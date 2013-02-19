@@ -174,6 +174,34 @@ int   bigcmp          (dptr da, dptr db);
 void  bigrand         (dptr da, dptr dx);
 int   bigsign         (dptr da);
 
+#define declare_convert_from_macro(TYPE) void convert_from_##TYPE(TYPE src, dptr dest);
+#define declare_convert_to_macro(TYPE) int convert_to_##TYPE(dptr src, TYPE *dest);
+
+declare_convert_to_macro(off_t)
+declare_convert_from_macro(off_t)
+declare_convert_to_macro(time_t)
+declare_convert_from_macro(time_t)
+declare_convert_to_macro(mode_t)
+declare_convert_from_macro(mode_t)
+declare_convert_from_macro(dev_t)
+#if UNIX
+declare_convert_from_macro(ino_t)
+declare_convert_from_macro(blkcnt_t)
+declare_convert_to_macro(uid_t)
+declare_convert_from_macro(uid_t)
+declare_convert_to_macro(gid_t)
+declare_convert_from_macro(gid_t)
+#elif PLAN9
+declare_convert_to_macro(ulong)
+declare_convert_from_macro(ulong)
+declare_convert_to_macro(vlong)
+declare_convert_from_macro(vlong)
+declare_convert_from_macro(uvlong)
+declare_convert_from_macro(uint)
+#endif
+declare_convert_from_macro(ulonglong)
+declare_convert_from_macro(uword)
+
 char *buffstr(dptr d);
 void buffnstr(dptr d, char **s, ...);
 

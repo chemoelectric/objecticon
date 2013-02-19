@@ -18,6 +18,7 @@
    #define UCHAR_MAX 255
    #define INT_MAX 0x7fffffff
    typedef unsigned int size_t;
+   typedef unsigned int dev_t;
    typedef unsigned long time_t;
    typedef unsigned long mode_t;
    typedef unsigned long clock_t;
@@ -38,7 +39,7 @@
    #define O_RDONLY 0
    #define O_WRONLY 1
    #define O_RDWR   2
-   #define O_ACCMODE 0 
+   #define O_ACCMODE 3
    #define O_NONBLOCK 0
    #define O_APPEND  0x10000
    #define O_CREAT   0x20000

@@ -71,12 +71,17 @@ if (self_id < 0)
     runerr(219, self);
 #enddef
 
+static convert_to_macro(key_t)
+
 function ipc_Shm_open_public_impl(key)
-   if !cnv:C_integer(key) then
+   if !cnv:integer(key) then
        runerr(101, key)
    body {
        int top_id;
-       top_id = shmget(key, sizeof(shm_top), 0600);
+       key_t k;
+       if (!convert_to_key_t(&key, &k))
+           runerr(0);
+       top_id = shmget(k, sizeof(shm_top), 0600);
        if (top_id == -1) {
            /* ENOENT causes failure; all other errors abort. */
            if (errno == ENOENT) {
@@ -90,18 +95,20 @@ function ipc_Shm_open_public_impl(key)
 end
 
 function ipc_Shm_create_public_impl(key, str)
-   if !cnv:C_integer(key) then
+   if !cnv:integer(key) then
        runerr(101, key)
    if !cnv:string(str) then
        runerr(103, str)
    body {
+       key_t k;
        int top_id, sem_id, data_id;
        shm_top *tp;
        semun arg;
        void *p, *data;
        int size;
-
-       top_id = shmget(key, sizeof(shm_top), IPC_EXCL | IPC_CREAT | 0600);
+       if (!convert_to_key_t(&key, &k))
+           runerr(0);
+       top_id = shmget(k, sizeof(shm_top), IPC_EXCL | IPC_CREAT | 0600);
        if (top_id == -1) {
            /* EEXIST causes failure; all other errors abort. */
            if (errno == EEXIST) {
@@ -319,11 +326,14 @@ function ipc_Shm_get_value_impl(self)
 end
 
 function ipc_Sem_open_public_impl(key)
-   if !cnv:C_integer(key) then
+   if !cnv:integer(key) then
        runerr(101, key)
    body {
+       key_t k;
        int sem_id;
-       sem_id = semget(key, 0, 0600);
+       if (!convert_to_key_t(&key, &k))
+           runerr(0);
+       sem_id = semget(k, 0, 0600);
        if (sem_id == -1) {
            /* ENOENT causes failure; all other errors abort. */
            if (errno == ENOENT) {
@@ -337,16 +347,18 @@ function ipc_Sem_open_public_impl(key)
 end
 
 function ipc_Sem_create_public_impl(key, val)
-   if !cnv:C_integer(key) then
+   if !cnv:integer(key) then
        runerr(101, key)
    if !cnv:C_integer(val) then
        runerr(101, val)
    body {
+       key_t k;
        int sem_id;
        semun arg;
        arg.val = val;
-
-       sem_id = semget(key, 1, IPC_EXCL | IPC_CREAT | 0600);
+       if (!convert_to_key_t(&key, &k))
+           runerr(0);
+       sem_id = semget(k, 1, IPC_EXCL | IPC_CREAT | 0600);
        if (sem_id == -1) {
            /* EEXIST causes failure; all other errors abort. */
            if (errno == EEXIST) {
@@ -461,11 +473,14 @@ function ipc_Sem_close(self)
 end
 
 function ipc_Msg_open_public_impl(key)
-   if !cnv:C_integer(key) then
+   if !cnv:integer(key) then
        runerr(101, key)
    body {
+       key_t k;
        int top_id;
-       top_id = shmget(key, sizeof(msg_top), 0600);
+       if (!convert_to_key_t(&key, &k))
+           runerr(0);
+       top_id = shmget(k, sizeof(msg_top), 0600);
        if (top_id == -1) {
            /* ENOENT causes failure; all other errors abort. */
            if (errno == ENOENT) {
@@ -479,13 +494,16 @@ function ipc_Msg_open_public_impl(key)
 end
 
 function ipc_Msg_create_public_impl(key)
-   if !cnv:C_integer(key) then
+   if !cnv:integer(key) then
        runerr(101, key)
    body {
+       key_t k;
        int top_id, msg_id, rcv_sem_id, snd_sem_id;
        msg_top *tp;
        semun arg;
-       top_id = shmget(key, sizeof(msg_top), IPC_EXCL | IPC_CREAT | 0600);
+       if (!convert_to_key_t(&key, &k))
+           runerr(0);
+       top_id = shmget(k, sizeof(msg_top), IPC_EXCL | IPC_CREAT | 0600);
        if (top_id == -1) {
            /* EEXIST causes failure; all other errors abort. */
            if (errno == EEXIST) {
@@ -566,7 +584,7 @@ function ipc_Msg_create_private_impl()
 
       add_resource(top_id, 2);
 
-       return C_integer top_id;
+      return C_integer top_id;
    }
 end
 

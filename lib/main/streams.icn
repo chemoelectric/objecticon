@@ -967,24 +967,23 @@ $ifdef _PLAN9
 
       # If we have no mode then we need to test for SEEK after
       # the file is opened.
-      C := if /mode then adjust_mode else 1
-
-      case iand(flags, 3) of {
-         FileOpt.RDONLY: {
-            flags2 := FileOpt9.OREAD
-            /mode := READ
+      if \mode then
+         C := 1
+      else {
+         C := adjust_mode
+         if /perm then
+            /flags := FileOpt.RDONLY
+         #
+         # Set the READ/WRITE mode flags based on the FileOpt flags.
+         #
+         mode := case iand(flags, FileOpt.ACCMODE) of {
+            FileOpt.RDONLY: READ
+            FileOpt.WRONLY: WRITE
+            FileOpt.RDWR: READ_WRITE
+            default: return error("Invalid flags combination")
          }
-         FileOpt.WRONLY: {
-            flags2 := FileOpt9.OWRITE
-            /mode := WRITE
-         }
-         FileOpt.RDWR: {
-            flags2 := FileOpt9.ORDWR
-            /mode := READ_WRITE
-         }
-         default:
-            runerr("Invalid flags combination")
       }
+      flags2 := iand(flags, 3)
       if iand(flags, FileOpt.TRUNC) ~= 0 then
          flags2 := ior(flags2, FileOpt9.OTRUNC)
       if iand(flags, FileOpt.EXCL) ~= 0 then
@@ -1009,15 +1008,14 @@ $ifdef _PLAN9
       if \mode then
          return create_for_fd(open_impl(name, flags), mode)
       #
-      # Set the READ/WRITE mode flags based on the FileOpt flags.
+      # Set the READ/WRITE mode flags based on the FileOpt9 flags.
       #
-      mode := if iand(flags, FileOpt.WRONLY) ~= 0 then
-         WRITE
-      else if iand(flags, FileOpt.RDWR) ~= 0 then
-         READ_WRITE
-      else
-         READ
-
+      mode := case iand(flags, 3) of {
+         FileOpt9.OREAD: READ
+         FileOpt9.OWRITE: WRITE
+         FileOpt9.ORDWR: READ_WRITE
+         default: return error("Invalid flags combination")
+      }
       return adjust_mode(create_for_fd(open_impl(name, flags), mode))
    end
 
@@ -1025,15 +1023,14 @@ $ifdef _PLAN9
       if \mode then
          return create_for_fd(create_impl(name, flags, perm), mode)
       #
-      # Set the READ/WRITE mode flags based on the FileOpt flags.
+      # Set the READ/WRITE mode flags based on the FileOpt9 flags.
       #
-      mode := if iand(flags, FileOpt.WRONLY) ~= 0 then
-         WRITE
-      else if iand(flags, FileOpt.RDWR) ~= 0 then
-         READ_WRITE
-      else
-         READ
-
+      mode := case iand(flags, 3) of {
+         FileOpt9.OREAD: READ
+         FileOpt9.OWRITE: WRITE
+         FileOpt9.ORDWR: READ_WRITE
+         default: return error("Invalid flags combination")
+      }
       return adjust_mode(create_for_fd(create_impl(name, flags, perm), mode))
    end
 
@@ -1102,13 +1099,12 @@ $else
       #
       # Set the READ/WRITE mode flags based on the FileOpt flags.
       #
-      mode := if iand(flags, FileOpt.WRONLY) ~= 0 then
-         WRITE
-      else if iand(flags, FileOpt.RDWR) ~= 0 then
-         READ_WRITE
-      else
-         READ
-
+      mode := case iand(flags, FileOpt.ACCMODE) of {
+         FileOpt.RDONLY: READ
+         FileOpt.WRONLY: WRITE
+         FileOpt.RDWR: READ_WRITE
+         default: return error("Invalid flags combination")
+      }
       return adjust_mode(setup(new_impl(name, flags, perm), mode))
    end
 
