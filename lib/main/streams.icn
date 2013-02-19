@@ -909,13 +909,12 @@ class FileStream(DescStream)
       #
       # Set the READ/WRITE mode flags based on the FileOpt flags.
       #
-      mode := if iand(flags, FileOpt.WRONLY) ~= 0 then
-         WRITE
-      else if iand(flags, FileOpt.RDWR) ~= 0 then
-         READ_WRITE
-      else
-         READ
-
+      mode := case iand(flags, 3) of {
+         FileOpt.RDONLY: READ
+         FileOpt.WRONLY: WRITE
+         FileOpt.RDWR: READ_WRITE
+         default: runerr("Invalid flags combination")
+      }
       return adjust_mode(setup(new_impl(name, flags, perm), mode))
    end
 
