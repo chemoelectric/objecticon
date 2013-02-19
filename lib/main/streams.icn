@@ -1007,11 +1007,12 @@ $ifdef _PLAN9
    public static open9(name, flags, mode)
       if \mode then
          return create_for_fd(open_impl(name, flags), mode)
+      /flags := FileOpt9.OREAD
       #
       # Set the READ/WRITE mode flags based on the FileOpt9 flags.
       #
       mode := case iand(flags, 3) of {
-         FileOpt9.OREAD: READ
+         FileOpt9.OREAD | FileOpt9.OEXEC: READ
          FileOpt9.OWRITE: WRITE
          FileOpt9.ORDWR: READ_WRITE
          default: return error("Invalid flags combination")
@@ -1022,11 +1023,12 @@ $ifdef _PLAN9
    public static create9(name, flags, perm, mode)
       if \mode then
          return create_for_fd(create_impl(name, flags, perm), mode)
+      /flags := FileOpt9.OREAD
       #
       # Set the READ/WRITE mode flags based on the FileOpt9 flags.
       #
       mode := case iand(flags, 3) of {
-         FileOpt9.OREAD: READ
+         FileOpt9.OREAD | FileOpt9.OEXEC: READ
          FileOpt9.OWRITE: WRITE
          FileOpt9.ORDWR: READ_WRITE
          default: return error("Invalid flags combination")
