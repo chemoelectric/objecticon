@@ -695,6 +695,30 @@ $else
 $endif
 
    #
+   # Utility to check whether the result of a {poll} for {Poll.IN} indicates
+   # a call to {in}.
+   #
+   public static poll_in_test(v)
+      local x
+      # Ignore OUT
+      v := iand(v, icom(Poll.OUT))
+      # Succeed if either IN or HUP is set, but no other.
+      x := iand(v, ior(Poll.IN,Poll.HUP))
+      return x ~= 0 & x = v
+   end
+
+   #
+   # Utility to check whether the result of a {poll} for {Poll.OUT} indicates
+   # a call to {out}.
+   #
+   public static poll_out_test(v)
+      # Ignore IN
+      v := iand(v, icom(Poll.IN))
+      # Succeed if OUT is set, but no other.
+      return v = Poll.OUT
+   end
+
+   #
    # Turn the specified flags on or off, and return the new set of
    # flags.  The flags should be selected from the constants in
    # {FileOpt}.
@@ -910,30 +934,6 @@ procedure close(f)
 end
 
 #
-# Utility to check whether the result of a {poll} for {Poll.IN} indicates
-# a call to {in}.
-#
-procedure poll_in_test(v)
-   local x
-   # Ignore OUT
-   v := iand(v, icom(Poll.OUT))
-   # Succeed if either IN or HUP is set, but no other.
-   x := iand(v, ior(Poll.IN,Poll.HUP))
-   return x ~= 0 & x = v
-end
-
-#
-# Utility to check whether the result of a {poll} for {Poll.OUT} indicates
-# a call to {out}.
-#
-procedure poll_out_test(v)
-   # Ignore IN
-   v := iand(v, icom(Poll.IN))
-   # Succeed if OUT is set, but no other.
-   return v = Poll.OUT
-end
-
-#
 # This class represents a stream based on a local file.
 #
 class FileStream(DescStream)
@@ -954,7 +954,8 @@ $ifdef _PLAN9
    # Open a new {FileStream} using the underlying system open
    # function.
    # @param name the file name
-   # @param flags the flags, selected from {FileOpt}
+   # @param flags the flags, selected from {FileOpt}, if perm
+   # @      and mode are omitted, defaults to {FileOpt.RDONLY}
    # @param perm the create permissions to use if a file is
    # @      created, selected from {Mode}.
    # @param mode the resulting {Stream}'s mode; if omitted
@@ -1096,6 +1097,8 @@ $else
    public new(name, flags, perm, mode)
       if \mode then
          return setup(new_impl(name, flags, perm), mode)
+      if /perm then
+        /flags := FileOpt.RDONLY
       #
       # Set the READ/WRITE mode flags based on the FileOpt flags.
       #
@@ -1557,11 +1560,11 @@ abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask,
       if *l = 0 then
          runerr(219, self)
       x := choose_poll(l) | fail
-      if poll_in_test(x[t[\cin]]) then
+      if DescStream.poll_in_test(x[t[\cin]]) then
          return cin
-      if poll_in_test(x[t[\cerr]]) then
+      if DescStream.poll_in_test(x[t[\cerr]]) then
          return cerr
-      if poll_out_test(x[t[\cout]]) then
+      if DescStream.poll_out_test(x[t[\cout]]) then
          return cout
       return error("child command i/o failed")
    end
@@ -1791,11 +1794,11 @@ abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask,
       if *l = 0 then
          runerr(219, self)
       x := choose_poll(l) | fail
-      if poll_in_test(x[t[\cin]]) then
+      if DescStream.poll_in_test(x[t[\cin]]) then
          return cin
-      if poll_in_test(x[t[\cerr]]) then
+      if DescStream.poll_in_test(x[t[\cerr]]) then
          return cerr
-      if poll_out_test(x[t[\cout]]) then
+      if DescStream.poll_out_test(x[t[\cout]]) then
          return cout
       return error("child command i/o failed")
    end
@@ -2758,12 +2761,12 @@ class SequenceStream(Stream, HasUnderlyingStream)
    end
 end
 
+# A {Stream} which takes its data from a co-expression.  Each result
+# provides one line of output.  End-of-file is signalled by the
+# co-expression generating {&null} and errors are signalled by it
+# failing and setting {&why}.
 #
-# Subclasses of this stream implement the {gen} method.  The results
-# sequence of that method represent the output of the stream, with
-# each result being one line.
-#
-abstract class GeneratorStream(LineBasedInputStream, NoCopy)
+class GeneratorStream(LineBasedInputStream, NoCopy)
    private
       coex
 
@@ -2783,29 +2786,23 @@ abstract class GeneratorStream(LineBasedInputStream, NoCopy)
       return self
    end
 
-   #
-   # Generates the lines of the stream.  End-of-file is signalled by
-   # returning {&null} and errors are signalled by failing and setting
-   # {&why}.
-   #
-   protected abstract line_gen()
-
-   public new()
+   public new(coex)
+      self.coex := coex
       cast(self,LineBasedInputStream).new()
-      self.coex := create line_gen()
       return
    end
 end
 
-#
-# A {Stream} which takes its data from a co-expression.  Each result provides
-# one line of output.
+# A {Stream} which takes its data from a co-expression.  Each result
+# provides one line of output.  Unlike {GeneratorStream}, no provision
+# is made for signalling errors (failure of the co-expression
+# indicates end-of-file).
 #
 # @example
 # @   # A stream with 10 lines
 # @   e := ExprStream{1 to 10}
 #
-class ExprStream(LineBasedInputStream)
+class ExprStream(LineBasedInputStream, NoCopy)
    private
       coex
 
@@ -2823,36 +2820,5 @@ class ExprStream(LineBasedInputStream)
    public new(coex)
       self.coex := coex
       return cast(self,LineBasedInputStream).new()
-   end
-end
-
-#
-# Useful parent class for filtering the lines from a particular
-# {Stream}.
-#
-abstract class LineFilterStream(GeneratorStream, HasUnderlyingStream)
-   protected
-      other
-
-   public close()
-      if \close_underlying_flag then
-         other.close() | fail
-      return self
-   end
-
-   protected next_line()
-      return other.read_line()
-   end
-
-   protected expect_line()
-      local s
-      s := other.read_line() | fail
-      return \s | error("Unexpected eof")
-   end
-
-   public new(other)
-      self.other := other
-      self.close_underlying_flag := &yes
-      return cast(self,GeneratorStream).new()
    end
 end
