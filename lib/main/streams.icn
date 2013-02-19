@@ -659,6 +659,30 @@ abstract class DescStream(Stream, NoCopy)
    public static native poll(l, timeout)
 
    #
+   # Utility to check whether the result of a {poll} for {Poll.IN} indicates
+   # a call to {in}.
+   #
+   public static poll_in_test(v)
+      local x
+      # Ignore OUT
+      v := iand(v, icom(Poll.OUT))
+      # Succeed if either IN or HUP is set, but no other.
+      x := iand(v, ior(Poll.IN,Poll.HUP))
+      return x ~= 0 & x = v
+   end
+
+   #
+   # Utility to check whether the result of a {poll} for {Poll.OUT} indicates
+   # a call to {out}.
+   #
+   public static poll_out_test(v)
+      # Ignore IN
+      v := iand(v, icom(Poll.IN))
+      # Succeed if OUT is set, but no other.
+      return v = Poll.OUT
+   end
+
+   #
    # Turn the specified flags on or off, and return the new set of
    # flags.  The flags should be selected from the constants in
    # {FileOpt}.
@@ -847,30 +871,6 @@ end
 procedure close(f)
    f.close() | fail
    return f
-end
-
-#
-# Utility to check whether the result of a {poll} for {Poll.IN} indicates
-# a call to {in}.
-#
-procedure poll_in_test(v)
-   local x
-   # Ignore OUT
-   v := iand(v, icom(Poll.OUT))
-   # Succeed if either IN or HUP is set, but no other.
-   x := iand(v, ior(Poll.IN,Poll.HUP))
-   return x ~= 0 & x = v
-end
-
-#
-# Utility to check whether the result of a {poll} for {Poll.OUT} indicates
-# a call to {out}.
-#
-procedure poll_out_test(v)
-   # Ignore IN
-   v := iand(v, icom(Poll.IN))
-   # Succeed if OUT is set, but no other.
-   return v = Poll.OUT
 end
 
 #
@@ -1390,11 +1390,11 @@ abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask,
       if *l = 0 then
          runerr(219, self)
       x := choose_poll(l) | fail
-      if poll_in_test(x[t[\cin]]) then
+      if DescStream.poll_in_test(x[t[\cin]]) then
          return cin
-      if poll_in_test(x[t[\cerr]]) then
+      if DescStream.poll_in_test(x[t[\cerr]]) then
          return cerr
-      if poll_out_test(x[t[\cout]]) then
+      if DescStream.poll_out_test(x[t[\cout]]) then
          return cout
       return error("child command i/o failed")
    end

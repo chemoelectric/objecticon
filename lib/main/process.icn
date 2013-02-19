@@ -90,7 +90,7 @@ class Process(HasTask, HasBgProc)
       r := do_poll(Poll.IN, t) | fail
       if /r then
          return error("Timeout")
-      if poll_in_test(r[1]) then
+      if DescStream.poll_in_test(r[1]) then
          return receive()
       return error("i/o error on reading from socket")
    end
