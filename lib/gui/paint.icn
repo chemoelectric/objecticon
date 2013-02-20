@@ -509,9 +509,9 @@ class ImagePaint(Paint)
       win := if \self.image_str then
          ImageCache.load(self.image_str, c.cbwin)
       else if \self.image_cache then
-         ImageCache.get(self.image_cache, c.cbwin).clone()
+         ImageCache.get(self.image_cache, c.cbwin).shared_copy()
       else if \self.image_window then
-         self.image_window.clone()
+         self.image_window.shared_copy()
    end
 
    public zoom_image()
