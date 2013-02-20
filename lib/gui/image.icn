@@ -22,8 +22,7 @@ class Image(Component)
       image_cache,
       win,
       zoom_win,
-      fill_dimensions,
-      dont_close
+      fill_dimensions
 
    #
    # Set an image to use; the parameter is passed to {ImageCache.load}
@@ -91,15 +90,12 @@ class Image(Component)
    end
 
    public load_image()
-      if \self.image_str then
-         win := ImageCache.load(self.image_str, self.cbwin)
-      else if \self.image_cache then {
-         if win := ImageCache.get(self.image_cache, self.cbwin) then
-            dont_close := 1
-      } else if \self.image_window then {
-         win := self.image_window
-         dont_close := 1
-      }
+      win := if \self.image_str then
+         ImageCache.load(self.image_str, self.cbwin)
+      else if \self.image_cache then
+         ImageCache.get(self.image_cache, self.cbwin).clone()
+      else if \self.image_window then
+         self.image_window.clone()
    end
 
    # This controls how the image will be expanded if its size is less
@@ -119,10 +115,9 @@ class Image(Component)
    end
 
    public close_image()
-      if \win & /dont_close then
-         win.close()
+      (\win).close()
       (\zoom_win).close()
-      dont_close := win := zoom_win := &null
+      win := zoom_win := &null
    end
 
    public get_default_width()

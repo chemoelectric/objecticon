@@ -211,7 +211,7 @@ class Worker()
    end
 
    private cvt_file(f)
-      local e, l, maxl, maxsz, maxuid, maxgid, t, path, rs, now, tf, gcache, ucache
+      local e, l, t, path, rs, now, tf, gcache, ucache
       ucache := table()
       gcache := table()
       if Files.is_directory(f) then {
@@ -220,26 +220,19 @@ class Worker()
          return use {
             rs := RamStream(),
             {
-               rs.out("<html><head><title>Directory " || f || "</title></head><pre>")
-               maxsz := maxl := maxuid := maxgid := 0
-               every e := !l do {
-                  maxl <:= *e[1]
-                  maxsz <:= *e[2].size
-                  maxuid <:= *uname(e[2].uid, ucache)
-                  maxgid <:= *grname(e[2].gid, gcache)
-               }
+               rs.out("<html><head><title>Directory " || f || "</title></head><table>")
                path := Files.get_path(f)
                every e := !l do {
                   t := e[2]
                   tf := if now - t.mtime > 180 * 86400 then
-                     Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM dd  yyyy")
+                     Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;&nbsp;'yyyy")
                   else
-                     Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM dd HH:mm")
-                  rs.out(t.mode_str || "  " || left(uname(t.uid, ucache), maxuid + 1) || left(grname(t.gid, gcache), maxgid + 1) ||
-                         right(t.size, maxsz) || " " || tf || " " ||
-                         "<a href=\"file://" || path.child(e[1]).canonical().str() || "\">" || e[1] || "</a>" || "\n")
+                     Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;'HH:mm")
+                  rs.out("<tr><td>" || t.mode_str || "&nbsp;<td>" || uname(t.uid, ucache) || "&nbsp;<td>" || grname(t.gid, gcache) ||
+                         "&nbsp;<td align=right>" || t.size || "<td>&nbsp;" || tf || "&nbsp;<td>" ||
+                         "<a href=\"file://" || path.child(e[1]).canonical().str() || "\">" || e[1] || "</a></tr>" || "\n")
                }
-               rs.out("</pre></html>")
+               rs.out("</table></html>")
                rs.str()
             }
          }
@@ -1572,8 +1565,7 @@ class Browser(Component)
       } else if is_html(res.content_type, res.data) then {
          s := page_data := res.data
       } else if view_img := Window.open_image(res.data) then {
-         view_img.close()
-         row := Image().set_border(NullBorder()).set_image(res.data)
+         row := Image().set_border(NullBorder()).set_window(view_img)
          page_data := res.data
       } else {
          s := u"<html><h1>Problem:</h1>Displaying " || res.url.str() || u"<br><br>This does not seem to be an HTML document</html>"
@@ -1639,6 +1631,7 @@ class Browser(Component)
       top_panel.set_inner(row)
       top_panel.layout()
       top_panel.invalidate()
+      (\view_img).close()
       parent_dialog.resynch_pointer()
       setup_tabbing()
    end
