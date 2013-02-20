@@ -1415,11 +1415,16 @@ class Browser(Component)
    end
 
    public finally()
+      local i
       cast(self,Component).finally()
       every (!workers).finally()
       clear(queue)
       running := 0
       status_ticker.stop()
+      # If we are displaying a simple Image, ensure it can be
+      # re-displayed if we are re-initialized.
+      if is(i := top_panel.view.inner, Image) then
+         i.set_image(page_data)
    end
 
    public do_next()
