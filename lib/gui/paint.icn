@@ -69,9 +69,11 @@ end
 # A simple {Paint} instance which draws a {Pixels} instance.
 #
 class PixelsPaint(Paint)
-   public pix
+   public src, pix
 
    public initially()
+      /pix | syserr("initially called out of sequence")
+      pix := src.shared_copy()
       self.w := pix.get_width()
       self.h := pix.get_height()
    end
@@ -80,33 +82,15 @@ class PixelsPaint(Paint)
       W.draw_image(x, y, pix)
    end
 
-   # Create a new instance.
-   # @param pix The `Pixels` to draw
-   public new(pix)
-      self.pix := pix
-      return
-   end
-end
-
-# A {Paint} instance which copies an image from another window.  The user is
-# responsible for opening and closing the other window.
-#
-class ImageWindowPaint(Paint)
-   public win
-
-   public initially()
-      self.w := win.get_width()
-      self.h := win.get_height()
-   end
-
-   public draw(W, x, y)
-      (\win).copy_to(,,,, W, x, y)
+   public finally()
+      pix.close()
+      pix := &null
    end
 
    # Create a new instance.
-   # @param w The source window
-   public new(w)
-      self.win := w
+   # @param src The `Pixels` to draw
+   public new(src)
+      self.src := src
       return
    end
 end
@@ -384,8 +368,7 @@ class GridPaint(Paint)
    end
 
    public close_win()
-      if \win then
-         win.close()
+      (\win).close()
       win := &null
    end
 
