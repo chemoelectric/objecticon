@@ -224,7 +224,7 @@ class Main(Dialog)
       s := \self.canvas.filename | "Untitled"
       if \self.canvas.modified then
          s ||:= " *"
-      self.filename_label.set_label(Files.get_path(s).get(-1))
+      self.filename_label.set_label(FilePath(s).get(-1))
       return self
    end      
 
@@ -1000,7 +1000,7 @@ class Main(Dialog)
    end
 
    public get_config_file_name()
-      return Files.get_path(Files.get_home()).child(".ivibrc2").str()
+      return FilePath(Files.get_home()).child(".ivibrc2").str()
    end
 
    public read_config_file()
@@ -1271,7 +1271,7 @@ class Main(Dialog)
       }
 
       plugins := table()
-      pp := Files.get_path(prefs.plugin_directory)
+      pp := FilePath(prefs.plugin_directory)
       every f := !Files.list(pp.str()) do {
          if f[2].mode_str[1] == "-" & upto('x', f[2].mode_str) then {
             fn := pp.child(f[1]).str()
@@ -1285,7 +1285,7 @@ class Main(Dialog)
          }
       }
 
-      every fp := Files.get_path(!prefs.named_image_path) do {
+      every fp := FilePath(!prefs.named_image_path) do {
          every f := !Files.list(fp.str()) do {
             if ext := is_image_file(f[1]) then
                ImageCache.name_image(f[1][1:-*ext], Files.file_to_string(fp.child(f[1]).str()))

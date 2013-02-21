@@ -289,7 +289,7 @@ class Ieval(ObjectOutput)
                if depth <= LIMIT then {
                   output.writes("   ", fe.proc, "(", list2str(fe.args), ")")
                   if \fe2 then
-                     output.write(" from line ", fe2.line, " in ", Files.get_path(fe2.file).get(-1))
+                     output.write(" from line ", fe2.line, " in ", FilePath(fe2.file).get(-1))
                   else
                      output.write()
                }
@@ -297,7 +297,7 @@ class Ieval(ObjectOutput)
                fe2 := fe
             }
             if \fe2 then
-               output.write("   at line ", fe2.line, " in ", Files.get_path(fe2.file).get(-1))
+               output.write("   at line ", fe2.line, " in ", FilePath(fe2.file).get(-1))
          }
       }
    end
@@ -331,7 +331,7 @@ class Ieval(ObjectOutput)
       if \opts["s"] then
          do_stdin()
       else {
-         hfile := Files.get_path(Files.get_home()).child(".ieval_history").str()
+         hfile := FilePath(Files.get_home()).child(".ieval_history").str()
          history := decode(Files.file_to_string(hfile)) | []
          if \opts["g"] then
             do_gui()
@@ -360,7 +360,7 @@ class Ieval(ObjectOutput)
       consts["oos"] := oos := ObjectOutputStream(output).set_indent(3)
       consts["out"] := output
 
-      f := Files.get_path(Files.get_home()).child(".ieval").str()
+      f := FilePath(Files.get_home()).child(".ieval").str()
       if Files.access(f) then
          push(files, f)
       every f := !files do {

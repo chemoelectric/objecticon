@@ -8,9 +8,9 @@ class ErrorDetail()
    # Does the same as abbreviate() in tmain.c
    private abbreviate(name)
       local l
-      l := Files.get_path(name).get(-1)
+      l := FilePath(name).get(-1)
       return if Files.access(name, Access.R_OK) then {
-         if Files.get_path(l).canonical().str() == name then
+         if FilePath(l).canonical().str() == name then
             l
          else
             name

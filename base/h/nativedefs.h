@@ -240,7 +240,7 @@ NativeDef(io.FileWorker,close_when_complete,io_FileWorker_close_when_complete)
 NativeDef(io.FileWorker,dup_fd,io_FileWorker_dup_fd)
 #endif
 #if MSWIN32
-NativeDef(io.WindowsFilePath,getdcwd,io_WindowsFilePath_getdcwd)
+NativeDef(io.WindowsFileSystem,getdcwd,io_WindowsFileSystem_getdcwd)
 NativeDef(io.WindowsFileSystem,get_roots,io_WindowsFileSystem_get_roots)
 #endif
 NativeDef(lang.Class,complete_raw_instance,lang_Class_complete_raw_instance)

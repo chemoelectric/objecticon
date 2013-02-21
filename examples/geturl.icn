@@ -156,7 +156,7 @@ procedure main(args)
    if \opts["while"] then
       hc.set_retry_while_data(&yes)
 
-   cookies := \opts["k"] | System.getenv("OICOOKIES") | Files.get_path(Files.get_home()).child(".oicookies").str()
+   cookies := \opts["k"] | System.getenv("OICOOKIES") | FilePath(Files.get_home()).child(".oicookies").str()
    t := decode(Files.file_to_string(cookies)) | table()
    hc.set_cookies(t)
 
@@ -392,7 +392,7 @@ procedure get_out(fname)
 
    if out := \opts["o"] then {
       if Files.is_directory(out) then
-         out := Files.get_path(out).child(fname).str()
+         out := FilePath(out).child(fname).str()
    } else
       out := fname
 end

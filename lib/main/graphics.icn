@@ -298,6 +298,13 @@ final class Window(NoCopy)
       return create_for_ptr(clone_impl())
    end
 
+   # Return a new instance which shares both canvas and context of
+   # {self}.
+   #
+   public shared_copy()
+      return couple(self)
+   end
+
    #
    # Produces a new window value that binds the canvas of {self} with
    # the graphics context of {other}.

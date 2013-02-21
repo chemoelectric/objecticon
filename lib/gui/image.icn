@@ -93,9 +93,9 @@ class Image(Component)
       win := if \self.image_str then
          ImageCache.load(self.image_str, self.cbwin)
       else if \self.image_cache then
-         ImageCache.get(self.image_cache, self.cbwin).clone()
+         ImageCache.get(self.image_cache, self.cbwin).shared_copy()
       else if \self.image_window then
-         self.image_window.clone()
+         self.image_window.shared_copy()
    end
 
    # This controls how the image will be expanded if its size is less

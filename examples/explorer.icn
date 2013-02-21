@@ -18,7 +18,7 @@ class Explorer(Dialog)
          push(l, n.get_label())
          n := n.get_parent() | break
       }
-      return Files.get_path_from_list(l).str()
+      return FilePath.from_list(l).str()
    end
 
    #

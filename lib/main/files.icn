@@ -11,7 +11,7 @@ import
 # system-independent access to the file system.
 #
 final abstract class Files()
-   private static const 
+   package static const 
       FS
 
    public static const 
@@ -56,7 +56,7 @@ $ifdef _PLAN9
    public static list(s)
       local l, t, e, st
       l := [[".", stat(s)],
-            ["..", stat(get_path(s).child("..").str())]] | fail
+            ["..", stat(FilePath(s).child("..").str())]] | fail
       t := dir_read_impl(s) | fail
       every e := !t do {
          st := Stat!e
@@ -86,7 +86,7 @@ $else
       local p
       return use {
          p := DirStream(s),
-         list1(get_path(s), p)
+         list1(FilePath(s), p)
       }
    end
 
@@ -103,22 +103,6 @@ $else
       }
    end
 $endif
-
-   #
-   # Return a {FilePath} corresponding to the given path in string
-   # form.
-   #
-   public static get_path(s)
-      return FS.get_path(s)
-   end
-
-   #
-   # Return a {FilePath} corresponding to the elements in the given
-   # list.
-   #
-   public static get_path_from_list(l)
-      return FS.get_path_from_list(default.copy(l))
-   end
 
    #
    # Return the home directory.
@@ -203,7 +187,7 @@ $endif
 
       randomize()
 
-      p := get_path(path)
+      p := FilePath(path)
       repeat {
          ?1                                # change &random
          name := p.child(prefix || left(&random, len, "0") || suffix).str()
@@ -471,7 +455,7 @@ $endif
    public static path_find(f, n, cd, mode)
       local p, s
       /mode := Access.F_OK
-      p := get_path(f)
+      p := FilePath(f)
 
       # Don't search the path if we have an absolute file
       if p.is_absolute() then {
@@ -486,7 +470,7 @@ $endif
       # the cd
       if p.size() > 1 then {
          # Prepend cd if given
-         s := get_path(\cd).append(p).str() | p.str()
+         s := FilePath(\cd).append(p).str() | p.str()
          if access(s, mode) then
             return s
          else
@@ -494,12 +478,12 @@ $endif
       }
 
       # Neither absolute nor relative.  Try current directory first
-      s := get_path(\cd).append(p).str() | p.str()
+      s := FilePath(\cd).append(p).str() | p.str()
       if access(s, mode) then
          return s
 
       # Search all the elements in the path
-      every s := get_path(split_paths(System.getenv(\n))).append(p).str() do {
+      every s := FilePath(split_paths(System.getenv(\n))).append(p).str() do {
          if access(s, mode) then
             return s
       }
@@ -522,7 +506,7 @@ $else
       /n := "PATH"
 $endif
       /mode := Access.X_OK
-      p := get_path(f)
+      p := FilePath(f)
 
       # Anything with separators in, we just look up and ignore the
       # path.
@@ -540,7 +524,7 @@ $ifdef _PLAN9
 $else
       path := System.getenv(n) | ""
 $endif
-      every s := get_path(split_paths(path)).append(p).str() do {
+      every s := FilePath(split_paths(path)).append(p).str() do {
          if access(s, mode) then
             return s
       }
@@ -566,12 +550,15 @@ end
 
 #
 # This class provides implementations of some of the methods in
-# {Files}.  It is not used directly by clients.
+# {Files} and {FilePath}.  It is not used directly by clients.
 #
 abstract class FileSystem()
-   public abstract get_path(s)
+   public abstract get_path_list(s)
 
-   public abstract get_path_from_list(l)
+   public abstract filepath_str(fp)
+   public abstract filepath_is_absolute(fp)
+   public abstract filepath_canonical(fp)
+   public abstract filepath_absolute(fp)
 
    public abstract get_home()
 
@@ -584,18 +571,22 @@ abstract class FileSystem()
    public abstract get_roots()
 
    public abstract split_paths(s)
+
+   package new()
+      return
+   end
 end
 
 #
 # This class manipulates file paths by treating them as a list of
 # elements.  Instances are not created directly by the client, rather
-# they are created initially via {Files.get_path()} and then via other
+# they are created initially via {FilePath()} and then via other
 # methods in this class.
 #
 # Instances of this class are immutable.
 #
-abstract class FilePath(ObjectOutput)
-   protected l
+class FilePath(ObjectOutput)
+   package l
 
    #
    # Return the number of elements in the path.
@@ -623,7 +614,7 @@ abstract class FilePath(ObjectOutput)
    # the other path.
    #
    public append(other)
-      return classof(self)(l ||| other.l)
+      return from_list(l ||| other.l)
    end
 
    #
@@ -631,7 +622,7 @@ abstract class FilePath(ObjectOutput)
    # element.  Fails if the path has no elements.
    #
    public parent()
-      return classof(self)(l[1:-1])
+      return from_list(l[1:-1])
    end
 
    private object_output(oo)
@@ -643,7 +634,7 @@ abstract class FilePath(ObjectOutput)
    # element {s}.
    #
    public child(s)
-      return classof(self)(l ||| [s])
+      return from_list(l ||| [s])
    end
 
    #
@@ -654,34 +645,55 @@ abstract class FilePath(ObjectOutput)
       local t
       t := copy(l)
       t[-1] := s | fail
-      return classof(self)(t)
+      return from_list(t)
    end
 
    #
    # Return a path which represents the absolute path of this
    # path.
    #
-   public abstract absolute()
+   public absolute()
+      return if is_absolute() then
+         self
+      else
+         Files.FS.filepath_absolute(self)
+   end
 
    #
    # Convert the path back into a string.
    #
-   public abstract str()
+   public str()
+      return Files.FS.filepath_str(self)
+   end
 
    #
    # Succeed iff this path represents an absolute path.
    #
-   public abstract is_absolute()
+   public is_absolute()
+      return Files.FS.filepath_is_absolute(self)
+   end
 
    #
    # Canonicalize a path, which means trying to turn it into a
    # standard form.  This involves (at least) getting the absolute
    # path and removing any redundant path elements.
    #
-   public abstract canonical()
+   public canonical()
+      return Files.FS.filepath_canonical(absolute())
+   end
 
-   package new(l)
-      self.l := l
+   #
+   # Create a new {FilePath} from the given list of path elements.
+   #
+   public static from_list(l)
+      local i
+      i := Class.create_instance()
+      i.l := l
+      return i
+   end
+
+   public new(s)
+      self.l := Files.FS.get_path_list(s) | fail
       return
    end
 end
@@ -812,47 +824,8 @@ class Stat()
 end
 $endif
 
-class UnixFilePath(FilePath)
-   public str()
-      local e, s
-      s := ""
-      every e := !l do {
-         if s[-1] ~== "/" then 
-            s ||:= "/"
-         s ||:= e
-      }
-      return s
-   end
-
-   public is_absolute()
-      return l[1] == "/"
-   end
-
-   public absolute()
-      if is_absolute() then
-         return self
-      return Files.get_path(Files.getcwd()).append(self)
-   end
-
-   public canonical()
-      local e, r
-      r := []
-      every e := !absolute().l do {
-         if e == "." then
-            next
-         else if e == ".." then {
-            # /.. -> /
-            if r[-1] ~== "/" then
-               pull(r)
-         } else
-            put(r, e)
-      }
-      return UnixFilePath(r)
-   end
-end
-
 class UnixFileSystem(FileSystem)
-   public get_path(s)
+   public get_path_list(s)
       local l, t
       l := []
       s ? {
@@ -864,11 +837,42 @@ class UnixFileSystem(FileSystem)
             move(1)
          }
       }
-      return UnixFilePath(l)
+      return l
    end
 
-   public get_path_from_list(l)
-      return UnixFilePath(l)
+   public filepath_str(fp)
+      local e, s
+      s := ""
+      every e := !fp.l do {
+         if s[-1] ~== "/" then 
+            s ||:= "/"
+         s ||:= e
+      }
+      return s
+   end
+
+   public filepath_is_absolute(fp)
+      return fp.l[1] == "/"
+   end
+
+   public filepath_canonical(fp)
+      local e, r
+      r := []
+      every e := !fp.l do {
+         if e == "." then
+            next
+         else if e == ".." then {
+            # /.. -> /
+            if r[-1] ~== "/" then
+               pull(r)
+         } else
+            put(r, e)
+      }
+      return FilePath.from_list(r)
+   end
+
+   public filepath_absolute(fp)
+      return FilePath(Files.getcwd()).append(fp)
    end
 
    public get_home()
@@ -922,56 +926,8 @@ class Plan9FileSystem(UnixFileSystem)
    end
 end
 
-class WindowsFilePath(FilePath)
-   public str()
-      local e, s
-      s := ""
-      every e := !l do {
-         if *s > 0 & not any("\\:", s[-1]) then
-            s ||:= "\\"
-         s ||:= e
-      }
-      return s
-   end
-
-   public is_absolute()
-      return l[1] == "\\\\" | l[1][2:0] == ":\\"
-   end
-
-   public absolute()
-      local s
-      if is_absolute() then
-         return self
-      if l[1] == "\\" then
-         return WindowsFilePath([Files.getcwd()[1:4]] ||| l[2:0])
-      if l[1][2:0] == ":" then {
-         s := getdcwd(l[1][1]) | l[1] || "\\"
-         return Files.get_path(s).append(WindowsFilePath(l[2:0]))
-      }
-      return Files.get_path(Files.getcwd()).append(self)
-   end
-
-   private static native getdcwd(d)
-
-   public canonical()
-      local e, r
-      r := []
-      every e := !absolute().l do {
-         if e == "." then
-            next
-         else if e == ".." then {
-            # Avoid, eg, c:\.. -> empty; c:\.. is in fact invalid.
-            if *r > 1 then
-               pull(r)
-         } else
-            put(r, map(e))
-      }
-      return WindowsFilePath(r)
-   end
-end
-
 class WindowsFileSystem(FileSystem)
-   public get_path(s)
+   public get_path_list(s)
       local l, t
       l := []
       s := map(s, "/", "\\")
@@ -991,12 +947,52 @@ class WindowsFileSystem(FileSystem)
             move(1)
          }
       }
-      return WindowsFilePath(l)
+      return l
    end
 
-   public get_path_from_list(l)
-      return WindowsFilePath(l)
+   public filepath_str(fp)
+      local e, s
+      s := ""
+      every e := !fp.l do {
+         if *s > 0 & not any("\\:", s[-1]) then
+            s ||:= "\\"
+         s ||:= e
+      }
+      return s
    end
+
+   public filepath_is_absolute(fp)
+      return fp.l[1] == "\\\\" | fp.l[1][2:0] == ":\\"
+   end
+
+   public filepath_canonical(fp)
+      local e, r
+      r := []
+      every e := !fp.l do {
+         if e == "." then
+            next
+         else if e == ".." then {
+            # Avoid, eg, c:\.. -> empty; c:\.. is in fact invalid.
+            if *r > 1 then
+               pull(r)
+         } else
+            put(r, map(e))
+      }
+      return FilePath.from_list(r)
+   end
+
+   public filepath_absolute(fp)
+      local s
+      if fp.l[1] == "\\" then
+         return FilePath.from_list([Files.getcwd()[1:4]] ||| fp.l[2:0])
+      if fp.l[1][2:0] == ":" then {
+         s := getdcwd(fp.l[1][1]) | fp.l[1] || "\\"
+         return FilePath(s).append(FilePath.from_list(fp.l[2:0]))
+      }
+      return FilePath(Files.getcwd()).append(fp)
+   end
+
+   private static native getdcwd(d)
 
    public get_home()
       return System.getenv("HOME")

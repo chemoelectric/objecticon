@@ -105,7 +105,7 @@ class DirectoryDialog(Dialog)
          if n === tree.get_root_node() then
             break
       }
-      return Files.get_path_from_list(l)
+      return FilePath.from_list(l)
    end
 
    public on_tree_expansion()
@@ -155,12 +155,12 @@ class DirectoryDialog(Dialog)
    end
 
    public get_dir_path()
-      return Files.get_path(dir.get_contents()).canonical()
+      return FilePath(dir.get_contents()).canonical()
    end
 
    public goto_dir(d)
       local n, s, p, ps
-      p := Files.get_path(d).canonical()
+      p := FilePath(d).canonical()
       n := tree.get_root_node()
       every s := p.gen() do {
          n := find_child(n, s) | break
