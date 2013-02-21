@@ -1427,7 +1427,7 @@ function io_WindowsFileSystem_get_roots()
     }
 end
 
-function io_WindowsFilePath_getdcwd(d)
+function io_WindowsFileSystem_getdcwd(d)
    if !cnv:string(d) then
       runerr(103, d)
    body {
