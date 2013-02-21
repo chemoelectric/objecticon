@@ -58,7 +58,7 @@ class GoogleSuggestField(GSuggestField)
    protected do_request()
       local hr, data, jp, v, s, u, hp, t, d, l
       data := StringStream()
-      u := URL.parse("http://" || domain || "/complete/search").
+      u := URL("http://" || domain || "/complete/search").
          set_cgi_parameters(table(, 
                                   "q", contents, 
                                   "hl", lang,
@@ -109,7 +109,7 @@ class TickerSuggestField(GSuggestField)
    protected do_request()
       local hr, data, jp, v, s, u, e, l
       data := StringStream()
-      u := URL.parse("http://" || domain || "/finance/match").
+      u := URL("http://" || domain || "/finance/match").
          set_cgi_parameters(table(, "q", contents))
       hr := HttpRequest().
          set_url(u).

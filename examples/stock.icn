@@ -134,7 +134,7 @@ class StockDialog(Dialog)
       sb := StringStream()
       hr := HttpRequest().
          set_output_stream(sb).
-         set_url(URL.parse("http://finance.google.com/finance/info?client=ig&q=" || q))
+         set_url(URL("http://finance.google.com/finance/info?client=ig&q=" || q))
       httpc.retrieve(hr) | fail
       sb.str() ? {
          tab(upto('[{'))
@@ -150,7 +150,7 @@ class StockDialog(Dialog)
                sb := StringStream()
                hr := HttpRequest().
                   set_output_stream(sb).
-                  set_url(URL.parse("http://www.google.com/finance/chart?cid=" || e.id))
+                  set_url(URL("http://www.google.com/finance/chart?cid=" || e.id))
                httpc.retrieve(hr) | fail
                e.update_chart(sb.str())
             }

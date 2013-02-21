@@ -114,7 +114,7 @@ class DefaultResolver(Resolver)
 
    private get_http(sys_id)
       local url, sb
-      url := URL.parse(sys_id) | fail
+      url := URL(sys_id) | fail
       return use { 
          http_client,
          use {
