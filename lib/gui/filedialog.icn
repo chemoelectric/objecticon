@@ -163,7 +163,7 @@ class FileDialog(Dialog)
    # 
    public set_path(s)
       local l, t
-      l := Files.get_path(s)
+      l := FilePath(s)
       if t := l.parent() then
          self.init_dirs := [t.str()]
       else
@@ -179,15 +179,15 @@ class FileDialog(Dialog)
          msg("Please enter a filename")
          fail
       }
-      self.res := Files.get_path(s)
+      self.res := FilePath(s)
       if not self.res.is_absolute() then
-         self.res := Files.get_path(dir.get_contents()).append(self.res)
+         self.res := FilePath(dir.get_contents()).append(self.res)
       self.res := self.res.canonical()
       self.dispose()
    end
 
    public get_dir_path()
-      return Files.get_path(dir.get_contents()).canonical()
+      return FilePath(dir.get_contents()).canonical()
    end
 
    public on_cancel_button()
@@ -281,7 +281,7 @@ class FileDialog(Dialog)
    end
 
    public goto_dir(d, cf)
-      dir.set_contents(ucs(Files.get_path(d).canonical().str()))
+      dir.set_contents(ucs(FilePath(d).canonical().str()))
       if \cf then
          file.set_contents(u"")
       load_dir()

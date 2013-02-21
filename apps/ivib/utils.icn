@@ -60,7 +60,7 @@ end
 procedure resolve_layout_filename(src, layout)
    local t, xl
 
-   t := Files.get_path(src)
+   t := FilePath(src)
 
    # Work out the expanded layout, with $ expanded to the
    # file name, less the .icn extension.
@@ -78,7 +78,7 @@ procedure resolve_layout_filename(src, layout)
    # Append the expanded layout string to the directory
    # part of the src file.
    if t := t.parent() then
-      return t.append(Files.get_path(xl)).str()
+      return t.append(FilePath(xl)).str()
    else
       return xl
 end

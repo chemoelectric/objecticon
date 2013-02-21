@@ -201,7 +201,7 @@ NativeDef(io.SocketStream,shutdown,io_SocketStream_shutdown)
 NativeDef(io.SocketStream,new_impl,io_SocketStream_new_impl)
 NativeDef(io.SocketStream,socketpair_impl,io_SocketStream_socketpair_impl)
 #if MSWIN32
-NativeDef(io.WindowsFilePath,getdcwd,io_WindowsFilePath_getdcwd)
+NativeDef(io.WindowsFileSystem,getdcwd,io_WindowsFileSystem_getdcwd)
 NativeDef(io.WindowsFileSystem,get_roots,io_WindowsFileSystem_get_roots)
 #endif
 NativeDef(lang.Class,complete_raw_instance,lang_Class_complete_raw_instance)

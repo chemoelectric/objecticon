@@ -513,7 +513,7 @@ end
 procedure main(a)
    local d, s, cookies, t, bak, settings, sf, home
    opts := options(a, "-k: -l! -agent:")
-   home := Files.get_path(Files.get_home())
+   home := FilePath(Files.get_home())
    sf := home.child(".oibrowser").str()
    cookies := \opts["k"] | System.getenv("OICOOKIES") | home.child(".oicookies").str()
    t := decode(Files.file_to_string(cookies)) | table()

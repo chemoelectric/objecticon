@@ -173,7 +173,7 @@ class Preprocessor(Connectable)
                {
                   if value := image(Files.file_to_string(Files.path_find(fname, 
                                                          "OIINCL",
-                                                          Files.get_path(preproc_filename).parent().str()))) then 
+                                                          FilePath(preproc_filename).parent().str()))) then 
                   {
                      if \ (old := preproc_sym_table[sym]) ~=== value then {
                         err("redefinition of " || sym || " = " ||
@@ -198,7 +198,7 @@ class Preprocessor(Connectable)
                {
                   if value := "u" || image(Files.file_to_string(Files.path_find(fname, 
                                                                 "OIINCL",
-                                                                Files.get_path(preproc_filename).parent().str()))) then 
+                                                                FilePath(preproc_filename).parent().str()))) then 
                   {
                      if \ (old := preproc_sym_table[sym]) ~=== value then {
                         err("redefinition of " || sym || " = " ||
@@ -314,7 +314,7 @@ class Preprocessor(Connectable)
                      if new_file := open(new_filename := 
                                          Files.path_find(sym, 
                                                          "OIINCL",
-                                                         Files.get_path(preproc_filename).parent().str()))
+                                                         FilePath(preproc_filename).parent().str()))
                      then {
                         every push(preproc_file_stack,
                                    preproc_encoding|preproc_file|preproc_filename|
@@ -348,7 +348,7 @@ class Preprocessor(Connectable)
             {
                preproc_filename := Files.path_find(\new_filename, 
                                                    &null,
-                                                   Files.get_path(preproc_filename).parent().str()) | \new_filename
+                                                   FilePath(preproc_filename).parent().str()) | \new_filename
                preproc_encoding := \new_encoding
                preproc_line := new_line - 1
             } else {

@@ -221,7 +221,7 @@ class Worker()
             rs := RamStream(),
             {
                rs.out("<html><head><title>Directory " || f || "</title></head><table>")
-               path := Files.get_path(f)
+               path := FilePath(f)
                every e := !l do {
                   t := e[2]
                   tf := if now - t.mtime > 180 * 86400 then
@@ -729,7 +729,7 @@ class FormBrowse(Component, FormEntry, HasAscent)
    end
 
    public get_filename()
-      return Files.get_path(tf.get_contents()).get(-1)
+      return FilePath(tf.get_contents()).get(-1)
    end
 
    public get_ascent() 

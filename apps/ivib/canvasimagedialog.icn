@@ -36,7 +36,7 @@ class CanvasImageDialog(CanvasComponentDialog)
       l := []
       s := img_field.get_contents()
       if is_image_file(s) then {
-         p := Files.get_path(s).canonical()
+         p := FilePath(s).canonical()
          put(l, p.parent().str())                             
          fd.set_file(p.get(-1))                               
       }
