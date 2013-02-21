@@ -263,8 +263,8 @@ class Worker()
 
    private handle_file_req(r)
       local data
-      if data := cvt_file(r.url.get_path()) then
-         r.callback(Resp(, r.url, r.referer, data, r.url.get_path_last(),, r.kind))
+      if data := cvt_file(r.url.get_decoded_path()) then
+         r.callback(Resp(, r.url, r.referer, data, r.url.get_decoded_path_last(),, r.kind))
       else
          r.callback(Resp(&why, r.url, r.referer,,,, r.kind))
    end

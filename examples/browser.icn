@@ -225,7 +225,7 @@ class BrowserDialog(Dialog, BrowserUI)
       local s, e
       s := "<html><head><title>Cookies</title></head>"
       every e := (!sort(browser.cookies))[1] do
-         s ||:= "<a href=config:cookie?q=" || URL.convert_hex(e) || ">" || e || "</a><br>"
+         s ||:= "<a href=config:cookie?q=" || URL.cgi_encode(e) || ">" || e || "</a><br>"
       s ||:= "</html>"
       return s
    end
@@ -254,7 +254,7 @@ class BrowserDialog(Dialog, BrowserUI)
       local s, t, path, ck
       s := "<html><head><title>Cookies</title></head>"
       if t := member(browser.cookies, k) then {
-         s ||:= "<a href=config:del_cookies?q=" || URL.convert_hex(k) || ">Delete all</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=config:cookies>Back to list</a>"
+         s ||:= "<a href=config:del_cookies?q=" || URL.cgi_encode(k) || ">Delete all</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=config:cookies>Back to list</a>"
          every path := key(t) do {
             every ck := !t[path] do {
                s ||:= "<hr><pre>" || to_string(ck, 3, 1) || 

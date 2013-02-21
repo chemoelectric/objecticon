@@ -26,6 +26,15 @@ class URL(ObjectOutput)
       fragment,
       port
 
+   public static const
+      RESERVED, UNRESERVED, CGI_ENCODE
+
+   private static init()
+      RESERVED := ':/?#[]@!$&\'()*+,;='
+      UNRESERVED := &letters ++ &digits ++ '_.\-~'
+      CGI_ENCODE := ~(&lcase ++ &ucase ++ &digits ++ '_*.\- ')
+   end
+
    #
    # Return the default port for the given scheme
    #
@@ -82,6 +91,14 @@ class URL(ObjectOutput)
    end
 
    #
+   # Get the userinfo field, with percent encodings decoded, or fail
+   # if it is not set.
+   #
+   public get_decoded_userinfo()
+      return percent_decode(\self.userinfo)
+   end
+
+   #
    # Get the file, which is the path followed by the query (if any).
    #
    public get_file()
@@ -92,10 +109,24 @@ class URL(ObjectOutput)
    end
 
    #
+   # Get the file, with percent encodings decoded.
+   #
+   public get_decoded_file()
+      return percent_decode(get_file())
+   end
+
+   #
    # Return the path
    #
    public get_path()
       return .path
+   end
+
+   #
+   # Return the path, with percent encodings decoded.
+   #
+   public get_decoded_path()
+      return percent_decode(path)
    end
 
    #
@@ -111,6 +142,13 @@ class URL(ObjectOutput)
    #
    public get_query()
       return .\query
+   end
+
+   #
+   # Return the query field, with percent encodings decoded, or fail if there is no query.
+   #
+   public get_decoded_query()
+      return percent_decode(\query)
    end
 
    #
@@ -137,6 +175,13 @@ class URL(ObjectOutput)
    end
 
    #
+   # Get the optional fragment field, with percent encodings decoded, failing if none is set.
+   #
+   public get_decoded_fragment()
+      return percent_decode(\self.fragment)
+   end
+
+   #
    # Set the host field.
    #
    public set_host(x)
@@ -149,6 +194,13 @@ class URL(ObjectOutput)
    #
    public get_host()
       return .\self.host
+   end
+
+   #
+   # Get the host field, with percent encodings decoded, or fail if this is not a hierarchical url.
+   #
+   public get_decoded_host()
+      return percent_decode(\self.host)
    end
 
    #
@@ -300,6 +352,13 @@ class URL(ObjectOutput)
    end
 
    #
+   # Get the last portion of the path, with percent encodings decoded.
+   #
+   public get_decoded_path_last()
+      return percent_decode(get_path_last())
+   end
+
+   #
    # Get the portion of the file name upto and including the last "/".  The filename
    # should always be at least a "/", so this should return at least that.
    #
@@ -310,6 +369,13 @@ class URL(ObjectOutput)
             move(-1)
          return tab(1)
       }
+   end
+   
+   #
+   # Get the path dir, with percent encodings decoded.
+   #
+   public get_decoded_path_dir()
+      return percent_decode(get_path_dir())
    end
 
    #
@@ -336,9 +402,9 @@ class URL(ObjectOutput)
       s := ""
       every l := !sort(cgi) do {
          if string(l[2]) then
-            s ||:= convert_hex(l[1]) || "=" || convert_hex(l[2]) || "&"
+            s ||:= cgi_encode(l[1]) || "=" || cgi_encode(l[2]) || "&"
          else
-            every s ||:= convert_hex(l[1]) || "=" || convert_hex(!l[2]) || "&"
+            every s ||:= cgi_encode(l[1]) || "=" || cgi_encode(!l[2]) || "&"
       }
       s[-1] := ""
       return s
@@ -347,21 +413,8 @@ class URL(ObjectOutput)
    #
    # Create a CGI parameter string by adding any encoding necessary.
    #
-   public static convert_hex(s)
-      local res
-      static convert_chars
-      initial 
-         convert_chars := &lcase ++ &ucase ++ &digits ++ '_*.\- '
-      s := string(s) | runerr(103, s)
-      res := ""
-      s ? repeat {
-         res ||:= tab(many(convert_chars))
-         if pos(0) then
-            break
-         res ||:= "%" || Format.int_to_string(ord(move(1)),,2)
-      }
-      res := map(res, " ", "+")
-      return res
+   public static cgi_encode(s)
+      return map(percent_encode(s, CGI_ENCODE), " ", "+")
    end
 
    #
@@ -377,7 +430,7 @@ class URL(ObjectOutput)
          until pos(0) do {
             key := tab(upto('&=') | 0)
             if ="=" then
-               val := extract_hex(tab(upto('&') | 0))
+               val := cgi_decode(tab(upto('&') | 0))
             else
                val := ""
             ="&"
@@ -392,15 +445,38 @@ class URL(ObjectOutput)
    # Convert a CGI parameter string by extracting any encoded
    # characters.  The result is always a string, never ucs.
    #
-   public static extract_hex(s)
+   public static cgi_decode(s)
+      s := string(s) | runerr(103, s)
+      return percent_decode(map(s, "+", " "))
+   end
+
+   # Convert a string by decoding any %xx encoding characters.  The
+   # result is always a string, never ucs.
+   #
+   public static percent_decode(s)
       local res
       s := string(s) | runerr(103, s)
       res := ""
-      s := map(s, "+", " ") 
       s ? repeat {
          res ||:= tab(upto('%') | 0)
          move(1) | break
          res ||:= char("16r" || move(2))
+      }
+      return res
+   end
+
+   # Convert a string `s` by encoding any chars in `c` to %xx format.
+   # The result is always a string, never ucs.
+   #
+   public static percent_encode(s, c)
+      local res
+      s := string(s) | runerr(103, s)
+      res := ""
+      s ? repeat {
+         res ||:= tab(upto(c) | 0)
+         if pos(0) then
+            break
+         res ||:= "%" || Format.int_to_string(ord(move(1)),,2)
       }
       return res
    end
