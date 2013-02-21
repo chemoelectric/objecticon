@@ -46,7 +46,7 @@ end
 procedure do_one(a)
    local url, hr, u, p, page, src, parser, doc, sb
    
-   url := URL.parse(a) | stop("Invalid url:" || a)
+   url := URL(a) | stop("Invalid url:" || a)
 
    sb := RamStream()
    hr := HttpRequest().set_output_stream(sb)
@@ -93,7 +93,7 @@ procedure do_search(url, src, doc, tag, attr, pfx)
 
    base := url
    if n := doc.get_root_element().search_tree("BASE") then {
-      base := URL.parse(n.get_attribute("HREF"))
+      base := URL(n.get_attribute("HREF"))
    }
 
    if \opts["text"] then {

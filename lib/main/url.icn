@@ -194,7 +194,7 @@ class URL(ObjectOutput)
    # @param cgi   The table of keys/values.
    #
    public with_cgi_parameters(cgi)
-      return URL(scheme, userinfo, host, port, path, make_cgi_string(cgi), fragment)
+      return from_parts(scheme, userinfo, host, port, path, make_cgi_string(cgi), fragment)
    end
 
    #
@@ -211,8 +211,7 @@ class URL(ObjectOutput)
    # Create a URL by parsing the given string.  Returns a new {URL} if okay,
    # or sets &why on failure.
    #
-   public static parse(s)
-      local scheme, userinfo, host, path, query, fragment, port
+   public new(s)
       s ? {
          scheme := 1(map(tab(many(&lcase ++ &ucase ++ &digits ++ '+-.'))), =":") | return error("Scheme required")
          if ="//" then {
@@ -247,7 +246,7 @@ class URL(ObjectOutput)
             fragment := tab(0)
          }
       }
-      return URL(scheme, userinfo, host, port, path, query, fragment)
+      return
    end
 
    #
@@ -256,12 +255,12 @@ class URL(ObjectOutput)
    public get_relative(s)
       local new_path, new_query, new_fragment
       if s[1:3] == "//" then
-         return parse(scheme || ":" || s)
+         return URL(scheme || ":" || s)
       if s[1] == "#" then
          #
          # Just reference, filename doesn't change.
          # 
-         return URL(scheme, userinfo, host, port, path, query, s[2:0])
+         return from_parts(scheme, userinfo, host, port, path, query, s[2:0])
       else {
          #
          # File name and possibly reference.
@@ -283,7 +282,7 @@ class URL(ObjectOutput)
                new_fragment := tab(0)
             }
          }
-         return URL(scheme, userinfo, host, port, new_path, new_query, new_fragment)
+         return from_parts(scheme, userinfo, host, port, new_path, new_query, new_fragment)
       }
    end
 
@@ -316,15 +315,17 @@ class URL(ObjectOutput)
    #
    # Create a new URL from the given constituent parts.
    #
-   public new(scheme, userinfo, host, port, path, query, fragment)
-      self.scheme := scheme
-      self.userinfo := userinfo
-      self.host := host
-      self.port := port
-      self.path := path
-      self.query := query
-      self.fragment := fragment
-      return
+   public static from_parts(scheme, userinfo, host, port, path, query, fragment)
+      local i
+      i := Class.create_instance()
+      i.scheme := scheme
+      i.userinfo := userinfo
+      i.host := host
+      i.port := port
+      i.path := path
+      i.query := query
+      i.fragment := fragment
+      return i
    end
 
    #

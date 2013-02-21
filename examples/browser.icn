@@ -29,7 +29,7 @@ class Settings()
       visited_size
 
    public new()
-      home_url := URL.parse(u"config:")
+      home_url := URL(u"config:")
       cache_size_mb := 8
       visited := []
       visited_size := 100
@@ -128,7 +128,7 @@ class BrowserDialog(Dialog, BrowserUI)
       s := search_field.get_contents()
       if *s = 0 then
          fail
-      if u := URL.parse(s) then
+      if u := URL(s) then
          browser.goto(u)
       else
          msg("Invalid url")
@@ -271,7 +271,7 @@ class BrowserDialog(Dialog, BrowserUI)
    end
 
    private edit_settings(home, cn, vn)
-      settings.home_url := URL.parse(ucs(home))
+      settings.home_url := URL(ucs(home))
       settings.cache_size_mb := integer(cn)
       settings.visited_size := integer(vn)
       return config_main()
@@ -323,7 +323,7 @@ class BrowserDialog(Dialog, BrowserUI)
          browser.set_log_http(&yes)
       browser.add_scheme_handler("config", config_handler)
       if \s then {
-         if u := URL.parse(s) then
+         if u := URL(s) then
             browser.goto(u)
          else
             msg("Invalid url")

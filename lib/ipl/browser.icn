@@ -1613,7 +1613,7 @@ class Browser(Component)
          doc := HtmlParser().parse(s)
          base := page_url
          if n := doc.get_root_element().search_tree(u"BASE") then
-            base := URL.parse(n.get_attribute(u"HREF"))
+            base := URL(n.get_attribute(u"HREF"))
 
          row := TextFlow(self)
          page_title := &null
@@ -1656,7 +1656,7 @@ class Browser(Component)
    end
 
    private mk_link(context, s)
-      return URL.parse(s) | (\context.base).get_relative(s)
+      return URL(s) | (\context.base).get_relative(s)
    end
 
    private traverse_a(e, p, context)
