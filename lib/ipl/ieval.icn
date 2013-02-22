@@ -10,23 +10,14 @@ $load IEVAL_LOGO "rpp.IEVAL_LOGO.png"
 
 record Activation(coex, info)
 
-class IevalTermDialog(TermDialog, ObjectOutput)
-   # Avoid printing the internals.
-   private object_output(oo)
-      oo.object_string(self)
-   end
+class IevalTermDialog(TermDialog, MinimalObjectOutput)
 end
 
-class Ieval(ObjectOutput)
+class Ieval(MinimalObjectOutput)
    private 
       input, output, error, vars, ev, quiet_flag, par, consts,
       oos, trace_flag, parse_flag, last_runerr, ee, hist_line, hlim,
       elim, llim, imports, files, opts, history
-
-   # Avoid printing the internals of Ieval.
-   private object_output(oo)
-      oo.object_string(self)
-   end
 
    private static map1(x)
       return map(x[1])
