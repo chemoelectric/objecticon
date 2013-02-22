@@ -105,7 +105,7 @@ class Encode(Stream, HasUnderlyingStream)
    private begin1(o)
       if \fast_flag then
          writes(Codec.FAST_FLAG)
-      encode(o)      
+      return encode(o)      
    end
 
    private note_seen(o)
@@ -180,7 +180,7 @@ class Encode(Stream, HasUnderlyingStream)
       if i := \seen[o] then {
          writes(Codec.REF_CODE)
          writes(i)
-         return
+         return self
       }
 
       ty := type(o)
@@ -306,7 +306,7 @@ class Encode(Stream, HasUnderlyingStream)
          default : 
             throw("Type not encodable: " || ty)
       }
-      return
+      return self
    end
 
    private line_out(s)

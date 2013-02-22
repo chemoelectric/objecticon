@@ -138,14 +138,17 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
          writes(repl(" ", indent * ilevel))
          stuff := &null
       }
+      return self
    end
 
    public iplus()
       ilevel +:= 1
+      return self
    end
 
    public iminus()
       ilevel -:= 1
+      return self
    end
 
    public traverse(o)
@@ -418,20 +421,22 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
       }
 
       level -:= 1
+      return self
    end
    
    public object_start(o)
-      writes(type(o), " ", Class.get_name(o), "#", serial(o), "(")
+      return writes(type(o), " ", Class.get_name(o), "#", serial(o), "(")
    end
 
    public object_end(o)
-      writes(")")
+      return writes(")")
    end
 
    public object_string(o, s)
       object_start(o)
       writes(\s)
       object_end(o)
+      return self
    end
 
    public object_selected(o, fields[])
@@ -461,6 +466,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
          nl()
          object_end(o)
       }
+      return self
    end
 
    public simple(x)
@@ -805,5 +811,16 @@ class NoCopy(ObjectClone)
 
    private final object_encode()
       throw("Not encodable: " || image(self))
+   end
+end
+
+#
+# An implementation of object_output that avoids printing the
+# internals of an object, and just produces the bare minimum output,
+# such as "object mypackage.MyObject#3()"
+#
+class MinimalObjectOutput(ObjectOutput)
+   protected object_output(oo)
+      oo.object_string(self)
    end
 end
