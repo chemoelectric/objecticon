@@ -178,10 +178,11 @@ class Ieval(ObjectOutput)
       }
    end
 
-   private dir(c)
-      local f, t
-      case type(c) of {
-         "null": list_syms()
+   private dir(a[])
+      local f, t, c
+      if *a = 0 then
+         list_syms()
+      else case type(c := a[1]) of {
          "object"|"cast"|"class": {
             output.write(if iand(lang.Class.get_class_flags(c), lang.Class.Final) ~= 0 then "final class " else "class ",
                          lang.Class.get_name(c), "(", supers_string(c), ")")
@@ -210,7 +211,6 @@ class Ieval(ObjectOutput)
                          Constructor.get_name(c), "(", fields_string(c), ")")
             output.write("   ", locn_string(Constructor.get_location(c))) 
          }
-
          default: {
             oos.show(c)
             output.write()
