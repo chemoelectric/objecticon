@@ -198,25 +198,25 @@ static void emit_ir_var(struct ir_var *v, char *desc)
         case LOCAL: {
             struct lentry *le = v->local;
             if (le->l_flag & F_Static) {
-                outwordx(Op_Static, "   %s=static (%s)", desc, le->name);
-                outwordx(le->l_val.index, "      %d", le->l_val.index);
+                outwordx(Op_Static, "   %s=static", desc);
+                outwordx(le->l_val.index, "      %d  (%s)", le->l_val.index, le->name);
             } else if (le->l_flag & F_Argument) {
-                outwordx(Op_FrameVar, "   %s=framevar (%s)", desc, le->name);
-                outwordx(le->l_val.index, "      %d", le->l_val.index);
+                outwordx(Op_FrameVar, "   %s=framevar", desc);
+                outwordx(le->l_val.index, "      %d (%s)", le->l_val.index, le->name);
             } else {
-                outwordx(Op_FrameVar, "   %s=framevar (%s)", desc, le->name);
-                outwordx(curr_lfunc->narguments + le->l_val.index, "      %d", 
-                         curr_lfunc->narguments + le->l_val.index);
+                outwordx(Op_FrameVar, "   %s=framevar", desc);
+                outwordx(curr_lfunc->narguments + le->l_val.index, "      %d  (%s)", 
+                         curr_lfunc->narguments + le->l_val.index, le->name);
             }
             break;
         }
         case GLOBAL: {
             struct gentry *ge = v->global;
             if ((ge->g_flag & (F_Builtin|F_Proc|F_Record|F_Class)) == 0)
-                outwordx(Op_Global, "   %s=global (%s)", desc, ge->name);
+                outwordx(Op_Global, "   %s=global", desc);
             else
-                outwordx(Op_NamedGlobal, "   %s=namedglobal (%s)", desc, ge->name);
-            outwordx(ge->g_index, "      %d", ge->g_index);
+                outwordx(Op_NamedGlobal, "   %s=namedglobal", desc);
+            outwordx(ge->g_index, "      %d (%s)", ge->g_index, ge->name);
             break;
         }
         case TMP: {
@@ -846,7 +846,7 @@ static void lemitcode()
                     word_field(x->clo, "clo");
                     emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->expr, "expr");
-                    word_field(x->ftab_entry->field_id, "field number");
+                    outwordx(x->ftab_entry->field_id, "   field number=%ld (%s)", (long)x->ftab_entry->field_id, x->ftab_entry->name); 
                     word_field(0, "inline cache");
                     word_field(0, "inline cache");
                     word_field(x->argc, "argc");
@@ -873,7 +873,7 @@ static void lemitcode()
                     word_field(x->clo, "clo");
                     emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->arg1, "arg1");
-                    word_field(x->ftab_entry->field_id, "field number");
+                    outwordx(x->ftab_entry->field_id, "   field number=%ld (%s)", (long)x->ftab_entry->field_id, x->ftab_entry->name); 
                     word_field(0, "inline cache");
                     word_field(0, "inline cache");
                     emit_ir_var(x->arg2, "arg2");
@@ -886,7 +886,7 @@ static void lemitcode()
                     out_op(Op_Field);
                     emit_ir_var(x->lhs, "lhs");
                     emit_ir_var(x->expr, "expr");
-                    word_field(x->ftab_entry->field_id, "field number");
+                    outwordx(x->ftab_entry->field_id, "   field number=%ld (%s)", (long)x->ftab_entry->field_id, x->ftab_entry->name); 
                     word_field(0, "inline cache");
                     word_field(0, "inline cache");
                     break;
@@ -1848,11 +1848,7 @@ static void outwordx(word oword, char *fmt, ...)
         putc('\n', dbgfile);
         va_end(ap);
     }
-
-    CodeCheck(WordSize);
-    memcpy(codep, &oword, WordSize);
-    codep += WordSize;
-    pc += WordSize;
+    outword(oword);
 }
 
 static void outshortx(short s, char *fmt, ...)
@@ -1881,11 +1877,7 @@ static void outwordz(word oword, char *fmt, ...)
         putc('\n', dbgfile);
         va_end(ap);
     }
-
-    CodeCheck(WordSize);
-    memcpy(codep, &oword, WordSize);
-    codep += WordSize;
-    pc += WordSize;
+    outword(oword);
 }
 
 static void outsdescrip(struct centry *ce, char *fmt, ...)
@@ -1898,11 +1890,7 @@ static void outsdescrip(struct centry *ce, char *fmt, ...)
         putc('\n', dbgfile);
         va_end(ap);
     }
-
-    CodeCheck(WordSize);
-    memcpy(codep, &ce->desc_no, WordSize);
-    codep += WordSize;
-    pc += WordSize;
+    outword(ce->desc_no);
 }
 
 /*
