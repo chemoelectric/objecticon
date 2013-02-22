@@ -32,7 +32,7 @@ class URL(ObjectOutput)
    private static init()
       RESERVED := ':/?#[]@!$&\'()*+,;='
       UNRESERVED := &letters ++ &digits ++ '_.\-~'
-      CGI_ENCODE := ~(&lcase ++ &ucase ++ &digits ++ '_*.\- ')
+      CGI_ENCODE := ~(&letters ++ &digits ++ '_.\- ')
    end
 
    #
