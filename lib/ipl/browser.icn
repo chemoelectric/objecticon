@@ -230,7 +230,7 @@ class Worker()
                      Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;'HH:mm")
                   rs.out("<tr><td>" || t.mode_str || "&nbsp;<td>" || uname(t.uid, ucache) || "&nbsp;<td>" || grname(t.gid, gcache) ||
                          "&nbsp;<td align=right>" || t.size || "<td>&nbsp;" || tf || "&nbsp;<td>" ||
-                         "<a href=\"file://" || path.child(e[1]).canonical().str() || "\">" || e[1] || "</a></tr>" || "\n")
+                         "<a href=\"file://" || URL.percent_encode(path.child(e[1]).canonical().str(), URL.UNRESERVED ++ '/') || "\">" || e[1] || "</a></tr>" || "\n")
                }
                rs.out("</table></html>")
                rs.str()

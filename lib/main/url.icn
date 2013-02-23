@@ -27,12 +27,12 @@ class URL(ObjectOutput)
       port
 
    public static const
-      RESERVED, UNRESERVED, CGI_ENCODE
+      RESERVED, UNRESERVED, CGI_UNRESERVED
 
    private static init()
       RESERVED := ':/?#[]@!$&\'()*+,;='
       UNRESERVED := &letters ++ &digits ++ '_.\-~'
-      CGI_ENCODE := ~(&letters ++ &digits ++ '_.\- ')
+      CGI_UNRESERVED := &letters ++ &digits ++ '_.\- '
    end
 
    #
@@ -414,7 +414,7 @@ class URL(ObjectOutput)
    # Create a CGI parameter string by adding any encoding necessary.
    #
    public static cgi_encode(s)
-      return map(percent_encode(s, CGI_ENCODE), " ", "+")
+      return map(percent_encode(s, CGI_UNRESERVED), " ", "+")
    end
 
    #
@@ -426,17 +426,15 @@ class URL(ObjectOutput)
       local cgi, key, val, l
       s := string(s) | runerr(103, s)
       cgi := table()
-      s ? {
-         until pos(0) do {
-            key := tab(upto('&=') | 0)
-            if ="=" then
-               val := cgi_decode(tab(upto('&') | 0))
-            else
-               val := ""
-            ="&"
-            (l := member(cgi, key)) | insert(cgi, key, l := [])
-            put(l, val)
-         }
+      s ? until pos(0) do {
+         key := tab(upto('&=') | 0)
+         if ="=" then
+            val := cgi_decode(tab(upto('&') | 0))
+         else
+            val := ""
+         ="&"
+         (l := member(cgi, key)) | insert(cgi, key, l := [])
+         put(l, val)
       }
       return cgi
    end
@@ -465,7 +463,7 @@ class URL(ObjectOutput)
       return res
    end
 
-   # Convert a string `s` by encoding any chars in `c` to %xx format.
+   # Convert a string `s` by encoding any chars not in `c` to %xx format.
    # The result is always a string, never ucs.
    #
    public static percent_encode(s, c)
@@ -473,7 +471,7 @@ class URL(ObjectOutput)
       s := string(s) | runerr(103, s)
       res := ""
       s ? repeat {
-         res ||:= tab(upto(c) | 0)
+         res ||:= tab(many(c))
          if pos(0) then
             break
          res ||:= "%" || Format.int_to_string(ord(move(1)),,2)
