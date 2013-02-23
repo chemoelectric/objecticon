@@ -63,6 +63,6 @@ class HttpResponse(MimeHeaders)
    # the empty string).
    #
    public get_filename()
-      return get_content_disposition_filename() | url.get_path_last()
+      return get_content_disposition_filename() | url.get_decoded_path_last()
    end
 end

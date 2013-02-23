@@ -168,14 +168,14 @@ class ContentSpec(ObjectOutput)
                   break
                x := x.arg2
             }
-            oo.writes("(" || s)
-            oo.traverse(x.arg2)
-            oo.writes(")")
+            oo.writes("(" || s).
+               traverse(x.arg2).
+               writes(")")
          }
 
          "+" | "*" | "?" :  {
-            oo.traverse(arg1)
-            oo.writes(op)
+            oo.traverse(arg1).
+               writes(op)
          }
 
          default:

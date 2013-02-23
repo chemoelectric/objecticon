@@ -96,19 +96,19 @@ abstract class Set(ObjectOutput, ObjectHash, ObjectEquals)
          }
          oo.object_end(self)
       } else {
-         oo.nl()
-         oo.object_start(self)
-         oo.iplus()
+         oo.nl().
+            object_start(self).
+            iplus()
          every e := !elements do {
             if \sep then
                oo.writes(",")
-            oo.nl()
-            oo.traverse(e)
+            oo.nl().
+               traverse(e)
             sep := 1
          }
-         oo.iminus()
-         oo.nl()
-         oo.object_end(self)
+         oo.iminus().
+            nl().
+            object_end(self)
       }
    end
 end

@@ -705,11 +705,11 @@ class HttpClient(NetClient)
    #
    # 
    private maybe_open()
-      if not(is_open()) | /open_url | open_url.get_host() ~== request.url.get_host() |
+      if not(is_open()) | /open_url | open_url.get_decoded_host() ~== request.url.get_decoded_host() |
          open_url.get_port() ~= request.url.get_port() then 
       {
          close()
-         set_server(request.url.get_host())
+         set_server(request.url.get_decoded_host())
          set_port(request.url.get_port())
          if request.url.get_scheme() == "https" then
             set_ssl(&yes)

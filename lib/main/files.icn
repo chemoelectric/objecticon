@@ -610,6 +610,15 @@ class FilePath(ObjectOutput)
    end
 
    #
+   # Return a new path consisting of elements i:j of the current path
+   #
+   public slice(i, j)
+      /i := 1
+      /j := 0
+      return from_list(l[i:j])
+   end
+
+   #
    # Return the path formed by appending the elements of this path to
    # the other path.
    #
@@ -692,6 +701,9 @@ class FilePath(ObjectOutput)
       return i
    end
 
+   #
+   # Create a new instance from the path represented by the given string.
+   #
    public new(s)
       self.l := Files.FS.get_path_list(s) | fail
       return
