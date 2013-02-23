@@ -427,7 +427,7 @@ class URL(ObjectOutput)
       s := string(s) | runerr(103, s)
       cgi := table()
       s ? until pos(0) do {
-         key := tab(upto('&=') | 0)
+         key := cgi_decode(tab(upto('&=') | 0))
          if ="=" then
             val := cgi_decode(tab(upto('&') | 0))
          else
