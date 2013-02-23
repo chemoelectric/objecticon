@@ -1932,19 +1932,6 @@ static void labout(int i, char *desc)
 }
 
 
-
-void idump(s)		/* dump code region */
-    char *s;
-{
-    int *c;
-
-    fprintf(stderr,"\ndump of code region %s:\n",s);
-    for (c = (int *)codeb; c < (int *)codep; c++)
-        fprintf(stderr,"%ld: %d\n",(long)c, (int)*c);
-    fflush(stderr);
-}
-
-
 /*
  * expand_table - realloc a table making it half again larger and zero the
  *   new part of the table.
