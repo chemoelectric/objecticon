@@ -33,21 +33,23 @@ class Ieval(MinimalObjectOutput)
    end
 
    private show_help()
-      output.write("!env        Show the values stored in the environment, excluding these predefined values.")
-      output.write("!help       Show help.")
-      output.write("!parse      Toggle parse mode, in which just the syntax structure of the command is printed.")
-      output.write("!trace      Toggle tracing.")
-      output.write("!wglob      Toggle the write-globals flag.")
-      output.write("!traceback  Show the traceback of the last command that gave a runtime error.")
-      output.write("!quiet      Don't force evaluation of all of the values in the expression, and don't output any expression value.")
-      output.write("dir(x)      With no parameter, show all global variables.  With a parameter, show information about it.")
-      output.write("!hist       Show the command line history.")
-      output.write("cmd(n)      Run command number n again.")
-      output.write("hlim(n)     Set the history limit to n.")
-      output.write("elim(n)     Set the expression limit to n.")
-      output.write("llim(n)     Set the gui log area line limit to n.")
-      output.write("oos         The ObjectOutputStream used to output results.")
-      output.write("out         The OutputStream of the terminal.")
+      output.
+         write("!env        Show the values stored in the environment, excluding these predefined values.").
+         write("!help       Show help.").
+         write("!parse      Toggle parse mode, in which just the syntax structure of the command is printed.").
+         write("!trace      Toggle tracing.").
+         write("!wglob      Toggle the write-globals flag.").
+         write("!traceback  Show the traceback of the last command that gave a runtime error.").
+         write("!quiet      Don't force evaluation of all of the values in the expression, and don't output any expression value.").
+         write("dir(x)      With no parameter, show all global variables.  With a parameter, show information about it.").
+         write("!hist       Show the command line history.").
+         write("old(s)      Search history for commands containing string s.").
+         write("cmd(n)      Run command number n again.").
+         write("hlim(n)     Set the history limit to n.").
+         write("elim(n)     Set the expression limit to n.").
+         write("llim(n)     Set the gui log area line limit to n.").
+         write("oos         The ObjectOutputStream used to output results.").
+         write("out         The OutputStream of the terminal.")
    end
 
    private list_syms()
@@ -209,12 +211,15 @@ class Ieval(MinimalObjectOutput)
       }
    end
 
-   private hist()
+   private hist(s)
       local i, e
-      is(input, TermDialog|LineEditorStream) | fail
+      /s := u""
+      s := map(ucs(s)) | runerr(128, s)
+      is(input, TermDialog | LineEditorStream) | fail
       i := input.get_history_start_no()
       every e := !input.get_history() do {
-         output.write(right(i, 4), "  ", e)
+         if find(s, map(e)) then
+            output.write(right(i, 4), "  ", e)
          i +:= 1
       }
    end
@@ -231,7 +236,7 @@ class Ieval(MinimalObjectOutput)
 
    private set_hlim(n)
       hlim := (10 < n)
-      if is(input, TermDialog|LineEditorStream) then
+      if is(input, TermDialog | LineEditorStream) then
          input.set_history_limit(hlim)
       return hlim
    end
@@ -294,7 +299,7 @@ class Ieval(MinimalObjectOutput)
    end
 
    private cmd(n)
-      if is(input, TermDialog|LineEditorStream) then 
+      if is(input, TermDialog | LineEditorStream) then 
          hist_line := input.get_history_item(n)
    end
 
@@ -343,6 +348,7 @@ class Ieval(MinimalObjectOutput)
       consts["wglob"] := create wglob()
       consts["dir"] := dir
       consts["hist"] := create hist()
+      consts["old"] := hist
       consts["elim"] := set_elim
       consts["hlim"] := set_hlim
       consts["llim"] := set_llim
