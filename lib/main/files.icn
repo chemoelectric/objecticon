@@ -492,22 +492,15 @@ end
 #
 abstract class FileSystem()
    public abstract get_path_list(s)
-
    public abstract filepath_str(fp)
    public abstract filepath_is_absolute(fp)
    public abstract filepath_canonical(fp)
    public abstract filepath_absolute(fp)
-
    public abstract get_home()
-
    public abstract get_temp()
-
    public abstract is_hidden(s)
-
    public abstract is_relative_dir(s)
-
    public abstract get_roots()
-
    public abstract split_paths(s)
 
    package new()
