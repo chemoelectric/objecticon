@@ -110,6 +110,7 @@ class TextDisplay(LineBasedScrollArea)
    public contents_changed()
       clear_split_list()
       compute_and_invalidate()
+      return self
    end
 
    #
@@ -219,6 +220,7 @@ class TextDisplay(LineBasedScrollArea)
          while *self.contents > \max do
             pop(self.contents)
       }
+      return self
    end
 
    #
