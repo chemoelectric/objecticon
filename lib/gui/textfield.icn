@@ -161,6 +161,7 @@ class TextField(Component)
          undo_manager.add_edit(ed)
       }
       end_handle(e)
+      return self
    end
 
    public start_handle(e)
@@ -213,6 +214,7 @@ class TextField(Component)
       self.cursor := x
 
       end_handle(e)
+      return self
    end
 
    public handle_lpress(e)
@@ -569,6 +571,7 @@ class TextField(Component)
          undo_manager.add_edit(ce)
       }
       end_handle(e)
+      return self
    end
 
    public handle_default(e)
