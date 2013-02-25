@@ -224,6 +224,8 @@ class PTable(SelectableScrollArea)
       /i := 0
       insert(cols, i, c)
       c.ptable := self
+      if is_initialized() then
+         c.initially()
       return self
    end
 
@@ -241,7 +243,11 @@ class PTable(SelectableScrollArea)
    # @param i   The index to remove
    #
    public remove_column_index(i)
+      local c
+      c := self.cols[i] | fail
       delete(cols, i)
+      if is_initialized() then
+         c.finally()
       return self
    end
 
