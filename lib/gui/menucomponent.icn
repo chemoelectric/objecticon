@@ -162,6 +162,7 @@ abstract class MenuComponent(Rect,Connectable)
          (\self.parent_component).invalidate()
       else
          (\parent.temp_win).invalidate(get_label_rect())
+      return self
    end
 
    #
