@@ -86,7 +86,7 @@ end
 # @ }
 procedure clean_try(e)
    local v
-   v := clean{try(e)}
+   clean{v := try(e)}
    if /thrower then
       return v
    &why := text(thrown) | ("thrown: " || image(thrown))

@@ -178,6 +178,7 @@ class EditableTextList(LineBasedScrollArea)
          constrain_line()
          undo_manager.clear()
       }
+      return self
    end
    
    private ensure_valid_cursor()
@@ -210,6 +211,7 @@ class EditableTextList(LineBasedScrollArea)
          self.cursor_x := x
       }
       end_handle(e)
+      return self
    end
 
    #
@@ -260,6 +262,7 @@ class EditableTextList(LineBasedScrollArea)
                pop(self.contents)
          }
       }
+      return self
    end
 
    #
@@ -409,6 +412,7 @@ class EditableTextList(LineBasedScrollArea)
          undo_manager.add_edit(ce)
       }
       end_handle(e)
+      return self
    end
 
    public on_vsb(ev)

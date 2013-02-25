@@ -12,7 +12,6 @@ class PopupEditor(Component)
       # Copy attribs of the parent component
       set_all_wattribs(comp.get_effective_wattribs())
       comp.parent_dialog.add(self)
-      initially()
       resize()
       old_focus := parent_dialog.focus
       parent_dialog.set_focus(editor.find_focus())
@@ -33,13 +32,8 @@ class PopupEditor(Component)
       if \parent_dialog.focus === Seq{traverse_components_postorder()} then
          parent_dialog.set_focus(old_focus)
       invalidate()
-      finally()
-   end
-
-   public finally()
       parent_dialog.disconnect_object(self)
       parent.remove(self)
-      cast(self,Component).finally()
    end
 
    public dialog_event(e)

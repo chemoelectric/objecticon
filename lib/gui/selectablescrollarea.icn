@@ -92,6 +92,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       invalidate_line_height()
       invalidate_line_count()
       compute_and_invalidate()
+      return self
    end
 
    #

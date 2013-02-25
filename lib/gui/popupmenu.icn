@@ -24,35 +24,27 @@ class PopupMenu(Component)
       px,
       py
 
-   public finally()
-      if \self.menu then {
-         self.menu.hide()
-         self.menu.finally()
-         self.menu := &null
-         self.parent_dialog.exit_menu_mode()
-         self.parent_dialog.disconnect_object(self)
-         # Note that remove() calls self.finally recursively, which
-         # then calls Component.finally(), since menu is now &null.
-         self.parent.remove(self)
-      } else
-         cast(self,Component).finally()
-   end
-
-   public display()
-   end
-
    public go_right()
    end
 
    public go_left()
    end
 
+   public close_menu()
+      self.menu.hide()
+      self.menu.finally()
+      self.menu := &null
+      self.parent_dialog.exit_menu_mode()
+      self.parent_dialog.disconnect_object(self)
+      self.parent.remove(self)
+   end
+
    public close_all()
-      finally()
+      close_menu()
    end
 
    public make_partial()
-      finally()
+      close_menu()
    end
 
    public dialog_event(e)
@@ -80,7 +72,6 @@ class PopupMenu(Component)
       px := a[3] | x
       py := a[4] | y
       dialog.add(self)
-      #self.initially()
       self.resize()
       self.parent_dialog.enter_menu_mode(self)
       self.parent_dialog.connect(self.dialog_event, Event.ICON)

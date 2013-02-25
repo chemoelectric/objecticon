@@ -219,6 +219,7 @@ class Table(Component)
    #
    public contents_changed()
       self.table_content.contents_changed()
+      return self
    end
 
    public clear_selections()
