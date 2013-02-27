@@ -138,8 +138,8 @@ operator ||| lconcat(x, y)
 
 
    body {
-      struct b_list *bp1;
-      struct b_lelem *lp1;
+      tended struct b_list *bp1;          
+      struct b_lelem *lp1;           /* Doesn't need to be tended */
       word size1, size2, size3;
 
       /*
@@ -149,14 +149,14 @@ operator ||| lconcat(x, y)
       size2 = ListBlk(y).size;
       size3 = size1 + size2;
 
-      MemProtect(bp1 = (struct b_list *)alclist_raw(size3, size3));
-      lp1 = (struct b_lelem *) (bp1->listhead);
+      MemProtect(bp1 = alclist_raw(size3, size3));
 
       /*
        * Make a copy of both lists in adjacent slots.
        */
-      cpslots(&x, lp1->lslots, (word)1, size1 + 1);
-      cpslots(&y, lp1->lslots + size1, (word)1, size2 + 1);
+      lp1 = (struct b_lelem *) (bp1->listhead);
+      cpslots(&x, lp1->lslots, 1, size1 + 1);
+      cpslots(&y, lp1->lslots + size1, 1, size2 + 1);
 
       BlkLoc(x) = (union block *)bp1;
 

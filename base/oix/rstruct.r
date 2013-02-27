@@ -20,13 +20,15 @@ void addmem(struct b_set *ps,struct b_selem *pe,union block **pl)
 /*
  * cpslots(dp1, slotptr, i, j) - copy elements of sublist dp1[i:j]
  *  into an array of descriptors.
+ * 
+ *  No allocation is done.
  */
 
 void cpslots(dptr dp1, dptr slotptr, word i, word j)
    {
    word size, pos;
-   tended struct b_list *lp1;
-   tended struct b_lelem *bp1;
+   struct b_list *lp1;     /* Neither pointer need be tended since no allocation is done. */
+   struct b_lelem *bp1;
    /*
     * Get pointers to the list and list elements for the source list
     *  (bp1, lp1).
@@ -73,7 +75,7 @@ void f(dptr dp1, dptr dp2, word i, word j)
    if (nslots == 0)
       nslots = MinListSlots;
 
-   MemProtect(lp2 = (struct b_list *) alclist(size, nslots));
+   MemProtect(lp2 = alclist(size, nslots));
    cpslots(dp1, lp2->listhead->lelem.lslots, i, j);
 
    /*

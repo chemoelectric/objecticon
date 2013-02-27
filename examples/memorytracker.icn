@@ -26,14 +26,14 @@ procedure print_stats(prog)
       write(left("String " || i, 10), r(e.used, e.size))
       i +:= 1
    }
-   write(left("String total", 43), right(f(t2.string_total), 12), right(t3.string_requests, 9))
+   write(left("String total", 23), right(f(t2.string_total), 32), right(t3.string_requests, 9))
 
    i := 1
    every e := !t1.block_regions do {
       write(left("Block " || i, 10), r(e.used, e.size))
       i +:= 1
    }
-   write(left("Block total", 43), right(f(t2.block_total), 12), right(t3.block_requests, 9))
+   write(left("Block total", 23), right(f(t2.block_total), 32), right(t3.block_requests, 9))
    write(left("User", 55), right(t3.user_requests, 9))
    write("                                                   ----    -----")
    write(right(f(t2.get_total()),55),right(t3.get_total(),9))
@@ -85,8 +85,8 @@ procedure main(args)
    write("----           ----                                 -----      ------")
    t := 0
    every e := !sort(proact) do {
-      write(left(MonitorCode.get_sym(e[1]),15),left(MonitorCode.get_desc(e[1]),30), 
-            right(f(e[2]), 12), right(f(totals[e[1]]),12))
+      write(left(MonitorCode.get_sym(e[1]),15),left(MonitorCode.get_desc(e[1]),27), 
+            right(f(e[2]), 15), right(f(totals[e[1]]),12))
       t +:= totals[e[1]]
    }
    write("                                                               ------")
