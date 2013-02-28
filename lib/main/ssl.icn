@@ -1,7 +1,5 @@
 package ssl
 
-$define LIB "objecticonssllib.so"
-
 import io, lang, util
 
 #
@@ -13,9 +11,10 @@ final class SslStream(Stream, HasUnderlyingStream, NoCopy)
       other
 
    public static const
-      SUPPORTED
+      LIB, SUPPORTED
 
    private static init()
+      LIB := "objecticonssllib.so"
       if Class.load_library(Files.find_native_lib(LIB)) then
          SUPPORTED := &yes
    end

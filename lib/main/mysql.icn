@@ -6,8 +6,6 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-$define LIB "objecticonmysqllib.so"
-
 package mysql
 
 import lang, io, util
@@ -73,7 +71,8 @@ final class MySql(NoCopy)
       CLIENT_MULTI_STATEMENTS,
       CLIENT_MULTI_RESULTS,
       CLIENT_REMEMBER_OPTIONS,
-      SUPPORTED
+      SUPPORTED,
+      LIB
 
    private 
       ptr
@@ -422,6 +421,8 @@ final class MySql(NoCopy)
       CLIENT_MULTI_STATEMENTS := 65536   
       CLIENT_MULTI_RESULTS :=    131072  
       CLIENT_REMEMBER_OPTIONS := 2147483648  # ((ulong) (1L << 31))
+
+      LIB := "objecticonmysqllib.so"
 
       if Class.load_library(Files.find_native_lib(LIB)) then
          SUPPORTED := &yes
