@@ -6,8 +6,6 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-$define LIB "objecticonmysqllib.so"
-
 package mysql
 
 import lang, util, io
@@ -179,7 +177,7 @@ final class MySqlRes(NoCopy)
    end
 
    private static init()
-      Class.load_library(Files.find_native_lib(LIB))
+      Class.load_library(Files.find_native_lib(MySql.LIB))
    end
 
    package new(ptr)

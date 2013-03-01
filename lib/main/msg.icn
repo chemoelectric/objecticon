@@ -6,8 +6,6 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-$define LIB "objecticonipclib.so"
-
 package ipc
 
 import lang, io, util
@@ -22,9 +20,6 @@ import lang, io, util
 final class Msg(NoCopy)
    private 
       id
-
-   public static const
-      SUPPORTED
 
    #
    # Send the given object.  The object may be an arbitrary Icon structure, and will be
@@ -90,12 +85,11 @@ final class Msg(NoCopy)
    private static native create_private_impl()
 
    private static init()
-      if Class.load_library(Files.find_native_lib(LIB)) then
-         SUPPORTED := &yes
+      Class.load_library(Files.find_native_lib(Ipc.LIB))
    end
 
    private new(id)
-      \SUPPORTED | return error("Msg ipc not supported")
+      \Ipc.SUPPORTED | return error("Msg ipc not supported")
       self.id := id
       return
    end

@@ -4537,8 +4537,9 @@ function io_FileWorker_get_buffer(self, n)
    body {
       tended struct descrip result;
       GetSelfFileWorker()
-      if (n < 0 || n > self_fileworker->buff_size)
+      if (n < 0)
            Irunerr(205, n);
+      n = Min(n, self_fileworker->buff_size);
       bytes2string(self_fileworker->buff, n, &result);
       return result;
    }
@@ -4581,11 +4582,11 @@ function io_FileWorker_close_when_complete(self)
          *self_fileworker_dptr = zerodesc;
          self_fileworker->close_when_complete = 1;
          qunlock(&self_fileworker->l);
-         return self;
+      } else {
+          qunlock(&self_fileworker->l);
+          cleanup_fileworker(self_fileworker);
+          *self_fileworker_dptr = zerodesc;
       }
-      qunlock(&self_fileworker->l);
-      cleanup_fileworker(self_fileworker);
-      *self_fileworker_dptr = zerodesc;
       return self;
    }
 end

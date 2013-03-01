@@ -1,0 +1,59 @@
+package ssl
+
+import io, lang, util
+
+#
+# A very simple SSL stream, using the openssl library.
+#
+final class SslStream(Stream, HasUnderlyingStream, NoCopy)
+   private
+      ptr,
+      other
+
+   public static const
+      LIB, SUPPORTED
+
+   private static init()
+      LIB := "objecticonssllib.so"
+      if Class.load_library(Files.find_native_lib(LIB)) then
+         SUPPORTED := &yes
+   end
+
+   public native connect()
+
+   public native verify(host)
+
+   public native shutdown()
+
+   public native in(n)
+
+   public native out(s)
+
+   public close()
+      local f
+      close_impl() | (f := 1)
+      if \close_underlying_flag then
+         other.close() | (f := 1)
+      return /f & self
+   end
+
+   private native close_impl()
+
+   public get_mode()
+      return other.get_mode()
+   end
+
+   private static native new_impl(other)
+
+   #
+   # Create a new SslStream.
+   #
+   # @param other an already connected {SocketStream} over which the connection
+   #              will operate
+   public new(other)
+      \SUPPORTED | return error("SSL not supported")
+      ptr := new_impl(other) | fail
+      self.other := other
+      return
+   end
+end

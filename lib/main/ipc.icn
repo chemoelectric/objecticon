@@ -1,0 +1,17 @@
+package ipc
+
+import lang, io
+
+# This class is just used to check whether the IPC facilities are
+# supported or not.
+#
+final abstract class Ipc()
+   public static const
+      LIB, SUPPORTED
+
+   private static init()
+      LIB := "objecticonipclib.so"
+      if Class.load_library(Files.find_native_lib(LIB)) then
+         SUPPORTED := &yes
+   end
+end

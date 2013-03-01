@@ -142,10 +142,8 @@ operator = tabmat(x)
            */
           if (i > UcsBlk(k_subject).length + 1)
               runerr(205, kywd_pos);
-          else {
+          else
               k_pos = i;
-          }
-          fail;
       } else {
           /*
            * x must be a string.
@@ -188,9 +186,8 @@ operator = tabmat(x)
               runerr(205, kywd_pos);
           else 
               k_pos = i;
-
-          fail;
       }
+      fail;
    }
 end
 
