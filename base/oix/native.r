@@ -4415,14 +4415,14 @@ function io_FileWorker_op_read(self, n)
       else {
           if (!cnv:C_integer(n, i))
               runerr(101, n);
+          if (i <= 0)
+              Irunerr(205, i);
+          if (i > self_fileworker->buff_size) {
+              LitWhy("Request size too long for buffer");
+              fail;
+          }
       }
-
       wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
-
-      if (i > self_fileworker->buff_size) {
-          LitWhy("Request size too long for buffer");
-          fail;
-      }
       self_fileworker->read_size = i;
       StartFileWorkerCmd(FW_READ);
    }
@@ -4433,11 +4433,11 @@ function io_FileWorker_op_write(self, s)
       runerr(103, s)
    body {
       GetSelfFileWorker();
-      wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
       if (StrLen(s) > self_fileworker->buff_size) {
           LitWhy("String too long for buffer");
           fail;
       }
+      wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
       self_fileworker->write_size = StrLen(s);
       memcpy(self_fileworker->buff, StrLoc(s), StrLen(s));
       StartFileWorkerCmd(FW_WRITE);
@@ -4449,11 +4449,11 @@ function io_FileWorker_op_write_all(self, s)
       runerr(103, s)
    body {
       GetSelfFileWorker();
-      wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
       if (StrLen(s) > self_fileworker->buff_size) {
           LitWhy("String too long for buffer");
           fail;
       }
+      wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
       self_fileworker->write_size = StrLen(s);
       memcpy(self_fileworker->buff, StrLoc(s), StrLen(s));
       StartFileWorkerCmd(FW_WRITE_ALL);
@@ -4467,11 +4467,11 @@ function io_FileWorker_op_open(self, path, mode)
       runerr(101, mode)
    body {
       GetSelfFileWorker();
-      wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
       if (StrLen(path) >= self_fileworker->buff_size) {
           LitWhy("String too long for buffer");
           fail;
       }
+      wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
       memcpy(self_fileworker->buff, StrLoc(path), StrLen(path));
       self_fileworker->buff[StrLen(path)] = 0;
       self_fileworker->mode = mode;
@@ -4493,12 +4493,11 @@ function io_FileWorker_op_create(self, path, mode, perm)
           if (!convert_to_ulong(&perm, &uperm))
               runerr(0);
       }
-
-      wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
       if (StrLen(path) >= self_fileworker->buff_size) {
           LitWhy("String too long for buffer");
           fail;
       }
+      wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
       memcpy(self_fileworker->buff, StrLoc(path), StrLen(path));
       self_fileworker->buff[StrLen(path)] = 0;
       self_fileworker->mode = mode;
@@ -4537,9 +4536,12 @@ function io_FileWorker_get_buffer(self, n)
    body {
       tended struct descrip result;
       GetSelfFileWorker()
-      if (n < 0)
+      if (n <= 0)
            Irunerr(205, n);
-      n = Min(n, self_fileworker->buff_size);
+      if (n > self_fileworker->buff_size) {
+          LitWhy("Request size too long for buffer");
+          fail;
+      }
       bytes2string(self_fileworker->buff, n, &result);
       return result;
    }
