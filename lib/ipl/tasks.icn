@@ -22,13 +22,14 @@ class Semaphore()
             fail
          }
       }
-      return
+      return self
    end
 
    # Perform a signal on the semaphore.
    public signal()
       n +:= 1
       get(wl).notify()
+      return self
    end
 
    # Create a new semaphore with initial value {n}, default 0.
