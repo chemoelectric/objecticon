@@ -1417,7 +1417,7 @@ class ProgInputStream(FileStream, HasBgProc)
    public close()
       cast(self,FileStream).close()
       do_wait()
-      return
+      return self
    end
 
    # Open a new readable {Stream} based on the given command.  The
@@ -1475,7 +1475,7 @@ class ProgOutputStream(FileStream, HasBgProc)
    public close()
       cast(self,FileStream).close()
       do_wait()
-      return
+      return self
    end
 
    # Open a new writeable {Stream} based on the given command. The

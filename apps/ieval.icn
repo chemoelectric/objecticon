@@ -13,17 +13,24 @@ end\n"
    return use {
       tf := Files.make_temp_filename("ieval"),
       compile(prog, tf, links),
-      save_why{Files.remove(tf)}
+      save_why{Files.remove(tf)}      # save_why since oit may remove the output file on failure
    }
 end
 
-procedure compile(prog, tf, links)
+procedure compile1(prog, pf, tf, links)
    local p
+   Files.string_to_file(pf, prog) | fail
+   use{ p := FilterOutputStream(, "oit", ["-s", "-l", "2", "-o", tf, pf] ||| links) } | fail
+   return p.succeeded()
+end
+
+procedure compile(prog, tf, links)
+   local pf
    use {
-      p := FilterOutputStream(, "oit", ["-s", "-l", "2", "-o", tf, "-"] ||| links),
-      p.write(prog)
+      pf := Files.make_temp_filename("ieval", ".icn"),
+      compile1(prog, pf, tf, links),
+      Files.remove(pf)
    } | fail
-   p.succeeded() | fail
    return lang.Prog.load(tf)
 end
 
