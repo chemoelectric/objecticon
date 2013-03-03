@@ -141,23 +141,19 @@ $endif
    # @param len, the number of digits in the result, default 8
    #
    public static make_temp_filename(prefix, suffix, path, len)
-      local p, name, f
-
+      local p, name
       /prefix := ""
       /suffix := ""
       /path := get_temp()
       /len := 8
-
       randomize()
-
       p := FilePath(path)
       repeat {
          ?1                                # change &random
          name := p.child(prefix || left(&random, len, "0") || suffix).str()
          if not access(name) then {
             # Touch the filename to stop anyone else using it.
-            f := FileStream(name, ior(FileOpt.WRONLY, FileOpt.CREAT)) | fail
-            f.close()
+            use{ FileStream(name, ior(FileOpt.WRONLY, FileOpt.CREAT)) } | fail
             return name
          }
       }
