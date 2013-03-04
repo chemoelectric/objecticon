@@ -69,6 +69,7 @@ class File9P()
       self.qversion +:= 1
       self.muid := uid
       self.mtime := Time.get_system_seconds()
+      return self
    end
 
    public open(mode)
@@ -76,9 +77,11 @@ class File9P()
    end
 
    public close()
+      return self
    end
 
    public path_unreferenced()
+      return self
    end
 
    # Return the parent, or fail if this is the root directory.
@@ -753,7 +756,7 @@ class TreeData9P(Data9P)
    end
 
    public remove_child(p1, p2)
-      p1.remove_child(p2)
+      return p1.remove_child(p2) & self
    end
 
    public create_child(p, name, uid, perm)
@@ -765,7 +768,7 @@ class TreeData9P(Data9P)
    end
    
    public modified(p, uid)
-      p.modified(uid)
+      return p.modified(uid) & self
    end
 
    public open(p, mode)
@@ -781,7 +784,7 @@ class TreeData9P(Data9P)
    end
 
    public close(p)
-      p.close()
+      return p.close() & self
    end
 
    public get_info(p)
@@ -789,7 +792,7 @@ class TreeData9P(Data9P)
    end
 
    public set_info(p, x)
-      p.set_info(x)
+      return p.set_info(x) & self
    end
 
    public get_qid(p)
@@ -797,7 +800,7 @@ class TreeData9P(Data9P)
    end
 
    public path_unreferenced(p)
-      p.path_unreferenced()
+      return p.path_unreferenced() & self
    end
 
    public new(root)
