@@ -2504,7 +2504,7 @@ function io_DirStream_close(self)
        free(self_dir->st);
        free(self_dir);
        *self_dir_dptr = zerodesc;
-       return nulldesc;
+       return self;
    }
 end
 
