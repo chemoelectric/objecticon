@@ -412,8 +412,7 @@ class Component(Rect,Align,Connectable)
    end
 
    public invoke_display(rx, ry, rw, rh)
-      self.cbwin.clip(rx, ry, rw, rh)
-      self.cbwin.erase_area(rx, ry, rw, rh)
+      cbwin.clip(rx, ry, rw, rh).erase_area(rx, ry, rw, rh)
       self.display()
       if \self.show_layout_flag then
          (\layout_delegate).display()
