@@ -585,7 +585,7 @@ dptr get_element(dptr d, word i)
       record: {
          struct b_record *bp;        /* doesn't need to be tended */
          bp = &RecordBlk(*d);
-         i = cvpos(i, (word)(bp->constructor->n_fields));
+         i = cvpos(i, bp->constructor->n_fields);
          if (i == CvtFail || i > bp->constructor->n_fields)
              return 0;
          return &bp->fields[i - 1];
