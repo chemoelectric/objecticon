@@ -2938,7 +2938,7 @@ static void get_PALETTE(struct imgdata *imd, int x, int y, int *r, int *g, int *
     *a = pe->a;
 }
 
-static unsigned int square(int x) {    return x/2 * x/2; }
+static unsigned int square(int x) {    return (x/2) * (x/2); }
 
 static unsigned int distance_rgb(struct palentry *pe, int r, int g, int b)
 {
