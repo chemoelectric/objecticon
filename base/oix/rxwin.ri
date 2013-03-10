@@ -3389,32 +3389,16 @@ void freewindow(wsp ws)
     if(ws->refcount == 0) {
         if (ws->win)
             close_screen_win(ws);
-
-        if (ws->pxft) {
+        if (ws->pxft)
             XftDrawDestroy(ws->pxft);
-            ws->pxft = NULL;
-        }
-
-        if (ws->pix) {
+        if (ws->pix)
             XFreePixmap(ws->display->display, ws->pix);
-            ws->pix = 0;
-        }
-
-        if (ws->ppic) {
+        if (ws->ppic)
             XRenderFreePicture(ws->display->display, ws->ppic);
-            ws->ppic = 0;
-        }
-
-        if (ws->icondata) {
+        if (ws->icondata)
             free(ws->icondata);
-            ws->icondata = 0;
-        }
-
-        if (ws->windowlabel) { 
+        if (ws->windowlabel)
            free(ws->windowlabel); 
-           ws->windowlabel = 0;
-        }
-
         del_gc_global(&ws->listp);
         GUnlink(ws, wstates);
         free(ws);
