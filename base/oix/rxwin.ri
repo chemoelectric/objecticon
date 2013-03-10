@@ -44,7 +44,6 @@ static void handle_crossing(wsp ws, XCrossingEvent *event);
 static void wmap(wbp w);
 static void synch_cursor(wsp ws);
 static int convert_KeySym_to_code_point(KeySym k);
-int xft_stringwidth(wbp w, char *s, int n);
 static wfp newfont(wdp wd, char *s);
 static wdp alcdisplay (char *s);
 static void resizepixmap(wbp w);
