@@ -89,7 +89,6 @@ final class Msg(NoCopy)
    end
 
    private new(id)
-      \Ipc.LOADED | return error("Msg ipc not supported")
       self.id := id
       return
    end
@@ -99,6 +98,7 @@ final class Msg(NoCopy)
    # if no such queue exists.
    #
    public static open_public(key)
+      \Ipc.LOADED | return error("Msg ipc not supported")
       return Msg(open_public_impl(key))
    end
 
@@ -106,6 +106,7 @@ final class Msg(NoCopy)
    # Create a new public queue with the given key
    #
    public static create_public(key)
+      \Ipc.LOADED | return error("Msg ipc not supported")
       return Msg(create_public_impl(key))
    end
 
@@ -113,6 +114,7 @@ final class Msg(NoCopy)
    # Create a new private queue
    #
    public static create_private()
+      \Ipc.LOADED | return error("Msg ipc not supported")
       return Msg(create_private_impl())
    end
 end
