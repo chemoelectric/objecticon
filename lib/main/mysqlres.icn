@@ -8,7 +8,7 @@
 
 package mysql
 
-import lang, util, io
+import lang, util
 
 #
 # This class provides a wrapper around an MYSQL_RES object.
@@ -177,7 +177,7 @@ final class MySqlRes(NoCopy)
    end
 
    private static init()
-      Class.load_library(Files.find_native_lib(MySql.LIB))
+      Class.load_library(\MySql.LOADED)
    end
 
    package new(ptr)

@@ -10,13 +10,12 @@ final class SslStream(Stream, HasUnderlyingStream, NoCopy)
       ptr,
       other
 
-   public static const
-      LIB, SUPPORTED
+   public static const LOADED
 
    private static init()
-      LIB := "objecticonssllib.so"
-      if Class.load_library(Files.find_native_lib(LIB)) then
-         SUPPORTED := &yes
+      local t
+      if Class.load_library(t := Files.find_native_lib("objecticonssllib.so")) then
+         LOADED := t
    end
 
    public native connect()
@@ -51,7 +50,7 @@ final class SslStream(Stream, HasUnderlyingStream, NoCopy)
    # @param other an already connected {SocketStream} over which the connection
    #              will operate
    public new(other)
-      \SUPPORTED | return error("SSL not supported")
+      \LOADED | return error("SSL not supported")
       ptr := new_impl(other) | fail
       self.other := other
       return

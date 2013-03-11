@@ -106,7 +106,7 @@ abstract class Pattern()
    protected ptr
 
    private static init()
-      Class.load_library(Files.find_native_lib(Context.LIB))
+      Class.load_library(\Context.LOADED)
    end
 
    private native set_matrix_impl(xx, yx, xy, yy, x0, y0)
@@ -150,7 +150,7 @@ end
 
 abstract class Gradient(Pattern)
    private static init()
-      Class.load_library(Files.find_native_lib(Context.LIB))
+      Class.load_library(\Context.LOADED)
    end
 
    private native add_color_stop_rgba(offset, r, g, b, a)
@@ -168,13 +168,13 @@ end
 
 final class LinearGradient(Gradient)
    private static init()
-      Class.load_library(Files.find_native_lib(Context.LIB))
+      Class.load_library(\Context.LOADED)
    end
 
    private static native new_impl()
 
    public new(x0, y0, x1, y1)
-      \Context.SUPPORTED | return error("Cairo not supported")
+      \Context.LOADED | return error("Cairo not supported")
       ptr := new_impl(x0, y0, x1, y1)
       return
    end
@@ -182,13 +182,13 @@ end
 
 final class RadialGradient(Gradient)
    private static init()
-      Class.load_library(Files.find_native_lib(Context.LIB))
+      Class.load_library(\Context.LOADED)
    end
 
    private static native new_impl()
 
    public new(cx0, cy0, r0, cx1, cy1, r1)
-      \Context.SUPPORTED | return error("Cairo not supported")
+      \Context.LOADED | return error("Cairo not supported")
       ptr := new_impl(cx0, cy0, r0, cx1, cy1, r1)
       return
    end
@@ -196,13 +196,13 @@ end
 
 final class SurfacePattern(Pattern)
    private static init()
-      Class.load_library(Files.find_native_lib(Context.LIB))
+      Class.load_library(\Context.LOADED)
    end
 
    private static native new_impl(sur)
 
    public new(sur)
-      \Context.SUPPORTED | return error("Cairo not supported")
+      \Context.LOADED | return error("Cairo not supported")
       ptr := new_impl(sur)
       return
    end
@@ -210,14 +210,14 @@ end
 
 final class SolidPattern(Pattern)
    private static init()
-      Class.load_library(Files.find_native_lib(Context.LIB))
+      Class.load_library(\Context.LOADED)
    end
 
    private static native new_impl(r, g, b, a)
 
    public new(col)
       local c
-      \Context.SUPPORTED | return error("Cairo not supported")
+      \Context.LOADED | return error("Cairo not supported")
       c := Window.parse_color(col) | fail
       ptr := new_impl(c[1] / 65535.0,
                       c[2] / 65535.0,
@@ -231,7 +231,7 @@ abstract class Surface()
    protected ptr
 
    private static init()
-      Class.load_library(Files.find_native_lib(Context.LIB))
+      Class.load_library(\Context.LOADED)
    end
 
    public native close()
@@ -239,13 +239,13 @@ end
 
 final class WindowSurface(Surface)
    private static init()
-      Class.load_library(Files.find_native_lib(Context.LIB))
+      Class.load_library(\Context.LOADED)
    end
 
    private static native new_impl()
 
    public new(win)
-      \Context.SUPPORTED | return error("Cairo not supported")
+      \Context.LOADED | return error("Cairo not supported")
       ptr := new_impl(win)
       return
    end
@@ -256,7 +256,7 @@ final class ImageSurface(Surface)
 
    private static init()
       local t
-      Class.load_library(Files.find_native_lib(Context.LIB))
+      Class.load_library(\Context.LOADED)
       use {
          t := Window(),
          FORMAT := t.get_format()
@@ -274,7 +274,7 @@ final class ImageSurface(Surface)
    private static native new_impl(pix)
 
    public new(pix)
-      \Context.SUPPORTED | return error("Cairo not supported")
+      \Context.LOADED | return error("Cairo not supported")
       pix.get_format() == FORMAT | runerr("Invalid format", pix)
       ptr := new_impl(pix)
       return
@@ -283,7 +283,7 @@ end
 
 abstract class PagedSurface(Surface)
    private static init()
-      Class.load_library(Files.find_native_lib(Context.LIB))
+      Class.load_library(\Context.LOADED)
    end
 
    public native copy_page()
@@ -292,13 +292,13 @@ end
 
 final class SVGSurface(PagedSurface)
    private static init()
-      Class.load_library(Files.find_native_lib(Context.LIB))
+      Class.load_library(\Context.LOADED)
    end
 
    private static native new_impl()
 
    public new(filename, width, height)
-      \Context.SUPPORTED | return error("Cairo not supported")
+      \Context.LOADED | return error("Cairo not supported")
       ptr := new_impl(filename, width, height)
       return
    end
@@ -306,13 +306,13 @@ end
 
 final class PostScriptSurface(PagedSurface)
    private static init()
-      Class.load_library(Files.find_native_lib(Context.LIB))
+      Class.load_library(\Context.LOADED)
    end
 
    private static native new_impl()
 
    public new(filename, width, height)
-      \Context.SUPPORTED | return error("Cairo not supported")
+      \Context.LOADED | return error("Cairo not supported")
       ptr := new_impl(filename, width, height)
       return
    end
@@ -320,13 +320,13 @@ end
 
 final class PDFSurface(PagedSurface)
    private static init()
-      Class.load_library(Files.find_native_lib(Context.LIB))
+      Class.load_library(\Context.LOADED)
    end
 
    private static native new_impl()
 
    public new(filename, width, height)
-      \Context.SUPPORTED | return error("Cairo not supported")
+      \Context.LOADED | return error("Cairo not supported")
       ptr := new_impl(filename, width, height)
       return
    end
@@ -334,7 +334,7 @@ end
 
 final class RecordingSurface(Surface)
    private static init()
-      Class.load_library(Files.find_native_lib(Context.LIB))
+      Class.load_library(\Context.LOADED)
    end
 
    public native get_extents()
@@ -343,7 +343,7 @@ final class RecordingSurface(Surface)
    private static native new_impl()
 
    public new(x, y, width, height)
-      \Context.SUPPORTED | return error("Cairo not supported")
+      \Context.LOADED | return error("Cairo not supported")
       ptr := new_impl(x, y, width, height)
       return
    end
@@ -352,12 +352,12 @@ end
 final class Context()
    private ptr
 
-   public static const LIB, SUPPORTED
+   public static const LOADED
 
    private static init()
-      LIB := "objecticoncairolib.so"
-      if Class.load_library(Files.find_native_lib(LIB)) then
-         SUPPORTED := &yes
+      local t
+      if Class.load_library(t := Files.find_native_lib("objecticoncairolib.so")) then
+         LOADED := t
    end
 
    public native move_to(x, y)
@@ -504,7 +504,7 @@ final class Context()
 
    public new(v)
       local t
-      \SUPPORTED | return error("Cairo not supported")
+      \LOADED | return error("Cairo not supported")
       if is(v, Window) then
          use {
             t := WindowSurface(v),

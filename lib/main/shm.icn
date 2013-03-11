@@ -8,7 +8,7 @@
 
 package ipc
 
-import lang, io, util
+import lang, util
 
 #
 # This class provides an inter process shared variable facility.  The implementation requires
@@ -60,11 +60,11 @@ final class Shm(NoCopy)
    private static native create_private_impl()
 
    private static init()
-      Class.load_library(Files.find_native_lib(Ipc.LIB))
+      Class.load_library(\Ipc.LOADED)
    end
 
    private new(id)
-      \Ipc.SUPPORTED | return error("Shm ipc not supported")
+      \Ipc.LOADED | return error("Shm ipc not supported")
       self.id := id
       return
    end

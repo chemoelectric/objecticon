@@ -52,7 +52,7 @@ import
 
 
 procedure QuitEvents()
-   suspend !"qQ"
+   suspend !"qQ" | Window.CLOSE_BUTTON
 end
 
 

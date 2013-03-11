@@ -1779,14 +1779,10 @@ void freewindow(wsp ws)
            close_screen_win(ws);
        if (ws->pix)
            close_pix_win(ws);
-       if (ws->windowlabel) { 
+       if (ws->windowlabel)
            free(ws->windowlabel); 
-           ws->windowlabel = 0;
-       }
-       if (ws->wsys) {
+       if (ws->wsys)
            free(ws->wsys);
-           ws->wsys = 0;
-       }
        del_gc_global(&ws->listp);
        GUnlink(ws, wstates);
        free(ws);

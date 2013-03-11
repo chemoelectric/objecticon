@@ -288,7 +288,7 @@ bb~~~~bb_
       } else {
          if w := \imap[key] then
             return w
-         w := Window.open_image(s)
+         w := Window.open_image(s) | fail
       }
       insert(imap, key, w)
       return w
