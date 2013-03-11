@@ -177,7 +177,7 @@ final class MySqlRes(NoCopy)
    end
 
    private static init()
-      Class.load_library(Files.find_native_lib(MySql.LIB))
+      Class.load_library(\MySql.LOADED)
    end
 
    package new(ptr)

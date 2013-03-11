@@ -71,8 +71,7 @@ final class MySql(NoCopy)
       CLIENT_MULTI_STATEMENTS,
       CLIENT_MULTI_RESULTS,
       CLIENT_REMEMBER_OPTIONS,
-      SUPPORTED,
-      LIB
+      LOADED
 
    private 
       ptr
@@ -367,6 +366,7 @@ final class MySql(NoCopy)
    private static native new_impl()
 
    private static init()
+      local t
       FIELD_TYPE_DECIMAL := 0
       FIELD_TYPE_TINY := 1
       FIELD_TYPE_SHORT := 2
@@ -422,14 +422,12 @@ final class MySql(NoCopy)
       CLIENT_MULTI_RESULTS :=    131072  
       CLIENT_REMEMBER_OPTIONS := 2147483648  # ((ulong) (1L << 31))
 
-      LIB := "objecticonmysqllib.so"
-
-      if Class.load_library(Files.find_native_lib(LIB)) then
-         SUPPORTED := &yes
+      if Class.load_library(t := Files.find_native_lib("objecticonmysqllib.so")) then
+         LOADED := t
    end
 
    public new()
-      \SUPPORTED | return error("MySQL not supported")
+      \LOADED | return error("MySQL not supported")
       ptr := new_impl() | fail
       return
    end
