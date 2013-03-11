@@ -1589,7 +1589,7 @@ function io_FileStream_chdir(self)
            errno2why();
            fail;
        }
-       return nulldesc;
+       return self;
 #else
      Unsupported;
 #endif
@@ -1769,7 +1769,7 @@ function io_SocketStream_shutdown(self, how)
            errno2why();
            fail;
        }
-       return nulldesc;
+       return self;
    }
 end
 
@@ -1930,7 +1930,7 @@ function io_SocketStream_connect(self, addr)
            fail;
        }
 
-       return nulldesc;
+       return self;
    }
 end
 
@@ -1960,7 +1960,7 @@ function io_SocketStream_bind(self, addr)
            fail;
        }
 
-       return nulldesc;
+       return self;
    }
 end
 
@@ -1974,7 +1974,7 @@ function io_SocketStream_listen(self, backlog)
            errno2why();
            fail;
        }
-       return nulldesc;
+       return self;
    }
 end
 
@@ -2039,7 +2039,7 @@ function io_DescStream_dup2_impl(self, other)
                errno2why();
                fail;
            }
-           return nulldesc;
+           return self;
        }
    }
 end
@@ -2097,7 +2097,7 @@ function io_DescStream_wstat(self, mode, uid, gid)
                fail;
            }
        }
-       return nulldesc;
+       return self;
 #else
         Unsupported;
 #endif
@@ -2401,7 +2401,7 @@ end
 #endif
 
 
-function io_Files_rename(s1,s2)
+function io_Files_rename(s1, s2)
    /*
     * Make C-style strings out of s1 and s2
     */
