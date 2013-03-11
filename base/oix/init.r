@@ -602,17 +602,13 @@ static void handle_prog_exit()
 
 " load a program corresponding to string s as a co-expression."
 
-function lang_Prog_load(s, arglist, blocksize, stringsize)
-   declare {
-      tended char *loadstring;
-      word bs, ss;
-      }
-   if !cnv:C_string(s,loadstring) then
-      runerr(103,s)
-   if !def:C_integer(blocksize, rootblock.size,bs) then
-      runerr(101,blocksize)
-   if !def:C_integer(stringsize, rootstring.size,ss) then
-      runerr(101,stringsize)
+function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
+   if !cnv:C_string(loadstring) then
+      runerr(103, loadstring)
+   if !def:C_integer(blocksize, rootblock.size) then
+      runerr(101, blocksize)
+   if !def:C_integer(stringsize, rootstring.size) then
+      runerr(101, stringsize)
     body {
        struct progstate *pstate;
        tended struct descrip result;
@@ -661,8 +657,8 @@ function lang_Prog_load(s, arglist, blocksize, stringsize)
 
        MemProtect(pstate->stringregion = malloc(sizeof(struct region)));
        MemProtect(pstate->blockregion  = malloc(sizeof(struct region)));
-       pstate->stringregion->size = ss;
-       pstate->blockregion->size = bs;
+       pstate->stringregion->size = stringsize;
+       pstate->blockregion->size = blocksize;
 
        /*
         * the local program region list starts out with this region only
