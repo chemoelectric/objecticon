@@ -1,10 +1,12 @@
-import gui, ivib.plugin, util
+import ivib.plugin, util, lang
 
 $load IMG "okcancel.gif"
 
+global IC
+
 class OkCancelPlugin(Plugin)
    private static init()
-      ImageCache.name_image("okcancel", IMG)
+      IC.name_image("okcancel", IMG)
    end
 
    public get_ui_name()
@@ -51,7 +53,7 @@ class OkCancelPlugin(Plugin)
       c.line(obj.name || ".add(" || t || ")")
    end
 
-   public display(obj, r)
+   public display(obj)
       get_icon(obj).copy_to(,,,, obj.cbwin, obj.x, obj.y)
    end
 
@@ -64,11 +66,13 @@ class OkCancelPlugin(Plugin)
    end
 
    private get_icon(obj)
-      return ImageCache.get("okcancel", obj.cbwin)
+      return IC.get("okcancel", obj.cbwin)
    end
 end
 
-procedure main()
+procedure main(m)
+   # Use the main prog's ImageCache so images use the same display.
+   IC := Prog.get_global("gui.ImageCache", Class.get_program(m))
    return OkCancelPlugin()
 end
 

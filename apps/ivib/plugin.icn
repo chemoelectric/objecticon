@@ -1,6 +1,6 @@
 package ivib.plugin
 
-class Plugin()
+abstract class Plugin()
    public get_unique_id()
       return get_ui_category() || "/" || get_ui_name()
    end
@@ -9,17 +9,17 @@ class Plugin()
       return "Plugin"
    end
 
-   public defer get_ui_name()
+   public abstract get_ui_name()
 
    public validate_config(obj, new_config)
       return
    end
 
-   public defer init_component(obj)
+   public abstract init_component(obj)
 
-   public defer display(obj, r)
+   public abstract display(obj)
 
-   public defer gen_code(code, obj)
+   public abstract gen_code(code, obj)
 
    public get_default_width(obj)
    end

@@ -1276,7 +1276,7 @@ class Main(Dialog)
          if f[2].mode_str[1] == "-" & upto('x', f[2].mode_str) then {
             fn := pp.child(f[1]).str()
             ce := Prog.load(fn) | stop("Failed to load plugin:", fn)
-            plugin := Prog.get_global("main", ce)() | stop("Plugin didn't return a Plugin from main")
+            plugin := Prog.get_global("main", ce)(self) | stop("Plugin didn't return a Plugin from main")
             insert(plugins, plugin.get_unique_id(), plugin)
             ui := PluginUI(plugin)
             listener := ObjectActionListener(self, ui)
