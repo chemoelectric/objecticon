@@ -407,16 +407,15 @@ abstract class MenuComponent(Rect,Connectable)
       }
 
       if /use_popup_win then {
-         self.temp_win := create_proxy()
-         self.temp_win.set_pos(self.x + win.get_dx(), 
-                               self.y + win.get_dy())
-         self.temp_win.set_size(self.w, self.h)
-         self.temp_win.set_z(pd.get_top_z())
-         # Copy attribs of the parent component
-         self.temp_win.set_all_wattribs(self.parent_component.get_effective_wattribs())
+         self.temp_win := create_proxy().
+            set_pos(self.x + win.get_dx(), 
+                    self.y + win.get_dy()).
+            set_size(self.w, self.h).
+            set_z(pd.get_top_z()).
+            # Copy attribs of the parent component
+            set_all_wattribs(self.parent_component.get_effective_wattribs())
          pd.add(self.temp_win)
-         self.temp_win.resize()
-         self.temp_win.invalidate()
+         self.temp_win.resize().invalidate()
       } else {
          d := PureDialog().
             set_canvas("popup").
@@ -426,11 +425,11 @@ abstract class MenuComponent(Rect,Connectable)
             set_dy(-self.y).
             set_x(win.get_x() + win.get_dx() + self.x).
             set_y(win.get_y() + win.get_dy() + self.y)
-         self.temp_win := create_proxy()
-         self.temp_win.set_pos(0, 0)
-         self.temp_win.set_size(self.w, self.h)
-         # Copy attribs of the parent component
-         self.temp_win.set_all_wattribs(self.parent_component.get_effective_wattribs())
+         self.temp_win := create_proxy().
+            set_pos(0, 0).
+            set_size(self.w, self.h).
+            # Copy attribs of the parent component
+            set_all_wattribs(self.parent_component.get_effective_wattribs())
          d.add(self.temp_win)
          pd.add_popup(d)
          d.show()

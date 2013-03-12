@@ -65,6 +65,7 @@ abstract class ScrollArea(Component)
       is_live() | fail
       self.set_internal_fields()
       self.invalidate()
+      return self
    end
 
    public get_default_height(dw)
@@ -488,6 +489,7 @@ abstract class ScrollArea(Component)
    #
    public invalidate_subject_width()
       self.subject_width := &null
+      return self
    end
 
    #
@@ -510,6 +512,7 @@ abstract class ScrollArea(Component)
    #
    public invalidate_subject_height()
       self.subject_height := &null
+      return self
    end
 
    #

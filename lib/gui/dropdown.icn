@@ -223,10 +223,10 @@ abstract class DropDown(SelectionList,Component)
 
          d.add(tl)
          self.tl.set_pos(0, 0)
-         self.parent_dialog.set_focus()
-         self.parent_dialog.add_popup(d)
-         d.show()
-         d.set_focus(tl)
+         self.parent_dialog.
+            set_focus().
+            add_popup(d)
+         d.show().set_focus(tl)
          d.held[ev.code] := [tl.view, tl, d]
       } else {
          if use_direction == Direction.DOWN then 
@@ -234,16 +234,17 @@ abstract class DropDown(SelectionList,Component)
          else
             self.tl.set_pos(self.x + win.get_dx(), self.y - self.tl.h_spec + win.get_dy())
 
-         self.tl.resize()
-         self.tl.invalidate()
-         self.parent_dialog.hold(tl.view, ev.code)
-         self.parent_dialog.set_focus(tl)
+         self.tl.resize().invalidate()
+         self.parent_dialog.
+            set_focus(tl).
+            hold(tl.view, ev.code)
       } 
 
       self.parent_dialog.connect(self.dialog_event, Event.ICON)
       if \self.selection then {
-         self.tl.set_cursor(self.selection)
-         self.tl.center_line(self.selection)
+         self.tl.
+            set_cursor(self.selection).
+            center_line(self.selection)
       }
    end
 
@@ -267,8 +268,9 @@ abstract class DropDown(SelectionList,Component)
          self.tl.parent_dialog.dispose()
       }
       self.tl := &null
-      self.parent_dialog.exit_menu_mode()
-      self.parent_dialog.disconnect_object(self)
+      self.parent_dialog.
+         exit_menu_mode().
+         disconnect_object(self)
    end
 
    public close_all()

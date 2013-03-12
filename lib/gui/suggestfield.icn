@@ -251,8 +251,7 @@ class SuggestField(TextField)
          else
             self.tl.set_pos(self.x + win.get_dx(), self.y - self.tl.h_spec + win.get_dy())
 
-         self.tl.resize()
-         self.tl.invalidate()
+         self.tl.resize().invalidate()
       } 
 
       self.parent_dialog.connect(self.dialog_event, Event.ICON)
@@ -267,8 +266,9 @@ class SuggestField(TextField)
          self.tl.parent_dialog.dispose()
       }
       self.tl := &null
-      self.parent_dialog.exit_menu_mode()
-      self.parent_dialog.disconnect_object(self)
+      self.parent_dialog.
+         exit_menu_mode().
+         disconnect_object(self)
    end
 
    public close_all()
