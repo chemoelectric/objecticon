@@ -298,24 +298,28 @@ class Dialog(Component)
       self.menu_mode := c
       popups := []
       win.grab_pointer()
+      return self
    end
 
    public exit_menu_mode()
       (\self.menu_mode := &null) | syserr("internal error - not  in menu mode.")
       win.ungrab_pointer()
       popups := &null
+      return self
    end
 
    public add_popup(d)
       \popups | syserr("internal error - not  in menu mode.")
       d.popup_manager := self
       put(popups, d)
+      return self
    end
 
    public remove_popup(d)
       \popups | syserr("internal error - not  in menu mode.")
       d.popup_manager := &null
       ldel(popups, d)
+      return self
    end
 
    public which_popup(ex, ey)
@@ -645,6 +649,7 @@ class Dialog(Component)
    public hold(c, ec)
       self.held[ec] := copy(\self.held[ec]) | fail
       put(self.held[ec], c)
+      return self
    end
 
    #
@@ -655,6 +660,7 @@ class Dialog(Component)
    public release(c, ec)
       self.held[ec] := copy(\self.held[ec]) | fail
       ldel(self.held[ec], c)
+      return self
    end
 
    #
