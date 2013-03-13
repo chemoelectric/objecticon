@@ -118,10 +118,10 @@ void traceback(struct b_coexpr *ce, int with_xtrace, int act_chain)
         } else {
             /* Will print some of this coexpression's calls, so print header */
             if (ae->coex->activator)
-                fprintf(stderr,"co-expression#%ld activated by co-expression#%ld\n", 
-                        (long)ae->coex->id, (long)ae->coex->activator->id);
+                fprintf(stderr,"co-expression#%lu activated by co-expression#%lu\n", 
+                        (unsigned long)ae->coex->id, (unsigned long)ae->coex->activator->id);
             else
-                fprintf(stderr,"co-expression#%ld (never activated)\n", (long)ae->coex->id);
+                fprintf(stderr,"co-expression#%lu (never activated)\n", (unsigned long)ae->coex->id);
 
             if (depth > LIMIT) {
                 if (depth == LIMIT + 1)
@@ -211,35 +211,35 @@ static void cotrace_line(struct b_coexpr *from)
 
 void trace_coact(struct b_coexpr *from, struct b_coexpr *to, dptr val)
 {
-    word to_id = to->id;  /* Save since outimage may collect */
+    uword to_id = to->id;  /* Save since outimage may collect */
     cotrace_line(from);
-    fprintf(stderr,"; co-expression#%ld : ", (long)from->id);
+    fprintf(stderr,"; co-expression#%lu : ", (unsigned long)from->id);
     outimage(stderr, val, 0);
-    fprintf(stderr, " @ co-expression#%ld\n", (long)to_id);
+    fprintf(stderr, " @ co-expression#%lu\n", (unsigned long)to_id);
     fflush(stderr);
 }
 
 void trace_coret(struct b_coexpr *from, struct b_coexpr *to, dptr val)
 {
-    word to_id = to->id;  /* Save since outimage may collect */
+    uword to_id = to->id;  /* Save since outimage may collect */
     cotrace_line(from);
-    fprintf(stderr,"; co-expression#%ld returned ", (long)from->id);
+    fprintf(stderr,"; co-expression#%lu returned ", (unsigned long)from->id);
     outimage(stderr, val, 0);
-    fprintf(stderr, " to co-expression#%ld\n", (long)to_id);
+    fprintf(stderr, " to co-expression#%lu\n", (unsigned long)to_id);
     fflush(stderr);
 }
 
 void trace_cofail(struct b_coexpr *from, struct b_coexpr *to)
 {
     cotrace_line(from);
-    fprintf(stderr,"; co-expression#%ld failed to co-expression#%ld\n", (long)from->id, (long)to->id);
+    fprintf(stderr,"; co-expression#%lu failed to co-expression#%lu\n", (unsigned long)from->id, (unsigned long)to->id);
     fflush(stderr);
 }
 
 void trace_cofail_to_handler(struct b_coexpr *from, struct b_coexpr *to)
 {
     cotrace_line(from);
-    fprintf(stderr,"; co-expression#%ld failed to &handler co-expression#%ld\n", (long)from->id, (long)to->id);
+    fprintf(stderr,"; co-expression#%lu failed to &handler co-expression#%lu\n", (unsigned long)from->id, (unsigned long)to->id);
     fflush(stderr);
 }
 
@@ -766,7 +766,7 @@ void xdisp(struct b_coexpr *ce, int count, FILE *f)
     struct p_frame *pf, *upf;
     struct progstate *p;
 
-    fprintf(f,"co-expression#%ld(%ld)\n\n", (long)ce->id, (long)ce->size);
+    fprintf(f,"co-expression#%lu(%ld)\n\n", (unsigned long)ce->id, (long)ce->size);
     pf = ce->curr_pf;
 
     /* The user pf will be null on a termination dump */

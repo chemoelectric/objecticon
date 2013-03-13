@@ -2,6 +2,8 @@
  * File: rcomp.r
  */
 
+static int idcmp(uword i, uword j);
+
 /*
  * anycmp - compare any two objects.
  */
@@ -9,7 +11,6 @@
 int anycmp(dptr dp1, dptr dp2)
 {
    int o1, o2;
-   long lresult;
    int iresult;
 
    /*
@@ -34,15 +35,11 @@ int anycmp(dptr dp1, dptr dp2)
       integer:
          return bigcmp(dp1, dp2);
 
-      coexpr: {
+      coexpr:
          /*
           * Collate on co-expression id.
           */
-         lresult = (CoexprBlk(*dp1).id - CoexprBlk(*dp2).id);
-         if (lresult == 0)
-            return Equal;
-         return ((lresult > 0) ? Greater : Less);
-         }
+         return idcmp(CoexprBlk(*dp1).id, CoexprBlk(*dp2).id);
 
       cset: {
           int i = 0, j = 0;
@@ -76,10 +73,7 @@ int anycmp(dptr dp1, dptr dp2)
          /*
           * Collate on list id.
           */
-         lresult = (ListBlk(*dp1).id - ListBlk(*dp2).id);
-         if (lresult == 0)
-            return Equal;
-         return ((lresult > 0) ? Greater : Less);
+         return idcmp(ListBlk(*dp1).id, ListBlk(*dp2).id);
       }
 
       null:
@@ -125,12 +119,8 @@ int anycmp(dptr dp1, dptr dp2)
           */
          iresult = lexcmp(RecordBlk(*dp1).constructor->name,
                           RecordBlk(*dp2).constructor->name);
-         if (iresult == Equal) {
-            lresult = (RecordBlk(*dp1).id - RecordBlk(*dp2).id);
-            if (lresult == 0)
-                return Equal;
-            return ((lresult > 0) ? Greater : Less);
-         }
+         if (iresult == Equal)
+             return idcmp(RecordBlk(*dp1).id, RecordBlk(*dp2).id);
          return iresult;
       }
 
@@ -140,12 +130,8 @@ int anycmp(dptr dp1, dptr dp2)
           */
          iresult = lexcmp(ObjectBlk(*dp1).class->name,
                           ObjectBlk(*dp2).class->name);
-         if (iresult == Equal) {
-            lresult = (ObjectBlk(*dp1).id - ObjectBlk(*dp2).id);
-            if (lresult == 0)
-                return Equal;
-            return ((lresult > 0) ? Greater : Less);
-         }
+         if (iresult == Equal)
+            return idcmp(ObjectBlk(*dp1).id, ObjectBlk(*dp2).id);
          return iresult;
       }
 
@@ -156,11 +142,10 @@ int anycmp(dptr dp1, dptr dp2)
           iresult = lexcmp(CastBlk(*dp1).object->class->name,
                            CastBlk(*dp2).object->class->name);
           if (iresult == Equal) {
-              lresult = (CastBlk(*dp1).object->id - CastBlk(*dp2).object->id);
-              if (lresult == 0)
+              iresult = idcmp(CastBlk(*dp1).object->id, CastBlk(*dp2).object->id);
+              if (iresult == Equal)
                   return lexcmp(CastBlk(*dp1).class->name,
                                 CastBlk(*dp2).class->name);
-              return ((lresult > 0) ? Greater : Less);
           }
           return iresult;
       }
@@ -172,44 +157,31 @@ int anycmp(dptr dp1, dptr dp2)
           iresult = lexcmp(MethpBlk(*dp1).object->class->name,
                            MethpBlk(*dp2).object->class->name);
           if (iresult == Equal) {
-              lresult = (MethpBlk(*dp1).object->id - MethpBlk(*dp2).object->id);
-              if (lresult == 0)
+              iresult = idcmp(MethpBlk(*dp1).object->id, MethpBlk(*dp2).object->id);
+              if (iresult == Equal)
                   return lexcmp(MethpBlk(*dp1).proc->name,
                                 MethpBlk(*dp2).proc->name);
-              return ((lresult > 0) ? Greater : Less);
           }
           return iresult;
       }
 
-      weakref: {
+      weakref:
          /*
           * Collate on id.
           */
-         lresult = (WeakrefBlk(*dp1).id - WeakrefBlk(*dp2).id);
-         if (lresult == 0)
-            return Equal;
-         return ((lresult > 0) ? Greater : Less);
-      }
+         return idcmp(WeakrefBlk(*dp1).id, WeakrefBlk(*dp2).id);
 
-      set: {
+      set:
          /*
           * Collate on set id.
           */
-         lresult = (SetBlk(*dp1).id - SetBlk(*dp2).id);
-         if (lresult == 0)
-            return Equal;
-         return ((lresult > 0) ? Greater : Less);
-      }
+         return idcmp(SetBlk(*dp1).id, SetBlk(*dp2).id);
 
-      table: {
+      table:
          /*
           * Collate on table id.
           */
-         lresult = (TableBlk(*dp1).id - TableBlk(*dp2).id);
-         if (lresult == 0)
-            return Equal;
-         return ((lresult > 0) ? Greater : Less);
-      }
+         return idcmp(TableBlk(*dp1).id, TableBlk(*dp2).id);
 
       default: {
 	 syserr("anycmp: unknown datatype.");
@@ -380,4 +352,14 @@ int lexcmp(dptr dp1, dptr dp2)
       return Equal;
    return ( (l1 > l2) ? Greater : Less);
 
+}
+
+/*
+ * Compare two id's (uwords).
+ */
+static int idcmp(uword i, uword j)
+{
+    if (i == j)
+      return Equal;
+   return ( (i > j) ? Greater : Less);
 }

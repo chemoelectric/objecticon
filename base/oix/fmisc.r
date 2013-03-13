@@ -388,16 +388,20 @@ end
 
 function serial(x)
  body {
+   uword id;
+   tended struct descrip result;
    type_case x of {
-      list:     return C_integer ListBlk(x).id;
-      set:      return C_integer SetBlk(x).id;
-      table:    return C_integer TableBlk(x).id;
-      record:   return C_integer RecordBlk(x).id;
-      object:   return C_integer ObjectBlk(x).id;
-      coexpr:   return C_integer CoexprBlk(x).id;
-      weakref:  return C_integer WeakrefBlk(x).id;
+      list:     id = ListBlk(x).id;
+      set:      id = SetBlk(x).id;
+      table:    id = TableBlk(x).id;
+      record:   id = RecordBlk(x).id;
+      object:   id = ObjectBlk(x).id;
+      coexpr:   id = CoexprBlk(x).id;
+      weakref:  id = WeakrefBlk(x).id;
       default:  runerr(123,x);
     }
+    convert_from_uword(id, &result);
+    return result;
   }
 end
 
