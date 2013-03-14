@@ -75,15 +75,7 @@ class Sizer(Component)
       local x1, y1
       x1 := self.x + (self.w - gp.w) / 2
       y1 := self.y + (self.h - gp.h) / 2
-      if \self.is_horizontal_flag then {
-         gp.draw(self.cbwin, x1 - 10, y1)
-         gp.draw(self.cbwin, x1, y1)
-         gp.draw(self.cbwin, x1 + 10, y1)
-      } else {
-         gp.draw(self.cbwin, x1, y1 - 10)
-         gp.draw(self.cbwin, x1, y1)
-         gp.draw(self.cbwin, x1, y1 + 10)
-      }
+      gp.draw(self.cbwin, x1, y1)
    end
 
    private set_curr_pos(e)
@@ -98,17 +90,20 @@ class Sizer(Component)
    end
 
    public initially()
-      if \self.is_horizontal_flag then
+      if \self.is_horizontal_flag then {
          set_pointer("sb v double arrow")
-      else
+         gp.set_cache("gui.HORIZ_GRID")
+      } else {
          set_pointer("sb h double arrow")
+         gp.set_cache("gui.VERT_GRID")
+      }
       cast(self,Component).initially()
-      self.gp.initially(self)
+      gp.initially(self)
    end
 
    public finally()
       cast(self,Component).finally()
-      self.gp.finally()
+      gp.finally()
    end
 
    public get_default_width()
@@ -129,11 +124,11 @@ class Sizer(Component)
 
       start_pos := set_curr_pos(e)
       if \self.show_inter_flag then {
-         self.temp_win := SliderDragComponent()
-         self.temp_win.set_pos(self.x + parent_dialog.win.get_dx(), 
-                               self.y + parent_dialog.win.get_dy())
-         self.temp_win.set_z(self.parent_dialog.get_top_z())
-         self.temp_win.set_size(self.w, self.h)
+         self.temp_win := SliderDragComponent().
+            set_pos(self.x + parent_dialog.win.get_dx(), 
+                    self.y + parent_dialog.win.get_dy()).
+            set_z(self.parent_dialog.get_top_z()).
+            set_size(self.w, self.h)
          if \self.is_horizontal_flag then {
             temp_orig := self.y + parent_dialog.win.get_dy()
             self.temp_win.set_pointer("sb v double arrow")
@@ -142,9 +137,7 @@ class Sizer(Component)
             self.temp_win.set_pointer("sb h double arrow")
          }
          self.parent_dialog.add(self.temp_win)
-         self.temp_win.initially()
-         self.temp_win.resize()
-         self.temp_win.invalidate()
+         self.temp_win.resize().invalidate()
       }
       fire(Event.SIZER_PRESS, e)
    end
@@ -157,9 +150,7 @@ class Sizer(Component)
          } else {
             self.temp_win.x_spec := temp_orig + get_delta()
          }
-         self.temp_win.invalidate()
-         self.temp_win.resize()
-         self.temp_win.invalidate()
+         self.temp_win.invalidate().resize().invalidate()
       }
       fire(Event.SIZER_DRAG, e)
    end
@@ -169,7 +160,6 @@ class Sizer(Component)
       if \self.show_inter_flag then {
          self.temp_win.invalidate()
          self.parent_dialog.remove(self.temp_win)
-         self.temp_win.finally()
          self.temp_win := &null
       }
       fire(Event.SIZER_RELEASE, e)
@@ -180,7 +170,7 @@ class Sizer(Component)
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-      gp := ImagePaint().set_cache("gui.GRID")
+      gp := ImagePaint()
       return
    end
 end
