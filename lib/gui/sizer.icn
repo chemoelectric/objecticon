@@ -16,9 +16,8 @@ import util
 # generated when the {Sizer} has been dragged and released.  The new position
 # may then be obtained and the dialog adjusted accordingly.
 #
-class Sizer(Component)
+class Sizer(Component, HasOrientation)
    public 
-      is_horizontal_flag, 
       show_inter_flag,
       temp_win,  
       temp_orig,
@@ -52,14 +51,6 @@ class Sizer(Component)
    #
    public get_delta()
       return curr_pos - start_pos
-   end
-
-   #
-   # Configure the orientation of the {Sizer}; the default is vertical.
-   #
-   public set_is_horizontal(s)
-      self.is_horizontal_flag := check_flag(s)
-      return self
    end
 
    #

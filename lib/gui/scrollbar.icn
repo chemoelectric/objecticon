@@ -67,7 +67,7 @@ end
 #
 # A Event.VALUE_CHANGED, which is fired whenever the value changes.
 #
-class ScrollBar(Component)
+class ScrollBar(Component, HasOrientation)
    public 
       value,                   #             
       old_value,
@@ -84,7 +84,6 @@ class ScrollBar(Component)
       bar_area,                #
       b1,                      #          
       b2,                      #          
-      is_horizontal_flag,      #                          
       bar_pos,                 #  Orientation independent bar pos
       bar_size,                #                
       bar_area_pos,            #  Orientation independent bararea pos
@@ -101,14 +100,6 @@ class ScrollBar(Component)
       DEFAULT_INNER_SIZE := 16
       DEFAULT_WHEEL_FACTOR := 4
       MIN_BAR_SIZE := 8
-   end
-
-   #
-   # Configure the orientation (default is vertical).
-   #
-   public set_is_horizontal(s)
-      self.is_horizontal_flag := check_flag(s)
-      return self
    end
 
    #
