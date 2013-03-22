@@ -8,27 +8,15 @@
 
 package gui
 
-import util
-
 #
 # This class implements an etched Line, drawn within its region.
 #
-class Line(Component)
+class Line(Component, HasOrientation)
    public
-      is_horizontal_flag,
       line_width
 
    public set_line_width(n)
       self.line_width := n
-      return self
-   end
-
-   #
-   # Configure the orientation of the {Line}; the default is horizontal.
-   #
-   public set_is_horizontal(s)
-      self.is_horizontal_flag := check_flag(s)
-      self.invalidate()
       return self
    end
 

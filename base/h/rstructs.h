@@ -87,7 +87,7 @@ struct b_lelem {		/* list-element block */
 struct b_list {			/* list-header block */
     word title;			/*   T_List */
     word size;			/*   current list size */
-    word id;			/*   identification number */
+    uword id;			/*   identification number */
     word changecount;           /*   count of structure changes (see lgstate) */
     union block *listhead;	/*   pointer to first list-element block */
     union block *listtail;	/*   pointer to last list-element block */
@@ -139,7 +139,7 @@ struct b_constructor {		/* constructor block */
     word title;			/*   T_Constructor */
     struct progstate *program;  /*   program in which this constructor resides */
     word package_id;            /*   Package id of this constructor's package - see b_proc above */
-    word instance_ids;          /*   Sequence for instance ids */
+    uword instance_ids;         /*   Sequence for instance ids */
     word n_fields;
     dptr name;           	/*   record type name (pointer to string qualifier) */
     word *fnums;                /* Pointer to array of field numbers array */
@@ -150,7 +150,7 @@ struct b_constructor {		/* constructor block */
 struct b_record {		/* record block */
     word title;			/*   T_Record */
     word blksize;		/*   size of block */
-    word id;			/*   identification number */
+    uword id;			/*   identification number */
     struct b_constructor *constructor;	/*   pointer to record constructor */
     struct descrip fields[1];	/*   fields */
 };
@@ -171,7 +171,7 @@ struct b_class {                 /* block representing a class - always static, 
     word title;                  /* T_Class */
     struct progstate *program;   /* Program in which this class resides */
     word package_id;             /* Package id of this class's package - see b_proc above */
-    word instance_ids;           /* Sequence for instance ids */
+    uword instance_ids;          /* Sequence for instance ids */
     word init_state;             /* State of initialization */
     word flags;                  /* Modifier flags from the source code */
     word n_supers;               /* Number of supers */
@@ -192,7 +192,7 @@ struct b_class {                 /* block representing a class - always static, 
 struct b_object {		/* object block */
     word title;			/*   T_Object */
     word blksize;		/*   size of block */
-    word id;			/*   identification number */
+    uword id;			/*   identification number */
     word init_state;            /*   state of initialization */
     struct b_class *class;	/*   pointer to class, being the type of this instance */
     struct descrip fields[1];	/*   instance fields */
@@ -231,7 +231,7 @@ struct b_ucs {
  */
 struct b_weakref {              /* weakref */
     word title;                 /*   T_Weakref */
-    word id;			/*   identification number */
+    uword id;			/*   identification number */
     struct b_weakref *chain;    /*   link used during gc */
     struct descrip val;         /*   the referenced value */
 };
@@ -250,7 +250,7 @@ struct b_selem {		/* set-element block */
 struct b_set {			/* set-header block */
     word title;			/*   T_Set */
     word size;			/*   size of the set */
-    word id;			/*   identification number */
+    uword id;			/*   identification number */
     word mask;			/*   mask for slot num, equals n slots - 1 */
     struct b_slots *hdir[HSegs];	/*   directory of hash slot segments */
 };
@@ -258,7 +258,7 @@ struct b_set {			/* set-header block */
 struct b_table {		/* table-header block */
     word title;			/*   T_Table */
     word size;			/*   current table size */
-    word id;			/*   identification number */
+    uword id;			/*   identification number */
     word mask;			/*   mask for slot num, equals n slots - 1 */
     struct b_slots *hdir[HSegs];	/*   directory of hash slot segments */
     struct descrip defvalue;	/*   default table element value */
@@ -433,11 +433,11 @@ struct progstate {
 
     int  *is_named_global;              /* Array matching Globals, indicating which are named globals (ie pre-set and constant) */
 
-    word Coexp_ser;			/* this program's serial numbers */
-    word List_ser;
-    word Set_ser;
-    word Table_ser;
-    word Weakref_ser;
+    uword Coexp_ser;			/* this program's serial numbers */
+    uword List_ser;
+    uword Set_ser;
+    uword Table_ser;
+    uword Weakref_ser;
 
     word Kywd_time_elsewhere;		/* &time spent in other programs */
     word Kywd_time_out;			/* &time at last program switch out */
@@ -520,7 +520,7 @@ struct progstate {
 struct b_coexpr {		/* co-expression block */
     word title;			/*   T_Coexpr */
     word size;			/*   number of results produced */
-    word id;			/*   identification number */
+    uword id;			/*   identification number */
     dptr tvalloc;		/*   where to place transmitted value */
     struct b_coexpr *activator; /*   this coexpression's activator */
     struct progstate *main_of;  /*   set to the parent program for all &main co-expressions;

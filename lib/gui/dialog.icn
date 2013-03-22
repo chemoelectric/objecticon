@@ -298,24 +298,28 @@ class Dialog(Component)
       self.menu_mode := c
       popups := []
       win.grab_pointer()
+      return self
    end
 
    public exit_menu_mode()
       (\self.menu_mode := &null) | syserr("internal error - not  in menu mode.")
       win.ungrab_pointer()
       popups := &null
+      return self
    end
 
    public add_popup(d)
       \popups | syserr("internal error - not  in menu mode.")
       d.popup_manager := self
       put(popups, d)
+      return self
    end
 
    public remove_popup(d)
       \popups | syserr("internal error - not  in menu mode.")
       d.popup_manager := &null
       ldel(popups, d)
+      return self
    end
 
    public which_popup(ex, ey)
@@ -658,6 +662,7 @@ $endif
    public hold(c, ec)
       self.held[ec] := copy(\self.held[ec]) | fail
       put(self.held[ec], c)
+      return self
    end
 
    #
@@ -668,6 +673,7 @@ $endif
    public release(c, ec)
       self.held[ec] := copy(\self.held[ec]) | fail
       ldel(self.held[ec], c)
+      return self
    end
 
    #
@@ -816,8 +822,7 @@ $endif
             set_x(win.get_x() + win.get_dx() + self.tooltip_component.x).
             set_y(win.get_y() + win.get_dy() + self.tooltip_component.y)
          self.tooltip_component.set_pos(0, 0)
-         d.add(self.tooltip_component)
-         d.show()
+         d.add(self.tooltip_component).show()
       } else
          self.tooltip_component.invalidate()
    end

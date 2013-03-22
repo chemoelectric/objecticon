@@ -64,7 +64,6 @@ final class Shm(NoCopy)
    end
 
    private new(id)
-      \Ipc.LOADED | return error("Shm ipc not supported")
       self.id := id
       return
    end
@@ -74,6 +73,7 @@ final class Shm(NoCopy)
    # if no such shared variable exists.
    #
    public static open_public(key)
+      \Ipc.LOADED | return error("Shm ipc not supported")
       return Shm(open_public_impl(key))
    end
 
@@ -81,6 +81,7 @@ final class Shm(NoCopy)
    # Create a new public shared variable with the given key and initial value
    #
    public static create_public(key, o)
+      \Ipc.LOADED | return error("Shm ipc not supported")
       return Shm(create_public_impl(key, encode(o, 1)))
    end
 
@@ -88,6 +89,7 @@ final class Shm(NoCopy)
    # Create a new private shared variable with the given initial value
    #
    public static create_private(o)
+      \Ipc.LOADED | return error("Shm ipc not supported")
       return Shm(create_private_impl(encode(o, 1)))
    end
 end

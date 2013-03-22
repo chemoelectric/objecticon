@@ -144,9 +144,9 @@ class Circulate(SelectionList,Component)
       self.preferred_focus := self.l := CirculateLabel()
       self.l.set_accepts_focus(&yes)
       add(self.l)
-      self.b := IconButton()
-      self.b.set_accepts_focus(&no)
-      self.b.connect(self.on_button_pressed, Event.ACTION)
+      self.b := IconButton().
+         set_accepts_focus(&no).
+         connect(self.on_button_pressed, Event.ACTION)
       add(self.b)
       self.b.set_image("13,c1,_
 ~~~~0000~~~~~_

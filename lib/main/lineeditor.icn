@@ -412,7 +412,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
    end
 end
 
-class LineEditorEdit(UndoableEdit)
+abstract class LineEditorEdit(UndoableEdit)
    protected
       parent,
       pos
@@ -432,8 +432,8 @@ class LineEditorEdit(UndoableEdit)
       restore()
    end
 
-   protected defer redo_impl()
-   protected defer undo_impl()
+   protected abstract redo_impl()
+   protected abstract undo_impl()
 
    private save()
       self.pos := parent.pos
@@ -547,13 +547,13 @@ class LineEditorAssignEdit(LineEditorEdit)
       }
    end
 
-   public redo_impl()
+   protected redo_impl()
       pre := parent.subj
       parent.subj := s
       parent.pos := *s + 1
    end
 
-   public undo_impl()
+   protected undo_impl()
       parent.subj := pre
    end
 
