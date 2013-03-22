@@ -261,8 +261,8 @@ class Dir9PImpl(Dir9P)
 end
 
 abstract class Regular9P(File9P)
-   public abstract write(s, pos)
-   public abstract read(pos, count)
+   public defer write(s, pos)
+   public defer read(pos, count)
 end
 
 class Regular9PImpl(Regular9P)
