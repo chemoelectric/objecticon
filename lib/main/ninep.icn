@@ -1158,8 +1158,7 @@ class Session9P()
          valid := set()
          use {
             ts := TaskStream(f, t).set_close_underlying(&no),
-            repeat {
-               x := Comms9P.get(ts) | break
+            while x := Comms9P.get(ts) do {
                if \verbose then write("GOT:", to_string(x))
                if is(x, TFlush) then {
                   y := respond(x)
