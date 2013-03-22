@@ -35,7 +35,7 @@ record Tinvalid()
 record Info(mode, atime, mtime, length, name, uid, gid, muid)
 record Qid(type, version, path)
 
-class File9P()
+abstract class File9P()
    private readable
       parent,
       name,
