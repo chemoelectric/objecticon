@@ -2,7 +2,6 @@ package ipl.browser
 
 import 
    gui,
-   graphics,
    ipl.strings,
    ipl.sort
 
@@ -692,6 +691,11 @@ class TextFlow(Component)
          self.browser.goto(wrote, browser.page_url, Worker.NORMAL)
    end
 
+   private handle_mrelease(e)
+      if \wrote then
+         self.browser.link_mrelease(wrote)
+   end
+
    private handle_lpress(e)
       local c, t
       if t := which_text_out(e) then {
@@ -704,17 +708,9 @@ class TextFlow(Component)
       held := wrote
    end
 
-   private copy_link(u)
-      parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([u]))
-   end
-
    private handle_rpress(e)
-      local pm, pm_menu, u
-      if u := \wrote then {
-         pm_menu := Menu()
-         pm_menu.add(TextMenuItem().
-                     set_label("Copy link").
-                     connect(create copy_link(u), Event.ACTION))
+      local pm, pm_menu
+      if pm_menu := browser.create_link_menu(\wrote) then {
          pm := PopupMenu()
          pm.popup(parent_dialog, pm_menu, e.x, e.y)
       }
@@ -775,6 +771,7 @@ class TextFlow(Component)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       connect(self.handle_exit, Event.MOUSE_EXIT)
       connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
+      connect(self.handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
       return
     end
 end
