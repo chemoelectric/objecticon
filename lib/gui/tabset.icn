@@ -88,6 +88,15 @@ class TabSet(Component)
       return member(Key.CURSOR_H, e.code)
    end
 
+   public invalidate_tab_region()
+      local r
+      r := if /self.tabs_at_bottom_flag then
+         Rect(self.x + border.get_l_inset(), self.y + border.get_t_inset(), self.w - border.get_total_width(), self.tab_h)
+      else
+         Rect(self.x + border.get_l_inset(), self.y + self.h - border.get_b_inset() - self.tab_h, self.w - border.get_total_width(), self.tab_h)
+      return invalidate(r)
+   end
+
    public display_tabs_at_top()
       local l, c, ypos, nx, r
 

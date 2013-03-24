@@ -41,7 +41,7 @@ class TabItem(Component)
          (\self.label_border).finally()
          self.label_border := b
          self.label_border.initially(parent)
-         self.parent.invalidate()
+         self.parent.invalidate_tab_region()
       } else
          self.label_border := b
       return self
@@ -52,7 +52,7 @@ class TabItem(Component)
          (\self.paint).finally()
          self.paint := p
          self.paint.initially(parent, self.accel)
-         self.parent.invalidate()
+         self.parent.invalidate_tab_region()
       } else
          self.paint := p
       return self
