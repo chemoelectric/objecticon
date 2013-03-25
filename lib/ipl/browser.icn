@@ -19,24 +19,25 @@ $load BROKEN_LINK "rpp.BROKEN_LINK_24.gif"
 
 class Req()
    public const
-      browser, url, referer, callback, kind, form_data
+      client, url, referer, callback, kind, form_data, on_status
 
-   public new(browser, url, referer, callback, kind, form_data)
-      self.browser := browser
+   public new(client, url, referer, callback, kind, form_data, on_status)
+      self.client := client
       self.url := url 
       self.referer := referer
       self.callback := callback
       self.kind := kind
       self.form_data := form_data
+      self.on_status := on_status
       return
    end
 end
 
 class Resp()
    public const
-      err, url, referer, data, fname, content_type, kind, form_data
+      err, url, referer, data, fname, content_type, kind, form_data, data_file
 
-   public new(err, url, referer, data, fname, content_type, kind, form_data)
+   public new(err, url, referer, data, fname, content_type, kind, form_data, data_file)
       self.err := err
       self.url := url
       self.referer := referer
@@ -45,6 +46,7 @@ class Resp()
       self.content_type := content_type
       self.kind := kind
       self.form_data := form_data
+      self.data_file := data_file
       return
    end
 end
@@ -119,17 +121,18 @@ end
 
 class Worker()
    private
-      pool, httpc
+      pool, httpc, tmp_file
 
    private readable
       doing, task, cancelled
    
-   public static const NORMAL, NAVIGATE, REFRESH
+   public static const NORMAL, NAVIGATE, REFRESH, DOWNLOAD
 
    private static init()
       NORMAL := 1
       NAVIGATE := 2
       REFRESH := 3
+      DOWNLOAD := 4
    end
 
    public initially()
@@ -140,7 +143,7 @@ class Worker()
       if \doing then
          cancel()
       else {
-         (\httpc).close()
+         httpc.close()
          task.stop()
       }
    end
@@ -150,11 +153,19 @@ class Worker()
          cancelled := 1
          task.interrupt()
          httpc.abort()
+         if \tmp_file then {
+            Files.remove(tmp_file)
+            tmp_file := &null
+         }
       }
    end
 
    public read()
       return httpc.get_read()
+   end
+
+   public length()
+      return httpc.get_length()
    end
 
    private dwrite(a[])
@@ -236,6 +247,10 @@ class Worker()
          return Files.file_to_string(f)
    end
 
+   private status(ev, src, type)
+      (\(\doing).on_status)(ev, src, type)
+   end
+
    private setup_httpc()
       httpc := HttpClient().
          set_task(task).
@@ -243,6 +258,15 @@ class Worker()
          set_authentications(pool.authentications).
          set_authentication_function(pool.authentication_function)
       httpc.set_user_agent(\pool.user_agent)
+
+      every httpc.connect(status, 
+                          NetClient.CONNECTING_EVENT |
+                          NetClient.CONNECTED_EVENT |
+                          NetClient.CLOSED_EVENT |
+                          HttpClient.COMPLETE_EVENT |
+                          HttpClient.FAILED_EVENT |
+                          HttpClient.ABORTED_EVENT |
+                          HttpClient.RETRYING_EVENT) 
 
       if \pool.log_http_flag then {
          httpc.connect(failed, HttpClient.FAILED_EVENT).
@@ -286,7 +310,33 @@ class Worker()
       local s, data, hreq, hres, fname, ct, x, ce
       if r.kind ~= REFRESH & /r.form_data & (ce := pool.cache.get(r.url)) then
          r.callback(Resp(, r.url, r.referer, ce.data, ce.fname, ce.content_type, r.kind))
-      else use {
+      else if r.kind = DOWNLOAD then {
+         tmp_file := Files.make_temp_filename("http_oibrowser.", ".bin") | stop("Couldn't create temp file: ", &why)
+         s := BufferStream(FileStream(tmp_file, 
+                                      ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))).
+            set_buff_size(8192) | stop("Couldn't open ", tmp_file, ": ", &why)
+         hreq := HttpRequest().
+            set_output_stream(s). 
+            set_url(r.url).
+            set_header("Accept-charset", "UTF-8, ISO-8859-1")
+         if (\r.referer).scheme ~== u"file" then
+            hreq.set_referer(r.referer.str())
+         if hres := httpc.retrieve(hreq) then {
+            s.close()
+            fname := hres.get_filename()
+            ct := ContentType.parse(hres.get_first_header("Content-Type"))
+            # Note that cancelling removes tmp_file
+            if /cancelled then
+               r.callback(Resp(, hres.url, r.referer,, fname, ct, r.kind, 
+                               if hreq.url === hres.url then r.form_data else &null, tmp_file))
+         } else {
+            s.close()
+            if /cancelled then {
+               save_why{Files.remove(tmp_file)}
+               r.callback(Resp(&why, r.url, r.referer,,,, r.kind, r.form_data))
+            }
+         }
+      } else use {
          s := RamStream(),
          {
             hreq := HttpRequest().
@@ -350,7 +400,6 @@ class Worker()
    end
 
    private run()
-      setup_httpc()
       repeat {
          while /pool.active do {
             # finally() has been called; close resources and revert
@@ -370,6 +419,7 @@ class Worker()
    public new(pool)
       self.pool := pool
       task := Dispatcher.new_task{run()}
+      setup_httpc()
       return
    end
 end
@@ -403,23 +453,33 @@ class WorkerPool()
       clear(queue)
    end
 
-   public cancel(browser)
+   public cancel(client)
       local w
-      delete(queue, browser)
+      delete(queue, client)
       every w := !workers do 
-         if (\w.doing).browser === browser then
+         if (\w.doing).client === client then
             w.cancel()
+   end
+
+   public get_worker(req)
+      local w
+      every w := !workers do 
+         if w.doing === req then
+            return w
    end
 
    public start_worker(req)
       local w, l
-      if l := member(queue, req.browser) then
+      if l := member(queue, req.client) then
          put(l, req)
       else
-         insert(queue, req.browser, [req])
+         insert(queue, req.client, [req])
+      # Wake up a sleeping task if possible
       every w := !workers do 
-         if w.task ~=== Dispatcher.scheduler.curr_task then
+         if w.task.is_sleeping() then {
             w.task.notify()
+            break
+         }
    end
 
    public queue_size()
@@ -434,24 +494,24 @@ class WorkerPool()
       l := ?queue | fail
       r := get(l) | syserr("Empty list in queue table")
       if *l = 0 then
-         delete(queue, r.browser)
+         delete(queue, r.client)
       return r
    end
 
-   public count(browser)
+   public count(client)
       local i, w
-      i := *member(queue, browser) | 0
+      i := *member(queue, client) | 0
       every w := !workers do 
-         if (\w.doing).browser === browser then
+         if (\w.doing).client === client then
             i +:= 1
       return i
    end
 
-   public read(browser)
+   public read(client)
       local i, w
       i := 0
       every w := !workers do 
-         if (\w.doing).browser === browser then
+         if (\w.doing).client === client then
             i +:= w.read()
       return i
    end
@@ -2197,7 +2257,8 @@ class Browser(Component)
             }
             add_component(p, q, context, Align.B)
          }
-         "text" | "password": {
+         # Assume something textual; could be password, text, email etc.
+         default: {
             v := e.get_attribute(u"VALUE") | u""
             use {
                mW := cbwin.clone().set_font(context.font),

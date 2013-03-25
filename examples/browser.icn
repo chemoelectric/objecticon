@@ -9,7 +9,8 @@ import
    http,
    net,
    ipl.options,
-   ipl.browser
+   ipl.browser,
+   ipl.lists
 
 global opts
 
@@ -20,19 +21,24 @@ $load HOME "rpp.HOME_24.gif"
 $load STOP "rpp.STOP_24.gif"
 $load PASTE "rpp.PASTE_24.gif"
 $load REFRESH "rpp.REFRESH_24.gif"
+$load CLEAR "rpp.CLEAR_24.gif"
 
 class Settings()
    public
       home_url,
       cache_size_mb,
       visited,
-      visited_size
+      visited_size,
+      pool_size,
+      destination_dir
 
    public new()
       home_url := URL(u"config:")
       cache_size_mb := 8
+      pool_size := 6
       visited := []
       visited_size := 100
+      destination_dir := "/tmp"
       return
    end
 end
@@ -93,7 +99,9 @@ class BrowserDialog(Dialog)
       home_button,
       search_field,
       next_button,
-      file_dialog
+      file_dialog,
+      directory_dialog,
+      downloads
 
    private on_copy_page_url_item(ev)
       own_selection(Selection.CLIPBOARD, URLSelectionOwner([tabs.which_one.browser.page_url]))
@@ -112,7 +120,11 @@ class BrowserDialog(Dialog)
    end
 
    private update_grey()
-      tabs.which_one.browser.do_update_grey()
+      if is(tabs.which_one, DownloadTab) then {
+         copy_page_url_item.set_is_shaded(&yes)
+         save_page_item.set_is_shaded(&yes)
+      } else
+         tabs.which_one.browser.do_update_grey()
    end
 
    public initially()
@@ -158,7 +170,7 @@ class BrowserDialog(Dialog)
    private list_all_cookies()
       local s, e
       s := "<html><head><title>Cookies</title></head>"
-      every e := (!sort(browser.cookies))[1] do
+      every e := (!sort(pool.cookies))[1] do
          s ||:= "<a href=config:cookie?q=" || URL.cgi_encode(e) || ">" || e || "</a><br>"
       s ||:= "</html>"
       return s
@@ -166,28 +178,28 @@ class BrowserDialog(Dialog)
 
    private del_cookie(k, path, name)
       local t1, t2
-      if t1 := member(browser.cookies, k) &
+      if t1 := member(pool.cookies, k) &
          t2 := member(t1, path) then
       {
          delete(t2, map(name))
          if *t2 = 0 then {
             delete(t1, path)
             if *t1 = 0 then
-               delete(browser.cookies, k)            
+               delete(pool.cookies, k)            
          }
       }
       return list_cookie(k)
    end
 
    private del_cookies(k)
-      delete(browser.cookies, k)            
+      delete(pool.cookies, k)            
       return list_all_cookies()
    end
 
    private list_cookie(k)
       local s, t, path, ck
       s := "<html><head><title>Cookies</title></head>"
-      if t := member(browser.cookies, k) then {
+      if t := member(pool.cookies, k) then {
          s ||:= "<a href=config:del_cookies?q=" || URL.cgi_encode(k) || ">Delete all</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=config:cookies>Back to list</a>"
          every path := key(t) do {
             every ck := !t[path] do {
@@ -204,10 +216,11 @@ class BrowserDialog(Dialog)
       return s
    end
 
-   private edit_settings(home, cn, vn)
+   private edit_settings(home, cn, vn, pn)
       settings.home_url := URL(ucs(home))
       settings.cache_size_mb := integer(cn)
       settings.visited_size := integer(vn)
+      settings.pool_size := integer(pn)
       return config_main()
    end
 
@@ -220,6 +233,7 @@ class BrowserDialog(Dialog)
                    <tr><td>Home page:<td><input type=text name=home value=" || xml_escape(settings.home_url.str(), ~(&letters++&digits)) || " size=50 /></tr>_
                    <tr><td>Cache size (MB):<td><input type=text name=cache value=" || settings.cache_size_mb || " size=50 /></tr>_
                    <tr><td>Visited list size:<td><input type=text name=vsize value=" || settings.visited_size || " size=50 /></tr>_
+                   <tr><td>Worker pool size:<td><input type=text name=psize value=" || settings.pool_size || " size=50 /></tr>_
                  </table>_
                  <input type=submit />_
               </form></fieldset></html>"
@@ -239,7 +253,7 @@ class BrowserDialog(Dialog)
          }
          "submit": {
             if t := req.url.extract_cgi_parameters() then
-               edit_settings(member(t, "home")[1], member(t, "cache")[1], member(t, "vsize")[1])
+               edit_settings(member(t, "home")[1], member(t, "cache")[1], member(t, "vsize")[1],  member(t, "psize")[1])
          }
       } | error("Bad config request")
    end
@@ -264,6 +278,7 @@ class BrowserDialog(Dialog)
       if \opts["l"] then
          pool.set_log_http(&yes)
       file_dialog := FileDialog()
+      directory_dialog := DirectoryDialog()
       self.set_size(600, 650)
       self.set_resize(&yes)
       new_tab_item := TextMenuItem().
@@ -297,6 +312,7 @@ class BrowserDialog(Dialog)
          add(menu)
       self.add(menu_bar)
       bt := BrowserTab(s, pool, settings)
+      downloads := DownloadTab(settings)
       tabs := TabSet().
          set_size("200", "150").
          clear_constraints().
@@ -309,6 +325,7 @@ class BrowserDialog(Dialog)
          set_constraint("t_inset", 0).
          set_constraint("b_inset", 0).
          add(bt).
+         add(downloads).
          set_which_one(bt).
          connect(on_tab_changed, Event.SELECTION_CHANGED).
          set_no_click_focus(1)
@@ -318,6 +335,407 @@ class BrowserDialog(Dialog)
       self.set_focus(bt.search_field.find_focus())
       set_label("Browser")
       return
+   end
+end
+
+class LogDialog(Dialog)
+   public log
+
+   public on_close_button(ev)
+      dispose()
+   end
+
+   public new()
+      cast(self,Dialog).new()
+      self.setup()
+      return
+   end
+
+   private setup()
+      local close_button
+      set_label("Item log")
+      set_resize(&yes)
+      log := EditableTextList().
+         set_size(500, 269).
+         set_constraint("eol", &yes).
+         set_contents([""]).
+         set_is_editable(&no)
+      add(log)
+      close_button := TextButton().
+         connect(on_close_button, Event.ACTION).
+         set_toggles(&no).
+         set_paint(TextPaint("Close"))
+      add(close_button)
+      connect(on_close_button, Event.WINDOW_CLOSE_BUTTON)
+      set_layout(GridLayout().set_extra("cells"))
+   end
+end
+
+class Download()
+   private readable
+      parent, req, resp, status, size, full_path, dialog
+
+   private log(s)
+      dialog.log.log([&clock || ": " || ucs(s)], 500)
+   end
+
+   private on_status(ev, src, type)
+      local s
+      s := type
+      if type == HttpClient.RETRYING_EVENT then
+         s ||:= ": " || &why
+      log(s)
+   end
+
+   private got_data(r)
+      local fname
+      resp := r
+      if \r.err then {
+         log("Failed to download:" || r.err)
+         status := "Failed"
+      } else {
+         fname := resp.fname
+         if *fname = 0 then
+            fname := "browser.out"
+         full_path := Files.ensure_unique_filename(FilePath(parent.settings.destination_dir).child(fname).canonical().str())
+         if \r.data then {
+            if Files.string_to_file(full_path, r.data) then {
+               log("Result file:" || full_path)
+               status := "Done"
+            } else {
+               save_why{Files.remove(full_path)}
+               log("Unable to create " || full_path || ": " || &why)
+               status := "Failed"
+            }
+         } else {
+            if Files.move(r.data_file, full_path) then {
+               log("Result file:" || full_path)
+               status := "Done"
+            } else {
+               save_why{every Files.remove(r.data_file | full_path)}
+               log("Unable to move " || r.data_file || " to " || full_path || ": " || &why)
+               status := "Failed"
+            }
+         }
+      }
+   end
+
+   public get_status()
+      local w, l
+      if w := parent.parent_dialog.pool.get_worker(req) then {
+         if l := w.length() then {
+            size := Format.numeric_to_string(l / 1048576.0, 1)
+            status := "Downloading (" || ((w.read() * 100) / l) || "%)"
+         } else {
+            size := ""
+            status := "Downloading (" || Format.numeric_to_string(w.read() / 1048576.0, 1) || "MB)"
+         }
+      }
+      return [req.url.str(), size, status, self]
+   end
+
+   public new(parent, url, referer)
+      self.parent := parent
+      self.status := "New"
+      size := ""
+      self.req := Req(self, url, referer, got_data, Worker.DOWNLOAD,, on_status)
+      self.dialog := LogDialog()
+      log("Log for " || url.str())
+      return
+   end
+end
+
+class DownloadTab(TabItem)
+   private readable
+      settings,
+      close_button,
+      paste_url_button,
+      destination_button,
+      clear_done_button,
+      search_field,
+      message_label,
+      ticker,
+      dl,
+      url_table
+
+   private update_title()
+      local s, n, e
+      s := "Downloads"
+      n := 0
+      every e := !dl do {
+         if not(e.status == ("Done" | "Failed")) then
+            n +:= 1
+      }         
+      if n > 0 then
+         s ||:= " (" || n || ")"
+      set_paint(TextPaint(s))
+   end
+
+   private on_search_field(ev)
+      local s, u
+      s := search_field.get_contents()
+      if *s = 0 then
+         fail
+      if u := URL(s) then
+         download(u)
+      else
+         msg("Not a valid URL")
+   end
+
+   private on_close_button(ev)
+      local t
+      if *parent.children > 1 then {
+         t := parent.children[parent.get_index(self) + 1 | 1]
+         parent.
+            remove(self).
+            set_which_one(t).
+            do_layout().
+            invalidate()
+      } else
+         parent_dialog.dispose()
+   end
+
+   private handle_paste_response(target_type, data, e)
+      if /data then
+         fail
+      data ?:= tab(upto('\r\n'))
+      search_field.set_contents(data)
+   end
+
+   private on_paste_url(ev)
+      parent_dialog.request_selection(Selection.CLIPBOARD, 
+                        ["text/uri-list", Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                        handle_paste_response, 
+                        ev)
+   end
+
+   private on_log(ev)
+      local d
+      d := url_table.table_content.object_get_gesture_selections()[1][-1]
+      d.dialog.show(parent_dialog)
+   end
+
+   private on_copy_urls(ev)
+      local l
+      l := []
+      every put(l, (!url_table.table_content.object_get_gesture_selections())[-1].req.url)
+      parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner(l))
+   end
+
+   private on_copy_result(ev)
+      local s
+      s := url_table.table_content.object_get_gesture_selections()[1][-1].full_path
+      parent_dialog.own_selection(Selection.CLIPBOARD, 
+                                  StaticTextSelectionOwner(s))
+   end
+
+   private on_delete(ev)
+      local d
+      d := url_table.table_content.object_get_gesture_selections()[1][-1]
+      parent_dialog.pool.cancel(d)
+      ldel1(dl, d)
+      refresh()
+   end
+
+   public msg(s, n)
+      message_label.set(TextPaint(s), n)
+   end
+
+   public clear_msg()
+      message_label.set()
+   end
+
+   private on_set_destination(ev)
+      local d, s
+      clear_msg()
+      d := parent_dialog.directory_dialog
+      d.set_directory(settings.destination_dir)
+      d.show_modal(parent_dialog)
+      s := d.get_result() | fail
+      if *s = 0 then
+         msg("Enter a directory")
+      else if not(Files.is_directory(s)) then
+         msg(s || " is not a directory")
+      else
+         settings.destination_dir := s
+   end
+
+   private on_clear_done(ev)
+      local i
+      i := 1
+      while i <= *dl do {
+         if dl[i].status == ("Done" | "Failed") then
+            delete(dl, i)
+         else
+            i +:= 1
+      }
+      refresh()
+   end
+
+   private refresh()
+      ticker.interrupt()
+   end
+
+   private on_table_rpress(ev)
+      local popup, menu, l
+
+      clear_msg()
+
+      # Ensure something is there to popup onto...
+      url_table.get_line_under_pointer(ev) | fail
+      l := url_table.table_content.object_get_gesture_selections() | fail
+
+      menu := Menu()
+      if *l = 1 then {
+         menu.add(TextMenuItem().
+            set_label("Log...").
+            connect(self.on_log, Event.ACTION))
+         menu.add(TextMenuItem().
+            set_label("Copy URL").
+            connect(self.on_copy_urls, Event.ACTION))
+         if \l[1][-1].full_path then {
+            menu.add(TextMenuItem().
+               set_label("Copy result").
+               connect(self.on_copy_result, Event.ACTION))
+         }
+         menu.add(TextMenuItem().
+               set_label("Delete").
+               connect(self.on_delete, Event.ACTION))
+      } else {
+         menu.add(TextMenuItem().
+            set_label("Copy URLs").
+            connect(self.on_copy_urls, Event.ACTION))
+      }
+
+      popup := PopupMenu()
+      popup.popup(self, menu, ev.x, ev.y)
+   end
+
+   private tick()
+      local l
+      repeat {
+         l := []
+         every put(l, (!dl).get_status())
+         equals(l, url_table.get_contents()) | {
+            url_table.set_contents(l)
+            update_title()
+         }
+         ticker.sleep(750)
+      }
+   end
+
+   public initially()
+      cast(self,TabItem).initially()
+      ticker.start()
+   end
+
+   public finally()
+      cast(self,TabItem).finally() 
+      ticker.stop()
+   end
+
+   public download(url, referer)
+      local d
+      d := Download(self, url, referer)
+      put(dl, d)
+      parent_dialog.pool.start_worker(d.req)
+   end
+
+   public new(settings)
+      cast(self,TabItem).new()
+      self.settings := settings
+      set_label_border(EmptyBorder().set_x_align(Align.L))
+      setup()
+      ticker := Dispatcher.new_task{tick()}
+      dl := []
+      update_title()
+      return
+   end
+
+   private setup()
+      local panel, border
+      close_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(TextPaint("Close")).
+         set_accel("c").
+         connect(self.on_close_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(ImagePaint().set_cache("rpp.EXIT_24"))
+      destination_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(TextPaint("Destination...")).
+         connect(self.on_set_destination, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(ImagePaint().set_cache("gui.UP_24"))
+      clear_done_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(TextPaint("Clear done")).
+         connect(self.on_clear_done, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(ImagePaint().set_cache("rpp.CLEAR_24"))
+      paste_url_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(TextPaint("Paste URL")).
+         connect(self.on_paste_url, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(ImagePaint().set_cache("rpp.PASTE_24"))
+      panel := Panel().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_align", Align.L).
+         set_layout(GridLayout().set_doi(0).set_dii(2).set_extra("cells")).
+         add(close_button).
+         add(destination_button).
+         add(clear_done_button).
+         add(paste_url_button)
+      self.add(panel)
+      search_field := TextField().
+         set_size("100").
+         set_align(Align.C, Align.T).
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         connect(self.on_search_field, Event.ACTION).
+         set_contents("")
+      self.add(search_field)
+      url_table := Table().
+         set_size("600", "258").
+         set_select_mode(Select.MANY).
+         set_constraint("eol", &yes).
+         set_contents([]).
+         add_column(TableColumn().set_label("URL")).
+         add_column(TableColumn().set_label("MB").set_column_width(35).set_column_align(Align.R)).
+         add_column(TableColumn().set_label("State").set_column_width(155))
+      url_table.table_content.connect(self.on_table_rpress, Event.MOUSE_RIGHT_PRESS)
+      self.add(url_table)
+      border := CompoundBorder().
+         set_outer(SunkenBorder()).
+         set_inner(EmptyBorder().
+            set_l_inset(3)).
+         set_x_align(Align.L)
+      message_label := MessageLabel().
+         set_size("100").
+         set_align(Align.L, Align.B).
+         set_fg("red").
+         clear_constraints().
+         set_constraint("b_inset", 0).
+         set_constraint("l_inset", 0).
+         set_constraint("r_inset", 0).
+         set_constraint("x_fill", &yes).
+         set_border(border).
+         set_paint(TextPaint(""))
+      self.add(message_label)
+      self.set_layout(GridLayout().set_extra("cells"))
    end
 end
 
@@ -370,12 +788,19 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([url]))
    end
 
+   private download(url, referer)
+      parent_dialog.downloads.download(url, referer)
+   end
+
    public create_link_menu(url)
       local m
       m := Menu()
       m.add(TextMenuItem().
             set_label("Copy link").
             connect(create copy_link(url), Event.ACTION))
+      m.add(TextMenuItem().
+            set_label("Download").
+            connect(create download(url, browser.page_url), Event.ACTION))
       return m
    end
 
@@ -385,10 +810,14 @@ class BrowserTab(TabItem, BrowserUI)
       m.add(TextMenuItem().
             set_label("Copy image").
             connect(create copy_link(url), Event.ACTION))
-      if \link_url then
+      if \link_url then {
          m.add(TextMenuItem().
                set_label("Copy link").
                connect(create copy_link(link_url), Event.ACTION))
+         m.add(TextMenuItem().
+               set_label("Download").
+               connect(create download(link_url, browser.page_url), Event.ACTION))
+      }
       if \img_data then
          m.add(TextMenuItem().
                set_label("Save image...").
@@ -635,6 +1064,8 @@ procedure main(a)
    cookies := \opts["k"] | System.getenv("OICOOKIES") | home.child(".oicookies").str()
    t := decode(Files.file_to_string(cookies)) | table()
    settings := decode(Files.file_to_string(sf)) | Settings()
+   /settings.pool_size := 6
+   /settings.destination_dir := "/tmp"
    ImageCache.name_image("rpp.EXIT_24", EXIT)
    ImageCache.name_image("rpp.NEXT_24", NEXT)
    ImageCache.name_image("rpp.PREV_24", PREV)
@@ -642,6 +1073,7 @@ procedure main(a)
    ImageCache.name_image("rpp.REFRESH_24", REFRESH)
    ImageCache.name_image("rpp.PASTE_24", PASTE)
    ImageCache.name_image("rpp.STOP_24", STOP)
+   ImageCache.name_image("rpp.CLEAR_24", CLEAR)
    s := ucs(a[1])
    d := BrowserDialog(s, t, settings)
    d.show_modal()
