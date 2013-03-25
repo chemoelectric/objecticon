@@ -141,10 +141,11 @@ class BrowserDialog(Dialog)
       local bt
       bt := BrowserTab(url, pool, settings)
       tabs.
-         add(bt).
-         set_which_one(bt).
+         add(bt, -1).
          do_layout().
          invalidate()
+      if /url then
+         tabs.set_which_one(bt)
       update_grey()
    end
 
@@ -448,7 +449,6 @@ end
 class DownloadTab(TabItem)
    private readable
       settings,
-      close_button,
       paste_url_button,
       destination_button,
       clear_done_button,
@@ -480,19 +480,6 @@ class DownloadTab(TabItem)
          download(u)
       else
          msg("Not a valid URL")
-   end
-
-   private on_close_button(ev)
-      local t
-      if *parent.children > 1 then {
-         t := parent.children[parent.get_index(self) + 1 | 1]
-         parent.
-            remove(self).
-            set_which_one(t).
-            do_layout().
-            invalidate()
-      } else
-         parent_dialog.dispose()
    end
 
    private handle_paste_response(target_type, data, e)
@@ -639,6 +626,7 @@ class DownloadTab(TabItem)
       d := Download(self, url, referer)
       put(dl, d)
       parent_dialog.pool.start_worker(d.req)
+      refresh()
    end
 
    public new(settings)
@@ -654,15 +642,6 @@ class DownloadTab(TabItem)
 
    private setup()
       local panel, border
-      close_button := IconButton().
-         set_align(Align.L, Align.C).
-         clear_constraints().
-         set_tooltip(TextPaint("Close")).
-         set_accel("c").
-         connect(self.on_close_button, Event.ACTION).
-         set_no_click_focus(&yes).
-         set_toggles(&no).
-         set_paint(ImagePaint().set_cache("rpp.EXIT_24"))
       destination_button := IconButton().
          set_align(Align.L, Align.C).
          clear_constraints().
@@ -692,7 +671,6 @@ class DownloadTab(TabItem)
          set_constraint("eol", &yes).
          set_constraint("x_align", Align.L).
          set_layout(GridLayout().set_doi(0).set_dii(2).set_extra("cells")).
-         add(close_button).
          add(destination_button).
          add(clear_done_button).
          add(paste_url_button)
@@ -757,15 +735,13 @@ class BrowserTab(TabItem, BrowserUI)
 
    private on_close_button(ev)
       local t
-      if *parent.children > 1 then {
-         t := parent.children[parent.get_index(self) + 1 | 1]
-         parent.
-            remove(self).
-            set_which_one(t).
-            do_layout().
-            invalidate()
-      } else
-         parent_dialog.dispose()
+      # There will always be a tab to the right of this one (it may be the download tab).
+      t := parent.children[parent.get_index(self) + 1] | syserr("Couldn't find other tab")
+      parent.
+         remove(self).
+         set_which_one(t).
+         do_layout().
+         invalidate()
    end
 
    public get_label_width()
