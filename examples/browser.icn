@@ -383,13 +383,15 @@ class Download()
    private on_status(ev, src, type)
       local s
       s := type
-      if type == HttpClient.RETRYING_EVENT then
-         s ||:= ": " || &why
+      case type of {
+         HttpClient.RETRYING_EVENT:  s ||:= ": " || &why
+         NetClient.CONNECTING_EVENT: s ||:= " to " || src.server || ":" || src.port
+      }
       log(s)
    end
 
    private got_data(r)
-      local fname
+      local fname, n
       resp := r
       if \r.err then {
          log("Failed to download:" || r.err)
@@ -401,7 +403,7 @@ class Download()
          full_path := Files.ensure_unique_filename(FilePath(parent.settings.destination_dir).child(fname).canonical().str())
          if \r.data then {
             if Files.string_to_file(full_path, r.data) then {
-               log("Result file:" || full_path)
+               log("Result file:" || full_path || " (" || Format.numeric_to_string(*r.data, 0, ',') || " bytes)")
                status := "Done"
             } else {
                save_why{Files.remove(full_path)}
@@ -409,8 +411,9 @@ class Download()
                status := "Failed"
             }
          } else {
+            n := Files.stat(r.data_file).size | 0
             if Files.move(r.data_file, full_path) then {
-               log("Result file:" || full_path)
+               log("Result file:" || full_path || " (" || Format.numeric_to_string(n, 0, ',') || " bytes)")
                status := "Done"
             } else {
                save_why{every Files.remove(r.data_file | full_path)}
@@ -433,6 +436,12 @@ class Download()
          }
       }
       return [req.url.str(), size, status, self]
+   end
+
+   public retrying()
+      self.status := "New"
+      size := ""
+      log("Retrying download")
    end
 
    public new(parent, url, referer)
@@ -487,6 +496,7 @@ class DownloadTab(TabItem)
          fail
       data ?:= tab(upto('\r\n'))
       search_field.set_contents(data)
+      parent_dialog.set_focus(search_field)
    end
 
    private on_paste_url(ev)
@@ -496,12 +506,6 @@ class DownloadTab(TabItem)
                         ev)
    end
 
-   private on_log(ev)
-      local d
-      d := url_table.table_content.object_get_gesture_selections()[1][-1]
-      d.dialog.show(parent_dialog)
-   end
-
    private on_copy_urls(ev)
       local l
       l := []
@@ -509,18 +513,20 @@ class DownloadTab(TabItem)
       parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner(l))
    end
 
-   private on_copy_result(ev)
-      local s
-      s := url_table.table_content.object_get_gesture_selections()[1][-1].full_path
+   private on_copy_result(d)
       parent_dialog.own_selection(Selection.CLIPBOARD, 
-                                  StaticTextSelectionOwner(s))
+                                  StaticTextSelectionOwner(d.full_path))
    end
 
-   private on_delete(ev)
-      local d
-      d := url_table.table_content.object_get_gesture_selections()[1][-1]
+   private on_delete(d)
       parent_dialog.pool.cancel(d)
       ldel1(dl, d)
+      refresh()
+   end
+
+   private on_retry(d)
+      d.retrying()
+      parent_dialog.pool.start_worker(d.req)
       refresh()
    end
 
@@ -564,7 +570,7 @@ class DownloadTab(TabItem)
    end
 
    private on_table_rpress(ev)
-      local popup, menu, l
+      local popup, menu, l, d
 
       clear_msg()
 
@@ -574,20 +580,25 @@ class DownloadTab(TabItem)
 
       menu := Menu()
       if *l = 1 then {
+         d := l[1][-1]
          menu.add(TextMenuItem().
             set_label("Log...").
-            connect(self.on_log, Event.ACTION))
+            connect(create d.dialog.show(parent_dialog), Event.ACTION))
          menu.add(TextMenuItem().
             set_label("Copy URL").
             connect(self.on_copy_urls, Event.ACTION))
-         if \l[1][-1].full_path then {
+         if \d.full_path then {
             menu.add(TextMenuItem().
                set_label("Copy result").
-               connect(self.on_copy_result, Event.ACTION))
+               connect(create on_copy_result(d), Event.ACTION))
          }
+         if l[1][-1].status == "Failed" then
+            menu.add(TextMenuItem().
+               set_label("Retry").
+               connect(create on_retry(d), Event.ACTION))
          menu.add(TextMenuItem().
                set_label("Delete").
-               connect(self.on_delete, Event.ACTION))
+               connect(create on_delete(d), Event.ACTION))
       } else {
          menu.add(TextMenuItem().
             set_label("Copy URLs").
@@ -887,6 +898,7 @@ class BrowserTab(TabItem, BrowserUI)
          fail
       data ?:= tab(upto('\r\n'))
       search_field.set_contents(data)
+      parent_dialog.set_focus(search_field)
    end
 
    private on_paste_url(ev)

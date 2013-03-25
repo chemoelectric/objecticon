@@ -121,10 +121,9 @@ end
 
 class Worker()
    private
-      pool, httpc, tmp_file
-
-   private readable
-      doing, task, cancelled
+      pool, httpc, tmp_file, cancelled
+   package
+      doing, task
    
    public static const NORMAL, NAVIGATE, REFRESH, DOWNLOAD
 
@@ -143,7 +142,8 @@ class Worker()
       if \doing then
          cancel()
       else {
-         httpc.close()
+         # httpc may be null, since we may have started but never been run
+         (\httpc).close()
          task.stop()
       }
    end
@@ -400,15 +400,15 @@ class Worker()
    end
 
    private run()
+      setup_httpc()
       repeat {
          while /pool.active do {
             # finally() has been called; close resources and revert
             httpc.close()
             task.revert()
          }
-         while *pool.queue = 0 do
+         until doing := pool.queue_get() do
             task.sleep()
-         doing := pool.queue_get()
          #write("doing for ",image(doing.browser), "   size=",pool.queue_size())
          cancelled := &null
          handle_req(doing)
@@ -419,16 +419,16 @@ class Worker()
    public new(pool)
       self.pool := pool
       task := Dispatcher.new_task{run()}
-      setup_httpc()
       return
    end
 end
 
 class WorkerPool()
-   private readable
+   private
       queue,
+      workers
+   private readable
       active,
-      workers,
       log_http_flag,
       cookies,
       user_agent,
@@ -489,7 +489,7 @@ class WorkerPool()
       return i
    end
 
-   public queue_get()
+   package queue_get()
       local l, r
       l := ?queue | fail
       r := get(l) | syserr("Empty list in queue table")
