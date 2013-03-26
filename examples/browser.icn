@@ -278,8 +278,8 @@ class BrowserDialog(Dialog)
       pool.set_user_agent(\opts["agent"])
       if \opts["l"] then
          pool.set_log_http(&yes)
-      file_dialog := FileDialog()
-      directory_dialog := DirectoryDialog()
+      file_dialog := FileDialog().set_remember_size(&yes)
+      directory_dialog := DirectoryDialog().set_remember_size(&yes)
       self.set_size(600, 650)
       self.set_resize(&yes)
       new_tab_item := TextMenuItem().
@@ -347,15 +347,11 @@ class LogDialog(Dialog)
    end
 
    public new()
-      cast(self,Dialog).new()
-      self.setup()
-      return
-   end
-
-   private setup()
       local close_button
+      cast(self,Dialog).new()
       set_label("Item log")
       set_resize(&yes)
+      set_remember_size(&yes)
       log := EditableTextList().
          set_size(500, 269).
          set_constraint("eol", &yes).
@@ -369,6 +365,7 @@ class LogDialog(Dialog)
       add(close_button)
       connect(on_close_button, Event.WINDOW_CLOSE_BUTTON)
       set_layout(GridLayout().set_extra("cells"))
+      return
    end
 end
 

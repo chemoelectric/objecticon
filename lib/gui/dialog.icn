@@ -13,7 +13,8 @@ import
    lang,
    ipl.sets,
    ipl.lists,
-   ipl.pdco
+   ipl.pdco,
+   util
 
 #
 #
@@ -66,7 +67,8 @@ class Dialog(Component)
       selections,
       popup_manager,
       popups,
-      curr_pointer
+      curr_pointer,
+      remember_size_flag
 
    public needs_validate()
       return \copy_rect
@@ -199,6 +201,15 @@ class Dialog(Component)
       return \self.win
    end
 
+   # If this flag is set, then the dialog remembers its size when it
+   # is disposed; if it is shown again it will open using the
+   # remembered size.
+   #
+   public set_remember_size(s)
+      self.remember_size_flag := check_flag(s)
+      return self
+   end
+
    public resize_win(w, h)
       self.win.set_size(w, h)
       self.win.pending(Window.RESIZE)      
@@ -283,6 +294,8 @@ class Dialog(Component)
          runerr("Dialog close_win(): canvas reference count not 1")
       if t[2] ~= 1 then
          runerr("Dialog close_win(): context reference count not 1")
+      if \remember_size_flag then
+         set_size!win.get_size()
       self.buffer_win.close()
       self.win.close()
       self.buffer_win := self.win := &null
