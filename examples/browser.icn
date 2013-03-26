@@ -704,7 +704,7 @@ class DownloadTab(TabItem)
          set_contents([]).
          add_column(TableColumn().set_label("URL")).
          add_column(TableColumn().set_label("MB").set_column_width(35).set_column_align(Align.R)).
-         add_column(TableColumn().set_label("State").set_column_width(155))
+         add_column(TableColumn().set_label("State").set_column_width(175))
       url_table.table_content.connect(self.on_table_rpress, Event.MOUSE_RIGHT_PRESS)
       self.add(url_table)
       border := CompoundBorder().
