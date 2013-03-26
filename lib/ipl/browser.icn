@@ -4,7 +4,6 @@ import
    gui, 
    lang, 
    mail,
-   graphics,
    http,
    util,
    io,
@@ -20,23 +19,25 @@ $load BROKEN_LINK "rpp.BROKEN_LINK_24.gif"
 
 class Req()
    public const
-      url, referer, callback, kind, form_data
+      client, url, referer, callback, kind, form_data, on_status
 
-   public new(url, referer, callback, kind, form_data)
+   public new(client, url, referer, callback, kind, form_data, on_status)
+      self.client := client
       self.url := url 
       self.referer := referer
       self.callback := callback
       self.kind := kind
       self.form_data := form_data
+      self.on_status := on_status
       return
    end
 end
 
 class Resp()
    public const
-      err, url, referer, data, fname, content_type, kind, form_data
+      err, url, referer, data, fname, content_type, kind, form_data, data_file
 
-   public new(err, url, referer, data, fname, content_type, kind, form_data)
+   public new(err, url, referer, data, fname, content_type, kind, form_data, data_file)
       self.err := err
       self.url := url
       self.referer := referer
@@ -45,6 +46,7 @@ class Resp()
       self.content_type := content_type
       self.kind := kind
       self.form_data := form_data
+      self.data_file := data_file
       return
    end
 end
@@ -119,17 +121,17 @@ end
 
 class Worker()
    private
-      browser, httpc
-
-   private readable
-      doing, task, cancelled
+      pool, httpc, tmp_file, cancelled
+   package
+      doing, task
    
-   public static const NORMAL, NAVIGATE, REFRESH
+   public static const NORMAL, NAVIGATE, REFRESH, DOWNLOAD
 
    private static init()
       NORMAL := 1
       NAVIGATE := 2
       REFRESH := 3
+      DOWNLOAD := 4
    end
 
    public initially()
@@ -140,7 +142,8 @@ class Worker()
       if \doing then
          cancel()
       else {
-         httpc.close()
+         # httpc may be null, since we may have started but never been run
+         (\httpc).close()
          task.stop()
       }
    end
@@ -150,7 +153,19 @@ class Worker()
          cancelled := 1
          task.interrupt()
          httpc.abort()
+         if \tmp_file then {
+            Files.remove(tmp_file)
+            tmp_file := &null
+         }
       }
+   end
+
+   public read()
+      return httpc.get_read()
+   end
+
+   public length()
+      return httpc.get_length()
    end
 
    private dwrite(a[])
@@ -184,14 +199,6 @@ class Worker()
 
    private other(ev, src, type)
       dwrite(type)
-   end
-
-   public read()
-      if \doing then return httpc.get_read()
-   end
-
-   public count()
-      return if \doing then 1 else 0
    end
 
    private static ls_sort(x)
@@ -240,14 +247,28 @@ class Worker()
          return Files.file_to_string(f)
    end
 
+   private status(ev, src, type)
+      (\(\doing).on_status)(ev, src, type)
+   end
+
    private setup_httpc()
       httpc := HttpClient().
          set_task(task).
-         set_cookies(browser.cookies).
-         set_authentications(browser.authentications).
-         set_authentication_function(browser.get_authentication)
-      httpc.set_user_agent(\browser.user_agent)
-      if \browser.log_http_flag then {
+         set_cookies(pool.cookies).
+         set_authentications(pool.authentications).
+         set_authentication_function(pool.authentication_function)
+      httpc.set_user_agent(\pool.user_agent)
+
+      every httpc.connect(status, 
+                          NetClient.CONNECTING_EVENT |
+                          NetClient.CONNECTED_EVENT |
+                          NetClient.CLOSED_EVENT |
+                          HttpClient.COMPLETE_EVENT |
+                          HttpClient.FAILED_EVENT |
+                          HttpClient.ABORTED_EVENT |
+                          HttpClient.RETRYING_EVENT) 
+
+      if \pool.log_http_flag then {
          httpc.connect(failed, HttpClient.FAILED_EVENT).
             connect(retrying, HttpClient.RETRYING_EVENT).
             connect(read_line, NetClient.READ_LINE_EVENT).
@@ -287,9 +308,35 @@ class Worker()
 
    private handle_http_req(r)
       local s, data, hreq, hres, fname, ct, x, ce
-      if r.kind ~= REFRESH & /r.form_data & (ce := browser.cache.get(r.url)) then
+      if r.kind ~= REFRESH & /r.form_data & (ce := pool.cache.get(r.url)) then
          r.callback(Resp(, r.url, r.referer, ce.data, ce.fname, ce.content_type, r.kind))
-      else use {
+      else if r.kind = DOWNLOAD then {
+         tmp_file := Files.make_temp_filename("http_oibrowser.", ".bin") | stop("Couldn't create temp file: ", &why)
+         s := BufferStream(FileStream(tmp_file, 
+                                      ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))).
+            set_buff_size(8192) | stop("Couldn't open ", tmp_file, ": ", &why)
+         hreq := HttpRequest().
+            set_output_stream(s). 
+            set_url(r.url).
+            set_header("Accept-charset", "UTF-8, ISO-8859-1")
+         if (\r.referer).scheme ~== u"file" then
+            hreq.set_referer(r.referer.str())
+         if hres := httpc.retrieve(hreq) then {
+            s.close()
+            fname := hres.get_filename()
+            ct := ContentType.parse(hres.get_first_header("Content-Type"))
+            # Note that cancelling removes tmp_file
+            if /cancelled then
+               r.callback(Resp(, hres.url, r.referer,, fname, ct, r.kind, 
+                               if hreq.url === hres.url then r.form_data else &null, tmp_file))
+         } else {
+            s.close()
+            if /cancelled then {
+               save_why{Files.remove(tmp_file)}
+               r.callback(Resp(&why, r.url, r.referer,,,, r.kind, r.form_data))
+            }
+         }
+      } else use {
          s := RamStream(),
          {
             hreq := HttpRequest().
@@ -304,6 +351,7 @@ class Worker()
                else
                   hreq.set_html_form_data(r.form_data)
             }
+
             if hres := httpc.retrieve(hreq) then {
                data := s.str()
                fname := hres.get_filename()
@@ -311,7 +359,7 @@ class Worker()
                # Note we have to take into account redirections in deciding whether to cache
                # and whether form data should be in the response.
                if httpc.request.method == "GET" & x := get_expiry(hres) then
-                  browser.cache.add(CacheEntry(hres.url, data, fname, ct, x))
+                  pool.cache.add(CacheEntry(hres.url, data, fname, ct, x))
                if /cancelled then
                   r.callback(Resp(, hres.url, r.referer, data, fname, ct, r.kind, 
                                   if hreq.url === hres.url then r.form_data else &null))
@@ -343,7 +391,7 @@ class Worker()
          "file": handle_file_req(r)
          "http"|"https": handle_http_req(r)
          default: {
-            if f := member(browser.scheme_handlers, t) then
+            if f := member(pool.scheme_handlers, t) then
                handle_func(r, f)
             else
                r.callback(Resp("Unknown url scheme", r.url, r.referer,,,, r.kind))
@@ -354,23 +402,168 @@ class Worker()
    private run()
       setup_httpc()
       repeat {
-         while /browser.cbwin do {
+         while /pool.active do {
             # finally() has been called; close resources and revert
             httpc.close()
             task.revert()
          }
-         while *browser.queue = 0 do
+         until doing := pool.queue_get() do
             task.sleep()
-         doing := 1
+         #write("doing for ",image(doing.browser), "   size=",pool.queue_size())
          cancelled := &null
-         handle_req(pop(browser.queue))
+         handle_req(doing)
          doing := &null
       }
    end
 
-   public new(browser)
-      self.browser := browser
+   public new(pool)
+      self.pool := pool
       task := Dispatcher.new_task{run()}
+      return
+   end
+end
+
+class WorkerPool()
+   private
+      queue,
+      workers
+   private readable
+      active,
+      log_http_flag,
+      cookies,
+      user_agent,
+      cache,
+      authentications,
+      authentication_function,
+      scheme_handlers
+
+   public set_log_http(s)
+      self.log_http_flag := check_flag(s)
+      return self
+   end
+
+   public initially()
+      active := 1
+      every (!workers).initially()
+   end
+
+   public finally()
+      active := &null
+      every (!workers).finally()
+      clear(queue)
+   end
+
+   public cancel(client)
+      local w
+      delete(queue, client)
+      every w := !workers do 
+         if (\w.doing).client === client then
+            w.cancel()
+   end
+
+   public get_worker(req)
+      local w
+      every w := !workers do 
+         if w.doing === req then
+            return w
+   end
+
+   public start_worker(req)
+      local w, l
+      if l := member(queue, req.client) then
+         put(l, req)
+      else
+         insert(queue, req.client, [req])
+      # Wake up a sleeping task if possible
+      every w := !workers do 
+         if w.task.is_sleeping() then {
+            w.task.notify()
+            break
+         }
+   end
+
+   public queue_size()
+      local i
+      i := 0
+      every i +:= *!queue
+      return i
+   end
+
+   package queue_get()
+      local l, r
+      l := ?queue | fail
+      r := get(l) | syserr("Empty list in queue table")
+      if *l = 0 then
+         delete(queue, r.client)
+      return r
+   end
+
+   public count(client)
+      local i, w
+      i := *member(queue, client) | 0
+      every w := !workers do 
+         if (\w.doing).client === client then
+            i +:= 1
+      return i
+   end
+
+   public read(client)
+      local i, w
+      i := 0
+      every w := !workers do 
+         if (\w.doing).client === client then
+            i +:= w.read()
+      return i
+   end
+
+   public set_cookies(cookies)
+      self.cookies := cookies
+      return self
+   end
+
+   public set_authentications(m)
+      self.authentications := m
+      return self
+   end
+
+   public set_authentication_function(f)
+      self.authentication_function := f
+      return self
+   end
+
+   public set_cache(c)
+      self.cache := c
+      return self
+   end
+
+   public set_scheme_handlers(m)
+      self.scheme_handlers := m
+      return self
+   end
+
+   public add_scheme_handler(scheme, func)
+      insert(scheme_handlers, scheme, func)
+      return self
+   end
+
+   #
+   # Set the user-agent identification
+   #
+   public set_user_agent(s)
+      self.user_agent := s
+      return self
+   end
+
+   public new(n)
+      /n := 6
+      queue := table()
+      cookies := table()
+      cache := Cache(8*1024*1024)
+      authentications := table()
+      scheme_handlers := table()
+      workers := []
+      every 1 to n do
+         put(workers, Worker(self))
       return
    end
 end
@@ -420,39 +613,22 @@ class Img(Label)
       }
    end
 
-   private copy_image()
-      parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([img_url]))
-   end
-
-   private copy_link(u)
-      parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([u]))
-   end
-
-   private save_image()
-      browser.do_save_image(img_name, img_data)
-   end
-
    private handle_rpress(e)
-      local pm, pm_menu, u
-      pm_menu := Menu()
-      pm_menu.add(TextMenuItem().
-                  set_label("Copy image").
-                  connect(copy_image, Event.ACTION))
-      if u := \wrote then
-         pm_menu.add(TextMenuItem().
-                     set_label("Copy link").
-                     connect(create copy_link(u), Event.ACTION))
-      if \img_data then
-         pm_menu.add(TextMenuItem().
-                     set_label("Save image...").
-                     connect(save_image, Event.ACTION))
-      pm := PopupMenu()
-      pm.popup(parent_dialog, pm_menu, e.x, e.y)
+      local pm, pm_menu
+      if pm_menu := browser.create_image_menu(img_url, img_name, img_data, wrote) then {
+         pm := PopupMenu()
+         pm.popup(parent_dialog, pm_menu, e.x, e.y)
+      }
    end
 
    private handle_lrelease(e, src)
       if \wrote then
          browser.goto(wrote, browser.page_url, Worker.NORMAL)
+   end
+
+   private handle_mrelease(e)
+      if \wrote then
+         browser.link_mrelease(wrote)
    end
 
    private handle_form_lrelease(e, src)
@@ -533,6 +709,7 @@ class Img(Label)
          connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
          connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+         connect(self.handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
          connect(self.handle_exit, Event.MOUSE_EXIT)
       }
       connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
@@ -749,7 +926,7 @@ class FormBrowse(Component, FormEntry, HasAscent)
    end
 
    private on_browse()
-      tf.set_contents(browser.do_browse_for_file())
+      tf.set_contents(browser.browse_for_file())
    end
 
    public new(browser, tf_size)
@@ -1216,6 +1393,10 @@ abstract class BrowserUI()
    public abstract set_url_field(url)
    public abstract update_grey(gs)
    public abstract set_title(s)
+   public abstract link_mrelease(url)
+   public abstract create_link_menu(url)
+   public abstract create_image_menu(url, img_name, img_data, link_url)
+   public abstract browse_for_file()
 end
 
 record GreyState(prev, nxt, refresh, copy_page, save_page, stop)
@@ -1223,7 +1404,8 @@ record GreyState(prev, nxt, refresh, copy_page, save_page, stop)
 class Browser(Component)
    private
       ui,
-      workers,
+      worker_pool,
+      shared_worker_pool_flag,
       top_panel,
       status_ticker,
       maps,
@@ -1238,15 +1420,7 @@ class Browser(Component)
       page_data,
       page_name,
       page_title,
-      queue,
-      running,
-      cookies,
-      user_agent,
-      log_http_flag,
-      cache,
-      file_dialog,
-      authentications,
-      scheme_handlers
+      running
 
    public static const 
       COLORS,
@@ -1325,15 +1499,13 @@ class Browser(Component)
       local i, r, s
       repeat {
          status_ticker.sleep(200)
-         i := *queue
-         every i +:= (!workers).count()
+         i := worker_pool.count(self)
          if (i > 0) | (i ~=== running) then {
             if i = 0 then {
                msg("Done")
                page_fully_loaded()
             } else {
-               r := 0
-               every r +:= (!workers).read()
+               r := worker_pool.read(self)
                s := i || " running requests"
                if r > 0 then
                   s ||:= ", read " || r || " bytes"
@@ -1345,6 +1517,19 @@ class Browser(Component)
             }
          }
       }
+   end
+
+   public link_mrelease(url)
+      (\ui).link_mrelease(url)
+      return self
+   end
+
+   public create_link_menu(url)
+      return (\ui).create_link_menu(url)
+   end
+
+   public create_image_menu(url, img_name, img_data, link_url)
+      return (\ui).create_image_menu(url, img_name, img_data, link_url)
    end
 
    public set_ui(ui)
@@ -1419,15 +1604,18 @@ class Browser(Component)
 
    public initially()
       cast(self,Component).initially()
-      every (!workers).initially()
+      if /shared_worker_pool_flag then
+         worker_pool.initially()
       status_ticker.start()
       do_update_grey()
    end
 
    public finally()
       cast(self,Component).finally()
-      every (!workers).finally()
-      clear(queue)
+      if /shared_worker_pool_flag then
+         worker_pool.finally()
+      else
+         worker_pool.cancel(self)
       running := 0
       status_ticker.stop()
    end
@@ -1456,54 +1644,17 @@ class Browser(Component)
       return self
    end
 
-   public do_save_page()
-      local s
-      file_dialog.set_file(\page_name)
-      file_dialog.show_modal(parent_dialog)
-      if s := file_dialog.get_result() then {
-         if Files.string_to_file(s, page_data) then
-            msg("Saved OK", 3000)
-         else
-            msg(&why, 3000)
-      }
-      return self
-   end
-
-   public do_copy_page()
-      parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([page_url]))
-      return self
-   end
-
-   public do_save_image(img_name, img_data)
-      local s
-      file_dialog.set_file(\img_name)
-      file_dialog.show_modal(parent_dialog)
-      if s := file_dialog.get_result() then {
-         if Files.string_to_file(s, img_data) then
-            msg("Saved OK", 3000)
-         else
-            msg(&why, 3000)
-      }
-      return self
-   end
-
-   public do_browse_for_file()
-      file_dialog.show_modal(parent_dialog)
-      return file_dialog.get_result()
+   public browse_for_file()
+      return (\ui).browse_for_file()
    end
 
    public cancel()
-      every (!workers).cancel()
-      clear(queue)
+      worker_pool.cancel(self)
    end
 
    private start_worker(req)
-      local w
-      put(queue, req)
+      worker_pool.start_worker(req)
       running := &null
-      every w := !workers do 
-         if w.task ~=== Dispatcher.scheduler.curr_task then
-            w.task.notify()
    end
 
    private static is_image(ct, s)
@@ -1875,7 +2026,7 @@ class Browser(Component)
          border := (0 < integer(e.get_attribute(u"BORDER"))) | 0
          if border > 0 then
             q.set_border(PlainBorder().set_line_width(border))
-         start_worker(Req(url, page_url, q.got_data, context.kind))
+         start_worker(Req(self, url, page_url, q.got_data, context.kind))
          align := convert_comp_align(e, u"ALIGN") | Align.B
          add_component(p, q, context, align)
       }
@@ -2042,7 +2193,7 @@ class Browser(Component)
          "image" : {
             if url := mk_link(context, e.get_attribute(u"SRC")) then {
                q := Img(self, url,, context.form)
-               start_worker(Req(url, page_url, q.got_data, context.kind))
+               start_worker(Req(self, url, page_url, q.got_data, context.kind))
                if e.get_attribute(u"DISABLED") then
                   q.set_is_shaded(&yes)
                else {
@@ -2106,7 +2257,8 @@ class Browser(Component)
             }
             add_component(p, q, context, Align.B)
          }
-         "text" | "password": {
+         # Assume something textual; could be password, text, email etc.
+         default: {
             v := e.get_attribute(u"VALUE") | u""
             use {
                mW := cbwin.clone().set_font(context.font),
@@ -2626,62 +2778,28 @@ class Browser(Component)
       }
    end
 
+   public set_worker_pool(worker_pool)
+      self.worker_pool := worker_pool
+      self.shared_worker_pool_flag := 1
+      return self
+   end
+
+   public set_shared_worker_pool(s)
+      self.shared_worker_pool_flag := check_flag(s)
+      return self
+   end
+
    public goto(url, referer, kind, form_data)
       /kind := Worker.NORMAL
       cancel()
-      start_worker(Req(url, referer, set_top_data, kind, form_data))
-      return self
-   end
-
-   public set_cookies(cookies)
-      self.cookies := cookies
-      return self
-   end
-
-   public set_authentications(m)
-      self.authentications := m
-      return self
-   end
-
-   public set_cache(c)
-      self.cache := c
-      return self
-   end
-
-   public set_scheme_handlers(m)
-      self.scheme_handlers := m
-      return self
-   end
-
-   public add_scheme_handler(scheme, func)
-      insert(scheme_handlers, scheme, func)
-      return self
-   end
-
-   #
-   # Set the user-agent identification
-   #
-   public set_user_agent(s)
-      self.user_agent := s
-      return self
-   end
-
-   public set_log_http(s)
-      self.log_http_flag := check_flag(s)
+      start_worker(Req(self, url, referer, set_top_data, kind, form_data))
       return self
    end
 
    public new()
       cast(self,Component).new()
-      self.cookies := table()
-      self.cache := Cache(8*1024*1024)
-      file_dialog := FileDialog()
-      authentications := table()
-      scheme_handlers := table()
-      queue := []
-      workers := []
-      every 1 to 6 do
-         put(workers, Worker(self))
+      worker_pool := WorkerPool().
+         set_authentication_function(get_authentication)
       status_ticker := Dispatcher.new_task{status()}
       top_panel := ComponentScrollArea().
          set_inner(Component().set_size(10,10)).

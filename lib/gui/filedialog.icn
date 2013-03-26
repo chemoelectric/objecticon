@@ -118,7 +118,7 @@ class FileDialog(Dialog)
    end
 
    #
-   # Set the initial directory.
+   # Set the initial directory.  It should be in canonical form.
    #
    public set_directory(s)
       self.init_dirs := [s]
@@ -126,8 +126,8 @@ class FileDialog(Dialog)
    end
 
    #
-   # Set the initial directories as a list; the first is
-   # the one initially shown.
+   # Set the initial directories as a list; the first is the one
+   # initially shown.  Each entry should be in canonical form.
    #
    public set_directories(l)
       self.init_dirs := l
@@ -162,12 +162,9 @@ class FileDialog(Dialog)
    # Set the initial file/directory from a whole path.
    # 
    public set_path(s)
-      local l, t
-      l := FilePath(s)
-      if t := l.parent() then
-         self.init_dirs := [t.str()]
-      else
-         self.init_dirs := [Files.getcwd()]
+      local l
+      l := FilePath(s).canonical()
+      self.init_dirs := [l.parent().str()]
       self.init_files := [l.get(-1)]
       return self
    end
