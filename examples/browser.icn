@@ -139,7 +139,8 @@ class BrowserDialog(Dialog)
 
    public new_tab(url)
       local bt
-      bt := BrowserTab(url, pool, settings)
+      bt := BrowserTab(url, pool, settings).
+         set_is_hidden(&yes)
       tabs.
          add(bt, -1).
          do_layout().
