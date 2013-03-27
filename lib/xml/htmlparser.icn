@@ -232,9 +232,13 @@ class HtmlParser()
       case string(start_tag.name) of {
          "PLAINTEXT":
             res.add("" ~== remove_entities(tab(0)))
-         "SCRIPT" | "STYLE" | "TITLE": {
+         "SCRIPT" | "STYLE": {
             if /start_tag.empty then
                res.add("" ~== move_past_end_tag(start_tag))
+         }
+         "TITLE": {
+            if /start_tag.empty then
+               res.add("" ~== remove_entities(move_past_end_tag(start_tag)))
          }
          default: {
             if not(\start_tag.empty | is_standalone_tag(start_tag.name)) then {
