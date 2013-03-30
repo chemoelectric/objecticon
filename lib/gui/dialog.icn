@@ -31,7 +31,9 @@ class Dialog(Component)
       TOOLTIP_X_OFFSET,
       TOOLTIP_Y_OFFSET,
       FOCUS_UP,                  # Set of events to move focus
-      FOCUS_DOWN
+      FOCUS_DOWN,
+      pointer_grab_stack,
+      keyboard_grab_stack
 
    public 
       win,                     # The dialog's window.
@@ -305,18 +307,44 @@ class Dialog(Component)
       return \self.buffer_win
    end
 
+   public grab_pointer()
+      win.grab_pointer()
+      put(pointer_grab_stack, self)
+      return self
+   end
+
+   public ungrab_pointer() 
+      pull(pointer_grab_stack)
+      if not(pointer_grab_stack[-1] === self) then
+         win.ungrab_pointer()
+      return self
+   end
+
+   public grab_keyboard()
+      win.grab_keyboard()
+      put(keyboard_grab_stack, self)
+      return self
+   end
+
+   public ungrab_keyboard() 
+      pull(keyboard_grab_stack)
+      if not(keyboard_grab_stack[-1] === self) then
+         win.ungrab_keyboard()
+      return self
+   end
+
    public enter_menu_mode(c)
       # If already in menu mode, force ourselves out of it.
       (\self.menu_mode).close_all()
       self.menu_mode := c
       popups := []
-      win.grab_pointer()
+      grab_pointer()
       return self
    end
 
    public exit_menu_mode()
       (\self.menu_mode := &null) | syserr("internal error - not  in menu mode.")
-      win.ungrab_pointer()
+      ungrab_pointer()
       popups := &null
       return self
    end
@@ -1264,6 +1292,8 @@ class Dialog(Component)
       FOCUS_UP := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
       FOCUS_DOWN := set("\t", Key.RIGHT, Key.DOWN)
       ROOT_WATTRIBS := table()
+      pointer_grab_stack := []
+      keyboard_grab_stack := []
    end
 
    public new()

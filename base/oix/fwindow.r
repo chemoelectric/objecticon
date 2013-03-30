@@ -73,6 +73,24 @@ function graphics_Window_ungrab_pointer(self)
    }
 end
 
+function graphics_Window_grab_keyboard(self)
+   body {
+      GetSelfW();
+      if (grabkeyboard(self_w) != Succeeded)
+          fail;
+      return self;
+   }
+end
+
+function graphics_Window_ungrab_keyboard(self)
+   body {
+      GetSelfW();
+      if (ungrabkeyboard(self_w) != Succeeded)
+          fail;
+      return self;
+   }
+end
+
 function graphics_Window_alert(self, volume)
    if !def:C_integer(volume, 0) then
       runerr(101, volume)

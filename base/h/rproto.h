@@ -301,6 +301,8 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    wbp  wopen           (char *display);
    int  grabpointer      (wbp w);
    int  ungrabpointer    (wbp w);
+   int  grabkeyboard      (wbp w);
+   int  ungrabkeyboard    (wbp w);
    void xdis            (wbp w, char *s, int n);
    void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2);
    void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2);

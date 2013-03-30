@@ -1602,6 +1602,27 @@ int ungrabpointer(wbp w)
     return Succeeded;
 }
 
+int grabkeyboard(wbp w)
+{
+    wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
+    if (XGrabKeyboard(ws->display->display, ws->win,False, 
+                     GrabModeAsync, GrabModeAsync, CurrentTime) == GrabSuccess)
+        return Succeeded;
+    else
+        return Failed;
+}
+
+int ungrabkeyboard(wbp w)
+{
+    wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
+    XUngrabKeyboard(ws->display->display, CurrentTime);
+    return Succeeded;
+}
+
 /*
  * Set the window's font by name.
  */
