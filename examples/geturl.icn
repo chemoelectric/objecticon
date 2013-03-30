@@ -34,9 +34,9 @@ class Monitor()
          return
       last_progress := now
       if \len then
-         writes(read, " bytes of ", len, " (", (read * 100) / len, "%)")
+         writes(Format.numeric_to_string(read, 0, ','), " bytes of ", Format.numeric_to_string(len, 0, ','), " (", (read * 100) / len, "%)")
       else
-         writes(read, " bytes read")
+         writes(Format.numeric_to_string(read, 0, ','), " bytes read")
    end
 
    public complete()
@@ -326,8 +326,8 @@ procedure process_one(a)
             Files.remove(tmp_file)
          } else {
             end_t := Prog.get_runtime_millis()
-            kbps := Format.numeric_to_string((hc.get_read() / 1024.0) / ((end_t - start_t) / 1000.0), 1)
-            msg := hc.get_read() || " bytes OK (" || kbps  || " kB/s)"
+            kbps := Format.numeric_to_string((hc.get_read() / 1024.0) / ((end_t - start_t) / 1000.0), 1, ',')
+            msg := Format.numeric_to_string(hc.get_read(), 0, ',') || " bytes OK (" || kbps  || " kB/s)"
 
             if out == "/dev/null" then {
                Files.remove(tmp_file)

@@ -1,12 +1,14 @@
 import gui,io
 
-procedure main()
+procedure main(a)
    local d
    d :=  FileDialog().
       set_label("A File Dialog").
       set_filters(["*","*.icn","*.c","*.txt"]).
       set_files(["fig.icn","jim.icn","laldy"]).
       set_directories(["/tmp","/home","/home/rparlett"])
+
+   d.set_path(a[1])
 
    d.show_modal()
 

@@ -185,7 +185,6 @@ struct Window
 	uchar		deleted;
 	uchar		mouseopen;
         uchar           hidden;
-//        uchar           grab;
 	char			*label;
 	int			pid;
 	char			*dir;
@@ -343,7 +342,7 @@ int		topped;
 int		order;
 int		snarffd;
 Window	*input;
-Window	*grab, *eein, *held;
+Window	*grabpointer, *grabkeyboard, *eein, *held;
 Window *over, *overb, *overw;
 QLock	all;			/* BUG */
 Filsys	*filsys;

@@ -23,8 +23,10 @@ enum
 	Move,
 	Scroll,
 	Noscroll,
-        Grab,
-        Ungrab,
+        Grabpointer,
+        Ungrabpointer,
+        Grabkeyboard,
+        Ungrabkeyboard,
 	Set,
 	Top,
 	Bottom,
@@ -49,8 +51,10 @@ static char *cmds[] = {
 	[Current]	= "current",
 	[Hide]	        = "hide",
 	[Unhide]	= "unhide",
-        [Grab]          = "grab",
-        [Ungrab]        = "ungrab",
+        [Grabpointer]   = "grabpointer",
+        [Ungrabpointer] = "ungrabpointer",
+        [Grabkeyboard]  = "grabkeyboard",
+        [Ungrabkeyboard]= "ungrabkeyboard",
         [Close]         = "close",
 	[Delete]	= "delete",
 	[Refresh2]	= "refresh",
@@ -618,11 +622,17 @@ writewctl(Xfid *x, char *err)
                     return -1;
 		}
 		return 1;
-        case Grab:
-                grab = w;
+        case Grabpointer:
+                grabpointer = w;
                 return 1;
-        case Ungrab:
-                grab = 0;
+        case Ungrabpointer:
+                grabpointer = 0;
+                return 1;
+        case Grabkeyboard:
+                grabkeyboard = w;
+                return 1;
+        case Ungrabkeyboard:
+                grabkeyboard = 0;
                 return 1;
 	case Delete:
 		wsendctlmesg(w, Deleted);

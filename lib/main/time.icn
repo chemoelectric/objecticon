@@ -559,6 +559,18 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    end
 
    #
+   # As above,  but if mday is out of bounds for new year,
+   # truncate to end of month
+   #
+   public set_year_truncate(n)
+      self.year := n
+      if self.mday > 28 then
+         self.mday := default.min(self.mday, get_mdays(self.year, self.month))
+      self.compute_seconds()
+      return self
+   end
+
+   #
    # Set month; recompute seconds past the base date.
    #
    public set_month(n)
@@ -572,16 +584,14 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # truncate to end of month
    #
    public set_month_truncate(n)
-      local t, d
-      t := self.mday
-      self.mday := 1
+      local t
       self.month := n
-      self.compute_seconds()
-      
-      d := get_mdays(self.year, self.month)
-      if t > d then
-         t := d
-      self.mday := t
+      if self.mday > 28 then {
+         t := self.mday
+         self.mday := 1
+         self.compute_seconds()
+         self.mday := default.min(t, get_mdays(self.year, self.month))
+      }
       self.compute_seconds()
       return self
    end
@@ -795,6 +805,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    public normalize_zone()
       if self.zone ~===:= Timezone.get_timezone_at(get_unix_seconds()) then
          compute_seconds()
+      return self
    end
 
    #
@@ -814,6 +825,22 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       compute_seconds()
       if /zone then
          normalize_zone()
+      return self
+   end
+
+   #
+   # Change the fields of the instance, and then recompute the
+   # seconds.  Any omitted fields are left unchanged.
+   #
+   public edit_fields(year, month, mday, hour, min, sec, zone)   
+      self.year := \year
+      self.month := \month
+      self.mday := \mday
+      self.hour := \hour
+      self.min := \min
+      self.sec := \sec
+      self.zone := \zone
+      compute_seconds()
       return self
    end
 

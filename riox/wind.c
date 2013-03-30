@@ -1600,7 +1600,8 @@ wclosewin(Window *w)
 	w->deleted = TRUE;
         if(w == held) held = nil;
         if(w == eein) eein = nil;
-        if(w == grab) grab = nil;
+        if(w == grabpointer) grabpointer = nil;
+        if(w == grabkeyboard) grabkeyboard = nil;
         if(w == over) over = nil;
         if(w == overb) overb = nil;
         if(w == overw) overw = nil;

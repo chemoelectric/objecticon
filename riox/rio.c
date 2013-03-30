@@ -324,7 +324,9 @@ keyboardthread(void*)
 			if(nbrecv(keyboardctl->c, rp+i) <= 0)
 				break;
 		rp[i] = L'\0';
-		if(input != nil)
+                if(grabkeyboard != nil)
+			sendp(grabkeyboard->ck, rp);
+		else if(input != nil)
 			sendp(input->ck, rp);
 	}
 }
@@ -500,8 +502,8 @@ static void domouse(void)
     static int oldbuttons;
     int press;
 
-    if (grab) {
-        overw = over = grab;
+    if (grabpointer) {
+        overw = over = grabpointer;
         overb = 0;
     } else {
         overw = wpointto(mouse->xy);
@@ -534,7 +536,7 @@ static void domouse(void)
             /* Top and give focus if appropriate.  The last &&
              * indicates not to give focus on the right-click context
              * menu (button3wmenu) */
-            if ((press & 7) && overw && !grab && !(overb && ((press & 5) == 4)))
+            if ((press & 7) && overw && !grabpointer && !(overb && ((press & 5) == 4)))
                 pressed(overw);
             held = over;
             if (held)

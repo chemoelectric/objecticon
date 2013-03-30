@@ -565,7 +565,7 @@ int grabpointer(wbp w)
     wsp ws = w->window;
     if (!ws->win)
         return Failed;
-    fprint(ws->wctl_fd, "grab");
+    fprint(ws->wctl_fd, "grabpointer");
     return Succeeded;
 }
 
@@ -574,7 +574,25 @@ int ungrabpointer(wbp w)
     wsp ws = w->window;
     if (!ws->win)
         return Failed;
-    fprint(ws->wctl_fd, "ungrab");
+    fprint(ws->wctl_fd, "ungrabpointer");
+    return Succeeded;
+}
+
+int grabkeyboard(wbp w)
+{
+    wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
+    fprint(ws->wctl_fd, "grabkeyboard");
+    return Succeeded;
+}
+
+int ungrabkeyboard(wbp w)
+{
+    wsp ws = w->window;
+    if (!ws->win)
+        return Failed;
+    fprint(ws->wctl_fd, "ungrabkeyboard");
     return Succeeded;
 }
 

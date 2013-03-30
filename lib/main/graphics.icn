@@ -327,6 +327,16 @@ final class Window(NoCopy)
    #
    public native ungrab_pointer()
 
+   #
+   # Grab the keyboard so that all key events are directed to this window.
+   #
+   public native grab_keyboard()
+
+   #
+   # Undoes the effect of {grab_keyboard}.
+   #
+   public native ungrab_keyboard()
+
    public native get_font_ascent()
    public native get_bg()
    public native get_canvas()
