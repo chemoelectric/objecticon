@@ -5,12 +5,13 @@ import graphics, util
 # This class is a {TextField} which provides suggested completions in
 # a popup list based on partial input.
 #
-class SuggestField(TextField)
+class SuggestField(TextField, MenuMode)
    public 
       tl,
       direction,
       max_height,
       max_width,
+      use_popup_win,
       forward_home_end_flag     # Forward home/end key to list?
 
    protected
@@ -133,7 +134,7 @@ class SuggestField(TextField)
 
    public open_textlist(data)
       local max_h, max_w, spc_below, spc_above, spc_right, d, dim, win, win_spc_above, 
-         win_spc_below, win_spc_right, use_popup_win, use_direction, rs, r
+         win_spc_below, win_spc_right, use_direction, rs, r
 
       if \tl then
          close_textlist()
@@ -141,6 +142,7 @@ class SuggestField(TextField)
       if (*data = 0) | (parent_dialog.focus ~=== self) then
          return
 
+      use_popup_win := &null
       win := parent_dialog.win
       dim := win.get_display_size()
       # Screen rectangle, in adjusted co-ordinates
@@ -253,12 +255,10 @@ class SuggestField(TextField)
 
          self.tl.resize().invalidate()
       } 
-
-      self.parent_dialog.connect(self.dialog_event, Event.ICON)
    end
 
    public close_textlist()
-      if /tl.parent_dialog.popup_manager then {
+      if /use_popup_win then {
          self.tl.invalidate()
          self.parent_dialog.remove(tl)
       } else {
@@ -266,22 +266,16 @@ class SuggestField(TextField)
          self.tl.parent_dialog.dispose()
       }
       self.tl := &null
-      self.parent_dialog.
-         exit_menu_mode().
-         disconnect_object(self)
+      self.parent_dialog.exit_menu_mode(self)
    end
 
    public close_all()
       keep_closed()
    end
 
-   public dialog_event(e)
-      if (/e.release & (e.code === "\e")) | 
-          (member(Mouse.PRESS, e.code) & 
-                not(tl.in_region(e))) then 
-      {
-         keep_closed()
-      }
+   public should_close(e)
+      if member(Mouse.PRESS, e.code) & not(tl.in_region(e)) then 
+         return
    end
 
    # Close the textlist (if it is open), and stop any running
@@ -363,6 +357,7 @@ class SuggestField(TextField)
 
    public handle_key(e)
       case e.code of {
+         "\e" : close_all()
          Key.UP : handle_key_up(e)
          Key.DOWN : handle_key_down(e)
          Key.PGUP : handle_key_page_up(e)

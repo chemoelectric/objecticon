@@ -37,6 +37,7 @@ abstract class MenuComponent(Rect,Connectable)
       accel,
       children,
       border,
+      use_popup_win,
       temp_win
 
    public initially()
@@ -328,6 +329,11 @@ abstract class MenuComponent(Rect,Connectable)
       return temp_win.in_region(e)
    end
 
+   public which_region(e)
+      if in_region(e) then
+         return self
+   end
+
    #
    # Set the border to use - this relates to the popup submenu, 
    # not the label.
@@ -353,11 +359,12 @@ abstract class MenuComponent(Rect,Connectable)
    # right and bottom of the screen respectively.
    #
    public show(x, y, xa, ya)
-      local d, win, x1, y1, pd, dim, use_popup_win, rs, r, r0
+      local d, win, x1, y1, pd, dim, rs, r, r0
       /self.temp_win | fail
 
       pd := self.parent_component.parent_dialog
       win := pd.win
+      use_popup_win := &null
 
       dim := win.get_display_size()
       # Screen rectangle, in adjusted co-ordinates
@@ -442,7 +449,7 @@ abstract class MenuComponent(Rect,Connectable)
    public hide()
       \self.temp_win | fail
 
-      if /self.temp_win.parent_dialog.popup_manager then {
+      if /use_popup_win then {
          self.temp_win.invalidate()
          self.parent_component.parent_dialog.remove(self.temp_win)
       } else {

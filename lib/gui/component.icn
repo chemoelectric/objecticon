@@ -756,6 +756,18 @@ class Component(Rect,Align,Connectable)
       return self
    end
 
+   # Generate the chain of components starting with this component and
+   # going up through the parents.
+   #
+   public gen_parents()
+      local t
+      t := self
+      while \t do {
+         suspend t
+         t := t.parent
+      }
+   end
+
    #
    # Complete the final setup before display by initializing the parent
    # dialog reference and creating the cloned windows.
@@ -900,12 +912,7 @@ class Component(Rect,Align,Connectable)
    end
 
    public reset_layout_chain()
-      local c
-      c := self
-      while \c do {
-         c.reset_layout()
-         c := c.parent
-      }
+      every gen_parents().reset_layout()
       return self
    end
 
