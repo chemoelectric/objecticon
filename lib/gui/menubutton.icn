@@ -15,7 +15,7 @@ import graphics
 # drop-down menu, rather than several.  It may be placed anywhere on
 # the dialog, whereas a {MenuBar} would invariably be placed along the top.
 #
-class MenuButton(Component)
+class MenuButton(Component, MenuMode)
    public 
       menu, 
       which_open,
@@ -71,7 +71,7 @@ class MenuButton(Component)
    public close_menu()
       self.menu.hide()
       self.which_open := &null
-      self.parent_dialog.exit_menu_mode()
+      self.parent_dialog.exit_menu_mode(self)
    end
 
    public close_all()
@@ -114,6 +114,12 @@ class MenuButton(Component)
 
    public match_accel(e)
       return self.menu.accel === e & menu.is_unshaded()
+   end
+
+   public should_close(e)
+      if member(Mouse.PRESS, e.code) &
+         not(in_region(e) | (\which_open).which_region(e)) then
+         return
    end
 
    public get_tooltip(e)

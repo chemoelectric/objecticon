@@ -18,7 +18,7 @@ import graphics
 # Note that instances should never be added or removed from a dialog;
 # that is done automatically.
 #
-class PopupMenu(Component)
+class PopupMenu(Component, MenuMode)
    public 
       menu,
       px,
@@ -34,7 +34,7 @@ class PopupMenu(Component)
       self.menu.hide()
       self.menu.finally()
       self.menu := &null
-      self.parent_dialog.exit_menu_mode()
+      self.parent_dialog.exit_menu_mode(self)
       self.parent_dialog.disconnect_object(self)
       self.parent.remove(self)
    end
@@ -50,6 +50,12 @@ class PopupMenu(Component)
    public dialog_event(e)
       if not(e.x = px & e.y = py & member(Mouse.PRESS | Mouse.RELEASE, e.code)) then
          self.menu.handle_event(e)
+   end
+
+   public should_close(e)
+      if member(Mouse.PRESS, e.code) &
+         not(menu.which_region(e)) then
+         return
    end
 
    #

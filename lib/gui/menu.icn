@@ -136,6 +136,10 @@ class Menu(TextMenuItem)
       return self
    end
 
+   public which_region(e)
+      return in_region(e) | (\which_open).which_region(e)
+   end
+
    public handle_key_up(e)
       local m, last
 
@@ -224,11 +228,6 @@ class Menu(TextMenuItem)
             # Try open sub-menu.
             #
             self.which_open.handle_event(e)
-         else
-            #
-            # Fail completely
-            #
-            close_all()
       }
    end
 

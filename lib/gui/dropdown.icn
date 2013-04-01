@@ -10,18 +10,166 @@ package gui
 
 import graphics
 
-#
-# This class is just a superclass of {List} and {EditList}.
-#
-abstract class DropDown(SelectionList,Component)
-   public 
+abstract class DropDown(Component, MenuMode)
+   public
       b,                           
       view,
-      tl,
-      old_selection,
+      popup,
       direction,
-      max_height,
-      max_width
+      use_popup_win
+
+   #
+   # Create the view component
+   #
+   public abstract create_view()
+
+   public abstract create_popup()
+
+   public close_all()
+      close_popup()
+   end
+
+   public should_close(e)
+      if (member(Mouse.PRESS, e.code) & 
+                not(popup.in_region(e) | b.in_region(e))) then 
+         return
+   end
+
+   public allow_nested(c)
+      return c.gen_parents() === popup
+   end
+
+   public open_popup(ev)
+      local spc_below, spc_above, spc_right, d, dim, win, win_spc_above, win_spc_left,
+         win_spc_below, win_spc_right, use_direction, rs, r, pref_w, pref_h, x_adj
+
+      use_popup_win := &null
+      win := parent_dialog.win
+      dim := win.get_display_size()
+      # Screen rectangle, in adjusted co-ordinates
+      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim[1], dim[2])
+      r := parent_dialog.intersect(rs)
+
+      win_spc_above := self.y - r.y
+      win_spc_below := r.y + r.h - self.y - self.h
+      win_spc_left := self.x - r.x
+      win_spc_right := r.x + r.w - self.x
+
+      if Gui.style.allow_popup(self) then {
+         # Space available for popup limited by screen size
+         spc_above := self.y - rs.y
+         spc_below := rs.y + rs.h - self.y - self.h
+         spc_right := rs.x + rs.w - self.x
+      } else {
+         # Space available limited by window size (and screen size, if window is off screen)
+         spc_above := win_spc_above
+         spc_below := win_spc_below
+         spc_right := win_spc_right
+      }
+
+      self.popup := create_popup().
+         set_all_wattribs(self.get_effective_wattribs()).
+         set_z(self.parent_dialog.get_top_z())
+      self.parent_dialog.add(popup)
+      pref_w := popup.get_preferred_width()
+      pref_h := popup.get_preferred_height()
+      x_adj := max(0, pref_w - spc_right)
+      if (x_adj > win_spc_left) | (pref_w - x_adj > win_spc_right) then
+         use_popup_win := 1
+
+      case self.direction of {
+         Direction.UP: {
+            if pref_h > win_spc_above then
+               use_popup_win := 1
+            use_direction := Direction.UP
+         }
+         Direction.DOWN: {
+            if pref_h > win_spc_below then
+               use_popup_win := 1
+            use_direction := Direction.DOWN
+         }
+         Direction.BEST: {
+            if pref_h > win_spc_below then
+               if pref_h <= spc_below then {
+                  use_popup_win := 1
+                  use_direction := Direction.DOWN
+               } else if pref_h > win_spc_above then {
+                  use_popup_win := 1
+                  use_direction := Direction.UP
+               } else
+                  use_direction := Direction.UP
+            else
+               use_direction := Direction.DOWN
+         }
+      }
+      self.parent_dialog.enter_menu_mode(self)
+
+      if Gui.style.allow_popup(self) & \use_popup_win then {
+         # Remove popup from dialog and add to popup window.
+         self.parent_dialog.remove(popup)
+         d := if use_direction == Direction.DOWN then 
+            PureDialog().
+               set_canvas("popup").
+               set_width(pref_w).
+               set_height(pref_h).
+               set_dx(-self.x + x_adj).
+               set_dy(-(self.y + self.h)).
+               set_x(win.get_x() + win.get_dx() + self.x - x_adj).
+               set_y(win.get_y() + win.get_dy() + self.y + self.h)
+         else
+            PureDialog().
+               set_canvas("popup").
+               set_width(pref_w).
+               set_height(pref_h).
+               set_dx(-self.x + x_adj).
+               set_dy(-(self.y - pref_h)).
+               set_x(win.get_x() + win.get_dx() + self.x - x_adj).
+               set_y(win.get_y() + win.get_dy() + self.y - pref_h)
+
+         d.add(popup)
+         self.popup.set_pos(0, 0)
+         self.parent_dialog.
+            set_focus().
+            add_popup(d)
+         d.show()
+      } else {
+         if use_direction == Direction.DOWN then 
+            self.popup.set_pos(self.x + win.get_dx() - x_adj, self.y + self.h + win.get_dy())
+         else
+            self.popup.set_pos(self.x + win.get_dx() - x_adj, self.y - pref_h + win.get_dy())
+         self.popup.resize().invalidate()
+         self.parent_dialog.set_focus()
+      } 
+   end
+
+   public close_popup()
+      if /use_popup_win then {
+         if self.parent_dialog.focus === popup then
+            self.parent_dialog.set_focus(view)
+         self.popup.invalidate()
+         self.parent_dialog.remove(popup)
+      } else {
+         if /self.parent_dialog.focus then
+            self.parent_dialog.set_focus(view)
+         self.parent_dialog.remove_popup(self.popup.parent_dialog)
+         self.popup.parent_dialog.dispose()
+      }
+      self.popup := &null
+      self.parent_dialog.exit_menu_mode(self)
+   end
+
+   public on_button_press(ev)
+      if \popup then
+         #
+         # Button pressed whilst list open; just close
+         #
+         close_popup()
+      else
+         #
+         # Button pressed whilst no list; open list
+         #
+         open_popup(ev)
+   end
 
    #
    # Set the direction to pop-up in.  Options are {Direction.UP}, {Direction.DOWN} or
@@ -32,26 +180,93 @@ abstract class DropDown(SelectionList,Component)
       return self
    end
 
-   public on_button_press(ev)
-      if \tl then
-         #
-         # Button pressed whilst list open; just close
-         #
-         self.close_textlist()
-      else
-         #
-         # Button pressed whilst no list; open list
-         #
-         self.open_textlist(ev)
+   public layout()
+      local bw
+
+      bw := b.get_preferred_width()
+      #
+      # Set button position and size
+      #
+      b.x := self.x + self.w - bw - border.get_r_inset()
+      b.y := self.y + border.get_t_inset()
+      b.w := bw
+      view.x := self.x + border.get_l_inset()
+      view.y := self.y + border.get_t_inset()
+      view.w := self.w - border.get_total_width() - bw
+      b.h := view.h := self.h - border.get_total_height()
+      b.layout()
+      view.layout()
    end
+
+   public get_default_width()
+      return border.get_total_width() + b.get_preferred_width() + view.get_preferred_width()
+   end
+
+   public get_default_height(dw)
+      dw -:= border.get_total_width() + b.get_preferred_width()
+      return border.get_total_height() + view.get_preferred_height(dw)
+   end
+
+   public display()
+      border.draw_rect(self.cbwin, self)
+      display_children()
+   end
+
+   protected forward_key(ev, src, type)
+      # In menu mode key events are forwarded to this component,
+      # rather than the text list, regardless of the focus.  So we
+      # must forward them ourselves.
+      if /ev.release & ev.code === "\e" then
+         close_all()
+      else
+         (\popup.parent_dialog.focus).fire(type, ev)
+   end
+
+   public go_up(e)
+   end
+
+   public go_down(e)
+   end
+
+   public new()
+      cast(self,Component).new()
+      self.set_border(SunkenBorder())
+      # Make the same width as the button in the scrollbar of the dropdown.
+      self.b := IconButton().
+         set_width(ScrollArea.predict_scrollbar_size()).
+         connect(self.on_button_press, Event.BUTTON_PRESS).
+         set_paint(ImagePaint().set_cache("gui.ARROW_DOWN")).
+         set_accepts_focus(&no)
+      self.direction := Direction.BEST
+      self.add(b)
+      self.preferred_focus := self.view := create_view()
+      self.add(view)
+      self.set_constraint("x_fill", &yes)
+      self.set_constraint("x_align", Align.L)
+      self.set_constraint("x_weight", 1.0)
+      connect(self.go_up, Event.MOUSE_WHEEL_UP)
+      connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
+      every connect(self.forward_key, Event.KEY_PRESS | Event.KEY_RELEASE)
+      return
+   end
+end
+
+#
+# This class is just a superclass of {List} and {EditList}.
+#
+abstract class SelectionDropDown(SelectionList, DropDown)
+   public 
+      old_selection,
+      max_height,
+      max_width
 
    public on_textlist_selection(ev)
       local tmp
       #
       # Selection in list - close textlist, amend label.
       #
-      tmp := tl.get_selections()[1]
-      self.close_textlist()
+      tmp := popup.get_selections()[1]
+      self.close_popup()
       go_to(\tmp, ev)
    end
 
@@ -119,10 +334,11 @@ abstract class DropDown(SelectionList,Component)
       end_change(e)
    end
 
-   public open_textlist(ev)
+   public open_popup(ev)
       local max_h, max_w, spc_below, spc_above, spc_right, d, dim, win, win_spc_above, 
-         win_spc_below, win_spc_right, use_popup_win, use_direction, rs, r
+         win_spc_below, win_spc_right, use_direction, rs, r
 
+      use_popup_win := &null
       win := parent_dialog.win
       dim := win.get_display_size()
       # Screen rectangle, in adjusted co-ordinates
@@ -155,7 +371,7 @@ abstract class DropDown(SelectionList,Component)
       max_w >:= \self.max_width
       max_h >:= \self.max_height
 
-      self.tl := create_popup().
+      self.popup := create_popup().
          set_all_wattribs(self.get_effective_wattribs()).
          connect(self.on_textlist_selection, Event.SELECTION_CHANGED).
          set_contents(self.selection_list).
@@ -164,30 +380,30 @@ abstract class DropDown(SelectionList,Component)
          set_select_mode(Select.ONE).
          set_selection_on_key_moves(&no).
          set_z(self.parent_dialog.get_top_z())
-      self.parent_dialog.add(tl)
-      self.tl.set_ideal_size(self.w, 
-                             max_w,
-                             0, max_h)
+      self.parent_dialog.add(popup)
+      self.popup.set_ideal_size(self.w, 
+                                max_w,
+                                0, max_h)
 
-      if tl.w_spec > win_spc_right then
+      if popup.w_spec > win_spc_right then
          use_popup_win := 1
       case self.direction of {
          Direction.UP: {
-            if tl.h_spec > win_spc_above then
+            if popup.h_spec > win_spc_above then
                use_popup_win := 1
             use_direction := Direction.UP
          }
          Direction.DOWN: {
-            if tl.h_spec > win_spc_below then
+            if popup.h_spec > win_spc_below then
                use_popup_win := 1
             use_direction := Direction.DOWN
          }
          Direction.BEST: {
-            if tl.h_spec > win_spc_below then
-               if tl.h_spec <= spc_below then {
+            if popup.h_spec > win_spc_below then
+               if popup.h_spec <= spc_below then {
                   use_popup_win := 1
                   use_direction := Direction.DOWN
-               } else if tl.h_spec > win_spc_above then {
+               } else if popup.h_spec > win_spc_above then {
                   use_popup_win := 1
                   use_direction := Direction.UP
                } else
@@ -200,13 +416,13 @@ abstract class DropDown(SelectionList,Component)
       self.parent_dialog.enter_menu_mode(self)
 
       if Gui.style.allow_popup(self) & \use_popup_win then {
-         # Remove tl from dialog and use add to popup window.
-         self.parent_dialog.remove(tl)
+         # Remove popup from dialog and use add to popup window.
+         self.parent_dialog.remove(popup)
          d := if use_direction == Direction.DOWN then 
             PureDialog().
                set_canvas("popup").
-               set_width(tl.w_spec).
-               set_height(tl.h_spec).
+               set_width(popup.w_spec).
+               set_height(popup.h_spec).
                set_dx(-self.x).
                set_dy(-(self.y + self.h)).
                set_x(win.get_x() + win.get_dx() + self.x).
@@ -214,78 +430,36 @@ abstract class DropDown(SelectionList,Component)
          else
             PureDialog().
                set_canvas("popup").
-               set_width(tl.w_spec).
-               set_height(tl.h_spec).
+               set_width(popup.w_spec).
+               set_height(popup.h_spec).
                set_dx(-self.x).
-               set_dy(-(self.y - tl.h_spec)).
+               set_dy(-(self.y - popup.h_spec)).
                set_x(win.get_x() + win.get_dx() + self.x).
-               set_y(win.get_y() + win.get_dy() + self.y - tl.h_spec)
+               set_y(win.get_y() + win.get_dy() + self.y - popup.h_spec)
 
-         d.add(tl)
-         self.tl.set_pos(0, 0)
+         d.add(popup)
+         self.popup.set_pos(0, 0)
          self.parent_dialog.
             set_focus().
             add_popup(d)
-         d.show().set_focus(tl)
-         d.held[ev.code] := [tl.view, tl, d]
+         d.show().set_focus(popup)
+         d.held[ev.code] := [popup.view, popup, d]
       } else {
          if use_direction == Direction.DOWN then 
-            self.tl.set_pos(self.x + win.get_dx(), self.y + self.h + win.get_dy())
+            self.popup.set_pos(self.x + win.get_dx(), self.y + self.h + win.get_dy())
          else
-            self.tl.set_pos(self.x + win.get_dx(), self.y - self.tl.h_spec + win.get_dy())
+            self.popup.set_pos(self.x + win.get_dx(), self.y - self.popup.h_spec + win.get_dy())
 
-         self.tl.resize().invalidate()
+         self.popup.resize().invalidate()
          self.parent_dialog.
-            set_focus(tl).
-            hold(tl.view, ev.code)
+            set_focus(popup).
+            hold(popup.view, ev.code)
       } 
 
-      self.parent_dialog.connect(self.dialog_event, Event.ICON)
       if \self.selection then {
-         self.tl.
+         self.popup.
             set_cursor(self.selection).
             center_line(self.selection)
-      }
-   end
-
-   private forward_key(ev, src, type)
-      # In menu mode key events are forwarded to this component,
-      # rather than the text list, regardless of the focus.  So we
-      # must forward them ourselves.
-      (\tl).fire(type, ev)
-   end
-
-   public close_textlist()
-      if /tl.parent_dialog.popup_manager then {
-         if self.parent_dialog.focus === tl then
-            self.parent_dialog.set_focus(view)
-         self.tl.invalidate()
-         self.parent_dialog.remove(tl)
-      } else {
-         if /self.parent_dialog.focus then
-            self.parent_dialog.set_focus(view)
-         self.parent_dialog.remove_popup(self.tl.parent_dialog)
-         self.tl.parent_dialog.dispose()
-      }
-      self.tl := &null
-      self.parent_dialog.
-         exit_menu_mode().
-         disconnect_object(self)
-   end
-
-   public close_all()
-      close_textlist()
-   end
-
-   public dialog_event(e)
-      if (/e.release & (e.code === "\e")) | 
-          (member(Mouse.PRESS, e.code) & 
-                not(tl.in_region(e)) & not(b.in_region(e))) then 
-      {
-         #
-         # Mouse click outside textlist.  Close.
-         # 
-         self.close_textlist()
       }
    end
 
@@ -298,59 +472,9 @@ abstract class DropDown(SelectionList,Component)
       #
       # Disposed with text list showing, just get rid of it
       #
-      if \self.tl then 
-         self.close_textlist()
+      if \self.popup then 
+         self.close_popup()
       cast(self,Component).finally()
-   end
-
-   public get_default_height(dw)
-      dw -:= border.get_total_width() + b.get_preferred_width()
-      return border.get_total_height() + view.get_preferred_height(dw)
-   end
-
-   public display()
-      border.draw_rect(self.cbwin, self)
-      display_children()
-   end
-
-   public layout()
-      local bw
-
-      bw := b.get_preferred_width()
-      #
-      # Set button position and size
-      #
-      b.x := self.x + self.w - bw - border.get_r_inset()
-      b.y := self.y + border.get_t_inset()
-      b.w := bw
-      view.x := self.x + border.get_l_inset()
-      view.y := self.y + border.get_t_inset()
-      view.w := self.w - border.get_total_width() - bw
-      b.h := view.h := self.h - border.get_total_height()
-      b.layout()
-      view.layout()
-   end
-
-   public new()
-      cast(self,Component).new()
-      self.set_border(SunkenBorder())
-      # Make the same width as the button in the scrollbar of the dropdown.
-      self.b := IconButton().
-         set_width(ScrollArea.predict_scrollbar_size()).
-         connect(self.on_button_press, Event.BUTTON_PRESS).
-         set_paint(ImagePaint().set_cache("gui.ARROW_DOWN")).
-         set_accepts_focus(&no)
-      self.direction := Direction.BEST
-      self.add(b)
-      self.preferred_focus := self.view := create_view()
-      self.add(view)
-      self.set_constraint("x_fill", &yes)
-      self.set_constraint("x_align", Align.L)
-      self.set_constraint("x_weight", 1.0)
-      connect(self.go_up, Event.MOUSE_WHEEL_UP)
-      connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
-      every connect(self.forward_key, Event.KEY_PRESS | Event.KEY_RELEASE)
-      return
    end
 end
 

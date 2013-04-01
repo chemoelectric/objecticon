@@ -70,7 +70,8 @@ class Dialog(Component)
       popup_manager,
       popups,
       curr_pointer,
-      remember_size_flag
+      remember_size_flag,
+      menu_mode_stack
 
    public needs_validate()
       return \copy_rect
@@ -334,32 +335,57 @@ class Dialog(Component)
    end
 
    public enter_menu_mode(c)
-      # If already in menu mode, force ourselves out of it.
-      (\self.menu_mode).close_all()
-      self.menu_mode := c
-      popups := []
-      grab_pointer()
+      if \popup_manager then
+         popup_manager.enter_menu_mode(c)
+      else {
+         while \menu_mode & not(menu_mode.allow_nested(c)) do
+            menu_mode.close_all()
+         if \menu_mode then
+            put(menu_mode_stack, menu_mode)
+         else {
+            popups := []
+            grab_pointer()
+         }
+         self.menu_mode := c
+      }
       return self
    end
 
-   public exit_menu_mode()
-      (\self.menu_mode := &null) | syserr("internal error - not  in menu mode.")
-      ungrab_pointer()
-      popups := &null
+   public exit_menu_mode(c)
+      if \popup_manager then
+         popup_manager.exit_menu_mode(c)
+      else {
+         until c === menu_mode do
+            menu_mode.close_all()
+         if c := pull(menu_mode_stack) then
+            menu_mode := c
+         else {
+            ungrab_pointer()
+            menu_mode := popups := &null
+         }
+      }
       return self
    end
 
    public add_popup(d)
-      \popups | syserr("internal error - not  in menu mode.")
-      d.popup_manager := self
-      put(popups, d)
+      if \popup_manager then
+         popup_manager.add_popup(d)
+      else {
+         \popups | syserr("internal error - not  in menu mode.")
+         d.popup_manager := self
+         put(popups, d)
+      }
       return self
    end
 
    public remove_popup(d)
-      \popups | syserr("internal error - not  in menu mode.")
-      d.popup_manager := &null
-      ldel(popups, d)
+      if \popup_manager then
+         popup_manager.remove_popup(d)
+      else {
+         \popups | syserr("internal error - not  in menu mode.")
+         d.popup_manager := &null
+         ldel(popups, d)
+      }
       return self
    end
 
@@ -589,6 +615,7 @@ class Dialog(Component)
 
    public process_event(l)
       local e
+
       case l[1] of {
          Selection.REQUEST: process_selection_request(l)
          Selection.CLEAR: process_selection_clear(l)
@@ -604,6 +631,14 @@ class Dialog(Component)
 
             e := WinEvent!l
             create_point_chain(e)
+
+            while \menu_mode do {
+               if menu_mode.should_close(e) then {
+                  menu_mode.close_all()
+                  create_point_chain(e)
+               } else
+                  break
+            }
 
             if /self.curr_drag then 
                check_dnd(e)
@@ -624,7 +659,7 @@ class Dialog(Component)
    private process_normal(e)
       local c, ec
 
-      if /self.win then
+      if /self.win | /self.point_chain then
          return
 
       ec := e.code
@@ -635,10 +670,8 @@ class Dialog(Component)
             self.set_focus(c, e)
       }
       else if \e.meta & /e.release & type(ec) == ("string" | "ucs") then {
-         if c := self.find_accel(ec) then {
-            (\self.menu_mode).close_all()
+         if c := self.find_accel(ec) then
             c.handle_accel(e)
-         }
       }
 
       generate_crossing_events(e) 
@@ -654,7 +687,7 @@ class Dialog(Component)
       # Check for focus keyboard movement, but not in menu mode; this would get muddled up
       # with the menu's cursor movement.
       #
-      if /e.release & /self.menu_mode then {
+      if /e.release & /self.menu_mode & /self.popup_manager then {
          if member(FOCUS_DOWN, ec) & (/self.focus | 
                                       self.focus.is_hidden() |
                                       self.focus.is_shaded() | 
@@ -1300,6 +1333,7 @@ class Dialog(Component)
       cast(self,Component).new()
       self.set_all_wattribs(ROOT_WATTRIBS)
       self.child_dialogs := set()
+      self.menu_mode_stack := []
       self.tooltip_ticker := Dispatcher.new_task{self.process_tooltip_tick()}
       return
    end
@@ -1501,3 +1535,8 @@ class WindowControl(Component)
    end
 end
 
+abstract class MenuMode()
+   public abstract should_close(e)
+   public abstract close_all()
+   public allow_nested(c) end
+end
