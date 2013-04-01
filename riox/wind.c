@@ -1387,10 +1387,11 @@ void
 wsetcursor(Window *w, int force)
 {
 	Cursor *p;
-
+        if(grabpointer && w != grabpointer)
+            return;
 	if(w==nil || /*w!=input || */ w->i==nil || Dx(w->screenr)<=0)
 		p = nil;
-	else if(wpointto(mouse->xy) == w){
+	else if(grabpointer || wpointto(mouse->xy) == w){
 		p = w->cursorp;
 		if(p==nil && w->holding)
 			p = &whitearrow;
