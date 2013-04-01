@@ -1024,7 +1024,7 @@ class Dialog(Component)
       local c, ptr
       ptr := DEFAULT_POINTER
       if /is_blocked_flag then {
-         every c := !\self.point_chain do {
+         every c := !\(back(\popups) | self).point_chain do {
             if c.is_unshaded() & (ptr := c.get_pointer(e)) then
                break
          }
