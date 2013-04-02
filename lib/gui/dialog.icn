@@ -961,7 +961,7 @@ class Dialog(Component)
       #
       # Get current tip/object, if any.
       #
-      every c := !(back(\popups) | self).point_chain do {
+      every c := !\(back(\popups) | self).point_chain do {
          if tip := c.get_tooltip(e) then {
             obj := c
             break
@@ -1023,13 +1023,14 @@ class Dialog(Component)
    public synch_pointer(e)
       local c, ptr
       ptr := DEFAULT_POINTER
-      if /is_blocked_flag then {
+      if /is_blocked_flag | \popup_manager then {
          every c := !\(back(\popups) | self).point_chain do {
             if c.is_unshaded() & (ptr := c.get_pointer(e)) then
                break
          }
       }
       change_pointer(ptr)
+      return self
    end
 
    #
