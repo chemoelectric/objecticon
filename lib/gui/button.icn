@@ -39,7 +39,8 @@ class Button(Toggle,Component)
       repeat_delay,
       no_click_focus_flag,
       toggles_flag,
-      repeat_ticker
+      repeat_ticker,
+      held_event
 
    public set_parent_button_group(x)
       self.parent_button_group := x
@@ -63,12 +64,13 @@ class Button(Toggle,Component)
    public repeat_tick()
       repeat {
          if Prog.get_runtime_millis() > self.repeat_delay then
-            fire(Event.BUTTON_HELD)
+            fire(Event.BUTTON_HELD, held_event)
          repeat_ticker.sleep(Gui.REPEAT_RATE)
       }
    end
 
-   public start_held()
+   public start_held(ev)
+      held_event := ev
       repeat_ticker.start()
    end
 
@@ -81,7 +83,7 @@ class Button(Toggle,Component)
 
       if /self.is_down then {
          self.is_down := 1
-         start_held()
+         start_held(e)
          self.repeat_delay := Prog.get_runtime_millis() + Gui.REPEAT_DELAY
          every b := !(\self.parent_button_group).buttons do {
             if b.is_unhidden() & b.is_unshaded() then {
@@ -101,7 +103,7 @@ class Button(Toggle,Component)
       if self.in_region(e) then {
          if /self.is_down then {
             self.is_down := 1
-            start_held()
+            start_held(e)
             invalidate()
          }
       } else {

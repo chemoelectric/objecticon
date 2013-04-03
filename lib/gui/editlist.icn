@@ -94,8 +94,11 @@ class EditList(SelectionDropDown)
 
    public on_textfield(ev, src, type)
       # Fire the event with self as source.
-      if type = Event.CONTENT_CHANGED & ev ~=== cc_ev then
+      if type = Event.CONTENT_CHANGED & ev ~=== cc_ev then {
+         start_change(ev)
          self.selection := &null
+         end_change(ev)
+      }
       fire(type, ev)
    end
 

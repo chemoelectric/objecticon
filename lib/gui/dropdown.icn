@@ -279,11 +279,6 @@ abstract class SelectionDropDown(SelectionList, DropDown)
          fire(Event.SELECTION_CHANGED, e)
    end
 
-   #
-   # Create the view component
-   #
-   public abstract create_view()
-
    public create_popup()
       return TextList()
    end

@@ -13,7 +13,8 @@ package gui
 #
 class EditListSpin(SelectionList,EditSpin)
    public 
-      cc_ev
+      cc_ev,
+      old_selection
 
    public apply_selection(ev)
       local s 
@@ -27,13 +28,25 @@ class EditListSpin(SelectionList,EditSpin)
       }
    end
 
+   public start_change(e)
+      self.old_selection := self.selection
+   end
+
+   public end_change(e)
+      if self.old_selection ~=== self.selection then
+         fire(Event.SELECTION_CHANGED, e)
+   end
+
    public extract_selection()
       return self.selection_list[\self.selection] 
    end
 
    public on_textfield(ev, src, type)
-      if type = Event.CONTENT_CHANGED & ev ~=== cc_ev then
+      if type = Event.CONTENT_CHANGED & ev ~=== cc_ev then {
+         start_change(ev)
          self.selection := &null
+         end_change(ev)
+      }
       cast(self,EditSpin).on_textfield(ev, src, type)
    end
 
