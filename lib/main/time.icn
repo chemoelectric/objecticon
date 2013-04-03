@@ -97,7 +97,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    #
    # Format the given int using the given width
    # 
-   private format_int(n, w)
+   private static format_int(n, w)
       local s
       s := string(n)
       if *s < w then
@@ -145,6 +145,27 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    end
 
    #
+   # Format a week year given the width
+   # 
+   private format_week_year(w)
+      local i
+      i := get_week()[2]
+      if w == 2 then
+         return format_int(i % 100, w)
+      else
+         return format_int(i, w)
+   end
+
+   #
+   # Format a week given the width
+   # 
+   private format_week(w)
+      local i
+      i := get_week()[1]
+      return format_int(i, w)
+   end
+
+   #
    # Format the instance using the given pattern string.  The pattern
    # consists of pattern chars and other chars.  
    # 
@@ -163,6 +184,8 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # y - The year.  If the width is 2, the year will be the least
    # significant 2 digits (eg "99"), otherwise it is the full year
    # padded to the width. 
+   #
+   # Y - The week year (see `get_week()`).
    # 
    # d - The day of the month padded to the width.
    # 
@@ -174,6 +197,8 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # numeric value is used, padded to the width.  If the width is 3, then
    # the abbreviated month is used (eg "Jul"); otherwise the full month is
    # used (eg "July").
+   # 
+   # w - The week (see `get_week()`).
    # 
    # m - The minute in the hour padded to the width.
    # 
@@ -206,13 +231,15 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       res := p[1:1]   # Empty string same type as p
       p ? {
          until pos(0) do {
-            if any('EydHMhmsaAzZ') then {
+            if any('EyYdHMwhmsaAzZ') then {
                ch := p[&pos]
                w := *tab(many(ch))
                res ||:= case string(ch) of {
                   "E": format_weekday(w)
                   "y": format_year(w)
+                  "Y": format_week_year(w)
                   "M": format_month(w)
+                  "w": format_week(w)
                   "d": format_int(self.mday, w)
                   "h": {
                      if self.hour < 13 then
