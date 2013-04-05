@@ -11,10 +11,9 @@ package gui
 #
 # Selection from a list with edit
 #
-class EditListSpin(SelectionList,EditSpin)
+class EditListSpin(SelectionSpin)
    public 
-      cc_ev,
-      old_selection
+      cc_ev
 
    public apply_selection(ev)
       local s 
@@ -28,26 +27,32 @@ class EditListSpin(SelectionList,EditSpin)
       }
    end
 
-   public start_change(e)
-      self.old_selection := self.selection
-   end
-
-   public end_change(e)
-      if self.old_selection ~=== self.selection then
-         fire(Event.SELECTION_CHANGED, e)
-   end
-
-   public extract_selection()
-      return self.selection_list[\self.selection] 
-   end
-
    public on_textfield(ev, src, type)
-      if type = Event.CONTENT_CHANGED & ev ~=== cc_ev then {
-         start_change(ev)
+      if type = Event.CONTENT_CHANGED & ev ~=== cc_ev then
          self.selection := &null
-         end_change(ev)
-      }
-      cast(self,EditSpin).on_textfield(ev, src, type)
+      # Fire the event with self as source.
+      fire(type, ev)
+   end
+
+   #
+   # Set the text field's filter (see {TextField} for details).
+   # @param c  The filter
+   #
+   public set_filter(c)
+      self.view.set_filter(c)
+      return self
+   end
+
+   #
+   # Return the contents of the text field (which may have
+   # been edited).
+   #
+   public get_contents()
+      return view.get_contents()
+   end
+
+   public create_view()
+      return SpinTextField()
    end
 
    #
@@ -63,35 +68,18 @@ class EditListSpin(SelectionList,EditSpin)
       return self
    end
 
-   public do_increment(e)
-      if *selection_list = 0 then
-         fail
-      if /self.selection | self.selection = *self.selection_list then
-         self.set_selection(1, e)
-      else
-         self.set_selection(self.selection + 1, e)
-   end
-
-   public do_decrement(e)
-      if *selection_list = 0 then
-         fail
-      if /self.selection | (self.selection = 1) then
-         self.set_selection(*self.selection_list, e)
-      else
-         self.set_selection(self.selection - 1, e)
-   end
-
-   public initially()
-      \self.selection_list | runerr("no selection list specified")
-      cast(self,EditSpin).initially()
-   end
-
    public get_default_width()
       local t
       t := 0
       # Max string length + space for cursor (cf TextField's get_view() method)
       every t <:= self.cbwin.text_width((view.contents | !self.selection_list) || " ")
       return border.get_total_width() + up.get_preferred_width() + t + view.border.get_total_width()
+   end
+
+   public new()
+      cast(self,SelectionSpin).new()
+      every view.connect(self.on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+      return
    end
 end
 

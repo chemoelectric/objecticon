@@ -222,10 +222,36 @@ abstract class DropDown(Component, MenuMode)
          (\popup.parent_dialog.focus).fire(type, ev)
    end
 
+   public do_increment(ev)
+   end
+
+   public do_decrement(ev)
+   end
+
+   #
+   # This may be overridden to monitor for changes to trigger events.  It is
+   # invoked before the do_increment/do_decrement methods are called
+   #
+   public start_change(e)
+   end
+
+   #
+   # This may be overridden to monitor for changes to trigger events.  It is
+   # invoked after the do_increment/do_decrement methods are called
+   #
+   public end_change(e)
+   end
+
    public go_up(e)
+      start_change(e)
+      do_increment(e)
+      end_change(e)
    end
 
    public go_down(e)
+      start_change(e)
+      do_decrement(e)
+      end_change(e)
    end
 
    public new()
@@ -270,6 +296,10 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       go_to(\tmp, ev)
    end
 
+   public extract_selection()
+      return text(self.selection_list[\self.selection])
+   end
+
    public start_change(e)
       self.old_selection := self.selection
    end
@@ -301,26 +331,22 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       return self
    end
 
-   public go_up(e)
+   public do_increment(e)
       if *selection_list = 0 then
          fail
-      start_change(e)
       if /self.selection | (self.selection = 1) then
          set_selection(*self.selection_list, e)
       else
          set_selection(self.selection - 1, e)
-      end_change(e)
    end
 
-   public go_down(e)
+   public do_decrement(e)
       if *selection_list = 0 then
          fail
-      start_change(e)
       if /self.selection then
          set_selection(1, e)
       else
          set_selection(1 + self.selection % *self.selection_list, e)
-      end_change(e)
    end
 
    public go_to(x, e)
@@ -473,8 +499,48 @@ abstract class SelectionDropDown(SelectionList, DropDown)
    end
 end
 
+class DropDownLabel(Label)
+   public keeps(e)
+      return member(Key.CURSOR_V, e.code)
+   end
+
+   public on_key(e)
+      case e.code of {
+         Key.UP : parent.go_up(e)
+         Key.DOWN : parent.go_down(e)
+      }
+   end
+
+   public new()
+      cast(self,Label).new()
+      self.set_label("")
+      self.set_accepts_focus(&yes)
+      self.connect(self.on_key, Event.KEY_PRESS)
+      # Align with the text in the textlist.
+      self.set_border(EmptyBorder().
+                      set_align(Align.L, Align.C).
+                      set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, Gui.Y_INSET, Gui.Y_INSET))
+      return
+   end
+end
 
 
+class DropDownTextField(TextField)
+   public keeps(e)
+      return member(Key.CURSOR, e.code)
+   end
 
+   public on_key(e)
+      case e.code of {
+         Key.UP : parent.go_up(e)
+         Key.DOWN : parent.go_down(e)
+      }
+   end
 
-
+   public new()
+      cast(self,TextField).new()
+      self.connect(self.on_key, Event.KEY_PRESS)
+      self.set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
+      return
+   end
+end

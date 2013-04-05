@@ -8,6 +8,8 @@
 
 package gui
 
+import graphics
+
 #
 # This class is the base class for all spin components.  It just provides the up/down
 # buttons and two abstract methods which are invoked to implement those actions.
@@ -121,6 +123,97 @@ abstract class Spin(Component)
       self.set_constraint("x_weight", 1.0)
       connect(self.go_up, Event.MOUSE_WHEEL_UP)
       connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
+      return
+   end
+end
+
+
+#
+# Selection from a list
+#
+abstract class SelectionSpin(SelectionList, Spin)
+   public old_selection
+
+   public extract_selection()
+      return text(self.selection_list[\self.selection])
+   end
+
+   public start_change(e)
+      self.old_selection := self.selection
+   end
+
+   public end_change(e)
+      if self.old_selection ~=== self.selection then
+         fire(Event.SELECTION_CHANGED, e)
+   end
+
+   public do_increment(e)
+      if *selection_list = 0 then
+         fail
+      if /self.selection | self.selection = *self.selection_list then
+         self.set_selection(1, e)
+      else
+         self.set_selection(self.selection + 1, e)
+   end
+
+   public do_decrement(e)
+      if *selection_list = 0 then
+         fail
+      if /self.selection | (self.selection = 1) then
+         self.set_selection(*self.selection_list, e)
+      else
+         self.set_selection(self.selection - 1, e)
+   end
+
+   public initially()
+      \self.selection_list | runerr("no selection list specified")
+      cast(self,Spin).initially()
+   end
+end
+
+
+class SpinTextField(TextField)
+   public keeps(e)
+      return member(Key.CURSOR, e.code)
+   end
+
+   public on_key(e)
+      case e.code of {
+         Key.UP : parent.go_up(e)
+         Key.DOWN : parent.go_down(e)
+      }
+   end
+
+   public new()
+      cast(self,TextField).new()
+      self.connect(self.on_key, Event.KEY_PRESS)
+      self.set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
+      return
+   end
+end
+
+
+class SpinLabel(Label)
+   public keeps(e)
+      return member(Key.CURSOR_V, e.code)
+   end
+
+   public on_key(e)
+      case e.code of {
+         Key.UP : parent.go_up(e)
+         Key.DOWN : parent.go_down(e)
+      }
+   end
+
+   public new()
+      cast(self,Label).new()
+      self.set_label("")
+      self.connect(self.on_key, Event.KEY_PRESS)
+      self.set_accepts_focus(&yes)
+      # Align with the text in the textlist.
+      self.set_border(EmptyBorder().
+                      set_align(Align.L, Align.C).
+                      set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, Gui.Y_INSET, Gui.Y_INSET))
       return
    end
 end

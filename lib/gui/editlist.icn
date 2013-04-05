@@ -8,29 +8,6 @@
 
 package gui
 
-import graphics
-
-class EditListTextField(TextField)
-   public keeps(e)
-      return member(Key.CURSOR, e.code)
-   end
-
-   public on_key(e)
-      case e.code of {
-         Key.UP : parent.go_up(e)
-         Key.DOWN : parent.go_down(e)
-      }
-   end
-
-   public new()
-      cast(self,TextField).new()
-      self.connect(self.on_key, Event.KEY_PRESS)
-      self.set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
-      return
-   end
-end
-
-
 #
 # This component functions in the same way as List above, but
 # the item selected may be edited by the user.  An extra
@@ -88,22 +65,15 @@ class EditList(SelectionDropDown)
       }
    end
 
-   public extract_selection()
-      return self.selection_list[\self.selection] 
-   end
-
    public on_textfield(ev, src, type)
       # Fire the event with self as source.
-      if type = Event.CONTENT_CHANGED & ev ~=== cc_ev then {
-         start_change(ev)
+      if type = Event.CONTENT_CHANGED & ev ~=== cc_ev then
          self.selection := &null
-         end_change(ev)
-      }
       fire(type, ev)
    end
 
    public create_view()
-      return EditListTextField()
+      return DropDownTextField()
    end
 
    public get_default_width()
