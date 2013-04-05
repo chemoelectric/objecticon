@@ -748,11 +748,13 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       local t
       if month = 12 & mday >= 29 then {
          t := get_week_one(year + 1)
-         if not before(t) then
+         # Note we don't use before/after here to avoid having to
+         # normalize self's timezone.
+         if (t.month = 12) & (mday >= t.mday) then
             return [1, year + 1]
       } else if month = 1 & mday <= 3 then {
          t := get_week_one(year)
-         if before(t) then
+         if (t.month = 1) & (mday < t.mday) then
             return t.set_mday(t.mday - 7).get_week()
       }
       return [(yday + 9 - (wday + 5) % 7) / 7, year]
@@ -773,19 +775,19 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # Utility procedure - return cumulative days upto month m in year y
    #
    #
-   private static get_cum_mdays(y, m)
-      return if (y % 4 = 0) & (y % 100 ~= 0 | y % 400 = 0) then
+   public static get_cum_mdays(y, m)
+      return .if (y % 4 = 0) & (y % 100 ~= 0 | y % 400 = 0) then
          LEAP_CUM_MDAYS[m]   # leap year
       else
          CUM_MDAYS[m]   # non-leap year
    end
    
    #
-   # Utility procedure - return in month m for year y
+   # Utility procedure - return days in month m for year y
    #
    #
-   private static get_mdays(y, m)
-      return if (y % 4 = 0) & (y % 100 ~= 0 | y % 400 = 0) then
+   public static get_mdays(y, m)
+      return .if (y % 4 = 0) & (y % 100 ~= 0 | y % 400 = 0) then
          LEAP_MDAYS[m]               # leap year
       else
          MDAYS[m]               # non-leap year
@@ -978,8 +980,8 @@ class TimeParser()
    # 
    # Get the next parsed int
    #
-   private parse_int(w)
-      local j
+   private parse_int(w, lo, hi)
+      local j, v
       j := ss.many(&digits) | throw("Digit expected")
       #
       # If there is a numeric field immediately following, limit
@@ -989,7 +991,12 @@ class TimeParser()
       if any('ydHMhms') then 
          j >:= ss.kpos + w
 
-      return integer(ss.tab(j))
+      v := integer(ss.tab(j))
+
+      if (v < \lo) | (v > \hi) then
+         throw("Value out of range")
+
+      return v
    end
 
    # 
@@ -1017,7 +1024,7 @@ class TimeParser()
    private parse_month(w)
       local s
       if w < 3 then
-         return parse_int(w)
+         return parse_int(w, 1, 12)
       s := ss.tab(ss.many(&ucase ++ &lcase)) | throw("Month expected")
       return month_to_num(s) | throw("Invalid month")
    end
@@ -1069,7 +1076,9 @@ class TimeParser()
    # 
    # d - The day of the month
    # 
-   # H/h - The hour in the day
+   # H  - The hour in the day in the 24 hour format
+   #
+   # h -  The hour in the day in the 12 hour clock format 
    # 
    # M - The month of the year.  If the width is less than 3 then the
    # numeric value is expected, otherwise the textual value is expected.
@@ -1083,6 +1092,8 @@ class TimeParser()
    # 
    # z - The timezone (eg UTC or +0400).
    #
+   # x - Matches the end of string, and can be used to detect extraneous input.
+   #
    public parse(s, p)
       ss := Scan(s)
       return p ? simple_try{ parse_impl() }
@@ -1091,23 +1102,25 @@ class TimeParser()
    private parse_impl()
       local y, d, m, hh, mm, sec, z, ampm, lit, ch, w
       until pos(0) do {
-         if any('EydHMhmsaAz') then {
+         if any('EydHMhmsaAzx') then {
             ch := &subject[&pos]
             w := *tab(many(ch))
             case string(ch) of {
                "E": parse_weekday()
                "y": y := parse_year(w)
                "M": m := parse_month(w)
-               "d": d := parse_int(w)
-               "h"|"H": hh := parse_int(w)
-               "m": mm := parse_int(w)
-               "s": sec := parse_int(w)
+               "d": d := parse_int(w, 1, 31)
+               "H": hh := parse_int(w, 0, 23)
+               "h": hh := parse_int(w, 0, 12)
+               "m": mm := parse_int(w, 0, 59)
+               "s": sec := parse_int(w, 0, 59)
                "z": z := parse_timezone()
                "A"|"a": {
                   ampm := parse_ampm()
                   if ampm == "pm" & (0 < \hh < 12) then 
                      hh +:= 12
                }
+               "x": ss.pos(0) | throw("Extraneous content")
             }
          } else if any('\'') then {
             lit := Time.match_literal()
