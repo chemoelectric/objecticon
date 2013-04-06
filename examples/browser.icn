@@ -206,14 +206,14 @@ class BrowserDialog(Dialog)
          every path := key(t) do {
             every ck := !t[path] do {
                s ||:= "<hr><br><table>"
-               s ||:= "<tr><td>Name<td>" || ck.name || "</tr>"
-               s ||:= "<tr><td>Value<td>" || ck.value || "</tr>"
-               s ||:= "<tr><td>Expires<td>" || (\ck.expires).to_rfc822() || "</tr>"
-               s ||:= "<tr><td>Domain<td>" || \ck.domain || "</tr>"
-               s ||:= "<tr><td>Path<td>" || \ck.path || "</tr>"
-               s ||:= "<tr><td>Secure<td>" || \ck.secure || "</tr>/"
-               s ||:= "<tr><td>Comment<td>" || \ck.comment || "</tr>"
-               s ||:= "<tr><td>Version<td>" || \ck.version || "</tr>"
+               s ||:= "<tr><td>Name&nbsp;&nbsp;<td>" || ck.name || "</tr>"
+               s ||:= "<tr><td>Value&nbsp;&nbsp;<td>" || ck.value || "</tr>"
+               s ||:= "<tr><td>Expires&nbsp;&nbsp;<td>" || (\ck.expires).to_rfc822() || "</tr>"
+               s ||:= "<tr><td>Domain&nbsp;&nbsp;<td>" || \ck.domain || "</tr>"
+               s ||:= "<tr><td>Path&nbsp;&nbsp;<td>" || \ck.path || "</tr>"
+               s ||:= "<tr><td>Secure&nbsp;&nbsp;<td>" || \ck.secure || "</tr>/"
+               s ||:= "<tr><td>Comment&nbsp;&nbsp;<td>" || \ck.comment || "</tr>"
+               s ||:= "<tr><td>Version&nbsp;&nbsp;<td>" || \ck.version || "</tr>"
                s ||:= "</table><br><a href=config:del_cookie?" || URL.make_cgi_string(table(, 
                                                                                             "q", k,
                                                                                             "path", ck.path,

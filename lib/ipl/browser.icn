@@ -569,6 +569,9 @@ class WorkerPool()
 end
 
 class Tbl(Border, HasMaxWidth, HasAscent)
+   private
+      hrules, vrules
+
    public get_max_width()
       local w1
       w1 := content.layout_delegate.get_max_width()  + border.get_total_width()
@@ -582,6 +585,36 @@ class Tbl(Border, HasMaxWidth, HasAscent)
       /title | return dh
       dw -:= border.get_total_width()
       return content.layout_delegate.get_ascent(dw) + border.get_t_inset() | dh
+   end
+
+   public set_hrules(r)
+      self.hrules := r
+      return self
+   end
+
+   public set_vrules(r)
+      self.vrules := r
+      return self
+   end
+
+   public display()
+      local i, g
+      cast(self, Border).display()
+      g := content.layout_delegate.g
+      g.compute_actual_col_positions(content.x)
+      g.compute_actual_row_positions(content.y)
+      every i := !g.info do {
+         if member(\vrules, i.x) then
+            cbwin.draw_rectangle(g.col_x[i.x],
+                                 g.row_y[i.y],
+                                 1,
+                                 Grid.slice(i.y, i.h, g.a_row_h))
+         if member(\hrules, i.y) then
+            cbwin.draw_rectangle(g.col_x[i.x],
+                                 g.row_y[i.y],
+                                 Grid.slice(i.x, i.w, g.a_col_w),
+                                 1)
+      }
    end
 
    public new()
@@ -1333,7 +1366,7 @@ class Form()
    end
 end
 
-record TableContext(tbl, caption, x, y, occ, cell_border, tr, colgroups, curr_colgroup)
+record TableContext(tbl, caption, x, y, occ, cell_border, tr, rowgroups, colgroups, curr_colgroup)
 record TableColGroup(align, valign, width, span, cols)
 record TableCol(align, valign, width, span)
 record ListContext(tbl, index, root)
@@ -2465,7 +2498,7 @@ class Browser(Component)
    end
 
    private traverse_table(e, p, context)
-      local ct, tbl, border, cellpadding, cellspacing, cell_border, align, c
+      local ct, tbl, border, cellpadding, cellspacing, cell_border, align, c, i
 
       tbl := Tbl()
       do_width_param(e, tbl)
@@ -2478,7 +2511,7 @@ class Browser(Component)
          tbl.set_border(PlainBorder().set_line_width(border))
       tbl.set_bg(convert_color(e, u"BGCOLOR"))
 
-      cell_border := if border > 0 then
+      cell_border := if border > 0 & not(e.get_attribute(u"RULES")) then
          CompoundBorder().
             set_outer(PlainBorder().set_line_width(1)).
             set_inner(EmptyBorder().set_insets(cellpadding, cellpadding, cellpadding, cellpadding))
@@ -2492,9 +2525,30 @@ class Browser(Component)
       ct.x := ct.y := 1
       ct.occ := set()
       ct.cell_border := cell_border
+      ct.rowgroups := []
       ct.colgroups := []
       traverse(e, p, c)
-
+      case string(map(e.get_attribute(u"RULES"))) of {
+         "groups": {
+            # NB - either of these lists may be empty
+            tbl.set_hrules(set!ct.rowgroups[2:0])
+            tbl.set_vrules(set!get_colgroup_cols(ct)[2:0])
+         }
+         "all": {
+            i := 1
+            every i <:= (!tbl.content.children).get_constraint("x")
+            tbl.set_vrules(Set{2 to i})
+            tbl.set_hrules(Set{2 to ct.y - 1})
+         }
+         "cols": {
+            i := 1
+            every i <:= (!tbl.content.children).get_constraint("x")
+            tbl.set_vrules(Set{2 to i})
+         }
+         "rows": {
+            tbl.set_hrules(Set{2 to ct.y - 1})
+         }
+      }
       if not(align === (Align.L | Align.R)) then
          put_new_row(p, c)
       if \c.table.caption then
@@ -2504,6 +2558,13 @@ class Browser(Component)
 
       if not(align === (Align.L | Align.R)) then
          put_new_row(p, c)
+   end
+
+   private traverse_tbody(e, p, context)
+      local ct
+      ct := \context.table | fail
+      put(ct.rowgroups, ct.y)
+      traverse(e, p, context)
    end
 
    private traverse_caption(e, p, context)
@@ -2597,6 +2658,20 @@ class Browser(Component)
             i +:= e.span
          }
       }
+   end
+
+   private get_colgroup_cols(ct)
+      local i, e, l
+      i := 1
+      l := []
+      every e := !ct.colgroups do {
+         put(l, i)
+         if *e.cols > 0 then
+            every i +:= (!e.cols).span
+         else
+            i +:= e.span
+      }
+      return l
    end
 
    private traverse_td(e, p, context)
@@ -2803,6 +2878,7 @@ class Browser(Component)
                "CENTER": traverse_center(e, p, context)
                "H" || (1 to 6): traverse_hN(e, p, context)
                "TABLE": traverse_table(e, p, context)
+               "THEAD"|"TBODY"|"TFOOT": traverse_tbody(e, p, context)
                "CAPTION": traverse_caption(e, p, context)
                "COLGROUP": traverse_colgroup(e, p, context)
                "COL": traverse_col(e, p, context)
