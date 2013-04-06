@@ -1333,7 +1333,9 @@ class Form()
    end
 end
 
-record TableContext(tbl, caption, x, y, occ, cell_border, tr)
+record TableContext(tbl, caption, x, y, occ, cell_border, tr, colgroups, curr_colgroup)
+record TableColGroup(align, valign, width, span, cols)
+record TableCol(align, valign, width, span)
 record ListContext(tbl, index, root)
 record DefListContext(tbl)
 record FieldSetContext(legend)
@@ -2444,9 +2446,9 @@ class Browser(Component)
       }
    end
 
-   private do_width_param(e, c)
+   private do_width_param(e, c, def_w)
       local width
-      return if width := e.get_attribute(u"WIDTH") then {
+      return if width := (e.get_attribute(u"WIDTH") | \def_w) then {
          if width := (0 <= integer(width)) then
             c.set_constraint("fix_w", width)
          else if width[-1] == "%" & width := (0 <= integer(width[1:-1])) then
@@ -2490,6 +2492,7 @@ class Browser(Component)
       ct.x := ct.y := 1
       ct.occ := set()
       ct.cell_border := cell_border
+      ct.colgroups := []
       traverse(e, p, c)
 
       if not(align === (Align.L | Align.R)) then
@@ -2535,6 +2538,33 @@ class Browser(Component)
       }
    end
 
+   private traverse_colgroup(e, p, context)
+      local ct, cg
+      ct := \context.table | fail
+      cg := TableColGroup()
+      cg.span := (0 < integer(e.get_attribute(u"SPAN"))) | 1
+      cg.width := e.get_attribute(u"WIDTH")
+      cg.valign := convert_valign(e, u"VALIGN")
+      cg.align := convert_halign(e, u"ALIGN")
+      cg.cols := []
+      put(ct.colgroups, cg)
+      ct.curr_colgroup := cg
+      traverse(e, p, context)
+      ct.curr_colgroup := &null
+   end
+
+   private traverse_col(e, p, context)
+      local ct, cg, tc
+      ct := \context.table | fail
+      cg := \ct.curr_colgroup | fail
+      tc := TableCol()
+      tc.span := (0 < integer(e.get_attribute(u"SPAN"))) | 1
+      tc.width := e.get_attribute(u"WIDTH") | cg.width
+      tc.valign := convert_valign(e, u"VALIGN") | cg.valign
+      tc.align := convert_halign(e, u"ALIGN") | cg.align
+      put(cg.cols, tc)
+   end
+
    private traverse_tr(e, p, context)
       local ct
       ct := \context.table | fail
@@ -2551,12 +2581,31 @@ class Browser(Component)
       ct.tr := &null
    end
 
+   private get_col_info(ct, n)
+      local i, e, f
+      i := 0
+      every e := !ct.colgroups do {
+         if *e.cols > 0 then {
+            every f := !e.cols do {
+               if i + f.span >= n then
+                  return f
+               i +:= f.span
+            }
+         } else {
+            if i + e.span >= n then
+               return e
+            i +:= e.span
+         }
+      }
+   end
+
    private traverse_td(e, p, context)
-      local ct, row, c, colspan, rowspan, valign
+      local ct, row, c, colspan, rowspan, valign, col, def_w
       ct := \context.table | fail
       while member(ct.occ, ct.x || "," || ct.y) do
          ct.x +:= 1
-      valign := convert_valign(e | \ct.tr, u"VALIGN") |  Align.C
+      col := get_col_info(ct, ct.x)
+      valign := convert_valign(e | \ct.tr, u"VALIGN") | \ (\col).valign | Align.C
       row := TextFlow(self).
          set_constraint("x", ct.x). 
          set_constraint("y", ct.y).
@@ -2568,7 +2617,9 @@ class Browser(Component)
       row.set_constraint("h", rowspan)
       row.set_bg(convert_color(e | \ct.tr, u"BGCOLOR"))
       every insert(ct.occ, (ct.x to ct.x + colspan - 1) || "," || (ct.y to ct.y + rowspan - 1))
-      do_width_param(e, row)
+      if colspan = 1 then
+         def_w :=  \ (\col).width
+      do_width_param(e, row, def_w)
       do_height_param(e, row)
       ct.tbl.content.add(row)
 
@@ -2577,9 +2628,9 @@ class Browser(Component)
          c.bold := 1
          c.size := min(c.size + 1, 7)
          synch_font(c)
-         c.align := convert_halign(e | \ct.tr, u"ALIGN") | Align.C
+         c.align := convert_halign(e | \ct.tr, u"ALIGN") | \ (\col).align | Align.C
       } else
-         c.align := convert_halign(e | \ct.tr, u"ALIGN") | Align.L
+         c.align := convert_halign(e | \ct.tr, u"ALIGN") | \ (\col).align | Align.L
       ct.x +:= colspan
 
       traverse(e, row, c)
@@ -2753,6 +2804,8 @@ class Browser(Component)
                "H" || (1 to 6): traverse_hN(e, p, context)
                "TABLE": traverse_table(e, p, context)
                "CAPTION": traverse_caption(e, p, context)
+               "COLGROUP": traverse_colgroup(e, p, context)
+               "COL": traverse_col(e, p, context)
                "TR": traverse_tr(e, p, context)
                "TD"|"TH": traverse_td(e, p, context)
                "DIR"|"MENU"|"OL"|"UL": traverse_list(e, p, context)
