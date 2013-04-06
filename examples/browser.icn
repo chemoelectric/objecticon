@@ -205,11 +205,19 @@ class BrowserDialog(Dialog)
          s ||:= "<a href=config:del_cookies?q=" || URL.cgi_encode(k) || ">Delete all</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=config:cookies>Back to list</a>"
          every path := key(t) do {
             every ck := !t[path] do {
-               s ||:= "<hr><pre>" || to_string(ck, 3, 1) || 
-                  "</pre><a href=config:del_cookie?" || URL.make_cgi_string(table(, 
-                                                                                  "q", k,
-                                                                                  "path", ck.path,
-                                                                                  "name", ck.name)) || 
+               s ||:= "<hr><br><table>"
+               s ||:= "<tr><td>Name<td>" || ck.name || "</tr>"
+               s ||:= "<tr><td>Value<td>" || ck.value || "</tr>"
+               s ||:= "<tr><td>Expires<td>" || (\ck.expires).to_rfc822() || "</tr>"
+               s ||:= "<tr><td>Domain<td>" || \ck.domain || "</tr>"
+               s ||:= "<tr><td>Path<td>" || \ck.path || "</tr>"
+               s ||:= "<tr><td>Secure<td>" || \ck.secure || "</tr>/"
+               s ||:= "<tr><td>Comment<td>" || \ck.comment || "</tr>"
+               s ||:= "<tr><td>Version<td>" || \ck.version || "</tr>"
+               s ||:= "</table><br><a href=config:del_cookie?" || URL.make_cgi_string(table(, 
+                                                                                            "q", k,
+                                                                                            "path", ck.path,
+                                                                                            "name", ck.name)) || 
                   ">Delete</a>"
             }
          }
