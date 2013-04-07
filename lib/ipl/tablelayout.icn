@@ -165,33 +165,66 @@ class TableGrid()
    # Adjust the p_col_max_w based on any column % widths; preferred
    # widths are not affected.
    private compute_pct_widths()
-      local pe, n, i, ppp, tot
-      tot := Grid.total(pct_col_w)
-      if tot = 0 then
+      local i, ppp, tot, sum_p, sum_r, p, d, n_r
+      p := Grid.total(pct_col_w)
+      if p = 0 | p > 100 then
          fail
 
-      if tot < 100 then {
-         # Total <100%, so allocate residue to any columns without a %
-         # specified (pct_col_w = 0%).
-         n := 0
-         every i := !pct_col_w do
-            if i = 0 then n +:= 1
-         if n > 0 then {
-            pe := (100 - tot) / n
-            every i := 1 to *pct_col_w do
-               if pct_col_w[i] = 0 then
-                  pct_col_w[i] := pe
-         }
-      }
+      # Stage 1 - adjust the columns with a pct so their p_col_max_w
+      # are in the correct proportions.
 
-      # Now calculate the maximum pixels-per-percentage value
+      # Calculate the maximum pixels-per-percentage value for those
+      # columns with a pct.
       ppp := 0
       every i := 1 to gw do
          ppp <:= real(p_col_max_w[i]) / (0 < pct_col_w[i])
 
-      # Expand column max widths, based on the % and the pixels-per-percentage
+      # Adjust those columns with a pct so they are the correct width
+      # in relation to one another.
       every i := 1 to gw do
          p_col_max_w[i] <:= integer(ppp * pct_col_w[i])
+
+      # Nothing more to do if the %'s total to 100%
+      if p = 100 then
+         return
+
+      # Stage 2 - add a sum to either (a) columns with a pct or (b)
+      # columns without a pct in order to make the total widths of
+      # those with a pct correct in relation to the table as a whole
+      # (they should amount to p% in total).
+
+      # Calculate the total numbers and widths in each group.
+      n_r := sum_p := sum_r := 0
+      every i := 1 to gw do {
+         if pct_col_w[i] > 0 then
+            sum_p +:= p_col_max_w[i]
+         else {
+            sum_r +:= p_col_max_w[i]
+            n_r +:= 1
+         }
+      }
+      tot := sum_p + sum_r
+      
+      # Decide whether to add to one group or the other.  We want to establish (p/100) * tot = sum_p
+      if p * tot > 100 * sum_p then {
+         # Add to those with a pct.  We will add d in total, so that
+         # (p/100) * (tot + d) = (sum_p + d)
+         d := (p * tot - 100 * sum_p) / (100 - p)
+         # Add in proportion to the % widths
+         every i := 1 to gw do {
+            if pct_col_w[i] > 0 then
+               p_col_max_w[i] +:= (d * pct_col_w[i] / p)
+         }
+      } else {
+         # Add to those without a pct.  We will add d, so that
+         # sum_p = (p/100) * (tot + d)
+         d := (100 * sum_p / p) - tot
+         # Just add an equal amount to each column.
+         every i := 1 to gw do {
+            if pct_col_w[i] <= 0 then
+               p_col_max_w[i] +:= d / n_r
+         }
+      }
    end
 
    public compute_preferred_row_heights()
@@ -275,11 +308,10 @@ class TableGrid()
 
       # Extra width
       left := w1 - Grid.total(p_col_w)
-
       n := *a_col_w
       done := list(*a_col_w)
       while n > 0 do {
-         a := integer(left / n)
+         a := left / n
          if a = 0 then
             break
          every i := 1 to *a_col_w do {
