@@ -1,0 +1,467 @@
+package ipl.timegui
+
+import
+   gui, io, util, lang
+
+class DateLabel(DropDownLabel)
+   public get_default_width()
+      local s
+      s := map(Time(2000, 1, 1).format(parent.format), &letters, repl("M", 26) || repl("m", 26))
+      return cbwin.text_width(s) + border.get_total_width()
+   end
+end
+
+class DateField(DropDown)
+   private readable
+      curr,
+      format
+
+   private got_date()
+      curr := popup.get_value()
+      close_all()
+      update_view()
+   end
+
+   public create_popup()
+      return Calendar(curr).connect(got_date, Event.VALUE_CHANGED)
+   end
+
+   public create_view()
+      return DateLabel()
+   end
+
+   private update_view()
+      view.set_label(curr.format(format))
+   end
+
+   public go_up()
+      curr.set_mday(curr.mday + 1)
+      update_view()
+   end
+
+   public go_down()
+      curr.set_mday(curr.mday - 1)
+      update_view()
+   end
+
+   public set_format(f)
+      self.format := f
+      update_view()
+      return self
+   end
+
+   public get_value()
+      return .curr
+   end
+
+   public set_value(v)
+      self.curr := v
+      update_view()
+      return self
+   end
+
+   public new(val)
+      cast(self,DropDown).new()
+      /val := Time()
+      curr := clone(val)
+      set_format("dd-MMM-yyyy")
+      return
+   end
+end
+
+class HourMinSecField(Spin)
+   public create_view()
+      return SpinTextField().
+         set_filter(&digits ++ ':').
+         connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+   end
+
+   public do_increment(ev)
+      local t
+      if t := get_value() then
+         set_value(t.set_sec(t.sec + 1), ev)
+   end
+
+   public do_decrement(ev)
+      local t
+      if t := get_value() then
+         set_value(t.set_sec(t.sec - 1), ev)
+   end
+
+   public get_value()
+      return Time.parse(view.get_contents(), "HH':'mm':'ssx")
+   end
+
+   public set_value(x, ev)
+      local s
+      s := x.format("HH:mm:ss")
+      if /ev then {
+         view.set_contents(s)
+         if is_live() then
+            view.remove_wattrib("fg").reset()
+      } else
+         view.assign_contents(s, ev)
+      return self
+   end
+
+   public on_textfield(ev, src, type)
+      if get_value() then
+         view.remove_wattrib("fg").reset()
+      else
+         view.set_fg("red").reset()
+      # Fire the event with self as source.
+      fire(type, ev)
+   end
+
+   public get_default_width()
+      return border.get_total_width() + up.get_preferred_width() + cbwin.text_width("00:00:00 ") + view.border.get_total_width()
+   end
+
+   public new(val)
+      cast(self,Spin).new()
+      /val := Time()
+      set_value(val)
+      return
+   end
+end
+
+class HourMinField(Spin)
+   public create_view()
+      return SpinTextField().
+         set_filter(&digits ++ ':').
+         connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+   end
+
+   public do_increment(ev)
+      local t
+      if t := get_value() then
+         set_value(t.set_min(t.min + 1), ev)
+   end
+
+   public do_decrement(ev)
+      local t
+      if t := get_value() then
+         set_value(t.set_min(t.min - 1), ev)
+   end
+
+   public get_value()
+      return Time.parse(view.get_contents(), "HH':'mmx")
+   end
+
+   public set_value(x, ev)
+      local s
+      s := x.format("HH:mm")
+      if /ev then {
+         view.set_contents(s)
+         if is_live() then
+            view.remove_wattrib("fg").reset()
+      } else
+         view.assign_contents(s, ev)
+      return self
+   end
+
+   public on_textfield(ev, src, type)
+      if get_value() then
+         view.remove_wattrib("fg").reset()
+      else
+         view.set_fg("red").reset()
+      # Fire the event with self as source.
+      fire(type, ev)
+   end
+
+   public get_default_width()
+      return border.get_total_width() + up.get_preferred_width() + cbwin.text_width("00:00 ") + view.border.get_total_width()
+   end
+
+   public new(val)
+      cast(self,Spin).new()
+      /val := Time()
+      set_value(val)
+      return
+   end
+end
+
+
+class WeekField(DropDown)
+   private readable
+      curr,
+      format
+
+   private got_date()
+      curr := popup.get_value()
+      curr.set_mday(curr.mday - (curr.wday + 5) % 7)
+write("curr=",curr.to_rfc822())
+      close_all()
+      update_view()
+   end
+
+   public create_popup()
+      return Calendar(curr).set_week_mode(1).connect(got_date, Event.VALUE_CHANGED)
+   end
+
+   public create_view()
+      return DateLabel()
+   end
+
+   private update_view()
+      view.set_label(curr.format(format))
+   end
+
+   public go_up()
+      curr.set_mday(curr.mday + 7)
+write("curr=",curr.to_rfc822(), "   ", to_string(curr.get_week()))
+      update_view()
+   end
+
+   public go_down()
+      curr.set_mday(curr.mday - 7)
+write("curr=",curr.to_rfc822(), "   ", to_string(curr.get_week()))
+      update_view()
+   end
+
+   public set_format(f)
+      self.format := f
+      update_view()
+      return self
+   end
+
+   public get_value()
+      return .curr
+   end
+
+   public set_value(v)
+      self.curr := v
+      update_view()
+      return self
+   end
+
+   public new(val)
+      cast(self,DropDown).new()
+      /val := Time()
+      curr := clone(val).edit_fields(,,, 0, 0, 0)
+      curr.set_mday(curr.mday - (curr.wday + 5) % 7)
+      set_format("dd-MMM-yyyy")
+      return
+   end
+
+end
+
+class MonthField(Component)
+   public month, year, curr
+
+   private on_month_change()
+   end
+
+   private on_year_change()
+   end
+
+   public new(val)
+      cast(self,Component).new()
+      /val := Time()
+      set_layout(GridLayout().set_doi(0))
+      curr := clone(val).edit_fields(,,1, 0, 0, 0)
+      month := Month().
+         connect(on_month_change, Event.SELECTION_CHANGED).
+         set_selection(curr.month)
+      add(month)
+      year := Year().
+         connect(on_year_change, Event.CONTENT_CHANGED).
+         set_value(curr.year)
+      add(year)
+      return
+   end
+end
+
+class Month(List)
+   public new()
+      cast(self,List).new()
+      set_selection_list(Time.MONTHS)
+      return
+   end
+end
+
+class Year(RangeSpin)
+   public new()
+      cast(self,RangeSpin).new()
+      lo := 1000
+      hi := 9999
+      return
+   end
+end
+
+class DayButton(TextButton)
+   private readable
+      time
+   public new(t)
+      cast(self,TextButton).new()
+      self.time := clone(t)
+      set_constraint("x_fill", &yes)
+      set_border(EmptyBorder())
+      set_label(t.mday)
+      set_no_click_focus(&yes)
+      return
+   end
+end
+
+class WeekButton(TextButton)
+   private readable
+      time
+   public new(t)
+      cast(self,TextButton).new()
+      self.time := clone(t)
+      set_constraint("x_fill", &yes)
+      set_border(EmptyBorder())
+      set_label(t.get_week()[1])
+      set_no_click_focus(&yes)
+      return
+   end
+end
+
+class Calendar(Component)
+   private readable
+      curr,
+      week_mode_flag
+   private
+      buttons,
+      month,
+      year,
+      showing
+
+   private on_month_change()
+      showing.set_month(month.get_selection())
+      update()
+   end
+
+   private on_year_change()
+      local i
+write("on year value change")
+      if i := year.get_value() then {
+         showing.set_year(i)
+         update()
+      }
+   end
+
+   private update()
+      curr.normalize_zone()
+      showing.normalize_zone()
+      month.set_selection(showing.month)
+      year.set_value(showing.year)
+      update_buttons()
+   end
+
+   public get_value()
+      return .curr
+   end
+
+   private day_press(ev, src)
+      if compare(curr, src.time) then return
+      curr := src.time
+      showing := clone(curr).set_mday(1)
+write("curr==",to_string(curr))
+write("swhowing==",to_string(showing))
+      update()
+      fire(Event.VALUE_CHANGED)
+   end
+
+   private update_buttons()
+      local i
+      i := get_index(buttons)
+      remove(buttons)
+      buttons := setup_buttons()
+      add(buttons, i)
+      if is_live() then {
+         reset_layout()
+         layout()
+         invalidate()
+      }
+   end
+
+   private compare(t1, t2)
+      return if /week_mode_flag then
+         (t1.year = t2.year & t1.month = t2.month & t1.mday = t2.mday)
+      else
+         equals(t1.get_week(), t2.get_week())
+   end
+
+   private setup_buttons()
+      local p, t, w, b, s, bg
+      t := clone(showing)
+      t.set_mday(1).set_mday(1 - (t.wday + 5) % 7)
+      p := Panel().
+         set_layout(GridLayout().set_doi(0).set_dii(0)).
+         set_constraint("eol", &yes)
+
+      if \week_mode_flag then
+         p.add(Label().
+               set_border(EmptyBorder()).
+               set_label("Week"))
+
+      every s := Time.WEEK_DAYS[2 to 8] do
+         p.add(Label().
+               set_border(EmptyBorder()).
+               set_label(s[1:4]))
+      p.children[-1].set_constraint("eol", &yes)
+      p.add(Line().set_constraint("eol", &yes).set_constraint("w", if \week_mode_flag then 8 else 7).set_constraint("x_fill", &yes).set_width(100))
+      bg := ButtonGroup()
+
+      every w := 1 to 6 do {
+         if \week_mode_flag then {
+            b := WeekButton(t).connect(day_press, Event.ACTION)
+            p.add(b)
+         }
+         every 1 to 7 do {
+            b := DayButton(t)
+            if t.month = showing.month then {
+               if t.wday = 1 then
+                  b.set_fg("red")
+            } else
+               b.set_fg("grey")
+            b.connect(day_press, Event.ACTION)
+            #write(to_string(curr),"-v-",to_string(t))
+            if compare(curr, t) then
+               b.set_bg("pale blue")
+            bg.add(b)
+            p.add(b)
+            t.set_mday(t.mday + 1)
+         }
+         b.set_constraint("eol", &yes)
+      }
+      return p
+   end
+
+   public set_week_mode(s)
+      self.week_mode_flag := check_flag(s)
+      update()
+      return self
+   end
+
+   public display()
+      border.draw(self.cbwin, x, y, w, h)
+      self.display_children()
+   end
+
+   public new(val)
+      local p
+      cast(self,Component).new()
+      /val := Time()
+      curr := clone(val).edit_fields(,,, 0, 0, 0)
+      showing := clone(curr).set_mday(1)
+      p := Component().
+         set_layout(GridLayout().set_doi(0)).
+         set_constraint("eol", &yes)
+      month := Month().
+         connect(on_month_change, Event.SELECTION_CHANGED).
+         set_selection(curr.month)
+      p.add(month)
+      year := Year().
+         connect(on_year_change, Event.CONTENT_CHANGED).
+         set_value(curr.year)
+      p.add(year)
+      add(p)
+      add(buttons := setup_buttons())
+      set_layout(GridLayout())
+      set_border(BevelledBorder())
+      return
+   end
+end
+
