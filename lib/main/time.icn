@@ -166,6 +166,17 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    end
 
    #
+   # The timezone in RFC3339 format
+   #
+   private format_rfc3339_timezone(w)
+      return if zone.offset = 0 then
+         "Z"
+      else (if zone.offset < 0 then "-" else "+") ||
+         right(abs(zone.offset) / 3600, 2, "0") || ":" ||
+         right((abs(zone.offset) % 3600) / 60, 2, "0")
+   end
+
+   #
    # Format the instance using the given pattern string.  The pattern
    # consists of pattern chars and other chars.  
    # 
@@ -210,6 +221,8 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # 
    # z - the timezone id (eg UTC or +0400).  The width is ignored.
    # Z - the timezone offset.   The width is ignored.
+   # T - The timezone in RFC3339 format (eg Z or +04:00).   The width
+   # is ignored.
    # 
    # Literal strings (which can include the above chars) can be
    # included using single quotes.  Two single quotes maps to
@@ -231,7 +244,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       res := p[1:1]   # Empty string same type as p
       p ? {
          until pos(0) do {
-            if any('EyYdHMwhmsaAzZ') then {
+            if any('EyYdHMwhmsaAzZT') then {
                ch := p[&pos]
                w := *tab(many(ch))
                res ||:= case string(ch) of {
@@ -252,6 +265,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
                   "s": format_int(self.sec, w)
                   "z": zone.get_id()
                   "Z": zone.format_offset()
+                  "T": format_rfc3339_timezone(w)
                   "a": {
                      if self.hour < 12 then
                         "am"
@@ -1009,6 +1023,23 @@ class TimeParser()
    end
 
    # 
+   # Get the next parsed rfc3339 timezone
+   #
+   private parse_rfc3339_timezone()
+      local h, m, sign
+      if ss.any('zZ') then {
+         ss.move(1)
+         return Timezone.UTC_TIMEZONE
+      }
+      # This is actually a little more liberal than the grammar in the rfc.
+      (sign := (if ss.tabmat("+") then 1 else if ss.tabmat("-") then -1) &
+       h := parse_int(2, 0, 23) &
+       ss.tabmat(":") &
+       m := parse_int(2, 0, 59)) | throw("RFC3339 Timezone expected")
+      return Timezone(sign * (3600 * h + 60 * m))
+   end
+
+   # 
    # Get the next parsed am/pm
    #
    private parse_ampm()
@@ -1092,6 +1123,8 @@ class TimeParser()
    # 
    # z - The timezone (eg UTC or +0400).
    #
+   # T - The timezone in RFC3339 format (eg Z or +04:00).
+   #
    # x - Matches the end of string, and can be used to detect extraneous input.
    #
    public parse(s, p)
@@ -1102,7 +1135,7 @@ class TimeParser()
    private parse_impl()
       local y, d, m, hh, mm, sec, z, ampm, lit, ch, w
       until pos(0) do {
-         if any('EydHMhmsaAzx') then {
+         if any('EydHMhmsaAzxT') then {
             ch := &subject[&pos]
             w := *tab(many(ch))
             case string(ch) of {
@@ -1115,6 +1148,7 @@ class TimeParser()
                "m": mm := parse_int(w, 0, 59)
                "s": sec := parse_int(w, 0, 59)
                "z": z := parse_timezone()
+               "T": z := parse_rfc3339_timezone()
                "A"|"a": {
                   ampm := parse_ampm()
                   if ampm == "pm" & (0 < \hh < 12) then 
