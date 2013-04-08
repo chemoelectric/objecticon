@@ -1159,13 +1159,6 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # For backward compatibility only...(now use {fire()}).
-   #
-   public create_event_and_fire(type, param)
-      return fire(type, param)
-   end
-
-   #
    # Drag and drop helper to invoke drag_reset
    #
    public invoke_drag_reset(e)
