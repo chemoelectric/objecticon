@@ -13,7 +13,8 @@ import
    ipl.pdco,
    ipl.sort,
    ipl.strings,
-   ipl.caseless
+   ipl.caseless,
+   ipl.timegui
 
 $load BROKEN_LINK "rpp.BROKEN_LINK_24.gif"
 
@@ -757,6 +758,9 @@ abstract class FormEntry()
       form_name, form_id, form_tabindex
 
    public reset_form() end
+   public validate_form()
+      return
+   end
                   
    public get_save_key()
       return \form_name | \form_id
@@ -766,7 +770,7 @@ abstract class FormEntry()
    public get_save_value() end
    public restore_value(val) end
 
-   public abstract get_value(ev, src, multipart_flag)
+   public abstract get_form_value(ev, src, multipart_flag)
 end
 
 class FormToggle(ToggleTextButton, FormEntry)
@@ -778,7 +782,7 @@ class FormToggle(ToggleTextButton, FormEntry)
       set_is_checked(init_checked)
    end
 
-   public get_value(ev, src)
+   public get_form_value(ev, src)
       if is_checked() then 
          return value
    end
@@ -808,7 +812,7 @@ class FormButton(TextButton, FormEntry, HasAscent)
    private const
       value
 
-   public get_value(ev, src)
+   public get_form_value(ev, src)
       if src === self then
          return value
    end
@@ -829,7 +833,7 @@ class FormTblButton(Button, FormEntry, HasMaxWidth, HasAscent)
    public const
       tbl, value, form, type
 
-   public get_value(ev, src)
+   public get_form_value(ev, src)
       if src === self then
          return value
    end
@@ -904,7 +908,7 @@ class Hidden(FormEntry)
    private const
       value
 
-   public get_value()
+   public get_form_value()
       return value
    end
 
@@ -931,7 +935,7 @@ class FormBrowse(Component, FormEntry, HasAscent)
       tf,
       browser
 
-   public get_value(ev, src, multipart_flag)
+   public get_form_value(ev, src, multipart_flag)
       return if /multipart_flag then
          tf.get_contents()
       else
@@ -977,7 +981,7 @@ class FormImgX(FormEntry)
    private const
       img
 
-   public get_value(ev, src)
+   public get_form_value(ev, src)
       if src === img then
          return ev.x - img.x
    end
@@ -992,7 +996,7 @@ class FormImgY(FormEntry)
    private const
       img
 
-   public get_value(ev, src)
+   public get_form_value(ev, src)
       if src === img then
          return ev.y - img.y
    end
@@ -1015,7 +1019,7 @@ class FormTextField(TextField, FormEntry, HasAscent)
       set_contents(init_val)
    end
 
-   public get_value()
+   public get_form_value()
       return get_contents()
    end
 
@@ -1035,6 +1039,141 @@ class FormTextField(TextField, FormEntry, HasAscent)
    end
 end
 
+class FormDateField(DateField, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
+   end
+
+   public reset_form()
+      set_value(init_val)
+   end
+
+   public get_form_value()
+      return get_value().format("yyyy-MM-dd")
+   end
+
+   public get_save_value()
+      return get_value()
+   end
+
+   public restore_value(val)
+      set_value(val)
+   end
+
+   public new(init_val)
+      cast(self,DateField).new(init_val)
+      self.init_val := init_val
+      return
+   end
+end
+
+class FormTimeField(Spin, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
+   end
+
+   public reset_form()
+      set_value(init_val)
+   end
+
+   public validate_form()
+      return get_value()
+   end
+
+   public get_form_value()
+      return format(get_value())
+   end
+
+   public get_save_value()
+      return get_value()
+   end
+
+   public restore_value(val)
+      set_value(val)
+   end
+
+   public create_view()
+      return SpinTextField().
+         set_filter(&digits ++ ':.').
+         connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+   end
+
+   public do_increment(ev)
+      local t
+      if t := get_value() then {
+         t[1].set_sec(t[1].sec + 1)
+         set_value(t, ev)
+      }
+   end
+
+   public do_decrement(ev)
+      local t
+      if t := get_value() then {
+         t[1].set_sec(t[1].sec - 1)
+         set_value(t, ev)
+      }
+   end
+
+   public static parse(s)
+      local t
+      s ? {
+         return if t := tab(upto('.')) then
+            [Time.parse(t, "HH':'mm':'ssx"), tab(0)]
+         else
+            [Time.parse(s, "HH':'mm':'ssx"), ""]
+      }
+   end
+
+   public static format(v)
+      return v[1].format("HH:mm:ss") || v[2]
+   end
+
+   public get_value()
+      return parse(view.get_contents())
+   end
+
+   public set_value(x, ev)
+      local s
+      s := format(x)
+      if /ev then {
+         view.set_contents(s)
+         if is_live() then
+            view.remove_wattrib("fg").reset()
+      } else
+         view.assign_contents(s, ev)
+      return self
+   end
+
+   public on_textfield(ev, src, type)
+      if get_value() then
+         view.remove_wattrib("fg").reset()
+      else
+         view.set_fg("red").reset()
+      # Fire the event with self as source.
+      fire(type, ev)
+   end
+
+   public get_default_width()
+      return border.get_total_width() + 
+         up.get_preferred_width() + 
+         cbwin.text_width(format(init_val) || " ") +
+         view.border.get_total_width()
+   end
+
+   public new(init_val)
+      cast(self,Spin).new()
+      set_value(init_val)
+      self.init_val := init_val
+      return
+   end
+end
+
 class FormEditableTextList(EditableTextList, FormEntry)
    private const
       init_val
@@ -1044,7 +1183,7 @@ class FormEditableTextList(EditableTextList, FormEntry)
       set_cursor(1, 1)
    end
 
-   public get_value()
+   public get_form_value()
       return get_contents_str()
    end
 
@@ -1092,7 +1231,7 @@ class FormOptionList(SelectableScrollArea, FormEntry)
       cast(self,SelectableScrollArea).end_handle(e)
    end
 
-   public get_value(ev, src)
+   public get_form_value(ev, src)
       suspend \contents[!selections].value
    end
 
@@ -1177,7 +1316,7 @@ class FormList(gui.List, FormEntry, HasAscent)
       set_selection(init_val)
    end
 
-   public get_value(ev, src)
+   public get_form_value(ev, src)
       return \object_get_selection().value
    end
 
@@ -1223,6 +1362,7 @@ class Form()
       items,
       labels,   # table of FormLabels with ids set (the "for" attribute)
       cbgs,
+      autofocus,
       link_later   # Components with ids set ("id" attribute) which will be matched to entries in labels.
 
    private make_cgi_table(ev, src)
@@ -1230,7 +1370,7 @@ class Form()
       t := table()
       every c := !items do {
          if k := \c.form_name then {
-            every v := c.get_value(ev, src) do {
+            every v := c.get_form_value(ev, src) do {
                (x := member(t, k)) | insert(t, k, x := [])
                put(x, v)
             }
@@ -1257,7 +1397,7 @@ class Form()
       mp := Multipart()
       every c := !items do {
          if k := \c.form_name then {
-            every v := c.get_value(ev, src, 1) do {
+            every v := c.get_form_value(ev, src, 1) do {
                m2 := Message()
                if is(c, FormBrowse) then {
                   m2.set_header("Content-Disposition", 
@@ -1282,7 +1422,15 @@ class Form()
    end
 
    public submit(ev, src)
+      local c
       \url | fail
+      # Validate form.
+      every c := !items do
+         c.validate_form() | {
+            browser.msg("Invalid form data")
+            fail
+         }
+
       if map(method) == "post" then {
          if map(enctype) == "multipart/form-data" then
             browser.goto(url, browser.page_url, Worker.NORMAL, make_cgi_message(ev, src))
@@ -1318,6 +1466,15 @@ class Form()
          /l.comp := comp
       else if \comp.form_id then
          put(link_later, comp)
+   end
+
+   public set_autofocus(c)
+      self.autofocus := c
+      return self
+   end
+
+   public get_autofocus()
+      return \autofocus
    end
 
    public resolve_link_labels()
@@ -1614,18 +1771,21 @@ class Browser(Component)
    end
 
    private page_fully_loaded()
-      local xp, yp
+      local xp, yp, f
       top_panel.
          reset_all_layouts().
          do_layout().
          invalidate()
-      # Goto named anchor unless user has started to scroll page
+      # Goto named anchor and maybe set focus unless user has started to scroll page
       if top_panel.get_area_y() = top_panel.get_area_x() = 0 then {
          if yp := \curr_history_entry.area_y | (lookup_named_anchor(page_url.get_fragment()) - top_panel.view.y) then {
             top_panel.set_area_y(yp)
             if xp := \curr_history_entry.area_x then
                top_panel.set_area_x(xp)
          }
+         # Set focus; this will scroll to the component if necessary (see focus_scroll).
+         if f := (!forms).get_autofocus() then
+            parent_dialog.set_focus(f.find_focus())
       }
       parent_dialog.resynch_pointer()
    end
@@ -2121,6 +2281,8 @@ class Browser(Component)
       if e.get_attribute(u"DISABLED") then
          q.set_is_shaded(&yes)
       else {
+         if e.get_attribute(u"AUTOFOCUS") then
+            context.form.set_autofocus(q)
          context.form.add_std(e, q)
          context.form.link_label(context, q)
       }
@@ -2175,6 +2337,8 @@ class Browser(Component)
       else {
          if e.get_attribute(u"READONLY") then
             q.set_is_editable(&no)
+         if e.get_attribute(u"AUTOFOCUS") then
+            context.form.set_autofocus(q)
          context.form.add_std(e, q)
          context.form.link_label(context, q)
       }
@@ -2196,8 +2360,11 @@ class Browser(Component)
                   set_fg(context.fg)
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
-            else
+            else {
+               if e.get_attribute(u"AUTOFOCUS") then
+                  context.form.set_autofocus(q.children[1])
                context.form.add_std(e, q)
+            }
             add_component(p, q, context, Align.B)
          }
          "submit" : {
@@ -2292,6 +2459,39 @@ class Browser(Component)
             }
             add_component(p, q, context, Align.B)
          }
+         "date": {
+            v := Time.parse(e.get_attribute(u"VALUE"), "yyyy-MM-dd") | Time()
+            q := FormDateField(v).
+               set_fg(context.fg).
+               set_font(context.font).
+               set_size(size)
+            if e.get_attribute(u"DISABLED") then
+               q.set_is_shaded(&yes)
+            else {
+               if e.get_attribute(u"AUTOFOCUS") then
+                  context.form.set_autofocus(q)
+               context.form.add_std(e, q)
+               context.form.link_label(context, q)
+            }
+            add_component(p, q, context, Align.B)
+         }
+         "time": {
+            v := FormTimeField.parse(e.get_attribute(u"VALUE")) | [Time(), ""]
+            q := FormTimeField(v).
+               set_fg(context.fg).
+               set_font(context.font).
+               set_size(size)
+            if e.get_attribute(u"DISABLED") then
+               q.set_is_shaded(&yes)
+            else {
+               if e.get_attribute(u"AUTOFOCUS") then
+                  context.form.set_autofocus(q)
+               context.form.add_std(e, q)
+               context.form.link_label(context, q)
+            }
+            add_component(p, q, context, Align.B)
+         }
+
          # Assume something textual; could be password, text, email etc.
          default: {
             v := e.get_attribute(u"VALUE") | u""
@@ -2311,6 +2511,8 @@ class Browser(Component)
             else {
                if e.get_attribute(u"READONLY") then
                   q.set_is_editable(&no)
+               if e.get_attribute(u"AUTOFOCUS") then
+                  context.form.set_autofocus(q)
                context.form.add_std(e, q)
                context.form.link_label(context, q)
             }
