@@ -1074,16 +1074,12 @@ class FormTimeField(Spin, FormEntry, HasAscent)
    private const
       init_val
 
-   public get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
-   end
-
    public reset_form()
       set_value(init_val)
    end
 
    public validate_form()
-      return get_value()
+      return get_value() | error("Bad time format")
    end
 
    public get_form_value()
@@ -1091,11 +1087,16 @@ class FormTimeField(Spin, FormEntry, HasAscent)
    end
 
    public get_save_value()
-      return get_value()
+      return view.get_contents()
    end
 
    public restore_value(val)
-      set_value(val)
+      view.set_contents(val)
+      get_value() | view.set_fg("red")
+   end
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
    end
 
    public create_view()
@@ -1168,6 +1169,215 @@ class FormTimeField(Spin, FormEntry, HasAscent)
 
    public new(init_val)
       cast(self,Spin).new()
+      set_value(init_val)
+      self.init_val := init_val
+      return
+   end
+end
+
+class FormDateTimeLocalField(Component, FormEntry, HasAscent)
+   private const
+      date,
+      time
+
+   public get_ascent() 
+      return date.get_ascent()
+   end
+
+   public reset_form()
+      date.reset_form()
+      time.reset_form()
+   end
+
+   public validate_form()
+      return time.validate_form()
+   end
+
+   public static parse(s)
+      local t
+      s ? {
+         return if t := tab(upto('.')) then
+            [Time.parse(t, "yyyy-MM-dd'T'HH':'mm':'ssx"), tab(0)]
+         else
+            [Time.parse(s, "yyyy-MM-dd'T'HH':'mm':'ssx"), ""]
+      }
+   end
+
+   public get_form_value()
+      return date.get_form_value() || "T" || time.get_form_value()
+   end
+
+   public get_save_value()
+      return [date.get_save_value(), time.get_save_value()]
+   end
+
+   public restore_value(val)
+      date.restore_value(val[1])
+      time.restore_value(val[2])
+   end
+
+   public new(init_val)
+      cast(self,Component).new()
+      set_layout(GridLayout().set_doi(0).set_dii(0))
+      add(date := FormDateField(init_val[1]))
+      add(time := FormTimeField(init_val))
+      return
+   end
+end
+
+class FormTimezoneField(EditList, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public reset_form()
+      set_value(init_val)
+   end
+
+   public validate_form()
+      return get_value() | error("Bad timezone format")
+   end
+
+   public get_form_value()
+      local zone
+      zone := get_value() | fail
+      return if zone.offset = 0 then
+         "Z"
+      else (if zone.offset < 0 then "-" else "+") ||
+         right(abs(zone.offset) / 3600, 2, "0") || ":" ||
+         right((abs(zone.offset) % 3600) / 60, 2, "0")
+   end
+
+   public get_save_value()
+      return view.get_contents()
+   end
+
+   public restore_value(val)
+      view.set_contents(val)
+      get_value() | view.set_fg("red")
+   end
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
+   end
+
+   public create_view()
+      return DropDownTextField().
+         set_filter(&digits ++ &ucase ++ '+\-').
+         connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+   end
+
+   public get_value()
+      return Timezone(view.get_contents())
+   end
+
+   public set_value(x)
+      local s
+      s := x.get_id()
+      view.set_contents(s)
+      if is_live() then
+         view.remove_wattrib("fg").reset()
+      return self
+   end
+
+   public on_textfield(ev, src, type)
+      if get_value() then
+         view.remove_wattrib("fg").reset()
+      else
+         view.set_fg("red").reset()
+      # Fire the event with self as source.
+      fire(type, ev)
+   end
+
+   public new(v)
+      local l
+      cast(self,EditList).new()
+      /v := Timezone.UTC_TIMEZONE
+      l := []
+      every put(l, (!Timezone.KNOWN_TIMEZONES).id)
+      set_selection_list(sort(l))
+      set_value(v)
+      return
+   end
+end
+
+class FormDateTimeField(Component, FormEntry, HasAscent)
+   private const
+      date,
+      time,
+      zone
+
+   public get_ascent() 
+      return date.get_ascent()
+   end
+
+   public reset_form()
+      date.reset_form()
+      time.reset_form()
+      zone.reset_form()
+   end
+
+   public validate_form()
+      return time.validate_form() & zone.validate_form()
+   end
+
+   public static parse(s)
+      local t, f
+      s ? {
+         return if t := tab(upto('.')) then {
+            f := move(1) || tab(many(&digits))
+            t ||:= tab(0)
+            [Time.parse(t, "yyyy-MM-dd'T'HH':'mm':'ssTx"), f]
+         } else
+            [Time.parse(s, "yyyy-MM-dd'T'HH':'mm':'ssTx"), ""]
+      }
+   end
+
+   public get_form_value()
+      return date.get_form_value() || "T" || time.get_form_value() || zone.get_form_value()
+   end
+
+   public get_save_value()
+      return [date.get_save_value(), time.get_save_value(), zone.get_save_value()]
+   end
+
+   public restore_value(val)
+      date.restore_value(val[1])
+      time.restore_value(val[2])
+      zone.restore_value(val[3])
+   end
+
+   public new(init_val)
+      cast(self,Component).new()
+      set_layout(GridLayout().set_doi(0).set_dii(0))
+      add(date := FormDateField(init_val[1]))
+      add(time := FormTimeField(init_val))
+      add(zone := FormTimezoneField(init_val[1].zone))
+      return
+   end
+end
+
+class FormRange(Slider, FormEntry)
+   private const
+      init_val
+
+   public reset_form()
+      set_value(init_val)
+   end
+
+   public get_form_value()
+      return get_value()
+   end
+
+   public get_save_value()
+      return get_value()
+   end
+
+   public restore_value(val)
+      set_value(val)
+   end
+
+   public new(init_val)
+      cast(self,Slider).new()
       set_value(init_val)
       self.init_val := init_val
       return
@@ -1427,7 +1637,7 @@ class Form()
       # Validate form.
       every c := !items do
          c.validate_form() | {
-            browser.msg("Invalid form data")
+            browser.msg("Invalid form: " || &why)
             fail
          }
 
@@ -2346,7 +2556,7 @@ class Browser(Component)
    end
 
    private traverse_input(e, p, context)
-      local q, s, k, v, size, mW, url, checked, align
+      local q, s, k, v, size, mW, url, checked, align, min, max
       \context.form | fail
       s := string(map(e.get_attribute(u"TYPE"))) | "text"
       case s of {
@@ -2463,8 +2673,7 @@ class Browser(Component)
             v := Time.parse(e.get_attribute(u"VALUE"), "yyyy-MM-dd") | Time()
             q := FormDateField(v).
                set_fg(context.fg).
-               set_font(context.font).
-               set_size(size)
+               set_font(context.font)
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
             else {
@@ -2479,13 +2688,57 @@ class Browser(Component)
             v := FormTimeField.parse(e.get_attribute(u"VALUE")) | [Time(), ""]
             q := FormTimeField(v).
                set_fg(context.fg).
-               set_font(context.font).
-               set_size(size)
+               set_font(context.font)
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
             else {
                if e.get_attribute(u"AUTOFOCUS") then
                   context.form.set_autofocus(q)
+               context.form.add_std(e, q)
+               context.form.link_label(context, q)
+            }
+            add_component(p, q, context, Align.B)
+         }
+         "datetime": {
+            v := FormDateTimeField.parse(e.get_attribute(u"VALUE")) | [Time(), ""]
+            q := FormDateTimeField(v).
+               set_fg(context.fg).
+               set_font(context.font)
+            if e.get_attribute(u"DISABLED") then
+               q.set_is_shaded(&yes)
+            else {
+               context.form.add_std(e, q)
+               context.form.link_label(context, q)
+            }
+            add_component(p, q, context, Align.B)
+         }
+         "datetime-local": {
+            v := FormDateTimeLocalField.parse(e.get_attribute(u"VALUE")) | [Time(), ""]
+            q := FormDateTimeLocalField(v).
+               set_fg(context.fg).
+               set_font(context.font)
+            if e.get_attribute(u"DISABLED") then
+               q.set_is_shaded(&yes)
+            else {
+               context.form.add_std(e, q)
+               context.form.link_label(context, q)
+            }
+            add_component(p, q, context, Align.B)
+         }
+         "range": {
+            min := real(e.get_attribute(u"MIN")) | 0
+            max := real(e.get_attribute(u"MAX")) | (min + 10)
+            v := real(e.get_attribute(u"VALUE")) | min
+            q := FormRange(v).
+               set_range(min, max).
+               set_fg(context.fg).
+               set_font(context.font).
+               set_is_horizontal(&yes).
+               set_size(160)
+            q.set_snaps(0.0 < real(e.get_attribute(u"STEP")))
+            if e.get_attribute(u"DISABLED") then
+               q.set_is_shaded(&yes)
+            else {
                context.form.add_std(e, q)
                context.form.link_label(context, q)
             }

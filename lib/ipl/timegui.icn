@@ -55,7 +55,7 @@ class DateField(DropDown)
    end
 
    public set_value(v)
-      self.curr := v
+      self.curr := clone(v)
       update_view()
       return self
    end
@@ -181,6 +181,46 @@ class HourMinField(Spin)
    end
 end
 
+class TimezoneField(EditList)
+   public create_view()
+      return DropDownTextField().
+         set_filter(&digits ++ &ucase ++ '+\-').
+         connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+   end
+
+   public get_value()
+      return Timezone(view.get_contents())
+   end
+
+   public set_value(x)
+      local s
+      s := x.get_id()
+      view.set_contents(s)
+      if is_live() then
+         view.remove_wattrib("fg").reset()
+      return self
+   end
+
+   public on_textfield(ev, src, type)
+      if get_value() then
+         view.remove_wattrib("fg").reset()
+      else
+         view.set_fg("red").reset()
+      # Fire the event with self as source.
+      fire(type, ev)
+   end
+
+   public new(v)
+      local l
+      cast(self,EditList).new()
+      /v := Timezone.UTC_TIMEZONE
+      l := []
+      every put(l, (!Timezone.KNOWN_TIMEZONES).id)
+      set_selection_list(sort(l))
+      set_value(v)
+      return
+   end
+end
 
 class WeekField(DropDown)
    private readable
