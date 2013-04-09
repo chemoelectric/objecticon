@@ -63,6 +63,8 @@ class Slider(Component, HasOrientation)
       slider_pos,
       slider_area_pos,
       slider_area_size,
+      old_slider_area_pos,
+      old_slider_area_size,
       discrete_vals,
       ticks,
       labels,
@@ -174,7 +176,7 @@ class Slider(Component, HasOrientation)
 
    public set_pos_from_value()
       if self.hi ~= self.lo then
-         self.move_slider_pos(self.slider_area_pos + integer(((self.get_value() - self.lo) * 
+         self.move_slider_pos(self.slider_area_pos + integer(((self.value - self.lo) * 
                                                               self.slider_area_size / (self.hi - self.lo))))
       else
          self.move_slider_pos(self.slider_area_pos)
@@ -242,13 +244,13 @@ class Slider(Component, HasOrientation)
             self.slider_down_offset := e.x - self.slider_pos
       } else if (/self.is_horizontal_flag & (self.slider_area.y  <= e.y < self.slider_area.slider_y)) | 
          (self.slider_area.x  <= e.x < self.slider_area.slider_x) then {
-         self.move_value(self.get_value() - self.increment_size)
+         self.move_value(self.value - self.increment_size)
          self.set_pos_from_value()
          start_paging(-1)
       } else  if (/self.is_horizontal_flag & 
                   (self.slider_area.slider_y + self.slider_area.slider_h <= e.y < self.slider_area.y + self.slider_area.h)) | 
          (self.slider_area.slider_x + self.slider_area.slider_w  <= e.x < self.slider_area.x + self.slider_area.w) then {
-         self.move_value(self.get_value() + self.increment_size)
+         self.move_value(self.value + self.increment_size)
          self.set_pos_from_value()
          start_paging(1)
       }
@@ -275,7 +277,7 @@ class Slider(Component, HasOrientation)
       repeat {
          if Prog.get_runtime_millis() > self.repeat_delay then {
             start_handle()
-            self.move_value(self.get_value()  + self.is_paging * self.increment_size)
+            self.move_value(self.value  + self.is_paging * self.increment_size)
             self.set_pos_from_value()
             end_handle()
          }
@@ -311,14 +313,14 @@ class Slider(Component, HasOrientation)
 
    public handle_wheel_up(e)
       start_handle(e)
-      self.move_value(self.get_value() - self.wheel_factor * self.increment_size)
+      self.move_value(self.value - self.wheel_factor * self.increment_size)
       self.set_pos_from_value()
       end_handle(e)
    end
 
    public handle_wheel_down(e)
       start_handle(e)
-      self.move_value(self.get_value() + self.wheel_factor * self.increment_size)
+      self.move_value(self.value + self.wheel_factor * self.increment_size)
       self.set_pos_from_value()
       end_handle(e)
    end
@@ -333,7 +335,7 @@ class Slider(Component, HasOrientation)
    end
 
    public reconfigure()
-      # Don't do anything if we haven't called resized yet.
+      # Don't do anything if we haven't been positioned yet.
       is_live() | fail
       self.move_value(self.value)
       self.set_pos_from_value()
@@ -409,7 +411,18 @@ class Slider(Component, HasOrientation)
          slider_area_size := slider_area.inner_w
       }
 
-      reconfigure()
+      # This test avoids a cosmetic problem whereby the slider would
+      # move slightly as its position is recalculated from the value.
+      # There is no need for this calculation unless the slider area
+      # has changed size/pos.
+      #
+      if old_slider_area_pos ~=== slider_area_pos |
+         old_slider_area_size ~=== slider_area_size then
+      {
+         set_pos_from_value()
+         old_slider_area_pos := slider_area_pos
+         old_slider_area_size := slider_area_size
+      }
    end
 
    public shift(dx, dy)
@@ -418,11 +431,13 @@ class Slider(Component, HasOrientation)
          (\labels_pos) +:= dx
          (\ticks_pos) +:= dx
          slider_area_pos +:= dy
+         old_slider_area_pos +:= dy
          slider_pos +:= dy
       } else {
          (\labels_pos) +:= dy
          (\ticks_pos) +:= dy
          slider_area_pos +:= dx
+         old_slider_area_pos +:= dx
          slider_pos +:= dx
       }
       slider_area.inner_x +:= dx
@@ -474,6 +489,8 @@ class Slider(Component, HasOrientation)
       \self.value | runerr("value not set")
       if /(self.lo | self.hi) then
          runerr("range not set")
+      # Ensure value in range
+      move_value(self.value)
       cast(self,Component).initially()
    end
 
@@ -491,6 +508,7 @@ class Slider(Component, HasOrientation)
 
    public finally()
       repeat_ticker.stop()
+      old_slider_area_pos := old_slider_area_size := &null
       cast(self,Component).finally()
    end
 
