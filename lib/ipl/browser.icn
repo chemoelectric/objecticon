@@ -1051,16 +1051,21 @@ class FormDateField(DateField, FormEntry, HasAscent)
       set_value(init_val)
    end
 
+   public validate_form()
+      return get_value() | error("Bad date format")
+   end
+
    public get_form_value()
       return get_value().format("yyyy-MM-dd")
    end
 
    public get_save_value()
-      return get_value()
+      return view.get_contents()
    end
 
    public restore_value(val)
-      set_value(val)
+      view.set_contents(val)
+      get_value() | view.set_fg("red")
    end
 
    public new(init_val)
@@ -1070,7 +1075,7 @@ class FormDateField(DateField, FormEntry, HasAscent)
    end
 end
 
-class FormTimeField(Spin, FormEntry, HasAscent)
+class FormTimeField(HourMinSecField, FormEntry, HasAscent)
    private const
       init_val
 
@@ -1099,77 +1104,18 @@ class FormTimeField(Spin, FormEntry, HasAscent)
       return cbwin.get_font_ascent() + border.get_t_inset()
    end
 
-   public create_view()
-      return SpinTextField().
-         set_filter(&digits ++ ':.').
-         connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
-   end
-
-   public do_increment(ev)
-      local t
-      if t := get_value() then {
-         t[1].set_sec(t[1].sec + 1)
-         set_value(t, ev)
-      }
-   end
-
-   public do_decrement(ev)
-      local t
-      if t := get_value() then {
-         t[1].set_sec(t[1].sec - 1)
-         set_value(t, ev)
-      }
-   end
-
    public static parse(s)
       local t
       s ? {
          return if t := tab(upto('.')) then
-            [Time.parse(t, "HH':'mm':'ssx"), tab(0)]
+            Time.parse(t, "HH':'mm':'ssx")
          else
-            [Time.parse(s, "HH':'mm':'ssx"), ""]
+            Time.parse(s, "HH':'mm':'ssx")
       }
    end
 
-   public static format(v)
-      return v[1].format("HH:mm:ss") || v[2]
-   end
-
-   public get_value()
-      return parse(view.get_contents())
-   end
-
-   public set_value(x, ev)
-      local s
-      s := format(x)
-      if /ev then {
-         view.set_contents(s)
-         if is_live() then
-            view.remove_wattrib("fg").reset()
-      } else
-         view.assign_contents(s, ev)
-      return self
-   end
-
-   public on_textfield(ev, src, type)
-      if get_value() then
-         view.remove_wattrib("fg").reset()
-      else
-         view.set_fg("red").reset()
-      # Fire the event with self as source.
-      fire(type, ev)
-   end
-
-   public get_default_width()
-      return border.get_total_width() + 
-         up.get_preferred_width() + 
-         cbwin.text_width(format(init_val) || " ") +
-         view.border.get_total_width()
-   end
-
    public new(init_val)
-      cast(self,Spin).new()
-      set_value(init_val)
+      cast(self,HourMinSecField).new(init_val)
       self.init_val := init_val
       return
    end
@@ -1197,9 +1143,9 @@ class FormDateTimeLocalField(Component, FormEntry, HasAscent)
       local t
       s ? {
          return if t := tab(upto('.')) then
-            [Time.parse(t, "yyyy-MM-dd'T'HH':'mm':'ssx"), tab(0)]
+            Time.parse(t, "yyyy-MM-dd'T'HH':'mm':'ssx")
          else
-            [Time.parse(s, "yyyy-MM-dd'T'HH':'mm':'ssx"), ""]
+            Time.parse(s, "yyyy-MM-dd'T'HH':'mm':'ssx")
       }
    end
 
@@ -1219,13 +1165,13 @@ class FormDateTimeLocalField(Component, FormEntry, HasAscent)
    public new(init_val)
       cast(self,Component).new()
       set_layout(GridLayout().set_doi(0).set_dii(0))
-      add(date := FormDateField(init_val[1]))
+      add(date := FormDateField(init_val))
       add(time := FormTimeField(init_val))
       return
    end
 end
 
-class FormTimezoneField(EditList, FormEntry, HasAscent)
+class FormTimezoneField(TimezoneField, FormEntry, HasAscent)
    private const
       init_val
 
@@ -1260,42 +1206,9 @@ class FormTimezoneField(EditList, FormEntry, HasAscent)
       return cbwin.get_font_ascent() + border.get_t_inset()
    end
 
-   public create_view()
-      return DropDownTextField().
-         set_filter(&digits ++ &ucase ++ '+\-').
-         connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
-   end
-
-   public get_value()
-      return Timezone(view.get_contents())
-   end
-
-   public set_value(x)
-      local s
-      s := x.get_id()
-      view.set_contents(s)
-      if is_live() then
-         view.remove_wattrib("fg").reset()
-      return self
-   end
-
-   public on_textfield(ev, src, type)
-      if get_value() then
-         view.remove_wattrib("fg").reset()
-      else
-         view.set_fg("red").reset()
-      # Fire the event with self as source.
-      fire(type, ev)
-   end
-
-   public new(v)
-      local l
-      cast(self,EditList).new()
-      /v := Timezone.UTC_TIMEZONE
-      l := []
-      every put(l, (!Timezone.KNOWN_TIMEZONES).id)
-      set_selection_list(sort(l))
-      set_value(v)
+   public new(init_val)
+      cast(self,TimezoneField).new(init_val)
+      self.init_val := init_val
       return
    end
 end
@@ -1326,9 +1239,9 @@ class FormDateTimeField(Component, FormEntry, HasAscent)
          return if t := tab(upto('.')) then {
             f := move(1) || tab(many(&digits))
             t ||:= tab(0)
-            [Time.parse(t, "yyyy-MM-dd'T'HH':'mm':'ssTx"), f]
+            Time.parse(t, "yyyy-MM-dd'T'HH':'mm':'ssTx")
          } else
-            [Time.parse(s, "yyyy-MM-dd'T'HH':'mm':'ssTx"), ""]
+            Time.parse(s, "yyyy-MM-dd'T'HH':'mm':'ssTx")
       }
    end
 
@@ -1349,9 +1262,9 @@ class FormDateTimeField(Component, FormEntry, HasAscent)
    public new(init_val)
       cast(self,Component).new()
       set_layout(GridLayout().set_doi(0).set_dii(0))
-      add(date := FormDateField(init_val[1]))
+      add(date := FormDateField(init_val))
       add(time := FormTimeField(init_val))
-      add(zone := FormTimezoneField(init_val[1].zone))
+      add(zone := FormTimezoneField(init_val.zone))
       return
    end
 end
@@ -2685,7 +2598,7 @@ class Browser(Component)
             add_component(p, q, context, Align.B)
          }
          "time": {
-            v := FormTimeField.parse(e.get_attribute(u"VALUE")) | [Time(), ""]
+            v := FormTimeField.parse(e.get_attribute(u"VALUE")) | Time()
             q := FormTimeField(v).
                set_fg(context.fg).
                set_font(context.font)
@@ -2700,7 +2613,7 @@ class Browser(Component)
             add_component(p, q, context, Align.B)
          }
          "datetime": {
-            v := FormDateTimeField.parse(e.get_attribute(u"VALUE")) | [Time(), ""]
+            v := FormDateTimeField.parse(e.get_attribute(u"VALUE")) | Time()
             q := FormDateTimeField(v).
                set_fg(context.fg).
                set_font(context.font)
@@ -2713,7 +2626,7 @@ class Browser(Component)
             add_component(p, q, context, Align.B)
          }
          "datetime-local": {
-            v := FormDateTimeLocalField.parse(e.get_attribute(u"VALUE")) | [Time(), ""]
+            v := FormDateTimeLocalField.parse(e.get_attribute(u"VALUE")) | Time()
             q := FormDateTimeLocalField(v).
                set_fg(context.fg).
                set_font(context.font)

@@ -192,11 +192,11 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # E - The weekday.  A width < 4 gives the first three chars (eg Mon), otherwise
    # the full day is given (eg Monday)
    # 
-   # y - The year.  If the width is 2, the year will be the least
+   # y or Y - The year.  If the width is 2, the year will be the least
    # significant 2 digits (eg "99"), otherwise it is the full year
    # padded to the width. 
    #
-   # Y - The week year (see `get_week()`).
+   # v - The week year (see `get_week()`).
    # 
    # d - The day of the month padded to the width.
    # 
@@ -244,13 +244,13 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       res := p[1:1]   # Empty string same type as p
       p ? {
          until pos(0) do {
-            if any('EyYdHMwhmsaAzZT') then {
+            if any('EyvYdHMwhmsaAzZT') then {
                ch := p[&pos]
                w := *tab(many(ch))
                res ||:= case string(ch) of {
                   "E": format_weekday(w)
-                  "y": format_year(w)
-                  "Y": format_week_year(w)
+                  "y" | "Y": format_year(w)
+                  "v": format_week_year(w)
                   "M": format_month(w)
                   "w": format_week(w)
                   "d": format_int(self.mday, w)
@@ -1104,6 +1104,8 @@ class TimeParser()
    # 
    # y - The year.  If the year is less than 70 it is taken to be 20xx; if
    # it is less than 100 it is taken to be 19xx, otherwise it is as given.
+   #
+   # Y - The year.  It must be explicitly 4 digits.
    # 
    # d - The day of the month
    # 
@@ -1135,12 +1137,13 @@ class TimeParser()
    private parse_impl()
       local y, d, m, hh, mm, sec, z, ampm, lit, ch, w
       until pos(0) do {
-         if any('EydHMhmsaAzxT') then {
+         if any('EyYdHMhmsaAzxT') then {
             ch := &subject[&pos]
             w := *tab(many(ch))
             case string(ch) of {
                "E": parse_weekday()
                "y": y := parse_year(w)
+               "Y": y := parse_int(w, 1000, 9999)
                "M": m := parse_month(w)
                "d": d := parse_int(w, 1, 31)
                "H": hh := parse_int(w, 0, 23)

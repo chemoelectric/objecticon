@@ -3,77 +3,109 @@ package ipl.timegui
 import
    gui, io, util, lang
 
-class DateLabel(DropDownLabel)
-   public get_default_width()
-      local s
-      s := map(Time(2000, 1, 1).format(parent.format), &letters, repl("M", 26) || repl("m", 26))
-      return cbwin.text_width(s) + border.get_total_width()
-   end
+procedure estimate_width(cbwin, fmt)
+   local s
+   s := map(Time(2000, 1, 1).format(fmt), &letters, repl("M", 26) || repl("m", 26)) || " "
+   #write("s=",image(s))
+   return cbwin.text_width(s)
 end
 
 class DateField(DropDown)
    private readable
-      curr,
-      format
+      format,
+      last_val
 
-   private got_date()
-      curr := popup.get_value()
+   private got_date(ev)
+      local v
+      v := popup.get_value()
       close_all()
-      update_view()
+      set_value(v, ev)
    end
 
    public create_popup()
-      return Calendar(curr).connect(got_date, Event.VALUE_CHANGED)
+      local v
+      v := get_value()
+      return Calendar(v).connect(got_date, Event.VALUE_CHANGED)
    end
 
    public create_view()
-      return DateLabel()
+      return DropDownTextField()
    end
 
-   private update_view()
-      view.set_label(curr.format(format))
+   public initially()
+      cast(self,DropDown).initially()
+      view.set_width(estimate_width(cbwin, format) + view.border.get_total_width())
    end
 
-   public go_up()
-      curr.set_mday(curr.mday + 1)
-      update_view()
+   public go_up(ev)
+      set_value(last_val.set_mday(last_val.mday + 1), ev)
+#      local v
+#      if v := get_value() then {
+#         v.set_mday(v.mday + 1)
+#         set_value(v, ev)
+#      }
    end
 
-   public go_down()
-      curr.set_mday(curr.mday - 1)
-      update_view()
+   public go_down(ev)
+      set_value(last_val.set_mday(last_val.mday - 1), ev)
+#      local v
+#      if v := get_value() then {
+#         v.set_mday(v.mday - 1)
+#         set_value(v, ev)
+#      }
    end
 
    public set_format(f)
+      local v
+      v := get_value()
       self.format := f
-      update_view()
+      set_value(\v)
       return self
    end
 
    public get_value()
-      return .curr
+      return Time.parse(view.get_contents(), format || "x")
    end
 
-   public set_value(v)
-      self.curr := clone(v)
-      update_view()
+   public set_value(x, ev)
+      local s
+      s := x.format(format)
+      if /ev then {
+         view.set_contents(s)
+         if is_live() then
+            view.remove_wattrib("fg").reset()
+         last_val := x
+      } else
+         view.assign_contents(s, ev)
       return self
+   end
+
+   public on_textfield(ev, src, type)
+      if last_val := get_value() then
+         view.remove_wattrib("fg").reset()
+      else
+         view.set_fg("red").reset()
+write(to_string(last_val))
+      # Fire the event with self as source.
+      fire(type, ev)
    end
 
    public new(val)
       cast(self,DropDown).new()
+      every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       /val := Time()
-      curr := clone(val)
-      set_format("dd-MMM-yyyy")
+      format := "dd-MMM-YYYY"
+      set_value(val)
       return
    end
 end
 
 class HourMinSecField(Spin)
+   private readable
+      format
+
    public create_view()
-      return SpinTextField().
-         set_filter(&digits ++ ':').
-         connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+      return SpinTextField().set_filter(&digits ++ ':')
    end
 
    public do_increment(ev)
@@ -89,12 +121,12 @@ class HourMinSecField(Spin)
    end
 
    public get_value()
-      return Time.parse(view.get_contents(), "HH':'mm':'ssx")
+      return Time.parse(view.get_contents(), format || "x")
    end
 
    public set_value(x, ev)
       local s
-      s := x.format("HH:mm:ss")
+      s := x.format(format)
       if /ev then {
          view.set_contents(s)
          if is_live() then
@@ -113,23 +145,35 @@ class HourMinSecField(Spin)
       fire(type, ev)
    end
 
-   public get_default_width()
-      return border.get_total_width() + up.get_preferred_width() + cbwin.text_width("00:00:00 ") + view.border.get_total_width()
+   public set_format(f)
+      local v
+      v := get_value()
+      self.format := f
+      set_value(\v)
+      return self
+   end
+
+   public initially()
+      cast(self,Spin).initially()
+      view.set_width(estimate_width(cbwin, format) + view.border.get_total_width())
    end
 
    public new(val)
       cast(self,Spin).new()
+      every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       /val := Time()
+      format := "HH:mm:ss"
       set_value(val)
       return
    end
 end
 
 class HourMinField(Spin)
+   private readable
+      format
+
    public create_view()
-      return SpinTextField().
-         set_filter(&digits ++ ':').
-         connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+      return SpinTextField().set_filter(&digits ++ ':')
    end
 
    public do_increment(ev)
@@ -145,12 +189,12 @@ class HourMinField(Spin)
    end
 
    public get_value()
-      return Time.parse(view.get_contents(), "HH':'mmx")
+      return Time.parse(view.get_contents(), format || "x")
    end
 
    public set_value(x, ev)
       local s
-      s := x.format("HH:mm")
+      s := x.format(format)
       if /ev then {
          view.set_contents(s)
          if is_live() then
@@ -169,25 +213,30 @@ class HourMinField(Spin)
       fire(type, ev)
    end
 
-   public get_default_width()
-      return border.get_total_width() + up.get_preferred_width() + cbwin.text_width("00:00 ") + view.border.get_total_width()
+   public set_format(f)
+      local v
+      v := get_value()
+      self.format := f
+      set_value(\v)
+      return self
+   end
+
+   public initially()
+      cast(self,Spin).initially()
+      view.set_width(estimate_width(cbwin, format) + view.border.get_total_width())
    end
 
    public new(val)
       cast(self,Spin).new()
+      every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       /val := Time()
+      format := "HH:mm"
       set_value(val)
       return
    end
 end
 
 class TimezoneField(EditList)
-   public create_view()
-      return DropDownTextField().
-         set_filter(&digits ++ &ucase ++ '+\-').
-         connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
-   end
-
    public get_value()
       return Timezone(view.get_contents())
    end
@@ -206,13 +255,13 @@ class TimezoneField(EditList)
          view.remove_wattrib("fg").reset()
       else
          view.set_fg("red").reset()
-      # Fire the event with self as source.
-      fire(type, ev)
+      cast(self,EditList).on_textfield(ev, src, type)
    end
 
    public new(v)
       local l
       cast(self,EditList).new()
+      view.set_filter(&digits ++ &ucase ++ '+\-')
       /v := Timezone.UTC_TIMEZONE
       l := []
       every put(l, (!Timezone.KNOWN_TIMEZONES).id)
@@ -240,7 +289,7 @@ write("curr=",curr.to_rfc822())
    end
 
    public create_view()
-      return DateLabel()
+      return DropDownLabel()
    end
 
    private update_view()
@@ -400,7 +449,7 @@ write("on year value change")
 write("curr==",to_string(curr))
 write("swhowing==",to_string(showing))
       update()
-      fire(Event.VALUE_CHANGED)
+      fire(Event.VALUE_CHANGED, ev)
    end
 
    private update_buttons()
