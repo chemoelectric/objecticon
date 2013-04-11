@@ -153,8 +153,8 @@ class Slider(Component, HasOrientation)
    #
    public set_value(x)
       if is_live() then {
-         self.move_value(x)
-         self.set_pos_from_value()
+         move_value(x)
+         set_pos_from_value()
       } else 
          self.value := x
       return self
@@ -176,10 +176,10 @@ class Slider(Component, HasOrientation)
 
    public set_pos_from_value()
       if self.hi ~= self.lo then
-         self.move_slider_pos(self.slider_area_pos + integer(((self.value - self.lo) * 
-                                                              self.slider_area_size / (self.hi - self.lo))))
+         move_slider_pos(self.slider_area_pos + integer(((self.value - self.lo) * 
+                                                         self.slider_area_size / (self.hi - self.lo))))
       else
-         self.move_slider_pos(self.slider_area_pos)
+         move_slider_pos(self.slider_area_pos)
    end
 
    public set_value_from_pos()
@@ -192,12 +192,12 @@ class Slider(Component, HasOrientation)
          # small ranges is unattractive.  For non-discrete ranges this behaviour is
          # not appropriate.
          if \self.discrete_vals then
-            self.move_value(self.lo + ((self.slider_area_size / 2) + (self.hi - self.lo) * 
-                                       (self.slider_pos - self.slider_area_pos)) / self.slider_area_size)
+            move_value(self.lo + ((self.slider_area_size / 2) + (self.hi - self.lo) * 
+                                  (self.slider_pos - self.slider_area_pos)) / self.slider_area_size)
          else
-            self.move_value(self.lo + ((self.hi - self.lo) * (self.slider_pos - self.slider_area_pos)) / self.slider_area_size)
+            move_value(self.lo + ((self.hi - self.lo) * (self.slider_pos - self.slider_area_pos)) / self.slider_area_size)
       } else
-         self.move_value(self.lo)
+         move_value(self.lo)
    end
 
    public move_slider_pos(x)
@@ -220,13 +220,15 @@ class Slider(Component, HasOrientation)
    # @param hi  The upper bound
    #
    public set_range(lo, hi)
+      if lo >= hi then
+         runerr("Invalid range")
       self.lo := lo
       self.hi := hi
       if type(self.hi) == type(self.lo) == "integer" then
          self.discrete_vals := 1
       else
          self.discrete_vals := &null
-      self.reconfigure()
+      reconfigure()
       return self
    end
 
@@ -244,14 +246,14 @@ class Slider(Component, HasOrientation)
             self.slider_down_offset := e.x - self.slider_pos
       } else if (/self.is_horizontal_flag & (self.slider_area.y  <= e.y < self.slider_area.slider_y)) | 
          (self.slider_area.x  <= e.x < self.slider_area.slider_x) then {
-         self.move_value(self.value - self.increment_size)
-         self.set_pos_from_value()
+         move_value(self.value - self.increment_size)
+         set_pos_from_value()
          start_paging(-1)
       } else  if (/self.is_horizontal_flag & 
                   (self.slider_area.slider_y + self.slider_area.slider_h <= e.y < self.slider_area.y + self.slider_area.h)) | 
          (self.slider_area.slider_x + self.slider_area.slider_w  <= e.x < self.slider_area.x + self.slider_area.w) then {
-         self.move_value(self.value + self.increment_size)
-         self.set_pos_from_value()
+         move_value(self.value + self.increment_size)
+         set_pos_from_value()
          start_paging(1)
       }
       end_handle(e)
@@ -266,7 +268,7 @@ class Slider(Component, HasOrientation)
          self.slider_down := &null
          if \self.snaps then {
             self.value +:= self.snaps / 2
-            self.set_value(self.value - (self.value % snaps))
+            set_value(self.value - (self.value % snaps))
          }
       } 
       stop_paging()
@@ -277,8 +279,8 @@ class Slider(Component, HasOrientation)
       repeat {
          if Prog.get_runtime_millis() > self.repeat_delay then {
             start_handle()
-            self.move_value(self.value  + self.is_paging * self.increment_size)
-            self.set_pos_from_value()
+            move_value(self.value  + self.is_paging * self.increment_size)
+            set_pos_from_value()
             end_handle()
          }
          repeat_ticker.sleep(Gui.REPEAT_RATE)
@@ -304,24 +306,24 @@ class Slider(Component, HasOrientation)
       # Slider dragged; compute new position
       #
       if /self.is_horizontal_flag then
-         self.move_slider_pos(e.y - self.slider_down_offset)
+         move_slider_pos(e.y - self.slider_down_offset)
       else
-         self.move_slider_pos(e.x - self.slider_down_offset)
-      self.set_value_from_pos()
+         move_slider_pos(e.x - self.slider_down_offset)
+      set_value_from_pos()
       end_handle(e)
    end
 
    public handle_wheel_up(e)
       start_handle(e)
-      self.move_value(self.value - self.wheel_factor * self.increment_size)
-      self.set_pos_from_value()
+      move_value(self.value - self.wheel_factor * self.increment_size)
+      set_pos_from_value()
       end_handle(e)
    end
 
    public handle_wheel_down(e)
       start_handle(e)
-      self.move_value(self.value + self.wheel_factor * self.increment_size)
-      self.set_pos_from_value()
+      move_value(self.value + self.wheel_factor * self.increment_size)
+      set_pos_from_value()
       end_handle(e)
    end
 
@@ -337,9 +339,10 @@ class Slider(Component, HasOrientation)
    public reconfigure()
       # Don't do anything if we haven't been positioned yet.
       is_live() | fail
-      self.move_value(self.value)
-      self.set_pos_from_value()
-      self.invalidate()
+      # Ensure value in lo..hi range.
+      move_value(self.value)
+      set_pos_from_value()
+      invalidate()
    end
 
    public get_default_width()
@@ -486,10 +489,10 @@ class Slider(Component, HasOrientation)
    end
 
    public initially()
-      \self.value | runerr("value not set")
+      \self.value | runerr("Value not set")
       if /(self.lo | self.hi) then
-         runerr("range not set")
-      # Ensure value in range
+         runerr("Range not set")
+      # Ensure value in lo..hi range.
       move_value(self.value)
       cast(self,Component).initially()
    end
