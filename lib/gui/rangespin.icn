@@ -18,15 +18,18 @@ class RangeSpin(Spin)
       increment_size
 
    public create_view()
+      return SpinTextField()
+   end
+
+   public initially()
       local f
       f := &digits
       if type(lo | hi) == "real" then
          f ++:= '.'
       if /lo | /hi | (lo < 0) then
          f ++:= '\-'
-      return SpinTextField().
-         set_filter(f).
-         connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+      view.set_filter(f)
+      cast(self,Spin).initially()
    end
 
    public do_increment(ev)
@@ -105,6 +108,7 @@ class RangeSpin(Spin)
    public new()
       cast(self,Spin).new()
       self.increment_size := 1
+      every view.connect(self.on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       return
    end
 end
