@@ -64,6 +64,10 @@ abstract class Spin(Component)
       display_children()
    end
 
+   public get_default_width()
+      return border.get_total_width() + up.get_preferred_width() + view.get_preferred_width()
+   end
+
    public get_default_height(dw)
       dw -:= border.get_total_width() + up.get_preferred_width()
       return border.get_total_height() + view.get_preferred_height(dw)
