@@ -88,6 +88,10 @@ class TabSet(Component)
       return member(Key.CURSOR_H, e.code)
    end
 
+   public focus_changed(e) 
+      invalidate_tab_region()
+   end
+
    public invalidate_tab_region()
       local r
       r := if /self.tabs_at_bottom_flag then

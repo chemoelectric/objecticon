@@ -563,7 +563,7 @@ class Component(Rect,Align,Connectable)
    # @param e the event causing the change of focus, if any
    #
    public got_focus(e)
-      invalidate()
+      focus_changed(e)
       fire(Event.GOT_FOCUS, e)
    end
 
@@ -593,8 +593,17 @@ class Component(Rect,Align,Connectable)
    # @param e the event causing the change of focus, if any
    #
    public lost_focus(e)
-      invalidate()
+      focus_changed(e)
       fire(Event.LOST_FOCUS, e)
+   end
+
+   #
+   # This is invoked when the focus is got/lost; by default it just
+   # calls invalidate.
+   # @param e the event causing the change of focus, if any
+   #
+   public focus_changed(e)
+      invalidate()
    end
 
    #

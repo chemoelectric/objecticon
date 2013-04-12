@@ -790,6 +790,10 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       }
    end
 
+   public focus_changed(e) 
+      invalidate_line(\self.cursor)
+   end
+
    #
    # This method is overridden by the subclass to draw the given 
    # line at the given position, as well as the selection drawing.
