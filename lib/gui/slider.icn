@@ -8,7 +8,7 @@
 
 package gui
 
-import lang
+import lang, graphics
 
 #
 # Component representing the slider area
@@ -275,6 +275,43 @@ class Slider(Component, HasOrientation)
       end_handle(e)
    end
 
+   public handle_key_home(e)
+      start_handle(e)
+      move_value(self.lo)
+      set_pos_from_value()
+      end_handle(e)
+   end
+
+   public handle_key_end(e)
+      start_handle(e)
+      move_value(self.hi)
+      set_pos_from_value()
+      end_handle(e)
+   end
+
+   public handle_key_right(e)
+      start_handle(e)
+      move_value(self.value + self.increment_size)
+      set_pos_from_value()
+      end_handle(e)
+   end
+
+   public handle_key_left(e)
+      start_handle(e)
+      move_value(self.value - self.increment_size)
+      set_pos_from_value()
+      end_handle(e)
+   end
+
+   public handle_key(e)
+      case e.code of {
+         Key.HOME : handle_key_home(e)
+         Key.END : handle_key_end(e)
+         Key.RIGHT | Key.UP : handle_key_right(e)
+         Key.LEFT | Key.DOWN : handle_key_left(e)
+      }
+   end
+
    public repeat_tick()
       repeat {
          if Prog.get_runtime_millis() > self.repeat_delay then {
@@ -506,7 +543,10 @@ class Slider(Component, HasOrientation)
       if \self.ticks then
          draw_ticks()
 
-      self.display_children()
+      display_children()
+
+      if has_focus() & is_unshaded() then
+         border.draw_focus_rect(self.cbwin, self)
    end
 
    public finally()
@@ -515,10 +555,15 @@ class Slider(Component, HasOrientation)
       cast(self,Component).finally()
    end
 
+   public keeps(e)
+      return member(if /self.is_horizontal_flag then Key.CURSOR_V else Key.CURSOR_H, e.code)
+   end
+
    public new()
       cast(self,Component).new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
       self.slider_area := SliderArea()
+      self.accepts_focus_flag := 1
       self.increment_size := 1
       self.wheel_factor := 1
       self.set_border(NullBorder())
@@ -529,6 +574,7 @@ class Slider(Component, HasOrientation)
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       connect(self.handle_wheel_up, Event.MOUSE_WHEEL_UP)
       connect(self.handle_wheel_down, Event.MOUSE_WHEEL_DOWN)
+      connect(self.handle_key, Event.KEY_PRESS)
       return
    end
 end
