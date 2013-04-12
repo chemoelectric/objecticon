@@ -12,12 +12,23 @@ package gui
 # Selection from a list
 #
 class ListSpin(SelectionSpin)
+   public old_selection
+
    public get_contents()
       return view.get_label()
    end
 
    public create_view()
       return SpinLabel()
+   end
+
+   public start_change(e)
+      self.old_selection := self.selection
+   end
+
+   public end_change(e)
+      if self.old_selection ~=== self.selection then
+         fire(Event.SELECTION_CHANGED, e)
    end
 
    public apply_selection()

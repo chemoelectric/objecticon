@@ -143,14 +143,11 @@ abstract class DropDown(Component, MenuMode)
    end
 
    public close_popup()
+      self.parent_dialog.set_focus(view)
       if /use_popup_win then {
-         if self.parent_dialog.focus === popup then
-            self.parent_dialog.set_focus(view)
          self.popup.invalidate()
          self.parent_dialog.remove(popup)
       } else {
-         if /self.parent_dialog.focus then
-            self.parent_dialog.set_focus(view)
          self.parent_dialog.remove_popup(self.popup.parent_dialog)
          self.popup.parent_dialog.dispose()
       }
@@ -282,7 +279,6 @@ end
 #
 abstract class SelectionDropDown(SelectionList, DropDown)
    public 
-      old_selection,
       max_height,
       max_width
 
@@ -298,15 +294,6 @@ abstract class SelectionDropDown(SelectionList, DropDown)
 
    public extract_selection()
       return text(self.selection_list[\self.selection])
-   end
-
-   public start_change(e)
-      self.old_selection := self.selection
-   end
-
-   public end_change(e)
-      if self.old_selection ~=== self.selection then
-         fire(Event.SELECTION_CHANGED, e)
    end
 
    public create_popup()

@@ -12,24 +12,17 @@ package gui
 # Selection from a list with edit
 #
 class EditListSpin(SelectionSpin)
-   public 
-      cc_ev
-
    public apply_selection(ev)
       local s 
       s := extract_selection() | ""
       if /ev then
          self.view.set_contents(s)
-      else {
-         # Note the event so that we don't set selection to &null in on_textfield below.
-         cc_ev := ev
+      else
          self.view.assign_contents(s, ev)
-      }
    end
 
    public on_textfield(ev, src, type)
-      if type = Event.CONTENT_CHANGED & ev ~=== cc_ev then
-         self.selection := &null
+      synch_selection()
       # Fire the event with self as source.
       fire(type, ev)
    end
@@ -61,11 +54,13 @@ class EditListSpin(SelectionSpin)
    # &null if there is no match.
    #
    public set_contents(x)
-      if not object_set_selection(x) then {
-         self.selection := &null
-         self.view.set_contents(x)
-      }
+      self.view.set_contents(x)
+      synch_selection()
       return self
+   end
+
+   public synch_selection()
+      selection := keyof(selection_list, view.get_contents())
    end
 
    public get_default_width()

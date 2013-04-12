@@ -136,19 +136,8 @@ end
 # Selection from a list
 #
 abstract class SelectionSpin(SelectionList, Spin)
-   public old_selection
-
    public extract_selection()
       return text(self.selection_list[\self.selection])
-   end
-
-   public start_change(e)
-      self.old_selection := self.selection
-   end
-
-   public end_change(e)
-      if self.old_selection ~=== self.selection then
-         fire(Event.SELECTION_CHANGED, e)
    end
 
    public do_increment(e)

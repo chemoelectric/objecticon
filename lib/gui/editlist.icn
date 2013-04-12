@@ -14,15 +14,11 @@ package gui
 # method is therefore supplied to get the content, as it may
 # not correspond to an element of the list.
 #
-# A Event.SELECTION_CHANGED is generated when an item in the
-# list is selected and a CONTENT_CHANGED event is generated
-# when the value displayed in the field changes, either by
-# selection from the list or user edit of the text.
+# A CONTENT_CHANGED event is generated when the value displayed in the
+# field changes, either by selection from the list or user edit of the
+# text.
 #
 class EditList(SelectionDropDown)
-   public 
-      cc_ev
-
    #
    # Set the text field's filter (see {TextField} for details).
    # @param c  The filter
@@ -46,11 +42,13 @@ class EditList(SelectionDropDown)
    # &null if there is no match.
    #
    public set_contents(x)
-      if not object_set_selection(x) then {
-         self.selection := &null
-         self.view.set_contents(x)
-      }
+      self.view.set_contents(x)
+      synch_selection()
       return self
+   end
+
+   public synch_selection()
+      selection := keyof(selection_list, view.get_contents())
    end
 
    public apply_selection(ev)
@@ -58,17 +56,13 @@ class EditList(SelectionDropDown)
       s := extract_selection() | ""
       if /ev then
          self.view.set_contents(s)
-      else {
-         # Note the event so that we don't set selection to &null in on_textfield below.
-         cc_ev := ev
+      else
          self.view.assign_contents(s, ev)
-      }
    end
 
    public on_textfield(ev, src, type)
+      synch_selection()
       # Fire the event with self as source.
-      if type = Event.CONTENT_CHANGED & ev ~=== cc_ev then
-         self.selection := &null
       fire(type, ev)
    end
 

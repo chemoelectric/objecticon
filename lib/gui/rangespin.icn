@@ -15,7 +15,8 @@ class RangeSpin(Spin)
    public
       lo,
       hi,
-      increment_size
+      increment_size,
+      last_val
 
    public create_view()
       return SpinTextField()
@@ -33,11 +34,11 @@ class RangeSpin(Spin)
    end
 
    public do_increment(ev)
-      set_value(get_value() + self.increment_size, ev)
+      set_value(last_val + self.increment_size, ev)
    end
 
    public do_decrement(ev)
-      set_value(get_value() - self.increment_size, ev)
+      set_value(last_val - self.increment_size, ev)
    end
 
    #
@@ -63,6 +64,7 @@ class RangeSpin(Spin)
          view.set_contents(x)
          if is_live() then
             view.remove_wattrib("fg").reset()
+         last_val := x
       } else
          view.assign_contents(x, ev)
       return self
@@ -77,7 +79,7 @@ class RangeSpin(Spin)
    end
 
    public on_textfield(ev, src, type)
-      if get_value() then
+      if last_val := get_value() then
          view.remove_wattrib("fg").reset()
       else
          view.set_fg("red").reset()

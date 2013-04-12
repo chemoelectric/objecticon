@@ -63,15 +63,13 @@ abstract class SelectionList()
    #
    public object_set_selection(o)
       local i
-      every i := 1 to *self.selection_list do {
-         if self.selection_list[i] === o then {
-            set_selection(i)
-            return i
-         }
+      if i := keyof(selection_list, o) then {
+         set_selection(i)
+         return i
       }
    end
 
-   public abstract apply_selection()
+   public abstract apply_selection(ev)
 end
 
 

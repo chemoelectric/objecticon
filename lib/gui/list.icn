@@ -27,7 +27,17 @@ package gui
 #
 class List(SelectionDropDown)
    public 
+      old_selection,
       constant_label
+
+   public start_change(e)
+      self.old_selection := self.selection
+   end
+
+   public end_change(e)
+      if self.old_selection ~=== self.selection then
+         fire(Event.SELECTION_CHANGED, e)
+   end
 
    public apply_selection()
       local s

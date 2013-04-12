@@ -1075,7 +1075,7 @@ class FormDateField(DateField, FormEntry, HasAscent)
    end
 end
 
-class FormTimeField(HourMinSecField, FormEntry, HasAscent)
+class FormTimeField(TimeField, FormEntry, HasAscent)
    private const
       init_val
 
@@ -1115,7 +1115,7 @@ class FormTimeField(HourMinSecField, FormEntry, HasAscent)
    end
 
    public new(init_val)
-      cast(self,HourMinSecField).new(init_val)
+      cast(self,TimeField).new(init_val)
       self.init_val := init_val
       return
    end
