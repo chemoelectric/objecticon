@@ -1,7 +1,7 @@
 package ipl.timegui
 
 import
-   gui, io, util, lang
+   gui, util, lang
 
 procedure estimate_width(cbwin, fmt)
    local s
@@ -32,11 +32,11 @@ class DateField(DropDown)
       view.set_width(estimate_width(cbwin, format) + view.border.get_total_width())
    end
 
-   public go_up(ev)
+   public do_increment(ev)
       set_value(last_val.set_mday(last_val.mday + 1), ev)
    end
 
-   public go_down(ev)
+   public do_decrement(ev)
       set_value(last_val.set_mday(last_val.mday - 1), ev)
    end
 
@@ -76,7 +76,7 @@ class DateField(DropDown)
       cast(self,DropDown).new()
       every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       /val := Time()
-      format := "dd-MMM-YYYY"
+      format := "dd-MMM-yyyy"
       set_value(val)
       return
    end
@@ -189,95 +189,84 @@ end
 
 class WeekField(DropDown)
    private readable
-      curr,
-      format
+      format,
+      last_val
 
-   private got_date()
-      curr := popup.get_value()
-      curr.set_mday(curr.mday - (curr.wday + 5) % 7)
-write("curr=",curr.to_rfc822())
+   private got_date(ev)
+      local t
+      t := popup.get_value()
+      t.set_mday(t.mday - (t.wday + 5) % 7)
+      set_value(t)
       close_all()
-      update_view()
    end
 
    public create_popup()
-      return Calendar(curr).set_week_mode(1).connect(got_date, Event.VALUE_CHANGED)
+      return Calendar(last_val).set_week_mode(1).connect(got_date, Event.VALUE_CHANGED)
    end
 
    public create_view()
-      return DropDownLabel()
+      return DropDownTextField()
    end
 
-   private update_view()
-      view.set_label(curr.format(format))
+   public initially()
+      cast(self,DropDown).initially()
+      view.set_width(estimate_width(cbwin, format) + view.border.get_total_width())
    end
 
-   public go_up()
-      curr.set_mday(curr.mday + 7)
-write("curr=",curr.to_rfc822(), "   ", to_string(curr.get_week()))
-      update_view()
+   public do_increment(ev)
+      set_value(last_val.set_mday(last_val.mday + 7), ev)
    end
 
-   public go_down()
-      curr.set_mday(curr.mday - 7)
-write("curr=",curr.to_rfc822(), "   ", to_string(curr.get_week()))
-      update_view()
-   end
-
-   public set_format(f)
-      self.format := f
-      update_view()
-      return self
+   public do_decrement(ev)
+      set_value(last_val.set_mday(last_val.mday - 7), ev)
    end
 
    public get_value()
-      return .curr
+      local w, y
+      map(view.get_contents()) ? {
+         (y := integer(tab(many(&digits))) &
+          1000 <= y <= 9999 &
+          =" week " &
+          w := integer(tab(many(&digits))) &
+          1 <= w <= 53 &
+          pos(0)) | fail
+      }
+      return Time.get_week_of_year(y, w)
    end
 
-   public set_value(v)
-      self.curr := v
-      update_view()
+   public set_value(x, ev)
+      local s
+      s := x.format(format)
+      if /ev then {
+         view.set_contents(s)
+         if is_live() then
+            view.remove_wattrib("fg").reset()
+         last_val := x
+      } else
+         view.assign_contents(s, ev)
       return self
+   end
+
+   public on_textfield(ev, src, type)
+      if last_val := get_value() then
+         view.remove_wattrib("fg").reset()
+      else
+         view.set_fg("red").reset()
+      # Fire the event with self as source.
+      fire(type, ev)
    end
 
    public new(val)
       cast(self,DropDown).new()
+      every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       /val := Time()
-      curr := clone(val).edit_fields(,,, 0, 0, 0)
-      curr.set_mday(curr.mday - (curr.wday + 5) % 7)
-      set_format("dd-MMM-yyyy")
-      return
-   end
-
-end
-
-class MonthField(Component)
-   public month, year, curr
-
-   private on_month_change()
-   end
-
-   private on_year_change()
-   end
-
-   public new(val)
-      cast(self,Component).new()
-      /val := Time()
-      set_layout(GridLayout().set_doi(0))
-      curr := clone(val).edit_fields(,,1, 0, 0, 0)
-      month := Month().
-         connect(on_month_change, Event.SELECTION_CHANGED).
-         set_selection(curr.month)
-      add(month)
-      year := YearField().
-         connect(on_year_change, Event.CONTENT_CHANGED).
-         set_value(curr.year)
-      add(year)
+      format := "vvvv 'week' ww"
+      set_value(val)
       return
    end
 end
 
-class Month(List)
+class MonthField(List)
    public new()
       cast(self,List).new()
       set_selection_list(Time.MONTHS)
@@ -288,8 +277,7 @@ end
 class YearField(RangeSpin)
    public new()
       cast(self,RangeSpin).new()
-      lo := 1000
-      hi := 9999
+      set_range(1000, 9999)
       return
    end
 end
@@ -339,7 +327,6 @@ class Calendar(Component)
 
    private on_year_change()
       local i
-write("on year value change")
       if i := year.get_value() then {
          showing.set_year(i)
          update()
@@ -362,8 +349,6 @@ write("on year value change")
       if compare(curr, src.time) then return
       curr := src.time
       showing := clone(curr).set_mday(1)
-write("curr==",to_string(curr))
-write("swhowing==",to_string(showing))
       update()
       fire(Event.VALUE_CHANGED, ev)
    end
@@ -454,7 +439,7 @@ write("swhowing==",to_string(showing))
       p := Component().
          set_layout(GridLayout().set_doi(0)).
          set_constraint("eol", &yes)
-      month := Month().
+      month := MonthField().
          connect(on_month_change, Event.SELECTION_CHANGED).
          set_selection(curr.month)
       p.add(month)

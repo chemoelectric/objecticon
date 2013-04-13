@@ -1075,6 +1075,55 @@ class FormDateField(DateField, FormEntry, HasAscent)
    end
 end
 
+class FormWeekField(WeekField, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
+   end
+
+   public reset_form()
+      set_value(init_val)
+   end
+
+   public validate_form()
+      return get_value() | error("Bad week format")
+   end
+
+   public get_form_value()
+      return get_value().format("vvvv'-W'ww")
+   end
+
+   public static parse(s)
+      local w, y
+      s ? {
+         (y := integer(tab(many(&digits))) &
+          1000 <= y <= 9999 &
+          ="-W" &
+          w := integer(tab(many(&digits))) &
+          1 <= w <= 53 &
+          pos(0)) | fail
+      }
+      return Time.get_week_of_year(y, w)
+   end
+
+   public get_save_value()
+      return view.get_contents()
+   end
+
+   public restore_value(val)
+      view.set_contents(val)
+      get_value() | view.set_fg("red")
+   end
+
+   public new(init_val)
+      cast(self,WeekField).new(init_val)
+      self.init_val := init_val
+      return
+   end
+end
+
 class FormTimeField(TimeField, FormEntry, HasAscent)
    private const
       init_val
@@ -1088,7 +1137,7 @@ class FormTimeField(TimeField, FormEntry, HasAscent)
    end
 
    public get_form_value()
-      return format(get_value())
+      return get_value().format("HH':'mm':'ss")
    end
 
    public get_save_value()
@@ -1105,13 +1154,8 @@ class FormTimeField(TimeField, FormEntry, HasAscent)
    end
 
    public static parse(s)
-      local t
-      s ? {
-         return if t := tab(upto('.')) then
-            Time.parse(t, "HH':'mm':'ssx")
-         else
-            Time.parse(s, "HH':'mm':'ssx")
-      }
+      s ?:= tab(upto('.'))
+      return Time.parse(s, "HH':'mm':'ssx")
    end
 
    public new(init_val)
@@ -1140,13 +1184,8 @@ class FormDateTimeLocalField(Component, FormEntry, HasAscent)
    end
 
    public static parse(s)
-      local t
-      s ? {
-         return if t := tab(upto('.')) then
-            Time.parse(t, "yyyy-MM-dd'T'HH':'mm':'ssx")
-         else
-            Time.parse(s, "yyyy-MM-dd'T'HH':'mm':'ssx")
-      }
+      s ?:= tab(upto('.'))
+      return Time.parse(s, "yyyy-MM-dd'T'HH':'mm':'ssx")
    end
 
    public get_form_value()
@@ -1213,6 +1252,75 @@ class FormTimezoneField(TimezoneField, FormEntry, HasAscent)
    end
 end
 
+class FormYearField(YearField, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public reset_form()
+      set_value(init_val)
+   end
+
+   public validate_form()
+      return get_value() | error("Bad timezone format")
+   end
+
+   public get_form_value()
+      return string(get_value())
+   end
+
+   public get_save_value()
+      return view.get_contents()
+   end
+
+   public restore_value(val)
+      view.set_contents(val)
+      get_value() | view.set_fg("red")
+   end
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
+   end
+
+   public new(init_val)
+      cast(self,YearField).new()
+      set_value(init_val)
+      self.init_val := init_val
+      return
+   end
+end
+
+class FormMonthField(MonthField, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public reset_form()
+      set_selection(init_val)
+   end
+
+   public get_form_value()
+      return string(get_selection())
+   end
+
+   public get_save_value()
+      return get_selection()
+   end
+
+   public restore_value(val)
+      set_selection(val)
+   end
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
+   end
+
+   public new(init_val)
+      cast(self,MonthField).new()
+      set_selection(init_val)
+      self.init_val := init_val
+      return
+   end
+end
+
 class FormDateTimeField(Component, FormEntry, HasAscent)
    private const
       date,
@@ -1234,15 +1342,14 @@ class FormDateTimeField(Component, FormEntry, HasAscent)
    end
 
    public static parse(s)
-      local t, f
       s ? {
-         return if t := tab(upto('.')) then {
-            f := move(1) || tab(many(&digits))
-            t ||:= tab(0)
-            Time.parse(t, "yyyy-MM-dd'T'HH':'mm':'ssTx")
-         } else
-            Time.parse(s, "yyyy-MM-dd'T'HH':'mm':'ssTx")
+         if s := tab(upto('.')) then {
+            move(1)
+            tab(many(&digits))
+            s ||:= tab(0)
+         }
       }
+      return Time.parse(s, "yyyy-MM-dd'T'HH':'mm':'ssTx")
    end
 
    public get_form_value()
@@ -1265,6 +1372,60 @@ class FormDateTimeField(Component, FormEntry, HasAscent)
       add(date := FormDateField(init_val))
       add(time := FormTimeField(init_val))
       add(zone := FormTimezoneField(init_val.zone))
+      return
+   end
+end
+
+class FormMonthYearField(Component, FormEntry, HasAscent)
+   private const
+      month,
+      year,
+      init_val
+
+   public get_ascent() 
+      return month.get_ascent()
+   end
+
+   public reset_form()
+      month.reset_form()
+      year.reset_form()
+   end
+
+   public validate_form()
+      return year.validate_form()
+   end
+
+   public static parse(s)
+      local y, m
+      s ? {
+         (y := integer(tab(many(&digits))) &
+          1000 <= y <= 9999 &
+          ="-" &
+          m := integer(tab(many(&digits))) &
+          1 <= m <= 12 &
+          pos(0)) | fail
+      }
+      return Time(y, m)
+   end
+
+   public get_form_value()
+      return year.get_form_value() || "-" || month.get_form_value()
+   end
+
+   public get_save_value()
+      return [year.get_save_value(), month.get_save_value()]
+   end
+
+   public restore_value(val)
+      year.restore_value(val[1])
+      month.restore_value(val[2])
+   end
+
+   public new(init_val)
+      cast(self,Component).new()
+      set_layout(GridLayout().set_doi(0).set_dii(0))
+      add(month := FormMonthField(init_val.month))
+      add(year := FormYearField(init_val.year))
       return
    end
 end
@@ -1421,14 +1582,14 @@ class FormList(gui.List, FormEntry, HasAscent)
       }
    end
 
-   public go_up(e)
+   public do_increment(e)
       if /selection then
          find_value(create *selection_list to 1 by -1, e)
       else
          find_value(create (selection - 1 to 1 by -1) | (*selection_list to selection + 1 by -1), e)
    end
 
-   public go_down(e)
+   public do_decrement(e)
       if /selection then
          find_value(create 1 to *selection_list, e)
       else
@@ -1455,8 +1616,8 @@ class FormList(gui.List, FormEntry, HasAscent)
       return FormOptionList()
    end
 
-   public extract_selection()
-      return self.selection_list[\self.selection].label
+   public convert_element(o)
+      return o.label
    end
 
    public get_default_width()
@@ -2612,6 +2773,36 @@ class Browser(Component)
             }
             add_component(p, q, context, Align.B)
          }
+         "week": {
+            v := FormWeekField.parse(e.get_attribute(u"VALUE")) | Time()
+            q := FormWeekField(v).
+               set_fg(context.fg).
+               set_font(context.font)
+            if e.get_attribute(u"DISABLED") then
+               q.set_is_shaded(&yes)
+            else {
+               if e.get_attribute(u"AUTOFOCUS") then
+                  context.form.set_autofocus(q)
+               context.form.add_std(e, q)
+               context.form.link_label(context, q)
+            }
+            add_component(p, q, context, Align.B)
+         }
+         "month": {
+            v := FormMonthYearField.parse(e.get_attribute(u"VALUE")) | Time()
+            q := FormMonthYearField(v).
+               set_fg(context.fg).
+               set_font(context.font)
+            if e.get_attribute(u"DISABLED") then
+               q.set_is_shaded(&yes)
+            else {
+               if e.get_attribute(u"AUTOFOCUS") then
+                  context.form.set_autofocus(q.children[1])
+               context.form.add_std(e, q)
+               context.form.link_label(context, q)
+            }
+            add_component(p, q, context, Align.B)
+         }
          "datetime": {
             v := FormDateTimeField.parse(e.get_attribute(u"VALUE")) | Time()
             q := FormDateTimeField(v).
@@ -2620,6 +2811,8 @@ class Browser(Component)
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
             else {
+               if e.get_attribute(u"AUTOFOCUS") then
+                  context.form.set_autofocus(q.children[1])
                context.form.add_std(e, q)
                context.form.link_label(context, q)
             }
@@ -2633,6 +2826,8 @@ class Browser(Component)
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
             else {
+               if e.get_attribute(u"AUTOFOCUS") then
+                  context.form.set_autofocus(q.children[1])
                context.form.add_std(e, q)
                context.form.link_label(context, q)
             }
@@ -2652,6 +2847,8 @@ class Browser(Component)
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
             else {
+               if e.get_attribute(u"AUTOFOCUS") then
+                  context.form.set_autofocus(q)
                context.form.add_std(e, q)
                context.form.link_label(context, q)
             }
