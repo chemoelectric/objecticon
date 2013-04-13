@@ -64,6 +64,10 @@ abstract class Spin(Component)
       display_children()
    end
 
+   public focus_changed(e) 
+      view.invalidate()
+   end
+
    public get_default_width()
       return border.get_total_width() + up.get_preferred_width() + view.get_preferred_width()
    end
@@ -136,8 +140,8 @@ end
 # Selection from a list
 #
 abstract class SelectionSpin(SelectionList, Spin)
-   public extract_selection()
-      return text(self.selection_list[\self.selection])
+   public convert_element(o)
+      return text(o)
    end
 
    public do_increment(e)

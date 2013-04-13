@@ -102,8 +102,8 @@ class TickerSuggestField(GSuggestField)
          add_column(PTableColumn().set_weight(1).set_align(Align.R))
    end
 
-   public extract_selection()
-      return tl.object_get_selections()[1][1]
+   public convert_element(o)
+      return o[1]
    end
 
    protected do_request()

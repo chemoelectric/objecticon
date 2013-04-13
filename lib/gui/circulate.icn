@@ -84,6 +84,10 @@ class Circulate(SelectionList,Component)
       display_children()
    end
 
+   public focus_changed(e) 
+      l.invalidate()
+   end
+
    #
    # The handler for the button - move the selection forward.
    #

@@ -209,6 +209,10 @@ abstract class DropDown(Component, MenuMode)
       display_children()
    end
 
+   public focus_changed(e) 
+      view.invalidate()
+   end
+
    protected forward_key(ev, src, type)
       # In menu mode key events are forwarded to this component,
       # rather than the text list, regardless of the focus.  So we
@@ -292,8 +296,8 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       go_to(\tmp, ev)
    end
 
-   public extract_selection()
-      return text(self.selection_list[\self.selection])
+   public convert_element(o)
+      return text(o)
    end
 
    public create_popup()

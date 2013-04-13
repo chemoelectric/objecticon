@@ -41,7 +41,7 @@ class List(SelectionDropDown)
 
    public apply_selection()
       local s
-      s := \self.constant_label | extract_selection() | ""
+      s := \self.constant_label | convert_element(object_get_selection()) | ""
       self.view.set_label(s)
    end
 
@@ -65,7 +65,7 @@ class List(SelectionDropDown)
          t := self.cbwin.text_width(self.constant_label)
       else {
          t := 0
-         every t <:= self.cbwin.text_width(!self.selection_list)
+         every t <:= self.cbwin.text_width(convert_element(!self.selection_list))
       }
       return border.get_total_width() + b.get_preferred_width() + t + view.border.get_total_width()
    end
