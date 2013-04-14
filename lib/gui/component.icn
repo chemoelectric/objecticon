@@ -337,6 +337,15 @@ class Component(Rect,Align,Connectable)
    end
 
    #
+   # Set the preferred focus, which is the component to which focus is
+   # given when a mouse click occurs in this component.
+   #
+   public set_preferred_focus(c)
+      self.preferred_focus := c
+      return self
+   end
+
+   #
    # Determines whether the component accepts the tab focus
    #
    public accepts_focus()
