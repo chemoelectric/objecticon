@@ -10,11 +10,14 @@ import
    net,
    xml,
    posix,
+   graphics,
+   ipl.lists,
    ipl.pdco,
    ipl.sort,
    ipl.strings,
    ipl.caseless,
-   ipl.timegui
+   ipl.timegui,
+   ipl.colorgui
 
 $load BROKEN_LINK "rpp.BROKEN_LINK_24.gif"
 
@@ -936,10 +939,22 @@ class FormBrowse(Component, FormEntry, HasAscent)
       browser
 
    public get_form_value(ev, src, multipart_flag)
+      local s
+      s := tf.get_contents()
+      if *s = 0 then
+         return ""
       return if /multipart_flag then
          tf.get_contents()
       else
-         Files.file_to_string(tf.get_contents())
+         Files.file_to_string(s)
+   end
+
+   public validate_form()
+      local s
+      s := tf.get_contents()
+      if *s = 0 then
+         return
+      return Files.access(s) | error("No such file")
    end
 
    public get_filename()
@@ -1060,12 +1075,11 @@ class FormDateField(DateField, FormEntry, HasAscent)
    end
 
    public get_save_value()
-      return view.get_contents()
+      return last_val
    end
 
    public restore_value(val)
-      view.set_contents(val)
-      get_value() | view.set_fg("red")
+      set_value(val)
    end
 
    public new(init_val)
@@ -1109,12 +1123,11 @@ class FormWeekField(WeekField, FormEntry, HasAscent)
    end
 
    public get_save_value()
-      return view.get_contents()
+      return last_val
    end
 
    public restore_value(val)
-      view.set_contents(val)
-      get_value() | view.set_fg("red")
+      set_value(val)
    end
 
    public new(init_val)
@@ -1141,12 +1154,11 @@ class FormTimeField(TimeField, FormEntry, HasAscent)
    end
 
    public get_save_value()
-      return view.get_contents()
+      return last_val
    end
 
    public restore_value(val)
-      view.set_contents(val)
-      get_value() | view.set_fg("red")
+      set_value(val)
    end
 
    public get_ascent() 
@@ -1180,7 +1192,7 @@ class FormDateTimeLocalField(Component, FormEntry, HasAscent)
    end
 
    public validate_form()
-      return time.validate_form()
+      return date.validate_form() & time.validate_form()
    end
 
    public static parse(s)
@@ -1233,12 +1245,11 @@ class FormTimezoneField(TimezoneField, FormEntry, HasAscent)
    end
 
    public get_save_value()
-      return view.get_contents()
+      return last_val
    end
 
    public restore_value(val)
-      view.set_contents(val)
-      get_value() | view.set_fg("red")
+      set_value(val)
    end
 
    public get_ascent() 
@@ -1269,12 +1280,11 @@ class FormYearField(YearField, FormEntry, HasAscent)
    end
 
    public get_save_value()
-      return view.get_contents()
+      return last_val
    end
 
    public restore_value(val)
-      view.set_contents(val)
-      get_value() | view.set_fg("red")
+      set_value(val)
    end
 
    public get_ascent() 
@@ -1338,7 +1348,7 @@ class FormDateTimeField(Component, FormEntry, HasAscent)
    end
 
    public validate_form()
-      return time.validate_form() & zone.validate_form()
+      return date.validate_form() & time.validate_form() & zone.validate_form()
    end
 
    public static parse(s)
@@ -1458,6 +1468,85 @@ class FormRange(Slider, FormEntry)
    end
 end
 
+class FormNumberField(RangeSpin, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public reset_form()
+      set_value(init_val)
+   end
+
+   public validate_form()
+      return get_value() | error("Invalid number")
+   end
+
+   public get_form_value()
+      return string(get_value())
+   end
+
+   public get_save_value()
+      return last_val
+   end
+
+   public restore_value(val)
+      set_value(val)
+   end
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
+   end
+
+   public new(init_val)
+      cast(self,RangeSpin).new()
+      set_value(init_val)
+      self.init_val := init_val
+      return
+   end
+end
+
+class FormColorField(ColorField, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public reset_form()
+      set_value(init_val)
+   end
+
+   public validate_form()
+      return get_value() | error("Bad color format")
+   end
+
+   public get_form_value()
+      local l, s
+      l := Window.parse_color(get_value()) | fail
+      s := "#"
+      every s ||:= Format.int_to_string(l[1 to 3] / 256, 16, 2)
+      return s
+   end
+
+   public get_save_value() 
+      return last_val
+   end
+
+   public restore_value(val)
+      set_value(val)
+   end
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + b.border.get_t_inset()
+   end
+
+   public static parse(s)
+      return Window.color_value(s)
+   end
+
+   public new(init_val)
+      cast(self,ColorField).new(init_val)
+      self.init_val := init_val
+      return
+   end
+end
+
 class FormEditableTextList(EditableTextList, FormEntry)
    private const
       init_val
@@ -1468,7 +1557,7 @@ class FormEditableTextList(EditableTextList, FormEntry)
    end
 
    public get_form_value()
-      return get_contents_str()
+      return list2str(contents, "\r\n")
    end
 
    public get_save_value()
@@ -2144,6 +2233,13 @@ class Browser(Component)
                    "GIF87a" | "GIF89a", s)
    end
 
+   private static is_text(ct, s)
+      \ct | fail
+      if (ct.type == "text" & ct.subtype == "plain") |
+         (ct.type == "application" & ct.subtype == "json") then
+         return
+   end
+
    private static is_html(ct, s)
       if (\ct).subtype == "html" then
          return
@@ -2207,6 +2303,21 @@ class Browser(Component)
       }
    end
 
+   private static to_pre(s)
+      local t
+      t := ""
+      s ? repeat {
+         t ||:= tab(upto('<&') | 0)
+         if pos(0) then
+            break
+         t ||:= case move(1) of {
+            "<": "&lt;"
+            "&": "&amp;"
+         }
+      }
+      return t
+   end
+
    private set_top_data(res)
       local doc, base, n, s, row, c
       if \curr_history_entry then {
@@ -2221,6 +2332,8 @@ class Browser(Component)
       } else {
          if is_html(res.content_type, res.data) then
             s := res.data
+         else if is_text(res.content_type, res.data) then
+            s := u"<html><pre>" || to_pre(res.data) || "</pre></html>"
          else if is_image(res.content_type, res.data) then {
             # Try adding as an Image; if it isn't initialized
             # successfully, it will be taken out below and replaced with
@@ -2232,7 +2345,7 @@ class Browser(Component)
                s := u"<html><h1>Problem:</h1>Displaying " || res.url.str() || u"<br><br>Unable to display that type of image</html>"
             }
          } else
-            s := u"<html><h1>Problem:</h1>Displaying " || res.url.str() || u"<br><br>This does not seem to be an HTML document or an image</html>"
+            s := u"<html><h1>Problem:</h1>Displaying " || res.url.str() || u"<br><br>This does not seem to be an HTML or text document or an image</html>"
          page_data := res.data
       }
       page_name := res.fname
@@ -2833,6 +2946,21 @@ class Browser(Component)
             }
             add_component(p, q, context, Align.B)
          }
+         "color": {
+            v := FormColorField.parse(e.get_attribute(u"VALUE")) | "white"
+            q := FormColorField(v).
+               set_fg(context.fg).
+               set_font(context.font)
+            if e.get_attribute(u"DISABLED") then
+               q.set_is_shaded(&yes)
+            else {
+               if e.get_attribute(u"AUTOFOCUS") then
+                  context.form.set_autofocus(q.children[1])
+               context.form.add_std(e, q)
+               context.form.link_label(context, q)
+            }
+            add_component(p, q, context, Align.B)
+         }
          "range": {
             min := real(e.get_attribute(u"MIN")) | 0
             max := real(e.get_attribute(u"MAX")) | (min + 10)
@@ -2844,6 +2972,25 @@ class Browser(Component)
                set_is_horizontal(&yes).
                set_size(160)
             q.set_snaps(0.0 < real(e.get_attribute(u"STEP")))
+            if e.get_attribute(u"DISABLED") then
+               q.set_is_shaded(&yes)
+            else {
+               if e.get_attribute(u"AUTOFOCUS") then
+                  context.form.set_autofocus(q)
+               context.form.add_std(e, q)
+               context.form.link_label(context, q)
+            }
+            add_component(p, q, context, Align.B)
+         }
+         "number": {
+            min := real(e.get_attribute(u"MIN")) | 0
+            max := real(e.get_attribute(u"MAX")) | (min + 10)
+            v := real(e.get_attribute(u"VALUE")) | min
+            q := FormNumberField(v).
+               set_range(min, max).
+               set_fg(context.fg).
+               set_font(context.font)
+            q.set_increment_size(0.0 < real(e.get_attribute(u"STEP")))
             if e.get_attribute(u"DISABLED") then
                q.set_is_shaded(&yes)
             else {
