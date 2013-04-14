@@ -1,0 +1,75 @@
+package ipl.colorgui
+
+import
+   gui, graphics
+
+class ColorField(Component)
+   private readable
+      b,
+      cr,
+      tf,
+      last_val
+
+   public on_textfield(ev, src, type)
+      if last_val := get_value() then {
+         tf.remove_wattrib("fg").reset()
+         cr.set_color(last_val)
+      } else {
+         tf.set_fg("red").reset()
+         cr.set_color("white")
+      }
+   end
+
+   public initially()
+      cast(self,Component).initially()
+      tf.set_width(cbwin.text_width("00000,00000,00000 ") + tf.border.get_total_width())
+   end
+
+   public get_value()
+      return Window.color_value(tf.get_contents())
+   end
+
+   public set_value(s)
+      s := Window.color_value(s) | fail
+      tf.set_contents(s)
+      last_val := s
+      cr.set_color(last_val)
+      if is_live() then
+         tf.remove_wattrib("fg").reset()
+      return self
+   end
+
+   private on_choose()
+      local d
+      d := ColorDialog(last_val)
+      d.show_modal()
+      set_value(d.get_result())
+   end
+
+   public new(init_val)
+      local p, t
+      cast(self,Component).new() 
+      set_layout(GridLayout().set_doi(0).set_dii(0))
+      p := Component().
+         set_layout(GridLayout().set_doi(0).set_dii(0))
+      cr := ColorRectangle().
+         set_size(25, 5).
+         set_constraint("y_fill", &yes)
+      p.add(cr)
+      tf := TextField().
+         set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
+      tf.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+      p.add(tf)
+      t := Border().
+         set_content(p).
+         set_border(SunkenBorder()).
+         set_preferred_focus(tf)
+      add(t)
+      b := TextButton().
+         set_label("Choose...").
+         connect(on_choose, Event.ACTION)
+      add(b)
+      set_value(init_val)
+      return
+   end
+end
