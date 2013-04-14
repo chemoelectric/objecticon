@@ -156,7 +156,7 @@ class BrowserDialog(Dialog)
    
    private list_visited()
       local s, e, t
-      s := "<html><head><title>Visited</title></head><table>"
+      s := "<html><title>Visited</title><table>"
       s ||:= "<tr><th align=left>URL<th align=right>Times<th>&nbsp;Last visit</tr>"
       every e := !settings.visited do {
          t := e.url.str()
@@ -171,7 +171,7 @@ class BrowserDialog(Dialog)
 
    private list_all_cookies()
       local s, e
-      s := "<html><head><title>Cookies</title></head>"
+      s := "<html><title>Cookies</title>"
       every e := (!sort(pool.cookies))[1] do
          s ||:= "<a href=config:cookie?q=" || URL.cgi_encode(e) || ">" || e || "</a><br>"
       s ||:= "</html>"
@@ -200,7 +200,7 @@ class BrowserDialog(Dialog)
 
    private list_cookie(k)
       local s, t, path, ck
-      s := "<html><head><title>Cookies</title></head>"
+      s := "<html><title>Cookies</title>"
       if t := member(pool.cookies, k) then {
          s ||:= "<a href=config:del_cookies?q=" || URL.cgi_encode(k) || ">Delete all</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=config:cookies>Back to list</a>"
          every path := key(t) do {
@@ -235,7 +235,7 @@ class BrowserDialog(Dialog)
    end
 
    private config_main()
-      return "<html><head><title>Config</title></head><a href=config:cookies >Edit cookies</a><p>_
+      return "<html><title>Config</title><a href=config:cookies >Edit cookies</a><p>_
               <a href=config:visited >Visited pages</a><p>_
               <fieldset><form method=get action=submit >_
                  <legend>Edit settings</legend>_
