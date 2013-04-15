@@ -295,8 +295,9 @@ class Worker()
    end
 
    private handle_image_req(r)
-      if is(r.client, Browser) & \r.client.image_data then
-         r.callback(Resp(, r.url, r.referer, r.client.image_data, r.url.get_decoded_path_last(),, r.kind))
+      local data
+      if is(r.client, Browser) & data := r.client.get_image_data() then
+         r.callback(Resp(, r.url, r.referer, data, r.url.get_decoded_path_last(),, r.kind))
       else
          r.callback(Resp("Invalid request", r.url, r.referer,,,, r.kind))
    end
@@ -2041,6 +2042,10 @@ class Browser(Component)
 
    public get_map(s)
       return member(maps, s)
+   end
+
+   public get_image_data()
+      return \image_data
    end
 
    private convert_color(el, name)
