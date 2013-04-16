@@ -932,12 +932,16 @@ end
 
 class FormLabel()
    public const
-      id
+      id,
+      form_id,
+      form
    public
       comp
 
-   public new(id)
+   public new(id, form_id, form)
       self.id := id
+      self.form_id := form_id
+      self.form := form
       return
    end
 end
@@ -1742,10 +1746,9 @@ class Form()
       method,
       enctype,
       items,
-      labels,   # table of FormLabels with ids set (the "for" attribute)
+      id_table,
       cbgs,
-      autofocus,
-      link_later   # Components with ids set ("id" attribute) which will be matched to entries in labels.
+      autofocus
 
    private make_cgi_table(ev, src)
       local t, k, c, v, x
@@ -1827,42 +1830,28 @@ class Form()
       item.form_name := name
    end
 
-   public add_std(el, item)
-      put(items, item)
-      item.form_name := el.get_attribute(u"NAME")
-      item.form_id := el.get_attribute(u"ID")
-      item.form_tabindex := integer(el.get_attribute(u"TABINDEX"))
-   end
-
-   public add_label(l)
-      insert(labels, l.id, l)
-   end
-
-   public link_label(context, comp)
+   public add_component(context, el, item)
       local l
+      put(items, item)
+      if el.get_attribute(u"AUTOFOCUS") then
+         autofocus := item
+      item.form_name := el.get_attribute(u"NAME")
+      if item.form_id := el.get_attribute(u"ID") then
+         insert(id_table, item.form_id, item)
+      item.form_tabindex := integer(el.get_attribute(u"TABINDEX"))
       l := context.form_label
       # If we have a label in the context, and the for and id tags
-      # make sense, link the comp to the label; otherwise put the comp
-      # in ids so its id can be resolved at the end of the form.
-      if \l & (/l.id | /comp.form_id | l.id == comp.form_id) then
-         /l.comp := comp
-      else if \comp.form_id then
-         put(link_later, comp)
+      # make sense, link the component item to the label.
+      if \l & (/l.id | /item.form_id | l.id == item.form_id) then
+         /l.comp := item
    end
 
-   public set_autofocus(c)
-      self.autofocus := c
-      return self
+   public get_item_by_id(id)
+      return member(id_table, id)
    end
 
    public get_autofocus()
       return \autofocus
-   end
-
-   public resolve_link_labels()
-      local c
-      every c := !link_later do
-         /member(labels, c.form_id).comp := c
    end
 
    public get_cbg(name)
@@ -1898,9 +1887,8 @@ class Form()
       self.method := method
       self.enctype := enctype
       self.items := []
+      self.id_table := table()
       self.cbgs := table()
-      self.labels := table()
-      self.link_later := []
       return
    end
 end
@@ -1984,6 +1972,7 @@ class Browser(Component)
       status_ticker,
       maps,
       forms,
+      labels,
       form_tab_children,
       curr_history_entry   # History entry currently being viewed.
 
@@ -2170,9 +2159,10 @@ class Browser(Component)
             if xp := \curr_history_entry.area_x then
                top_panel.set_area_x(xp)
          }
-         # Set focus; this will scroll to the component if necessary (see focus_scroll).
+         # Set focus; this will scroll to the component if necessary (see focus_scroll).  Note that if we've moved to another tab
+         # whilst the page loads, (making f hidden) then gen_focusable will fail.
          if f := (!forms).get_autofocus() then
-            parent_dialog.set_focus(f.find_focus())
+            parent_dialog.set_focus(f.gen_focusable())
       }
       parent_dialog.resynch_pointer()
    end
@@ -2385,6 +2375,7 @@ class Browser(Component)
       maps := table()
       forms := []
       form_tab_children := []
+      labels := []
       s := convert_to_ucs(res.content_type, s)
       doc := HtmlParser().parse(s)
       base := page_url
@@ -2407,6 +2398,7 @@ class Browser(Component)
          c.link_fg := convert_color(n, u"LINK")
       }
       traverse(doc, row, c)
+      resolve_labels()
       if res.kind ~= Worker.REFRESH then
          restore_form_values()
       every form_tab_children |||:= (!forms).get_tab_children()
@@ -2419,13 +2411,28 @@ class Browser(Component)
    end
 
    private focus_scroll(e, c)
+      local d
+      # Try and find a parent component which has this component as
+      # its preferred focus (eg a Spin with a TextField); if found
+      # then make the (larger) parent visible, rather than the child.
+      every d := c.parent.gen_parents() do {
+         if d.get_preferred_focus() === c then {
+            c := d
+            break
+         }
+      }
       top_panel.ensure_visible(c)
    end
 
    private setup_tabbing()
       local c
-      every c := Seq{(!self.form_tab_children).traverse_tab_order()} do
-         c.connect(focus_scroll, Event.GOT_FOCUS)
+      every c := Seq{(!self.form_tab_children).traverse_tab_order()} do {
+         # Note that we the c may be hidden (since the browser tab may
+         # be not be the current one), so the test is not the same as
+         # say in find_focus().
+         if c.accepts_focus() & c.is_unshaded() then
+            c.connect(focus_scroll, Event.GOT_FOCUS)
+      }
    end
 
    private mk_link(context, s)
@@ -2578,19 +2585,50 @@ class Browser(Component)
       c.form := Form(self, key, url, m, t)
       put(forms, c.form)
       traverse(e, p, c)
-      (\c.form).resolve_link_labels()
    end
 
    private traverse_label(e, p, context)
-      local c, l, id
-      \context.form | fail
+      local c, l, id, form_id
       id := e.get_attribute(u"FOR")
-      l := FormLabel(id)
-      if \id then
-         context.form.add_label(l)
+      form_id := e.get_attribute(u"FORM")
+      l := FormLabel(id, form_id, context.form)
+      put(labels, l)
       c := copy(context)
       c.form_label := l
       traverse(e, p, c)
+   end
+
+   private resolve_labels()
+      local l
+      #dump_forms()
+      every l := !labels do {
+         if \l.id then
+            /l.comp := get_form_for_label(l).get_item_by_id(l.id)
+      }
+   end
+
+   private get_form_for_label(l)
+      local f
+      # If no form id specified, then the label relates to the form it
+      # is declared in; if outside a form then the first form in the
+      # page.
+      if /l.form_id then
+         return \l.form | forms[1]
+      # Otherwise, we just search for the matching form id.
+      every f := !forms do
+         if \f.key == l.form_id then
+            return f
+   end
+
+   private dump_forms()
+      local f, i
+      every write(to_string(!labels,3,,1))
+      every f := !forms do {
+         every write(to_string(f,3,,1))
+         every i := !f.items do {
+            write("\t",image(i.form_id), "->", to_string(i,3,,0))
+         }
+      }
    end
 
    private add_component(p, c, context, align)
@@ -2605,13 +2643,9 @@ class Browser(Component)
       v := e.get_attribute(u"VALUE") | u""
       type := map(string(e.get_attribute(u"TYPE"))) | "submit"
       q := FormTblButton(context.form, v, type)
-      if e.get_attribute(u"DISABLED") then
-         q.set_is_shaded(&yes)
-      else
-         context.form.add_std(e, q)
       row := TextFlow(self)
       q.tbl.content.add(row)
-      add_component(p, q, context, Align.B)
+      add_form_component(e, p, q, context)
       traverse(e, row, context)
    end
 
@@ -2630,6 +2664,16 @@ class Browser(Component)
          align := convert_comp_align(e, u"ALIGN") | Align.B
          add_component(p, q, context, align)
       }
+   end
+
+   private add_form_component(e, p, q, context)
+      q.set_fg(context.fg).
+         set_font(context.font)
+      if e.get_attribute(u"DISABLED") then
+         q.set_is_shaded(&yes)
+      else
+         context.form.add_component(context, e, q)
+      add_component(p, q, context, Align.B)
    end
 
    private traverse_select(e, p, context)
@@ -2682,16 +2726,7 @@ class Browser(Component)
             set_selection_list(sc.options).
             set_selection(sel)
       }
-      q.set_font(context.font).set_fg(context.fg)
-      if e.get_attribute(u"DISABLED") then
-         q.set_is_shaded(&yes)
-      else {
-         if e.get_attribute(u"AUTOFOCUS") then
-            context.form.set_autofocus(q)
-         context.form.add_std(e, q)
-         context.form.link_label(context, q)
-      }
-      add_component(p, q, context, Align.B)
+      add_form_component(e, p, q, context)
    end
 
    private traverse_option(e, p, context)
@@ -2734,20 +2769,10 @@ class Browser(Component)
       }
       # The ucs conversion is used here since an empty node will return "" (not u"").
       q := FormEditableTextList(ucs(e.get_trimmed_string_content())).
-         set_font(context.font).
-         set_fg(context.fg).
          set_size(w, h)
-      if e.get_attribute(u"DISABLED") then
-         q.set_is_shaded(&yes)
-      else {
-         if e.get_attribute(u"READONLY") then
-            q.set_is_editable(&no)
-         if e.get_attribute(u"AUTOFOCUS") then
-            context.form.set_autofocus(q)
-         context.form.add_std(e, q)
-         context.form.link_label(context, q)
-      }
-      add_component(p, q, context)
+      if e.get_attribute(u"READONLY") then
+         q.set_is_editable(&no)
+      add_form_component(e, p, q, context)
    end
 
    private traverse_input(e, p, context)
@@ -2760,42 +2785,21 @@ class Browser(Component)
                mW := cbwin.clone().set_font(context.font),
                size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
             }
-            q := FormBrowse(self, size).
-                  set_font(context.font).
-                  set_fg(context.fg)
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else {
-               if e.get_attribute(u"AUTOFOCUS") then
-                  context.form.set_autofocus(q.children[1])
-               context.form.add_std(e, q)
-            }
-            add_component(p, q, context, Align.B)
+            q := FormBrowse(self, size)
+            add_form_component(e, p, q, context)
          }
          "submit" : {
             v := e.get_attribute(u"VALUE")
             if /v | (*v = 0) then
                v := u"Submit"
             q := FormButton(v).
-                  set_font(context.font).
-                  set_fg(context.fg).
                   connect(context.form.submit, Event.ACTION)
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else
-               context.form.add_std(e, q)
-            add_component(p, q, context, Align.B)
+            add_form_component(e, p, q, context)
          }
          "button" : {
             v := e.get_attribute(u"VALUE") | u""
-            q := FormButton(v).
-                  set_font(context.font).
-                  set_fg(context.fg)
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else
-               context.form.add_std(e, q)
-            add_component(p, q, context, Align.B)
+            q := FormButton(v)
+            add_form_component(e, p, q, context)
          }
          "image" : {
             if url := mk_link(context, e.get_attribute(u"SRC")) then {
@@ -2821,14 +2825,8 @@ class Browser(Component)
             if /v | (*v = 0) then
                v := u"Reset"
             q := FormButton(v).
-               set_font(context.font).
-               set_fg(context.fg).
                connect(context.form.reset_form, Event.ACTION)
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else
-               context.form.add_std(e, q)
-            add_component(p, q, context, Align.B)
+            add_form_component(e, p, q, context)
          }
          "hidden": {
             context.form.add(e.get_attribute(u"NAME"), Hidden(e.get_attribute(u"VALUE")))
@@ -2840,13 +2838,7 @@ class Browser(Component)
                set_paint(ImagePaint().set_cache("gui.DIAMOND_UP")).
                set_paint_down(ImagePaint().set_cache("gui.DIAMOND_DOWN")).
                set_border(NullBorder())
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else {
-               context.form.add_std(e, q)
-               context.form.link_label(context, q)
-            }
-            add_component(p, q, context, Align.B)
+            add_form_component(e, p, q, context)
             context.form.get_cbg(e.get_attribute(u"NAME")).add(q)
          }
          "checkbox": {
@@ -2856,118 +2848,42 @@ class Browser(Component)
                set_paint(ImagePaint().set_cache("gui.BOX_UP")).
                set_paint_down(ImagePaint().set_cache("gui.BOX_DOWN")).
                set_border(NullBorder())
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else {
-               context.form.add_std(e, q)
-               context.form.link_label(context, q)
-            }
-            add_component(p, q, context, Align.B)
+            add_form_component(e, p, q, context)
          }
          "date": {
             v := Time.parse(e.get_attribute(u"VALUE"), "yyyy-MM-dd") | Time()
-            q := FormDateField(v).
-               set_fg(context.fg).
-               set_font(context.font)
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else {
-               if e.get_attribute(u"AUTOFOCUS") then
-                  context.form.set_autofocus(q)
-               context.form.add_std(e, q)
-               context.form.link_label(context, q)
-            }
-            add_component(p, q, context, Align.B)
+            q := FormDateField(v)
+            add_form_component(e, p, q, context)
          }
          "time": {
             v := FormTimeField.parse(e.get_attribute(u"VALUE")) | Time()
-            q := FormTimeField(v).
-               set_fg(context.fg).
-               set_font(context.font)
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else {
-               if e.get_attribute(u"AUTOFOCUS") then
-                  context.form.set_autofocus(q)
-               context.form.add_std(e, q)
-               context.form.link_label(context, q)
-            }
-            add_component(p, q, context, Align.B)
+            q := FormTimeField(v)
+            add_form_component(e, p, q, context)
          }
          "week": {
             v := FormWeekField.parse(e.get_attribute(u"VALUE")) | Time()
-            q := FormWeekField(v).
-               set_fg(context.fg).
-               set_font(context.font)
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else {
-               if e.get_attribute(u"AUTOFOCUS") then
-                  context.form.set_autofocus(q)
-               context.form.add_std(e, q)
-               context.form.link_label(context, q)
-            }
-            add_component(p, q, context, Align.B)
+            q := FormWeekField(v)
+            add_form_component(e, p, q, context)
          }
          "month": {
             v := FormMonthYearField.parse(e.get_attribute(u"VALUE")) | Time()
-            q := FormMonthYearField(v).
-               set_fg(context.fg).
-               set_font(context.font)
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else {
-               if e.get_attribute(u"AUTOFOCUS") then
-                  context.form.set_autofocus(q.children[1])
-               context.form.add_std(e, q)
-               context.form.link_label(context, q)
-            }
-            add_component(p, q, context, Align.B)
+            q := FormMonthYearField(v)
+            add_form_component(e, p, q, context)
          }
          "datetime": {
             v := FormDateTimeField.parse(e.get_attribute(u"VALUE")) | Time()
-            q := FormDateTimeField(v).
-               set_fg(context.fg).
-               set_font(context.font)
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else {
-               if e.get_attribute(u"AUTOFOCUS") then
-                  context.form.set_autofocus(q.children[1])
-               context.form.add_std(e, q)
-               context.form.link_label(context, q)
-            }
-            add_component(p, q, context, Align.B)
+            q := FormDateTimeField(v)
+            add_form_component(e, p, q, context)
          }
          "datetime-local": {
             v := FormDateTimeLocalField.parse(e.get_attribute(u"VALUE")) | Time()
-            q := FormDateTimeLocalField(v).
-               set_fg(context.fg).
-               set_font(context.font)
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else {
-               if e.get_attribute(u"AUTOFOCUS") then
-                  context.form.set_autofocus(q.children[1])
-               context.form.add_std(e, q)
-               context.form.link_label(context, q)
-            }
-            add_component(p, q, context, Align.B)
+            q := FormDateTimeLocalField(v)
+            add_form_component(e, p, q, context)
          }
          "color": {
             v := FormColorField.parse(e.get_attribute(u"VALUE")) | "white"
-            q := FormColorField(v).
-               set_fg(context.fg).
-               set_font(context.font)
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else {
-               if e.get_attribute(u"AUTOFOCUS") then
-                  context.form.set_autofocus(q.children[1])
-               context.form.add_std(e, q)
-               context.form.link_label(context, q)
-            }
-            add_component(p, q, context, Align.B)
+            q := FormColorField(v)
+            add_form_component(e, p, q, context)
          }
          "range": {
             min := real(e.get_attribute(u"MIN")) | 0
@@ -2975,39 +2891,19 @@ class Browser(Component)
             v := real(e.get_attribute(u"VALUE")) | min
             q := FormRange(v).
                set_range(min, max).
-               set_fg(context.fg).
-               set_font(context.font).
                set_is_horizontal(&yes).
                set_size(160)
             q.set_snaps(0.0 < real(e.get_attribute(u"STEP")))
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else {
-               if e.get_attribute(u"AUTOFOCUS") then
-                  context.form.set_autofocus(q)
-               context.form.add_std(e, q)
-               context.form.link_label(context, q)
-            }
-            add_component(p, q, context, Align.B)
+            add_form_component(e, p, q, context)
          }
          "number": {
             min := real(e.get_attribute(u"MIN")) | 0
             max := real(e.get_attribute(u"MAX")) | (min + 10)
             v := real(e.get_attribute(u"VALUE")) | min
             q := FormNumberField(v).
-               set_range(min, max).
-               set_fg(context.fg).
-               set_font(context.font)
+               set_range(min, max)
             q.set_increment_size(0.0 < real(e.get_attribute(u"STEP")))
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else {
-               if e.get_attribute(u"AUTOFOCUS") then
-                  context.form.set_autofocus(q)
-               context.form.add_std(e, q)
-               context.form.link_label(context, q)
-            }
-            add_component(p, q, context, Align.B)
+            add_form_component(e, p, q, context)
          }
 
          # Assume something textual; could be password, text, email etc.
@@ -3018,23 +2914,13 @@ class Browser(Component)
                size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
             }
             q := FormTextField(v).
-               set_fg(context.fg).
-               set_font(context.font).
                set_size(size).
                connect(context.form.submit, Event.ACTION)
             if s == "password" then
                q.set_displaychar("*")
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else {
-               if e.get_attribute(u"READONLY") then
-                  q.set_is_editable(&no)
-               if e.get_attribute(u"AUTOFOCUS") then
-                  context.form.set_autofocus(q)
-               context.form.add_std(e, q)
-               context.form.link_label(context, q)
-            }
-            add_component(p, q, context, Align.B)
+            if e.get_attribute(u"READONLY") then
+               q.set_is_editable(&no)
+            add_form_component(e, p, q, context)
          }
       }
       traverse(e, p, context)
