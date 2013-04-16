@@ -10,6 +10,7 @@ package gui
 
 import 
    ipl.sort,
+   ipl.pdco,
    util
 
 #
@@ -338,11 +339,19 @@ class Component(Rect,Align,Connectable)
 
    #
    # Set the preferred focus, which is the component to which focus is
-   # given when a mouse click occurs in this component.
+   # given when a mouse click occurs in this component.  By default,
+   # this is set to the component itself.
    #
    public set_preferred_focus(c)
       self.preferred_focus := c
       return self
+   end
+
+   #
+   # Return the preferred focus.
+   #
+   public get_preferred_focus()
+      return self.preferred_focus
    end
 
    #
@@ -1025,6 +1034,17 @@ class Component(Rect,Align,Connectable)
             if f := c.find_accel(e) then
                return f
          }
+      }
+   end
+
+   #
+   # Generate the focusable children of this tree of components, in tab focus order.
+   #
+   public gen_focusable(e)
+      local c
+      every c := Seq{traverse_tab_order()} do {
+         if c.accepts_focus(e) & c.is_unhidden() & c.is_unshaded() then
+            suspend c
       }
    end
 
