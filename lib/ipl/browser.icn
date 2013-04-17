@@ -766,10 +766,9 @@ class Img(Label)
 end
 
 abstract class FormEntry()
-   public 
+   package readable
       form_name, form_id, form_tabindex
 
-   public reset_form() end
    public validate_form()
       return
    end
@@ -778,6 +777,7 @@ abstract class FormEntry()
       return \form_name | \form_id
    end
 
+   public reset_form() end
    public get_save_subkey() end
    public get_save_value() end
    public restore_value(val) end
@@ -1739,7 +1739,8 @@ class FormList(gui.List, FormEntry, HasAscent)
 end
 
 class Form()
-   private readable
+   public const
+      id,
       key,
       url,
       browser,
@@ -1747,7 +1748,8 @@ class Form()
       enctype,
       items,
       id_table,
-      cbgs,
+      cbgs
+   private readable
       autofocus
 
    private make_cgi_table(ev, src)
@@ -1877,12 +1879,12 @@ class Form()
    end
 
    public get_save_key()
-      return \key
+      return \id | (\url).str()
    end
 
-   public new(browser, key, url, method, enctype)
+   public new(browser, id, url, method, enctype)
       self.browser := browser
-      self.key := key
+      self.id := id
       self.url := url
       self.method := method
       self.enctype := enctype
@@ -2576,13 +2578,13 @@ class Browser(Component)
    end
 
    private traverse_form(e, p, context)
-      local m, c, t, url, key
+      local m, c, t, url, id
       m := e.get_attribute(u"METHOD") | "get"
       t := e.get_attribute(u"ENCTYPE") | "application/x-www-form-urlencoded"
       url := mk_link(context, e.get_attribute(u"ACTION"))
-      key := e.get_attribute(u"ID" | u"NAME") | (\url).str()
+      id := e.get_attribute(u"ID" | u"NAME")
       c := copy(context)
-      c.form := Form(self, key, url, m, t)
+      c.form := Form(self, id, url, m, t)
       put(forms, c.form)
       traverse(e, p, c)
    end
@@ -2616,7 +2618,7 @@ class Browser(Component)
          return \l.form | forms[1]
       # Otherwise, we just search for the matching form id.
       every f := !forms do
-         if \f.key == l.form_id then
+         if \f.id == l.form_id then
             return f
    end
 
