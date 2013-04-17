@@ -660,8 +660,9 @@ class Img(Label)
    end
 
    private handle_rpress(e)
-      local pm, pm_menu
-      if pm_menu := browser.create_image_menu(img_url, img_name, img_data, wrote) then {
+      local pm, pm_menu, url
+      url := if img_url.scheme == u"image" then browser.page_url else img_url
+      if pm_menu := browser.create_image_menu(url, img_name, img_data, wrote) then {
          pm := PopupMenu()
          pm.popup(parent_dialog, pm_menu, e.x, e.y)
       }
