@@ -43,8 +43,8 @@ class ColorDialog(Dialog)
    end
 
    public init_dialog()
+      alpha_panel.set_is_shaded(opaque_flag)
       if \opaque_flag then {
-         alpha_panel.set_is_shaded(&yes)
          alpha.set_value(65535)
          update_rgb()
          update_alpha()
