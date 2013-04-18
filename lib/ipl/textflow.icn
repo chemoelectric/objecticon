@@ -700,9 +700,9 @@ class TextFlow(Component)
       local c, t
       if t := which_text_out(e) then {
          if c := \ ( \ (t.attr.form_label)).comp & not c.is_shaded() then {
-            parent_dialog.set_focus(c)
+            parent_dialog.set_focus(c.gen_focusable(e))
             if is(c, Toggle) then
-               c.toggle_is_checked()
+               c.on_action(e)
          }
       }
       held := wrote

@@ -11,13 +11,15 @@ package gui
 #
 # Selection from a list
 #
-class ListSpin(SelectionList,StaticSpin)
+class ListSpin(SelectionSpin)
    public old_selection
 
-   public apply_selection()
-      local s
-      s := self.selection_list[\self.selection] | ""
-      self.view.set_label(s)
+   public get_contents()
+      return view.get_label()
+   end
+
+   public create_view()
+      return SpinLabel()
    end
 
    public start_change(e)
@@ -29,33 +31,16 @@ class ListSpin(SelectionList,StaticSpin)
          fire(Event.SELECTION_CHANGED, e)
    end
 
-   public do_increment()
-      if *selection_list = 0 then
-         fail
-      if /self.selection | self.selection = *self.selection_list then
-         self.set_selection(1)
-      else
-         self.set_selection(self.selection + 1)
-   end
-
-   public do_decrement()
-      if *selection_list = 0 then
-         fail
-      if /self.selection | (self.selection = 1) then
-         self.set_selection(*self.selection_list)
-      else
-         self.set_selection(self.selection - 1)
-   end
-
-   public initially()
-      \self.selection_list | runerr("no selection list specified")
-      cast(self,StaticSpin).initially()
+   public apply_selection()
+      local s
+      s := convert_element(object_get_selection()) | ""
+      self.view.set_label(s)
    end
 
    public get_default_width()
       local t
       t := 0
-      every t <:= self.cbwin.text_width(!self.selection_list)
+      every t <:= self.cbwin.text_width(convert_element(!self.selection_list))
       return border.get_total_width() + up.get_preferred_width() + t + view.border.get_total_width()
    end
 end

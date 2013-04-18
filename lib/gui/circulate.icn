@@ -15,14 +15,6 @@ class CirculateLabel(Label)
       return member(Key.CURSOR_V, e.code)
    end
 
-   public go_up(e)
-      parent.go_up(e)
-   end
-
-   public go_down(e)
-      parent.go_down(e)
-   end
-
    public on_key(e)
       case e.code of {
          Key.UP : parent.go_up(e)
@@ -34,8 +26,6 @@ class CirculateLabel(Label)
       cast(self,Label).new()
       self.set_label("")
       connect(self.on_key, Event.KEY_PRESS)
-      connect(self.go_up, Event.MOUSE_WHEEL_UP)
-      connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
       # Align with the text in the textlist.
       self.set_border(EmptyBorder().
                       set_align(Align.L, Align.C).
@@ -92,6 +82,10 @@ class Circulate(SelectionList,Component)
    public display()
       border.draw_rect(self.cbwin, self)
       display_children()
+   end
+
+   public focus_changed(e) 
+      l.invalidate()
    end
 
    #
@@ -167,6 +161,8 @@ class Circulate(SelectionList,Component)
 ~~~000000~~~~_
 ~~~~0000~~~~~_
 ")
+      connect(self.go_up, Event.MOUSE_WHEEL_UP)
+      connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
       return
    end
 end

@@ -11,18 +11,34 @@ package gui
 #
 # This is a Spin for numeric values, optionally within a fixed range.
 #
-class RangeSpin(EditSpin)
+class RangeSpin(Spin)
    public
       lo,
       hi,
-      increment_size
+      increment_size,
+      last_val
+
+   public create_view()
+      return SpinTextField()
+   end
+
+   public initially()
+      local f
+      f := &digits
+      if type(lo | hi) == "real" then
+         f ++:= '.'
+      if /lo | /hi | (lo < 0) then
+         f ++:= '\-'
+      view.set_filter(f)
+      cast(self,Spin).initially()
+   end
 
    public do_increment(ev)
-      set_value(get_value() + self.increment_size, ev)
+      set_value(last_val + self.increment_size, ev)
    end
 
    public do_decrement(ev)
-      set_value(get_value() - self.increment_size, ev)
+      set_value(last_val - self.increment_size, ev)
    end
 
    #
@@ -44,9 +60,12 @@ class RangeSpin(EditSpin)
    public set_value(x, ev)
       x <:= \self.lo
       x >:= \self.hi
-      if /ev then
+      if /ev then {
          view.set_contents(x)
-      else
+         if is_live() then
+            view.remove_wattrib("fg").reset()
+         last_val := x
+      } else
          view.assign_contents(x, ev)
       return self
    end
@@ -60,38 +79,38 @@ class RangeSpin(EditSpin)
    end
 
    public on_textfield(ev, src, type)
-      local x
-      if x := get_value() then {
-         # No point using assign_contents, since an invalid value is in the
-         # undo list.
-         if x < \self.lo then
-            view.set_contents(self.lo)
-         else if x > \self.hi then
-            view.set_contents(self.hi)
-      } 
-      cast(self,EditSpin).on_textfield(ev, src, type)
+      if last_val := get_value() then
+         view.remove_wattrib("fg").reset()
+      else
+         view.set_fg("red").reset()
+      # Fire the event with self as source.
+      fire(type, ev)
    end
 
    #
    # Return the value, or fail if the value is not presently a valid
-   # numeric value.
+   # numeric value in the required range.
    #
    public get_value()
-      return numeric(view.get_contents())
+      local v
+      v := numeric(view.get_contents()) | fail
+      if (v < \self.lo) | (v > \self.hi) then
+         fail
+      return v
    end
 
    public get_default_width()
       local t
       t := 0
       # Bit difficult if we don't have a maximum...
-      every t <:= self.cbwin.text_width((view.contents | \self.hi) || " ")
+      every t <:= self.cbwin.text_width((view.contents | \self.lo | \self.hi) || " ")
       return border.get_total_width() + up.get_preferred_width() + t + view.border.get_total_width()
    end
 
    public new()
-      cast(self,EditSpin).new()
-      view.set_filter(&digits ++ '.\-')
+      cast(self,Spin).new()
       self.increment_size := 1
+      every view.connect(self.on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       return
    end
 end

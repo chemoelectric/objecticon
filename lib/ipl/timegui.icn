@@ -1,0 +1,461 @@
+package ipl.timegui
+
+import
+   gui, util, lang
+
+procedure estimate_width(cbwin, fmt)
+   local s
+   s := map(Time(2000, 1, 1).format(fmt), &letters, repl("M", 26) || repl("m", 26)) || " "
+   return cbwin.text_width(s)
+end
+
+class DateField(DropDown)
+   private readable
+      format,
+      last_val
+
+   private got_date(ev)
+      set_value(popup.get_value())
+      close_all()
+   end
+
+   public create_popup()
+      return Calendar(last_val).connect(got_date, Event.VALUE_CHANGED)
+   end
+
+   public create_view()
+      return DropDownTextField()
+   end
+
+   public initially()
+      cast(self,DropDown).initially()
+      view.set_width(estimate_width(cbwin, format) + view.border.get_total_width())
+   end
+
+   public do_increment(ev)
+      set_value(last_val.set_mday(last_val.mday + 1), ev)
+   end
+
+   public do_decrement(ev)
+      set_value(last_val.set_mday(last_val.mday - 1), ev)
+   end
+
+   public set_format(f)
+      self.format := f
+      set_value(last_val)
+      return self
+   end
+
+   public get_value()
+      return Time.parse(view.get_contents(), format || "x")
+   end
+
+   public set_value(x, ev)
+      local s
+      s := x.format(format)
+      if /ev then {
+         view.set_contents(s)
+         if is_live() then
+            view.remove_wattrib("fg").reset()
+         last_val := x
+      } else
+         view.assign_contents(s, ev)
+      return self
+   end
+
+   public on_textfield(ev, src, type)
+      if last_val := get_value() then
+         view.remove_wattrib("fg").reset()
+      else
+         view.set_fg("red").reset()
+      # Fire the event with self as source.
+      fire(type, ev)
+   end
+
+   public new(val)
+      cast(self,DropDown).new()
+      every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+      /val := Time()
+      format := "dd-MMM-yyyy"
+      set_value(val)
+      return
+   end
+end
+
+class TimeField(Spin)
+   private readable
+      format,
+      last_val
+
+   public create_view()
+      return SpinTextField().set_filter(&digits ++ ':')
+   end
+
+   public do_increment(ev)
+      if find("ss", format) then
+         set_value(last_val.set_sec(last_val.sec + 1), ev)
+      else
+         set_value(last_val.set_min(last_val.min + 1), ev)
+   end
+
+   public do_decrement(ev)
+      if find("ss", format) then
+         set_value(last_val.set_sec(last_val.sec - 1), ev)
+      else
+         set_value(last_val.set_min(last_val.min + 1), ev)
+   end
+
+   public get_value()
+      return Time.parse(view.get_contents(), format || "x")
+   end
+
+   public set_value(x, ev)
+      local s
+      s := x.format(format)
+      if /ev then {
+         view.set_contents(s)
+         if is_live() then
+            view.remove_wattrib("fg").reset()
+         last_val := x
+      } else
+         view.assign_contents(s, ev)
+      return self
+   end
+
+   public on_textfield(ev, src, type)
+      if last_val := get_value() then
+         view.remove_wattrib("fg").reset()
+      else
+         view.set_fg("red").reset()
+      # Fire the event with self as source.
+      fire(type, ev)
+   end
+
+   public set_format(f)
+      self.format := f
+      set_value(last_val)
+      return self
+   end
+
+   public initially()
+      cast(self,Spin).initially()
+      view.set_width(estimate_width(cbwin, format) + view.border.get_total_width())
+   end
+
+   public new(val)
+      cast(self,Spin).new()
+      every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+      /val := Time()
+      format := "HH:mm:ss"
+      set_value(val)
+      return
+   end
+end
+
+class TimezoneField(EditList)
+   private readable
+      last_val
+
+   public get_value()
+      return Timezone.get_known_timezone(view.get_contents())
+   end
+
+   public set_value(x)
+      local s
+      s := x.get_id()
+      set_contents(s)
+      if is_live() then
+         view.remove_wattrib("fg").reset()
+      last_val := x
+      return self
+   end
+
+   public on_textfield(ev, src, type)
+      if last_val := get_value() then
+         view.remove_wattrib("fg").reset()
+      else
+         view.set_fg("red").reset()
+      cast(self,EditList).on_textfield(ev, src, type)
+   end
+
+   public new(v)
+      local l
+      cast(self,EditList).new()
+      view.set_filter(&digits ++ &ucase ++ '+\-')
+      /v := Timezone.UTC_TIMEZONE
+      l := []
+      every put(l, (!Timezone.KNOWN_TIMEZONES).id)
+      set_selection_list(sort(l))
+      set_value(v)
+      return
+   end
+end
+
+class WeekField(DropDown)
+   private readable
+      format,
+      last_val
+
+   private got_date(ev)
+      local t
+      t := popup.get_value()
+      t.set_mday(t.mday - (t.wday + 5) % 7)
+      set_value(t)
+      close_all()
+   end
+
+   public create_popup()
+      return Calendar(last_val).set_week_mode(1).connect(got_date, Event.VALUE_CHANGED)
+   end
+
+   public create_view()
+      return DropDownTextField()
+   end
+
+   public initially()
+      cast(self,DropDown).initially()
+      view.set_width(estimate_width(cbwin, format) + view.border.get_total_width())
+   end
+
+   public do_increment(ev)
+      set_value(last_val.set_mday(last_val.mday + 7), ev)
+   end
+
+   public do_decrement(ev)
+      set_value(last_val.set_mday(last_val.mday - 7), ev)
+   end
+
+   public get_value()
+      local w, y
+      map(view.get_contents()) ? {
+         (y := integer(tab(many(&digits))) &
+          1000 <= y <= 9999 &
+          =" week " &
+          w := integer(tab(many(&digits))) &
+          1 <= w <= 53 &
+          pos(0)) | fail
+      }
+      return Time.get_week_of_year(y, w)
+   end
+
+   public set_value(x, ev)
+      local s
+      s := x.format(format)
+      if /ev then {
+         view.set_contents(s)
+         if is_live() then
+            view.remove_wattrib("fg").reset()
+         last_val := x
+      } else
+         view.assign_contents(s, ev)
+      return self
+   end
+
+   public on_textfield(ev, src, type)
+      if last_val := get_value() then
+         view.remove_wattrib("fg").reset()
+      else
+         view.set_fg("red").reset()
+      # Fire the event with self as source.
+      fire(type, ev)
+   end
+
+   public new(val)
+      cast(self,DropDown).new()
+      every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
+      /val := Time()
+      format := "vvvv 'week' ww"
+      set_value(val)
+      return
+   end
+end
+
+class MonthField(List)
+   public new()
+      cast(self,List).new()
+      set_selection_list(Time.MONTHS)
+      return
+   end
+end
+
+class YearField(RangeSpin)
+   public new()
+      cast(self,RangeSpin).new()
+      set_range(1000, 9999)
+      return
+   end
+end
+
+class DayButton(TextButton)
+   private readable
+      time
+   public new(t)
+      cast(self,TextButton).new()
+      self.time := clone(t)
+      set_constraint("x_fill", &yes)
+      set_border(EmptyBorder())
+      set_label(t.mday)
+      set_no_click_focus(&yes)
+      return
+   end
+end
+
+class WeekButton(TextButton)
+   private readable
+      time
+   public new(t)
+      cast(self,TextButton).new()
+      self.time := clone(t)
+      set_constraint("x_fill", &yes)
+      set_border(EmptyBorder())
+      set_label(t.get_week()[1])
+      set_no_click_focus(&yes)
+      return
+   end
+end
+
+class Calendar(Component)
+   private readable
+      curr,
+      week_mode_flag
+   private
+      buttons,
+      month,
+      year,
+      showing
+
+   private on_month_change()
+      showing.set_month(month.get_selection())
+      update()
+   end
+
+   private on_year_change()
+      local i
+      if i := year.get_value() then {
+         showing.set_year(i)
+         update()
+      }
+   end
+
+   private update()
+      curr.normalize_zone()
+      showing.normalize_zone()
+      month.set_selection(showing.month)
+      year.set_value(showing.year)
+      update_buttons()
+   end
+
+   public get_value()
+      return .curr
+   end
+
+   private day_press(ev, src)
+      if compare(curr, src.time) then return
+      curr := src.time
+      showing := clone(curr).set_mday(1)
+      update()
+      fire(Event.VALUE_CHANGED, ev)
+   end
+
+   private update_buttons()
+      local i
+      i := get_index(buttons)
+      remove(buttons)
+      buttons := setup_buttons()
+      add(buttons, i)
+      if is_live() then {
+         reset_layout()
+         layout()
+         invalidate()
+      }
+   end
+
+   private compare(t1, t2)
+      return if /week_mode_flag then
+         (t1.year = t2.year & t1.month = t2.month & t1.mday = t2.mday)
+      else
+         equals(t1.get_week(), t2.get_week())
+   end
+
+   private setup_buttons()
+      local p, t, w, b, s, bg
+      t := clone(showing)
+      t.set_mday(1).set_mday(1 - (t.wday + 5) % 7)
+      p := Panel().
+         set_layout(GridLayout().set_doi(0).set_dii(0)).
+         set_constraint("eol", &yes)
+
+      if \week_mode_flag then
+         p.add(Label().
+               set_border(EmptyBorder()).
+               set_label("Week"))
+
+      every s := Time.WEEK_DAYS[2 to 8] do
+         p.add(Label().
+               set_border(EmptyBorder()).
+               set_label(s[1:4]))
+      p.children[-1].set_constraint("eol", &yes)
+      p.add(Line().set_constraint("eol", &yes).set_constraint("w", if \week_mode_flag then 8 else 7).set_constraint("x_fill", &yes).set_width(100))
+      bg := ButtonGroup()
+
+      every w := 1 to 6 do {
+         if \week_mode_flag then {
+            b := WeekButton(t).connect(day_press, Event.ACTION)
+            p.add(b)
+         }
+         every 1 to 7 do {
+            b := DayButton(t)
+            if t.month = showing.month then {
+               if t.wday = 1 then
+                  b.set_fg("red")
+            } else
+               b.set_fg("grey")
+            b.connect(day_press, Event.ACTION)
+            #write(to_string(curr),"-v-",to_string(t))
+            if compare(curr, t) then
+               b.set_bg("pale blue")
+            bg.add(b)
+            p.add(b)
+            t.set_mday(t.mday + 1)
+         }
+         b.set_constraint("eol", &yes)
+      }
+      return p
+   end
+
+   public set_week_mode(s)
+      self.week_mode_flag := check_flag(s)
+      update()
+      return self
+   end
+
+   public display()
+      border.draw(self.cbwin, x, y, w, h)
+      self.display_children()
+   end
+
+   public new(val)
+      local p
+      cast(self,Component).new()
+      /val := Time()
+      curr := clone(val).edit_fields(,,, 0, 0, 0)
+      showing := clone(curr).set_mday(1)
+      p := Component().
+         set_layout(GridLayout().set_doi(0)).
+         set_constraint("eol", &yes)
+      month := MonthField().
+         connect(on_month_change, Event.SELECTION_CHANGED).
+         set_selection(curr.month)
+      p.add(month)
+      year := YearField().
+         connect(on_year_change, Event.CONTENT_CHANGED).
+         set_value(curr.year)
+      p.add(year)
+      add(p)
+      add(buttons := setup_buttons())
+      set_layout(GridLayout())
+      set_border(BevelledBorder())
+      return
+   end
+end
+

@@ -92,9 +92,8 @@ class HtmlParser()
       HTML_DELIM := '\"\''
       HTML_PUBID_CHAR := ' \n\rA-Za-z0-9\-\'()+,./:=?;!*#@$_%'
       HTML_STANDALONE := set("IMG", "BR", "HR", "META", "BASE", "INPUT", "AREA", 
-                             "BASEFONT", "BGSOUND", "COL", "COLGROUP", "ISINDEX", 
-                             "LINK", "NEXTID", "SPACER", "TBODY", "TFOOT", 
-                             "THEAD", "WBR")
+                             "BASEFONT", "BGSOUND", "COL", "ISINDEX", 
+                             "LINK", "NEXTID", "SPACER", "WBR")
 
       HTML_AUTOCLOSE := table(,
                               "LI", set("LI"),
@@ -102,9 +101,13 @@ class HtmlParser()
                               "A", set("A"),
                               "DD", set("DD", "DT"),
                               "DT", set("DT", "DD"),
-                              "TR", set("TR"),
-                              "TD", set("TD", "TR", "TH"),
-                              "TH", set("TH", "TR", "TD"),
+                              "TR", set("TR", "THEAD", "TBODY", "TFOOT"),
+                              "TD", set("TD", "TR", "TH", "THEAD", "TBODY", "TFOOT"),
+                              "TH", set("TH", "TR", "TD", "THEAD", "TBODY", "TFOOT"),
+                              "THEAD", set("THEAD", "TFOOT", "TBODY"),
+                              "TBODY", set("THEAD", "TFOOT", "TBODY"),
+                              "TFOOT", set("THEAD", "TFOOT", "TBODY"),
+                              "COLGROUP", set("COLGROUP", "TH", "TR", "TD", "TBODY", "TFOOT", "THEAD"),
                               "OPTION", set("OPTION"))
 
       HTML_ENTITIES := table(,
@@ -471,21 +474,19 @@ class HtmlParser()
    private remove_entities(s)
       local res, i, j
       res := ""
-      s ? {
-         repeat {
-            res ||:= tab(upto('&') | 0)
-            if pos(0) then
-               break
-            i := &pos
-            res ||:= if j := parse_entity() then {
-               if \utf8_flag then
-                  uchar(j | 63)
-               else
-                  char(j | 63)
-            } else {
-               &pos := i
-               move(1)
-            }
+      s ? repeat {
+         res ||:= tab(upto('&') | 0)
+         if pos(0) then
+            break
+         i := &pos
+         res ||:= if j := parse_entity() then {
+            if \utf8_flag then
+               uchar(j | 63)
+            else
+               char(j | 63)
+         } else {
+            &pos := i
+            move(1)
          }
       }
       return res

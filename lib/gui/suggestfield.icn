@@ -68,11 +68,11 @@ class SuggestField(TextField, MenuMode)
 
    public synch_contents(ev)
       synch_ev := ev
-      assign_contents(extract_selection(), ev)
+      assign_contents(convert_element(tl.object_get_selections()[1]), ev)
    end
 
-   public extract_selection()
-      return tl.object_get_selections()[1]
+   public convert_element(o)
+      return text(o)
    end
 
    private requests()

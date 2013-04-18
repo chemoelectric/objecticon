@@ -409,7 +409,7 @@ class HttpClient(NetClient)
       #
       # Calculate HA2
       #
-      md5.update(request.method || ":" || request.url.get_file())
+      md5.update(string(request.method || ":" || request.url.get_file()))
       if \qop == "auth-int" then {
          # Calculate H(entity)
          t := MD5()

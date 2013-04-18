@@ -10,6 +10,7 @@ package gui
 
 import 
    ipl.sort,
+   ipl.pdco,
    util
 
 #
@@ -337,6 +338,23 @@ class Component(Rect,Align,Connectable)
    end
 
    #
+   # Set the preferred focus, which is the component to which focus is
+   # given when a mouse click occurs in this component.  By default,
+   # this is set to the component itself.
+   #
+   public set_preferred_focus(c)
+      self.preferred_focus := c
+      return self
+   end
+
+   #
+   # Return the preferred focus.
+   #
+   public get_preferred_focus()
+      return self.preferred_focus
+   end
+
+   #
    # Determines whether the component accepts the tab focus
    #
    public accepts_focus()
@@ -563,7 +581,7 @@ class Component(Rect,Align,Connectable)
    # @param e the event causing the change of focus, if any
    #
    public got_focus(e)
-      invalidate()
+      focus_changed(e)
       fire(Event.GOT_FOCUS, e)
    end
 
@@ -593,8 +611,17 @@ class Component(Rect,Align,Connectable)
    # @param e the event causing the change of focus, if any
    #
    public lost_focus(e)
-      invalidate()
+      focus_changed(e)
       fire(Event.LOST_FOCUS, e)
+   end
+
+   #
+   # This is invoked when the focus is got/lost; by default it just
+   # calls invalidate.
+   # @param e the event causing the change of focus, if any
+   #
+   public focus_changed(e)
+      invalidate()
    end
 
    #
@@ -1011,6 +1038,17 @@ class Component(Rect,Align,Connectable)
    end
 
    #
+   # Generate the focusable children of this tree of components, in tab focus order.
+   #
+   public gen_focusable(e)
+      local c
+      every c := Seq{traverse_tab_order()} do {
+         if c.accepts_focus(e) & c.is_unhidden() & c.is_unshaded() then
+            suspend c
+      }
+   end
+
+   #
    # Succeed if the given (key) event matches this component's accelerator.
    #
    public match_accel(e)
@@ -1156,13 +1194,6 @@ class Component(Rect,Align,Connectable)
    #
    public get_children()
       return self.children
-   end
-
-   #
-   # For backward compatibility only...(now use {fire()}).
-   #
-   public create_event_and_fire(type, param)
-      return fire(type, param)
    end
 
    #

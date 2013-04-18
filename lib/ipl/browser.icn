@@ -10,10 +10,14 @@ import
    net,
    xml,
    posix,
+   graphics,
+   ipl.lists,
    ipl.pdco,
    ipl.sort,
    ipl.strings,
-   ipl.caseless
+   ipl.caseless,
+   ipl.timegui,
+   ipl.colorgui
 
 $load BROKEN_LINK "rpp.BROKEN_LINK_24.gif"
 
@@ -227,7 +231,7 @@ class Worker()
          return use {
             rs := RamStream(),
             {
-               rs.out("<html><head><title>Directory " || f || "</title></head><table>")
+               rs.out("<html><title>Directory " || f || "</title><table>")
                path := FilePath(f)
                every e := !l do {
                   t := e[2]
@@ -288,6 +292,14 @@ class Worker()
          r.callback(Resp(, r.url, r.referer, data, r.url.get_decoded_path_last(),, r.kind))
       else
          r.callback(Resp(&why, r.url, r.referer,,,, r.kind))
+   end
+
+   private handle_image_req(r)
+      local data
+      if is(r.client, Browser) & data := r.client.get_image_data() then
+         r.callback(Resp(, r.url, r.referer, data, r.url.get_decoded_path_last(),, r.kind))
+      else
+         r.callback(Resp("Invalid request", r.url, r.referer,,,, r.kind))
    end
 
    private get_expiry(hres)
@@ -390,6 +402,7 @@ class Worker()
       case t of {
          "file": handle_file_req(r)
          "http"|"https": handle_http_req(r)
+         "image": handle_image_req(r)
          default: {
             if f := member(pool.scheme_handlers, t) then
                handle_func(r, f)
@@ -569,6 +582,9 @@ class WorkerPool()
 end
 
 class Tbl(Border, HasMaxWidth, HasAscent)
+   private
+      hrules, vrules
+
    public get_max_width()
       local w1
       w1 := content.layout_delegate.get_max_width()  + border.get_total_width()
@@ -582,6 +598,36 @@ class Tbl(Border, HasMaxWidth, HasAscent)
       /title | return dh
       dw -:= border.get_total_width()
       return content.layout_delegate.get_ascent(dw) + border.get_t_inset() | dh
+   end
+
+   public set_hrules(r)
+      self.hrules := r
+      return self
+   end
+
+   public set_vrules(r)
+      self.vrules := r
+      return self
+   end
+
+   public display()
+      local i, g
+      cast(self, Border).display()
+      g := content.layout_delegate.g
+      g.compute_actual_col_positions(content.x)
+      g.compute_actual_row_positions(content.y)
+      every i := !g.info do {
+         if member(\vrules, i.x) then
+            cbwin.draw_rectangle(g.col_x[i.x],
+                                 g.row_y[i.y],
+                                 1,
+                                 Grid.slice(i.y, i.h, g.a_row_h))
+         if member(\hrules, i.y) then
+            cbwin.draw_rectangle(g.col_x[i.x],
+                                 g.row_y[i.y],
+                                 Grid.slice(i.x, i.w, g.a_col_w),
+                                 1)
+      }
    end
 
    public new()
@@ -614,8 +660,9 @@ class Img(Label)
    end
 
    private handle_rpress(e)
-      local pm, pm_menu
-      if pm_menu := browser.create_image_menu(img_url, img_name, img_data, wrote) then {
+      local pm, pm_menu, url
+      url := if img_url.scheme == u"image" then browser.page_url else img_url
+      if pm_menu := browser.create_image_menu(url, img_name, img_data, wrote) then {
          pm := PopupMenu()
          pm.popup(parent_dialog, pm_menu, e.x, e.y)
       }
@@ -720,20 +767,23 @@ class Img(Label)
 end
 
 abstract class FormEntry()
-   public 
+   package readable
       form_name, form_id, form_tabindex
 
-   public reset_form() end
+   public validate_form()
+      return
+   end
                   
    public get_save_key()
       return \form_name | \form_id
    end
 
+   public reset_form() end
    public get_save_subkey() end
    public get_save_value() end
    public restore_value(val) end
 
-   public abstract get_value(ev, src, multipart_flag)
+   public abstract get_form_value(ev, src, multipart_flag)
 end
 
 class FormToggle(ToggleTextButton, FormEntry)
@@ -745,7 +795,7 @@ class FormToggle(ToggleTextButton, FormEntry)
       set_is_checked(init_checked)
    end
 
-   public get_value(ev, src)
+   public get_form_value(ev, src)
       if is_checked() then 
          return value
    end
@@ -775,7 +825,7 @@ class FormButton(TextButton, FormEntry, HasAscent)
    private const
       value
 
-   public get_value(ev, src)
+   public get_form_value(ev, src)
       if src === self then
          return value
    end
@@ -796,7 +846,7 @@ class FormTblButton(Button, FormEntry, HasMaxWidth, HasAscent)
    public const
       tbl, value, form, type
 
-   public get_value(ev, src)
+   public get_form_value(ev, src)
       if src === self then
          return value
    end
@@ -871,7 +921,7 @@ class Hidden(FormEntry)
    private const
       value
 
-   public get_value()
+   public get_form_value()
       return value
    end
 
@@ -883,12 +933,16 @@ end
 
 class FormLabel()
    public const
-      id
+      id,
+      form_id,
+      form
    public
       comp
 
-   public new(id)
+   public new(id, form_id, form)
       self.id := id
+      self.form_id := form_id
+      self.form := form
       return
    end
 end
@@ -898,11 +952,23 @@ class FormBrowse(Component, FormEntry, HasAscent)
       tf,
       browser
 
-   public get_value(ev, src, multipart_flag)
+   public get_form_value(ev, src, multipart_flag)
+      local s
+      s := tf.get_contents()
+      if *s = 0 then
+         return ""
       return if /multipart_flag then
          tf.get_contents()
       else
-         Files.file_to_string(tf.get_contents())
+         Files.file_to_string(s)
+   end
+
+   public validate_form()
+      local s
+      s := tf.get_contents()
+      if *s = 0 then
+         return
+      return Files.access(s) | error("No such file")
    end
 
    public get_filename()
@@ -944,7 +1010,7 @@ class FormImgX(FormEntry)
    private const
       img
 
-   public get_value(ev, src)
+   public get_form_value(ev, src)
       if src === img then
          return ev.x - img.x
    end
@@ -959,7 +1025,7 @@ class FormImgY(FormEntry)
    private const
       img
 
-   public get_value(ev, src)
+   public get_form_value(ev, src)
       if src === img then
          return ev.y - img.y
    end
@@ -982,7 +1048,7 @@ class FormTextField(TextField, FormEntry, HasAscent)
       set_contents(init_val)
    end
 
-   public get_value()
+   public get_form_value()
       return get_contents()
    end
 
@@ -1002,6 +1068,499 @@ class FormTextField(TextField, FormEntry, HasAscent)
    end
 end
 
+class FormDateField(DateField, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
+   end
+
+   public reset_form()
+      set_value(init_val)
+   end
+
+   public validate_form()
+      return get_value() | error("Bad date format")
+   end
+
+   public get_form_value()
+      return get_value().format("yyyy-MM-dd")
+   end
+
+   public get_save_value()
+      return last_val
+   end
+
+   public restore_value(val)
+      set_value(val)
+   end
+
+   public new(init_val)
+      cast(self,DateField).new(init_val)
+      self.init_val := init_val
+      return
+   end
+end
+
+class FormWeekField(WeekField, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
+   end
+
+   public reset_form()
+      set_value(init_val)
+   end
+
+   public validate_form()
+      return get_value() | error("Bad week format")
+   end
+
+   public get_form_value()
+      return get_value().format("vvvv'-W'ww")
+   end
+
+   public static parse(s)
+      local w, y
+      s ? {
+         (y := integer(tab(many(&digits))) &
+          1000 <= y <= 9999 &
+          ="-W" &
+          w := integer(tab(many(&digits))) &
+          1 <= w <= 53 &
+          pos(0)) | fail
+      }
+      return Time.get_week_of_year(y, w)
+   end
+
+   public get_save_value()
+      return last_val
+   end
+
+   public restore_value(val)
+      set_value(val)
+   end
+
+   public new(init_val)
+      cast(self,WeekField).new(init_val)
+      self.init_val := init_val
+      return
+   end
+end
+
+class FormTimeField(TimeField, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public reset_form()
+      set_value(init_val)
+   end
+
+   public validate_form()
+      return get_value() | error("Bad time format")
+   end
+
+   public get_form_value()
+      return get_value().format("HH':'mm':'ss")
+   end
+
+   public get_save_value()
+      return last_val
+   end
+
+   public restore_value(val)
+      set_value(val)
+   end
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
+   end
+
+   public static parse(s)
+      s ?:= tab(upto('.'))
+      return Time.parse(s, "HH':'mm':'ssx")
+   end
+
+   public new(init_val)
+      cast(self,TimeField).new(init_val)
+      self.init_val := init_val
+      return
+   end
+end
+
+class FormDateTimeLocalField(Component, FormEntry, HasAscent)
+   private const
+      date,
+      time
+
+   public get_ascent() 
+      return date.get_ascent()
+   end
+
+   public reset_form()
+      date.reset_form()
+      time.reset_form()
+   end
+
+   public validate_form()
+      return date.validate_form() & time.validate_form()
+   end
+
+   public static parse(s)
+      s ?:= tab(upto('.'))
+      return Time.parse(s, "yyyy-MM-dd'T'HH':'mm':'ssx")
+   end
+
+   public get_form_value()
+      return date.get_form_value() || "T" || time.get_form_value()
+   end
+
+   public get_save_value()
+      return [date.get_save_value(), time.get_save_value()]
+   end
+
+   public restore_value(val)
+      date.restore_value(val[1])
+      time.restore_value(val[2])
+   end
+
+   public new(init_val)
+      cast(self,Component).new()
+      set_layout(GridLayout().set_doi(0).set_dii(0))
+      add(date := FormDateField(init_val))
+      add(time := FormTimeField(init_val))
+      return
+   end
+end
+
+class FormTimezoneField(TimezoneField, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public reset_form()
+      set_value(init_val)
+   end
+
+   public validate_form()
+      return get_value() | error("Bad timezone format")
+   end
+
+   public get_form_value()
+      local zone
+      zone := get_value() | fail
+      return if zone.offset = 0 then
+         "Z"
+      else (if zone.offset < 0 then "-" else "+") ||
+         right(abs(zone.offset) / 3600, 2, "0") || ":" ||
+         right((abs(zone.offset) % 3600) / 60, 2, "0")
+   end
+
+   public get_save_value()
+      return last_val
+   end
+
+   public restore_value(val)
+      set_value(val)
+   end
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
+   end
+
+   public new(init_val)
+      cast(self,TimezoneField).new(init_val)
+      self.init_val := init_val
+      return
+   end
+end
+
+class FormYearField(YearField, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public reset_form()
+      set_value(init_val)
+   end
+
+   public validate_form()
+      return get_value() | error("Bad timezone format")
+   end
+
+   public get_form_value()
+      return string(get_value())
+   end
+
+   public get_save_value()
+      return last_val
+   end
+
+   public restore_value(val)
+      set_value(val)
+   end
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
+   end
+
+   public new(init_val)
+      cast(self,YearField).new()
+      set_value(init_val)
+      self.init_val := init_val
+      return
+   end
+end
+
+class FormMonthField(MonthField, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public reset_form()
+      set_selection(init_val)
+   end
+
+   public get_form_value()
+      return string(get_selection())
+   end
+
+   public get_save_value()
+      return get_selection()
+   end
+
+   public restore_value(val)
+      set_selection(val)
+   end
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
+   end
+
+   public new(init_val)
+      cast(self,MonthField).new()
+      set_selection(init_val)
+      self.init_val := init_val
+      return
+   end
+end
+
+class FormDateTimeField(Component, FormEntry, HasAscent)
+   private const
+      date,
+      time,
+      zone
+
+   public get_ascent() 
+      return date.get_ascent()
+   end
+
+   public reset_form()
+      date.reset_form()
+      time.reset_form()
+      zone.reset_form()
+   end
+
+   public validate_form()
+      return date.validate_form() & time.validate_form() & zone.validate_form()
+   end
+
+   public static parse(s)
+      s ? {
+         if s := tab(upto('.')) then {
+            move(1)
+            tab(many(&digits))
+            s ||:= tab(0)
+         }
+      }
+      return Time.parse(s, "yyyy-MM-dd'T'HH':'mm':'ssTx")
+   end
+
+   public get_form_value()
+      return date.get_form_value() || "T" || time.get_form_value() || zone.get_form_value()
+   end
+
+   public get_save_value()
+      return [date.get_save_value(), time.get_save_value(), zone.get_save_value()]
+   end
+
+   public restore_value(val)
+      date.restore_value(val[1])
+      time.restore_value(val[2])
+      zone.restore_value(val[3])
+   end
+
+   public new(init_val)
+      cast(self,Component).new()
+      set_layout(GridLayout().set_doi(0).set_dii(0))
+      add(date := FormDateField(init_val))
+      add(time := FormTimeField(init_val))
+      add(zone := FormTimezoneField(init_val.zone))
+      return
+   end
+end
+
+class FormMonthYearField(Component, FormEntry, HasAscent)
+   private const
+      month,
+      year,
+      init_val
+
+   public get_ascent() 
+      return month.get_ascent()
+   end
+
+   public reset_form()
+      month.reset_form()
+      year.reset_form()
+   end
+
+   public validate_form()
+      return year.validate_form()
+   end
+
+   public static parse(s)
+      local y, m
+      s ? {
+         (y := integer(tab(many(&digits))) &
+          1000 <= y <= 9999 &
+          ="-" &
+          m := integer(tab(many(&digits))) &
+          1 <= m <= 12 &
+          pos(0)) | fail
+      }
+      return Time(y, m)
+   end
+
+   public get_form_value()
+      return year.get_form_value() || "-" || month.get_form_value()
+   end
+
+   public get_save_value()
+      return [year.get_save_value(), month.get_save_value()]
+   end
+
+   public restore_value(val)
+      year.restore_value(val[1])
+      month.restore_value(val[2])
+   end
+
+   public new(init_val)
+      cast(self,Component).new()
+      set_layout(GridLayout().set_doi(0).set_dii(0))
+      add(month := FormMonthField(init_val.month))
+      add(year := FormYearField(init_val.year))
+      return
+   end
+end
+
+class FormRange(Slider, FormEntry)
+   private const
+      init_val
+
+   public reset_form()
+      set_value(init_val)
+   end
+
+   public get_form_value()
+      return get_value()
+   end
+
+   public get_save_value()
+      return get_value()
+   end
+
+   public restore_value(val)
+      set_value(val)
+   end
+
+   public new(init_val)
+      cast(self,Slider).new()
+      set_value(init_val)
+      self.init_val := init_val
+      return
+   end
+end
+
+class FormNumberField(RangeSpin, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public reset_form()
+      set_value(init_val)
+   end
+
+   public validate_form()
+      return get_value() | error("Invalid number")
+   end
+
+   public get_form_value()
+      return string(get_value())
+   end
+
+   public get_save_value()
+      return last_val
+   end
+
+   public restore_value(val)
+      set_value(val)
+   end
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + border.get_t_inset()
+   end
+
+   public new(init_val)
+      cast(self,RangeSpin).new()
+      set_value(init_val)
+      self.init_val := init_val
+      return
+   end
+end
+
+class FormColorField(ColorField, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public reset_form()
+      set_value(init_val)
+   end
+
+   public validate_form()
+      return get_value() | error("Bad color format")
+   end
+
+   public get_form_value()
+      local l, s
+      l := Window.parse_color(get_value()) | fail
+      s := "#"
+      every s ||:= Format.int_to_string(l[1 to 3] / 256, 16, 2)
+      return s
+   end
+
+   public get_save_value() 
+      return last_val
+   end
+
+   public restore_value(val)
+      set_value(val)
+   end
+
+   public get_ascent() 
+      return cbwin.get_font_ascent() + b.border.get_t_inset()
+   end
+
+   public static parse(s)
+      return Window.color_value(s)
+   end
+
+   public new(init_val)
+      cast(self,ColorField).new(init_val)
+      self.init_val := init_val
+      return
+   end
+end
+
 class FormEditableTextList(EditableTextList, FormEntry)
    private const
       init_val
@@ -1011,8 +1570,8 @@ class FormEditableTextList(EditableTextList, FormEntry)
       set_cursor(1, 1)
    end
 
-   public get_value()
-      return get_contents_str()
+   public get_form_value()
+      return list2str(contents, "\r\n")
    end
 
    public get_save_value()
@@ -1059,7 +1618,7 @@ class FormOptionList(SelectableScrollArea, FormEntry)
       cast(self,SelectableScrollArea).end_handle(e)
    end
 
-   public get_value(ev, src)
+   public get_form_value(ev, src)
       suspend \contents[!selections].value
    end
 
@@ -1126,14 +1685,14 @@ class FormList(gui.List, FormEntry, HasAscent)
       }
    end
 
-   public go_up(e)
+   public do_increment(e)
       if /selection then
          find_value(create *selection_list to 1 by -1, e)
       else
          find_value(create (selection - 1 to 1 by -1) | (*selection_list to selection + 1 by -1), e)
    end
 
-   public go_down(e)
+   public do_decrement(e)
       if /selection then
          find_value(create 1 to *selection_list, e)
       else
@@ -1144,7 +1703,7 @@ class FormList(gui.List, FormEntry, HasAscent)
       set_selection(init_val)
    end
 
-   public get_value(ev, src)
+   public get_form_value(ev, src)
       return \object_get_selection().value
    end
 
@@ -1160,8 +1719,8 @@ class FormList(gui.List, FormEntry, HasAscent)
       return FormOptionList()
    end
 
-   public extract_selection()
-      return self.selection_list[\self.selection].label
+   public convert_element(o)
+      return o.label
    end
 
    public get_default_width()
@@ -1181,23 +1740,25 @@ class FormList(gui.List, FormEntry, HasAscent)
 end
 
 class Form()
-   private readable
+   public const
+      id,
       key,
       url,
       browser,
       method,
       enctype,
       items,
-      labels,   # table of FormLabels with ids set (the "for" attribute)
-      cbgs,
-      link_later   # Components with ids set ("id" attribute) which will be matched to entries in labels.
+      id_table,
+      cbgs
+   private readable
+      autofocus
 
    private make_cgi_table(ev, src)
       local t, k, c, v, x
       t := table()
       every c := !items do {
          if k := \c.form_name then {
-            every v := c.get_value(ev, src) do {
+            every v := c.get_form_value(ev, src) do {
                (x := member(t, k)) | insert(t, k, x := [])
                put(x, v)
             }
@@ -1224,7 +1785,7 @@ class Form()
       mp := Multipart()
       every c := !items do {
          if k := \c.form_name then {
-            every v := c.get_value(ev, src, 1) do {
+            every v := c.get_form_value(ev, src, 1) do {
                m2 := Message()
                if is(c, FormBrowse) then {
                   m2.set_header("Content-Disposition", 
@@ -1249,7 +1810,15 @@ class Form()
    end
 
    public submit(ev, src)
+      local c
       \url | fail
+      # Validate form.
+      every c := !items do
+         c.validate_form() | {
+            browser.msg("Invalid form: " || &why)
+            fail
+         }
+
       if map(method) == "post" then {
          if map(enctype) == "multipart/form-data" then
             browser.goto(url, browser.page_url, Worker.NORMAL, make_cgi_message(ev, src))
@@ -1264,33 +1833,28 @@ class Form()
       item.form_name := name
    end
 
-   public add_std(el, item)
-      put(items, item)
-      item.form_name := el.get_attribute(u"NAME")
-      item.form_id := el.get_attribute(u"ID")
-      item.form_tabindex := integer(el.get_attribute(u"TABINDEX"))
-   end
-
-   public add_label(l)
-      insert(labels, l.id, l)
-   end
-
-   public link_label(context, comp)
+   public add_component(context, el, item)
       local l
+      put(items, item)
+      if el.get_attribute(u"AUTOFOCUS") then
+         autofocus := item
+      item.form_name := el.get_attribute(u"NAME")
+      if item.form_id := el.get_attribute(u"ID") then
+         insert(id_table, item.form_id, item)
+      item.form_tabindex := integer(el.get_attribute(u"TABINDEX"))
       l := context.form_label
       # If we have a label in the context, and the for and id tags
-      # make sense, link the comp to the label; otherwise put the comp
-      # in ids so its id can be resolved at the end of the form.
-      if \l & (/l.id | /comp.form_id | l.id == comp.form_id) then
-         /l.comp := comp
-      else if \comp.form_id then
-         put(link_later, comp)
+      # make sense, link the component item to the label.
+      if \l & (/l.id | /item.form_id | l.id == item.form_id) then
+         /l.comp := item
    end
 
-   public resolve_link_labels()
-      local c
-      every c := !link_later do
-         /member(labels, c.form_id).comp := c
+   public get_item_by_id(id)
+      return member(id_table, id)
+   end
+
+   public get_autofocus()
+      return \autofocus
    end
 
    public get_cbg(name)
@@ -1316,24 +1880,25 @@ class Form()
    end
 
    public get_save_key()
-      return \key
+      return \id | (\url).str()
    end
 
-   public new(browser, key, url, method, enctype)
+   public new(browser, id, url, method, enctype)
       self.browser := browser
-      self.key := key
+      self.id := id
       self.url := url
       self.method := method
       self.enctype := enctype
       self.items := []
+      self.id_table := table()
       self.cbgs := table()
-      self.labels := table()
-      self.link_later := []
       return
    end
 end
 
-record TableContext(tbl, caption, x, y, occ, cell_border, tr)
+record TableContext(tbl, caption, x, y, occ, cell_border, tr, rowgroups, colgroups, curr_colgroup)
+record TableColGroup(align, valign, width, span, cols)
+record TableCol(align, valign, width, span)
 record ListContext(tbl, index, root)
 record DefListContext(tbl)
 record FieldSetContext(legend)
@@ -1410,6 +1975,7 @@ class Browser(Component)
       status_ticker,
       maps,
       forms,
+      labels,
       form_tab_children,
       curr_history_entry   # History entry currently being viewed.
 
@@ -1420,6 +1986,7 @@ class Browser(Component)
       page_data,
       page_name,
       page_title,
+      image_data,
       running
 
    public static const 
@@ -1467,6 +2034,10 @@ class Browser(Component)
 
    public get_map(s)
       return member(maps, s)
+   end
+
+   public get_image_data()
+      return \image_data
    end
 
    private convert_color(el, name)
@@ -1579,18 +2150,22 @@ class Browser(Component)
    end
 
    private page_fully_loaded()
-      local xp, yp
+      local xp, yp, f
       top_panel.
          reset_all_layouts().
          do_layout().
          invalidate()
-      # Goto named anchor unless user has started to scroll page
+      # Goto named anchor and maybe set focus unless user has started to scroll page
       if top_panel.get_area_y() = top_panel.get_area_x() = 0 then {
          if yp := \curr_history_entry.area_y | (lookup_named_anchor(page_url.get_fragment()) - top_panel.view.y) then {
             top_panel.set_area_y(yp)
             if xp := \curr_history_entry.area_x then
                top_panel.set_area_x(xp)
          }
+         # Set focus; this will scroll to the component if necessary (see focus_scroll).  Note that if we've moved to another tab
+         # whilst the page loads, (making f hidden) then gen_focusable will fail.
+         if f := (!forms).get_autofocus() then
+            parent_dialog.set_focus(f.gen_focusable())
       }
       parent_dialog.resynch_pointer()
    end
@@ -1665,6 +2240,13 @@ class Browser(Component)
                    "GIF87a" | "GIF89a", s)
    end
 
+   private static is_text(ct, s)
+      \ct | fail
+      if (ct.type == "text" & ct.subtype == "plain") |
+         (ct.type == "application" & ct.subtype == "json") then
+         return
+   end
+
    private static is_html(ct, s)
       if (\ct).subtype == "html" then
          return
@@ -1728,6 +2310,21 @@ class Browser(Component)
       }
    end
 
+   private static to_pre(s)
+      local t
+      t := ""
+      s ? repeat {
+         t ||:= tab(upto('<&') | 0)
+         if pos(0) then
+            break
+         t ||:= case move(1) of {
+            "<": "&lt;"
+            "&": "&amp;"
+         }
+      }
+      return t
+   end
+
    private set_top_data(res)
       local doc, base, n, s, row, c
       if \curr_history_entry then {
@@ -1736,24 +2333,24 @@ class Browser(Component)
          curr_history_entry.area_y := top_panel.get_area_y()
       }
       top_panel.set_area_y(0).set_area_x(0)
+      image_data := &null
       if \res.err then {
-         s := u"<html><h1>Error:</h1>Getting " || res.url.str() || u"<br><br>" || res.err || u"</html>"
+         s := "<html><title>Error</title>" || 
+            "<h1>Error:</h1>Getting " || res.url.str() || "<br><br>" || res.err || "</html>"
          page_data := &null
       } else {
          if is_html(res.content_type, res.data) then
             s := res.data
+         else if is_text(res.content_type, res.data) then
+            s := "<html><title>" || to_pre(res.fname) || "</title>" || 
+               "<pre>" || to_pre(res.data) || "</pre></html>"
          else if is_image(res.content_type, res.data) then {
-            # Try adding as an Image; if it isn't initialized
-            # successfully, it will be taken out below and replaced with
-            # a TextFlow with a problem message.
-            row := Image().set_border(NullBorder()).set_image(res.data)
-            top_panel.set_inner(row)
-            if /row.win then {
-               row := &null
-               s := u"<html><h1>Problem:</h1>Displaying " || res.url.str() || u"<br><br>Unable to display that type of image</html>"
-            }
+            s := "<html><title>" || to_pre(res.fname) || "</title>" || 
+               "<img src=\"image:" || URL.percent_encode(res.fname, URL.UNRESERVED ++ '/') || "\"/></html>"
+            image_data := res.data
          } else
-            s := u"<html><h1>Problem:</h1>Displaying " || res.url.str() || u"<br><br>This does not seem to be an HTML document or an image</html>"
+            s := "<html><title>Problem</title>" || 
+               "<h1>Problem:</h1>Displaying " || res.url.str() || "<br><br>This does not seem to be an HTML or text document or an image</html>"
          page_data := res.data
       }
       page_name := res.fname
@@ -1781,36 +2378,34 @@ class Browser(Component)
       maps := table()
       forms := []
       form_tab_children := []
-      if /row then {
-         s := convert_to_ucs(res.content_type, s)
-         doc := HtmlParser().parse(s)
-         base := page_url
-         if n := doc.get_root_element().search_tree(u"BASE") then
-            base := URL(n.get_attribute(u"HREF"))
-
-         row := TextFlow(self)
-         page_title := &null
-         c := Context()
-         c.base := base
-         c.face := "sans"
-         c.fg := "black"
-         c.link_fg := "blue"
-         c.size := 3
-         c.align := Align.L
-         c.kind := res.kind   # Tells images whether to refresh or not
-         synch_font(c)
-         if n := doc.get_root_element().search_tree(u"BODY") then {
-            row.set_bg(convert_color(n, u"BGCOLOR"))
-            c.fg := convert_color(n, u"TEXT")
-            c.link_fg := convert_color(n, u"LINK")
-         }
-         traverse(doc, row, c)
-         if res.kind ~= Worker.REFRESH then
-            restore_form_values()
-         every form_tab_children |||:= (!forms).get_tab_children()
-         top_panel.set_inner(row)
-      } else
-         page_title := page_name
+      labels := []
+      s := convert_to_ucs(res.content_type, s)
+      doc := HtmlParser().parse(s)
+      base := page_url
+      if n := doc.get_root_element().search_tree(u"BASE") then
+         base := URL(n.get_attribute(u"HREF"))
+      row := TextFlow(self)
+      page_title := &null
+      c := Context()
+      c.base := base
+      c.face := "sans"
+      c.fg := "black"
+      c.link_fg := "blue"
+      c.size := 3
+      c.align := Align.L
+      c.kind := res.kind   # Tells images whether to refresh or not
+      synch_font(c)
+      if n := doc.get_root_element().search_tree(u"BODY") then {
+         row.set_bg(convert_color(n, u"BGCOLOR"))
+         c.fg := convert_color(n, u"TEXT")
+         c.link_fg := convert_color(n, u"LINK")
+      }
+      traverse(doc, row, c)
+      resolve_labels()
+      if res.kind ~= Worker.REFRESH then
+         restore_form_values()
+      every form_tab_children |||:= (!forms).get_tab_children()
+      top_panel.set_inner(row)
       set_title(page_title)
       top_panel.layout()
       top_panel.invalidate()
@@ -1819,13 +2414,28 @@ class Browser(Component)
    end
 
    private focus_scroll(e, c)
+      local d
+      # Try and find a parent component which has this component as
+      # its preferred focus (eg a Spin with a TextField); if found
+      # then make the (larger) parent visible, rather than the child.
+      every d := c.parent.gen_parents() do {
+         if d.get_preferred_focus() === c then {
+            c := d
+            break
+         }
+      }
       top_panel.ensure_visible(c)
    end
 
    private setup_tabbing()
       local c
-      every c := Seq{(!self.form_tab_children).traverse_tab_order()} do
-         c.connect(focus_scroll, Event.GOT_FOCUS)
+      every c := Seq{(!self.form_tab_children).traverse_tab_order()} do {
+         # Note that we the c may be hidden (since the browser tab may
+         # be not be the current one), so the test is not the same as
+         # say in find_focus().
+         if c.accepts_focus() & c.is_unshaded() then
+            c.connect(focus_scroll, Event.GOT_FOCUS)
+      }
    end
 
    private mk_link(context, s)
@@ -1969,28 +2579,59 @@ class Browser(Component)
    end
 
    private traverse_form(e, p, context)
-      local m, c, t, url, key
+      local m, c, t, url, id
       m := e.get_attribute(u"METHOD") | "get"
       t := e.get_attribute(u"ENCTYPE") | "application/x-www-form-urlencoded"
       url := mk_link(context, e.get_attribute(u"ACTION"))
-      key := e.get_attribute(u"ID" | u"NAME") | (\url).str()
+      id := e.get_attribute(u"ID" | u"NAME")
       c := copy(context)
-      c.form := Form(self, key, url, m, t)
+      c.form := Form(self, id, url, m, t)
       put(forms, c.form)
       traverse(e, p, c)
-      (\c.form).resolve_link_labels()
    end
 
    private traverse_label(e, p, context)
-      local c, l, id
-      \context.form | fail
+      local c, l, id, form_id
       id := e.get_attribute(u"FOR")
-      l := FormLabel(id)
-      if \id then
-         context.form.add_label(l)
+      form_id := e.get_attribute(u"FORM")
+      l := FormLabel(id, form_id, context.form)
+      put(labels, l)
       c := copy(context)
       c.form_label := l
       traverse(e, p, c)
+   end
+
+   private resolve_labels()
+      local l
+      #dump_forms()
+      every l := !labels do {
+         if \l.id then
+            /l.comp := get_form_for_label(l).get_item_by_id(l.id)
+      }
+   end
+
+   private get_form_for_label(l)
+      local f
+      # If no form id specified, then the label relates to the form it
+      # is declared in; if outside a form then the first form in the
+      # page.
+      if /l.form_id then
+         return \l.form | forms[1]
+      # Otherwise, we just search for the matching form id.
+      every f := !forms do
+         if \f.id == l.form_id then
+            return f
+   end
+
+   private dump_forms()
+      local f, i
+      every write(to_string(!labels,3,,1))
+      every f := !forms do {
+         every write(to_string(f,3,,1))
+         every i := !f.items do {
+            write("\t",image(i.form_id), "->", to_string(i,3,,0))
+         }
+      }
    end
 
    private add_component(p, c, context, align)
@@ -2005,13 +2646,9 @@ class Browser(Component)
       v := e.get_attribute(u"VALUE") | u""
       type := map(string(e.get_attribute(u"TYPE"))) | "submit"
       q := FormTblButton(context.form, v, type)
-      if e.get_attribute(u"DISABLED") then
-         q.set_is_shaded(&yes)
-      else
-         context.form.add_std(e, q)
       row := TextFlow(self)
       q.tbl.content.add(row)
-      add_component(p, q, context, Align.B)
+      add_form_component(e, p, q, context)
       traverse(e, row, context)
    end
 
@@ -2030,6 +2667,16 @@ class Browser(Component)
          align := convert_comp_align(e, u"ALIGN") | Align.B
          add_component(p, q, context, align)
       }
+   end
+
+   private add_form_component(e, p, q, context)
+      q.set_fg(context.fg).
+         set_font(context.font)
+      if e.get_attribute(u"DISABLED") then
+         q.set_is_shaded(&yes)
+      else
+         context.form.add_component(context, e, q)
+      add_component(p, q, context, Align.B)
    end
 
    private traverse_select(e, p, context)
@@ -2082,14 +2729,7 @@ class Browser(Component)
             set_selection_list(sc.options).
             set_selection(sel)
       }
-      q.set_font(context.font).set_fg(context.fg)
-      if e.get_attribute(u"DISABLED") then
-         q.set_is_shaded(&yes)
-      else {
-         context.form.add_std(e, q)
-         context.form.link_label(context, q)
-      }
-      add_component(p, q, context, Align.B)
+      add_form_component(e, p, q, context)
    end
 
    private traverse_option(e, p, context)
@@ -2132,22 +2772,14 @@ class Browser(Component)
       }
       # The ucs conversion is used here since an empty node will return "" (not u"").
       q := FormEditableTextList(ucs(e.get_trimmed_string_content())).
-         set_font(context.font).
-         set_fg(context.fg).
          set_size(w, h)
-      if e.get_attribute(u"DISABLED") then
-         q.set_is_shaded(&yes)
-      else {
-         if e.get_attribute(u"READONLY") then
-            q.set_is_editable(&no)
-         context.form.add_std(e, q)
-         context.form.link_label(context, q)
-      }
-      add_component(p, q, context)
+      if e.get_attribute(u"READONLY") then
+         q.set_is_editable(&no)
+      add_form_component(e, p, q, context)
    end
 
    private traverse_input(e, p, context)
-      local q, s, k, v, size, mW, url, checked, align
+      local q, s, k, v, size, mW, url, checked, align, min, max
       \context.form | fail
       s := string(map(e.get_attribute(u"TYPE"))) | "text"
       case s of {
@@ -2156,39 +2788,21 @@ class Browser(Component)
                mW := cbwin.clone().set_font(context.font),
                size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
             }
-            q := FormBrowse(self, size).
-                  set_font(context.font).
-                  set_fg(context.fg)
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else
-               context.form.add_std(e, q)
-            add_component(p, q, context, Align.B)
+            q := FormBrowse(self, size)
+            add_form_component(e, p, q, context)
          }
          "submit" : {
             v := e.get_attribute(u"VALUE")
             if /v | (*v = 0) then
                v := u"Submit"
             q := FormButton(v).
-                  set_font(context.font).
-                  set_fg(context.fg).
                   connect(context.form.submit, Event.ACTION)
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else
-               context.form.add_std(e, q)
-            add_component(p, q, context, Align.B)
+            add_form_component(e, p, q, context)
          }
          "button" : {
             v := e.get_attribute(u"VALUE") | u""
-            q := FormButton(v).
-                  set_font(context.font).
-                  set_fg(context.fg)
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else
-               context.form.add_std(e, q)
-            add_component(p, q, context, Align.B)
+            q := FormButton(v)
+            add_form_component(e, p, q, context)
          }
          "image" : {
             if url := mk_link(context, e.get_attribute(u"SRC")) then {
@@ -2214,14 +2828,8 @@ class Browser(Component)
             if /v | (*v = 0) then
                v := u"Reset"
             q := FormButton(v).
-               set_font(context.font).
-               set_fg(context.fg).
                connect(context.form.reset_form, Event.ACTION)
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else
-               context.form.add_std(e, q)
-            add_component(p, q, context, Align.B)
+            add_form_component(e, p, q, context)
          }
          "hidden": {
             context.form.add(e.get_attribute(u"NAME"), Hidden(e.get_attribute(u"VALUE")))
@@ -2233,13 +2841,7 @@ class Browser(Component)
                set_paint(ImagePaint().set_cache("gui.DIAMOND_UP")).
                set_paint_down(ImagePaint().set_cache("gui.DIAMOND_DOWN")).
                set_border(NullBorder())
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else {
-               context.form.add_std(e, q)
-               context.form.link_label(context, q)
-            }
-            add_component(p, q, context, Align.B)
+            add_form_component(e, p, q, context)
             context.form.get_cbg(e.get_attribute(u"NAME")).add(q)
          }
          "checkbox": {
@@ -2249,14 +2851,64 @@ class Browser(Component)
                set_paint(ImagePaint().set_cache("gui.BOX_UP")).
                set_paint_down(ImagePaint().set_cache("gui.BOX_DOWN")).
                set_border(NullBorder())
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else {
-               context.form.add_std(e, q)
-               context.form.link_label(context, q)
-            }
-            add_component(p, q, context, Align.B)
+            add_form_component(e, p, q, context)
          }
+         "date": {
+            v := Time.parse(e.get_attribute(u"VALUE"), "yyyy-MM-dd") | Time()
+            q := FormDateField(v)
+            add_form_component(e, p, q, context)
+         }
+         "time": {
+            v := FormTimeField.parse(e.get_attribute(u"VALUE")) | Time()
+            q := FormTimeField(v)
+            add_form_component(e, p, q, context)
+         }
+         "week": {
+            v := FormWeekField.parse(e.get_attribute(u"VALUE")) | Time()
+            q := FormWeekField(v)
+            add_form_component(e, p, q, context)
+         }
+         "month": {
+            v := FormMonthYearField.parse(e.get_attribute(u"VALUE")) | Time()
+            q := FormMonthYearField(v)
+            add_form_component(e, p, q, context)
+         }
+         "datetime": {
+            v := FormDateTimeField.parse(e.get_attribute(u"VALUE")) | Time()
+            q := FormDateTimeField(v)
+            add_form_component(e, p, q, context)
+         }
+         "datetime-local": {
+            v := FormDateTimeLocalField.parse(e.get_attribute(u"VALUE")) | Time()
+            q := FormDateTimeLocalField(v)
+            add_form_component(e, p, q, context)
+         }
+         "color": {
+            v := FormColorField.parse(e.get_attribute(u"VALUE")) | "white"
+            q := FormColorField(v)
+            add_form_component(e, p, q, context)
+         }
+         "range": {
+            min := real(e.get_attribute(u"MIN")) | 0
+            max := real(e.get_attribute(u"MAX")) | (min + 10)
+            v := real(e.get_attribute(u"VALUE")) | min
+            q := FormRange(v).
+               set_range(min, max).
+               set_is_horizontal(&yes).
+               set_size(160)
+            q.set_snaps(0.0 < real(e.get_attribute(u"STEP")))
+            add_form_component(e, p, q, context)
+         }
+         "number": {
+            min := real(e.get_attribute(u"MIN")) | 0
+            max := real(e.get_attribute(u"MAX")) | (min + 10)
+            v := real(e.get_attribute(u"VALUE")) | min
+            q := FormNumberField(v).
+               set_range(min, max)
+            q.set_increment_size(0.0 < real(e.get_attribute(u"STEP")))
+            add_form_component(e, p, q, context)
+         }
+
          # Assume something textual; could be password, text, email etc.
          default: {
             v := e.get_attribute(u"VALUE") | u""
@@ -2265,21 +2917,13 @@ class Browser(Component)
                size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
             }
             q := FormTextField(v).
-               set_fg(context.fg).
-               set_font(context.font).
                set_size(size).
                connect(context.form.submit, Event.ACTION)
             if s == "password" then
                q.set_displaychar("*")
-            if e.get_attribute(u"DISABLED") then
-               q.set_is_shaded(&yes)
-            else {
-               if e.get_attribute(u"READONLY") then
-                  q.set_is_editable(&no)
-               context.form.add_std(e, q)
-               context.form.link_label(context, q)
-            }
-            add_component(p, q, context, Align.B)
+            if e.get_attribute(u"READONLY") then
+               q.set_is_editable(&no)
+            add_form_component(e, p, q, context)
          }
       }
       traverse(e, p, context)
@@ -2444,9 +3088,9 @@ class Browser(Component)
       }
    end
 
-   private do_width_param(e, c)
+   private do_width_param(e, c, def_w)
       local width
-      return if width := e.get_attribute(u"WIDTH") then {
+      return if width := (e.get_attribute(u"WIDTH") | \def_w) then {
          if width := (0 <= integer(width)) then
             c.set_constraint("fix_w", width)
          else if width[-1] == "%" & width := (0 <= integer(width[1:-1])) then
@@ -2463,7 +3107,7 @@ class Browser(Component)
    end
 
    private traverse_table(e, p, context)
-      local ct, tbl, border, cellpadding, cellspacing, cell_border, align, c
+      local ct, tbl, border, cellpadding, cellspacing, cell_border, align, c, i
 
       tbl := Tbl()
       do_width_param(e, tbl)
@@ -2476,7 +3120,7 @@ class Browser(Component)
          tbl.set_border(PlainBorder().set_line_width(border))
       tbl.set_bg(convert_color(e, u"BGCOLOR"))
 
-      cell_border := if border > 0 then
+      cell_border := if border > 0 & not(e.get_attribute(u"RULES")) then
          CompoundBorder().
             set_outer(PlainBorder().set_line_width(1)).
             set_inner(EmptyBorder().set_insets(cellpadding, cellpadding, cellpadding, cellpadding))
@@ -2490,8 +3134,30 @@ class Browser(Component)
       ct.x := ct.y := 1
       ct.occ := set()
       ct.cell_border := cell_border
+      ct.rowgroups := []
+      ct.colgroups := []
       traverse(e, p, c)
-
+      case string(map(e.get_attribute(u"RULES"))) of {
+         "groups": {
+            # NB - either of these lists may be empty
+            tbl.set_hrules(set!ct.rowgroups[2:0])
+            tbl.set_vrules(set!get_colgroup_cols(ct)[2:0])
+         }
+         "all": {
+            i := 1
+            every i <:= (!tbl.content.children).get_constraint("x")
+            tbl.set_vrules(Set{2 to i})
+            tbl.set_hrules(Set{2 to ct.y - 1})
+         }
+         "cols": {
+            i := 1
+            every i <:= (!tbl.content.children).get_constraint("x")
+            tbl.set_vrules(Set{2 to i})
+         }
+         "rows": {
+            tbl.set_hrules(Set{2 to ct.y - 1})
+         }
+      }
       if not(align === (Align.L | Align.R)) then
          put_new_row(p, c)
       if \c.table.caption then
@@ -2501,6 +3167,13 @@ class Browser(Component)
 
       if not(align === (Align.L | Align.R)) then
          put_new_row(p, c)
+   end
+
+   private traverse_tbody(e, p, context)
+      local ct
+      ct := \context.table | fail
+      put(ct.rowgroups, ct.y)
+      traverse(e, p, context)
    end
 
    private traverse_caption(e, p, context)
@@ -2535,6 +3208,33 @@ class Browser(Component)
       }
    end
 
+   private traverse_colgroup(e, p, context)
+      local ct, cg
+      ct := \context.table | fail
+      cg := TableColGroup()
+      cg.span := (0 < integer(e.get_attribute(u"SPAN"))) | 1
+      cg.width := e.get_attribute(u"WIDTH")
+      cg.valign := convert_valign(e, u"VALIGN")
+      cg.align := convert_halign(e, u"ALIGN")
+      cg.cols := []
+      put(ct.colgroups, cg)
+      ct.curr_colgroup := cg
+      traverse(e, p, context)
+      ct.curr_colgroup := &null
+   end
+
+   private traverse_col(e, p, context)
+      local ct, cg, tc
+      ct := \context.table | fail
+      cg := \ct.curr_colgroup | fail
+      tc := TableCol()
+      tc.span := (0 < integer(e.get_attribute(u"SPAN"))) | 1
+      tc.width := e.get_attribute(u"WIDTH") | cg.width
+      tc.valign := convert_valign(e, u"VALIGN") | cg.valign
+      tc.align := convert_halign(e, u"ALIGN") | cg.align
+      put(cg.cols, tc)
+   end
+
    private traverse_tr(e, p, context)
       local ct
       ct := \context.table | fail
@@ -2551,12 +3251,45 @@ class Browser(Component)
       ct.tr := &null
    end
 
+   private get_col_info(ct, n)
+      local i, e, f
+      i := 0
+      every e := !ct.colgroups do {
+         if *e.cols > 0 then {
+            every f := !e.cols do {
+               if i + f.span >= n then
+                  return f
+               i +:= f.span
+            }
+         } else {
+            if i + e.span >= n then
+               return e
+            i +:= e.span
+         }
+      }
+   end
+
+   private get_colgroup_cols(ct)
+      local i, e, l
+      i := 1
+      l := []
+      every e := !ct.colgroups do {
+         put(l, i)
+         if *e.cols > 0 then
+            every i +:= (!e.cols).span
+         else
+            i +:= e.span
+      }
+      return l
+   end
+
    private traverse_td(e, p, context)
-      local ct, row, c, colspan, rowspan, valign
+      local ct, row, c, colspan, rowspan, valign, col, def_w
       ct := \context.table | fail
       while member(ct.occ, ct.x || "," || ct.y) do
          ct.x +:= 1
-      valign := convert_valign(e | \ct.tr, u"VALIGN") |  Align.C
+      col := get_col_info(ct, ct.x)
+      valign := convert_valign(e | \ct.tr, u"VALIGN") | \ (\col).valign | Align.C
       row := TextFlow(self).
          set_constraint("x", ct.x). 
          set_constraint("y", ct.y).
@@ -2568,7 +3301,9 @@ class Browser(Component)
       row.set_constraint("h", rowspan)
       row.set_bg(convert_color(e | \ct.tr, u"BGCOLOR"))
       every insert(ct.occ, (ct.x to ct.x + colspan - 1) || "," || (ct.y to ct.y + rowspan - 1))
-      do_width_param(e, row)
+      if colspan = 1 then
+         def_w :=  \ (\col).width
+      do_width_param(e, row, def_w)
       do_height_param(e, row)
       ct.tbl.content.add(row)
 
@@ -2577,9 +3312,9 @@ class Browser(Component)
          c.bold := 1
          c.size := min(c.size + 1, 7)
          synch_font(c)
-         c.align := convert_halign(e | \ct.tr, u"ALIGN") | Align.C
+         c.align := convert_halign(e | \ct.tr, u"ALIGN") | \ (\col).align | Align.C
       } else
-         c.align := convert_halign(e | \ct.tr, u"ALIGN") | Align.L
+         c.align := convert_halign(e | \ct.tr, u"ALIGN") | \ (\col).align | Align.L
       ct.x +:= colspan
 
       traverse(e, row, c)
@@ -2752,7 +3487,10 @@ class Browser(Component)
                "CENTER": traverse_center(e, p, context)
                "H" || (1 to 6): traverse_hN(e, p, context)
                "TABLE": traverse_table(e, p, context)
+               "THEAD"|"TBODY"|"TFOOT": traverse_tbody(e, p, context)
                "CAPTION": traverse_caption(e, p, context)
+               "COLGROUP": traverse_colgroup(e, p, context)
+               "COL": traverse_col(e, p, context)
                "TR": traverse_tr(e, p, context)
                "TD"|"TH": traverse_td(e, p, context)
                "DIR"|"MENU"|"OL"|"UL": traverse_list(e, p, context)
