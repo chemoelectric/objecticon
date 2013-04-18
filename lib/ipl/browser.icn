@@ -1557,6 +1557,7 @@ class FormColorField(ColorField, FormEntry, HasAscent)
    public new(init_val)
       cast(self,ColorField).new(init_val)
       self.init_val := init_val
+      set_opaque(&yes)
       return
    end
 end

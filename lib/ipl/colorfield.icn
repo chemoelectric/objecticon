@@ -1,14 +1,25 @@
 package ipl.colorgui
 
 import
-   gui, graphics
+   gui, graphics, util
 
+#
+# A component for choosing a color, in icon color-string format.
+#
 class ColorField(Component)
    private readable
       b,
       cr,
       tf,
-      last_val
+      last_val,
+      opaque_flag
+
+   # If set, the field will only allow opaque colors to be entered.
+   #
+   public set_opaque(s)
+      self.opaque_flag := check_flag(s)
+      return self
+   end
 
    public on_textfield(ev, src, type)
       if last_val := get_value() then {
@@ -22,15 +33,27 @@ class ColorField(Component)
 
    public initially()
       cast(self,Component).initially()
-      tf.set_width(cbwin.text_width("00000,00000,00000 ") + tf.border.get_total_width())
+      tf.set_width(cbwin.text_width(if /opaque_flag then "00000,00000,00000,00000 " else "00000,00000,00000 ") + tf.border.get_total_width())
    end
 
+   # Return the value (as an integer form icon color value), or fail
+   # if the input is not currently valid.
+   #
    public get_value()
-      return Window.color_value(tf.get_contents())
+      local c
+      c := Window.color_value(tf.get_contents()) | fail
+      if \opaque_flag & Window.parse_color(c)[4] ~= 65535 then
+         fail
+      return c
    end
 
+   # Set the value (from an icon color value).  Fails if `s` is not a
+   # valid color.
+   #
    public set_value(s)
       s := Window.color_value(s) | fail
+      if \opaque_flag & Window.parse_color(s)[4] ~= 65535 then
+         fail
       tf.set_contents(s)
       last_val := s
       cr.set_color(last_val)
@@ -41,13 +64,17 @@ class ColorField(Component)
 
    private on_choose()
       local d
-      d := ColorDialog(last_val)
-      d.show_modal()
+      d := ColorDialog(last_val).set_opaque(opaque_flag)
+      d.show_modal(parent_dialog)
       set_value(d.get_result())
    end
 
-   public new(init_val)
+   # Create a new instance optionally with the given initial value of
+   # the field, as a icon color value.
+   #
+   public new(val)
       local p, t
+      /val := "black"
       cast(self,Component).new() 
       set_layout(GridLayout().set_doi(0).set_dii(0))
       p := Component().
@@ -69,7 +96,7 @@ class ColorField(Component)
          set_label("Choose...").
          connect(on_choose, Event.ACTION)
       add(b)
-      set_value(init_val)
+      set_value(val)
       return
    end
 end
