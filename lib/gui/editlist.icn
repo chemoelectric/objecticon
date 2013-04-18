@@ -8,6 +8,8 @@
 
 package gui
 
+import graphics
+
 #
 # This component functions in the same way as List above, but
 # the item selected may be edited by the user.  An extra
@@ -19,6 +21,14 @@ package gui
 # text.
 #
 class EditList(SelectionDropDown)
+   public static const
+      # A set of event codes which indicate edits via navigation of the selection list.
+      NAVIGATE
+
+   private static init()
+      NAVIGATE := set("\r", Mouse.LEFT_RELEASE, Mouse.WHEEL_UP, Mouse.WHEEL_DOWN, Key.UP, Key.DOWN)
+   end
+
    #
    # Set the text field's filter (see {TextField} for details).
    # @param c  The filter
