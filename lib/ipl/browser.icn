@@ -581,6 +581,8 @@ class WorkerPool()
    end
 end
 
+class TblContent(Component) end
+
 class Tbl(Border, HasMaxWidth, HasAscent)
    private
       hrules, vrules
@@ -632,7 +634,7 @@ class Tbl(Border, HasMaxWidth, HasAscent)
 
    public new()
       cast(self,Border).new()
-      set_content(Component(). 
+      set_content(TblContent(). 
                     set_layout(TableLayout()))
       set_border(NullBorder())
       return
@@ -1961,24 +1963,28 @@ abstract class BrowserUI()
    public abstract set_title(s)
    public abstract link_mrelease(url)
    public abstract create_link_menu(url)
+   public abstract create_page_menu()
    public abstract create_image_menu(url, img_name, img_data, link_url)
    public abstract browse_for_file()
 end
 
-record GreyState(prev, nxt, refresh, copy_page, save_page, stop)
+record GreyState(prev, nxt, refresh, stop)
 
-class Browser(Component)
+class Browser(ComponentScrollArea)
    private
       ui,
       worker_pool,
       shared_worker_pool_flag,
-      top_panel,
       status_ticker,
       maps,
       forms,
       labels,
       form_tab_children,
-      curr_history_entry   # History entry currently being viewed.
+      curr_history_entry,   # History entry currently being viewed.
+      scroll_ticker,
+      scroll_ticker_interval,
+      h_direction,
+      v_direction
 
    private readable
       history,
@@ -1988,7 +1994,13 @@ class Browser(Component)
       page_name,
       page_title,
       image_data,
-      running
+      running,
+      marking,
+      mark_x,
+      mark_y,
+      cursor_x,
+      cursor_y,
+      current_selections
 
    public static const 
       COLORS,
@@ -2052,7 +2064,7 @@ class Browser(Component)
    end
 
    public traverse_tab_order()
-      coact(top_panel)
+      coact(self)
       every (!self.form_tab_children).traverse_tab_order()
    end
 
@@ -2100,6 +2112,10 @@ class Browser(Component)
       return (\ui).create_link_menu(url)
    end
 
+   public create_page_menu()
+      return (\ui).create_page_menu()
+   end
+
    public create_image_menu(url, img_name, img_data, link_url)
       return (\ui).create_image_menu(url, img_name, img_data, link_url)
    end
@@ -2145,23 +2161,20 @@ class Browser(Component)
       update_grey(GreyState(if history_pos > 1 then &no else &yes,
                             if history_pos < *history then &no else &yes,
                             if history[history_pos] then &no else &yes,
-                            if \page_url then &no else &yes,
-                            if \page_data then &no else &yes,
                             if \running > 0 then &no else &yes))
    end
 
    private page_fully_loaded()
       local xp, yp, f
-      top_panel.
-         reset_all_layouts().
-         do_layout().
-         invalidate()
+      reset_all_layouts()
+      layout()
+      invalidate()
       # Goto named anchor and maybe set focus unless user has started to scroll page
-      if top_panel.get_area_y() = top_panel.get_area_x() = 0 then {
-         if yp := \curr_history_entry.area_y | (lookup_named_anchor(page_url.get_fragment()) - top_panel.view.y) then {
-            top_panel.set_area_y(yp)
+      if get_area_y() = get_area_x() = 0 then {
+         if yp := \curr_history_entry.area_y | (lookup_named_anchor(page_url.get_fragment()) - view.y) then {
+            set_area_y(yp)
             if xp := \curr_history_entry.area_x then
-               top_panel.set_area_x(xp)
+               set_area_x(xp)
          }
          # Set focus; this will scroll to the component if necessary (see focus_scroll).  Note that if we've moved to another tab
          # whilst the page loads, (making f hidden) then gen_focusable will fail.
@@ -2173,13 +2186,13 @@ class Browser(Component)
 
    private lookup_named_anchor(name)
       local c, yp
-      every c := Seq{top_panel.traverse_components_postorder()} do
+      every c := Seq{traverse_components_postorder()} do
          if is(c,TextFlow) & yp := c.lookup_named_anchor(name) then
             return yp
    end
 
    public initially()
-      cast(self,Component).initially()
+      cast(self,ComponentScrollArea).initially()
       if /shared_worker_pool_flag then
          worker_pool.initially()
       status_ticker.start()
@@ -2187,15 +2200,16 @@ class Browser(Component)
    end
 
    public finally()
-      cast(self,Component).finally()
+      cast(self,ComponentScrollArea).finally()
       if /shared_worker_pool_flag then
          worker_pool.finally()
       else
          worker_pool.cancel(self)
       running := 0
+      scroll_ticker.stop()
       status_ticker.stop()
    end
-
+   
    public do_next()
       local he
       he := history[history_pos +:= 1] 
@@ -2330,10 +2344,10 @@ class Browser(Component)
       local doc, base, n, s, row, c
       if \curr_history_entry then {
          save_form_values()
-         curr_history_entry.area_x := top_panel.get_area_x()
-         curr_history_entry.area_y := top_panel.get_area_y()
+         curr_history_entry.area_x := get_area_x()
+         curr_history_entry.area_y := get_area_y()
       }
-      top_panel.set_area_y(0).set_area_x(0)
+      set_area_y(0).set_area_x(0)
       image_data := &null
       if \res.err then {
          s := "<html><title>Error</title>" || 
@@ -2406,10 +2420,10 @@ class Browser(Component)
       if res.kind ~= Worker.REFRESH then
          restore_form_values()
       every form_tab_children |||:= (!forms).get_tab_children()
-      top_panel.set_inner(row)
+      set_inner(row)
       set_title(page_title)
-      top_panel.layout()
-      top_panel.invalidate()
+      layout()
+      invalidate()
       parent_dialog.resynch_pointer()
       setup_tabbing()
    end
@@ -2425,7 +2439,7 @@ class Browser(Component)
             break
          }
       }
-      top_panel.ensure_visible(c)
+      ensure_visible(c)
    end
 
    private setup_tabbing()
@@ -3535,19 +3549,217 @@ class Browser(Component)
       return self
    end
 
+   private handle_lpress(e)
+      #write(to_string(parent_dialog.point_chain,3,,1))
+      if view.in_region(e) & is(parent_dialog.point_chain[1], TextFlow|TblContent) then {
+         marking := 1
+         set_cursor_from_pos(e)
+         mark_x := cursor_x
+         mark_y := cursor_y
+         #write(image(self),": marked:", mark_x,",",mark_y)
+         refresh()
+      }
+   end
+
+   private set_cursor_from_pos(e)
+      cursor_x := e.x - view.inner.x
+      cursor_y := e.y - view.inner.y
+      cursor_x <:= get_area_x()
+      cursor_x >:= get_area_x() + view.w
+      cursor_y <:= get_area_y()
+      cursor_y >:= get_area_y() + view.h
+   end
+
+   private handle_ldrag(e)
+      if \marking then {
+         set_cursor_from_pos(e)
+         #refresh()
+
+         if cursor_y > 0 & e.y < self.view.y then {
+            v_direction := "up"
+            check_scroll_ticker(self.view.y - e.y)
+         } else if cursor_y < view.inner.h & e.y >= self.view.y + self.view.h then {
+            v_direction := "down"
+            check_scroll_ticker(e.y - (self.view.y + self.view.h))
+         } else
+            v_direction := &null
+
+         if cursor_x > 0 & e.x < self.view.x then {
+            h_direction := "left"
+            check_scroll_ticker(self.view.x - e.x)
+         } else if cursor_x < view.inner.w & e.x >= self.view.x + self.view.w then {
+            h_direction := "right"
+            check_scroll_ticker(e.x - (self.view.x + self.view.w))
+         } else
+            h_direction := &null
+
+         if /v_direction & /h_direction then {
+            scroll_ticker.stop()
+            refresh()
+         }
+      }
+   end
+
+   public has_region()
+      return \mark_x & (mark_x ~= cursor_x | mark_y ~= cursor_y)
+   end
+
+   public get_region_rect()
+      local x1, y1, x2, y2
+      has_region() | fail
+      y1 := mark_y
+      y2 := cursor_y
+      if y2 < y1 then
+         y1 :=: y2
+      else if y2 = y1 then
+         y2 +:= 1
+      x1 := mark_x
+      x2 := cursor_x
+      if x2 < x1 then
+         x1 :=: x2
+      else if x2 = x1 then
+         x2 +:= 1
+      return Rect(view.inner.x + x1, view.inner.y + y1, x2 - x1, y2 - y1)
+   end
+
+   public layout()
+      cast(self,ComponentScrollArea).layout()
+      clear_mark()
+   end
+
+   public display()
+      local W, r
+      #writes(".")
+      cast(self,ComponentScrollArea).display()
+      if \marking & r := get_region_rect() then {
+         use {
+            W := view.cbwin.clone().set_fg("purple").set_masked_pattern("gray"),
+            W.draw_rectangle(r.x, r.y, r.w, r.h)
+         }
+      }
+   end
+
+   package check_scroll_ticker(d)
+      scroll_ticker_interval := Gui.style.distance2ticker_rate(d)
+      scroll_ticker.change_sleep(scroll_ticker_interval)
+      # Start it (if it isn't already running)
+      scroll_ticker.start()
+   end
+
+   private scroll_tick()
+      repeat {
+         case v_direction of {
+            "up": {
+               if cursor_y > 0 then {
+                  cursor_y := max(0, cursor_y - 20)
+                  set_area_y(cursor_y)
+               }
+            }
+            "down": {
+               if cursor_y < view.inner.h then {
+                  cursor_y := min(view.inner.h, cursor_y + 20)
+                  set_area_y(cursor_y - view.h)
+               }
+            }
+         }
+         case h_direction of {
+            "left": {
+               if cursor_x > 0 then {
+                  cursor_x := max(0, cursor_x - 20)
+                  set_area_x(cursor_x)
+               }
+            }
+            "right": {
+               if cursor_x < view.inner.w then {
+                  cursor_x := min(view.inner.w, cursor_x + 20)
+                  set_area_x(cursor_x - view.w)
+               }
+            }
+         }
+         scroll_ticker.sleep(scroll_ticker_interval)
+      }
+   end
+
+   public clear_mark()
+      current_selections := marking := cursor_x := cursor_y := mark_x := mark_y := &null
+      scroll_ticker.stop()
+      return self
+   end
+
+   private calculate_selections()
+      local c, br, l
+      current_selections := &null
+      br := get_region_rect() | fail
+      l := []
+      every c := Seq{traverse_components_postorder()} do {
+         if is(c,TextFlow) then
+            c.calculate_selections(br, l)
+      }
+      if *l = 0 then
+         fail
+      current_selections := l
+   end
+
+   public get_current_selections()
+      return \current_selections
+   end
+
+   public get_current_text_selection()
+      local s
+      \current_selections | fail
+      s := u""
+      every s ||:= (!current_selections).s
+      return s
+   end
+
+   private handle_lrelease(e)
+      local s
+      scroll_ticker.stop()
+      if \marking then {
+         has_region() | clear_mark()
+         marking := &null
+         refresh()
+         calculate_selections()
+         if s := get_current_text_selection() then
+            parent_dialog.own_selection(Selection.PRIMARY, 
+                                        StaticTextSelectionOwner(s))
+      }
+   end
+
+   private can_rpress(e)
+      local c
+      is(parent_dialog.point_chain[1], TextFlow|TblContent) | fail
+      every c := !parent_dialog.point_chain do {
+         if is(c, TextFlow) & c.wants_rpress(e) then
+            fail
+      }
+      return
+   end
+
+   private handle_rpress(e)
+      local pm, pm_menu
+      can_rpress(e) | fail
+      if pm_menu := create_page_menu() then {
+         pm := PopupMenu()
+         pm.popup(parent_dialog, pm_menu, e.x, e.y)
+      }
+   end
+
    public new()
-      cast(self,Component).new()
+      cast(self,ComponentScrollArea).new()
+      scroll_ticker := Dispatcher.new_task{scroll_tick()}
       worker_pool := WorkerPool().
          set_authentication_function(get_authentication)
       status_ticker := Dispatcher.new_task{status()}
-      top_panel := ComponentScrollArea().
-         set_inner(Component().set_size(10,10)).
-         use_default_keys()
-      set_layout(GridLayout().set_doi(0))
-      add(top_panel)
+      set_inner(Component().set_size(10,10))
+      use_default_keys()
       history := []
       history_pos := 0
       running := 0
+      view.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG).
+         connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS).
+         connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE).
+         connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
       return
    end
 end

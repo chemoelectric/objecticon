@@ -84,8 +84,6 @@ end
 
 class BrowserDialog(Dialog)
    private readable
-      copy_page_url_item,
-      save_page_item,
       settings,
       pool,
       tabs,
@@ -103,14 +101,6 @@ class BrowserDialog(Dialog)
       directory_dialog,
       downloads
 
-   private on_copy_page_url_item(ev)
-      own_selection(Selection.CLIPBOARD, URLSelectionOwner([tabs.which_one.browser.page_url]))
-   end
-
-   private on_save_page_item(ev)
-      tabs.which_one.do_save(tabs.which_one.browser.page_name, tabs.which_one.browser.page_data)
-   end
-
    private on_quit(ev)
       dispose()
    end
@@ -120,10 +110,7 @@ class BrowserDialog(Dialog)
    end
 
    private update_grey()
-      if is(tabs.which_one, DownloadTab) then {
-         copy_page_url_item.set_is_shaded(&yes)
-         save_page_item.set_is_shaded(&yes)
-      } else
+      if is(tabs.which_one, BrowserTab) then
          tabs.which_one.browser.do_update_grey()
    end
 
@@ -294,12 +281,6 @@ class BrowserDialog(Dialog)
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
          set_paint_mid(TextPaint("New Tab"))
-      copy_page_url_item := TextMenuItem().
-         connect(on_copy_page_url_item, Event.ACTION).
-         set_paint_mid(TextPaint("Copy page"))
-      save_page_item := TextMenuItem().
-         connect(on_save_page_item, Event.ACTION).
-         set_paint_mid(TextPaint("Save page..."))
       quit_menu_item := TextMenuItem().
          connect(on_quit, Event.ACTION).
          set_paint_mid(TextPaint("Quit"))
@@ -307,8 +288,6 @@ class BrowserDialog(Dialog)
          set_accel("f").
          set_paint_mid(TextPaint("File")).
          add(new_tab_item).
-         add(copy_page_url_item).
-         add(save_page_item).
          add(quit_menu_item)
       menu_bar := MenuBar().
          set_size("100").
@@ -746,9 +725,7 @@ class BrowserTab(TabItem, BrowserUI)
       stop_button,
       home_button,
       paste_url_button,
-      refresh_button,
-      copy_page_url_item,
-      save_page_item
+      refresh_button
 
    private on_close_button(ev)
       local t
@@ -781,8 +758,35 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([url]))
    end
 
+   private copy_text(s)
+      parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
+   end
+
    private download(url, referer)
       parent_dialog.downloads.download(url, referer)
+   end
+
+   public create_page_menu()
+      local m, s
+      m := Menu()
+      if \browser.page_url then {
+         m.add(TextMenuItem().
+               set_label("Copy page").
+               connect(create copy_link(browser.page_url), Event.ACTION))
+      }
+      if s := browser.get_current_text_selection() then {
+         m.add(TextMenuItem().
+               set_label("Copy text").
+               connect(create copy_text(s), Event.ACTION))
+      }
+      if \browser.page_data then {
+         m.add(TextMenuItem().
+               set_label("Save page...").
+               connect(create do_save(browser.page_name, browser.page_data), Event.ACTION))
+      }
+
+      if *m.children > 0 then
+         return m
    end
 
    public create_link_menu(url)
@@ -822,8 +826,6 @@ class BrowserTab(TabItem, BrowserUI)
       prev_button.set_is_shaded(gs.prev)
       next_button.set_is_shaded(gs.nxt)
       refresh_button.set_is_shaded(gs.refresh)
-      parent_dialog.copy_page_url_item.set_is_shaded(gs.copy_page)
-      parent_dialog.save_page_item.set_is_shaded(gs.save_page)
       stop_button.set_is_shaded(gs.stop)
    end
 

@@ -105,6 +105,20 @@ class CompOut(Rect)
    end
 end
 
+class TextSelection(Rect)
+   public const s, attr
+
+   public new(x, y, w, h, attr, s)
+      self.x := x
+      self.y := y
+      self.w := w
+      self.h := h
+      self.attr := attr
+      self.s := s
+      return
+   end
+end
+
 class TextFlow(Component)
    public const
       input
@@ -320,10 +334,11 @@ class TextFlow(Component)
    end
 
    public display()
-      local o, W, font, fg, x1, y1, x2, y2, r
+      local o, W, font, fg, x1, y1, x2, y2, r, br, t, i, j, u, d
       border.draw(self.cbwin, x, y, w, h)
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
+      br := browser.get_region_rect()
       W := cbwin.clone()
       r := get_cbwin_clip()
       every o := !output do {
@@ -339,6 +354,22 @@ class TextFlow(Component)
             font := o.attr.font
             fg := o.attr.fg
          } 
+         if \br then {
+            t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
+            if t := br.intersect(t) then { 
+               d := t.x - x1 - o.x
+               i := 1
+               u := 0
+               while i <= *o.s & ((.u + (u := W.text_width(o.s[1+:i]))) / 2) < d do
+                  i +:= 1
+               j := i
+               d +:= t.w
+               u := W.text_width(o.s[1:i])
+               while j <= *o.s & ((.u + (u := W.text_width(o.s[1+:j]))) / 2) < d do
+                  j +:= 1
+               Gui.style.selection_rectangle(cbwin, x1 + o.x + W.text_width(o.s[1:i]), y1 + o.y, W.text_width(o.s[i:j]), W.get_font_height())
+            }
+         }
          draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
          if \o.attr.underline then {
             x2 := x1 + o.x
@@ -353,6 +384,44 @@ class TextFlow(Component)
       }
       W.close()
       cast(self,Component).display()
+   end
+
+   public calculate_selections(br, l)
+      local o, W, font, fg, x1, y1, t, i, j, u, d
+      x1 := x + border.get_l_inset()
+      y1 := y + border.get_t_inset() + y_off
+      W := cbwin.clone()
+      every o := !output do {
+         if y1 + o.y + o.h < br.y then
+            next
+         # Since we sorted row output by y pos'n, we can break here
+         if y1 + o.y > br.y + br.h then
+            break
+         if font ~=== o.attr.font | fg ~=== o.attr.fg then {
+            W.close()
+            W := attr_clone(o.attr)
+            font := o.attr.font
+            fg := o.attr.fg
+         } 
+
+         t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
+         if t := br.intersect(t) then { 
+            d := t.x - x1 - o.x
+            i := 1
+            u := 0
+            while i <= *o.s & ((.u + (u := W.text_width(o.s[1+:i]))) / 2) < d do
+               i +:= 1
+            j := i
+            d +:= t.w
+            u := W.text_width(o.s[1:i])
+            while j <= *o.s & ((.u + (u := W.text_width(o.s[1+:j]))) / 2) < d do
+               j +:= 1
+            #write("\ti=",i," j=",j)
+            if j > i then
+               put(l, TextSelection(x1 + o.x + W.text_width(o.s[1:i]), y1 + o.y, W.text_width(o.s[i:j]), o.h, o.attr, o.s[i:j]))
+         }
+      }
+      W.close()
    end
 
    public layout()
@@ -708,6 +777,10 @@ class TextFlow(Component)
       held := wrote
    end
 
+   public wants_rpress(e)
+      return \wrote
+   end
+
    private handle_rpress(e)
       local pm, pm_menu
       if pm_menu := browser.create_link_menu(\wrote) then {
@@ -740,12 +813,14 @@ class TextFlow(Component)
       local u
       if u := \which_text_out(e).attr.url & u === held then {
          if wrote ~=== u then {
+            set_pointer("hand1")
             browser.msg(u.str())
             wrote := u
          }
       } else if \wrote then {
          browser.clear_msg()
-         wrote := &null
+         wrote := &null 
+         set_pointer()
       }
    end
 
