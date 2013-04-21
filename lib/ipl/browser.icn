@@ -642,7 +642,10 @@ class Tbl(Border, HasMaxWidth, HasAscent)
 end
 
 class Img(Label)
-   private browser, img_url, link_url, wrote, imgw, imgh, img_data, img_name, form, map, held
+   public const
+      browser, form, img_url, link_url, imgw, imgh
+   private 
+      wrote, img_data, img_name, map, held
 
    public got_data(res)
       if \res.err then
@@ -738,6 +741,17 @@ class Img(Label)
          browser.clear_msg()
          wrote := &null
          set_pointer()
+      }
+   end
+
+   public display()
+      local r, W
+      cast(self,Label).display()
+      if r := browser.get_region_rect().intersect(self) then {
+         use {
+            W := cbwin.clone().set_fg("blue 25%"),
+            W.fill_rectangle(x, y, w, h)
+         }
       }
    end
 
@@ -1968,7 +1982,30 @@ abstract class BrowserUI()
    public abstract browse_for_file()
 end
 
-record GreyState(prev, nxt, refresh, stop)
+class BrowserPrimarySelectionOwner(TextSelectionOwner)
+   private parent, s
+
+   protected get_text()
+      return s
+   end
+
+   package set_text(s)
+      self.s := s
+      return self
+   end
+
+   public lost_ownership()
+      parent.clear_mark()
+      parent.refresh()
+   end
+
+   public new(parent)
+      self.parent := parent
+      return
+   end
+end
+
+record GreyState(prev, nxt, refresh, copy_page, save_page, stop)
 
 class Browser(ComponentScrollArea)
    private
@@ -1984,7 +2021,8 @@ class Browser(ComponentScrollArea)
       scroll_ticker,
       scroll_ticker_interval,
       h_direction,
-      v_direction
+      v_direction,
+      primary_selection_owner
 
    private readable
       history,
@@ -2161,6 +2199,8 @@ class Browser(ComponentScrollArea)
       update_grey(GreyState(if history_pos > 1 then &no else &yes,
                             if history_pos < *history then &no else &yes,
                             if history[history_pos] then &no else &yes,
+                            if \page_url then &no else &yes,
+                            if \page_data then &no else &yes,
                             if \running > 0 then &no else &yes))
    end
 
@@ -3550,15 +3590,12 @@ class Browser(ComponentScrollArea)
    end
 
    private handle_lpress(e)
-      #write(to_string(parent_dialog.point_chain,3,,1))
-      if view.in_region(e) & is(parent_dialog.point_chain[1], TextFlow|TblContent) then {
-         marking := 1
-         set_cursor_from_pos(e)
-         mark_x := cursor_x
-         mark_y := cursor_y
-         #write(image(self),": marked:", mark_x,",",mark_y)
-         refresh()
-      }
+      can_press(e) | fail
+      marking := 1
+      set_cursor_from_pos(e)
+      mark_x := cursor_x
+      mark_y := cursor_y
+      refresh()
    end
 
    private set_cursor_from_pos(e)
@@ -3571,42 +3608,42 @@ class Browser(ComponentScrollArea)
    end
 
    private handle_ldrag(e)
-      if \marking then {
-         set_cursor_from_pos(e)
-         #refresh()
+      \marking | fail
 
-         if cursor_y > 0 & e.y < self.view.y then {
-            v_direction := "up"
-            check_scroll_ticker(self.view.y - e.y)
-         } else if cursor_y < view.inner.h & e.y >= self.view.y + self.view.h then {
-            v_direction := "down"
-            check_scroll_ticker(e.y - (self.view.y + self.view.h))
-         } else
-            v_direction := &null
+      # Note that we don't refresh if we are scroll ticking.  This
+      # prevents the drag consuming the dispatcher by constantly
+      # invalidating, which would prevent the scroll ticker running
+      # smoothly.
 
-         if cursor_x > 0 & e.x < self.view.x then {
-            h_direction := "left"
-            check_scroll_ticker(self.view.x - e.x)
-         } else if cursor_x < view.inner.w & e.x >= self.view.x + self.view.w then {
-            h_direction := "right"
-            check_scroll_ticker(e.x - (self.view.x + self.view.w))
-         } else
-            h_direction := &null
+      set_cursor_from_pos(e)
 
-         if /v_direction & /h_direction then {
-            scroll_ticker.stop()
-            refresh()
-         }
+      if cursor_y > 0 & e.y < self.view.y then {
+         v_direction := "up"
+         check_scroll_ticker(self.view.y - e.y)
+      } else if cursor_y < view.inner.h & e.y >= self.view.y + self.view.h then {
+         v_direction := "down"
+         check_scroll_ticker(e.y - (self.view.y + self.view.h))
+      } else
+         v_direction := &null
+
+      if cursor_x > 0 & e.x < self.view.x then {
+         h_direction := "left"
+         check_scroll_ticker(self.view.x - e.x)
+      } else if cursor_x < view.inner.w & e.x >= self.view.x + self.view.w then {
+         h_direction := "right"
+         check_scroll_ticker(e.x - (self.view.x + self.view.w))
+      } else
+         h_direction := &null
+
+      if /v_direction & /h_direction then {
+         scroll_ticker.stop()
+         refresh()
       }
-   end
-
-   public has_region()
-      return \mark_x & (mark_x ~= cursor_x | mark_y ~= cursor_y)
    end
 
    public get_region_rect()
       local x1, y1, x2, y2
-      has_region() | fail
+      \mark_x | fail
       y1 := mark_y
       y2 := cursor_y
       if y2 < y1 then
@@ -3625,11 +3662,11 @@ class Browser(ComponentScrollArea)
    public layout()
       cast(self,ComponentScrollArea).layout()
       clear_mark()
+      scroll_ticker.stop()
    end
 
    public display()
       local W, r
-      #writes(".")
       cast(self,ComponentScrollArea).display()
       if \marking & r := get_region_rect() then {
          use {
@@ -3682,22 +3719,23 @@ class Browser(ComponentScrollArea)
 
    public clear_mark()
       current_selections := marking := cursor_x := cursor_y := mark_x := mark_y := &null
-      scroll_ticker.stop()
       return self
    end
 
    private calculate_selections()
       local c, br, l
-      current_selections := &null
       br := get_region_rect() | fail
       l := []
       every c := Seq{traverse_components_postorder()} do {
-         if is(c,TextFlow) then
+         if is(c, TextFlow) then
             c.calculate_selections(br, l)
+         else if is(c, Img) then
+            if br.intersect(c) then
+               put(l, c)
       }
       if *l = 0 then
          fail
-      current_selections := l
+      return l
    end
 
    public get_current_selections()
@@ -3705,32 +3743,50 @@ class Browser(ComponentScrollArea)
    end
 
    public get_current_text_selection()
-      local s
-      \current_selections | fail
+      local s, c
       s := u""
-      every s ||:= (!current_selections).s
-      return s
+      every c := !\current_selections do {
+         if is(c, TextSelection) then
+            s ||:= c.s
+      }
+      if *s > 0 then
+         return s
+   end
+
+   public get_current_links_selection()
+      local l, c
+      l := []
+      every c := !\current_selections do {
+         if is(c, TextSelection) then
+            put(l, \c.attr.url)
+         else if is(c, Img) then
+            put(l, \c.link_url)
+      }
+      if *l > 0 then
+         return l
    end
 
    private handle_lrelease(e)
       local s
       scroll_ticker.stop()
       if \marking then {
-         has_region() | clear_mark()
          marking := &null
          refresh()
-         calculate_selections()
-         if s := get_current_text_selection() then
-            parent_dialog.own_selection(Selection.PRIMARY, 
-                                        StaticTextSelectionOwner(s))
+         if current_selections := calculate_selections() then {
+            if s := get_current_text_selection() then {
+               primary_selection_owner.set_text(s)            
+               parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
+            }
+         } else
+            clear_mark()
       }
    end
 
-   private can_rpress(e)
+   private can_press(e)
       local c
-      is(parent_dialog.point_chain[1], TextFlow|TblContent) | fail
+      is(parent_dialog.point_chain[1], TextFlow | TblContent) | fail
       every c := !parent_dialog.point_chain do {
-         if is(c, TextFlow) & c.wants_rpress(e) then
+         if is(c, TextFlow) & c.wants_press(e) then
             fail
       }
       return
@@ -3738,7 +3794,7 @@ class Browser(ComponentScrollArea)
 
    private handle_rpress(e)
       local pm, pm_menu
-      can_rpress(e) | fail
+      can_press(e) | fail
       if pm_menu := create_page_menu() then {
          pm := PopupMenu()
          pm.popup(parent_dialog, pm_menu, e.x, e.y)
@@ -3751,7 +3807,8 @@ class Browser(ComponentScrollArea)
       worker_pool := WorkerPool().
          set_authentication_function(get_authentication)
       status_ticker := Dispatcher.new_task{status()}
-      set_inner(Component().set_size(10,10))
+      primary_selection_owner := BrowserPrimarySelectionOwner(self)
+      set_inner(TextFlow(self))
       use_default_keys()
       history := []
       history_pos := 0

@@ -1431,6 +1431,7 @@ class StaticTextSelectionOwner(TextSelectionOwner)
 
    public set_text(s)
       self.s := s
+      return self
    end
 
    public lost_ownership()

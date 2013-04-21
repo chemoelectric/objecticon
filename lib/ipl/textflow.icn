@@ -334,7 +334,7 @@ class TextFlow(Component)
    end
 
    public display()
-      local o, W, font, fg, x1, y1, x2, y2, r, br, t, i, j, u, d
+      local o, W, font, fg, x1, y1, x2, y2, r, br, t
       border.draw(self.cbwin, x, y, w, h)
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
@@ -354,22 +354,14 @@ class TextFlow(Component)
             font := o.attr.font
             fg := o.attr.fg
          } 
-         if \br then {
-            t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
-            if t := br.intersect(t) then { 
-               d := t.x - x1 - o.x
-               i := 1
-               u := 0
-               while i <= *o.s & ((.u + (u := W.text_width(o.s[1+:i]))) / 2) < d do
-                  i +:= 1
-               j := i
-               d +:= t.w
-               u := W.text_width(o.s[1:i])
-               while j <= *o.s & ((.u + (u := W.text_width(o.s[1+:j]))) / 2) < d do
-                  j +:= 1
-               Gui.style.selection_rectangle(cbwin, x1 + o.x + W.text_width(o.s[1:i]), y1 + o.y, W.text_width(o.s[i:j]), W.get_font_height())
-            }
-         }
+
+         if \br & t := get_selected_part(W, x1, y1, o, br) then
+            Gui.style.selection_rectangle(cbwin, 
+                                          x1 + o.x + W.text_width(o.s[1:t[1]]), 
+                                          y1 + o.y, 
+                                          W.text_width(o.s[t[1]:t[2]]), 
+                                          o.h)
+
          draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
          if \o.attr.underline then {
             x2 := x1 + o.x
@@ -386,8 +378,26 @@ class TextFlow(Component)
       cast(self,Component).display()
    end
 
+   private get_selected_part(W, x1, y1, o, br)
+      local t, d, i, u, j
+      t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
+      t := br.intersect(t) | fail
+      d := t.x - x1 - o.x
+      i := 1
+      u := 0
+      while i <= *o.s & ((.u + (u := W.text_width(o.s[1+:i]))) / 2) < d do
+         i +:= 1
+      j := i
+      d +:= t.w
+      u := W.text_width(o.s[1:i])
+      while j <= *o.s & ((.u + (u := W.text_width(o.s[1+:j]))) / 2) < d do
+         j +:= 1
+      if j > i then
+         return [i, j]
+   end
+
    public calculate_selections(br, l)
-      local o, W, font, fg, x1, y1, t, i, j, u, d
+      local o, W, font, fg, x1, y1, t, s
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
       W := cbwin.clone()
@@ -404,21 +414,14 @@ class TextFlow(Component)
             fg := o.attr.fg
          } 
 
-         t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
-         if t := br.intersect(t) then { 
-            d := t.x - x1 - o.x
-            i := 1
-            u := 0
-            while i <= *o.s & ((.u + (u := W.text_width(o.s[1+:i]))) / 2) < d do
-               i +:= 1
-            j := i
-            d +:= t.w
-            u := W.text_width(o.s[1:i])
-            while j <= *o.s & ((.u + (u := W.text_width(o.s[1+:j]))) / 2) < d do
-               j +:= 1
-            #write("\ti=",i," j=",j)
-            if j > i then
-               put(l, TextSelection(x1 + o.x + W.text_width(o.s[1:i]), y1 + o.y, W.text_width(o.s[i:j]), o.h, o.attr, o.s[i:j]))
+         if t := get_selected_part(W, x1, y1, o, br) then {
+            s := o.s[t[1]:t[2]]
+            put(l, TextSelection(x1 + o.x + W.text_width(o.s[1:t[1]]), 
+                                 y1 + o.y, 
+                                 W.text_width(s), 
+                                 o.h, 
+                                 o.attr,
+                                 s))
          }
       }
       W.close()
@@ -777,8 +780,8 @@ class TextFlow(Component)
       held := wrote
    end
 
-   public wants_rpress(e)
-      return \wrote
+   package wants_press(e)
+      return .\wrote
    end
 
    private handle_rpress(e)

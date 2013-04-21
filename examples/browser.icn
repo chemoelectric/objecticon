@@ -82,6 +82,14 @@ class MessageLabel(Label)
    end
 end
 
+class PageMenu(DynamicMenu)
+   public populate()
+      local m
+      if m := parent_component.parent_dialog.tabs.which_one.create_page_menu() then
+         every add(!m.children)
+   end
+end
+
 class BrowserDialog(Dialog)
    private readable
       settings,
@@ -99,7 +107,8 @@ class BrowserDialog(Dialog)
       next_button,
       file_dialog,
       directory_dialog,
-      downloads
+      downloads,
+      page_menu
 
    private on_quit(ev)
       dispose()
@@ -110,8 +119,11 @@ class BrowserDialog(Dialog)
    end
 
    private update_grey()
-      if is(tabs.which_one, BrowserTab) then
+      if is(tabs.which_one, BrowserTab) then {
+         page_menu.set_is_shaded(&no)
          tabs.which_one.browser.do_update_grey()
+      } else
+         page_menu.set_is_shaded(&yes)
    end
 
    public initially()
@@ -263,7 +275,7 @@ class BrowserDialog(Dialog)
    end
 
    public new(s, cookies, settings)
-      local quit_menu_item, menu_bar, menu, bt, new_tab_item
+      local quit_menu_item, menu_bar, file_menu, bt, new_tab_item
       cast(self,Dialog).new()
       self.settings := settings
       pool := WorkerPool().
@@ -284,11 +296,14 @@ class BrowserDialog(Dialog)
       quit_menu_item := TextMenuItem().
          connect(on_quit, Event.ACTION).
          set_paint_mid(TextPaint("Quit"))
-      menu := Menu().
+      file_menu := Menu().
          set_accel("f").
-         set_paint_mid(TextPaint("File")).
+         set_label("File").
          add(new_tab_item).
          add(quit_menu_item)
+      page_menu := PageMenu().
+         set_accel("p").
+         set_label("Page")
       menu_bar := MenuBar().
          set_size("100").
          clear_constraints().
@@ -298,7 +313,8 @@ class BrowserDialog(Dialog)
          set_constraint("t_inset", 0).
          set_constraint("b_inset", 0).
          set_constraint("x_fill", &yes).
-         add(menu)
+         add(file_menu).
+         add(page_menu)
       self.add(menu_bar)
       bt := BrowserTab(s, pool, settings)
       downloads := DownloadTab(settings)
@@ -758,6 +774,14 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([url]))
    end
 
+   private copy_links(urls)
+      parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner(urls))
+   end
+
+   private download_links(urls, referer)
+      every parent_dialog.downloads.download(!urls, referer)
+   end
+
    private copy_text(s)
       parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
    end
@@ -767,22 +791,31 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public create_page_menu()
-      local m, s
+      local m, s, l
       m := Menu()
       if \browser.page_url then {
          m.add(TextMenuItem().
                set_label("Copy page").
                connect(create copy_link(browser.page_url), Event.ACTION))
       }
+      if \browser.page_data then {
+         m.add(TextMenuItem().
+               set_label("Save page...").
+               connect(create do_save(browser.page_name, browser.page_data), Event.ACTION))
+      }
+
       if s := browser.get_current_text_selection() then {
          m.add(TextMenuItem().
                set_label("Copy text").
                connect(create copy_text(s), Event.ACTION))
       }
-      if \browser.page_data then {
+      if l := browser.get_current_links_selection() then {
          m.add(TextMenuItem().
-               set_label("Save page...").
-               connect(create do_save(browser.page_name, browser.page_data), Event.ACTION))
+               set_label("Copy links").
+               connect(create copy_links(l), Event.ACTION))
+         m.add(TextMenuItem().
+               set_label("Download links").
+               connect(create download_links(l, browser.page_url), Event.ACTION))
       }
 
       if *m.children > 0 then
