@@ -32,7 +32,7 @@ abstract class ABorder(Insets,Align)
    end
 
    public draw_down(W, x, y, w, h)
-      Gui.style.down_rectangle(W, x, y, w, h)
+      Gui.style.fill_down_rectangle(W, x, y, w, h)
    end
 
    #

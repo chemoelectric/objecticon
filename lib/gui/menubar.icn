@@ -95,7 +95,7 @@ class MenuBar(Component, MenuMode)
          if cbwin.drawable(m.label_x, m.label_y, m.label_w, m.label_h) then {
             m.draw_label(self.cbwin, 0, m.label_w, 0)
             if m === \self.which_highlight then
-               Gui.style.down_rectangle(self.cbwin, m.label_x, m.label_y, m.label_w, m.label_h)
+               Gui.style.fill_down_rectangle(self.cbwin, m.label_x, m.label_y, m.label_w, m.label_h)
             if m.is_shaded() then
                Gui.style.shade_rectangle(self.cbwin,
                                          m.label_x, m.label_y, m.label_w, m.label_h)

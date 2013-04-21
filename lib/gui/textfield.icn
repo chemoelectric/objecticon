@@ -708,11 +708,11 @@ class TextField(Component)
             np := cursor
          off1 := self.cbwin.text_width(s[1:mp])
          off2 := self.cbwin.text_width(s[1:np])
-         Gui.style.selection_rectangle(self.cbwin,
-                                       self.tx - loff + off1,
-                                       y1, 
-                                       off2 - off1,
-                                       fh)
+         Gui.style.fill_selection_rectangle(self.cbwin,
+                                            self.tx - loff + off1,
+                                            y1, 
+                                            off2 - off1,
+                                            fh)
       }
 
       #

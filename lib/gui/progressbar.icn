@@ -26,7 +26,7 @@ class ProgressBar(Component)
       #
       # Draw the bar in 'down' mode
       #
-      Gui.style.down_rectangle(self.cbwin, r.x, r.y, r.w * p / 100.0, r.h)
+      Gui.style.fill_down_rectangle(self.cbwin, r.x, r.y, r.w * p / 100.0, r.h)
    end
 
    #

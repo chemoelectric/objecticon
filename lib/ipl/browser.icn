@@ -745,14 +745,10 @@ class Img(Label)
    end
 
    public display()
-      local r, W
+      local r
       cast(self,Label).display()
-      if r := browser.get_region_rect().intersect(self) then {
-         use {
-            W := cbwin.clone().set_fg("blue 25%"),
-            W.fill_rectangle(x, y, w, h)
-         }
-      }
+      if r := browser.get_region_rect().intersect(self) then
+         Gui.style.fill_selection_rectangle(cbwin, x, y, w, h)
    end
 
    public new(browser, img_url, link_url, form, imgw, imgh, map)
@@ -877,7 +873,7 @@ class FormTblButton(Button, FormEntry, HasMaxWidth, HasAscent)
    public display()
       display_children()
       if \self.is_down then {
-         Gui.style.down_rectangle(self.cbwin, self.x, self.y, self.w, self.h)
+         Gui.style.fill_down_rectangle(self.cbwin, self.x, self.y, self.w, self.h)
          tbl.border.draw_rev_rect(self.cbwin, self)
       }
       if self.has_focus() & self.is_unshaded() then

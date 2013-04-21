@@ -821,7 +821,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    public draw_line_sel_cur(x, y, w, h, sel, cur, hi)
       if \sel then
-         Gui.style.selection_rectangle(view.cbwin, x, y, w, h)
+         Gui.style.fill_selection_rectangle(view.cbwin, x, y, w, h)
       case \cur of {
          "f": Gui.style.draw_focus_rectangle(view.cbwin, x, y, w, h)
          "d": Gui.style.draw_dashed_rectangle(view.cbwin, x, y, w, h)

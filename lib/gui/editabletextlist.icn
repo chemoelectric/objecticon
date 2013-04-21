@@ -1119,7 +1119,7 @@ class EditableTextList(LineBasedScrollArea)
          if \r then {
             off1 := text_width_ex(view.cbwin, s, 1, r[1] - v.first + 1, self.tab_width)
             off2 := text_width_ex(view.cbwin, s, 1, r[2] - v.first + 1, self.tab_width)
-            Gui.style.selection_rectangle(self.cbwin, xp + off1, yp,  off2 - off1, self.line_height)
+            Gui.style.fill_selection_rectangle(self.cbwin, xp + off1, yp,  off2 - off1, self.line_height)
          }
       }
 

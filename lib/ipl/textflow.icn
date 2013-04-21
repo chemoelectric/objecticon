@@ -355,14 +355,15 @@ class TextFlow(Component)
             fg := o.attr.fg
          } 
 
-         if \br & t := get_selected_part(W, x1, y1, o, br) then
-            Gui.style.selection_rectangle(cbwin, 
-                                          x1 + o.x + W.text_width(o.s[1:t[1]]), 
-                                          y1 + o.y, 
-                                          W.text_width(o.s[t[1]:t[2]]), 
-                                          o.h)
-
          draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
+
+         if \br & t := get_selected_part(W, x1, y1, o, br) then
+            Gui.style.fill_selection_rectangle(cbwin, 
+                                               x1 + o.x + W.text_width(o.s[1:t[1]]), 
+                                               y1 + o.y, 
+                                               W.text_width(o.s[t[1]:t[2]]), 
+                                               o.h)
+
          if \o.attr.underline then {
             x2 := x1 + o.x
             y2 := y1 + o.y + W.get_font_ascent() + 1
