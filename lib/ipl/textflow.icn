@@ -105,16 +105,23 @@ class CompOut(Rect)
    end
 end
 
-class TextSelection(Rect)
-   public const s, attr
+class TextSelection()
+   public const textout, textflow, i, j, w_off, w_sub, h
 
-   public new(x, y, w, h, attr, s)
-      self.x := x
-      self.y := y
-      self.w := w
-      self.h := h
-      self.attr := attr
-      self.s := s
+   public get_bounds()
+      return Rect(textflow.x + textflow.border.get_l_inset() + textout.x + w_off,
+                  textflow.y + textflow.border.get_t_inset() + textflow.get_y_off() + textout.y,
+                  w_sub,
+                  textout.h)
+   end
+
+   public new(textout, textflow, i, j, w_off, w_sub)
+      self.textout := textout
+      self.textflow := textflow
+      self.i := i
+      self.j := j
+      self.w_off := w_off
+      self.w_sub := w_sub
       return
    end
 end
@@ -333,12 +340,15 @@ class TextFlow(Component)
       return W
    end
 
+   public get_y_off()
+      return y_off
+   end
+
    public display()
-      local o, W, font, fg, x1, y1, x2, y2, r, br, t
+      local o, W, font, fg, x1, y1, x2, y2, r, t
       border.draw(self.cbwin, x, y, w, h)
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
-      br := browser.get_region_rect()
       W := cbwin.clone()
       r := get_cbwin_clip()
       every o := !output do {
@@ -356,14 +366,14 @@ class TextFlow(Component)
          } 
 
          draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
-
-         if \br & t := get_selected_part(W, x1, y1, o, br) then
+         if t := browser.is_banded(o) then {
+            # NB - the rectangle used should be the same as that returned by t.get_bounds()
             Gui.style.fill_selection_rectangle(cbwin, 
-                                               x1 + o.x + W.text_width(o.s[1:t[1]]), 
+                                               x1 + o.x + t.w_off,
                                                y1 + o.y, 
-                                               W.text_width(o.s[t[1]:t[2]]), 
+                                               t.w_sub,
                                                o.h)
-
+         }
          if \o.attr.underline then {
             x2 := x1 + o.x
             y2 := y1 + o.y + W.get_font_ascent() + 1
@@ -397,7 +407,7 @@ class TextFlow(Component)
          return [i, j]
    end
 
-   public calculate_selections(br, l)
+   public calculate_banded(br, b)
       local o, W, font, fg, x1, y1, t, s
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
@@ -417,12 +427,9 @@ class TextFlow(Component)
 
          if t := get_selected_part(W, x1, y1, o, br) then {
             s := o.s[t[1]:t[2]]
-            put(l, TextSelection(x1 + o.x + W.text_width(o.s[1:t[1]]), 
-                                 y1 + o.y, 
-                                 W.text_width(s), 
-                                 o.h, 
-                                 o.attr,
-                                 s))
+            insert(b, o,  TextSelection(o, self, 
+                                        t[1], t[2], 
+                                        W.text_width(o.s[1:t[1]]), W.text_width(o.s[t[1]:t[2]])))
          }
       }
       W.close()

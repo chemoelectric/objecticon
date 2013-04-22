@@ -747,7 +747,7 @@ class Img(Label)
    public display()
       local r
       cast(self,Label).display()
-      if r := browser.get_region_rect().intersect(self) then
+      if r := browser.is_banded(self) then
          Gui.style.fill_selection_rectangle(cbwin, x, y, w, h)
    end
 
@@ -1991,8 +1991,7 @@ class BrowserPrimarySelectionOwner(TextSelectionOwner)
    end
 
    public lost_ownership()
-      parent.clear_mark()
-      parent.refresh()
+      parent.on_lost_primary_ownership()
    end
 
    public new(parent)
@@ -2029,12 +2028,11 @@ class Browser(ComponentScrollArea)
       page_title,
       image_data,
       running,
-      marking,
       mark_x,
       mark_y,
       cursor_x,
       cursor_y,
-      current_selections
+      banded
 
    public static const 
       COLORS,
@@ -3586,12 +3584,17 @@ class Browser(ComponentScrollArea)
    end
 
    private handle_lpress(e)
+      local t
+      /mark_x | fail
       can_press(e) | fail
-      marking := 1
       set_cursor_from_pos(e)
       mark_x := cursor_x
       mark_y := cursor_y
-      refresh()
+      t := get_band_rect()
+      t := t.union(calculate_banded_rect())
+      calculate_banded()
+      t := t.union(calculate_banded_rect())
+      view.inner.invalidate(t)
    end
 
    private set_cursor_from_pos(e)
@@ -3604,14 +3607,17 @@ class Browser(ComponentScrollArea)
    end
 
    private handle_ldrag(e)
-      \marking | fail
+      local t
 
-      # Note that we don't refresh if we are scroll ticking.  This
-      # prevents the drag consuming the dispatcher by constantly
-      # invalidating, which would prevent the scroll ticker running
-      # smoothly.
+      \mark_x | fail
 
+      t := get_band_rect()
+      t := t.union(calculate_banded_rect())
       set_cursor_from_pos(e)
+      calculate_banded()
+      t := t.union(get_band_rect())
+      t := t.union(calculate_banded_rect())
+      view.inner.invalidate(t)
 
       if cursor_y > 0 & e.y < self.view.y then {
          v_direction := "up"
@@ -3631,13 +3637,11 @@ class Browser(ComponentScrollArea)
       } else
          h_direction := &null
 
-      if /v_direction & /h_direction then {
+      if /v_direction & /h_direction then
          scroll_ticker.stop()
-         refresh()
-      }
    end
 
-   public get_region_rect()
+   public get_band_rect()
       local x1, y1, x2, y2
       \mark_x | fail
       y1 := mark_y
@@ -3658,13 +3662,14 @@ class Browser(ComponentScrollArea)
    public layout()
       cast(self,ComponentScrollArea).layout()
       clear_mark()
+      clear(banded)
       scroll_ticker.stop()
    end
 
    public display()
       local W, r
       cast(self,ComponentScrollArea).display()
-      if \marking & r := get_region_rect() then {
+      if r := get_band_rect() then {
          use {
             W := view.cbwin.clone().set_fg("purple").set_masked_pattern("gray"),
             W.draw_rectangle(r.x, r.y, r.w, r.h)
@@ -3679,19 +3684,27 @@ class Browser(ComponentScrollArea)
       scroll_ticker.start()
    end
 
+   package is_banded(o)
+      return member(banded, o)
+   end
+
    private scroll_tick()
+      local f
       repeat {
+         f := &null
          case v_direction of {
             "up": {
                if cursor_y > 0 then {
                   cursor_y := max(0, cursor_y - 20)
                   set_area_y(cursor_y)
+                  f := 1
                }
             }
             "down": {
                if cursor_y < view.inner.h then {
                   cursor_y := min(view.inner.h, cursor_y + 20)
                   set_area_y(cursor_y - view.h)
+                  f := 1
                }
             }
          }
@@ -3700,50 +3713,73 @@ class Browser(ComponentScrollArea)
                if cursor_x > 0 then {
                   cursor_x := max(0, cursor_x - 20)
                   set_area_x(cursor_x)
+                  f := 1
                }
             }
             "right": {
                if cursor_x < view.inner.w then {
                   cursor_x := min(view.inner.w, cursor_x + 20)
                   set_area_x(cursor_x - view.w)
+                  f := 1
                }
             }
          }
+         if \f then
+            calculate_banded()
+
          scroll_ticker.sleep(scroll_ticker_interval)
       }
    end
 
-   public clear_mark()
-      current_selections := marking := cursor_x := cursor_y := mark_x := mark_y := &null
+   private clear_mark()
+      cursor_x := cursor_y := mark_x := mark_y := &null
       return self
    end
 
-   private calculate_selections()
-      local c, br, l
-      br := get_region_rect() | fail
-      l := []
-      every c := Seq{traverse_components_postorder()} do {
-         if is(c, TextFlow) then
-            c.calculate_selections(br, l)
-         else if is(c, Img) then
-            if br.intersect(c) then
-               put(l, c)
-      }
-      if *l = 0 then
-         fail
-      return l
+   package on_lost_primary_ownership()
+      view.inner.invalidate(calculate_banded_rect())
+      clear(banded)
    end
 
-   public get_current_selections()
-      return \current_selections
+   private calculate_banded()
+      local c, br
+      br := get_band_rect() | fail
+      clear(banded)
+      every c := Seq{traverse_components_postorder()} do {
+         if is(c, TextFlow) then
+            c.calculate_banded(br, banded)
+         else if is(c, Img) then
+            if br.intersect(c) then
+               insert(banded, c, c)
+      }
+   end
+
+   private show_bounds()
+      local c
+      every c := !banded do {
+         if is(c, TextSelection) then
+            write(image(c), " -> ", to_string(c.get_bounds()))
+      }
+   end
+
+   private calculate_banded_rect()
+      local c, t, r
+      every c := !banded do {
+         t := if is(c, TextSelection) then
+            c.get_bounds()
+         else if is(c, Img) then
+            c
+         r := (\r).union(t) | t
+      }
+      return \r
    end
 
    public get_current_text_selection()
       local s, c
       s := u""
-      every c := !\current_selections do {
+      every c := !banded do {
          if is(c, TextSelection) then
-            s ||:= c.s
+            s ||:= c.textout.s[c.i:c.j]
       }
       if *s > 0 then
          return s
@@ -3752,9 +3788,9 @@ class Browser(ComponentScrollArea)
    public get_current_links_selection()
       local l, c
       l := []
-      every c := !\current_selections do {
+      every c := !banded do {
          if is(c, TextSelection) then
-            put(l, \c.attr.url)
+            put(l, \c.textout.attr.url)
          else if is(c, Img) then
             put(l, \c.link_url)
       }
@@ -3765,16 +3801,13 @@ class Browser(ComponentScrollArea)
    private handle_lrelease(e)
       local s
       scroll_ticker.stop()
-      if \marking then {
-         marking := &null
-         refresh()
-         if current_selections := calculate_selections() then {
-            if s := get_current_text_selection() then {
-               primary_selection_owner.set_text(s)            
-               parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
-            }
-         } else
-            clear_mark()
+      if \mark_x then {
+         view.inner.invalidate(get_band_rect())
+         clear_mark()
+      }
+      if s := get_current_text_selection() then {
+         primary_selection_owner.set_text(s)            
+         parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
       }
    end
 
@@ -3809,6 +3842,7 @@ class Browser(ComponentScrollArea)
       history := []
       history_pos := 0
       running := 0
+      banded := table()
       view.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG).
          connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS).
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE).
