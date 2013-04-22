@@ -2,8 +2,7 @@ package ipl.browser
 
 import 
    gui,
-   ipl.strings,
-   ipl.sort
+   ipl.strings
 
 abstract class HasAscent()
    public abstract get_ascent(dw, dh)
@@ -110,7 +109,7 @@ class TextSelection()
 
    public get_bounds()
       return Rect(textflow.x + textflow.border.get_l_inset() + textout.x + w_off,
-                  textflow.y + textflow.border.get_t_inset() + textflow.get_y_off() + textout.y,
+                  textflow.y + textflow.border.get_t_inset() + textflow.y_off + textout.y,
                   w_sub,
                   textout.h)
    end
@@ -126,16 +125,28 @@ class TextSelection()
    end
 end
 
+class OutputRow(Rect)
+   public const l
+
+   public new()
+      l := []
+      return
+   end
+end
+
 class TextFlow(Component)
    public const
       input
+
+   private readable
+      y_off
 
    private
       left_comps,
       right_comps,
       output_comps,
-      output_text,
-      output,
+      output_rows,
+      computed_output_rows,
       row,
       row_x,
       row_y,
@@ -156,7 +167,6 @@ class TextFlow(Component)
       compute_w,
       deferred,
       v_align,
-      y_off,
       at_new_para,
       def_width,
       max_width,
@@ -184,8 +194,8 @@ class TextFlow(Component)
          return
       compute_w := width
       calculating := if width = 16r7fffffff then 1 else &null
-      output_text := []
       output_comps := []
+      output_rows := []
       left_comps := []
       right_comps := []
       named_anchors := table()
@@ -219,7 +229,7 @@ class TextFlow(Component)
    end
 
    public reset_layout()
-      max_width := def_width := output_text := output_comps := left_comps :=
+      max_width := def_width := output_rows := output_comps := left_comps :=
          named_anchors := right_comps := compute_w := &null
    end
 
@@ -340,99 +350,137 @@ class TextFlow(Component)
       return W
    end
 
-   public get_y_off()
-      return y_off
-   end
-
    public display()
-      local o, W, font, fg, x1, y1, x2, y2, r, t
+      local o, W, font, fg, x1, y1, x2, y2, r, t, or
       border.draw(self.cbwin, x, y, w, h)
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
       W := cbwin.clone()
       r := get_cbwin_clip()
-      every o := !output do {
-         if y1 + o.y + o.h < r.y then
+      every or := !computed_output_rows do {
+         if y1 + or.y + or.h < r.y then
             next
-         # Since we sorted row output by y pos'n, we can break here
-         if y1 + o.y > r.y + r.h then
+         # Since rows ascend by y pos'n, we can break here
+         if y1 + or.y > r.y + r.h then
             break
+         every o := !or.l do {
+            if font ~=== o.attr.font | fg ~=== o.attr.fg then {
+               W.close()
+               W := attr_clone(o.attr)
+               font := o.attr.font
+               fg := o.attr.fg
+            } 
 
-         if font ~=== o.attr.font | fg ~=== o.attr.fg then {
-            W.close()
-            W := attr_clone(o.attr)
-            font := o.attr.font
-            fg := o.attr.fg
-         } 
-
-         draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
-         if t := browser.is_banded(o) then {
-            # NB - the rectangle used should be the same as that returned by t.get_bounds()
-            Gui.style.fill_selection_rectangle(cbwin, 
-                                               x1 + o.x + t.w_off,
-                                               y1 + o.y, 
-                                               t.w_sub,
-                                               o.h)
-         }
-         if \o.attr.underline then {
-            x2 := x1 + o.x
-            y2 := y1 + o.y + W.get_font_ascent() + 1
-            W.draw_line(x2, y2, x2 + o.w, y2)
-         }
-         if \o.attr.strike then {
-            x2 := x1 + o.x
-            y2 := y1 + o.y + (2 * W.get_font_ascent()) / 3
-            W.draw_line(x2, y2, x2 + o.w, y2)
+            draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
+            if t := browser.is_banded(o) then {
+               # NB - the rectangle used should be the same as that returned by t.get_bounds()
+               Gui.style.fill_selection_rectangle(cbwin, 
+                                                  x1 + o.x + t.w_off,
+                                                  y1 + o.y, 
+                                                  t.w_sub,
+                                                  o.h)
+            }
+            if \o.attr.underline then {
+               x2 := x1 + o.x
+               y2 := y1 + o.y + W.get_font_ascent() + 1
+               W.draw_line(x2, y2, x2 + o.w, y2)
+            }
+            if \o.attr.strike then {
+               x2 := x1 + o.x
+               y2 := y1 + o.y + (2 * W.get_font_ascent()) / 3
+               W.draw_line(x2, y2, x2 + o.w, y2)
+            }
          }
       }
       W.close()
       cast(self,Component).display()
    end
 
-   private get_selected_part(W, x1, y1, o, br)
-      local t, d, i, u, j
-      t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
-      t := br.intersect(t) | fail
-      d := t.x - x1 - o.x
-      i := 1
-      u := 0
-      while i <= *o.s & ((.u + (u := W.text_width(o.s[1+:i]))) / 2) < d do
-         i +:= 1
-      j := i
-      d +:= t.w
-      u := W.text_width(o.s[1:i])
-      while j <= *o.s & ((.u + (u := W.text_width(o.s[1+:j]))) / 2) < d do
-         j +:= 1
-      if j > i then
-         return [i, j]
-   end
-
-   public calculate_banded(br, b)
-      local o, W, font, fg, x1, y1, t, s
+   public calculate_banded(br, bs)
+      local d, i, u, j, or, o, W, font, x1, y1, t, first, last, first_r, last_r, l, ts
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
-      W := cbwin.clone()
-      every o := !output do {
-         if y1 + o.y + o.h < br.y then
+      l := []
+      every or := !computed_output_rows do {
+         if y1 + or.y + or.h < br.y then
             next
-         # Since we sorted row output by y pos'n, we can break here
-         if y1 + o.y > br.y + br.h then
+         # Since rows ascend by y pos'n, we can break here
+         if y1 + or.y > br.y + br.h then
             break
-         if font ~=== o.attr.font | fg ~=== o.attr.fg then {
+         every o := !or.l do {
+            t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
+            if t := br.intersect(t) then {
+               if /first := o then
+                  first_r := t
+               last := o
+               last_r := t
+            }
+            if \first then
+               put(l, o)
+         }
+      }
+      if /first then
+         fail
+      until l[-1] === last do
+         pull(l)
+
+      W := cbwin.clone()
+      every o := !l do {
+         if font ~=== o.attr.font then {
             W.close()
             W := attr_clone(o.attr)
             font := o.attr.font
-            fg := o.attr.fg
          } 
+         i := 1
+         if o === first then {
+            d := first_r.x - x1 - o.x
+            u := 0
+            while i <= *o.s & ((.u + (u := W.text_width(o.s[1+:i]))) / 2) < d do
+               i +:= 1
+         }
+         if o === last then {
+            d := last_r.x - x1 - o.x + last_r.w
+            j := i
+            u := W.text_width(o.s[1:i])
+            while j <= *o.s & ((.u + (u := W.text_width(o.s[1+:j]))) / 2) < d do
+               j +:= 1
+         } else
+            j := *o.s + 1
 
-         if t := get_selected_part(W, x1, y1, o, br) then {
-            s := o.s[t[1]:t[2]]
-            insert(b, o,  TextSelection(o, self, 
-                                        t[1], t[2], 
-                                        W.text_width(o.s[1:t[1]]), W.text_width(o.s[t[1]:t[2]])))
+         if i < j then {
+            ts := TextSelection(o, self, 
+                                i, j, 
+                                W.text_width(o.s[1:i]), W.text_width(o.s[i:j]))
+            insert(bs, o, ts)
          }
       }
       W.close()
+   end
+
+   public get_selected_text(br)
+      local o, x1, y1, t, or, s, sr
+      x1 := x + border.get_l_inset()
+      y1 := y + border.get_t_inset() + y_off
+      s := u""
+      every or := !computed_output_rows do {
+         if y1 + or.y + or.h < br.y then
+            next
+         # Since rows ascend by y pos'n, we can break here
+         if y1 + or.y > br.y + br.h then
+            break
+         sr := u""
+         every o := !or.l do {
+            if t := browser.is_banded(o) then
+               sr ||:= o.s[t.i:t.j]
+         }
+         if *sr > 0 then {
+            if *s > 0 then
+               s ||:= u"\n"
+            s ||:= sr
+         }
+      }
+      if *s > 0 then
+         return s
    end
 
    public layout()
@@ -455,16 +503,12 @@ class TextFlow(Component)
          c.h := co.h
          c.layout()
       }
-      output := isort(output_text, y_cmp)
+      computed_output_rows := output_rows
       computed_named_anchors := named_anchors 
    end
 
-   private y_cmp(v)
-      return v.y
-   end
-
    private new_row(gap)
-      local x1, r, g, need
+      local x1, r, g, need, or
       /gap := 0
       x1 := row_x
 
@@ -480,6 +524,12 @@ class TextFlow(Component)
          row_ascent +:= need / 2
          row_descent +:= need / 2 + need % 2
       }
+
+      put(output_rows, or := OutputRow())
+      or.x := row_x
+      or.y := row_y
+      or.h := row_ascent + row_descent
+      or.w := row_width
 
       /first_row_ascent := row_ascent      
       while r := get(row) do {
@@ -506,6 +556,7 @@ class TextFlow(Component)
             r.x := x1
             r.y := row_y + row_ascent - r.ascent
             x1 +:= r.w
+            put(or.l, r)
          }
          if \calculating & \r.attr.pre then
             # Since a pre section can still have several elements on a
@@ -654,7 +705,6 @@ class TextFlow(Component)
                     W.get_font_ascent() + baseline_off, 
                     W.get_font_descent() - baseline_off, 
                     W.text_width(s), W.get_font_height())
-      put(output_text, xo)
       put(row,  xo)
       row_width +:= xo.w
       row_ascent <:= xo.ascent
@@ -755,14 +805,18 @@ class TextFlow(Component)
    end
 
    private which_text_out(e)
-      local o, x1, y1
+      local or, o, x1, y1
       x1 := e.x - x - border.get_l_inset()
       y1 := e.y - y - border.get_t_inset() - y_off
-      every o := !output do {
-         if o.y > y1 then
+      every or := !computed_output_rows do {
+         if or.y + or.h < y1 then
+            next
+         if or.y > y1 then
             break
-         if o.inside(x1, y1) then
-            return o
+         every o := !or.l do {
+            if o.inside(x1, y1) then
+               return o
+         }
       }
    end
 

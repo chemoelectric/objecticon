@@ -3584,17 +3584,13 @@ class Browser(ComponentScrollArea)
    end
 
    private handle_lpress(e)
-      local t
       /mark_x | fail
       can_press(e) | fail
       set_cursor_from_pos(e)
       mark_x := cursor_x
       mark_y := cursor_y
-      t := get_band_rect()
-      t := t.union(calculate_banded_rect())
-      calculate_banded()
-      t := t.union(calculate_banded_rect())
-      view.inner.invalidate(t)
+      view.inner.invalidate(calculate_banded_rect())
+      clear_banded()
    end
 
    private set_cursor_from_pos(e)
@@ -3607,17 +3603,14 @@ class Browser(ComponentScrollArea)
    end
 
    private handle_ldrag(e)
-      local t
-
       \mark_x | fail
 
-      t := get_band_rect()
-      t := t.union(calculate_banded_rect())
+      view.inner.invalidate(get_band_rect())
+      view.inner.invalidate(calculate_banded_rect())
       set_cursor_from_pos(e)
       calculate_banded()
-      t := t.union(get_band_rect())
-      t := t.union(calculate_banded_rect())
-      view.inner.invalidate(t)
+      view.inner.invalidate(get_band_rect())
+      view.inner.invalidate(calculate_banded_rect())
 
       if cursor_y > 0 & e.y < self.view.y then {
          v_direction := "up"
@@ -3644,6 +3637,8 @@ class Browser(ComponentScrollArea)
    public get_band_rect()
       local x1, y1, x2, y2
       \mark_x | fail
+      if mark_x = mark_y & cursor_x = cursor_y then
+         fail
       y1 := mark_y
       y2 := cursor_y
       if y2 < y1 then
@@ -3662,7 +3657,7 @@ class Browser(ComponentScrollArea)
    public layout()
       cast(self,ComponentScrollArea).layout()
       clear_mark()
-      clear(banded)
+      clear_banded()
       scroll_ticker.stop()
    end
 
@@ -3733,18 +3728,21 @@ class Browser(ComponentScrollArea)
 
    private clear_mark()
       cursor_x := cursor_y := mark_x := mark_y := &null
-      return self
+   end
+
+   private clear_banded()
+      clear(banded)
    end
 
    package on_lost_primary_ownership()
       view.inner.invalidate(calculate_banded_rect())
-      clear(banded)
+      clear_banded()
    end
 
    private calculate_banded()
       local c, br
+      clear_banded()
       br := get_band_rect() | fail
-      clear(banded)
       every c := Seq{traverse_components_postorder()} do {
          if is(c, TextFlow) then
             c.calculate_banded(br, banded)
@@ -3774,12 +3772,13 @@ class Browser(ComponentScrollArea)
       return \r
    end
 
-   public get_current_text_selection()
-      local s, c
+   private get_current_text_selection()
+      local br, s, c
+      br := calculate_banded_rect() | fail
       s := u""
-      every c := !banded do {
-         if is(c, TextSelection) then
-            s ||:= c.textout.s[c.i:c.j]
+      every c := Seq{traverse_components_postorder()} do {
+         if is(c, TextFlow) then
+            s ||:= c.get_selected_text(br)
       }
       if *s > 0 then
          return s
