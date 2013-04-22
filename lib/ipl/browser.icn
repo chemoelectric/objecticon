@@ -2032,7 +2032,9 @@ class Browser(ComponentScrollArea)
       mark_y,
       cursor_x,
       cursor_y,
-      banded
+      banded,
+      text_selection,
+      links_selection
 
    public static const 
       COLORS,
@@ -3732,6 +3734,7 @@ class Browser(ComponentScrollArea)
 
    private clear_banded()
       clear(banded)
+      text_selection := links_selection := &null
    end
 
    package on_lost_primary_ownership()
@@ -3772,20 +3775,35 @@ class Browser(ComponentScrollArea)
       return \r
    end
 
-   private get_current_text_selection()
-      local br, s, c
+   public get_current_text_selection()
+      return \.text_selection
+   end
+
+   private calculate_text_selection()
+      local br, s, t, c
+      text_selection := &null
       br := calculate_banded_rect() | fail
       s := u""
       every c := Seq{traverse_components_postorder()} do {
-         if is(c, TextFlow) then
-            s ||:= c.get_selected_text(br)
+         if is(c, TextFlow) then {
+            if t := c.get_selected_text(br) then {
+               if *s > 0 then
+                  s ||:= u"\n"
+               s ||:= t
+            }
+         }
       }
       if *s > 0 then
-         return s
+         text_selection := s
    end
 
    public get_current_links_selection()
+      return \.links_selection
+   end
+
+   private calculate_links_selection()
       local l, c
+      links_selection := &null
       l := []
       every c := !banded do {
          if is(c, TextSelection) then
@@ -3794,7 +3812,7 @@ class Browser(ComponentScrollArea)
             put(l, \c.link_url)
       }
       if *l > 0 then
-         return l
+         links_selection := l
    end
 
    private handle_lrelease(e)
@@ -3804,6 +3822,8 @@ class Browser(ComponentScrollArea)
          view.inner.invalidate(get_band_rect())
          clear_mark()
       }
+      calculate_text_selection()
+      calculate_links_selection()
       if s := get_current_text_selection() then {
          primary_selection_owner.set_text(s)            
          parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
