@@ -1,5 +1,7 @@
 package gui
 
+import util
+
 #
 # A column in a {PTable}.  The default column handles simple string data, but may
 # be subclassed to handle any type of data.
@@ -333,7 +335,7 @@ class PTable(SelectableScrollArea)
    end
 
    public draw()
-      local yp, i, j, info, h, lh, r, col, cc, colx
+      local yp, i, j, info, h, lh, r, col, cc, colx, W
 
       r := view.get_cbwin_clip()
 
@@ -341,23 +343,26 @@ class PTable(SelectableScrollArea)
       h := get_line_height()
 
       colx := get_subject_x() + inset
-      every j := 1 to *cols do {
-         col := cols[j]
-         # If the column is visible
-         if cc := view.cbwin.drawable(colx, r.y, col.width, r.h) then {
-            # Clip on the column.
-            view.cbwin.clip!cc
-            yp := r.y - info.offset
-            # Write each line in this column
-            every i := info.first to info.last do {
-               lh := integer(h) | h[i]
-               col.draw_cell(view.cbwin, self.contents[i, j], i, j, colx, yp, lh)
-               yp +:= lh
+      use {
+         W := view.cbwin.clone(), 
+         {
+            every j := 1 to *cols do {
+               col := cols[j]
+               # If the column is visible
+               if cc := view.cbwin.drawable(colx, r.y, col.width, r.h) then {
+                  # Clip on the column.
+                  W.clip!cc
+                  yp := r.y - info.offset
+                  # Write each line in this column
+                  every i := info.first to info.last do {
+                     lh := integer(h) | h[i]
+                     col.draw_cell(W, self.contents[i, j], i, j, colx, yp, lh)
+                     yp +:= lh
+                  }
+               }
+               colx +:= col.width + inset
             }
-            # Reset the clip.
-            view.cbwin.clip(r.x, r.y, r.w, r.h)
          }
-         colx +:= col.width + inset
       }
       # Call the superclass draw to do the selection, highlight etc.
       cast(self,SelectableScrollArea).draw()
