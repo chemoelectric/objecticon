@@ -55,7 +55,7 @@ class Resp()
    end
 end
 
-class Handled()
+class StaticData()
    public const
       data, fname, content_type
 
@@ -67,11 +67,11 @@ class Handled()
    end
 end
 
-class CacheEntry()
+class CacheEntry(StaticData)
    public const
-      url, data, fname, content_type, expiry
+      url, expiry
 
-   public new(url, data, fname, content_type, expiry)
+   public new(url, expiry, data, fname, content_type)
       self.url := url
       self.data := data
       self.fname := fname
@@ -82,7 +82,7 @@ class CacheEntry()
 end
 
 class Cache()
-   private t, total, lim
+   private t, total, lim, id
 
    public get(url)
       local k, ent
@@ -102,10 +102,11 @@ class Cache()
       delete(t, k)
    end
 
-   public add(ent)
-      local k, old
+   public add(url, expiry, data, fname, content_type)
+      local k, old, ent
+      ent := CacheEntry(url, expiry, data, fname, content_type)
       k := string(ent.url.str())
-      #write("cache add ",k, " expiry ", (\ent.expiry - Time.get_system_seconds()) | "-")
+      #write("cache add key=", k, "\n\tdata=", *data, " bytes\n\tfname=", fname, "\n\tct=", to_string(content_type), "\n\texpiry=", (\ent.expiry - Time.get_system_seconds()) | "-")
       if old := member(t, k) then
          del(old)
       while *t > 0 &  total + *ent.data > lim do
@@ -115,10 +116,19 @@ class Cache()
       return
    end
 
+   public create_url(expiry, data, fname, content_type)
+      local url
+      /expiry := Time.get_system_seconds() + 60
+      url := URL("cache:" || (id +:= 1))
+      add(url, expiry, data, fname, content_type)
+      return url
+   end
+
    public new(lim)
       t := table()
       self.lim := lim
       total := 0
+      id := 0
       return
    end
 end
@@ -294,12 +304,12 @@ class Worker()
          r.callback(Resp(&why, r.url, r.referer,,,, r.kind))
    end
 
-   private handle_image_req(r)
-      local data
-      if is(r.client, Browser) & data := r.client.get_image_data() then
-         r.callback(Resp(, r.url, r.referer, data, r.url.get_decoded_path_last(),, r.kind))
+   private handle_cache_req(r)
+      local ce
+      if ce := pool.cache.get(r.url) then
+         r.callback(Resp(, r.url, r.referer, ce.data, ce.fname, ce.content_type, r.kind))
       else
-         r.callback(Resp("Invalid request", r.url, r.referer,,,, r.kind))
+         r.callback(Resp("Cache entry expired", r.url, r.referer,,,, r.kind))
    end
 
    private get_expiry(hres)
@@ -331,7 +341,7 @@ class Worker()
             set_output_stream(s). 
             set_url(r.url).
             set_header("Accept-charset", "UTF-8, ISO-8859-1")
-         if (\r.referer).scheme ~== u"file" then
+         if (\r.referer).scheme == (u"http" | u"https") then
             hreq.set_referer(r.referer.str())
          if hres := httpc.retrieve(hreq) then {
             s.close()
@@ -355,7 +365,7 @@ class Worker()
                set_output_stream(s). 
                set_url(r.url).
                set_header("Accept-charset", "UTF-8, ISO-8859-1")
-            if (\r.referer).scheme ~== u"file" then
+            if (\r.referer).scheme == (u"http" | u"https") then
                hreq.set_referer(r.referer.str())
             if \r.form_data then {
                if is(r.form_data, Message) then
@@ -371,7 +381,7 @@ class Worker()
                # Note we have to take into account redirections in deciding whether to cache
                # and whether form data should be in the response.
                if httpc.request.method == "GET" & x := get_expiry(hres) then
-                  pool.cache.add(CacheEntry(hres.url, data, fname, ct, x))
+                  pool.cache.add(hres.url, x, data, fname, ct)
                if /cancelled then
                   r.callback(Resp(, hres.url, r.referer, data, fname, ct, r.kind, 
                                   if hreq.url === hres.url then r.form_data else &null))
@@ -386,7 +396,7 @@ class Worker()
    private handle_func(r, f)
       local x, s
       if x := f(r) then {
-         if is(x, Handled) then
+         if is(x, StaticData) then
             r.callback(Resp(, r.url, r.referer, x.data, x.fname, x.content_type, r.kind))
          else if s := string(x) then
             r.callback(Resp(, r.url, r.referer, s, r.url.get_path_last(),, r.kind))
@@ -402,7 +412,7 @@ class Worker()
       case t of {
          "file": handle_file_req(r)
          "http"|"https": handle_http_req(r)
-         "image": handle_image_req(r)
+         "cache": handle_cache_req(r)
          default: {
             if f := member(pool.scheme_handlers, t) then
                handle_func(r, f)
@@ -644,10 +654,10 @@ end
 class Img(Label)
    public const
       browser, form, img_url, link_url, imgw, imgh
-   private 
+   private readable
       wrote, img_data, img_name, map, held
 
-   public got_data(res)
+   package got_data(res)
       if \res.err then
          set_paint(ImagePaint().set_cache("rpp.BROKEN_LINK"))
       else {
@@ -666,7 +676,7 @@ class Img(Label)
 
    private handle_rpress(e)
       local pm, pm_menu, url
-      url := if img_url.scheme == u"image" then browser.page_url else img_url
+      url := if img_url.scheme == u"cache" then browser.page_url else img_url
       if pm_menu := browser.create_image_menu(url, img_name, img_data, wrote) then {
          pm := PopupMenu()
          pm.popup(parent_dialog, pm_menu, e.x, e.y)
@@ -2026,7 +2036,7 @@ class Browser(ComponentScrollArea)
       page_data,
       page_name,
       page_title,
-      image_data,
+      page_links,
       running,
       mark_x,
       mark_y,
@@ -2081,10 +2091,6 @@ class Browser(ComponentScrollArea)
 
    public get_map(s)
       return member(maps, s)
-   end
-
-   public get_image_data()
-      return \image_data
    end
 
    private convert_color(el, name)
@@ -2377,14 +2383,13 @@ class Browser(ComponentScrollArea)
    end
 
    private set_top_data(res)
-      local doc, base, n, s, row, c
+      local doc, base, n, s, row, c, cu
       if \curr_history_entry then {
          save_form_values()
          curr_history_entry.area_x := get_area_x()
          curr_history_entry.area_y := get_area_y()
       }
       set_area_y(0).set_area_x(0)
-      image_data := &null
       if \res.err then {
          s := "<html><title>Error</title>" || 
             "<h1>Error:</h1>Getting " || res.url.str() || "<br><br>" || res.err || "</html>"
@@ -2396,9 +2401,9 @@ class Browser(ComponentScrollArea)
             s := "<html><title>" || to_pre(res.fname) || "</title>" || 
                "<pre>" || to_pre(res.data) || "</pre></html>"
          else if is_image(res.content_type, res.data) then {
+            cu := worker_pool.cache.create_url(Time.get_system_seconds() + 60, res.data, res.fname, res.content_type)
             s := "<html><title>" || to_pre(res.fname) || "</title>" || 
-               "<img src=\"image:" || URL.percent_encode(res.fname, URL.UNRESERVED ++ '/') || "\"/></html>"
-            image_data := res.data
+               "<img src=\"" || cu.str() || "\"/></html>"
          } else
             s := "<html><title>Problem</title>" || 
                "<h1>Problem:</h1>Displaying " || res.url.str() || "<br><br>This does not seem to be an HTML or text document or an image</html>"
@@ -2437,6 +2442,7 @@ class Browser(ComponentScrollArea)
          base := URL(n.get_attribute(u"HREF"))
       row := TextFlow(self)
       page_title := &null
+      page_links := []
       c := Context()
       c.base := base
       c.face := "sans"
@@ -2500,6 +2506,7 @@ class Browser(ComponentScrollArea)
          traverse(e, p, context)
       }
       else if url := mk_link(context, e.get_attribute(u"HREF")) then {
+         put(page_links, url)
          c := copy(context)
          c.url := url
          c.fg := c.link_fg
@@ -3847,6 +3854,47 @@ class Browser(ComponentScrollArea)
          pm := PopupMenu()
          pm.popup(parent_dialog, pm_menu, e.x, e.y)
       }
+   end
+
+   public get_page_info()
+      local s, l, t, c, n, sz
+
+      s := "<html><title>Page info</title>"
+      s ||:= "<h1>Page</h1>"
+      if l := \page_url then
+         s ||:= "URL: <a href=\"" || l.str() || "\">" || l.str() || "</a><p>"
+      if sz := *\page_data then
+         s ||:= "Size: " || Format.numeric_to_string(sz, 0, ',') || " bytes<p>"
+      if n := \page_name then
+         s ||:= "Name: " || n || "<p>"
+      if n := \page_title then
+         s ||:= "Title: " || n || "<p>"
+
+      s ||:= "<h1>Images</h1><table><tr><th align=left>Name<th align=right>Size<th align=left>&nbsp;URL</tr>"
+
+      t := table(u"")
+      every c := Seq{traverse_components_postorder()} do {
+         if is(c, TextFlow) then
+            c.calculate_link_text(t)
+         else if is(c, Img) then {
+            l := c.img_url
+            n := limit_text(cbwin, \c.img_name, 200) | "-"
+            sz := *\c.img_data | "-"
+            s ||:= "<tr><td>" || n || "<td align=right>" || Format.numeric_to_string(sz, 0, ',') || "<td><a href=\"" || l.str() || "\">&nbsp;" || l.str() || "</a></tr>"
+         }
+      }
+      s ||:= "</table><h1>Links</h1><table><tr><th align=left>Name<th align=left>URL</tr>"
+      every l := !page_links do {
+         n := limit_text(cbwin, t[l], 200)
+         s ||:= "<tr><td>" || replace(n, " ", "&nbsp;") || "<td><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
+         
+      }      
+      s ||:= "</table></html>"
+      return s
+   end
+
+   public get_cache()
+      return worker_pool.cache
    end
 
    public new()

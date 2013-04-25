@@ -136,7 +136,7 @@ class BrowserDialog(Dialog)
       pool.finally()
    end
 
-   public new_tab(url)
+   public new_tab(url, sel)
       local bt
       bt := BrowserTab(url, pool, settings).
          set_is_hidden(&yes)
@@ -144,13 +144,13 @@ class BrowserDialog(Dialog)
          add(bt, -1).
          do_layout().
          invalidate()
-      if /url then
+      if \sel then
          tabs.set_which_one(bt)
       update_grey()
    end
 
    private on_new_tab(ev)
-      new_tab()
+      new_tab(settings.home_url, 1)
    end
    
    private list_visited()
@@ -274,7 +274,7 @@ class BrowserDialog(Dialog)
       return \d.result
    end
 
-   public new(s, cookies, settings)
+   public new(url, cookies, settings)
       local quit_menu_item, menu_bar, file_menu, bt, new_tab_item
       cast(self,Dialog).new()
       self.settings := settings
@@ -316,7 +316,7 @@ class BrowserDialog(Dialog)
          add(file_menu).
          add(page_menu)
       self.add(menu_bar)
-      bt := BrowserTab(s, pool, settings)
+      bt := BrowserTab(url, pool, settings)
       downloads := DownloadTab(settings)
       tabs := TabSet().
          set_size("200", "150").
@@ -532,7 +532,7 @@ class DownloadTab(TabItem)
    end
 
    public msg(s, n)
-      message_label.set(TextPaint(s), n)
+      message_label.set(AbbreviatedTextPaint(s), n)
    end
 
    public clear_msg()
@@ -790,6 +790,14 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.downloads.download(url, referer)
    end
 
+   private page_info()
+      local s, url
+      if s := browser.get_page_info() then {
+         url := browser.get_cache().create_url(, s)
+         parent_dialog.new_tab(url, 1)
+      }
+   end
+
    public create_page_menu()
       local m, s, l
       m := Menu()
@@ -802,6 +810,9 @@ class BrowserTab(TabItem, BrowserUI)
          m.add(TextMenuItem().
                set_label("Save page...").
                connect(create do_save(browser.page_name, browser.page_data), Event.ACTION))
+         m.add(TextMenuItem().
+               set_label("Page info").
+               connect(page_info, Event.ACTION))
       }
 
       if s := browser.get_current_text_selection() then {
@@ -874,7 +885,7 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public msg(s, n)
-      message_label.set(TextPaint(s), n)
+      message_label.set(AbbreviatedTextPaint(s), n)
    end
 
    public clear_msg()
@@ -923,7 +934,7 @@ class BrowserTab(TabItem, BrowserUI)
 
    public set_title(s)
       /s := "Browser"
-      set_paint(TextPaint(s))
+      set_paint(AbbreviatedTextPaint(s))
    end
 
    private on_stop(ev)
@@ -965,8 +976,7 @@ class BrowserTab(TabItem, BrowserUI)
             browser.goto(u)
          else
             msg("Invalid url")
-      } else
-         on_home()
+      }
       return
    end
 
@@ -1103,7 +1113,7 @@ procedure main(a)
    ImageCache.name_image("rpp.PASTE_24", PASTE)
    ImageCache.name_image("rpp.STOP_24", STOP)
    ImageCache.name_image("rpp.CLEAR_24", CLEAR)
-   s := ucs(a[1])
+   s := ucs(a[1]) | settings.home_url
    d := BrowserDialog(s, t, settings)
    d.show_modal()
    # Save cookies

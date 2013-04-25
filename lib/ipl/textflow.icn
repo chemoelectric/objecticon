@@ -483,6 +483,21 @@ class TextFlow(Component)
          return s
    end
 
+   public calculate_link_text(t)
+      local o, or, u, u2, or2
+      every or := !computed_output_rows do {
+         every o := !or.l do {
+            if u := \o.attr.url then {
+               if u === u2 & or ~=== or2 then
+                  t[u] ||:= u" "
+               t[u] ||:= o.s
+               u2 := u
+               or2 := or
+            }
+         }
+      }
+   end
+
    public layout()
       local co, c, x1, y1
       compute(self.w - border.get_total_width())
