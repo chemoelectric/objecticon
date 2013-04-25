@@ -74,9 +74,9 @@ class ItemPaintList(SelectableScrollArea)
       local d, r
       d := contents[i]
       r := Rect(xp, yp, max(subject_width, view.w), lh)
-      item_paint.draw_point(view.cbwin, 
-                            d,
-                            item_border.float(r, item_paint.get_size(view.cbwin, d)))
+      item_paint.draw_rect(view.cbwin, 
+                           d,
+                           item_border.float(r, item_paint.get_size(view.cbwin, d)))
       item_border.draw_rect(view.cbwin, r)
    end
 

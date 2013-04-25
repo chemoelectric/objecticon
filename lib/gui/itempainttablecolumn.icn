@@ -62,7 +62,7 @@ class ItemPaintTableColumn(TableColumn)
    public draw_cell(W, data, line, col, cy, ch)
       local r
       r := Rect(self.x, cy, self.w, ch)
-      item_paint.draw_point(W, data, item_border.float(r, item_paint.get_size(W, data)))
+      item_paint.draw_rect(W, data, item_border.float(r, item_paint.get_size(W, data)))
       item_border.draw_rect(W, r)
    end
 

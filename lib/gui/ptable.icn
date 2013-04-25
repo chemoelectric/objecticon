@@ -187,7 +187,7 @@ class ItemPaintPTableColumn(PTableColumn)
    public draw_cell(W, data, line, col, cx, cy, ch)
       local r
       r := Rect(cx, cy, width, ch)
-      item_paint.draw_point(W, data, item_border.float(r, item_paint.get_size(W, data)))
+      item_paint.draw_rect(W, data, item_border.float(r, item_paint.get_size(W, data)))
       item_border.draw_rect(W, r)
    end
 

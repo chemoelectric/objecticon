@@ -168,21 +168,21 @@ class TextMenuItem(MenuComponent)
       r := Rect(label_x, label_y, lw, label_h)
       if lw > 0 & \paint_left then {
          border_left.draw(W, r.x, r.y, r.w, r.h)
-         paint_left.draw_point(W, border_left.float(r, paint_left))
+         paint_left.draw_rect(W, border_left.float(r, paint_left))
       }
       r.x +:= lw
 
       if mw > 0 & \paint_mid then {
          r.w := mw
          border_mid.draw(W, r.x, r.y, r.w, r.h)
-         paint_mid.draw_point(W, border_mid.float(r, paint_mid))
+         paint_mid.draw_rect(W, border_mid.float(r, paint_mid))
       }
       r.x +:= mw
 
       if rw > 0 & \paint_right then {
          r.w := rw
          border_right.draw(W, r.x, r.y, r.w, r.h)
-         paint_right.draw_point(W, border_right.float(r, paint_right))
+         paint_right.draw_rect(W, border_right.float(r, paint_right))
       }
    end
 

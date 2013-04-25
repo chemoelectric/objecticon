@@ -87,7 +87,7 @@ class ItemPaintTree(Tree)
       local r, s
       s := item_paint.get_size(view.cbwin, n.label)
       r := Rect(xp, yp, s.w + item_border.get_total_width(), lh)
-      item_paint.draw_point(view.cbwin, n.label, item_border.float(r, s))
+      item_paint.draw_rect(view.cbwin, n.label, item_border.float(r, s))
       item_border.draw_rect(view.cbwin, r)
    end
 

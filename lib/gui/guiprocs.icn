@@ -411,6 +411,22 @@ procedure clone_win_with(w, t)
    return w
 end
 
+#
+# Produce a string which is an initial substring of s, but tries to
+# fit into n pixels of width.  If truncation takes place, the result
+# ends in "...".
+#
+procedure limit_text(W, s, n)
+   local i, t
+   t := s
+   i := *s
+   while i > 0 & W.text_width(t) > n do {
+      t := s[1:i] || "..."
+      i -:= 1
+   }
+   return t
+end
+
 abstract class HasOrientation()
    public 
       is_horizontal_flag

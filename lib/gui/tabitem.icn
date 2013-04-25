@@ -84,7 +84,7 @@ class TabItem(Component)
       local r
       r := Rect(x, y, w, h)
       label_border.draw_rect(W, r)
-      paint.draw_point(W, label_border.float(r, paint))
+      paint.draw_rect(W, label_border.float(r, paint))
       if \focus then
          label_border.draw_focus_rect(W, r)
    end

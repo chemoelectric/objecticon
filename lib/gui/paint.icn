@@ -20,17 +20,20 @@ abstract class Paint(Size)
    # @param W The window to draw into
    # @param x The x position
    # @param y The y position
-   public abstract draw(W, x, y)
+   # @param w The available output width
+   # @param h The available output height
+   public abstract draw(W, x, y, w, h)
 
    # Cleanup any resources used by this instance.
    public finally()
    end
 
-   # Convenient method to draw at a given point; just calls {draw}.
+   # Convenient method to draw at a given point with size limit; just calls {draw}.
    # @param W The window to draw into
-   # @param p The {Point} to draw at
-   public draw_point(W, p)
-      self.draw(W, p.x, p.y)
+   # @param p The {Rect}, giving the point to draw at, and the
+   # @        height/width limitation.
+   public draw_rect(W, r)
+      self.draw(W, r.x, r.y, r.w, r.h)
    end
 end
 
@@ -56,6 +59,31 @@ class TextPaint(Paint)
 
    public draw(W, x, y)
       draw_string_ex(W, x, y, str, accel)
+   end
+
+   # Create a new instance.
+   # @param s The string to draw
+   public new(s)
+      self.str := s
+      return
+   end
+end
+
+# A simple {Paint} instance which draws a string.  If the string is
+# limited when output, then a truncated string ending in "..." is
+# output.
+#
+class AbbreviatedTextPaint(Paint)
+   public str, accel
+
+   public initially(c, accel)
+      self.accel := accel
+      self.h := c.cbwin.get_font_height()
+      self.w := c.cbwin.text_width(str)
+   end
+
+   public draw(W, x, y, w)
+      draw_string_ex(W, x, y, limit_text(W, str, w), accel)
    end
 
    # Create a new instance.
