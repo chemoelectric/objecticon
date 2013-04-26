@@ -10,7 +10,8 @@ import
    net,
    ipl.options,
    ipl.browser,
-   ipl.lists
+   ipl.lists,
+   ipl.strings
 
 global opts
 
@@ -47,11 +48,13 @@ class VisitedEntry()
    public const
       url
    public
+      title,
       last_time,
       times
 
-   public new(url)
+   public new(url, title)
       self.url := url
+      self.title := title
       self.last_time := Time()
       self.times := 1
       return
@@ -144,8 +147,10 @@ class BrowserDialog(Dialog)
          add(bt, -1).
          do_layout().
          invalidate()
-      if \sel then
+      if \sel then {
          tabs.set_which_one(bt)
+         set_focus(bt.search_field.find_focus())
+      }
       update_grey()
    end
 
@@ -154,15 +159,14 @@ class BrowserDialog(Dialog)
    end
    
    private list_visited()
-      local s, e, t
+      local s, e, l, n
       s := "<html><title>Visited</title><table>"
-      s ||:= "<tr><th align=left>URL<th align=right>Times<th>&nbsp;Last visit</tr>"
+      s ||:= "<tr><th align=left>Title<th align=right>Times<th>&nbsp;Last visit<th align=left>URL</tr>"
       every e := !settings.visited do {
-         t := e.url.str()
-         if *t > 50 then
-            t[48:0] := "..."
-         s ||:= "<tr><td><a href=\"" || e.url.str() || "\">" || t || 
-            "</a><td align=right>" || e.times || "<td>&nbsp;" || e.last_time.format("MMM'&nbsp;'dd'&nbsp;'HH:mm") || "</tr>"
+         n := Browser.limit_text(\e.title, 200) | "-"
+         s ||:= "<tr><td>" || replace(n, " ", "&nbsp;") || "<td align=right>" || e.times || "<td>&nbsp;" || e.last_time.format("MMM'&nbsp;'dd'&nbsp;'HH:mm")
+         l := e.url
+         s ||:= "<td><a href=\"" || l.str() || "\">" || l.str() ||  "</a></tr>"
       }
       s ||:= "</table></html>"
       return s
@@ -210,7 +214,7 @@ class BrowserDialog(Dialog)
                s ||:= "<tr><td>Expires&nbsp;&nbsp;<td>" || (\ck.expires).to_rfc822() || "</tr>"
                s ||:= "<tr><td>Domain&nbsp;&nbsp;<td>" || \ck.domain || "</tr>"
                s ||:= "<tr><td>Path&nbsp;&nbsp;<td>" || \ck.path || "</tr>"
-               s ||:= "<tr><td>Secure&nbsp;&nbsp;<td>" || \ck.secure || "</tr>/"
+               s ||:= "<tr><td>Secure&nbsp;&nbsp;<td>" || \ck.secure || "</tr>"
                s ||:= "<tr><td>Comment&nbsp;&nbsp;<td>" || \ck.comment || "</tr>"
                s ||:= "<tr><td>Version&nbsp;&nbsp;<td>" || \ck.version || "</tr>"
                s ||:= "</table><br><a href=config:del_cookie?" || URL.make_cgi_string(table(, 
@@ -236,6 +240,7 @@ class BrowserDialog(Dialog)
    private config_main()
       return "<html><title>Config</title><a href=config:cookies >Edit cookies</a><p>_
               <a href=config:visited >Visited pages</a><p>_
+              <a href=config:cache >Cache status</a><p>_
               <fieldset><form method=get action=submit >_
                  <legend>Edit settings</legend>_
                  <table>_
@@ -248,6 +253,10 @@ class BrowserDialog(Dialog)
               </form></fieldset></html>"
    end
 
+   private cache_status()
+      return pool.cache.get_status()
+   end
+
    private config_handler(req)
       local t
       return case string(req.url.path) of {
@@ -255,6 +264,7 @@ class BrowserDialog(Dialog)
          "visited": list_visited()
          "cookies": list_all_cookies()
          "cookie": list_cookie(member(req.url.extract_cgi_parameters(), "q")[1])
+         "cache": cache_status()
          "del_cookies": del_cookies(member(req.url.extract_cgi_parameters(), "q")[1])
          "del_cookie": {
             if t := req.url.extract_cgi_parameters() then
@@ -910,26 +920,29 @@ class BrowserTab(TabItem, BrowserUI)
       return self
    end
 
-   private update_visited(url)
+   private update_visited(url, title)
       local e, i 
+      if url.scheme == (u"cache" | u"config") then
+         fail
       every i := 1 to *settings.visited do {
          e := settings.visited[i]
          if equals(url, e.url) then {
             e.last_time := Time()
+            e.title := title
             e.times +:= 1
             delete(settings.visited, i)
             push(settings.visited, e)
             return
          }
       }
-      push(settings.visited, VisitedEntry(url))
+      push(settings.visited, VisitedEntry(url, title))
       if *settings.visited > settings.visited_size then
          pull(settings.visited)
    end
 
-   public set_url_field(url)
-      update_visited(url)
-      search_field.set_contents(url.str())
+   public page_loaded()
+      update_visited(browser.page_url, browser.page_title)
+      search_field.set_contents(browser.page_url.str())
    end
 
    public set_title(s)

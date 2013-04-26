@@ -119,9 +119,25 @@ class Cache()
    public create_url(expiry, data, fname, content_type)
       local url
       /expiry := Time.get_system_seconds() + 60
-      url := URL("cache:" || (id +:= 1))
+      url := URL(u"cache:" || (id +:= 1))
       add(url, expiry, data, fname, content_type)
       return url
+   end
+
+   public get_status()
+      local s, ce, n, sz, exp, ct, l
+      s := "<html><title>Cache status</title><table>"
+      s ||:= "<tr><th align=left>Filename<th align=right>Size<th>&nbsp;Expiry<th align=left>Content type<th align=left>URL</tr>"
+      every ce := !t do {
+         n := Browser.limit_text(\ce.fname, 200) | "-"
+         sz := Format.numeric_to_string(*ce.data, 0, ',')
+         exp := \ce.expiry | "-"
+         ct := ((\ce.content_type).type || "/" || ce.content_type.subtype) | "-"
+         l := ce.url
+         s ||:= "<tr><td>" || n || "<td align=right>" || sz || "<td>&nbsp;" || exp || "<td>" || ct || "<td><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
+      }
+      s ||:= "</table></html>"
+      return s
    end
 
    public new(lim)
@@ -328,6 +344,16 @@ class Worker()
       return
    end
 
+   # On a redirection, we will get back a URL made from a string
+   # rather than ucs.  This interacts poorly with the visited list and
+   # the textfield in the client, so convert to a ucs-based URL.
+   #
+   private ensure_ucs_url(url)
+      if type(url.scheme) == "ucs" then
+         return url
+      return URL(Text.liberal_ucs(url.str())) | URL(u"invalid:url")
+   end
+
    private handle_http_req(r)
       local s, data, hreq, hres, fname, ct, x, ce
       if r.kind ~= REFRESH & /r.form_data & (ce := pool.cache.get(r.url)) then
@@ -349,7 +375,7 @@ class Worker()
             ct := ContentType.parse(hres.get_first_header("Content-Type"))
             # Note that cancelling removes tmp_file
             if /cancelled then
-               r.callback(Resp(, hres.url, r.referer,, fname, ct, r.kind, 
+               r.callback(Resp(, ensure_ucs_url(hres.url), r.referer,, fname, ct, r.kind, 
                                if hreq.url === hres.url then r.form_data else &null, tmp_file))
          } else {
             s.close()
@@ -383,7 +409,7 @@ class Worker()
                if httpc.request.method == "GET" & x := get_expiry(hres) then
                   pool.cache.add(hres.url, x, data, fname, ct)
                if /cancelled then
-                  r.callback(Resp(, hres.url, r.referer, data, fname, ct, r.kind, 
+                  r.callback(Resp(, ensure_ucs_url(hres.url), r.referer, data, fname, ct, r.kind, 
                                   if hreq.url === hres.url then r.form_data else &null))
             } else {
                if /cancelled then
@@ -1978,7 +2004,7 @@ record HistoryEntry(url,          # URL displayed (on a redirect may differ from
 abstract class BrowserUI()
    public abstract msg(s, n)
    public abstract clear_msg()
-   public abstract set_url_field(url)
+   public abstract page_loaded()
    public abstract update_grey(gs)
    public abstract set_title(s)
    public abstract link_mrelease(url)
@@ -2050,6 +2076,9 @@ class Browser(ComponentScrollArea)
       COLORS,
       FACES,
       SIZES
+
+   private static
+      default_font_clone
 
    private static init()
       COLORS := table(,
@@ -2175,8 +2204,8 @@ class Browser(ComponentScrollArea)
       return self
    end
 
-   public set_url_field(url)
-      (\ui).set_url_field(url)
+   public page_loaded()
+      (\ui).page_loaded()
       return self
    end
 
@@ -2231,6 +2260,11 @@ class Browser(ComponentScrollArea)
       every c := Seq{traverse_components_postorder()} do
          if is(c,TextFlow) & yp := c.lookup_named_anchor(name) then
             return yp
+   end
+
+   public static limit_text(s, n)
+      /default_font_clone := Window().set_font("sans" || "," || SIZES[3])
+      return gui.limit_text(default_font_clone, s, n)
    end
 
    public initially()
@@ -2423,7 +2457,6 @@ class Browser(ComponentScrollArea)
          history_pos +:= 1
       }
       do_update_grey()
-      set_url_field(page_url)
       curr_history_entry := history[history_pos]
       # Note that the url/form_data may change even on a
       # navigate/refresh, if the server behaved differently (eg
@@ -2468,6 +2501,7 @@ class Browser(ComponentScrollArea)
       invalidate()
       parent_dialog.resynch_pointer()
       setup_tabbing()
+      page_loaded()
    end
 
    private focus_scroll(e, c)
@@ -3857,7 +3891,7 @@ class Browser(ComponentScrollArea)
    end
 
    public get_page_info()
-      local s, l, t, c, n, sz
+      local s, l, t, c, n, sz, m, f, imgs
 
       s := "<html><title>Page info</title>"
       s ||:= "<h1>Page</h1>"
@@ -3865,31 +3899,52 @@ class Browser(ComponentScrollArea)
          s ||:= "URL: <a href=\"" || l.str() || "\">" || l.str() || "</a><p>"
       if sz := *\page_data then
          s ||:= "Size: " || Format.numeric_to_string(sz, 0, ',') || " bytes<p>"
-      if n := \page_name then
+      if n := \page_name & *n > 0 then
          s ||:= "Name: " || n || "<p>"
-      if n := \page_title then
+      if n := \page_title & *n > 0 then
          s ||:= "Title: " || n || "<p>"
 
-      s ||:= "<h1>Images</h1><table><tr><th align=left>Name<th align=right>Size<th align=left>&nbsp;URL</tr>"
-
+      imgs := []
       t := table(u"")
       every c := Seq{traverse_components_postorder()} do {
          if is(c, TextFlow) then
             c.calculate_link_text(t)
-         else if is(c, Img) then {
-            l := c.img_url
-            n := limit_text(cbwin, \c.img_name, 200) | "-"
-            sz := *\c.img_data | "-"
-            s ||:= "<tr><td>" || n || "<td align=right>" || Format.numeric_to_string(sz, 0, ',') || "<td><a href=\"" || l.str() || "\">&nbsp;" || l.str() || "</a></tr>"
-         }
+         else if is(c, Img) then
+            put(imgs, c)
       }
-      s ||:= "</table><h1>Links</h1><table><tr><th align=left>Name<th align=left>URL</tr>"
-      every l := !page_links do {
-         n := limit_text(cbwin, t[l], 200)
-         s ||:= "<tr><td>" || replace(n, " ", "&nbsp;") || "<td><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
-         
-      }      
-      s ||:= "</table></html>"
+
+      if *forms > 0 then {
+         s ||:= "<h1>Forms</h1><table><tr><th align=left>Name<th align=left>Method<th align=left>URL</tr>"
+         every f := !forms do {
+            if l := \f.url then {
+               n := \f.id | "-"
+               m := \f.method | "-"
+               s ||:= "<tr><td>" || n || "<td>" || m || "<td><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
+            }
+         }
+         s ||:= "</table>"
+      }
+
+      if *imgs > 0 then {
+         s ||:= "<h1>Images</h1><table><tr><th align=left>Name<th align=right>Size<th align=left>&nbsp;URL</tr>"
+         every c := !imgs do {
+            l := c.img_url
+            n := limit_text(\c.img_name, 200) | "-"
+            sz := Format.numeric_to_string(*\c.img_data, 0, ',') | "-"
+            s ||:= "<tr><td>" || n || "<td align=right>" || sz || "<td><a href=\"" || l.str() || "\">&nbsp;" || l.str() || "</a></tr>"
+         }
+         s ||:= "</table>"
+      }
+
+      if *page_links > 0 then {
+         s ||:= "<h1>Links</h1><table><tr><th align=left>Name<th align=left>URL</tr>"
+         every l := !page_links do {
+            n := limit_text(t[l], 200)
+            s ||:= "<tr><td>" || replace(n, " ", "&nbsp;") || "<td><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
+         }      
+         s ||:= "</table>"
+      }
+      s ||:= "</html>"
       return s
    end
 
