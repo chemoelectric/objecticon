@@ -602,7 +602,7 @@ class TextFlow(Component)
    end
 
    private fits_in_row(co)
-      return have_max() | (row_x + co.maxw  + row_width <= right_margin)
+      return have_max() | (row_x + co.pw  + row_width <= right_margin)
    end
 
    private do_deferred(co)
@@ -611,7 +611,7 @@ class TextFlow(Component)
             if fits_in_row(co) then {
                co.x := row_x
                co.y := row_y
-               co.w := min(co.maxw, right_margin - row_x - row_width)
+               co.w := min(co.pw, right_margin - row_x - row_width)
                co.set_height_from_width()
                row_x +:= co.w
                put(left_comps, co)
@@ -620,7 +620,7 @@ class TextFlow(Component)
          }
          Align.R: {
             if fits_in_row(co) then {
-               co.w := min(co.maxw, right_margin - row_x - row_width)
+               co.w := min(co.pw, right_margin - row_x - row_width)
                co.x := right_margin - co.w
                co.y := row_y
                co.set_height_from_width()
@@ -646,18 +646,18 @@ class TextFlow(Component)
             if *deferred = 0 & fits_in_row(co) then {
                co.x := row_x
                co.y := row_y
-               co.w := co.maxw
+               co.w := co.pw
                co.set_height_from_width()
-               row_x +:= co.maxw
+               row_x +:= co.w
                put(left_comps, co)
             } else
                put(deferred, co)
          }
          Align.R: {
             if *deferred = 0 & fits_in_row(co) then {
-               co.x := right_margin - co.maxw 
+               co.w := co.pw
+               co.x := right_margin - co.w 
                co.y := row_y
-               co.w := co.maxw
                co.set_height_from_width()
                right_margin -:= co.w
                put(right_comps, co)
