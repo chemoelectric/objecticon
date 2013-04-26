@@ -150,6 +150,7 @@ class TextFlow(Component)
       row,
       row_x,
       row_y,
+      row_bottom,
       row_width,
       row_ascent,
       first_row_ascent,
@@ -201,23 +202,19 @@ class TextFlow(Component)
       named_anchors := table()
       row := []
       deferred := []
-      row_width := 0
-      need_spc := &null
       at_new_para := 1
-      row_y := 0
-      row_x := 0
-      max_pre_w := 0
-      max_word_w := 0
-      max_ll := 0
-      baseline_off := 0
+      row_width := row_y := row_bottom := row_x := max_pre_w := max_word_w := max_ll := 
+         baseline_off := row_abs_middle_height := row_abs_top_height := 
+         row_abs_bottom_height := row_ascent := row_descent := 0
       right_margin := compute_w
-      row_abs_middle_height := row_abs_top_height := row_abs_bottom_height := row_ascent := row_descent := 0
-      first_row_ascent := &null
+      need_spc := first_row_ascent := &null
       compute1(, input)
       while *(row | deferred) > 0 do
          new_row()
       if \calculating then {
-         # Ensure that we have cleared any left/right images
+         # Ensure that we have cleared any left/right images, so that
+         # we calculate max_ll correctly (which we only need if
+         # calculating).
          until have_max() do 
             new_row()
       }
@@ -267,7 +264,7 @@ class TextFlow(Component)
       local mh, co
       dw -:= border.get_total_width()
       compute(dw)
-      mh := row_y
+      mh := row_bottom
       every co := !left_comps | !right_comps do
         mh <:= co.y + co.h
       return mh + border.get_total_height()
@@ -523,69 +520,77 @@ class TextFlow(Component)
    end
 
    private new_row(gap)
-      local x1, r, g, need, or
+      local x1, r, g, need, or, row_height
       /gap := 0
-      x1 := row_x
+      if *row > 0 then {
+         x1 := row_x
 
-      # Expand space for comps relative to absolute top
-      row_descent <:= row_abs_top_height - row_ascent
+         # Expand space for comps relative to absolute top
+         row_descent <:= row_abs_top_height - row_ascent
 
-      # and to absolute bottom
-      row_ascent <:= row_abs_bottom_height - row_descent
+         # and to absolute bottom
+         row_ascent <:= row_abs_bottom_height - row_descent
 
-      # finally absolute middle
-      need := row_abs_middle_height - (row_ascent + row_descent)
-      if need > 0 then {
-         row_ascent +:= need / 2
-         row_descent +:= need / 2 + need % 2
-      }
-
-      put(output_rows, or := OutputRow())
-      or.x := row_x
-      or.y := row_y
-      or.h := row_ascent + row_descent
-      or.w := row_width
-
-      /first_row_ascent := row_ascent      
-      while r := get(row) do {
-         if /calculating & x1 = row_x then {
-            case r.attr.align of {
-               Align.C:
-                  x1 +:= (right_margin - row_width - row_x) / 2
-               Align.R:
-                  x1 +:= right_margin - row_width - row_x
-            }
+         # finally absolute middle
+         need := row_abs_middle_height - (row_ascent + row_descent)
+         if need > 0 then {
+            row_ascent +:= need / 2
+            row_descent +:= need / 2 + need % 2
          }
-         if is(r, CompOut) then {
-            r.x := x1
-            r.y := case r.align of {
-               Align.C: row_y + row_ascent - r.h / 2
-               Align.B: row_y + row_ascent - r.ascent
-               Align.T: row_y
-               "absbottom": row_y + row_ascent + row_descent - r.h
-               "absmiddle": row_y + (row_ascent + row_descent - r.h) / 2
-               default: runerr("invalid alignment", r.align)
-            }
-            x1 +:= r.w
-         } else {
-            r.x := x1
-            r.y := row_y + row_ascent - r.ascent
-            x1 +:= r.w
-            put(or.l, r)
+
+         row_height := row_ascent + row_descent
+
+         if /calculating then {
+            put(output_rows, or := OutputRow())
+            or.x := row_x
+            or.y := row_y
+            or.h := row_height
+            or.w := row_width
          }
-         if \calculating & \r.attr.pre then
-            # Since a pre section can still have several elements on a
-            # line (eg with an <a> in a line), we need to record the
-            # maximum width of the line.
-            max_pre_w <:= r.x + r.w - row_x
-      }
+         row_bottom := row_y + row_height
+
+         /first_row_ascent := row_ascent      
+         while r := get(row) do {
+            if /calculating & x1 = row_x then {
+               case r.attr.align of {
+                  Align.C:
+                     x1 +:= (right_margin - row_width - row_x) / 2
+                  Align.R:
+                     x1 +:= right_margin - row_width - row_x
+               }
+            }
+            if is(r, CompOut) then {
+               r.x := x1
+               r.y := case r.align of {
+                  Align.C: row_y + row_ascent - r.h / 2
+                  Align.B: row_y + row_ascent - r.ascent
+                  Align.T: row_y
+                  "absbottom": row_y + row_height - r.h
+                  "absmiddle": row_y + (row_height - r.h) / 2
+                  default: runerr("invalid alignment", r.align)
+               }
+               x1 +:= r.w
+            } else {
+               r.x := x1
+               r.y := row_y + row_ascent - r.ascent
+               x1 +:= r.w
+               put((\or).l, r)
+            }
+            if \calculating & \r.attr.pre then
+               # Since a pre section can still have several elements on a
+               # line (eg with an <a> in a line), we need to record the
+               # maximum width of the line.
+               max_pre_w <:= r.x + r.w - row_x
+         }
+
+         row_y +:= row_height + gap
+      } else
+         row_y +:= 1
 
       if \calculating then
          max_ll <:= compute_w - (right_margin - row_width - row_x)
 
-      row_width := 0
-      row_y +:= max(1, row_ascent + row_descent + gap)
-      row_abs_middle_height := row_abs_top_height := row_abs_bottom_height := row_ascent := row_descent := 0
+      row_width := row_abs_middle_height := row_abs_top_height := row_abs_bottom_height := row_ascent := row_descent := 0
 
       row_x := 0
       every g := !left_comps do
