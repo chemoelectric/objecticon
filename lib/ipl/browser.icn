@@ -126,8 +126,8 @@ class Cache()
 
    public get_status()
       local s, ce, n, sz, exp, ct, l
-      s := "<html><title>Cache status</title><table>"
-      s ||:= "<tr><th align=left>Filename<th align=right>Size<th>&nbsp;Expiry<th align=left>Content type<th align=left>URL</tr>"
+      s := "<html><title>Cache status</title>" || Browser.get_table_tag()
+      s ||:= "<tr><th align=left>Filename<th align=right>Size<th>&nbsp;Expiry<th align=left>Content&nbsp;type<th align=left>URL</tr>"
       every ce := !t do {
          n := Browser.limit_text(\ce.fname, 200) | "-"
          sz := Format.numeric_to_string(*ce.data, 0, ',')
@@ -257,7 +257,7 @@ class Worker()
          return use {
             rs := RamStream(),
             {
-               rs.out("<html><title>Directory " || f || "</title><table>")
+               rs.out("<html><title>Directory " || f || "</title>" || Browser.get_table_tag())
                path := FilePath(f)
                every e := !l do {
                   t := e[2]
@@ -601,6 +601,49 @@ class WorkerPool()
    public set_user_agent(s)
       self.user_agent := s
       return self
+   end
+
+   public get_status()
+      local s, w, st, t, l, r, k, c
+      s := "<html><title>Worker pool status</title>"
+
+      s ||:= "<h1>Workers</h1>" || Browser.get_table_tag() || "<tr><th align=left>Serial<th align=left>Status<th align=left>URL</tr>"
+      every w := !workers do {
+         t := w.task
+         st := if t.is_current() then "current"
+         else if t.is_sleeping() then "sleeping"
+         else if t.is_polling() then "polling"
+         else if t.is_ready() then "ready"
+         else if t.is_active() then "active"
+         else "stopped"
+         s ||:= "<tr><td>" || serial(w) || "<td>" || st
+         if l := (\w.doing).url then
+            s ||:= "<td><a href=\"" || l.str() || "\">" || l.str() || "</a>"
+         else
+            s ||:= "<td>"
+         s ||:= "</tr>"          
+      }
+      s ||:= "</table>"
+
+      if *queue > 0 then {
+         s ||:= "<h1>Queue</h1>" || Browser.get_table_tag() || "<tr><th align=left>Client<th align=left>Kind<th align=left>URL</tr>"
+         every r := !!queue do {
+            k := case r.kind of {
+               Worker.NORMAL: "NORMAL"
+               Worker.NAVIGATE: "NAVIGATE"
+               Worker.REFRESH: "REFRESH"
+               Worker.DOWNLOAD: "DOWNLOAD"
+               default: "-"
+            }
+            l := r.url
+            c := Class.get_name(r.client) || "#" || serial(r.client)
+            s ||:= "<tr><td>" || c || "<td>" || k || "<td><a href=\"" || l.str() || "\">" || l.str() || "</a>"
+         }
+         s ||:= "</table>"
+      }
+
+      s ||:= "</html>"
+      return s
    end
 
    public new(n)
@@ -3647,7 +3690,6 @@ class Browser(ComponentScrollArea)
 
    private handle_ldrag(e)
       \mark_x | fail
-
       view.inner.invalidate(get_band_rect())
       view.inner.invalidate(calculate_banded_rect())
       set_cursor_from_pos(e)
@@ -3914,7 +3956,7 @@ class Browser(ComponentScrollArea)
       }
 
       if *forms > 0 then {
-         s ||:= "<h1>Forms</h1><table><tr><th align=left>Name<th align=left>Method<th align=left>URL</tr>"
+         s ||:= "<h1>Forms</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=left>Method<th align=left>URL</tr>"
          every f := !forms do {
             if l := \f.url then {
                n := \f.id | "-"
@@ -3926,7 +3968,7 @@ class Browser(ComponentScrollArea)
       }
 
       if *imgs > 0 then {
-         s ||:= "<h1>Images</h1><table><tr><th align=left>Name<th align=right>Size<th align=left>&nbsp;URL</tr>"
+         s ||:= "<h1>Images</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=right>Size<th align=left>&nbsp;URL</tr>"
          every c := !imgs do {
             l := c.img_url
             n := limit_text(\c.img_name, 200) | "-"
@@ -3937,7 +3979,7 @@ class Browser(ComponentScrollArea)
       }
 
       if *page_links > 0 then {
-         s ||:= "<h1>Links</h1><table><tr><th align=left>Name<th align=left>URL</tr>"
+         s ||:= "<h1>Links</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=left>URL</tr>"
          every l := !page_links do {
             n := limit_text(t[l], 200)
             s ||:= "<tr><td>" || replace(n, " ", "&nbsp;") || "<td><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
@@ -3946,6 +3988,11 @@ class Browser(ComponentScrollArea)
       }
       s ||:= "</html>"
       return s
+   end
+
+   public static get_table_tag()
+      #return "<table border=1 cellspacing=4 rules=cols>"
+      return "<table cellspacing=4>"
    end
 
    public get_cache()

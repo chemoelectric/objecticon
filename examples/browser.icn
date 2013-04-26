@@ -160,7 +160,7 @@ class BrowserDialog(Dialog)
    
    private list_visited()
       local s, e, l, n
-      s := "<html><title>Visited</title><table>"
+      s := "<html><title>Visited</title>" || Browser.get_table_tag() || ""
       s ||:= "<tr><th align=left>Title<th align=right>Times<th>&nbsp;Last visit<th align=left>URL</tr>"
       every e := !settings.visited do {
          n := Browser.limit_text(\e.title, 200) | "-"
@@ -241,6 +241,7 @@ class BrowserDialog(Dialog)
       return "<html><title>Config</title><a href=config:cookies >Edit cookies</a><p>_
               <a href=config:visited >Visited pages</a><p>_
               <a href=config:cache >Cache status</a><p>_
+              <a href=config:workers >Worker pool status</a><p>_
               <fieldset><form method=get action=submit >_
                  <legend>Edit settings</legend>_
                  <table>_
@@ -257,6 +258,10 @@ class BrowserDialog(Dialog)
       return pool.cache.get_status()
    end
 
+   private workers_status()
+      return pool.get_status()
+   end
+
    private config_handler(req)
       local t
       return case string(req.url.path) of {
@@ -265,6 +270,7 @@ class BrowserDialog(Dialog)
          "cookies": list_all_cookies()
          "cookie": list_cookie(member(req.url.extract_cgi_parameters(), "q")[1])
          "cache": cache_status()
+         "workers": workers_status()
          "del_cookies": del_cookies(member(req.url.extract_cgi_parameters(), "q")[1])
          "del_cookie": {
             if t := req.url.extract_cgi_parameters() then
