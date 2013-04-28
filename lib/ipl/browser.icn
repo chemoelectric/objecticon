@@ -124,6 +124,27 @@ class Cache()
       return url
    end
 
+   private format_expiry(v)
+      if /v then
+         return "never"
+      v -:= Time.get_system_seconds()
+      if v < 0 then
+         return "expired"
+      if v < 300 then
+         return v || "&nbsp;secs"
+      v /:= 60
+      if v < 120 then
+         return v || "&nbsp;mins"
+      v /:= 60
+      if v <= 48 then
+         return v || "&nbsp;hours"
+      v /:= 24
+      if v < 365 * 2 then
+         return v || "&nbsp;days"
+      v /:= 365
+      return v || "&nbsp;years"
+   end
+
    public get_status()
       local s, ce, n, sz, exp, ct, l
       s := "<html><title>Cache status</title>" || Browser.get_table_tag()
@@ -131,7 +152,7 @@ class Cache()
       every ce := !t do {
          n := Browser.limit_text(\ce.fname, 200) | "-"
          sz := Format.numeric_to_string(*ce.data, 0, ',')
-         exp := \ce.expiry | "-"
+         exp := format_expiry(ce.expiry)
          ct := ((\ce.content_type).type || "/" || ce.content_type.subtype) | "-"
          l := ce.url
          s ||:= "<tr><td>" || n || "<td align=right>" || sz || "<td>&nbsp;" || exp || "<td>" || ct || "<td><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
