@@ -412,8 +412,8 @@ class GridPaint(Paint)
             cw.draw_rectangle(0, 0, w, h)
 
             every i := !(\g).info do {
-               cw.draw_rectangle(g.col_x[i.x],
-                                 g.row_y[i.y],
+               cw.draw_rectangle(g.a_col_x[i.x],
+                                 g.a_row_y[i.y],
                                  Grid.slice(i.x, i.w, g.a_col_w),
                                  Grid.slice(i.y, i.h, g.a_row_h))
             }
