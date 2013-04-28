@@ -664,16 +664,12 @@ class Pod()
    private
       anchor,
       entries,
-      t
+      pods
 
    public static const POD_SIZE
 
    private static init()
       POD_SIZE := 100
-   end
-
-   private pod_key(x, y)
-      return (x / POD_SIZE) || "," || (y / POD_SIZE)
    end
 
    private pod_keys(sz)
@@ -690,7 +686,7 @@ class Pod()
       put(entries, c)
       r := Rect(c.x - anchor.x, c.y - anchor.y, c.w, c.h)
       every k := pod_keys(r) do {
-         (l := member(t, k)) | insert(t, k, l := [])
+         (l := member(pods, k)) | insert(pods, k, l := [])
          put(l, *entries)
       }
    end
@@ -699,13 +695,20 @@ class Pod()
       local s
       s := set()
       r := Rect(r.x - anchor.x, r.y - anchor.y, r.w, r.h)
-      every insert(s, !member(t, pod_keys(r)))
-      #every write(image( entries[!sort(s)]))
+      every insert(s, !member(pods, pod_keys(r)))
       suspend entries[!sort(s)]
    end
 
+   public intersecting(r)
+      local c
+      every c := nearby(r) do {
+         if c.intersect(r) then
+            suspend c
+      }
+   end
+
    public new(anchor)
-      t := table()
+      pods := table()
       entries := []
       self.anchor := anchor
       return
@@ -2193,7 +2196,7 @@ class Browser(ComponentScrollArea)
       cursor_x,
       cursor_y,
       banded,
-      banded_pod,
+      banded_candidates,
       text_selection,
       links_selection
 
@@ -3827,14 +3830,15 @@ class Browser(ComponentScrollArea)
       clear_mark()
       clear_banded()
       scroll_ticker.stop()
-      create_banded_pod()
+      create_banded_candidates()
    end
 
-   private create_banded_pod()
+   private create_banded_candidates()
       local c
-      banded_pod := Pod(view.inner)
+      banded_candidates := Pod(view.inner)
       every c := Seq{view.inner.traverse_components_postorder()} do
-         banded_pod.add(c)
+         if is(c, TextFlow | Img) then
+            banded_candidates.add(c)
    end
 
    public display()
@@ -3920,13 +3924,11 @@ class Browser(ComponentScrollArea)
       local c, br
       clear_banded()
       br := get_band_rect() | fail
-      every c := banded_pod.nearby(br) do {
-         if br.intersect(c) then {
-            if is(c, TextFlow) then
-               c.calculate_banded(br, banded)
-            else if is(c, Img) then
-               insert(banded, c, c)
-         }
+      every c := banded_candidates.intersecting(br) do {
+         if is(c, TextFlow) then
+            c.calculate_banded(br, banded)
+         else if is(c, Img) then
+            insert(banded, c, c)
       }
    end
 
@@ -3959,7 +3961,7 @@ class Browser(ComponentScrollArea)
       text_selection := &null
       br := calculate_banded_rect() | fail
       s := u""
-      every c := banded_pod.nearby(br) do {
+      every c := banded_candidates.intersecting(br) do {
          if is(c, TextFlow) then {
             if t := c.get_selected_text(br) then {
                if *s > 0 then
