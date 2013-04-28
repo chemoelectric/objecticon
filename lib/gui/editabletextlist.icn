@@ -1060,7 +1060,8 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public focus_changed(e) 
-      invalidate_line(get_view_list_index(cursor_x, cursor_y))
+      if is_live() then
+         invalidate_line(get_view_list_index(cursor_x, cursor_y))
    end
 
    public draw()

@@ -94,6 +94,7 @@ class TabSet(Component)
 
    public invalidate_tab_region()
       local r
+      is_live() | fail
       r := if /self.tabs_at_bottom_flag then
          Rect(self.x + border.get_l_inset(), self.y + border.get_t_inset(), self.w - border.get_total_width(), self.tab_h)
       else
