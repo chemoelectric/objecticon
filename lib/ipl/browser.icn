@@ -660,12 +660,123 @@ class WorkerPool()
    end
 end
 
-class TblContent(Component) end
+class Pod()
+   private
+      anchor,
+      entries,
+      t
 
-class Tbl(Border, HasMaxWidth, HasAscent)
+   public static const POD_SIZE
+
+   private static init()
+      POD_SIZE := 100
+   end
+
+   private pod_key(x, y)
+      return (x / POD_SIZE) || "," || (y / POD_SIZE)
+   end
+
+   private pod_keys(sz)
+      local x1, y1, x2, y2
+      x1 := sz.x / POD_SIZE
+      y1 := sz.y / POD_SIZE
+      x2 := (sz.x + sz.w - 1) / POD_SIZE
+      y2 := (sz.y + sz.h - 1) / POD_SIZE
+      suspend (x1 to x2) || "," || (y1 to y2)
+   end
+
+   public add(c)
+      local k, l, r
+      put(entries, c)
+      r := Rect(c.x - anchor.x, c.y - anchor.y, c.w, c.h)
+      every k := pod_keys(r) do {
+         (l := member(t, k)) | insert(t, k, l := [])
+         put(l, *entries)
+      }
+   end
+
+   public nearby(r)
+      local s
+      s := set()
+      r := Rect(r.x - anchor.x, r.y - anchor.y, r.w, r.h)
+      every insert(s, !member(t, pod_keys(r)))
+      #every write(image( entries[!sort(s)]))
+      suspend entries[!sort(s)]
+   end
+
+   public new(anchor)
+      t := table()
+      entries := []
+      self.anchor := anchor
+      return
+   end
+end
+
+class TblContent(Component)
    private
       hrules, vrules
 
+   public whose_point(ex, ey)
+      local ci, i, g, c
+      g := layout_delegate.g
+      every i := g.rows_in_range(ey - y, 1) do {
+         every ci := !g.in_row[i] do {
+            c := ci.obj
+            if c.is_unhidden() & c.inside(ex, ey) then
+               return c
+         }
+      }
+   end
+
+   public display()
+      local ci, i, r, g, seen
+      r := get_cbwin_clip()
+      g := layout_delegate.g
+      seen := set()
+      every i := g.rows_in_range(r.y - y, r.h) do {
+         every ci := !g.in_row[i] do {
+            if ci.h = 1 then
+               display_cell_info(ci, r)
+            else {
+               member(seen, ci) | {
+                  display_cell_info(ci, r)
+                  insert(seen, ci)
+               }
+            }               
+         }
+      }
+   end
+
+   private display_cell_info(ci, cbr)
+      local g, r
+      display_child(ci.obj)
+      if \vrules | \hrules then {
+         g := layout_delegate.g
+         r := Rect(x + g.a_col_x[ci.x],
+                   y + g.a_row_y[ci.y],
+                   Grid.slice(ci.x, ci.w, g.a_col_w),
+                   Grid.slice(ci.y, ci.h, g.a_row_h))
+         if cbr.intersect(r) then {
+            if member(\vrules, ci.x) then
+               cbwin.draw_rectangle(r.x, r.y, 1, r.h)
+            if member(\hrules, ci.y) then
+               cbwin.draw_rectangle(r.x, r.y, r.w, 1)
+         }
+      }
+   end
+
+   public set_hrules(r)
+      self.hrules := r
+      return self
+   end
+
+   public set_vrules(r)
+      self.vrules := r
+      return self
+   end
+end
+
+class Tbl(Border, HasMaxWidth, HasAscent)
    public get_max_width()
       local w1
       w1 := content.layout_delegate.get_max_width()  + border.get_total_width()
@@ -679,36 +790,6 @@ class Tbl(Border, HasMaxWidth, HasAscent)
       /title | return dh
       dw -:= border.get_total_width()
       return content.layout_delegate.get_ascent(dw) + border.get_t_inset() | dh
-   end
-
-   public set_hrules(r)
-      self.hrules := r
-      return self
-   end
-
-   public set_vrules(r)
-      self.vrules := r
-      return self
-   end
-
-   public display()
-      local i, g
-      cast(self, Border).display()
-      g := content.layout_delegate.g
-      g.compute_actual_col_positions(content.x)
-      g.compute_actual_row_positions(content.y)
-      every i := !g.info do {
-         if member(\vrules, i.x) then
-            cbwin.draw_rectangle(g.col_x[i.x],
-                                 g.row_y[i.y],
-                                 1,
-                                 Grid.slice(i.y, i.h, g.a_row_h))
-         if member(\hrules, i.y) then
-            cbwin.draw_rectangle(g.col_x[i.x],
-                                 g.row_y[i.y],
-                                 Grid.slice(i.x, i.w, g.a_col_w),
-                                 1)
-      }
    end
 
    public new()
@@ -2112,6 +2193,7 @@ class Browser(ComponentScrollArea)
       cursor_x,
       cursor_y,
       banded,
+      banded_pod,
       text_selection,
       links_selection
 
@@ -3275,22 +3357,22 @@ class Browser(ComponentScrollArea)
       case string(map(e.get_attribute(u"RULES"))) of {
          "groups": {
             # NB - either of these lists may be empty
-            tbl.set_hrules(set!ct.rowgroups[2:0])
-            tbl.set_vrules(set!get_colgroup_cols(ct)[2:0])
+            tbl.content.set_hrules(set!ct.rowgroups[2:0])
+            tbl.content.set_vrules(set!get_colgroup_cols(ct)[2:0])
          }
          "all": {
             i := 1
             every i <:= (!tbl.content.children).get_constraint("x")
-            tbl.set_vrules(Set{2 to i})
-            tbl.set_hrules(Set{2 to ct.y - 1})
+            tbl.content.set_vrules(Set{2 to i})
+            tbl.content.set_hrules(Set{2 to ct.y - 1})
          }
          "cols": {
             i := 1
             every i <:= (!tbl.content.children).get_constraint("x")
-            tbl.set_vrules(Set{2 to i})
+            tbl.content.set_vrules(Set{2 to i})
          }
          "rows": {
-            tbl.set_hrules(Set{2 to ct.y - 1})
+            tbl.content.set_hrules(Set{2 to ct.y - 1})
          }
       }
       if not(align === (Align.L | Align.R)) then
@@ -3690,6 +3772,7 @@ class Browser(ComponentScrollArea)
 
    private handle_ldrag(e)
       \mark_x | fail
+
       view.inner.invalidate(get_band_rect())
       view.inner.invalidate(calculate_banded_rect())
       set_cursor_from_pos(e)
@@ -3744,6 +3827,14 @@ class Browser(ComponentScrollArea)
       clear_mark()
       clear_banded()
       scroll_ticker.stop()
+      create_banded_pod()
+   end
+
+   private create_banded_pod()
+      local c
+      banded_pod := Pod(view.inner)
+      every c := Seq{view.inner.traverse_components_postorder()} do
+         banded_pod.add(c)
    end
 
    public display()
@@ -3829,12 +3920,13 @@ class Browser(ComponentScrollArea)
       local c, br
       clear_banded()
       br := get_band_rect() | fail
-      every c := Seq{traverse_components_postorder()} do {
-         if is(c, TextFlow) then
-            c.calculate_banded(br, banded)
-         else if is(c, Img) then
-            if br.intersect(c) then
+      every c := banded_pod.nearby(br) do {
+         if br.intersect(c) then {
+            if is(c, TextFlow) then
+               c.calculate_banded(br, banded)
+            else if is(c, Img) then
                insert(banded, c, c)
+         }
       }
    end
 
@@ -3867,7 +3959,7 @@ class Browser(ComponentScrollArea)
       text_selection := &null
       br := calculate_banded_rect() | fail
       s := u""
-      every c := Seq{traverse_components_postorder()} do {
+      every c := banded_pod.nearby(br) do {
          if is(c, TextFlow) then {
             if t := c.get_selected_text(br) then {
                if *s > 0 then
@@ -3915,7 +4007,7 @@ class Browser(ComponentScrollArea)
 
    private can_press(e)
       local c
-      is(parent_dialog.point_chain[1], TextFlow | TblContent) | fail
+      is(parent_dialog.point_chain[1], TextFlow | TblContent | Tbl) | fail
       every c := !parent_dialog.point_chain do {
          if is(c, TextFlow) & c.wants_press(e) then
             fail
@@ -3991,7 +4083,7 @@ class Browser(ComponentScrollArea)
    end
 
    public static get_table_tag()
-      #return "<table border=1 cellspacing=4 rules=cols>"
+      #return "<table border=1 cellspacing=4 rules=all>"
       return "<table cellspacing=4>"
    end
 

@@ -347,45 +347,80 @@ class TextFlow(Component)
       return W
    end
 
+   private rows_in_range(ry, rh)
+      local i, j, m, or
+      # Shortcut for very common case
+      if *computed_output_rows = 1 then {
+         or := computed_output_rows[1]
+         return if or.y + or.h > ry  &  or.y < ry + rh then or
+      }
+      i := 1
+      j := *computed_output_rows
+      while i <= j do {
+         m := (i + j) / 2
+         or := computed_output_rows[m]
+         if or.y + or.h <= ry then
+            i := m + 1
+         else if or.y >= ry + rh then
+            j := m - 1
+         else
+            break
+      }
+      if i > j then
+         fail
+
+      # Now row m is in the sought range; but rows before may be too,
+      # so tab back as far as needed.
+      while or := computed_output_rows[m - 1] &
+         or.y + or.h > ry  &  or.y < ry + rh do
+         m -:= 1
+
+      # Now suspend all the rows in range from row m forwards.
+      while or := computed_output_rows[m] &
+         or.y + or.h > ry  &  or.y < ry + rh do
+      {
+         suspend or
+         m +:= 1
+      }
+   end
+
    public display()
-      local o, W, font, fg, x1, y1, x2, y2, r, t, or
+      local o, W, font, fg, x1, y1, x2, y2, r, t, ts, or
       border.draw(self.cbwin, x, y, w, h)
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
       W := cbwin.clone()
       r := get_cbwin_clip()
-      every or := !computed_output_rows do {
-         if y1 + or.y + or.h < r.y then
-            next
-         # Since rows ascend by y pos'n, we can break here
-         if y1 + or.y > r.y + r.h then
-            break
+      every or := rows_in_range(r.y - y1, r.h) do {
          every o := !or.l do {
-            if font ~=== o.attr.font | fg ~=== o.attr.fg then {
-               W.close()
-               W := attr_clone(o.attr)
-               font := o.attr.font
-               fg := o.attr.fg
-            } 
+            t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
+            if r.intersect(t) then {
+               if font ~=== o.attr.font | fg ~=== o.attr.fg then {
+                  W.close()
+                  W := attr_clone(o.attr)
+                  font := o.attr.font
+                  fg := o.attr.fg
+               } 
 
-            draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
-            if t := browser.is_banded(o) then {
-               # NB - the rectangle used should be the same as that returned by t.get_bounds()
-               Gui.style.fill_selection_rectangle(cbwin, 
-                                                  x1 + o.x + t.w_off,
-                                                  y1 + o.y, 
-                                                  t.w_sub,
-                                                  o.h)
-            }
-            if \o.attr.underline then {
-               x2 := x1 + o.x
-               y2 := y1 + o.y + W.get_font_ascent() + 1
-               W.draw_line(x2, y2, x2 + o.w, y2)
-            }
-            if \o.attr.strike then {
-               x2 := x1 + o.x
-               y2 := y1 + o.y + (2 * W.get_font_ascent()) / 3
-               W.draw_line(x2, y2, x2 + o.w, y2)
+               draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
+               if ts := browser.is_banded(o) then {
+                  # NB - the rectangle used should be the same as that returned by t.get_bounds()
+                  Gui.style.fill_selection_rectangle(cbwin, 
+                                                     x1 + o.x + ts.w_off,
+                                                     y1 + o.y, 
+                                                     ts.w_sub,
+                                                     o.h)
+               }
+               if \o.attr.underline then {
+                  x2 := x1 + o.x
+                  y2 := y1 + o.y + W.get_font_ascent() + 1
+                  W.draw_line(x2, y2, x2 + o.w, y2)
+               }
+               if \o.attr.strike then {
+                  x2 := x1 + o.x
+                  y2 := y1 + o.y + (2 * W.get_font_ascent()) / 3
+                  W.draw_line(x2, y2, x2 + o.w, y2)
+               }
             }
          }
       }
@@ -398,12 +433,7 @@ class TextFlow(Component)
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
       l := []
-      every or := !computed_output_rows do {
-         if y1 + or.y + or.h < br.y then
-            next
-         # Since rows ascend by y pos'n, we can break here
-         if y1 + or.y > br.y + br.h then
-            break
+      every or := rows_in_range(br.y - y1, br.h) do {
          every o := !or.l do {
             t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
             if t := br.intersect(t) then {
@@ -459,12 +489,7 @@ class TextFlow(Component)
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
       s := u""
-      every or := !computed_output_rows do {
-         if y1 + or.y + or.h < br.y then
-            next
-         # Since rows ascend by y pos'n, we can break here
-         if y1 + or.y > br.y + br.h then
-            break
+      every or := rows_in_range(br.y - y1, br.h) do {
          sr := u""
          every o := !or.l do {
             if t := browser.is_banded(o) then
@@ -826,15 +851,11 @@ class TextFlow(Component)
 
    private which_text_out(e)
       local or, o, x1, y1
-      x1 := e.x - x - border.get_l_inset()
-      y1 := e.y - y - border.get_t_inset() - y_off
-      every or := !computed_output_rows do {
-         if or.y + or.h < y1 then
-            next
-         if or.y > y1 then
-            break
+      x1 := x + border.get_l_inset()
+      y1 := y + border.get_t_inset() + y_off
+      every or := rows_in_range(e.y - y1, 1) do {
          every o := !or.l do {
-            if o.inside(x1, y1) then
+            if o.inside(e.x - x1, e.y - y1) then
                return o
          }
       }
@@ -917,7 +938,7 @@ class TextFlow(Component)
       }
    end
 
-    public new(browser)
+   public new(browser)
       cast(self,Component).new()
       self.browser := browser
       set_border(NullBorder())

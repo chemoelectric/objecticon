@@ -58,8 +58,10 @@ class TableGrid()
       pct_col_w,
       a_col_w,      # Actual column widths/row heights after extra
       a_row_h,      # space has been allocated
-      col_x,        # Actual row x and y values
-      row_y,
+      a_col_x,      # Actual row x and y values.  Unlike GridLayout, these
+      a_row_y,      # are zero (offset) based, rather than absolute positions, to avoid
+                    # recomputing them on a shift(), since they are used for 
+                    # row searching by Tbl and for rule drawing.
       info,         # List of CellInfo for each component being laid out
       dii,          # Default inner padding, ie not at edge of grid
       doi,          # Default outer padding
@@ -67,7 +69,8 @@ class TableGrid()
       add_x,        # For auto-computing cell position and sizes.
       add_y,
       add_row_h,
-      fix_col1_flag
+      fix_col1_flag,
+      in_row        # Lists of CellInfos in each row
 
    public create_cell(t)
       local ci
@@ -284,6 +287,39 @@ class TableGrid()
       write("\nPreferred size gives:", get_preferred_width(),",",get_preferred_height())
    end
 
+   public rows_in_range(ry, rh)
+      local i, j, m, rowh, rowy
+      i := 1
+      j := *a_row_y
+      while i <= j do {
+         m := (i + j) / 2
+         rowy := a_row_y[m]
+         rowh := a_row_h[m]
+         if rowy + rowh <= ry then
+            i := m + 1
+         else if rowy >= ry + rh then
+            j := m - 1
+         else
+            break
+      }
+      if i > j then
+         fail
+
+      # Now row m is in the sought range; but rows before may be too,
+      # so tab back as far as needed.
+      while rowy := a_row_y[m - 1] & rowh := a_row_h[m - 1] &
+         rowy + rowh > ry  &  rowy < ry + rh do
+         m -:= 1
+
+      # Now suspend all the rows in range from row m forwards.
+      while  rowy := a_row_y[m] & rowh := a_row_h[m] &
+         rowy + rowh > ry  &  rowy < ry + rh do
+      {
+         suspend m
+         m +:= 1
+      }
+   end
+
    public set_fix_col1(s)
       self.fix_col1_flag := check_flag(s)
       return self
@@ -334,18 +370,18 @@ class TableGrid()
          i.aw := Grid.slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
    end
 
-   public compute_actual_col_positions(x1)
+   public compute_actual_col_positions()
       local i, x, w
 
-      col_x := []
-      x := x1
+      a_col_x := []
+      x := 0
       every w := !a_col_w do {
-         put(col_x, x)
+         put(a_col_x, x)
          x +:= w
       }
 
       every i := !info do
-         i.ax := col_x[i.x] + i.l_inset
+         i.ax := a_col_x[i.x] + i.l_inset
    end
 
    public compute_actual_row_heights(h1)
@@ -361,18 +397,27 @@ class TableGrid()
          i.ah := Grid.slice(i.y, i.h, a_row_h) - i.t_inset - i.b_inset
    end
 
-   public compute_actual_row_positions(y1)
+   public compute_actual_row_positions()
       local i, y, h
 
-      row_y := []
-      y := y1
+      a_row_y := []
+      y := 0
       every h := !a_row_h do {
-         put(row_y, y)
+         put(a_row_y, y)
          y +:= h
       }
 
       every i := !info do
-         i.ay := row_y[i.y] + i.t_inset + i.ascent_adj
+         i.ay := a_row_y[i.y] + i.t_inset + i.ascent_adj
+   end
+
+   public compute_in_row()
+      local ci
+      in_row := []
+      every 1 to gh do
+         put(in_row, [])
+      every ci := !info do
+         every put(in_row[ci.y to ci.y + ci.h - 1], ci)
    end
 
    #
@@ -437,6 +482,7 @@ class TableLayout(Layout)
       }
       g.dimension()
       g.compute_preferred_col_widths()
+      g.compute_in_row()
    end
 
    public get_preferred_width()
@@ -521,8 +567,8 @@ class TableLayout(Layout)
          {
             cw.draw_rectangle(parent.x, parent.y, parent.w, parent.h)
             every i := !g.info do {
-               cw.draw_rectangle(g.col_x[i.x],
-                                 g.row_y[i.y],
+               cw.draw_rectangle(g.a_col_x[i.x],
+                                 g.a_row_y[i.y],
                                  Grid.slice(i.x, i.w, g.a_col_w),
                                  Grid.slice(i.y, i.h, g.a_row_h))
             }
@@ -541,14 +587,14 @@ class TableLayout(Layout)
       ensure_grid()
 
       g.compute_actual_col_widths(parent.w)
-      g.compute_actual_col_positions(parent.x)
+      g.compute_actual_col_positions()
       adjust_preferred_heights()
       g.compute_actual_row_heights(parent.h)
-      g.compute_actual_row_positions(parent.y)
+      g.compute_actual_row_positions()
 
       every i := !g.info do {
-         i.obj.x := i.ax
-         i.obj.y := i.ay
+         i.obj.x := i.ax + parent.x
+         i.obj.y := i.ay + parent.y
          i.obj.w := i.aw
          i.obj.h := i.ah
       }
