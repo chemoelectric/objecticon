@@ -161,6 +161,7 @@ class TextFlow(Component)
       row_abs_bottom_height,
       max_pre_w,
       max_word_w,
+      max_pct_w,
       max_ll,
       calculating,
       need_spc,
@@ -204,7 +205,7 @@ class TextFlow(Component)
       deferred := []
       at_new_para := 1
       row_width := row_y := row_bottom := row_x := max_pre_w := max_word_w := max_ll := 
-         baseline_off := row_abs_middle_height := row_abs_top_height := 
+         baseline_off := row_abs_middle_height := row_abs_top_height := max_pct_w :=
          row_abs_bottom_height := row_ascent := row_descent := 0
       right_margin := compute_w
       need_spc := first_row_ascent := &null
@@ -245,6 +246,7 @@ class TextFlow(Component)
          every c := !output_comps do
             def_width <:= c.pw
          def_width <:= max_word_w
+         def_width <:= max_pct_w
          def_width +:= border.get_total_width()
       }
       return def_width
@@ -255,6 +257,7 @@ class TextFlow(Component)
          return get_preferred_width()
       if /max_width then {
          compute()
+         max_ll <:= max_pct_w
          max_width := max_ll + border.get_total_width()
       }
       return max_width
@@ -677,6 +680,7 @@ class TextFlow(Component)
    private compute_component(cmd)
       local co, prefw, maxw, i
       prefw := cmd.c.get_preferred_width()
+      maxw := if is(cmd.c, HasMaxWidth) then cmd.c.get_max_width() else prefw
       #
       # Apply constraints.  If calculating, then pct_w and use_w are
       # ignored; the default width is then bounded by the "true"
@@ -689,12 +693,15 @@ class TextFlow(Component)
       #
       if i := cmd.c.get_constraint("fix_w") then
          prefw := maxw := max(i, prefw)
-      else if i := integer(cmd.c.get_constraint("pct_w")) & /calculating then
-         prefw := maxw := max((compute_w * i) / 100, prefw)
-      else if \cmd.c.get_constraint("use_w") & /calculating then
+      else if i := integer(cmd.c.get_constraint("pct_w")) then {
+         if \calculating then {
+            if is(parent, TblContent) then
+               max_pct_w <:= prefw * 100 / i
+         } else
+            prefw := maxw := max((compute_w * i) / 100, prefw)
+      } else if \cmd.c.get_constraint("use_w") & /calculating then
          prefw := maxw := max(right_margin - row_x - row_width, prefw)
-      else
-         maxw := if is(cmd.c, HasMaxWidth) then cmd.c.get_max_width() else prefw
+
       co := CompOut(cmd.attr, cmd.c, cmd.align, prefw, maxw)
       put(output_comps, co)
       case cmd.align of {
