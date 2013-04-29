@@ -631,20 +631,24 @@ class TextFlow(Component)
          pop(deferred)
    end
 
-   private fits_in_row(co)
-      return have_max() | (row_x + co.maxw  + row_width <= right_margin)
+   private fits_in_row_with_maxw(co)
+      return have_max() | (row_x + co.maxw + row_width <= right_margin)
+   end
+
+   private fits_in_row_with_pw(co)
+      return have_max() | (row_x + co.pw + row_width <= right_margin)
    end
 
    private do_deferred(co)
       case co.align of {
          Align.L: {
-            if fits_in_row(co) then {
+            if fits_in_row_with_maxw(co) then {
                left_comp_out(co)
                return
             }
          }
          Align.R: {
-            if fits_in_row(co) then {
+            if fits_in_row_with_maxw(co) then {
                right_comp_out(co)
                return
             }
@@ -673,21 +677,36 @@ class TextFlow(Component)
    private compute_component(cmd)
       local co, prefw, maxw, i
       prefw := cmd.c.get_preferred_width()
-      maxw := if is(cmd.c, HasMaxWidth) then cmd.c.get_max_width() else prefw
+      #
+      # Apply constraints.  If calculating, then pct_w and use_w are
+      # ignored; the default width is then bounded by the "true"
+      # preferred width of the component.  Since a component can
+      # always occupy an empty row on its own, on display it should
+      # get enough space.
+      #
+      # use_w is just used by the HR tag; if it used 100% pct_w then it would
+      # force itself below any left/right components unnecessarily.
+      #
       if i := cmd.c.get_constraint("fix_w") then
          prefw := maxw := max(i, prefw)
+      else if i := integer(cmd.c.get_constraint("pct_w")) & /calculating then
+         prefw := maxw := max((compute_w * i) / 100, prefw)
+      else if \cmd.c.get_constraint("use_w") & /calculating then
+         prefw := maxw := max(right_margin - row_x - row_width, prefw)
+      else
+         maxw := if is(cmd.c, HasMaxWidth) then cmd.c.get_max_width() else prefw
       co := CompOut(cmd.attr, cmd.c, cmd.align, prefw, maxw)
       put(output_comps, co)
       case cmd.align of {
          Align.L: {
             # If already have deferred, then defer this too, otherwise they will be out of order. 
-            if *deferred = 0 & fits_in_row(co) then
+            if *deferred = 0 & fits_in_row_with_maxw(co) then
                left_comp_out(co)
             else
                put(deferred, co)
          }
          Align.R: {
-            if *deferred = 0 & fits_in_row(co) then 
+            if *deferred = 0 & fits_in_row_with_maxw(co) then 
                right_comp_out(co)
             else
                put(deferred, co)
@@ -719,16 +738,11 @@ class TextFlow(Component)
    end
 
    private comp_out(co)
-      local c, avail, pct
+      local c
       c := co.c
-      while (row_x + row_width + co.pw > right_margin) & not have_max() do
+      until fits_in_row_with_pw(co) do
          new_row()
-
-      avail := right_margin - row_x - row_width
-      co.w := if pct := integer(c.get_constraint("pct_w")) & /calculating then
-         max(co.pw, (avail * pct) / 100)
-      else
-         min(co.maxw, avail)
+      co.w := min(co.maxw, right_margin - row_x - row_width)
       co.set_height_from_width()
       co.ascent := (if is(co.c, HasAscent) then co.c.get_ascent(co.w, co.h) else co.h) + baseline_off
       co.descent := co.h - co.ascent
@@ -882,7 +896,7 @@ class TextFlow(Component)
    end
 
    package wants_press(e)
-      return .\wrote
+      return \wrote
    end
 
    private handle_rpress(e)

@@ -825,25 +825,44 @@ class Tbl(Border, HasMaxWidth, HasAscent)
    end
 end
 
-class Img(Label)
+class Img(Image)
    public const
-      browser, form, img_url, link_url, imgw, imgh
+      browser, form, img_url, link_url
    private readable
       wrote, img_data, img_name, map, held
 
    package got_data(res)
-      if \res.err then
-         set_paint(ImagePaint().set_cache("rpp.BROKEN_LINK"))
-      else {
-         set_paint(ImagePaint().
-                      set_image(res.data).
-                      set_max_size(imgw, imgh).
-                      set_fill_dimensions(2))
-         if /paint.win then
-            set_paint(ImagePaint().set_cache("rpp.BROKEN_LINK"))
-         else {
+      local iw, ih
+      if \res.err then {
+         set_cache("rpp.BROKEN_LINK")
+         every remove_constraint("fix_w" | "fix_h" | "pct_w")
+      } else {
+         set_image(res.data)
+         if /win then {
+            set_cache("rpp.BROKEN_LINK")
+            every remove_constraint("fix_w" | "fix_h" | "pct_w")
+         } else {
+            # Set width and perhaps height based on constraints.
+            #
+            # If pct_w is set, then set a small minimal value, since
+            # otherwise the actual width of the image would be the
+            # preferred width, and hence the minimum size which
+            # TextFlow would allocate, whereas we want to allow the
+            # image to shrink below its actual width.
+            #
+            if iw := integer(member(constraints, "fix_w")) then
+               set_width(iw)
+            else if iw := integer(member(constraints, "pct_w")) then
+               set_width(10)
+            if ih := integer(member(constraints, "fix_h")) then {
+               if /iw then 
+                  set_width(ih * win.get_width() / win.get_height())
+               else 
+                  set_height(ih)
+            }
             img_name := res.fname
             img_data := res.data
+            set_fill_dimensions(2)
          }
       }
    end
@@ -898,12 +917,14 @@ class Img(Label)
       local u
       if u := which_url(e) & u === held then {
          if wrote ~=== u then {
+            set_pointer("hand1")
             browser.msg(u.str())
             wrote := u
          }
       } else if \wrote then {
          browser.clear_msg()
          wrote := &null
+         set_pointer()
       }
    end
 
@@ -911,6 +932,10 @@ class Img(Label)
       if /form then
          handle_move(e)
       return \self.pointer
+   end
+
+   package wants_lpress(e)
+      return \wrote | \form
    end
 
    private handle_move(e)
@@ -930,16 +955,15 @@ class Img(Label)
 
    public display()
       local r
-      cast(self,Label).display()
+      cast(self,Image).display()
       if r := browser.is_banded(self) then
          Gui.style.fill_selection_rectangle(cbwin, x, y, w, h)
    end
 
-   public new(browser, img_url, link_url, form, imgw, imgh, map)
-      cast(self,Label).new()
+   public new(browser, img_url, link_url, form, map)
+      cast(self,Image).new()
+      clear_constraints()
       self.browser := browser
-      self.imgw := imgw
-      self.imgh := imgh
       self.img_url := img_url
       self.form := form
       self.link_url := link_url
@@ -956,7 +980,6 @@ class Img(Label)
          connect(self.handle_exit, Event.MOUSE_EXIT)
       }
       connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
-      set_paint(NullPaint())
       set_border(NullBorder())
       return
    end
@@ -2894,13 +2917,13 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_img(e, p, context)
-      local q, url, border, iw, ih, align, map, s
+      local q, url, border, align, map, s
       if url := mk_link(context, e.get_attribute(u"SRC")) then {
-         iw := (0 <= integer(e.get_attribute(u"WIDTH")))
-         ih := (0 <= integer(e.get_attribute(u"HEIGHT")))
          if (s := e.get_attribute(u"USEMAP")) & (s[1] == u"#") then
             map := default.map(string(s[2:0]))
-         q := Img(self, url, context.url,, iw, ih, map)
+         q := Img(self, url, context.url,, map)
+         do_width_param(e, q)
+         do_height_param(e, q)
          border := (0 < integer(e.get_attribute(u"BORDER"))) | 0
          if border > 0 then
             q.set_border(PlainBorder().set_line_width(border))
@@ -3243,7 +3266,7 @@ class Browser(ComponentScrollArea)
       local l, c
       l := Line().
          set_width(5)
-      do_width_param(e, l) | l.set_constraint("pct_w", 100)
+      do_width_param(e, l) | l.set_constraint("use_w", &yes)
       c := copy(context)
       put_new_row(p, c)
       c.align := convert_halign(e, u"ALIGN")
@@ -3777,7 +3800,7 @@ class Browser(ComponentScrollArea)
 
    private handle_lpress(e)
       /mark_x | fail
-      can_press(e) | fail
+      can_lpress(e) | fail
       set_cursor_from_pos(e)
       mark_x := cursor_x
       mark_y := cursor_y
@@ -4028,7 +4051,7 @@ class Browser(ComponentScrollArea)
       }
    end
 
-   private can_press(e)
+   private can_rpress(e)
       local c
       is(parent_dialog.point_chain[1], TextFlow | TblContent | Tbl) | fail
       every c := !parent_dialog.point_chain do {
@@ -4038,9 +4061,21 @@ class Browser(ComponentScrollArea)
       return
    end
 
+   private can_lpress(e)
+      local c
+      is(parent_dialog.point_chain[1], Img | TextFlow | TblContent | Tbl) | fail
+      every c := !parent_dialog.point_chain do {
+         if is(c, TextFlow) & c.wants_press(e) then
+            fail
+         if is(c, Img) & c.wants_lpress(e) then
+            fail
+      }
+      return
+   end
+
    private handle_rpress(e)
       local pm, pm_menu
-      can_press(e) | fail
+      can_rpress(e) | fail
       if pm_menu := create_page_menu() then {
          pm := PopupMenu()
          pm.popup(parent_dialog, pm_menu, e.x, e.y)
