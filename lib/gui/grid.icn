@@ -346,7 +346,7 @@ class Grid()
             else {
                # Some weights, so no border and allocate by weight.
                self.pad_w := 0
-               dist_by_weight(1, *a_col_w, ew, a_col_w, col_weights, tw)
+               dist_by_weight(1, gw, ew, a_col_w, col_weights, tw)
             }
          }
          EXTRA_BORDERS : 
@@ -396,7 +396,7 @@ class Grid()
                self.pad_h := eh / 2
             else {
                self.pad_h := 0
-               dist_by_weight(1, *a_row_h, eh, a_row_h, row_weights, tw)
+               dist_by_weight(1, gh, eh, a_row_h, row_weights, tw)
             }
          }
          EXTRA_BORDERS : 
