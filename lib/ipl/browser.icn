@@ -831,10 +831,6 @@ class Img(Image)
    private readable
       wrote, img_data, img_name, map, held
 
-   public get_min_width()
-      return 1
-   end
-
    package got_data(res)
       local iw, ih
       if \res.err then {
@@ -3269,7 +3265,7 @@ class Browser(ComponentScrollArea)
    private traverse_hr(e, p, context)
       local l, c
       l := Line().
-         set_width(5)
+         set_width(1)
       do_width_param(e, l) | l.set_constraint("pct_w", 100)
       c := copy(context)
       put_new_row(p, c)
