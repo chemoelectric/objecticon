@@ -681,64 +681,29 @@ class WorkerPool()
    end
 end
 
-class Pod()
-   private
-      anchor,
-      entries,
-      pods
-
-   public static const POD_SIZE
-
-   private static init()
-      POD_SIZE := 100
-   end
-
-   private pod_keys(sz)
-      local x1, y1, x2, y2
-      x1 := sz.x / POD_SIZE
-      y1 := sz.y / POD_SIZE
-      x2 := (sz.x + sz.w - 1) / POD_SIZE
-      y2 := (sz.y + sz.h - 1) / POD_SIZE
-      suspend (x1 to x2) || "," || (y1 to y2)
-   end
-
-   public add(c)
-      local k, l, r
-      put(entries, c)
-      r := Rect(c.x - anchor.x, c.y - anchor.y, c.w, c.h)
-      every k := pod_keys(r) do {
-         (l := member(pods, k)) | insert(pods, k, l := [])
-         put(l, *entries)
-      }
-   end
-
-   public nearby(r)
-      local s
-      s := set()
-      r := Rect(r.x - anchor.x, r.y - anchor.y, r.w, r.h)
-      every insert(s, !member(pods, pod_keys(r)))
-      suspend entries[!sort(s)]
-   end
-
-   public intersecting(r)
-      local c
-      every c := nearby(r) do {
-         if c.intersect(r) then
-            suspend c
-      }
-   end
-
-   public new(anchor)
-      pods := table()
-      entries := []
-      self.anchor := anchor
-      return
-   end
-end
-
 class TblContent(Component)
    private
       hrules, vrules
+
+   public gen_children_intersecting(r)
+      local ci, i, g, seen
+      g := layout_delegate.g
+      seen := set()
+      every i := g.rows_in_range(r.y - y, r.h) do {
+         every ci := !g.in_row[i] do {
+            if ci.h = 1 then
+               if ci.obj.intersect(r) then
+                  suspend ci.obj
+            else {
+               member(seen, ci) | {
+                  if ci.obj.intersect(r) then
+                     suspend ci.obj
+                  insert(seen, ci)
+               }
+            }               
+         }
+      }
+   end
 
    public whose_point(ex, ey)
       local ci, i, g, c
@@ -2240,7 +2205,6 @@ class Browser(ComponentScrollArea)
       cursor_x,
       cursor_y,
       banded,
-      banded_candidates,
       text_selection,
       links_selection
 
@@ -3874,15 +3838,6 @@ class Browser(ComponentScrollArea)
       clear_mark()
       clear_banded()
       scroll_ticker.stop()
-      create_banded_candidates()
-   end
-
-   private create_banded_candidates()
-      local c
-      banded_candidates := Pod(view.inner)
-      every c := Seq{view.inner.traverse_components_postorder()} do
-         if is(c, TextFlow | Img) then
-            banded_candidates.add(c)
    end
 
    public display()
@@ -3968,12 +3923,21 @@ class Browser(ComponentScrollArea)
       local c, br
       clear_banded()
       br := get_band_rect() | fail
-      every c := banded_candidates.intersecting(br) do {
+      every c := Seq{traverse_intersecting(view.inner, br)} do {
          if is(c, TextFlow) then
             c.calculate_banded(br, banded)
          else if is(c, Img) then
             insert(banded, c, c)
       }
+   end
+
+   private static traverse_intersecting(c, r)
+      r := c.intersect(r) | fail
+      coact(c)
+      if is(c, TblContent) then
+         every traverse_intersecting(c.gen_children_intersecting(r), r)
+      else
+         every traverse_intersecting(!c.children, r)
    end
 
    private show_bounds()
@@ -4005,7 +3969,7 @@ class Browser(ComponentScrollArea)
       text_selection := &null
       br := calculate_banded_rect() | fail
       s := u""
-      every c := banded_candidates.intersecting(br) do {
+      every c := Seq{traverse_intersecting(view.inner, br)} do {
          if is(c, TextFlow) then {
             if t := c.get_selected_text(br) then {
                if *s > 0 then
