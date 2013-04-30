@@ -162,6 +162,7 @@ class TextFlow(Component)
       max_pre_w,
       max_word_w,
       max_pct_w,
+      pref_pct_w,
       max_ll,
       calculating,
       need_spc,
@@ -205,7 +206,7 @@ class TextFlow(Component)
       deferred := []
       at_new_para := 1
       row_width := row_y := row_bottom := row_x := max_pre_w := max_word_w := max_ll := 
-         baseline_off := row_abs_middle_height := row_abs_top_height := max_pct_w :=
+         baseline_off := row_abs_middle_height := row_abs_top_height := max_pct_w := pref_pct_w :=
          row_abs_bottom_height := row_ascent := row_descent := 0
       right_margin := compute_w
       need_spc := first_row_ascent := &null
@@ -246,7 +247,7 @@ class TextFlow(Component)
          every c := !output_comps do
             def_width <:= c.pw
          def_width <:= max_word_w
-         def_width <:= max_pct_w
+         def_width <:= pref_pct_w
          def_width +:= border.get_total_width()
       }
       return def_width
@@ -677,31 +678,45 @@ class TextFlow(Component)
       put(right_comps, co)
    end
 
+   package is_top_level()
+      return self === browser.view.inner
+   end
+
    private compute_component(cmd)
       local co, prefw, maxw, i
       prefw := cmd.c.get_preferred_width()
       maxw := if is(cmd.c, HasMaxWidth) then cmd.c.get_max_width() else prefw
-      #
-      # Apply constraints.  If calculating, then pct_w and use_w are
-      # ignored; the default width is then bounded by the "true"
-      # preferred width of the component.  Since a component can
-      # always occupy an empty row on its own, on display it should
-      # get enough space.
-      #
-      # use_w is just used by the HR tag; if it used 100% pct_w then it would
-      # force itself below any left/right components unnecessarily.
-      #
+
+      # Apply constraints
       if i := cmd.c.get_constraint("fix_w") then
          prefw := maxw := max(i, prefw)
       else if i := integer(cmd.c.get_constraint("pct_w")) then {
-         if \calculating then {
-            if is(parent, TblContent) then
-               max_pct_w <:= prefw * 100 / i
-         } else
-            prefw := maxw := max((compute_w * i) / 100, prefw)
-      } else if \cmd.c.get_constraint("use_w") & /calculating then
-         prefw := maxw := max(right_margin - row_x - row_width, prefw)
-
+         case classof(cmd.c) of {
+            Line: {
+               if /calculating then
+                  prefw := maxw := max(((right_margin - row_x - row_width) * i) / 100, prefw)
+            }
+            Img: {
+               if /calculating then
+                  prefw := maxw := max((compute_w * i) / 100, prefw)
+               else {
+                  if not is_top_level() then
+                     max_pct_w <:= (\cmd.c.win).get_width() * 100 / i
+               }
+            }
+            Tbl: {
+               if /calculating then
+                  prefw := maxw := max((compute_w * i) / 100, prefw)
+               else {
+                  if not is_top_level() then {
+                     max_pct_w <:= maxw * 100 / i
+                     pref_pct_w <:= prefw * 100 / i
+                  }
+               }
+            }
+            default: syserr("Invalid type with pct_w")
+         }
+      }
       co := CompOut(cmd.attr, cmd.c, cmd.align, prefw, maxw)
       put(output_comps, co)
       case cmd.align of {

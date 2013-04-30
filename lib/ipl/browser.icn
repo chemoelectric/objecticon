@@ -856,12 +856,8 @@ class Img(Image)
             #
             if iw := integer(member(constraints, "fix_w")) then
                set_width(iw)
-            else if iw := integer(member(constraints, "pct_w")) then {
-               if is(parent.parent, TblContent) then
-                  set_width(win.get_width())
-               else
-                  set_width(1)
-            }
+            else if iw := integer(member(constraints, "pct_w")) then
+               set_width(1)
             if ih := integer(member(constraints, "fix_h")) then {
                if /iw then 
                   set_width(ih * win.get_width() / win.get_height())
@@ -3274,10 +3270,10 @@ class Browser(ComponentScrollArea)
       local l, c
       l := Line().
          set_width(5)
-      do_width_param(e, l) | l.set_constraint("use_w", &yes)
+      do_width_param(e, l) | l.set_constraint("pct_w", 100)
       c := copy(context)
       put_new_row(p, c)
-      c.align := convert_halign(e, u"ALIGN")
+      c.align := convert_halign(e, u"ALIGN") | Align.C
       add_component(p, l, c)
       put_new_row(p, c)
    end
