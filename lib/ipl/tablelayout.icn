@@ -287,6 +287,20 @@ class TableGrid()
       write("\nPreferred size gives:", get_preferred_width(),",",get_preferred_height())
    end
 
+   public cells_in_range(ry, rh)
+      local ci, i, fl
+      every i := rows_in_range(ry, rh) do {
+         every ci := !in_row[i] do {
+            # We have encountered the cell for the first time if
+            # either this is the first row examined (/fl) or it is the
+            # first row of the cell (ci.y=i).
+            if /fl | (ci.y = i) then
+               suspend ci
+         }
+         fl := 1
+      }
+   end
+
    public rows_in_range(ry, rh)
       local i, j, m, rowh, rowy
       i := 1
@@ -344,13 +358,13 @@ class TableGrid()
 
       # Extra width
       left := w1 - Grid.total(p_col_w)
-      n := *a_col_w
-      done := list(*a_col_w)
+      n := gw
+      done := list(gw)
       while n > 0 do {
          a := left / n
          if a = 0 then
             break
-         every i := 1 to *a_col_w do {
+         every i := 1 to gw do {
             if \done[i] then next
             if a_col_w[i] + a > p_col_max_w[i] then {
                left -:= p_col_max_w[i] - a_col_w[i]
@@ -363,7 +377,7 @@ class TableGrid()
             }
          }
       }
-      dist_equally(1, *a_col_w, left, a_col_w)
+      dist_equally(1, gw, left, a_col_w)
 
       # Set cell width values
       every i := !info do
@@ -391,7 +405,7 @@ class TableGrid()
 
       # Extra height.
       eh := h1 - Grid.total(p_row_h)
-      dist_equally(1, *a_row_h, eh, a_row_h)
+      dist_equally(1, gh, eh, a_row_h)
 
       every i := !info do
          i.ah := Grid.slice(i.y, i.h, a_row_h) - i.t_inset - i.b_inset

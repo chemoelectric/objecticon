@@ -685,71 +685,31 @@ class TblContent(Component)
    private
       hrules, vrules
 
-   public gen_children_intersecting(r)
-      local ci, i, g, seen
-      g := layout_delegate.g
-      seen := set()
-      every i := g.rows_in_range(r.y - y, r.h) do {
-         every ci := !g.in_row[i] do {
-            if ci.h = 1 then
-               if ci.obj.intersect(r) then
-                  suspend ci.obj
-            else {
-               member(seen, ci) | {
-                  if ci.obj.intersect(r) then
-                     suspend ci.obj
-                  insert(seen, ci)
-               }
-            }               
-         }
-      }
-   end
-
    public whose_point(ex, ey)
-      local ci, i, g, c
-      g := layout_delegate.g
-      every i := g.rows_in_range(ey - y, 1) do {
-         every ci := !g.in_row[i] do {
-            c := ci.obj
-            if c.is_unhidden() & c.inside(ex, ey) then
-               return c
-         }
+      local c
+      every c := layout_delegate.g.cells_in_range(ey - y, 1).obj do {
+         if c.is_unhidden() & c.inside(ex, ey) then
+            return c
       }
    end
 
    public display()
-      local ci, i, r, g, seen
+      local ci, r, g, t
       r := get_cbwin_clip()
       g := layout_delegate.g
-      seen := set()
-      every i := g.rows_in_range(r.y - y, r.h) do {
-         every ci := !g.in_row[i] do {
-            if ci.h = 1 then
-               display_cell_info(ci, r)
-            else {
-               member(seen, ci) | {
-                  display_cell_info(ci, r)
-                  insert(seen, ci)
-               }
-            }               
-         }
-      }
-   end
-
-   private display_cell_info(ci, cbr)
-      local g, r
-      display_child(ci.obj)
-      if \vrules | \hrules then {
-         g := layout_delegate.g
-         r := Rect(x + g.a_col_x[ci.x],
-                   y + g.a_row_y[ci.y],
-                   Grid.slice(ci.x, ci.w, g.a_col_w),
-                   Grid.slice(ci.y, ci.h, g.a_row_h))
-         if cbr.intersect(r) then {
-            if member(\vrules, ci.x) then
-               cbwin.draw_rectangle(r.x, r.y, 1, r.h)
-            if member(\hrules, ci.y) then
-               cbwin.draw_rectangle(r.x, r.y, r.w, 1)
+      every ci := g.cells_in_range(r.y - y, r.h) do {
+         display_child(ci.obj)
+         if \vrules | \hrules then {
+            t := Rect(x + g.a_col_x[ci.x],
+                      y + g.a_row_y[ci.y],
+                      Grid.slice(ci.x, ci.w, g.a_col_w),
+                      Grid.slice(ci.y, ci.h, g.a_row_h))
+            if r.intersect(t) then {
+               if member(\vrules, ci.x) then
+                  cbwin.draw_rectangle(t.x, t.y, 1, t.h)
+               if member(\hrules, ci.y) then
+                  cbwin.draw_rectangle(t.x, t.y, t.w, 1)
+            }
          }
       }
    end
@@ -3935,7 +3895,7 @@ class Browser(ComponentScrollArea)
       r := c.intersect(r) | fail
       coact(c)
       if is(c, TblContent) then
-         every traverse_intersecting(c.gen_children_intersecting(r), r)
+         every traverse_intersecting(c.layout_delegate.g.cells_in_range(r.y - c.y, r.h).obj, r)
       else
          every traverse_intersecting(!c.children, r)
    end
