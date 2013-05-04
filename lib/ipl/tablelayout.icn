@@ -124,7 +124,7 @@ class TableGrid()
 
    public static dist_equally(start, span, extra, l, flag)
       local left, i, a
-      if span = 0 then
+      if (extra | span) = 0 then
          fail
       if \flag & start = 1 & span > 1 then {
          start := 2

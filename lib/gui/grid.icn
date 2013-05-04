@@ -216,7 +216,8 @@ class Grid()
 
    public static dist_equally(start, span, extra, l)
       local left, i, a
-
+      if extra = 0 then
+         fail
       a := extra / span
       left := extra
       every i := start to start + span - 1 do {
