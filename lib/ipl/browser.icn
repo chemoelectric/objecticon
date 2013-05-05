@@ -2328,7 +2328,7 @@ class Browser(ComponentScrollArea)
                             if history[history_pos] then &no else &yes,
                             if \page_url then &no else &yes,
                             if \page_data then &no else &yes,
-                            if \running > 0 then &no else &yes))
+                            if running === 0 then &yes else &no))
    end
 
    private page_fully_loaded()
@@ -3724,6 +3724,7 @@ class Browser(ComponentScrollArea)
 
    private handle_lpress(e)
       /mark_x | fail
+      running === 0 | fail
       can_lpress(e) | fail
       set_cursor_from_pos(e)
       mark_x := cursor_x
