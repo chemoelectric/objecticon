@@ -69,6 +69,9 @@ class TableGrid()
       add_x,        # For auto-computing cell position and sizes.
       add_y,
       add_row_h,
+      total_p_col_w,  # Useful sum totals of p_col_w etc
+      total_p_col_max_w,
+      total_p_row_h,
       fix_col1_flag,
       in_row        # Lists of CellInfos in each row
 
@@ -163,6 +166,9 @@ class TableGrid()
       }
 
       compute_pct_widths()
+
+      total_p_col_w := Grid.total(p_col_w)
+      total_p_col_max_w := Grid.total(p_col_max_w)
    end
 
    # Adjust the p_col_max_w based on any column % widths; preferred
@@ -170,9 +176,12 @@ class TableGrid()
    private compute_pct_widths()
       local i, ppp, tot, sum_p, sum_r, p, d, n_r
       p := Grid.total(pct_col_w)
-      if p = 0 | p > 100 then
+      if p = 0 then
          fail
-
+      if p > 100 then {
+         pct_col_w := list(gw, 0)
+         fail
+      }
       # Stage 1 - adjust the columns with a pct so their p_col_max_w
       # are in the correct proportions.
 
@@ -241,6 +250,8 @@ class TableGrid()
          if need > 0 then 
             dist_equally(i.y, i.h, need, p_row_h)
       }
+
+      total_p_row_h := Grid.total(p_row_h)
    end
 
    private static cell_width_sort(i)
@@ -340,44 +351,56 @@ class TableGrid()
    end
 
    public get_preferred_width()
-      return Grid.total(p_col_w)
+      return total_p_col_w
    end
 
    public get_max_width()
-      return Grid.total(p_col_max_w)
+      return total_p_col_max_w
    end
 
    public get_preferred_height()
-      return Grid.total(p_row_h)
+      return total_p_row_h
    end
 
-   public compute_actual_col_widths(w1)
-      local left, i, a, n, done
-
-      a_col_w := copy(p_col_w)
-
-      # Extra width
-      left := w1 - Grid.total(p_col_w)
-      n := gw
-      done := list(gw)
-      while n > 0 do {
-         a := left / n
-         if a = 0 then
-            break
-         every i := 1 to gw do {
-            if \done[i] then next
-            if a_col_w[i] + a > p_col_max_w[i] then {
-               left -:= p_col_max_w[i] - a_col_w[i]
-               a_col_w[i] := p_col_max_w[i]
-               done[i] := 1
-               n -:= 1
-            } else {
-               a_col_w[i] +:= a
-               left -:= a
+   private choose(total_a_col_w)
+      local i, r1, r2, best1, best2, t
+      every i := 1 to gw do {
+         t := total_a_col_w * p_col_max_w[i] / total_p_col_max_w  - a_col_w[i]
+         if pct_col_w[i] > 0 then {
+            if /r1 | (t > best1) then {
+               r1 := i
+               best1 := t
+            }
+         } else {
+            if /r2 | (t > best2) then {
+               r2 := i
+               best2 := t
             }
          }
       }
-      dist_equally(1, gw, left, a_col_w)
+      if \best1 > 0 then
+         return r1
+      return r2
+   end
+
+   public compute_actual_col_widths(w1)
+      local total_a_col_w, i
+
+      # Start with allocation set to either min or max col width
+      if w1 >= total_p_col_max_w then {
+         a_col_w := copy(p_col_max_w)
+         w1 -:= total_p_col_max_w
+      } else {
+         a_col_w := copy(p_col_w)
+         w1 -:= total_p_col_w
+      }
+
+      # Allocate remaining width pixel by pixel
+      total_a_col_w := Grid.total(a_col_w)
+      every 1 to w1 do {
+         a_col_w[choose(total_a_col_w)] +:= 1
+         total_a_col_w +:= 1
+      }
 
       # Set cell width values
       every i := !info do
@@ -404,7 +427,7 @@ class TableGrid()
       a_row_h := copy(p_row_h)
 
       # Extra height.
-      eh := h1 - Grid.total(p_row_h)
+      eh := h1 - total_p_row_h
       dist_equally(1, gh, eh, a_row_h)
 
       every i := !info do
