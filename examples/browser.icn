@@ -10,8 +10,7 @@ import
    net,
    ipl.options,
    ipl.browser,
-   ipl.lists,
-   ipl.strings
+   ipl.lists
 
 global opts
 
@@ -164,9 +163,9 @@ class BrowserDialog(Dialog)
       s ||:= "<tr><th align=left>Title<th align=right>Times<th>&nbsp;Last visit<th align=left>URL</tr>"
       every e := !settings.visited do {
          n := Browser.limit_text(\e.title, 200) | "-"
-         s ||:= "<tr><td>" || replace(n, " ", "&nbsp;") || "<td align=right>" || e.times || "<td>&nbsp;" || e.last_time.format("MMM'&nbsp;'dd'&nbsp;'HH:mm")
+         s ||:= "<tr><td nowrap>" || n || "<td align=right>" || e.times || "<td>&nbsp;" || e.last_time.format("MMM'&nbsp;'dd'&nbsp;'HH:mm")
          l := e.url
-         s ||:= "<td><a href=\"" || l.str() || "\">" || l.str() ||  "</a></tr>"
+         s ||:= "<td nowrap><a href=\"" || l.str() || "\">" || l.str() ||  "</a></tr>"
       }
       s ||:= "</table></html>"
       return s

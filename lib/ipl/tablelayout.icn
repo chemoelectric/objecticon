@@ -378,9 +378,9 @@ class TableGrid()
             }
          }
       }
-      if \best1 > 0 then
-         return r1
-      return r2
+      if /r2 | (\best1 > 0) then
+         return \r1
+      return \r2
    end
 
    public compute_actual_col_widths(w1)

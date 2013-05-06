@@ -159,7 +159,7 @@ class TextFlow(Component)
       row_abs_middle_height,
       row_abs_top_height,
       row_abs_bottom_height,
-      max_pre_w,
+      max_pre_nowrap_w,
       max_word_w,
       max_ll,
       calculating,
@@ -203,7 +203,7 @@ class TextFlow(Component)
       row := []
       deferred := []
       at_new_para := 1
-      row_width := row_y := row_bottom := row_x := max_pre_w := max_word_w := max_ll := 
+      row_width := row_y := row_bottom := row_x := max_pre_nowrap_w := max_word_w := max_ll := 
          baseline_off := row_abs_middle_height := row_abs_top_height :=
          row_abs_bottom_height := row_ascent := row_descent := 0
       right_margin := compute_w
@@ -241,7 +241,7 @@ class TextFlow(Component)
          return get_max_width()
       if /def_width then {
          compute()
-         def_width := max_pre_w
+         def_width := max_pre_nowrap_w
          every c := !output_comps do
             def_width <:= c.pw
          def_width <:= max_word_w
@@ -323,10 +323,12 @@ class TextFlow(Component)
                insert(named_anchors, string(cmd.name), row_y)
             }
             TextCmd: {
-               if \cmd.attr.pre then
-                  compute_pre_txt(W, cmd)
-               else
-                  compute_txt(W, cmd)
+               case cmd.attr.fill of {
+                  Browser.FILL_NORMAL: compute_txt(W, cmd)
+                  Browser.FILL_PRE: compute_pre_txt(W, cmd)
+                  Browser.FILL_NOWRAP: compute_nowrap_txt(W, cmd)
+                  default: syserr("attr.fill invalid")
+               }
             }
          }
       }
@@ -601,11 +603,13 @@ class TextFlow(Component)
                x1 +:= r.w
                put((\or).l, r)
             }
-            if \calculating & \r.attr.pre then
-               # Since a pre section can still have several elements on a
-               # line (eg with an <a> in a line), we need to record the
-               # maximum width of the line.
-               max_pre_w <:= r.x + r.w - row_x
+            if \calculating & r.attr.fill === (Browser.FILL_PRE | Browser.FILL_NOWRAP) then
+               # Since a pre/nowrap section can still have several
+               # elements on a line (eg with an <a> in a line), we
+               # need to record the maximum width of the line.  We
+               # also take advantage of the fact that the fill type
+               # won't change mid-line.
+               max_pre_nowrap_w <:= r.x + r.w - row_x
          }
 
          row_y +:= row_height + gap
@@ -755,8 +759,12 @@ class TextFlow(Component)
    private comp_out(co)
       local c
       c := co.c
-      until fits_in_row_with_pw(co) do
-         new_row()
+      # In fact, if we are in pre or nowrap mode then it should always
+      # fit in the row anyway.
+      if co.attr.fill === Browser.FILL_NORMAL then {
+         until fits_in_row_with_pw(co) do
+            new_row()
+      }
       co.w := min(co.maxw, right_margin - row_x - row_width)
       co.set_height_from_width()
       co.ascent := (if is(co.c, HasAscent) then co.c.get_ascent(co.w, co.h) else co.h) + baseline_off
@@ -830,6 +838,31 @@ class TextFlow(Component)
             }
          } else
             ds := ds2
+      }
+      if *ds > 0 then
+         txt_out(W, attr, ds)
+      if any(WHITESPACE, cmd.s[-1]) then
+         need_spc := 1
+   end
+
+   private compute_nowrap_txt(W, cmd)
+      local ds, attr, wd, l
+      attr := cmd.attr
+      ds := u""
+      l := []
+      if any(WHITESPACE, cmd.s) then
+         need_spc := 1
+      every put(l, words(cmd.s, WHITESPACE))
+      while wd := get(l) do {
+         if *ds = 0 then {
+            # Never put a space at the start of a row.
+            if *row > 0 & \need_spc then
+               ds := u" " || wd
+            else
+               ds := wd
+            need_spc := &no
+         } else
+            ds ||:= u" " || wd
       }
       if *ds > 0 then
          txt_out(W, attr, ds)

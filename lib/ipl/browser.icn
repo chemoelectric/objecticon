@@ -155,7 +155,7 @@ class Cache()
          exp := format_expiry(ce.expiry)
          ct := ((\ce.content_type).type || "/" || ce.content_type.subtype) | "-"
          l := ce.url
-         s ||:= "<tr><td>" || n || "<td align=right>" || sz || "<td>&nbsp;" || exp || "<td>" || ct || "<td><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
+         s ||:= "<tr><td>" || n || "<td align=right>" || sz || "<td>&nbsp;" || exp || "<td>" || ct || "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
       }
       s ||:= "</table></html>"
       return s
@@ -287,7 +287,7 @@ class Worker()
                   else
                      Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;'HH:mm")
                   rs.out("<tr><td>" || t.mode_str || "&nbsp;<td>" || uname(t.uid, ucache) || "&nbsp;<td>" || grname(t.gid, gcache) ||
-                         "&nbsp;<td align=right>" || Format.numeric_to_string(t.size, 0, ',') || "<td>&nbsp;" || tf || "&nbsp;<td>" ||
+                         "&nbsp;<td align=right>" || Format.numeric_to_string(t.size, 0, ',') || "<td>&nbsp;" || tf || "&nbsp;<td nowrap>" ||
                          "<a href=\"file://" || URL.percent_encode(path.child(e[1]).canonical().str(), URL.UNRESERVED ++ '/') || "\">" || e[1] || "</a></tr>" || "\n")
                }
                rs.out("</table></html>")
@@ -639,7 +639,7 @@ class WorkerPool()
          else "stopped"
          s ||:= "<tr><td>" || serial(w) || "<td>" || st
          if l := (\w.doing).url then
-            s ||:= "<td><a href=\"" || l.str() || "\">" || l.str() || "</a>"
+            s ||:= "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a>"
          else
             s ||:= "<td>"
          s ||:= "</tr>"          
@@ -658,7 +658,7 @@ class WorkerPool()
             }
             l := r.url
             c := Class.get_name(r.client) || "#" || serial(r.client)
-            s ||:= "<tr><td>" || c || "<td>" || k || "<td><a href=\"" || l.str() || "\">" || l.str() || "</a>"
+            s ||:= "<tr><td>" || c || "<td>" || k || "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a>"
          }
          s ||:= "</table>"
       }
@@ -2049,7 +2049,7 @@ record DefListContext(tbl)
 record FieldSetContext(legend)
 record MapContext(map)
 record SelectContext(options, optgroup)
-record Context(base, form, form_label, url, fg, link_fg, font, align, pre, underline, strike, 
+record Context(base, form, form_label, url, fg, link_fg, font, align, fill, underline, strike, 
                face, size, bold, italic, kind, table, list, def_list, fieldset, select, map)
 
 class MapArea()
@@ -2171,7 +2171,10 @@ class Browser(ComponentScrollArea)
    public static const 
       COLORS,
       FACES,
-      SIZES
+      SIZES,
+      FILL_NORMAL,
+      FILL_PRE,
+      FILL_NOWRAP
 
    private static
       default_font_clone
@@ -2212,6 +2215,10 @@ class Browser(ComponentScrollArea)
 
       SIZES := [7,9,11,14,17,20,23]
       ImageCache.name_image("rpp.BROKEN_LINK", BROKEN_LINK)
+
+      FILL_NORMAL := 1
+      FILL_PRE := 2
+      FILL_NOWRAP := 3
    end
 
    public get_map(s)
@@ -2580,6 +2587,7 @@ class Browser(ComponentScrollArea)
       c.size := 3
       c.align := Align.L
       c.kind := res.kind   # Tells images whether to refresh or not
+      c.fill := FILL_NORMAL
       synch_font(c)
       if n := doc.get_root_element().search_tree(u"BODY") then {
          row.set_bg(convert_color(n, u"BGCOLOR"))
@@ -3219,7 +3227,7 @@ class Browser(ComponentScrollArea)
       c := copy(context)
       c.face := "mono"
       synch_font(c)
-      c.pre := 1
+      c.fill := FILL_PRE
       traverse(e, p, c)
       put_para(p, c)
    end
@@ -3496,6 +3504,8 @@ class Browser(ComponentScrollArea)
       ct.tbl.content.add(row)
 
       c := copy(context)
+      if e.get_attribute(u"NOWRAP") then
+         c.fill := FILL_NOWRAP
       if e.name == u"TH" then {
          c.bold := 1
          c.size := min(c.size + 1, 7)
@@ -4036,7 +4046,7 @@ class Browser(ComponentScrollArea)
             if l := \f.url then {
                n := \f.id | "-"
                m := \f.method | "-"
-               s ||:= "<tr><td>" || n || "<td>" || m || "<td><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
+               s ||:= "<tr><td>" || n || "<td>" || m || "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
             }
          }
          s ||:= "</table>"
@@ -4048,7 +4058,7 @@ class Browser(ComponentScrollArea)
             l := c.img_url
             n := limit_text(\c.img_name, 200) | "-"
             sz := Format.numeric_to_string(*\c.img_data, 0, ',') | "-"
-            s ||:= "<tr><td>" || n || "<td align=right>" || sz || "<td><a href=\"" || l.str() || "\">&nbsp;" || l.str() || "</a></tr>"
+            s ||:= "<tr><td>" || n || "<td align=right>" || sz || "<td nowrap><a href=\"" || l.str() || "\">&nbsp;" || l.str() || "</a></tr>"
          }
          s ||:= "</table>"
       }
@@ -4057,7 +4067,7 @@ class Browser(ComponentScrollArea)
          s ||:= "<h1>Links</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=left>URL</tr>"
          every l := !page_links do {
             n := limit_text(t[l], 200)
-            s ||:= "<tr><td>" || replace(n, " ", "&nbsp;") || "<td><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
+            s ||:= "<tr><td nowrap>" || n || "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
          }      
          s ||:= "</table>"
       }
