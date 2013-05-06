@@ -159,7 +159,6 @@ class TextFlow(Component)
       row_abs_middle_height,
       row_abs_top_height,
       row_abs_bottom_height,
-      max_pre_nowrap_w,
       max_word_w,
       max_ll,
       calculating,
@@ -176,7 +175,9 @@ class TextFlow(Component)
       dominant_width,
       computed_named_anchors,
       named_anchors,
-      browser
+      browser,
+      pre_row_no,
+      pre_row_widths
 
    public static const 
       WHITESPACE,
@@ -200,11 +201,13 @@ class TextFlow(Component)
       left_comps := []
       right_comps := []
       named_anchors := table()
+      if \calculating then
+         pre_row_widths := table()
       row := []
       deferred := []
       at_new_para := 1
-      row_width := row_y := row_bottom := row_x := max_pre_nowrap_w := max_word_w := max_ll := 
-         baseline_off := row_abs_middle_height := row_abs_top_height :=
+      row_width := row_y := row_bottom := row_x := max_word_w := max_ll := 
+         baseline_off := row_abs_middle_height := row_abs_top_height := pre_row_no :=
          row_abs_bottom_height := row_ascent := row_descent := 0
       right_margin := compute_w
       need_spc := first_row_ascent := &null
@@ -227,7 +230,7 @@ class TextFlow(Component)
 
    public reset_layout()
       max_width := def_width := output_rows := output_comps := left_comps :=
-         named_anchors := right_comps := compute_w := &null
+         pre_row_widths := named_anchors := right_comps := compute_w := &null
    end
 
    public set_dominant_width(x)
@@ -241,7 +244,8 @@ class TextFlow(Component)
          return get_max_width()
       if /def_width then {
          compute()
-         def_width := max_pre_nowrap_w
+         def_width := 0
+         every def_width <:= !pre_row_widths
          every c := !output_comps do
             def_width <:= c.pw
          def_width <:= max_word_w
@@ -573,7 +577,17 @@ class TextFlow(Component)
             or.y := row_y
             or.h := row_height
             or.w := row_width
+         } else {
+            if row[1].attr.fill ~=== Browser.FILL_NORMAL then {
+               # Save the pre/nowrap row width so that it can be
+               # retrieved at the start of the row when /calculating,
+               # so as to ensure enough room, taking any left/right
+               # images into account.
+               pre_row_no +:= 1
+               insert(pre_row_widths, pre_row_no, row_width)
+            }
          }
+
          row_bottom := row_y + row_height
 
          /first_row_ascent := row_ascent      
@@ -603,15 +617,7 @@ class TextFlow(Component)
                x1 +:= r.w
                put((\or).l, r)
             }
-            if \calculating & r.attr.fill === (Browser.FILL_PRE | Browser.FILL_NOWRAP) then
-               # Since a pre/nowrap section can still have several
-               # elements on a line (eg with an <a> in a line), we
-               # need to record the maximum width of the line.  We
-               # also take advantage of the fact that the fill type
-               # won't change mid-line.
-               max_pre_nowrap_w <:= r.x + r.w - row_x
          }
-
          row_y +:= row_height + gap
       } else
          row_y +:= 1
@@ -635,24 +641,20 @@ class TextFlow(Component)
          pop(deferred)
    end
 
-   private fits_in_row_with_maxw(co)
-      return have_max() | (row_x + co.maxw + row_width <= right_margin)
-   end
-
-   private fits_in_row_with_pw(co)
-      return have_max() | (row_x + co.pw + row_width <= right_margin)
+   private fits_in_row(w)
+      return have_max() | (row_x + w + row_width <= right_margin)
    end
 
    private do_deferred(co)
       case co.align of {
          Align.L: {
-            if fits_in_row_with_maxw(co) then {
+            if fits_in_row(co.maxw) then {
                left_comp_out(co)
                return
             }
          }
          Align.R: {
-            if fits_in_row_with_maxw(co) then {
+            if fits_in_row(co.maxw) then {
                right_comp_out(co)
                return
             }
@@ -719,13 +721,13 @@ class TextFlow(Component)
       case cmd.align of {
          Align.L: {
             # If already have deferred, then defer this too, otherwise they will be out of order. 
-            if *deferred = 0 & fits_in_row_with_maxw(co) then
+            if *deferred = 0 & fits_in_row(co.maxw) then
                left_comp_out(co)
             else
                put(deferred, co)
          }
          Align.R: {
-            if *deferred = 0 & fits_in_row_with_maxw(co) then 
+            if *deferred = 0 & fits_in_row(co.maxw) then 
                right_comp_out(co)
             else
                put(deferred, co)
@@ -756,15 +758,33 @@ class TextFlow(Component)
       }
    end
 
+   # If not calculating, and we are about to add the first
+   # (pre/nowrap) element of the row, then ensure enough space for the
+   # whole preformatted row.
+   private check_pre_room()
+      local rw
+      if /calculating & *row = 0 then {
+         # We know that the preformatted rows will come in the same
+         # sequence as when we were calculating, since they don't
+         # depend on available row width.  Also, we rely on the fact
+         # that you can't mix pre and non-pre formatted text in a row
+         # (since <pre> causes a new paragraph, and nowrap applies to
+         # a whole table cell.)
+         pre_row_no +:= 1
+         rw := member(pre_row_widths, pre_row_no) | syserr("pre_row_no not found in table")
+         until fits_in_row(rw) do
+            new_row()
+      }
+   end
+
    private comp_out(co)
       local c
       c := co.c
-      # In fact, if we are in pre or nowrap mode then it should always
-      # fit in the row anyway.
       if co.attr.fill === Browser.FILL_NORMAL then {
-         until fits_in_row_with_pw(co) do
+         until fits_in_row(co.pw) do
             new_row()
-      }
+      } else
+         check_pre_room()
       co.w := min(co.maxw, right_margin - row_x - row_width)
       co.set_height_from_width()
       co.ascent := (if is(co.c, HasAscent) then co.c.get_ascent(co.w, co.h) else co.h) + baseline_off
@@ -777,6 +797,11 @@ class TextFlow(Component)
       at_new_para := &null
       put(row,  co)
       row_width +:= co.w
+   end
+
+   private pre_txt_out(W, attr, s)
+      check_pre_room()
+      txt_out(W, attr, s)
    end
 
    private txt_out(W, attr, s)
@@ -865,13 +890,13 @@ class TextFlow(Component)
             ds ||:= u" " || wd
       }
       if *ds > 0 then
-         txt_out(W, attr, ds)
+         pre_txt_out(W, attr, ds)
       if any(WHITESPACE, cmd.s[-1]) then
          need_spc := 1
    end
 
    private compute_pre_txt(W, cmd)
-      local s, tw, attr, l, i, s2, nl
+      local s, attr, l, nl
       attr := cmd.attr
       l := []
 
@@ -879,33 +904,16 @@ class TextFlow(Component)
          put(l, detab( (tab(upto('\n')) || move(1)) | tab(0)))
 
       while s := get(l) do {
-         s2 := s
-         if s2[-1] == u"\n" then {
-            s2[-1] := u""
-            if s2[-1] == u"\r" then
-               s2[-1] := u""
+         if s[-1] == u"\n" then {
+            s[-1] := u""
+            if s[-1] == u"\r" then
+               s[-1] := u""
             nl := &yes
          } else
             nl := &no
-         tw := W.text_width(s2)
-         if row_x + row_width + tw > right_margin then {
-            if have_max() then {
-               i := *s2 + 1
-               while i > 2 &
-                  row_x + row_width +  W.text_width(s2[1:i]) > right_margin do
-                  i -:= 1
-               txt_out(W, attr, s2[1:i])
-               new_row()
-               push(l, u"" ~== s[i:0])
-            } else {
-               new_row()
-               push(l, s)
-            }
-         } else {
-            txt_out(W, attr, s2)
-            if \nl then
-               new_row()
-         }
+         pre_txt_out(W, attr, s)
+         if \nl then
+            new_row()
       }
    end
 
