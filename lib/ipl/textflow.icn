@@ -202,7 +202,7 @@ class TextFlow(Component)
       right_comps := []
       named_anchors := table()
       if \calculating then
-         pre_row_widths := table()
+         pre_row_widths := []
       row := []
       deferred := []
       at_new_para := 1
@@ -583,8 +583,7 @@ class TextFlow(Component)
                # retrieved at the start of the row when /calculating,
                # so as to ensure enough room, taking any left/right
                # images into account.
-               pre_row_no +:= 1
-               insert(pre_row_widths, pre_row_no, row_width)
+               put(pre_row_widths, row_width)
             }
          }
 
@@ -771,7 +770,7 @@ class TextFlow(Component)
          # (since <pre> causes a new paragraph, and nowrap applies to
          # a whole table cell.)
          pre_row_no +:= 1
-         rw := member(pre_row_widths, pre_row_no) | syserr("pre_row_no not found in table")
+         rw := pre_row_widths[pre_row_no] | syserr("pre_row_no not found in table")
          until fits_in_row(rw) do
             new_row()
       }
@@ -871,14 +870,11 @@ class TextFlow(Component)
    end
 
    private compute_nowrap_txt(W, cmd)
-      local ds, attr, wd, l
-      attr := cmd.attr
+      local ds, wd
       ds := u""
-      l := []
       if any(WHITESPACE, cmd.s) then
          need_spc := 1
-      every put(l, words(cmd.s, WHITESPACE))
-      while wd := get(l) do {
+      every wd := words(cmd.s, WHITESPACE) do {
          if *ds = 0 then {
             # Never put a space at the start of a row.
             if *row > 0 & \need_spc then
@@ -890,20 +886,15 @@ class TextFlow(Component)
             ds ||:= u" " || wd
       }
       if *ds > 0 then
-         pre_txt_out(W, attr, ds)
+         pre_txt_out(W, cmd.attr, ds)
       if any(WHITESPACE, cmd.s[-1]) then
          need_spc := 1
    end
 
    private compute_pre_txt(W, cmd)
-      local s, attr, l, nl
-      attr := cmd.attr
-      l := []
-
-      cmd.s ? until pos(0) do
-         put(l, detab( (tab(upto('\n')) || move(1)) | tab(0)))
-
-      while s := get(l) do {
+      local s, nl
+      cmd.s ? until pos(0) do {
+         s := detab( (tab(upto('\n')) || move(1)) | tab(0))
          if s[-1] == u"\n" then {
             s[-1] := u""
             if s[-1] == u"\r" then
@@ -911,7 +902,7 @@ class TextFlow(Component)
             nl := &yes
          } else
             nl := &no
-         pre_txt_out(W, attr, s)
+         pre_txt_out(W, cmd.attr, s)
          if \nl then
             new_row()
       }
