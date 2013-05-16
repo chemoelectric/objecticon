@@ -366,11 +366,11 @@ class TableGrid()
 
    private choose(total_a_col_w)
       local i, r1, r2, best1, best2, t
-      if (gw | total_p_col_max_w) = 0 then
+      if gw = 0 then
          fail
       # Set r1 to the most needy % col; r2 to the most needy non-% col.
       every i := 1 to gw do {
-         t := total_a_col_w * p_col_max_w[i] / total_p_col_max_w  - a_col_w[i]
+         t := ((total_a_col_w * p_col_max_w[i] / (0 < total_p_col_max_w)) | 0)  - a_col_w[i]
          if pct_col_w[i] > 0 then {
             if /r1 | (t > best1) then {
                r1 := i
