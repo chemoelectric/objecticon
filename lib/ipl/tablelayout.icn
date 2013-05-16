@@ -39,9 +39,11 @@ class TableCellInfo(Insets, ObjectOutput)
       t := s || ": "
       t ||:= " pos=" || self.x || "," || self.y || " dim=" || self.w || "," || self.h ||
          " component pref width=" || pw ||" max width=" || max_w
-      t ||:= "\n\theight=" || ph || " calculated from width " || ph_calc_w
-      t ||:= "\n\tcell desired size=" || pw + l_inset + r_inset || "," || 
-         ph + ascent_adj + t_inset + b_inset
+      if \ph then {
+         t ||:= "\n\theight=" || ph || " calculated from width " || ph_calc_w
+         t ||:= "\n\tcell desired size=" || pw + l_inset + r_inset || "," || 
+            ph + ascent_adj + t_inset + b_inset
+      }
       t ||:= " located to=" || \ax || "," || \ay || " size set to " || \aw || "," || \ah
       t ||:= " pct_w=" || \pct_w
       oo.object_string(self, t)
@@ -364,6 +366,9 @@ class TableGrid()
 
    private choose(total_a_col_w)
       local i, r1, r2, best1, best2, t
+      if (gw | total_p_col_max_w) = 0 then
+         fail
+      # Set r1 to the most needy % col; r2 to the most needy non-% col.
       every i := 1 to gw do {
          t := total_a_col_w * p_col_max_w[i] / total_p_col_max_w  - a_col_w[i]
          if pct_col_w[i] > 0 then {
@@ -379,8 +384,8 @@ class TableGrid()
          }
       }
       if /r2 | (\best1 > 0) then
-         return \r1
-      return \r2
+         return r1
+      return r2
    end
 
    public compute_actual_col_widths(w1)
