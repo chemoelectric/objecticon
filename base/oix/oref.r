@@ -565,33 +565,22 @@ operator [] subsc(underef x -> dx,y)
 
       table: {
             uword hn;
-            int res;
-            union block *bp; /* doesn't need to be tended */
-            union block **dp1;
-            struct b_tvtbl *tp;
+            struct b_tvtbl *tp;       /* Doesn't need to be tended */
 
             EVValD(&dx, E_Tref);
             EVValD(&y, E_Tsub);
 
             hn = hash(&y);
-            dp1 = memb(BlkLoc(dx), &y, hn, &res);
-            if (res) {
-               bp = *dp1;
-               return struct_var(&bp->telem.tval, bp);
-            }
-            if (_rval)
-                return TableBlk(dx).defvalue;
-            else {
-               /*
-                * dx[y] is not in the table, make a table element trapped
-                *  variable and return it as the result.
-                */
-               MemProtect(tp = alctvtbl());
-               tp->hashnum = hn;
-               tp->clink = BlkLoc(dx);
-               tp->tref = y;
-               return tvtbl(tp);
-           }
+            /*
+             * Return a table element trapped variable
+             * representing the result; defer actual lookup until
+             * later.
+             */
+            MemProtect(tp = alctvtbl());
+            tp->hashnum = hn;
+            tp->clink = BlkLoc(dx);
+            tp->tref = y;
+            return tvtbl(tp);
       }
 
       record: {
