@@ -2538,7 +2538,7 @@ class Browser(ComponentScrollArea)
             s := "<html><title>" || to_pre(res.fname) || "</title>" || 
                "<pre>" || to_pre(res.data) || "</pre></html>"
          else if is_image(res.content_type, res.data) then {
-            cu := worker_pool.cache.create_url(Time.get_system_seconds() + 60, res.data, res.fname, res.content_type)
+            cu := worker_pool.cache.create_url(, res.data, res.fname, res.content_type)
             s := "<html><title>" || to_pre(res.fname) || "</title>" || 
                "<img src=\"" || cu.str() || "\"/></html>"
          } else
