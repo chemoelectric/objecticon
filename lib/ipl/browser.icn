@@ -2049,7 +2049,7 @@ record DefListContext(tbl)
 record FieldSetContext(legend)
 record MapContext(map)
 record SelectContext(options, optgroup)
-record Context(base, form, form_label, url, fg, link_fg, font, align, fill, underline, strike, 
+record Context(base, form, form_label, url, fg, link_fg, font, align, pre, nowrap, underline, strike, 
                face, size, bold, italic, kind, table, list, def_list, fieldset, select, map)
 
 class MapArea()
@@ -2171,10 +2171,7 @@ class Browser(ComponentScrollArea)
    public static const 
       COLORS,
       FACES,
-      SIZES,
-      FILL_NORMAL,
-      FILL_PRE,
-      FILL_NOWRAP
+      SIZES
 
    private static
       default_font_clone
@@ -2215,10 +2212,6 @@ class Browser(ComponentScrollArea)
 
       SIZES := [7,9,11,14,17,20,23]
       ImageCache.name_image("rpp.BROKEN_LINK", BROKEN_LINK)
-
-      FILL_NORMAL := 1
-      FILL_PRE := 2
-      FILL_NOWRAP := 3
    end
 
    public get_map(s)
@@ -2587,7 +2580,6 @@ class Browser(ComponentScrollArea)
       c.size := 3
       c.align := Align.L
       c.kind := res.kind   # Tells images whether to refresh or not
-      c.fill := FILL_NORMAL
       synch_font(c)
       if n := doc.get_root_element().search_tree(u"BODY") then {
          row.set_bg(convert_color(n, u"BGCOLOR"))
@@ -3194,6 +3186,13 @@ class Browser(ComponentScrollArea)
       put(p.input, BreakCmd(clear, context))
    end
 
+   private traverse_nobr(e, p, context)
+      local c
+      c := copy(context)
+      c.nowrap := 1
+      traverse(e, p, c)
+   end
+
    private traverse_hr(e, p, context)
       local l, c
       l := Line().
@@ -3227,7 +3226,7 @@ class Browser(ComponentScrollArea)
       c := copy(context)
       c.face := "mono"
       synch_font(c)
-      c.fill := FILL_PRE
+      c.pre := 1
       traverse(e, p, c)
       put_para(p, c)
    end
@@ -3505,7 +3504,7 @@ class Browser(ComponentScrollArea)
 
       c := copy(context)
       if e.get_attribute(u"NOWRAP") then
-         c.fill := FILL_NOWRAP
+         c.nowrap := 1
       if e.name == u"TH" then {
          c.bold := 1
          c.size := min(c.size + 1, 7)
@@ -3681,6 +3680,7 @@ class Browser(ComponentScrollArea)
                "EM"|"CITE"|"I": traverse_i(e, p, context)
                "ADDRESS": traverse_address(e, p, context)
                "BR": traverse_br(e, p, context)
+               "NOBR": traverse_nobr(e, p, context)
                "HR": traverse_hr(e, p, context)
                "CENTER": traverse_center(e, p, context)
                "H" || (1 to 6): traverse_hN(e, p, context)

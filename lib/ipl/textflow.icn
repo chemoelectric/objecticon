@@ -24,6 +24,8 @@ end
 class ComponentCmd(TextFlowCmd)
    public const c, align
 
+   package blob_width
+
    public new(c, attr, align)
       self.c := c
       self.attr := attr
@@ -33,7 +35,9 @@ class ComponentCmd(TextFlowCmd)
 end
 
 class TextCmd(TextFlowCmd)
-  public const s
+   public const s
+
+   package blob_width
 
    public new(s, attr)
       self.s := s
@@ -176,8 +180,7 @@ class TextFlow(Component)
       computed_named_anchors,
       named_anchors,
       browser,
-      pre_row_no,
-      pre_row_widths
+      blob_start
 
    public static const 
       WHITESPACE,
@@ -201,16 +204,14 @@ class TextFlow(Component)
       left_comps := []
       right_comps := []
       named_anchors := table()
-      if \calculating then
-         pre_row_widths := []
       row := []
       deferred := []
       at_new_para := 1
-      row_width := row_y := row_bottom := row_x := max_word_w := max_ll := 
-         baseline_off := row_abs_middle_height := row_abs_top_height := pre_row_no :=
+      row_width := row_y := row_bottom := row_x := max_word_w := max_ll :=
+         baseline_off := row_abs_middle_height := row_abs_top_height :=
          row_abs_bottom_height := row_ascent := row_descent := 0
       right_margin := compute_w
-      need_spc := first_row_ascent := &null
+      need_spc := first_row_ascent := blob_start := &null
       compute1(, input)
       while *(row | deferred) > 0 do
          new_row()
@@ -230,7 +231,7 @@ class TextFlow(Component)
 
    public reset_layout()
       max_width := def_width := output_rows := output_comps := left_comps :=
-         pre_row_widths := named_anchors := right_comps := compute_w := &null
+         named_anchors := right_comps := compute_w := &null
    end
 
    public set_dominant_width(x)
@@ -245,7 +246,10 @@ class TextFlow(Component)
       if /def_width then {
          compute()
          def_width := 0
-         every def_width <:= !pre_row_widths
+         every c := !input do {
+            if is(c, TextCmd | ComponentCmd) then
+               def_width <:= \c.blob_width
+         }
          every c := !output_comps do
             def_width <:= c.pw
          def_width <:= max_word_w
@@ -327,12 +331,13 @@ class TextFlow(Component)
                insert(named_anchors, string(cmd.name), row_y)
             }
             TextCmd: {
-               case cmd.attr.fill of {
-                  Browser.FILL_NORMAL: compute_txt(W, cmd)
-                  Browser.FILL_PRE: compute_pre_txt(W, cmd)
-                  Browser.FILL_NOWRAP: compute_nowrap_txt(W, cmd)
-                  default: syserr("attr.fill invalid")
-               }
+               if /cmd.attr.pre then {
+                  if /cmd.attr.nowrap then
+                     compute_txt(W, cmd)
+                  else
+                     compute_nowrap_txt(W, cmd)
+               } else
+                  compute_pre_txt(W, cmd)
             }
          }
       }
@@ -577,14 +582,6 @@ class TextFlow(Component)
             or.y := row_y
             or.h := row_height
             or.w := row_width
-         } else {
-            if row[1].attr.fill ~=== Browser.FILL_NORMAL then {
-               # Save the pre/nowrap row width so that it can be
-               # retrieved at the start of the row when /calculating,
-               # so as to ensure enough room, taking any left/right
-               # images into account.
-               put(pre_row_widths, row_width)
-            }
          }
 
          row_bottom := row_y + row_height
@@ -732,58 +729,54 @@ class TextFlow(Component)
                put(deferred, co)
          }
          Align.B: {
-            comp_out(co)
+            comp_out(cmd, co)
             row_ascent <:= co.ascent
             row_descent <:= co.descent
          }
          Align.T: {
-            comp_out(co)
+            comp_out(cmd, co)
             row_abs_top_height <:= co.h
          }
          Align.C: {
-            comp_out(co)
+            comp_out(cmd, co)
             row_ascent <:= co.h / 2
             row_descent <:= co.h / 2 + co.h % 2
          }
          "absbottom": {
-            comp_out(co)
+            comp_out(cmd, co)
             row_abs_bottom_height <:= co.h
          }
          "absmiddle": {
-            comp_out(co)
+            comp_out(cmd, co)
             row_abs_middle_height <:= co.h
          }
          default: runerr("invalid alignment", cmd.align)
       }
    end
 
-   # If not calculating, and we are about to add the first
-   # (pre/nowrap) element of the row, then ensure enough space for the
-   # whole preformatted row.
-   private check_pre_room()
-      local rw
-      if /calculating & *row = 0 then {
-         # We know that the preformatted rows will come in the same
-         # sequence as when we were calculating, since they don't
-         # depend on available row width.  Also, we rely on the fact
-         # that you can't mix pre and non-pre formatted text in a row
-         # (since <pre> causes a new paragraph, and nowrap applies to
-         # a whole table cell.)
-         pre_row_no +:= 1
-         rw := pre_row_widths[pre_row_no] | syserr("pre_row_no not found in table")
-         until fits_in_row(rw) do
+   private comp_out(cmd, co)
+      local c, tw
+      c := co.c
+      if \calculating then {
+         if \co.attr.nowrap | \co.attr.pre then {
+            # In nowrap/pre mode we always either start a new blob, or
+            # add to the existing one.
+            if (*row = 0) | /blob_start then {
+               blob_start := cmd
+               cmd.blob_width := co.pw
+            } else
+               blob_start.blob_width +:= co.pw
+         } else
+            # Outside of nowrap/pre mode; a component always cancels a
+            # blob (so a break may occur to the left or right of an
+            # image).
+            blob_start := &null
+      } else {
+         tw := \cmd.blob_width | co.pw
+         until fits_in_row(tw) do
             new_row()
       }
-   end
 
-   private comp_out(co)
-      local c
-      c := co.c
-      if co.attr.fill === Browser.FILL_NORMAL then {
-         until fits_in_row(co.pw) do
-            new_row()
-      } else
-         check_pre_room()
       co.w := min(co.maxw, right_margin - row_x - row_width)
       co.set_height_from_width()
       co.ascent := (if is(co.c, HasAscent) then co.c.get_ascent(co.w, co.h) else co.h) + baseline_off
@@ -796,11 +789,6 @@ class TextFlow(Component)
       at_new_para := &null
       put(row,  co)
       row_width +:= co.w
-   end
-
-   private pre_txt_out(W, attr, s)
-      check_pre_room()
-      txt_out(W, attr, s)
    end
 
    private txt_out(W, attr, s)
@@ -824,12 +812,35 @@ class TextFlow(Component)
       local ds, ds2, tw, attr, wd, l, i
       attr := cmd.attr
       ds := u""
-      l := []
       if any(WHITESPACE, cmd.s) then
          need_spc := 1
+      l := []
       every put(l, words(cmd.s, WHITESPACE))
-      while wd := get(l) do {
-         max_word_w <:= W.text_width(wd)
+      if \calculating then {
+         # If we are at the start of a row, then we cancel any
+         # existing blob; otherwise if the input doesn't start with a
+         # whitespace, then the first word must be added to any
+         # existing blob.
+         if *row = 0 then
+            blob_start := &null
+         else if not any(WHITESPACE, cmd.s) then
+            (\blob_start).blob_width +:= W.text_width(l[1])
+
+         # If the input ends with whitespace, then we have no blob
+         # since that can give a break.  Otherwise, the last word may
+         # start a new blob.  If we have >1 words, then it must since
+         # that implies a space in the input.
+         if any(WHITESPACE, cmd.s[-1]) then
+            blob_start := &null
+         else if (*l > 1) | /blob_start then {
+            blob_start := cmd
+            cmd.blob_width := W.text_width(l[-1])
+         }
+         every max_word_w <:= W.text_width(!l)
+      }
+
+      i := 1
+      while wd := l[i] do {
          if *ds = 0 then {
             # Never put a space at the start of a row.
             if *row > 0 & \need_spc then
@@ -839,29 +850,33 @@ class TextFlow(Component)
             need_spc := &no
          } else
             ds2 := ds || u" " || wd
-         tw := W.text_width(ds2)
-         if row_x + row_width + tw > right_margin then {
-            if *ds = 0 then {
-               if have_max() then {
-                  i := *wd + 1
-                  while i > 2 &
-                     row_x + row_width +  W.text_width(wd[1:i]) > right_margin do
-                     i -:= 1
-                  txt_out(W, attr, wd[1:i])
-                  new_row()
-                  push(l, u"" ~== wd[i:0])
+         if \calculating then {
+            ds := ds2
+            i +:= 1
+         } else {
+            tw := W.text_width(ds2)
+            # The width of the last word is given by the blob width, if any.
+            if (i = *l) & \cmd.blob_width then
+               tw -:= W.text_width(wd) - cmd.blob_width
+            if row_x + row_width + tw > right_margin then {
+               if *ds = 0 then {
+                  if have_max() then {
+                     txt_out(W, attr, wd)
+                     new_row()
+                     i +:= 1
+                  } else {
+                     new_row()
+                  }
                } else {
+                  txt_out(W, attr, ds)
                   new_row()
-                  push(l, wd)
+                  ds := u""
                }
             } else {
-               txt_out(W, attr, ds)
-               new_row()
-               ds := u""
-               push(l, wd)
+               ds := ds2
+               i +:= 1
             }
-         } else
-            ds := ds2
+         }
       }
       if *ds > 0 then
          txt_out(W, attr, ds)
@@ -869,41 +884,88 @@ class TextFlow(Component)
          need_spc := 1
    end
 
-   private compute_nowrap_txt(W, cmd)
-      local ds, wd
-      ds := u""
+    private compute_nowrap_txt(W, cmd)
+      local ds, ds1, ds2, wd, tw
       if any(WHITESPACE, cmd.s) then
          need_spc := 1
+      # Calculate ds1 being the catenation without leading space; ds2 with any leading space.
+      ds1 := u""
       every wd := words(cmd.s, WHITESPACE) do {
-         if *ds = 0 then {
-            # Never put a space at the start of a row.
-            if *row > 0 & \need_spc then
-               ds := u" " || wd
-            else
-               ds := wd
-            need_spc := &no
-         } else
-            ds ||:= u" " || wd
+         if *ds1 = 0 then
+            ds1 := wd
+         else
+            ds1 ||:= u" " || wd
       }
+      if \need_spc then {
+         ds2 := u" " || ds1
+         need_spc := &no
+      } else
+         ds2 := ds1
+
+      if \calculating then {
+         # If we are starting a new blob, then the width is ds1, since
+         # potentially we can break to a new row.  If adding to a
+         # blob, then add ds2, since we can't break and must show the
+         # space (in other words, on display *row > 0 in the test
+         # below).
+         if (*row = 0) | /blob_start then {
+            blob_start := cmd
+            cmd.blob_width := W.text_width(ds1)
+         } else
+            blob_start.blob_width +:= W.text_width(ds2)
+      } else {
+         if tw := \cmd.blob_width then {
+            until fits_in_row(tw) do
+               new_row()
+         }
+      }
+
+      # Don't show the leading space at the start of a new row.
+      ds := if *row = 0 then ds1 else ds2
       if *ds > 0 then
-         pre_txt_out(W, cmd.attr, ds)
+         txt_out(W, cmd.attr, ds)
+
       if any(WHITESPACE, cmd.s[-1]) then
          need_spc := 1
    end
 
    private compute_pre_txt(W, cmd)
-      local s, nl
-      cmd.s ? until pos(0) do {
-         s := detab( (tab(upto('\n')) || move(1)) | tab(0))
-         if s[-1] == u"\n" then {
-            s[-1] := u""
-            if s[-1] == u"\r" then
-               s[-1] := u""
-            nl := &yes
-         } else
-            nl := &no
-         pre_txt_out(W, cmd.attr, s)
-         if \nl then
+      local s, l, i, tw
+      l := []
+      every put(l, detab(separate_lines(cmd.s)))
+
+      if \calculating then {
+         # This follows similar logic to compute_txt above.  First,
+         # cancel the current blob if we are starting a new line;
+         # otherwise add the first line to any current blob.
+         if *row = 0 then
+            blob_start := &null
+         else
+            (\blob_start).blob_width +:= W.text_width(l[1])
+
+         # Now see if we start a new blob.  If we end with a nl, then
+         # no, since that starts a new row.  Otherwise start a new
+         # blob, unless we have just one line and an existing blob (to
+         # which the single line will have just been added).
+         if cmd.s[-1] == u"\n" then
+            blob_start := &null
+         else if (*l > 1) | /blob_start then {
+            blob_start := cmd
+            cmd.blob_width := W.text_width(l[-1])
+         }
+
+         every max_word_w <:= W.text_width(!l)
+      }
+      every i := 1 to *l do {
+         s := l[i]
+         if /calculating then {
+            tw := (i = *l, \cmd.blob_width) | W.text_width(s)
+            until fits_in_row(tw) do
+               new_row()
+         }
+
+         txt_out(W, cmd.attr, s)
+         if (i < *l) | cmd.s[-1] == u"\n" then
             new_row()
       }
    end
