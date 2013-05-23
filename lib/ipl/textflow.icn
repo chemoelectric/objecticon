@@ -836,8 +836,12 @@ class TextFlow(Component)
          # must be added to any existing blob.
          if (*row = 0) | any(WHITESPACE, cmd.s) then
             blob_start := &null
-         else
-            (\blob_start).blob_width +:= W.text_width(l[1])
+         else if \blob_start then { 
+            tw := W.text_width(l[1])
+            if \need_spc then
+               tw +:=  W.text_width(" ")
+            blob_start.blob_width +:= tw
+         }
 
          # If the input ends with whitespace, then we have no blob
          # since that can give a break.  Otherwise, the last word may
@@ -909,11 +913,11 @@ class TextFlow(Component)
          else
             ds1 ||:= u" " || wd
       }
-      if \need_spc then {
+      if \need_spc & *ds1 > 0 then
          ds2 := u" " || ds1
-         need_spc := &no
-      } else
+      else
          ds2 := ds1
+      need_spc := &no
 
       if \calculating then {
          # If we are starting a new blob, then the width is ds1, since
