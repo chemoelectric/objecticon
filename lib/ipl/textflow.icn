@@ -90,7 +90,7 @@ end
 
 class CompOut(Rect)
    public const c, align, attr, pw, maxw
-   public ascent, descent
+   public ascent, descent, lpad
 
    public set_height_from_width()
       h := c.get_preferred_height(w)
@@ -295,7 +295,7 @@ class TextFlow(Component)
          } 
          case classof(cmd) of {
             ComponentCmd: 
-               compute_component(cmd)
+               compute_component(W, cmd)
             NewRowCmd: {
                # Avoid 1-pixel gap, which would be added if *row=0
                if *row > 0 then
@@ -597,6 +597,7 @@ class TextFlow(Component)
                }
             }
             if is(r, CompOut) then {
+               x1 +:= r.lpad
                r.x := x1
                r.y := case r.align of {
                   Align.C: row_y + row_ascent - r.h / 2
@@ -680,7 +681,7 @@ class TextFlow(Component)
       return self === browser.view.inner
    end
 
-   private compute_component(cmd)
+   private compute_component(W, cmd)
       local co, prefw, maxw, i
       prefw := cmd.c.get_preferred_width()
       maxw := if is(cmd.c, HasMaxWidth) then cmd.c.get_max_width() else prefw
@@ -729,66 +730,79 @@ class TextFlow(Component)
                put(deferred, co)
          }
          Align.B: {
-            comp_out(cmd, co)
+            comp_out(W, cmd, co)
             row_ascent <:= co.ascent
             row_descent <:= co.descent
          }
          Align.T: {
-            comp_out(cmd, co)
+            comp_out(W, cmd, co)
             row_abs_top_height <:= co.h
          }
          Align.C: {
-            comp_out(cmd, co)
+            comp_out(W, cmd, co)
             row_ascent <:= co.h / 2
             row_descent <:= co.h / 2 + co.h % 2
          }
          "absbottom": {
-            comp_out(cmd, co)
+            comp_out(W, cmd, co)
             row_abs_bottom_height <:= co.h
          }
          "absmiddle": {
-            comp_out(cmd, co)
+            comp_out(W, cmd, co)
             row_abs_middle_height <:= co.h
          }
          default: runerr("invalid alignment", cmd.align)
       }
    end
 
-   private comp_out(cmd, co)
-      local c, tw
+   private comp_out(W, cmd, co)
+      local c, tw, lpad
       c := co.c
-      if \calculating then {
-         if \co.attr.nowrap | \co.attr.pre then {
+      lpad := if /co.attr.pre & \need_spc then W.text_width(" ") else 0
+      if \co.attr.nowrap | \co.attr.pre then {
+         if \calculating then {
             # In nowrap/pre mode we always either start a new blob, or
             # add to the existing one.
             if (*row = 0) | /blob_start then {
                blob_start := cmd
                cmd.blob_width := co.pw
             } else
-               blob_start.blob_width +:= co.pw
-         } else
+               blob_start.blob_width +:= co.pw + lpad
+         } else {
+            if tw := \cmd.blob_width then {
+               if *row > 0 then
+                  tw +:= lpad
+               until fits_in_row(tw) do {
+                  new_row()
+                  tw := cmd.blob_width
+               }
+            }
+         }
+      } else {
+         if \calculating then {
             # Outside of nowrap/pre mode; a component always cancels a
             # blob (so a break may occur to the left or right of an
             # image).
             blob_start := &null
-      } else {
-         tw := \cmd.blob_width | co.pw
-         until fits_in_row(tw) do
-            new_row()
+         } else {
+            tw := co.pw
+            if *row > 0 then
+               tw +:= lpad
+            until fits_in_row(tw) do {
+               new_row()
+               tw := co.pw
+            }
+         }
       }
 
       co.w := min(co.maxw, right_margin - row_x - row_width)
       co.set_height_from_width()
       co.ascent := (if is(co.c, HasAscent) then co.c.get_ascent(co.w, co.h) else co.h) + baseline_off
       co.descent := co.h - co.ascent
-      # A component cancels outstanding ws before the line eg the \n after the <br> is ignored
-      # begin<br>
-      # <img src="/tmp/j3.jpeg">is some stuff
-      if *row = 0 then
-         need_spc := &null
-      at_new_para := &null
+      co.lpad := if *row = 0 then 0 else lpad
+      need_spc := at_new_para := &null
       put(row,  co)
-      row_width +:= co.w
+      row_width +:= co.w + co.lpad
    end
 
    private txt_out(W, attr, s)
@@ -915,8 +929,15 @@ class TextFlow(Component)
             blob_start.blob_width +:= W.text_width(ds2)
       } else {
          if tw := \cmd.blob_width then {
-            until fits_in_row(tw) do
+            # The blob width gives us the width excluding any leading
+            # space, so unless at start of row we must add ensure we
+            # have the space too.
+            if *row > 0 then
+               tw +:= W.text_width(ds2) - W.text_width(ds1)
+            until fits_in_row(tw) do {
                new_row()
+               tw := cmd.blob_width
+            }
          }
       }
 
@@ -953,7 +974,6 @@ class TextFlow(Component)
             blob_start := cmd
             cmd.blob_width := W.text_width(l[-1])
          }
-
          every max_word_w <:= W.text_width(!l)
       }
       every i := 1 to *l do {
