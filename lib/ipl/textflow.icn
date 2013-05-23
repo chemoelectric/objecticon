@@ -831,13 +831,12 @@ class TextFlow(Component)
       l := []
       every put(l, words(cmd.s, WHITESPACE))
       if \calculating then {
-         # If we are at the start of a row, then we cancel any
-         # existing blob; otherwise if the input doesn't start with a
-         # whitespace, then the first word must be added to any
-         # existing blob.
-         if *row = 0 then
+         # If we are at the start of a row, or start with whitespace,
+         # then we cancel any existing blob; otherwise the first word
+         # must be added to any existing blob.
+         if (*row = 0) | any(WHITESPACE, cmd.s) then
             blob_start := &null
-         else if not any(WHITESPACE, cmd.s) then
+         else
             (\blob_start).blob_width +:= W.text_width(l[1])
 
          # If the input ends with whitespace, then we have no blob
