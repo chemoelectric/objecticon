@@ -412,33 +412,24 @@ class TextFlow(Component)
                   font := o.attr.font
                   fg := o.attr.fg
                } 
-               if \o.s then {
-                  draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
-                  if ts := browser.is_banded(o) then
-                     # NB - the rectangle used should be the same as that returned by t.get_bounds()
-                     Gui.style.fill_selection_rectangle(cbwin, 
-                                                        x1 + o.x + ts.w_off,
-                                                        y1 + o.y, 
-                                                        ts.w_sub,
-                                                        o.h)
-                  if \o.attr.underline then
-                     text_line(W,
-                               o.s, 
-                               x1 + o.x, 
-                               y1 + o.y + W.get_font_ascent() + 1)
-                  if \o.attr.strike then
-                     text_line(W,
-                               o.s, 
-                               x1 + o.x,
-                               y1 + o.y + (2 * W.get_font_ascent()) / 3)
-               } else {
-                  if browser.is_banded(o) then
-                     Gui.style.fill_selection_rectangle(cbwin, 
-                                                        x1 + o.x,
-                                                        y1 + o.y, 
-                                                        o.w,
-                                                        o.h)
-               }
+               draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
+               if ts := browser.is_banded(o) then
+                  # NB - the rectangle used should be the same as that returned by t.get_bounds()
+                  Gui.style.fill_selection_rectangle(cbwin, 
+                                                     x1 + o.x + ts.w_off,
+                                                     y1 + o.y, 
+                                                     ts.w_sub,
+                                                     o.h)
+               if \o.attr.underline then
+                  text_line(W,
+                            o.s, 
+                            x1 + o.x, 
+                            y1 + o.y + W.get_font_ascent() + 1)
+               if \o.attr.strike then
+                  text_line(W,
+                            o.s, 
+                            x1 + o.x,
+                            y1 + o.y + (2 * W.get_font_ascent()) / 3)
             }
          }
       }
@@ -490,50 +481,27 @@ class TextFlow(Component)
             W := attr_clone(o.attr)
             font := o.attr.font
          } 
-         if \o.s then {
-            i := 1
-            if o === first then {
-               d := first_r.x - x1 - o.x
-               u := 0
-               while i <= *o.s & ((.u + (u := W.text_width(o.s[1+:i]))) / 2) < d do
-                  i +:= 1
-            }
-            if o === last then {
-               d := last_r.x - x1 - o.x + last_r.w
-               j := i
-               u := W.text_width(o.s[1:i])
-               while j <= *o.s & ((.u + (u := W.text_width(o.s[1+:j]))) / 2) < d do
-                  j +:= 1
-            } else
-               j := *o.s + 1
+         i := 1
+         if o === first then {
+            d := first_r.x - x1 - o.x
+            u := 0
+            while i <= *o.s & ((.u + (u := W.text_width(o.s[1+:i]))) / 2) < d do
+               i +:= 1
+         }
+         if o === last then {
+            d := last_r.x - x1 - o.x + last_r.w
+            j := i
+            u := W.text_width(o.s[1:i])
+            while j <= *o.s & ((.u + (u := W.text_width(o.s[1+:j]))) / 2) < d do
+               j +:= 1
+         } else
+            j := *o.s + 1
 
-            if i < j then {
-               ts := TextSelection(o, self, 
-                                   i, j, 
-                                   W.text_width(o.s[1:i]), W.text_width(o.s[i:j]))
-               insert(bs, o, ts)
-            }
-         } else {
-            i := 1
-            if o === first then {
-               d := first_r.x - x1 - o.x
-               if o.w / 2 < d then
-                  i +:= 1
-            }
-            if o === last then {
-               d := last_r.x - x1 - o.x + last_r.w
-               j := i
-               if j <= 1 & o.w / 2 < d then
-                  j +:= 1
-            } else
-               j := 2
-
-            if i < j then {
-               ts := TextSelection(o, self, 
-                                   i, j, 
-                                   0, o.w)
-               insert(bs, o, ts)
-            }
+         if i < j then {
+            ts := TextSelection(o, self, 
+                                i, j, 
+                                W.text_width(o.s[1:i]), W.text_width(o.s[i:j]))
+            insert(bs, o, ts)
          }
       }
       W.close()
@@ -547,12 +515,8 @@ class TextFlow(Component)
       every or := rows_in_range(br.y - y1, br.h) do {
          sr := u""
          every o := !or.l do {
-            if t := browser.is_banded(o) then {
-               if \o.s then
-                  sr ||:= o.s[t.i:t.j]
-               else
-                  sr ||:= u" "
-            }
+            if t := browser.is_banded(o) then
+               sr ||:= o.s[t.i:t.j]
          }
          if *sr > 0 then {
             if *s > 0 then
@@ -571,7 +535,7 @@ class TextFlow(Component)
             if u := \o.attr.url then {
                if u === u2 & or ~=== or2 then
                   t[u] ||:= u" "
-               t[u] ||:= \o.s | u" "
+               t[u] ||:= o.s
                u2 := u
                or2 := or
             }
@@ -781,35 +745,36 @@ class TextFlow(Component)
                put(deferred, co)
          }
          Align.B: {
-            comp_out(W, cmd, co)
+            comp_out(cmd, co)
             row_ascent <:= co.ascent
             row_descent <:= co.descent
          }
          Align.T: {
-            comp_out(W, cmd, co)
+            comp_out(cmd, co)
             row_abs_top_height <:= co.h
          }
          Align.C: {
-            comp_out(W, cmd, co)
+            comp_out(cmd, co)
             row_ascent <:= co.h / 2
             row_descent <:= co.h / 2 + co.h % 2
          }
          "absbottom": {
-            comp_out(W, cmd, co)
+            comp_out(cmd, co)
             row_abs_bottom_height <:= co.h
          }
          "absmiddle": {
-            comp_out(W, cmd, co)
+            comp_out(cmd, co)
             row_abs_middle_height <:= co.h
          }
          default: runerr("invalid alignment", cmd.align)
       }
    end
 
-   private comp_out(W, cmd, co)
-      local c, tw, lpad
+   private comp_out(cmd, co)
+      local c, tw
       c := co.c
-      lpad := if /co.attr.pre & *row > 0 & \need_spc then need_spc else 0
+      if \co.attr.pre | *row = 0 then
+         need_spc := &null
       if \co.attr.nowrap | \co.attr.pre then {
          if \calculating then {
             # In nowrap/pre mode we always either start a new blob, or
@@ -818,12 +783,12 @@ class TextFlow(Component)
                blob_start := cmd
                cmd.blob_width := co.pw
             } else
-               blob_start.blob_width +:= co.pw + lpad
+               blob_start.blob_width +:= co.pw + get_pad()
          } else {
             if tw := \cmd.blob_width then {
-               until fits_in_row(tw + lpad) do {
+               until fits_in_row(tw + get_pad()) do {
                   new_row()
-                  lpad := 0
+                  need_spc := &null
                }
             }
          }
@@ -835,9 +800,9 @@ class TextFlow(Component)
             blob_start := &null
          } else {
             tw := co.pw
-            until fits_in_row(tw + lpad) do {
+            until fits_in_row(tw + get_pad()) do {
                new_row()
-               lpad := 0
+               need_spc := &null
             }
          }
       }
@@ -846,28 +811,25 @@ class TextFlow(Component)
       co.set_height_from_width()
       co.ascent := (if is(co.c, HasAscent) then co.c.get_ascent(co.w, co.h) else co.h) + baseline_off
       co.descent := co.h - co.ascent
-      need_spc := at_new_para := &null
-      if lpad > 0 then {
-         put(row, TextOut(co.attr, &null,
-                          W.get_font_ascent() + baseline_off, 
-                          W.get_font_descent() - baseline_off, 
-                          lpad, W.get_font_height()))
-         row_width +:= lpad
+      if \need_spc then {
+         put(row, need_spc)
+         row_width +:= need_spc.w
+         row_ascent <:= need_spc.ascent
+         row_descent <:= need_spc.descent
       }
       put(row,  co)
       row_width +:= co.w
+      need_spc := at_new_para := &null
    end
 
-   private txt_out(W, attr, s, lpad)
+   private txt_out(W, attr, s)
       local xo
-      if lpad > 0 then {
-         put(row, TextOut(attr, &null,
-                          W.get_font_ascent() + baseline_off, 
-                          W.get_font_descent() - baseline_off, 
-                          lpad, W.get_font_height()))
-         row_width +:= lpad
+      if \need_spc then {
+         put(row, need_spc)
+         row_width +:= need_spc.w
+         row_ascent <:= need_spc.ascent
+         row_descent <:= need_spc.descent
       }
-
       xo := TextOut(attr, s, 
                     W.get_font_ascent() + baseline_off, 
                     W.get_font_descent() - baseline_off, 
@@ -883,25 +845,39 @@ class TextFlow(Component)
       return *row = 0 & row_x = 0 & right_margin = compute_w
    end
 
+   private make_pad(W, attr)
+      return TextOut(attr, u" ",
+                     W.get_font_ascent() + baseline_off, 
+                     W.get_font_descent() - baseline_off, 
+                     W.text_width(" "), W.get_font_height())
+   end
+
+   private get_pad()
+      return (\need_spc).w | 0
+   end
+
    private compute_txt(W, cmd)
-      local ds, ds2, tw, attr, wd, l, i, lpad
+      local ds, ds2, tw, attr, wd, l, i
       attr := cmd.attr
-      if any(WHITESPACE, cmd.s) then
-         /need_spc := W.text_width(" ") 
+
       l := []
       every put(l, words(cmd.s, WHITESPACE))
+
+      if *row = 0 | *l = 0 then
+         need_spc := &null
+      else if any(WHITESPACE, cmd.s) then 
+         /need_spc := make_pad(W, attr)
+
       if \calculating then {
          # If we are at the start of a row, or start with whitespace,
          # then we cancel any existing blob; otherwise the first word
          # must be added to any existing blob.
          if (*row = 0) | any(WHITESPACE, cmd.s) then
             blob_start := &null
-         else if \blob_start then {
-            blob_start.blob_width +:= W.text_width(l[1])
+         else if \blob_start then
             # We might have need_spc here if we've just left a nobr
             # section, for example :- "<nobr>Some text </nobr>after"
-            blob_start.blob_width +:= \need_spc
-         }
+            blob_start.blob_width +:= W.text_width(l[1]) + get_pad()
 
          # If the input ends with whitespace, then we have no blob
          # since that can give a break.  Otherwise, the last word may
@@ -919,35 +895,33 @@ class TextFlow(Component)
       ds := u""
       i := 1
       while wd := l[i] do {
-         if *ds = 0 then {
-            # Never put a space at the start of a row.
-            lpad := if *row > 0 & \need_spc then need_spc else 0
+         if *ds = 0 then
             ds2 := wd
-            need_spc := &no
-         } else
+         else
             ds2 := ds || u" " || wd
          if \calculating then {
             ds := ds2
             i +:= 1
          } else {
-            tw := lpad + W.text_width(ds2)
+            tw := W.text_width(ds2) + get_pad()
             # The width of the last word is given by the blob width, if any.
             if (i = *l) & \cmd.blob_width then
                tw -:= W.text_width(wd) - cmd.blob_width
             if row_x + row_width + tw > right_margin then {
                if *ds = 0 then {
                   if have_max() then {
-                     txt_out(W, attr, wd, lpad)
+                     txt_out(W, attr, wd)
                      new_row()
                      i +:= 1
                   } else {
                      new_row()
                   }
                } else {
-                  txt_out(W, attr, ds, lpad)
+                  txt_out(W, attr, ds)
                   new_row()
                   ds := u""
                }
+               need_spc := &null
             } else {
                ds := ds2
                i +:= 1
@@ -955,16 +929,19 @@ class TextFlow(Component)
          }
       }
       if *ds > 0 then
-         txt_out(W, attr, ds, lpad)
-      if any(WHITESPACE, cmd.s[-1]) then
-         need_spc := W.text_width(" ")
+         txt_out(W, attr, ds)
+
+      need_spc := if any(WHITESPACE, cmd.s[-1]) then
+         make_pad(W, attr)
+      else
+         &null
    end
 
     private compute_nowrap_txt(W, cmd)
-      local ds, wd, tw, lpad
-      if any(WHITESPACE, cmd.s) then 
-         /need_spc := W.text_width(" ") 
-      # Calculate ds being the catenation without leading space; ds2 with any leading space.
+      local ds, wd, tw, attr
+      attr := cmd.attr
+
+      # Calculate ds being the catenation without leading space
       ds := u""
       every wd := words(cmd.s, WHITESPACE) do {
          if *ds = 0 then
@@ -972,44 +949,48 @@ class TextFlow(Component)
          else
             ds ||:= u" " || wd
       }
-      lpad := if *row > 0 & \need_spc & *ds > 0 then need_spc else 0
-      need_spc := &no
+
+      if *row = 0 | *ds = 0 then
+         need_spc := &null
+      else if any(WHITESPACE, cmd.s) then 
+         /need_spc := make_pad(W, attr)
 
       if \calculating then {
          # If we are starting a new blob, then the width is ds, since
          # potentially we can break to a new row.  If adding to a
-         # blob, then add ds2, since we can't break and must show the
-         # space (in other words, on display *row > 0 in the test
-         # below).
+         # blob, then add any pad space, since we can't break and must
+         # show the space.
          if (*row = 0) | /blob_start then {
             blob_start := cmd
             cmd.blob_width := W.text_width(ds)
          } else
-            blob_start.blob_width +:= W.text_width(ds) + lpad
+            blob_start.blob_width +:= W.text_width(ds) + get_pad()
       } else {
          if tw := \cmd.blob_width then {
             # The blob width gives us the width excluding any leading
             # space, so unless at start of row we must ensure we have
             # the space too.
-            until fits_in_row(tw + lpad) do {
+            until fits_in_row(tw + get_pad()) do {
                new_row()
-               lpad := 0
+               need_spc := &null
             }
          }
       }
 
-      # Don't show the leading space at the start of a new row.
       if *ds > 0 then
-         txt_out(W, cmd.attr, ds, lpad)
+         txt_out(W, attr, ds)
 
-      if any(WHITESPACE, cmd.s[-1]) then
-         need_spc := W.text_width(" ")
+      need_spc := if any(WHITESPACE, cmd.s[-1]) then
+         make_pad(W, attr)
+      else
+         &null
    end
 
    private compute_pre_txt(W, cmd)
       local s, l, i, tw
       l := []
       every put(l, detab(separate_lines(cmd.s)))
+      need_spc := &null
 
       if \calculating then {
          # This follows similar logic to compute_txt above.  First,
@@ -1040,7 +1021,7 @@ class TextFlow(Component)
                new_row()
          }
 
-         txt_out(W, cmd.attr, s, 0)
+         txt_out(W, cmd.attr, s)
          if (i < *l) | cmd.s[-1] == u"\n" then
             new_row()
       }
