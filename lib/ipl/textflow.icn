@@ -849,12 +849,10 @@ class TextFlow(Component)
          # must be added to any existing blob.
          if (*row = 0) | any(WHITESPACE, cmd.s) then
             blob_start := &null
-         else if \blob_start then { 
-            tw := W.text_width(l[1])
-            if \need_spc then
-               tw +:=  W.text_width(" ")
-            blob_start.blob_width +:= tw
-         }
+         else if \blob_start then
+            # We might have need_spc here if we've just left a nobr
+            # section, for example :- "<nobr>Some text </nobr>after"
+            blob_start.blob_width +:= W.text_width(if \need_spc then u" " || l[1] else l[1])
 
          # If the input ends with whitespace, then we have no blob
          # since that can give a break.  Otherwise, the last word may
@@ -946,8 +944,8 @@ class TextFlow(Component)
       } else {
          if tw := \cmd.blob_width then {
             # The blob width gives us the width excluding any leading
-            # space, so unless at start of row we must add ensure we
-            # have the space too.
+            # space, so unless at start of row we must ensure we have
+            # the space too.
             if *row > 0 then
                tw +:= W.text_width(ds2) - W.text_width(ds1)
             until fits_in_row(tw) do {
