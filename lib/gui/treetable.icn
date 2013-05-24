@@ -8,6 +8,8 @@
 
 package gui
 
+import util
+
 #
 # A node in a {TreeTable}.  It provides the column data
 # for the extra (non-tree) columns.  For example if
@@ -105,7 +107,7 @@ class TreeTableContent(Tree)
    end
 
    public draw()
-      local xp, yp, i, j, info, h, lh, r, cols, col, cc
+      local xp, yp, i, j, info, h, lh, r, cols, col, cc, W
 
       r := view.get_cbwin_clip()
 
@@ -113,26 +115,49 @@ class TreeTableContent(Tree)
       h := get_line_height()
 
       cols := parent.table_header.children
-      every j := 1 to *cols do {
-         col := cols[j]
-         # If the column is visible
-         if cc := view.cbwin.drawable(col.x, r.y, col.w, r.h) then {
-            # Clip on the column.
-            view.cbwin.clip!cc
-            yp := r.y - info.offset
-            xp := get_subject_x()
-            # Write each line in this column
-            every i := info.first to info.last do {
-               lh := integer(h) | h[i]
-               if j = 1 then
-                  cast(self,Tree).draw_line(xp, yp, lh, i)
-               else
-                  col.draw_cell(view.cbwin, 
-                                (\self.contents[i].contents)[j - 1], i, j, yp, lh)
-               yp +:= lh
+
+      # First (tree) column
+      #
+      col := cols[1]
+      # If the column is visible
+      if cc := view.cbwin.drawable(col.x, r.y, col.w, r.h) then {
+         # Clip on the column.  We must clip directly on view.cbwin
+         # since we borrow Tree's draw_line()
+         view.cbwin.clip!cc
+         yp := r.y - info.offset
+         xp := get_subject_x()
+         # Write each line in this column
+         every i := info.first to info.last do {
+            lh := integer(h) | h[i]
+            cast(self,Tree).draw_line(xp, yp, lh, i)
+            yp +:= lh
+         }
+         # Reset the clip.
+         view.cbwin.clip(r.x, r.y, r.w, r.h)
+      }
+
+      # Other columns
+      #
+      use {
+         W := view.cbwin.clone(), 
+         {
+            every j := 2 to *cols do {
+               col := cols[j]
+               # If the column is visible
+               if cc := view.cbwin.drawable(col.x, r.y, col.w, r.h) then {
+                  # Clip on the column.
+                  W.clip!cc
+                  yp := r.y - info.offset
+                  xp := get_subject_x()
+                  # Write each line in this column
+                  every i := info.first to info.last do {
+                     lh := integer(h) | h[i]
+                     col.draw_cell(W, 
+                                   (\self.contents[i].contents)[j - 1], i, j, yp, lh)
+                     yp +:= lh
+                  }
+               }
             }
-            # Reset the clip.
-            view.cbwin.clip(r.x, r.y, r.w, r.h)
          }
       }
       # Call the superclass draw to do the selection, highlight etc.

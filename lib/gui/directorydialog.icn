@@ -127,7 +127,8 @@ class DirectoryDialog(Dialog)
    end
 
    public on_dir(ev)
-      goto_dir(dir.get_contents())
+      if member(EditList.NAVIGATE, ev.code) then
+         goto_dir(dir.get_contents())
    end
 
    #
@@ -338,7 +339,7 @@ $endif
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          connect(self.on_dir, Event.ACTION).
-         connect(self.on_dir, Event.SELECTION_CHANGED).
+         connect(self.on_dir, Event.CONTENT_CHANGED).
          set_selection_list([""])
       self.add(dir)
       paint_8 := TextPaint("Show hidden directories")

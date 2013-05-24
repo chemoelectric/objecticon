@@ -701,7 +701,7 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public scroll_tick()
-      local ax, s, v, vi, e
+      local ax, s, v, vi, e, i
       repeat {
          start_handle(e)
 
@@ -709,15 +709,19 @@ class EditableTextList(LineBasedScrollArea)
          
          case self.direction of {
             "up" : {
-               if vi > 1 then {
-                  v := view_list[vi - 1]
+               if vi > 1 & i := get_line_info() then {
+                  vi := i.first_whole - 1
+                  vi <:= 1
+                  v := view_list[vi]
                   self.cursor_y := v.index
                   self.cursor_x := v.first
                }
             }
             "down" : {
-               if vi < *view_list then {
-                  v := view_list[vi + 1]
+               if vi < *view_list & i := get_line_info() then {
+                  vi := i.last_whole + 1
+                  vi >:= *view_list
+                  v := view_list[vi]
                   self.cursor_y := v.index
                   self.cursor_x := v.first
                }
@@ -1056,7 +1060,8 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public focus_changed(e) 
-      invalidate_line(get_view_list_index(cursor_x, cursor_y))
+      if is_live() then
+         invalidate_line(get_view_list_index(cursor_x, cursor_y))
    end
 
    public draw()
@@ -1085,30 +1090,37 @@ class EditableTextList(LineBasedScrollArea)
       si := self.cursor_x - v.first + 1
       draw_string_ex(view.cbwin, xp, yp, detab(s, self.tab_width + 1))
       if \self.mark_y then {
+         #
+         # Note use of v.first + *s, rather than v.last.  v.last is
+         # the last permissible cursor pos, rather than the last
+         # permissible char to highlight.  If we have a split line and
+         # it is say wholly selected, using v.last would leave the
+         # last char unhighlighted.
+         #
          if (self.mark_y < v.index < self.cursor_y) | (self.mark_y > v.index > self.cursor_y) then {
             # Whole line selected
-            r := [v.first, v.last]
+            r := [v.first, v.first + *s]
          } else if v.index = self.mark_y = self.cursor_y then {
             # Part of line
             if self.mark_x < self.cursor_x then
-               r := range(v.first, v.last, self.mark_x, self.cursor_x)
+               r := range(v.first, v.first + *s, self.mark_x, self.cursor_x)
             else if self.mark_x > self.cursor_x then
-               r := range(v.first, v.last, self.cursor_x, self.mark_x)
+               r := range(v.first, v.first + *s, self.cursor_x, self.mark_x)
          } else if v.index = self.mark_y then {
             if self.mark_y < self.cursor_y then
-               r := range(v.first, v.last, self.mark_x, *self.contents[v.index] + 1)
+               r := range(v.first, v.first + *s, self.mark_x, *self.contents[v.index] + 1)
             else
-               r := range(v.first, v.last, 1, self.mark_x)
+               r := range(v.first, v.first + *s, 1, self.mark_x)
          } else if v.index = self.cursor_y then {
             if self.mark_y > self.cursor_y then
-               r := range(v.first, v.last, self.cursor_x, *self.contents[v.index] + 1)
+               r := range(v.first, v.first + *s, self.cursor_x, *self.contents[v.index] + 1)
             else
-               r := range(v.first, v.last, 1, self.cursor_x)
+               r := range(v.first, v.first + *s, 1, self.cursor_x)
          }
          if \r then {
             off1 := text_width_ex(view.cbwin, s, 1, r[1] - v.first + 1, self.tab_width)
             off2 := text_width_ex(view.cbwin, s, 1, r[2] - v.first + 1, self.tab_width)
-            Gui.style.selection_rectangle(self.cbwin, xp + off1, yp,  off2 - off1, self.line_height)
+            Gui.style.fill_selection_rectangle(self.cbwin, xp + off1, yp,  off2 - off1, self.line_height)
          }
       }
 

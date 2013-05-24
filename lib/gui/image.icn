@@ -146,6 +146,8 @@ class Image(Component)
       \win | fail
 
       ir := border.get_inner_rect(self)
+      if (ir.h | ir.w) <= 0 then
+         fail
 
       img_w := win.get_width()
       img_h := win.get_height()

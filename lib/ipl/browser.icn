@@ -55,7 +55,7 @@ class Resp()
    end
 end
 
-class Handled()
+class StaticData()
    public const
       data, fname, content_type
 
@@ -67,11 +67,11 @@ class Handled()
    end
 end
 
-class CacheEntry()
+class CacheEntry(StaticData)
    public const
-      url, data, fname, content_type, expiry
+      url, expiry
 
-   public new(url, data, fname, content_type, expiry)
+   public new(url, expiry, data, fname, content_type)
       self.url := url
       self.data := data
       self.fname := fname
@@ -82,7 +82,7 @@ class CacheEntry()
 end
 
 class Cache()
-   private t, total, lim
+   private t, total, lim, id
 
    public get(url)
       local k, ent
@@ -102,10 +102,11 @@ class Cache()
       delete(t, k)
    end
 
-   public add(ent)
-      local k, old
+   public add(url, expiry, data, fname, content_type)
+      local k, old, ent
+      ent := CacheEntry(url, expiry, data, fname, content_type)
       k := string(ent.url.str())
-      #write("cache add ",k, " expiry ", (\ent.expiry - Time.get_system_seconds()) | "-")
+      #write("cache add key=", k, "\n\tdata=", *data, " bytes\n\tfname=", fname, "\n\tct=", to_string(content_type), "\n\texpiry=", (\ent.expiry - Time.get_system_seconds()) | "-")
       if old := member(t, k) then
          del(old)
       while *t > 0 &  total + *ent.data > lim do
@@ -115,10 +116,56 @@ class Cache()
       return
    end
 
+   public create_url(expiry, data, fname, content_type)
+      local url
+      /expiry := Time.get_system_seconds() + 60
+      url := URL(u"cache:" || (id +:= 1))
+      add(url, expiry, data, fname, content_type)
+      return url
+   end
+
+   private format_expiry(v)
+      if /v then
+         return "never"
+      v -:= Time.get_system_seconds()
+      if v < 0 then
+         return "expired"
+      if v < 300 then
+         return v || "&nbsp;secs"
+      v /:= 60
+      if v < 120 then
+         return v || "&nbsp;mins"
+      v /:= 60
+      if v <= 48 then
+         return v || "&nbsp;hours"
+      v /:= 24
+      if v < 365 * 2 then
+         return v || "&nbsp;days"
+      v /:= 365
+      return v || "&nbsp;years"
+   end
+
+   public get_status()
+      local s, ce, n, sz, exp, ct, l
+      s := "<html><title>Cache status</title>" || Browser.get_table_tag()
+      s ||:= "<tr><th align=left>Filename<th align=right>Size<th>&nbsp;Expiry<th align=left>Content&nbsp;type<th align=left>URL</tr>"
+      every ce := !t do {
+         n := Browser.limit_text(\ce.fname, 200) | "-"
+         sz := Format.numeric_to_string(*ce.data, 0, ',')
+         exp := format_expiry(ce.expiry)
+         ct := ((\ce.content_type).type || "/" || ce.content_type.subtype) | "-"
+         l := ce.url
+         s ||:= "<tr><td>" || n || "<td align=right>" || sz || "<td>&nbsp;" || exp || "<td>" || ct || "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
+      }
+      s ||:= "</table></html>"
+      return s
+   end
+
    public new(lim)
       t := table()
       self.lim := lim
       total := 0
+      id := 0
       return
    end
 end
@@ -231,7 +278,7 @@ class Worker()
          return use {
             rs := RamStream(),
             {
-               rs.out("<html><title>Directory " || f || "</title><table>")
+               rs.out("<html><title>Directory " || f || "</title>" || Browser.get_table_tag())
                path := FilePath(f)
                every e := !l do {
                   t := e[2]
@@ -240,7 +287,7 @@ class Worker()
                   else
                      Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;'HH:mm")
                   rs.out("<tr><td>" || t.mode_str || "&nbsp;<td>" || uname(t.uid, ucache) || "&nbsp;<td>" || grname(t.gid, gcache) ||
-                         "&nbsp;<td align=right>" || Format.numeric_to_string(t.size, 0, ',') || "<td>&nbsp;" || tf || "&nbsp;<td>" ||
+                         "&nbsp;<td align=right>" || Format.numeric_to_string(t.size, 0, ',') || "<td>&nbsp;" || tf || "&nbsp;<td nowrap>" ||
                          "<a href=\"file://" || URL.percent_encode(path.child(e[1]).canonical().str(), URL.UNRESERVED ++ '/') || "\">" || e[1] || "</a></tr>" || "\n")
                }
                rs.out("</table></html>")
@@ -294,12 +341,12 @@ class Worker()
          r.callback(Resp(&why, r.url, r.referer,,,, r.kind))
    end
 
-   private handle_image_req(r)
-      local data
-      if is(r.client, Browser) & data := r.client.get_image_data() then
-         r.callback(Resp(, r.url, r.referer, data, r.url.get_decoded_path_last(),, r.kind))
+   private handle_cache_req(r)
+      local ce
+      if ce := pool.cache.get(r.url) then
+         r.callback(Resp(, r.url, r.referer, ce.data, ce.fname, ce.content_type, r.kind))
       else
-         r.callback(Resp("Invalid request", r.url, r.referer,,,, r.kind))
+         r.callback(Resp("Cache entry expired", r.url, r.referer,,,, r.kind))
    end
 
    private get_expiry(hres)
@@ -318,6 +365,16 @@ class Worker()
       return
    end
 
+   # On a redirection, we will get back a URL made from a string
+   # rather than ucs.  This interacts poorly with the visited list and
+   # the textfield in the client, so convert to a ucs-based URL.
+   #
+   private ensure_ucs_url(url)
+      if type(url.scheme) == "ucs" then
+         return url
+      return URL(Text.liberal_ucs(url.str())) | URL(u"invalid:url")
+   end
+
    private handle_http_req(r)
       local s, data, hreq, hres, fname, ct, x, ce
       if r.kind ~= REFRESH & /r.form_data & (ce := pool.cache.get(r.url)) then
@@ -331,7 +388,7 @@ class Worker()
             set_output_stream(s). 
             set_url(r.url).
             set_header("Accept-charset", "UTF-8, ISO-8859-1")
-         if (\r.referer).scheme ~== u"file" then
+         if (\r.referer).scheme == (u"http" | u"https") then
             hreq.set_referer(r.referer.str())
          if hres := httpc.retrieve(hreq) then {
             s.close()
@@ -339,7 +396,7 @@ class Worker()
             ct := ContentType.parse(hres.get_first_header("Content-Type"))
             # Note that cancelling removes tmp_file
             if /cancelled then
-               r.callback(Resp(, hres.url, r.referer,, fname, ct, r.kind, 
+               r.callback(Resp(, ensure_ucs_url(hres.url), r.referer,, fname, ct, r.kind, 
                                if hreq.url === hres.url then r.form_data else &null, tmp_file))
          } else {
             s.close()
@@ -355,7 +412,7 @@ class Worker()
                set_output_stream(s). 
                set_url(r.url).
                set_header("Accept-charset", "UTF-8, ISO-8859-1")
-            if (\r.referer).scheme ~== u"file" then
+            if (\r.referer).scheme == (u"http" | u"https") then
                hreq.set_referer(r.referer.str())
             if \r.form_data then {
                if is(r.form_data, Message) then
@@ -371,9 +428,9 @@ class Worker()
                # Note we have to take into account redirections in deciding whether to cache
                # and whether form data should be in the response.
                if httpc.request.method == "GET" & x := get_expiry(hres) then
-                  pool.cache.add(CacheEntry(hres.url, data, fname, ct, x))
+                  pool.cache.add(hres.url, x, data, fname, ct)
                if /cancelled then
-                  r.callback(Resp(, hres.url, r.referer, data, fname, ct, r.kind, 
+                  r.callback(Resp(, ensure_ucs_url(hres.url), r.referer, data, fname, ct, r.kind, 
                                   if hreq.url === hres.url then r.form_data else &null))
             } else {
                if /cancelled then
@@ -386,7 +443,7 @@ class Worker()
    private handle_func(r, f)
       local x, s
       if x := f(r) then {
-         if is(x, Handled) then
+         if is(x, StaticData) then
             r.callback(Resp(, r.url, r.referer, x.data, x.fname, x.content_type, r.kind))
          else if s := string(x) then
             r.callback(Resp(, r.url, r.referer, s, r.url.get_path_last(),, r.kind))
@@ -402,7 +459,7 @@ class Worker()
       case t of {
          "file": handle_file_req(r)
          "http"|"https": handle_http_req(r)
-         "image": handle_image_req(r)
+         "cache": handle_cache_req(r)
          default: {
             if f := member(pool.scheme_handlers, t) then
                handle_func(r, f)
@@ -567,6 +624,49 @@ class WorkerPool()
       return self
    end
 
+   public get_status()
+      local s, w, st, t, l, r, k, c
+      s := "<html><title>Worker pool status</title>"
+
+      s ||:= "<h1>Workers</h1>" || Browser.get_table_tag() || "<tr><th align=left>Serial<th align=left>Status<th align=left>URL</tr>"
+      every w := !workers do {
+         t := w.task
+         st := if t.is_current() then "current"
+         else if t.is_sleeping() then "sleeping"
+         else if t.is_polling() then "polling"
+         else if t.is_ready() then "ready"
+         else if t.is_active() then "active"
+         else "stopped"
+         s ||:= "<tr><td>" || serial(w) || "<td>" || st
+         if l := (\w.doing).url then
+            s ||:= "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a>"
+         else
+            s ||:= "<td>"
+         s ||:= "</tr>"          
+      }
+      s ||:= "</table>"
+
+      if *queue > 0 then {
+         s ||:= "<h1>Queue</h1>" || Browser.get_table_tag() || "<tr><th align=left>Client<th align=left>Kind<th align=left>URL</tr>"
+         every r := !!queue do {
+            k := case r.kind of {
+               Worker.NORMAL: "NORMAL"
+               Worker.NAVIGATE: "NAVIGATE"
+               Worker.REFRESH: "REFRESH"
+               Worker.DOWNLOAD: "DOWNLOAD"
+               default: "-"
+            }
+            l := r.url
+            c := Class.get_name(r.client) || "#" || serial(r.client)
+            s ||:= "<tr><td>" || c || "<td>" || k || "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a>"
+         }
+         s ||:= "</table>"
+      }
+
+      s ||:= "</html>"
+      return s
+   end
+
    public new(n)
       /n := 6
       queue := table()
@@ -581,10 +681,51 @@ class WorkerPool()
    end
 end
 
-class Tbl(Border, HasMaxWidth, HasAscent)
+class TblContent(Component)
    private
       hrules, vrules
 
+   public whose_point(ex, ey)
+      local c
+      every c := layout_delegate.g.cells_in_range(ey - y, 1).obj do {
+         if c.is_unhidden() & c.inside(ex, ey) then
+            return c
+      }
+   end
+
+   public display()
+      local ci, r, g, t
+      r := get_cbwin_clip()
+      g := layout_delegate.g
+      every ci := g.cells_in_range(r.y - y, r.h) do {
+         display_child(ci.obj)
+         if \vrules | \hrules then {
+            t := Rect(x + g.a_col_x[ci.x],
+                      y + g.a_row_y[ci.y],
+                      Grid.slice(ci.x, ci.w, g.a_col_w),
+                      Grid.slice(ci.y, ci.h, g.a_row_h))
+            if r.intersect(t) then {
+               if member(\vrules, ci.x) then
+                  cbwin.draw_rectangle(t.x, t.y, 1, t.h)
+               if member(\hrules, ci.y) then
+                  cbwin.draw_rectangle(t.x, t.y, t.w, 1)
+            }
+         }
+      }
+   end
+
+   public set_hrules(r)
+      self.hrules := r
+      return self
+   end
+
+   public set_vrules(r)
+      self.vrules := r
+      return self
+   end
+end
+
+class Tbl(Border, HasMaxWidth, HasAscent)
    public get_max_width()
       local w1
       w1 := content.layout_delegate.get_max_width()  + border.get_total_width()
@@ -600,68 +741,60 @@ class Tbl(Border, HasMaxWidth, HasAscent)
       return content.layout_delegate.get_ascent(dw) + border.get_t_inset() | dh
    end
 
-   public set_hrules(r)
-      self.hrules := r
-      return self
-   end
-
-   public set_vrules(r)
-      self.vrules := r
-      return self
-   end
-
-   public display()
-      local i, g
-      cast(self, Border).display()
-      g := content.layout_delegate.g
-      g.compute_actual_col_positions(content.x)
-      g.compute_actual_row_positions(content.y)
-      every i := !g.info do {
-         if member(\vrules, i.x) then
-            cbwin.draw_rectangle(g.col_x[i.x],
-                                 g.row_y[i.y],
-                                 1,
-                                 Grid.slice(i.y, i.h, g.a_row_h))
-         if member(\hrules, i.y) then
-            cbwin.draw_rectangle(g.col_x[i.x],
-                                 g.row_y[i.y],
-                                 Grid.slice(i.x, i.w, g.a_col_w),
-                                 1)
-      }
-   end
-
    public new()
       cast(self,Border).new()
-      set_content(Component(). 
+      set_content(TblContent(). 
                     set_layout(TableLayout()))
       set_border(NullBorder())
       return
    end
 end
 
-class Img(Label)
-   private browser, img_url, link_url, wrote, imgw, imgh, img_data, img_name, form, map, held
+class Img(Image)
+   public const
+      browser, form, img_url, link_url
+   private readable
+      wrote, img_data, img_name, map, held
 
-   public got_data(res)
-      if \res.err then
-         set_paint(ImagePaint().set_cache("rpp.BROKEN_LINK"))
-      else {
-         set_paint(ImagePaint().
-                      set_image(res.data).
-                      set_max_size(imgw, imgh).
-                      set_fill_dimensions(2))
-         if /paint.win then
-            set_paint(ImagePaint().set_cache("rpp.BROKEN_LINK"))
-         else {
+   package got_data(res)
+      local iw, ih
+      if \res.err then {
+         set_cache("rpp.BROKEN_LINK")
+         every remove_constraint("fix_w" | "fix_h" | "pct_w")
+      } else {
+         set_image(res.data)
+         if /win then {
+            set_cache("rpp.BROKEN_LINK")
+            every remove_constraint("fix_w" | "fix_h" | "pct_w")
+         } else {
+            # Set width and perhaps height based on constraints.
+            #
+            # If pct_w is set, then set a small minimal value, since
+            # otherwise the actual width of the image would be the
+            # preferred width, and hence the minimum size which
+            # TextFlow would allocate, whereas we want to allow the
+            # image to shrink below its actual width.
+            #
+            if iw := integer(member(constraints, "fix_w")) then
+               set_width(iw)
+            else if iw := integer(member(constraints, "pct_w")) then
+               set_width(1)
+            if ih := integer(member(constraints, "fix_h")) then {
+               if /iw then 
+                  set_width(ih * win.get_width() / win.get_height())
+               else 
+                  set_height(ih)
+            }
             img_name := res.fname
             img_data := res.data
+            set_fill_dimensions(2)
          }
       }
    end
 
    private handle_rpress(e)
       local pm, pm_menu, url
-      url := if img_url.scheme == u"image" then browser.page_url else img_url
+      url := if img_url.scheme == u"cache" then browser.page_url else img_url
       if pm_menu := browser.create_image_menu(url, img_name, img_data, wrote) then {
          pm := PopupMenu()
          pm.popup(parent_dialog, pm_menu, e.x, e.y)
@@ -709,12 +842,14 @@ class Img(Label)
       local u
       if u := which_url(e) & u === held then {
          if wrote ~=== u then {
+            set_pointer("hand1")
             browser.msg(u.str())
             wrote := u
          }
       } else if \wrote then {
          browser.clear_msg()
          wrote := &null
+         set_pointer()
       }
    end
 
@@ -722,6 +857,10 @@ class Img(Label)
       if /form then
          handle_move(e)
       return \self.pointer
+   end
+
+   package wants_lpress(e)
+      return \wrote | \form
    end
 
    private handle_move(e)
@@ -739,11 +878,17 @@ class Img(Label)
       }
    end
 
-   public new(browser, img_url, link_url, form, imgw, imgh, map)
-      cast(self,Label).new()
+   public display()
+      local r
+      cast(self,Image).display()
+      if r := browser.is_banded(self) then
+         Gui.style.fill_selection_rectangle(cbwin, x, y, w, h)
+   end
+
+   public new(browser, img_url, link_url, form, map)
+      cast(self,Image).new()
+      clear_constraints()
       self.browser := browser
-      self.imgw := imgw
-      self.imgh := imgh
       self.img_url := img_url
       self.form := form
       self.link_url := link_url
@@ -760,7 +905,6 @@ class Img(Label)
          connect(self.handle_exit, Event.MOUSE_EXIT)
       }
       connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
-      set_paint(NullPaint())
       set_border(NullBorder())
       return
    end
@@ -861,7 +1005,7 @@ class FormTblButton(Button, FormEntry, HasMaxWidth, HasAscent)
    public display()
       display_children()
       if \self.is_down then {
-         Gui.style.down_rectangle(self.cbwin, self.x, self.y, self.w, self.h)
+         Gui.style.fill_down_rectangle(self.cbwin, self.x, self.y, self.w, self.h)
          tbl.border.draw_rev_rect(self.cbwin, self)
       }
       if self.has_focus() & self.is_unshaded() then
@@ -1557,6 +1701,7 @@ class FormColorField(ColorField, FormEntry, HasAscent)
    public new(init_val)
       cast(self,ColorField).new(init_val)
       self.init_val := init_val
+      set_opaque(&yes)
       return
    end
 end
@@ -1904,7 +2049,7 @@ record DefListContext(tbl)
 record FieldSetContext(legend)
 record MapContext(map)
 record SelectContext(options, optgroup)
-record Context(base, form, form_label, url, fg, link_fg, font, align, pre, underline, strike, 
+record Context(base, form, form_label, url, fg, link_fg, font, align, pre, nowrap, underline, strike, 
                face, size, bold, italic, kind, table, list, def_list, fieldset, select, map)
 
 class MapArea()
@@ -1955,29 +2100,56 @@ record HistoryEntry(url,          # URL displayed (on a redirect may differ from
 abstract class BrowserUI()
    public abstract msg(s, n)
    public abstract clear_msg()
-   public abstract set_url_field(url)
+   public abstract page_loaded()
    public abstract update_grey(gs)
    public abstract set_title(s)
    public abstract link_mrelease(url)
    public abstract create_link_menu(url)
+   public abstract create_page_menu()
    public abstract create_image_menu(url, img_name, img_data, link_url)
    public abstract browse_for_file()
 end
 
+class BrowserPrimarySelectionOwner(TextSelectionOwner)
+   private parent, s
+
+   protected get_text()
+      return s
+   end
+
+   package set_text(s)
+      self.s := s
+      return self
+   end
+
+   public lost_ownership()
+      parent.on_lost_primary_ownership()
+   end
+
+   public new(parent)
+      self.parent := parent
+      return
+   end
+end
+
 record GreyState(prev, nxt, refresh, copy_page, save_page, stop)
 
-class Browser(Component)
+class Browser(ComponentScrollArea)
    private
       ui,
       worker_pool,
       shared_worker_pool_flag,
-      top_panel,
       status_ticker,
       maps,
       forms,
       labels,
       form_tab_children,
-      curr_history_entry   # History entry currently being viewed.
+      curr_history_entry,   # History entry currently being viewed.
+      scroll_ticker,
+      scroll_ticker_interval,
+      h_direction,
+      v_direction,
+      primary_selection_owner
 
    private readable
       history,
@@ -1986,13 +2158,23 @@ class Browser(Component)
       page_data,
       page_name,
       page_title,
-      image_data,
-      running
+      page_links,
+      running,
+      mark_x,
+      mark_y,
+      cursor_x,
+      cursor_y,
+      banded,
+      text_selection,
+      links_selection
 
    public static const 
       COLORS,
       FACES,
       SIZES
+
+   private static
+      default_font_clone
 
    private static init()
       COLORS := table(,
@@ -2036,10 +2218,6 @@ class Browser(Component)
       return member(maps, s)
    end
 
-   public get_image_data()
-      return \image_data
-   end
-
    private convert_color(el, name)
       local s
       if s := el.get_attribute(name) then {
@@ -2051,7 +2229,7 @@ class Browser(Component)
    end
 
    public traverse_tab_order()
-      coact(top_panel)
+      coact(self)
       every (!self.form_tab_children).traverse_tab_order()
    end
 
@@ -2099,6 +2277,10 @@ class Browser(Component)
       return (\ui).create_link_menu(url)
    end
 
+   public create_page_menu()
+      return (\ui).create_page_menu()
+   end
+
    public create_image_menu(url, img_name, img_data, link_url)
       return (\ui).create_image_menu(url, img_name, img_data, link_url)
    end
@@ -2118,8 +2300,8 @@ class Browser(Component)
       return self
    end
 
-   public set_url_field(url)
-      (\ui).set_url_field(url)
+   public page_loaded()
+      (\ui).page_loaded()
       return self
    end
 
@@ -2146,21 +2328,20 @@ class Browser(Component)
                             if history[history_pos] then &no else &yes,
                             if \page_url then &no else &yes,
                             if \page_data then &no else &yes,
-                            if \running > 0 then &no else &yes))
+                            if running === 0 then &yes else &no))
    end
 
    private page_fully_loaded()
       local xp, yp, f
-      top_panel.
-         reset_all_layouts().
-         do_layout().
-         invalidate()
+      reset_all_layouts()
+      layout()
+      invalidate()
       # Goto named anchor and maybe set focus unless user has started to scroll page
-      if top_panel.get_area_y() = top_panel.get_area_x() = 0 then {
-         if yp := \curr_history_entry.area_y | (lookup_named_anchor(page_url.get_fragment()) - top_panel.view.y) then {
-            top_panel.set_area_y(yp)
+      if get_area_y() = get_area_x() = 0 then {
+         if yp := \curr_history_entry.area_y | (lookup_named_anchor(page_url.get_fragment()) - view.y) then {
+            set_area_y(yp)
             if xp := \curr_history_entry.area_x then
-               top_panel.set_area_x(xp)
+               set_area_x(xp)
          }
          # Set focus; this will scroll to the component if necessary (see focus_scroll).  Note that if we've moved to another tab
          # whilst the page loads, (making f hidden) then gen_focusable will fail.
@@ -2172,13 +2353,18 @@ class Browser(Component)
 
    private lookup_named_anchor(name)
       local c, yp
-      every c := Seq{top_panel.traverse_components_postorder()} do
+      every c := Seq{traverse_components_postorder()} do
          if is(c,TextFlow) & yp := c.lookup_named_anchor(name) then
             return yp
    end
 
+   public static limit_text(s, n)
+      /default_font_clone := Window().set_font("sans" || "," || SIZES[3])
+      return gui.limit_text(default_font_clone, s, n)
+   end
+
    public initially()
-      cast(self,Component).initially()
+      cast(self,ComponentScrollArea).initially()
       if /shared_worker_pool_flag then
          worker_pool.initially()
       status_ticker.start()
@@ -2186,15 +2372,16 @@ class Browser(Component)
    end
 
    public finally()
-      cast(self,Component).finally()
+      cast(self,ComponentScrollArea).finally()
       if /shared_worker_pool_flag then
          worker_pool.finally()
       else
          worker_pool.cancel(self)
       running := 0
+      scroll_ticker.stop()
       status_ticker.stop()
    end
-
+   
    public do_next()
       local he
       he := history[history_pos +:= 1] 
@@ -2326,14 +2513,13 @@ class Browser(Component)
    end
 
    private set_top_data(res)
-      local doc, base, n, s, row, c
+      local doc, base, n, s, row, c, cu
       if \curr_history_entry then {
          save_form_values()
-         curr_history_entry.area_x := top_panel.get_area_x()
-         curr_history_entry.area_y := top_panel.get_area_y()
+         curr_history_entry.area_x := get_area_x()
+         curr_history_entry.area_y := get_area_y()
       }
-      top_panel.set_area_y(0).set_area_x(0)
-      image_data := &null
+      set_area_y(0).set_area_x(0)
       if \res.err then {
          s := "<html><title>Error</title>" || 
             "<h1>Error:</h1>Getting " || res.url.str() || "<br><br>" || res.err || "</html>"
@@ -2345,9 +2531,9 @@ class Browser(Component)
             s := "<html><title>" || to_pre(res.fname) || "</title>" || 
                "<pre>" || to_pre(res.data) || "</pre></html>"
          else if is_image(res.content_type, res.data) then {
+            cu := worker_pool.cache.create_url(, res.data, res.fname, res.content_type)
             s := "<html><title>" || to_pre(res.fname) || "</title>" || 
-               "<img src=\"image:" || URL.percent_encode(res.fname, URL.UNRESERVED ++ '/') || "\"/></html>"
-            image_data := res.data
+               "<img src=\"" || cu.str() || "\"/></html>"
          } else
             s := "<html><title>Problem</title>" || 
                "<h1>Problem:</h1>Displaying " || res.url.str() || "<br><br>This does not seem to be an HTML or text document or an image</html>"
@@ -2367,7 +2553,6 @@ class Browser(Component)
          history_pos +:= 1
       }
       do_update_grey()
-      set_url_field(page_url)
       curr_history_entry := history[history_pos]
       # Note that the url/form_data may change even on a
       # navigate/refresh, if the server behaved differently (eg
@@ -2386,6 +2571,7 @@ class Browser(Component)
          base := URL(n.get_attribute(u"HREF"))
       row := TextFlow(self)
       page_title := &null
+      page_links := []
       c := Context()
       c.base := base
       c.face := "sans"
@@ -2405,12 +2591,13 @@ class Browser(Component)
       if res.kind ~= Worker.REFRESH then
          restore_form_values()
       every form_tab_children |||:= (!forms).get_tab_children()
-      top_panel.set_inner(row)
+      set_inner(row)
       set_title(page_title)
-      top_panel.layout()
-      top_panel.invalidate()
+      layout()
+      invalidate()
       parent_dialog.resynch_pointer()
       setup_tabbing()
+      page_loaded()
    end
 
    private focus_scroll(e, c)
@@ -2424,7 +2611,7 @@ class Browser(Component)
             break
          }
       }
-      top_panel.ensure_visible(c)
+      ensure_visible(c)
    end
 
    private setup_tabbing()
@@ -2449,6 +2636,7 @@ class Browser(Component)
          traverse(e, p, context)
       }
       else if url := mk_link(context, e.get_attribute(u"HREF")) then {
+         put(page_links, url)
          c := copy(context)
          c.url := url
          c.fg := c.link_fg
@@ -2653,13 +2841,13 @@ class Browser(Component)
    end
 
    private traverse_img(e, p, context)
-      local q, url, border, iw, ih, align, map, s
+      local q, url, border, align, map, s
       if url := mk_link(context, e.get_attribute(u"SRC")) then {
-         iw := (0 <= integer(e.get_attribute(u"WIDTH")))
-         ih := (0 <= integer(e.get_attribute(u"HEIGHT")))
          if (s := e.get_attribute(u"USEMAP")) & (s[1] == u"#") then
             map := default.map(string(s[2:0]))
-         q := Img(self, url, context.url,, iw, ih, map)
+         q := Img(self, url, context.url,, map)
+         do_width_param(e, q)
+         do_height_param(e, q)
          border := (0 < integer(e.get_attribute(u"BORDER"))) | 0
          if border > 0 then
             q.set_border(PlainBorder().set_line_width(border))
@@ -2998,14 +3186,21 @@ class Browser(Component)
       put(p.input, BreakCmd(clear, context))
    end
 
+   private traverse_nobr(e, p, context)
+      local c
+      c := copy(context)
+      c.nowrap := 1
+      traverse(e, p, c)
+   end
+
    private traverse_hr(e, p, context)
       local l, c
       l := Line().
-         set_width(5)
+         set_width(1)
       do_width_param(e, l) | l.set_constraint("pct_w", 100)
       c := copy(context)
       put_new_row(p, c)
-      c.align := convert_halign(e, u"ALIGN")
+      c.align := convert_halign(e, u"ALIGN") | Align.C
       add_component(p, l, c)
       put_new_row(p, c)
    end
@@ -3140,22 +3335,22 @@ class Browser(Component)
       case string(map(e.get_attribute(u"RULES"))) of {
          "groups": {
             # NB - either of these lists may be empty
-            tbl.set_hrules(set!ct.rowgroups[2:0])
-            tbl.set_vrules(set!get_colgroup_cols(ct)[2:0])
+            tbl.content.set_hrules(set!ct.rowgroups[2:0])
+            tbl.content.set_vrules(set!get_colgroup_cols(ct)[2:0])
          }
          "all": {
             i := 1
             every i <:= (!tbl.content.children).get_constraint("x")
-            tbl.set_vrules(Set{2 to i})
-            tbl.set_hrules(Set{2 to ct.y - 1})
+            tbl.content.set_vrules(Set{2 to i})
+            tbl.content.set_hrules(Set{2 to ct.y - 1})
          }
          "cols": {
             i := 1
             every i <:= (!tbl.content.children).get_constraint("x")
-            tbl.set_vrules(Set{2 to i})
+            tbl.content.set_vrules(Set{2 to i})
          }
          "rows": {
-            tbl.set_hrules(Set{2 to ct.y - 1})
+            tbl.content.set_hrules(Set{2 to ct.y - 1})
          }
       }
       if not(align === (Align.L | Align.R)) then
@@ -3308,6 +3503,8 @@ class Browser(Component)
       ct.tbl.content.add(row)
 
       c := copy(context)
+      if e.get_attribute(u"NOWRAP") then
+         c.nowrap := 1
       if e.name == u"TH" then {
          c.bold := 1
          c.size := min(c.size + 1, 7)
@@ -3483,6 +3680,7 @@ class Browser(Component)
                "EM"|"CITE"|"I": traverse_i(e, p, context)
                "ADDRESS": traverse_address(e, p, context)
                "BR": traverse_br(e, p, context)
+               "NOBR": traverse_nobr(e, p, context)
                "HR": traverse_hr(e, p, context)
                "CENTER": traverse_center(e, p, context)
                "H" || (1 to 6): traverse_hN(e, p, context)
@@ -3534,19 +3732,375 @@ class Browser(Component)
       return self
    end
 
+   private handle_lpress(e)
+      /mark_x | fail
+      running === 0 | fail
+      can_lpress(e) | fail
+      set_cursor_from_pos(e)
+      mark_x := cursor_x
+      mark_y := cursor_y
+      view.inner.invalidate(calculate_banded_rect())
+      clear_banded()
+   end
+
+   private set_cursor_from_pos(e)
+      cursor_x := e.x - view.inner.x
+      cursor_y := e.y - view.inner.y
+      cursor_x <:= get_area_x()
+      cursor_x >:= get_area_x() + view.w
+      cursor_y <:= get_area_y()
+      cursor_y >:= get_area_y() + view.h
+   end
+
+   private handle_ldrag(e)
+      \mark_x | fail
+
+      view.inner.invalidate(get_band_rect())
+      view.inner.invalidate(calculate_banded_rect())
+      set_cursor_from_pos(e)
+      calculate_banded()
+      view.inner.invalidate(get_band_rect())
+      view.inner.invalidate(calculate_banded_rect())
+
+      if cursor_y > 0 & e.y < self.view.y then {
+         v_direction := "up"
+         check_scroll_ticker(self.view.y - e.y)
+      } else if cursor_y < view.inner.h & e.y >= self.view.y + self.view.h then {
+         v_direction := "down"
+         check_scroll_ticker(e.y - (self.view.y + self.view.h))
+      } else
+         v_direction := &null
+
+      if cursor_x > 0 & e.x < self.view.x then {
+         h_direction := "left"
+         check_scroll_ticker(self.view.x - e.x)
+      } else if cursor_x < view.inner.w & e.x >= self.view.x + self.view.w then {
+         h_direction := "right"
+         check_scroll_ticker(e.x - (self.view.x + self.view.w))
+      } else
+         h_direction := &null
+
+      if /v_direction & /h_direction then
+         scroll_ticker.stop()
+   end
+
+   public get_band_rect()
+      local x1, y1, x2, y2
+      \mark_x | fail
+      if mark_x = mark_y & cursor_x = cursor_y then
+         fail
+      y1 := mark_y
+      y2 := cursor_y
+      if y2 < y1 then
+         y1 :=: y2
+      else if y2 = y1 then
+         y2 +:= 1
+      x1 := mark_x
+      x2 := cursor_x
+      if x2 < x1 then
+         x1 :=: x2
+      else if x2 = x1 then
+         x2 +:= 1
+      return Rect(view.inner.x + x1, view.inner.y + y1, x2 - x1, y2 - y1)
+   end
+
+   public layout()
+      cast(self,ComponentScrollArea).layout()
+      clear_mark()
+      clear_banded()
+      scroll_ticker.stop()
+   end
+
+   public display()
+      local W, r
+      cast(self,ComponentScrollArea).display()
+      if r := get_band_rect() then {
+         use {
+            W := view.cbwin.clone().set_fg("purple").set_masked_pattern("gray"),
+            W.draw_rectangle(r.x, r.y, r.w, r.h)
+         }
+      }
+   end
+
+   package check_scroll_ticker(d)
+      scroll_ticker_interval := Gui.style.distance2ticker_rate(d)
+      scroll_ticker.change_sleep(scroll_ticker_interval)
+      # Start it (if it isn't already running)
+      scroll_ticker.start()
+   end
+
+   package is_banded(o)
+      return member(banded, o)
+   end
+
+   private scroll_tick()
+      local f
+      repeat {
+         f := &null
+         case v_direction of {
+            "up": {
+               if cursor_y > 0 then {
+                  cursor_y := max(0, cursor_y - 20)
+                  set_area_y(cursor_y)
+                  f := 1
+               }
+            }
+            "down": {
+               if cursor_y < view.inner.h then {
+                  cursor_y := min(view.inner.h, cursor_y + 20)
+                  set_area_y(cursor_y - view.h)
+                  f := 1
+               }
+            }
+         }
+         case h_direction of {
+            "left": {
+               if cursor_x > 0 then {
+                  cursor_x := max(0, cursor_x - 20)
+                  set_area_x(cursor_x)
+                  f := 1
+               }
+            }
+            "right": {
+               if cursor_x < view.inner.w then {
+                  cursor_x := min(view.inner.w, cursor_x + 20)
+                  set_area_x(cursor_x - view.w)
+                  f := 1
+               }
+            }
+         }
+         if \f then
+            calculate_banded()
+
+         scroll_ticker.sleep(scroll_ticker_interval)
+      }
+   end
+
+   private clear_mark()
+      cursor_x := cursor_y := mark_x := mark_y := &null
+   end
+
+   private clear_banded()
+      clear(banded)
+      text_selection := links_selection := &null
+   end
+
+   package on_lost_primary_ownership()
+      view.inner.invalidate(calculate_banded_rect())
+      clear_banded()
+   end
+
+   private calculate_banded()
+      local c, br
+      clear_banded()
+      br := get_band_rect() | fail
+      every c := Seq{traverse_intersecting(view.inner, br)} do {
+         if is(c, TextFlow) then
+            c.calculate_banded(br, banded)
+         else if is(c, Img) then
+            insert(banded, c, c)
+      }
+   end
+
+   private static traverse_intersecting(c, r)
+      r := c.intersect(r) | fail
+      coact(c)
+      if is(c, TblContent) then
+         every traverse_intersecting(c.layout_delegate.g.cells_in_range(r.y - c.y, r.h).obj, r)
+      else
+         every traverse_intersecting(!c.children, r)
+   end
+
+   private show_bounds()
+      local c
+      every c := !banded do {
+         if is(c, TextSelection) then
+            write(image(c), " -> ", to_string(c.get_bounds()))
+      }
+   end
+
+   private calculate_banded_rect()
+      local c, t, r
+      every c := !banded do {
+         t := if is(c, TextSelection) then
+            c.get_bounds()
+         else if is(c, Img) then
+            c
+         r := (\r).union(t) | t
+      }
+      return \r
+   end
+
+   public get_current_text_selection()
+      return \.text_selection
+   end
+
+   private calculate_text_selection()
+      local br, s, t, c
+      text_selection := &null
+      br := calculate_banded_rect() | fail
+      s := u""
+      every c := Seq{traverse_intersecting(view.inner, br)} do {
+         if is(c, TextFlow) then {
+            if t := c.get_selected_text(br) then {
+               if *s > 0 then
+                  s ||:= u"\n"
+               s ||:= t
+            }
+         }
+      }
+      if *s > 0 then
+         text_selection := s
+   end
+
+   public get_current_links_selection()
+      return \.links_selection
+   end
+
+   private calculate_links_selection()
+      local l, c
+      links_selection := &null
+      l := []
+      every c := !banded do {
+         if is(c, TextSelection) then
+            put(l, \c.textout.attr.url)
+         else if is(c, Img) then
+            put(l, \c.link_url)
+      }
+      if *l > 0 then
+         links_selection := l
+   end
+
+   private handle_lrelease(e)
+      local s
+      scroll_ticker.stop()
+      if \mark_x then {
+         view.inner.invalidate(get_band_rect())
+         clear_mark()
+      }
+      calculate_text_selection()
+      calculate_links_selection()
+      if s := get_current_text_selection() then {
+         primary_selection_owner.set_text(s)            
+         parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
+      }
+   end
+
+   private can_rpress(e)
+      local c
+      is(parent_dialog.point_chain[1], TextFlow | TblContent | Tbl) | fail
+      every c := !parent_dialog.point_chain do {
+         if is(c, TextFlow) & c.wants_press(e) then
+            fail
+      }
+      return
+   end
+
+   private can_lpress(e)
+      local c
+      is(parent_dialog.point_chain[1], Img | TextFlow | TblContent | Tbl) | fail
+      every c := !parent_dialog.point_chain do {
+         if is(c, TextFlow) & c.wants_press(e) then
+            fail
+         if is(c, Img) & c.wants_lpress(e) then
+            fail
+      }
+      return
+   end
+
+   private handle_rpress(e)
+      local pm, pm_menu
+      can_rpress(e) | fail
+      if pm_menu := create_page_menu() then {
+         pm := PopupMenu()
+         pm.popup(parent_dialog, pm_menu, e.x, e.y)
+      }
+   end
+
+   public get_page_info()
+      local s, l, t, c, n, sz, m, f, imgs
+
+      s := "<html><title>Page info</title>"
+      s ||:= "<h1>Page</h1>"
+      if l := \page_url then
+         s ||:= "URL: <a href=\"" || l.str() || "\">" || l.str() || "</a><p>"
+      if sz := *\page_data then
+         s ||:= "Size: " || Format.numeric_to_string(sz, 0, ',') || " bytes<p>"
+      if n := \page_name & *n > 0 then
+         s ||:= "Name: " || n || "<p>"
+      if n := \page_title & *n > 0 then
+         s ||:= "Title: " || n || "<p>"
+
+      imgs := []
+      t := table(u"")
+      every c := Seq{traverse_components_postorder()} do {
+         if is(c, TextFlow) then
+            c.calculate_link_text(t)
+         else if is(c, Img) then
+            put(imgs, c)
+      }
+
+      if *forms > 0 then {
+         s ||:= "<h1>Forms</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=left>Method<th align=left>URL</tr>"
+         every f := !forms do {
+            if l := \f.url then {
+               n := \f.id | "-"
+               m := \f.method | "-"
+               s ||:= "<tr><td>" || n || "<td>" || m || "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
+            }
+         }
+         s ||:= "</table>"
+      }
+
+      if *imgs > 0 then {
+         s ||:= "<h1>Images</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=right>Size<th align=left>&nbsp;URL</tr>"
+         every c := !imgs do {
+            l := c.img_url
+            n := limit_text(\c.img_name, 200) | "-"
+            sz := Format.numeric_to_string(*\c.img_data, 0, ',') | "-"
+            s ||:= "<tr><td>" || n || "<td align=right>" || sz || "<td nowrap><a href=\"" || l.str() || "\">&nbsp;" || l.str() || "</a></tr>"
+         }
+         s ||:= "</table>"
+      }
+
+      if *page_links > 0 then {
+         s ||:= "<h1>Links</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=left>URL</tr>"
+         every l := !page_links do {
+            n := limit_text(t[l], 200)
+            s ||:= "<tr><td nowrap>" || n || "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
+         }      
+         s ||:= "</table>"
+      }
+      s ||:= "</html>"
+      return s
+   end
+
+   public static get_table_tag()
+      #return "<table border=1 cellspacing=4 rules=all>"
+      return "<table cellspacing=4>"
+   end
+
+   public get_cache()
+      return worker_pool.cache
+   end
+
    public new()
-      cast(self,Component).new()
+      cast(self,ComponentScrollArea).new()
+      scroll_ticker := Dispatcher.new_task{scroll_tick()}
       worker_pool := WorkerPool().
          set_authentication_function(get_authentication)
       status_ticker := Dispatcher.new_task{status()}
-      top_panel := ComponentScrollArea().
-         set_inner(Component().set_size(10,10)).
-         use_default_keys()
-      set_layout(GridLayout().set_doi(0))
-      add(top_panel)
+      primary_selection_owner := BrowserPrimarySelectionOwner(self)
+      set_inner(TextFlow(self))
+      use_default_keys()
       history := []
       history_pos := 0
       running := 0
+      banded := table()
+      view.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG).
+         connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS).
+         connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE).
+         connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
       return
    end
 end

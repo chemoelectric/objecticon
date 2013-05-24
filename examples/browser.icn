@@ -47,11 +47,13 @@ class VisitedEntry()
    public const
       url
    public
+      title,
       last_time,
       times
 
-   public new(url)
+   public new(url, title)
       self.url := url
+      self.title := title
       self.last_time := Time()
       self.times := 1
       return
@@ -82,10 +84,16 @@ class MessageLabel(Label)
    end
 end
 
+class PageMenu(DynamicMenu)
+   public populate()
+      local m
+      if m := parent_component.parent_dialog.tabs.which_one.create_page_menu() then
+         every add(!m.children)
+   end
+end
+
 class BrowserDialog(Dialog)
    private readable
-      copy_page_url_item,
-      save_page_item,
       settings,
       pool,
       tabs,
@@ -101,15 +109,8 @@ class BrowserDialog(Dialog)
       next_button,
       file_dialog,
       directory_dialog,
-      downloads
-
-   private on_copy_page_url_item(ev)
-      own_selection(Selection.CLIPBOARD, URLSelectionOwner([tabs.which_one.browser.page_url]))
-   end
-
-   private on_save_page_item(ev)
-      tabs.which_one.do_save(tabs.which_one.browser.page_name, tabs.which_one.browser.page_data)
-   end
+      downloads,
+      page_menu
 
    private on_quit(ev)
       dispose()
@@ -120,11 +121,11 @@ class BrowserDialog(Dialog)
    end
 
    private update_grey()
-      if is(tabs.which_one, DownloadTab) then {
-         copy_page_url_item.set_is_shaded(&yes)
-         save_page_item.set_is_shaded(&yes)
-      } else
+      if is(tabs.which_one, BrowserTab) then {
+         page_menu.set_is_shaded(&no)
          tabs.which_one.browser.do_update_grey()
+      } else
+         page_menu.set_is_shaded(&yes)
    end
 
    public initially()
@@ -137,7 +138,7 @@ class BrowserDialog(Dialog)
       pool.finally()
    end
 
-   public new_tab(url)
+   public new_tab(url, sel)
       local bt
       bt := BrowserTab(url, pool, settings).
          set_is_hidden(&yes)
@@ -145,25 +146,26 @@ class BrowserDialog(Dialog)
          add(bt, -1).
          do_layout().
          invalidate()
-      if /url then
+      if \sel then {
          tabs.set_which_one(bt)
+         set_focus(bt.search_field.find_focus())
+      }
       update_grey()
    end
 
    private on_new_tab(ev)
-      new_tab()
+      new_tab(settings.home_url, 1)
    end
    
    private list_visited()
-      local s, e, t
-      s := "<html><title>Visited</title><table>"
-      s ||:= "<tr><th align=left>URL<th align=right>Times<th>&nbsp;Last visit</tr>"
+      local s, e, l, n
+      s := "<html><title>Visited</title>" || Browser.get_table_tag() || ""
+      s ||:= "<tr><th align=left>Title<th align=right>Times<th>&nbsp;Last visit<th align=left>URL</tr>"
       every e := !settings.visited do {
-         t := e.url.str()
-         if *t > 50 then
-            t[48:0] := "..."
-         s ||:= "<tr><td><a href=\"" || e.url.str() || "\">" || t || 
-            "</a><td align=right>" || e.times || "<td>&nbsp;" || e.last_time.format("MMM'&nbsp;'dd'&nbsp;'HH:mm") || "</tr>"
+         n := Browser.limit_text(\e.title, 200) | "-"
+         s ||:= "<tr><td nowrap>" || n || "<td align=right>" || e.times || "<td>&nbsp;" || e.last_time.format("MMM'&nbsp;'dd'&nbsp;'HH:mm")
+         l := e.url
+         s ||:= "<td nowrap><a href=\"" || l.str() || "\">" || l.str() ||  "</a></tr>"
       }
       s ||:= "</table></html>"
       return s
@@ -211,7 +213,7 @@ class BrowserDialog(Dialog)
                s ||:= "<tr><td>Expires&nbsp;&nbsp;<td>" || (\ck.expires).to_rfc822() || "</tr>"
                s ||:= "<tr><td>Domain&nbsp;&nbsp;<td>" || \ck.domain || "</tr>"
                s ||:= "<tr><td>Path&nbsp;&nbsp;<td>" || \ck.path || "</tr>"
-               s ||:= "<tr><td>Secure&nbsp;&nbsp;<td>" || \ck.secure || "</tr>/"
+               s ||:= "<tr><td>Secure&nbsp;&nbsp;<td>" || \ck.secure || "</tr>"
                s ||:= "<tr><td>Comment&nbsp;&nbsp;<td>" || \ck.comment || "</tr>"
                s ||:= "<tr><td>Version&nbsp;&nbsp;<td>" || \ck.version || "</tr>"
                s ||:= "</table><br><a href=config:del_cookie?" || URL.make_cgi_string(table(, 
@@ -237,6 +239,8 @@ class BrowserDialog(Dialog)
    private config_main()
       return "<html><title>Config</title><a href=config:cookies >Edit cookies</a><p>_
               <a href=config:visited >Visited pages</a><p>_
+              <a href=config:cache >Cache status</a><p>_
+              <a href=config:workers >Worker pool status</a><p>_
               <fieldset><form method=get action=submit >_
                  <legend>Edit settings</legend>_
                  <table>_
@@ -249,6 +253,14 @@ class BrowserDialog(Dialog)
               </form></fieldset></html>"
    end
 
+   private cache_status()
+      return pool.cache.get_status()
+   end
+
+   private workers_status()
+      return pool.get_status()
+   end
+
    private config_handler(req)
       local t
       return case string(req.url.path) of {
@@ -256,6 +268,8 @@ class BrowserDialog(Dialog)
          "visited": list_visited()
          "cookies": list_all_cookies()
          "cookie": list_cookie(member(req.url.extract_cgi_parameters(), "q")[1])
+         "cache": cache_status()
+         "workers": workers_status()
          "del_cookies": del_cookies(member(req.url.extract_cgi_parameters(), "q")[1])
          "del_cookie": {
             if t := req.url.extract_cgi_parameters() then
@@ -275,8 +289,8 @@ class BrowserDialog(Dialog)
       return \d.result
    end
 
-   public new(s, cookies, settings)
-      local quit_menu_item, menu_bar, menu, bt, new_tab_item
+   public new(url, cookies, settings)
+      local quit_menu_item, menu_bar, file_menu, bt, new_tab_item
       cast(self,Dialog).new()
       self.settings := settings
       pool := WorkerPool().
@@ -294,22 +308,17 @@ class BrowserDialog(Dialog)
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
          set_paint_mid(TextPaint("New Tab"))
-      copy_page_url_item := TextMenuItem().
-         connect(on_copy_page_url_item, Event.ACTION).
-         set_paint_mid(TextPaint("Copy page"))
-      save_page_item := TextMenuItem().
-         connect(on_save_page_item, Event.ACTION).
-         set_paint_mid(TextPaint("Save page..."))
       quit_menu_item := TextMenuItem().
          connect(on_quit, Event.ACTION).
          set_paint_mid(TextPaint("Quit"))
-      menu := Menu().
+      file_menu := Menu().
          set_accel("f").
-         set_paint_mid(TextPaint("File")).
+         set_label("File").
          add(new_tab_item).
-         add(copy_page_url_item).
-         add(save_page_item).
          add(quit_menu_item)
+      page_menu := PageMenu().
+         set_accel("p").
+         set_label("Page")
       menu_bar := MenuBar().
          set_size("100").
          clear_constraints().
@@ -319,9 +328,10 @@ class BrowserDialog(Dialog)
          set_constraint("t_inset", 0).
          set_constraint("b_inset", 0).
          set_constraint("x_fill", &yes).
-         add(menu)
+         add(file_menu).
+         add(page_menu)
       self.add(menu_bar)
-      bt := BrowserTab(s, pool, settings)
+      bt := BrowserTab(url, pool, settings)
       downloads := DownloadTab(settings)
       tabs := TabSet().
          set_size("200", "150").
@@ -537,7 +547,7 @@ class DownloadTab(TabItem)
    end
 
    public msg(s, n)
-      message_label.set(TextPaint(s), n)
+      message_label.set(AbbreviatedTextPaint(s), n)
    end
 
    public clear_msg()
@@ -746,9 +756,7 @@ class BrowserTab(TabItem, BrowserUI)
       stop_button,
       home_button,
       paste_url_button,
-      refresh_button,
-      copy_page_url_item,
-      save_page_item
+      refresh_button
 
    private on_close_button(ev)
       local t
@@ -781,8 +789,63 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([url]))
    end
 
+   private copy_links(urls)
+      parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner(urls))
+   end
+
+   private download_links(urls, referer)
+      every parent_dialog.downloads.download(!urls, referer)
+   end
+
+   private copy_text(s)
+      parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
+   end
+
    private download(url, referer)
       parent_dialog.downloads.download(url, referer)
+   end
+
+   private page_info()
+      local s, url
+      if s := browser.get_page_info() then {
+         url := browser.get_cache().create_url(, s)
+         parent_dialog.new_tab(url, 1)
+      }
+   end
+
+   public create_page_menu()
+      local m, s, l
+      m := Menu()
+      if \browser.page_url then {
+         m.add(TextMenuItem().
+               set_label("Copy page").
+               connect(create copy_link(browser.page_url), Event.ACTION))
+      }
+      if \browser.page_data then {
+         m.add(TextMenuItem().
+               set_label("Save page...").
+               connect(create do_save(browser.page_name, browser.page_data), Event.ACTION))
+         m.add(TextMenuItem().
+               set_label("Page info").
+               connect(page_info, Event.ACTION))
+      }
+
+      if s := browser.get_current_text_selection() then {
+         m.add(TextMenuItem().
+               set_label("Copy text").
+               connect(create copy_text(s), Event.ACTION))
+      }
+      if l := browser.get_current_links_selection() then {
+         m.add(TextMenuItem().
+               set_label("Copy links").
+               connect(create copy_links(l), Event.ACTION))
+         m.add(TextMenuItem().
+               set_label("Download links").
+               connect(create download_links(l, browser.page_url), Event.ACTION))
+      }
+
+      if *m.children > 0 then
+         return m
    end
 
    public create_link_menu(url)
@@ -822,8 +885,6 @@ class BrowserTab(TabItem, BrowserUI)
       prev_button.set_is_shaded(gs.prev)
       next_button.set_is_shaded(gs.nxt)
       refresh_button.set_is_shaded(gs.refresh)
-      parent_dialog.copy_page_url_item.set_is_shaded(gs.copy_page)
-      parent_dialog.save_page_item.set_is_shaded(gs.save_page)
       stop_button.set_is_shaded(gs.stop)
    end
 
@@ -839,7 +900,7 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public msg(s, n)
-      message_label.set(TextPaint(s), n)
+      message_label.set(AbbreviatedTextPaint(s), n)
    end
 
    public clear_msg()
@@ -864,31 +925,34 @@ class BrowserTab(TabItem, BrowserUI)
       return self
    end
 
-   private update_visited(url)
+   private update_visited(url, title)
       local e, i 
+      if url.scheme == (u"cache" | u"config") then
+         fail
       every i := 1 to *settings.visited do {
          e := settings.visited[i]
          if equals(url, e.url) then {
             e.last_time := Time()
+            e.title := title
             e.times +:= 1
             delete(settings.visited, i)
             push(settings.visited, e)
             return
          }
       }
-      push(settings.visited, VisitedEntry(url))
+      push(settings.visited, VisitedEntry(url, title))
       if *settings.visited > settings.visited_size then
          pull(settings.visited)
    end
 
-   public set_url_field(url)
-      update_visited(url)
-      search_field.set_contents(url.str())
+   public page_loaded()
+      update_visited(browser.page_url, browser.page_title)
+      search_field.set_contents(browser.page_url.str())
    end
 
    public set_title(s)
       /s := "Browser"
-      set_paint(TextPaint(s))
+      set_paint(AbbreviatedTextPaint(s))
    end
 
    private on_stop(ev)
@@ -930,8 +994,7 @@ class BrowserTab(TabItem, BrowserUI)
             browser.goto(u)
          else
             msg("Invalid url")
-      } else
-         on_home()
+      }
       return
    end
 
@@ -1068,7 +1131,7 @@ procedure main(a)
    ImageCache.name_image("rpp.PASTE_24", PASTE)
    ImageCache.name_image("rpp.STOP_24", STOP)
    ImageCache.name_image("rpp.CLEAR_24", CLEAR)
-   s := ucs(a[1])
+   s := ucs(a[1]) | settings.home_url
    d := BrowserDialog(s, t, settings)
    d.show_modal()
    # Save cookies

@@ -76,7 +76,7 @@ class Menu(TextMenuItem)
          if cw.drawable(c.label_x, c.label_y, c.label_w, c.label_h) then {
             c.draw_label(cw, self.max_label_left_w, self.max_label_mid_w, self.max_label_right_w)
             if c === \self.which_highlight then
-               Gui.style.down_rectangle(cw, c.label_x, c.label_y, c.label_w, c.label_h)
+               Gui.style.fill_down_rectangle(cw, c.label_x, c.label_y, c.label_w, c.label_h)
             else if c.is_shaded() then
                Gui.style.shade_rectangle(cw,
                                           c.label_x, c.label_y, c.label_w, c.label_h)

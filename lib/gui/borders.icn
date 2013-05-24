@@ -32,13 +32,14 @@ abstract class ABorder(Insets,Align)
    end
 
    public draw_down(W, x, y, w, h)
-      Gui.style.down_rectangle(W, x, y, w, h)
+      Gui.style.fill_down_rectangle(W, x, y, w, h)
    end
 
    #
-   # Take a {Rect}, giving the bordered size, and a {Size}, giving
-   # an object within it, and "float" it within the area in accordance
-   # with the x and y alignment.  A {Point} is returned.
+   # Take a {Rect}, giving the bordered size, and a {Size}, giving an
+   # object within it, and "float" it within the area in accordance
+   # with the x and y alignment, but limiting the result to the
+   # {Rect}.  A {Size} is returned.
    #
    public float(r, s)
       return get_inner_rect(r).float(s, self)

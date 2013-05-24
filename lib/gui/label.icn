@@ -79,7 +79,7 @@ class Label(Component)
    end
 
    public display()
-      paint.draw_point(self.cbwin, border.float(self, paint))
+      paint.draw_rect(self.cbwin, border.float(self, paint))
       border.draw_rect(self.cbwin, self)
       if self.has_focus() & self.is_unshaded() then
          border.draw_focus_rect(self.cbwin, self)

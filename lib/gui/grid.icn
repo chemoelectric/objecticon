@@ -62,8 +62,8 @@ class Grid()
       p_row_h,
       a_col_w,      # Actual column widths/row heights after extra
       a_row_h,      # space has been allocated
-      col_x,        # Actual row x and y values
-      row_y,
+      a_col_x,      # Actual row x and y values
+      a_row_y,
       col_weights,  # Column/row weights.
       row_weights,
       info,         # List of CellInfo for each component being laid out
@@ -216,7 +216,8 @@ class Grid()
 
    public static dist_equally(start, span, extra, l)
       local left, i, a
-
+      if extra = 0 then
+         fail
       a := extra / span
       left := extra
       every i := start to start + span - 1 do {
@@ -346,7 +347,7 @@ class Grid()
             else {
                # Some weights, so no border and allocate by weight.
                self.pad_w := 0
-               dist_by_weight(1, *a_col_w, ew, a_col_w, col_weights, tw)
+               dist_by_weight(1, gw, ew, a_col_w, col_weights, tw)
             }
          }
          EXTRA_BORDERS : 
@@ -365,15 +366,15 @@ class Grid()
    public compute_actual_col_positions(x1)
       local i, x, w
 
-      col_x := []
+      a_col_x := []
       x := x1 + self.pad_w
       every w := !a_col_w do {
-         put(col_x, x)
+         put(a_col_x, x)
          x +:= w
       }
 
       every i := !info do {
-         x := col_x[i.x] + i.l_inset
+         x := a_col_x[i.x] + i.l_inset
          i.ax := case i.x_align of {
             Align.L : x
             Align.R : x + i.vw - i.aw
@@ -396,7 +397,7 @@ class Grid()
                self.pad_h := eh / 2
             else {
                self.pad_h := 0
-               dist_by_weight(1, *a_row_h, eh, a_row_h, row_weights, tw)
+               dist_by_weight(1, gh, eh, a_row_h, row_weights, tw)
             }
          }
          EXTRA_BORDERS : 
@@ -415,15 +416,15 @@ class Grid()
    public compute_actual_row_positions(y1)
       local i, y, h
 
-      row_y := []
+      a_row_y := []
       y := y1 + self.pad_h
       every h := !a_row_h do {
-         put(row_y, y)
+         put(a_row_y, y)
          y +:= h
       }
 
       every i := !info do {
-         y := row_y[i.y] + i.t_inset
+         y := a_row_y[i.y] + i.t_inset
          i.ay := case i.y_align of {
             Align.T : y
             Align.B : y + i.vh - i.ah

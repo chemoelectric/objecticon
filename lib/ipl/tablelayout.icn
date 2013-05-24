@@ -39,9 +39,11 @@ class TableCellInfo(Insets, ObjectOutput)
       t := s || ": "
       t ||:= " pos=" || self.x || "," || self.y || " dim=" || self.w || "," || self.h ||
          " component pref width=" || pw ||" max width=" || max_w
-      t ||:= "\n\theight=" || ph || " calculated from width " || ph_calc_w
-      t ||:= "\n\tcell desired size=" || pw + l_inset + r_inset || "," || 
-         ph + ascent_adj + t_inset + b_inset
+      if \ph then {
+         t ||:= "\n\theight=" || ph || " calculated from width " || ph_calc_w
+         t ||:= "\n\tcell desired size=" || pw + l_inset + r_inset || "," || 
+            ph + ascent_adj + t_inset + b_inset
+      }
       t ||:= " located to=" || \ax || "," || \ay || " size set to " || \aw || "," || \ah
       t ||:= " pct_w=" || \pct_w
       oo.object_string(self, t)
@@ -58,8 +60,10 @@ class TableGrid()
       pct_col_w,
       a_col_w,      # Actual column widths/row heights after extra
       a_row_h,      # space has been allocated
-      col_x,        # Actual row x and y values
-      row_y,
+      a_col_x,      # Actual row x and y values.  Unlike GridLayout, these
+      a_row_y,      # are zero (offset) based, rather than absolute positions, to avoid
+                    # recomputing them on a shift(), since they are used for 
+                    # row searching by Tbl and for rule drawing.
       info,         # List of CellInfo for each component being laid out
       dii,          # Default inner padding, ie not at edge of grid
       doi,          # Default outer padding
@@ -67,7 +71,11 @@ class TableGrid()
       add_x,        # For auto-computing cell position and sizes.
       add_y,
       add_row_h,
-      fix_col1_flag
+      total_p_col_w,  # Useful sum totals of p_col_w etc
+      total_p_col_max_w,
+      total_p_row_h,
+      fix_col1_flag,
+      in_row        # Lists of CellInfos in each row
 
    public create_cell(t)
       local ci
@@ -121,7 +129,7 @@ class TableGrid()
 
    public static dist_equally(start, span, extra, l, flag)
       local left, i, a
-      if span = 0 then
+      if (extra | span) = 0 then
          fail
       if \flag & start = 1 & span > 1 then {
          start := 2
@@ -160,6 +168,9 @@ class TableGrid()
       }
 
       compute_pct_widths()
+
+      total_p_col_w := Grid.total(p_col_w)
+      total_p_col_max_w := Grid.total(p_col_max_w)
    end
 
    # Adjust the p_col_max_w based on any column % widths; preferred
@@ -167,9 +178,12 @@ class TableGrid()
    private compute_pct_widths()
       local i, ppp, tot, sum_p, sum_r, p, d, n_r
       p := Grid.total(pct_col_w)
-      if p = 0 | p > 100 then
+      if p = 0 then
          fail
-
+      if p > 100 then {
+         pct_col_w := list(gw, 0)
+         fail
+      }
       # Stage 1 - adjust the columns with a pct so their p_col_max_w
       # are in the correct proportions.
 
@@ -238,6 +252,8 @@ class TableGrid()
          if need > 0 then 
             dist_equally(i.y, i.h, need, p_row_h)
       }
+
+      total_p_row_h := Grid.total(p_row_h)
    end
 
    private static cell_width_sort(i)
@@ -284,68 +300,130 @@ class TableGrid()
       write("\nPreferred size gives:", get_preferred_width(),",",get_preferred_height())
    end
 
+   public cells_in_range(ry, rh)
+      local ci, i, fl
+      every i := rows_in_range(ry, rh) do {
+         every ci := !in_row[i] do {
+            # We have encountered the cell for the first time if
+            # either this is the first row examined (/fl) or it is the
+            # first row of the cell (ci.y=i).
+            if /fl | (ci.y = i) then
+               suspend ci
+         }
+         fl := 1
+      }
+   end
+
+   public rows_in_range(ry, rh)
+      local i, j, m, rowh, rowy
+      i := 1
+      j := *a_row_y
+      while i <= j do {
+         m := (i + j) / 2
+         rowy := a_row_y[m]
+         rowh := a_row_h[m]
+         if rowy + rowh <= ry then
+            i := m + 1
+         else if rowy >= ry + rh then
+            j := m - 1
+         else
+            break
+      }
+      if i > j then
+         fail
+
+      # Now row m is in the sought range; but rows before may be too,
+      # so tab back as far as needed.
+      while rowy := a_row_y[m - 1] & rowh := a_row_h[m - 1] &
+         rowy + rowh > ry  &  rowy < ry + rh do
+         m -:= 1
+
+      # Now suspend all the rows in range from row m forwards.
+      while  rowy := a_row_y[m] & rowh := a_row_h[m] &
+         rowy + rowh > ry  &  rowy < ry + rh do
+      {
+         suspend m
+         m +:= 1
+      }
+   end
+
    public set_fix_col1(s)
       self.fix_col1_flag := check_flag(s)
       return self
    end
 
    public get_preferred_width()
-      return Grid.total(p_col_w)
+      return total_p_col_w
    end
 
    public get_max_width()
-      return Grid.total(p_col_max_w)
+      return total_p_col_max_w
    end
 
    public get_preferred_height()
-      return Grid.total(p_row_h)
+      return total_p_row_h
    end
 
-   public compute_actual_col_widths(w1)
-      local left, i, a, n, done
-
-      a_col_w := copy(p_col_w)
-
-      # Extra width
-      left := w1 - Grid.total(p_col_w)
-      n := *a_col_w
-      done := list(*a_col_w)
-      while n > 0 do {
-         a := left / n
-         if a = 0 then
-            break
-         every i := 1 to *a_col_w do {
-            if \done[i] then next
-            if a_col_w[i] + a > p_col_max_w[i] then {
-               left -:= p_col_max_w[i] - a_col_w[i]
-               a_col_w[i] := p_col_max_w[i]
-               done[i] := 1
-               n -:= 1
-            } else {
-               a_col_w[i] +:= a
-               left -:= a
+   private choose(total_a_col_w)
+      local i, r1, r2, best1, best2, t
+      if gw = 0 then
+         fail
+      # Set r1 to the most needy % col; r2 to the most needy non-% col.
+      every i := 1 to gw do {
+         t := ((total_a_col_w * p_col_max_w[i] / (0 < total_p_col_max_w)) | 0)  - a_col_w[i]
+         if pct_col_w[i] > 0 then {
+            if /r1 | (t > best1) then {
+               r1 := i
+               best1 := t
+            }
+         } else {
+            if /r2 | (t > best2) then {
+               r2 := i
+               best2 := t
             }
          }
       }
-      dist_equally(1, *a_col_w, left, a_col_w)
+      if /r2 | (\best1 > 0) then
+         return r1
+      return r2
+   end
+
+   public compute_actual_col_widths(w1)
+      local total_a_col_w, i
+
+      # Start with allocation set to either min or max col width
+      if w1 >= total_p_col_max_w then {
+         a_col_w := copy(p_col_max_w)
+         w1 -:= total_p_col_max_w
+      } else {
+         a_col_w := copy(p_col_w)
+         w1 -:= total_p_col_w
+      }
+
+      # Allocate remaining width pixel by pixel
+      total_a_col_w := Grid.total(a_col_w)
+      every 1 to w1 do {
+         a_col_w[choose(total_a_col_w)] +:= 1
+         total_a_col_w +:= 1
+      }
 
       # Set cell width values
       every i := !info do
          i.aw := Grid.slice(i.x, i.w, a_col_w) - i.l_inset - i.r_inset
    end
 
-   public compute_actual_col_positions(x1)
+   public compute_actual_col_positions()
       local i, x, w
 
-      col_x := []
-      x := x1
+      a_col_x := []
+      x := 0
       every w := !a_col_w do {
-         put(col_x, x)
+         put(a_col_x, x)
          x +:= w
       }
 
       every i := !info do
-         i.ax := col_x[i.x] + i.l_inset
+         i.ax := a_col_x[i.x] + i.l_inset
    end
 
    public compute_actual_row_heights(h1)
@@ -354,25 +432,34 @@ class TableGrid()
       a_row_h := copy(p_row_h)
 
       # Extra height.
-      eh := h1 - Grid.total(p_row_h)
-      dist_equally(1, *a_row_h, eh, a_row_h)
+      eh := h1 - total_p_row_h
+      dist_equally(1, gh, eh, a_row_h)
 
       every i := !info do
          i.ah := Grid.slice(i.y, i.h, a_row_h) - i.t_inset - i.b_inset
    end
 
-   public compute_actual_row_positions(y1)
+   public compute_actual_row_positions()
       local i, y, h
 
-      row_y := []
-      y := y1
+      a_row_y := []
+      y := 0
       every h := !a_row_h do {
-         put(row_y, y)
+         put(a_row_y, y)
          y +:= h
       }
 
       every i := !info do
-         i.ay := row_y[i.y] + i.t_inset + i.ascent_adj
+         i.ay := a_row_y[i.y] + i.t_inset + i.ascent_adj
+   end
+
+   public compute_in_row()
+      local ci
+      in_row := []
+      every 1 to gh do
+         put(in_row, [])
+      every ci := !info do
+         every put(in_row[ci.y to ci.y + ci.h - 1], ci)
    end
 
    #
@@ -437,6 +524,7 @@ class TableLayout(Layout)
       }
       g.dimension()
       g.compute_preferred_col_widths()
+      g.compute_in_row()
    end
 
    public get_preferred_width()
@@ -521,8 +609,8 @@ class TableLayout(Layout)
          {
             cw.draw_rectangle(parent.x, parent.y, parent.w, parent.h)
             every i := !g.info do {
-               cw.draw_rectangle(g.col_x[i.x],
-                                 g.row_y[i.y],
+               cw.draw_rectangle(g.a_col_x[i.x],
+                                 g.a_row_y[i.y],
                                  Grid.slice(i.x, i.w, g.a_col_w),
                                  Grid.slice(i.y, i.h, g.a_row_h))
             }
@@ -541,14 +629,14 @@ class TableLayout(Layout)
       ensure_grid()
 
       g.compute_actual_col_widths(parent.w)
-      g.compute_actual_col_positions(parent.x)
+      g.compute_actual_col_positions()
       adjust_preferred_heights()
       g.compute_actual_row_heights(parent.h)
-      g.compute_actual_row_positions(parent.y)
+      g.compute_actual_row_positions()
 
       every i := !g.info do {
-         i.obj.x := i.ax
-         i.obj.y := i.ay
+         i.obj.x := i.ax + parent.x
+         i.obj.y := i.ay + parent.y
          i.obj.w := i.aw
          i.obj.h := i.ah
       }

@@ -94,24 +94,53 @@ class Rect(Point,Size)
    end
 
    #
-   # Float the given {Size} within this {Rect}, according to the
-   # given {Align}.   A {Point} is returned.
+   # Float the given {Size} within this {Rect}, according to the given
+   # {Align}, but limit the result so that it lies within this {Rect}.
+   # A {Rect} is returned, with width and height set to the input
+   # values, or this {Rect}'s values, depending on whether the result
+   # was so limited.
    #
    public float(s, a)
-      local x1, y1
-      x1 := case a.x_align of {
-         Align.C : self.x + (self.w - s.w) / 2
-         Align.L : self.x
-         Align.R : self.x + self.w - s.w
+      local x1, y1, w1, h1
+      if s.w > self.w then {
+         x1 := self.x
+         w1 := self.w
+      } else case a.x_align of {
+         Align.C : {
+            x1 := self.x + (self.w - s.w) / 2
+            w1 := s.w
+         }
+         Align.L : {
+            x1 := self.x
+            w1 := self.w
+         }
+         Align.R : {
+            x1 := self.x + self.w - s.w
+            w1 := s.w
+         }
          default : runerr("incorrect x_align specifier", a.x_align)
       }         
-      y1 := case a.y_align of {
-         Align.C : self.y + (self.h - s.h) / 2
-         Align.T : self.y
-         Align.B : self.y + self.h - s.h
+
+      if s.h > self.h then {
+         y1 := self.y
+         h1 := self.h
+      } else case a.y_align of {
+         Align.C : {
+            y1 := self.y + (self.h - s.h) / 2
+            h1 := s.h
+         }
+         Align.T : {
+            y1 := self.y
+            h1 := self.h
+         }
+         Align.B : {
+            y1 := self.y + self.h - s.h
+            h1 := s.h
+         }
          default : runerr("incorrect y_align specifier", a.y_align)
-      }         
-      return Point(x1, y1)
+      }
+
+      return Rect(x1, y1, w1, h1)
    end
 
    public new(x, y, w, h)

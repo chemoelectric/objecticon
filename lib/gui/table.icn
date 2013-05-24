@@ -8,6 +8,8 @@
 
 package gui
 
+import util
+
 class TableContent(SelectableScrollArea)
    public calculate_line_height()
       local t, m, h, r, e, i
@@ -83,7 +85,7 @@ class TableContent(SelectableScrollArea)
    end
 
    public draw()
-      local yp, i, j, info, h, lh, r, cols, col, cc
+      local yp, i, j, info, h, lh, r, cols, col, cc, W
 
       r := view.get_cbwin_clip()
 
@@ -91,21 +93,24 @@ class TableContent(SelectableScrollArea)
       h := get_line_height()
 
       cols := parent.table_header.children
-      every j := 1 to *cols do {
-         col := cols[j]
-         # If the column is visible
-         if cc := view.cbwin.drawable(col.x, r.y, col.w, r.h) then {
-            # Clip on the column.
-            view.cbwin.clip!cc
-            yp := r.y - info.offset
-            # Write each line in this column
-            every i := info.first to info.last do {
-               lh := integer(h) | h[i]
-               col.draw_cell(view.cbwin, self.contents[i, j], i, j, yp, lh)
-               yp +:= lh
+      use {
+         W := view.cbwin.clone(), 
+         {
+            every j := 1 to *cols do {
+               col := cols[j]
+               # If the column is visible
+               if cc := view.cbwin.drawable(col.x, r.y, col.w, r.h) then {
+                  # Clip on the column.
+                  W.clip!cc
+                  yp := r.y - info.offset
+                  # Write each line in this column
+                  every i := info.first to info.last do {
+                     lh := integer(h) | h[i]
+                     col.draw_cell(W, self.contents[i, j], i, j, yp, lh)
+                     yp +:= lh
+                  }
+               }
             }
-            # Reset the clip.
-            view.cbwin.clip(r.x, r.y, r.w, r.h)
          }
       }
       # Call the superclass draw to do the selection, highlight etc.

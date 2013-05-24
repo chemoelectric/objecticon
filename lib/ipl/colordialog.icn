@@ -1,14 +1,14 @@
 package ipl.colorgui
 
 import
-   gui, graphics, ipl.graphics
+   gui, graphics, ipl.graphics, util
 
 class ColorRectangle(Component)
-   private c
+   private readable c
 
    public display()
-      self.cbwin.set_fg(c)
-      self.cbwin.fill_rectangle(self.x, self.y, self.w, self.h)
+      cbwin.set_fg(c)
+      cbwin.fill_rectangle(self.x, self.y, self.w, self.h)
    end
 
    public set_color(c)
@@ -31,10 +31,28 @@ class ColorDialog(Dialog)
       colr,
       res,
       okay_button,
-      cancel_button
+      cancel_button,
+      alpha,
+      alpha_label,
+      opaque_flag,
+      alpha_panel
+
+   public set_opaque(s)
+      self.opaque_flag := check_flag(s)
+      return self
+   end
+
+   public init_dialog()
+      alpha_panel.set_is_shaded(opaque_flag)
+      if \opaque_flag then {
+         alpha.set_value(65535)
+         update_rgb()
+         update_alpha()
+      }
+   end
 
    private copy_rgb_label()
-      own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(rgb_label.paint.str))
+      own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(colr.c))
    end
 
    private on_rgb_label(ev)
@@ -53,16 +71,18 @@ class ColorDialog(Dialog)
          red.set_value(l[1])
          green.set_value(l[2])
          blue.set_value(l[3])
+         alpha.set_value(l[4])
       }
       update_rgb()
-      rgb_label.connect(on_rgb_label, Event.MOUSE_RIGHT_PRESS)
+      update_alpha()
+      colr.connect(on_rgb_label, Event.MOUSE_RIGHT_PRESS)
       return
    end
 
    private update_rgb()
       local c, hls
       c := red.get_value() || "," || green.get_value() || "," || blue.get_value()
-      colr.set_color(c)
+      colr.set_color(c || "," || alpha.get_value())
       rgb_label.set_label(c)
       hls := rgb2hls(color2rgb(c))
       hue.set_value(integer(hls.h))
@@ -75,8 +95,8 @@ class ColorDialog(Dialog)
       local rgb, l
       hls_label.set_label(hue.get_value() || ":" || light.get_value() || ":" || saturation.get_value())
       rgb := rgb2color(hls2rgb(hls(hue.get_value(), light.get_value()/100.0, saturation.get_value()/100.0)))
-      colr.set_color(rgb)
       l := Window.parse_color(rgb)
+      colr.set_color(l[1] || "," || l[2] || "," || l[3] || "," || alpha.get_value())
       rgb_label.set_label(l[1] || "," || l[2] || "," || l[3])
       red.set_value(l[1])
       green.set_value(l[2])
@@ -112,7 +132,7 @@ class ColorDialog(Dialog)
    end
 
    private on_okay_button(ev)
-      self.res := rgb_label.paint.str
+      self.res := colr.c
       self.dispose()
    end
 
@@ -120,10 +140,20 @@ class ColorDialog(Dialog)
       return \res
    end
 
+   private update_alpha()
+      alpha_label.set_label(alpha.get_value())
+   end
+
+   private on_alpha(ev)
+      local c
+      update_alpha()
+      c := red.get_value() || "," || green.get_value() || "," || blue.get_value() || "," || alpha.get_value()
+      colr.set_color(c)
+   end
+
    private setup()
-      local paint_2, panel_2, label_2, layout_4, paint_4, layout_1, paint_1, paint_9, panel_1, label_1, border_2, layout_6, paint_10, layout_3, paint_3, panel_3, border_content_1, border_content_2, border_1, layout_5, layout_2
+      local paint_2, panel_2, label_2, layout_7, paint_11, layout_4, paint_4, layout_1, paint_1, paint_9, panel_1, label_1, border_2, layout_6, paint_10, layout_3, paint_3, panel_3, border_content_1, border_content_2, border_content_3, label_3, paint_12, border_1, layout_5, layout_2
       self.set_label("Select color")
-      self.set_size(397, 320)
       paint_2 := TextPaint("RGB")
       label_1 := Label().
          set_pos("286", "248").
@@ -131,7 +161,7 @@ class ColorDialog(Dialog)
          set_constraint("x_align", Align.L).
          set_paint(paint_2)
       red := Slider().
-         set_size("169", "20").
+         set_size(196).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -142,7 +172,7 @@ class ColorDialog(Dialog)
          set_increment_size(1024).
          set_is_horizontal(&yes)
       green := Slider().
-         set_size("169", "20").
+         set_size("169").
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -152,7 +182,7 @@ class ColorDialog(Dialog)
          set_increment_size(1024).
          set_is_horizontal(&yes)
       blue := Slider().
-         set_size("169", "20").
+         set_size("169").
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -239,12 +269,51 @@ class ColorDialog(Dialog)
          add(hls_label)
       border_2 := Border().
          clear_constraints().
+         set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_constraint("y_fill", &yes).
          set_constraint("y_weight", 1.0).
          set_title(label_2).
          set_content(border_content_2)
+      paint_11 := TextPaint("Alpha")
+      label_3 := Label().
+         set_pos(215, 398).
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_paint(paint_11)
+      alpha := Slider().
+         set_size("100").
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         connect(self.on_alpha, Event.VALUE_CHANGED).
+         set_range(0, 65535).
+         set_value(65535).
+         set_increment_size(1024).
+         set_is_horizontal(&yes)
+      paint_12 := TextPaint("Label")
+      alpha_label := Label().
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_paint(paint_12)
+      layout_7 := GridLayout().
+         set_extra("cells")
+      border_content_3 := Component().
+         clear_constraints().
+         set_layout(layout_7).
+         add(alpha).
+         add(alpha_label)
+      alpha_panel := Border().
+         clear_constraints().
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0).
+         set_title(label_3).
+         set_content(border_content_3)
       layout_5 := GridLayout().
          set_doi(0).
          set_extra("cells")
@@ -256,10 +325,11 @@ class ColorDialog(Dialog)
          set_constraint("y_weight", 1.0).
          set_layout(layout_5).
          add(border_1).
-         add(border_2)
+         add(border_2).
+         add(alpha_panel)
       self.add(panel_2)
       colr := ColorRectangle().
-         set_size("136", "134").
+         set_size(154, "134").
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).

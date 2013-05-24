@@ -94,6 +94,7 @@ class TabSet(Component)
 
    public invalidate_tab_region()
       local r
+      is_live() | fail
       r := if /self.tabs_at_bottom_flag then
          Rect(self.x + border.get_l_inset(), self.y + border.get_t_inset(), self.w - border.get_total_width(), self.tab_h)
       else
@@ -102,40 +103,47 @@ class TabSet(Component)
    end
 
    public display_tabs_at_top()
-      local l, c, ypos, nx, r
+      local l, c, ypos, nx, r, cc, W
 
       ypos := self.y + border.get_t_inset()
       r := get_cbwin_clip()
-      
-      every l := !self.line_break do {
-         every c := !l do {
-            draw_shadow_segment("e",
-                                c.tab_x - Gui.BORDER_WIDTH + c.tab_w + 2 * Gui.BORDER_WIDTH - 1, 
-                                ypos - Gui.BORDER_WIDTH, self.label_h + 2 * Gui.BORDER_WIDTH)
-            draw_hilite_segment("w",
-                                c.tab_x - Gui.BORDER_WIDTH, ypos - Gui.BORDER_WIDTH, 
-                                self.label_h + 2 * Gui.BORDER_WIDTH)
-            draw_hilite_segment("n",
-                                c.tab_x - Gui.BORDER_WIDTH, ypos - Gui.BORDER_WIDTH, 
-                                c.tab_w + 2 * Gui.BORDER_WIDTH)
 
-            cbwin.clip(c.tab_x, ypos, c.tab_w, self.label_h)
-            c.draw_label(self.cbwin, 
-                         c.tab_x, 
-                         ypos, 
-                         c.tab_w, 
-                         self.label_h,
-                         if self.has_focus() & self.is_unshaded() & c === self.which_one 
-                         then 1 else &null)
+      use {
+         W := cbwin.clone(), 
+         {
+            every l := !self.line_break do {
+               every c := !l do {
+                  if cbwin.drawable(c.tab_x - Gui.BORDER_WIDTH, ypos - Gui.BORDER_WIDTH,
+                                    c.tab_w + 2 * Gui.BORDER_WIDTH, self.label_h + 2 * Gui.BORDER_WIDTH) then 
+                  {
+                     draw_shadow_segment("e",
+                                         c.tab_x - Gui.BORDER_WIDTH + c.tab_w + 2 * Gui.BORDER_WIDTH - 1, 
+                                         ypos - Gui.BORDER_WIDTH, self.label_h + 2 * Gui.BORDER_WIDTH)
+                     draw_hilite_segment("w",
+                                         c.tab_x - Gui.BORDER_WIDTH, ypos - Gui.BORDER_WIDTH, 
+                                         self.label_h + 2 * Gui.BORDER_WIDTH)
+                     draw_hilite_segment("n",
+                                         c.tab_x - Gui.BORDER_WIDTH, ypos - Gui.BORDER_WIDTH, 
+                                         c.tab_w + 2 * Gui.BORDER_WIDTH)
 
-            # Reset the clip.
-            cbwin.clip(r.x, r.y, r.w, r.h)
-
-            if c.is_shaded() then
-               Gui.style.shade_rectangle(self.cbwin,
-                                          c.tab_x, ypos, c.tab_w, self.label_h)
+                     if cc := cbwin.drawable(c.tab_x, ypos, c.tab_w, self.label_h) then {
+                        W.clip!cc
+                        c.draw_label(W, 
+                                     c.tab_x, 
+                                     ypos, 
+                                     c.tab_w, 
+                                     self.label_h,
+                                     if self.has_focus() & self.is_unshaded() & c === self.which_one 
+                                     then 1 else &null)
+                        if c.is_shaded() then
+                           Gui.style.shade_rectangle(W,
+                                                     c.tab_x, ypos, c.tab_w, self.label_h)
+                     }
+                  }
+               }
+               ypos +:= self.label_h + Gui.BORDER_WIDTH
+            }
          }
-         ypos +:= self.label_h + Gui.BORDER_WIDTH
       }
 
       #
@@ -154,43 +162,53 @@ class TabSet(Component)
    end
 
    public display_tabs_at_bottom()
-      local l, c, ypos, nx, r
+      local l, c, ypos, nx, r, cc, W
 
       ypos := self.y + self.h - border.get_b_inset() - self.label_h
       r := get_cbwin_clip()
       
-      every l := !self.line_break do {
-         every c := !l do {
-            draw_shadow_segment("e",
-                                c.tab_x - Gui.BORDER_WIDTH + c.tab_w + 2 * Gui.BORDER_WIDTH - 1, 
-                                ypos - Gui.BORDER_WIDTH, self.label_h + 2 * Gui.BORDER_WIDTH)
-            draw_hilite_segment("w",
-                                c.tab_x - Gui.BORDER_WIDTH, ypos - Gui.BORDER_WIDTH, 
-                                self.label_h + 2 * Gui.BORDER_WIDTH)
-            draw_hilite_segment("s",
-                                c.tab_x - Gui.BORDER_WIDTH, ypos + label_h + Gui.BORDER_WIDTH - 1, 
-                                c.tab_w + 2 * Gui.BORDER_WIDTH)
+      use {
+         W := cbwin.clone(), 
+         {
+            every l := !self.line_break do {
+               every c := !l do {
 
-            cbwin.clip(c.tab_x, ypos, c.tab_w, self.label_h)
-            c.draw_label(self.cbwin, 
-                         c.tab_x, 
-                         ypos, 
-                         c.tab_w, 
-                         self.label_h,
-                         if self.has_focus() & self.is_unshaded() & c === self.which_one 
-                         then 1 else &null)
+                  if cbwin.drawable(c.tab_x - Gui.BORDER_WIDTH, ypos - Gui.BORDER_WIDTH,
+                                    c.tab_w + 2 * Gui.BORDER_WIDTH, self.label_h + 2 * Gui.BORDER_WIDTH) then 
+                  {
 
-            # Reset the clip.
-            cbwin.clip(r.x, r.y, r.w, r.h)
+                     draw_shadow_segment("e",
+                                         c.tab_x - Gui.BORDER_WIDTH + c.tab_w + 2 * Gui.BORDER_WIDTH - 1, 
+                                         ypos - Gui.BORDER_WIDTH, self.label_h + 2 * Gui.BORDER_WIDTH)
+                     draw_hilite_segment("w",
+                                         c.tab_x - Gui.BORDER_WIDTH, ypos - Gui.BORDER_WIDTH, 
+                                         self.label_h + 2 * Gui.BORDER_WIDTH)
+                     draw_hilite_segment("s",
+                                         c.tab_x - Gui.BORDER_WIDTH, ypos + label_h + Gui.BORDER_WIDTH - 1, 
+                                         c.tab_w + 2 * Gui.BORDER_WIDTH)
 
-            if c.is_shaded() then
-               Gui.style.shade_rectangle(self.cbwin,
-                                          c.tab_x, ypos, c.tab_w, self.label_h)
+                     if cc := cbwin.drawable(c.tab_x, ypos, c.tab_w, self.label_h) then {
+                        W.clip!cc
+                        c.draw_label(W, 
+                                     c.tab_x, 
+                                     ypos, 
+                                     c.tab_w, 
+                                     self.label_h,
+                                     if self.has_focus() & self.is_unshaded() & c === self.which_one 
+                                     then 1 else &null)
+
+                        if c.is_shaded() then
+                           Gui.style.shade_rectangle(W,
+                                                     c.tab_x, ypos, c.tab_w, self.label_h)
+                     }
+                  }
+               }
+               ypos -:= self.label_h + Gui.BORDER_WIDTH
+            }
          }
-         ypos -:= self.label_h + Gui.BORDER_WIDTH
       }
 
-         ypos +:= self.label_h + Gui.BORDER_WIDTH
+      ypos +:= self.label_h + Gui.BORDER_WIDTH
 
       #
       # Display line under tabs.
