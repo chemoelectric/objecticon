@@ -396,7 +396,7 @@ class TextFlow(Component)
    end
 
    public display()
-      local o, W, font, fg, x1, y1, x2, y2, r, t, ts, or
+      local o, W, font, fg, x1, y1, r, t, ts, or
       border.draw(self.cbwin, x, y, w, h)
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
@@ -414,29 +414,42 @@ class TextFlow(Component)
                } 
 
                draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
-               if ts := browser.is_banded(o) then {
+               if ts := browser.is_banded(o) then
                   # NB - the rectangle used should be the same as that returned by t.get_bounds()
                   Gui.style.fill_selection_rectangle(cbwin, 
                                                      x1 + o.x + ts.w_off,
                                                      y1 + o.y, 
                                                      ts.w_sub,
                                                      o.h)
-               }
-               if \o.attr.underline then {
-                  x2 := x1 + o.x
-                  y2 := y1 + o.y + W.get_font_ascent() + 1
-                  W.draw_line(x2, y2, x2 + o.w, y2)
-               }
-               if \o.attr.strike then {
-                  x2 := x1 + o.x
-                  y2 := y1 + o.y + (2 * W.get_font_ascent()) / 3
-                  W.draw_line(x2, y2, x2 + o.w, y2)
-               }
+               if \o.attr.underline then
+                  text_line(W,
+                            o.s, 
+                            x1 + o.x, 
+                            y1 + o.y + W.get_font_ascent() + 1)
+               if \o.attr.strike then
+                  text_line(W,
+                            o.s, 
+                            x1 + o.x,
+                            y1 + o.y + (2 * W.get_font_ascent()) / 3)
             }
          }
       }
       W.close()
       cast(self,Component).display()
+   end
+
+   private static text_line(W, s, x, y)
+      local t, x1
+      s ? repeat {
+         if t := tab(many(WHITESPACE)) then
+            x +:= W.text_width(t)
+         if pos(0) then
+            break
+         t := tab(upto(WHITESPACE) | 0)
+         x1 := x + W.text_width(t)
+         W.draw_line(x, y, x1, y)
+         x := x1
+      }
    end
 
    public calculate_banded(br, bs)
