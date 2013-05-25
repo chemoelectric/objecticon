@@ -46,6 +46,9 @@ class TextCmd(TextFlowCmd)
    end
 end
 
+class WbrCmd(TextFlowCmd)
+end
+
 class NamedAnchorCmd(TextFlowCmd)
    public const
       name
@@ -329,6 +332,10 @@ class TextFlow(Component)
             }
             NamedAnchorCmd: {
                insert(named_anchors, string(cmd.name), row_y)
+            }
+            WbrCmd: {
+               if /cmd.attr.nowrap & /cmd.attr.pre then
+                  blob_start := &null
             }
             TextCmd: {
                if /cmd.attr.pre then {

@@ -3642,6 +3642,10 @@ class Browser(ComponentScrollArea)
       }
    end
 
+   private traverse_wbr(e, p, context)
+      put(p.input, WbrCmd(context))
+   end
+
    private traverse_text(e, p, context)
       put(p.input, TextCmd(e, context))
    end
@@ -3708,6 +3712,7 @@ class Browser(ComponentScrollArea)
                "LEGEND": traverse_legend(e, p, context)
                "MAP": traverse_map(e, p, context)
                "AREA": traverse_area(e, p, context)
+               "WBR": traverse_wbr(e, p, context)
                default : traverse(e, p, context)
             }
          }
