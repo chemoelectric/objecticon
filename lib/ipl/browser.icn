@@ -2251,7 +2251,7 @@ class Browser(ComponentScrollArea)
          i := worker_pool.count(self)
          if (i > 0) | (i ~=== running) then {
             if i = 0 then {
-               msg("Done")
+               msg("Done", 1500)
                page_fully_loaded()
             } else {
                r := worker_pool.read(self)
