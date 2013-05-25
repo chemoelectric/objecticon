@@ -904,7 +904,13 @@ class TextFlow(Component)
             i +:= 1
          } else {
             tw := W.text_width(ds2) + get_pad()
-            # The width of the last word is given by the blob width, if any.
+            #
+            # The width of the last word is given by the blob width, if any.  For example, if we have
+            # <u>Fred Smith</u><i>Hello</i>
+            # and wd = Smith, then blob_width = len(Smith) + len(hello), tw = len(Fred Smith), and we
+            # will adjust tw to = len(Fred Smith) - len(Smith) + bw = len(Fred Smith) + len(hello).
+            # Thus, this corresponds to the sum of the strings we will output.
+            #
             if (i = *l) & \cmd.blob_width then
                tw -:= W.text_width(wd) - cmd.blob_width
             if row_x + row_width + tw > right_margin then {
