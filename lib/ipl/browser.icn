@@ -3628,13 +3628,12 @@ class Browser(ComponentScrollArea)
    private traverse_area(e, p, context)
       local mc, s, coords
       mc := \context.map | fail
-      if s := e.get_attribute(u"COORDS") then {
-         coords := []
-         every put(coords, integer(separate(s)))
-         mc.map.add_area(MapArea(map(string(e.get_attribute(u"SHAPE"))), 
-                                 coords,
-                                 mk_link(e.get_attribute(u"HREF"))))
-      }
+      s := e.get_attribute(u"COORDS") | fail
+      coords := []
+      every put(coords, integer(separate(s)))
+      mc.map.add_area(MapArea(map(string(e.get_attribute(u"SHAPE"))), 
+                              coords,
+                              mk_link(e.get_attribute(u"HREF"))))
    end
 
    private traverse_abbr(e, p, context)
