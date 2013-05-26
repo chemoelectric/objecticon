@@ -885,7 +885,7 @@ class Img(Image)
          Gui.style.fill_selection_rectangle(cbwin, x, y, w, h)
    end
 
-   public new(browser, img_url, link_url, form, map)
+   public new(browser, img_url, link_url, abbr, form, map)
       cast(self,Image).new()
       clear_constraints()
       self.browser := browser
@@ -893,6 +893,7 @@ class Img(Image)
       self.form := form
       self.link_url := link_url
       self.map := map
+      set_tooltip(\abbr)
       if \form then {
          set_pointer("hand1")
          connect(self.handle_form_lrelease, Event.MOUSE_LEFT_RELEASE)
@@ -2049,8 +2050,8 @@ record DefListContext(tbl)
 record FieldSetContext(legend)
 record MapContext(map)
 record SelectContext(options, optgroup)
-record Context(base, form, form_label, url, fg, link_fg, font, align, pre, nowrap, underline, strike, 
-               face, size, bold, italic, kind, table, list, def_list, fieldset, select, map)
+record Context(form, form_label, url, fg, link_fg, font, align, pre, nowrap, underline, strike, 
+               face, size, bold, italic, table, list, def_list, fieldset, select, map, abbr)
 
 class MapArea()
    public const
@@ -2159,6 +2160,8 @@ class Browser(ComponentScrollArea)
       page_name,
       page_title,
       page_links,
+      page_base,
+      page_kind,
       running,
       mark_x,
       mark_y,
@@ -2513,7 +2516,7 @@ class Browser(ComponentScrollArea)
    end
 
    private set_top_data(res)
-      local doc, base, n, s, row, c, cu
+      local doc, s, row, c, cu
       if \curr_history_entry then {
          save_form_values()
          curr_history_entry.area_x := get_area_x()
@@ -2566,29 +2569,21 @@ class Browser(ComponentScrollArea)
       labels := []
       s := convert_to_ucs(res.content_type, s)
       doc := HtmlParser().parse(s)
-      base := page_url
-      if n := doc.get_root_element().search_tree(u"BASE") then
-         base := URL(n.get_attribute(u"HREF"))
+      page_base := page_url
       row := TextFlow(self)
       page_title := &null
       page_links := []
+      page_kind := res.kind   # Tells images whether to refresh or not
       c := Context()
-      c.base := base
       c.face := "sans"
       c.fg := "black"
       c.link_fg := "blue"
       c.size := 3
       c.align := Align.L
-      c.kind := res.kind   # Tells images whether to refresh or not
       synch_font(c)
-      if n := doc.get_root_element().search_tree(u"BODY") then {
-         row.set_bg(convert_color(n, u"BGCOLOR"))
-         c.fg := convert_color(n, u"TEXT")
-         c.link_fg := convert_color(n, u"LINK")
-      }
       traverse(doc, row, c)
       resolve_labels()
-      if res.kind ~= Worker.REFRESH then
+      if page_kind ~= Worker.REFRESH then
          restore_form_values()
       every form_tab_children |||:= (!forms).get_tab_children()
       set_inner(row)
@@ -2625,8 +2620,8 @@ class Browser(ComponentScrollArea)
       }
    end
 
-   private mk_link(context, s)
-      return URL(s) | (\context.base).get_relative(s)
+   private mk_link(s)
+      return URL(s) | page_base.get_relative(s)
    end
 
    private traverse_a(e, p, context)
@@ -2635,7 +2630,7 @@ class Browser(ComponentScrollArea)
          put(p.input, NamedAnchorCmd(na, context))
          traverse(e, p, context)
       }
-      else if url := mk_link(context, e.get_attribute(u"HREF")) then {
+      else if url := mk_link(e.get_attribute(u"HREF")) then {
          put(page_links, url)
          c := copy(context)
          c.url := url
@@ -2770,7 +2765,7 @@ class Browser(ComponentScrollArea)
       local m, c, t, url, id
       m := e.get_attribute(u"METHOD") | "get"
       t := e.get_attribute(u"ENCTYPE") | "application/x-www-form-urlencoded"
-      url := mk_link(context, e.get_attribute(u"ACTION"))
+      url := mk_link(e.get_attribute(u"ACTION"))
       id := e.get_attribute(u"ID" | u"NAME")
       c := copy(context)
       c.form := Form(self, id, url, m, t)
@@ -2842,16 +2837,16 @@ class Browser(ComponentScrollArea)
 
    private traverse_img(e, p, context)
       local q, url, border, align, map, s
-      if url := mk_link(context, e.get_attribute(u"SRC")) then {
+      if url := mk_link(e.get_attribute(u"SRC")) then {
          if (s := e.get_attribute(u"USEMAP")) & (s[1] == u"#") then
             map := default.map(string(s[2:0]))
-         q := Img(self, url, context.url,, map)
+         q := Img(self, url, context.url, context.abbr,, map)
          do_width_param(e, q)
          do_height_param(e, q)
          border := (0 < integer(e.get_attribute(u"BORDER"))) | 0
          if border > 0 then
             q.set_border(PlainBorder().set_line_width(border))
-         start_worker(Req(self, url, page_url, q.got_data, context.kind))
+         start_worker(Req(self, url, page_url, q.got_data, page_kind))
          align := convert_comp_align(e, u"ALIGN") | Align.B
          add_component(p, q, context, align)
       }
@@ -2993,9 +2988,9 @@ class Browser(ComponentScrollArea)
             add_form_component(e, p, q, context)
          }
          "image" : {
-            if url := mk_link(context, e.get_attribute(u"SRC")) then {
-               q := Img(self, url,, context.form)
-               start_worker(Req(self, url, page_url, q.got_data, context.kind))
+            if url := mk_link(e.get_attribute(u"SRC")) then {
+               q := Img(self, url,,, context.abbr, context.form)
+               start_worker(Req(self, url, page_url, q.got_data, page_kind))
                if e.get_attribute(u"DISABLED") then
                   q.set_is_shaded(&yes)
                else {
@@ -3638,8 +3633,28 @@ class Browser(ComponentScrollArea)
          every put(coords, integer(separate(s)))
          mc.map.add_area(MapArea(map(string(e.get_attribute(u"SHAPE"))), 
                                  coords,
-                                 mk_link(context, e.get_attribute(u"HREF"))))
+                                 mk_link(e.get_attribute(u"HREF"))))
       }
+   end
+
+   private traverse_abbr(e, p, context)
+      local c
+      c := copy(context)
+      c.abbr := e.get_attribute(u"TITLE")
+      traverse(e, p, c)
+   end
+
+   private traverse_body(e, p, context)
+      local c
+      c := copy(context)
+      c.fg := convert_color(e, u"TEXT")
+      c.link_fg := convert_color(e, u"LINK")
+      p.set_bg(convert_color(e, u"BGCOLOR"))
+      traverse(e, p, c)
+   end
+
+   private traverse_base(e, p, context)
+      page_base := URL(e.get_attribute(u"HREF"))
    end
 
    private traverse_wbr(e, p, context)
@@ -3713,6 +3728,9 @@ class Browser(ComponentScrollArea)
                "MAP": traverse_map(e, p, context)
                "AREA": traverse_area(e, p, context)
                "WBR": traverse_wbr(e, p, context)
+               "ABBR": traverse_abbr(e, p, context)
+               "BASE": traverse_base(e, p, context)
+               "BODY": traverse_body(e, p, context)
                default : traverse(e, p, context)
             }
          }

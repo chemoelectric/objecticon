@@ -1087,8 +1087,16 @@ class TextFlow(Component)
    end
 
    private handle_move(e)
-      local u
-      if u := \which_text_out(e).attr.url then {
+      local u, t, a
+
+      t := which_text_out(e)
+
+      if a := \ (\t).attr.abbr then
+         set_tooltip(a)
+      else
+         set_tooltip()
+
+      if u := \ (\t).attr.url then {
          if wrote ~=== u then {
             set_pointer("hand1")
             browser.msg(u.str())
@@ -1126,6 +1134,7 @@ class TextFlow(Component)
          browser.clear_msg()
          wrote := &null
          set_pointer()
+         set_tooltip()
       }
    end
 
