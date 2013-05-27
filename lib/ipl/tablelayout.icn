@@ -6,7 +6,8 @@ import
    ipl.sort,
    io,
    gui,
-   ipl.graphics
+   ipl.graphics,
+   ipl.numbers
 
 class TableCellInfo(Insets, ObjectOutput)
    public 
@@ -67,7 +68,7 @@ class TableGrid()
       info,         # List of CellInfo for each component being laid out
       dii,          # Default inner padding, ie not at edge of grid
       doi,          # Default outer padding
-      id_str,       # For generating CellInfo string ids for debug
+      id_seq,       # For generating CellInfo string ids for debug
       add_x,        # For auto-computing cell position and sizes.
       add_y,
       add_row_h,
@@ -81,8 +82,7 @@ class TableGrid()
       local ci
       ci := TableCellInfo()
       ci.grid := self
-      ci.s := id_str[1]
-      id_str[1] := ""
+      ci.s := @id_seq
       self.add_x +:= Grid.validate_int(t, "x_tab")
       if self.add_y +:= Grid.validate_int(t, "y_tab") then
          add_row_h := 0
@@ -265,16 +265,19 @@ class TableGrid()
    end
 
    public print_layout()
-      local x, y, t, i, s
+      local x, y, t, i, s, l, u
 
       write("Grid dimensions:", gw, ",",gh)
+      l := *info[-1].s
       t := table()
-      every t[(1 to gw)||","||(1 to gh)] := " "
+      u := repl(" ", l)
+      every t[(1 to gw)||","||(1 to gh)] := u
 
       every i := !info do
-         every t[(i.x to i.x + i.w - 1)||","||(i.y to i.y + i.h - 1)] := i.s
+         every t[(i.x to i.x + i.w - 1)||","||(i.y to i.y + i.h - 1)] := right(i.s, l)
 
-      write(s := repl("+-", gw) || "+")
+      u := "+" || repl("-", l)
+      write(s := repl(u, gw) || "+")
       every y := 1 to gh do {
          every x := 1 to gw do
             writes("|", t[x||","||y])
@@ -480,7 +483,7 @@ class TableGrid()
 
    public new()
       self.dii := self.doi := 0
-      self.id_str := string(&ucase)
+      self.id_seq := create alphaseq(seq())
       self.add_y := self.add_x := 1
       self.add_row_h := 0
       self.info := []
