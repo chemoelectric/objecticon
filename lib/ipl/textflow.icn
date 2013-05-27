@@ -576,7 +576,6 @@ class TextFlow(Component)
 
    private new_row(gap)
       local x1, r, g, need, or, row_height
-      /gap := 0
       if *row > 0 then {
          x1 := row_x
 
@@ -637,9 +636,12 @@ class TextFlow(Component)
                default: syserr("Invalid type in row")
             }
          }
+         /gap := 0
          row_y +:= row_height + gap
-      } else
-         row_y +:= 1
+      } else {
+         /gap := 1
+         row_y +:= gap
+      }
 
       if \calculating then
          max_ll <:= compute_w - (right_margin - row_width - row_x)
