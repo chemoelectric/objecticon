@@ -17,7 +17,8 @@ import
    ipl.strings,
    ipl.caseless,
    ipl.timegui,
-   ipl.colorgui
+   ipl.colorgui,
+   ipl.numbers
 
 $load BROKEN_LINK "rpp.BROKEN_LINK_24.gif"
 
@@ -2045,7 +2046,7 @@ end
 record TableContext(tbl, caption, x, y, occ, cell_border, tr, rowgroups, colgroups, curr_colgroup)
 record TableColGroup(align, valign, width, span, cols)
 record TableCol(align, valign, width, span)
-record ListContext(tbl, index, root)
+record ListContext(tbl, index, type, kind)
 record DefListContext(tbl)
 record FieldSetContext(legend)
 record MapContext(map)
@@ -3519,8 +3520,9 @@ class Browser(ComponentScrollArea)
       c := copy(context)
       lc := ListContext()
       lc.tbl := tbl
-      lc.index := 0
-      lc.root := e
+      lc.index := integer(e.get_attribute(u"START")) | 1
+      lc.type := e.get_attribute(u"TYPE")
+      lc.kind := e.name
       c.list := lc
       traverse(e, p, c)
       put_new_row(p, c)
@@ -3529,13 +3531,31 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_li(e, p, context)
-      local lc, row
+      local lc, row, val, type
       lc := \context.list | fail
       row := TextFlow(self)
-      if lc.root.name == u"OL" then
-         put(row.input, TextCmd((lc.index +:= 1) || u".\ua0\ua0\ua0", context))
-      else
-         put(row.input, TextCmd(u"\u2022\ua0\ua0\ua0", context))
+      type := e.get_attribute(u"TYPE") | lc.type
+      if lc.kind == u"OL" then {
+         val := integer(e.get_attribute(u"VALUE")) | lc.index
+         if val > 0 then {
+            val := case string(type) of {
+               "a": map(alphaseq(val))
+               "A": alphaseq(val)
+               "i": map(roman(val))
+               "I": roman(val)
+            }
+         }
+         put(row.input, TextCmd(val || u".\ua0\ua0\ua0", context))
+         lc.index +:= 1
+      } else {
+         /type := "disc"
+         val := case map(string(type)) of {
+            "circle": u"o"
+            "square": u"\u25ca"
+            default: u"\u2022"
+         }
+         put(row.input, TextCmd(val || u"\ua0\ua0\ua0", context))
+      }
       lc.tbl.content.add(row)
       row := TextFlow(self) .set_constraint("eol", &yes)
       lc.tbl.content.add(row)
