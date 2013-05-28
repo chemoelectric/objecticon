@@ -459,16 +459,16 @@ class TextFlow(Component)
    end
 
    private static text_line(W, s, x, y)
-      local t, x1
+      local t, w1
       s ? repeat {
          if t := tab(many(WHITESPACE)) then
             x +:= W.text_width(t)
          if pos(0) then
             break
          t := tab(upto(WHITESPACE) | 0)
-         x1 := x + W.text_width(t)
-         W.draw_line(x, y, x1, y)
-         x := x1
+         w1 := W.text_width(t)
+         W.draw_rectangle(x, y, w1, 1)
+         x +:= w1
       }
    end
 
