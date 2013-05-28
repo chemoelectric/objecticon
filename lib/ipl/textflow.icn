@@ -412,37 +412,39 @@ class TextFlow(Component)
       r := get_cbwin_clip()
       every or := rows_in_range(r.y - y1, r.h) do {
          every o := !or.l do {
-            t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
-            if r.intersect(t) then {
-               if font ~=== o.attr.font | fg ~=== o.attr.fg then {
-                  W.close()
-                  W := attr_clone(o.attr)
-                  font := o.attr.font
-                  fg := o.attr.fg
-               } 
-               draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
-               if ts := browser.is_banded(o) then
-                  # NB - the rectangle used should be the same as that returned by t.get_bounds()
-                  Gui.style.fill_selection_rectangle(cbwin, 
-                                                     x1 + o.x + ts.w_off,
-                                                     y1 + o.y, 
-                                                     ts.w_sub,
-                                                     o.h)
-               if \o.attr.underline then
-                  text_line(W,
-                            o.s, 
-                            x1 + o.x, 
-                            y1 + o.y + W.get_font_ascent() + 1)
-               else if \o.attr.underdash then
-                  text_dash(W,
-                            o.s, 
-                            x1 + o.x, 
-                            y1 + o.y + W.get_font_ascent() + 1)
-               if \o.attr.strike then
-                  text_line(W,
-                            o.s, 
-                            x1 + o.x,
-                            y1 + o.y + (2 * W.get_font_ascent()) / 3)
+            if is(o, TextOut) then {
+               t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
+               if r.intersect(t) then {
+                  if font ~=== o.attr.font | fg ~=== o.attr.fg then {
+                     W.close()
+                     W := attr_clone(o.attr)
+                     font := o.attr.font
+                     fg := o.attr.fg
+                  } 
+                  draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
+                  if ts := browser.is_banded(o) then
+                     # NB - the rectangle used should be the same as that returned by t.get_bounds()
+                     Gui.style.fill_selection_rectangle(cbwin, 
+                                                        x1 + o.x + ts.w_off,
+                                                        y1 + o.y, 
+                                                        ts.w_sub,
+                                                        o.h)
+                  if \o.attr.underline then
+                     text_line(W,
+                               o.s, 
+                               x1 + o.x, 
+                               y1 + o.y + W.get_font_ascent() + 1)
+                  else if \o.attr.underdash then
+                     text_dash(W,
+                               o.s, 
+                               x1 + o.x, 
+                               y1 + o.y + W.get_font_ascent() + 1)
+                  if \o.attr.strike then
+                     text_line(W,
+                               o.s, 
+                               x1 + o.x,
+                               y1 + o.y + (2 * W.get_font_ascent()) / 3)
+               }
             }
          }
       }
@@ -453,7 +455,7 @@ class TextFlow(Component)
    private static text_dash(W, s, x, y)
       local W2
       use {
-         W2 := Gui.style.get_dashed_clone(W),
+         W2 := W.clone().set_masked_pattern("gray"),
          text_line(W2, s, x, y)
       }
    end
@@ -502,27 +504,36 @@ class TextFlow(Component)
             W := attr_clone(o.attr)
             font := o.attr.font
          } 
-         i := 1
-         if o === first then {
-            d := first_r.x - x1 - o.x
-            u := 0
-            while i <= *o.s & ((.u + (u := W.text_width(o.s[1+:i]))) / 2) < d do
-               i +:= 1
-         }
-         if o === last then {
-            d := last_r.x - x1 - o.x + last_r.w
-            j := i
-            u := W.text_width(o.s[1:i])
-            while j <= *o.s & ((.u + (u := W.text_width(o.s[1+:j]))) / 2) < d do
-               j +:= 1
-         } else
-            j := *o.s + 1
+         case classof(o) of {
+            TextOut: {
+               i := 1
+               if o === first then {
+                  d := first_r.x - x1 - o.x
+                  u := 0
+                  while i <= *o.s & ((.u + (u := W.text_width(o.s[1+:i]))) / 2) < d do
+                     i +:= 1
+               }
+               if o === last then {
+                  d := last_r.x - x1 - o.x + last_r.w
+                  j := i
+                  u := W.text_width(o.s[1:i])
+                  while j <= *o.s & ((.u + (u := W.text_width(o.s[1+:j]))) / 2) < d do
+                     j +:= 1
+               } else
+                  j := *o.s + 1
 
-         if i < j then {
-            ts := TextSelection(o, self, 
-                                i, j, 
-                                W.text_width(o.s[1:i]), W.text_width(o.s[i:j]))
-            insert(bs, o, ts)
+               if i < j then {
+                  ts := TextSelection(o, self, 
+                                      i, j, 
+                                      W.text_width(o.s[1:i]), W.text_width(o.s[i:j]))
+                  insert(bs, o, ts)
+               }
+            }
+            CompOut: {
+               # An image; add both CompOut and Img to the banded map.
+               insert(bs, o, o.c)
+               insert(bs, o.c, o.c)
+            }
          }
       }
       W.close()
@@ -536,8 +547,16 @@ class TextFlow(Component)
       every or := rows_in_range(br.y - y1, br.h) do {
          sr := u""
          every o := !or.l do {
-            if t := browser.is_banded(o) then
-               sr ||:= o.s[t.i:t.j]
+            case classof(o) of {
+               TextOut: {
+                  if t := browser.is_banded(o) then
+                     sr ||:= o.s[t.i:t.j]
+               }
+               CompOut: {
+                  if browser.is_banded(o) then
+                     sr ||:= \o.c.alt
+               }
+            }
          }
          if *sr > 0 then {
             if *s > 0 then
@@ -553,7 +572,7 @@ class TextFlow(Component)
       local o, or, u, u2, or2
       every or := !computed_output_rows do {
          every o := !or.l do {
-            if u := \o.attr.url then {
+            if is(o, TextOut) & (u := \o.attr.url) then {
                if u === u2 & or ~=== or2 then
                   t[u] ||:= u" "
                t[u] ||:= o.s
@@ -640,6 +659,9 @@ class TextFlow(Component)
                      default: runerr("invalid alignment", r.align)
                   }
                   x1 +:= r.w
+                  # Save images in the row for banded selection.
+                  if is(r.c, Img) then
+                     put((\or).l, r)
                }
                TextOut: {
                   r.x := x1
@@ -1062,7 +1084,7 @@ class TextFlow(Component)
       y1 := y + border.get_t_inset() + y_off
       every or := rows_in_range(e.y - y1, 1) do {
          every o := !or.l do {
-            if o.inside(e.x - x1, e.y - y1) then
+            if is(o, TextOut) & o.inside(e.x - x1, e.y - y1) then
                return o
          }
       }
@@ -1107,7 +1129,7 @@ class TextFlow(Component)
 
       t := which_text_out(e)
 
-      if a := \ (\t).attr.abbr then
+      if a := \ (\t).attr.title then
          set_tooltip(a)
       else
          set_tooltip()
