@@ -753,7 +753,7 @@ end
 
 class Img(Image)
    public const
-      browser, form, img_url, link_url
+      browser, form, img_url, link_url, alt
    private readable
       wrote, img_data, img_name, map, held
 
@@ -886,15 +886,15 @@ class Img(Image)
          Gui.style.fill_selection_rectangle(cbwin, x, y, w, h)
    end
 
-   public new(browser, img_url, link_url, abbr, form, map)
+   public new(browser, img_url, link_url, alt, form, map)
       cast(self,Image).new()
       clear_constraints()
       self.browser := browser
       self.img_url := img_url
       self.form := form
       self.link_url := link_url
+      self.alt := alt
       self.map := map
-      set_tooltip(\abbr)
       if \form then {
          set_pointer("hand1")
          connect(self.handle_form_lrelease, Event.MOUSE_LEFT_RELEASE)
@@ -2052,7 +2052,7 @@ record FieldSetContext(legend)
 record MapContext(map)
 record SelectContext(options, optgroup)
 record Context(form, form_label, url, fg, link_fg, font, align, pre, nowrap, underline, strike, underdash,
-               face, size, bold, italic, table, list, def_list, fieldset, select, map, abbr)
+               face, size, bold, italic, table, list, def_list, fieldset, select, map, title)
 
 class MapArea()
    public const
@@ -2821,6 +2821,7 @@ class Browser(ComponentScrollArea)
    private add_component(p, c, context, align)
       /align := "absbottom"
       put(p.input, ComponentCmd(c, context, align))
+      c.set_tooltip(\context.title)
       p.add(c)
    end
 
@@ -2837,11 +2838,12 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_img(e, p, context)
-      local q, url, border, align, map, s
+      local q, url, border, align, map, s, alt
       if url := mk_link(e.get_attribute(u"SRC")) then {
          if (s := e.get_attribute(u"USEMAP")) & (s[1] == u"#") then
             map := default.map(string(s[2:0]))
-         q := Img(self, url, context.url, context.abbr,, map)
+         alt := e.get_attribute(u"ALT")
+         q := Img(self, url, context.url, alt,, map)
          do_width_param(e, q)
          do_height_param(e, q)
          border := (0 < integer(e.get_attribute(u"BORDER"))) | 0
@@ -2963,7 +2965,7 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_input(e, p, context)
-      local q, s, k, v, size, mW, url, checked, align, min, max
+      local q, s, k, v, size, mW, url, checked, align, min, max, alt
       \context.form | fail
       s := string(map(e.get_attribute(u"TYPE"))) | "text"
       case s of {
@@ -2990,7 +2992,8 @@ class Browser(ComponentScrollArea)
          }
          "image" : {
             if url := mk_link(e.get_attribute(u"SRC")) then {
-               q := Img(self, url,,, context.abbr, context.form)
+               alt := e.get_attribute(u"ALT")
+               q := Img(self, url,, alt, context.form)
                start_worker(Req(self, url, page_url, q.got_data, page_resp.kind))
                if e.get_attribute(u"DISABLED") then
                   q.set_is_shaded(&yes)
@@ -3659,7 +3662,6 @@ class Browser(ComponentScrollArea)
    private traverse_abbr(e, p, context)
       local c
       c := copy(context)
-      c.abbr := e.get_attribute(u"TITLE")
       c.underdash := 1
       traverse(e, p, c)
    end
@@ -3690,68 +3692,73 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse(n, p, context)
-      local e, id
+      local e, id, title, c
       every e := !n.children do {
          if text(e) then
             traverse_text(e, p, context)
          else if is(e, HtmlElement) then {
             if id := e.get_attribute(u"ID") then
                put(p.input, NamedAnchorCmd(id, context))
+            if title := e.get_attribute(u"TITLE") then {
+               c := copy(context)
+               c.title := title
+            } else
+               c := context
             case string(e.name) of {
                "META"|"LINK"|"SCRIPT"|"STYLE": {}
-               "TITLE": traverse_title(e, p, context)
-               "A": traverse_a(e, p, context)
-               "FORM": traverse_form(e, p, context)
-               "BUTTON": traverse_button(e, p, context)
-               "LABEL": traverse_label(e, p, context)
-               "FONT": traverse_font(e, p, context)
-               "IMG": traverse_img(e, p, context)
-               "SELECT": traverse_select(e, p, context)
-               "OPTION": traverse_option(e, p, context)
-               "OPTGROUP": traverse_optgroup(e, p, context)
-               "TEXTAREA": traverse_textarea(e, p, context)
-               "INPUT": traverse_input(e, p, context)
-               "DIV": traverse_div(e, p, context)
-               "BIG": traverse_big(e, p, context)
-               "SMALL": traverse_small(e, p, context)
-               "SAMP"|"KBD"|"CODE"|"TT": traverse_tt(e, p, context)
-               "STRONG"|"DFN"|"B": traverse_b(e, p, context)
-               "EM"|"CITE"|"I"|"VAR": traverse_i(e, p, context)
-               "ADDRESS": traverse_address(e, p, context)
-               "BR": traverse_br(e, p, context)
-               "NOBR": traverse_nobr(e, p, context)
-               "HR": traverse_hr(e, p, context)
-               "CENTER": traverse_center(e, p, context)
-               "H" || (1 to 6): traverse_hN(e, p, context)
-               "TABLE": traverse_table(e, p, context)
-               "THEAD"|"TBODY"|"TFOOT": traverse_tbody(e, p, context)
-               "CAPTION": traverse_caption(e, p, context)
-               "COLGROUP": traverse_colgroup(e, p, context)
-               "COL": traverse_col(e, p, context)
-               "TR": traverse_tr(e, p, context)
-               "TD"|"TH": traverse_td(e, p, context)
-               "DIR"|"MENU"|"OL"|"UL": traverse_list(e, p, context)
-               "LI": traverse_li(e, p, context)
-               "DL": traverse_dl(e, p, context)
-               "DT": traverse_dt(e, p, context)
-               "DD": traverse_dd(e, p, context)
-               "BLOCKQUOTE": traverse_blockquote(e, p, context)
-               "P": traverse_p(e, p, context)
-               "Q": traverse_q(e, p, context)
-               "INS"|"U": traverse_u(e, p, context)
-               "DEL"|"STRIKE"|"S": traverse_s(e, p, context)
-               "SUP": traverse_sup(e, p, context)
-               "SUB": traverse_sub(e, p, context)
-               "LISTING"|"PRE": traverse_pre(e, p, context)
-               "FIELDSET": traverse_fieldset(e, p, context)
-               "LEGEND": traverse_legend(e, p, context)
-               "MAP": traverse_map(e, p, context)
-               "AREA": traverse_area(e, p, context)
-               "WBR": traverse_wbr(e, p, context)
-               "ABBR"|"ACRONYM": traverse_abbr(e, p, context)
-               "BASE": traverse_base(e, p, context)
-               "BODY": traverse_body(e, p, context)
-               default : traverse(e, p, context)
+               "TITLE": traverse_title(e, p, c)
+               "A": traverse_a(e, p, c)
+               "FORM": traverse_form(e, p, c)
+               "BUTTON": traverse_button(e, p, c)
+               "LABEL": traverse_label(e, p, c)
+               "FONT": traverse_font(e, p, c)
+               "IMG": traverse_img(e, p, c)
+               "SELECT": traverse_select(e, p, c)
+               "OPTION": traverse_option(e, p, c)
+               "OPTGROUP": traverse_optgroup(e, p, c)
+               "TEXTAREA": traverse_textarea(e, p, c)
+               "INPUT": traverse_input(e, p, c)
+               "DIV": traverse_div(e, p, c)
+               "BIG": traverse_big(e, p, c)
+               "SMALL": traverse_small(e, p, c)
+               "SAMP"|"KBD"|"CODE"|"TT": traverse_tt(e, p, c)
+               "STRONG"|"DFN"|"B": traverse_b(e, p, c)
+               "EM"|"CITE"|"I"|"VAR": traverse_i(e, p, c)
+               "ADDRESS": traverse_address(e, p, c)
+               "BR": traverse_br(e, p, c)
+               "NOBR": traverse_nobr(e, p, c)
+               "HR": traverse_hr(e, p, c)
+               "CENTER": traverse_center(e, p, c)
+               "H" || (1 to 6): traverse_hN(e, p, c)
+               "TABLE": traverse_table(e, p, c)
+               "THEAD"|"TBODY"|"TFOOT": traverse_tbody(e, p, c)
+               "CAPTION": traverse_caption(e, p, c)
+               "COLGROUP": traverse_colgroup(e, p, c)
+               "COL": traverse_col(e, p, c)
+               "TR": traverse_tr(e, p, c)
+               "TD"|"TH": traverse_td(e, p, c)
+               "DIR"|"MENU"|"OL"|"UL": traverse_list(e, p, c)
+               "LI": traverse_li(e, p, c)
+               "DL": traverse_dl(e, p, c)
+               "DT": traverse_dt(e, p, c)
+               "DD": traverse_dd(e, p, c)
+               "BLOCKQUOTE": traverse_blockquote(e, p, c)
+               "P": traverse_p(e, p, c)
+               "Q": traverse_q(e, p, c)
+               "INS"|"U": traverse_u(e, p, c)
+               "DEL"|"STRIKE"|"S": traverse_s(e, p, c)
+               "SUP": traverse_sup(e, p, c)
+               "SUB": traverse_sub(e, p, c)
+               "LISTING"|"PRE": traverse_pre(e, p, c)
+               "FIELDSET": traverse_fieldset(e, p, c)
+               "LEGEND": traverse_legend(e, p, c)
+               "MAP": traverse_map(e, p, c)
+               "AREA": traverse_area(e, p, c)
+               "WBR": traverse_wbr(e, p, c)
+               "ABBR"|"ACRONYM": traverse_abbr(e, p, c)
+               "BASE": traverse_base(e, p, c)
+               "BODY": traverse_body(e, p, c)
+               default : traverse(e, p, c)
             }
          }
       }
