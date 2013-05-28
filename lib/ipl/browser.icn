@@ -2433,7 +2433,7 @@ class Browser(ComponentScrollArea)
 
    private static is_text(ct, s)
       \ct | fail
-      if (ct.type == "text" & ct.subtype == "plain") |
+      if (ct.type == "text") |
          (ct.type == "application" & ct.subtype == "json") then
          return
    end
