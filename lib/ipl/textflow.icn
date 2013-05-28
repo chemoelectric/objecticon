@@ -2,6 +2,7 @@ package ipl.browser
 
 import 
    gui,
+   util,
    ipl.strings
 
 abstract class HasAscent()
@@ -432,6 +433,11 @@ class TextFlow(Component)
                             o.s, 
                             x1 + o.x, 
                             y1 + o.y + W.get_font_ascent() + 1)
+               else if \o.attr.underdash then
+                  text_dash(W,
+                            o.s, 
+                            x1 + o.x, 
+                            y1 + o.y + W.get_font_ascent() + 1)
                if \o.attr.strike then
                   text_line(W,
                             o.s, 
@@ -442,6 +448,14 @@ class TextFlow(Component)
       }
       W.close()
       cast(self,Component).display()
+   end
+
+   private static text_dash(W, s, x, y)
+      local W2
+      use {
+         W2 := Gui.style.get_dashed_clone(W),
+         text_line(W2, s, x, y)
+      }
    end
 
    private static text_line(W, s, x, y)

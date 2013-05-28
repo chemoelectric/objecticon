@@ -2051,7 +2051,7 @@ record DefListContext(tbl)
 record FieldSetContext(legend)
 record MapContext(map)
 record SelectContext(options, optgroup)
-record Context(form, form_label, url, fg, link_fg, font, align, pre, nowrap, underline, strike, 
+record Context(form, form_label, url, fg, link_fg, font, align, pre, nowrap, underline, strike, underdash,
                face, size, bold, italic, table, list, def_list, fieldset, select, map, abbr)
 
 class MapArea()
@@ -3660,6 +3660,7 @@ class Browser(ComponentScrollArea)
       local c
       c := copy(context)
       c.abbr := e.get_attribute(u"TITLE")
+      c.underdash := 1
       traverse(e, p, c)
    end
 
@@ -3714,8 +3715,8 @@ class Browser(ComponentScrollArea)
                "BIG": traverse_big(e, p, context)
                "SMALL": traverse_small(e, p, context)
                "SAMP"|"KBD"|"CODE"|"TT": traverse_tt(e, p, context)
-               "DFN"|"B": traverse_b(e, p, context)
-               "EM"|"CITE"|"I": traverse_i(e, p, context)
+               "STRONG"|"DFN"|"B": traverse_b(e, p, context)
+               "EM"|"CITE"|"I"|"VAR": traverse_i(e, p, context)
                "ADDRESS": traverse_address(e, p, context)
                "BR": traverse_br(e, p, context)
                "NOBR": traverse_nobr(e, p, context)
@@ -3747,7 +3748,7 @@ class Browser(ComponentScrollArea)
                "MAP": traverse_map(e, p, context)
                "AREA": traverse_area(e, p, context)
                "WBR": traverse_wbr(e, p, context)
-               "ABBR": traverse_abbr(e, p, context)
+               "ABBR"|"ACRONYM": traverse_abbr(e, p, context)
                "BASE": traverse_base(e, p, context)
                "BODY": traverse_body(e, p, context)
                default : traverse(e, p, context)
