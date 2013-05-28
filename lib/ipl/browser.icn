@@ -2162,7 +2162,7 @@ class Browser(ComponentScrollArea)
       page_title,
       page_links,
       page_base,
-      page_kind,
+      page_resp,
       running,
       mark_x,
       mark_y,
@@ -2544,6 +2544,7 @@ class Browser(ComponentScrollArea)
          page_data := res.data
       }
       page_name := res.fname
+      page_resp := res
       page_url := res.url
       if res.kind = Worker.NORMAL then {
          # Reset history_pos, since we may have done a navigate
@@ -2574,7 +2575,6 @@ class Browser(ComponentScrollArea)
       row := TextFlow(self)
       page_title := &null
       page_links := []
-      page_kind := res.kind   # Tells images whether to refresh or not
       c := Context()
       c.face := "sans"
       c.fg := "black"
@@ -2584,7 +2584,7 @@ class Browser(ComponentScrollArea)
       synch_font(c)
       traverse(doc, row, c)
       resolve_labels()
-      if page_kind ~= Worker.REFRESH then
+      if page_resp.kind ~= Worker.REFRESH then
          restore_form_values()
       every form_tab_children |||:= (!forms).get_tab_children()
       set_inner(row)
@@ -2847,7 +2847,7 @@ class Browser(ComponentScrollArea)
          border := (0 < integer(e.get_attribute(u"BORDER"))) | 0
          if border > 0 then
             q.set_border(PlainBorder().set_line_width(border))
-         start_worker(Req(self, url, page_url, q.got_data, page_kind))
+         start_worker(Req(self, url, page_url, q.got_data, page_resp.kind))
          align := convert_comp_align(e, u"ALIGN") | Align.B
          add_component(p, q, context, align)
       }
@@ -2991,7 +2991,7 @@ class Browser(ComponentScrollArea)
          "image" : {
             if url := mk_link(e.get_attribute(u"SRC")) then {
                q := Img(self, url,,, context.abbr, context.form)
-               start_worker(Req(self, url, page_url, q.got_data, page_kind))
+               start_worker(Req(self, url, page_url, q.got_data, page_resp.kind))
                if e.get_attribute(u"DISABLED") then
                   q.set_is_shaded(&yes)
                else {
@@ -4061,7 +4061,7 @@ class Browser(ComponentScrollArea)
    end
 
    public get_page_info()
-      local s, l, t, c, n, sz, m, f, imgs
+      local s, l, t, c, n, sz, m, f, imgs, ct
 
       s := "<html><title>Page info</title>"
       s ||:= "<h1>Page</h1>"
@@ -4073,6 +4073,10 @@ class Browser(ComponentScrollArea)
          s ||:= "Name: " || n || "<p>"
       if n := \page_title & *n > 0 then
          s ||:= "Title: " || n || "<p>"
+      if ct := \page_resp.content_type then
+         s ||:= "Content-type: " || ct.type || "/" || ct.subtype || "<p>"
+      if l := \page_resp.referer & (l.scheme == (u"http" | u"https")) then
+         s ||:= "Referer: <a href=\"" || l.str() || "\">" || l.str() || "</a><p>"
 
       imgs := []
       t := table(u"")
