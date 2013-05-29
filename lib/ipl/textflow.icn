@@ -1156,10 +1156,8 @@ class TextFlow(Component)
       local u, t, a
       *parent_dialog.held = 0 | fail
       t := which_text_out(e)
-      if a := \ (\t).attr.title then
-         set_tooltip(a)
-      else
-         set_tooltip()
+      a := \ (\t).attr.title
+      set_tooltip(a)
       if u := \ (\t).attr.url then {
          if wrote ~=== u then {
             set_pointer("hand1")
@@ -1215,6 +1213,7 @@ class TextFlow(Component)
       v_align := Align.T
       set_constraint("x_fill", &yes)
       set_constraint("y_fill", &yes)
+      set_tooltip_follows_mouse(&yes)
       connect(self.handle_lmdrag, Event.MOUSE_LEFT_DRAG)
       connect(self.handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
       connect(self.handle_mpress, Event.MOUSE_MIDDLE_PRESS)
