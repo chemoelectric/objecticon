@@ -707,8 +707,8 @@ class Dialog(Component)
       # closed revealing something below, so re-create the point chain.
       #
       create_point_chain(e)
-      process_tooltip_event(e)
       generate_crossing_events(e)
+      process_tooltip_event(e)
 
       #
       # Synch the pointer if either there were no buttons down before or after
