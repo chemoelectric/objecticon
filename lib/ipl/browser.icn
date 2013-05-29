@@ -835,17 +835,17 @@ class Img(Image)
       return \link_url
    end
 
-   private handle_lpress(e)
-      held := wrote
+   private handle_lmpress(e)
+      held := \wrote
    end
 
-   private handle_ldrag(e)
-      local u
-      if u := which_url(e) & u === held then {
-         if wrote ~=== u then {
+   private handle_lmdrag(e)
+      \held | fail
+      if which_url(e) === held then {
+         if wrote ~=== held then {
             set_pointer("hand1")
-            browser.msg(u.str())
-            wrote := u
+            browser.msg(held.str())
+            wrote := held
          }
       } else if \wrote then {
          browser.clear_msg()
@@ -854,18 +854,13 @@ class Img(Image)
       }
    end
 
-   public get_pointer(e)
-      if /form then
-         handle_move(e)
-      return \self.pointer
-   end
-
    package wants_lpress(e)
       return \wrote | \form
    end
 
-   private handle_move(e)
+   private handle_in_chain(e)
       local u
+      *parent_dialog.held = 0 | fail
       if u := which_url(e) then {
          if wrote ~=== u then {
             set_pointer("hand1")
@@ -899,10 +894,12 @@ class Img(Image)
          set_pointer("hand1")
          connect(self.handle_form_lrelease, Event.MOUSE_LEFT_RELEASE)
       } else if \map | \link_url then {
-         connect(self.handle_move, Event.MOUSE_MOVEMENT)
-         connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
-         connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+         connect(self.handle_in_chain, Dialog.IN_POINT_CHAIN)
+         connect(self.handle_lmdrag, Event.MOUSE_LEFT_DRAG)
+         connect(self.handle_lmpress, Event.MOUSE_LEFT_PRESS)
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+         connect(self.handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
+         connect(self.handle_lmpress, Event.MOUSE_MIDDLE_PRESS)
          connect(self.handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
          connect(self.handle_exit, Event.MOUSE_EXIT)
       }
@@ -2051,7 +2048,7 @@ record DefListContext(tbl)
 record FieldSetContext(legend)
 record MapContext(map)
 record SelectContext(options, optgroup)
-record Context(form, form_label, url, fg, link_fg, font, align, pre, nowrap, underline, strike, underdash,
+record Context(form, form_label, url, fg, font, align, pre, nowrap, underline, strike, underdash,
                face, size, bold, italic, table, list, def_list, fieldset, select, map, title)
 
 class MapArea()
@@ -2110,6 +2107,7 @@ abstract class BrowserUI()
    public abstract create_page_menu()
    public abstract create_image_menu(url, img_name, img_data, link_url)
    public abstract browse_for_file()
+   public abstract is_visited(url)
 end
 
 class BrowserPrimarySelectionOwner(TextSelectionOwner)
@@ -2163,6 +2161,9 @@ class Browser(ComponentScrollArea)
       page_links,
       page_base,
       page_resp,
+      page_link_color,
+      page_alink_color,
+      page_vlink_color,
       running,
       mark_x,
       mark_y,
@@ -2283,6 +2284,10 @@ class Browser(ComponentScrollArea)
 
    public create_page_menu()
       return (\ui).create_page_menu()
+   end
+
+   public is_visited(url)
+      return (\ui).is_visited(url)
    end
 
    public create_image_menu(url, img_name, img_data, link_url)
@@ -2575,10 +2580,12 @@ class Browser(ComponentScrollArea)
       row := TextFlow(self)
       page_title := &null
       page_links := []
+      page_alink_color := "red"
+      page_vlink_color := "#800080"
+      page_link_color := "blue"
       c := Context()
       c.face := "sans"
       c.fg := "black"
-      c.link_fg := "blue"
       c.size := 3
       c.align := Align.L
       synch_font(c)
@@ -2635,7 +2642,7 @@ class Browser(ComponentScrollArea)
          put(page_links, url)
          c := copy(context)
          c.url := url
-         c.fg := c.link_fg
+         c.fg := if is_visited(url) then page_vlink_color else page_link_color
          traverse(e, p, c)
       }
    end
@@ -3670,7 +3677,9 @@ class Browser(ComponentScrollArea)
       local c
       c := copy(context)
       c.fg := convert_color(e, u"TEXT")
-      c.link_fg := convert_color(e, u"LINK")
+      page_link_color := convert_color(e, u"LINK")
+      page_alink_color := convert_color(e, u"ALINK")
+      page_vlink_color := convert_color(e, u"VLINK")
       p.set_bg(convert_color(e, u"BGCOLOR"))
       traverse(e, p, c)
    end
@@ -3699,7 +3708,7 @@ class Browser(ComponentScrollArea)
          else if is(e, HtmlElement) then {
             if id := e.get_attribute(u"ID") then
                put(p.input, NamedAnchorCmd(id, context))
-            if title := e.get_attribute(u"TITLE") then {
+            if title := e.get_attribute(u"TITLE") & *title > 0 then {
                c := copy(context)
                c.title := title
             } else

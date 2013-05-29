@@ -180,6 +180,7 @@ class TextFlow(Component)
       max_width,
       held,
       wrote,
+      highlight,
       dominant_width,
       computed_named_anchors,
       named_anchors,
@@ -421,6 +422,8 @@ class TextFlow(Component)
                      font := o.attr.font
                      fg := o.attr.fg
                   } 
+                  if o.attr.url === \highlight then
+                     W.set_fg(fg := browser.page_alink_color)
                   draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
                   if ts := browser.is_banded(o) then
                      # NB - the rectangle used should be the same as that returned by t.get_bounds()
@@ -566,6 +569,18 @@ class TextFlow(Component)
       }
       if *s > 0 then
          return s
+   end
+
+   private invalidate_url(u)
+      local o, or, x1, y1
+      x1 := x + border.get_l_inset()
+      y1 := y + border.get_t_inset() + y_off
+      every or := !computed_output_rows do {
+         every o := !or.l do {
+            if is(o, TextOut) & (u === \o.attr.url) then
+               invalidate(Rect(x1 + o.x, y1 + o.y, o.w, o.h))
+         }
+      }
    end
 
    public calculate_link_text(t)
@@ -1091,25 +1106,38 @@ class TextFlow(Component)
    end
 
    private handle_lrelease(e)
-      if \wrote then
+      if \wrote then {
+         set_highlight()
          self.browser.goto(wrote, browser.page_url, Worker.NORMAL)
+      }
    end
 
    private handle_mrelease(e)
-      if \wrote then
+      if \wrote then {
+         set_highlight()
          self.browser.link_mrelease(wrote)
+      }
    end
 
    private handle_lpress(e)
       local c, t
-      if t := which_text_out(e) then {
+      if \wrote then {
+         set_highlight(wrote)
+         held := wrote
+      } else if t := which_text_out(e) then {
          if c := \ ( \ (t.attr.form_label)).comp & not c.is_shaded() then {
             parent_dialog.set_focus(c.gen_focusable(e))
             if is(c, Toggle) then
                c.on_action(e)
          }
       }
-      held := wrote
+   end
+
+   private handle_mpress(e)
+      if \wrote then {
+         set_highlight(wrote)
+         held := wrote
+      }
    end
 
    package wants_press(e)
@@ -1124,16 +1152,14 @@ class TextFlow(Component)
       }
    end
 
-   private handle_move(e)
+   private handle_in_chain(e)
       local u, t, a
-
+      *parent_dialog.held = 0 | fail
       t := which_text_out(e)
-
       if a := \ (\t).attr.title then
          set_tooltip(a)
       else
          set_tooltip()
-
       if u := \ (\t).attr.url then {
          if wrote ~=== u then {
             set_pointer("hand1")
@@ -1147,21 +1173,18 @@ class TextFlow(Component)
       }
    end
 
-   public get_pointer(e)
-      handle_move(e)
-      return \self.pointer
-   end
-
-   private handle_ldrag(e)
-      local u
-      if u := \which_text_out(e).attr.url & u === held then {
-         if wrote ~=== u then {
+   private handle_lmdrag(e)
+      \held | fail
+      if \which_text_out(e).attr.url === held then {
+         if wrote ~=== held then {
             set_pointer("hand1")
-            browser.msg(u.str())
-            wrote := u
+            browser.msg(held.str())
+            wrote := held
+            set_highlight(wrote)
          }
       } else if \wrote then {
          browser.clear_msg()
+         set_highlight()
          wrote := &null 
          set_pointer()
       }
@@ -1170,10 +1193,18 @@ class TextFlow(Component)
    private handle_exit(e)
       if \wrote then {
          browser.clear_msg()
+         set_highlight()
          wrote := &null
          set_pointer()
-         set_tooltip()
       }
+      set_tooltip()
+   end
+
+   private set_highlight(u)
+      invalidate_url(\highlight)
+      highlight := u
+      invalidate_url(\highlight)
+      return self
    end
 
    public new(browser)
@@ -1184,13 +1215,15 @@ class TextFlow(Component)
       v_align := Align.T
       set_constraint("x_fill", &yes)
       set_constraint("y_fill", &yes)
-      connect(self.handle_move, Event.MOUSE_MOVEMENT)
-      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      connect(self.handle_lmdrag, Event.MOUSE_LEFT_DRAG)
+      connect(self.handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
+      connect(self.handle_mpress, Event.MOUSE_MIDDLE_PRESS)
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       connect(self.handle_exit, Event.MOUSE_EXIT)
       connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
       connect(self.handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
+      connect(self.handle_in_chain, Dialog.IN_POINT_CHAIN)
       return
     end
 end

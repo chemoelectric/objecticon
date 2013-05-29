@@ -95,6 +95,7 @@ end
 class BrowserDialog(Dialog)
    private readable
       settings,
+      visited_set,
       pool,
       tabs,
       prev_button,
@@ -136,6 +137,29 @@ class BrowserDialog(Dialog)
    public finally()
       cast(self,Dialog).finally()
       pool.finally()
+   end
+
+   public update_visited(url, title)
+      local e, i 
+      if url.scheme == (u"cache" | u"config") then
+         fail
+      every i := 1 to *settings.visited do {
+         e := settings.visited[i]
+         if equals(url, e.url) then {
+            e.last_time := Time()
+            e.title := title
+            e.times +:= 1
+            delete(settings.visited, i)
+            push(settings.visited, e)
+            return
+         }
+      }
+      push(settings.visited, VisitedEntry(url, title))
+      insert(visited_set, url.str())
+      if *settings.visited > settings.visited_size then {
+         e := pull(settings.visited)
+         delete(visited_set, e.url.str())
+      }
    end
 
    public new_tab(url, sel)
@@ -293,6 +317,8 @@ class BrowserDialog(Dialog)
       local quit_menu_item, menu_bar, file_menu, bt, new_tab_item
       cast(self,Dialog).new()
       self.settings := settings
+      self.visited_set := set()
+      every insert(visited_set, (!settings.visited).url.str())
       pool := WorkerPool().
          set_cookies(cookies).
          set_cache(Cache(settings.cache_size_mb*1024*1024)).
@@ -331,8 +357,8 @@ class BrowserDialog(Dialog)
          add(file_menu).
          add(page_menu)
       self.add(menu_bar)
-      bt := BrowserTab(url, pool, settings)
-      downloads := DownloadTab(settings)
+      bt := BrowserTab(url, pool)
+      downloads := DownloadTab()
       tabs := TabSet().
          set_size("200", "150").
          clear_constraints().
@@ -473,7 +499,6 @@ end
 
 class DownloadTab(TabItem)
    private readable
-      settings,
       paste_url_button,
       destination_button,
       clear_done_button,
@@ -558,7 +583,7 @@ class DownloadTab(TabItem)
       local d, s
       clear_msg()
       d := parent_dialog.directory_dialog
-      d.set_directory(settings.destination_dir)
+      d.set_directory(parent_dialog.settings.destination_dir)
       d.show_modal(parent_dialog)
       s := d.get_result() | fail
       if *s = 0 then
@@ -566,7 +591,7 @@ class DownloadTab(TabItem)
       else if not(Files.is_directory(s)) then
          msg(s || " is not a directory")
       else
-         settings.destination_dir := s
+         parent_dialog.settings.destination_dir := s
    end
 
    private on_clear_done(ev)
@@ -656,9 +681,8 @@ class DownloadTab(TabItem)
       refresh()
    end
 
-   public new(settings)
+   public new()
       cast(self,TabItem).new()
-      self.settings := settings
       set_label_border(EmptyBorder().set_x_align(Align.L))
       setup()
       ticker := Dispatcher.new_task{tick()}
@@ -746,7 +770,6 @@ end
 
 class BrowserTab(TabItem, BrowserUI)
    private readable
-      settings,
       browser,
       prev_button,
       message_label,
@@ -925,28 +948,12 @@ class BrowserTab(TabItem, BrowserUI)
       return self
    end
 
-   private update_visited(url, title)
-      local e, i 
-      if url.scheme == (u"cache" | u"config") then
-         fail
-      every i := 1 to *settings.visited do {
-         e := settings.visited[i]
-         if equals(url, e.url) then {
-            e.last_time := Time()
-            e.title := title
-            e.times +:= 1
-            delete(settings.visited, i)
-            push(settings.visited, e)
-            return
-         }
-      }
-      push(settings.visited, VisitedEntry(url, title))
-      if *settings.visited > settings.visited_size then
-         pull(settings.visited)
+   public is_visited(url)
+      return member(parent_dialog.visited_set, url.str())
    end
 
    public page_loaded()
-      update_visited(browser.page_url, browser.page_title)
+      parent_dialog.update_visited(browser.page_url, browser.page_title)
       search_field.set_contents(browser.page_url.str())
    end
 
@@ -960,7 +967,7 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    private on_home(ev)
-      browser.goto(settings.home_url)
+      browser.goto(parent_dialog.settings.home_url)
    end
 
    private handle_paste_response(target_type, data, e)
@@ -982,9 +989,8 @@ class BrowserTab(TabItem, BrowserUI)
       browser.do_refresh()
    end
 
-   public new(u, pool, settings)
+   public new(u, pool)
       cast(self,TabItem).new()
-      self.settings := settings
       set_label_border(EmptyBorder().set_x_align(Align.L))
       set_title()
       setup()
