@@ -32,6 +32,7 @@ class Dialog(Component)
       TOOLTIP_Y_OFFSET,
       FOCUS_UP,                  # Set of events to move focus
       FOCUS_DOWN,
+      IN_POINT_CHAIN,
       pointer_grab_stack,
       keyboard_grab_stack
 
@@ -657,13 +658,14 @@ class Dialog(Component)
    # Normal event processing - not dnd
    # 
    private process_normal(e)
-      local c, ec
+      local c, ec, old_n_held
 
       if /self.win | /self.point_chain then
          return
 
       ec := e.code
 
+      old_n_held := *held
       if member(Mouse.PRESS, ec) then {
          check_click_count(e)
          if c := (!self.point_chain).find_focus(e) then
@@ -709,9 +711,11 @@ class Dialog(Component)
       generate_crossing_events(e)
 
       #
-      # Synch the pointer if the left mouse button isn't held.
+      # Synch the pointer if either there were no buttons down before or after
+      # this event.  This means we synch at the start and end of a drag, but not
+      # during a drag.
       #
-      if /held[-1] then
+      if (old_n_held | *held) = 0 then
          synch_pointer(e)
    end
 
@@ -750,6 +754,7 @@ class Dialog(Component)
       crossing := elementset(point_chain)
       fire_list(t -- crossing, Event.MOUSE_EXIT, e)
       fire_list(crossing -- t, Event.MOUSE_ENTER, e)
+      fire_list(point_chain, IN_POINT_CHAIN, e)      
    end
 
    public generate_events(e)
@@ -1330,6 +1335,7 @@ class Dialog(Component)
       DEFAULT_POINTER := "left ptr"
       FOCUS_UP := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
       FOCUS_DOWN := set("\t", Key.RIGHT, Key.DOWN)
+      IN_POINT_CHAIN := "in point chain"
       ROOT_WATTRIBS := table()
       pointer_grab_stack := []
       keyboard_grab_stack := []
