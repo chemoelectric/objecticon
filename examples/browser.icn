@@ -442,7 +442,7 @@ class Download()
          fname := resp.fname
          if *fname = 0 then
             fname := "browser.out"
-         full_path := Files.ensure_unique_filename(FilePath(parent.settings.destination_dir).child(fname).canonical().str())
+         full_path := Files.ensure_unique_filename(FilePath(parent.parent_dialog.settings.destination_dir).child(fname).canonical().str())
          if \r.data then {
             if Files.string_to_file(full_path, r.data) then {
                log("Result file:" || full_path || " (" || Format.numeric_to_string(*r.data, 0, ',') || " bytes)")
