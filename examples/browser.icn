@@ -953,7 +953,9 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public page_loaded()
-      parent_dialog.update_visited(browser.page_url, browser.page_title)
+      # Don't save pages that didn't load in the visited list.
+      if \browser.page_data then
+         parent_dialog.update_visited(browser.page_url, browser.page_title)
       search_field.set_contents(browser.page_url.str())
    end
 

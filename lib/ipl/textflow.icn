@@ -333,7 +333,8 @@ class TextFlow(Component)
                }
             }
             NamedAnchorCmd: {
-               insert(named_anchors, string(cmd.name), row_y)
+               if /calculating then
+                  insert(named_anchors, string(cmd.name), row_y)
             }
             WbrCmd: {
                if /cmd.attr.nowrap & /cmd.attr.pre then
@@ -355,7 +356,7 @@ class TextFlow(Component)
 
    public lookup_named_anchor(name)
       local yp
-      if yp := member(\computed_named_anchors, string(name)) then
+      if yp := member(computed_named_anchors, string(name)) then
          return yp + y + border.get_t_inset() + y_off
    end
 
@@ -572,10 +573,11 @@ class TextFlow(Component)
    end
 
    private invalidate_url(u)
-      local o, or, x1, y1
+      local o, or, x1, y1, r
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
-      every or := !computed_output_rows do {
+      r := get_clip_rect()
+      every or := rows_in_range(r.y - y1, r.h) do {
          every o := !or.l do {
             if is(o, TextOut) & (u === \o.attr.url) then
                invalidate(Rect(x1 + o.x, y1 + o.y, o.w, o.h))
@@ -1156,7 +1158,7 @@ class TextFlow(Component)
       local u, t, a
       *parent_dialog.held = 0 | fail
       t := which_text_out(e)
-      a := \ (\t).attr.title
+      a := (\t).attr.title
       set_tooltip(a)
       if u := \ (\t).attr.url then {
          if wrote ~=== u then {
