@@ -186,7 +186,7 @@ class BrowserDialog(Dialog)
       s := "<html><title>Visited</title>" || Browser.get_table_tag() || ""
       s ||:= "<tr><th align=left>Title<th align=right>Times<th>&nbsp;Last visit<th align=left>URL</tr>"
       every e := !settings.visited do {
-         n := Browser.limit_text(\e.title, 200) | "-"
+         n := Browser.limit_text(\e.title, 200) | ""
          s ||:= "<tr><td nowrap>" || n || "<td align=right>" || e.times || "<td>&nbsp;" || e.last_time.format("MMM'&nbsp;'dd'&nbsp;'HH:mm")
          l := e.url
          s ||:= "<td nowrap><a href=\"" || l.str() || "\">" || l.str() ||  "</a></tr>"
