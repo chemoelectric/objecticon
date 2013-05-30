@@ -295,8 +295,7 @@ class TextFlow(Component)
       every cmd := !input do {
          if font ~=== cmd.attr.font then {
             W.close()
-            W := attr_clone(cmd.attr)
-            font := cmd.attr.font
+            W := attr_clone(font := cmd.attr.font)
          } 
          case classof(cmd) of {
             ComponentCmd: 
@@ -360,11 +359,11 @@ class TextFlow(Component)
          return yp + y + border.get_t_inset() + y_off
    end
 
-   private attr_clone(attr)
+   private attr_clone(font, fg)
       local W
       W := cbwin.clone()
-      W.set_fg(attr.fg)
-      W.set_font(attr.font)
+      W.set_font(font)
+      W.set_fg(\fg)
       return W
    end
 
@@ -406,7 +405,7 @@ class TextFlow(Component)
    end
 
    public display()
-      local o, W, font, fg, x1, y1, r, t, ts, or
+      local o, W, font, fg, x1, y1, r, t, ts, or, want_fg
       border.draw(self.cbwin, x, y, w, h)
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
@@ -417,14 +416,16 @@ class TextFlow(Component)
             if is(o, TextOut) then {
                t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
                if r.intersect(t) then {
-                  if font ~=== o.attr.font | fg ~=== o.attr.fg then {
+                  want_fg := if o.attr.url === \highlight then
+                     browser.page_alink_color
+                  else
+                     o.attr.fg
+                  if font ~=== o.attr.font | fg ~=== want_fg then {
                      W.close()
-                     W := attr_clone(o.attr)
-                     font := o.attr.font
-                     fg := o.attr.fg
+                     W := attr_clone(font := o.attr.font, fg := want_fg)
                   } 
-                  if o.attr.url === \highlight then
-                     W.set_fg(fg := browser.page_alink_color)
+                  if \o.attr.mark then
+                     text_bg(W, "yellow", x1 + o.x, y1 + o.y, o.w, o.h)
                   draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
                   if ts := browser.is_banded(o) then
                      # NB - the rectangle used should be the same as that returned by t.get_bounds()
@@ -454,6 +455,14 @@ class TextFlow(Component)
       }
       W.close()
       cast(self,Component).display()
+   end
+
+   private static text_bg(W, c, x, y, w, h)
+      local W2
+      use {
+         W2 := W.clone().set_fg(c),
+         W2.fill_rectangle(x, y, w, h)
+      }
    end
 
    private static text_dash(W, s, x, y)
@@ -505,8 +514,7 @@ class TextFlow(Component)
       every o := !l do {
          if font ~=== o.attr.font then {
             W.close()
-            W := attr_clone(o.attr)
-            font := o.attr.font
+            W := attr_clone(font := o.attr.font)
          } 
          case classof(o) of {
             TextOut: {

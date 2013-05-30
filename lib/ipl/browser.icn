@@ -2048,7 +2048,7 @@ record DefListContext(tbl)
 record FieldSetContext(legend)
 record MapContext(map)
 record SelectContext(options, optgroup)
-record Context(form, form_label, url, fg, font, align, pre, nowrap, underline, strike, underdash,
+record Context(form, form_label, url, fg, font, align, pre, nowrap, underline, strike, underdash, mark,
                face, size, bold, italic, table, list, def_list, fieldset, select, map, title)
 
 class MapArea()
@@ -2742,6 +2742,13 @@ class Browser(ComponentScrollArea)
       c := copy(context)
       c.italic := 1
       synch_font(c)
+      traverse(e, p, c)
+   end
+
+   private traverse_mark(e, p, context)
+      local c
+      c := copy(context)
+      c.mark := 1
       traverse(e, p, c)
    end
 
@@ -3503,7 +3510,7 @@ class Browser(ComponentScrollArea)
       row.set_bg(convert_color(e | \ct.tr, u"BGCOLOR"))
       every insert(ct.occ, (ct.x to ct.x + colspan - 1) || "," || (ct.y to ct.y + rowspan - 1))
       if colspan = 1 then
-         def_w :=  \ (\col).width
+         def_w := (\col).width
       do_width_param(e, row, def_w)
       do_height_param(e, row)
       ct.tbl.content.add(row)
@@ -3733,6 +3740,7 @@ class Browser(ComponentScrollArea)
                "SAMP"|"KBD"|"CODE"|"TT": traverse_tt(e, p, c)
                "STRONG"|"DFN"|"B": traverse_b(e, p, c)
                "EM"|"CITE"|"I"|"VAR": traverse_i(e, p, c)
+               "MARK": traverse_mark(e, p, c)
                "ADDRESS": traverse_address(e, p, c)
                "BR": traverse_br(e, p, c)
                "NOBR": traverse_nobr(e, p, c)
