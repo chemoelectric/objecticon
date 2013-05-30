@@ -2144,7 +2144,6 @@ class Browser(ComponentScrollArea)
       forms,
       labels,
       form_tab_children,
-      curr_history_entry,   # History entry currently being viewed.
       scroll_ticker,
       scroll_ticker_interval,
       h_direction,
@@ -2154,6 +2153,7 @@ class Browser(ComponentScrollArea)
    private readable
       history,
       history_pos,
+      curr_history_entry,   # History entry currently being viewed.
       page_url,
       page_data,
       page_name,
@@ -2402,6 +2402,13 @@ class Browser(ComponentScrollArea)
    public do_prev()
       local he
       he := history[history_pos -:= 1] 
+      goto(he.url, he.referer, Worker.NAVIGATE, he.form_data)
+      do_update_grey()
+      return self
+   end
+
+   public do_jump(he)
+      history_pos := keyof(history, he) | fail
       goto(he.url, he.referer, Worker.NAVIGATE, he.form_data)
       do_update_grey()
       return self

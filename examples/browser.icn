@@ -735,7 +735,7 @@ class DownloadTab(TabItem)
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          connect(self.on_search_field, Event.ACTION).
-         set_contents("")
+         set_contents(u"")
       self.add(search_field)
       url_table := Table().
          set_size("600", "258").
@@ -765,6 +765,45 @@ class DownloadTab(TabItem)
          set_paint(TextPaint(""))
       self.add(message_label)
       self.set_layout(GridLayout().set_extra("cells"))
+   end
+end
+
+class URLList(TextList)
+   public calculate_subject_width()
+      # A nominal minimum width; the width will be expanded by the
+      # owning EditList to its own width, and then we use limit_text
+      # to draw nicely in the allocated view.
+      return 250
+   end
+
+   public draw_line_data(xp, yp, lh, i)
+      draw_string_ex(view.cbwin, 
+                     xp + Gui.TEXT_INSET, 
+                     yp, 
+                     limit_text(view.cbwin, contents[i].url.str(), view.w - 2 * Gui.TEXT_INSET))
+   end
+end
+
+class URLEditList(EditList)
+   private old_selection
+
+   public create_popup()
+      return URLList()
+   end
+
+   # These two methods are overridden to do nothing, effectively
+   # making the list and the textfield independent, so that
+   # changes/selection from one don't affect the other.
+   public apply_selection(ev) end
+   public synch_selection() end
+
+   public start_change(e)
+      self.old_selection := self.selection
+   end
+
+   public end_change(e)
+      if self.old_selection ~=== self.selection then
+         fire(Event.SELECTION_CHANGED, e)
    end
 end
 
@@ -911,6 +950,10 @@ class BrowserTab(TabItem, BrowserUI)
       stop_button.set_is_shaded(gs.stop)
    end
 
+   private on_search_field_selection(ev)
+      browser.do_jump(search_field.object_get_selection())
+   end
+
    private on_search_field(ev)
       local s, u
       s := search_field.get_contents()
@@ -956,7 +999,10 @@ class BrowserTab(TabItem, BrowserUI)
       # Don't save pages that didn't load in the visited list.
       if \browser.page_data then
          parent_dialog.update_visited(browser.page_url, browser.page_title)
-      search_field.set_contents(browser.page_url.str())
+      search_field.
+         set_contents(browser.curr_history_entry.url.str()).
+         set_selection_list(lreverse(browser.history)).
+         object_set_selection(browser.curr_history_entry)
    end
 
    public set_title(s)
@@ -1079,7 +1125,9 @@ class BrowserTab(TabItem, BrowserUI)
          add(stop_button).
          add(paste_url_button)
       self.add(panel)
-      search_field := TextField().
+      search_field := URLEditList().
+         set_selection_list([]).
+         set_contents(u"").
          set_size("100").
          set_align(Align.C, Align.T).
          clear_constraints().
@@ -1088,7 +1136,7 @@ class BrowserTab(TabItem, BrowserUI)
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          connect(self.on_search_field, Event.ACTION).
-         set_contents("")
+         connect(self.on_search_field_selection, Event.SELECTION_CHANGED)
       self.add(search_field)
       browser := Browser().
          set_size("651", "337").
