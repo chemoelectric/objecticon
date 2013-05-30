@@ -768,7 +768,28 @@ class DownloadTab(TabItem)
    end
 end
 
-class URLList(TextList)
+class URLList(SelectableScrollArea)
+   public static const
+      TITLE_FONT, URL_FONT
+
+   private static init()
+      TITLE_FONT := "sans,13"
+      URL_FONT := "sans,11"
+   end
+   
+   public calculate_line_height()
+      local W, v
+      use {
+         W := view.cbwin.clone().set_font(TITLE_FONT),
+         {
+            v := W.get_font_height()
+            W.set_font(URL_FONT)
+            v +:= W.get_font_height()
+         }
+      }
+      return v
+   end
+
    public calculate_subject_width()
       # A nominal minimum width; the width will be expanded by the
       # owning EditList to its own width, and then we use limit_text
@@ -777,10 +798,22 @@ class URLList(TextList)
    end
 
    public draw_line_data(xp, yp, lh, i)
-      draw_string_ex(view.cbwin, 
-                     xp + Gui.TEXT_INSET, 
-                     yp, 
-                     limit_text(view.cbwin, contents[i].url.str(), view.w - 2 * Gui.TEXT_INSET))
+      local W
+      use {
+         W := view.cbwin.clone().set_font(TITLE_FONT),
+         {
+            draw_string_ex(W, 
+                           xp + Gui.TEXT_INSET, 
+                           yp, 
+                           limit_text(W, \contents[i].title, view.w - 2 * Gui.TEXT_INSET))
+            yp +:= W.get_font_height()
+            W.set_font(URL_FONT).set_fg("blue")
+            draw_string_ex(W, 
+                           xp + Gui.TEXT_INSET, 
+                           yp, 
+                           limit_text(W, u"    " || contents[i].url.str(), view.w - 2 * Gui.TEXT_INSET))
+         }
+      }
    end
 end
 
@@ -1003,11 +1036,13 @@ class BrowserTab(TabItem, BrowserUI)
          set_contents(browser.curr_history_entry.url.str()).
          set_selection_list(lreverse(browser.history)).
          object_set_selection(browser.curr_history_entry)
+      set_title(browser.page_title)
    end
 
-   public set_title(s)
+   private set_title(s)
       /s := "Browser"
       set_paint(AbbreviatedTextPaint(s))
+      return self
    end
 
    private on_stop(ev)
@@ -1130,6 +1165,7 @@ class BrowserTab(TabItem, BrowserUI)
          set_contents(u"").
          set_size("100").
          set_align(Align.C, Align.T).
+         set_direction(Direction.DOWN).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_align", Align.L).

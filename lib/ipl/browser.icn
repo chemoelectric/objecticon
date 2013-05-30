@@ -2089,6 +2089,7 @@ class Map()
 end
 
 record HistoryEntry(url,          # URL displayed (on a redirect may differ from that requested) 
+                    title,        # Page title
                     referer,      # referer URL
                     form_values,  # Cached values of form components; updated when we move away from the page 
                     form_data,    # POST data used to get the page; on a redirect will always be null
@@ -2101,7 +2102,6 @@ abstract class BrowserUI()
    public abstract clear_msg()
    public abstract page_loaded()
    public abstract update_grey(gs)
-   public abstract set_title(s)
    public abstract link_mrelease(url)
    public abstract create_link_menu(url)
    public abstract create_page_menu()
@@ -2316,11 +2316,6 @@ class Browser(ComponentScrollArea)
 
    public update_grey(gs)
       (\ui).update_grey(gs)
-      return self
-   end
-
-   public set_title(s)
-      (\ui).set_title(s)
       return self
    end
 
@@ -2597,12 +2592,12 @@ class Browser(ComponentScrollArea)
       c.align := Align.L
       synch_font(c)
       traverse(doc, row, c)
+      curr_history_entry.title := page_title
       resolve_labels()
       if page_resp.kind ~= Worker.REFRESH then
          restore_form_values()
       every form_tab_children |||:= (!forms).get_tab_children()
       set_inner(row)
-      set_title(page_title)
       layout()
       invalidate()
       parent_dialog.resynch_pointer()
