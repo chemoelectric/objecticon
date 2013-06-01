@@ -1021,7 +1021,7 @@ class BrowserTab(TabItem, BrowserUI)
       return parent_dialog.file_dialog.get_result()
    end
 
-   public do_save(name, data)
+   private do_save(name, data)
       local s
       parent_dialog.file_dialog.set_file(\name)
       parent_dialog.file_dialog.show_modal(parent_dialog)
@@ -1031,7 +1031,6 @@ class BrowserTab(TabItem, BrowserUI)
          else
             msg(&why, 3000)
       }
-      return self
    end
 
    public is_visited(url)
