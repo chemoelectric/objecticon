@@ -1650,7 +1650,7 @@ class FormNumberField(RangeSpin, FormEntry, HasAscent)
    end
 
    public get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public new(init_val)
@@ -1959,6 +1959,8 @@ class Form()
       # Validate form.
       every c := !items do
          c.validate_form() | {
+            if is(c, Component) then
+               browser.parent_dialog.set_focus(c.gen_focusable())
             browser.msg("Invalid form: " || &why)
             fail
          }
@@ -2981,7 +2983,7 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_input(e, p, context)
-      local q, s, k, v, size, mW, url, checked, align, min, max, alt
+      local q, s, k, v, size, mW, url, checked, align, min, max, step, alt
       \context.form | fail
       s := string(map(e.get_attribute(u"TYPE"))) | "text"
       case s of {
@@ -3092,23 +3094,43 @@ class Browser(ComponentScrollArea)
             add_form_component(e, p, q, context)
          }
          "range": {
-            min := real(e.get_attribute(u"MIN")) | 0
-            max := real(e.get_attribute(u"MAX")) | (min + 10)
-            v := real(e.get_attribute(u"VALUE")) | min
+            min := numeric(e.get_attribute(u"MIN"))
+            step := numeric(e.get_attribute(u"STEP"))
+            # If min and step are both integer, then the values must be too.
+            if type(min) == type(step) == "integer" then {
+               max := integer(e.get_attribute(u"MAX")) | (min + 10)
+               v := integer(e.get_attribute(u"VALUE")) | min
+            } else {
+               min := real(min) | 0.0
+               step := real(step)
+               max := real(e.get_attribute(u"MAX")) | (min + 10.0)
+               v := real(e.get_attribute(u"VALUE")) | min
+            }
             q := FormRange(v).
                set_range(min, max).
                set_is_horizontal(&yes).
-               set_size(160)
-            q.set_snaps(0.0 < real(e.get_attribute(u"STEP")))
+               set_width(160)
+            q.set_snaps(0 < \step)
             add_form_component(e, p, q, context)
          }
          "number": {
-            min := real(e.get_attribute(u"MIN")) | 0
-            max := real(e.get_attribute(u"MAX")) | (min + 10)
-            v := real(e.get_attribute(u"VALUE")) | min
+            min := numeric(e.get_attribute(u"MIN"))
+            step := numeric(e.get_attribute(u"STEP")) 
+            # If min and step are both integer, then the values must be too.
+            if type(min) == type(step) == "integer" then {
+               max := integer(e.get_attribute(u"MAX"))
+               v := integer(e.get_attribute(u"VALUE")) | \min | 0
+            } else {
+               min := real(min)
+               step := real(step)
+               max := real(e.get_attribute(u"MAX"))
+               v := real(e.get_attribute(u"VALUE")) | \min | 0.0
+            }
             q := FormNumberField(v).
                set_range(min, max)
-            q.set_increment_size(0.0 < real(e.get_attribute(u"STEP")))
+            q.set_increment_size(0 < \step)
+            if /max then
+               q.set_width(100)
             add_form_component(e, p, q, context)
          }
 
@@ -3120,7 +3142,7 @@ class Browser(ComponentScrollArea)
                size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
             }
             q := FormTextField(v).
-               set_size(size).
+               set_width(size).
                connect(context.form.submit, Event.ACTION)
             if s == "password" then
                q.set_displaychar("*")

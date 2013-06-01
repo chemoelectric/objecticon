@@ -269,9 +269,9 @@ class BrowserDialog(Dialog)
                  <legend>Edit settings</legend>_
                  <table>_
                    <tr><td>Home page:<td><input type=text name=home value=" || xml_escape(settings.home_url.str(), ~(&letters++&digits)) || " size=50 /></tr>_
-                   <tr><td>Cache size (MB):<td><input type=text name=cache value=" || settings.cache_size_mb || " size=50 /></tr>_
-                   <tr><td>Visited list size:<td><input type=text name=vsize value=" || settings.visited_size || " size=50 /></tr>_
-                   <tr><td>Worker pool size:<td><input type=text name=psize value=" || settings.pool_size || " size=50 /></tr>_
+                   <tr><td>Cache size (MB):<td><input type=number min=1 step=1 name=cache value=" || settings.cache_size_mb || " size=50 /></tr>_
+                   <tr><td>Visited list size:<td><input type=number min=10 step=1 name=vsize value=" || settings.visited_size || " size=50 /></tr>_
+                   <tr><td>Worker pool size:<td><input type=number min=5 step=1 name=psize value=" || settings.pool_size || " size=50 /></tr>_
                  </table>_
                  <input type=submit />_
               </form></fieldset></html>"
