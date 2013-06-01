@@ -235,7 +235,7 @@ class HtmlParser()
       case string(start_tag.name) of {
          "PLAINTEXT":
             res.add("" ~== remove_entities(tab(0)))
-         "SCRIPT" | "STYLE": {
+         "XMP" | "SCRIPT" | "STYLE": {
             if /start_tag.empty then
                res.add("" ~== move_past_end_tag(start_tag))
          }
