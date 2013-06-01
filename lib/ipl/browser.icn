@@ -1965,7 +1965,7 @@ class Form()
             fail
          }
 
-      if map(method) == "post" then {
+      if method == "post" then {
          if map(enctype) == "multipart/form-data" then
             browser.goto(url, browser.page_url, Worker.NORMAL, make_cgi_message(ev, src))
          else 
@@ -2782,8 +2782,8 @@ class Browser(ComponentScrollArea)
 
    private traverse_form(e, p, context)
       local m, c, t, url, id
-      m := e.get_attribute(u"METHOD") | "get"
-      t := e.get_attribute(u"ENCTYPE") | "application/x-www-form-urlencoded"
+      m := map(string(e.get_attribute(u"METHOD"))) | "get"
+      t := string(e.get_attribute(u"ENCTYPE")) | "application/x-www-form-urlencoded"
       url := mk_link(e.get_attribute(u"ACTION"))
       id := e.get_attribute(u"ID" | u"NAME")
       c := copy(context)
@@ -3094,30 +3094,32 @@ class Browser(ComponentScrollArea)
             add_form_component(e, p, q, context)
          }
          "range": {
-            min := numeric(e.get_attribute(u"MIN"))
-            step := numeric(e.get_attribute(u"STEP"))
+            min := numeric(e.get_attribute(u"MIN")) | 0
+            v := e.get_attribute(u"STEP")
+            step := if /v then 1 else if map(v) == u"any" then 1.0 else (0 < numeric(v)) | 1
             # If min and step are both integer, then the values must be too.
             if type(min) == type(step) == "integer" then {
                max := integer(e.get_attribute(u"MAX")) | (min + 10)
                v := integer(e.get_attribute(u"VALUE")) | min
             } else {
-               min := real(min) | 0.0
+               min := real(min)
                step := real(step)
                max := real(e.get_attribute(u"MAX")) | (min + 10.0)
                v := real(e.get_attribute(u"VALUE")) | min
             }
             q := FormRange(v).
                set_range(min, max).
+               set_snaps(step).
                set_is_horizontal(&yes).
                set_width(160)
-            q.set_snaps(0 < \step)
             add_form_component(e, p, q, context)
          }
          "number": {
             min := numeric(e.get_attribute(u"MIN"))
-            step := numeric(e.get_attribute(u"STEP")) 
-            # If min and step are both integer, then the values must be too.
-            if type(min) == type(step) == "integer" then {
+            v := e.get_attribute(u"STEP")
+            step := if /v then 1 else if map(v) == u"any" then 1.0 else (0 < numeric(v)) | 1
+            # If min is null or integer, and step is integer, then the values must be integer too.
+            if (/min | type(min) == "integer") & (type(step) == "integer") then {
                max := integer(e.get_attribute(u"MAX"))
                v := integer(e.get_attribute(u"VALUE")) | \min | 0
             } else {
@@ -3127,8 +3129,8 @@ class Browser(ComponentScrollArea)
                v := real(e.get_attribute(u"VALUE")) | \min | 0.0
             }
             q := FormNumberField(v).
-               set_range(min, max)
-            q.set_increment_size(0 < \step)
+               set_range(min, max).
+               set_increment_size(step)
             if /max then
                q.set_width(100)
             add_form_component(e, p, q, context)
