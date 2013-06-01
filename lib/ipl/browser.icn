@@ -1119,7 +1119,7 @@ class FormBrowse(Component, FormEntry, HasAscent)
    end
 
    public get_ascent() 
-      return cbwin.get_font_ascent() + Gui.Y_INSET
+      return cbwin.get_font_ascent() + tf.border.get_t_inset()
    end
 
    public reset_form()
@@ -1216,7 +1216,7 @@ class FormDateField(DateField, FormEntry, HasAscent)
       init_val
 
    public get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public reset_form()
@@ -1251,7 +1251,7 @@ class FormWeekField(WeekField, FormEntry, HasAscent)
       init_val
 
    public get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public reset_form()
@@ -1319,7 +1319,7 @@ class FormTimeField(TimeField, FormEntry, HasAscent)
    end
 
    public get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public static parse(s)
@@ -1410,7 +1410,7 @@ class FormTimezoneField(TimezoneField, FormEntry, HasAscent)
    end
 
    public get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public new(init_val)
@@ -1445,7 +1445,7 @@ class FormYearField(YearField, FormEntry, HasAscent)
    end
 
    public get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public new(init_val)
@@ -1477,7 +1477,7 @@ class FormMonthField(MonthField, FormEntry, HasAscent)
    end
 
    public get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public new(init_val)
