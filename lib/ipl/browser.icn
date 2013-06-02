@@ -2095,6 +2095,7 @@ record HistoryEntry(url,          # URL displayed (on a redirect may differ from
                     referer,      # referer URL
                     form_values,  # Cached values of form components; updated when we move away from the page 
                     form_data,    # POST data used to get the page; on a redirect will always be null
+                    focus_index,  # Index of focused component on moving away
                     area_x,
                     area_y
                     ) 
@@ -2357,8 +2358,12 @@ class Browser(ComponentScrollArea)
          }
          # Set focus; this will scroll to the component if necessary (see focus_scroll).  Note that if we've moved to another tab
          # whilst the page loads, (making f hidden) then gen_focusable will fail.
-         if f := (!forms).get_autofocus() then
-            parent_dialog.set_focus(f.gen_focusable())
+         if page_resp.kind = Worker.NAVIGATE then
+            parent_dialog.set_focus(get_nth_focusable(\curr_history_entry.focus_index))
+         else {
+            if f := (!forms).get_autofocus() then
+               parent_dialog.set_focus(f.gen_focusable())
+         }
       }
       parent_dialog.resynch_pointer()
    end
@@ -2531,12 +2536,32 @@ class Browser(ComponentScrollArea)
       return t
    end
 
+   private get_nth_focusable(n)
+      local c
+      every c := view.gen_focusable() do {
+         n -:= 1
+         if n = 0 then
+            return c
+      }
+   end
+
+   private get_focusable_index(focus)
+      local n, c
+      n := 0
+      every c := view.gen_focusable() do {
+         n +:= 1
+         if focus === c then
+            return n
+      }
+   end
+
    private set_top_data(res)
       local doc, s, row, c, cu
       if \curr_history_entry then {
          save_form_values()
          curr_history_entry.area_x := get_area_x()
          curr_history_entry.area_y := get_area_y()
+         curr_history_entry.focus_index := get_focusable_index(parent_dialog.get_focus()) | &null
       }
       set_area_y(0).set_area_x(0)
       if \res.err then {
@@ -2602,7 +2627,7 @@ class Browser(ComponentScrollArea)
       traverse(doc, row, c)
       curr_history_entry.title := page_title
       resolve_labels()
-      if page_resp.kind ~= Worker.REFRESH then
+      if page_resp.kind = Worker.NAVIGATE then
          restore_form_values()
       every form_tab_children |||:= (!forms).get_tab_children()
       set_inner(row)
