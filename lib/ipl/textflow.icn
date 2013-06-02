@@ -542,8 +542,9 @@ class TextFlow(Component)
                }
             }
             CompOut: {
-               # An image; add both CompOut and Img to the banded map.
-               insert(bs, o, o.c)
+               # An image; add the Img to the banded map.  (It may be
+               # inserted again by Browser.calculate_banded() if the
+               # image actually intersects the band).
                insert(bs, o.c, o.c)
             }
          }
@@ -565,7 +566,7 @@ class TextFlow(Component)
                      sr ||:= o.s[t.i:t.j]
                }
                CompOut: {
-                  if browser.is_banded(o) then
+                  if browser.is_banded(o.c) then
                      sr ||:= \o.c.alt
                }
             }
@@ -1118,14 +1119,14 @@ class TextFlow(Component)
    private handle_lrelease(e)
       if \wrote then {
          set_highlight()
-         self.browser.goto(wrote, browser.page_url, Worker.NORMAL)
+         self.browser.link_left_clicked(wrote)
       }
    end
 
    private handle_mrelease(e)
       if \wrote then {
          set_highlight()
-         self.browser.link_mrelease(wrote)
+         self.browser.link_middle_clicked(wrote)
       }
    end
 

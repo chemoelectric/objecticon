@@ -162,9 +162,9 @@ class BrowserDialog(Dialog)
       }
    end
 
-   public new_tab(url, sel)
+   public new_tab(url, referer_url, sel)
       local bt
-      bt := BrowserTab(url, pool, settings).
+      bt := BrowserTab(url, referer_url, pool, settings).
          set_is_hidden(&yes)
       tabs.
          add(bt, -1).
@@ -178,7 +178,7 @@ class BrowserDialog(Dialog)
    end
 
    private on_new_tab(ev)
-      new_tab(settings.home_url, 1)
+      new_tab(settings.home_url,, 1)
    end
    
    private list_visited()
@@ -357,7 +357,7 @@ class BrowserDialog(Dialog)
          add(file_menu).
          add(page_menu)
       self.add(menu_bar)
-      bt := BrowserTab(url, pool)
+      bt := BrowserTab(url,, pool)
       downloads := DownloadTab()
       tabs := TabSet().
          set_size("200", "150").
@@ -876,8 +876,12 @@ class BrowserTab(TabItem, BrowserUI)
       browser.do_prev()
    end
 
-   public link_mrelease(url)
-      parent_dialog.new_tab(url)
+   public link_left_clicked(url)
+      browser.goto(url, browser.page_url)
+   end
+
+   public link_middle_clicked(url)
+      parent_dialog.new_tab(url, browser.page_url)
    end
 
    private copy_link(url)
@@ -904,7 +908,7 @@ class BrowserTab(TabItem, BrowserUI)
       local s, url
       if s := browser.get_page_info() then {
          url := browser.get_cache().create_url(, s)
-         parent_dialog.new_tab(url, 1)
+         parent_dialog.new_tab(url,, 1)
       }
    end
 
@@ -1081,18 +1085,13 @@ class BrowserTab(TabItem, BrowserUI)
       browser.do_refresh()
    end
 
-   public new(u, pool)
+   public new(url, referer_url, pool)
       cast(self,TabItem).new()
       set_label_border(EmptyBorder().set_x_align(Align.L))
       set_title()
       setup()
       browser.set_ui(self).set_worker_pool(pool)
-      if \u then {
-         if is(u, URL) | (u := URL(u)) then
-            browser.goto(u)
-         else
-            msg("Invalid url")
-      }
+      browser.goto(\url, referer_url)
       return
    end
 
@@ -1215,7 +1214,7 @@ class BrowserTab(TabItem, BrowserUI)
 end
 
 procedure main(a)
-   local d, s, cookies, t, bak, settings, sf, home
+   local d, url, cookies, t, bak, settings, sf, home
    opts := options(a, "-k: -l! -agent:")
    home := FilePath(Files.get_home())
    sf := home.child(".oibrowser").str()
@@ -1232,8 +1231,11 @@ procedure main(a)
    ImageCache.name_image("rpp.PASTE_24", PASTE)
    ImageCache.name_image("rpp.STOP_24", STOP)
    ImageCache.name_image("rpp.CLEAR_24", CLEAR)
-   s := ucs(a[1]) | settings.home_url
-   d := BrowserDialog(s, t, settings)
+   url := if *a = 0 then
+      settings.home_url
+   else
+      URL(ucs(a[1])) | stop("Invalid url")
+   d := BrowserDialog(url, t, settings)
    d.show_modal()
    # Save cookies
    bak := cookies || ".bak"

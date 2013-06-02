@@ -804,12 +804,12 @@ class Img(Image)
 
    private handle_lrelease(e, src)
       if \wrote then
-         browser.goto(wrote, browser.page_url, Worker.NORMAL)
+         browser.link_left_clicked(wrote)
    end
 
    private handle_mrelease(e)
       if \wrote then
-         browser.link_mrelease(wrote)
+         browser.link_middle_clicked(wrote)
    end
 
    private handle_form_lrelease(e, src)
@@ -1967,11 +1967,11 @@ class Form()
 
       if method == "post" then {
          if map(enctype) == "multipart/form-data" then
-            browser.goto(url, browser.page_url, Worker.NORMAL, make_cgi_message(ev, src))
+            browser.goto(url, browser.page_url, make_cgi_message(ev, src))
          else 
-            browser.goto(url, browser.page_url, Worker.NORMAL, make_cgi_table(ev, src))
+            browser.goto(url, browser.page_url, make_cgi_table(ev, src))
       } else
-         browser.goto(url.with_cgi_parameters(make_cgi_table(ev, src)), browser.page_url, Worker.NORMAL)
+         browser.goto(url.with_cgi_parameters(make_cgi_table(ev, src)), browser.page_url)
    end
 
    public add(name, item)
@@ -2104,7 +2104,8 @@ abstract class BrowserUI()
    public abstract clear_msg()
    public abstract page_loaded()
    public abstract update_grey(gs)
-   public abstract link_mrelease(url)
+   public abstract link_left_clicked(url)
+   public abstract link_middle_clicked(url)
    public abstract create_link_menu(url)
    public abstract create_page_menu()
    public abstract create_image_menu(url, img_name, img_data, link_url)
@@ -2275,8 +2276,13 @@ class Browser(ComponentScrollArea)
       }
    end
 
-   public link_mrelease(url)
-      (\ui).link_mrelease(url)
+   public link_left_clicked(url)
+      (\ui).link_left_clicked(url)
+      return self
+   end
+
+   public link_middle_clicked(url)
+      (\ui).link_middle_clicked(url)
       return self
    end
 
@@ -2391,7 +2397,7 @@ class Browser(ComponentScrollArea)
    public do_next()
       local he
       he := history[history_pos +:= 1] 
-      goto(he.url, he.referer, Worker.NAVIGATE, he.form_data)
+      goto(he.url, he.referer, he.form_data, Worker.NAVIGATE)
       do_update_grey()
       return self
    end
@@ -2399,14 +2405,14 @@ class Browser(ComponentScrollArea)
    public do_prev()
       local he
       he := history[history_pos -:= 1] 
-      goto(he.url, he.referer, Worker.NAVIGATE, he.form_data)
+      goto(he.url, he.referer, he.form_data, Worker.NAVIGATE)
       do_update_grey()
       return self
    end
 
    public do_jump(he)
       history_pos := keyof(history, he) | fail
-      goto(he.url, he.referer, Worker.NAVIGATE, he.form_data)
+      goto(he.url, he.referer, he.form_data, Worker.NAVIGATE)
       do_update_grey()
       return self
    end
@@ -2414,7 +2420,7 @@ class Browser(ComponentScrollArea)
    public do_refresh()
       local he
       he := history[history_pos] 
-      goto(he.url, he.referer, Worker.REFRESH, he.form_data)
+      goto(he.url, he.referer, he.form_data, Worker.REFRESH)
       do_update_grey()
       return self
    end
@@ -3818,7 +3824,7 @@ class Browser(ComponentScrollArea)
       return self
    end
 
-   public goto(url, referer, kind, form_data)
+   public goto(url, referer, form_data, kind)
       /kind := Worker.NORMAL
       cancel()
       start_worker(Req(self, url, referer, set_top_data, kind, form_data))
