@@ -2862,21 +2862,29 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_img(e, p, context)
-      local q, url, border, align, map, s, alt
-      if url := mk_link(e.get_attribute(u"SRC")) then {
-         if (s := e.get_attribute(u"USEMAP")) & (s[1] == u"#") then
-            map := default.map(string(s[2:0]))
-         alt := e.get_attribute(u"ALT")
-         q := Img(self, url, context.url, alt,, map)
-         do_width_param(e, q)
-         do_height_param(e, q)
-         border := (0 < integer(e.get_attribute(u"BORDER"))) | 0
+      local q, url, border, align, map, s, alt, hspace, vspace
+      url := mk_link(e.get_attribute(u"SRC")) | fail
+      if (s := e.get_attribute(u"USEMAP")) & (s[1] == u"#") then
+         map := default.map(string(s[2:0]))
+      alt := e.get_attribute(u"ALT")
+      q := Img(self, url, context.url, alt,, map)
+      do_width_param(e, q)
+      do_height_param(e, q)
+      border := (0 < integer(e.get_attribute(u"BORDER"))) | 0
+      hspace := (0 < integer(e.get_attribute(u"HSPACE"))) | 0
+      vspace := (0 < integer(e.get_attribute(u"VSPACE"))) | 0
+      if (hspace | vspace) > 0 then {
          if border > 0 then
-            q.set_border(PlainBorder().set_line_width(border))
-         start_worker(Req(self, url, page_url, q.got_data, page_resp.kind))
-         align := convert_comp_align(e, u"ALIGN") | Align.B
-         add_component(p, q, context, align)
-      }
+            q.set_border(CompoundBorder().
+                            set_outer(EmptyBorder().set_insets(hspace, hspace, vspace, vspace)).
+                            set_inner(PlainBorder().set_line_width(border)))
+         else
+            q.set_border(EmptyBorder().set_insets(hspace, hspace, vspace, vspace))
+      } else if border > 0 then
+         q.set_border(PlainBorder().set_line_width(border))
+      start_worker(Req(self, url, page_url, q.got_data, page_resp.kind))
+      align := convert_comp_align(e, u"ALIGN") | Align.B
+      add_component(p, q, context, align)
    end
 
    private add_form_component(e, p, q, context)
@@ -3288,7 +3296,9 @@ class Browser(ComponentScrollArea)
       local c
       c := copy(context)
       c.align := Align.C
+      put_new_row(p, context)
       traverse(e, p, c)
+      put_new_row(p, context)
    end
 
    private convert_valign(el, name)
@@ -3347,7 +3357,7 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_table(e, p, context)
-      local ct, tbl, border, cellpadding, cellspacing, cell_border, align, c, i
+      local ct, tbl, border, cellpadding, cellspacing, cell_border, align, c, i, t
 
       tbl := Tbl()
       do_width_param(e, tbl)
@@ -3366,9 +3376,12 @@ class Browser(ComponentScrollArea)
             set_inner(EmptyBorder().set_insets(cellpadding, cellpadding, cellpadding, cellpadding))
          else
             EmptyBorder().set_insets(cellpadding, cellpadding, cellpadding, cellpadding)
-      align := convert_comp_align(e, u"ALIGN") | Align.C
-
+      # The align param is a bit of a hybrid.  If left or right, then
+      # it behaves like a left/right aligned image.  If center, then
+      # it is like enclosing the table in <center>.
+      align := convert_halign(e, u"ALIGN")
       c := copy(context)
+      c.align := (align === Align.C)
       c.table := ct := TableContext()
       ct.tbl := tbl
       ct.x := ct.y := 1
@@ -3398,15 +3411,14 @@ class Browser(ComponentScrollArea)
             tbl.content.set_hrules(Set{2 to ct.y - 1})
          }
       }
-      if not(align === (Align.L | Align.R)) then
+      t := \c.table.caption | tbl
+      if align === (Align.L | Align.R) then
+         add_component(p, t, c, align)
+      else {
          put_new_row(p, c)
-      if \c.table.caption then
-         add_component(p, c.table.caption, context, align)
-      else
-         add_component(p, tbl, context, align)
-
-      if not(align === (Align.L | Align.R)) then
+         add_component(p, t, c)
          put_new_row(p, c)
+      }
    end
 
    private traverse_tbody(e, p, context)
@@ -3747,7 +3759,7 @@ class Browser(ComponentScrollArea)
          else if is(e, HtmlElement) then {
             if id := e.get_attribute(u"ID") then
                put(p.input, NamedAnchorCmd(id, context))
-            if title := e.get_attribute(u"TITLE") & *title > 0 then {
+            if title := (u"" ~== e.get_attribute(u"TITLE")) then {
                c := copy(context)
                c.title := title
             } else
