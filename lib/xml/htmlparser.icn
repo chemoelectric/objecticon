@@ -92,7 +92,7 @@ class HtmlParser()
       HTML_DELIM := '\"\''
       HTML_PUBID_CHAR := ' \n\rA-Za-z0-9\-\'()+,./:=?;!*#@$_%'
       HTML_STANDALONE := set("IMG", "BR", "HR", "META", "BASE", "INPUT", "AREA", 
-                             "BASEFONT", "BGSOUND", "COL", "ISINDEX", 
+                             "BASEFONT", "BGSOUND", "COL", "ISINDEX", "PARAM",
                              "LINK", "NEXTID", "SPACER", "WBR")
 
       HTML_AUTOCLOSE := table(,
