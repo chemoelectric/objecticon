@@ -25,6 +25,7 @@ class TabItem(Component)
    public 
       paint,
       label_border,
+      tab_tooltip,
       tab_x,
       tab_w
 
@@ -56,6 +57,22 @@ class TabItem(Component)
       } else
          self.paint := p
       return self
+   end
+
+   #
+   # Set the tab tooltip, which is displayed by the TabSet when the
+   # mouse is over the tab.
+   #
+   public set_tab_tooltip(x)
+      self.tab_tooltip := x
+      return self
+   end
+
+   #
+   # Return the tab_tooltip, if any.
+   #
+   public get_tab_tooltip()
+      return \self.tab_tooltip
    end
 
    public initially()

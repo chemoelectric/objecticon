@@ -284,10 +284,11 @@ class TabSet(Component)
    # @p
    public which_tab(e)
       local l, c
-      if /self.tabs_at_bottom_flag then
-         l := (e.y - (self.y + border.get_t_inset())) / (self.label_h + Gui.BORDER_WIDTH) + 1
+      in_tab_region(e) | fail
+      l := if /self.tabs_at_bottom_flag then
+         (e.y - (self.y + border.get_t_inset())) / (self.label_h + Gui.BORDER_WIDTH) + 1
       else
-         l := (self.y + self.h - border.get_b_inset() - e.y) / (self.label_h + Gui.BORDER_WIDTH) + 1
+         (self.y + self.h - border.get_b_inset() - e.y - 1) / (self.label_h + Gui.BORDER_WIDTH) + 1
       every c := !self.line_break[l] do {
          if c.is_unshaded() & 
             (c.tab_x - Gui.BORDER_WIDTH <= e.x < c.tab_x + c.tab_w + Gui.BORDER_WIDTH) then
@@ -351,7 +352,6 @@ class TabSet(Component)
    end
 
    public handle_lpress(e)
-      in_tab_region(e) | fail
       start_handle(e)
       set_which_one(which_tab(e))
       end_handle(e)
@@ -408,6 +408,12 @@ class TabSet(Component)
             fail
       }
       return cast(self,Component).accepts_focus(e)
+   end
+
+   public get_tooltip(e)
+      if \self.tooltip then
+         return self.tooltip
+      return which_tab(e).get_tab_tooltip(e)
    end
 
    public handle_accel(e)
