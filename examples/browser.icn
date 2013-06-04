@@ -10,6 +10,7 @@ import
    net,
    ipl.options,
    ipl.browser,
+   ipl.strings,
    ipl.lists
 
 global opts
@@ -851,7 +852,8 @@ class BrowserTab(TabItem, BrowserUI)
       stop_button,
       home_button,
       paste_url_button,
-      refresh_button
+      refresh_button,
+      title_tt
 
    private on_close_button(ev)
       local t
@@ -1055,7 +1057,31 @@ class BrowserTab(TabItem, BrowserUI)
    private set_title(s)
       /s := "Browser"
       set_paint(AbbreviatedTextPaint(s))
+      title_tt := &null
       return self
+   end
+
+   public get_tab_tooltip()
+      local l, w
+      # Only produce a tab tooltip if the title will be limited.
+      if cbwin.text_width(paint.str) <= tab_w - label_border.get_total_width() then
+         fail
+      if /title_tt then {
+         title_tt := u".cell\n.attr ia_x=l\n"
+         l := u""
+         every w := words(paint.str) do {
+            if *l > 0 then
+               l ||:= u" "
+            l ||:= w
+            if cbwin.text_width(l) > 500 then {
+               title_tt ||:= l || u"\n.br\n"
+               l := u""
+            }
+         }
+         if *l > 0 then
+            title_tt ||:= l || u"\n.br\n"
+      }
+      return title_tt
    end
 
    private on_stop(ev)
