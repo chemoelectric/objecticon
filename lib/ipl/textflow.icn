@@ -185,7 +185,8 @@ class TextFlow(Component)
       computed_named_anchors,
       named_anchors,
       browser,
-      blob_start
+      blob_start,
+      row_blob
 
    public static const 
       WHITESPACE,
@@ -214,7 +215,7 @@ class TextFlow(Component)
       at_new_para := 1
       row_width := row_y := row_bottom := row_x := max_word_w := max_ll :=
          baseline_off := row_abs_middle_height := row_abs_top_height :=
-         row_abs_bottom_height := row_ascent := row_descent := 0
+         row_abs_bottom_height := row_ascent := row_descent := row_blob := 0
       right_margin := compute_w
       need_spc := first_row_ascent := blob_start := &null
       compute1(, input)
@@ -708,7 +709,7 @@ class TextFlow(Component)
       if \calculating then
          max_ll <:= compute_w - (right_margin - row_width - row_x)
 
-      row_width := row_abs_middle_height := row_abs_top_height := row_abs_bottom_height := row_ascent := row_descent := 0
+      row_blob := row_width := row_abs_middle_height := row_abs_top_height := row_abs_bottom_height := row_ascent := row_descent := 0
 
       row_x := 0
       every g := !left_comps do
@@ -724,11 +725,29 @@ class TextFlow(Component)
          pop(deferred)
    end
 
+   # A special version of fits_in_row, used for determining if a
+   # left/right aligned component will fit in the row.  The problem
+   # arises in a case like :-
+   #
+   #    FIRST<img src="j3.jpeg" align="right"/>SECOND
+   #
+   # FIRST and SECOND form a blob, but row_width is only includes
+   # FIRST after it has been output.  Therefore fits_in_row may
+   # wrongly indicate that the img would fit in the row, rather than
+   # be deferred.  The solution is to set row_blob to the end of the
+   # blob when FIRST is output, and use row_blob to see if the img
+   # would fit.
+   #
+   private fits_in_row_lr(w)
+      return have_max() | (row_x + w + max(row_blob, row_width) <= right_margin)
+   end
+
    private fits_in_row(w)
       return have_max() | (row_x + w + row_width <= right_margin)
    end
 
    private do_deferred(co)
+      # Note fits_in_row can be used since row_blob = 0.
       case co.align of {
          Align.L: {
             if fits_in_row(co.maxw) then {
@@ -804,13 +823,13 @@ class TextFlow(Component)
       case cmd.align of {
          Align.L: {
             # If already have deferred, then defer this too, otherwise they will be out of order. 
-            if *deferred = 0 & fits_in_row(co.maxw) then
+            if *deferred = 0 & fits_in_row_lr(co.maxw) then
                left_comp_out(co)
             else
                put(deferred, co)
          }
          Align.R: {
-            if *deferred = 0 & fits_in_row(co.maxw) then 
+            if *deferred = 0 & fits_in_row_lr(co.maxw) then 
                right_comp_out(co)
             else
                put(deferred, co)
@@ -842,7 +861,7 @@ class TextFlow(Component)
    end
 
    private comp_out(cmd, co)
-      local c, tw
+      local c, tw, rb
       c := co.c
       if \co.attr.pre | *row = 0 then
          need_spc := &null
@@ -861,6 +880,7 @@ class TextFlow(Component)
                   new_row()
                   need_spc := &null
                }
+               rb := row_width + tw + get_pad()
             }
          }
       } else {
@@ -890,10 +910,11 @@ class TextFlow(Component)
       }
       put(row,  co)
       row_width +:= co.w
+      row_blob := \rb
       need_spc := at_new_para := &null
    end
 
-   private txt_out(W, attr, s)
+   private txt_out(W, attr, s, rb)
       local xo
       if \need_spc then {
          put(row, need_spc)
@@ -909,6 +930,7 @@ class TextFlow(Component)
       row_width +:= xo.w
       row_ascent <:= xo.ascent
       row_descent <:= xo.descent
+      row_blob := \rb
       at_new_para := &null
    end
 
@@ -928,7 +950,7 @@ class TextFlow(Component)
    end
 
    private compute_txt(W, cmd)
-      local ds, ds2, tw, attr, wd, l, i
+      local ds, ds2, tw, attr, wd, l, i, rb
       attr := cmd.attr
 
       l := []
@@ -982,22 +1004,21 @@ class TextFlow(Component)
             # will adjust tw to = len(Fred Smith) - len(Smith) + bw = len(Fred Smith) + len(hello).
             # Thus, this corresponds to the sum of the strings we will output.
             #
-            if (i = *l) & \cmd.blob_width then
+            if (i = *l) & \cmd.blob_width then {
                tw -:= W.text_width(wd) - cmd.blob_width
+               rb := row_width + tw
+            }
             if row_x + row_width + tw > right_margin then {
                if *ds = 0 then {
                   if have_max() then {
                      txt_out(W, attr, wd)
-                     new_row()
                      i +:= 1
-                  } else {
-                     new_row()
                   }
                } else {
                   txt_out(W, attr, ds)
-                  new_row()
                   ds := u""
                }
+               new_row()
                need_spc := &null
             } else {
                ds := ds2
@@ -1006,7 +1027,7 @@ class TextFlow(Component)
          }
       }
       if *ds > 0 then
-         txt_out(W, attr, ds)
+         txt_out(W, attr, ds, rb)
 
       need_spc := if any(WHITESPACE, cmd.s[-1]) then
          make_pad(W, attr)
@@ -1015,7 +1036,7 @@ class TextFlow(Component)
    end
 
     private compute_nowrap_txt(W, cmd)
-      local ds, wd, tw, attr
+      local ds, wd, tw, attr, rb
       attr := cmd.attr
 
       # Calculate ds being the catenation without leading space
@@ -1051,11 +1072,12 @@ class TextFlow(Component)
                new_row()
                need_spc := &null
             }
+            rb := row_width + tw + get_pad()
          }
       }
 
       if *ds > 0 then
-         txt_out(W, attr, ds)
+         txt_out(W, attr, ds, rb)
 
       need_spc := if any(WHITESPACE, cmd.s[-1]) then
          make_pad(W, attr)
@@ -1064,7 +1086,7 @@ class TextFlow(Component)
    end
 
    private compute_pre_txt(W, cmd)
-      local s, l, i, tw
+      local s, l, i, tw, rb
       l := []
       every put(l, detab(separate_lines(cmd.s)))
       need_spc := &null
@@ -1093,12 +1115,18 @@ class TextFlow(Component)
       every i := 1 to *l do {
          s := l[i]
          if /calculating then {
-            tw := (i = *l, \cmd.blob_width) | W.text_width(s)
-            until fits_in_row(tw) do
-               new_row()
+            if (i = *l) & tw := \cmd.blob_width then {
+               until fits_in_row(tw) do
+                  new_row()
+               rb := row_width + tw 
+            } else {
+               tw := W.text_width(s)
+               until fits_in_row(tw) do
+                  new_row()
+            }
          }
 
-         txt_out(W, cmd.attr, s)
+         txt_out(W, cmd.attr, s, rb)
          if (i < *l) | cmd.s[-1] == u"\n" then
             new_row()
       }
