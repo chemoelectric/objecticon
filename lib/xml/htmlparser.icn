@@ -454,7 +454,7 @@ class HtmlParser()
    #
    private parse_entity()
       local i
-      ="&"
+      =u"&"
       i := (if any('#') then {
          move(1)
          if any('x') then {
@@ -464,7 +464,7 @@ class HtmlParser()
             integer(tab(many(&digits)))
       } else
          member(HTML_ENTITIES, string(tab(many(&ucase ++ &lcase))))) | fail
-      =";" | fail
+      =u";" | fail
       return i
    end
 
