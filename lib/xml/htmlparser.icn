@@ -239,7 +239,7 @@ class HtmlParser()
             if /start_tag.empty then
                res.add("" ~== move_past_end_tag(start_tag))
          }
-         "TITLE": {
+         "TITLE" | "TEXTAREA": {
             if /start_tag.empty then
                res.add("" ~== remove_entities(move_past_end_tag(start_tag)))
          }
