@@ -538,14 +538,14 @@ class DownloadTab(TabItem)
          fail
       data ?:= tab(upto('\r\n'))
       search_field.set_contents(data)
-      parent_dialog.set_focus(search_field)
+      parent_dialog.set_focus(search_field.find_focus(e))
    end
 
    private on_paste_url(ev)
       parent_dialog.request_selection(Selection.CLIPBOARD, 
-                        ["text/uri-list", Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
-                        handle_paste_response, 
-                        ev)
+                                      ["text/uri-list", Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                                      handle_paste_response, 
+                                      ev)
    end
 
    private on_copy_urls(ev)
@@ -1107,14 +1107,14 @@ class BrowserTab(TabItem, BrowserUI)
          fail
       data ?:= tab(upto('\r\n'))
       search_field.set_contents(data)
-      parent_dialog.set_focus(search_field)
+      parent_dialog.set_focus(search_field.find_focus(e))
    end
 
    private on_paste_url(ev)
       parent_dialog.request_selection(Selection.CLIPBOARD, 
-                        ["text/uri-list", Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
-                        handle_paste_response, 
-                        ev)
+                                      ["text/uri-list", Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                                      handle_paste_response, 
+                                      ev)
    end
 
    private on_refresh(ev)
