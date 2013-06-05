@@ -1061,26 +1061,36 @@ class BrowserTab(TabItem, BrowserUI)
       return self
    end
 
+   private static split_string(s, f, n)
+      local W, w, l, r
+      use {
+         W := Window().set_font(f),
+         {
+            r := u".cell\n.attr ia_x=l\n"
+            l := u""
+            every w := words(s) do {
+               if *l > 0 then
+                  l ||:= u" "
+               l ||:= w
+               if W.text_width(l) > n then {
+                  r ||:= l || u"\n.br\n"
+                  l := u""
+               }
+            }
+            if *l > 0 then
+               r ||:= l || u"\n.br\n"
+         }
+      }
+      return r
+   end
+
    public get_tab_tooltip()
-      local l, w
       # Only produce a tab tooltip if the title will be limited.
       if cbwin.text_width(paint.str) <= tab_w - label_border.get_total_width() then
          fail
-      if /title_tt then {
-         title_tt := u".cell\n.attr ia_x=l\n"
-         l := u""
-         every w := words(paint.str) do {
-            if *l > 0 then
-               l ||:= u" "
-            l ||:= w
-            if cbwin.text_width(l) > 500 then {
-               title_tt ||:= l || u"\n.br\n"
-               l := u""
-            }
-         }
-         if *l > 0 then
-            title_tt ||:= l || u"\n.br\n"
-      }
+      /title_tt := split_string(paint.str, 
+                                Gui.style.create_tooltip_label().get_wattrib("font"),
+                                500)
       return title_tt
    end
 
