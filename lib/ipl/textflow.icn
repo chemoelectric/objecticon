@@ -767,14 +767,18 @@ class TextFlow(Component)
    private left_comp_out(co)
       co.x := row_x
       co.y := row_y
-      co.w := min(co.maxw, right_margin - row_x - row_width)
+      # Since we only do left/right_comp_out if co.maxw
+      # fits_in_row_lr, we only need to reduce its width from maxw if
+      # it fit because of have_max, and the available width is less
+      # than maxw.
+      co.w := min(co.maxw, compute_w)
       co.set_height_from_width()
       row_x +:= co.w
       put(left_comps, co)
    end
 
    private right_comp_out(co)
-      co.w := min(co.maxw, right_margin - row_x - row_width)
+      co.w := min(co.maxw, compute_w)
       co.x := right_margin - co.w
       co.y := row_y
       co.set_height_from_width()
