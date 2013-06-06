@@ -2165,6 +2165,7 @@ class Browser(ComponentScrollArea)
       page_links,
       page_base,
       page_resp,
+      page_text_color,
       page_link_color,
       page_alink_color,
       page_vlink_color,
@@ -2743,9 +2744,10 @@ class Browser(ComponentScrollArea)
       page_alink_color := "red"
       page_vlink_color := "#800080"
       page_link_color := "blue"
+      page_text_color := "black"
       c := Context()
       c.face := "sans"
-      c.fg := "black"
+      c.fg := page_text_color
       c.size := 3
       c.align := Align.L
       synch_font(c)
@@ -3543,6 +3545,12 @@ class Browser(ComponentScrollArea)
       # it is like enclosing the table in <center>.
       align := convert_halign(e, u"ALIGN")
       c := copy(context)
+      # A lot of attributes aren't inherited.
+      c.pre := c.nowrap := c.underline := c.strike := c.underdash := c.mark := c.bold := c.italic := &null
+      # Font color comes from the default (or as set in <body>); face is inherited and size is reset to the default).
+      c.fg := page_text_color
+      c.size := 3
+      synch_font(c)
       c.align := (align === Align.C)
       c.table := ct := TableContext()
       ct.tbl := tbl
@@ -3889,7 +3897,7 @@ class Browser(ComponentScrollArea)
    private traverse_body(e, p, context)
       local c
       c := copy(context)
-      c.fg := convert_color(e, u"TEXT")
+      c.fg := page_text_color := convert_color(e, u"TEXT")
       page_link_color := convert_color(e, u"LINK")
       page_alink_color := convert_color(e, u"ALINK")
       page_vlink_color := convert_color(e, u"VLINK")
