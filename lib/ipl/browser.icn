@@ -149,14 +149,15 @@ class Cache()
    public get_status()
       local s, ce, n, sz, exp, ct, l
       s := "<html><title>Cache status</title>" || Browser.get_table_tag()
-      s ||:= "<tr><th align=left>Filename<th align=right>Size<th>&nbsp;Expiry<th align=left>Content&nbsp;type<th align=left>URL</tr>"
+      s ||:= "<tr><th align=left>Filename</th><th align=right>Size&nbsp;</th><th>Expiry</th><th align=left>Content&nbsp;type</th><th align=left>URL</th></tr>"
       every ce := !t do {
          n := Browser.limit_text(\ce.fname, 200) | "-"
          sz := Format.numeric_to_string(*ce.data, 0, ',')
          exp := format_expiry(ce.expiry)
          ct := ((\ce.content_type).type || "/" || ce.content_type.subtype) | "-"
          l := ce.url
-         s ||:= "<tr><td>" || n || "<td align=right>" || sz || "<td>&nbsp;" || exp || "<td>" || ct || "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
+         s ||:= "<tr><td>" || Browser.to_content(n) || "</td><td align=right>" || sz || "&nbsp;</td><td>" || exp ||
+                   "</td><td>" || ct || "</td>" || Browser.mk_anchor_cell(l) || "</tr>" 
       }
       s ||:= "</table></html>"
       return s
@@ -287,9 +288,10 @@ class Worker()
                      Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;&nbsp;'yyyy")
                   else
                      Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;'HH:mm")
-                  rs.out("<tr><td>" || t.mode_str || "&nbsp;<td>" || uname(t.uid, ucache) || "&nbsp;<td>" || grname(t.gid, gcache) ||
-                         "&nbsp;<td align=right>" || Format.numeric_to_string(t.size, 0, ',') || "<td>&nbsp;" || tf || "&nbsp;<td nowrap>" ||
-                         "<a href=\"file://" || URL.percent_encode(path.child(e[1]).canonical().str(), URL.UNRESERVED ++ '/') || "\">" || e[1] || "</a></tr>" || "\n")
+                  rs.out("<tr><td>" || t.mode_str || "&nbsp;</td><td>" || uname(t.uid, ucache) || "&nbsp;</td><td>" || grname(t.gid, gcache) ||
+                         "&nbsp;</td><td align=right>" || Format.numeric_to_string(t.size, 0, ',') || "&nbsp;</td><td>" || tf || "&nbsp;</td>" ||
+                         "<td nowrap><a href=\"file://" || URL.percent_encode(path.child(e[1]).canonical().str(), URL.UNRESERVED ++ '/') || "\">" || 
+                                 Browser.to_content(e[1]) || "</a></td></tr>\n")
                }
                rs.out("</table></html>")
                rs.str()
@@ -629,7 +631,7 @@ class WorkerPool()
       local s, w, st, t, l, r, k, c
       s := "<html><title>Worker pool status</title>"
 
-      s ||:= "<h1>Workers</h1>" || Browser.get_table_tag() || "<tr><th align=left>Serial<th align=left>Status<th align=left>URL</tr>"
+      s ||:= "<h1>Workers</h1>" || Browser.get_table_tag() || "<tr><th align=left>Serial</th><th align=left>Status</th><th align=left>URL</th></tr>"
       every w := !workers do {
          t := w.task
          st := if t.is_current() then "current"
@@ -638,17 +640,17 @@ class WorkerPool()
          else if t.is_ready() then "ready"
          else if t.is_active() then "active"
          else "stopped"
-         s ||:= "<tr><td>" || serial(w) || "<td>" || st
+         s ||:= "<tr><td>" || serial(w) || "</td><td>" || st || "</td>"
          if l := (\w.doing).url then
-            s ||:= "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a>"
+            s ||:= Browser.mk_anchor_cell(l)
          else
-            s ||:= "<td>"
+            s ||:= "<td/>"
          s ||:= "</tr>"          
       }
       s ||:= "</table>"
 
       if *queue > 0 then {
-         s ||:= "<h1>Queue</h1>" || Browser.get_table_tag() || "<tr><th align=left>Client<th align=left>Kind<th align=left>URL</tr>"
+         s ||:= "<h1>Queue</h1>" || Browser.get_table_tag() || "<tr><th align=left>Client</th><th align=left>Kind</th><th align=left>URL</th></tr>"
          every r := !!queue do {
             k := case r.kind of {
                Worker.NORMAL: "NORMAL"
@@ -657,9 +659,8 @@ class WorkerPool()
                Worker.DOWNLOAD: "DOWNLOAD"
                default: "-"
             }
-            l := r.url
             c := Class.get_name(r.client) || "#" || serial(r.client)
-            s ||:= "<tr><td>" || c || "<td>" || k || "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a>"
+            s ||:= "<tr><td>" || c || "</td><td>" || k || "</td>" || Browser.mk_anchor_cell(r.url) || "</tr>"
          }
          s ||:= "</table>"
       }
@@ -2647,19 +2648,43 @@ class Browser(ComponentScrollArea)
       }
    end
 
-   private static to_pre(s)
+   public static to_content(s)
       local t
       t := ""
       s ? repeat {
          t ||:= tab(upto('<&') | 0)
          if pos(0) then
             break
-         t ||:= case move(1) of {
+         t ||:= case string(move(1)) of {
             "<": "&lt;"
             "&": "&amp;"
          }
       }
       return t
+   end
+
+   public static to_attr(s)
+      local t
+      t := ""
+      s ? repeat {
+         t ||:= tab(upto('\"\'&') | 0)
+         if pos(0) then
+            break
+         t ||:= case string(move(1)) of {
+            "\"": "&quot;"
+            "\'": "&apos;"
+            "&": "&amp;"
+         }
+      }
+      return t
+   end
+
+   public static mk_anchor(url)
+      return "<a href=\"" || to_attr(url.str()) || "\">" || Browser.to_content(url.str()) || "</a>"
+   end
+
+   public static mk_anchor_cell(url)
+      return "<td nowrap>" || mk_anchor(url) || "</td>"
    end
 
    private get_nth_focusable(n)
@@ -2692,21 +2717,21 @@ class Browser(ComponentScrollArea)
       set_area_y(0).set_area_x(0)
       if \res.err then {
          s := "<html><title>Error</title>" || 
-            "<h1>Error:</h1>Getting " || res.url.str() || "<br><br>" || res.err || "</html>"
+            "<h1>Error:</h1>Getting " || to_content(res.url.str()) || "<br><br>" || res.err || "</html>"
          page_data := &null
       } else {
          if is_html(res.content_type, res.data) then
             s := res.data
          else if is_text(res.content_type, res.data) then
-            s := "<html><title>" || to_pre(res.fname) || "</title>" || 
-               "<pre>" || to_pre(res.data) || "</pre></html>"
+            s := "<html><title>" || to_content(res.fname) || "</title>" || 
+               "<pre>" || to_content(res.data) || "</pre></html>"
          else if is_image(res.content_type, res.data) then {
             cu := worker_pool.cache.create_url(, res.data, res.fname, res.content_type)
-            s := "<html><title>" || to_pre(res.fname) || "</title>" || 
-               "<img src=\"" || cu.str() || "\"/></html>"
+            s := "<html><title>" || to_content(res.fname) || "</title>" || 
+               "<img src=\"" || to_attr(cu.str()) || "\"/></html>"
          } else
             s := "<html><title>Problem</title>" || 
-               "<h1>Problem:</h1>Displaying " || res.url.str() || "<br><br>This does not seem to be an HTML or text document or an image</html>"
+               "<h1>Problem:</h1>Displaying " || to_content(res.url.str()) || "<br><br>This does not seem to be an HTML or text document or an image</html>"
          page_data := res.data
       }
       page_name := res.fname
@@ -4303,18 +4328,19 @@ class Browser(ComponentScrollArea)
 
       s := "<html><title>Page info</title>"
       s ||:= "<h1>Page</h1>"
+
       if l := \page_url then
-         s ||:= "URL: <a href=\"" || l.str() || "\">" || l.str() || "</a><p>"
+         s ||:= "URL: " || mk_anchor(l) || "<p>"
       if sz := *\page_data then
          s ||:= "Size: " || Format.numeric_to_string(sz, 0, ',') || " bytes<p>"
       if n := \page_name & *n > 0 then
-         s ||:= "Name: " || n || "<p>"
+         s ||:= "Name: " || to_content(n) || "<p>"
       if n := \page_title & *n > 0 then
-         s ||:= "Title: " || n || "<p>"
+         s ||:= "Title: " || to_content(n) || "<p>"
       if ct := \page_resp.content_type then
          s ||:= "Content-type: " || ct.type || "/" || ct.subtype || "<p>"
       if l := \page_resp.referer & (l.scheme == (u"http" | u"https")) then
-         s ||:= "Referer: <a href=\"" || l.str() || "\">" || l.str() || "</a><p>"
+         s ||:= "Referer: " || mk_anchor(l) || "<p>"
 
       imgs := []
       t := table(u"")
@@ -4331,19 +4357,19 @@ class Browser(ComponentScrollArea)
             if l := \f.url then {
                n := \f.id | "-"
                m := \f.method | "-"
-               s ||:= "<tr><td>" || n || "<td>" || m || "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
+               s ||:= "<tr><td>" || to_content(n) || "<td>" || m || mk_anchor_cell(l) || "</tr>" 
             }
          }
          s ||:= "</table>"
       }
 
       if *imgs > 0 then {
-         s ||:= "<h1>Images</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=right>Size<th align=left>&nbsp;URL</tr>"
+         s ||:= "<h1>Images</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=right>Size&nbsp;<th align=left>URL</tr>"
          every c := !imgs do {
             l := c.img_url
             n := limit_text(\c.img_name, 200) | "-"
             sz := Format.numeric_to_string(*\c.img_data, 0, ',') | "-"
-            s ||:= "<tr><td>" || n || "<td align=right>" || sz || "<td nowrap><a href=\"" || l.str() || "\">&nbsp;" || l.str() || "</a></tr>"
+            s ||:= "<tr><td>" || to_content(n) || "<td align=right>" || sz || "&nbsp;" || mk_anchor_cell(l) || "</tr>"
          }
          s ||:= "</table>"
       }
@@ -4352,7 +4378,7 @@ class Browser(ComponentScrollArea)
          s ||:= "<h1>Links</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=left>URL</tr>"
          every l := !page_links do {
             n := limit_text(t[l], 200)
-            s ||:= "<tr><td nowrap>" || n || "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
+            s ||:= "<tr><td nowrap>" || to_content(n) || mk_anchor_cell(l) || "</tr>" 
          }      
          s ||:= "</table>"
       }

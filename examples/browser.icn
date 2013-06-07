@@ -183,14 +183,13 @@ class BrowserDialog(Dialog)
    end
    
    private list_visited()
-      local s, e, l, n
+      local s, e, n
       s := "<html><title>Visited</title>" || Browser.get_table_tag() || ""
-      s ||:= "<tr><th align=left>Title<th align=right>Times<th>&nbsp;Last visit<th align=left>URL</tr>"
+      s ||:= "<tr><th align=left>Title</th><th align=right>Times&nbsp;</th><th>Last visit</th><th align=left>URL</th></tr>"
       every e := !settings.visited do {
          n := Browser.limit_text(\e.title, 200) | ""
-         s ||:= "<tr><td nowrap>" || n || "<td align=right>" || e.times || "<td>&nbsp;" || e.last_time.format("MMM'&nbsp;'dd'&nbsp;'HH:mm")
-         l := e.url
-         s ||:= "<td nowrap><a href=\"" || l.str() || "\">" || l.str() ||  "</a></tr>"
+         s ||:= "<tr><td nowrap>" || ipl.browser.Browser.to_content(n) || "</td><td align=right>" || e.times || "&nbsp;</td><td>" || 
+                e.last_time.format("MMM'&nbsp;'dd'&nbsp;'HH:mm") || "</td>" || Browser.mk_anchor_cell(e.url) || "</tr>"
       }
       s ||:= "</table></html>"
       return s
@@ -233,14 +232,14 @@ class BrowserDialog(Dialog)
          every path := key(t) do {
             every ck := !t[path] do {
                s ||:= "<hr><br><table>"
-               s ||:= "<tr><td>Name&nbsp;&nbsp;<td>" || ck.name || "</tr>"
-               s ||:= "<tr><td>Value&nbsp;&nbsp;<td>" || ck.value || "</tr>"
-               s ||:= "<tr><td>Expires&nbsp;&nbsp;<td>" || (\ck.expires).to_rfc822() || "</tr>"
-               s ||:= "<tr><td>Domain&nbsp;&nbsp;<td>" || \ck.domain || "</tr>"
-               s ||:= "<tr><td>Path&nbsp;&nbsp;<td>" || \ck.path || "</tr>"
-               s ||:= "<tr><td>Secure&nbsp;&nbsp;<td>" || \ck.secure || "</tr>"
-               s ||:= "<tr><td>Comment&nbsp;&nbsp;<td>" || \ck.comment || "</tr>"
-               s ||:= "<tr><td>Version&nbsp;&nbsp;<td>" || \ck.version || "</tr>"
+               s ||:= "<tr><td>Name&nbsp;&nbsp;</td><td>" || ck.name || "</td></tr>"
+               s ||:= "<tr><td>Value&nbsp;&nbsp;</td><td>" || ck.value || "</td></tr>"
+               s ||:= "<tr><td>Expires&nbsp;&nbsp;</td><td>" || (\ck.expires).to_rfc822() || "</td></tr>"
+               s ||:= "<tr><td>Domain&nbsp;&nbsp;</td><td>" || \ck.domain || "</td></tr>"
+               s ||:= "<tr><td>Path&nbsp;&nbsp;</td><td>" || \ck.path || "</td></tr>"
+               s ||:= "<tr><td>Secure&nbsp;&nbsp;</td><td>" || \ck.secure || "</td></tr>"
+               s ||:= "<tr><td>Comment&nbsp;&nbsp;</td><td>" || \ck.comment || "</td></tr>"
+               s ||:= "<tr><td>Version&nbsp;&nbsp;</td><td>" || \ck.version || "</td></tr>"
                s ||:= "</table><br><a href=config:del_cookie?" || URL.make_cgi_string(table(, 
                                                                                             "q", k,
                                                                                             "path", ck.path,
@@ -269,10 +268,10 @@ class BrowserDialog(Dialog)
               <fieldset><form method=get action=submit >_
                  <legend>Edit settings</legend>_
                  <table>_
-                   <tr><td>Home page:<td><input type=text name=home value=" || xml_escape(settings.home_url.str(), ~(&letters++&digits)) || " size=50 /></tr>_
-                   <tr><td>Cache size (MB):<td><input type=number min=1 step=1 name=cache value=" || settings.cache_size_mb || " size=50 /></tr>_
-                   <tr><td>Visited list size:<td><input type=number min=10 step=1 name=vsize value=" || settings.visited_size || " size=50 /></tr>_
-                   <tr><td>Worker pool size:<td><input type=number min=5 step=1 name=psize value=" || settings.pool_size || " size=50 /></tr>_
+                   <tr><td>Home page:</td><td><input type=text name=home value=" || xml_escape(settings.home_url.str(), ~(&letters++&digits)) || " size=50 /></td></tr>_
+                   <tr><td>Cache size (MB):</td><td><input type=number min=1 step=1 name=cache value=" || settings.cache_size_mb || " size=50 /></td></tr>_
+                   <tr><td>Visited list size:</td><td><input type=number min=10 step=1 name=vsize value=" || settings.visited_size || " size=50 /></td></tr>_
+                   <tr><td>Worker pool size:</td><td><input type=number min=5 step=1 name=psize value=" || settings.pool_size || " size=50 /></td></tr>_
                  </table>_
                  <input type=submit />_
               </form></fieldset></html>"
