@@ -10,7 +10,7 @@ package xml
 
 import ipl.scan
 
-class Tag(Node)
+class Tag()
    public const
       attributes
    private readable
@@ -25,13 +25,6 @@ class Tag(Node)
    public set_name(s) 
       name := map(s, &lcase, &ucase)
       return self
-   end
-
-   #
-   # Succeed if the given tag is a matching closing tag for this tag.
-   #
-   public balances(other)
-      return \other.closed & (name == other.name)
    end
 
    #
@@ -59,109 +52,126 @@ class Tag(Node)
    end
 
    public new()
-      cast(self,Node).new()
       self.attributes := table()
       return
    end
 end
 
+record TagInfo(limit, autoclose)
 
 class HtmlParser()
    private 
       doc,
-      utf8_flag
+      utf8_flag,
+      node_stack
 
    public static const
-      HTML_IDINTRO,
-      HTML_IDCHARS,
-      HTML_KEYCHARS,
-      HTML_VALCHARS, 
-      HTML_DELIM,
-      HTML_SPACE,
-      HTML_STANDALONE,
-      HTML_AUTOCLOSE,
-      HTML_ENTITIES,
-      HTML_PUBID_CHAR
-
+      IDINTRO,
+      IDCHARS,
+      KEYCHARS,
+      VALCHARS, 
+      DELIM,
+      SPACE,
+      STANDALONE,
+      ENTITIES,
+      PUBID_CHAR,
+      TAG_INFO
+   
    private static init()
-      HTML_SPACE := '\x20\x09\x0D\x0A'
-      HTML_IDINTRO := 'A-Za-z'
-      HTML_IDCHARS := 'A-Za-z0-9.\-'
-      HTML_KEYCHARS := 'A-Za-z0-9_'
-      HTML_VALCHARS := &ascii -- ' \t\n\r>'
-      HTML_DELIM := '\"\''
-      HTML_PUBID_CHAR := ' \n\rA-Za-z0-9\-\'()+,./:=?;!*#@$_%'
-      HTML_STANDALONE := set("IMG", "BR", "HR", "META", "BASE", "INPUT", "AREA", 
-                             "BASEFONT", "BGSOUND", "COL", "ISINDEX", "PARAM",
-                             "LINK", "NEXTID", "SPACER", "WBR")
+      local container
 
-      HTML_AUTOCLOSE := table(,
-                              "LI", set("LI"),
-                              "P", set("P"),
-                              "A", set("A"),
-                              "DD", set("DD", "DT"),
-                              "DT", set("DT", "DD"),
-                              "TR", set("TR", "THEAD", "TBODY", "TFOOT"),
-                              "TD", set("TD", "TR", "TH", "THEAD", "TBODY", "TFOOT"),
-                              "TH", set("TH", "TR", "TD", "THEAD", "TBODY", "TFOOT"),
-                              "THEAD", set("THEAD", "TFOOT", "TBODY"),
-                              "TBODY", set("THEAD", "TFOOT", "TBODY"),
-                              "TFOOT", set("THEAD", "TFOOT", "TBODY"),
-                              "COLGROUP", set("COLGROUP", "TH", "TR", "TD", "TBODY", "TFOOT", "THEAD"),
-                              "OPTION", set("OPTION"))
+      SPACE := '\x20\x09\x0D\x0A'
+      IDINTRO := 'A-Za-z'
+      IDCHARS := 'A-Za-z0-9.\-'
+      KEYCHARS := 'A-Za-z0-9_'
+      VALCHARS := &ascii -- ' \t\n\r>'
+      DELIM := '\"\''
+      PUBID_CHAR := ' \n\rA-Za-z0-9\-\'()+,./:=?;!*#@$_%'
+      STANDALONE := set("IMG", "BR", "HR", "META", "BASE", "INPUT", "AREA", 
+                        "BASEFONT", "BGSOUND", "COL", "ISINDEX", "PARAM",
+                        "LINK", "NEXTID", "SPACER", "WBR")
 
-      HTML_ENTITIES := table(,
-                             "quot", 34, "amp", 38, "apos", 39, "lt", 60, "gt", 62, "OElig", 338,
-                             "oelig", 339, "Scaron", 352, "scaron", 353, "Yuml", 376, "circ", 710,
-                             "tilde", 732, "ensp", 8194, "emsp", 8195, "thinsp", 8201, "zwnj", 8204,
-                             "zwj", 8205, "lrm", 8206, "rlm", 8207, "ndash", 8211, "mdash", 8212,
-                             "lsquo", 8216, "rsquo", 8217, "sbquo", 8218, "ldquo", 8220, "rdquo", 8221,
-                             "bdquo", 8222, "dagger", 8224, "Dagger", 8225, "permil", 8240, "lsaquo", 8249,
-                             "rsaquo", 8250, "euro", 8364, "fnof", 402, "Alpha", 913, "Beta", 914,
-                             "Gamma", 915, "Delta", 916, "Epsilon", 917, "Zeta", 918, "Eta", 919,
-                             "Theta", 920, "Iota", 921, "Kappa", 922, "Lambda", 923, "Mu", 924,
-                             "Nu", 925, "Xi", 926, "Omicron", 927, "Pi", 928, "Rho", 929,
-                             "Sigma", 931, "Tau", 932, "Upsilon", 933, "Phi", 934, "Chi", 935,
-                             "Psi", 936, "Omega", 937, "alpha", 945, "beta", 946, "gamma", 947,
-                             "delta", 948, "epsilon", 949, "zeta", 950, "eta", 951, "theta", 952,
-                             "iota", 953, "kappa", 954, "lambda", 955, "mu", 956, "nu", 957,
-                             "xi", 958, "omicron", 959, "pi", 960, "rho", 961, "sigmaf", 962,
-                             "sigma", 963, "tau", 964, "upsilon", 965, "phi", 966, "chi", 967,
-                             "psi", 968, "omega", 969, "thetasym", 977, "upsih", 978, "piv", 982,
-                             "bull", 8226, "hellip", 8230, "prime", 8242, "Prime", 8243, "oline", 8254,
-                             "frasl", 8260, "weierp", 8472, "image", 8465, "real", 8476, "trade", 8482,
-                             "alefsym", 8501, "larr", 8592, "uarr", 8593, "rarr", 8594, "darr", 8595,
-                             "harr", 8596, "crarr", 8629, "lArr", 8656, "uArr", 8657, "rArr", 8658,
-                             "dArr", 8659, "hArr", 8660, "forall", 8704, "part", 8706, "exist", 8707,
-                             "empty", 8709, "nabla", 8711, "isin", 8712, "notin", 8713, "ni", 8715,
-                             "prod", 8719, "sum", 8721, "minus", 8722, "lowast", 8727, "radic", 8730,
-                             "prop", 8733, "infin", 8734, "ang", 8736, "and", 8743, "or", 8744,
-                             "cap", 8745, "cup", 8746, "int", 8747, "there4", 8756, "sim", 8764,
-                             "cong", 8773, "asymp", 8776, "ne", 8800, "equiv", 8801, "le", 8804,
-                             "ge", 8805, "sub", 8834, "sup", 8835, "nsub", 8836, "sube", 8838,
-                             "supe", 8839, "oplus", 8853, "otimes", 8855, "perp", 8869, "sdot", 8901,
-                             "lceil", 8968, "rceil", 8969, "lfloor", 8970, "rfloor", 8971, "lang", 9001,
-                             "rang", 9002, "loz", 9674, "spades", 9824, "clubs", 9827, "hearts", 9829,
-                             "diams", 9830, "nbsp", 160, "iexcl", 161, "cent", 162, "pound", 163,
-                             "curren", 164, "yen", 165, "brvbar", 166, "sect", 167, "uml", 168,
-                             "copy", 169, "ordf", 170, "laquo", 171, "not", 172, "shy", 173,
-                             "reg", 174, "macr", 175, "deg", 176, "plusmn", 177, "sup2", 178,
-                             "sup3", 179, "acute", 180, "micro", 181, "para", 182, "middot", 183,
-                             "cedil", 184, "sup1", 185, "ordm", 186, "raquo", 187, "frac14", 188,
-                             "frac12", 189, "frac34", 190, "iquest", 191, "Agrave", 192, "Aacute", 193,
-                             "Acirc", 194, "Atilde", 195, "Auml", 196, "Aring", 197, "AElig", 198,
-                             "Ccedil", 199, "Egrave", 200, "Eacute", 201, "Ecirc", 202, "Euml", 203,
-                             "Igrave", 204, "Iacute", 205, "Icirc", 206, "Iuml", 207, "ETH", 208,
-                             "Ntilde", 209, "Ograve", 210, "Oacute", 211, "Ocirc", 212, "Otilde", 213,
-                             "Ouml", 214, "times", 215, "Oslash", 216, "Ugrave", 217, "Uacute", 218,
-                             "Ucirc", 219, "Uuml", 220, "Yacute", 221, "THORN", 222, "szlig", 223,
-                             "agrave", 224, "aacute", 225, "acirc", 226, "atilde", 227, "auml", 228,
-                             "aring", 229, "aelig", 230, "ccedil", 231, "egrave", 232, "eacute", 233,
-                             "ecirc", 234, "euml", 235, "igrave", 236, "iacute", 237, "icirc", 238,
-                             "iuml", 239, "eth", 240, "ntilde", 241, "ograve", 242, "oacute", 243,
-                             "ocirc", 244, "otilde", 245, "ouml", 246, "divide", 247, "oslash", 248,
-                             "ugrave", 249, "uacute", 250, "ucirc", 251, "uuml", 252, "yacute", 253,
-                             "thorn", 254, "yuml", 255)
+      container := set("LI", "DD", "DT", "TD", "TR", "TH", "THEAD", "TBODY", "TFOOT", "TABLE",
+                       "UL", "OL", "DL", "BUTTON", "CAPTION", "BLOCKQUOTE", "FIELDSET", "LEGEND",
+                       "BODY", "HTML")
+
+      TAG_INFO := table(TagInfo(container, set()),
+                        "LI", TagInfo(set("UL", "OL"), set("LI")),
+                        "P", TagInfo(container, set("P")),
+                        "A", TagInfo(container, set("A")),
+                        "DD", TagInfo(set("DL"), set("DD", "DT")),
+                        "DT", TagInfo(set("DL"), set("DT", "DD")),
+                        "TR", TagInfo(set("TABLE"), set("TR", "TD", "TH")),
+                        "TD", TagInfo(set("TABLE"), set("TD", "TH")),
+                        "TH", TagInfo(set("TABLE"), set("TD", "TH")),
+                        "THEAD", TagInfo(set("TABLE"), set("THEAD", "TFOOT", "TBODY")),
+                        "TBODY", TagInfo(set("TABLE"), set("THEAD", "TFOOT", "TBODY")),
+                        "TFOOT", TagInfo(set("TABLE"), set("THEAD", "TFOOT", "TBODY")),
+                        "TABLE", TagInfo(set("TABLE"), set()),
+                        "UL", TagInfo(set("UL"), set()),
+                        "OL", TagInfo(set("OL"), set()),
+                        "DL", TagInfo(set("DL"), set()),
+                        "CAPTION", TagInfo(set("CAPTION"), set()),
+                        "BLOCKQUOTE", TagInfo(set("BLOCKQUOTE"), set()),
+                        "FIELDSET", TagInfo(set("FIELDSET"), set()),
+                        "LEGEND", TagInfo(set("LEGEND"), set()),
+                        "BODY", TagInfo(set("BODY"), set()),
+                        "HTML", TagInfo(set("HTML"), set()),
+                        "COLGROUP", TagInfo(set(), set("COLGROUP", "TH", "TR", "TD", "TBODY", "TFOOT", "THEAD")),
+                        "OPTION", TagInfo(set(), set("OPTION")))
+
+      ENTITIES := table(,
+                        "quot", 34, "amp", 38, "apos", 39, "lt", 60, "gt", 62, "OElig", 338,
+                        "oelig", 339, "Scaron", 352, "scaron", 353, "Yuml", 376, "circ", 710,
+                        "tilde", 732, "ensp", 8194, "emsp", 8195, "thinsp", 8201, "zwnj", 8204,
+                        "zwj", 8205, "lrm", 8206, "rlm", 8207, "ndash", 8211, "mdash", 8212,
+                        "lsquo", 8216, "rsquo", 8217, "sbquo", 8218, "ldquo", 8220, "rdquo", 8221,
+                        "bdquo", 8222, "dagger", 8224, "Dagger", 8225, "permil", 8240, "lsaquo", 8249,
+                        "rsaquo", 8250, "euro", 8364, "fnof", 402, "Alpha", 913, "Beta", 914,
+                        "Gamma", 915, "Delta", 916, "Epsilon", 917, "Zeta", 918, "Eta", 919,
+                        "Theta", 920, "Iota", 921, "Kappa", 922, "Lambda", 923, "Mu", 924,
+                        "Nu", 925, "Xi", 926, "Omicron", 927, "Pi", 928, "Rho", 929,
+                        "Sigma", 931, "Tau", 932, "Upsilon", 933, "Phi", 934, "Chi", 935,
+                        "Psi", 936, "Omega", 937, "alpha", 945, "beta", 946, "gamma", 947,
+                        "delta", 948, "epsilon", 949, "zeta", 950, "eta", 951, "theta", 952,
+                        "iota", 953, "kappa", 954, "lambda", 955, "mu", 956, "nu", 957,
+                        "xi", 958, "omicron", 959, "pi", 960, "rho", 961, "sigmaf", 962,
+                        "sigma", 963, "tau", 964, "upsilon", 965, "phi", 966, "chi", 967,
+                        "psi", 968, "omega", 969, "thetasym", 977, "upsih", 978, "piv", 982,
+                        "bull", 8226, "hellip", 8230, "prime", 8242, "Prime", 8243, "oline", 8254,
+                        "frasl", 8260, "weierp", 8472, "image", 8465, "real", 8476, "trade", 8482,
+                        "alefsym", 8501, "larr", 8592, "uarr", 8593, "rarr", 8594, "darr", 8595,
+                        "harr", 8596, "crarr", 8629, "lArr", 8656, "uArr", 8657, "rArr", 8658,
+                        "dArr", 8659, "hArr", 8660, "forall", 8704, "part", 8706, "exist", 8707,
+                        "empty", 8709, "nabla", 8711, "isin", 8712, "notin", 8713, "ni", 8715,
+                        "prod", 8719, "sum", 8721, "minus", 8722, "lowast", 8727, "radic", 8730,
+                        "prop", 8733, "infin", 8734, "ang", 8736, "and", 8743, "or", 8744,
+                        "cap", 8745, "cup", 8746, "int", 8747, "there4", 8756, "sim", 8764,
+                        "cong", 8773, "asymp", 8776, "ne", 8800, "equiv", 8801, "le", 8804,
+                        "ge", 8805, "sub", 8834, "sup", 8835, "nsub", 8836, "sube", 8838,
+                        "supe", 8839, "oplus", 8853, "otimes", 8855, "perp", 8869, "sdot", 8901,
+                        "lceil", 8968, "rceil", 8969, "lfloor", 8970, "rfloor", 8971, "lang", 9001,
+                        "rang", 9002, "loz", 9674, "spades", 9824, "clubs", 9827, "hearts", 9829,
+                        "diams", 9830, "nbsp", 160, "iexcl", 161, "cent", 162, "pound", 163,
+                        "curren", 164, "yen", 165, "brvbar", 166, "sect", 167, "uml", 168,
+                        "copy", 169, "ordf", 170, "laquo", 171, "not", 172, "shy", 173,
+                        "reg", 174, "macr", 175, "deg", 176, "plusmn", 177, "sup2", 178,
+                        "sup3", 179, "acute", 180, "micro", 181, "para", 182, "middot", 183,
+                        "cedil", 184, "sup1", 185, "ordm", 186, "raquo", 187, "frac14", 188,
+                        "frac12", 189, "frac34", 190, "iquest", 191, "Agrave", 192, "Aacute", 193,
+                        "Acirc", 194, "Atilde", 195, "Auml", 196, "Aring", 197, "AElig", 198,
+                        "Ccedil", 199, "Egrave", 200, "Eacute", 201, "Ecirc", 202, "Euml", 203,
+                        "Igrave", 204, "Iacute", 205, "Icirc", 206, "Iuml", 207, "ETH", 208,
+                        "Ntilde", 209, "Ograve", 210, "Oacute", 211, "Ocirc", 212, "Otilde", 213,
+                        "Ouml", 214, "times", 215, "Oslash", 216, "Ugrave", 217, "Uacute", 218,
+                        "Ucirc", 219, "Uuml", 220, "Yacute", 221, "THORN", 222, "szlig", 223,
+                        "agrave", 224, "aacute", 225, "acirc", 226, "atilde", 227, "auml", 228,
+                        "aring", 229, "aelig", 230, "ccedil", 231, "egrave", 232, "eacute", 233,
+                        "ecirc", 234, "euml", 235, "igrave", 236, "iacute", 237, "icirc", 238,
+                        "iuml", 239, "eth", 240, "ntilde", 241, "ograve", 242, "oacute", 243,
+                        "ocirc", 244, "otilde", 245, "ouml", 246, "divide", 247, "oslash", 248,
+                        "ugrave", 249, "uacute", 250, "ucirc", 251, "uuml", 252, "yacute", 253,
+                        "thorn", 254, "yuml", 255)
    end
 
    #
@@ -172,6 +182,7 @@ class HtmlParser()
       doc := HtmlDocument()
 
       utf8_flag := if type(s) == "ucs" then 1 else &null
+      node_stack := []
 
       s ? {
          repeat {
@@ -225,7 +236,7 @@ class HtmlParser()
    # Parse and return an Element, given the starting tag
    #
    private parse_element(start_tag)
-      local res, i, node, n
+      local res, i, node
 
       res := HtmlElement()
 
@@ -245,6 +256,7 @@ class HtmlParser()
          }
          default: {
             if not(\start_tag.empty | is_standalone_tag(start_tag.name)) then {
+               push(node_stack, string(start_tag.name))
                repeat {
                   res.add("" ~== remove_entities(move_to_node()))
                   if pos(0) then
@@ -254,21 +266,22 @@ class HtmlParser()
                   node := parse_node(res) | break
 
                   if is(node, Tag) then {
-                     if start_tag.balances(node) then 
-                        break
-
-                     if should_close_tag(start_tag, node) then {
-                        #
-                        # Auto-close the tag, for example we have encountered something like :-
-                        # <td> .... <tr>
-                        # The opening <tr> implicitly closes the <td>.  The <tr> needs to be
-                        # rescanned, so tab back.
-                        #
-                        &pos := i
-                        break
+                     if /node.closed then {
+                        if should_close_tag(node) then {
+                           #write("closing on out of sync opening tag ",node.name, " at ",to_string(node_stack), " pos=",i)
+                           &pos := i
+                           break
+                        }
+                        res.add(parse_element(node))
+                     } else {
+                        if node.name == start_tag.name then
+                           break
+                        if find_open_tag(node) then {
+                           #write("closing on out of sync closing tag ",node.name, " at ",to_string(node_stack), " pos=",i)
+                           &pos := i
+                           break
+                        }
                      }
-                     else if /node.closed then
-                        res.add(n := parse_element(node))
                   } else {
                      #
                      # It's either a coment, or something else; just add it to the list of children
@@ -276,11 +289,43 @@ class HtmlParser()
                      res.add(node)
                   }            
                }
+               get(node_stack)
             }
          }
       }
-
       return res
+   end
+
+   #
+   # Succeed if and only if the tag implicitly closes when the other (opening)
+   # tag is encountered at the same level.
+   #
+   private should_close_tag(other)
+      local n, ti
+      ti := TAG_INFO[string(other.name)]
+      if *ti.autoclose = 0 then
+         fail
+      every n := !node_stack do {
+         if member(ti.autoclose, n) then
+            return
+         if member(ti.limit, n) then
+            fail
+      }
+   end
+
+   #
+   # Succeed if and only if the given (closing) tag has a matching
+   # open tag in the node stack.
+   #
+   private find_open_tag(other)
+      local n, ti, on
+      ti := TAG_INFO[on := string(other.name)]
+      every n := !node_stack do {
+         if n == on then
+            return
+         if member(ti.limit, n) then
+            fail
+      }
    end
 
    #
@@ -292,19 +337,19 @@ class HtmlParser()
       res := DocType()
       =u"<!DOCTYPE" | fail
 
-      tab(upto(HTML_IDINTRO))
-      res.name := tab(many(HTML_IDCHARS))
+      tab(upto(IDINTRO))
+      res.name := tab(many(IDCHARS))
 
-      tab(many(HTML_SPACE))
+      tab(many(SPACE))
       if =u"SYSTEM" then {
          res.external_id := ExternalID()
-         tab(many(HTML_SPACE))
+         tab(many(SPACE))
          res.external_id.system_id := parse_system_literal()
       } else if =u"PUBLIC" then {
          res.external_id := ExternalID()
-         tab(many(HTML_SPACE))
+         tab(many(SPACE))
          res.external_id.public_id := parse_pubid_literal()
-         tab(many(HTML_SPACE))
+         tab(many(SPACE))
          res.external_id.system_id := parse_system_literal()
       }
       tab(upto('>')) | fail
@@ -324,9 +369,9 @@ class HtmlParser()
    private parse_pubid_literal()
       local c, res, t
       if any('\'') then
-         t := HTML_PUBID_CHAR -- '\''
+         t := PUBID_CHAR -- '\''
       else if any('\"') then
-         t := HTML_PUBID_CHAR
+         t := PUBID_CHAR
       else
          fail
       c := move(1)
@@ -368,10 +413,10 @@ class HtmlParser()
       =u"<" | fail
       if =u"/" then
          res.set_closed()
-      s := (any(HTML_IDINTRO) & tab(many(HTML_IDCHARS))) | fail
+      s := (any(IDINTRO) & tab(many(IDCHARS))) | fail
       res.set_name(s)
       repeat {
-         tab(upto(HTML_KEYCHARS ++ '/>'))
+         tab(upto(KEYCHARS ++ '/>'))
          if =u"/>" then {
             res.set_empty()
             break
@@ -379,18 +424,18 @@ class HtmlParser()
          if =u">" then
             break
 
-         key := tab(many(HTML_KEYCHARS)) | break
+         key := tab(many(KEYCHARS)) | break
 
-         tab(upto(HTML_VALCHARS ++ '>='))
+         tab(upto(VALCHARS ++ '>='))
 
          if =u"=" then {
-            tab(upto(HTML_VALCHARS ++ HTML_DELIM))
-            if any(HTML_DELIM) then {
+            tab(upto(VALCHARS ++ DELIM))
+            if any(DELIM) then {
                c := move(1)
                s := tab(upto(c) | 0)
                move(1)
             } else
-               s := tab(many(HTML_VALCHARS)) | break
+               s := tab(many(VALCHARS)) | break
             value := remove_entities(s)
          } else
             # See http://www.w3.org/TR/html4/intro/sgmltut.html#h-3.3.4.2
@@ -413,7 +458,7 @@ class HtmlParser()
          if pos(0) then
             break
          i := &pos
-         if t := parse_tag() & start_tag.balances(t) then
+         if t := parse_tag() & \t.closed & start_tag.name == t.name then
             break
          &pos := i
          s ||:= move(1)
@@ -463,7 +508,7 @@ class HtmlParser()
          } else
             integer(tab(many(&digits)))
       } else
-         member(HTML_ENTITIES, string(tab(many(&ucase ++ &lcase))))) | fail
+         member(ENTITIES, string(tab(many(&ucase ++ &lcase))))) | fail
       =u";" | fail
       return i
    end
@@ -504,16 +549,6 @@ class HtmlParser()
    # matching closing tag.
    #
    public static is_standalone_tag(name)
-      return member(HTML_STANDALONE, string(name))
-   end
-
-   #
-   # Succeed if and only if the tag implicitly closes when the other
-   # tag (which may be a closing tag) is encountered at the same level.
-   #
-   public static should_close_tag(tag, other)
-      local t
-      if t := member(HTML_AUTOCLOSE, string(tag.name)) then
-         return \other.closed | member(t, string(other.name))
+      return member(STANDALONE, string(name))
    end
 end
