@@ -8,7 +8,7 @@
 
 package xml
 
-import ipl.scan
+import io, lang, util, ipl.scan
 
 class Tag()
    public const
@@ -51,7 +51,7 @@ class Tag()
       return self
    end
 
-   public new()
+   package new()
       self.attributes := table()
       return
    end
@@ -63,7 +63,8 @@ class HtmlParser()
    private 
       doc,
       utf8_flag,
-      node_stack
+      node_stack,
+      debug_recovery_flag
 
    public static const
       IDINTRO,
@@ -107,18 +108,18 @@ class HtmlParser()
                         "THEAD", TagInfo(set("TABLE"), set("THEAD", "TFOOT", "TBODY")),
                         "TBODY", TagInfo(set("TABLE"), set("THEAD", "TFOOT", "TBODY")),
                         "TFOOT", TagInfo(set("TABLE"), set("THEAD", "TFOOT", "TBODY")),
-                        "TABLE", TagInfo(set("TABLE"), set()),
-                        "UL", TagInfo(set("UL"), set()),
-                        "OL", TagInfo(set("OL"), set()),
-                        "DL", TagInfo(set("DL"), set()),
-                        "CAPTION", TagInfo(set("CAPTION"), set()),
-                        "BLOCKQUOTE", TagInfo(set("BLOCKQUOTE"), set()),
-                        "FIELDSET", TagInfo(set("FIELDSET"), set()),
-                        "LEGEND", TagInfo(set("LEGEND"), set()),
-                        "BODY", TagInfo(set("BODY"), set()),
-                        "HTML", TagInfo(set("HTML"), set()),
-                        "COLGROUP", TagInfo(set(), set("COLGROUP", "TH", "TR", "TD", "TBODY", "TFOOT", "THEAD")),
-                        "OPTION", TagInfo(set(), set("OPTION")))
+                        "COLGROUP", TagInfo(set("TABLE"), set("COLGROUP")),
+                        "TABLE", TagInfo(set(), set()),
+                        "UL", TagInfo(set(), set()),
+                        "OL", TagInfo(set(), set()),
+                        "DL", TagInfo(set(), set()),
+                        "CAPTION", TagInfo(set(), set()),
+                        "BLOCKQUOTE", TagInfo(set(), set()),
+                        "FIELDSET", TagInfo(set(), set()),
+                        "LEGEND", TagInfo(set(), set()),
+                        "BODY", TagInfo(set(), set()),
+                        "HTML", TagInfo(set(), set()),
+                        "OPTION", TagInfo(set(), set()))
 
       ENTITIES := table(,
                         "quot", 34, "amp", 38, "apos", 39, "lt", 60, "gt", 62, "OElig", 338,
@@ -172,6 +173,11 @@ class HtmlParser()
                         "ocirc", 244, "otilde", 245, "ouml", 246, "divide", 247, "oslash", 248,
                         "ugrave", 249, "uacute", 250, "ucirc", 251, "uuml", 252, "yacute", 253,
                         "thorn", 254, "yuml", 255)
+   end
+
+   public set_debug_recovery(s)
+      self.debug_recovery_flag := check_flag(s)
+      return self
    end
 
    #
@@ -268,7 +274,8 @@ class HtmlParser()
                   if is(node, Tag) then {
                      if /node.closed then {
                         if should_close_tag(node) then {
-                           #write("closing on out of sync opening tag ",node.name, " at ",to_string(node_stack), " pos=",i)
+                           if \debug_recovery_flag then
+                              write("closing on out of sync opening tag ", node.name, " at ", to_string(node_stack), " pos=", i)
                            &pos := i
                            break
                         }
@@ -277,7 +284,8 @@ class HtmlParser()
                         if node.name == start_tag.name then
                            break
                         if find_open_tag(node) then {
-                           #write("closing on out of sync closing tag ",node.name, " at ",to_string(node_stack), " pos=",i)
+                           if \debug_recovery_flag then
+                              write("closing on out of sync closing tag ", node.name, " at ", to_string(node_stack), " pos=", i)
                            &pos := i
                            break
                         }
