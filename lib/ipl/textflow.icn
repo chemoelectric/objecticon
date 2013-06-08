@@ -1204,11 +1204,11 @@ class TextFlow(Component)
       if u := \ (\t).attr.url then {
          if wrote ~=== u then {
             set_pointer("hand1")
-            browser.msg(u.str())
+            browser.msg(u.str(),, self)
             wrote := u
          }
       } else if \wrote then {
-         browser.clear_msg()
+         browser.clear_msg(self)
          wrote := &null
          set_pointer()
       }
@@ -1219,12 +1219,12 @@ class TextFlow(Component)
       if \which_text_out(e).attr.url === held then {
          if wrote ~=== held then {
             set_pointer("hand1")
-            browser.msg(held.str())
+            browser.msg(held.str(),, self)
             wrote := held
             set_highlight(wrote)
          }
       } else if \wrote then {
-         browser.clear_msg()
+         browser.clear_msg(self)
          set_highlight()
          wrote := &null 
          set_pointer()
@@ -1233,7 +1233,7 @@ class TextFlow(Component)
 
    private handle_exit(e)
       if \wrote then {
-         browser.clear_msg()
+         browser.clear_msg(self)
          set_highlight()
          wrote := &null
          set_pointer()

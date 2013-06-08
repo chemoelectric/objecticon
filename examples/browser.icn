@@ -1010,7 +1010,7 @@ class BrowserTab(TabItem, BrowserUI)
       if u := URL(s) then
          browser.goto(u)
       else
-         msg("Invalid url")
+         browser.msg("Invalid url")
    end
 
    public msg(s, n)
@@ -1032,9 +1032,9 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.file_dialog.show_modal(parent_dialog)
       if s := parent_dialog.file_dialog.get_result() then {
          if Files.string_to_file(s, data) then
-            msg("Saved OK", 3000)
+            browser.msg("Saved OK", 3000)
          else
-            msg(&why, 3000)
+            browser.msg(&why, 3000)
       }
    end
 

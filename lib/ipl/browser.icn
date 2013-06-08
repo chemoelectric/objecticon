@@ -820,7 +820,7 @@ class Img(Image)
 
    private handle_exit(e)
       if \wrote then {
-         browser.clear_msg()
+         browser.clear_msg(self)
          wrote := &null
          set_pointer()
       }
@@ -845,11 +845,11 @@ class Img(Image)
       if which_url(e) === held then {
          if wrote ~=== held then {
             set_pointer("hand1")
-            browser.msg(held.str())
+            browser.msg(held.str(),, self)
             wrote := held
          }
       } else if \wrote then {
-         browser.clear_msg()
+         browser.clear_msg(self)
          wrote := &null
          set_pointer()
       }
@@ -865,11 +865,11 @@ class Img(Image)
       if u := which_url(e) then {
          if wrote ~=== u then {
             set_pointer("hand1")
-            browser.msg(u.str())
+            browser.msg(u.str(),, self)
             wrote := u
          }
       } else if \wrote then {
-         browser.clear_msg()
+         browser.clear_msg(self)
          wrote := &null
          set_pointer()
       }
@@ -2153,7 +2153,8 @@ class Browser(ComponentScrollArea)
       scroll_ticker_interval,
       h_direction,
       v_direction,
-      primary_selection_owner
+      primary_selection_owner,
+      msg_owner
 
    private readable
       history,
@@ -2435,13 +2436,18 @@ class Browser(ComponentScrollArea)
       return self
    end
 
-   public msg(s, n)
+   public msg(s, n, owner)
+      /owner := self
       (\ui).msg(s, n)
+      msg_owner := owner
       return self
    end
 
-   public clear_msg()
-      (\ui).clear_msg()
+   public clear_msg(owner)
+      if /msg_owner | /owner | (owner === msg_owner) then {
+         (\ui).clear_msg()
+         msg_owner := &null
+      }
       return self
    end
 
@@ -2988,7 +2994,6 @@ class Browser(ComponentScrollArea)
 
    private resolve_labels()
       local l
-      #dump_forms()
       every l := !labels do {
          if \l.id then
             /l.comp := get_form_for_label(l).get_item_by_id(l.id)
@@ -3906,7 +3911,7 @@ class Browser(ComponentScrollArea)
       mc := \context.map | fail
       s := e.get_attribute(u"COORDS") | fail
       coords := []
-      every put(coords, integer(separate(s)))
+      every put(coords, integer(separate(s, ',; ')))
       mc.map.add_area(MapArea(map(string(e.get_attribute(u"SHAPE"))), 
                               coords,
                               mk_link(e.get_attribute(u"HREF"))))
