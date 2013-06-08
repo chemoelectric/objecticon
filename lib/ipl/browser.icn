@@ -754,9 +754,9 @@ end
 
 class Img(Image)
    public const
-      browser, form, img_url, link_url, alt
+      browser, context, form, img_url, alt, bg_area
    private readable
-      wrote, img_data, img_name, map, held
+      wrote, img_data, img_name, map, map_id, held
 
    package got_data(res)
       local iw, ih
@@ -826,14 +826,11 @@ class Img(Image)
       }
    end
 
-   private which_url(e)
-      local m, u
+   private which_area(e)
       in_region(e) | fail
-      if m := browser.get_map(\map) &
-         u := m.over_url(e.x - x - border.get_l_inset(), 
-                         e.y - y - border.get_t_inset()) then 
-         return u
-      return \link_url
+      /map := browser.get_map(\map_id) | ipl.browser.Map()
+      return map.which_area(e.x - x - border.get_l_inset(), 
+                            e.y - y - border.get_t_inset()) | bg_area
    end
 
    private handle_lmpress(e)
@@ -842,7 +839,7 @@ class Img(Image)
 
    private handle_lmdrag(e)
       \held | fail
-      if which_url(e) === held then {
+      if \which_area(e).url === held then {
          if wrote ~=== held then {
             set_pointer("hand1")
             browser.msg(held.str(),, self)
@@ -860,9 +857,12 @@ class Img(Image)
    end
 
    private handle_in_chain(e)
-      local u
+      local u, t, a
       *parent_dialog.held = 0 | fail
-      if u := which_url(e) then {
+      t := which_area(e)
+      a := (\t).title
+      set_tooltip(a)
+      if u := \ (\t).url then {
          if wrote ~=== u then {
             set_pointer("hand1")
             browser.msg(u.str(),, self)
@@ -882,19 +882,19 @@ class Img(Image)
          Gui.style.fill_selection_rectangle(cbwin, x, y, w, h)
    end
 
-   public new(browser, img_url, link_url, alt, form, map)
+   public new(browser, context, img_url, alt, form, map_id)
       cast(self,Image).new()
       clear_constraints()
       self.browser := browser
+      self.context := context
       self.img_url := img_url
       self.form := form
-      self.link_url := link_url
       self.alt := alt
-      self.map := map
+      self.map_id := map_id
       if \form then {
          set_pointer("hand1")
          connect(self.handle_form_lrelease, Event.MOUSE_LEFT_RELEASE)
-      } else if \map | \link_url then {
+      } else if \map_id | \context.url then {
          connect(self.handle_in_chain, Dialog.IN_POINT_CHAIN)
          connect(self.handle_lmdrag, Event.MOUSE_LEFT_DRAG)
          connect(self.handle_lmpress, Event.MOUSE_LEFT_PRESS)
@@ -903,6 +903,8 @@ class Img(Image)
          connect(self.handle_lmpress, Event.MOUSE_MIDDLE_PRESS)
          connect(self.handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
          connect(self.handle_exit, Event.MOUSE_EXIT)
+         bg_area := MapArea(,, context.url, context.title)
+         set_tooltip_follows_mouse(&yes)
       }
       connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
       set_border(NullBorder())
@@ -2056,12 +2058,53 @@ record Context(form, form_label, url, fg, font, align, pre, nowrap, underline, s
 
 class MapArea()
    public const
-      shape, coords, url
+      shape, coords, url, title
 
-   public new(shape, coords, url)
+   public contains(x, y)
+      return case shape of {
+         "rect": check_rect(x, y)
+         "poly": check_poly(x, y)
+         "circle": check_circle(x, y)
+         "default": &null
+      }
+   end
+
+   private check_rect(x, y)
+      return (coords[1] <= x <= coords[3]) & (coords[2] <= y <= coords[4])
+   end
+
+   private check_circle(x, y)
+      return (x - coords[1]) ^ 2 + (y - coords[2]) ^ 2 <= coords[3] ^ 2
+   end
+
+   # Adapted from :-
+   # http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+   #
+   private check_poly(x, y)
+      local i, j, n, c, xi, yi, xj, yj, b1, b2
+      if *coords % 2 = 1 | *coords < 6 then
+         fail
+      j := n := *coords / 2
+      c := 0
+      every i := 1 to n do {
+         xi := coords[2 * i - 1]
+         yi := coords[2 * i]
+         xj := coords[2 * j - 1]
+         yj := coords[2 * j]
+         b1 := if yi > y then 1 else 0
+         b2 := if yj > y then 1 else 0
+         if b1 ~= b2 & (x < (xj - xi) * (y - yi) / (yj - yi) + xi) then
+            c +:= 1
+         j := i
+      }
+      return c % 2 = 1
+   end
+
+   public new(shape, coords, url, title)
       self.shape := shape
       self.coords := coords
       self.url := url
+      self.title := title
       return
    end
 end
@@ -2070,19 +2113,17 @@ class Map()
    private const
       l
 
-   public over_url(x, y)
-      local e, co
+   public which_area(x, y)
+      local e
       every e := !l do {
-         co := e.coords
-         case e.shape of {
-            "rect": if (co[1] <= x <= co[3]) & (co[2] <= y <= co[4]) then
-               return e.url
-         }
+         if e.contains(x, y) then
+            return e
       }
    end
 
    public add_area(area)
       put(l, area)
+      return self
    end
 
    public new()
@@ -3049,7 +3090,7 @@ class Browser(ComponentScrollArea)
       if (s := e.get_attribute(u"USEMAP")) & (s[1] == u"#") then
          map := default.map(string(s[2:0]))
       alt := e.get_attribute(u"ALT")
-      q := Img(self, url, context.url, alt,, map)
+      q := Img(self, context, url, alt,, map)
       do_width_param(e, q)
       do_height_param(e, q)
       border := (0 < integer(e.get_attribute(u"BORDER"))) | 0
@@ -3207,7 +3248,7 @@ class Browser(ComponentScrollArea)
          "image" : {
             if url := mk_link(e.get_attribute(u"SRC")) then {
                alt := e.get_attribute(u"ALT")
-               q := Img(self, url,, alt, context.form)
+               q := Img(self, context, url, alt, context.form)
                start_worker(Req(self, url, page_url, q.got_data, page_resp.kind))
                if e.get_attribute(u"DISABLED") then
                   q.set_is_shaded(&yes)
@@ -3907,14 +3948,14 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_area(e, p, context)
-      local mc, s, coords
+      local mc, coords
       mc := \context.map | fail
-      s := e.get_attribute(u"COORDS") | fail
       coords := []
-      every put(coords, integer(separate(s, ',; ')))
+      every put(coords, integer(separate(e.get_attribute(u"COORDS"), ',; ')))
       mc.map.add_area(MapArea(map(string(e.get_attribute(u"SHAPE"))), 
                               coords,
-                              mk_link(e.get_attribute(u"HREF"))))
+                              mk_link(e.get_attribute(u"HREF")),
+                              context.title))
    end
 
    private traverse_abbr(e, p, context)
