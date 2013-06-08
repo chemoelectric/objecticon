@@ -804,13 +804,17 @@ class Img(Image)
    end
 
    private handle_lrelease(e, src)
-      if \wrote then
+      if \wrote then {
+         set_highlight()
          browser.link_left_clicked(wrote)
+      }
    end
 
    private handle_mrelease(e)
-      if \wrote then
+      if \wrote then {
+         set_highlight()
          browser.link_middle_clicked(wrote)
+      }
    end
 
    private handle_form_lrelease(e, src)
@@ -821,20 +825,40 @@ class Img(Image)
    private handle_exit(e)
       if \wrote then {
          browser.clear_msg(self)
+         set_highlight()
          wrote := &null
          set_pointer()
       }
    end
 
+   package gen_areas()
+      # Non-null bg_area implies we have some areas (ie, links) (see constructor below).
+      if \bg_area then
+         suspend get_map().gen_areas() | bg_area
+   end
+
+   private get_map()
+      /map := browser.get_map(\map_id) | ipl.browser.Map()
+      return map
+   end
+
    private which_area(e)
       in_region(e) | fail
-      /map := browser.get_map(\map_id) | ipl.browser.Map()
-      return map.which_area(e.x - x - border.get_l_inset(), 
-                            e.y - y - border.get_t_inset()) | bg_area
+      return get_map().which_area(e.x - x - border.get_l_inset(), 
+                                  e.y - y - border.get_t_inset()) | bg_area
    end
 
    private handle_lmpress(e)
-      held := \wrote
+      if \wrote then {
+         set_highlight(wrote)
+         held := wrote
+      }
+   end
+
+   private set_highlight(u)
+      set_fg(if \u then browser.page_alink_color else context.fg)
+      reset()
+      return self
    end
 
    private handle_lmdrag(e)
@@ -844,9 +868,11 @@ class Img(Image)
             set_pointer("hand1")
             browser.msg(held.str(),, self)
             wrote := held
+            set_highlight(wrote)
          }
       } else if \wrote then {
          browser.clear_msg(self)
+         set_highlight()
          wrote := &null
          set_pointer()
       }
@@ -2113,6 +2139,10 @@ class Map()
    private const
       l
 
+   public gen_areas()
+      suspend .!l
+   end
+
    public which_area(x, y)
       local e
       every e := !l do {
@@ -3068,7 +3098,9 @@ class Browser(ComponentScrollArea)
    private add_component(p, c, context, align)
       /align := "absbottom"
       put(p.input, ComponentCmd(c, context, align))
-      c.set_tooltip(\context.title)
+      c.set_tooltip(context.title).
+         set_fg(context.fg).
+         set_font(context.font)
       p.add(c)
    end
 
@@ -3111,8 +3143,6 @@ class Browser(ComponentScrollArea)
    end
 
    private add_form_component(e, p, q, context)
-      q.set_fg(context.fg).
-         set_font(context.font)
       if e.get_attribute(u"DISABLED") then
          q.set_is_shaded(&yes)
       else
@@ -3592,16 +3622,6 @@ class Browser(ComponentScrollArea)
       cellpadding := (0 < integer(e.get_attribute(u"CELLPADDING"))) | 0
       cellspacing := (0 <= integer(e.get_attribute(u"CELLSPACING"))) | 2
 
-      if (hspace | vspace) > 0 then {
-         if border > 0 then
-            tbl.set_border(CompoundBorder().
-                           set_outer(EmptyBorder().set_insets(hspace, hspace, vspace, vspace)).
-                           set_inner(PlainBorder().set_line_width(border)))
-         else
-            tbl.set_border(EmptyBorder().set_insets(hspace, hspace, vspace, vspace))
-      } else if border > 0 then
-         tbl.set_border(PlainBorder().set_line_width(border))
-
       tbl.content.layout_delegate.set_doi(cellspacing).set_dii(cellspacing/2)
       tbl.set_bg(convert_color(e, u"BGCOLOR"))
 
@@ -3652,7 +3672,25 @@ class Browser(ComponentScrollArea)
             tbl.content.set_hrules(Set{2 to ct.y - 1})
          }
       }
-      t := \c.table.caption | tbl
+
+      if t := \c.table.caption then {
+         if (hspace | vspace) > 0 then
+            t.set_border(EmptyBorder().set_insets(hspace, hspace, vspace, vspace))
+         if border > 0 then
+            tbl.set_border(PlainBorder().set_line_width(border))
+      } else {
+         if (hspace | vspace) > 0 then {
+            if border > 0 then
+               tbl.set_border(CompoundBorder().
+                              set_outer(EmptyBorder().set_insets(hspace, hspace, vspace, vspace)).
+                              set_inner(PlainBorder().set_line_width(border)))
+            else
+               tbl.set_border(EmptyBorder().set_insets(hspace, hspace, vspace, vspace))
+         } else if border > 0 then
+            tbl.set_border(PlainBorder().set_line_width(border))
+         t := tbl
+      }
+
       if align === (Align.L | Align.R) then
          add_component(p, t, c, align)
       else {
@@ -4317,7 +4355,7 @@ class Browser(ComponentScrollArea)
          if is(c, TextSelection) then
             put(l, \c.textout.attr.url)
          else if is(c, Img) then
-            put(l, \c.link_url)
+            every put(l, \c.gen_areas().url)
       }
       if *l > 0 then
          links_selection := l
