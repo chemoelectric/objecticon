@@ -779,10 +779,18 @@ class Img(Image)
             #
             if iw := integer(member(constraints, "fix_w")) then
                set_width(iw + border.get_total_width())
-            else if iw := integer(member(constraints, "pct_w")) then
-               set_width(1 + border.get_total_width())
+            else if integer(member(constraints, "pct_w")) then {
+               # % width not allowed if no breaking mode, since it
+               # would mean we couldn't calculate the blob widths in
+               # the row (and hence the preferred width of the
+               # TextFlow).
+               if \context.nowrap | \context.pre then
+                  remove_constraint("pct_w")
+               else
+                  set_width(1 + border.get_total_width())
+            }
             if ih := integer(member(constraints, "fix_h")) then {
-               if /iw then 
+               if /w_spec then 
                   set_width(ih * win.get_width() / win.get_height() + border.get_total_width())
                else 
                   set_height(ih + border.get_total_height())
