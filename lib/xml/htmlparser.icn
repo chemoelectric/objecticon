@@ -94,7 +94,7 @@ class HtmlParser()
 
       container := set("LI", "DD", "DT", "TD", "TR", "TH", "THEAD", "TBODY", "TFOOT", "TABLE",
                        "UL", "OL", "DL", "BUTTON", "CAPTION", "BLOCKQUOTE", "FIELDSET", "LEGEND",
-                       "BODY", "HTML")
+                       "FORM", "BODY", "HTML")
 
       TAG_INFO := table(TagInfo(container, set()),
                         "LI", TagInfo(set("UL", "OL"), set("LI")),
@@ -113,6 +113,8 @@ class HtmlParser()
                         "UL", TagInfo(set(), set()),
                         "OL", TagInfo(set(), set()),
                         "DL", TagInfo(set(), set()),
+                        "BUTTON", TagInfo(set(), set()),
+                        "FORM", TagInfo(set(), set()),
                         "CAPTION", TagInfo(set(), set()),
                         "BLOCKQUOTE", TagInfo(set(), set()),
                         "FIELDSET", TagInfo(set(), set()),
