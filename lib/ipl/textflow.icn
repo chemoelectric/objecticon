@@ -805,14 +805,16 @@ class TextFlow(Component)
                   prefw := maxw := max(((right_margin - row_x - row_width) * i) / 100, prefw)
             }
             Img: {
+               # For Img, specified widths refer to image width, excluding any border.
                if /calculating then
-                  prefw := maxw := max((compute_w * i) / 100, prefw)
+                  prefw := maxw := max((compute_w * i) / 100 + cmd.c.border.get_total_width(), prefw)
                else {
-                  # Since prefw/maxw is set to 1 (see Img), we set it
-                  # to the actual image size, so the max width is calculated
-                  # on that basis.
+                  # Since prefw/maxw is set to 1 + the border width
+                  # (see Img), we set it to the actual image size +
+                  # the border, so the max width is calculated on that
+                  # basis.
                   if not is_top_level() then
-                     maxw := (\cmd.c.win).get_width()
+                     maxw := (\cmd.c.win).get_width() + cmd.c.border.get_total_width()
                }
             }
             Tbl: {

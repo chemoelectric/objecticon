@@ -778,14 +778,14 @@ class Img(Image)
             # image to shrink below its actual width.
             #
             if iw := integer(member(constraints, "fix_w")) then
-               set_width(iw)
+               set_width(iw + border.get_total_width())
             else if iw := integer(member(constraints, "pct_w")) then
-               set_width(1)
+               set_width(1 + border.get_total_width())
             if ih := integer(member(constraints, "fix_h")) then {
                if /iw then 
-                  set_width(ih * win.get_width() / win.get_height())
+                  set_width(ih * win.get_width() / win.get_height() + border.get_total_width())
                else 
-                  set_height(ih)
+                  set_height(ih + border.get_total_height())
             }
             img_name := res.fname
             img_data := res.data
