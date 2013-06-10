@@ -3619,8 +3619,6 @@ class Browser(ComponentScrollArea)
       local ct, tbl, border, hspace, vspace, cellpadding, cellspacing, cell_border, align, c, i, t
 
       tbl := Tbl()
-      do_width_param(e, tbl)
-      do_height_param(e, tbl)
       border := (0 < integer(e.get_attribute(u"BORDER"))) | 0
       # hspace, vspace are non-standard, but firefox has them.
       hspace := (0 < integer(e.get_attribute(u"HSPACE"))) | 0
@@ -3697,6 +3695,9 @@ class Browser(ComponentScrollArea)
          t := tbl
       }
 
+      do_width_param(e, t)
+      do_height_param(e, t)
+
       if align === (Align.L | Align.R) then
          add_component(p, t, c, align)
       else {
@@ -3726,6 +3727,7 @@ class Browser(ComponentScrollArea)
       traverse(e, cap, c)
       main := TextFlow(self)
       add_component(main, ct.tbl, context)
+      ct.tbl.set_constraint("pct_w", 100)
       align := convert_cap_align(e, u"ALIGN") | Align.T
       case align of {
          Align.T: {
