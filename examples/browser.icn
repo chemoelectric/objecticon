@@ -99,16 +99,6 @@ class BrowserDialog(Dialog)
       visited_set,
       pool,
       tabs,
-      prev_button,
-      message_label,
-      stop_button,
-      paste_url_button,
-      browser,
-      refresh_button,
-      close_button,
-      home_button,
-      search_field,
-      next_button,
       file_dialog,
       directory_dialog,
       downloads,
@@ -536,7 +526,7 @@ class DownloadTab(TabItem)
       if /data then
          fail
       data ?:= tab(upto('\r\n'))
-      search_field.set_contents(data)
+      search_field.set_contents(Text.liberal_ucs(data))
       parent_dialog.set_focus(search_field.find_focus(e))
    end
 
@@ -1105,7 +1095,7 @@ class BrowserTab(TabItem, BrowserUI)
       if /data then
          fail
       data ?:= tab(upto('\r\n'))
-      search_field.set_contents(data)
+      search_field.set_contents(Text.liberal_ucs(data))
       parent_dialog.set_focus(search_field.find_focus(e))
    end
 
