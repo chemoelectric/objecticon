@@ -372,7 +372,7 @@ class Worker()
    # rather than ucs.  This interacts poorly with the visited list and
    # the textfield in the client, so convert to a ucs-based URL.
    #
-   private ensure_ucs_url(url)
+   private static ensure_ucs_url(url)
       if type(url.scheme) == "ucs" then
          return url
       return URL(Text.liberal_ucs(url.str())) | URL(u"invalid:url")
