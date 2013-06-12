@@ -17,9 +17,9 @@ http://www.cs.arizona.edu/icon/docs/ipd281.htm
 
 == Opening a window ==
 
-Use the static method `Window.open` to open a window.  This method returns a hidden window of size 1 pixel by 1 pixel, with default attributes.  These can then be modified using setter methods before the window is made visible by setting the canvas type to "normal".  For example :-
+Use the constructor of `Window` to open a window.  This gives a hidden window of size 1 pixel by 1 pixel, with default attributes.  These can then be modified using setter methods before the window is made visible by setting the canvas type to "normal".  For example :-
 {{{
-   w := Window.open().
+   w := Window().
       set_size(200,200).
       set_fg("red").
       set_bg("light grey").
@@ -111,19 +111,19 @@ Image data is represented using the `Pixels` class.  This is just a two-dimensio
  * An image grabbed from part of a `Window`
  * A blank image
 
-To create an instance from an image file use the `Pixels.open` static method, passing the filename.  `Pixels.open` is also used to create an instance from raw data.  This can easily be done using the preprocessor `$load` directive to compile image data into the executable.  An example of this would be
+To create an instance from an image file use the `Pixels` constructor, passing the filename.  The constructor is also used to create an instance from raw data.  This can easily be done using the preprocessor `$load` directive to compile image data into the executable.  An example of this would be
 {{{
 $load FLINTSTONES "/tmp/flintstones.jpg"
 
 ...
-   i := Pixels.open(FLINTSTONES)
+   i := Pixels(FLINTSTONES)
 ...
 }}}
 The `$load` directive defines the preprocessor symbol `FLINTSTONES` with the value being a string containing the contents of the specified file.   An advantage of using this technique is that the image file does not of course have to be present at runtime (only at compile time).
 
-To get pixels from a `Window`, use its `get_pixels` method, and to create a new blank image,  use the `Pixels.blank` static method, passing width, height and optionally the desired underlying format.  For example :-
+To get pixels from a `Window`, use its `get_pixels` method, and to create a new blank image,  use the `Pixels` constructor, passing width, height and optionally the desired underlying format.  For example :-
 {{{
-   i := Pixels.blank(3, 3, Pixels.RGBA32)
+   i := Pixels(3, 3, Pixels.RGBA32)
 }}}
 creates a 3x3 image using 32 bits per pixel.  Some formats do not store an alpha channel; in this case reading back from the image always gives an opaque pixel.
 
@@ -153,7 +153,7 @@ $load CAT "/tmp/cheetah_cubs.jpg"
 
 procedure circle_mask(d)
    local p, i, j, r2, r, s, a
-   p := Pixels.blank(d, d, Pixels.A8)
+   p := Pixels(d, d, Pixels.A8)
    r := d / 2
    r2 := r * r
    every j := 0 to d - 1 do
@@ -169,14 +169,14 @@ procedure main()
    local cat, cm, w
 
    # Create a image of the cheetahs
-   cat := Pixels.open(CAT) | stop(&why)
+   cat := Pixels(CAT) | stop(&why)
 
    # Create a circular mask image.  The parameter gives the diameter.
    # The further away from the centre of the circle, the more
    # transparent is the mask, with the centre being opaque.
    cm := circle_mask(cat.get_width())
 
-   w := Window.open().
+   w := Window().
       # Copy the circle mask to w; "source" must be used here so that
       # the mask is copied to w (rather than combined with the w's
       # underlying background).

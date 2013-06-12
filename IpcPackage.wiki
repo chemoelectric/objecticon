@@ -27,7 +27,7 @@ procedure main()
 
    c := Process{run()}
    c.start()
-   c.join()
+   c.close()
 
    write("Finished")
 end
@@ -39,7 +39,7 @@ In parent
 In child
 Finished
 }}}
-The child process body is given (as a co-expression) in the `Process` constructor.  In the parent process in the `main` procedure, invoking the `start()` method of the child begins the process, whilst the `join()` method waits for the child to finish.
+The child process body is given (as a co-expression) in the `Process` constructor.  In the parent process in the `main` procedure, invoking the `start()` method of the child begins the process, whilst the `close()` method waits for the child to finish.
 
 This is very straightforward, but for things become more complicated when the child and parent process wish to communicate with one another.  Consider the following expanded version of the above program.
 
@@ -64,7 +64,7 @@ procedure main()
 
    c := Process{run()}
    c.start()
-   c.join()
+   c.close()
 
    write("Finished, var=", var)
 end
@@ -103,11 +103,11 @@ procedure main()
 
    c := Process{run()}
    c.start()
-   c.join()
+   c.close()
 
    write("Finished, var=", var.get_value())
 
-   var.remove()
+   var.close()
 end
 }}}
 
@@ -118,7 +118,7 @@ In child, setting var
 Finished, var=2
 }}}
 
-Here, var is an instance of the `Shm` class, and is created with the "factory" method `create_private()`.  The parameter `1` is just the initial value.  Then `get_value()` and `set_value()` are used to get/set the value of the object, and finally `remove()` cleans up the operating system resources used by the instance (if this is not done, it will be done automatically when the program ends, and a warning message output).  These various calls delegate their work to the C functions in the shared library.
+Here, var is an instance of the `Shm` class, and is created with the "factory" method `create_private()`.  The parameter `1` is just the initial value.  Then `get_value()` and `set_value()` are used to get/set the value of the object, and finally `close()` cleans up the operating system resources used by the instance (if this is not done, it will be done automatically when the program ends, and a warning message output).  These various calls delegate their work to the C functions in the shared library.
 
 More or less anything can be used as the parameter to `set_value()`, but note that the value is copied into and out of the shared variable, ie reference semantics do not apply.  So, for example :-
 {{{
@@ -179,10 +179,10 @@ procedure main()
       if i = 10 then 
          break
    }
-   c.join()
-   var.remove()
-   sem1.remove()
-   sem2.remove()
+   c.close()
+   var.close()
+   sem1.close()
+   sem2.close()
 
    write("Finished okay")
 end
@@ -228,8 +228,8 @@ procedure main()
       if i = 10 then 
          break
    }
-   c.join()
-   mq.remove()
+   c.close()
+   mq.close()
 
    write("Finished")
 end
@@ -254,4 +254,4 @@ This message queue may then be opened by another process, possibly in another pr
 }}}
 Similar factory procedures exist for semaphores and shared memory.
 
-There is one difference between "private" and "public" resources: the "public" variety aren't destroyed automatically at the end of the creating process; they have to be destroyed explicitly either by calling the `remove()` method, or ultimately using the Unix commands `ipcs` and `ipcrm`.
+There is one difference between "private" and "public" resources: the "public" variety aren't destroyed automatically at the end of the creating process; they have to be destroyed explicitly either by calling the `close()` method, or ultimately using the Unix commands `ipcs` and `ipcrm`.

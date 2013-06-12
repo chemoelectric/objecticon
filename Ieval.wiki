@@ -14,10 +14,10 @@ $ ieval -i lang,graphics
 7
 13
 18
-> w := Window.open()
-object graphics.Window#1(wbp=136611152;transient_for=&null)
+> w := Window()
+object graphics.Window#1(ptr=136611152)
 > w.close()
-object graphics.Window#1(wbp=0;transient_for=&null)
+object graphics.Window#1(ptr=0)
 > ^D
 $
 }}}
@@ -47,8 +47,10 @@ Remaining arguments specify files which are processed before command line input 
  * *!quiet* Don't force evaluation of all of the values in the expression, and don't output any expression value
  * *dir(x)* With no parameter, show all global variables.  With a parameter, show information about it.
  * *!hist* Show the command line history
+ * *old(s)* List commands in the history containing string `s`.
  * *cmd(n)* Run command number `n` again.
  * *hlim(n)* Set the history limit to `n`.
  * *elim(n)* Set the expression limit to `n`.
  * *llim(n)* Set the gui log area line limit to `n`.
  * *oos* The `ObjectOutputStream` used to output results.
+ * *out* The `OutputStream` of the terminal (or window if using the graphical interface).

@@ -16,11 +16,11 @@ The `io` package also provides some procedures which emulate the old Icon builti
 
 = File I/O =
 
-The class `FileStream` provides conventional filesystem I/O.  To open a new `FileStream`, use the static `open` method :-
+The class `FileStream` provides conventional filesystem I/O.  To open a new `FileStream`, use the constructor :-
 {{{
-   f := FileStream.open("test.txt", ior(FileOpt.WRONLY, 
-                                        FileOpt.TRUNC, 
-                                        FileOpt.CREAT)) | stop(&why)
+   f := FileStream("test.txt", ior(FileOpt.WRONLY, 
+                                   FileOpt.TRUNC, 
+                                   FileOpt.CREAT)) | stop(&why)
    f.write("some text")
    f.close()
 }}}
@@ -77,7 +77,7 @@ import io
 
 procedure main()
    local f
-   f := SocketStream.socket()
+   f := SocketStream()
    f.connect("inet:www.google.com:80") | stop(&why)
    f.writes("HEAD / HTTP/1.1\r\nConnection: close\r\n\r\n")
    while write(f.read())
@@ -116,7 +116,7 @@ procedure main()
    #
    # Create a socket and switch on non-blocking mode
    #
-   f := SocketStream.socket()
+   f := SocketStream()
    f.flag(FileOpt.NONBLOCK) | fail
 
    #

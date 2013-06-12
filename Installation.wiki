@@ -37,26 +37,28 @@ to see them.  The `configure` script prints a summary of features when it finish
 
 {{{
 Summary:-
-Install prefix         : /usr/local
+Installation prefix    : /usr/local
 X11 graphics           : yes
 jpeg library           : yes
-Xft anti-aliased fonts : yes
-Xpm                    : yes
+png library            : yes
 zlib compression       : yes
 dynamic loading        : yes
 mysql lib              : yes
+cairo lib              : yes
+ssl lib                : yes
 }}}
 
 The meaning of these various options is as follows.
 
  * *Install prefix* - The root of the place to install to.  By default `/usr/local`, but can be changed with the `configure` option `--prefix`.  Note that you can also choose to run Object Icon from the same directory it was built in.
- * *X11 graphics* - Determines whether the Icon graphics facilities are built. The following three options only apply if this is 'yes'.
+ * *X11 graphics* - Determines whether the Icon graphics facilities are built. The following two options only apply if this is 'yes'.
  * *jpeg library* -Allows loading of jpeg images.
- * *Xft anti-aliased fonts* - Fonts are drawn with smooth edges using the xft and freetype libraries. This looks nice, but is considerably slower than using traditional X bitmap fonts.  If this is a problem, you can force the use of traditional X11 bitmap fonts by giving `configure` the option `--without-xft`.
- * *Xpm* -Allows loading of xpm images.
+ * *png library* -Allows loading of png images.
  * *zlib compression* - This allows icode files to be compressed with the -Z flag given to `oit`.
  * *dynamic loading* -Allows shared library (.so) files containing native functions to be loaded at runtime.
- * *mysql lib* -Allows a dynamic library to be built which provides an interface to mysql.  Has no effect either way on the runtime system proper.
+ * *mysql lib* -Allows a dynamic library to be built which provides an interface to mysql (package `mysql`).  Neither this option, nor the following dynamic libraries, have any effect either way on the runtime system proper.
+ * *cairo lib* -Allows a dynamic library to be built which provides an interface to cairo graphics (package `cairo`).
+ * *ssl lib* -Allows a dynamic library to be built which provides an interface to the openssl library (see the class `io.SsslStream`).
 
 If you later wish to run `configure` again, please remember to run `make clean` afterwards in order to remove any object files built under the previous configuration.
 == Compilation ==
@@ -94,10 +96,12 @@ This command will take a couple of minutes to run.
 == Environment variables ==
 Object Icon requires some environment variables to be setup correctly.  To make doing this a bit easier, a file named `paths.sh` is provided which contains appropriate definitions.  Its location is printed by `make install`, or if you are running from the source distribution, it is in the distribution top-level directory.
 
-Include this file by adding a line like this to your `.bashrc` file (or equivalent)
+Include this file by adding a line like this to your `.bashrc` file (or equivalent); obviously the actual path will vary, and note the dot at the beginning of the line.
 {{{
-. /usr/local/lib/objecticon/paths.sh
+. /usr/local/lib/objecticon-2.xx/paths.sh
 }}}
 
+If you are using bash, you can also use the `source` command instead of the dot syntax; but don't try to run `paths.sh` directly, since its contents must be loaded into the current shell environment.
+
 == Uninstallation ==
-There is an uninstallation script named `uninstall.sh`.  Its location is printed by `make install`.  Running it will remove all of the files installed by `make install`.  Some empty directories may remain however.
+There is an uninstallation script named `uninstall.sh`.  Its location is also printed by `make install`.  Running it will remove all of the files installed by `make install`.  Some empty directories may remain however.
