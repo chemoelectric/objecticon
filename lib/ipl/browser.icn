@@ -2249,7 +2249,8 @@ class Browser(ComponentScrollArea)
       cursor_y,
       banded,
       text_selection,
-      links_selection
+      links_selection,
+      done_set_top_data
 
    public static const 
       COLORS,
@@ -2460,7 +2461,14 @@ class Browser(ComponentScrollArea)
          if (i > 0) | (i ~=== running) then {
             if i = 0 then {
                msg("Done", 1500)
-               page_fully_loaded()
+               # This flag will be &null if we haven't called
+               # set_top_data; this may happen if we cancel a
+               # request before downloading the top page data; in
+               # that case there is no need to do anything.
+               if \done_set_top_data then {
+                  done_set_top_data := &null
+                  page_fully_loaded()
+               }
             } else {
                r := worker_pool.read(self)
                s := i || " running requests"
@@ -2865,6 +2873,7 @@ class Browser(ComponentScrollArea)
       parent_dialog.resynch_pointer()
       setup_tabbing()
       page_loaded()
+      done_set_top_data := 1
    end
 
    private focus_scroll(e, c)
