@@ -542,13 +542,28 @@ procedure roman(n)
 
    initial equiv := ["","I","II","III","IV","V","VI","VII","VIII","IX"]
 
-   integer(n) > 0 | fail
+   n := (0 < integer(n)) | fail
    result := ""
    every arabic := !n do
       result := map(result,"IVXLCDM","XLCDM**") || equiv[arabic + 1]
    if find("*",result) then fail else return result
 
 end
+
+# Return the nth element of the sequence
+#       A,B,C,...Z,AA,AB,...,AZ,BA,... etc
+#
+procedure alphaseq(n)
+   local r
+   n := (0 < integer(n)) | fail
+   r := ""
+   while n > 0 do {
+      r := &ucase[(n - 1) % 26 + 1] || r
+      n := (n - 1) / 26
+   }
+   return r
+end
+
 
 # round real
 procedure round(r)		

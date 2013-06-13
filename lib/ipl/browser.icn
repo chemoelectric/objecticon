@@ -17,7 +17,8 @@ import
    ipl.strings,
    ipl.caseless,
    ipl.timegui,
-   ipl.colorgui
+   ipl.colorgui,
+   ipl.numbers
 
 $load BROKEN_LINK "rpp.BROKEN_LINK_24.gif"
 
@@ -148,14 +149,15 @@ class Cache()
    public get_status()
       local s, ce, n, sz, exp, ct, l
       s := "<html><title>Cache status</title>" || Browser.get_table_tag()
-      s ||:= "<tr><th align=left>Filename<th align=right>Size<th>&nbsp;Expiry<th align=left>Content&nbsp;type<th align=left>URL</tr>"
+      s ||:= "<tr><th align=left>Filename</th><th align=right>Size&nbsp;</th><th>Expiry</th><th align=left>Content&nbsp;type</th><th align=left>URL</th></tr>"
       every ce := !t do {
          n := Browser.limit_text(\ce.fname, 200) | "-"
          sz := Format.numeric_to_string(*ce.data, 0, ',')
          exp := format_expiry(ce.expiry)
          ct := ((\ce.content_type).type || "/" || ce.content_type.subtype) | "-"
          l := ce.url
-         s ||:= "<tr><td>" || n || "<td align=right>" || sz || "<td>&nbsp;" || exp || "<td>" || ct || "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
+         s ||:= "<tr><td>" || Browser.to_content(n) || "</td><td align=right>" || sz || "&nbsp;</td><td>" || exp ||
+                   "</td><td>" || ct || "</td>" || Browser.mk_anchor_cell(l) || "</tr>" 
       }
       s ||:= "</table></html>"
       return s
@@ -286,9 +288,10 @@ class Worker()
                      Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;&nbsp;'yyyy")
                   else
                      Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;'HH:mm")
-                  rs.out("<tr><td>" || t.mode_str || "&nbsp;<td>" || uname(t.uid, ucache) || "&nbsp;<td>" || grname(t.gid, gcache) ||
-                         "&nbsp;<td align=right>" || Format.numeric_to_string(t.size, 0, ',') || "<td>&nbsp;" || tf || "&nbsp;<td nowrap>" ||
-                         "<a href=\"file://" || URL.percent_encode(path.child(e[1]).canonical().str(), URL.UNRESERVED ++ '/') || "\">" || e[1] || "</a></tr>" || "\n")
+                  rs.out("<tr><td>" || t.mode_str || "&nbsp;</td><td>" || uname(t.uid, ucache) || "&nbsp;</td><td>" || grname(t.gid, gcache) ||
+                         "&nbsp;</td><td align=right>" || Format.numeric_to_string(t.size, 0, ',') || "&nbsp;</td><td>" || tf || "&nbsp;</td>" ||
+                         "<td nowrap><a href=\"file://" || URL.percent_encode(path.child(e[1]).canonical().str(), URL.UNRESERVED ++ '/') || "\">" || 
+                                 Browser.to_content(e[1]) || "</a></td></tr>\n")
                }
                rs.out("</table></html>")
                rs.str()
@@ -369,7 +372,7 @@ class Worker()
    # rather than ucs.  This interacts poorly with the visited list and
    # the textfield in the client, so convert to a ucs-based URL.
    #
-   private ensure_ucs_url(url)
+   private static ensure_ucs_url(url)
       if type(url.scheme) == "ucs" then
          return url
       return URL(Text.liberal_ucs(url.str())) | URL(u"invalid:url")
@@ -628,7 +631,7 @@ class WorkerPool()
       local s, w, st, t, l, r, k, c
       s := "<html><title>Worker pool status</title>"
 
-      s ||:= "<h1>Workers</h1>" || Browser.get_table_tag() || "<tr><th align=left>Serial<th align=left>Status<th align=left>URL</tr>"
+      s ||:= "<h1>Workers</h1>" || Browser.get_table_tag() || "<tr><th align=left>Serial</th><th align=left>Status</th><th align=left>URL</th></tr>"
       every w := !workers do {
          t := w.task
          st := if t.is_current() then "current"
@@ -637,17 +640,17 @@ class WorkerPool()
          else if t.is_ready() then "ready"
          else if t.is_active() then "active"
          else "stopped"
-         s ||:= "<tr><td>" || serial(w) || "<td>" || st
+         s ||:= "<tr><td>" || serial(w) || "</td><td>" || st || "</td>"
          if l := (\w.doing).url then
-            s ||:= "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a>"
+            s ||:= Browser.mk_anchor_cell(l)
          else
-            s ||:= "<td>"
+            s ||:= "<td/>"
          s ||:= "</tr>"          
       }
       s ||:= "</table>"
 
       if *queue > 0 then {
-         s ||:= "<h1>Queue</h1>" || Browser.get_table_tag() || "<tr><th align=left>Client<th align=left>Kind<th align=left>URL</tr>"
+         s ||:= "<h1>Queue</h1>" || Browser.get_table_tag() || "<tr><th align=left>Client</th><th align=left>Kind</th><th align=left>URL</th></tr>"
          every r := !!queue do {
             k := case r.kind of {
                Worker.NORMAL: "NORMAL"
@@ -656,9 +659,8 @@ class WorkerPool()
                Worker.DOWNLOAD: "DOWNLOAD"
                default: "-"
             }
-            l := r.url
             c := Class.get_name(r.client) || "#" || serial(r.client)
-            s ||:= "<tr><td>" || c || "<td>" || k || "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a>"
+            s ||:= "<tr><td>" || c || "</td><td>" || k || "</td>" || Browser.mk_anchor_cell(r.url) || "</tr>"
          }
          s ||:= "</table>"
       }
@@ -752,9 +754,9 @@ end
 
 class Img(Image)
    public const
-      browser, form, img_url, link_url
+      browser, context, form, img_url, alt, bg_area
    private readable
-      wrote, img_data, img_name, map, held
+      wrote, img_data, img_name, map, map_id, held
 
    package got_data(res)
       local iw, ih
@@ -776,14 +778,14 @@ class Img(Image)
             # image to shrink below its actual width.
             #
             if iw := integer(member(constraints, "fix_w")) then
-               set_width(iw)
-            else if iw := integer(member(constraints, "pct_w")) then
-               set_width(1)
+               set_width(iw + border.get_total_width())
+            else if integer(member(constraints, "pct_w")) then
+               set_width(1 + border.get_total_width())
             if ih := integer(member(constraints, "fix_h")) then {
-               if /iw then 
-                  set_width(ih * win.get_width() / win.get_height())
+               if /w_spec then 
+                  set_width(ih * win.get_width() / win.get_height() + border.get_total_width())
                else 
-                  set_height(ih)
+                  set_height(ih + border.get_total_height())
             }
             img_name := res.fname
             img_data := res.data
@@ -802,13 +804,17 @@ class Img(Image)
    end
 
    private handle_lrelease(e, src)
-      if \wrote then
-         browser.goto(wrote, browser.page_url, Worker.NORMAL)
+      if \wrote then {
+         set_highlight()
+         browser.link_left_clicked(wrote)
+      }
    end
 
    private handle_mrelease(e)
-      if \wrote then
-         browser.link_mrelease(wrote)
+      if \wrote then {
+         set_highlight()
+         browser.link_middle_clicked(wrote)
+      }
    end
 
    private handle_form_lrelease(e, src)
@@ -818,61 +824,78 @@ class Img(Image)
 
    private handle_exit(e)
       if \wrote then {
-         browser.clear_msg()
+         browser.clear_msg(self)
+         set_highlight()
          wrote := &null
          set_pointer()
       }
    end
 
-   private which_url(e)
-      local m, u
+   package gen_areas()
+      # Non-null bg_area implies we have some areas (ie, links) (see constructor below).
+      if \bg_area then
+         suspend get_map().gen_areas() | bg_area
+   end
+
+   private get_map()
+      /map := browser.get_map(\map_id) | ipl.browser.Map()
+      return map
+   end
+
+   private which_area(e)
       in_region(e) | fail
-      if m := browser.get_map(\map) &
-         u := m.over_url(e.x - x - border.get_l_inset(), 
-                         e.y - y - border.get_t_inset()) then 
-         return u
-      return \link_url
+      return get_map().which_area(e.x - x - border.get_l_inset(), 
+                                  e.y - y - border.get_t_inset()) | bg_area
    end
 
-   private handle_lpress(e)
-      held := wrote
+   private handle_lmpress(e)
+      if \wrote then {
+         set_highlight(wrote)
+         held := wrote
+      }
    end
 
-   private handle_ldrag(e)
-      local u
-      if u := which_url(e) & u === held then {
-         if wrote ~=== u then {
+   private set_highlight(u)
+      set_fg(if \u then browser.page_alink_color else context.fg)
+      reset()
+      return self
+   end
+
+   private handle_lmdrag(e)
+      \held | fail
+      if \which_area(e).url === held then {
+         if wrote ~=== held then {
             set_pointer("hand1")
-            browser.msg(u.str())
-            wrote := u
+            browser.msg(held.str(),, self)
+            wrote := held
+            set_highlight(wrote)
          }
       } else if \wrote then {
-         browser.clear_msg()
+         browser.clear_msg(self)
+         set_highlight()
          wrote := &null
          set_pointer()
       }
-   end
-
-   public get_pointer(e)
-      if /form then
-         handle_move(e)
-      return \self.pointer
    end
 
    package wants_lpress(e)
       return \wrote | \form
    end
 
-   private handle_move(e)
-      local u
-      if u := which_url(e) then {
+   private handle_in_chain(e)
+      local u, t, a
+      *parent_dialog.held = 0 | fail
+      t := which_area(e)
+      a := (\t).title
+      set_tooltip(a)
+      if u := \ (\t).url then {
          if wrote ~=== u then {
             set_pointer("hand1")
-            browser.msg(u.str())
+            browser.msg(u.str(),, self)
             wrote := u
          }
       } else if \wrote then {
-         browser.clear_msg()
+         browser.clear_msg(self)
          wrote := &null
          set_pointer()
       }
@@ -885,24 +908,29 @@ class Img(Image)
          Gui.style.fill_selection_rectangle(cbwin, x, y, w, h)
    end
 
-   public new(browser, img_url, link_url, form, map)
+   public new(browser, context, img_url, alt, form, map_id)
       cast(self,Image).new()
       clear_constraints()
       self.browser := browser
+      self.context := context
       self.img_url := img_url
       self.form := form
-      self.link_url := link_url
-      self.map := map
+      self.alt := alt
+      self.map_id := map_id
       if \form then {
          set_pointer("hand1")
          connect(self.handle_form_lrelease, Event.MOUSE_LEFT_RELEASE)
-      } else if \map | \link_url then {
-         connect(self.handle_move, Event.MOUSE_MOVEMENT)
-         connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
-         connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
+      } else if \map_id | \context.url then {
+         connect(self.handle_in_chain, Dialog.IN_POINT_CHAIN)
+         connect(self.handle_lmdrag, Event.MOUSE_LEFT_DRAG)
+         connect(self.handle_lmpress, Event.MOUSE_LEFT_PRESS)
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+         connect(self.handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
+         connect(self.handle_lmpress, Event.MOUSE_MIDDLE_PRESS)
          connect(self.handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
          connect(self.handle_exit, Event.MOUSE_EXIT)
+         bg_area := MapArea(,, context.url, context.title)
+         set_tooltip_follows_mouse(&yes)
       }
       connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
       set_border(NullBorder())
@@ -1120,7 +1148,7 @@ class FormBrowse(Component, FormEntry, HasAscent)
    end
 
    public get_ascent() 
-      return cbwin.get_font_ascent() + Gui.Y_INSET
+      return cbwin.get_font_ascent() + tf.border.get_t_inset()
    end
 
    public reset_form()
@@ -1217,7 +1245,7 @@ class FormDateField(DateField, FormEntry, HasAscent)
       init_val
 
    public get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public reset_form()
@@ -1252,7 +1280,7 @@ class FormWeekField(WeekField, FormEntry, HasAscent)
       init_val
 
    public get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public reset_form()
@@ -1320,7 +1348,7 @@ class FormTimeField(TimeField, FormEntry, HasAscent)
    end
 
    public get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public static parse(s)
@@ -1411,7 +1439,7 @@ class FormTimezoneField(TimezoneField, FormEntry, HasAscent)
    end
 
    public get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public new(init_val)
@@ -1446,7 +1474,7 @@ class FormYearField(YearField, FormEntry, HasAscent)
    end
 
    public get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public new(init_val)
@@ -1478,7 +1506,7 @@ class FormMonthField(MonthField, FormEntry, HasAscent)
    end
 
    public get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public new(init_val)
@@ -1651,7 +1679,7 @@ class FormNumberField(RangeSpin, FormEntry, HasAscent)
    end
 
    public get_ascent() 
-      return cbwin.get_font_ascent() + border.get_t_inset()
+      return cbwin.get_font_ascent() + border.get_t_inset() + view.border.get_t_inset()
    end
 
    public new(init_val)
@@ -1960,17 +1988,19 @@ class Form()
       # Validate form.
       every c := !items do
          c.validate_form() | {
+            if is(c, Component) then
+               browser.parent_dialog.set_focus(c.gen_focusable())
             browser.msg("Invalid form: " || &why)
             fail
          }
 
-      if map(method) == "post" then {
+      if method == "post" then {
          if map(enctype) == "multipart/form-data" then
-            browser.goto(url, browser.page_url, Worker.NORMAL, make_cgi_message(ev, src))
+            browser.goto(url, browser.page_url, make_cgi_message(ev, src))
          else 
-            browser.goto(url, browser.page_url, Worker.NORMAL, make_cgi_table(ev, src))
+            browser.goto(url, browser.page_url, make_cgi_table(ev, src))
       } else
-         browser.goto(url.with_cgi_parameters(make_cgi_table(ev, src)), browser.page_url, Worker.NORMAL)
+         browser.goto(url.with_cgi_parameters(make_cgi_table(ev, src)), browser.page_url)
    end
 
    public add(name, item)
@@ -2044,22 +2074,63 @@ end
 record TableContext(tbl, caption, x, y, occ, cell_border, tr, rowgroups, colgroups, curr_colgroup)
 record TableColGroup(align, valign, width, span, cols)
 record TableCol(align, valign, width, span)
-record ListContext(tbl, index, root)
+record ListContext(tbl, index, type, kind)
 record DefListContext(tbl)
 record FieldSetContext(legend)
 record MapContext(map)
 record SelectContext(options, optgroup)
-record Context(base, form, form_label, url, fg, link_fg, font, align, pre, nowrap, underline, strike, 
-               face, size, bold, italic, kind, table, list, def_list, fieldset, select, map)
+record Context(form, form_label, url, fg, font, align, pre, nowrap, underline, strike, underdash, mark,
+               face, size, bold, italic, table, list, def_list, fieldset, select, map, title)
 
 class MapArea()
    public const
-      shape, coords, url
+      shape, coords, url, title
 
-   public new(shape, coords, url)
+   public contains(x, y)
+      return case shape of {
+         "rect": check_rect(x, y)
+         "poly": check_poly(x, y)
+         "circle": check_circle(x, y)
+         "default": &null
+      }
+   end
+
+   private check_rect(x, y)
+      return (coords[1] <= x <= coords[3]) & (coords[2] <= y <= coords[4])
+   end
+
+   private check_circle(x, y)
+      return (x - coords[1]) ^ 2 + (y - coords[2]) ^ 2 <= coords[3] ^ 2
+   end
+
+   # Adapted from :-
+   # http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+   #
+   private check_poly(x, y)
+      local i, j, n, c, xi, yi, xj, yj, b1, b2
+      if *coords % 2 = 1 | *coords < 6 then
+         fail
+      j := n := *coords / 2
+      c := 0
+      every i := 1 to n do {
+         xi := coords[2 * i - 1]
+         yi := coords[2 * i]
+         xj := coords[2 * j - 1]
+         yj := coords[2 * j]
+         b1 := if yi > y then 1 else 0
+         b2 := if yj > y then 1 else 0
+         if b1 ~= b2 & (x < (xj - xi) * (y - yi) / (yj - yi) + xi) then
+            c +:= 1
+         j := i
+      }
+      return c % 2 = 1
+   end
+
+   public new(shape, coords, url, title)
       self.shape := shape
       self.coords := coords
       self.url := url
+      self.title := title
       return
    end
 end
@@ -2068,19 +2139,21 @@ class Map()
    private const
       l
 
-   public over_url(x, y)
-      local e, co
+   public gen_areas()
+      suspend .!l
+   end
+
+   public which_area(x, y)
+      local e
       every e := !l do {
-         co := e.coords
-         case e.shape of {
-            "rect": if (co[1] <= x <= co[3]) & (co[2] <= y <= co[4]) then
-               return e.url
-         }
+         if e.contains(x, y) then
+            return e
       }
    end
 
    public add_area(area)
       put(l, area)
+      return self
    end
 
    public new()
@@ -2090,9 +2163,11 @@ class Map()
 end
 
 record HistoryEntry(url,          # URL displayed (on a redirect may differ from that requested) 
+                    title,        # Page title
                     referer,      # referer URL
                     form_values,  # Cached values of form components; updated when we move away from the page 
                     form_data,    # POST data used to get the page; on a redirect will always be null
+                    focus_index,  # Index of focused component on moving away
                     area_x,
                     area_y
                     ) 
@@ -2102,12 +2177,13 @@ abstract class BrowserUI()
    public abstract clear_msg()
    public abstract page_loaded()
    public abstract update_grey(gs)
-   public abstract set_title(s)
-   public abstract link_mrelease(url)
+   public abstract link_left_clicked(url)
+   public abstract link_middle_clicked(url)
    public abstract create_link_menu(url)
    public abstract create_page_menu()
    public abstract create_image_menu(url, img_name, img_data, link_url)
    public abstract browse_for_file()
+   public abstract is_visited(url)
 end
 
 class BrowserPrimarySelectionOwner(TextSelectionOwner)
@@ -2144,21 +2220,28 @@ class Browser(ComponentScrollArea)
       forms,
       labels,
       form_tab_children,
-      curr_history_entry,   # History entry currently being viewed.
       scroll_ticker,
       scroll_ticker_interval,
       h_direction,
       v_direction,
-      primary_selection_owner
+      primary_selection_owner,
+      msg_owner
 
    private readable
       history,
       history_pos,
+      curr_history_entry,   # History entry currently being viewed.
       page_url,
       page_data,
       page_name,
       page_title,
       page_links,
+      page_base,
+      page_resp,
+      page_text_color,
+      page_link_color,
+      page_alink_color,
+      page_vlink_color,
       running,
       mark_x,
       mark_y,
@@ -2166,7 +2249,8 @@ class Browser(ComponentScrollArea)
       cursor_y,
       banded,
       text_selection,
-      links_selection
+      links_selection,
+      done_set_top_data
 
    public static const 
       COLORS,
@@ -2178,22 +2262,147 @@ class Browser(ComponentScrollArea)
 
    private static init()
       COLORS := table(,
+                      "aliceblue", "#F0F8FF",
+                      "antiquewhite", "#FAEBD7",
                       "aqua", "#00FFFF",
-                      "black", "#x000000",
-                      "blue", "#0000CC",
+                      "aquamarine", "#7FFFD4",
+                      "azure", "#F0FFFF",
+                      "beige", "#F5F5DC",
+                      "bisque", "#FFE4C4",
+                      "black", "#000000",
+                      "blanchedalmond", "#FFEBCD",
+                      "blue", "#0000FF",
+                      "blueviolet", "#8A2BE2",
+                      "brown", "#A52A2A",
+                      "burlywood", "#DEB887",
+                      "cadetblue", "#5F9EA0",
+                      "chartreuse", "#7FFF00",
+                      "chocolate", "#D2691E",
+                      "coral", "#FF7F50",
+                      "cornflowerblue", "#6495ED",
+                      "cornsilk", "#FFF8DC",
+                      "crimson", "#DC143C",
+                      "cyan", "#00FFFF",
+                      "darkblue", "#00008B",
+                      "darkcyan", "#008B8B",
+                      "darkgoldenrod", "#B8860B",
+                      "darkgray", "#A9A9A9",
+                      "darkgreen", "#006400",
+                      "darkkhaki", "#BDB76B",
+                      "darkmagenta", "#8B008B",
+                      "darkolivegreen", "#556B2F",
+                      "darkorange", "#FF8C00",
+                      "darkorchid", "#9932CC",
+                      "darkred", "#8B0000",
+                      "darksalmon", "#E9967A",
+                      "darkseagreen", "#8FBC8F",
+                      "darkslateblue", "#483D8B",
+                      "darkslategray", "#2F4F4F",
+                      "darkturquoise", "#00CED1",
+                      "darkviolet", "#9400D3",
+                      "deeppink", "#FF1493",
+                      "deepskyblue", "#00BFFF",
+                      "dimgray", "#696969",
+                      "dimgrey", "#696969",
+                      "dodgerblue", "#1E90FF",
+                      "firebrick", "#B22222",
+                      "floralwhite", "#FFFAF0",
+                      "forestgreen", "#228B22",
                       "fuchsia", "#FF00FF",
+                      "gainsboro", "#DCDCDC",
+                      "ghostwhite", "#F8F8FF",
+                      "gold", "#FFD700",
+                      "goldenrod", "#DAA520",
                       "gray", "#808080",
                       "green", "#008000",
+                      "greenyellow", "#ADFF2F",
+                      "honeydew", "#F0FFF0",
+                      "hotpink", "#FF69B4",
+                      "indianred", "#CD5C5C",
+                      "indigo", "#4B0082",
+                      "ivory", "#FFFFF0",
+                      "khaki", "#F0E68C",
+                      "lavender", "#E6E6FA",
+                      "lavenderblush", "#FFF0F5",
+                      "lawngreen", "#7CFC00",
+                      "lemonchiffon", "#FFFACD",
+                      "lightblue", "#ADD8E6",
+                      "lightcoral", "#F08080",
+                      "lightcyan", "#E0FFFF",
+                      "lightgoldenrodyellow", "#FAFAD2",
+                      "lightgray", "#D3D3D3",
+                      "lightgreen", "#90EE90",
+                      "lightpink", "#FFB6C1",
+                      "lightsalmon", "#FFA07A",
+                      "lightseagreen", "#20B2AA",
+                      "lightskyblue", "#87CEFA",
+                      "lightslategray", "#778899",
+                      "lightsteelblue", "#B0C4DE",
+                      "lightyellow", "#FFFFE0",
                       "lime", "#00FF00",
+                      "limegreen", "#32CD32",
+                      "linen", "#FAF0E6",
+                      "magenta", "#FF00FF",
                       "maroon", "#800000",
+                      "mediumaquamarine", "#66CDAA",
+                      "mediumblue", "#0000CD",
+                      "mediumorchid", "#BA55D3",
+                      "mediumpurple", "#9370DB",
+                      "mediumseagreen", "#3CB371",
+                      "mediumslateblue", "#7B68EE",
+                      "mediumspringgreen", "#00FA9A",
+                      "mediumturquoise", "#48D1CC",
+                      "mediumvioletred", "#C71585",
+                      "midnightblue", "#191970",
+                      "mintcream", "#F5FFFA",
+                      "mistyrose", "#FFE4E1",
+                      "moccasin", "#FFE4B5",
+                      "navajowhite", "#FFDEAD",
                       "navy", "#000080",
+                      "oldlace", "#FDF5E6",
                       "olive", "#808000",
+                      "olivedrab", "#6B8E23",
+                      "orange", "#FFA500",
+                      "orangered", "#FF4500",
+                      "orchid", "#DA70D6",
+                      "palegoldenrod", "#EEE8AA",
+                      "palegreen", "#98FB98",
+                      "paleturquoise", "#AFEEEE",
+                      "palevioletred", "#DB7093",
+                      "papayawhip", "#FFEFD5",
+                      "peachpuff", "#FFDAB9",
+                      "peru", "#CD853F",
+                      "pink", "#FFC0CB",
+                      "plum", "#DDA0DD",
+                      "powderblue", "#B0E0E6",
                       "purple", "#800080",
                       "red", "#FF0000",
+                      "rosybrown", "#BC8F8F",
+                      "royalblue", "#4169E1",
+                      "saddlebrown", "#8B4513",
+                      "salmon", "#FA8072",
+                      "sandybrown", "#F4A460",
+                      "seagreen", "#2E8B57",
+                      "seashell", "#FFF5EE",
+                      "sienna", "#A0522D",
                       "silver", "#C0C0C0",
+                      "skyblue", "#87CEEB",
+                      "slateblue", "#6A5ACD",
+                      "slategray", "#708090",
+                      "snow", "#FFFAFA",
+                      "springgreen", "#00FF7F",
+                      "steelblue", "#4682B4",
+                      "tan", "#D2B48C",
                       "teal", "#008080",
+                      "thistle", "#D8BFD8",
+                      "tomato", "#FF6347",
+                      "turquoise", "#40E0D0",
+                      "violet", "#EE82EE",
+                      "wheat", "#F5DEB3",
                       "white", "#FFFFFF",
-                      "yellow", "#FFFF00")
+                      "whitesmoke", "#F5F5F5",
+                      "yellow", "#FFFF00",
+                      "yellowgreen", "#9ACD32")
 
       FACES := table(,
                      "serif", "serif",
@@ -2251,8 +2460,15 @@ class Browser(ComponentScrollArea)
          i := worker_pool.count(self)
          if (i > 0) | (i ~=== running) then {
             if i = 0 then {
-               msg("Done")
-               page_fully_loaded()
+               msg("Done", 1500)
+               # This flag will be &null if we haven't called
+               # set_top_data; this may happen if we cancel a
+               # request before downloading the top page data; in
+               # that case there is no need to do anything.
+               if \done_set_top_data then {
+                  done_set_top_data := &null
+                  page_fully_loaded()
+               }
             } else {
                r := worker_pool.read(self)
                s := i || " running requests"
@@ -2268,8 +2484,13 @@ class Browser(ComponentScrollArea)
       }
    end
 
-   public link_mrelease(url)
-      (\ui).link_mrelease(url)
+   public link_left_clicked(url)
+      (\ui).link_left_clicked(url)
+      return self
+   end
+
+   public link_middle_clicked(url)
+      (\ui).link_middle_clicked(url)
       return self
    end
 
@@ -2281,6 +2502,10 @@ class Browser(ComponentScrollArea)
       return (\ui).create_page_menu()
    end
 
+   public is_visited(url)
+      return (\ui).is_visited(url)
+   end
+
    public create_image_menu(url, img_name, img_data, link_url)
       return (\ui).create_image_menu(url, img_name, img_data, link_url)
    end
@@ -2290,13 +2515,18 @@ class Browser(ComponentScrollArea)
       return self
    end
 
-   public msg(s, n)
+   public msg(s, n, owner)
+      /owner := self
       (\ui).msg(s, n)
+      msg_owner := owner
       return self
    end
 
-   public clear_msg()
-      (\ui).clear_msg()
+   public clear_msg(owner)
+      if /msg_owner | /owner | (owner === msg_owner) then {
+         (\ui).clear_msg()
+         msg_owner := &null
+      }
       return self
    end
 
@@ -2307,11 +2537,6 @@ class Browser(ComponentScrollArea)
 
    public update_grey(gs)
       (\ui).update_grey(gs)
-      return self
-   end
-
-   public set_title(s)
-      (\ui).set_title(s)
       return self
    end
 
@@ -2345,8 +2570,12 @@ class Browser(ComponentScrollArea)
          }
          # Set focus; this will scroll to the component if necessary (see focus_scroll).  Note that if we've moved to another tab
          # whilst the page loads, (making f hidden) then gen_focusable will fail.
-         if f := (!forms).get_autofocus() then
-            parent_dialog.set_focus(f.gen_focusable())
+         if page_resp.kind = Worker.NAVIGATE then
+            parent_dialog.set_focus(get_nth_focusable(\curr_history_entry.focus_index))
+         else {
+            if f := (!forms).get_autofocus() then
+               parent_dialog.set_focus(f.gen_focusable())
+         }
       }
       parent_dialog.resynch_pointer()
    end
@@ -2385,7 +2614,7 @@ class Browser(ComponentScrollArea)
    public do_next()
       local he
       he := history[history_pos +:= 1] 
-      goto(he.url, he.referer, Worker.NAVIGATE, he.form_data)
+      goto(he.url, he.referer, he.form_data, Worker.NAVIGATE)
       do_update_grey()
       return self
    end
@@ -2393,7 +2622,14 @@ class Browser(ComponentScrollArea)
    public do_prev()
       local he
       he := history[history_pos -:= 1] 
-      goto(he.url, he.referer, Worker.NAVIGATE, he.form_data)
+      goto(he.url, he.referer, he.form_data, Worker.NAVIGATE)
+      do_update_grey()
+      return self
+   end
+
+   public do_jump(he)
+      history_pos := keyof(history, he) | fail
+      goto(he.url, he.referer, he.form_data, Worker.NAVIGATE)
       do_update_grey()
       return self
    end
@@ -2401,7 +2637,7 @@ class Browser(ComponentScrollArea)
    public do_refresh()
       local he
       he := history[history_pos] 
-      goto(he.url, he.referer, Worker.REFRESH, he.form_data)
+      goto(he.url, he.referer, he.form_data, Worker.REFRESH)
       do_update_grey()
       return self
    end
@@ -2429,7 +2665,7 @@ class Browser(ComponentScrollArea)
 
    private static is_text(ct, s)
       \ct | fail
-      if (ct.type == "text" & ct.subtype == "plain") |
+      if (ct.type == "text") |
          (ct.type == "application" & ct.subtype == "json") then
          return
    end
@@ -2497,14 +2733,14 @@ class Browser(ComponentScrollArea)
       }
    end
 
-   private static to_pre(s)
+   public static to_content(s)
       local t
       t := ""
       s ? repeat {
          t ||:= tab(upto('<&') | 0)
          if pos(0) then
             break
-         t ||:= case move(1) of {
+         t ||:= case string(move(1)) of {
             "<": "&lt;"
             "&": "&amp;"
          }
@@ -2512,34 +2748,79 @@ class Browser(ComponentScrollArea)
       return t
    end
 
+   public static to_attr(s)
+      local t
+      t := ""
+      s ? repeat {
+         t ||:= tab(upto('\"\'&') | 0)
+         if pos(0) then
+            break
+         t ||:= case string(move(1)) of {
+            "\"": "&quot;"
+            "\'": "&apos;"
+            "&": "&amp;"
+         }
+      }
+      return t
+   end
+
+   public static mk_anchor(url)
+      return "<a href=\"" || to_attr(url.str()) || "\">" || Browser.to_content(url.str()) || "</a>"
+   end
+
+   public static mk_anchor_cell(url)
+      return "<td nowrap>" || mk_anchor(url) || "</td>"
+   end
+
+   private get_nth_focusable(n)
+      local c
+      every c := view.gen_focusable() do {
+         n -:= 1
+         if n = 0 then
+            return c
+      }
+   end
+
+   private get_focusable_index(focus)
+      local n, c
+      n := 0
+      every c := view.gen_focusable() do {
+         n +:= 1
+         if focus === c then
+            return n
+      }
+   end
+
    private set_top_data(res)
-      local doc, base, n, s, row, c, cu
+      local doc, s, row, c, cu
       if \curr_history_entry then {
          save_form_values()
          curr_history_entry.area_x := get_area_x()
          curr_history_entry.area_y := get_area_y()
+         curr_history_entry.focus_index := get_focusable_index(parent_dialog.get_focus()) | &null
       }
       set_area_y(0).set_area_x(0)
       if \res.err then {
          s := "<html><title>Error</title>" || 
-            "<h1>Error:</h1>Getting " || res.url.str() || "<br><br>" || res.err || "</html>"
+            "<h1>Error:</h1>Getting " || to_content(res.url.str()) || "<br><br>" || res.err || "</html>"
          page_data := &null
       } else {
          if is_html(res.content_type, res.data) then
             s := res.data
          else if is_text(res.content_type, res.data) then
-            s := "<html><title>" || to_pre(res.fname) || "</title>" || 
-               "<pre>" || to_pre(res.data) || "</pre></html>"
+            s := "<html><title>" || to_content(res.fname) || "</title>" || 
+               "<pre>" || to_content(res.data) || "</pre></html>"
          else if is_image(res.content_type, res.data) then {
             cu := worker_pool.cache.create_url(, res.data, res.fname, res.content_type)
-            s := "<html><title>" || to_pre(res.fname) || "</title>" || 
-               "<img src=\"" || cu.str() || "\"/></html>"
+            s := "<html><title>" || to_content(res.fname) || "</title>" || 
+               "<img src=\"" || to_attr(cu.str()) || "\"/></html>"
          } else
             s := "<html><title>Problem</title>" || 
-               "<h1>Problem:</h1>Displaying " || res.url.str() || "<br><br>This does not seem to be an HTML or text document or an image</html>"
+               "<h1>Problem:</h1>Displaying " || to_content(res.url.str()) || "<br><br>This does not seem to be an HTML or text document or an image</html>"
          page_data := res.data
       }
       page_name := res.fname
+      page_resp := res
       page_url := res.url
       if res.kind = Worker.NORMAL then {
          # Reset history_pos, since we may have done a navigate
@@ -2566,38 +2847,33 @@ class Browser(ComponentScrollArea)
       labels := []
       s := convert_to_ucs(res.content_type, s)
       doc := HtmlParser().parse(s)
-      base := page_url
-      if n := doc.get_root_element().search_tree(u"BASE") then
-         base := URL(n.get_attribute(u"HREF"))
+      page_base := page_url
       row := TextFlow(self)
       page_title := &null
       page_links := []
+      page_alink_color := "red"
+      page_vlink_color := "#800080"
+      page_link_color := "blue"
+      page_text_color := "black"
       c := Context()
-      c.base := base
       c.face := "sans"
-      c.fg := "black"
-      c.link_fg := "blue"
+      c.fg := page_text_color
       c.size := 3
       c.align := Align.L
-      c.kind := res.kind   # Tells images whether to refresh or not
       synch_font(c)
-      if n := doc.get_root_element().search_tree(u"BODY") then {
-         row.set_bg(convert_color(n, u"BGCOLOR"))
-         c.fg := convert_color(n, u"TEXT")
-         c.link_fg := convert_color(n, u"LINK")
-      }
       traverse(doc, row, c)
+      curr_history_entry.title := page_title
       resolve_labels()
-      if res.kind ~= Worker.REFRESH then
+      if page_resp.kind = Worker.NAVIGATE then
          restore_form_values()
       every form_tab_children |||:= (!forms).get_tab_children()
       set_inner(row)
-      set_title(page_title)
       layout()
       invalidate()
       parent_dialog.resynch_pointer()
       setup_tabbing()
       page_loaded()
+      done_set_top_data := 1
    end
 
    private focus_scroll(e, c)
@@ -2625,8 +2901,8 @@ class Browser(ComponentScrollArea)
       }
    end
 
-   private mk_link(context, s)
-      return URL(s) | (\context.base).get_relative(s)
+   private mk_link(s)
+      return URL(s) | page_base.get_relative(s)
    end
 
    private traverse_a(e, p, context)
@@ -2635,11 +2911,11 @@ class Browser(ComponentScrollArea)
          put(p.input, NamedAnchorCmd(na, context))
          traverse(e, p, context)
       }
-      else if url := mk_link(context, e.get_attribute(u"HREF")) then {
+      else if url := mk_link(e.get_attribute(u"HREF")) then {
          put(page_links, url)
          c := copy(context)
          c.url := url
-         c.fg := c.link_fg
+         c.fg := if is_visited(url) then page_vlink_color else page_link_color
          traverse(e, p, c)
       }
    end
@@ -2742,6 +3018,13 @@ class Browser(ComponentScrollArea)
       traverse(e, p, c)
    end
 
+   private traverse_mark(e, p, context)
+      local c
+      c := copy(context)
+      c.mark := 1
+      traverse(e, p, c)
+   end
+
    private traverse_address(e, p, context)
       local c
       c := copy(context)
@@ -2768,9 +3051,9 @@ class Browser(ComponentScrollArea)
 
    private traverse_form(e, p, context)
       local m, c, t, url, id
-      m := e.get_attribute(u"METHOD") | "get"
-      t := e.get_attribute(u"ENCTYPE") | "application/x-www-form-urlencoded"
-      url := mk_link(context, e.get_attribute(u"ACTION"))
+      m := map(string(e.get_attribute(u"METHOD"))) | "get"
+      t := string(e.get_attribute(u"ENCTYPE")) | "application/x-www-form-urlencoded"
+      url := mk_link(e.get_attribute(u"ACTION"))
       id := e.get_attribute(u"ID" | u"NAME")
       c := copy(context)
       c.form := Form(self, id, url, m, t)
@@ -2791,7 +3074,6 @@ class Browser(ComponentScrollArea)
 
    private resolve_labels()
       local l
-      #dump_forms()
       every l := !labels do {
          if \l.id then
             /l.comp := get_form_for_label(l).get_item_by_id(l.id)
@@ -2825,6 +3107,9 @@ class Browser(ComponentScrollArea)
    private add_component(p, c, context, align)
       /align := "absbottom"
       put(p.input, ComponentCmd(c, context, align))
+      c.set_tooltip(context.title).
+         set_fg(context.fg).
+         set_font(context.font)
       p.add(c)
    end
 
@@ -2841,25 +3126,38 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_img(e, p, context)
-      local q, url, border, align, map, s
-      if url := mk_link(context, e.get_attribute(u"SRC")) then {
-         if (s := e.get_attribute(u"USEMAP")) & (s[1] == u"#") then
-            map := default.map(string(s[2:0]))
-         q := Img(self, url, context.url,, map)
-         do_width_param(e, q)
-         do_height_param(e, q)
-         border := (0 < integer(e.get_attribute(u"BORDER"))) | 0
+      local q, url, border, align, map, s, alt, hspace, vspace
+      url := mk_link(e.get_attribute(u"SRC")) | fail
+      if (s := e.get_attribute(u"USEMAP")) & (s[1] == u"#") then
+         map := default.map(string(s[2:0]))
+      alt := e.get_attribute(u"ALT")
+      q := Img(self, context, url, alt,, map)
+      do_width_param(e, q)
+      do_height_param(e, q)
+      # % width not allowed if no breaking mode, since it
+      # would mean we couldn't calculate the blob widths in
+      # the row (and hence the preferred width of the
+      # TextFlow).
+      if \context.nowrap | \context.pre then
+         q.remove_constraint("pct_w")
+      border := (0 < integer(e.get_attribute(u"BORDER"))) | 0
+      hspace := (0 < integer(e.get_attribute(u"HSPACE"))) | 0
+      vspace := (0 < integer(e.get_attribute(u"VSPACE"))) | 0
+      if (hspace | vspace) > 0 then {
          if border > 0 then
-            q.set_border(PlainBorder().set_line_width(border))
-         start_worker(Req(self, url, page_url, q.got_data, context.kind))
-         align := convert_comp_align(e, u"ALIGN") | Align.B
-         add_component(p, q, context, align)
-      }
+            q.set_border(CompoundBorder().
+                            set_outer(EmptyBorder().set_insets(hspace, hspace, vspace, vspace)).
+                            set_inner(PlainBorder().set_line_width(border)))
+         else
+            q.set_border(EmptyBorder().set_insets(hspace, hspace, vspace, vspace))
+      } else if border > 0 then
+         q.set_border(PlainBorder().set_line_width(border))
+      start_worker(Req(self, url, page_url, q.got_data, page_resp.kind))
+      align := convert_comp_align(e, u"ALIGN") | Align.B
+      add_component(p, q, context, align)
    end
 
    private add_form_component(e, p, q, context)
-      q.set_fg(context.fg).
-         set_font(context.font)
       if e.get_attribute(u"DISABLED") then
          q.set_is_shaded(&yes)
       else
@@ -2872,6 +3170,7 @@ class Browser(ComponentScrollArea)
       \context.form | fail
       sc := SelectContext()
       sc.options := []
+      sc.optgroup := 0
       c := copy(context)
       c.select := sc
       traverse(e, p, c)
@@ -2931,21 +3230,18 @@ class Browser(ComponentScrollArea)
          if e.get_attribute(u"SELECTED") then
             selected := 1
       }
-      txt := if \sc.optgroup then
-         u"    " || label
-      else
-         label
+      txt := repl(u"    ", sc.optgroup) || label
       put(sc.options, FormOption(txt, label, v, selected, disabled))
    end
 
    private traverse_optgroup(e, p, context)
       local sc, label
       sc := \context.select | fail
-      /sc.optgroup := 1 | fail
       label := e.get_attribute(u"LABEL") | u""
-      put(sc.options, FormOption(u"--- " || label || u" ---", label,,,, 1))
+      put(sc.options, FormOption(repl(u"    ", sc.optgroup) || u"--- " || label || u" ---", label,,,, 1))
+      sc.optgroup +:= 1
       traverse(e, p, context)
-      sc.optgroup := &null
+      sc.optgroup -:= 1
    end
 
    private traverse_textarea(e, p, context)
@@ -2967,7 +3263,7 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_input(e, p, context)
-      local q, s, k, v, size, mW, url, checked, align, min, max
+      local q, s, k, v, size, mW, url, checked, align, min, max, step, alt
       \context.form | fail
       s := string(map(e.get_attribute(u"TYPE"))) | "text"
       case s of {
@@ -2993,9 +3289,10 @@ class Browser(ComponentScrollArea)
             add_form_component(e, p, q, context)
          }
          "image" : {
-            if url := mk_link(context, e.get_attribute(u"SRC")) then {
-               q := Img(self, url,, context.form)
-               start_worker(Req(self, url, page_url, q.got_data, context.kind))
+            if url := mk_link(e.get_attribute(u"SRC")) then {
+               alt := e.get_attribute(u"ALT")
+               q := Img(self, context, url, alt, context.form)
+               start_worker(Req(self, url, page_url, q.got_data, page_resp.kind))
                if e.get_attribute(u"DISABLED") then
                   q.set_is_shaded(&yes)
                else {
@@ -3077,23 +3374,45 @@ class Browser(ComponentScrollArea)
             add_form_component(e, p, q, context)
          }
          "range": {
-            min := real(e.get_attribute(u"MIN")) | 0
-            max := real(e.get_attribute(u"MAX")) | (min + 10)
-            v := real(e.get_attribute(u"VALUE")) | min
+            min := numeric(e.get_attribute(u"MIN")) | 0
+            v := e.get_attribute(u"STEP")
+            step := if /v then 1 else if map(v) == u"any" then 1.0 else (0 < numeric(v)) | 1
+            # If min and step are both integer, then the values must be too.
+            if type(min) == type(step) == "integer" then {
+               max := integer(e.get_attribute(u"MAX")) | (min + 10)
+               v := integer(e.get_attribute(u"VALUE")) | min
+            } else {
+               min := real(min)
+               step := real(step)
+               max := real(e.get_attribute(u"MAX")) | (min + 10.0)
+               v := real(e.get_attribute(u"VALUE")) | min
+            }
             q := FormRange(v).
                set_range(min, max).
+               set_snaps(step).
                set_is_horizontal(&yes).
-               set_size(160)
-            q.set_snaps(0.0 < real(e.get_attribute(u"STEP")))
+               set_width(160)
             add_form_component(e, p, q, context)
          }
          "number": {
-            min := real(e.get_attribute(u"MIN")) | 0
-            max := real(e.get_attribute(u"MAX")) | (min + 10)
-            v := real(e.get_attribute(u"VALUE")) | min
+            min := numeric(e.get_attribute(u"MIN"))
+            v := e.get_attribute(u"STEP")
+            step := if /v then 1 else if map(v) == u"any" then 1.0 else (0 < numeric(v)) | 1
+            # If min is null or integer, and step is integer, then the values must be integer too.
+            if (/min | type(min) == "integer") & (type(step) == "integer") then {
+               max := integer(e.get_attribute(u"MAX"))
+               v := integer(e.get_attribute(u"VALUE")) | \min | 0
+            } else {
+               min := real(min)
+               step := real(step)
+               max := real(e.get_attribute(u"MAX"))
+               v := real(e.get_attribute(u"VALUE")) | \min | 0.0
+            }
             q := FormNumberField(v).
-               set_range(min, max)
-            q.set_increment_size(0.0 < real(e.get_attribute(u"STEP")))
+               set_range(min, max).
+               set_increment_size(step)
+            if /max then
+               q.set_width(100)
             add_form_component(e, p, q, context)
          }
 
@@ -3105,7 +3424,7 @@ class Browser(ComponentScrollArea)
                size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
             }
             q := FormTextField(v).
-               set_size(size).
+               set_width(size).
                connect(context.form.submit, Event.ACTION)
             if s == "password" then
                q.set_displaychar("*")
@@ -3243,7 +3562,9 @@ class Browser(ComponentScrollArea)
       local c
       c := copy(context)
       c.align := Align.C
+      put_new_row(p, context)
       traverse(e, p, c)
+      put_new_row(p, context)
    end
 
    private convert_valign(el, name)
@@ -3302,17 +3623,17 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_table(e, p, context)
-      local ct, tbl, border, cellpadding, cellspacing, cell_border, align, c, i
+      local ct, tbl, border, hspace, vspace, cellpadding, cellspacing, cell_border, align, c, i, t
 
       tbl := Tbl()
-      do_width_param(e, tbl)
-      do_height_param(e, tbl)
-      border := integer(e.get_attribute(u"BORDER")) | 0
-      cellpadding := integer(e.get_attribute(u"CELLPADDING")) | 0
-      cellspacing := integer(e.get_attribute(u"CELLSPACING")) | 2
+      border := (0 < integer(e.get_attribute(u"BORDER"))) | 0
+      # hspace, vspace are non-standard, but firefox has them.
+      hspace := (0 < integer(e.get_attribute(u"HSPACE"))) | 0
+      vspace := (0 < integer(e.get_attribute(u"VSPACE"))) | 0
+      cellpadding := (0 < integer(e.get_attribute(u"CELLPADDING"))) | 0
+      cellspacing := (0 <= integer(e.get_attribute(u"CELLSPACING"))) | 2
+
       tbl.content.layout_delegate.set_doi(cellspacing).set_dii(cellspacing/2)
-      if border > 0 then
-         tbl.set_border(PlainBorder().set_line_width(border))
       tbl.set_bg(convert_color(e, u"BGCOLOR"))
 
       cell_border := if border > 0 & not(e.get_attribute(u"RULES")) then
@@ -3321,9 +3642,18 @@ class Browser(ComponentScrollArea)
             set_inner(EmptyBorder().set_insets(cellpadding, cellpadding, cellpadding, cellpadding))
          else
             EmptyBorder().set_insets(cellpadding, cellpadding, cellpadding, cellpadding)
-      align := convert_comp_align(e, u"ALIGN") | Align.C
-
+      # The align param is a bit of a hybrid.  If left or right, then
+      # it behaves like a left/right aligned image.  If center, then
+      # it is like enclosing the table in <center>.
+      align := convert_halign(e, u"ALIGN")
       c := copy(context)
+      # A lot of attributes aren't inherited.
+      c.pre := c.nowrap := c.underline := c.strike := c.underdash := c.mark := c.bold := c.italic := &null
+      # Font color comes from the default (or as set in <body>); face is inherited and size is reset to the default).
+      c.fg := page_text_color
+      c.size := 3
+      synch_font(c)
+      c.align := (align === Align.C)
       c.table := ct := TableContext()
       ct.tbl := tbl
       ct.x := ct.y := 1
@@ -3353,15 +3683,35 @@ class Browser(ComponentScrollArea)
             tbl.content.set_hrules(Set{2 to ct.y - 1})
          }
       }
-      if not(align === (Align.L | Align.R)) then
-         put_new_row(p, c)
-      if \c.table.caption then
-         add_component(p, c.table.caption, context, align)
-      else
-         add_component(p, tbl, context, align)
 
-      if not(align === (Align.L | Align.R)) then
+      if t := \c.table.caption then {
+         if (hspace | vspace) > 0 then
+            t.set_border(EmptyBorder().set_insets(hspace, hspace, vspace, vspace))
+         if border > 0 then
+            tbl.set_border(PlainBorder().set_line_width(border))
+      } else {
+         if (hspace | vspace) > 0 then {
+            if border > 0 then
+               tbl.set_border(CompoundBorder().
+                              set_outer(EmptyBorder().set_insets(hspace, hspace, vspace, vspace)).
+                              set_inner(PlainBorder().set_line_width(border)))
+            else
+               tbl.set_border(EmptyBorder().set_insets(hspace, hspace, vspace, vspace))
+         } else if border > 0 then
+            tbl.set_border(PlainBorder().set_line_width(border))
+         t := tbl
+      }
+
+      do_width_param(e, t)
+      do_height_param(e, t)
+
+      if align === (Align.L | Align.R) then
+         add_component(p, t, c, align)
+      else {
          put_new_row(p, c)
+         add_component(p, t, c)
+         put_new_row(p, c)
+      }
    end
 
    private traverse_tbody(e, p, context)
@@ -3384,6 +3734,7 @@ class Browser(ComponentScrollArea)
       traverse(e, cap, c)
       main := TextFlow(self)
       add_component(main, ct.tbl, context)
+      ct.tbl.set_constraint("pct_w", 100)
       align := convert_cap_align(e, u"ALIGN") | Align.T
       case align of {
          Align.T: {
@@ -3497,7 +3848,7 @@ class Browser(ComponentScrollArea)
       row.set_bg(convert_color(e | \ct.tr, u"BGCOLOR"))
       every insert(ct.occ, (ct.x to ct.x + colspan - 1) || "," || (ct.y to ct.y + rowspan - 1))
       if colspan = 1 then
-         def_w :=  \ (\col).width
+         def_w := (\col).width
       do_width_param(e, row, def_w)
       do_height_param(e, row)
       ct.tbl.content.add(row)
@@ -3524,8 +3875,9 @@ class Browser(ComponentScrollArea)
       c := copy(context)
       lc := ListContext()
       lc.tbl := tbl
-      lc.index := 0
-      lc.root := e
+      lc.index := integer(e.get_attribute(u"START")) | 1
+      lc.type := e.get_attribute(u"TYPE")
+      lc.kind := e.name
       c.list := lc
       traverse(e, p, c)
       put_new_row(p, c)
@@ -3534,13 +3886,31 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_li(e, p, context)
-      local lc, row
+      local lc, row, val, type
       lc := \context.list | fail
       row := TextFlow(self)
-      if lc.root.name == u"OL" then
-         put(row.input, TextCmd((lc.index +:= 1) || u".\ua0\ua0\ua0", context))
-      else
-         put(row.input, TextCmd(u"\u2022\ua0\ua0\ua0", context))
+      type := e.get_attribute(u"TYPE") | lc.type
+      if lc.kind == u"OL" then {
+         val := integer(e.get_attribute(u"VALUE")) | lc.index
+         if val > 0 then {
+            val := case string(type) of {
+               "a": map(alphaseq(val))
+               "A": alphaseq(val)
+               "i": map(roman(val))
+               "I": roman(val)
+            }
+         }
+         put(row.input, TextCmd(val || u".\ua0\ua0\ua0", context))
+         lc.index +:= 1
+      } else {
+         /type := "disc"
+         val := case map(string(type)) of {
+            "circle": u"o"
+            "square": u"\u25ca"
+            default: u"\u2022"
+         }
+         put(row.input, TextCmd(val || u"\ua0\ua0\ua0", context))
+      }
       lc.tbl.content.add(row)
       row := TextFlow(self) .set_constraint("eol", &yes)
       lc.tbl.content.add(row)
@@ -3631,15 +4001,40 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_area(e, p, context)
-      local mc, s, coords
+      local mc, coords
       mc := \context.map | fail
-      if s := e.get_attribute(u"COORDS") then {
-         coords := []
-         every put(coords, integer(separate(s)))
-         mc.map.add_area(MapArea(map(string(e.get_attribute(u"SHAPE"))), 
-                                 coords,
-                                 mk_link(context, e.get_attribute(u"HREF"))))
-      }
+      coords := []
+      every put(coords, integer(separate(e.get_attribute(u"COORDS"), ',; ')))
+      mc.map.add_area(MapArea(map(string(e.get_attribute(u"SHAPE"))), 
+                              coords,
+                              mk_link(e.get_attribute(u"HREF")),
+                              context.title))
+   end
+
+   private traverse_abbr(e, p, context)
+      local c
+      c := copy(context)
+      c.underdash := 1
+      traverse(e, p, c)
+   end
+
+   private traverse_body(e, p, context)
+      local c
+      c := copy(context)
+      c.fg := page_text_color := convert_color(e, u"TEXT")
+      page_link_color := convert_color(e, u"LINK")
+      page_alink_color := convert_color(e, u"ALINK")
+      page_vlink_color := convert_color(e, u"VLINK")
+      p.set_bg(convert_color(e, u"BGCOLOR"))
+      traverse(e, p, c)
+   end
+
+   private traverse_base(e, p, context)
+      page_base := URL(e.get_attribute(u"HREF"))
+   end
+
+   private traverse_wbr(e, p, context)
+      put(p.input, WbrCmd(context))
    end
 
    private traverse_text(e, p, context)
@@ -3651,64 +4046,74 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse(n, p, context)
-      local e, id
+      local e, id, title, c
       every e := !n.children do {
          if text(e) then
             traverse_text(e, p, context)
          else if is(e, HtmlElement) then {
             if id := e.get_attribute(u"ID") then
                put(p.input, NamedAnchorCmd(id, context))
+            if title := (u"" ~== e.get_attribute(u"TITLE")) then {
+               c := copy(context)
+               c.title := title
+            } else
+               c := context
             case string(e.name) of {
                "META"|"LINK"|"SCRIPT"|"STYLE": {}
-               "TITLE": traverse_title(e, p, context)
-               "A": traverse_a(e, p, context)
-               "FORM": traverse_form(e, p, context)
-               "BUTTON": traverse_button(e, p, context)
-               "LABEL": traverse_label(e, p, context)
-               "FONT": traverse_font(e, p, context)
-               "IMG": traverse_img(e, p, context)
-               "SELECT": traverse_select(e, p, context)
-               "OPTION": traverse_option(e, p, context)
-               "OPTGROUP": traverse_optgroup(e, p, context)
-               "TEXTAREA": traverse_textarea(e, p, context)
-               "INPUT": traverse_input(e, p, context)
-               "DIV": traverse_div(e, p, context)
-               "BIG": traverse_big(e, p, context)
-               "SMALL": traverse_small(e, p, context)
-               "SAMP"|"KBD"|"CODE"|"TT": traverse_tt(e, p, context)
-               "DFN"|"B": traverse_b(e, p, context)
-               "EM"|"CITE"|"I": traverse_i(e, p, context)
-               "ADDRESS": traverse_address(e, p, context)
-               "BR": traverse_br(e, p, context)
-               "NOBR": traverse_nobr(e, p, context)
-               "HR": traverse_hr(e, p, context)
-               "CENTER": traverse_center(e, p, context)
-               "H" || (1 to 6): traverse_hN(e, p, context)
-               "TABLE": traverse_table(e, p, context)
-               "THEAD"|"TBODY"|"TFOOT": traverse_tbody(e, p, context)
-               "CAPTION": traverse_caption(e, p, context)
-               "COLGROUP": traverse_colgroup(e, p, context)
-               "COL": traverse_col(e, p, context)
-               "TR": traverse_tr(e, p, context)
-               "TD"|"TH": traverse_td(e, p, context)
-               "DIR"|"MENU"|"OL"|"UL": traverse_list(e, p, context)
-               "LI": traverse_li(e, p, context)
-               "DL": traverse_dl(e, p, context)
-               "DT": traverse_dt(e, p, context)
-               "DD": traverse_dd(e, p, context)
-               "BLOCKQUOTE": traverse_blockquote(e, p, context)
-               "P": traverse_p(e, p, context)
-               "Q": traverse_q(e, p, context)
-               "INS"|"U": traverse_u(e, p, context)
-               "DEL"|"STRIKE"|"S": traverse_s(e, p, context)
-               "SUP": traverse_sup(e, p, context)
-               "SUB": traverse_sub(e, p, context)
-               "LISTING"|"PRE": traverse_pre(e, p, context)
-               "FIELDSET": traverse_fieldset(e, p, context)
-               "LEGEND": traverse_legend(e, p, context)
-               "MAP": traverse_map(e, p, context)
-               "AREA": traverse_area(e, p, context)
-               default : traverse(e, p, context)
+               "TITLE": traverse_title(e, p, c)
+               "A": traverse_a(e, p, c)
+               "FORM": traverse_form(e, p, c)
+               "BUTTON": traverse_button(e, p, c)
+               "LABEL": traverse_label(e, p, c)
+               "FONT": traverse_font(e, p, c)
+               "IMG": traverse_img(e, p, c)
+               "SELECT": traverse_select(e, p, c)
+               "OPTION": traverse_option(e, p, c)
+               "OPTGROUP": traverse_optgroup(e, p, c)
+               "TEXTAREA": traverse_textarea(e, p, c)
+               "INPUT": traverse_input(e, p, c)
+               "DIV": traverse_div(e, p, c)
+               "BIG": traverse_big(e, p, c)
+               "SMALL": traverse_small(e, p, c)
+               "SAMP"|"KBD"|"CODE"|"TT": traverse_tt(e, p, c)
+               "STRONG"|"DFN"|"B": traverse_b(e, p, c)
+               "EM"|"CITE"|"I"|"VAR": traverse_i(e, p, c)
+               "MARK": traverse_mark(e, p, c)
+               "ADDRESS": traverse_address(e, p, c)
+               "BR": traverse_br(e, p, c)
+               "NOBR": traverse_nobr(e, p, c)
+               "HR": traverse_hr(e, p, c)
+               "CENTER": traverse_center(e, p, c)
+               "H" || (1 to 6): traverse_hN(e, p, c)
+               "TABLE": traverse_table(e, p, c)
+               "THEAD"|"TBODY"|"TFOOT": traverse_tbody(e, p, c)
+               "CAPTION": traverse_caption(e, p, c)
+               "COLGROUP": traverse_colgroup(e, p, c)
+               "COL": traverse_col(e, p, c)
+               "TR": traverse_tr(e, p, c)
+               "TD"|"TH": traverse_td(e, p, c)
+               "DIR"|"MENU"|"OL"|"UL": traverse_list(e, p, c)
+               "LI": traverse_li(e, p, c)
+               "DL": traverse_dl(e, p, c)
+               "DT": traverse_dt(e, p, c)
+               "DD": traverse_dd(e, p, c)
+               "BLOCKQUOTE": traverse_blockquote(e, p, c)
+               "P": traverse_p(e, p, c)
+               "Q": traverse_q(e, p, c)
+               "INS"|"U": traverse_u(e, p, c)
+               "DEL"|"STRIKE"|"S": traverse_s(e, p, c)
+               "SUP": traverse_sup(e, p, c)
+               "SUB": traverse_sub(e, p, c)
+               "LISTING"|"PRE"|"XMP": traverse_pre(e, p, c)
+               "FIELDSET": traverse_fieldset(e, p, c)
+               "LEGEND": traverse_legend(e, p, c)
+               "MAP": traverse_map(e, p, c)
+               "AREA": traverse_area(e, p, c)
+               "WBR": traverse_wbr(e, p, c)
+               "ABBR"|"ACRONYM": traverse_abbr(e, p, c)
+               "BASE": traverse_base(e, p, c)
+               "BODY": traverse_body(e, p, c)
+               default : traverse(e, p, c)
             }
          }
       }
@@ -3725,7 +4130,7 @@ class Browser(ComponentScrollArea)
       return self
    end
 
-   public goto(url, referer, kind, form_data)
+   public goto(url, referer, form_data, kind)
       /kind := Worker.NORMAL
       cancel()
       start_worker(Req(self, url, referer, set_top_data, kind, form_data))
@@ -3965,7 +4370,7 @@ class Browser(ComponentScrollArea)
          if is(c, TextSelection) then
             put(l, \c.textout.attr.url)
          else if is(c, Img) then
-            put(l, \c.link_url)
+            every put(l, \c.gen_areas().url)
       }
       if *l > 0 then
          links_selection := l
@@ -4018,18 +4423,23 @@ class Browser(ComponentScrollArea)
    end
 
    public get_page_info()
-      local s, l, t, c, n, sz, m, f, imgs
+      local s, l, t, c, n, sz, m, f, imgs, ct
 
       s := "<html><title>Page info</title>"
       s ||:= "<h1>Page</h1>"
+
       if l := \page_url then
-         s ||:= "URL: <a href=\"" || l.str() || "\">" || l.str() || "</a><p>"
+         s ||:= "URL: " || mk_anchor(l) || "<p>"
       if sz := *\page_data then
          s ||:= "Size: " || Format.numeric_to_string(sz, 0, ',') || " bytes<p>"
       if n := \page_name & *n > 0 then
-         s ||:= "Name: " || n || "<p>"
+         s ||:= "Name: " || to_content(n) || "<p>"
       if n := \page_title & *n > 0 then
-         s ||:= "Title: " || n || "<p>"
+         s ||:= "Title: " || to_content(n) || "<p>"
+      if ct := \page_resp.content_type then
+         s ||:= "Content-type: " || ct.type || "/" || ct.subtype || "<p>"
+      if l := \page_resp.referer & (l.scheme == (u"http" | u"https")) then
+         s ||:= "Referer: " || mk_anchor(l) || "<p>"
 
       imgs := []
       t := table(u"")
@@ -4046,19 +4456,19 @@ class Browser(ComponentScrollArea)
             if l := \f.url then {
                n := \f.id | "-"
                m := \f.method | "-"
-               s ||:= "<tr><td>" || n || "<td>" || m || "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
+               s ||:= "<tr><td>" || to_content(n) || "<td>" || m || mk_anchor_cell(l) || "</tr>" 
             }
          }
          s ||:= "</table>"
       }
 
       if *imgs > 0 then {
-         s ||:= "<h1>Images</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=right>Size<th align=left>&nbsp;URL</tr>"
+         s ||:= "<h1>Images</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=right>Size&nbsp;<th align=left>URL</tr>"
          every c := !imgs do {
             l := c.img_url
             n := limit_text(\c.img_name, 200) | "-"
             sz := Format.numeric_to_string(*\c.img_data, 0, ',') | "-"
-            s ||:= "<tr><td>" || n || "<td align=right>" || sz || "<td nowrap><a href=\"" || l.str() || "\">&nbsp;" || l.str() || "</a></tr>"
+            s ||:= "<tr><td>" || to_content(n) || "<td align=right>" || sz || "&nbsp;" || mk_anchor_cell(l) || "</tr>"
          }
          s ||:= "</table>"
       }
@@ -4067,7 +4477,7 @@ class Browser(ComponentScrollArea)
          s ||:= "<h1>Links</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=left>URL</tr>"
          every l := !page_links do {
             n := limit_text(t[l], 200)
-            s ||:= "<tr><td nowrap>" || n || "<td nowrap><a href=\"" || l.str() || "\">" || l.str() || "</a></tr>" 
+            s ||:= "<tr><td nowrap>" || to_content(n) || mk_anchor_cell(l) || "</tr>" 
          }      
          s ||:= "</table>"
       }

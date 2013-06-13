@@ -147,7 +147,7 @@ procedure remove_entities(s)
             } else
                res ||:= "&#"
          } else {
-            if i := \HtmlParser.HTML_ENTITIES[string(tab(many(&ucase ++ &lcase)))] then {
+            if i := \HtmlParser.ENTITIES[string(tab(many(&ucase ++ &lcase)))] then {
                if \opts["utf8"] then
                   res ||:= uchar(i)
                else

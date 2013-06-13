@@ -156,7 +156,7 @@ class Image(Component)
          win.copy_to(,,,, 
                      self.cbwin,
                      self.x + border.get_l_inset(),
-                     self.y + border.get_l_inset())
+                     self.y + border.get_t_inset())
       } else {
          #
          # Scale the image to the desired size

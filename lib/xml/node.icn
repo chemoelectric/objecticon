@@ -111,7 +111,7 @@ class Node()
       local l, e
       l := []
       every e := !children do {
-         if not(text(e) & (many(XmlParser.XML_SPACE, e) = *e + 1)) then
+         if not(text(e) & (many(XmlParser.SPACE, e) = *e + 1)) then
             put(l, e)
       }
       return l
@@ -216,7 +216,7 @@ class Node()
    # Trim xml.xml_space chars from both ends of the given string
    #
    public static xml_trim(s)
-      return trim(s, XmlParser.XML_SPACE)
+      return trim(s, XmlParser.SPACE)
    end
 
    public new()

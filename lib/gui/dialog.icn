@@ -32,6 +32,7 @@ class Dialog(Component)
       TOOLTIP_Y_OFFSET,
       FOCUS_UP,                  # Set of events to move focus
       FOCUS_DOWN,
+      IN_POINT_CHAIN,
       pointer_grab_stack,
       keyboard_grab_stack
 
@@ -670,13 +671,14 @@ $endif
    # Normal event processing - not dnd
    # 
    private process_normal(e)
-      local c, ec
+      local c, ec, old_n_held
 
       if /self.win | /self.point_chain then
          return
 
       ec := e.code
 
+      old_n_held := *held
       if member(Mouse.PRESS, ec) then {
          check_click_count(e)
          if c := (!self.point_chain).find_focus(e) then
@@ -718,13 +720,15 @@ $endif
       # closed revealing something below, so re-create the point chain.
       #
       create_point_chain(e)
-      process_tooltip_event(e)
       generate_crossing_events(e)
+      process_tooltip_event(e)
 
       #
-      # Synch the pointer if the left mouse button isn't held.
+      # Synch the pointer if either there were no buttons down before or after
+      # this event.  This means we synch at the start and end of a drag, but not
+      # during a drag.
       #
-      if /held[-1] then
+      if (old_n_held | *held) = 0 then
          synch_pointer(e)
    end
 
@@ -763,6 +767,7 @@ $endif
       crossing := elementset(point_chain)
       fire_list(t -- crossing, Event.MOUSE_EXIT, e)
       fire_list(crossing -- t, Event.MOUSE_ENTER, e)
+      fire_list(point_chain, IN_POINT_CHAIN, e)      
    end
 
    public generate_events(e)
@@ -971,13 +976,18 @@ $endif
          return
       }
 
+      # Get current tip/object, if any.  If mouse over current tip
+      # component, retain current object and tip.
       #
-      # Get current tip/object, if any.
-      #
-      every c := !\(back(\popups) | self).point_chain do {
-         if tip := c.get_tooltip(e) then {
-            obj := c
-            break
+      if (\tooltip_component).in_region(e) then {
+         tip := tooltip_last_tip
+         obj := tooltip_last_obj
+      } else {
+         every c := !\ (back(\popups) | self).point_chain do {
+            if tip := c.get_tooltip(e) then {
+               obj := c
+               break
+            }
          }
       }
 
@@ -1338,6 +1348,7 @@ $endif
       DEFAULT_POINTER := "left ptr"
       FOCUS_UP := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
       FOCUS_DOWN := set("\t", Key.RIGHT, Key.DOWN)
+      IN_POINT_CHAIN := "in point chain"
       ROOT_WATTRIBS := table()
       pointer_grab_stack := []
       keyboard_grab_stack := []

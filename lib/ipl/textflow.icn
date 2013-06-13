@@ -2,6 +2,7 @@ package ipl.browser
 
 import 
    gui,
+   util,
    ipl.strings
 
 abstract class HasAscent()
@@ -13,7 +14,8 @@ abstract class HasMaxWidth()
 end
 
 abstract class TextFlowCmd()
-  public const attr
+   public const attr
+   package blob_width
 
    public new(attr)
       self.attr := attr
@@ -23,8 +25,6 @@ end
 
 class ComponentCmd(TextFlowCmd)
    public const c, align
-
-   package blob_width
 
    public new(c, attr, align)
       self.c := c
@@ -37,13 +37,14 @@ end
 class TextCmd(TextFlowCmd)
    public const s
 
-   package blob_width
-
    public new(s, attr)
       self.s := s
       self.attr := attr
       return
    end
+end
+
+class WbrCmd(TextFlowCmd)
 end
 
 class NamedAnchorCmd(TextFlowCmd)
@@ -90,7 +91,7 @@ end
 
 class CompOut(Rect)
    public const c, align, attr, pw, maxw
-   public ascent, descent, lpad
+   public ascent, descent
 
    public set_height_from_width()
       h := c.get_preferred_height(w)
@@ -166,6 +167,7 @@ class TextFlow(Component)
       max_word_w,
       max_ll,
       calculating,
+      calculated,
       need_spc,
       right_margin,
       compute_w,
@@ -176,11 +178,13 @@ class TextFlow(Component)
       max_width,
       held,
       wrote,
+      highlight,
       dominant_width,
       computed_named_anchors,
       named_anchors,
       browser,
-      blob_start
+      blob_start,
+      row_blob
 
    public static const 
       WHITESPACE,
@@ -194,6 +198,10 @@ class TextFlow(Component)
    end
 
    private compute(width)
+      local c
+      # We must compute in calculating mode before computing with a particular width, in order to set the row blobs.
+      if \width & /calculated then
+         compute()
       /width := 16r7fffffff
       if width === compute_w then 
          return
@@ -209,10 +217,10 @@ class TextFlow(Component)
       at_new_para := 1
       row_width := row_y := row_bottom := row_x := max_word_w := max_ll :=
          baseline_off := row_abs_middle_height := row_abs_top_height :=
-         row_abs_bottom_height := row_ascent := row_descent := 0
+         row_abs_bottom_height := row_ascent := row_descent := row_blob := 0
       right_margin := compute_w
       need_spc := first_row_ascent := blob_start := &null
-      compute1(, input)
+      compute1()
       while *(row | deferred) > 0 do
          new_row()
       if \calculating then {
@@ -221,6 +229,18 @@ class TextFlow(Component)
          # calculating).
          until have_max() do 
             new_row()
+
+         # Calculate default (=minimum) and max widths.
+         def_width := 0
+         every c := !input do
+            def_width <:= \c.blob_width
+         every c := !output_comps do
+            def_width <:= c.pw
+         def_width <:= max_word_w
+         def_width +:= border.get_total_width()
+         max_width := max_ll + border.get_total_width()
+
+         calculated := 1
       }
    end
 
@@ -231,7 +251,8 @@ class TextFlow(Component)
 
    public reset_layout()
       max_width := def_width := output_rows := output_comps := left_comps :=
-         named_anchors := right_comps := compute_w := &null
+         calculated := named_anchors := right_comps := compute_w := &null
+      every (!input).blob_width := &null
    end
 
    public set_dominant_width(x)
@@ -240,31 +261,18 @@ class TextFlow(Component)
    end
 
    public get_default_width()
-      local c
       if dominant_width === MAX_WIDTH then
          return get_max_width()
-      if /def_width then {
+      if /calculated then
          compute()
-         def_width := 0
-         every c := !input do {
-            if is(c, TextCmd | ComponentCmd) then
-               def_width <:= \c.blob_width
-         }
-         every c := !output_comps do
-            def_width <:= c.pw
-         def_width <:= max_word_w
-         def_width +:= border.get_total_width()
-      }
       return def_width
    end
 
    public get_max_width()
       if dominant_width === PREFERRED_WIDTH then
          return get_preferred_width()
-      if /max_width then {
+      if /calculated then
          compute()
-         max_width := max_ll + border.get_total_width()
-      }
       return max_width
    end
 
@@ -290,8 +298,7 @@ class TextFlow(Component)
       every cmd := !input do {
          if font ~=== cmd.attr.font then {
             W.close()
-            W := attr_clone(cmd.attr)
-            font := cmd.attr.font
+            W := attr_clone(font := cmd.attr.font)
          } 
          case classof(cmd) of {
             ComponentCmd: 
@@ -328,7 +335,12 @@ class TextFlow(Component)
                }
             }
             NamedAnchorCmd: {
-               insert(named_anchors, string(cmd.name), row_y)
+               if /calculating then
+                  insert(named_anchors, string(cmd.name), row_y)
+            }
+            WbrCmd: {
+               if /cmd.attr.nowrap & /cmd.attr.pre then
+                  blob_start := &null
             }
             TextCmd: {
                if /cmd.attr.pre then {
@@ -346,15 +358,15 @@ class TextFlow(Component)
 
    public lookup_named_anchor(name)
       local yp
-      if yp := member(\computed_named_anchors, string(name)) then
+      if yp := member(computed_named_anchors, string(name)) then
          return yp + y + border.get_t_inset() + y_off
    end
 
-   private attr_clone(attr)
+   private attr_clone(font, fg)
       local W
       W := cbwin.clone()
-      W.set_fg(attr.fg)
-      W.set_font(attr.font)
+      W.set_font(font)
+      W.set_fg(\fg)
       return W
    end
 
@@ -396,7 +408,7 @@ class TextFlow(Component)
    end
 
    public display()
-      local o, W, font, fg, x1, y1, r, t, ts, or
+      local o, W, font, fg, x1, y1, r, t, ts, or, want_fg
       border.draw(self.cbwin, x, y, w, h)
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
@@ -404,33 +416,43 @@ class TextFlow(Component)
       r := get_cbwin_clip()
       every or := rows_in_range(r.y - y1, r.h) do {
          every o := !or.l do {
-            t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
-            if r.intersect(t) then {
-               if font ~=== o.attr.font | fg ~=== o.attr.fg then {
-                  W.close()
-                  W := attr_clone(o.attr)
-                  font := o.attr.font
-                  fg := o.attr.fg
-               } 
-
-               draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
-               if ts := browser.is_banded(o) then
-                  # NB - the rectangle used should be the same as that returned by t.get_bounds()
-                  Gui.style.fill_selection_rectangle(cbwin, 
-                                                     x1 + o.x + ts.w_off,
-                                                     y1 + o.y, 
-                                                     ts.w_sub,
-                                                     o.h)
-               if \o.attr.underline then
-                  text_line(W,
-                            o.s, 
-                            x1 + o.x, 
-                            y1 + o.y + W.get_font_ascent() + 1)
-               if \o.attr.strike then
-                  text_line(W,
-                            o.s, 
-                            x1 + o.x,
-                            y1 + o.y + (2 * W.get_font_ascent()) / 3)
+            if is(o, TextOut) then {
+               t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
+               if r.intersect(t) then {
+                  want_fg := if o.attr.url === \highlight then
+                     browser.page_alink_color
+                  else
+                     o.attr.fg
+                  if font ~=== o.attr.font | fg ~=== want_fg then {
+                     W.close()
+                     W := attr_clone(font := o.attr.font, fg := want_fg)
+                  } 
+                  if \o.attr.mark then
+                     text_bg(W, "yellow", x1 + o.x, y1 + o.y, o.w, o.h)
+                  draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
+                  if ts := browser.is_banded(o) then
+                     # NB - the rectangle used should be the same as that returned by t.get_bounds()
+                     Gui.style.fill_selection_rectangle(cbwin, 
+                                                        x1 + o.x + ts.w_off,
+                                                        y1 + o.y, 
+                                                        ts.w_sub,
+                                                        o.h)
+                  if \o.attr.underline then
+                     text_line(W,
+                               o.s, 
+                               x1 + o.x, 
+                               y1 + o.y + W.get_font_ascent() + 1)
+                  else if \o.attr.underdash then
+                     text_dash(W,
+                               o.s, 
+                               x1 + o.x, 
+                               y1 + o.y + W.get_font_ascent() + 1)
+                  if \o.attr.strike then
+                     text_line(W,
+                               o.s, 
+                               x1 + o.x,
+                               y1 + o.y + (2 * W.get_font_ascent()) / 3)
+               }
             }
          }
       }
@@ -438,17 +460,33 @@ class TextFlow(Component)
       cast(self,Component).display()
    end
 
+   private static text_bg(W, c, x, y, w, h)
+      local W2
+      use {
+         W2 := W.clone().set_fg(c),
+         W2.fill_rectangle(x, y, w, h)
+      }
+   end
+
+   private static text_dash(W, s, x, y)
+      local W2
+      use {
+         W2 := W.clone().set_masked_pattern("gray"),
+         text_line(W2, s, x, y)
+      }
+   end
+
    private static text_line(W, s, x, y)
-      local t, x1
+      local t, w1
       s ? repeat {
          if t := tab(many(WHITESPACE)) then
             x +:= W.text_width(t)
          if pos(0) then
             break
          t := tab(upto(WHITESPACE) | 0)
-         x1 := x + W.text_width(t)
-         W.draw_line(x, y, x1, y)
-         x := x1
+         w1 := W.text_width(t)
+         W.draw_rectangle(x, y, w1, 1)
+         x +:= w1
       }
    end
 
@@ -479,30 +517,39 @@ class TextFlow(Component)
       every o := !l do {
          if font ~=== o.attr.font then {
             W.close()
-            W := attr_clone(o.attr)
-            font := o.attr.font
+            W := attr_clone(font := o.attr.font)
          } 
-         i := 1
-         if o === first then {
-            d := first_r.x - x1 - o.x
-            u := 0
-            while i <= *o.s & ((.u + (u := W.text_width(o.s[1+:i]))) / 2) < d do
-               i +:= 1
-         }
-         if o === last then {
-            d := last_r.x - x1 - o.x + last_r.w
-            j := i
-            u := W.text_width(o.s[1:i])
-            while j <= *o.s & ((.u + (u := W.text_width(o.s[1+:j]))) / 2) < d do
-               j +:= 1
-         } else
-            j := *o.s + 1
+         case classof(o) of {
+            TextOut: {
+               i := 1
+               if o === first then {
+                  d := first_r.x - x1 - o.x
+                  u := 0
+                  while i <= *o.s & ((.u + (u := W.text_width(o.s[1+:i]))) / 2) < d do
+                     i +:= 1
+               }
+               if o === last then {
+                  d := last_r.x - x1 - o.x + last_r.w
+                  j := i
+                  u := W.text_width(o.s[1:i])
+                  while j <= *o.s & ((.u + (u := W.text_width(o.s[1+:j]))) / 2) < d do
+                     j +:= 1
+               } else
+                  j := *o.s + 1
 
-         if i < j then {
-            ts := TextSelection(o, self, 
-                                i, j, 
-                                W.text_width(o.s[1:i]), W.text_width(o.s[i:j]))
-            insert(bs, o, ts)
+               if i < j then {
+                  ts := TextSelection(o, self, 
+                                      i, j, 
+                                      W.text_width(o.s[1:i]), W.text_width(o.s[i:j]))
+                  insert(bs, o, ts)
+               }
+            }
+            CompOut: {
+               # An image; add the Img to the banded map.  (It may be
+               # inserted again by Browser.calculate_banded() if the
+               # image actually intersects the band).
+               insert(bs, o.c, o.c)
+            }
          }
       }
       W.close()
@@ -516,8 +563,16 @@ class TextFlow(Component)
       every or := rows_in_range(br.y - y1, br.h) do {
          sr := u""
          every o := !or.l do {
-            if t := browser.is_banded(o) then
-               sr ||:= o.s[t.i:t.j]
+            case classof(o) of {
+               TextOut: {
+                  if t := browser.is_banded(o) then
+                     sr ||:= o.s[t.i:t.j]
+               }
+               CompOut: {
+                  if browser.is_banded(o.c) then
+                     sr ||:= \o.c.alt
+               }
+            }
          }
          if *sr > 0 then {
             if *s > 0 then
@@ -529,11 +584,24 @@ class TextFlow(Component)
          return s
    end
 
+   private invalidate_url(u)
+      local o, or, x1, y1, r
+      x1 := x + border.get_l_inset()
+      y1 := y + border.get_t_inset() + y_off
+      r := get_clip_rect()
+      every or := rows_in_range(r.y - y1, r.h) do {
+         every o := !or.l do {
+            if is(o, TextOut) & (u === \o.attr.url) then
+               invalidate(Rect(x1 + o.x, y1 + o.y, o.w, o.h))
+         }
+      }
+   end
+
    public calculate_link_text(t)
       local o, or, u, u2, or2
       every or := !computed_output_rows do {
          every o := !or.l do {
-            if u := \o.attr.url then {
+            if is(o, TextOut) & (u := \o.attr.url) then {
                if u === u2 & or ~=== or2 then
                   t[u] ||:= u" "
                t[u] ||:= o.s
@@ -570,7 +638,6 @@ class TextFlow(Component)
 
    private new_row(gap)
       local x1, r, g, need, or, row_height
-      /gap := 0
       if *row > 0 then {
          x1 := row_x
 
@@ -609,33 +676,42 @@ class TextFlow(Component)
                      x1 +:= right_margin - row_width - row_x
                }
             }
-            if is(r, CompOut) then {
-               x1 +:= r.lpad
-               r.x := x1
-               r.y := case r.align of {
-                  Align.C: row_y + row_ascent - r.h / 2
-                  Align.B: row_y + row_ascent - r.ascent
-                  Align.T: row_y
-                  "absbottom": row_y + row_height - r.h
-                  "absmiddle": row_y + (row_height - r.h) / 2
-                  default: runerr("invalid alignment", r.align)
+            case classof(r) of {
+               CompOut: {
+                  r.x := x1
+                  r.y := case r.align of {
+                     Align.C: row_y + row_ascent - r.h / 2
+                     Align.B: row_y + row_ascent - r.ascent
+                     Align.T: row_y
+                     "absbottom": row_y + row_height - r.h
+                     "absmiddle": row_y + (row_height - r.h) / 2
+                     default: runerr("invalid alignment", r.align)
+                  }
+                  x1 +:= r.w
+                  # Save images in the row for banded selection.
+                  if is(r.c, Img) then
+                     put((\or).l, r)
                }
-               x1 +:= r.w
-            } else {
-               r.x := x1
-               r.y := row_y + row_ascent - r.ascent
-               x1 +:= r.w
-               put((\or).l, r)
+               TextOut: {
+                  r.x := x1
+                  r.y := row_y + row_ascent - r.ascent
+                  x1 +:= r.w
+                  put((\or).l, r)
+               }
+               default: syserr("Invalid type in row")
             }
          }
+         /gap := 0
          row_y +:= row_height + gap
-      } else
-         row_y +:= 1
+      } else {
+         /gap := 1
+         row_y +:= gap
+      }
 
       if \calculating then
          max_ll <:= compute_w - (right_margin - row_width - row_x)
 
-      row_width := row_abs_middle_height := row_abs_top_height := row_abs_bottom_height := row_ascent := row_descent := 0
+      row_blob := row_width := row_abs_middle_height := row_abs_top_height := row_abs_bottom_height := row_ascent := row_descent := 0
 
       row_x := 0
       every g := !left_comps do
@@ -651,11 +727,29 @@ class TextFlow(Component)
          pop(deferred)
    end
 
+   # A special version of fits_in_row, used for determining if a
+   # left/right aligned component will fit in the row.  The problem
+   # arises in a case like :-
+   #
+   #    FIRST<img src="j3.jpeg" align="right"/>SECOND
+   #
+   # FIRST and SECOND form a blob, but row_width only includes
+   # FIRST after it has been output.  Therefore fits_in_row may
+   # wrongly indicate that the img would fit in the row, rather than
+   # be deferred.  The solution is to set row_blob to the end of the
+   # blob when FIRST is output, and use row_blob to see if the img
+   # would fit.
+   #
+   private fits_in_row_lr(w)
+      return have_max() | (row_x + w + max(row_blob, row_width) <= right_margin)
+   end
+
    private fits_in_row(w)
       return have_max() | (row_x + w + row_width <= right_margin)
    end
 
    private do_deferred(co)
+      # Note fits_in_row can be used since row_blob = 0.
       case co.align of {
          Align.L: {
             if fits_in_row(co.maxw) then {
@@ -675,14 +769,18 @@ class TextFlow(Component)
    private left_comp_out(co)
       co.x := row_x
       co.y := row_y
-      co.w := min(co.maxw, right_margin - row_x - row_width)
+      # Since we only do left/right_comp_out if co.maxw
+      # fits_in_row_lr, we only need to reduce its width from maxw if
+      # it fit because of have_max, and the available width is less
+      # than maxw.
+      co.w := min(co.maxw, compute_w)
       co.set_height_from_width()
       row_x +:= co.w
       put(left_comps, co)
    end
 
    private right_comp_out(co)
-      co.w := min(co.maxw, right_margin - row_x - row_width)
+      co.w := min(co.maxw, compute_w)
       co.x := right_margin - co.w
       co.y := row_y
       co.set_height_from_width()
@@ -709,14 +807,16 @@ class TextFlow(Component)
                   prefw := maxw := max(((right_margin - row_x - row_width) * i) / 100, prefw)
             }
             Img: {
+               # For Img, specified widths refer to image width, excluding any border.
                if /calculating then
-                  prefw := maxw := max((compute_w * i) / 100, prefw)
+                  prefw := maxw := max((compute_w * i) / 100 + cmd.c.border.get_total_width(), prefw)
                else {
-                  # Since prefw/maxw is set to 1 (see Img), we set it
-                  # to the actual image size, so the max width is calculated
-                  # on that basis.
+                  # Since prefw/maxw is set to 1 + the border width
+                  # (see Img), we set it to the actual image size +
+                  # the border, so the max width is calculated on that
+                  # basis.
                   if not is_top_level() then
-                     maxw := (\cmd.c.win).get_width()
+                     maxw := (\cmd.c.win).get_width() + cmd.c.border.get_total_width()
                }
             }
             Tbl: {
@@ -731,47 +831,48 @@ class TextFlow(Component)
       case cmd.align of {
          Align.L: {
             # If already have deferred, then defer this too, otherwise they will be out of order. 
-            if *deferred = 0 & fits_in_row(co.maxw) then
+            if *deferred = 0 & fits_in_row_lr(co.maxw) then
                left_comp_out(co)
             else
                put(deferred, co)
          }
          Align.R: {
-            if *deferred = 0 & fits_in_row(co.maxw) then 
+            if *deferred = 0 & fits_in_row_lr(co.maxw) then 
                right_comp_out(co)
             else
                put(deferred, co)
          }
          Align.B: {
-            comp_out(W, cmd, co)
+            comp_out(cmd, co)
             row_ascent <:= co.ascent
             row_descent <:= co.descent
          }
          Align.T: {
-            comp_out(W, cmd, co)
+            comp_out(cmd, co)
             row_abs_top_height <:= co.h
          }
          Align.C: {
-            comp_out(W, cmd, co)
+            comp_out(cmd, co)
             row_ascent <:= co.h / 2
             row_descent <:= co.h / 2 + co.h % 2
          }
          "absbottom": {
-            comp_out(W, cmd, co)
+            comp_out(cmd, co)
             row_abs_bottom_height <:= co.h
          }
          "absmiddle": {
-            comp_out(W, cmd, co)
+            comp_out(cmd, co)
             row_abs_middle_height <:= co.h
          }
          default: runerr("invalid alignment", cmd.align)
       }
    end
 
-   private comp_out(W, cmd, co)
-      local c, tw, lpad
+   private comp_out(cmd, co)
+      local c, tw, rb
       c := co.c
-      lpad := if /co.attr.pre & \need_spc then W.text_width(" ") else 0
+      if \co.attr.pre | *row = 0 then
+         need_spc := &null
       if \co.attr.nowrap | \co.attr.pre then {
          if \calculating then {
             # In nowrap/pre mode we always either start a new blob, or
@@ -780,15 +881,14 @@ class TextFlow(Component)
                blob_start := cmd
                cmd.blob_width := co.pw
             } else
-               blob_start.blob_width +:= co.pw + lpad
+               blob_start.blob_width +:= co.pw + get_pad()
          } else {
             if tw := \cmd.blob_width then {
-               if *row > 0 then
-                  tw +:= lpad
-               until fits_in_row(tw) do {
+               until fits_in_row(tw + get_pad()) do {
                   new_row()
-                  tw := cmd.blob_width
+                  need_spc := &null
                }
+               rb := row_width + tw + get_pad()
             }
          }
       } else {
@@ -799,11 +899,9 @@ class TextFlow(Component)
             blob_start := &null
          } else {
             tw := co.pw
-            if *row > 0 then
-               tw +:= lpad
-            until fits_in_row(tw) do {
+            until fits_in_row(tw + get_pad()) do {
                new_row()
-               tw := co.pw
+               need_spc := &null
             }
          }
       }
@@ -812,14 +910,26 @@ class TextFlow(Component)
       co.set_height_from_width()
       co.ascent := (if is(co.c, HasAscent) then co.c.get_ascent(co.w, co.h) else co.h) + baseline_off
       co.descent := co.h - co.ascent
-      co.lpad := if *row = 0 then 0 else lpad
-      need_spc := at_new_para := &null
+      if \need_spc then {
+         put(row, need_spc)
+         row_width +:= need_spc.w
+         row_ascent <:= need_spc.ascent
+         row_descent <:= need_spc.descent
+      }
       put(row,  co)
-      row_width +:= co.w + co.lpad
+      row_width +:= co.w
+      row_blob := \rb
+      need_spc := at_new_para := &null
    end
 
-   private txt_out(W, attr, s)
+   private txt_out(W, attr, s, rb)
       local xo
+      if \need_spc then {
+         put(row, need_spc)
+         row_width +:= need_spc.w
+         row_ascent <:= need_spc.ascent
+         row_descent <:= need_spc.descent
+      }
       xo := TextOut(attr, s, 
                     W.get_font_ascent() + baseline_off, 
                     W.get_font_descent() - baseline_off, 
@@ -828,6 +938,7 @@ class TextFlow(Component)
       row_width +:= xo.w
       row_ascent <:= xo.ascent
       row_descent <:= xo.descent
+      row_blob := \rb
       at_new_para := &null
    end
 
@@ -835,14 +946,29 @@ class TextFlow(Component)
       return *row = 0 & row_x = 0 & right_margin = compute_w
    end
 
+   private make_pad(W, attr)
+      return TextOut(attr, u" ",
+                     W.get_font_ascent() + baseline_off, 
+                     W.get_font_descent() - baseline_off, 
+                     W.text_width(" "), W.get_font_height())
+   end
+
+   private get_pad()
+      return (\need_spc).w | 0
+   end
+
    private compute_txt(W, cmd)
-      local ds, ds2, tw, attr, wd, l, i
+      local ds, ds2, tw, attr, wd, l, i, rb
       attr := cmd.attr
-      ds := u""
-      if any(WHITESPACE, cmd.s) then
-         need_spc := 1
+
       l := []
       every put(l, words(cmd.s, WHITESPACE))
+
+      if *row = 0 | *l = 0 then
+         need_spc := &null
+      else if any(WHITESPACE, cmd.s) then 
+         /need_spc := make_pad(W, attr)
+
       if \calculating then {
          # If we are at the start of a row, or start with whitespace,
          # then we cancel any existing blob; otherwise the first word
@@ -852,7 +978,7 @@ class TextFlow(Component)
          else if \blob_start then
             # We might have need_spc here if we've just left a nobr
             # section, for example :- "<nobr>Some text </nobr>after"
-            blob_start.blob_width +:= W.text_width(if \need_spc then u" " || l[1] else l[1])
+            blob_start.blob_width +:= W.text_width(l[1]) + get_pad()
 
          # If the input ends with whitespace, then we have no blob
          # since that can give a break.  Otherwise, the last word may
@@ -867,39 +993,41 @@ class TextFlow(Component)
          every max_word_w <:= W.text_width(!l)
       }
 
+      ds := u""
       i := 1
       while wd := l[i] do {
-         if *ds = 0 then {
-            # Never put a space at the start of a row.
-            if *row > 0 & \need_spc then
-               ds2 := u" " || wd
-            else
-               ds2 := wd
-            need_spc := &no
-         } else
+         if *ds = 0 then
+            ds2 := wd
+         else
             ds2 := ds || u" " || wd
          if \calculating then {
             ds := ds2
             i +:= 1
          } else {
-            tw := W.text_width(ds2)
-            # The width of the last word is given by the blob width, if any.
-            if (i = *l) & \cmd.blob_width then
+            tw := W.text_width(ds2) + get_pad()
+            #
+            # The width of the last word is given by the blob width, if any.  For example, if we have
+            # <u>Fred Smith</u><i>Hello</i>
+            # and wd = Smith, then blob_width = len(Smith) + len(hello), tw = len(Fred Smith), and we
+            # will adjust tw to = len(Fred Smith) - len(Smith) + bw = len(Fred Smith) + len(hello).
+            # Thus, this corresponds to the sum of the strings we will output.
+            #
+            if (i = *l) & \cmd.blob_width then {
                tw -:= W.text_width(wd) - cmd.blob_width
+               rb := row_width + tw
+            }
             if row_x + row_width + tw > right_margin then {
                if *ds = 0 then {
                   if have_max() then {
                      txt_out(W, attr, wd)
-                     new_row()
                      i +:= 1
-                  } else {
-                     new_row()
                   }
                } else {
                   txt_out(W, attr, ds)
-                  new_row()
                   ds := u""
                }
+               new_row()
+               need_spc := &null
             } else {
                ds := ds2
                i +:= 1
@@ -907,67 +1035,69 @@ class TextFlow(Component)
          }
       }
       if *ds > 0 then
-         txt_out(W, attr, ds)
-      if any(WHITESPACE, cmd.s[-1]) then
-         need_spc := 1
+         txt_out(W, attr, ds, rb)
+
+      need_spc := if any(WHITESPACE, cmd.s[-1]) then
+         make_pad(W, attr)
+      else
+         &null
    end
 
     private compute_nowrap_txt(W, cmd)
-      local ds, ds1, ds2, wd, tw
-      if any(WHITESPACE, cmd.s) then
-         need_spc := 1
-      # Calculate ds1 being the catenation without leading space; ds2 with any leading space.
-      ds1 := u""
+      local ds, wd, tw, attr, rb
+      attr := cmd.attr
+
+      # Calculate ds being the catenation without leading space
+      ds := u""
       every wd := words(cmd.s, WHITESPACE) do {
-         if *ds1 = 0 then
-            ds1 := wd
+         if *ds = 0 then
+            ds := wd
          else
-            ds1 ||:= u" " || wd
+            ds ||:= u" " || wd
       }
-      if \need_spc & *ds1 > 0 then
-         ds2 := u" " || ds1
-      else
-         ds2 := ds1
-      need_spc := &no
+
+      if *row = 0 | *ds = 0 then
+         need_spc := &null
+      else if any(WHITESPACE, cmd.s) then 
+         /need_spc := make_pad(W, attr)
 
       if \calculating then {
-         # If we are starting a new blob, then the width is ds1, since
+         # If we are starting a new blob, then the width is ds, since
          # potentially we can break to a new row.  If adding to a
-         # blob, then add ds2, since we can't break and must show the
-         # space (in other words, on display *row > 0 in the test
-         # below).
+         # blob, then add any pad space, since we can't break and must
+         # show the space.
          if (*row = 0) | /blob_start then {
             blob_start := cmd
-            cmd.blob_width := W.text_width(ds1)
+            cmd.blob_width := W.text_width(ds)
          } else
-            blob_start.blob_width +:= W.text_width(ds2)
+            blob_start.blob_width +:= W.text_width(ds) + get_pad()
       } else {
          if tw := \cmd.blob_width then {
             # The blob width gives us the width excluding any leading
             # space, so unless at start of row we must ensure we have
             # the space too.
-            if *row > 0 then
-               tw +:= W.text_width(ds2) - W.text_width(ds1)
-            until fits_in_row(tw) do {
+            until fits_in_row(tw + get_pad()) do {
                new_row()
-               tw := cmd.blob_width
+               need_spc := &null
             }
+            rb := row_width + tw + get_pad()
          }
       }
 
-      # Don't show the leading space at the start of a new row.
-      ds := if *row = 0 then ds1 else ds2
       if *ds > 0 then
-         txt_out(W, cmd.attr, ds)
+         txt_out(W, attr, ds, rb)
 
-      if any(WHITESPACE, cmd.s[-1]) then
-         need_spc := 1
+      need_spc := if any(WHITESPACE, cmd.s[-1]) then
+         make_pad(W, attr)
+      else
+         &null
    end
 
    private compute_pre_txt(W, cmd)
-      local s, l, i, tw
+      local s, l, i, tw, rb
       l := []
       every put(l, detab(separate_lines(cmd.s)))
+      need_spc := &null
 
       if \calculating then {
          # This follows similar logic to compute_txt above.  First,
@@ -993,12 +1123,18 @@ class TextFlow(Component)
       every i := 1 to *l do {
          s := l[i]
          if /calculating then {
-            tw := (i = *l, \cmd.blob_width) | W.text_width(s)
-            until fits_in_row(tw) do
-               new_row()
+            if (i = *l) & tw := \cmd.blob_width then {
+               until fits_in_row(tw) do
+                  new_row()
+               rb := row_width + tw 
+            } else {
+               tw := W.text_width(s)
+               until fits_in_row(tw) do
+                  new_row()
+            }
          }
 
-         txt_out(W, cmd.attr, s)
+         txt_out(W, cmd.attr, s, rb)
          if (i < *l) | cmd.s[-1] == u"\n" then
             new_row()
       }
@@ -1010,32 +1146,45 @@ class TextFlow(Component)
       y1 := y + border.get_t_inset() + y_off
       every or := rows_in_range(e.y - y1, 1) do {
          every o := !or.l do {
-            if o.inside(e.x - x1, e.y - y1) then
+            if is(o, TextOut) & o.inside(e.x - x1, e.y - y1) then
                return o
          }
       }
    end
 
    private handle_lrelease(e)
-      if \wrote then
-         self.browser.goto(wrote, browser.page_url, Worker.NORMAL)
+      if \wrote then {
+         set_highlight()
+         self.browser.link_left_clicked(wrote)
+      }
    end
 
    private handle_mrelease(e)
-      if \wrote then
-         self.browser.link_mrelease(wrote)
+      if \wrote then {
+         set_highlight()
+         self.browser.link_middle_clicked(wrote)
+      }
    end
 
    private handle_lpress(e)
       local c, t
-      if t := which_text_out(e) then {
+      if \wrote then {
+         set_highlight(wrote)
+         held := wrote
+      } else if t := which_text_out(e) then {
          if c := \ ( \ (t.attr.form_label)).comp & not c.is_shaded() then {
             parent_dialog.set_focus(c.gen_focusable(e))
             if is(c, Toggle) then
                c.on_action(e)
          }
       }
-      held := wrote
+   end
+
+   private handle_mpress(e)
+      if \wrote then {
+         set_highlight(wrote)
+         held := wrote
+      }
    end
 
    package wants_press(e)
@@ -1050,36 +1199,37 @@ class TextFlow(Component)
       }
    end
 
-   private handle_move(e)
-      local u
-      if u := \which_text_out(e).attr.url then {
+   private handle_in_chain(e)
+      local u, t, a
+      *parent_dialog.held = 0 | fail
+      t := which_text_out(e)
+      a := (\t).attr.title
+      set_tooltip(a)
+      if u := \ (\t).attr.url then {
          if wrote ~=== u then {
             set_pointer("hand1")
-            browser.msg(u.str())
+            browser.msg(u.str(),, self)
             wrote := u
          }
       } else if \wrote then {
-         browser.clear_msg()
+         browser.clear_msg(self)
          wrote := &null
          set_pointer()
       }
    end
 
-   public get_pointer(e)
-      handle_move(e)
-      return \self.pointer
-   end
-
-   private handle_ldrag(e)
-      local u
-      if u := \which_text_out(e).attr.url & u === held then {
-         if wrote ~=== u then {
+   private handle_lmdrag(e)
+      \held | fail
+      if \which_text_out(e).attr.url === held then {
+         if wrote ~=== held then {
             set_pointer("hand1")
-            browser.msg(u.str())
-            wrote := u
+            browser.msg(held.str(),, self)
+            wrote := held
+            set_highlight(wrote)
          }
       } else if \wrote then {
-         browser.clear_msg()
+         browser.clear_msg(self)
+         set_highlight()
          wrote := &null 
          set_pointer()
       }
@@ -1087,10 +1237,19 @@ class TextFlow(Component)
 
    private handle_exit(e)
       if \wrote then {
-         browser.clear_msg()
+         browser.clear_msg(self)
+         set_highlight()
          wrote := &null
          set_pointer()
       }
+      set_tooltip()
+   end
+
+   private set_highlight(u)
+      invalidate_url(\highlight)
+      highlight := u
+      invalidate_url(\highlight)
+      return self
    end
 
    public new(browser)
@@ -1101,13 +1260,16 @@ class TextFlow(Component)
       v_align := Align.T
       set_constraint("x_fill", &yes)
       set_constraint("y_fill", &yes)
-      connect(self.handle_move, Event.MOUSE_MOVEMENT)
-      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      set_tooltip_follows_mouse(&yes)
+      connect(self.handle_lmdrag, Event.MOUSE_LEFT_DRAG)
+      connect(self.handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
+      connect(self.handle_mpress, Event.MOUSE_MIDDLE_PRESS)
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       connect(self.handle_exit, Event.MOUSE_EXIT)
       connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
       connect(self.handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
+      connect(self.handle_in_chain, Dialog.IN_POINT_CHAIN)
       return
     end
 end

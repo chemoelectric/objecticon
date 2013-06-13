@@ -1477,8 +1477,7 @@ int setfg(wbp w, char *s)
     wcp wc = w->context;
     if (!parsecolor(s, &r, &g, &b, &a))
         return Failed;
-    if (wc->fg)
-        unlink_sharedcolor(wc->fg);
+    unlink_sharedcolor(wc->fg);
     wc->fg = new_sharedcolor(wc->display, s, r, g, b, a);
     return Succeeded;
 }
@@ -1492,8 +1491,7 @@ int setbg(wbp w, char *s)
     wcp wc = w->context;
     if (!parsecolor(s, &r, &g, &b, &a))
         return Failed;
-    if (wc->bg)
-        unlink_sharedcolor(wc->bg);
+    unlink_sharedcolor(wc->bg);
     wc->bg = new_sharedcolor(wc->display, s, r, g, b, a);
     return Succeeded;
 }
@@ -3433,10 +3431,8 @@ void freecontext(wcp wc)
 {
     wc->refcount--;
     if(wc->refcount == 0) {
-        if (wc->fg)
-            unlink_sharedcolor(wc->fg);
-        if (wc->bg)
-            unlink_sharedcolor(wc->bg);
+        unlink_sharedcolor(wc->fg);
+        unlink_sharedcolor(wc->bg);
         if (wc->pattern)
             unlink_sharedpicture(wc->pattern);
         GUnlink(wc, wcntxts);

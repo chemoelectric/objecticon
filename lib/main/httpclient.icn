@@ -306,9 +306,9 @@ class HttpClient(NetClient)
       insert(redir_set, s)
 
       #
-      # On a redirect, a POST becomes a GET.
+      # On a redirect, a POST becomes a GET, except for code 307.
       #
-      if request.method == "POST" then {
+      if request.method == "POST" & not find("307", response.get_status()) then {
          request.set_method("GET").
             set_input_stream().
             set_content_type().

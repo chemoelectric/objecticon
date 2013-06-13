@@ -124,6 +124,14 @@ class Button(Toggle,Component)
       }
    end
 
+   public clear_down()
+      if \self.is_down then {
+         self.is_down := &null
+         stop_held()
+         invalidate()
+      }
+   end
+
    public on_action(e)
       local t
       if \self.toggles_flag then {
