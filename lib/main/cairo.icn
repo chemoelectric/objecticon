@@ -505,18 +505,18 @@ final class Context()
    public new(v)
       local t
       \LOADED | return error("Cairo not supported")
-      if is(v, Window) then
+      ptr := if is(v, Window) then
          use {
             t := WindowSurface(v),
-            ptr := new_impl(t)
+            new_impl(t)
          }
       else if is(v, Pixels) then
          use {
             t := ImageSurface(v),
-            ptr := new_impl(t)
+            new_impl(t)
          }
       else
-         ptr := new_impl(v)
+         new_impl(v)
       return
    end
 end
