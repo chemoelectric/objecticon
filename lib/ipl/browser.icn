@@ -3170,6 +3170,7 @@ class Browser(ComponentScrollArea)
       \context.form | fail
       sc := SelectContext()
       sc.options := []
+      sc.optgroup := 0
       c := copy(context)
       c.select := sc
       traverse(e, p, c)
@@ -3229,21 +3230,18 @@ class Browser(ComponentScrollArea)
          if e.get_attribute(u"SELECTED") then
             selected := 1
       }
-      txt := if \sc.optgroup then
-         u"    " || label
-      else
-         label
+      txt := repl(u"    ", sc.optgroup) || label
       put(sc.options, FormOption(txt, label, v, selected, disabled))
    end
 
    private traverse_optgroup(e, p, context)
       local sc, label
       sc := \context.select | fail
-      /sc.optgroup := 1 | fail
       label := e.get_attribute(u"LABEL") | u""
-      put(sc.options, FormOption(u"--- " || label || u" ---", label,,,, 1))
+      put(sc.options, FormOption(repl(u"    ", sc.optgroup) || u"--- " || label || u" ---", label,,,, 1))
+      sc.optgroup +:= 1
       traverse(e, p, context)
-      sc.optgroup := &null
+      sc.optgroup -:= 1
    end
 
    private traverse_textarea(e, p, context)

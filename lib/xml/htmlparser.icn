@@ -121,7 +121,8 @@ class HtmlParser()
                         "LEGEND", TagInfo(set(), set()),
                         "BODY", TagInfo(set(), set()),
                         "HTML", TagInfo(set(), set()),
-                        "OPTION", TagInfo(set(), set()))
+                        "OPTGROUP", TagInfo(set("SELECT"), set()),
+                        "OPTION", TagInfo(set("SELECT"), set("OPTION")))
 
       ENTITIES := table(,
                         "quot", 34, "amp", 38, "apos", 39, "lt", 60, "gt", 62, "OElig", 338,
