@@ -494,6 +494,7 @@ end
 class TableLayout(Layout)
    public 
       g,
+      computed_g,
       dii,          # Default inner padding, ie not at edge of grid
       doi,          # Default outer padding
       fix_col1_flag,
@@ -643,6 +644,8 @@ class TableLayout(Layout)
          i.obj.w := i.aw
          i.obj.h := i.ah
       }
+      
+      computed_g := g
 
       if \debug then
          g.print_layout()

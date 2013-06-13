@@ -689,7 +689,7 @@ class TblContent(Component)
 
    public whose_point(ex, ey)
       local c
-      every c := layout_delegate.g.cells_in_range(ey - y, 1).obj do {
+      every c := layout_delegate.computed_g.cells_in_range(ey - y, 1).obj do {
          if c.is_unhidden() & c.inside(ex, ey) then
             return c
       }
@@ -698,7 +698,7 @@ class TblContent(Component)
    public display()
       local ci, r, g, t
       r := get_cbwin_clip()
-      g := layout_delegate.g
+      g := layout_delegate.computed_g
       every ci := g.cells_in_range(r.y - y, r.h) do {
          display_child(ci.obj)
          if \vrules | \hrules then {
@@ -4311,7 +4311,7 @@ class Browser(ComponentScrollArea)
       r := c.intersect(r) | fail
       coact(c)
       if is(c, TblContent) then
-         every traverse_intersecting(c.layout_delegate.g.cells_in_range(r.y - c.y, r.h).obj, r)
+         every traverse_intersecting(c.layout_delegate.computed_g.cells_in_range(r.y - c.y, r.h).obj, r)
       else
          every traverse_intersecting(!c.children, r)
    end
