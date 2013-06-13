@@ -167,6 +167,7 @@ class TextFlow(Component)
       max_word_w,
       max_ll,
       calculating,
+      calculated,
       need_spc,
       right_margin,
       compute_w,
@@ -197,6 +198,10 @@ class TextFlow(Component)
    end
 
    private compute(width)
+      local c
+      # We must compute in calculating mode before computing with a particular width, in order to set the row blobs.
+      if \width & /calculated then
+         compute()
       /width := 16r7fffffff
       if width === compute_w then 
          return
@@ -224,6 +229,18 @@ class TextFlow(Component)
          # calculating).
          until have_max() do 
             new_row()
+
+         # Calculate default (=minimum) and max widths.
+         def_width := 0
+         every c := !input do
+            def_width <:= \c.blob_width
+         every c := !output_comps do
+            def_width <:= c.pw
+         def_width <:= max_word_w
+         def_width +:= border.get_total_width()
+         max_width := max_ll + border.get_total_width()
+
+         calculated := 1
       }
    end
 
@@ -234,7 +251,7 @@ class TextFlow(Component)
 
    public reset_layout()
       max_width := def_width := output_rows := output_comps := left_comps :=
-         named_anchors := right_comps := compute_w := &null
+         calculated := named_anchors := right_comps := compute_w := &null
       every (!input).blob_width := &null
    end
 
@@ -244,29 +261,18 @@ class TextFlow(Component)
    end
 
    public get_default_width()
-      local c
       if dominant_width === MAX_WIDTH then
          return get_max_width()
-      if /def_width then {
+      if /calculated then
          compute()
-         def_width := 0
-         every c := !input do
-            def_width <:= \c.blob_width
-         every c := !output_comps do
-            def_width <:= c.pw
-         def_width <:= max_word_w
-         def_width +:= border.get_total_width()
-      }
       return def_width
    end
 
    public get_max_width()
       if dominant_width === PREFERRED_WIDTH then
          return get_preferred_width()
-      if /max_width then {
+      if /calculated then
          compute()
-         max_width := max_ll + border.get_total_width()
-      }
       return max_width
    end
 
