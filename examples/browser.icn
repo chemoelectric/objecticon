@@ -163,13 +163,15 @@ class BrowserDialog(Dialog)
          invalidate()
       if \sel then {
          tabs.set_which_one(bt)
-         set_focus(bt.search_field.find_focus())
+         update_grey()
       }
-      update_grey()
+      return bt
    end
 
    private on_new_tab(ev)
-      new_tab(settings.home_url,, 1)
+      local bt
+      bt := new_tab(settings.home_url,, 1)
+      set_focus(bt.search_field.find_focus())
    end
    
    private list_visited()
@@ -896,10 +898,11 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    private page_info()
-      local s, url
+      local s, url, bt
       if s := browser.get_page_info() then {
          url := browser.get_cache().create_url(, s)
-         parent_dialog.new_tab(url,, 1)
+         bt := parent_dialog.new_tab(url,, 1)
+         parent_dialog.set_focus(bt.browser.find_focus())
       }
    end
 
