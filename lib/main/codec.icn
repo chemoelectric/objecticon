@@ -126,7 +126,7 @@ class Encode(Stream, HasUnderlyingStream)
       return self
    end
 
-   private encode_string(s)
+   private static encode_string(s)
       local r
       static printable
       initial {
@@ -151,7 +151,7 @@ class Encode(Stream, HasUnderlyingStream)
    # or "3" for a builtin operator like "+" or "||", "P" for a
    # procedure and "M" for a (static) method.
    #
-   private get_proc_code(f)
+   private static get_proc_code(f)
       local s, j
       image(f) ? {
          s := case tab(upto(' ')) of {
@@ -358,7 +358,7 @@ class Decode()
       }
    end
 
-   private decode_string(s)
+   private static decode_string(s)
       local r
       r := ""
       s ? {
@@ -370,7 +370,7 @@ class Decode()
       }
    end
 
-   private decode_proc_code(fn)
+   private static decode_proc_code(fn)
       local c, s, i, j, cl, g
       fn ? {
          c := move(1)
@@ -406,7 +406,7 @@ class Decode()
       }
    end
 
-   private line_in()
+   private static line_in()
       local s
       if s := tab(upto(Codec.CODE_SEPARATOR)) then {
          move(1)
@@ -415,11 +415,11 @@ class Decode()
       throw("missing separator")
    end
 
-   private int_in()
+   private static int_in()
       return integer(tab(many(&digits ++ '\-'))) | throw("int expected")
    end
 
-   private char_in()
+   private static char_in()
       return move(1) | throw("char expected")
    end
 
