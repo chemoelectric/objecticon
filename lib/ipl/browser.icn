@@ -3653,12 +3653,6 @@ class Browser(ComponentScrollArea)
       # it is like enclosing the table in <center>.
       align := convert_halign(e, u"ALIGN")
       c := copy(context)
-      # A lot of attributes aren't inherited.
-      c.pre := c.nowrap := c.underline := c.strike := c.underdash := c.mark := c.bold := c.italic := &null
-      # Font color comes from the default (or as set in <body>); face is inherited and size is reset to the default).
-      c.fg := page_text_color
-      c.size := 3
-      synch_font(c)
       c.align := (align === Align.C)
       c.table := ct := TableContext()
       ct.tbl := tbl
