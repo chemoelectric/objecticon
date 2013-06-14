@@ -2568,9 +2568,15 @@ class Browser(ComponentScrollArea)
             if xp := \curr_history_entry.area_x then
                set_area_x(xp)
          }
-         # Set focus; this will scroll to the component if necessary (see focus_scroll).  Note that if we've moved to another tab
-         # whilst the page loads, (making f hidden) then gen_focusable will fail.
-         if page_resp.kind = Worker.NAVIGATE then
+         # If the user has placed the focus in a component in the new
+         # page, just ensure it's still visible; otherwise set the
+         # focus to any history/autofocus component; this will scroll
+         # to the component if necessary (see focus_scroll).  Note
+         # that if this browser's tab is not current, then the various
+         # focus methods fail and no change to the focus is made.
+         if view === (f := parent_dialog.get_focus()).gen_parents() then
+            focus_scroll(, f)
+         else if page_resp.kind = Worker.NAVIGATE then
             parent_dialog.set_focus(get_nth_focusable(\curr_history_entry.focus_index))
          else {
             if f := (!forms).get_autofocus() then

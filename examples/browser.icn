@@ -169,9 +169,7 @@ class BrowserDialog(Dialog)
    end
 
    private on_new_tab(ev)
-      local bt
-      bt := new_tab(settings.home_url,, 1)
-      set_focus(bt.search_field.find_focus())
+      new_tab(settings.home_url,, 1)
    end
    
    private list_visited()
@@ -898,11 +896,10 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    private page_info()
-      local s, url, bt
+      local s, url
       if s := browser.get_page_info() then {
          url := browser.get_cache().create_url(, s)
-         bt := parent_dialog.new_tab(url,, 1)
-         parent_dialog.set_focus(bt.browser.find_focus())
+         parent_dialog.new_tab(url,, 1)
       }
    end
 
@@ -1044,6 +1041,7 @@ class BrowserTab(TabItem, BrowserUI)
          set_selection_list(lreverse(browser.history)).
          object_set_selection(browser.curr_history_entry)
       set_title(browser.page_title)
+      parent_dialog.set_focus(browser.find_focus())
    end
 
    private set_title(s)
