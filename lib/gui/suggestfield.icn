@@ -5,7 +5,7 @@ import graphics, util
 # This class is a {TextField} which provides suggested completions in
 # a popup list based on partial input.
 #
-class SuggestField(TextField, MenuMode)
+abstract class SuggestField(TextField, MenuMode)
    public 
       tl,
       direction,
@@ -106,7 +106,7 @@ class SuggestField(TextField, MenuMode)
    # This method is implemented to provide the list of suggestions, based on
    # the current contents of the textfield.
    #
-   protected defer do_request()
+   protected abstract do_request()
 
    # This method is called to abort a request in progress; do_request() should then
    # fail.

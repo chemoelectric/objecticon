@@ -10,7 +10,7 @@ import
    net(URL),
    xml(HtmlParser)
 
-class GSuggestField(SuggestField)
+abstract class GSuggestField(SuggestField)
    protected hc, domain
 
    protected close_request()
