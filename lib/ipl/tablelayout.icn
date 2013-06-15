@@ -12,7 +12,6 @@ import
 class TableCellInfo(Insets, ObjectOutput)
    public 
       obj,            # A TextFlow
-      grid,           # The grid we're in
       ax,             # Actual computed pixel location and size,
       ay,             # within insets, ie where to draw the thing
       aw,             # inside the cell.
@@ -82,7 +81,6 @@ class TableGrid()
    public create_cell(t)
       local ci
       ci := TableCellInfo()
-      ci.grid := self
       ci.s := @id_seq
       self.add_x +:= Grid.validate_int(t, "x_tab")
       if self.add_y +:= Grid.validate_int(t, "y_tab") then
