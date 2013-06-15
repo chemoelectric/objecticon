@@ -159,6 +159,7 @@ class TextFlow(Component)
       row_width,
       row_ascent,
       first_row_ascent,
+      last_row_baseline,
       row_descent,
       baseline_off,
       row_abs_middle_height,
@@ -219,7 +220,7 @@ class TextFlow(Component)
          baseline_off := row_abs_middle_height := row_abs_top_height :=
          row_abs_bottom_height := row_ascent := row_descent := row_blob := 0
       right_margin := compute_w
-      need_spc := first_row_ascent := blob_start := &null
+      need_spc := first_row_ascent := last_row_baseline := blob_start := &null
       compute1()
       while *(row | deferred) > 0 do
          new_row()
@@ -284,6 +285,16 @@ class TextFlow(Component)
       every co := !left_comps | !right_comps do
         mh <:= co.y + co.h
       return mh + border.get_total_height()
+   end
+
+   public get_ascent(dw)
+      return get_last_row_baseline(dw) + border.t_inset
+   end
+
+   public get_last_row_baseline(dw)
+      dw -:= border.get_total_width()
+      compute(dw)
+      return \last_row_baseline | 0
    end
 
    public get_first_row_ascent(dw)
@@ -701,6 +712,7 @@ class TextFlow(Component)
                default: syserr("Invalid type in row")
             }
          }
+         last_row_baseline := row_y + row_ascent
          /gap := 0
          row_y +:= row_height + gap
       } else {

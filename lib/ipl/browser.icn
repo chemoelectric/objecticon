@@ -730,7 +730,7 @@ end
 class Tbl(Border, HasMaxWidth, HasAscent)
    public get_max_width()
       local w1
-      w1 := content.layout_delegate.get_max_width()  + border.get_total_width()
+      w1 := content.layout_delegate.get_max_width() + border.get_total_width()
       return if \title then
          max(w1, title.get_max_width() + 2 * TITLE_OFFSET)
       else
@@ -740,7 +740,8 @@ class Tbl(Border, HasMaxWidth, HasAscent)
    public get_ascent(dw, dh)
       /title | return dh
       dw -:= border.get_total_width()
-      return content.layout_delegate.get_ascent(dw) + border.get_t_inset() | dh
+      dh -:= border.get_total_height()
+      return content.layout_delegate.get_ascent(dw, dh) + border.get_t_inset()
    end
 
    public new()
@@ -1014,9 +1015,9 @@ class FormButton(TextButton, FormEntry, HasAscent)
    end
 end
 
-class FormTblButton(Button, FormEntry, HasMaxWidth, HasAscent)
+class FormTextFlowButton(Button, FormEntry, HasMaxWidth, HasAscent)
    public const
-      tbl, value, form, type
+      tf, value, form, type
 
    public get_form_value(ev, src)
       if src === self then
@@ -1034,10 +1035,10 @@ class FormTblButton(Button, FormEntry, HasMaxWidth, HasAscent)
       display_children()
       if \self.is_down then {
          Gui.style.fill_down_rectangle(self.cbwin, self.x, self.y, self.w, self.h)
-         tbl.border.draw_rev_rect(self.cbwin, self)
+         tf.border.draw_rev_rect(self.cbwin, self)
       }
       if self.has_focus() & self.is_unshaded() then
-         tbl.border.draw_focus_rect(self.cbwin, self)
+         tf.border.draw_focus_rect(self.cbwin, self)
    end
 
    #
@@ -1047,43 +1048,39 @@ class FormTblButton(Button, FormEntry, HasMaxWidth, HasAscent)
    end
 
    public get_default_width()
-      return tbl.get_preferred_width()
+      return tf.get_preferred_width()
    end
 
    public get_max_width()
-      return tbl.get_max_width()
+      return tf.get_max_width()
    end
 
    public get_default_height(dw)
-      return tbl.get_preferred_height(dw)
+      return tf.get_preferred_height(dw)
+   end
+
+   public get_ascent(dw)
+      return tf.get_ascent(dw)
    end
 
    public layout()
-      tbl.x := x
-      tbl.y := y
-      tbl.w := w
-      tbl.h := h
-      tbl.layout()
-   end
-
-   public get_ascent(dw, dh)
-      return tbl.get_ascent(dw, dh)
+      tf.x := x
+      tf.y := y
+      tf.w := w
+      tf.h := h
+      tf.layout()
    end
 
    public new(form, value, type)
       cast(self,Button).new()
-      tbl := Tbl().
+      tf := TextFlow(form.browser).
          set_border(CompoundBorder().
                     set_outer(RaisedBorder()).
                     set_inner(EmptyBorder()))
-      add(tbl)
+      add(tf)
       self.value := value
       self.form := form
       self.type := type
-      # Although there is only one element in this Tbl, this flag
-      # makes the ascent for the Tbl the ascent of the single
-      # element.
-      tbl.content.layout_delegate.set_align_baselines(&yes)
       connect(self.handle_action, Event.ACTION)
       return
    end
@@ -3120,15 +3117,13 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_button(e, p, context)
-      local q, row, v, type
+      local q, v, type
       \context.form | fail
       v := e.get_attribute(u"VALUE") | u""
       type := map(string(e.get_attribute(u"TYPE"))) | "submit"
-      q := FormTblButton(context.form, v, type)
-      row := TextFlow(self)
-      q.tbl.content.add(row)
+      q := FormTextFlowButton(context.form, v, type)
       add_form_component(e, p, q, context)
-      traverse(e, row, context)
+      traverse(e, q.tf, context)
    end
 
    private traverse_img(e, p, context)
@@ -3709,7 +3704,7 @@ class Browser(ComponentScrollArea)
          add_component(p, t, c, align)
       else {
          put_new_row(p, c)
-         add_component(p, t, c)
+         add_component(p, t, c, Align.B)
          put_new_row(p, c)
       }
    end

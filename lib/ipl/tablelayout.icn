@@ -11,7 +11,7 @@ import
 
 class TableCellInfo(Insets, ObjectOutput)
    public 
-      obj,            # An arbitrary object 
+      obj,            # A TextFlow
       grid,           # The grid we're in
       ax,             # Actual computed pixel location and size,
       ay,             # within insets, ie where to draw the thing
@@ -29,7 +29,8 @@ class TableCellInfo(Insets, ObjectOutput)
       pw,             # Preferred cell width excluding insets
       ph,
       ph_calc_w,      # Width used to calc ph
-      ascent,         # Ascent of first row
+      first_row_ascent,   # Ascent of first row
+      last_row_baseline,  # Baseline of last row
       ascent_adj      # Adjustment needed to align baselines
    #
    # Output object
@@ -548,7 +549,8 @@ class TableLayout(Layout)
            i.ph_calc_w := i.aw
            i.ph := i.obj.get_preferred_height(i.ph_calc_w)
            i.ph <:= \i.fix_h
-           i.ascent := i.obj.get_first_row_ascent(i.ph_calc_w)
+           i.first_row_ascent := i.obj.get_first_row_ascent(i.ph_calc_w)
+           i.last_row_baseline := i.obj.get_last_row_baseline(i.ph_calc_w)
            adj := 1
         }
      }
@@ -565,17 +567,17 @@ class TableLayout(Layout)
      every i := !g.info do {
         if i.y === y then {
            put(row, i)
-           ma <:= i.ascent
+           ma <:= i.first_row_ascent
         } else {
            every j := !row do
-              j.ascent_adj := ma - j.ascent
+              j.ascent_adj := ma - j.first_row_ascent
            row := [i]
-           ma := i.ascent
+           ma := i.first_row_ascent
            y := i.y
         }
      }
      every j := !row do
-        j.ascent_adj := ma - j.ascent
+        j.ascent_adj := ma - j.first_row_ascent
    end
 
    public get_preferred_height(pw)
@@ -585,14 +587,17 @@ class TableLayout(Layout)
       return g.get_preferred_height()
    end
 
-   public get_ascent(pw)
-      local i
-      if /align_baselines_flag then
-         fail
+   public get_ascent(pw, ph)
+      local i, m
       ensure_grid()
       g.compute_actual_col_widths(pw)
       adjust_preferred_heights()
-      return if i := g.info[1] then i.ascent + i.ascent_adj + i.t_inset else 0
+      g.compute_actual_row_heights(ph)
+      g.compute_actual_row_positions()
+      m := 0
+      every i := !g.in_row[-1] do
+         m <:= i.ay + i.last_row_baseline + i.obj.border.t_inset
+      return m
    end
 
    public set_fix_col1(s)
@@ -644,11 +649,12 @@ class TableLayout(Layout)
          i.obj.w := i.aw
          i.obj.h := i.ah
       }
-      
-      computed_g := g
 
       if \debug then
          g.print_layout()
+      
+      computed_g := g
+      g := &null
    end
 
    public set_debug(s)
