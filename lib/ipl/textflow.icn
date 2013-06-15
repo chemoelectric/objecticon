@@ -879,9 +879,9 @@ class TextFlow(Component)
             # add to the existing one.
             if (*row = 0) | /blob_start then {
                blob_start := cmd
-               cmd.blob_width := co.pw
+               cmd.blob_width := co.maxw
             } else
-               blob_start.blob_width +:= co.pw + get_pad()
+               blob_start.blob_width +:= co.maxw + get_pad()
          } else {
             if tw := \cmd.blob_width then {
                until fits_in_row(tw + get_pad()) do {
@@ -898,7 +898,7 @@ class TextFlow(Component)
             # image).
             blob_start := &null
          } else {
-            tw := co.pw
+            tw := co.maxw
             until fits_in_row(tw + get_pad()) do {
                new_row()
                need_spc := &null
@@ -906,16 +906,16 @@ class TextFlow(Component)
          }
       }
 
-      co.w := min(co.maxw, right_margin - row_x - row_width)
-      co.set_height_from_width()
-      co.ascent := (if is(co.c, HasAscent) then co.c.get_ascent(co.w, co.h) else co.h) + baseline_off
-      co.descent := co.h - co.ascent
       if \need_spc then {
          put(row, need_spc)
          row_width +:= need_spc.w
          row_ascent <:= need_spc.ascent
          row_descent <:= need_spc.descent
       }
+      co.w := min(co.maxw, right_margin - row_x - row_width)
+      co.set_height_from_width()
+      co.ascent := (if is(co.c, HasAscent) then co.c.get_ascent(co.w, co.h) else co.h) + baseline_off
+      co.descent := co.h - co.ascent
       put(row,  co)
       row_width +:= co.w
       row_blob := \rb
