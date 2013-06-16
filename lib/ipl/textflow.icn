@@ -1104,7 +1104,11 @@ class TextFlow(Component)
    private compute_pre_txt(W, cmd)
       local s, l, i, tw, rb
       l := []
-      every put(l, detab(separate_lines(cmd.s)))
+      every s := detab(separate_lines(cmd.s)) do {
+         # Xft can't measure/display very long strings, so just truncate them.
+         s[1000:0] := u""
+         put(l, s)
+      }
       need_spc := &null
 
       if \calculating then {
