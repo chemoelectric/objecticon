@@ -727,7 +727,7 @@ class TblContent(Component)
    end
 end
 
-class Tbl(Border, HasMaxWidth, HasAscent)
+class Tbl(Border, HasMaxWidth)
    public get_max_width()
       local w1
       w1 := content.layout_delegate.get_max_width() + border.get_total_width()
@@ -735,13 +735,6 @@ class Tbl(Border, HasMaxWidth, HasAscent)
          max(w1, title.get_max_width() + 2 * TITLE_OFFSET)
       else
          w1
-   end
-
-   public get_ascent(dw, dh)
-      /title | return dh
-      dw -:= border.get_total_width()
-      dh -:= border.get_total_height()
-      return content.layout_delegate.get_ascent(dw, dh) + border.get_t_inset()
    end
 
    public new()
@@ -1103,14 +1096,12 @@ end
 class FormLabel()
    public const
       id,
-      form_id,
       form
    public
       comp
 
-   public new(id, form_id, form)
+   public new(id, form)
       self.id := id
-      self.form_id := form_id
       self.form := form
       return
    end
@@ -1205,9 +1196,11 @@ class FormImgY(FormEntry)
    end
 end
 
-class FormTextField(TextField, FormEntry, HasAscent)
+class FormTextField(SuggestField, FormEntry, HasAscent)
    private const
-      init_val
+      browser,
+      init_val,
+      datalist_id
 
    public get_ascent() 
       return cbwin.get_font_ascent() + border.get_t_inset()
@@ -1229,9 +1222,38 @@ class FormTextField(TextField, FormEntry, HasAscent)
       set_contents(val)
    end
 
-   public new(init_val)
-      cast(self,TextField).new()
+   public create_popup()
+      return FormOptionList()
+   end
+
+   public convert_element(o)
+      return o.value
+   end
+
+   protected do_request()
+      local l, t, e, s
+      l := browser.get_datalist(\datalist_id) | fail
+      s := map(contents)
+      t := []
+      every e := !l do {
+         if match(s, map(e.value)) then
+            put(t, e)
+      }
+      return t
+   end
+
+   public handle_return(e)
+      if \tl then
+         keep_closed()
+      else
+         cast(self,TextField).handle_return(e)
+   end
+
+   public new(browser, init_val, datalist_id)
+      cast(self,SuggestField).new()
+      self.browser := browser
       self.init_val := init_val
+      self.datalist_id := datalist_id
       set_contents(init_val)
       return
    end
@@ -1918,6 +1940,7 @@ class Form()
       method,
       enctype,
       items,
+      labels,
       id_table,
       cbgs
    private readable
@@ -2055,6 +2078,12 @@ class Form()
       return \id | (\url).str()
    end
 
+   public resolve_labels()
+      local l
+      every l := !labels do
+         /l.comp := get_item_by_id(\l.id)
+   end
+
    public new(browser, id, url, method, enctype)
       self.browser := browser
       self.id := id
@@ -2062,6 +2091,7 @@ class Form()
       self.method := method
       self.enctype := enctype
       self.items := []
+      self.labels := []
       self.id_table := table()
       self.cbgs := table()
       return
@@ -2076,8 +2106,9 @@ record DefListContext(tbl)
 record FieldSetContext(legend)
 record MapContext(map)
 record SelectContext(options, optgroup)
-record Context(form, form_label, url, fg, font, align, pre, nowrap, underline, strike, underdash, mark,
-               face, size, bold, italic, table, list, def_list, fieldset, select, map, title)
+record DataListContext(options)
+record Context(form, form_label, title, url, fg, font, align, pre, nowrap, underline, strike, underdash, mark,
+               face, size, bold, italic, table, list, def_list, fieldset, select, map, datalist)
 
 class MapArea()
    public const
@@ -2214,8 +2245,8 @@ class Browser(ComponentScrollArea)
       shared_worker_pool_flag,
       status_ticker,
       maps,
+      datalists,
       forms,
-      labels,
       form_tab_children,
       scroll_ticker,
       scroll_ticker_interval,
@@ -2422,6 +2453,10 @@ class Browser(ComponentScrollArea)
 
    public get_map(s)
       return member(maps, s)
+   end
+
+   public get_datalist(s)
+      return member(datalists, s)
    end
 
    private convert_color(el, name)
@@ -2845,9 +2880,9 @@ class Browser(ComponentScrollArea)
       curr_history_entry.referer := res.referer
       curr_history_entry.form_data := res.form_data
       maps := table()
+      datalists := table()
       forms := []
       form_tab_children := []
-      labels := []
       s := convert_to_ucs(res.content_type, s)
       doc := HtmlParser().parse(s)
       page_base := page_url
@@ -2866,7 +2901,6 @@ class Browser(ComponentScrollArea)
       synch_font(c)
       traverse(doc, row, c)
       curr_history_entry.title := page_title
-      resolve_labels()
       if page_resp.kind = Worker.NAVIGATE then
          restore_form_values()
       every form_tab_children |||:= (!forms).get_tab_children()
@@ -3062,43 +3096,22 @@ class Browser(ComponentScrollArea)
       c.form := Form(self, id, url, m, t)
       put(forms, c.form)
       traverse(e, p, c)
+      c.form.resolve_labels()
    end
 
    private traverse_label(e, p, context)
-      local c, l, id, form_id
+      local c, l, id
+      \context.form | fail
       id := e.get_attribute(u"FOR")
-      form_id := e.get_attribute(u"FORM")
-      l := FormLabel(id, form_id, context.form)
-      put(labels, l)
+      l := FormLabel(id, context.form)
+      put(context.form.labels, l)
       c := copy(context)
       c.form_label := l
       traverse(e, p, c)
    end
 
-   private resolve_labels()
-      local l
-      every l := !labels do {
-         if \l.id then
-            /l.comp := get_form_for_label(l).get_item_by_id(l.id)
-      }
-   end
-
-   private get_form_for_label(l)
-      local f
-      # If no form id specified, then the label relates to the form it
-      # is declared in; if outside a form then the first form in the
-      # page.
-      if /l.form_id then
-         return \l.form | forms[1]
-      # Otherwise, we just search for the matching form id.
-      every f := !forms do
-         if \f.id == l.form_id then
-            return f
-   end
-
    private dump_forms()
       local f, i
-      every write(to_string(!labels,3,,1))
       every f := !forms do {
          every write(to_string(f,3,,1))
          every i := !f.items do {
@@ -3221,18 +3234,25 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_option(e, p, context)
-      local sc, v, txt, label, disabled, selected
-      sc := \context.select | fail
-      label := e.get_trimmed_string_content()
-      if e.get_attribute(u"DISABLED") then
-         disabled := 1
-      else {
-         v := e.get_attribute(u"VALUE") | label
-         if e.get_attribute(u"SELECTED") then
-            selected := 1
+      local dc, sc, v, txt, label, disabled, selected
+      if sc := \context.select then {
+         label := e.get_trimmed_string_content()
+         if e.get_attribute(u"DISABLED") then
+            disabled := 1
+         else {
+            v := e.get_attribute(u"VALUE") | label
+            if e.get_attribute(u"SELECTED") then
+               selected := 1
+         }
+         txt := repl(u"    ", sc.optgroup) || label
+         put(sc.options, FormOption(txt, label, v, selected, disabled))
+      } else if dc := \context.datalist then {
+         label := (u"" ~== e.get_trimmed_string_content())
+         v := e.get_attribute(u"VALUE")
+         /label := v
+         /v := label
+         put(dc.options, FormOption(label, label, v))
       }
-      txt := repl(u"    ", sc.optgroup) || label
-      put(sc.options, FormOption(txt, label, v, selected, disabled))
    end
 
    private traverse_optgroup(e, p, context)
@@ -3264,7 +3284,7 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_input(e, p, context)
-      local q, s, k, v, size, mW, url, checked, align, min, max, step, alt
+      local q, s, k, v, size, mW, url, checked, align, min, max, step, alt, did
       \context.form | fail
       s := string(map(e.get_attribute(u"TYPE"))) | "text"
       case s of {
@@ -3293,6 +3313,14 @@ class Browser(ComponentScrollArea)
             if url := mk_link(e.get_attribute(u"SRC")) then {
                alt := e.get_attribute(u"ALT")
                q := Img(self, context, url, alt, context.form)
+               do_width_param(e, q)
+               do_height_param(e, q)
+               # % width not allowed if no breaking mode, since it
+               # would mean we couldn't calculate the blob widths in
+               # the row (and hence the preferred width of the
+               # TextFlow).
+               if \context.nowrap | \context.pre then
+                  q.remove_constraint("pct_w")
                start_worker(Req(self, url, page_url, q.got_data, page_resp.kind))
                if e.get_attribute(u"DISABLED") then
                   q.set_is_shaded(&yes)
@@ -3420,17 +3448,19 @@ class Browser(ComponentScrollArea)
          # Assume something textual; could be password, text, email etc.
          default: {
             v := e.get_attribute(u"VALUE") | u""
+            did := map(string(e.get_attribute(u"LIST")))
             use {
                mW := cbwin.clone().set_font(context.font),
                size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
             }
-            q := FormTextField(v).
+            q := FormTextField(self, v, did).
                set_width(size).
                connect(context.form.submit, Event.ACTION)
             if s == "password" then
                q.set_displaychar("*")
             if e.get_attribute(u"READONLY") then
                q.set_is_editable(&no)
+            q.set_placeholder(e.get_attribute(u"PLACEHOLDER"))
             add_form_component(e, p, q, context)
          }
       }
@@ -3572,7 +3602,8 @@ class Browser(ComponentScrollArea)
       return case string(map(el.get_attribute(name))) of {
          "top": Align.T
          "middle": Align.C
-         "bottom"|"baseline": Align.B
+         "bottom": Align.B
+         "baseline": "baseline"
       }
    end
 
@@ -3866,7 +3897,6 @@ class Browser(ComponentScrollArea)
    private traverse_list(e, p, context)
       local tbl, lc, c
       tbl := Tbl()
-      tbl.content.layout_delegate.set_align_baselines(&yes)
       c := copy(context)
       lc := ListContext()
       lc.tbl := tbl
@@ -3883,7 +3913,7 @@ class Browser(ComponentScrollArea)
    private traverse_li(e, p, context)
       local lc, row, val, type
       lc := \context.list | fail
-      row := TextFlow(self)
+      row := TextFlow(self).set_v_align("baseline")
       type := e.get_attribute(u"TYPE") | lc.type
       if lc.kind == u"OL" then {
          val := integer(e.get_attribute(u"VALUE")) | lc.index
@@ -3907,7 +3937,7 @@ class Browser(ComponentScrollArea)
          put(row.input, TextCmd(val || u"\ua0\ua0\ua0", context))
       }
       lc.tbl.content.add(row)
-      row := TextFlow(self) .set_constraint("eol", &yes)
+      row := TextFlow(self).set_v_align("baseline").set_constraint("eol", &yes)
       lc.tbl.content.add(row)
       traverse(e, row, context)
    end
@@ -3915,7 +3945,7 @@ class Browser(ComponentScrollArea)
    private traverse_dl(e, p, context)
       local tbl, dc, c
       tbl := Tbl()
-      tbl.content.layout_delegate.set_fix_col1(&yes).set_align_baselines(&yes)
+      tbl.content.layout_delegate.set_fix_col1(&yes)
       dc := DefListContext()
       dc.tbl := tbl
       c := copy(context)
@@ -3937,10 +3967,10 @@ class Browser(ComponentScrollArea)
    private traverse_dd(e, p, context)
       local dc, row
       dc := \context.def_list | fail
-      row := TextFlow(self) .set_constraint("eol", &no)
+      row := TextFlow(self).set_v_align("baseline").set_constraint("eol", &no)
       put(row.input, TextCmd(u"\u2022\ua0\ua0\ua0", context))
       dc.tbl.content.add(row)
-      row := TextFlow(self) .set_constraint("eol", &yes)
+      row := TextFlow(self).set_v_align("baseline").set_constraint("eol", &yes)
       dc.tbl.content.add(row)
       traverse(e, row, context)
    end
@@ -3953,7 +3983,7 @@ class Browser(ComponentScrollArea)
       row := TextFlow(self)
       put(row.input, TextCmd(u"\ua0\ua0\ua0\ua0", context))
       tbl.content.add(row)
-      row := TextFlow(self) .set_constraint("eol", &yes)
+      row := TextFlow(self).set_constraint("eol", &yes)
       tbl.content.add(row)
       traverse(e, row, context)
       put_new_row(p, context)
@@ -3993,6 +4023,16 @@ class Browser(ComponentScrollArea)
       c.map := mc
       traverse(e, p, c)
       insert(maps, map(string(e.get_attribute(u"NAME"))), mc.map)
+   end
+
+   private traverse_datalist(e, p, context)
+      local c, dc
+      dc := DataListContext()
+      dc.options := []
+      c := copy(context)
+      c.datalist := dc
+      traverse(e, p, c)
+      insert(datalists, map(string(e.get_attribute(u"ID"))), dc.options)
    end
 
    private traverse_area(e, p, context)
@@ -4104,6 +4144,7 @@ class Browser(ComponentScrollArea)
                "LEGEND": traverse_legend(e, p, c)
                "MAP": traverse_map(e, p, c)
                "AREA": traverse_area(e, p, c)
+               "DATALIST": traverse_datalist(e, p, c)
                "WBR": traverse_wbr(e, p, c)
                "ABBR"|"ACRONYM": traverse_abbr(e, p, c)
                "BASE": traverse_base(e, p, c)
