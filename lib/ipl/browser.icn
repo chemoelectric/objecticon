@@ -3251,7 +3251,8 @@ class Browser(ComponentScrollArea)
          v := e.get_attribute(u"VALUE")
          /label := v
          /v := label
-         put(dc.options, FormOption(label, label, v))
+         if (not e.get_attribute(u"DISABLED")) & \label then
+            put(dc.options, FormOption(label, label, v))
       }
    end
 
