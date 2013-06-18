@@ -308,34 +308,41 @@ class URL(ObjectOutput)
       local new_path, new_query, new_fragment
       if s[1:3] == "//" then
          return URL(scheme || ":" || s)
+
       if s[1] == "#" then
          #
          # Just reference, filename doesn't change.
          # 
          return from_parts(scheme, userinfo, host, port, path, query, s[2:0])
-      else {
+
+      if *s = 0 then
          #
-         # File name and possibly reference.
-         #
-         if s[1] == "?" then
-            # eg http://a/b/c?d + ?e -> http://a/b/c?e
-            s := path || s
-         else if not(s[1] == "/") then
-            # eg http://a/b/c?d + e -> http://a/b/e
-            s ?:= strip_dot_dirs(get_path_dir() || tab(upto('?') | 0)) || tab(0)
-         s ? {
-            new_path := tab(upto('#?') | 0)
-            if any('?') then {
-               move(1)
-               new_query := tab(upto('#') | 0)
-            }
-            if any('#') then {
-               move(1)
-               new_fragment := tab(0)
-            }
+         # Empty string means copy the base, but drop the fragment.  see http://www.w3.org/TR/url/ s3.2.1
+         # and rfc3986 s5.2.2
+         # 
+         return from_parts(scheme, userinfo, host, port, path, query)
+
+      #
+      # File name and possibly reference.
+      #
+      if s[1] == "?" then
+         # eg http://a/b/c?d + ?e -> http://a/b/c?e
+         s := path || s
+      else if s[1] ~== "/" then
+         # eg http://a/b/c?d + e -> http://a/b/e
+         s ?:= strip_dot_dirs(get_path_dir() || tab(upto('?') | 0)) || tab(0)
+      s ? {
+         new_path := tab(upto('#?') | 0)
+         if any('?') then {
+            move(1)
+            new_query := tab(upto('#') | 0)
          }
-         return from_parts(scheme, userinfo, host, port, new_path, new_query, new_fragment)
+         if any('#') then {
+            move(1)
+            new_fragment := tab(0)
+         }
       }
+      return from_parts(scheme, userinfo, host, port, new_path, new_query, new_fragment)
    end
 
    #
