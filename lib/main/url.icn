@@ -320,7 +320,7 @@ class URL(ObjectOutput)
          if s[1] == "?" then
             # eg http://a/b/c?d + ?e -> http://a/b/c?e
             s := path || s
-         else if s[1] ~== "/" then
+         else if not(s[1] == "/") then
             # eg http://a/b/c?d + e -> http://a/b/e
             s ?:= strip_dot_dirs(get_path_dir() || tab(upto('?') | 0)) || tab(0)
          s ? {
