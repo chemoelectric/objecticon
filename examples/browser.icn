@@ -732,7 +732,7 @@ class DownloadTab(TabItem)
          set_select_mode(Select.MANY).
          set_constraint("eol", &yes).
          set_contents([]).
-         add_column(TableColumn().set_label("URL")).
+         add_column(ItemPaintTableColumn().set_label("URL").set_item_paint(AbbreviatedTextItemPaint())).
          add_column(TableColumn().set_label("MB").set_column_width(35).set_column_align(Align.R)).
          add_column(TableColumn().set_label("State").set_column_width(175))
       url_table.table_content.connect(self.on_table_rpress, Event.MOUSE_RIGHT_PRESS)
