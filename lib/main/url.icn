@@ -430,7 +430,7 @@ class URL(ObjectOutput)
    # @return   A table, representing the keys and values of the fields.
    #
    public static make_cgi_table(s)
-      local cgi, key, val, l
+      local cgi, key, val
       s := string(s) | runerr(103, s)
       cgi := table()
       s ? until pos(0) do {
@@ -440,8 +440,7 @@ class URL(ObjectOutput)
          else
             val := ""
          ="&"
-         (l := member(cgi, key)) | insert(cgi, key, l := [])
-         put(l, val)
+         put(member(cgi, key), val) | insert(cgi, key, [val])
       }
       return cgi
    end

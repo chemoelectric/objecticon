@@ -1947,14 +1947,12 @@ class Form()
       autofocus
 
    private make_cgi_table(ev, src)
-      local t, k, c, v, x
+      local t, k, c, v
       t := table()
       every c := !items do {
          if k := \c.form_name then {
-            every v := c.get_form_value(ev, src) do {
-               (x := member(t, k)) | insert(t, k, x := [])
-               put(x, v)
-            }
+            every v := c.get_form_value(ev, src) do
+               put(member(t, k), v) | insert(t, k, [v])
          }
       }
       return t
