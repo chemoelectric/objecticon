@@ -34,7 +34,23 @@ class FileDialog(Dialog)
       init_filters,
       res,                      # Resulting file path          
       message_label, 
-      show_hidden_cb
+      show_hidden_cb,
+      existing_file_mode
+
+   public static const
+      WARN, IGNORE, REQUIRE, DISALLOW
+   
+   private static init()
+      WARN := "warn"
+      IGNORE := "ignore"
+      REQUIRE := "require"
+      DISALLOW := "disallow"
+   end
+
+   public set_existing_file_mode(s)
+      existing_file_mode := s
+      return self
+   end
 
    public static ucs_list(l)
       local t
@@ -78,9 +94,21 @@ class FileDialog(Dialog)
       # If we have a filename in the field, select it in the file list,
       # if it's there.
       synch_file()
+      check_existing()
+   end
+
+   public check_existing()
+      local f
+      clear_msg()
+      f := get_current_selection().str() | fail
+      if Files.is_directory(f) then
+         msg("Directory")
+      else if existing_file_mode === (WARN | DISALLOW) & Files.access(f) then
+         msg("Existing file")
    end
 
    public on_file_content(ev)
+      check_existing()
       if member(EditList.NAVIGATE, ev.code) then
          synch_file()
    end
@@ -170,17 +198,43 @@ class FileDialog(Dialog)
       return self
    end
 
-   public on_okay_button()
-      local s
+   public get_current_selection()
+      local s, f
       s := file.get_contents()
-      if *s = 0 then {
+      if *s = 0 then
+         fail
+      f := FilePath(s)
+      if not f.is_absolute() then
+         f := FilePath(dir.get_contents()).append(f)
+      return f.canonical()
+   end
+
+   public on_okay_button()
+      local f, fs
+      f := get_current_selection() | {
          msg("Please enter a filename")
          fail
       }
-      self.res := FilePath(s)
-      if not self.res.is_absolute() then
-         self.res := FilePath(dir.get_contents()).append(self.res)
-      self.res := self.res.canonical()
+      fs := f.str()
+      if Files.is_directory(fs) then {
+         msg("Selected file is a directory")
+         fail
+      }
+      case existing_file_mode of {
+         REQUIRE: {
+            if not Files.access(fs) then {
+               msg("Selected file doesn't exist")
+               fail
+            }
+         }
+         DISALLOW: {
+            if Files.access(fs) then {
+               msg("Selected file already exists")
+               fail
+            }
+         }
+      }
+      self.res := f
       self.dispose()
    end
 
@@ -209,6 +263,7 @@ class FileDialog(Dialog)
       #
       clear_msg()
       file.set_contents(flist.object_get_selections()[1])
+      check_existing()
    end
 
    public on_dir(ev)
@@ -353,6 +408,7 @@ class FileDialog(Dialog)
    public new()
       cast(self,Dialog).new()
       self.setup()
+      existing_file_mode := IGNORE
       return
    end
 

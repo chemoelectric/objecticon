@@ -27,7 +27,23 @@ class DirectoryDialog(Dialog)
       message_label, 
       tree, 
       dir, 
-      show_hidden_cb
+      show_hidden_cb,
+      existing_file_mode
+
+   public static const
+      WARN, IGNORE, REQUIRE, DISALLOW
+   
+   private static init()
+      WARN := "warn"
+      IGNORE := "ignore"
+      REQUIRE := "require"
+      DISALLOW := "disallow"
+   end
+
+   public set_existing_file_mode(s)
+      existing_file_mode := s
+      return self
+   end
 
    public component_setup()
       local root_node, d
@@ -54,6 +70,7 @@ class DirectoryDialog(Dialog)
       # Do this here as we need the tree to be setup so that we
       # can scroll to the selected dir.
       goto_dir(dir.get_contents())
+      check_existing()
    end
 
    public end_dialog()
@@ -124,11 +141,13 @@ class DirectoryDialog(Dialog)
    public on_tree_selection(ev)
       clear_msg()
       dir.set_contents(get_full_path(tree.object_get_selections()[1]).str())
+      check_existing()
    end
 
    public on_dir(ev)
       if member(EditList.NAVIGATE, ev.code) then
          goto_dir(dir.get_contents())
+      check_existing()
    end
 
    #
@@ -193,8 +212,41 @@ $endif
       }
    end
 
+   public check_existing()
+      local f
+      clear_msg()
+      f := get_dir_path().str()
+      if Files.access(f) then {
+         if not Files.is_directory(f) then
+            msg("Not a directory")
+         else if existing_file_mode === (WARN | DISALLOW) then
+            msg("Existing directory")
+      }
+   end
+
    public on_okay_button()
-      self.res := get_dir_path()
+      local f, fs
+      f := get_dir_path()
+      fs := f.str()
+      if Files.access(fs) & not Files.is_directory(fs) then {
+         msg("Selected file is not a directory")
+         fail
+      }
+      case existing_file_mode of {
+         REQUIRE: {
+            if not Files.access(fs) then {
+               msg("Selected directory doesn't exist")
+               fail
+            }
+         }
+         DISALLOW: {
+            if Files.access(fs) then {
+               msg("Selected directory already exists")
+               fail
+            }
+         }
+      }
+      self.res := f
       self.dispose()
    end
 
@@ -252,6 +304,7 @@ $endif
    public new()
       cast(self,Dialog).new()
       self.setup()
+      existing_file_mode := IGNORE
       return
    end
 
