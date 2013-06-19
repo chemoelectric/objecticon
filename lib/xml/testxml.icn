@@ -57,7 +57,7 @@ procedure main(a)
    every e := !a do {
       s := Files.file_to_string(e) | stop("couldnt open" || e)
       if \t["u"] then
-         s := ucs(s) | stop("Couldn't convert utf8: ", &why)
+         s := ucs(s) | stop("Couldn't convert to utf8")
 
       write("--- Parsing ", e)
       if d := p.parse(s) then {

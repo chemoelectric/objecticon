@@ -291,11 +291,9 @@ int f(dptr s, dptr d)
         e1 = s1 + StrLen(str);
 
         while (s1 < e1) {
-            char *t = s1;
             int i = utf8_check(&s1, e1);
             ++n;
             if (i < 0 || i > MAX_CODE_POINT) {
-                whyf("Invalid utf-8 at sequence beginning at char %d", 1 + (t - StrLoc(str)));
                 EVValD(s, e_fconv);
                 return 0;
             }
