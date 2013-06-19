@@ -406,7 +406,7 @@ end
 
 class Download()
    private readable
-      parent, req, resp, status, size, full_path, dialog
+      parent, req, resp, status, size, full_path, dialog, dest
 
    private log(s)
       dialog.log.log([&clock || ": " || ucs(s)], 500)
@@ -429,10 +429,14 @@ class Download()
          log("Failed to download:" || r.err)
          status := "Failed"
       } else {
-         fname := resp.fname
-         if *fname = 0 then
-            fname := "browser.out"
-         full_path := Files.ensure_unique_filename(FilePath(parent.parent_dialog.settings.destination_dir).child(fname).canonical().str())
+         if \dest then
+            full_path := dest
+         else {
+            fname := resp.fname
+            if *fname = 0 then
+               fname := "browser.out"
+            full_path := Files.ensure_unique_filename(FilePath(parent.parent_dialog.settings.destination_dir).child(fname).canonical().str())
+         }
          if \r.data then {
             if Files.string_to_file(full_path, r.data) then {
                log("Result file:" || full_path || " (" || Format.numeric_to_string(*r.data, 0, ',') || " bytes)")
@@ -476,9 +480,10 @@ class Download()
       log("Retrying download")
    end
 
-   public new(parent, url, referer)
+   public new(parent, url, referer, dest)
       self.parent := parent
       self.status := "New"
+      self.dest := dest
       size := ""
       self.req := Req(self, url, referer, got_data, Worker.DOWNLOAD,, on_status)
       self.dialog := LogDialog()
@@ -663,9 +668,9 @@ class DownloadTab(TabItem)
       ticker.stop()
    end
 
-   public download(url, referer)
+   public download(url, referer, dest)
       local d
-      d := Download(self, url, referer)
+      d := Download(self, url, referer, dest)
       put(dl, d)
       parent_dialog.pool.start_worker(d.req)
       refresh()
@@ -895,6 +900,13 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.downloads.download(url, referer)
    end
 
+   private download_to(url, referer)
+      local f
+      parent_dialog.file_dialog.set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
+      f := parent_dialog.file_dialog.get_result() | fail
+      parent_dialog.downloads.download(url, referer, f)
+   end
+
    private page_info()
       local s, url
       if s := browser.get_page_info() then {
@@ -947,6 +959,9 @@ class BrowserTab(TabItem, BrowserUI)
       m.add(TextMenuItem().
             set_label("Download").
             connect(create download(url, browser.page_url), Event.ACTION))
+      m.add(TextMenuItem().
+            set_label("Download to...").
+            connect(create download_to(url, browser.page_url), Event.ACTION))
       return m
    end
 
@@ -963,6 +978,9 @@ class BrowserTab(TabItem, BrowserUI)
          m.add(TextMenuItem().
                set_label("Download").
                connect(create download(link_url, browser.page_url), Event.ACTION))
+         m.add(TextMenuItem().
+               set_label("Download to...").
+               connect(create download_to(link_url, browser.page_url), Event.ACTION))
       }
       if \img_data then
          m.add(TextMenuItem().
@@ -1012,14 +1030,14 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public browse_for_file()
-      parent_dialog.file_dialog.show_modal(parent_dialog)
+      parent_dialog.file_dialog.set_existing_file_mode(FileDialog.REQUIRE).show_modal(parent_dialog)
       return parent_dialog.file_dialog.get_result()
    end
 
    private do_save(name, data)
       local s
       parent_dialog.file_dialog.set_file(\name)
-      parent_dialog.file_dialog.show_modal(parent_dialog)
+      parent_dialog.file_dialog.set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
       if s := parent_dialog.file_dialog.get_result() then {
          if Files.string_to_file(s, data) then
             browser.msg("Saved OK", 3000)
