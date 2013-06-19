@@ -2802,12 +2802,16 @@ class Browser(ComponentScrollArea)
       return t
    end
 
-   public static mk_anchor(url)
-      return "<a href=\"" || to_attr(url.str()) || "\">" || Browser.to_content(url.str()) || "</a>"
+   public static mk_anchor(url, lim)
+      local s1, s2
+      /lim := 1000
+      s1 := s2 := url.str()
+      s2 := limit_text(s2, lim)
+      return "<a href=\"" || to_attr(s1) || "\">" || Browser.to_content(s2) || "</a>"
    end
 
-   public static mk_anchor_cell(url)
-      return "<td nowrap>" || mk_anchor(url) || "</td>"
+   public static mk_anchor_cell(url, lim)
+      return "<td nowrap>" || mk_anchor(url, lim) || "</td>"
    end
 
    private get_nth_focusable(n)
