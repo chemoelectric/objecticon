@@ -3036,7 +3036,10 @@ int textwidth(wbp w, char *s, int n)
                      (FcChar8 *)s,
                      n,
                      &extents);
-    return extents.xOff;
+    /* xOff is a short; on long strings it wraps round at 32k, so
+     * anding with 0xffff doubles the range of sensible result
+     * values. */
+    return extents.xOff & 0xffff;
 }
 
 int utf8width(wbp w, char *s, int n, int nchars)
@@ -3047,7 +3050,7 @@ int utf8width(wbp w, char *s, int n, int nchars)
                         (FcChar8 *)s,
                         n,
                         &extents);
-    return extents.xOff;
+    return extents.xOff & 0xffff;
 }
 
 static void prepare_xft(wbp w)
