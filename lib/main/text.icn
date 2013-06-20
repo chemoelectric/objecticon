@@ -55,20 +55,20 @@ final abstract class Text()
    # @param s the string to parse into a ucs
    # @param subst the substitute character
    public static liberal_ucs(s, subst)
-      local t, i, n
+      local t, n
       if s := ucs(s) then
          return s
       s := string(s) | runerr(103, s)
       /subst := "\uFFFD"
       subst := string(subst) | runerr(103, subst)
       t := ""
-      i := 1
-      while i <= *s do {
-         if n := get_utf8_seq_len(s[i]) & t ||:= string(ucs(s[i+:n])) then
-            i +:= n
-         else {
+      s ? repeat {
+         t ||:= tab(many(&ascii))
+         if pos(0) then
+            break
+         (n := get_utf8_seq_len(&subject[&pos]) & t ||:= string(ucs(move(n)))) | {
             t ||:= subst
-            i +:= 1
+            move(1)
          }
       }
       return ucs(t)
