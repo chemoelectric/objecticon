@@ -51,29 +51,28 @@ class DirectoryDialog(Dialog)
       # Defaults and extra dirs.
       #
       /init_dirs := []
-      every put(init_dirs, ucs(Files.getcwd() | 
-                               Files.get_home() | 
-                               Files.get_temp() | 
-                               Files.get_roots()))
+      every put(init_dirs, 
+                Files.getcwd() | 
+                Files.get_home() | 
+                Files.get_temp() | 
+                Files.get_roots())
       init_dirs := lunique(FileDialog.ucs_list(init_dirs))
-
-      dir.set_selection_list(init_dirs)
+      dir.set_selection_list(init_dirs).set_selection(1)
       root_node := TreeNode()
       every d := Files.get_roots() do
          root_node.add(TreeNode().set_label(ucs(d)).set_always_expandable(&yes))
       tree.set_root_node(root_node)
+      res := &null
    end
 
    public init_dialog()
+      res := &null
       set_focus(dir.find_focus())
       win.set_min_size(win.get_width(), win.get_height())
       # Do this here as we need the tree to be setup so that we
       # can scroll to the selected dir.
       goto_dir(dir.get_contents())
       check_existing()
-   end
-
-   public end_dialog()
    end
 
    #
@@ -172,6 +171,13 @@ class DirectoryDialog(Dialog)
    public set_directories(l)
       self.init_dirs := l
       return self
+   end
+
+   #
+   # Keep the directory last selected by this dialog.
+   #
+   public keep_directory()
+      return set_directory(get_dir_path().str())
    end
 
    public get_dir_path()

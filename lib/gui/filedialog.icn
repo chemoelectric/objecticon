@@ -64,10 +64,12 @@ class FileDialog(Dialog)
       # Defaults and extra dirs.
       #
       /init_dirs := []
-      every put(init_dirs, ucs(Files.getcwd() | 
-                               Files.get_home() | 
-                               Files.get_temp() | 
-                               Files.get_roots()))
+      every put(init_dirs,
+                Files.getcwd() | 
+                Files.get_home() | 
+                Files.get_temp() | 
+                Files.get_roots())
+
       init_dirs := lunique(ucs_list(init_dirs))
 
       /init_files := []
@@ -75,16 +77,16 @@ class FileDialog(Dialog)
 
       init_files := ucs_list(init_files)
       init_filters := ucs_list(init_filters)
-
-      dir.set_selection_list(init_dirs)
-      file.set_selection_list(init_files)
-      filter.set_selection_list(init_filters)
+      dir.set_selection_list(init_dirs).set_selection(1)
+      file.set_selection_list(init_files).set_selection(1)
+      filter.set_selection_list(init_filters).set_selection(1)
 
       dlist.set_draggable_cursor(&yes)
       dlist.set_selection_on_key_moves(&no)
       flist.set_draggable_cursor(&yes)
 
       pos_table := table()
+      res := &null
    end
 
    public init_dialog()
@@ -144,6 +146,13 @@ class FileDialog(Dialog)
    #
    public get_result()
       return (\self.res).str()
+   end
+
+   #
+   # Keep the directory last selected by this dialog.
+   #
+   public keep_directory()
+      return set_directory(get_dir_path().str())
    end
 
    #
@@ -269,6 +278,7 @@ class FileDialog(Dialog)
    public on_dir(ev)
       if member(EditList.NAVIGATE, ev.code) then
          goto_dir(dir.get_contents(), 1)
+      check_existing()
    end
 
    public on_filter(ev)
