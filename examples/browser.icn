@@ -429,14 +429,17 @@ class Download()
          log("Failed to download:" || r.err)
          status := "Failed"
       } else {
-         if \dest then
-            full_path := dest
-         else {
-            fname := resp.fname
-            if *fname = 0 then
-               fname := "browser.out"
-            full_path := Files.ensure_unique_filename(FilePath(parent.parent_dialog.settings.destination_dir).child(fname).canonical().str())
-         }
+         fname := resp.fname
+         if *fname = 0 then
+            fname := "browser.out"
+         full_path := if \dest then
+            if Files.is_directory(dest) then
+               Files.ensure_unique_filename(FilePath(dest).child(fname).canonical().str())
+            else
+               dest
+         else
+            Files.ensure_unique_filename(FilePath(parent.parent_dialog.settings.destination_dir).child(fname).canonical().str())
+
          if \r.data then {
             if Files.string_to_file(full_path, r.data) then {
                log("Result file:" || full_path || " (" || Format.numeric_to_string(*r.data, 0, ',') || " bytes)")
@@ -575,18 +578,11 @@ class DownloadTab(TabItem)
    end
 
    private on_set_destination(ev)
-      local d, s
+      local d
       clear_msg()
       d := parent_dialog.directory_dialog
-      d.set_directory(parent_dialog.settings.destination_dir)
-      d.show_modal(parent_dialog)
-      s := d.get_result() | fail
-      if *s = 0 then
-         msg("Enter a directory")
-      else if not(Files.is_directory(s)) then
-         msg(s || " is not a directory")
-      else
-         parent_dialog.settings.destination_dir := s
+      d.set_directory(parent_dialog.settings.destination_dir).set_existing_file_mode(DirectoryDialog.REQUIRE).show_modal(parent_dialog)
+      parent_dialog.settings.destination_dir := d.get_result()
    end
 
    private on_clear_done(ev)
@@ -738,7 +734,7 @@ class DownloadTab(TabItem)
          set_constraint("eol", &yes).
          set_contents([]).
          add_column(ItemPaintTableColumn().set_label("URL").set_item_paint(AbbreviatedTextItemPaint())).
-         add_column(TableColumn().set_label("MB").set_column_width(35).set_column_align(Align.R)).
+         add_column(TableColumn().set_label("MB").set_column_width(50).set_column_align(Align.R)).
          add_column(TableColumn().set_label("State").set_column_width(175))
       url_table.table_content.connect(self.on_table_rpress, Event.MOUSE_RIGHT_PRESS)
       self.add(url_table)
@@ -892,6 +888,14 @@ class BrowserTab(TabItem, BrowserUI)
       every parent_dialog.downloads.download(!urls, referer)
    end
 
+   private download_links_to_dir(urls, referer)
+      local d, f
+      d := parent_dialog.directory_dialog
+      d.keep_directory().set_existing_file_mode(DirectoryDialog.REQUIRE).show_modal(parent_dialog)
+      f := d.get_result() | fail
+      every parent_dialog.downloads.download(!urls, referer, f)
+   end
+
    private copy_text(s)
       parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
    end
@@ -900,19 +904,32 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.downloads.download(url, referer)
    end
 
-   private download_to(url, referer)
-      local f
-      parent_dialog.file_dialog.set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
-      f := parent_dialog.file_dialog.get_result() | fail
+   private download_to_file(url, referer)
+      local d, f, d1, f1, full_path
+      d := parent_dialog.file_dialog
+      d1 := d.get_dir_path()
+      f1 := ucs(url.get_decoded_path_last())
+      if /f1 | *f1 = 0 | *f1 > 32 then
+         f1 := u"browser.out"
+      full_path := Files.ensure_unique_filename(d1.child(f1).canonical().str())
+      d.set_path(full_path).set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
+      f := d.get_result() | fail
+      parent_dialog.downloads.download(url, referer, f)
+   end
+
+   private download_to_dir(url, referer)
+      local d, f
+      d := parent_dialog.directory_dialog
+      d.keep_directory().set_existing_file_mode(DirectoryDialog.REQUIRE).show_modal(parent_dialog)
+      f := d.get_result() | fail
       parent_dialog.downloads.download(url, referer, f)
    end
 
    private page_info()
       local s, url
-      if s := browser.get_page_info() then {
-         url := browser.get_cache().create_url(, s)
-         parent_dialog.new_tab(url,, 1)
-      }
+      s := browser.get_page_info() | fail
+      url := browser.get_cache().create_url(, s)
+      parent_dialog.new_tab(url,, 1)
    end
 
    public create_page_menu()
@@ -944,15 +961,16 @@ class BrowserTab(TabItem, BrowserUI)
          m.add(TextMenuItem().
                set_label("Download links").
                connect(create download_links(l, browser.page_url), Event.ACTION))
+         m.add(TextMenuItem().
+               set_label("Download links to dir...").
+               connect(create download_links_to_dir(l, browser.page_url), Event.ACTION))
       }
 
       if *m.children > 0 then
          return m
    end
 
-   public create_link_menu(url)
-      local m
-      m := Menu()
+   private populate_link_menu(url, m)
       m.add(TextMenuItem().
             set_label("Copy link").
             connect(create copy_link(url), Event.ACTION))
@@ -960,8 +978,17 @@ class BrowserTab(TabItem, BrowserUI)
             set_label("Download").
             connect(create download(url, browser.page_url), Event.ACTION))
       m.add(TextMenuItem().
-            set_label("Download to...").
-            connect(create download_to(url, browser.page_url), Event.ACTION))
+            set_label("Download to file...").
+            connect(create download_to_file(url, browser.page_url), Event.ACTION))
+      m.add(TextMenuItem().
+            set_label("Download to dir...").
+            connect(create download_to_dir(url, browser.page_url), Event.ACTION))
+   end
+
+   public create_link_menu(url)
+      local m
+      m := Menu()
+      populate_link_menu(url, m)
       return m
    end
 
@@ -971,17 +998,8 @@ class BrowserTab(TabItem, BrowserUI)
       m.add(TextMenuItem().
             set_label("Copy image").
             connect(create copy_link(url), Event.ACTION))
-      if \link_url then {
-         m.add(TextMenuItem().
-               set_label("Copy link").
-               connect(create copy_link(link_url), Event.ACTION))
-         m.add(TextMenuItem().
-               set_label("Download").
-               connect(create download(link_url, browser.page_url), Event.ACTION))
-         m.add(TextMenuItem().
-               set_label("Download to...").
-               connect(create download_to(link_url, browser.page_url), Event.ACTION))
-      }
+      if \link_url then
+         populate_link_menu(link_url, m)
       if \img_data then
          m.add(TextMenuItem().
                set_label("Save image...").
@@ -1030,15 +1048,18 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public browse_for_file()
-      parent_dialog.file_dialog.set_existing_file_mode(FileDialog.REQUIRE).show_modal(parent_dialog)
-      return parent_dialog.file_dialog.get_result()
+      local d
+      d := parent_dialog.file_dialog
+      d.keep_directory().set_files().set_existing_file_mode(FileDialog.REQUIRE).show_modal(parent_dialog)
+      return d.get_result()
    end
 
    private do_save(name, data)
-      local s
-      parent_dialog.file_dialog.set_file(\name)
-      parent_dialog.file_dialog.set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
-      if s := parent_dialog.file_dialog.get_result() then {
+      local s, d
+      d := parent_dialog.file_dialog
+      d.set_file(\name)
+      d.keep_directory().set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
+      if s := d.get_result() then {
          if Files.string_to_file(s, data) then
             browser.msg("Saved OK", 3000)
          else
