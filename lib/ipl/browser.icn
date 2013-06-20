@@ -1992,7 +1992,7 @@ class Form()
          }
       }
       m.set_header("Content-Type", "multipart/form-data")
-      m.set_content_object(mp) | stop("Failed to set_content_object:",m.get_reason())
+      m.set_content_object(mp) | stop("Failed to set_content_object:", &why)
       return m
    end
 
