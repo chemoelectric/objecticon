@@ -148,6 +148,12 @@ class ContentDisposition()
       return p.parse_content_disposition(s)
    end   
 
+   public static parse_2616(s)
+      local p
+      p := RFC2616Parser()
+      return p.parse_content_disposition(s)
+   end   
+
    public to_rfc1521()
       local s, e
       s := type 

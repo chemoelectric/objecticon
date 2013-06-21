@@ -54,7 +54,7 @@ class HttpResponse(MimeHeaders)
    # present; fail otherwise.
    #
    public get_content_disposition_filename()
-      return ContentDisposition.parse(get_first_header("content-disposition")).get_filename()
+      return ContentDisposition.parse_2616(get_first_header("content-disposition")).get_filename()
    end
 
    #
