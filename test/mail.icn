@@ -354,7 +354,7 @@ procedure test_content_disposition()
 
    t := Time(2003, 3, 1, 9, 45, 30, Timezone.UTC_TIMEZONE)
 
-   yes_no{"Bad ContentDisposition", ContentDisposition.parse("junk")}
+   yes_no{"Bad ContentDisposition", ContentDisposition.parse("junk;")}
    yes_no{"Good ContentDisposition", ContentDisposition.parse("attachment; filename=junk")}
    yes_no{"Empty ContentDisposition", ContentDisposition()}
 

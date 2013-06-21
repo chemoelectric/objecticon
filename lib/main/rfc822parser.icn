@@ -6,8 +6,7 @@ package mail
 
 import 
    util,
-   exception,
-   ipl.caseless
+   exception
 
 class RFC822Parser()
    public static const 
@@ -513,15 +512,7 @@ class RFC822Parser()
    #               ; These values are not case sensitive
    #
    private parse_content_transfer_encoding_impl()
-      local s
-
-      if s := tab(matchcl("7bit"|"8bit"|"binary"|"quoted-printable"|"base64")) then
-         return s
-
-      if match("X-"|"x-") then
-         return parse_extension_token()
-
-      return parse_ietf_token()
+      return parse_token_1521()
    end
 
    #
@@ -533,63 +524,26 @@ class RFC822Parser()
    #
    #  extension-token := ietf-token / x-token
    #
+   #  ietf-token := <An extension token defined by a
+   #                 standards-track RFC and registered
+   #                 with IANA.>
+   #
    #  x-token := <The two characters "X-" or "x-" followed, with
    #              no intervening white space, by any token>
    #
    private parse_type()
-      local s
-
-      if s := tab(matchcl("application"|"audio"|"image"|"message"|"multipart"|"text"|"video")) then
-         return s
-
-      if match("X-"|"x-") then
-         return parse_extension_token()
-
-      return parse_ietf_token()
+      return parse_token_1521()
    end
 
    #
    # subtype := extension-token / iana-token
    #
-   private parse_subtype()
-      if match("X-"|"x-") then
-         return parse_extension_token()
-
-      return parse_iana_token()
-   end
-
-   #
-   #  ietf-token := <An extension token defined by a
-   #                 standards-track RFC and registered
-   #                 with IANA.>
-   #
-   private parse_ietf_token()
-      return parse_token_1521()
-   end
-
-   #
-   #  iana-token := <A publicly-defined extension token. Tokens
+   # iana-token := <A publicly-defined extension token. Tokens
    #                 of this form must be registered with IANA
    #                 as specified in RFC 2048   
    #
-   private parse_iana_token()
+   private parse_subtype()
       return parse_token_1521()
-   end
-
-   #
-   # extension-token :=  x-token / iana-token
-   #
-   #     iana-token := <a publicly-defined extension token,
-   #               registered with IANA, as specified in
-   #               appendix E>
-   #
-   #     x-token := <The two characters "X-" or "x-" followed, with
-   #                 no intervening white space, by any token>
-   #
-   private parse_extension_token()
-      local s
-      s := =("X-"|"x-") | throw("X- or x- expected")
-      return s || parse_token_1521()
    end
 
    #
@@ -633,7 +587,6 @@ class RFC822Parser()
       next_token()
       val := parse_value()
       o.set_parameter(key, val)
-      return
    end
 
    #
@@ -678,15 +631,7 @@ class RFC822Parser()
    #                       / extension-token
    #                       ; values are not case-sensitive
    private parse_disposition_type()
-      local s
-
-      if s := tab(matchcl("inline"|"attachment"|"form-data")) then
-         return s
-
-      if match("X-"|"x-") then
-         return parse_extension_token()
-
-      throw("Unknown Content-disposition type")
+      return parse_token_1521()
    end
 
    #
