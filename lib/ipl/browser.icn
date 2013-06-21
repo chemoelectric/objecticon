@@ -368,16 +368,6 @@ class Worker()
       return
    end
 
-   # On a redirection, we will get back a URL made from a string
-   # rather than ucs.  This interacts poorly with the visited list and
-   # the textfield in the client, so convert to a ucs-based URL.
-   #
-   private static ensure_ucs_url(url)
-      if type(url.scheme) == "ucs" then
-         return url
-      return URL(Text.liberal_ucs(url.str())) | URL(u"invalid:url")
-   end
-
    private handle_http_req(r)
       local s, data, hreq, hres, fname, ct, x, ce
       if r.kind ~= REFRESH & /r.form_data & (ce := pool.cache.get(r.url)) then
@@ -399,7 +389,7 @@ class Worker()
             ct := ContentType.parse(hres.get_first_header("Content-Type"))
             # Note that cancelling removes tmp_file
             if /cancelled then
-               r.callback(Resp(, ensure_ucs_url(hres.url), r.referer,, fname, ct, r.kind, 
+               r.callback(Resp(, hres.url, r.referer,, fname, ct, r.kind, 
                                if hreq.url === hres.url then r.form_data else &null, tmp_file))
          } else {
             s.close()
@@ -433,7 +423,7 @@ class Worker()
                if httpc.request.method == "GET" & x := get_expiry(hres) then
                   pool.cache.add(hres.url, x, data, fname, ct)
                if /cancelled then
-                  r.callback(Resp(, ensure_ucs_url(hres.url), r.referer, data, fname, ct, r.kind, 
+                  r.callback(Resp(, hres.url, r.referer, data, fname, ct, r.kind, 
                                   if hreq.url === hres.url then r.form_data else &null))
             } else {
                if /cancelled then

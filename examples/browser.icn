@@ -131,12 +131,16 @@ class BrowserDialog(Dialog)
    end
 
    public update_visited(url, title)
-      local e, i 
+      local e, i, s
       if url.scheme == (u"cache" | u"config") then
          fail
+      s := url.str()
       every i := 1 to *settings.visited do {
          e := settings.visited[i]
-         if equals(url, e.url) then {
+         # Don't use equals here since the ucs/string interaction may
+         # give wrong results; eg on a redirection we get a URL
+         # composed of string elements.
+         if s == e.url.str() then {
             e.last_time := Time()
             e.title := title
             e.times +:= 1
