@@ -135,10 +135,10 @@ class FileDialog(Dialog)
    end
 
    #
-   # Get the file part of the result
+   # Get the file part of the result; the result is always a string, never ucs.
    #
    public get_file()
-      return (\self.res).get(-1)
+      return string((\self.res).get(-1))
    end
 
    #
@@ -146,6 +146,13 @@ class FileDialog(Dialog)
    #
    public get_result()
       return (\self.res).str()
+   end
+
+   #
+   # Get the result, as a `FilePath` (will fail if cancel was pressed).
+   #
+   public get_result_path()
+      return \self.res
    end
 
    #
@@ -347,7 +354,7 @@ class FileDialog(Dialog)
    end
 
    public goto_dir(d, cf)
-      dir.set_contents(ucs(FilePath(d).canonical().str()))
+      dir.set_contents(FilePath(d).canonical().liberal_ucs())
       if \cf then
          file.set_contents(u"")
       load_dir()

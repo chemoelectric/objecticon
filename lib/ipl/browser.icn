@@ -87,7 +87,7 @@ class Cache()
 
    public get(url)
       local k, ent
-      k := string(url.str())
+      k := url.str()
       if ent := member(t, k) then {
          if \ent.expiry < Time.get_system_seconds() then
             del(ent)
@@ -98,7 +98,7 @@ class Cache()
 
    private del(ent)
       local k
-      k := string(ent.url.str())
+      k := ent.url.str()
       total -:= *ent.data
       delete(t, k)
    end
@@ -106,7 +106,7 @@ class Cache()
    public add(url, expiry, data, fname, content_type)
       local k, old, ent
       ent := CacheEntry(url, expiry, data, fname, content_type)
-      k := string(ent.url.str())
+      k := ent.url.str()
       #write("cache add key=", k, "\n\tdata=", *data, " bytes\n\tfname=", fname, "\n\tct=", to_string(content_type), "\n\texpiry=", (\ent.expiry - Time.get_system_seconds()) | "-")
       if old := member(t, k) then
          del(old)
@@ -1152,7 +1152,7 @@ class FormBrowse(Component, FormEntry, HasAscent)
    end
 
    private on_browse()
-      tf.set_contents(browser.browse_for_file())
+      tf.set_contents(ucs(browser.browse_for_file()))
    end
 
    public new(browser, tf_size)
@@ -2772,11 +2772,11 @@ class Browser(ComponentScrollArea)
    public static to_content(s)
       local t
       t := ""
-      s ? repeat {
+      string(s) ? repeat {
          t ||:= tab(upto('<&') | 0)
          if pos(0) then
             break
-         t ||:= case string(move(1)) of {
+         t ||:= case move(1) of {
             "<": "&lt;"
             "&": "&amp;"
          }
@@ -2787,11 +2787,11 @@ class Browser(ComponentScrollArea)
    public static to_attr(s)
       local t
       t := ""
-      s ? repeat {
+      string(s) ? repeat {
          t ||:= tab(upto('\"\'&') | 0)
          if pos(0) then
             break
-         t ||:= case string(move(1)) of {
+         t ||:= case move(1) of {
             "\"": "&quot;"
             "\'": "&apos;"
             "&": "&amp;"

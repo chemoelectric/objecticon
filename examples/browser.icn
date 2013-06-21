@@ -178,7 +178,7 @@ class BrowserDialog(Dialog)
       s ||:= "<tr><th align=left>Title</th><th align=right>Times&nbsp;</th><th>Last visit</th><th align=left>URL</th></tr>"
       every e := !settings.visited do {
          n := Browser.limit_text(\e.title, 200) | ""
-         s ||:= "<tr><td nowrap>" || ipl.browser.Browser.to_content(n) || "</td><td align=right>" || e.times || "&nbsp;</td><td>" || 
+         s ||:= "<tr><td nowrap>" || Browser.to_content(n) || "</td><td align=right>" || e.times || "&nbsp;</td><td>" || 
                 e.last_time.format("MMM'&nbsp;'dd'&nbsp;'HH:mm") || "</td>" || Browser.mk_anchor_cell(e.url) || "</tr>"
       }
       s ||:= "</table></html>"
@@ -409,7 +409,7 @@ class Download()
       parent, req, resp, status, size, full_path, dialog, dest
 
    private log(s)
-      dialog.log.log([&clock || ": " || ucs(s)], 500)
+      dialog.log.log([&clock || u": " || Text.liberal_ucs(s)], 500)
    end
 
    private on_status(ev, src, type)
@@ -474,7 +474,7 @@ class Download()
             status := "Downloading (" || Format.numeric_to_string(w.read() / 1048576.0, 1) || "MB)"
          }
       }
-      return [req.url.str(), size, status, self]
+      return [req.url.liberal_ucs(), size, status, self]
    end
 
    public retrying()
@@ -802,7 +802,7 @@ class URLList(SelectableScrollArea)
             draw_string_ex(W, 
                            xp + Gui.TEXT_INSET, 
                            yp, 
-                           limit_text(W, u"    " || contents[i].url.str(), view.w - 2 * Gui.TEXT_INSET))
+                           limit_text(W, u"    " || contents[i].url.liberal_ucs(), view.w - 2 * Gui.TEXT_INSET))
          }
       }
    end
@@ -1076,7 +1076,7 @@ class BrowserTab(TabItem, BrowserUI)
       if \browser.page_data then
          parent_dialog.update_visited(browser.page_url, browser.page_title)
       search_field.
-         set_contents(browser.curr_history_entry.url.str()).
+         set_contents(browser.curr_history_entry.url.liberal_ucs()).
          set_selection_list(lreverse(browser.history)).
          object_set_selection(browser.curr_history_entry)
       set_title(browser.page_title)

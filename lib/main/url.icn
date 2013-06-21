@@ -211,25 +211,39 @@ class URL(ObjectOutput)
    end
 
    #
-   # Convert to string representation
+   # Convert to string representation.  The result is always a string, never ucs.
    #
    public str()
       local s
-      s := self.scheme || ":"
+      s := string(self.scheme) || ":"
       if \self.host then {
          s ||:= "//"
-         s ||:= \self.userinfo || "@"
+         s ||:= string(\self.userinfo) || "@"
          if self.scheme == "file" then
-            s ||:= "localhost" ~== self.host 
+            s ||:= "localhost" ~== string(self.host)
          else
-            s ||:= self.host
+            s ||:= string(self.host)
          if \port & not(port = get_default_port(scheme)) then
             s ||:= ":" || self.port
       }
-      s ||:= self.path
-      s ||:= "?" || \self.query
-      s ||:= "#" || \self.fragment
+      s ||:= string(self.path)
+      s ||:= "?" || string(\self.query)
+      s ||:= "#" || string(\self.fragment)
       return s
+   end
+
+   #
+   # Convenient method to give ucs(str()); may fail if str() is not convertible.
+   #
+   public ucs()
+      return default.ucs(str())
+   end
+
+   #
+   # Convenient method to give Text.liberal_ucs(str()); will never fail.
+   #
+   public liberal_ucs()
+      return Text.liberal_ucs(str())
    end
 
    # Extract the cgi parameters from the {file} field.  Fails if there

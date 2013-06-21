@@ -80,7 +80,6 @@ class DirectoryDialog(Dialog)
    #
    public load_subtree(n)
       local s, l
-
       s := get_full_path(n).str()
       l := list_directory(s)
       n.clear_children()
@@ -139,7 +138,7 @@ class DirectoryDialog(Dialog)
 
    public on_tree_selection(ev)
       clear_msg()
-      dir.set_contents(get_full_path(tree.object_get_selections()[1]).str())
+      dir.set_contents(get_full_path(tree.object_get_selections()[1]).liberal_ucs())
       check_existing()
    end
 
@@ -154,6 +153,13 @@ class DirectoryDialog(Dialog)
    #
    public get_result()
       return (\self.res).str()
+   end
+
+   #
+   # Get the result, as a `FilePath` (will fail if cancel was pressed).
+   #
+   public get_result_path()
+      return \self.res
    end
 
    #
@@ -202,7 +208,7 @@ class DirectoryDialog(Dialog)
          clear_msg()
       else
          msg("Not a dir: " || ps)
-      dir.set_contents(ps)
+      dir.set_contents(p.liberal_ucs())
    end
 
    public find_child(n, s)
