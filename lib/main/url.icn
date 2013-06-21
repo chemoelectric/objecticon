@@ -478,7 +478,7 @@ class URL(ObjectOutput)
       s ? repeat {
          res ||:= tab(upto('%') | 0)
          move(1) | break
-         res ||:= char("16r" || move(2))
+         res ||:= char(integer("16r" || move(2)))
       }
       return res
    end
