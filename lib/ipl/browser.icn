@@ -154,10 +154,10 @@ class Cache()
          n := Browser.limit_text(\ce.fname, 200) | "-"
          sz := Format.numeric_to_string(*ce.data, 0, ',')
          exp := format_expiry(ce.expiry)
-         ct := ((\ce.content_type).type || "/" || ce.content_type.subtype) | "-"
+         ct := (\ce.content_type).to_rfc1521() | "-"
          l := ce.url
          s ||:= "<tr><td>" || Browser.to_content(n) || "</td><td align=right>" || sz || "&nbsp;</td><td>" || exp ||
-                   "</td><td>" || ct || "</td>" || Browser.mk_anchor_cell(l) || "</tr>" 
+                   "</td><td nowrap>" || Browser.to_content(ct) || "</td>" || Browser.mk_anchor_cell(l) || "</tr>" 
       }
       s ||:= "</table></html>"
       return s
@@ -386,7 +386,7 @@ class Worker()
          if hres := httpc.retrieve(hreq) then {
             s.close()
             fname := hres.get_filename()
-            ct := ContentType.parse(hres.get_first_header("Content-Type"))
+            ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
             # Note that cancelling removes tmp_file
             if /cancelled then
                r.callback(Resp(, hres.url, r.referer,, fname, ct, r.kind, 
@@ -417,7 +417,7 @@ class Worker()
             if hres := httpc.retrieve(hreq) then {
                data := s.str()
                fname := hres.get_filename()
-               ct := ContentType.parse(hres.get_first_header("Content-Type"))
+               ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
                # Note we have to take into account redirections in deciding whether to cache
                # and whether form data should be in the response.
                if httpc.request.method == "GET" & x := get_expiry(hres) then
@@ -2682,7 +2682,7 @@ class Browser(ComponentScrollArea)
    end
 
    private static is_image(ct, s)
-      if (\ct).type == "image" then
+      if map((\ct).type) == "image" then
          return
       return match("\x89PNG\x0D\x0A\x1A\x0A" |
                    "\xFF\xD8" |
@@ -2691,13 +2691,13 @@ class Browser(ComponentScrollArea)
 
    private static is_text(ct, s)
       \ct | fail
-      if (ct.type == "text") |
-         (ct.type == "application" & ct.subtype == "json") then
+      if (map(ct.type) == "text") |
+         (map(ct.type) == "application" & map(ct.subtype) == "json") then
          return
    end
 
    private static is_html(ct, s)
-      if (\ct).subtype == "html" then
+      if map((\ct).subtype) == "html" then
          return
       s ? {
          while tab(upto('<')) do {
@@ -2715,13 +2715,6 @@ class Browser(ComponentScrollArea)
             }
          }
       }
-   end
-
-   private convert_to_ucs(ct, s)
-      return if (\ct).get_parameter("charset") == "ISO-8859-1" then
-         Text.iso_8859_1_to_ucs(s)
-      else
-         Text.liberal_ucs(s)
    end
 
    private save_form_values()
@@ -2875,7 +2868,11 @@ class Browser(ComponentScrollArea)
       datalists := table()
       forms := []
       form_tab_children := []
-      s := convert_to_ucs(res.content_type, s)
+      # Convert s to ucs
+      s := if (\res.content_type).get_parameter("charset") == "ISO-8859-1" then
+         Text.iso_8859_1_to_ucs(s)
+      else
+         Text.liberal_ucs(s)
       doc := HtmlParser().parse(s)
       page_base := page_url
       row := TextFlow(self)
@@ -4466,7 +4463,7 @@ class Browser(ComponentScrollArea)
       if n := \page_title & *n > 0 then
          s ||:= "Title: " || to_content(n) || "<p>"
       if ct := \page_resp.content_type then
-         s ||:= "Content-type: " || ct.type || "/" || ct.subtype || "<p>"
+         s ||:= "Content-type: " || to_content(ct.to_rfc1521()) || "<p>"
       if l := \page_resp.referer & (l.scheme == (u"http" | u"https")) then
          s ||:= "Referer: " || mk_anchor(l) || "<p>"
 

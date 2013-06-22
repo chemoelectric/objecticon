@@ -54,7 +54,12 @@ class HttpResponse(MimeHeaders)
    # present; fail otherwise.
    #
    public get_content_disposition_filename()
-      return ContentDisposition.parse_2616(get_first_header("content-disposition")).get_filename()
+      local v
+      v := ContentDisposition.parse_rfc2616(get_first_header("content-disposition")).get_parameter("filename*" | "filename") | fail
+      return if is(v, ExtValue) then
+         v.value
+      else
+         v
    end
 
    #

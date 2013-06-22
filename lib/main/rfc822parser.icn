@@ -200,7 +200,7 @@ class RFC822Parser()
    private parse_local_part()
       local res
       res := parse_word()
-      while res ||:= ="." do
+      while res ||:= =u"." do
          res ||:= parse_word()
       return res
    end
@@ -211,7 +211,7 @@ class RFC822Parser()
    private parse_domain()
       local res
       res := parse_sub_domain()
-      while res ||:= ="." do
+      while res ||:= =u"." do
          res ||:= parse_sub_domain()
       return res
    end
@@ -237,20 +237,17 @@ class RFC822Parser()
    #
    private parse_phrase()
       local res
-      res := ""
+      res := move(0)
       next_token()
-      while any('\"' | ATOM_CHAR) do {
+      while any('\"' ++ ATOM_CHAR) do {
          # Single spaces between words
          if *res > 0 then
             res ||:= " "
          res ||:= parse_word()
          next_token()
       }
-
-      # Strictly, this would be :-
-      # if *res > 0 then
-      #   return res
-
+      if *res = 0 then
+         throw("phrase expected")
       return res
    end
 
@@ -262,7 +259,7 @@ class RFC822Parser()
       t := parse_local_part()
       mb.set_local_part(t)
       next_token()
-      ="@" | throw("@ expected")
+      =u"@" | throw("@ expected")
       t := parse_domain()
       mb.set_domain(t)
       return
@@ -277,14 +274,14 @@ class RFC822Parser()
       t := []
       repeat {
          next_token()
-         ="@" | throw("@ expected")
+         =u"@" | throw("@ expected")
          put(t, parse_domain())
          next_token()
-         ="," | break
+         =u"," | break
          next_token()
       }
       next_token()
-      =":" | throw(": expected")
+      =u":" | throw(": expected")
       mb.set_route(t)
       return
    end
@@ -293,24 +290,26 @@ class RFC822Parser()
    # route-addr  =  "<" [route] addr-spec ">"
    #
    private parse_route_addr(mb)
-      ="<" | throw("< expected")
+      next_token()
+      =u"<" | throw("< expected")
       next_token()
       if any('@') then
          parse_route(mb)
       else
          mb.set_route([])
-      next_token()
       parse_addr_spec(mb)
       next_token()
-      =">" | throw("> expected")
+      =u">" | throw("> expected")
       return
    end
 
    #
-   # mailbox = addr-spec | phrase route-addr
+   # See RFC1123 5.2.15
+   # mailbox =  addr-spec            ; simple address
+   #         / [phrase] route-addr   ; name & addr-spec
    #
    private parse_mailbox_impl()
-      local x, t, mb
+      local x, mb
       mb := Mailbox()
       #
       # The lookahead is complex, so try parsing as a simple address
@@ -320,8 +319,8 @@ class RFC822Parser()
       try { parse_addr_spec(mb) } | {
          exception.clear()
          tab(x)
-         t := parse_phrase()
-         mb.set_phrase(t)
+         if any('\"' ++ ATOM_CHAR) then
+            mb.set_phrase(parse_phrase())
          parse_route_addr(mb)
       }
 
@@ -338,7 +337,7 @@ class RFC822Parser()
       p := parse_phrase()
       t := []
       next_token()
-      =":" | throw(": expected")
+      =u":" | throw(": expected")
       next_token()
       if any(';') then # empty group
          move(1)
@@ -347,9 +346,10 @@ class RFC822Parser()
             mb := parse_mailbox_impl()
             put(t, mb)
             next_token()
-            ="," | break
+            =u"," | break
+            next_token()
          }
-         =";" | throw("; expected")
+         =u";" | throw("; expected")
       }
       return Group(t, p)
    end
@@ -379,7 +379,7 @@ class RFC822Parser()
       repeat {
          put(l, parse_mailbox_or_group()) | fail
          next_token()
-         ="," | return l
+         =u"," | return l
       }
    end
 
@@ -396,7 +396,7 @@ class RFC822Parser()
       repeat {
          put(l, parse_mailbox_impl())
          next_token()
-         ="," | return l
+         =u"," | return l
       }
    end
 
@@ -426,7 +426,7 @@ class RFC822Parser()
       local s
       next_token()
       s := tab(many(&digits)) | throw("digit expected")
-      if *s = (2 | 4) then
+      if 2 <= *s <= 4 then
          return integer(s)
       throw("invalid year: " || s)
    end
@@ -449,7 +449,7 @@ class RFC822Parser()
    #
    # date-time = [ day "," ] date time
    # day =  "Mon"  / "Tue" /  "Wed"  / "Thu"/  "Fri"  / "Sat" /  "Sun"
-   # date =  1*2DIGIT month 2DIGIT        
+   # date = 1*2DIGIT month 2*4DIGIT ; see rfc1123, s5.2.14
    # time =  hour zone                    
    # hour =  2DIGIT ":" 2DIGIT [":" 2DIGIT]
    #
@@ -459,7 +459,7 @@ class RFC822Parser()
       next_token()
       if =(!DAYS) then {
          next_token()
-         ="," | throw(", expected")
+         =u"," | throw(", expected")
       }
       d := parse_day()
       m := parse_month()
@@ -467,7 +467,7 @@ class RFC822Parser()
 
       hh := parse_2dig()
       next_token()
-      =":" | throw(": expected")
+      =u":" | throw(": expected")
       mm := parse_2dig()
       next_token()
       if any(':') then {
@@ -492,7 +492,7 @@ class RFC822Parser()
       next_token()
       f := tab(many(FIELD_NAME_CHARS)) | throw("Expect fieldname chars")
       next_token()
-      =":" | throw(": expected")
+      =u":" | throw(": expected")
       next_token()
       # The handling of folding is done by the caller, so we just take the
       # rest of the string as the field-body.
@@ -583,7 +583,7 @@ class RFC822Parser()
       local key, val
       key := parse_token_1521()
       next_token()
-      ="=" | throw("= expected")
+      =u"=" | throw("= expected")
       next_token()
       val := parse_value()
       o.set_parameter(key, val)
@@ -610,14 +610,14 @@ class RFC822Parser()
 
       ty := parse_type()
       next_token()
-      ="/" | throw("/ expected")
+      =u"/" | throw("/ expected")
       next_token()
       st := parse_subtype()
       ct := ContentType(ty, st)
 
       repeat {
          next_token()
-         =";" | break
+         =u";" | break
          next_token()
          parse_parameter(ct)
       }
@@ -679,7 +679,7 @@ class RFC822Parser()
 
       repeat {
          next_token()
-         =";" | break
+         =u";" | break
          next_token()
          parse_parameter(cd)
       }

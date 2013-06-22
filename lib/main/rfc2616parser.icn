@@ -5,9 +5,10 @@
 package mail
 
 import 
-   lang,
    exception,
    ipl.caseless
+
+record ExtValue(charset, language, value)
 
 class RFC2616Parser()
    public static const 
@@ -105,24 +106,69 @@ class RFC2616Parser()
    end
 
    #
-   # word =  atom / quoted-string
-   #
-   private parse_word() 
-      next_token()
-      if any('\"') then
-         return parse_quoted_string()
-      else
-         return parse_atom()
-   end
-
-   #
-   #  value := token / quoted-string
+   #  value          = token | quoted-string
    #
    private parse_value()
       if any('\"') then
          return parse_and_convert_quoted_string()
       else
          return parse_atom()
+   end
+   
+   #
+   #  type           = token
+   #
+   private parse_type()
+      return parse_atom()
+   end
+
+   #
+   #  subtype        = token
+   #
+   private parse_subtype()
+      return parse_atom()
+   end
+
+   #
+   #  parameter      = attribute "=" value
+   #  attribute      = token
+   #
+   #  On success the resulting value is placed into o.
+   #
+   private parse_parameter(o)
+      local key, val
+      key := parse_atom()
+      next_token()
+      =u"=" | throw("= expected")
+      next_token()
+      val := parse_value()
+      o.set_parameter(key, val)
+   end
+
+   #
+   #  Content-Type   = "Content-Type" ":" media-type
+   #  media-type     = type "/" subtype *( ";" parameter )
+   #
+   private parse_content_type_impl()
+      local ty, st, ct
+
+      next_token()
+
+      ty := parse_type()
+      next_token()
+      ="/" | throw("/ expected")
+      next_token()
+      st := parse_subtype()
+      ct := ContentType(ty, st)
+
+      repeat {
+         next_token()
+         =";" | break
+         next_token()
+         parse_parameter(ct)
+      }
+
+      return ct
    end
 
    #
@@ -146,20 +192,17 @@ class RFC2616Parser()
    # language      = <Language-Tag, defined in [RFC5646], Section 2.1>
    # 
    private parse_ext_value()
-      local s, cs
+      local s, lang, cs
       cs := parse_charset()
       next_token()
-      ="'" | throw("' expected")
+      =u"'" | throw("' expected")
       next_token()
-      tab(many(LANGUAGE_CHAR))
+      lang := tab(many(LANGUAGE_CHAR))
       next_token()
-      ="'" | throw("' expected")
+      =u"'" | throw("' expected")
       next_token()
       s := parse_value_chars()
-      return if cs == "UTF-8" then
-         Text.liberal_ucs(s)
-      else
-         s
+      return ExtValue(cs, lang, s)
    end
 
    # value-chars   = *( pct-encoded / attr-char )
@@ -174,7 +217,7 @@ class RFC2616Parser()
    # 
    private parse_value_chars()
       local s
-      # Always returns a string, not ucs.
+      # Always returns a string, not ucs.  (like URL.percent_decode)
       s := ""
       repeat {
          if any(ATTR_CHAR) then
@@ -216,12 +259,12 @@ class RFC2616Parser()
       key := parse_atom()
       if key[-1] == "*" then {
          next_token()
-         ="=" | throw("= expected")
+         =u"=" | throw("= expected")
          next_token()
          val := parse_ext_value()
       } else {
          next_token()
-         ="=" | throw("= expected")
+         =u"=" | throw("= expected")
          next_token()
          val := parse_value()
       }
@@ -241,7 +284,7 @@ class RFC2616Parser()
 
       repeat {
          next_token()
-         =";" | break
+         =u";" | break
          next_token()
          parse_disposition_parm(cd)
       }
@@ -257,5 +300,9 @@ class RFC2616Parser()
 
    public parse_content_disposition(s)
       return s ? simple_try{ end_check(parse_content_disposition_impl()) }
+   end
+
+   public parse_content_type(s)
+      return s ? simple_try{ end_check(parse_content_type_impl()) }
    end
 end
