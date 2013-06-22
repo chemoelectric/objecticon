@@ -81,7 +81,12 @@ final abstract class Text()
       local t
       s := string(s) | runerr(103, s)
       t := ""
-      every t ||:= Text.utf8_seq(ord(s))
+      s ? repeat {
+         t ||:= tab(many(&ascii))
+         if pos(0) then
+            break
+         t ||:= Text.utf8_seq(ord(move(1)))
+      }
       return ucs(t)
    end
 
