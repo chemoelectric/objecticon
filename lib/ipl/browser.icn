@@ -173,11 +173,12 @@ class Cache()
 end
 
 class Worker()
+   private readable
+      pool, httpc, cancelled, req, task
+
    private
-      pool, httpc, tmp_file, cancelled
-   package
-      doing, task
-   
+      tmp_file
+
    public static const NORMAL, NAVIGATE, REFRESH, DOWNLOAD
 
    private static init()
@@ -192,7 +193,7 @@ class Worker()
    end
 
    public finally()
-      if \doing then
+      if \req then
          cancel()
       else {
          # httpc may be null, since we may have started but never been run
@@ -202,7 +203,7 @@ class Worker()
    end
 
    public cancel()
-      if \doing then {
+      if \req then {
          cancelled := 1
          task.interrupt()
          httpc.abort()
@@ -302,7 +303,7 @@ class Worker()
    end
 
    private status(ev, src, type)
-      (\(\doing).on_status)(ev, src, type)
+      (\(\req).on_status)(ev, src, type)
    end
 
    private setup_httpc()
@@ -336,20 +337,20 @@ class Worker()
       }
    end
 
-   private handle_file_req(r)
+   private handle_file_req()
       local data
-      if data := cvt_file(r.url.get_decoded_path()) then
-         r.callback(Resp(, r.url, r.referer, data, r.url.get_decoded_path_last(),, r.kind))
+      if data := cvt_file(req.url.get_decoded_path()) then
+         req.callback(Resp(, req.url, req.referer, data, req.url.get_decoded_path_last(),, req.kind))
       else
-         r.callback(Resp(&why, r.url, r.referer,,,, r.kind))
+         req.callback(Resp(&why, req.url, req.referer,,,, req.kind))
    end
 
-   private handle_cache_req(r)
+   private handle_cache_req()
       local ce
-      if ce := pool.cache.get(r.url) then
-         r.callback(Resp(, r.url, r.referer, ce.data, ce.fname, ce.content_type, r.kind))
+      if ce := pool.cache.get(req.url) then
+         req.callback(Resp(, req.url, req.referer, ce.data, ce.fname, ce.content_type, req.kind))
       else
-         r.callback(Resp("Cache entry expired", r.url, r.referer,,,, r.kind))
+         req.callback(Resp("Cache entry expired", req.url, req.referer,,,, req.kind))
    end
 
    private get_expiry(hres)
@@ -368,34 +369,34 @@ class Worker()
       return
    end
 
-   private handle_http_req(r)
+   private handle_http_req()
       local s, data, hreq, hres, fname, ct, x, ce
-      if r.kind ~= REFRESH & /r.form_data & (ce := pool.cache.get(r.url)) then
-         r.callback(Resp(, r.url, r.referer, ce.data, ce.fname, ce.content_type, r.kind))
-      else if r.kind = DOWNLOAD then {
+      if req.kind ~= REFRESH & /req.form_data & (ce := pool.cache.get(req.url)) then
+         req.callback(Resp(, req.url, req.referer, ce.data, ce.fname, ce.content_type, req.kind))
+      else if req.kind = DOWNLOAD then {
          tmp_file := Files.make_temp_filename("http_oibrowser.", ".bin") | stop("Couldn't create temp file: ", &why)
          s := BufferStream(FileStream(tmp_file, 
                                       ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))).
             set_buff_size(8192) | stop("Couldn't open ", tmp_file, ": ", &why)
          hreq := HttpRequest().
             set_output_stream(s). 
-            set_url(r.url).
+            set_url(req.url).
             set_header("Accept-charset", "UTF-8, ISO-8859-1")
-         if (\r.referer).scheme == (u"http" | u"https") then
-            hreq.set_referer(r.referer.str())
+         if (\req.referer).scheme == (u"http" | u"https") then
+            hreq.set_referer(req.referer.str())
          if hres := httpc.retrieve(hreq) then {
             s.close()
             fname := hres.get_filename()
             ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
             # Note that cancelling removes tmp_file
             if /cancelled then
-               r.callback(Resp(, hres.url, r.referer,, fname, ct, r.kind, 
-                               if hreq.url === hres.url then r.form_data else &null, tmp_file))
+               req.callback(Resp(, hres.url, req.referer,, fname, ct, req.kind, 
+                               if hreq.url === hres.url then req.form_data else &null, tmp_file))
          } else {
             s.close()
             if /cancelled then {
                save_why{Files.remove(tmp_file)}
-               r.callback(Resp(&why, r.url, r.referer,,,, r.kind, r.form_data))
+               req.callback(Resp(&why, req.url, req.referer,,,, req.kind, req.form_data))
             }
          }
       } else use {
@@ -403,15 +404,15 @@ class Worker()
          {
             hreq := HttpRequest().
                set_output_stream(s). 
-               set_url(r.url).
+               set_url(req.url).
                set_header("Accept-charset", "UTF-8, ISO-8859-1")
-            if (\r.referer).scheme == (u"http" | u"https") then
-               hreq.set_referer(r.referer.str())
-            if \r.form_data then {
-               if is(r.form_data, Message) then
-                  hreq.set_multipart_form_data(r.form_data)
+            if (\req.referer).scheme == (u"http" | u"https") then
+               hreq.set_referer(req.referer.str())
+            if \req.form_data then {
+               if is(req.form_data, Message) then
+                  hreq.set_multipart_form_data(req.form_data)
                else
-                  hreq.set_html_form_data(r.form_data)
+                  hreq.set_html_form_data(req.form_data)
             }
 
             if hres := httpc.retrieve(hreq) then {
@@ -423,41 +424,47 @@ class Worker()
                if httpc.request.method == "GET" & x := get_expiry(hres) then
                   pool.cache.add(hres.url, x, data, fname, ct)
                if /cancelled then
-                  r.callback(Resp(, hres.url, r.referer, data, fname, ct, r.kind, 
-                                  if hreq.url === hres.url then r.form_data else &null))
+                  req.callback(Resp(, hres.url, req.referer, data, fname, ct, req.kind, 
+                                  if hreq.url === hres.url then req.form_data else &null))
             } else {
                if /cancelled then
-                  r.callback(Resp(&why, r.url, r.referer,,,, r.kind, r.form_data))
+                  req.callback(Resp(&why, req.url, req.referer,,,, req.kind, req.form_data))
             }
          }
       }
    end
 
-   private handle_func(r, f)
+   private handle_func(f)
       local x, s
-      if x := f(r) then {
-         if is(x, StaticData) then
-            r.callback(Resp(, r.url, r.referer, x.data, x.fname, x.content_type, r.kind))
-         else if s := string(x) then
-            r.callback(Resp(, r.url, r.referer, s, r.url.get_path_last(),, r.kind))
-         else
-            runerr(103, x)
-      } else
-         r.callback(Resp(&why, r.url, r.referer,,,, r.kind))
+      if x := f(self) then {
+         if /cancelled then {
+            if is(x, Resp) then
+               req.callback(x)
+            else if is(x, StaticData) then
+               req.callback(Resp(, req.url, req.referer, x.data, x.fname, x.content_type, req.kind))
+            else if s := string(x) then
+               req.callback(Resp(, req.url, req.referer, s, req.url.get_path_last(),, req.kind))
+            else
+               runerr(103, x)
+         }
+      } else {
+         if /cancelled then
+            req.callback(Resp(&why, req.url, req.referer,,,, req.kind))
+      }
    end
 
-   private handle_req(r)
+   private handle_req()
       local f, t
-      t := string(r.url.scheme)
+      t := string(req.url.scheme)
       case t of {
-         "file": handle_file_req(r)
-         "http"|"https": handle_http_req(r)
-         "cache": handle_cache_req(r)
+         "file": handle_file_req()
+         "http"|"https": handle_http_req()
+         "cache": handle_cache_req()
          default: {
             if f := member(pool.scheme_handlers, t) then
-               handle_func(r, f)
+               handle_func(f)
             else
-               r.callback(Resp("Unknown url scheme", r.url, r.referer,,,, r.kind))
+               req.callback(Resp("Unknown url scheme", req.url, req.referer,,,, req.kind))
          }
       }
    end
@@ -470,12 +477,12 @@ class Worker()
             httpc.close()
             task.revert()
          }
-         until doing := pool.queue_get() do
+         until req := pool.queue_get() do
             task.sleep()
-         #write("doing for ",image(doing.browser), "   size=",pool.queue_size())
+         #write("req for ",image(req.browser), "   size=",pool.queue_size())
          cancelled := &null
-         handle_req(doing)
-         doing := &null
+         handle_req(req)
+         req := &null
       }
    end
 
@@ -520,14 +527,14 @@ class WorkerPool()
       local w
       delete(queue, client)
       every w := !workers do 
-         if (\w.doing).client === client then
+         if (\w.req).client === client then
             w.cancel()
    end
 
    public get_worker(req)
       local w
       every w := !workers do 
-         if w.doing === req then
+         if w.req === req then
             return w
    end
 
@@ -565,7 +572,7 @@ class WorkerPool()
       local i, w
       i := *member(queue, client) | 0
       every w := !workers do 
-         if (\w.doing).client === client then
+         if (\w.req).client === client then
             i +:= 1
       return i
    end
@@ -574,7 +581,7 @@ class WorkerPool()
       local i, w
       i := 0
       every w := !workers do 
-         if (\w.doing).client === client then
+         if (\w.req).client === client then
             i +:= w.read()
       return i
    end
@@ -631,7 +638,7 @@ class WorkerPool()
          else if t.is_active() then "active"
          else "stopped"
          s ||:= "<tr><td>" || serial(w) || "</td><td>" || st || "</td>"
-         if l := (\w.doing).url then
+         if l := (\w.req).url then
             s ||:= Browser.mk_anchor_cell(l)
          else
             s ||:= "<td/>"

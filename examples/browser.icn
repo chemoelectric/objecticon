@@ -198,8 +198,14 @@ class BrowserDialog(Dialog)
       return s
    end
 
-   private del_cookie(k, path, name)
-      local t1, t2
+   private del_cookie(req)
+      local t, t1, t2, k, path, name
+
+      (t := req.url.extract_cgi_parameters() &
+       k := member(t, "q")[1] &
+       path := member(t, "path")[1] & 
+       name :=  member(t, "name")[1]) | return error("Bad request")
+
       if t1 := member(pool.cookies, k) &
          t2 := member(t1, path) then
       {
@@ -210,16 +216,19 @@ class BrowserDialog(Dialog)
                delete(pool.cookies, k)            
          }
       }
-      return list_cookie(k)
+      return list_cookie(req)
    end
 
-   private del_cookies(k)
+   private del_cookies(req)
+      local k
+      (k := member(req.url.extract_cgi_parameters(), "q")[1]) | return error("Bad request")
       delete(pool.cookies, k)            
       return list_all_cookies()
    end
 
-   private list_cookie(k)
-      local s, t, path, ck
+   private list_cookie(req)
+      local k, s, t, path, ck
+      (k := member(req.url.extract_cgi_parameters(), "q")[1]) | return error("Bad request")
       s := "<html><title>Cookies</title>"
       if t := member(pool.cookies, k) then {
          s ||:= "<a href=config:del_cookies?q=" || URL.cgi_encode(k) || ">Delete all</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=config:cookies>Back to list</a>"
@@ -246,7 +255,14 @@ class BrowserDialog(Dialog)
       return s
    end
 
-   private edit_settings(home, cn, vn, pn)
+   private edit_settings(req)
+      local t, home, cn, vn, pn
+      (t := req.url.extract_cgi_parameters() &
+       home := member(t, "home")[1] &
+       cn := member(t, "cache")[1] &
+       vn := member(t, "vsize")[1] &
+       pn := member(t, "psize")[1]) | return error("Bad request")
+
       settings.home_url := URL(ucs(home))
       settings.cache_size_mb := integer(cn)
       settings.visited_size := integer(vn)
@@ -279,25 +295,29 @@ class BrowserDialog(Dialog)
       return pool.get_status()
    end
 
-   private config_handler(req)
-      local t
+   private do_delay(worker)
+      local n
+      (n := member(worker.req.url.extract_cgi_parameters(), "n")[1]) | return error("Bad request")
+      worker.task.sleep(n)
+      return "<html>Complete</html>"
+   end
+
+   private config_handler(worker)
+      local req
+      req := worker.req
       return case string(req.url.path) of {
          "": config_main()
+         "delay": do_delay(worker)
          "visited": list_visited()
          "cookies": list_all_cookies()
-         "cookie": list_cookie(member(req.url.extract_cgi_parameters(), "q")[1])
+         "cookie": list_cookie(req)
          "cache": cache_status()
          "workers": workers_status()
-         "del_cookies": del_cookies(member(req.url.extract_cgi_parameters(), "q")[1])
-         "del_cookie": {
-            if t := req.url.extract_cgi_parameters() then
-               del_cookie(member(t, "q")[1], member(t, "path")[1], member(t, "name")[1])
-         }
-         "submit": {
-            if t := req.url.extract_cgi_parameters() then
-               edit_settings(member(t, "home")[1], member(t, "cache")[1], member(t, "vsize")[1],  member(t, "psize")[1])
-         }
-      } | error("Bad config request")
+         "del_cookies": del_cookies(req)
+         "del_cookie": del_cookie(req)
+         "submit": edit_settings(req)
+         default: error("Bad config request")
+      }
    end
 
    private get_authentication(dom, realm)
