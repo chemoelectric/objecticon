@@ -49,7 +49,7 @@ class URL(ObjectOutput)
    # Set the scheme field.
    #
    public set_scheme(x)
-      self.scheme := x
+      self.scheme := map(x)
       return self
    end
 
