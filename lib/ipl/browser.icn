@@ -302,6 +302,23 @@ class Worker()
          return Files.file_to_string(f)
    end
 
+   private cvt_prog(f)
+      local ps
+      return use {
+         ps := TaskStream(ProgInputStream("/bin/sh", ["-c", f]), task),
+         ps.read_all()
+      }
+   end
+
+   private do_run(f)
+      local pid
+      pid := System.fork() | fail
+      if pid > 0 then
+         return
+      System.exec("/bin/sh", ["-c", f]) | stop(&why)
+      syserr("Not reached")
+   end
+
    private status(ev, src, type)
       (\(\req).on_status)(ev, src, type)
    end
@@ -334,6 +351,28 @@ class Worker()
             connect(other, NetClient.CONNECTED_EVENT).
             connect(other, NetClient.CLOSED_EVENT).
             connect(other, HttpClient.COMPLETE_EVENT)
+      }
+   end
+
+   private handle_prog_req()
+      local data
+      if (\req.referer).scheme == (u"http" | u"https") then
+         req.callback(Resp("Can't run a prog from an http page", req.url, req.referer,,,, req.kind))
+      else if data := cvt_prog(req.url.get_decoded_path()) then {
+         if /cancelled then
+            req.callback(Resp(, req.url, req.referer, data, "",, req.kind))
+      } else {
+         if /cancelled then
+            req.callback(Resp(&why, req.url, req.referer,,,, req.kind))
+      }
+   end
+
+   private handle_run_req()
+      if (\req.referer).scheme == (u"http" | u"https") then
+         req.callback(Resp("Can't run a prog from an http page", req.url, req.referer,,,, req.kind))
+      if not do_run(req.url.get_decoded_path()) then {
+         if /cancelled then
+            req.callback(Resp(&why, req.url, req.referer,,,, req.kind))
       }
    end
 
@@ -444,7 +483,7 @@ class Worker()
                req.callback(Resp(, req.url, req.referer, x.data, x.fname, x.content_type, req.kind))
             else if s := string(x) then
                req.callback(Resp(, req.url, req.referer, s, req.url.get_path_last(),, req.kind))
-            else
+            else if \x then
                runerr(103, x)
          }
       } else {
@@ -458,6 +497,8 @@ class Worker()
       t := string(req.url.scheme)
       case t of {
          "file": handle_file_req()
+         "prog": handle_prog_req()
+         "run": handle_run_req()
          "http"|"https": handle_http_req()
          "cache": handle_cache_req()
          default: {
