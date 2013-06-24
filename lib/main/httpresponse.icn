@@ -35,18 +35,24 @@ class HttpResponse(MimeHeaders)
    end
 
    #
+   # Return the integer status code, extracted by parsing the status.
+   #
+   public get_status_code()
+      # see rfc2616
+      # Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF
+      status ? {
+         tab(upto(' '))
+         tab(many(' '))
+         return integer(tab(many(&digits)))
+      }
+   end
+
+   #
    # Set the status
    #
    public set_status(s)
       self.status := s
       return self
-   end
-
-   #
-   # Succeed iff the status was an HTTP OK status.
-   #
-   public status_okay()
-      return find("200", status)
    end
 
    #
