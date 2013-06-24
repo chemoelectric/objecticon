@@ -409,7 +409,7 @@ class Worker()
    end
 
    private handle_http_req()
-      local s, data, hreq, hres, fname, ct, x, ce
+      local s, data, hreq, hres, fname, ct, x, ce, sc
       if req.kind ~= REFRESH & /req.form_data & (ce := pool.cache.get(req.url)) then
          req.callback(Resp(, req.url, req.referer, ce.data, ce.fname, ce.content_type, req.kind))
       else if req.kind = DOWNLOAD then {
@@ -464,9 +464,22 @@ class Worker()
                   pool.cache.add(hres.url, x, data, fname, ct)
                if /cancelled then
                   req.callback(Resp(, hres.url, req.referer, data, fname, ct, req.kind, 
-                                  if hreq.url === hres.url then req.form_data else &null))
-            } else {
-               if /cancelled then
+                                    if hreq.url === hres.url then req.form_data else &null))
+            } else if /cancelled then {
+               # Decide whether to include http content together with
+               # the error message, so it can be displayed
+               if httpc.get_http_error() & 
+                  hres := httpc.response &
+                  sc := hres.get_status_code() &
+                  400 <= sc <= 599 &
+                  data := s.str() &
+                  *data > 0 then
+               {
+                  fname := hres.get_filename()
+                  ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
+                  req.callback(Resp(&why, hres.url, req.referer, data, fname, ct, req.kind, 
+                                    if hreq.url === hres.url then req.form_data else &null))
+               } else
                   req.callback(Resp(&why, req.url, req.referer,,,, req.kind, req.form_data))
             }
          }
@@ -2871,7 +2884,7 @@ class Browser(ComponentScrollArea)
          curr_history_entry.focus_index := get_focusable_index(parent_dialog.get_focus()) | &null
       }
       set_area_y(0).set_area_x(0)
-      if \res.err then {
+      if \res.err & /res.data then {
          s := "<html><title>Error</title>" || 
             "<h1>Error:</h1>Getting " || to_content(res.url.str()) || "<br><br>" || res.err || "</html>"
          page_data := &null
@@ -4497,7 +4510,7 @@ class Browser(ComponentScrollArea)
    end
 
    public get_page_info()
-      local s, l, t, c, n, sz, m, f, imgs, ct
+      local e, s, l, t, c, n, sz, m, f, imgs, ct
 
       s := "<html><title>Page info</title>"
       s ||:= "<h1>Page</h1>"
@@ -4514,6 +4527,8 @@ class Browser(ComponentScrollArea)
          s ||:= "Content-type: " || to_content(ct.to_rfc1521()) || "<p>"
       if l := \page_resp.referer & (l.scheme == (u"http" | u"https")) then
          s ||:= "Referer: " || mk_anchor(l) || "<p>"
+      if e := \page_resp.err then
+         s ||:= "Error: " || to_content(e) || "<p>"
 
       imgs := []
       t := table(u"")
