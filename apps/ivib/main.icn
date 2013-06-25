@@ -832,6 +832,7 @@ class Main(Dialog)
       self.clear_undo()
       self.clear_redo()
       self.undo_to(Canvas())
+      self.set_filename_label()
       update_grey()
    end
 
