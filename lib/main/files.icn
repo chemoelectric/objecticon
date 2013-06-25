@@ -657,10 +657,24 @@ class FilePath(ObjectOutput)
    end
 
    #
-   # Convert the path back into a string.
+   # Convert the path back into a string.  The result is always a string, never ucs.
    #
    public str()
       return Files.FS.filepath_str(self)
+   end
+
+   #
+   # Convenient method to give ucs(str()); may fail if str() is not convertible.
+   #
+   public ucs()
+      return default.ucs(str())
+   end
+
+   #
+   # Convenient method to give Text.liberal_ucs(str()); will never fail.
+   #
+   public liberal_ucs()
+      return Text.liberal_ucs(str())
    end
 
    #
@@ -846,7 +860,7 @@ class UnixFileSystem(FileSystem)
       every e := !fp.l do {
          if s[-1] ~== "/" then 
             s ||:= "/"
-         s ||:= e
+         s ||:= string(e)
       }
       return s
    end
@@ -956,7 +970,7 @@ class WindowsFileSystem(FileSystem)
       every e := !fp.l do {
          if *s > 0 & not any("\\:", s[-1]) then
             s ||:= "\\"
-         s ||:= e
+         s ||:= string(e)
       }
       return s
    end

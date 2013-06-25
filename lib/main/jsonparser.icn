@@ -9,6 +9,7 @@ class JSONParser()
       UNESCAPED_CHAR
 
    private
+      utf8_flag,
       true,
       false,
       null
@@ -35,24 +36,24 @@ class JSONParser()
 
    private parse_number()
       local s
-      s := =("-" | "") || 
-         (="0" | (tab(any('123456789')) || (tab(many(&digits)) | ""))) ||
-         ((="." || tab(many(&digits))) | "") ||
-         ((="e" || (tab(any('+\-')) | "") || tab(many(&digits))) | "") | throw("Invalid number")
+      s := (=u"-" | "") || 
+         (=u"0" | (tab(any('123456789')) || (tab(many(&digits)) | ""))) ||
+         ((=u"." || tab(many(&digits))) | "") ||
+         ((=u"e" || (tab(any('+\-')) | "") || tab(many(&digits))) | "") | throw("Invalid number")
       return numeric(s) | throw("Number out of range")
    end
 
    private parse_string()
-      local s, t, ch
-      ="\""
-      s := move(0)
+      local s, t, ch, i
+      =u"\""
+      s := ""
       repeat {
          s ||:= tab(many(UNESCAPED_CHAR))
          if pos(0) then
             throw("Unclosed quote")
-         if ="\"" then
+         if =u"\"" then
             break
-         if ="\\" then {
+         if =u"\\" then {
             ch := move(1) | throw("Unclosed quote")
             s ||:= case string(ch) of {
                "\"": "\""
@@ -65,7 +66,11 @@ class JSONParser()
                "t": "\t"
                "u": {
                   many(&digits ++ 'ABCDEFabcdef', t := move(4)) = 5 | throw("Invalid \\u escape")
-                  uchar(integer("16r" || t))
+                  i := integer("16r" || t)
+                  if \utf8_flag then
+                     uchar(i | 63)
+                  else
+                     char(i | 63)
                }
                default: throw("Invalid escape char in string: " || ch)
             }
@@ -76,11 +81,11 @@ class JSONParser()
    end
 
    private parse_value()
-      return if ="false" then
+      return if =u"false" then
          false
-      else if ="true" then
+      else if =u"true" then
          true
-      else if ="null" then
+      else if =u"null" then
          null
       else if any('[') then
          parse_array()
@@ -101,16 +106,16 @@ class JSONParser()
    private parse_array()
       local res
       res := []
-      ="["
+      =u"["
       next_token()
-      if ="]" then
+      if =u"]" then
          return res
       repeat {
          put(res, parse_value())
          next_token()
-         if ="]" then
+         if =u"]" then
             return res
-         ="," | throw(", expected")
+         =u"," | throw(", expected")
          next_token()
       }
       return res
@@ -119,21 +124,21 @@ class JSONParser()
    private parse_object()
       local res, m, v
       res := table()
-      ="{"
+      =u"{"
       next_token()
-      if ="}" then
+      if =u"}" then
          return res
       repeat {
          m := parse_string()
          next_token()
-         =":" | throw(": expected")
+         =u":" | throw(": expected")
          next_token()
          v := parse_value()
          next_token()
          insert(res, m, v)
-         if ="}" then
+         if =u"}" then
             return res
-         ="," | throw(", expected")
+         =u"," | throw(", expected")
          next_token()
       }
       return res
@@ -156,6 +161,7 @@ class JSONParser()
    end
 
    public parse(s)
+      utf8_flag := if type(s) == "ucs" then 1 else &null
       return s ? simple_try{ end_check(parse_impl()) }
    end
 

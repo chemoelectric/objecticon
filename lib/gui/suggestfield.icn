@@ -5,7 +5,7 @@ import graphics, util
 # This class is a {TextField} which provides suggested completions in
 # a popup list based on partial input.
 #
-class SuggestField(TextField, MenuMode)
+abstract class SuggestField(TextField, MenuMode)
    public 
       tl,
       direction,
@@ -106,7 +106,7 @@ class SuggestField(TextField, MenuMode)
    # This method is implemented to provide the list of suggestions, based on
    # the current contents of the textfield.
    #
-   protected defer do_request()
+   protected abstract do_request()
 
    # This method is called to abort a request in progress; do_request() should then
    # fail.
@@ -124,6 +124,8 @@ class SuggestField(TextField, MenuMode)
    public on_change(ev)
       if synch_ev === ev then
          mod := 2
+      else if *contents = 0 & ev.code ~=== Key.DOWN then
+         keep_closed()
       else {
          mod := 1
          # Wakeup req if waiting
@@ -311,6 +313,10 @@ class SuggestField(TextField, MenuMode)
       cast(self,TextField).finally()
    end
 
+   public keeps(e)
+      return member(Key.CURSOR, e.code)
+   end
+
    public handle_return(e)
       keep_closed()
       cast(self,TextField).handle_return(e)
@@ -338,7 +344,8 @@ class SuggestField(TextField, MenuMode)
             synch_contents(e)
          } else
             tl.fire(Event.KEY_PRESS, e)
-      }
+      } else if *contents = 0 then
+         on_change(e)
    end
 
    public handle_key_home(e)

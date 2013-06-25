@@ -154,7 +154,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
    public traverse(o)
       local ty, s, i, e, sep, desc, def
 
-      if s := \seen[o] then
+      if s := member(seen, o) then
          return writes("ref ", s)
 
       ty := type(o)
@@ -165,7 +165,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
       case ty of {
          "record" : {
             s := ty || " " || Constructor.get_name(o) || "#" || serial(o)
-            seen[o] := s
+            insert(seen, o, s)
             if /desc then 
                writes(s)
             else if simple{!o} then {
@@ -200,7 +200,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
 
          "object" : {
             s := type(o) || " " || Class.get_name(o) || "#" || serial(o)
-            seen[o] := s
+            insert(seen, o, s)
             if /desc then
                writes(s)
             else if /ignore_object_output_flag & is(o, ObjectOutput) then
@@ -235,7 +235,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
 
          "set" : {
             s := ty || "#" || serial(o)
-            seen[o] := s
+            insert(seen, o, s)
             if /desc then
                writes(s)
             else if simple{!o} then {
@@ -266,7 +266,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
 
          "list" : {
             s := ty || "#" || serial(o)
-            seen[o] := s
+            insert(seen, o, s)
             if /desc then
                writes(s)
             else if simple{!o} then {
@@ -297,7 +297,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
 
          "table" : {
             s := ty || "#" || serial(o)
-            seen[o] := s
+            insert(seen, o, s)
             if /desc then
                writes(s)
             else {
@@ -394,7 +394,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
 
          "weakref" : {
             s := ty || "#" || serial(o)
-            seen[o] := s
+            insert(seen, o, s)
             if /desc then
                writes(s)
             else if e := weakrefval(o) then {
@@ -544,7 +544,7 @@ procedure clone(o, seen)
 
    /seen := table()
 
-   if res := \seen[o] then
+   if res := member(seen, o) then
       return res
 
    ty := type(o)
@@ -553,14 +553,14 @@ procedure clone(o, seen)
       "object" : {
          if is(o, ObjectClone) then {
             res := o.object_clone(seen)
-            seen[o] := res
+            insert(seen, o, res)
          } else {
             #
             # Create an instance
             #
             res := Class.create_raw_instance_of(classof(o))
             # The members of res may reference it...
-            seen[o] := res
+            insert(seen, o, res)
             every i := 1 to Class.get_n_instance_fields(res) do
                Class.get(res, i) := clone(Class.get(o, i), seen)
             Class.complete_raw_instance(res)
@@ -570,7 +570,7 @@ procedure clone(o, seen)
 
       "record" : {
          res := classof(o)()
-         seen[o] := res
+         insert(seen, o, res)
          every i := 1 to *o do
             res[i] := clone(o[i], seen)
          return res
@@ -578,21 +578,21 @@ procedure clone(o, seen)
 
       "set" : {
          res := set()
-         seen[o] := res
+         insert(seen, o, res)
          every insert(res, clone(!o, seen))
          return res
       }
 
       "list" : {
          res := []
-         seen[o] := res
+         insert(seen, o, res)
          every put(res, clone(!o, seen))
          return res
       }
 
       "table" : {
          res := table(clone(o[[]], seen))
-         seen[o] := res
+         insert(seen, o, res)
          every e := entries(o) do
             insert(res, clone(e[1], seen), clone(e[2], seen))
          return res
@@ -673,19 +673,18 @@ end
 # members of the object.
 #
 procedure equals(x, y, seen)
+   local t
    if x === y then
       return
-
    type(x) == type(y) | fail
-
    /seen := table()
-   if member(\seen[x], y) | member(\seen[y], x) then
+   if member(member(seen, x), y) | member(member(seen, y), x) then
       return
-   /seen[x] := set()
-   insert(seen[x], y)
+   (t := member(seen, x)) | insert(seen, x, t := set())
+   insert(t, y)
    if equals_impl(x, y, seen) then
       return
-   delete(seen[x], y)
+   delete(t, y)
 end
 
 procedure equals_impl(x, y, seen)
@@ -761,10 +760,10 @@ procedure hash_and_check(s1, s2, seen)
    t := table()
    every e := !s1 do {
       i := hash(e)
-      (/t[i] := [e]) | put(t[i], e)
+      put(member(t, i), e) | insert(t, i, [e])
    }
    every e := !s2 do
-      in_bucket(e, \t[hash(e)], seen) | fail
+      in_bucket(e, member(t, hash(e)), seen) | fail
    return
 end
 

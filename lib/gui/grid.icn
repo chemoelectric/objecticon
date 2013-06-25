@@ -10,7 +10,6 @@ import
 class CellInfo(Insets,Align,ObjectOutput)
    public 
       obj,            # An arbitrary object 
-      grid,           # The grid we're in
       ax,             # Actual computed pixel location and size,
       ay,             # within insets, ie where to draw the thing
       aw,             # inside the cell.
@@ -127,7 +126,6 @@ class Grid()
    public create_cell(t)
       local ci
       ci := CellInfo()
-      ci.grid := self
       ci.s := @id_seq
       self.add_x +:= validate_int(t, "x_tab")
       if self.add_y +:= validate_int(t, "y_tab") then

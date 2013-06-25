@@ -63,10 +63,12 @@ class ContentType()
       return self
    end
 
+   public static parse_rfc2616(s)
+      return RFC2616Parser().parse_content_type(s)
+   end   
+
    public static parse(s)
-      local p
-      p := RFC822Parser()
-      return p.parse_content_type(s)
+      return RFC822Parser().parse_content_type(s)
    end   
 
    public to_rfc1521()

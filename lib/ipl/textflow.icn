@@ -143,7 +143,11 @@ class TextFlow(Component)
    public const
       input
 
+   package
+      ascent_adj
+
    private readable
+      v_align,
       y_off
 
    private
@@ -172,7 +176,6 @@ class TextFlow(Component)
       right_margin,
       compute_w,
       deferred,
-      v_align,
       at_new_para,
       def_width,
       max_width,
@@ -284,6 +287,10 @@ class TextFlow(Component)
       every co := !left_comps | !right_comps do
         mh <:= co.y + co.h
       return mh + border.get_total_height()
+   end
+
+   public get_ascent(dw)
+      return get_first_row_ascent(dw) + border.t_inset
    end
 
    public get_first_row_ascent(dw)
@@ -616,6 +623,7 @@ class TextFlow(Component)
       local co, c, x1, y1
       compute(self.w - border.get_total_width())
       y_off := case v_align of {
+         "baseline": ascent_adj
          Align.T: 0
          Align.C: (h - get_default_height(w)) / 2
          Align.B: h - get_default_height(w)
@@ -879,9 +887,9 @@ class TextFlow(Component)
             # add to the existing one.
             if (*row = 0) | /blob_start then {
                blob_start := cmd
-               cmd.blob_width := co.pw
+               cmd.blob_width := co.maxw
             } else
-               blob_start.blob_width +:= co.pw + get_pad()
+               blob_start.blob_width +:= co.maxw + get_pad()
          } else {
             if tw := \cmd.blob_width then {
                until fits_in_row(tw + get_pad()) do {
@@ -898,7 +906,7 @@ class TextFlow(Component)
             # image).
             blob_start := &null
          } else {
-            tw := co.pw
+            tw := co.maxw
             until fits_in_row(tw + get_pad()) do {
                new_row()
                need_spc := &null
@@ -906,16 +914,16 @@ class TextFlow(Component)
          }
       }
 
-      co.w := min(co.maxw, right_margin - row_x - row_width)
-      co.set_height_from_width()
-      co.ascent := (if is(co.c, HasAscent) then co.c.get_ascent(co.w, co.h) else co.h) + baseline_off
-      co.descent := co.h - co.ascent
       if \need_spc then {
          put(row, need_spc)
          row_width +:= need_spc.w
          row_ascent <:= need_spc.ascent
          row_descent <:= need_spc.descent
       }
+      co.w := min(co.maxw, right_margin - row_x - row_width)
+      co.set_height_from_width()
+      co.ascent := (if is(co.c, HasAscent) then co.c.get_ascent(co.w, co.h) else co.h) + baseline_off
+      co.descent := co.h - co.ascent
       put(row,  co)
       row_width +:= co.w
       row_blob := \rb
@@ -1096,7 +1104,11 @@ class TextFlow(Component)
    private compute_pre_txt(W, cmd)
       local s, l, i, tw, rb
       l := []
-      every put(l, detab(separate_lines(cmd.s)))
+      every s := detab(separate_lines(cmd.s)) do {
+         # Xft can't measure/display very long strings, so just truncate them.
+         s[1000:0] := u""
+         put(l, s)
+      }
       need_spc := &null
 
       if \calculating then {
@@ -1257,6 +1269,7 @@ class TextFlow(Component)
       self.browser := browser
       set_border(NullBorder())
       input := []
+      ascent_adj := 0
       v_align := Align.T
       set_constraint("x_fill", &yes)
       set_constraint("y_fill", &yes)

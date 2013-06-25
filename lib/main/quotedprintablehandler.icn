@@ -94,7 +94,7 @@ class QuotedPrintableHandler(EncodingHandler)
             move(1)
             # If not a soft line break, then unescape the =XX format.
             if not ="\r\n" then {
-               res ||:= char("16r" || move(2)) | return error("Bad quoted-printable data")
+               res ||:= char(integer("16r" || move(2))) | return error("Bad quoted-printable data")
             }
          } else
             res ||:= ="\r\n" | return error("Bad quoted-printable data")

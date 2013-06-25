@@ -34,7 +34,23 @@ class FileDialog(Dialog)
       init_filters,
       res,                      # Resulting file path          
       message_label, 
-      show_hidden_cb
+      show_hidden_cb,
+      existing_file_mode
+
+   public static const
+      WARN, IGNORE, REQUIRE, DISALLOW
+   
+   private static init()
+      WARN := "warn"
+      IGNORE := "ignore"
+      REQUIRE := "require"
+      DISALLOW := "disallow"
+   end
+
+   public set_existing_file_mode(s)
+      existing_file_mode := s
+      return self
+   end
 
    public static ucs_list(l)
       local t
@@ -48,10 +64,12 @@ class FileDialog(Dialog)
       # Defaults and extra dirs.
       #
       /init_dirs := []
-      every put(init_dirs, ucs(Files.getcwd() | 
-                               Files.get_home() | 
-                               Files.get_temp() | 
-                               Files.get_roots()))
+      every put(init_dirs,
+                Files.getcwd() | 
+                Files.get_home() | 
+                Files.get_temp() | 
+                Files.get_roots())
+
       init_dirs := lunique(ucs_list(init_dirs))
 
       /init_files := []
@@ -59,16 +77,16 @@ class FileDialog(Dialog)
 
       init_files := ucs_list(init_files)
       init_filters := ucs_list(init_filters)
-
-      dir.set_selection_list(init_dirs)
-      file.set_selection_list(init_files)
-      filter.set_selection_list(init_filters)
+      dir.set_selection_list(init_dirs).set_selection(1)
+      file.set_selection_list(init_files).set_selection(1)
+      filter.set_selection_list(init_filters).set_selection(1)
 
       dlist.set_draggable_cursor(&yes)
       dlist.set_selection_on_key_moves(&no)
       flist.set_draggable_cursor(&yes)
 
       pos_table := table()
+      res := &null
    end
 
    public init_dialog()
@@ -78,9 +96,21 @@ class FileDialog(Dialog)
       # If we have a filename in the field, select it in the file list,
       # if it's there.
       synch_file()
+      check_existing()
+   end
+
+   public check_existing()
+      local f
+      clear_msg()
+      f := get_current_selection().str() | fail
+      if Files.is_directory(f) then
+         msg("Directory")
+      else if existing_file_mode === (WARN | DISALLOW) & Files.access(f) then
+         msg("Existing file")
    end
 
    public on_file_content(ev)
+      check_existing()
       if member(EditList.NAVIGATE, ev.code) then
          synch_file()
    end
@@ -105,10 +135,10 @@ class FileDialog(Dialog)
    end
 
    #
-   # Get the file part of the result
+   # Get the file part of the result; the result is always a string, never ucs.
    #
    public get_file()
-      return (\self.res).get(-1)
+      return string((\self.res).get(-1))
    end
 
    #
@@ -116,6 +146,20 @@ class FileDialog(Dialog)
    #
    public get_result()
       return (\self.res).str()
+   end
+
+   #
+   # Get the result, as a `FilePath` (will fail if cancel was pressed).
+   #
+   public get_result_path()
+      return \self.res
+   end
+
+   #
+   # Keep the directory last selected by this dialog.
+   #
+   public keep_directory()
+      return set_directory(get_dir_path().str())
    end
 
    #
@@ -170,17 +214,43 @@ class FileDialog(Dialog)
       return self
    end
 
-   public on_okay_button()
-      local s
+   public get_current_selection()
+      local s, f
       s := file.get_contents()
-      if *s = 0 then {
+      if *s = 0 then
+         fail
+      f := FilePath(s)
+      if not f.is_absolute() then
+         f := FilePath(dir.get_contents()).append(f)
+      return f.canonical()
+   end
+
+   public on_okay_button()
+      local f, fs
+      f := get_current_selection() | {
          msg("Please enter a filename")
          fail
       }
-      self.res := FilePath(s)
-      if not self.res.is_absolute() then
-         self.res := FilePath(dir.get_contents()).append(self.res)
-      self.res := self.res.canonical()
+      fs := f.str()
+      if Files.is_directory(fs) then {
+         msg("Selected file is a directory")
+         fail
+      }
+      case existing_file_mode of {
+         REQUIRE: {
+            if not Files.access(fs) then {
+               msg("Selected file doesn't exist")
+               fail
+            }
+         }
+         DISALLOW: {
+            if Files.access(fs) then {
+               msg("Selected file already exists")
+               fail
+            }
+         }
+      }
+      self.res := f
       self.dispose()
    end
 
@@ -209,11 +279,13 @@ class FileDialog(Dialog)
       #
       clear_msg()
       file.set_contents(flist.object_get_selections()[1])
+      check_existing()
    end
 
    public on_dir(ev)
       if member(EditList.NAVIGATE, ev.code) then
          goto_dir(dir.get_contents(), 1)
+      check_existing()
    end
 
    public on_filter(ev)
@@ -282,7 +354,7 @@ class FileDialog(Dialog)
    end
 
    public goto_dir(d, cf)
-      dir.set_contents(ucs(FilePath(d).canonical().str()))
+      dir.set_contents(FilePath(d).canonical().liberal_ucs())
       if \cf then
          file.set_contents(u"")
       load_dir()
@@ -353,6 +425,7 @@ class FileDialog(Dialog)
    public new()
       cast(self,Dialog).new()
       self.setup()
+      existing_file_mode := IGNORE
       return
    end
 

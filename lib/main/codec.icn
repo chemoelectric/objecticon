@@ -126,7 +126,7 @@ class Encode(Stream, HasUnderlyingStream)
       return self
    end
 
-   private encode_string(s)
+   private static encode_string(s)
       local r
       static printable
       initial {
@@ -151,7 +151,7 @@ class Encode(Stream, HasUnderlyingStream)
    # or "3" for a builtin operator like "+" or "||", "P" for a
    # procedure and "M" for a (static) method.
    #
-   private get_proc_code(f)
+   private static get_proc_code(f)
       local s, j
       image(f) ? {
          s := case tab(upto(' ')) of {
@@ -177,7 +177,7 @@ class Encode(Stream, HasUnderlyingStream)
    public encode(o)
       local ty, i, cname, n, e, l
 
-      if i := \seen[o] then {
+      if i := member(seen, o) then {
          writes(Codec.REF_CODE)
          writes(i)
          return self
@@ -358,7 +358,7 @@ class Decode()
       }
    end
 
-   private decode_string(s)
+   private static decode_string(s)
       local r
       r := ""
       s ? {
@@ -370,7 +370,7 @@ class Decode()
       }
    end
 
-   private decode_proc_code(fn)
+   private static decode_proc_code(fn)
       local c, s, i, j, cl, g
       fn ? {
          c := move(1)
@@ -406,21 +406,21 @@ class Decode()
       }
    end
 
-   private line_in()
+   private static line_in()
       local s
       if s := tab(upto(Codec.CODE_SEPARATOR)) then {
          move(1)
          return s
       }
-      throw("missing separator")
+      throw("Missing separator")
    end
 
-   private int_in()
-      return integer(tab(many(&digits ++ '\-'))) | throw("int expected")
+   private static int_in()
+      return integer(tab(many(&digits ++ '\-'))) | throw("Integer expected")
    end
 
-   private char_in()
-      return move(1) | throw("char expected")
+   private static char_in()
+      return move(1) | throw("Char expected")
    end
 
    private note_seen(o)
@@ -428,14 +428,14 @@ class Decode()
    end
 
    public decode()
-      local i, n, rname, t, res, def, con, cl, cname, l, v
+      local i, n, rname, t, v, res, def, con, cl, cname, l
 
       t := char_in()
 
       case t of {
          Codec.REF_CODE : {
             i := int_in()
-            return \seen[i]
+            return member(seen, i) | throw("Invalid reference")
          }
 
          Codec.NULL_CODE :
@@ -477,8 +477,8 @@ class Decode()
                } else {
                   n := integer(decode())
                   every 1 to n do {
-                     (t := decode() &
-                      v := decode())
+                     t := decode()
+                     v := decode()
                      Class.getq(res, t) := v
                   }
                }
@@ -493,7 +493,7 @@ class Decode()
             return int_in()
 
          Codec.REAL_CODE :
-            return real(line_in())
+            return real(line_in()) | throw("Invalid real")
 
          Codec.CSET_CODE : {
              n := int_in()
@@ -504,7 +504,7 @@ class Decode()
           }
 
          Codec.UCS_CODE :
-            return ucs(decode_string(line_in()))
+            return ucs(decode_string(line_in())) | throw("Invalid ucs")
 
          Codec.RECORD_CODE : {
             rname := line_in()
@@ -518,8 +518,8 @@ class Decode()
                   res[i] := decode()
             } else {
                every 1 to n do {
-                  (t := decode() &
-                   v := decode())
+                  t := decode()
+                  v := decode()
                   res[t] := v
                }
             }

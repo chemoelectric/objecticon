@@ -16,7 +16,7 @@ procedure main(a)
    *a = 1 | stop("usage: testnotwf source")
    s := Files.file_to_string(a[1]) | stop("couldnt open" || a[1])
    if \opt["u"] then
-      s := ucs(s) | exit(0) # stop("Invalid utf-8 in notwf case ", a[1], ": ",  &why)
+      s := ucs(s) | exit(0)
 
    if d := p.parse(s) then {
       write("A not-wf case parsed successfully : ", a[1])

@@ -131,12 +131,16 @@ class BrowserDialog(Dialog)
    end
 
    public update_visited(url, title)
-      local e, i 
+      local e, i, s
       if url.scheme == (u"cache" | u"config") then
          fail
+      s := url.str()
       every i := 1 to *settings.visited do {
          e := settings.visited[i]
-         if equals(url, e.url) then {
+         # Don't use equals here since the ucs/string interaction may
+         # give wrong results; eg on a redirection we get a URL
+         # composed of string elements.
+         if s == e.url.str() then {
             e.last_time := Time()
             e.title := title
             e.times +:= 1
@@ -155,7 +159,7 @@ class BrowserDialog(Dialog)
 
    public new_tab(url, referer_url, sel)
       local bt
-      bt := BrowserTab(url, referer_url, pool, settings).
+      bt := BrowserTab(url, referer_url, pool, tabs.which_one).
          set_is_hidden(&yes)
       tabs.
          add(bt, -1).
@@ -163,9 +167,9 @@ class BrowserDialog(Dialog)
          invalidate()
       if \sel then {
          tabs.set_which_one(bt)
-         set_focus(bt.search_field.find_focus())
+         update_grey()
       }
-      update_grey()
+      return bt
    end
 
    private on_new_tab(ev)
@@ -178,7 +182,7 @@ class BrowserDialog(Dialog)
       s ||:= "<tr><th align=left>Title</th><th align=right>Times&nbsp;</th><th>Last visit</th><th align=left>URL</th></tr>"
       every e := !settings.visited do {
          n := Browser.limit_text(\e.title, 200) | ""
-         s ||:= "<tr><td nowrap>" || ipl.browser.Browser.to_content(n) || "</td><td align=right>" || e.times || "&nbsp;</td><td>" || 
+         s ||:= "<tr><td nowrap>" || Browser.to_content(n) || "</td><td align=right>" || e.times || "&nbsp;</td><td>" || 
                 e.last_time.format("MMM'&nbsp;'dd'&nbsp;'HH:mm") || "</td>" || Browser.mk_anchor_cell(e.url) || "</tr>"
       }
       s ||:= "</table></html>"
@@ -194,8 +198,14 @@ class BrowserDialog(Dialog)
       return s
    end
 
-   private del_cookie(k, path, name)
-      local t1, t2
+   private del_cookie(req)
+      local t, t1, t2, k, path, name
+
+      (t := req.url.extract_cgi_parameters() &
+       k := member(t, "q")[1] &
+       path := member(t, "path")[1] & 
+       name :=  member(t, "name")[1]) | return error("Bad request")
+
       if t1 := member(pool.cookies, k) &
          t2 := member(t1, path) then
       {
@@ -206,16 +216,19 @@ class BrowserDialog(Dialog)
                delete(pool.cookies, k)            
          }
       }
-      return list_cookie(k)
+      return list_cookie(req)
    end
 
-   private del_cookies(k)
+   private del_cookies(req)
+      local k
+      (k := member(req.url.extract_cgi_parameters(), "q")[1]) | return error("Bad request")
       delete(pool.cookies, k)            
       return list_all_cookies()
    end
 
-   private list_cookie(k)
-      local s, t, path, ck
+   private list_cookie(req)
+      local k, s, t, path, ck
+      (k := member(req.url.extract_cgi_parameters(), "q")[1]) | return error("Bad request")
       s := "<html><title>Cookies</title>"
       if t := member(pool.cookies, k) then {
          s ||:= "<a href=config:del_cookies?q=" || URL.cgi_encode(k) || ">Delete all</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=config:cookies>Back to list</a>"
@@ -242,7 +255,14 @@ class BrowserDialog(Dialog)
       return s
    end
 
-   private edit_settings(home, cn, vn, pn)
+   private edit_settings(req)
+      local t, home, cn, vn, pn
+      (t := req.url.extract_cgi_parameters() &
+       home := member(t, "home")[1] &
+       cn := member(t, "cache")[1] &
+       vn := member(t, "vsize")[1] &
+       pn := member(t, "psize")[1]) | return error("Bad request")
+
       settings.home_url := URL(ucs(home))
       settings.cache_size_mb := integer(cn)
       settings.visited_size := integer(vn)
@@ -275,25 +295,29 @@ class BrowserDialog(Dialog)
       return pool.get_status()
    end
 
-   private config_handler(req)
-      local t
+   private do_delay(worker)
+      local n
+      (n := member(worker.req.url.extract_cgi_parameters(), "n")[1]) | return error("Bad request")
+      worker.task.sleep(n)
+      return "<html>Complete</html>"
+   end
+
+   private config_handler(worker)
+      local req
+      req := worker.req
       return case string(req.url.path) of {
          "": config_main()
+         "delay": do_delay(worker)
          "visited": list_visited()
          "cookies": list_all_cookies()
-         "cookie": list_cookie(member(req.url.extract_cgi_parameters(), "q")[1])
+         "cookie": list_cookie(req)
          "cache": cache_status()
          "workers": workers_status()
-         "del_cookies": del_cookies(member(req.url.extract_cgi_parameters(), "q")[1])
-         "del_cookie": {
-            if t := req.url.extract_cgi_parameters() then
-               del_cookie(member(t, "q")[1], member(t, "path")[1], member(t, "name")[1])
-         }
-         "submit": {
-            if t := req.url.extract_cgi_parameters() then
-               edit_settings(member(t, "home")[1], member(t, "cache")[1], member(t, "vsize")[1],  member(t, "psize")[1])
-         }
-      } | error("Bad config request")
+         "del_cookies": del_cookies(req)
+         "del_cookie": del_cookie(req)
+         "submit": edit_settings(req)
+         default: error("Bad config request")
+      }
    end
 
    private get_authentication(dom, realm)
@@ -406,10 +430,10 @@ end
 
 class Download()
    private readable
-      parent, req, resp, status, size, full_path, dialog
+      parent, req, resp, status, size, full_path, dialog, dest
 
    private log(s)
-      dialog.log.log([&clock || ": " || ucs(s)], 500)
+      dialog.log.log([&clock || u": " || Text.liberal_ucs(s)], 500)
    end
 
    private on_status(ev, src, type)
@@ -432,7 +456,14 @@ class Download()
          fname := resp.fname
          if *fname = 0 then
             fname := "browser.out"
-         full_path := Files.ensure_unique_filename(FilePath(parent.parent_dialog.settings.destination_dir).child(fname).canonical().str())
+         full_path := if \dest then
+            if Files.is_directory(dest) then
+               Files.ensure_unique_filename(FilePath(dest).child(fname).canonical().str())
+            else
+               dest
+         else
+            Files.ensure_unique_filename(FilePath(parent.parent_dialog.settings.destination_dir).child(fname).canonical().str())
+
          if \r.data then {
             if Files.string_to_file(full_path, r.data) then {
                log("Result file:" || full_path || " (" || Format.numeric_to_string(*r.data, 0, ',') || " bytes)")
@@ -467,7 +498,7 @@ class Download()
             status := "Downloading (" || Format.numeric_to_string(w.read() / 1048576.0, 1) || "MB)"
          }
       }
-      return [req.url.str(), size, status, self]
+      return [req.url.liberal_ucs(), size, status, self]
    end
 
    public retrying()
@@ -476,9 +507,10 @@ class Download()
       log("Retrying download")
    end
 
-   public new(parent, url, referer)
+   public new(parent, url, referer, dest)
       self.parent := parent
       self.status := "New"
+      self.dest := dest
       size := ""
       self.req := Req(self, url, referer, got_data, Worker.DOWNLOAD,, on_status)
       self.dialog := LogDialog()
@@ -570,18 +602,11 @@ class DownloadTab(TabItem)
    end
 
    private on_set_destination(ev)
-      local d, s
+      local d
       clear_msg()
       d := parent_dialog.directory_dialog
-      d.set_directory(parent_dialog.settings.destination_dir)
-      d.show_modal(parent_dialog)
-      s := d.get_result() | fail
-      if *s = 0 then
-         msg("Enter a directory")
-      else if not(Files.is_directory(s)) then
-         msg(s || " is not a directory")
-      else
-         parent_dialog.settings.destination_dir := s
+      d.set_directory(parent_dialog.settings.destination_dir).set_existing_file_mode(DirectoryDialog.REQUIRE).show_modal(parent_dialog)
+      parent_dialog.settings.destination_dir := d.get_result()
    end
 
    private on_clear_done(ev)
@@ -663,9 +688,9 @@ class DownloadTab(TabItem)
       ticker.stop()
    end
 
-   public download(url, referer)
+   public download(url, referer, dest)
       local d
-      d := Download(self, url, referer)
+      d := Download(self, url, referer, dest)
       put(dl, d)
       parent_dialog.pool.start_worker(d.req)
       refresh()
@@ -732,8 +757,8 @@ class DownloadTab(TabItem)
          set_select_mode(Select.MANY).
          set_constraint("eol", &yes).
          set_contents([]).
-         add_column(TableColumn().set_label("URL")).
-         add_column(TableColumn().set_label("MB").set_column_width(35).set_column_align(Align.R)).
+         add_column(ItemPaintTableColumn().set_label("URL").set_item_paint(AbbreviatedTextItemPaint())).
+         add_column(TableColumn().set_label("MB").set_column_width(50).set_column_align(Align.R)).
          add_column(TableColumn().set_label("State").set_column_width(175))
       url_table.table_content.connect(self.on_table_rpress, Event.MOUSE_RIGHT_PRESS)
       self.add(url_table)
@@ -801,7 +826,7 @@ class URLList(SelectableScrollArea)
             draw_string_ex(W, 
                            xp + Gui.TEXT_INSET, 
                            yp, 
-                           limit_text(W, u"    " || contents[i].url.str(), view.w - 2 * Gui.TEXT_INSET))
+                           limit_text(W, u"    " || contents[i].url.liberal_ucs(), view.w - 2 * Gui.TEXT_INSET))
          }
       }
    end
@@ -842,12 +867,20 @@ class BrowserTab(TabItem, BrowserUI)
       home_button,
       paste_url_button,
       refresh_button,
-      title_tt
+      title_tt,
+      revert_tab
 
    private on_close_button(ev)
-      local t
-      # There will always be a tab to the right of this one (it may be the download tab).
-      t := parent.children[parent.get_index(self) + 1] | syserr("Couldn't find other tab")
+      local t, i
+      (i := parent.get_index(\revert_tab)) | {
+         i := parent.get_index(self)
+         # There will always be a tab to the right of this one (it may be the download tab).
+         if i > 1 then
+            i -:= 1
+         else
+            i +:= 1
+      }
+      t := parent.children[i] | syserr("Couldn't find other tab")
       parent.
          remove(self).
          set_which_one(t).
@@ -887,6 +920,14 @@ class BrowserTab(TabItem, BrowserUI)
       every parent_dialog.downloads.download(!urls, referer)
    end
 
+   private download_links_to_dir(urls, referer)
+      local d, f
+      d := parent_dialog.directory_dialog
+      d.keep_directory().set_existing_file_mode(DirectoryDialog.REQUIRE).show_modal(parent_dialog)
+      f := d.get_result() | fail
+      every parent_dialog.downloads.download(!urls, referer, f)
+   end
+
    private copy_text(s)
       parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
    end
@@ -895,12 +936,32 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.downloads.download(url, referer)
    end
 
+   private download_to_file(url, referer)
+      local d, f, d1, f1, full_path
+      d := parent_dialog.file_dialog
+      d1 := d.get_dir_path()
+      f1 := ucs(url.get_decoded_path_last())
+      if /f1 | *f1 = 0 | *f1 > 32 then
+         f1 := u"browser.out"
+      full_path := Files.ensure_unique_filename(d1.child(f1).canonical().str())
+      d.set_path(full_path).set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
+      f := d.get_result() | fail
+      parent_dialog.downloads.download(url, referer, f)
+   end
+
+   private download_to_dir(url, referer)
+      local d, f
+      d := parent_dialog.directory_dialog
+      d.keep_directory().set_existing_file_mode(DirectoryDialog.REQUIRE).show_modal(parent_dialog)
+      f := d.get_result() | fail
+      parent_dialog.downloads.download(url, referer, f)
+   end
+
    private page_info()
       local s, url
-      if s := browser.get_page_info() then {
-         url := browser.get_cache().create_url(, s)
-         parent_dialog.new_tab(url,, 1)
-      }
+      s := browser.get_page_info() | fail
+      url := browser.get_cache().create_url(, s)
+      parent_dialog.new_tab(url,, 1)
    end
 
    public create_page_menu()
@@ -932,21 +993,34 @@ class BrowserTab(TabItem, BrowserUI)
          m.add(TextMenuItem().
                set_label("Download links").
                connect(create download_links(l, browser.page_url), Event.ACTION))
+         m.add(TextMenuItem().
+               set_label("Download links to dir...").
+               connect(create download_links_to_dir(l, browser.page_url), Event.ACTION))
       }
 
       if *m.children > 0 then
          return m
    end
 
-   public create_link_menu(url)
-      local m
-      m := Menu()
+   private populate_link_menu(url, m)
       m.add(TextMenuItem().
             set_label("Copy link").
             connect(create copy_link(url), Event.ACTION))
       m.add(TextMenuItem().
             set_label("Download").
             connect(create download(url, browser.page_url), Event.ACTION))
+      m.add(TextMenuItem().
+            set_label("Download to file...").
+            connect(create download_to_file(url, browser.page_url), Event.ACTION))
+      m.add(TextMenuItem().
+            set_label("Download to dir...").
+            connect(create download_to_dir(url, browser.page_url), Event.ACTION))
+   end
+
+   public create_link_menu(url)
+      local m
+      m := Menu()
+      populate_link_menu(url, m)
       return m
    end
 
@@ -956,14 +1030,8 @@ class BrowserTab(TabItem, BrowserUI)
       m.add(TextMenuItem().
             set_label("Copy image").
             connect(create copy_link(url), Event.ACTION))
-      if \link_url then {
-         m.add(TextMenuItem().
-               set_label("Copy link").
-               connect(create copy_link(link_url), Event.ACTION))
-         m.add(TextMenuItem().
-               set_label("Download").
-               connect(create download(link_url, browser.page_url), Event.ACTION))
-      }
+      if \link_url then
+         populate_link_menu(link_url, m)
       if \img_data then
          m.add(TextMenuItem().
                set_label("Save image...").
@@ -1012,15 +1080,18 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public browse_for_file()
-      parent_dialog.file_dialog.show_modal(parent_dialog)
-      return parent_dialog.file_dialog.get_result()
+      local d
+      d := parent_dialog.file_dialog
+      d.keep_directory().set_files().set_existing_file_mode(FileDialog.REQUIRE).show_modal(parent_dialog)
+      return d.get_result()
    end
 
    private do_save(name, data)
-      local s
-      parent_dialog.file_dialog.set_file(\name)
-      parent_dialog.file_dialog.show_modal(parent_dialog)
-      if s := parent_dialog.file_dialog.get_result() then {
+      local s, d
+      d := parent_dialog.file_dialog
+      d.set_file(\name)
+      d.keep_directory().set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
+      if s := d.get_result() then {
          if Files.string_to_file(s, data) then
             browser.msg("Saved OK", 3000)
          else
@@ -1037,10 +1108,11 @@ class BrowserTab(TabItem, BrowserUI)
       if \browser.page_data then
          parent_dialog.update_visited(browser.page_url, browser.page_title)
       search_field.
-         set_contents(browser.curr_history_entry.url.str()).
+         set_contents(browser.curr_history_entry.url.liberal_ucs()).
          set_selection_list(lreverse(browser.history)).
          object_set_selection(browser.curr_history_entry)
       set_title(browser.page_title)
+      parent_dialog.set_focus(browser.find_focus())
    end
 
    private set_title(s)
@@ -1110,8 +1182,9 @@ class BrowserTab(TabItem, BrowserUI)
       browser.do_refresh()
    end
 
-   public new(url, referer_url, pool)
+   public new(url, referer_url, pool, revert_tab)
       cast(self,TabItem).new()
+      self.revert_tab := revert_tab
       set_label_border(EmptyBorder().set_x_align(Align.L))
       set_title()
       setup()

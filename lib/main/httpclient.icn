@@ -238,6 +238,7 @@ class HttpClient(NetClient)
    # @param request - an {HttpRequest} instance
    # @return an {HttpResponse} object.
    public retrieve(request)
+      local sc
       \request.url | runerr("URL not set")
       # Create our own copy of the request as we may modify it during
       # redirects
@@ -270,20 +271,20 @@ class HttpClient(NetClient)
          http_error := &null
 
          retrieve_page() | fail
-
-         if find("200"|"206", response.get_status()) then
+         sc := response.get_status_code() | return on_http_error("Invalid status code in response")
+         if sc = (200 | 206) then
             return response
 
-         if find("401", response.get_status()) then
+         if sc = 401 then
             handle_authentication() | fail
-         else if find("301"|"302"|"303"|"307", response.get_status()) then
-            handle_redirect() | fail
+         else if sc = (301| 302 | 303 | 307) then
+            handle_redirect(sc) | fail
          else
             return on_http_error(response.get_status())
       }
    end
 
-   private handle_redirect()
+   private handle_redirect(sc)
       local l, s, u
       #
       # A redirection, so extract the URL if possible.
@@ -308,7 +309,7 @@ class HttpClient(NetClient)
       #
       # On a redirect, a POST becomes a GET, except for code 307.
       #
-      if request.method == "POST" & not find("307", response.get_status()) then {
+      if request.method == "POST" & sc ~= 307 then {
          request.set_method("GET").
             set_input_stream().
             set_content_type().
@@ -807,7 +808,7 @@ class HttpClient(NetClient)
          # the status/headers again - they follow immediately after
          # the end of the first headers.
          #
-         find("100", response.get_status()) | break
+         (response.get_status_code() = 100) | break
       }
 
       if request.method === "HEAD" then
@@ -947,7 +948,7 @@ class HttpClient(NetClient)
       # attempt.  Otherwise, they are reset and the output stream
       # truncated.
       #
-      if not(\self.read & find("206", response.get_status())) then {
+      if not(\self.read & response.get_status_code() = 206) then {
          close_inflater()
          request.output_stream.truncate(0) | fail
          open_inflater() | fail

@@ -87,7 +87,7 @@ class Cache()
 
    public get(url)
       local k, ent
-      k := string(url.str())
+      k := url.str()
       if ent := member(t, k) then {
          if \ent.expiry < Time.get_system_seconds() then
             del(ent)
@@ -98,7 +98,7 @@ class Cache()
 
    private del(ent)
       local k
-      k := string(ent.url.str())
+      k := ent.url.str()
       total -:= *ent.data
       delete(t, k)
    end
@@ -106,7 +106,7 @@ class Cache()
    public add(url, expiry, data, fname, content_type)
       local k, old, ent
       ent := CacheEntry(url, expiry, data, fname, content_type)
-      k := string(ent.url.str())
+      k := ent.url.str()
       #write("cache add key=", k, "\n\tdata=", *data, " bytes\n\tfname=", fname, "\n\tct=", to_string(content_type), "\n\texpiry=", (\ent.expiry - Time.get_system_seconds()) | "-")
       if old := member(t, k) then
          del(old)
@@ -154,10 +154,10 @@ class Cache()
          n := Browser.limit_text(\ce.fname, 200) | "-"
          sz := Format.numeric_to_string(*ce.data, 0, ',')
          exp := format_expiry(ce.expiry)
-         ct := ((\ce.content_type).type || "/" || ce.content_type.subtype) | "-"
+         ct := (\ce.content_type).to_rfc1521() | "-"
          l := ce.url
          s ||:= "<tr><td>" || Browser.to_content(n) || "</td><td align=right>" || sz || "&nbsp;</td><td>" || exp ||
-                   "</td><td>" || ct || "</td>" || Browser.mk_anchor_cell(l) || "</tr>" 
+                   "</td><td nowrap>" || Browser.to_content(ct) || "</td>" || Browser.mk_anchor_cell(l) || "</tr>" 
       }
       s ||:= "</table></html>"
       return s
@@ -173,11 +173,12 @@ class Cache()
 end
 
 class Worker()
+   private readable
+      pool, httpc, cancelled, req, task
+
    private
-      pool, httpc, tmp_file, cancelled
-   package
-      doing, task
-   
+      tmp_file
+
    public static const NORMAL, NAVIGATE, REFRESH, DOWNLOAD
 
    private static init()
@@ -192,7 +193,7 @@ class Worker()
    end
 
    public finally()
-      if \doing then
+      if \req then
          cancel()
       else {
          # httpc may be null, since we may have started but never been run
@@ -202,7 +203,7 @@ class Worker()
    end
 
    public cancel()
-      if \doing then {
+      if \req then {
          cancelled := 1
          task.interrupt()
          httpc.abort()
@@ -301,8 +302,25 @@ class Worker()
          return Files.file_to_string(f)
    end
 
+   private cvt_prog(f)
+      local ps
+      return use {
+         ps := TaskStream(ProgInputStream("/bin/sh", ["-c", f]), task),
+         ps.read_all()
+      }
+   end
+
+   private do_run(f)
+      local pid
+      pid := System.fork() | fail
+      if pid > 0 then
+         return
+      System.exec("/bin/sh", ["-c", f]) | stop(&why)
+      syserr("Not reached")
+   end
+
    private status(ev, src, type)
-      (\(\doing).on_status)(ev, src, type)
+      (\(\req).on_status)(ev, src, type)
    end
 
    private setup_httpc()
@@ -336,20 +354,42 @@ class Worker()
       }
    end
 
-   private handle_file_req(r)
+   private handle_prog_req()
       local data
-      if data := cvt_file(r.url.get_decoded_path()) then
-         r.callback(Resp(, r.url, r.referer, data, r.url.get_decoded_path_last(),, r.kind))
-      else
-         r.callback(Resp(&why, r.url, r.referer,,,, r.kind))
+      if (\req.referer).scheme == (u"http" | u"https") then
+         req.callback(Resp("Can't run a prog from an http page", req.url, req.referer,,,, req.kind))
+      else if data := cvt_prog(req.url.get_decoded_path()) then {
+         if /cancelled then
+            req.callback(Resp(, req.url, req.referer, data, "",, req.kind))
+      } else {
+         if /cancelled then
+            req.callback(Resp(&why, req.url, req.referer,,,, req.kind))
+      }
    end
 
-   private handle_cache_req(r)
-      local ce
-      if ce := pool.cache.get(r.url) then
-         r.callback(Resp(, r.url, r.referer, ce.data, ce.fname, ce.content_type, r.kind))
+   private handle_run_req()
+      if (\req.referer).scheme == (u"http" | u"https") then
+         req.callback(Resp("Can't run a prog from an http page", req.url, req.referer,,,, req.kind))
+      if not do_run(req.url.get_decoded_path()) then {
+         if /cancelled then
+            req.callback(Resp(&why, req.url, req.referer,,,, req.kind))
+      }
+   end
+
+   private handle_file_req()
+      local data
+      if data := cvt_file(req.url.get_decoded_path()) then
+         req.callback(Resp(, req.url, req.referer, data, req.url.get_decoded_path_last(),, req.kind))
       else
-         r.callback(Resp("Cache entry expired", r.url, r.referer,,,, r.kind))
+         req.callback(Resp(&why, req.url, req.referer,,,, req.kind))
+   end
+
+   private handle_cache_req()
+      local ce
+      if ce := pool.cache.get(req.url) then
+         req.callback(Resp(, req.url, req.referer, ce.data, ce.fname, ce.content_type, req.kind))
+      else
+         req.callback(Resp("Cache entry expired", req.url, req.referer,,,, req.kind))
    end
 
    private get_expiry(hres)
@@ -368,44 +408,34 @@ class Worker()
       return
    end
 
-   # On a redirection, we will get back a URL made from a string
-   # rather than ucs.  This interacts poorly with the visited list and
-   # the textfield in the client, so convert to a ucs-based URL.
-   #
-   private static ensure_ucs_url(url)
-      if type(url.scheme) == "ucs" then
-         return url
-      return URL(Text.liberal_ucs(url.str())) | URL(u"invalid:url")
-   end
-
-   private handle_http_req(r)
-      local s, data, hreq, hres, fname, ct, x, ce
-      if r.kind ~= REFRESH & /r.form_data & (ce := pool.cache.get(r.url)) then
-         r.callback(Resp(, r.url, r.referer, ce.data, ce.fname, ce.content_type, r.kind))
-      else if r.kind = DOWNLOAD then {
+   private handle_http_req()
+      local s, data, hreq, hres, fname, ct, x, ce, sc
+      if req.kind ~= REFRESH & /req.form_data & (ce := pool.cache.get(req.url)) then
+         req.callback(Resp(, req.url, req.referer, ce.data, ce.fname, ce.content_type, req.kind))
+      else if req.kind = DOWNLOAD then {
          tmp_file := Files.make_temp_filename("http_oibrowser.", ".bin") | stop("Couldn't create temp file: ", &why)
          s := BufferStream(FileStream(tmp_file, 
                                       ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))).
             set_buff_size(8192) | stop("Couldn't open ", tmp_file, ": ", &why)
          hreq := HttpRequest().
             set_output_stream(s). 
-            set_url(r.url).
+            set_url(req.url).
             set_header("Accept-charset", "UTF-8, ISO-8859-1")
-         if (\r.referer).scheme == (u"http" | u"https") then
-            hreq.set_referer(r.referer.str())
+         if (\req.referer).scheme == (u"http" | u"https") then
+            hreq.set_referer(req.referer.str())
          if hres := httpc.retrieve(hreq) then {
             s.close()
             fname := hres.get_filename()
-            ct := ContentType.parse(hres.get_first_header("Content-Type"))
+            ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
             # Note that cancelling removes tmp_file
             if /cancelled then
-               r.callback(Resp(, ensure_ucs_url(hres.url), r.referer,, fname, ct, r.kind, 
-                               if hreq.url === hres.url then r.form_data else &null, tmp_file))
+               req.callback(Resp(, hres.url, req.referer,, fname, ct, req.kind, 
+                               if hreq.url === hres.url then req.form_data else &null, tmp_file))
          } else {
             s.close()
             if /cancelled then {
                save_why{Files.remove(tmp_file)}
-               r.callback(Resp(&why, r.url, r.referer,,,, r.kind, r.form_data))
+               req.callback(Resp(&why, req.url, req.referer,,,, req.kind, req.form_data))
             }
          }
       } else use {
@@ -413,61 +443,82 @@ class Worker()
          {
             hreq := HttpRequest().
                set_output_stream(s). 
-               set_url(r.url).
+               set_url(req.url).
                set_header("Accept-charset", "UTF-8, ISO-8859-1")
-            if (\r.referer).scheme == (u"http" | u"https") then
-               hreq.set_referer(r.referer.str())
-            if \r.form_data then {
-               if is(r.form_data, Message) then
-                  hreq.set_multipart_form_data(r.form_data)
+            if (\req.referer).scheme == (u"http" | u"https") then
+               hreq.set_referer(req.referer.str())
+            if \req.form_data then {
+               if is(req.form_data, Message) then
+                  hreq.set_multipart_form_data(req.form_data)
                else
-                  hreq.set_html_form_data(r.form_data)
+                  hreq.set_html_form_data(req.form_data)
             }
 
             if hres := httpc.retrieve(hreq) then {
                data := s.str()
                fname := hres.get_filename()
-               ct := ContentType.parse(hres.get_first_header("Content-Type"))
+               ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
                # Note we have to take into account redirections in deciding whether to cache
                # and whether form data should be in the response.
                if httpc.request.method == "GET" & x := get_expiry(hres) then
                   pool.cache.add(hres.url, x, data, fname, ct)
                if /cancelled then
-                  r.callback(Resp(, ensure_ucs_url(hres.url), r.referer, data, fname, ct, r.kind, 
-                                  if hreq.url === hres.url then r.form_data else &null))
-            } else {
-               if /cancelled then
-                  r.callback(Resp(&why, r.url, r.referer,,,, r.kind, r.form_data))
+                  req.callback(Resp(, hres.url, req.referer, data, fname, ct, req.kind, 
+                                    if hreq.url === hres.url then req.form_data else &null))
+            } else if /cancelled then {
+               # Decide whether to include http content together with
+               # the error message, so it can be displayed
+               if httpc.get_http_error() & 
+                  hres := httpc.response &
+                  sc := hres.get_status_code() &
+                  400 <= sc <= 599 &
+                  data := s.str() &
+                  *data > 0 then
+               {
+                  fname := hres.get_filename()
+                  ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
+                  req.callback(Resp(&why, hres.url, req.referer, data, fname, ct, req.kind, 
+                                    if hreq.url === hres.url then req.form_data else &null))
+               } else
+                  req.callback(Resp(&why, req.url, req.referer,,,, req.kind, req.form_data))
             }
          }
       }
    end
 
-   private handle_func(r, f)
+   private handle_func(f)
       local x, s
-      if x := f(r) then {
-         if is(x, StaticData) then
-            r.callback(Resp(, r.url, r.referer, x.data, x.fname, x.content_type, r.kind))
-         else if s := string(x) then
-            r.callback(Resp(, r.url, r.referer, s, r.url.get_path_last(),, r.kind))
-         else
-            runerr(103, x)
-      } else
-         r.callback(Resp(&why, r.url, r.referer,,,, r.kind))
+      if x := f(self) then {
+         if /cancelled then {
+            if is(x, Resp) then
+               req.callback(x)
+            else if is(x, StaticData) then
+               req.callback(Resp(, req.url, req.referer, x.data, x.fname, x.content_type, req.kind))
+            else if s := string(x) then
+               req.callback(Resp(, req.url, req.referer, s, req.url.get_path_last(),, req.kind))
+            else if \x then
+               runerr(103, x)
+         }
+      } else {
+         if /cancelled then
+            req.callback(Resp(&why, req.url, req.referer,,,, req.kind))
+      }
    end
 
-   private handle_req(r)
+   private handle_req()
       local f, t
-      t := string(r.url.scheme)
+      t := string(req.url.scheme)
       case t of {
-         "file": handle_file_req(r)
-         "http"|"https": handle_http_req(r)
-         "cache": handle_cache_req(r)
+         "file": handle_file_req()
+         "prog": handle_prog_req()
+         "run": handle_run_req()
+         "http"|"https": handle_http_req()
+         "cache": handle_cache_req()
          default: {
             if f := member(pool.scheme_handlers, t) then
-               handle_func(r, f)
+               handle_func(f)
             else
-               r.callback(Resp("Unknown url scheme", r.url, r.referer,,,, r.kind))
+               req.callback(Resp("Unknown url scheme", req.url, req.referer,,,, req.kind))
          }
       }
    end
@@ -480,12 +531,12 @@ class Worker()
             httpc.close()
             task.revert()
          }
-         until doing := pool.queue_get() do
+         until req := pool.queue_get() do
             task.sleep()
-         #write("doing for ",image(doing.browser), "   size=",pool.queue_size())
+         #write("req for ",image(req.browser), "   size=",pool.queue_size())
          cancelled := &null
-         handle_req(doing)
-         doing := &null
+         handle_req(req)
+         req := &null
       }
    end
 
@@ -530,14 +581,14 @@ class WorkerPool()
       local w
       delete(queue, client)
       every w := !workers do 
-         if (\w.doing).client === client then
+         if (\w.req).client === client then
             w.cancel()
    end
 
    public get_worker(req)
       local w
       every w := !workers do 
-         if w.doing === req then
+         if w.req === req then
             return w
    end
 
@@ -575,7 +626,7 @@ class WorkerPool()
       local i, w
       i := *member(queue, client) | 0
       every w := !workers do 
-         if (\w.doing).client === client then
+         if (\w.req).client === client then
             i +:= 1
       return i
    end
@@ -584,7 +635,7 @@ class WorkerPool()
       local i, w
       i := 0
       every w := !workers do 
-         if (\w.doing).client === client then
+         if (\w.req).client === client then
             i +:= w.read()
       return i
    end
@@ -641,7 +692,7 @@ class WorkerPool()
          else if t.is_active() then "active"
          else "stopped"
          s ||:= "<tr><td>" || serial(w) || "</td><td>" || st || "</td>"
-         if l := (\w.doing).url then
+         if l := (\w.req).url then
             s ||:= Browser.mk_anchor_cell(l)
          else
             s ||:= "<td/>"
@@ -689,7 +740,7 @@ class TblContent(Component)
 
    public whose_point(ex, ey)
       local c
-      every c := layout_delegate.g.cells_in_range(ey - y, 1).obj do {
+      every c := layout_delegate.computed_g.cells_in_range(ey - y, 1).obj do {
          if c.is_unhidden() & c.inside(ex, ey) then
             return c
       }
@@ -698,7 +749,7 @@ class TblContent(Component)
    public display()
       local ci, r, g, t
       r := get_cbwin_clip()
-      g := layout_delegate.g
+      g := layout_delegate.computed_g
       every ci := g.cells_in_range(r.y - y, r.h) do {
          display_child(ci.obj)
          if \vrules | \hrules then {
@@ -727,20 +778,14 @@ class TblContent(Component)
    end
 end
 
-class Tbl(Border, HasMaxWidth, HasAscent)
+class Tbl(Border, HasMaxWidth)
    public get_max_width()
       local w1
-      w1 := content.layout_delegate.get_max_width()  + border.get_total_width()
+      w1 := content.layout_delegate.get_max_width() + border.get_total_width()
       return if \title then
          max(w1, title.get_max_width() + 2 * TITLE_OFFSET)
       else
          w1
-   end
-
-   public get_ascent(dw, dh)
-      /title | return dh
-      dw -:= border.get_total_width()
-      return content.layout_delegate.get_ascent(dw) + border.get_t_inset() | dh
    end
 
    public new()
@@ -1014,9 +1059,9 @@ class FormButton(TextButton, FormEntry, HasAscent)
    end
 end
 
-class FormTblButton(Button, FormEntry, HasMaxWidth, HasAscent)
+class FormTextFlowButton(Button, FormEntry, HasMaxWidth, HasAscent)
    public const
-      tbl, value, form, type
+      tf, value, form, type
 
    public get_form_value(ev, src)
       if src === self then
@@ -1034,10 +1079,10 @@ class FormTblButton(Button, FormEntry, HasMaxWidth, HasAscent)
       display_children()
       if \self.is_down then {
          Gui.style.fill_down_rectangle(self.cbwin, self.x, self.y, self.w, self.h)
-         tbl.border.draw_rev_rect(self.cbwin, self)
+         tf.border.draw_rev_rect(self.cbwin, self)
       }
       if self.has_focus() & self.is_unshaded() then
-         tbl.border.draw_focus_rect(self.cbwin, self)
+         tf.border.draw_focus_rect(self.cbwin, self)
    end
 
    #
@@ -1047,43 +1092,39 @@ class FormTblButton(Button, FormEntry, HasMaxWidth, HasAscent)
    end
 
    public get_default_width()
-      return tbl.get_preferred_width()
+      return tf.get_preferred_width()
    end
 
    public get_max_width()
-      return tbl.get_max_width()
+      return tf.get_max_width()
    end
 
    public get_default_height(dw)
-      return tbl.get_preferred_height(dw)
+      return tf.get_preferred_height(dw)
+   end
+
+   public get_ascent(dw)
+      return tf.get_ascent(dw)
    end
 
    public layout()
-      tbl.x := x
-      tbl.y := y
-      tbl.w := w
-      tbl.h := h
-      tbl.layout()
-   end
-
-   public get_ascent(dw, dh)
-      return tbl.get_ascent(dw, dh)
+      tf.x := x
+      tf.y := y
+      tf.w := w
+      tf.h := h
+      tf.layout()
    end
 
    public new(form, value, type)
       cast(self,Button).new()
-      tbl := Tbl().
+      tf := TextFlow(form.browser).
          set_border(CompoundBorder().
                     set_outer(RaisedBorder()).
                     set_inner(EmptyBorder()))
-      add(tbl)
+      add(tf)
       self.value := value
       self.form := form
       self.type := type
-      # Although there is only one element in this Tbl, this flag
-      # makes the ascent for the Tbl the ascent of the single
-      # element.
-      tbl.content.layout_delegate.set_align_baselines(&yes)
       connect(self.handle_action, Event.ACTION)
       return
    end
@@ -1106,14 +1147,12 @@ end
 class FormLabel()
    public const
       id,
-      form_id,
       form
    public
       comp
 
-   public new(id, form_id, form)
+   public new(id, form)
       self.id := id
-      self.form_id := form_id
       self.form := form
       return
    end
@@ -1164,7 +1203,7 @@ class FormBrowse(Component, FormEntry, HasAscent)
    end
 
    private on_browse()
-      tf.set_contents(browser.browse_for_file())
+      tf.set_contents(ucs(browser.browse_for_file()))
    end
 
    public new(browser, tf_size)
@@ -1208,9 +1247,11 @@ class FormImgY(FormEntry)
    end
 end
 
-class FormTextField(TextField, FormEntry, HasAscent)
+class FormTextField(SuggestField, FormEntry, HasAscent)
    private const
-      init_val
+      browser,
+      init_val,
+      datalist_id
 
    public get_ascent() 
       return cbwin.get_font_ascent() + border.get_t_inset()
@@ -1232,9 +1273,38 @@ class FormTextField(TextField, FormEntry, HasAscent)
       set_contents(val)
    end
 
-   public new(init_val)
-      cast(self,TextField).new()
+   public create_popup()
+      return FormOptionList()
+   end
+
+   public convert_element(o)
+      return o.value
+   end
+
+   protected do_request()
+      local l, t, e, s
+      l := browser.get_datalist(\datalist_id) | fail
+      s := map(contents)
+      t := []
+      every e := !l do {
+         if match(s, map(e.value)) then
+            put(t, e)
+      }
+      return t
+   end
+
+   public handle_return(e)
+      if \tl then
+         keep_closed()
+      else
+         cast(self,TextField).handle_return(e)
+   end
+
+   public new(browser, init_val, datalist_id)
+      cast(self,SuggestField).new()
+      self.browser := browser
       self.init_val := init_val
+      self.datalist_id := datalist_id
       set_contents(init_val)
       return
    end
@@ -1921,20 +1991,19 @@ class Form()
       method,
       enctype,
       items,
+      labels,
       id_table,
       cbgs
    private readable
       autofocus
 
    private make_cgi_table(ev, src)
-      local t, k, c, v, x
+      local t, k, c, v
       t := table()
       every c := !items do {
          if k := \c.form_name then {
-            every v := c.get_form_value(ev, src) do {
-               (x := member(t, k)) | insert(t, k, x := [])
-               put(x, v)
-            }
+            every v := c.get_form_value(ev, src) do
+               put(member(t, k), v) | insert(t, k, [v])
          }
       }
       return t
@@ -1974,7 +2043,7 @@ class Form()
          }
       }
       m.set_header("Content-Type", "multipart/form-data")
-      m.set_content_object(mp) | stop("Failed to set_content_object:",m.get_reason())
+      m.set_content_object(mp) | stop("Failed to set_content_object:", &why)
       return m
    end
 
@@ -2058,6 +2127,12 @@ class Form()
       return \id | (\url).str()
    end
 
+   public resolve_labels()
+      local l
+      every l := !labels do
+         /l.comp := get_item_by_id(\l.id)
+   end
+
    public new(browser, id, url, method, enctype)
       self.browser := browser
       self.id := id
@@ -2065,6 +2140,7 @@ class Form()
       self.method := method
       self.enctype := enctype
       self.items := []
+      self.labels := []
       self.id_table := table()
       self.cbgs := table()
       return
@@ -2079,8 +2155,9 @@ record DefListContext(tbl)
 record FieldSetContext(legend)
 record MapContext(map)
 record SelectContext(options, optgroup)
-record Context(form, form_label, url, fg, font, align, pre, nowrap, underline, strike, underdash, mark,
-               face, size, bold, italic, table, list, def_list, fieldset, select, map, title)
+record DataListContext(options)
+record Context(form, form_label, title, url, fg, font, align, pre, nowrap, underline, strike, underdash, mark,
+               face, size, bold, italic, table, list, def_list, fieldset, select, map, datalist)
 
 class MapArea()
    public const
@@ -2217,8 +2294,8 @@ class Browser(ComponentScrollArea)
       shared_worker_pool_flag,
       status_ticker,
       maps,
+      datalists,
       forms,
-      labels,
       form_tab_children,
       scroll_ticker,
       scroll_ticker_interval,
@@ -2427,6 +2504,10 @@ class Browser(ComponentScrollArea)
       return member(maps, s)
    end
 
+   public get_datalist(s)
+      return member(datalists, s)
+   end
+
    private convert_color(el, name)
       local s
       if s := el.get_attribute(name) then {
@@ -2568,9 +2649,15 @@ class Browser(ComponentScrollArea)
             if xp := \curr_history_entry.area_x then
                set_area_x(xp)
          }
-         # Set focus; this will scroll to the component if necessary (see focus_scroll).  Note that if we've moved to another tab
-         # whilst the page loads, (making f hidden) then gen_focusable will fail.
-         if page_resp.kind = Worker.NAVIGATE then
+         # If the user has placed the focus in a component in the new
+         # page, just ensure it's still visible; otherwise set the
+         # focus to any history/autofocus component; this will scroll
+         # to the component if necessary (see focus_scroll).  Note
+         # that if this browser's tab is not current, then the various
+         # focus methods fail and no change to the focus is made.
+         if view === (f := parent_dialog.get_focus()).gen_parents() then
+            focus_scroll(, f)
+         else if page_resp.kind = Worker.NAVIGATE then
             parent_dialog.set_focus(get_nth_focusable(\curr_history_entry.focus_index))
          else {
             if f := (!forms).get_autofocus() then
@@ -2656,7 +2743,7 @@ class Browser(ComponentScrollArea)
    end
 
    private static is_image(ct, s)
-      if (\ct).type == "image" then
+      if map((\ct).type) == "image" then
          return
       return match("\x89PNG\x0D\x0A\x1A\x0A" |
                    "\xFF\xD8" |
@@ -2665,13 +2752,13 @@ class Browser(ComponentScrollArea)
 
    private static is_text(ct, s)
       \ct | fail
-      if (ct.type == "text") |
-         (ct.type == "application" & ct.subtype == "json") then
+      if (map(ct.type) == "text") |
+         (map(ct.type) == "application" & map(ct.subtype) == "json") then
          return
    end
 
    private static is_html(ct, s)
-      if (\ct).subtype == "html" then
+      if map((\ct).subtype) == "html" then
          return
       s ? {
          while tab(upto('<')) do {
@@ -2689,13 +2776,6 @@ class Browser(ComponentScrollArea)
             }
          }
       }
-   end
-
-   private convert_to_ucs(ct, s)
-      return if (\ct).get_parameter("charset") == "ISO-8859-1" then
-         Text.iso_8859_1_to_ucs(s)
-      else
-         Text.liberal_ucs(s)
    end
 
    private save_form_values()
@@ -2736,11 +2816,11 @@ class Browser(ComponentScrollArea)
    public static to_content(s)
       local t
       t := ""
-      s ? repeat {
+      string(s) ? repeat {
          t ||:= tab(upto('<&') | 0)
          if pos(0) then
             break
-         t ||:= case string(move(1)) of {
+         t ||:= case move(1) of {
             "<": "&lt;"
             "&": "&amp;"
          }
@@ -2751,11 +2831,11 @@ class Browser(ComponentScrollArea)
    public static to_attr(s)
       local t
       t := ""
-      s ? repeat {
+      string(s) ? repeat {
          t ||:= tab(upto('\"\'&') | 0)
          if pos(0) then
             break
-         t ||:= case string(move(1)) of {
+         t ||:= case move(1) of {
             "\"": "&quot;"
             "\'": "&apos;"
             "&": "&amp;"
@@ -2764,12 +2844,16 @@ class Browser(ComponentScrollArea)
       return t
    end
 
-   public static mk_anchor(url)
-      return "<a href=\"" || to_attr(url.str()) || "\">" || Browser.to_content(url.str()) || "</a>"
+   public static mk_anchor(url, lim)
+      local s1, s2
+      /lim := 1000
+      s1 := s2 := url.str()
+      s2 := limit_text(s2, lim)
+      return "<a href=\"" || to_attr(s1) || "\">" || Browser.to_content(s2) || "</a>"
    end
 
-   public static mk_anchor_cell(url)
-      return "<td nowrap>" || mk_anchor(url) || "</td>"
+   public static mk_anchor_cell(url, lim)
+      return "<td nowrap>" || mk_anchor(url, lim) || "</td>"
    end
 
    private get_nth_focusable(n)
@@ -2800,7 +2884,7 @@ class Browser(ComponentScrollArea)
          curr_history_entry.focus_index := get_focusable_index(parent_dialog.get_focus()) | &null
       }
       set_area_y(0).set_area_x(0)
-      if \res.err then {
+      if \res.err & /res.data then {
          s := "<html><title>Error</title>" || 
             "<h1>Error:</h1>Getting " || to_content(res.url.str()) || "<br><br>" || res.err || "</html>"
          page_data := &null
@@ -2842,10 +2926,14 @@ class Browser(ComponentScrollArea)
       curr_history_entry.referer := res.referer
       curr_history_entry.form_data := res.form_data
       maps := table()
+      datalists := table()
       forms := []
       form_tab_children := []
-      labels := []
-      s := convert_to_ucs(res.content_type, s)
+      # Convert s to ucs
+      s := if map((\res.content_type).get_parameter("charset")) == "iso-8859-1" then
+         Text.iso_8859_1_to_ucs(s)
+      else
+         Text.liberal_ucs(s)
       doc := HtmlParser().parse(s)
       page_base := page_url
       row := TextFlow(self)
@@ -2863,7 +2951,6 @@ class Browser(ComponentScrollArea)
       synch_font(c)
       traverse(doc, row, c)
       curr_history_entry.title := page_title
-      resolve_labels()
       if page_resp.kind = Worker.NAVIGATE then
          restore_form_values()
       every form_tab_children |||:= (!forms).get_tab_children()
@@ -3059,43 +3146,22 @@ class Browser(ComponentScrollArea)
       c.form := Form(self, id, url, m, t)
       put(forms, c.form)
       traverse(e, p, c)
+      c.form.resolve_labels()
    end
 
    private traverse_label(e, p, context)
-      local c, l, id, form_id
+      local c, l, id
+      \context.form | fail
       id := e.get_attribute(u"FOR")
-      form_id := e.get_attribute(u"FORM")
-      l := FormLabel(id, form_id, context.form)
-      put(labels, l)
+      l := FormLabel(id, context.form)
+      put(context.form.labels, l)
       c := copy(context)
       c.form_label := l
       traverse(e, p, c)
    end
 
-   private resolve_labels()
-      local l
-      every l := !labels do {
-         if \l.id then
-            /l.comp := get_form_for_label(l).get_item_by_id(l.id)
-      }
-   end
-
-   private get_form_for_label(l)
-      local f
-      # If no form id specified, then the label relates to the form it
-      # is declared in; if outside a form then the first form in the
-      # page.
-      if /l.form_id then
-         return \l.form | forms[1]
-      # Otherwise, we just search for the matching form id.
-      every f := !forms do
-         if \f.id == l.form_id then
-            return f
-   end
-
    private dump_forms()
       local f, i
-      every write(to_string(!labels,3,,1))
       every f := !forms do {
          every write(to_string(f,3,,1))
          every i := !f.items do {
@@ -3114,15 +3180,13 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_button(e, p, context)
-      local q, row, v, type
+      local q, v, type
       \context.form | fail
       v := e.get_attribute(u"VALUE") | u""
       type := map(string(e.get_attribute(u"TYPE"))) | "submit"
-      q := FormTblButton(context.form, v, type)
-      row := TextFlow(self)
-      q.tbl.content.add(row)
+      q := FormTextFlowButton(context.form, v, type)
       add_form_component(e, p, q, context)
-      traverse(e, row, context)
+      traverse(e, q.tf, context)
    end
 
    private traverse_img(e, p, context)
@@ -3220,18 +3284,26 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_option(e, p, context)
-      local sc, v, txt, label, disabled, selected
-      sc := \context.select | fail
-      label := e.get_trimmed_string_content()
-      if e.get_attribute(u"DISABLED") then
-         disabled := 1
-      else {
-         v := e.get_attribute(u"VALUE") | label
-         if e.get_attribute(u"SELECTED") then
-            selected := 1
+      local dc, sc, v, txt, label, disabled, selected
+      if sc := \context.select then {
+         label := e.get_trimmed_string_content()
+         if e.get_attribute(u"DISABLED") then
+            disabled := 1
+         else {
+            v := e.get_attribute(u"VALUE") | label
+            if e.get_attribute(u"SELECTED") then
+               selected := 1
+         }
+         txt := repl(u"    ", sc.optgroup) || label
+         put(sc.options, FormOption(txt, label, v, selected, disabled))
+      } else if dc := \context.datalist then {
+         label := (u"" ~== e.get_trimmed_string_content())
+         v := e.get_attribute(u"VALUE")
+         /label := v
+         /v := label
+         if (not e.get_attribute(u"DISABLED")) & \label then
+            put(dc.options, FormOption(label, label, v))
       }
-      txt := repl(u"    ", sc.optgroup) || label
-      put(sc.options, FormOption(txt, label, v, selected, disabled))
    end
 
    private traverse_optgroup(e, p, context)
@@ -3263,7 +3335,7 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_input(e, p, context)
-      local q, s, k, v, size, mW, url, checked, align, min, max, step, alt
+      local q, s, k, v, size, mW, url, checked, align, min, max, step, alt, did
       \context.form | fail
       s := string(map(e.get_attribute(u"TYPE"))) | "text"
       case s of {
@@ -3292,6 +3364,14 @@ class Browser(ComponentScrollArea)
             if url := mk_link(e.get_attribute(u"SRC")) then {
                alt := e.get_attribute(u"ALT")
                q := Img(self, context, url, alt, context.form)
+               do_width_param(e, q)
+               do_height_param(e, q)
+               # % width not allowed if no breaking mode, since it
+               # would mean we couldn't calculate the blob widths in
+               # the row (and hence the preferred width of the
+               # TextFlow).
+               if \context.nowrap | \context.pre then
+                  q.remove_constraint("pct_w")
                start_worker(Req(self, url, page_url, q.got_data, page_resp.kind))
                if e.get_attribute(u"DISABLED") then
                   q.set_is_shaded(&yes)
@@ -3419,17 +3499,19 @@ class Browser(ComponentScrollArea)
          # Assume something textual; could be password, text, email etc.
          default: {
             v := e.get_attribute(u"VALUE") | u""
+            did := map(string(e.get_attribute(u"LIST")))
             use {
                mW := cbwin.clone().set_font(context.font),
                size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
             }
-            q := FormTextField(v).
+            q := FormTextField(self, v, did).
                set_width(size).
                connect(context.form.submit, Event.ACTION)
             if s == "password" then
                q.set_displaychar("*")
             if e.get_attribute(u"READONLY") then
                q.set_is_editable(&no)
+            q.set_placeholder(e.get_attribute(u"PLACEHOLDER"))
             add_form_component(e, p, q, context)
          }
       }
@@ -3571,7 +3653,8 @@ class Browser(ComponentScrollArea)
       return case string(map(el.get_attribute(name))) of {
          "top": Align.T
          "middle": Align.C
-         "bottom"|"baseline": Align.B
+         "bottom": Align.B
+         "baseline": "baseline"
       }
    end
 
@@ -3647,12 +3730,6 @@ class Browser(ComponentScrollArea)
       # it is like enclosing the table in <center>.
       align := convert_halign(e, u"ALIGN")
       c := copy(context)
-      # A lot of attributes aren't inherited.
-      c.pre := c.nowrap := c.underline := c.strike := c.underdash := c.mark := c.bold := c.italic := &null
-      # Font color comes from the default (or as set in <body>); face is inherited and size is reset to the default).
-      c.fg := page_text_color
-      c.size := 3
-      synch_font(c)
       c.align := (align === Align.C)
       c.table := ct := TableContext()
       ct.tbl := tbl
@@ -3709,7 +3786,7 @@ class Browser(ComponentScrollArea)
          add_component(p, t, c, align)
       else {
          put_new_row(p, c)
-         add_component(p, t, c)
+         add_component(p, t, c, Align.B)
          put_new_row(p, c)
       }
    end
@@ -3871,7 +3948,6 @@ class Browser(ComponentScrollArea)
    private traverse_list(e, p, context)
       local tbl, lc, c
       tbl := Tbl()
-      tbl.content.layout_delegate.set_align_baselines(&yes)
       c := copy(context)
       lc := ListContext()
       lc.tbl := tbl
@@ -3888,7 +3964,7 @@ class Browser(ComponentScrollArea)
    private traverse_li(e, p, context)
       local lc, row, val, type
       lc := \context.list | fail
-      row := TextFlow(self)
+      row := TextFlow(self).set_v_align("baseline")
       type := e.get_attribute(u"TYPE") | lc.type
       if lc.kind == u"OL" then {
          val := integer(e.get_attribute(u"VALUE")) | lc.index
@@ -3912,7 +3988,7 @@ class Browser(ComponentScrollArea)
          put(row.input, TextCmd(val || u"\ua0\ua0\ua0", context))
       }
       lc.tbl.content.add(row)
-      row := TextFlow(self) .set_constraint("eol", &yes)
+      row := TextFlow(self).set_v_align("baseline").set_constraint("eol", &yes)
       lc.tbl.content.add(row)
       traverse(e, row, context)
    end
@@ -3920,7 +3996,7 @@ class Browser(ComponentScrollArea)
    private traverse_dl(e, p, context)
       local tbl, dc, c
       tbl := Tbl()
-      tbl.content.layout_delegate.set_fix_col1(&yes).set_align_baselines(&yes)
+      tbl.content.layout_delegate.set_fix_col1(&yes)
       dc := DefListContext()
       dc.tbl := tbl
       c := copy(context)
@@ -3942,10 +4018,10 @@ class Browser(ComponentScrollArea)
    private traverse_dd(e, p, context)
       local dc, row
       dc := \context.def_list | fail
-      row := TextFlow(self) .set_constraint("eol", &no)
+      row := TextFlow(self).set_v_align("baseline").set_constraint("eol", &no)
       put(row.input, TextCmd(u"\u2022\ua0\ua0\ua0", context))
       dc.tbl.content.add(row)
-      row := TextFlow(self) .set_constraint("eol", &yes)
+      row := TextFlow(self).set_v_align("baseline").set_constraint("eol", &yes)
       dc.tbl.content.add(row)
       traverse(e, row, context)
    end
@@ -3958,7 +4034,7 @@ class Browser(ComponentScrollArea)
       row := TextFlow(self)
       put(row.input, TextCmd(u"\ua0\ua0\ua0\ua0", context))
       tbl.content.add(row)
-      row := TextFlow(self) .set_constraint("eol", &yes)
+      row := TextFlow(self).set_constraint("eol", &yes)
       tbl.content.add(row)
       traverse(e, row, context)
       put_new_row(p, context)
@@ -3998,6 +4074,16 @@ class Browser(ComponentScrollArea)
       c.map := mc
       traverse(e, p, c)
       insert(maps, map(string(e.get_attribute(u"NAME"))), mc.map)
+   end
+
+   private traverse_datalist(e, p, context)
+      local c, dc
+      dc := DataListContext()
+      dc.options := []
+      c := copy(context)
+      c.datalist := dc
+      traverse(e, p, c)
+      insert(datalists, map(string(e.get_attribute(u"ID"))), dc.options)
    end
 
    private traverse_area(e, p, context)
@@ -4109,6 +4195,7 @@ class Browser(ComponentScrollArea)
                "LEGEND": traverse_legend(e, p, c)
                "MAP": traverse_map(e, p, c)
                "AREA": traverse_area(e, p, c)
+               "DATALIST": traverse_datalist(e, p, c)
                "WBR": traverse_wbr(e, p, c)
                "ABBR"|"ACRONYM": traverse_abbr(e, p, c)
                "BASE": traverse_base(e, p, c)
@@ -4311,7 +4398,7 @@ class Browser(ComponentScrollArea)
       r := c.intersect(r) | fail
       coact(c)
       if is(c, TblContent) then
-         every traverse_intersecting(c.layout_delegate.g.cells_in_range(r.y - c.y, r.h).obj, r)
+         every traverse_intersecting(c.layout_delegate.computed_g.cells_in_range(r.y - c.y, r.h).obj, r)
       else
          every traverse_intersecting(!c.children, r)
    end
@@ -4423,7 +4510,7 @@ class Browser(ComponentScrollArea)
    end
 
    public get_page_info()
-      local s, l, t, c, n, sz, m, f, imgs, ct
+      local e, s, l, t, c, n, sz, m, f, imgs, ct
 
       s := "<html><title>Page info</title>"
       s ||:= "<h1>Page</h1>"
@@ -4437,9 +4524,11 @@ class Browser(ComponentScrollArea)
       if n := \page_title & *n > 0 then
          s ||:= "Title: " || to_content(n) || "<p>"
       if ct := \page_resp.content_type then
-         s ||:= "Content-type: " || ct.type || "/" || ct.subtype || "<p>"
+         s ||:= "Content-type: " || to_content(ct.to_rfc1521()) || "<p>"
       if l := \page_resp.referer & (l.scheme == (u"http" | u"https")) then
          s ||:= "Referer: " || mk_anchor(l) || "<p>"
+      if e := \page_resp.err then
+         s ||:= "Error: " || to_content(e) || "<p>"
 
       imgs := []
       t := table(u"")

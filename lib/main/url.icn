@@ -49,7 +49,7 @@ class URL(ObjectOutput)
    # Set the scheme field.
    #
    public set_scheme(x)
-      self.scheme := x
+      self.scheme := map(x)
       return self
    end
 
@@ -211,25 +211,39 @@ class URL(ObjectOutput)
    end
 
    #
-   # Convert to string representation
+   # Convert to string representation.  The result is always a string, never ucs.
    #
    public str()
       local s
-      s := self.scheme || ":"
+      s := string(self.scheme) || ":"
       if \self.host then {
          s ||:= "//"
-         s ||:= \self.userinfo || "@"
+         s ||:= string(\self.userinfo) || "@"
          if self.scheme == "file" then
-            s ||:= "localhost" ~== self.host 
+            s ||:= "localhost" ~== string(self.host)
          else
-            s ||:= self.host
+            s ||:= string(self.host)
          if \port & not(port = get_default_port(scheme)) then
             s ||:= ":" || self.port
       }
-      s ||:= self.path
-      s ||:= "?" || \self.query
-      s ||:= "#" || \self.fragment
+      s ||:= string(self.path)
+      s ||:= "?" || string(\self.query)
+      s ||:= "#" || string(\self.fragment)
       return s
+   end
+
+   #
+   # Convenient method to give ucs(str()); may fail if str() is not convertible.
+   #
+   public ucs()
+      return default.ucs(str())
+   end
+
+   #
+   # Convenient method to give Text.liberal_ucs(str()); will never fail.
+   #
+   public liberal_ucs()
+      return Text.liberal_ucs(str())
    end
 
    # Extract the cgi parameters from the {file} field.  Fails if there
@@ -308,34 +322,41 @@ class URL(ObjectOutput)
       local new_path, new_query, new_fragment
       if s[1:3] == "//" then
          return URL(scheme || ":" || s)
+
       if s[1] == "#" then
          #
          # Just reference, filename doesn't change.
          # 
          return from_parts(scheme, userinfo, host, port, path, query, s[2:0])
-      else {
+
+      if *s = 0 then
          #
-         # File name and possibly reference.
-         #
-         if s[1] == "?" then
-            # eg http://a/b/c?d + ?e -> http://a/b/c?e
-            s := path || s
-         else if s[1] ~== "/" then
-            # eg http://a/b/c?d + e -> http://a/b/e
-            s ?:= strip_dot_dirs(get_path_dir() || tab(upto('?') | 0)) || tab(0)
-         s ? {
-            new_path := tab(upto('#?') | 0)
-            if any('?') then {
-               move(1)
-               new_query := tab(upto('#') | 0)
-            }
-            if any('#') then {
-               move(1)
-               new_fragment := tab(0)
-            }
+         # Empty string means copy the base, but drop the fragment.  see http://www.w3.org/TR/url/ s3.2.1
+         # and rfc3986 s5.2.2
+         # 
+         return from_parts(scheme, userinfo, host, port, path, query)
+
+      #
+      # File name and possibly reference.
+      #
+      if s[1] == "?" then
+         # eg http://a/b/c?d + ?e -> http://a/b/c?e
+         s := path || s
+      else if s[1] ~== "/" then
+         # eg http://a/b/c?d + e -> http://a/b/e
+         s ?:= strip_dot_dirs(get_path_dir() || tab(upto('?') | 0)) || tab(0)
+      s ? {
+         new_path := tab(upto('#?') | 0)
+         if any('?') then {
+            move(1)
+            new_query := tab(upto('#') | 0)
          }
-         return from_parts(scheme, userinfo, host, port, new_path, new_query, new_fragment)
+         if any('#') then {
+            move(1)
+            new_fragment := tab(0)
+         }
       }
+      return from_parts(scheme, userinfo, host, port, new_path, new_query, new_fragment)
    end
 
    #
@@ -423,7 +444,7 @@ class URL(ObjectOutput)
    # @return   A table, representing the keys and values of the fields.
    #
    public static make_cgi_table(s)
-      local cgi, key, val, l
+      local cgi, key, val
       s := string(s) | runerr(103, s)
       cgi := table()
       s ? until pos(0) do {
@@ -433,8 +454,7 @@ class URL(ObjectOutput)
          else
             val := ""
          ="&"
-         (l := member(cgi, key)) | insert(cgi, key, l := [])
-         put(l, val)
+         put(member(cgi, key), val) | insert(cgi, key, [val])
       }
       return cgi
    end
@@ -458,7 +478,7 @@ class URL(ObjectOutput)
       s ? repeat {
          res ||:= tab(upto('%') | 0)
          move(1) | break
-         res ||:= char("16r" || move(2))
+         res ||:= char(integer("16r" || move(2)))
       }
       return res
    end

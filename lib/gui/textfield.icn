@@ -44,6 +44,7 @@ class TextField(Component)
       tx,                      #          
       tw,                      #
       displaychar,             # char to print on screen
+      placeholder,
       undo_manager,
       remembered_region,
       clipboard,
@@ -64,6 +65,14 @@ class TextField(Component)
    #
    public set_displaychar(c)
       displaychar := c
+      return self
+   end
+
+   #
+   # Set the placeholder attribute
+   #
+   public set_placeholder(s)
+      placeholder := s
       return self
    end
 
@@ -691,13 +700,18 @@ class TextField(Component)
    end
 
    public display()
-      local fh, s, mp, np, y1, off1, off2
+      local fh, s, mp, np, y1, off1, off2, W
 
       fh := self.cbwin.get_font_height()
       y1 := self.y + (self.h - fh) / 2
       s := get_view()
-
-      draw_string_ex(self.cbwin, self.tx - loff, y1, s)
+      if *s = 0 & \placeholder then {
+         use {
+            W := Gui.style.get_shadow_clone(cbwin),
+            draw_string_ex(W, self.tx, y1, placeholder)
+         }
+      } else
+         draw_string_ex(self.cbwin, self.tx - loff, y1, s)
 
       if has_region() then {
          mp := self.mark
