@@ -104,6 +104,10 @@ class BrowserDialog(Dialog)
       downloads,
       page_menu
 
+   public
+      last_download_dir,
+      last_file_dir
+      
    private on_quit(ev)
       dispose()
    end
@@ -343,6 +347,7 @@ class BrowserDialog(Dialog)
          pool.set_log_http(&yes)
       file_dialog := FileDialog().set_remember_size(&yes)
       directory_dialog := DirectoryDialog().set_remember_size(&yes)
+      last_file_dir := last_download_dir := Files.get_home()
       self.set_size(600, 650)
       self.set_resize(&yes)
       new_tab_item := TextMenuItem().
@@ -923,8 +928,9 @@ class BrowserTab(TabItem, BrowserUI)
    private download_links_to_dir(urls, referer)
       local d, f
       d := parent_dialog.directory_dialog
-      d.keep_directory().set_existing_file_mode(DirectoryDialog.REQUIRE).show_modal(parent_dialog)
+      d.set_directory(parent_dialog.last_download_dir).set_existing_file_mode(DirectoryDialog.REQUIRE).show_modal(parent_dialog)
       f := d.get_result() | fail
+      parent_dialog.last_download_dir := d.get_result()
       every parent_dialog.downloads.download(!urls, referer, f)
    end
 
@@ -939,21 +945,23 @@ class BrowserTab(TabItem, BrowserUI)
    private download_to_file(url, referer)
       local d, f, d1, f1, full_path
       d := parent_dialog.file_dialog
-      d1 := d.get_dir_path()
+      d1 := FilePath(parent_dialog.last_download_dir)
       f1 := ucs(url.get_decoded_path_last())
       if /f1 | *f1 = 0 | *f1 > 32 then
          f1 := u"browser.out"
       full_path := Files.ensure_unique_filename(d1.child(f1).canonical().str())
       d.set_path(full_path).set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
       f := d.get_result() | fail
+      parent_dialog.last_download_dir := d.get_directory()
       parent_dialog.downloads.download(url, referer, f)
    end
 
    private download_to_dir(url, referer)
       local d, f
       d := parent_dialog.directory_dialog
-      d.keep_directory().set_existing_file_mode(DirectoryDialog.REQUIRE).show_modal(parent_dialog)
+      d.set_directory(parent_dialog.last_download_dir).set_existing_file_mode(DirectoryDialog.REQUIRE).show_modal(parent_dialog)
       f := d.get_result() | fail
+      parent_dialog.last_download_dir := d.get_result()
       parent_dialog.downloads.download(url, referer, f)
    end
 
@@ -1082,7 +1090,8 @@ class BrowserTab(TabItem, BrowserUI)
    public browse_for_file()
       local d
       d := parent_dialog.file_dialog
-      d.keep_directory().set_files().set_existing_file_mode(FileDialog.REQUIRE).show_modal(parent_dialog)
+      d.set_directory(parent_dialog.last_file_dir).set_files().set_existing_file_mode(FileDialog.REQUIRE).show_modal(parent_dialog)
+      parent_dialog.last_file_dir := d.get_directory()
       return d.get_result()
    end
 
@@ -1090,7 +1099,8 @@ class BrowserTab(TabItem, BrowserUI)
       local s, d
       d := parent_dialog.file_dialog
       d.set_file(\name)
-      d.keep_directory().set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
+      d.set_directory(parent_dialog.last_file_dir).set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
+      parent_dialog.last_file_dir := d.get_directory()
       if s := d.get_result() then {
          if Files.string_to_file(s, data) then
             browser.msg("Saved OK", 3000)

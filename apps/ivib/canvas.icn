@@ -398,10 +398,12 @@ class Canvas(Component,SelectiveObjectCodec)
    public component_save(cc)
       local fd, s, f, c
 
-      fd := FileDialog().set_existing_file_mode(FileDialog.WARN)
-      fd.show_modal(parent_dialog)
-
+      fd := FileDialog().
+         set_directory(Ivib.last_layout_dir).
+         set_existing_file_mode(FileDialog.WARN).
+         show_modal(parent_dialog)
       s := fd.get_result() | fail
+      Ivib.last_layout_dir := fd.get_directory()
       f := io.open(s, "w") | return alert_error(parent_dialog, "Couldn't open " || s)
 
       c := cc.dup()
@@ -417,9 +419,10 @@ class Canvas(Component,SelectiveObjectCodec)
    #
    public component_load(cc)
       local fd, s, f, c
-      fd := FileDialog().set_existing_file_mode(FileDialog.REQUIRE)
-      fd.set_directory(\Ivib.last_layout_dir)
-      fd.show_modal(parent_dialog)
+      fd := FileDialog().
+         set_directory(Ivib.last_layout_dir).
+         set_existing_file_mode(FileDialog.REQUIRE).
+         show_modal(parent_dialog)
       s := fd.get_result() | fail
       Ivib.last_layout_dir := fd.get_directory()
       f := io.open(s) | return alert_error(parent_dialog, "Couldn't open " || s)
