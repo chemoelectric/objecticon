@@ -644,7 +644,7 @@ class Main(Dialog)
    #
    public op_save_as()
       local fd, s, c
-      fd := FileDialog()
+      fd := FileDialog().set_existing_file_mode(FileDialog.WARN)
       if /self.canvas.filename then {
          fd.set_path(\Ivib.last_icn_dir)
          fd.set_file("Untitled.icn")
@@ -733,7 +733,7 @@ class Main(Dialog)
       if \self.canvas.modified then
          self.save_if_wanted() | fail
 
-      fd := FileDialog()
+      fd := FileDialog().set_existing_file_mode(FileDialog.REQUIRE)
       fd.set_directory(\Ivib.last_icn_dir)
       fd.show_modal(self)
       Ivib.last_icn_dir := fd.get_directory()
@@ -1429,7 +1429,7 @@ class Preferences(Dialog)
 
    public on_plugin_dir_browse()
       local d, s
-      d := DirectoryDialog()
+      d := DirectoryDialog().set_existing_file_mode(DirectoryDialog.REQUIRE)
       d.set_directory(plugin_dir_field.get_contents())
       d.show_modal(self)
       if s := d.get_result() then
@@ -1536,7 +1536,7 @@ class PathTab(TabItem)
 
    public on_browse()
       local d, s
-      d := DirectoryDialog()
+      d := DirectoryDialog().set_existing_file_mode(DirectoryDialog.REQUIRE)
       d.set_directory("Edit me" ~== path.get_contents())
       d.show_modal(self.parent_dialog)
       if s := d.get_result() then {

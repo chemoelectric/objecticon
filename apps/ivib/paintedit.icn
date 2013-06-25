@@ -114,7 +114,7 @@ class ImagePaintEdit(PaintEdit)
 
    public on_file_browse()
       local fd, s, l, p
-      fd := FileDialog()
+      fd := FileDialog().set_existing_file_mode(FileDialog.REQUIRE)
       l := []
       s := img_field.get_contents()
       if is_image_file(s) then {
@@ -276,7 +276,7 @@ class GridPaintEdit(PaintEdit)
 
    public on_save_input()
       local d, fn
-      d := FileDialog()
+      d := FileDialog().set_existing_file_mode(FileDialog.WARN)
       d.show_modal(self)
       fn := d.get_result() | fail
       Files.string_to_file(fn, input.get_contents_str()) | 
@@ -285,7 +285,7 @@ class GridPaintEdit(PaintEdit)
 
    public on_load_input()
       local d, fn, s
-      d := FileDialog()
+      d := FileDialog().set_existing_file_mode(FileDialog.REQUIRE)
       d.show_modal(self)
       fn := d.get_result() | fail
       s := Files.file_to_string(fn) | return alert_error(self, ["Couldn't load from " || fn, &why])
@@ -294,7 +294,7 @@ class GridPaintEdit(PaintEdit)
 
    public on_insert_image_file(e)
       local d, s
-      d := FileDialog()
+      d := FileDialog().set_existing_file_mode(FileDialog.REQUIRE)
       d.set_directory(\Ivib.last_icon_dir)
       d.set_filters(["*.gif;*.png;*.jpg","*"])
       d.show_modal(self)
