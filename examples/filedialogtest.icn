@@ -1,19 +1,34 @@
-import gui,io
+import gui,io,ipl.options,lang
 
 procedure main(a)
-   local d
+   local d,opts
+   opts := options(a, "-we! -re! -de! -l! -k!")
    d :=  FileDialog().
       set_label("A File Dialog").
       set_filters(["*","*.icn","*.c","*.txt"]).
-      set_files(["fig.icn","jim.icn","laldy"]).
-      set_directories(["/tmp","/home","/home/rparlett"])
+      set_files(["one.icn", "two.icn","three.icn"]).
+      set_directories(["/tmp","/home"])
+
+   if \opts["we"] then
+      d.set_existing_file_mode(FileDialog.WARN)
+
+   if \opts["re"] then
+      d.set_existing_file_mode(FileDialog.REQUIRE)
+
+   if \opts["de"] then
+      d.set_existing_file_mode(FileDialog.DISALLOW)
 
    d.set_path(a[1])
-
-   d.show_modal()
-
-   write("d.result=",d.get_result() | "FAILED")
-   write("d.directory=",d.get_directory())
-   write("d.file=",d.get_file())
+   repeat{
+      d.show_modal()
+      write("d.get_result()=",image(d.get_result()) | "FAILED")
+      write("d.get_result_path()=",to_string(d.get_result_path()) | "FAILED")
+      write("d.get_directory()=",image(d.get_directory()))
+      write("d.get_file()=",image(d.get_file()))
+      write("d.get_dir_path()=",to_string(d.get_dir_path()))
+      if /opts["l"] then break
+      if \opts["k"] then
+         d.keep_directory()
+   }
 end
 
