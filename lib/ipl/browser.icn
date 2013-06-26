@@ -533,9 +533,8 @@ class Worker()
          }
          until req := pool.queue_get() do
             task.sleep()
-         #write("req for ",image(req.browser), "   size=",pool.queue_size())
          cancelled := &null
-         handle_req(req)
+         handle_req()
          req := &null
       }
    end
