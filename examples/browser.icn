@@ -347,7 +347,7 @@ class BrowserDialog(Dialog)
          pool.set_log_http(&yes)
       file_dialog := FileDialog().set_remember_size(&yes)
       directory_dialog := DirectoryDialog().set_remember_size(&yes)
-      last_file_dir := last_download_dir := Files.get_home()
+      last_file_dir := last_download_dir := Files.getcwd()
       self.set_size(600, 650)
       self.set_resize(&yes)
       new_tab_item := TextMenuItem().

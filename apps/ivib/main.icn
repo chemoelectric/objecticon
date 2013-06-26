@@ -32,7 +32,7 @@ class Ivib()
       insert(Dialog.ROOT_WATTRIBS, "resize", &yes)
       insert(Dialog.ROOT_WATTRIBS, "icon", ImageCache.get_named_image("ivib.logo"))
       IVIB_COMPONENT_TARGET := "IVIB_COMPONENT"
-      last_icon_dir := last_layout_dir := last_icn_dir := Files.get_home()
+      last_icon_dir := last_layout_dir := last_icn_dir := Files.getcwd()
    end
 end
 
