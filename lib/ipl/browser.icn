@@ -507,6 +507,8 @@ class Worker()
 
    private handle_req()
       local f, t
+      # So that read and length above don't return the last http request's stats
+      httpc.reset_progress_counters()
       t := string(req.url.scheme)
       case t of {
          "file": handle_file_req()
