@@ -632,12 +632,28 @@ class WorkerPool()
       return i
    end
 
+   # Return the amount read by this client's current requests.
+   #
    public read(client)
       local i, w
       i := 0
-      every w := !workers do 
+      every w := !workers do
          if (\w.req).client === client then
             i +:= w.read()
+      return i
+   end
+
+   # Return a length giving the remaining data to be downloaded for
+   # this client; fails if that is unknown.
+   #
+   public length(client)
+      local i, w
+      if member(queue, client) then
+         fail
+      i := 0
+      every w := !workers do
+         if (\w.req).client === client then
+            i +:= w.length() | fail
       return i
    end
 
@@ -2536,7 +2552,7 @@ class Browser(ComponentScrollArea)
    end
 
    private status()
-      local i, r, s
+      local i, r, s, l
       repeat {
          status_ticker.sleep(200)
          i := worker_pool.count(self)
@@ -2554,8 +2570,12 @@ class Browser(ComponentScrollArea)
             } else {
                r := worker_pool.read(self)
                s := i || " running requests"
-               if r > 0 then
-                  s ||:= ", read " || r || " bytes"
+               if r > 0 then {
+                  if l := (0 < worker_pool.length(self)) then
+                     s ||:= ", read " || r || " of " || l || " bytes (" || ((r * 100) / l) || "%)"
+                  else
+                     s ||:= ", read " || r || " bytes"
+               }
                msg(s)
             }
             if i ~=== running then {

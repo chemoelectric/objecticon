@@ -495,7 +495,7 @@ class Download()
    public get_status()
       local w, l
       if w := parent.parent_dialog.pool.get_worker(req) then {
-         if l := w.length() then {
+         if l := (0 < w.length()) then {
             size := Format.numeric_to_string(l / 1048576.0, 1)
             status := "Downloading (" || ((w.read() * 100) / l) || "%)"
          } else {
