@@ -33,7 +33,7 @@ class EditableTextList(LineBasedScrollArea)
       direction,               #
       long_line,               #
       undo_manager,
-      remembered_region,
+      primary,
       clipboard,
       old_view_list_size,
       old_mw,
@@ -450,9 +450,10 @@ class EditableTextList(LineBasedScrollArea)
    public end_handle(e)
       local r, i, cursor_moved, t
 
-      if r := get_region_list() then {
+      if r := get_region_list() &
+         not view.is_held(Mouse.LEFT_PRESS) then {
          parent_dialog.own_selection(Selection.PRIMARY, self.primary_selection_owner)
-         self.remembered_region := r
+         self.primary := r
       }
 
       if \changed then {
@@ -509,8 +510,6 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public handle_key(e)
-      # Stop dragging on any keypress.
-      parent_dialog.release(view, Mouse.LEFT_PRESS)
       case e.code of {
          Key.HOME : handle_key_home(e)
          Key.END : handle_key_end(e)
@@ -701,9 +700,9 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public scroll_tick()
-      local ax, s, v, vi, e, i
+      local ax, s, v, vi, i
       repeat {
-         start_handle(e)
+         start_handle()
 
          vi := get_view_list_index()
          
@@ -748,7 +747,7 @@ class EditableTextList(LineBasedScrollArea)
             }
          }
 
-         end_handle(e)
+         end_handle()
          scroll_ticker.sleep(scroll_ticker_interval)
       }
    end
@@ -1380,7 +1379,7 @@ class EditableTextListPrimarySelectionOwner(TextSelectionOwner)
    private parent
 
    protected get_text()
-      return parent.get_region() | cat_lines(\parent.remembered_region)
+      return cat_lines(\parent.primary)
    end
 
    public lost_ownership()
