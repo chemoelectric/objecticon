@@ -1463,19 +1463,19 @@ class URLSelectionOwner(SelectionOwner)
          Selection.URI_LIST_TARGET : {
             s := ""
             every s ||:= (!urls).str() || "\r\n"
-            return s
+            return text_guess_convert(s, "ucs")
          }
          Selection.STRING_TARGET : {
             s := ""
             every s ||:= (!urls).str() || "\n"
             s[-1] := ""
-            return text_convert(s, "string")
+            return text_guess_convert(s, "string")
          }
          Selection.UTF8_STRING_TARGET: {
             s := ""
             every s ||:= (!urls).str() || "\n"
             s[-1] := ""
-            return text_convert(s, "ucs")
+            return text_guess_convert(s, "ucs")
          }
       }
    end

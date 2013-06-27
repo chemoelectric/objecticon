@@ -304,9 +304,7 @@ end
 #
 procedure text_convert(s, target)
    local t, i
-
    s := text(s) | fail
-
    if type(s) == target then
       return s
 
@@ -322,6 +320,21 @@ procedure text_convert(s, target)
             t ||:= char(i | 63)
          return t
       }
+      default: runerr("Bad target type", target)
+   }
+end
+
+#
+# This utility takes a string or ucs and returns a string or ucs
+# according to the target parameter.  The format of strings are
+# guessed using the ucs() function; if that fails they are assumed to
+# be in iso-8859 format.
+#
+procedure text_guess_convert(s, target)
+   s := text(s) | fail
+   return case target of {
+      "ucs": ucs(s) | Text.iso_8859_1_to_ucs(s)
+      "string": Text.ucs_to_iso_8859_1(ucs(s)) | s
       default: runerr("Bad target type", target)
    }
 end
