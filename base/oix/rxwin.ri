@@ -1209,23 +1209,30 @@ int ownselection(wbp w, char *selname)
 
 int requestselection(wbp w, char *selname, char *targetname)
 {
-    Atom selection, target;
+    Atom selection, target, property;
     wsp ws = w->window;
     wdp wd = ws->display;
     if (!ws->win)
         return Failed;
     selection = XInternAtom(wd->display, selname, False);
     target = XInternAtom(wd->display, targetname, False);
+    /* 
+     * Use 8 property atoms to allow multiple concurrent requests
+     * without the results getting mixed up.  Obviously this isn't
+     * perfect, but is better than nothing.
+     */
+    property = wd->atoms[ATOM__OBJECTICON_PROP0 + (ws->propcount++) % 8];
     if (selection_debug)
-        printf("getselectioncontent: calling XConvertSelection selection=%s target=%s requestor=%lx\n",
+        printf("getselectioncontent: calling XConvertSelection selection=%s target=%s property=%s requestor=%lx\n",
                atom_fmt(ws, selection),
                atom_fmt(ws, target),
+               atom_fmt(ws, property),
                (long)ws->win);
 
     XConvertSelection(wd->display,
                       selection, 
                       target, 
-                      ATOM(wd, _OBJECTICON_PROP), 
+                      property,
                       ws->win,
                       CurrentTime);
 
@@ -3128,7 +3135,6 @@ char *atom_names[NUMATOMS] = {
     "TIMESTAMP",
     "USER",
     "WM_DELETE_WINDOW",
-    "_OBJECTICON_PROP",
     "_NET_WM_STATE_MAXIMIZED_VERT",
     "_NET_WM_STATE_MAXIMIZED_HORZ",
     "_NET_WM_STATE_FULLSCREEN",
@@ -3137,6 +3143,14 @@ char *atom_names[NUMATOMS] = {
     "_NET_WM_NAME",
     "UTF8_STRING",
     "WM_STATE",
+    "_OBJECTICON_PROP0",
+    "_OBJECTICON_PROP1",
+    "_OBJECTICON_PROP2",
+    "_OBJECTICON_PROP3",
+    "_OBJECTICON_PROP4",
+    "_OBJECTICON_PROP5",
+    "_OBJECTICON_PROP6",
+    "_OBJECTICON_PROP7",
 };
 
 /*
