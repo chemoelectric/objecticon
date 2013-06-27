@@ -540,7 +540,7 @@ void pollevent(wbp w)
 
                 status = XGetWindowProperty(ws->display->display,
                                             ws->win,
-                                            ATOM(ws->display, _OBJECTICON_PROP),
+                                            event.xselection.property,
                                             0,
                                             8192,   /* Means we won't get back > 32kb of stuff */
                                             True,
