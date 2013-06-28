@@ -8,6 +8,8 @@
 #include "../h/gsupport.h"
 #undef OF
 #undef CONST
+/* Fix for AIX warning */
+#undef TILDE
 #if MSWIN32
 #define WORD _WORD
 #endif
