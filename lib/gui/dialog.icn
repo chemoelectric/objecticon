@@ -607,11 +607,13 @@ class Dialog(Component)
       } else
          win.own_selection(selection)
       selections[selection] := obj
+      return self
    end
 
    public request_selection(selection, target_types, proc, user_data)
       selection_requests[selection] := SelectionRequest(target_types, proc, user_data)
       win.request_selection(selection, target_types[1])
+      return self
    end
 
    public process_event(l)
