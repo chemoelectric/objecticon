@@ -33,11 +33,16 @@ case $CCVER in
     clang*) CFLAGS="$CFLAGS -Wall -Wno-parentheses-equality -Wno-tautological-compare" ;;
 esac
 
+OI_ADD_LIB(dl)
+CHECK_DYNAMIC_LINKING()
+
 AX_CHECK_X11()
 if test "$found_x11" = yes; then
    AX_CHECK_JPEG()
    AX_CHECK_PNG()
-   AX_CHECK_CAIRO()
+   if test "$HAVE_DYNAMIC_LINKING" = yes; then
+      AX_CHECK_CAIRO()
+   fi
 fi
 
 CHECK_ZLIB()
@@ -45,10 +50,11 @@ OI_ADD_LIB(m)
 if ! test "$ac_cv_lib_m_main" = yes; then
         AC_MSG_ERROR([*** Couldn't find the math library (-lm) - can't compile without it.])
 fi
-OI_ADD_LIB(dl)
 
-AX_LIB_MYSQL()
-AX_CHECK_OPENSSL()
+if test "$HAVE_DYNAMIC_LINKING" = yes; then
+   AX_LIB_MYSQL()
+   AX_CHECK_OPENSSL()
+fi
 
 AC_FLAG_MSG_NOSIGNAL()
 
@@ -127,53 +133,45 @@ AC_CONFIG_HEADERS([base/h/auto.h:config/files/base/h/auto.h])
 AC_OUTPUT
 echo "Summary:-"
 echo    "Installation prefix    :" $prefix
-echo -n "X11 graphics           : "
 if test "$found_x11" = yes; then
-        echo yes
-        echo -n "jpeg library           : "
+        echo "X11 graphics           : yes"
         if test "$ac_cv_lib_jpeg_main" = yes; then
-                echo yes
+                echo "jpeg library           : yes"
         else
-                echo no
+                echo "jpeg library           : no"
         fi
-        echo -n "png library            : "
         if test -z "$found_png"; then
-                echo no
+                echo "png library            : no"
         else
-                echo yes
+                echo "png library            : yes"
         fi
 else
-        echo no
+        echo "X11 graphics           : no"
 fi
-echo -n "zlib compression       : "
 if test "$ac_cv_lib_z_main" = yes; then
-        echo yes
+        echo "zlib compression       : yes"
 else
-        echo no
+        echo "zlib compression       : no"
 fi
-echo -n "dynamic loading        : "
-if test "$ac_cv_lib_dl_main" = yes; then
-        echo yes
+if test "$HAVE_DYNAMIC_LINKING" = yes; then
+        echo "dynamic linking        : yes"
+        if test -z "$MYSQL_VERSION"; then 
+                echo "mysql lib              : no"
+        else
+                echo "mysql lib              : yes"
+        fi
+        if test -z "$CAIRO_VERSION"; then
+                echo "cairo lib              : no"
+        else
+                echo "cairo lib              : yes"
+        fi
+        if test -z "$OPENSSL_VERSION"; then
+                echo "ssl lib                : no"
+        else
+                echo "ssl lib                : yes"
+        fi
 else
-        echo no
-fi
-echo -n "mysql lib              : "
-if test -z "$MYSQL_VERSION"; then
-        echo no
-else
-        echo yes
-fi
-echo -n "cairo lib              : "
-if test -z "$CAIRO_VERSION"; then
-        echo no
-else
-        echo yes
-fi
-echo -n "ssl lib                : "
-if test -z "$OPENSSL_VERSION"; then
-        echo no
-else
-        echo yes
+        echo "dynamic linking        : no"
 fi
 echo
 echo "When reconfiguring, please remember to run 'make clean' before 'make'."

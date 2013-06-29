@@ -1,7 +1,7 @@
 include ../../Makedefs
 
 CFLAGS:=-fPIC $(CFLAGS)
-ifeq (@CYGWIN@, yes)
+ifeq (@HAVE_DYNAMIC_LINKING@, no)
   TARGET=
 else
   TARGET=objecticonipclib.so
@@ -19,7 +19,7 @@ endif
 all : $(TARGET)
 
 objecticonmysqllib.so : mysql.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o objecticonmysqllib.so mysql.o @MYSQL_LDFLAGS@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(DYNAMIC_LIB_LDFLAGS) -o objecticonmysqllib.so mysql.o @MYSQL_LDFLAGS@
 
 mysql.o : mysql.r
 	$(RTT) -h gmysql.h mysql.r
@@ -27,7 +27,7 @@ mysql.o : mysql.r
 	$(RM) mysql.c
 
 objecticonipclib.so : ipc.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -shared -o objecticonipclib.so ipc.o
+	$(CC) $(CFLAGS) $(LDFLAGS) $(DYNAMIC_LIB_LDFLAGS) -o objecticonipclib.so ipc.o
 
 ipc.o : ipc.r
 	$(RTT) -h gipc.h ipc.r
@@ -35,7 +35,7 @@ ipc.o : ipc.r
 	$(RM) ipc.c
 
 objecticoncairolib.so : cairo.o
-	$(CC) @CAIRO_LDFLAGS@ -shared -fPIC -o objecticoncairolib.so cairo.o @CAIRO_LIBS@
+	$(CC) @CAIRO_LDFLAGS@ $(DYNAMIC_LIB_LDFLAGS) -o objecticoncairolib.so cairo.o @CAIRO_LIBS@
 
 cairo.o : cairo.r
 	$(RTT) -h gcairo.h cairo.r
@@ -43,7 +43,7 @@ cairo.o : cairo.r
 	$(RM) cairo.c
 
 objecticonssllib.so : ssl.o
-	$(CC) @OPENSSL_LDFLAGS@ -shared -fPIC -o objecticonssllib.so ssl.o @OPENSSL_LIBS@
+	$(CC) @OPENSSL_LDFLAGS@ $(DYNAMIC_LIB_LDFLAGS) -o objecticonssllib.so ssl.o @OPENSSL_LIBS@
 
 ssl.o : ssl.r
 	$(RTT) -h gssl.h ssl.r

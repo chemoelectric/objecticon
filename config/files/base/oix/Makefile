@@ -36,7 +36,7 @@ oref.o: orefiasm.ri
 all:	oix
 
 oix:	$(OBJS)
-	$(CC) $(CFLAGS) -Wl,-E $(LDFLAGS) -o oix $(OBJS) $(LIBS)
+	$(CC) $(CFLAGS) $(DYNAMIC_EXPORT_LDFLAGS) $(LDFLAGS) -o oix $(OBJS) $(LIBS)
 	$(CP) oix $(OIBIN)
 
 %.o: %.r $(HDRS)

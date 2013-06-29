@@ -300,6 +300,65 @@ AC_DEFUN([CHECK_DOUBLE_HAS_WORD_ALIGNMENT],
                    ])
 ])
 
+
+AC_DEFUN([CHECK_DYNAMIC_LINKING],
+   [ AC_MSG_CHECKING(for dynamic linking)
+
+     dnl Set default compiler options if not set externally
+     if test -z "$DYNAMIC_LIB_LDFLAGS" ; then
+        DYNAMIC_LIB_LDFLAGS="-shared -fPIC"
+     fi
+     if test -z "$DYNAMIC_EXPORT_LDFLAGS" ; then
+        DYNAMIC_EXPORT_LDFLAGS="-Wl,-E"
+     fi
+
+     dnl Create a shared library, dloadtest.so, to use with this test.
+     dnl If this fails, the main test will surely fail.
+     rm -f ./dloadtest.so
+     AC_LANG_CONFTEST(
+        [AC_LANG_SOURCE([[extern int func1(int); 
+                          int func2(int x) { return 2*x*func1(3); }]])]
+      )
+     $ac_ct_CC $DYNAMIC_LIB_LDFLAGS -o dloadtest.so conftest.c
+
+     dnl Now try to link a program with the shared library, and have each half call the other.
+     my_save_cflags="$CFLAGS"
+     CFLAGS=$DYNAMIC_EXPORT_LDFLAGS
+     AC_RUN_IFELSE(
+        [AC_LANG_SOURCE([[#include <dlfcn.h>
+                          #include <stdlib.h>
+                          int func1(int x) { return 3*x; }
+                          int main() {
+                              void *handle;
+                              int (*func2)(int);
+                              handle = dlopen("./dloadtest.so", RTLD_LAZY);
+                              if (!handle) exit(1);
+                              *(void **)(&func2) = dlsym(handle, "func2");
+                              if (!func2) exit(1);
+                              if (func2(13) != 234) exit(1);
+                              exit(0);
+                          }
+                          ]])],
+                   [
+                   AC_MSG_RESULT(yes)
+                   HAVE_DYNAMIC_LINKING=yes
+                   ],
+                   [
+                   AC_MSG_RESULT(no)
+                   HAVE_DYNAMIC_LINKING=no
+                   DYNAMIC_LIB_LDFLAGS=""
+                   DYNAMIC_EXPORT_LDFLAGS=""
+                   ]
+
+     )
+     CFLAGS="$my_save_cflags"
+     rm -f ./dloadtest.so
+     AC_SUBST(DYNAMIC_LIB_LDFLAGS)
+     AC_SUBST(DYNAMIC_EXPORT_LDFLAGS)
+     AC_SUBST(HAVE_DYNAMIC_LINKING)
+])
+
+
 AC_DEFUN([CHECK_COMPUTED_GOTO],
    [ AC_MSG_CHECKING(for computed goto support)
      AC_COMPILE_IFELSE(
