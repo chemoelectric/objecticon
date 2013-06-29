@@ -30,11 +30,8 @@ then
         ZLIB_OLD_CPPFLAGS=$CPPFLAGS
         OI_ADD_LIB_DIR(${ZLIB_HOME}/lib)
         OI_ADD_INCLUDE_DIR(${ZLIB_HOME}/include)
-        AC_LANG_SAVE
-        AC_LANG_C
         AC_CHECK_LIB(z, inflateEnd, [zlib_cv_libz=yes], [zlib_cv_libz=no])
         AC_CHECK_HEADER(zlib.h, [zlib_cv_zlib_h=yes], [zlib_cv_zlib_h=no])
-        AC_LANG_RESTORE
         if test "$zlib_cv_libz" = "yes" -a "$zlib_cv_zlib_h" = "yes"
         then
                 #
@@ -89,12 +86,9 @@ then
         JPEG_OLD_CPPFLAGS=$CPPFLAGS
         OI_ADD_LIB_DIR(${JPEG_HOME}/lib)
         OI_ADD_INCLUDE_DIR(${JPEG_HOME}/include)
-        AC_LANG_SAVE
-        AC_LANG_C
         AC_CHECK_LIB(jpeg, jpeg_destroy_decompress, [jpeg_cv_libjpeg=yes], [jpeg_cv_libjpeg=no])
         AC_CHECK_HEADER(jpeglib.h, [jpeg_cv_jpeglib_h=yes], [jpeg_cv_jpeglib_h=no])
         AC_CHECK_HEADER(jerror.h, [jpeg_cv_jerror_h=yes], [jpeg_cv_jerror_h=no])
-        AC_LANG_RESTORE
         if test "$jpeg_cv_libjpeg" = "yes" -a "$jpeg_cv_jpeglib_h" = "yes" -a "$jpeg_cv_jerror_h" = "yes"
         then
                 #
@@ -305,25 +299,33 @@ AC_DEFUN([CHECK_DYNAMIC_LINKING],
    [ AC_MSG_CHECKING(for dynamic linking)
 
      dnl Set default compiler options if not set externally
+     if test -z "$DYNAMIC_LIB_CFLAGS" ; then
+        dnl Flags for compiling source file which is part of a library
+        DYNAMIC_LIB_CFLAGS="-fPIC"
+     fi
      if test -z "$DYNAMIC_LIB_LDFLAGS" ; then
-        DYNAMIC_LIB_LDFLAGS="-shared -fPIC"
+        dnl Flags for linking a library
+        DYNAMIC_LIB_LDFLAGS="-shared"
      fi
      if test -z "$DYNAMIC_EXPORT_LDFLAGS" ; then
+        dnl Flags for linking the main program so its symbols are accessible to a loaded library
         DYNAMIC_EXPORT_LDFLAGS="-Wl,-E"
      fi
 
      dnl Create a shared library, dloadtest.so, to use with this test.
      dnl If this fails, the main test will surely fail.
-     rm -f ./dloadtest.so
+     rm -f ./dloadtest.so ./conftest.o
      AC_LANG_CONFTEST(
         [AC_LANG_SOURCE([[extern int func1(int); 
                           int func2(int x) { return 2*x*func1(3); }]])]
       )
-     $ac_ct_CC $DYNAMIC_LIB_LDFLAGS -o dloadtest.so conftest.c
+     $ac_ct_CC -c $DYNAMIC_LIB_CFLAGS -o conftest.o conftest.c
+     $ac_ct_CC $DYNAMIC_LIB_LDFLAGS -o dloadtest.so conftest.o
+     rm -f ./conftest.o
 
      dnl Now try to link a program with the shared library, and have each half call the other.
-     my_save_cflags="$CFLAGS"
-     CFLAGS=$DYNAMIC_EXPORT_LDFLAGS
+     my_save_ldflags="$LDFLAGS"
+     LDFLAGS="$LDFLAGS $DYNAMIC_EXPORT_LDFLAGS"
      AC_RUN_IFELSE(
         [AC_LANG_SOURCE([[#include <dlfcn.h>
                           #include <stdlib.h>
@@ -346,13 +348,15 @@ AC_DEFUN([CHECK_DYNAMIC_LINKING],
                    [
                    AC_MSG_RESULT(no)
                    HAVE_DYNAMIC_LINKING=no
+                   DYNAMIC_LIB_CFLAGS=""
                    DYNAMIC_LIB_LDFLAGS=""
                    DYNAMIC_EXPORT_LDFLAGS=""
                    ]
 
      )
-     CFLAGS="$my_save_cflags"
+     LDFLAGS="$my_save_ldflags"
      rm -f ./dloadtest.so
+     AC_SUBST(DYNAMIC_LIB_CFLAGS)
      AC_SUBST(DYNAMIC_LIB_LDFLAGS)
      AC_SUBST(DYNAMIC_EXPORT_LDFLAGS)
      AC_SUBST(HAVE_DYNAMIC_LINKING)
