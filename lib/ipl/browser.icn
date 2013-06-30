@@ -517,14 +517,26 @@ class Worker()
       }
    end
 
+   # A little task to wait for the child process to exit, so that it
+   # doesn't become a zombie process.
+   private monitor(t, pid)
+      while System.wait(pid, WaitOpt.WNOHANG).pid ~= pid do
+         # ei.pid is presumably 0, meaning the child is still running.
+         t.sleep(500)
+      t.revert()
+   end
+
    private handle_run_req()
-      local pid, f
+      local pid, f, t
       if (\req.referer).scheme == (u"http" | u"https") then
          return error("Can't run a prog from an http page")
       f := req.url.get_decoded_path()
       pid := System.fork() | fail
-      if pid > 0 then
+      if pid > 0 then {
+         t := Dispatcher.new_task{monitor(t, pid)}
+         t.start()
          return
+      }
       System.exec("/bin/sh", ["-c", f]) | stop(&why)
       syserr("Not reached")
    end
