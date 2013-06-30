@@ -455,7 +455,7 @@ class Download()
       local fname, n
       resp := r
       if \r.err then {
-         log("Failed to download:" || r.err)
+         log("Failed to download: " || r.err)
          status := "Failed"
       } else {
          fname := resp.fname
