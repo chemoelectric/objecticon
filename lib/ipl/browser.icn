@@ -3396,6 +3396,7 @@ class Browser(ComponentScrollArea)
          }
       }
       # The ucs conversion is used here since an empty node will return "" (not u"").
+      strip_newlines(e)
       q := FormEditableTextList(ucs(e.get_trimmed_string_content())).
          set_size(w, h)
       if e.get_attribute(u"READONLY") then
@@ -3690,11 +3691,36 @@ class Browser(ComponentScrollArea)
       put_para(p, c)
    end
 
+   # Strip optional start and end newlines from the child content
+   private strip_newlines(e)
+      local s
+      text(e.children[1]) ? {
+         if =(u"\n" | u"\r\n") then {
+            s := tab(0)
+            if *s = 0 then
+               delete(e.children, 1)
+            else
+               e.children[1] := s
+         }
+      }
+      text(e.children[-1]) ? {
+         tab(0)
+         if (move(-2) == u"\r\n") | (move(-1) == u"\n") then {
+            s := tab(1)
+            if *s = 0 then
+               delete(e.children, -1)
+            else
+               e.children[-1] := s
+         }
+      }
+   end
+
    private traverse_pre(e, p, context)
       local c
       put_para(p, context)
       c := copy(context)
       c.face := "mono"
+      strip_newlines(e)
       synch_font(c)
       c.pre := 1
       traverse(e, p, c)
