@@ -452,3 +452,38 @@ abstract class HasOrientation()
       return self
    end
 end
+
+#
+# This is a Dialog whose only purpose is to retrieve a given selection.
+# @example
+# @ d := GetSelection(Selection.CLIPBOARD).show_modal()
+# @ ... the clipboard is now stored in d.result (which may be null).
+#
+class GetSelection(Dialog)
+   private readable
+      result
+   private
+      sel
+
+   private respond(target_type, data, e)
+      result := data
+      dispose()
+   end
+
+   public show()
+      cast(self, Dialog).show()
+      # Now we have an underlying window, we can request the selection.
+      request_selection(sel,
+                        [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                        respond)
+      return self
+   end
+
+   public new(sel)
+      cast(self, Dialog).new()
+      set_canvas("withdrawn")
+      set_size(100, 100)
+      self.sel := sel
+      return
+   end
+end
