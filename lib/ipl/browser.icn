@@ -187,28 +187,24 @@ class ProgSubWorker(SubWorker)
    public get_length() end
 
    public get_read()
-      return *data
+      return data.tell() - 1
    end
 
    public get_data(worker)
-      local ps, f
+      local ts, f
       if (\worker.req.referer).scheme == (u"http" | u"https") then
          return error("Can't run a prog from an http page")
       f := worker.req.url.get_decoded_path()
       return use {
-         ps := TaskStream(ProgInputStream("/bin/sh", ["-c", f]), worker.task),
-         StaticData(read_all(ps), "")     # Return StaticData in order to set a blank filename.
+         ts := TaskStream(ProgInputStream("/bin/sh", ["-c", f]), worker.task),
+         StaticData(read_all(ts), "")     # Return StaticData in order to set a blank filename.
       }
    end
 
-   private read_all(ps)
-      local t
-      data := ""
-      repeat {
-         t := ps.in(1048576) | fail
-         if /t then
-            return data
-         data ||:= t
+   private read_all(ts)
+      return use {
+         data := RamStream(),
+         ts.copy_to(data) & data.str()
       }
    end
 end
@@ -221,7 +217,7 @@ class FileSubWorker(SubWorker)
    public get_length() end
 
    public get_read()
-      return *data
+      return data.tell() - 1
    end
 
    private static grname(gid, cache)
@@ -241,7 +237,7 @@ class FileSubWorker(SubWorker)
    end
 
    public get_data(worker)
-      local f, e, l, t, path, rs, now, tf, gcache, ucache, fs
+      local f, e, l, t, path, rs, now, tf, gcache, ucache, ts
       f := worker.req.url.get_decoded_path()
       if Files.is_directory(f) then {
          l := isort(Files.list(f), ls_sort) | fail
@@ -270,20 +266,16 @@ class FileSubWorker(SubWorker)
          }
       } else {
          return use {
-            fs := TaskStream(FileStream(f), worker.task),
-            read_all(fs)
+            ts := TaskStream(FileStream(f), worker.task),
+            read_all(ts)
          }
       }
    end
 
-   private read_all(ps)
-      local t
-      data := ""
-      repeat {
-         t := ps.in(1048576) | fail
-         if /t then
-            return data
-         data ||:= t
+   private read_all(ts)
+      return use {
+         data := RamStream(),
+         ts.copy_to(data) & data.str()
       }
    end
 end
