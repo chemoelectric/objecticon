@@ -245,8 +245,6 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
    int pointargs(wbp w, dptr argv, word *px, word *py);
    int dpointargs(wbp w, dptr argv, double *px, double *py);
-   float  getdefaultfontsize(void);
-   char *getdefaultfont(void);
    int interpimage(dptr d,  struct imgdata *imd);
    int reducerect(wbp w, int clip, word *x, word *y, word *width, word *height);
    void captureimgdata(wbp w, int x, int y, struct imgdata *imd);

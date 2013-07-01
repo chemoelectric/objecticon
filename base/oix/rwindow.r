@@ -1451,30 +1451,6 @@ static int writepngfile(char *filename, struct imgdata *imd)
 
 #endif
 
-float getdefaultfontsize()
-{
-    static float t;
-    if (!t) {
-        t = 12.0;
-        env_float(OIFONTSIZE, &t, 1, 1e32);
-    }
-    return t;
-}
-
-char *getdefaultfont()
-{
-    static char *t;
-    if (!t) {
-        char *s = getenv(OIFONT);
-        if (s)
-            t = salloc(s);
-        else
-            t = "fixed";
-    }
-    return t;
-}
-
-
 /*
  * mapping from recognized style attributes to flag values
  */

@@ -107,6 +107,9 @@ extern wcp wcntxts;
 extern wsp wstates;
 extern clock_t starttime;		/* start time in milliseconds */
 
+extern float defaultfontsize;
+extern char *defaultfont;
+
 #if XWindows
       extern struct _wdisplay * wdsplys;
 #endif				/* XWindows */

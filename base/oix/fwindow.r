@@ -1839,14 +1839,14 @@ end
 function graphics_Window_get_default_font()
    body {
        tended struct descrip result;
-       cstr2string(getdefaultfont(), &result);
+       cstr2string(defaultfont, &result);
        return result;
    }
 end
 
 function graphics_Window_get_default_font_size()
    body {
-       return C_double getdefaultfontsize();
+       return C_double defaultfontsize;
    }
 end
 

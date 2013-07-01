@@ -3218,7 +3218,7 @@ static wdp alcdisplay(char *s)
     wd->black = new_sharedcolor(wd, "black", 0, 0, 0, 65535);
     wd->white = new_sharedcolor(wd, "white", 65535, 65535, 65535, 65535);
     wd->transparent = new_sharedcolor(wd, "transparent", 0, 0, 0, 0);
-    wd->defaultfont = loadfont(wd, getdefaultfont());
+    wd->defaultfont = loadfont(wd, defaultfont);
     if (wd->defaultfont == NULL) {
         unlink_sharedcolor(wd->white);
         unlink_sharedcolor(wd->black);
@@ -3287,7 +3287,7 @@ char *tofcpatternstr(char *s)
         FcPatternAddString(p, FC_FAMILY, (FcChar8 *)family);
 
     if (size < 0)
-        size = getdefaultfontsize();
+        size = defaultfontsize;
     FcPatternAddDouble(p, FC_SIZE, (double)size);
 
     if (flags & FONTFLAG_MEDIUM)
