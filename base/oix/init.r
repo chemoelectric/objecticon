@@ -318,7 +318,7 @@ void env_int(char *name, int *variable, int min, int max)
 }
 
 /*
- * env_int - get the value of an integer-valued environment variable.
+ * env_word - get the value of an word-valued environment variable.
  */
 void env_word(char *name, word *variable, word min, word max)
 {
@@ -327,6 +327,22 @@ void env_word(char *name, word *variable, word min, word max)
     if ((value = getenv(name)) == NULL || *value == '\0')
         return;
     if (sscanf(value, "%ld%c", &t, &ch) != 1)
+        ffatalerr("environment variable not numeric: %s=%s", name, value);
+    if (t < min || t > max)
+        ffatalerr("environment variable out of range: %s=%s", name, value);
+    *variable = t;
+}
+
+/*
+ * env_float - get the value of a float-valued environment variable.
+ */
+void env_float(char *name, float *variable, float min, float max)
+{
+    double t;
+    char *value, ch;
+    if ((value = getenv(name)) == NULL || *value == '\0')
+        return;
+    if (sscanf(value, "%lf%c", &t, &ch) != 1)
         ffatalerr("environment variable not numeric: %s=%s", name, value);
     if (t < min || t > max)
         ffatalerr("environment variable out of range: %s=%s", name, value);
