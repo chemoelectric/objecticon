@@ -1,6 +1,6 @@
 package gui
 
-import ipl.graphics, util
+import ipl.graphics, graphics, util
 
 class Style()
    #
@@ -136,7 +136,7 @@ class Style()
    public create_tooltip_label()
       return Label().
          set_bg("pale yellow").
-         set_font("sans,10").
+         set_font("sans," || (Window.get_default_font_size() - 2)).
          set_fg("black").
          set_border(CompoundBorder().
                       set_outer(PlainBorder().set_line_width(1)).
