@@ -173,6 +173,8 @@ int set_up = 0;				/* set-up switch */
 char *currend = NULL;			/* current end of memory region */
 word memcushion = RegionCushion;	/* memory region cushion factor */
 word memgrowth = RegionGrowth;		/* memory region growth factor */
+float defaultfontsize = 12.0;
+char *defaultfont = "fixed";
 
 word dodump = 1;			/* if zero never core dump;
                                          * if 1 core dump on C-level internal error (call to syserr)
@@ -1275,6 +1277,10 @@ int main(int argc, char **argv)
     stacklim = rootblock.size / 2;
     env_word(OISTKLIM, (word *)&stacklim, 1024, MaxWord);
     env_word(OISTKCUSHION, &stackcushion, 0, 10000);
+    env_float(OIFONTSIZE, &defaultfontsize, 1, 1e32);
+    t = getenv(OIFONT);
+    if (t)
+        defaultfont = salloc(t);
 
     Protect(rootpstate.Code = malloc(hdr.icodesize), fatalerr(315, NULL));
 

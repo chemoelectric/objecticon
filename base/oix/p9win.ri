@@ -2133,7 +2133,7 @@ static void init_window_system(void)
     black = new_sharedcolor("black", 0x000000ff);
     white = new_sharedcolor("white", 0xffffffff);
     max_rect = Rect(-1073741823, -1073741823, 1073741823, 1073741823);
-    default_font = load_font(getdefaultfont());
+    default_font = load_font(defaultfont);
     if (!default_font)
         ffatalerr("Couldn't load default font");
 
@@ -2439,7 +2439,7 @@ static struct FontInfo *match_font(char *s)
         return 0;
 
     if (size < 0)
-        size = getdefaultfontsize();
+        size = defaultfontsize;
 
     for (curr = font_info; curr; curr = curr->next) {
         if (acceptable_font(curr, family, flags, size)) {
