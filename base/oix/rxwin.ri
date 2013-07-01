@@ -3286,16 +3286,10 @@ char *tofcpatternstr(char *s)
     else
         FcPatternAddString(p, FC_FAMILY, (FcChar8 *)family);
 
-    if (size > 0)
-        FcPatternAddDouble(p, FC_SIZE, (double)size);
-    else {
-        /* Only use a default font size if explicitly set via
-         * OIFONTSIZE.  This lets fontconfig set the size to its
-         * default (12.0), unless overridden in the config file */
-        float t = getdefaultfontsize(-1);
-        if (t > 0)
-            FcPatternAddDouble(p, FC_SIZE, (double)t);
-    }
+    if (size < 0)
+        size = getdefaultfontsize();
+    FcPatternAddDouble(p, FC_SIZE, (double)size);
+
     if (flags & FONTFLAG_MEDIUM)
         FcPatternAddInteger(p, FC_WEIGHT, FC_WEIGHT_MEDIUM);
     else if ((flags & FONTFLAG_DEMI) && (flags & FONTFLAG_BOLD))

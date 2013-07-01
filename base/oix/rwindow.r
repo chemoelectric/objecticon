@@ -1451,12 +1451,12 @@ static int writepngfile(char *filename, struct imgdata *imd)
 
 #endif
 
-float getdefaultfontsize(float deflt)
+float getdefaultfontsize()
 {
     static float t;
     if (!t) {
-        env_float(OIFONTSIZE, &deflt, 1, 1e32);
-        t = deflt;
+        t = 12.0;
+        env_float(OIFONTSIZE, &t, 1, 1e32);
     }
     return t;
 }

@@ -799,6 +799,18 @@ final class Window(NoCopy)
    public static native palette_key(s1, s2)
 
    #
+   # Get the default font for a window, as optionally specified with
+   # the OIFONT environment variable.
+   #
+   public static native get_default_font()
+
+   #
+   # Get the default font size for a font, as optionally specified with
+   # the OIFONTSIZE environment variable.
+   #
+   public static native get_default_font_size()
+
+   #
    # Return the `Pixels` format this window uses internally.
    #
    public native get_format()

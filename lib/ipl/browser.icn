@@ -2415,6 +2415,7 @@ class Browser(ComponentScrollArea)
       default_font_clone
 
    private static init()
+      local t
       COLORS := table(,
                       "aliceblue", "#F0F8FF",
                       "antiquewhite", "#FAEBD7",
@@ -2573,7 +2574,8 @@ class Browser(ComponentScrollArea)
                      "times new roman", "serif",
                      "courier", "typewriter")
 
-      SIZES := [7,9,11,14,17,20,23]
+      t := Window.get_default_font_size()
+      SIZES := [t-5, t-3, t, t+3, t+6, t+9, t+12] 
       ImageCache.name_image("rpp.BROKEN_LINK", BROKEN_LINK)
    end
 

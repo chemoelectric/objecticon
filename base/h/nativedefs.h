@@ -14,6 +14,8 @@ NativeDef(graphics.Window,parse_color,graphics_Window_parse_color)
 NativeDef(graphics.Window,palette_chars,graphics_Window_palette_chars)
 NativeDef(graphics.Window,palette_color,graphics_Window_palette_color)
 NativeDef(graphics.Window,palette_key,graphics_Window_palette_key)
+NativeDef(graphics.Window,get_default_font,graphics_Window_get_default_font)
+NativeDef(graphics.Window,get_default_font_size,graphics_Window_get_default_font_size)
 #if Graphics
 NativeDef(graphics.Window,alert,graphics_Window_alert)
 NativeDef(graphics.Window,can_resize,graphics_Window_can_resize)

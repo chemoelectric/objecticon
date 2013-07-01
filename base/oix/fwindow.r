@@ -1836,6 +1836,20 @@ function graphics_Window_palette_key(s1, s2)
    }
 end
 
+function graphics_Window_get_default_font()
+   body {
+       tended struct descrip result;
+       cstr2string(getdefaultfont(), &result);
+       return result;
+   }
+end
+
+function graphics_Window_get_default_font_size()
+   body {
+       return C_double getdefaultfontsize();
+   }
+end
+
 function graphics_Pixels_new_blank_impl(width, height, format)
    if !cnv:C_integer(width) then
       runerr(101, width)
