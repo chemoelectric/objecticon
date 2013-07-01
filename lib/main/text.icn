@@ -90,6 +90,24 @@ final abstract class Text()
       return ucs(t)
    end
 
+   #
+   # Convert a ucs to ISO-8859-1 string; characters out of range are
+   # represented by the subst string (default "?").
+   #
+   public static ucs_to_iso_8859_1(s, subst)
+      local t
+      s := ucs(s) | runerr(128, s)
+      /subst := "?"
+      t := ""
+      s ? repeat {
+         t ||:= string(tab(many(&ascii)))
+         if pos(0) then
+            break
+         t ||:= char(ord(move(1)\1)) | subst
+      }
+      return t
+   end
+
    # Given a cset {c}, produce another cset containing those characters in 
    # positions {i}:{j}.
    #

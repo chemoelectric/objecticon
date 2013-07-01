@@ -32,7 +32,7 @@ class CanvasImageDialog(CanvasComponentDialog)
 
    public on_file_browse()
       local fd, s, l, p
-      fd := FileDialog()
+      fd := FileDialog().set_existing_file_mode(FileDialog.REQUIRE)
       l := []
       s := img_field.get_contents()
       if is_image_file(s) then {
@@ -40,12 +40,12 @@ class CanvasImageDialog(CanvasComponentDialog)
          put(l, p.parent().str())                             
          fd.set_file(p.get(-1))                               
       }
-      put(l, \Ivib.last_icon_dir)
+      put(l, Ivib.last_icon_dir)
       fd.set_directories(l)
       fd.set_filters(["*.gif;*.png;*.jpg","*"])
       fd.show_modal(self)
-      Ivib.last_icon_dir := fd.get_directory()
       if s := fd.get_result() then {
+         Ivib.last_icon_dir := fd.get_directory()
          self.img.set_image(s)
          img_field.set_contents(s)
       }

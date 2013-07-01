@@ -172,12 +172,243 @@ class Cache()
    end
 end
 
+abstract class SubWorker()
+   public abstract cancel()
+   public abstract get_read()
+   public abstract get_length()
+   public abstract get_data(worker)
+end
+
+class ProgSubWorker(SubWorker)
+   private 
+      data
+
+   public cancel() end
+   public get_length() end
+
+   public get_read()
+      return *data
+   end
+
+   public get_data(worker)
+      local ps, f
+      if (\worker.req.referer).scheme == (u"http" | u"https") then
+         return error("Can't run a prog from an http page")
+      f := worker.req.url.get_decoded_path()
+      return use {
+         ps := TaskStream(ProgInputStream("/bin/sh", ["-c", f]), worker.task),
+         StaticData(read_all(ps), "")     # Return StaticData in order to set a blank filename.
+      }
+   end
+
+   private read_all(ps)
+      local t
+      data := ""
+      repeat {
+         t := ps.in(1048576) | fail
+         if /t then
+            return data
+         data ||:= t
+      }
+   end
+end
+
+class FileSubWorker(SubWorker)
+   private 
+      data
+
+   public cancel() end
+   public get_length() end
+
+   public get_read()
+      return *data
+   end
+
+   private static grname(gid, cache)
+      local s
+      (s := member(cache, gid)) | insert(cache, gid, s := (System.getgr(gid).name | gid))
+      return s
+   end
+
+   private static uname(uid, cache)
+      local s
+      (s := member(cache, uid)) | insert(cache, uid, s := (System.getpw(uid).name | uid))
+      return s
+   end
+
+   private static ls_sort(x)
+      return map(x[1])
+   end
+
+   public get_data(worker)
+      local f, e, l, t, path, rs, now, tf, gcache, ucache, fs
+      f := worker.req.url.get_decoded_path()
+      if Files.is_directory(f) then {
+         l := isort(Files.list(f), ls_sort) | fail
+         now := Time.get_system_seconds()
+         ucache := table()
+         gcache := table()
+         return use {
+            rs := RamStream(),
+            {
+               rs.out("<html><title>Directory " || f || "</title>" || Browser.get_table_tag())
+               path := FilePath(f)
+               every e := !l do {
+                  t := e[2]
+                  tf := if now - t.mtime > 180 * 86400 then
+                     Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;&nbsp;'yyyy")
+                  else
+                     Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;'HH:mm")
+                  rs.out("<tr><td>" || t.mode_str || "&nbsp;</td><td>" || uname(t.uid, ucache) || "&nbsp;</td><td>" || grname(t.gid, gcache) ||
+                         "&nbsp;</td><td align=right>" || Format.numeric_to_string(t.size, 0, ',') || "&nbsp;</td><td>" || tf || "&nbsp;</td>" ||
+                         "<td nowrap><a href=\"file://" || URL.percent_encode(path.child(e[1]).canonical().str(), URL.UNRESERVED ++ '/') || "\">" || 
+                                 Browser.to_content(e[1]) || "</a></td></tr>\n")
+               }
+               rs.out("</table></html>")
+               rs.str()
+            }
+         }
+      } else {
+         return use {
+            fs := TaskStream(FileStream(f), worker.task),
+            read_all(fs)
+         }
+      }
+   end
+
+   private read_all(ps)
+      local t
+      data := ""
+      repeat {
+         t := ps.in(1048576) | fail
+         if /t then
+            return data
+         data ||:= t
+      }
+   end
+end
+
+class HttpSubWorker(SubWorker)
+   private 
+      httpc, tmp_file
+
+   public cancel()
+      httpc.abort()
+      rm_tmp()
+   end
+
+   private rm_tmp()
+      if \tmp_file then {
+         save_why{Files.remove(tmp_file)}
+         tmp_file := &null
+      }
+   end
+
+   public get_length()
+      return httpc.get_length()
+   end
+
+   public get_read()
+      return httpc.get_read()
+   end
+
+   private static get_expiry(hres)
+      local s, t, now, ma
+      now := Time.get_system_seconds()
+      if t := HttpClient.parse_generic_header(hres.get_first_header("Cache-Control")) then {
+         if member(t, "no-cache") then
+            fail
+         if ma := integer(member(t, "max-age")) then
+            return now + (0 < ma)
+      }
+      if s := hres.get_first_header("Expires") then {
+         t := Time.parse(s, "E, d MMM yyyy hh:mm:ss z") | fail
+         return now < t.get_unix_seconds()
+      }
+      return
+   end
+
+   public get_data(worker)
+      local req, s, data, hreq, hres, fname, ct, x, ce, sc
+      httpc := worker.httpc
+      req := worker.req
+      return if req.kind ~= Worker.REFRESH & /req.form_data & (ce := worker.pool.cache.get(req.url)) then
+         ce
+      else if req.kind = Worker.DOWNLOAD then {
+         tmp_file := Files.make_temp_filename("http_oibrowser.", ".bin") | stop("Couldn't create temp file: ", &why)
+         use {
+            s := BufferStream(FileStream(tmp_file, 
+                                         ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))).
+               set_buff_size(8192),
+            {
+               hreq := HttpRequest().
+                  set_output_stream(s). 
+                  set_url(req.url).
+                  set_header("Accept-charset", "UTF-8, ISO-8859-1")
+               if (\req.referer).scheme == (u"http" | u"https") then
+                  hreq.set_referer(req.referer.str())
+               if hres := httpc.retrieve(hreq) then {
+                  fname := hres.get_filename()
+                  ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
+                  Resp(, hres.url, req.referer,, fname, ct, req.kind, 
+                       if hreq.url === hres.url then req.form_data else &null, tmp_file)
+               } else {
+                  rm_tmp()
+                  Resp(&why, req.url, req.referer,,,, req.kind, req.form_data)
+               }
+            }
+         }
+      } else use {
+         s := RamStream(),
+         {
+            hreq := HttpRequest().
+               set_output_stream(s). 
+               set_url(req.url).
+               set_header("Accept-charset", "UTF-8, ISO-8859-1")
+            if (\req.referer).scheme == (u"http" | u"https") then
+               hreq.set_referer(req.referer.str())
+            if \req.form_data then {
+               if is(req.form_data, Message) then
+                  hreq.set_multipart_form_data(req.form_data)
+               else
+                  hreq.set_html_form_data(req.form_data)
+            }
+
+            if hres := httpc.retrieve(hreq) then {
+               data := s.str()
+               fname := hres.get_filename()
+               ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
+               # Note we have to take into account redirections in deciding whether to cache
+               # and whether form data should be in the response.
+               if httpc.request.method == "GET" & x := get_expiry(hres) then
+                  worker.pool.cache.add(hres.url, x, data, fname, ct)
+               Resp(, hres.url, req.referer, data, fname, ct, req.kind, 
+                    if hreq.url === hres.url then req.form_data else &null)
+            } else {
+               # Decide whether to include http content together with
+               # the error message, so it can be displayed
+               if httpc.get_http_error() & 
+                  hres := httpc.response &
+                  sc := hres.get_status_code() &
+                  400 <= sc <= 599 &
+                  data := s.str() &
+                  *data > 0 then
+               {
+                  fname := hres.get_filename()
+                  ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
+                  Resp(&why, hres.url, req.referer, data, fname, ct, req.kind, 
+                       if hreq.url === hres.url then req.form_data else &null)
+               } else
+                  Resp(&why, req.url, req.referer,,,, req.kind, req.form_data)
+            }
+         }
+      }
+   end
+end
+
 class Worker()
    private readable
-      pool, httpc, cancelled, req, task
-
-   private
-      tmp_file
+      pool, httpc, cancelled, req, task, sub_worker
 
    public static const NORMAL, NAVIGATE, REFRESH, DOWNLOAD
 
@@ -206,20 +437,16 @@ class Worker()
       if \req then {
          cancelled := 1
          task.interrupt()
-         httpc.abort()
-         if \tmp_file then {
-            Files.remove(tmp_file)
-            tmp_file := &null
-         }
+         (\sub_worker).cancel()
       }
    end
 
    public read()
-      return httpc.get_read()
+      return (\sub_worker).get_read()
    end
 
    public length()
-      return httpc.get_length()
+      return (\sub_worker).get_length()
    end
 
    private dwrite(a[])
@@ -253,70 +480,6 @@ class Worker()
 
    private other(ev, src, type)
       dwrite(type)
-   end
-
-   private static ls_sort(x)
-      return map(x[1])
-   end
-
-   private static grname(gid, cache)
-      local s
-      (s := member(cache, gid)) | insert(cache, gid, s := (System.getgr(gid).name | gid))
-      return s
-   end
-
-   private static uname(uid, cache)
-      local s
-      (s := member(cache, uid)) | insert(cache, uid, s := (System.getpw(uid).name | uid))
-      return s
-   end
-
-   private cvt_file(f)
-      local e, l, t, path, rs, now, tf, gcache, ucache
-      ucache := table()
-      gcache := table()
-      if Files.is_directory(f) then {
-         l := isort(Files.list(f), ls_sort) | fail
-         now := Time.get_system_seconds()
-         return use {
-            rs := RamStream(),
-            {
-               rs.out("<html><title>Directory " || f || "</title>" || Browser.get_table_tag())
-               path := FilePath(f)
-               every e := !l do {
-                  t := e[2]
-                  tf := if now - t.mtime > 180 * 86400 then
-                     Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;&nbsp;'yyyy")
-                  else
-                     Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;'HH:mm")
-                  rs.out("<tr><td>" || t.mode_str || "&nbsp;</td><td>" || uname(t.uid, ucache) || "&nbsp;</td><td>" || grname(t.gid, gcache) ||
-                         "&nbsp;</td><td align=right>" || Format.numeric_to_string(t.size, 0, ',') || "&nbsp;</td><td>" || tf || "&nbsp;</td>" ||
-                         "<td nowrap><a href=\"file://" || URL.percent_encode(path.child(e[1]).canonical().str(), URL.UNRESERVED ++ '/') || "\">" || 
-                                 Browser.to_content(e[1]) || "</a></td></tr>\n")
-               }
-               rs.out("</table></html>")
-               rs.str()
-            }
-         }
-      } else
-         return Files.file_to_string(f)
-   end
-
-   private cvt_prog(f)
-      local ps
-      return use {
-         ps := TaskStream(ProgInputStream("/bin/sh", ["-c", f]), task),
-         ps.read_all()
-      }
-   end
-
-   private do_run(f)
-      local pid
-      pid := System.fork() | fail
-      if pid > 0 then
-         return
-      System.exec("/bin/sh", ["-c", f]) | stop(&why)
-      syserr("Not reached")
    end
 
    private status(ev, src, type)
@@ -354,148 +517,47 @@ class Worker()
       }
    end
 
-   private handle_prog_req()
-      local data
-      if (\req.referer).scheme == (u"http" | u"https") then
-         req.callback(Resp("Can't run a prog from an http page", req.url, req.referer,,,, req.kind))
-      else if data := cvt_prog(req.url.get_decoded_path()) then {
-         if /cancelled then
-            req.callback(Resp(, req.url, req.referer, data, "",, req.kind))
-      } else {
-         if /cancelled then
-            req.callback(Resp(&why, req.url, req.referer,,,, req.kind))
-      }
+   # A little task to wait for the child process to exit, so that it
+   # doesn't become a zombie process.
+   private monitor(t, pid)
+      while System.wait(pid, WaitOpt.WNOHANG).pid ~= pid do
+         # ei.pid is presumably 0, meaning the child is still running.
+         t.sleep(500)
+      t.revert()
    end
 
    private handle_run_req()
+      local pid, f, t
       if (\req.referer).scheme == (u"http" | u"https") then
-         req.callback(Resp("Can't run a prog from an http page", req.url, req.referer,,,, req.kind))
-      if not do_run(req.url.get_decoded_path()) then {
-         if /cancelled then
-            req.callback(Resp(&why, req.url, req.referer,,,, req.kind))
+         return error("Can't run a prog from an http page")
+      f := req.url.get_decoded_path()
+      pid := System.fork() | fail
+      if pid > 0 then {
+         t := Dispatcher.new_task{monitor(t, pid)}
+         t.start()
+         return
       }
-   end
-
-   private handle_file_req()
-      local data
-      if data := cvt_file(req.url.get_decoded_path()) then
-         req.callback(Resp(, req.url, req.referer, data, req.url.get_decoded_path_last(),, req.kind))
-      else
-         req.callback(Resp(&why, req.url, req.referer,,,, req.kind))
+      System.exec("/bin/sh", ["-c", f]) | stop(&why)
+      syserr("Not reached")
    end
 
    private handle_cache_req()
-      local ce
-      if ce := pool.cache.get(req.url) then
-         req.callback(Resp(, req.url, req.referer, ce.data, ce.fname, ce.content_type, req.kind))
-      else
-         req.callback(Resp("Cache entry expired", req.url, req.referer,,,, req.kind))
-   end
-
-   private get_expiry(hres)
-      local s, t, now, ma
-      now := Time.get_system_seconds()
-      if t := HttpClient.parse_generic_header(hres.get_first_header("Cache-Control")) then {
-         if member(t, "no-cache") then
-            fail
-         if ma := integer(member(t, "max-age")) then
-            return now + (0 < ma)
-      }
-      if s := hres.get_first_header("Expires") then {
-         t := Time.parse(s, "E, d MMM yyyy hh:mm:ss z") | fail
-         return now < t.get_unix_seconds()
-      }
-      return
-   end
-
-   private handle_http_req()
-      local s, data, hreq, hres, fname, ct, x, ce, sc
-      if req.kind ~= REFRESH & /req.form_data & (ce := pool.cache.get(req.url)) then
-         req.callback(Resp(, req.url, req.referer, ce.data, ce.fname, ce.content_type, req.kind))
-      else if req.kind = DOWNLOAD then {
-         tmp_file := Files.make_temp_filename("http_oibrowser.", ".bin") | stop("Couldn't create temp file: ", &why)
-         s := BufferStream(FileStream(tmp_file, 
-                                      ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))).
-            set_buff_size(8192) | stop("Couldn't open ", tmp_file, ": ", &why)
-         hreq := HttpRequest().
-            set_output_stream(s). 
-            set_url(req.url).
-            set_header("Accept-charset", "UTF-8, ISO-8859-1")
-         if (\req.referer).scheme == (u"http" | u"https") then
-            hreq.set_referer(req.referer.str())
-         if hres := httpc.retrieve(hreq) then {
-            s.close()
-            fname := hres.get_filename()
-            ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
-            # Note that cancelling removes tmp_file
-            if /cancelled then
-               req.callback(Resp(, hres.url, req.referer,, fname, ct, req.kind, 
-                               if hreq.url === hres.url then req.form_data else &null, tmp_file))
-         } else {
-            s.close()
-            if /cancelled then {
-               save_why{Files.remove(tmp_file)}
-               req.callback(Resp(&why, req.url, req.referer,,,, req.kind, req.form_data))
-            }
-         }
-      } else use {
-         s := RamStream(),
-         {
-            hreq := HttpRequest().
-               set_output_stream(s). 
-               set_url(req.url).
-               set_header("Accept-charset", "UTF-8, ISO-8859-1")
-            if (\req.referer).scheme == (u"http" | u"https") then
-               hreq.set_referer(req.referer.str())
-            if \req.form_data then {
-               if is(req.form_data, Message) then
-                  hreq.set_multipart_form_data(req.form_data)
-               else
-                  hreq.set_html_form_data(req.form_data)
-            }
-
-            if hres := httpc.retrieve(hreq) then {
-               data := s.str()
-               fname := hres.get_filename()
-               ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
-               # Note we have to take into account redirections in deciding whether to cache
-               # and whether form data should be in the response.
-               if httpc.request.method == "GET" & x := get_expiry(hres) then
-                  pool.cache.add(hres.url, x, data, fname, ct)
-               if /cancelled then
-                  req.callback(Resp(, hres.url, req.referer, data, fname, ct, req.kind, 
-                                    if hreq.url === hres.url then req.form_data else &null))
-            } else if /cancelled then {
-               # Decide whether to include http content together with
-               # the error message, so it can be displayed
-               if httpc.get_http_error() & 
-                  hres := httpc.response &
-                  sc := hres.get_status_code() &
-                  400 <= sc <= 599 &
-                  data := s.str() &
-                  *data > 0 then
-               {
-                  fname := hres.get_filename()
-                  ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
-                  req.callback(Resp(&why, hres.url, req.referer, data, fname, ct, req.kind, 
-                                    if hreq.url === hres.url then req.form_data else &null))
-               } else
-                  req.callback(Resp(&why, req.url, req.referer,,,, req.kind, req.form_data))
-            }
-         }
-      }
+      return pool.cache.get(req.url) | error("Cache entry expired")
    end
 
    private handle_func(f)
       local x, s
       if x := f(self) then {
          if /cancelled then {
-            if is(x, Resp) then
+            if is(x, SubWorker) then {
+               sub_worker := x
+               handle_func(x.get_data)
+            } else if is(x, Resp) then
                req.callback(x)
             else if is(x, StaticData) then
                req.callback(Resp(, req.url, req.referer, x.data, x.fname, x.content_type, req.kind))
             else if s := string(x) then
-               req.callback(Resp(, req.url, req.referer, s, req.url.get_path_last(),, req.kind))
+               req.callback(Resp(, req.url, req.referer, s, req.url.get_decoded_path_last(),, req.kind))
             else if \x then
                runerr(103, x)
          }
@@ -509,11 +571,11 @@ class Worker()
       local f, t
       t := string(req.url.scheme)
       case t of {
-         "file": handle_file_req()
-         "prog": handle_prog_req()
-         "run": handle_run_req()
-         "http"|"https": handle_http_req()
-         "cache": handle_cache_req()
+         "file": handle_func(FileSubWorker)
+         "prog": handle_func(ProgSubWorker)
+         "run": handle_func(handle_run_req)
+         "cache": handle_func(handle_cache_req)
+         "http"|"https": handle_func(HttpSubWorker)
          default: {
             if f := member(pool.scheme_handlers, t) then
                handle_func(f)
@@ -533,10 +595,9 @@ class Worker()
          }
          until req := pool.queue_get() do
             task.sleep()
-         #write("req for ",image(req.browser), "   size=",pool.queue_size())
          cancelled := &null
-         handle_req(req)
-         req := &null
+         handle_req()
+         sub_worker := req := &null
       }
    end
 
@@ -631,12 +692,28 @@ class WorkerPool()
       return i
    end
 
+   # Return the amount read by this client's current requests.
+   #
    public read(client)
       local i, w
       i := 0
-      every w := !workers do 
+      every w := !workers do
          if (\w.req).client === client then
             i +:= w.read()
+      return i
+   end
+
+   # Return a length giving the remaining data to be downloaded for
+   # this client; fails if that is unknown.
+   #
+   public length(client)
+      local i, w
+      if member(queue, client) then
+         fail
+      i := 0
+      every w := !workers do
+         if (\w.req).client === client then
+            i +:= w.length() | fail
       return i
    end
 
@@ -2338,6 +2415,7 @@ class Browser(ComponentScrollArea)
       default_font_clone
 
    private static init()
+      local t
       COLORS := table(,
                       "aliceblue", "#F0F8FF",
                       "antiquewhite", "#FAEBD7",
@@ -2496,7 +2574,8 @@ class Browser(ComponentScrollArea)
                      "times new roman", "serif",
                      "courier", "typewriter")
 
-      SIZES := [7,9,11,14,17,20,23]
+      t := Window.get_default_font_size()
+      SIZES := [t-5, t-3, t, t+3, t+6, t+9, t+12] 
       ImageCache.name_image("rpp.BROKEN_LINK", BROKEN_LINK)
    end
 
@@ -2535,7 +2614,7 @@ class Browser(ComponentScrollArea)
    end
 
    private status()
-      local i, r, s
+      local i, r, s, l
       repeat {
          status_ticker.sleep(200)
          i := worker_pool.count(self)
@@ -2553,8 +2632,12 @@ class Browser(ComponentScrollArea)
             } else {
                r := worker_pool.read(self)
                s := i || " running requests"
-               if r > 0 then
-                  s ||:= ", read " || r || " bytes"
+               if r > 0 then {
+                  if l := (0 < worker_pool.length(self)) then
+                     s ||:= ", read " || r || " of " || l || " bytes (" || ((r * 100) / l) || "%)"
+                  else
+                     s ||:= ", read " || r || " bytes"
+               }
                msg(s)
             }
             if i ~=== running then {
@@ -2886,7 +2969,7 @@ class Browser(ComponentScrollArea)
       set_area_y(0).set_area_x(0)
       if \res.err & /res.data then {
          s := "<html><title>Error</title>" || 
-            "<h1>Error:</h1>Getting " || to_content(res.url.str()) || "<br><br>" || res.err || "</html>"
+            "<h1>Error:</h1>Getting " || mk_anchor(res.url) || "<br><br>" || res.err || "</html>"
          page_data := &null
       } else {
          if is_html(res.content_type, res.data) then
@@ -2900,7 +2983,7 @@ class Browser(ComponentScrollArea)
                "<img src=\"" || to_attr(cu.str()) || "\"/></html>"
          } else
             s := "<html><title>Problem</title>" || 
-               "<h1>Problem:</h1>Displaying " || to_content(res.url.str()) || "<br><br>This does not seem to be an HTML or text document or an image</html>"
+               "<h1>Problem:</h1>Displaying " || mk_anchor(res.url) || "<br><br>This does not seem to be an HTML or text document or an image</html>"
          page_data := res.data
       }
       page_name := res.fname
@@ -3327,6 +3410,7 @@ class Browser(ComponentScrollArea)
          }
       }
       # The ucs conversion is used here since an empty node will return "" (not u"").
+      strip_newlines(e)
       q := FormEditableTextList(ucs(e.get_trimmed_string_content())).
          set_size(w, h)
       if e.get_attribute(u"READONLY") then
@@ -3621,11 +3705,36 @@ class Browser(ComponentScrollArea)
       put_para(p, c)
    end
 
+   # Strip optional start and end newlines from the child content
+   private strip_newlines(e)
+      local s
+      text(e.children[1]) ? {
+         if =(u"\n" | u"\r\n") then {
+            s := tab(0)
+            if *s = 0 then
+               delete(e.children, 1)
+            else
+               e.children[1] := s
+         }
+      }
+      text(e.children[-1]) ? {
+         tab(0)
+         if (move(-2) == u"\r\n") | (move(-1) == u"\n") then {
+            s := tab(1)
+            if *s = 0 then
+               delete(e.children, -1)
+            else
+               e.children[-1] := s
+         }
+      }
+   end
+
    private traverse_pre(e, p, context)
       local c
       put_para(p, context)
       c := copy(context)
       c.face := "mono"
+      strip_newlines(e)
       synch_font(c)
       c.pre := 1
       traverse(e, p, c)

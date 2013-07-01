@@ -65,7 +65,7 @@ struct FontInfo {
    char *path;
    char *family;
    int flags;
-   int size;
+   float size;
    struct FontInfo *next;
 };
 static struct FontInfo *font_info;
@@ -2394,7 +2394,7 @@ void registerplatformimgdataformats()
     registerimgdataformat(&imgdataformat_P9AG16);
 }
 
-static int acceptable_font(struct FontInfo *fi, char *family, int flags, int size)
+static int acceptable_font(struct FontInfo *fi, char *family, int flags, float size)
 {
     if (strcmp(fi->family, family) != 0)
         return 0;
@@ -2411,15 +2411,15 @@ do { \
         return f2; \
 } while(0)
 
-static struct FontInfo *best_font(struct FontInfo *f1, struct FontInfo *f2, int flags, int size)
+static struct FontInfo *best_font(struct FontInfo *f1, struct FontInfo *f2, int flags, float size)
 {
-    int n;
+    float n;
 
     PREFER(FONTFLAG_ROMAN);
     PREFER(FONTFLAG_MEDIUM);
     PREFER(FONTFLAG_NORMAL);
 
-    n = abs(f1->size - size) - abs(f2->size - size);
+    n = fabs(f1->size - size) - fabs(f2->size - size);
     if (n > 0)
         return f2;
     if (n < 0)
@@ -2430,7 +2430,8 @@ static struct FontInfo *best_font(struct FontInfo *f1, struct FontInfo *f2, int 
 
 static struct FontInfo *match_font(char *s)
 {
-    int flags, size;
+    int flags;
+    float size;
     char family[MAXFONTWORD];
     struct FontInfo *best = 0, *curr;
 
@@ -2438,7 +2439,7 @@ static struct FontInfo *match_font(char *s)
         return 0;
 
     if (size < 0)
-        size = getdefaultfontsize(10);
+        size = getdefaultfontsize();
 
     for (curr = font_info; curr; curr = curr->next) {
         if (acceptable_font(curr, family, flags, size)) {
@@ -2480,7 +2481,8 @@ static void load_font_info(void)
                 /* Ignore blank lines and commented lines */
                 if (buff[0] == 0 || buff[0] != '#') {
                     char family[MAXFONTWORD];
-                    int flags, size;
+                    int flags;
+                    float size;
                     struct FontInfo *fi;
                     if (!parsefont(info, family, &flags, &size) || size <= 0)
                         ffatalerr("Couldn't parse line %d in font info file %s", line, fn);

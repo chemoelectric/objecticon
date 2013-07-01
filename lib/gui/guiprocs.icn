@@ -304,9 +304,7 @@ end
 #
 procedure text_convert(s, target)
    local t, i
-
    s := text(s) | fail
-
    if type(s) == target then
       return s
 
@@ -322,6 +320,21 @@ procedure text_convert(s, target)
             t ||:= char(i | 63)
          return t
       }
+      default: runerr("Bad target type", target)
+   }
+end
+
+#
+# This utility takes a string or ucs and returns a string or ucs
+# according to the target parameter.  The format of strings are
+# guessed using the ucs() function; if that fails they are assumed to
+# be in iso-8859 format.
+#
+procedure text_guess_convert(s, target)
+   s := text(s) | fail
+   return case target of {
+      "ucs": ucs(s) | Text.iso_8859_1_to_ucs(s)
+      "string": Text.ucs_to_iso_8859_1(ucs(s)) | s
       default: runerr("Bad target type", target)
    }
 end
@@ -437,5 +450,40 @@ abstract class HasOrientation()
    public set_is_horizontal(s)
       self.is_horizontal_flag := check_flag(s)
       return self
+   end
+end
+
+#
+# This is a Dialog whose only purpose is to retrieve a given selection.
+# @example
+# @ d := GetSelection(Selection.CLIPBOARD).show_modal()
+# @ ... the clipboard is now stored in d.result (which may be null).
+#
+class GetSelection(Dialog)
+   private readable
+      result
+   private
+      sel
+
+   private respond(target_type, data, e)
+      result := data
+      dispose()
+   end
+
+   public show()
+      cast(self, Dialog).show()
+      # Now we have an underlying window, we can request the selection.
+      request_selection(sel,
+                        [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                        respond)
+      return self
+   end
+
+   public new(sel)
+      cast(self, Dialog).new()
+      set_canvas("withdrawn")
+      set_size(100, 100)
+      self.sel := sel
+      return
    end
 end

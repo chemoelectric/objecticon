@@ -1451,12 +1451,12 @@ static int writepngfile(char *filename, struct imgdata *imd)
 
 #endif
 
-int getdefaultfontsize(int deflt)
+float getdefaultfontsize()
 {
-    static int t;
+    static float t;
     if (!t) {
-        env_int(OIFONTSIZE, &deflt, 1, INT_MAX);
-        t = deflt;
+        t = 12.0;
+        env_float(OIFONTSIZE, &t, 1, 1e32);
     }
     return t;
 }
@@ -1508,9 +1508,10 @@ stringint fontwords[] = {
  * returns 1 on an OK font name
  * returns 0 on a "malformed" font (might be a window-system fontname)
  */
-int parsefont(char *s, char family[MAXFONTWORD], int *style, int *size)
+int parsefont(char *s, char family[MAXFONTWORD], int *style, float *size)
 {
     char c, *a, attr[MAXFONTWORD];
+    float tmpf;
     int tmp;
 
     /*
@@ -1554,10 +1555,10 @@ int parsefont(char *s, char family[MAXFONTWORD], int *style, int *size)
          */
         if (*family == '\0')
             strcpy(family, attr);		/* first word is the family name */
-        else if (sscanf(attr, "%d%c", &tmp, &c) == 1 && tmp > 0) {
-            if (*size != -1 && *size != tmp)
+        else if (sscanf(attr, "%f%c", &tmpf, &c) == 1 && tmpf > 0) {
+            if (*size != -1 && *size != tmpf)
                 return 0;			/* if conflicting sizes given */
-            *size = tmp;			/* integer value is a size */
+            *size = tmpf;			/* float value is a size */
         }
         else {				/* otherwise it's a style attribute */
             tmp = stringint_str2int(fontwords, attr);	/* look up in table */

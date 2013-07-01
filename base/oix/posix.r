@@ -236,7 +236,11 @@ function posix_System_wait_impl(pid, options)
       MakeInt(wpid, &tmp);
       list_put(&result, &tmp);
       /* Unpack all the fields */
-      if (WIFSTOPPED(status)) {
+      if (wpid == 0) {
+          /* Means we were called with WNOHANG, and the exit status is not yet available. */
+          LitStr("unavailable", &tmp);
+          list_put(&result, &tmp);
+      } else if (WIFSTOPPED(status)) {
           LitStr("stopped", &tmp);
           list_put(&result, &tmp);
           MakeInt(WSTOPSIG(status), &tmp);

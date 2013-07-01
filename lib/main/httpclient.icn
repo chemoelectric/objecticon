@@ -723,6 +723,14 @@ class HttpClient(NetClient)
    end
 
    #
+   # Reset the read and length counters to null.
+   #
+   public reset_progress_counters()
+      self.read := self.length := &null
+      return self
+   end
+
+   #
    # Retrieve the current request; doesn't handle redirects and so
    # on - these are handled by the caller, retrieve().
    # 
@@ -731,7 +739,7 @@ class HttpClient(NetClient)
 
       i := retries
 
-      self.read := self.length := &null
+      reset_progress_counters()
 
       repeat {
          prev_read := self.read

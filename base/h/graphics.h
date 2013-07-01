@@ -106,29 +106,36 @@ extern struct sdescrip wclassname;
 #define NUMCURSORSYMS	78
 
 /* Interned atoms array */
-#define NUMATOMS        22
-#define ATOM_CHARACTER_POSITION    0
-#define ATOM_CLIENT_WINDOW         1
-#define ATOM_HOSTNAME              2
-#define ATOM_HOST_NAME             3
-#define ATOM_LENGTH                4
-#define ATOM_LIST_LENGTH           5
-#define ATOM_NAME                  6
-#define ATOM_OWNER_OS              7
-#define ATOM_SPAN                  8
-#define ATOM_TARGETS               9
-#define ATOM_TIMESTAMP            10
-#define ATOM_USER                 11
-#define ATOM_WM_DELETE_WINDOW     12
-#define ATOM__OBJECTICON_PROP     13
-#define ATOM__NET_WM_STATE_MAXIMIZED_VERT 14
-#define ATOM__NET_WM_STATE_MAXIMIZED_HORZ 15
-#define ATOM__NET_WM_STATE_FULLSCREEN     16
-#define ATOM__NET_WM_STATE                17
-#define ATOM__NET_WM_ICON                 18
-#define ATOM__NET_WM_NAME                 19
-#define ATOM_UTF8_STRING                  20
-#define ATOM_WM_STATE                     21
+#define NUMATOMS        29
+#define ATOM_CHARACTER_POSITION            0
+#define ATOM_CLIENT_WINDOW                 1
+#define ATOM_HOSTNAME                      2
+#define ATOM_HOST_NAME                     3
+#define ATOM_LENGTH                        4
+#define ATOM_LIST_LENGTH                   5
+#define ATOM_NAME                          6
+#define ATOM_OWNER_OS                      7
+#define ATOM_SPAN                          8
+#define ATOM_TARGETS                       9
+#define ATOM_TIMESTAMP                    10
+#define ATOM_USER                         11
+#define ATOM_WM_DELETE_WINDOW             12
+#define ATOM__NET_WM_STATE_MAXIMIZED_VERT 13
+#define ATOM__NET_WM_STATE_MAXIMIZED_HORZ 14
+#define ATOM__NET_WM_STATE_FULLSCREEN     15
+#define ATOM__NET_WM_STATE                16
+#define ATOM__NET_WM_ICON                 17
+#define ATOM__NET_WM_NAME                 18
+#define ATOM_UTF8_STRING                  19
+#define ATOM_WM_STATE                     20
+#define ATOM__OBJECTICON_PROP0            21
+#define ATOM__OBJECTICON_PROP1            22
+#define ATOM__OBJECTICON_PROP2            23
+#define ATOM__OBJECTICON_PROP3            24
+#define ATOM__OBJECTICON_PROP4            25
+#define ATOM__OBJECTICON_PROP5            26
+#define ATOM__OBJECTICON_PROP6            27
+#define ATOM__OBJECTICON_PROP7            28
 
 #define _NET_WM_STATE_ADD            1
 #define _NET_WM_STATE_REMOVE         0
@@ -369,6 +376,7 @@ typedef struct _wstate {
   XftDraw       *pxft;
   int		state;			/* window state; icon, window or root*/
   Window        transientfor;           /* transient-for hint */
+  int           propcount;              /* counter for selection requests*/
 #elif PLAN9
   char		*windowlabel;		/* window label */
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */

@@ -46,7 +46,7 @@ class TextField(Component)
       displaychar,             # char to print on screen
       placeholder,
       undo_manager,
-      remembered_region,
+      primary,
       clipboard,
       old_cursor,
       old_mark,
@@ -182,9 +182,10 @@ class TextField(Component)
 
    public end_handle(e)
       local r
-      if r := get_region() then {
+      if r := get_region() &
+         not is_held(Mouse.LEFT_PRESS) then {
          parent_dialog.own_selection(Selection.PRIMARY, self.primary_selection_owner)
-         self.remembered_region := r
+         self.primary := r
       }
       if \changed then {
          self.constrain_line()
@@ -780,7 +781,7 @@ class TextFieldPrimarySelectionOwner(TextSelectionOwner)
    private parent
 
    protected get_text()
-      return parent.get_region() | \parent.remembered_region
+      return \parent.primary
    end
 
    public lost_ownership()
