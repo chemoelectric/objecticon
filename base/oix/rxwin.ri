@@ -3251,7 +3251,7 @@ char *tofcpatternstr(char *s)
         return s + 3;
 
     if (!parsefont(s, family, &flags, &size))
-        return s;
+        return 0;
 
     p = FcPatternCreate();
 
@@ -3329,6 +3329,8 @@ wfp loadfont(wdp wd, char *s)
      * Convert to a system font name (without the fc: prefix)
      */
     s = tofcpatternstr(s);
+    if (!s)
+        return 0;
 
     /*
      * see if the font is already loaded on this display
@@ -3342,8 +3344,8 @@ wfp loadfont(wdp wd, char *s)
      * load a new font
      */
     rv = newfont(wd, s);
-    if (rv == NULL)
-        return NULL;
+    if (!rv)
+        return 0;
 
     /*
      * link the font into this display's fontlist
@@ -3355,32 +3357,31 @@ wfp loadfont(wdp wd, char *s)
 static wfp newfont(wdp wd, char *s)
 {
     wfp rv;
+    XGlyphInfo	extents; 
     GAlloc(rv, _wfont);
     rv->fsp = XftFontOpenName(wd->display, DefaultScreen(wd->display), s);
-    if (rv->fsp == NULL){
+    if (!rv->fsp){
         free(rv);
-        return NULL;
+        return 0;
     }
 
     MemProtect(rv->name = malloc(strlen(s) + 3 + 1));
     sprintf(rv->name, "fc:%s", s);
-    {
-        XGlyphInfo	extents; 
-        /*
-         * Xft seems to sometimes give too-small values in its font
-         * ascent/descent fields; therefore calculate the GlyphInfo
-         * for the first 256 chars and take the maximum ascent/descent
-         * of the sample and the font's reported values.
-         */
-        XftTextExtents8 (wd->display,
-                         rv->fsp,
-                         (FcChar8 *)allchars,
-                         256,
-                         &extents);
-        rv->ascent = Max(rv->fsp->ascent, extents.y);
-        rv->descent = Max(rv->fsp->descent, extents.height - extents.y);
-        rv->maxwidth = rv->fsp->max_advance_width;
-    }
+
+    /*
+     * Xft seems to sometimes give too-small values in its font
+     * ascent/descent fields; therefore calculate the GlyphInfo
+     * for the first 256 chars and take the maximum ascent/descent
+     * of the sample and the font's reported values.
+     */
+    XftTextExtents8 (wd->display,
+                     rv->fsp,
+                     (FcChar8 *)allchars,
+                     256,
+                     &extents);
+    rv->ascent = Max(rv->fsp->ascent, extents.y);
+    rv->descent = Max(rv->fsp->descent, extents.height - extents.y);
+    rv->maxwidth = rv->fsp->max_advance_width;
     rv->height = rv->ascent + rv->descent;
     return rv;
 }
