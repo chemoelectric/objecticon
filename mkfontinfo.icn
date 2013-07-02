@@ -110,7 +110,7 @@ procedure get_size(w, s, fam)
       if \pix then
          font_size +:= 1
    }
-   return integer(0.5 + (font_size * 72.0 / 96.0))
+   return Format.numeric_to_string(font_size * 72.0 / 96.0, 1)
 end
 
 procedure main(a)
@@ -120,7 +120,7 @@ procedure main(a)
       p := open("/bin/du -a /lib/font/bit | /bin/awk '{print $2}' | grep '*.font' | sort", "pr"),
       while x := p.read() do {
          use {
-            w := Window.open(),
+            w := Window(),
             {
                if w.set_font(x) &
                   s := (fam := get_family(w, x)) || "," || 

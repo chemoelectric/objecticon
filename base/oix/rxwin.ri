@@ -3286,8 +3286,6 @@ char *tofcpatternstr(char *s)
     else
         FcPatternAddString(p, FC_FAMILY, (FcChar8 *)family);
 
-    if (size < 0)
-        size = defaultfontsize;
     FcPatternAddDouble(p, FC_SIZE, (double)size);
 
     if (flags & FONTFLAG_MEDIUM)
@@ -3328,7 +3326,7 @@ wfp loadfont(wdp wd, char *s)
     wfp rv;
 
     /*
-     * Convert to a system font name (without the fc: or x11: prefix)
+     * Convert to a system font name (without the fc: prefix)
      */
     s = tofcpatternstr(s);
 

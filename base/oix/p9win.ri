@@ -2438,9 +2438,6 @@ static struct FontInfo *match_font(char *s)
     if (!parsefont(s, family, &flags, &size))
         return 0;
 
-    if (size < 0)
-        size = defaultfontsize;
-
     for (curr = font_info; curr; curr = curr->next) {
         if (acceptable_font(curr, family, flags, size)) {
             if (!best)
@@ -2484,7 +2481,7 @@ static void load_font_info(void)
                     int flags;
                     float size;
                     struct FontInfo *fi;
-                    if (!parsefont(info, family, &flags, &size) || size <= 0)
+                    if (!parsefont(info, family, &flags, &size))
                         ffatalerr("Couldn't parse line %d in font info file %s", line, fn);
                     if (access(buff, R_OK) == 0) {
                         MemProtect(fi = malloc(sizeof(struct FontInfo)));

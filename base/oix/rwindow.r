@@ -1495,7 +1495,7 @@ int parsefont(char *s, char family[MAXFONTWORD], int *style, float *size)
      */
     *family = '\0';
     *style = 0;
-    *size = -1;
+    *size = -1.0;
 
     /*
      * now, scan through the raw and break out pieces
@@ -1531,8 +1531,12 @@ int parsefont(char *s, char family[MAXFONTWORD], int *style, float *size)
          */
         if (*family == '\0')
             strcpy(family, attr);		/* first word is the family name */
-        else if (sscanf(attr, "%f%c", &tmpf, &c) == 1 && tmpf > 0) {
-            if (*size != -1 && *size != tmpf)
+        else if (sscanf(attr, "%f%c", &tmpf, &c) == 1 && tmpf != 0.0) {
+            if (attr[0] == '+' || tmpf < 0.0) {
+                tmpf += defaultfontsize;        /* relative to default font size */
+                if (tmpf < 1.0) tmpf = 1.0;
+            }
+            if (*size != -1.0 && *size != tmpf)
                 return 0;			/* if conflicting sizes given */
             *size = tmpf;			/* float value is a size */
         }
@@ -1545,6 +1549,9 @@ int parsefont(char *s, char family[MAXFONTWORD], int *style, float *size)
             }
         }
     }
+
+    if (*size == -1.0)
+        *size = defaultfontsize;
 
     /* got to end of string; it's OK if it had at least a font family */
     return (*family != '\0');
