@@ -1090,17 +1090,14 @@ static char *convert_spec(char *s)
 {
     struct FontInfo *fi;
 
-    if (*s == '/')
-        return s;
-
     if (!strncmp(s, "p9:", 3))
         return s + 3;
 
     fi = match_font(s);
     if (fi)
         return fi->path;
-
-    return s;
+    else
+        return 0;
 }
 
 static wfp load_font(char *s)
@@ -1112,6 +1109,8 @@ static wfp load_font(char *s)
      * Convert to a font path name (without the p9: prefix)
      */
     s = convert_spec(s);
+    if (!s)
+        return 0;
 
     /*
      * See if the font is already loaded.

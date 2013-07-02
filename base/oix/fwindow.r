@@ -1401,7 +1401,7 @@ function graphics_Window_set_font(self, val)
       runerr(103, val)
    body {
        GetSelfW();
-       AttemptAttr(setfont(self_w, buffstr(&val)), "No matching font in system");
+       AttemptAttr(setfont(self_w, buffstr(&val)), "Invalid or unavailable font");
        return self;
    }
 end

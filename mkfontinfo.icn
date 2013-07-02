@@ -122,7 +122,7 @@ procedure main(a)
          use {
             w := Window(),
             {
-               if w.set_font(x) &
+               if w.set_font("p9:" || x) &
                   s := (fam := get_family(w, x)) || "," || 
                   get_serif(x, fam) || "," || 
                   get_weight(x) || "," || 
