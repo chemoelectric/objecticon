@@ -793,8 +793,8 @@ class URLList(SelectableScrollArea)
       TITLE_FONT, URL_FONT
 
    private static init()
-      TITLE_FONT := "sans,13"
-      URL_FONT := "sans,11"
+      TITLE_FONT := "sans"
+      URL_FONT := "sans,-1"
    end
    
    public calculate_line_height()
