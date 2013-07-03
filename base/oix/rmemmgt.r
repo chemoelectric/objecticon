@@ -310,8 +310,6 @@ struct other_global {
     struct other_global *next;
 };
 
-#define hasher(x,obj)   ((((word)x)/4)%ElemCount(obj))
-
 static struct other_global *og_hash[OGHASH_SIZE];
 
 #if 0
@@ -333,7 +331,7 @@ static void dump_gc_global()
 
 void add_gc_global(dptr d)
 {
-    int i = hasher(d, og_hash);
+    int i = ptrhasher(d, og_hash);
     struct other_global *og;
     MemProtect(og = malloc(sizeof(struct other_global)));
     og->dp = d;
@@ -343,7 +341,7 @@ void add_gc_global(dptr d)
 
 void del_gc_global(dptr d)
 {
-    int i = hasher(d, og_hash);
+    int i = ptrhasher(d, og_hash);
     struct other_global **ogp, *og;
     ogp = &og_hash[i];
     while ((og = *ogp) && og->dp != d)

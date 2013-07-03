@@ -1277,7 +1277,7 @@ int main(int argc, char **argv)
     stacklim = rootblock.size / 2;
     env_word(OISTKLIM, (word *)&stacklim, 1024, MaxWord);
     env_word(OISTKCUSHION, &stackcushion, 0, 10000);
-    env_float(OIFONTSIZE, &defaultfontsize, 1, 1e32);
+    env_float(OIFONTSIZE, &defaultfontsize, MIN_FONTSIZE, 1e32);
     t = getenv(OIFONT);
     if (t)
         defaultfont = salloc(t);

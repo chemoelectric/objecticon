@@ -51,6 +51,13 @@ struct str_buf {
 #define ElemSize(a)   (sizeof(a[0]))
 
 /*
+ * Hash functions for symbol tables.
+ */
+#define hasher(x,obj)   (((unsigned)x)%ElemCount(obj))
+/* If x is a pointer */
+#define ptrhasher(x,obj)   ((((unsigned)x)/4)%ElemCount(obj))
+
+/*
  * Clear an object
  */
 #define ArrClear(obj) (memset(obj, 0, sizeof(obj)))

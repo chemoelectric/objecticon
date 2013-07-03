@@ -26,6 +26,8 @@ struct trapezoid {
 #define TCH1 '~'			/* usual transparent character */
 #define TCH2 0377			/* alternate transparent character */
 
+#define MIN_FONTSIZE 1.0
+
 #define MAXCOLORNAME 50
 
 #define IMGDATA_RGB24      1
@@ -230,8 +232,7 @@ extern struct imgdataformat imgdataformat_X11BGRA32;
  * Fonts are allocated within displays.
  */
 typedef struct _wfont {
-  int		refcount;
-  struct _wfont *previous, *next;
+  struct _wfont *next;
   char	        *name;			/* name for WAttrib and fontsearch */
   int           ascent;                 /* font dimensions */
   int           descent;
@@ -248,6 +249,8 @@ typedef struct _wfont {
 
 #if XWindows
 
+#define FONTHASH_SIZE 64
+
 /*
  * Displays are maintained in a global list in rwinrsc.r.
  */
@@ -257,7 +260,7 @@ typedef struct _wdisplay {
   struct imgdataformat *format;                /* imgdata format */
   struct progstate *program;           /* owning program */
   struct SharedColor *black, *white, *transparent;
-  wfp		fonts, defaultfont;
+  wfp		fonts[FONTHASH_SIZE], defaultfont;
   XRenderPictFormat *pixfmt, *winfmt, *maskfmt;
   Cursor	cursors[NUMCURSORSYMS];
   Atom          atoms[NUMATOMS];      /* interned atoms */

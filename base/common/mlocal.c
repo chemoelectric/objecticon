@@ -1026,3 +1026,18 @@ char *word2cstr(word n)
     sprintf(sbuf, "%ld", (long)n);
     return sbuf;
 }
+
+/*
+ * Simple hash function for C strings.
+ */
+unsigned int hashcstr(char *s)
+{
+    unsigned int h;
+    h = 0;
+    while (*s) {
+        h = 13 * h + (*s & 0377);
+        ++s;
+    }
+    return h;
+}
+

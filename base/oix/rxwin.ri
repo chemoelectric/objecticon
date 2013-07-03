@@ -3324,6 +3324,7 @@ char *tofcpatternstr(char *s)
 wfp loadfont(wdp wd, char *s)
 {
     wfp rv;
+    int i;
 
     /*
      * Convert to a system font name (without the fc: prefix)
@@ -3335,7 +3336,8 @@ wfp loadfont(wdp wd, char *s)
     /*
      * see if the font is already loaded on this display
      */
-    for(rv = wd->fonts; rv; rv = rv->next) {
+    i = hasher(hashcstr(s), wd->fonts);
+    for(rv = wd->fonts[i]; rv; rv = rv->next) {
         if (!strcmp(s, rv->name + 3))
             return rv;
     }
@@ -3350,7 +3352,9 @@ wfp loadfont(wdp wd, char *s)
     /*
      * link the font into this display's fontlist
      */
-    GLink(rv, wd->fonts);
+    rv->next = wd->fonts[i];
+    wd->fonts[i] = rv;
+
     return rv;
 }
 
@@ -3358,7 +3362,8 @@ static wfp newfont(wdp wd, char *s)
 {
     wfp rv;
     XGlyphInfo	extents; 
-    GAlloc(rv, _wfont);
+
+    MemProtect(rv = calloc(1, sizeof(struct _wfont)));
     rv->fsp = XftFontOpenName(wd->display, DefaultScreen(wd->display), s);
     if (!rv->fsp){
         free(rv);

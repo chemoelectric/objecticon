@@ -1,5 +1,7 @@
+#define FONTHASH_SIZE 64
+
 static int inited;
-static wfp fonts, default_font;
+static wfp fonts[FONTHASH_SIZE], default_font;
 static Rectangle max_rect;
 static struct Cursor cursor_data[];
 static int use_win;
@@ -1103,6 +1105,7 @@ static char *convert_spec(char *s)
 static wfp load_font(char *s)
 {
     wfp rv;
+    int i;
     Font *f;
 
     /*
@@ -1115,7 +1118,8 @@ static wfp load_font(char *s)
     /*
      * See if the font is already loaded.
      */
-    for(rv = fonts; rv; rv = rv->next) {
+    i = hasher(hashcstr(s), fonts);
+    for(rv = fonts[i]; rv; rv = rv->next) {
         if (!strcmp(s, rv->name + 3))
             return rv;
     }
@@ -1124,7 +1128,7 @@ static wfp load_font(char *s)
     if (!f)
         return 0;
 
-    GAlloc(rv, _wfont);
+    MemProtect(rv = calloc(1, sizeof(struct _wfont)));
     MemProtect(rv->name = malloc(strlen(s) + 3 + 1));
     sprint(rv->name, "p9:%s", s);
     rv->ascent = f->ascent;               /* font dimensions */
@@ -1132,7 +1136,8 @@ static wfp load_font(char *s)
     rv->height = f->height;
     rv->maxwidth = f->width;               /* max width of one char */
     rv->font = f;
-    GLink(rv, fonts);
+    rv->next = fonts[i];
+    fonts[i] = rv;
     return rv;
 }
 

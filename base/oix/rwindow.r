@@ -1482,7 +1482,7 @@ stringint fontwords[] = {
  *  further translation into window system dependent values.
  *
  * returns 1 on an OK font name
- * returns 0 on a "malformed" font (might be a window-system fontname)
+ * returns 0 on a "malformed" font
  */
 int parsefont(char *s, char family[MAXFONTWORD], int *style, float *size)
 {
@@ -1531,11 +1531,11 @@ int parsefont(char *s, char family[MAXFONTWORD], int *style, float *size)
          */
         if (*family == '\0')
             strcpy(family, attr);		/* first word is the family name */
-        else if (sscanf(attr, "%f%c", &tmpf, &c) == 1 && tmpf != 0.0) {
-            if (attr[0] == '+' || tmpf < 0.0) {
+        else if (sscanf(attr, "%f%c", &tmpf, &c) == 1) {
+            if (attr[0] == '+' || tmpf < 0.0)
                 tmpf += defaultfontsize;        /* relative to default font size */
-                if (tmpf < 1.0) tmpf = 1.0;
-            }
+            if (tmpf < MIN_FONTSIZE) 
+                tmpf = MIN_FONTSIZE;
             if (*size != -1.0 && *size != tmpf)
                 return 0;			/* if conflicting sizes given */
             *size = tmpf;			/* float value is a size */

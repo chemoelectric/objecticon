@@ -2234,7 +2234,7 @@ record MapContext(map)
 record SelectContext(options, optgroup)
 record DataListContext(options)
 record Context(form, form_label, title, url, fg, font, align, pre, nowrap, underline, strike, underdash, mark,
-               face, size, bold, italic, table, list, def_list, fieldset, select, map, datalist)
+               family, size, bold, italic, table, list, def_list, fieldset, select, map, datalist)
 
 class MapArea()
    public const
@@ -2408,10 +2408,9 @@ class Browser(ComponentScrollArea)
 
    public static const 
       COLORS,
-      FACES,
       SIZES
 
-   private static
+   private static const
       default_font_clone
 
    private static init()
@@ -2559,24 +2558,10 @@ class Browser(ComponentScrollArea)
                       "yellow", "#FFFF00",
                       "yellowgreen", "#9ACD32")
 
-      FACES := table(,
-                     "serif", "serif",
-                     "sans-serif", "sans",
-                     "monospace", "mono",
-                     "sans", "sans",
-                     "mono", "mono",
-                     "typewriter", "typewriter",
-                     "cursive", "serif",
-                     "fantasy", "serif",
-                     "helvetica", "sans",
-                     "arial", "sans",
-                     "times", "serif",
-                     "times new roman", "serif",
-                     "courier", "typewriter")
-
       t := Window.get_default_font_size()
       SIZES := [t-5, t-3, t, t+3, t+6, t+9, t+12] 
       ImageCache.name_image("rpp.BROKEN_LINK", BROKEN_LINK)
+      default_font_clone := Window().set_font("sans")
    end
 
    public get_map(s)
@@ -2604,7 +2589,7 @@ class Browser(ComponentScrollArea)
 
    private synch_font(context)
       local s
-      s := member(FACES, map(trim(separate(string(context.face))))) | "sans"
+      s := context.family
       if \context.bold then
          s ||:= ",bold"
       if \context.italic then
@@ -2758,7 +2743,6 @@ class Browser(ComponentScrollArea)
    end
 
    public static limit_text(s, n)
-      /default_font_clone := Window().set_font("sans" || "," || SIZES[3])
       return gui.limit_text(default_font_clone, s, n)
    end
 
@@ -3027,7 +3011,7 @@ class Browser(ComponentScrollArea)
       page_link_color := "blue"
       page_text_color := "black"
       c := Context()
-      c.face := "sans"
+      c.family := "sans"
       c.fg := page_text_color
       c.size := 3
       c.align := Align.L
@@ -3110,11 +3094,45 @@ class Browser(ComponentScrollArea)
       return (0 < \i <= 7, i)
    end
 
+   private static valid_family(fam)
+      local w
+      return use {
+         w := Window(),
+         w.set_font(fam) & fam
+      }
+   end
+
+   private static select_family(faces)
+      local e
+      every e := map(trim(separate(string(faces)))) do {
+         # If we have one of the four standard families (or their html
+         # equivalent names), return that.
+         if e := case e of {
+            "serif": "serif"
+            "sans"|"sans-serif": "sans"
+            "mono"|"monospace": "mono"
+            "typewriter": "typewriter"
+         } then
+            return e
+         # If the face is usable as a family, return it.
+         if valid_family(e) then
+            return e
+      }
+      # Having failed with all alternatives, try a mapping of common
+      # families based on the last family in the input list.
+      if e := case e of {
+         "cursive"|"fantasy"|"times"|"times new roman": "serif"
+         "helvetica"|"arial": "sans"
+         "courier": "typewriter"
+      } then
+         return e
+   end
+
    private traverse_font(e, p, context)
       local c
       c := copy(context)
       c.fg := convert_color(e, u"COLOR")
-      c.face := e.get_attribute(u"FACE")
+      c.family := select_family(e.get_attribute(u"FACE"))
       c.size := parse_size(e.get_attribute(u"SIZE"), c.size)
       synch_font(c)
       traverse(e, p, c)
@@ -3123,7 +3141,7 @@ class Browser(ComponentScrollArea)
    private traverse_tt(e, p, context)
       local c
       c := copy(context)
-      c.face := "mono"
+      c.family := "mono"
       synch_font(c)
       traverse(e, p, c)
    end
@@ -3733,7 +3751,7 @@ class Browser(ComponentScrollArea)
       local c
       put_para(p, context)
       c := copy(context)
-      c.face := "mono"
+      c.family := "mono"
       strip_newlines(e)
       synch_font(c)
       c.pre := 1
