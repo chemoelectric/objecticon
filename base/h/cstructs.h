@@ -53,9 +53,9 @@ struct str_buf {
 /*
  * Hash functions for symbol tables.
  */
-#define hasher(x,obj)   (((word)x)%ElemCount(obj))
+#define hasher(x,obj)   (((unsigned)x)%ElemCount(obj))
 /* If x is a pointer */
-#define ptrhasher(x,obj)   ((((word)x)/4)%ElemCount(obj))
+#define ptrhasher(x,obj)   ((((unsigned)x)/4)%ElemCount(obj))
 
 /*
  * Clear an object
