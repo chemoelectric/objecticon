@@ -36,11 +36,6 @@
 #define F_Field       01000000  /* local X is really self.X or Class.X */
 #define F_Method      02000000  /* function is a method */
 
-/*
- * Hash functions for symbol tables.
- */
-#define hasher(x,obj)   (((word)x)%ElemCount(obj))
-
 #define MemProtect(notnull) do {if (!(notnull)) quit("Out of memory");} while(0)
 #define Abs(x) (((x) < 0) ? (-(x)) : (x))
 #define Max(x,y)        ((x)>(y)?(x):(y))

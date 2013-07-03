@@ -60,4 +60,5 @@ int strncasecmp(char *s1, char *s2, int n);
 
 char *double2cstr(double n);
 char *word2cstr(word n);
+unsigned int hashcstr(char *s);
 
