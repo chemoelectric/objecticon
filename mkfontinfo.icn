@@ -110,7 +110,7 @@ procedure get_size(w, s, fam)
       if \pix then
          font_size +:= 1
    }
-   return Format.numeric_to_string(font_size * 72.0 / 96.0, 1)
+   return Format.numeric_to_string(max(1.0, font_size * 72.0 / 96.0), 1)
 end
 
 procedure main(a)
