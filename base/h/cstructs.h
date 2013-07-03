@@ -51,11 +51,13 @@ struct str_buf {
 #define ElemSize(a)   (sizeof(a[0]))
 
 /*
- * Hash functions for symbol tables.
+ * Hash functions for symbol tables.  Cast to uword so that the result
+ * is never -ve, and avoid compiler warnings about casting pointer to
+ * narrower type.
  */
-#define hasher(x,obj)   (((unsigned)x)%ElemCount(obj))
+#define hasher(x,obj)   (((uword)x)%ElemCount(obj))
 /* If x is a pointer */
-#define ptrhasher(x,obj)   ((((unsigned)x)/4)%ElemCount(obj))
+#define ptrhasher(x,obj)   ((((uword)x)/4)%ElemCount(obj))
 
 /*
  * Clear an object
