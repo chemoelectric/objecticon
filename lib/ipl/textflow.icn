@@ -1147,7 +1147,9 @@ class TextFlow(Component)
          }
 
          txt_out(W, cmd.attr, s, rb)
-         if (i < *l) | cmd.s[-1] == u"\n" then
+         # Every element of l except the last ends in a new line
+         # (recall that "abc\ndef\n" -> l=["abc","def",""])
+         if i < *l then
             new_row()
       }
    end
