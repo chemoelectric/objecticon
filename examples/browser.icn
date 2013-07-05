@@ -1127,9 +1127,18 @@ class BrowserTab(TabItem, BrowserUI)
 
    private set_title(s)
       /s := "Browser"
-      set_paint(AbbreviatedTextPaint(s))
+      set_paint(AbbreviatedTextPaint(fill_title(s)))
       title_tt := &null
       return self
+   end
+
+   # Simple fill function for the potentially multi-line title.
+   private static fill_title(s)
+      local l
+      l := u""
+      every l ||:= words(s) || u" "
+      l[-1] := u""
+      return l
    end
 
    private static split_string(s, f, n)
