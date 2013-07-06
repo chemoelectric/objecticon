@@ -78,14 +78,13 @@ final abstract class Text()
    # Convert an ISO-8859-1 string to ucs
    #
    public static iso_8859_1_to_ucs(s)
-      local t
+      local t, ch
       s := string(s) | runerr(103, s)
       t := ""
       s ? repeat {
          t ||:= tab(many(&ascii))
-         if pos(0) then
-            break
-         t ||:= Text.utf8_seq(ord(move(1)))
+         ch := ord(move(1)) | break
+         t ||:= Text.utf8_seq(ch)
       }
       return ucs(t)
    end
@@ -95,15 +94,14 @@ final abstract class Text()
    # represented by the subst string (default "?").
    #
    public static ucs_to_iso_8859_1(s, subst)
-      local t
+      local t, ch
       s := ucs(s) | runerr(128, s)
       /subst := "?"
       t := ""
       s ? repeat {
          t ||:= string(tab(many(&ascii)))
-         if pos(0) then
-            break
-         t ||:= char(ord(move(1)\1)) | subst
+         ch := ord(move(1)) | break
+         t ||:= char(ch) | subst
       }
       return t
    end

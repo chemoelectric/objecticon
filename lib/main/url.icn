@@ -487,14 +487,13 @@ class URL(ObjectOutput)
    # The result is always a string, never ucs.
    #
    public static percent_encode(s, c)
-      local res
+      local res, ch
       s := string(s) | runerr(103, s)
       res := ""
       s ? repeat {
          res ||:= tab(many(c))
-         if pos(0) then
-            break
-         res ||:= "%" || Format.int_to_string(ord(move(1)),,2)
+         ch := ord(move(1)) | break
+         res ||:= "%" || Format.int_to_string(ch,,2)
       }
       return res
    end

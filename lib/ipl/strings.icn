@@ -742,10 +742,10 @@ procedure words(s, sep)
    /sep := ' \t\r\n\v\f'
    s ? repeat {
       tab(many(sep))
-      if pos(0) then
-         fail
       if t := tab(upto(sep)) then
          suspend t
+      else if pos(0) then
+         fail
       else
          return tab(0)
    }
