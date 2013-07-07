@@ -81,10 +81,8 @@ class TreeNode()
    public expand_to_root()
       local n
       n := self
-      repeat {
-         n := n.get_parent() | break
+      while n := n.get_parent() do
          n.set_expanded(&yes)
-      }
    end
 
    #
