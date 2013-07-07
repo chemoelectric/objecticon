@@ -51,6 +51,8 @@ extern struct c_proc Bdeferred_method_stub;  /* Deferred method block */
 
 extern word memcushion;		/* memory region cushion factor */
 extern word memgrowth;		/* memory region growth factor */
+extern float defaultfontsize;   /* default font size */
+extern char *defaultfont;       /* default font spec */
 
 extern struct tend_desc *tend;  /* chain of tended descriptors */
 
@@ -106,9 +108,6 @@ extern wbp wbndngs;
 extern wcp wcntxts;
 extern wsp wstates;
 extern clock_t starttime;		/* start time in milliseconds */
-
-extern float defaultfontsize;
-extern char *defaultfont;
 
 #if XWindows
       extern struct _wdisplay * wdsplys;

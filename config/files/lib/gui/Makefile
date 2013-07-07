@@ -1,5 +1,7 @@
 include ../../Makedefs
 
+.NOTPARALLEL:
+
 LIBSRC=$(wildcard *.icn)
 
 LIBU=$(LIBSRC:.icn=.u)

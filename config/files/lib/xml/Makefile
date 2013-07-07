@@ -1,5 +1,7 @@
 include ../../Makedefs
 
+.NOTPARALLEL:
+
 LIBSRC=attlist.icn attributedef.icn canonicalxmlformatter.icn cdata.icn \
 	comment.icn contentspec.icn xmlerrorhandler.icn defaultresolver.icn \
 	doctype.icn document.icn element.icn elementdecl.icn entitydef.icn \

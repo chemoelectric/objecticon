@@ -1,5 +1,7 @@
 include ../../Makedefs
 
+.NOTPARALLEL:
+
 LIBSRC=$(wildcard *.icn)
 AUTOSRC=posixconsts.icn ioconsts.icn evmonconsts.icn ucodeconsts.icn
 

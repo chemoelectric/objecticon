@@ -106,16 +106,15 @@ class RFC822Parser()
    # Little utility function for quoting a string (if necessary).
    #
    public static escape_1521_value(s)
-      local t
+      local t, ch
       # If non-empty and all chars are atom chars, no quotes needed.
       if many(ATOM_CHAR_1521, s) = *s + 1 then
          return s
       t := "\""
       s ? repeat {
          t ||:= tab(many(QTEXT_CHAR))
-         if pos(0) then
-            break
-         t ||:= "\\" || move(1)
+         ch := move(1) | break
+         t ||:= "\\" || ch
       }
       return t || "\""
    end

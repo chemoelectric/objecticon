@@ -2087,13 +2087,12 @@ class Form()
    end
 
    private static escape_1521_value(s)
-      local t
+      local t, ch
       t := u"\""
       s ? repeat {
          t ||:= tab(many(&uset -- '\"\\\r'))
-         if pos(0) then
-            break
-         t ||:= u"\\" || move(1)
+         ch := move(1) | break
+         t ||:= u"\\" || ch
       }
       return t || u"\""
    end
@@ -2881,13 +2880,12 @@ class Browser(ComponentScrollArea)
    end
 
    public static to_content(s)
-      local t
+      local t, ch
       t := ""
       string(s) ? repeat {
          t ||:= tab(upto('<&') | 0)
-         if pos(0) then
-            break
-         t ||:= case move(1) of {
+         ch := move(1) | break
+         t ||:= case ch of {
             "<": "&lt;"
             "&": "&amp;"
          }
@@ -2896,13 +2894,12 @@ class Browser(ComponentScrollArea)
    end
 
    public static to_attr(s)
-      local t
+      local t, ch
       t := ""
       string(s) ? repeat {
          t ||:= tab(upto('\"\'&') | 0)
-         if pos(0) then
-            break
-         t ||:= case move(1) of {
+         ch := move(1) | break
+         t ||:= case ch of {
             "\"": "&quot;"
             "\'": "&apos;"
             "&": "&amp;"

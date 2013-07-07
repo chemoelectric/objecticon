@@ -1,5 +1,7 @@
 include ../../Makedefs
 
+.NOTPARALLEL:
+
 COMMONSRC=canvas.icn canvasborder.icn canvasborderdialog.icn \
 	canvasborderui.icn canvasbutton.icn canvasbuttondialog.icn \
 	canvasbuttongroup.icn canvascheckbox.icn canvascheckboxdialog.icn \

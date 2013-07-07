@@ -1,5 +1,7 @@
 include ../../Makedefs
 
+.NOTPARALLEL:
+
 COMMONSRC=outputter.icn htmloutputter.icn groffoutputter.icn comment.icn
 COMMONU=$(COMMONSRC:.icn=.u)
 
