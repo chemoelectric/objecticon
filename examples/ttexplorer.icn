@@ -1,4 +1,4 @@
-import gui, io, ipl.sort, util(Time)
+import gui, io, ipl.sort, util, graphics
 
 class TTExplorer(Dialog)
    public bits_col, date_col, file_col, size_col, tt, tree
@@ -36,10 +36,12 @@ class TTExplorer(Dialog)
    end
 
    private fmt_time(t)
-      local x
-      x := Time()
-      x.set_unix_seconds(t)
-      return x.format("MMM dd HH:mm:ss")
+      local now
+      now := Time.get_system_seconds()
+      return if now - t > 180 * 86400 then
+         Time(t + Time.SYSTEM_BASE_OFFSET).format("  MMM dd  yyyy")
+      else
+         Time(t + Time.SYSTEM_BASE_OFFSET).format("  MMM dd HH:mm")
    end
 
    #
@@ -58,7 +60,7 @@ class TTExplorer(Dialog)
             r1.set_label(t)
             if e[2].mode_str[1] == "d" then
                r1.set_always_expandable(&yes)
-            r1.set_contents([e[2].size, fmt_time(e[2].mtime), e[2].mode_str])
+            r1.set_contents([Format.numeric_to_string(e[2].size, 0, ','), fmt_time(e[2].mtime), e[2].mode_str])
             n.add(r1)
          }
       }
@@ -91,34 +93,33 @@ class TTExplorer(Dialog)
    end
 
    public component_setup()
-      local root_node
+      local root_node, w
       self.setup()
       tree := tt.get_table_content()
+
+      use {
+         w := Window(),
+         {
+            tree.set_item_paint(AbbreviatedTextItemPaint())
+            size_col.set_column_width(w.text_width("000,000,000,000"))
+            date_col.set_column_width(w.text_width("  MMM 00 00:00"))
+            bits_col.set_column_width(w.text_width("drwxrwxrwx  "))
+         }
+      }
+
       tree.connect(self.handle_tree_expansion, Event.TREE_NODE_EXPANSION)
       root_node := TreeTableNode().set_label("/")
       load_subtree(root_node)
       tt.table_content.set_root_node(root_node)
    end
 
-   public end_dialog()
-   end
-
-   public init_dialog()
-   end
-
    public on_text_button_1(ev)
       dispose()
    end
 
-# WARN : parameterless initially method
-   public new()
-      cast(self,Dialog).new()
-      return
-   end
-
    private setup()
       local paint_2, paint_4, layout_1, paint_1, paint_3, paint, text_button_1
-      set_resize(&yes)
+      self.set_resize(&yes)
       paint := TextPaint("File")
       file_col := TableColumn().
          set_paint(paint).
@@ -138,7 +139,7 @@ class TTExplorer(Dialog)
          set_paint(paint_3).
          set_column_align(Align.L).
          set_column_width(100)
-      tt := TreeTable().
+      tt := ItemPaintTreeTable().
          set_size("475", "265").
          set_align(Align.C, Align.T).
          clear_constraints().
@@ -153,18 +154,18 @@ class TTExplorer(Dialog)
          add_column(size_col).
          add_column(date_col).
          add_column(bits_col)
-      add(tt)
+      self.add(tt)
       paint_4 := TextPaint("Quit")
       text_button_1 := TextButton().
          set_align(Align.C, Align.B).
          clear_constraints().
-         connect(on_text_button_1, Event.ACTION).
+         connect(self.on_text_button_1, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_4)
-      add(text_button_1)
+      self.add(text_button_1)
       layout_1 := GridLayout().
          set_extra("cells")
-      set_layout(layout_1)
+      self.set_layout(layout_1)
    end
 end
 
@@ -180,42 +181,42 @@ end
 ### Ivib-v2 layout ##
 #CCanvas|I18SSuperClass Name|SDialog|SImport Name|Sgui|SButton Groups|L
 #0SCheckbox Groups|L0SGen Indent|I3SGen Main|I1SGen Component Setup|I1S
-#Gen Init Dialog|I1SGen Constructor|I1SDialog Struct|CCDialog|I1SWAttri
-#bs|T1NSresize|I1SName|STTExplorer|SIs Component|NSWidth|NSHeight|NSChi
-#ldren|L2CCanvasTable|I29SParent Canvas|X1SName|Stt|SClass Name|STreeTa
-#ble|SImport Name|Sgui|SClass Variable|I1SX Fix|I1SY Fix|I1SW Fix|I1SH 
-#Fix|I1SX Spec|NSY Spec|NSW Spec|S475|SH Spec|S265|SX Align|Sc|SY Align
-#|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T5NSx_weight
-#|B1.0|Sx_fill|I1Sy_weight|B1.0|Sy_fill|I1Seol|I1STooltip|NSAccel|NSLay
-#out delegate|NSBorder opts|NSEvent Handlers|L0SClass Variable|I1SParen
-#t Component|X1SSelect Mode|Sone|SColumns|L4CCanvasTableColumn|I10SPare
-#nt Canvas|X1SName|Sfile_col|SClass Name|STableColumn|SImport Name|Sgui
+#Gen Init Dialog|NSGen Constructor|NSDialog Struct|CCDialog|I1SWAttribs
+#|T1NSresize|I1SName|STTExplorer|SIs Component|NSWidth|NSHeight|NSChild
+#ren|L2CCanvasTable|I29SParent Canvas|X1SName|Stt|SClass Name|SItemPain
+#tTreeTable|SImport Name|Sgui|SClass Variable|I1SX Fix|I1SY Fix|I1SW Fi
+#x|I1SH Fix|I1SX Spec|NSY Spec|NSW Spec|S475|SH Spec|S265|SX Align|Sc|S
+#Y Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T5NSx
+#_weight|B1.0|Sx_fill|I1Sy_weight|B1.0|Sy_fill|I1Seol|I1STooltip|NSAcce
+#l|NSLayout delegate|NSBorder opts|NSEvent Handlers|L0SClass Variable|I
+#1SParent Component|X1SSelect Mode|Sone|SColumns|L4CCanvasTableColumn|I
+#10SParent Canvas|X1SName|Sfile_col|SClass Name|STableColumn|SImport Na
+#me|Sgui|SClass Variable|I1SPaint|CCanvasTextPaint|I6SParent Canvas|X1S
+#Name|Spaint|SClass Name|STextPaint|SImport Name|Sgui|SClass Variable|N
+#SStr|SFile|SColumn Width|NSInternal Alignment|Sl|SWAttribs|T0NSEvent H
+#andlers|L0CCanvasTableColumn|I10SParent Canvas|X1SName|Ssize_col|SClas
+#s Name|STableColumn|SImport Name|Sgui|SClass Variable|I1SPaint|CCanvas
+#TextPaint|I6SParent Canvas|X1SName|Spaint_1|SClass Name|STextPaint|SIm
+#port Name|Sgui|SClass Variable|NSStr|SSize|SColumn Width|I75SInternal 
+#Alignment|Sr|SWAttribs|T0NSEvent Handlers|NCCanvasTableColumn|I10SPare
+#nt Canvas|X1SName|Sdate_col|SClass Name|STableColumn|SImport Name|Sgui
 #|SClass Variable|I1SPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Sp
-#aint|SClass Name|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|SF
-#ile|SColumn Width|NSInternal Alignment|Sl|SWAttribs|T0NSEvent Handlers
-#|NCCanvasTableColumn|I10SParent Canvas|X1SName|Ssize_col|SClass Name|S
-#TableColumn|SImport Name|Sgui|SClass Variable|I1SPaint|CCanvasTextPain
-#t|I6SParent Canvas|X1SName|Spaint_1|SClass Name|STextPaint|SImport Nam
-#e|Sgui|SClass Variable|NSStr|SSize|SColumn Width|I75SInternal Alignmen
-#t|Sr|SWAttribs|T0NSEvent Handlers|NCCanvasTableColumn|I10SParent Canva
-#s|X1SName|Sdate_col|SClass Name|STableColumn|SImport Name|Sgui|SClass 
-#Variable|I1SPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_2|S
-#Class Name|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|SDate|SC
-#olumn Width|I100SInternal Alignment|Sl|SWAttribs|T0NSEvent Handlers|NC
-#CanvasTableColumn|I10SParent Canvas|X1SName|Sbits_col|SClass Name|STab
-#leColumn|SImport Name|Sgui|SClass Variable|I1SPaint|CCanvasTextPaint|I
-#6SParent Canvas|X1SName|Spaint_3|SClass Name|STextPaint|SImport Name|S
-#gui|SClass Variable|NSStr|SBits|SColumn Width|I100SInternal Alignment|
-#Sl|SWAttribs|T0NSEvent Handlers|NCCanvasTextButton|I35SParent Canvas|X
-#1SName|Stext_button_1|SClass Name|STextButton|SImport Name|Sgui|SClass
-# Variable|NSX Fix|I1SY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|
-#NSH Spec|NSX Align|Sc|SY Align|Sb|SZ|I0STab ord|I0SIs shaded|NSWAttrib
-#s|T0NSConstraints|T0NSTooltip|NSAccel|NSLayout delegate|NSBorder opts|
-#NSEvent Handlers|L1L2SEvent.ACTION|Son_text_button_1|SClass Variable|N
-#SParent Component|X1SNo click focus|NSAccepts focus Flag|I1SIs Checked
-# Flag|NSIs Checkbox Flag|NSParent CheckBoxGroup|NSParent Button Group|
-#NSPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_4|SClass Name
-#|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|SQuit|SPaint down|
-#NSInitial Focus|NSEvent Handlers|L0SLayout delegate|CCanvasGridLayout|
-#I8SDII val|NSDOI val|NSExtra|Scells|SName|Slayout_1|SClass Name|SGridL
-#ayout|SImport Name|Sgui|SClass Variable|NSParent|X1
+#aint_2|SClass Name|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|
+#SDate|SColumn Width|I100SInternal Alignment|Sl|SWAttribs|T0NSEvent Han
+#dlers|NCCanvasTableColumn|I10SParent Canvas|X1SName|Sbits_col|SClass N
+#ame|STableColumn|SImport Name|Sgui|SClass Variable|I1SPaint|CCanvasTex
+#tPaint|I6SParent Canvas|X1SName|Spaint_3|SClass Name|STextPaint|SImpor
+#t Name|Sgui|SClass Variable|NSStr|SBits|SColumn Width|I100SInternal Al
+#ignment|Sl|SWAttribs|T0NSEvent Handlers|NCCanvasTextButton|I35SParent 
+#Canvas|X1SName|Stext_button_1|SClass Name|STextButton|SImport Name|Sgu
+#i|SClass Variable|NSX Fix|I1SY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|N
+#SW Spec|NSH Spec|NSX Align|Sc|SY Align|Sb|SZ|I0STab ord|I0SIs shaded|N
+#SWAttribs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayout delegate|NSBord
+#er opts|NSEvent Handlers|L1L2SEvent.ACTION|Son_text_button_1|SClass Va
+#riable|NSParent Component|X1SNo click focus|NSAccepts focus Flag|I1SIs
+# Checked Flag|NSIs Checkbox Flag|NSParent CheckBoxGroup|NSParent Butto
+#n Group|NSPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_4|SCl
+#ass Name|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|SQuit|SPai
+#nt down|NSInitial Focus|NSEvent Handlers|L0SLayout delegate|CCanvasGri
+#dLayout|I8SDII val|NSDOI val|NSExtra|Scells|SName|Slayout_1|SClass Nam
+#e|SGridLayout|SImport Name|Sgui|SClass Variable|NSParent|X1
