@@ -712,7 +712,7 @@ class DownloadTab(TabItem)
    end
 
    private setup()
-      local panel, border
+      local panel, border, w
       destination_button := IconButton().
          set_align(Align.L, Align.C).
          clear_constraints().
@@ -757,19 +757,22 @@ class DownloadTab(TabItem)
          connect(self.on_search_field, Event.ACTION).
          set_contents(u"")
       self.add(search_field)
-      url_table := Table().
-         set_size("600", "258").
-         set_select_mode(Select.MANY).
-         set_constraint("eol", &yes).
-         set_contents([]).
-         add_column(ItemPaintTableColumn().
-                       set_label("URL").
-                       set_item_paint(AbbreviatedTextItemPaint()).
-                       set_item_border(EmptyBorder().             # Set a border to align with the button text
-                                          set_insets(Gui.TEXT_INSET,0,0,0).
-                                          set_x_align(Align.L))).
-         add_column(TableColumn().set_label("MB").set_column_width(50).set_column_align(Align.R)).
-         add_column(TableColumn().set_label("State").set_column_width(175))
+      use {
+         w := Window(),
+         url_table := Table().
+            set_size("600", "258").
+            set_select_mode(Select.MANY).
+            set_constraint("eol", &yes).
+            set_contents([]).
+            add_column(ItemPaintTableColumn().
+                          set_label("URL").
+                          set_item_paint(AbbreviatedTextItemPaint()).
+                          set_item_border(EmptyBorder().             # Set a border to align with the button text
+                                             set_insets(Gui.TEXT_INSET,0,0,0).
+                                             set_x_align(Align.L))).
+            add_column(TableColumn().set_label("MB").set_column_width(w.text_width("0,000.0")).set_column_align(Align.R)).
+            add_column(TableColumn().set_label("State").set_column_width(w.text_width("Downloading (0,000.0MB)")))
+      }
       url_table.table_content.connect(self.on_table_rpress, Event.MOUSE_RIGHT_PRESS)
       self.add(url_table)
       border := CompoundBorder().
