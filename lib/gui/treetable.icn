@@ -148,7 +148,6 @@ class TreeTableContent(Tree)
                   # Clip on the column.
                   W.clip!cc
                   yp := r.y - info.offset
-                  xp := get_subject_x()
                   # Write each line in this column
                   every i := info.first to info.last do {
                      lh := integer(h) | h[i]
@@ -185,3 +184,23 @@ class TreeTable(Table)
    end
 end
 
+class ItemPaintTreeTableContent(ItemPaintTree, TreeTableContent)
+   public draw_node_data(n, xp, yp, lh)
+      local r, s, col
+      col := parent.table_header.children[1]
+      s := item_paint.get_size(view.cbwin, n.label)
+      # r is the rectangle available to draw in, limited by the column width.
+      r := Rect(xp, yp, col.x + col.w - xp, lh)
+      item_paint.draw_rect(view.cbwin, n.label, item_border.float(r, s))
+      item_border.draw_rect(view.cbwin, r)
+   end
+end
+
+#
+# A {TreeTable} which uses an {ItemPaint} to paint its tree column.
+#
+class ItemPaintTreeTable(Table)
+   public create_table_content()
+      return ItemPaintTreeTableContent()
+   end
+end
