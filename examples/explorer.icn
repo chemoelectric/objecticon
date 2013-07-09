@@ -159,7 +159,12 @@ class Explorer(Dialog)
          tbl := Table().
             set_size(470,420).
             set_select_mode("none").
-            add_column(ItemPaintTableColumn().set_label("File").set_item_paint(AbbreviatedTextItemPaint())).
+            add_column(ItemPaintTableColumn().
+                          set_label("File").
+                          set_item_paint(AbbreviatedTextItemPaint()).
+                          set_item_border(EmptyBorder().             # Set a border to align with the button text
+                                             set_insets(Gui.TEXT_INSET,0,0,0).
+                                             set_x_align(Align.L))).
             add_column(TableColumn().set_label("Size").set_column_width(w.text_width("000,000,000,000")).set_column_align("r")).
             add_column(TableColumn().set_label("Date").set_column_width(w.text_width("  MMM 00 00:00"))).
             add_column(TableColumn().set_label("Bits").set_column_width(w.text_width("drwxrwxrwx  ")))

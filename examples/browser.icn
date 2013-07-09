@@ -762,7 +762,12 @@ class DownloadTab(TabItem)
          set_select_mode(Select.MANY).
          set_constraint("eol", &yes).
          set_contents([]).
-         add_column(ItemPaintTableColumn().set_label("URL").set_item_paint(AbbreviatedTextItemPaint())).
+         add_column(ItemPaintTableColumn().
+                       set_label("URL").
+                       set_item_paint(AbbreviatedTextItemPaint()).
+                       set_item_border(EmptyBorder().             # Set a border to align with the button text
+                                          set_insets(Gui.TEXT_INSET,0,0,0).
+                                          set_x_align(Align.L))).
          add_column(TableColumn().set_label("MB").set_column_width(50).set_column_align(Align.R)).
          add_column(TableColumn().set_label("State").set_column_width(175))
       url_table.table_content.connect(self.on_table_rpress, Event.MOUSE_RIGHT_PRESS)
