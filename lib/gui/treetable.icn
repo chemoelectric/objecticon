@@ -125,7 +125,7 @@ class TreeTableContent(Tree)
          # since we borrow Tree's draw_line()
          view.cbwin.clip!cc
          yp := r.y - info.offset
-         xp := get_subject_x()
+         xp := col.x
          # Write each line in this column
          every i := info.first to info.last do {
             lh := integer(h) | h[i]
@@ -215,6 +215,10 @@ class ItemPaintTreeTableContent(ItemPaintTree, TreeTableContent)
       }
 
       return r
+   end
+
+   public calculate_subject_width()
+      return parent.get_total_column_width()
    end
 
    public draw_node_data(n, xp, yp, lh)
