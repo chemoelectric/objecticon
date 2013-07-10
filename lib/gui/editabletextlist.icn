@@ -90,7 +90,7 @@ class EditableTextList(LineBasedScrollArea)
    public get_default_subject_height(dw)
       local spl
       spl := get_split(dw  - 2 * Gui.TEXT_INSET)
-      return view.cbwin.get_font_height() * *spl.lines
+      return get_line_height() * *spl.lines
    end
 
    public get_default_subject_width()
