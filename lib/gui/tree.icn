@@ -63,6 +63,7 @@ class Tree(SelectableScrollArea)
    public invalidate_node_images()
       col_w := img_w := img_h := &null
       invalidate_line_height()
+      return self
    end
 
    public initially()
@@ -91,6 +92,7 @@ class Tree(SelectableScrollArea)
          root_node.expand()
          tree_structure_changed()
       }
+      return self
    end
 
    #
@@ -132,11 +134,12 @@ class Tree(SelectableScrollArea)
 
    public tree_structure_changed()
       local sels
-      if /root_node then
-         return
-      sels := object_get_selections()
-      set_contents(flatten())
-      object_set_selections(sels)
+      if \root_node then {
+         sels := object_get_selections()
+         set_contents(flatten())
+         object_set_selections(sels)
+      }
+      return self
    end
 
    #

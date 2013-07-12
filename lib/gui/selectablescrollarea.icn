@@ -277,6 +277,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          insert(self.selections, i)
          invalidate_line(i)
       }
+      return self
    end
 
    #
@@ -287,13 +288,14 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          delete(self.selections, i)
          invalidate_line(i)
       }
+      return self
    end
 
    #
    # Select the given object
    #
    public select_object(o)
-      select_line(find_line(o))
+      return select_line(find_line(o))
    end
 
    #
@@ -308,6 +310,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
             break
          }
       }
+      return self
    end
 
    #
@@ -322,7 +325,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          if member(t, self.contents[i]) then
             insert(s, i)
       }
-      set_selections(s)
+      return set_selections(s)
    end
 
    #
@@ -330,7 +333,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # in the contents list.
    #
    public object_set_cursor(o)
-      set_cursor(find_line(o))
+      return set_cursor(find_line(o))
    end
 
    #
@@ -383,6 +386,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       invalidate_line_height()
       invalidate_line_count()
       compute_and_invalidate()
+      return self
    end
 
    #
@@ -423,6 +427,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       invalidate_line_height()
       invalidate_line_count()
       compute_and_invalidate()
+      return self
    end
 
    #
@@ -454,6 +459,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       delete_lines(l)
       insert_lines(t, n1)
       self.selections ++:= s
+      return self
    end
 
    private move_cursor_on_key(e, line)
