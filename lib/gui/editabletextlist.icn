@@ -13,6 +13,7 @@ import
    lang, 
    util, 
    ipl.lists,
+   ipl.strings,
    graphics
 
 #
@@ -239,9 +240,9 @@ class EditableTextList(LineBasedScrollArea)
          if type(!l) ~== t then
             runerr("Type of log list inconsistent with contents - must be all string or all ucs")
 
+         every put(self.contents, !l)
          if is_live() then {
             clear_mark()
-            every put(self.contents, !l)
             update_view_list(*self.contents - *l + 1, 0, *l)
             if (n := *self.contents - \max) > 0 then {
                every 1 to n do
@@ -257,10 +258,52 @@ class EditableTextList(LineBasedScrollArea)
             ensure_valid_cursor()
             constrain_cursor()
          } else {
-            every put(self.contents, !l)
             while *self.contents > \max do
                pop(self.contents)
          }
+      }
+      return self
+   end
+
+   # Similar to `log()`, but log a string, rather than a list of
+   # lines.  The string is separated into lines and the first is
+   # appended to the last content line; the remaining lines (if any)
+   # are appended to the content.
+   #
+   public log_str(s, max)
+      local t, n, fl
+
+      # Check type unless we have empty contents.
+      (*self.contents = 1 & *self.contents[1] = 0) | type(self.contents[1]) == type(s) |
+            runerr("Type of log_str string inconsistent with contents - must be all string or all ucs")
+
+      n := *contents
+      every t := separate_lines(s) do {
+         if /fl then {
+            contents[-1] ||:= t
+            fl := 1
+         } else
+            put(contents, t)
+      }
+      if is_live() then {
+         clear_mark()
+         update_view_list(n, 1, 1 + *contents - n)
+         if (n := *self.contents - \max) > 0 then {
+            every 1 to n do
+               pop(self.contents)
+            update_view_list(1, n, 0)
+         }
+         invalidate_line_count()
+         invalidate_subject_width()
+         compute_and_invalidate()
+         undo_manager.clear()
+         goto_last(get_line_count())
+         # Make sure the cursor is valid, and on the screen.
+         ensure_valid_cursor()
+         constrain_cursor()
+      } else {
+         while *self.contents > \max do
+            pop(self.contents)
       }
       return self
    end
