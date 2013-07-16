@@ -182,7 +182,7 @@ class EditableTextList(LineBasedScrollArea)
       return self
    end
    
-   private ensure_valid_cursor()
+   public ensure_valid_cursor()
       self.cursor_y >:= *self.contents
       self.cursor_x >:= *self.contents[self.cursor_y] + 1
    end
@@ -312,7 +312,7 @@ class EditableTextList(LineBasedScrollArea)
    # Move cursor so that it is in the text area, if possible.  May not be possible
    # if cursor at end of line to the left of the text area.
    #     
-   private constrain_cursor()
+   public constrain_cursor()
       local vi, v, s, i, ax, info
       vi := get_view_list_index()
       info := get_line_info() | fail
@@ -363,7 +363,7 @@ class EditableTextList(LineBasedScrollArea)
    #
    # Move the text area displayed so that the cursor is on the screen.
    #
-   private constrain_line()
+   public constrain_line()
       local vi, v, s, i, ax
       vi := get_view_list_index()
 
@@ -531,7 +531,7 @@ class EditableTextList(LineBasedScrollArea)
          (i := get_line_info()) then 
       {
          t := [get_view_list_index(old_cursor_x, old_cursor_y),
-               get_view_list_index(cursor_x, cursor_y)]
+               get_view_list_index()]
          if not has_region() & /old_has_region then
             # No regions, so just invalidate cursor lines
             every invalidate_line(!t, i)
@@ -582,7 +582,7 @@ class EditableTextList(LineBasedScrollArea)
    # Given a ViewLine v and a pixel offset d in that line (which may extend past the end),
    # calculate the new cursor_x and cursor_y.
    #
-   private set_cursor_in_view_line(v, d)
+   public set_cursor_in_view_line(v, d)
       local s, i, t
       self.cursor_y := v.index
       s := v.str
@@ -596,7 +596,7 @@ class EditableTextList(LineBasedScrollArea)
    #
    # Set cursor from the given event
    #
-   private set_cursor_from_pos(e)
+   public set_cursor_from_pos(e)
       set_cursor_in_view_line(self.view_list[get_nearest_line_to_pointer(e)],
                               e.x - self.tx + get_area_x())
    end
@@ -830,7 +830,7 @@ class EditableTextList(LineBasedScrollArea)
       end_handle(e)
    end
 
-   private adjust_view_list_index(off)
+   public adjust_view_list_index(off)
       local e1, e2, v1, v2
       v1 := get_view_list_index()
       v2 := v1 + off
@@ -1095,7 +1095,7 @@ class EditableTextList(LineBasedScrollArea)
             else
                (cursor_on + 1) % 3
             if (t | cursor_on) = 2 then
-               invalidate_line(get_view_list_index(cursor_x, cursor_y))
+               invalidate_line(get_view_list_index())
          }
          cursor_ticker.sleep(Gui.CURSOR_BLINK)
       }
@@ -1103,7 +1103,7 @@ class EditableTextList(LineBasedScrollArea)
 
    public focus_changed(e) 
       if is_live() then
-         invalidate_line(get_view_list_index(cursor_x, cursor_y))
+         invalidate_line(get_view_list_index())
    end
 
    public draw()
@@ -1186,7 +1186,7 @@ class EditableTextList(LineBasedScrollArea)
    # fail if the ranges don't intersect.  Example:
    # range(2,20,10,30) = [10,20]
    # 
-   private range(f1, t1, f2, t2)
+   public static range(f1, t1, f2, t2)
       if f1 < f2 then {
          if t1 >= f2 then
             return [f2, min(t1, t2)]
@@ -1218,7 +1218,7 @@ class EditableTextList(LineBasedScrollArea)
    # Return the index into view_list containing the
    # content position x, y.  Binary search is used.
    # 
-   private get_view_list_index(x, y)
+   public get_view_list_index(x, y)
       local i, j, mid, v
       /x := self.cursor_x
       /y := self.cursor_y
@@ -1245,7 +1245,7 @@ class EditableTextList(LineBasedScrollArea)
    #
    # Create the view_list from the contents.
    # 
-   private create_view_list()
+   public create_view_list()
       local spl
       spl := get_split(predict_view_width(w, vsb) - 2 * Gui.TEXT_INSET)
       view_list := spl.lines
@@ -1257,12 +1257,12 @@ class EditableTextList(LineBasedScrollArea)
    # Clear the view list, forcing it to be re-created next
    # time it's needed.
    # 
-   private clear_split_list()
+   public clear_split_list()
       last_split := &null
       clear_view_list()
    end
 
-   private clear_view_list()
+   public clear_view_list()
       view_list := long_line := &null
       invalidate_subject_width()
       invalidate_line_count()
@@ -1271,7 +1271,7 @@ class EditableTextList(LineBasedScrollArea)
    #
    # Run through the view list looking for the longest line.
    # 
-   private find_long_line()
+   public find_long_line()
       local v
       long_line := view_list[1]
       every v := !view_list do {

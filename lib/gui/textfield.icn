@@ -328,7 +328,7 @@ class TextField(Component)
    #
    # Move the text area displayed so that the cursor is on the screen.
    #
-   private constrain_line()
+   public constrain_line()
       local s, i
       s := get_view()
       i := self.cbwin.text_width(s[1:self.cursor])
