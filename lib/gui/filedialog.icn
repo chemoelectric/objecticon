@@ -81,8 +81,9 @@ class FileDialog(Dialog)
       file.set_selection_list(init_files).set_selection(1)
       filter.set_selection_list(init_filters).set_selection(1)
 
-      dlist.set_draggable_cursor(&yes)
-      dlist.set_selection_on_key_moves(&no)
+      dlist.
+         set_draggable_cursor(&yes).
+         set_selection_on_key_moves(&no)
       flist.set_draggable_cursor(&yes)
 
       pos_table := table()
@@ -118,9 +119,10 @@ class FileDialog(Dialog)
    public synch_file()
       local i
       if i := flist.find_line(file.get_contents()) then {
-         flist.set_cursor(i)
-         flist.set_selections([i])
-         flist.center_line(i)
+         flist.
+            set_cursor(i).
+            set_selections([i]).
+            center_line(i)
       }
    end
 
@@ -375,22 +377,26 @@ class FileDialog(Dialog)
       #
       l := list_directory(s)
 
-      dlist.set_contents(l[1])
-      dlist.clear_selections()
-      if e := \pos_table[s] then {
-         dlist.set_cursor(e[1])
-         dlist.goto_first(e[2])
-      } else {
-         dlist.goto_first(1)
-         dlist.set_area_x(0)
-         dlist.set_cursor(1)
-      }
+      dlist.
+         set_contents(l[1]).
+         clear_selections()
 
-      flist.set_contents(l[2])
-      flist.goto_first(1)
-      flist.set_area_x(0)
-      flist.clear_selections()
-      flist.set_cursor(1)
+      if e := \pos_table[s] then
+         dlist.
+           set_cursor(e[1]).
+           goto_first(e[2])
+      else
+         dlist.
+            goto_first(1).
+            set_area_x(0).
+            set_cursor(1)
+
+      flist.
+         set_contents(l[2]).
+         goto_first(1).
+         set_area_x(0).
+         clear_selections().
+         set_cursor(1)
    end
 
    #

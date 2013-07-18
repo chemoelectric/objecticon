@@ -199,10 +199,11 @@ class DirectoryDialog(Dialog)
          load_subtree(n)
          n.set_expanded(&yes)
       }
-      tree.tree_structure_changed()
-      tree.object_set_selections([n])
-      tree.object_set_cursor(n)
-      tree.center_line(tree.find_line(n))
+      tree.
+         tree_structure_changed().
+         object_set_selections([n]).
+         object_set_cursor(n).
+         center_line(tree.find_line(n))
       ps := p.str()
       if Files.is_directory(ps) then
          clear_msg()
