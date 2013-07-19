@@ -912,9 +912,18 @@ class Img(Image)
       local pm, pm_menu, url
       url := if img_url.scheme == u"cache" then browser.page_url else img_url
       if pm_menu := browser.create_image_menu(url, img_name, img_data, wrote) then {
+         set_highlight(wrote)
+         browser.clear_msg(self)
+         wrote := &null
+         set_pointer()
          pm := PopupMenu()
+         pm.connect(on_popup_closed, Event.POPUP_CLOSED)
          pm.popup(parent_dialog, pm_menu, e.x, e.y)
       }
+   end
+
+   private on_popup_closed()
+      set_highlight()
    end
 
    private handle_lrelease(e, src)
@@ -922,6 +931,7 @@ class Img(Image)
          set_highlight()
          browser.link_left_clicked(wrote)
       }
+      held := &null
    end
 
    private handle_mrelease(e)
@@ -929,6 +939,7 @@ class Img(Image)
          set_highlight()
          browser.link_middle_clicked(wrote)
       }
+      held := &null
    end
 
    private handle_form_lrelease(e, src)
@@ -937,9 +948,9 @@ class Img(Image)
    end
 
    private handle_exit(e)
+      *parent_dialog.held = 0 | fail
       if \wrote then {
          browser.clear_msg(self)
-         set_highlight()
          wrote := &null
          set_pointer()
       }
@@ -1035,7 +1046,7 @@ class Img(Image)
          set_pointer("hand1")
          connect(self.handle_form_lrelease, Event.MOUSE_LEFT_RELEASE)
       } else if \map_id | \context.url then {
-         connect(self.handle_in_chain, Dialog.IN_POINT_CHAIN)
+         connect(self.handle_in_chain, Event.IN_POINT_CHAIN)
          connect(self.handle_lmdrag, Event.MOUSE_LEFT_DRAG)
          connect(self.handle_lmpress, Event.MOUSE_LEFT_PRESS)
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
@@ -4598,7 +4609,7 @@ class Browser(ComponentScrollArea)
       local c
       is(parent_dialog.point_chain[1], TextFlow | TblContent | Tbl) | fail
       every c := !parent_dialog.point_chain do {
-         if is(c, TextFlow) & c.wants_press(e) then
+         if is(c, TextFlow) & c.wants_rpress(e) then
             fail
       }
       return
@@ -4608,7 +4619,7 @@ class Browser(ComponentScrollArea)
       local c
       is(parent_dialog.point_chain[1], Img | TextFlow | TblContent | Tbl) | fail
       every c := !parent_dialog.point_chain do {
-         if is(c, TextFlow) & c.wants_press(e) then
+         if is(c, TextFlow) & c.wants_lpress(e) then
             fail
          if is(c, Img) & c.wants_lpress(e) then
             fail
