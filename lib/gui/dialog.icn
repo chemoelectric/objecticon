@@ -32,7 +32,6 @@ class Dialog(Component)
       TOOLTIP_Y_OFFSET,
       FOCUS_UP,                  # Set of events to move focus
       FOCUS_DOWN,
-      IN_POINT_CHAIN,
       pointer_grab_stack,
       keyboard_grab_stack
 
@@ -756,7 +755,7 @@ class Dialog(Component)
       crossing := elementset(point_chain)
       fire_list(t -- crossing, Event.MOUSE_EXIT, e)
       fire_list(crossing -- t, Event.MOUSE_ENTER, e)
-      fire_list(point_chain, IN_POINT_CHAIN, e)      
+      fire_list(point_chain, Event.IN_POINT_CHAIN, e)      
    end
 
    public generate_events(e)
@@ -1337,7 +1336,6 @@ class Dialog(Component)
       DEFAULT_POINTER := "left ptr"
       FOCUS_UP := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
       FOCUS_DOWN := set("\t", Key.RIGHT, Key.DOWN)
-      IN_POINT_CHAIN := "in point chain"
       ROOT_WATTRIBS := table()
       pointer_grab_stack := []
       keyboard_grab_stack := []
