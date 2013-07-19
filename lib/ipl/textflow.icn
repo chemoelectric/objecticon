@@ -1185,6 +1185,7 @@ class TextFlow(Component)
 
    private handle_lpress(e)
       local c, t
+      *parent_dialog.held = 1 | fail
       if \wrote then {
          set_highlight(wrote)
          held := wrote
@@ -1198,6 +1199,7 @@ class TextFlow(Component)
    end
 
    private handle_mpress(e)
+      *parent_dialog.held = 1 | fail
       if \wrote then {
          set_highlight(wrote)
          held := wrote
@@ -1216,6 +1218,7 @@ class TextFlow(Component)
 
    private handle_rpress(e)
       local pm, pm_menu
+      *parent_dialog.held = 1 | fail
       if pm_menu := browser.create_link_menu(\wrote) then {
          set_highlight(wrote)
          browser.clear_msg(self)

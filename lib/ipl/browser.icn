@@ -910,6 +910,7 @@ class Img(Image)
 
    private handle_rpress(e)
       local pm, pm_menu, url
+      *parent_dialog.held = 1 | fail
       url := if img_url.scheme == u"cache" then browser.page_url else img_url
       if pm_menu := browser.create_image_menu(url, img_name, img_data, wrote) then {
          set_highlight(wrote)
@@ -974,6 +975,7 @@ class Img(Image)
    end
 
    private handle_lmpress(e)
+      *parent_dialog.held = 1 | fail
       if \wrote then {
          set_highlight(wrote)
          held := wrote
@@ -4352,6 +4354,7 @@ class Browser(ComponentScrollArea)
    end
 
    private handle_lpress(e)
+      *parent_dialog.held = 1 | fail
       /mark_x | fail
       running === 0 | fail
       can_lpress(e) | fail
@@ -4629,6 +4632,7 @@ class Browser(ComponentScrollArea)
 
    private handle_rpress(e)
       local pm, pm_menu
+      *parent_dialog.held = 1 | fail
       can_rpress(e) | fail
       if pm_menu := create_page_menu() then {
          pm := PopupMenu()
