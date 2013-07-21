@@ -20,10 +20,14 @@ class FileDialog(Dialog)
       home_button, 
       new_button, 
       refresh_button, 
+      prev_button,
+      next_button,
       up_button, 
       dir, 
       dlist, 
       flist, 
+      history,
+      history_pos,
       pos_table,
       cancel_button, 
       file, 
@@ -94,10 +98,6 @@ class FileDialog(Dialog)
       set_focus(file.find_focus())
       win.set_min_size(win.get_width(), win.get_height())
       goto_dir(dir.get_contents())
-      # If we have a filename in the field, select it in the file list,
-      # if it's there.
-      synch_file()
-      check_existing()
    end
 
    public check_existing()
@@ -272,7 +272,7 @@ class FileDialog(Dialog)
    end
 
    public on_dlist()
-      goto_dir(get_dir_path().child(dlist.object_get_selections()[1]).str(), 1)
+      goto_dir(get_dir_path().child(dlist.object_get_selections()[1]).str())
    end
 
    public on_flist()
@@ -286,39 +286,55 @@ class FileDialog(Dialog)
 
    public on_dir(ev)
       if member(EditList.NAVIGATE, ev.code) then
-         goto_dir(dir.get_contents(), 1)
-      check_existing()
+         goto_dir(dir.get_contents())
    end
 
    public on_filter(ev)
-      if member(EditList.NAVIGATE, ev.code) then {
+      if member(EditList.NAVIGATE, ev.code) then
          load_dir()
-         synch_file()
-      }
    end
 
    public on_show_hidden_cb(ev)
       pos_table := table()
       load_dir()
-      synch_file()
    end
 
    public on_up_button(ev)
       local t
       t := self.get_dir_path()
       if t.size() > 1 then
-         goto_dir(t.parent().str(), 1)
+         goto_dir(t.parent().str())
       else
          msg("At root")
    end
 
    public on_home_button(ev)
-      goto_dir(Files.get_home(), 1)
+      goto_dir(Files.get_home())
    end
 
    public on_refresh_button(ev)
       load_dir()
-      synch_file()
+   end
+
+   public on_next_button(ev)
+      local s
+      (history_pos < *history) | fail
+      s := history[history_pos +:= 1]
+      update_grey()
+      goto_dir(s, &yes)
+   end
+   
+   public on_prev_button(ev)
+      local s
+      (history_pos > 1) | fail
+      s := history[history_pos -:= 1]
+      update_grey()
+      goto_dir(s, &yes)
+   end
+
+   public update_grey()
+      prev_button.set_is_shaded(if history_pos > 1 then &no else &yes)
+      next_button.set_is_shaded(if history_pos < *history then &no else &yes)
    end
 
    public on_new_button(ev)
@@ -328,7 +344,7 @@ class FileDialog(Dialog)
       if \d.okay then {
          s := self.get_dir_path().child(d.result).str()
          if Files.mkdir(s) then
-            goto_dir(s, 1)
+            goto_dir(s)
          else
             msg("mkdir failed: " || &why)
       }
@@ -355,11 +371,16 @@ class FileDialog(Dialog)
       msg("")
    end
 
-   public goto_dir(d, cf)
+   public goto_dir(d, nav)
       dir.set_contents(FilePath(d).canonical().liberal_ucs())
-      if \cf then
-         file.set_contents(u"")
       load_dir()
+      if /nav then {
+         while *history > history_pos do
+            pull(history)
+         put(history, dir.get_contents())
+         history_pos +:= 1
+         update_grey()
+      }
    end
 
    public on_dlist_cursor(ev)
@@ -397,6 +418,9 @@ class FileDialog(Dialog)
          set_area_x(0).
          clear_selections().
          set_cursor(1)
+
+      synch_file()
+      check_existing()
    end
 
    #
@@ -432,11 +456,14 @@ class FileDialog(Dialog)
       cast(self,Dialog).new()
       self.setup()
       existing_file_mode := IGNORE
+      history := []
+      history_pos := 0
+      update_grey()
       return
    end
 
    private setup()
-      local paint_2, panel_2, layout_7, paint_7, paint_11, layout_4, paint_4, split_content_1, split_content_2, panel_4, layout_9, paint_1, paint_9, split_1, layout_6, paint_6, paint_10, layout_3, paint_3, panel_3, paint, layout_8, paint_8, paint_5
+      local paint_2, panel_2, paint_14, layout_7, paint_7, paint_11, layout_4, paint_4, split_content_1, split_content_2, panel_4, layout_9, paint_1, paint_9, split_1, paint_13, layout_6, paint_6, paint_10, layout_3, paint_3, panel_3, paint_15, paint, layout_8, paint_8, paint_12, paint_5
       self.set_label("Select file")
       self.set_resize(&yes)
       paint_1 := ImagePaint().
@@ -483,6 +510,28 @@ class FileDialog(Dialog)
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_7)
+      paint_12 := ImagePaint().
+         set_cache("gui.PREV_24")
+      paint_13 := TextPaint("Prev")
+      prev_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_13).
+         connect(self.on_prev_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_12)
+      paint_14 := ImagePaint().
+         set_cache("gui.NEXT_24")
+      paint_15 := TextPaint("Next")
+      next_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_15).
+         connect(self.on_next_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_14)
       dir := EditList().
          set_size("150").
          set_align(Align.L, Align.C).
@@ -507,6 +556,8 @@ class FileDialog(Dialog)
          add(up_button).
          add(new_button).
          add(refresh_button).
+         add(prev_button).
+         add(next_button).
          add(dir)
       self.add(panel_4)
       dlist := TextList().
