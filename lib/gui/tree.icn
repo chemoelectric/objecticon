@@ -19,6 +19,7 @@ class Tree(SelectableScrollArea)
    public 
       root_node,
       default_icon_paint,
+      fixed_col_w,
       col_w,
       img_w,
       img_h,
@@ -27,7 +28,7 @@ class Tree(SelectableScrollArea)
       last_expanded,
       show_root_flag,
       show_root_handles_flag
-
+   
    public calculate_line_height()
       local res
       if /col_w then
@@ -44,8 +45,14 @@ class Tree(SelectableScrollArea)
    public calculate_subject_width()
       local mw, n
       mw := 0
-      every n := !self.contents do
-         mw <:= col_w * n.depth + col_w + view.cbwin.text_width(n.label)
+      if /fixed_col_w then {
+         every n := !self.contents do
+            mw <:= col_w * n.depth + col_w + view.cbwin.text_width(n.label)
+      } else {
+         every n := !self.contents do
+            mw <:= col_w * n.depth + view.cbwin.text_width(n.label)
+      }
+
       return mw + 2 * Gui.TEXT_INSET
    end
 
@@ -160,24 +167,34 @@ class Tree(SelectableScrollArea)
       return self
    end
 
+   #
+   # Use a fixed column width, and let the node draw the icons
+   #
+   public set_fixed_col_w(w)
+      self.fixed_col_w := w
+      return self
+   end
+
    public compute_img_wh()
       local n, icon_paint
-      img_w := img_h := 0
+      if /fixed_col_w then {
+         img_w := img_h := 0
+         every n := Seq{(\root_node).traverse_all_preorder()} do {
+            icon_paint := \n.icon_paint | default_icon_paint
+            img_w <:= icon_paint[1].w
+            img_w <:= icon_paint[2].w
+            img_w <:= icon_paint[3].w
+            img_h <:= icon_paint[1].h
+            img_h <:= icon_paint[2].h
+            img_h <:= icon_paint[3].h
+         }
 
-      every n := Seq{(\root_node).traverse_all_preorder()} do {
-         icon_paint := \n.icon_paint | default_icon_paint
-         img_w <:= icon_paint[1].w
-         img_w <:= icon_paint[2].w
-         img_w <:= icon_paint[3].w
-         img_h <:= icon_paint[1].h
-         img_h <:= icon_paint[2].h
-         img_h <:= icon_paint[3].h
-      }
-
-      #
-      # The column width is slightly wider than the bitmap width
-      #
-      col_w := img_w + 4
+         #
+         # The column width is slightly wider than the bitmap width
+         #
+         col_w := img_w + 4
+      } else
+         col_w := fixed_col_w
    end
 
    #
@@ -268,48 +285,56 @@ class Tree(SelectableScrollArea)
       y0 := yp + lh / 2
 
       N := contents[i]
-      dashed := view.cbwin.clone().set_masked_pattern("gray")
-      lp := xp
-      every j := 1 to N.depth - 1 do {
-         if N.draw_line[j] == ("f"|"d") then
-            dashed.fill_rectangle(lp + col_w / 2, yp, 1, lh)
-         
-         lp +:= col_w
-      }
-      if N.depth > 0 then {
-         if N.draw_line[N.depth] == "d" then
-            dashed.fill_rectangle(lp + col_w / 2, y0, 1, lh / 2)
-         else if N.draw_line[N.depth] == "f" then
-            dashed.fill_rectangle(lp + col_w / 2, yp, 1, lh)
-         else if N.draw_line[N.depth] == "u" then
-            dashed.fill_rectangle(lp + col_w / 2, yp, 1, lh / 2 + 1)
+      use {
+         dashed := view.cbwin.clone().set_masked_pattern("gray"),
+         {
+            lp := xp
+            every j := 1 to N.depth - 1 do {
+               if N.draw_line[j] == ("f"|"d") then
+                  dashed.fill_rectangle(lp + col_w / 2, yp, 1, lh)
+               
+               lp +:= col_w
+            }
+            if N.depth > 0 then {
+               if N.draw_line[N.depth] == "d" then
+                  dashed.fill_rectangle(lp + col_w / 2, y0, 1, lh / 2)
+               else if N.draw_line[N.depth] == "f" then
+                  dashed.fill_rectangle(lp + col_w / 2, yp, 1, lh)
+               else if N.draw_line[N.depth] == "u" then
+                  dashed.fill_rectangle(lp + col_w / 2, yp, 1, lh / 2 + 1)
 
-         dashed.fill_rectangle(lp + col_w / 2, y0, col_w + 1, 1)
+               dashed.fill_rectangle(lp + col_w / 2, y0, col_w + 1, 1)
 
-         lp +:= col_w
-      }
+               lp +:= col_w
+            }
 
-      icon_paint := \N.icon_paint | default_icon_paint
-      if (*N.children = 0) & /N.always_expandable_flag then
-         img := icon_paint[3]
-      else {
-         if \N.is_expanded_flag then {
-            img := icon_paint[2]
-            little := minus
-            if *N.children > 0 then
-               dashed.fill_rectangle(lp + col_w / 2, yp + lh / 2, 1, lh / 2)
-         } else {
-            img := icon_paint[1]
-            little := plus
+            icon_paint := \N.icon_paint | default_icon_paint
+            if (*N.children = 0) & /N.always_expandable_flag then
+               img := icon_paint[3]
+            else {
+               if \N.is_expanded_flag then {
+                  img := icon_paint[2]
+                  little := minus
+                  if *N.children > 0 then
+                     dashed.fill_rectangle(lp + col_w / 2, yp + lh / 2, 1, lh / 2)
+               } else {
+                  img := icon_paint[1]
+                  little := plus
+               }
+               # Erase first as the little +/- are not opaque images, and we may have drawn a line here.
+               view.cbwin.erase_area(lp - col_w / 2 - plus.w / 2, y0 - plus.h / 2, plus.w, plus.h)
+               little.draw(view.cbwin, lp - col_w / 2 - plus.w / 2, y0 - plus.h / 2)
+            }
+            if /fixed_col_w then {
+               (\img).draw(view.cbwin, lp + col_w / 2 - img.w / 2, y0 - img.h / 2)
+               draw_node_data(N, lp + col_w, yp, lh)
+               draw_line_sel_cur(lp + col_w, yp, get_node_data_width(N), lh, sel, cur, hi)
+            } else {
+               draw_node_data(N, lp, yp, lh)
+               draw_line_sel_cur(lp, yp, get_node_data_width(N), lh, sel, cur, hi)
+            }
          }
-         # Erase first as the little +/- are not opaque images, and we may have drawn a line here.
-         view.cbwin.erase_area(lp - col_w / 2 - plus.w / 2, y0 - plus.h / 2, plus.w, plus.h)
-         little.draw(view.cbwin, lp - col_w / 2 - plus.w / 2, y0 - plus.h / 2)
       }
-      (\img).draw(view.cbwin, lp + col_w / 2 - img.w / 2, y0 - img.h / 2)
-      draw_node_data(N, lp + col_w, yp, lh)
-      draw_line_sel_cur(lp + col_w, yp, get_node_data_width(N), lh, sel, cur, hi)
-      dashed.close()
    end
 
    public new()
