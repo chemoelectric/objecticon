@@ -134,6 +134,22 @@ class NullPaint(Paint)
    end
 end
 
+# A simple {Paint} instance which has the given size and draws nothing.
+#
+class EmptyPaint(Paint)
+   public initially()
+   end
+
+   public draw(W, x, y)
+   end
+
+   public new(w, h)
+      self.w := w
+      self.h := h
+      return
+   end
+end
+
 # A {Paint} instance which draws its output using a {Grid}.  The input is a format
 # string specifying the grid and its contents.
 #
