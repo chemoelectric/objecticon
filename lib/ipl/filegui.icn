@@ -1,0 +1,209 @@
+package ipl.filegui
+
+import
+   ipl.sort,
+   gui,
+   io
+
+class ColorFilesItemPaint(WithCloneItemPaint)
+   protected make_clone(W)
+      return W.clone()
+   end
+
+   public get_width(W, data)
+      return W.text_width(data[1])
+   end
+
+   public get_constant_height(W)
+      return W.get_font_height()
+   end
+
+   public get_size(W, data)
+      return Size(W.text_width(data[1]), W.get_font_height())
+   end
+
+   public draw(W, data, x, y)
+      local st, color
+      st := data[2]
+      color := case st.mode_str[1] of {
+         "d" : "purple"
+         "l" : "cyan"
+         "p" : "orange"
+         "s" : "dark gray"
+         "b" : "gray"
+         "c" : "gray"
+         default : {
+            if st.mode_str[4] == "x" then
+               "green"
+            else case map(string(Files.get_extension(data[1]))) of {
+               "cmd"|"exe"|"com"|"btm"|"bat" : "green"
+               "tar"|"tgz"|"arj"|"taz"|"lzh"|"zip"|"z"|"Z"|"gz"|"xz"|"bz2"|"rar" : "red"
+               "jpg"|"jpeg"|"png"|"gif"|"bmp"|"xbm"|"xpm": "blue"
+               "mp4"|"flv"|"avi"|"wmv"|"webm"|"3gp"|"mpeg"|"mpg"|"m4v"|"mkv": "pink" 
+            }
+         }
+      } | "black"
+      W := get_clone(W).set_fg(color)
+      draw_string_ex(W, x, y, data[1])
+   end
+end
+
+$load PDF_16 "fileicons/pdf.png"
+$load IMAGE_16 "fileicons/image.png"
+$load VIDEO_16 "fileicons/video.png"
+$load ARCHIVE_16 "fileicons/archive.png"
+$load AUDIO_16 "fileicons/audio.png"
+$load EXE_16 "fileicons/exe.png"
+$load CHARDEVICE_16 "fileicons/chardevice.png"
+$load BLOCKDEVICE_16 "fileicons/blockdevice.png"
+$load SYMLINK_16 "fileicons/symlink.png"
+$load SOCKET_16 "fileicons/socket.png"
+$load PIPE_16 "fileicons/pipe.png"
+$load HTML_16 "fileicons/html.png"
+
+class IconFilesItemPaint(ItemPaint)
+   public static const ICON_SIZE
+
+   private static init()
+      ICON_SIZE := 16
+      ImageCache.name_image("icn.PDF_16", PDF_16)
+      ImageCache.name_image("icn.IMAGE_16", IMAGE_16)
+      ImageCache.name_image("icn.VIDEO_16", VIDEO_16)
+      ImageCache.name_image("icn.ARCHIVE_16", ARCHIVE_16)
+      ImageCache.name_image("icn.AUDIO_16", AUDIO_16)
+      ImageCache.name_image("icn.EXE_16", EXE_16)
+      ImageCache.name_image("icn.CHARDEVICE_16", CHARDEVICE_16)
+      ImageCache.name_image("icn.BLOCKDEVICE_16", BLOCKDEVICE_16)
+      ImageCache.name_image("icn.SYMLINK_16", SYMLINK_16)
+      ImageCache.name_image("icn.SOCKET_16", SOCKET_16)
+      ImageCache.name_image("icn.PIPE_16", PIPE_16)
+      ImageCache.name_image("icn.HTML_16", HTML_16)
+   end
+
+   public get_width(W, data)
+      return ICON_SIZE + Gui.TEXT_INSET + W.text_width(data[1])
+   end
+
+   public get_constant_height(W)
+      return max(W.get_font_height(), ICON_SIZE)
+   end
+
+   public get_size(W, data)
+      return Size(get_width(W, data), get_constant_height(W))
+   end
+
+   public draw(W, data, x, y, w, h)
+      local st, i, k
+      st := data[2]
+      k := case st.mode_str[1] of {
+         "d" : "gui.CLOSED_FOLDER"
+         "l" : "icn.SYMLINK_16"
+         "s" : "icn.SOCKET_16"
+         "p" : "icn.PIPE_16"
+         "b" : "icn.BLOCKDEVICE_16"
+         "c" : "icn.CHARDEVICE_16"
+         default : {
+            if st.mode_str[4] == "x" then
+               "icn.EXE_16"
+            else case map(string(Files.get_extension(data[1]))) of {
+               "pdf": "icn.PDF_16"
+               "cmd"|"exe"|"com"|"btm"|"bat" : "icn.EXE_16"
+               "tar"|"tgz"|"arj"|"taz"|"lzh"|"zip"|"z"|"Z"|"gz"|"xz"|"bz2"|"rar" : "icn.ARCHIVE_16"
+               "jpg"|"jpeg"|"png"|"gif"|"bmp"|"xbm"|"xpm": "icn.IMAGE_16"
+               "mp4"|"flv"|"avi"|"wmv"|"webm"|"3gp"|"mpeg"|"mpg"|"m4v"|"mkv": "icn.VIDEO_16"
+               "mp3"|"wav"|"mid"|"rm": "icn.AUDIO_16"
+               "htm"|"html": "icn.HTML_16"
+            }
+         }
+      } | "gui.FILE"
+      i := ImageCache.get(k) | syserr("Bad cache key in IconFilesItemPaint")
+      i.copy_to(,,,, W, x, y + (h - ICON_SIZE) / 2)
+      x +:= ICON_SIZE + Gui.TEXT_INSET
+      w -:= ICON_SIZE + Gui.TEXT_INSET
+      draw_string_ex(W, x, y, limit_text(W, data[1], w))
+   end
+end
+
+class FileSuggestField(SuggestField)
+   public
+      cwd,
+      prefix,
+      choose_mode
+
+   public set_choose_mode(x)
+      self.choose_mode := x
+      return self
+   end
+
+   public static map1(data)
+      return map(data[1])
+   end
+
+   public set_cwd(d)
+      self.cwd := d
+      return self
+   end
+
+   private match_mode(l)
+      if l[1] == (u"." | u"..") then
+         fail
+      return /choose_mode | any(choose_mode, l[2].mode_str)
+   end
+
+   protected do_request()
+      local s, path, l, fl, t, i
+      if *contents = 0 then
+         return []
+      s := contents
+      every i := upto('/', s)
+      prefix := if /i then "" else s[1+:i]
+
+      if s[1] == u"~" then {
+         if *s = 1 then
+            return []
+         s := ucs(Files.get_home()) || s[2:0] | fail
+      }
+
+      path := FilePath(s)
+      if not path.is_absolute() then
+         path := FilePath(cwd).append(path)
+
+      l := []
+      if s[-1] == u"/" then {
+         fl := Files.ucs_list(path.str()) | fail
+         fl := isort(fl, map1)
+         every t := !fl do {
+            if match_mode(t) then
+               put(l, t)
+         }
+      } else {
+         fl := Files.ucs_list(path.parent().str()) | fail
+         fl := isort(fl, map1)
+         s := path.get(-1)
+         every t := !fl do {
+            if match_mode(t) & match(s, t[1]) then
+               put(l, t)
+         }
+      }
+      return l
+   end
+
+   public convert_element(o)
+      return prefix || text(o[1])
+   end
+
+   public create_popup()
+      return ItemPaintList().
+         set_item_paint(IconFilesItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                            set_x_align(Align.L))
+   end
+
+   public new()
+      cast(self,SuggestField).new()
+      cwd := Files.get_home()
+      set_direction(Direction.DOWN)
+      return
+   end
+end

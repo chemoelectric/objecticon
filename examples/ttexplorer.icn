@@ -1,7 +1,14 @@
-import gui, io, ipl.sort, util, graphics
+import gui, io, ipl.sort, util, graphics, ipl.filegui
 
 class TTExplorer(Dialog)
-   public bits_col, date_col, file_col, size_col, tt, tree
+   public
+      bits_col,
+      date_col,
+      file_col,
+      size_col,
+      tt,
+      tree
+
    #
    # Given a Node n, get the full file path it represents by traversing
    # up the tree structure to the root.
@@ -10,7 +17,7 @@ class TTExplorer(Dialog)
       local l
       l := []
       repeat {
-         push(l, n.get_label())
+         push(l, n.get_label()[1])
          n := n.get_parent() | break
       }
       return FilePath.from_list(l).str()
@@ -57,7 +64,7 @@ class TTExplorer(Dialog)
       every e := !!l do {
          if t := ucs(e[1]) then {
             r1 := TreeTableNode()
-            r1.set_label(t)
+            r1.set_label(e)
             if e[2].mode_str[1] == "d" then
                r1.set_always_expandable(&yes)
             r1.set_contents([Format.numeric_to_string(e[2].size, 0, ','), fmt_time(e[2].mtime), e[2].mode_str])
@@ -70,55 +77,58 @@ class TTExplorer(Dialog)
    # Read a directory.
    #
    public get_directory_list(s)
-      local e, dir_list, file_list, l
+      local e, dir_list, file_list, l, t
       if not(l := Files.list(s)) then {
          return [[],[]]
       }
       dir_list := []
       file_list := []
       every e := !l do {
-         if not(Files.is_hidden(e[1])) then {
+         if t := ucs(e[1]) &
+            not(Files.is_hidden(e[1])) then {
             if e[2].mode_str[1] == "d" then
-               put(dir_list, e)
+               put(dir_list, [t, e[2]])
             else
-               put(file_list, e)
+               put(file_list, [t, e[2]])
          }
       }
-      return [isort(dir_list, name_sort),
-              isort(file_list, name_sort)]
-   end
-
-   private static name_sort(x)
-      return x[1]
+      return [isort(dir_list, FileDialog.map1),
+              isort(file_list, FileDialog.map1)]
    end
 
    public component_setup()
       local root_node, w
       self.setup()
       tree := tt.get_table_content()
+      tree.
+         set_fixed_col_w(20).
+         set_item_paint(IconFilesItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                            set_x_align(Align.L)).
+         connect(self.handle_tree_expansion, Event.TREE_NODE_EXPANSION)
 
+      set_size(750, 500)
       use {
          w := Window(),
          {
-            tree.set_item_paint(AbbreviatedTextItemPaint())
             size_col.set_column_width(w.text_width("000,000,000,000"))
             date_col.set_column_width(w.text_width("  MMM 00 00:00"))
             bits_col.set_column_width(w.text_width("drwxrwxrwx  "))
          }
       }
 
-      tree.connect(self.handle_tree_expansion, Event.TREE_NODE_EXPANSION)
-      root_node := TreeTableNode().set_label("/")
+      root_node := TreeTableNode().set_label([u"/", Files.stat("/")])
       load_subtree(root_node)
       tt.table_content.set_root_node(root_node)
    end
 
-   public on_text_button_1(ev)
+   private on_close_button(ev)
       dispose()
    end
 
    private setup()
-      local paint_2, paint_4, layout_1, paint_1, paint_3, paint, text_button_1
+      local paint_2, layout_1, paint_1, paint_3, paint
       self.set_resize(&yes)
       paint := TextPaint("File")
       file_col := TableColumn().
@@ -155,22 +165,12 @@ class TTExplorer(Dialog)
          add_column(date_col).
          add_column(bits_col)
       self.add(tt)
-      paint_4 := TextPaint("Quit")
-      text_button_1 := TextButton().
-         set_align(Align.C, Align.B).
-         clear_constraints().
-         connect(self.on_text_button_1, Event.ACTION).
-         set_toggles(&no).
-         set_paint(paint_4)
-      self.add(text_button_1)
+      self.connect(self.on_close_button, Event.WINDOW_CLOSE_BUTTON)
       layout_1 := GridLayout().
          set_extra("cells")
       self.set_layout(layout_1)
    end
 end
-
-
-
 
 procedure main()
    local d
@@ -183,7 +183,7 @@ end
 #0SCheckbox Groups|L0SGen Indent|I3SGen Main|I1SGen Component Setup|I1S
 #Gen Init Dialog|NSGen Constructor|NSDialog Struct|CCDialog|I1SWAttribs
 #|T1NSresize|I1SName|STTExplorer|SIs Component|NSWidth|NSHeight|NSChild
-#ren|L2CCanvasTable|I29SParent Canvas|X1SName|Stt|SClass Name|SItemPain
+#ren|L1CCanvasTable|I29SParent Canvas|X1SName|Stt|SClass Name|SItemPain
 #tTreeTable|SImport Name|Sgui|SClass Variable|I1SX Fix|I1SY Fix|I1SW Fi
 #x|I1SH Fix|I1SX Spec|NSY Spec|NSW Spec|S475|SH Spec|S265|SX Align|Sc|S
 #Y Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T5NSx
@@ -207,16 +207,7 @@ end
 #ame|STableColumn|SImport Name|Sgui|SClass Variable|I1SPaint|CCanvasTex
 #tPaint|I6SParent Canvas|X1SName|Spaint_3|SClass Name|STextPaint|SImpor
 #t Name|Sgui|SClass Variable|NSStr|SBits|SColumn Width|I100SInternal Al
-#ignment|Sl|SWAttribs|T0NSEvent Handlers|NCCanvasTextButton|I35SParent 
-#Canvas|X1SName|Stext_button_1|SClass Name|STextButton|SImport Name|Sgu
-#i|SClass Variable|NSX Fix|I1SY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|N
-#SW Spec|NSH Spec|NSX Align|Sc|SY Align|Sb|SZ|I0STab ord|I0SIs shaded|N
-#SWAttribs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayout delegate|NSBord
-#er opts|NSEvent Handlers|L1L2SEvent.ACTION|Son_text_button_1|SClass Va
-#riable|NSParent Component|X1SNo click focus|NSAccepts focus Flag|I1SIs
-# Checked Flag|NSIs Checkbox Flag|NSParent CheckBoxGroup|NSParent Butto
-#n Group|NSPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_4|SCl
-#ass Name|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|SQuit|SPai
-#nt down|NSInitial Focus|NSEvent Handlers|L0SLayout delegate|CCanvasGri
-#dLayout|I8SDII val|NSDOI val|NSExtra|Scells|SName|Slayout_1|SClass Nam
-#e|SGridLayout|SImport Name|Sgui|SClass Variable|NSParent|X1
+#ignment|Sl|SWAttribs|T0NSEvent Handlers|NSInitial Focus|NSEvent Handle
+#rs|L1L2SEvent.WINDOW_CLOSE_BUTTON|Son_close_button|SLayout delegate|CC
+#anvasGridLayout|I8SDII val|NSDOI val|NSExtra|Scells|SName|Slayout_1|SC
+#lass Name|SGridLayout|SImport Name|Sgui|SClass Variable|NSParent|X1

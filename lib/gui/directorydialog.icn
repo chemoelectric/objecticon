@@ -104,7 +104,7 @@ class DirectoryDialog(Dialog)
                not(Files.is_hidden(t))) then
             put(dir_list, t)
       }
-      return isort(dir_list, map)
+      return isort(dir_list, FileDialog.map1)
    end
 
    #

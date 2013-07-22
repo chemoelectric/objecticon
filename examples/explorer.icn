@@ -1,4 +1,4 @@
-import gui, ipl.sort, io, util, graphics
+import gui, ipl.filegui, ipl.sort, io, util, graphics
 
 #
 # A very simple filesystem explorer with a tree and a table.
@@ -65,7 +65,7 @@ class Explorer(Dialog)
       s := get_full_path(n)
 
       l := get_directory_list(s)[1]
-      l := isort(l, name_sort)
+      l := isort(l, FileDialog.map1)
 
       n.clear_children()
       every name := (!l)[1] do {
@@ -75,10 +75,6 @@ class Explorer(Dialog)
             n.add(r1)
          }
       }
-   end
-
-   private static name_sort(x)
-      return x[1]
    end
 
    private fmt_time(t)
@@ -100,11 +96,11 @@ class Explorer(Dialog)
       s := get_full_path(n)
 
       t := get_directory_list(s) | fail
-      t := isort(t[1] ||| t[2], name_sort)
+      t := isort(t[1] ||| t[2], FileDialog.map1)
 
       l := []
       every el := !t do {
-         put(l, [el[1], Format.numeric_to_string(el[2].size, 0, ','), fmt_time(el[2].mtime), el[2].mode_str])
+         put(l, [el, Format.numeric_to_string(el[2].size, 0, ','), fmt_time(el[2].mtime), el[2].mode_str])
       }
 
       tbl.set_contents(l)
@@ -124,18 +120,19 @@ class Explorer(Dialog)
    # Read a directory.
    #
    public get_directory_list(s)
-      local e, dir_list, file_list, l
+      local e, dir_list, file_list, l, t
       if not(l := Files.list(s)) then {
          return [[],[]]
       }
       dir_list := []
       file_list := []
       every e := !l do {
-         if not(Files.is_hidden(e[1])) then {
+         if t := ucs(e[1]) &
+            not(Files.is_hidden(e[1])) then {
             if e[2].mode_str[1] == "d" then
-               put(dir_list, e)
+               put(dir_list, [t, e[2]])
             else
-               put(file_list, e)
+               put(file_list, [t, e[2]])
          }
       }
       return [dir_list, file_list]
@@ -161,7 +158,7 @@ class Explorer(Dialog)
             set_select_mode("none").
             add_column(ItemPaintTableColumn().
                           set_label("File").
-                          set_item_paint(AbbreviatedTextItemPaint()).
+                          set_item_paint(IconFilesItemPaint()).
                           set_item_border(EmptyBorder().             # Set a border to align with the button text
                                              set_insets(Gui.TEXT_INSET,0,0,0).
                                              set_x_align(Align.L))).

@@ -101,3 +101,25 @@ class EditList(SelectionDropDown)
       return
    end
 end
+
+#
+# EditList in which changes/selection to the view/list are independent
+#
+class IndependentEditList(EditList)
+   private old_selection
+
+   # These two methods are overridden to do nothing, effectively
+   # making the list and the textfield independent, so that
+   # changes/selection from one don't affect the other.
+   public apply_selection(ev) end
+   public synch_selection() end
+
+   public start_change(e)
+      self.old_selection := self.selection
+   end
+
+   public end_change(e)
+      if self.old_selection ~=== self.selection then
+         fire(Event.SELECTION_CHANGED, e)
+   end
+end

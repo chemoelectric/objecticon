@@ -1091,7 +1091,7 @@ class BrowserTab(TabItem, BrowserUI)
       message_label.set()
    end
 
-   public browse_for_file()
+   public browse_for_file(s)
       local d
       d := parent_dialog.file_dialog
       d.set_directory(parent_dialog.last_file_dir).set_files().set_existing_file_mode(FileDialog.REQUIRE).show_modal(parent_dialog)

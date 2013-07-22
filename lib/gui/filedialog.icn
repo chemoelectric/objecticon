@@ -4,6 +4,7 @@ import
    ipl.wildcard,
    ipl.sort,
    ipl.lists,
+   ipl.filegui,
    io
 
 #
@@ -88,7 +89,13 @@ class FileDialog(Dialog)
       dlist.
          set_draggable_cursor(&yes).
          set_selection_on_key_moves(&no)
-      flist.set_draggable_cursor(&yes)
+
+      flist.
+         set_draggable_cursor(&yes).
+         set_item_paint(IconFilesItemPaint()).
+         set_item_border(EmptyBorder().
+                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                             set_x_align(Align.L))
 
       pos_table := table()
       res := &null
@@ -117,12 +124,16 @@ class FileDialog(Dialog)
    end
 
    public synch_file()
-      local i
-      if i := flist.find_line(file.get_contents()) then {
-         flist.
-            set_cursor(i).
-            set_selections([i]).
-            center_line(i)
+      local i, s
+      s := file.get_contents()
+      every i := 1 to *flist.contents do {
+         if flist.contents[i, 1] == s then {
+            flist.
+               set_cursor(i).
+               set_selections([i]).
+               center_line(i)
+            return
+         }
       }
    end
 
@@ -280,7 +291,7 @@ class FileDialog(Dialog)
       # Clicked in file list; set TextField
       #
       clear_msg()
-      file.set_contents(flist.object_get_selections()[1])
+      file.set_contents(flist.object_get_selections()[1][1])
       check_existing()
    end
 
@@ -423,6 +434,10 @@ class FileDialog(Dialog)
       check_existing()
    end
 
+   public static map1(data)
+      return map(data[1])
+   end
+
    #
    # Read a directory.
    #
@@ -445,11 +460,11 @@ class FileDialog(Dialog)
                Files.is_relative_dir(t) | put(dir_list, t)
             else {
                if (!pats).match(t) = *t + 1 then
-                  put(file_list, t)
+                  put(file_list, [t, e[2]])
             }
          }
       }
-      return [isort(dir_list, map), isort(file_list, map)]
+      return [isort(dir_list, map), isort(file_list, map1)]
    end
 
    public new()
@@ -466,6 +481,7 @@ class FileDialog(Dialog)
       local paint_2, panel_2, paint_14, layout_7, paint_7, paint_11, layout_4, paint_4, split_content_1, split_content_2, panel_4, layout_9, paint_1, paint_9, split_1, paint_13, layout_6, paint_6, paint_10, layout_3, paint_3, panel_3, paint_15, paint, layout_8, paint_8, paint_12, paint_5
       self.set_label("Select file")
       self.set_resize(&yes)
+      self.set_size(700, 500)
       paint_1 := ImagePaint().
          set_cache("gui.HOME_24")
       paint := TextPaint("Home")
@@ -579,8 +595,8 @@ class FileDialog(Dialog)
          clear_constraints().
          set_layout(layout_8).
          add(dlist)
-      flist := TextList().
-         set_size(270, 200).
+      flist := ItemPaintList().
+         set_size("270", "200").
          clear_constraints().
          set_constraint("l_inset", 0).
          set_constraint("x_fill", &yes).
@@ -589,7 +605,7 @@ class FileDialog(Dialog)
          set_constraint("y_weight", 1.0).
          connect(self.on_flist, Event.SELECTION_CHANGED).
          set_select_mode(Select.ONE).
-         set_contents([""])
+         set_contents([])
       layout_9 := GridLayout().
          set_doi(0).
          set_extra("cells")
