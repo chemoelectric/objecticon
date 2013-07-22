@@ -18,6 +18,7 @@ import
    ipl.caseless,
    ipl.timegui,
    ipl.colorgui,
+   ipl.filegui,
    ipl.numbers
 
 $load BROKEN_LINK "rpp.BROKEN_LINK_24.gif"
@@ -1285,14 +1286,14 @@ class FormBrowse(Component, FormEntry, HasAscent)
    end
 
    private on_browse()
-      tf.set_contents(ucs(browser.browse_for_file()))
+      tf.set_contents(ucs(browser.browse_for_file(tf.get_contents())))
    end
 
    public new(browser, tf_size)
       cast(self,Component).new()
       self.browser := browser
       set_layout(GridLayout().set_doi(0).set_dii(0))
-      tf := TextField().set_size(tf_size).set_contents(u"")
+      tf := FileSuggestField().set_size(tf_size).set_contents(u"")
       add(tf)
       add(TextButton().set_label("Browse...").connect(on_browse, Event.ACTION))
       return
@@ -2340,7 +2341,7 @@ abstract class BrowserUI()
    public abstract create_link_menu(url)
    public abstract create_page_menu()
    public abstract create_image_menu(url, img_name, img_data, link_url)
-   public abstract browse_for_file()
+   public abstract browse_for_file(s)
    public abstract is_visited(url)
 end
 
@@ -2800,8 +2801,8 @@ class Browser(ComponentScrollArea)
       return self
    end
 
-   public browse_for_file()
-      return (\ui).browse_for_file()
+   public browse_for_file(s)
+      return (\ui).browse_for_file(s)
    end
 
    public cancel()
