@@ -101,10 +101,10 @@ class TTExplorer(Dialog)
       self.setup()
       tree := tt.get_table_content()
       tree.
-         set_fixed_col_w(16 + 2 * Gui.TEXT_INSET).
+         set_fixed_col_w(16 + 2 * 2).
          set_item_paint(IconFilesItemPaint()).
          set_item_border(EmptyBorder().
-                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                            set_insets(2, Gui.TEXT_INSET, 0, 0).
                             set_x_align(Align.L)).
          connect(self.handle_tree_expansion, Event.TREE_NODE_EXPANSION)
 
