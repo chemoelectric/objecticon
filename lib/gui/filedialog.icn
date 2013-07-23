@@ -119,8 +119,7 @@ class FileDialog(Dialog)
 
    public on_file_content(ev)
       check_existing()
-      if member(EditList.NAVIGATE, ev.code) then
-         synch_file()
+      synch_file()
    end
 
    public synch_file()
@@ -135,6 +134,7 @@ class FileDialog(Dialog)
             return
          }
       }
+      flist.clear_selections()
    end
 
    public end_dialog()
