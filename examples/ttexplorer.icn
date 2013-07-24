@@ -97,7 +97,7 @@ class TTExplorer(Dialog)
    end
 
    public component_setup()
-      local root_node, w
+      local root_node, w, bw
       self.setup()
       tree := tt.get_table_content()
       tree.
@@ -108,13 +108,14 @@ class TTExplorer(Dialog)
                             set_x_align(Align.L)).
          connect(self.handle_tree_expansion, Event.TREE_NODE_EXPANSION)
 
-      set_size(750, 500)
+      bw := TableColumn().border.get_total_width()
+      set_size(800, 600)
       use {
          w := Window(),
          {
-            size_col.set_column_width(w.text_width("000,000,000,000"))
-            date_col.set_column_width(w.text_width("  MMM 00 00:00"))
-            bits_col.set_column_width(w.text_width("drwxrwxrwx  "))
+            size_col.set_column_width(bw + w.text_width("000,000,000,000"))
+            date_col.set_column_width(bw + w.text_width("  MMM 00 00:00"))
+            bits_col.set_column_width(bw + w.text_width("drwxrwxrwx  "))
          }
       }
 

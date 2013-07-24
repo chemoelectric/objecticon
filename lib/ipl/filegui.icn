@@ -33,7 +33,7 @@ class ColorFilesItemPaint(WithCloneItemPaint)
          "b" : "gray"
          "c" : "gray"
          default : {
-            if st.mode_str[4] == ("x" | "s") then
+            if st.mode_str[-7] == ("x" | "s") then
                "green"
             else case map(string(Files.get_extension(data[1]))) of {
                "cmd"|"exe"|"com"|"btm"|"bat" : "green"
@@ -103,7 +103,7 @@ class IconFilesItemPaint(ItemPaint)
          "b" : "icn.BLOCKDEVICE_16"
          "c" : "icn.CHARDEVICE_16"
          default : {
-            if st.mode_str[4] == ("x" | "s") then
+            if st.mode_str[-7] == ("x" | "s") then
                "icn.EXE_16"
             else case map(string(Files.get_extension(data[1]))) of {
                "pdf": "icn.PDF_16"
