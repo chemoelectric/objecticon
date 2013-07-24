@@ -6,6 +6,8 @@ $load HOME "images/gui.HOME_24.gif"
 $load NEW_FOLDER "images/gui.NEW_FOLDER_24.gif"
 $load REFRESH "images/gui.REFRESH_24.gif"
 $load UP "images/gui.UP_24.gif"
+$load PREV "images/gui.PREV_24.gif"
+$load NEXT "images/gui.NEXT_24.gif"
 
 final abstract class ImageCache()
    public static 
@@ -16,6 +18,8 @@ final abstract class ImageCache()
       names := table()
       imap := table()
       name_image("gui.HOME_24", HOME)
+      name_image("gui.PREV_24", PREV)
+      name_image("gui.NEXT_24", NEXT)
       name_image("gui.NEW_FOLDER_24", NEW_FOLDER)
       name_image("gui.REFRESH_24", REFRESH)
       name_image("gui.UP_24", UP)

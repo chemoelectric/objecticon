@@ -8,7 +8,10 @@
 
 package gui
 
-import util, ipl.lists
+import 
+   util,
+   ipl.strings,
+   ipl.lists
 
 #
 # This class displays a list of strings.
@@ -117,12 +120,12 @@ class TextDisplay(LineBasedScrollArea)
    # Clear the view list, forcing it to be re-created next
    # time it's needed.
    # 
-   private clear_split_list()
+   public clear_split_list()
       last_split := &null
       clear_view_list()
    end
 
-   private clear_view_list()
+   public clear_view_list()
       view_list := long_line := &null
       invalidate_subject_width()
       invalidate_line_count()
@@ -131,7 +134,7 @@ class TextDisplay(LineBasedScrollArea)
    #
    # Run through the view list looking for the longest line.
    # 
-   private find_long_line()
+   public find_long_line()
       local v
       long_line := view_list[1] | &null
       every v := !view_list do {
@@ -203,8 +206,8 @@ class TextDisplay(LineBasedScrollArea)
    #
    public log(l, max)
       local n
+      every put(self.contents, !l)
       if is_live() then {
-         every put(self.contents, !l)
          update_view_list(*self.contents - *l + 1, 0, *l)
          if (n := *self.contents - \max) > 0 then {
             every 1 to n do
@@ -216,7 +219,34 @@ class TextDisplay(LineBasedScrollArea)
          compute_and_invalidate()
          goto_last(get_line_count())
       } else {
-         every put(self.contents, !l)
+         while *self.contents > \max do
+            pop(self.contents)
+      }
+      return self
+   end
+
+   public log_str(s, max)
+      local t, n, fl
+      n := *contents
+      every t := separate_lines(s) do {
+         if /fl then {
+            contents[-1] ||:= t
+            fl := 1
+         } else
+            put(contents, t)
+      }
+      if is_live() then {
+         update_view_list(n, 1, 1 + *contents - n)
+         if (n := *self.contents - \max) > 0 then {
+            every 1 to n do
+               pop(self.contents)
+            update_view_list(1, n, 0)
+         }
+         invalidate_line_count()
+         invalidate_subject_width()
+         compute_and_invalidate()
+         goto_last(get_line_count())
+      } else {
          while *self.contents > \max do
             pop(self.contents)
       }
@@ -248,7 +278,7 @@ class TextDisplay(LineBasedScrollArea)
    #
    # Create the view_list from the contents.
    # 
-   private create_view_list()
+   public create_view_list()
       local spl
       spl := get_split(predict_view_width(w, vsb) - 2 * Gui.TEXT_INSET)
       view_list := spl.lines
@@ -260,7 +290,7 @@ class TextDisplay(LineBasedScrollArea)
    # Return the index into view_list containing the
    # content position x, y.  Binary search is used.
    # 
-   private get_view_list_index(x, y)
+   public get_view_list_index(x, y)
       local i, j, mid, v
       i := 1
       j := *view_list

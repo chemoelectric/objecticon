@@ -37,6 +37,7 @@ class PopupMenu(Component, MenuMode)
       self.parent_dialog.exit_menu_mode(self)
       self.parent_dialog.disconnect_object(self)
       self.parent.remove(self)
+      fire(Event.POPUP_CLOSED)
    end
 
    public close_all()

@@ -16,12 +16,8 @@ import
 global opts
 
 $load EXIT "rpp.EXIT_24.gif"
-$load NEXT "rpp.NEXT_24.gif"
-$load PREV "rpp.PREV_24.gif"
-$load HOME "rpp.HOME_24.gif"
 $load STOP "rpp.STOP_24.gif"
 $load PASTE "rpp.PASTE_24.gif"
-$load REFRESH "rpp.REFRESH_24.gif"
 $load CLEAR "rpp.CLEAR_24.gif"
 
 class Settings()
@@ -712,7 +708,7 @@ class DownloadTab(TabItem)
    end
 
    private setup()
-      local panel, border
+      local panel, border, w
       destination_button := IconButton().
          set_align(Align.L, Align.C).
          clear_constraints().
@@ -757,14 +753,22 @@ class DownloadTab(TabItem)
          connect(self.on_search_field, Event.ACTION).
          set_contents(u"")
       self.add(search_field)
-      url_table := Table().
-         set_size("600", "258").
-         set_select_mode(Select.MANY).
-         set_constraint("eol", &yes).
-         set_contents([]).
-         add_column(ItemPaintTableColumn().set_label("URL").set_item_paint(AbbreviatedTextItemPaint())).
-         add_column(TableColumn().set_label("MB").set_column_width(50).set_column_align(Align.R)).
-         add_column(TableColumn().set_label("State").set_column_width(175))
+      use {
+         w := Window(),
+         url_table := Table().
+            set_size("600", "258").
+            set_select_mode(Select.MANY).
+            set_constraint("eol", &yes).
+            set_contents([]).
+            add_column(ItemPaintTableColumn().
+                          set_label("URL").
+                          set_item_paint(AbbreviatedTextItemPaint()).
+                          set_item_border(EmptyBorder().             # Set a border to align with the button text
+                                             set_insets(Gui.TEXT_INSET,0,0,0).
+                                             set_x_align(Align.L))).
+            add_column(TableColumn().set_label("MB").set_column_width(w.text_width("0,000.0")).set_column_align(Align.R)).
+            add_column(TableColumn().set_label("State").set_column_width(w.text_width("Downloading (0,000.0MB)")))
+      }
       url_table.table_content.connect(self.on_table_rpress, Event.MOUSE_RIGHT_PRESS)
       self.add(url_table)
       border := CompoundBorder().
@@ -1087,7 +1091,7 @@ class BrowserTab(TabItem, BrowserUI)
       message_label.set()
    end
 
-   public browse_for_file()
+   public browse_for_file(s)
       local d
       d := parent_dialog.file_dialog
       d.set_directory(parent_dialog.last_file_dir).set_files().set_existing_file_mode(FileDialog.REQUIRE).show_modal(parent_dialog)
@@ -1231,7 +1235,7 @@ class BrowserTab(TabItem, BrowserUI)
          connect(self.on_home, Event.ACTION).
          set_no_click_focus(&yes).
          set_toggles(&no).
-         set_paint(ImagePaint().set_cache("rpp.HOME_24"))
+         set_paint(ImagePaint().set_cache("gui.HOME_24"))
       refresh_button := IconButton().
          set_align(Align.L, Align.C).
          clear_constraints().
@@ -1239,7 +1243,7 @@ class BrowserTab(TabItem, BrowserUI)
          connect(self.on_refresh, Event.ACTION).
          set_no_click_focus(&yes).
          set_toggles(&no).
-         set_paint(ImagePaint().set_cache("rpp.REFRESH_24"))
+         set_paint(ImagePaint().set_cache("gui.REFRESH_24"))
       prev_button := IconButton().
          set_align(Align.L, Align.C).
          clear_constraints().
@@ -1247,7 +1251,7 @@ class BrowserTab(TabItem, BrowserUI)
          connect(self.on_prev, Event.ACTION).
          set_no_click_focus(&yes).
          set_toggles(&no).
-         set_paint(ImagePaint().set_cache("rpp.PREV_24"))
+         set_paint(ImagePaint().set_cache("gui.PREV_24"))
       next_button := IconButton().
          set_align(Align.L, Align.C).
          clear_constraints().
@@ -1255,7 +1259,7 @@ class BrowserTab(TabItem, BrowserUI)
          connect(self.on_next, Event.ACTION).
          set_no_click_focus(&yes).
          set_toggles(&no).
-         set_paint(ImagePaint().set_cache("rpp.NEXT_24"))
+         set_paint(ImagePaint().set_cache("gui.NEXT_24"))
       stop_button := IconButton().
          set_align(Align.L, Align.C).
          clear_constraints().
@@ -1341,10 +1345,6 @@ procedure main(a)
    /settings.pool_size := 6
    /settings.destination_dir := "/tmp"
    ImageCache.name_image("rpp.EXIT_24", EXIT)
-   ImageCache.name_image("rpp.NEXT_24", NEXT)
-   ImageCache.name_image("rpp.PREV_24", PREV)
-   ImageCache.name_image("rpp.HOME_24", HOME)
-   ImageCache.name_image("rpp.REFRESH_24", REFRESH)
    ImageCache.name_image("rpp.PASTE_24", PASTE)
    ImageCache.name_image("rpp.STOP_24", STOP)
    ImageCache.name_image("rpp.CLEAR_24", CLEAR)

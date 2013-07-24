@@ -125,7 +125,7 @@ class TreeTableContent(Tree)
          # since we borrow Tree's draw_line()
          view.cbwin.clip!cc
          yp := r.y - info.offset
-         xp := get_subject_x()
+         xp := col.x
          # Write each line in this column
          every i := info.first to info.last do {
             lh := integer(h) | h[i]
@@ -148,7 +148,6 @@ class TreeTableContent(Tree)
                   # Clip on the column.
                   W.clip!cc
                   yp := r.y - info.offset
-                  xp := get_subject_x()
                   # Write each line in this column
                   every i := info.first to info.last do {
                      lh := integer(h) | h[i]
@@ -185,3 +184,59 @@ class TreeTable(Table)
    end
 end
 
+class ItemPaintTreeTableContent(ItemPaintTree, TreeTableContent)
+   # We have to override this since ItemPaintTree overrides calculate_line_height
+   public calculate_line_height()
+      local t, m, h, r, e, i, j, cols
+      t := []
+      m := 0
+      cols := parent.table_header.children
+      every j := 1 to *cols do {
+         h := if j = 1 then
+            cast(self,ItemPaintTree).calculate_line_height()
+         else
+            cols[j].calculate_line_height(self.cbwin)
+         if integer(h) then
+            m <:= h
+         else
+            put(t, h)
+      }
+      #
+      # Easy case, all columns report fixed row heights, so the row height for the
+      # table is the maximum.
+      if *t = 0 then
+         return m
+
+      r := list(*t[1], m)
+      every e := !t do {
+         *e = *r | syserr("Inconsistent table column row height list sizes returned")
+         every i := 1 to *r do
+            r[i] <:= e[i]
+      }
+
+      return r
+   end
+
+   public calculate_subject_width()
+      return parent.get_total_column_width()
+   end
+
+   public draw_node_data(n, xp, yp, lh)
+      local r, s, col
+      col := parent.table_header.children[1]
+      s := item_paint.get_size(view.cbwin, n.label)
+      # r is the rectangle available to draw in, limited by the column width.
+      r := Rect(xp, yp, col.x + col.w - xp, lh)
+      item_paint.draw_rect(view.cbwin, n.label, item_border.float(r, s))
+      item_border.draw_rect(view.cbwin, r)
+   end
+end
+
+#
+# A {TreeTable} which uses an {ItemPaint} to paint its tree column.
+#
+class ItemPaintTreeTable(Table)
+   public create_table_content()
+      return ItemPaintTreeTableContent()
+   end
+end

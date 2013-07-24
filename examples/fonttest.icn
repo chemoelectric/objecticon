@@ -23,7 +23,10 @@ class FontTestDialog(Dialog)
       native_tab,
       native_field,
       font_label,
-      size_label
+      size_label,
+      default_tab,
+      oifont_label,
+      oifontsize_label
 
    public component_setup()
       local t
@@ -34,9 +37,10 @@ class FontTestDialog(Dialog)
       t.close()
       command_field.set_contents(case fsys of {
          "p9": "/bin/du -a /lib/font/bit | /bin/awk '{print $2}' | grep '*.font' | sort"
-         "x11": "xlsfonts"
          "fc": "fc-list"
       })
+      oifont_label.set_label(Window.get_default_font())
+      oifontsize_label.set_label(Window.get_default_font_size())
 
       range_list.set_selection_list(["32-127 (ascii)",
                                      "128-255 (latin)",
@@ -76,6 +80,9 @@ class FontTestDialog(Dialog)
             s ||:= "," || ("-" ~== width_list.object_get_selection())
             s ||:= "," || ("-" ~== font_size.get_contents())
             name_label.set_label(s)
+         }
+         default_tab: {
+            s := Window.get_default_font()
          }
          native_tab: {
             s := fsys || ":" || native_field.get_contents()
@@ -137,7 +144,7 @@ class FontTestDialog(Dialog)
    end
 
    private setup()
-      local paint_2, panel_2, paint_14, label_2, layout_7, paint_7, paint_11, paint_19, layout_4, paint_4, panel_4, paint_16, label_4, layout_1, layout_9, paint_1, paint_9, panel_1, paint_13, label_1, layout_6, paint_6, paint_10, paint_18, layout_3, paint_3, panel_3, paint_15, paint, layout_8, paint_8, paint_12, layout_5, paint_5, panel_5, paint_17, text_button_1, label_5
+      local paint_2, paint_14, layout_7, paint_11, layout_4, panel_4, label_4, layout_1, paint_9, panel_1, label_1, paint_6, paint_18, paint_23, paint_3, paint_15, paint_20, layout_8, paint_12, label_8, layout_5, panel_5, label_5, panel_2, label_2, paint_7, paint_19, paint_24, paint_4, paint_16, paint_21, layout_9, paint_1, paint_13, layout_10, layout_6, paint_10, label_6, layout_3, panel_3, paint, paint_8, paint_5, paint_17, paint_22, text_button_1
       paint := TextPaint("Font")
       label_1 := Label().
          clear_constraints().
@@ -329,6 +336,37 @@ class FontTestDialog(Dialog)
          set_layout(layout_6).
          add(panel_2).
          add(name_label)
+      paint_20 := TextPaint("Default")
+      layout_10 := GridLayout().
+         set_extra("cells")
+      paint_21 := TextPaint("OIFONT")
+      label_6 := Label().
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_paint(paint_21)
+      paint_22 := TextPaint("Label")
+      oifont_label := Label().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_align", Align.L).
+         set_paint(paint_22)
+      paint_23 := TextPaint("OIFONTSIZE")
+      label_8 := Label().
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_paint(paint_23)
+      paint_24 := TextPaint("Label")
+      oifontsize_label := Label().
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_paint(paint_24)
+      default_tab := TabItem().
+         set_paint(paint_20).
+         set_layout(layout_10).
+         add(label_6).
+         add(oifont_label).
+         add(label_8).
+         add(oifontsize_label)
       paint_5 := TextPaint("Native spec")
       layout_5 := GridLayout().
          set_extra("cells")
@@ -399,6 +437,7 @@ class FontTestDialog(Dialog)
          set_constraint("y_weight", 1.0).
          connect(self.synch_font, Event.SELECTION_CHANGED).
          add(icon_tab).
+         add(default_tab).
          add(native_tab).
          set_which_one(icon_tab)
       self.add(tab_set)
@@ -605,7 +644,7 @@ end
 #ttribs|T0NSConstraints|T5NSx_weight|B1.0|Sx_fill|I1Sy_weight|B1.0|Sy_f
 #ill|I1Seol|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent 
 #Handlers|L1L2SEvent.SELECTION_CHANGED|Ssynch_font|SClass Variable|I1SP
-#arent Component|X1SChildren|L2CCanvasTabItem|I29SParent Canvas|X1SName
+#arent Component|X1SChildren|L3CCanvasTabItem|I29SParent Canvas|X1SName
 #|Sicon_tab|SClass Name|STabItem|SImport Name|Sgui|SClass Variable|I1SX
 # Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX A
 #lign|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstrai
@@ -694,73 +733,111 @@ end
 #r opts|NSEvent Handlers|L0SClass Variable|I1SParent Component|X78SPain
 #t|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_4|SClass Name|SText
 #Paint|SImport Name|Sgui|SClass Variable|NSStr|S|CCanvasTabItem|I29SPar
-#ent Canvas|X1SName|Snative_tab|SClass Name|STabItem|SImport Name|Sgui|
+#ent Canvas|X1SName|Sdefault_tab|SClass Name|STabItem|SImport Name|Sgui
+#|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NS
+#W Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NS
+#WAttribs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayout delegate|CCanvas
+#GridLayout|I8SDII val|NSDOI val|NSExtra|Scells|SName|Slayout_10|SClass
+# Name|SGridLayout|SImport Name|Sgui|SClass Variable|NSParent|X145SBord
+#er opts|NSEvent Handlers|L0SClass Variable|I1SParent Component|X72SPai
+#nt|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_20|SClass Name|STe
+#xtPaint|SImport Name|Sgui|SClass Variable|NSStr|SDefault|SChildren|L4C
+#CanvasLabel|I28SParent Canvas|X1SName|Slabel_6|SClass Name|SLabel|SImp
+#ort Name|Sgui|SClass Variable|NSX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec
+#|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0S
+#Is shaded|NSWAttribs|T0NSConstraints|T1NSx_align|Sl|STooltip|NSAccel|N
+#SLayout delegate|NSBorder opts|NSEvent Handlers|L0SClass Variable|NSPa
+#rent Component|X145SPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Sp
+#aint_21|SClass Name|STextPaint|SImport Name|Sgui|SClass Variable|NSStr
+#|SOIFONT|CCanvasLabel|I28SParent Canvas|X1SName|Soifont_label|SClass N
+#ame|SLabel|SImport Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|
+#NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align|St|S
+#Z|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T2NSx_align|Sl|Se
+#ol|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handlers
+#|L0SClass Variable|I1SParent Component|X145SPaint|CCanvasTextPaint|I6S
+#Parent Canvas|X1SName|Spaint_22|SClass Name|STextPaint|SImport Name|Sg
+#ui|SClass Variable|NSStr|SLabel|CCanvasLabel|I28SParent Canvas|X1SName
+#|Slabel_8|SClass Name|SLabel|SImport Name|Sgui|SClass Variable|NSX Fix
+#|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align
+#|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|
+#T1NSx_align|Sl|STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEven
+#t Handlers|L0SClass Variable|NSParent Component|X145SPaint|CCanvasText
+#Paint|I6SParent Canvas|X1SName|Spaint_23|SClass Name|STextPaint|SImpor
+#t Name|Sgui|SClass Variable|NSStr|SOIFONTSIZE|CCanvasLabel|I28SParent 
+#Canvas|X1SName|Soifontsize_label|SClass Name|SLabel|SImport Name|Sgui|
 #SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW
 # Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSW
-#Attribs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayout delegate|CCanvasG
-#ridLayout|I8SDII val|NSDOI val|NSExtra|Scells|SName|Slayout_5|SClass N
-#ame|SGridLayout|SImport Name|Sgui|SClass Variable|NSParent|X145SBorder
-# opts|NSEvent Handlers|L0SClass Variable|I1SParent Component|X72SPaint
-#|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_5|SClass Name|STextP
-#aint|SImport Name|Sgui|SClass Variable|NSStr|SNative spec|SChildren|L3
-#CCanvasTextList|I29SParent Canvas|X1SName|Snative_list|SClass Name|STe
-#xtList|SImport Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH 
-#Fix|NSX Spec|NSY Spec|NSW Spec|S200|SH Spec|S150|SX Align|Sl|SY Align|
-#St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T5NSx_weight|
-#B1.0|Sx_fill|I1Sy_weight|B1.0|Sy_fill|I1Seol|I1STooltip|NSAccel|NSLayo
-#ut delegate|NSBorder opts|NSEvent Handlers|L1L2SEvent.SELECTION_CHANGE
-#D|Son_native_list|SClass Variable|I1SParent Component|X145SSelect Mode
-#|Sone|SContents|L0CCanvasPanel|I28SParent Canvas|X1SName|Spanel_4|SCla
-#ss Name|SPanel|SImport Name|Sgui|SClass Variable|NSX Fix|NSY Fix|NSW F
-#ix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align|S
-#t|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T5NSx_weight|B
-#1.0|Sx_fill|I1Sy_weight|B1.0|Sy_fill|I1Seol|I1STooltip|NSAccel|NSLayou
-#t delegate|CCanvasGridLayout|I8SDII val|NSDOI val|I0SExtra|Scells|SNam
-#e|Slayout_8|SClass Name|SGridLayout|SImport Name|Sgui|SClass Variable|
-#NSParent|X158SBorder opts|NSEvent Handlers|L0SClass Variable|NSParent 
-#Component|X145SChildren|L3CCanvasLabel|I28SParent Canvas|X1SName|Slabe
-#l_4|SClass Name|SLabel|SImport Name|Sgui|SClass Variable|NSX Fix|NSY F
-#ix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY
-# Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T1NSx_
-#align|Sl|STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Hand
-#lers|L0SClass Variable|NSParent Component|X158SPaint|CCanvasTextPaint|
-#I6SParent Canvas|X1SName|Spaint_17|SClass Name|STextPaint|SImport Name
-#|Sgui|SClass Variable|NSStr|SList command|CCanvasTextField|I31SParent 
-#Canvas|X1SName|Scommand_field|SClass Name|STextField|SImport Name|Sgui
-#|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|I1SX Spec|NSY Spec|N
-#SW Spec|S60|SH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shade
-#d|NSWAttribs|T0NSConstraints|T3NSx_align|Sl|Sx_weight|B1.0|Sx_fill|I1S
-#Tooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L1L2S
-#Event.ACTION|Son_get_list|SClass Variable|I1SParent Component|X158SCon
-#tents|Sfc-list|SFilter String|S|SIs editable flag|I1SMove on rpress fl
-#ag|I1CCanvasTextButton|I35SParent Canvas|X1SName|Stext_button_1|SClass
-# Name|STextButton|SImport Name|Sgui|SClass Variable|NSX Fix|NSY Fix|NS
-#W Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Alig
-#n|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T0NSTooltip
-#|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L1L2SEvent.A
-#CTION|Son_get_list|SClass Variable|NSParent Component|X158SNo click fo
-#cus|NSAccepts focus Flag|I1SIs Checked Flag|NSIs Checkbox Flag|NSParen
-#t CheckBoxGroup|NSParent Button Group|NSPaint|CCanvasTextPaint|I6SPare
-#nt Canvas|X1SName|Spaint_18|SClass Name|STextPaint|SImport Name|Sgui|S
-#Class Variable|NSStr|SGet list|SPaint down|NCCanvasTextField|I31SParen
-#t Canvas|X1SName|Snative_field|SClass Name|STextField|SImport Name|Sgu
-#i|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|I1SX Spec|NSY Spec|
-#NSW Spec|S60|SH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shad
-#ed|NSWAttribs|T0NSConstraints|T3NSx_align|Sl|Sx_weight|B1.0|Sx_fill|I1
-#STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L1L2
-#SEvent.CONTENT_CHANGED|Ssynch_font|SClass Variable|I1SParent Component
-#|X145SContents|U|SFilter String|U|SIs editable flag|I1SMove on rpress 
-#flag|I1SWhich One|X78SPrefer one row flag|NSNo click focus flag|NSTabs
-# at bottom flag|NCCanvasTextButton|I35SParent Canvas|X1SName|Squit_but
-#ton|SClass Name|STextButton|SImport Name|Sgui|SClass Variable|I1SX Fix
-#|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align
-#|Sc|SY Align|Sb|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|
-#T0NSTooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L
-#1L2SEvent.ACTION|Son_quit_button|SClass Variable|I1SParent Component|X
-#1SNo click focus|NSAccepts focus Flag|I1SIs Checked Flag|NSIs Checkbox
-# Flag|NSParent CheckBoxGroup|NSParent Button Group|NSPaint|CCanvasText
-#Paint|I6SParent Canvas|X1SName|Spaint_19|SClass Name|STextPaint|SImpor
-#t Name|Sgui|SClass Variable|NSStr|SQuit|SPaint down|NSInitial Focus|NS
-#Event Handlers|L0SLayout delegate|CCanvasGridLayout|I8SDII val|NSDOI v
-#al|NSExtra|Scells|SName|Slayout_4|SClass Name|SGridLayout|SImport Name
-#|Sgui|SClass Variable|NSParent|X1
+#Attribs|T0NSConstraints|T1NSx_align|Sl|STooltip|NSAccel|NSLayout deleg
+#ate|NSBorder opts|NSEvent Handlers|L0SClass Variable|I1SParent Compone
+#nt|X145SPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_24|SCla
+#ss Name|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|SLabel|CCan
+#vasTabItem|I29SParent Canvas|X1SName|Snative_tab|SClass Name|STabItem|
+#SImport Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX
+# Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab or
+#d|I0SIs shaded|NSWAttribs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayout
+# delegate|CCanvasGridLayout|I8SDII val|NSDOI val|NSExtra|Scells|SName|
+#Slayout_5|SClass Name|SGridLayout|SImport Name|Sgui|SClass Variable|NS
+#Parent|X172SBorder opts|NSEvent Handlers|L0SClass Variable|I1SParent C
+#omponent|X72SPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_5|
+#SClass Name|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|SNative
+# spec|SChildren|L3CCanvasTextList|I29SParent Canvas|X1SName|Snative_li
+#st|SClass Name|STextList|SImport Name|Sgui|SClass Variable|I1SX Fix|NS
+#Y Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|S200|SH Spec|S150|SX 
+#Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstra
+#ints|T5NSx_weight|B1.0|Sx_fill|I1Sy_weight|B1.0|Sy_fill|I1Seol|I1STool
+#tip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L1L2SEven
+#t.SELECTION_CHANGED|Son_native_list|SClass Variable|I1SParent Componen
+#t|X172SSelect Mode|Sone|SContents|L0CCanvasPanel|I28SParent Canvas|X1S
+#Name|Spanel_4|SClass Name|SPanel|SImport Name|Sgui|SClass Variable|NSX
+# Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX A
+#lign|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstrai
+#nts|T5NSx_weight|B1.0|Sx_fill|I1Sy_weight|B1.0|Sy_fill|I1Seol|I1SToolt
+#ip|NSAccel|NSLayout delegate|CCanvasGridLayout|I8SDII val|NSDOI val|I0
+#SExtra|Scells|SName|Slayout_8|SClass Name|SGridLayout|SImport Name|Sgu
+#i|SClass Variable|NSParent|X185SBorder opts|NSEvent Handlers|L0SClass 
+#Variable|NSParent Component|X172SChildren|L3CCanvasLabel|I28SParent Ca
+#nvas|X1SName|Slabel_4|SClass Name|SLabel|SImport Name|Sgui|SClass Vari
+#able|NSX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Sp
+#ec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NS
+#Constraints|T1NSx_align|Sl|STooltip|NSAccel|NSLayout delegate|NSBorder
+# opts|NSEvent Handlers|L0SClass Variable|NSParent Component|X185SPaint
+#|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_17|SClass Name|SText
+#Paint|SImport Name|Sgui|SClass Variable|NSStr|SList command|CCanvasTex
+#tField|I31SParent Canvas|X1SName|Scommand_field|SClass Name|STextField
+#|SImport Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|I1
+#SX Spec|NSY Spec|NSW Spec|S60|SH Spec|NSX Align|Sl|SY Align|St|SZ|I0ST
+#ab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T3NSx_align|Sl|Sx_weigh
+#t|B1.0|Sx_fill|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEv
+#ent Handlers|L1L2SEvent.ACTION|Son_get_list|SClass Variable|I1SParent 
+#Component|X185SContents|Sfc-list|SFilter String|S|SIs editable flag|I1
+#SMove on rpress flag|I1CCanvasTextButton|I35SParent Canvas|X1SName|Ste
+#xt_button_1|SClass Name|STextButton|SImport Name|Sgui|SClass Variable|
+#NSX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NS
+#X Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConst
+#raints|T0NSTooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Han
+#dlers|L1L2SEvent.ACTION|Son_get_list|SClass Variable|NSParent Componen
+#t|X185SNo click focus|NSAccepts focus Flag|I1SIs Checked Flag|NSIs Che
+#ckbox Flag|NSParent CheckBoxGroup|NSParent Button Group|NSPaint|CCanva
+#sTextPaint|I6SParent Canvas|X1SName|Spaint_18|SClass Name|STextPaint|S
+#Import Name|Sgui|SClass Variable|NSStr|SGet list|SPaint down|NCCanvasT
+#extField|I31SParent Canvas|X1SName|Snative_field|SClass Name|STextFiel
+#d|SImport Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|I
+#1SX Spec|NSY Spec|NSW Spec|S60|SH Spec|NSX Align|Sl|SY Align|St|SZ|I0S
+#Tab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T3NSx_align|Sl|Sx_weig
+#ht|B1.0|Sx_fill|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSE
+#vent Handlers|L1L2SEvent.CONTENT_CHANGED|Ssynch_font|SClass Variable|I
+#1SParent Component|X172SContents|U|SFilter String|U|SIs editable flag|
+#I1SMove on rpress flag|I1SWhich One|X78SPrefer one row flag|NSNo click
+# focus flag|NSTabs at bottom flag|NCCanvasTextButton|I35SParent Canvas
+#|X1SName|Squit_button|SClass Name|STextButton|SImport Name|Sgui|SClass
+# Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|
+#NSH Spec|NSX Align|Sc|SY Align|Sb|SZ|I0STab ord|I0SIs shaded|NSWAttrib
+#s|T0NSConstraints|T0NSTooltip|NSAccel|NSLayout delegate|NSBorder opts|
+#NSEvent Handlers|L1L2SEvent.ACTION|Son_quit_button|SClass Variable|I1S
+#Parent Component|X1SNo click focus|NSAccepts focus Flag|I1SIs Checked 
+#Flag|NSIs Checkbox Flag|NSParent CheckBoxGroup|NSParent Button Group|N
+#SPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_19|SClass Name
+#|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|SQuit|SPaint down|
+#NSInitial Focus|NSEvent Handlers|L0SLayout delegate|CCanvasGridLayout|
+#I8SDII val|NSDOI val|NSExtra|Scells|SName|Slayout_4|SClass Name|SGridL
+#ayout|SImport Name|Sgui|SClass Variable|NSParent|X1

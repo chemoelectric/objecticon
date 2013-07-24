@@ -1156,6 +1156,7 @@ class TextFlow(Component)
 
    private which_text_out(e)
       local or, o, x1, y1
+      in_region(e) | fail
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
       every or := rows_in_range(e.y - y1, 1) do {
@@ -1171,6 +1172,7 @@ class TextFlow(Component)
          set_highlight()
          self.browser.link_left_clicked(wrote)
       }
+      held := &null
    end
 
    private handle_mrelease(e)
@@ -1178,10 +1180,12 @@ class TextFlow(Component)
          set_highlight()
          self.browser.link_middle_clicked(wrote)
       }
+      held := &null
    end
 
    private handle_lpress(e)
       local c, t
+      *parent_dialog.held = 1 | fail
       if \wrote then {
          set_highlight(wrote)
          held := wrote
@@ -1195,22 +1199,39 @@ class TextFlow(Component)
    end
 
    private handle_mpress(e)
+      *parent_dialog.held = 1 | fail
       if \wrote then {
          set_highlight(wrote)
          held := wrote
       }
    end
 
-   package wants_press(e)
+   package wants_rpress(e)
+      # Also check highlight since we may have just opened a menu,
+      # clearing wrote and setting highlight.
+      return \wrote | \highlight
+   end
+
+   package wants_lpress(e)
       return \wrote
    end
 
    private handle_rpress(e)
       local pm, pm_menu
+      *parent_dialog.held = 1 | fail
       if pm_menu := browser.create_link_menu(\wrote) then {
+         set_highlight(wrote)
+         browser.clear_msg(self)
+         wrote := &null 
+         set_pointer()
          pm := PopupMenu()
+         pm.connect(on_popup_closed, Event.POPUP_CLOSED)
          pm.popup(parent_dialog, pm_menu, e.x, e.y)
       }
+   end
+
+   private on_popup_closed()
+      set_highlight()
    end
 
    private handle_in_chain(e)
@@ -1250,9 +1271,9 @@ class TextFlow(Component)
    end
 
    private handle_exit(e)
+      *parent_dialog.held = 0 | fail
       if \wrote then {
          browser.clear_msg(self)
-         set_highlight()
          wrote := &null
          set_pointer()
       }
@@ -1284,7 +1305,7 @@ class TextFlow(Component)
       connect(self.handle_exit, Event.MOUSE_EXIT)
       connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
       connect(self.handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
-      connect(self.handle_in_chain, Dialog.IN_POINT_CHAIN)
+      connect(self.handle_in_chain, Event.IN_POINT_CHAIN)
       return
     end
 end

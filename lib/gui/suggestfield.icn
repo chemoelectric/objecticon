@@ -318,8 +318,8 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public handle_return(e)
-      keep_closed()
       cast(self,TextField).handle_return(e)
+      keep_closed()
    end
 
    public handle_key_up(e)

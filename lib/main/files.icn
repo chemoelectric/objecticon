@@ -105,6 +105,19 @@ $else
 $endif
 
    #
+   # Like `list`, but the filenames are converted to `ucs`; any which
+   # can't be converted are skipped.
+   #
+   public static ucs_list(s)
+      local e, l, t
+      l := list(s) | fail
+      t := []
+      every e := !l do
+         put(t, [ucs(e[1]), e[2]])
+      return t
+   end
+
+   #
    # Return the home directory.
    #
    public static get_home()
@@ -435,6 +448,18 @@ $endif
             s[p] := "_" || i || s[p]
          access(s) | return s
          i +:= 1
+      }
+   end
+
+   #
+   # Return the extension of a filename, or fail if there is none.
+   #
+   public static get_extension(f)
+      local i
+      f ? {
+         every i := upto('.')
+         if tab(\i + 1) & not pos(0) then
+            return tab(0)
       }
    end
 

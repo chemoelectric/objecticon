@@ -105,39 +105,27 @@ class Rect(Point,Size)
       if s.w > self.w then {
          x1 := self.x
          w1 := self.w
-      } else case a.x_align of {
-         Align.C : {
-            x1 := self.x + (self.w - s.w) / 2
-            w1 := s.w
+      } else {
+         x1 := case a.x_align of {
+            Align.C : self.x + (self.w - s.w) / 2
+            Align.L : self.x
+            Align.R : self.x + self.w - s.w
+            default : runerr("incorrect x_align specifier", a.x_align)
          }
-         Align.L : {
-            x1 := self.x
-            w1 := self.w
-         }
-         Align.R : {
-            x1 := self.x + self.w - s.w
-            w1 := s.w
-         }
-         default : runerr("incorrect x_align specifier", a.x_align)
+         w1 := s.w
       }         
 
       if s.h > self.h then {
          y1 := self.y
          h1 := self.h
-      } else case a.y_align of {
-         Align.C : {
-            y1 := self.y + (self.h - s.h) / 2
-            h1 := s.h
+      } else {
+         y1 := case a.y_align of {
+            Align.C : self.y + (self.h - s.h) / 2
+            Align.T : self.y
+            Align.B : self.y + self.h - s.h
+            default : runerr("incorrect y_align specifier", a.y_align)
          }
-         Align.T : {
-            y1 := self.y
-            h1 := self.h
-         }
-         Align.B : {
-            y1 := self.y + self.h - s.h
-            h1 := s.h
-         }
-         default : runerr("incorrect y_align specifier", a.y_align)
+         h1 := s.h
       }
 
       return Rect(x1, y1, w1, h1)
