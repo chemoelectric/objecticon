@@ -2147,22 +2147,18 @@ function io_DescStream_select(rl, wl, el, timeout)
 end
 
 function io_DescStream_poll(l, timeout)
+   if !is:list(l) then
+      runerr(108,l)
+   if !def:C_integer(timeout, -1) then
+      runerr(101, timeout)
    body {
 #if HAVE_POLL
        static struct pollfd *ufds = 0;
        unsigned int nfds;
-       word tw;
        int i, rc;
        struct lgstate state;
        tended struct b_lelem *le;
        tended struct descrip result;
-
-       if (!is:list(l))
-           runerr(108, l);
-       if (is:null(timeout))
-           tw = -1;
-       else if (!cnv:C_integer(timeout, tw))
-           runerr(101, timeout);
 
        if (ListBlk(l).size % 2 != 0)
            runerr(130);
@@ -2184,7 +2180,7 @@ function io_DescStream_poll(l, timeout)
            le = lgnext(&ListBlk(l), &state, le);
        }
 
-       rc = poll(ufds, nfds, tw);
+       rc = poll(ufds, nfds, timeout);
        if (rc < 0) {
            errno2why();
            fail;
