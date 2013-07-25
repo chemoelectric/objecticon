@@ -4526,7 +4526,7 @@ function io_FileWorker_get_buff_size(self)
    }
 end
 
-function io_FileWorker_get_buffer(self, n)
+function io_FileWorker_get_buff(self, n)
    if !cnv:C_integer(n) then
       runerr(101, n)
    body {

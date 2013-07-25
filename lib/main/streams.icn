@@ -2510,7 +2510,7 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
 
       # Now rc > 0
       if *rbuff = 0 then
-         rbuff := reader.get_buffer(rc)
+         rbuff := reader.get_buff(rc)
 
       # Now *rbuff > 0
       rbuff ? {
@@ -2694,7 +2694,7 @@ class FileWorker(Pollable, NoCopy)
    public native op_close()
    public native is_running()
    public native get_buff_size()
-   public native get_buffer(n)
+   public native get_buff(n)
    public native get_result()
    public native await()
    public native close()
