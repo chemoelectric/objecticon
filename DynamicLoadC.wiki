@@ -41,10 +41,10 @@ prog : 	prog.icn
 
 testlib.o : testlib.r
 	$(RTT) testlib.r
-	$(CC) $(CPPFLAGS) $(CFLAGS) -fPIC -c testlib.c -o testlib.o
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(DYNAMIC_LIB_CFLAGS) -c testlib.c -o testlib.o
 
 testlib.so : testlib.o
-	$(CC) -shared -fPIC -o testlib.so testlib.o
+	$(CC) $(DYNAMIC_LIB_LDFLAGS) -o testlib.so testlib.o
 }}}
 
 Notes :-

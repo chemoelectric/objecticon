@@ -70,7 +70,9 @@ The various setter methods for setting window attributes are summarised in the f
 Most of the attributes have corresponding `get` methods.
 
 == Fonts ==
-Fonts follow the same format as in Icon, with some minor enhancements.  The environment variable `OIFONT` specifies the default font to use in a window, and `OIFONTSIZE` specifies the default fontsize.  On X11, Xft, Fontconfig and Freetype are used for fonts.  With fontconfig, further customization can be achieved by editing the `~/.fonts.conf` file and defining patterns for the following family names :-
+Fonts follow the same format as in Icon, with some minor enhancements.  The environment variable `OIFONT` specifies the default font to use in a window, and `OIFONTSIZE` specifies the default fontsize; if not given the default font size is 12.  Font sizes need not be integers.  Font sizes can also be specified as relative to the default font size, byprefixing with a `+` or a `-`.  So for example, if `OIFONTSIZE` was set to "11.5", then "sans" would be the same as "sans,11.5", and "sans,+2" would be the same as "sans,13.5".  A static method in the `Window` class, `get_default_font_size()`, returns the default font size.
+
+On X11, Xft, Fontconfig and Freetype are used for fonts.  With fontconfig, further customization can be achieved by editing the `~/.fonts.conf` file and defining patterns for the following family names :-
 
 || *Icon font family* || *Xft family name* || *Default value* ||
 || fixed || Object Icon fixed || mono ||
@@ -88,16 +90,13 @@ An example entry, which makes the Icon mono family use the "Deja Vu Sans Mono" f
    <edit name="family" mode="prepend" binding="same">
       <string>Deja Vu Sans Mono</string>
    </edit>
-   <edit name="size" mode="append" binding="same">
-      <int>10</int>
-   </edit>
  </match>
 }}}
  
-A font specifier may specify a string to be interpreted directly by the platform's font system.  When using fontconfig, this is done by prepending the string "fc:" to the specifier (for example, "fc:Bitstream Vera Sans-11").  The result of the `get_font()` method will in fact always be in this platform specific format.
+A font specifier may specify a string to be interpreted directly by the platform's font system.  When using fontconfig, this is done by prepending the string "fc:" to the specifier (for example, "fc:Bitstream Vera Sans-11").  The result of the `get_font()` method will in fact always be in this platform-specific format.  Note that the setting of `OIFONTSIZE` has no effect on a font specified in this way.
 
 == Colours and Palettes ==
-Colour specifications and palettes follow the same format as in Icon, with an enhancement to allow specification of transluscent colours.  For a colour specified numerically, a fourth optional value can be added to specify the alpha value.  For a colour specified with a string name, a percentage may be appended to given the tranluscency.  For example :-
+Colour specifications and palettes follow the same format as in Icon, with an enhancement to allow specification of transluscent colours.  For a colour specified numerically, a fourth optional value can be added to specify the alpha value.  For a colour specified with a string name, a percentage may be appended to give the tranluscency.  For example :-
 {{
 "45874,0,0,52428"   # 70% red, 80% alpha
 "dark blue 50%"
