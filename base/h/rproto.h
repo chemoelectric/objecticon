@@ -185,6 +185,8 @@ declare_convert_to_macro(uid_t)
 declare_convert_from_macro(uid_t)
 declare_convert_to_macro(gid_t)
 declare_convert_from_macro(gid_t)
+declare_convert_to_macro(pid_t)
+declare_convert_from_macro(pid_t)
 #endif
 declare_convert_from_macro(ulonglong)
 declare_convert_from_macro(uword)

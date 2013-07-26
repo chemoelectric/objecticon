@@ -76,6 +76,7 @@
    #include <dirent.h>
    #include <limits.h>
    #include <unistd.h>
+   #include <strings.h>
    #include <sys/stat.h>
    #include <sys/time.h>
    #include <sys/times.h>
