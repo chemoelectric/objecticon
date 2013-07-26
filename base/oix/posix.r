@@ -207,7 +207,7 @@ function posix_System_wait_impl(pid, options)
    body {
 #if PLAN9
       tended struct descrip result, tmp;
-      int i;
+      word i;
       Waitmsg *w;
       if (!cnv:C_integer(pid, i))
           runerr(101, pid);
@@ -278,8 +278,11 @@ function posix_System_wait_impl(pid, options)
 #elif MSWIN32
       struct descrip tmp;
       tended struct descrip result;
+      word i;
       int wpid, termstat;
-      if ((wpid = _cwait(&termstat, pid, options)) < 0) {
+      if (!cnv:C_integer(pid, i))
+          runerr(101, pid);
+      if ((wpid = _cwait(&termstat, i, options)) < 0) {
          errno2why();
          fail;
       }
