@@ -1875,6 +1875,7 @@ class PttyStream(FileStream)
       slave_name
 
    private static native new_impl()
+   private static native prepare_slave(f)
 
    #
    # Open the slave corresponding to this instance (the master file).
@@ -1882,7 +1883,13 @@ class PttyStream(FileStream)
    # communication channel.
    #
    public open_slave()
-      return FileStream(slave_name, FileOpt.RDWR)
+      local f
+      f := FileStream(slave_name, FileOpt.RDWR) | fail
+      prepare_slave(f) | {
+         f.close()
+         fail
+      }
+      return f
    end
 
    public new()
