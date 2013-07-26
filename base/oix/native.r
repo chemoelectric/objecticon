@@ -181,6 +181,8 @@ convert_to_macro(uid_t)
 convert_from_macro(uid_t)
 convert_to_macro(gid_t)
 convert_from_macro(gid_t)
+convert_to_macro(pid_t)
+convert_from_macro(pid_t)
 #elif PLAN9
 convert_to_macro(ulong)
 convert_from_macro(ulong)
@@ -657,8 +659,8 @@ function lang_Prog_get_runtime_millis(c)
           runerr(0);
 
       if (gettimeofday(&tp, 0) < 0) {
-	 errno2why();
-	 fail;
+          errno2why();
+          fail;
       }
       MakeInt(tp.tv_sec - prog->start_time.tv_sec, &ls);
       MakeInt((tp.tv_usec - prog->start_time.tv_usec) / 1000, &lm);
@@ -1518,10 +1520,10 @@ function io_FileStream_new_impl(path, flags, mode)
    if !cnv:C_integer(flags) then
       runerr(101, flags)
 #if UNIX
-   if !def:integer(mode, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, mode) then
+   if !def:integer(mode, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) then
       runerr(101, mode)
 #else
-   if !def:integer(mode, 0664, mode) then
+   if !def:integer(mode, 0664) then
       runerr(101, mode)
 #endif
    body {
@@ -2230,6 +2232,7 @@ function io_DescStream_wstat(self, mode, uid, gid)
                if (!convert_to_uid_t(&uid, &owner))
                    runerr(0);
            }
+
            if (is:null(gid))
                group = (gid_t)-1;
            else {
@@ -2747,7 +2750,7 @@ end
 function io_Files_mkdir(s, mode)
    if !cnv:C_string(s) then
       runerr(103, s)
-   if !def:integer(mode, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH, mode) then
+   if !def:integer(mode, S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH) then
       runerr(101, mode)
    body {
        mode_t c_mode;
@@ -4633,5 +4636,46 @@ function weakrefval(wr)
        if (is:null(t))
            fail;
        return t;
+    }
+end
+
+function io_PttyStream_new_impl()
+   body {
+#if UNIX
+       int fd;
+       char *sn;
+       tended struct descrip result, tmp;
+
+       if ((fd = posix_openpt(O_RDWR | O_NOCTTY)) < 0) {
+           errno2why();
+           fail;
+       }
+       if (grantpt(fd) < 0) {
+           errno2why();
+           close(fd);
+           fail;
+       }
+       if (unlockpt(fd) < 0) {
+           errno2why();
+           close(fd);
+           fail;
+       }
+       sn = ptsname(fd);
+       if (!sn) {
+           errno2why();
+           close(fd);
+           fail;
+       }
+
+       create_list(2, &result);
+       MakeInt(fd, &tmp);
+       list_put(&result, &tmp);
+       cstr2string(sn, &tmp);
+       list_put(&result, &tmp);
+
+       return result;
+#else
+       Unsupported;
+#endif
     }
 end

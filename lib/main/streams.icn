@@ -2820,3 +2820,21 @@ class ExprStream(LineBasedInputStream, NoCopy)
       return cast(self,LineBasedInputStream).new()
    end
 end
+
+class PttyStream(FileStream)
+   private readable 
+      slave_name
+
+   private static native new_impl()
+
+   public open_slave()
+      return FileStream(slave_name, FileOpt.RDWR)
+   end
+
+   public new()
+      local l
+      l := new_impl() | fail
+      slave_name := l[2]
+      return setup(l[1], READ_WRITE)
+   end
+end

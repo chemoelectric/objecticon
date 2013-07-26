@@ -191,6 +191,8 @@ declare_convert_to_macro(uid_t)
 declare_convert_from_macro(uid_t)
 declare_convert_to_macro(gid_t)
 declare_convert_from_macro(gid_t)
+declare_convert_to_macro(pid_t)
+declare_convert_from_macro(pid_t)
 #elif PLAN9
 declare_convert_to_macro(ulong)
 declare_convert_from_macro(ulong)

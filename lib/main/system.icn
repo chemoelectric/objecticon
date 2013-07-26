@@ -106,10 +106,23 @@ final abstract class System()
    end
 
    # Sets the effective user ID of the calling process.
-   public static native setuid(id)
+   public static native setuid(uid)
 
    # Sets the effective group ID of the calling process.
-   public static native setgid(id)
+   public static native setgid(gid)
+
+   # Creates a session and sets the process group ID, returning the
+   # new process group ID of the calling process.
+   public static native setsid()
+
+   # Returns the session ID of the process with the given process ID
+   public static native getsid(id)
+
+   # Set process group ID for job control
+   public static native setpgid(pid, pgid)
+
+   # Get the process group ID for a process
+   public static native getpgid(pid)
 end
 
 # A structure returned by the {System.uname} method.

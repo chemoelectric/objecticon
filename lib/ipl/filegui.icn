@@ -95,6 +95,7 @@ class IconFilesItemPaint(ItemPaint)
    public draw(W, data, x, y, w, h)
       local st, i, k
       st := data[2]
+$ifdef _PNG
       k := case st.mode_str[1] of {
          "d" : "gui.CLOSED_FOLDER"
          "l" : "icn.SYMLINK_16"
@@ -116,6 +117,12 @@ class IconFilesItemPaint(ItemPaint)
             }
          }
       } | "gui.FILE"
+$else
+      k := if st.mode_str[1] == "d" then
+         "gui.CLOSED_FOLDER"
+      else
+         "gui.FILE"
+$endif
       i := ImageCache.get(k) | syserr("Bad cache key in IconFilesItemPaint")
       i.copy_to(,,,, W, x, y + (h - ICON_SIZE) / 2)
       x +:= ICON_SIZE + Gui.TEXT_INSET

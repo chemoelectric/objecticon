@@ -26,18 +26,19 @@ int gettimeofday(struct timeval *tv, struct timezone *tz)
 "kill() - send a signal to a process."
 
 function posix_System_kill(pid, signal)
-   if !cnv:C_integer(pid) then
+   if !cnv:integer(pid) then
       runerr(101, pid)
-
    if !cnv:C_integer(signal) then
       runerr(101, signal)
-
    body {
 #if UNIX
-      if (kill(pid, signal) != 0) {
-	 errno2why();
-	 fail;
-	 }
+      pid_t i;
+      if (!convert_to_pid_t(&pid, &i))
+          runerr(0);
+      if (kill(i, signal) != 0) {
+         errno2why();
+         fail;
+      }
       return nulldesc;
 #else
      Unsupported;
@@ -68,19 +69,21 @@ end
 function posix_System_fork()
    body {
 #if UNIX
-      int pid;
+      pid_t pid;
+      tended struct descrip result;
       if ((pid = fork()) < 0) {
-	 errno2why();
-	 fail;
-	 }
+         errno2why();
+         fail;
+         }
 #if Graphics
       /* A child process can't interact with the graphics system */
       if (pid == 0)
         wdsplys = 0;
 #endif
-      return C_integer pid;
+      convert_from_pid_t(pid, &result);      
+      return result;
 #else
-     Unsupported;
+      Unsupported;
 #endif
       }
 end
@@ -188,8 +191,8 @@ function posix_System_execve(f, argv, envp)
              free(c_envp[0]);
              free(c_envp);
          }
-	 errno2why();
-	 fail;
+         errno2why();
+         fail;
       }
       /* Not reached */
       return nulldesc;
@@ -197,14 +200,18 @@ function posix_System_execve(f, argv, envp)
 end
 
 function posix_System_wait_impl(pid, options)
-   if !def:C_integer(pid, -1) then
+   if !def:integer(pid, -1) then
       runerr(101, pid)
    if !def:C_integer(options, 0) then 
       runerr(103, options)
    body {
 #if PLAN9
       tended struct descrip result, tmp;
-      Waitmsg *w = waitforpid(pid);
+      int i;
+      Waitmsg *w;
+      if (!cnv:C_integer(pid, i))
+          runerr(101, pid);
+      w = waitforpid(i);
       if (!w) {
           LitWhy("process has no children");
           fail;
@@ -224,19 +231,20 @@ function posix_System_wait_impl(pid, options)
       free(w);
       return result;
 #elif UNIX
-      struct descrip tmp;
-      tended struct descrip result;
-      char retval[64];
-      int status = 0, wpid;
-      if ((wpid = waitpid(pid, &status, options)) < 0) {
+      pid_t i, j;
+      tended struct descrip result, tmp;
+      int status = 0;
+      if (!convert_to_pid_t(&pid, &i))
+          runerr(0);
+      if ((j = waitpid(i, &status, options)) < 0) {
           errno2why();
           fail;
       }
       create_list(3, &result);
-      MakeInt(wpid, &tmp);
+      convert_from_pid_t(j, &tmp);      
       list_put(&result, &tmp);
       /* Unpack all the fields */
-      if (wpid == 0) {
+      if (j == 0) {
           /* Means we were called with WNOHANG, and the exit status is not yet available. */
           LitStr("unavailable", &tmp);
           list_put(&result, &tmp);
@@ -272,8 +280,8 @@ function posix_System_wait_impl(pid, options)
       tended struct descrip result;
       int wpid, termstat;
       if ((wpid = _cwait(&termstat, pid, options)) < 0) {
-	 errno2why();
-	 fail;
+         errno2why();
+         fail;
       }
       create_list(3, &result);
       MakeInt(wpid, &tmp);
@@ -296,8 +304,8 @@ function posix_System_unsetenv(name)
    body {
 #if HAVE_UNSETENV_INT_RETURN
        if (unsetenv(name) < 0) {
-	 errno2why();
-	 fail;
+         errno2why();
+         fail;
        }
 #else
        unsetenv(name);
@@ -315,7 +323,7 @@ function posix_System_setenv(name, value)
       runerr(103, value)
    body {
       if (setenv(name, value, 1) < 0) {
-	 errno2why();
+         errno2why();
          fail;
       }
       return nulldesc;
@@ -329,7 +337,7 @@ function posix_System_getenv(s)
       runerr(103,s)
    body {
       char *p;
-      if ((p = getenv(s)) != NULL) {	/* get environment variable */
+      if ((p = getenv(s)) != NULL) {    /* get environment variable */
           tended struct descrip result;
           cstr2string(p, &result);
 #if PLAN9
@@ -337,8 +345,8 @@ function posix_System_getenv(s)
 #endif
           return result;
       }
-      else 				/* fail if not in environment */
-	 fail;
+      else                              /* fail if not in environment */
+         fail;
 
    }
 end
@@ -372,7 +380,11 @@ end
 
 function posix_System_getpid()
    body {
-#if UNIX || PLAN9
+#if UNIX
+     tended struct descrip result;
+     convert_from_pid_t(getpid(), &result);      
+     return result;
+#elif PLAN9
      return C_integer getpid();
 #else
      Unsupported;
@@ -382,7 +394,11 @@ end
 
 function posix_System_getppid()
    body {
-#if UNIX || PLAN9
+#if UNIX
+     tended struct descrip result;
+     convert_from_pid_t(getppid(), &result);      
+     return result;
+#elif PLAN9
      return C_integer getppid();
 #else
      Unsupported;
@@ -646,13 +662,13 @@ function posix_System_getgroups()
     }
 end
 
-function posix_System_setuid(id)
-   if !cnv:integer(id) then
-      runerr(101, id)
+function posix_System_setuid(uid)
+   if !cnv:integer(uid) then
+      runerr(101, uid)
    body {
 #if UNIX
        uid_t u;
-       if (!convert_to_uid_t(&id, &u))
+       if (!convert_to_uid_t(&uid, &u))
            runerr(0);
        if (setuid(u) < 0) {
            errno2why();
@@ -665,19 +681,101 @@ function posix_System_setuid(id)
     }
 end
 
-function posix_System_setgid(id)
-   if !cnv:integer(id) then
-      runerr(101, id)
+function posix_System_setgid(gid)
+   if !cnv:integer(gid) then
+      runerr(101, gid)
    body {
 #if UNIX
        gid_t g;
-       if (!convert_to_gid_t(&id, &g))
+       if (!convert_to_gid_t(&gid, &g))
            runerr(0);
        if (setgid(g) < 0) {
            errno2why();
            fail;
        }
        return nulldesc;
+#else
+       Unsupported;
+#endif
+    }
+end
+
+function posix_System_setsid()
+   body {
+#if UNIX
+       pid_t i;
+       tended struct descrip result;
+       if ((i = setsid()) < 0) {
+           errno2why();
+           fail;
+       }
+       convert_from_pid_t(i, &result);      
+       return result;
+#else
+       Unsupported;
+#endif
+    }
+end
+
+function posix_System_getsid(pid)
+   if !def:integer(pid, 0) then
+      runerr(101, pid)
+   body {
+#if UNIX
+       pid_t i, j;
+       tended struct descrip result;
+       if (!convert_to_pid_t(&pid, &i))
+           runerr(0);
+       if ((j = getsid(i)) < 0) {
+           errno2why();
+           fail;
+       }
+       convert_from_pid_t(j, &result);      
+       return result;
+#else
+       Unsupported;
+#endif
+    }
+end
+
+function posix_System_setpgid(pid, pgid)
+   if !def:integer(pid, 0) then
+      runerr(101, pid)
+   if !def:integer(pgid, 0) then
+      runerr(101, pgid)
+   body {
+#if UNIX
+       pid_t i, j;
+       if (!convert_to_pid_t(&pid, &i))
+           runerr(0);
+       if (!convert_to_pid_t(&pgid, &j))
+           runerr(0);
+       if (setpgid(i, j) < 0) {
+           errno2why();
+           fail;
+       }
+       return nulldesc;
+#else
+       Unsupported;
+#endif
+    }
+end
+
+function posix_System_getpgid(pid)
+   if !def:integer(pid, 0) then
+      runerr(101, pid)
+   body {
+#if UNIX
+       pid_t i, j;
+       tended struct descrip result;
+       if (!convert_to_pid_t(&pid, &i))
+           runerr(0);
+       if ((j = getpgid(i)) < 0) {
+           errno2why();
+           fail;
+       }
+       convert_from_pid_t(j, &result);      
+       return result;
 #else
        Unsupported;
 #endif

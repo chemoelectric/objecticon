@@ -1,5 +1,8 @@
 /* define's for zlib, jpeg, opengl, etc. */
 
+/* define as 1 if using the GNU C library */
+#undef _GNU_SOURCE
+
 /* define as 1 if we have Zlib/libz/whatever */
 #undef HAVE_LIBZ
 
