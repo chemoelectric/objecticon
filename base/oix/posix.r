@@ -233,8 +233,10 @@ function posix_System_wait_impl(pid, options)
 #elif MSWIN32
       struct descrip tmp;
       tended struct descrip result;
-      int wpid, termstat;
-      if ((wpid = _cwait(&termstat, pid, options)) < 0) {
+      int i, wpid, termstat;
+      if (!cnv:C_integer(pid, i))
+          runerr(101, pid);
+      if ((wpid = _cwait(&termstat, i, options)) < 0) {
          errno2why();
          fail;
       }
