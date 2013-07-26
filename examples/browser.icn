@@ -841,26 +841,9 @@ class URLList(SelectableScrollArea)
    end
 end
 
-class URLEditList(EditList)
-   private old_selection
-
+class URLEditList(IndependentEditList)
    public create_popup()
       return URLList()
-   end
-
-   # These two methods are overridden to do nothing, effectively
-   # making the list and the textfield independent, so that
-   # changes/selection from one don't affect the other.
-   public apply_selection(ev) end
-   public synch_selection() end
-
-   public start_change(e)
-      self.old_selection := self.selection
-   end
-
-   public end_change(e)
-      if self.old_selection ~=== self.selection then
-         fire(Event.SELECTION_CHANGED, e)
    end
 end
 
