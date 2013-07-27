@@ -416,6 +416,8 @@ AC_DEFUN([AX_CHECK_CAIRO],
               AC_DEFINE(HAVE_LIBCAIRO)
               AC_MSG_RESULT(yes)
            else
+              PKGERR=`pkg-config --errors-to-stdout --print-errors $CAIRO_CONFIG`
+              AC_MSG_RESULT([$PKGERR])
               AC_MSG_RESULT([no])
            fi
     fi
@@ -456,6 +458,8 @@ AC_DEFUN([AX_CHECK_OPENSSL],
               AC_DEFINE(HAVE_LIBOPENSSL)
               AC_MSG_RESULT(yes)
            else
+              PKGERR=`pkg-config --errors-to-stdout --print-errors $OPENSSL_CONFIG`
+              AC_MSG_RESULT([$PKGERR])
               AC_MSG_RESULT([no])
            fi
     fi
@@ -497,6 +501,8 @@ AC_DEFUN([AX_CHECK_PNG],
               AC_MSG_RESULT(yes)
               found_png=yes
            else
+              PKGERR=`pkg-config --errors-to-stdout --print-errors --atleast-version=1.2.37 $PNG_CONFIG`
+              AC_MSG_RESULT([$PKGERR])
               AC_MSG_RESULT([no])
            fi
     fi
@@ -534,6 +540,8 @@ AC_DEFUN([AX_CHECK_X11],
               AC_MSG_RESULT(yes)
               found_x11=yes
            else
+              PKGERR=`pkg-config --errors-to-stdout --print-errors $X11_CONFIG`
+              AC_MSG_RESULT([$PKGERR])
               AC_MSG_RESULT([no])
            fi
     fi
