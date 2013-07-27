@@ -143,7 +143,11 @@ abstract class DropDown(Component, MenuMode)
    end
 
    public close_popup()
-      self.parent_dialog.set_focus(view)
+      local f
+      # Allow views that don't accept focus, and ensure in that case
+      # the focus isn't left with the popup.
+      f := view.find_focus()
+      self.parent_dialog.set_focus(f)
       if /use_popup_win then {
          self.popup.invalidate()
          self.parent_dialog.remove(popup)
