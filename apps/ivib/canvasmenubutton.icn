@@ -45,6 +45,7 @@ class CanvasMenuButton(CanvasComponent,MenuButton)
    end
 
    protected post_decode()
+      cast(self,CanvasComponent).post_decode()
       self.menu.component_link := self
    end
 
