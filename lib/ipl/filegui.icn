@@ -10,22 +10,10 @@ class ColorFilesItemPaint(WithCloneItemPaint)
       return W.clone()
    end
 
-   public get_width(W, data)
-      return W.text_width(data[1])
-   end
-
-   public get_constant_height(W)
-      return W.get_font_height()
-   end
-
-   public get_size(W, data)
-      return Size(W.text_width(data[1]), W.get_font_height())
-   end
-
-   public draw(W, data, x, y)
-      local st, color
+   public get_color(data)
+      local st
       st := data[2]
-      color := case st.mode_str[1] of {
+      return case st.mode_str[1] of {
          "d" : "purple"
          "l" : "cyan"
          "p" : "orange"
@@ -43,8 +31,27 @@ class ColorFilesItemPaint(WithCloneItemPaint)
             }
          }
       } | "black"
-      W := get_clone(W).set_fg(color)
-      draw_string_ex(W, x, y, data[1])
+   end
+
+   public get_string(data)
+      return data[1]
+   end
+
+   public get_width(W, data)
+      return W.text_width(get_string(data))
+   end
+
+   public get_constant_height(W)
+      return W.get_font_height()
+   end
+
+   public get_size(W, data)
+      return Size(get_width(W, data), W.get_font_height())
+   end
+
+   public draw(W, data, x, y)
+      W := get_clone(W).set_fg(get_color(data))
+      draw_string_ex(W, x, y, get_string(data))
    end
 end
 
@@ -65,7 +72,6 @@ class IconFilesItemPaint(ItemPaint)
    public static const ICON_SIZE
 
    private static init()
-      ICON_SIZE := 16
       ImageCache.name_image("icn.PDF_16", PDF_16)
       ImageCache.name_image("icn.IMAGE_16", IMAGE_16)
       ImageCache.name_image("icn.VIDEO_16", VIDEO_16)
@@ -78,10 +84,11 @@ class IconFilesItemPaint(ItemPaint)
       ImageCache.name_image("icn.SOCKET_16", SOCKET_16)
       ImageCache.name_image("icn.PIPE_16", PIPE_16)
       ImageCache.name_image("icn.HTML_16", HTML_16)
+      ICON_SIZE := 16
    end
 
    public get_width(W, data)
-      return ICON_SIZE + Gui.TEXT_INSET + W.text_width(data[1])
+      return ICON_SIZE + Gui.TEXT_INSET + W.text_width(get_string(data))
    end
 
    public get_constant_height(W)
@@ -92,8 +99,12 @@ class IconFilesItemPaint(ItemPaint)
       return Size(get_width(W, data), get_constant_height(W))
    end
 
-   public draw(W, data, x, y, w, h)
-      local st, i, k
+   public get_string(data)
+      return data[1]
+   end
+
+   public get_icon(data)
+      local st, k
       st := data[2]
 $ifdef _PNG
       k := case st.mode_str[1] of {
@@ -123,11 +134,16 @@ $else
       else
          "gui.FILE"
 $endif
-      i := ImageCache.get(k) | syserr("Bad cache key in IconFilesItemPaint")
+      return ImageCache.get(k) | syserr("Bad cache key in IconFilesItemPaint")
+   end
+
+   public draw(W, data, x, y, w, h)
+      local i
+      i := get_icon(data)
       i.copy_to(,,,, W, x, y + (h - ICON_SIZE) / 2)
       x +:= ICON_SIZE + Gui.TEXT_INSET
       w -:= ICON_SIZE + Gui.TEXT_INSET
-      draw_string_ex(W, x, y, limit_text(W, data[1], w))
+      draw_string_ex(W, x, y, limit_text(W, get_string(data), w))
    end
 end
 
