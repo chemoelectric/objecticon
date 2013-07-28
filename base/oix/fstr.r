@@ -602,8 +602,8 @@ function map(s1,s2,s3)
                   maps3u = nulldesc;
                   runerr(208);
               }
-              
-              MemProtect(maptab = realloc(maptab, maptab_len * sizeof(struct mappair)));
+
+              MemProtect(maptab = realloc(maptab, 1 + maptab_len * sizeof(struct mappair)));  /* + 1 to avoid realloc(..., 0) */
               p2 = StrLoc(UcsBlk(s2).utf8);
               p3 = StrLoc(UcsBlk(s3).utf8);
               for (i = 0; i < UcsBlk(s2).length; ++i) {

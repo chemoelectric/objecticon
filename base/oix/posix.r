@@ -508,7 +508,7 @@ function posix_System_getgroups()
         errno2why();
         fail;
     }
-    MemProtect(buf = malloc(n * sizeof(gid_t)));
+    MemProtect(buf = malloc(1 + n * sizeof(gid_t)));   /* +1 to avoid zero alloc */
     n = getgroups(n, buf);
     if (n < 0) {
         errno2why();
