@@ -1075,9 +1075,18 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public browse_for_file(s)
-      local d
+      local d, p
       d := parent_dialog.file_dialog
-      d.set_directory(parent_dialog.last_file_dir).set_files().set_existing_file_mode(FileDialog.REQUIRE).show_modal(parent_dialog)
+      if *s = 0 then
+         d.set_directory(parent_dialog.last_file_dir).set_files()
+      else {
+         p := FilePath(s).canonical()
+         if Files.is_directory(p.str()) then
+            d.set_directory(p.str()).set_files()
+         else
+            d.set_directory(p.parent().str()).set_file(p.get(-1))
+      }
+      d.set_existing_file_mode(FileDialog.REQUIRE).show_modal(parent_dialog)
       parent_dialog.last_file_dir := d.get_directory()
       return d.get_result()
    end
