@@ -1273,8 +1273,8 @@ class Main(Dialog)
       plugins := table()
       pp := FilePath(prefs.plugin_directory)
       every f := !Files.list(pp.str()) do {
-         if f[2].mode_str[1] == "-" & upto('x', f[2].mode_str) then {
-            fn := pp.child(f[1]).str()
+         if f.stat.mode_str[1] == "-" & upto('x', f.stat.mode_str) then {
+            fn := pp.child(f.name).str()
             ce := Prog.load(fn) | stop("Failed to load plugin:", fn)
             plugin := Prog.get_global("main", ce)(self) | stop("Plugin didn't return a Plugin from main")
             insert(plugins, plugin.get_unique_id(), plugin)
@@ -1287,8 +1287,8 @@ class Main(Dialog)
 
       every fp := FilePath(!prefs.named_image_path) do {
          every f := !Files.list(fp.str()) do {
-            if ext := is_image_file(f[1]) then
-               ImageCache.name_image(f[1][1:-*ext], Files.file_to_string(fp.child(f[1]).str()))
+            if ext := is_image_file(f.name) then
+               ImageCache.name_image(f.name[1:-*ext - 1], Files.file_to_string(fp.child(f.name).str()))
          }
       }
 

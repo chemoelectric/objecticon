@@ -126,7 +126,7 @@ class FileDialog(Dialog)
       local i, s
       s := file.get_contents()
       every i := 1 to *flist.contents do {
-         if flist.contents[i, 1] == s then {
+         if flist.contents[i].name == s then {
             flist.
                set_cursor(i).
                set_selections([i]).
@@ -291,7 +291,7 @@ class FileDialog(Dialog)
       # Clicked in file list; set TextField
       #
       clear_msg()
-      file.set_contents(flist.object_get_selections()[1][1])
+      file.set_contents(flist.object_get_selections()[1].name)
       check_existing()
    end
 
@@ -441,32 +441,25 @@ class FileDialog(Dialog)
       check_existing()
    end
 
-   public static map1(data)
-      return map(data[1])
-   end
-
    #
    # Read a directory.
    #
    public list_directory(s)
       local e, dir_list, file_list, l, pats, t
       pats := get_pats()
-      l := Files.list(s) | fail
+      l := Files.ucs_list(s) | fail
       dir_list := []
       file_list := []
       every e := !l do {
-         if t := ucs(e[1]) & (show_hidden_cb.is_checked() | 
-                              not(Files.is_hidden(t))) then 
-         {
-            if e[2].mode_str[1] == "d" then
+         t := e.name
+         if show_hidden_cb.is_checked() | not(Files.is_hidden(t)) then {
+            if e.stat.mode_str[1] == "d" then
                Files.is_relative_dir(t) | put(dir_list, t)
-            else {
-               if (!pats).match(t) = *t + 1 then
-                  put(file_list, [t, e[2]])
-            }
+            else if (!pats).match(t) = *t + 1 then
+               put(file_list, e)
          }
       }
-      return [isort(dir_list, map), isort(file_list, map1)]
+      return [isort(dir_list, map), isort(file_list, Files.name_key)]
    end
 
    public new()

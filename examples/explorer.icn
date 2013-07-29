@@ -65,10 +65,10 @@ class Explorer(Dialog)
       s := get_full_path(n)
 
       l := get_directory_list(s)[1]
-      l := isort(l, FileDialog.map1)
+      l := isort(l, Files.name_key)
 
       n.clear_children()
-      every name := (!l)[1] do {
+      every name := (!l).name do {
          if (name ~== "./") & (name ~== "../") then {
             r1 := TreeNode().set_always_expandable(&yes)
             r1.set_label(name)
@@ -96,11 +96,11 @@ class Explorer(Dialog)
       s := get_full_path(n)
 
       t := get_directory_list(s) | fail
-      t := isort(t[1] ||| t[2], FileDialog.map1)
+      t := isort(t[1] ||| t[2], Files.name_key)
 
       l := []
       every el := !t do {
-         put(l, [el, Format.numeric_to_string(el[2].size, 0, ','), fmt_time(el[2].mtime), el[2].mode_str])
+         put(l, [el, Format.numeric_to_string(el.lstat.size, 0, ','), fmt_time(el.lstat.mtime), el.lstat.mode_str])
       }
 
       tbl.set_contents(l)
@@ -120,19 +120,17 @@ class Explorer(Dialog)
    # Read a directory.
    #
    public get_directory_list(s)
-      local e, dir_list, file_list, l, t
-      if not(l := Files.list(s)) then {
+      local e, dir_list, file_list, l
+      if not(l := Files.ucs_list(s)) then
          return [[],[]]
-      }
       dir_list := []
       file_list := []
       every e := !l do {
-         if t := ucs(e[1]) &
-            not(Files.is_hidden(e[1])) then {
-            if e[2].mode_str[1] == "d" then
-               put(dir_list, [t, e[2]])
+         if not(Files.is_hidden(e.name)) then {
+            if e.stat.mode_str[1] == "d" then
+               put(dir_list, e)
             else
-               put(file_list, [t, e[2]])
+               put(file_list, e)
          }
       }
       return [dir_list, file_list]

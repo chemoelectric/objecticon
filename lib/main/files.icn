@@ -44,40 +44,52 @@ $endif
    end
 
    #
-   # Read the given directory returning a list of [name, {Stat}] pairs.
+   # Read the given directory returning a list of `ListEntry` objects,
+   # each containing the name, lstat and stat values for each entry.
    #
    public static list(s)
       local p
       return use {
          p := DirStream(s),
-         list1(FilePath(s), p)
+         list1(FilePath(s), p, 1)
       }
    end
 
-   private static list1(path, p)
-      local l, s, cpath
+   #
+   # Like `list`, but the filenames are converted to `ucs`; any that
+   # can't be converted are skipped.
+   #
+   public static ucs_list(s)
+      local p
+      return use {
+         p := DirStream(s),
+         list1(FilePath(s), p, ucs)
+      }
+   end
+
+   private static list1(path, p, f)
+      local l, s, cs, lst, st
       l := []
       repeat {
          s := p.read_line() | fail
          if /s then
             return l
-         cpath := path.child(s)
-         put(l, [s, lstat(cpath.str())]) |
-            return error("Couldn't lstat " || cpath.str() || ": " || &why)
+         cs := path.child(s).str()
+         lst := lstat(cs) | return error("Couldn't lstat " || cs || ": " || &why)
+         st := if lst.mode_str[1] == "l" then
+            stat(cs) | return error("Couldn't stat " || cs || ": " || &why)
+         else
+            lst
+         put(l, ListEntry(f(s), lst, st))
       }
    end
 
    #
-   # Like `list`, but the filenames are converted to `ucs`; any which
-   # can't be converted are skipped.
+   # A useful function to help sort by name the result of the various list
+   # functions with isort.
    #
-   public static ucs_list(s)
-      local e, l, t
-      l := list(s) | fail
-      t := []
-      every e := !l do
-         put(t, [ucs(e[1]), e[2]])
-      return t
+   public static name_key(data)
+      return map(data.name)
    end
 
    #
@@ -524,6 +536,23 @@ abstract class FileSystem()
    public abstract split_paths(s)
 
    package new()
+      return
+   end
+end
+
+#
+# This class holds a result from the `Files.list` method.
+#
+class ListEntry()
+   public const
+      name,
+      lstat,
+      stat
+
+   public new(name, lstat, stat)
+      self.name := name
+      self.lstat := lstat
+      self.stat := stat
       return
    end
 end

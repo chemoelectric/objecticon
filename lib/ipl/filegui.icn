@@ -12,7 +12,7 @@ class ColorFilesItemPaint(WithCloneItemPaint)
 
    public get_color(data)
       local st
-      st := data[2]
+      st := data.lstat
       return case st.mode_str[1] of {
          "d" : "purple"
          "l" : "cyan"
@@ -23,7 +23,7 @@ class ColorFilesItemPaint(WithCloneItemPaint)
          default : {
             if st.mode_str[-7] == ("x" | "s") then
                "green"
-            else case map(string(Files.get_extension(data[1]))) of {
+            else case map(string(Files.get_extension(data.name))) of {
                "cmd"|"exe"|"com"|"btm"|"bat" : "green"
                "tar"|"tgz"|"arj"|"taz"|"lzh"|"zip"|"z"|"Z"|"gz"|"xz"|"bz2"|"rar" : "red"
                "jpg"|"jpeg"|"png"|"gif"|"bmp"|"xbm"|"xpm": "blue"
@@ -34,7 +34,7 @@ class ColorFilesItemPaint(WithCloneItemPaint)
    end
 
    public get_string(data)
-      return data[1]
+      return data.name
    end
 
    public get_width(W, data)
@@ -100,12 +100,12 @@ class IconFilesItemPaint(ItemPaint)
    end
 
    public get_string(data)
-      return data[1]
+      return data.name
    end
 
    public get_icon(data)
       local st, k
-      st := data[2]
+      st := data.lstat
 $ifdef _PNG
       k := case st.mode_str[1] of {
          "d" : "gui.CLOSED_FOLDER"
@@ -117,7 +117,7 @@ $ifdef _PNG
          default : {
             if st.mode_str[-7] == ("x" | "s") then
                "icn.EXE_16"
-            else case map(string(Files.get_extension(data[1]))) of {
+            else case map(string(Files.get_extension(data.name))) of {
                "pdf": "icn.PDF_16"
                "cmd"|"exe"|"com"|"btm"|"bat" : "icn.EXE_16"
                "tar"|"tgz"|"arj"|"taz"|"lzh"|"zip"|"z"|"Z"|"gz"|"xz"|"bz2"|"rar" : "icn.ARCHIVE_16"
@@ -166,16 +166,16 @@ class FileSuggestField(SuggestField)
    end
 
    private match_mode(l)
-      if l[1] == (u"." | u"..") then
+      if l.name == (u"." | u"..") then
          fail
-      return /choose_mode | any(choose_mode, l[2].mode_str)
+      return /choose_mode | any(choose_mode, l.stat.mode_str)
    end
 
    private do_dir_list(s)
       if dir_list_name === s then
          return dir_list
       dir_list := Files.ucs_list(s) | fail
-      dir_list := isort(dir_list, FileDialog.map1)
+      dir_list := isort(dir_list, Files.name_key)
       dir_list_name := s
       return dir_list
    end
@@ -209,7 +209,7 @@ class FileSuggestField(SuggestField)
          do_dir_list(path.parent().str()) | fail
          s := path.get(-1)
          every t := !dir_list do {
-            if match_mode(t) & match(s, t[1]) then
+            if match_mode(t) & match(s, t.name) then
                put(l, t)
          }
       }
@@ -217,7 +217,7 @@ class FileSuggestField(SuggestField)
    end
 
    public convert_element(o)
-      return prefix || text(o[1])
+      return prefix || text(o.name)
    end
 
    public create_popup()

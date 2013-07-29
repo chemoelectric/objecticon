@@ -89,17 +89,17 @@ class DirectoryDialog(Dialog)
 
    public list_directory(s)
       local e, dir_list, l, t
-      l := Files.list(s) | fail
+      l := Files.ucs_list(s) | fail
       dir_list := []
       every e := !l do {
-         if e[2].mode_str[1] == "d" &
-            t := ucs(e[1]) &
+         t := e.name
+         if e.stat.mode_str[1] == "d" &
             not(Files.is_relative_dir(t)) &
             (show_hidden_cb.is_checked() | 
                not(Files.is_hidden(t))) then
             put(dir_list, t)
       }
-      return isort(dir_list, FileDialog.map1)
+      return isort(dir_list, map)
    end
 
    #
@@ -135,7 +135,6 @@ class DirectoryDialog(Dialog)
    end
 
    public on_tree_selection(ev)
-      clear_msg()
       dir.set_contents(get_full_path(tree.object_get_selections()[1]).liberal_ucs())
       check_existing()
    end
@@ -143,6 +142,8 @@ class DirectoryDialog(Dialog)
    public on_dir(ev)
       if member(EditList.NAVIGATE, ev.code) then
          goto_dir(dir.get_contents())
+      else
+         check_existing()
    end
 
    #
@@ -188,27 +189,29 @@ class DirectoryDialog(Dialog)
    end
 
    public goto_dir(d)
-      local n, s, p, ps, err
+      local n, s, p, ps, err, i
       p := FilePath(d).canonical()
       n := tree.get_root_node()
       every s := p.gen() do {
          n := find_child(n, s) | break
          load_subtree(n) | {
-            err := 1
+            err := &why
             break
          }
          n.set_expanded(&yes)
       }
 
+      tree.tree_structure_changed()
+      i := tree.find_line(n)
       tree.
-         tree_structure_changed().
-         object_set_selections([n]).
-         object_set_cursor(n).
-         center_line(tree.find_line(n))
+         set_selections([i]).
+         set_cursor(i).
+         center_line(i)
+
       dir.set_contents(p.liberal_ucs())
       ps := p.str()
       if \err then
-         msg(&why)
+         msg(err)
       else if Files.is_directory(ps) then
          check_existing()
       else
