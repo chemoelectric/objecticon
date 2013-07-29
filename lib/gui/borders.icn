@@ -1,5 +1,15 @@
 package gui
 
+#
+# A `ABorder` (so named to avoid a clash with the `Border` component),
+# is an object which represents a border.  It reports the widths of
+# the four edges of its border.  Given a rectangle, it also draws the
+# border on a Window.
+#
+# An `ABorder` also subclasses `Align`.  This lets it position a
+# `Size` within a `Rect` by "floating" it within the bordered inner
+# area according to the alignment.
+#
 abstract class ABorder(Insets,Align)
    public abstract initially(c)
    public abstract draw(W, x, y, w, h)
@@ -39,7 +49,7 @@ abstract class ABorder(Insets,Align)
    # Take a {Rect}, giving the bordered size, and a {Size}, giving an
    # object within it, and "float" it within the area in accordance
    # with the x and y alignment, but limiting the result to the
-   # {Rect}.  A {Size} is returned.
+   # {Rect}.  A {Rect} is returned.
    #
    public float(r, s)
       return get_inner_rect(r).float(s, self)
@@ -67,6 +77,10 @@ abstract class ABorder(Insets,Align)
    end
 end
 
+# A border with an arbitrary width, that is just empty space (ie
+# nothing is drawn).  The default l/r insets are Gui.X_INSET and t/b
+# insets Gui.Y_INSET.
+#
 class EmptyBorder(ABorder)
    public initially(c)
    end
@@ -110,6 +124,9 @@ class EmptyBorder(ABorder)
    end
 end
 
+#
+# A border with zero size insets.
+#
 class NullBorder(ABorder)
    public initially()
       self.l_inset := self.t_inset := self.r_inset := self.b_inset := 0
@@ -119,6 +136,10 @@ class NullBorder(ABorder)
    end
 end
 
+#
+# A parent class for several borders which draw lines to display the
+# border.  The four insets are always of the same width.
+#
 abstract class LineBorder(ABorder)
    public line_width
 
@@ -136,6 +157,7 @@ abstract class LineBorder(ABorder)
       return self.line_width
    end
 
+   # Set the line width of this border; each of the four insets has this width.
    public set_line_width(n)
       self.line_width := n
       return self
@@ -148,7 +170,7 @@ abstract class LineBorder(ABorder)
    end
 end
 
-
+# A `LineBorder` displayed as a raised rectangle.
 class RaisedBorder(LineBorder)
    public draw(W, x, y, w, h)
       Gui.style.draw_raised_rectangle(W, x, y, w, h, line_width)
@@ -159,7 +181,7 @@ class RaisedBorder(LineBorder)
    end
 end
 
-
+# A `LineBorder` displayed as a sunken rectangle.
 class SunkenBorder(LineBorder)
    public draw(W, x, y, w, h)
       Gui.style.draw_sunken_rectangle(W, x, y, w, h, line_width)
@@ -170,7 +192,7 @@ class SunkenBorder(LineBorder)
    end
 end
 
-
+# A `LineBorder` displayed as a bevelled rectangle.
 class BevelledBorder(LineBorder)
    public draw(W, x, y, w, h)
       Gui.style.draw_sunken_rectangle(W, x, y, w, h, line_width / 2)
@@ -179,7 +201,7 @@ class BevelledBorder(LineBorder)
    end
 end
 
-
+# A `LineBorder` displayed as a plain rectangle.
 class PlainBorder(LineBorder)
    public draw(W, x, y, w, h)
       local i
@@ -188,7 +210,9 @@ class PlainBorder(LineBorder)
    end
 end
 
-
+#
+# A border made up of two sub-borders.
+#
 class CompoundBorder(ABorder)
    public
       outer,
