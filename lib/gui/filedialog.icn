@@ -407,7 +407,14 @@ class FileDialog(Dialog)
       #
       # Update directory and file lists.
       #
-      l := list_directory(s)
+      l := list_directory(s) | {
+         msg(&why)
+         dlist.set_contents([])
+         flist.set_contents([])
+         fail
+      }
+
+      clear_msg()
 
       dlist.
          set_contents(l[1]).
@@ -443,13 +450,8 @@ class FileDialog(Dialog)
    #
    public list_directory(s)
       local e, dir_list, file_list, l, pats, t
-      clear_msg()
       pats := get_pats()
-
-      if not(l := Files.list(s)) then {
-         msg(&why)
-         return [[],[]]
-      }
+      l := Files.list(s) | fail
       dir_list := []
       file_list := []
       every e := !l do {

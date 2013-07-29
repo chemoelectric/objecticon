@@ -72,7 +72,6 @@ class DirectoryDialog(Dialog)
       # Do this here as we need the tree to be setup so that we
       # can scroll to the selected dir.
       goto_dir(dir.get_contents())
-      check_existing()
    end
 
    #
@@ -81,20 +80,16 @@ class DirectoryDialog(Dialog)
    public load_subtree(n)
       local s, l
       s := get_full_path(n).str()
-      l := list_directory(s)
       n.clear_children()
+      l := list_directory(s) | fail
       every s := !l do
          n.add(TreeNode().set_label(s).set_always_expandable(&yes))
+      return self
    end
 
    public list_directory(s)
       local e, dir_list, l, t
-      if l := Files.list(s) then 
-         clear_msg()
-      else {
-         msg(&why)
-         return []
-      }
+      l := Files.list(s) | fail
       dir_list := []
       every e := !l do {
          if e[2].mode_str[1] == "d" &
@@ -131,7 +126,10 @@ class DirectoryDialog(Dialog)
       # an expansion, load the subtree and refresh the tree.
       #
       if n.is_expanded() then {
-         load_subtree(n)
+         if load_subtree(n) then
+            check_existing()
+         else
+            msg(&why)
          tree.tree_structure_changed()
       }
    end
@@ -145,7 +143,6 @@ class DirectoryDialog(Dialog)
    public on_dir(ev)
       if member(EditList.NAVIGATE, ev.code) then
          goto_dir(dir.get_contents())
-      check_existing()
    end
 
    #
@@ -191,25 +188,31 @@ class DirectoryDialog(Dialog)
    end
 
    public goto_dir(d)
-      local n, s, p, ps
+      local n, s, p, ps, err
       p := FilePath(d).canonical()
       n := tree.get_root_node()
       every s := p.gen() do {
          n := find_child(n, s) | break
-         load_subtree(n)
+         load_subtree(n) | {
+            err := 1
+            break
+         }
          n.set_expanded(&yes)
       }
+
       tree.
          tree_structure_changed().
          object_set_selections([n]).
          object_set_cursor(n).
          center_line(tree.find_line(n))
+      dir.set_contents(p.liberal_ucs())
       ps := p.str()
-      if Files.is_directory(ps) then
-         clear_msg()
+      if \err then
+         msg(&why)
+      else if Files.is_directory(ps) then
+         check_existing()
       else
          msg("Not a dir: " || ps)
-      dir.set_contents(p.liberal_ucs())
    end
 
    public find_child(n, s)
@@ -289,7 +292,10 @@ $endif
    public on_refresh_button(ev)
       local n
       n := tree.object_get_selections()[1] | fail
-      load_subtree(n)
+      if load_subtree(n) then
+         check_existing()
+      else
+         msg(&why)
       tree.tree_structure_changed()
    end
 
