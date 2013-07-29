@@ -88,7 +88,11 @@ class FileDialog(Dialog)
 
       dlist.
          set_draggable_cursor(&yes).
-         set_selection_on_key_moves(&no)
+         set_selection_on_key_moves(&no).
+         set_item_paint(IconFilesItemPaint()).
+         set_item_border(EmptyBorder().
+                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                             set_x_align(Align.L))
 
       flist.
          set_draggable_cursor(&yes).
@@ -283,7 +287,7 @@ class FileDialog(Dialog)
    end
 
    public on_dlist()
-      goto_dir(get_dir_path().child(dlist.object_get_selections()[1]).str())
+      goto_dir(get_dir_path().child(dlist.object_get_selections()[1].name).str())
    end
 
    public on_flist()
@@ -454,12 +458,12 @@ class FileDialog(Dialog)
          t := e.name
          if show_hidden_cb.is_checked() | not(Files.is_hidden(t)) then {
             if e.stat.mode_str[1] == "d" then
-               Files.is_relative_dir(t) | put(dir_list, t)
+               Files.is_relative_dir(t) | put(dir_list, e)
             else if (!pats).match(t) = *t + 1 then
                put(file_list, e)
          }
       }
-      return [isort(dir_list, map), isort(file_list, Files.name_key)]
+      return [isort(dir_list, Files.name_key), isort(file_list, Files.name_key)]
    end
 
    public new()
@@ -571,8 +575,8 @@ class FileDialog(Dialog)
          add(next_button).
          add(dir)
       self.add(panel_4)
-      dlist := TextList().
-         set_size(210, 200).
+      dlist := ItemPaintList().
+         set_size("210", "200").
          clear_constraints().
          set_constraint("r_inset", 0).
          set_constraint("x_fill", &yes).
@@ -582,7 +586,7 @@ class FileDialog(Dialog)
          connect(self.on_dlist, Event.SELECTION_CHANGED).
          connect(self.on_dlist_cursor, Event.CURSOR_MOVED).
          set_select_mode(Select.ONE).
-         set_contents([""])
+         set_contents([])
       layout_8 := GridLayout().
          set_doi(0).
          set_extra("cells")
