@@ -4,7 +4,8 @@ import
    ipl.sort,
    ipl.strings,
    gui,
-   io
+   io,
+   util
 
 class ColorFilesItemPaint(WithCloneItemPaint)
    protected make_clone(W)
@@ -156,12 +157,12 @@ class FileSuggestField(SuggestField)
    public
       cwd,
       prefix,
-      choose_mode,
       dir_list,
-      dir_list_name
+      dir_list_name,
+      directories_only_flag
 
-   public set_choose_mode(x)
-      self.choose_mode := x
+   public set_directories_only(s)
+      self.directories_only_flag := check_flag(s)
       return self
    end
 
@@ -173,7 +174,7 @@ class FileSuggestField(SuggestField)
    private match_mode(l)
       if l.name == (u"." | u"..") then
          fail
-      return /choose_mode | any(choose_mode, l.stat.mode_str)
+      return /directories_only_flag | l.stat.mode_str[1] == "d"
    end
 
    private do_dir_list(s)
@@ -196,12 +197,8 @@ class FileSuggestField(SuggestField)
       return path
    end
 
-   protected do_request()
-      local s, path, l, t, i
-      if contents == (u"" | u"~") then
-         return []
-      every i := upto('/', contents)
-      prefix := if /i then "" else contents[1+:i]
+   private get_match_list()
+      local path, l, s, t
       path := get_content_path()
       l := []
       if contents[-1] == u"/" then {
@@ -218,16 +215,24 @@ class FileSuggestField(SuggestField)
                put(l, t)
          }
       }
+      return l
+   end
 
+   protected do_request()
+      local l, i
+      if contents == (u"" | u"~") then
+         return []
+      every i := upto('/', contents)
+      prefix := if /i then "" else contents[1+:i]
+      l := get_match_list() | fail
       # No point in a list which is a copy of what we already have
       if *l = 1 & endswith(contents, l[1].name) then
          return []
-
       return l
    end
 
    public convert_element(o)
-      if o.stat.mode_str[1] == "d" then
+      if /directories_only_flag & o.stat.mode_str[1] == "d" then
          return prefix || text(o.name) || u"/"
       else
          return prefix || text(o.name)
@@ -255,24 +260,37 @@ class FileSuggestField(SuggestField)
       return t
    end
 
+   private should_append_slash()
+      local l
+      if *contents = 0 | contents[-1] == u"/" then
+         fail
+      if l := get_match_list() & *l = 1 & l[1].stat.mode_str[1] == "d" then
+         return
+   end
+
    public handle_tab(e)
       local t
       if \tl then {
-         t := prefix || if *tl.contents = 1 & tl.contents[1].stat.mode_str[1] == "d" then
+         t := prefix || if /directories_only_flag & *tl.contents = 1 & tl.contents[1].stat.mode_str[1] == "d" then
             tl.contents[1].name || u"/"
          else
             get_longest_prefix(tl.contents)
          if *contents < *t then
             assign_contents(t, e)
-         else if contents[-1] == u"/" then
+         else if *contents > *prefix then {
             # If we have selected a dir in the open list, and pressed
             # tab we want to close this selection and open with the
             # new dir.
-            on_change(e)
+            if /directories_only_flag then {
+               if contents[-1] == u"/" then
+                  on_change(e)
+            } else
+               assign_contents(contents || u"/", e)
+         }
       } else {
-         # If we have no text list, but contents representing a
+         # If we have no text list, but contents unambiguously representing a
          # directory, but no "/" at the end, add the slash.
-         if contents[-1] ~== u"/" & Files.is_directory(get_content_path().str()) then
+         if should_append_slash() then
             assign_contents(contents || u"/", e)
          else
             on_change(e)
