@@ -92,6 +92,14 @@ $endif
       return map(data.name)
    end
 
+   public static size_key(data)
+      return data.lstat.size
+   end
+
+   public static date_key(data)
+      return data.lstat.mtime
+   end
+
    #
    # Return the home directory.
    #

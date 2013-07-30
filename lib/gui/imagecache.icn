@@ -8,6 +8,10 @@ $load REFRESH "images/gui.REFRESH_24.gif"
 $load UP "images/gui.UP_24.gif"
 $load PREV "images/gui.PREV_24.gif"
 $load NEXT "images/gui.NEXT_24.gif"
+$load CLOCK "images/gui.CLOCK_24.gif"
+$load FONT "images/gui.FONT_24.gif"
+$load FILESIZE "images/gui.FILESIZE_24.gif"
+$load HIDDENFILE "images/gui.HIDDENFILE_24.gif"
 
 final abstract class ImageCache()
    public static 
@@ -23,6 +27,11 @@ final abstract class ImageCache()
       name_image("gui.NEW_FOLDER_24", NEW_FOLDER)
       name_image("gui.REFRESH_24", REFRESH)
       name_image("gui.UP_24", UP)
+      name_image("gui.CLOCK_24", CLOCK)
+      name_image("gui.FONT_24",FONT)
+      name_image("gui.FILESIZE_24", FILESIZE)
+      name_image("gui.HIDDENFILE_24", HIDDENFILE)
+
       name_image("gui.BOX_UP", "13,(0=shadow;1=hilite;~=transparent),_
 ~~~~~~~~~~~~~_
 ~11111111111~_

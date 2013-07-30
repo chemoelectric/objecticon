@@ -28,7 +28,7 @@ class DirectoryDialog(Dialog)
       message_label, 
       tree, 
       dir, 
-      show_hidden_cb,
+      show_hidden_button,
       existing_file_mode
 
    public static const
@@ -62,13 +62,7 @@ class DirectoryDialog(Dialog)
       root_node := TreeNode()
       every d := Files.get_roots() do
          root_node.add(TreeNode().set_label(ListEntry(ucs(d), Files.lstat(d), Files.stat(d))).set_always_expandable(&yes))
-      tree.
-         set_fixed_col_w(16 + 2 * 2).
-         set_item_paint(IconFilesItemPaint()).
-         set_item_border(EmptyBorder().
-                            set_insets(2, Gui.TEXT_INSET, 0, 0).
-                            set_x_align(Align.L)).
-         set_root_node(root_node)
+      tree.set_root_node(root_node)
       res := &null
    end
 
@@ -102,7 +96,7 @@ class DirectoryDialog(Dialog)
          t := e.name
          if e.stat.mode_str[1] == "d" &
             not(Files.is_relative_dir(t)) &
-            (show_hidden_cb.is_checked() | 
+            (show_hidden_button.is_checked() | 
                not(Files.is_hidden(t))) then
             put(dir_list, e)
       }
@@ -280,7 +274,7 @@ $endif
       self.dispose()
    end
 
-   public on_show_hidden_cb(ev)
+   public on_show_hidden_button(ev)
       local n
       n := tree.object_get_selections()[1] | fail
       goto_dir(get_full_path(n).str())
@@ -333,6 +327,13 @@ $endif
    public new()
       cast(self,Dialog).new()
       self.setup()
+      tree.
+         set_fixed_col_w(16 + 2 * 2).
+         set_item_paint(IconFilesItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(2, Gui.TEXT_INSET, 0, 0).
+                            set_x_align(Align.L))
+         
       existing_file_mode := IGNORE
       return
    end
@@ -341,7 +342,7 @@ $endif
    end
 
    private setup()
-      local paint_2, layout_7, paint_7, paint_11, layout_4, paint_4, panel_4, paint_1, paint_9, layout_6, paint_6, paint_10, paint_3, panel_3, paint, paint_8, paint_5
+      local paint_2, layout_7, paint_7, paint_11, layout_4, paint_4, panel_4, paint_34, paint_1, paint_9, layout_6, paint_6, paint_10, paint_3, panel_3, paint_33, paint, paint_5, paint_35
       self.set_label("Select directory")
       self.set_resize(&yes)
       paint_1 := ImagePaint().
@@ -388,6 +389,17 @@ $endif
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_7)
+      paint_34 := ImagePaint().
+         set_cache("gui.HIDDENFILE_24")
+      paint_33 := TextPaint("Hidden files")
+      show_hidden_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_33).
+         connect(self.on_show_hidden_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&yes).
+         set_paint(paint_34)
       layout_6 := GridLayout().
          set_doi(0).
          set_dii(2).
@@ -400,7 +412,8 @@ $endif
          add(home_button).
          add(up_button).
          add(new_button).
-         add(refresh_button)
+         add(refresh_button).
+         add(show_hidden_button)
       self.add(panel_4)
       tree := ItemPaintTree().
          set_size("390", "272").
@@ -415,6 +428,7 @@ $endif
          set_select_mode(Select.ONE).
          set_show_root(&no)
       self.add(tree)
+      paint_35 := TextPaint("Directory")
       dir := EditList().
          set_size("150").
          set_align(Align.L, Align.B).
@@ -423,19 +437,11 @@ $endif
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
+         set_tooltip(paint_35).
          connect(self.on_dir, Event.ACTION).
          connect(self.on_dir, Event.CONTENT_CHANGED).
          set_selection_list([""])
       self.add(dir)
-      paint_8 := TextPaint("Show hidden directories")
-      show_hidden_cb := CheckBox().
-         clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_align", Align.L).
-         connect(self.on_show_hidden_cb, Event.ACTION).
-         set_toggles(&yes).
-         set_paint(paint_8)
-      self.add(show_hidden_cb)
       paint_9 := TextPaint("Okay")
       okay_button := TextButton().
          set_align(Align.L, Align.B).
