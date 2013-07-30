@@ -662,7 +662,7 @@ function graphics_Window_filter(self, x0, y0, w0, h0, spec)
           tended struct b_lelem *le;
           tended struct descrip elem;
           nfilter = ListBlk(spec).size;
-          MemProtect(filter = malloc(nfilter * sizeof(struct filter)));
+          MemProtect(filter = malloc(1 + nfilter * sizeof(struct filter)));  /* + 1 to avoid 0 malloc */
           for (le = lgfirst(&ListBlk(spec), &state); le;
                le = lgnext(&ListBlk(spec), &state, le)) {
               elem = le->lslots[state.result];

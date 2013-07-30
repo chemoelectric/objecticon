@@ -2821,14 +2821,29 @@ class ExprStream(LineBasedInputStream, NoCopy)
    end
 end
 
+# A {FileStream} which wraps a unix pseudo-terminal file.  This can be
+# used to communicate with a child process, such as a shell.
+#
 class PttyStream(FileStream)
    private readable 
       slave_name
 
    private static native new_impl()
+   private static native prepare_slave(f)
 
+   #
+   # Open the slave corresponding to this instance (the master file).
+   # This is called by the child process to establish its end of the
+   # communication channel.
+   #
    public open_slave()
-      return FileStream(slave_name, FileOpt.RDWR)
+      local f
+      f := FileStream(slave_name, FileOpt.RDWR) | fail
+      prepare_slave(f) | {
+         f.close()
+         fail
+      }
+      return f
    end
 
    public new()

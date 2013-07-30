@@ -15,7 +15,7 @@ class Explorer(Dialog)
       local l
       l := []
       repeat {
-         push(l, n.get_label())
+         push(l, n.get_label().name)
          n := n.get_parent() | break
       }
       return FilePath.from_list(l).str()
@@ -60,20 +60,17 @@ class Explorer(Dialog)
    # Given a TreeNode n, load its children with the sub-directories.
    #
    public load_subtree(n)
-      local s, name, r1, l
+      local s, r1, l, e
 
       s := get_full_path(n)
 
       l := get_directory_list(s)[1]
-      l := isort(l, FileDialog.map1)
-
+      l := isort(l, Files.name_key)
       n.clear_children()
-      every name := (!l)[1] do {
-         if (name ~== "./") & (name ~== "../") then {
-            r1 := TreeNode().set_always_expandable(&yes)
-            r1.set_label(name)
-            n.add(r1)
-         }
+      every e := !l do {
+         r1 := TreeNode().set_always_expandable(&yes)
+         r1.set_label(e)
+         n.add(r1)
       }
    end
 
@@ -96,11 +93,11 @@ class Explorer(Dialog)
       s := get_full_path(n)
 
       t := get_directory_list(s) | fail
-      t := isort(t[1] ||| t[2], FileDialog.map1)
+      t := isort(t[1] ||| t[2], Files.name_key)
 
       l := []
       every el := !t do {
-         put(l, [el, Format.numeric_to_string(el[2].size, 0, ','), fmt_time(el[2].mtime), el[2].mode_str])
+         put(l, [el, Format.numeric_to_string(el.lstat.size, 0, ','), fmt_time(el.lstat.mtime), el.lstat.mode_str])
       }
 
       tbl.set_contents(l)
@@ -120,19 +117,17 @@ class Explorer(Dialog)
    # Read a directory.
    #
    public get_directory_list(s)
-      local e, dir_list, file_list, l, t
-      if not(l := Files.list(s)) then {
+      local e, dir_list, file_list, l
+      if not(l := Files.ucs_list(s)) then
          return [[],[]]
-      }
       dir_list := []
       file_list := []
       every e := !l do {
-         if t := ucs(e[1]) &
-            not(Files.is_hidden(e[1])) then {
-            if e[2].mode_str[1] == "d" then
-               put(dir_list, [t, e[2]])
+         if not(Files.is_hidden(e.name)) then {
+            if e.stat.mode_str[1] == "d" then
+               put(dir_list, e)
             else
-               put(file_list, [t, e[2]])
+               put(file_list, e)
          }
       }
       return [dir_list, file_list]
@@ -147,9 +142,17 @@ class Explorer(Dialog)
 
       set_layout(GridLayout())
 
-      tree := Tree().set_size(250,420).set_select_mode("one")
-      tree.connect(self.handle_tree_expansion, Event.TREE_NODE_EXPANSION)
-      tree.connect(self.handle_tree_selection, Event.SELECTION_CHANGED)
+      tree := ItemPaintTree().
+         set_size(250,420).
+         set_select_mode("one").
+         set_fixed_col_w(16 + 2 * 2).
+         set_item_paint(IconFilesItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(2, Gui.TEXT_INSET, 0, 0).
+                            set_x_align(Align.L)).
+         connect(self.handle_tree_expansion, Event.TREE_NODE_EXPANSION).
+         connect(self.handle_tree_selection, Event.SELECTION_CHANGED)
+
       bw := TableColumn().border.get_total_width()
       use {
          w := Window(),
@@ -173,7 +176,7 @@ class Explorer(Dialog)
       #
       # Initialize the tree data structure.
       #
-      root_node := TreeNode().set_label("/")
+      root_node := TreeTableNode().set_label(ListEntry(u"/", Files.lstat("/"), Files.stat("/")))
       load_subtree(root_node)
       tree.set_root_node(root_node)
       tree.object_set_selections([root_node])

@@ -237,15 +237,11 @@ class FileSubWorker(SubWorker)
       return s
    end
 
-   private static ls_sort(x)
-      return map(x[1])
-   end
-
    public get_data(worker)
       local f, e, l, t, path, rs, now, tf, gcache, ucache, ts
       f := worker.req.url.get_decoded_path()
       if Files.is_directory(f) then {
-         l := isort(Files.list(f), ls_sort) | fail
+         l := isort(Files.ucs_list(f), Files.name_key) | fail
          now := Time.get_system_seconds()
          ucache := table()
          gcache := table()
@@ -255,15 +251,15 @@ class FileSubWorker(SubWorker)
                rs.out("<html><title>Directory " || f || "</title>" || Browser.get_table_tag())
                path := FilePath(f)
                every e := !l do {
-                  t := e[2]
+                  t := e.lstat
                   tf := if now - t.mtime > 180 * 86400 then
                      Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;&nbsp;'yyyy")
                   else
                      Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;'HH:mm")
                   rs.out("<tr><td>" || t.mode_str || "&nbsp;</td><td>" || uname(t.uid, ucache) || "&nbsp;</td><td>" || grname(t.gid, gcache) ||
                          "&nbsp;</td><td align=right>" || Format.numeric_to_string(t.size, 0, ',') || "&nbsp;</td><td>" || tf || "&nbsp;</td>" ||
-                         "<td nowrap><a href=\"file://" || URL.percent_encode(path.child(e[1]).canonical().str(), URL.UNRESERVED ++ '/') || "\">" || 
-                                 Browser.to_content(e[1]) || "</a></td></tr>\n")
+                         "<td nowrap><a href=\"file://" || URL.percent_encode(path.child(e.name).canonical().str(), URL.UNRESERVED ++ '/') || "\">" || 
+                                 Browser.to_content(e.name) || "</a></td></tr>\n")
                }
                rs.out("</table></html>")
                rs.str()

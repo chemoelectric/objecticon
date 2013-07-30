@@ -150,6 +150,42 @@ class EmptyPaint(Paint)
    end
 end
 
+#
+# A {Paint} instance which paints one instance on top of another.  The
+# width/height is taken as the maximum of the two inner {Paint}s.
+#
+class CompoundPaint(Paint)
+   public
+      top, bottom
+
+   public initially(c, accel)
+      top.initially(c, accel)
+      bottom.initially(c, accel)
+      w := max(top.w, bottom.w)
+      h := max(top.h, bottom.h)
+   end
+
+   public finally()
+      top.finally()
+      bottom.finally()
+   end
+
+   public draw(W, x, y, w, h)
+      bottom.draw(W, x, y, w, h)
+      top.draw(W, x, y, w, h)
+   end
+
+   public set_top(top)
+      self.top := top
+      return self
+   end
+
+   public set_bottom(bottom)
+      self.bottom := bottom
+      return self
+   end
+end
+
 # A {Paint} instance which draws its output using a {Grid}.  The input is a format
 # string specifying the grid and its contents.
 #

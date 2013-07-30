@@ -3,6 +3,7 @@ package gui
 import 
    ipl.sort,
    ipl.lists,
+   ipl.filegui,
    io
 
 #
@@ -60,8 +61,14 @@ class DirectoryDialog(Dialog)
       dir.set_selection_list(init_dirs).set_selection(1)
       root_node := TreeNode()
       every d := Files.get_roots() do
-         root_node.add(TreeNode().set_label(ucs(d)).set_always_expandable(&yes))
-      tree.set_root_node(root_node)
+         root_node.add(TreeNode().set_label(ListEntry(ucs(d), Files.lstat(d), Files.stat(d))).set_always_expandable(&yes))
+      tree.
+         set_fixed_col_w(16 + 2 * 2).
+         set_item_paint(IconFilesItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(2, Gui.TEXT_INSET, 0, 0).
+                            set_x_align(Align.L)).
+         set_root_node(root_node)
       res := &null
    end
 
@@ -72,39 +79,34 @@ class DirectoryDialog(Dialog)
       # Do this here as we need the tree to be setup so that we
       # can scroll to the selected dir.
       goto_dir(dir.get_contents())
-      check_existing()
    end
 
    #
    # Given a TreeNode n, load its children with the sub-directories.
    #
    public load_subtree(n)
-      local s, l
+      local s, e, l
       s := get_full_path(n).str()
-      l := list_directory(s)
       n.clear_children()
-      every s := !l do
-         n.add(TreeNode().set_label(s).set_always_expandable(&yes))
+      l := list_directory(s) | fail
+      every e := !l do
+         n.add(TreeNode().set_label(e).set_always_expandable(&yes))
+      return self
    end
 
    public list_directory(s)
       local e, dir_list, l, t
-      if l := Files.list(s) then 
-         clear_msg()
-      else {
-         msg(&why)
-         return []
-      }
+      l := Files.ucs_list(s) | fail
       dir_list := []
       every e := !l do {
-         if e[2].mode_str[1] == "d" &
-            t := ucs(e[1]) &
+         t := e.name
+         if e.stat.mode_str[1] == "d" &
             not(Files.is_relative_dir(t)) &
             (show_hidden_cb.is_checked() | 
                not(Files.is_hidden(t))) then
-            put(dir_list, t)
+            put(dir_list, e)
       }
-      return isort(dir_list, FileDialog.map1)
+      return isort(dir_list, Files.name_key)
    end
 
    #
@@ -115,7 +117,7 @@ class DirectoryDialog(Dialog)
       local l
       l := []
       repeat {
-         push(l, n.get_label())
+         push(l, n.get_label().name)
          n := n.get_parent()
          if n === tree.get_root_node() then
             break
@@ -131,13 +133,15 @@ class DirectoryDialog(Dialog)
       # an expansion, load the subtree and refresh the tree.
       #
       if n.is_expanded() then {
-         load_subtree(n)
+         if load_subtree(n) then
+            check_existing()
+         else
+            msg(&why)
          tree.tree_structure_changed()
       }
    end
 
    public on_tree_selection(ev)
-      clear_msg()
       dir.set_contents(get_full_path(tree.object_get_selections()[1]).liberal_ucs())
       check_existing()
    end
@@ -145,7 +149,8 @@ class DirectoryDialog(Dialog)
    public on_dir(ev)
       if member(EditList.NAVIGATE, ev.code) then
          goto_dir(dir.get_contents())
-      check_existing()
+      else
+         check_existing()
    end
 
    #
@@ -191,35 +196,43 @@ class DirectoryDialog(Dialog)
    end
 
    public goto_dir(d)
-      local n, s, p, ps
+      local n, s, p, ps, err, i
       p := FilePath(d).canonical()
       n := tree.get_root_node()
       every s := p.gen() do {
          n := find_child(n, s) | break
-         load_subtree(n)
+         load_subtree(n) | {
+            err := &why
+            break
+         }
          n.set_expanded(&yes)
       }
+
+      tree.tree_structure_changed()
+      i := tree.find_line(n)
       tree.
-         tree_structure_changed().
-         object_set_selections([n]).
-         object_set_cursor(n).
-         center_line(tree.find_line(n))
+         set_selections([i]).
+         set_cursor(i).
+         center_line(i)
+
+      dir.set_contents(p.liberal_ucs())
       ps := p.str()
-      if Files.is_directory(ps) then
-         clear_msg()
+      if \err then
+         msg(err)
+      else if Files.is_directory(ps) then
+         check_existing()
       else
          msg("Not a dir: " || ps)
-      dir.set_contents(p.liberal_ucs())
    end
 
    public find_child(n, s)
       local n1
       every n1 := !n.children do {
 $ifdef _MS_WIN32
-         if map(n1.label) == map(s) then
+         if map(n1.label.name) == map(s) then
             return n1
 $else
-         if n1.label == s then
+         if n1.label.name == s then
             return n1
 $endif
       }
@@ -289,7 +302,10 @@ $endif
    public on_refresh_button(ev)
       local n
       n := tree.object_get_selections()[1] | fail
-      load_subtree(n)
+      if load_subtree(n) then
+         check_existing()
+      else
+         msg(&why)
       tree.tree_structure_changed()
    end
 
@@ -319,6 +335,9 @@ $endif
       self.setup()
       existing_file_mode := IGNORE
       return
+   end
+
+   public end_dialog()
    end
 
    private setup()
@@ -383,8 +402,8 @@ $endif
          add(new_button).
          add(refresh_button)
       self.add(panel_4)
-      tree := Tree().
-         set_size(390, 272).
+      tree := ItemPaintTree().
+         set_size("390", "272").
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).

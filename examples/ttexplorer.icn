@@ -17,7 +17,7 @@ class TTExplorer(Dialog)
       local l
       l := []
       repeat {
-         push(l, n.get_label()[1])
+         push(l, n.get_label().name)
          n := n.get_parent() | break
       }
       return FilePath.from_list(l).str()
@@ -55,21 +55,17 @@ class TTExplorer(Dialog)
    # Given a Node n, load its children with the sub-directories.
    #
    public load_subtree(n)
-      local s, e, r1, l, t
-
+      local s, e, r1, l
       s := get_full_path(n)
-
       l := get_directory_list(s)
       n.clear_children()
       every e := !!l do {
-         if t := ucs(e[1]) then {
-            r1 := TreeTableNode()
-            r1.set_label(e)
-            if e[2].mode_str[1] == "d" then
-               r1.set_always_expandable(&yes)
-            r1.set_contents([Format.numeric_to_string(e[2].size, 0, ','), fmt_time(e[2].mtime), e[2].mode_str])
-            n.add(r1)
-         }
+         r1 := TreeTableNode()
+         r1.set_label(e)
+         if e.stat.mode_str[1] == "d" then
+            r1.set_always_expandable(&yes)
+         r1.set_contents([Format.numeric_to_string(e.lstat.size, 0, ','), fmt_time(e.lstat.mtime), e.lstat.mode_str])
+         n.add(r1)
       }
    end
 
@@ -77,23 +73,21 @@ class TTExplorer(Dialog)
    # Read a directory.
    #
    public get_directory_list(s)
-      local e, dir_list, file_list, l, t
-      if not(l := Files.list(s)) then {
+      local e, dir_list, file_list, l
+      if not(l := Files.ucs_list(s)) then
          return [[],[]]
-      }
       dir_list := []
       file_list := []
       every e := !l do {
-         if t := ucs(e[1]) &
-            not(Files.is_hidden(e[1])) then {
-            if e[2].mode_str[1] == "d" then
-               put(dir_list, [t, e[2]])
+         if not(Files.is_hidden(e.name)) then {
+            if e.stat.mode_str[1] == "d" then
+               put(dir_list, e)
             else
-               put(file_list, [t, e[2]])
+               put(file_list, e)
          }
       }
-      return [isort(dir_list, FileDialog.map1),
-              isort(file_list, FileDialog.map1)]
+      return [isort(dir_list, Files.name_key),
+              isort(file_list, Files.name_key)]
    end
 
    public component_setup()
@@ -119,7 +113,7 @@ class TTExplorer(Dialog)
          }
       }
 
-      root_node := TreeTableNode().set_label([u"/", Files.stat("/")])
+      root_node := TreeTableNode().set_label(ListEntry(u"/", Files.lstat("/"), Files.stat("/")))
       load_subtree(root_node)
       tt.table_content.set_root_node(root_node)
    end

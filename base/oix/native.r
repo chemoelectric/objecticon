@@ -3446,7 +3446,8 @@ function io_RamStream_new_impl(s, wiggle)
        struct ramstream *p;
        if (wiggle < 0)
            Irunerr(205, wiggle);
-
+       if (wiggle == 0)
+           ++wiggle;  /* To avoid zero-size mallocs/reallocs */
        MemProtect(p = malloc(sizeof(*p)));
        p->wiggle = wiggle;
        p->pos = p->size = StrLen(s);
@@ -4679,3 +4680,18 @@ function io_PttyStream_new_impl()
 #endif
     }
 end
+
+#if UNIX
+function io_PttyStream_prepare_slave(f)
+    body {
+       FdStaticParam(f, fd);
+#ifdef TIOCSCTTY                        /* Acquire controlling tty on BSD */
+       if (ioctl(fd, TIOCSCTTY, 0) < 0) {
+           errno2why();
+           fail;
+       }
+#endif
+       return nulldesc;
+    }
+end
+#endif

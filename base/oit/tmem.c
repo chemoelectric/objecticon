@@ -244,6 +244,8 @@ void next_import(char *s, int qualified, struct node *n)
 {
     int i = hasher(s, import_hash);
     struct timport *x = import_hash[i];
+    if (s == package_name)
+        tfatal_at(n, "import same as package: %s", s);
     while (x && x->name != s)
         x = x->b_next;
     if (x) {

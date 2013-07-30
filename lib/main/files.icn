@@ -51,16 +51,32 @@ $endif
 
 $ifdef _PLAN9
    #
-   # Read the given directory returning a list of [name, {Stat}] pairs.
+   # Read the given directory returning a list of `ListEntry` objects,
+   # each containing the name, lstat and stat values for each entry.
    #
    public static list(s)
+      return list1(s, 1)
+   end
+
+   #
+   # Like `list`, but the filenames are converted to `ucs`; any that
+   # can't be converted are skipped.
+   #
+   public static ucs_list(s)
+      return list1(s, ucs)
+   end
+
+   private static list1(s, f)
       local l, t, e, st
-      l := [[".", stat(s)],
-            ["..", stat(FilePath(s).child("..").str())]] | fail
+      l := []
+      st := stat(s) | fail
+      put(l, ListEntry(".", st, st))
+      st := stat(FilePath(s).child("..").str()) | fail
+      put(l, ListEntry("..", st, st))
       t := dir_read_impl(s) | fail
       every e := !t do {
          st := Stat!e
-         put(l, [st.name, st])
+         put(l, ListEntry(f(st.name), st, st))
       }
       return l
    end
@@ -86,35 +102,46 @@ $else
       local p
       return use {
          p := DirStream(s),
-         list1(FilePath(s), p)
+         list1(FilePath(s), p, 1)
       }
    end
 
-   private static list1(path, p)
-      local l, s, cpath
+   #
+   # Like `list`, but the filenames are converted to `ucs`; any that
+   # can't be converted are skipped.
+   #
+   public static ucs_list(s)
+      local p
+      return use {
+         p := DirStream(s),
+         list1(FilePath(s), p, ucs)
+      }
+   end
+
+   private static list1(path, p, f)
+      local l, s, cs, lst, st
       l := []
       repeat {
          s := p.read_line() | fail
          if /s then
             return l
-         cpath := path.child(s)
-         put(l, [s, lstat(cpath.str())]) |
-            return error("Couldn't lstat " || cpath.str() || ": " || &why)
+         cs := path.child(s).str()
+         lst := lstat(cs) | next
+         st := if lst.mode_str[1] == "l" then
+            stat(cs) | next
+         else
+            lst
+         put(l, ListEntry(f(s), lst, st))
       }
    end
 $endif
 
    #
-   # Like `list`, but the filenames are converted to `ucs`; any which
-   # can't be converted are skipped.
+   # A useful function to help sort by name the result of the various list
+   # functions with isort.
    #
-   public static ucs_list(s)
-      local e, l, t
-      l := list(s) | fail
-      t := []
-      every e := !l do
-         put(t, [ucs(e[1]), e[2]])
-      return t
+   public static name_key(data)
+      return map(data.name)
    end
 
    #
@@ -586,6 +613,23 @@ abstract class FileSystem()
    public abstract split_paths(s)
 
    package new()
+      return
+   end
+end
+
+#
+# This class holds a result from the `Files.list` method.
+#
+class ListEntry()
+   public const
+      name,
+      lstat,
+      stat
+
+   public new(name, lstat, stat)
+      self.name := name
+      self.lstat := lstat
+      self.stat := stat
       return
    end
 end
