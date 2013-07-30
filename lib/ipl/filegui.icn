@@ -103,10 +103,10 @@ class IconFilesItemPaint(ItemPaint)
       return data.name
    end
 
+$ifdef _PNG
    public get_icon(data)
       local st, k
       st := data.lstat
-$ifdef _PNG
       k := case st.mode_str[1] of {
          "d" : "gui.CLOSED_FOLDER"
          "l" : "icn.SYMLINK_16"
@@ -128,14 +128,18 @@ $ifdef _PNG
             }
          }
       } | "gui.FILE"
+      return ImageCache.get(k) | syserr("Bad cache key in IconFilesItemPaint")
+   end
 $else
-      k := if st.mode_str[1] == "d" then
+   public get_icon(data)
+      local k
+      k := if data.stat.mode_str[1] == "d" then
          "gui.CLOSED_FOLDER"
       else
          "gui.FILE"
-$endif
       return ImageCache.get(k) | syserr("Bad cache key in IconFilesItemPaint")
    end
+$endif
 
    public draw(W, data, x, y, w, h)
       local i
