@@ -2,6 +2,7 @@ package ipl.filegui
 
 import
    ipl.sort,
+   ipl.strings,
    gui,
    io
 
@@ -184,26 +185,26 @@ class FileSuggestField(SuggestField)
       return dir_list
    end
 
-   protected do_request()
-      local s, path, l, t, i
-      if *contents = 0 then
-         return []
+   public get_content_path()
+      local path, s
       s := contents
-      every i := upto('/', s)
-      prefix := if /i then "" else s[1+:i]
-
-      if s[1] == u"~" then {
-         if *s = 1 then
-            return []
+      if s[1] == u"~" then
          s := ucs(Files.get_home()) || s[2:0] | fail
-      }
-
       path := FilePath(s)
       if not path.is_absolute() then
          path := FilePath(cwd).append(path)
+      return path
+   end
 
+   protected do_request()
+      local s, path, l, t, i
+      if contents == (u"" | u"~") then
+         return []
+      every i := upto('/', contents)
+      prefix := if /i then "" else contents[1+:i]
+      path := get_content_path()
       l := []
-      if s[-1] == u"/" then {
+      if contents[-1] == u"/" then {
          do_dir_list(path.str()) | fail
          every t := !dir_list do {
             if match_mode(t) then
@@ -217,11 +218,19 @@ class FileSuggestField(SuggestField)
                put(l, t)
          }
       }
+
+      # No point in a list which is a copy of what we already have
+      if *l = 1 & endswith(contents, l[1].name) then
+         return []
+
       return l
    end
 
    public convert_element(o)
-      return prefix || text(o.name)
+      if o.stat.mode_str[1] == "d" then
+         return prefix || text(o.name) || u"/"
+      else
+         return prefix || text(o.name)
    end
 
    public create_popup()
@@ -232,8 +241,58 @@ class FileSuggestField(SuggestField)
                             set_x_align(Align.L))
    end
 
+   private static get_longest_prefix(l)
+      local i, s, t, e
+      i := 1
+      t := u""
+      repeat {
+         s := l[1].name[1+:i] | break
+         every e := !l do
+            e.name[1+:i] == s | break break
+         t := s
+         i +:= 1
+      }
+      return t
+   end
+
+   public handle_tab(e)
+      local t
+      if \tl then {
+         t := prefix || if *tl.contents = 1 & tl.contents[1].stat.mode_str[1] == "d" then
+            tl.contents[1].name || u"/"
+         else
+            get_longest_prefix(tl.contents)
+         if *contents < *t then
+            assign_contents(t, e)
+         else if contents[-1] == u"/" then
+            # If we have selected a dir in the open list, and pressed
+            # tab we want to close this selection and open with the
+            # new dir.
+            on_change(e)
+      } else {
+         # If we have no text list, but contents representing a
+         # directory, but no "/" at the end, add the slash.
+         if contents[-1] ~== u"/" & Files.is_directory(get_content_path().str()) then
+            assign_contents(contents || u"/", e)
+         else
+            on_change(e)
+      }
+   end
+
+   public keeps(e)
+      return
+   end
+
+   public handle_key(e)
+      if e.code == "\t" then
+         handle_tab(e)
+      else
+         cast(self,SuggestField).handle_key(e)
+   end
+
    public new()
       cast(self,SuggestField).new()
+      self.set_contents(u"")
       cwd := Files.getcwd()
       set_direction(Direction.DOWN)
       return
