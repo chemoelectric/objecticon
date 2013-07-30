@@ -75,9 +75,9 @@ $endif
          if /s then
             return l
          cs := path.child(s).str()
-         lst := lstat(cs) | return error("Couldn't lstat " || cs || ": " || &why)
+         lst := lstat(cs) | next
          st := if lst.mode_str[1] == "l" then
-            stat(cs) | return error("Couldn't stat " || cs || ": " || &why)
+            stat(cs) | next
          else
             lst
          put(l, ListEntry(f(s), lst, st))
