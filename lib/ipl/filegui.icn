@@ -218,7 +218,7 @@ class FileSuggestField(SuggestField)
       if not path.is_absolute() then
          path := FilePath(cwd).append(path)
       matches := []
-      if *contents = 0 | contents[-1] == u"/" then {
+      if *contents = 0 | contents[-1] == Files.PATH_SEPARATOR then {
          do_dir_list(path.str()) | fail
          every t := !dir_list do {
             if match_entry(t) then
@@ -247,7 +247,7 @@ class FileSuggestField(SuggestField)
 
    public convert_element(o)
       if /directories_only_flag & o.stat.mode_str[1] == "d" then
-         return prefix || text(o.name) || u"/"
+         return prefix || text(o.name) || Files.PATH_SEPARATOR
       else
          return prefix || text(o.name)
    end
@@ -286,7 +286,7 @@ class FileSuggestField(SuggestField)
          # a /.  So for example
          # "/ho" + tab -> "/home/" rather than "/home"
          t := prefix || if /directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
-            matches[1].name || u"/"
+            matches[1].name || Files.PATH_SEPARATOR
          else
             get_longest_prefix()
 
@@ -303,13 +303,13 @@ class FileSuggestField(SuggestField)
             if /directories_only_flag then
                on_change(e)
             else
-               assign_contents(contents || u"/", e)
+               assign_contents(contents || Files.PATH_SEPARATOR, e)
          }
       } else {
          # As above, calculate the string we could insert.
          calc_matches() | fail
          t := prefix || if /directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
-            matches[1].name || u"/"
+            matches[1].name || Files.PATH_SEPARATOR
          else
             get_longest_prefix()
 
@@ -324,7 +324,7 @@ class FileSuggestField(SuggestField)
          if *contents < *t then
             assign_contents(t, e)
          else if *contents = *t & \directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
-            assign_contents(t || u"/", e)
+            assign_contents(t || Files.PATH_SEPARATOR, e)
          else
             on_change(e)
       }
