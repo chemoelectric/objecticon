@@ -190,12 +190,13 @@ class FileSuggestField(SuggestField)
    private match_entry(e)
       local n
       n := e.name
-      if n == (u"." | u"..") then
-         fail
-      if e.stat.mode_str[1] == "d" then
-         return
-      if /directories_only_flag & (/pats | (!pats).match(n) = *n + 1) then
-         return
+      if e.stat.mode_str[1] == "d" then {
+         if not Files.is_relative_dir(n) then
+            return
+      } else {
+         if /directories_only_flag & (/pats | (!pats).match(n) = *n + 1) then
+            return
+      }
    end
 
    private do_dir_list(s)
