@@ -157,6 +157,7 @@ end
 class FileSuggestField(SuggestField)
    public
       cwd,
+      matches,
       prefix,
       dir_list,
       dir_list_name,
@@ -206,49 +207,42 @@ class FileSuggestField(SuggestField)
       return dir_list
    end
 
-   public get_content_path()
-      local path
+   #
+   # Calculate the matches list and prefix string from the current
+   # contents.  A new contents can then be calculated by simply
+   # appending the prefix to the name of a member of the matches list.
+   #
+   private calc_matches()
+      local path, s, t
       path := FilePath(contents)
       if not path.is_absolute() then
          path := FilePath(cwd).append(path)
-      return path
-   end
-
-   private get_match_list()
-      local path, l, s, t
-      path := get_content_path() | fail
-      l := []
+      matches := []
       if *contents = 0 | contents[-1] == u"/" then {
          do_dir_list(path.str()) | fail
          every t := !dir_list do {
             if match_entry(t) then
-               put(l, t)
+               put(matches, t)
          }
+         prefix := contents
       } else {
          do_dir_list(path.parent().str()) | fail
          s := path.get(-1)
          every t := !dir_list do {
             if match_entry(t) & match(s, t.name) then
-               put(l, t)
+               put(matches, t)
          }
+         prefix := contents[1:-*s]
       }
-      return l
-   end
-
-   private get_prefix()
-      local i
-      every i := upto('/', contents)
-      return if /i then u"" else contents[1+:i]
+      return
    end
 
    protected do_request()
-      local l
-      l := get_match_list() | fail
-      prefix := get_prefix()
+      calc_matches() | fail
       # No point in a list which is a copy of what we already have
-      if *l = 1 & endswith(contents, l[1].name) then
+      if *matches = 1 & endswith(contents, matches[1].name) then
          return []
-      return l
+      return matches
    end
 
    public convert_element(o)
@@ -266,13 +260,17 @@ class FileSuggestField(SuggestField)
                             set_x_align(Align.L))
    end
 
-   private static get_longest_prefix(l)
+   #
+   # Get the longest common initial name from the matches list.  Eg if
+   # we have ["mark", "mary", "marion"], we get "mar".
+   #
+   private get_longest_prefix()
       local i, s, t, e
       i := 1
       t := u""
       repeat {
-         s := l[1].name[1+:i] | break
-         every e := !l do
+         s := matches[1].name[1+:i] | break
+         every e := !matches do
             e.name[1+:i] == s | break break
          t := s
          i +:= 1
@@ -281,17 +279,16 @@ class FileSuggestField(SuggestField)
    end
 
    public handle_tab(e)
-      local t, l, px
+      local t
       if \tl then {
-         l := tl.contents
          # Calculate the string we could insert.  If not
          # directories-only, and we have a single directory, append
          # a /.  So for example
          # "/ho" + tab -> "/home/" rather than "/home"
-         t := prefix || if /directories_only_flag & *l = 1 & l[1].stat.mode_str[1] == "d" then
-            l[1].name || u"/"
+         t := prefix || if /directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
+            matches[1].name || u"/"
          else
-            get_longest_prefix(l)
+            get_longest_prefix()
 
          # If the calculated string is longer than what we have,
          # insert it.  Otherwise, if we have selected from the list
@@ -310,12 +307,11 @@ class FileSuggestField(SuggestField)
          }
       } else {
          # As above, calculate the string we could insert.
-         l := get_match_list() | fail
-         px := get_prefix()
-         t := px || if /directories_only_flag & *l = 1 & l[1].stat.mode_str[1] == "d" then
-            l[1].name || u"/"
+         calc_matches() | fail
+         t := prefix || if /directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
+            matches[1].name || u"/"
          else
-            get_longest_prefix(l)
+            get_longest_prefix()
 
          #write("px=",image(px),  " contents=",image(contents)," t=",image(t),  " tl=",to_string(ipl.pdco.List{(!l).name}))
 
@@ -327,7 +323,7 @@ class FileSuggestField(SuggestField)
          # list contents.
          if *contents < *t then
             assign_contents(t, e)
-         else if *contents = *t & \directories_only_flag & *l = 1 & l[1].stat.mode_str[1] == "d" then
+         else if *contents = *t & \directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
             assign_contents(t || u"/", e)
          else
             on_change(e)
