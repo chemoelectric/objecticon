@@ -19,7 +19,7 @@ class DateField(DropDown)
       last_val
 
    private got_date(ev)
-      set_value(popup.get_value())
+      set_value(popup.get_value(), ev)
       close_all()
    end
 
@@ -37,11 +37,11 @@ class DateField(DropDown)
    end
 
    public do_increment(ev)
-      set_value(last_val.set_mday(last_val.mday + 1), ev)
+      set_value(last_val.set_mday(last_val.mday + 1), ev, &yes)
    end
 
    public do_decrement(ev)
-      set_value(last_val.set_mday(last_val.mday - 1), ev)
+      set_value(last_val.set_mday(last_val.mday - 1), ev, &yes)
    end
 
    # Set the format for the input string to be converted to/from a
@@ -62,7 +62,7 @@ class DateField(DropDown)
 
    # Set the value from the given `Time` instance.
    #
-   public set_value(x, ev)
+   public set_value(x, ev, coalesce)
       local s
       s := x.format(format)
       if /ev then {
@@ -71,7 +71,7 @@ class DateField(DropDown)
             view.remove_wattrib("fg").reset()
          last_val := clone(x)
       } else
-         view.assign_contents(s, ev)
+         view.assign_contents(s, ev, coalesce)
       return self
    end
 
@@ -112,16 +112,16 @@ class TimeField(Spin)
 
    public do_increment(ev)
       if find("ss", format) then
-         set_value(last_val.set_sec(last_val.sec + 1), ev)
+         set_value(last_val.set_sec(last_val.sec + 1), ev, &yes)
       else
-         set_value(last_val.set_min(last_val.min + 1), ev)
+         set_value(last_val.set_min(last_val.min + 1), ev, &yes)
    end
 
    public do_decrement(ev)
       if find("ss", format) then
-         set_value(last_val.set_sec(last_val.sec - 1), ev)
+         set_value(last_val.set_sec(last_val.sec - 1), ev, &yes)
       else
-         set_value(last_val.set_min(last_val.min + 1), ev)
+         set_value(last_val.set_min(last_val.min + 1), ev, &yes)
    end
 
    # Return the value (as a `Time`), or fail if the input is not
@@ -133,7 +133,7 @@ class TimeField(Spin)
 
    # Set the value from the given `Time` instance.
    #
-   public set_value(x, ev)
+   public set_value(x, ev, coalesce)
       local s
       s := x.format(format)
       if /ev then {
@@ -142,7 +142,7 @@ class TimeField(Spin)
             view.remove_wattrib("fg").reset()
          last_val := clone(x)
       } else
-         view.assign_contents(s, ev)
+         view.assign_contents(s, ev, coalesce)
       return self
    end
 
@@ -243,7 +243,7 @@ class WeekField(DropDown)
       local t
       t := popup.get_value()
       t.set_mday(t.mday - (t.wday + 5) % 7)
-      set_value(t)
+      set_value(t, ev)
       close_all()
    end
 
@@ -261,11 +261,11 @@ class WeekField(DropDown)
    end
 
    public do_increment(ev)
-      set_value(last_val.set_mday(last_val.mday + 7), ev)
+      set_value(last_val.set_mday(last_val.mday + 7), ev, &yes)
    end
 
    public do_decrement(ev)
-      set_value(last_val.set_mday(last_val.mday - 7), ev)
+      set_value(last_val.set_mday(last_val.mday - 7), ev, &yes)
    end
 
    # Return the value (as a `Time`, being the first day of the
@@ -286,7 +286,7 @@ class WeekField(DropDown)
 
    # Set the value from the given `Time` instance.
    #
-   public set_value(x, ev)
+   public set_value(x, ev, coalesce)
       local s
       s := x.format(format)
       if /ev then {
@@ -295,7 +295,7 @@ class WeekField(DropDown)
             view.remove_wattrib("fg").reset()
          last_val := clone(x)
       } else
-         view.assign_contents(s, ev)
+         view.assign_contents(s, ev, coalesce)
       return self
    end
 

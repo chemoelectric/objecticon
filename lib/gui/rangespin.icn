@@ -34,11 +34,11 @@ class RangeSpin(Spin)
    end
 
    public do_increment(ev)
-      set_value(last_val + self.increment_size, ev)
+      set_value(last_val + self.increment_size, ev, &yes)
    end
 
    public do_decrement(ev)
-      set_value(last_val - self.increment_size, ev)
+      set_value(last_val - self.increment_size, ev, &yes)
    end
 
    #
@@ -57,7 +57,7 @@ class RangeSpin(Spin)
    #
    # Set the value
    #
-   public set_value(x, ev)
+   public set_value(x, ev, coalesce)
       x <:= \self.lo
       x >:= \self.hi
       if /ev then {
@@ -66,7 +66,7 @@ class RangeSpin(Spin)
             view.remove_wattrib("fg").reset()
          last_val := x
       } else
-         view.assign_contents(x, ev)
+         view.assign_contents(x, ev, coalesce)
       return self
    end
 
