@@ -124,7 +124,7 @@ abstract class SuggestField(TextField, MenuMode)
    public on_change(ev)
       if synch_ev === ev then
          mod := 2
-      else if *contents = 0 & ev.code ~=== Key.DOWN then
+      else if *contents = 0 & not(ev.code === (Key.DOWN | "\t")) then
          keep_closed()
       else {
          mod := 1

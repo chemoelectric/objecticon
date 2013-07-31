@@ -3,6 +3,7 @@ package ipl.filegui
 import
    ipl.sort,
    ipl.strings,
+   ipl.wildcard,
    gui,
    io,
    util
@@ -159,7 +160,8 @@ class FileSuggestField(SuggestField)
       prefix,
       dir_list,
       dir_list_name,
-      directories_only_flag
+      directories_only_flag,
+      pats
 
    public set_directories_only(s)
       self.directories_only_flag := check_flag(s)
@@ -171,10 +173,28 @@ class FileSuggestField(SuggestField)
       return self
    end
 
-   private match_mode(l)
-      if l.name == (u"." | u"..") then
+   public set_filter(f)
+      local pat
+      pats := []
+      f ? {
+         repeat {
+            pat := tab(upto(';') | 0)
+            put(pats, Wildcard(pat))
+            move(1) | break
+         }
+      }
+      return self
+   end
+
+   private match_entry(e)
+      local n
+      n := e.name
+      if n == (u"." | u"..") then
          fail
-      return /directories_only_flag | l.stat.mode_str[1] == "d"
+      if e.stat.mode_str[1] == "d" then
+         return
+      if /directories_only_flag & (/pats | (!pats).match(n) = *n + 1) then
+         return
    end
 
    private do_dir_list(s)
@@ -187,11 +207,8 @@ class FileSuggestField(SuggestField)
    end
 
    public get_content_path()
-      local path, s
-      s := contents
-      if s[1] == u"~" then
-         s := ucs(Files.get_home()) || s[2:0] | fail
-      path := FilePath(s)
+      local path
+      path := FilePath(contents)
       if not path.is_absolute() then
          path := FilePath(cwd).append(path)
       return path
@@ -199,32 +216,35 @@ class FileSuggestField(SuggestField)
 
    private get_match_list()
       local path, l, s, t
-      path := get_content_path()
+      path := get_content_path() | fail
       l := []
-      if contents[-1] == u"/" then {
+      if *contents = 0 | contents[-1] == u"/" then {
          do_dir_list(path.str()) | fail
          every t := !dir_list do {
-            if match_mode(t) then
+            if match_entry(t) then
                put(l, t)
          }
       } else {
          do_dir_list(path.parent().str()) | fail
          s := path.get(-1)
          every t := !dir_list do {
-            if match_mode(t) & match(s, t.name) then
+            if match_entry(t) & match(s, t.name) then
                put(l, t)
          }
       }
       return l
    end
 
-   protected do_request()
-      local l, i
-      if contents == (u"" | u"~") then
-         return []
+   private get_prefix()
+      local i
       every i := upto('/', contents)
-      prefix := if /i then "" else contents[1+:i]
+      return if /i then u"" else contents[1+:i]
+   end
+
+   protected do_request()
+      local l
       l := get_match_list() | fail
+      prefix := get_prefix()
       # No point in a list which is a copy of what we already have
       if *l = 1 & endswith(contents, l[1].name) then
          return []
@@ -260,38 +280,55 @@ class FileSuggestField(SuggestField)
       return t
    end
 
-   private should_append_slash()
-      local l
-      if *contents = 0 | contents[-1] == u"/" then
-         fail
-      if l := get_match_list() & *l = 1 & l[1].stat.mode_str[1] == "d" then
-         return
-   end
-
    public handle_tab(e)
-      local t
+      local t, l, px
       if \tl then {
-         t := prefix || if /directories_only_flag & *tl.contents = 1 & tl.contents[1].stat.mode_str[1] == "d" then
-            tl.contents[1].name || u"/"
+         l := tl.contents
+         # Calculate the string we could insert.  If not
+         # directories-only, and we have a single directory, append
+         # a /.  So for example
+         # "/ho" + tab -> "/home/" rather than "/home"
+         t := prefix || if /directories_only_flag & *l = 1 & l[1].stat.mode_str[1] == "d" then
+            l[1].name || u"/"
          else
-            get_longest_prefix(tl.contents)
+            get_longest_prefix(l)
+
+         # If the calculated string is longer than what we have,
+         # insert it.  Otherwise, if we have selected from the list
+         # then trigger a change to refresh the list.  If in
+         # directories only mode, append a "/"; this will show the
+         # next dir.  So for example "/ho", press tab, choose "/home",
+         # press tab again to set to "/home/" and show its contents.
+
          if *contents < *t then
             assign_contents(t, e)
-         else if *contents > *prefix then {
-            # If we have selected a dir in the open list, and pressed
-            # tab we want to close this selection and open with the
-            # new dir.
-            if /directories_only_flag then {
-               if contents[-1] == u"/" then
-                  on_change(e)
-            } else
+         else if *tl.get_selections() = 1 then {
+            if /directories_only_flag then
+               on_change(e)
+            else
                assign_contents(contents || u"/", e)
          }
       } else {
-         # If we have no text list, but contents unambiguously representing a
-         # directory, but no "/" at the end, add the slash.
-         if should_append_slash() then
-            assign_contents(contents || u"/", e)
+         # As above, calculate the string we could insert.
+         l := get_match_list() | fail
+         px := get_prefix()
+         t := px || if /directories_only_flag & *l = 1 & l[1].stat.mode_str[1] == "d" then
+            l[1].name || u"/"
+         else
+            get_longest_prefix(l)
+
+         #write("px=",image(px),  " contents=",image(contents)," t=",image(t),  " tl=",to_string(ipl.pdco.List{(!l).name}))
+
+         # Again as above, insert the string if it's longer.
+         # Otherwise trigger a change.  The only special case is if we
+         # are in directories mode and press tab whilst contents is an
+         # unambiguous directory; in this case append a /, which will
+         # show its contents.  Eg "/home" + tab -> set to "/home/" and
+         # list contents.
+         if *contents < *t then
+            assign_contents(t, e)
+         else if *contents = *t & \directories_only_flag & *l = 1 & l[1].stat.mode_str[1] == "d" then
+            assign_contents(t || u"/", e)
          else
             on_change(e)
       }
