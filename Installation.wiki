@@ -16,6 +16,13 @@ This will create a directory `objecticon` under the present directory (you can c
 Then `cd` into that directory and run the command `autoconf`.  This will create a `configure` script.
 
 Then proceed just the same as if you had downloaded the .tar.gz file.
+
+If you later wish to update your copy of the repository, `cd` into the directory and run the following :-
+
+{{{svn up}}}
+{{{make clean}}}
+
+Then run `autoconf` again, and then `configure`, and then proceed as before.
 == Installing from a tar.gz file ==
 
 Extract the source code from the .tar.gz file with a command like
