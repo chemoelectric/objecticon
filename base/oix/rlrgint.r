@@ -981,7 +981,7 @@ int bigpowri(double a, dptr db, dptr dx)
 
     if (Type(*db) == T_Integer) {   /* real ^ integer */
         word n = IntVal(*db);
-        if (a == 0.0 && n <= 0) 
+        if (a == 0.0 && n < 0) 
             ReturnErrNum(204, Error);
         if (n < 0) {
             /*
@@ -1923,7 +1923,7 @@ static int bigpowii(word a, word i, dptr dx)
     int isbig = 0;
 
     if (a == 0 || i <= 0) {              /* special cases */
-        if (a == 0 && i <= 0)             /* 0 ^ negative -> error */
+        if (a == 0 && i < 0)             /* 0 ^ negative -> error */
             ReturnErrNum(204,Error);
         if (i == 0) {
             *dx = onedesc;
