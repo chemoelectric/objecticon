@@ -1,0 +1,329 @@
+import
+   gui,
+   ipl.timegui,
+   ipl.colorgui,
+   ipl.filegui
+
+class Untitled(Dialog)
+   private
+      month_field,
+      week_field,
+      date_field,
+      time_field,
+      year_field,
+      timezone_field,
+      file_field,
+      color_field,
+      dir_field
+
+   public component_setup()
+      self.setup()
+      time_field.set_size().set_format("hh:mm")
+      year_field.set_size().set_value(2000)
+      date_field.set_size().set_format("yyyy/MM/dd")
+      week_field.set_size()
+      month_field.set_size()
+      timezone_field.set_size()
+      color_field.set_size()
+      file_field.set_placeholder("File")
+      dir_field.set_placeholder("Dir").set_directories_only(1)
+   end
+
+   private setup()
+      local panel_2, label_2, border_3, layout_7, paint_11, layout_1, paint_9, panel_1, label_1, border_2, layout_6, paint_10, layout_3, border_content_1, border_content_2, border_content_3, label_3, layout_8, paint_12, border_1, text_button_1, layout_2
+      self.set_resize(&yes)
+      paint_10 := TextPaint("Date & Time")
+      label_1 := Label().
+         set_pos("575", "381").
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_paint(paint_10)
+      time_field := TimeField().
+         set_size("123", "47").
+         clear_constraints()
+      year_field := YearField().
+         set_size("159", "75").
+         clear_constraints()
+      timezone_field := TimezoneField().
+         set_size("171", "44").
+         clear_constraints()
+      layout_3 := GridLayout().
+         set_doi(0).
+         set_extra("cells")
+      panel_2 := Panel().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_layout(layout_3).
+         add(time_field).
+         add(year_field).
+         add(timezone_field)
+      date_field := DateField().
+         set_size("132", "41").
+         clear_constraints()
+      week_field := WeekField().
+         set_size("132", "41").
+         clear_constraints()
+      month_field := MonthField().
+         set_size("132", "41").
+         clear_constraints()
+      layout_2 := GridLayout().
+         set_doi(0).
+         set_extra("cells")
+      panel_1 := Panel().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_layout(layout_2).
+         add(date_field).
+         add(week_field).
+         add(month_field)
+      layout_6 := GridLayout().
+         set_extra("cells")
+      border_content_1 := Component().
+         clear_constraints().
+         set_layout(layout_6).
+         add(panel_2).
+         add(panel_1)
+      border_1 := Border().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0).
+         set_title(label_1).
+         set_content(border_content_1)
+      self.add(border_1)
+      paint_11 := TextPaint("Color")
+      label_2 := Label().
+         set_pos("600", "417").
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_paint(paint_11)
+      color_field := ColorField().
+         set_size("196", "61").
+         clear_constraints().
+         set_constraint("eol", &yes)
+      layout_7 := GridLayout().
+         set_extra("cells")
+      border_content_2 := Component().
+         clear_constraints().
+         set_layout(layout_7).
+         add(color_field)
+      border_2 := Border().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0).
+         set_title(label_2).
+         set_content(border_content_2)
+      self.add(border_2)
+      paint_12 := TextPaint("Filesystem")
+      label_3 := Label().
+         set_pos("604", "461").
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_paint(paint_12)
+      file_field := FileSuggestField().
+         set_size("320").
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_contents("")
+      dir_field := FileSuggestField().
+         set_size("320").
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_contents("")
+      layout_8 := GridLayout().
+         set_extra("cells")
+      border_content_3 := Component().
+         clear_constraints().
+         set_layout(layout_8).
+         add(file_field).
+         add(dir_field)
+      border_3 := Border().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0).
+         set_title(label_3).
+         set_content(border_content_3)
+      self.add(border_3)
+      paint_9 := TextPaint("Quit")
+      text_button_1 := TextButton().
+         clear_constraints().
+         connect(self.dispose, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_9)
+      self.add(text_button_1)
+      layout_1 := GridLayout().
+         set_extra("cells")
+      self.set_layout(layout_1)
+   end
+end
+
+procedure main()
+   local d
+   d := Untitled()
+   d.show_modal()
+end
+
+### Ivib-v2 layout ##
+#CCanvas|I18SSuperClass Name|SDialog|SImport Name|Sgui|SButton Groups|L
+#0SCheckbox Groups|L0SGen Indent|I3SGen Main|I1SGen Component Setup|I1S
+#Gen Init Dialog|NSGen Constructor|NSDialog Struct|CCDialog|I1SWAttribs
+#|T1NSresize|I1SName|SUntitled|SIs Component|NSWidth|NSHeight|NSChildre
+#n|L4CCanvasBorder|I31SParent Canvas|X1SName|Sborder_1|SClass Name|SBor
+#der|SImport Name|Sgui|SClass Variable|NSX Fix|NSY Fix|NSW Fix|NSH Fix|
+#NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab
+# ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T5NSx_weight|B1.0|Sx_fill
+#|I1Sy_weight|B1.0|Sy_fill|I1Seol|I1STooltip|NSAccel|NSLayout delegate|
+#NSBorder opts|NSEvent Handlers|L0SClass Variable|NSParent Component|X1
+#SInternal Alignment|Sl|SChildren|L2CCanvasBorderContent|I28SParent Can
+#vas|X1SName|Sborder_content_1|SClass Name|SComponent|SImport Name|Sgui
+#|SClass Variable|NSX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW
+# Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSW
+#Attribs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayout delegate|CCanvasG
+#ridLayout|I8SDII val|NSDOI val|NSExtra|Scells|SName|Slayout_6|SClass N
+#ame|SGridLayout|SImport Name|Sgui|SClass Variable|NSParent|X12SBorder 
+#opts|NSEvent Handlers|L0SClass Variable|NSParent Component|X7SChildren
+#|L2CCanvasPanel|I28SParent Canvas|X1SName|Spanel_2|SClass Name|SPanel|
+#SImport Name|Sgui|SClass Variable|NSX Fix|NSY Fix|NSW Fix|NSH Fix|NSX 
+#Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord
+#|I0SIs shaded|NSWAttribs|T0NSConstraints|T1NSeol|I1STooltip|NSAccel|NS
+#Layout delegate|CCanvasGridLayout|I8SDII val|NSDOI val|I0SExtra|Scells
+#|SName|Slayout_3|SClass Name|SGridLayout|SImport Name|Sgui|SClass Vari
+#able|NSParent|X18SBorder opts|NSEvent Handlers|L0SClass Variable|NSPar
+#ent Component|X12SChildren|L3CCanvasCustom|I27SParent Canvas|X1SName|S
+#time_field|SClass Name|STimeField|SImport Name|Sipl.timegui|SClass Var
+#iable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|S123
+#|SH Spec|S47|SX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAtt
+#ribs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayout delegate|NSBorder op
+#ts|NSEvent Handlers|L0SClass Variable|I1SParent Component|X18CCanvasCu
+#stom|I27SParent Canvas|X1SName|Syear_field|SClass Name|SYearField|SImp
+#ort Name|Sipl.timegui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix
+#|NSX Spec|NSY Spec|NSW Spec|S159|SH Spec|S75|SX Align|Sl|SY Align|St|S
+#Z|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T0NSTooltip|NSAcc
+#el|NSLayout delegate|NSBorder opts|NSEvent Handlers|L0SClass Variable|
+#I1SParent Component|X18CCanvasCustom|I27SParent Canvas|X1SName|Stimezo
+#ne_field|SClass Name|STimezoneField|SImport Name|Sipl.timegui|SClass V
+#ariable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|S1
+#71|SH Spec|S44|SX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWA
+#ttribs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayout delegate|NSBorder 
+#opts|NSEvent Handlers|L0SClass Variable|I1SParent Component|X18CCanvas
+#Panel|I28SParent Canvas|X1SName|Spanel_1|SClass Name|SPanel|SImport Na
+#me|Sgui|SClass Variable|NSX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY S
+#pec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs sha
+#ded|NSWAttribs|T0NSConstraints|T1NSeol|I1STooltip|NSAccel|NSLayout del
+#egate|CCanvasGridLayout|I8SDII val|NSDOI val|I0SExtra|Scells|SName|Sla
+#yout_2|SClass Name|SGridLayout|SImport Name|Sgui|SClass Variable|NSPar
+#ent|X36SBorder opts|NSEvent Handlers|L0SClass Variable|NSParent Compon
+#ent|X12SChildren|L3CCanvasCustom|I27SParent Canvas|X1SName|Sdate_field
+#|SClass Name|SDateField|SImport Name|Sipl.timegui|SClass Variable|I1SX
+# Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|S132|SH Spec|S
+#41|SX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSC
+#onstraints|T0NSTooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent
+# Handlers|L0SClass Variable|I1SParent Component|X36CCanvasCustom|I27SP
+#arent Canvas|X1SName|Sweek_field|SClass Name|SWeekField|SImport Name|S
+#ipl.timegui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|
+#NSY Spec|NSW Spec|S132|SH Spec|S41|SX Align|Sl|SY Align|St|SZ|I0STab o
+#rd|I0SIs shaded|NSWAttribs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayou
+#t delegate|NSBorder opts|NSEvent Handlers|L0SClass Variable|I1SParent 
+#Component|X36CCanvasCustom|I27SParent Canvas|X1SName|Smonth_field|SCla
+#ss Name|SMonthField|SImport Name|Sipl.timegui|SClass Variable|I1SX Fix
+#|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|S132|SH Spec|S41|S
+#X Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConst
+#raints|T0NSTooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Han
+#dlers|L0SClass Variable|I1SParent Component|X36CCanvasLabel|I28SParent
+# Canvas|X1SName|Slabel_1|SClass Name|SLabel|SImport Name|Sgui|SClass V
+#ariable|NSX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|S575|SY Spec|S381|SW 
+#Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWA
+#ttribs|T0NSConstraints|T1NSx_align|Sl|STooltip|NSAccel|NSLayout delega
+#te|NSBorder opts|NSEvent Handlers|L0SClass Variable|NSParent Component
+#|X7SPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_10|SClass N
+#ame|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|SDate & Time|ST
+#itle Obj|X54SContent|X12CCanvasBorder|I31SParent Canvas|X1SName|Sborde
+#r_2|SClass Name|SBorder|SImport Name|Sgui|SClass Variable|NSX Fix|NSY 
+#Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|S
+#Y Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T5NSx
+#_weight|B1.0|Sx_fill|I1Sy_weight|B1.0|Sy_fill|I1Seol|I1STooltip|NSAcce
+#l|NSLayout delegate|NSBorder opts|NSEvent Handlers|L0SClass Variable|N
+#SParent Component|X1SInternal Alignment|Sl|SChildren|L2CCanvasBorderCo
+#ntent|I28SParent Canvas|X1SName|Sborder_content_2|SClass Name|SCompone
+#nt|SImport Name|Sgui|SClass Variable|NSX Fix|NSY Fix|NSW Fix|NSH Fix|N
+#SX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab 
+#ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayo
+#ut delegate|CCanvasGridLayout|I8SDII val|NSDOI val|NSExtra|Scells|SNam
+#e|Slayout_7|SClass Name|SGridLayout|SImport Name|Sgui|SClass Variable|
+#NSParent|X64SBorder opts|NSEvent Handlers|L0SClass Variable|NSParent C
+#omponent|X59SChildren|L1CCanvasCustom|I27SParent Canvas|X1SName|Scolor
+#_field|SClass Name|SColorField|SImport Name|Sipl.colorgui|SClass Varia
+#ble|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|S196|S
+#H Spec|S61|SX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttri
+#bs|T0NSConstraints|T1NSeol|I1STooltip|NSAccel|NSLayout delegate|NSBord
+#er opts|NSEvent Handlers|L0SClass Variable|I1SParent Component|X64CCan
+#vasLabel|I28SParent Canvas|X1SName|Slabel_2|SClass Name|SLabel|SImport
+# Name|Sgui|SClass Variable|NSX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|S6
+#00|SY Spec|S417|SW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab or
+#d|I0SIs shaded|NSWAttribs|T0NSConstraints|T1NSx_align|Sl|STooltip|NSAc
+#cel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L0SClass Variable
+#|NSParent Component|X59SPaint|CCanvasTextPaint|I6SParent Canvas|X1SNam
+#e|Spaint_11|SClass Name|STextPaint|SImport Name|Sgui|SClass Variable|N
+#SStr|SColor|STitle Obj|X74SContent|X64CCanvasBorder|I31SParent Canvas|
+#X1SName|Sborder_3|SClass Name|SBorder|SImport Name|Sgui|SClass Variabl
+#e|NSX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|
+#NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSCon
+#straints|T5NSx_weight|B1.0|Sx_fill|I1Sy_weight|B1.0|Sy_fill|I1Seol|I1S
+#Tooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L0SCl
+#ass Variable|NSParent Component|X1SInternal Alignment|Sl|SChildren|L2C
+#CanvasBorderContent|I28SParent Canvas|X1SName|Sborder_content_3|SClass
+# Name|SComponent|SImport Name|Sgui|SClass Variable|NSX Fix|NSY Fix|NSW
+# Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align
+#|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T0NSTooltip|
+#NSAccel|NSLayout delegate|CCanvasGridLayout|I8SDII val|NSDOI val|NSExt
+#ra|Scells|SName|Slayout_8|SClass Name|SGridLayout|SImport Name|Sgui|SC
+#lass Variable|NSParent|X84SBorder opts|NSEvent Handlers|L0SClass Varia
+#ble|NSParent Component|X79SChildren|L2CCanvasTextField|I31SParent Canv
+#as|X1SName|Sfile_field|SClass Name|SFileSuggestField|SImport Name|Sgui
+#|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|I1SX Spec|NSY Spec|N
+#SW Spec|S320|SH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shad
+#ed|NSWAttribs|T0NSConstraints|T4NSx_align|Sl|Sx_weight|B1.0|Sx_fill|I1
+#Seol|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handle
+#rs|L0SClass Variable|I1SParent Component|X84SContents|S|SFilter String
+#|S|SIs editable flag|I1SMove on rpress flag|I1CCanvasTextField|I31SPar
+#ent Canvas|X1SName|Sdir_field|SClass Name|SFileSuggestField|SImport Na
+#me|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|I1SX Spec|NSY
+# Spec|NSW Spec|S320|SH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0S
+#Is shaded|NSWAttribs|T0NSConstraints|T4NSx_align|Sl|Sx_weight|B1.0|Sx_
+#fill|I1Seol|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent
+# Handlers|L0SClass Variable|I1SParent Component|X84SContents|S|SFilter
+# String|S|SIs editable flag|I1SMove on rpress flag|I1CCanvasLabel|I28S
+#Parent Canvas|X1SName|Slabel_3|SClass Name|SLabel|SImport Name|Sgui|SC
+#lass Variable|NSX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|S604|SY Spec|S4
+#61|SW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shade
+#d|NSWAttribs|T0NSConstraints|T1NSx_align|Sl|STooltip|NSAccel|NSLayout 
+#delegate|NSBorder opts|NSEvent Handlers|L0SClass Variable|NSParent Com
+#ponent|X79SPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_12|S
+#Class Name|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|SFilesys
+#tem|STitle Obj|X98SContent|X84CCanvasTextButton|I35SParent Canvas|X1SN
+#ame|Stext_button_1|SClass Name|STextButton|SImport Name|Sgui|SClass Va
+#riable|NSX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH 
+#Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0
+#NSConstraints|T0NSTooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEv
+#ent Handlers|L1L2SEvent.ACTION|Sdispose|SClass Variable|NSParent Compo
+#nent|X1SNo click focus|NSAccepts focus Flag|I1SIs Checked Flag|NSIs Ch
+#eckbox Flag|NSParent CheckBoxGroup|NSParent Button Group|NSPaint|CCanv
+#asTextPaint|I6SParent Canvas|X1SName|Spaint_9|SClass Name|STextPaint|S
+#Import Name|Sgui|SClass Variable|NSStr|SQuit|SPaint down|NSInitial Foc
+#us|NSEvent Handlers|L0SLayout delegate|CCanvasGridLayout|I8SDII val|NS
+#DOI val|NSExtra|Scells|SName|Slayout_1|SClass Name|SGridLayout|SImport
+# Name|Sgui|SClass Variable|NSParent|X1
