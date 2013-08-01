@@ -1,4 +1,7 @@
-AC_INIT([Object Icon],[2.11svn],[r.parlett@gmail.com],[objecticon])
+AC_INIT([Object Icon],
+        m4_esyscmd([echo 2.11svn-`svnversion` | tr -d '\n']),
+        [r.parlett@gmail.com],
+        [objecticon])
 
 AC_GNU_SOURCE
 
