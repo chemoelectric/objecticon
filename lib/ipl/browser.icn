@@ -1281,8 +1281,8 @@ class FormBrowse(Component, FormEntry, HasAscent)
       tf.set_contents(val)
    end
 
-   private on_browse()
-      tf.set_contents(ucs(browser.browse_for_file(tf.get_contents())))
+   private on_browse(ev)
+      tf.assign_contents(ucs(browser.browse_for_file(tf.get_contents())), ev)
    end
 
    public new(browser, tf_size)
