@@ -14,6 +14,10 @@ package ipl.math
 
 #  ExtMath - a class that provides an expanded set of mathematical functions that are 
 #  implemented as static methods of this class.
+
+#  Constant defined in this class:
+#     * syms - set of alphabetic and numeric
+#     * eiler - Eiler-Maskeroni constant
   
 #  Methods defined in this class:
 #     * to_sys(x,n) - convert number to system with base n
@@ -62,6 +66,11 @@ package ipl.math
 #     * arcth(x) - area-cotangent
 #     * arsch(x,n) - area-secans (n is paramether for sign of result, optional)
 #     * arcsch(x) - area-cosecans
+#     * dzeta(x) - Riman dzeta-function
+#     * bessel1(x,v) - Bessel function of first kind
+#     * bessel2(x,v) - Bessel function of second kind
+#     * frenel1(x,v) - Fresnel integral S(x)
+#     * frenel2(x,v) - Fresnel integral C(x)
 
 import 
    util(Math),
@@ -205,7 +214,7 @@ public static const
 
    public static ci(x)
    local i,s,k
-   s := eiler+Math.log(x,Math.E)
+   s := eiler+Math.log(x)
    i :=1
    while i<20 do {
       k := (((-1.0)^i)*(x^(2.0*i)))/(factorial(2.0*i)*2.0*i)
@@ -392,5 +401,65 @@ public static const
 
   public static arcsch(x)
   if x < 0 then return Math.log((1-Math.sqrt(1+x^2))/x) else Math.log((1+Math.sqrt(1+x^2))/x)
+  end
+
+  public static dzeta(x) 
+  local s,i
+  s := 0
+  i := 1
+  while i < 20 do {
+     s +:= 1.0/(i^x)
+     i +:= 1
+  }
+  return s
+  end
+
+  public static bessel1(x,v)
+  local s,z,i,a,b
+  s := 0
+  z := 0.5 * x
+  i := 0
+  while i < 20 do {
+     a := ((-1)^i) * z^(2*i+abs(v))
+     b := factorial(i) * gamma(i+abs(v)+1)
+     s +:= a/b
+     i +:= 1
+  }
+  if v >= 0 then return s else return ((-1.0)^v)*s
+  end
+
+  public static bessel2(x,v)
+  local a,b
+  a := (bessel1(x,v)*Math.cos(v*Math.PI)) - bessel1(x,-v)
+  b := Math.sin(v*Math.PI)
+  return a/b
+  end
+
+  public static fresnel1(x)
+  local s,i,a,b,c
+  s := 0
+  i := 0
+  while i < 40 do {
+     a := 4.0*i+3
+     b := ((-1)^i) * (x^a)
+     c := factorial(2*i+1) * a
+     s +:= b/c
+     i +:= 1
+  }
+  return s
+  end
+
+  public static fresnel2(x)
+  local s,i,a,b,c
+  s := 0
+  i := 0
+  while i < 40 do {
+     a := 4.0*i+1.0
+     b := ((-1)^i) * (x^a)
+     c := factorial(2*i) * a
+     s +:= b/c
+     i +:= 1
+  }
+  return s
   end
 end
