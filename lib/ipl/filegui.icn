@@ -177,12 +177,10 @@ class FileSuggestField(SuggestField)
    public set_filter(f)
       local pat
       pats := []
-      f ? {
-         repeat {
-            pat := tab(upto(';') | 0)
-            put(pats, Wildcard(pat))
-            move(1) | break
-         }
+      f ? repeat {
+         pat := tab(upto(';') | 0)
+         put(pats, Wildcard(pat))
+         move(1) | break
       }
       return self
    end

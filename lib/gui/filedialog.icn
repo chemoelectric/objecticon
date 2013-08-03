@@ -389,12 +389,10 @@ class FileDialog(Dialog)
    public get_pats()
       local pat, pats
       pats := []
-      filter.get_contents() ? {
-         repeat {
-            pat := tab(upto(';') | 0)
-            put(pats, Wildcard(pat))
-            move(1) | break
-         }
+      filter.get_contents() ? repeat {
+         pat := tab(upto(';') | 0)
+         put(pats, Wildcard(pat))
+         move(1) | break
       }
       return pats
    end
