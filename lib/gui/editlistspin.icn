@@ -18,7 +18,7 @@ class EditListSpin(SelectionSpin)
       if /ev then
          self.view.set_contents(s)
       else
-         self.view.assign_contents(s, ev)
+         self.view.assign_contents(s, ev, &yes)
    end
 
    public on_textfield(ev, src, type)

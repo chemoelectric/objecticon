@@ -29,8 +29,7 @@ package gui
 #
 class IconButton(TextButton)
    public new()
-      # Bypass TextButton's constructor to save creating a border twice.
-      cast(self,Button).new()
+      cast(self,TextButton).new()
       self.border := RaisedBorder()
       return
    end

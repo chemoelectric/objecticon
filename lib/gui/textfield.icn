@@ -155,8 +155,10 @@ class TextField(Component)
    #
    # @param x   The new contents
    # @param e   The event causing the change
+   # @param coalesce Allow this operation to be coalseced with others 
+   # @          by the undo manager.
    #
-   public assign_contents(x, e)
+   public assign_contents(x, e, coalesce)
       local ed
       /x := ""
       x := text(x) | runerr(129, x)
@@ -165,7 +167,7 @@ class TextField(Component)
          clear_mark()
          cursor := *contents + 1
       } else {
-         ed := TextFieldAssignEdit(self, x)
+         ed := TextFieldAssignEdit(self, x, coalesce)
          ed.doit()
          undo_manager.add_edit(ed)
       }
@@ -1000,10 +1002,10 @@ class TextFieldDeleteLineEdit(TextFieldEdit)
 end
 
 class TextFieldAssignEdit(TextFieldEdit)
-   public s, pre
+   public s, pre, coalesce
 
    public add_edit(other)
-      if is(other, gui.TextFieldAssignEdit) then {
+      if \coalesce & is(other, gui.TextFieldAssignEdit) then {
          self.s := other.s
          return
       }
@@ -1020,9 +1022,10 @@ class TextFieldAssignEdit(TextFieldEdit)
       parent.contents := pre
    end
 
-   public new(parent, s)
+   public new(parent, s, coalesce)
       cast(self,TextFieldEdit).new(parent)
       self.s := s
+      self.coalesce := coalesce
       return
    end
 end

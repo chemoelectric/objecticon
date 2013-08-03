@@ -5,7 +5,38 @@ import
    ipl.sort,
    ipl.lists,
    ipl.filegui,
+   util,
    io
+
+#
+# Extend `ListEntry` to add formatted date and size strings.
+#
+class ListEntryEx(ListEntry)
+   public const
+      fmt_date,
+      fmt_size
+
+   public new(name, lstat, stat, fmt_date, fmt_size)
+      self.name := name
+      self.lstat := lstat
+      self.stat := stat
+      self.fmt_date := fmt_date
+      self.fmt_size := fmt_size
+      return
+   end
+end
+
+class IconFilesItemPaintSize(IconFilesItemPaint)
+   public get_string(data)
+      return data.fmt_size
+   end
+end
+
+class IconFilesItemPaintDate(IconFilesItemPaint)
+   public get_string(data)
+      return data.fmt_date
+   end
+end
 
 #
 #
@@ -18,6 +49,10 @@ import
 #
 class FileDialog(Dialog)
    public
+      show_hidden_button,
+      date_button,
+      name_button,
+      size_button,
       home_button, 
       new_button, 
       refresh_button, 
@@ -27,6 +62,8 @@ class FileDialog(Dialog)
       dir, 
       dlist, 
       flist, 
+      ascending,
+      sorter,
       history,
       history_pos,
       pos_table,
@@ -39,7 +76,6 @@ class FileDialog(Dialog)
       init_filters,
       res,                      # Resulting file path          
       message_label, 
-      show_hidden_cb,
       existing_file_mode
 
    public static const
@@ -85,21 +121,6 @@ class FileDialog(Dialog)
       dir.set_selection_list(init_dirs).set_selection(1)
       file.set_selection_list(init_files).set_selection(1)
       filter.set_selection_list(init_filters).set_selection(1)
-
-      dlist.
-         set_draggable_cursor(&yes).
-         set_selection_on_key_moves(&no).
-         set_item_paint(IconFilesItemPaint()).
-         set_item_border(EmptyBorder().
-                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
-                             set_x_align(Align.L))
-
-      flist.
-         set_draggable_cursor(&yes).
-         set_item_paint(IconFilesItemPaint()).
-         set_item_border(EmptyBorder().
-                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
-                             set_x_align(Align.L))
 
       pos_table := table()
       res := &null
@@ -309,7 +330,7 @@ class FileDialog(Dialog)
          load_dir()
    end
 
-   public on_show_hidden_cb(ev)
+   public on_show_hidden_button(ev)
       pos_table := table()
       load_dir()
    end
@@ -449,26 +470,59 @@ class FileDialog(Dialog)
    # Read a directory.
    #
    public list_directory(s)
-      local e, dir_list, file_list, l, pats, t
+      local e, dir_list, file_list, l, pats, t, tf, z, zf, n, now, fl
       pats := get_pats()
       l := Files.ucs_list(s) | fail
       dir_list := []
       file_list := []
+      now := Time.get_system_seconds()
       every e := !l do {
-         t := e.name
-         if show_hidden_cb.is_checked() | not(Files.is_hidden(t)) then {
+         n := e.name
+         if show_hidden_button.is_checked() | not(Files.is_hidden(n)) then {
             if e.stat.mode_str[1] == "d" then
-               Files.is_relative_dir(t) | put(dir_list, e)
-            else if (!pats).match(t) = *t + 1 then
-               put(file_list, e)
+               Files.is_relative_dir(n) | put(dir_list, e)
+            else if (!pats).match(n) = *n + 1 then {
+               t := e.lstat.mtime
+               tf := if now - t > 180 * 86400 then
+                  Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d yyyy")
+               else
+                  Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d HH:mm")
+               tf := n || " (" || tf || ")"
+               z := e.lstat.size
+               zf := if z < 1024 then
+                  Format.numeric_to_string(z, 0, ',') || "B"
+               else if z < 1024*1024 then
+                  Format.numeric_to_string(z/1024.0, 1, ',') || "KB"
+               else
+                  Format.numeric_to_string(z/(1024.0*1024.0), 1, ',') || "MB"
+               zf := n || " (" || zf || ")"
+               put(file_list, ListEntryEx(n, e.lstat, e.stat, tf, zf))
+            }
          }
       }
-      return [isort(dir_list, Files.name_key), isort(file_list, Files.name_key)]
+      fl := isort(file_list, sorter)
+      if \ascending then
+         fl := lreverse(fl)
+      return [isort(dir_list, Files.name_key), fl]
    end
 
    public new()
       cast(self,Dialog).new()
       self.setup()
+      dlist.
+         set_draggable_cursor(&yes).
+         set_selection_on_key_moves(&no).
+         set_item_paint(IconFilesItemPaint()).
+         set_item_border(EmptyBorder().
+                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                             set_x_align(Align.L))
+      flist.
+         set_draggable_cursor(&yes).
+         set_item_border(EmptyBorder().
+                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                             set_x_align(Align.L))
+      sorter := Files.name_key
+      synch_paints()
       existing_file_mode := IGNORE
       history := []
       history_pos := 0
@@ -476,8 +530,63 @@ class FileDialog(Dialog)
       return
    end
 
+   private synch_paints()
+      local cp, np, sp, dp
+      cp := CompoundPaint().set_top(ImagePaint().set_cache(if /ascending then "gui.TINY_ARROW_DOWN" else "gui.TINY_ARROW_UP"))
+      np := ImagePaint().set_cache("gui.FONT_24")
+      sp := ImagePaint().set_cache("gui.FILESIZE_24")
+      dp := ImagePaint().set_cache("gui.CLOCK_24")
+      case sorter of {
+         Files.name_key: {
+            name_button.set_paint(cp.set_bottom(np))
+            date_button.set_paint(dp)
+            size_button.set_paint(sp)
+            flist.set_item_paint(IconFilesItemPaint())
+         }
+         Files.size_key: {
+            name_button.set_paint(np)
+            date_button.set_paint(dp)
+            size_button.set_paint(cp.set_bottom(sp))
+            flist.set_item_paint(IconFilesItemPaintSize())
+         }
+         Files.date_key: {
+            name_button.set_paint(np)
+            date_button.set_paint(cp.set_bottom(dp))
+            size_button.set_paint(sp)
+            flist.set_item_paint(IconFilesItemPaintDate())
+         }
+      }
+   end
+
+   private on_date_button(ev)
+      if sorter === Files.date_key then
+         ascending := toggle_flag(ascending)
+      else
+         sorter := Files.date_key
+      synch_paints()
+      load_dir()
+   end
+
+   private on_name_button(ev)
+      if sorter === Files.name_key then
+         ascending := toggle_flag(ascending)
+      else
+         sorter := Files.name_key
+      synch_paints()
+      load_dir()
+   end
+
+   private on_size_button(ev)
+      if sorter === Files.size_key then
+         ascending := toggle_flag(ascending)
+      else
+         sorter := Files.size_key
+      synch_paints()
+      load_dir()
+   end
+
    private setup()
-      local paint_2, panel_2, paint_14, layout_7, paint_7, paint_11, layout_4, paint_4, split_content_1, split_content_2, panel_4, layout_9, paint_1, paint_9, split_1, paint_13, layout_6, paint_6, paint_10, layout_3, paint_3, panel_3, paint_15, paint, layout_8, paint_8, paint_12, paint_5
+      local paint_2, panel_2, paint_14, paint_27, paint_32, layout_7, paint_7, paint_11, paint_37, layout_4, paint_4, split_content_1, split_content_2, panel_4, paint_29, paint_34, layout_9, paint_1, paint_9, split_1, paint_13, paint_31, layout_6, paint_6, paint_10, paint_36, layout_3, paint_3, panel_3, paint_15, paint_28, paint_33, paint, layout_8, paint_12, paint_30, paint_5, paint_35
       self.set_label("Select file")
       self.set_resize(&yes)
       self.set_size(700, 500)
@@ -547,6 +656,51 @@ class FileDialog(Dialog)
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_14)
+      paint_28 := ImagePaint().
+         set_cache("gui.FONT_24")
+      paint_27 := TextPaint("Sort by name")
+      name_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_27).
+         connect(self.on_name_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_28)
+      paint_30 := ImagePaint().
+         set_cache("gui.CLOCK_24")
+      paint_29 := TextPaint("Sort by date")
+      date_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_29).
+         connect(self.on_date_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_30)
+      paint_32 := ImagePaint().
+         set_cache("gui.FILESIZE_24")
+      paint_31 := TextPaint("Sort by size")
+      size_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_31).
+         connect(self.on_size_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_32)
+      paint_34 := ImagePaint().
+         set_cache("gui.HIDDENFILE_24")
+      paint_33 := TextPaint("Hidden files")
+      show_hidden_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_33).
+         connect(self.on_show_hidden_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&yes).
+         set_paint(paint_34)
+      paint_36 := TextPaint("Directory")
       dir := EditList().
          set_size("150").
          set_align(Align.L, Align.C).
@@ -554,6 +708,7 @@ class FileDialog(Dialog)
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
+         set_tooltip(paint_36).
          connect(self.on_dir, Event.ACTION).
          connect(self.on_dir, Event.CONTENT_CHANGED).
          set_selection_list([""])
@@ -573,6 +728,10 @@ class FileDialog(Dialog)
          add(refresh_button).
          add(prev_button).
          add(next_button).
+         add(name_button).
+         add(date_button).
+         add(size_button).
+         add(show_hidden_button).
          add(dir)
       self.add(panel_4)
       dlist := ItemPaintList().
@@ -623,15 +782,18 @@ class FileDialog(Dialog)
          set_right(split_content_2).
          set_min(100, 100)
       self.add(split_1)
+      paint_35 := TextPaint("Filter")
       filter := EditList().
          set_size("150").
          set_align(Align.L, Align.B).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
+         set_tooltip(paint_35).
          connect(self.on_filter, Event.ACTION).
          connect(self.on_filter, Event.CONTENT_CHANGED).
          set_selection_list([""])
+      paint_37 := TextPaint("File")
       file := EditList().
          set_size("150").
          set_align(Align.L, Align.B).
@@ -639,6 +801,7 @@ class FileDialog(Dialog)
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
+         set_tooltip(paint_37).
          connect(self.on_file, Event.ACTION).
          connect(self.on_file_content, Event.CONTENT_CHANGED).
          set_selection_list([""])
@@ -654,15 +817,6 @@ class FileDialog(Dialog)
          add(filter).
          add(file)
       self.add(panel_2)
-      paint_8 := TextPaint("Show hidden files and directories")
-      show_hidden_cb := CheckBox().
-         clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_align", Align.L).
-         connect(self.on_show_hidden_cb, Event.ACTION).
-         set_toggles(&yes).
-         set_paint(paint_8)
-      self.add(show_hidden_cb)
       paint_9 := TextPaint("Okay")
       okay_button := TextButton().
          set_align(Align.L, Align.B).

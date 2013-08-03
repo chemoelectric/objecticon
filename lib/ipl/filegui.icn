@@ -2,8 +2,11 @@ package ipl.filegui
 
 import
    ipl.sort,
+   ipl.strings,
+   ipl.wildcard,
    gui,
-   io
+   io,
+   util
 
 class ColorFilesItemPaint(WithCloneItemPaint)
    protected make_clone(W)
@@ -103,10 +106,10 @@ class IconFilesItemPaint(ItemPaint)
       return data.name
    end
 
+$ifdef _PNG
    public get_icon(data)
       local st, k
       st := data.lstat
-$ifdef _PNG
       k := case st.mode_str[1] of {
          "d" : "gui.CLOSED_FOLDER"
          "l" : "icn.SYMLINK_16"
@@ -128,14 +131,18 @@ $ifdef _PNG
             }
          }
       } | "gui.FILE"
+      return ImageCache.get(k) | syserr("Bad cache key in IconFilesItemPaint")
+   end
 $else
-      k := if st.mode_str[1] == "d" then
+   public get_icon(data)
+      local k
+      k := if data.stat.mode_str[1] == "d" then
          "gui.CLOSED_FOLDER"
       else
          "gui.FILE"
-$endif
       return ImageCache.get(k) | syserr("Bad cache key in IconFilesItemPaint")
    end
+$endif
 
    public draw(W, data, x, y, w, h)
       local i
@@ -150,13 +157,15 @@ end
 class FileSuggestField(SuggestField)
    public
       cwd,
+      matches,
       prefix,
-      choose_mode,
       dir_list,
-      dir_list_name
+      dir_list_name,
+      directories_only_flag,
+      pats
 
-   public set_choose_mode(x)
-      self.choose_mode := x
+   public set_directories_only(s)
+      self.directories_only_flag := check_flag(s)
       return self
    end
 
@@ -165,10 +174,29 @@ class FileSuggestField(SuggestField)
       return self
    end
 
-   private match_mode(l)
-      if l.name == (u"." | u"..") then
-         fail
-      return /choose_mode | any(choose_mode, l.stat.mode_str)
+   public set_filter(f)
+      local pat
+      pats := []
+      f ? {
+         repeat {
+            pat := tab(upto(';') | 0)
+            put(pats, Wildcard(pat))
+            move(1) | break
+         }
+      }
+      return self
+   end
+
+   private match_entry(e)
+      local n
+      n := e.name
+      if e.stat.mode_str[1] == "d" then {
+         if not Files.is_relative_dir(n) then
+            return
+      } else {
+         if /directories_only_flag & (/pats | (!pats).match(n) = *n + 1) then
+            return
+      }
    end
 
    private do_dir_list(s)
@@ -180,44 +208,49 @@ class FileSuggestField(SuggestField)
       return dir_list
    end
 
-   protected do_request()
-      local s, path, l, t, i
-      if *contents = 0 then
-         return []
-      s := contents
-      every i := upto('/', s)
-      prefix := if /i then "" else s[1+:i]
-
-      if s[1] == u"~" then {
-         if *s = 1 then
-            return []
-         s := ucs(Files.get_home()) || s[2:0] | fail
-      }
-
-      path := FilePath(s)
+   #
+   # Calculate the matches list and prefix string from the current
+   # contents.  A new contents can then be calculated by simply
+   # appending the prefix to the name of a member of the matches list.
+   #
+   private calc_matches()
+      local path, s, t
+      path := FilePath(contents)
       if not path.is_absolute() then
          path := FilePath(cwd).append(path)
-
-      l := []
-      if s[-1] == u"/" then {
+      matches := []
+      if *contents = 0 | contents[-1] == Files.PATH_SEPARATOR then {
          do_dir_list(path.str()) | fail
          every t := !dir_list do {
-            if match_mode(t) then
-               put(l, t)
+            if match_entry(t) then
+               put(matches, t)
          }
+         prefix := contents
       } else {
          do_dir_list(path.parent().str()) | fail
          s := path.get(-1)
          every t := !dir_list do {
-            if match_mode(t) & match(s, t.name) then
-               put(l, t)
+            if match_entry(t) & match(s, t.name) then
+               put(matches, t)
          }
+         prefix := contents[1:-*s]
       }
-      return l
+      return
+   end
+
+   protected do_request()
+      calc_matches() | fail
+      # No point in a list which is a copy of what we already have
+      if *matches = 1 & endswith(contents, matches[1].name) then
+         return []
+      return matches
    end
 
    public convert_element(o)
-      return prefix || text(o.name)
+      if /directories_only_flag & o.stat.mode_str[1] == "d" then
+         return prefix || text(o.name) || Files.PATH_SEPARATOR
+      else
+         return prefix || text(o.name)
    end
 
    public create_popup()
@@ -228,8 +261,90 @@ class FileSuggestField(SuggestField)
                             set_x_align(Align.L))
    end
 
+   #
+   # Get the longest common initial name from the matches list.  Eg if
+   # we have ["mark", "mary", "marion"], we get "mar".
+   #
+   private get_longest_prefix()
+      local i, s, t, e
+      i := 1
+      t := u""
+      repeat {
+         s := matches[1].name[1+:i] | break
+         every e := !matches do
+            e.name[1+:i] == s | break break
+         t := s
+         i +:= 1
+      }
+      return t
+   end
+
+   public handle_tab(e)
+      local t
+      if \tl then {
+         # Calculate the string we could insert.  If not
+         # directories-only, and we have a single directory, append
+         # a /.  So for example
+         # "/ho" + tab -> "/home/" rather than "/home"
+         t := prefix || if /directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
+            matches[1].name || Files.PATH_SEPARATOR
+         else
+            get_longest_prefix()
+
+         # If the calculated string is longer than what we have,
+         # insert it.  Otherwise, if we have selected from the list
+         # then trigger a change to refresh the list.  If in
+         # directories only mode, append a "/"; this will show the
+         # next dir.  So for example "/ho", press tab, choose "/home",
+         # press tab again to set to "/home/" and show its contents.
+
+         if *contents < *t then
+            assign_contents(t, e)
+         else if *tl.get_selections() = 1 then {
+            if /directories_only_flag then
+               on_change(e)
+            else
+               assign_contents(contents || Files.PATH_SEPARATOR, e)
+         }
+      } else {
+         # As above, calculate the string we could insert.
+         calc_matches() | fail
+         t := prefix || if /directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
+            matches[1].name || Files.PATH_SEPARATOR
+         else
+            get_longest_prefix()
+
+         #write("px=",image(px),  " contents=",image(contents)," t=",image(t),  " tl=",to_string(ipl.pdco.List{(!l).name}))
+
+         # Again as above, insert the string if it's longer.
+         # Otherwise trigger a change.  The only special case is if we
+         # are in directories mode and press tab whilst contents is an
+         # unambiguous directory; in this case append a /, which will
+         # show its contents.  Eg "/home" + tab -> set to "/home/" and
+         # list contents.
+         if *contents < *t then
+            assign_contents(t, e)
+         else if *contents = *t & \directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
+            assign_contents(t || Files.PATH_SEPARATOR, e)
+         else
+            on_change(e)
+      }
+   end
+
+   public keeps(e)
+      return
+   end
+
+   public handle_key(e)
+      if e.code == "\t" then
+         handle_tab(e)
+      else
+         cast(self,SuggestField).handle_key(e)
+   end
+
    public new()
       cast(self,SuggestField).new()
+      self.set_contents(u"")
       cwd := Files.getcwd()
       set_direction(Direction.DOWN)
       return
