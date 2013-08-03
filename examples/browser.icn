@@ -582,6 +582,11 @@ class DownloadTab(TabItem)
                                   StaticTextSelectionOwner(d.full_path))
    end
 
+   private on_copy_escaped_result(d)
+      parent_dialog.own_selection(Selection.CLIPBOARD, 
+                                  StaticTextSelectionOwner(Format.shell_escape(d.full_path)))
+   end
+
    private on_delete(d)
       parent_dialog.pool.cancel(d)
       ldel1(dl, d)
@@ -648,6 +653,9 @@ class DownloadTab(TabItem)
             menu.add(TextMenuItem().
                set_label("Copy result").
                connect(create on_copy_result(d), Event.ACTION))
+            menu.add(TextMenuItem().
+               set_label("Copy escaped result").
+               connect(create on_copy_escaped_result(d), Event.ACTION))
          }
          if l[1][-1].status == "Failed" then
             menu.add(TextMenuItem().

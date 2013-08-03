@@ -269,6 +269,35 @@ final abstract class Format()
    end
 
    #
+   # Unescape a string in shell escape format.
+   #
+   public static shell_unescape(s)
+      local t, ch
+      t := ""
+      s ? repeat {
+         t ||:= tab(upto('\\') | 0)
+         ch := (move(1), move(1)) | break
+         t ||:= ch
+      }
+      return t
+
+   end
+
+   # Convert a string into shell format by escaping certain special
+   # shell characters.
+   #
+   public static shell_escape(s)
+      local t, ch
+      t := ""
+      s ? repeat {
+         t ||:= tab(many(~'\\*?@+&#()<>[]({}!$`\'\" '))
+         ch := move(1) | break
+         t ||:= "\\" || ch
+      }
+      return t
+   end
+
+   #
    # Convert the subject integer into words, eg 231 to "Two Hundred and Thirty-One"
    #
    public static int_to_words(subject)
