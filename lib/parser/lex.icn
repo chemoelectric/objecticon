@@ -237,7 +237,7 @@ class Lex(Connectable)
             every t ||:= Text.utf8_seq(ord(val))
             val := ucs(t)
          }
-         yytokval := Format.escape(val) | err(&why)
+         yytokval := Format.unescape(val) | err(&why)
          tokflags +:= Beginner + Ender
          return YY.UCSLIT
       } else {
@@ -255,7 +255,7 @@ class Lex(Connectable)
             u ||:= char(i) | err("code point out of range for string literal")
          val := u
       }
-      yytokval := Format.escape(val)
+      yytokval := Format.unescape(val)
       tokflags +:= Beginner + Ender
       return YY.STRINGLIT
    end
@@ -263,7 +263,7 @@ class Lex(Connectable)
    private do_csetlit()
       local val
       val := get_strlit()
-      yytokval := Format.cset_escape(val) | err(&why)
+      yytokval := Format.cset_unescape(val) | err(&why)
       tokflags +:= Beginner + Ender
       return YY.CSETLIT
    end
