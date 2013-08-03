@@ -1416,7 +1416,7 @@ class ProgInputStream(FileStream, HasBgProc)
    #
    public close()
       cast(self,FileStream).close()
-      do_wait()
+      do_wait() | fail
       return self
    end
 
@@ -1474,7 +1474,7 @@ class ProgOutputStream(FileStream, HasBgProc)
    #
    public close()
       cast(self,FileStream).close()
-      do_wait()
+      do_wait() | fail
       return self
    end
 
@@ -1635,7 +1635,7 @@ class ProgInputStream(SocketStream, HasBgProc)
    public close()
       shutdown(Shut.RD)
       cast(self,SocketStream).close()
-      do_wait()
+      do_wait() | fail
       return self
    end
 
@@ -1695,7 +1695,7 @@ class ProgOutputStream(SocketStream, HasBgProc)
    public close()
       shutdown(Shut.WR)
       cast(self,SocketStream).close()
-      do_wait()
+      do_wait() | fail
       return self
    end
 
@@ -1950,7 +1950,7 @@ class FilterOutputStream(FilterStreamBase)
          sink.close() | (f := 1)
          (err_sink === sink) | err_sink.close() | (f := 1)
       }
-      do_wait()
+      do_wait() | (f := 1)
       return /f & self
    end
 
@@ -2085,7 +2085,7 @@ class FilterInputStream(FilterStreamBase)
          source.close() | (f := 1)
          err_sink.close() | (f := 1)
       }
-      do_wait()
+      do_wait() | (f := 1)
       self.buff := &null
       return /f & self
    end

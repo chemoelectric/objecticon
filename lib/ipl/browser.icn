@@ -201,7 +201,7 @@ $ifdef _PLAN9
          ts := TaskStream(NonBlockStream(ps := ProgInputStream("/bin/rc", ["-c", f]),, 1048576), worker.task),
          StaticData(read_all(ts), "")     # Return StaticData in order to set a blank filename.
       } | fail
-      i := ps.get_exit_info().param
+      i := ps.get_exit_info().param | syserr("No exit info")
       return if /i then            
          d
       else
@@ -211,7 +211,7 @@ $else
          ts := TaskStream(ps := ProgInputStream("/bin/sh", ["-c", f]), worker.task),
          StaticData(read_all(ts), "")     # Return StaticData in order to set a blank filename.
       } | fail
-      i := ps.get_exit_info().param
+      i := ps.get_exit_info().param | syserr("No exit info")
       return if i = 0 then            
          d
       else
