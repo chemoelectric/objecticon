@@ -34,7 +34,8 @@ class FavouriteDirectoriesDialog(Dialog)
       entry_table,
       etc,
       directory_column,
-      application_check_box
+      application_check_box,
+      application_column
    public
       okay
 
@@ -74,7 +75,16 @@ class FavouriteDirectoriesDialog(Dialog)
          set_select_mode("many").
          set_dnd_mode(SelectableScrollArea.EDGES_ONLY).
          connect(on_table_selection, Event.SELECTION_CHANGED)
-      directory_column.set_item_paint(AbbreviatedTextItemPaint())
+      directory_column.
+         set_item_paint(AbbreviatedTextItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, 0, 0, 0).
+                            set_x_align(Align.L))
+      application_column.
+         set_item_paint(AbbreviatedTextItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, 0, 0, 0).
+                            set_x_align(Align.L))
       directory_field.set_directories_only(1)
       update_grey()
    end
@@ -150,11 +160,11 @@ class FavouriteDirectoriesDialog(Dialog)
    end
 
    private setup()
-      local table_column_1, paint_2, panel_2, label_2, paint_7, layout_4, paint_4, paint_1, paint_9, label_1, paint_6, paint_10, layout_3, paint_3, panel_3, border_content_1, paint_8, border_1, layout_5, paint_5, layout_2
+      local paint_2, panel_2, label_2, paint_7, layout_4, paint_4, paint_1, paint_9, label_1, paint_6, paint_10, layout_3, paint_3, panel_3, border_content_1, paint_8, border_1, layout_5, paint_5, layout_2
       self.set_label("Favourite directories")
       self.set_resize(&yes)
       paint_1 := TextPaint("Application")
-      table_column_1 := TableColumn().
+      application_column := ItemPaintTableColumn().
          set_paint(paint_1).
          set_column_align(Align.L).
          set_column_width(90)
@@ -171,7 +181,7 @@ class FavouriteDirectoriesDialog(Dialog)
          set_constraint("y_weight", 1.0).
          set_select_mode(Select.NONE).
          set_contents([]).
-         add_column(table_column_1).
+         add_column(application_column).
          add_column(directory_column)
       self.add(entry_table)
       paint_7 := TextPaint("Add")
