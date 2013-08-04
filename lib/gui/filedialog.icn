@@ -55,6 +55,7 @@ class FileDialog(Dialog)
       size_button,
       home_button, 
       new_button, 
+      favourites_button,
       refresh_button, 
       prev_button,
       next_button,
@@ -101,26 +102,20 @@ class FileDialog(Dialog)
    end
 
    public component_setup()
+      local t
       #
       # Defaults and extra dirs.
       #
       /init_dirs := []
-      every put(init_dirs,
-                Files.getcwd() | 
-                Files.get_home() | 
-                Files.get_temp() | 
-                Files.get_roots())
-
-      init_dirs := lunique(ucs_list(init_dirs))
-
       /init_files := []
       /init_filters := [u"*"]
-
-      init_files := ucs_list(init_files)
-      init_filters := ucs_list(init_filters)
-      dir.set_selection_list(init_dirs).set_selection(1)
-      file.set_selection_list(init_files).set_selection(1)
-      filter.set_selection_list(init_filters).set_selection(1)
+      t := copy(init_dirs)
+      every put(t,
+                Files.getcwd() | 
+                FavouriteDirectoriesDialog.gen_directories())
+      dir.set_selection_list(lunique(ucs_list(t))).set_selection(1)
+      file.set_selection_list(ucs_list(init_files)).set_selection(1)
+      filter.set_selection_list(ucs_list(init_filters)).set_selection(1)
 
       pos_table := table()
       res := &null
@@ -377,13 +372,25 @@ class FileDialog(Dialog)
       local d, s
       d := NewDirectoryDialog()
       d.show_modal(self)
-      if \d.okay then {
-         s := self.get_dir_path().child(d.result).str()
-         if Files.mkdir(s) then
-            goto_dir(s)
-         else
-            msg("mkdir failed: " || &why)
-      }
+      \d.okay | fail
+      s := self.get_dir_path().child(d.result).str()
+      if Files.mkdir(s) then
+         goto_dir(s)
+      else
+         msg("mkdir failed: " || &why)
+   end
+
+   public on_favourites_button(ev)
+      local d, t
+      d := FavouriteDirectoriesDialog()
+      d.show_modal(self)
+      \d.okay | fail
+      t := copy(init_dirs)
+      every put(t,
+                Files.getcwd() | 
+                FavouriteDirectoriesDialog.gen_directories())
+      dir.selection_list := lunique(ucs_list(t))
+      dir.constrain_selection().synch_selection()
    end
 
    public get_pats()
@@ -584,7 +591,7 @@ class FileDialog(Dialog)
    end
 
    private setup()
-      local paint_2, panel_2, paint_14, paint_27, paint_32, layout_7, paint_7, paint_11, paint_37, layout_4, paint_4, split_content_1, split_content_2, panel_4, paint_29, paint_34, layout_9, paint_1, paint_9, split_1, paint_13, paint_31, layout_6, paint_6, paint_10, paint_36, layout_3, paint_3, panel_3, paint_15, paint_28, paint_33, paint, layout_8, paint_12, paint_30, paint_5, paint_35
+      local paint_2, panel_2, paint_14, paint_27, paint_32, layout_7, paint_7, paint_11, paint_37, layout_4, paint_4, split_content_1, split_content_2, panel_4, paint_29, paint_34, layout_9, paint_1, paint_9, split_1, paint_13, paint_31, paint_39, layout_6, paint_6, paint_10, paint_36, layout_3, paint_3, panel_3, paint_15, paint_28, paint_33, paint, layout_8, paint_12, paint_30, paint_38, paint_5, paint_35
       self.set_label("Select file")
       self.set_resize(&yes)
       self.set_size(700, 500)
@@ -621,6 +628,17 @@ class FileDialog(Dialog)
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_5)
+      paint_39 := ImagePaint().
+         set_cache("gui.FAVOURITES_24")
+      paint_38 := TextPaint("Favourite dirs")
+      favourites_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_38).
+         connect(self.on_favourites_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_39)
       paint_7 := ImagePaint().
          set_cache("gui.REFRESH_24")
       paint_6 := TextPaint("Refresh")
@@ -723,6 +741,7 @@ class FileDialog(Dialog)
          add(home_button).
          add(up_button).
          add(new_button).
+         add(favourites_button).
          add(refresh_button).
          add(prev_button).
          add(next_button).

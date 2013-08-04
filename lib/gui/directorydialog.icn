@@ -19,6 +19,7 @@ class DirectoryDialog(Dialog)
    public
       home_button, 
       new_button, 
+      favourites_button,
       refresh_button, 
       up_button, 
       cancel_button, 
@@ -47,18 +48,16 @@ class DirectoryDialog(Dialog)
    end
 
    public component_setup()
-      local root_node, d
+      local root_node, d, t
       #
       # Defaults and extra dirs.
       #
       /init_dirs := []
-      every put(init_dirs, 
+      t := copy(init_dirs)
+      every put(t,
                 Files.getcwd() | 
-                Files.get_home() | 
-                Files.get_temp() | 
-                Files.get_roots())
-      init_dirs := lunique(FileDialog.ucs_list(init_dirs))
-      dir.set_selection_list(init_dirs).set_selection(1)
+                FavouriteDirectoriesDialog.gen_directories())
+      dir.set_selection_list(lunique(FileDialog.ucs_list(t))).set_selection(1)
       root_node := TreeNode()
       every d := Files.get_roots() do
          root_node.add(TreeNode().set_label(ListEntry(ucs(d), Files.lstat(d), Files.stat(d))).set_always_expandable(&yes))
@@ -341,8 +340,21 @@ $endif
    public end_dialog()
    end
 
+   public on_favourites_button(ev)
+      local d, t
+      d := FavouriteDirectoriesDialog()
+      d.show_modal(self)
+      \d.okay | fail
+      t := copy(init_dirs)
+      every put(t,
+                Files.getcwd() | 
+                FavouriteDirectoriesDialog.gen_directories())
+      dir.selection_list := lunique(FileDialog.ucs_list(t))
+      dir.constrain_selection().synch_selection()
+   end
+
    private setup()
-      local paint_2, layout_7, paint_7, paint_11, layout_4, paint_4, panel_4, paint_34, paint_1, paint_9, layout_6, paint_6, paint_10, paint_3, panel_3, paint_33, paint, paint_5, paint_35
+      local paint_2, layout_7, paint_7, paint_11, layout_4, paint_4, panel_4, paint_34, paint_1, paint_9, paint_39, layout_6, paint_6, paint_10, paint_3, panel_3, paint_33, paint, paint_38, paint_5, paint_35
       self.set_label("Select directory")
       self.set_resize(&yes)
       paint_1 := ImagePaint().
@@ -378,6 +390,17 @@ $endif
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_5)
+      paint_39 := ImagePaint().
+         set_cache("gui.FAVOURITES_24")
+      paint_38 := TextPaint("Favourite dirs")
+      favourites_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_38).
+         connect(self.on_favourites_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_39)
       paint_7 := ImagePaint().
          set_cache("gui.REFRESH_24")
       paint_6 := TextPaint("Refresh")
@@ -412,6 +435,7 @@ $endif
          add(home_button).
          add(up_button).
          add(new_button).
+         add(favourites_button).
          add(refresh_button).
          add(show_hidden_button)
       self.add(panel_4)
