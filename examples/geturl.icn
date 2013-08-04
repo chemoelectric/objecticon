@@ -391,6 +391,9 @@ procedure get_out(fname)
    if *fname = 0 then
       fname := "geturl.out"
 
+   # Ensure illegal path chars (/ and NULL) are removed from fname
+   fname := map(fname, "/\0", "--")
+
    fname := \opts["p"] || fname
    fname := fname || \opts["d"]
 
