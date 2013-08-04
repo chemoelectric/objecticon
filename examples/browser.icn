@@ -454,7 +454,8 @@ class Download()
          log("Failed to download: " || r.err)
          status := "Failed"
       } else {
-         fname := resp.fname
+         # Ensure illegal path chars (/ and NULL) are removed from fname
+         fname := map(resp.fname, "/\0", "--")
          if *fname = 0 then
             fname := "browser.out"
          full_path := if \dest then
