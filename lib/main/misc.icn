@@ -200,3 +200,15 @@ procedure do_cleanups()
       @x | (f := 1)
    return /f
 end
+
+# Convert an index position based on a length, to an absolute index,
+# using Icon semantics of indices <= 0.  Fails if pos is out of range.
+#
+procedure cvpos(pos, len)
+   if pos < -len | pos > len + 1 then
+      fail
+   if pos > 0 then
+      return pos
+   return pos + len + 1
+end
+

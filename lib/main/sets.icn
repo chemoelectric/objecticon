@@ -86,7 +86,7 @@ abstract class Set(ObjectOutput, ObjectHash, ObjectEquals)
    private object_output(oo)
       local elements, e, sep
       elements := sort()
-      if oo.simple{!!elements} then {
+      if oo.simple{!elements} then {
          oo.object_start(self)
          every e := !elements do {
             if \sep then
@@ -216,12 +216,10 @@ class BuiltinSet(Set)
    # Create a new instance.
    #
    # @param s the set to wrap; if omitted a new set is created.
-   # @param entries initial entries to insert.
    #
-   public new(s, entries[])
+   public new(s)
       /s := set()
       self.s := s
-      every insert(!entries)
       return
    end
 end
