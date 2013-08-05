@@ -15,7 +15,7 @@ import graphics
 # drop-down menu, rather than several.  It may be placed anywhere on
 # the dialog, whereas a {MenuBar} would invariably be placed along the top.
 #
-class MenuButton(Component, MenuMode)
+class MenuButton(Component, BorderWhilstEntered, MenuMode)
    public 
       menu, 
       which_open,
@@ -58,7 +58,8 @@ class MenuButton(Component, MenuMode)
       if menu.is_shaded() then
          Gui.style.shade_rectangle(self.cbwin,
                                     self.x, self.y, self.w, self.h)
-      border.draw_rect(self.cbwin, self)
+      if /border_whilst_entered_flag | (is_unshaded() & \entered) then
+         border.draw_rect(self.cbwin, self)
    end
 
    public open_menu()
@@ -164,6 +165,7 @@ class MenuButton(Component, MenuMode)
 
    public new()
       cast(self,Component).new()
+      cast(self,BorderWhilstEntered).new()
       self.set_border(RaisedBorder())
       return
    end
