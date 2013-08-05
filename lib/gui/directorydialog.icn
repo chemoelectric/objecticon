@@ -17,10 +17,9 @@ import
 #
 class DirectoryDialog(Dialog)
    public
+      show_hidden_menu_item,
+      tools_menu,
       home_button, 
-      new_button, 
-      favourites_button,
-      refresh_button, 
       up_button, 
       cancel_button, 
       okay_button,
@@ -29,7 +28,6 @@ class DirectoryDialog(Dialog)
       message_label, 
       tree, 
       dir, 
-      show_hidden_button,
       existing_file_mode
 
    public static const
@@ -95,7 +93,7 @@ class DirectoryDialog(Dialog)
          t := e.name
          if e.stat.mode_str[1] == "d" &
             not(Files.is_relative_dir(t)) &
-            (show_hidden_button.is_checked() | 
+            (show_hidden_menu_item.is_checked() | 
                not(Files.is_hidden(t))) then
             put(dir_list, e)
       }
@@ -273,7 +271,7 @@ $endif
       self.dispose()
    end
 
-   public on_show_hidden_button(ev)
+   public on_show_hidden_menu_item(ev)
       local n
       n := tree.object_get_selections()[1] | fail
       goto_dir(get_full_path(n).str())
@@ -292,7 +290,7 @@ $endif
       goto_dir(Files.get_home())
    end
 
-   public on_refresh_button(ev)
+   public on_refresh_menu_item(ev)
       local n
       n := tree.object_get_selections()[1] | fail
       if load_subtree(n) then
@@ -302,7 +300,7 @@ $endif
       tree.tree_structure_changed()
    end
 
-   public on_new_button(ev)
+   public on_new_dir_menu_item(ev)
       local d, s
       d := NewDirectoryDialog()
       d.show_modal(self)
@@ -326,6 +324,7 @@ $endif
    public new()
       cast(self,Dialog).new()
       self.setup()
+      tools_menu.set_border_mid(NullBorder())
       tree.
          set_fixed_col_w(16 + 2 * 2).
          set_item_paint(IconFilesItemPaint()).
@@ -340,7 +339,7 @@ $endif
    public end_dialog()
    end
 
-   public on_favourites_button(ev)
+   public on_favourite_dirs_menu_item(ev)
       local d, t
       d := FavouriteDirectoriesDialog()
       d.show_modal(self)
@@ -354,9 +353,38 @@ $endif
    end
 
    private setup()
-      local paint_2, layout_7, paint_7, paint_11, layout_4, paint_4, panel_4, paint_34, paint_1, paint_9, paint_39, layout_6, paint_6, paint_10, paint_3, panel_3, paint_33, paint, paint_38, paint_5, paint_35
+      local paint_2, favourite_dirs_menu_item, paint_45, layout_7, menu_button, refresh_menu_item, paint_11, paint_42, layout_4, panel_4, paint_47, paint_1, paint_9, paint_44, layout_6, paint_10, paint_3, panel_3, paint_46, paint, new_dir_menu_item, paint_43, paint_35
       self.set_label("Select directory")
       self.set_resize(&yes)
+      paint_45 := ImagePaint().
+         set_cache("gui.CONFIGURE_24")
+      paint_42 := TextPaint("New directory...")
+      new_dir_menu_item := TextMenuItem().
+         connect(on_new_dir_menu_item, Event.ACTION).
+         set_paint_mid(paint_42)
+      paint_43 := TextPaint("Favourite dirs...")
+      favourite_dirs_menu_item := TextMenuItem().
+         connect(on_favourite_dirs_menu_item, Event.ACTION).
+         set_paint_mid(paint_43)
+      paint_44 := TextPaint("Show hidden files")
+      show_hidden_menu_item := CheckBoxMenuItem().
+         connect(on_show_hidden_menu_item, Event.ACTION).
+         set_paint_mid(paint_44)
+      paint_46 := TextPaint("Refresh")
+      refresh_menu_item := TextMenuItem().
+         connect(on_refresh_menu_item, Event.ACTION).
+         set_paint_mid(paint_46)
+      tools_menu := Menu().
+         set_paint_mid(paint_45).
+         add(new_dir_menu_item).
+         add(favourite_dirs_menu_item).
+         add(show_hidden_menu_item).
+         add(refresh_menu_item)
+      paint_47 := TextPaint("Tools")
+      menu_button := MenuButton().
+         clear_constraints().
+         set_tooltip(paint_47).
+         set_menu(tools_menu)
       paint_1 := ImagePaint().
          set_cache("gui.HOME_24")
       paint := TextPaint("Home")
@@ -379,50 +407,6 @@ $endif
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_3)
-      paint_5 := ImagePaint().
-         set_cache("gui.NEW_FOLDER_24")
-      paint_4 := TextPaint("New dir")
-      new_button := IconButton().
-         set_align(Align.L, Align.C).
-         clear_constraints().
-         set_tooltip(paint_4).
-         connect(self.on_new_button, Event.ACTION).
-         set_no_click_focus(&yes).
-         set_toggles(&no).
-         set_paint(paint_5)
-      paint_39 := ImagePaint().
-         set_cache("gui.FAVOURITES_24")
-      paint_38 := TextPaint("Favourite dirs")
-      favourites_button := IconButton().
-         set_align(Align.L, Align.C).
-         clear_constraints().
-         set_tooltip(paint_38).
-         connect(self.on_favourites_button, Event.ACTION).
-         set_no_click_focus(&yes).
-         set_toggles(&no).
-         set_paint(paint_39)
-      paint_7 := ImagePaint().
-         set_cache("gui.REFRESH_24")
-      paint_6 := TextPaint("Refresh")
-      refresh_button := IconButton().
-         set_align(Align.L, Align.C).
-         clear_constraints().
-         set_tooltip(paint_6).
-         connect(self.on_refresh_button, Event.ACTION).
-         set_no_click_focus(&yes).
-         set_toggles(&no).
-         set_paint(paint_7)
-      paint_34 := ImagePaint().
-         set_cache("gui.HIDDENFILE_24")
-      paint_33 := TextPaint("Hidden files")
-      show_hidden_button := IconButton().
-         set_align(Align.L, Align.C).
-         clear_constraints().
-         set_tooltip(paint_33).
-         connect(self.on_show_hidden_button, Event.ACTION).
-         set_no_click_focus(&yes).
-         set_toggles(&yes).
-         set_paint(paint_34)
       layout_6 := GridLayout().
          set_doi(0).
          set_dii(2).
@@ -432,12 +416,9 @@ $endif
          set_constraint("eol", &yes).
          set_constraint("x_align", Align.L).
          set_layout(layout_6).
+         add(menu_button).
          add(home_button).
-         add(up_button).
-         add(new_button).
-         add(favourites_button).
-         add(refresh_button).
-         add(show_hidden_button)
+         add(up_button)
       self.add(panel_4)
       tree := ItemPaintTree().
          set_size("390", "272").
