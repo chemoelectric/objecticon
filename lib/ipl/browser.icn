@@ -2373,7 +2373,6 @@ record GreyState(prev, nxt, refresh, copy_page, save_page, stop)
 class Browser(ComponentScrollArea)
    private
       ui,
-      worker_pool,
       shared_worker_pool_flag,
       status_ticker,
       maps,
@@ -2391,6 +2390,7 @@ class Browser(ComponentScrollArea)
       history,
       history_pos,
       curr_history_entry,   # History entry currently being viewed.
+      worker_pool,
       page_url,
       page_data,
       page_name,
