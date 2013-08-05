@@ -182,7 +182,7 @@ class FavouriteDirectoriesDialog(Dialog)
    end
 
    private setup()
-      local paint_2, panel_2, label_2, paint_7, layout_4, paint_4, paint_1, paint_9, label_1, paint_6, paint_10, layout_3, paint_3, panel_3, border_content_1, paint_8, border_1, layout_5, paint_5, layout_2
+      local paint_2, panel_2, label_2, paint_7, layout_4, paint_4, paint_1, paint_9, label_1, layout_6, paint_6, paint_10, paint_3, panel_3, border_content_1, paint_8, border_1, layout_5, paint_5, layout_2
       self.set_label("Favourite directories")
       self.set_resize(&yes)
       paint_1 := TextPaint("Application")
@@ -195,8 +195,9 @@ class FavouriteDirectoriesDialog(Dialog)
          set_paint(paint_2).
          set_column_align(Align.L)
       entry_table := FavouriteDirectoriesTable().
-         set_size("328", "202").
+         set_size(420, "202").
          clear_constraints().
+         set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_constraint("y_fill", &yes).
@@ -206,38 +207,6 @@ class FavouriteDirectoriesDialog(Dialog)
          add_column(application_column).
          add_column(directory_column)
       self.add(entry_table)
-      paint_7 := TextPaint("Add")
-      add_button := TextButton().
-         clear_constraints().
-         set_constraint("eol", &yes).
-         connect(self.on_add_button, Event.ACTION).
-         set_toggles(&no).
-         set_paint(paint_7)
-      paint_8 := TextPaint("Delete")
-      delete_button := TextButton().
-         clear_constraints().
-         set_constraint("eol", &yes).
-         connect(self.on_delete_button, Event.ACTION).
-         set_toggles(&no).
-         set_paint(paint_8)
-      paint_9 := TextPaint("Apply")
-      apply_button := TextButton().
-         clear_constraints().
-         connect(self.on_apply_button, Event.ACTION).
-         set_toggles(&no).
-         set_paint(paint_9)
-      layout_3 := GridLayout().
-         set_doi(0).
-         set_extra("cells")
-      panel_3 := Panel().
-         clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("y_align", Align.T).
-         set_layout(layout_3).
-         add(add_button).
-         add(delete_button).
-         add(apply_button)
-      self.add(panel_3)
       paint_3 := TextPaint("Application")
       label_1 := Label().
          clear_constraints().
@@ -269,11 +238,42 @@ class FavouriteDirectoriesDialog(Dialog)
       directory_field := FileSuggestField().
          set_size("205").
          clear_constraints().
+         set_constraint("eol", &yes).
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          connect(self.on_apply_button, Event.ACTION).
          set_contents(u"")
+      paint_7 := TextPaint("Add")
+      add_button := TextButton().
+         clear_constraints().
+         connect(self.on_add_button, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_7)
+      paint_8 := TextPaint("Delete")
+      delete_button := TextButton().
+         clear_constraints().
+         connect(self.on_delete_button, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_8)
+      paint_9 := TextPaint("Apply")
+      apply_button := TextButton().
+         clear_constraints().
+         connect(self.on_apply_button, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_9)
+      layout_6 := GridLayout().
+         set_doi(0).
+         set_extra("cells")
+      panel_3 := Panel().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("w", 2).
+         set_constraint("y_align", Align.T).
+         set_layout(layout_6).
+         add(add_button).
+         add(delete_button).
+         add(apply_button)
       layout_4 := GridLayout().
          set_extra("cells")
       border_content_1 := Component().
@@ -283,7 +283,8 @@ class FavouriteDirectoriesDialog(Dialog)
          add(application_field).
          add(application_check_box).
          add(label_2).
-         add(directory_field)
+         add(directory_field).
+         add(panel_3)
       border_1 := Border().
          clear_constraints().
          set_constraint("eol", &yes).
