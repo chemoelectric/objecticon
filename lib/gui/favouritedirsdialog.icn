@@ -22,6 +22,28 @@ class FavouriteDirectoriesTable(Table)
    end
 end
 
+class ApplicationItemPaint(ItemPaint)
+   private convert(data)
+      return \data | "All"
+   end
+
+   public get_width(W, data)
+      return W.text_width(convert(data))
+   end
+
+   public get_constant_height(W)
+      return W.get_font_height()
+   end
+
+   public get_size(W, data)
+      return Size(W.text_width(convert(data)), W.get_font_height())
+   end
+
+   public draw(W, data, x, y, w)
+      draw_string_ex(W, x, y, limit_text(W, convert(data), w))
+   end
+end
+
 class FavouriteDirectoriesDialog(Dialog)
    private
       application_field,
@@ -48,7 +70,7 @@ class FavouriteDirectoriesDialog(Dialog)
       if l := decode(Files.file_to_string(get_favourites_file())) then
          return l
       l := []
-      every put(l, ["", ucs(Files.get_home() | Files.get_temp() | Files.get_roots())])
+      every put(l, [&null, ucs(Files.get_home() | Files.get_temp() | Files.get_roots())])
       return l
    end
 
@@ -60,7 +82,7 @@ class FavouriteDirectoriesDialog(Dialog)
       local app, e
       app := get_app_name()
       every e := !get_pair_list() do {
-         if e[1] == ("" | app) then
+         if /e[1] | (e[1] == app) then
             suspend e[2]
       }
    end
@@ -81,7 +103,7 @@ class FavouriteDirectoriesDialog(Dialog)
                             set_insets(Gui.TEXT_INSET, 0, 0, 0).
                             set_x_align(Align.L))
       application_column.
-         set_item_paint(AbbreviatedTextItemPaint()).
+         set_item_paint(ApplicationItemPaint()).
          set_item_border(EmptyBorder().
                             set_insets(Gui.TEXT_INSET, 0, 0, 0).
                             set_x_align(Align.L))
@@ -95,7 +117,7 @@ class FavouriteDirectoriesDialog(Dialog)
          e := etc.object_get_selections()[1]
          application_field.set_contents(e[1])
          directory_field.set_contents(e[2])
-         if *e[1] = 0 then
+         if /e[1] then
             application_check_box.set_is_checked(&yes)
          else
             application_check_box.set_is_checked(&no)
@@ -148,7 +170,7 @@ class FavouriteDirectoriesDialog(Dialog)
    end
 
    private on_apply_button(ev)
-      etc.set_lines([[if application_check_box.is_checked() then "" else application_field.get_contents(), 
+      etc.set_lines([[if application_check_box.is_checked() then &null else application_field.get_contents(), 
                       FilePath(directory_field.get_contents()).canonical().ucs()]], 
                     etc.get_selections()[1])
       etc.clear_selections()
