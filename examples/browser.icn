@@ -302,6 +302,12 @@ class BrowserDialog(Dialog)
       return "<html>Complete</html>"
    end
 
+   private do_image(req)
+      local n
+      (n := member(req.url.extract_cgi_parameters(), "name")[1]) | return error("Bad request")
+      return ImageCache.get_named_image(n) | return error("Unknown image")
+   end
+
    private config_handler(worker)
       local req
       req := worker.req
@@ -316,6 +322,7 @@ class BrowserDialog(Dialog)
          "del_cookies": del_cookies(req)
          "del_cookie": del_cookie(req)
          "submit": edit_settings(req)
+         "image": do_image(req)
          default: error("Bad config request")
       }
    end
