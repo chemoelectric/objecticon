@@ -57,7 +57,8 @@ class FavouriteDirectoriesDialog(Dialog)
       etc,
       directory_column,
       application_check_box,
-      application_column
+      application_column,
+      edit_panel
    public
       okay
 
@@ -128,18 +129,14 @@ class FavouriteDirectoriesDialog(Dialog)
    private update_grey()
       if *etc.get_selections() = 1 then {
          apply_button.set_is_shaded(&no)
-         application_check_box.set_is_shaded(&no)
+         edit_panel.set_is_shaded(&no)
          if application_check_box.is_checked() then
             application_field.set_is_shaded(&yes)
          else
             application_field.set_is_shaded(&no)
-         directory_field.set_is_shaded(&no)
-      } else {
-         apply_button.set_is_shaded(&yes)
-         application_field.set_is_shaded(&yes)
-         application_check_box.set_is_shaded(&yes)
-         directory_field.set_is_shaded(&yes)
-      }
+      } else
+         edit_panel.set_is_shaded(&yes)
+
       if *etc.get_selections() > 0 then
          delete_button.set_is_shaded(&no)
       else
@@ -178,11 +175,13 @@ class FavouriteDirectoriesDialog(Dialog)
    end
 
    private on_application_check_box(ev)
+      if application_check_box.is_unchecked() & *application_field.get_contents() = 0 then
+         application_field.set_contents(get_app_name())
       update_grey()
    end
 
    private setup()
-      local paint_2, panel_2, label_2, paint_7, layout_4, paint_4, paint_1, paint_9, label_1, layout_6, paint_6, paint_10, paint_3, panel_3, border_content_1, paint_8, border_1, layout_5, paint_5, layout_2
+      local paint_2, panel_2, label_2, layout_7, paint_7, layout_4, paint_4, paint_1, paint_9, label_1, layout_6, paint_6, paint_10, paint_3, panel_3, border_content_1, paint_8, border_1, layout_5, paint_5, layout_2
       self.set_label("Favourite directories")
       self.set_resize(&yes)
       paint_1 := TextPaint("Application")
@@ -238,12 +237,27 @@ class FavouriteDirectoriesDialog(Dialog)
       directory_field := FileSuggestField().
          set_size("205").
          clear_constraints().
-         set_constraint("eol", &yes).
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          connect(self.on_apply_button, Event.ACTION).
          set_contents(u"")
+      layout_7 := GridLayout().
+         set_doi(0).
+         set_extra("cells")
+      edit_panel := Panel().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0).
+         set_layout(layout_7).
+         add(label_1).
+         add(application_field).
+         add(application_check_box).
+         add(label_2).
+         add(directory_field)
       paint_7 := TextPaint("Add")
       add_button := TextButton().
          clear_constraints().
@@ -268,8 +282,6 @@ class FavouriteDirectoriesDialog(Dialog)
       panel_3 := Panel().
          clear_constraints().
          set_constraint("eol", &yes).
-         set_constraint("w", 2).
-         set_constraint("y_align", Align.T).
          set_layout(layout_6).
          add(add_button).
          add(delete_button).
@@ -279,11 +291,7 @@ class FavouriteDirectoriesDialog(Dialog)
       border_content_1 := Component().
          clear_constraints().
          set_layout(layout_4).
-         add(label_1).
-         add(application_field).
-         add(application_check_box).
-         add(label_2).
-         add(directory_field).
+         add(edit_panel).
          add(panel_3)
       border_1 := Border().
          clear_constraints().
