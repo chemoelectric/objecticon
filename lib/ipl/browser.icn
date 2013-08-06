@@ -4708,12 +4708,23 @@ class Browser(ComponentScrollArea)
    end
 
    public static get_table_tag()
-      #return "<table border=1 cellspacing=4 rules=all>"
       return "<table cellspacing=4>"
    end
 
    public get_cache()
       return worker_pool.cache
+   end
+
+   public handle_copy(e)
+      local s
+      if s := get_current_text_selection() then
+         parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
+   end
+
+   private additional_keys(e)
+      case e.code of {
+         "\^c" :  handle_copy(e)
+      }
    end
 
    public new()
@@ -4725,6 +4736,7 @@ class Browser(ComponentScrollArea)
       primary_selection_owner := BrowserPrimarySelectionOwner(self)
       set_inner(TextFlow(self))
       use_default_keys()
+      connect(additional_keys, Event.KEY_PRESS)
       history := []
       history_pos := 0
       running := 0
