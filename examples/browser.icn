@@ -406,21 +406,20 @@ class BrowserDialog(Dialog)
    end
 end
 
-class LogDialog(Dialog)
-   public log
+class MessageDialog(Dialog)
+   public const text
 
    public new()
       local close_button
       cast(self,Dialog).new()
-      set_label("Item log")
       set_resize(&yes)
       set_remember_size(&yes)
-      log := EditableTextList().
+      text := EditableTextList().
          set_size(500, 269).
          set_constraint("eol", &yes).
          set_contents([""]).
          set_is_editable(&no)
-      add(log)
+      add(text)
       close_button := TextButton().
          connect(dispose, Event.ACTION).
          set_toggles(&no).
@@ -437,7 +436,7 @@ class Download()
       parent, req, resp, status, size, full_path, dialog, dest
 
    private log(s)
-      dialog.log.log([&clock || u": " || Text.liberal_ucs(s)], 500)
+      dialog.text.log([&clock || u": " || Text.liberal_ucs(s)], 500)
    end
 
    private on_status(ev, src, type)
@@ -518,7 +517,7 @@ class Download()
       self.dest := dest
       size := ""
       self.req := Req(self, url, referer, got_data, Worker.DOWNLOAD,, on_status)
-      self.dialog := LogDialog()
+      self.dialog := MessageDialog().set_label("Item log")
       log("Log for " || url.str())
       return
    end
@@ -941,6 +940,13 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.downloads.download(url, referer)
    end
 
+   private show_img_error(err)
+      local d
+      d := MessageDialog().set_label("Image error")
+      d.text.set_contents_str(err)
+      d.show_modal()
+   end
+
    private download_to_file(url, referer)
       local d, f, d1, f1, full_path
       d := parent_dialog.file_dialog
@@ -1031,7 +1037,7 @@ class BrowserTab(TabItem, BrowserUI)
       return m
    end
 
-   public create_image_menu(url, img_name, img_data, link_url)
+   public create_image_menu(url, img_name, img_data, err, link_url)
       local m
       m := Menu()
       m.add(TextMenuItem().
@@ -1043,6 +1049,10 @@ class BrowserTab(TabItem, BrowserUI)
          m.add(TextMenuItem().
                set_label("Save image...").
                connect(create do_save(img_name, img_data), Event.ACTION))
+      if \err then
+         m.add(TextMenuItem().
+               set_label("Show error...").
+               connect(create show_img_error(err), Event.ACTION))
       return m
    end
 

@@ -872,16 +872,18 @@ class Img(Image)
    public const
       browser, context, form, img_url, alt, bg_area
    private readable
-      wrote, img_data, img_name, map, map_id, held
+      wrote, img_data, img_name, map, map_id, held, err
 
    package got_data(res)
       local iw, ih
       if \res.err then {
+         err := res.err
          set_cache("rpp.BROKEN_LINK")
          every remove_constraint("fix_w" | "fix_h" | "pct_w")
       } else {
          set_image(res.data)
          if /win then {
+            err := &why
             set_cache("rpp.BROKEN_LINK")
             every remove_constraint("fix_w" | "fix_h" | "pct_w")
          } else {
@@ -914,7 +916,7 @@ class Img(Image)
       local pm, pm_menu, url
       *parent_dialog.held = 1 | fail
       url := if img_url.scheme == u"cache" then browser.page_url else img_url
-      if pm_menu := browser.create_image_menu(url, img_name, img_data, wrote) then {
+      if pm_menu := browser.create_image_menu(url, img_name, img_data, err, wrote) then {
          set_highlight(wrote)
          browser.clear_msg(self)
          wrote := &null
@@ -2341,7 +2343,7 @@ abstract class BrowserUI()
    public abstract link_middle_clicked(url)
    public abstract create_link_menu(url)
    public abstract create_page_menu()
-   public abstract create_image_menu(url, img_name, img_data, link_url)
+   public abstract create_image_menu(url, img_name, img_data, err, link_url)
    public abstract browse_for_file(s)
    public abstract is_visited(url)
 end
@@ -2661,8 +2663,8 @@ class Browser(ComponentScrollArea)
       return (\ui).is_visited(url)
    end
 
-   public create_image_menu(url, img_name, img_data, link_url)
-      return (\ui).create_image_menu(url, img_name, img_data, link_url)
+   public create_image_menu(url, img_name, img_data, err, link_url)
+      return (\ui).create_image_menu(url, img_name, img_data, err, link_url)
    end
 
    public set_ui(ui)
