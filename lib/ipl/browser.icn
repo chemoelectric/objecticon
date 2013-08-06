@@ -2386,7 +2386,8 @@ class Browser(ComponentScrollArea)
       h_direction,
       v_direction,
       primary_selection_owner,
-      msg_owner
+      msg_owner,
+      outermost_border
 
    private readable
       history,
@@ -2948,6 +2949,14 @@ class Browser(ComponentScrollArea)
       }
    end
 
+   # Set a border around the outermost (top level) `TextFlow`; by
+   # default this is a `NullBorder`.
+   #
+   public set_outermost_border(b)
+      self.outermost_border := b
+      return self
+   end
+
    private set_top_data(res)
       local doc, s, row, c, cu
       if \curr_history_entry then {
@@ -3009,7 +3018,8 @@ class Browser(ComponentScrollArea)
          Text.liberal_ucs(s)
       doc := HtmlParser().parse(s)
       page_base := page_url
-      row := TextFlow(self)
+      row := TextFlow(self).
+         set_border(outermost_border)
       page_title := &null
       page_links := []
       page_alink_color := "red"
@@ -4743,6 +4753,7 @@ class Browser(ComponentScrollArea)
       history_pos := 0
       running := 0
       banded := table()
+      outermost_border := NullBorder()
       view.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG).
          connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS).
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE).

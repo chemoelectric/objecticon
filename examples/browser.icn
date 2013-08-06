@@ -1225,7 +1225,7 @@ class BrowserTab(TabItem, BrowserUI)
       set_label_border(EmptyBorder().set_x_align(Align.L))
       set_title()
       setup()
-      browser.set_ui(self).set_worker_pool(pool)
+      browser.set_ui(self).set_worker_pool(pool).set_outermost_border(EmptyBorder().set_insets(2, 2, 2, 2))
       browser.goto(\url, referer_url)
       return
    end
