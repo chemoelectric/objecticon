@@ -409,10 +409,6 @@ end
 class LogDialog(Dialog)
    public log
 
-   public on_close_button(ev)
-      dispose()
-   end
-
    public new()
       local close_button
       cast(self,Dialog).new()
@@ -426,11 +422,11 @@ class LogDialog(Dialog)
          set_is_editable(&no)
       add(log)
       close_button := TextButton().
-         connect(on_close_button, Event.ACTION).
+         connect(dispose, Event.ACTION).
          set_toggles(&no).
          set_paint(TextPaint("Close"))
       add(close_button)
-      connect(on_close_button, Event.WINDOW_CLOSE_BUTTON)
+      connect(dispose, Event.WINDOW_CLOSE_BUTTON)
       set_layout(GridLayout().set_extra("cells"))
       return
    end
