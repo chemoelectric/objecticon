@@ -1005,16 +1005,6 @@ function lang_Class_get_cast_class(c)
     }
 end
 
-#begdef CheckField(field)
-{
-    word x;
-    if (cnv:C_integer(field, x))
-        MakeInt(x, &field);
-    else if (!cnv:string(field,field))
-        runerr(170,field);
-}
-#enddef
-
 function lang_Class_get_field_flags(c, field)
    body {
         struct b_class *class0;
