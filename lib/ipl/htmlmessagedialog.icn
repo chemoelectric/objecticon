@@ -1,51 +1,26 @@
 package ipl.browser
 
 import
-   gui,
-   net,
-   util
+   gui
 
 # A simple dialog for displaying a single HTML page, typically
-# containing a help message.  Images may be included by either
-# specifying a normal URL, or with URL img:name, where name is a name
-# in the image cache (eg: <img src="img:gui.HOME_24">).
+# containing a help message.
 #
 class HTMLMessageDialog(Dialog)
-   private
-      page,
+   public const
       browser
 
-   #
-   # Set the HTML page to display.
-   #
-   public set_page(page)
-      self.page := page
-      return self
-   end
-
-   private page_handler(worker)
-      return \page | return error("No page set")
-   end
-
-   private img_handler(worker)
-      local n
-      n := string(worker.req.url.get_path())
-      return ImageCache.get_named_image(n) | return error("Unknown image")
-   end
-
-   public component_setup()
+   public new()
+      cast(self,Dialog).new()
       self.setup()
-      browser.worker_pool.
-         add_scheme_handler("page", page_handler).
-         add_scheme_handler("img", img_handler)
-      browser.goto(URL("page:"))
+      return
    end
 
    private setup()
       local layout_1, paint_1, close_button
       self.set_resize(&yes)
-      browser := Browser().
-         set_size("278", "206").
+      browser := SimpleBrowser().
+         set_size("353", "254").
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -60,10 +35,10 @@ class HTMLMessageDialog(Dialog)
          set_toggles(&no).
          set_paint(paint_1)
       self.add(close_button)
+      self.connect(self.dispose, Event.WINDOW_CLOSE_BUTTON)
       layout_1 := GridLayout().
          set_extra("cells")
       self.set_layout(layout_1)
-      self.set_focus(browser.find_focus())
    end
 end
 

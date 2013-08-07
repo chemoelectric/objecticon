@@ -4764,3 +4764,64 @@ class Browser(ComponentScrollArea)
       return
    end
 end
+
+# A simple subclass of `Browser`, intended for displaying HTML pages
+# with no user navigation and a minimalist interface.
+#
+# An HTML document may be shown by calling `set_page`, passing the
+# document in string form.  Images may be included in the page by
+# either specifying a normal external URL, or with URL img:name, where
+# name is a name in the image cache (eg: <img src="img:gui.HOME_24">).
+#
+class SimpleBrowser(Browser)
+   private readable
+      page
+
+   public static const
+      LINK_LEFT_CLICKED,
+      LINK_MIDDLE_CLICKED
+
+   private static init()
+      LINK_LEFT_CLICKED := "link_left_clicked"
+      LINK_MIDDLE_CLICKED := "link_middle_clicked"
+   end
+
+   public link_left_clicked(url)
+      cast(self, Browser).link_left_clicked(url)
+      fire(LINK_LEFT_CLICKED, url)
+      return self
+   end
+
+   public link_middle_clicked(url)
+      cast(self, Browser).link_middle_clicked(url)
+      fire(LINK_MIDDLE_CLICKED, url)
+      return self
+   end
+
+   # Set the page to display as a string representing an HTML
+   # document.
+   #
+   public set_page(page)
+      self.page := page
+      goto(URL("page:"))
+      return self
+   end
+
+   private page_handler(worker)
+      return \page | return error("No page set")
+   end
+
+   private img_handler(worker)
+      local n
+      n := string(worker.req.url.get_path())
+      return ImageCache.get_named_image(n) | error("Unknown image")
+   end
+
+   public new()
+      cast(self,Browser).new()
+      worker_pool.
+         add_scheme_handler("page", page_handler).
+         add_scheme_handler("img", img_handler)
+      return
+   end
+end
