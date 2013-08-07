@@ -1037,22 +1037,23 @@ class BrowserTab(TabItem, BrowserUI)
       return m
    end
 
-   public create_image_menu(url, img_name, img_data, err, link_url)
-      local m
+   public create_image_menu(img)
+      local m, url
+      url := if img.img_url.scheme == u"cache" then browser.page_url else img.img_url
       m := Menu()
       m.add(TextMenuItem().
             set_label("Copy image").
             connect(create copy_link(url), Event.ACTION))
-      if \link_url then
-         populate_link_menu(link_url, m)
-      if \img_data then
+      if \img.wrote then
+         populate_link_menu(img.wrote, m)
+      if \img.img_data then
          m.add(TextMenuItem().
                set_label("Save image...").
-               connect(create do_save(img_name, img_data), Event.ACTION))
-      if \err then
+               connect(create do_save(img.img_name, img.img_data), Event.ACTION))
+      if \img.err then
          m.add(TextMenuItem().
                set_label("Show error...").
-               connect(create show_img_error(err), Event.ACTION))
+               connect(create show_img_error(img.err), Event.ACTION))
       return m
    end
 

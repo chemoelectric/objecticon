@@ -872,7 +872,7 @@ class Img(Image)
    public const
       browser, context, form, img_url, alt, bg_area
    private readable
-      wrote, img_data, img_name, map, map_id, held, err
+      wrote, img_data, img_name, map, map_id, held, err, highlight
 
    package got_data(res)
       local iw, ih
@@ -913,10 +913,9 @@ class Img(Image)
    end
 
    private handle_rpress(e)
-      local pm, pm_menu, url
+      local pm, pm_menu
       *parent_dialog.held = 1 | fail
-      url := if img_url.scheme == u"cache" then browser.page_url else img_url
-      if pm_menu := browser.create_image_menu(url, img_name, img_data, err, wrote) then {
+      if pm_menu := browser.create_image_menu(self) then {
          set_highlight(wrote)
          browser.clear_msg(self)
          wrote := &null
@@ -987,8 +986,12 @@ class Img(Image)
    end
 
    private set_highlight(u)
-      set_fg(if \u then browser.page_alink_color else context.fg)
-      reset()
+      # Avoid resetting since that will reload the image data, which is slow.
+      if not(is(border, NullBorder | EmptyBorder) | highlight === u) then {
+         set_fg(if \u then browser.page_alink_color else context.fg)
+         reset()
+      }
+      highlight := u
       return self
    end
 
@@ -2343,7 +2346,7 @@ abstract class BrowserUI()
    public abstract link_middle_clicked(url)
    public abstract create_link_menu(url)
    public abstract create_page_menu()
-   public abstract create_image_menu(url, img_name, img_data, err, link_url)
+   public abstract create_image_menu(img)
    public abstract browse_for_file(s)
    public abstract is_visited(url)
 end
@@ -2664,8 +2667,8 @@ class Browser(ComponentScrollArea)
       return (\ui).is_visited(url)
    end
 
-   public create_image_menu(url, img_name, img_data, err, link_url)
-      return (\ui).create_image_menu(url, img_name, img_data, err, link_url)
+   public create_image_menu(img)
+      return (\ui).create_image_menu(img)
    end
 
    public set_ui(ui)
