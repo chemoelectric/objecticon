@@ -1,0 +1,92 @@
+package ipl.functional
+
+#-------------------------------------------------------------------------------
+# Name:        functools
+# Purpose:     Small functional programming library
+#
+# Author:      Oleg Baharew aka ArqricCat (IDP Team)
+#
+# Created:     03.08.2013
+# Copyright:   (c) IDP Team, 2013
+# Licence:     MIT License
+
+# Class summary:
+
+#  FuncTools - This class provides some higher-order and other functions, borrowed from functional languages.
+
+#  Methods defined in this class:
+#     * head(l) - head of list
+#     * tail(l) - tail of list
+#     * mapf(f,l) - application of function to all elements of the list
+#     * filter(f,l) - creates a list of values for which function is true
+#     * foldl(f,l) - left-associative list folding
+#     * foldr(f,l) - right-associative list folding
+#     * enumerate(seq) - creates a table with iterated keys and values, taken from sequence
+#     * sum(l) - sum of list elements
+
+final abstract class FuncTools()
+
+   public static head(l)
+   return l[1]
+   end
+
+   public static tail(l)
+   return l[2:0]
+   end
+
+   public static mapf(f,l)
+   local i,acc
+   acc := []
+   every i:= !l do {
+      if type(i) ~== "list" then put(acc,f(i)) else {
+       put(acc,mapf(f,i))
+    }
+   }
+   return acc
+   end
+
+   public static filter(f,l)
+   local i,acc
+   acc := []
+   every i:= !l do {
+      if type(i) ~== "list" then {
+         if f(i) then put(acc,i)
+      } else put(acc,filter(f,i))
+   }
+   return acc
+   end
+
+   public static foldl(f,start,l)
+   local i
+   every i := !l do {
+      if type(i) ~== "list" then start := f(start,i) else start := f(start,foldl(f,start,i)) 
+   }
+   return start
+   end
+
+   public static foldr(f,start,l)
+   local i
+   every i := back(l) do {
+      if type(i) ~== "list" then start := f(start,i) else start := f(start,foldl(f,start,i)) 
+   }
+   return start
+   end
+
+   public static enumerate(seq)
+   local i,t
+   t := table()
+   every i := 1 to *seq do {
+      t[i] := seq[i]
+   }
+   return t
+   end
+
+   public static sum(l)
+   local acc,i
+   acc := 0
+   every i := !l do {
+      if type(i) ~== "list" then acc +:= i else acc +:= sum(i)
+   }
+   return acc
+   end
+end
