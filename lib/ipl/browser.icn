@@ -2985,7 +2985,7 @@ class Browser(ComponentScrollArea)
                "<img src=\"" || to_attr(cu.str()) || "\"/></html>"
          } else
             s := "<html><title>Problem</title>" || 
-               "<h1>Problem:</h1>Displaying " || mk_anchor(res.url) || "<br><br>This does not seem to be an HTML or text document or an image</html>"
+               "<h1>Problem:</h1>Displaying " || mk_anchor(res.url) || "<br><br>This does not seem to be an HTML or text document or an image.</html>"
          page_data := res.data
       }
       page_name := res.fname
