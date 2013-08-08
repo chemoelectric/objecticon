@@ -1125,7 +1125,7 @@ class BrowserTab(TabItem, BrowserUI)
    private do_save(name, data)
       local s, d
       d := parent_dialog.file_dialog
-      d.set_file(\name)
+      d.set_file(map(\name, "/\0", "--"))
       d.set_directory(parent_dialog.last_file_dir).set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
       parent_dialog.last_file_dir := d.get_directory()
       if s := d.get_result() then {
