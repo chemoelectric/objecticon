@@ -485,7 +485,8 @@ class Worker()
          set_task(task).
          set_cookies(pool.cookies).
          set_authentications(pool.authentications).
-         set_authentication_function(pool.authentication_function)
+         set_authentication_function(pool.authentication_function).
+         set_retry_while_data(&yes)
       httpc.set_user_agent(\pool.user_agent)
 
       every httpc.connect(status, 
