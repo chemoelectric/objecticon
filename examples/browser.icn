@@ -27,7 +27,8 @@ class Settings()
       visited,
       visited_size,
       pool_size,
-      destination_dir
+      destination_dir,
+      authentications
 
    public new()
       home_url := URL(u"config:")
@@ -262,7 +263,10 @@ class BrowserDialog(Dialog)
        cn := member(t, "cache")[1] &
        vn := member(t, "vsize")[1] &
        pn := member(t, "psize")[1]) | return error("Bad request")
-
+      settings.authentications := if member(t, "authentications") then
+         pool.authentications
+      else
+         &null
       settings.home_url := URL(ucs(home))
       settings.cache_size_mb := integer(cn)
       settings.visited_size := integer(vn)
@@ -282,7 +286,10 @@ class BrowserDialog(Dialog)
                    <tr><td>Cache size (MB):</td><td><input type=number min=1 step=1 name=cache value=" || settings.cache_size_mb || " size=50 /></td></tr>_
                    <tr><td>Visited list size:</td><td><input type=number min=10 step=1 name=vsize value=" || settings.visited_size || " size=50 /></td></tr>_
                    <tr><td>Worker pool size:</td><td><input type=number min=5 step=1 name=psize value=" || settings.pool_size || " size=50 /></td></tr>_
+                   <tr><td colspan=2><label><input type=checkbox name=authentications value=yes " || 
+                                       (if /settings.authentications then "" else "checked") || "/> Save authentications</label></td></tr>_
                  </table>_
+                 <p>_
                  <input type=submit />_
               </form></fieldset></html>"
    end
@@ -345,6 +352,7 @@ class BrowserDialog(Dialog)
          set_cache(Cache(settings.cache_size_mb*1024*1024)).
          set_authentication_function(get_authentication).
          add_scheme_handler("config", config_handler)
+      pool.set_authentications(\settings.authentications)
       pool.set_user_agent(\opts["agent"])
       if \opts["l"] then
          pool.set_log_http(&yes)
