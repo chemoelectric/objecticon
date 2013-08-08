@@ -600,48 +600,19 @@ operator [] subsc(underef x -> dx,y)
       }
 
       record: {
+         word i;
+         CheckField(y);
+         i = lookup_record_field(RecordBlk(dx).constructor, &y, 0);
+         if (i < 0)
+             fail;
+
+         EVValD(&dx, E_Rref);
+         EVVal(i + 1, E_Rsub);
+
          /*
-          * x is a record.  Convert y to an integer and be sure that it
-          *  it is in range as a field number.
+          * Found the field, return a pointer to it.
           */
-         if (cnv:C_integer(y, yi)) {
-            word i;
-            union block *bp; /* doesn't need to be tended */
-
-            bp = BlkLoc(dx);
-            i = cvpos(yi, bp->record.constructor->n_fields);
-            if (i == CvtFail || i > bp->record.constructor->n_fields)
-               fail;
-
-            EVValD(&dx, E_Rref);
-            EVVal(i, E_Rsub);
-
-            /*
-             * Locate the appropriate field and return a pointer to it.
-             */
-            return struct_var(&bp->record.fields[i-1], bp);
-         } else {
-            union block *bp;  /* doesn't need to be tended */
-            struct b_constructor *bp2; /* doesn't need to be tended */
-            word i;
-
-            if (!cnv:string(y, y))
-               runerr(170, y);
-
-            bp = BlkLoc(dx);
-            bp2 = RecordBlk(dx).constructor;
-            i = lookup_record_field_by_name(bp2, &y);
-            if (i < 0)
-               fail;
-
-            EVValD(&dx, E_Rref);
-            EVVal(i+1, E_Rsub);
-
-            /*
-             * Found the field, return a pointer to it.
-             */
-            return struct_var(&bp->record.fields[i], bp);
-         }
+         return struct_var(&RecordBlk(dx).fields[i], &RecordBlk(dx));
        }
 
      ucs: {
