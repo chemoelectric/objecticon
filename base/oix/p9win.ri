@@ -4,6 +4,7 @@
 static int inited;
 static wfp fonts[FONTHASH_SIZE], default_font;
 static struct wcursor *cursors[CURSORHASH_SIZE];
+static struct SharedCursor *null_cursor;
 static Rectangle max_rect;
 static struct Cursor cursor_data[];
 static int use_win;
@@ -2607,10 +2608,10 @@ int definepointer(wbp w, char *name, int x, int y)
     rv = ensure_wcursor(name);
     if (rv->shared_cursor) {
         unlink_sharedcursor(rv->shared_cursor);
-        rv->shared_cursor = new_sharedcursor(0);
+        rv->shared_cursor = link_sharedcursor(null_cursor);
         synch_cursors(rv);
     } else
-        rv->shared_cursor = new_sharedcursor(0);
+        rv->shared_cursor = link_sharedcursor(null_cursor);
     return Succeeded;
 }
 
@@ -2654,7 +2655,7 @@ static void setup_cursor(char *name, struct Cursor *c)
         memcpy(c2, c, sizeof(struct Cursor));
         rv->shared_cursor = new_sharedcursor(c2);
     } else
-        rv->shared_cursor = new_sharedcursor(0);
+        rv->shared_cursor = link_sharedcursor(null_cursor);
     rv->next = cursors[i];
     cursors[i] = rv;
 }
@@ -2669,6 +2670,8 @@ static void setup_cursor(char *name, struct Cursor *c)
 
 static void setup_cursors()
 {
+    null_cursor = new_sharedcursor(0);
+
     /* Plan9 ones */
     LoadCursor("p9cursors/bullseye", "bullseye");
     LoadCursor("p9cursors/crosscursor", "crosscursor");
