@@ -1094,10 +1094,10 @@ $endif
 
          # If we have a drag holder, see if it can drop here.
          if o := (\self.curr_drag_holder).can_drop(self.curr_drag, e) then {
-            change_pointer("hand2")
+            change_pointer("dnd positive")
             self.curr_drop := Drag(self.curr_drag_holder, o, e, curr_drag.button)
          } else {
-            change_pointer("exchange")
+            change_pointer("dnd negative")
             self.curr_drop := &null
          }
       } else if ec === curr_drag.button - 3 then {
@@ -1133,8 +1133,10 @@ $endif
                 # Try to begin a drag.
                 self.curr_drag := self.invoke_can_drag(e) 
                 self.tried_drag := 1
-                if \self.curr_drag then
-                   change_pointer("exchange")
+                if \self.curr_drag then {
+                   self.curr_drag.get_source().define_dnd_pointers(self.curr_drag)
+                   change_pointer("dnd negative")
+                }
              }
       } else
          self.tried_drag := self.drag_gesture_x := self.drag_gesture_y := &null

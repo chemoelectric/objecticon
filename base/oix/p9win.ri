@@ -57,6 +57,11 @@ static Point *convert_points(struct point *points0, int npoints);
 static Image *getmask(int width, int height);
 static void maskimage2(wbp w, Image *mask, int x, int y, int width, int height);
 static int needmask(wcp wc, int overlap);
+static wbp alcwbinding(void);
+static wbp findwbp(wsp ws);
+static wcp clonecontext(wcp src);
+static void freewindow(wsp ws);
+static void freecontext(wcp wc);
 
 static struct imgdataformat imgdataformat_P9ABGR32;
 static struct imgdataformat imgdataformat_P9AG16;
@@ -78,6 +83,12 @@ static struct FontInfo *font_info;
 
 /* List of windows with win non-null */
 static wsp vwstates;
+
+/* List of bindings */
+static wbp wbndngs;
+
+/* List of windows */
+static wsp wstates;
 
 static stringint drawops[] = {
    { 0, 12},
@@ -271,10 +282,22 @@ wbp wopen(char *display)
     wbp w;
     wsp ws;
     wcp wc;
+    char *wsysstr = 0;
 
     if (!inited) {
         init_window_system();
         inited = 1;
+    }
+
+    /* Get this first so we don't have to fail halfway through the setup */
+    if (display)
+        wsysstr = salloc(display);
+    else {
+        wsysstr = getenv("wsys");
+        if (!wsysstr) {
+            LitWhy("wsys environment variable not set");
+            return 0;
+        }
     }
 
     w = alcwbinding();
@@ -291,21 +314,11 @@ wbp wopen(char *display)
     ws->width = ws->height = 1;
     ws->state = HiddenCanvas;
     ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
-    GLink(ws, wstates);
+    GLink4(ws, wstates, wnext, wprevious);
 
     w->window = ws;
     add_gc_global(&ws->listp);
-
-    if (display)
-        ws->wsys = salloc(display);
-    else {
-        ws->wsys = getenv("wsys");
-        if (!ws->wsys) {
-            LitWhy("wsys environment variable not set");
-            freewbinding(w);
-            return 0;
-        }
-    }
+    ws->wsys = wsysstr;
 
     GAlloc(wc, _wcontext);
     wc->clipx = wc->clipy = 0;
@@ -316,7 +329,6 @@ wbp wopen(char *display)
     wc->drawop = stringint_lookup(drawops, "over");
     wc->linestyle = stringint_lookup(linestyles, "endsquare");
     wc->linewidth = 1;
-    GLink(wc, wcntxts);
 
     w->context = wc;
     create_list(64, &ws->listp);
@@ -594,9 +606,54 @@ int copyarea(wbp w1, int x, int y, int w, int h, wbp w2, int x2, int y2)
     return Succeeded;
 }
 
-int cancouple(wbp w, wbp w2)
+/*
+ * allocate a window binding structure
+ */
+static wbp alcwbinding()
 {
-    return Succeeded;
+    wbp w;
+    MemProtect(w = calloc(1, sizeof(struct _wbinding)));
+    GLink(w, wbndngs);
+    return w;
+}
+
+static wbp findwbp(wsp ws)
+{
+    wbp wb;
+    for (wb = wbndngs; wb; wb = wb->next)
+        if (wb->window == ws)
+            return wb;
+    syserr("Couldn't find wbp for wsp");
+    return 0;  /* not reached */
+}
+
+/*
+ * free a window binding.
+ */
+void freewbinding(wbp w)
+{
+    freewindow(w->window);
+    freecontext(w->context);
+    GUnlink(w, wbndngs);
+    free(w);
+}
+
+wbp clonewindow(wbp w)
+{
+    wbp w2;
+    w2 = alcwbinding();
+    w2->window = linkwindow(w->window);
+    w2->context = clonecontext(w->context);
+    return w2;
+}
+
+wbp couplewindows(wbp w1, wbp w2)
+{
+    wbp w3;
+    w3 = alcwbinding();
+    w3->window = linkwindow(w1->window);
+    w3->context = linkcontext(w2->context);
+    return w3;
 }
 
 void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
@@ -1764,25 +1821,22 @@ static void close_pix_win(wsp ws)
     }
 }
 
-void freewindow(wsp ws)
+static void freewindow(wsp ws)
 {
    ws->refcount--;
    if (ws->refcount == 0) {
        if (ws->win)
            close_screen_win(ws);
-       if (ws->pix)
-           close_pix_win(ws);
-       if (ws->windowlabel)
-           free(ws->windowlabel); 
-       if (ws->wsys)
-           free(ws->wsys);
+       close_pix_win(ws);
+       free(ws->windowlabel); 
+       free(ws->wsys);
        del_gc_global(&ws->listp);
-       GUnlink(ws, wstates);
+       GUnlink4(ws, wstates, wnext, wprevious);
        free(ws);
    }
 }
 
-void freecontext(wcp wc)
+static void freecontext(wcp wc)
 {
     wc->refcount--;
     if (wc->refcount == 0) {
@@ -1790,7 +1844,6 @@ void freecontext(wcp wc)
         unlink_sharedcolor(wc->bg);
         if (wc->pattern)
             unlink_sharedimage(wc->pattern);
-        GUnlink(wc, wcntxts);
         free(wc);
     }
 }
@@ -2059,7 +2112,7 @@ char *getwindowlabel(wbp w)
     return w->window->windowlabel;
 }
 
-wcp clonecontext(wcp src)
+static wcp clonecontext(wcp src)
 {
     wcp wc;
     GAlloc(wc, _wcontext);
@@ -2077,7 +2130,6 @@ wcp clonecontext(wcp src)
     wc->linewidth = src->linewidth;
     wc->drawop = src->drawop;
     wc->linestyle = src->linestyle;
-    GLink(wc, wcntxts);
     return wc;
 }
 
@@ -2086,7 +2138,7 @@ static int black_pattern_data[] =  {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x
 static void close_window_system(void)
 {
     wsp ws;
-    for (ws = wstates; ws; ws = ws->next) {
+    for (ws = wstates; ws; ws = ws->wnext) {
        if (ws->win)
            close_screen_win(ws);
     }

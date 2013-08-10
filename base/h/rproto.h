@@ -243,10 +243,11 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
     * portable graphics routines in rwindow.r and rwinrsc.r
     */
 
-   wbp  alcwbinding     (void);
-   wbp  findwbp         (wsp ws);
    wsp  linkwindow      (wsp ws);
    wcp  linkcontext     (wcp wc);
+   wbp  clonewindow     (wbp w);
+   wbp  couplewindows   (wbp w1, wbp w2);
+   void freewbinding(wbp w);
    void drawcurve       (wbp w, struct point *p, int n);
    int  parsefilter     (wbp w, char *s, struct filter *res);
    int  parsefont       (char *s, char *fam, int *sty, float *sz);
@@ -268,14 +269,10 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    int is_png(dptr data);
    int is_jpeg(dptr data);
    int is_gif(dptr data);
-   wcp  clonecontext   (wcp wc);
    int  copyarea        (wbp w, int x, int y, int wd, int h, wbp w2, int x2, int y2);
    void doconfig        (wbp w, int status);
    void erasearea       (wbp w, int x, int y, int width, int height);
    void fillrectangle   (wbp w, int x, int y, int width, int height);
-   void freewbinding    (wbp w);
-   void freecontext     (wcp wc);
-   void freewindow      (wsp ws);
    char *getbg          (wbp w);
    char *getcanvas      (wbp w);
    char *getdisplay     (wbp w);
@@ -293,7 +290,6 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    int  queryrootpointer(wbp w, int *x, int *y);
    int  getdisplaysize  (wbp w, int *width, int *height);
    int  raisewindow     (wbp w);
-   int  cancouple       (wbp w, wbp w2);
    int  setbg           (wbp w, char *s);
    int  setcanvas       (wbp w, char *s);
    int  setdrawop       (wbp w, char *val);
@@ -347,6 +343,8 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    wfp loadfont(wdp wd, char *s);
    char *tofcpatternstr(char *s);
    Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd);
+   wbp alcwbinding(wdp wd);
+   wbp findwbp(wsp ws);
 #endif
 
 #endif                                  /* Graphics */

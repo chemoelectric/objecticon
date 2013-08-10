@@ -9,14 +9,6 @@ static struct palentry *palsetup_palette;	/* current palette */
 
 #if Graphics
 
-/*
- * global variables.
- */
-
-wcp wcntxts = NULL;
-wsp wstates = NULL;
-wbp wbndngs = NULL;
-
 #if HAVE_LIBJPEG
 static int  readjpegdata       (dptr data, struct imgdata *d);
 static int  writejpegfile       (char *filename, struct imgdata *imd);
@@ -40,16 +32,6 @@ static void wgetq(wbp w, dptr res)
 {
     if (!list_get(&w->window->listp, res))
         fatalerr(143, 0);
-}
-
-wbp findwbp(wsp ws)
-{
-    wbp wb;
-    for (wb = wbndngs; wb; wb = wb->next)
-        if (wb->window == ws)
-            return wb;
-    syserr("Couldn't find wbp for wsp");
-    return 0;  /* not reached */
 }
 
 void wgetevent(wbp w, dptr res)
@@ -1767,28 +1749,6 @@ void drawcurve(wbp w, struct point *p, int n)
 
     drawlines(w, thepoints, n2);
     free(thepoints);
-}
-
-/*
- * allocate a window binding structure
- */
-wbp alcwbinding()
-{
-    wbp w;
-    MemProtect(w = calloc(1, sizeof(struct _wbinding)));
-    GLink(w, wbndngs);
-    return w;
-}
-
-/*
- * free a window binding.
- */
-void freewbinding(wbp w)
-{
-    if (w->window) freewindow(w->window);
-    if (w->context) freecontext(w->context);
-    GUnlink(w, wbndngs);
-    free(w);
 }
 
 wsp linkwindow(wsp ws)

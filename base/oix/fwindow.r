@@ -105,9 +105,7 @@ function graphics_Window_clone_impl(self)
    body {
        wbp w2;
        GetSelfW();
-       w2 = alcwbinding();
-       w2->window = linkwindow(self_w->window);
-       w2->context = clonecontext(self_w->context);
+       w2 = clonewindow(self_w);
        return C_integer((word)w2);
    }
 end
@@ -153,16 +151,9 @@ function graphics_Window_couple_impl(self, other)
       GetSelfW();
       {
       WindowStaticParam(other, w2);
-
-      if (cancouple(self_w, w2) == Failed) 
+      wb_new = couplewindows(self_w, w2);
+      if (!wb_new)
           fail;
-
-      /*
-       * make the new binding
-       */
-      wb_new = alcwbinding();
-      wb_new->window = linkwindow(self_w->window);
-      wb_new->context = linkcontext(w2->context);
       }
       return C_integer((word)wb_new);
    }

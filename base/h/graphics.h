@@ -257,6 +257,8 @@ typedef struct _wfont {
 typedef struct _wdisplay {
   char		name[MAXDISPLAYNAME];
   Display *	display;
+  struct _wbinding *wbndngs;          /* List of current window bindings */
+  struct _wstate *vwstates;           /* List of windows with win non-null */
   struct imgdataformat *format;                /* imgdata format */
   struct progstate *program;           /* owning program */
   struct SharedColor *black, *white, *transparent;
@@ -332,7 +334,6 @@ struct wcursor {
  */
 typedef struct _wcontext {
   int		refcount;
-  struct _wcontext *previous, *next;
   int		clipx, clipy, clipw, cliph;
   wfp		font;
   int		dx, dy;
@@ -374,7 +375,6 @@ typedef struct _wcontext {
  */
 typedef struct _wstate {
   int		refcount;		/* reference count */
-  struct _wstate *previous, *next;
   int		inputmask;		/* user input mask */
   int		y, x;		        /* desired upper lefthand corner */
   int           height;                 /* window height, in pixels */
@@ -405,6 +405,7 @@ typedef struct _wstate {
   int           propcount;              /* counter for selection requests*/
 #elif PLAN9
   char		*windowlabel;		/* window label */
+  struct _wstate *wprevious, *wnext;    /* List of states */
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   Image         *win;
   Screen        *screen;

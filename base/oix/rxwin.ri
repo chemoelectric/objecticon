@@ -21,8 +21,6 @@
  */
 wdp wdsplys;
 
-/* List of windows with win non-null */
-static wsp vwstates;
 
 
 struct lineinfo {
@@ -43,7 +41,7 @@ static void handle_keypress(wsp ws, XKeyEvent *event);
 static void handle_crossing(wsp ws, XCrossingEvent *event);
 static void wmap(wbp w);
 static void synch_cursor(wsp ws);
-static void synch_cursors(struct wcursor *c);
+static void synch_cursors(wdp wd, struct wcursor *c);
 static void setup_cursors(wdp wd);
 static void setup_cursor(wdp wd, char *name, int id);
 static struct SharedCursor *new_sharedcursor(wdp wd, Cursor cursor);
@@ -80,6 +78,9 @@ static int make_circle(double cx, double cy, double radius, int max_ntraps, XTra
 static int make_ellipse(double cx, double cy, double rx, double ry, int max_ntraps, XTrapezoid traps[]);
 static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed);
 static void getlineinfo(wcp wc, XPointDouble *p0, XPointDouble *q0, struct lineinfo *res);
+static wcp clonecontext(wcp wc);
+static void freecontext(wcp wc);
+static void freewindow(wsp ws);
 
 static stringint drawops[] = {
    { 0, 12},
@@ -325,16 +326,16 @@ int definepointer(wbp w, char *name, int x, int y)
     if (rv->shared_cursor) {
         unlink_sharedcursor(rv->shared_cursor);
         rv->shared_cursor = new_sharedcursor(wd, nc);
-        synch_cursors(rv);
+        synch_cursors(wd, rv);
     } else
         rv->shared_cursor = new_sharedcursor(wd, nc);
     return Succeeded;
 }
 
-static void synch_cursors(struct wcursor *c)
+static void synch_cursors(wdp wd, struct wcursor *c)
 {
     wsp x;
-    for (x = vwstates; x; x = x->vnext) {
+    for (x = wd->vwstates; x; x = x->vnext) {
         if (x->cursor == c)
             synch_cursor(x);
     }
@@ -352,7 +353,7 @@ int copypointer(wbp w, char *dest, char *src)
         if (dc->shared_cursor) {
             unlink_sharedcursor(dc->shared_cursor);
             dc->shared_cursor = link_sharedcursor(sc->shared_cursor);
-            synch_cursors(dc);
+            synch_cursors(wd, dc);
         } else
             dc->shared_cursor = link_sharedcursor(sc->shared_cursor);
     }
@@ -576,8 +577,8 @@ void pollevent(wbp w)
         XNextEvent(wd->display, &event);
         evwin = event.xexpose.window;  /* go ahead, criticize all you like */
 
-        for (ws = vwstates; ws; ws = ws->vnext) {
-            if (ws->display == wd && ws->win == evwin) 
+        for (ws = wd->vwstates; ws; ws = ws->vnext) {
+            if (ws->win == evwin) 
                 break;
         }
         if (!ws) continue;
@@ -765,7 +766,7 @@ static void close_screen_win(wsp ws)
     XDestroyWindow(wd->display, ws->win);
     XFlush(wd->display);
     ws->win = 0;
-    GUnlink4(ws, vwstates, vnext, vprevious);
+    GUnlink4(ws, wd->vwstates, vnext, vprevious);
     synch_state(ws);
 }
 
@@ -785,7 +786,7 @@ wbp wopen(char *display)
         return 0;
     }
 
-    w = alcwbinding();
+    w = alcwbinding(wd);
 
     GAlloc(ws, _wstate);
     ws->listp = nulldesc;
@@ -798,7 +799,6 @@ wbp wopen(char *display)
     ws->pxft = NULL;
     ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
     ws->display = wd;
-    GLink(ws, wstates);
 
     w->window = ws;
     add_gc_global(&ws->listp);
@@ -814,7 +814,6 @@ wbp wopen(char *display)
     wc->clipw = wc->cliph = -1;
     wc->linewidth = 1;
     wc->linestyle = stringint_lookup(linestyles, "endsquare");
-    GLink(wc, wcntxts);
 
     w->context = wc;
 
@@ -968,7 +967,7 @@ static void wmap(wbp w)
 
     XClearWindow(wd->display, ws->win);
 
-    GLink4(ws, vwstates, vnext, vprevious);
+    GLink4(ws, wd->vwstates, vnext, vprevious);
 
     /* For RootState, need to fill since XClearWindow above fills with a pixmap */
     if (ws->state == RootState) {
@@ -1301,7 +1300,7 @@ int ownselection(wbp w, char *selname)
      */
     if (curr) {
         wsp x;
-        for (x = vwstates; x; x = x->vnext) {
+        for (x = wd->vwstates; x; x = x->vnext) {
             if (x->win == curr) {
                 tended struct descrip tmp;
                 if (selection_debug)
@@ -1422,16 +1421,26 @@ int setdrawop(wbp w, char *val)
     return Succeeded;
 }
 
-/*
- * cancouple() - can we bind w's context to that of w2.
- */
-int cancouple(wbp w, wbp w2)
+wbp clonewindow(wbp w)
 {
-    if (w->window->display != w2->context->display) {
+    wbp w2;
+    w2 = alcwbinding(w->window->display);
+    w2->window = linkwindow(w->window);
+    w2->context = clonecontext(w->context);
+    return w2;
+}
+
+wbp couplewindows(wbp w1, wbp w2)
+{
+    wbp w3;
+    if (w1->window->display != w2->context->display) {
         LitWhy("Can't couple between different displays");
-        return Failed;
+        return 0;
     }
-    return Succeeded;
+    w3 = alcwbinding(w1->window->display);
+    w3->window = linkwindow(w1->window);
+    w3->context = linkcontext(w2->context);
+    return w3;
 }
 
 static void clip(wbp w)
@@ -3265,6 +3274,39 @@ char *atom_names[NUMATOMS] = {
 };
 
 /*
+ * allocate a window binding structure
+ */
+wbp alcwbinding(wdp wd)
+{
+    wbp w;
+    MemProtect(w = calloc(1, sizeof(struct _wbinding)));
+    GLink(w, wd->wbndngs);
+    return w;
+}
+
+/*
+ * free a window binding.
+ */
+void freewbinding(wbp w)
+{
+    wdp wd = w->window->display;
+    freewindow(w->window);
+    freecontext(w->context);
+    GUnlink(w, wd->wbndngs);
+    free(w);
+}
+
+wbp findwbp(wsp ws)
+{
+    wbp wb;
+    for (wb = ws->display->wbndngs; wb; wb = wb->next)
+        if (wb->window == ws)
+            return wb;
+    syserr("Couldn't find wbp for wsp");
+    return 0;  /* not reached */
+}
+
+/*
  * allocate a display on machine s
  */
 static wdp alcdisplay(char *s)
@@ -3506,7 +3548,7 @@ static wfp newfont(wdp wd, char *s)
 /*
  * allocate a context, cloning attributes from an existing context
  */
-wcp clonecontext(wcp wc)
+static wcp clonecontext(wcp wc)
 {
     wcp rv;
     GAlloc(rv, _wcontext);
@@ -3525,14 +3567,13 @@ wcp clonecontext(wcp wc)
     rv->linestyle = wc->linestyle;
     rv->linewidth = wc->linewidth;
     rv->drawop = wc->drawop;
-    GLink(rv, wcntxts);
     return rv;
 }
 
 /*
  * free a window state
  */
-void freewindow(wsp ws)
+static void freewindow(wsp ws)
 {
     ws->refcount--;
     if(ws->refcount == 0) {
@@ -3540,16 +3581,12 @@ void freewindow(wsp ws)
             close_screen_win(ws);
         if (ws->pxft)
             XftDrawDestroy(ws->pxft);
-        if (ws->pix)
-            XFreePixmap(ws->display->display, ws->pix);
-        if (ws->ppic)
-            XRenderFreePicture(ws->display->display, ws->ppic);
+        XFreePixmap(ws->display->display, ws->pix);
+        XRenderFreePicture(ws->display->display, ws->ppic);
         if (ws->icondata)
             free(ws->icondata);
-        if (ws->windowlabel)
-           free(ws->windowlabel); 
+        free(ws->windowlabel); 
         del_gc_global(&ws->listp);
-        GUnlink(ws, wstates);
         free(ws);
     }
 }
@@ -3557,7 +3594,7 @@ void freewindow(wsp ws)
 /*
  * free a window context
  */
-void freecontext(wcp wc)
+static void freecontext(wcp wc)
 {
     wc->refcount--;
     if(wc->refcount == 0) {
@@ -3565,7 +3602,6 @@ void freecontext(wcp wc)
         unlink_sharedcolor(wc->bg);
         if (wc->pattern)
             unlink_sharedpicture(wc->pattern);
-        GUnlink(wc, wcntxts);
         free(wc);
     }
 }
