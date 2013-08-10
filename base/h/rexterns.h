@@ -103,9 +103,6 @@ extern dptr xarg1, xarg2, xarg3;   /* Operator args */
 extern char c1list[], c2list[], c3list[], c4list[];
 #if Graphics
    
-extern int wconfig, inattr;
-extern clock_t starttime;		/* start time in milliseconds */
-
 #if XWindows
       extern struct _wdisplay * wdsplys;
 #endif				/* XWindows */
