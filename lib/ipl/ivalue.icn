@@ -46,8 +46,8 @@ procedure ivalue(s)
    return {
       numeric(s) | {				# integer or real
       s ? {
-         2(="\"", Format.escape(tab(-1)), ="\"") |		# string literal
-         2(="'", Format.cset_escape(tab(-1)), ="'")	# cset literal
+         2(="\"", Format.unescape(tab(-1)), ="\"") |		# string literal
+         2(="'", Format.cset_unescape(tab(-1)), ="'")	# cset literal
          }
       } |
       ((*s = 0) & &null) |			# empty string = &null

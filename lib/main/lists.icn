@@ -1,0 +1,400 @@
+#
+# $Id: sets.icn 3945 2013-02-22 20:36:44Z r.parlett $
+#
+
+package datastruct
+
+import lang, util
+
+#
+# This is a common superclass for a list-like data structure.
+#
+abstract class List(ObjectOutput, ObjectHash, ObjectEquals)
+   #
+   # Insert a new element `x` at position `i`
+   #
+   public abstract insert(i, x)
+
+   #
+   # Delete element at position `i` from the list.
+   #
+   public abstract delete(i)
+
+   #
+   # Return the member at position `i`.
+   #
+   public abstract at(i)
+
+   #
+   # Remove and return an element from the left end of list.
+   #
+   public abstract get()
+
+   #
+   # Remove and return an element from the right end of the list.
+   #
+   public abstract pull()
+
+   #
+   # Push an element onto the left end of the list.
+   #
+   public push(x)
+      return insert(1, x)
+   end
+
+   #
+   # Push an element onto the right end of the list.
+   #
+   public put(x)
+      return insert(0, x)
+   end
+
+   #
+   # Generate the members.
+   #
+   public abstract gen()
+
+   #
+   # Generate the members in reverse order.
+   #
+   public abstract back()
+
+   #
+   # Return the size of the list.
+   #
+   public abstract size()
+
+   #
+   # Clear the list of all elements.
+   #
+   public abstract clear()
+
+   #
+   # Generate the indices i such that at(i) === x
+   #
+   public keyof(x)
+      local i
+      i := 1
+      while i <= size() do {
+         if x === at(i) then
+            suspend i
+         i +:= 1
+      }
+   end
+
+   #
+   # Custom equals mirrors the {equals()} behaviour for builtin lists.
+   #
+   private object_equals(other, seen)
+      local i
+      other.size() = size() | fail
+      every i := 1 to size() do
+         equals(at(i), other.at(i), seen) | fail
+      return
+   end
+
+   #
+   # Custom hash mirrors the {hash()} behaviour for builtin lists.
+   #
+   private object_hash(depth)
+      local n, i
+      n := size()
+      if depth > 1 then
+         every i := hash(gen() \ 10, depth - 1) do
+            n := 37 * iand(n, 16rffffff)  + i
+      return n
+   end
+
+   #
+   # Output object
+   #
+   private object_output(oo)
+      local e, sep
+      if oo.simple{gen()} then {
+         oo.object_start(self)
+         every e := gen() do {
+            if \sep then
+               oo.writes(",")
+            oo.traverse(e)
+            sep := 1
+         }
+         oo.object_end(self)
+      } else {
+         oo.nl().
+            object_start(self).
+            iplus()
+         every e := gen() do {
+            if \sep then
+               oo.writes(",")
+            oo.nl().
+               traverse(e)
+            sep := 1
+         }
+         oo.iminus().
+            nl().
+            object_end(self)
+      }
+   end
+end
+
+#
+# A `List` that is just a wrapper around a builtin list
+#
+class BuiltinList(List)
+   private l
+
+   public insert(i, x)
+      default.insert(l, i, x) | fail
+      return self
+   end
+
+   public delete(i)
+      default.delete(l, i) | fail
+      return self
+   end
+
+   public at(i)
+      return l[i]
+   end
+
+   public get()
+      return default.get(l)
+   end
+
+   public pull()
+      return default.pull(l)
+   end
+
+   public push(x)
+      default.push(l, x)
+      return self
+   end
+
+   public put(x)
+      default.put(l, x)
+      return self
+   end
+
+   public keyof(x)
+      suspend default.keyof(l, x)
+   end
+
+   public gen()
+      suspend !l
+   end
+
+   public back()
+      suspend default.back(l)
+   end
+
+   public size()
+      return *l
+   end
+
+   public clear()
+      default.clear(l)
+      return self
+   end
+
+   public new(l)
+      /l := []
+      self.l := l
+      return
+   end
+end
+
+#
+# A node in a `LinkedList`.
+#
+class LinkedListNode()
+   public
+      nxt, val
+   public new(nxt, val)
+      self.nxt := nxt
+      self.val := val
+      return
+   end
+end
+
+#
+# A `List` implementation based on a simple linked list.  Note some of
+# the operations which suspend values may behave differently from the
+# builtin list if the list is concurrently modified.
+#
+class LinkedList(List)
+   private nhead
+
+   public insert(i, x)
+      local n, t
+      if i = 0 then {
+         if /nhead then
+            nhead := LinkedListNode(, x)
+         else {
+            n := nhead
+            while \n.nxt do
+               n := n.nxt
+            n.nxt := LinkedListNode(, x)
+         }
+      } else {
+         if i < 0 then
+            i := cvpos(i, size()) | fail
+         if i = 1 then
+            nhead := LinkedListNode(nhead, x)
+         else {
+            n := nhead
+            while \n & i > 2 do {
+               n := n.nxt
+               i -:= 1
+            }
+            t := LinkedListNode((\n).nxt, x) | fail
+            n.nxt := t
+         }
+      }
+      return self
+   end
+
+   public delete(i)
+      local n
+      if i <= 0 then
+         i := cvpos(i, size()) | fail
+      if i = 1 then
+         nhead := (\nhead).nxt | fail
+      else {
+         n := nhead
+         while \n & i > 2 do {
+            n := n.nxt
+            i -:= 1
+         }
+         n.nxt := (\ (\n).nxt).nxt | fail
+      }
+      return self
+   end
+
+   public at(i)
+      local n
+      if i <= 0 then
+         i := cvpos(i, size()) | fail
+      n := nhead
+      while \n & i > 1 do {
+         n := n.nxt
+         i -:= 1
+      }
+      return (\n).val
+   end
+
+   public get()
+      local v
+      \nhead | fail
+      v := nhead.val
+      nhead := nhead.nxt
+      return v
+   end
+
+   public pull()
+      local v, n
+      \nhead | fail
+      if /nhead.nxt then {
+         v := nhead.val
+         nhead := &null
+      } else {
+         n := nhead
+         while \n.nxt.nxt do
+            n := n.nxt
+         v := n.nxt.val
+         n.nxt := &null
+      }
+      return v
+   end
+
+   public gen()
+      local n
+      n := nhead
+      while \n do {
+         suspend n.val
+         n := n.nxt
+      }
+   end
+
+   public keyof(x)
+      local i, n
+      i := 1
+      n := nhead
+      while \n do {
+         if n.val === x then
+            suspend i
+         n := n.nxt
+         i +:= 1
+      }
+   end
+
+   public back()
+      local l
+      l := []
+      every default.put(l, gen())
+      suspend default.back(l)
+   end
+
+   public size()
+      local i, n
+      i := 0
+      n := nhead
+      while \n do {
+         i +:= 1
+         n := n.nxt
+      }
+      return i
+   end
+
+   public clear()
+      nhead := &null
+      return self
+   end
+
+   #
+   # Return the head value of the list, or fail if the list is empty.
+   #
+   public head()
+      return (\nhead).val
+   end
+
+   #
+   # Return the tail of the list, or fail if the list is empty.
+   #
+   public tail()
+      return from_node((\nhead).nxt)
+   end
+
+   #
+   # Make the last element of this list point to the head of the other list.
+   #
+   public join(other)
+      local n
+      if /nhead then
+         nhead := other.nhead
+      else {
+         n := nhead
+         while \n.nxt do
+            n := n.nxt
+         n.nxt := other.nhead
+      }
+      return self
+   end
+
+   #
+   # Create an instance given a `LinkedListNode` as the list's head node.
+   #
+   public static from_node(n)
+      local i
+      i := Class.create_instance()
+      i.nhead := n
+      return i
+   end
+
+   #
+   # Create an instance and add each of the given entries.
+   #
+   public new(entries[])
+      every nhead := LinkedListNode(nhead, default.back(entries))
+      return
+   end
+end

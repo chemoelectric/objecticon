@@ -436,7 +436,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # @param n the position
    #
    public move_lines(l, n)
-      local t, s, e, n1, i
+      local t, s, e, n1, i, tc
 
       # Save the moving lines into a list
       t := []
@@ -455,10 +455,13 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
             insert(s, n1 + i - 1)
       }
 
-      # Delete, re-insert and adjust selections.
+      # Delete, re-insert and adjust selections.  Save and restore cursor
+      # since delete_lines constrains it in the temporarily shortened list.
+      tc := self.cursor
       delete_lines(l)
       insert_lines(t, n1)
       self.selections ++:= s
+      set_cursor(tc)
       return self
    end
 

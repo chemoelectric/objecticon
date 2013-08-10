@@ -1,7 +1,9 @@
 #define FONTHASH_SIZE 64
+#define CURSORHASH_SIZE 128
 
 static int inited;
 static wfp fonts[FONTHASH_SIZE], default_font;
+static struct wcursor *cursors[CURSORHASH_SIZE];
 static Rectangle max_rect;
 static struct Cursor cursor_data[];
 static int use_win;
@@ -11,12 +13,14 @@ static int read_screeninfo(wsp ws, int *mx, int *my, int *sx, int *sy, int *sw, 
 static int open_winfile(wsp ws, char *s, int mode);
 static struct FontInfo *match_font(char *s);
 static void load_font_info(void);
+static void setup_cursors(void);
 static wfp alcfont(wbp w, char **s);
 static void mouse_loop(wsp ws);
 static Rune *utf8_to_runes(char *str, int nchars);
 static void cons_loop(wsp ws);
 static wfp load_font(char *s);
 static void synch_cursor(wsp ws);
+static void synch_cursors(struct wcursor *c);
 static vlong get_time(void);
 static ulong get_timestamp(void);
 static int open_screen_win(wsp ws);
@@ -104,88 +108,6 @@ static stringint canvastypes[] = {
     {"iconic",      IconicCanvas},
     {"normal",      NormalCanvas},
     {"popup",       PopupCanvas},
-};
-
-static stringint cursors[] = {
-    { 0, 78},
-    {"X cursor",          25},
-    {"arrow",             16},
-    {"based arrow down",  -1},
-    {"based arrow up",    -1},
-    {"boat",              -1},
-    {"bogosity",          -1},
-    {"bottom left corner", 12},
-    {"bottom right corner",10},
-    {"bottom side",        11},
-    {"bottom tee",         17},
-    {"box spiral",        -1},
-    {"center ptr",         18},
-    {"circle",             19},
-    {"clock",             -1},
-    {"coffee mug",        -1},
-    {"cross",             20},
-    {"cross reverse",     21},
-    {"crosshair",         22},
-    {"diamond cross",     23},
-    {"dot",               24},
-    {"dotbox",            -1},
-    {"double arrow",      -1},
-    {"draft large",       -1},
-    {"draft small",       -1},
-    {"draped box",        -1},
-    {"exchange",          29},
-    {"fleur",             15},
-    {"gobbler",           -1},
-    {"gumby",             -1},
-    {"hand1",             28},
-    {"hand2",             28},
-    {"heart",             -1},
-    {"icon",              -1},
-    {"iron cross",        -1},
-    {"left ptr",          -1},
-    {"left side",          13},
-    {"left tee",          -1},
-    {"leftbutton",        -1},
-    {"ll angle",          -1},
-    {"lr angle",          -1},
-    {"man",               -1},
-    {"middlebutton",      -1},
-    {"mouse",             -1},
-    {"pencil",            -1},
-    {"pirate",            -1},
-    {"plus",              -1},
-    {"question arrow",     5},
-    {"right ptr",         -1},
-    {"right side",         9},
-    {"right tee",         -1},
-    {"rightbutton",       -1},
-    {"rtl logo",          -1},
-    {"sailboat",          -1},
-    {"sb down arrow",     -1},
-    {"sb h double arrow", 26},
-    {"sb left arrow",     -1},
-    {"sb right arrow",    -1},
-    {"sb up arrow",       -1},
-    {"sb v double arrow", 27},
-    {"shuttle",           -1},
-    {"sizing",            -1},
-    {"spider",            -1},
-    {"spraycan",          -1},
-    {"star",              -1},
-    {"target",             0},
-    {"tcross",            -1},
-    {"top left arrow",    -1},
-    {"top left corner",    6},
-    {"top right corner",   8},
-    {"top side",           7},
-    {"top tee",           -1},
-    {"trek",              -1},
-    {"ul angle",          -1},
-    {"umbrella",          -1},
-    {"ur angle",          -1},
-    {"watch",             30},
-    {"xterm",             14},
-    {"num glyphs",        -1},
 };
 
 static struct SharedColor *black, *white;
@@ -288,6 +210,57 @@ static void unlink_sharedimage(struct SharedImage *x)
     }
 }
 
+static struct SharedCursor *new_sharedcursor(struct Cursor *cursor)
+{
+    struct SharedCursor *res;
+    GAlloc(res, SharedCursor);
+    res->cursor = cursor;
+    return res;
+}
+
+static struct SharedCursor *link_sharedcursor(struct SharedCursor *x)
+{
+    ++x->refcount;
+    return x;
+}
+
+static void unlink_sharedcursor(struct SharedCursor *x)
+{
+    --x->refcount;
+    if (x->refcount == 0) {
+        free(x->cursor);
+        free(x);
+    }
+}
+
+static struct wcursor *lookup_wcursor(char *name)
+{
+    struct wcursor *rv;
+    int i;
+    i = hasher(hashcstr(name), cursors);
+    for(rv = cursors[i]; rv; rv = rv->next) {
+        if (!strcmp(name, rv->name))
+            return rv;
+    }
+    return 0;
+}
+
+static struct wcursor *ensure_wcursor(char *name)
+{
+    struct wcursor *rv;
+    int i;
+    i = hasher(hashcstr(name), cursors);
+    for(rv = cursors[i]; rv; rv = rv->next) {
+        if (!strcmp(name, rv->name))
+            return rv;
+    }
+    MemProtect(rv = calloc(1, sizeof(struct wcursor)));
+    rv->name = salloc(name);
+    rv->next = cursors[i];
+    cursors[i] = rv;
+    return rv;
+}
+
 static void draw_error(Display *d, char *s)
 {
     fprintf(stderr, "Draw error on display %p: %s\n", d, s);
@@ -311,7 +284,7 @@ wbp wopen(char *display)
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->screeninfo_fd = ws->cursor_fd = ws->label_fd = ws->mouse_pid = ws->cons_pid =
         ws->wininfo_fd = ws->wsys_fd = ws->wctl_fd = ws->winid = ws->transientfor_winid = -1;
-    ws->cursor = stringint_lookup(cursors, "left ptr");
+    ws->cursor = lookup_wcursor("left ptr");
     ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
@@ -1915,19 +1888,22 @@ double getlinewidth(wbp w)
 
 static void synch_cursor(wsp ws)
 {
-    if (ws->cursor->i == -1)
-        write(ws->cursor_fd, "", 0);
+    struct Cursor *c;
+    c = ws->cursor->shared_cursor->cursor;
+    if (c)
+        write(ws->cursor_fd, c, sizeof(struct Cursor));
     else
-        write(ws->cursor_fd, &cursor_data[ws->cursor->i], sizeof(struct Cursor));
+        write(ws->cursor_fd, "", 0);
 }
 
 int setpointer(wbp w, char *val)
 {
+    struct wcursor *c;
     wsp ws = w->window;
-    stringint *e = stringint_lookup(cursors, val);
-    if (!e)
+    c = lookup_wcursor(val);
+    if (!c)
         return Failed;
-    ws->cursor = e;
+    ws->cursor = c;
     if (ws->win)
         synch_cursor(ws);
     return Succeeded;
@@ -2010,7 +1986,7 @@ int querypointer(wbp w, int *x, int *y)
 
 char *getpointer(wbp w)
 {
-    return w->window->cursor->s;
+    return w->window->cursor->name;
 }
 
 char *getdrawop(wbp w)
@@ -2125,6 +2101,7 @@ static void init_window_system(void)
     env_int("OIWINNAMEG", &win_nameg, 0, 1);
 
     load_font_info();
+    setup_cursors();
 
     if (win_nameg) {
         /* Keep mounts private */
@@ -2572,37 +2549,159 @@ static void get_P9AG16(struct imgdata *imd, int x, int y, int *r, int *g, int *b
 static struct imgdataformat imgdataformat_P9ABGR32 =   {set_P9ABGR32,get_P9ABGR32,0,0,getlength_32,8,24,0,"P9ABGR32"};
 static struct imgdataformat imgdataformat_P9AG16 =   {set_P9AG16,get_P9AG16,0,0,getlength_16,8,8,0,"P9AG16"};
 
-static struct Cursor cursor_data[] = {
-    #include "p9cursors/bullseye"          /*  0 */
-    #include "p9cursors/crosscursor"       /*  1 */
-    #include "p9cursors/boxcursor"         /*  2 */
-    #include "p9cursors/sightcursor"       /*  3 */
-    #include "p9cursors/whitearrow"        /*  4 */
-    #include "p9cursors/query"             /*  5 */
-    #include "p9cursors/top_left_corner"   /*  6 */
-    #include "p9cursors/top_side"          /*  7 */
-    #include "p9cursors/top_right_corner"  /*  8 */
-    #include "p9cursors/right_side"        /*  9 */
-    #include "p9cursors/bottom_right_corner"/* 10 */
-    #include "p9cursors/bottom_side"       /* 11 */
-    #include "p9cursors/bottom_left_corner"/* 12 */
-    #include "p9cursors/left_side"         /* 13 */
-    #include "p9cursors/xterm"             /* 14 */
-    #include "p9cursors/fleur"             /* 15 */
-    #include "p9cursors/arrow"             /* 16 */
-    #include "p9cursors/bottom_tee"        /* 17 */
-    #include "p9cursors/center_ptr"        /* 18 */
-    #include "p9cursors/circle"            /* 19 */
-    #include "p9cursors/cross"             /* 20 */
-    #include "p9cursors/cross_reverse"     /* 21 */
-    #include "p9cursors/crosshair"         /* 22 */
-    #include "p9cursors/diamond_cross"     /* 23 */
-    #include "p9cursors/dot"               /* 24 */
-    #include "p9cursors/x_cursor"          /* 25 */
-    #include "p9cursors/sb_h_double_arrow" /* 26 */
-    #include "p9cursors/sb_v_double_arrow" /* 27 */
-    #include "p9cursors/hand2"             /* 28 */
-    #include "p9cursors/exchange"          /* 29 */
-    #include "p9cursors/watch"             /* 30 */
-};
+int definepointer(wbp w, char *name, int x, int y)
+{
+    struct wcursor *rv;
+    rv = ensure_wcursor(name);
+    if (rv->shared_cursor) {
+        unlink_sharedcursor(rv->shared_cursor);
+        rv->shared_cursor = new_sharedcursor(0);
+        synch_cursors(rv);
+    } else
+        rv->shared_cursor = new_sharedcursor(0);
+    return Succeeded;
+}
 
+int copypointer(wbp w, char *dest, char *src)
+{
+    struct wcursor *sc, *dc;
+    sc = lookup_wcursor(src);
+    if (!sc)
+        return Failed;
+    dc = ensure_wcursor(dest);
+    if (sc != dc) {
+        if (dc->shared_cursor) {
+            unlink_sharedcursor(dc->shared_cursor);
+            dc->shared_cursor = link_sharedcursor(sc->shared_cursor);
+            synch_cursors(dc);
+        } else
+            dc->shared_cursor = link_sharedcursor(sc->shared_cursor);
+    }
+    return Succeeded;
+}
+
+static void synch_cursors(struct wcursor *c)
+{
+    wsp x;
+    for (x = vwstates; x; x = x->vnext) {
+        if (x->cursor == c)
+            synch_cursor(x);
+    }
+}
+
+static void setup_cursor(char *name, struct Cursor *c)
+{
+    int i;
+    struct wcursor *rv;
+    struct Cursor *c2;
+    i = hasher(hashcstr(name), cursors);
+    MemProtect(rv = calloc(1, sizeof(struct wcursor)));
+    rv->name = name;
+    if (c) {
+        MemProtect(c2 = malloc(sizeof(struct Cursor)));
+        memcpy(c2, c, sizeof(struct Cursor));
+        rv->shared_cursor = new_sharedcursor(c2);
+    } else
+        rv->shared_cursor = new_sharedcursor(0);
+    rv->next = cursors[i];
+    cursors[i] = rv;
+}
+
+#begdef LoadCursor(f, s)
+    {
+        struct Cursor t =
+    #include f
+            setup_cursor(s, &t);
+    }
+#enddef
+
+static void setup_cursors()
+{
+    /* Plan9 ones */
+    LoadCursor("p9cursors/bullseye", "bullseye");
+    LoadCursor("p9cursors/crosscursor", "crosscursor");
+    LoadCursor("p9cursors/boxcursor", "boxcursor");
+    LoadCursor("p9cursors/sightcursor", "sightcursor");
+    LoadCursor("p9cursors/whitearrow", "whitearrow");
+    LoadCursor("p9cursors/query", "query");
+
+    /* X11 ones */
+    LoadCursor("p9cursors/x_cursor", "X cursor");
+    LoadCursor("p9cursors/arrow", "arrow");
+    setup_cursor("based arrow down", 0);
+    setup_cursor("based arrow up", 0);
+    setup_cursor("boat", 0);
+    setup_cursor("bogosity", 0);
+    LoadCursor("p9cursors/bottom_left_corner", "bottom left corner");
+    LoadCursor("p9cursors/bottom_right_corner", "bottom right corner");
+    LoadCursor("p9cursors/bottom_side", "bottom side");
+    LoadCursor("p9cursors/bottom_tee", "bottom tee");
+    setup_cursor("box spiral", 0);
+    LoadCursor("p9cursors/center_ptr", "center ptr");
+    LoadCursor("p9cursors/circle", "circle");
+    setup_cursor("clock", 0);
+    setup_cursor("coffee mug", 0);
+    LoadCursor("p9cursors/cross", "cross");
+    LoadCursor("p9cursors/cross_reverse", "cross reverse");
+    LoadCursor("p9cursors/crosshair", "crosshair");
+    LoadCursor("p9cursors/diamond_cross", "diamond cross");
+    LoadCursor("p9cursors/dot", "dot");
+    setup_cursor("dotbox", 0);
+    setup_cursor("double arrow", 0);
+    setup_cursor("draft large", 0);
+    setup_cursor("draft small", 0);
+    setup_cursor("draped box", 0);
+    LoadCursor("p9cursors/exchange", "exchange");
+    LoadCursor("p9cursors/fleur", "fleur");
+    setup_cursor("gobbler", 0);
+    setup_cursor("gumby", 0);
+    setup_cursor("hand1", 0);
+    LoadCursor("p9cursors/hand2", "hand2");
+    setup_cursor("heart", 0);
+    setup_cursor("icon", 0);
+    setup_cursor("iron cross", 0);
+    setup_cursor("left ptr", 0);
+    LoadCursor("p9cursors/left_side", "left side");
+    setup_cursor("left tee", 0);
+    setup_cursor("leftbutton", 0);
+    setup_cursor("ll angle", 0);
+    setup_cursor("lr angle", 0);
+    setup_cursor("man", 0);
+    setup_cursor("middlebutton", 0);
+    setup_cursor("mouse", 0);
+    setup_cursor("pencil", 0);
+    setup_cursor("pirate", 0);
+    setup_cursor("plus", 0);
+    setup_cursor("question arrow", 0);
+    setup_cursor("right ptr", 0);
+    LoadCursor("p9cursors/right_side", "right side");
+    setup_cursor("right tee", 0);
+    setup_cursor("rightbutton", 0);
+    setup_cursor("rtl logo", 0);
+    setup_cursor("sailboat", 0);
+    setup_cursor("sb down arrow", 0);
+    LoadCursor("p9cursors/sb_h_double_arrow", "sb h double arrow");
+    setup_cursor("sb left arrow", 0);
+    setup_cursor("sb right arrow", 0);
+    setup_cursor("sb up arrow", 0);
+    LoadCursor("p9cursors/sb_v_double_arrow", "sb v double arrow");
+    setup_cursor("shuttle", 0);
+    setup_cursor("sizing", 0);
+    setup_cursor("spider", 0);
+    setup_cursor("spraycan", 0);
+    setup_cursor("star", 0);
+    setup_cursor("target", 0);
+    setup_cursor("tcross", 0);
+    setup_cursor("top left arrow", 0);
+    LoadCursor("p9cursors/top_left_corner", "top left corner");
+    LoadCursor("p9cursors/top_right_corner", "top right corner");
+    LoadCursor("p9cursors/top_side", "top side");
+    setup_cursor("top tee", 0);
+    setup_cursor("trek", 0);
+    setup_cursor("ul angle", 0);
+    setup_cursor("umbrella", 0);
+    setup_cursor("ur angle", 0);
+    LoadCursor("p9cursors/watch", "watch");
+    LoadCursor("p9cursors/xterm", "xterm");
+
+}

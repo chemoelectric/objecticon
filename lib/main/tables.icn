@@ -209,11 +209,6 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
       while *entries > 0 do
          insert(default.get(entries), default.get(entries))
    end
-
-   public new(def)
-      self.def := def
-      return
-   end
 end
 
 #
@@ -281,7 +276,7 @@ class ClTable(Table)
    # @param entries initial key-value entries.
    #
    public new(def, entries[])
-      cast(self,Table).new(def)
+      self.def := def
       t := table(def)
       init_entries(entries)
       return
@@ -471,7 +466,7 @@ class SortTable(Table)
    # @param entries initial key-value entries.
    #
    public new(def, cmp, entries[])
-      cast(self,Table).new(def)
+      self.def := def
       /cmp := Internal.compare
       self.cmp := cmp
       self.sz := 0
@@ -587,7 +582,7 @@ class EqTable(Table)
    # @param entries initial key-value entries.
    #
    public new(def, entries[])
-      cast(self,Table).new(def)
+      self.def := def
       t := table()
       sz := 0
       init_entries(entries)
@@ -645,13 +640,11 @@ class BuiltinTable(Table)
    #
    # @param t the table to wrap; if omitted then a new table is
    # @     created.
-   # @param entries initial key-value entries.
    #
-   public new(t, entries[])
+   public new(t)
       /t := table()
       self.t := t
-      cast(self,Table).new(t[[]])
-      init_entries(entries)
+      self.def := t[[]]
       return
    end
 end
@@ -798,7 +791,7 @@ class WeakrefTable(Table)
    # @param entries initial key-value entries.
    #
    public new(def, entries[])
-      cast(self,Table).new(def)
+      self.def := def
       self.t := table()
       self.sz := 0
       init_entries(entries)

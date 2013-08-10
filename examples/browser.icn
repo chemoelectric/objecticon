@@ -27,7 +27,8 @@ class Settings()
       visited,
       visited_size,
       pool_size,
-      destination_dir
+      destination_dir,
+      authentications
 
    public new()
       home_url := URL(u"config:")
@@ -262,7 +263,10 @@ class BrowserDialog(Dialog)
        cn := member(t, "cache")[1] &
        vn := member(t, "vsize")[1] &
        pn := member(t, "psize")[1]) | return error("Bad request")
-
+      settings.authentications := if member(t, "authentications") then
+         pool.authentications
+      else
+         &null
       settings.home_url := URL(ucs(home))
       settings.cache_size_mb := integer(cn)
       settings.visited_size := integer(vn)
@@ -282,7 +286,10 @@ class BrowserDialog(Dialog)
                    <tr><td>Cache size (MB):</td><td><input type=number min=1 step=1 name=cache value=" || settings.cache_size_mb || " size=50 /></td></tr>_
                    <tr><td>Visited list size:</td><td><input type=number min=10 step=1 name=vsize value=" || settings.visited_size || " size=50 /></td></tr>_
                    <tr><td>Worker pool size:</td><td><input type=number min=5 step=1 name=psize value=" || settings.pool_size || " size=50 /></td></tr>_
+                   <tr><td colspan=2><label><input type=checkbox name=authentications value=yes " || 
+                                       (if /settings.authentications then "" else "checked") || "/> Save authentications</label></td></tr>_
                  </table>_
+                 <p>_
                  <input type=submit />_
               </form></fieldset></html>"
    end
@@ -302,6 +309,12 @@ class BrowserDialog(Dialog)
       return "<html>Complete</html>"
    end
 
+   private do_image(req)
+      local n
+      (n := member(req.url.extract_cgi_parameters(), "name")[1]) | return error("Bad request")
+      return ImageCache.get_named_image(n) | return error("Unknown image")
+   end
+
    private config_handler(worker)
       local req
       req := worker.req
@@ -316,6 +329,7 @@ class BrowserDialog(Dialog)
          "del_cookies": del_cookies(req)
          "del_cookie": del_cookie(req)
          "submit": edit_settings(req)
+         "image": do_image(req)
          default: error("Bad config request")
       }
    end
@@ -338,6 +352,7 @@ class BrowserDialog(Dialog)
          set_cache(Cache(settings.cache_size_mb*1024*1024)).
          set_authentication_function(get_authentication).
          add_scheme_handler("config", config_handler)
+      pool.set_authentications(\settings.authentications)
       pool.set_user_agent(\opts["agent"])
       if \opts["l"] then
          pool.set_log_http(&yes)
@@ -399,31 +414,26 @@ class BrowserDialog(Dialog)
    end
 end
 
-class LogDialog(Dialog)
-   public log
-
-   public on_close_button(ev)
-      dispose()
-   end
+class MessageDialog(Dialog)
+   public const text
 
    public new()
       local close_button
       cast(self,Dialog).new()
-      set_label("Item log")
       set_resize(&yes)
       set_remember_size(&yes)
-      log := EditableTextList().
+      text := EditableTextList().
          set_size(500, 269).
          set_constraint("eol", &yes).
          set_contents([""]).
          set_is_editable(&no)
-      add(log)
+      add(text)
       close_button := TextButton().
-         connect(on_close_button, Event.ACTION).
+         connect(dispose, Event.ACTION).
          set_toggles(&no).
          set_paint(TextPaint("Close"))
       add(close_button)
-      connect(on_close_button, Event.WINDOW_CLOSE_BUTTON)
+      connect(dispose, Event.WINDOW_CLOSE_BUTTON)
       set_layout(GridLayout().set_extra("cells"))
       return
    end
@@ -434,7 +444,7 @@ class Download()
       parent, req, resp, status, size, full_path, dialog, dest
 
    private log(s)
-      dialog.log.log([&clock || u": " || Text.liberal_ucs(s)], 500)
+      dialog.text.log([&clock || u": " || Text.liberal_ucs(s)], 500)
    end
 
    private on_status(ev, src, type)
@@ -454,7 +464,8 @@ class Download()
          log("Failed to download: " || r.err)
          status := "Failed"
       } else {
-         fname := resp.fname
+         # Ensure illegal path chars (/ and NULL) are removed from fname
+         fname := map(resp.fname, "/\0", "--")
          if *fname = 0 then
             fname := "browser.out"
          full_path := if \dest then
@@ -514,7 +525,7 @@ class Download()
       self.dest := dest
       size := ""
       self.req := Req(self, url, referer, got_data, Worker.DOWNLOAD,, on_status)
-      self.dialog := LogDialog()
+      self.dialog := MessageDialog().set_label("Item log")
       log("Log for " || url.str())
       return
    end
@@ -580,6 +591,11 @@ class DownloadTab(TabItem)
    private on_copy_result(d)
       parent_dialog.own_selection(Selection.CLIPBOARD, 
                                   StaticTextSelectionOwner(d.full_path))
+   end
+
+   private on_copy_escaped_result(d)
+      parent_dialog.own_selection(Selection.CLIPBOARD, 
+                                  StaticTextSelectionOwner(Format.shell_escape(d.full_path)))
    end
 
    private on_delete(d)
@@ -648,6 +664,9 @@ class DownloadTab(TabItem)
             menu.add(TextMenuItem().
                set_label("Copy result").
                connect(create on_copy_result(d), Event.ACTION))
+            menu.add(TextMenuItem().
+               set_label("Copy escaped result").
+               connect(create on_copy_escaped_result(d), Event.ACTION))
          }
          if l[1][-1].status == "Failed" then
             menu.add(TextMenuItem().
@@ -929,6 +948,13 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.downloads.download(url, referer)
    end
 
+   private show_img_error(err)
+      local d
+      d := MessageDialog().set_label("Image error")
+      d.text.set_contents_str(err)
+      d.show_modal()
+   end
+
    private download_to_file(url, referer)
       local d, f, d1, f1, full_path
       d := parent_dialog.file_dialog
@@ -1019,18 +1045,23 @@ class BrowserTab(TabItem, BrowserUI)
       return m
    end
 
-   public create_image_menu(url, img_name, img_data, link_url)
-      local m
+   public create_image_menu(img)
+      local m, url
+      url := if img.img_url.scheme == u"cache" then browser.page_url else img.img_url
       m := Menu()
       m.add(TextMenuItem().
             set_label("Copy image").
             connect(create copy_link(url), Event.ACTION))
-      if \link_url then
-         populate_link_menu(link_url, m)
-      if \img_data then
+      if \img.wrote then
+         populate_link_menu(img.wrote, m)
+      if \img.img_data then
          m.add(TextMenuItem().
                set_label("Save image...").
-               connect(create do_save(img_name, img_data), Event.ACTION))
+               connect(create do_save(img.img_name, img.img_data), Event.ACTION))
+      if \img.err then
+         m.add(TextMenuItem().
+               set_label("Show error...").
+               connect(create show_img_error(img.err), Event.ACTION))
       return m
    end
 
@@ -1094,7 +1125,7 @@ class BrowserTab(TabItem, BrowserUI)
    private do_save(name, data)
       local s, d
       d := parent_dialog.file_dialog
-      d.set_file(\name)
+      d.set_file(map(\name, "/\0", "--"))
       d.set_directory(parent_dialog.last_file_dir).set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
       parent_dialog.last_file_dir := d.get_directory()
       if s := d.get_result() then {
@@ -1203,7 +1234,7 @@ class BrowserTab(TabItem, BrowserUI)
       set_label_border(EmptyBorder().set_x_align(Align.L))
       set_title()
       setup()
-      browser.set_ui(self).set_worker_pool(pool)
+      browser.set_ui(self).set_worker_pool(pool).set_outermost_border(EmptyBorder().set_insets(2, 2, 2, 2))
       browser.goto(\url, referer_url)
       return
    end

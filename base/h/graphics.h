@@ -105,7 +105,6 @@ extern struct sdescrip wclassname;
 #define EndSquare 2
 
 #define MAXDISPLAYNAME	64
-#define NUMCURSORSYMS	78
 
 /* Interned atoms array */
 #define NUMATOMS        29
@@ -250,6 +249,7 @@ typedef struct _wfont {
 #if XWindows
 
 #define FONTHASH_SIZE 64
+#define CURSORHASH_SIZE 128
 
 /*
  * Displays are maintained in a global list in rwinrsc.r.
@@ -262,7 +262,7 @@ typedef struct _wdisplay {
   struct SharedColor *black, *white, *transparent;
   wfp		fonts[FONTHASH_SIZE], defaultfont;
   XRenderPictFormat *pixfmt, *winfmt, *maskfmt;
-  Cursor	cursors[NUMCURSORSYMS];
+  struct wcursor *cursors[CURSORHASH_SIZE];
   Atom          atoms[NUMATOMS];      /* interned atoms */
   struct _wdisplay *previous, *next;
 } *wdp;
@@ -282,6 +282,18 @@ struct SharedPicture {
    int width, height;
    int refcount;
 };
+
+struct SharedCursor {
+   wdp wd;
+   Cursor cursor;
+   int refcount;
+};
+
+struct wcursor {
+   struct wcursor *next;
+   char *name;
+   struct SharedCursor *shared_cursor;
+};
 #elif PLAN9
 struct SharedColor {
    Image *i;            /* 1x1 image representing colour rgb */
@@ -293,6 +305,17 @@ struct SharedColor {
 struct SharedImage {
    Image *i;
    int   refcount;
+};
+
+struct SharedCursor {
+   struct Cursor *cursor;
+   int refcount;
+};
+
+struct wcursor {
+   struct wcursor *next;
+   char *name;
+   struct SharedCursor *shared_cursor;
 };
 #endif
 
@@ -373,7 +396,7 @@ typedef struct _wstate {
   Picture       ppic;                   /* Render extension Picture view of pix */
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
-  stringint     *cursor;
+  struct wcursor *cursor;               /* current cursor */
   unsigned long *icondata;              /* window icon data and length */
   int           iconlen;
   XftDraw       *pxft;
@@ -396,7 +419,7 @@ typedef struct _wstate {
   int           winid;                  /* Id as per winid file */
   int           transientfor_winid;     /* Winid of transient-for window, or -1 */
   int           state;                  /* Current or desired window state */
-  stringint     *cursor;
+  struct wcursor *cursor;               /* current cursor */
   int           using_win;
   int           border_width;
 #elif MSWIN32

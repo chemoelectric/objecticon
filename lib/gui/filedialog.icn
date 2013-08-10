@@ -49,13 +49,12 @@ end
 #
 class FileDialog(Dialog)
    public
-      show_hidden_button,
+      show_hidden_menu_item,
+      tools_menu,
       date_button,
       name_button,
       size_button,
       home_button, 
-      new_button, 
-      refresh_button, 
       prev_button,
       next_button,
       up_button, 
@@ -101,26 +100,20 @@ class FileDialog(Dialog)
    end
 
    public component_setup()
+      local t
       #
       # Defaults and extra dirs.
       #
       /init_dirs := []
-      every put(init_dirs,
-                Files.getcwd() | 
-                Files.get_home() | 
-                Files.get_temp() | 
-                Files.get_roots())
-
-      init_dirs := lunique(ucs_list(init_dirs))
-
       /init_files := []
       /init_filters := [u"*"]
-
-      init_files := ucs_list(init_files)
-      init_filters := ucs_list(init_filters)
-      dir.set_selection_list(init_dirs).set_selection(1)
-      file.set_selection_list(init_files).set_selection(1)
-      filter.set_selection_list(init_filters).set_selection(1)
+      t := copy(init_dirs)
+      every put(t,
+                Files.getcwd() | 
+                FavouriteDirectoriesDialog.gen_directories())
+      dir.set_selection_list(lunique(ucs_list(t))).set_selection(1)
+      file.set_selection_list(ucs_list(init_files)).set_selection(1)
+      filter.set_selection_list(ucs_list(init_filters)).set_selection(1)
 
       pos_table := table()
       res := &null
@@ -330,7 +323,7 @@ class FileDialog(Dialog)
          load_dir()
    end
 
-   public on_show_hidden_button(ev)
+   public on_show_hidden_menu_item(ev)
       pos_table := table()
       load_dir()
    end
@@ -348,7 +341,7 @@ class FileDialog(Dialog)
       goto_dir(Files.get_home())
    end
 
-   public on_refresh_button(ev)
+   public on_refresh_menu_item(ev)
       load_dir()
    end
 
@@ -373,28 +366,38 @@ class FileDialog(Dialog)
       next_button.set_is_shaded(if history_pos < *history then &no else &yes)
    end
 
-   public on_new_button(ev)
+   public on_new_dir_menu_item(ev)
       local d, s
       d := NewDirectoryDialog()
       d.show_modal(self)
-      if \d.okay then {
-         s := self.get_dir_path().child(d.result).str()
-         if Files.mkdir(s) then
-            goto_dir(s)
-         else
-            msg("mkdir failed: " || &why)
-      }
+      \d.okay | fail
+      s := self.get_dir_path().child(d.result).str()
+      if Files.mkdir(s) then
+         goto_dir(s)
+      else
+         msg("mkdir failed: " || &why)
+   end
+
+   public on_favourite_dirs_menu_item(ev)
+      local d, t
+      d := FavouriteDirectoriesDialog()
+      d.show_modal(self)
+      \d.okay | fail
+      t := copy(init_dirs)
+      every put(t,
+                Files.getcwd() | 
+                FavouriteDirectoriesDialog.gen_directories())
+      dir.selection_list := lunique(ucs_list(t))
+      dir.constrain_selection().synch_selection()
    end
 
    public get_pats()
       local pat, pats
       pats := []
-      filter.get_contents() ? {
-         repeat {
-            pat := tab(upto(';') | 0)
-            put(pats, Wildcard(pat))
-            move(1) | break
-         }
+      filter.get_contents() ? repeat {
+         pat := tab(upto(';') | 0)
+         put(pats, Wildcard(pat))
+         move(1) | break
       }
       return pats
    end
@@ -478,7 +481,7 @@ class FileDialog(Dialog)
       now := Time.get_system_seconds()
       every e := !l do {
          n := e.name
-         if show_hidden_button.is_checked() | not(Files.is_hidden(n)) then {
+         if show_hidden_menu_item.is_checked() | not(Files.is_hidden(n)) then {
             if e.stat.mode_str[1] == "d" then
                Files.is_relative_dir(n) | put(dir_list, e)
             else if (!pats).match(n) = *n + 1 then {
@@ -509,6 +512,8 @@ class FileDialog(Dialog)
    public new()
       cast(self,Dialog).new()
       self.setup()
+      tools_menu.set_border_mid(NullBorder())
+
       dlist.
          set_draggable_cursor(&yes).
          set_selection_on_key_moves(&no).
@@ -586,10 +591,39 @@ class FileDialog(Dialog)
    end
 
    private setup()
-      local paint_2, panel_2, paint_14, paint_27, paint_32, layout_7, paint_7, paint_11, paint_37, layout_4, paint_4, split_content_1, split_content_2, panel_4, paint_29, paint_34, layout_9, paint_1, paint_9, split_1, paint_13, paint_31, layout_6, paint_6, paint_10, paint_36, layout_3, paint_3, panel_3, paint_15, paint_28, paint_33, paint, layout_8, paint_12, paint_30, paint_5, paint_35
+      local paint_2, paint_14, paint_45, layout_7, menu_button, refresh_menu_item, paint_11, paint_37, paint_42, layout_4, split_content_1, split_content_2, panel_4, paint_29, paint_9, split_1, paint_31, paint_3, paint_15, paint_46, layout_8, new_dir_menu_item, paint_12, paint_43, paint_35, panel_2, favourite_dirs_menu_item, paint_27, paint_32, paint_47, layout_9, paint_1, paint_13, paint_44, layout_6, paint_10, paint_36, layout_3, panel_3, paint_28, paint, paint_30
       self.set_label("Select file")
       self.set_resize(&yes)
       self.set_size(700, 500)
+      paint_45 := ImagePaint().
+         set_cache("gui.CONFIGURE_24")
+      paint_42 := TextPaint("New directory...")
+      new_dir_menu_item := TextMenuItem().
+         connect(on_new_dir_menu_item, Event.ACTION).
+         set_paint_mid(paint_42)
+      paint_43 := TextPaint("Favourite dirs...")
+      favourite_dirs_menu_item := TextMenuItem().
+         connect(on_favourite_dirs_menu_item, Event.ACTION).
+         set_paint_mid(paint_43)
+      paint_44 := TextPaint("Show hidden files")
+      show_hidden_menu_item := CheckBoxMenuItem().
+         connect(on_show_hidden_menu_item, Event.ACTION).
+         set_paint_mid(paint_44)
+      paint_46 := TextPaint("Refresh")
+      refresh_menu_item := TextMenuItem().
+         connect(on_refresh_menu_item, Event.ACTION).
+         set_paint_mid(paint_46)
+      tools_menu := Menu().
+         set_paint_mid(paint_45).
+         add(new_dir_menu_item).
+         add(favourite_dirs_menu_item).
+         add(show_hidden_menu_item).
+         add(refresh_menu_item)
+      paint_47 := TextPaint("Tools")
+      menu_button := MenuButton().
+         clear_constraints().
+         set_tooltip(paint_47).
+         set_menu(tools_menu)
       paint_1 := ImagePaint().
          set_cache("gui.HOME_24")
       paint := TextPaint("Home")
@@ -612,28 +646,6 @@ class FileDialog(Dialog)
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_3)
-      paint_5 := ImagePaint().
-         set_cache("gui.NEW_FOLDER_24")
-      paint_4 := TextPaint("New dir")
-      new_button := IconButton().
-         set_align(Align.L, Align.C).
-         clear_constraints().
-         set_tooltip(paint_4).
-         connect(self.on_new_button, Event.ACTION).
-         set_no_click_focus(&yes).
-         set_toggles(&no).
-         set_paint(paint_5)
-      paint_7 := ImagePaint().
-         set_cache("gui.REFRESH_24")
-      paint_6 := TextPaint("Refresh")
-      refresh_button := IconButton().
-         set_align(Align.L, Align.C).
-         clear_constraints().
-         set_tooltip(paint_6).
-         connect(self.on_refresh_button, Event.ACTION).
-         set_no_click_focus(&yes).
-         set_toggles(&no).
-         set_paint(paint_7)
       paint_12 := ImagePaint().
          set_cache("gui.PREV_24")
       paint_13 := TextPaint("Prev")
@@ -689,17 +701,6 @@ class FileDialog(Dialog)
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_32)
-      paint_34 := ImagePaint().
-         set_cache("gui.HIDDENFILE_24")
-      paint_33 := TextPaint("Hidden files")
-      show_hidden_button := IconButton().
-         set_align(Align.L, Align.C).
-         clear_constraints().
-         set_tooltip(paint_33).
-         connect(self.on_show_hidden_button, Event.ACTION).
-         set_no_click_focus(&yes).
-         set_toggles(&yes).
-         set_paint(paint_34)
       paint_36 := TextPaint("Directory")
       dir := EditList().
          set_size("150").
@@ -722,16 +723,14 @@ class FileDialog(Dialog)
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_layout(layout_6).
+         add(menu_button).
          add(home_button).
          add(up_button).
-         add(new_button).
-         add(refresh_button).
          add(prev_button).
          add(next_button).
          add(name_button).
          add(date_button).
          add(size_button).
-         add(show_hidden_button).
          add(dir)
       self.add(panel_4)
       dlist := ItemPaintList().

@@ -891,6 +891,21 @@ final class Window(NoCopy)
    public native request_selection(selection, target_type)
 
    #
+   # Define a custom pointer.  The contents of this window provide the source image.
+   # @param name the name of the pointer
+   # @param x the x hotpoint
+   # @param y the y hotpoint
+   #
+   public native define_pointer(name, x, y)
+
+   #
+   # Make the destination pointer be the same as the src.
+   # @param dest the destination name, which need not currently be defined
+   # @param src the current name.
+   #
+   public native copy_pointer(dest, src)
+
+   #
    # Close this binding to the window.  If no other bindings to the
    # same canvas exist, the underlying window is closed.
    #

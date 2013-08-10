@@ -43,6 +43,14 @@ static void handle_keypress(wsp ws, XKeyEvent *event);
 static void handle_crossing(wsp ws, XCrossingEvent *event);
 static void wmap(wbp w);
 static void synch_cursor(wsp ws);
+static void synch_cursors(struct wcursor *c);
+static void setup_cursors(wdp wd);
+static void setup_cursor(wdp wd, char *name, int id);
+static struct SharedCursor *new_sharedcursor(wdp wd, Cursor cursor);
+static struct SharedCursor *link_sharedcursor(struct SharedCursor *x);
+static void unlink_sharedcursor(struct SharedCursor *x);
+static struct wcursor *lookup_wcursor(wdp wd, char *name);
+static struct wcursor *ensure_wcursor(wdp wd, char *name);
 static int convert_KeySym_to_code_point(KeySym k);
 static wfp newfont(wdp wd, char *s);
 static wdp alcdisplay (char *s);
@@ -106,88 +114,6 @@ static stringint canvastypes[] = {
     {"popup",       PopupState},
     {"root",        RootState},
     {"withdrawn",   WithdrawnState},
-};
-
-static stringint cursors[] = {
-  { 0, NUMCURSORSYMS},
-  {"X cursor",		XC_X_cursor},
-  {"arrow",		XC_arrow},
-  {"based arrow down",	XC_based_arrow_down},
-  {"based arrow up",	XC_based_arrow_up},
-  {"boat",		XC_boat},
-  {"bogosity",		XC_bogosity},
-  {"bottom left corner",XC_bottom_left_corner},
-  {"bottom right corner",XC_bottom_right_corner},
-  {"bottom side",	XC_bottom_side},
-  {"bottom tee",	XC_bottom_tee},
-  {"box spiral",	XC_box_spiral},
-  {"center ptr",	XC_center_ptr},
-  {"circle",		XC_circle},
-  {"clock",		XC_clock},
-  {"coffee mug",	XC_coffee_mug},
-  {"cross",		XC_cross},
-  {"cross reverse",	XC_cross_reverse},
-  {"crosshair",		XC_crosshair},
-  {"diamond cross",	XC_diamond_cross},
-  {"dot",		XC_dot},
-  {"dotbox",		XC_dotbox},
-  {"double arrow",	XC_double_arrow},
-  {"draft large",	XC_draft_large},
-  {"draft small",	XC_draft_small},
-  {"draped box",	XC_draped_box},
-  {"exchange",		XC_exchange},
-  {"fleur",		XC_fleur},
-  {"gobbler",		XC_gobbler},
-  {"gumby",		XC_gumby},
-  {"hand1",		XC_hand1},
-  {"hand2",		XC_hand2},
-  {"heart",		XC_heart},
-  {"icon",		XC_icon},
-  {"iron cross",	XC_iron_cross},
-  {"left ptr",		XC_left_ptr},
-  {"left side",		XC_left_side},
-  {"left tee",		XC_left_tee},
-  {"leftbutton",	XC_leftbutton},
-  {"ll angle",		XC_ll_angle},
-  {"lr angle",		XC_lr_angle},
-  {"man",		XC_man},
-  {"middlebutton",	XC_middlebutton},
-  {"mouse",		XC_mouse},
-  {"pencil",		XC_pencil},
-  {"pirate",		XC_pirate},
-  {"plus",		XC_plus},
-  {"question arrow",	XC_question_arrow},
-  {"right ptr",		XC_right_ptr},
-  {"right side",	XC_right_side},
-  {"right tee",		XC_right_tee},
-  {"rightbutton",	XC_rightbutton},
-  {"rtl logo",		XC_rtl_logo},
-  {"sailboat",		XC_sailboat},
-  {"sb down arrow",	XC_sb_down_arrow},
-  {"sb h double arrow",	XC_sb_h_double_arrow},
-  {"sb left arrow",	XC_sb_left_arrow},
-  {"sb right arrow",	XC_sb_right_arrow},
-  {"sb up arrow",	XC_sb_up_arrow},
-  {"sb v double arrow",	XC_sb_v_double_arrow},
-  {"shuttle",		XC_shuttle},
-  {"sizing",		XC_sizing},
-  {"spider",		XC_spider},
-  {"spraycan",		XC_spraycan},
-  {"star",		XC_star},
-  {"target",		XC_target},
-  {"tcross",		XC_tcross},
-  {"top left arrow",	XC_top_left_arrow},
-  {"top left corner",	XC_top_left_corner},
-  {"top right corner",	XC_top_right_corner},
-  {"top side",		XC_top_side},
-  {"top tee",		XC_top_tee},
-  {"trek",		XC_trek},
-  {"ul angle",		XC_ul_angle},
-  {"umbrella",		XC_umbrella},
-  {"ur angle",		XC_ur_angle},
-  {"watch",		XC_watch},
-  {"xterm",		XC_xterm},
-  {"num glyphs",	XC_num_glyphs},
 };
 
 static int selection_debug = 0;
@@ -337,7 +263,197 @@ void unlink_sharedcolor(struct SharedColor *x)
     }
 }
 
-static char *atom_fmt(wsp ws,Atom a) {
+static struct SharedCursor *new_sharedcursor(wdp wd, Cursor cursor)
+{
+    struct SharedCursor *res;
+    GAlloc(res, SharedCursor);
+    res->wd = wd;
+    res->cursor = cursor;
+    return res;
+}
+
+static struct SharedCursor *link_sharedcursor(struct SharedCursor *x)
+{
+    ++x->refcount;
+    return x;
+}
+
+static void unlink_sharedcursor(struct SharedCursor *x)
+{
+    --x->refcount;
+    if (x->refcount == 0) {
+        XFreeCursor(x->wd->display, x->cursor);
+        free(x);
+    }
+}
+
+static struct wcursor *lookup_wcursor(wdp wd, char *name)
+{
+    struct wcursor *rv;
+    int i;
+    i = hasher(hashcstr(name), wd->cursors);
+    for(rv = wd->cursors[i]; rv; rv = rv->next) {
+        if (!strcmp(name, rv->name))
+            return rv;
+    }
+    return 0;
+}
+
+static struct wcursor *ensure_wcursor(wdp wd, char *name)
+{
+    struct wcursor *rv;
+    int i;
+    i = hasher(hashcstr(name), wd->cursors);
+    for(rv = wd->cursors[i]; rv; rv = rv->next) {
+        if (!strcmp(name, rv->name))
+            return rv;
+    }
+    MemProtect(rv = calloc(1, sizeof(struct wcursor)));
+    rv->name = salloc(name);
+    rv->next = wd->cursors[i];
+    wd->cursors[i] = rv;
+    return rv;
+}
+
+int definepointer(wbp w, char *name, int x, int y)
+{
+    struct wcursor *rv;
+    Cursor nc;
+    wdp wd = w->window->display;
+    nc = XRenderCreateCursor(wd->display, w->window->ppic, x, y);
+    rv = ensure_wcursor(wd, name);
+    if (rv->shared_cursor) {
+        unlink_sharedcursor(rv->shared_cursor);
+        rv->shared_cursor = new_sharedcursor(wd, nc);
+        synch_cursors(rv);
+    } else
+        rv->shared_cursor = new_sharedcursor(wd, nc);
+    return Succeeded;
+}
+
+static void synch_cursors(struct wcursor *c)
+{
+    wsp x;
+    for (x = vwstates; x; x = x->vnext) {
+        if (x->cursor == c)
+            synch_cursor(x);
+    }
+}
+
+int copypointer(wbp w, char *dest, char *src)
+{
+    struct wcursor *sc, *dc;
+    wdp wd = w->window->display;
+    sc = lookup_wcursor(wd, src);
+    if (!sc)
+        return Failed;
+    dc = ensure_wcursor(wd, dest);
+    if (sc != dc) {
+        if (dc->shared_cursor) {
+            unlink_sharedcursor(dc->shared_cursor);
+            dc->shared_cursor = link_sharedcursor(sc->shared_cursor);
+            synch_cursors(dc);
+        } else
+            dc->shared_cursor = link_sharedcursor(sc->shared_cursor);
+    }
+    return Succeeded;
+}
+
+static void setup_cursor(wdp wd, char *name, int id)
+{
+    int i;
+    struct wcursor *rv;
+    i = hasher(hashcstr(name), wd->cursors);
+    MemProtect(rv = calloc(1, sizeof(struct wcursor)));
+    rv->name = name;
+    rv->shared_cursor = new_sharedcursor(wd, XCreateFontCursor(wd->display, id));
+    rv->next = wd->cursors[i];
+    wd->cursors[i] = rv;
+}
+
+static void setup_cursors(wdp wd)
+{
+    setup_cursor(wd, "X cursor",	XC_X_cursor);
+    setup_cursor(wd, "arrow",		XC_arrow);
+    setup_cursor(wd, "based arrow down",XC_based_arrow_down);
+    setup_cursor(wd, "based arrow up",	XC_based_arrow_up);
+    setup_cursor(wd, "boat",		XC_boat);
+    setup_cursor(wd, "bogosity",	XC_bogosity);
+    setup_cursor(wd, "bottom left corner",XC_bottom_left_corner);
+    setup_cursor(wd, "bottom right corner",XC_bottom_right_corner);
+    setup_cursor(wd, "bottom side",	XC_bottom_side);
+    setup_cursor(wd, "bottom tee",	XC_bottom_tee);
+    setup_cursor(wd, "box spiral",	XC_box_spiral);
+    setup_cursor(wd, "center ptr",	XC_center_ptr);
+    setup_cursor(wd, "circle",		XC_circle);
+    setup_cursor(wd, "clock",		XC_clock);
+    setup_cursor(wd, "coffee mug",	XC_coffee_mug);
+    setup_cursor(wd, "cross",		XC_cross);
+    setup_cursor(wd, "cross reverse",	XC_cross_reverse);
+    setup_cursor(wd, "crosshair",	XC_crosshair);
+    setup_cursor(wd, "diamond cross",	XC_diamond_cross);
+    setup_cursor(wd, "dot",		XC_dot);
+    setup_cursor(wd, "dotbox",		XC_dotbox);
+    setup_cursor(wd, "double arrow",	XC_double_arrow);
+    setup_cursor(wd, "draft large",	XC_draft_large);
+    setup_cursor(wd, "draft small",	XC_draft_small);
+    setup_cursor(wd, "draped box",	XC_draped_box);
+    setup_cursor(wd, "exchange",	XC_exchange);
+    setup_cursor(wd, "fleur",		XC_fleur);
+    setup_cursor(wd, "gobbler",		XC_gobbler);
+    setup_cursor(wd, "gumby",		XC_gumby);
+    setup_cursor(wd, "hand1",		XC_hand1);
+    setup_cursor(wd, "hand2",		XC_hand2);
+    setup_cursor(wd, "heart",		XC_heart);
+    setup_cursor(wd, "icon",		XC_icon);
+    setup_cursor(wd, "iron cross",	XC_iron_cross);
+    setup_cursor(wd, "left ptr",	XC_left_ptr);
+    setup_cursor(wd, "left side",	XC_left_side);
+    setup_cursor(wd, "left tee",	XC_left_tee);
+    setup_cursor(wd, "leftbutton",	XC_leftbutton);
+    setup_cursor(wd, "ll angle",	XC_ll_angle);
+    setup_cursor(wd, "lr angle",	XC_lr_angle);
+    setup_cursor(wd, "man",		XC_man);
+    setup_cursor(wd, "middlebutton",	XC_middlebutton);
+    setup_cursor(wd, "mouse",		XC_mouse);
+    setup_cursor(wd, "pencil",		XC_pencil);
+    setup_cursor(wd, "pirate",		XC_pirate);
+    setup_cursor(wd, "plus",		XC_plus);
+    setup_cursor(wd, "question arrow",	XC_question_arrow);
+    setup_cursor(wd, "right ptr",	XC_right_ptr);
+    setup_cursor(wd, "right side",	XC_right_side);
+    setup_cursor(wd, "right tee",	XC_right_tee);
+    setup_cursor(wd, "rightbutton",	XC_rightbutton);
+    setup_cursor(wd, "rtl logo",	XC_rtl_logo);
+    setup_cursor(wd, "sailboat",	XC_sailboat);
+    setup_cursor(wd, "sb down arrow",	XC_sb_down_arrow);
+    setup_cursor(wd, "sb h double arrow",	XC_sb_h_double_arrow);
+    setup_cursor(wd, "sb left arrow",	XC_sb_left_arrow);
+    setup_cursor(wd, "sb right arrow",	XC_sb_right_arrow);
+    setup_cursor(wd, "sb up arrow",	XC_sb_up_arrow);
+    setup_cursor(wd, "sb v double arrow",	XC_sb_v_double_arrow);
+    setup_cursor(wd, "shuttle",		XC_shuttle);
+    setup_cursor(wd, "sizing",		XC_sizing);
+    setup_cursor(wd, "spider",		XC_spider);
+    setup_cursor(wd, "spraycan",	XC_spraycan);
+    setup_cursor(wd, "star",		XC_star);
+    setup_cursor(wd, "target",		XC_target);
+    setup_cursor(wd, "tcross",		XC_tcross);
+    setup_cursor(wd, "top left arrow",	XC_top_left_arrow);
+    setup_cursor(wd, "top left corner",	XC_top_left_corner);
+    setup_cursor(wd, "top right corner",XC_top_right_corner);
+    setup_cursor(wd, "top side",	XC_top_side);
+    setup_cursor(wd, "top tee",		XC_top_tee);
+    setup_cursor(wd, "trek",		XC_trek);
+    setup_cursor(wd, "ul angle",	XC_ul_angle);
+    setup_cursor(wd, "umbrella",	XC_umbrella);
+    setup_cursor(wd, "ur angle",	XC_ur_angle);
+    setup_cursor(wd, "watch",		XC_watch);
+    setup_cursor(wd, "xterm",		XC_xterm);
+}
+
+static char *atom_fmt(wsp ws,Atom a) 
+{
     static int n = 0;
     static char buff[8][96];
     char *s, *r;
@@ -673,7 +789,7 @@ wbp wopen(char *display)
 
     GAlloc(ws, _wstate);
     ws->listp = nulldesc;
-    ws->cursor = stringint_lookup(cursors, "left ptr");
+    ws->cursor = lookup_wcursor(wd, "left ptr");
     ws->state = HiddenState;
     ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;
@@ -1273,12 +1389,7 @@ int setwindowlabel(wbp w, char *s)
 
 static void synch_cursor(wsp ws)
 {
-    int i;
-    wdp wd = ws->display;
-    i = ws->cursor->i >> 1;
-    if (!wd->cursors[i])
-        wd->cursors[i] = XCreateFontCursor(wd->display, 2 * i);
-    XDefineCursor(wd->display, ws->win, wd->cursors[i]);
+    XDefineCursor(ws->display->display, ws->win, ws->cursor->shared_cursor->cursor);
 }
 
 /*
@@ -1286,12 +1397,12 @@ static void synch_cursor(wsp ws)
  */
 int setpointer(wbp w, char *val)
 {
-    stringint *e;
+    struct wcursor *c;
     wsp ws = w->window;
-    e = stringint_lookup(cursors, val);
-    if (!e)
+    c = lookup_wcursor(ws->display, val);
+    if (!c)
         return Failed;
-    ws->cursor = e;
+    ws->cursor = c;
     if (ws->win)
         synch_cursor(ws);
     return Succeeded;
@@ -1577,7 +1688,7 @@ char *getlinestyle(wbp w)
 
 char *getpointer(wbp w)
 {
-    return w->window->cursor->s;
+    return w->window->cursor->name;
 }
 
 char *getdrawop(wbp w)
@@ -3228,6 +3339,7 @@ static wdp alcdisplay(char *s)
         return NULL;
     }
     XInternAtoms(wd->display, atom_names, NUMATOMS, False, wd->atoms);
+    setup_cursors(wd);
     GLink(wd, wdsplys);
     return wd;
 }

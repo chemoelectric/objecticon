@@ -16,12 +16,10 @@ import util
 # The size of the button can either be set using {set_size()},
 # be left to default to a size based on the given label.
 #
-class TextButton(Button)
+class TextButton(Button, BorderWhilstEntered)
    public 
       paint,
-      paint_down,
-      border_whilst_entered_flag,
-      entered
+      paint_down
 
    public display()
       local p
@@ -140,6 +138,26 @@ class TextButton(Button)
       return t + border.get_total_height()
    end
 
+   public new()
+      cast(self,Button).new()
+      cast(self,BorderWhilstEntered).new()
+      self.border := CompoundBorder().
+                       set_outer(RaisedBorder()).
+                       set_inner(EmptyBorder())
+      connect(handle_enter, Event.MOUSE_ENTER)
+      connect(handle_exit, Event.MOUSE_EXIT)
+      return
+   end
+end
+
+# A helper class for a component whose border is only shown whilst the
+# mouse cursor is over the component.
+#
+class BorderWhilstEntered(Component)
+   public 
+      border_whilst_entered_flag,
+      entered
+
    #
    # If set, only draw the border whilst the button is enabled and the
    # mouse pointer is over the button.  This is useful for toolbar
@@ -163,14 +181,8 @@ class TextButton(Button)
    end
 
    public new()
-      cast(self,Button).new()
-      self.border := CompoundBorder().
-                       set_outer(RaisedBorder()).
-                       set_inner(EmptyBorder())
       connect(handle_enter, Event.MOUSE_ENTER)
       connect(handle_exit, Event.MOUSE_EXIT)
       return
    end
 end
-
-

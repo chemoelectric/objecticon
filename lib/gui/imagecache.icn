@@ -12,6 +12,8 @@ $load CLOCK "images/gui.CLOCK_24.gif"
 $load FONT "images/gui.FONT_24.gif"
 $load FILESIZE "images/gui.FILESIZE_24.gif"
 $load HIDDENFILE "images/gui.HIDDENFILE_24.gif"
+$load FAVOURITES "images/gui.FAVOURITES_24.gif"
+$load CONFIGURE "images/gui.CONFIGURE_24.gif"
 
 final abstract class ImageCache()
    public static 
@@ -31,6 +33,8 @@ final abstract class ImageCache()
       name_image("gui.FONT_24",FONT)
       name_image("gui.FILESIZE_24", FILESIZE)
       name_image("gui.HIDDENFILE_24", HIDDENFILE)
+      name_image("gui.FAVOURITES_24", FAVOURITES)
+      name_image("gui.CONFIGURE_24", CONFIGURE)
 
       name_image("gui.BOX_UP", "13,(0=shadow;1=hilite;~=transparent),_
 ~~~~~~~~~~~~~_

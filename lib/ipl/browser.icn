@@ -501,7 +501,8 @@ class Worker()
          set_task(task).
          set_cookies(pool.cookies).
          set_authentications(pool.authentications).
-         set_authentication_function(pool.authentication_function)
+         set_authentication_function(pool.authentication_function).
+         set_retry_while_data(&yes)
       httpc.set_user_agent(\pool.user_agent)
 
       every httpc.connect(status, 
@@ -888,16 +889,18 @@ class Img(Image)
    public const
       browser, context, form, img_url, alt, bg_area
    private readable
-      wrote, img_data, img_name, map, map_id, held
+      wrote, img_data, img_name, map, map_id, held, err, highlight
 
    package got_data(res)
       local iw, ih
       if \res.err then {
+         err := res.err
          set_cache("rpp.BROKEN_LINK")
          every remove_constraint("fix_w" | "fix_h" | "pct_w")
       } else {
          set_image(res.data)
          if /win then {
+            err := &why
             set_cache("rpp.BROKEN_LINK")
             every remove_constraint("fix_w" | "fix_h" | "pct_w")
          } else {
@@ -927,10 +930,9 @@ class Img(Image)
    end
 
    private handle_rpress(e)
-      local pm, pm_menu, url
+      local pm, pm_menu
       *parent_dialog.held = 1 | fail
-      url := if img_url.scheme == u"cache" then browser.page_url else img_url
-      if pm_menu := browser.create_image_menu(url, img_name, img_data, wrote) then {
+      if pm_menu := browser.create_image_menu(self) then {
          set_highlight(wrote)
          browser.clear_msg(self)
          wrote := &null
@@ -1001,8 +1003,12 @@ class Img(Image)
    end
 
    private set_highlight(u)
-      set_fg(if \u then browser.page_alink_color else context.fg)
-      reset()
+      # Avoid resetting since that will reload the image data, which is slow.
+      if not(is(border, NullBorder | EmptyBorder) | highlight === u) then {
+         set_fg(if \u then browser.page_alink_color else context.fg)
+         reset()
+      }
+      highlight := u
       return self
    end
 
@@ -2357,7 +2363,7 @@ abstract class BrowserUI()
    public abstract link_middle_clicked(url)
    public abstract create_link_menu(url)
    public abstract create_page_menu()
-   public abstract create_image_menu(url, img_name, img_data, link_url)
+   public abstract create_image_menu(img)
    public abstract browse_for_file(s)
    public abstract is_visited(url)
 end
@@ -2389,7 +2395,6 @@ record GreyState(prev, nxt, refresh, copy_page, save_page, stop)
 class Browser(ComponentScrollArea)
    private
       ui,
-      worker_pool,
       shared_worker_pool_flag,
       status_ticker,
       maps,
@@ -2401,12 +2406,14 @@ class Browser(ComponentScrollArea)
       h_direction,
       v_direction,
       primary_selection_owner,
-      msg_owner
+      msg_owner,
+      outermost_border
 
    private readable
       history,
       history_pos,
       curr_history_entry,   # History entry currently being viewed.
+      worker_pool,
       page_url,
       page_data,
       page_name,
@@ -2677,8 +2684,8 @@ class Browser(ComponentScrollArea)
       return (\ui).is_visited(url)
    end
 
-   public create_image_menu(url, img_name, img_data, link_url)
-      return (\ui).create_image_menu(url, img_name, img_data, link_url)
+   public create_image_menu(img)
+      return (\ui).create_image_menu(img)
    end
 
    public set_ui(ui)
@@ -2962,6 +2969,14 @@ class Browser(ComponentScrollArea)
       }
    end
 
+   # Set a border around the outermost (top level) `TextFlow`; by
+   # default this is a `NullBorder`.
+   #
+   public set_outermost_border(b)
+      self.outermost_border := b
+      return self
+   end
+
    private set_top_data(res)
       local doc, s, row, c, cu
       if \curr_history_entry then {
@@ -2987,7 +3002,7 @@ class Browser(ComponentScrollArea)
                "<img src=\"" || to_attr(cu.str()) || "\"/></html>"
          } else
             s := "<html><title>Problem</title>" || 
-               "<h1>Problem:</h1>Displaying " || mk_anchor(res.url) || "<br><br>This does not seem to be an HTML or text document or an image</html>"
+               "<h1>Problem:</h1>Displaying " || mk_anchor(res.url) || "<br><br>This does not seem to be an HTML or text document or an image.</html>"
          page_data := res.data
       }
       page_name := res.fname
@@ -3023,7 +3038,8 @@ class Browser(ComponentScrollArea)
          Text.liberal_ucs(s)
       doc := HtmlParser().parse(s)
       page_base := page_url
-      row := TextFlow(self)
+      row := TextFlow(self).
+         set_border(outermost_border)
       page_title := &null
       page_links := []
       page_alink_color := "red"
@@ -4724,12 +4740,23 @@ class Browser(ComponentScrollArea)
    end
 
    public static get_table_tag()
-      #return "<table border=1 cellspacing=4 rules=all>"
       return "<table cellspacing=4>"
    end
 
    public get_cache()
       return worker_pool.cache
+   end
+
+   public handle_copy(e)
+      local s
+      if s := get_current_text_selection() then
+         parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
+   end
+
+   private additional_keys(e)
+      case e.code of {
+         "\^c" :  handle_copy(e)
+      }
    end
 
    public new()
@@ -4741,14 +4768,77 @@ class Browser(ComponentScrollArea)
       primary_selection_owner := BrowserPrimarySelectionOwner(self)
       set_inner(TextFlow(self))
       use_default_keys()
+      connect(additional_keys, Event.KEY_PRESS)
       history := []
       history_pos := 0
       running := 0
       banded := table()
+      outermost_border := NullBorder()
       view.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG).
          connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS).
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE).
          connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
+      return
+   end
+end
+
+# A simple subclass of `Browser`, intended for displaying HTML pages
+# with no user navigation and a minimalist interface.
+#
+# An HTML document may be shown by calling `set_page`, passing the
+# document in string form.  Images may be included in the page by
+# either specifying a normal external URL, or with URL img:name, where
+# name is a name in the image cache (eg: <img src="img:gui.HOME_24">).
+#
+class SimpleBrowser(Browser)
+   private readable
+      page
+
+   public static const
+      LINK_LEFT_CLICKED,
+      LINK_MIDDLE_CLICKED
+
+   private static init()
+      LINK_LEFT_CLICKED := "link_left_clicked"
+      LINK_MIDDLE_CLICKED := "link_middle_clicked"
+   end
+
+   public link_left_clicked(url)
+      cast(self, Browser).link_left_clicked(url)
+      fire(LINK_LEFT_CLICKED, url)
+      return self
+   end
+
+   public link_middle_clicked(url)
+      cast(self, Browser).link_middle_clicked(url)
+      fire(LINK_MIDDLE_CLICKED, url)
+      return self
+   end
+
+   # Set the page to display as a string representing an HTML
+   # document.
+   #
+   public set_page(page)
+      self.page := page
+      goto(URL("page:"))
+      return self
+   end
+
+   private page_handler(worker)
+      return \page | return error("No page set")
+   end
+
+   private img_handler(worker)
+      local n
+      n := string(worker.req.url.get_path())
+      return ImageCache.get_named_image(n) | error("Unknown image")
+   end
+
+   public new()
+      cast(self,Browser).new()
+      worker_pool.
+         add_scheme_handler("page", page_handler).
+         add_scheme_handler("img", img_handler)
       return
    end
 end

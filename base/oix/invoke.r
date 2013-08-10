@@ -1157,6 +1157,7 @@ static void handle_access_failure()
 function lang_Class_get(obj, field)
    body {
       struct p_frame *pf;
+      CheckField(field);
       MemProtect(pf = alc_p_frame(&Bget_impl, 0));
       push_frame((struct frame *)pf);
       pf->tmp[0] = obj;
@@ -1169,6 +1170,7 @@ end
 function lang_Class_getf(obj, field)
    body {
       struct p_frame *pf;
+      CheckField(field);
       MemProtect(pf = alc_p_frame(&Bgetf_impl, 0));
       push_frame((struct frame *)pf);
       pf->tmp[0] = obj;
@@ -1181,6 +1183,7 @@ end
 function lang_Class_getq(obj, field)
    body {
       struct p_frame *pf;
+      CheckField(field);
       MemProtect(pf = alc_p_frame(&Bgetq_impl, 0));
       push_frame((struct frame *)pf);
       pf->tmp[0] = obj;

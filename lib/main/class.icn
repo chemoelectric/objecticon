@@ -217,7 +217,7 @@ final abstract class Class()
    # Get the value of the field in {x}, behaving in exactly the same way
    # as though the "." operation had been invoked with equivalent values.
    #
-   # @param x either a class, cast or object
+   # @param x either a record, class, cast or object
    # @param field either a field name or number
    # @return the field value
    # @runerr if the field is unknown or access is not permitted
@@ -229,7 +229,7 @@ final abstract class Class()
    # or access is denied.  On failure, {&why} is set to an appropriate
    # message.
    #
-   # @param x either a class, cast or object
+   # @param x either a record, class, cast or object
    # @param field either a field name or number
    # @return the field value
    # @fail if the field is unknown or access is not permitted
@@ -239,7 +239,7 @@ final abstract class Class()
    # This behaves in exactly the same way as {getf} above, but
    # doesn't set {&why} on failure.
    #
-   # @param x either a class, cast or object
+   # @param x either a record, class, cast or object
    # @param field either a field name or number
    # @return the field value
    # @fail if the field is unknown or access is not permitted

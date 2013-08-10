@@ -387,6 +387,20 @@ if (m < 0)
 #enddef
 
 /*
+ * Check and convert to class/record field specifier - integer or string.
+ */
+
+#begdef CheckField(field)
+{
+    word x;
+    if (cnv:C_integer(field, x))
+        MakeInt(x, &field);
+    else if (!cnv:string(field,field))
+        runerr(170,field);
+}
+#enddef
+
+/*
  * These macros are used to convert to/from various integer types
  * which may be bigger than a word and may or may not be signed.
  */

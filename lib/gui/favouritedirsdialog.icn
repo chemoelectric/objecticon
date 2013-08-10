@@ -1,0 +1,334 @@
+package gui
+
+import
+   io, ipl.filegui
+
+import lang
+
+class FavouriteDirectoriesTableContent(TableContent)
+   public perform_drop(drag, drop)
+      local l
+      # Calculate insertion index
+      l := self.get_highlight() | fail
+      if get_highlight_part() === BOTTOM then
+         l +:= 1
+      move_lines(get_gesture_selections(), l)
+   end
+end
+
+class FavouriteDirectoriesTable(Table)
+   public create_table_content()
+      return FavouriteDirectoriesTableContent()
+   end
+end
+
+class ApplicationItemPaint(ItemPaint)
+   private convert(data)
+      return \data | "All"
+   end
+
+   public get_width(W, data)
+      return W.text_width(convert(data))
+   end
+
+   public get_constant_height(W)
+      return W.get_font_height()
+   end
+
+   public get_size(W, data)
+      return Size(W.text_width(convert(data)), W.get_font_height())
+   end
+
+   public draw(W, data, x, y, w)
+      draw_string_ex(W, x, y, limit_text(W, convert(data), w))
+   end
+end
+
+class FavouriteDirectoriesDialog(Dialog)
+   private
+      application_field,
+      directory_field,
+      okay_button,
+      cancel_button,
+      add_button,
+      delete_button,
+      apply_button,
+      entry_table,
+      etc,
+      directory_column,
+      application_check_box,
+      application_column,
+      edit_panel
+   public
+      okay
+
+   public static get_favourites_file()
+      return FilePath(Files.get_home()).child(".oifavouritedirs").str()
+   end
+
+   public static get_pair_list()
+      local l
+      if l := decode(Files.file_to_string(get_favourites_file())) then
+         return l
+      l := []
+      every put(l, [&null, ucs(Files.get_home() | Files.get_temp() | Files.get_roots())])
+      return l
+   end
+
+   public static get_app_name()
+      return FilePath(&progname).get(-1)
+   end
+
+   public static gen_directories()
+      local app, e
+      app := get_app_name()
+      every e := !get_pair_list() do {
+         if /e[1] | (e[1] == app) then
+            suspend e[2]
+      }
+   end
+
+   public component_setup()
+      self.setup()
+      entry_table.set_contents(get_pair_list())
+      etc := entry_table.table_content
+      etc.
+         set_allow_drag(&yes).
+         set_allow_drop(&yes).
+         set_select_mode("many").
+         set_dnd_mode(SelectableScrollArea.EDGES_ONLY).
+         connect(on_table_selection, Event.SELECTION_CHANGED)
+      directory_column.
+         set_item_paint(AbbreviatedTextItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, 0, 0, 0).
+                            set_x_align(Align.L))
+      application_column.
+         set_item_paint(ApplicationItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, 0, 0, 0).
+                            set_x_align(Align.L))
+      directory_field.set_directories_only(1)
+      update_grey()
+   end
+
+   private on_table_selection()
+      local e
+      if *etc.get_selections() = 1 then {
+         e := etc.object_get_selections()[1]
+         application_field.set_contents(e[1])
+         directory_field.set_contents(e[2])
+         if /e[1] then
+            application_check_box.set_is_checked(&yes)
+         else
+            application_check_box.set_is_checked(&no)
+      }
+      update_grey()
+   end
+
+   private update_grey()
+      if *etc.get_selections() = 1 then {
+         apply_button.set_is_shaded(&no)
+         edit_panel.set_is_shaded(&no)
+         if application_check_box.is_checked() then
+            application_field.set_is_shaded(&yes)
+         else
+            application_field.set_is_shaded(&no)
+      } else
+         edit_panel.set_is_shaded(&yes)
+
+      if *etc.get_selections() > 0 then
+         delete_button.set_is_shaded(&no)
+      else
+         delete_button.set_is_shaded(&yes)
+   end
+
+   private on_cancel_button(ev)
+      dispose()
+   end
+
+   private on_okay_button(ev)
+      okay := 1
+      Files.string_to_file(get_favourites_file(), encode(etc.contents))
+      dispose()
+   end
+
+   private on_add_button(ev)
+      etc.insert_lines([ [get_app_name(), u"Edit me"] ], *etc.contents + 1)
+      etc.set_selections([*etc.contents])
+      parent_dialog.set_focus(directory_field)
+      on_table_selection()
+      directory_field.handle_select_all()
+   end
+
+   private on_delete_button(ev)
+      etc.delete_lines(etc.get_selections()) 
+      update_grey()
+   end
+
+   private on_apply_button(ev)
+      etc.set_lines([[if application_check_box.is_checked() then &null else application_field.get_contents(), 
+                      FilePath(directory_field.get_contents()).canonical().ucs()]], 
+                    etc.get_selections()[1])
+      etc.clear_selections()
+      update_grey()
+   end
+
+   private on_application_check_box(ev)
+      if application_check_box.is_unchecked() & *application_field.get_contents() = 0 then
+         application_field.set_contents(get_app_name())
+      update_grey()
+   end
+
+   private setup()
+      local paint_2, panel_2, label_2, layout_7, paint_7, layout_4, paint_4, paint_1, paint_9, label_1, layout_6, paint_6, paint_10, paint_3, panel_3, border_content_1, paint_8, border_1, layout_5, paint_5, layout_2
+      self.set_label("Favourite directories")
+      self.set_resize(&yes)
+      paint_1 := TextPaint("Application")
+      application_column := ItemPaintTableColumn().
+         set_paint(paint_1).
+         set_column_align(Align.L).
+         set_column_width(90)
+      paint_2 := TextPaint("Directory")
+      directory_column := ItemPaintTableColumn().
+         set_paint(paint_2).
+         set_column_align(Align.L)
+      entry_table := FavouriteDirectoriesTable().
+         set_size(420, "202").
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0).
+         set_select_mode(Select.NONE).
+         set_contents([]).
+         add_column(application_column).
+         add_column(directory_column)
+      self.add(entry_table)
+      paint_3 := TextPaint("Application")
+      label_1 := Label().
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_paint(paint_3)
+      application_field := TextField().
+         set_size("203").
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         connect(self.on_apply_button, Event.ACTION).
+         set_contents(u"")
+      paint_10 := TextPaint("Use in all applications")
+      application_check_box := CheckBox().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_align", Align.L).
+         set_constraint("x_tab", 1).
+         connect(self.on_application_check_box, Event.ACTION).
+         set_toggles(&yes).
+         set_paint(paint_10)
+      paint_4 := TextPaint("Directory")
+      label_2 := Label().
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_paint(paint_4)
+      directory_field := FileSuggestField().
+         set_size("205").
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         connect(self.on_apply_button, Event.ACTION).
+         set_contents(u"")
+      layout_7 := GridLayout().
+         set_doi(0).
+         set_extra("cells")
+      edit_panel := Panel().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0).
+         set_layout(layout_7).
+         add(label_1).
+         add(application_field).
+         add(application_check_box).
+         add(label_2).
+         add(directory_field)
+      paint_7 := TextPaint("Add")
+      add_button := TextButton().
+         clear_constraints().
+         connect(self.on_add_button, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_7)
+      paint_8 := TextPaint("Delete")
+      delete_button := TextButton().
+         clear_constraints().
+         connect(self.on_delete_button, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_8)
+      paint_9 := TextPaint("Apply")
+      apply_button := TextButton().
+         clear_constraints().
+         connect(self.on_apply_button, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_9)
+      layout_6 := GridLayout().
+         set_doi(0).
+         set_extra("cells")
+      panel_3 := Panel().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_layout(layout_6).
+         add(add_button).
+         add(delete_button).
+         add(apply_button)
+      layout_4 := GridLayout().
+         set_extra("cells")
+      border_content_1 := Component().
+         clear_constraints().
+         set_layout(layout_4).
+         add(edit_panel).
+         add(panel_3)
+      border_1 := Border().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_weight", 0.0).
+         set_content(border_content_1)
+      self.add(border_1)
+      paint_5 := TextPaint("Okay")
+      okay_button := TextButton().
+         set_align(Align.L, Align.B).
+         clear_constraints().
+         connect(self.on_okay_button, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_5)
+      paint_6 := TextPaint("Cancel")
+      cancel_button := TextButton().
+         set_align(Align.L, Align.B).
+         clear_constraints().
+         connect(self.on_cancel_button, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_6)
+      layout_2 := GridLayout().
+         set_doi(0).
+         set_extra("cells")
+      panel_2 := Panel().
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_layout(layout_2).
+         add(okay_button).
+         add(cancel_button)
+      self.add(panel_2)
+      layout_5 := GridLayout().
+         set_extra("cells")
+      self.set_layout(layout_5)
+   end
+end
+
+### Ivib-v2 layout: layouts/$.layout
