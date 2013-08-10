@@ -1206,13 +1206,24 @@ class Component(Rect,Align,Connectable)
 
    #
    # Invoked on a drag gesture; if the  component wishes to start a drag and drop session,
-   # it should succeed, otherwise it should fail.
+   # it should succeed and return the drag content, otherwise it should fail.  The drag
+   # content is subsequently stored in the `content` of the current `Drag` object.
    #
    # NB - this method will only be invoked if the allow_drag flag is non-null.
    #
    # @param e the event, an instance of WindowEvent
    #
    public can_drag(e)
+   end
+
+   #
+   # Invoked after `can_drag` succeeds, at the beginning of an operation.  Two pointers, "dnd positive" and
+   # "dnd negative" should be defined to indicate to the user whether the current operation has
+   # a potential drop or not.  By default, this method just uses two pre-defined pointers.
+   #
+   public define_dnd_pointers(drag)
+      cbwin.copy_pointer("dnd negative", "exchange")
+      cbwin.copy_pointer("dnd positive", "hand2")
    end
 
    #
