@@ -1399,7 +1399,7 @@ function cairo_WindowSurface_new_impl(win)
                                                                wd->pixfmt,
                                                                ws->pixwidth, ws->pixheight);
 
-       w2 = alcwbinding();
+       w2 = alcwbinding(wd);
        w2->window = linkwindow(ws);
        w2->context = linkcontext(wc);
        cairo_surface_set_user_data(surface, &winkey, w2, destroywin);
