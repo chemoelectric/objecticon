@@ -122,6 +122,8 @@ NativeDef(graphics.Window,set_width,graphics_Window_set_width)
 NativeDef(graphics.Window,text_width,graphics_Window_text_width)
 NativeDef(graphics.Window,unclip,graphics_Window_unclip)
 NativeDef(graphics.Window,warp_pointer,graphics_Window_warp_pointer)
+NativeDef(graphics.Window,define_pointer,graphics_Window_define_pointer)
+NativeDef(graphics.Window,copy_pointer,graphics_Window_copy_pointer)
 #endif
 NativeDef(graphics.Pixels,get_width,graphics_Pixels_get_width)
 NativeDef(graphics.Pixels,get_height,graphics_Pixels_get_height)

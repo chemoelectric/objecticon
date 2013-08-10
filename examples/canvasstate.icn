@@ -1,7 +1,7 @@
 $load FLINTSTONES "flintstones10-hp.jpg"
 
 import
-   gui, graphics
+   gui, graphics,io
 
 global init_canvas
 
@@ -19,9 +19,11 @@ class Untitled(Dialog)
       t,
       text_button_8,
       text_button_10,
-      text_button_9
+      text_button_9,
+      text_button_11
 
    public component_setup()
+      local w
       self.setup()
       t := Dispatcher.new_task{tick()}
       t.start()
@@ -31,7 +33,20 @@ class Untitled(Dialog)
          set_resize(&yes).
          set_image(FLINTSTONES).
          set_canvas(init_canvas)
+
+      w := ImageCache.get("gui.CLOCK_24") | stop(&why)
+      w.define_pointer("funky") | stop(&why)
+
+#      other.copy_pointer("funky", "xterm") | stop(&why)
+      other.set_pointer("funky")| stop(&why)
+
    end
+
+   private on_text_button_11(ev)
+      other.copy_pointer("funky", "xterm") | stop(&why)
+      other.copy_pointer("xterm", "xterm") | stop(&why)
+   end
+
 
    public tick()
       local d
@@ -91,7 +106,7 @@ class Untitled(Dialog)
    end
 
    private setup()
-      local paint_2, paint_7, paint_11, paint_4, layout_1, paint_1, paint_9, panel_1, paint_6, paint_10, paint_3, paint_8, paint_5, layout_2
+      local paint_2, paint_7, paint_11, paint_4, layout_1, paint_1, paint_9, panel_1, paint_6, paint_10, paint_3, paint_8, paint_12, paint_5, layout_2
       paint_1 := TextPaint("->Iconic")
       text_button_1 := TextButton().
          clear_constraints().
@@ -185,6 +200,13 @@ class Untitled(Dialog)
          set_toggles(&no).
          set_paint(paint_2)
       self.add(text_button_2)
+      paint_12 := TextPaint("Button")
+      text_button_11 := TextButton().
+         clear_constraints().
+         connect(self.on_text_button_11, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_12)
+      self.add(text_button_11)
       layout_1 := GridLayout().
          set_extra("cells")
       self.set_layout(layout_1)
@@ -202,7 +224,7 @@ end
 #CCanvas|I18SSuperClass Name|SDialog|SImport Name|Sgui|SButton Groups|L
 #0SCheckbox Groups|L0SGen Indent|I3SGen Main|I1SGen Component Setup|I1S
 #Gen Init Dialog|I1SGen Constructor|NSDialog Struct|CCDialog|I1SWAttrib
-#s|T0NSName|SUntitled|SIs Component|NSWidth|NSHeight|NSChildren|L10CCan
+#s|T0NSName|SUntitled|SIs Component|NSWidth|NSHeight|NSChildren|L11CCan
 #vasTextButton|I35SParent Canvas|X1SName|Stext_button_1|SClass Name|STe
 #xtButton|SImport Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NS
 #H Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|
@@ -314,7 +336,16 @@ end
 #SAccepts focus Flag|I1SIs Checked Flag|NSIs Checkbox Flag|NSParent Che
 #ckBoxGroup|NSParent Button Group|NSPaint|CCanvasTextPaint|I6SParent Ca
 #nvas|X1SName|Spaint_2|SClass Name|STextPaint|SImport Name|Sgui|SClass 
-#Variable|NSStr|SQuit|SPaint down|NSInitial Focus|NSEvent Handlers|L0SL
-#ayout delegate|CCanvasGridLayout|I8SDII val|NSDOI val|NSExtra|Scells|S
-#Name|Slayout_1|SClass Name|SGridLayout|SImport Name|Sgui|SClass Variab
-#le|NSParent|X1
+#Variable|NSStr|SQuit|SPaint down|NCCanvasTextButton|I35SParent Canvas|
+#X1SName|Stext_button_11|SClass Name|STextButton|SImport Name|Sgui|SCla
+#ss Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spe
+#c|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttr
+#ibs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayout delegate|NSBorder opt
+#s|NSEvent Handlers|L1L2SEvent.ACTION|Son_text_button_11|SClass Variabl
+#e|I1SParent Component|X1SNo click focus|NSAccepts focus Flag|I1SIs Che
+#cked Flag|NSIs Checkbox Flag|NSParent CheckBoxGroup|NSParent Button Gr
+#oup|NSPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_12|SClass
+# Name|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|SButton|SPain
+#t down|NSInitial Focus|NSEvent Handlers|L0SLayout delegate|CCanvasGrid
+#Layout|I8SDII val|NSDOI val|NSExtra|Scells|SName|Slayout_1|SClass Name
+#|SGridLayout|SImport Name|Sgui|SClass Variable|NSParent|X1
