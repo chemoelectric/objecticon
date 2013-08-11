@@ -307,23 +307,12 @@ end
 # iso-8859 format, rather than utf8 format.
 #
 procedure text_convert(s, target)
-   local t, i
    s := text(s) | fail
    if type(s) == target then
       return s
-
-   case target of {
-      "ucs": {
-         t := ""
-         every t ||:= Text.utf8_seq(ord(s))
-         return ucs(t)
-      }
-      "string": {
-         t := ""
-         every i := ord(s) do
-            t ||:= char(i | 63)
-         return t
-      }
+   return case target of {
+      "ucs": Text.iso_8859_1_to_ucs(s)
+      "string": Text.ucs_to_iso_8859_1(s)
       default: runerr("Bad target type", target)
    }
 end
