@@ -468,6 +468,9 @@ class Download()
          fname := map(resp.fname, "/\0", "--")
          if *fname = 0 then
             fname := "browser.out"
+         # Ensure fname is in ucs.  This should mean full_path is also convertible to ucs() since the
+         # directories below were selected in the file dialogs.
+         fname := text_guess_convert(fname, "ucs")
          full_path := if \dest then
             if Files.is_directory(dest) then
                Files.ensure_unique_filename(FilePath(dest).child(fname).canonical().str())
@@ -589,13 +592,17 @@ class DownloadTab(TabItem)
    end
 
    private on_copy_result(d)
+      local s
+      s := ucs(d.full_path) | d.full_path
       parent_dialog.own_selection(Selection.CLIPBOARD, 
-                                  StaticTextSelectionOwner(d.full_path))
+                                  StaticTextSelectionOwner(s))
    end
 
    private on_copy_escaped_result(d)
+      local s
+      s := ucs(d.full_path) | d.full_path
       parent_dialog.own_selection(Selection.CLIPBOARD, 
-                                  StaticTextSelectionOwner(Format.shell_escape(d.full_path)))
+                                  StaticTextSelectionOwner(Format.shell_escape(s)))
    end
 
    private on_delete(d)
