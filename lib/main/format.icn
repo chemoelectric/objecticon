@@ -282,7 +282,7 @@ final abstract class Format()
       local t, ch
       t := ""
       s ? repeat {
-         t ||:= tab(upto('\\*?@+&#()<>[]({}!$`\'\" ') | 0)
+         t ||:= tab(upto('|\\*?@+&#()<>[]({}!$`\'\" ') | 0)
          ch := move(1) | break
          t ||:= "\\" || ch
       }
