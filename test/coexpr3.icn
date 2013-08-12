@@ -103,44 +103,44 @@ procedure main()
 
    # Fiddly, since &source muddles up the return to try{}.
    e := r1()
-   try{"r1", {t := &source ; if v := @e := 100 then coact(v,t) else coact(,t,,&yes)} }
+   try{"r1", {t := &source ; if v := @e := 100 then coact(v,t) else cofail(t)} }
    e := r2()
-   try{"r2", {t := &source ; if v := @e := 100 then coact(v,t) else coact(,t,,&yes)} }
+   try{"r2", {t := &source ; if v := @e := 100 then coact(v,t) else cofail(t)} }
    e := r3()
-   try{"r3", {t := &source ; if v := @e := 100 then coact(v,t) else coact(,t,,&yes)} }
+   try{"r3", {t := &source ; if v := @e := 100 then coact(v,t) else cofail(t)} }
 
    e := r1()
-   try{"r1a", {t := &source ; if v := !e := 100 then coact(v,t) else coact(,t,,&yes)} }
+   try{"r1a", {t := &source ; if v := !e := 100 then coact(v,t) else cofail(t)} }
    e := r2()
-   try{"r2a", {t := &source ; if v := !e := 100 then coact(v,t) else coact(,t,,&yes)} }
+   try{"r2a", {t := &source ; if v := !e := 100 then coact(v,t) else cofail(t)} }
    e := r3()
-   try{"r3a", {t := &source ; if v := !e := 100 then coact(v,t) else coact(,t,,&yes)} }
+   try{"r3a", {t := &source ; if v := !e := 100 then coact(v,t) else cofail(t)} }
 
    e := s1()
-   try{"s1", {t := &source ; if v := @e := 100 then coact(v,t) else coact(,t,,&yes)} }
+   try{"s1", {t := &source ; if v := @e := 100 then coact(v,t) else cofail(t)} }
    e := s2()
-   try{"s2", {t := &source ; if v := @e := 100 then coact(v,t) else coact(,t,,&yes)} }
+   try{"s2", {t := &source ; if v := @e := 100 then coact(v,t) else cofail(t)} }
    e := s3()
-   try{"s3", {t := &source ; if v := @e := 100 then coact(v,t) else coact(,t,,&yes)} }
+   try{"s3", {t := &source ; if v := @e := 100 then coact(v,t) else cofail(t)} }
 
    e := s1()
-   try{"s1a", {t := &source ; if v := !e := 100 then coact(v,t) else coact(,t,,&yes)} }
+   try{"s1a", {t := &source ; if v := !e := 100 then coact(v,t) else cofail(t)} }
    e := s2()
-   try{"s2a", {t := &source ; if v := !e := 100 then coact(v,t) else coact(,t,,&yes)} }
+   try{"s2a", {t := &source ; if v := !e := 100 then coact(v,t) else cofail(t)} }
    e := s3()
-   try{"s3a", {t := &source ; if v := !e := 100 then coact(v,t) else coact(,t,,&yes)} }
+   try{"s3a", {t := &source ; if v := !e := 100 then coact(v,t) else cofail(t)} }
 
    e := create l1
    try{"L1", @e := 100}
 
    e := create { l1@&source }
-   try{"L2", {t := &source ; if v := @e := 100 then coact(v,t) else coact(,t,,&yes)} }
+   try{"L2", {t := &source ; if v := @e := 100 then coact(v,t) else cofail(t)} }
 
    e := create { coact(l1) }
    try{"L3", @e := 100}
 
    e := create { proc("@",2)(l1,&source) }
-   try{"L4", {t := &source ; if v := @e := 100 then coact(v,t) else coact(,t,,&yes)} }
+   try{"L4", {t := &source ; if v := @e := 100 then coact(v,t) else cofail(t)} }
 
    e := create l1|l2|l3
    try{"L5", {every !e := 0 ; "ok" }}

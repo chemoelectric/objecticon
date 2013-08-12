@@ -1,13 +1,25 @@
 $start coact_impl
     Op_Custom c:coact_ex
-         Op_Tmp tmp:4
+         Op_Tmp tmp:3
          Op_Tmp tmp:0
          Op_Tmp tmp:1
          Op_Tmp tmp:2
-         Op_Tmp tmp:3
          FailureTransmitted
     Op_CReturn
-         Op_Tmp tmp:4
+         Op_Tmp tmp:3
+
+FailureTransmitted:
+    Op_CFail
+$end
+
+$start cofail_impl
+    Op_Custom c:cofail_ex
+         Op_Tmp tmp:2
+         Op_Tmp tmp:0
+         Op_Tmp tmp:1
+         FailureTransmitted
+    Op_CReturn
+         Op_Tmp tmp:2
 
 FailureTransmitted:
     Op_CFail
