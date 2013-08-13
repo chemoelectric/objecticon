@@ -932,18 +932,22 @@ class Img(Image)
    end
 
    private handle_lrelease(e, src)
+      \held | fail
       if \over then {
          set_highlight()
          browser.link_left_clicked(over)
-      }
+      } else
+         set_pointer()
       held := &null
    end
 
    private handle_mrelease(e)
+      \held | fail
       if \over then {
          set_highlight()
          browser.link_middle_clicked(over)
-      }
+      } else
+         set_pointer()
       held := &null
    end
 
@@ -1000,7 +1004,6 @@ class Img(Image)
       \held | fail
       if \which_area(e).url === held then {
          if over ~=== held then {
-            set_pointer("hand1")
             browser.msg(held.str(),, self)
             over := held
             set_highlight(over)
@@ -1009,7 +1012,6 @@ class Img(Image)
          browser.clear_msg(self)
          set_highlight()
          over := &null
-         set_pointer()
       }
    end
 

@@ -1169,18 +1169,22 @@ class TextFlow(Component)
    end
 
    private handle_lrelease(e)
+      \held | fail
       if \over then {
          set_highlight()
          self.browser.link_left_clicked(over)
-      }
+      } else
+         set_pointer()
       held := &null
    end
 
    private handle_mrelease(e)
+      \held | fail
       if \over then {
          set_highlight()
          self.browser.link_middle_clicked(over)
-      }
+      } else
+         set_pointer()
       held := &null
    end
 
@@ -1262,7 +1266,6 @@ class TextFlow(Component)
       \held | fail
       if \which_text_out(e).attr.url === held then {
          if over ~=== held then {
-            set_pointer("hand1")
             browser.msg(held.str(),, self)
             over := held
             set_highlight(over)
@@ -1271,7 +1274,6 @@ class TextFlow(Component)
          browser.clear_msg(self)
          set_highlight()
          over := &null 
-         set_pointer()
       }
    end
 
