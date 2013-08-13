@@ -1018,12 +1018,16 @@ class Img(Image)
    end
 
    private handle_in_chain(e)
-      local u, t, a
+      local u, t, a, f
       *parent_dialog.held = 0 | fail
+      if e.code === (Key.SHIFT_L | Key.SHIFT_R) then {
+         if /e.release then
+            f := 1
+      } else f := \e.shift
       t := which_area(e)
       a := (\t).title
       set_tooltip(a)
-      if u := \ (\t).url then {
+      if /f & (u := \ (\t).url) then {
          if wrote ~=== u then {
             set_pointer("hand1")
             browser.msg(u.str(),, self)
