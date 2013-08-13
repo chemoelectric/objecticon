@@ -1118,7 +1118,19 @@ class Key()
       SUPER_L,
       SUPER_R,
       MENU,
-      NAVIGATE
+      NAVIGATE,
+      SHIFT_L,
+      SHIFT_R,
+      CONTROL_L,
+      CONTROL_R,
+      CAPS_LOCK,
+      SHIFT_LOCK,
+      META_L,
+      META_R,
+      ALT_L,
+      ALT_R,
+      HYPER_L,
+      HYPER_R
 
    private static init()
       MOD_SHIFT :=    1
@@ -1205,6 +1217,19 @@ $ifdef _X_WINDOW_SYSTEM
       SUPER_L :=             65515
       SUPER_R :=             65516
       MENU :=                65383
+      SHIFT_L :=             65505
+      SHIFT_R :=             65506
+      CONTROL_L :=           65507
+      CONTROL_R :=           65508
+      CAPS_LOCK :=           65509
+      SHIFT_LOCK :=          65510
+      META_L :=              65511
+      META_R :=              65512
+      ALT_L :=               65513
+      ALT_R :=               65514
+      HYPER_L :=             65517
+      HYPER_R :=             65518
+
 $elsifdef _MS_WIN32
       DOWN :=               40
       END :=                35
