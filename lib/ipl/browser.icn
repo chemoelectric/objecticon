@@ -873,7 +873,7 @@ class Img(Image)
    public const
       browser, context, form, img_url, alt, bg_area
    private readable
-      wrote, img_data, img_name, map, map_id, held, err, highlight
+      over, img_data, img_name, map, map_id, held, err, highlight
 
    package got_data(res)
       local iw, ih
@@ -917,9 +917,9 @@ class Img(Image)
       local pm, pm_menu
       *parent_dialog.held = 1 | fail
       if pm_menu := browser.create_image_menu(self) then {
-         set_highlight(wrote)
+         set_highlight(over)
          browser.clear_msg(self)
-         wrote := &null
+         over := &null
          set_pointer()
          pm := PopupMenu()
          pm.connect(on_popup_closed, Event.POPUP_CLOSED)
@@ -932,17 +932,17 @@ class Img(Image)
    end
 
    private handle_lrelease(e, src)
-      if \wrote then {
+      if \over then {
          set_highlight()
-         browser.link_left_clicked(wrote)
+         browser.link_left_clicked(over)
       }
       held := &null
    end
 
    private handle_mrelease(e)
-      if \wrote then {
+      if \over then {
          set_highlight()
-         browser.link_middle_clicked(wrote)
+         browser.link_middle_clicked(over)
       }
       held := &null
    end
@@ -954,9 +954,9 @@ class Img(Image)
 
    private handle_exit(e)
       *parent_dialog.held = 0 | fail
-      if \wrote then {
+      if \over then {
          browser.clear_msg(self)
-         wrote := &null
+         over := &null
          set_pointer()
       }
    end
@@ -980,9 +980,9 @@ class Img(Image)
 
    private handle_lmpress(e)
       *parent_dialog.held = 1 | fail
-      if \wrote then {
-         set_highlight(wrote)
-         held := wrote
+      if \over then {
+         set_highlight(over)
+         held := over
       }
    end
 
@@ -999,22 +999,22 @@ class Img(Image)
    private handle_lmdrag(e)
       \held | fail
       if \which_area(e).url === held then {
-         if wrote ~=== held then {
+         if over ~=== held then {
             set_pointer("hand1")
             browser.msg(held.str(),, self)
-            wrote := held
-            set_highlight(wrote)
+            over := held
+            set_highlight(over)
          }
-      } else if \wrote then {
+      } else if \over then {
          browser.clear_msg(self)
          set_highlight()
-         wrote := &null
+         over := &null
          set_pointer()
       }
    end
 
    package wants_lpress(e)
-      return \wrote | \form
+      return \over | \form
    end
 
    private handle_in_chain(e)
@@ -1028,14 +1028,14 @@ class Img(Image)
       a := (\t).title
       set_tooltip(a)
       if /f & (u := \ (\t).url) then {
-         if wrote ~=== u then {
+         if over ~=== u then {
             set_pointer("hand1")
             browser.msg(u.str(),, self)
-            wrote := u
+            over := u
          }
-      } else if \wrote then {
+      } else if \over then {
          browser.clear_msg(self)
-         wrote := &null
+         over := &null
          set_pointer()
       }
    end
