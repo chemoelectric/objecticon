@@ -918,9 +918,7 @@ class Img(Image)
       *parent_dialog.held = 1 | fail
       if pm_menu := browser.create_image_menu(self) then {
          set_highlight(over)
-         browser.clear_msg(self)
-         over := &null
-         set_pointer()
+         set_over()
          pm := PopupMenu()
          pm.connect(on_popup_closed, Event.POPUP_CLOSED)
          pm.popup(parent_dialog, pm_menu, e.x, e.y)
@@ -936,8 +934,7 @@ class Img(Image)
       if \over then {
          set_highlight()
          browser.link_left_clicked(over)
-      } else
-         set_pointer()
+      }
       held := &null
    end
 
@@ -946,8 +943,7 @@ class Img(Image)
       if \over then {
          set_highlight()
          browser.link_middle_clicked(over)
-      } else
-         set_pointer()
+      }
       held := &null
    end
 
@@ -958,11 +954,7 @@ class Img(Image)
 
    private handle_exit(e)
       *parent_dialog.held = 0 | fail
-      if \over then {
-         browser.clear_msg(self)
-         over := &null
-         set_pointer()
-      }
+      set_over()
    end
 
    package gen_areas()
@@ -990,28 +982,37 @@ class Img(Image)
       }
    end
 
-   private set_highlight(u)
-      # Avoid resetting since that will reload the image data, which is slow.
-      if not(is(border, NullBorder | EmptyBorder) | highlight === u) then {
-         set_fg(if \u then browser.page_alink_color else context.fg)
-         reset()
+   private set_over(u)
+      if u ~=== over then {
+         over := u
+         if /over then
+            browser.clear_msg(self)
+         else
+            browser.msg(over.str(),, self)
       }
-      highlight := u
+      return self
+   end
+
+   private set_highlight(u)
+      if u ~=== highlight then {
+         # Avoid resetting since that will reload the image data, which is slow.
+         is(border, NullBorder | EmptyBorder) | {
+            set_fg(if \u then browser.page_alink_color else context.fg)
+            reset()
+         }
+         highlight := u
+      }
       return self
    end
 
    private handle_lmdrag(e)
       \held | fail
       if \which_area(e).url === held then {
-         if over ~=== held then {
-            browser.msg(held.str(),, self)
-            over := held
-            set_highlight(over)
-         }
-      } else if \over then {
-         browser.clear_msg(self)
+         set_over(held)
+         set_highlight(held)
+      } else {
+         set_over()
          set_highlight()
-         over := &null
       }
    end
 
@@ -1030,14 +1031,10 @@ class Img(Image)
       a := (\t).title
       set_tooltip(a)
       if /f & (u := \ (\t).url) then {
-         if over ~=== u then {
-            set_pointer("hand1")
-            browser.msg(u.str(),, self)
-            over := u
-         }
-      } else if \over then {
-         browser.clear_msg(self)
-         over := &null
+         set_over(u)
+         set_pointer("hand1")
+      } else {
+         set_over()
          set_pointer()
       }
    end

@@ -1059,8 +1059,8 @@ class BrowserTab(TabItem, BrowserUI)
       m.add(TextMenuItem().
             set_label("Copy image").
             connect(create copy_link(url), Event.ACTION))
-      if \img.wrote then
-         populate_link_menu(img.wrote, m)
+      if \img.over then
+         populate_link_menu(img.over, m)
       if \img.img_data then
          m.add(TextMenuItem().
                set_label("Save image...").
