@@ -502,6 +502,7 @@ class Dialog(Component)
    public resynch_pointer()
       if \point_chain_source then {
          create_point_chain(point_chain_source)
+         generate_crossing_events(point_chain_source) 
          synch_pointer(point_chain_source)
       }
    end

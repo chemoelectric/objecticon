@@ -2,22 +2,36 @@ static word coact_impl_code[] = {
    Op_Custom,
    (word)coact_ex,
    Op_Tmp,
-   4,
+   3,
    Op_Tmp,
    0,
    Op_Tmp,
    1,
    Op_Tmp,
    2,
-   Op_Tmp,
-   3,
-   (word)&coact_impl_code[16],
+   (word)&coact_impl_code[14],
    Op_CReturn,
    Op_Tmp,
-   4,
+   3,
    Op_CFail,
 };
-#passthru CustomProc(coact_impl,coact_impl_code,0,0,0,0,5,0,0,"coact_impl")
+#passthru CustomProc(coact_impl,coact_impl_code,0,0,0,0,4,0,0,"coact_impl")
+static word cofail_impl_code[] = {
+   Op_Custom,
+   (word)cofail_ex,
+   Op_Tmp,
+   2,
+   Op_Tmp,
+   0,
+   Op_Tmp,
+   1,
+   (word)&cofail_impl_code[12],
+   Op_CReturn,
+   Op_Tmp,
+   2,
+   Op_CFail,
+};
+#passthru CustomProc(cofail_impl,cofail_impl_code,0,0,0,0,3,0,0,"cofail_impl")
 static word lang_Prog_get_event_impl_impl_code[] = {
    Op_Custom,
    (word)activate_child_prog,

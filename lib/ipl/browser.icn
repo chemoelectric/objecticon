@@ -889,7 +889,7 @@ class Img(Image)
    public const
       browser, context, form, img_url, alt, bg_area
    private readable
-      wrote, img_data, img_name, map, map_id, held, err, highlight
+      over, img_data, img_name, map, map_id, held, err, highlight
 
    package got_data(res)
       local iw, ih
@@ -933,10 +933,8 @@ class Img(Image)
       local pm, pm_menu
       *parent_dialog.held = 1 | fail
       if pm_menu := browser.create_image_menu(self) then {
-         set_highlight(wrote)
-         browser.clear_msg(self)
-         wrote := &null
-         set_pointer()
+         set_highlight(over)
+         set_over()
          pm := PopupMenu()
          pm.connect(on_popup_closed, Event.POPUP_CLOSED)
          pm.popup(parent_dialog, pm_menu, e.x, e.y)
@@ -948,17 +946,19 @@ class Img(Image)
    end
 
    private handle_lrelease(e, src)
-      if \wrote then {
+      \held | fail
+      if \over then {
          set_highlight()
-         browser.link_left_clicked(wrote)
+         browser.link_left_clicked(over)
       }
       held := &null
    end
 
    private handle_mrelease(e)
-      if \wrote then {
+      \held | fail
+      if \over then {
          set_highlight()
-         browser.link_middle_clicked(wrote)
+         browser.link_middle_clicked(over)
       }
       held := &null
    end
@@ -970,11 +970,7 @@ class Img(Image)
 
    private handle_exit(e)
       *parent_dialog.held = 0 | fail
-      if \wrote then {
-         browser.clear_msg(self)
-         wrote := &null
-         set_pointer()
-      }
+      set_over()
    end
 
    package gen_areas()
@@ -996,58 +992,65 @@ class Img(Image)
 
    private handle_lmpress(e)
       *parent_dialog.held = 1 | fail
-      if \wrote then {
-         set_highlight(wrote)
-         held := wrote
+      if \over then {
+         set_highlight(over)
+         held := over
       }
    end
 
-   private set_highlight(u)
-      # Avoid resetting since that will reload the image data, which is slow.
-      if not(is(border, NullBorder | EmptyBorder) | highlight === u) then {
-         set_fg(if \u then browser.page_alink_color else context.fg)
-         reset()
+   private set_over(u)
+      if u ~=== over then {
+         over := u
+         if /over then
+            browser.clear_msg(self)
+         else
+            browser.msg(over.str(),, self)
       }
-      highlight := u
+      return self
+   end
+
+   private set_highlight(u)
+      if u ~=== highlight then {
+         # Avoid resetting since that will reload the image data, which is slow.
+         is(border, NullBorder | EmptyBorder) | {
+            set_fg(if \u then browser.page_alink_color else context.fg)
+            reset()
+         }
+         highlight := u
+      }
       return self
    end
 
    private handle_lmdrag(e)
       \held | fail
       if \which_area(e).url === held then {
-         if wrote ~=== held then {
-            set_pointer("hand1")
-            browser.msg(held.str(),, self)
-            wrote := held
-            set_highlight(wrote)
-         }
-      } else if \wrote then {
-         browser.clear_msg(self)
+         set_over(held)
+         set_highlight(held)
+      } else {
+         set_over()
          set_highlight()
-         wrote := &null
-         set_pointer()
       }
    end
 
    package wants_lpress(e)
-      return \wrote | \form
+      return \over | \form
    end
 
    private handle_in_chain(e)
-      local u, t, a
+      local u, t, a, f
       *parent_dialog.held = 0 | fail
+      if e.code === (Key.SHIFT_L | Key.SHIFT_R) then {
+         if /e.release then
+            f := 1
+      } else f := \e.shift
       t := which_area(e)
       a := (\t).title
       set_tooltip(a)
-      if u := \ (\t).url then {
-         if wrote ~=== u then {
-            set_pointer("hand1")
-            browser.msg(u.str(),, self)
-            wrote := u
-         }
-      } else if \wrote then {
-         browser.clear_msg(self)
-         wrote := &null
+      if /f & (u := \ (\t).url) then {
+         set_over(u)
+         set_pointer("hand1")
+      } else {
+         set_over()
          set_pointer()
       }
    end

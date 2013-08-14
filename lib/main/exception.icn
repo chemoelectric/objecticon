@@ -22,7 +22,7 @@ procedure throw(x)
    }
    thrown := x
    thrower := &current
-   coact(, throw_handler,, 1)
+   cofail(throw_handler)
    runerr("throw(): code co-expression reactivated unexpectedly")
 end
 
@@ -33,7 +33,7 @@ end
 procedure rethrow()
    \throw_handler | runerr("rethrow(): no handler set")
    \thrower | runerr("rethrow(): no exception current")
-   coact(, throw_handler,, 1)
+   cofail(throw_handler)
    runerr("rethrow(): code co-expression reactivated unexpectedly")
 end
 
