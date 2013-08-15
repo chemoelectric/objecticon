@@ -25,6 +25,12 @@ abstract class DropDown(Component, MenuMode)
 
    public abstract create_popup()
 
+   public create_button()
+      return IconButton().
+         set_width(ScrollArea.predict_scrollbar_size()).
+         set_paint(ImagePaint().set_cache("gui.ARROW_DOWN"))
+   end
+
    public close_all()
       close_popup()
    end
@@ -263,10 +269,8 @@ abstract class DropDown(Component, MenuMode)
       cast(self,Component).new()
       self.set_border(SunkenBorder())
       # Make the same width as the button in the scrollbar of the dropdown.
-      self.b := IconButton().
-         set_width(ScrollArea.predict_scrollbar_size()).
+      self.b := create_button().
          connect(self.on_button_press, Event.BUTTON_PRESS).
-         set_paint(ImagePaint().set_cache("gui.ARROW_DOWN")).
          set_accepts_focus(&no)
       self.direction := Direction.BEST
       self.add(b)

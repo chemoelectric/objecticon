@@ -71,5 +71,35 @@ class List(SelectionDropDown)
    end
 end
 
+# A subclass of `List` which has a null border and a zero size view,
+# leaving just the button visible.  The button can then be customized
+# by overriding `create_button`, giving a `List` with just a button.
+#
+abstract class ButtonOnlyList(List)
+   public layout()
+      view.x := b.x := x
+      view.y := b.y := y
+      b.w := w
+      b.h := h
+      view.w := view.h := 0
+      b.layout()
+      view.layout()
+   end
+
+   public get_default_width()
+      return b.get_preferred_width()
+   end
+
+   public get_default_height(dw)
+      return b.get_preferred_height(dw)
+   end
+
+   public new()
+      cast(self,List).new()
+      view.set_accepts_focus(&no)
+      set_border(NullBorder())
+      return
+   end
+end
 
 
