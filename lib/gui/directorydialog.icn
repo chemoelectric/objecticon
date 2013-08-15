@@ -46,16 +46,12 @@ class DirectoryDialog(Dialog)
    end
 
    public component_setup()
-      local root_node, d, t
+      local root_node, d
       #
       # Defaults and extra dirs.
       #
       /init_dirs := []
-      t := copy(init_dirs)
-      every put(t,
-                Files.getcwd() | 
-                FavouriteDirectoriesDialog.gen_directories())
-      dir.set_selection_list(lunique(FileDialog.ucs_list(t))).set_selection(1)
+      dir.set_selection_list(get_favourites_directories()).set_selection(1)
       root_node := TreeNode()
       every d := Files.get_roots() do
          root_node.add(TreeNode().set_label(ListEntry(ucs(d), Files.lstat(d), Files.stat(d))).set_always_expandable(&yes))
@@ -339,16 +335,21 @@ $endif
    public end_dialog()
    end
 
-   public on_favourite_dirs_menu_item(ev)
-      local d, t
-      d := FavouriteDirectoriesDialog()
-      d.show_modal(self)
-      \d.okay | fail
+   public get_favourites_directories()
+      local t
       t := copy(init_dirs)
       every put(t,
                 Files.getcwd() | 
                 FavouriteDirectoriesDialog.gen_directories())
-      dir.selection_list := lunique(FileDialog.ucs_list(t))
+      return lunique(FileDialog.ucs_list(t))
+   end
+
+   public on_favourite_dirs_menu_item(ev)
+      local d
+      d := FavouriteDirectoriesDialog()
+      d.show_modal(self)
+      \d.okay | fail
+      dir.selection_list := get_favourites_directories()
       dir.constrain_selection().synch_selection()
    end
 
