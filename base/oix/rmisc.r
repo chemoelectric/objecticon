@@ -1080,6 +1080,44 @@ struct ipc_fname *find_ipc_fname(word *ipc, struct progstate *p)
    return 0;
 }
 
+#if UNIX
+static int should_esc(FILE *f)
+{
+    return isatty(fileno(f)) && getenv("TERMLINKS");
+}
+
+void begin_esc(FILE *f, dptr fname, word line)
+{
+    char *s;
+    int i;
+    if (!should_esc(f))
+        return;
+    fprintf(f, "\x1b[\"f=");
+    i = StrLen(*fname);
+    s = StrLoc(*fname);
+    while (i-- > 0) {
+        if (*s == '\"' || *s == '%')
+            fprintf(f, "%%%02x", *s & 0xff);
+        else
+            fputc(*s, f);
+        s++;
+    }
+    fputs("\"", f);
+    if (line)
+        fprintf(f, ";\"line=%d\"", (int)line);
+    fputs(";\"ct=text/plain\"", f);
+    fputs("Z", f);
+}
+
+void end_esc(FILE *f)
+{
+    if (should_esc(f))
+        fputs("\x1b[Z", f);
+}
+#else
+void begin_esc(FILE *f, dptr fname, word line) {}
+void end_esc(FILE *f) {}
+#endif
 
 /*
  * Get the last path element of the given filename and put the result

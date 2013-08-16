@@ -6,7 +6,7 @@ class ErrorDetail()
    public const src, line, msg
 
    # Does the same as abbreviate() in tmain.c
-   private abbreviate(name)
+   private static abbreviate(name)
       local l
       l := FilePath(name).get(-1)
       return if Files.access(name, Access.R_OK) then {
@@ -18,15 +18,34 @@ class ErrorDetail()
       l
    end
 
+   # Produce a string version of the message in the same form as
+   # produced by the compiler, including embedded filename and line
+   # no.
+   #
+   public esc_str()
+      local s
+      if \src then
+         s := Files.begin_esc(src) || "File " || abbreviate(src) || "; "
+      else
+         s := ""
+      s ||:= "Line " || line
+      if \src then
+         s ||:= Files.end_esc()
+      s ||:= " # " || msg
+      return s
+   end
+
    #
    # Produce a string version of the message in the same form
    # as produced by the compiler.
    #
    public str()
       local s
-      s := "Line " || line || " # " || msg
       if \src then
-         s := "File " || abbreviate(src) || "; " || s
+         s := "File " || abbreviate(src) || "; "
+      else
+         s := ""
+      s ||:= "Line " || line || " # " || msg
       return s
    end
 

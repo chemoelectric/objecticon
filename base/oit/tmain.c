@@ -554,6 +554,41 @@ void quit(char *fmt, ...)
     exit(EXIT_FAILURE);
 }
 
+#if UNIX
+static int should_esc(FILE *f)
+{
+    return isatty(fileno(f)) && getenv("TERMLINKS");
+}
+
+void begin_esc(FILE *f, char *fname, int line)
+{
+    char *s;
+    if (!should_esc(f))
+        return;
+    fprintf(f, "\x1b[\"f=");
+    for (s = fname; *s; ++s) {
+        if (*s == '\"' || *s == '%')
+            fprintf(f, "%%%02x", *s & 0xff);
+        else
+            fputc(*s, f);
+    }
+    fputs("\"", f);
+    if (line)
+        fprintf(f, ";\"line=%d\"", line);
+    fputs(";\"ct=text/plain\"", f);
+    fputs("Z", f);
+}
+
+void end_esc(FILE *f)
+{
+    if (should_esc(f))
+        fputs("\x1b[Z", f);
+}
+#else
+void begin_esc(FILE *f, char *fname, int line) {}
+void end_esc(FILE *f) {}
+#endif
+
 /*
  * The given name is a canonical reference to a source file.  If it
  * exists and represents a file in the current directory, just the

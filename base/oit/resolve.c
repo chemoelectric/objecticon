@@ -57,10 +57,17 @@ static struct gentry *rres_found, *rres_ambig;
 
 static void print_clash(void)
 {
-    fprintf(stderr, "\t%s (File %s; Line %d)\n", 
-            rres_found->name, abbreviate(rres_found->pos.file), rres_found->pos.line);
-    fprintf(stderr, "\t%s (File %s; Line %d)\n", 
-            rres_ambig->name, abbreviate(rres_ambig->pos.file), rres_ambig->pos.line);
+    fprintf(stderr, "\t%s (", rres_found->name);
+    begin_esc(stderr, rres_found->pos.file, rres_found->pos.line);
+    fprintf(stderr, "File %s; Line %d", 
+            abbreviate(rres_found->pos.file), rres_found->pos.line);
+    end_esc(stderr);
+    fprintf(stderr, ")\n\t%s (", rres_ambig->name);
+    begin_esc(stderr, rres_ambig->pos.file, rres_ambig->pos.line);
+    fprintf(stderr, "File %s; Line %d", 
+            abbreviate(rres_ambig->pos.file), rres_ambig->pos.line);
+    end_esc(stderr);
+    fputs(")\n", stderr);
 }
 
 /*
@@ -366,28 +373,24 @@ static void merge(struct lclass *cl, struct lclass *super)
             if (!(f->flag & M_Static) &&
                 !(((fr->field->flag & (M_Method | M_Static)) == M_Method) 
                        && ((f->flag & (M_Method | M_Static)) == M_Method)))
-                lfatal(fr->field->class->global->defined,
-                       &fr->field->pos,
-                       "Inheritance clash: field '%s' encountered in class %s and class %s (File %s; Line %d)",
-                       f->name,
-                       fr->field->class->global->name,
-                       f->class->global->name,
-                       abbreviate(f->pos.file),
-                       f->pos.line
+                lfatal2(fr->field->class->global->defined,
+                        &fr->field->pos, &f->pos, ")",
+                        "Inheritance clash: field '%s' encountered in class %s and class %s (",
+                        f->name,
+                        fr->field->class->global->name,
+                        f->class->global->name
                     );
             /*
              * If the new field is final, then fr cannot override it.  Note that the translator
              * ensures only non-static methods can be marked final.
              */
             else if (f->flag & M_Final)
-                lfatal(fr->field->class->global->defined,
-                       &fr->field->pos,
-                       "Field %s encountered in class %s overrides a final field in class %s (File %s; Line %d)",
-                       f->name,
-                       fr->field->class->global->name,
-                       f->class->global->name,
-                       abbreviate(f->pos.file),
-                       f->pos.line
+                lfatal2(fr->field->class->global->defined,
+                        &fr->field->pos, &f->pos, ")",
+                        "Field %s encountered in class %s overrides a final field in class %s (",
+                        f->name,
+                        fr->field->class->global->name,
+                        f->class->global->name
                     );
         } else {
             /* Not found, so add it */
@@ -397,10 +400,9 @@ static void merge(struct lclass *cl, struct lclass *super)
             cl->implemented_field_hash[i] = fr;
             if (f->flag & (M_Method | M_Static)) {
                 if (!(cl->flag & M_Abstract) && (f->flag & M_Abstract))
-                    lfatal(cl->global->defined, &cl->global->pos,
-                           "Resolved class %s contains an abstract method %s (File %s; Line %d), but is not itself declared abstract",
-                           cl->global->name, f->name,
-                           abbreviate(f->pos.file), f->pos.line);
+                    lfatal2(cl->global->defined, &cl->global->pos, &f->pos, "), but is not itself declared abstract",
+                            "Resolved class %s contains an abstract method %s (",
+                            cl->global->name, f->name);
 
                 if (cl->last_implemented_class_field) {
                     cl->last_implemented_class_field->next = fr;

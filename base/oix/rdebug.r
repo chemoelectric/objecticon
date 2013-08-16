@@ -167,7 +167,10 @@ static void trace_at(struct p_frame *pf)
     if (pfile && pline) {
         struct descrip t;
         abbr_fname(pfile->fname, &t);
-        fprintf(stderr, "   at line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
+        fputs("   at ", stderr);
+        begin_esc(stderr, pfile->fname, pline->line);
+        fprintf(stderr, "line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
+        end_esc(stderr);
     } else
         fprintf(stderr, "   at ?");
     putc('\n', stderr);
@@ -196,7 +199,10 @@ static void trace_frame(struct p_frame *pf)
     if (pline && pfile) {
         struct descrip t;
         abbr_fname(pfile->fname, &t);
-        fprintf(stderr, " from line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
+        fputs(" from ", stderr);
+        begin_esc(stderr, pfile->fname, pline->line);
+        fprintf(stderr, "line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
+        end_esc(stderr);
     }
     putc('\n', stderr);
 }
@@ -616,7 +622,10 @@ static void xtrace()
     if (pfile && pline) {
         struct descrip t;
         abbr_fname(pfile->fname, &t);
-        fprintf(stderr, " from line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
+        fputs(" from ", stderr);
+        begin_esc(stderr, pfile->fname, pline->line);
+        fprintf(stderr, "line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
+        end_esc(stderr);
     } else
         fprintf(stderr, " from ?");
 

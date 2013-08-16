@@ -3,6 +3,7 @@ package io
 import 
    lang,
    util,
+   net,
    posix,
    ipl.random
 
@@ -523,6 +524,27 @@ $endif
          insert(seen, f, t)
          return t
       }
+   end
+
+   #
+   # Return the opening escape sequence for an embedded link
+   #
+   public static begin_esc(f, line, ct)
+      local s
+      s := "\e[\"f=" || URL.percent_encode(f, URL.CGI_UNRESERVED ++ '/') || "\""
+      if \line then
+         s ||:= ";\"line=" || line || "\""
+      /ct := "text/plain"
+      s ||:= ";\"ct=" || ct || "\""
+      s ||:= "Z"
+      return s
+   end
+
+   #
+   # Return the closing escape sequence for an embedded link
+   #
+   public static end_esc()
+      return "\e[Z"
    end
 end
 

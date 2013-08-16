@@ -581,6 +581,6 @@ class Preprocessor(Connectable)
 
    private err(msg)
       /msg := "Invalid preprocessor line"
-      fire("error", ErrorDetail(preproc_filename, preproc_line, msg))
+      fire("error", ErrorDetail(FilePath(preproc_filename).canonical().str(), preproc_line, msg))
    end
 end

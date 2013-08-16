@@ -104,9 +104,8 @@ void readglob(struct lfile *lf)
                 name = uin_fqid(lf->package);
                 gp = glocate(name);
                 if (gp) {
-                    lfatal(lf, &pos, 
-                           "class %s declared elsewhere at %s: Line %d", 
-                           name, abbreviate(gp->pos.file), gp->pos.line);
+                    lfatal2(lf, &pos, &gp->pos, "",
+                            "class %s declared elsewhere at ", name);
                     curr_class = 0;
                 } else {
                     gp = putglobal(name, F_Class, lf, &pos);
@@ -151,9 +150,8 @@ void readglob(struct lfile *lf)
                 name = uin_fqid(lf->package);	/* record name */
                 gp = glocate(name);
                 if (gp) {
-                    lfatal(lf, &pos, 
-                           "record %s declared elsewhere at %s: Line %d", 
-                           name, abbreviate(gp->pos.file), gp->pos.line);
+                    lfatal2(lf, &pos, &gp->pos, "",
+                            "record %s declared elsewhere at ", name);
                     curr_record = 0;
                 } else {
                     gp = putglobal(name, F_Record, lf, &pos);
@@ -173,9 +171,8 @@ void readglob(struct lfile *lf)
                 name = uin_fqid(lf->package);	/* get variable name */
                 gp = glocate(name);
                 if (gp)
-                    lfatal(lf, &pos, 
-                           "procedure %s declared elsewhere at %s: Line %d", 
-                           name, abbreviate(gp->pos.file), gp->pos.line);
+                    lfatal2(lf, &pos, &gp->pos, "",
+                           "procedure %s declared elsewhere at ", name);
                 else
                     gp = putglobal(name, F_Proc, lf, &pos);
                 curr_func = gp->func = Alloc(struct lfunction);
@@ -214,9 +211,8 @@ void readglob(struct lfile *lf)
                 name = uin_fqid(lf->package);	/* get variable name */
                 gp = glocate(name);
                 if (gp)
-                    lfatal(lf, &pos, 
-                           "global %s declared elsewhere at %s: Line %d", 
-                           name, abbreviate(gp->pos.file), gp->pos.line);
+                    lfatal2(lf, &pos, &gp->pos, "",
+                            "global %s declared elsewhere at ", name);
                 else
                     putglobal(name, 0, lf, &pos);
                 break;

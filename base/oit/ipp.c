@@ -541,7 +541,10 @@ static void ppdir(char *s)
 static void pfatal(char *fmt, ...)
 {
     va_list argp;
-    fprintf(stderr, "File %s; Line %ld # ", curfile->fname, curfile->lno);
+    begin_esc(stderr, canonicalize(curfile->fname), curfile->lno);
+    fprintf(stderr, "File %s; Line %ld", curfile->fname, curfile->lno);
+    end_esc(stderr);
+    fputs(" # ", stderr);
     va_start(argp, fmt);
     vfprintf(stderr, fmt, argp);
     putc('\n', stderr);
