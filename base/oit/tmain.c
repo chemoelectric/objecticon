@@ -562,22 +562,11 @@ static int should_esc(FILE *f)
 
 void begin_esc(FILE *f, char *fname, int line)
 {
-    char *s, *host = 0;
-#if HAVE_UNAME
-    struct utsname utsn;
-#else
-    char buff[256];
-#endif
+    char *s, *host;
     if (!should_esc(f))
         return;
-#if HAVE_UNAME
-    if (uname(&utsn) >= 0)
-        host = utsn.nodename;
-#else
-    if (gethostname(buff, sizeof(buff)) >= 0)
-        host = buff;
-#endif
     fprintf(f, "\x1b[\"url=file://");
+    host = get_hostname();
     if (host)
         fputs(host, f);
     for (s = fname; *s; ++s) {
