@@ -1088,14 +1088,13 @@ static int should_esc(FILE *f)
 
 void begin_esc(FILE *f, dptr fname, word line)
 {
-    char *s, *host;
+    char *s;
     int i;
     if (!should_esc(f))
         return;
     fprintf(f, "\x1b[\"url=file://");
-    host = get_hostname();
-    if (host)
-        fputs(host, f);
+    if ((s = get_hostname()))
+        fputs(s, f);
     i = StrLen(*fname);
     s = StrLoc(*fname);
     while (i-- > 0) {

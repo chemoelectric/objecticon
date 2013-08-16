@@ -562,13 +562,12 @@ static int should_esc(FILE *f)
 
 void begin_esc(FILE *f, char *fname, int line)
 {
-    char *s, *host;
+    char *s;
     if (!should_esc(f))
         return;
     fprintf(f, "\x1b[\"url=file://");
-    host = get_hostname();
-    if (host)
-        fputs(host, f);
+    if ((s = get_hostname()))
+        fputs(s, f);
     for (s = fname; *s; ++s) {
         if (strchr(URL_UNRESERVED, *s))
             fputc(*s, f);
