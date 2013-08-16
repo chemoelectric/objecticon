@@ -79,6 +79,8 @@ struct str_buf {
 extern int utf8_seq_len_arr[];
 #define UTF8_SEQ_LEN(ch) utf8_seq_len_arr[(ch) & 0xff]
 
+#define URL_UNRESERVED "/-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz~"
+
 /* Data structures for cset char ranges */
 
 struct range {

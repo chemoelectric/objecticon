@@ -1088,18 +1088,32 @@ static int should_esc(FILE *f)
 
 void begin_esc(FILE *f, dptr fname, word line)
 {
-    char *s;
+    char *s, *host = 0;
     int i;
+#if HAVE_UNAME
+    struct utsname utsn;
+#else
+    char buff[256];
+#endif
     if (!should_esc(f))
         return;
-    fprintf(f, "\x1b[\"f=");
+#if HAVE_UNAME
+    if (uname(&utsn) >= 0)
+        host = utsn.nodename;
+#else
+    if (gethostname(buff, sizeof(buff)) >= 0)
+        host = buff;
+#endif
+    fprintf(f, "\x1b[\"url=file://");
+    if (host)
+        fputs(host, f);
     i = StrLen(*fname);
     s = StrLoc(*fname);
     while (i-- > 0) {
-        if (*s == '\"' || *s == '%')
-            fprintf(f, "%%%02x", *s & 0xff);
-        else
+        if (strchr(URL_UNRESERVED, *s))
             fputc(*s, f);
+        else
+            fprintf(f, "%%%02x", *s & 0xff);
         s++;
     }
     fputs("\"", f);
