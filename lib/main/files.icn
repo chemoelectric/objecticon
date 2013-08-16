@@ -534,8 +534,8 @@ $endif
       s := "\e[\"url=file://" || &host || URL.percent_encode(f, URL.UNRESERVED ++ '/') || "\""
       if \line then
          s ||:= ";\"line=" || line || "\""
-      /ct := "text/plain"
-      s ||:= ";\"ct=" || ct || "\""
+      if \ct then
+         s ||:= ";\"ct=" || ct || "\""
       s ||:= "Z"
       return s
    end

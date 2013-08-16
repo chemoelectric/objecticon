@@ -25,7 +25,7 @@ class ErrorDetail()
    public esc_str()
       local s
       if \src then
-         s := Files.begin_esc(src) || "File " || abbreviate(src) || "; "
+         s := Files.begin_esc(src, line, "text/plain") || "File " || abbreviate(src) || "; "
       else
          s := ""
       s ||:= "Line " || line
