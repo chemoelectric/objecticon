@@ -1874,6 +1874,8 @@ class PttyStream(FileStream)
    private readable 
       slave_name
 
+   public native set_size(cols, rows)
+
    private static native new_impl()
    private static native prepare_slave(f)
 

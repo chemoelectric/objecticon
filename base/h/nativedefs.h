@@ -209,6 +209,7 @@ NativeDef(io.SocketStream,socketpair_impl,io_SocketStream_socketpair_impl)
 NativeDef(io.PttyStream,new_impl,io_PttyStream_new_impl)
 #if UNIX
 NativeDef(io.PttyStream,prepare_slave,io_PttyStream_prepare_slave)
+NativeDef(io.PttyStream,set_size,io_PttyStream_set_size)
 #endif
 #if MSWIN32
 NativeDef(io.WindowsFileSystem,getdcwd,io_WindowsFileSystem_getdcwd)

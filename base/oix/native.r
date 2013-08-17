@@ -3732,4 +3732,22 @@ function io_PttyStream_prepare_slave(f)
        return nulldesc;
     }
 end
+
+function io_PttyStream_set_size(self, cols, rows)
+   if !cnv:C_integer(rows) then
+      runerr(101, rows)
+   if !cnv:C_integer(cols) then
+      runerr(101, cols)
+    body {
+       struct winsize ws;
+       GetSelfFd();
+       ws.ws_row = rows;
+       ws.ws_col = cols;
+       if (ioctl(self_fd, TIOCSWINSZ, &ws) < 0) {
+           errno2why();
+           fail;
+       }
+       return self;
+    }
+end
 #endif
