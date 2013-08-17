@@ -51,5 +51,7 @@ int main(int argc, char **argv);
 void report(char *fmt, ...);
 void quit(char *fmt, ...);
 char *abbreviate(char *path);
+void begin_esc(FILE *f, char *fname, int line);
+void end_esc(FILE *f);
 
 #endif

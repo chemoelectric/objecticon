@@ -233,8 +233,6 @@ end
 #begdef ERRFUNC()
 {
     word err_num;
-    char *s;
-    int j;
 
     if (cnv:C_integer(i, err_num)) {
         char *em;
@@ -267,14 +265,11 @@ end
         return;
     }
 
-    s = StrLoc(k_errortext);
-    j = StrLen(k_errortext);
     if (k_errornumber > 0)
         fprintf(stderr, "\nRun-time error %d\n", k_errornumber);
     else 
         fprintf(stderr, "\nRun-time error: ");
-    while (j-- > 0)
-        fputc(*s++, stderr);
+    putstr(stderr, &k_errortext);
     fputc('\n', stderr);
 
     checkfatalrecurse();
@@ -332,7 +327,10 @@ function syserr(msg)
       if (pline && pfile) {
           struct descrip t;
           abbr_fname(pfile->fname, &t);
-          fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), (int)pline->line);
+          begin_esc(stderr, pfile->fname, pline->line);
+          fprintf(stderr, "File %.*s; Line %d", (int)StrLen(t), StrLoc(t), (int)pline->line);
+          end_esc(stderr);
+          fputc('\n', stderr);
       } else
           fprintf(stderr, "File ?; Line ?\n");
 

@@ -1041,3 +1041,20 @@ unsigned int hashcstr(char *s)
     return h;
 }
 
+/*
+ * Get the hostname, returning a pointer to static data, or NULL on error.
+ */
+char *get_hostname()
+{
+#if HAVE_UNAME
+    static struct utsname utsn;
+    if (uname(&utsn) < 0)
+        return 0;
+    return utsn.nodename;
+#else
+    static char buff[256];
+    if (gethostname(buff, sizeof(buff)) < 0)
+        return 0;
+    return buff;
+#endif
+}

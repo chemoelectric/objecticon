@@ -198,21 +198,21 @@ void err_msg(int n, dptr v)
 
     if (set_up) {
         if (is:null(kywd_handler)) {
-            char *s = StrLoc(k_errortext);
-            int i = StrLen(k_errortext);
             struct ipc_line *pline;
             struct ipc_fname *pfile;
             if (k_errornumber == -1) {
                 fprintf(stderr, "\nRun-time error: ");
-                while (i-- > 0)
-                    fputc(*s++, stderr);
+                putstr(stderr, &k_errortext);
                 fputc('\n', stderr);
                 pline = frame_ipc_line(curr_pf);
                 pfile = frame_ipc_fname(curr_pf);
                 if (pline && pfile) {
                     struct descrip t;
                     abbr_fname(pfile->fname, &t);
-                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), (int)pline->line);
+                    begin_esc(stderr, pfile->fname, pline->line);
+                    fprintf(stderr, "File %.*s; Line %d", (int)StrLen(t), StrLoc(t), (int)pline->line);
+                    end_esc(stderr);
+                    fputc('\n', stderr);
                 } else
                     fprintf(stderr, "File ?; Line ?\n");
             } else {
@@ -222,11 +222,13 @@ void err_msg(int n, dptr v)
                 if (pline && pfile) {
                     struct descrip t;
                     abbr_fname(pfile->fname, &t);
-                    fprintf(stderr, "File %.*s; Line %d\n", (int)StrLen(t), StrLoc(t), (int)pline->line);
+                    begin_esc(stderr, pfile->fname, pline->line);
+                    fprintf(stderr, "File %.*s; Line %d", (int)StrLen(t), StrLoc(t), (int)pline->line);
+                    end_esc(stderr);
+                    fputc('\n', stderr);
                 } else
                     fprintf(stderr, "File ?; Line ?\n");
-                while (i-- > 0)
-                    fputc(*s++, stderr);
+                putstr(stderr, &k_errortext);
                 fputc('\n', stderr);
             }
         }
@@ -239,14 +241,11 @@ void err_msg(int n, dptr v)
         }
     }
     else {
-        char *s = StrLoc(k_errortext);
-        int i = StrLen(k_errortext);
         if (k_errornumber == -1)
             fprintf(stderr, "\nRun-time error in startup code: ");
         else
             fprintf(stderr, "\nRun-time error %d in startup code\n", n);
-        while (i-- > 0)
-            fputc(*s++, stderr);
+        putstr(stderr, &k_errortext);
         fputc('\n', stderr);
     }
 

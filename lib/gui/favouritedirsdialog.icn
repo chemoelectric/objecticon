@@ -180,6 +180,12 @@ class FavouriteDirectoriesDialog(Dialog)
       update_grey()
    end
 
+   private on_directory_field(ev)
+      # Only act on a return if there is no suggestion list showing.
+      if /directory_field.tl then
+         on_apply_button(ev)
+   end
+
    private setup()
       local paint_2, panel_2, label_2, layout_7, paint_7, layout_4, paint_4, paint_1, paint_9, label_1, layout_6, paint_6, paint_10, paint_3, panel_3, border_content_1, paint_8, border_1, layout_5, paint_5, layout_2
       self.set_label("Favourite directories")
@@ -240,7 +246,7 @@ class FavouriteDirectoriesDialog(Dialog)
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
-         connect(self.on_apply_button, Event.ACTION).
+         connect(self.on_directory_field, Event.ACTION).
          set_contents(u"")
       layout_7 := GridLayout().
          set_doi(0).

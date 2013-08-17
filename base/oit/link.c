@@ -156,16 +156,61 @@ void lfatal(struct lfile *lf, struct loc *pos, char *fmt, ...)
     if (lf)
         fprintf(stderr, "%s:\n", lf->name);
     if (pos) {
-        if (pos->file)
+        if (pos->file) {
+            begin_esc(stderr, pos->file, pos->line);
             fprintf(stderr, "File %s; ", abbreviate(pos->file));
+        }
         if (pos->line)
-            fprintf(stderr, "Line %d # ", pos->line);
+            fprintf(stderr, "Line %d", pos->line);
+        if (pos->file)
+            end_esc(stderr);
+        if (pos->line)
+            fputs(" # ", stderr);
     }
     va_start(argp, fmt);
     vfprintf(stderr, fmt, argp);
     putc('\n', stderr);
     fflush(stderr);
     va_end(argp);
+    lfatals++;
+}
+
+/*
+ * lfatal - issue a fatal linker error message.
+ */
+void lfatal2(struct lfile *lf, struct loc *pos, struct loc *pos2, char *tail, char *fmt, ...)
+{
+    va_list argp;
+    if (lf)
+        fprintf(stderr, "%s:\n", lf->name);
+    if (pos) {
+        if (pos->file) {
+            begin_esc(stderr, pos->file, pos->line);
+            fprintf(stderr, "File %s; ", abbreviate(pos->file));
+        }
+        if (pos->line)
+            fprintf(stderr, "Line %d", pos->line);
+        if (pos->file)
+            end_esc(stderr);
+        if (pos->line)
+            fputs(" # ", stderr);
+    }
+    va_start(argp, fmt);
+    vfprintf(stderr, fmt, argp);
+    va_end(argp);
+    if (pos2) {
+        if (pos2->file) {
+            begin_esc(stderr, pos2->file, pos2->line);
+            fprintf(stderr, "File %s; ", abbreviate(pos2->file));
+        }
+        if (pos2->line)
+            fprintf(stderr, "Line %d", pos2->line);
+        if (pos2->file)
+            end_esc(stderr);
+    }
+    fputs(tail, stderr);
+    putc('\n', stderr);
+    fflush(stderr);
     lfatals++;
 }
 
@@ -179,10 +224,16 @@ void lwarn(struct lfile *lf, struct loc *pos, char *fmt, ...)
     if (lf)
         fprintf(stderr, "%s:\n", lf->name);
     if (pos) {
-        if (pos->file)
+        if (pos->file) {
+            begin_esc(stderr, pos->file, pos->line);
             fprintf(stderr, "File %s; ", abbreviate(pos->file));
+        }
         if (pos->line)
-            fprintf(stderr, "Line %d # ", pos->line);
+            fprintf(stderr, "Line %d", pos->line);
+        if (pos->file)
+            end_esc(stderr);
+        if (pos->line)
+            fputs(" # ", stderr);
     }
     fprintf(stderr, "Warning: ");
     vfprintf(stderr, fmt, argp);

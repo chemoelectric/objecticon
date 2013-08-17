@@ -197,21 +197,12 @@ end
 keyword host
    body {
        tended struct descrip result;
-#if HAVE_UNAME
-       struct utsname utsn;
-       if (uname(&utsn) < 0) {
+       char *s = get_hostname();
+       if (!s) {
            errno2why();
            fail;
        }
-       cstr2string(utsn.nodename, &result);
-#else
-       char buff[256];
-       if (gethostname(buff, sizeof(buff)) < 0) {
-           errno2why();
-           fail;
-       }
-       cstr2string(buff, &result);
-#endif
+       cstr2string(s, &result);
        return result;
       }
 end

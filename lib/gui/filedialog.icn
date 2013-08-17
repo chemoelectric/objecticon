@@ -100,18 +100,13 @@ class FileDialog(Dialog)
    end
 
    public component_setup()
-      local t
       #
       # Defaults and extra dirs.
       #
       /init_dirs := []
       /init_files := []
       /init_filters := [u"*"]
-      t := copy(init_dirs)
-      every put(t,
-                Files.getcwd() | 
-                FavouriteDirectoriesDialog.gen_directories())
-      dir.set_selection_list(lunique(ucs_list(t))).set_selection(1)
+      dir.set_selection_list(get_favourites_directories()).set_selection(1)
       file.set_selection_list(ucs_list(init_files)).set_selection(1)
       filter.set_selection_list(ucs_list(init_filters)).set_selection(1)
 
@@ -378,16 +373,21 @@ class FileDialog(Dialog)
          msg("mkdir failed: " || &why)
    end
 
-   public on_favourite_dirs_menu_item(ev)
-      local d, t
-      d := FavouriteDirectoriesDialog()
-      d.show_modal(self)
-      \d.okay | fail
+   public get_favourites_directories()
+      local t
       t := copy(init_dirs)
       every put(t,
                 Files.getcwd() | 
                 FavouriteDirectoriesDialog.gen_directories())
-      dir.selection_list := lunique(ucs_list(t))
+      return lunique(ucs_list(t))
+   end
+
+   public on_favourite_dirs_menu_item(ev)
+      local d
+      d := FavouriteDirectoriesDialog()
+      d.show_modal(self)
+      \d.okay | fail
+      dir.selection_list := get_favourites_directories()
       dir.constrain_selection().synch_selection()
    end
 

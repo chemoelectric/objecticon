@@ -14,6 +14,7 @@ extern struct lfunction *curr_lfunc;
 void ilink(struct file_param *link_files, int *fatals, int *warnings);
 char *function_name(struct lfunction *f);
 void lfatal(struct lfile *lf, struct loc *pos, char *fmt, ...);
+void lfatal2(struct lfile *lf, struct loc *pos, struct loc *pos2, char *tail, char *fmt, ...);
 void lwarn(struct lfile *lf, struct loc *pos, char *fmt, ...);
 void setexe(char *fname);
 char *f_flag2str(int flag);
