@@ -399,10 +399,11 @@ abstract class ScrollArea(Component)
          i := \self.vertical_increment | get_default_vertical_increment()
          self.vsb.set_increment_size(i)
          if \new_vsb then {
-            self.vsb.set_wheel_component(self)
             self.vsb.set_wheel_factor(\self.wheel_factor)
-            self.vsb.connect(self.on_vsb, Event.VALUE_CHANGED)
-            self.vsb.set_value(0)
+            self.vsb.
+               set_wheel_component(self).
+               connect(self.on_vsb, Event.VALUE_CHANGED).
+               set_value(0)
             self.add(self.vsb)
          }
          self.vsb.layout()
@@ -417,9 +418,10 @@ abstract class ScrollArea(Component)
          i := \self.horizontal_increment | get_default_horizontal_increment()
          self.hsb.set_increment_size(i)
          if \new_hsb then {
-            self.hsb.set_wheel_component(&null)
-            self.hsb.connect(self.on_hsb, Event.VALUE_CHANGED)
-            self.hsb.set_value(0)
+            self.hsb.
+               set_wheel_component(&null).
+               connect(self.on_hsb, Event.VALUE_CHANGED).
+               set_value(0)
             self.add(self.hsb)
          }
          self.hsb.layout()
@@ -542,7 +544,3 @@ abstract class ScrollArea(Component)
       return
    end
 end
-
-
-
-
