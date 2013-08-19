@@ -19,6 +19,7 @@ $load EXIT "rpp.EXIT_24.gif"
 $load STOP "rpp.STOP_24.gif"
 $load PASTE "rpp.PASTE_24.gif"
 $load CLEAR "rpp.CLEAR_24.gif"
+$load BROWSER_LOGO "rpp.BROWSER_LOGO.png"
 
 class Settings()
    public
@@ -1378,6 +1379,7 @@ procedure main(a)
    ImageCache.name_image("rpp.PASTE_24", PASTE)
    ImageCache.name_image("rpp.STOP_24", STOP)
    ImageCache.name_image("rpp.CLEAR_24", CLEAR)
+   insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(BROWSER_LOGO))
    url := if *a = 0 then
       settings.home_url
    else
