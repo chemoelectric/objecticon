@@ -33,6 +33,8 @@ package ipl.functional
 #     * joinfuncs(flist,x) - list generated from the results of the application functions from flist
 #     * joinfuncs2(flist,x) - list formed from a list of functions and the results of their application
 #     * iterf(f,l) - transform function application to generator
+#     * traverse(l) - nested list traversal, activating &source with successive elements
+#     * rtraverse(l) - nested list reverse order traversal, activating &source with successive elements
 
 final abstract class FuncTools()
 
@@ -142,10 +144,9 @@ final abstract class FuncTools()
    end
 
    public static also(flist,x)
-   local i
-   every i := !flist do {
-      if type(i) ~== "list" then suspend i(x) else suspend also(i,x)
-   }
+   local e
+   e := create traverse(flist)
+   suspend (|@e)(x)
    end
 
    public static lsequental(flist,x)
@@ -176,9 +177,20 @@ final abstract class FuncTools()
    end
 
    public static iterf(f,l)
-   local i
-   every i := !l do {
-      if type(i) ~== "list" then suspend f(i) else suspend iterf(f,i)
-   }
+   local e
+   e := create traverse(l)
+   suspend f(|@e)
+   end
+
+   public static traverse(l)
+   local e
+   every e := !l do
+      if type(e) == "list" then traverse(e) else coact(e)
+   end
+
+   public static rtraverse(l)
+   local e
+   every e := back(l) do
+      if type(e) == "list" then rtraverse(e) else coact(e)
    end
 end
