@@ -1292,3 +1292,29 @@ end
 procedure Swap(e, f)
    while @e :=: @f
 end
+
+#
+# Generate results from co-expression `e`, while function `f`, applied
+# to each result, succeeds.
+#
+procedure TakeWhile(f, e)
+   local i
+   f := callable(@f) | runerr("*** invalid operation for TakeWhile{}")
+   while f(i := @e) do
+      suspend i
+end
+
+#
+# Discard results from co-expression `e`, while function `f`, applied
+# to each result, succeeds.  Then generate the remainder of the
+# results from `e`.
+#
+procedure DropWhile(f, e)
+   local i
+   f := callable(@f) | runerr("*** invalid operation for DropWhile{}")
+   repeat {
+      i := @e | fail
+      f(i) | break
+   }
+   suspend i | |@e
+end
