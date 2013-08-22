@@ -223,11 +223,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # Find the line which contains the given object, or fail
    #
    public find_line(o)
-      local i
-      every i := 1 to *self.contents do {
-         if self.contents[i] === o then
-            return i
-      }
+      return keyof(contents, o)
    end
 
    #
