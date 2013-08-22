@@ -336,10 +336,12 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # Set the cursor to the given line
    #
    public set_cursor(line)
-      invalidate_line(\self.cursor)
-      self.cursor := line
-      invalidate_line(\self.cursor)
-      constrain_cursor()
+      if line ~=== self.cursor then {
+         invalidate_line(\self.cursor)
+         self.cursor := line
+         invalidate_line(\self.cursor)
+         constrain_cursor()
+      }
       return self
    end
 
