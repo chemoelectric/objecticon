@@ -140,7 +140,7 @@ class OutputRow(Rect)
    end
 end
 
-class TextFlow(Component)
+class TextFlow(Component, HasLastHighlight)
    public const
       input
 
@@ -183,6 +183,7 @@ class TextFlow(Component)
       held,               # URL held during mouse press
       over,               # URL the mouse is over; also written to the browser's msg area
       highlight,          # URL highlighted with alink colour.
+      last_highlight,
       dominant_width,
       computed_named_anchors,
       named_anchors,
@@ -450,7 +451,7 @@ class TextFlow(Component)
                                o.s, 
                                x1 + o.x, 
                                y1 + o.y + W.get_font_ascent() + 1)
-                  else if \o.attr.underdash then
+                  else if \o.attr.underdash | (o.attr.url === \last_highlight) then
                      text_dash(W,
                                o.s, 
                                x1 + o.x, 
@@ -1281,8 +1282,47 @@ class TextFlow(Component)
       return self
    end
 
+   public get_last_highlight_index()
+      local or, o, n, u
+      n := 0
+      every or := !computed_output_rows do {
+         every o := !or.l do {
+            if u := \o.attr.url then {
+               n +:= 1
+               if last_highlight === u then
+                  return n
+            }
+         }
+      }
+   end
+
+   public set_last_highlight_index(n)
+      local or, o, u
+      every or := !computed_output_rows do {
+         every o := !or.l do {
+            if u := \o.attr.url then {
+               n -:= 1
+               if n = 0 then {
+                  last_highlight := u
+                  return self
+               }
+            }
+         }
+      }
+   end
+
+   public set_last_highlight(u)
+      if u ~=== last_highlight then {
+         invalidate_url(\last_highlight)
+         last_highlight := u
+         invalidate_url(\last_highlight)
+      }
+      return self
+   end
+
    private set_highlight(u)
       if u ~=== highlight then {
+         browser.set_last_highlight(self, \u)
          invalidate_url(\highlight)
          highlight := u
          invalidate_url(\highlight)

@@ -869,11 +869,17 @@ class Tbl(Border, HasMaxWidth)
    end
 end
 
-class Img(Image)
+abstract class HasLastHighlight()
+   public abstract set_last_highlight(u)
+   public abstract get_last_highlight_index()
+   public abstract set_last_highlight_index(n)
+end
+
+class Img(Image, HasLastHighlight)
    public const
       browser, context, form, img_url, alt, bg_area
    private readable
-      over, img_data, img_name, map, map_id, held, err, highlight
+      over, img_data, img_name, map, map_id, held, err, highlight, last_highlight
 
    package got_data(res)
       local iw, ih
@@ -993,8 +999,42 @@ class Img(Image)
       return self
    end
 
+   public set_last_highlight(u)
+      if u ~=== last_highlight then {
+         last_highlight := u
+         invalidate()
+      }
+      return self
+   end
+
+   public get_last_highlight_index()
+      local a, u, n
+      n := 0
+      every a := gen_areas() do {
+         if u := \a.url then {
+            n +:= 1
+            if last_highlight === u then
+               return n
+         }
+      }
+   end
+
+   public set_last_highlight_index(n)
+      local a, u
+      every a := gen_areas() do {
+         if u := \a.url then {
+            n -:= 1
+            if n = 0 then {
+               last_highlight := u
+               return self
+            }
+         }
+      }
+   end
+
    private set_highlight(u)
       if u ~=== highlight then {
+         browser.set_last_highlight(self, \u)
          # Avoid resetting since that will reload the image data, which is slow.
          is(border, NullBorder | EmptyBorder) | {
             set_fg(if \u then browser.page_alink_color else context.fg)
@@ -1044,6 +1084,8 @@ class Img(Image)
       cast(self,Image).display()
       if r := browser.is_banded(self) then
          Gui.style.fill_selection_rectangle(cbwin, x, y, w, h)
+      if \last_highlight then
+         Gui.style.draw_dashed_rectangle(cbwin, x, y, w, h)
    end
 
    public new(browser, context, img_url, alt, form, map_id)
@@ -2337,6 +2379,8 @@ record HistoryEntry(url,          # URL displayed (on a redirect may differ from
                     form_values,  # Cached values of form components; updated when we move away from the page 
                     form_data,    # POST data used to get the page; on a redirect will always be null
                     focus_index,  # Index of focused component on moving away
+                    last_highlight_component_index,  # Child index of last_highlight_component
+                    last_highlight_index,            # Index of last_highlight within last_highlight_component
                     area_x,
                     area_y
                     ) 
@@ -2420,7 +2464,8 @@ class Browser(ComponentScrollArea)
       banded,
       text_selection,
       links_selection,
-      done_set_top_data
+      done_set_top_data,
+      last_highlight_component
 
    public static const 
       COLORS,
@@ -2586,6 +2631,14 @@ class Browser(ComponentScrollArea)
 
    public get_datalist(s)
       return member(datalists, s)
+   end
+
+   public set_last_highlight(c, u)
+      if c ~=== \last_highlight_component then
+         last_highlight_component.set_last_highlight()
+      last_highlight_component := c
+      last_highlight_component.set_last_highlight(u)
+      return self
    end
 
    private convert_color(el, name)
@@ -2880,6 +2933,14 @@ class Browser(ComponentScrollArea)
       curr_history_entry.form_values := t1
    end
 
+   private restore_last_highlight()
+      local c
+      if c := get_nth_child(\curr_history_entry.last_highlight_component_index) &
+         is(c, HasLastHighlight) &
+         c.set_last_highlight_index(\curr_history_entry.last_highlight_index) then
+         last_highlight_component := c
+   end
+
    private restore_form_values()
       local f, c, name, t1, t2, k
       t1 := \curr_history_entry.form_values | fail
@@ -2956,6 +3017,25 @@ class Browser(ComponentScrollArea)
       }
    end
 
+   private get_nth_child(n)
+      local c
+      every c := Seq{view.traverse_components_preorder()} do {
+         n -:= 1
+         if n = 0 then
+            return c
+      }
+   end
+
+   private get_child_index(child)
+      local n, c
+      n := 0
+      every c := Seq{view.traverse_components_preorder()} do {
+         n +:= 1
+         if child === c then
+            return n
+      }
+   end
+
    # Set a border around the outermost (top level) `TextFlow`; by
    # default this is a `NullBorder`.
    #
@@ -2971,6 +3051,8 @@ class Browser(ComponentScrollArea)
          curr_history_entry.area_x := get_area_x()
          curr_history_entry.area_y := get_area_y()
          curr_history_entry.focus_index := get_focusable_index(parent_dialog.get_focus()) | &null
+         curr_history_entry.last_highlight_component_index := get_child_index(\last_highlight_component) | &null
+         curr_history_entry.last_highlight_index := (\last_highlight_component).get_last_highlight_index() | &null
       }
       set_area_y(0).set_area_x(0)
       if \res.err & /res.data then {
@@ -3047,6 +3129,10 @@ class Browser(ComponentScrollArea)
       set_inner(row)
       layout()
       invalidate()
+      if page_resp.kind = Worker.NAVIGATE then
+         restore_last_highlight()
+      else
+         last_highlight_component := &null
       parent_dialog.resynch_pointer()
       setup_tabbing()
       page_loaded()
