@@ -135,7 +135,7 @@
 #
 #   PosDiff{e1,e2}	produces positions at which e1 and e2 differ
 #
-#   Positions{e, i}	generates the positions at which i occurs in e.
+#   Positions{e, v}	generates the positions at which v occurs in e.
 #  
 #   Random{e1,e2, ...}
 #			produces results of e1, e2, ... at random
@@ -890,15 +890,15 @@ end
 
 # positions in e of i
 procedure Positions(e1, e2)	
-   local i, count, j
+   local v, count, x
 
-   i := integer(@\e2) | fail
+   v := @e2 | fail
 
    count := 0
 
-   while j := @e1 do {
+   while x := @e1 do {
       count +:= 1
-      if j = i then suspend count
+      if x === v then suspend count
       }
 
 end
