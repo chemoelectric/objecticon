@@ -133,6 +133,8 @@ class ComponentScrollArea(ScrollArea)
          set_area_x(min(x0, x0 + c.w - view.w))
       else if x0 < get_area_x() then
          set_area_x(x0)
+
+      return self
    end
 
    public create_view()
