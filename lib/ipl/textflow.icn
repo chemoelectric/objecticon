@@ -111,7 +111,7 @@ class CompOut(Rect)
 end
 
 class TextSelection()
-   public const textout, textflow, i, j, w_off, w_sub, h
+   public const textout, textflow, i, j, w_off, w_sub
 
    public get_bounds()
       return Rect(textflow.x + textflow.border.get_l_inset() + textout.x + w_off,
@@ -439,8 +439,19 @@ class TextFlow(Component, HasLastHighlight)
                   if \o.attr.mark then
                      text_bg(W, "yellow", x1 + o.x, y1 + o.y, o.w, o.h)
                   draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
+
+                  every ts := browser.is_searched(o) do {
+                     text_bg(W, 
+                             if ts === browser.highlighted_searched then "red 33%" else "purple 33%",
+                             x1 + o.x + ts.w_off,
+                             y1 + o.y, 
+                             ts.w_sub,
+                             o.h)
+                  }
+
+
                   if ts := browser.is_banded(o) then
-                     # NB - the rectangle used should be the same as that returned by t.get_bounds()
+                     # NB - the rectangle used should be the same as that returned by ts.get_bounds()
                      Gui.style.fill_selection_rectangle(cbwin, 
                                                         x1 + o.x + ts.w_off,
                                                         y1 + o.y, 
@@ -524,12 +535,12 @@ class TextFlow(Component, HasLastHighlight)
 
       W := cbwin.clone()
       every o := !l do {
-         if font ~=== o.attr.font then {
-            W.close()
-            W := attr_clone(font := o.attr.font)
-         } 
          case classof(o) of {
             TextOut: {
+               if font ~=== o.attr.font then {
+                  W.close()
+                  W := attr_clone(font := o.attr.font)
+               } 
                i := 1
                if o === first then {
                   d := first_r.x - x1 - o.x
@@ -558,6 +569,28 @@ class TextFlow(Component, HasLastHighlight)
                # inserted again by Browser.calculate_banded() if the
                # image actually intersects the band).
                insert(bs, o.c, o.c)
+            }
+         }
+      }
+      W.close()
+   end
+
+   public search(s, searched)
+      local or, o, W, font, ts, i
+      W := cbwin.clone()
+      every or := !computed_output_rows do {
+         every o := !or.l do {
+            if is(o, TextOut) then {
+               every i := find(s, o.s) do {
+                  if font ~=== o.attr.font then {
+                     W.close()
+                     W := attr_clone(font := o.attr.font)
+                  } 
+                  ts := TextSelection(o, self, 
+                                      i, i + *s, 
+                                      W.text_width(o.s[1:i]), W.text_width(o.s[i+:*s]))
+                  put(member(searched, o), ts) | insert(searched, o, [ts])
+               }
             }
          }
       }

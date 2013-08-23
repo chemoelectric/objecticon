@@ -2389,6 +2389,7 @@ abstract class BrowserUI()
    public abstract msg(s, n)
    public abstract clear_msg()
    public abstract page_loaded()
+   public abstract page_fully_loaded()
    public abstract update_grey(gs)
    public abstract link_left_clicked(url)
    public abstract link_middle_clicked(url)
@@ -2462,6 +2463,10 @@ class Browser(ComponentScrollArea)
       cursor_x,
       cursor_y,
       banded,
+      searched,
+      sorted_searched,
+      highlighted_searched,
+      searched_term,
       text_selection,
       links_selection,
       done_set_top_data,
@@ -2802,6 +2807,7 @@ class Browser(ComponentScrollArea)
          }
       }
       parent_dialog.resynch_pointer()
+      (\ui).page_fully_loaded()
    end
 
    private lookup_named_anchor(name)
@@ -2854,6 +2860,65 @@ class Browser(ComponentScrollArea)
       history_pos := keyof(history, he) | fail
       goto(he.url, he.referer, he.form_data, Worker.NAVIGATE)
       do_update_grey()
+      return self
+   end
+
+   private static sorted_comp(a, b)
+      if a.textflow === b.textflow then {
+         return a.textout.y < b.textout.y
+      } else {
+         a := a.get_bounds()
+         b := b.get_bounds()
+         return (a.y < b.y) | (a.y = b.y & a.x < b.x)
+      }
+   end
+
+   private redo_search()
+      local c, i
+      \searched_term | fail
+      i := keyof(sorted_searched, highlighted_searched)
+      clear(searched)
+      if *searched_term > 0 then {
+         every c := Seq{traverse_components_postorder()} do
+            if is(c,TextFlow) then
+               c.search(searched_term, searched)
+      }
+      sorted_searched := []
+      every put(sorted_searched, !!searched)
+      qsort(sorted_searched, sorted_comp)
+      highlighted_searched := sorted_searched[\i] | &null
+   end
+
+   public do_search(s)
+      local c
+      if *s > 0 then {
+         searched_term := s
+         clear(searched)
+         every c := Seq{traverse_components_postorder()} do
+            if is(c,TextFlow) then
+               c.search(s, searched)
+         highlighted_searched := &null
+         sorted_searched := []
+         every put(sorted_searched, !!searched)
+         qsort(sorted_searched, sorted_comp)
+      } else
+         clear_searched()
+      refresh()
+      return self
+   end
+
+   private clear_searched()
+      clear(searched)
+      searched_term := sorted_searched := highlighted_searched := &null
+   end
+
+   public goto_searched(n)
+      local t
+      t := (\sorted_searched)[n] | fail
+      (\highlighted_searched).textflow.invalidate(highlighted_searched.get_bounds())
+      highlighted_searched := t
+      t.textflow.invalidate(t.get_bounds())
+      ensure_visible(t.get_bounds())
       return self
    end
 
@@ -3077,6 +3142,7 @@ class Browser(ComponentScrollArea)
       page_name := res.fname
       page_resp := res
       page_url := res.url
+      clear_searched()
       if res.kind = Worker.NORMAL then {
          # Reset history_pos, since we may have done a navigate
          # back/forward (changing history_pos), and cancelled it with
@@ -4537,6 +4603,7 @@ class Browser(ComponentScrollArea)
       cast(self,ComponentScrollArea).layout()
       clear_mark()
       clear_banded()
+      redo_search()
       scroll_ticker.stop()
    end
 
@@ -4560,6 +4627,10 @@ class Browser(ComponentScrollArea)
 
    package is_banded(o)
       return member(banded, o)
+   end
+
+   package is_searched(o)
+      suspend !member(searched, o)
    end
 
    private scroll_tick()
@@ -4846,6 +4917,7 @@ class Browser(ComponentScrollArea)
       history_pos := 0
       running := 0
       banded := table()
+      searched := table()
       outermost_border := NullBorder()
       view.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG).
          connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS).

@@ -409,7 +409,7 @@ class BrowserDialog(Dialog)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
       self.set_layout(GridLayout().set_extra("cells"))
-      self.set_focus(bt.search_field.find_focus())
+      self.set_focus(bt.url_field.find_focus())
       set_label("Browser")
       return
    end
@@ -540,7 +540,7 @@ class DownloadTab(TabItem)
       paste_url_button,
       destination_button,
       clear_done_button,
-      search_field,
+      url_field,
       message_label,
       ticker,
       dl,
@@ -559,9 +559,9 @@ class DownloadTab(TabItem)
       set_paint(TextPaint(s))
    end
 
-   private on_search_field(ev)
+   private on_url_field(ev)
       local s, u
-      s := search_field.get_contents()
+      s := url_field.get_contents()
       if *s = 0 then
          fail
       if u := URL(s) then
@@ -574,8 +574,8 @@ class DownloadTab(TabItem)
       if /data then
          fail
       data ?:= tab(upto('\r\n'))
-      search_field.set_contents(Text.liberal_ucs(data))
-      parent_dialog.set_focus(search_field.find_focus(e))
+      url_field.set_contents(Text.liberal_ucs(data))
+      parent_dialog.set_focus(url_field.find_focus(e))
    end
 
    private on_paste_url(ev)
@@ -769,7 +769,7 @@ class DownloadTab(TabItem)
          add(clear_done_button).
          add(paste_url_button)
       self.add(panel)
-      search_field := TextField().
+      url_field := TextField().
          set_size("100").
          set_align(Align.C, Align.T).
          clear_constraints().
@@ -777,9 +777,9 @@ class DownloadTab(TabItem)
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
-         connect(self.on_search_field, Event.ACTION).
+         connect(self.on_url_field, Event.ACTION).
          set_contents(u"")
-      self.add(search_field)
+      self.add(url_field)
       use {
          w := Window(),
          url_table := Table().
@@ -880,14 +880,20 @@ class BrowserTab(TabItem, BrowserUI)
       prev_button,
       message_label,
       close_button,
-      search_field,
+      url_field,
       next_button,
       stop_button,
       home_button,
       paste_url_button,
       refresh_button,
       title_tt,
-      revert_tab
+      revert_tab,
+      search_panel,
+      search_field,
+      search_label, 
+      search_next_button,
+      search_prev_button, 
+      search_pos
 
    private on_close_button(ev)
       local t, i
@@ -993,6 +999,57 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.new_tab(url,, 1)
    end
 
+   private open_search_panel()
+      add(search_panel, -1)
+      reset_layout()
+      layout()
+      invalidate()
+      update_search_state()
+      parent_dialog.set_focus(search_field)
+   end
+
+   private close_search_panel()
+      remove(search_panel)
+      reset_layout()
+      layout()
+      invalidate()
+      parent_dialog.set_focus(browser)
+   end
+
+   private on_search_next()
+      search_pos +:= 1
+      browser.goto_searched(search_pos)
+      update_search_state()
+   end
+
+   private on_search_prev()
+      search_pos -:= 1
+      browser.goto_searched(search_pos)
+      update_search_state()
+   end
+
+   public update_search_state()
+      if /browser.sorted_searched then {
+         search_next_button.set_is_shaded(&yes)
+         search_prev_button.set_is_shaded(&yes)
+         search_label.set_label("No search")
+      } else {
+         search_next_button.set_is_shaded(if search_pos < *browser.sorted_searched then &no else &yes)
+         search_prev_button.set_is_shaded(if search_pos > 1 then &no else &yes)
+         search_label.set_label(if *browser.sorted_searched = 0 then
+            "No results"
+         else
+            search_pos || "/" || *browser.sorted_searched)
+      }
+   end
+
+   private on_search_field()
+      browser.do_search(search_field.get_contents())
+      search_pos := 1
+      browser.goto_searched(search_pos)
+      update_search_state()
+   end
+
    public create_page_menu()
       local m, s, l
       m := Menu()
@@ -1005,6 +1062,10 @@ class BrowserTab(TabItem, BrowserUI)
          m.add(TextMenuItem().
                set_label("Save page...").
                connect(create do_save(browser.page_name, browser.page_data), Event.ACTION))
+         if not search_panel.is_live() then
+            m.add(TextMenuItem().
+                  set_label("Search").
+                  connect(open_search_panel, Event.ACTION))
          m.add(TextMenuItem().
                set_label("Page info").
                connect(page_info, Event.ACTION))
@@ -1090,13 +1151,13 @@ class BrowserTab(TabItem, BrowserUI)
       set_is_shaded_ex(stop_button, gs.stop)
    end
 
-   private on_search_field_selection(ev)
-      browser.do_jump(search_field.object_get_selection())
+   private on_url_field_selection(ev)
+      browser.do_jump(url_field.object_get_selection())
    end
 
-   private on_search_field(ev)
+   private on_url_field(ev)
       local s, u
-      s := search_field.get_contents()
+      s := url_field.get_contents()
       if *s = 0 then
          fail
       if u := URL(s) then
@@ -1152,12 +1213,16 @@ class BrowserTab(TabItem, BrowserUI)
       # Don't save pages that didn't load in the visited list.
       if \browser.page_data then
          parent_dialog.update_visited(browser.page_url, browser.page_title)
-      search_field.
+      url_field.
          set_contents(browser.curr_history_entry.url.liberal_ucs()).
          set_selection_list(lreverse(browser.history)).
          object_set_selection(browser.curr_history_entry)
       set_title(browser.page_title)
       parent_dialog.set_focus(browser.find_focus())
+      update_search_state()
+   end
+
+   public page_fully_loaded()
    end
 
    private set_title(s)
@@ -1221,8 +1286,8 @@ class BrowserTab(TabItem, BrowserUI)
       if /data then
          fail
       data ?:= tab(upto('\r\n'))
-      search_field.set_contents(Text.liberal_ucs(data))
-      parent_dialog.set_focus(search_field.find_focus(e))
+      url_field.set_contents(Text.liberal_ucs(data))
+      parent_dialog.set_focus(url_field.find_focus(e))
    end
 
    private on_paste_url(ev)
@@ -1320,7 +1385,7 @@ class BrowserTab(TabItem, BrowserUI)
          add(stop_button).
          add(paste_url_button)
       self.add(panel)
-      search_field := URLEditList().
+      url_field := URLEditList().
          set_selection_list([]).
          set_contents(u"").
          set_size("100").
@@ -1331,9 +1396,9 @@ class BrowserTab(TabItem, BrowserUI)
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
-         connect(self.on_search_field, Event.ACTION).
-         connect(self.on_search_field_selection, Event.SELECTION_CHANGED)
-      self.add(search_field)
+         connect(self.on_url_field, Event.ACTION).
+         connect(self.on_url_field_selection, Event.SELECTION_CHANGED)
+      self.add(url_field)
       browser := Browser().
          set_size("651", "337").
          set_font("sans,9").
@@ -1358,10 +1423,46 @@ class BrowserTab(TabItem, BrowserUI)
          set_constraint("l_inset", 0).
          set_constraint("r_inset", 0).
          set_constraint("x_fill", &yes).
+         set_constraint("eol", &yes).
          set_border(border).
          set_paint(TextPaint(""))
       self.add(message_label)
       self.set_layout(GridLayout().set_extra("cells"))
+      search_panel := Component().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_layout(GridLayout().set_doi(0).set_extra("cells"))
+      search_panel.add(IconButton().
+         set_tooltip(TextPaint("Close")).
+         connect(close_search_panel, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_paint(ImagePaint().set_cache("gui.CLOSE_24")))
+      search_field := TextField().
+         set_width(150).
+         set_filter(~' ').
+         set_contents(u"").
+         connect(on_search_field, Event.CONTENT_CHANGED).
+         connect(on_search_field, Event.ACTION)
+      search_panel.add(search_field)
+      search_prev_button := IconButton().
+         set_tooltip(TextPaint("Prev")).
+         connect(self.on_search_prev, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_paint(ImagePaint().set_cache("gui.PREV_24"))
+      search_panel.add(search_prev_button)
+      search_next_button := IconButton().
+         set_tooltip(TextPaint("Next")).
+         connect(self.on_search_next, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_paint(ImagePaint().set_cache("gui.NEXT_24"))
+      search_panel.add(search_next_button)
+      search_label := Label().
+         set_label("").
+         set_constraint("x_align", Align.L).
+         set_constraint("x_weight", 1.0).
+         set_width(75)
+      search_panel.add(search_label)
    end
 end
 
