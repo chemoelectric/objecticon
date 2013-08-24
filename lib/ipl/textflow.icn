@@ -5,7 +5,7 @@ import
    util,
    graphics,
    ipl.strings
-import io
+
 abstract class HasAscent()
    public abstract get_ascent(dw, dh)
 end
@@ -140,17 +140,16 @@ class OutputRow(Rect)
    end
 end
 
+# A result in the list `sorted_searched`; also used to calculate the
+# text selection.  The Point part is just used for sorting purposes.
 #
-# A result in the list `sorted_searched`.  The Point part is just used
-# for sorting that list.
-#
-class SearchResult(Point)
-   public const ts
+class PointResult(Point)
+   public const val
 
-   public new(x, y, ts)
+   public new(x, y, val)
       self.x := x
       self.y := y
-      self.ts := ts
+      self.val := val
       return
    end
 end
@@ -609,9 +608,9 @@ class TextFlow(Component, HasLastHighlight)
                   put(member(searched, o), ts) | insert(searched, o, [ts])
                   # Note we use or.y as the y sort co-ordinate so that all matches in the same row
                   # compare on their x position.
-                  put(sorted, SearchResult(x1 + o.x + ts.w_off, 
-                                           y1 + or.y,
-                                           ts))
+                  put(sorted, PointResult(x1 + o.x + ts.w_off, 
+                                          y1 + or.y,
+                                          ts))
                }
             }
          }
@@ -619,33 +618,32 @@ class TextFlow(Component, HasLastHighlight)
       W.close()
    end
 
-   public get_selected_text(br)
-      local o, x1, y1, t, or, s, sr
+   public get_selected_text(br, sorted)
+      local o, x1, y1, t, or, sr, x2
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
-      s := u""
       every or := rows_in_range(br.y - y1, br.h) do {
-         sr := u""
+         sr := u""     # The selected text on this row
+         x2 := &null   # The x position of the start of the selected text on this row
          every o := !or.l do {
             case classof(o) of {
                TextOut: {
-                  if t := browser.is_banded(o) then
+                  if t := browser.is_banded(o) then {
                      sr ||:= o.s[t.i:t.j]
+                     /x2 := x1 + o.x + t.w_off 
+                  }
                }
                CompOut: {
-                  if browser.is_banded(o.c) then
+                  if browser.is_banded(o.c) then {
                      sr ||:= \o.c.alt
+                     /x2 := o.c.x  # o.c.x = x1 + o.x
+                  }
                }
             }
          }
-         if *sr > 0 then {
-            if *s > 0 then
-               s ||:= u"\n"
-            s ||:= sr
-         }
+         if *sr > 0 then
+            put(sorted, PointResult(x2, y1 + or.y, sr))
       }
-      if *s > 0 then
-         return s
    end
 
    private invalidate_url(u)

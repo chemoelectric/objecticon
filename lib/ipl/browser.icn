@@ -2908,7 +2908,7 @@ class Browser(ComponentScrollArea)
       local t
       t := (\sorted_searched)[n] | fail
       (\highlighted_searched).textflow.invalidate(highlighted_searched.get_bounds())
-      highlighted_searched := t.ts
+      highlighted_searched := t.val
       highlighted_searched.textflow.invalidate(highlighted_searched.get_bounds())
       ensure_visible(highlighted_searched.get_bounds())
       return self
@@ -4728,18 +4728,21 @@ class Browser(ComponentScrollArea)
    end
 
    private calculate_text_selection()
-      local br, s, t, c
+      local br, s, c, l, e, y1
       text_selection := &null
       br := calculate_banded_rect() | fail
-      s := u""
+      l := []
       every c := Seq{traverse_intersecting(view.inner, br)} do {
-         if is(c, TextFlow) then {
-            if t := c.get_selected_text(br) then {
-               if *s > 0 then
-                  s ||:= u"\n"
-               s ||:= t
-            }
-         }
+         if is(c, TextFlow) then
+            c.get_selected_text(br, l)
+      }
+      qsort(l, point_comp)
+      s := u""
+      every e := !l do {
+         if *s > 0 then
+            s ||:= if e.y > y1 then u"\n" else u" "
+         s ||:= e.val
+         y1 := e.y
       }
       if *s > 0 then
          text_selection := s
