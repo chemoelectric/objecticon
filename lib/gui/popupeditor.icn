@@ -29,7 +29,7 @@ class PopupEditor(Component)
    end
 
    public close_all()
-      if \parent_dialog.focus === Seq{traverse_components_postorder()} then
+      if \parent_dialog.focus === Seq{traverse_postorder()} then
          parent_dialog.set_focus(old_focus)
       invalidate()
       parent_dialog.disconnect_object(self)
