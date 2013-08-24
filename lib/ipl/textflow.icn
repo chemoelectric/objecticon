@@ -5,7 +5,7 @@ import
    util,
    graphics,
    ipl.strings
-
+import io
 abstract class HasAscent()
    public abstract get_ascent(dw, dh)
 end
@@ -136,6 +136,21 @@ class OutputRow(Rect)
 
    public new()
       l := []
+      return
+   end
+end
+
+#
+# A result in the list `sorted_searched`.  The Point part is just used
+# for sorting that list.
+#
+class SearchResult(Point)
+   public const ts
+
+   public new(x, y, ts)
+      self.x := x
+      self.y := y
+      self.ts := ts
       return
    end
 end
@@ -575,9 +590,11 @@ class TextFlow(Component, HasLastHighlight)
       W.close()
    end
 
-   public search(s, searched)
-      local or, o, W, font, ts, i
+   public search(s, searched, sorted)
+      local or, o, W, font, ts, i, x1, y1
       W := cbwin.clone()
+      x1 := x + border.get_l_inset()
+      y1 := y + border.get_t_inset() + y_off
       every or := !computed_output_rows do {
          every o := !or.l do {
             if is(o, TextOut) then {
@@ -590,6 +607,11 @@ class TextFlow(Component, HasLastHighlight)
                                       i, i + *s, 
                                       W.text_width(o.s[1:i]), W.text_width(o.s[i+:*s]))
                   put(member(searched, o), ts) | insert(searched, o, [ts])
+                  # Note we use or.y as the y sort co-ordinate so that all matches in the same row
+                  # compare on their x position.
+                  put(sorted, SearchResult(x1 + o.x + ts.w_off, 
+                                           y1 + or.y,
+                                           ts))
                }
             }
          }

@@ -2812,7 +2812,7 @@ class Browser(ComponentScrollArea)
 
    private lookup_named_anchor(name)
       local c, yp
-      every c := Seq{traverse_components_postorder()} do
+      every c := Seq{traverse_postorder()} do
          if is(c,TextFlow) & yp := c.lookup_named_anchor(name) then
             return yp
    end
@@ -2863,14 +2863,8 @@ class Browser(ComponentScrollArea)
       return self
    end
 
-   private static sorted_comp(a, b)
-      if a.textflow === b.textflow then {
-         return a.textout.y < b.textout.y
-      } else {
-         a := a.get_bounds()
-         b := b.get_bounds()
-         return (a.y < b.y) | (a.y = b.y & a.x < b.x)
-      }
+   private static point_comp(a, b)
+      return (a.y < b.y) | (a.y = b.y & a.x < b.x)
    end
 
    private redo_search()
@@ -2878,14 +2872,13 @@ class Browser(ComponentScrollArea)
       \searched_term | fail
       i := keyof(sorted_searched, highlighted_searched)
       clear(searched)
-      if *searched_term > 0 then {
-         every c := Seq{traverse_components_postorder()} do
-            if is(c,TextFlow) then
-               c.search(searched_term, searched)
-      }
       sorted_searched := []
-      every put(sorted_searched, !!searched)
-      qsort(sorted_searched, sorted_comp)
+      if *searched_term > 0 then {
+         every c := Seq{traverse_postorder()} do
+            if is(c,TextFlow) then
+               c.search(searched_term, searched, sorted_searched)
+      }
+      qsort(sorted_searched, point_comp)
       highlighted_searched := sorted_searched[\i] | &null
    end
 
@@ -2894,13 +2887,12 @@ class Browser(ComponentScrollArea)
       if *s > 0 then {
          searched_term := s
          clear(searched)
-         every c := Seq{traverse_components_postorder()} do
-            if is(c,TextFlow) then
-               c.search(s, searched)
-         highlighted_searched := &null
          sorted_searched := []
-         every put(sorted_searched, !!searched)
-         qsort(sorted_searched, sorted_comp)
+         every c := Seq{traverse_postorder()} do
+            if is(c,TextFlow) then
+               c.search(s, searched, sorted_searched)
+         highlighted_searched := &null
+         qsort(sorted_searched, point_comp)
       } else
          clear_searched()
       refresh()
@@ -2916,9 +2908,9 @@ class Browser(ComponentScrollArea)
       local t
       t := (\sorted_searched)[n] | fail
       (\highlighted_searched).textflow.invalidate(highlighted_searched.get_bounds())
-      highlighted_searched := t
-      t.textflow.invalidate(t.get_bounds())
-      ensure_visible(t.get_bounds())
+      highlighted_searched := t.ts
+      highlighted_searched.textflow.invalidate(highlighted_searched.get_bounds())
+      ensure_visible(highlighted_searched.get_bounds())
       return self
    end
 
@@ -3084,7 +3076,7 @@ class Browser(ComponentScrollArea)
 
    private get_nth_child(n)
       local c
-      every c := Seq{view.traverse_components_preorder()} do {
+      every c := Seq{view.traverse_preorder()} do {
          n -:= 1
          if n = 0 then
             return c
@@ -3094,7 +3086,7 @@ class Browser(ComponentScrollArea)
    private get_child_index(child)
       local n, c
       n := 0
-      every c := Seq{view.traverse_components_preorder()} do {
+      every c := Seq{view.traverse_preorder()} do {
          n +:= 1
          if child === c then
             return n
@@ -4841,7 +4833,7 @@ class Browser(ComponentScrollArea)
 
       imgs := []
       t := table(u"")
-      every c := Seq{traverse_components_postorder()} do {
+      every c := Seq{traverse_postorder()} do {
          if is(c, TextFlow) then
             c.calculate_link_text(t)
          else if is(c, Img) then
