@@ -8,12 +8,11 @@ import lang, util
 # co-expression.  The stream's co-expression is re-activated only when
 # the {Scheduler} determines the stream is ready for i/o.
 #
-class TaskStream(Stream, HasUnderlyingStream)
+class TaskStream(Stream, HasTask, HasUnderlyingStream)
    private readable
       timeout
    private
-      other,
-      task
+      other
 
    public in(n)
       local r
