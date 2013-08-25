@@ -654,9 +654,11 @@ class WorkerPool()
          put(l, req)
       else
          insert(queue, req.client, [req])
-      # Wake up a sleeping task if possible
-      every w := !workers do 
-         if w.task.is_sleeping() then {
+      # Wake up a sleeping task if possible.  Take care not to notify
+      # a sleeping task that is processing a request, or to notify a
+      # non-sleeping task (may be in ready state).
+      every w := !workers do
+         if /w.req & w.task.is_sleeping() then {
             w.task.notify()
             break
          }
