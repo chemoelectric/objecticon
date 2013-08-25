@@ -60,11 +60,11 @@ class Monitor()
    end
 
    public failed(ev)
-      write("Failed ", &why, repl(" ", 20))
+      write("Failed: ", &why, repl(" ", 20))
    end
 
    public retrying(ev)
-      write("Retrying ", &why, repl(" ", 20))
+      write("Retrying: ", &why, repl(" ", 20))
    end
 
    public connecting(ev, src, type)
