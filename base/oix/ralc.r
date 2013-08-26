@@ -992,16 +992,14 @@ void free_frame(struct frame *f)
         case P_Frame: {
             struct frame_vars *l = ((struct p_frame *)f)->fvars;
             f->creator->stackcurr -= f->size;
-            if (((struct p_frame *)f)->proc->creates) {
-                if (l) {
+            if (l) {
+                if (((struct p_frame *)f)->proc->creates) {
                     --l->refcnt;
                     if (l->refcnt == 0) {
                         l->creator->stackcurr -= l->size;
                         free(l);
                     }
-                }
-            } else {
-                if (l) {
+                } else {
                     if (l->refcnt != 1)
                         syserr("Expected refcnt==1 in free_frame");
                     l->creator->stackcurr -= l->size;
