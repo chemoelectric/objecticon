@@ -881,30 +881,29 @@ class UnixFileSystem(FileSystem)
    end
 
    public get_data_home()
-      local f, s
-      if s := System.getenv("XDG_DATA_HOME") then {
-         f := FilePath(s)
-         Files.is_directory(f.str()) | fail
-      } else {
+      local f, c, s
+      if s := System.getenv("XDG_DATA_HOME") then
+         Files.is_directory(s) | return error("File specified by XDG_DATA_HOME is not a directory")
+      else {
          f := FilePath(get_home())
-         every s := ".local" | "share" do {
-            f := f.child(s)
-            Files.is_directory(f.str()) | Files.mkdir(f.str()) | fail
+         every c := ".local" | "share" do {
+            f := f.child(c)
+            s := f.str()
+            Files.is_directory(s) | Files.mkdir(s) | return error("Couldn't create data directory \"" || s || "\": " || &why)
          }
       }
-      return f.str()
+      return s
    end
 
    public get_config_home()
-      local f, s
-      if s := System.getenv("XDG_CONFIG_HOME") then {
-         f := FilePath(s)
-         Files.is_directory(f.str()) | fail
-      } else {
-         f := FilePath(get_home()).child(".config")
-         Files.is_directory(f.str()) | Files.mkdir(f.str()) | fail
+      local s
+      if s := System.getenv("XDG_CONFIG_HOME") then
+         Files.is_directory(s) | return error("File specified by XDG_CONFIG_HOME is not a directory")
+      else {
+         s := FilePath(get_home()).child(".config").str()
+         Files.is_directory(s) | Files.mkdir(s) | return error("Couldn't create config directory \"" || s || "\": " || &why)
       }
-      return f.str()
+      return s
    end
 
    public is_hidden(s)
