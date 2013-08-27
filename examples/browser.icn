@@ -4,7 +4,6 @@ import
    util,
    xml,
    graphics,
-   posix,
    lang,
    http,
    net,
@@ -1469,9 +1468,9 @@ end
 procedure main(a)
    local d, url, cookies, t, bak, settings, sf, home
    opts := options(a, "-k: -l! -agent:")
-   home := FilePath(Files.get_home())
-   sf := home.child(".oibrowser").str()
-   cookies := \opts["k"] | System.getenv("OICOOKIES") | home.child(".oicookies").str()
+   home := FilePath(Files.get_data_home()) | stop("Couldn't access data dir: ", &why)
+   sf := home.child("oibrowser").str()
+   cookies := \opts["k"] | home.child("oicookies").str()
    t := decode(Files.file_to_string(cookies)) | table()
    settings := decode(Files.file_to_string(sf)) | Settings()
    /settings.pool_size := 6

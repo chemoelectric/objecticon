@@ -2,7 +2,7 @@
 # Retrieve http pages.
 #
 
-import util, http, net, lang, ipl.options, io, posix
+import util, http, net, lang, ipl.options, io
 
 global total, ok, err, failed, hc, opts, stdin, skipped, out
 
@@ -160,7 +160,7 @@ procedure main(args)
    if \opts["while"] then
       hc.set_retry_while_data(&yes)
 
-   cookies := \opts["k"] | System.getenv("OICOOKIES") | FilePath(Files.get_home()).child(".oicookies").str()
+   cookies := \opts["k"] | FilePath(Files.get_data_home()).child("oicookies").str()
    t := decode(Files.file_to_string(cookies)) | table()
    hc.set_cookies(t)
 

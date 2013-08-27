@@ -116,6 +116,20 @@ $endif
    end
 
    #
+   # Return the directory to store user data files
+   #
+   public static get_data_home()
+      return FS.get_data_home()
+   end
+
+   #
+   # Return the directory to store user configuration files
+   #
+   public static get_config_home()
+      return FS.get_config_home()
+   end
+
+   #
    # Succeed iff the given file is hidden.
    #
    public static is_hidden(s)
@@ -546,6 +560,25 @@ $endif
    public static end_esc()
       return "\e[Z"
    end
+
+   public static get_application_name()
+      return FilePath(&progname).get(-1)
+   end
+
+   public static get_data_file(name)
+      local f, s
+      if s := System.getenv("XDG_DATA_HOME") then {
+         f := FilePath(s)
+         is_directory(f.str()) | fail
+      } else {
+         f := FilePath(Files.get_home())
+         every s := ".local" | "share" do {
+            f := f.child(s)
+            is_directory(f.str()) | mkdir(f.str()) | fail
+         }
+      }
+      return f.child(name).str()
+   end
 end
 
 #
@@ -560,6 +593,8 @@ abstract class FileSystem()
    public abstract filepath_absolute(fp)
    public abstract get_home()
    public abstract get_temp()
+   public abstract get_data_home()
+   public abstract get_config_home()
    public abstract is_hidden(s)
    public abstract is_relative_dir(s)
    public abstract get_roots()
@@ -845,6 +880,33 @@ class UnixFileSystem(FileSystem)
       return System.getenv("TEMP") | "/tmp"
    end
 
+   public get_data_home()
+      local f, s
+      if s := System.getenv("XDG_DATA_HOME") then {
+         f := FilePath(s)
+         Files.is_directory(f.str()) | fail
+      } else {
+         f := FilePath(get_home())
+         every s := ".local" | "share" do {
+            f := f.child(s)
+            Files.is_directory(f.str()) | Files.mkdir(f.str()) | fail
+         }
+      }
+      return f.str()
+   end
+
+   public get_config_home()
+      local f, s
+      if s := System.getenv("XDG_CONFIG_HOME") then {
+         f := FilePath(s)
+         Files.is_directory(f.str()) | fail
+      } else {
+         f := FilePath(get_home()).child(".config")
+         Files.is_directory(f.str()) | Files.mkdir(f.str()) | fail
+      }
+      return f.str()
+   end
+
    public is_hidden(s)
       return any('.', s)
    end
@@ -943,6 +1005,14 @@ class WindowsFileSystem(FileSystem)
 
    public get_temp()
       return System.getenv("TEMP") | "C:\\TEMP"
+   end
+
+   public get_data_home()
+      return get_home()
+   end
+
+   public get_config_home()
+      return get_home()
    end
 
    public is_hidden(s)
