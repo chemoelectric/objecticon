@@ -58,7 +58,8 @@ class FavouriteDirectoriesDialog(Dialog)
       directory_column,
       application_check_box,
       application_column,
-      edit_panel
+      edit_panel,
+      message_label
    public
       okay
 
@@ -82,6 +83,14 @@ class FavouriteDirectoriesDialog(Dialog)
          if /e[1] | (e[1] == app) then
             suspend e[2]
       }
+   end
+
+   public msg(s)
+      message_label.set_label(s)
+   end
+
+   public clear_msg()
+      msg("")
    end
 
    public component_setup()
@@ -120,6 +129,7 @@ class FavouriteDirectoriesDialog(Dialog)
             application_check_box.set_is_checked(&no)
       }
       update_grey()
+      clear_msg()
    end
 
    private update_grey()
@@ -130,8 +140,10 @@ class FavouriteDirectoriesDialog(Dialog)
             application_field.set_is_shaded(&yes)
          else
             application_field.set_is_shaded(&no)
-      } else
+      } else {
+         apply_button.set_is_shaded(&yes)
          edit_panel.set_is_shaded(&yes)
+      }
 
       if *etc.get_selections() > 0 then
          delete_button.set_is_shaded(&no)
@@ -144,9 +156,11 @@ class FavouriteDirectoriesDialog(Dialog)
    end
 
    private on_okay_button(ev)
-      okay := 1
-      Files.string_to_file(get_favourites_file(), encode(etc.contents))
-      dispose()
+      if Files.string_to_file(get_favourites_file(), encode(etc.contents)) then {
+         okay := 1
+         dispose()
+      } else
+         msg(&why)
    end
 
    private on_add_button(ev)
@@ -155,11 +169,13 @@ class FavouriteDirectoriesDialog(Dialog)
       parent_dialog.set_focus(directory_field)
       on_table_selection()
       directory_field.handle_select_all()
+      clear_msg()
    end
 
    private on_delete_button(ev)
       etc.delete_lines(etc.get_selections()) 
       update_grey()
+      clear_msg()
    end
 
    private on_apply_button(ev)
@@ -168,12 +184,14 @@ class FavouriteDirectoriesDialog(Dialog)
                     etc.get_selections()[1])
       etc.clear_selections()
       update_grey()
+      clear_msg()
    end
 
    private on_application_check_box(ev)
       if application_check_box.is_unchecked() & *application_field.get_contents() = 0 then
          application_field.set_contents(Files.get_application_name())
       update_grey()
+      clear_msg()
    end
 
    private on_directory_field(ev)
@@ -183,7 +201,7 @@ class FavouriteDirectoriesDialog(Dialog)
    end
 
    private setup()
-      local paint_2, panel_2, label_2, layout_7, paint_7, layout_4, paint_4, paint_1, paint_9, label_1, layout_6, paint_6, paint_10, paint_3, panel_3, border_content_1, paint_8, border_1, layout_5, paint_5, layout_2
+      local paint_2, panel_2, label_2, layout_7, paint_7, paint_11, layout_4, paint_4, paint_1, paint_9, label_1, layout_6, paint_6, paint_10, paint_3, panel_3, border_content_1, paint_8, border_1, layout_5, paint_5, layout_2
       self.set_label("Favourite directories")
       self.set_resize(&yes)
       paint_1 := TextPaint("Application")
@@ -317,15 +335,28 @@ class FavouriteDirectoriesDialog(Dialog)
          connect(self.on_cancel_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_6)
+      paint_11 := TextPaint("")
+      message_label := Label().
+         set_size("130").
+         set_align(Align.L, Align.B).
+         set_fg("red").
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_paint(paint_11)
       layout_2 := GridLayout().
          set_doi(0).
          set_extra("cells")
       panel_2 := Panel().
          clear_constraints().
          set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
          set_layout(layout_2).
          add(okay_button).
-         add(cancel_button)
+         add(cancel_button).
+         add(message_label)
       self.add(panel_2)
       layout_5 := GridLayout().
          set_extra("cells")
