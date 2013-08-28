@@ -124,20 +124,6 @@ $endif
    end
 
    #
-   # Return the directory to store user data files
-   #
-   public static get_data_home()
-      return FS.get_data_home()
-   end
-
-   #
-   # Return the directory to store user configuration files
-   #
-   public static get_config_home()
-      return FS.get_config_home()
-   end
-
-   #
    # Succeed iff the given file is hidden.
    #
    public static is_hidden(s)
@@ -589,8 +575,6 @@ abstract class FileSystem()
    public abstract filepath_absolute(fp)
    public abstract get_home()
    public abstract get_temp()
-   public abstract get_data_home()
-   public abstract get_config_home()
    public abstract is_hidden(s)
    public abstract is_relative_dir(s)
    public abstract get_roots()
@@ -876,32 +860,6 @@ class UnixFileSystem(FileSystem)
       return System.getenv("TEMP") | "/tmp"
    end
 
-   public get_data_home()
-      local f, c, s
-      if s := System.getenv("XDG_DATA_HOME") then
-         Files.is_directory(s) | return error("File specified by XDG_DATA_HOME is not a directory")
-      else {
-         f := FilePath(get_home())
-         every c := ".local" | "share" do {
-            f := f.child(c)
-            s := f.str()
-            Files.is_directory(s) | Files.mkdir(s) | return error("Couldn't create data directory " || s || ": " || &why)
-         }
-      }
-      return s
-   end
-
-   public get_config_home()
-      local s
-      if s := System.getenv("XDG_CONFIG_HOME") then
-         Files.is_directory(s) | return error("File specified by XDG_CONFIG_HOME is not a directory")
-      else {
-         s := FilePath(get_home()).child(".config").str()
-         Files.is_directory(s) | Files.mkdir(s) | return error("Couldn't create config directory " || s || ": " || &why)
-      }
-      return s
-   end
-
    public is_hidden(s)
       return any('.', s)
    end
@@ -1000,14 +958,6 @@ class WindowsFileSystem(FileSystem)
 
    public get_temp()
       return System.getenv("TEMP") | "C:\\TEMP"
-   end
-
-   public get_data_home()
-      return get_home()
-   end
-
-   public get_config_home()
-      return get_home()
    end
 
    public is_hidden(s)

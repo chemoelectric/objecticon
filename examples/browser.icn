@@ -7,6 +7,7 @@ import
    lang,
    http,
    net,
+   xdg,
    ipl.options,
    ipl.browser,
    ipl.strings,
@@ -1468,7 +1469,7 @@ end
 procedure main(a)
    local d, url, cookies, t, bak, settings, sf, home
    opts := options(a, "-k: -l! -agent:")
-   home := FilePath(Files.get_data_home()) | stop("Couldn't access data dir: ", &why)
+   home := FilePath(Xdg.ensure_data_home()) | stop("Couldn't access data dir: ", &why)
    sf := home.child("oibrowser").str()
    cookies := \opts["k"] | home.child("oicookies").str()
    t := decode(Files.file_to_string(cookies)) | table()

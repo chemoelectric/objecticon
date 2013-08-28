@@ -2,7 +2,7 @@
 # Retrieve http pages.
 #
 
-import util, http, net, lang, ipl.options, io
+import util, http, net, lang, ipl.options, io, xdg
 
 global total, ok, err, failed, hc, opts, stdin, skipped, out
 
@@ -160,7 +160,7 @@ procedure main(args)
    if \opts["while"] then
       hc.set_retry_while_data(&yes)
 
-   cookies := \opts["k"] | FilePath(Files.get_data_home()).child("oicookies").str() | stop("Couldn't access data dir: ", &why)
+   cookies := \opts["k"] | FilePath(Xdg.ensure_data_home()).child("oicookies").str() | stop("Couldn't access data dir: ", &why)
    t := decode(Files.file_to_string(cookies)) | table()
    hc.set_cookies(t)
 

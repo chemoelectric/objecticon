@@ -1,0 +1,138 @@
+package xdg
+
+import io, posix, util, ipl.strings, ipl.wildcard
+
+class Xdg()
+   private static getenv_ne(k)
+      return "" ~== System.getenv(k)
+   end
+
+   public static ensure_data_home()
+      local f, c, s
+      if s := getenv_ne("XDG_DATA_HOME") then
+         Files.is_directory(s) | return error("File specified by XDG_DATA_HOME is not a directory")
+      else {
+         f := FilePath(Files.get_home())
+         every c := ".local" | "share" do {
+            f := f.child(c)
+            s := f.str()
+            Files.is_directory(s) | Files.mkdir(s) | return error("Couldn't create data directory " || s || ": " || &why)
+         }
+      }
+      return s
+   end
+
+   public static ensure_config_home()
+      local s
+      if s := getenv_ne("XDG_CONFIG_HOME") then
+         Files.is_directory(s) | return error("File specified by XDG_CONFIG_HOME is not a directory")
+      else {
+         s := FilePath(Files.get_home()).child(".config").str()
+         Files.is_directory(s) | Files.mkdir(s) | return error("Couldn't create config directory " || s || ": " || &why)
+      }
+      return s
+   end
+
+   public static get_data_home()
+      return getenv_ne("XDG_DATA_HOME") | FilePath(Files.get_home()).append(FilePath(".local/share")).str()
+   end
+
+   public static get_config_home()
+      return getenv_ne("XDG_CONFIG_HOME") | FilePath(Files.get_home()).child(".config").str()
+   end
+
+   public static get_data_dirs()
+      return getenv_ne("XDG_DATA_DIRS") | "/usr/local/share:/usr/share"
+   end
+
+   public static get_config_dirs()
+      return getenv_ne("XDG_CONFIG_DIRS") | "/etc/xdg"
+   end
+
+   private static parse_glob_file(g, s)
+      local weight, type, pattern
+      every separate_lines(s) ? {
+         if weight := integer(tab(upto(':'))) & 
+            move(1) &
+            type := tab(upto(':')) &
+            move(1) &
+            pattern := tab(0) then 
+         {
+            g.add(pattern, weight, type)
+         }
+      }
+   end
+
+   public static read_globs()
+      local d, g, s
+      g := Globs()
+      every d := get_data_home() | Files.split_paths(Xdg.get_data_dirs()) do {
+         if s := ucs(Files.file_to_string(FilePath(d).append(FilePath("mime/globs2")).str())) then
+            parse_glob_file(g, s)
+      }
+      return g
+   end
+end
+
+class GlobMatch()
+   public const
+      weight, type, pattern
+
+   public new(weight, type, pattern)
+      self.weight := weight
+      self.type := type
+      self.pattern := pattern
+      return
+   end
+end
+
+class Globs()
+   private const
+      literal,
+      simple,
+      other
+
+   public lookup(f)
+      local i, v, fm
+      f := ucs(f) | fail
+      fm := map(f)
+      if v := member(literal, f | fm) then
+         return v
+      every i := upto('.', f) do {
+         if v := member(simple, (f | fm)[i + 1:0]) then
+            return v
+      }
+      every v := !other do {
+         if v.pattern.match(f | fm) then
+            return v
+      }
+   end
+
+   package add(p, weight, type)
+      local x
+      if upto('*?[', p) then {
+         if match("*.", p) & not upto('*?[', p[3:0]) then {
+            p := p[3:0]
+            x := member(simple, p)
+            if /x | (weight > x.weight) then
+               insert(simple, p, GlobMatch(weight, type))
+         } else {
+            x := member(other, p)
+            if /x | (weight > x.weight) then
+               insert(other, p, GlobMatch(weight, type, Wildcard(p)))
+         }
+      } else {
+         x := member(literal, p)
+         if /x | (weight > x.weight) then
+            insert(literal, p, GlobMatch(weight, type))
+      }
+      return self
+   end
+
+   public new()
+      literal := table()
+      simple := table()
+      other := table()
+      return
+   end
+end
