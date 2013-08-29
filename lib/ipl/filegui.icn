@@ -4,9 +4,17 @@ import
    ipl.sort,
    ipl.strings,
    ipl.wildcard,
+   ipl.graphics,
    gui,
+   graphics,
    io,
+   xdg,
    util
+
+class ListEntryWithIcon(ListEntry)
+   package readable
+      icon
+end
 
 class ColorFilesItemPaint(WithCloneItemPaint)
    protected make_clone(W)
@@ -107,6 +115,26 @@ class IconFilesItemPaint(ItemPaint)
    end
 
 $ifdef _PNG
+   public get_xdg(data)
+      local t, w2, w
+      #write("ask for ",data.name)
+      t :=  Xdg.suggest_icon_for_file(data.name, ICON_SIZE, u"gnome") | fail
+      #write("got:",t)
+      #t :=  Xdg.suggest_icon_for_file(data.name, 48, u"oxygen") | fail
+      #t :=  Xdg.suggest_icon_for_file(data.name, 48) | fail
+      w := ImageCache.get(t) | fail
+      if w.get_width() = w.get_height() = ICON_SIZE then
+         return t
+      t ||:= "/RESIZED TO " || ICON_SIZE
+      if member(ImageCache.imap, t) then
+         return t
+      w2 := Window().set_size(ICON_SIZE, ICON_SIZE)
+      Zoom(w, w2)
+      insert(ImageCache.imap, t, w2)
+      #write(image(t))
+      return t
+   end
+
    public get_icon(data)
       local st, k
       st := data.lstat
@@ -120,14 +148,16 @@ $ifdef _PNG
          default : {
             if st.mode_str[-7] == ("x" | "s") then
                "icn.EXE_16"
-            else case map(string(Files.get_extension(data.name))) of {
-               "pdf": "icn.PDF_16"
-               "cmd"|"exe"|"com"|"btm"|"bat" : "icn.EXE_16"
-               "tar"|"tgz"|"arj"|"taz"|"lzh"|"zip"|"z"|"Z"|"gz"|"xz"|"bz2"|"rar" : "icn.ARCHIVE_16"
-               "jpg"|"jpeg"|"png"|"gif"|"bmp"|"xbm"|"xpm": "icn.IMAGE_16"
-               "mp4"|"flv"|"avi"|"wmv"|"webm"|"3gp"|"mpeg"|"mpg"|"m4v"|"mkv": "icn.VIDEO_16"
-               "mp3"|"wav"|"mid"|"rm": "icn.AUDIO_16"
-               "htm"|"html": "icn.HTML_16"
+            else {
+               case map(string(Files.get_extension(data.name))) of {
+                  "pdf": "icn.PDF_16"
+                  "cmd"|"exe"|"com"|"btm"|"bat" : "icn.EXE_16"
+                  "tar"|"tgz"|"arj"|"taz"|"lzh"|"zip"|"z"|"Z"|"gz"|"xz"|"bz2"|"rar" : "icn.ARCHIVE_16"
+                  "jpg"|"jpeg"|"png"|"gif"|"bmp"|"xbm"|"xpm": "icn.IMAGE_16"
+                  "mp4"|"flv"|"avi"|"wmv"|"webm"|"3gp"|"mpeg"|"mpg"|"m4v"|"mkv": "icn.VIDEO_16"
+                  "mp3"|"wav"|"mid"|"rm": "icn.AUDIO_16"
+                  "htm"|"html": "icn.HTML_16"
+               } | get_xdg(data)
             }
          }
       } | "gui.FILE"
@@ -146,7 +176,11 @@ $endif
 
    public draw(W, data, x, y, w, h)
       local i
-      i := get_icon(data)
+      if is(data, ListEntryWithIcon) then {
+         if not(i := \data.icon) then
+            i := data.icon := get_icon(data)
+      } else
+         i := get_icon(data)
       i.copy_to(,,,, W, x, y + (h - ICON_SIZE) / 2)
       x +:= ICON_SIZE + Gui.TEXT_INSET
       w -:= ICON_SIZE + Gui.TEXT_INSET

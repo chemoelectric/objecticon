@@ -1,8 +1,57 @@
 package xdg
 
-import io, posix, util, ipl.strings, ipl.wildcard
+import io, posix, util, ipl.strings, ipl.wildcard, lang
 
+class Locale()
+   public const
+      lang, country, encoding, modifier
+
+   public new(s)
+      s ? {
+         lang := tab(upto('_.@') | 0)
+         if ="_" then
+            country := tab(upto('.@') | 0)
+         if ="." then
+            encoding := tab(upto('@') | 0)
+         if ="@" then
+            modifier := tab(0)
+      }
+      return
+   end
+end
+   
 class Xdg()
+   public static const
+      MIME_TYPES,
+      LC_MESSAGES,
+      INI_LC_KEYS,
+      ICON_THEMES,
+      GLOBS,
+      ICONS,
+      GENERIC_ICONS,
+      MIME_SUBCLASSES,
+      MIME_ALIASES,
+      FIND_ICON_CACHE
+
+   private static init()
+      LC_MESSAGES := Locale(getenv_ne("LC_MESSAGES" | "LC_ALL") | "C")
+      INI_LC_KEYS := []
+      every put(INI_LC_KEYS, 
+                LC_MESSAGES.lang || "_" || \LC_MESSAGES.country || "@" || \LC_MESSAGES.modifier |
+                LC_MESSAGES.lang || "_" || \LC_MESSAGES.country |
+                LC_MESSAGES.lang || "@" || \LC_MESSAGES.modifier |
+                LC_MESSAGES.lang |
+                &null)
+      ICON_THEMES := table()
+      MIME_TYPES := table()
+      GLOBS := read_globs()
+      ICONS := read_icons()
+      GENERIC_ICONS := read_generic_icons()
+      MIME_ALIASES := read_mime_aliases()
+      MIME_SUBCLASSES := read_mime_subclasses()
+      FIND_ICON_CACHE := table()
+   end
+
    private static getenv_ne(k)
       return "" ~== System.getenv(k)
    end
@@ -34,7 +83,7 @@ class Xdg()
    end
 
    public static get_data_home()
-      return getenv_ne("XDG_DATA_HOME") | FilePath(Files.get_home()).append(FilePath(".local/share")).str()
+      return getenv_ne("XDG_DATA_HOME") | FilePath(Files.get_home()).walk(".local", "share").str()
    end
 
    public static get_config_home()
@@ -49,9 +98,13 @@ class Xdg()
       return getenv_ne("XDG_CONFIG_DIRS") | "/etc/xdg"
    end
 
+   public static gen_base_dirs()
+      suspend get_data_home() | Files.split_paths(get_data_dirs())
+   end
+
    private static parse_glob_file(g, s)
-      local weight, type, pattern
-      every separate_lines(s) ? {
+      local weight, type, pattern, l
+      every l := separate_lines(s) do l ? {
          if weight := integer(tab(upto(':'))) & 
             move(1) &
             type := tab(upto(':')) &
@@ -63,15 +116,297 @@ class Xdg()
       }
    end
 
-   public static read_globs()
+   public static get_mime_type(f)
+      return GLOBS.lookup(f).type
+   end
+
+   public static get_generic_icon(mt)
+      suspend !member(GENERIC_ICONS, mt)
+   end
+
+   public static get_icon(mt)
+      suspend !member(ICONS, mt)
+   end
+
+   public static get_all_icons(mt)
+      suspend !member(ICONS | GENERIC_ICONS, mt) | map(mt, u"/", u"-")
+   end
+
+   public static alternative_mime_types(mt)
+      suspend mt | !member(MIME_ALIASES, mt) | alternative_mime_types(!member(MIME_SUBCLASSES, mt))
+   end
+
+   public static suggest_icon_for_file(file, size, theme)
+      local mt, i, f
+      every mt := alternative_mime_types(get_mime_type(file)) do
+         every i := get_all_icons(mt) do {
+            if f := find_icon(i, size, theme) then
+               return f
+         }
+   end
+
+   private static read_generic_icons()
+      local d, t, s, k, v, l
+      t := table()
+      every d := gen_base_dirs() do {
+         if s := ucs(Files.file_to_string(FilePath(d).walk("mime", "generic-icons").str())) then {
+            every l := separate_lines(s) do l ? {
+               if k := tab(upto(':')) &
+                  move(1) &
+                  v := tab(0) then
+               {
+                  put(member(t, k), v) | insert(t, k, [v])
+               }
+            }
+         }
+      }
+      return t
+   end
+
+   private static read_icons()
+      local d, t, s, k, v, l
+      t := table()
+      every d := gen_base_dirs() do {
+         if s := ucs(Files.file_to_string(FilePath(d).walk("mime", "icons").str())) then {
+            every l := separate_lines(s) do l ? {
+               if k := tab(upto(':')) &
+                  move(1) &
+                  v := tab(0) then
+               {
+                  put(member(t, k), v) | insert(t, k, [v])
+               }
+            }
+         }
+      }
+      return t
+   end
+
+   private static read_mime_aliases()
+      local d, t, s, k, v, l
+      t := table()
+      every d := gen_base_dirs() do {
+         if s := ucs(Files.file_to_string(FilePath(d).walk("mime", "aliases").str())) then {
+            every l := separate_lines(s) do l ? {
+               if k := tab(upto(' ')) &
+                  move(1) &
+                  v := tab(0) then
+               {
+                  put(member(t, k), v) | insert(t, k, [v])
+               }
+            }
+         }
+      }
+      return t
+   end
+
+   private static read_mime_subclasses()
+      local d, t, s, k, v, l
+      t := table()
+      every d := gen_base_dirs() do {
+         if s := ucs(Files.file_to_string(FilePath(d).walk("mime", "subclasses").str())) then {
+            every l := separate_lines(s) do l ? {
+               if k := tab(upto(' ')) &
+                  move(1) &
+                  v := tab(0) then
+               {
+                  put(member(t, k), v) | insert(t, k, [v])
+               }
+            }
+         }
+      }
+      return t
+   end
+
+   private static read_globs()
       local d, g, s
       g := Globs()
-      every d := get_data_home() | Files.split_paths(Xdg.get_data_dirs()) do {
-         if s := ucs(Files.file_to_string(FilePath(d).append(FilePath("mime/globs2")).str())) then
+      every d := gen_base_dirs() do {
+         if s := ucs(Files.file_to_string(FilePath(d).walk("mime", "globs2").str())) then
             parse_glob_file(g, s)
       }
       return g
    end
+
+   private static unescape(s)
+      local t, ch
+      t := ""
+      s ? repeat {
+         t ||:= tab(upto('\\') | 0)
+         ch := (move(1), move(1)) | break
+         t ||:= case string(ch) of {
+            "s": " "
+            "t": "\t"
+            "n": "\n"
+            "r": "\r"
+            default: ch
+         }
+      }
+      return t
+   end
+
+   private static parse_key_val(group)
+      local key, val, enc, t
+      key := tab(many(&letters ++ &digits ++ '-')) | fail
+      if ="[" then {
+         enc := tab(upto(']')) | fail
+         move(1)
+      }
+      tab(many(' '))
+      ="=" | fail
+      tab(many(' '))
+      val := unescape(tab(0))
+      (t := member(group, key)) | insert(group, key, t := table())
+      insert(t, enc, val)
+   end
+
+   private static resolve_lc(group)
+      local key, sel, t
+      every key := default.key(group) do {
+         t := member(group, key)
+         sel := member(t, !INI_LC_KEYS)
+         insert(group, key, sel)
+      }
+   end
+
+   public static parse_ini_file(s)
+      local group, groups, gn, l
+      groups := table()
+      every l := separate_lines(s) do l ? {
+         if ="[" & gn := tab(upto(']')) then {
+            group := table()
+            insert(groups, gn, group)
+         } else
+            parse_key_val(\group)
+      }
+      every resolve_lc(!groups)
+      return groups
+   end
+
+   public static load_ini_file(f)
+      return parse_ini_file(Files.file_to_string(f))
+   end
+
+   public static get_theme_index(theme)
+      local d, s, m
+      if m := member(ICON_THEMES, theme) then
+         return m
+      every d := gen_base_dirs() do {
+         if s := ucs(Files.file_to_string(FilePath(d).walk("icons", theme, "index.theme").str())) then {
+            m := parse_ini_file(s)
+            insert(ICON_THEMES, theme, m)
+            return m
+         }
+      }
+   end
+
+   public static find_icon_nocache(icon, size, theme)
+      local tried
+      tried := set()
+      return find_icon_helper(icon, size, \theme | u"hicolor", tried) | lookup_fallback_icon(icon)
+   end
+
+   public static find_icon(icon, size, theme)
+      local k, v
+      k := icon || u"/" || size
+      k ||:= u"/" || \theme
+      if not(v := member(FIND_ICON_CACHE, k)) then {
+         v := find_icon_nocache(icon, size, theme)
+         insert(FIND_ICON_CACHE, k, v)
+      }
+      return \v
+   end
+
+   private static gen_theme_subdirs(tm)
+      suspend separate(\tm[u"Icon Theme", u"Directories"])
+   end
+
+   private static gen_theme_parents(tm)
+      suspend separate(\tm[u"Icon Theme", u"Inherits"])
+   end
+
+   private static directory_matches_size(tm, subdir, desired_size)
+      local m, size, threshold, type
+      m := member(tm, subdir) | fail
+      size := integer(member(m, u"Size")) | fail
+      type := member(m, u"Type") | u"Threshold"
+      case type of {
+         u"Fixed": return desired_size = size
+         u"Threshold": {
+            threshold := integer(member(tm, u"Threshold")) | 2
+            return size - threshold <= desired_size <= size + threshold
+         }
+      }
+   end
+
+   private static directory_size_distance(tm, subdir, desired_size)
+      local m, size, threshold, minsize, maxsize, type
+      m := member(tm, subdir) | fail
+      size := integer(member(m, u"Size")) | fail
+      type := member(m, u"Type") | u"Threshold"
+      case type of {
+         u"Fixed": return abs(desired_size - size)
+         u"Threshold": {
+            threshold := integer(member(tm, u"Threshold")) | 2
+            minsize := integer(member(tm, u"MinSize")) | size
+            maxsize := integer(member(tm, u"MaxSize")) | size
+            if desired_size < size - threshold then 
+               return minsize - desired_size
+            if desired_size > size + threshold then 
+               return desired_size - maxsize
+            return 0
+         }
+      }
+   end
+
+   private static find_icon_helper(icon, size, theme, tried)
+      local tm, p, f
+      if member(tried, theme) then
+         fail
+      insert(tried, theme)
+      tm := get_theme_index(theme) | fail
+      if f := lookup_icon(tm, icon, size, theme) then
+         return f
+      every p := gen_theme_parents(tm) do {
+         if f := find_icon_helper(icon, size, p, tried) then
+            return f
+      }
+   end
+
+   private static lookup_fallback_icon(icon)
+      local d, f
+      every d := gen_base_dirs() do {
+         f := FilePath(d).walk("icons", icon || ".png").str()
+         if Files.access(f) then
+            return f
+      }
+   end
+
+   private static lookup_icon(tm, icon, size, theme)
+      local subdir, f, d, minimal_size, closest_filename, ms
+      every subdir := gen_theme_subdirs(tm) do {
+         if directory_matches_size(tm, subdir, size) then {
+            every d := gen_base_dirs() do {
+               f := FilePath(d).walk("icons", theme).append(FilePath(subdir)).child(icon || ".png").str()
+               if Files.access(f) then
+                  return f
+            }
+         }
+      }
+      minimal_size := Limit.MaxWord
+      every subdir := gen_theme_subdirs(tm) do {
+         if (ms := directory_size_distance(tm, subdir, size)) < minimal_size then {
+            every d := gen_base_dirs() do {
+               f := FilePath(d).walk("icons", theme).append(FilePath(subdir)).child(icon || ".png").str()
+               if Files.access(f) then {
+                  closest_filename := f
+                  minimal_size := ms
+               }
+            }
+         }
+      }
+      return \closest_filename
+   end
+
 end
 
 class GlobMatch()
