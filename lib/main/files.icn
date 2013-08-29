@@ -644,11 +644,23 @@ class FilePath(ObjectOutput)
    end
 
    #
-   # Return the path formed by appending the elements of this path to
-   # the other path.
+   # Returns the path formed by appending the elements of this path to
+   # the elements of `other`.  `other` must be a list or another
+   #`FilePath`.
    #
    public append(other)
-      return from_list(l ||| other.l)
+      return if is(other, FilePath) then
+         from_list(l ||| other.l)
+      else
+         from_list(l ||| other)
+   end
+
+   #
+   # Takes a variable arguments list, and returns the path formed by
+   # appending the elements of this path to that list.
+   #
+   public walk(a[])
+      return from_list(l ||| a)
    end
 
    #
