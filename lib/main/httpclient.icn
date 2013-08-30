@@ -88,6 +88,7 @@ class HttpClient(NetClient)
    private readable 
       request,
       response,
+      previous_response,
       open_url,
       retries,
       retry_while_data_flag,
@@ -267,7 +268,7 @@ class HttpClient(NetClient)
       }
 
       redir_set := set()
-      auth := auth_scheme := abort_flag := &null
+      previous_response := auth := auth_scheme := abort_flag := &null
       repeat {
          http_error := &null
 
@@ -302,7 +303,7 @@ class HttpClient(NetClient)
          #
          request.set_url(request.url.get_relative(l))
       
-      s := string(request.url.str())
+      s := request.url.str()
       if member(redir_set, s) then
          return on_http_error("Circular redirection detected: " || s)
       insert(redir_set, s)
@@ -317,6 +318,11 @@ class HttpClient(NetClient)
             unset_header("content-length").
             unset_header("content-type")
       }
+
+      # Note this response so that it is added to the chain of
+      # redirected responses in the final response.
+      previous_response := response
+
       return
    end
 
@@ -808,7 +814,9 @@ class HttpClient(NetClient)
          # Create a response
          #
          response := HttpResponse().
-            set_url(request.url)
+            set_url(request.url).
+            set_previous_response(previous_response)
+
          s := expect_line() | fail
          response.set_status(s)
 

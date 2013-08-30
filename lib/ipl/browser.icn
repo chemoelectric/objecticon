@@ -323,7 +323,7 @@ class HttpSubWorker(SubWorker)
    end
 
    public get_data(worker)
-      local req, s, data, hreq, hres, fname, ct, x, ce, sc
+      local req, s, data, hreq, hres, fname, ct, x, ce, sc, pr
       httpc := worker.httpc
       req := worker.req
       return if req.kind ~= Worker.REFRESH & /req.form_data & (ce := worker.pool.cache.get(req.url)) then
@@ -374,8 +374,16 @@ class HttpSubWorker(SubWorker)
                ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
                # Note we have to take into account redirections in deciding whether to cache
                # and whether form data should be in the response.
-               if httpc.request.method == "GET" & x := get_expiry(hres) then
-                  worker.pool.cache.add(hres.url, x, data, fname, ct)
+               if httpc.request.method == "GET" then {
+                  if x := get_expiry(hres) then
+                     worker.pool.cache.add(hres.url, x, data, fname, ct)
+                  # Check for any cacheable redirection responses.
+                  pr := hres
+                  while pr := pr.get_previous_response() do {
+                     if pr.get_status_code() = (301 | 302) & x := get_expiry(pr) then 
+                        worker.pool.cache.add(pr.url, x, data, fname, ct)
+                  }
+               }
                Resp(, hres.url, req.referer, data, fname, ct, req.kind, 
                     if hreq.url === hres.url then req.form_data else &null)
             } else {

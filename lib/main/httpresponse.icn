@@ -16,7 +16,8 @@ import util, mail
 class HttpResponse(MimeHeaders)
    private readable 
       url, 
-      status
+      status,
+      previous_response
 
    #
    # Set the url
@@ -75,5 +76,22 @@ class HttpResponse(MimeHeaders)
    #
    public get_filename()
       return get_content_disposition_filename() | url.get_decoded_path_last()
+   end
+
+   #
+   # Return the previous response, or fail if there was none.  A chain
+   # of responses will arise, for example, when there are
+   # redirections.
+   #
+   public get_previous_response()
+      return \previous_response
+   end
+
+   #
+   # Set the previous response
+   #
+   public set_previous_response(other)
+      self.previous_response := other
+      return self
    end
 end
