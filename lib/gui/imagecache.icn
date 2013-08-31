@@ -1,6 +1,9 @@
 package gui
 
-import graphics, util
+import 
+   graphics, 
+   util,
+   ipl.graphics
 
 $load HOME "images/gui.HOME_24.gif"
 $load NEW_FOLDER "images/gui.NEW_FOLDER_24.gif"
@@ -308,46 +311,73 @@ bb~~~~bb_
    # name is unknown.
    #
    public static get_named_image(name)
-      return \names[name]
+      return member(names, name)
    end
 
-   # Load an image, using the cache if possible.  The parameter should
-   # be either in Icon image format, a file name, or the name of an
-   # image set by {name_image()}.  On a successful load, the image is
-   # stored in the cache for future use, and thus should not be
-   # closed after use.
+   #
+   # Place an entry into the window cache with the given key.  The
+   # window should not be subsequently closed.
+   #
+   public static cache_window(key, win)
+      insert(imap, key, win)
+   end
+
+   #
+   # Return an entry in the window cache, or fail if the key is not
+   # present.
+   #
+   public static get_cached_window(key)
+      return member(imap, key)
+   end
+
+   #
+   # Load an image, using the cache if possible.  The parameter `s`
+   # should be either in Icon image format, a file name, or the name
+   # of an image set by {name_image()}.  On a successful load, the
+   # image is stored in the cache for future use, and thus should not
+   # be closed after use.
    #
    public static get(s, win)
+      return member(imap, get_key(s, win))
+   end
+
+   #
+   # This is the same as `get`, but returns the key into the cached
+   # window map, rather than the window.  If it succeeds, then the
+   # returned key will be in the map, and the window can be retrieved
+   # by `get_cached_window`.
+   #
+   public static get_key(s, win)
       local w, key, p
       key := s
-      s := \names[s]
+      s := member(names, s)
       if is_image_string(s) then {
          if \win then
             key := Window.color_value(win.get_fg()) || "/" || Window.color_value(win.get_bg()) || "#" || key
-         if w := \imap[key] then
-            return w
+         if w := member(imap, key) then
+            return key
          w := use {
             p := parse_image_string(s, win),
             Window.open_image(p)
          } | fail
       } else {
-         if w := \imap[key] then
-            return w
+         if w := member(imap, key) then
+            return key
          w := Window.open_image(s) | fail
       }
       insert(imap, key, w)
-      return w
+      return key
    end
 
    #
    # Load an image without using the cache.  The parameter {s} should
    # be either in Icon image format, a file name, or the name of an
-   # image set by {name_image()}.  The returned image shoud be closed
+   # image set by {name_image()}.  The returned image should be closed
    # after use.
    #
    public static load(s, win)
       local p
-      s := \names[s]
+      s := member(names, s)
       return if is_image_string(s) then {
          use {
             p := parse_image_string(s, win),
@@ -356,5 +386,31 @@ bb~~~~bb_
       } else
          Window.open_image(s)
    end
-end
 
+   #
+   # This is like `get`, but if the resulting window is not of the
+   # given dimensions, then another window is created (and cached),
+   # which is the result of resizing to the desired size.
+   #
+   public static get_with_resize(s, width, height, win)
+      return member(imap, get_key_with_resize(s, width, height, win))
+   end
+
+   #
+   # Like `get_with_resize`, but returns the key rather than the window.
+   #
+   public static get_key_with_resize(s, width, height, win)
+      local w, k, w2
+      k := get_key(s, win) | fail
+      w := member(imap, k)
+      if w.get_width() = width & w.get_height() = height then
+         return k
+      k ||:= "#Resized to " || width || "x" || height
+      if member(imap, k) then
+         return k
+      w2 := Window().set_size(width, height)
+      Zoom(w, w2)
+      insert(imap, k, w2)
+      return k
+   end
+end
