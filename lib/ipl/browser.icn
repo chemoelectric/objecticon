@@ -41,17 +41,15 @@ end
 
 class Resp()
    public const
-      err, url, referer, data, fname, content_type, kind, form_data, data_file
+      req, err, url, referer, data, fname, content_type, data_file
 
-   public new(err, url, referer, data, fname, content_type, kind, form_data, data_file)
+   public new(req, err, url, data, fname, content_type, data_file)
+      self.req := req
       self.err := err
       self.url := url
-      self.referer := referer
       self.data := data
       self.fname := fname
       self.content_type := content_type
-      self.kind := kind
-      self.form_data := form_data
       self.data_file := data_file
       return
    end
@@ -344,11 +342,10 @@ class HttpSubWorker(SubWorker)
                if hres := httpc.retrieve(hreq) then {
                   fname := hres.get_filename()
                   ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
-                  Resp(, hres.url, req.referer,, fname, ct, req.kind, 
-                       if hreq.url === hres.url then req.form_data else &null, tmp_file)
+                  Resp(req,, hres.url,, fname, ct, tmp_file)
                } else {
                   rm_tmp()
-                  Resp(&why, req.url, req.referer,,,, req.kind, req.form_data)
+                  Resp(req, &why, req.url)
                }
             }
          }
@@ -384,8 +381,7 @@ class HttpSubWorker(SubWorker)
                         worker.pool.cache.add(pr.url, x, data, fname, ct)
                   }
                }
-               Resp(, hres.url, req.referer, data, fname, ct, req.kind, 
-                    if hreq.url === hres.url then req.form_data else &null)
+               Resp(req,, hres.url, data, fname, ct)
             } else {
                # Decide whether to include http content together with
                # the error message, so it can be displayed
@@ -398,10 +394,9 @@ class HttpSubWorker(SubWorker)
                {
                   fname := hres.get_filename()
                   ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
-                  Resp(&why, hres.url, req.referer, data, fname, ct, req.kind, 
-                       if hreq.url === hres.url then req.form_data else &null)
+                  Resp(req, &why, hres.url, data, fname, ct)
                } else
-                  Resp(&why, req.url, req.referer,,,, req.kind, req.form_data)
+                  Resp(req, &why, req.url)
             }
          }
       }
@@ -558,15 +553,15 @@ class Worker()
             } else if is(x, Resp) then
                req.callback(x)
             else if is(x, StaticData) then
-               req.callback(Resp(, req.url, req.referer, x.data, x.fname, x.content_type, req.kind))
+               req.callback(Resp(req,, req.url, x.data, x.fname, x.content_type))
             else if s := string(x) then
-               req.callback(Resp(, req.url, req.referer, s, req.url.get_decoded_path_last(),, req.kind))
+               req.callback(Resp(req,, req.url, s, req.url.get_decoded_path_last()))
             else if \x then
                runerr(103, x)
          }
       } else {
          if /cancelled then
-            req.callback(Resp(&why, req.url, req.referer,,,, req.kind))
+            req.callback(Resp(req, &why, req.url))
       }
    end
 
@@ -583,7 +578,7 @@ class Worker()
             if f := member(pool.scheme_handlers, t) then
                handle_func(f)
             else
-               req.callback(Resp("Unknown url scheme", req.url, req.referer,,,, req.kind))
+               req.callback(Resp(req, "Unknown url scheme", req.url))
          }
       }
    end
@@ -2809,7 +2804,7 @@ class Browser(ComponentScrollArea)
          # focus methods fail and no change to the focus is made.
          if view === (f := parent_dialog.get_focus()).gen_parents() then
             focus_scroll(, f)
-         else if page_resp.kind = Worker.NAVIGATE then
+         else if page_resp.req.kind = Worker.NAVIGATE then
             parent_dialog.set_focus(get_nth_focusable(\curr_history_entry.focus_index))
          else {
             if f := (!forms).get_autofocus() then
@@ -3145,7 +3140,7 @@ class Browser(ComponentScrollArea)
       page_resp := res
       page_url := res.url
       clear_searched()
-      if res.kind = Worker.NORMAL then {
+      if res.req.kind = Worker.NORMAL then {
          # Reset history_pos, since we may have done a navigate
          # back/forward (changing history_pos), and cancelled it with
          # a normal click whist it was pending.
@@ -3162,8 +3157,9 @@ class Browser(ComponentScrollArea)
       # navigate/refresh, if the server behaved differently (eg
       # redirect instead of error).
       curr_history_entry.url := page_url
-      curr_history_entry.referer := res.referer
-      curr_history_entry.form_data := res.form_data
+      curr_history_entry.referer := res.req.referer
+      curr_history_entry.form_data := if page_url === res.req.url then res.req.form_data else &null
+
       maps := table()
       datalists := table()
       forms := []
@@ -3191,13 +3187,13 @@ class Browser(ComponentScrollArea)
       synch_font(c)
       traverse(doc, row, c)
       curr_history_entry.title := page_title
-      if page_resp.kind = Worker.NAVIGATE then
+      if page_resp.req.kind = Worker.NAVIGATE then
          restore_form_values()
       every form_tab_children |||:= (!forms).get_tab_children()
       set_inner(row)
       layout()
       invalidate()
-      if page_resp.kind = Worker.NAVIGATE then
+      if page_resp.req.kind = Worker.NAVIGATE then
          restore_last_highlight()
       else
          last_highlight_component := &null
@@ -3494,7 +3490,7 @@ class Browser(ComponentScrollArea)
             q.set_border(EmptyBorder().set_insets(hspace, hspace, vspace, vspace))
       } else if border > 0 then
          q.set_border(PlainBorder().set_line_width(border))
-      start_worker(Req(self, url, page_url, q.got_data, page_resp.kind))
+      start_worker(Req(self, url, page_url, q.got_data, page_resp.req.kind))
       align := convert_comp_align(e, u"ALIGN") | Align.B
       add_component(p, q, context, align)
    end
@@ -3651,7 +3647,7 @@ class Browser(ComponentScrollArea)
                # TextFlow).
                if \context.nowrap | \context.pre then
                   q.remove_constraint("pct_w")
-               start_worker(Req(self, url, page_url, q.got_data, page_resp.kind))
+               start_worker(Req(self, url, page_url, q.got_data, page_resp.req.kind))
                if e.get_attribute(u"DISABLED") then
                   q.set_is_shaded(&yes)
                else {
@@ -4839,7 +4835,7 @@ class Browser(ComponentScrollArea)
          s ||:= "Title: " || to_content(n) || "<p>"
       if ct := \page_resp.content_type then
          s ||:= "Content-type: " || to_content(ct.to_rfc1521()) || "<p>"
-      if l := \page_resp.referer & (l.scheme == (u"http" | u"https")) then
+      if l := \page_resp.req.referer & (l.scheme == (u"http" | u"https")) then
          s ||:= "Referer: " || mk_anchor(l) || "<p>"
       if e := \page_resp.err then
          s ||:= "Error: " || to_content(e) || "<p>"

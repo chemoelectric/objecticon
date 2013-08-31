@@ -1210,9 +1210,16 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public page_loaded()
+      local ru
       # Don't save pages that didn't load in the visited list.
-      if \browser.page_data then
+      if \browser.page_data then {
          parent_dialog.update_visited(browser.page_url, browser.page_title)
+         # If we were redirected from the original url, save that too
+         # in the visited list.
+         ru := browser.page_resp.req.url
+         if ru ~=== browser.page_url then
+            parent_dialog.update_visited(ru, browser.page_title)
+      }
       url_field.
          set_contents(browser.curr_history_entry.url.liberal_ucs()).
          set_selection_list(lreverse(browser.history)).
