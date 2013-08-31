@@ -4,9 +4,7 @@ import
    ipl.sort,
    ipl.strings,
    ipl.wildcard,
-   ipl.graphics,
    gui,
-   graphics,
    io,
    xdg,
    util
@@ -116,23 +114,9 @@ class IconFilesItemPaint(ItemPaint)
 
 $ifdef _PNG
    public get_xdg(data)
-      local t, w2, w
-      #write("ask for ",data.name)
-      t :=  Xdg.suggest_icon_for_file(data.name, ICON_SIZE, u"gnome") | fail
-      #write("got:",t)
-      #t :=  Xdg.suggest_icon_for_file(data.name, 48, u"oxygen") | fail
-      #t :=  Xdg.suggest_icon_for_file(data.name, 48) | fail
-      w := ImageCache.get(t) | fail
-      if w.get_width() = w.get_height() = ICON_SIZE then
-         return t
-      t ||:= "/RESIZED TO " || ICON_SIZE
-      if member(ImageCache.imap, t) then
-         return t
-      w2 := Window().set_size(ICON_SIZE, ICON_SIZE)
-      Zoom(w, w2)
-      insert(ImageCache.imap, t, w2)
-      #write(image(t))
-      return t
+      local t
+      t := Xdg.suggest_icon_for_file(data.name, ICON_SIZE) | fail
+      return ImageCache.get_key_with_resize(t, ICON_SIZE, ICON_SIZE)
    end
 
    public get_icon(data)

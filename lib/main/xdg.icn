@@ -26,6 +26,7 @@ class Xdg()
       LC_MESSAGES,
       INI_LC_KEYS,
       ICON_THEMES,
+      CURRENT_ICON_THEME,
       GLOBS,
       ICONS,
       GENERIC_ICONS,
@@ -50,6 +51,7 @@ class Xdg()
       MIME_ALIASES := read_mime_aliases()
       MIME_SUBCLASSES := read_mime_subclasses()
       FIND_ICON_CACHE := table()
+      CURRENT_ICON_THEME := get_current_icon_theme()
    end
 
    private static getenv_ne(k)
@@ -136,11 +138,11 @@ class Xdg()
       suspend mt | !member(MIME_ALIASES, mt) | alternative_mime_types(!member(MIME_SUBCLASSES, mt))
    end
 
-   public static suggest_icon_for_file(file, size, theme)
+   public static suggest_icon_for_file(file, size, theme, scalable_flag)
       local mt, i, f
       every mt := alternative_mime_types(get_mime_type(file)) do
          every i := get_all_icons(mt) do {
-            if f := find_icon(i, size, theme) then
+            if f := find_icon(i, size, theme, scalable_flag) then
                return f
          }
    end
@@ -299,21 +301,33 @@ class Xdg()
       }
    end
 
-   public static find_icon_nocache(icon, size, theme)
+   private static find_icon_nocache(icon, size, theme, scalable_flag)
       local tried
       tried := set()
-      return find_icon_helper(icon, size, \theme | u"hicolor", tried) | lookup_fallback_icon(icon)
+      return find_icon_helper(icon, size, theme, scalable_flag, tried) | lookup_fallback_icon(icon, scalable_flag)
    end
 
-   public static find_icon(icon, size, theme)
+   public static find_icon(icon, size, theme, scalable_flag)
       local k, v
-      k := icon || u"/" || size
-      k ||:= u"/" || \theme
+      /theme := CURRENT_ICON_THEME
+      k := icon || u"/" || size || u"/" || image(theme) || u"/" || image(scalable_flag)
       if not(v := member(FIND_ICON_CACHE, k)) then {
-         v := find_icon_nocache(icon, size, theme)
+         v := find_icon_nocache(icon, size, theme, scalable_flag)
          insert(FIND_ICON_CACHE, k, v)
       }
       return \v
+   end
+
+   private static get_current_icon_theme()
+      local f, theme, d
+      every theme := u"oxygen" | u"gnome" do {
+         every d := gen_base_dirs() do {
+            f := FilePath(d).walk("icons", theme, "index.theme").str()
+            if Files.access(f) then
+               return theme
+         }
+      }
+      return u"hicolor"
    end
 
    private static gen_theme_subdirs(tm)
@@ -324,21 +338,28 @@ class Xdg()
       suspend separate(\tm[u"Icon Theme", u"Inherits"])
    end
 
-   private static directory_matches_size(tm, subdir, desired_size)
-      local m, size, threshold, type
+   private static directory_matches_size(tm, subdir, desired_size, scalable_flag)
+      local m, size, minsize, maxsize, threshold, type
       m := member(tm, subdir) | fail
       size := integer(member(m, u"Size")) | fail
       type := member(m, u"Type") | u"Threshold"
       case type of {
          u"Fixed": return desired_size = size
          u"Threshold": {
-            threshold := integer(member(tm, u"Threshold")) | 2
+            threshold := integer(member(m, u"Threshold")) | 2
             return size - threshold <= desired_size <= size + threshold
+         }
+         u"Scalable": {
+            if \scalable_flag then {
+               minsize := integer(member(m, u"MinSize")) | size
+               maxsize := integer(member(m, u"MaxSize")) | size
+               return minsize <= desired_size <= maxsize
+            }
          }
       }
    end
 
-   private static directory_size_distance(tm, subdir, desired_size)
+   private static directory_size_distance(tm, subdir, desired_size, scalable_flag)
       local m, size, threshold, minsize, maxsize, type
       m := member(tm, subdir) | fail
       size := integer(member(m, u"Size")) | fail
@@ -346,58 +367,88 @@ class Xdg()
       case type of {
          u"Fixed": return abs(desired_size - size)
          u"Threshold": {
-            threshold := integer(member(tm, u"Threshold")) | 2
-            minsize := integer(member(tm, u"MinSize")) | size
-            maxsize := integer(member(tm, u"MaxSize")) | size
+            threshold := integer(member(m, u"Threshold")) | 2
+            minsize := integer(member(m, u"MinSize")) | size
+            maxsize := integer(member(m, u"MaxSize")) | size
             if desired_size < size - threshold then 
                return minsize - desired_size
             if desired_size > size + threshold then 
                return desired_size - maxsize
             return 0
          }
+         u"Scalable": {
+            if \scalable_flag then {
+               minsize := integer(member(m, u"MinSize")) | size
+               maxsize := integer(member(m, u"MaxSize")) | size
+               if desired_size < minsize then
+                  return minsize - desired_size
+               if desired_size > maxsize then
+                  return desired_size - maxsize
+               return 0
+            }
+         }
       }
    end
 
-   private static find_icon_helper(icon, size, theme, tried)
+   private static find_icon_helper(icon, size, theme, scalable_flag, tried)
       local tm, p, f
       if member(tried, theme) then
          fail
       insert(tried, theme)
       tm := get_theme_index(theme) | fail
-      if f := lookup_icon(tm, icon, size, theme) then
+      if f := lookup_icon(tm, icon, size, scalable_flag, theme) then
          return f
       every p := gen_theme_parents(tm) do {
-         if f := find_icon_helper(icon, size, p, tried) then
+         if f := find_icon_helper(icon, size, p, scalable_flag, tried) then
             return f
       }
    end
 
-   private static lookup_fallback_icon(icon)
-      local d, f
+   private static lookup_fallback_icon(icon, scalable_flag)
+      local d, p, f
       every d := gen_base_dirs() do {
-         f := FilePath(d).walk("icons", icon || ".png").str()
+         p := FilePath(d).child("icons")
+         if f := try_access1(p, icon, scalable_flag) then
+            return f
+      }
+   end
+
+   private static try_access(d, theme, subdir, icon, scalable_flag)
+      return try_access1(FilePath(d).walk("icons", theme).append(FilePath(subdir)),
+                         icon,
+                         scalable_flag)
+   end
+
+   private static try_access1(p, icon, scalable_flag)
+      local f
+      f := p.child(icon || ".png").str()
+      if Files.access(f) then
+         return f
+      if \scalable_flag then {
+         f := p.child(icon || ".svg").str()
+         if Files.access(f) then
+            return f
+         f := p.child(icon || ".svgz").str()
          if Files.access(f) then
             return f
       }
    end
 
-   private static lookup_icon(tm, icon, size, theme)
+   private static lookup_icon(tm, icon, size, scalable_flag, theme)
       local subdir, f, d, minimal_size, closest_filename, ms
       every subdir := gen_theme_subdirs(tm) do {
-         if directory_matches_size(tm, subdir, size) then {
+         if directory_matches_size(tm, subdir, size, scalable_flag) then {
             every d := gen_base_dirs() do {
-               f := FilePath(d).walk("icons", theme).append(FilePath(subdir)).child(icon || ".png").str()
-               if Files.access(f) then
+               if f := try_access(d, theme, subdir, icon, scalable_flag) then
                   return f
             }
          }
       }
       minimal_size := Limit.MaxWord
       every subdir := gen_theme_subdirs(tm) do {
-         if (ms := directory_size_distance(tm, subdir, size)) < minimal_size then {
+         if (ms := directory_size_distance(tm, subdir, size, scalable_flag)) < minimal_size then {
             every d := gen_base_dirs() do {
-               f := FilePath(d).walk("icons", theme).append(FilePath(subdir)).child(icon || ".png").str()
-               if Files.access(f) then {
+               if f := try_access(d, theme, subdir, icon, scalable_flag) then {
                   closest_filename := f
                   minimal_size := ms
                }
