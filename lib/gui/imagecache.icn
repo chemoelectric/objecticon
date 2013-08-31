@@ -3,6 +3,7 @@ package gui
 import 
    graphics, 
    util,
+   cairo,
    ipl.graphics
 
 $load HOME "images/gui.HOME_24.gif"
@@ -400,17 +401,42 @@ bb~~~~bb_
    # Like `get_with_resize`, but returns the key rather than the window.
    #
    public static get_key_with_resize(s, width, height, win)
-      local w, k, w2
-      k := get_key(s, win) | fail
-      w := member(imap, k)
+      local w, key, w2
+      key := get_key(s, win) | fail
+      w := member(imap, key)
       if w.get_width() = width & w.get_height() = height then
-         return k
-      k ||:= "#Resized to " || width || "x" || height
-      if member(imap, k) then
-         return k
+         return key
+      key ||:= "#Resized to " || width || "x" || height
+      if member(imap, key) then
+         return key
       w2 := Window().set_size(width, height)
       Zoom(w, w2)
-      insert(imap, k, w2)
-      return k
+      insert(imap, key, w2)
+      return key
+   end
+
+   public static get_scaled_svg(s, width, height)
+      return member(imap, get_scaled_svg_key(s, width, height))
+   end
+
+   public static get_scaled_svg_key(s, width, height)
+      local w, key, cc, svg
+      key := s || "#Scaled to " || width || "x" || height
+      if member(imap, key) then
+         return key
+      s := member(names, s)
+      svg := SVG(s) | fail
+      w := Window().
+         set_size(width, height).
+         set_bg("transparent").
+         erase_area()
+      use {
+         cc := Context(w).
+            scale(real(width) / svg.get_width(), real(height) / svg.get_height()),
+         svg.render(cc)
+      }
+      svg.close()
+      insert(imap, key, w)
+      return key
    end
 end
