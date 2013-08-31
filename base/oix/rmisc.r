@@ -1983,6 +1983,32 @@ void cstr2string(char *s, dptr d)
 }
 
 /*
+ * C-level utility to convert a string to ucs; both pointers must
+ * point to tended descriptors.  returns 1 on conversion success, 0
+ * otherwise.
+ */
+int string2ucs(dptr str, dptr res)
+{
+    tended struct b_ucs *p;
+    char *s1, *e1;
+    word n = 0;
+
+    s1 = StrLoc(*str);
+    e1 = s1 + StrLen(*str);
+
+    while (s1 < e1) {
+        int i = utf8_check(&s1, e1);
+        ++n;
+        if (i < 0 || i > MAX_CODE_POINT)
+            return 0;
+    }
+    p = make_ucs_block(str, n);
+    res->dword = D_Ucs;
+    BlkLoc(*res) = (union block *)p;
+    return 1;
+}
+
+/*
  * Allocate a string and initialize it based on the given pointer and
  * length.  The result is stored in the given dptr.  If len is zero,
  * s is ignored and emptystr is returned.
