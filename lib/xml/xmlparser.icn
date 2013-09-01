@@ -15,11 +15,13 @@ import lang, util, ipl.scan, exception
 #
 class Diversion()
    private readable
+      base,
       id,
       subject, 
       pos
 
-   package new(id, subject, pos)
+   package new(base, id, subject, pos)
+      self.base := base
       self.id := id
       self.subject := subject
       self.pos := pos
@@ -73,6 +75,7 @@ class XmlParser(Connectable)
       resolver, 
       current_divert_id,
       divert_stack,
+      current_base,
       in_ext_subset,
       id_attribute_refs,
       dtd_insert_shown_error
@@ -439,7 +442,7 @@ class XmlParser(Connectable)
       # Need to divert because the normalize_attvalue1 uses string scanning, and
       # returns errors.
       #
-      start_divert("attvalue")
+      start_divert(current_base, "attvalue")
       res := normalize_attvalue1(s)
       end_divert()
 
@@ -755,7 +758,7 @@ class XmlParser(Connectable)
    # [28] doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' (markupdecl | DeclSep)* ']' S?)? '>'
    #
    private parse_doctype_decl()
-      local res, s
+      local res, r
       res := DocType()
       =u"<!DOCTYPE" | throw("'<!DOCTYPE' expected")
       spaces()
@@ -774,10 +777,10 @@ class XmlParser(Connectable)
 
       if \res.external_id then {
          # Resolve and parse the external subset 
-         s := resolve(res.external_id)
-         start_divert(to_string(res.external_id))
+         r := resolve(current_base, res.external_id)
+         start_divert(r.base, to_string(res.external_id))
          in_ext_subset := 1
-         s ? {
+         r.content ? {
             parse_ext_subset()
             pos(0) | throw("extraneous content")
          }
@@ -795,7 +798,7 @@ class XmlParser(Connectable)
    # [29] markupdecl ::= elementdecl | AttlistDecl | EntityDecl | NotationDecl | PI | Comment 
    #
    private parse_markup_decls()
-      local ref, o, s
+      local ref, o, r
       repeat {
          if match(u"<!ELEMENT") then
             parse_element_decl()
@@ -814,7 +817,7 @@ class XmlParser(Connectable)
             ref := parse_pe_reference()
             o := lookup_pe_reference(ref)
             if \o.str then { 
-               start_divert("macro")
+               start_divert(current_base, "macro")
                o.str ? {
                   parse_markup_decls()
                   pos(0) | throw("extraneous content")
@@ -824,9 +827,9 @@ class XmlParser(Connectable)
                if \o.notation then
                   throw("unparsed entity not allowed")
                # Resolve the external entity, parse it appropriately.
-               s := resolve(o.external_id)
-               start_divert(to_string(o.external_id))
-               s ? {
+               r := resolve(current_base, o.external_id)
+               start_divert(r.base, to_string(o.external_id))
+               r.content ? {
                   parse_markup_decls()
                   pos(0) | throw("extraneous content")
                }
@@ -853,7 +856,7 @@ class XmlParser(Connectable)
    # [31] extSubsetDecl ::= ( markupdecl | conditionalSect | DeclSep)*
    #
    private parse_ext_subset_decl()
-      local ref, o, s
+      local ref, o, r
       repeat {
          if match(u"<![") then
             parse_conditional_sect()
@@ -874,7 +877,7 @@ class XmlParser(Connectable)
             ref := parse_pe_reference()
             o := lookup_pe_reference(ref)
             if \o.str then { 
-               start_divert("macro")
+               start_divert(current_base, "macro")
                o.str ? {
                   parse_ext_subset_decl()
                   pos(0) | throw("extraneous content")
@@ -884,9 +887,9 @@ class XmlParser(Connectable)
                if \o.notation then
                   throw("unparsed entity not allowed")
                # Resolve the external entity, parse it appropriately.
-               s := resolve(o.external_id)
-               start_divert(to_string(o.external_id))
-               s ? {
+               r := resolve(current_base, o.external_id)
+               start_divert(r.base, to_string(o.external_id))
+               r.content ? {
                   parse_ext_subset_decl()
                   pos(0) | throw("extraneous content")
                }
@@ -1028,7 +1031,7 @@ class XmlParser(Connectable)
    # [14] CharData ::= [^<&]* - ([^<&]* ']]>' [^<&]*)
    #
    private parse_content(parent, circle)
-      local s, o, c2, ref, cd
+      local r, o, c2, ref, cd
 
       until pos(0) do {
          if any('&') then {
@@ -1048,7 +1051,7 @@ class XmlParser(Connectable)
                   throw("cannot reference an entity declared externally, in a standalone document")
                if \o.str then { 
                   # Simple expansion, parsed as content.
-                  start_divert("macro")
+                  start_divert(current_base, "macro")
                   o.str ? {
                      parse_content(parent, c2)
                      pos(0) | throw("extraneous content")
@@ -1058,9 +1061,9 @@ class XmlParser(Connectable)
                   if \o.notation then
                      throw("unparsed entity not allowed")
                   # Resolve the external entity, parse it appropriately.
-                  s := resolve(o.external_id)
-                  start_divert(to_string(o.external_id))
-                  s ? {
+                  r := resolve(current_base, o.external_id)
+                  start_divert(r.base, to_string(o.external_id))
+                  r.content ? {
                      parse_external_parsed_entity(parent, c2)
                      pos(0) | throw("extraneous content")
                   }
@@ -1587,7 +1590,8 @@ class XmlParser(Connectable)
          return o.str
       if \o.notation then
          throw("unparsed entity not allowed")
-      return resolve(o.external_id)
+      # Resolve with base set to the current_base of the place where defined.
+      return resolve(o.pos[1].base, o.external_id).content
    end
 
    #
@@ -1975,19 +1979,23 @@ class XmlParser(Connectable)
       }
    end
 
-   private start_divert(id) 
-      push(divert_stack, Diversion(current_divert_id, &subject, &pos))
+   private start_divert(base, id) 
+      push(divert_stack, Diversion(current_base, current_divert_id, &subject, &pos))
       current_divert_id := id
+      current_base := base
    end
 
    private end_divert()
-      current_divert_id := pop(divert_stack).id
+      local t
+      t := pop(divert_stack)
+      current_divert_id := t.id
+      current_base := t.base
    end
 
    private where()
       local stack
       stack := copy(divert_stack)
-      push(stack, Diversion(current_divert_id, &subject, &pos))
+      push(stack, Diversion(current_base, current_divert_id, &subject, &pos))
       return stack
    end
 
@@ -2148,12 +2156,13 @@ class XmlParser(Connectable)
    #
    # Resolve the given external_id, using the current resolver
    #
-   private resolve(external_id)
+   private resolve(base, external_id)
       local t
-      t := resolver.resolve(external_id)  | throw("Couldn't resolve: " || to_string(external_id) || ": " || &why)
+      t := resolver.resolve(base, external_id)  | throw("Couldn't resolve: " || to_string(external_id) || ": " || &why)
       if \utf8_flag then
-         t := ucs(t) | throw("Couldn't convert " || to_string(external_id) || " to utf8")
-      return normalize_eol(t)
+         t.content := ucs(t.content) | throw("Couldn't convert " || to_string(external_id) || " to utf8")
+      t.content := normalize_eol(t.content)
+      return t
    end
 
    #
