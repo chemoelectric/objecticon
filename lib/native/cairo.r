@@ -1626,8 +1626,10 @@ end
 
 static int is_svg_filename(dptr data)
 {
-    return (StrLen(*data) >= 5 && StrLen(*data) <= 2048 &&
-            strncasecmp(StrLoc(*data) + StrLen(*data) - 4, ".svg", 4) == 0);
+    return StrLen(*data) <= 2048 &&
+        ((StrLen(*data) >= 6 && strncasecmp(StrLoc(*data) + StrLen(*data) - 5, ".svgz", 5) == 0) ||
+         (StrLen(*data) >= 5 && strncasecmp(StrLoc(*data) + StrLen(*data) - 4, ".svg", 4) == 0) ||
+         (StrLen(*data) >= 5 && strncasecmp(StrLoc(*data) + StrLen(*data) - 4, ".xml", 4) == 0));
 }
 
 function cairo_SVG_new_impl(data)
@@ -1635,7 +1637,7 @@ function cairo_SVG_new_impl(data)
       runerr(103, data)
     body {
        RsvgHandle *h;
-       GError *err;
+       GError *err = 0;
        g_type_init();
        if (is_svg_filename(&data))
            h = rsvg_handle_new_from_file(buffstr(&data),
