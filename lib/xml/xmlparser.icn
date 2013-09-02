@@ -262,7 +262,7 @@ class XmlParser(Connectable)
       local docname, e
 
       every e := !doc.children do {
-         if not(text(e)) & is(e, DocType) then {
+         if is(e, DocType) then {
             docname := e.get_name()
             break
          }
