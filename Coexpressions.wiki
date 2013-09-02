@@ -114,15 +114,16 @@ end
 Note we have used `cocopy{i * i}`, which is just syntactic shorthand for `cocopy(create i * i)`.
 
 == The coact() function ==
-This builtin function is like the `@` operator, but more flexible. It takes four parameters as follows:
-`coact(value, ce, activator, failto)`
+This builtin function is like the `@` operator, but more flexible. It takes three parameters as follows:
+`coact(value, ce, activator)`
 
-It transmits `value` to `ce`, optionally setting `ce`'s activator. If `failto` is not `&null`, `value` is ignored, and failure is transmitted to `ce` instead. If `activator` is `&null`, then the activator of `ce` is left unchanged. 
+It transmits `value` to `ce`, optionally setting `ce`'s activator.  If `activator` is `&null`, then the activator of `ce` is left unchanged. 
 
 Note that `coact(val, ce, &current)` has the same effect as `val@ce`.
 
 The default of `ce` is `&source`, so `coact(val)` is like `val@&source`, with the important difference that the activator of `&source` is unchanged.  This use of `coact` is helpful in avoiding co-expression "black holes", described below.
 
+A related function, `cofail(ce, activator)`, can be used to transmit failure to `ce`.
 == Refreshing ==
 In Icon, refreshing a co-expression reset the local variables to their values when the co-expression was created.   This doesn't happen in the Object Icon implementation of co-expressions.  Refreshing a co-expression simply creates a new co-expression which shares the local variables of the co-expression being refreshed.  `cocopy` does the same, but creates copies of the local variables instead.
 

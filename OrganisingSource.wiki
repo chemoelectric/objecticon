@@ -1,0 +1,78 @@
+#summary How to organise application and library source code
+<wiki:toc max_depth="3" />
+= Organising application and library source code =
+This page gives some information about how to organise source code.  There are really two kinds of source - library code which you wish to reuse in several applications, and application code, which is just used once by a particular program.  A source file with a "main" procedure would always be "application code" of course.
+
+== Organising library code ==
+Library source files should be placed in a separate directory from application code.  Let us imagine we choose to use "/opt/oilib" for the library source files.
+
+=== Choosing a package name (or names) ===
+We now choose one or more package names to organise our source code.  Package names can include the "." character to help subdivide the name, so for example we could place files related to user interfaces in package "oilib.gui", and those relating to I/O in "oilib.io".  Note that there is no relation between the chosen directory name and the package names.
+
+Each file in the library should now be edited so that it has the appropriate package declaration line at the top; for example "package oilib.gui".
+
+=== Amending OIPATH ===
+The next step is to amend the value of the `OIPATH` environment variable so that it includes the new library directory.  A good place to do this is just after OIPATH has been initialized by executing the `paths.sh` file.  For example :-
+
+{{{
+. /opt/objecticon/paths.sh
+OIPATH=$OIPATH:/opt/oilib
+}}}
+
+=== Makefile ===
+It is naturally useful to have a `Makefile` in the library directory.  Here is an example which can be used as-is, or adapted as needs be :-
+
+{{{
+include $(OIHOME)/Makedefs
+
+.NOTPARALLEL:
+
+LIBSRC=$(wildcard *.icn)
+
+LIBU=$(LIBSRC:.icn=.u)
+
+all: $(LIBU)
+
+clean:
+	$(RM) *.u packages.txt
+
+$(LIBU): %.u: %.icn
+	oit -snc $(LIBSRC)
+}}}
+
+=== Multiple library directories ===
+It is possible to repeat the above steps, resulting in a library spread across multiple directories.  The only point to bear in mind is that an individual package's files cannot be spread across several directories.
+
+== Organising application code ==
+Application code should be placed in a separate directory from the library directory described above.  Also, there is no advantage in placing application code in a package, since it will not be imported by external applications.  Therefore it is just necessary to compile and link the application code.  So for example, if we have three files in our application, then the following `Makefile` would be suitable to compile and link into an executable named `prog`.
+
+{{{
+include $(OIHOME)/Makedefs
+
+SRC=one.icn two.icn three.icn
+
+U=$(SRC:.icn=.u)
+
+PROG=prog
+
+all:	$(PROG)
+
+clean:
+	$(RM) *.u packages.txt $(PROG)
+
+prog:   $(U)
+	oit -so $@ $(U)
+}}}
+
+One of the three files should contain a `main` procedure of course.
+
+=== Setting OIPATH in the Makefile ===
+One point worth mentioning is that there is an alternative to setting the `OIPATH` environment variable as described above.  This is to set it in the application's `Makefile`, with a line like this :-
+
+{{{
+export OIPATH:=$(OIPATH):/opt/oilib
+}}}
+
+The main difference with this method is that the library will not be accessible to a compilation done outside of the `Makefile`; for example by using `oit` at the command line.
+
+Since the `OIPATH` variable is only used when linking `.u` files to make an executable, its value in fact makes no difference to the library `Makefile` show above.  At that stage we are just translating `.icn` files to `.u` files.

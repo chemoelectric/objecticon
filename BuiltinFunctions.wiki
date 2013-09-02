@@ -76,9 +76,9 @@ If `o` is a class, object or cast, the corresponding class is returned.  If `o` 
 Clears all the elements from `X` which must be a set, list or table. Produces `X`.
 
 == coact ==
-`coact (value,ce,activator,failto) : x` -- general co-expression transmission
+`coact (value,ce,activator) : x` -- general co-expression transmission
 
-This function is like the `@` operator, but more flexible.  It transmits `value` to `ce`, optionally setting `ce`'s activator.  If `failto` is not `&null`, `value` is ignored, and failure is transmitted to `ce` instead.  If `activator` is `&null`, then the activator of `ce` is left unchanged.
+This function is like the `@` operator, but more flexible.  It transmits `value` to `ce`, optionally setting `ce`'s activator.  If `activator` is `&null`, then the activator of `ce` is left unchanged.
 
 Defaults:
  * `ce`        `&source`
@@ -87,6 +87,14 @@ Defaults:
 `cocopy (ce) : ce` -- refresh with copy
 
 Return a refreshed copy of `ce`, but with a copied set of local variables.
+
+== cofail ==
+`cofail (ce,activator) : x` -- transmit failure to co-expression
+
+This function behaves like `coact`, except that rather than transmitting a value, failure is transmitted instead.
+
+Defaults:
+ * `ce`        `&source`
 
 == collect ==
 `collect () : n` -- perform garbage collection

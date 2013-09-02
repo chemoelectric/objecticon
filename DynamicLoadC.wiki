@@ -29,7 +29,7 @@ To create a dynamic library to use this function we would firstly place it in a 
 Next, create a Makefile to build the library.
 
 {{{
-include $(OILIB)/Makedefs
+include $(OIHOME)/Makedefs
 
 all:	testlib.so prog
 
@@ -49,7 +49,6 @@ testlib.so : testlib.o
 
 Notes :-
 
- * If you are running directly from the source distribution, the `Makedefs` file should be included from `$(OIHOME)`, rather than `$(OILIB)`.
  * The `Makedefs` file defines various variables, in particular the flags for C compilation.
  * The flags to the `$(CC)` command may need to be tweaked.
  * The use of the macro $(RTT) is important because it points `rtt` to the location of the necessary header files (via the `-r` option).
