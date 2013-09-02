@@ -114,13 +114,7 @@ class IconFilesItemPaint(ItemPaint)
 
 $ifdef _PNG
    public get_xdg(data)
-      local t
-      t := Xdg.suggest_icon_for_file(data.name, ICON_SIZE) | fail
-#t := "/usr/share/icons/hicolor/scalable/apps/gimp.svg"
-      if endswith(t, ".svg") then {
-         return ImageCache.get_scaled_svg_key(t, ICON_SIZE, ICON_SIZE)
-      } else
-         return ImageCache.get_key_with_resize(t, ICON_SIZE, ICON_SIZE)
+      return Xdg.suggest_icon_for_file_and_cache(data.name, ICON_SIZE)
    end
 
    public get_icon(data)

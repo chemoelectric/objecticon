@@ -305,6 +305,7 @@ bb~~~~bb_
    #
    public static name_image(name, data)
       insert(names, name, data)
+      return ImageCache
    end
 
    #
@@ -321,6 +322,16 @@ bb~~~~bb_
    #
    public static cache_window(key, win)
       insert(imap, key, win)
+      return ImageCache
+   end
+
+   #
+   # Given an existing key, add an entry to the window cache with
+   # `new_key`, pointing to the same window.
+   #
+   public static copy_key(new_key, key)
+      insert(imap, new_key, member(imap, key))
+      return ImageCache
    end
 
    #
@@ -415,10 +426,18 @@ bb~~~~bb_
       return key
    end
 
+   #
+   # This function takes an SVG filename, or key to named SVG data set
+   # by `name_image()` (ie, an xml document), `s`, scales the SVG to
+   # the given size, and returns a cached window.
+   #
    public static get_scaled_svg(s, width, height)
       return member(imap, get_scaled_svg_key(s, width, height))
    end
 
+   #
+   # Like `get_scaled_svg`, but returns the key rather than the window.
+   #
    public static get_scaled_svg_key(s, width, height)
       local w, key, cc, svg
       key := s || "#Scaled to " || width || "x" || height
