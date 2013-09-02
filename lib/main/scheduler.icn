@@ -90,6 +90,7 @@ class Task()
       \coex | runerr("change_sleep called on a currently active task")
       if is_sleeping() then
          sleep_until := (last_sleep + \n) | &null
+      return self
    end
 
    # Succeed iff the task is currently active.
@@ -161,11 +162,11 @@ class Task()
 
    # Suspend this task, which must be the currently scheduled task,
    # for {n} milliseconds.  If the task is interrupted this method
-   # fails, setting {&why}, otherwise it succeeds and returns {&null}.
+   # fails, setting {&why}, otherwise it succeeds and returns {self}.
    #
    # @param n The time to wait for.  If {&null}, wait forever (or until
    # @        interrupted).
-   # @return {&null} when the task awakes; fails on interrupt
+   # @return {self} when the task awakes; fails on interrupt
    #
    public sleep(n)
       self === scheduler.curr_task | runerr("sleep called on task which is not current")
@@ -176,7 +177,7 @@ class Task()
       scheduler.now_sleep(self)
       if \interrupt_flag then
          return error("Interrupted")
-      return
+      return self
    end
 
    # Interrupt the task, which may not be currently active.  If the
@@ -187,6 +188,7 @@ class Task()
    public interrupt()
       \coex | runerr("interrupt called on a currently active task")
       scheduler.interrupt(self)
+      return self
    end
 
    # If the task is sleeping, then place it immediately back into the
@@ -195,6 +197,7 @@ class Task()
    public notify()
       \coex | runerr("notify called on a currently active task")
       scheduler.notify(self)
+      return self
    end
 
    # Suspend this task, which must be the currently scheduled task,
@@ -204,6 +207,7 @@ class Task()
       self === scheduler.curr_task | runerr("yield called on task which is not current")
       self.coex := &current
       scheduler.now_yield(self)
+      return self
    end
 
    # Suspend this task, which must be the currently scheduled task,
@@ -216,6 +220,7 @@ class Task()
       self === scheduler.curr_task | runerr("revert called on task which is not current")
       self.coex := &current
       scheduler.now_revert()
+      return self
    end
 
    # Start the task, which may not be currently active.  If the task
@@ -225,6 +230,7 @@ class Task()
    public start()
       \coex | runerr("start called on a currently active task")
       scheduler.start(self)
+      return self
    end
 
    # Stop the task, which may not be currently active.  This prevents
@@ -235,6 +241,7 @@ class Task()
    public stop()
       \coex | runerr("stop called on a currently active task")
       scheduler.stop(self)
+      return self
    end
 
    # This is called once just before the {Task} is activated for the
