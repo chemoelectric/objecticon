@@ -83,13 +83,18 @@ class DefaultResolver(Resolver)
 
       sys_id := string(sys_id)
 
+      # 
+      # Make an absolute filename a URL
+      #
+      if sys_id[1] == "/" then
+         sys_id := "file://" || sys_id
+
       #
       # Try to make an absolute URL of sys_id, using base.
       #
       if \base &
-         not(sys_id == "/") &
-         not(base == "/") &
-         not URL(sys_id) &
+         not match("http://" | "https://" | "file://", sys_id) &
+         match("http://" | "https://" | "file://", base) &
          u := URL(base) then
       {
          sys_id := u.get_relative(sys_id).str()
