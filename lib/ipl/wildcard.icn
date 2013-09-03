@@ -102,7 +102,7 @@ class Wildcard()
             #  Put pattern element on list.
             #
             e := (="*" & 0) | (="?" & 1) | (="\\" & move(1)) |
-	       (="[" & c := (=("]" | "!]" | "!-]" | "") || tab(find("]"))) &
+	       (="[" & c := (=("]" | "!]" | "!-]" | "") || tab(default.find("]"))) &
                 move(1)) |
 	       move(1) || tab(upto('*?[\\') | 0)
             #
@@ -120,7 +120,7 @@ class Wildcard()
                   e ++:= ch
                   special --:= ch
 	       }
-               while chars := tab(find("-")) do {
+               while chars := tab(default.find("-")) do {
                   move(1)
                   e ++:= chars[1:-1] ++
 		     &cset[ord(chars[-1]) + 1:ord(move(1)) + 2]
