@@ -309,6 +309,15 @@ bb~~~~bb_
    end
 
    #
+   # Given an existing key, add an entry to the name-data table with
+   # `new_key`, pointing to the same data.
+   #
+   public static copy_name(new_key, key)
+      insert(names, new_key, member(names, key))
+      return ImageCache
+   end
+
+   #
    # Return the data previously set with {name_image}.  Fails if the
    # name is unknown.
    #

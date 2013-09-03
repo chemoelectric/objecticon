@@ -81,19 +81,27 @@ class IconFilesItemPaint(ItemPaint)
    public static const ICON_SIZE
 
    private static init()
-      ImageCache.name_image("icn.PDF_16", PDF_16)
-      ImageCache.name_image("icn.IMAGE_16", IMAGE_16)
-      ImageCache.name_image("icn.VIDEO_16", VIDEO_16)
-      ImageCache.name_image("icn.ARCHIVE_16", ARCHIVE_16)
-      ImageCache.name_image("icn.AUDIO_16", AUDIO_16)
-      ImageCache.name_image("icn.EXE_16", EXE_16)
-      ImageCache.name_image("icn.CHARDEVICE_16", CHARDEVICE_16)
-      ImageCache.name_image("icn.BLOCKDEVICE_16", BLOCKDEVICE_16)
-      ImageCache.name_image("icn.SYMLINK_16", SYMLINK_16)
-      ImageCache.name_image("icn.SOCKET_16", SOCKET_16)
-      ImageCache.name_image("icn.PIPE_16", PIPE_16)
-      ImageCache.name_image("icn.HTML_16", HTML_16)
       ICON_SIZE := 16
+      ImageCache.
+         name_image("fi.PDF_16", PDF_16).
+         name_image("fi.IMAGE_16", IMAGE_16).
+         name_image("fi.VIDEO_16", VIDEO_16).
+         name_image("fi.ARCHIVE_16", ARCHIVE_16).
+         name_image("fi.AUDIO_16", AUDIO_16).
+         name_image("fi.EXE_16", EXE_16).
+         name_image("fi.CHARDEVICE_16", CHARDEVICE_16).
+         name_image("fi.BLOCKDEVICE_16", BLOCKDEVICE_16).
+         name_image("fi.SYMLINK_16", SYMLINK_16).
+         name_image("fi.SOCKET_16", SOCKET_16).
+         name_image("fi.PIPE_16", PIPE_16).
+         name_image("fi.HTML_16", HTML_16)
+
+      try_xdg("fi.folder", "folder", "gui.CLOSED_FOLDER")
+      try_xdg("fi.symlink", "emblem-symbolic-link", "fi.SYMLINK_16")
+   end
+
+   private static try_xdg(key, icon, alt)
+      ImageCache.copy_key(key, Xdg.find_icon_and_cache(icon, ICON_SIZE) | ImageCache.get_key(alt))
    end
 
    public get_width(W, data)
@@ -113,33 +121,33 @@ class IconFilesItemPaint(ItemPaint)
    end
 
 $ifdef _PNG
-   public get_xdg(data)
-      return Xdg.suggest_icon_for_file_and_cache(data.name, ICON_SIZE)
+   public get_xdg_for_file(f)
+      return Xdg.suggest_icon_for_file_and_cache(f, ICON_SIZE) | Xdg.find_icon_and_cache("text-plain", ICON_SIZE)
    end
 
    public get_icon(data)
       local st, k
       st := data.lstat
       k := case st.mode_str[1] of {
-         "d" : "gui.CLOSED_FOLDER"
-         "l" : "icn.SYMLINK_16"
-         "s" : "icn.SOCKET_16"
-         "p" : "icn.PIPE_16"
-         "b" : "icn.BLOCKDEVICE_16"
-         "c" : "icn.CHARDEVICE_16"
+         "d" : "fi.folder"
+         "l" : "fi.symlink"
+         "s" : "fi.SOCKET_16"
+         "p" : "fi.PIPE_16"
+         "b" : "fi.BLOCKDEVICE_16"
+         "c" : "fi.CHARDEVICE_16"
          default : {
             if st.mode_str[-7] == ("x" | "s") then
-               "icn.EXE_16"
+               "fi.EXE_16"
             else {
-               case map(string(Files.get_extension(data.name))) of {
-                  "pdf": "icn.PDF_16"
-                  "cmd"|"exe"|"com"|"btm"|"bat" : "icn.EXE_16"
-                  "tar"|"tgz"|"arj"|"taz"|"lzh"|"zip"|"z"|"Z"|"gz"|"xz"|"bz2"|"rar" : "icn.ARCHIVE_16"
-                  "jpg"|"jpeg"|"png"|"gif"|"bmp"|"xbm"|"xpm": "icn.IMAGE_16"
-                  "mp4"|"flv"|"avi"|"wmv"|"webm"|"3gp"|"mpeg"|"mpg"|"m4v"|"mkv": "icn.VIDEO_16"
-                  "mp3"|"wav"|"mid"|"rm": "icn.AUDIO_16"
-                  "htm"|"html": "icn.HTML_16"
-               } | get_xdg(data)
+                get_xdg_for_file(data.name) | case map(string(Files.get_extension(data.name))) of {
+                  "pdf": "fi.PDF_16"
+                  "cmd"|"exe"|"com"|"btm"|"bat" : "fi.EXE_16"
+                  "tar"|"tgz"|"arj"|"taz"|"lzh"|"zip"|"z"|"Z"|"gz"|"xz"|"bz2"|"rar" : "fi.ARCHIVE_16"
+                  "jpg"|"jpeg"|"png"|"gif"|"bmp"|"xbm"|"xpm": "fi.IMAGE_16"
+                  "mp4"|"flv"|"avi"|"wmv"|"webm"|"3gp"|"mpeg"|"mpg"|"m4v"|"mkv": "fi.VIDEO_16"
+                  "mp3"|"wav"|"mid"|"rm": "fi.AUDIO_16"
+                  "htm"|"html": "fi.HTML_16"
+               }
             }
          }
       } | "gui.FILE"
