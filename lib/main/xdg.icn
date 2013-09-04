@@ -26,32 +26,49 @@ end
 # An object for holding info about a theme and the icons in its
 # various directories.
 #
-class Theme()
+class ThemeIndex()
    public const
-      subdirs,   # A list of ThemeSubDir objects
-      parents    # A list of parent theme names
+      directories,   # A list of ThemeDirectory objects
+      parents        # A list of parent theme names (strings)
 
-   public new(subdirs, parents)
-      self.subdirs := subdirs
+   public new(directories, parents)
+      self.directories := directories
       self.parents := parents
       return
    end   
 end
 
-# Encapsulates a subdir in a theme.  This is not an actual directory,
+# Encapsulates a directory in a theme.  This is not an actual directory,
 # but gives the meta information about the several actual directories
 # that it does relate to.  These actual directories are located under
 # the various elements of the base directories path, and each one has
-# an element in the theme_dirs member.
+# an element in the cached_dirs member.
 #
-class ThemeSubDir()
+# For example an index.theme file may contain the directory group:-
+#   [16x16/intl]
+#   Size=16
+#   Context=International
+#   Type=Threshold
+#
+# This is represented by a ThemeDirectory.  Then, each element from
+# gen_base_dirs() is appended to the theme name to give an actual
+# directory :-
+#
+#   "/home/rparlett/.local/share/16x16/intl"
+#   "/usr/local/share/16x16/intl"
+#   "/usr/share/16x16/intl"
+#  
+# and the cached contents of those directories are stored in CachedDir
+# instances in the cached_dirs list.
+#
+class ThemeDirectory()
    public const
-      type,       # Type, a string
-      size,       # Sizes etc, all integers
-      minsize,    #         
+      type,         # Type, a string
+      size,         # Sizes etc, all integers
+      minsize,      #         
       maxsize,
       threshold,
-      theme_dirs  # A list of ThemeDir objects
+      cached_dirs   # A list of CachedDir objects
 
    public matches_size(desired_size, scalable_flag)
       case type of {
@@ -88,20 +105,21 @@ class ThemeSubDir()
       }
    end
 
-   public new(type, size, minsize, maxsize, threshold, theme_dirs)
+   public new(type, size, minsize, maxsize, threshold, cached_dirs)
       self.type := type
       self.size := size
       self.minsize := minsize
       self.maxsize := maxsize
       self.threshold := threshold
-      self.theme_dirs := theme_dirs
+      self.cached_dirs := cached_dirs
       return
    end
 end
 
-# Encapsulates cached info about an actual directory in a theme.
 #
-class ThemeDir()
+# Encapsulates cached info about a directory.
+#
+class CachedDir()
    public const
       file_path,    # A FilePath, giving the directory
       contents      # A set of strings, being the entries in the directory.
@@ -124,11 +142,11 @@ end
 # This class contains many static methods for looking up XDG data.
 #
 class Xdg()
-   public static const
+   private static const
       LC_MESSAGES,        # A Locale object giving the LC_MESSAGES locale info
       INI_LC_KEYS,        # A list of strings used to choose locale-based keys in
                           # ini files
-      ICON_THEMES,        # A map of theme names (string) to Theme objects.
+      ICON_THEMES,        # A map of theme names (string) to ThemeIndex objects.
       GLOBS,              # A Globs instance for file pattern matching.
       ICONS,              # A map of mime-type (string) to list of icon names (strings)
       GENERIC_ICONS,      #   - ditto -
@@ -138,7 +156,7 @@ class Xdg()
                           #   mapping mime-type (string) to lists of mime-types (strings)
       FIND_ICON_CACHE,    # A cache of find_icon() results, mapping string key to icon
                           #   name (string)
-      ICON_FALLBACK_DIRS  # A list of ThemeDir objects
+      ICON_FALLBACK_CACHED_DIRS  # A list of CachedDir objects
 
    private static readable
       icon_theme,
@@ -162,7 +180,7 @@ class Xdg()
       MIME_SUBCLASSES := read_mime_subclasses()
       FIND_ICON_CACHE := table()
       icon_theme := get_current_icon_theme()
-      ICON_FALLBACK_DIRS := setup_icon_fallback_dirs()
+      ICON_FALLBACK_CACHED_DIRS := setup_icon_fallback_cached_dirs()
       scalable_flag := &yes
    end
 
@@ -171,7 +189,7 @@ class Xdg()
    #
    public static set_icon_theme(s)
       s := string(s) | runerr(103, s)
-      get_theme(s) | fail
+      get_theme_index(s) | fail
       icon_theme := s
       return Xdg
    end
@@ -504,7 +522,7 @@ class Xdg()
       }
    end
 
-   private static gen_theme_subdirs(tm)
+   private static gen_theme_directories(tm)
       suspend separate(member(member(tm, u"Icon Theme"), u"Directories"))
    end
 
@@ -512,12 +530,12 @@ class Xdg()
       suspend string(separate(member(member(tm, u"Icon Theme"), u"Inherits")))
    end
 
-   # Build a Theme object given the name and the ini table.
-   private static build_theme(name, tm)
-      local d, subdir, f, dirs, ds, m, td,
+   # Build a ThemeIndex object given the name and the ini table.
+   private static build_theme_index(theme, tm)
+      local d, subdir, f, dirs, ds, m, cd,
          type, size, minsize, maxsize, threshold
       dirs := []
-      every subdir := gen_theme_subdirs(tm) do {
+      every subdir := gen_theme_directories(tm) do {
          if m := member(tm, subdir) &
             size := integer(member(m, u"Size")) then 
          {
@@ -525,42 +543,42 @@ class Xdg()
             threshold := integer(member(m, u"Threshold")) | 2
             minsize := integer(member(m, u"MinSize")) | size
             maxsize := integer(member(m, u"MaxSize")) | size
-            td := []
+            cd := []
             every d := gen_base_dirs() do {
-               f := FilePath(d).walk("icons", name).append(FilePath(subdir))
+               f := FilePath(d).walk("icons", theme).append(FilePath(subdir))
                if ds := dir_set(f.str()) & *ds > 2 then
-                  put(td, ThemeDir(f, ds))
+                  put(cd, CachedDir(f, ds))
             }
-            if *td > 0 then
-               put(dirs, ThemeSubDir(type, size, minsize, maxsize, threshold, td))
+            if *cd > 0 then
+               put(dirs, ThemeDirectory(type, size, minsize, maxsize, threshold, cd))
          }
       }
-      return Theme(dirs, ipl.pdco.List{gen_theme_parents(tm)})
+      return ThemeIndex(dirs, ipl.pdco.List{gen_theme_parents(tm)})
    end
 
-   private static setup_icon_fallback_dirs()
+   private static setup_icon_fallback_cached_dirs()
       local d, p, r, ds
       r := []
       every d := gen_base_dirs() do {
          p := FilePath(d).child("icons")
          if ds := dir_set(p.str()) & *ds > 2 then
-            put(r, ThemeDir(p, ds))
+            put(r, CachedDir(p, ds))
       }
       return r
    end
 
-   private static get_theme1(name)
+   private static get_theme_index1(name)
       local d, m
       every d := gen_base_dirs() do {
-         if m := build_theme(name, load_ini_file(FilePath(d).walk("icons", name, "index.theme").str())) then
+         if m := build_theme_index(name, load_ini_file(FilePath(d).walk("icons", name, "index.theme").str())) then
             return m
       }
    end
 
-   private static get_theme(name)
+   private static get_theme_index(name)
       local m
       if not(m := member(ICON_THEMES, name)) then {
-         m := get_theme1(name)
+         m := get_theme_index1(name)
          insert(ICON_THEMES, name, m)
       }
       return \m
@@ -610,31 +628,29 @@ class Xdg()
       return "hicolor"
    end
 
-   private static find_icon_helper(icon, size, theme_name, tried)
-      local theme, p, f
-      if member(tried, theme_name) then
+   private static find_icon_helper(icon, size, theme, tried)
+      local theme_index
+      if member(tried, theme) then
          fail
-      insert(tried, theme_name)
-      theme := get_theme(theme_name) | fail
-      if f := lookup_icon(theme, icon, size) then
-         return f
-      every p := !theme.parents do {
-         if f := find_icon_helper(icon, size, p, tried) then
-            return f
-      }
+      insert(tried, theme)
+      theme_index := get_theme_index(theme) | fail
+
+      # Try this theme, failing that try recursively with the theme's parents.
+      return lookup_icon(theme_index, icon, size) | 
+         find_icon_helper(icon, size, !theme_index.parents, tried)
    end
 
    private static lookup_fallback_icon(icon)
-      return has_icon(!ICON_FALLBACK_DIRS, icon)
+      return has_icon(!ICON_FALLBACK_CACHED_DIRS, icon)
    end
 
-   private static has_icon(theme_dir, icon)
+   private static has_icon(cached_dir, icon)
       local ex, f
-      if f := theme_dir.access(icon || ".png") then
+      if f := cached_dir.access(icon || ".png") then
          return f
       if \scalable_flag then {
          every ex := ".svg" | ".svgz" do {
-            if f := theme_dir.access(icon || ex) then {
+            if f := cached_dir.access(icon || ex) then {
                # Try to load cairo; if fail then don't look for svg files again.
                if /Context.LOADED then {
                   scalable_flag := &null
@@ -646,24 +662,21 @@ class Xdg()
       }
    end
 
-   private static lookup_icon(theme, icon, size)
-      local subdir, f, td, minimal_size, closest_filename, ms
-      every subdir := !theme.subdirs do {
+   private static lookup_icon(theme_index, icon, size)
+      local subdir, f, minimal_size, closest_filename, ms
+      every subdir := !theme_index.directories do {
          if subdir.matches_size(size, scalable_flag) then {
-            every td := !subdir.theme_dirs do {
-               if f := has_icon(td, icon) then
-                  return f
-            }
+            # Search in all the CachedDirs in the subdir
+            if f := has_icon(!subdir.cached_dirs, icon) then
+               return f
          }
       }
       minimal_size := lang.Limit.MaxWord
-      every subdir := !theme.subdirs do {
+      every subdir := !theme_index.directories do {
          if (ms := subdir.directory_size_distance(size, scalable_flag)) < minimal_size then {
-            every td := !subdir.theme_dirs do {
-               if f := has_icon(td, icon) then {
-                  closest_filename := f
-                  minimal_size := ms
-               }
+            if f := has_icon(!subdir.cached_dirs, icon) then {
+               closest_filename := f
+               minimal_size := ms
             }
          }
       }
@@ -671,9 +684,14 @@ class Xdg()
    end
 end
 
+#
+# An entry in the `Globs` object.
+#
 class GlobMatch()
    public const
-      weight, type, pattern
+      weight,      # The integer weight
+      type,        # The mime type (string)
+      pattern      # An optional wildcard pattern.
 
    public new(weight, type, pattern)
       self.weight := weight
@@ -683,6 +701,9 @@ class GlobMatch()
    end
 end
 
+# A helper class used to store wildcard ("globbing") information
+# associated with mime-types.
+#
 class Globs()
    private const
       literal,
@@ -705,10 +726,14 @@ class Globs()
       }
    end
 
-   package add(p, weight, type)
+   #
+   # Add an entry.  p is the pattern (ucs), weight an integer and type
+   # the mime type (string).
+   #
+   public add(p, weight, type)
       local x
       if upto('*?[', p) then {
-         if match("*.", p) & not upto('*?[', p[3:0]) then {
+         if match(u"*.", p) & not upto('*?[', p[3:0]) then {
             p := p[3:0]
             x := member(simple, p)
             if /x | (weight > x.weight) then
