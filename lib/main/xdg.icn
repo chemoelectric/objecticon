@@ -191,6 +191,7 @@ class Xdg()
       s := string(s) | runerr(103, s)
       get_theme_index(s) | fail
       icon_theme := s
+      clear(FIND_ICON_CACHE)
       return Xdg
    end
 
@@ -584,21 +585,15 @@ class Xdg()
       return \m
    end
 
-   private static find_icon_nocache(icon, size)
-      local tried
-      tried := set()
-      return find_icon_helper(icon, size, icon_theme, tried) | lookup_fallback_icon(icon)
-   end
-
    #
    # Find an icon given the icon name (string) and integer size.
    #
    public static find_icon(icon, size)
       local k, v
       icon := string(icon) | runerr(103, icon)
-      k := icon || "/" || size || "/" || icon_theme
+      k := icon || "/" || size
       if not(v := member(FIND_ICON_CACHE, k)) then {
-         v := find_icon_nocache(icon, size)
+         v := find_icon_helper(icon, size, icon_theme, set()) | lookup_fallback_icon(icon)
          insert(FIND_ICON_CACHE, k, v)
       }
       return \v
