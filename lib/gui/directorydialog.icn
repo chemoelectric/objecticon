@@ -83,7 +83,7 @@ class DirectoryDialog(Dialog)
 
    public list_directory(s)
       local e, dir_list, l, t
-      l := Files.ucs_list(s) | fail
+      l := Files.ucs_list(s, ListEntryWithIcon) | fail
       dir_list := []
       every e := !l do {
          t := e.name

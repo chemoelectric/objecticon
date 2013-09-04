@@ -224,7 +224,7 @@ class FileSuggestField(SuggestField)
    private do_dir_list(s)
       if dir_list_name === s then
          return dir_list
-      dir_list := Files.ucs_list(s) | fail
+      dir_list := Files.ucs_list(s, ListEntryWithIcon) | fail
       dir_list := isort(dir_list, Files.name_key)
       dir_list_name := s
       return dir_list

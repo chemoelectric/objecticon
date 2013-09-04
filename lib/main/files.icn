@@ -48,11 +48,15 @@ $endif
    # Read the given directory returning a list of `ListEntry` objects,
    # each containing the name, lstat and stat values for each entry.
    #
-   public static list(s)
+   # `f` is an optional parameter, providing an alternative constructor for
+   # the returned objects; by default it is `ListEntry`.
+   #
+   public static list(s, f)
       local p
+      /f := ListEntry
       return use {
          p := DirStream(s),
-         list1(FilePath(s), p, 1)
+         list1(FilePath(s), p, f, 1)
       }
    end
 
@@ -60,15 +64,16 @@ $endif
    # Like `list`, but the filenames are converted to `ucs`; any that
    # can't be converted are skipped.
    #
-   public static ucs_list(s)
+   public static ucs_list(s, f)
       local p
+      /f := ListEntry
       return use {
          p := DirStream(s),
-         list1(FilePath(s), p, ucs)
+         list1(FilePath(s), p, f, ucs)
       }
    end
 
-   private static list1(path, p, f)
+   private static list1(path, p, f, g)
       local l, s, cs, lst, st
       l := []
       repeat {
@@ -81,7 +86,7 @@ $endif
             stat(cs) | next
          else
             lst
-         put(l, ListEntry(f(s), lst, st))
+         put(l, f(g(s), lst, st))
       }
    end
 
