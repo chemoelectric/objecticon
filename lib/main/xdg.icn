@@ -618,7 +618,7 @@ class Xdg()
 
    private static get_current_icon_theme()
       local f, theme, d
-      every theme := "oxygen" | "gnome" do {
+      every theme := getenv_ne("OITHEME") | "oxygen" | "gnome" do {
          every d := gen_base_dirs() do {
             f := FilePath(d).walk("icons", theme, "index.theme").str()
             if Files.access(f) then
