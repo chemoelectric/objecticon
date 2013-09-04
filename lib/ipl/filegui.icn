@@ -98,6 +98,7 @@ class IconFilesItemPaint(ItemPaint)
 
       try_xdg("fi.folder", "folder", "gui.CLOSED_FOLDER")
       try_xdg("fi.symlink", "emblem-symbolic-link", "fi.SYMLINK_16")
+      try_xdg("fi.exe", "application-x-executable", "fi.EXE_16")
    end
 
    private static try_xdg(key, icon, alt)
@@ -122,7 +123,7 @@ class IconFilesItemPaint(ItemPaint)
 
 $ifdef _PNG
    public get_xdg_for_file(f)
-      return Xdg.suggest_icon_for_file_and_cache(f, ICON_SIZE) | Xdg.find_icon_and_cache("text-plain", ICON_SIZE)
+      return Xdg.suggest_icon_for_file_and_cache(f, ICON_SIZE) | Xdg.find_icon_and_cache("text-x-generic", ICON_SIZE)
    end
 
    public get_icon(data)
@@ -137,7 +138,7 @@ $ifdef _PNG
          "c" : "fi.CHARDEVICE_16"
          default : {
             if st.mode_str[-7] == ("x" | "s") then
-               "fi.EXE_16"
+               "fi.exe"
             else {
                 get_xdg_for_file(data.name) | case map(string(Files.get_extension(data.name))) of {
                   "pdf": "fi.PDF_16"
