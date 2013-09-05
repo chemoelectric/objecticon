@@ -1,6 +1,16 @@
 package xdg
 
-import io, posix, util, ipl.strings, ipl.wildcard, lang, gui, cairo, ipl.pdco
+import 
+   io,
+   posix,
+   util,
+   lang,
+   gui,
+   cairo,
+   ipl.strings,
+   ipl.wildcard,
+   ipl.sort,
+   ipl.pdco
 
 # An object for parsing and holding the parts of a locale string, like
 # "en_GB.utf8".
@@ -139,6 +149,61 @@ class CachedDir()
 end
 
 #
+# Represents info from a ".desktop" file
+#
+class DesktopEntry()
+   public const
+      name,                 # Descriptive name (ucs)
+      icon,                 # Icon name (string)
+      source,               # Source file (string)
+      exec,                 # Exec entry (ucs)
+      exec_line,            # optional ExecLine entry (ucs)
+      path,                 # Path entry (ucs)
+      terminal,             # Terminal entry (flag)
+      initial_preference    # InitialPreference entry (integer or &null)
+
+   package
+      list_pos              # Used internally for initial_preference sort
+
+   #
+   # Substitute a single file, with optional line number, into the
+   # Exec command, returning a command string.
+   #
+   public subst_file(f, line)
+      local r, ch, s
+      s := \exec | fail
+      if \line then
+         s := \exec_line
+      r := u""
+      s ? repeat {
+         r ||:= tab(upto('%') | 0)
+         move(1) | break
+         r ||:= case ch := string(move(1)) of {
+            "%": u"%"
+            "i": \icon
+            "c": name
+            "k": ucs(source)
+            !"uUfF": f
+            "L": \line
+         }
+      }
+      return r
+   end
+
+   public new(name, icon, source, exec, exec_line, path, terminal, initial_preference)
+      self.name := name
+      self.icon := icon
+      self.source := source
+      self.exec := exec
+      self.exec_line := exec_line
+      self.path := path
+      self.terminal := terminal
+      self.initial_preference := initial_preference
+      return
+   end
+end
+
+#
 # This class contains many static methods for looking up XDG data.
 #
 class Xdg()
@@ -156,7 +221,8 @@ class Xdg()
                           #   mapping mime-type (string) to lists of mime-types (strings)
       FIND_ICON_CACHE,    # A cache of find_icon() results, mapping string key to icon
                           #   name (string)
-      ICON_FALLBACK_CACHED_DIRS  # A list of CachedDir objects
+      ICON_FALLBACK_CACHED_DIRS,  # A list of CachedDir objects
+      DESKTOP_ENTRIES     # A map of mime-types (string) to list of DesktopEntry objects.
 
    private static readable
       icon_theme,
@@ -182,6 +248,7 @@ class Xdg()
       icon_theme := get_current_icon_theme()
       ICON_FALLBACK_CACHED_DIRS := setup_icon_fallback_cached_dirs()
       scalable_flag := &yes
+      DESKTOP_ENTRIES := read_desktop_entries()
    end
 
    #
@@ -285,7 +352,7 @@ class Xdg()
    # Given a filename, return the corresponding mime type.
    #
    public static get_mime_type_for_file(f)
-      return GLOBS.lookup(f).type
+      return GLOBS.lookup(f).mime_type
    end
 
    #
@@ -323,7 +390,7 @@ class Xdg()
          alternative_mime_types1(mt, l)
          insert(MIME_ALTERNATIVES, mt, l)
       }
-      suspend !l
+      suspend !.l
    end
 
    private static alternative_mime_types1(mt, l)
@@ -356,11 +423,11 @@ class Xdg()
    end
 
    #
-   # This calls `suggest_icon_for_file`, caches the result in
+   # This calls `find_icon_for_file`, caches the result in
    # `ImageCache`, and returns the cache key.
    #
-   public static suggest_icon_for_file_and_cache(file, size)
-      return cache_icon(suggest_icon_for_file(file, size), size)
+   public static find_icon_for_file_and_cache(file, size)
+      return cache_icon(find_icon_for_file(file, size), size)
    end
 
    private static read_generic_icons()
@@ -462,15 +529,19 @@ class Xdg()
       return t
    end
 
+   # Note that this is more liberal than the desktop entry spec
+   # indicates, since we want to parse the mimeapps.list file, which
+   # has keys with chars outside &letters ++ &digits ++ '-'
+   #
    private static parse_key_val(group)
       local key, val, enc, t
-      key := tab(many(&letters ++ &digits ++ '-')) | fail
-      if ="[" then {
+      key := trim(tab(upto('[='))) | fail
+      if =u"[" then {
          enc := string(tab(upto(']'))) | fail
          move(1)
+         tab(many(' '))
       }
-      tab(many(' '))
-      ="=" | fail
+      =u"=" | fail
       tab(many(' '))
       val := unescape(tab(0))
       (t := member(group, key)) | insert(group, key, t := table())
@@ -481,8 +552,12 @@ class Xdg()
       local key, sel, t
       every key := default.key(group) do {
          t := member(group, key)
-         sel := member(t, !INI_LC_KEYS)
-         insert(group, key, sel)
+         if sel := member(t, !INI_LC_KEYS) then
+            insert(group, key, sel)
+         else
+            # No matching locale (or fallback without locale), so
+            # delete the key entirely.
+            delete(group, key)
       }
    end
 
@@ -490,7 +565,9 @@ class Xdg()
       local group, groups, gn, l
       groups := table()
       every l := separate_lines(s) do l ? {
-         if ="[" & gn := tab(upto(']')) then {
+         if pos(0) | match(u"#") then
+            next
+         if =u"[" & gn := tab(upto(']')) then {
             group := table()
             insert(groups, gn, group)
          } else
@@ -602,13 +679,9 @@ class Xdg()
    #
    # Find an icon given a filename (string) and integer size.
    #
-   public static suggest_icon_for_file(file, size)
-      local mt, i, f
-      every mt := alternative_mime_types(get_mime_type_for_file(file)) do
-         every i := gen_all_icons(mt) do {
-            if f := find_icon(i, size) then
-               return f
-         }
+   public static find_icon_for_file(file, size)
+      return find_icon(gen_all_icons(alternative_mime_types(get_mime_type_for_file(file))),
+                       size)
    end
 
    private static get_current_icon_theme()
@@ -677,6 +750,134 @@ class Xdg()
       }
       return \closest_filename
    end
+
+   private static build_desktop_entry(dm, src)
+      local name, icon, exec, path, terminal, try_exec, 
+         initial_preference, exec_line
+      dm := member(dm, u"Desktop Entry") | fail
+
+      name := member(dm, u"Name") | fail
+
+      # A TryExec entry means testing if such an exe is on the path;
+      # if not ignore the entry
+      if try_exec := member(dm, u"TryExec") then
+         Files.find_exe(try_exec) | fail
+
+      icon := string(member(dm, u"Icon"))
+      exec := member(dm, u"Exec")
+      exec_line := member(dm, u"ExecLine")
+      path := member(dm, u"Path")
+      terminal := if map(member(dm, u"Terminal")) == u"true" then &yes
+      initial_preference := integer(member(dm, u"InitialPreference"))
+      return DesktopEntry(name, icon, src, exec, exec_line, path, terminal, initial_preference)
+   end
+
+   private static gen_desktop_mime_types(dm)
+      suspend "" ~== string(separate(member(member(dm, u"Desktop Entry"), u"MimeType"), ';'))
+   end
+
+   private static scan_application_dir(p, prefix, t, u)
+      local l, e, de, mt, dm, src, key
+      l := Files.ucs_list(p.str()) | fail
+      every e := !l do {
+         if not(Files.is_hidden(e.name)) then {
+            if e.stat.mode_str[1] == "d" then {
+               scan_application_dir(p.child(e.name), prefix || e.name || u"-", t, u)
+            } else if endswith(e.name, u".desktop") then {
+               key := prefix || e.name
+               if (not member(t, key)) & 
+                  src := p.child(e.name).str() &
+                  dm := load_ini_file(src) &
+                  de := build_desktop_entry(dm, src) then 
+               {
+                  insert(t, key, de)
+                  every mt := gen_desktop_mime_types(dm) do
+                     put(member(u, mt), de) | insert(u, mt, [de])
+               }
+            }
+         }
+      }
+   end
+
+   private static process_mimeapps_list(mm, t, u)
+      local a, mime_type, l, d
+      if a := member(mm, u"Added Associations") then {
+         # Each entry gives a mime type and list of desktop files, so
+         # we look each one up in t.  The resulting list overwrites
+         # what was there already.
+         every mime_type := key(a) do {
+            insert(u, 
+                   string(mime_type),
+                   ipl.pdco.List{ member(t, separate(member(a, mime_type), ';')) })
+         }
+      }
+      if a := member(mm, u"Removed Associations") then {
+         # Each entry gives a mime type and list of desktop files to
+         # remove from the corresponding list in u.
+         every mime_type := key(a) do {
+            if l := member(u, string(mime_type)) then {
+               # Lookup the DesktopEntry (in t) and then delete it from l.
+               every d := member(t, separate(member(a, mime_type), ';')) do
+                  delete(l, keyof(l, d))
+            }
+         }
+      }
+   end
+
+   private static prefcmp(d1, d2)
+      local ip1, ip2
+      ip1 := \d1.initial_preference | -1
+      ip2 := \d2.initial_preference | -1
+      return (ip1 > ip2) | (ip1 = ip2 & d1.list_pos > d2.list_pos)
+   end
+
+   private static sort_by_preference(l)
+      local e, i
+      # Do nothing if they're all unset
+      \ (!l).initial_preference | fail
+      # The list_pos is used to maintain the original ordering if the
+      # preferences for two entries are the same.
+      i := *l
+      every e := !l do {
+         e.list_pos := i
+         i -:= 1
+      }
+      qsort(l, prefcmp)
+   end
+
+   private static read_desktop_entries()
+      local d, t, u, f, mm
+      t := table()    # maps desktop entry names (ucs, eg u"kate.desktop") to DesktopEntry object
+      u := table()    # mime-type (string) to list of DesktopEntry
+      every d := gen_base_dirs() do
+         scan_application_dir(FilePath(d).child("applications"), u"", t, u)
+
+      # Sort each list of DesktopEntry by the initial preference field.
+      every sort_by_preference(!u)
+
+      # Process customisations from the mimeapps.lists files.
+      every d := Reverse{gen_base_dirs()} do {
+         f := FilePath(d).walk("applications", "mimeapps.list").str()
+         if mm := load_ini_file(f) then
+            process_mimeapps_list(mm, t, u)
+      }
+
+      return u
+   end
+
+   #
+   # Return the `DesktopEntry` most suitbale for a particular filename (without path).
+   #
+   public static get_desktop_entry_for_file(file)
+      return gen_desktop_entries(alternative_mime_types(get_mime_type_for_file(file)))
+   end
+
+   #
+   # Given a mime type (string), generate the corresponding `DesktopEntry` objects, in preference order.
+   #
+   public static gen_desktop_entries(mt)
+      suspend .!member(DESKTOP_ENTRIES, mt)
+   end
 end
 
 #
@@ -685,12 +886,12 @@ end
 class GlobMatch()
    public const
       weight,      # The integer weight
-      type,        # The mime type (string)
+      mime_type,   # The mime mime_type (string)
       pattern      # An optional wildcard pattern.
 
-   public new(weight, type, pattern)
+   public new(weight, mime_type, pattern)
       self.weight := weight
-      self.type := type
+      self.mime_type := mime_type
       self.pattern := pattern
       return
    end
@@ -722,26 +923,26 @@ class Globs()
    end
 
    #
-   # Add an entry.  p is the pattern (ucs), weight an integer and type
+   # Add an entry.  p is the pattern (ucs), weight an integer and mime_type
    # the mime type (string).
    #
-   public add(p, weight, type)
+   public add(p, weight, mime_type)
       local x
       if upto('*?[', p) then {
          if match(u"*.", p) & not upto('*?[', p[3:0]) then {
             p := p[3:0]
             x := member(simple, p)
             if /x | (weight > x.weight) then
-               insert(simple, p, GlobMatch(weight, type))
+               insert(simple, p, GlobMatch(weight, mime_type))
          } else {
             x := member(other, p)
             if /x | (weight > x.weight) then
-               insert(other, p, GlobMatch(weight, type, Wildcard(p)))
+               insert(other, p, GlobMatch(weight, mime_type, Wildcard(p)))
          }
       } else {
          x := member(literal, p)
          if /x | (weight > x.weight) then
-            insert(literal, p, GlobMatch(weight, type))
+            insert(literal, p, GlobMatch(weight, mime_type))
       }
       return self
    end

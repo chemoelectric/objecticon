@@ -123,7 +123,7 @@ class IconFilesItemPaint(ItemPaint)
 
 $ifdef _PNG
    public get_xdg_for_file(f)
-      return Xdg.suggest_icon_for_file_and_cache(f, ICON_SIZE) | Xdg.find_icon_and_cache("text-x-generic", ICON_SIZE)
+      return Xdg.find_icon_for_file_and_cache(f, ICON_SIZE) | Xdg.find_icon_and_cache("text-x-generic", ICON_SIZE)
    end
 
    public get_icon(data)
