@@ -188,12 +188,12 @@ class Dialog(Component)
    public show_and_wait(task, d)
       local x
       x := connect_and_return(create {
-         task.start()
+         task.notify()
          disconnect(x)
       }, Event.DIALOG_DISPOSED)
       show(d)
       while \win do
-         task.revert()
+         task.sleep()
       return self
    end
 

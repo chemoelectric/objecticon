@@ -2,7 +2,7 @@
 # Retrieve http pages.
 #
 
-import util, http, net, lang, ipl.options, io, posix
+import util, http, net, lang, ipl.options, io, xdg
 
 global total, ok, err, failed, hc, opts, stdin, skipped, out
 
@@ -60,11 +60,11 @@ class Monitor()
    end
 
    public failed(ev)
-      write("Failed ", &why, repl(" ", 20))
+      write("Failed: ", &why, repl(" ", 20))
    end
 
    public retrying(ev)
-      write("Retrying ", &why, repl(" ", 20))
+      write("Retrying: ", &why, repl(" ", 20))
    end
 
    public connecting(ev, src, type)
@@ -160,7 +160,7 @@ procedure main(args)
    if \opts["while"] then
       hc.set_retry_while_data(&yes)
 
-   cookies := \opts["k"] | System.getenv("OICOOKIES") | FilePath(Files.get_home()).child(".oicookies").str()
+   cookies := \opts["k"] | FilePath(Xdg.ensure_data_home()).child("oicookies").str() | stop("Couldn't access data dir: ", &why)
    t := decode(Files.file_to_string(cookies)) | table()
    hc.set_cookies(t)
 

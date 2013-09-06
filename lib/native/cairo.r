@@ -8,6 +8,8 @@
 #passthru #include <cairo-ft.h>
 #passthru #include <pango/pangocairo.h>
 #passthru #include <pango/pangofc-fontmap.h>
+#passthru #include <librsvg/rsvg.h>
+#passthru #include <librsvg/rsvg-cairo.h>
 
 static void pix_to_win(cairo_t *cr, double x1, double y1, double x2, double y2);
 static void ensure(cairo_t *cr);
@@ -30,7 +32,7 @@ if (!self_cr_dptr)
     syserr("Missing ptr field");
 self_cr = (cairo_t *)IntVal(*self_cr_dptr);
 if (!self_cr)
-    runerr(142, self);
+    runerr(152, self);
 ensure(self_cr);
 #enddef
 
@@ -43,7 +45,7 @@ if (!self_pattern_dptr)
     syserr("Missing ptr field");
 self_pattern = (cairo_pattern_t *)IntVal(*self_pattern_dptr);
 if (!self_pattern)
-    runerr(142, self);
+    runerr(152, self);
 #enddef
 
 #begdef GetSelfSurface()
@@ -55,7 +57,7 @@ if (!self_surface_dptr)
     syserr("Missing ptr field");
 self_surface = (cairo_surface_t *)IntVal(*self_surface_dptr);
 if (!self_surface)
-    runerr(142, self);
+    runerr(152, self);
 #enddef
 
 static struct sdescrip patternclassname = {13, "cairo.Pattern"};
@@ -90,6 +92,35 @@ if (!x##_dptr)
 (x) = (cairo_surface_t *)IntVal(*x##_dptr);
 if (!(x))
     runerr(152, p);
+#enddef
+
+static struct sdescrip crclassname = {13, "cairo.Context"};
+
+#begdef CrStaticParam(p, x)
+cairo_t *x;
+dptr x##_dptr;
+static struct inline_field_cache x##_ic;
+static struct inline_global_cache x##_igc;
+if (!c_is(&p, (dptr)&crclassname, &x##_igc))
+    runerr(205, p);
+x##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &x##_ic);
+if (!x##_dptr)
+    syserr("Missing ptr field");
+(x) = (cairo_t *)IntVal(*x##_dptr);
+if (!(x))
+    runerr(152, p);
+#enddef
+
+#begdef GetSelfSVG()
+RsvgHandle *self_svg;
+dptr self_svg_dptr;
+static struct inline_field_cache self_svg_ic;
+self_svg_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_svg_ic);
+if (!self_svg_dptr)
+    syserr("Missing ptr field");
+self_svg = (RsvgHandle *)IntVal(*self_svg_dptr);
+if (!self_svg)
+    runerr(152, self);
 #enddef
 
 static stringint drawops[] = {
@@ -1590,5 +1621,180 @@ function cairo_ImageSurface_get_height(self)
     body {
         GetSelfSurface();
         return C_integer cairo_image_surface_get_height(self_surface);
+    }
+end
+
+static int is_svg_filename(dptr data)
+{
+    return StrLen(*data) <= 2048 &&
+        ((StrLen(*data) >= 6 && strncasecmp(StrLoc(*data) + StrLen(*data) - 5, ".svgz", 5) == 0) ||
+         (StrLen(*data) >= 5 && strncasecmp(StrLoc(*data) + StrLen(*data) - 4, ".svg", 4) == 0) ||
+         (StrLen(*data) >= 5 && strncasecmp(StrLoc(*data) + StrLen(*data) - 4, ".xml", 4) == 0));
+}
+
+function cairo_SVG_new_impl(data)
+   if !cnv:string(data) then
+      runerr(103, data)
+    body {
+       RsvgHandle *h;
+       GError *err = 0;
+       g_type_init();
+       if (is_svg_filename(&data))
+           h = rsvg_handle_new_from_file(buffstr(&data),
+                                         &err);
+       else
+           h = rsvg_handle_new_from_data((const guint8 *)StrLoc(data),
+                                         StrLen(data),
+                                         &err);
+       if (!h) {
+           why(err->message);
+           g_error_free(err);
+           fail;
+       }
+       return C_integer (word) h;
+    }
+end
+
+function cairo_SVG_get_width(self, id)
+    body {
+        RsvgDimensionData dimensions;
+        char *s2;
+        GetSelfSVG();
+        if (is:null(id))
+            s2 = 0;
+        else {
+            if (!cnv:string(id, id))
+                runerr(103, id);
+            s2 = buffstr(&id);
+        }
+        rsvg_handle_get_dimensions_sub(self_svg, &dimensions, s2);
+        return C_integer dimensions.width;
+    }
+end
+
+function cairo_SVG_get_height(self, id)
+    body {
+        RsvgDimensionData dimensions;
+        char *s2;
+        GetSelfSVG();
+        if (is:null(id))
+            s2 = 0;
+        else {
+            if (!cnv:string(id, id))
+                runerr(103, id);
+            s2 = buffstr(&id);
+        }
+        rsvg_handle_get_dimensions_sub(self_svg, &dimensions, s2);
+        return C_integer dimensions.height;
+    }
+end
+
+function cairo_SVG_get_x(self, id)
+   if !cnv:string(id) then
+      runerr(103, id)
+    body {
+        RsvgPositionData pos;
+        GetSelfSVG();
+        rsvg_handle_get_position_sub(self_svg, &pos, buffstr(&id));
+        return C_integer pos.x;
+    }
+end
+
+function cairo_SVG_get_y(self, id)
+   if !cnv:string(id) then
+      runerr(103, id)
+    body {
+        RsvgPositionData pos;
+        GetSelfSVG();
+        rsvg_handle_get_position_sub(self_svg, &pos, buffstr(&id));
+        return C_integer pos.y;
+    }
+end
+
+function cairo_SVG_has_sub(self, id)
+   if !cnv:string(id) then
+      runerr(103, id)
+    body {
+        GetSelfSVG();
+        if (rsvg_handle_has_sub(self_svg, buffstr(&id)))
+            return nulldesc;
+        else
+            fail;
+    }
+end
+
+function cairo_SVG_get_title(self)
+    body {
+        tended struct descrip str, result;
+        char *s;
+        GetSelfSVG();
+        s = (char *)rsvg_handle_get_title(self_svg);
+        if (!s)
+            fail;
+        cstr2string(s, &str);
+        if (!string2ucs(&str, &result))
+            fail;
+        return result;
+    }
+end
+
+function cairo_SVG_get_desc(self)
+    body {
+        tended struct descrip str, result;
+        char *s;
+        GetSelfSVG();
+        s = (char *)rsvg_handle_get_desc(self_svg);
+        if (!s)
+            fail;
+        cstr2string(s, &str);
+        if (!string2ucs(&str, &result))
+            fail;
+        return result;
+    }
+end
+
+function cairo_SVG_get_metadata(self)
+    body {
+        tended struct descrip str, result;
+        char *s;
+        GetSelfSVG();
+        s = (char *)rsvg_handle_get_metadata(self_svg);
+        if (!s)
+            fail;
+        cstr2string(s, &str);
+        if (!string2ucs(&str, &result))
+            fail;
+        return result;
+    }
+end
+
+function cairo_SVG_render(self, context, id)
+    body {
+        char *s2;
+        double x1, y1, x2, y2;
+        GetSelfSVG();
+        {
+        CrStaticParam(context, cr);
+        if (is:null(id))
+            s2 = 0;
+        else {
+            if (!cnv:string(id, id))
+                runerr(103, id);
+            s2 = buffstr(&id);
+        }
+        device_clip_extents(cr, &x1, &y1, &x2, &y2);
+        rsvg_handle_render_cairo_sub(self_svg, cr, s2);
+        pix_to_win(cr, x1, y1, x2, y2);
+        }
+        return nulldesc;
+    }
+end
+
+function cairo_SVG_close(self)
+    body {
+       GetSelfSVG();
+       g_object_unref(self_svg);
+       *self_svg_dptr = zerodesc;
+       return self;
     }
 end

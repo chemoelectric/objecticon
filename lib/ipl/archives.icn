@@ -181,3 +181,13 @@ procedure gunzip(s)
    } & f.succeeded() then
       return r
 end
+
+# Perform gunzip on the given file, returning the unzipped string.
+procedure gunzip_file(fn)
+   local f, r
+   if r := use {
+      f := FilterInputStream(, "gunzip", ["-c", fn]),
+      f.read_all()
+   } & f.succeeded() then
+      return r
+end

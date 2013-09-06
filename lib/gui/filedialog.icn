@@ -11,7 +11,7 @@ import
 #
 # Extend `ListEntry` to add formatted date and size strings.
 #
-class ListEntryEx(ListEntry)
+class ListEntryEx(ListEntryWithIcon)
    public const
       fmt_date,
       fmt_size
@@ -475,7 +475,7 @@ class FileDialog(Dialog)
    public list_directory(s)
       local e, dir_list, file_list, l, pats, t, tf, z, zf, n, now, fl
       pats := get_pats()
-      l := Files.ucs_list(s) | fail
+      l := Files.ucs_list(s, ListEntryWithIcon) | fail
       dir_list := []
       file_list := []
       now := Time.get_system_seconds()

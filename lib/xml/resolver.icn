@@ -14,8 +14,26 @@ package xml
 abstract class Resolver()
    #
    # Resolve the given external ID into a string, or fail if that is
-   # not possible.
+   # not possible.  The `base` may be null, or the returned value from
+   # a previous resolution (see `Resolved`).
    #
-   public abstract resolve(external_id)
+   public abstract resolve(base, external_id)
+end
+
+#
+# The result of a call to a `Resolver`.  Returned is a pair, namely a
+# base url to pass back to the resolver for resolutions within the
+# content returned, and the content of the xternal id itself.
+#
+class Resolved()
+   public
+      base,
+      content
+
+   public new(base, content)
+      self.base := base
+      self.content := content
+      return
+   end
 end
 

@@ -111,7 +111,7 @@ class CompOut(Rect)
 end
 
 class TextSelection()
-   public const textout, textflow, i, j, w_off, w_sub, h
+   public const textout, textflow, i, j, w_off, w_sub
 
    public get_bounds()
       return Rect(textflow.x + textflow.border.get_l_inset() + textout.x + w_off,
@@ -140,7 +140,21 @@ class OutputRow(Rect)
    end
 end
 
-class TextFlow(Component)
+# A result in the list `sorted_searched`; also used to calculate the
+# text selection.  The Point part is just used for sorting purposes.
+#
+class PointResult(Point)
+   public const val
+
+   public new(x, y, val)
+      self.x := x
+      self.y := y
+      self.val := val
+      return
+   end
+end
+
+class TextFlow(Component, HasLastHighlight)
    public const
       input
 
@@ -183,6 +197,7 @@ class TextFlow(Component)
       held,               # URL held during mouse press
       over,               # URL the mouse is over; also written to the browser's msg area
       highlight,          # URL highlighted with alink colour.
+      last_highlight,
       dominant_width,
       computed_named_anchors,
       named_anchors,
@@ -438,8 +453,19 @@ class TextFlow(Component)
                   if \o.attr.mark then
                      text_bg(W, "yellow", x1 + o.x, y1 + o.y, o.w, o.h)
                   draw_string_ex(W, x1 + o.x, y1 + o.y, o.s)
+
+                  every ts := browser.is_searched(o) do {
+                     text_bg(W, 
+                             if ts === browser.highlighted_searched then "red 33%" else "purple 33%",
+                             x1 + o.x + ts.w_off,
+                             y1 + o.y, 
+                             ts.w_sub,
+                             o.h)
+                  }
+
+
                   if ts := browser.is_banded(o) then
-                     # NB - the rectangle used should be the same as that returned by t.get_bounds()
+                     # NB - the rectangle used should be the same as that returned by ts.get_bounds()
                      Gui.style.fill_selection_rectangle(cbwin, 
                                                         x1 + o.x + ts.w_off,
                                                         y1 + o.y, 
@@ -450,7 +476,7 @@ class TextFlow(Component)
                                o.s, 
                                x1 + o.x, 
                                y1 + o.y + W.get_font_ascent() + 1)
-                  else if \o.attr.underdash then
+                  else if \o.attr.underdash | (o.attr.url === \last_highlight) then
                      text_dash(W,
                                o.s, 
                                x1 + o.x, 
@@ -523,12 +549,12 @@ class TextFlow(Component)
 
       W := cbwin.clone()
       every o := !l do {
-         if font ~=== o.attr.font then {
-            W.close()
-            W := attr_clone(font := o.attr.font)
-         } 
          case classof(o) of {
             TextOut: {
+               if font ~=== o.attr.font then {
+                  W.close()
+                  W := attr_clone(font := o.attr.font)
+               } 
                i := 1
                if o === first then {
                   d := first_r.x - x1 - o.x
@@ -563,33 +589,61 @@ class TextFlow(Component)
       W.close()
    end
 
-   public get_selected_text(br)
-      local o, x1, y1, t, or, s, sr
+   public search(s, searched, sorted)
+      local or, o, W, font, ts, i, x1, y1
+      W := cbwin.clone()
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
-      s := u""
-      every or := rows_in_range(br.y - y1, br.h) do {
-         sr := u""
+      every or := !computed_output_rows do {
          every o := !or.l do {
-            case classof(o) of {
-               TextOut: {
-                  if t := browser.is_banded(o) then
-                     sr ||:= o.s[t.i:t.j]
-               }
-               CompOut: {
-                  if browser.is_banded(o.c) then
-                     sr ||:= \o.c.alt
+            if is(o, TextOut) then {
+               every i := find(s, o.s) do {
+                  if font ~=== o.attr.font then {
+                     W.close()
+                     W := attr_clone(font := o.attr.font)
+                  } 
+                  ts := TextSelection(o, self, 
+                                      i, i + *s, 
+                                      W.text_width(o.s[1:i]), W.text_width(o.s[i+:*s]))
+                  put(member(searched, o), ts) | insert(searched, o, [ts])
+                  # Note we use or.y as the y sort co-ordinate so that all matches in the same row
+                  # compare on their x position.
+                  put(sorted, PointResult(x1 + o.x + ts.w_off, 
+                                          y1 + or.y,
+                                          ts))
                }
             }
          }
-         if *sr > 0 then {
-            if *s > 0 then
-               s ||:= u"\n"
-            s ||:= sr
-         }
       }
-      if *s > 0 then
-         return s
+      W.close()
+   end
+
+   public get_selected_text(br, sorted)
+      local o, x1, y1, t, or, sr, x2
+      x1 := x + border.get_l_inset()
+      y1 := y + border.get_t_inset() + y_off
+      every or := rows_in_range(br.y - y1, br.h) do {
+         sr := u""     # The selected text on this row
+         x2 := &null   # The x position of the start of the selected text on this row
+         every o := !or.l do {
+            case classof(o) of {
+               TextOut: {
+                  if t := browser.is_banded(o) then {
+                     sr ||:= o.s[t.i:t.j]
+                     /x2 := x1 + o.x + t.w_off 
+                  }
+               }
+               CompOut: {
+                  if browser.is_banded(o.c) then {
+                     sr ||:= \o.c.alt
+                     /x2 := o.c.x  # o.c.x = x1 + o.x
+                  }
+               }
+            }
+         }
+         if *sr > 0 then
+            put(sorted, PointResult(x2, y1 + or.y, sr))
+      }
    end
 
    private invalidate_url(u)
@@ -1281,8 +1335,47 @@ class TextFlow(Component)
       return self
    end
 
+   public get_last_highlight_index()
+      local or, o, n, u
+      n := 0
+      every or := !computed_output_rows do {
+         every o := !or.l do {
+            if u := \o.attr.url then {
+               n +:= 1
+               if last_highlight === u then
+                  return n
+            }
+         }
+      }
+   end
+
+   public set_last_highlight_index(n)
+      local or, o, u
+      every or := !computed_output_rows do {
+         every o := !or.l do {
+            if u := \o.attr.url then {
+               n -:= 1
+               if n = 0 then {
+                  last_highlight := u
+                  return self
+               }
+            }
+         }
+      }
+   end
+
+   public set_last_highlight(u)
+      if u ~=== last_highlight then {
+         invalidate_url(\last_highlight)
+         last_highlight := u
+         invalidate_url(\last_highlight)
+      }
+      return self
+   end
+
    private set_highlight(u)
       if u ~=== highlight then {
+         browser.set_last_highlight(self, \u)
          invalidate_url(\highlight)
          highlight := u
          invalidate_url(\highlight)

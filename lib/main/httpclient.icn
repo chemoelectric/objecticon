@@ -88,6 +88,7 @@ class HttpClient(NetClient)
    private readable 
       request,
       response,
+      previous_response,
       open_url,
       retries,
       retry_while_data_flag,
@@ -112,6 +113,7 @@ class HttpClient(NetClient)
       authentications,
       authentication_function,
       abort_flag,
+      dont_retry_flag,
       gzip_flag,
       inflater_stream
 
@@ -266,7 +268,7 @@ class HttpClient(NetClient)
       }
 
       redir_set := set()
-      auth := auth_scheme := abort_flag := &null
+      previous_response := auth := auth_scheme := abort_flag := &null
       repeat {
          http_error := &null
 
@@ -301,7 +303,7 @@ class HttpClient(NetClient)
          #
          request.set_url(request.url.get_relative(l))
       
-      s := string(request.url.str())
+      s := request.url.str()
       if member(redir_set, s) then
          return on_http_error("Circular redirection detected: " || s)
       insert(redir_set, s)
@@ -316,6 +318,11 @@ class HttpClient(NetClient)
             unset_header("content-length").
             unset_header("content-type")
       }
+
+      # Note this response so that it is added to the chain of
+      # redirected responses in the final response.
+      previous_response := response
+
       return
    end
 
@@ -738,7 +745,7 @@ class HttpClient(NetClient)
       local i, prev_read
 
       i := retries
-
+      dont_retry_flag := &null
       reset_progress_counters()
 
       repeat {
@@ -762,11 +769,19 @@ class HttpClient(NetClient)
             fire(ABORTED_EVENT)
             fail
          }
+         if \dont_retry_flag then {
+            # Since we may be closing the inflater prematurely, gzip would
+            # overwrite &why with "unexpected end of file"
+            save_why{close_inflater()}
+            error("Failed and unable to retry - last reason: " || &why)
+            fire(FAILED_EVENT)
+            fail
+         }
 
          if prev_read ~=== self.read & \retry_while_data_flag then {
             i := retries
          } else if (i -:= 1) < 0 then {
-            close_inflater()
+            save_why{close_inflater()}
             if retries > 0 then
                error("Gave up after " || (1+retries) || " attempts - last reason: " || &why)
             fire(FAILED_EVENT)
@@ -799,7 +814,9 @@ class HttpClient(NetClient)
          # Create a response
          #
          response := HttpResponse().
-            set_url(request.url)
+            set_url(request.url).
+            set_previous_response(previous_response)
+
          s := expect_line() | fail
          response.set_status(s)
 
@@ -958,8 +975,8 @@ class HttpClient(NetClient)
       #
       if not(\self.read & response.get_status_code() = 206) then {
          close_inflater()
-         request.output_stream.truncate(0) | fail
-         open_inflater() | fail
+         request.output_stream.truncate(0) | return fail_dont_retry()
+         open_inflater() | return fail_dont_retry()
          self.length := integer(response.get_first_header("content-length")) | &null
          self.read := 0
       }
@@ -1060,13 +1077,17 @@ class HttpClient(NetClient)
       return \self.read
    end
 
+   private fail_dont_retry()
+      dont_retry_flag := 1
+   end
+
    private add_some(s)
       self.read +:= *s
       fire(PROGRESS_EVENT)
-      return if \inflater_stream then
+      return (if \inflater_stream then
          inflater_stream.writes(s)
       else
-         request.output_stream.writes(s)
+         request.output_stream.writes(s)) | fail_dont_retry()
    end
 
    public new()

@@ -401,7 +401,7 @@ AC_DEFUN([AX_CHECK_CAIRO],
          AC_MSG_RESULT(no)
       fi], 
    [
-       CAIRO_CONFIG="cairo pangocairo"
+       CAIRO_CONFIG="cairo pangocairo librsvg-2.0"
        AC_MSG_RESULT(yes)
    ]
 )

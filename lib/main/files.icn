@@ -55,7 +55,10 @@ $ifdef _PLAN9
    # Read the given directory returning a list of `ListEntry` objects,
    # each containing the name, lstat and stat values for each entry.
    #
-   public static list(s)
+   # `f` is an optional parameter, providing an alternative constructor for
+   # the returned objects; by default it is `ListEntry`.
+   #
+   public static list(s, f)
       return list1(s, 1)
    end
 
@@ -101,9 +104,10 @@ $else
    #
    public static list(s)
       local p
+      /f := ListEntry
       return use {
          p := DirStream(s),
-         list1(FilePath(s), p, 1)
+         list1(FilePath(s), p, f, 1)
       }
    end
 
@@ -111,15 +115,16 @@ $else
    # Like `list`, but the filenames are converted to `ucs`; any that
    # can't be converted are skipped.
    #
-   public static ucs_list(s)
+   public static ucs_list(s, f)
       local p
+      /f := ListEntry
       return use {
          p := DirStream(s),
-         list1(FilePath(s), p, ucs)
+         list1(FilePath(s), p, f, ucs)
       }
    end
 
-   private static list1(path, p, f)
+   private static list1(path, p, f, g)
       local l, s, cs, lst, st
       l := []
       repeat {
@@ -132,23 +137,31 @@ $else
             stat(cs) | next
          else
             lst
-         put(l, ListEntry(f(s), lst, st))
+         put(l, f(g(s), lst, st))
       }
    end
 $endif
 
    #
-   # A useful function to help sort by name the result of the various list
-   # functions with isort.
+   # A useful function to help sort the result of the various list
+   # functions.  Sorts by case-insensitive name.
    #
    public static name_key(data)
       return map(data.name)
    end
 
+   #
+   # A useful function to help sort the result of the various list
+   # functions.  Sorts by size in bytes.
+   #
    public static size_key(data)
       return data.lstat.size
    end
 
+   #
+   # A useful function to help sort the result of the various list
+   # functions.  Sorts by modification time.
+   #
    public static date_key(data)
       return data.lstat.mtime
    end
@@ -623,6 +636,13 @@ $endif
    public static end_esc()
       return "\e[Z"
    end
+
+   #
+   # Return the application name, based on the last path element of `&progname`
+   #
+   public static get_application_name()
+      return FilePath(&progname).get(-1)
+   end
 end
 
 #
@@ -706,11 +726,23 @@ class FilePath(ObjectOutput)
    end
 
    #
-   # Return the path formed by appending the elements of this path to
-   # the other path.
+   # Returns the path formed by appending the elements of this path to
+   # the elements of `other`.  `other` must be a list or another
+   #`FilePath`.
    #
    public append(other)
-      return from_list(l ||| other.l)
+      return if is(other, FilePath) then
+         from_list(l ||| other.l)
+      else
+         from_list(l ||| other)
+   end
+
+   #
+   # Takes a variable arguments list, and returns the path formed by
+   # appending the elements of this path to that list.
+   #
+   public walk(a[])
+      return from_list(l ||| a)
    end
 
    #

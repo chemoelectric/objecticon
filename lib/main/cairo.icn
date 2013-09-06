@@ -102,7 +102,7 @@ class Matrix()
    end
 end
 
-abstract class Pattern()
+abstract class Pattern(NoCopy)
    protected ptr
 
    private static init()
@@ -227,7 +227,7 @@ final class SolidPattern(Pattern)
    end
 end
 
-abstract class Surface()
+abstract class Surface(NoCopy)
    protected ptr
 
    private static init()
@@ -349,7 +349,7 @@ final class RecordingSurface(Surface)
    end
 end
 
-final class Context()
+final class Context(NoCopy)
    private ptr
 
    public static const LOADED
@@ -517,6 +517,43 @@ final class Context()
          }
       else
          new_impl(v)
+      return
+   end
+end
+
+final class SVG(NoCopy)
+   private ptr
+
+   private static init()
+      Class.load_library(\Context.LOADED)
+   end
+
+   # Get the width of the document
+   #
+   public native get_width(id)
+
+   # Get the height of the document
+   #
+   public native get_height(id)
+
+   public native has_sub()
+   public native get_x(id)
+   public native get_y(id)
+   public native get_title()
+   public native get_desc()
+   public native get_metadata()
+
+   # Render to a cairo context.
+   #
+   public native render(context, id)
+
+   public native close()
+
+   private static native new_impl()
+
+   public new(data)
+      \Context.LOADED | return error("Cairo not supported")
+      ptr := new_impl(data) | fail
       return
    end
 end

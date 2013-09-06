@@ -175,3 +175,36 @@ procedure sortt(T, i)
    return sortf(result, i)
 
 end
+
+#
+# The classic quick sort procedure.
+#
+procedure qsort(l, comp, first, last)
+   local i, j, pivot
+   /first := 1
+   /last := *l
+
+   i := first
+   j := last
+
+   if i = j then
+      return l
+
+   pivot := l[(i + j) / 2]
+   repeat {
+      while comp(l[i], pivot) do i +:= 1
+      while comp(pivot, l[j]) do j -:= 1
+      if i <= j then {
+         l[i] :=: l[j]
+         i +:= 1
+         j -:= 1
+      }
+      if i > j then
+         break
+   }
+   if first < j then
+      qsort(l, comp, first, j)
+   if i < last then
+      qsort(l, comp, i, last)
+   return l
+end

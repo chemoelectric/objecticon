@@ -74,7 +74,7 @@ class TTExplorer(Dialog)
    #
    public get_directory_list(s)
       local e, dir_list, file_list, l
-      if not(l := Files.ucs_list(s)) then
+      if not(l := Files.ucs_list(s, ListEntryWithIcon)) then
          return [[],[]]
       dir_list := []
       file_list := []
