@@ -206,7 +206,7 @@ end
 #
 # This class contains many static methods for looking up XDG data.
 #
-class Xdg()
+final abstract class Xdg()
    private static const
       LC_MESSAGES,        # A Locale object giving the LC_MESSAGES locale info
       INI_LC_KEYS,        # A list of strings used to choose locale-based keys in
