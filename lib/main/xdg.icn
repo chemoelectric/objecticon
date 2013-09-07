@@ -411,7 +411,7 @@ final abstract class Xdg()
       return if endswith(f, ".svg" | ".svgz") then
          ImageCache.get_scaled_svg_key(f, size, size)
       else
-         ImageCache.get_key_with_resize(f, size, size)
+         ImageCache.get_key(f)
    end
 
    #
