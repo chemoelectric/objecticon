@@ -755,7 +755,7 @@ final abstract class Xdg()
       local name, icon, exec, path, terminal, try_exec, 
          initial_preference, exec_line
       dm := member(dm, u"Desktop Entry") | fail
-
+      member(dm, u"Type") == u"Application" | fail
       name := member(dm, u"Name") | fail
 
       # A TryExec entry means testing if such an exe is on the path;
