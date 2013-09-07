@@ -176,7 +176,7 @@ class Explorer(Dialog)
       #
       # Initialize the tree data structure.
       #
-      root_node := TreeTableNode().set_label(ListEntry(u"/", Files.lstat("/"), Files.stat("/")))
+      root_node := TreeTableNode().set_label(ListEntryWithIcon(u"/", Files.lstat("/"), Files.stat("/")))
       load_subtree(root_node)
       tree.set_root_node(root_node)
       tree.object_set_selections([root_node])
