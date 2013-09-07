@@ -728,6 +728,8 @@ class DownloadTab(TabItem)
       cast(self,TabItem).new()
       set_label_border(EmptyBorder().set_x_align(Align.L))
       setup()
+      theme_toolbar_button(paste_url_button, "edit-paste")
+      theme_toolbar_button(destination_button, "go-up")
       ticker := Dispatcher.new_task{tick()}
       dl := []
       update_title()
@@ -1314,6 +1316,15 @@ class BrowserTab(TabItem, BrowserUI)
       set_label_border(EmptyBorder().set_x_align(Align.L))
       set_title()
       setup()
+      # Try themed icon buttons
+      theme_toolbar_button(close_button, "window-close")
+      theme_toolbar_button(prev_button, "go-previous")
+      theme_toolbar_button(next_button, "go-next")
+      theme_toolbar_button(home_button, "go-home")
+      #theme_toolbar_button(stop_button, "process-stop")
+      theme_toolbar_button(refresh_button, "view-refresh")
+      theme_toolbar_button(paste_url_button, "edit-paste")
+
       browser.set_ui(self).set_worker_pool(pool).set_outermost_border(EmptyBorder().set_insets(2, 2, 2, 2))
       browser.goto(\url, referer_url)
       return

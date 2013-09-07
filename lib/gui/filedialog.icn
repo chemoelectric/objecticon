@@ -50,6 +50,7 @@ end
 class FileDialog(Dialog)
    public
       show_hidden_menu_item,
+      tools_menu_button,
       tools_menu,
       date_button,
       name_button,
@@ -513,6 +514,12 @@ class FileDialog(Dialog)
       cast(self,Dialog).new()
       self.setup()
       tools_menu.set_border_mid(NullBorder())
+      # Try themed icon buttons
+      theme_toolbar_button(prev_button, "go-previous")
+      theme_toolbar_button(next_button, "go-next")
+      theme_toolbar_button(home_button, "go-home")
+      theme_toolbar_button(up_button, "go-up")
+      theme_toolbar_button(tools_menu_button, "applications-system")
 
       dlist.
          set_draggable_cursor(&yes).
@@ -591,7 +598,7 @@ class FileDialog(Dialog)
    end
 
    private setup()
-      local paint_2, paint_14, paint_45, layout_7, menu_button, refresh_menu_item, paint_11, paint_37, paint_42, layout_4, split_content_1, split_content_2, panel_4, paint_29, paint_9, split_1, paint_31, paint_3, paint_15, paint_46, layout_8, new_dir_menu_item, paint_12, paint_43, paint_35, panel_2, favourite_dirs_menu_item, paint_27, paint_32, paint_47, layout_9, paint_1, paint_13, paint_44, layout_6, paint_10, paint_36, layout_3, panel_3, paint_28, paint, paint_30
+      local paint_2, paint_14, paint_45, layout_7, refresh_menu_item, paint_11, paint_37, paint_42, layout_4, split_content_1, split_content_2, panel_4, paint_29, paint_9, split_1, paint_31, paint_3, paint_15, paint_46, layout_8, new_dir_menu_item, paint_12, paint_43, paint_35, panel_2, favourite_dirs_menu_item, paint_27, paint_32, paint_47, layout_9, paint_1, paint_13, paint_44, layout_6, paint_10, paint_36, layout_3, panel_3, paint_28, paint, paint_30
       self.set_label("Select file")
       self.set_resize(&yes)
       self.set_size(700, 500)
@@ -620,7 +627,7 @@ class FileDialog(Dialog)
          add(show_hidden_menu_item).
          add(refresh_menu_item)
       paint_47 := TextPaint("Tools")
-      menu_button := MenuButton().
+      tools_menu_button := MenuButton().
          clear_constraints().
          set_tooltip(paint_47).
          set_menu(tools_menu)
@@ -723,7 +730,7 @@ class FileDialog(Dialog)
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_layout(layout_6).
-         add(menu_button).
+         add(tools_menu_button).
          add(home_button).
          add(up_button).
          add(prev_button).

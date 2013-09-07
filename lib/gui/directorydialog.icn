@@ -19,6 +19,7 @@ class DirectoryDialog(Dialog)
    public
       show_hidden_menu_item,
       tools_menu,
+      tools_menu_button,
       home_button, 
       up_button, 
       cancel_button, 
@@ -321,6 +322,11 @@ $endif
       cast(self,Dialog).new()
       self.setup()
       tools_menu.set_border_mid(NullBorder())
+      # Try themed icon buttons
+      theme_toolbar_button(home_button, "go-home")
+      theme_toolbar_button(up_button, "go-up")
+      theme_toolbar_button(tools_menu_button, "applications-system")
+
       tree.
          set_fixed_col_w(16 + 2 * 2).
          set_item_paint(IconFilesItemPaint()).
@@ -354,7 +360,7 @@ $endif
    end
 
    private setup()
-      local paint_2, favourite_dirs_menu_item, paint_45, layout_7, menu_button, refresh_menu_item, paint_11, paint_42, layout_4, panel_4, paint_47, paint_1, paint_9, paint_44, layout_6, paint_10, paint_3, panel_3, paint_46, paint, new_dir_menu_item, paint_43, paint_35
+      local paint_2, favourite_dirs_menu_item, paint_45, layout_7, refresh_menu_item, paint_11, paint_42, layout_4, panel_4, paint_47, paint_1, paint_9, paint_44, layout_6, paint_10, paint_3, panel_3, paint_46, paint, new_dir_menu_item, paint_43, paint_35
       self.set_label("Select directory")
       self.set_resize(&yes)
       paint_45 := ImagePaint().
@@ -382,7 +388,7 @@ $endif
          add(show_hidden_menu_item).
          add(refresh_menu_item)
       paint_47 := TextPaint("Tools")
-      menu_button := MenuButton().
+      tools_menu_button := MenuButton().
          clear_constraints().
          set_tooltip(paint_47).
          set_menu(tools_menu)
@@ -417,7 +423,7 @@ $endif
          set_constraint("eol", &yes).
          set_constraint("x_align", Align.L).
          set_layout(layout_6).
-         add(menu_button).
+         add(tools_menu_button).
          add(home_button).
          add(up_button)
       self.add(panel_4)
