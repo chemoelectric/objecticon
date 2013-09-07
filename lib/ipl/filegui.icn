@@ -123,7 +123,12 @@ class IconFilesItemPaint(ItemPaint)
 
 $ifdef _PNG
    public get_xdg_for_file(f)
-      return Xdg.find_icon_for_file_and_cache(f, ICON_SIZE) | Xdg.find_icon_and_cache("text-x-generic", ICON_SIZE)
+      local k, w
+      k := Xdg.find_icon_for_file_and_cache(f, ICON_SIZE) | Xdg.find_icon_and_cache("text-x-generic", ICON_SIZE) | fail
+      w := ImageCache.get(k)
+      if w.get_width() > ICON_SIZE then
+         k := ImageCache.get_key_with_resize(k, ICON_SIZE, ICON_SIZE)
+      return k
    end
 
    public get_icon(data)
@@ -167,11 +172,8 @@ $endif
 
    public draw(W, data, x, y, w, h)
       local i
-      if is(data, ListEntryWithIcon) then {
-         if not(i := \data.icon) then
-            i := data.icon := get_icon(data)
-      } else
-         i := get_icon(data)
+      if not(i := \data.icon) then
+         i := data.icon := get_icon(data)
       i.copy_to(,,,, W, x, y + (h - ICON_SIZE) / 2)
       x +:= ICON_SIZE + Gui.TEXT_INSET
       w -:= ICON_SIZE + Gui.TEXT_INSET
