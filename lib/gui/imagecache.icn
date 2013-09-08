@@ -4,6 +4,7 @@ import
    graphics, 
    util,
    cairo,
+   io,
    ipl.graphics
 
 $load HOME "images/gui.HOME_24.gif"
@@ -353,10 +354,9 @@ bb~~~~bb_
 
    #
    # Load an image, using the cache if possible.  The parameter `s`
-   # should be either in Icon image format, a file name, or the name
-   # of an image set by {name_image()}.  On a successful load, the
-   # image is stored in the cache for future use, and thus should not
-   # be closed after use.
+   # should be either a file name, or the name of an image set by
+   # {name_image()}.  On a successful load, the image is stored in the
+   # cache for future use, and thus should not be closed after use.
    #
    public static get(s, win)
       return member(imap, get_key(s, win))
@@ -369,14 +369,16 @@ bb~~~~bb_
    # by `get_cached_window`.
    #
    public static get_key(s, win)
-      local w, key, p
+      local w, key, p, fl
       key := s
-      s := member(names, s)
+      if s := member(names, s) then
+         fl := &yes
       if is_image_string(s) then {
          if \win then
             key := Window.color_value(win.get_fg()) || "/" || Window.color_value(win.get_bg()) || "#" || key
          if w := member(imap, key) then
             return key
+         \fl | return error("Invalid key for ImageCache")
          w := use {
             p := parse_image_string(s, win),
             Window.open_image(p)
@@ -384,6 +386,7 @@ bb~~~~bb_
       } else {
          if w := member(imap, key) then
             return key
+         \fl | Files.access(key) | return error("Invalid key for ImageCache")
          w := Window.open_image(s) | fail
       }
       insert(imap, key, w)
@@ -392,9 +395,9 @@ bb~~~~bb_
 
    #
    # Load an image without using the cache.  The parameter {s} should
-   # be either in Icon image format, a file name, or the name of an
-   # image set by {name_image()}.  The returned image should be closed
-   # after use.
+   # be either a file name, or the name of an image set by
+   # {name_image()}.  It may also be raw image data (unlike `get`).
+   # The returned image should be closed after use.
    #
    public static load(s, win)
       local p
@@ -452,7 +455,7 @@ bb~~~~bb_
       key := s || "#Scaled to " || width || "x" || height
       if member(imap, key) then
          return key
-      s := member(names, s)
+      (s := member(names, s)) | Files.access(s) | return error("Invalid key for ImageCache")
       svg := SVG(s) | fail
       w := Window().
          set_size(width, height).
