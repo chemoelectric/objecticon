@@ -218,7 +218,7 @@ class StockDialog(Dialog)
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          connect(self.on_symbol_field, Event.ACTION).
-         set_contents("")
+         set_contents(u"")
       self.add(symbol_field)
       stocks := ComponentScrollArea().
          set_size(549, 308).
@@ -275,7 +275,7 @@ end
 #NSWAttribs|T0NSConstraints|T4NSx_align|Sl|Sx_weight|B1.0|Sx_fill|I1Seo
 #l|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handlers|
 #L1L2SEvent.ACTION|Son_symbol_field|SClass Variable|I1SParent Component
-#|X1SContents|S|SFilter String|S|SIs editable flag|I1SMove on rpress fl
+#|X1SContents|U|SFilter String|U|SIs editable flag|I1SMove on rpress fl
 #ag|I1CCanvasPanel|I28SParent Canvas|X1SName|Sstocks|SClass Name|SCompo
 #nentScrollArea|SImport Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW 
 #Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|I549SH Spec|I308SX Align|Sl|SY 
