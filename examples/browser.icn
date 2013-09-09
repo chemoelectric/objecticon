@@ -1280,24 +1280,17 @@ class BrowserTab(TabItem, BrowserUI)
       update_search_state()
    end
 
-   private static convert_ico_to_png1(data, f, g)
-      local fs
-      Files.string_to_file(f, data) | fail
-      use { fs := FilterInputStream(, "convert", ["-resize", "16x16",
-                                                  f || "[0]", 
-                                                  g]), fs.read_all() } | fail
-      fs.succeeded() | fail
-      return Files.file_to_string(g)
-   end
-
    private static convert_ico_to_png(data)
-      local f, g, r
-      f := Files.make_temp_filename("browser-favicon", ".ico")
-      g := Files.make_temp_filename("browser-favicon", ".png")
-      r := convert_ico_to_png1(data, f, g)
-      Files.remove(f)
-      Files.remove(g)
-      return \r
+      local f, r
+      if r := use { 
+         f := FilterInputStream(StringStream(data),
+                                "convert", ["-resize", 
+                                            "16x16",
+                                            "ico:-[0]",
+                                            "png:-"]),
+         f.read_all()
+      } & f.succeeded() then
+         return r
    end
 
    private update_title(fres)
