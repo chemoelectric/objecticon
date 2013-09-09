@@ -1450,6 +1450,42 @@ class FormTextField(SuggestField, FormEntry, HasAscent)
    end
 end
 
+class FormURLField(TextField, FormEntry, HasAscent)
+   private const
+      init_val
+
+   public get_ascent()
+      return cbwin.get_font_ascent() + border.get_t_inset()
+   end
+
+   public reset_form()
+      set_contents(init_val)
+   end
+
+   public get_form_value()
+      return get_contents()
+   end
+
+   public validate_form()
+      return URL(get_contents()) | error("Bad URL")
+   end
+
+   public get_save_value()
+      return get_contents()
+   end
+
+   public restore_value(val)
+      set_contents(val)
+   end
+
+   public new(init_val)
+      cast(self,TextField).new()
+      self.init_val := init_val
+      set_contents(init_val)
+      return
+   end
+end
+
 class FormDateField(DateField, FormEntry, HasAscent)
    private const
       init_val
@@ -3773,7 +3809,20 @@ class Browser(ComponentScrollArea)
                q.set_width(100)
             add_form_component(e, p, q, context)
          }
-
+         "url": {
+            v := e.get_attribute(u"VALUE") | u""
+            use {
+               mW := cbwin.clone().set_font(context.font),
+               size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
+            }
+            q := FormURLField(v).
+               set_width(size).
+               connect(context.form.submit, Event.ACTION)
+            if e.get_attribute(u"READONLY") then
+               q.set_is_editable(&no)
+            q.set_placeholder(e.get_attribute(u"PLACEHOLDER"))
+            add_form_component(e, p, q, context)
+         }
          # Assume something textual; could be password, text, email etc.
          default: {
             v := e.get_attribute(u"VALUE") | u""
