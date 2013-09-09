@@ -121,8 +121,6 @@ class TickerSuggestField(GSuggestField)
          set_header("Accept-Charset", "utf-8")
       hc.retrieve(hr) | fail
       s := ucs(data.str()) | fail
-      # Google has a habit of using illegal \x escape sequences
-      s := replace(s, "\\x", "\\u00")
       jp := JSONParser()
       v := jp.parse(s) | fail
       l := []

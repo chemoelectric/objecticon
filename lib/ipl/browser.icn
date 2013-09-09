@@ -41,7 +41,7 @@ end
 
 class Resp()
    public const
-      req, err, url, referer, data, fname, content_type, data_file
+      req, err, url, data, fname, content_type, data_file
 
    public new(req, err, url, data, fname, content_type, data_file)
       self.req := req
@@ -2478,6 +2478,8 @@ class Browser(ComponentScrollArea)
       page_link_color,
       page_alink_color,
       page_vlink_color,
+      page_favicon_resp,
+      page_favicon_url,
       running,
       mark_x,
       mark_y,
@@ -3189,7 +3191,7 @@ class Browser(ComponentScrollArea)
       page_base := page_url
       row := TextFlow(self).
          set_border(outermost_border)
-      page_title := &null
+      page_favicon_resp := page_favicon_url := page_title := &null
       page_links := []
       page_alink_color := "red"
       page_vlink_color := "#800080"
@@ -3202,6 +3204,7 @@ class Browser(ComponentScrollArea)
       c.align := Align.L
       synch_font(c)
       traverse(doc, row, c)
+      get_favicon()
       curr_history_entry.title := page_title
       if page_resp.req.kind = Worker.NAVIGATE then
          restore_form_values()
@@ -4447,6 +4450,26 @@ class Browser(ComponentScrollArea)
       page_title := e.get_trimmed_string_content()
    end
 
+   private got_favicon(res)
+      page_favicon_resp := res
+   end
+
+   private get_favicon()
+      if /page_favicon_url then {
+         page_url.scheme == (u"http" | u"https") | fail
+         page_favicon_url := clone(page_url).set_path(u"/favicon.ico")
+      }
+      start_worker(Req(self, page_favicon_url, page_url, got_favicon, page_resp.req.kind))
+   end
+
+   private traverse_link(e, p, context)
+      if map(e.get_attribute(u"REL")) == (u"icon" | u"shortcut icon") then {
+         # Favour png file if available
+         if /page_favicon_url | (e.get_attribute(u"TYPE") == u"image/png") then
+            page_favicon_url := mk_link(e.get_attribute(u"HREF"))
+      }
+   end
+
    private traverse(n, p, context)
       local e, id, title, c
       every e := !n.children do {
@@ -4461,7 +4484,8 @@ class Browser(ComponentScrollArea)
             } else
                c := context
             case string(e.name) of {
-               "META"|"LINK"|"SCRIPT"|"STYLE": {}
+               "META"|"SCRIPT"|"STYLE": {}
+               "LINK": traverse_link(e, p, c)
                "TITLE": traverse_title(e, p, c)
                "A": traverse_a(e, p, c)
                "FORM": traverse_form(e, p, c)

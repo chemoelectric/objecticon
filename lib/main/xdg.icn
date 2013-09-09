@@ -206,7 +206,7 @@ end
 #
 # This class contains many static methods for looking up XDG data.
 #
-class Xdg()
+final abstract class Xdg()
    private static const
       LC_MESSAGES,        # A Locale object giving the LC_MESSAGES locale info
       INI_LC_KEYS,        # A list of strings used to choose locale-based keys in
@@ -411,7 +411,7 @@ class Xdg()
       return if endswith(f, ".svg" | ".svgz") then
          ImageCache.get_scaled_svg_key(f, size, size)
       else
-         ImageCache.get_key_with_resize(f, size, size)
+         ImageCache.get_key(f)
    end
 
    #
@@ -755,7 +755,7 @@ class Xdg()
       local name, icon, exec, path, terminal, try_exec, 
          initial_preference, exec_line
       dm := member(dm, u"Desktop Entry") | fail
-
+      member(dm, u"Type") == u"Application" | fail
       name := member(dm, u"Name") | fail
 
       # A TryExec entry means testing if such an exe is on the path;

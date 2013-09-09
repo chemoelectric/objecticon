@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics, lang, util
+import graphics, lang, util, xdg
 
 class Event()
    public static const
@@ -479,4 +479,22 @@ class GetSelection(Dialog)
       self.sel := sel
       return
    end
+end
+
+procedure theme_toolbar_button(b, icon)
+   if is(b, IconButton) then
+      b.set_paint(get_toolbar_theme_paint(icon)) | fail
+   else if is(b, MenuButton) then
+      b.menu.set_paint_mid(get_toolbar_theme_paint(icon)) | fail
+   b.set_size(28, 28)
+   return b
+end
+
+procedure get_toolbar_theme_paint(icon)
+   local k, w
+   k := Xdg.find_icon_and_cache(icon, 24) | fail
+   w := ImageCache.get(k)
+   if w.get_width() > 24 then
+      k := ImageCache.get_key_with_resize(k, 24, 24)
+   return ImagePaint().set_cache(k)
 end

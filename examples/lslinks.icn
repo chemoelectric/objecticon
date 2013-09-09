@@ -44,7 +44,7 @@ procedure main(args)
 end
 
 procedure do_one(a)
-   local url, hr, u, p, page, src, parser, doc, sb
+   local url, hr, u, p, res, src, parser, doc, sb
    
    url := URL(a) | stop("Invalid url:" || a)
 
@@ -62,7 +62,7 @@ procedure do_one(a)
 
    hr.set_referer(\opts["e"])
    hr.set_url(url)
-   page := hc.retrieve(hr) | stop("Couldn't get: reason ", &why)
+   res := hc.retrieve(hr) | stop("Couldn't get: reason ", &why)
 
    src := sb.done()
 
@@ -76,14 +76,14 @@ procedure do_one(a)
    parser := HtmlParser()
    doc := parser.parse(src) | stop("couldnt parse page")
    if \opts["i"] then
-      do_search(url, src, doc, "IMG", "SRC", "")
+      do_search(res.url, src, doc, "IMG", "SRC", "")
    else if \opts["b"] then {
-      do_search(url, src, doc, "IMG", "SRC", "IMG:")
-      do_search(url, src, doc, "A", "HREF", "A:")
-      do_search(url, src, doc, "AREA", "HREF", "A:")
+      do_search(res.url, src, doc, "IMG", "SRC", "IMG:")
+      do_search(res.url, src, doc, "A", "HREF", "A:")
+      do_search(res.url, src, doc, "AREA", "HREF", "A:")
    } else {
-      do_search(url, src, doc, "A", "HREF", "")
-      do_search(url, src, doc, "AREA", "HREF", "")
+      do_search(res.url, src, doc, "A", "HREF", "")
+      do_search(res.url, src, doc, "AREA", "HREF", "")
    }
 end
 

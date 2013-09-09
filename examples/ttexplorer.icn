@@ -113,7 +113,7 @@ class TTExplorer(Dialog)
          }
       }
 
-      root_node := TreeTableNode().set_label(ListEntry(u"/", Files.lstat("/"), Files.stat("/")))
+      root_node := TreeTableNode().set_label(ListEntryWithIcon(u"/", Files.lstat("/"), Files.stat("/")))
       load_subtree(root_node)
       tt.table_content.set_root_node(root_node)
    end

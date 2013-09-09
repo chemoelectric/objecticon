@@ -1546,23 +1546,26 @@ abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask,
    end
 
    protected do_poll()
-      local x, l, t
+      local x, l, t2, t3
       l := []
-      t := table()
-      if l |||:= [\cin, Poll.IN] then
-         t[cin] := 1
-      if l |||:= [\cerr, Poll.IN] then
-         t[cerr] := *l/2
-      if l |||:= [\cout, Poll.OUT] then
-         t[cout] := *l/2
+      if \cin then
+         every put(l, cin | Poll.IN)
+      if \cerr then {
+         every put(l, cerr | Poll.IN)
+         t2 := *l / 2
+      }
+      if \cout then {
+         every put(l, cout | Poll.OUT)
+         t3 := *l / 2
+      }
       if *l = 0 then
          runerr(219, self)
       x := choose_poll(l) | fail
-      if DescStream.poll_in_test(x[t[\cin]]) then
+      if \cin & DescStream.poll_in_test(x[1]) then
          return cin
-      if DescStream.poll_in_test(x[t[\cerr]]) then
+      if \cerr & DescStream.poll_in_test(x[t2]) then
          return cerr
-      if DescStream.poll_out_test(x[t[\cout]]) then
+      if \cout & DescStream.poll_out_test(x[t3]) then
          return cout
       return error("child command i/o failed")
    end
@@ -1780,23 +1783,26 @@ abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask,
    end
 
    protected do_poll()
-      local x, l, t
+      local x, l, t2, t3
       l := []
-      t := table()
-      if l |||:= [\cin, Poll.IN] then
-         t[cin] := 1
-      if l |||:= [\cerr, Poll.IN] then
-         t[cerr] := *l/2
-      if l |||:= [\cout, Poll.OUT] then
-         t[cout] := *l/2
+      if \cin then
+         every put(l, cin | Poll.IN)
+      if \cerr then {
+         every put(l, cerr | Poll.IN)
+         t2 := *l / 2
+      }
+      if \cout then {
+         every put(l, cout | Poll.OUT)
+         t3 := *l / 2
+      }
       if *l = 0 then
          runerr(219, self)
       x := choose_poll(l) | fail
-      if DescStream.poll_in_test(x[t[\cin]]) then
+      if \cin & DescStream.poll_in_test(x[1]) then
          return cin
-      if DescStream.poll_in_test(x[t[\cerr]]) then
+      if \cerr & DescStream.poll_in_test(x[t2]) then
          return cerr
-      if DescStream.poll_out_test(x[t[\cout]]) then
+      if \cout & DescStream.poll_out_test(x[t3]) then
          return cout
       return error("child command i/o failed")
    end
