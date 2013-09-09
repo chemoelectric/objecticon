@@ -1335,27 +1335,31 @@ class TextFlow(Component, HasLastHighlight)
       return self
    end
 
-   public get_last_highlight_index()
+   package save_last_highlight(he)
       local or, o, n, u
       n := 0
       every or := !computed_output_rows do {
          every o := !or.l do {
             if u := \o.attr.url then {
                n +:= 1
-               if last_highlight === u then
-                  return n
+               if last_highlight === u then {
+                  he.last_highlight_index := n
+                  he.last_highlight := u
+                  return self
+               }
             }
          }
       }
    end
 
-   public set_last_highlight_index(n)
+   package restore_last_highlight(n, url)
       local or, o, u
       every or := !computed_output_rows do {
          every o := !or.l do {
             if u := \o.attr.url then {
                n -:= 1
                if n = 0 then {
+                  (url.str() == u.str()) | fail
                   last_highlight := u
                   return self
                }

@@ -876,8 +876,8 @@ end
 
 abstract class HasLastHighlight()
    public abstract set_last_highlight(u)
-   public abstract get_last_highlight_index()
-   public abstract set_last_highlight_index(n)
+   package abstract save_last_highlight(he)
+   package abstract restore_last_highlight(n, url)
 end
 
 class Img(Image, HasLastHighlight)
@@ -1012,24 +1012,28 @@ class Img(Image, HasLastHighlight)
       return self
    end
 
-   public get_last_highlight_index()
+   package save_last_highlight(he)
       local a, u, n
       n := 0
       every a := gen_areas() do {
          if u := \a.url then {
             n +:= 1
-            if last_highlight === u then
-               return n
+            if last_highlight === u then {
+               he.last_highlight_index := n
+               he.last_highlight := u
+               return self
+            }
          }
       }
    end
 
-   public set_last_highlight_index(n)
+   package restore_last_highlight(n, url)
       local a, u
       every a := gen_areas() do {
          if u := \a.url then {
             n -:= 1
             if n = 0 then {
+               (url.str() == u.str()) | fail
                last_highlight := u
                return self
             }
@@ -2422,6 +2426,7 @@ record HistoryEntry(url,          # URL displayed (on a redirect may differ from
                     focus_index,  # Index of focused component on moving away
                     last_highlight_component_index,  # Child index of last_highlight_component
                     last_highlight_index,            # Index of last_highlight within last_highlight_component
+                    last_highlight,                  # Last highlight URL
                     area_x,
                     area_y
                     ) 
@@ -2911,9 +2916,10 @@ class Browser(ComponentScrollArea)
    end
 
    private redo_search()
-      local c, i
+      local c, i, j
       \searched_term | fail
-      i := keyof(sorted_searched, highlighted_searched)
+      if sorted_searched[i := 1 to *sorted_searched].val === highlighted_searched then
+         j := i
       clear(searched)
       sorted_searched := []
       if *searched_term > 0 then {
@@ -2922,7 +2928,7 @@ class Browser(ComponentScrollArea)
                c.search(searched_term, searched, sorted_searched)
       }
       qsort(sorted_searched, point_comp)
-      highlighted_searched := sorted_searched[\i] | &null
+      highlighted_searched := sorted_searched[\j].val | &null
    end
 
    public do_search(s)
@@ -3037,7 +3043,7 @@ class Browser(ComponentScrollArea)
       local c
       if c := get_nth_child(\curr_history_entry.last_highlight_component_index) &
          is(c, HasLastHighlight) &
-         c.set_last_highlight_index(\curr_history_entry.last_highlight_index) then
+         c.restore_last_highlight(\curr_history_entry.last_highlight_index, \curr_history_entry.last_highlight) then
          last_highlight_component := c
    end
 
@@ -3151,8 +3157,11 @@ class Browser(ComponentScrollArea)
          curr_history_entry.area_x := get_area_x()
          curr_history_entry.area_y := get_area_y()
          curr_history_entry.focus_index := get_focusable_index(parent_dialog.get_focus()) | &null
-         curr_history_entry.last_highlight_component_index := get_child_index(\last_highlight_component) | &null
-         curr_history_entry.last_highlight_index := (\last_highlight_component).get_last_highlight_index() | &null
+         # Save last highlight stuff
+         curr_history_entry.last_highlight_component_index := 
+            curr_history_entry.last_highlight_index := curr_history_entry.last_highlight := &null
+         if curr_history_entry.last_highlight_component_index := get_child_index(\last_highlight_component) then
+            last_highlight_component.save_last_highlight(curr_history_entry)
       }
       set_area_y(0).set_area_x(0)
       if \res.err & /res.data then {
@@ -3232,10 +3241,9 @@ class Browser(ComponentScrollArea)
       set_inner(row)
       layout()
       invalidate()
+      last_highlight_component := &null
       if page_resp.req.kind = Worker.NAVIGATE then
          restore_last_highlight()
-      else
-         last_highlight_component := &null
       parent_dialog.resynch_pointer()
       setup_tabbing()
       page_loaded()
