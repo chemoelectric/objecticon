@@ -1285,7 +1285,7 @@ class BrowserTab(TabItem, BrowserUI)
       Files.string_to_file(f, data) | fail
       use { fs := FilterInputStream(, "convert", ["-resize", "16x16",
                                                   f || "[0]", 
-                                                  g]) } | fail
+                                                  g]), fs.read_all() } | fail
       fs.succeeded() | fail
       return Files.file_to_string(g)
    end
