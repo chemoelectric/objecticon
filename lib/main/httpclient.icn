@@ -603,26 +603,24 @@ class HttpClient(NetClient)
    # 
    private store_cookies()
       local c, domain, path, paths, vals, s
-
       every s := response.gen_headers("set-cookie") do {
          if (c := parse_cookie_string(s)) & valid_cookie(c) then {
-            domain := string(map(\c.domain | request.url.get_host()))
+            domain := map(\c.domain | string(request.url.get_host()))
             (paths := member(cookies, domain)) | insert(cookies, domain, paths := table())
             path := c.path
             if /path then {
                # Netscape cookies default to the full file path; rfc2109 ones
                # default to the file up to, but not including, the right-most /.
                if /c.version then
-                  path := request.url.get_file()
+                  path := string(request.url.get_file())
                else {
-                  path := request.url.get_path_dir()
+                  path := string(request.url.get_path_dir())
                   if path[-1] == "/" then
                      path[-1] := ""
                }
             }
-            path := string(path)
             (vals := member(paths, path)) | insert(paths, path, vals := table())
-            insert(vals, string(map(c.name)), c)
+            insert(vals, map(c.name), c)
          }
       }
    end
