@@ -131,6 +131,20 @@ class TextSelection()
    end
 end
 
+class SearchTextSelection(Point, TextSelection)
+   public new(x, y, textout, textflow, i, j, w_off, w_sub)
+      self.x := x
+      self.y := y
+      self.textout := textout
+      self.textflow := textflow
+      self.i := i
+      self.j := j
+      self.w_off := w_off
+      self.w_sub := w_sub
+      return
+   end
+end
+
 class OutputRow(Rect)
    public const l
 
@@ -140,8 +154,7 @@ class OutputRow(Rect)
    end
 end
 
-# A result in the list `sorted_searched`; also used to calculate the
-# text selection.  The Point part is just used for sorting purposes.
+# A point and a string, used for sorting the text selection.
 #
 class PointResult(Point)
    public const val
@@ -589,8 +602,8 @@ class TextFlow(Component, HasLastHighlight)
       W.close()
    end
 
-   public search(s, searched, sorted)
-      local or, o, W, font, ts, i, x1, y1
+   package search(s, searched, sorted)
+      local or, o, W, font, ts, i, x1, y1, w_off
       W := cbwin.clone()
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
@@ -602,15 +615,17 @@ class TextFlow(Component, HasLastHighlight)
                      W.close()
                      W := attr_clone(font := o.attr.font)
                   } 
-                  ts := TextSelection(o, self, 
-                                      i, i + *s, 
-                                      W.text_width(o.s[1:i]), W.text_width(o.s[i+:*s]))
-                  put(member(searched, o), ts) | insert(searched, o, [ts])
                   # Note we use or.y as the y sort co-ordinate so that all matches in the same row
                   # compare on their x position.
-                  put(sorted, PointResult(x1 + o.x + ts.w_off, 
-                                          y1 + or.y,
-                                          ts))
+                  w_off := W.text_width(o.s[1:i])
+                  ts := SearchTextSelection(x1 + o.x + w_off,
+                                            y1 + or.y,
+                                            o, self, 
+                                            i, i + *s, 
+                                            w_off,
+                                            W.text_width(o.s[i+:*s]))
+                  put(member(searched, o), ts) | insert(searched, o, [ts])
+                  put(sorted, ts)
                }
             }
          }

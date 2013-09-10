@@ -2916,10 +2916,9 @@ class Browser(ComponentScrollArea)
    end
 
    private redo_search()
-      local c, i, j
+      local c, i
       \searched_term | fail
-      if sorted_searched[i := 1 to *sorted_searched].val === highlighted_searched then
-         j := i
+      i := keyof(sorted_searched, highlighted_searched)
       clear(searched)
       sorted_searched := []
       if *searched_term > 0 then {
@@ -2928,7 +2927,7 @@ class Browser(ComponentScrollArea)
                c.search(searched_term, searched, sorted_searched)
       }
       qsort(sorted_searched, point_comp)
-      highlighted_searched := sorted_searched[\j].val | &null
+      highlighted_searched := sorted_searched[\i] | &null
    end
 
    public do_search(s)
@@ -2957,7 +2956,7 @@ class Browser(ComponentScrollArea)
       local t
       t := (\sorted_searched)[n] | fail
       (\highlighted_searched).textflow.invalidate(highlighted_searched.get_bounds())
-      highlighted_searched := t.val
+      highlighted_searched := t
       highlighted_searched.textflow.invalidate(highlighted_searched.get_bounds())
       ensure_visible(highlighted_searched.get_bounds())
       return self
