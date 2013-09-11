@@ -86,7 +86,9 @@ class Cache()
 
    public get(url)
       local k, ent
+      url := clone(url).set_fragment()
       k := url.str()
+      #write("cache get key=", k)
       if ent := member(t, k) then {
          if \ent.expiry < Time.get_system_seconds() then
             del(ent)
@@ -104,6 +106,7 @@ class Cache()
 
    public add(url, expiry, data, fname, content_type)
       local k, old, ent
+      url := clone(url).set_fragment()
       ent := CacheEntry(url, expiry, data, fname, content_type)
       k := ent.url.str()
       #write("cache add key=", k, "\n\tdata=", *data, " bytes\n\tfname=", fname, "\n\tct=", to_string(content_type), "\n\texpiry=", (\ent.expiry - Time.get_system_seconds()) | "-")
@@ -338,7 +341,8 @@ class HttpSubWorker(SubWorker)
                   set_url(req.url).
                   set_header("Accept-charset", "UTF-8, ISO-8859-1")
                if (\req.referer).scheme == (u"http" | u"https") then
-                  hreq.set_referer(req.referer.str())
+                  # A referer header shouldn't include a fragment (rfc2616).
+                  hreq.set_referer(clone(req.referer).set_fragment().str())
                if hres := httpc.retrieve(hreq) then {
                   fname := hres.get_filename()
                   ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
@@ -357,7 +361,8 @@ class HttpSubWorker(SubWorker)
                set_url(req.url).
                set_header("Accept-charset", "UTF-8, ISO-8859-1")
             if (\req.referer).scheme == (u"http" | u"https") then
-               hreq.set_referer(req.referer.str())
+               # A referer header shouldn't include a fragment (rfc2616).
+               hreq.set_referer(clone(req.referer).set_fragment().str())
             if \req.form_data then {
                if is(req.form_data, Message) then
                   hreq.set_multipart_form_data(req.form_data)
