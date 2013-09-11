@@ -27,7 +27,18 @@ class TabItem(Component)
       label_border,
       tab_tooltip,
       tab_x,
-      tab_w
+      tab_w,
+      remembered_focus
+
+   #
+   # Set the remembered focus component, which will received the focus
+   # when the tab is selected (if the parent TabSet is configured with
+   # set_remember_focus to on).
+   #
+   public set_remembered_focus(c)
+      remembered_focus := c
+      return self
+   end
 
    #
    # Set the {TabItem}'s label.

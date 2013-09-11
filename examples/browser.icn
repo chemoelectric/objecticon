@@ -412,7 +412,8 @@ class BrowserDialog(Dialog)
          add(downloads).
          set_which_one(bt).
          connect(on_tab_changed, Event.SELECTION_CHANGED).
-         set_no_click_focus(1)
+         set_remember_focus(&yes).
+         set_no_click_focus(&yes)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
       self.set_layout(GridLayout().set_extra("cells"))
@@ -1398,6 +1399,7 @@ class BrowserTab(TabItem, BrowserUI)
       set_label_border(EmptyBorder().set_x_align(Align.L))
       set_title()
       setup()
+      set_remembered_focus(browser)
       # Try themed icon buttons
       theme_toolbar_button(close_button, "window-close")
       theme_toolbar_button(prev_button, "go-previous")
@@ -1406,7 +1408,6 @@ class BrowserTab(TabItem, BrowserUI)
       #theme_toolbar_button(stop_button, "process-stop")
       theme_toolbar_button(refresh_button, "view-refresh")
       theme_toolbar_button(paste_url_button, "edit-paste")
-
       theme_toolbar_button(search_close_button, "window-close")
       theme_toolbar_button(search_prev_button, "go-previous")
       theme_toolbar_button(search_next_button, "go-next")
