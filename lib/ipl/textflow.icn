@@ -78,6 +78,7 @@ end
 
 class TextOut(Rect)
    public const s, attr, ascent, descent
+   package l_s     # Cached value of map(s)
 
    public new(attr, s, ascent, descent, w, h)
       self.attr := attr
@@ -644,7 +645,8 @@ class TextFlow(Component, HasLastHighlight)
          j := 1
          every o := !or.l do {
             if is(o, TextOut) then {
-               every k := find(s, map(o.s)) do {
+               /o.l_s := map(o.s)
+               every k := find(s, o.l_s) do {
                   if *sl = 1 then {
                      # Optimize for simple case of one word.
                      if font ~=== o.attr.font then {
@@ -701,14 +703,15 @@ class TextFlow(Component, HasLastHighlight)
          while o := or.l[j] do {
             # Don't allow any component to be a word separator.
             is(o, TextOut) | fail
-            o.s ? {
+            /o.l_s := map(o.s)
+            o.l_s ? {
                tab(k)
                repeat {
                   tab(many(WHITESPACE_NB))
                   if pos(0) then
                      break
                   i1 := &pos
-                  word := map(tab(upto(WHITESPACE_NB) | 0))
+                  word := tab(upto(WHITESPACE_NB) | 0)
                   n +:= 1
                   # The last word just has to start with the sought
                   # text; the others have to match exactly (the first
