@@ -115,11 +115,10 @@ class BrowserDialog(Dialog)
       update_grey()
    end
 
-   private update_grey()
-      if is(tabs.which_one, BrowserTab) then {
+   public update_grey()
+      if is(tabs.which_one, BrowserTab) then
          page_menu.set_is_shaded(&no)
-         tabs.which_one.browser.do_update_grey()
-      } else
+      else
          page_menu.set_is_shaded(&yes)
    end
 
@@ -955,7 +954,7 @@ class BrowserTab(TabItem, BrowserUI)
       search_pos
 
    private on_close_button(ev)
-      local t, i
+      local t, i, d
       (i := parent.get_index(\revert_tab)) | {
          i := parent.get_index(self)
          # There will always be a tab to the right of this one (it may be the download tab).
@@ -965,11 +964,13 @@ class BrowserTab(TabItem, BrowserUI)
             i +:= 1
       }
       t := parent.children[i] | syserr("Couldn't find other tab")
+      d := parent_dialog
       parent.
          remove(self).
          set_which_one(t).
          do_layout().
          invalidate()
+      d.update_grey()
    end
 
    public get_label_width()
