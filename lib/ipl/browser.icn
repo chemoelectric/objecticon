@@ -341,8 +341,7 @@ class HttpSubWorker(SubWorker)
                   set_url(req.url).
                   set_header("Accept-charset", "UTF-8, ISO-8859-1")
                if (\req.referer).scheme == (u"http" | u"https") then
-                  # A referer header shouldn't include a fragment (rfc2616).
-                  hreq.set_referer(clone(req.referer).set_fragment().str())
+                  hreq.set_referer(req.referer)
                if hres := httpc.retrieve(hreq) then {
                   fname := hres.get_filename()
                   ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
@@ -361,8 +360,7 @@ class HttpSubWorker(SubWorker)
                set_url(req.url).
                set_header("Accept-charset", "UTF-8, ISO-8859-1")
             if (\req.referer).scheme == (u"http" | u"https") then
-               # A referer header shouldn't include a fragment (rfc2616).
-               hreq.set_referer(clone(req.referer).set_fragment().str())
+               hreq.set_referer(req.referer)
             if \req.form_data then {
                if is(req.form_data, Message) then
                   hreq.set_multipart_form_data(req.form_data)

@@ -853,10 +853,15 @@ class HttpClient(NetClient)
    end
 
    private write_request()
-      local rs, sz, s, f
+      local rs, sz, s, f, v
       request.set_header("user-agent", user_agent)
       request.set_header("host", request.url.get_host())
-      request.set_header("referer", \request.referer)
+      if v := \request.referer then {
+         # A referer header shouldn't include a fragment (rfc2616).
+         if is(v, URL) then
+            v := clone(v).set_fragment().str()
+         request.set_header("referer", v)
+      }
       if \gzip_flag then
          request.set_header("accept-encoding", "gzip")
       request.unset_header("cookie")
