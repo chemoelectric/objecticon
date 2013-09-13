@@ -323,6 +323,8 @@ class FileDialog(Dialog)
    public on_dir(ev)
       if member(EditList.NAVIGATE, ev.code) then
          goto_dir(dir.get_contents())
+      else
+         check_existing()
    end
 
    public on_filter(ev)
