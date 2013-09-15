@@ -363,7 +363,7 @@ class BrowserDialog(Dialog)
       self.settings := settings
       self.visited_set := set()
       every insert(visited_set, (!settings.visited).url.str())
-      pool := WorkerPool().
+      pool := WorkerPool(settings.pool_size).
          set_cookies(cookies).
          set_cache(Cache(settings.cache_size_mb*1024*1024)).
          set_authentication_function(get_authentication).
