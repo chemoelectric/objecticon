@@ -5,6 +5,7 @@ import
    xml,
    graphics,
    lang,
+   mail,
    http,
    net,
    xdg,
@@ -153,7 +154,7 @@ class BrowserDialog(Dialog)
       }
       push(settings.visited, VisitedEntry(url, title))
       insert(visited_set, url.str())
-      if *settings.visited > settings.visited_size then {
+      while *settings.visited > settings.visited_size do {
          e := pull(settings.visited)
          delete(visited_set, e.url.str())
       }
@@ -284,7 +285,7 @@ class BrowserDialog(Dialog)
       settings.cache_size_mb := cn
       settings.visited_size := vn
       settings.pool_size := pn
-      return config_main("<p><font size=+1 color=green>Settings saved OK</font><p>")
+      return config_main("<p><font size=+1 color=green>Settings saved OK; cache and pool sizes only take effect on restart.</font><p>")
    end
 
    private config_main(msg)
@@ -1060,7 +1061,7 @@ class BrowserTab(TabItem, BrowserUI)
    private page_info()
       local s, url
       s := browser.get_page_info() | fail
-      url := browser.get_cache().create_url(, s)
+      url := browser.get_cache().create_url(, s,, ContentType("text", "html"))
       parent_dialog.new_tab(url,, 1)
    end
 
