@@ -82,41 +82,39 @@ class CacheEntry(StaticData)
 end
 
 class Cache()
-   private t, total, lim, id
+   private t, lim, id
 
-   public get(url)
-      local k, ent
-      url := clone(url).set_fragment()
-      k := url.str()
-      #write("cache get key=", k)
-      if ent := member(t, k) then {
-         if \ent.expiry < Time.get_system_seconds() then
-            del(ent)
+   public tidy()
+      local now, ce, total
+      now := Time.get_system_seconds()
+      total := 0
+      every ce := !t do {
+         if now > \ce.expiry then
+            delete(t, ce.url.str())
          else
-            return ent
+            total +:= *ce.data
+      }
+      while *t > 0 & total > lim do {
+         ce := ?t
+         delete(t, ce.url.str())
+         total -:= *ce.data
       }
    end
 
-   private del(ent)
-      local k
-      k := ent.url.str()
-      total -:= *ent.data
-      delete(t, k)
+   public get(url)
+      local ce
+      url := clone(url).set_fragment()
+      if ce := member(t, url.str()) &
+         (/ce.expiry | ce.expiry > Time.get_system_seconds()) then
+         return ce
    end
 
    public add(url, expiry, data, fname, content_type)
-      local k, old, ent
+      local ce
       url := clone(url).set_fragment()
-      ent := CacheEntry(url, expiry, data, fname, content_type)
-      k := ent.url.str()
-      #write("cache add key=", k, "\n\tdata=", *data, " bytes\n\tfname=", fname, "\n\tct=", to_string(content_type), "\n\texpiry=", (\ent.expiry - Time.get_system_seconds()) | "-")
-      if old := member(t, k) then
-         del(old)
-      while *t > 0 &  total + *ent.data > lim do
-         del(?t)
-      insert(t, k, ent)
-      total +:= *ent.data
-      return
+      ce := CacheEntry(url, expiry, data, fname, content_type)
+      insert(t, ce.url.str(), ce)
+      return self
    end
 
    public create_url(expiry, data, fname, content_type)
@@ -149,9 +147,10 @@ class Cache()
    end
 
    public get_status()
-      local s, ce, n, sz, exp, ct, l
+      local s, ce, n, sz, exp, ct, l, total
       s := "<html><title>Cache status</title>" || Browser.get_table_tag()
       s ||:= "<tr><th align=left>Filename</th><th align=right>Size&nbsp;</th><th>Expiry</th><th align=left>Content&nbsp;type</th><th align=left>URL</th></tr>"
+      total := 0
       every ce := !t do {
          n := Browser.limit_text(\ce.fname, 200) | "-"
          sz := Format.numeric_to_string(*ce.data, 0, ',')
@@ -160,15 +159,18 @@ class Cache()
          l := ce.url
          s ||:= "<tr><td>" || Browser.to_content(n) || "</td><td align=right>" || sz || "&nbsp;</td><td>" || exp ||
                    "</td><td nowrap>" || Browser.to_content(ct) || "</td>" || Browser.mk_anchor_cell(l) || "</tr>" 
+         total +:= *ce.data
       }
-      s ||:= "</table></html>"
+      s ||:= "</table><p>"
+      s ||:= "Usage " || Format.numeric_to_string(total, 0, ',') || " / " || 
+         Format.numeric_to_string(lim, 0, ',') || " (" || integer((total * 100) / lim) || "%)"
+      s ||:= "</html>"
       return s
    end
 
    public new(lim)
       t := table()
       self.lim := lim
-      total := 0
       id := 0
       return
    end
@@ -2488,7 +2490,8 @@ class Browser(ComponentScrollArea)
       v_direction,
       primary_selection_owner,
       msg_owner,
-      outermost_border
+      outermost_border,
+      tidy_cache_task
 
    private readable
       history,
@@ -2878,6 +2881,7 @@ class Browser(ComponentScrollArea)
       if /shared_worker_pool_flag then
          worker_pool.initially()
       status_ticker.start()
+      tidy_cache_task.start()
       do_update_grey()
    end
 
@@ -2890,6 +2894,7 @@ class Browser(ComponentScrollArea)
       running := 0
       scroll_ticker.stop()
       status_ticker.stop()
+      tidy_cache_task.stop()
    end
    
    public do_next()
@@ -4716,6 +4721,13 @@ class Browser(ComponentScrollArea)
       suspend !member(searched, o)
    end
 
+   private tidy_cache()
+      repeat {
+         worker_pool.cache.tidy()
+         tidy_cache_task.sleep(15000)
+      }
+   end
+
    private scroll_tick()
       local f
       repeat {
@@ -4992,6 +5004,7 @@ class Browser(ComponentScrollArea)
    public new()
       cast(self,ComponentScrollArea).new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
+      tidy_cache_task := Dispatcher.new_task{tidy_cache()}
       worker_pool := WorkerPool().
          set_authentication_function(get_authentication)
       status_ticker := Dispatcher.new_task{status()}
