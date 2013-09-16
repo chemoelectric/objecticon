@@ -85,7 +85,7 @@ class HtmlParser()
       IDINTRO := 'A-Za-z'
       IDCHARS := 'A-Za-z0-9.\-'
       KEYCHARS := 'A-Za-z0-9_'
-      VALCHARS := &ascii -- ' \t\n\r>'
+      VALCHARS := &ascii -- ' \t\n\r>/'
       DELIM := '\"\''
       PUBID_CHAR := ' \n\rA-Za-z0-9\-\'()+,./:=?;!*#@$_%'
       STANDALONE := set("IMG", "BR", "HR", "META", "BASE", "INPUT", "AREA", 
@@ -437,10 +437,10 @@ class HtmlParser()
 
          key := tab(many(KEYCHARS)) | break
 
-         tab(upto(VALCHARS ++ '>='))
+         tab(upto(VALCHARS ++ '>/='))
 
          if =u"=" then {
-            tab(upto(VALCHARS ++ DELIM))
+            tab(upto(VALCHARS))   # Note DELIM is a subset of VALCHARS
             if any(DELIM) then {
                c := move(1)
                s := tab(upto(c) | 0)
