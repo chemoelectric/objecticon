@@ -392,25 +392,19 @@ class HtmlParser()
    end
 
    #
-   # Comment - SGML style parsing; different from xml comment in that you can
-   # have a legal comment like <!-- abc -- def -->
-   # see http://htmlhelp.com/reference/wilbur/misc/comment.html
+   # http://dev.w3.org/html5/markup/syntax.html#comments
    #
    private parse_comment()
-      local res, s, t
+      local res
       res := Comment()
       =u"<!" | fail
-      s := move(0)  # Empty string, same type as &subject
-      repeat {
-         tab(upto('->'))
-         if =u">" then
-            break
-         =u"--" | fail
-         t := tab(find(u"--")) | fail
-         =u"--"
-         s ||:= t
+      if =(u">" | u"->" | u"-->" | u"--->") then
+         res.comment := move(0)  # Empty string, same type as &subject
+      else {
+         =u"--"         
+         res.comment := tab(find(u"-->") | 0)
+         move(3)
       }
-      res.comment := s
       return res
    end
 
