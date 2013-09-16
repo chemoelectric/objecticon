@@ -3160,7 +3160,7 @@ class Browser(ComponentScrollArea)
    end
 
    private set_top_data(res)
-      local doc, s, row, c, cu
+      local doc, s, row, c, cu, p
       if \curr_history_entry then {
          save_form_values()
          curr_history_entry.area_x := get_area_x()
@@ -3185,8 +3185,14 @@ class Browser(ComponentScrollArea)
                "<pre>" || to_content(res.data) || "</pre></html>"
          else if is_image(res.content_type, res.data) then {
             cu := worker_pool.cache.create_url(, res.data, res.fname, res.content_type)
-            s := "<html><title>" || to_content(res.fname) || "</title>" || 
-               "<img src=\"" || to_attr(cu.str()) || "\"/></html>"
+            s := "<html><title>" || to_content(res.fname) || "</title><img src=\"" || to_attr(cu.str()) || "\""
+            # Set width and height param if possible; this allows the
+            # image to display before any favicon is loaded.
+            use {
+               p := Pixels(res.data),
+               s ||:= " width=" || p.get_width() || " height=" || p.get_height()
+            }
+            s ||:= " /></html>"
          } else
             s := "<html><title>Problem</title>" || 
                "<h1>Problem:</h1>Displaying " || mk_anchor(res.url) || "<br><br>This does not seem to be an HTML or text document or an image.</html>"
