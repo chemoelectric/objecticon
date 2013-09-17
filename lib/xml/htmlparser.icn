@@ -233,12 +233,12 @@ class HtmlParser()
    # Parse the current input into an {Node}
    #
    private parse_node()
-      if match(u"<!DOCTYPE") then
-         return parse_doctype()
-      if match(u"<!") then
-         return parse_comment()
-      if match(u"<") then
-         return parse_tag()
+      return if string(map(move(9))) == "<!doctype" then
+         parse_doctype()
+      else if =u"<!" then
+         parse_comment()
+      else
+         parse_tag()
    end
 
    #
@@ -342,11 +342,12 @@ class HtmlParser()
    #
    # DOCTYPE
    #
+   # Assume "<!DOCTYPE" already matched.
+   #
    private parse_doctype()
       local res
 
       res := DocType()
-      =u"<!DOCTYPE" | fail
 
       tab(upto(IDINTRO))
       res.name := tab(many(IDCHARS))
@@ -394,14 +395,15 @@ class HtmlParser()
    #
    # http://dev.w3.org/html5/markup/syntax.html#comments
    #
+   # Assume "<!" already matched.
+   #
    private parse_comment()
       local res
       res := Comment()
-      =u"<!" | fail
       if =(u">" | u"->" | u"-->" | u"--->") then
          res.comment := move(0)  # Empty string, same type as &subject
       else {
-         =u"--"         
+         =u"--"
          res.comment := tab(find(u"-->") | 0)
          move(3)
       }
