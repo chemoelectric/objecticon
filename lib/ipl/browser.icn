@@ -19,7 +19,8 @@ import
    ipl.timegui,
    ipl.colorgui,
    ipl.filegui,
-   ipl.numbers
+   ipl.numbers,
+   ipl.imagedetect
 
 $load BROKEN_LINK "rpp.BROKEN_LINK_24.gif"
 
@@ -3160,7 +3161,7 @@ class Browser(ComponentScrollArea)
    end
 
    private set_top_data(res)
-      local doc, s, row, c, cu, p
+      local doc, s, row, c, cu, id
       if \curr_history_entry then {
          save_form_values()
          curr_history_entry.area_x := get_area_x()
@@ -3188,11 +3189,9 @@ class Browser(ComponentScrollArea)
             s := "<html><title>" || to_content(res.fname) || "</title><img src=\"" || to_attr(cu.str()) || "\""
             # Set width and height param if possible; this allows the
             # image to display before any favicon is loaded.
-            use {
-               p := Pixels(res.data),
-               s ||:= " width=" || p.get_width() || " height=" || p.get_height()
-            }
-            s ||:= " /></html>"
+            if id := detect(res.data) then
+               s ||:= " width=" || id.width || " height=" || id.height
+            s ||:= "/></html>"
          } else
             s := "<html><title>Problem</title>" || 
                "<h1>Problem:</h1>Displaying " || mk_anchor(res.url) || "<br><br>This does not seem to be an HTML or text document or an image.</html>"
