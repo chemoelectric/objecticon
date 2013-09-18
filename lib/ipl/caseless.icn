@@ -66,75 +66,88 @@
 
 package ipl.caseless
 
-# 	Caseless version of any()
-procedure anycl(c, s, i1, i2)	
-
-	c := cset(map(cset(c)))
-	/i1 := (/s & &pos)
-	s := map(text(s) | (/s & &subject))
-
-	return any(c, s, i1, i2)
-
+# Expand the given cset so that all letters appear in the result both in lowercase
+# and uppercase, eg mod_cset('Cat123') -> 'catCAT123'
+procedure mod_cset(c)
+   local ls
+   ls := map(string(c ** &letters))
+   return c ++ cset(ls || map(ls, &lcase, &ucase))
 end
 
-
-# 	Caseless version of bal()
-procedure balcl(c1, c2, c3, s, i1, i2)	
-
-	c1 := cset(map(cset(c1)))
-	c2 := cset(map(cset(c2)))
-	c3 := cset(map(cset(c3)))
-	/i1 := (/s & &pos)
-	s := map(text(s) | (/s & &subject))
-
-	suspend bal(c1, c2, c3, s, i1, i2)
-
+# Caseless version of bal()
+procedure balcl(c1, c2, c3, s, i, j)
+   suspend bal(mod_cset(c1), mod_cset(c2), mod_cset(c3), s, i, j)
 end
 
-
-# 	Caseless version of find()
-procedure findcl(s1, s2, i1, i2)	
-
-	s1 := map(text(s1))
-	/i1 := (/s2 & &pos)
-	s2 := map(text(s2) | (/s2 & &subject))
-
-	suspend find(s1, s2, i1, i2)
-
+# Caseless version of upto()
+procedure uptocl(c, s, i, j)
+   suspend upto(mod_cset(c), s, i, j)
 end
 
-
-# 	Caseless version of many()
-procedure manycl(c, s, i1, i2)	
-
-	c := cset(map(cset(c)))
-	/i1 := (/s & &pos)
-	s := map(text(s) | (/s & &subject))
-
-	return many(c, s, i1, i2)
-
+# Caseless version of many()
+procedure manycl(c, s, i, j)
+   suspend many(mod_cset(c), s, i, j)
 end
 
-
-# 	Caseless version of match()
-procedure matchcl(s1, s2, i1, i2)	
-
-	s1 := map(text(s1))
-	/i1 := (/s2 & &pos)
-	s2 := map(text(s2) | (/s2 & &subject))
-
-	return match(s1, s2, i1, i2)
-
+# Caseless version of any()
+procedure anycl(c, s, i, j)
+   suspend any(mod_cset(c), s, i, j)
 end
 
+# Caseless version of match()
+procedure matchcl(s1, s2, i, j)
+   if /s2 := &subject then {
+      (/i := &pos) | (i := match("", s2, i)) | fail
+   } else {
+      s2 := text(s2) | runerr(129, s2)
+      (/i := 1) | (i := match("", s2, i)) | fail
+   }
+   (/j := *s2 + 1) | (j := match("", s2, j)) | fail
 
-# 	Caseless version of upto()
-procedure uptocl(c, s, i1, i2)	
+   if type(s2) == "string" then
+      s1 := string(s1) | runerr(103, s1)
+   else
+      s1 := ucs(s1) | runerr(128, s1)
 
-	c := cset(map(cset(c)))
-	/i1 := (/s & &pos)
-	s := map(text(s) | (/s & &subject))
+   if i > j then
+      i :=: j
 
-	suspend upto(c, s, i1, i2)
-
+   if map(s1) == map(s2[i:j][1+:*s1]) then
+      return i + *s1
 end
+
+# Caseless version of find()
+procedure findcl(s1, s2, i, j)
+   local c, t
+   if /s2 := &subject then {
+      (/i := &pos) | (i := match("", s2, i)) | fail
+   } else {
+      s2 := text(s2) | runerr(129, s2)
+      (/i := 1) | (i := match("", s2, i)) | fail
+   }
+   (/j := *s2 + 1) | (j := match("", s2, j)) | fail
+
+   if type(s2) == "string" then
+      s1 := string(s1) | runerr(103, s1)
+   else
+      s1 := ucs(s1) | runerr(128, s1)
+
+   if i > j then
+      i :=: j
+
+   if *s1 = 0 then {
+      suspend i to j
+      fail
+   }
+   s1 := map(s1)
+   # Cset of first char in upper and lower case; eg if searching for
+   # "cat", c = 'cC'.
+   c := cset(s1[1] || map(s1[1], &lcase, &ucase))
+   every t := upto(c, s2, i, j) do {
+      if t > j - *s1 then
+         break
+      if s1 == map(s2[t+:*s1]) then
+         suspend t
+   }
+end
+
