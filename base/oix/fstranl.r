@@ -157,65 +157,82 @@ function find(s1,s2,i,j)
    str_anal( s2, i, j )
 
    body {
+      tended char *p;
       char *str1, *str2;
       word s1_len, l, term;
 
+      /*
+       * Loop through s2[i:j] trying to find s1 at each point, stopping
+       * when the remaining portion s2[i:j] is too short to contain s1.
+       */
       if (is:string(s2)) {
+          char first, ch;
+
           if (!cnv:string(s1,s1))
               runerr(103,s1);
 
-          /*
-           * Loop through s2[i:j] trying to find s1 at each point, stopping
-           * when the remaining portion s2[i:j] is too short to contain s1.
-           * Optimize me!
-           */
           s1_len = StrLen(s1);
-          term = cnv_j - s1_len;
-          while (cnv_i <= term) {
-              str1 = StrLoc(s1);
-              str2 = StrLoc(s2) + cnv_i - 1;
-              l    = s1_len;
+          /* Special case if s1 is empty string */
+          if (s1_len == 0) {
+              while (cnv_i <= cnv_j) {
+                  suspend C_integer cnv_i;
+                  cnv_i++;
+              }
+              fail;
+          }
 
-              /*
-               * Compare strings on a byte-wise basis; if the end is reached
-               * before inequality is found, suspend with the position of the
-               * string.
-               */
-              do {
-                  if (l-- <= 0) {
+          first = *StrLoc(s1);
+          term = cnv_j - s1_len;
+          p = StrLoc(s2) + cnv_i - 1;
+          while (cnv_i <= term) {
+              ch = *p++;
+              if (ch == first) {
+                  /* First char matches, check remainder. */
+                  str1 = StrLoc(s1) + 1;
+                  str2 = p;
+                  l = s1_len - 1;
+                  while (l > 0 && *str1++ == *str2++)
+                      --l;
+                  if (l == 0)
                       suspend C_integer cnv_i;
-                      break;
-                  }
-              } while (*str1++ == *str2++);
+              }
               cnv_i++;
           }
       } else {
+          int first, ch;
+
           if (!cnv:ucs(s1,s1))
               runerr(128,s1);
 
-          /*
-           * Loop through s2[i:j] trying to find s1 at each point, stopping
-           * when the remaining portion s2[i:j] is too short to contain s1.
-           * Optimize me!
-           */
           s1_len = UcsBlk(s1).length;
-          term = cnv_j - s1_len;
-          while (cnv_i <= term) {
-              str1 = StrLoc(UcsBlk(s1).utf8);
-              str2 = ucs_utf8_ptr(&UcsBlk(s2), cnv_i);
-              l    = s1_len;
+          /* Special case if s1 is empty string */
+          if (s1_len == 0) {
+              while (cnv_i <= cnv_j) {
+                  suspend C_integer cnv_i;
+                  cnv_i++;
+              }
+              fail;
+          }
 
-              /*
-               * Compare strings on a byte-wise basis; if the end is reached
-               * before inequality is found, suspend with the position of the
-               * string.
-               */
-              do {
-                  if (l-- <= 0) {
+          /* Get first char of s1 */
+          str1 = StrLoc(UcsBlk(s1).utf8);
+          first = utf8_iter(&str1);
+
+          term = cnv_j - s1_len;
+          p = ucs_utf8_ptr(&UcsBlk(s2), cnv_i);
+          while (cnv_i <= term) {
+              int ch = utf8_iter(&p);
+              if (ch == first) {
+                  /* First char matches, check remainder. */
+                  str1 = StrLoc(UcsBlk(s1).utf8);
+                  utf8_iter(&str1);
+                  str2 = p;
+                  l = s1_len - 1;
+                  while (l > 0 && utf8_iter(&str1) == utf8_iter(&str2))
+                      --l;
+                  if (l == 0)
                       suspend C_integer cnv_i;
-                      break;
-                  }
-              } while (utf8_iter(&str1) == utf8_iter(&str2));
+              }
               cnv_i++;
           }
       }
@@ -223,7 +240,6 @@ function find(s1,s2,i,j)
       fail;
    }
 end
-
 
 "many(c,s,i1,i2) - produces the position in s after the longest initial "
 "sequence of characters in c in s[i1:i2] but fails if there is none."
