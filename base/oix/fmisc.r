@@ -1054,6 +1054,8 @@ struct b_ucs *make_ucs_substring(struct b_ucs *b, word pos, word len)
     tended struct descrip utf8;
     if (len == 0)
         return emptystr_ucs;
+    if (pos == 1 && len == b->length)
+        return b;
     utf8_substr(b, pos, len, &utf8);
     return make_ucs_block(&utf8, len);
 }
