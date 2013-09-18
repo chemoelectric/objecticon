@@ -233,11 +233,12 @@ class HtmlParser()
    # Parse the current input into an {Node}
    #
    private parse_node()
-      return if string(map(move(9))) == "<!doctype" then
-         parse_doctype()
-      else if =u"<!" then
-         parse_comment()
-      else
+      return if =u"<!" then {
+         if tab(lmatch(u"doctype")) then
+            parse_doctype()
+         else
+            parse_comment()
+      } else
          parse_tag()
    end
 

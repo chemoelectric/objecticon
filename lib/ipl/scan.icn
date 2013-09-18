@@ -776,3 +776,46 @@ procedure rev(e)
       push(r, &pos)
    suspend tab(!r)
 end
+
+#
+# Like match(s), but does a case insensitive match; note that `s` is
+# assumed to be already lower-case.
+#
+# See ipl.caseless for a more general version of this function.
+#
+procedure lmatch(s)
+   # Convert s to the same as &subject.
+   if type(&subject) == "string" then
+      s := string(s) | runerr(103, s)
+   else
+      s := ucs(s) | runerr(128, s)
+   if s == map(&subject[&pos+:*s]) then
+      return &pos + *s
+end
+
+#
+# Like find(s), but does a case insensitive search; note that `s` is
+# assumed to be already lower-case, and non-empty.
+#
+# See ipl.caseless for a more general version of this function.
+#
+procedure lfind(s)
+   local i, c, sub
+
+   # Save value, since it might change during a suspension.
+   sub := &subject
+
+   # Convert s to the same as &subject.
+   if type(sub) == "string" then
+      s := string(s) | runerr(103, s)
+   else
+      s := ucs(s) | runerr(128, s)
+
+   # Cset of first char in upper and lower case; eg if searching for
+   # "cat", c = 'cC'.
+   c := cset(s[1] || map(s[1], &lcase, &ucase))
+   every i := upto(c, sub) do {
+      if s == map(sub[i+:*s]) then
+         suspend i
+   }
+end

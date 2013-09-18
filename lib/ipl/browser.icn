@@ -15,7 +15,7 @@ import
    ipl.pdco,
    ipl.sort,
    ipl.strings,
-   ipl.caseless,
+   ipl.scan,
    ipl.timegui,
    ipl.colorgui,
    ipl.filegui,
@@ -3014,17 +3014,13 @@ class Browser(ComponentScrollArea)
          return
       s ? {
          while tab(upto('<')) do {
-            if matchcl("<!doctype" | "<html" | "<meta") then
+            if lmatch("<!doctype" | "<html" | "<meta") then
                return
             # Expect html comment (see htmlparser.icn)
             ="<!" | fail
-            repeat {
-               tab(upto('->'))
-               if u">" then
-                  break
-               ="--" | fail
-               tab(find("--")) | fail
+            =(">" | "->" | "-->" | "--->") | {
                ="--"
+               tab(find("-->")) | fail
             }
          }
       }
