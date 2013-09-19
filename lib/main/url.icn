@@ -11,7 +11,7 @@ package net
 import 
    lang,
    util,
-   ipl.lastc
+   ipl.scan
 
 #
 # This class encapsulates a URL
@@ -366,8 +366,7 @@ class URL(ObjectOutput)
    public get_path_last()
       path ? {
          tab(0)
-         until lastc('/') do
-            move(-1)
+         tab(backto('/') | 1)
          return tab(0)
       }
    end
@@ -386,8 +385,7 @@ class URL(ObjectOutput)
    public get_path_dir()
       path ? {
          tab(0)
-         until lastc('/') do
-            move(-1)
+         tab(backto('/') | 1)
          return tab(1)
       }
    end
@@ -499,10 +497,8 @@ class URL(ObjectOutput)
    end
 
    private static rmdir(s, i)
-      while s[i - 1] ~== "/" do
-         i -:= 1
       # Never remove the root /
-      return 1 < i
+      return 1 < backto('/', s, i)
    end
 
    #

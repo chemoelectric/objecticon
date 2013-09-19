@@ -1,6 +1,6 @@
 package lang
 
-import io, util, exception
+import io, util, exception, ipl.scan
 
 $define PUBLIC_STATIC_METHOD ior(Class.Public, Class.Static, Class.Method)
 
@@ -388,12 +388,12 @@ class Decode()
                throw("No such procedure " || s)
             }
             "M": {
-               every i := find(".", s)
-               if cl := Class.for_name(s[1:i]) &
-                  j := Class.get_field_flags(cl, s[i+1:0]) &
+               i := backto('.', s)
+               if cl := Class.for_name(s[1:i-1]) &
+                  j := Class.get_field_flags(cl, s[i:0]) &
                   iand(j, PUBLIC_STATIC_METHOD) = PUBLIC_STATIC_METHOD 
                then
-                  return Class.get(cl, s[i+1:0]) 
+                  return Class.get(cl, s[i:0]) 
                throw("No such public static method " || s)
             }
             default: throw("Unknown proc code")

@@ -524,7 +524,7 @@ end
 #
 # What is just ahead in the current scan?
 #
-procedure coming_up(i, j)
+procedure ahead(i, j)
    /j := 0
    return &subject[&pos+j +: i]
 end
@@ -777,45 +777,102 @@ procedure rev(e)
    suspend tab(!r)
 end
 
-#
-# Like match(s), but does a case insensitive match; note that `s` is
-# assumed to be already lower-case.
-#
-# See ipl.caseless for a more general version of this function.
-#
-procedure lmatch(s)
-   # Convert s to the same as &subject.
-   if type(&subject) == "string" then
-      s := string(s) | runerr(103, s)
+# Expand the given cset so that all letters appear in the result both in lowercase
+# and uppercase, eg csetcl('Cat123') -> 'catCAT123'.  The result can then be used,
+# for example to do a caseless upto search.
+procedure csetcl(c)
+   local ls
+   ls := map(string(c ** &letters))
+   return c ++ cset(ls || map(ls, &lcase, &ucase))
+end
+
+# Caseless version of match()
+procedure matchcl(s1, s2, i, j)
+   if /s2 := &subject then {
+      (/i := &pos) | (i := match("", s2, i)) | fail
+   } else {
+      s2 := text(s2) | runerr(129, s2)
+      (/i := 1) | (i := match("", s2, i)) | fail
+   }
+   (/j := *s2 + 1) | (j := match("", s2, j)) | fail
+
+   if type(s2) == "string" then
+      s1 := string(s1) | runerr(103, s1)
    else
-      s := ucs(s) | runerr(128, s)
-   if s == map(&subject[&pos+:*s]) then
-      return &pos + *s
+      s1 := ucs(s1) | runerr(128, s1)
+
+   if i > j then
+      i :=: j
+
+   if map(s1) == map(s2[i:j][1+:*s1]) then
+      return i + *s1
+end
+
+# Caseless version of find()
+procedure findcl(s1, s2, i, j)
+   local c, t
+   if /s2 := &subject then {
+      (/i := &pos) | (i := match("", s2, i)) | fail
+   } else {
+      s2 := text(s2) | runerr(129, s2)
+      (/i := 1) | (i := match("", s2, i)) | fail
+   }
+   (/j := *s2 + 1) | (j := match("", s2, j)) | fail
+
+   if type(s2) == "string" then
+      s1 := string(s1) | runerr(103, s1)
+   else
+      s1 := ucs(s1) | runerr(128, s1)
+
+   if i > j then
+      i :=: j
+
+   if *s1 = 0 then {
+      suspend i to j
+      fail
+   }
+   s1 := map(s1)
+   # Cset of first char in upper and lower case; eg if searching for
+   # "cat", c = 'cC'.
+   c := cset(s1[1] || map(s1[1], &lcase, &ucase))
+   every t := upto(c, s2, i, j) do {
+      if t > j - *s1 then
+         break
+      if s1 == map(s2[t+:*s1]) then
+         suspend t
+   }
 end
 
 #
-# Like find(s), but does a case insensitive search; note that `s` is
-# assumed to be already lower-case, and non-empty.
+# Search backwards in s[i:j], for chars in cset c, beginning at the
+# end.  For each one found, the position just to the right is
+# suspended.
 #
-# See ipl.caseless for a more general version of this function.
+# For example - 
+#    backto('aeiou', "quick brown fox") -> {15,10,4,3} 
 #
-procedure lfind(s)
-   local i, c, sub
-
-   # Save value, since it might change during a suspension.
-   sub := &subject
-
-   # Convert s to the same as &subject.
-   if type(sub) == "string" then
-      s := string(s) | runerr(103, s)
-   else
-      s := ucs(s) | runerr(128, s)
-
-   # Cset of first char in upper and lower case; eg if searching for
-   # "cat", c = 'cC'.
-   c := cset(s[1] || map(s[1], &lcase, &ucase))
-   every i := upto(c, sub, &pos) do {
-      if s == map(sub[i+:*s]) then
+# Note that backto(c, s, i, j) - 1 should give the same sequence of
+# results as upto(c, s, i, j), but in reverse order, so upto applied
+# to the above example gives {2,3,9,14}.
+#
+# Defaults: s - &subject
+#           i - &pos or 0 as appropriate
+#           j - 1
+#
+procedure backto(c, s, i, j)
+   c := cset(c) | runerr(104, c)
+   if /s := &subject then
+      (/i := &pos) | (i := match("", s, i)) | fail
+   else {
+      s := text(s) | runerr(129, s)
+      (/i := *s + 1) | (i := match("", s, i)) | fail
+   }
+   (/j := 1) | (j := match("", s, j)) | fail
+   if i < j then
+      i :=: j
+   while i > j do {
+      if any(c, s, i - 1) then
          suspend i
+      i -:= 1
    }
 end
