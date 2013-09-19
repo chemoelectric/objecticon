@@ -86,12 +86,12 @@ end
 
 # Caseless version of many()
 procedure manycl(c, s, i, j)
-   suspend many(mod_cset(c), s, i, j)
+   return many(mod_cset(c), s, i, j)
 end
 
 # Caseless version of any()
 procedure anycl(c, s, i, j)
-   suspend any(mod_cset(c), s, i, j)
+   return any(mod_cset(c), s, i, j)
 end
 
 # Caseless version of match()
