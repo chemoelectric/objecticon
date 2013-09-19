@@ -526,7 +526,7 @@ end
 #
 procedure ahead(i, j)
    /j := 0
-   return &subject[&pos+j +: i]
+   return .&subject[&pos+j +: i]
 end
 
 #
