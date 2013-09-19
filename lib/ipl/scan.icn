@@ -814,7 +814,7 @@ procedure lfind(s)
    # Cset of first char in upper and lower case; eg if searching for
    # "cat", c = 'cC'.
    c := cset(s[1] || map(s[1], &lcase, &ucase))
-   every i := upto(c, sub) do {
+   every i := upto(c, sub, &pos) do {
       if s == map(sub[i+:*s]) then
          suspend i
    }
