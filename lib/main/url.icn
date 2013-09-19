@@ -365,8 +365,7 @@ class URL(ObjectOutput)
    #
    public get_path_last()
       path ? {
-         tab(0)
-         tab(backto('/') | 1)
+         tab(backto('/',, 0))
          return tab(0)
       }
    end
@@ -384,8 +383,7 @@ class URL(ObjectOutput)
    #
    public get_path_dir()
       path ? {
-         tab(0)
-         tab(backto('/') | 1)
+         tab(backto('/',, 0))
          return tab(1)
       }
    end
