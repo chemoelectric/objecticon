@@ -365,7 +365,7 @@ class URL(ObjectOutput)
    #
    public get_path_last()
       path ? {
-         tab(backto('/',, 0))
+         tab(backto('/'))
          return tab(0)
       }
    end
@@ -383,7 +383,7 @@ class URL(ObjectOutput)
    #
    public get_path_dir()
       path ? {
-         tab(backto('/',, 0))
+         tab(backto('/'))
          return tab(1)
       }
    end
@@ -496,7 +496,7 @@ class URL(ObjectOutput)
 
    private static rmdir(s, i)
       # Never remove the root /
-      return 1 < backto('/', s, i)
+      return 1 < backto('/', s, i, 1)
    end
 
    #

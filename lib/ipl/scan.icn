@@ -855,9 +855,7 @@ end
 # results as upto(c, s, i, j), but in reverse order, so upto applied
 # to the above example gives {2,3,9,14}.
 #
-# Defaults: s - &subject
-#           i - &pos or 0 as appropriate
-#           j - 1
+# Defaults: as for upto
 #
 procedure backto(c, s, i, j)
    c := cset(c) | runerr(104, c)
@@ -865,14 +863,14 @@ procedure backto(c, s, i, j)
       (/i := &pos) | (i := match("", s, i)) | fail
    else {
       s := text(s) | runerr(129, s)
-      (/i := *s + 1) | (i := match("", s, i)) | fail
+      (/i := 1) | (i := match("", s, i)) | fail
    }
-   (/j := 1) | (j := match("", s, j)) | fail
-   if i < j then
+   (/j := *s + 1) | (j := match("", s, j)) | fail
+   if i > j then
       i :=: j
-   while i > j do {
-      if any(c, s, i - 1) then
-         suspend i
-      i -:= 1
+   while j > i do {
+      if any(c, s, j - 1) then
+         suspend j
+      j -:= 1
    }
 end
