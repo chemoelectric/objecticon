@@ -181,6 +181,7 @@
 package ipl.findre
 
 import
+   ipl.scan(begin_analysis),
    io(ewrite, ewrites)
 
 global state_table, parends_present, slash_present
@@ -190,7 +191,7 @@ record o_a_s(op,arg,state)
 
 procedure findre(re, s, i, j)
 
-    local p, default_val, x, nonmeta_len, tokenized_re, tmp
+    local a, p, x, nonmeta_len, tokenized_re, tmp
     static FSTN_table, STRING_table
     initial {
 	FSTN_table := table()
@@ -204,21 +205,8 @@ procedure findre(re, s, i, j)
 	return
     }
 
-    if /s := &subject
-    then default_val := &pos
-    else default_val := 1
-
-    if \i then {
-	if i < 1 then
-	    i := *s + (i+1)
-    }
-    else i := default_val
-	
-    if \j then {
-	if j < 1 then
-	    j := *s + (j+1)
-    }
-    else j := *s+1
+    a := begin_analysis(s, i, j) | fail
+    s := a.s; i := a.i; j := a.j
 
     if /FSTN_table[re] then {
 	# If we haven't seen this re before, then...

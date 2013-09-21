@@ -21,24 +21,21 @@
 #  quoting characters removed.
 #
 ############################################################################
-#
-#  Links: scanset
-#
-############################################################################
 
 package ipl.word
 
 import
-   ipl.scanset(scan_setup)
+   ipl.scan(begin_analysis)
 
 #
 #  word(s) -- Produces the position past a UNIX-style command line
 #  word.
 #
 procedure word(s,i1,i2)
-   local c,d,p,e,x
-   x := scan_setup(s,i1,i2)
-   x.ss ? {
+   local c,d,p,e,a
+   a := begin_analysis(s,i1,i2) | fail
+   s := a.s; i1 := a.i; i2 := a.j
+   s[i1:i2] ? {
       (while tab(upto(' \t"\'')) do {
 	 if (c := move(1)) == ("\"" | "'") then {
 	    e := c ++ "\\"
@@ -52,7 +49,7 @@ procedure word(s,i1,i2)
 	 }) | "" ~== tab(0) | fail
       p := &pos
       }
-   return x.offset + p
+   return i1 + p - 1
 end
 
 

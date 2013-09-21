@@ -46,6 +46,9 @@
 #
 package ipl.wildcard
 
+import
+   ipl.scan(begin_analysis)
+
 class Wildcard()
    private plist
 
@@ -56,7 +59,9 @@ class Wildcard()
    #  positions.
    #
    public match(s,i1,i2) 
-      /i1:= if /s := &subject then &pos else 1 ; /i2 := 0
+      local a
+      a := begin_analysis(s,i1,i2) | fail
+      s := a.s; i1 := a.i; i2 := a.j
       suspend s[i1:i2] ? (wild_match1(copy(plist)) & i1 + &pos - 1)
    end
 
@@ -67,8 +72,9 @@ class Wildcard()
    #  to find().
    #
    public find(s,i1,i2) 
-      local p
-      /i1 := if /s := &subject then &pos else 1 ; /i2 := 0
+      local p, a
+      a := begin_analysis(s,i1,i2) | fail
+      s := a.s; i1 := a.i; i2 := a.j
       s[i1:i2] ? suspend (
                           wild_skip(plist) &
                           p := &pos &

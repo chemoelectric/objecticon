@@ -54,34 +54,31 @@
 
 package ipl.lastc
 
+import
+   ipl.scan(begin_analysis)
+
 procedure lastc( c, s, i1, i2 )
-
-if /s  := &subject then /i1 := &pos
-/i1 := 1
-/i2 := 0
-
-suspend ( ( i1 = 1 )  |  any( c, s, 0 < ( i1 - 1 ), i2 ) )
+   local a
+   a := begin_analysis(s, i1, i2) | fail
+   s := a.s; i1 := a.i; i2 := a.j
+   suspend ( ( i1 = 1 )  |  any( c, s, 0 < ( i1 - 1 ), i2 ) )
 end
 
 procedure findp( c, s1, s2, i1, i2 )
-
-if /s2 := &subject then /i1 := &pos 
-/i1 := 1
-/i2 := 0
-
-suspend lastc( c, s2, find( s1, s2, i1, i2 ), i2 )
+   local a
+   a := begin_analysis(s2, i1, i2) | fail
+   s2 := a.s; i1 := a.i; i2 := a.j
+   suspend lastc( c, s2, find( s1, s2, i1, i2 ), i2 )
 end
 
 procedure findw( c1, s1, c2, s2, i1, i2 )
 
-local csr,csr2
+   local csr,csr2,a
+   a := begin_analysis(s2, i1, i2) | fail
+   s2 := a.s; i1 := a.i; i2 := a.j
 
-if /s2 := &subject then /i1 := &pos 
-/i1 := 1
-/i2 := 0
-
-suspend 1(  csr := findp( c1, s1, s2, i1, i2 ),
-            csr2 := csr + *s1,
-            ( csr2 = ( *s2 + 1 ) ) | any( c2, s2, csr2, i2 )
-         )
+   suspend 1(  csr := findp( c1, s1, s2, i1, i2 ),
+             csr2 := csr + *s1,
+             ( csr2 = ( *s2 + 1 ) ) | any( c2, s2, csr2, i2 )
+             )
 end

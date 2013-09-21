@@ -287,6 +287,7 @@ package ipl.regexp
 
 import
    ipl.noncase(c_any, c_find, c_match, c_upto),
+   ipl.scan(begin_analysis),
    lang(Prog),
    util(check_flag)
 
@@ -618,12 +619,12 @@ class Pattern()
    #  multiple positions.
    #
    public match(s,i1,i2) 
-      local i
+      local a
       check_plist()
-      if /s := &subject then /i1 := &pos else /i1 := 1 ; /i2 := 0
-      i := default.match("",s,i1,i2) - 1 | fail
+      a := begin_analysis(s,i1,i2) | fail
+      s := a.s; i1 := a.i; i2 := a.j
       Re_ParenGroups := []
-      suspend s[i1:i2] ? (Re_match1(plist,1),i + &pos)
+      suspend s[i1:i2] ? (Re_match1(plist,1),i1 - 1 + &pos)
    end
 
 
@@ -645,16 +646,16 @@ class Pattern()
    #  to find().
    #
    public find(s,i1,i2) 
-      local i,p
+      local p,a
       check_plist()
-      if /s := &subject then /i1 := &pos else /i1 := 1 ; /i2 := 0
-      i := default.match("",s,i1,i2) - 1 | fail
+      a := begin_analysis(s,i1,i2) | fail
+      s := a.s; i1 := a.i; i2 := a.j
       Re_ParenGroups := []
       s[i1:i2] ? suspend (
                           tab(Re_skip(plist)) &
                           p := &pos &
                           Re_match1(plist,1)\1 &
-                          i + p)
+                          i1 -1 + p)
    end
 
 
