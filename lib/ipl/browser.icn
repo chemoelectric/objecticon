@@ -3014,7 +3014,7 @@ class Browser(ComponentScrollArea)
          return
       s ? {
          while tab(upto('<')) do {
-            if matchcl("<!doctype" | "<html" | "<meta") then
+            if clmatch("<!doctype" | "<html" | "<meta") then
                return
             # Expect html comment (see htmlparser.icn)
             ="<!" | fail
