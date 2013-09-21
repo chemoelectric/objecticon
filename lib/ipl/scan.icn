@@ -69,6 +69,8 @@
 #
 ############################################################################
 
+$encoding UTF-8
+
 package ipl.scan
 
 import
@@ -506,40 +508,54 @@ procedure ahead(i, j)
 end
 
 #
-# Like many, but succeeds with &pos if zero matching chars. Many needs
+# Like many, but succeeds with the position i if zero matching chars. Many needs
 # one or more to succeed.
 #
-procedure many0(c)
-   return many(c) | .&pos
+procedure many0(c, s, i, j)
+   local a
+   a := begin_analysis(s, i, j) | fail
+   return many(c, a.s, a.i, a.j) | .a.i
 end
 
 #
-# Like any, but succeeds with &pos if there is no matching char.
+# Like any, but succeeds with the position i if there is no matching char.
 #
-procedure any0(c)
-   return any(c) | .&pos
+procedure any0(c, s, i, j)
+   local a
+   a := begin_analysis(s, i, j) | fail
+   return any(c, a.s, a.i, a.j) | .a.i
 end
 
 #
-# Like match, but succeeds with &pos if there is no matching string.
+# Like match, but succeeds with the position i if there is no matching string.
 #
-procedure match0(s)
-   return match(s) | .&pos
+procedure match0(s1, s2, i, j)
+   local a
+   a := begin_analysis(s2, i, j) | fail
+   return match(s1, a.s, a.i, a.j) | .a.i
 end
 
 #
 # Search for a string using find and suspend the position after the string,
 # if found.
 #
-procedure past(s)
-   suspend find(s) + *s
+procedure past(s1, s2, i, j)
+   local a
+   # Note that the usual conversions are necessary, since they potentially
+   # change the type of s1 (and hence *s1).
+   a := begin_analysis(s2, i, j) | fail
+   s2 := a.s; i := a.i; j := a.j
+   s1 := same_type(s1, s2)
+   suspend find(s1, s2, i, j) + *s1
 end
 
 #
 # Like many, but limit number of characters matched to {max}.
 #
-procedure max_many(c, max)
-   return min(many(c), &pos + max)
+procedure max_many(c, max, s, i, j)
+   local a
+   a := begin_analysis(s, i, j) | fail
+   return many(c, a.s, a.i, min(a.j, a.i + max))
 end
 
 # Like `util.save_vars{..., &subject|&pos}`.
