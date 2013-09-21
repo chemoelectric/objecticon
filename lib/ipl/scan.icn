@@ -758,7 +758,7 @@ end
 # and uppercase, eg csetcl('Cat123') -> 'catCAT123'.  The result can then be used,
 # for example to do a caseless upto search.
 #
-procedure csetcl(c)
+procedure clcset(c)
    local ls
    ls := map(string(c ** &letters))
    return c ++ cset(ls || map(ls, &lcase, &ucase))

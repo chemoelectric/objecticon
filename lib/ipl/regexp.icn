@@ -286,8 +286,7 @@
 package ipl.regexp
 
 import
-   ipl.noncase(c_any, c_find, c_match, c_upto),
-   ipl.scan(begin_analysis),
+   ipl.scan(clcset, clmatch, clfind, begin_analysis),
    lang(Prog),
    util(check_flag)
 
@@ -351,12 +350,12 @@ class Pattern()
    public set_case_dependent(f)
       check_open()
       if /check_flag(f) then {
-         Re__find := c_find
-         Re__any := c_any
-         Re__upto := c_upto
+         Re__find := clfind
+         Re__any := Re_c_any
+         Re__upto := Re_c_upto
          Re__tabmatch := Re_c_tabmatch
       } else {
-         Re__find := find
+         Re__find := default.find
          Re__any := any
          Re__upto := upto
          Re__tabmatch := Prog.get_operator("=",1)
@@ -696,7 +695,7 @@ class Pattern()
          ZeroOrOneTimes: Re_ZeroOrOneTimes(tok.tok)
          TabMatch: Re_TabMatch(tok.str)
          MatchParenGroup: Re_MatchParenGroup(tok.n)
-         default: fatalerr("Invalid proc for Re_Tok")
+         default: syserr("Invalid proc for Re_Tok")
       }
    end
 
@@ -912,6 +911,15 @@ class Pattern()
    ###################  Case Independence Procedures  ###################
 
    private static Re_c_tabmatch(s)
-      suspend tab(c_match(s))
+      suspend tab(clmatch(s))
    end
+
+   private static Re_c_any(c)
+      return any(clcset(c))
+   end
+
+   private static Re_c_upto(c)
+      suspend upto(clcset(c))
+   end
+
 end
