@@ -3476,7 +3476,9 @@ class Browser(ComponentScrollArea)
       c := copy(context)
       c.form := Form(self, id, url, m, t)
       put(forms, c.form)
+      put_new_row(p, c)
       traverse(e, p, c)
+      put_new_row(p, c)
       c.form.resolve_labels()
    end
 
