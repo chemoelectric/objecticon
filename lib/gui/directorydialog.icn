@@ -26,9 +26,10 @@ class DirectoryDialog(Dialog)
       okay_button,
       init_dirs,         # Directory choices
       res,               # Resulting file path          
+      selected_path,     # FilePath of tree selection
       message_label, 
-      tree, 
-      dir, 
+      tree,
+      dir,
       existing_file_mode
 
    public static const
@@ -55,7 +56,7 @@ class DirectoryDialog(Dialog)
       dir.set_selection_list(get_favourites_directories()).set_selection(1)
       root_node := TreeNode()
       every d := Files.get_roots() do
-         root_node.add(TreeNode().set_label(ListEntry(ucs(d), Files.lstat(d), Files.stat(d))).set_always_expandable(&yes))
+         root_node.add(TreeNode().set_label(ListEntryWithIcon(ucs(d), Files.lstat(d), Files.stat(d))).set_always_expandable(&yes))
       tree.set_root_node(root_node)
       res := &null
    end
@@ -130,7 +131,8 @@ class DirectoryDialog(Dialog)
    end
 
    public on_tree_selection(ev)
-      dir.set_contents(get_full_path(tree.object_get_selections()[1]).liberal_ucs())
+      selected_path := get_full_path(tree.object_get_selections()[1])
+      dir.set_contents(selected_path.liberal_ucs())
       check_existing()
    end
 
@@ -184,7 +186,7 @@ class DirectoryDialog(Dialog)
    end
 
    public goto_dir(d)
-      local n, s, p, ps, err, i
+      local n, s, p, err, i
       p := FilePath(d).canonical()
       n := tree.get_root_node()
       every s := p.gen() do {
@@ -203,14 +205,14 @@ class DirectoryDialog(Dialog)
          set_cursor(i).
          center_line(i)
 
+      selected_path := get_full_path(n)
       dir.set_contents(p.liberal_ucs())
-      ps := p.str()
       if \err then
          msg(err)
-      else if Files.is_directory(ps) then
+      else if Files.is_directory(p.str()) then
          check_existing()
       else
-         msg("Not a dir: " || ps)
+         msg("Not a dir: " || p.liberal_ucs())
    end
 
    public find_child(n, s)
@@ -275,10 +277,8 @@ $endif
    end
 
    public on_up_button(ev)
-      local t
-      t := self.get_dir_path()
-      if t.size() > 1 then
-         goto_dir(t.parent().str())
+      if selected_path.size() > 1 then
+         goto_dir(selected_path.parent().str())
       else
          msg("At root")
    end
@@ -302,7 +302,7 @@ $endif
       d := NewDirectoryDialog()
       d.show_modal(self)
       if \d.okay then {
-         s := self.get_dir_path().child(d.result).str()
+         s := selected_path.child(d.result).str()
          if Files.mkdir(s) then
             goto_dir(s)
          else

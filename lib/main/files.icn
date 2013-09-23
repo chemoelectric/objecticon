@@ -5,7 +5,8 @@ import
    util,
    net,
    posix,
-   ipl.random
+   ipl.random,
+   ipl.scan
 
 #
 # This class has several static methods which provide
@@ -488,7 +489,7 @@ $endif
       local i, p, s
       access(stem) | return stem
       i := 1
-      every p := find(".", stem)
+      p := backto('.', stem) - 1
       repeat {
          s := stem
          if /p then
@@ -504,12 +505,9 @@ $endif
    # Return the extension of a filename, or fail if there is none.
    #
    public static get_extension(f)
-      local i
-      f ? {
-         every i := upto('.')
-         if tab(\i + 1) & not pos(0) then
-            return tab(0)
-      }
+      local i                                                     
+      if i := backto('.', f) then
+         return "" ~== f[i:0]
    end
 
    #

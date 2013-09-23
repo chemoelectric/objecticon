@@ -6,7 +6,7 @@ package mail
 
 import 
    exception,
-   ipl.caseless
+   ipl.scan
 
 record ExtValue(charset, language, value)
 
@@ -156,14 +156,14 @@ class RFC2616Parser()
 
       ty := parse_type()
       next_token()
-      ="/" | throw("/ expected")
+      =u"/" | throw("/ expected")
       next_token()
       st := parse_subtype()
       ct := ContentType(ty, st)
 
       repeat {
          next_token()
-         =";" | break
+         =u";" | break
          next_token()
          parse_parameter(ct)
       }
@@ -179,7 +179,7 @@ class RFC2616Parser()
    private parse_disposition_type()
       local s
 
-      if s := tab(matchcl("inline"|"attachment")) then
+      if s := tab(clmatch(u"inline" | u"attachment")) then
          return s
 
       return parse_atom()

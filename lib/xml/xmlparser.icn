@@ -578,10 +578,11 @@ class XmlParser(Connectable)
    #
    # [15] Comment ::= '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->'
    #
+   # Assume "<!--" already matched.
+   #
    private parse_comment()
       local res, s, t
       res := Comment()
-      =u"<!--" | throw("'<!--' expected")
       s := ""
       repeat {
          t := tab(upto('-')) | throw("- expected")
@@ -600,10 +601,11 @@ class XmlParser(Connectable)
    #
    # [16] PI ::= '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>'
    #
+   #  Assume "<?" already matched.
+   #
    private parse_pi()
       local res
       res := ProcessingInstruction()
-      =u"<?" | throw("'<?' expected")
       res.target := parse_pi_target()
       if any(SPACE) then {
          spaces()
@@ -631,10 +633,11 @@ class XmlParser(Connectable)
    # [20] CData ::= (Char* - (Char* ']]>' Char*)) 
    # [21] CDEnd ::= ']]>'
    #
+   # Assume "<![CDATA[" already matched.
+   #
    private parse_cdsect()
       local res
       res := CData()
-      =u"<![CDATA[" | throw("'<![CDATA[' expected")
       res.content := tab(find(u"]]>")) | throw("no corresponding ']]>' in CDATA section")
       check_is_char_data(res.content, "PI")
       =u"]]>"
@@ -645,12 +648,12 @@ class XmlParser(Connectable)
    # [22] prolog ::= XMLDecl? Misc* (doctypedecl Misc*)?
    #
    private parse_prolog()
-      if match(u"<?xml") then
+      if =u"<?xml" then
          doc.add(parse_xml_decl())
 
       parse_misc_star()
 
-      if match(u"<!DOCTYPE") then {
+      if =u"<!DOCTYPE" then {
          doc.add(parse_doctype_decl())
          parse_misc_star()
       }
@@ -661,10 +664,11 @@ class XmlParser(Connectable)
    #
    # [23] XMLDecl ::= '<?xml' VersionInfo EncodingDecl? SDDecl? S? '?>'
    #
+   # Assume "<?xml" already matched
+   #
    private parse_xml_decl() 
       local res
       res := XmlDecl()
-      =u"<?xml" | throw("'<?xml' expected")
       res.version := parse_version_info()
 
       if looking_at_space_then(u"encoding") then
@@ -727,9 +731,9 @@ class XmlParser(Connectable)
    #
    private parse_misc_star()
       repeat {
-         if match(u"<!--") then
+         if =u"<!--" then
             parse_and_maybe_add_comment(doc)
-         else if match(u"<?") then
+         else if =u"<?" then
             doc.add(parse_pi())
          else if any(SPACE) then
             spaces()
@@ -757,10 +761,11 @@ class XmlParser(Connectable)
    #
    # [28] doctypedecl ::= '<!DOCTYPE' S Name (S ExternalID)? S? ('[' (markupdecl | DeclSep)* ']' S?)? '>'
    #
+   # Assume "<!DOCTYPE" already matched.
+   #
    private parse_doctype_decl()
       local res, r
       res := DocType()
-      =u"<!DOCTYPE" | throw("'<!DOCTYPE' expected")
       spaces()
       res.name := parse_name()
       if looking_at_space_then(u"SYSTEM" | u"PUBLIC") then {
@@ -800,17 +805,17 @@ class XmlParser(Connectable)
    private parse_markup_decls()
       local ref, o, r
       repeat {
-         if match(u"<!ELEMENT") then
+         if =u"<!ELEMENT" then
             parse_element_decl()
-         else if match(u"<!ATTLIST") then
+         else if =u"<!ATTLIST" then
             parse_attlist_decl()
-         else if match(u"<!ENTITY") then
+         else if =u"<!ENTITY" then
             parse_entity_decl()
-         else if match(u"<!NOTATION") then
+         else if =u"<!NOTATION" then
             parse_notation_decl()
-         else if match(u"<?") then
+         else if =u"<?" then
             doc.add(parse_pi())
-         else if match(u"<!--") then
+         else if =u"<!--" then
             parse_and_maybe_add_comment(doc)
          else if any('%') then {
             # Recursively parse the value of the pe.
@@ -847,7 +852,7 @@ class XmlParser(Connectable)
    # [30] extSubset ::= TextDecl? extSubsetDecl
    #
    private parse_ext_subset()
-      if match(u"<?xml") then
+      if =u"<?xml" then
          parse_text_decl()
       return parse_ext_subset_decl()
    end
@@ -858,19 +863,19 @@ class XmlParser(Connectable)
    private parse_ext_subset_decl()
       local ref, o, r
       repeat {
-         if match(u"<![") then
+         if =u"<![" then
             parse_conditional_sect()
-         else if match(u"<!ELEMENT") then
+         else if =u"<!ELEMENT" then
             parse_element_decl()
-         else if match(u"<!ATTLIST") then
+         else if =u"<!ATTLIST" then
             parse_attlist_decl()
-         else if match(u"<!ENTITY") then
+         else if =u"<!ENTITY" then
             parse_entity_decl()
-         else if match(u"<!NOTATION") then
+         else if =u"<!NOTATION" then
             parse_notation_decl()
-         else if match(u"<?") then
+         else if =u"<?" then
             doc.add(parse_pi())
-         else if match(u"<!--") then
+         else if =u"<!--" then
             parse_and_maybe_add_comment(doc)
          else if any('%') then {
             # Recursively parse the value of the pe.
@@ -1070,11 +1075,11 @@ class XmlParser(Connectable)
                   end_divert()
                }
             }
-         } else if match(u"<!--") then
+         } else if =u"<!--" then
             parse_and_maybe_add_comment(parent)
-         else if match(u"<?") then
+         else if =u"<?" then
             parent.add(parse_pi())
-         else if match(u"<![CDATA[") then
+         else if =u"<![CDATA[" then
             parent.add(parse_cdsect())
          else if any('<') then {
             if match(u"</") then
@@ -1106,10 +1111,11 @@ class XmlParser(Connectable)
    #
    # [45] elementdecl ::=  '<!ELEMENT' S Name S contentspec S? '>'
    #
+   # Assume "<!ELEMENT" already matched
+   #
    private parse_element_decl()
       local name, content_spec, element_decl
 
-      tab(dtd_match(u"<!ELEMENT")) | throw("'<!ELEMENT' expected")
       dtd_spaces()
       name := dtd_parse_name()
       dtd_spaces()
@@ -1265,9 +1271,10 @@ class XmlParser(Connectable)
    # [52] AttlistDecl ::= '<!ATTLIST' S Name AttDef* S? '>'
    # [53] AttDef ::= S Name S AttType S DefaultDecl
    #
+   # Assume "<!ATTLIST" already matched.
+   #
    private parse_attlist_decl()
       local element_name, t, attr_name, attribute_def, res
-      tab(dtd_match(u"<!ATTLIST")) | throw("'<!ATTLIST' expected")
       dtd_spaces()
       element_name := dtd_parse_name()
       #
@@ -1452,8 +1459,9 @@ class XmlParser(Connectable)
    # [62] includeSect ::= '<![' S? 'INCLUDE' S? '[' extSubsetDecl ']]>' 
    # [63] ignoreSect ::= '<![' S? 'IGNORE' S? '[' ignoreSectContents* ']]>'
    #
+   # Assume "<![" already matched.
+   #
    private parse_conditional_sect()
-      tab(dtd_match(u"<![")) | throw("'<![' expected")
       dtd_opt_spaces()
       if tab(dtd_match(u"INCLUDE")) then {
          dtd_opt_spaces()
@@ -1599,9 +1607,10 @@ class XmlParser(Connectable)
    # [71] GEDecl ::= '<!ENTITY' S Name S EntityDef S? '>'
    # [72] PEDecl ::= '<!ENTITY' S '%' S Name S PEDef S? '>'
    #
+   # Assume "<!ENTITY" already matched.
+   #
    private parse_entity_decl()
       local name, val
-      tab(dtd_match(u"<!ENTITY")) | throw("'<!ENTITY' expected")
       #
       # This could be more sophisticated to try to cover for example
       # <!ENTITY%x; abc 'def >   where %x -> ' %'
@@ -1704,9 +1713,9 @@ class XmlParser(Connectable)
    #
    # [77] TextDecl ::= '<?xml' VersionInfo? EncodingDecl S? '?>'
    #
+   # Assume "<?xml" already matched.
+   #
    private parse_text_decl()
-      =u"<?xml" | throw("'<?xml' expected")
-
       if looking_at_space_then(u"version") then
          parse_version_info()
       
@@ -1723,7 +1732,7 @@ class XmlParser(Connectable)
    # [78] extParsedEnt ::= TextDecl? content
    #
    private parse_external_parsed_entity(parent, circle)
-      if match(u"<?xml") then
+      if =u"<?xml" then
          parse_text_decl()
       return parse_content(parent, circle)
    end
@@ -1764,10 +1773,11 @@ class XmlParser(Connectable)
    # [82] NotationDecl ::= '<!NOTATION' S Name S (ExternalID | PublicID) S? '>'
    # [83] PublicID ::= 'PUBLIC' S PubidLiteral 
    #
+   # Assume "<!NOTATION" already matched.
+   #
    private parse_notation_decl()
       local res, name, pub, sys
       res := NotationDecl()
-      tab(dtd_match(u"<!NOTATION")) | throw("'<!NOTATION' expected")
       dtd_spaces()
       name := dtd_parse_name()
       dtd_spaces()

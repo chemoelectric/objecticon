@@ -5,6 +5,7 @@ import
    ipl.sort,
    ipl.lists,
    ipl.filegui,
+   ipl.pdco,
    util,
    io
 
@@ -22,6 +23,18 @@ class ListEntryEx(ListEntryWithIcon)
       self.stat := stat
       self.fmt_date := fmt_date
       self.fmt_size := fmt_size
+      return
+   end
+end
+
+class FileDialogPos()
+   public const
+      cursor_name,
+      area_y
+
+   public new(cursor_name, area_y)
+      self.cursor_name := cursor_name
+      self.area_y := area_y
       return
    end
 end
@@ -67,6 +80,7 @@ class FileDialog(Dialog)
       history,
       history_pos,
       pos_table,
+      loaded_dir_path,
       cancel_button, 
       file, 
       filter, 
@@ -137,18 +151,14 @@ class FileDialog(Dialog)
    end
 
    public synch_file()
-      local i, s
-      s := file.get_contents()
-      every i := 1 to *flist.contents do {
-         if flist.contents[i].name == s then {
-            flist.
-               set_cursor(i).
-               set_selections([i]).
-               center_line(i)
-            return
-         }
-      }
-      flist.clear_selections()
+      local i
+      if i := Positions{(!flist.contents).name, file.get_contents()} then {
+         flist.
+            set_cursor(i).
+            set_selections([i]).
+            center_line(i)
+      } else
+         flist.clear_selections()
    end
 
    public end_dialog()
@@ -297,7 +307,7 @@ class FileDialog(Dialog)
    end
 
    public on_dlist()
-      goto_dir(get_dir_path().child(dlist.object_get_selections()[1].name).str())
+      goto_dir(loaded_dir_path.child(dlist.object_get_selections()[1].name).str())
    end
 
    public on_flist()
@@ -305,6 +315,7 @@ class FileDialog(Dialog)
       # Clicked in file list; set TextField
       #
       clear_msg()
+      dir.set_contents(loaded_dir_path.liberal_ucs())
       file.set_contents(flist.object_get_selections()[1].name)
       check_existing()
    end
@@ -312,23 +323,23 @@ class FileDialog(Dialog)
    public on_dir(ev)
       if member(EditList.NAVIGATE, ev.code) then
          goto_dir(dir.get_contents())
+      else
+         check_existing()
    end
 
    public on_filter(ev)
       if member(EditList.NAVIGATE, ev.code) then
-         load_dir()
+         refresh_dir()
    end
 
    public on_show_hidden_menu_item(ev)
       pos_table := table()
-      load_dir()
+      refresh_dir()
    end
 
    public on_up_button(ev)
-      local t
-      t := self.get_dir_path()
-      if t.size() > 1 then
-         goto_dir(t.parent().str())
+      if loaded_dir_path.size() > 1 then
+         goto_dir(loaded_dir_path.parent().str())
       else
          msg("At root")
    end
@@ -338,7 +349,7 @@ class FileDialog(Dialog)
    end
 
    public on_refresh_menu_item(ev)
-      load_dir()
+      refresh_dir()
    end
 
    public on_next_button(ev)
@@ -367,7 +378,7 @@ class FileDialog(Dialog)
       d := NewDirectoryDialog()
       d.show_modal(self)
       \d.okay | fail
-      s := self.get_dir_path().child(d.result).str()
+      s := loaded_dir_path.child(d.result).str()
       if Files.mkdir(s) then
          goto_dir(s)
       else
@@ -411,9 +422,36 @@ class FileDialog(Dialog)
       msg("")
    end
 
+   public refresh_dir()
+      dir.set_contents(loaded_dir_path.liberal_ucs())
+      save_pos()
+      load_dir(loaded_dir_path.str())
+      restore_pos()
+   end
+
+   public save_pos()
+      insert(pos_table,
+             (\loaded_dir_path).str(),
+             FileDialogPos(dlist.object_get_cursor().name, dlist.get_area_y()))
+   end
+
+   public restore_pos()
+      local e, i
+      if e := member(pos_table, loaded_dir_path.str()) then {
+         if i := Positions{(!dlist.contents).name, e.cursor_name} then
+            dlist.set_cursor(i)
+         dlist.set_area_y(e.area_y)
+      }
+   end
+
    public goto_dir(d, nav)
+      local p
+      save_pos()
       dir.set_contents(FilePath(d).canonical().liberal_ucs())
-      load_dir()
+      p := get_dir_path()
+      load_dir(p.str())
+      loaded_dir_path := p
+      restore_pos()
       if /nav then {
          while *history > history_pos do
             pull(history)
@@ -423,15 +461,8 @@ class FileDialog(Dialog)
       }
    end
 
-   public on_dlist_cursor(ev)
-      pos_table[get_dir_path().str()] := [dlist.get_cursor(), 
-                                          dlist.get_line_info().first_whole]
-   end
-
-   public load_dir()
-      local l, e, s
-
-      s := get_dir_path().str()
+   public load_dir(s)
+      local l
 
       #
       # Update directory and file lists.
@@ -447,22 +478,15 @@ class FileDialog(Dialog)
 
       dlist.
          set_contents(l[1]).
-         clear_selections()
-
-      if e := \pos_table[s] then
-         dlist.
-           set_cursor(e[1]).
-           goto_first(e[2])
-      else
-         dlist.
-            goto_first(1).
-            set_area_x(0).
-            set_cursor(1)
+         set_area_x(0).
+         set_area_y(0).
+         clear_selections().
+         set_cursor(1)
 
       flist.
          set_contents(l[2]).
-         goto_first(1).
          set_area_x(0).
+         set_area_y(0).
          clear_selections().
          set_cursor(1)
 
@@ -576,7 +600,7 @@ class FileDialog(Dialog)
       else
          sorter := Files.date_key
       synch_paints()
-      load_dir()
+      refresh_dir()
    end
 
    private on_name_button(ev)
@@ -585,7 +609,7 @@ class FileDialog(Dialog)
       else
          sorter := Files.name_key
       synch_paints()
-      load_dir()
+      refresh_dir()
    end
 
    private on_size_button(ev)
@@ -594,7 +618,7 @@ class FileDialog(Dialog)
       else
          sorter := Files.size_key
       synch_paints()
-      load_dir()
+      refresh_dir()
    end
 
    private setup()
@@ -749,7 +773,6 @@ class FileDialog(Dialog)
          set_constraint("y_fill", &yes).
          set_constraint("y_weight", 1.0).
          connect(self.on_dlist, Event.SELECTION_CHANGED).
-         connect(self.on_dlist_cursor, Event.CURSOR_MOVED).
          set_select_mode(Select.ONE).
          set_contents([])
       layout_8 := GridLayout().

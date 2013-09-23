@@ -87,7 +87,7 @@ class HttpRequest(MimeHeaders)
    end
 
    #
-   # Set the referer page.
+   # Set the referer page; the value may be a string or a `URL`.
    #
    public set_referer(s)
       self.referer := s

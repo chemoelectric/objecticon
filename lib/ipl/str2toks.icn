@@ -55,27 +55,17 @@
 
 package ipl.str2toks
 
+import
+   ipl.scan(begin_analysis)
+
 procedure str2toks(c, s, i, j)
 
-    local token, default_val
+    local token, a
 
     /c := ~(&letters ++ &digits)
 
-    if /s := &subject
-    then default_val := &pos
-    else default_val := 1
-
-    if \i then {
-	if i < 1 then
-	    i := *s + (i+1)
-    }
-    else i := default_val
-	
-    if \j then {
-	if j < 1 then
-	    j := *s + (j+1)
-    }
-    else j := *s+1
+    a := begin_analysis(s, i, j) | fail
+    s := a.s; i := a.i; j := a.j
 
     s[i:j] ? {
 	tab(many(c))

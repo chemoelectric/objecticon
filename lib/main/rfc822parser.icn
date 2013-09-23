@@ -229,10 +229,6 @@ class RFC822Parser()
 
    #
    # phrase =  1*word
-   # 
-   # In fact this is parsed as just "*word".  This allows
-   # parsing of mailboxes such as, for example "<rparlett@xyz.com>" and
-   # groups such as :joe@soap.com;
    #
    private parse_phrase()
       local res

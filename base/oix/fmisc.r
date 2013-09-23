@@ -1047,21 +1047,43 @@ struct b_ucs *make_one_char_ucs_block(int i)
 
 /*
  * Helper function to make a new ucs block which is a substring of the
- * given ucs block.
+ * given ucs block.  NB pos is one-based.
  */
 struct b_ucs *make_ucs_substring(struct b_ucs *b, word pos, word len)
 {
+    char *p, *q;
+    word first, last;
     tended struct descrip utf8;
     if (len == 0)
         return emptystr_ucs;
-    utf8_substr(b, pos, len, &utf8);
+    if (pos == 1 && len == b->length)
+        return b;
+
+    first = pos - 1;
+    last = first + len - 1;
+
+    if (len < 0 || first < 0 || last < 0 || first >= b->length || last >= b->length)
+        syserr("Invalid pos/len to make_ucs_substring");
+
+    p = get_ucs_off(b, first);
+    StrLoc(utf8) = p;
+    if (last / b->index_step > first / b->index_step)
+        q = get_ucs_off(b, last + 1);
+    else {
+        word i = len;
+        q = p;
+        while (i-- > 0)
+            q += UTF8_SEQ_LEN(*q);
+    }
+    StrLen(utf8) = q - p;
     return make_ucs_block(&utf8, len);
 }
 
 /*
- * Given a ucs block, this function returns the utf8 substring correspoding to
- * the slice pos:len.  No allocation is done.  pos,len must be a valid range
- * for the string.
+ * Given a ucs block, this function returns (in res) the utf8
+ * substring correspoding to the slice pos:len.  No allocation is
+ * done.  pos,len must be a valid range for the string.  NB pos is
+ * one-based.
  */
 void utf8_substr(struct b_ucs *b, word pos, word len, dptr res)
 {
@@ -1070,6 +1092,10 @@ void utf8_substr(struct b_ucs *b, word pos, word len, dptr res)
 
     if (len == 0) {
         *res = emptystr;
+        return;
+    }
+    if (pos == 1 && len == b->length) {
+        *res = b->utf8;
         return;
     }
 
@@ -1081,9 +1107,9 @@ void utf8_substr(struct b_ucs *b, word pos, word len, dptr res)
 
     p = get_ucs_off(b, first);
     StrLoc(*res) = p;
-    if (last / b->index_step > first / b->index_step) {
+    if (last / b->index_step > first / b->index_step)
         q = get_ucs_off(b, last + 1);
-    } else {
+    else {
         q = p;
         while (len-- > 0)
             q += UTF8_SEQ_LEN(*q);

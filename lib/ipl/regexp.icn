@@ -286,7 +286,7 @@
 package ipl.regexp
 
 import
-   ipl.noncase(c_any, c_find, c_match, c_upto),
+   ipl.scan(clcset, clmatch, clfind, begin_analysis),
    lang(Prog),
    util(check_flag)
 
@@ -350,12 +350,12 @@ class Pattern()
    public set_case_dependent(f)
       check_open()
       if /check_flag(f) then {
-         Re__find := c_find
-         Re__any := c_any
-         Re__upto := c_upto
+         Re__find := clfind
+         Re__any := Re_c_any
+         Re__upto := Re_c_upto
          Re__tabmatch := Re_c_tabmatch
       } else {
-         Re__find := find
+         Re__find := default.find
          Re__any := any
          Re__upto := upto
          Re__tabmatch := Prog.get_operator("=",1)
@@ -618,12 +618,12 @@ class Pattern()
    #  multiple positions.
    #
    public match(s,i1,i2) 
-      local i
+      local a
       check_plist()
-      if /s := &subject then /i1 := &pos else /i1 := 1 ; /i2 := 0
-      i := default.match("",s,i1,i2) - 1 | fail
+      a := begin_analysis(s,i1,i2) | fail
+      s := a.s; i1 := a.i; i2 := a.j
       Re_ParenGroups := []
-      suspend s[i1:i2] ? (Re_match1(plist,1),i + &pos)
+      suspend s[i1:i2] ? (Re_match1(plist,1),i1 - 1 + &pos)
    end
 
 
@@ -645,16 +645,16 @@ class Pattern()
    #  to find().
    #
    public find(s,i1,i2) 
-      local i,p
+      local p,a
       check_plist()
-      if /s := &subject then /i1 := &pos else /i1 := 1 ; /i2 := 0
-      i := default.match("",s,i1,i2) - 1 | fail
+      a := begin_analysis(s,i1,i2) | fail
+      s := a.s; i1 := a.i; i2 := a.j
       Re_ParenGroups := []
       s[i1:i2] ? suspend (
                           tab(Re_skip(plist)) &
                           p := &pos &
                           Re_match1(plist,1)\1 &
-                          i + p)
+                          i1 -1 + p)
    end
 
 
@@ -695,7 +695,7 @@ class Pattern()
          ZeroOrOneTimes: Re_ZeroOrOneTimes(tok.tok)
          TabMatch: Re_TabMatch(tok.str)
          MatchParenGroup: Re_MatchParenGroup(tok.n)
-         default: fatalerr("Invalid proc for Re_Tok")
+         default: syserr("Invalid proc for Re_Tok")
       }
    end
 
@@ -911,6 +911,15 @@ class Pattern()
    ###################  Case Independence Procedures  ###################
 
    private static Re_c_tabmatch(s)
-      suspend tab(c_match(s))
+      suspend tab(clmatch(s))
    end
+
+   private static Re_c_any(c)
+      return any(clcset(c))
+   end
+
+   private static Re_c_upto(c)
+      suspend upto(clcset(c))
+   end
+
 end

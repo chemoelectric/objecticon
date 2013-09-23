@@ -28,6 +28,8 @@ class OverlaySet(Component)
    # the first which was added.
    #
    public set_which_one(x)
+      if which_one === x then
+         return self
       if is_initialized() then {
          self.which_one := x
          set_hidden_flags()
@@ -45,6 +47,7 @@ class OverlaySet(Component)
          else
             c.set_is_hidden(&yes)
       }
+      return self
    end
 
    public initially()

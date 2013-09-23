@@ -85,7 +85,7 @@ class HtmlParser()
       IDINTRO := 'A-Za-z'
       IDCHARS := 'A-Za-z0-9.\-'
       KEYCHARS := 'A-Za-z0-9_'
-      VALCHARS := &ascii -- ' \t\n\r>'
+      VALCHARS := &ascii -- ' \t\n\r>/'
       DELIM := '\"\''
       PUBID_CHAR := ' \n\rA-Za-z0-9\-\'()+,./:=?;!*#@$_%'
       STANDALONE := set("IMG", "BR", "HR", "META", "BASE", "INPUT", "AREA", 
@@ -233,12 +233,13 @@ class HtmlParser()
    # Parse the current input into an {Node}
    #
    private parse_node()
-      if match(u"<!DOCTYPE") then
-         return parse_doctype()
-      if match(u"<!") then
-         return parse_comment()
-      if match(u"<") then
-         return parse_tag()
+      return if =u"<!" then {
+         if tab(clmatch(u"doctype")) then
+            parse_doctype()
+         else
+            parse_comment()
+      } else
+         parse_tag()
    end
 
    #
@@ -342,11 +343,12 @@ class HtmlParser()
    #
    # DOCTYPE
    #
+   # Assume "<!DOCTYPE" already matched.
+   #
    private parse_doctype()
       local res
 
       res := DocType()
-      =u"<!DOCTYPE" | fail
 
       tab(upto(IDINTRO))
       res.name := tab(many(IDCHARS))
@@ -392,25 +394,20 @@ class HtmlParser()
    end
 
    #
-   # Comment - SGML style parsing; different from xml comment in that you can
-   # have a legal comment like <!-- abc -- def -->
-   # see http://htmlhelp.com/reference/wilbur/misc/comment.html
+   # http://dev.w3.org/html5/markup/syntax.html#comments
+   #
+   # Assume "<!" already matched.
    #
    private parse_comment()
-      local res, s, t
+      local res
       res := Comment()
-      =u"<!" | fail
-      s := move(0)  # Empty string, same type as &subject
-      repeat {
-         tab(upto('->'))
-         if =u">" then
-            break
-         =u"--" | fail
-         t := tab(find(u"--")) | fail
+      if =(u">" | u"->" | u"-->" | u"--->") then
+         res.comment := move(0)  # Empty string, same type as &subject
+      else {
          =u"--"
-         s ||:= t
+         res.comment := tab(find(u"-->") | 0)
+         move(3)
       }
-      res.comment := s
       return res
    end
 
@@ -437,10 +434,10 @@ class HtmlParser()
 
          key := tab(many(KEYCHARS)) | break
 
-         tab(upto(VALCHARS ++ '>='))
+         tab(upto(VALCHARS ++ '>/='))
 
          if =u"=" then {
-            tab(upto(VALCHARS ++ DELIM))
+            tab(upto(VALCHARS))   # Note DELIM is a subset of VALCHARS
             if any(DELIM) then {
                c := move(1)
                s := tab(upto(c) | 0)

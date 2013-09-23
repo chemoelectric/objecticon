@@ -27,7 +27,8 @@ class TabSet(Component)
       no_click_focus_flag,
       prefer_one_row_flag,
       old_which_one,
-      tabs_at_bottom_flag
+      tabs_at_bottom_flag,
+      remember_focus_flag
 
    # Vertical layout :-
    #           border top margin
@@ -63,6 +64,17 @@ class TabSet(Component)
    #
    public set_tabs_at_bottom(s)
       self.tabs_at_bottom_flag := check_flag(s)
+      return self
+   end
+
+   #
+   # If set, then the a tab remembers if it had focus when it was
+   # deselected, and restores it when it is reselected.  This only
+   # really makes sense with no-click-focus set, except when switching
+   # tabs programatically.
+   #
+   public set_remember_focus(s)
+      self.remember_focus_flag := check_flag(s)
       return self
    end
 
@@ -310,18 +322,41 @@ class TabSet(Component)
       }
    end
 
+   public maybe_remember_focus()
+      local f
+      \remember_focus_flag | fail
+      f := parent_dialog.get_focus() | fail
+      if f.gen_parents() === which_one then
+         which_one.remembered_focus := f
+   end
+
+   public maybe_restore_focus()
+      local f
+      \remember_focus_flag | fail
+      f := \which_one.remembered_focus | fail
+      if f.is_live() then
+         parent_dialog.set_focus(f.find_focus())
+   end
+
    #
    # Set which tab is currently on display.
    # @param x  The {TabItem} to be displayed.
+   # @param dont_restore_flag if set, then the tab's remembered focus will not be
+   #         restored (only relevant if remember_focus is on).
    #
-   public set_which_one(x)
+   public set_which_one(x, dont_restore_flag)
+      if which_one === x then
+         return self
       if is_initialized() then {
-         self.which_one := x
+         maybe_remember_focus()
+         which_one := x
          set_hidden_flags()
-         self.adjust_lines()
-         self.invalidate()
+         adjust_lines()
+         if /dont_restore_flag then
+            maybe_restore_focus()
+         invalidate()
       } else
-         self.which_one := x
+         which_one := x
       return self
    end
 
@@ -333,6 +368,7 @@ class TabSet(Component)
          else
             c.set_is_hidden(&yes)
       }
+      return self
    end
 
    #
@@ -363,7 +399,9 @@ class TabSet(Component)
       every i := 1 to *self.children do {
          if self.children[i] === which_one then {
             c := self.children[i - 1 | -1]
-            set_which_one(c)
+            # We don't allow remembered focus, since the cursor key would then be
+            # applied by the dialog on the new focus, and would move off it.
+            set_which_one(c, &yes)
             break
          }
       }
@@ -376,7 +414,7 @@ class TabSet(Component)
       every i := 1 to *self.children do {
          if self.children[i] === which_one then {
             c := self.children[i + 1 | 1]
-            set_which_one(c)
+            set_which_one(c, &yes)
             break
          }
       }

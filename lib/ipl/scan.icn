@@ -37,9 +37,6 @@
 #	slashupto(c, s, i, j)
 #		like upto() with escape processing
 #
-#	slshupto()
-#		synonym for slashupto()
-#
 #	snapshot(title, len)
 #		snapshot of string scanning with optional title and
 #		maximum length.
@@ -72,6 +69,8 @@
 #
 ############################################################################
 
+$encoding UTF-8
+
 package ipl.scan
 
 import
@@ -80,7 +79,7 @@ import
 # bal() with escapes
 procedure slashbal(c1, c2, c3, s, i, j)	
 
-    local twocs, allcs, default_val, POS, chr, chr2, count
+    local twocs, allcs, a, POS, chr, chr2, count
 
     /c1 := &cset
     /c2 := '('
@@ -88,20 +87,8 @@ procedure slashbal(c1, c2, c3, s, i, j)
     twocs := c2 ++ c3
     allcs := c1 ++ c2 ++ c3 ++ '\\'
 
-    if /s := &subject
-    then default_val := &pos
-    else default_val := 1
-
-    if \i then {
-	if i < 1 then
-	    i := *s + (i+1)
-    }
-    else i := default_val
-    if \j then {
-	if j < 1 then
-	    j := *s + (j+1)
-    }
-    else j := *s + 1
+    a := begin_analysis(s, i, j) | fail
+    s := a.s; i := a.i; j := a.j
 
     count := 0; POS := i - 1
     s[i:j] ? {
@@ -152,28 +139,19 @@ end
 #
 ############################################################################
 
-# for compatibility with the original name
 #
-# upto() with escapes
-procedure slashupto(c, s, i, j)		
-    suspend slshupto(c, s, i, j)
-end
-
-#
-# slshupto:  cset x string x integer x integer -> integers
+# slashupto:  cset x string x integer x integer -> integers
 #             (c, s, i, j) -> Is (a generator)
 #    where Is are the integer positions in s[i:j] before characters
 #    in c that is not preceded by a backslash escape
 #
 # upto() with escapes
-procedure slshupto(c, s, i, j)		
+procedure slashupto(c, s, i, j)		
 
-    local c2
+    local c2, a
 
-    if /s := &subject
-    then /i := &pos
-    else /i := 1
-    /j := *s + 1
+    a := begin_analysis(s, i, j) | fail
+    s := a.s; i := a.i; j := a.j
     
     /c := &cset
     c2 := '\\' ++ c
@@ -353,27 +331,27 @@ end
 
 # bal() with quote escaping.
 procedure balq(				
-   cstop, copen, cclose, cquote, cescape, s, i1, i2)
+               cstop, copen, cclose, cquote, cescape, s, i1, i2)
 
-local quote, pcount, spos
-local ca, c, sp
+   local quote, pcount, spos
+   local ca, c, sp, a
 
-if /s := &subject then /i1 := &pos
-/i1 := 1
-/i2 := 0
-/cstop   := &cset                                     # stopping characters
-/copen   := '('                                       # open characters
-/cclose  := ')'                                       # close characters
-/cquote  := '\'\"'                                    # quote characters
-/cescape := '\\'                                      # escape characters
+   a := begin_analysis(s, i1, i2) | fail
+   s := a.s; i1 := a.i; i2 := a.j
+
+   /cstop   := &cset                                     # stopping characters
+   /copen   := '('                                       # open characters
+   /cclose  := ')'                                       # close characters
+   /cquote  := '\'\"'                                    # quote characters
+   /cescape := '\\'                                      # escape characters
 
 
-pcount := 0                                           # "parenthesis" counter
-spos   := i1                                          # scanning position
+   pcount := 0                                           # "parenthesis" counter
+   spos   := i1                                          # scanning position
 
-ca := cstop ++ copen ++ cclose ++ cquote ++ cescape   # characters to check
+   ca := cstop ++ copen ++ cclose ++ cquote ++ cescape   # characters to check
 
-while sp := s[ spos := upto( ca, s, spos, i2 ) ] do { 
+   while sp := s[ spos := upto( ca, s, spos, i2 ) ] do { 
       
       if /quote & ( pcount = 0 ) & any( cstop, sp) then suspend spos
       
@@ -382,62 +360,62 @@ while sp := s[ spos := upto( ca, s, spos, i2 ) ] do {
          case c of {
             
             copen  : if /quote then 
-                        pcount +:= 1
+               pcount +:= 1
             
             cclose : if /quote then 
-                        if ( pcount -:= 1 ) < 0 then
-                           fail
+               if ( pcount -:= 1 ) < 0 then
+                  fail
             
             cquote : if /quote then 
-                        quote := sp 
-                     else 
-                        if quote == sp then quote := &null
+               quote := sp 
+            else 
+               if quote == sp then quote := &null
             
             cescape: if \quote then
-                        spos +:= 1
-            }
+               spos +:= 1
+         }
       
       spos +:= 1
       
-      }
+   }
 
 end
 
 # balq() with comment escaping
 procedure balqc(			
-   cstop, copen, cclose, cquote, cescape, scm, ecm, s, i1, i2)
+                cstop, copen, cclose, cquote, cescape, scm, ecm, s, i1, i2)
 
-local quote, pcount, spos
-local ca, c, sp
-local ccom, comnt
+   local quote, pcount, spos
+   local ca, c, sp
+   local ccom, comnt, a
 
-if /s := &subject then /i1 := &pos
-/i1 := 1
-/i2 := 0
-/cstop   := &cset                                     # stopping characters
-/copen   := '('                                       # open characters
-/cclose  := ')'                                       # close characters
-/cquote  := '\'\"'                                    # quote characters
-/cescape := '\\'                                      # escape characters
+   a := begin_analysis(s, i1, i2) | fail
+   s := a.s; i1 := a.i; i2 := a.j
 
-if /scm & /ecm then {
-   scm := "/*"                                        # start of comment
-   ecm := "*/"                                        # end of comment
+   /cstop   := &cset                                     # stopping characters
+   /copen   := '('                                       # open characters
+   /cclose  := ')'                                       # close characters
+   /cquote  := '\'\"'                                    # quote characters
+   /cescape := '\\'                                      # escape characters
+
+   if /scm & /ecm then {
+      scm := "/*"                                        # start of comment
+      ecm := "*/"                                        # end of comment
    }
-else 
-   if \scm & /ecm then 
-      ecm := &null                                    # icon style comment
+   else 
+      if \scm & /ecm then 
+         ecm := &null                                    # icon style comment
 
-ccom := ''
-ccom ++:= cset(\scm[1])
-ccom ++:= cset(\ecm[1])
+   ccom := ''
+   ccom ++:= cset(\scm[1])
+   ccom ++:= cset(\ecm[1])
 
-pcount := 0                                           # "parenthesis" counter
-spos   := i1                                          # scanning position
+   pcount := 0                                           # "parenthesis" counter
+   spos   := i1                                          # scanning position
 
-ca := cstop ++ copen ++ cclose ++ cquote ++ cescape ++ ccom # chars to check
+   ca := cstop ++ copen ++ cclose ++ cquote ++ cescape ++ ccom # chars to check
 
-while sp := s[ spos := upto( ca, s, spos, i2 ) ] do { 
+   while sp := s[ spos := upto( ca, s, spos, i2 ) ] do { 
       
       if /quote & ( pcount = 0 ) & /comnt & any( cstop, sp) then 
          suspend spos
@@ -447,37 +425,37 @@ while sp := s[ spos := upto( ca, s, spos, i2 ) ] do {
          case c of {
             
             copen  : if /quote & /comnt then 
-                        pcount +:= 1
+               pcount +:= 1
             
             cclose : if /quote & /comnt then 
-                        if ( pcount -:= 1 ) < 0 then
-                           fail
+               if ( pcount -:= 1 ) < 0 then
+                  fail
             
             cquote : if /comnt then
-                        if /quote then 
-                           quote := sp 
-                        else 
-                           if quote == sp then quote := &null
+               if /quote then 
+                  quote := sp 
+               else 
+                  if quote == sp then quote := &null
             
             cescape: if \quote then 
-                        spos +:= 1
+               spos +:= 1
 
             ccom   : if /quote then 
-                        if /comnt then {
-                           if comnt := ( s[ spos +: *scm ] == scm ) then
-                              spos +:= *scm - 1
-                           }
-                        else
-                           if \ecm == s[ spos +: *ecm ] then {
-                              spos +:= *ecm - 1
-                              comnt := &null
-                              }
-                              
-            }
+               if /comnt then {
+                  if comnt := ( s[ spos +: *scm ] == scm ) then
+                     spos +:= *scm - 1
+               }
+               else
+                  if \ecm == s[ spos +: *ecm ] then {
+                     spos +:= *ecm - 1
+                     comnt := &null
+                  }
+            
+         }
       
       spos +:= 1
       
-      }
+   }
 
 end
 
@@ -509,61 +487,75 @@ end
 # matching items in list
 procedure limatch(l,i)			
 
-local s, f, p
+   local s, f, p
 
-p := &pos
-every ( s := !l ) | ( return p ) do
-{
-   if /f := 1 then tab(find(s))        #  startup - position at first string
-   tab(match(s)) | fail                #  fail if not matched
-   tab(many(i) | &pos)                 #  skip ignore chars. if any
-   p := &pos                           #  remember last position
-}
+   p := &pos
+   every ( s := !l ) | ( return p ) do
+   {
+      if /f := 1 then tab(find(s))        #  startup - position at first string
+      tab(match(s)) | fail                #  fail if not matched
+      tab(many(i) | &pos)                 #  skip ignore chars. if any
+      p := &pos                           #  remember last position
+   }
 end
 
 #
 # What is just ahead in the current scan?
 #
-procedure coming_up(i, j)
+procedure ahead(i, j)
    /j := 0
-   return &subject[&pos+j +: i]
+   return .&subject[&pos+j +: i]
 end
 
 #
-# Like many, but succeeds with &pos if zero matching chars. Many needs
+# Like many, but succeeds with the position i if zero matching chars. Many needs
 # one or more to succeed.
 #
-procedure many0(c)
-   return many(c) | .&pos
+procedure many0(c, s, i, j)
+   local a
+   a := begin_analysis(s, i, j) | fail
+   return many(c, a.s, a.i, a.j) | .a.i
 end
 
 #
-# Like any, but succeeds with &pos if there is no matching char.
+# Like any, but succeeds with the position i if there is no matching char.
 #
-procedure any0(c)
-   return any(c) | .&pos
+procedure any0(c, s, i, j)
+   local a
+   a := begin_analysis(s, i, j) | fail
+   return any(c, a.s, a.i, a.j) | .a.i
 end
 
 #
-# Like match, but succeeds with &pos if there is no matching string.
+# Like match, but succeeds with the position i if there is no matching string.
 #
-procedure match0(s)
-   return match(s) | .&pos
+procedure match0(s1, s2, i, j)
+   local a
+   a := begin_analysis(s2, i, j) | fail
+   return match(s1, a.s, a.i, a.j) | .a.i
 end
 
 #
 # Search for a string using find and suspend the position after the string,
 # if found.
 #
-procedure past(s)
-   suspend find(s) + *s
+procedure past(s1, s2, i, j)
+   local a
+   # Note that the usual conversions are necessary, since they potentially
+   # change the type of s1 (and hence *s1).
+   a := begin_analysis(s2, i, j) | fail
+   s2 := a.s; i := a.i; j := a.j
+   s1 := same_type(s1, s2)
+   suspend find(s1, s2, i, j) + *s1
 end
 
 #
 # Like many, but limit number of characters matched to {max}.
 #
-procedure max_many(c, max)
-   return min(many(c), &pos + max)
+procedure max_many(c, max, s, i, j)
+   local a
+   a := begin_analysis(s, i, j) | fail
+   return many(c, a.s, a.i, min(a.j, a.i + max))
 end
 
 # Like `util.save_vars{..., &subject|&pos}`.
@@ -775,4 +767,111 @@ procedure rev(e)
    while @e do
       push(r, &pos)
    suspend tab(!r)
+end
+
+#
+# Expand the given cset so that all letters appear in the result both in lowercase
+# and uppercase, eg csetcl('Cat123') -> 'catCAT123'.  The result can then be used,
+# for example to do a caseless upto search.
+#
+procedure clcset(c)
+   local ls
+   ls := map(string(c ** &letters))
+   return c ++ cset(ls || map(ls, &lcase, &ucase))
+end
+
+record StringAnalysis(s, i, j)
+
+#
+# This procedure can be used to normalize the three parameters
+# commonly given to string analysis functions (like upto, find etc).
+# The result is a `StringAnalysis` record with the normalized values
+# of s, i and j, or failure if i and/or j are out of bounds.
+#
+procedure begin_analysis(s, i, j)
+   if /s := &subject then
+      (/i := &pos) | (i := match("", s, i)) | fail
+   else {
+      s := text(s) | runerr(129, s)
+      (/i := 1) | (i := match("", s, i)) | fail
+   }
+   (/j := *s + 1) | (j := match("", s, j)) | fail
+   if i > j then
+      i :=: j
+   return StringAnalysis(s, i, j)
+end
+
+#
+# Convert and return s1 so that it has the same type as s2, which is
+# assumed to be string or ucs, giving a runerr if conversion is not
+# possible.
+#
+procedure same_type(s1, s2)
+   return if type(s2) == "string" then
+      string(s1) | runerr(103, s1)
+   else
+      ucs(s1) | runerr(128, s1)
+end
+
+#
+# Caseless version of match()
+#
+procedure clmatch(s1, s2, i, j)
+   local a
+   a := begin_analysis(s2, i, j) | fail
+   s2 := a.s; i := a.i; j := a.j
+   s1 := same_type(s1, s2)
+   if map(s1) == map(s2[i:j][1+:*s1]) then
+      return i + *s1
+end
+
+#
+# Caseless version of find()
+#
+procedure clfind(s1, s2, i, j)
+   local c, t, a
+   a := begin_analysis(s2, i, j) | fail
+   s2 := a.s; i := a.i; j := a.j
+   s1 := same_type(s1, s2)
+   # Special case if s1 empty
+   if *s1 = 0 then {
+      suspend i to j
+      fail
+   }
+   s1 := map(s1)
+   # Cset of first char in upper and lower case; eg if searching for
+   # "cat", c = 'cC'.
+   c := cset(s1[1] || map(s1[1], &lcase, &ucase))
+   every t := upto(c, s2, i, j) do {
+      if t > j - *s1 then
+         break
+      if s1 == map(s2[t+:*s1]) then
+         suspend t
+   }
+end
+
+#
+# Search backwards in s[i:j], for chars in cset c, beginning at the
+# end.  For each one found, the position just to the right is
+# suspended.
+#
+# For example - 
+#    backto('aeiou', "quick brown fox") -> {15,10,4,3} 
+#
+# Note that backto(c, s, i, j) - 1 should give the same sequence of
+# results as upto(c, s, i, j), but in reverse order, so upto applied
+# to the above example gives {2,3,9,14}.
+#
+# Defaults: as for upto
+#
+procedure backto(c, s, i, j)
+   local a
+   c := cset(c) | runerr(104, c)
+   a := begin_analysis(s, i, j) | fail
+   s := a.s; i := a.i; j := a.j
+   while j > i do {
+      if any(c, s, j - 1) then
+         suspend j
+      j -:= 1
+   }
 end

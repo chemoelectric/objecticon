@@ -51,7 +51,7 @@ package ipl.stripunb
 
 import
    io(read),
-   ipl.scan(slashbal)
+   ipl.scan(begin_analysis,slashbal)
 
 global last_k
 record outstr(on, off)
@@ -62,7 +62,7 @@ procedure stripunb(c1,c2,s,i,j,t)
     # NB:  Stripunb() returns a string - not an integer (like find,
     # upto).
 
-    local lookinfor, bothcs, s2, k,  c, compl
+    local lookinfor, bothcs, s2, k,  c, compl, a
     #global last_k
     initial last_k := list()
 
@@ -72,17 +72,8 @@ procedure stripunb(c1,c2,s,i,j,t)
     lookinfor := c1 ++ '\\'
     c := &cset -- c1 -- c2
 
-    /s := &subject
-    if \i then {
-	if i < 1 then
-	    i := *s + (i+1)
-    }
-    else i := \&pos | 1
-    if \j then {
-	if j < 1 then
-	    j := *s + (j+1)
-    }
-    else j := *s + 1
+    a := begin_analysis(s, i, j) | fail
+    s := a.s; i := a.i; j := a.j
 
     s2 := ""
     s ? {
