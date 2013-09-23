@@ -60,28 +60,28 @@ $ifdef _PLAN9
    # the returned objects; by default it is `ListEntry`.
    #
    public static list(s, f)
-      return list1(s, 1)
+      return list1(s, f, 1)
    end
 
    #
    # Like `list`, but the filenames are converted to `ucs`; any that
    # can't be converted are skipped.
    #
-   public static ucs_list(s)
-      return list1(s, ucs)
+   public static ucs_list(s, f)
+      return list1(s, f, ucs)
    end
 
-   private static list1(s, f)
+   private static list1(s, f, g)
       local l, t, e, st
       l := []
       st := stat(s) | fail
-      put(l, ListEntry(".", st, st))
+      put(l, f(g("."), st, st))
       st := stat(FilePath(s).child("..").str()) | fail
-      put(l, ListEntry("..", st, st))
+      put(l, f(g(".."), st, st))
       t := dir_read_impl(s) | fail
       every e := !t do {
          st := Stat!e
-         put(l, ListEntry(f(st.name), st, st))
+         put(l, f(g(st.name), st, st))
       }
       return l
    end
@@ -101,9 +101,13 @@ $ifdef _PLAN9
    public static native unmount(name, old)
 $else
    #
-   # Read the given directory returning a list of [name, {Stat}] pairs.
+   # Read the given directory returning a list of `ListEntry` objects,
+   # each containing the name, lstat and stat values for each entry.
    #
-   public static list(s)
+   # `f` is an optional parameter, providing an alternative constructor for
+   # the returned objects; by default it is `ListEntry`.
+   #
+   public static list(s, f)
       local p
       /f := ListEntry
       return use {
