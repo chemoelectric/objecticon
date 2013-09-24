@@ -3492,7 +3492,9 @@ class Browser(ComponentScrollArea)
       c := copy(context)
       c.form := Form(self, id, url, m, t)
       put(forms, c.form)
+      put_new_row(p, c)
       traverse(e, p, c)
+      put_new_row(p, c)
       c.form.resolve_labels()
    end
 
@@ -3983,7 +3985,7 @@ class Browser(ComponentScrollArea)
    end
 
    # Strip optional start and end newlines from the child content
-   private strip_newlines(e)
+   private static strip_newlines(e)
       local s
       text(e.children[1]) ? {
          if =(u"\n" | u"\r\n") then {

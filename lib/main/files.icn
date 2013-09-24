@@ -73,6 +73,7 @@ $ifdef _PLAN9
 
    private static list1(s, f, g)
       local l, t, e, st
+      /f := ListEntry
       l := []
       st := stat(s) | fail
       put(l, f(g("."), st, st))
@@ -109,7 +110,6 @@ $else
    #
    public static list(s, f)
       local p
-      /f := ListEntry
       return use {
          p := DirStream(s),
          list1(FilePath(s), p, f, 1)
@@ -122,7 +122,6 @@ $else
    #
    public static ucs_list(s, f)
       local p
-      /f := ListEntry
       return use {
          p := DirStream(s),
          list1(FilePath(s), p, f, ucs)
@@ -131,6 +130,7 @@ $else
 
    private static list1(path, p, f, g)
       local l, s, cs, lst, st
+      /f := ListEntry
       l := []
       repeat {
          s := p.read_line() | fail
