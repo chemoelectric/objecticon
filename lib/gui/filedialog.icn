@@ -90,7 +90,12 @@ class FileDialog(Dialog)
       init_filters,
       res,                      # Resulting file path          
       message_label, 
-      existing_file_mode
+      existing_file_mode,
+      multiple_files_flag,
+      single_file_overlay_item,
+      multiple_files_overlay_item,
+      file_overlay,
+      file_label
 
    public static const
       WARN, IGNORE, REQUIRE, DISALLOW
@@ -104,6 +109,11 @@ class FileDialog(Dialog)
 
    public set_existing_file_mode(s)
       existing_file_mode := s
+      return self
+   end
+
+   public set_multiple_files(s)
+      self.multiple_files_flag := check_flag(s)
       return self
    end
 
@@ -122,15 +132,22 @@ class FileDialog(Dialog)
       /init_files := []
       /init_filters := [u"*"]
       dir.set_selection_list(get_favourites_directories()).set_selection(1)
-      file.set_selection_list(ucs_list(init_files)).set_selection(1)
       filter.set_selection_list(ucs_list(init_filters)).set_selection(1)
-
+      if /multiple_files_flag then {
+         file.set_selection_list(ucs_list(init_files)).set_selection(1)
+         flist.set_select_mode(Select.ONE)
+         file_overlay.set_which_one(single_file_overlay_item)
+      } else {
+         flist.set_select_mode(Select.MANY)
+         file_overlay.set_which_one(multiple_files_overlay_item)
+      }
       pos_table := table()
       res := &null
    end
 
    public init_dialog()
-      set_focus(file.find_focus())
+      if /multiple_files_flag then
+         set_focus(file.find_focus())
       win.set_min_size(win.get_width(), win.get_height())
       goto_dir(dir.get_contents())
    end
@@ -138,6 +155,7 @@ class FileDialog(Dialog)
    public check_existing()
       local f
       clear_msg()
+      /multiple_files_flag | fail
       f := get_current_selection().str() | fail
       if Files.is_directory(f) then
          msg("Directory")
@@ -152,41 +170,60 @@ class FileDialog(Dialog)
 
    public synch_file()
       local i
-      if i := Positions{(!flist.contents).name, file.get_contents()} then {
-         flist.
-            set_cursor(i).
-            set_selections([i]).
-            center_line(i)
-      } else
+      if /multiple_files_flag then {
+         if i := Positions{(!flist.contents).name, file.get_contents()} then {
+            flist.
+               set_cursor(i).
+               set_selections([i]).
+               center_line(i)
+         } else
+            flist.clear_selections()
+      } else {
          flist.clear_selections()
+         update_file_label()
+      }
    end
 
    public end_dialog()
    end
 
    #
-   # Get the directory part of the result
+   # Get the directory part of the result.  In multiple files mode,
+   # this returns the directory which is common to each of the
+   # selected files.  The result is always a string, never ucs.
    #
    public get_directory()
-      return (\self.res).parent().str()
+      \self.res | fail
+      return if /multiple_files_flag then
+         res.parent().str()
+      else
+         loaded_dir_path.str()
    end
 
    #
-   # Get the file part of the result; the result is always a string, never ucs.
+   # Get the file part of the result; the result is always a string,
+   # never ucs. Not applicable in multiple files mode.
    #
    public get_file()
       return string((\self.res).get(-1))
    end
 
    #
-   # Get the result, (will fail if cancel was pressed).
+   # Get the result, (will fail if cancel was pressed).  This will
+   # return a non-empty list in multiple files mode.
    #
    public get_result()
-      return (\self.res).str()
+      \self.res | fail
+      return if /multiple_files_flag then
+         res.str()
+      else
+         ipl.pdco.List{(!res).str()}
    end
 
    #
-   # Get the result, as a `FilePath` (will fail if cancel was pressed).
+   # Get the result, as a `FilePath` (will fail if cancel was
+   # pressed).  This will return a non-empty list of `FilePath`s in
+   # multiple files mode.
    #
    public get_result_path()
       return \self.res
@@ -251,6 +288,10 @@ class FileDialog(Dialog)
       return self
    end
 
+   #
+   # Get the current file selected based on the file and dir fields;
+   # do not call in multiple file selection mode.
+   #
    public get_current_selection()
       local s, f
       s := file.get_contents()
@@ -263,31 +304,40 @@ class FileDialog(Dialog)
    end
 
    public on_okay_button()
-      local f, fs
-      f := get_current_selection() | {
-         msg("Please enter a filename")
-         fail
-      }
-      fs := f.str()
-      if Files.is_directory(fs) then {
-         msg("Selected file is a directory")
-         fail
-      }
-      case existing_file_mode of {
-         REQUIRE: {
-            if not Files.access(fs) then {
-               msg("Selected file doesn't exist")
-               fail
+      local f, fs, sel
+      if /multiple_files_flag then {
+         f := get_current_selection() | {
+            msg("Please enter a filename")
+            fail
+         }
+         fs := f.str()
+         if Files.is_directory(fs) then {
+            msg("Selected file is a directory")
+            fail
+         }
+         case existing_file_mode of {
+            REQUIRE: {
+               if not Files.access(fs) then {
+                  msg("Selected file doesn't exist")
+                  fail
+               }
+            }
+            DISALLOW: {
+               if Files.access(fs) then {
+                  msg("Selected file already exists")
+                  fail
+               }
             }
          }
-         DISALLOW: {
-            if Files.access(fs) then {
-               msg("Selected file already exists")
-               fail
-            }
+         self.res := f
+      } else {
+         sel := flist.object_get_selections()
+         if *sel = 0 then {
+            msg("Please select a file")
+            fail
          }
+         self.res := ipl.pdco.List{loaded_dir_path.child((!sel).name)}
       }
-      self.res := f
       self.dispose()
    end
 
@@ -310,13 +360,25 @@ class FileDialog(Dialog)
       goto_dir(loaded_dir_path.child(dlist.object_get_selections()[1].name).str())
    end
 
+   public update_file_label()
+      local n
+      file_label.set_label(case n := *flist.get_selections() of {
+         0:  "No files selected"
+         1:  "One file selected"
+         default:  n || " files selected"
+      })
+   end
+
    public on_flist()
       #
       # Clicked in file list; set TextField
       #
       clear_msg()
       dir.set_contents(loaded_dir_path.liberal_ucs())
-      file.set_contents(flist.object_get_selections()[1].name)
+      if /multiple_files_flag then
+         file.set_contents(flist.object_get_selections()[1].name)
+      else
+         update_file_label()
       check_existing()
    end
 
@@ -622,7 +684,7 @@ class FileDialog(Dialog)
    end
 
    private setup()
-      local paint_2, paint_14, paint_45, layout_7, refresh_menu_item, paint_11, paint_37, paint_42, layout_4, split_content_1, split_content_2, panel_4, paint_29, paint_9, split_1, paint_31, paint_3, paint_15, paint_46, layout_8, new_dir_menu_item, paint_12, paint_43, paint_35, panel_2, favourite_dirs_menu_item, paint_27, paint_32, paint_47, layout_9, paint_1, paint_13, paint_44, layout_6, paint_10, paint_36, layout_3, panel_3, paint_28, paint, paint_30
+      local paint_2, paint_14, paint_45, layout_11, layout_7, refresh_menu_item, paint_11, paint_37, paint_42, layout_4, split_content_1, split_content_2, panel_4, paint_29, paint_9, split_1, paint_31, paint_3, paint_15, paint_46, layout_8, new_dir_menu_item, paint_12, paint_43, paint_35, panel_2, favourite_dirs_menu_item, paint_27, paint_32, paint_47, layout_9, paint_1, paint_13, paint_44, layout_10, layout_6, paint_10, paint_36, layout_3, panel_3, paint_28, paint, paint_30, paint_48
       self.set_label("Select file")
       self.set_resize(&yes)
       self.set_size(700, 500)
@@ -822,6 +884,9 @@ class FileDialog(Dialog)
          connect(self.on_filter, Event.ACTION).
          connect(self.on_filter, Event.CONTENT_CHANGED).
          set_selection_list([""])
+      layout_10 := GridLayout().
+         set_doi(0).
+         set_extra("cells")
       paint_37 := TextPaint("File")
       file := EditList().
          set_size("150").
@@ -834,6 +899,32 @@ class FileDialog(Dialog)
          connect(self.on_file, Event.ACTION).
          connect(self.on_file_content, Event.CONTENT_CHANGED).
          set_selection_list([""])
+      single_file_overlay_item := OverlayItem().
+         set_layout(layout_10).
+         add(file)
+      layout_11 := GridLayout().
+         set_doi(0).
+         set_extra("cells")
+      paint_48 := TextPaint("Label")
+      file_label := Label().
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_paint(paint_48)
+      multiple_files_overlay_item := OverlayItem().
+         set_layout(layout_11).
+         add(file_label)
+      file_overlay := OverlaySet().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0).
+         add(single_file_overlay_item).
+         add(multiple_files_overlay_item).
+         set_which_one(single_file_overlay_item)
       layout_3 := GridLayout().
          set_doi(0).
          set_extra("cells")
@@ -844,7 +935,7 @@ class FileDialog(Dialog)
          set_constraint("x_weight", 1.0).
          set_layout(layout_3).
          add(filter).
-         add(file)
+         add(file_overlay)
       self.add(panel_2)
       paint_9 := TextPaint("Okay")
       okay_button := TextButton().
