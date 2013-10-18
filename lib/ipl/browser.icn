@@ -4518,7 +4518,7 @@ class Browser(ComponentScrollArea)
    private traverse_link(e, p, context)
       if map(e.get_attribute(u"REL")) == (u"icon" | u"shortcut icon") then {
          # Favour png file if available
-         if /page_favicon_url | (e.get_attribute(u"TYPE") == u"image/png") then
+         if /page_favicon_url | (map(e.get_attribute(u"TYPE")) == u"image/png") then
             page_favicon_url := mk_link(e.get_attribute(u"HREF"))
       }
    end

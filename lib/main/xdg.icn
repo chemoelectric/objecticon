@@ -359,14 +359,14 @@ final abstract class Xdg()
    # Generate the generic icons defined for the given mime type.
    #
    public static gen_generic_icons(mt)
-      suspend .!member(GENERIC_ICONS, mt)
+      suspend .!member(GENERIC_ICONS, map(mt))
    end
 
    #
    # Generate the icons defined for the given mime type.
    #
    public static gen_icons(mt)
-      suspend .!member(ICONS, mt)
+      suspend .!member(ICONS, map(mt))
    end
 
    #
@@ -375,7 +375,7 @@ final abstract class Xdg()
    # and then the generic icons.
    #
    public static gen_all_icons(mt)
-      suspend map(mt, "/", "-") | .!member(ICONS | GENERIC_ICONS, mt)
+      suspend map(mt, "/" || &ucase, "-" || &lcase) | .!member(ICONS | GENERIC_ICONS, map(mt))
    end
 
    #
@@ -387,24 +387,26 @@ final abstract class Xdg()
       local l
       if not(l := member(MIME_ALTERNATIVES, mt)) then {
          l := []
-         alternative_mime_types1(mt, l)
+         alternative_mime_types1(mt, l, set())
          insert(MIME_ALTERNATIVES, mt, l)
       }
       suspend !.l
    end
 
-   private static alternative_mime_types1(mt, l)
-      local sub
-      if keyof(l, mt) then
+   private static alternative_mime_types1(mt, l, seen)
+      local sub, mmt
+      mmt := map(mt)
+      if member(seen, mmt) then
          fail
       put(l, mt)
-      every alternative_mime_types1(!member(MIME_ALIASES, mt), l)
-      if sub := member(MIME_SUBCLASSES, mt) then
-         every alternative_mime_types1(!sub, l)
-      else if match("text/", mt) then
-         alternative_mime_types1("text/plain", l)
-      else if not match("inode/", mt) then
-         alternative_mime_types1("application/octet-stream", l)
+      insert(seen, mmt)
+      every alternative_mime_types1(!member(MIME_ALIASES, mmt), l, seen)
+      if sub := member(MIME_SUBCLASSES, mmt) then
+         every alternative_mime_types1(!sub, l, seen)
+      else if match("text/", mmt) then
+         alternative_mime_types1("text/plain", l, seen)
+      else if not match("inode/", mmt) then
+         alternative_mime_types1("application/octet-stream", l, seen)
    end
 
    private static cache_icon(f, size)
@@ -436,7 +438,7 @@ final abstract class Xdg()
       every d := gen_base_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "generic-icons").str()) then {
             every l := separate_lines(s) do l ? {
-               if k := tab(upto(':')) &
+               if k := map(tab(upto(':'))) &
                   move(1) &
                   v := tab(0) then
                {
@@ -454,7 +456,7 @@ final abstract class Xdg()
       every d := gen_base_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "icons").str()) then {
             every l := separate_lines(s) do l ? {
-               if k := tab(upto(':')) &
+               if k := map(tab(upto(':'))) &
                   move(1) &
                   v := tab(0) then
                {
@@ -472,7 +474,7 @@ final abstract class Xdg()
       every d := gen_base_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "aliases").str()) then {
             every l := separate_lines(s) do l ? {
-               if k := tab(upto(' ')) &
+               if k := map(tab(upto(' '))) &
                   move(1) &
                   v := tab(0) then
                {
@@ -490,7 +492,7 @@ final abstract class Xdg()
       every d := gen_base_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "subclasses").str()) then {
             every l := separate_lines(s) do l ? {
-               if k := tab(upto(' ')) &
+               if k := map(tab(upto(' '))) &
                   move(1) &
                   v := tab(0) then
                {
@@ -773,7 +775,7 @@ final abstract class Xdg()
    end
 
    private static gen_desktop_mime_types(dm)
-      suspend "" ~== string(separate(member(member(dm, u"Desktop Entry"), u"MimeType"), ';'))
+      suspend "" ~== map(string(separate(member(member(dm, u"Desktop Entry"), u"MimeType"), ';')))
    end
 
    private static scan_application_dir(p, prefix, t, u)
@@ -876,7 +878,7 @@ final abstract class Xdg()
    # Given a mime type (string), generate the corresponding `DesktopEntry` objects, in preference order.
    #
    public static gen_desktop_entries(mt)
-      suspend .!member(DESKTOP_ENTRIES, mt)
+      suspend .!member(DESKTOP_ENTRIES, map(mt))
    end
 end
 
