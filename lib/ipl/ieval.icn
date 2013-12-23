@@ -4,7 +4,7 @@
 
 package ipl.ieval
 
-import io, gui, lang, ipl.colmize, parser, eval, util, ipl.pdco, ipl.sort, ipl.termdialog, ipl.lists
+import io, gui, lang, xdg, ipl.colmize, parser, eval, util, ipl.pdco, ipl.sort, ipl.termdialog, ipl.lists
 
 $load IEVAL_LOGO "rpp.IEVAL_LOGO.png"
 
@@ -327,7 +327,7 @@ class Ieval(MinimalObjectOutput)
       if \opts["s"] then
          do_stdin()
       else {
-         hfile := FilePath(Files.get_home()).child(".ieval_history").str()
+         hfile := FilePath(Xdg.ensure_data_home()).child("ieval").str() | stop("Couldn't access data dir: ", &why)
          history := decode(Files.file_to_string(hfile)) | []
          if \opts["g"] then
             do_gui()
@@ -357,7 +357,7 @@ class Ieval(MinimalObjectOutput)
       consts["oos"] := oos := ObjectOutputStream(output).set_indent(3)
       consts["out"] := output
 
-      f := FilePath(Files.get_home()).child(".ieval").str()
+      f := FilePath(Xdg.ensure_config_home()).child("ieval").str() | stop("Couldn't access config dir: ", &why)
       if Files.access(f) then
          push(files, f)
       every f := !files do {

@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, gui, io, graphics, ipl.pdco, util, ipl.filegui
+import lang, gui, io, graphics, ipl.pdco, util, xdg, ipl.filegui
 
 $include "version.icn"
 
@@ -157,7 +157,8 @@ class Main(Dialog)
       component_tree_dialog,
       plugins,
       clipboard_selection_owner,
-      clipboard
+      clipboard,
+      config_file_name
 
    #
    # Clear undo list
@@ -999,28 +1000,22 @@ class Main(Dialog)
       every dump(obj.gen_cos(), level + 1)
    end
 
-   public get_config_file_name()
-      return FilePath(Files.get_home()).child(".ivibrc2").str()
-   end
-
    public read_config_file()
-      local f, n
+      local f
       self.prefs := Prefs()
-      n := get_config_file_name()
-      Files.access(n) | return
+      Files.access(config_file_name) | return
       return use {
-         f := io.open(n),
+         f := io.open(config_file_name),
          self.prefs := lang.decode(f.read())
-      } | alert_error(self, "Problem reading config file " || n || ": " || &why)
+      } | alert_error(self, "Problem reading config file " || config_file_name || ": " || &why)
    end
 
    public save_config_file()
-      local f, n
-      n := get_config_file_name()
+      local f
       return use {
-         f := io.open(n, "w"),
+         f := io.open(config_file_name, "w"),
          f.write(lang.encode(self.prefs))
-      } | alert_error(self, "Couldn't save to config file " || n || ": " || &why)
+      } | alert_error(self, "Couldn't save to config file " || config_file_name || ": " || &why)
    end
 
    public synch_named_images()
@@ -1061,9 +1056,9 @@ class Main(Dialog)
          order_sub_menu, f, ce, plugin, pp, fn, i, fp, ext
 
       cast(self,Dialog).new()
+      config_file_name := FilePath(Xdg.ensure_data_home()).child("ivib").str() | stop("Couldn't access data dir: ", &why)
       set_layout(GridLayout().set_doi(0).set_dii(0))
       connect(self.dialog_event, Event.ICON)
-
       self.clipboard_selection_owner := IvibClipboardSelectionOwner(self)
 
       mb := MenuBar().set_constraint("eol", &yes).set_constraint("x_fill", &yes)

@@ -123,6 +123,10 @@ if (!self_svg)
     runerr(152, self);
 #enddef
 
+#define CheckSurfaceStatus(obj) do {if (cairo_surface_status(obj) == CAIRO_STATUS_NO_MEMORY) fatalerr(309,NULL);} while(0)
+#define CheckPatternStatus(obj) do {if (cairo_pattern_status(obj) == CAIRO_STATUS_NO_MEMORY) fatalerr(309,NULL);} while(0)
+#define CheckContextStatus(obj) do {if (cairo_status(obj) == CAIRO_STATUS_NO_MEMORY) fatalerr(309,NULL);} while(0)
+
 static stringint drawops[] = {
    { 0, 12},
    {"atop",  CAIRO_OPERATOR_ATOP},
@@ -347,8 +351,9 @@ static void clone_wc(cairo_t *cr)
                                                                 DefaultScreenOfDisplay(wd->display),
                                                                 wd->pixfmt,
                                                                 pic->width, pic->height);
-           
+        CheckSurfaceStatus(surface);
         pattern = cairo_pattern_create_for_surface(surface);
+        CheckPatternStatus(pattern);
         cairo_pattern_set_user_data(pattern, &pickey, pic, destroypic);
         cairo_pattern_set_extend(pattern, CAIRO_EXTEND_REPEAT);
         cairo_set_source(cr, pattern);
@@ -390,6 +395,7 @@ function cairo_Context_new_impl(sur)
        {
        SurfaceStaticParam(sur, surface);
        cr = cairo_create(surface);
+       CheckContextStatus(cr);
        layout = pango_cairo_create_layout(cr);
        cairo_set_user_data(cr, &contextkey, layout, destroylayout);
        clone_wc(cr);
@@ -1321,6 +1327,7 @@ function cairo_LinearGradient_new_impl(x0, y0, x1, y1)
     body {
        cairo_pattern_t *pattern;
        pattern = cairo_pattern_create_linear(x0, y0, x1, y1);
+       CheckPatternStatus(pattern);
        return C_integer (word) pattern;
     }
 end
@@ -1341,6 +1348,7 @@ function cairo_RadialGradient_new_impl(cx0, cy0, r0, cx1, cy1, r1)
     body {
        cairo_pattern_t *pattern;
        pattern = cairo_pattern_create_radial(cx0, cy0, r0, cx1, cy1, r1);
+       CheckPatternStatus(pattern);
        return C_integer (word) pattern;
     }
 end
@@ -1430,6 +1438,7 @@ function cairo_WindowSurface_new_impl(win)
                                                                wd->pixfmt,
                                                                ws->pixwidth, ws->pixheight);
 
+       CheckSurfaceStatus(surface);
        w2 = alcwbinding(wd);
        w2->window = linkwindow(ws);
        w2->context = linkcontext(wc);
@@ -1458,6 +1467,7 @@ function cairo_SVGSurface_new_impl(filename, width, height)
     body {
        cairo_surface_t *surface;
        surface = cairo_svg_surface_create(buffstr(&filename), width, height);
+       CheckSurfaceStatus(surface);
        return C_integer (word) surface;
     }
 end
@@ -1472,6 +1482,7 @@ function cairo_PostScriptSurface_new_impl(filename, width, height)
     body {
        cairo_surface_t *surface;
        surface = cairo_ps_surface_create(buffstr(&filename), width, height);
+       CheckSurfaceStatus(surface);
        return C_integer (word) surface;
     }
 end
@@ -1486,6 +1497,7 @@ function cairo_PDFSurface_new_impl(filename, width, height)
     body {
        cairo_surface_t *surface;
        surface = cairo_pdf_surface_create(buffstr(&filename), width, height);
+       CheckSurfaceStatus(surface);
        return C_integer (word) surface;
     }
 end
@@ -1495,6 +1507,7 @@ function cairo_SurfacePattern_new_impl(sur)
        cairo_pattern_t *pattern;
        SurfaceStaticParam(sur, surface);
        pattern = cairo_pattern_create_for_surface(surface);
+       CheckPatternStatus(pattern);
        return C_integer (word) pattern;
     }
 end
@@ -1511,6 +1524,7 @@ function cairo_SolidPattern_new_impl(r, g, b, a)
     body {
        cairo_pattern_t *pattern;
        pattern = cairo_pattern_create_rgba(r, g, b, a);
+       CheckPatternStatus(pattern);
        return C_integer (word) pattern;
     }
 end
@@ -1532,6 +1546,7 @@ function cairo_RecordingSurface_new_impl(x, y, width, height)
                runerr(102, height);
            surface = cairo_recording_surface_create(CAIRO_CONTENT_COLOR_ALPHA, &r);
        }
+       CheckSurfaceStatus(surface);
        return C_integer (word) surface;
     }
 end
@@ -1604,6 +1619,7 @@ function cairo_ImageSurface_new_impl(pix)
                                                      CAIRO_FORMAT_ARGB32,
                                                      imd->width, imd->height,
                                                      4 * imd->width);
+       CheckSurfaceStatus(surface);
        cairo_surface_set_user_data(surface, &imdkey, linkimgdata(imd), destroyimd);
        }
        return C_integer (word) surface;

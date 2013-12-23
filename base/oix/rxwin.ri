@@ -4,8 +4,6 @@
 
 #define GetDepth(wd) DefaultDepth((wd)->display,DefaultScreen((wd)->display))
 #define GetVisual(wd) DefaultVisual((wd)->display,DefaultScreen((wd)->display))
-#define GetColormap(wd) DefaultColormap((wd)->display,DefaultScreen((wd)->display))
-#define GetGC(wd) DefaultGC((wd)->display,DefaultScreen((wd)->display))
 #define GetWidth(wd) DisplayWidth((wd)->display,DefaultScreen((wd)->display))
 #define GetHeight(wd) DisplayHeight((wd)->display,DefaultScreen((wd)->display))
 #define GetRoot(wd) DefaultRootWindow((wd)->display)

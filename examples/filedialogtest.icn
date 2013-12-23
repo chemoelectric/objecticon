@@ -2,7 +2,7 @@ import gui,io,ipl.options,lang
 
 procedure main(a)
    local d,opts
-   opts := options(a, "-we! -re! -de! -l! -k!")
+   opts := options(a, "-we! -re! -de! -l! -k! -m!")
    d :=  FileDialog().
       set_label("A File Dialog").
       set_filters(["*","*.icn","*.c","*.txt"]).
@@ -18,14 +18,18 @@ procedure main(a)
    if \opts["de"] then
       d.set_existing_file_mode(FileDialog.DISALLOW)
 
+   if \opts["m"] then
+      d.set_multiple_files(&yes)
+
    d.set_path(a[1])
    repeat{
       d.show_modal()
-      write("d.get_result()=",image(d.get_result()) | "FAILED")
+      write("d.get_result()=",to_string(d.get_result()) | "FAILED")
       write("d.get_result_path()=",to_string(d.get_result_path()) | "FAILED")
       write("d.get_directory()=",image(d.get_directory()))
-      write("d.get_file()=",image(d.get_file()))
-      write("d.get_dir_path()=",to_string(d.get_dir_path()))
+      if /opts["m"] then {
+         write("d.get_file()=",image(d.get_file()))
+      }
       if /opts["l"] then break
       if \opts["k"] then
          d.keep_directory()
