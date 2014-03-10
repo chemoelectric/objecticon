@@ -845,9 +845,7 @@ class Dialog(Component)
 
       # Note that if we have popups, we use a popup for a tooltip, so that it won't appear
       # below the other popup window.
-      if Gui.style.allow_popup(self.tooltip_component) &
-         ((*\popups > 0) | not r.contains(self.tooltip_component)) then
-      {
+      if ((*\popups > 0) | not r.contains(self.tooltip_component)) then {
          # Use screen dimensions for calculations.
          r := rs
          use_popup_win := 1

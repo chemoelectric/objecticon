@@ -146,12 +146,6 @@ class Style()
    public polish(obj)
    end
 
-   public allow_popup(obj)
-$ifdef _X_WINDOW_SYSTEM
-      return
-$endif
-   end
-
    public distance2ticker_rate(d)
       local r
       r := 200 - 6*d
