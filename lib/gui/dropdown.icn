@@ -61,17 +61,10 @@ abstract class DropDown(Component, MenuMode)
       win_spc_left := self.x - r.x
       win_spc_right := r.x + r.w - self.x
 
-      if Gui.style.allow_popup(self) then {
-         # Space available for popup limited by screen size
-         spc_above := self.y - rs.y
-         spc_below := rs.y + rs.h - self.y - self.h
-         spc_right := rs.x + rs.w - self.x
-      } else {
-         # Space available limited by window size (and screen size, if window is off screen)
-         spc_above := win_spc_above
-         spc_below := win_spc_below
-         spc_right := win_spc_right
-      }
+      # Space available for popup limited by screen size
+      spc_above := self.y - rs.y
+      spc_below := rs.y + rs.h - self.y - self.h
+      spc_right := rs.x + rs.w - self.x
 
       self.popup := create_popup().
          set_all_wattribs(self.get_effective_wattribs()).
@@ -110,7 +103,7 @@ abstract class DropDown(Component, MenuMode)
       }
       self.parent_dialog.enter_menu_mode(self)
 
-      if Gui.style.allow_popup(self) & \use_popup_win then {
+      if \use_popup_win then {
          # Remove popup from dialog and add to popup window.
          self.parent_dialog.remove(popup)
          d := if use_direction == Direction.DOWN then 
@@ -369,17 +362,10 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       win_spc_below := r.y + r.h - self.y - self.h
       win_spc_right := r.x + r.w - self.x
 
-      if Gui.style.allow_popup(self) then {
-         # Space available for popup limited by screen size
-         spc_above := self.y - rs.y
-         spc_below := rs.y + rs.h - self.y - self.h
-         spc_right := rs.x + rs.w - self.x
-      } else {
-         # Space available limited by window size (and screen size, if window is off screen)
-         spc_above := win_spc_above
-         spc_below := win_spc_below
-         spc_right := win_spc_right
-      }
+      # Space available for popup limited by screen size
+      spc_above := self.y - rs.y
+      spc_below := rs.y + rs.h - self.y - self.h
+      spc_right := rs.x + rs.w - self.x
 
       max_h := case self.direction of {
          Direction.UP: spc_above
@@ -435,7 +421,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
 
       self.parent_dialog.enter_menu_mode(self)
 
-      if Gui.style.allow_popup(self) & \use_popup_win then {
+      if \use_popup_win then {
          # Remove popup from dialog and use add to popup window.
          self.parent_dialog.remove(popup)
          d := if use_direction == Direction.DOWN then 

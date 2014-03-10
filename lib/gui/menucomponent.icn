@@ -378,10 +378,7 @@ abstract class MenuComponent(Rect,Connectable)
       # Note the first test that we must use a popup for the menu if
       # the parent's menu is a popup; otherwise it may appear below
       # one of the parent popups.
-      if Gui.style.allow_popup(self) &
-         (\ (\parent).temp_win.parent_dialog.popup_manager |
-          not r.contains(self)) then
-      {
+      if \ (\parent).temp_win.parent_dialog.popup_manager | not r.contains(self) then {
          # Use screen dimensions for calculations.
          r := rs
          use_popup_win := 1
