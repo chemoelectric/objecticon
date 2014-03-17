@@ -32,7 +32,7 @@ import
    util(Math)
 
 procedure glabels(min, max, ntick)
-   local d, graphmin, graphmax, nfrac, llist, x,  range
+   local d, graphmin, graphmax, llist, x,  range
 
    if min = max then fail		# no can do
 
@@ -40,7 +40,6 @@ procedure glabels(min, max, ntick)
    d := nicenum(range / (ntick - 1), 1)
    graphmin := floor(min / d) * d
    graphmax := ceil(max / d) * d
-   nfrac := max(-floor(Math.log(d, 10)), 0)
    llist := []
    every x := graphmin to graphmax + 0.5 * d by d do
      put(llist, x)
