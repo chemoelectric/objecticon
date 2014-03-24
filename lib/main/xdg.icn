@@ -170,7 +170,7 @@ class DesktopEntry()
    # Exec command, returning a command string.
    #
    public subst_file(f, line)
-      local r, ch, s
+      local r, ch, s, fl
       s := \exec | fail
       if \line then
          s := \exec_line
@@ -180,13 +180,16 @@ class DesktopEntry()
          move(1) | break
          r ||:= case ch := string(move(1)) of {
             "%": u"%"
-            "i": \icon
+            "i": u"--icon " || \icon
             "c": name
             "k": ucs(source)
-            !"uUfF": f
+            !"uUfF": (fl := 1, \f)
             "L": \line
          }
       }
+      # If file not substituted, then add to the end.
+      if /fl then
+         r ||:= u" " || \f
       return r
    end
 
