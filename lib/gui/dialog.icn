@@ -594,7 +594,7 @@ class Dialog(Component)
    end
 
    private process_invoke_later(l)
-      l[2]!l[3]
+      @l[2]
    end
 
    public own_selection(selection, obj)
@@ -1207,19 +1207,17 @@ class Dialog(Component)
 
    #
    # This method adds an otherwise meaningless event to the window's event
-   # queue.  When that event comes to be processed, the given method in the
-   # given object is invoked, with the optional parameter.
+   # queue.  When that event comes to be processed, the given co-expression
+   # is activated.
    #
    # This is useful if you need to take some action from within an event
    # handler method, but that action has to take place after the current
    # event has completed processing.
    #
-   # @param proc    The procedure (or method pointer) to call
-   # @param param[] Optional parameters which will be passed to the
-   #                method.
+   # @param coex    The co-expression to activate
    #
-   public invoke_later(proc, param[])
-      self.win.pending(Window.INVOKE_LATER, proc, param)
+   public invoke_later(coex)
+      self.win.pending(Window.INVOKE_LATER, coex)
    end
 
    public set_label(v)

@@ -56,14 +56,7 @@ void wgetevent(wbp w, dptr res)
                 }
                 return;
             }
-            case INVOKELATER: {
-                /* Two items follow */
-                for (i = 0; i < 2; ++i) {
-                    wgetq(w, &qval);
-                    list_put(res, &qval);
-                }
-                return;
-            }
+            case INVOKELATER:
             case SELECTIONCLEAR: {
                 /* One item follows */
                 wgetq(w, &qval);
