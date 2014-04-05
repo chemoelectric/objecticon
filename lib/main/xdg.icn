@@ -875,7 +875,7 @@ final abstract class Xdg()
    # filename (without path), with the most suitable first.
    #
    public static gen_desktop_entries_for_file(file)
-      suspend gen_desktop_entries(alternative_mime_types(get_mime_type_for_file(file)))
+      suspend Unique{gen_desktop_entries(alternative_mime_types(get_mime_type_for_file(file)))}
    end
 
    #
