@@ -871,10 +871,11 @@ final abstract class Xdg()
    end
 
    #
-   # Return the `DesktopEntry` most suitbale for a particular filename (without path).
+   # Generate the `DesktopEntry` objects suitable for a particular
+   # filename (without path), with the most suitable first.
    #
-   public static get_desktop_entry_for_file(file)
-      return gen_desktop_entries(alternative_mime_types(get_mime_type_for_file(file)))
+   public static gen_desktop_entries_for_file(file)
+      suspend gen_desktop_entries(alternative_mime_types(get_mime_type_for_file(file)))
    end
 
    #
