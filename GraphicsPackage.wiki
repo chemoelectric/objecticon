@@ -96,11 +96,12 @@ An example entry, which makes the Icon mono family use the "Deja Vu Sans Mono" f
 A font specifier may specify a string to be interpreted directly by the platform's font system.  When using fontconfig, this is done by prepending the string "fc:" to the specifier (for example, "fc:Bitstream Vera Sans-11").  The result of the `get_font()` method will in fact always be in this platform-specific format.  Note that the setting of `OIFONTSIZE` has no effect on a font specified in this way.
 
 == Colours and Palettes ==
-Colour specifications and palettes follow the same format as in Icon, with an enhancement to allow specification of transluscent colours.  For a colour specified numerically, a fourth optional value can be added to specify the alpha value.  For a colour specified with a string name, a percentage may be appended to give the tranluscency.  For example :-
-{{
+Colour specifications and palettes follow the same format as in Icon, with an enhancement to allow specification of transluscent colours.  For a colour specified numerically, a fourth optional value can be added to specify the alpha value.  Also, fractions between 0 and 1 may be used instead of exact 16 bit integer values if desired.  For a colour specified with a string name, a percentage may be appended to give the tranluscency.  For example :-
+{{{
 "45874,0,0,52428"   # 70% red, 80% alpha
+"0.1,0.2,0.3,0.4"   # 10% red, 20% blue, 30% green 40% alpha
 "dark blue 50%"
-}}
+}}}
 
 == Images and the Pixels class ==
 Image data is represented using the `Pixels` class.  This is just a two-dimensional array of pixel data, stored in various formats.  Pixel data can come from a number of sources :-
