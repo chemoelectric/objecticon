@@ -37,6 +37,7 @@ static void handle_exposures(wsp ws, XExposeEvent *event);
 static void handle_mouse(wsp ws, XButtonEvent *event);
 static void handle_keypress(wsp ws, XKeyEvent *event);
 static void handle_crossing(wsp ws, XCrossingEvent *event);
+static char *getprogname(void);
 static void wmap(wbp w);
 static void synch_cursor(wsp ws);
 static void synch_cursors(wdp wd, struct wcursor *c);
@@ -899,6 +900,24 @@ int getpattern(wbp w, struct imgdata *imd)
 }
 
 /*
+ * Return an allocated string giving the part of the prog name after the last '/'.
+ */
+static char *getprogname()
+{
+    int n;
+    char *p, *s, *m;
+    p = StrLoc(kywd_prog);
+    s = p + StrLen(kywd_prog);
+    while (s > p && s[-1] != '/')
+        s--;				/* find tail of prog_name */
+    n = p + StrLen(kywd_prog) - s;          /* no. of chars to copy */
+    MemProtect(m = malloc(n + 1));
+    memcpy(m, s, n);
+    m[n] = 0;
+    return m;
+}
+
+/*
  *  Open the X window for a non-hidden icon window.
  */
 static void wmap(wbp w)
@@ -1040,25 +1059,16 @@ static void wmap(wbp w)
         clhints.res_name = s;
         m1 = 0;
     } else {
-        int n;
-        char *p;
-        p = StrLoc(kywd_prog);
-        s = p + StrLen(kywd_prog);
-        while (s > p && s[-1] != '/')
-            s--;				/* find tail of prog_name */
-        n = p + StrLen(kywd_prog) - s;          /* no. of chars to copy */
-        MemProtect(m1 = malloc(n + 1));
-        memcpy(m1, s, n);
-        m1[n] = 0;
+        m1 = getprogname();
         clhints.res_name = m1;
     }
     if ((s = getenv("OIRESOURCE_CLASS"))) {
         clhints.res_class = s;
         m2 = 0;
     } else {
-        /* Same as resource name, with first letter capitalized (see X(7) manpage). */
-        m2 = salloc(clhints.res_name);
-        m2[0] = toupper((unsigned char)clhints.res_name[0]);
+        /* Defaults to prog name, with first letter capitalized (see X(7) manpage). */
+        m2 = getprogname();
+        m2[0] = toupper((unsigned char)m2[0]);
         clhints.res_class = m2;
     }
     XSetClassHint(wd->display, ws->win, &clhints);
