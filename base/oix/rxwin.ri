@@ -837,8 +837,7 @@ int setwindowicon(wbp w, struct imgdata *imd)
 {
     wsp ws = w->window;
     int i, j, k;
-    if (ws->icondata)
-        free(ws->icondata);
+    free(ws->icondata);
     ws->iconlen = 2 + imd->width * imd->height;
     MemProtect(ws->icondata = malloc(ws->iconlen * sizeof(unsigned long)));
     k = 0;
@@ -906,8 +905,7 @@ static void wmap(wbp w)
 {
     XWindowAttributes attrs;
     XSetWindowAttributes attr;
-    char *s, *p, sbuf[256];
-    int i;
+    char *s, *m1, *m2;
     XWMHints wmhints;
     XClassHint clhints;
     wcp wc = w->context;
@@ -1038,20 +1036,34 @@ static void wmap(wbp w)
      * Set the class hints that name the program (for reference by the
      * window manager) following conventions given in O'Reilly.
      */
-    if ((s = getenv("RESOURCE_NAME")))
+    if ((s = getenv("OIRESOURCE_NAME"))) {
         clhints.res_name = s;
-    else {
+        m1 = 0;
+    } else {
+        int n;
+        char *p;
         p = StrLoc(kywd_prog);
         s = p + StrLen(kywd_prog);
         while (s > p && s[-1] != '/')
             s--;				/* find tail of prog_name */
-        for (i = 0; i < sizeof(sbuf) - 1 && s < p + StrLen(kywd_prog); ) 
-            sbuf[i++] = *s++;
-        sbuf[i] = '\0';
-        clhints.res_name = sbuf;
+        n = p + StrLen(kywd_prog) - s;          /* no. of chars to copy */
+        MemProtect(m1 = malloc(n + 1));
+        memcpy(m1, s, n);
+        m1[n] = 0;
+        clhints.res_name = m1;
     }
-    clhints.res_class = "ObjectIconProg";
+    if ((s = getenv("OIRESOURCE_CLASS"))) {
+        clhints.res_class = s;
+        m2 = 0;
+    } else {
+        /* Same as resource name, with first letter capitalized (see X(7) manpage). */
+        m2 = salloc(clhints.res_name);
+        m2[0] = toupper((unsigned char)clhints.res_name[0]);
+        clhints.res_class = m2;
+    }
     XSetClassHint(wd->display, ws->win, &clhints);
+    free(m1);
+    free(m2);
     XSync(wd->display, False);
 
     if (ws->state == MaximizedState) {
@@ -1367,8 +1379,7 @@ int setwindowlabel(wbp w, char *s)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
-    if (ws->windowlabel)
-        free(ws->windowlabel);
+    free(ws->windowlabel);
     ws->windowlabel = salloc(s);
 
     if (ws->win)
@@ -3580,8 +3591,7 @@ static void freewindow(wsp ws)
             XftDrawDestroy(ws->pxft);
         XFreePixmap(ws->display->display, ws->pix);
         XRenderFreePicture(ws->display->display, ws->ppic);
-        if (ws->icondata)
-            free(ws->icondata);
+        free(ws->icondata);
         free(ws->windowlabel); 
         del_gc_global(&ws->listp);
         free(ws);
