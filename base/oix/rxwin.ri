@@ -906,7 +906,8 @@ static void wmap(wbp w)
 {
     XWindowAttributes attrs;
     XSetWindowAttributes attr;
-    char *s;
+    char *s, *p, sbuf[256];
+    int i;
     XWMHints wmhints;
     XClassHint clhints;
     wcp wc = w->context;
@@ -1040,8 +1041,6 @@ static void wmap(wbp w)
     if ((s = getenv("RESOURCE_NAME")))
         clhints.res_name = s;
     else {
-        int i;
-        char *p, sbuf[256];
         p = StrLoc(kywd_prog);
         s = p + StrLen(kywd_prog);
         while (s > p && s[-1] != '/')
