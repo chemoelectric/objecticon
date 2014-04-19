@@ -3385,19 +3385,17 @@ static wdp alcdisplay(char *s)
     }
     XFree(xvi_ret);
 
+    wd->defaultfont = loadfont(wd, defaultfont);
+    if (wd->defaultfont == NULL) {
+        LitWhy("Couldn't load default font");
+        XCloseDisplay(wd->display);
+        free(wd);
+        return NULL;
+    }
     wd->pixfmt = XRenderFindStandardFormat(wd->display, PictStandardARGB32);
     wd->black = new_sharedcolor(wd, "black", 0, 0, 0, 65535);
     wd->white = new_sharedcolor(wd, "white", 65535, 65535, 65535, 65535);
     wd->transparent = new_sharedcolor(wd, "transparent", 0, 0, 0, 0);
-    wd->defaultfont = loadfont(wd, defaultfont);
-    if (wd->defaultfont == NULL) {
-        unlink_sharedcolor(wd->white);
-        unlink_sharedcolor(wd->black);
-        XCloseDisplay(wd->display);
-        free(wd);
-        LitWhy("Couldn't load default font");
-        return NULL;
-    }
     XInternAtoms(wd->display, atom_names, NUMATOMS, False, wd->atoms);
     setup_cursors(wd);
     GLink(wd, wdsplys);
