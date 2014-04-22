@@ -1660,7 +1660,7 @@ void drawcurve(wbp w, struct point *p, int n)
     int    i, j, steps, n2, nalc;
     double  ax, ay, bx, by, stepsize, stepsize2, stepsize3;
     double  x, dx, d2x, d3x, y, dy, d2y, d3y;
-    struct point *thepoints = 0;
+    struct point *thepoints;
     if (n < 5)
         return;
     nalc = 64;
