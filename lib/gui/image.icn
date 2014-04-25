@@ -168,8 +168,8 @@ class Image(Component)
             zoom_w := ir.w
             zoom_h := ir.h
          } else {
-            asp_r := real(img_w) / real(img_h)
-            asp_max := real(ir.w) / real(ir.h)
+            asp_r := real(img_w) / img_h
+            asp_max := real(ir.w) / ir.h
 
             if asp_r > asp_max then {
                zoom_w := ir.w
