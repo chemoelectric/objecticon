@@ -1,12 +1,12 @@
 ############################################################################
 #
-#	File:     printf.icn
+#       File:     printf.icn
 #
-#	Subject:  Procedures for printf-style formatting
+#       Subject:  Procedures for printf-style formatting
 #
-#	Author:   William H. Mitchell
+#       Author:   William H. Mitchell
 #
-#	Date:     July 20, 2005
+#       Date:     July 20, 2005
 #
 ############################################################################
 #
@@ -14,7 +14,7 @@
 #
 ############################################################################
 #
-#	Contributors:   Cheyenne Wills, Phillip Lee Thomas, Michael Glass
+#       Contributors:   Cheyenne Wills, Phillip Lee Thomas, Michael Glass
 #
 ############################################################################
 #
@@ -34,10 +34,10 @@
 #
 #     Possible new formats:
 #
-#	   %t -- print a real number as a time in hh:mm
-#	   %R -- roman numerals
-#	   %w -- integers in English
-#	   %b -- binary
+#          %t -- print a real number as a time in hh:mm
+#          %R -- roman numerals
+#          %w -- integers in English
+#          %b -- binary
 #
 ############################################################################
 
@@ -48,62 +48,61 @@ import
    util(Format)
 
 procedure sprintf(format, args[])
-	return _doprnt(format, args)
+        return _doprnt(format, args)
 end
 
 procedure fprintf(file, format, args[])
-	writes(file, _doprnt(format, args))
-	return
+        writes(file, _doprnt(format, args))
+        return
 end
 
 procedure printf(format, args[])
-	writes(, _doprnt(format, args))
-	return
+        writes(, _doprnt(format, args))
+        return
 end
 
 procedure _doprnt(format, args)
-   local out, v, just, width, conv, prec, pad
+   local out, v, just, width, conv, prec, pad, flag
 
-	out := ""
-	format ? repeat {
-		(out ||:= tab(upto('%'))) | (out ||:= tab(0) & break)
-		v := get(args)
-		move(1)
-		just := right
-		width := conv := prec := pad := &null
-		="-" & just := left
-		width := tab(many(&digits))
-		(\width)[1] == "0" & pad := "0"
-		="." & prec := tab(many(&digits))
-		conv := move(1)
+        out := ""
+        format ? repeat {
+                (out ||:= tab(upto('%'))) | (out ||:= tab(0) & break)
+                v := get(args)
+                move(1)
+                flag := tab(many('0\'\-+SZ')) | ''
+                # Convert flags to those used by Format.numeric_to_string
+                if any(flag, "'") then flag ++:= ','
+                if any(flag, "S") then flag ++:= 's'
+                if any(flag, "Z") then flag ++:= 'z'
+                just := if any(flag, "-") then left else right
+                pad := if any(flag, "0") then "0" else &null
+                width := tab(many(&digits)) | &null
+                prec := if ="." then tab(many(&digits)) else &null
+                conv := move(1) | &null
 
-		##write("just: ",image(just),", width: ", width, ", prec: ",
-		## prec, ", conv: ", conv)
-		case string(conv) of {
-		    "d": {
-			v := string(integer(v))
-			}
-		    "s": {
-			v := string(v[1:(\prec+1)|0])
-			}
-		    "x": v := map(hexstr(v))
-		    "X": v := hexstr(v)
-		    "o": v := octstr(v)
-		    "i": v := image(v)
-		    "r": v := fixnum(v,prec)
-		    "e": v := eformatstr(v, prec)
-		    default: {
-			push(args, v)
-			v := conv
-			}
-		    }
-		if \width & *v < width then {
-			v := just(v, width, pad)
-			}
-		out ||:= v
-		}
+                ##write("just: ",image(just),", width: ", width, ", prec: ",
+                ## prec, ", conv: ", conv)
+                case string(conv) of {
+                    "d": v := decimal(v,prec,flag)
+                    "s": v := string(v[1:(\prec+1)|0])
+                    "x": v := map(hexstr(v))
+                    "X": v := hexstr(v)
+                    "o": v := octstr(v)
+                    "i": v := image(v)
+                    "r": v := fixnum(v,prec,flag)
+                    "e": v := eformatstr(v, prec,flag)
+                    default: {
+                        push(args, v)
+                        v := conv
+                        }
+                    }
+                if \width & *v < width then {
+                        v := just(v, width, pad)
+                        }
+                out ||:= v
+                }
 
-	return out
+        return out
 end
 
 procedure hexstr(x)
@@ -116,18 +115,23 @@ procedure octstr(x)
    return Format.int_to_string(x, 8)
 end
 
-procedure fixnum(x, prec)
+procedure fixnum(x, prec, flag)
    /prec := 6
    x := real(x) | return image(x)
-   return Format.numeric_to_string(x, prec)
+   return Format.numeric_to_string(x, prec, flag)
+end
+
+procedure decimal(x, prec, flag)
+   x := integer(x) | return image(x)
+   return Format.numeric_to_string(x, 0, flag)
 end
 
 
 # e-format:  [-]m.ddddddE(+|-)xxx
 #
-procedure eformatstr(x, prec)
+procedure eformatstr(x, prec, flag)
    /prec := 6
    x := real(x) | return image(x)
-   return Format.numeric_to_string(x, prec, 'e')
+   return Format.numeric_to_string(x, prec, flag ++ 'e')
 end
 

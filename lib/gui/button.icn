@@ -172,7 +172,7 @@ class Button(Toggle,Component)
    end
 
    public handle_key(e)
-      if e.code == ("\r"|"\l"|" ") & /self.is_down then
+      if e.code === ("\r"|"\l"|" ") & /self.is_down then
          visualize_action(e)
    end
 

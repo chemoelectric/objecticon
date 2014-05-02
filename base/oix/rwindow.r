@@ -56,14 +56,7 @@ void wgetevent(wbp w, dptr res)
                 }
                 return;
             }
-            case INVOKELATER: {
-                /* Two items follow */
-                for (i = 0; i < 2; ++i) {
-                    wgetq(w, &qval);
-                    list_put(res, &qval);
-                }
-                return;
-            }
+            case INVOKELATER:
             case SELECTIONCLEAR: {
                 /* One item follows */
                 wgetq(w, &qval);
@@ -561,24 +554,16 @@ static int readgiffile(char *filename, struct imgdata *imd)
     fclose(gf_file);
     gf_file = 0;
 
-    if (gf_prefix) {
-        free(gf_prefix);
-        gf_prefix = NULL;
-    }
-    if (gf_suffix) {
-        free(gf_suffix);
-        gf_suffix = NULL;
-    }
+    free(gf_prefix);
+    gf_prefix = NULL;
+    free(gf_suffix);
+    gf_suffix = NULL;
 
     if (!r) {			/* if no success, free mem */
-        if (gf_paltbl) {
-            free(gf_paltbl);
-            gf_paltbl = NULL;
-        }
-        if (gf_string) {
-            free(gf_string);
-            gf_string = NULL;
-        }
+        free(gf_paltbl);
+        gf_paltbl = NULL;
+        free(gf_string);
+        gf_string = NULL;
         return Failed;
     }
 
@@ -603,24 +588,16 @@ static int readgifdata(dptr data, struct imgdata *imd)
     r = gfread();			/* read image */
     gf_data = gf_data_eof = 0;
 
-    if (gf_prefix) {
-        free(gf_prefix);
-        gf_prefix = NULL;
-    }
-    if (gf_suffix) {
-        free(gf_suffix);
-        gf_suffix = NULL;
-    }
+    free(gf_prefix);
+    gf_prefix = NULL;
+    free(gf_suffix);
+    gf_suffix = NULL;
 
     if (!r) {			/* if no success, free mem */
-        if (gf_paltbl) {
-            free(gf_paltbl);
-            gf_paltbl = NULL;
-        }
-        if (gf_string) {
-            free(gf_string);
-            gf_string = NULL;
-        }
+        free(gf_paltbl);
+        gf_paltbl = NULL;
+        free(gf_string);
+        gf_string = NULL;
         return Failed;
     }
 
@@ -1025,7 +1002,7 @@ static int readjpegfile(char *filename, struct imgdata *imd)
 
     if (setjmp(jerr.setjmp_buffer)) {
         jpeg_destroy_decompress(&cinfo);
-        if (data) free(data);
+        free(data);
         fclose(fp);
         whyf("readjpegfile: Failed to read file %s", filename);
         return Failed;
@@ -1204,8 +1181,8 @@ static int readpngfile(char *filename, struct imgdata *imd)
 
     if (setjmp(png_jmpbuf(png_ptr))) {
         png_destroy_read_struct(&png_ptr, &info_ptr, 0);
-        if (row_pointers) free(row_pointers);
-        if (data) free(data);
+        free(row_pointers);
+        free(data);
         fclose(fp);
         whyf("readpngfile: Failed to read file %s", filename);
         return Failed;
@@ -1329,8 +1306,8 @@ static int writepngfile(char *filename, struct imgdata *imd)
 
     if (setjmp(png_jmpbuf(png_ptr))) {
         png_destroy_write_struct(&png_ptr, &info_ptr);
-        if (row_pointers) free(row_pointers);
-        if (data) free(data);
+        free(row_pointers);
+        free(data);
         fclose(fp);
         LitWhy("readpngfile: libpng failed to write image");
         return Failed;
@@ -1683,7 +1660,7 @@ void drawcurve(wbp w, struct point *p, int n)
     int    i, j, steps, n2, nalc;
     double  ax, ay, bx, by, stepsize, stepsize2, stepsize3;
     double  x, dx, d2x, d3x, y, dy, d2y, d3y;
-    struct point *thepoints = 0;
+    struct point *thepoints;
     if (n < 5)
         return;
     nalc = 64;

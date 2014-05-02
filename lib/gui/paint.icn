@@ -607,14 +607,14 @@ class ImagePaint(Paint)
          (/max_w | img_w <= max_w)\1 & (/max_h | img_h <= max_h)\1 then
          fail
 
-      asp_r := real(img_w) / real(img_h)
+      asp_r := real(img_w) / img_h
       if \max_w then {
          if \max_h then {
             if fill_dimensions = 2 then { 
                zoom_w := max_w
                zoom_h := max_h
             } else {
-               asp_max := real(max_w) / real(max_h)
+               asp_max := real(max_w) / max_h
                if asp_r > asp_max then {
                   zoom_w := max_w
                   zoom_h := integer(max_w / asp_r)

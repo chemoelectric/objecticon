@@ -2,7 +2,7 @@
 if [ -z "$OIXCACHE" ] ; then
     OIXCACHE=/tmp/oixcache
 fi
-mkdir -p $OIXCACHE
+mkdir -p -m 777 $OIXCACHE
 HASH=$OIXCACHE/`md5sum "$1" | cut -c1-32`
 if [ ! -x $HASH ] ; then
     SRC=$OIXCACHE/src-$$.icn
@@ -12,6 +12,7 @@ if [ ! -x $HASH ] ; then
         exit 1
     fi
     rm -f $SRC
+    chmod 555 $HASH
 fi
 shift
 $HASH "$@"

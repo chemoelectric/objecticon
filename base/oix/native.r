@@ -1286,8 +1286,7 @@ static void *get_handle(char *filename)
      * Get a library handle, reusing it over successive calls.
      */
     if (!handle || !curfile || strcmp(filename, curfile) != 0) {
-        if (curfile)
-            free(curfile);	/* free the old file name */
+        free(curfile);	/* free the old file name if any */
         curfile = salloc(filename);	/* save the new name */
         handle = dlopen(filename, RTLD_LAZY);	/* get the handle */
     }

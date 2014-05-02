@@ -59,7 +59,9 @@ final abstract class Format()
    # @         in scientific notation.  If c contains {','} then commas
    # @         are introduced into the non-fractional part of the number;
    # @         if c contains {'+'} then a leading + is added to positive
-   # @         numbers.
+   # @         numbers.  If c contains {'s'} then trailing fractional
+   # @         zeroes are replaced with spaces, whilst {'z'} means drop
+   # @         such zeroes altogether.
    # @           
    #
    public static numeric_to_string(subject, p, f)

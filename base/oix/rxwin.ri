@@ -37,6 +37,7 @@ static void handle_exposures(wsp ws, XExposeEvent *event);
 static void handle_mouse(wsp ws, XButtonEvent *event);
 static void handle_keypress(wsp ws, XKeyEvent *event);
 static void handle_crossing(wsp ws, XCrossingEvent *event);
+static char *getprogname(void);
 static void wmap(wbp w);
 static void synch_cursor(wsp ws);
 static void synch_cursors(wdp wd, struct wcursor *c);
@@ -837,8 +838,7 @@ int setwindowicon(wbp w, struct imgdata *imd)
 {
     wsp ws = w->window;
     int i, j, k;
-    if (ws->icondata)
-        free(ws->icondata);
+    free(ws->icondata);
     ws->iconlen = 2 + imd->width * imd->height;
     MemProtect(ws->icondata = malloc(ws->iconlen * sizeof(unsigned long)));
     k = 0;
@@ -900,13 +900,31 @@ int getpattern(wbp w, struct imgdata *imd)
 }
 
 /*
+ * Return an allocated string giving the part of the prog name after the last '/'.
+ */
+static char *getprogname()
+{
+    int n;
+    char *p, *s, *m;
+    p = StrLoc(kywd_prog);
+    s = p + StrLen(kywd_prog);
+    while (s > p && s[-1] != '/')
+        s--;				/* find tail of prog_name */
+    n = p + StrLen(kywd_prog) - s;          /* no. of chars to copy */
+    MemProtect(m = malloc(n + 1));
+    memcpy(m, s, n);
+    m[n] = 0;
+    return m;
+}
+
+/*
  *  Open the X window for a non-hidden icon window.
  */
 static void wmap(wbp w)
 {
     XWindowAttributes attrs;
     XSetWindowAttributes attr;
-    char *s;
+    char *s, *m1, *m2;
     XWMHints wmhints;
     XClassHint clhints;
     wcp wc = w->context;
@@ -1037,22 +1055,25 @@ static void wmap(wbp w)
      * Set the class hints that name the program (for reference by the
      * window manager) following conventions given in O'Reilly.
      */
-    if ((s = getenv("RESOURCE_NAME")))
+    if ((s = getenv("OIRESOURCE_NAME"))) {
         clhints.res_name = s;
-    else {
-        int i;
-        char *p, sbuf[256];
-        p = StrLoc(kywd_prog);
-        s = p + StrLen(kywd_prog);
-        while (s > p && s[-1] != '/')
-            s--;				/* find tail of prog_name */
-        for (i = 0; i < sizeof(sbuf) - 1 && s < p + StrLen(kywd_prog); ) 
-            sbuf[i++] = *s++;
-        sbuf[i] = '\0';
-        clhints.res_name = sbuf;
+        m1 = 0;
+    } else {
+        m1 = getprogname();
+        clhints.res_name = m1;
     }
-    clhints.res_class = "ObjectIconProg";
+    if ((s = getenv("OIRESOURCE_CLASS"))) {
+        clhints.res_class = s;
+        m2 = 0;
+    } else {
+        /* Defaults to prog name, with first letter capitalized (see X(7) manpage). */
+        m2 = getprogname();
+        m2[0] = toupper((unsigned char)m2[0]);
+        clhints.res_class = m2;
+    }
     XSetClassHint(wd->display, ws->win, &clhints);
+    free(m1);
+    free(m2);
     XSync(wd->display, False);
 
     if (ws->state == MaximizedState) {
@@ -1368,8 +1389,7 @@ int setwindowlabel(wbp w, char *s)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
-    if (ws->windowlabel)
-        free(ws->windowlabel);
+    free(ws->windowlabel);
     ws->windowlabel = salloc(s);
 
     if (ws->win)
@@ -3365,19 +3385,17 @@ static wdp alcdisplay(char *s)
     }
     XFree(xvi_ret);
 
+    wd->defaultfont = loadfont(wd, defaultfont);
+    if (wd->defaultfont == NULL) {
+        LitWhy("Couldn't load default font");
+        XCloseDisplay(wd->display);
+        free(wd);
+        return NULL;
+    }
     wd->pixfmt = XRenderFindStandardFormat(wd->display, PictStandardARGB32);
     wd->black = new_sharedcolor(wd, "black", 0, 0, 0, 65535);
     wd->white = new_sharedcolor(wd, "white", 65535, 65535, 65535, 65535);
     wd->transparent = new_sharedcolor(wd, "transparent", 0, 0, 0, 0);
-    wd->defaultfont = loadfont(wd, defaultfont);
-    if (wd->defaultfont == NULL) {
-        unlink_sharedcolor(wd->white);
-        unlink_sharedcolor(wd->black);
-        XCloseDisplay(wd->display);
-        free(wd);
-        LitWhy("Couldn't load default font");
-        return NULL;
-    }
     XInternAtoms(wd->display, atom_names, NUMATOMS, False, wd->atoms);
     setup_cursors(wd);
     GLink(wd, wdsplys);
@@ -3581,8 +3599,7 @@ static void freewindow(wsp ws)
             XftDrawDestroy(ws->pxft);
         XFreePixmap(ws->display->display, ws->pix);
         XRenderFreePicture(ws->display->display, ws->ppic);
-        if (ws->icondata)
-            free(ws->icondata);
+        free(ws->icondata);
         free(ws->windowlabel); 
         del_gc_global(&ws->listp);
         free(ws);
