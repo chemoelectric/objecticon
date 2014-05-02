@@ -476,7 +476,7 @@ class Download()
    end
 
    private got_data(r)
-      local fname, n
+      local fname, n, check_eq
       resp := r
       if \r.err then {
          log("Failed to download: " || r.err)
@@ -491,14 +491,18 @@ class Download()
          fname := text_guess_convert(fname, "ucs")
          full_path := if \dest then
             if Files.is_directory(dest) then
-               Files.ensure_unique_filename(FilePath(dest).child(fname).canonical().str())
+               Files.ensure_unique_filename(check_eq := FilePath(dest).child(fname).canonical().str())
             else
                dest
          else
-            Files.ensure_unique_filename(FilePath(parent.parent_dialog.settings.destination_dir).child(fname).canonical().str())
+            Files.ensure_unique_filename(check_eq := FilePath(parent.parent_dialog.settings.destination_dir).child(fname).canonical().str())
 
          if \r.data then {
-            if Files.string_to_file(full_path, r.data) then {
+            if Files.stat(\check_eq).size = *r.data & Files.file_to_string(check_eq) == r.data then {
+               log("Existing file " || check_eq || " is identical. (" || Format.numeric_to_string(*r.data, 0, ',') || " bytes)")
+               full_path := check_eq
+               status := "Done"
+            } else if Files.string_to_file(full_path, r.data) then {
                log("Result file:" || full_path || " (" || Format.numeric_to_string(*r.data, 0, ',') || " bytes)")
                status := "Done"
             } else {
@@ -508,7 +512,12 @@ class Download()
             }
          } else {
             n := Files.stat(r.data_file).size | 0
-            if Files.move(r.data_file, full_path) then {
+            if Files.equal_files(r.data_file, \check_eq) then {
+               log("Existing file " || check_eq || " is identical. (" || Format.numeric_to_string(n, 0, ',') || " bytes)")
+               full_path := check_eq
+               save_why{Files.remove(r.data_file)}
+               status := "Done"
+            } else if Files.move(r.data_file, full_path) then {
                log("Result file:" || full_path || " (" || Format.numeric_to_string(n, 0, ',') || " bytes)")
                status := "Done"
             } else {
