@@ -493,12 +493,12 @@ class Download()
             if Files.is_directory(dest) then
                Files.ensure_unique_filename(check_eq := FilePath(dest).child(fname).canonical().str())
             else
-               dest
+               check_eq := dest
          else
             Files.ensure_unique_filename(check_eq := FilePath(parent.parent_dialog.settings.destination_dir).child(fname).canonical().str())
 
          if \r.data then {
-            if Files.stat(\check_eq).size = *r.data & Files.file_to_string(check_eq) == r.data then {
+            if Files.stat(check_eq).size = *r.data & Files.file_to_string(check_eq) == r.data then {
                log("Existing file " || check_eq || " is identical. (" || Format.numeric_to_string(*r.data, 0, ',') || " bytes)")
                full_path := check_eq
                status := "Done"
@@ -506,23 +506,23 @@ class Download()
                log("Result file:" || full_path || " (" || Format.numeric_to_string(*r.data, 0, ',') || " bytes)")
                status := "Done"
             } else {
-               save_why{Files.remove(full_path)}
                log("Unable to create " || full_path || ": " || &why)
+               Files.remove(full_path)
                status := "Failed"
             }
          } else {
             n := Files.stat(r.data_file).size | 0
-            if Files.equal_files(r.data_file, \check_eq) then {
+            if Files.equal_files(r.data_file, check_eq) then {
                log("Existing file " || check_eq || " is identical. (" || Format.numeric_to_string(n, 0, ',') || " bytes)")
                full_path := check_eq
-               save_why{Files.remove(r.data_file)}
+               Files.remove(r.data_file)
                status := "Done"
             } else if Files.move(r.data_file, full_path) then {
                log("Result file:" || full_path || " (" || Format.numeric_to_string(n, 0, ',') || " bytes)")
                status := "Done"
             } else {
-               save_why{every Files.remove(r.data_file | full_path)}
                log("Unable to move " || r.data_file || " to " || full_path || ": " || &why)
+               every Files.remove(r.data_file | full_path)
                status := "Failed"
             }
          }
@@ -1048,10 +1048,10 @@ class BrowserTab(TabItem, BrowserUI)
       local d, f, d1, f1, full_path
       d := parent_dialog.file_dialog
       d1 := FilePath(parent_dialog.last_download_dir)
-      f1 := ucs(url.get_decoded_path_last())
-      if /f1 | *f1 = 0 | *f1 > 32 then
-         f1 := u"browser.out"
-      full_path := Files.ensure_unique_filename(d1.child(f1).canonical().str())
+      f1 := text_guess_convert(url.get_decoded_path_last(), "ucs")
+      if *f1 = 0 | *f1 > 32 then
+         f1 := "browser.out"
+      full_path := d1.child(f1).canonical().str()
       d.set_path(full_path).set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
       f := d.get_result() | fail
       parent_dialog.last_download_dir := d.get_directory()
@@ -1269,7 +1269,7 @@ class BrowserTab(TabItem, BrowserUI)
    private do_save(name, data)
       local s, d
       d := parent_dialog.file_dialog
-      d.set_file(map(\name, "/\0", "--"))
+      d.set_file(text_guess_convert(map(\name, "/\0", "--"), "ucs"))
       d.set_directory(parent_dialog.last_file_dir).set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
       parent_dialog.last_file_dir := d.get_directory()
       if s := d.get_result() then {
