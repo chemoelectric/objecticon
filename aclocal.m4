@@ -405,7 +405,7 @@ AC_DEFUN([AX_CHECK_CAIRO],
        AC_MSG_RESULT(yes)
    ]
 )
-    unset CAIRO_VERSION CAIRO_CFLAGS CAIRO_LIBS
+    unset CAIRO_VERSION CAIRO_CPPFLAGS CAIRO_LDFLAGS CAIRO_LIBS
     if test -n "$CAIRO_CONFIG"; then
            AC_MSG_CHECKING([for libcairo library])
            if pkg-config $CAIRO_CONFIG; then
@@ -447,7 +447,7 @@ AC_DEFUN([AX_CHECK_OPENSSL],
        AC_MSG_RESULT(yes)
    ]
 )
-    unset OPENSSL_VERSION OPENSSL_CFLAGS OPENSSL_LIBS
+    unset OPENSSL_VERSION OPENSSL_CPPFLAGS OPENSSL_LDFLAGS OPENSSL_LIBS
     if test -n "$OPENSSL_CONFIG"; then
            AC_MSG_CHECKING([for libOpenSSL library])
            if pkg-config $OPENSSL_CONFIG; then
