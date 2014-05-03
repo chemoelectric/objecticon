@@ -484,11 +484,12 @@ class Download()
       } else {
          # Ensure illegal path chars (/ and NULL) are removed from fname
          fname := map(resp.fname, "/\0", "--")
-         if *fname = 0 then
-            fname := "browser.out"
-         # Ensure fname is in ucs.  This should mean full_path is also convertible to ucs() since the
-         # directories below were selected in the file dialogs.
-         fname := text_guess_convert(fname, "ucs")
+         fname := if *fname = 0 then
+            "browser.out"
+         else
+            # Ensure fname is in ucs.  This should mean full_path is in utf8 form since the
+            # directories below were selected in the file dialogs.
+            Text.liberal_ucs(fname)
          full_path := if \dest then
             if Files.is_directory(dest) then
                Files.ensure_unique_filename(check_eq := FilePath(dest).child(fname).canonical().str())
@@ -1048,9 +1049,11 @@ class BrowserTab(TabItem, BrowserUI)
       local d, f, d1, f1, full_path
       d := parent_dialog.file_dialog
       d1 := FilePath(parent_dialog.last_download_dir)
-      f1 := text_guess_convert(url.get_decoded_path_last(), "ucs")
-      if *f1 = 0 | *f1 > 32 then
-         f1 := "browser.out"
+      f1 := url.get_decoded_path_last()
+      f1 := if *f1 = 0 | *f1 > 32 then
+         "browser.out"
+      else
+         Text.liberal_ucs(f1)
       full_path := d1.child(f1).canonical().str()
       d.set_path(full_path).set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
       f := d.get_result() | fail
@@ -1269,7 +1272,7 @@ class BrowserTab(TabItem, BrowserUI)
    private do_save(name, data)
       local s, d
       d := parent_dialog.file_dialog
-      d.set_file(text_guess_convert(map(\name, "/\0", "--"), "ucs"))
+      d.set_file(Text.liberal_ucs(map(\name, "/\0", "--")))
       d.set_directory(parent_dialog.last_file_dir).set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
       parent_dialog.last_file_dir := d.get_directory()
       if s := d.get_result() then {
