@@ -69,6 +69,7 @@ class HtmlParser()
    public static const
       IDINTRO,
       IDCHARS,
+      KEYINTRO,
       KEYCHARS,
       VALCHARS, 
       DELIM,
@@ -84,7 +85,8 @@ class HtmlParser()
       SPACE := '\x20\x09\x0D\x0A'
       IDINTRO := 'A-Za-z'
       IDCHARS := 'A-Za-z0-9.\-'
-      KEYCHARS := 'A-Za-z0-9_'
+      KEYINTRO := 'A-Za-z_'
+      KEYCHARS := 'A-Za-z_0-9.\-'
       VALCHARS := &ascii -- ' \t\n\r>/'
       DELIM := '\"\''
       PUBID_CHAR := ' \n\rA-Za-z0-9\-\'()+,./:=?;!*#@$_%'
@@ -424,7 +426,7 @@ class HtmlParser()
       s := (any(IDINTRO) & tab(many(IDCHARS))) | fail
       res.set_name(s)
       repeat {
-         tab(upto(KEYCHARS ++ '/>'))
+         tab(upto(KEYINTRO ++ '/>'))
          if =u"/>" then {
             res.set_empty()
             break

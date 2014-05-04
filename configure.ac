@@ -33,7 +33,7 @@ AC_PROG_CC
 
 CCVER=`$CC --version`
 case $CCVER in
-    gcc*) CFLAGS="$CFLAGS -Wall -fno-strict-aliasing" ;;
+    gcc*) CFLAGS="$CFLAGS -Wall -fno-strict-aliasing -Wno-deprecated-declarations" ;;
     pcc*) CFLAGS="$CFLAGS -Wall" ;;
     clang*) CFLAGS="$CFLAGS -Wall -Wno-parentheses-equality -Wno-tautological-compare" ;;
 esac
