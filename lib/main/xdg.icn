@@ -232,7 +232,7 @@ final abstract class Xdg()
       scalable_flag
 
    private static init()
-      LC_MESSAGES := Locale(getenv_ne("LC_MESSAGES" | "LC_ALL") | "C")
+      LC_MESSAGES := Locale(getenv_ne("LC_ALL" | "LC_MESSAGES" | "LANG") | "C")
       INI_LC_KEYS := []
       every put(INI_LC_KEYS, 
                 LC_MESSAGES.lang || "_" || \LC_MESSAGES.country || "@" || \LC_MESSAGES.modifier |
