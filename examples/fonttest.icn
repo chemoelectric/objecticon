@@ -37,7 +37,7 @@ class FontTestDialog(Dialog)
       t.close()
       command_field.set_contents(case fsys of {
          "p9": "/bin/du -a /lib/font/bit | /bin/awk '{print $2}' | grep '*.font' | sort"
-         "fc": "fc-list"
+         "fc": "fc-list : family style spacing"
       })
       oifont_label.set_label(Window.get_default_font())
       oifontsize_label.set_label(Window.get_default_font_size())
