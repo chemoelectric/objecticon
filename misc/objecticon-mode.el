@@ -247,7 +247,7 @@ with no args, if that value is non-nil."
 		     (progn (objecticon-indent-line) (newline) t)
                      nil)))
 	(progn
-	  (insert last-command-char)
+	  (insert last-command-event)
 	  (objecticon-indent-line)
 	  (if objecticon-auto-newline
 	      (progn
