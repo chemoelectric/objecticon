@@ -60,12 +60,26 @@ class Toggle()
    end
 
    #
-   # Set the status to checked.
+   # Set the checked status according to the given flag.
    #
    public set_is_checked(s)
       self.is_checked_flag := check_flag(s)
       synch_cbg()
       return self
+   end
+
+   public toggle_action(e)
+      local t
+      if \parent_check_box_group then {
+         t := parent_check_box_group.which_one
+         if \parent_check_box_group.allow_none_checked_flag then
+            toggle_is_checked()
+         else
+            set_is_checked(&yes)
+         if t ~=== parent_check_box_group.which_one then
+            parent_check_box_group.fire(Event.SELECTION_CHANGED, e)
+      } else
+         toggle_is_checked()
    end
 
    #

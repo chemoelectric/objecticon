@@ -23,11 +23,21 @@ import util
 #
 class CheckBoxGroup(Connectable)
    public 
-      checkboxes,              #                  
-      which_one
+      checkboxes,
+      which_one,
+      allow_none_checked_flag
 
    #
-   # Returns the object is currently down.
+   # If set, then the group allows the user to press the currently
+   # checked box, leaving none checked.
+   #
+   public set_allow_none_checked(s)
+      self.allow_none_checked_flag := check_flag(s)
+      return self
+   end
+
+   #
+   # Returns the object which is currently checked.
    #
    public get_which_one()
       return self.which_one
@@ -44,11 +54,14 @@ class CheckBoxGroup(Connectable)
    end
 
    #
-   # Set which CheckBox which is down.
-   # @param x   The object which is down.
+   # Set which CheckBox is checked, or &null to indicate none checked.
+   # @param x   The object which is checked or &null.
    #
    public set_which_one(x)
-      x.set_is_checked(&yes)
+      if /x then
+         (\which_one).set_is_checked(&no)
+      else
+         x.set_is_checked(&yes)
       return self
    end
 
