@@ -80,7 +80,6 @@ class Button(Toggle,Component)
 
    public handle_lpress(e)
       local b
-
       if /self.is_down then {
          self.is_down := 1
          start_held(e)
@@ -106,19 +105,13 @@ class Button(Toggle,Component)
             start_held(e)
             invalidate()
          }
-      } else {
-         if \self.is_down then {
-            self.is_down := &null
-            stop_held()
-            invalidate()
-         }
-      }
+      } else
+         clear_down()
    end
 
    public handle_lrelease(e)
       if \self.is_down then {
-         self.is_down := &null
-         stop_held()
+         clear_down()
          fire(Event.BUTTON_RELEASE, e)
          on_action(e)
       }
@@ -133,17 +126,8 @@ class Button(Toggle,Component)
    end
 
    public on_action(e)
-      local t
-      if \self.toggles_flag then {
-         if \self.parent_check_box_group then {
-            t := self.parent_check_box_group.which_one
-            self.set_is_checked(&yes)
-            if t ~=== self.parent_check_box_group.which_one then
-               self.parent_check_box_group.fire(Event.SELECTION_CHANGED, e)
-         } else
-            self.toggle_is_checked()
-      } else
-         self.invalidate()
+      if \self.toggles_flag then
+         toggle_action(e)
       fire(Event.ACTION, e)
    end
 
@@ -154,15 +138,17 @@ class Button(Toggle,Component)
    #
    public visualize_action(e)
       local t
-      self.is_down := 1
-      self.invalidate()
-      t := Dispatcher.new_task{{
-         t.sleep(50)
-         self.is_down := &null
-         on_action(e)
-         t.revert()
-      }}
-      t.start()
+      if /self.is_down then {
+         self.is_down := 1
+         self.invalidate()
+         t := Dispatcher.new_task{{
+            t.sleep(50)
+            clear_down()
+            on_action(e)
+            t.revert()
+         }}
+         t.start()
+      }
    end
 
    public handle_accel(e)
@@ -172,16 +158,19 @@ class Button(Toggle,Component)
    end
 
    public handle_key(e)
-      if e.code === ("\r"|"\l"|" ") & /self.is_down then
+      if e.code === ("\r"|"\l"|" ") then
          visualize_action(e)
    end
 
    #
-   # Set the status to checked.
+   # Set the checked status according to the given flag.
    #
    public set_is_checked(s)
-      cast(self,Toggle).set_is_checked(s)
-      self.invalidate()
+      s := check_flag(s)
+      if s ~=== self.is_checked_flag then {
+         cast(self,Toggle).set_is_checked(s)
+         self.invalidate()
+      }
       return self
    end
 

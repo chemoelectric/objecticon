@@ -9,7 +9,6 @@
 #passthru #include <pango/pangocairo.h>
 #passthru #include <pango/pangofc-fontmap.h>
 #passthru #include <librsvg/rsvg.h>
-#passthru #include <librsvg/rsvg-cairo.h>
 
 static void pix_to_win(cairo_t *cr, double x1, double y1, double x2, double y2);
 static void ensure(cairo_t *cr);

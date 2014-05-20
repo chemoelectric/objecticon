@@ -126,7 +126,8 @@ class CheckBox(Button)
       # For a checkbox, visualizing a keyboard action introduces a
       # slight delay and has no real advantage; so we just call
       # on_action directly.
-      on_action(e)
+      if /self.is_down then
+         on_action(e)
    end
 
    public display()

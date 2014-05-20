@@ -232,7 +232,7 @@ final abstract class Xdg()
       scalable_flag
 
    private static init()
-      LC_MESSAGES := Locale(getenv_ne("LC_MESSAGES" | "LC_ALL") | "C")
+      LC_MESSAGES := Locale(getenv_ne("LC_ALL" | "LC_MESSAGES" | "LANG") | "C")
       INI_LC_KEYS := []
       every put(INI_LC_KEYS, 
                 LC_MESSAGES.lang || "_" || \LC_MESSAGES.country || "@" || \LC_MESSAGES.modifier |
@@ -510,7 +510,7 @@ final abstract class Xdg()
    private static read_globs()
       local d, g, s
       g := Globs()
-      every d := gen_base_dirs() do {
+      every d := Reverse{ gen_base_dirs() } do {
          if s := ucs(Files.file_to_string(FilePath(d).walk("mime", "globs2").str())) then
             parse_glob_file(g, s)
       }
@@ -806,14 +806,23 @@ final abstract class Xdg()
 
    private static process_mimeapps_list(mm, t, u)
       local a, mime_type, l, d
-      if a := member(mm, u"Added Associations") then {
+      every a := member(mm, u"Added Associations" | u"Default Applications") do {
          # Each entry gives a mime type and list of desktop files, so
-         # we look each one up in t.  The resulting list overwrites
-         # what was there already.
+         # we look each one up in t.  The resulting list prepends to any
+         # desktop entries there already.
          every mime_type := key(a) do {
-            insert(u, 
-                   string(mime_type),
-                   ipl.pdco.List{ member(t, separate(member(a, mime_type), ';')) })
+            if l := member(u, string(mime_type)) then {
+               every d := Reverse{ member(t, separate(member(a, mime_type), ';')) } do {
+                  # Keep the list unique, by deleting the element (if present)
+                  # we're about to push on the front.
+                  delete(l, keyof(l, d))
+                  push(l, d)
+               }
+            } else {
+               insert(u, 
+                      string(mime_type),
+                      ipl.pdco.List{ member(t, separate(member(a, mime_type), ';')) })
+            }
          }
       }
       if a := member(mm, u"Removed Associations") then {
@@ -861,7 +870,7 @@ final abstract class Xdg()
       every sort_by_preference(!u)
 
       # Process customisations from the mimeapps.lists files.
-      every d := Reverse{gen_base_dirs()} do {
+      every d := Reverse{ gen_base_dirs() } do {
          f := FilePath(d).walk("applications", "mimeapps.list").str()
          if mm := load_ini_file(f) then
             process_mimeapps_list(mm, t, u)
@@ -933,8 +942,15 @@ class Globs()
    # the mime type (string).
    #
    public add(p, weight, mime_type)
-      local x
-      if upto('*?[', p) then {
+      local x, t, k
+      if p == u"__NOGLOBS__" then {
+         every t := literal | simple | other do {
+            every k := key(t) do {
+               if t[k].mime_type == mime_type then
+                  delete(t, k)
+            }
+         }
+      } else if upto('*?[', p) then {
          if match(u"*.", p) & not upto('*?[', p[3:0]) then {
             p := p[3:0]
             x := member(simple, p)
