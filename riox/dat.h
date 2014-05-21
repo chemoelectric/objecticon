@@ -26,8 +26,8 @@ enum
 
 enum
 {
-	Kscrolloneup = KF|0x20,
-	Kscrollonedown = KF|0x21,
+	riox_Kscrolloneup = KF|0x20,
+	riox_Kscrollonedown = KF|0x21,
 };
 
 #define	STACK	8192

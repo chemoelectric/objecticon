@@ -627,7 +627,7 @@ wkeyctl(Window *w, Rune r)
 		case Kdown:
 			n = w->maxlines/3;
 			goto case_Down;
-		case Kscrollonedown:
+		case riox_Kscrollonedown:
 			n = mousescrollsize(w->maxlines);
 			if(n <= 0)
 				n = 1;
@@ -641,7 +641,7 @@ wkeyctl(Window *w, Rune r)
 		case Kup:
 			n = w->maxlines/3;
 			goto case_Up;
-		case Kscrolloneup:
+		case riox_Kscrolloneup:
 			n = mousescrollsize(w->maxlines);
 			if(n <= 0)
 				n = 1;
@@ -916,9 +916,9 @@ wmousectl(Window *w)
 		but = 3;
 	else{
 		if(w->mc.buttons == 8)
-			wkeyctl(w, Kscrolloneup);
+			wkeyctl(w, riox_Kscrolloneup);
 		if(w->mc.buttons == 16)
-			wkeyctl(w, Kscrollonedown);
+			wkeyctl(w, riox_Kscrollonedown);
 		return;
 	}
 
