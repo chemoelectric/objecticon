@@ -1243,4 +1243,8 @@ Const(SEEK_END)
 
     fclose(out);
     exit(0);
+
+#if PLAN9
+    return 0;
+#endif
 }

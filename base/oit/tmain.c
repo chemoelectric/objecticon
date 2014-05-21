@@ -355,6 +355,10 @@ int main(int argc, char **argv)
     }
 
     exit(EXIT_SUCCESS);
+
+#if PLAN9
+    return 0;
+#endif
 }
 
 /*

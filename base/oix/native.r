@@ -26,6 +26,9 @@ static struct b_class *get_class_for(dptr x)
      default: 
             ReturnErrVal(620, *x, 0);
     }
+#if PLAN9
+    return 0;
+#endif
 }
 
 static struct b_constructor *get_constructor_for(dptr x)
@@ -40,6 +43,9 @@ static struct b_constructor *get_constructor_for(dptr x)
      default: 
             ReturnErrVal(625, *x, 0);
     }
+#if PLAN9
+    return 0;
+#endif
 }
 
 static struct b_proc *get_proc_for(dptr x)
@@ -54,6 +60,9 @@ static struct b_proc *get_proc_for(dptr x)
      default: 
             ReturnErrVal(631, *x, 0);
     }
+#if PLAN9
+    return 0;
+#endif
 }
 
 static struct progstate *get_program_for(dptr x)
@@ -70,6 +79,9 @@ static struct progstate *get_program_for(dptr x)
         default:
              ReturnErrVal(118, *x, 0);
     }
+#if PLAN9
+    return 0;
+#endif
 }
 
 static struct b_coexpr *get_coexpr_for(dptr x)
@@ -82,6 +94,9 @@ static struct b_coexpr *get_coexpr_for(dptr x)
         default:
              ReturnErrVal(118, *x, 0);
     }
+#if PLAN9
+    return 0;
+#endif
 }
 
 static void loc_to_list(struct loc *p, dptr res)
