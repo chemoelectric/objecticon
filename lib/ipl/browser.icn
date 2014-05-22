@@ -1135,14 +1135,14 @@ end
 
 abstract class FormEntry()
    package readable
-      form_name, form_id, form_tabindex
+      form_name, form_name_count, form_id, form_tabindex
 
    public validate_form()
       return
    end
                   
    public get_save_key()
-      return \form_name | \form_id
+      return (\form_name || u"_" || \form_name_count) | \form_id
    end
 
    public reset_form() end
@@ -2179,6 +2179,7 @@ class Form()
       items,
       labels,
       id_table,
+      name_counts,
       cbgs
    private readable
       autofocus
@@ -2260,6 +2261,7 @@ class Form()
    public add(name, item)
       put(items, item)
       item.form_name := name
+      item.form_name_count := (name_counts[item.form_name] +:= 1)
    end
 
    public add_component(context, el, item)
@@ -2267,7 +2269,8 @@ class Form()
       put(items, item)
       if el.get_attribute(u"AUTOFOCUS") then
          autofocus := item
-      item.form_name := el.get_attribute(u"NAME")
+      if item.form_name := el.get_attribute(u"NAME") then
+         item.form_name_count := (name_counts[item.form_name] +:= 1)
       if item.form_id := el.get_attribute(u"ID") then
          insert(id_table, item.form_id, item)
       item.form_tabindex := integer(el.get_attribute(u"TABINDEX"))
@@ -2327,6 +2330,7 @@ class Form()
       self.items := []
       self.labels := []
       self.id_table := table()
+      self.name_counts := table(0)
       self.cbgs := table()
       return
    end
