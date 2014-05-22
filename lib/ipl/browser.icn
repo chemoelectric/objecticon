@@ -1333,7 +1333,7 @@ class FormBrowse(Component, FormEntry, HasAscent)
    end
 
    public get_filename()
-      return FilePath(tf.get_contents()).get(-1)
+      return FilePath(tf.get_contents()).get(-1) | u""
    end
 
    public get_ascent() 
