@@ -1135,14 +1135,14 @@ end
 
 abstract class FormEntry()
    package readable
-      form_name, form_name_count, form_id, form_tabindex
+      form_name, form_save_key, form_id, form_tabindex
 
    public validate_form()
       return
    end
                   
    public get_save_key()
-      return (\form_name || u"_" || \form_name_count) | \form_id
+      return \form_save_key
    end
 
    public reset_form() end
@@ -2171,15 +2171,14 @@ end
 class Form()
    public const
       id,
-      key,
       url,
+      save_key,
       browser,
       method,
       enctype,
       items,
       labels,
       id_table,
-      name_counts,
       cbgs
    private readable
       autofocus
@@ -2261,7 +2260,7 @@ class Form()
    public add(name, item)
       put(items, item)
       item.form_name := name
-      item.form_name_count := (name_counts[item.form_name] +:= 1)
+      item.form_save_key := item.form_name || u":" || *items
    end
 
    public add_component(context, el, item)
@@ -2269,10 +2268,10 @@ class Form()
       put(items, item)
       if el.get_attribute(u"AUTOFOCUS") then
          autofocus := item
-      if item.form_name := el.get_attribute(u"NAME") then
-         item.form_name_count := (name_counts[item.form_name] +:= 1)
+      item.form_name := el.get_attribute(u"NAME")
       if item.form_id := el.get_attribute(u"ID") then
          insert(id_table, item.form_id, item)
+      item.form_save_key := (\item.form_name | \item.form_id) || u":" || *items
       item.form_tabindex := integer(el.get_attribute(u"TABINDEX"))
       l := context.form_label
       # If we have a label in the context, and the for and id tags
@@ -2312,7 +2311,7 @@ class Form()
    end
 
    public get_save_key()
-      return \id | (\url).str()
+      return \save_key
    end
 
    public resolve_labels()
@@ -2321,8 +2320,9 @@ class Form()
          /l.comp := get_item_by_id(\l.id)
    end
 
-   public new(browser, id, url, method, enctype)
+   public new(browser, save_key, id, url, method, enctype)
       self.browser := browser
+      self.save_key := save_key
       self.id := id
       self.url := url
       self.method := method
@@ -2330,7 +2330,6 @@ class Form()
       self.items := []
       self.labels := []
       self.id_table := table()
-      self.name_counts := table(0)
       self.cbgs := table()
       return
    end
@@ -3472,13 +3471,14 @@ class Browser(ComponentScrollArea)
    end
 
    private traverse_form(e, p, context)
-      local m, c, t, url, id
+      local m, c, t, url, id, save_key
       m := map(string(e.get_attribute(u"METHOD"))) | "get"
       t := string(e.get_attribute(u"ENCTYPE")) | "application/x-www-form-urlencoded"
       url := mk_link(e.get_attribute(u"ACTION"))
       id := e.get_attribute(u"ID" | u"NAME")
+      save_key :=  (\id | (\url).ucs()) || u":" || (*forms + 1)
       c := copy(context)
-      c.form := Form(self, id, url, m, t)
+      c.form := Form(self, save_key, id, url, m, t)
       put(forms, c.form)
       put_new_row(p, c)
       traverse(e, p, c)
