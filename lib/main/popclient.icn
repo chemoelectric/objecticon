@@ -17,6 +17,7 @@ class PopClient(NetClient)
    #
    public dele(n)
       send_command("DELE " || n) | fail
+      return self
    end
 
    #
@@ -38,10 +39,13 @@ class PopClient(NetClient)
    #
    # Open a connection; should be followed by {login()}
    #
-   public open_connection()
-      open() | fail
-      read_response() | fail
-      return
+   public open()
+      open_connection() | fail
+      read_response() | {
+         close_connection()
+         fail
+      }
+      return self
    end
 
    #
@@ -50,16 +54,15 @@ class PopClient(NetClient)
    public login()
       send_command("USER " || username) | fail
       send_command("PASS " || password) | fail
-      return
+      return self
    end
 
    #
    # Disconnect using the QUIT command
    #
-   public close_connection()
-      send_command("QUIT") | fail
-      close() | fail
-      return
+   public close()
+      send_command("QUIT")
+      return close_connection()
    end
 
    #
@@ -67,7 +70,7 @@ class PopClient(NetClient)
    #
    public rset()
       send_command("RSET") | fail
-      return
+      return self
    end
 
    #
@@ -179,7 +182,7 @@ class PopClient(NetClient)
    # Send a single command
    # 
    private send_command(msg)
-      write_line(msg)
+      write_line(msg) | fail
       return read_response()
    end
 
@@ -207,7 +210,7 @@ class PopClient(NetClient)
       local s
 
       s := expect_line() | {
-         close()
+         close_connection()
          fail
       }
       s ? {
@@ -218,11 +221,11 @@ class PopClient(NetClient)
 
          if ="-ERR" then {
             =" "
-            return error_and_close("Got an error: " || tab(0))
+            return error_and_close_connection("Got an error: " || tab(0))
          }
       }
 
-      return error_and_close("Got an unrecognized response: " || s)
+      return error_and_close_connection("Got an unrecognized response: " || s)
    end
 
    public new()

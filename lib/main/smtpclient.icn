@@ -31,20 +31,22 @@ class SmtpClient(NetClient)
       return self
    end
 
-   public open_connection()
+   public open()
       local s
-      open() | fail
+      open_connection() | fail
       sent_helo := &null
-      s := read_response() | fail
+      s := read_response() | {
+         close_connection()
+         fail
+      }
       if not(s[1:4] == "220") then
-         return error_and_close("Failed to get initial 220:" || s)
-      return
+         return error_and_close_connection("Failed to get initial 220:" || s)
+      return self
    end
 
-   public close_connection()
-      send_command("QUIT", 221) | fail
-      close() | fail
-      return
+   public close()
+      send_command("QUIT", 221)
+      return close_connection()
    end
 
    public send_message(m)
@@ -87,7 +89,7 @@ class SmtpClient(NetClient)
       write_line(s)
       send_command(".", 250) | fail
 
-      return
+      return self
    end
 
    private smtp_address(mb)

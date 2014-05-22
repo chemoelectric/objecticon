@@ -710,18 +710,18 @@ class HttpClient(NetClient)
 
    #
    # 
-   private maybe_open()
-      if not(is_open()) | /open_url | open_url.get_decoded_host() ~== request.url.get_decoded_host() |
+   private maybe_open_connection()
+      if not(is_connected()) | /open_url | open_url.get_decoded_host() ~== request.url.get_decoded_host() |
          open_url.get_port() ~= request.url.get_port() then 
       {
-         close()
+         close_connection()
          set_server(request.url.get_decoded_host())
          set_port(request.url.get_port())
          if request.url.get_scheme() == "https" then
             set_ssl(&yes)
          else
             set_ssl(&no)
-         open() | fail
+         open_connection() | fail
          open_url := clone(request.url)
       }
       return
@@ -760,7 +760,7 @@ class HttpClient(NetClient)
             }
          }
 
-         close()
+         close_connection()
          if \abort_flag then {
             close_inflater()
             error("Aborted")
@@ -800,7 +800,7 @@ class HttpClient(NetClient)
       #
       # Open the connection
       #
-      maybe_open() | fail
+      maybe_open_connection() | fail
 
       #
       # Write the request
@@ -835,7 +835,7 @@ class HttpClient(NetClient)
       }
 
       if request.method === "HEAD" then
-         maybe_close()
+         maybe_close_connection()
       else
          read_data() | fail
 
@@ -844,12 +844,12 @@ class HttpClient(NetClient)
    
    #
    # 
-   private maybe_close()
+   private maybe_close_connection()
       #
       # Close if told to do so.
       #
       if map(response.gen_headers("connection")) == "close" then
-         close()
+         close_connection()
    end
 
    private write_request()
@@ -1026,7 +1026,7 @@ class HttpClient(NetClient)
             break
       }
 
-      maybe_close()
+      maybe_close_connection()
 
       return
    end
@@ -1040,7 +1040,7 @@ class HttpClient(NetClient)
          if \abort_flag then fail
          s := read_str(1048576) | fail
          if /s then {
-            close()
+            close_connection()
             return
          }
          add_some(s) | fail
@@ -1061,7 +1061,7 @@ class HttpClient(NetClient)
          add_some(s) | fail
       }
 
-      maybe_close()
+      maybe_close_connection()
 
       return
    end
