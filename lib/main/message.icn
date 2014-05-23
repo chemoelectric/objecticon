@@ -234,9 +234,8 @@ class Message(MimeHeaders)
    # Parse the given raw data into a Message.
    #
    public static parse(data)
-      local s, p, m
+      local s, m
       m := Message()
-      p := RFC822Parser()
       data ? {
          while s := tab(find("\r\n")) do {
             move(2)
@@ -248,7 +247,7 @@ class Message(MimeHeaders)
                s ||:= tab(find("\r\n")) | return error("Unexpected end of message")
                move(2)
             }
-            p.parse_field(s, m) | fail
+            RFC822Parser().parse_field(s, m) | fail
          }
          return error("Unexpected end of message")
       }
@@ -285,10 +284,9 @@ class Message(MimeHeaders)
    # @return a {Time} instance
    #
    public get_date()
-      local s, p
+      local s
       s := get_first_header("Date") | return error("Missing header: Date")
-      p := RFC822Parser()
-      return p.parse_date_time(s) | header_error("Date", s)
+      return RFC822Parser().parse_date_time(s) | header_error("Date", s)
    end
 
    #
@@ -306,10 +304,9 @@ class Message(MimeHeaders)
    # @     list of {Address}es
    #
    public get_to()
-      local s, p
+      local s
       s := get_catenated_headers("To") | return error("Missing header: To")
-      p := RFC822Parser()
-      return p.parse_address_list(s) | header_error("To", s)
+      return RFC822Parser().parse_address_list(s) | header_error("To", s)
    end
 
    #
@@ -338,10 +335,9 @@ class Message(MimeHeaders)
    # @     list of {Address}es
    #
    public get_reply_to()
-      local s, p
+      local s
       s := get_catenated_headers("Reply-To") | return error("Missing header: Reply-To")
-      p := RFC822Parser()
-      return p.parse_address_list(s, 1) | header_error("Reply-To", s)
+      return RFC822Parser().parse_address_list(s, 1) | header_error("Reply-To", s)
    end
 
    #
@@ -370,10 +366,9 @@ class Message(MimeHeaders)
    # @     list of {Address}es
    #
    public get_resent_to()
-      local s, p
+      local s
       s := get_catenated_headers("Resent-To") | return error("Missing header: Resent-To")
-      p := RFC822Parser()
-      return p.parse_address_list(s) | header_error("Resent-To", s)
+      return RFC822Parser().parse_address_list(s) | header_error("Resent-To", s)
    end
 
    #
@@ -402,10 +397,9 @@ class Message(MimeHeaders)
    # @     list of {Address}es
    #
    public get_cc()
-      local s, p
+      local s
       s := get_catenated_headers("cc") | return error("Missing header: cc")
-      p := RFC822Parser()
-      return p.parse_address_list(s) | header_error("cc", s)
+      return RFC822Parser().parse_address_list(s) | header_error("cc", s)
    end
 
    #
@@ -434,10 +428,9 @@ class Message(MimeHeaders)
    # @     list of {Address}es
    #
    public get_resent_cc()
-      local s, p
+      local s
       s := get_catenated_headers("Resent-cc") | return error("Missing header: Resent-cc")
-      p := RFC822Parser()
-      return p.parse_address_list(s) | header_error("Resent-cc", s)
+      return RFC822Parser().parse_address_list(s) | header_error("Resent-cc", s)
    end
 
    #
@@ -466,10 +459,9 @@ class Message(MimeHeaders)
    # @     list of {Address}es
    #
    public get_bcc()
-      local s, p
+      local s
       s := get_catenated_headers("bcc") | return error("Missing header: bcc")
-      p := RFC822Parser()
-      return p.parse_address_list(s, 1) | header_error("bcc", s)
+      return RFC822Parser().parse_address_list(s, 1) | header_error("bcc", s)
    end
 
    #
@@ -498,10 +490,9 @@ class Message(MimeHeaders)
    # @     list of {Address}es
    #
    public get_resent_bcc()
-      local s, p
+      local s
       s := get_catenated_headers("Resent-bcc") | return error("Missing header: Resent-bcc")
-      p := RFC822Parser()
-      return p.parse_address_list(s, 1) | header_error("Resent-bcc", s)
+      return RFC822Parser().parse_address_list(s, 1) | header_error("Resent-bcc", s)
    end
 
    #
@@ -530,10 +521,9 @@ class Message(MimeHeaders)
    # @     list of {Mailbox}es
    #
    public get_from()
-      local s, p
+      local s
       s := get_catenated_headers("From") | return error("Missing header: From")
-      p := RFC822Parser()
-      return p.parse_mailbox_list(s) | header_error("From", s)
+      return RFC822Parser().parse_mailbox_list(s) | header_error("From", s)
    end
 
    #
@@ -562,10 +552,9 @@ class Message(MimeHeaders)
    # @     {Mailbox}
    #
    public get_sender()
-      local s, p
+      local s
       s := get_first_header("Sender") | return error("Missing header: Sender")
-      p := RFC822Parser()
-      return p.parse_mailbox(s) | header_error("Sender", s)
+      return RFC822Parser().parse_mailbox(s) | header_error("Sender", s)
    end
 
    #
@@ -582,10 +571,9 @@ class Message(MimeHeaders)
    # @param a an {Mailbox} or a list of {Mailbox}es.
    #
    public get_resent_from()
-      local s, p
+      local s
       s := get_catenated_headers("Resent-From") | return error("Missing header: Resent-From")
-      p := RFC822Parser()
-      return p.parse_mailbox_list(s) | header_error("Resent-From", s)
+      return RFC822Parser().parse_mailbox_list(s) | header_error("Resent-From", s)
    end
 
    #
@@ -614,10 +602,9 @@ class Message(MimeHeaders)
    # @     {Mailbox}
    #
    public get_resent_sender()
-      local s, p
+      local s
       s := get_first_header("Resent-Sender") | return error("Missing header: Resent-Sender")
-      p := RFC822Parser()
-      return p.parse_mailbox(s) | header_error("Resent-Sender", s)
+      return RFC822Parser().parse_mailbox(s) | header_error("Resent-Sender", s)
    end
 
    #
@@ -633,10 +620,9 @@ class Message(MimeHeaders)
    # @return a {Time}
    #
    public get_resent_date()
-      local s, p
+      local s
       s := get_first_header("Resent-Date") | return error("Missing header: Resent-Date")
-      p := RFC822Parser()
-      return p.parse_date_time(s) | header_error("Resent-Date", s)
+      return RFC822Parser().parse_date_time(s) | header_error("Resent-Date", s)
    end
 
    #
@@ -653,10 +639,9 @@ class Message(MimeHeaders)
    # @fail if the "Content-Type" header is absent or cannot be parsed.
    #
    public get_content_type()
-      local s, p
+      local s
       s := get_first_header("Content-Type") | return error("Missing header: Content-Type")
-      p := RFC822Parser()
-      return p.parse_content_type(s) | header_error("Content-Type", s)
+      return RFC822Parser().parse_content_type(s) | header_error("Content-Type", s)
    end
 
    #
@@ -673,10 +658,9 @@ class Message(MimeHeaders)
    # @fail if the "Content-Disposition" header is absent or cannot be parsed.
    #
    public get_content_disposition()
-      local s, p
+      local s
       s := get_first_header("Content-Disposition") | return error("Missing header: Content-Disposition")
-      p := RFC822Parser()
-      return p.parse_content_disposition(s) | header_error("Content-Disposition", s)
+      return RFC822Parser().parse_content_disposition(s) | header_error("Content-Disposition", s)
    end
 
    #
@@ -693,10 +677,9 @@ class Message(MimeHeaders)
    # @return a string
    #
    public get_content_transfer_encoding()
-      local s, p
+      local s
       s := get_first_header("Content-Transfer-Encoding") | return error("Missing header: Content-Transfer-Encoding")
-      p := RFC822Parser()
-      return p.parse_content_transfer_encoding(s) | header_error("Content-Transfer-Encoding", s)
+      return RFC822Parser().parse_content_transfer_encoding(s) | header_error("Content-Transfer-Encoding", s)
    end
 
    #

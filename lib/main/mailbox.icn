@@ -71,9 +71,7 @@ class Mailbox(Address)
    end
 
    public static parse(s)
-      local p
-      p := RFC822Parser()
-      return p.parse_mailbox(s)
+      return RFC822Parser().parse_mailbox(s)
    end   
 
    public generate_mailboxes()
