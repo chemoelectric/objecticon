@@ -11,6 +11,7 @@ import
    xml,
    posix,
    graphics,
+   xdg,
    ipl.lists,
    ipl.pdco,
    ipl.sort,
@@ -2202,7 +2203,7 @@ class Form()
    end
 
    private make_cgi_message(ev, src)
-      local k, v, c, m, mp, m2
+      local k, v, c, m, mp, m2, fn, mt
       m := Message()
       mp := Multipart()
       every c := !items do {
@@ -2210,10 +2211,12 @@ class Form()
             every v := c.get_form_value(ev, src, 1) do {
                m2 := Message()
                if is(c, FormBrowse) then {
+                  fn := c.get_filename()
+                  mt := Xdg.get_mime_type_for_file(fn) | "application/octet-stream"
                   m2.set_header("Content-Disposition", 
                                 "form-data; name=" || escape_1521_value(k) || 
-                                "; filename=" || escape_1521_value(c.get_filename()))
-                  m2.set_header("Content-Type", "application/octet-stream")
+                                "; filename=" || escape_1521_value(fn))
+                  m2.set_header("Content-Type", mt)
                } else 
                   m2.set_header("Content-Disposition", 
                                 "form-data; name=" || escape_1521_value(k))
