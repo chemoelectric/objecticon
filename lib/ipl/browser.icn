@@ -1146,7 +1146,6 @@ abstract class FormEntry()
    end
 
    public reset_form() end
-   public get_save_subkey() end
    public get_save_value() end
    public restore_value(val) end
 
@@ -1165,10 +1164,6 @@ class FormToggle(ToggleTextButton, FormEntry)
    public get_form_value(ev, src)
       if is_checked() then 
          return value
-   end
-
-   public get_save_subkey()
-      return value
    end
 
    public get_save_value()
@@ -2260,7 +2255,6 @@ class Form()
    public add(name, item)
       put(items, item)
       item.form_name := name
-      item.form_save_key := item.form_name || u":" || *items
    end
 
    public add_component(context, el, item)
@@ -2271,7 +2265,7 @@ class Form()
       item.form_name := el.get_attribute(u"NAME")
       if item.form_id := el.get_attribute(u"ID") then
          insert(id_table, item.form_id, item)
-      item.form_save_key := (\item.form_name | \item.form_id) || u":" || *items
+      item.form_save_key := Class.get_name(item) || u":" || (\item.form_name | \item.form_id | u"?") || u":" || *items
       item.form_tabindex := integer(el.get_attribute(u"TABINDEX"))
       l := context.form_label
       # If we have a label in the context, and the for and id tags
@@ -2311,7 +2305,7 @@ class Form()
    end
 
    public get_save_key()
-      return \save_key
+      return save_key
    end
 
    public resolve_labels()
@@ -3030,21 +3024,15 @@ class Browser(ComponentScrollArea)
    end
 
    private save_form_values()
-      local f, c, name, t1, t2, fk, k
+      local f, c, t1, t2
       t1 := table()
       every f := !forms do {
-         if fk := f.get_save_key() then {
-            t2 := table()
-            insert(t1, fk, t2)
-            every c := !f.items do {
-               if name := c.get_save_key() then {
-                  k := Class.get_name(c) || u":" || name
-                  k ||:= u":" || c.get_save_subkey()
-                  insert(t2, k, c.get_save_value())
-               }
-            }
-         }
+         t2 := table()
+         insert(t1, f.get_save_key(), t2)
+         every c := !f.items do
+            insert(t2, c.get_save_key(), c.get_save_value())
       }
+      #write(to_string(t1,3,1))
       curr_history_entry.form_values := t1
    end
 
@@ -3057,17 +3045,12 @@ class Browser(ComponentScrollArea)
    end
 
    private restore_form_values()
-      local f, c, name, t1, t2, k
+      local f, c, t1, t2
       t1 := \curr_history_entry.form_values | fail
       every f := !forms do {
          if t2 := member(t1, f.get_save_key()) then {
-            every c := !f.items do {
-               if name := c.get_save_key() then {
-                  k := Class.get_name(c) || u":" || name
-                  k ||:= u":" || c.get_save_subkey()
-                  c.restore_value(member(t2, k))
-               }
-            }
+            every c := !f.items do
+               c.restore_value(member(t2, c.get_save_key()))
          }
       }
    end
@@ -3476,7 +3459,7 @@ class Browser(ComponentScrollArea)
       t := string(e.get_attribute(u"ENCTYPE")) | "application/x-www-form-urlencoded"
       url := mk_link(e.get_attribute(u"ACTION"))
       id := e.get_attribute(u"ID" | u"NAME")
-      save_key :=  (\id | (\url).ucs()) || u":" || (*forms + 1)
+      save_key :=  (\id | (\url).ucs() | u"?") || u":" || (*forms + 1)
       c := copy(context)
       c.form := Form(self, save_key, id, url, m, t)
       put(forms, c.form)
