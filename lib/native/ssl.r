@@ -6,6 +6,7 @@
 struct sslstream {
     SSL_CTX *ctx;
     SSL *ssl;
+    char *host;
 };
 
 #begdef GetSelfSsl()
@@ -44,7 +45,9 @@ static int pattern_match (char *pattern, char *string)
     return *n == '\0';
 }
 
-function ssl_SslStream_new_impl(other)
+function ssl_SslStream_new_impl(other, host)
+   if !cnv:C_string(host) then
+      runerr(103, host)
    body {
        struct sslstream *p;
        SSL_METHOD *meth;
@@ -62,6 +65,7 @@ function ssl_SslStream_new_impl(other)
 
        MemProtect(p = malloc(sizeof(*p)));
        p->ctx = ctx;
+       p->host = salloc(host);
 
        SSL_CTX_set_default_verify_paths(ctx);
 
@@ -69,6 +73,7 @@ function ssl_SslStream_new_impl(other)
        ssl = SSL_new(ctx);
        sbio = BIO_new_socket(fd, BIO_NOCLOSE);
        SSL_set_bio(ssl, sbio, sbio);
+       SSL_set_tlsext_host_name(ssl, p->host);
 
        p->ssl = ssl;
 
@@ -136,9 +141,7 @@ static int match_alt_names(X509 *cert, char *host)
     return 0;
 }
 
-function ssl_SslStream_verify(self, host)
-   if !cnv:C_string(host) then
-      runerr(103, host)
+function ssl_SslStream_verify(self)
    body {
        long l;   
        X509 *peer;
@@ -150,7 +153,7 @@ function ssl_SslStream_verify(self, host)
        }
 
        peer = SSL_get_peer_certificate(self_ssl->ssl);
-       if (!match_common_name(peer, host) && !match_alt_names(peer, host)) {
+       if (!match_common_name(peer, self_ssl->host) && !match_alt_names(peer, self_ssl->host)) {
            LitWhy("Couldn't match host name with certificate's common name or alternate names");
            fail;
        }
@@ -232,6 +235,7 @@ function ssl_SslStream_close_impl(self)
        SSL_shutdown(self_ssl->ssl);
        SSL_free(self_ssl->ssl);
        SSL_CTX_free(self_ssl->ctx);
+       free(self_ssl->host);
        free(self_ssl);
        *self_ssl_dptr = zerodesc;
        return self;

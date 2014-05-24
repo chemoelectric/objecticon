@@ -449,8 +449,8 @@ AC_DEFUN([AX_CHECK_OPENSSL],
 )
     unset OPENSSL_VERSION OPENSSL_CPPFLAGS OPENSSL_LDFLAGS OPENSSL_LIBS
     if test -n "$OPENSSL_CONFIG"; then
-           AC_MSG_CHECKING([for libOpenSSL library])
-           if pkg-config $OPENSSL_CONFIG; then
+           AC_MSG_CHECKING([for libOpenSSL library >= 1.0])
+           if pkg-config --atleast-version=1.0 $OPENSSL_CONFIG; then
               OPENSSL_CPPFLAGS=`pkg-config --cflags $OPENSSL_CONFIG`
               OPENSSL_LDFLAGS=`pkg-config --libs-only-L $OPENSSL_CONFIG`
               OPENSSL_LIBS=`pkg-config --libs-only-l $OPENSSL_CONFIG`
@@ -458,7 +458,7 @@ AC_DEFUN([AX_CHECK_OPENSSL],
               AC_DEFINE(HAVE_LIBOPENSSL)
               AC_MSG_RESULT(yes)
            else
-              PKGERR=`pkg-config --errors-to-stdout --print-errors $OPENSSL_CONFIG`
+              PKGERR=`pkg-config --errors-to-stdout --print-errors --atleast-version=1.0 $OPENSSL_CONFIG`
               AC_MSG_RESULT([$PKGERR])
               AC_MSG_RESULT([no])
            fi

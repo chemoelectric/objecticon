@@ -135,7 +135,7 @@ class NetClient(Connectable, HasTask)
          }
       }
       if \ssl_flag then {
-         ssl_connection := SslStream(connection) | {
+         ssl_connection := SslStream(connection, server) | {
             close_connection()
             return error("Couldn't create SslStream: " || &why)
          }
@@ -146,7 +146,7 @@ class NetClient(Connectable, HasTask)
             }
          }
          if \ssl_verify_flag then {
-            ssl_connection.verify(server) | {
+            ssl_connection.verify() | {
                close_connection()
                return error("Couldn't verify SSL connection: " || &why)
             }

@@ -20,7 +20,7 @@ final class SslStream(Stream, HasUnderlyingStream, NoCopy)
 
    public native connect()
 
-   public native verify(host)
+   public native verify()
 
    public native shutdown()
 
@@ -42,16 +42,17 @@ final class SslStream(Stream, HasUnderlyingStream, NoCopy)
       return other.get_mode()
    end
 
-   private static native new_impl(other)
+   private static native new_impl(other, host)
 
    #
    # Create a new SslStream.
    #
    # @param other an already connected {SocketStream} over which the connection
    #              will operate
-   public new(other)
+   # @param host  the name of the host corresponding to the connection
+   public new(other, host)
       \LOADED | return error("SSL not supported")
-      ptr := new_impl(other) | fail
+      ptr := new_impl(other, host) | fail
       self.other := other
       return
    end
