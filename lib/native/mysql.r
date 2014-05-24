@@ -185,17 +185,11 @@ function mysql_MySql_select_db(self, db)
    }
 end
 
-#passthru #if MYSQL_VERSION_ID >= 50001 || (MYSQL_VERSION_ID < 50000 && MYSQL_VERSION_ID >= 40103)
-#passthru   #define SHUTDOWN_CMD(X)   mysql_shutdown(X, SHUTDOWN_DEFAULT)
-#passthru #else
-#passthru   #define SHUTDOWN_CMD(X)   mysql_shutdown(X)
-#passthru #endif
-
 function mysql_MySql_shutdown(self)
    body {
       GetSelfMySql();
 
-      if (SHUTDOWN_CMD(self_mysql))
+      if (mysql_shutdown(self_mysql, SHUTDOWN_DEFAULT))
       {
           on_mysql_error(self_mysql);
           fail;
