@@ -81,7 +81,7 @@ class Monitor()
       if \opts["head"|"c"] then
          fail
 
-      if fname := hc.get_response().get_content_disposition_filename() then {
+      if fname := hc.get_response().get_filename() & *fname > 0 then {
          get_out(fname)
          if check_skip() then
             hc.abort()
