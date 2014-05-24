@@ -50,9 +50,7 @@ class Group(Address)
    end
 
    public static parse(s)
-      local p
-      p := RFC822Parser()
-      return p.parse_group(s)
+      return RFC822Parser().parse_group(s)
    end   
 
    public generate_mailboxes()

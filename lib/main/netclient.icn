@@ -58,9 +58,9 @@ class NetClient(Connectable, HasTask)
    # 
    # Fail and set the error code, and close the connection.
    #
-   protected error_and_close(a)
+   protected error_and_close_connection(a)
       error(a)
-      close()
+      close_connection()
    end
 
    # Set the timeout in ms to use.  If {&null}, then no timeout will
@@ -123,10 +123,10 @@ $else
    #
    # Open the connection.
    #
-   protected open()
+   protected open_connection()
       local r, domain, addr, msg_addr
 
-      close()
+      close_connection()
       fire(CONNECTING_EVENT)
 
       if \server then {
@@ -141,43 +141,43 @@ $else
 
       connection := SocketStream(domain)
       connection.flag(FileOpt.NONBLOCK) | {
-         close()
+         close_connection()
          return error("Couldn't put socket in non-blocking mode: " || &why)
       }
 
       connection.connect(addr) | {
          if errno() = Errno.EINPROGRESS then {
             r := do_poll(Poll.OUT) | {
-               close()
+               close_connection()
                return error("Couldn't connect to " || msg_addr || ": " || &why)
             }
             if /r then {
-               close()
+               close_connection()
                return error("Couldn't connect to " || msg_addr || ": timeout")
             }
             DescStream.poll_out_test(r[1]) | {
-               close()
+               close_connection()
                return error("Couldn't connect to " || msg_addr || ": socket error")
             }
          } else {
-            close()
+            close_connection()
             return error("Couldn't connect to " || msg_addr || ": " || &why)
          }
       }
       if \ssl_flag then {
-         ssl_connection := SslStream(connection) | {
-            close()
+         ssl_connection := SslStream(connection, server) | {
+            close_connection()
             return error("Couldn't create SslStream: " || &why)
          }
          until ssl_connection.connect() do {
             ssl_maybe_poll() | {
-               close()
+               close_connection()
                return error("Couldn't perform SSL connection: " || &why)
             }
          }
          if \ssl_verify_flag then {
-            ssl_connection.verify(server) | {
-               close()
+            ssl_connection.verify() | {
+               close_connection()
                return error("Couldn't verify SSL connection: " || &why)
             }
          }
@@ -219,7 +219,7 @@ $endif
    #
    # Close the connection
    #
-   public close()
+   protected close_connection()
       if \ssl_connection then {
          ssl_connection.close()
          connection.close()
@@ -231,6 +231,10 @@ $endif
          fire(CLOSED_EVENT)
       }
       return self
+   end
+
+   public close()
+      return close_connection()
    end
 
    #
@@ -390,7 +394,7 @@ $endif
       return \s | error("Unexpected eof")
    end
 
-   protected is_open()
+   protected is_connected()
       if \self.connection then
          return
    end

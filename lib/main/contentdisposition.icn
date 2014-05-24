@@ -71,10 +71,9 @@ class ContentDisposition()
    # @return a {Time} instance
    #
    public get_creation_date()
-      local s, p
+      local s
       s := get_parameter("creation-date") | return error("Missing parameter: creation-date")
-      p := RFC822Parser()
-      return p.parse_date_time(s) | parameter_error("creation-date", s)
+      return RFC822Parser().parse_date_time(s) | parameter_error("creation-date", s)
    end
 
    #
@@ -91,10 +90,9 @@ class ContentDisposition()
    # @return a {Time} instance
    #
    public get_modification_date()
-      local s, p
+      local s
       s := get_parameter("modification-date") | return error("Missing parameter: modification-date")
-      p := RFC822Parser()
-      return p.parse_date_time(s) | parameter_error("modification-date", s)
+      return RFC822Parser().parse_date_time(s) | parameter_error("modification-date", s)
    end
 
    #
@@ -111,10 +109,9 @@ class ContentDisposition()
    # @return a {Time} instance
    #
    public get_read_date()
-      local s, p
+      local s
       s := get_parameter("read-date") | return error("Missing parameter: read-date")
-      p := RFC822Parser()
-      return p.parse_date_time(s) | parameter_error("read-date", s)
+      return RFC822Parser().parse_date_time(s) | parameter_error("read-date", s)
    end
 
    #
