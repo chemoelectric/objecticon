@@ -189,17 +189,18 @@ class NetClient(Connectable, HasTask)
    # Close the connection
    #
    protected close_connection()
+      local f
       if \ssl_connection then {
-         ssl_connection.close()
-         connection.close()
+         ssl_connection.close() | (f := 1)
+         connection.close() | (f := 1)
          ssl_connection := connection := &null
          fire(CLOSED_EVENT)
       } else if \connection then {
-         connection.close()
+         connection.close() | (f := 1)
          connection := &null
          fire(CLOSED_EVENT)
       }
-      return self
+      return /f & self
    end
 
    public close()
