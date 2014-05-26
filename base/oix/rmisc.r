@@ -1107,7 +1107,6 @@ void begin_esc(FILE *f, dptr fname, word line)
     fputs("\"", f);
     if (line)
         fprintf(f, ";\"line=%d\"", (int)line);
-    fputs(";\"ct=text/x-objecticon\"", f);
     fputs("Z", f);
 }
 
