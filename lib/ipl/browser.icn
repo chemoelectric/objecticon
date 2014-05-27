@@ -600,8 +600,10 @@ class Worker()
          }
          until req := pool.queue_get() do
             task.sleep()
+         insert(pool.req_worker, req, self)
          cancelled := &null
          handle_req()
+         delete(pool.req_worker, req)
          sub_worker := req := &null
       }
    end
@@ -617,6 +619,8 @@ class WorkerPool()
    private
       queue,
       workers
+   package
+      req_worker         # table mapping Req to Worker
    private readable
       active,
       log_http_flag,
@@ -666,15 +670,11 @@ class WorkerPool()
       }
       # Not found in queue, so look in the workers.
       get_worker(req).cancel()
-
       return self
    end
 
    public get_worker(req)
-      local w
-      every w := !workers do 
-         if w.req === req then
-            return w
+      return member(req_worker, req)
    end
 
    public enqueue(req)
@@ -834,6 +834,7 @@ class WorkerPool()
       workers := []
       every 1 to n do
          put(workers, Worker(self))
+      req_worker := table()
       return
    end
 end
