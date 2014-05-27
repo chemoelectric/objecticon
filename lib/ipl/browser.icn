@@ -643,12 +643,31 @@ class WorkerPool()
       clear(queue)
    end
 
-   public cancel(client)
+   # Cancel all requests for a given client
+   public cancel_all(client)
       local w
       delete(queue, client)
       every w := !workers do 
          if (\w.req).client === client then
             w.cancel()
+      return self
+   end
+
+   # Cancel an individual request
+   public cancel_req(req)
+      local l, i
+      if l := member(queue, req.client) then {
+         if i := keyof(l, req) then {
+            delete(l, i)
+            if *l = 0 then
+               delete(queue, req.client)
+            return self
+         }
+      }
+      # Not found in queue, so look in the workers.
+      get_worker(req).cancel()
+
+      return self
    end
 
    public get_worker(req)
@@ -658,7 +677,7 @@ class WorkerPool()
             return w
    end
 
-   public start_worker(req)
+   public enqueue(req)
       local w, l
       if l := member(queue, req.client) then
          put(l, req)
@@ -672,6 +691,7 @@ class WorkerPool()
             w.task.notify()
             break
          }
+      return self
    end
 
    public queue_size()
@@ -2891,7 +2911,7 @@ class Browser(ComponentScrollArea)
       if /shared_worker_pool_flag then
          worker_pool.finally()
       else
-         worker_pool.cancel(self)
+         worker_pool.cancel_all(self)
       running := 0
       scroll_ticker.stop()
       status_ticker.stop()
@@ -2986,11 +3006,12 @@ class Browser(ComponentScrollArea)
    end
 
    public cancel()
-      worker_pool.cancel(self)
+      worker_pool.cancel_all(self)
+      return self
    end
 
-   private start_worker(req)
-      worker_pool.start_worker(req)
+   private enqueue(req)
+      worker_pool.enqueue(req)
       running := &null
    end
 
@@ -3539,7 +3560,7 @@ class Browser(ComponentScrollArea)
             q.set_border(EmptyBorder().set_insets(hspace, hspace, vspace, vspace))
       } else if border > 0 then
          q.set_border(PlainBorder().set_line_width(border))
-      start_worker(Req(self, url, page_url, q.got_data, page_resp.req.kind))
+      enqueue(Req(self, url, page_url, q.got_data, page_resp.req.kind))
       align := convert_comp_align(e, u"ALIGN") | Align.B
       add_component(p, q, context, align)
    end
@@ -3696,7 +3717,7 @@ class Browser(ComponentScrollArea)
                # TextFlow).
                if \context.nowrap | \context.pre then
                   q.remove_constraint("pct_w")
-               start_worker(Req(self, url, page_url, q.got_data, page_resp.req.kind))
+               enqueue(Req(self, url, page_url, q.got_data, page_resp.req.kind))
                if e.get_attribute(u"DISABLED") then
                   q.set_is_shaded(&yes)
                else {
@@ -4502,7 +4523,7 @@ class Browser(ComponentScrollArea)
          page_url.scheme == (u"http" | u"https") | fail
          page_favicon_url := clone(page_url).set_path(u"/favicon.ico")
       }
-      start_worker(Req(self, page_favicon_url, page_url, got_favicon, page_resp.req.kind))
+      enqueue(Req(self, page_favicon_url, page_url, got_favicon, page_resp.req.kind))
    end
 
    private traverse_link(e, p, context)
@@ -4603,7 +4624,7 @@ class Browser(ComponentScrollArea)
    public goto(url, referer, form_data, kind)
       /kind := Worker.NORMAL
       cancel()
-      start_worker(Req(self, url, referer, set_top_data, kind, form_data))
+      enqueue(Req(self, url, referer, set_top_data, kind, form_data))
       return self
    end
 

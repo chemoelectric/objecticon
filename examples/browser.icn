@@ -30,13 +30,15 @@ class Settings()
       visited,
       visited_size,
       pool_size,
+      max_concurrent_downloads,
       destination_dir,
       authentications
 
    public new()
       home_url := URL(u"config:")
       cache_size_mb := 8
-      pool_size := 6
+      pool_size := 6 
+      max_concurrent_downloads := 3
       visited := []
       visited_size := 100
       destination_dir := "/tmp"
@@ -271,12 +273,13 @@ class BrowserDialog(Dialog)
    end
 
    private edit_settings(req)
-      local t, home, cn, vn, pn
+      local t, home, cn, vn, pn, mcd
       (t := req.url.extract_cgi_parameters() &
        home := URL(ucs(member(t, "home")[1])) &
        cn := integer(member(t, "cache")[1]) &
        vn := integer(member(t, "vsize")[1]) &
-       pn := integer(member(t, "psize")[1])) | return error("Bad request")
+       pn := integer(member(t, "psize")[1]) &
+       mcd := integer(member(t, "maxcd")[1])) | return error("Bad request")
       settings.authentications := if member(t, "authentications") then
          pool.authentications
       else
@@ -285,6 +288,7 @@ class BrowserDialog(Dialog)
       settings.cache_size_mb := cn
       settings.visited_size := vn
       settings.pool_size := pn
+      settings.max_concurrent_downloads := mcd
       return config_main("<p><font size=+1 color=green>Settings saved OK; cache and pool sizes only take effect on restart.</font><p>")
    end
 
@@ -302,6 +306,8 @@ class BrowserDialog(Dialog)
                    <tr><td>Cache size (MB):</td><td><input type=number min=1 step=1 name=cache value=" || settings.cache_size_mb || " size=50 /></td></tr>_
                    <tr><td>Visited list size:</td><td><input type=number min=10 step=1 name=vsize value=" || settings.visited_size || " size=50 /></td></tr>_
                    <tr><td>Worker pool size:</td><td><input type=number min=5 step=1 name=psize value=" || settings.pool_size || " size=50 /></td></tr>_
+                   <tr><td>Max concurrent downloads:</td><td><input type=number min=2 step=1 name=maxcd value=" || 
+                           settings.max_concurrent_downloads || " size=50 /></td></tr>_
                    <tr><td colspan=2><label><input type=checkbox name=authentications value=yes " || 
                                        (if /settings.authentications then "" else "checked") || "/> Save authentications</label></td></tr>_
                  </table>_
@@ -461,6 +467,12 @@ class Download()
    private readable
       parent, req, resp, status, size, full_path, dialog, dest
 
+   public enqueue()
+      parent.parent_dialog.pool.enqueue(req)
+      status := "Queued"
+      return self
+   end
+
    private log(s)
       dialog.text.log([&clock || u": " || Text.liberal_ucs(s)], 500)
    end
@@ -555,7 +567,7 @@ class Download()
       self.status := "New"
       self.dest := dest
       size := ""
-      self.req := Req(self, url, referer, got_data, Worker.DOWNLOAD,, on_status)
+      self.req := Req(parent, url, referer, got_data, Worker.DOWNLOAD,, on_status)
       self.dialog := MessageDialog().set_label("Item log")
       log("Log for " || url.str())
       return
@@ -634,14 +646,13 @@ class DownloadTab(TabItem)
    end
 
    private on_delete(d)
-      parent_dialog.pool.cancel(d)
+      parent_dialog.pool.cancel_req(d.req)
       ldel1(dl, d)
       refresh()
    end
 
    private on_retry(d)
       d.retrying()
-      parent_dialog.pool.start_worker(d.req)
       refresh()
    end
 
@@ -720,15 +731,39 @@ class DownloadTab(TabItem)
       popup.popup(self, menu, ev.x, ev.y)
    end
 
-   private tick()
-      local l
-      repeat {
-         l := []
-         every put(l, (!dl).get_status())
-         equals(l, url_table.get_contents()) | {
-            url_table.set_contents(l)
-            update_title()
+   private maybe_enqueue_some()
+      local i, d
+      # Count how many aren't in the pool queue, or working
+      i := parent_dialog.settings.max_concurrent_downloads
+      every d := !dl do {
+         if match("Queued" | "Downloading", d.status) then
+            i -:= 1
+      }
+      # Move any in "New" into available slots.
+      every d := !dl do {
+         if i <= 0 then
+            break
+         if d.status == "New" then {
+            d.enqueue()
+            i -:= 1
          }
+      }
+   end
+
+   private update_status()
+      local l
+      l := []
+      every put(l, (!dl).get_status())
+      equals(l, url_table.get_contents()) | {
+         url_table.set_contents(l)
+         update_title()
+      }
+   end
+
+   private tick()
+      repeat {
+         maybe_enqueue_some()
+         update_status()
          ticker.sleep(750)
       }
    end
@@ -744,10 +779,7 @@ class DownloadTab(TabItem)
    end
 
    public download(url, referer, dest)
-      local d
-      d := Download(self, url, referer, dest)
-      put(dl, d)
-      parent_dialog.pool.start_worker(d.req)
+      put(dl, Download(self, url, referer, dest))
       refresh()
    end
 
@@ -1601,6 +1633,7 @@ procedure main(a)
    t := decode(Files.file_to_string(cookies)) | table()
    settings := decode(Files.file_to_string(sf)) | Settings()
    /settings.pool_size := 6
+   /settings.max_concurrent_downloads := 3
    /settings.destination_dir := "/tmp"
    ImageCache.name_image("rpp.EXIT_24", EXIT)
    ImageCache.name_image("rpp.PASTE_24", PASTE)
