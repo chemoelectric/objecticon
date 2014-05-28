@@ -886,9 +886,11 @@ class Dialog(Component)
             set_dx(-self.tooltip_component.x).
             set_dy(-self.tooltip_component.y).
             set_x(win.get_x() + win.get_dx() + self.tooltip_component.x).
-            set_y(win.get_y() + win.get_dy() + self.tooltip_component.y)
+            set_y(win.get_y() + win.get_dy() + self.tooltip_component.y).
+            copy_wattrib("display", self).
+            add(self.tooltip_component)
          self.tooltip_component.set_pos(0, 0)
-         d.add(self.tooltip_component).show()
+         d.show()
       } else
          self.tooltip_component.invalidate()
    end

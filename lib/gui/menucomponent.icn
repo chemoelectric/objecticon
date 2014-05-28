@@ -421,20 +421,21 @@ abstract class MenuComponent(Rect,Connectable)
          pd.add(self.temp_win)
          self.temp_win.resize().invalidate()
       } else {
-         d := PureDialog().
-            set_canvas("popup").
-            set_width(self.w).
-            set_height(self.h).
-            set_dx(-self.x).
-            set_dy(-self.y).
-            set_x(win.get_x() + win.get_dx() + self.x).
-            set_y(win.get_y() + win.get_dy() + self.y)
          self.temp_win := create_proxy().
             set_pos(0, 0).
             set_size(self.w, self.h).
             # Copy attribs of the parent component
             set_all_wattribs(self.parent_component.get_effective_wattribs())
-         d.add(self.temp_win)
+         d := PureDialog().
+            set_canvas("popup").
+            set_width(self.w).
+            set_height(self.h).
+            copy_wattrib("display", parent_component.parent_dialog).
+            add(self.temp_win).
+            set_dx(-self.x).
+            set_dy(-self.y).
+            set_x(win.get_x() + win.get_dx() + self.x).
+            set_y(win.get_y() + win.get_dy() + self.y)
          pd.add_popup(d)
          d.show()
       }

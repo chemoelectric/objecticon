@@ -106,26 +106,24 @@ abstract class DropDown(Component, MenuMode)
       if \use_popup_win then {
          # Remove popup from dialog and add to popup window.
          self.parent_dialog.remove(popup)
-         d := if use_direction == Direction.DOWN then 
-            PureDialog().
-               set_canvas("popup").
-               set_width(pref_w).
-               set_height(pref_h).
-               set_dx(-self.x + x_adj).
-               set_dy(-(self.y + self.h)).
-               set_x(win.get_x() + win.get_dx() + self.x - x_adj).
-               set_y(win.get_y() + win.get_dy() + self.y + self.h)
-         else
-            PureDialog().
-               set_canvas("popup").
-               set_width(pref_w).
-               set_height(pref_h).
-               set_dx(-self.x + x_adj).
-               set_dy(-(self.y - pref_h)).
-               set_x(win.get_x() + win.get_dx() + self.x - x_adj).
-               set_y(win.get_y() + win.get_dy() + self.y - pref_h)
+         d := PureDialog().
+            set_canvas("popup").
+            set_width(pref_w).
+            set_height(pref_h).
+            copy_wattrib("display", parent_dialog).
+            add(popup)
 
-         d.add(popup)
+         if use_direction == Direction.DOWN then 
+            d.set_dx(-self.x + x_adj).
+              set_dy(-(self.y + self.h)).
+              set_x(win.get_x() + win.get_dx() + self.x - x_adj).
+              set_y(win.get_y() + win.get_dy() + self.y + self.h)
+         else
+            d.set_dx(-self.x + x_adj).
+              set_dy(-(self.y - pref_h)).
+              set_x(win.get_x() + win.get_dx() + self.x - x_adj).
+              set_y(win.get_y() + win.get_dy() + self.y - pref_h)
+
          self.popup.set_pos(0, 0)
          self.parent_dialog.
             set_focus().
@@ -424,26 +422,24 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       if \use_popup_win then {
          # Remove popup from dialog and use add to popup window.
          self.parent_dialog.remove(popup)
-         d := if use_direction == Direction.DOWN then 
-            PureDialog().
-               set_canvas("popup").
-               set_width(popup.w_spec).
-               set_height(popup.h_spec).
-               set_dx(-self.x).
-               set_dy(-(self.y + self.h)).
-               set_x(win.get_x() + win.get_dx() + self.x).
-               set_y(win.get_y() + win.get_dy() + self.y + self.h)
-         else
-            PureDialog().
-               set_canvas("popup").
-               set_width(popup.w_spec).
-               set_height(popup.h_spec).
-               set_dx(-self.x).
-               set_dy(-(self.y - popup.h_spec)).
-               set_x(win.get_x() + win.get_dx() + self.x).
-               set_y(win.get_y() + win.get_dy() + self.y - popup.h_spec)
+         d := PureDialog().
+            set_canvas("popup").
+            set_width(popup.w_spec).
+            set_height(popup.h_spec).
+            copy_wattrib("display", parent_dialog).
+            add(popup)
 
-         d.add(popup)
+         if use_direction == Direction.DOWN then 
+            d.set_dx(-self.x).
+              set_dy(-(self.y + self.h)).
+              set_x(win.get_x() + win.get_dx() + self.x).
+              set_y(win.get_y() + win.get_dy() + self.y + self.h)
+         else
+            d.set_dx(-self.x).
+              set_dy(-(self.y - popup.h_spec)).
+              set_x(win.get_x() + win.get_dx() + self.x).
+              set_y(win.get_y() + win.get_dy() + self.y - popup.h_spec)
+
          self.popup.set_pos(0, 0)
          self.parent_dialog.
             set_focus().

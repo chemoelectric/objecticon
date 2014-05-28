@@ -482,6 +482,20 @@ class Component(Rect,Align,Connectable)
    end
 
    #
+   # Copy an attrib from another component to this one.  If the
+   # attribute is absent in the other component it is deleted from
+   # this one.
+   #
+   public copy_wattrib(attr, other)
+      local val
+      if val := other.get_wattrib(attr) then
+         set_wattrib(attr, val)
+      else
+         remove_wattrib(attr)
+      return self
+   end
+
+   #
    # Set a layout constraint
    #
    public set_constraint(key, val)
