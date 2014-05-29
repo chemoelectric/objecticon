@@ -103,19 +103,15 @@ class Cache()
       }
    end
 
-   public get(url)
+   public get(key_url)
       local ce
-      url := clone(url).set_fragment()
-      if ce := member(t, url.str()) &
+      if ce := member(t, key_url.str()) &
          (/ce.expiry | ce.expiry > Time.get_system_seconds()) then
          return ce
    end
 
-   public add(url, expiry, data, fname, content_type)
-      local ce
-      url := clone(url).set_fragment()
-      ce := CacheEntry(url, expiry, data, fname, content_type)
-      insert(t, ce.url.str(), ce)
+   public add(key_url, url, expiry, data, fname, content_type)
+      insert(t, key_url.str(), CacheEntry(url, expiry, data, fname, content_type))
       return self
    end
 
@@ -123,7 +119,7 @@ class Cache()
       local url
       /expiry := Time.get_system_seconds() + 60
       url := URL(u"cache:" || (id +:= 1))
-      add(url, expiry, data, fname, content_type)
+      add(url, url, expiry, data, fname, content_type)
       return url
    end
 
@@ -149,17 +145,19 @@ class Cache()
    end
 
    public get_status()
-      local s, ce, n, sz, exp, ct, l, total
+      local s, ce, n, sz, exp, ct, l, total, k
       s := "<html><title>Cache status</title>" || Browser.get_table_tag()
-      s ||:= "<tr><th align=left>Filename</th><th align=right>Size&nbsp;</th><th>Expiry</th><th align=left>Content&nbsp;type</th><th align=left>URL</th></tr>"
+      s ||:= "<tr><th align=left>Key</th><th align=left>Filename</th><th align=right>Size&nbsp;</th><th>Expiry</th><th align=left>Content&nbsp;type</th><th align=left>URL</th></tr>"
       total := 0
-      every ce := !t do {
+      every k := key(t) do {
+         ce := member(t, k)
+         k := Browser.limit_text(k, 200)
          n := Browser.limit_text(\ce.fname, 200) | "-"
          sz := Format.numeric_to_string(*ce.data, 0, ',')
          exp := format_expiry(ce.expiry)
          ct := (\ce.content_type).to_rfc1521() | "-"
          l := ce.url
-         s ||:= "<tr><td>" || Browser.to_content(n) || "</td><td align=right>" || sz || "&nbsp;</td><td>" || exp ||
+         s ||:= "<tr><td>" || Browser.to_content(k) || "</td><td>" || Browser.to_content(n) || "</td><td align=right>" || sz || "&nbsp;</td><td>" || exp ||
                    "</td><td nowrap>" || Browser.to_content(ct) || "</td>" || Browser.mk_anchor_cell(l) || "</tr>" 
          total +:= *ce.data
       }
@@ -327,13 +325,26 @@ class HttpSubWorker(SubWorker)
       return
    end
 
+   # Copy the fragment part of url1 to url2, unless url2 has its own fragment.
+   # See s4.1 at http://www.w3.org/TR/cuap#uri
+   #
+   private static adjust_fragment(url1, url2)
+      local f
+      if f := url1.get_fragment() &
+         not url2.get_fragment() then
+         url2 := clone(url2).set_fragment(f)
+      return url2
+   end
+
    public get_data(worker)
-      local req, s, data, hreq, hres, fname, ct, x, ce, sc, pr
+      local req, s, data, hreq, hres, fname, ct, x, ce, sc, pr, req_url_no_frag
       httpc := worker.httpc
       req := worker.req
-      return if req.kind ~= Worker.REFRESH & /req.form_data & (ce := worker.pool.cache.get(req.url)) then
-         ce
-      else if req.kind = Worker.DOWNLOAD then {
+      # The request URL without the fragment
+      req_url_no_frag := clone(req.url).set_fragment()
+      return if req.kind ~= Worker.REFRESH & /req.form_data & (ce := worker.pool.cache.get(req_url_no_frag)) then {
+         return Resp(req,, adjust_fragment(req.url, ce.url), ce.data, ce.fname, ce.content_type)
+      } else if req.kind = Worker.DOWNLOAD then {
          tmp_file := Files.make_temp_filename("http_oibrowser.", ".bin") | stop("Couldn't create temp file: ", &why)
          use {
             s := BufferStream(FileStream(tmp_file, 
@@ -342,14 +353,14 @@ class HttpSubWorker(SubWorker)
             {
                hreq := HttpRequest().
                   set_output_stream(s). 
-                  set_url(req.url).
+                  set_url(req_url_no_frag).
                   set_header("Accept-charset", "UTF-8, ISO-8859-1")
                if (\req.referer).scheme == (u"http" | u"https") then
                   hreq.set_referer(req.referer)
                if hres := httpc.retrieve(hreq) then {
                   fname := hres.get_filename()
                   ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
-                  Resp(req,, hres.url,, fname, ct, tmp_file)
+                  Resp(req,, adjust_fragment(req.url, hres.url),, fname, ct, tmp_file)
                } else {
                   rm_tmp()
                   Resp(req, &why, req.url)
@@ -361,7 +372,7 @@ class HttpSubWorker(SubWorker)
          {
             hreq := HttpRequest().
                set_output_stream(s). 
-               set_url(req.url).
+               set_url(req_url_no_frag).
                set_header("Accept-charset", "UTF-8, ISO-8859-1")
             if (\req.referer).scheme == (u"http" | u"https") then
                hreq.set_referer(req.referer)
@@ -376,19 +387,18 @@ class HttpSubWorker(SubWorker)
                data := s.str()
                fname := hres.get_filename()
                ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
-               # Note we have to take into account redirections in deciding whether to cache
-               # and whether form data should be in the response.
+               # Check whether to cache any data, including redirections.  POST requests are never cached.
                if httpc.request.method == "GET" then {
                   if x := get_expiry(hres) then
-                     worker.pool.cache.add(hres.url, x, data, fname, ct)
+                     worker.pool.cache.add(hres.url, hres.url, x, data, fname, ct)
                   # Check for any cacheable redirection responses.
                   pr := hres
                   while pr := pr.get_previous_response() do {
                      if pr.get_status_code() = (301 | 302) & x := get_expiry(pr) then 
-                        worker.pool.cache.add(pr.url, x, data, fname, ct)
+                        worker.pool.cache.add(pr.url, hres.url, x, data, fname, ct)
                   }
                }
-               Resp(req,, hres.url, data, fname, ct)
+               Resp(req,, adjust_fragment(req.url, hres.url), data, fname, ct)
             } else {
                # Decide whether to include http content together with
                # the error message, so it can be displayed
@@ -401,7 +411,7 @@ class HttpSubWorker(SubWorker)
                {
                   fname := hres.get_filename()
                   ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
-                  Resp(req, &why, hres.url, data, fname, ct)
+                  Resp(req, &why, adjust_fragment(req.url, hres.url), data, fname, ct)
                } else
                   Resp(req, &why, req.url)
             }
