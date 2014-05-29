@@ -69,10 +69,24 @@ class StaticData()
    end
 end
 
-class CacheEntry(StaticData)
+class CacheEntry()
    public const
       url, expiry
+end
 
+class CacheAlias(CacheEntry)
+   public const
+      dest
+
+   public new(url, expiry, dest)
+      self.url := url
+      self.expiry := expiry
+      self.dest := dest
+      return
+   end
+end
+
+class CacheData(CacheEntry, StaticData)
    public new(url, expiry, data, fname, content_type)
       self.url := url
       self.data := data
@@ -93,25 +107,36 @@ class Cache()
       every ce := !t do {
          if now > \ce.expiry then
             delete(t, ce.url.str())
-         else
+         else if is(ce, CacheData) then
             total +:= *ce.data
       }
       while *t > 0 & total > lim do {
          ce := ?t
-         delete(t, ce.url.str())
-         total -:= *ce.data
+         if is(ce, CacheData) then {
+            delete(t, ce.url.str())
+            total -:= *ce.data
+         }
       }
    end
 
-   public get(key_url)
+   public get(url)
       local ce
-      if ce := member(t, key_url.str()) &
-         (/ce.expiry | ce.expiry > Time.get_system_seconds()) then
-         return ce
+      every 1 to 2 do {
+         (ce := member(t, url.str()) &
+          (/ce.expiry | ce.expiry > Time.get_system_seconds())) | fail
+         if is(ce, CacheData) then
+            return ce
+         url := ce.dest
+      }
    end
 
-   public add(key_url, url, expiry, data, fname, content_type)
-      insert(t, key_url.str(), CacheEntry(url, expiry, data, fname, content_type))
+   public add_data(url, expiry, data, fname, content_type)
+      insert(t, url.str(), CacheData(url, expiry, data, fname, content_type))
+      return self
+   end
+
+   public add_alias(url, expiry, dest)
+      insert(t, url.str(), CacheAlias(url, expiry, dest))
       return self
    end
 
@@ -119,7 +144,7 @@ class Cache()
       local url
       /expiry := Time.get_system_seconds() + 60
       url := URL(u"cache:" || (id +:= 1))
-      add(url, url, expiry, data, fname, content_type)
+      add_data(url, expiry, data, fname, content_type)
       return url
    end
 
@@ -145,27 +170,34 @@ class Cache()
    end
 
    public get_status()
-      local s, ce, n, sz, exp, ct, l, total, k
-      s := "<html><title>Cache status</title>" || Browser.get_table_tag()
-      s ||:= "<tr><th align=left>Key</th><th align=left>Filename</th><th align=right>Size&nbsp;</th><th>Expiry</th><th align=left>Content&nbsp;type</th><th align=left>URL</th></tr>"
+      local s1, s2, ce, n, sz, exp, ct, total
+      s1 := Browser.get_table_tag() ||
+         "<tr><th align=left>Filename</th><th align=right>Size&nbsp;</th><th>Expiry</th><th align=left>Content&nbsp;type</th><th align=left>URL</th></tr>"
+      s2 := Browser.get_table_tag() ||
+         "<tr><th align=left>Dest</th><th>Expiry</th><th align=left>URL</th></tr>"
       total := 0
-      every k := key(t) do {
-         ce := member(t, k)
-         k := Browser.limit_text(k, 200)
-         n := Browser.limit_text(\ce.fname, 200) | "-"
-         sz := Format.numeric_to_string(*ce.data, 0, ',')
+      every ce := !t do {
          exp := format_expiry(ce.expiry)
-         ct := (\ce.content_type).to_rfc1521() | "-"
-         l := ce.url
-         s ||:= "<tr><td>" || Browser.to_content(k) || "</td><td>" || Browser.to_content(n) || "</td><td align=right>" || sz || "&nbsp;</td><td>" || exp ||
-                   "</td><td nowrap>" || Browser.to_content(ct) || "</td>" || Browser.mk_anchor_cell(l) || "</tr>" 
-         total +:= *ce.data
+         case classof(ce) of {
+            CacheData: {
+               n := Browser.limit_text(\ce.fname, 200) | "-"
+               sz := Format.numeric_to_string(*ce.data, 0, ',')
+               ct := (\ce.content_type).to_rfc1521() | "-"
+               s1 ||:= "<tr><td>" || Browser.to_content(n) || "</td><td align=right>" || sz || "&nbsp;</td><td>" || exp ||
+                  "</td><td nowrap>" || Browser.to_content(ct) || "</td>" || Browser.mk_anchor_cell(ce.url) || "</tr>" 
+               total +:= *ce.data
+            }
+            CacheAlias:
+               s2 ||:= "<tr>" || Browser.mk_anchor_cell(ce.dest) || "<td>" || exp || "</td>" || Browser.mk_anchor_cell(ce.url) || "</tr>" 
+         }
       }
-      s ||:= "</table><p>"
-      s ||:= "Usage " || Format.numeric_to_string(total, 0, ',') || " / " || 
-         Format.numeric_to_string(lim, 0, ',') || " (" || integer((total * 100) / lim) || "%)"
-      s ||:= "</html>"
-      return s
+      s1 ||:= "</table>"
+      s2 ||:= "</table>"
+
+      return "<html><title>Cache status</title>" || s1 || "<p>" || s2 || "<p>" ||
+            "Usage " || Format.numeric_to_string(total, 0, ',') || " / " || 
+            Format.numeric_to_string(lim, 0, ',') || " (" || integer((total * 100) / lim) || "%)" ||
+            "</html>"
    end
 
    public new(lim)
@@ -388,14 +420,13 @@ class HttpSubWorker(SubWorker)
                fname := hres.get_filename()
                ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
                # Check whether to cache any data, including redirections.  POST requests are never cached.
-               if httpc.request.method == "GET" then {
-                  if x := get_expiry(hres) then
-                     worker.pool.cache.add(hres.url, hres.url, x, data, fname, ct)
+               if hreq.method == "GET" & x := get_expiry(hres) then {
+                  worker.pool.cache.add_data(hres.url, x, data, fname, ct)
                   # Check for any cacheable redirection responses.
                   pr := hres
                   while pr := pr.get_previous_response() do {
                      if pr.get_status_code() = (301 | 302) & x := get_expiry(pr) then 
-                        worker.pool.cache.add(pr.url, hres.url, x, data, fname, ct)
+                        worker.pool.cache.add_alias(pr.url, x, hres.url)
                   }
                }
                Resp(req,, adjust_fragment(req.url, hres.url), data, fname, ct)
