@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics,io,lang
+import graphics
 
 #
 # This is similar to {MenuBar}, but holds just a single
@@ -127,15 +127,10 @@ class MenuButton(Component, BorderWhilstEntered, MenuMode)
    end
 
    public handle_key(e)
-      write("mb key event:",to_string(e))
-      if e === accel_skip then {
+      if e === accel_skip then
          accel_skip := &null
-         return
-      }
-      if \self.which_open then {
-         self.which_open.handle_key(e)
-         return
-      }
+      else
+         (\self.which_open).handle_key(e)
    end
 
    public get_default_width()

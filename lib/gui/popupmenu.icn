@@ -20,9 +20,7 @@ import graphics
 #
 class PopupMenu(Component, MenuMode)
    public 
-      menu,
-      px,
-      py
+      menu
 
    public go_right()
    end
@@ -47,11 +45,6 @@ class PopupMenu(Component, MenuMode)
       close_menu()
    end
 
-   public dialog_event(e)
-      if not(e.x = px & e.y = py & member(Mouse.PRESS | Mouse.RELEASE, e.code)) then
-         self.menu.handle_event(e)
-   end
-
    public should_close(e)
       if member(Mouse.PRESS, e.code) &
          not(menu.which_region(e)) then
@@ -66,6 +59,10 @@ class PopupMenu(Component, MenuMode)
       }
    end
 
+   public handle_key(e)
+      (\menu).handle_key(e)
+   end
+
    #
    # Popup a menu.  The use of the alternate positions is described in
    # {MenuComponent.show()}.
@@ -76,15 +73,11 @@ class PopupMenu(Component, MenuMode)
    # @param y The y position to show
    # @param xa The alternate x position to show; defaults to {x}.
    # @param ya The alternate y position to show; defaults to {&null}).
-   # @param px The current mouse x position; defaults to {x}.
-   # @param py The current mouse y position; defaults to {y}).
    #
    public popup(dialog, menu, x, y, a[])
       local xa, ya
       xa := a[1] | x
       ya := a[2]
-      px := a[3] | x
-      py := a[4] | y
       dialog.add(self)
       self.resize()
       self.parent_dialog.enter_menu_mode(self)
@@ -98,8 +91,7 @@ class PopupMenu(Component, MenuMode)
    public new()
       cast(self,Component).new()
       self.x_spec := self.y_spec := self.w_spec := self.h_spec := 0
+      connect(handle_key, Event.KEY_PRESS)
       return
    end
 end
-
-

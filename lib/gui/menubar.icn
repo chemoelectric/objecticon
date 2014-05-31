@@ -321,16 +321,11 @@ class MenuBar(Component, MenuMode)
    end
 
    public handle_key(e)
-      if e === accel_skip then {
+      if e === accel_skip then
          accel_skip := &null
-         return
-      }
-
-      if \self.which_open then {
+      else if \self.which_open then
          self.which_open.handle_key(e)
-         return
-      }
-      case /e.release & e.code of {
+      else case /e.release & e.code of {
          Key.DOWN | " " | "\r": handle_key_down(e)
          Key.RIGHT: handle_key_right(e)
          Key.LEFT: handle_key_left(e)
