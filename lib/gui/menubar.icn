@@ -74,12 +74,10 @@ class MenuBar(Component, MenuMode)
 
    public initially()
       cast(self,Component).initially()
-      self.parent_dialog.connect(self.dialog_event, Event.ICON)
       every (!self.menus).initially()
    end
 
    public finally()
-      self.parent_dialog.disconnect_object(self)
       self.set_which_highlight()
       every (!self.menus).finally()
       cast(self,Component).finally()
@@ -106,7 +104,6 @@ class MenuBar(Component, MenuMode)
    #
    # Determine which of the menu labels is selected, if any, given we're in region.
    #
-   # @p
    public which_item(e)
       local m
       every m := !self.menus do {
@@ -118,7 +115,6 @@ class MenuBar(Component, MenuMode)
    #
    # Set which_open and which_highlight to (non-null) x.
    #
-   # @p
    public set_which_open(x)
       #
       # Do nothing if x presently open
@@ -136,7 +132,6 @@ class MenuBar(Component, MenuMode)
    #
    # Set the which_highlight to x, which_open to null
    #
-   # @p
    public set_which_highlight(x)
       #
       # Do nothing if already in desired state.
@@ -278,47 +273,31 @@ class MenuBar(Component, MenuMode)
 
    public handle_press(e)
       local t
-      if in_region(e) then {
-         if t := which_item(e) then {
-            if t === self.which_open then
-               set_which_highlight(t)
-            else
-               set_which_open(t)
-         } else
-            self.set_which_highlight()
-      } else {
-         if \self.which_open then
-            which_open.handle_event(e)
+      if t := which_item(e) then {
+         if t === self.which_open then
+            set_which_highlight(t)
          else
-            #
-            # Clicked outside the region with no submenu - close.
-            #
-            self.set_which_highlight()
-      }
+            set_which_open(t)
+      } else
+         self.set_which_highlight()
    end
 
    public handle_move(e)
       local t
-      \self.which_highlight | fail
+      if \self.which_highlight & t := which_item(e) then {
+         #
+         # Over a (different) item - highlight or open it, depending on whether the
+         # current one is open or just highlighted.
+         #
+         if /self.which_open then
+            self.set_which_highlight(t)
+         else
+            self.set_which_open(t)
+      }
+   end
 
-      #
-      # Try any open sub-menu.  This ensures quickly dragging off
-      # a submenu onto the bar doesn't leave one of its items selected.
-      #
-      (\self.which_open).handle_event(e)
-
-      if in_region(e) then {
-         if t := which_item(e) then {
-            #
-            # Over a (different) item - highlight or open it, depending on whether the
-            # current one is open or just highlighted.
-            #
-            if /self.which_open then
-               self.set_which_highlight(t)
-            else
-               self.set_which_open(t)
-         }
-      } else if /self.which_open & e.code = Mouse.MOVEMENT then
+   public handle_exit(e)
+      if /self.which_open & e.code = Mouse.MOVEMENT then
          #
          # Submenu not open (just highlighted), and a mouse move outside of the
          # bar - this clears the highlight (and leaves menu mode).
@@ -327,18 +306,13 @@ class MenuBar(Component, MenuMode)
    end
 
    public handle_release(e) 
-      if in_region(e) & \self.which_highlight then {
+      if \self.which_highlight then {
          #
          # Released with menu open.  If not on a label then close
          #
          which_item(e) | self.set_which_highlight()
       } else {
-         if \self.which_open then
-            #
-            # Try open sub-menu.
-            #
-            self.which_open.handle_event(e)
-         else
+         if /self.which_open then
             #
             # Close
             #
@@ -347,8 +321,13 @@ class MenuBar(Component, MenuMode)
    end
 
    public handle_key(e)
+      if e === accel_skip then {
+         accel_skip := &null
+         return
+      }
+
       if \self.which_open then {
-         self.which_open.handle_event(e)
+         self.which_open.handle_key(e)
          return
       }
       case /e.release & e.code of {
@@ -358,28 +337,6 @@ class MenuBar(Component, MenuMode)
          "\e" : handle_key_escape(e)
          default: handle_default(e)
       }
-   end
-
-   public dialog_event(e)
-      local ec
-
-      (self.is_unshaded() & self.is_unhidden()) | fail
-
-      ec := e.code
-
-      if e === accel_skip then
-         accel_skip := &null
-      else if integer(ec) < 0 then {
-         if member(Mouse.PRESS, ec) then 
-            handle_press(e)
-         else if member(Mouse.RELEASE, ec) then 
-            handle_release(e)
-         else if member(Mouse.DRAG_OR_MOVEMENT, ec) then 
-            handle_move(e)
-         else
-            (\self.which_open).handle_event(e)
-      } else
-         handle_key(e)
    end
 
    public get_default_height()
@@ -422,15 +379,24 @@ class MenuBar(Component, MenuMode)
       }
    end
 
+   public allow_nested(c)
+      local t
+      every t := c.gen_parents() do {
+         if is(t, SubMenuProxyComponent) then
+            return t.menu.parent_component === self
+      }
+   end
+
    public new()
       cast(self,Component).new()
       self.set_border(RaisedBorder())
       set_tooltip_follows_mouse(&yes)
       self.menus := []
+      every connect(handle_press, Event.MOUSE_LEFT_PRESS | Event.MOUSE_MIDDLE_PRESS | Event.MOUSE_RIGHT_PRESS)
+      every connect(handle_release, Event.MOUSE_LEFT_RELEASE_OVER | Event.MOUSE_MIDDLE_RELEASE_OVER | Event.MOUSE_RIGHT_RELEASE_OVER)
+      every connect(handle_move, Event.MOUSE_MOVEMENT | Event.MOUSE_LEFT_DRAG_OVER | Event.MOUSE_MIDDLE_DRAG_OVER | Event.MOUSE_RIGHT_DRAG_OVER)
+      connect(handle_exit, Event.MOUSE_EXIT)
+      connect(handle_key, Event.KEY_PRESS)
       return
    end
 end
-
-
-
-

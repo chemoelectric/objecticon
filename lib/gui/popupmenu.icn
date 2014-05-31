@@ -35,7 +35,6 @@ class PopupMenu(Component, MenuMode)
       self.menu.finally()
       self.menu := &null
       self.parent_dialog.exit_menu_mode(self)
-      self.parent_dialog.disconnect_object(self)
       self.parent.remove(self)
       fire(Event.POPUP_CLOSED)
    end
@@ -57,6 +56,14 @@ class PopupMenu(Component, MenuMode)
       if member(Mouse.PRESS, e.code) &
          not(menu.which_region(e)) then
          return
+   end
+
+   public allow_nested(c)
+      local t
+      every t := c.gen_parents() do {
+         if is(t, SubMenuProxyComponent) then
+            return t.menu.parent_component === self
+      }
    end
 
    #
@@ -81,7 +88,6 @@ class PopupMenu(Component, MenuMode)
       dialog.add(self)
       self.resize()
       self.parent_dialog.enter_menu_mode(self)
-      self.parent_dialog.connect(self.dialog_event, Event.ICON)
       self.menu := menu
       self.menu.set_component_link(self)         
       self.menu.initially()
