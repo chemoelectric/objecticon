@@ -25,6 +25,12 @@ class Event()
       MOUSE_WHEEL_UP,
       MOUSE_WHEEL_DOWN,
       WINDOW_RESIZE,
+      MOUSE_LEFT_DRAG_OVER,
+      MOUSE_MIDDLE_DRAG_OVER,
+      MOUSE_RIGHT_DRAG_OVER,
+      MOUSE_LEFT_RELEASE_OVER,
+      MOUSE_MIDDLE_RELEASE_OVER,
+      MOUSE_RIGHT_RELEASE_OVER,
       WINDOW_CLOSE_BUTTON,
       # This event listens for all window-system generated events
       ICON,
@@ -82,6 +88,12 @@ class Event()
       MOUSE_EXIT := 95
       KEY_PRESS := 100
       KEY_RELEASE := 101
+      MOUSE_LEFT_DRAG_OVER := 201
+      MOUSE_MIDDLE_DRAG_OVER := 202
+      MOUSE_RIGHT_DRAG_OVER := 203
+      MOUSE_LEFT_RELEASE_OVER := 204
+      MOUSE_MIDDLE_RELEASE_OVER := 205
+      MOUSE_RIGHT_RELEASE_OVER := 206
       GOT_FOCUS := 400
       LOST_FOCUS := 401
       DIALOG_DISPOSED := 500

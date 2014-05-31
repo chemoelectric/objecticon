@@ -226,6 +226,12 @@ class Dialog(Component)
       self.effective_is_shaded_flag := self.is_shaded_flag
       Gui.style.polish(self)
       self.held := table()
+      # For a popup window, initialize held so that its keys are consistent with
+      # the current mouse state.  This ensures that DRAG_OVER events are fired
+      # properly in the popup when a drag has started before the popup was
+      # opened (eg in a menu system).
+      if \popup_manager then
+         every insert(held, key(popup_manager.held), [])
       self.crossing := set()
       self.selections := table()
       self.selection_requests := table()
@@ -770,13 +776,16 @@ class Dialog(Component)
             held[ec] := point_chain
             fire_list(point_chain, ec, e)
          } else if ec === Mouse.DRAG then {
-            every t := key(held) do
+            every t := key(held) do {
+               fire_list(point_chain, 200 - t, e)
                fire_list(held[t], 10 - t, e)
+            }
          } else if ec === Mouse.MOVEMENT then {
             fire_list(point_chain, ec, e)
          } else if member(Mouse.RELEASE, ec) then {
-            if t := \held[ec + 3] then {
+            if t := member(held, ec + 3) then {
                delete(held, ec + 3)
+               fire_list(point_chain, 200 - ec, e)
                fire_list(t, ec, e)
             }
          }
