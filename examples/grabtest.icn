@@ -69,6 +69,12 @@ class Untitled(Dialog)
          Event.MOUSE_MOVEMENT: "MOUSE_MOVEMENT"
          Event.MOUSE_WHEEL_UP: "MOUSE_WHEEL_UP"
          Event.MOUSE_WHEEL_DOWN: "MOUSE_WHEEL_DOWN"
+         Event.MOUSE_LEFT_DRAG_OVER: "MOUSE_LEFT_DRAG_OVER"
+         Event.MOUSE_MIDDLE_DRAG_OVER: "MOUSE_MIDDLE_DRAG_OVER"
+         Event.MOUSE_RIGHT_DRAG_OVER: "MOUSE_RIGHT_DRAG_OVER"
+         Event.MOUSE_LEFT_RELEASE_OVER: "MOUSE_LEFT_RELEASE_OVER"
+         Event.MOUSE_MIDDLE_RELEASE_OVER: "MOUSE_MIDDLE_RELEASE_OVER"
+         Event.MOUSE_RIGHT_RELEASE_OVER: "MOUSE_RIGHT_RELEASE_OVER"
          Event.WINDOW_RESIZE: "WINDOW_RESIZE"
          Event.WINDOW_CLOSE_BUTTON: "WINDOW_CLOSE_BUTTON"
          Event.ICON: "ICON"
@@ -91,6 +97,7 @@ class Untitled(Dialog)
          Event.GOT_FOCUS: "GOT_FOCUS"
          Event.LOST_FOCUS: "LOST_FOCUS"
          Event.DIALOG_DISPOSED: "DIALOG_DISPOSED"
+         Event.IN_POINT_CHAIN: "IN_POINT_CHAIN"
          default: "?"||image(n)
       }
    end

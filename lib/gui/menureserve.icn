@@ -1,0 +1,64 @@
+package gui
+
+#
+# This class reserves space for an arbitrary `Component` in a menu.   The `Component` is
+# added to the menu when it is shown.
+#
+class MenuReserve(MenuComponent)
+   public
+      comp,
+      res_w,
+      res_h
+
+   public prepare_parent_proxy()
+      local p
+      p := parent.temp_win
+      comp.set_pos(label_x - parent.x, label_y - parent.y)
+      comp.set_size(label_w, label_h)
+      p.add(comp)
+   end
+
+   # Set the amount of space to reserve for the `Component`
+   #
+   public set_size(w, h)
+      self.res_w := w
+      self.res_h := h
+      return self
+   end
+
+   # Set the `Component` to install into the `Menu` when it is shown.
+   #
+   public set_component(comp)
+      self.comp := comp
+      return self
+   end
+
+   public get_label_mid_width()
+      return res_w
+   end
+
+   public get_label_mid_height()
+      return res_h
+   end
+
+   public get_label_left_width()
+   end
+
+   public get_label_left_height()
+   end
+
+   public get_label_right_width()
+   end
+
+   public get_label_right_height()
+   end
+
+   public draw_label(W, lw, mw, rw)
+   end
+
+   public new()
+      cast(self,MenuComponent).new()
+      self.is_decorative_flag := 1
+      return
+   end
+end

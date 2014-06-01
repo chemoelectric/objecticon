@@ -581,7 +581,6 @@ void begin_esc(FILE *f, char *fname, int line)
     fputs("\"", f);
     if (line)
         fprintf(f, ";\"line=%d\"", line);
-    fputs(";\"ct=text/plain\"", f);
     fputs("Z", f);
 }
 

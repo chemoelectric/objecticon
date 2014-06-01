@@ -22,7 +22,8 @@ class Menu(TextMenuItem)
       max_label_mid_w,                                
       max_label_right_w,                                
       which_open,                                
-      which_highlight
+      which_highlight,
+      pressed
 
    public resize()
       local py, m, tw
@@ -100,7 +101,6 @@ class Menu(TextMenuItem)
    #
    # Set which_open and which_highlight to (non-null) x.
    #
-   # @p
    public set_which_open(x)
       #
       # Do nothing if x presently open
@@ -119,7 +119,6 @@ class Menu(TextMenuItem)
    #
    # Set the which_highlight to x, which_open to null
    #
-   # @p
    public set_which_highlight(x)
       #
       # Do nothing if already in desired state.
@@ -206,96 +205,62 @@ class Menu(TextMenuItem)
 
    public handle_press(e)
       local m
-
-      if in_region(e) then {
-         #
-         # Mouse press in region.  Open the item where the pointer is
-         # or clear highlight (eg if over a shaded item).
-         #
-         if m := self.which_item(e) then {
-            if m.is_sub_menu() then {
-               if m === self.which_open then
-                  self.set_which_highlight(m)
-               else
-                  self.set_which_open(m)
-            } else
+      # Open the item where the pointer is or clear highlight (eg
+      # if over a shaded item).
+      #
+      if m := self.which_item(e) then {
+         if m.is_sub_menu() then {
+            if m === self.which_open then
                self.set_which_highlight(m)
+            else
+               self.set_which_open(m)
          } else
-            self.set_which_highlight()
-      } else {
-        if \self.which_open then
-            #
-            # Try open sub-menu.
-            #
-            self.which_open.handle_event(e)
-      }
+            self.set_which_highlight(m)
+      } else
+         self.set_which_highlight()
    end
 
    public handle_release(e)
-      if in_region(e) then {
+      if \self.which_highlight then {
          #
-         # Mouse released over region
-         #
-         if \self.which_highlight then {
-            #
-            # If item selected and not a sub-menu, return its selected
-            # event.
-            self.which_highlight.is_sub_menu() | self.which_highlight.succeed(e)
-         } else
-            #
-            # Close completely
-            #
-            close_all()
-      } else {
-         if \self.which_open then
-            #
-            # Try open sub-menu.
-            #
-            self.which_open.handle_event(e)
-         else
-            #
-            # Close
-            #
-            close_all()
+         # If item selected and not a sub-menu, return its selected
+         # event.
+         self.which_highlight.is_sub_menu() | self.which_highlight.succeed(e)
       }
    end
 
    public handle_move(e)
       local m
-
-      #
-      # Try any open sub-menu.  This ensures quickly dragging off
-      # a submenu doesn't leave one of its items selected.
-      #
-      (\self.which_open).handle_event(e)
-
-      if in_region(e) then {
-         if m := self.which_item(e) then {
-            # 
-            # If this is the current highlight, do nothing, as a sub-menu may
-            # be highlighted but not open (due to a click) and we don't
-            # want to flick it back open on a move.
+      if m := self.which_item(e) then {
+         # 
+         # If this is the current highlight, do nothing, as a sub-menu may
+         # be highlighted but not open (due to a click) and we don't
+         # want to flick it back open on a move.
+         #
+         if m ~=== self.which_highlight then {
             #
-            if m ~=== self.which_highlight then {
-               #
-               # Over an (different) item; either open it or highlight it.
-               #
-               if m.is_sub_menu() then
-                  self.set_which_open(m)
-               else
-                  self.set_which_highlight(m)
-            }
-         } else if /self.which_open then
+            # Over an (different) item; either open it or highlight it.
             #
-            # Over menu but not over item (eg over grey/separator); clear highlight, 
-            # but not an open submenu.
-            #
-            self.set_which_highlight()
+            if m.is_sub_menu() then
+               self.set_which_open(m)
+            else
+               self.set_which_highlight(m)
+         }
       } else if /self.which_open then
+         #
+         # Over menu but not over item (eg over grey/separator); clear highlight, 
+         # but not an open submenu.
+         #
+         self.set_which_highlight()
+   end
+
+   public handle_exit(e)
+      if /self.which_open then {
          #
          # Not over one of out items; clear highlight, but not an open submenu.
          #
          self.set_which_highlight()
+      }
    end
 
    public handle_default(e)
@@ -318,11 +283,9 @@ class Menu(TextMenuItem)
    end
 
    public handle_key(e)
-      if \self.which_open then {
-         self.which_open.handle_event(e)
-         return
-      }
-      case /e.release & e.code of {
+      if \self.which_open then
+         self.which_open.handle_key(e)
+      else case /e.release & e.code of {
          Key.UP: handle_key_up(e)
          Key.DOWN: handle_key_down(e)
          Key.RIGHT: handle_key_right(e)
@@ -333,20 +296,17 @@ class Menu(TextMenuItem)
       }
    end
 
-   public handle_event(e)
-      local ec
-      ec := e.code
-      if integer(ec) < 0 then {
-         if member(Mouse.PRESS, ec) then
-            handle_press(e)
-         else if member(Mouse.RELEASE, ec) then
-            handle_release(e)
-         else if member(Mouse.DRAG_OR_MOVEMENT, ec) then
-            handle_move(e)
-         else
-            (\self.which_open).handle_event(e)
-      } else
-         handle_key(e)
+   protected create_proxy()
+      local c
+      c := SubMenuProxyComponent(self)
+      every c.connect(handle_press, 
+                             Event.MOUSE_LEFT_PRESS | Event.MOUSE_MIDDLE_PRESS | Event.MOUSE_RIGHT_PRESS)
+      every c.connect(handle_release, 
+                             Event.MOUSE_LEFT_RELEASE_OVER | Event.MOUSE_MIDDLE_RELEASE_OVER | Event.MOUSE_RIGHT_RELEASE_OVER)
+      every c.connect(handle_move, 
+                             Event.MOUSE_MOVEMENT | Event.MOUSE_LEFT_DRAG_OVER | Event.MOUSE_MIDDLE_DRAG_OVER | Event.MOUSE_RIGHT_DRAG_OVER)
+      c.connect(handle_exit, Event.MOUSE_EXIT)
+      return c
    end
 
    #
@@ -370,8 +330,3 @@ class Menu(TextMenuItem)
       return
    end
 end
-
-
-
-
-

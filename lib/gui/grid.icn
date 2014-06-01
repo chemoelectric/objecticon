@@ -37,7 +37,7 @@ class CellInfo(Insets,Align,ObjectOutput)
       t := s || ": "
       t ||:= " pos=" || self.x || "," || self.y || " dim=" || self.w || "," || self.h ||
          " component pref width=" || pw
-      t ||:= "\n\theight=" || ph || " calculated from width " || ph_calc_w
+      t ||:= "\n\theight=" || ph || " calculated from width " || image(ph_calc_w)
       t ||:= "\n\tcell desired size=" || pw + l_inset + r_inset || "," || ph + t_inset + b_inset
       t ||:= " located to=" || \ax || "," || \ay || " size set to " || \aw || "," || \ah
 

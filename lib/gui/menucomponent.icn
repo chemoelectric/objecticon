@@ -269,6 +269,12 @@ abstract class MenuComponent(Rect,Connectable)
    end
 
    #
+   # Called on each child after the proxy window has been created.
+   #
+   public prepare_parent_proxy()
+   end
+
+   #
    # Abstract methods for the label sizes.
    #
    public abstract get_label_left_width()
@@ -318,9 +324,9 @@ abstract class MenuComponent(Rect,Connectable)
    public defer display(w)
 
    #
-   # Handle the given event.
+   # Handle the given key event.
    #
-   public defer handle_event(e)
+   public defer handle_key(e)
 
    #
    # Is the cursor over us?
@@ -410,31 +416,31 @@ abstract class MenuComponent(Rect,Connectable)
          use_popup_win := &null
       }
 
+      temp_win := create_proxy().
+         set_size(self.w, self.h).
+         # Copy attribs of the parent component
+         set_all_wattribs(self.parent_component.get_effective_wattribs())
+      every (!children).prepare_parent_proxy()
+
       if /use_popup_win then {
-         self.temp_win := create_proxy().
+         temp_win.
             set_pos(self.x + win.get_dx(), 
                     self.y + win.get_dy()).
-            set_size(self.w, self.h).
-            set_z(pd.get_top_z()).
-            # Copy attribs of the parent component
-            set_all_wattribs(self.parent_component.get_effective_wattribs())
+            set_z(pd.get_top_z())
          pd.add(self.temp_win)
          self.temp_win.resize().invalidate()
       } else {
+         temp_win.set_pos(0, 0)
          d := PureDialog().
             set_canvas("popup").
             set_width(self.w).
             set_height(self.h).
+            copy_wattrib("display", parent_component.parent_dialog).
+            add(self.temp_win).
             set_dx(-self.x).
             set_dy(-self.y).
             set_x(win.get_x() + win.get_dx() + self.x).
             set_y(win.get_y() + win.get_dy() + self.y)
-         self.temp_win := create_proxy().
-            set_pos(0, 0).
-            set_size(self.w, self.h).
-            # Copy attribs of the parent component
-            set_all_wattribs(self.parent_component.get_effective_wattribs())
-         d.add(self.temp_win)
          pd.add_popup(d)
          d.show()
       }
@@ -469,6 +475,7 @@ class SubMenuProxyComponent(Component)
 
    public display()
       menu.display(self.cbwin)
+      display_children()
    end
 
    public get_tooltip(e)

@@ -462,14 +462,14 @@ class Component(Rect,Align,Connectable)
    # list, or fail if none is present.
    #
    public get_wattrib(attr)
-      return \self.wattribs[attr]
+      return member(self.wattribs, attr)
    end
 
    #
    # Clear all wattribs
    #
    public clear_wattribs()
-      self.wattribs := table()
+      clear(self.wattribs)
       return self
    end
 
@@ -478,6 +478,20 @@ class Component(Rect,Align,Connectable)
    #
    public set_all_wattribs(t)
       self.wattribs := copy(t)
+      return self
+   end
+
+   #
+   # Copy an attrib from another component to this one.  If the
+   # attribute is absent in the other component it is deleted from
+   # this one.
+   #
+   public copy_wattrib(attr, other)
+      local val
+      if val := other.get_wattrib(attr) then
+         set_wattrib(attr, val)
+      else
+         remove_wattrib(attr)
       return self
    end
 
@@ -501,14 +515,14 @@ class Component(Rect,Align,Connectable)
    # Get a layout constraint, or fail if it's not present.
    #
    public get_constraint(key)
-      return \self.constraints[key]
+      return member(self.constraints, key)
    end
 
    #
    # Clear all constraints
    #
    public clear_constraints()
-      self.constraints := table()
+      clear(self.constraints)
       return self
    end      
 
@@ -985,7 +999,6 @@ class Component(Rect,Align,Connectable)
          c.build_point_chain(l, ex, ey)
          put(l, c)
       }
-      return l
    end
 
    #

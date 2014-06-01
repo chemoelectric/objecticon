@@ -45,8 +45,10 @@ class SmtpClient(NetClient)
    end
 
    public close()
-      send_command("QUIT", 221)
-      return close_connection()
+      local f
+      send_command("QUIT", 221) | (f := 1)
+      close_connection() | (f := 1)
+      return /f & self
    end
 
    public send_message(m)

@@ -226,6 +226,12 @@ class Dialog(Component)
       self.effective_is_shaded_flag := self.is_shaded_flag
       Gui.style.polish(self)
       self.held := table()
+      # For a popup window, initialize held so that its keys are consistent with
+      # the current mouse state.  This ensures that DRAG_OVER events are fired
+      # properly in the popup when a drag has started before the popup was
+      # opened (eg in a menu system).
+      if \popup_manager then
+         every insert(held, key(popup_manager.held), [])
       self.crossing := set()
       self.selections := table()
       self.selection_requests := table()
@@ -264,7 +270,7 @@ class Dialog(Component)
    private ensure_size(t)
       local tw
       if member(t, "size" | "geometry") | (member(t, "width") & member(t, "height")) then
-         return
+         fail
 
       if tw := member(t, "width") then 
          # Got width, need height
@@ -507,12 +513,12 @@ class Dialog(Component)
       }
    end
 
-   public create_point_chain(e)
+   private create_point_chain(e)
       local p, flag
 
       # A popup window lets its event manager create its point chain for it.
       if \popup_manager then
-         return
+         fail
 
       self.point_chain := []
       self.point_chain_source := e
@@ -521,7 +527,7 @@ class Dialog(Component)
       # the window (or over an obscured part).  Note that we shouldn't get exit events
       # if we have popups, since we are in grab mode.
       if e.code === Mouse.EXIT then
-         return
+         fail
 
       every p := back(\popups) do {
          p.point_chain := []
@@ -614,7 +620,7 @@ $else
       if curr := \selections[selection] then {
          # Check if current owner is asserting selection.
          if curr === obj then
-            return
+            return self
          curr.lost_ownership()
       } else
          win.own_selection(selection)
@@ -676,7 +682,7 @@ $endif
       local c, ec, old_n_held
 
       if /self.win | /self.point_chain then
-         return
+         fail
 
       ec := e.code
 
@@ -698,7 +704,7 @@ $endif
       # If a handler closed us, do no more.
       #
       if /self.win then
-         return
+         fail
 
       #
       # Check for focus keyboard movement, but not in menu mode; this would get muddled up
@@ -783,13 +789,16 @@ $endif
             held[ec] := point_chain
             fire_list(point_chain, ec, e)
          } else if ec === Mouse.DRAG then {
-            every t := key(held) do
+            every t := key(held) do {
+               fire_list(point_chain, 200 - t, e)
                fire_list(held[t], 10 - t, e)
+            }
          } else if ec === Mouse.MOVEMENT then {
             fire_list(point_chain, ec, e)
          } else if member(Mouse.RELEASE, ec) then {
-            if t := \held[ec + 3] then {
+            if t := member(held, ec + 3) then {
                delete(held, ec + 3)
+               fire_list(point_chain, 200 - ec, e)
                fire_list(t, ec, e)
             }
          }
@@ -899,9 +908,11 @@ $endif
             set_dx(-self.tooltip_component.x).
             set_dy(-self.tooltip_component.y).
             set_x(win.get_x() + win.get_dx() + self.tooltip_component.x).
-            set_y(win.get_y() + win.get_dy() + self.tooltip_component.y)
+            set_y(win.get_y() + win.get_dy() + self.tooltip_component.y).
+            copy_wattrib("display", self).
+            add(self.tooltip_component)
          self.tooltip_component.set_pos(0, 0)
-         d.add(self.tooltip_component).show()
+         d.show()
       } else
          self.tooltip_component.invalidate()
    end
@@ -966,14 +977,14 @@ $endif
 
       # Popup window tooltips are processed by the manager.
       if \popup_manager then 
-         return
+         fail
 
       if \is_blocked_flag | 
             not((e.code === Mouse.MOVEMENT) | (*held = 0 & member(Mouse.CROSSING, e.code))) then {
          if tooltip_state = 2 then
             hide_tooltip()
          tooltip_state := 0
-         return
+         fail
       }
 
       # Get current tip/object, if any.  If mouse over current tip

@@ -41,12 +41,10 @@ class MenuButton(Component, BorderWhilstEntered, MenuMode)
    public initially()
       \self.menu | runerr("no menu set")
       cast(self,Component).initially()
-      self.parent_dialog.connect(self.dialog_event, Event.ICON)
       self.menu.initially()
    end
 
    public finally()
-      self.parent_dialog.disconnect_object(self)
       if \self.which_open then
          self.close_menu()
       self.menu.finally()
@@ -90,19 +88,11 @@ class MenuButton(Component, BorderWhilstEntered, MenuMode)
    end
 
    public handle_press(e)
-      if self.in_region(e) then {
-         if /self.which_open then {
-            if menu.is_unshaded() then
-               self.open_menu()
-         } else
-            self.close_menu()
+      if /self.which_open then {
+         if menu.is_unshaded() then
+            self.open_menu()
       } else
-         (\self.which_open).handle_event(e)
-   end
-
-   public handle_release(e)
-      if not in_region(e) then
-         (\self.which_open).handle_event(e)
+         self.close_menu()
    end
 
    public handle_accel(e)
@@ -123,23 +113,24 @@ class MenuButton(Component, BorderWhilstEntered, MenuMode)
          return
    end
 
+   public allow_nested(c)
+      local t
+      every t := c.gen_parents() do {
+         if is(t, SubMenuProxyComponent) then
+            return t.menu.parent_component === self
+      }
+   end
+
    public get_tooltip(e)
       return \self.tooltip | 
          (menu.in_label_region(e) & menu.get_tooltip(e))
    end
 
-   public dialog_event(e)
-      local ec
-      (self.is_unshaded() & self.is_unhidden()) | fail
-      ec := e.code
+   public handle_key(e)
       if e === accel_skip then
          accel_skip := &null
-      else if member(Mouse.PRESS, ec) then 
-         handle_press(e)
-      else if member(Mouse.RELEASE, ec) then 
-         handle_release(e)
       else
-         (\self.which_open).handle_event(e)
+         (\self.which_open).handle_key(e)
    end
 
    public get_default_width()
@@ -167,9 +158,8 @@ class MenuButton(Component, BorderWhilstEntered, MenuMode)
       cast(self,Component).new()
       cast(self,BorderWhilstEntered).new()
       self.set_border(RaisedBorder())
+      every connect(handle_press, Event.MOUSE_LEFT_PRESS | Event.MOUSE_MIDDLE_PRESS | Event.MOUSE_RIGHT_PRESS)
+      connect(handle_key, Event.KEY_PRESS)
       return
    end
 end
-
-
-

@@ -416,9 +416,9 @@ AC_DEFUN([AX_CHECK_CAIRO],
               AC_DEFINE(HAVE_LIBCAIRO)
               AC_MSG_RESULT(yes)
            else
+              AC_MSG_RESULT([no])
               PKGERR=`pkg-config --errors-to-stdout --print-errors $CAIRO_CONFIG`
               AC_MSG_RESULT([$PKGERR])
-              AC_MSG_RESULT([no])
            fi
     fi
 
@@ -450,7 +450,7 @@ AC_DEFUN([AX_CHECK_OPENSSL],
     unset OPENSSL_VERSION OPENSSL_CPPFLAGS OPENSSL_LDFLAGS OPENSSL_LIBS
     if test -n "$OPENSSL_CONFIG"; then
            AC_MSG_CHECKING([for libOpenSSL library >= 1.0])
-           if pkg-config --atleast-version=1.0 $OPENSSL_CONFIG; then
+           if pkg-config "$OPENSSL_CONFIG >= 1.0"; then
               OPENSSL_CPPFLAGS=`pkg-config --cflags $OPENSSL_CONFIG`
               OPENSSL_LDFLAGS=`pkg-config --libs-only-L $OPENSSL_CONFIG`
               OPENSSL_LIBS=`pkg-config --libs-only-l $OPENSSL_CONFIG`
@@ -458,9 +458,9 @@ AC_DEFUN([AX_CHECK_OPENSSL],
               AC_DEFINE(HAVE_LIBOPENSSL)
               AC_MSG_RESULT(yes)
            else
-              PKGERR=`pkg-config --errors-to-stdout --print-errors --atleast-version=1.0 $OPENSSL_CONFIG`
-              AC_MSG_RESULT([$PKGERR])
               AC_MSG_RESULT([no])
+              PKGERR=`pkg-config --errors-to-stdout --print-errors "$OPENSSL_CONFIG >= 1.0"`
+              AC_MSG_RESULT([$PKGERR])
            fi
     fi
 
@@ -493,7 +493,7 @@ AC_DEFUN([AX_CHECK_PNG],
 
     if test -n "$PNG_CONFIG"; then
            AC_MSG_CHECKING([for libpng library >= 1.2.37])
-           if pkg-config --atleast-version=1.2.37 $PNG_CONFIG; then
+           if pkg-config "$PNG_CONFIG >= 1.2.37"; then
               CPPFLAGS="$CPPFLAGS `pkg-config --cflags $PNG_CONFIG`"
               LDFLAGS="$LDFLAGS `pkg-config --libs-only-L $PNG_CONFIG`"
               LIBS="$LIBS `pkg-config --libs-only-l $PNG_CONFIG`"
@@ -501,9 +501,9 @@ AC_DEFUN([AX_CHECK_PNG],
               AC_MSG_RESULT(yes)
               found_png=yes
            else
-              PKGERR=`pkg-config --errors-to-stdout --print-errors --atleast-version=1.2.37 $PNG_CONFIG`
-              AC_MSG_RESULT([$PKGERR])
               AC_MSG_RESULT([no])
+              PKGERR=`pkg-config --errors-to-stdout --print-errors "$PNG_CONFIG >= 1.2.37"`
+              AC_MSG_RESULT([$PKGERR])
            fi
     fi
 ])
@@ -540,9 +540,9 @@ AC_DEFUN([AX_CHECK_X11],
               AC_MSG_RESULT(yes)
               found_x11=yes
            else
+              AC_MSG_RESULT([no])
               PKGERR=`pkg-config --errors-to-stdout --print-errors $X11_CONFIG`
               AC_MSG_RESULT([$PKGERR])
-              AC_MSG_RESULT([no])
            fi
     fi
 ])

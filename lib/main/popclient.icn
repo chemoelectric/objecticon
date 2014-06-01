@@ -61,8 +61,10 @@ class PopClient(NetClient)
    # Disconnect using the QUIT command
    #
    public close()
-      send_command("QUIT")
-      return close_connection()
+      local f
+      send_command("QUIT") | (f := 1)
+      close_connection() | (f := 1)
+      return /f & self
    end
 
    #

@@ -1682,7 +1682,8 @@ int getpos(wbp w)
     unsigned int key_buttons;
     wsp ws = w->window;
     wdp wd = ws->display;
-    if (!ws->win) return Failed;
+    if (!ws->win)
+        return Failed;
     /*
      * This call is made because it is guaranteed to generate
      * a synchronous request of the server, not just ask Xlib
@@ -3639,11 +3640,19 @@ int readimagedataimpl(dptr data, struct imgdata *imd)
 int settransientfor(wbp w, wbp other)
 {
     wsp ws = w->window;
-    if (ws->win)
+    if (ws->win) {
+        LitWhy("Can't set transient_for on an open window");
         return Failed;
+    }
     if (other) {
-        if (!other->window->win)
+        if (!other->window->win) {
+            LitWhy("Can't set transient_for to a window that isn't open");
             return Failed;
+        }
+        if (w->window->display != other->window->display) {
+            LitWhy("Can't set transient_for with windows on different displays");
+            return Failed;
+        }
         ws->transientfor = other->window->win;
     } else
         ws->transientfor = 0;
