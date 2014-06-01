@@ -79,9 +79,9 @@ $ifdef _PLAN9
    #
    # Open the connection.
    #
-   protected open()
+   protected open_connection()
       local addr
-      close()
+      close_connection()
       fire(CONNECTING_EVENT)
       if \ssl_flag then
          return error("SSL not supported")
@@ -90,12 +90,12 @@ $ifdef _PLAN9
       connection := NonBlockStream(connection,, 1048576, 1048576).
          set_write_on_close(NonBlockStream.DISCARD) | 
       {
-         close()
+         close_connection()
          return error("Couldn't create NonBlockStream: " || &why)
       }
       sbuff := ""
       fire(CONNECTED_EVENT)
-      return
+      return self
    end
 $else
    private dns_bg_query(p)
