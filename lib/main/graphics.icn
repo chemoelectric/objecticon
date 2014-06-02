@@ -959,6 +959,7 @@ class Selection()
       CLIPBOARD,
       UTF8_STRING_TARGET,
       STRING_TARGET,
+      TIMESTAMP_TARGET,
       URI_LIST_TARGET,
       TARGETS_TARGET
 
@@ -973,6 +974,7 @@ class Selection()
       STRING_TARGET := "STRING"
       UTF8_STRING_TARGET := "UTF8_STRING"
       URI_LIST_TARGET := "text/uri-list"
+      TIMESTAMP_TARGET := "TIMESTAMP"
       TARGETS_TARGET := "TARGETS"
    end
 end

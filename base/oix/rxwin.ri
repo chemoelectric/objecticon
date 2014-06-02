@@ -19,14 +19,11 @@
  */
 wdp wdsplys;
 
-
-
 struct lineinfo {
     double dx, dy;
     double len;
     XPointDouble p1, p2, q1, q2;
 };
-
 
 /*
  * function prototypes
@@ -518,7 +515,7 @@ static char* property_to_string(wdp wd, Atom target, int number_items, void* dat
     switch (target) {
         case XA_ATOM: {
             int curr_len, total_len;
-            unsigned long *long_array = (unsigned long*) data;
+            unsigned long *long_array = (unsigned long *)data;
 
             length = 32;
             MemProtect(result = malloc(length));
@@ -542,27 +539,32 @@ static char* property_to_string(wdp wd, Atom target, int number_items, void* dat
             break;
         }
         case XA_INTEGER: {
-            long *int_array = (long*) data;
+            long *long_array = (long *)data;
             length = number_items * 20 + 1;
             MemProtect(result = malloc(length));
             *result = 0;
-            for (i = 0; i < number_items; i++)
-                sprintf(result + strlen(result), "%ld ", int_array[i]);
+            for (i = 0; i < number_items; i++) {
+                if (i > 0)
+                    strcat(result, " ");
+                sprintf(result + strlen(result), "%ld", long_array[i]);
+            }
             break;
         }
         case XA_WINDOW: {
-            unsigned long *long_array = (unsigned long*) data;
+            unsigned long *long_array = (unsigned long *)data;
             length = number_items * 12 + 1;
             MemProtect(result = malloc(length));
             *result = 0;
-            for (i = 0; i < number_items; i++)
-                sprintf(result + strlen(result), "0x%8.8lu ", long_array[i]);
+            for (i = 0; i < number_items; i++) {
+                if (i > 0)
+                    strcat(result, " ");
+                sprintf(result + strlen(result), "0x%8.8lu", long_array[i]);
+            }
             break;
         }
     }
 
     return result;
-
 }
 
 void pollevent(wbp w)
@@ -692,7 +694,8 @@ void pollevent(wbp w)
 
                 bytes_read = nitems * (actual_format/8);
                 if (selection_debug)
-                    printf("Got %lu items x %d bits -> %ld bytes\n",nitems, actual_format, (long)bytes_read);
+                    printf("Got %lu items x %d bits -> %ld bytes actual_type=%s\n",
+                           nitems, actual_format, (long)bytes_read, atom_fmt(ws, actual_type));
 
                 conv_str = property_to_string(ws->display,
                                               actual_type,
@@ -1208,12 +1211,14 @@ void doconfig(wbp w, int status)
         resizepixmap(w);
 }
 
+convert_to_macro(INT32)
+
 /*
  * data is a safe pointer into a frame.
  */
 int sendselectionresponse(wbp w, word requestor, char *property, char *selection, char *target, word time, dptr data)
 {
-    Atom property_atom, target_atom, selection_atom, XA_TARGETS, target_list[32];
+    Atom property_atom, target_atom, selection_atom, target_list[32];
     XEvent theevent;
     struct lgstate state;
     tended struct b_lelem *le;
@@ -1230,12 +1235,11 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
     property_atom = XInternAtom(wd->display, property, False);
     target_atom = XInternAtom(wd->display, target, False);
     selection_atom = XInternAtom(wd->display, selection, False);
-    XA_TARGETS = ATOM(wd, TARGETS);
 
-    if (target_atom == XA_TARGETS) {
+    if (target_atom == ATOM(wd, TARGETS)) {
         if (!is:list(*data))
             ReturnErrVal(108, *data, Error);
-        target_list[0] = XA_TARGETS;
+        target_list[0] = ATOM(wd, TARGETS);
         for (le = lgfirst(&ListBlk(*data), &state); le;
              le = lgnext(&ListBlk(*data), &state, le)) {
             if (!cnv:C_string(le->lslots[state.result], cstr_target))
@@ -1247,7 +1251,7 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
         XChangeProperty(wd->display,
                         requestor,
                         property_atom,
-                        target_atom,
+                        XA_ATOM,
                         32,
                         PropModeReplace,
                         (unsigned char *)target_list,
@@ -1258,6 +1262,27 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *selection
         if (selection_debug)
             printf("\tSetting property to None\n");
         theevent.xselection.property = None;
+    } else if (convert_target(wd, target_atom) == XA_INTEGER) {
+        INT32 i32;
+        long l;
+        if (!cnv:integer(*data, *data))
+            ReturnErrVal(101, *data, Error);
+        if (!convert_to_INT32(data, &i32))
+            /* the convert function has set the error values itself */
+            return Error;
+        /* The data is sent as a long regardless of whether that is 32 or 64 bits. */
+        l = i32;
+        if (selection_debug)
+            printf("\tSetting property to INTEGER data %ld\n", l);
+        XChangeProperty(wd->display,
+                        requestor,
+                        property_atom,
+                        XA_INTEGER,
+                        32,
+                        PropModeReplace,
+                        (unsigned char *)&l,
+                        1);
+        theevent.xselection.property = property_atom;
     } else {
         if (!cnv:string(*data, *data))
             ReturnErrVal(103, *data, Error);
@@ -1300,39 +1325,42 @@ int ownselection(wbp w, char *selname)
         return Failed;
 
     selection = XInternAtom(wd->display, selname, False);
-
     curr = XGetSelectionOwner(wd->display, selection);
+
     /* Check for no change in selection */
-    if (curr == ws->win)
-        return Succeeded;
+    if (curr == ws->win) {
+        if (selection_debug)
+            printf("Ownership of selection %s retained by %lx\n", 
+                   atom_fmt(ws, selection),
+                   (long)ws->win);
+    } else {
+        if (selection_debug)
+            printf("Owner of selection %s set from %lx -> %lx\n", 
+                   atom_fmt(ws, selection),
+                   (long)curr,
+                   (long)ws->win);
 
-    if (selection_debug)
-        printf("Owner of selection %s set from %lx -> %lx\n", 
-               atom_fmt(ws, selection),
-               (long)curr,
-               (long)ws->win);
-
-    /*
-     * X doesn't send a SelectionClear event to us when the selection
-     * changes between our own windows, so if the current owner is one
-     * our windows, send it a "clear" message.
-     */
-    if (curr) {
-        wsp x;
-        for (x = wd->vwstates; x; x = x->vnext) {
-            if (x->win == curr) {
-                tended struct descrip tmp;
-                if (selection_debug)
-                    printf("Enqueueing artificial SELECTIONCLEAR to current owner %lx\n",(long)curr);
-                MakeInt(SELECTIONCLEAR, &tmp);
-                list_put(&x->listp, &tmp);
-                get_atom_descriptor(x, selection, &tmp);
-                list_put(&x->listp, &tmp);
-                break;
+        /*
+         * X doesn't send a SelectionClear event to us when the selection
+         * changes between our own windows, so if the current owner is one
+         * our windows, send it a "clear" message.
+         */
+        if (curr) {
+            wsp x;
+            for (x = wd->vwstates; x; x = x->vnext) {
+                if (x->win == curr) {
+                    tended struct descrip tmp;
+                    if (selection_debug)
+                        printf("Enqueueing artificial SELECTIONCLEAR to current owner %lx\n", (long)curr);
+                    MakeInt(SELECTIONCLEAR, &tmp);
+                    list_put(&x->listp, &tmp);
+                    get_atom_descriptor(x, selection, &tmp);
+                    list_put(&x->listp, &tmp);
+                    break;
+                }
             }
         }
     }
-
     XSetSelectionOwner(wd->display, 
                        selection,
                        ws->win,
@@ -3263,6 +3291,7 @@ void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
 char *atom_names[NUMATOMS] = {
     "CHARACTER_POSITION",
     "CLIENT_WINDOW",
+    "CLIPBOARD",
     "HOSTNAME",
     "HOST_NAME",
     "LENGTH",

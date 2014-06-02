@@ -14,6 +14,7 @@ import
    ipl.sets,
    ipl.lists,
    ipl.pdco,
+   io,
    util
 
 #
@@ -550,13 +551,13 @@ class Dialog(Component)
 
    public dispose_selections()
       every (!selections).lost_ownership()
-      selections := table()
+      clear(selections)
    end
 
    private process_selection_request(l)
       local c, data, target
       target := l[5]
-      if c := \selections[l[4]] then {
+      if c := member(selections, l[4]) then {
          if target == Selection.TARGETS_TARGET then {
             data := []
             every put(data, c.get_targets())
@@ -570,7 +571,7 @@ class Dialog(Component)
 
    private process_selection_clear(l)
       local c
-      if c := \selections[l[2]] then {
+      if c := member(selections, l[2]) then {
          c.lost_ownership()
          delete(selections, l[2])
       }
@@ -578,7 +579,7 @@ class Dialog(Component)
 
    private process_selection_response(l)
       local req
-      if req := \selection_requests[l[2]] then {
+      if req := member(selection_requests, l[2]) then {
          if /l[4] | (l[3] ~== req.target_types[1]) then {
             # Null data (indicating failure), or mismatch in type.  Pop off
             # the last requested type.
@@ -605,19 +606,21 @@ class Dialog(Component)
 
    public own_selection(selection, obj)
       local curr
-      if curr := \selections[selection] then {
+      if curr := member(selections, selection) then {
          # Check if current owner is asserting selection.
-         if curr === obj then
-            return self
-         curr.lost_ownership()
+         if curr ~=== obj then {
+            curr.lost_ownership()
+            insert(selections, selection, obj)
+         }
       } else
-         win.own_selection(selection)
-      selections[selection] := obj
+         insert(selections, selection, obj)
+      obj.reset_timestamp()
+      win.own_selection(selection)
       return self
    end
 
    public request_selection(selection, target_types, proc, user_data)
-      selection_requests[selection] := SelectionRequest(target_types, proc, user_data)
+      insert(selection_requests, selection, SelectionRequest(target_types, proc, user_data))
       win.request_selection(selection, target_types[1])
       return self
    end
@@ -1423,6 +1426,22 @@ class SelectionRequest()
 end
 
 abstract class SelectionOwner()
+   private timestamp
+
+   public get_timestamp()
+      local s
+      if /timestamp then {
+         if s := Files.file_to_string("/proc/uptime") then
+            timestamp := iand(integer(s ? tab(find(" ")) * 100), 16r7fffffff)
+         /timestamp := 0
+      }
+      return timestamp
+   end
+
+   public reset_timestamp()
+      timestamp := &null
+   end
+
    public abstract get_content(target)
    public abstract lost_ownership()
    public abstract get_targets()
@@ -1432,13 +1451,14 @@ abstract class TextSelectionOwner(SelectionOwner)
    protected abstract get_text()
 
    public get_targets()
-      suspend Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET
+      suspend Selection.TIMESTAMP_TARGET | Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET
    end
 
    public get_content(target)
       case target of {
          Selection.STRING_TARGET: return text_convert(get_text(), "string")
          Selection.UTF8_STRING_TARGET: return text_convert(get_text(), "ucs")
+         Selection.TIMESTAMP_TARGET: return get_timestamp()
       }
    end
 end
@@ -1487,6 +1507,8 @@ class URLSelectionOwner(SelectionOwner)
             s[-1] := ""
             return text_guess_convert(s, "ucs")
          }
+         Selection.TIMESTAMP_TARGET:
+            return get_timestamp()
       }
    end
 
@@ -1494,7 +1516,7 @@ class URLSelectionOwner(SelectionOwner)
    end
 
    public get_targets()
-      suspend Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET | "text/uri-list"
+      suspend Selection.TIMESTAMP_TARGET | Selection.STRING_TARGET | Selection.UTF8_STRING_TARGET | Selection.URI_LIST_TARGET
    end
 
    public new(urls)
