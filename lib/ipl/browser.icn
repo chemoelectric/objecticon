@@ -2515,15 +2515,10 @@ abstract class BrowserUI()
 end
 
 class BrowserPrimarySelectionOwner(TextSelectionOwner)
-   private parent, s
+   private parent
 
    protected get_text()
-      return s
-   end
-
-   package set_text(s)
-      self.s := s
-      return self
+      return \parent.primary
    end
 
    public lost_ownership()
@@ -2575,6 +2570,7 @@ class Browser(ComponentScrollArea)
       page_favicon_resp,
       page_favicon_url,
       running,
+      primary,
       mark_x,
       mark_y,
       cursor_x,
@@ -4839,6 +4835,7 @@ class Browser(ComponentScrollArea)
    package on_lost_primary_ownership()
       view.inner.invalidate(calculate_banded_rect())
       clear_banded()
+      primary := &null
    end
 
    private calculate_banded()
@@ -4935,8 +4932,8 @@ class Browser(ComponentScrollArea)
       calculate_text_selection()
       calculate_links_selection()
       if s := get_current_text_selection() then {
-         primary_selection_owner.set_text(s)            
          parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
+         self.primary := s
       }
    end
 
