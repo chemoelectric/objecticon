@@ -208,7 +208,7 @@ typedef int time_t, DIR, uid_t, gid_t, pid_t, stringint;
       typedef int *Display, Cursor, GC, Window, Pixmap, Picture, Visual, KeySym;
       typedef int WidgetClass, XImage, XpmAttributes, XSetWindowAttributes;
       typedef int XGlyphInfo, XftColor, Region, XftDraw, FcChar8, FcPattern, FcResult;
-      typedef int Cardinal,String,XtResource,XtPointer,XArc,CARD32;
+      typedef int Cardinal,String,XtResource,XtPointer,XArc,CARD32,INT32;
       typedef int XRenderColor, XRenderPictureAttributes, XRenderPictFormat;
       typedef int XPointFixed, XLineFixed, XTriangle, XTrapezoid, XTransform;
       typedef int XPointDouble;
