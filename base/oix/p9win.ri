@@ -1380,17 +1380,19 @@ int ownselection(wbp w, char *selection)
     if (!ws->win)
         return Failed;
 
-    /* Note - could filter out selections to use CLIPBOARD only, ie ^C, not drag */
-    MakeInt(SELECTIONREQUEST, &tmp);
-    list_put(&ws->listp, &tmp);
-    list_put(&ws->listp, &zerodesc);/* req id */
-    LitStr("none", &tmp);           /* property */
-    list_put(&ws->listp, &tmp);
-    cstr2string(selection, &tmp);   /* selection */
-    list_put(&ws->listp, &tmp);
-    LitStr("UTF8_STRING", &tmp);    /* type */
-    list_put(&ws->listp, &tmp);
-    list_put(&ws->listp, &zerodesc); /* time */
+    /* Ignore anything other than CLIPBOARD selections. */
+    if (strcmp(selection, "CLIPBOARD") == 0) {
+        MakeInt(SELECTIONREQUEST, &tmp);
+        list_put(&ws->listp, &tmp);
+        list_put(&ws->listp, &zerodesc);/* req id */
+        LitStr("none", &tmp);           /* property */
+        list_put(&ws->listp, &tmp);
+        cstr2string(selection, &tmp);   /* selection */
+        list_put(&ws->listp, &tmp);
+        LitStr("UTF8_STRING", &tmp);    /* type */
+        list_put(&ws->listp, &tmp);
+        list_put(&ws->listp, &zerodesc); /* time */
+    }
     return Succeeded;
 }
 
@@ -1404,10 +1406,10 @@ int requestselection(wbp w, char *selection, char *target)
     if (!ws->win)
         return Failed;
 
-    if (strcmp(target, "UTF8_STRING") == 0) {
+    if (strcmp(selection, "CLIPBOARD") == 0 &&
+        strcmp(target, "UTF8_STRING") == 0) {
         int fd, n_read;
         char buff[512];
-        /* Note - could filter out selections to use CLIPBOARD only, ie ^C, not drag */
         if ((fd = open("/dev/snarf", OREAD)) < 0) {
             whyf("Can't open snarf file: %r");
             return Failed;
