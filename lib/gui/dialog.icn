@@ -14,7 +14,6 @@ import
    ipl.sets,
    ipl.lists,
    ipl.pdco,
-   io,
    util
 
 #
@@ -1429,17 +1428,13 @@ abstract class SelectionOwner()
    private timestamp
 
    public get_timestamp()
-      local s
-      if /timestamp then {
-         if s := Files.file_to_string("/proc/uptime") then
-            timestamp := iand(integer(s ? tab(find(" ")) * 100), 16r7fffffff)
-         /timestamp := 0
-      }
+      /timestamp := iand(Time.get_system_millis(), 16r7fffffff)
       return timestamp
    end
 
    public reset_timestamp()
       timestamp := &null
+      return self
    end
 
    public abstract get_content(target)

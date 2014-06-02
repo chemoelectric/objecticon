@@ -47,14 +47,12 @@ class TextField(Component)
       placeholder,
       undo_manager,
       primary,
-      clipboard,
       old_cursor,
       old_mark,
       old_region,
       changed,
       loff,
       primary_selection_owner,
-      clipboard_selection_owner,
       scroll_ticker,
       scroll_ticker_interval,
       cursor_ticker,
@@ -185,6 +183,7 @@ class TextField(Component)
    public end_handle(e)
       local r
       if r := get_region() &
+         primary ~=== r &
          not is_held(Mouse.LEFT_PRESS) then {
          parent_dialog.own_selection(Selection.PRIMARY, self.primary_selection_owner)
          self.primary := r
@@ -512,23 +511,21 @@ class TextField(Component)
    end
 
    public handle_cut(e)
+      local s
       \self.is_editable_flag | fail
-
       start_handle(e)
-      if has_region() then {
-         self.clipboard := get_region()
-         parent_dialog.own_selection(Selection.CLIPBOARD, self.clipboard_selection_owner)
+      if s := get_region() then {
+         parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
          delete_region(e)
       }
       end_handle(e)
    end
 
    public handle_copy(e)
+      local s
       start_handle(e)
-      if has_region() then {
-         self.clipboard := get_region()
-         parent_dialog.own_selection(Selection.CLIPBOARD, self.clipboard_selection_owner)
-      }
+      if s := get_region() then
+         parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
       end_handle(e)
    end
 
@@ -768,7 +765,6 @@ class TextField(Component)
       set_pointer("xterm")
       self.loff := 0
       self.primary_selection_owner := TextFieldPrimarySelectionOwner(self)
-      self.clipboard_selection_owner := TextFieldClipboardSelectionOwner(self)
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
       connect(self.handle_mpress, Event.MOUSE_MIDDLE_PRESS)
@@ -794,22 +790,7 @@ class TextFieldPrimarySelectionOwner(TextSelectionOwner)
          parent.end_handle()
       } else
          parent.clear_mark()
-   end
-
-   public new(parent)
-      self.parent := parent
-      return
-   end
-end
-
-class TextFieldClipboardSelectionOwner(TextSelectionOwner)
-   private parent
-
-   protected get_text()
-      return \parent.clipboard
-   end
-
-   public lost_ownership()
+      parent.primary := &null
    end
 
    public new(parent)

@@ -35,7 +35,6 @@ class EditableTextList(LineBasedScrollArea)
       long_line,               #
       undo_manager,
       primary,
-      clipboard,
       old_view_list_size,
       old_mw,
       old_cursor_x,
@@ -53,7 +52,6 @@ class EditableTextList(LineBasedScrollArea)
       last_split,
       changed,
       primary_selection_owner,
-      clipboard_selection_owner,
       scroll_ticker,
       scroll_ticker_interval,
       cursor_ticker,
@@ -380,23 +378,21 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public handle_cut(e)
+      local l
       \self.is_editable_flag | fail
-
       start_handle(e)
-      if has_region() then {
-         self.clipboard := get_region_list()
-         parent_dialog.own_selection(Selection.CLIPBOARD, self.clipboard_selection_owner)
+      if l := get_region_list() then {
+         parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(cat_lines(l)))
          delete_region(e)
       }
       end_handle(e)
    end
 
    public handle_copy(e)
+      local l
       start_handle(e)
-      if has_region() then {
-         self.clipboard := get_region_list()
-         parent_dialog.own_selection(Selection.CLIPBOARD, self.clipboard_selection_owner)
-      }
+      if l := get_region_list() then
+         parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(cat_lines(l)))
       end_handle(e)
    end
 
@@ -494,6 +490,7 @@ class EditableTextList(LineBasedScrollArea)
       local r, i, cursor_moved, t
 
       if r := get_region_list() &
+         not equals(primary, r) &
          not view.is_held(Mouse.LEFT_PRESS) then {
          parent_dialog.own_selection(Selection.PRIMARY, self.primary_selection_owner)
          self.primary := r
@@ -548,7 +545,7 @@ class EditableTextList(LineBasedScrollArea)
          fire(Event.CONTENT_CHANGED, e)
       if \cursor_moved then
          fire(Event.CURSOR_MOVED, e)
-      if not lang.equals(old_region, r) then
+      if not equals(old_region, r) then
          fire(Event.SELECTION_CHANGED, e)
    end
 
@@ -1406,7 +1403,6 @@ class EditableTextList(LineBasedScrollArea)
       self.is_editable_flag := 1
       self.move_on_rpress_flag := 1
       self.primary_selection_owner := EditableTextListPrimarySelectionOwner(self)
-      self.clipboard_selection_owner := EditableTextListClipboardSelectionOwner(self)
       view.connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       view.connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
       view.connect(self.handle_mpress, Event.MOUSE_MIDDLE_PRESS)
@@ -1433,22 +1429,7 @@ class EditableTextListPrimarySelectionOwner(TextSelectionOwner)
          parent.end_handle()
       } else
          parent.clear_mark()
-   end
-
-   public new(parent)
-      self.parent := parent
-      return
-   end
-end
-
-class EditableTextListClipboardSelectionOwner(TextSelectionOwner)
-   private parent
-
-   protected get_text()
-      return cat_lines(\parent.clipboard)
-   end
-
-   public lost_ownership()
+      parent.primary := &null
    end
 
    public new(parent)
