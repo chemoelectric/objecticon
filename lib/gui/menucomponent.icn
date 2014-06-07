@@ -419,9 +419,9 @@ abstract class MenuComponent(Rect,Connectable)
       temp_win := create_proxy().
          set_size(self.w, self.h).
          # Copy attribs of the parent component
-         set_all_wattribs(self.parent_component.get_effective_wattribs())
+         set_all_wattribs(self.parent_component.get_effective_wattribs()).
+         set_inherit_wattribs(&no)
       every (!children).prepare_parent_proxy()
-
       if /use_popup_win then {
          temp_win.
             set_pos(self.x + win.get_dx(), 

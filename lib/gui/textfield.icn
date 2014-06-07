@@ -36,6 +36,7 @@ class TextField(Component)
    public 
       filter,                  # Cset for filtering characters
       is_editable_flag,        # Are we editable?
+      menu_on_rpress_flag,     # Show context menu on mouse right press event?
       move_on_rpress_flag,     # Move on mouse right press event?
       contents,                #                
       going_left,
@@ -95,10 +96,18 @@ class TextField(Component)
    end
 
    #
-   # Move the cursor on mouse right press?
+   # Move the cursor on mouse right press?  Only relevant if the context menu is disabled.
    #
    public set_move_on_rpress(s)
       self.move_on_rpress_flag := check_flag(s)
+      return self
+   end
+
+   #
+   # Show the context menu on mouse right press?
+   #
+   public set_menu_on_rpress(s)
+      self.menu_on_rpress_flag := check_flag(s)
       return self
    end
 
@@ -255,12 +264,23 @@ class TextField(Component)
       end_handle(e)
    end
 
+   public create_context_menu(e)
+      return TextContextMenu(self)
+   end
+
    public handle_rpress(e)
-      \self.move_on_rpress_flag | fail
-      start_handle(e)
-      self.cursor := whereis_x(e)
-      clear_mark()
-      end_handle(e)
+      local m, pm
+      if \menu_on_rpress_flag then {
+         if m := create_context_menu(e) & *m.children > 0 then {
+            pm := PopupMenu()
+            pm.popup(self, m, e.x, e.y)
+         }
+      } else if \move_on_rpress_flag then {
+         start_handle(e)
+         self.cursor := whereis_x(e)
+         clear_mark()
+         end_handle(e)
+      }
    end
 
    private handle_mpress_response(target_type, data, e)
@@ -529,6 +549,18 @@ class TextField(Component)
       end_handle(e)
    end
 
+   public is_editable()
+      return \is_editable_flag
+   end
+
+   public can_undo()
+      return undo_manager.can_undo()
+   end
+
+   public can_redo()
+      return undo_manager.can_redo()
+   end
+
    public keeps(e)
       return member(Key.CURSOR_H, e.code)
    end
@@ -758,6 +790,7 @@ class TextField(Component)
                                     set_l_inset(Gui.TEXT_INSET).
                                     set_r_inset(Gui.TEXT_INSET)))
       self.is_editable_flag := 1
+      self.menu_on_rpress_flag := 1
       self.move_on_rpress_flag := 1
       self.set_constraint("x_fill", &yes)
       self.set_constraint("x_align", Align.L)

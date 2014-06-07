@@ -67,18 +67,21 @@ class PopupMenu(Component, MenuMode)
    # Popup a menu.  The use of the alternate positions is described in
    # {MenuComponent.show()}.
    #
-   # @param dialog The dialog in which to show the menu
+   # @param comp The component to temporarily add the menu to
    # @param menu  The menu to show
    # @param x The x position to show
    # @param y The y position to show
    # @param xa The alternate x position to show; defaults to {x}.
    # @param ya The alternate y position to show; defaults to {&null}).
    #
-   public popup(dialog, menu, x, y, a[])
-      local xa, ya
+   public popup(comp, menu, x, y, a[])
+      local xa, ya, pd
       xa := a[1] | x
       ya := a[2]
-      dialog.add(self)
+      pd := comp.parent_dialog
+      pd := \pd.popup_manager
+      set_all_wattribs(pd.get_effective_wattribs())
+      comp.add(self)
       self.resize()
       self.parent_dialog.enter_menu_mode(self)
       self.menu := menu
@@ -92,6 +95,7 @@ class PopupMenu(Component, MenuMode)
       cast(self,Component).new()
       self.x_spec := self.y_spec := self.w_spec := self.h_spec := 0
       connect(handle_key, Event.KEY_PRESS)
+      set_inherit_wattribs(&no)
       return
    end
 end

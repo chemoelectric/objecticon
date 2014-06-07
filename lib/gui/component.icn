@@ -125,6 +125,10 @@ class Component(Rect,Align,Connectable)
       #
       show_layout_flag,
       #
+      # If set, inherit wattribs from the parent - on by default.
+      #
+      inherit_wattribs_flag,
+      #
       # Border instance
       #
       border
@@ -245,7 +249,7 @@ class Component(Rect,Align,Connectable)
    # Get the cloned buffer window, as seen by a child component.
    #
    public get_cbwin()
-      return self.cbwin
+      return \self.cbwin
    end
 
    #
@@ -821,7 +825,7 @@ class Component(Rect,Align,Connectable)
       self.effective_is_hidden_flag := if parent.is_hidden() | \self.is_hidden_flag then 1 else &null
       self.effective_is_shaded_flag := if parent.is_shaded() | \self.is_shaded_flag then 1 else &null
       Gui.style.polish(self)
-      self.effective_wattribs := copy(parent.get_effective_wattribs())
+      self.effective_wattribs := if /inherit_wattribs_flag then table() else copy(parent.get_effective_wattribs())
       every t := key(self.wattribs) do {
          if member(Gui.CONTEXT_WATTRIB_SET, t) then
             insert(self.effective_wattribs, t, self.wattribs[t])
@@ -830,7 +834,10 @@ class Component(Rect,Align,Connectable)
       }
       self.compute_z_order()
       self.compute_tab_order()
-      cbwin := clone_win_with(parent.get_cbwin(), self.wattribs) | runerr("Failed to clone window:" || &why)
+      cbwin := if /inherit_wattribs_flag then
+         fresh_clone_win_with(parent.get_cbwin(), self.wattribs)
+      else
+         clone_win_with(parent.get_cbwin(), self.wattribs)
       (\self.border).initially(self)
       every (!self.children).initially()
    end
@@ -1316,6 +1323,14 @@ class Component(Rect,Align,Connectable)
    end
 
    #
+   # Configure whether to inherit wattribs from the parent; on by default.
+   #
+   public set_inherit_wattribs(s)
+      self.inherit_wattribs_flag := check_flag(s)
+      return self
+   end
+
+   #
    # Set whether the component will show the layout grid, if any.
    #
    public set_show_layout(s)
@@ -1369,6 +1384,7 @@ class Component(Rect,Align,Connectable)
       self.z := self.tab_ord := 0
       self.tooltip_start_delay := Dialog.TOOLTIP_START_DELAY
       self.tooltip_end_delay := Dialog.TOOLTIP_END_DELAY
+      self.inherit_wattribs_flag := 1
       return
    end
 end

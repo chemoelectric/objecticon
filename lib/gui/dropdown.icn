@@ -68,6 +68,7 @@ abstract class DropDown(Component, MenuMode)
 
       self.popup := create_popup().
          set_all_wattribs(self.get_effective_wattribs()).
+         set_inherit_wattribs(&no).
          set_z(self.parent_dialog.get_top_z())
       self.parent_dialog.add(popup)
       pref_w := popup.get_preferred_width()
@@ -377,6 +378,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
 
       self.popup := create_popup().
          set_all_wattribs(self.get_effective_wattribs()).
+         set_inherit_wattribs(&no).
          connect(self.on_textlist_selection, Event.SELECTION_CHANGED).
          set_contents(self.selection_list).
          set_draggable_cursor(&yes).

@@ -26,6 +26,7 @@ class EditableTextList(LineBasedScrollArea)
    public 
       contents,                                     
       is_editable_flag,        # Are we editable?
+      menu_on_rpress_flag,     # Show context menu on mouse right press event?
       move_on_rpress_flag,     # Move on mouse right press event?
       cursor_x,                #                
       cursor_y,                #                
@@ -351,10 +352,18 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    #
-   # Move the cursor on mouse right press?
+   # Move the cursor on mouse right press?  Only relevant if the context menu is disabled.
    #
    public set_move_on_rpress(s)
       self.move_on_rpress_flag := check_flag(s)
+      return self
+   end
+
+   #
+   # Show the context menu on mouse right press?
+   #
+   public set_menu_on_rpress(s)
+      self.menu_on_rpress_flag := check_flag(s)
       return self
    end
 
@@ -394,6 +403,10 @@ class EditableTextList(LineBasedScrollArea)
       if l := get_region_list() then
          parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(cat_lines(l)))
       end_handle(e)
+   end
+
+   public is_editable()
+      return \is_editable_flag
    end
 
    public can_undo()
@@ -651,13 +664,23 @@ class EditableTextList(LineBasedScrollArea)
       end_handle(e)
    end
 
-   public handle_rpress(e)
-      \self.move_on_rpress_flag | fail
+   public create_context_menu(e)
+      return TextContextMenu(self)
+   end
 
-      start_handle(e)
-      set_cursor_from_pos(e)
-      clear_mark()
-      end_handle(e)
+   public handle_rpress(e)
+      local m, pm
+      if \menu_on_rpress_flag then {
+         if m := create_context_menu(e) & *m.children > 0 then {
+            pm := PopupMenu()
+            pm.popup(self, m, e.x, e.y)
+         }
+      } else if \move_on_rpress_flag then {
+         start_handle(e)
+         set_cursor_from_pos(e)
+         clear_mark()
+         end_handle(e)
+      }
    end
 
    private handle_mpress_response(target_type, data, e)
@@ -1401,6 +1424,7 @@ class EditableTextList(LineBasedScrollArea)
       set_wrap_mode("off")
       self.cursor_x := self.cursor_y := 1
       self.is_editable_flag := 1
+      self.menu_on_rpress_flag := 1
       self.move_on_rpress_flag := 1
       self.primary_selection_owner := EditableTextListPrimarySelectionOwner(self)
       view.connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)

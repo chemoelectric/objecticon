@@ -320,6 +320,23 @@ class Menu(TextMenuItem)
       cast(self,TextMenuItem).hide()
    end
 
+   # A helpful method to tidy up a menu by removing any redundant
+   # separators.  This can simplify the logic when creating a menu
+   # with optional elements.
+   #
+   public tidy()
+      local i
+      every i := *children to 1 by -1 do {
+         if is(children[i], MenuSeparator) then {
+            if is(children[i + 1], MenuSeparator) then
+               remove_index(i + 1)
+            if i = (1 | *children) then
+               remove_index(i)
+         }
+      }
+      return self
+   end
+
    public new()
       cast(self,TextMenuItem).new()
       self.set_border(RaisedBorder())
