@@ -135,10 +135,6 @@ class Menu(TextMenuItem)
       return self
    end
 
-   public which_region(e)
-      return in_region(e) | (\which_open).which_region(e)
-   end
-
    public handle_key_up(e)
       local m, last
 
@@ -283,8 +279,8 @@ class Menu(TextMenuItem)
    end
 
    public handle_key(e)
-      if \self.which_open then
-         self.which_open.handle_key(e)
+      if e === accel_skip then
+         accel_skip := &null
       else case /e.release & e.code of {
          Key.UP: handle_key_up(e)
          Key.DOWN: handle_key_down(e)
@@ -306,6 +302,7 @@ class Menu(TextMenuItem)
       every c.connect(handle_move, 
                              Event.MOUSE_MOVEMENT | Event.MOUSE_LEFT_DRAG_OVER | Event.MOUSE_MIDDLE_DRAG_OVER | Event.MOUSE_RIGHT_DRAG_OVER)
       c.connect(handle_exit, Event.MOUSE_EXIT)
+      c.connect(handle_key, Event.KEY_PRESS)
       return c
    end
 

@@ -15,11 +15,10 @@ import graphics
 # drop-down menu, rather than several.  It may be placed anywhere on
 # the dialog, whereas a {MenuBar} would invariably be placed along the top.
 #
-class MenuButton(Component, BorderWhilstEntered, MenuMode)
+class MenuButton(Component, BorderWhilstEntered, MenuSystem)
    public 
       menu, 
-      which_open,
-      accel_skip
+      which_open
 
    #
    # Set the menu to be displayed when the component is clicked.
@@ -100,7 +99,7 @@ class MenuButton(Component, BorderWhilstEntered, MenuMode)
          self.open_menu()
       self.menu.cursor_on()
       # See comment in MenuBar.handle_accel
-      accel_skip := e
+      menu.accel_skip := e
    end
 
    public match_accel(e)
@@ -108,29 +107,12 @@ class MenuButton(Component, BorderWhilstEntered, MenuMode)
    end
 
    public should_close(e)
-      if member(Mouse.PRESS, e.code) &
-         not(in_region(e) | (\which_open).which_region(e)) then
-         return
-   end
-
-   public allow_nested(c)
-      local t
-      every t := c.gen_parents() do {
-         if is(t, SubMenuProxyComponent) then
-            return t.menu.parent_component === self
-      }
+      return member(Mouse.PRESS, e.code) & not(in_region(e))
    end
 
    public get_tooltip(e)
       return \self.tooltip | 
          (menu.in_label_region(e) & menu.get_tooltip(e))
-   end
-
-   public handle_key(e)
-      if e === accel_skip then
-         accel_skip := &null
-      else
-         (\self.which_open).handle_key(e)
    end
 
    public get_default_width()
@@ -154,12 +136,22 @@ class MenuButton(Component, BorderWhilstEntered, MenuMode)
       self.menu.label_y +:= dy
    end
 
+   public allow_nested(c)
+      return is(c, SubMenuProxyComponent) & c.menu.parent_component === self
+   end
+
+   public gen_popup_components()
+   end
+
+   public get_nesting_component()
+      return self
+   end
+
    public new()
       cast(self,Component).new()
       cast(self,BorderWhilstEntered).new()
       self.set_border(RaisedBorder())
       every connect(handle_press, Event.MOUSE_LEFT_PRESS | Event.MOUSE_MIDDLE_PRESS | Event.MOUSE_RIGHT_PRESS)
-      connect(handle_key, Event.KEY_PRESS)
       return
    end
 end

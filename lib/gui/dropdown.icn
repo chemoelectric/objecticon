@@ -42,7 +42,16 @@ abstract class DropDown(Component, MenuMode)
    end
 
    public allow_nested(c)
+      c := c.get_nesting_component()
       return c.gen_parents() === popup
+   end
+
+   public get_nesting_component()
+      return self
+   end
+
+   public gen_popup_components()
+      return popup
    end
 
    public open_popup(ev)
@@ -102,11 +111,13 @@ abstract class DropDown(Component, MenuMode)
                use_direction := Direction.DOWN
          }
       }
-      self.parent_dialog.enter_menu_mode(self)
+      parent_dialog.
+         set_focus().
+         enter_menu_mode(self)
 
       if \use_popup_win then {
          # Remove popup from dialog and add to popup window.
-         self.parent_dialog.remove(popup)
+         parent_dialog.remove(popup)
          d := PureDialog().
             set_canvas("popup").
             set_width(pref_w).
@@ -125,18 +136,15 @@ abstract class DropDown(Component, MenuMode)
               set_x(win.get_x() + win.get_dx() + self.x - x_adj).
               set_y(win.get_y() + win.get_dy() + self.y - pref_h)
 
-         self.popup.set_pos(0, 0)
-         self.parent_dialog.
-            set_focus().
-            add_popup(d)
+         popup.set_pos(0, 0)
+         parent_dialog.add_popup(d)
          d.show()
       } else {
          if use_direction == Direction.DOWN then 
-            self.popup.set_pos(self.x + win.get_dx() - x_adj, self.y + self.h + win.get_dy())
+            popup.set_pos(self.x + win.get_dx() - x_adj, self.y + self.h + win.get_dy())
          else
-            self.popup.set_pos(self.x + win.get_dx() - x_adj, self.y - pref_h + win.get_dy())
-         self.popup.resize().invalidate()
-         self.parent_dialog.set_focus()
+            popup.set_pos(self.x + win.get_dx() - x_adj, self.y - pref_h + win.get_dy())
+         popup.resize().invalidate()
       } 
    end
 

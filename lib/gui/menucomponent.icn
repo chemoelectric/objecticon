@@ -8,7 +8,7 @@
 
 package gui
 
-import util
+import util, graphics
 
 #
 # This is the superclass of all the objects that make up the
@@ -38,7 +38,8 @@ abstract class MenuComponent(Rect,Connectable)
       children,
       border,
       use_popup_win,
-      temp_win
+      temp_win,
+      accel_skip
 
    public initially()
       self.parent_component := (\parent).parent_component | component_link
@@ -335,11 +336,6 @@ abstract class MenuComponent(Rect,Connectable)
       return temp_win.in_region(e)
    end
 
-   public which_region(e)
-      if in_region(e) then
-         return self
-   end
-
    #
    # Set the border to use - this relates to the popup submenu, 
    # not the label.
@@ -422,6 +418,9 @@ abstract class MenuComponent(Rect,Connectable)
          set_all_wattribs(self.parent_component.get_effective_wattribs()).
          set_inherit_wattribs(&no)
       every (!children).prepare_parent_proxy()
+
+      pd.enter_menu_mode(temp_win)
+
       if /use_popup_win then {
          temp_win.
             set_pos(self.x + win.get_dx(), 
@@ -451,7 +450,6 @@ abstract class MenuComponent(Rect,Connectable)
    #
    public hide()
       \self.temp_win | fail
-
       if /use_popup_win then {
          self.temp_win.invalidate()
          self.parent_component.parent_dialog.remove(self.temp_win)
@@ -459,6 +457,7 @@ abstract class MenuComponent(Rect,Connectable)
          parent_component.parent_dialog.remove_popup(self.temp_win.parent_dialog)
          self.temp_win.parent_dialog.dispose()
       }
+      parent_component.parent_dialog.exit_menu_mode(temp_win)
       self.temp_win := &null
    end
 
@@ -470,7 +469,7 @@ abstract class MenuComponent(Rect,Connectable)
 end
 
 
-class SubMenuProxyComponent(Component)
+class SubMenuProxyComponent(Component, MenuMode)
    public menu
 
    public display()
@@ -486,6 +485,33 @@ class SubMenuProxyComponent(Component)
       }
    end
 
+   public should_close(e)
+      return member(Mouse.PRESS, e.code) & not(in_region(e))
+   end
+
+   public close_all()
+      menu.hide()
+   end
+
+   public gen_popup_components()
+      return self
+   end
+
+   public get_nesting_component()
+      return self
+   end
+
+   public allow_nested(c) 
+      local t
+      if is(c, SubMenuProxyComponent) then
+         return c.menu.parent === menu
+      c := c.get_nesting_component()
+      every t := c.gen_parents() do {
+         if is(t, SubMenuProxyComponent) then
+            return t === self
+      }
+   end
+
    public new(m)
       cast(self,Component).new()
       self.menu := m
@@ -494,4 +520,9 @@ class SubMenuProxyComponent(Component)
    end
 end
 
+abstract class MenuSystem(MenuMode)
+   public abstract go_right()
+   public abstract go_left()
+   public abstract make_partial()
+end
 

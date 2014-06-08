@@ -263,6 +263,17 @@ abstract class SuggestField(TextField, MenuMode)
       self.parent_dialog.exit_menu_mode(self)
    end
 
+   public get_nesting_component()
+      return self
+   end
+
+   public gen_popup_components()
+      return tl
+   end
+
+   public allow_nested(c)
+   end
+
    public close_all()
       keep_closed()
    end

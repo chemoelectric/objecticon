@@ -1579,5 +1579,7 @@ end
 abstract class MenuMode()
    public abstract should_close(e)
    public abstract close_all()
-   public allow_nested(c) end
+   public abstract gen_popup_components()
+   public abstract get_nesting_component()
+   public abstract allow_nested(c)
 end
