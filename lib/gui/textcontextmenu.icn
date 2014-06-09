@@ -59,13 +59,15 @@ class TextContextMenu(Menu)
                 set_accel("r").
                 connect(parent.handle_redo, Event.ACTION))
       }
-      add(MenuSeparator())
-      add(TextMenuItem().
-          set_label("Select all").
-          set_paint_left(ImagePaint().set_cache("txt.select-all")).
-          set_label_right("^A").
-          set_accel("a").
-          connect(parent.handle_select_all, Event.ACTION))
+      if parent.has_contents() then {
+         add(MenuSeparator())
+         add(TextMenuItem().
+             set_label("Select all").
+             set_paint_left(ImagePaint().set_cache("txt.select-all")).
+             set_label_right("^A").
+             set_accel("a").
+             connect(parent.handle_select_all, Event.ACTION))
+      }
       tidy()
       return
    end

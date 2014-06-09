@@ -553,6 +553,10 @@ class TextField(Component)
       return \is_editable_flag
    end
 
+   public has_contents()
+      return *contents > 0
+   end
+
    public can_undo()
       return undo_manager.can_undo()
    end
