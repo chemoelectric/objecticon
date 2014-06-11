@@ -1,0 +1,2125 @@
+import 
+   gui,
+   io,
+   posix,
+   util,
+   xdg,
+   ipl.sort,
+   ipl.pdco,
+   ipl.wildcard,
+   ipl.strings,
+   ipl.lists,
+   ipl.filegui,
+   graphics,
+   net
+
+import lang
+
+$load EXIT "rpp.EXIT_24.gif"
+$load SAVE "rpp.SAVE_24.gif"
+$load MIXFILE "rpp.MIXFILE_24.png"
+$load TERMINAL_LOGO "rpp.TERMINAL_LOGO.png"
+
+class MessageLabel(Label)
+   private
+      want, keep
+
+   public set(p, n)
+      local t
+      want := p
+      if /keep then {
+         /p := TextPaint("")
+         set_paint(p)
+         if \n then {
+            keep := 1
+            t := Dispatcher.new_task{{
+               t.sleep(n)
+               keep := &null
+               set_paint(\want)
+               t.revert()
+            }}
+            t.start()
+         }
+      }
+   end
+end
+
+class Runner()
+   public const
+      cmd, in_shell
+
+   public new(cmd, in_shell)
+      self.cmd := cmd
+      self.in_shell := in_shell
+      return
+   end
+end
+
+class TerminalDialog(Dialog)
+   private readable
+      favourite_dirs,
+      tabs
+
+   public quit()
+      #write()
+      exit()
+   end
+
+   private on_quit(ev)
+      quit()
+      #dispose()
+   end
+
+   public new_tab(url, referer_url, sel)
+      local bt
+      bt := Terminal().
+         set_is_hidden(&yes)
+      tabs.
+         add(bt, 0).
+         do_layout().
+         invalidate()
+      if \sel then {
+         tabs.set_which_one(bt)
+         #update_grey()
+      }
+      return bt
+   end
+
+   private on_new_tab(ev)
+      new_tab(1)
+   end
+
+   public on_favourite_dirs(ev)
+      local d
+      d := FavouriteDirectoriesDialog()
+      d.show_modal(self)
+      \d.okay | fail
+      every (!tabs.children).refresh_favourite_dirs()
+   end
+
+   private child_cleanup(t)
+      local r
+      repeat {
+         t.sleep(1000)
+         while r := System.wait(-1, WaitOpt.WNOHANG) & r.pid > 0 do
+            write("Exit:",to_string(r))
+      }
+   end
+
+   public new()
+      local quit_menu_item, menu_bar, file_menu, bt, new_tab_item, favourite_dirs_item, t
+      cast(self,Dialog).new()
+      set_size(1000, 750)
+      self.set_resize(&yes)
+      new_tab_item := TextMenuItem().
+         connect(on_new_tab, Event.ACTION).
+         set_paint_mid(TextPaint("New Tab"))
+      favourite_dirs_item := TextMenuItem().
+         connect(on_favourite_dirs, Event.ACTION).
+         set_paint_mid(TextPaint("Favourite dirs..."))
+      quit_menu_item := TextMenuItem().
+         connect(on_quit, Event.ACTION).
+         set_paint_mid(TextPaint("Quit"))
+      file_menu := Menu().
+         set_accel("f").
+         set_label("File").
+         add(new_tab_item).
+         add(favourite_dirs_item).
+         add(quit_menu_item)
+      menu_bar := MenuBar().
+         set_size("100").
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("l_inset", 0).
+         set_constraint("r_inset", 0).
+         set_constraint("t_inset", 0).
+         set_constraint("b_inset", 0).
+         set_constraint("x_fill", &yes).
+         add(file_menu)
+      self.add(menu_bar)
+      bt := Terminal()
+      tabs := TabSet().
+         set_size("200", "150").
+         clear_constraints().
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0).
+         set_constraint("l_inset", 0).
+         set_constraint("r_inset", 0).
+         set_constraint("t_inset", 0).
+         set_constraint("b_inset", 0).
+         add(bt).
+         set_which_one(bt).
+         set_remember_focus(&yes).
+         set_no_click_focus(&yes)
+      self.add(tabs)
+      self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
+      self.set_layout(GridLayout().set_extra("cells"))
+      self.set_focus(bt.commands.find_focus())
+      set_label("Terminal")
+      t := Dispatcher.new_task{child_cleanup(t)}
+      t.start()
+      return
+   end
+end
+
+class Columns(LineBasedScrollArea)
+   public
+      data,
+      nrows,
+      col_w,
+      n_rows,
+      gutter,
+      item_border,
+      item_paint,
+      down,
+      over,
+      highlight,
+      last_highlight
+
+   public initially()
+      \self.item_paint | runerr("ItemPaint not set")
+      cast(self,LineBasedScrollArea).initially()
+      self.item_paint.initially(self)
+      self.item_border.initially(self)
+   end
+
+   public finally()
+      cast(self,LineBasedScrollArea).finally()
+      self.item_paint.finally()
+      self.item_border.finally()
+   end
+
+   #
+   # Set a border to draw along with each item.
+   #
+   public set_item_border(b)
+      if is_initialized() then {
+         (\self.item_border).finally()
+         self.item_border := b
+         self.item_border.initially(self)
+      } else
+         self.item_border := b
+      return self
+   end
+
+   public set_item_paint(r)
+      if is_initialized() then {
+         (\self.item_paint).finally()
+         self.item_paint := r
+         self.item_paint.initially(self)
+      } else
+         self.item_paint := r
+      return self
+   end
+
+   public draw_line(xp, yp, lh, i)
+      local e, j, r, s, k, r2
+      every j := 1 to *col_w do {
+         k := (i - 1) * *col_w  + j
+         e := data[k] | break
+         s := item_paint.get_size(view.cbwin, e)
+         r := Rect(xp, yp, col_w[j], lh)
+         item_paint.draw_rect(view.cbwin, e, r2 := item_border.float(r, s))
+         item_border.draw_rect(view.cbwin, r)
+         if k === highlight then 
+            Gui.style.fill_selection_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
+         if k === last_highlight then 
+            Gui.style.draw_dashed_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
+         xp +:= col_w[j] + gutter
+      }
+   end
+
+   private mk_split(n)
+      local i, e
+      col_w := list(n, 0)
+      i := 1
+      n_rows := 0
+      every e := !data do {
+         if i = 1 then
+            n_rows +:= 1
+         col_w[i] <:= item_paint.get_width(view.cbwin, e)
+         i +:= 1
+         if i > n then
+            i := 1
+      }
+      every (!col_w) +:= item_border.get_total_width()
+   end
+
+   public calculate_subject_width()
+      local mw, e
+      mw := 0
+      every e := !data do
+         mw <:= item_paint.get_width(view.cbwin, e)
+      return mw + item_border.get_total_width()
+   end
+
+   private invalidate_split()
+      invalidate_subject_width()
+      invalidate_line_count()
+   end
+
+   public layout()
+      invalidate_split()
+      cast(self,ScrollArea).layout()
+   end
+
+   public set_internal_fields()
+      local had_vsb
+      had_vsb := self.vsb
+      cast(self,ScrollArea).set_internal_fields()
+      if had_vsb ~=== self.vsb then {
+         invalidate_split()
+         cast(self,ScrollArea).set_internal_fields()
+      }
+   end
+
+   public get_default_subject_height(dw)
+      mk_best_split(dw)
+      return n_rows * get_line_height()
+   end
+
+   private mk_best_split(dw)
+      local n, tw
+      n := 1
+      repeat {
+         mk_split(n)
+         tw := gutter * (*col_w - 1)
+         every tw +:= !col_w
+         if tw > dw then {
+            if n > 1 then
+               mk_split(n - 1)
+            return
+         }
+         if n >= *data then
+            return
+         n +:= 1
+      }
+   end
+
+   public calculate_line_height()
+      return item_paint.get_constant_height(view.cbwin) + item_border.get_total_height() | runerr("Need a constant height")
+   end
+
+   public calculate_line_count()
+      mk_best_split(predict_view_width(w, vsb))
+      return n_rows
+   end
+
+   public get_element_under_pointer(e)
+      local i, j, d, s, r, xp, yp, fs, k
+      i := get_line_under_pointer(e) | fail
+      xp := get_subject_x()
+      yp := get_subject_y() + get_line_height() * (i - 1)
+      every j := 1 to *col_w do {
+         if xp <= e.x < xp + col_w[j] then {
+            k := (i - 1) * *col_w + j
+            d := data[k] | fail
+            s := item_paint.get_size(view.cbwin, d)
+            r := Rect(xp, yp, col_w[j], get_line_height())
+            fs := item_border.float(r, s)
+            if fs.inside(e.x, e.y) then
+               return k
+            else
+               fail
+         }
+         xp +:= col_w[j] + gutter
+      }
+   end
+
+   private handle_in_chain(e)
+      local k
+      *parent_dialog.held = 0 | fail
+      if k := get_element_under_pointer(e) then {
+         set_over(k)
+         view.set_pointer("hand1")
+      } else {
+         set_over()
+         view.set_pointer()
+      }
+   end
+
+   private set_over(n)
+      local s, url
+      if n ~=== over then {
+         #write("over=",n)
+         over := n
+         if /over then
+            parent.parent.parent.parent.clear_msg()
+         else {
+            s := FilePath(parent.parent.parent.parent.cwd).child(data[n].name).ucs() | fail
+            url := URL(u"file://" || &host || URL.percent_encode(s, URL.UNRESERVED ++ '/')) | fail
+            parent.parent.parent.parent.msg(url.ucs())
+         }
+      }
+      return self
+   end
+
+   public handle_lmdrag(e)
+      if \down = get_element_under_pointer(e) then {
+         set_highlight(down)
+         set_over(down)
+      } else {
+         set_highlight()
+         set_over()
+      }
+   end
+
+   public handle_lrelease(e)
+      if \highlight then
+         fire("lclicked", e)
+      down := &null
+      set_highlight()
+   end
+
+   public handle_mrelease(e)
+      if \highlight then
+         fire("mclicked", e)
+      down := &null
+      set_highlight()
+   end
+
+   private get_row_for_index(n)
+      return (n - 1) / *col_w + 1
+   end
+
+   public set_last_highlight(n)
+      if last_highlight ~=== n then {
+         invalidate_line(get_row_for_index(\last_highlight))
+         last_highlight := n
+         invalidate_line(get_row_for_index(\last_highlight))
+      }
+      return self
+   end
+
+   public set_highlight(n)
+      if highlight ~=== n then {
+         set_last_highlight(\n)
+         invalidate_line(get_row_for_index(\highlight))
+         highlight := n
+         ensure_line_visible(get_row_for_index(\highlight)) 
+         invalidate_line(get_row_for_index(\highlight))
+      }
+      return self
+   end
+
+   public get_highlight()
+      return .\highlight
+   end
+
+   public object_get_last_highlight()
+      return data[.\last_highlight]
+   end
+
+   public object_set_last_highlight(o)
+      return set_last_highlight(keyof(data, o))
+   end
+   
+   public get_last_highlight()
+      return .\last_highlight
+   end
+
+   public handle_lmpress(e)
+      if down := get_element_under_pointer(e) then
+         set_highlight(down)
+      else
+         set_highlight()
+   end
+
+   public constrain_last_highlight()
+      if *data = 0 then
+         last_highlight := &null
+      else if \last_highlight then {
+         last_highlight <:= 1
+         last_highlight >:= *data
+      }
+   end
+
+   public set_data(l)
+      self.data := l
+      set_over()
+      invalidate_subject_width()
+      invalidate_line_count()
+      compute_and_invalidate()
+      constrain_last_highlight()
+      return self
+   end
+
+   public set_gutter(n)
+      self.gutter := n
+      return self
+   end
+
+   public new()
+      cast(self,LineBasedScrollArea).new()
+      data := []
+      gutter := 8
+      item_paint := TextItemPaint()
+      item_border := NullBorder().set_x_align(Align.L)
+      view.connect(self.handle_lmpress, Event.MOUSE_LEFT_PRESS)
+      view.connect(self.handle_lmpress, Event.MOUSE_MIDDLE_PRESS)
+      view.connect(self.handle_lmdrag, Event.MOUSE_LEFT_DRAG)
+      view.connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      view.connect(self.handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
+      view.connect(self.handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
+      view.connect(self.handle_in_chain, Event.IN_POINT_CHAIN)
+      return
+   end
+end
+
+class Commands(EditableTextList, MenuMode)
+   private
+      popup,
+      popup_x, popup_y, popup_ev,
+      popup_path, 
+      popup_dir_flag,
+      use_popup_win
+   public
+      terminal
+
+   public handle_return(e)
+      local s
+      if \e.shift then
+         return cast(self, EditableTextList).handle_return(e)
+      s := contents[cursor_y]
+      write("input line:", image(s))
+      parent.parent.parent.parent.parent.clear_msg()
+      if cursor_y = *contents then {
+         move_cursor(*contents[cursor_y] + 1, cursor_y)
+         cast(self, EditableTextList).handle_return(e)
+      } else
+         move_cursor(1, cursor_y + 1)
+      terminal.got_input(s || u"\n")
+   end
+
+   public should_close(e)
+      if (member(Mouse.PRESS, e.code) & 
+                not(popup.in_region(e))) then 
+         return
+   end
+
+   public close_all()
+      close_popup()
+   end
+
+   public close_popup()
+      self.parent_dialog.set_focus(self)
+      if /use_popup_win then {
+         self.popup.invalidate()
+         self.parent_dialog.remove(popup)
+      } else {
+         self.parent_dialog.remove_popup(self.popup.parent_dialog)
+         self.popup.parent_dialog.dispose()
+      }
+      self.popup := &null
+      self.parent_dialog.exit_menu_mode(self)
+   end
+
+   public open_popup(px, py, l)
+      local spc_below, spc_right, d, dim, win, win_spc_left,
+         win_spc_below, win_spc_right, rs, r, x_adj, max_h, max_w
+
+      use_popup_win := &null
+      win := parent_dialog.win
+      dim := win.get_display_size()
+      # Screen rectangle, in adjusted co-ordinates
+      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim[1], dim[2])
+      r := parent_dialog.intersect(rs)
+
+      win_spc_below := r.y + r.h - py
+      win_spc_left := px - r.x
+      win_spc_right := r.x + r.w - px
+
+      # Space available for popup limited by screen size
+      spc_below := rs.y + rs.h - py
+      spc_right := rs.x + rs.w - px
+
+      max_h := spc_below
+      max_w := spc_right
+
+      self.popup := ItemPaintList().
+         set_item_paint(IconFilesItemPaint()).
+         set_item_border(EmptyBorder().
+                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                             set_x_align(Align.L)).
+         set_all_wattribs(self.get_effective_wattribs()).
+         set_inherit_wattribs(&no).
+         connect(self.on_textlist_selection, Event.SELECTION_CHANGED).
+         set_select_mode(Select.ONE).
+         set_accepts_focus(&no).
+         set_draggable_cursor(&yes).
+         set_motion_cursor(&yes).
+         set_selection_on_key_moves(&no).
+         set_contents(l).
+         set_z(self.parent_dialog.get_top_z())
+      self.parent_dialog.add(popup)
+      self.popup.set_ideal_size(25, 
+                                max_w,
+                                0, max_h)
+      if popup.w_spec > win_spc_right then
+         use_popup_win := 1
+      if popup.h_spec > win_spc_below then
+         use_popup_win := 1
+      self.parent_dialog.enter_menu_mode(self)
+      x_adj := 0
+      if \use_popup_win then {
+         # Remove popup from dialog and add to popup window.
+         self.parent_dialog.remove(popup)
+         d := PureDialog().
+            set_canvas("popup").
+            set_width(popup.w_spec).
+            set_height(popup.h_spec).
+            set_dx(-(px - x_adj)).
+            set_dy(-py).
+            set_x(win.get_x() + win.get_dx() + px - x_adj).
+            set_y(win.get_y() + win.get_dy() + py)
+         d.add(popup)
+         self.popup.set_pos(0, 0)
+         self.parent_dialog.
+            add_popup(d)
+         d.show()
+      } else {
+         self.popup.set_pos(px + win.get_dx() - x_adj, py + win.get_dy())
+         self.popup.resize().invalidate()
+      } 
+   end
+
+   private static get_longest_prefix(l)
+      local i, s, t, e
+      i := 1
+      t := u""
+      repeat {
+         s := l[1].name[1+:i] | break
+         every e := !l do
+            e.name[1+:i] == s | break break
+         t := s
+         i +:= 1
+      }
+      return t
+   end
+
+   public on_textlist_selection(ev)
+      local tmp, e, spc
+      #
+      # Selection in list - close textlist, amend label.
+      #
+      e := popup.object_get_selections()[1]
+      tmp := e.name
+      spc := u""
+      if e.stat.mode_str[1] == "d" then
+         tmp ||:= u"/"
+      else
+         spc := u" "
+      close_popup()
+      if /popup_dir_flag then
+         insert_string(Format.shell_escape(tmp[*popup_path.get(-1) + 1:0]) || spc, ev)
+      else
+         insert_string(Format.shell_escape(tmp, ev) || spc)
+   end
+
+   public handle_tab(ev)
+      local v, i, l, s, popup_pre, popup_pre_unesc, t, fl
+      i := cursor_x
+      while i > 1 &
+         (contents[self.cursor_y][i - 1] ~== u" " |
+          contents[self.cursor_y][i - 2] == u"\\") do
+         i -:= 1
+
+      #while any(~'\t ', contents[self.cursor_y], i - 1) do
+      #   i -:= 1
+      popup_pre := contents[self.cursor_y][i:cursor_x]
+      popup_pre_unesc := Format.shell_unescape(popup_pre)
+      if *popup_pre_unesc = 0 then
+         popup_pre_unesc := ucs(terminal.cwd) || u"/"
+      else if popup_pre_unesc[1] == u"~" then
+         popup_pre_unesc := ucs(Files.get_home()) || popup_pre_unesc[2:0] | fail
+      popup_path := FilePath(popup_pre_unesc)
+      if not popup_path.is_absolute() then
+         popup_path := FilePath(terminal.cwd).append(popup_path)
+
+      l := []
+      if popup_pre_unesc[-1] == u"/" then {
+         fl := Files.ucs_list(popup_path.str(), ListEntryWithIcon) | fail
+         fl := isort(fl, Files.name_key)
+         every t := !fl do {
+            if not Files.is_relative_dir(t.name) then
+               put(l, t)
+         }
+         popup_dir_flag := &yes
+      } else {
+         fl := Files.ucs_list(popup_path.parent().str(), ListEntryWithIcon) | fail
+         fl := isort(fl, Files.name_key)
+         s := popup_path.get(-1)
+         every t := !fl do {
+            if match(s, t.name) then
+               put(l, t)
+         }
+         popup_dir_flag := &no
+      }
+
+      if *l = 0 then
+         fail
+
+      if *l = 1 then {
+         s := if /popup_dir_flag then
+            Format.shell_escape(l[1].name[*popup_path.get(-1) + 1:0])
+         else
+            Format.shell_escape(l[1].name)
+         if l[1].stat.mode_str[1] == "d" then
+            s ||:= u"/"
+         else
+            s ||:= u" "
+         insert_string(s, ev)
+      } else {
+         s := get_longest_prefix(l)
+         if *s > *popup_path.get(-1) then {
+            insert_string(Format.shell_escape(s[*popup_path.get(-1) + 1:0]), ev)
+            popup_path := popup_path.sibling(s)
+         }
+         #write("\nLONG:",image(s))
+         v :=  view_list[get_view_list_index()]
+         #px := x + 16 + text_width_ex(view.cbwin, v.str, 1, self.cursor_x - v.first + 1, self.tab_width)
+         #py := y + (v.index - 1) * line_height
+         popup_x := x + text_width_ex(view.cbwin, v.str, 1, i - v.first + 1, self.tab_width)
+         popup_y := y + v.index * line_height
+         popup_ev := ev
+         open_popup(popup_x, popup_y, l)
+      }
+   end
+
+   protected forward_key(ev, src, ty)
+      \popup  | fail
+      if ev === popup_ev then
+         fail
+      if member(Key.NAVIGATE ++ set("\r"), ev.code) then
+         #(\popup.parent_dialog.focus).fire(ty, ev)
+         (\popup).fire(ty, ev)
+      else if ev.code === "\e" then
+         close_all()
+      else if type(ev.code) == ("string" | "ucs") then {
+         close_all()
+         handle_key(ev)
+      }
+   end
+
+   public handle_key(e)
+      /popup  | fail
+      case e.code of {
+         "\t" : handle_tab(e)
+         "\^d" | "\^c" : terminal.got_input(ucs(e.code))
+         default : cast(self,EditableTextList).handle_key(e)
+      }
+   end
+
+   public gen_popup_components()
+      return popup
+   end
+
+   public get_nesting_component()
+   end
+
+   public allow_nested(c)
+   end
+
+   public new()
+      cast(self, EditableTextList).new()
+      every connect(self.forward_key, Event.KEY_PRESS)
+      return
+   end
+end
+
+class Block()
+   public const
+      orig, stripped, segments
+
+   public new(orig, segments, stripped)
+      self.orig := orig
+      self.stripped := stripped
+      self.segments := segments
+      return
+   end
+end
+
+class Segment()
+   public const
+      first, 
+      str,
+      colour,
+      link
+
+   public new(first, str, colour, link)
+      self.first := first
+      self.str := str
+      self.colour := colour
+      self.link := link
+      return
+   end
+end
+
+class Link()
+   public const
+      url,
+      line,
+      col,
+      offset
+
+   public new(url, line, col, offset)
+      self.url := url
+      self.line := line
+      self.col := col
+      self.offset := offset
+      return
+   end
+end
+
+class OutputView(DrawScrollAreaView)
+   public layout()
+      local rows, cols
+      cols := w / cbwin.text_width("m")
+      rows := h / cbwin.get_font_height()
+      #write("dim=",w,"x",h,"  ->  cols=",cols,"  rows=",rows)
+      parent.terminal.tty.set_size(cols, rows)
+   end
+end
+
+class Output(EditableTextList)
+   private
+      blocks,
+      highlight,
+      last_highlight,
+      held,
+      over
+
+   public
+      terminal
+
+   public create_view()
+      return OutputView()
+   end
+
+   private mk_link(l)
+      local url, line, col, e, k, v, offset
+      every e := !l do {
+         e ? {
+            k := 1(tab(many(&letters)), ="=") | fail
+            v := tab(0)      #ucs(URL.percent_decode(tab(0))) | fail
+            case map(string(k)) of {
+               "line": line := integer(v) | fail
+               "col": col := integer(v) | fail
+               "offset": offset := integer(v) | fail
+               "url": url := URL(v) | fail
+               default: fail
+            }
+         }
+      }
+      return Link(url, line, col, offset)
+   end
+
+   private mk_block(s)
+      local t, colour, strip, i, j, cmd, param, link, segs
+      strip := u""
+      segs := []
+      s ? repeat {
+         t := tab(find(u"\e[") | 0)
+         i := *strip + 1
+         strip ||:= t
+         j := *strip + 1
+         if j > i then
+            put(segs, Segment(i, t, colour, link))
+         if pos(0) then
+            break
+         move(2)
+         param := []
+         repeat {
+            if any(&digits) then
+               put(param, integer(tab(many(&digits))))
+            else if any('\"') then {
+               move(1)
+               put(param, tab(upto('\"') | 0))
+               move(1)
+            }
+            =";" | break
+         }
+         cmd := move(1)
+         #write("cmd:",image(cmd), " params=",to_string(param))
+         case string(cmd) of {
+            "m": case param[1] of {
+               0: colour := &null
+               30: colour := "black"
+               31: colour := "red"
+               32: colour := "green"
+               33: colour := "yellow"
+               34: colour := "blue"
+               35: colour := "purple"
+               36: colour := "cyan"
+               37: colour := "white"
+            }
+            "Z": {
+               if *param = 0 then
+                  link := &null
+               else
+                  link := mk_link(param) | &null
+            }
+         }
+      }
+      return Block(s, segs, strip)
+   end
+
+   public draw_line(xp, yp, i)
+      local si, s, off1, off2, v, r, seg, x1, s2, s3, W, fg, r2, w1, want_fg
+
+      v := self.view_list[i]
+      s := v.str
+      si := self.cursor_x - v.first + 1
+
+      x1 := xp
+      s2 := contents[v.index] 
+      W := view.cbwin.clone()
+      every seg := !blocks[v.index].segments do {
+         if r2 := range(v.first, v.first + *s, seg.first, seg.first + *seg.str) then {
+            s3 := s2[r2[1]:r2[2]]
+            want_fg := if seg === highlight then "red" else seg.colour
+            if fg ~=== want_fg then {
+               W.close()
+               W := view.cbwin.clone()
+               fg := want_fg
+               W.set_fg(\fg)
+            }
+            draw_string_ex(W, x1, yp, s3)
+            w1 := text_width_ex(W, s3)
+            if \seg.link then
+               W.draw_rectangle(x1, yp + W.get_font_ascent() + 1, w1, 1)
+            if seg === last_highlight then
+               Gui.style.draw_dashed_rectangle(W,
+                                               x1, yp, w1, W.get_font_height())
+            x1 +:= w1
+         }
+      }
+      W.close()
+
+      if \self.mark_y then {
+         #
+         # Note use of v.first + *s, rather than v.last.  v.last is
+         # the last permissible cursor pos, rather than the last
+         # permissible char to highlight.  If we have a split line and
+         # it is say wholly selected, using v.last would leave the
+         # last char unhighlighted.
+         #
+         if (self.mark_y < v.index < self.cursor_y) | (self.mark_y > v.index > self.cursor_y) then {
+            # Whole line selected
+            r := [v.first, v.first + *s]
+         } else if v.index = self.mark_y = self.cursor_y then {
+            # Part of line
+            if self.mark_x < self.cursor_x then
+               r := range(v.first, v.first + *s, self.mark_x, self.cursor_x)
+            else if self.mark_x > self.cursor_x then
+               r := range(v.first, v.first + *s, self.cursor_x, self.mark_x)
+         } else if v.index = self.mark_y then {
+            if self.mark_y < self.cursor_y then
+               r := range(v.first, v.first + *s, self.mark_x, *self.contents[v.index] + 1)
+            else
+               r := range(v.first, v.first + *s, 1, self.mark_x)
+         } else if v.index = self.cursor_y then {
+            if self.mark_y > self.cursor_y then
+               r := range(v.first, v.first + *s, self.cursor_x, *self.contents[v.index] + 1)
+            else
+               r := range(v.first, v.first + *s, 1, self.cursor_x)
+         }
+         if \r then {
+            off1 := text_width_ex(view.cbwin, s, 1, r[1] - v.first + 1, self.tab_width)
+            off2 := text_width_ex(view.cbwin, s, 1, r[2] - v.first + 1, self.tab_width)
+            Gui.style.fill_selection_rectangle(self.cbwin, xp + off1, yp,  off2 - off1, self.line_height)
+         }
+      }
+
+      if (v.index = \self.cursor_y) & (v.first <= \self.cursor_x <= v.last) then {
+         if (self.has_focus() | self === parent_dialog.in_menu_mode()) & self.is_unshaded() then {
+            if self.cursor_on ~= 2 then
+               Gui.style.draw_text_cursor(view.cbwin,
+                                          xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
+                                          yp, 
+                                          self.line_height)
+         } else if \self.is_editable_flag then
+            Gui.style.draw_shadow_text_cursor(view.cbwin,
+                                              xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
+                                              yp, 
+                                              self.line_height)
+      }
+   end
+
+   public log_str(s, max)
+      local t, n, fl, b
+
+      # Check type unless we have empty contents.
+      (*self.contents = 1 & *self.contents[1] = 0) | type(self.contents[1]) == type(s) |
+            runerr("Type of log_str string inconsistent with contents - must be all string or all ucs")
+
+      n := *contents
+      every t := separate_lines(s) do {
+         t := detab(t, tab_width + 1)
+         if /fl then {
+            t := blocks[-1].orig || t
+            blocks[-1] := mk_block(t)
+            contents[-1] := blocks[-1].stripped
+            fl := 1
+         } else {
+            b := mk_block(t)
+            put(blocks, b)
+            put(contents, b.stripped)
+         }
+      }
+      if is_live() then {
+         clear_mark()
+         update_view_list(n, 1, 1 + *contents - n)
+         if (n := *self.contents - \max) > 0 then {
+            every 1 to n do {
+               pop(self.contents)
+               pop(self.blocks)
+            }
+            update_view_list(1, n, 0)
+         }
+         invalidate_line_count()
+         invalidate_subject_width()
+         compute_and_invalidate()
+         undo_manager.clear()
+         goto_last(get_line_count())
+         # Make sure the cursor is valid, and on the screen.
+         ensure_valid_cursor()
+         constrain_cursor()
+      } else {
+         while *self.contents > \max do {
+            pop(self.contents)
+            pop(self.blocks)
+         }
+      }
+      (*contents = *blocks) | syserr("Blocks and contents differ in length")
+      return self
+   end
+
+   private get_segment_for_pos(ev)
+      local i, v, x1, s, seg
+      v := view_list[i := get_line_under_pointer(ev)] | fail
+      x1 := ev.x - self.tx + get_area_x()
+      s := v.str
+      i := v.first
+      while (i < v.last) & (text_width_ex(view.cbwin, s, 1, i - v.first + 2, self.tab_width)  < x1) do
+         i +:= 1
+      every seg := !blocks[v.index].segments do {
+         if seg.first <= i < seg.first + *seg.str then
+            return seg
+      }
+   end
+
+   public handle_mpress(e)
+      if \over then {
+         set_highlight(over)
+         held := over
+      }
+   end
+
+   public handle_ldrag(ev)
+      if \held then {
+         handle_lmdrag(ev)
+      } else {
+         cast(self,EditableTextList).handle_ldrag(ev)
+      }
+   end
+
+   public handle_mrelease(ev)
+      \held | fail
+      if \over then {
+         set_highlight()
+         terminal.insert_link(over.link, ev)
+      }
+      held := &null
+   end
+
+   public handle_lpress(e)
+      if \over then {
+         set_highlight(over)
+         held := over
+      } else {
+         e.shift := &null   # Stop confusion with the shift handling in handle_in_chain below.
+         cast(self,EditableTextList).handle_lpress(e)
+      }
+   end
+
+   private on_popup_closed()
+      set_highlight()
+   end
+
+   public handle_rpress(e)
+      local m, pm
+      if /over then
+         # Normal text menu
+         cast(self,EditableTextList).handle_rpress(e)
+      else {
+         m := terminal.create_link_menu(over.link)
+         set_highlight(over)
+         set_over()
+         pm := PopupMenu()
+         pm.connect(on_popup_closed, Event.POPUP_CLOSED)
+         pm.popup(parent_dialog, m, e.x, e.y)
+      }
+   end
+
+   private handle_exit(e)
+      *parent_dialog.held = 0 | fail
+      set_over()
+   end
+
+   private invalidate_segment(seg)
+      local info, i, b
+      info := get_line_info() | fail
+      every i := info.first to info.last do {
+         b := blocks[view_list[i].index]
+         if keyof(b.segments, seg) then {
+            invalidate_line(i, info)
+#            break
+         }
+      }
+   end
+
+   private set_last_highlight(seg)
+      if seg ~=== last_highlight then {
+         invalidate_segment(\last_highlight)
+         last_highlight := seg
+         invalidate_segment(\last_highlight)
+      }
+      return self
+   end
+
+   private set_highlight(seg)
+      if seg ~=== highlight then {
+         set_last_highlight(\seg)
+         invalidate_segment(\highlight)
+         highlight := seg
+         invalidate_segment(\highlight)
+      }
+      return self
+   end
+
+   public handle_lrelease(e)
+      if \held then {
+         if \over then {
+            set_highlight()
+            terminal.open_link(over.link)
+         }
+         held := &null
+      } else {
+         cast(self,EditableTextList).handle_lrelease(e)
+      }
+   end
+
+   public handle_lmdrag(ev)
+      local seg
+      \held | fail
+      if (seg := get_segment_for_pos(ev)) & (seg === held) then {
+         set_over(held)
+         set_highlight(seg)
+      } else {
+         set_over()
+         set_highlight()
+      }
+   end
+
+   private handle_in_chain(ev)
+      local seg, f
+      *parent_dialog.held = 0 | fail
+      if ev.code === (Key.SHIFT_L | Key.SHIFT_R) then {
+         if /ev.release then
+            f := 1
+      } else f := \ev.shift
+      if /f & (seg := get_segment_for_pos(ev)) & \seg.link then {
+         set_over(seg)
+         view.set_pointer("hand1")
+      } else {
+         set_over()
+         view.set_pointer()
+      }
+   end
+
+   private set_over(seg)
+      local s
+      if seg ~=== over then {
+         over := seg
+         if /over then
+            parent.parent.parent.parent.parent.clear_msg()
+         else {
+            s := seg.link.url.ucs()
+            s ||:= u" (line=" || \seg.link.line || u")"
+            s ||:= u" (col=" || \seg.link.col || u")"
+            s ||:= u" (offset=" || \seg.link.offset || u")"
+            parent.parent.parent.parent.parent.msg(s)
+         }
+      }
+   end
+
+   public new()
+      cast(self,EditableTextList).new()
+      blocks := [mk_block(contents[1])]
+      view.connect(self.handle_in_chain, Event.IN_POINT_CHAIN)
+      view.connect(self.handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
+      view.connect(self.handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
+      view.connect(self.handle_exit, Event.MOUSE_EXIT)
+      return
+   end
+end
+
+class DirList(ButtonOnlyList)
+   public create_button()
+      local b
+      b := IconButton().set_paint(ImagePaint().set_cache("gui.FAVOURITES_24"))
+      theme_toolbar_button(b, "emblem-favorite")
+      return b
+   end
+end
+
+class Terminal(TabItem)
+   private
+      prev_button,
+      next_button,
+      date_button,
+      name_button,
+      size_button,
+      show_hidden_button,
+      mix_entries_button,
+      favourites_list,
+      save_button,
+      commands_mod,
+      commands_file,
+      message_label
+
+   private readable
+      ascending,
+      sorter,
+      filter,
+      refresh_button,
+      up_button,
+      home_button,
+      close_button,
+      output,
+      columns,
+      columns_pos_table,
+      commands,
+      history,
+      history_pos,
+      nav_dir,
+      io_task,
+      pid, 
+      tty,
+      input,
+      cwd
+
+   private close_all()
+      io_task.stop()
+      tty.out("exit\n\^d")
+      tty.close()
+      System.wait(pid)
+   end
+
+   public msg(s, n)
+      #write("msg:",image(s),"   ",image(n))
+      message_label.set(AbbreviatedTextPaint(s), n)
+   end
+
+   public clear_msg()
+      #write("clear_msg")
+      message_label.set()
+   end
+
+   private setup_shell()
+      local env
+      #prompt := "OIX-SH-" || ?100000
+      env := []
+      every put(env, System.environ())
+      put(env, "TERMLINKS=1")
+      put(env, "PATH=" || System.getenv("HOME") || "/termlinks-extras/bin:" || System.getenv("PATH"))
+      #      put(env, "PS1=" || prompt)
+      #      put(env, "PS1=")
+      tty := PttyStream() | fail
+      (pid := System.fork()) | {
+         tty.close()
+         fail
+      }
+      if pid > 0 then {
+         # Parent
+         return
+      } else {
+         # Child
+         System.setsid() | stop(&why)
+         tty.close()
+         tty := tty.open_slave() | stop(&why)
+         tty.dup2(FileStream.stdout) | stop(&why)
+         tty.dup2(FileStream.stdin) | stop(&why)
+         tty.dup2(FileStream.stderr) | stop(&why)
+         System.exec("/bin/bash", ["--noediting", "-i"], env) | stop(&why)
+         syserr("Not reached")
+      }
+   end
+
+   public get_pats()
+      local pat, pats
+      pats := []
+      filter.get_contents() ? {
+         repeat {
+            pat := tab(upto(';') | 0)
+            put(pats, Wildcard(pat))
+            move(1) | break
+         }
+      }
+      return pats
+   end
+
+   public got_input(s)
+      put(input, s)
+      return self
+   end
+
+   private check_pwd()
+      local s
+      s := Files.readlink("/proc/" || pid || "/cwd") | fail
+      if s ~== cwd then {
+         set_cwd(s, if s === nav_dir then &yes else &no)
+         nav_dir := &null
+      }
+   end
+
+   # Avoid a little glitch which happens when a button is greyed out
+   # while held down, leaving it stuck like that, since it never gets the
+   # release event.
+   #
+   private set_is_shaded_ex(b, v)
+      if \v then
+         b.clear_down()
+      b.set_is_shaded(v)
+   end
+
+   private update_grey()
+      set_is_shaded_ex(prev_button, if history_pos > 1 then &no else &yes)
+      set_is_shaded_ex(next_button, if history_pos < *history then &no else &yes)
+      set_is_shaded_ex(save_button, toggle_flag(commands_mod))
+   end
+
+   public run_command()
+      local t, x, s
+      repeat {
+         x := io_task.poll([tty, Poll.IN + Poll.OUT], 150)
+         #write("X=",to_string(x))
+         if DescStream.poll_in_test(x[1]) then {
+            t := tty.in(1048576) | {
+               err_msg(u"IO problem on tty: " || ucs(&why))
+               break
+            }
+            if /t then {
+               err_msg(u"EOF on tty")
+               break
+            }
+            #write("IN:",*t) #image(t))
+            #write(image(t))
+            output.log_str(Text.liberal_ucs(t), 500)
+            check_pwd()
+         } else if DescStream.poll_out_test(x[1]) then {
+            if s := get(input) then {
+               tty.writes1(s)
+               #write("WROTE:",image(s))
+            } else {
+               #write("asking for input but none here...break")
+               io_task.sleep(50)
+            }
+         }
+      }
+      io_task.revert()
+   end
+
+   public open_link(link)
+      local r
+      #write(to_string(link))
+      if r := get_runner(link) then {
+         if \r.in_shell then
+            run_prog(r.cmd)
+         else
+            launch_prog(r.cmd)
+      }
+   end
+
+   public insert_link(link, ev)
+      local s, es
+      if link.url.scheme == "file" then {
+         if s := ucs(link.url.get_decoded_path()) then {
+            es := if \ev.ctrl & 
+               link.url.host == &host &
+               s[1+:*cwd] == cwd & 
+               s[*cwd + 1] == u"/" then
+               Format.shell_escape(s[*cwd+2:0])
+            else
+               Format.shell_escape(s)
+            if Files.is_directory(s) then
+               es ||:= u"/"
+            else
+               es ||:= u" "
+            commands.insert_string(es)
+         }
+      } else
+         commands.insert_string(link.url.ucs())
+   end
+
+   private err_msg(s)
+      output.log_str(u"\n\e[31m(Message from terminal:) " || s || u"\e[0m\n")
+      msg(s, 3000)
+   end
+
+   private info_msg(s)
+      output.log_str(u"\n\e[35m(Info from terminal:) " || s || u"\e[0m\n")
+      msg(s, 3000)
+   end
+
+   private static get_possible_desktop_entries(link, s)
+      suspend Unique{Xdg.gen_desktop_entries(Xdg.alternative_mime_types(Xdg.get_mime_type_for_file(FilePath(s).get(-1))))}
+   end
+
+   private get_runner(link)
+      local s, es, de, cmd, url
+      url := link.url
+      (url.scheme == "file") | return info_msg(u"Can only handle file:// URLs")
+      (url.host == &host) | return info_msg(u"Can't run a file on another host (" || url.host || u")")
+      s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
+      es := Format.shell_escape(s)
+      if Files.is_directory(s) then
+         return Runner(u"cd " || es, &yes)
+      # Get a DesktopEntry based on the content-type if available, or the filename.
+      de := get_possible_desktop_entries(link, es) | return info_msg(u"No matching desktop entry for this URL")
+      #write(to_string(de,3,1))
+      cmd := de.subst_file(es, link.line)
+      #write(cmd)
+      return Runner(cmd)
+   end
+
+   private on_columns_lclick()
+      local item
+      item := columns.data[columns.get_highlight()]
+      open_link(item_to_link(item))
+   end
+
+   private item_to_link(item)
+      local s, url
+      s := FilePath(cwd).child(item.name).ucs() | fail
+      url := URL(u"file://" || &host || URL.percent_encode(s, URL.UNRESERVED ++ '/')) | fail
+      return Link(url)
+   end
+
+   private on_columns_mclick(ev)
+      local item
+      item := columns.data[columns.get_highlight()]
+      insert_link(item_to_link(item), ev)
+   end
+
+   private copy_link(link)
+      if link.url.scheme == "file" then
+         parent_dialog.own_selection(Selection.CLIPBOARD, 
+                                     StaticTextSelectionOwner(Format.shell_escape(ucs(link.url.get_decoded_path()))))
+   end
+
+   private copy_link_url(link)
+      parent_dialog.own_selection(Selection.CLIPBOARD,
+                                  URLSelectionOwner([link.url]))
+   end 
+
+   private insert_cmd(link)
+      local r
+      if r := get_runner(link) then
+         commands.insert_string(r.cmd)
+   end
+
+   private connect_launch(m2, cmd)
+      m2.connect(create launch_prog(cmd), Event.ACTION)
+   end
+
+   public create_link_menu(link)
+      local m, m1, m2, s, es, de, cmd
+      m := Menu()
+      if link.url.scheme == "file" then {
+         m.add(TextMenuItem().
+               set_label("Copy").
+               connect(create copy_link(link), Event.ACTION))
+      }
+      m.add(TextMenuItem().
+            set_label("Copy URL").
+            connect(create copy_link_url(link), Event.ACTION))
+      m.add(TextMenuItem().
+            set_label("Insert command").
+            connect(create insert_cmd(link), Event.ACTION))
+
+      if s := ucs(link.url.get_decoded_path()) &
+         not Files.is_directory(s) &
+         es := Format.shell_escape(s) then
+      {
+         m1 := Menu().set_label("Open with")
+         every de := get_possible_desktop_entries(link, es) do {
+            #write(to_string(de))
+            m2 := TextMenuItem().
+               set_label(de.name)
+            m2.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
+            cmd := de.subst_file(es, link.line)
+            connect_launch(m2, cmd)
+            m1.add(m2)
+         }
+         if *m1.children > 0 then 
+            m.add(m1)
+      }
+
+      return m
+   end
+
+  private on_columns_rpress(e)
+      local i, m, pm, item, link
+      item := columns.data[i := columns.get_element_under_pointer(e)] | fail
+      link := item_to_link(item) | fail
+      columns.set_highlight(i)
+      m := create_link_menu(link)
+      pm := PopupMenu()
+      pm.connect(on_popup_closed, Event.POPUP_CLOSED)
+      pm.popup(parent_dialog, m, e.x, e.y)
+   end
+
+   private on_popup_closed()
+      columns.set_highlight()
+   end
+
+   private run_prog(s)
+      s ||:= u"\n"
+      got_input(s)
+   end
+
+   private launch_prog(s)
+      local pid, nul
+      #write("launch ",s)
+      pid := System.fork() | fail
+      if pid > 0 then
+         # Parent
+         return
+      System.setpgid()
+      if nul := FileStream("/dev/null", FileOpt.RDWR) then {
+         nul.dup2(FileStream.stdin)
+         nul.dup2(FileStream.stdout)
+         nul.dup2(FileStream.stderr)
+         nul.close()
+      }
+      System.exec("/bin/bash", ["-c", "exec " || s]) | stop(&why)
+   end
+
+   private goto_dir(d, nav)
+      nav_dir := if /nav then &null else string(d)
+      run_prog(u"cd " || Format.shell_escape(ucs(d)))
+   end
+
+   private synch_paints()
+      local cp, np, sp, dp
+      cp := CompoundPaint().set_top(ImagePaint().set_cache(if /ascending then "gui.TINY_ARROW_DOWN" else "gui.TINY_ARROW_UP"))
+      np := ImagePaint().set_cache("gui.FONT_24")
+      sp := ImagePaint().set_cache("gui.FILESIZE_24")
+      dp := ImagePaint().set_cache("gui.CLOCK_24")
+      case sorter of {
+         Files.name_key: {
+            name_button.set_paint(cp.set_bottom(np))
+            date_button.set_paint(dp)
+            size_button.set_paint(sp)
+            columns.set_item_paint(IconFilesItemPaint())
+         }
+         Files.size_key: {
+            name_button.set_paint(np)
+            date_button.set_paint(dp)
+            size_button.set_paint(cp.set_bottom(sp))
+            columns.set_item_paint(IconFilesItemPaintSize())
+         }
+         Files.date_key: {
+            name_button.set_paint(np)
+            date_button.set_paint(cp.set_bottom(dp))
+            size_button.set_paint(sp)
+            columns.set_item_paint(IconFilesItemPaintDate())
+         }
+      }
+   end
+
+   private on_mix_entries_button(ev)
+      resort_cwd()
+   end
+
+   private on_show_hidden_button(ev)
+      resort_cwd()
+   end
+
+   private on_date_button(ev)
+      if sorter === Files.date_key then
+         ascending := toggle_flag(ascending)
+      else
+         sorter := Files.date_key
+      synch_paints()
+      resort_cwd()
+   end
+
+   private on_name_button(ev)
+      if sorter === Files.name_key then
+         ascending := toggle_flag(ascending)
+      else
+         sorter := Files.name_key
+      synch_paints()
+      resort_cwd()
+   end
+
+   private on_size_button(ev)
+      if sorter === Files.size_key then
+         ascending := toggle_flag(ascending)
+      else
+         sorter := Files.size_key
+      synch_paints()
+      resort_cwd()
+   end
+
+   private resort_cwd()
+      local s, i
+      s := columns.object_get_last_highlight().name
+      columns.set_data(list_cwd(get_pats()))
+      i := Positions{(!columns.data).name, s}
+      columns.set_last_highlight(i)
+   end
+
+   private list_cwd(pats)
+      local dirs, files, e, l, s, t, now, tf, m, z, zf
+      l := Files.ucs_list(cwd) | fail
+      dirs := []
+      files := []
+      now := Time.get_system_seconds()
+      every e := !l do {
+         s := e.name
+         if (/pats | (!pats).match(s) = *s + 1)\1 &
+            (show_hidden_button.is_checked() | not(Files.is_hidden(s))) then
+         {
+            t := e.lstat.mtime
+            tf := if now - t > 180 * 86400 then
+               Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d yyyy")
+            else
+               Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d HH:mm")
+            tf := s || " (" || tf || ")"
+            z := e.lstat.size
+            zf := if z < 1024 then
+               Format.numeric_to_string(z, 0, ',') || "B"
+            else if z < 1024*1024 then
+               Format.numeric_to_string(z/1024.0, 1, ',') || "KB"
+            else
+               Format.numeric_to_string(z/(1024.0*1024.0), 1, ',') || "MB"
+            zf := s || " (" || zf || ")"
+            m := ListEntryEx(s, e.lstat, e.stat, tf, zf)
+            if e.stat.mode_str[1] == "d" then
+               put(dirs, m)
+            else
+               put(files, m)
+         }
+      }
+      if mix_entries_button.is_checked() then
+         while put(dirs, get(files))
+
+      dirs := isort(dirs, sorter)
+      if \ascending then
+         dirs := lreverse(dirs)
+      files := isort(files, sorter)
+      if \ascending then
+         files := lreverse(files)
+      return dirs ||| files
+   end
+
+   private refresh_cwd()
+      resort_cwd()
+   end
+
+   private set_cwd(s, nav)
+      local data, ex, e, lh, t, l, i
+      if \cwd then {
+         lh := columns.data[columns.get_last_highlight()].name
+         insert(columns_pos_table, 
+                FilePath(cwd).canonical().str(), 
+                FileDialogPos(lh, columns.get_area_y()))
+      }
+      cwd := ucs(s) | fail
+      data := list_cwd()
+      columns.set_data(data)
+
+      ex := table(0)
+      every e := !data do
+         ex[Files.get_extension(e.name)] +:= 1
+      l := [u"*"]
+      every e := back(sort(ex, 2)) do
+         put(l, u"*." || e[1])
+      filter.set_selection_list(l).set_selection(1)
+
+      #write(to_string(columns_pos_table,3))
+      if is_live() then {
+         if t := member(columns_pos_table, FilePath(cwd).canonical().str()) then {
+            columns.set_area_y(t.area_y).set_area_x(0)
+            if i := Positions{(!data).name, \t.cursor_name} then
+               columns.set_last_highlight(i)
+            else
+               columns.set_last_highlight()
+         } else {
+            columns.set_area_y(0).set_area_x(0).set_last_highlight()
+         }
+         parent_dialog.resynch_pointer()
+      }
+
+      if /nav then {
+         while *history > history_pos do
+            pull(history)
+         put(history, cwd)
+         history_pos +:= 1
+         update_grey()
+      }
+      set_paint(AbbreviatedTextPaint(cwd))
+      return self
+   end
+
+   public get_favourites_directories()
+      local t
+      t := []
+      every put(t,
+                Files.getcwd() | 
+                FavouriteDirectoriesDialog.gen_directories())
+      return lunique(FileDialog.ucs_list(t))
+   end
+
+   public refresh_favourite_dirs()
+      favourites_list.selection_list := get_favourites_directories()
+      favourites_list.constrain_selection().synch_selection()
+   end
+
+   public component_setup()
+      self.setup()
+      commands_file := FilePath(Xdg.ensure_config_home()).child("oiterminal").str() | stop("Couldn't access config dir: ", &why)
+      sorter := Files.name_key
+      synch_paints()
+      set_label_border(EmptyBorder().set_x_align(Align.L))
+      columns.
+         set_width(300).
+         set_item_paint(IconFilesItemPaint()).
+         set_item_border(EmptyBorder().
+                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                             set_x_align(Align.L)).
+         connect(on_columns_lclick, "lclicked").
+         connect(on_columns_mclick, "mclicked").
+         connect(on_columns_rpress, Event.MOUSE_RIGHT_PRESS)
+      output.set_accepts_focus(&no)
+      #output.set_wrap_mode("width")
+      output.set_font("mono,-1")
+      favourites_list.set_size().set_selection_list(get_favourites_directories())
+      commands.terminal := output.terminal := self
+      commands.set_contents_str(ucs(Files.file_to_string(commands_file)))
+      commands.set_cursor(1, *commands.contents)
+      filter.set_selection_list([u"*"])
+      history := []
+      history_pos := 0
+      update_grey()
+      columns_pos_table := table()
+      set_cwd(Files.getcwd())
+      setup_shell() | stop(&why)
+      input := []
+      io_task := Dispatcher.new_task{run_command()}
+      io_task.start()
+      theme_toolbar_button(close_button, "window-close")
+      theme_toolbar_button(prev_button, "go-previous")
+      theme_toolbar_button(next_button, "go-next")
+      theme_toolbar_button(up_button, "go-up")
+      theme_toolbar_button(home_button, "go-home")
+      theme_toolbar_button(save_button, "document-save")
+      theme_toolbar_button(refresh_button, "view-refresh")
+   end
+
+   public finally()
+      cast(self,TabItem).finally()
+      close_all()
+   end
+
+   public new()
+      cast(self,TabItem).new()
+      component_setup()
+      return
+   end
+
+   private on_favourites_list(ev)
+      goto_dir(favourites_list.object_get_selection())
+      parent_dialog.set_focus(commands)
+   end
+
+   private on_home_button(ev)
+      goto_dir(Files.get_home())
+   end
+
+   private on_refresh_button(ev)
+      refresh_cwd()
+   end
+
+   private on_up_button(ev)
+      local t
+      t := FilePath(cwd).canonical()
+      if t.size() > 1 then
+         goto_dir(t.parent().str())
+   end
+
+   private on_close_button(ev)
+      local t, i
+      if *parent.children = 1 then
+         parent_dialog.quit()
+      else {
+         i := parent.get_index(self)
+         if i > 1 then
+            i -:= 1
+         else
+            i +:= 1
+         t := parent.children[i] | syserr("Couldn't find other tab")
+         parent.
+            remove(self).
+            set_which_one(t).
+            do_layout().
+            invalidate()
+      }
+   end
+
+   private on_filter(ev)
+      if member(EditList.NAVIGATE, ev.code) then {
+         refresh_cwd()
+         parent_dialog.set_focus(commands)
+      }
+   end
+
+   private on_next_button(ev)
+      local s
+      (history_pos < *history) | fail
+      s := history[history_pos +:= 1]
+      update_grey()
+      goto_dir(s, &yes)
+   end
+
+   private on_prev_button(ev)
+      local s
+      (history_pos > 1) | fail
+      s := history[history_pos -:= 1]
+      update_grey()
+      goto_dir(s, &yes)
+   end
+
+   private on_save_button(ev)
+      if Files.string_to_file(commands_file, commands.get_contents_str()) then {
+         commands_mod := &null
+         update_grey()
+      } else
+         err_msg(u"*** Error saving commands: " || ucs(&why))
+   end
+
+   private on_commands_content_changed(ev)
+      commands_mod := 1
+      update_grey()
+   end
+
+   private setup()
+      local paint_2, paint_14, layout_7, paint_11, paint_37, layout_4, split_content_3, split_content_1, split_content_2, split_content_4, panel_4, paint_29, paint_34, layout_1, paint_9, split_1, paint_31, paint_6, paint_23, paint_3, layout_8, paint_12, paint_38, layout_5, panel_5, paint_35, paint_40, layout_2, split_2, paint_27, paint_32, paint_7, paint_13, paint_39, layout_6, panel_6, paint_10, paint_36, layout_3, paint_28, paint_33, paint, paint_8, paint_30, border_1
+      paint_10 := ImagePaint().
+         set_cache("rpp.EXIT_24")
+      paint_9 := TextPaint("Close")
+      close_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_9).
+         set_accel("c").
+         connect(self.on_close_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_10)
+      paint_8 := ImagePaint().
+         set_cache("gui.HOME_24")
+      paint := TextPaint("Home")
+      home_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint).
+         connect(self.on_home_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_8)
+      paint_3 := ImagePaint().
+         set_cache("gui.UP_24")
+      paint_2 := TextPaint("Up")
+      up_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_2).
+         connect(self.on_up_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_3)
+      paint_7 := ImagePaint().
+         set_cache("gui.REFRESH_24")
+      paint_6 := TextPaint("Refresh")
+      refresh_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_6).
+         connect(self.on_refresh_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_7)
+      paint_12 := ImagePaint().
+         set_cache("gui.PREV_24")
+      paint_11 := TextPaint("Prev")
+      prev_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_11).
+         connect(self.on_prev_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_12)
+      paint_14 := ImagePaint().
+         set_cache("gui.NEXT_24")
+      paint_13 := TextPaint("Next")
+      next_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_13).
+         connect(self.on_next_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_14)
+      paint_23 := TextPaint("Filter")
+      filter := EditList().
+         set_size("150").
+         set_align(Align.L, Align.B).
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_tooltip(paint_23).
+         connect(self.on_filter, Event.ACTION).
+         connect(self.on_filter, Event.CONTENT_CHANGED).
+         set_selection_list([""])
+      paint_28 := ImagePaint().
+         set_cache("gui.FONT_24")
+      paint_27 := TextPaint("Sort by name")
+      name_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_27).
+         connect(self.on_name_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_28)
+      paint_30 := ImagePaint().
+         set_cache("gui.CLOCK_24")
+      paint_29 := TextPaint("Sort by date")
+      date_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_29).
+         connect(self.on_date_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_30)
+      paint_32 := ImagePaint().
+         set_cache("gui.FILESIZE_24")
+      paint_31 := TextPaint("Sort by size")
+      size_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_31).
+         connect(self.on_size_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_32)
+      paint_34 := ImagePaint().
+         set_cache("gui.HIDDENFILE_24")
+      paint_33 := TextPaint("Hidden files")
+      show_hidden_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_33).
+         connect(self.on_show_hidden_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&yes).
+         set_paint(paint_34)
+      paint_36 := ImagePaint().
+         set_cache("rpp.MIXFILE_24")
+      paint_35 := TextPaint("Mix files & dirs")
+      mix_entries_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_35).
+         connect(self.on_mix_entries_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&yes).
+         set_paint(paint_36)
+      paint_37 := TextPaint("Favourite directories")
+      favourites_list := DirList().
+         set_size("37", "30").
+         clear_constraints().
+         set_tooltip(paint_37).
+         connect(self.on_favourites_list, Event.SELECTION_CHANGED)
+      paint_39 := ImagePaint().
+         set_cache("rpp.SAVE_24")
+      paint_38 := TextPaint("Save")
+      save_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_38).
+         connect(self.on_save_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(paint_39)
+      layout_6 := GridLayout().
+         set_doi(0).
+         set_dii(2).
+         set_extra("cells")
+      panel_4 := Panel().
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_constraint("x_weight", 1.0).
+         set_layout(layout_6).
+         add(close_button).
+         add(home_button).
+         add(up_button).
+         add(refresh_button).
+         add(prev_button).
+         add(next_button).
+         add(filter).
+         add(name_button).
+         add(date_button).
+         add(size_button).
+         add(show_hidden_button).
+         add(mix_entries_button).
+         add(favourites_list).
+         add(save_button)
+      layout_7 := GridLayout().
+         set_doi(0).
+         set_extra("cells")
+      panel_5 := Panel().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_layout(layout_7).
+         add(panel_4)
+      self.add(panel_5)
+      columns := Columns().
+         set_size("100", "100").
+         clear_constraints().
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0)
+      layout_8 := GridLayout().
+         set_doi(0).
+         set_extra("cells")
+      panel_6 := Panel().
+         clear_constraints().
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0).
+         set_layout(layout_8).
+         add(columns)
+      layout_5 := GridLayout().
+         set_doi(0).
+         set_extra("cells")
+      split_content_3 := Component().
+         clear_constraints().
+         set_layout(layout_5).
+         add(panel_6)
+      commands := Commands().
+         set_size("200", "150").
+         clear_constraints().
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0).
+         connect(self.on_commands_content_changed, Event.CONTENT_CHANGED).
+         set_contents([u""])
+      layout_2 := GridLayout().
+         set_doi(0).
+         set_extra("cells")
+      split_content_1 := Component().
+         clear_constraints().
+         set_layout(layout_2).
+         add(commands)
+      output := Output().
+         set_size("200", "150").
+         clear_constraints().
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0).
+         set_contents([u""]).
+         set_is_editable(&no)
+      layout_1 := GridLayout().
+         set_doi(0).
+         set_extra("cells")
+      split_content_2 := Component().
+         clear_constraints().
+         set_layout(layout_1).
+         add(output)
+      split_1 := Split().
+         set_size("286", "184").
+         clear_constraints().
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0).
+         set_top(split_content_1).
+         set_bottom(split_content_2).
+         set_weight(0.5)
+      layout_4 := GridLayout().
+         set_doi(0).
+         set_extra("cells")
+      split_content_4 := Component().
+         clear_constraints().
+         set_layout(layout_4).
+         add(split_1)
+      split_2 := Split().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0).
+         set_left(split_content_3).
+         set_right(split_content_4)
+      self.add(split_2)
+      paint_40 := TextPaint("")
+      border_1 := CompoundBorder().
+         set_outer(SunkenBorder()).
+         set_inner(EmptyBorder().
+            set_l_inset(3)).
+         set_x_align(Align.L)
+      message_label := MessageLabel().
+         set_fg("red").
+         clear_constraints().
+         set_constraint("b_inset", 0).
+         set_constraint("l_inset", 0).
+         set_constraint("r_inset", 0).
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_border(border_1).
+         set_paint(paint_40)
+      self.add(message_label)
+      layout_3 := GridLayout().
+         set_extra("cells")
+      self.set_layout(layout_3)
+   end
+end
+
+procedure main()
+   local d
+   ImageCache.
+      name_image("rpp.EXIT_24", EXIT).
+      name_image("rpp.SAVE_24", SAVE).
+      name_image("rpp.MIXFILE_24", MIXFILE)
+   insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(TERMINAL_LOGO))
+   d := TerminalDialog()
+   d.show_modal()
+end
+
+### Ivib-v2 layout: layouts/$.layout

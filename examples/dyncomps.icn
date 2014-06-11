@@ -93,26 +93,26 @@ class DynComps(Dialog)
       add := TextButton().
          set_align(Align.C, Align.T).
          clear_constraints().
-         connect(on_add, Event.ACTION).
+         connect(self.on_add, Event.ACTION).
          set_toggles(&no).
          set_paint(paint)
       paint_1 := TextPaint("Delete")
       del := TextButton().
          set_align(Align.C, Align.T).
          clear_constraints().
-         connect(on_del, Event.ACTION).
+         connect(self.on_del, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_1)
       paint_2 := TextPaint("Resize")
       resize := TextButton().
          clear_constraints().
-         connect(on_resize, Event.ACTION).
+         connect(self.on_resize, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_2)
       paint_3 := TextPaint("Repos")
       repos := TextButton().
          clear_constraints().
-         connect(on_repos, Event.ACTION).
+         connect(self.on_repos, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_3)
       paint_4 := TextPaint("Quit")
@@ -120,7 +120,7 @@ class DynComps(Dialog)
          set_align(Align.C, Align.T).
          clear_constraints().
          set_constraint("eol", &yes).
-         connect(on_quit, Event.ACTION).
+         connect(self.on_quit, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_4)
       layout_1 := GridLayout().
@@ -149,72 +149,4 @@ procedure main()
    d.show_modal()
 end
 
-### Ivib-v2 layout ##
-#CCanvas|I18SSuperClass Name|SDialog|SImport Name|Sgui|SButton Groups|L
-#0SCheckbox Groups|L0SGen Indent|I3SGen Main|I1SGen Component Setup|I1S
-#Gen Init Dialog|I1SGen Constructor|I1SDialog Struct|CCDialog|I1SWAttri
-#bs|T1NSresize|I1SName|SDynComps|SIs Component|NSWidth|NSHeight|NSChild
-#ren|L2CCanvasPanel|I28SParent Canvas|X1SName|Scont|SClass Name|SCompon
-#entScrollArea|SImport Name|Sgui|SClass Variable|I1SX Fix|I1SY Fix|NSW 
-#Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|S417|SH Spec|S226|SX Align|Sc|S
-#Y Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T5NSx
-#_weight|B1.0|Sx_fill|I1Sy_weight|B1.0|Sy_fill|I1Seol|I1STooltip|NSAcce
-#l|NSLayout delegate|NSBorder opts|NSEvent Handlers|L0SClass Variable|I
-#1SParent Component|X1SChildren|L0CCanvasPanel|I28SParent Canvas|X1SNam
-#e|Spanel_1|SClass Name|SPanel|SImport Name|Sgui|SClass Variable|NSX Fi
-#x|I1SY Fix|I1SW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Al
-#ign|Sc|SY Align|Sb|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstrain
-#ts|T0NSTooltip|NSAccel|NSLayout delegate|CCanvasGridLayout|I8SDII val|
-#NSDOI val|I0SExtra|Scells|SName|Slayout_1|SClass Name|SGridLayout|SImp
-#ort Name|Sgui|SClass Variable|NSParent|X12SBorder opts|NSEvent Handler
-#s|L0SClass Variable|NSParent Component|X1SChildren|L5CCanvasTextButton
-#|I35SParent Canvas|X1SName|Sadd|SClass Name|STextButton|SImport Name|S
-#gui|SClass Variable|NSX Fix|NSY Fix|I1SW Fix|NSH Fix|NSX Spec|NSY Spec
-#|NSW Spec|NSH Spec|NSX Align|Sc|SY Align|St|SZ|I0STab ord|I0SIs shaded
-#|NSWAttribs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayout delegate|NSBo
-#rder opts|NSEvent Handlers|L1L2SEvent.ACTION|Son_add|SClass Variable|N
-#SParent Component|X12SNo click focus|NSAccepts focus Flag|I1SIs Checke
-#d Flag|NSIs Checkbox Flag|NSParent CheckBoxGroup|NSParent Button Group
-#|NSPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint|SClass Name|
-#STextPaint|SImport Name|Sgui|SClass Variable|NSStr|SAdd|SPaint down|NC
-#CanvasTextButton|I35SParent Canvas|X1SName|Sdel|SClass Name|STextButto
-#n|SImport Name|Sgui|SClass Variable|NSX Fix|NSY Fix|I1SW Fix|NSH Fix|N
-#SX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sc|SY Align|St|SZ|I0STab 
-#ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayo
-#ut delegate|NSBorder opts|NSEvent Handlers|L1L2SEvent.ACTION|Son_del|S
-#Class Variable|NSParent Component|X12SNo click focus|NSAccepts focus F
-#lag|I1SIs Checked Flag|NSIs Checkbox Flag|NSParent CheckBoxGroup|NSPar
-#ent Button Group|NSPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spa
-#int_1|SClass Name|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|S
-#Delete|SPaint down|NCCanvasTextButton|I35SParent Canvas|X1SName|Sresiz
-#e|SClass Name|STextButton|SImport Name|Sgui|SClass Variable|NSX Fix|NS
-#Y Fix|I1SW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|S
-#l|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T0
-#NSTooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L1L
-#2SEvent.ACTION|Son_resize|SClass Variable|NSParent Component|X12SNo cl
-#ick focus|NSAccepts focus Flag|I1SIs Checked Flag|NSIs Checkbox Flag|N
-#SParent CheckBoxGroup|NSParent Button Group|NSPaint|CCanvasTextPaint|I
-#6SParent Canvas|X1SName|Spaint_2|SClass Name|STextPaint|SImport Name|S
-#gui|SClass Variable|NSStr|SResize|SPaint down|NCCanvasTextButton|I35SP
-#arent Canvas|X1SName|Srepos|SClass Name|STextButton|SImport Name|Sgui|
-#SClass Variable|NSX Fix|NSY Fix|I1SW Fix|NSH Fix|NSX Spec|NSY Spec|NSW
-# Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSW
-#Attribs|T0NSConstraints|T0NSTooltip|NSAccel|NSLayout delegate|NSBorder
-# opts|NSEvent Handlers|L1L2SEvent.ACTION|Son_repos|SClass Variable|NSP
-#arent Component|X12SNo click focus|NSAccepts focus Flag|I1SIs Checked 
-#Flag|NSIs Checkbox Flag|NSParent CheckBoxGroup|NSParent Button Group|N
-#SPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_3|SClass Name|
-#STextPaint|SImport Name|Sgui|SClass Variable|NSStr|SRepos|SPaint down|
-#NCCanvasTextButton|I35SParent Canvas|X1SName|Squit|SClass Name|STextBu
-#tton|SImport Name|Sgui|SClass Variable|NSX Fix|NSY Fix|I1SW Fix|NSH Fi
-#x|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sc|SY Align|St|SZ|I0ST
-#ab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T1NSeol|I1STooltip|NSAc
-#cel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L1L2SEvent.ACTION
-#|Son_quit|SClass Variable|NSParent Component|X12SNo click focus|NSAcce
-#pts focus Flag|I1SIs Checked Flag|NSIs Checkbox Flag|NSParent CheckBox
-#Group|NSParent Button Group|NSPaint|CCanvasTextPaint|I6SParent Canvas|
-#X1SName|Spaint_4|SClass Name|STextPaint|SImport Name|Sgui|SClass Varia
-#ble|NSStr|SQuit|SPaint down|NSInitial Focus|NSEvent Handlers|L0SLayout
-# delegate|CCanvasGridLayout|I8SDII val|NSDOI val|NSExtra|Scells|SName|
-#Slayout|SClass Name|SGridLayout|SImport Name|Sgui|SClass Variable|NSPa
-#rent|X1
+### Ivib-v2 layout: layouts/$.layout
