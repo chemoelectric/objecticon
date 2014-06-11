@@ -875,3 +875,45 @@ procedure backto(c, s, i, j)
       j -:= 1
    }
 end
+
+# This behaves like many, but searches backward from the end of the
+# string.  The position just to the left of the last char which is in
+# c is returned, but fails if there is no such character.
+#
+# Note that the parameters still take the standard scanning form, so
+# to search backwards from &pos to the beginning of the string during
+# a scan, use revmany(c,,, 1) - otherwise it will search from the end
+# of &subject towards &pos.
+#
+procedure revmany(c, s, i, j)
+   local a
+   c := cset(c) | runerr(104, c)
+   a := begin_analysis(s, i, j) | fail
+   s := a.s; i := a.i; j := a.j
+   while j > i & any(c, s, j - 1) do
+      j -:= 1
+   return a.j ~= j
+end
+
+# This is like revmany, but is the corresponding function for any.
+#
+procedure revany(c, s, i, j)
+   local a
+   c := cset(c) | runerr(104, c)
+   a := begin_analysis(s, i, j) | fail
+   s := a.s; i := a.i; j := a.j
+   if j > i & any(c, s, j - 1) then
+      return j - 1
+end
+
+# This is a helper function to extract part of &subject relative to
+# &pos.  First &pos is added to `off`, then the substring of length
+# `len` is taken from that position.  Either parameter may be -ve; no
+# change is made to &subject or &pos.
+#
+procedure posoff(off, len)
+   /len := 1
+   off +:= &pos
+   if off >= 1 then
+      return .&subject[off +: len]
+end
