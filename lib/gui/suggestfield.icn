@@ -1,7 +1,7 @@
 package gui
 
 import graphics, util
-
+import io
 # This class is a {TextField} which provides suggested completions in
 # a popup list based on partial input.
 #
@@ -12,6 +12,7 @@ abstract class SuggestField(TextField, MenuMode)
       max_height,
       max_width,
       use_popup_win,
+      select_using_enter_flag,
       forward_home_end_flag     # Forward home/end key to list?
 
    protected
@@ -39,6 +40,15 @@ abstract class SuggestField(TextField, MenuMode)
       return self
    end
 
+   #
+   # If set, the enter key is used to select from the list, rather than items being selected
+   # using the cursor keys.
+   #
+   public set_select_using_enter(s)
+      self.select_using_enter_flag := check_flag(s)
+      return self
+   end
+
    public create_popup()
       return TextList()
    end
@@ -62,6 +72,7 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public on_textlist_selection(e)
+write("sel")
       synch_contents(e)
       member(Key.NAVIGATE, e.code) | close_textlist()
    end
@@ -137,7 +148,7 @@ abstract class SuggestField(TextField, MenuMode)
    public open_textlist(data)
       local max_h, max_w, spc_below, spc_above, spc_right, d, dim, win, win_spc_above, 
          win_spc_below, win_spc_right, use_direction, rs, r
-
+write("opentlist")
       if \tl then
          close_textlist()
 
@@ -178,8 +189,9 @@ abstract class SuggestField(TextField, MenuMode)
          set_accepts_focus(&no).
          set_draggable_cursor(&yes).
          set_motion_cursor(&yes).
+         set_always_show_focus_cursor(&yes).
          set_select_mode(Select.ONE).
-         set_selection_on_key_moves(&yes).
+         set_selection_on_key_moves(if /select_using_enter_flag then &yes else &no).
          set_z(self.parent_dialog.get_top_z())
       self.parent_dialog.add(tl)
       self.tl.set_ideal_size(self.w, 
@@ -321,7 +333,10 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public handle_return(e)
-      cast(self,TextField).handle_return(e)
+      if \select_using_enter_flag & \tl then
+         tl.fire(Event.KEY_PRESS, e)
+      else
+         cast(self,TextField).handle_return(e)
       keep_closed()
    end
 
@@ -342,7 +357,7 @@ abstract class SuggestField(TextField, MenuMode)
 
    public handle_key_down(e)
       if \tl then {
-         if *tl.get_selections() = 0 & tl.get_cursor() = 1 then {
+         if /select_using_enter_flag & *tl.get_selections() = 0 & tl.get_cursor() = 1 then {
             tl.set_selections([1])
             synch_contents(e)
          } else
