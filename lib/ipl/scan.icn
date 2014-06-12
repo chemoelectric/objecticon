@@ -906,6 +906,25 @@ procedure revany(c, s, i, j)
       return j - 1
 end
 
+#
+# Like revmany, but succeeds with the position j if zero matching chars. Revmany needs
+# one or more to succeed.
+#
+procedure revmany0(c, s, i, j)
+   local a
+   a := begin_analysis(s, i, j) | fail
+   return revmany(c, a.s, a.i, a.j) | .a.j
+end
+
+#
+# Like revany, but succeeds with the position j if there is no matching char.
+#
+procedure revany0(c, s, i, j)
+   local a
+   a := begin_analysis(s, i, j) | fail
+   return revany(c, a.s, a.i, a.j) | .a.j
+end
+
 # This is a helper function to extract part of &subject relative to
 # &pos.  First &pos is added to `off`, then the substring of length
 # `len` is taken from that position.  Either parameter may be -ve; no
