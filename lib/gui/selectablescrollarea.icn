@@ -34,9 +34,10 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       on_a_line,
       highlight,
       highlight_part,
-      draggable_cursor,
-      motion_cursor,
-      selection_on_key_moves,
+      draggable_cursor_flag,
+      motion_cursor_flag,
+      selection_on_key_moves_flag,
+      always_show_focus_cursor_flag,
       scroll_ticker,
       scroll_ticker_interval
 
@@ -120,7 +121,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # component).
    #
    public set_draggable_cursor(s)
-      self.draggable_cursor := check_flag(s)
+      self.draggable_cursor_flag := check_flag(s)
       return self
    end
 
@@ -128,7 +129,16 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # Configure the object so that mouse motion moves the cursor.
    #
    public set_motion_cursor(s)
-      self.motion_cursor := check_flag(s)
+      self.motion_cursor_flag := check_flag(s)
+      return self
+   end
+
+   #
+   # Configure the object so that the focus (red) cursor is always
+   # displayed, even if focus is not held.
+   #
+   public set_always_show_focus_cursor(s)
+      self.always_show_focus_cursor_flag := check_flag(s)
       return self
    end
 
@@ -137,7 +147,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # selection (the default behaviour).
    #
    public set_selection_on_key_moves(s)
-      self.selection_on_key_moves := check_flag(s)
+      self.selection_on_key_moves_flag := check_flag(s)
       return self
    end
 
@@ -467,7 +477,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       self.cursor := line
       constrain_cursor()
       self.prev_cursor := self.cursor
-      if \self.selection_on_key_moves & (self.select_mode ~=== Select.NONE) then {
+      if \self.selection_on_key_moves_flag & (self.select_mode ~=== Select.NONE) then {
          if not (\e.shift & (self.select_mode === Select.MANY)) then {
             self.selections := set()
          }
@@ -602,7 +612,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    end
 
    public handle_move(e)
-      \self.motion_cursor | fail
+      \self.motion_cursor_flag | fail
       start_handle(e)
       self.cursor := get_nearest_line_to_pointer(e)
       ensure_line_visible(self.cursor)
@@ -622,7 +632,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    end
 
    public handle_ldrag(e)
-      \self.draggable_cursor | fail
+      \self.draggable_cursor_flag | fail
 
       #
       # This ensures we don't start scrolling with the ticker until we
@@ -780,7 +790,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          else
             &null
          cur := if i = \self.cursor then {
-            if self.has_focus() & self.is_unshaded() then
+            if (\always_show_focus_cursor_flag | self.has_focus()) & self.is_unshaded() then
                "f"
             else
                "d"
@@ -843,7 +853,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    public defer draw_line_data(xp, yp, lh, i)
 
    public can_drag(ev)
-      if view.is_held(Mouse.LEFT_PRESS) & /self.draggable_cursor & \self.on_a_line then
+      if view.is_held(Mouse.LEFT_PRESS) & /self.draggable_cursor_flag & \self.on_a_line then
          return self.object_get_gesture_selections()
    end
 
@@ -957,7 +967,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       self.dnd_mode := MIDDLE_ONLY
       self.contents := []
       self.selections := set()
-      self.selection_on_key_moves := 1
+      self.selection_on_key_moves_flag := &yes
       view.connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       view.connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
       view.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
