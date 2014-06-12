@@ -1,7 +1,7 @@
 package gui
 
 import graphics, util
-import io
+
 # This class is a {TextField} which provides suggested completions in
 # a popup list based on partial input.
 #
@@ -72,7 +72,6 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public on_textlist_selection(e)
-write("sel")
       synch_contents(e)
       member(Key.NAVIGATE, e.code) | close_textlist()
    end
@@ -148,7 +147,7 @@ write("sel")
    public open_textlist(data)
       local max_h, max_w, spc_below, spc_above, spc_right, d, dim, win, win_spc_above, 
          win_spc_below, win_spc_right, use_direction, rs, r
-write("opentlist")
+
       if \tl then
          close_textlist()
 
