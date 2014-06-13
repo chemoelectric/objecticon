@@ -15,7 +15,7 @@ package undo
 # Once closed, it behaves just like a closed CompoundEdit.
 #
 class UndoManager(CompoundEdit)
-   private
+   private readable
       limit,
       index,
       last
@@ -27,6 +27,7 @@ class UndoManager(CompoundEdit)
          last := l[index]
          l[index].redo()
          index +:= 1
+         return self
       }
    end
 
@@ -37,15 +38,18 @@ class UndoManager(CompoundEdit)
          index -:= 1
          last := l[index]
          l[index].undo()
+         return self
       }
    end
 
+   # Return the last edit added, undone or redone, or fail if there is no such edit.
+   #
    public get_last()
-      return last
+      return .\last
    end
 
    public get_limit()
-      return limit
+      return .limit
    end
 
    public set_limit(limit)
@@ -71,6 +75,7 @@ class UndoManager(CompoundEdit)
          index -:= 1
          pop(l)
       }
+      return self
    end
 
    #
@@ -94,6 +99,7 @@ class UndoManager(CompoundEdit)
    public clear()
       cast(self,CompoundEdit).clear()
       self.index := 1
+      return self
    end
 
    public new()

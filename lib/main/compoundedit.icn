@@ -24,6 +24,7 @@ class CompoundEdit(UndoableEdit)
 
    public redo()
       every (!l).redo()
+      return self
    end
 
    public gen()
@@ -34,13 +35,15 @@ class CompoundEdit(UndoableEdit)
       local i
       every i := *l to 1 by -1 do
          l[i].undo()
+      return self
    end
 
    public add_edit(other)
       if \closed then
-         return \liberal_flag & l[-1].add_edit(other)
+         return \liberal_flag & l[-1].add_edit(other) & self
 
       l[-1].add_edit(other) | put(l, other)
+      return self
    end
 
    #
@@ -49,13 +52,15 @@ class CompoundEdit(UndoableEdit)
    #
    public close()
       self.closed := 1
+      return self
    end
 
    #
    # Clear the list of edits.
    #
    public clear()
-      self.l := []
+      default.clear(l)
+      return self
    end
 
    #
@@ -80,7 +85,7 @@ class CompoundEdit(UndoableEdit)
    # Return a description of the edit.
    #
    public get_desc()
-      return desc
+      return .desc
    end
 
    public new()
