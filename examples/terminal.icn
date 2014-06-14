@@ -2,18 +2,20 @@ import
    gui,
    io,
    posix,
+   graphics,
+   net,
+   lang,
    util,
    xdg,
+   ipl.options,
    ipl.sort,
    ipl.pdco,
    ipl.wildcard,
    ipl.strings,
    ipl.lists,
-   ipl.filegui,
-   graphics,
-   net
+   ipl.filegui
 
-import lang
+global opts
 
 $load EXIT "rpp.EXIT_24.gif"
 $load SAVE "rpp.SAVE_24.gif"
@@ -60,14 +62,8 @@ class TerminalDialog(Dialog)
       favourite_dirs,
       tabs
 
-   public quit()
-      #write()
-      exit()
-   end
-
    private on_quit(ev)
-      quit()
-      #dispose()
+      dispose()
    end
 
    public new_tab(url, referer_url, sel)
@@ -102,7 +98,7 @@ class TerminalDialog(Dialog)
       repeat {
          t.sleep(1000)
          while r := System.wait(-1, WaitOpt.WNOHANG) & r.pid > 0 do
-            write("Exit:",to_string(r))
+            if \opts["v"] then write("Child process exited: ",to_string(r))
       }
    end
 
@@ -343,7 +339,6 @@ class Columns(LineBasedScrollArea)
    private set_over(n)
       local s, url
       if n ~=== over then {
-         #write("over=",n)
          over := n
          if /over then
             parent.parent.parent.parent.clear_msg()
@@ -474,7 +469,9 @@ class Commands(EditableTextList, MenuMode)
       popup_x, popup_y, popup_ev,
       popup_path, 
       popup_dir_flag,
-      use_popup_win
+      use_popup_win,
+      popup_delim,
+      alt_dot_off
    public
       terminal
 
@@ -483,7 +480,7 @@ class Commands(EditableTextList, MenuMode)
       if \e.shift then
          return cast(self, EditableTextList).handle_return(e)
       s := contents[cursor_y]
-      write("input line:", image(s))
+      if \opts["v"] then write("Input line: ", image(s))
       parent.parent.parent.parent.parent.clear_msg()
       if cursor_y = *contents then {
          move_cursor(*contents[cursor_y] + 1, cursor_y)
@@ -550,6 +547,7 @@ class Commands(EditableTextList, MenuMode)
          set_accepts_focus(&no).
          set_draggable_cursor(&yes).
          set_motion_cursor(&yes).
+         set_always_show_focus_cursor(&yes).
          set_selection_on_key_moves(&no).
          set_contents(l).
          set_z(self.parent_dialog.get_top_z())
@@ -600,36 +598,130 @@ class Commands(EditableTextList, MenuMode)
    end
 
    public on_textlist_selection(ev)
-      local tmp, e, spc
-      #
-      # Selection in list - close textlist, amend label.
-      #
-      e := popup.object_get_selections()[1]
-      tmp := e.name
-      spc := u""
-      if e.stat.mode_str[1] == "d" then
-         tmp ||:= u"/"
-      else
-         spc := u" "
+      local le
+      le := popup.object_get_selections()[1]
       close_popup()
-      if /popup_dir_flag then
-         insert_string(Format.shell_escape(tmp[*popup_path.get(-1) + 1:0]) || spc, ev)
+      insert_from_popup(le, ev)
+   end
+
+   private insert_from_popup(le, ev)
+      local s
+      s := if /popup_dir_flag then
+         le.name[*popup_path.get(-1) + 1:0]
       else
-         insert_string(Format.shell_escape(tmp, ev) || spc)
+         le.name
+
+      s := escape_param(s)
+      if le.stat.mode_str[1] == "d" then
+         s ||:= u"/"
+      else if popup_delim == u" " then
+         s ||:= u" "
+      else
+         s ||:= popup_delim || u" "
+
+      insert_string(s, ev)
+   end
+
+   # Given a string s generate the locations of the shell parameters, as two element lists
+   # giving the slice for each parameter.  Quoted params include the quotes.
+   private static gen_param_locs(s)
+      local i
+      s ? repeat {
+         tab(many(' '))
+         if pos(0) then
+            break
+         i := &pos
+         if any('\'') then {
+            move(1)
+            tab(upto('\'') | 0)
+            move(1)
+         } else if any('"') then {
+            move(1)
+            while tab(upto('\\"') | 0) do {
+               if any('\\') then
+                  move(2)
+               else
+                  break
+            }
+            move(1)
+         } else {
+            while tab(upto('\\ \'"') | 0) do {
+               if any('\\') then
+                  move(2)
+               else
+                  break
+            }
+         }
+         suspend [i, .&pos]
+      }
+   end
+
+   private unescape_param(s)
+      local t, ch
+      case popup_delim of {
+         u" ": return Format.shell_unescape(s)
+         u"'": return s
+         u"\"": {
+            t := ""
+            s ? repeat {
+               t ||:= tab(upto('\\') | 0)
+               ch := (move(1), move(1)) | break
+               if any('$`"\\', ch) then
+                  t ||:= ch
+               else
+                  t ||:= "\\" || ch
+            }
+            return t
+         }
+         default: syserr("Bad val for popup_delim")
+      }
+   end
+
+   private escape_param(s)
+      local t, ch
+      case popup_delim of {
+         u" ": return Format.shell_escape(s)
+         u"'": return s
+         u"\"": {
+            t := ""
+            s ? repeat {
+               t ||:= tab(upto('\\$`\"') | 0)
+               ch := move(1) | break
+               t ||:= "\\" || ch
+            }
+            return t
+         }
+         default: syserr("Bad val for popup_delim")
+      }
    end
 
    public handle_tab(ev)
-      local v, i, l, s, popup_pre, popup_pre_unesc, t, fl
-      i := cursor_x
-      while i > 1 &
-         (contents[self.cursor_y][i - 1] ~== u" " |
-          contents[self.cursor_y][i - 2] == u"\\") do
-         i -:= 1
+      local v, i, l, s, popup_pre, popup_pre_unesc, t, fl, ch, p
 
-      #while any(~'\t ', contents[self.cursor_y], i - 1) do
-      #   i -:= 1
-      popup_pre := contents[self.cursor_y][i:cursor_x]
-      popup_pre_unesc := Format.shell_unescape(popup_pre)
+      i := cursor_x
+      s := contents[self.cursor_y]
+      popup_delim := u" "
+      popup_pre := u""
+      every p := gen_param_locs(s) do {
+         if p[1] < i <= p[2] then {
+            ch := s[p[1]]
+            # Is it just past the end of a quoted param?
+            if any('"\'', ch) & i = p[2] & s[i - 1] == ch then
+               fail
+            if any('"\'', ch) then {
+               popup_delim := ch
+               popup_pre := s[p[1] + 1 : i]
+            } else {
+               popup_delim := u" "
+               popup_pre := s[p[1] : i]
+            }
+            break
+         }
+         if p[1] >= i then
+            break
+      }
+
+      popup_pre_unesc := unescape_param(popup_pre)
       if *popup_pre_unesc = 0 then
          popup_pre_unesc := ucs(terminal.cwd) || u"/"
       else if popup_pre_unesc[1] == u"~" then
@@ -661,27 +753,16 @@ class Commands(EditableTextList, MenuMode)
       if *l = 0 then
          fail
 
-      if *l = 1 then {
-         s := if /popup_dir_flag then
-            Format.shell_escape(l[1].name[*popup_path.get(-1) + 1:0])
-         else
-            Format.shell_escape(l[1].name)
-         if l[1].stat.mode_str[1] == "d" then
-            s ||:= u"/"
-         else
-            s ||:= u" "
-         insert_string(s, ev)
-      } else {
+      if *l = 1 then
+         insert_from_popup(l[1], ev)
+      else {
          s := get_longest_prefix(l)
          if *s > *popup_path.get(-1) then {
-            insert_string(Format.shell_escape(s[*popup_path.get(-1) + 1:0]), ev)
+            insert_string(escape_param(s[*popup_path.get(-1) + 1:0]), ev)
             popup_path := popup_path.sibling(s)
          }
-         #write("\nLONG:",image(s))
          v :=  view_list[get_view_list_index()]
-         #px := x + 16 + text_width_ex(view.cbwin, v.str, 1, self.cursor_x - v.first + 1, self.tab_width)
-         #py := y + (v.index - 1) * line_height
-         popup_x := x + text_width_ex(view.cbwin, v.str, 1, i - v.first + 1, self.tab_width)
+         popup_x := x + text_width_ex(view.cbwin, v.str, 1, i - v.first + 1, self.tab_width) - get_area_x()
          popup_y := y + v.index * line_height
          popup_ev := ev
          open_popup(popup_x, popup_y, l)
@@ -693,7 +774,6 @@ class Commands(EditableTextList, MenuMode)
       if ev === popup_ev then
          fail
       if member(Key.NAVIGATE ++ set("\r"), ev.code) then
-         #(\popup.parent_dialog.focus).fire(ty, ev)
          (\popup).fire(ty, ev)
       else if ev.code === "\e" then
          close_all()
@@ -703,12 +783,49 @@ class Commands(EditableTextList, MenuMode)
       }
    end
 
+   private static last_param(s)
+      local l
+      every l := gen_param_locs(s)
+      if \l then
+         return s[l[1]:l[2]]
+   end
+
+   private handle_altdot(e)
+      local s, i
+      i := alt_dot_off
+      if /i then
+         i := 1
+      else
+         handle_undo(e)
+      repeat {
+         if i >= cursor_y then {
+            alt_dot_off := &null
+            break
+         }
+         if s := last_param(contents[cursor_y - i]) then {
+            insert_string(s, e)
+            alt_dot_off := i + 1
+            break
+         } else
+            i +:= 1
+      }
+   end
+
+   private reset_alt_dot()
+      alt_dot_off := &null
+   end
+
    public handle_key(e)
       /popup  | fail
-      case e.code of {
-         "\t" : handle_tab(e)
-         "\^d" | "\^c" : terminal.got_input(ucs(e.code))
-         default : cast(self,EditableTextList).handle_key(e)
+      if e.code === "." & \e.meta then
+         handle_altdot(e)
+      else {
+         reset_alt_dot()
+         case e.code of {
+            "\t" : handle_tab(e)
+            "\^d" | "\^c" : terminal.got_input(ucs(e.code))
+            default : cast(self,EditableTextList).handle_key(e)
+         }
       }
    end
 
@@ -725,6 +842,7 @@ class Commands(EditableTextList, MenuMode)
    public new()
       cast(self, EditableTextList).new()
       every connect(self.forward_key, Event.KEY_PRESS)
+      connect(self.reset_alt_dot, Event.CONTENT_CHANGED)
       return
    end
 end
@@ -778,7 +896,6 @@ class OutputView(DrawScrollAreaView)
       local rows, cols
       cols := w / cbwin.text_width("m")
       rows := h / cbwin.get_font_height()
-      #write("dim=",w,"x",h,"  ->  cols=",cols,"  rows=",rows)
       parent.terminal.tty.set_size(cols, rows)
    end
 end
@@ -867,7 +984,7 @@ class Output(EditableTextList)
    end
 
    public draw_line(xp, yp, i)
-      local si, s, off1, off2, v, r, seg, x1, s2, s3, W, fg, r2, w1, want_fg
+      local si, s, off1, off2, v, r, seg, x1, s2, s3, W, fg, r2, w1, want_fg, win_bg
 
       v := self.view_list[i]
       s := v.str
@@ -876,10 +993,12 @@ class Output(EditableTextList)
       x1 := xp
       s2 := contents[v.index] 
       W := view.cbwin.clone()
+      win_bg := W.get_bg()
       every seg := !blocks[v.index].segments do {
          if r2 := range(v.first, v.first + *s, seg.first, seg.first + *seg.str) then {
             s3 := s2[r2[1]:r2[2]]
-            want_fg := if seg === highlight then "red" else seg.colour
+            # The second test avoids setting the foreground to the background colour.
+            want_fg := if seg === highlight then "red" else if seg.colour === win_bg then "black" else seg.colour
             if fg ~=== want_fg then {
                W.close()
                W := view.cbwin.clone()
@@ -1076,7 +1195,6 @@ class Output(EditableTextList)
          b := blocks[view_list[i].index]
          if keyof(b.segments, seg) then {
             invalidate_line(i, info)
-#            break
          }
       }
    end
@@ -1220,12 +1338,10 @@ class Terminal(TabItem)
    end
 
    public msg(s, n)
-      #write("msg:",image(s),"   ",image(n))
       message_label.set(AbbreviatedTextPaint(s), n)
    end
 
    public clear_msg()
-      #write("clear_msg")
       message_label.set()
    end
 
@@ -1306,7 +1422,6 @@ class Terminal(TabItem)
       local t, x, s
       repeat {
          x := io_task.poll([tty, Poll.IN + Poll.OUT], 150)
-         #write("X=",to_string(x))
          if DescStream.poll_in_test(x[1]) then {
             t := tty.in(1048576) | {
                err_msg(u"IO problem on tty: " || ucs(&why))
@@ -1335,7 +1450,6 @@ class Terminal(TabItem)
 
    public open_link(link)
       local r
-      #write(to_string(link))
       if r := get_runner(link) then {
          if \r.in_shell then
             run_prog(r.cmd)
@@ -1348,7 +1462,7 @@ class Terminal(TabItem)
       local s, es
       if link.url.scheme == "file" then {
          if s := ucs(link.url.get_decoded_path()) then {
-            es := if \ev.ctrl & 
+            es := if /ev.ctrl & 
                link.url.host == &host &
                s[1+:*cwd] == cwd & 
                s[*cwd + 1] == u"/" then
@@ -1390,9 +1504,8 @@ class Terminal(TabItem)
          return Runner(u"cd " || es, &yes)
       # Get a DesktopEntry based on the content-type if available, or the filename.
       de := get_possible_desktop_entries(link, es) | return info_msg(u"No matching desktop entry for this URL")
-      #write(to_string(de,3,1))
       cmd := de.subst_file(es, link.line)
-      #write(cmd)
+      if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1), "\nCmd: ", image(cmd))
       return Runner(cmd)
    end
 
@@ -1457,7 +1570,6 @@ class Terminal(TabItem)
       {
          m1 := Menu().set_label("Open with")
          every de := get_possible_desktop_entries(link, es) do {
-            #write(to_string(de))
             m2 := TextMenuItem().
                set_label(de.name)
             m2.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
@@ -1494,7 +1606,6 @@ class Terminal(TabItem)
 
    private launch_prog(s)
       local pid, nul
-      #write("launch ",s)
       pid := System.fork() | fail
       if pid > 0 then
          # Parent
@@ -1653,7 +1764,6 @@ class Terminal(TabItem)
          put(l, u"*." || e[1])
       filter.set_selection_list(l).set_selection(1)
 
-      #write(to_string(columns_pos_table,3))
       if is_live() then {
          if t := member(columns_pos_table, FilePath(cwd).canonical().str()) then {
             columns.set_area_y(t.area_y).set_area_x(0)
@@ -1767,7 +1877,7 @@ class Terminal(TabItem)
    private on_close_button(ev)
       local t, i
       if *parent.children = 1 then
-         parent_dialog.quit()
+         parent_dialog.dispose()
       else {
          i := parent.get_index(self)
          if i > 1 then
@@ -2111,8 +2221,9 @@ class Terminal(TabItem)
    end
 end
 
-procedure main()
+procedure main(a)
    local d
+   opts := options(a, "-v!")
    ImageCache.
       name_image("rpp.EXIT_24", EXIT).
       name_image("rpp.SAVE_24", SAVE).
@@ -2120,6 +2231,7 @@ procedure main()
    insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(TERMINAL_LOGO))
    d := TerminalDialog()
    d.show_modal()
+   if \opts["v"] then write("Exiting")
 end
 
 ### Ivib-v2 layout: layouts/$.layout
