@@ -1635,10 +1635,11 @@ procedure main(a)
    /settings.pool_size := 6
    /settings.max_concurrent_downloads := 3
    /settings.destination_dir := "/tmp"
-   ImageCache.name_image("rpp.EXIT_24", EXIT)
-   ImageCache.name_image("rpp.PASTE_24", PASTE)
-   ImageCache.name_image("rpp.STOP_24", STOP)
-   ImageCache.name_image("rpp.CLEAR_24", CLEAR)
+   ImageCache.
+      name_image("rpp.EXIT_24", EXIT).
+      name_image("rpp.PASTE_24", PASTE).
+      name_image("rpp.STOP_24", STOP).
+      name_image("rpp.CLEAR_24", CLEAR)
    insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(BROWSER_LOGO))
    url := if *a = 0 then
       settings.home_url
