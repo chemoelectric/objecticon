@@ -894,7 +894,7 @@ end
 class OutputView(DrawScrollAreaView)
    public layout()
       local rows, cols
-      cols := w / cbwin.text_width("m")
+      cols := (w - 2 * Gui.TEXT_INSET) / cbwin.text_width("m")
       rows := h / cbwin.get_font_height()
       parent.terminal.tty.set_size(cols, rows)
    end
@@ -915,6 +915,36 @@ class Output(EditableTextList)
       return OutputView()
    end
 
+   private on_interact(e)
+      # Set cursor to end
+      clear_mark()
+      set_cursor(*contents[-1] + 1, *contents)
+      constrain_line()
+      parent_dialog.set_focus(self)
+   end
+
+   private on_clear(e)
+      set_contents([u""])
+      blocks := [mk_block(contents[1])]
+   end
+
+   public keeps(e)
+      return
+   end
+
+   public create_context_menu(e)
+      local m
+      m := TextContextMenu(self)
+      m.add(MenuSeparator()).
+         add(TextMenuItem().
+               set_label("Clear").
+               connect(on_clear, Event.ACTION)).
+         add(TextMenuItem().
+               set_label("Interact").
+               connect(on_interact, Event.ACTION))
+      return m.tidy()
+   end
+
    private mk_link(l)
       local url, line, col, e, k, v, offset
       every e := !l do {
@@ -933,11 +963,24 @@ class Output(EditableTextList)
       return Link(url, line, col, offset)
    end
 
+   private normalize_str(s)
+      local t
+      t := u""
+      s ? repeat {
+         t ||:= tab(upto('\b') | 0)
+         if pos(0) then
+            break
+         move(1)
+         t[-1] := u""
+      }
+      return detab(t, tab_width + 1)
+   end
+
    private mk_block(s)
       local t, colour, strip, i, j, cmd, param, link, segs
       strip := u""
       segs := []
-      s ? repeat {
+      normalize_str(s) ? repeat {
          t := tab(find(u"\e[") | 0)
          i := *strip + 1
          strip ||:= t
@@ -1076,7 +1119,7 @@ class Output(EditableTextList)
 
       n := *contents
       every t := separate_lines(s) do {
-         t := detab(t, tab_width + 1)
+         #t := detab(t, tab_width + 1)
          if /fl then {
             t := blocks[-1].orig || t
             blocks[-1] := mk_block(t)
@@ -1102,10 +1145,14 @@ class Output(EditableTextList)
          invalidate_subject_width()
          compute_and_invalidate()
          undo_manager.clear()
-         goto_last(get_line_count())
-         # Make sure the cursor is valid, and on the screen.
-         ensure_valid_cursor()
-         constrain_cursor()
+         # Set cursor to end
+         set_cursor(*contents[-1] + 1, *contents)
+         # If we had a newline, set the horizontal scrollbar (if any) back to 0.  If we don't do this,
+         # then pressing return may leave the cursor at the very left, with any prompt not visible.
+         if upto('\n', s) then
+            set_area_x(0)
+         # Ensure the cursor is on the screen
+         constrain_line()
       } else {
          while *self.contents > \max do {
             pop(self.contents)
@@ -1254,7 +1301,7 @@ class Output(EditableTextList)
          view.set_pointer("hand1")
       } else {
          set_over()
-         view.set_pointer()
+         view.set_pointer("xterm")
       }
    end
 
@@ -1271,6 +1318,17 @@ class Output(EditableTextList)
             s ||:= u" (offset=" || \seg.link.offset || u")"
             parent.parent.parent.parent.parent.msg(s)
          }
+      }
+   end
+
+   public handle_key(e)
+      local ch
+      ch := e.code
+      if type(ch) == ("string" | "ucs") then {
+         # For some reason the terminal's backspace key is the delete (erase) key.
+         if ch == "\b" then
+            ch := "\d"
+         terminal.got_input(ch)
       }
    end
 
@@ -1817,13 +1875,15 @@ class Terminal(TabItem)
          connect(on_columns_lclick, "lclicked").
          connect(on_columns_mclick, "mclicked").
          connect(on_columns_rpress, Event.MOUSE_RIGHT_PRESS)
-      output.set_accepts_focus(&no)
+      output.
+         set_accepts_focus(&no).
+         set_font("fixed")
       #output.set_wrap_mode("width")
-      output.set_font("mono,-1")
       favourites_list.set_size().set_selection_list(get_favourites_directories())
       commands.terminal := output.terminal := self
-      commands.set_contents_str(ucs(Files.file_to_string(commands_file)))
-      commands.set_cursor(1, *commands.contents)
+      commands.
+         set_contents_str(ucs(Files.file_to_string(commands_file))).
+         set_cursor(1, *commands.contents)
       filter.set_selection_list([u"*"])
       history := []
       history_pos := 0
