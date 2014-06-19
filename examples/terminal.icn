@@ -762,7 +762,7 @@ class Commands(EditableTextList, MenuMode)
             popup_path := popup_path.sibling(s)
          }
          v :=  view_list[get_view_list_index()]
-         popup_x := x + text_width_ex(view.cbwin, v.str, 1, i - v.first + 1, self.tab_width) - get_area_x()
+         popup_x := x + text_width_ex(view.cbwin, v.str, 1, cursor_x - v.first + 1, self.tab_width) - get_area_x()
          popup_y := y + v.index * line_height
          popup_ev := ev
          open_popup(popup_x, popup_y, l)
