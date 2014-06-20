@@ -696,7 +696,7 @@ class Commands(EditableTextList, MenuMode)
    end
 
    public handle_tab(ev)
-      local v, i, l, s, popup_pre, popup_pre_unesc, t, fl, ch, p
+      local v, i, l, s, popup_pre, popup_pre_unesc, t, fl, ch, p, info, vi
 
       i := cursor_x
       s := contents[self.cursor_y]
@@ -761,9 +761,11 @@ class Commands(EditableTextList, MenuMode)
             insert_string(escape_param(s[*popup_path.get(-1) + 1:0]), ev)
             popup_path := popup_path.sibling(s)
          }
-         v :=  view_list[get_view_list_index()]
+         vi := get_view_list_index()
+         v :=  view_list[vi]
          popup_x := x + text_width_ex(view.cbwin, v.str, 1, cursor_x - v.first + 1, self.tab_width) - get_area_x()
-         popup_y := y + v.index * line_height
+         info := get_line_info() | fail
+         popup_y := view.y - info.offset + (vi - info.first + 1) * line_height
          popup_ev := ev
          open_popup(popup_x, popup_y, l)
       }
@@ -1878,12 +1880,16 @@ class Terminal(TabItem)
       output.
          set_accepts_focus(&no).
          set_font("fixed")
-      #output.set_wrap_mode("width")
       favourites_list.set_size().set_selection_list(get_favourites_directories())
       commands.terminal := output.terminal := self
       commands.
          set_contents_str(ucs(Files.file_to_string(commands_file))).
          set_cursor(1, *commands.contents)
+      if \opts["w"] then {
+         output.set_wrap_mode("width")
+         commands.set_wrap_mode("width")
+      }
+        
       filter.set_selection_list([u"*"])
       history := []
       history_pos := 0
@@ -2283,7 +2289,7 @@ end
 
 procedure main(a)
    local d
-   opts := options(a, "-v!")
+   opts := options(a, "-v! -w!")
    ImageCache.
       name_image("rpp.EXIT_24", EXIT).
       name_image("rpp.SAVE_24", SAVE).
