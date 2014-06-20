@@ -48,11 +48,19 @@ end
 
 class Runner()
    public const
-      cmd, in_shell
+      # The command to run.  Optional: either this is null, and the other
+      # two fields set, or this is set and the other two are ignored.
+      # At present if it is set, it is just used for a "cd" command.
+      cmd, 
+      # The DesktopEntry giving the command and other parameters.
+      desktop_entry,
+      # The link itself (a Link object).
+      link
 
-   public new(cmd, in_shell)
+   public new(cmd, desktop_entry, link)
       self.cmd := cmd
-      self.in_shell := in_shell
+      self.desktop_entry := desktop_entry
+      self.link := link
       return
    end
 end
@@ -1511,16 +1519,16 @@ class Terminal(TabItem)
    public open_link(link)
       local r
       if r := get_runner(link) then {
-         if \r.in_shell then
+         if \r.cmd then
             run_prog(r.cmd)
          else
-            launch_prog(r.cmd)
+            launch_prog(r)
       }
    end
 
    public insert_link(link, ev)
       local s, es
-      if link.url.scheme == "file" then {
+      if link.url.scheme == u"file" then {
          if s := ucs(link.url.get_decoded_path()) then {
             es := if /ev.ctrl & 
                link.url.host == &host &
@@ -1549,24 +1557,23 @@ class Terminal(TabItem)
       msg(s, 3000)
    end
 
-   private static get_possible_desktop_entries(link, s)
+   private static get_possible_desktop_entries(s)
       suspend Unique{Xdg.gen_desktop_entries(Xdg.alternative_mime_types(Xdg.get_mime_type_for_file(FilePath(s).get(-1))))}
    end
 
    private get_runner(link)
-      local s, es, de, cmd, url
+      local s, es, de, url
       url := link.url
       (url.scheme == "file") | return info_msg(u"Can only handle file:// URLs")
       (url.host == &host) | return info_msg(u"Can't run a file on another host (" || url.host || u")")
       s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
       es := Format.shell_escape(s)
       if Files.is_directory(s) then
-         return Runner(u"cd " || es, &yes)
+         return Runner(u"cd " || es)
       # Get a DesktopEntry based on the content-type if available, or the filename.
-      de := get_possible_desktop_entries(link, es) | return info_msg(u"No matching desktop entry for this URL")
-      cmd := de.subst_file(es, link.line)
-      if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1), "\nCmd: ", image(cmd))
-      return Runner(cmd)
+      de := get_possible_desktop_entries(es) | return info_msg(u"No matching desktop entry for this URL")
+      if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1))
+      return Runner(, de, link)
    end
 
    private on_columns_lclick()
@@ -1589,7 +1596,7 @@ class Terminal(TabItem)
    end
 
    private copy_link(link)
-      if link.url.scheme == "file" then
+      if link.url.scheme == u"file" then
          parent_dialog.own_selection(Selection.CLIPBOARD, 
                                      StaticTextSelectionOwner(Format.shell_escape(ucs(link.url.get_decoded_path()))))
    end
@@ -1600,19 +1607,21 @@ class Terminal(TabItem)
    end 
 
    private insert_cmd(link)
-      local r
-      if r := get_runner(link) then
-         commands.insert_string(r.cmd)
+      local r, cmd
+      if r := get_runner(link) then {
+         cmd := r.de.subst_file(r.esc_file, r.link.line)
+         commands.insert_string(cmd)
+      }
    end
 
-   private connect_launch(m2, cmd)
-      m2.connect(create launch_prog(cmd), Event.ACTION)
+   private connect_launch(m2, runner)
+      m2.connect(create launch_prog(runner), Event.ACTION)
    end
 
    public create_link_menu(link)
-      local m, m1, m2, s, es, de, cmd
+      local m, m1, m2, s, es, de
       m := Menu()
-      if link.url.scheme == "file" then {
+      if link.url.scheme == u"file" then {
          m.add(TextMenuItem().
                set_label("Copy").
                connect(create copy_link(link), Event.ACTION))
@@ -1625,16 +1634,16 @@ class Terminal(TabItem)
             connect(create insert_cmd(link), Event.ACTION))
 
       if s := ucs(link.url.get_decoded_path()) &
+         link.url.scheme == u"file" &
          not Files.is_directory(s) &
          es := Format.shell_escape(s) then
       {
          m1 := Menu().set_label("Open with")
-         every de := get_possible_desktop_entries(link, es) do {
+         every de := get_possible_desktop_entries(es) do {
             m2 := TextMenuItem().
                set_label(de.name)
             m2.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
-            cmd := de.subst_file(es, link.line)
-            connect_launch(m2, cmd)
+            connect_launch(m2, Runner(, de, link))
             m1.add(m2)
          }
          if *m1.children > 0 then 
@@ -1664,12 +1673,18 @@ class Terminal(TabItem)
       got_input(s)
    end
 
-   private launch_prog(s)
-      local pid, nul
+   private launch_prog(runner)
+      local pid, nul, cmd, s
       pid := System.fork() | fail
       if pid > 0 then
          # Parent
          return
+      # Get the working directory for the child process
+      if s := \runner.desktop_entry.path | System.getenv("HOME") then
+         Files.chdir(s)
+      # Get the command to run.
+      s := ucs(runner.link.url.get_decoded_path()) | syserr("Couldn't get ucs path from link")
+      cmd := runner.desktop_entry.subst_file(Format.shell_escape(s), runner.link.line)
       System.setpgid()
       if nul := FileStream("/dev/null", FileOpt.RDWR) then {
          nul.dup2(FileStream.stdin)
@@ -1677,7 +1692,7 @@ class Terminal(TabItem)
          nul.dup2(FileStream.stderr)
          nul.close()
       }
-      System.exec("/bin/bash", ["-c", "exec " || s]) | stop(&why)
+      System.exec("/bin/bash", ["-c", "exec " || cmd]) | stop(&why)
    end
 
    private goto_dir(d, nav)
