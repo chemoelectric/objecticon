@@ -83,7 +83,7 @@ class ClassSymbol(Symbol)
    end
 
    public get_implemented_field(n)
-      return .\self.implemented_fields[n]
+      return member(implemented_fields, n)
    end
 
    public get_implemented_classes()
@@ -94,11 +94,11 @@ class ClassSymbol(Symbol)
       local f
       put(self.implemented_classes, c)
       every f := !c.fields do
-         /self.implemented_fields[f.name] := f
+         member(implemented_fields, f.name) | insert(implemented_fields, f.name, f)
    end
 
    public get_field(n)
-      return .\self.fields[n]
+      return member(fields, n)
    end
 
    public get_fields()
@@ -106,7 +106,7 @@ class ClassSymbol(Symbol)
    end
 
    package add_field(f)
-      self.fields[f.name] := f
+      insert(fields, f.name, f)
       return self
    end
 
@@ -174,12 +174,12 @@ class ScannedFile()
    end
       
    package add_symbol(sym)
-      symbols[sym.name] := sym
+      insert(symbols, sym.name, sym)
       return self
    end
 
    public get_symbol(name)
-      return .\symbols[name]
+      return member(symbols, name)
    end
 
    public get_symbols()
@@ -187,12 +187,12 @@ class ScannedFile()
    end
 
    package add_import(i)
-      imports[i.name] := i
+      insert(imports, i.name, i)
       return self
    end
 
    public get_import(name)
-      return .\imports[name]
+      return member(imports, name)
    end
 
    public get_imports()
@@ -532,7 +532,7 @@ class SymbolTable(Connectable)
    public scan_package(p)
       local d, fs, seen, f
       if member(scanned_packages, p) then
-         return
+         return self
       insert(scanned_packages, p)
       ensure_package_db() | fail
       every d := key(package_db) do {
@@ -546,7 +546,7 @@ class SymbolTable(Connectable)
       }
       if /seen then
          return error("cannot resolve package " || p)
-      return
+      return self
    end
 
    public gen_symbol_names()
@@ -560,7 +560,7 @@ class SymbolTable(Connectable)
    public add_builtins()
       local x
       every x := !BUILTINS do
-         symbol_table[x] := BuiltinSymbol(x)
+         insert(symbol_table, x, BuiltinSymbol(x))
       return self
    end
 
@@ -573,11 +573,11 @@ class SymbolTable(Connectable)
    end
 
    public glocate(name)
-      return .\symbol_table[name]
+      return member(symbol_table, name)
    end
 
    public get_scanned_file(f)
-      return .\scanned_files[get_stem(FilePath(f).canonical().str())]
+      return member(scanned_files, get_stem(FilePath(f).canonical().str()))
    end
 
    public resolve_n(sf, name)
