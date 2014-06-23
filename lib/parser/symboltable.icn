@@ -517,7 +517,9 @@ class SymbolTable(Connectable)
       while s := read(f) do {
          if s == ">package" then {
             s := read(f) | return error("corrupt - package name expected following package")
-            u := /t[s] := set() | return error("corrupt - duplicate package entry")
+            if member(t, s) then
+               return error("corrupt - duplicate package entry")
+            insert(t, s, u := set())
          } else
             insert(\u, s) | return error("corrupt - package expected")
       }
@@ -568,8 +570,10 @@ class SymbolTable(Connectable)
       local x
       if x := glocate(name) then
          return x
-      if member(BUILTINS, name) then
-         return symbol_table[name] := BuiltinSymbol(name)
+      if member(BUILTINS, name) then {
+         insert(symbol_table, name, x := BuiltinSymbol(name))
+         return x
+      }
    end
 
    public glocate(name)
