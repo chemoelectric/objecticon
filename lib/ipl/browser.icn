@@ -2584,7 +2584,8 @@ class Browser(ComponentScrollArea)
       text_selection,
       links_selection,
       done_set_top_data,
-      last_highlight_component
+      last_highlight_component,
+      font_factor
 
    public static const 
       COLORS,
@@ -2739,7 +2740,7 @@ class Browser(ComponentScrollArea)
                       "yellowgreen", "#9ACD32")
 
       t := Window.get_default_font_size()
-      SIZES := [t-5, t-3, t, t+3, t+6, t+9, t+12] 
+      SIZES := [0.5 * t, 0.75 * t, t, 1.25 * t, 1.5 * t, 1.75 * t, 2.0 * t]
       ImageCache.name_image("rpp.BROKEN_LINK", BROKEN_LINK)
       default_font_clone := Window().set_font("sans")
    end
@@ -2782,7 +2783,7 @@ class Browser(ComponentScrollArea)
          s ||:= ",bold"
       if \context.italic then
          s ||:= ",italic"
-      s ||:= "," || SIZES[context.size]
+      s ||:= "," || (SIZES[context.size] * font_factor)
       context.font := s
    end
 
@@ -5054,6 +5055,11 @@ class Browser(ComponentScrollArea)
       }
    end
 
+   public set_font_factor(n)
+      self.font_factor := n
+      return self
+   end
+
    public new()
       cast(self,ComponentScrollArea).new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
@@ -5071,6 +5077,7 @@ class Browser(ComponentScrollArea)
       banded := table()
       searched := table()
       outermost_border := NullBorder()
+      font_factor := 1.0
       view.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG).
          connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS).
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE).
