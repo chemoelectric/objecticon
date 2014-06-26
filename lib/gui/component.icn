@@ -865,6 +865,7 @@ class Component(Rect,Align,Connectable)
    #
    public finally()
       \cbwin | syserr("finally called out of sequence")
+      reset_layout()
       (\self.border).finally()
       self.cbwin.close()
       self.cbwin := &null
