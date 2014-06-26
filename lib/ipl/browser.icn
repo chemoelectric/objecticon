@@ -2512,6 +2512,7 @@ abstract class BrowserUI()
    public abstract create_image_menu(img)
    public abstract browse_for_file(s)
    public abstract is_visited(url)
+   public abstract display_search()
 end
 
 class BrowserPrimarySelectionOwner(TextSelectionOwner)
@@ -5049,12 +5050,54 @@ class Browser(ComponentScrollArea)
          parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
    end
 
+   private static scale_font(s, f)
+      return s ? tab(backto(',')) || real(tab(0)) * f
+   end
+
+   # Magnify the fonts in the page by multiplying by the given factor.
+   #
+   public magnify(f)
+      local c, i, seen, s
+       seen := set()
+      every c := Seq{traverse_postorder()} do {
+         if is(c,TextFlow) then {
+            every i := !c.input do {
+               if not member(seen, i.attr) then {
+                  insert(seen, i.attr)
+                  i.attr.font := scale_font(i.attr.font, f)
+               }
+            }
+         }
+         if s := c.get_wattrib("font") then
+            c.set_font(scale_font(s, f))
+      }
+      reset()
+      return self
+   end
+
+   # Increase the fonts by 5%
+   #
+   public do_increase_font()
+      return magnify(1.05)
+   end
+
+   # Decrease the fonts by 5%
+   # 
+  public do_decrease_font()
+      return magnify(1.0/1.05)
+   end
+
    private additional_keys(e)
       case e.code of {
+         "-" : if \e.ctrl then do_decrease_font()
+         "=" : if \e.ctrl then do_increase_font()
          "\^c" :  handle_copy(e)
+         "\^f" : (\ui).display_search()
       }
    end
 
+   # Set a scaling factor to apply to all fonts (default 1.0).
+   #
    public set_font_factor(n)
       self.font_factor := n
       return self

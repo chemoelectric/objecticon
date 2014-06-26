@@ -21,6 +21,7 @@ $load EXIT "rpp.EXIT_24.gif"
 $load STOP "rpp.STOP_24.gif"
 $load PASTE "rpp.PASTE_24.gif"
 $load CLEAR "rpp.CLEAR_24.gif"
+$load FONT "rpp.FONT_24.gif"
 $load BROWSER_LOGO "rpp.BROWSER_LOGO.png"
 
 class Settings()
@@ -1000,6 +1001,8 @@ class BrowserTab(TabItem, BrowserUI)
       home_button,
       paste_url_button,
       refresh_button,
+      increase_font_button,
+      decrease_font_button,
       title_tt,
       revert_tab,
       search_panel,
@@ -1114,6 +1117,10 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.new_tab(url,, 1)
    end
 
+   public display_search()
+      search_panel.is_live() | open_search_panel()
+   end
+
    private open_search_panel()
       add(search_panel, -1)
       reset_layout()
@@ -1180,6 +1187,7 @@ class BrowserTab(TabItem, BrowserUI)
          if not search_panel.is_live() then
             m.add(TextMenuItem().
                   set_label("Search").
+                  set_label_right("^F").
                   connect(open_search_panel, Event.ACTION))
          m.add(TextMenuItem().
                set_label("Page info").
@@ -1189,6 +1197,7 @@ class BrowserTab(TabItem, BrowserUI)
       if s := browser.get_current_text_selection() then {
          m.add(TextMenuItem().
                set_label("Copy text").
+               set_label_right("^C").
                connect(create copy_text(s), Event.ACTION))
       }
       if l := browser.get_current_links_selection() then {
@@ -1449,6 +1458,14 @@ class BrowserTab(TabItem, BrowserUI)
       browser.do_refresh()
    end
 
+   private on_decrease_font(ev)
+      browser.do_decrease_font()
+   end
+
+   private on_increase_font(ev)
+      browser.do_increase_font()
+   end
+
    public new(browser_dialog, url, referer_url, pool, revert_tab)
       cast(self,TabItem).new()
       self.revert_tab := revert_tab
@@ -1467,6 +1484,8 @@ class BrowserTab(TabItem, BrowserUI)
       theme_toolbar_button(search_close_button, "window-close")
       theme_toolbar_button(search_prev_button, "go-previous")
       theme_toolbar_button(search_next_button, "go-next")
+      theme_toolbar_button(increase_font_button, "format-font-size-more")
+      theme_toolbar_button(decrease_font_button, "format-font-size-less")
       browser.
          set_ui(self).
          set_worker_pool(browser_dialog.pool).
@@ -1536,6 +1555,23 @@ class BrowserTab(TabItem, BrowserUI)
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(ImagePaint().set_cache("rpp.PASTE_24"))
+      increase_font_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(TextPaint("Increase font size")).
+         connect(self.on_increase_font, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(ImagePaint().set_cache("rpp.FONT_24"))
+      decrease_font_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(TextPaint("Decrease font size")).
+         connect(self.on_decrease_font, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(ImagePaint().set_cache("rpp.FONT_24"))
+
       panel := Panel().
          clear_constraints().
          set_constraint("eol", &yes).
@@ -1547,6 +1583,8 @@ class BrowserTab(TabItem, BrowserUI)
          add(prev_button).
          add(next_button).
          add(stop_button).
+         add(increase_font_button).
+         add(decrease_font_button).
          add(paste_url_button)
       self.add(panel)
       url_field := URLEditList().
@@ -1647,7 +1685,8 @@ procedure main(a)
       name_image("rpp.EXIT_24", EXIT).
       name_image("rpp.PASTE_24", PASTE).
       name_image("rpp.STOP_24", STOP).
-      name_image("rpp.CLEAR_24", CLEAR)
+      name_image("rpp.CLEAR_24", CLEAR).
+      name_image("rpp.FONT_24", FONT)
    insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(BROWSER_LOGO))
    url := if *a = 0 then
       settings.home_url
