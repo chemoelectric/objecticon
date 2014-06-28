@@ -47,6 +47,7 @@ class PopupEditor(Component)
       self.editor := editor
       editor.connect(close_all, Event.ACTION)
       self.add(editor)
+      set_inherit_wattribs(&no)
       return
    end
 end

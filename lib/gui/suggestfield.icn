@@ -12,6 +12,7 @@ abstract class SuggestField(TextField, MenuMode)
       max_height,
       max_width,
       use_popup_win,
+      select_using_enter_flag,
       forward_home_end_flag     # Forward home/end key to list?
 
    protected
@@ -36,6 +37,15 @@ abstract class SuggestField(TextField, MenuMode)
    #
    public set_forward_home_end(s)
       self.forward_home_end_flag := check_flag(s)
+      return self
+   end
+
+   #
+   # If set, the enter key is used to select from the list, rather than items being selected
+   # using the cursor keys.
+   #
+   public set_select_using_enter(s)
+      self.select_using_enter_flag := check_flag(s)
       return self
    end
 
@@ -172,13 +182,15 @@ abstract class SuggestField(TextField, MenuMode)
 
       self.tl := create_popup().
          set_all_wattribs(self.get_effective_wattribs()).
+         set_inherit_wattribs(&no).
          connect(self.on_textlist_selection, Event.SELECTION_CHANGED).
          set_contents(data).
          set_accepts_focus(&no).
          set_draggable_cursor(&yes).
          set_motion_cursor(&yes).
+         set_always_show_focus_cursor(&yes).
          set_select_mode(Select.ONE).
-         set_selection_on_key_moves(&yes).
+         set_selection_on_key_moves(if /select_using_enter_flag then &yes else &no).
          set_z(self.parent_dialog.get_top_z())
       self.parent_dialog.add(tl)
       self.tl.set_ideal_size(self.w, 
@@ -262,6 +274,17 @@ abstract class SuggestField(TextField, MenuMode)
       self.parent_dialog.exit_menu_mode(self)
    end
 
+   public get_nesting_component()
+      return self
+   end
+
+   public gen_popup_components()
+      return tl
+   end
+
+   public allow_nested(c)
+   end
+
    public close_all()
       keep_closed()
    end
@@ -309,7 +332,10 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public handle_return(e)
-      cast(self,TextField).handle_return(e)
+      if \select_using_enter_flag & \tl then
+         tl.fire(Event.KEY_PRESS, e)
+      else
+         cast(self,TextField).handle_return(e)
       keep_closed()
    end
 
@@ -330,7 +356,7 @@ abstract class SuggestField(TextField, MenuMode)
 
    public handle_key_down(e)
       if \tl then {
-         if *tl.get_selections() = 0 & tl.get_cursor() = 1 then {
+         if /select_using_enter_flag & *tl.get_selections() = 0 & tl.get_cursor() = 1 then {
             tl.set_selections([1])
             synch_contents(e)
          } else

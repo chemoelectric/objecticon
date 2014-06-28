@@ -30,24 +30,24 @@ class ImageViewTest(Dialog)
 
    private setup()
       local quit, paint
-      set_resize(&yes)
-      set_size(362, 344)
+      self.set_resize(&yes)
+      self.set_size(362, 344)
       iv := ImageView().
          set_pos("50%", "10").
          set_size("100%-20", "100%-60").
          set_align(Align.C, Align.T).
          clear_constraints()
-      add(iv)
+      self.add(iv)
       paint := TextPaint("Quit")
       quit := TextButton().
          set_pos("50%", "100%-25").
          set_align(Align.C, Align.C).
          clear_constraints().
          set_accel("q").
-         connect(on_quit, Event.ACTION).
+         connect(self.on_quit, Event.ACTION).
          set_toggles(&no).
          set_paint(paint)
-      add(quit)
+      self.add(quit)
    end
 end
 
@@ -103,24 +103,4 @@ procedure main(a)
    d.show_modal()
 end
 
-### Ivib-v2 layout ##
-#CCanvas|I18SSuperClass Name|SDialog|SImport Name|Sgui|SButton Groups|L
-#0SCheckbox Groups|L0SGen Indent|I3SGen Main|I1SGen Component Setup|I1S
-#Gen Init Dialog|I1SGen Constructor|I1SDialog Struct|CCDialog|I1SWAttri
-#bs|T1NSresize|I1SName|SImageViewTest|SIs Component|NSWidth|S362|SHeigh
-#t|S344|SChildren|L2CCanvasCustom|I27SParent Canvas|X1SName|Siv|SClass 
-#Name|SImageView|SImport Name|Sgui|SClass Variable|I1SX Fix|I1SY Fix|I1
-#SW Fix|I1SH Fix|I1SX Spec|S50%|SY Spec|S10|SW Spec|S100%-20|SH Spec|S1
-#00%-60|SX Align|Sc|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T
-#0NSConstraints|T0NSTooltip|NSAccel|NSLayout delegate|NSBorder opts|NSE
-#vent Handlers|L0SClass Variable|I1SParent Component|X1CCanvasTextButto
-#n|I35SParent Canvas|X1SName|Squit|SClass Name|STextButton|SImport Name
-#|Sgui|SClass Variable|NSX Fix|I1SY Fix|I1SW Fix|NSH Fix|NSX Spec|S50%|
-#SY Spec|S100%-25|SW Spec|NSH Spec|NSX Align|Sc|SY Align|Sc|SZ|I0STab o
-#rd|I0SIs shaded|NSWAttribs|T0NSConstraints|T0NSTooltip|NSAccel|Sq|SLay
-#out delegate|NSBorder opts|NSEvent Handlers|L1L2SEvent.ACTION|Son_quit
-#|SClass Variable|NSParent Component|X1SNo click focus|NSAccepts focus 
-#Flag|I1SIs Checked Flag|NSIs Checkbox Flag|NSParent CheckBoxGroup|NSPa
-#rent Button Group|NSPaint|CCanvasTextPaint|I6SParent Canvas|X1SName|Sp
-#aint|SClass Name|STextPaint|SImport Name|Sgui|SClass Variable|NSStr|SQ
-#uit|SPaint down|NSInitial Focus|NSEvent Handlers|L0SLayout delegate|N
+### Ivib-v2 layout: layouts/$.layout

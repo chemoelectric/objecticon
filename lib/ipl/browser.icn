@@ -2528,6 +2528,7 @@ abstract class BrowserUI()
    public abstract create_image_menu(img)
    public abstract browse_for_file(s)
    public abstract is_visited(url)
+   public abstract display_search()
 end
 
 class BrowserPrimarySelectionOwner(TextSelectionOwner)
@@ -2600,7 +2601,8 @@ class Browser(ComponentScrollArea)
       text_selection,
       links_selection,
       done_set_top_data,
-      last_highlight_component
+      last_highlight_component,
+      font_factor
 
    public static const 
       COLORS,
@@ -2755,7 +2757,7 @@ class Browser(ComponentScrollArea)
                       "yellowgreen", "#9ACD32")
 
       t := Window.get_default_font_size()
-      SIZES := [t-5, t-3, t, t+3, t+6, t+9, t+12] 
+      SIZES := [0.5 * t, 0.75 * t, t, 1.25 * t, 1.5 * t, 1.75 * t, 2.0 * t]
       ImageCache.name_image("rpp.BROKEN_LINK", BROKEN_LINK)
       default_font_clone := Window().set_font("sans")
    end
@@ -2798,7 +2800,7 @@ class Browser(ComponentScrollArea)
          s ||:= ",bold"
       if \context.italic then
          s ||:= ",italic"
-      s ||:= "," || SIZES[context.size]
+      s ||:= "," || (SIZES[context.size] * font_factor)
       context.font := s
    end
 
@@ -5064,10 +5066,57 @@ class Browser(ComponentScrollArea)
          parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
    end
 
+   private static scale_font(s, f)
+      return s ? tab(backto(',')) || real(tab(0)) * f
+   end
+
+   # Magnify the fonts in the page by multiplying by the given factor.
+   #
+   public magnify(f)
+      local c, i, seen, s
+       seen := set()
+      every c := Seq{traverse_postorder()} do {
+         if is(c,TextFlow) then {
+            every i := !c.input do {
+               if not member(seen, i.attr) then {
+                  insert(seen, i.attr)
+                  i.attr.font := scale_font(i.attr.font, f)
+               }
+            }
+         }
+         if s := c.get_wattrib("font") then
+            c.set_font(scale_font(s, f))
+      }
+      reset()
+      return self
+   end
+
+   # Increase the fonts by 5%
+   #
+   public do_increase_font()
+      return magnify(1.05)
+   end
+
+   # Decrease the fonts by 5%
+   # 
+  public do_decrease_font()
+      return magnify(1.0/1.05)
+   end
+
    private additional_keys(e)
       case e.code of {
+         "-" : if \e.ctrl then do_decrease_font()
+         "=" : if \e.ctrl then do_increase_font()
          "\^c" :  handle_copy(e)
+         "\^f" : (\ui).display_search()
       }
+   end
+
+   # Set a scaling factor to apply to all fonts (default 1.0).
+   #
+   public set_font_factor(n)
+      self.font_factor := n
+      return self
    end
 
    public new()
@@ -5087,6 +5136,7 @@ class Browser(ComponentScrollArea)
       banded := table()
       searched := table()
       outermost_border := NullBorder()
+      font_factor := 1.0
       view.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG).
          connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS).
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE).

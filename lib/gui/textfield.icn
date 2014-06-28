@@ -36,6 +36,7 @@ class TextField(Component)
    public 
       filter,                  # Cset for filtering characters
       is_editable_flag,        # Are we editable?
+      menu_on_rpress_flag,     # Show context menu on mouse right press event?
       move_on_rpress_flag,     # Move on mouse right press event?
       contents,                #                
       going_left,
@@ -95,10 +96,18 @@ class TextField(Component)
    end
 
    #
-   # Move the cursor on mouse right press?
+   # Move the cursor on mouse right press?  Only relevant if the context menu is disabled.
    #
    public set_move_on_rpress(s)
       self.move_on_rpress_flag := check_flag(s)
+      return self
+   end
+
+   #
+   # Show the context menu on mouse right press?
+   #
+   public set_menu_on_rpress(s)
+      self.menu_on_rpress_flag := check_flag(s)
       return self
    end
 
@@ -255,12 +264,23 @@ class TextField(Component)
       end_handle(e)
    end
 
+   public create_context_menu(e)
+      return TextContextMenu(self)
+   end
+
    public handle_rpress(e)
-      \self.move_on_rpress_flag | fail
-      start_handle(e)
-      self.cursor := whereis_x(e)
-      clear_mark()
-      end_handle(e)
+      local m, pm
+      if \menu_on_rpress_flag then {
+         if m := create_context_menu(e) & *m.children > 0 then {
+            pm := PopupMenu()
+            pm.popup(self, m, e.x, e.y)
+         }
+      } else if \move_on_rpress_flag then {
+         start_handle(e)
+         self.cursor := whereis_x(e)
+         clear_mark()
+         end_handle(e)
+      }
    end
 
    private handle_mpress_response(target_type, data, e)
@@ -529,6 +549,22 @@ class TextField(Component)
       end_handle(e)
    end
 
+   public is_editable()
+      return \is_editable_flag
+   end
+
+   public has_contents()
+      return *contents > 0
+   end
+
+   public can_undo()
+      return undo_manager.can_undo()
+   end
+
+   public can_redo()
+      return undo_manager.can_redo()
+   end
+
    public keeps(e)
       return member(Key.CURSOR_H, e.code)
    end
@@ -681,14 +717,31 @@ class TextField(Component)
          return self.contents
    end
 
+   public dont_blink()
+      local c
+      # If dialog is blocked, don't blink
+      if parent_dialog.is_blocked() then
+         return
+      # If not in menu mode, blink
+      c := parent_dialog.in_menu_mode() | fail
+      # If this component is the menu mode (eg SuggestField), blink
+      if c === self then
+         fail
+      # If this component is a child of the menu mode's popup (eg a textfield in
+      # a DropDown's popup, such as Calendar), blink.
+      if c.gen_popup_components() === gen_parents() then
+         fail
+      # Otherwise, don't blink.
+      return
+   end
+
    public cursor_tick()
       local t
       repeat {
-         if (self.has_focus() | self === parent_dialog.in_menu_mode()) &
-                self.is_unshaded() & self.is_unhidden() then 
+         if self.has_focus() & self.is_unshaded() & self.is_unhidden() then 
          {
             t := cursor_on
-            cursor_on := if parent_dialog.is_blocked() | (self ~=== parent_dialog.in_menu_mode()) then
+            cursor_on := if dont_blink() then
                0
             else
                (cursor_on + 1) % 3
@@ -732,7 +785,7 @@ class TextField(Component)
       #
       # If has focus display box cursor, else display outline cursor
       #
-      if (self.has_focus() | self === parent_dialog.in_menu_mode()) & self.is_unshaded() then {
+      if self.has_focus() & self.is_unshaded() then {
          if self.cursor_on ~= 2 then
             Gui.style.draw_text_cursor(self.cbwin,
                                        self.tx - loff + self.cbwin.text_width(s[1:cursor]), y1, fh)
@@ -758,6 +811,7 @@ class TextField(Component)
                                     set_l_inset(Gui.TEXT_INSET).
                                     set_r_inset(Gui.TEXT_INSET)))
       self.is_editable_flag := 1
+      self.menu_on_rpress_flag := 1
       self.move_on_rpress_flag := 1
       self.set_constraint("x_fill", &yes)
       self.set_constraint("x_align", Align.L)

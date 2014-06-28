@@ -21,6 +21,7 @@ $load EXIT "rpp.EXIT_24.gif"
 $load STOP "rpp.STOP_24.gif"
 $load PASTE "rpp.PASTE_24.gif"
 $load CLEAR "rpp.CLEAR_24.gif"
+$load FONT "rpp.FONT_24.gif"
 $load BROWSER_LOGO "rpp.BROWSER_LOGO.png"
 
 class Settings()
@@ -32,7 +33,8 @@ class Settings()
       pool_size,
       max_concurrent_downloads,
       destination_dir,
-      authentications
+      authentications,
+      font_factor
 
    public new()
       home_url := URL(u"config:")
@@ -42,6 +44,7 @@ class Settings()
       visited := []
       visited_size := 100
       destination_dir := "/tmp"
+      font_factor := 1.0
       return
    end
 end
@@ -164,7 +167,7 @@ class BrowserDialog(Dialog)
 
    public new_tab(url, referer_url, sel)
       local bt
-      bt := BrowserTab(url, referer_url, pool, tabs.which_one).
+      bt := BrowserTab(self, url, referer_url, tabs.which_one).
          set_is_hidden(&yes)
       tabs.
          add(bt, -1).
@@ -273,12 +276,13 @@ class BrowserDialog(Dialog)
    end
 
    private edit_settings(req)
-      local t, home, cn, vn, pn, mcd
+      local t, home, cn, vn, pn, mcd, ff
       (t := req.url.extract_cgi_parameters() &
        home := URL(ucs(member(t, "home")[1])) &
        cn := integer(member(t, "cache")[1]) &
        vn := integer(member(t, "vsize")[1]) &
        pn := integer(member(t, "psize")[1]) &
+       ff := real(member(t, "fontfactor")[1]) &
        mcd := integer(member(t, "maxcd")[1])) | return error("Bad request")
       settings.authentications := if member(t, "authentications") then
          pool.authentications
@@ -289,7 +293,8 @@ class BrowserDialog(Dialog)
       settings.visited_size := vn
       settings.pool_size := pn
       settings.max_concurrent_downloads := mcd
-      return config_main("<p><font size=+1 color=green>Settings saved OK; cache and pool sizes only take effect on restart.</font><p>")
+      settings.font_factor := ff
+      return config_main("<p><font size=+1 color=green>Settings saved OK; cache and pool sizes only take effect on restart, font factor on new tab.</font><p>")
    end
 
    private config_main(msg)
@@ -308,6 +313,7 @@ class BrowserDialog(Dialog)
                    <tr><td>Worker pool size:</td><td><input type=number min=5 step=1 name=psize value=" || settings.pool_size || " size=50 /></td></tr>_
                    <tr><td>Max concurrent downloads:</td><td><input type=number min=2 step=1 name=maxcd value=" || 
                            settings.max_concurrent_downloads || " size=50 /></td></tr>_
+                   <tr><td>Font size factor:</td><td><input type=number min=0.5 step=0.1 name=fontfactor value=" || settings.font_factor || " size=50 /></td></tr>_
                    <tr><td colspan=2><label><input type=checkbox name=authentications value=yes " || 
                                        (if /settings.authentications then "" else "checked") || "/> Save authentications</label></td></tr>_
                  </table>_
@@ -410,7 +416,7 @@ class BrowserDialog(Dialog)
          add(file_menu).
          add(page_menu)
       self.add(menu_bar)
-      bt := BrowserTab(url,, pool)
+      bt := BrowserTab(self, url)
       downloads := DownloadTab()
       tabs := TabSet().
          set_size("200", "150").
@@ -995,6 +1001,8 @@ class BrowserTab(TabItem, BrowserUI)
       home_button,
       paste_url_button,
       refresh_button,
+      increase_font_button,
+      decrease_font_button,
       title_tt,
       revert_tab,
       search_panel,
@@ -1109,6 +1117,10 @@ class BrowserTab(TabItem, BrowserUI)
       parent_dialog.new_tab(url,, 1)
    end
 
+   public display_search()
+      search_panel.is_live() | open_search_panel()
+   end
+
    private open_search_panel()
       add(search_panel, -1)
       reset_layout()
@@ -1175,6 +1187,7 @@ class BrowserTab(TabItem, BrowserUI)
          if not search_panel.is_live() then
             m.add(TextMenuItem().
                   set_label("Search").
+                  set_label_right("^F").
                   connect(open_search_panel, Event.ACTION))
          m.add(TextMenuItem().
                set_label("Page info").
@@ -1184,6 +1197,7 @@ class BrowserTab(TabItem, BrowserUI)
       if s := browser.get_current_text_selection() then {
          m.add(TextMenuItem().
                set_label("Copy text").
+               set_label_right("^C").
                connect(create copy_text(s), Event.ACTION))
       }
       if l := browser.get_current_links_selection() then {
@@ -1444,7 +1458,15 @@ class BrowserTab(TabItem, BrowserUI)
       browser.do_refresh()
    end
 
-   public new(url, referer_url, pool, revert_tab)
+   private on_decrease_font(ev)
+      browser.do_decrease_font()
+   end
+
+   private on_increase_font(ev)
+      browser.do_increase_font()
+   end
+
+   public new(browser_dialog, url, referer_url, pool, revert_tab)
       cast(self,TabItem).new()
       self.revert_tab := revert_tab
       set_label_border(EmptyBorder().set_x_align(Align.L))
@@ -1462,8 +1484,13 @@ class BrowserTab(TabItem, BrowserUI)
       theme_toolbar_button(search_close_button, "window-close")
       theme_toolbar_button(search_prev_button, "go-previous")
       theme_toolbar_button(search_next_button, "go-next")
-
-      browser.set_ui(self).set_worker_pool(pool).set_outermost_border(EmptyBorder().set_insets(2, 2, 2, 2))
+      theme_toolbar_button(increase_font_button, "format-font-size-more")
+      theme_toolbar_button(decrease_font_button, "format-font-size-less")
+      browser.
+         set_ui(self).
+         set_worker_pool(browser_dialog.pool).
+         set_outermost_border(EmptyBorder().set_insets(2, 2, 2, 2)).
+         set_font_factor(browser_dialog.settings.font_factor)
       browser.goto(\url, referer_url)
       return
    end
@@ -1528,6 +1555,23 @@ class BrowserTab(TabItem, BrowserUI)
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(ImagePaint().set_cache("rpp.PASTE_24"))
+      increase_font_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(TextPaint("Increase font size")).
+         connect(self.on_increase_font, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(ImagePaint().set_cache("rpp.FONT_24"))
+      decrease_font_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(TextPaint("Decrease font size")).
+         connect(self.on_decrease_font, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&no).
+         set_paint(ImagePaint().set_cache("rpp.FONT_24"))
+
       panel := Panel().
          clear_constraints().
          set_constraint("eol", &yes).
@@ -1539,6 +1583,8 @@ class BrowserTab(TabItem, BrowserUI)
          add(prev_button).
          add(next_button).
          add(stop_button).
+         add(increase_font_button).
+         add(decrease_font_button).
          add(paste_url_button)
       self.add(panel)
       url_field := URLEditList().
@@ -1557,7 +1603,6 @@ class BrowserTab(TabItem, BrowserUI)
       self.add(url_field)
       browser := Browser().
          set_size("651", "337").
-         set_font("sans,9").
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -1635,10 +1680,13 @@ procedure main(a)
    /settings.pool_size := 6
    /settings.max_concurrent_downloads := 3
    /settings.destination_dir := "/tmp"
-   ImageCache.name_image("rpp.EXIT_24", EXIT)
-   ImageCache.name_image("rpp.PASTE_24", PASTE)
-   ImageCache.name_image("rpp.STOP_24", STOP)
-   ImageCache.name_image("rpp.CLEAR_24", CLEAR)
+   /settings.font_factor := 1.0
+   ImageCache.
+      name_image("rpp.EXIT_24", EXIT).
+      name_image("rpp.PASTE_24", PASTE).
+      name_image("rpp.STOP_24", STOP).
+      name_image("rpp.CLEAR_24", CLEAR).
+      name_image("rpp.FONT_24", FONT)
    insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(BROWSER_LOGO))
    url := if *a = 0 then
       settings.home_url

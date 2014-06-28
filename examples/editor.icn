@@ -3,9 +3,23 @@ import gui,io
 $load SAVE "rpp.SAVE_24.gif"
 $load EXIT "rpp.EXIT_24.gif"
 
+class EditMenu(DynamicMenu)
+   private text
+
+   public populate()
+      populate_from(text.create_context_menu())
+   end
+
+   public new(text)
+      cast(self,DynamicMenu).new()
+      self.text := text
+      return
+   end
+end
+
 class Editor(Dialog)
    public curr_file_name, text, open_item, quit_item,
-      cut_item, copy_item, paste_item, undo_item, redo_item, split_words_item,
+      split_words_item,
       close_button, save_button, save_item, message_label,
       save_as_item, new_item
 
@@ -128,27 +142,14 @@ class Editor(Dialog)
    end
 
    private update_grey()
-      if text.has_region() then {
-         cut_item.set_is_shaded(&no)
-         copy_item.set_is_shaded(&no)
-      } else {
-         cut_item.set_is_shaded(&yes)
-         copy_item.set_is_shaded(&yes)
-      }
       if text.can_undo() then {
          clear_msg()
          save_button.set_is_shaded(&no)
          save_item.set_is_shaded(&no)
-         undo_item.set_is_shaded(&no)
       } else {  
          save_button.set_is_shaded(&yes)
          save_item.set_is_shaded(&yes)
-         undo_item.set_is_shaded(&yes)
       }
-      if text.can_redo() then
-         redo_item.set_is_shaded(&no)
-      else
-         redo_item.set_is_shaded(&yes)
    end
 
    private setup()
@@ -183,22 +184,7 @@ class Editor(Dialog)
       menu_1.add(quit_item)
       menu_bar_1.add(menu_1)
 
-      menu_2 := Menu().set_label("Edit").set_accel("e")
-      cut_item := TextMenuItem().set_label("Cut").set_accel("c")
-      cut_item.connect(text.handle_cut, Event.ACTION)
-      menu_2.add(cut_item)
-      copy_item := TextMenuItem().set_label("Copy").set_accel("o")
-      copy_item.connect(text.handle_copy, Event.ACTION)
-      menu_2.add(copy_item)
-      paste_item := TextMenuItem().set_label("Paste").set_accel("p")
-      paste_item.connect(text.handle_paste, Event.ACTION)
-      menu_2.add(paste_item)
-      undo_item := TextMenuItem().set_label("Undo").set_accel("u")
-      undo_item.connect(text.handle_undo, Event.ACTION)
-      menu_2.add(undo_item)
-      redo_item := TextMenuItem().set_label("Redo").set_accel("r")
-      redo_item.connect(text.handle_redo, Event.ACTION)
-      menu_2.add(redo_item)
+      menu_2 := EditMenu(text).set_label("Edit").set_accel("e")
       menu_bar_1.add(menu_2)
 
       cbg := CheckBoxGroup()

@@ -88,7 +88,6 @@ class Dialog(Component)
       copy_rect := &null
 
       self.invoke_display(r.x, r.y, r.w, r.h)
-
       cbwin.copy_to(r.x, r.y, r.w, r.h, win, r.x, r.y)
    end
 
@@ -104,7 +103,10 @@ class Dialog(Component)
    end
 
    public in_menu_mode()
-      return \self.menu_mode
+      return if \popup_manager then
+         \popup_manager.menu_mode
+      else
+         \self.menu_mode
    end
 
    public block()
@@ -243,8 +245,7 @@ class Dialog(Component)
       self.compute_z_order()
       self.compute_tab_order()
       self.cbwin := clone_win_with(self.buffer_win,
-                                   self.effective_wattribs) | 
-         runerr("Failed to open clone window:" || &why)
+                                   self.effective_wattribs)
       every (!self.children).initially()
    end
 
@@ -1582,5 +1583,7 @@ end
 abstract class MenuMode()
    public abstract should_close(e)
    public abstract close_all()
-   public allow_nested(c) end
+   public abstract gen_popup_components()
+   public abstract get_nesting_component()
+   public abstract allow_nested(c)
 end

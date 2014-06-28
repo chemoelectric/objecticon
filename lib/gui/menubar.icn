@@ -16,12 +16,11 @@ import graphics
 #
 # Menus are added to the menu bar with the {add()} method.
 #
-class MenuBar(Component, MenuMode)
+class MenuBar(Component, MenuSystem)
    public 
       which_highlight,      # Currently highlighted menu
       which_open,           # Currently open menu
-      menus,                # List of menus.
-      accel_skip
+      menus                 # List of menus.
 
    public close_all()
       set_which_highlight()
@@ -142,7 +141,7 @@ class MenuBar(Component, MenuMode)
       if /self.which_highlight then
          self.parent_dialog.enter_menu_mode(self)
 
-      # Hide any existing visible submenu
+      # Hide any existing visible submenu (even though it may have already hidden itself)
       (\self.which_open).hide()
 
       # Just invalidate the bits that have changed.
@@ -186,10 +185,10 @@ class MenuBar(Component, MenuMode)
    public handle_accel(e)
       local m
       m := find_key(e.code) | fail
-      # The accelerator event will be passed to handle_key below; we don't want
-      # to pass this on to the menu in case it matches one of its menus - that would
-      # be two "accelerations" on one keypress.
-      accel_skip := e
+      # The accelerator event will be passed to the menu, which could
+      # be two "accelerations" on one keypress.  Therefore the key is noted
+      # in menu and skipped by the menu handle_key method.
+      m.accel_skip := e
       set_which_open(m)
       m.cursor_on()
    end
@@ -199,9 +198,7 @@ class MenuBar(Component, MenuMode)
    end
 
    public should_close(e)
-      if member(Mouse.PRESS, e.code) &
-         not(in_region(e) | (\which_open).which_region(e)) then
-         return
+      return member(Mouse.PRESS, e.code) & not(in_region(e))
    end
 
    public get_tooltip(e)
@@ -321,11 +318,7 @@ class MenuBar(Component, MenuMode)
    end
 
    public handle_key(e)
-      if e === accel_skip then
-         accel_skip := &null
-      else if \self.which_open then
-         self.which_open.handle_key(e)
-      else case /e.release & e.code of {
+       case /e.release & e.code of {
          Key.DOWN | " " | "\r": handle_key_down(e)
          Key.RIGHT: handle_key_right(e)
          Key.LEFT: handle_key_left(e)
@@ -375,11 +368,14 @@ class MenuBar(Component, MenuMode)
    end
 
    public allow_nested(c)
-      local t
-      every t := c.gen_parents() do {
-         if is(t, SubMenuProxyComponent) then
-            return t.menu.parent_component === self
-      }
+      return is(c, SubMenuProxyComponent) & c.menu.parent_component === self
+   end
+
+   public gen_popup_components()
+   end
+
+   public get_nesting_component()
+      return self
    end
 
    public new()

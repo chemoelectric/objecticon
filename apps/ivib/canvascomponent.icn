@@ -246,15 +246,6 @@ class CanvasComponent(CanvasObject)
    end
 
    #
-   # Reset an object, ie finalize it and set it up again afresh.
-   #
-   public reset()
-      self.finally()
-      self.initially()
-      self.layout()
-   end
-
-   #
    # Is obj inside this object?
    #
    public is_inside(obj)

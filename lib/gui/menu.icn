@@ -135,10 +135,6 @@ class Menu(TextMenuItem)
       return self
    end
 
-   public which_region(e)
-      return in_region(e) | (\which_open).which_region(e)
-   end
-
    public handle_key_up(e)
       local m, last
 
@@ -283,8 +279,8 @@ class Menu(TextMenuItem)
    end
 
    public handle_key(e)
-      if \self.which_open then
-         self.which_open.handle_key(e)
+      if e === accel_skip then
+         accel_skip := &null
       else case /e.release & e.code of {
          Key.UP: handle_key_up(e)
          Key.DOWN: handle_key_down(e)
@@ -306,6 +302,7 @@ class Menu(TextMenuItem)
       every c.connect(handle_move, 
                              Event.MOUSE_MOVEMENT | Event.MOUSE_LEFT_DRAG_OVER | Event.MOUSE_MIDDLE_DRAG_OVER | Event.MOUSE_RIGHT_DRAG_OVER)
       c.connect(handle_exit, Event.MOUSE_EXIT)
+      c.connect(handle_key, Event.KEY_PRESS)
       return c
    end
 
@@ -318,6 +315,23 @@ class Menu(TextMenuItem)
       #
       set_which_highlight()
       cast(self,TextMenuItem).hide()
+   end
+
+   # A helpful method to tidy up a menu by removing any redundant
+   # separators.  This can simplify the logic when creating a menu
+   # with optional elements.
+   #
+   public tidy()
+      local i
+      every i := *children to 1 by -1 do {
+         if is(children[i], MenuSeparator) then {
+            if is(children[i + 1], MenuSeparator) then
+               remove_index(i + 1)
+            if i = (1 | *children) then
+               remove_index(i)
+         }
+      }
+      return self
    end
 
    public new()
