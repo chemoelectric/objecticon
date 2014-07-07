@@ -5112,7 +5112,7 @@ class Browser(ComponentScrollArea)
       status_ticker := Dispatcher.new_task{status()}
       primary_selection_owner := BrowserPrimarySelectionOwner(self)
       set_inner(TextFlow(self))
-      use_default_keys()
+      set_use_default_keys(&yes)
       connect(additional_keys, Event.KEY_PRESS)
       history := []
       history_pos := 0

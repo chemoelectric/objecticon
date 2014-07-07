@@ -380,7 +380,7 @@ class TextDisplay(LineBasedScrollArea)
       tab_width := Gui.TAB_WIDTH
       set_contents([])
       set_wrap_mode("off")
-      use_default_keys()
+      set_use_default_keys(&yes)
       return
    end
 end
