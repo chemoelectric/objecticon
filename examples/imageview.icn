@@ -88,7 +88,7 @@ class ImageView(DrawScrollArea)
 
    public new()
       cast(self,DrawScrollArea).new()
-      use_default_keys()
+      set_use_default_keys(&yes)
       return
    end
 end

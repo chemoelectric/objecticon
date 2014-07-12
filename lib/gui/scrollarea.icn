@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics
+import graphics, util
 
 #
 # This is a base class for displaying an arbitrarily large object
@@ -25,7 +25,8 @@ abstract class ScrollArea(Component)
       wheel_factor,
       vertical_increment,
       horizontal_increment,
-      use_default_keys_flag
+      use_wheel_flag,
+      default_key_listener
 
    public static
       SCROLLAREA_SCROLLBAR_SIZE
@@ -401,7 +402,7 @@ abstract class ScrollArea(Component)
          if \new_vsb then {
             self.vsb.set_wheel_factor(\self.wheel_factor)
             self.vsb.
-               set_wheel_component(self).
+               set_wheel_component(if /use_wheel_flag then &null else self).
                connect(self.on_vsb, Event.VALUE_CHANGED).
                set_value(0)
             self.add(self.vsb)
@@ -443,11 +444,11 @@ abstract class ScrollArea(Component)
 
       display_children()
 
-      if \use_default_keys_flag & self.has_focus() & self.is_unshaded() then
+      if \default_key_listener & self.has_focus() & self.is_unshaded() then
          Gui.style.draw_focus_rectangle(self.cbwin, self.x, self.y, self.w, self.h)
    end
 
-   public default_on_key(e)
+   public on_default_key(e)
       case e.code of {
          Key.HOME : set_area_y(0)
          Key.END : set_area_y((\self.vsb).total_size)
@@ -460,15 +461,30 @@ abstract class ScrollArea(Component)
       }
    end
 
-   public use_default_keys()
-      self.set_accepts_focus(&yes)
-      self.connect(self.default_on_key, Event.KEY_PRESS)
-      self.use_default_keys_flag := 1
+   # Configure whether or not to use the default cursor movement keys; default no.
+   #
+   public set_use_default_keys(s)
+      s := check_flag(s)
+      disconnect(\default_key_listener)
+      if /s then {
+         set_accepts_focus(&no)
+         default_key_listener := &null
+      } else {
+         set_accepts_focus(&yes)
+         default_key_listener := connect_and_return(on_default_key, Event.KEY_PRESS)
+      }
+      return self
+   end
+
+   # Configure whether or not to use the mouse wheel; default yes.
+   #
+   public set_use_wheel(s)
+      use_wheel_flag := check_flag(s)
       return self
    end
 
    public keeps(e)
-      return \use_default_keys_flag & member(Key.CURSOR, e.code)
+      return \default_key_listener & member(Key.CURSOR, e.code)
    end
 
    #
@@ -535,6 +551,7 @@ abstract class ScrollArea(Component)
    public new()
       cast(self,Component).new()
       self.set_border(SunkenBorder())
+      use_wheel_flag := &yes
       self.view := create_view()
       add(view)
       self.set_constraint("x_fill", &yes)

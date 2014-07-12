@@ -5074,7 +5074,7 @@ class Browser(ComponentScrollArea)
    #
    public magnify(f)
       local c, i, seen, s
-       seen := set()
+      seen := set()
       every c := Seq{traverse_postorder()} do {
          if is(c,TextFlow) then {
             every i := !c.input do {
@@ -5087,7 +5087,13 @@ class Browser(ComponentScrollArea)
          if s := c.get_wattrib("font") then
             c.set_font(scale_font(s, f))
       }
-      reset()
+      # We could just call reset() here, but that would mean we
+      # couldn't use this function during page loading (since it would
+      # reset the worker pool).  So just reset the view() and call
+      # layout() and invalidate() as reset() would have done.
+      view.reset()
+      layout()
+      invalidate()
       return self
    end
 
@@ -5119,6 +5125,20 @@ class Browser(ComponentScrollArea)
       return self
    end
 
+   private on_wheel_up(e)
+      if /e.ctrl then
+         (\vsb).handle_wheel_up(e)
+      else
+         do_increase_font()
+   end
+
+   private on_wheel_down(e)
+      if /e.ctrl then
+         (\vsb).handle_wheel_down(e)
+      else
+         do_decrease_font()
+   end
+
    public new()
       cast(self,ComponentScrollArea).new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
@@ -5128,7 +5148,10 @@ class Browser(ComponentScrollArea)
       status_ticker := Dispatcher.new_task{status()}
       primary_selection_owner := BrowserPrimarySelectionOwner(self)
       set_inner(TextFlow(self))
-      use_default_keys()
+      set_use_default_keys(&yes)
+      set_use_wheel(&no)
+      connect(on_wheel_up, Event.MOUSE_WHEEL_UP)
+      connect(on_wheel_down, Event.MOUSE_WHEEL_DOWN)
       connect(additional_keys, Event.KEY_PRESS)
       history := []
       history_pos := 0
