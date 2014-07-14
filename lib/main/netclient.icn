@@ -68,18 +68,22 @@ class NetClient(Connectable, HasTask)
       return choose_poll([connection, for], timeout)
    end
 
+   private dns_query_impl()
+      return SocketStream.dns_query_4(server)
+   end
+
    private dns_bg_query(p)
       local r
-      if r := SocketStream.dns_query(server) then
+      if r := dns_query_impl() then
          p.send(r)
       else
          p.send(&why)
    end
 
-   private do_dns_query()
+   private dns_query()
       local p, v
       if /task then
-         return SocketStream.dns_query(server)
+         return dns_query_impl()
       v := use {
          p := Process{dns_bg_query(p)}.set_task(task),
          p.start().poll()
@@ -94,14 +98,20 @@ class NetClient(Connectable, HasTask)
    # Open the connection.
    #
    protected open_connection()
-      local r, domain, addr, msg_addr
+      local r, domain, addr, msg_addr, ip
 
       close_connection()
       fire(CONNECTING_EVENT)
 
       if \server then {
-         domain := ProtocolFormat.INET
-         addr := "inet:" || do_dns_query()[1] || ":" || port | fail
+         ip := dns_query()[1] | fail
+         if upto('.', ip) then {
+            domain := ProtocolFormat.INET
+            addr := "inet:" || ip || ":" || port
+         } else {
+            domain := ProtocolFormat.INET6
+            addr := "inet6:[" || ip || "]:" || port
+         }
          msg_addr := server || " (" || addr || ")"
       } else if \path then {
          domain := ProtocolFormat.UNIX
