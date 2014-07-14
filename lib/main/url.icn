@@ -215,20 +215,22 @@ class URL(ObjectOutput)
    #
    public str()
       local s
-      s := string(self.scheme) || ":"
-      if \self.host then {
+      s := string(scheme) || ":"
+      if \host then {
          s ||:= "//"
-         s ||:= string(\self.userinfo) || "@"
-         if self.scheme == "file" then
-            s ||:= "localhost" ~== string(self.host)
-         else
-            s ||:= string(self.host)
+         s ||:= string(\userinfo) || "@"
+         if not(scheme == "file" & host == "localhost") then {
+            s ||:= if upto(':', host) then
+               "[" || string(host) || "]"
+            else
+               string(host)
+         }
          if \port & not(port = get_default_port(scheme)) then
-            s ||:= ":" || self.port
+            s ||:= ":" || port
       }
-      s ||:= string(self.path)
-      s ||:= "?" || string(\self.query)
-      s ||:= "#" || string(\self.fragment)
+      s ||:= string(path)
+      s ||:= "?" || string(\query)
+      s ||:= "#" || string(\fragment)
       return s
    end
 
@@ -282,7 +284,10 @@ class URL(ObjectOutput)
          scheme := 1(map(tab(many(&lcase ++ &ucase ++ &digits ++ '+-.'))), =":") | return error("Scheme required")
          if ="//" then {
             userinfo := 1(tab(upto('@')), move(1))
-            host := tab(upto(':/#?') | 0)
+            host := if ="[" then
+               1(tab(upto(']')), move(1)) | return error("Missing ] bracket")
+            else
+               tab(upto(':/#?') | 0)
             if *host = 0 then {
                if scheme == "file" then
                   host := "localhost"
@@ -303,14 +308,10 @@ class URL(ObjectOutput)
                return error("// expected")
             path := tab(upto('#?') | 0)
          }
-         if any('?') then {
-            move(1)
+         if ="?" then
             query := tab(upto('#') | 0)
-         }
-         if any('#') then {
-            move(1)
+         if ="#" then
             fragment := tab(0)
-         }
       }
       return
    end
