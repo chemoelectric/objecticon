@@ -281,10 +281,10 @@ class URL(ObjectOutput)
    #
    public new(s)
       s ? {
-         scheme := 1(map(tab(many(&lcase ++ &ucase ++ &digits ++ '+-.'))), =":") | return error("Scheme required")
-         if ="//" then {
+         scheme := 1(map(tab(many(&lcase ++ &ucase ++ &digits ++ '+-.'))), =u":") | return error("Scheme required")
+         if =u"//" then {
             userinfo := 1(tab(upto('@')), move(1))
-            host := if ="[" then
+            host := if =u"[" then
                1(tab(upto(']')), move(1)) | return error("Missing ] bracket")
             else
                tab(upto(':/#?') | 0)
@@ -294,7 +294,7 @@ class URL(ObjectOutput)
                else
                   return error("No host")
             }
-            port := if =":" then
+            port := if =u":" then
                integer(tab(many(&digits))) | return error("Bad port")
             else 
                get_default_port(scheme)
@@ -308,9 +308,9 @@ class URL(ObjectOutput)
                return error("// expected")
             path := tab(upto('#?') | 0)
          }
-         if ="?" then
+         if =u"?" then
             query := tab(upto('#') | 0)
-         if ="#" then
+         if =u"#" then
             fragment := tab(0)
       }
       return
@@ -348,14 +348,10 @@ class URL(ObjectOutput)
          s ?:= strip_dot_dirs(get_path_dir() || tab(upto('?') | 0)) || tab(0)
       s ? {
          new_path := tab(upto('#?') | 0)
-         if any('?') then {
-            move(1)
+         if =u"?" then
             new_query := tab(upto('#') | 0)
-         }
-         if any('#') then {
-            move(1)
+         if =u"#" then
             new_fragment := tab(0)
-         }
       }
       return from_parts(scheme, userinfo, host, port, new_path, new_query, new_fragment)
    end
