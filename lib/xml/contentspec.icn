@@ -18,7 +18,7 @@ import lang, io
 #
 class ContentSpec(ObjectOutput)
    public
-      op, 
+      op,        # op is always a string, never ucs.
       arg1,
       arg2,
       is_mixed_flag
@@ -83,7 +83,7 @@ class ContentSpec(ObjectOutput)
    public pattern_match(subject, pos)
       local x, y, b
 
-      case string(op) of {
+      case op of {
          "ANY" :
             return *subject - pos + 1
 
@@ -142,6 +142,8 @@ class ContentSpec(ObjectOutput)
             suspend 0 | arg1.pattern_match(subject, pos)
          }
 
+         default:
+            runerr("Bad ContentSpec op", op)
       }
    end
 
@@ -151,7 +153,7 @@ class ContentSpec(ObjectOutput)
    private object_output(oo)
       local s, x
       oo.object_start(self)
-      case string(op) of {
+      case op of {
          "ANY" | "EMPTY" | "#PCDATA" :
             oo.writes(op)
 

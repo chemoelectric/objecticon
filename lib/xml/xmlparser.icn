@@ -1166,7 +1166,7 @@ class XmlParser(Connectable)
       x := parse_choiceseq()
       if dtd_any('?*+') then {
          op := move(1)
-         return ContentSpec(op, x)
+         return ContentSpec(string(op), x)
       } else
          return x
    end
@@ -1185,7 +1185,7 @@ class XmlParser(Connectable)
          throw("Name or ( expected")
       if dtd_any('?*+') then {
          op := move(1)
-         return ContentSpec(op, x)
+         return ContentSpec(string(op), x)
       } else
          return x
    end
@@ -1204,13 +1204,13 @@ class XmlParser(Connectable)
 
       if dtd_any('|,') then {
          op := move(1)
-         res := t := ContentSpec(op, a)
+         res := t := ContentSpec(string(op), a)
          repeat {
             dtd_opt_spaces()
             a := parse_cp()
             dtd_opt_spaces()
             tab(dtd_match(op)) | break
-            t.arg2 := ContentSpec(op, a)
+            t.arg2 := ContentSpec(string(op), a)
             t := t.arg2
          }
          t.arg2 := a
@@ -1230,7 +1230,7 @@ class XmlParser(Connectable)
 
       tab(dtd_match(u"(")) | throw("( expected")
       dtd_opt_spaces()
-      a := ContentSpec(tab(dtd_match(u"#PCDATA"))) | throw("'#PCDATA' expected")
+      a := ContentSpec(string(tab(dtd_match(u"#PCDATA")))) | throw("'#PCDATA' expected")
        
       dtd_opt_spaces()
 
