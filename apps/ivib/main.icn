@@ -372,9 +372,7 @@ class Main(Dialog)
       #
       # Dispose of current canvas
       #
-      if self.parent_dialog.focus === self.canvas then
-         self.parent_dialog.focus := &null
-
+      clear_focus()
       canvas_border.remove(self.canvas)
       self.canvas := c
       canvas_border.set_canvas(self.canvas)
@@ -387,6 +385,7 @@ class Main(Dialog)
       self.canvas.update_pos_label()
       update_grey()
       synch_tree()
+      set_focus(c)
    end
 
    public copy_to_clipboard(cc)
@@ -1383,6 +1382,7 @@ class Main(Dialog)
       canvas.dialog_ih := Canvas.DEFAULT_HEIGHT
       canvas.synch_size()
       self.canvas_zone.add(canvas_border)
+      set_focus(canvas)
 
       #
       # Initialize the undo/redo lists.

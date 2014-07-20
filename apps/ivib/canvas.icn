@@ -1170,10 +1170,9 @@ class Canvas(Component,SelectiveObjectCodec)
             self.invalidate()
          }
       } else {
-         something_selected() | fail
          case ec of {
             "\r":
-               parent_dialog.show_dialog(selected)
+               parent_dialog.op_dialog()
 
             Key.UP | Key.DOWN | Key.LEFT | Key.RIGHT : 
                handle_move_key(e)
@@ -1184,6 +1183,7 @@ class Canvas(Component,SelectiveObjectCodec)
    private handle_move_key(e)
       local ec
 
+      something_selected() | fail
       ec := e.code
       moving := selected
       #
