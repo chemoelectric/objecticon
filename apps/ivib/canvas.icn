@@ -1161,18 +1161,30 @@ class Canvas(Component,SelectiveObjectCodec)
 
    public handle_key(e)
       local ec
+
       ec := e.code
       if \self.held_flag then {
          if ec === "\e" then {
             moving := held_flag := resize_mode := &null
+            parent_dialog.change_pointer(Dialog.DEFAULT_POINTER)
             self.invalidate()
          }
-         fail
+      } else {
+         something_selected() | fail
+         case ec of {
+            "\r":
+               parent_dialog.show_dialog(selected)
+
+            Key.UP | Key.DOWN | Key.LEFT | Key.RIGHT : 
+               handle_move_key(e)
+         }
       }
+   end
 
-      member(Key.CURSOR, ec) | fail
-      something_selected() | fail
+   private handle_move_key(e)
+      local ec
 
+      ec := e.code
       moving := selected
       #
       # Save original pos and size.

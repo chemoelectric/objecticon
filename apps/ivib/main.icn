@@ -870,7 +870,6 @@ class Main(Dialog)
          info_label.set_label("")
 
       case /self.menu_mode & /e.release & e.code of {
-         "\r" : op_dialog()
          "\^q" : op_quit()
          "\^o" : op_open_file()
          "\^w" : op_save_as()
@@ -881,7 +880,6 @@ class Main(Dialog)
          "\^s" : if /save.is_shaded_flag then op_save()
          "\^z" : if /undo.is_shaded_flag then op_undo()
          "\^y" : if /redo.is_shaded_flag then op_redo()
-         "\d" : op_delete_selections()  #swj
       }
    end
 
