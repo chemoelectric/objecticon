@@ -1913,7 +1913,6 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
         struct addrinfo *res;
         int error;
         char *t = s + 5, buf[128], *host, *port;
-
         if (strlen(t) >= sizeof(buf)) {
             LitWhy("Name too long");
             return 0;
@@ -1921,7 +1920,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
         strcpy(buf, t);
         port = strchr(buf, ':');
         if (!port) {
-            LitWhy("Bad socket address format");
+            LitWhy("Bad socket address format (missing :)");
             return 0;
         }
         *port++ = 0;
@@ -1944,8 +1943,58 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
         *len = sizeof(iss);
         return (struct sockaddr *)&iss;
     }
+    if (strncmp(s, "inet6:", 6) == 0) {
+        static struct sockaddr_in6 iss;
+        struct addrinfo hints;
+        struct addrinfo *res;
+        int error;
+        char *t = s + 6, buf[128], *host, *port;
+        if (strlen(t) >= sizeof(buf)) {
+            LitWhy("Name too long");
+            return 0;
+        }
+        strcpy(buf, t);
+        if (buf[0] == '[') {
+            t = strchr(buf, ']');
+            if (!t) {
+                LitWhy("Bad socket address format (missing ])");
+                return 0;
+            }
+            host = buf + 1;
+            *t++ = 0;
+            if (*t != ':') {
+                LitWhy("Bad socket address format (missing :)");
+                return 0;
+            }
+            port = t + 1;
+        } else {
+            host = buf;
+            port = strchr(buf, ':');
+            if (!port) {
+                LitWhy("Bad socket address format (missing :)");
+                return 0;
+            }
+            *port++ = 0;
+        }
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = AF_INET6;
+        hints.ai_socktype = SOCK_STREAM;
+        if (strcmp(host, "INADDR_ANY") == 0) {
+            hints.ai_flags = AI_PASSIVE;
+            host = 0;
+        }
+        error = getaddrinfo(host, port, &hints, &res);
+        if (error != 0) {
+            getaddrinfo_error2why(error);
+            return 0;
+        }
+        memcpy(&iss, res->ai_addr, res->ai_addrlen);
+        freeaddrinfo(res);
+        *len = sizeof(iss);
+        return (struct sockaddr *)&iss;
+    }
 
-    LitWhy("Bad socket address format");
+    LitWhy("Bad socket address format (unknown family)");
     return 0;
 #else
     LitWhy("Unsuppoted");
@@ -1953,7 +2002,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
 #endif
 }
 
-function io_SocketStream_dns_query(host)
+function io_SocketStream_dns_query_4(host)
    if !cnv:C_string(host) then
       runerr(103, host)
    body {
@@ -1979,6 +2028,43 @@ function io_SocketStream_dns_query(host)
           char buf[INET_ADDRSTRLEN];
           struct sockaddr_in *p = (struct sockaddr_in *)t->ai_addr;
           inet_ntop(AF_INET, &p->sin_addr, buf, sizeof(buf));
+          cstr2string(buf, &tmp);
+          list_put(&result, &tmp);
+      }
+      freeaddrinfo(res);
+      return result;
+#else
+      Unsupported;
+#endif
+   }
+end
+
+function io_SocketStream_dns_query_6(host)
+   if !cnv:C_string(host) then
+      runerr(103, host)
+   body {
+#if UNIX
+      struct addrinfo hints;
+      struct addrinfo *res, *t;
+      tended struct descrip tmp, result;
+      int error, n;
+      memset(&hints, 0, sizeof(hints));
+      hints.ai_family = AF_INET6;
+      hints.ai_socktype = SOCK_STREAM;
+      error = getaddrinfo(host, NULL, &hints, &res);
+      if (error != 0) {
+          getaddrinfo_error2why(error);
+          fail;
+      }
+      n = 0;
+      for (t = res; t; t = t->ai_next)
+          ++n;
+
+      create_list(n, &result);
+      for (t = res; t; t = t->ai_next) {
+          char buf[INET6_ADDRSTRLEN];
+          struct sockaddr_in6 *p = (struct sockaddr_in6 *)t->ai_addr;
+          inet_ntop(AF_INET6, &p->sin6_addr, buf, sizeof(buf));
           cstr2string(buf, &tmp);
           list_put(&result, &tmp);
       }

@@ -976,7 +976,7 @@ class UnixFileSystem(FileSystem)
       local l, t
       l := []
       s ? {
-         put(l, ="/")
+         put(l, =u"/")
          until pos(0) do {
             t := tab(upto('/') | 0)
             if *t > 0 then

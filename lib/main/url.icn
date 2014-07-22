@@ -215,20 +215,22 @@ class URL(ObjectOutput)
    #
    public str()
       local s
-      s := string(self.scheme) || ":"
-      if \self.host then {
+      s := string(scheme) || ":"
+      if \host then {
          s ||:= "//"
-         s ||:= string(\self.userinfo) || "@"
-         if self.scheme == "file" then
-            s ||:= "localhost" ~== string(self.host)
-         else
-            s ||:= string(self.host)
+         s ||:= string(\userinfo) || "@"
+         if not(scheme == "file" & host == "localhost") then {
+            s ||:= if upto(':', host) then
+               "[" || string(host) || "]"
+            else
+               string(host)
+         }
          if \port & not(port = get_default_port(scheme)) then
-            s ||:= ":" || self.port
+            s ||:= ":" || port
       }
-      s ||:= string(self.path)
-      s ||:= "?" || string(\self.query)
-      s ||:= "#" || string(\self.fragment)
+      s ||:= string(path)
+      s ||:= "?" || string(\query)
+      s ||:= "#" || string(\fragment)
       return s
    end
 
@@ -279,17 +281,20 @@ class URL(ObjectOutput)
    #
    public new(s)
       s ? {
-         scheme := 1(map(tab(many(&lcase ++ &ucase ++ &digits ++ '+-.'))), =":") | return error("Scheme required")
-         if ="//" then {
+         scheme := 1(map(tab(many(&lcase ++ &ucase ++ &digits ++ '+-.'))), =u":") | return error("Scheme required")
+         if =u"//" then {
             userinfo := 1(tab(upto('@')), move(1))
-            host := tab(upto(':/#?') | 0)
+            host := if =u"[" then
+               1(tab(upto(']')), move(1)) | return error("Missing ] bracket")
+            else
+               tab(upto(':/#?') | 0)
             if *host = 0 then {
                if scheme == "file" then
                   host := "localhost"
                else
                   return error("No host")
             }
-            port := if =":" then
+            port := if =u":" then
                integer(tab(many(&digits))) | return error("Bad port")
             else 
                get_default_port(scheme)
@@ -303,14 +308,10 @@ class URL(ObjectOutput)
                return error("// expected")
             path := tab(upto('#?') | 0)
          }
-         if any('?') then {
-            move(1)
+         if =u"?" then
             query := tab(upto('#') | 0)
-         }
-         if any('#') then {
-            move(1)
+         if =u"#" then
             fragment := tab(0)
-         }
       }
       return
    end
@@ -347,14 +348,10 @@ class URL(ObjectOutput)
          s ?:= strip_dot_dirs(get_path_dir() || tab(upto('?') | 0)) || tab(0)
       s ? {
          new_path := tab(upto('#?') | 0)
-         if any('?') then {
-            move(1)
+         if =u"?" then
             new_query := tab(upto('#') | 0)
-         }
-         if any('#') then {
-            move(1)
+         if =u"#" then
             new_fragment := tab(0)
-         }
       }
       return from_parts(scheme, userinfo, host, port, new_path, new_query, new_fragment)
    end

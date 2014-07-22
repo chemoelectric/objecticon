@@ -1219,9 +1219,14 @@ class SocketStream(DescStream)
    public native shutdown(how)
 
    #
-   # Return a list of numerical addresses for the given host.
+   # Return a list of ipv4 numerical addresses for the given host.
    #
-   public static native dns_query(host)
+   public static native dns_query_4(host)
+
+   #
+   # Return a list of ipv6 numerical addresses for the given host.
+   #
+   public static native dns_query_6(host)
 
    private native accept_impl()
 

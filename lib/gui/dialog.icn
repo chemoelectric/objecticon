@@ -415,12 +415,11 @@ class Dialog(Component)
    # Sets keyboard focus to the given component.
    #
    public set_focus(c, e)
-      if \self.focus === c then
-         return self
-
-      (\self.focus).lost_focus(e)
-      self.focus := c
-      (\self.focus).got_focus(e)
+      if self.focus ~=== c then {
+         (\self.focus).lost_focus(e)
+         self.focus := c
+         (\self.focus).got_focus(e)
+      }
       return self
    end
 
@@ -428,9 +427,7 @@ class Dialog(Component)
    # Clear the keyboard focus.
    #
    public clear_focus(e)
-      (\self.focus).lost_focus(e)
-      self.focus := &null
-      return self
+      return set_focus(, e)
    end
 
    #
