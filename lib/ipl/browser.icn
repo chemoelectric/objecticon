@@ -2529,6 +2529,7 @@ abstract class BrowserUI()
    public abstract browse_for_file(s)
    public abstract is_visited(url)
    public abstract display_search()
+   public abstract display_externally(res)
 end
 
 class BrowserPrimarySelectionOwner(TextSelectionOwner)
@@ -3061,6 +3062,10 @@ class Browser(ComponentScrollArea)
       return (\ui).browse_for_file(s)
    end
 
+   public display_externally(res)
+      return (\ui).display_externally(res)
+   end
+
    public cancel()
       worker_pool.cancel_all(self)
       return self
@@ -3224,18 +3229,6 @@ class Browser(ComponentScrollArea)
 
    private set_top_data(res)
       local doc, s, row, c, cu, id
-      if \curr_history_entry then {
-         save_form_values()
-         curr_history_entry.area_x := get_area_x()
-         curr_history_entry.area_y := get_area_y()
-         curr_history_entry.focus_index := get_focusable_index(parent_dialog.get_focus()) | &null
-         # Save last highlight stuff
-         curr_history_entry.last_highlight_component_index := 
-            curr_history_entry.last_highlight_index := curr_history_entry.last_highlight := &null
-         if curr_history_entry.last_highlight_component_index := get_child_index(\last_highlight_component) then
-            last_highlight_component.save_last_highlight(curr_history_entry)
-      }
-      set_area_y(0).set_area_x(0)
       if \res.err & /res.data then {
          s := "<html><title>Error</title>" || 
             "<h1>Error:</h1>Getting " || mk_anchor(res.url) || "<br><br>" || res.err || "</html>"
@@ -3254,11 +3247,26 @@ class Browser(ComponentScrollArea)
             if id := detect(res.data) then
                s ||:= " width=" || id.width || " height=" || id.height
             s ||:= "/></html>"
-         } else
+         } else if display_externally(res) then
+            return
+         else
             s := "<html><title>Problem</title>" || 
-               "<h1>Problem:</h1>Displaying " || mk_anchor(res.url) || "<br><br>This does not seem to be an HTML or text document or an image.</html>"
+               "<h1>Problem:</h1>Displaying " || mk_anchor(res.url) || "<br><br>This does not seem to be an HTML or text document or an image, or an externally viewable object</html>"
          page_data := res.data
       }
+      if \curr_history_entry then {
+         save_form_values()
+         curr_history_entry.area_x := get_area_x()
+         curr_history_entry.area_y := get_area_y()
+         curr_history_entry.focus_index := get_focusable_index(parent_dialog.get_focus()) | &null
+         # Save last highlight stuff
+         curr_history_entry.last_highlight_component_index := 
+            curr_history_entry.last_highlight_index := curr_history_entry.last_highlight := &null
+         if curr_history_entry.last_highlight_component_index := get_child_index(\last_highlight_component) then
+            last_highlight_component.save_last_highlight(curr_history_entry)
+      }
+      set_area_y(0)
+      set_area_x(0)
       page_name := res.fname
       page_resp := res
       page_url := res.url
