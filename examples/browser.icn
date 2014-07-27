@@ -9,6 +9,7 @@ import
    http,
    net,
    xdg,
+   posix,
    ipl.options,
    ipl.browser,
    ipl.strings,
@@ -112,6 +113,15 @@ class BrowserDialog(Dialog)
    public
       last_download_dir,
       last_file_dir
+
+   private child_cleanup(t)
+      local r
+      repeat {
+         t.sleep(1000)
+         while r := System.wait(-1, WaitOpt.WNOHANG) & r.pid > 0 do
+            if \opts["v"] then write("Child process exited: ",to_string(r))
+      }
+   end
       
    private on_quit(ev)
       dispose()
@@ -371,7 +381,7 @@ class BrowserDialog(Dialog)
    end
 
    public new(url, cookies, settings)
-      local quit_menu_item, menu_bar, file_menu, bt, new_tab_item
+      local quit_menu_item, menu_bar, file_menu, bt, new_tab_item, t
       cast(self,Dialog).new()
       self.settings := settings
       self.visited_set := set()
@@ -440,6 +450,8 @@ class BrowserDialog(Dialog)
       self.set_layout(GridLayout().set_extra("cells"))
       self.set_focus(bt.url_field.find_focus())
       set_label("Browser")
+      t := Dispatcher.new_task{child_cleanup(t)}
+      t.start()
       return
    end
 end
@@ -1298,6 +1310,61 @@ class BrowserTab(TabItem, BrowserUI)
       message_label.set()
    end
 
+   private launch_prog(de, file)
+      local pid, nul, cmd, s
+      pid := System.fork() | fail
+      if pid > 0 then
+         # Parent
+         return
+      # Get the working directory for the child process
+      if s := \de.path | System.getenv("HOME") then
+         Files.chdir(s)
+      # Get the command to run.
+      cmd := de.subst_file(Format.shell_escape(file))
+      if \opts["v"] then 
+         write("Command: ", image(cmd))
+      System.setpgid()
+      if nul := FileStream("/dev/null", FileOpt.RDWR) then {
+         every nul.dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
+         nul.close()
+      }
+      System.exec("/bin/bash", ["-c", "exec " || cmd]) | stop(&why)
+   end
+
+   private static has_data(file, data)
+      return Files.stat(file).size = *data & Files.file_to_string(file) == data
+   end
+
+   private make_display_file(res)
+      local t
+      if /res.fname then
+         t := Files.make_temp_filename("oibrowser")
+      else {
+         # Use liberal_ucs here since we will insert it into the desktop entry's command string,
+         # which is ucs.  Also, we don't want non-utf files created in the filesystem.
+         t := FilePath(Files.get_temp()).child(map(res.fname, "/\0", "--")).liberal_ucs()
+         # If the display file has the same data, just return it.
+         if has_data(t, res.data) then
+            return t
+         t := Files.ensure_unique_filename(t)
+      }
+      Files.string_to_file(t, res.data) | stop(&why)
+      return t
+   end
+
+   public display_externally(res)
+      local de, mt, file
+      mt := (\res.content_type).to_rfc1521()
+      de := Xdg.gen_desktop_entries(\mt) | Xdg.gen_desktop_entries_for_file(\res.fname) | fail
+      if \opts["v"] then 
+         write("Desktop entry: ", to_string(de, 3, 1))
+      file := make_display_file(res)
+      if \opts["v"] then 
+         write("Display file: ", image(file))
+      launch_prog(de, file)
+      return
+   end
+
    public browse_for_file(s)
       local d, p
       d := parent_dialog.file_dialog
@@ -1671,7 +1738,7 @@ end
 
 procedure main(a)
    local d, url, cookies, t, bak, settings, sf, home
-   opts := options(a, "-k: -l! -agent:")
+   opts := options(a, "-k: -l! -agent: -v!")
    home := FilePath(Xdg.ensure_data_home()) | stop("Couldn't access data dir: ", &why)
    sf := home.child("oibrowser").str()
    cookies := \opts["k"] | home.child("oicookies").str()

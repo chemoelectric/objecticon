@@ -1687,9 +1687,7 @@ class Terminal(TabItem)
       cmd := runner.desktop_entry.subst_file(Format.shell_escape(s), runner.link.line)
       System.setpgid()
       if nul := FileStream("/dev/null", FileOpt.RDWR) then {
-         nul.dup2(FileStream.stdin)
-         nul.dup2(FileStream.stdout)
-         nul.dup2(FileStream.stderr)
+         every nul.dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
          nul.close()
       }
       System.exec("/bin/bash", ["-c", "exec " || cmd]) | stop(&why)
