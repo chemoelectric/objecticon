@@ -3249,7 +3249,8 @@ class Browser(ComponentScrollArea)
          if curr_history_entry.last_highlight_component_index := get_child_index(\last_highlight_component) then
             last_highlight_component.save_last_highlight(curr_history_entry)
       }
-      set_area_y(0).set_area_x(0)
+      set_area_y(0)
+      set_area_x(0)
       page_name := res.fname
       page_resp := res
       page_url := res.url
