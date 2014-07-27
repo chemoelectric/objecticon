@@ -14,6 +14,7 @@ import
    ipl.browser,
    ipl.strings,
    ipl.lists,
+   ipl.pdco,
    ipl.graphics
 
 global opts
@@ -108,18 +109,47 @@ class BrowserDialog(Dialog)
       file_dialog,
       directory_dialog,
       downloads,
-      page_menu
+      page_menu,
+      bg_pids
 
    public
       last_download_dir,
       last_file_dir
 
+   public launch_prog(de, file)
+      local pid, nul, cmd, s
+      pid := System.fork() | fail
+      if pid > 0 then {
+         # Parent
+         insert(bg_pids, pid)
+         return
+      }
+      # Get the working directory for the child process
+      if s := \de.path | System.getenv("HOME") then
+         Files.chdir(s)
+      # Get the command to run.
+      cmd := de.subst_file(Format.shell_escape(file))
+      if \opts["v"] then 
+         write("Command: ", image(cmd))
+      System.setpgid()
+      if nul := FileStream("/dev/null", FileOpt.RDWR) then {
+         every nul.dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
+         nul.close()
+      }
+      System.exec("/bin/bash", ["-c", "exec " || cmd]) | stop(&why)
+   end
+
    private child_cleanup(t)
-      local r
+      local r, pid
       repeat {
          t.sleep(1000)
-         while r := System.wait(-1, WaitOpt.WNOHANG) & r.pid > 0 do
-            if \opts["v"] then write("Child process exited: ",to_string(r))
+         every pid := !bg_pids do {
+            if r := System.wait(pid, WaitOpt.WNOHANG) & r.pid > 0 then {
+               if \opts["v"] then
+                  write("Child process exited: ",to_string(r))
+               delete(bg_pids, pid)
+            }
+         }
       }
    end
       
@@ -452,6 +482,7 @@ class BrowserDialog(Dialog)
       set_label("Browser")
       t := Dispatcher.new_task{child_cleanup(t)}
       t.start()
+      bg_pids := set()
       return
    end
 end
@@ -706,8 +737,19 @@ class DownloadTab(TabItem)
       ticker.interrupt()
    end
 
+   private static get_possible_desktop_entries(res)
+      local mt
+      mt := (\res.content_type).to_rfc1521()
+      suspend Unique{Xdg.gen_desktop_entries(\mt) | 
+                     Xdg.gen_desktop_entries(Xdg.alternative_mime_types(Xdg.get_mime_type_for_file(\res.fname)))}
+   end
+
+   private connect_launch(m2, de, file)
+      m2.connect(create parent_dialog.launch_prog(de, file), Event.ACTION)
+   end
+
    private on_table_rpress(ev)
-      local popup, menu, l, d
+      local popup, menu, l, d, m1, m2, de
 
       clear_msg()
 
@@ -731,6 +773,16 @@ class DownloadTab(TabItem)
             menu.add(TextMenuItem().
                set_label("Copy escaped result").
                connect(create on_copy_escaped_result(d), Event.ACTION))
+            m1 := Menu().set_label("Open with")
+            every de := get_possible_desktop_entries(d.resp) do {
+               m2 := TextMenuItem().
+                  set_label(de.name)
+               m2.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
+               connect_launch(m2, de, d.full_path)
+               m1.add(m2)
+            }
+            if *m1.children > 0 then 
+               menu.add(m1)
          }
          if l[1][-1].status == "Failed" then
             menu.add(TextMenuItem().
@@ -861,7 +913,7 @@ class DownloadTab(TabItem)
       self.add(url_field)
       use {
          w := Window(),
-         url_table := Table().
+         url_table := gui.Table().
             set_size("600", "258").
             set_select_mode(Select.MANY).
             set_constraint("eol", &yes).
@@ -1310,27 +1362,6 @@ class BrowserTab(TabItem, BrowserUI)
       message_label.set()
    end
 
-   private launch_prog(de, file)
-      local pid, nul, cmd, s
-      pid := System.fork() | fail
-      if pid > 0 then
-         # Parent
-         return
-      # Get the working directory for the child process
-      if s := \de.path | System.getenv("HOME") then
-         Files.chdir(s)
-      # Get the command to run.
-      cmd := de.subst_file(Format.shell_escape(file))
-      if \opts["v"] then 
-         write("Command: ", image(cmd))
-      System.setpgid()
-      if nul := FileStream("/dev/null", FileOpt.RDWR) then {
-         every nul.dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
-         nul.close()
-      }
-      System.exec("/bin/bash", ["-c", "exec " || cmd]) | stop(&why)
-   end
-
    private static has_data(file, data)
       return Files.stat(file).size = *data & Files.file_to_string(file) == data
    end
@@ -1361,7 +1392,7 @@ class BrowserTab(TabItem, BrowserUI)
       file := make_display_file(res)
       if \opts["v"] then 
          write("Display file: ", image(file))
-      launch_prog(de, file)
+      parent_dialog.launch_prog(de, file)
       return
    end
 
