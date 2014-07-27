@@ -1393,6 +1393,7 @@ class BrowserTab(TabItem, BrowserUI)
       if \opts["v"] then 
          write("Display file: ", image(file))
       parent_dialog.launch_prog(de, file)
+      parent_dialog.update_visited(res.url)
       return
    end
 
