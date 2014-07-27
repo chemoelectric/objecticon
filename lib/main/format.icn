@@ -8,7 +8,7 @@
 
 package util
 
-import lang, ipl.scan(max_many)
+import lang, ipl.scan(max_many), ipl.strings(replace)
 
 final abstract class Format()
    public static const
@@ -288,6 +288,15 @@ final abstract class Format()
          t ||:= "\\" || ch
       }
       return t
+   end
+
+   # Convert a string into rc shell format by enclosing in single quotes
+   #
+   public static rc_escape(s)
+      return if upto('=^|*?&#()<>[]{}$`\' ', s) then
+         "'" || replace(s, "'", "''") || "'"
+      else
+         s
    end
 
    #
