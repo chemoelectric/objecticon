@@ -1562,16 +1562,15 @@ class Terminal(TabItem)
    end
 
    private get_runner(link)
-      local s, es, de, url
+      local s, de, url
       url := link.url
       (url.scheme == "file") | return info_msg(u"Can only handle file:// URLs")
       (url.host == &host) | return info_msg(u"Can't run a file on another host (" || url.host || u")")
       s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
-      es := Format.shell_escape(s)
       if Files.is_directory(s) then
-         return Runner(u"cd " || es)
+         return Runner(u"cd " || Format.shell_escape(s))
       # Get a DesktopEntry based on the content-type if available, or the filename.
-      de := get_possible_desktop_entries(es) | return info_msg(u"No matching desktop entry for this URL")
+      de := get_possible_desktop_entries(s) | return info_msg(u"No matching desktop entry for this URL")
       if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1))
       return Runner(, de, link)
    end
@@ -1619,7 +1618,7 @@ class Terminal(TabItem)
    end
 
    public create_link_menu(link)
-      local m, m1, m2, s, es, de
+      local m, m1, m2, s, de
       m := Menu()
       if link.url.scheme == u"file" then {
          m.add(TextMenuItem().
@@ -1635,11 +1634,10 @@ class Terminal(TabItem)
 
       if s := ucs(link.url.get_decoded_path()) &
          link.url.scheme == u"file" &
-         not Files.is_directory(s) &
-         es := Format.shell_escape(s) then
+         not Files.is_directory(s) then
       {
          m1 := Menu().set_label("Open with")
-         every de := get_possible_desktop_entries(es) do {
+         every de := get_possible_desktop_entries(s) do {
             m2 := TextMenuItem().
                set_label(de.name)
             m2.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
