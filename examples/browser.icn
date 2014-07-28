@@ -119,7 +119,7 @@ class BrowserDialog(Dialog)
 $ifdef _PLAN9
    public launch_prog(de, file)
       local pid, nul, cmd, s
-      pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFFDG, ForkOpt.RFNAMEG, 
+      pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFCFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
                              ForkOpt.RFNOTEG, ForkOpt.RFREND, ForkOpt.RFNOWAIT)) | fail
       if pid > 0 then {
          # Parent
