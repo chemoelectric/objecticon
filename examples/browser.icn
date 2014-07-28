@@ -120,7 +120,7 @@ $ifdef _PLAN9
    public launch_prog(de, file)
       local pid, nul, cmd, s
 
-      pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFCFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
+      pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
                              ForkOpt.RFNOTEG, ForkOpt.RFREND, ForkOpt.RFNOWAIT)) | fail
       if pid > 0 then {
          # Parent
@@ -1437,6 +1437,7 @@ class BrowserTab(TabItem, BrowserUI)
       if \opts["v"] then 
          write("Display file: ", image(file))
       parent_dialog.launch_prog(de, file)
+      parent_dialog.update_visited(res.url)
       return
    end
 

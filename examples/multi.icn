@@ -70,7 +70,8 @@ end
 procedure main()
    local d
    d := ChildDialog().set_label("Dialog Modes")
-   d.show_modal()
+   d.show()
+   Dispatcher.message_loop()
 end
 
 

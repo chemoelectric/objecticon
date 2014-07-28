@@ -325,6 +325,7 @@ class TabSet(Component)
    public maybe_remember_focus()
       local f
       \remember_focus_flag | fail
+      which_one.remembered_focus := &null
       f := parent_dialog.get_focus() | fail
       if f.gen_parents() === which_one then
          which_one.remembered_focus := f

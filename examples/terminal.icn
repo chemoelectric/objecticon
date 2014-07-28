@@ -68,6 +68,7 @@ end
 class TerminalDialog(Dialog)
    private readable
       favourite_dirs,
+      bg_pids,
       tabs
 
    private on_quit(ev)
@@ -101,12 +102,39 @@ class TerminalDialog(Dialog)
       every (!tabs.children).refresh_favourite_dirs()
    end
 
+   public launch_prog(runner)
+      local pid, nul, cmd, s
+      pid := System.fork() | fail
+      if pid > 0 then {
+         # Parent
+         insert(bg_pids, pid)
+         return
+      }
+      # Get the working directory for the child process
+      if s := \runner.desktop_entry.path | System.getenv("HOME") then
+         Files.chdir(s)
+      # Get the command to run.
+      s := ucs(runner.link.url.get_decoded_path()) | syserr("Couldn't get ucs path from link")
+      cmd := runner.desktop_entry.subst_file(Format.shell_escape(s), runner.link.line)
+      System.setpgid()
+      if nul := FileStream("/dev/null", FileOpt.RDWR) then {
+         every nul.dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
+         nul.close()
+      }
+      System.exec("/bin/bash", ["-c", "exec " || cmd]) | stop(&why)
+   end
+
    private child_cleanup(t)
-      local r
+      local r, pid
       repeat {
          t.sleep(1000)
-         while r := System.wait(-1, WaitOpt.WNOHANG) & r.pid > 0 do
-            if \opts["v"] then write("Child process exited: ",to_string(r))
+         every pid := !bg_pids do {
+            if r := System.wait(pid, WaitOpt.WNOHANG) & r.pid > 0 then {
+               if \opts["v"] then
+                  write("Child process exited: ",to_string(r))
+               delete(bg_pids, pid)
+            }
+         }
       }
    end
 
@@ -160,10 +188,11 @@ class TerminalDialog(Dialog)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
       self.set_layout(GridLayout().set_extra("cells"))
-      self.set_focus(bt.commands.find_focus())
+      self.set_focus(bt.remembered_focus)
       set_label("Terminal")
       t := Dispatcher.new_task{child_cleanup(t)}
       t.start()
+      bg_pids := set()
       return
    end
 end
@@ -1522,7 +1551,7 @@ class Terminal(TabItem)
          if \r.cmd then
             run_prog(r.cmd)
          else
-            launch_prog(r)
+            parent_dialog.launch_prog(r)
       }
    end
 
@@ -1614,7 +1643,7 @@ class Terminal(TabItem)
    end
 
    private connect_launch(m2, runner)
-      m2.connect(create launch_prog(runner), Event.ACTION)
+      m2.connect(create parent_dialog.launch_prog(runner), Event.ACTION)
    end
 
    public create_link_menu(link)
@@ -1669,26 +1698,6 @@ class Terminal(TabItem)
    private run_prog(s)
       s ||:= u"\n"
       got_input(s)
-   end
-
-   private launch_prog(runner)
-      local pid, nul, cmd, s
-      pid := System.fork() | fail
-      if pid > 0 then
-         # Parent
-         return
-      # Get the working directory for the child process
-      if s := \runner.desktop_entry.path | System.getenv("HOME") then
-         Files.chdir(s)
-      # Get the command to run.
-      s := ucs(runner.link.url.get_decoded_path()) | syserr("Couldn't get ucs path from link")
-      cmd := runner.desktop_entry.subst_file(Format.shell_escape(s), runner.link.line)
-      System.setpgid()
-      if nul := FileStream("/dev/null", FileOpt.RDWR) then {
-         every nul.dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
-         nul.close()
-      }
-      System.exec("/bin/bash", ["-c", "exec " || cmd]) | stop(&why)
    end
 
    private goto_dir(d, nav)
@@ -1900,7 +1909,7 @@ class Terminal(TabItem)
          output.set_wrap_mode("width")
          commands.set_wrap_mode("width")
       }
-        
+      set_remembered_focus(commands.find_focus())
       filter.set_selection_list([u"*"])
       history := []
       history_pos := 0
