@@ -119,12 +119,22 @@ class BrowserDialog(Dialog)
 $ifdef _PLAN9
    public launch_prog(de, file)
       local pid, nul, cmd, s
+
       pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFCFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
                              ForkOpt.RFNOTEG, ForkOpt.RFREND, ForkOpt.RFNOWAIT)) | fail
       if pid > 0 then {
          # Parent
          return
       }
+
+      # Unmount our window directories in /n.  If we didn't do this,
+      # and since we are copying the namespace, this would prevent
+      # these windows closing until the launched application closes.
+      every s := (!Files.list("/n")).name do {
+         if match("oix-win.", s) then
+            Files.unmount(, "/n/" || s)
+      }
+
       # Get the working directory for the child process
       if s := \de.path | System.getenv("HOME") then
          Files.chdir(s)
