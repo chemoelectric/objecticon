@@ -188,7 +188,7 @@ class TerminalDialog(Dialog)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
       self.set_layout(GridLayout().set_extra("cells"))
-      self.set_focus(bt.commands.find_focus())
+      self.set_focus(bt.remembered_focus)
       set_label("Terminal")
       t := Dispatcher.new_task{child_cleanup(t)}
       t.start()
@@ -1909,7 +1909,7 @@ class Terminal(TabItem)
          output.set_wrap_mode("width")
          commands.set_wrap_mode("width")
       }
-        
+      set_remembered_focus(commands.find_focus())
       filter.set_selection_list([u"*"])
       history := []
       history_pos := 0
