@@ -2176,13 +2176,13 @@ static void writescript()
      *  Thanks to the Unix-haters handbook for this trick.
      */
     snprintf(script, sizeof(script),
-             "%s\n%s%-72s\n%s\n\n%s\n%s\n%s\n%s%s%s\n\n%s",
+             "%s\n%s%s%s\n%s\n\n%s\n%s\n%s\n%s%s%s\n\n%s",
              "#!/bin/sh",
-             "OIXBIN=", oixloc,
+             "OIXBIN=\"", oixloc, "\"",
              "OIXLCL=`echo $0 | sed 's=[^/]*$=oix='`",
              "[ -n \"$OIX\" ] && exec \"$OIX\" $0 ${1+\"$@\"}",
-             "[ -x $OIXLCL ] && exec $OIXLCL $0 ${1+\"$@\"}",
-             "[ -x $OIXBIN ] && exec $OIXBIN $0 ${1+\"$@\"}",
+             "[ -x \"$OIXLCL\" ] && exec \"$OIXLCL\" $0 ${1+\"$@\"}",
+             "[ -x \"$OIXBIN\" ] && exec \"$OIXBIN\" $0 ${1+\"$@\"}",
              "exec ",
              "oix",
              " $0 ${1+\"$@\"}",
