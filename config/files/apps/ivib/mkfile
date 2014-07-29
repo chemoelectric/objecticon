@@ -58,7 +58,7 @@ all:V: ivib
 
 ivib:   $COMMONU
         oit -sn -o ivib ivib.icn $COMMONU
-	cp ivib ../../bin
+	cp ivib $OIBIN
 
 clean:
 	rm -f $PROGS *.u packages.txt

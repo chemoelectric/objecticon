@@ -3,5 +3,13 @@ CFLAGS= -p -FV
 
 RLIBS=
 
+OIHOME=@CONFIG_DIR@
+OIBIN=$OIHOME/bin
+OILIB=$OIHOME/lib
+OIPATH=$OILIB/main $OILIB/gui $OILIB/xml $OILIB/parser $OILIB/ipl
+OIINCL=$OILIB/incl
+OIFONTINFO=$OIHOME/fontinfo.txt
+path=$OIBIN /bin
+
 %.$O:	%.c
 	$CC $CFLAGS $stem.c

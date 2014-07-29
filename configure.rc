@@ -1,7 +1,6 @@
 #!/bin/rc
 echo copying config files
 cp config/files/mkfile .
-cp config/files/mkdefs .
 cp config/files/lib/iyacc/mkfile lib/iyacc/mkfile
 cp config/files/lib/mkfile lib/mkfile
 cp config/files/lib/xml/mkfile lib/xml/mkfile
@@ -22,6 +21,9 @@ cp config/files/apps/oidoc/mkfile apps/oidoc/mkfile
 cp config/files/examples/mkfile examples/mkfile
 mkdir -p bin
 x=`{pwd}
+echo creating mkdefs
+sed -e 's:@CONFIG_DIR@:'^$"x^':'  \
+    <./config/files/mkdefs >mkdefs
 echo creating paths.rc
 cat >paths.rc <<EOF
 # Object Icon path settings
