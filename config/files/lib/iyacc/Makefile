@@ -40,7 +40,7 @@ all:		$(PROGRAM)
 
 $(PROGRAM):     $(OBJS)
 		$(CC) $(CFLAGS) $(LDFLAGS) -o $(PROGRAM) $(OBJS) $(LIBS)
-		$(CP) iyacc $(OIBIN)
+		$(CP) iyacc "$(OIBIN)"
 
 clean:;		@rm -f $(OBJS) $(PROGRAM)
 		$(MAKE) -C test clean
