@@ -1429,7 +1429,7 @@ class Terminal(TabItem)
 
    private close_all()
       io_task.stop()
-      tty.out("exit\n\^d")
+      #tty.out("exit\n\^d")
       tty.close()
       System.wait(pid)
    end
@@ -1452,7 +1452,8 @@ class Terminal(TabItem)
       #      put(env, "PS1=" || prompt)
       #      put(env, "PS1=")
       tty := PttyStream() | fail
-      (pid := System.fork()) | {
+      (tty.flag(FileOpt.NONBLOCK) &
+       pid := System.fork()) | {
          tty.close()
          fail
       }
@@ -1515,10 +1516,13 @@ class Terminal(TabItem)
       set_is_shaded_ex(save_button, toggle_flag(commands_mod))
    end
 
-   public run_command()
-      local t, x, s
+   private service_tty()
+      local t, x, s, n
       repeat {
-         x := io_task.poll([tty, Poll.IN + Poll.OUT], 150)
+         x := io_task.poll([tty, Poll.IN + Poll.OUT]) | {
+            err_msg(u"IO problem polling tty: " || ucs(&why))
+            break
+         }
          if DescStream.poll_in_test(x[1]) then {
             t := tty.in(1048576) | {
                err_msg(u"IO problem on tty: " || ucs(&why))
@@ -1534,7 +1538,12 @@ class Terminal(TabItem)
             check_pwd()
          } else if DescStream.poll_out_test(x[1]) then {
             if s := get(input) then {
-               tty.writes1(s)
+               n := tty.out(s) | {
+                  err_msg(u"IO problem on tty: " || ucs(&why))
+                  break
+               }
+               if n < *s then
+                  push(input, s[n + 1:0])
                #write("WROTE:",image(s))
             } else {
                #write("asking for input but none here...break")
@@ -1918,7 +1927,7 @@ class Terminal(TabItem)
       set_cwd(Files.getcwd())
       setup_shell() | stop(&why)
       input := []
-      io_task := Dispatcher.new_task{run_command()}
+      io_task := Dispatcher.new_task{service_tty()}
       io_task.start()
       theme_toolbar_button(close_button, "window-close")
       theme_toolbar_button(prev_button, "go-previous")

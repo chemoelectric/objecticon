@@ -134,11 +134,13 @@ $endif
    end
 
    private close_sock()
+      local f
 $ifndef _PLAN9
-      sock.shutdown(Shut.RDWR)
+      sock.shutdown(Shut.RDWR) | (f := 1)
 $endif
-      sock.close()
+      sock.close() | (f := 1)
       sock := &null
+      return /f & self
    end
 
    #
@@ -147,22 +149,25 @@ $endif
    # &null and closes the socket.
    #
    public close()
-      do_wait() | fail
-      close_sock()
-      return self
+      local f
+      do_wait() | (f := 1)
+      close_sock() | (f := 1)
+      return /f & self
    end
 
    #
    # Called by the parent to kill the child.  Then the {close} method is invoked.
    #
    public stop()
-      \pid | runerr("stop() called out of sequence", self)
 $ifdef _PLAN9
-      runerr("stop() not implemented")
+      \pid | runerr("stop() called out of sequence", self)
+      return error("stop() not implemented")
 $else
-      System.kill(pid, Signal.SIGTERM) | fail
-      close() | fail
-      return self
+      local f
+      \pid | runerr("stop() called out of sequence", self)
+      System.kill(pid, Signal.SIGTERM) | (f := 1)
+      close() | (f := 1)
+      return /f & self
 $endif
    end
 
