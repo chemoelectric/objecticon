@@ -6,10 +6,11 @@
 #define _ICONT_H 1
 
 #include "../h/gsupport.h"
+/* Undefine various sensitive symbols to avoid compiler warnings */
 #undef OF
 #undef CONST
-/* Fix for AIX warning */
 #undef TILDE
+#undef PRIVATE
 #if MSWIN32
 #define WORD _WORD
 #endif
