@@ -159,16 +159,17 @@ $endif
    # Called by the parent to kill the child.  Then the {close} method is invoked.
    #
    public stop()
-$ifdef _PLAN9
-      \pid | runerr("stop() called out of sequence", self)
-      return error("stop() not implemented")
-$else
       local f
       \pid | runerr("stop() called out of sequence", self)
+$ifdef _PLAN9
+      # This may fail if the child has exited, so this isn't regarded as an
+      # error (unix kill will succeed even if the child has already exited).
+      Files.string_to_file("/proc/" || pid || "/note", "kill")
+$else
       System.kill(pid, Signal.SIGTERM) | (f := 1)
+$endif
       close() | (f := 1)
       return /f & self
-$endif
    end
 
    # Create a new instance, with the given co-expression as the body
