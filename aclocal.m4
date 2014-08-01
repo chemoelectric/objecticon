@@ -307,7 +307,11 @@ AC_DEFUN([CHECK_DOUBLE_HAS_WORD_ALIGNMENT],
 
 
 AC_DEFUN([CHECK_DYNAMIC_LINKING],
-   [ AC_MSG_CHECKING(for dynamic linking)
+   [ 
+     dnl Save $LIBS since we won't want -ldl if we find we can't use dynamic linking
+     my_save_libs=$LIBS
+     AC_CHECK_LIB(dl,main)
+     AC_MSG_CHECKING(for dynamic linking)
 
      dnl Set default compiler options if not set externally
      if test -z "$DYNAMIC_LIB_CFLAGS" ; then
@@ -358,6 +362,7 @@ AC_DEFUN([CHECK_DYNAMIC_LINKING],
                    ],
                    [
                    AC_MSG_RESULT(no)
+                   LIBS=$my_save_libs
                    HAVE_DYNAMIC_LINKING=no
                    DYNAMIC_LIB_CFLAGS=""
                    DYNAMIC_LIB_LDFLAGS=""
