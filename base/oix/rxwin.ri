@@ -34,7 +34,7 @@ static void handle_exposures(wsp ws, XExposeEvent *event);
 static void handle_mouse(wsp ws, XButtonEvent *event);
 static void handle_keypress(wsp ws, XKeyEvent *event);
 static void handle_crossing(wsp ws, XCrossingEvent *event);
-static char *getprogname(void);
+static char *get_progname(void);
 static void wmap(wbp w);
 static void synch_cursor(wsp ws);
 static void synch_cursors(wdp wd, struct wcursor *c);
@@ -905,7 +905,7 @@ int getpattern(wbp w, struct imgdata *imd)
 /*
  * Return an allocated string giving the part of the prog name after the last '/'.
  */
-static char *getprogname()
+static char *get_progname()
 {
     int n;
     char *p, *s, *m;
@@ -1062,7 +1062,7 @@ static void wmap(wbp w)
         clhints.res_name = s;
         m1 = 0;
     } else {
-        m1 = getprogname();
+        m1 = get_progname();
         clhints.res_name = m1;
     }
     if ((s = getenv("OIRESOURCE_CLASS"))) {
@@ -1070,7 +1070,7 @@ static void wmap(wbp w)
         m2 = 0;
     } else {
         /* Defaults to prog name, with first letter capitalized (see X(7) manpage). */
-        m2 = getprogname();
+        m2 = get_progname();
         m2[0] = toupper((unsigned char)m2[0]);
         clhints.res_class = m2;
     }

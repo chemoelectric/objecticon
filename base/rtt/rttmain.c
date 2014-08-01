@@ -178,10 +178,12 @@ int main(argc, argv)
         optind++;
     }
 
+
+    exit(EXIT_SUCCESS);
+
 #if PLAN9
-    exits(0);
+    return 0;
 #endif
-    return EXIT_SUCCESS;
 }
 
 /*
