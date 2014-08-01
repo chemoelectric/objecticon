@@ -4,6 +4,7 @@ AC_INIT([Object Icon],
         [objecticon])
 
 AC_GNU_SOURCE
+AC_CANONICAL_HOST
 
 AC_DEFUN([OI_ADD_LIB],[
  AC_CHECK_LIB($1,main)
@@ -51,7 +52,7 @@ if test "$found_x11" = yes; then
    fi
 fi
 
-CHECK_ZLIB()
+AX_CHECK_ZLIB()
 OI_ADD_LIB(m)
 if ! test "$ac_cv_lib_m_main" = yes; then
         AC_MSG_ERROR([*** Couldn't find the math library (-lm) - can't compile without it.])
@@ -154,7 +155,7 @@ if test "$found_x11" = yes; then
 else
         echo "X11 graphics           : no"
 fi
-if test "$ac_cv_lib_z_main" = yes; then
+if test "$found_zlib" = yes; then
         echo "zlib compression       : yes"
 else
         echo "zlib compression       : no"

@@ -9,61 +9,6 @@ AC_DEFUN([AX_LIB_SOCKET_NSL],
                 AC_CHECK_LIB([socket], [socket], [LIBS="-lsocket -lnsl $LIBS"], [], [-lnsl])])
 ])
 
-AC_DEFUN([CHECK_ZLIB],
-#
-# Handle user hints
-#
-[AC_MSG_CHECKING(if zlib is wanted)
-AC_ARG_WITH(zlib,
-[  --with-zlib=DIR root directory path of zlib installation [defaults to
-                    /usr/local or /usr if not found in /usr/local]
-  --without-zlib to disable zlib usage completely],
-[if test "$withval" != no ; then
-  AC_MSG_RESULT(yes)
-  ZLIB_HOME="$withval"
-else
-  AC_MSG_RESULT(no)
-fi], [
-AC_MSG_RESULT(yes)
-ZLIB_HOME=/usr/local
-if test ! -f "${ZLIB_HOME}/include/zlib.h"
-then
-        ZLIB_HOME=/usr
-fi
-])
-
-#
-# Locate zlib, if wanted
-#
-if test -n "${ZLIB_HOME}"
-then
-        ZLIB_OLD_LDFLAGS=$LDFLAGS
-        ZLIB_OLD_CPPFLAGS=$CPPFLAGS
-        OI_ADD_LIB_DIR(${ZLIB_HOME}/lib)
-        OI_ADD_INCLUDE_DIR(${ZLIB_HOME}/include)
-        AC_CHECK_LIB(z, inflateEnd, [zlib_cv_libz=yes], [zlib_cv_libz=no])
-        AC_CHECK_HEADER(zlib.h, [zlib_cv_zlib_h=yes], [zlib_cv_zlib_h=no])
-        if test "$zlib_cv_libz" = "yes" -a "$zlib_cv_zlib_h" = "yes"
-        then
-                #
-                # If both library and header were found, use them
-                #
-                OI_ADD_LIB(z)
-                AC_MSG_CHECKING(zlib in ${ZLIB_HOME})
-                AC_MSG_RESULT(ok)
-        else
-                #
-                # If either header or library was not found, revert and bomb
-                #
-                AC_MSG_CHECKING(zlib in ${ZLIB_HOME})
-                LDFLAGS="$ZLIB_OLD_LDFLAGS"
-                CPPFLAGS="$ZLIB_OLD_CPPFLAGS"
-                AC_MSG_RESULT(failed)
-        fi
-fi
-
-])
-
 
 AC_DEFUN([AX_CHECK_JPEG],
 #
@@ -324,7 +269,14 @@ AC_DEFUN([CHECK_DYNAMIC_LINKING],
      fi
      if test -z "$DYNAMIC_EXPORT_LDFLAGS" ; then
         dnl Flags for linking the main program so its symbols are accessible to a loaded library
-        DYNAMIC_EXPORT_LDFLAGS="-Wl,-E"
+        case $host_os in
+           solaris* )
+                    dnl No flag needed
+                    ;;
+           *)
+                    DYNAMIC_EXPORT_LDFLAGS="-Wl,-E"
+                    ;;
+        esac
      fi
 
      dnl Create a shared library, dloadtest.so, to use with this test.
@@ -407,28 +359,28 @@ AC_DEFUN([AX_CHECK_CAIRO],
 [
     AC_MSG_CHECKING(if cairo is wanted)
     AC_ARG_WITH(cairo,
-[  --with-cairo=full paths to cairo.pc and pangocairo.pc
+[ --with-cairo to enable cairo if available (the default)
   --without-cairo to disable cairo usage completely],
    [
       if test "$withval" != "no"; then
          AC_MSG_RESULT(yes)
-         CAIRO_CONFIG="$withval"
       else
          AC_MSG_RESULT(no)
       fi], 
    [
-       CAIRO_CONFIG="cairo pangocairo librsvg-2.0"
+       with_cairo=yes
        AC_MSG_RESULT(yes)
    ]
 )
     unset CAIRO_VERSION CAIRO_CPPFLAGS CAIRO_LDFLAGS CAIRO_LIBS
-    if test -n "$CAIRO_CONFIG"; then
-           AC_MSG_CHECKING([for libcairo library])
+    if test "$with_cairo" != "no"; then
+           CAIRO_CONFIG="cairo >= 1.13 pangocairo >= 1.36 librsvg-2.0 >= 2.40"
+           AC_MSG_CHECKING([for $CAIRO_CONFIG])
            if pkg-config $CAIRO_CONFIG; then
               CAIRO_CPPFLAGS=`pkg-config --cflags $CAIRO_CONFIG`
               CAIRO_LDFLAGS=`pkg-config --libs-only-L $CAIRO_CONFIG`
               CAIRO_LIBS=`pkg-config --libs-only-l $CAIRO_CONFIG`
-              CAIRO_VERSION=`pkg-config --version $CAIRO_CONFIG`
+              CAIRO_VERSION=`pkg-config --modversion cairo`
               AC_DEFINE(HAVE_LIBCAIRO)
               AC_MSG_RESULT(yes)
            else
@@ -449,24 +401,24 @@ AC_DEFUN([AX_CHECK_OPENSSL],
 [
     AC_MSG_CHECKING(if OpenSSL is wanted)
     AC_ARG_WITH(openssl,
-        [  --with-openssl=path to open ssl .pc file
+        [  --with-openssl to enable OpenSSL if available (the default)
   --without-openssl to disable OpenSSL usage completely],
    [
       if test "$withval" != "no"; then
          AC_MSG_RESULT(yes)
-         OPENSSL_CONFIG="$withval"
       else
          AC_MSG_RESULT(no)
       fi], 
    [
-       OPENSSL_CONFIG="openssl"
+       with_openssl=yes
        AC_MSG_RESULT(yes)
    ]
 )
     unset OPENSSL_VERSION OPENSSL_CPPFLAGS OPENSSL_LDFLAGS OPENSSL_LIBS
-    if test -n "$OPENSSL_CONFIG"; then
-           AC_MSG_CHECKING([for libOpenSSL library >= 1.0])
-           if pkg-config "$OPENSSL_CONFIG >= 1.0"; then
+    if test "$with_openssl" != "no"; then
+           OPENSSL_CONFIG="openssl >= 1.0"
+           AC_MSG_CHECKING([for $OPENSSL_CONFIG])
+           if pkg-config $OPENSSL_CONFIG; then
               OPENSSL_CPPFLAGS=`pkg-config --cflags $OPENSSL_CONFIG`
               OPENSSL_LDFLAGS=`pkg-config --libs-only-L $OPENSSL_CONFIG`
               OPENSSL_LIBS=`pkg-config --libs-only-l $OPENSSL_CONFIG`
@@ -475,7 +427,7 @@ AC_DEFUN([AX_CHECK_OPENSSL],
               AC_MSG_RESULT(yes)
            else
               AC_MSG_RESULT([no])
-              PKGERR=`pkg-config --errors-to-stdout --print-errors "$OPENSSL_CONFIG >= 1.0"`
+              PKGERR=`pkg-config --errors-to-stdout --print-errors $OPENSSL_CONFIG`
               AC_MSG_RESULT([$PKGERR])
            fi
     fi
@@ -492,24 +444,24 @@ AC_DEFUN([AX_CHECK_PNG],
 [
     AC_MSG_CHECKING(if png is wanted)
     AC_ARG_WITH(png,
-[  --with-png=path to libpng .pc file
+[  --with-png to enable png usage if available (the default)
   --without-png to disable png usage completely],
    [
       if test "$withval" != "no"; then
          AC_MSG_RESULT(yes)
-         PNG_CONFIG="$withval"
       else
          AC_MSG_RESULT(no)
       fi], 
    [
-       PNG_CONFIG="libpng"
+       with_png=yes
        AC_MSG_RESULT(yes)
    ]
 )
 
-    if test -n "$PNG_CONFIG"; then
-           AC_MSG_CHECKING([for libpng library >= 1.2.37])
-           if pkg-config "$PNG_CONFIG >= 1.2.37"; then
+    if test "$with_png" != "no"; then
+           PNG_CONFIG="libpng >= 1.2.37"
+           AC_MSG_CHECKING([for $PNG_CONFIG])
+           if pkg-config $PNG_CONFIG; then
               CPPFLAGS="$CPPFLAGS `pkg-config --cflags $PNG_CONFIG`"
               LDFLAGS="$LDFLAGS `pkg-config --libs-only-L $PNG_CONFIG`"
               LIBS="$LIBS `pkg-config --libs-only-l $PNG_CONFIG`"
@@ -518,7 +470,44 @@ AC_DEFUN([AX_CHECK_PNG],
               found_png=yes
            else
               AC_MSG_RESULT([no])
-              PKGERR=`pkg-config --errors-to-stdout --print-errors "$PNG_CONFIG >= 1.2.37"`
+              PKGERR=`pkg-config --errors-to-stdout --print-errors $PNG_CONFIG`
+              AC_MSG_RESULT([$PKGERR])
+           fi
+    fi
+])
+
+
+AC_DEFUN([AX_CHECK_ZLIB],
+[
+    AC_MSG_CHECKING(if zlib is wanted)
+    AC_ARG_WITH(zlib,
+[  --with-zlib to enable zlib usage if available (the default)
+  --without-zlib to disable zlib usage completely],
+   [
+      if test "$withval" != "no"; then
+         AC_MSG_RESULT(yes)
+      else
+         AC_MSG_RESULT(no)
+      fi], 
+   [
+       with_zlib=yes
+       AC_MSG_RESULT(yes)
+   ]
+)
+
+    if test "$with_zlib" != "no"; then
+           ZLIB_CONFIG="zlib >= 1.2.8"
+           AC_MSG_CHECKING([for $ZLIB_CONFIG])
+           if pkg-config $ZLIB_CONFIG; then
+              CPPFLAGS="$CPPFLAGS `pkg-config --cflags $ZLIB_CONFIG`"
+              LDFLAGS="$LDFLAGS `pkg-config --libs-only-L $ZLIB_CONFIG`"
+              LIBS="$LIBS `pkg-config --libs-only-l $ZLIB_CONFIG`"
+              AC_DEFINE(HAVE_LIBZ)
+              AC_MSG_RESULT(yes)
+              found_zlib=yes
+           else
+              AC_MSG_RESULT([no])
+              PKGERR=`pkg-config --errors-to-stdout --print-errors $ZLIB_CONFIG`
               AC_MSG_RESULT([$PKGERR])
            fi
     fi
@@ -531,23 +520,23 @@ AC_DEFUN([AX_CHECK_X11],
 [
     AC_MSG_CHECKING(if X11 graphics are wanted)
     AC_ARG_WITH(X11,
-[  --with-X11=paths to x11 xrender xft fontconfig freetype2 .pc files
+[  --with-X11 to enable X11 usage if available (the default)
   --without-X11 to disable X11 usage completely],
    [
       if test "$withval" != "no"; then
          AC_MSG_RESULT(yes)
-         X11_CONFIG="$withval"
       else
          AC_MSG_RESULT(no)
       fi], 
    [
-       X11_CONFIG="x11 xrender xft fontconfig freetype2"
+       with_X11=yes
        AC_MSG_RESULT(yes)
    ]
 )
 
-    if test -n "$X11_CONFIG"; then
-           AC_MSG_CHECKING([for x11, xrender, xft, fontconfig, freetype2 ])
+    if test "$with_X11" != "no"; then
+           X11_CONFIG="x11 >= 1.5 xrender >= 0.9.7 xft >= 2.3.1 fontconfig >= 2.8.0 freetype2 >= 14.1.8"
+           AC_MSG_CHECKING([for $X11_CONFIG])
            if pkg-config $X11_CONFIG; then
               CPPFLAGS="$CPPFLAGS `pkg-config --cflags $X11_CONFIG`"
               LDFLAGS="$LDFLAGS `pkg-config --libs-only-L $X11_CONFIG`"
