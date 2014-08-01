@@ -822,8 +822,12 @@ class Session9P()
       verbose
 
    private new_fid(n, path, uid, mode)
-      /fids[n] := Fid(path, uid, mode) | throw("fid already in use:" || n)
-      (/paths[path] := set(n)) | insert(paths[path], n)
+      local s
+      if member(fids, n) then
+         throw("fid already in use:" || n)
+      insert(fids, n, Fid(path, uid, mode))
+      (s := member(paths, path)) | insert(paths, path, s := set())
+      insert(s, n)
       inc_ref(path)
    end
 
