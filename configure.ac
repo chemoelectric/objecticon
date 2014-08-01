@@ -38,6 +38,8 @@ case $CCVER in
     clang*) CFLAGS="$CFLAGS -Wall -Wno-parentheses-equality -Wno-tautological-compare" ;;
 esac
 
+AX_LIB_SOCKET_NSL()
+
 OI_ADD_LIB(dl)
 CHECK_DYNAMIC_LINKING()
 

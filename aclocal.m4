@@ -1,3 +1,14 @@
+#
+# Check for -lnsl and -lsocket (needed on solaris).
+# http://www.nongnu.org/autoconf-archive/ax_lib_socket_nsl.html
+#
+AC_DEFUN([AX_LIB_SOCKET_NSL],
+[
+        AC_SEARCH_LIBS([gethostbyname], [nsl])
+        AC_SEARCH_LIBS([socket], [socket], [], [
+                AC_CHECK_LIB([socket], [socket], [LIBS="-lsocket -lnsl $LIBS"], [], [-lnsl])])
+])
+
 AC_DEFUN([CHECK_ZLIB],
 #
 # Handle user hints
