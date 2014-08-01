@@ -179,7 +179,7 @@ int main(argc, argv)
     }
 
 
-    return EXIT_SUCCESS;
+    exit(EXIT_SUCCESS);
 }
 
 /*
