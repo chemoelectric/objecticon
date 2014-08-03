@@ -5,6 +5,7 @@ import
 $ifdef _PLAN9
    lang(Class, NoCopy, Prog),
    posix(System), util(use),
+   ipl.scan(backto),
 $else
    lang(Class, NoCopy),
    posix(ExitInfo, System),
@@ -2293,22 +2294,18 @@ class NetStream(FileStream)
    #
    public static connect(s, timeout, task)
       local clone_file, dest, res
-
       s ? {
          clone_file := tab(upto(' '))
          move(1)
          dest := tab(0)
       }
-
       res := clone(clone_file) | fail
-
       # Try to connect
       res.write_ctrl("connect " || dest, timeout, task) | {
          res.close()
          # &why should be set appropriately by the response to the connect
          fail
       }
-      
       res.open_data() | {
          res.close()
          fail
@@ -2346,8 +2343,8 @@ class NetStream(FileStream)
       cf := FileStream(fn, FileOpt.RDWR) | return error("Couldn't open clone file: " || &why)
       # Get the id number of the connection clone created
       name := cf.in(1024)
-      every i := upto('/', fn)
-      dir := fn[1:i + 1] || name
+      i := backto('/', fn)
+      dir := fn[1:i] || name
       return NetStream(cf, dir)
    end
 
@@ -2395,8 +2392,8 @@ class NetStream(FileStream)
          cf := CtrlStream(fd)
       }
       name := cf.in(1024)
-      every i := upto('/',dir)
-      new_dir := dir[1:i + 1] || name
+      i := backto('/', dir)
+      new_dir := dir[1:i] || name
       return NetStream(cf, new_dir)
    end
 
@@ -2404,9 +2401,9 @@ class NetStream(FileStream)
    #
    public accept()
       local i
-      every i := upto('/',dir)
+      i := backto('/', dir)
       # May fail, so ignore errors
-      save_why{write_ctrl("accept " || dir[i + 1:0])}
+      save_why{write_ctrl("accept " || dir[i:0])}
       # Open data stream
       return open_data()
    end
@@ -2415,9 +2412,9 @@ class NetStream(FileStream)
    #
    public reject(cause)
       local i
-      every i := upto('/',dir)
+      i := backto('/', dir)
       # May fail, so ignore errors
-      save_why{write_ctrl("reject " || dir[i + 1:0] || " " || cause)}
+      save_why{write_ctrl("reject " || dir[i:0] || " " || cause)}
       return
    end
 
