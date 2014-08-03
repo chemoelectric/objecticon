@@ -227,7 +227,7 @@ int rename(const char *from, const char *to)
 
 int unlink(const char *path)
 {
-    return 0;
+    return remove(path);
 }
 
 /* Adapted from libc/9sys/ctime.c */
