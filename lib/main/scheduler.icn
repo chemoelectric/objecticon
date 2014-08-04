@@ -52,6 +52,13 @@ class TaskStream(Stream, HasTask, HasUnderlyingStream)
       return other.truncate(len)
    end
 
+   # Set the timeout in ms to use.
+   #
+   public set_timeout(timeout)
+      self.timeout := timeout
+      return self
+   end
+
    public new(other, task, timeout)
       self.other := other
       self.close_underlying_flag := &yes

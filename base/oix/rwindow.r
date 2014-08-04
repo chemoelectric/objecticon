@@ -199,8 +199,9 @@ void qmouseevents(wsp ws,             /* canvas */
             MakeInt(MOUSE5UP, &d);
             qevent(ws, &d, x, y, t, mod);
         }
+
+        ws->mousestate = state;
     }
-    ws->mousestate = state;
 }
 
 static void linearfilter_impl(int *val, float m, int c)
