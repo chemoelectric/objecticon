@@ -5,7 +5,6 @@ import
 $ifdef _PLAN9
    lang(Class, NoCopy, Prog),
    posix(System), util(use),
-   ipl.scan(backto),
 $else
    lang(Class, NoCopy),
    posix(ExitInfo, System),
@@ -2272,7 +2271,7 @@ class NetStream(FileStream)
    # Open a file under the stream's directory with the given mode.
    #
    public open_subfile(s, mode)
-      return FileStream(dir || "/" || s, mode)
+      return FileStream(dir.child(s).str(), mode)
    end
 
    # Open the data stream file
@@ -2339,13 +2338,11 @@ class NetStream(FileStream)
    # becomes the control file of the new instance.
    #
    public static clone(fn)
-      local cf, name, dir, i
+      local cf, name
       cf := FileStream(fn, FileOpt.RDWR) | return error("Couldn't open clone file: " || &why)
       # Get the id number of the connection clone created
       name := cf.in(1024)
-      i := backto('/', fn)
-      dir := fn[1:i] || name
-      return NetStream(cf, dir)
+      return NetStream(cf, FilePath(fn).sibling(name))
    end
 
    # Return a new {NetStream} which can be used to listen on the given address.
@@ -2374,14 +2371,14 @@ class NetStream(FileStream)
    # @      whilst waiting.
    #
    public listen(timeout, task)
-      local cf, name, new_dir, i, cw, r, fd
+      local cf, name, cw, r, fd
       if /timeout & /task then
          cf := open_subfile("listen", FileOpt.RDWR) | return error("Couldn't open listen file: " || &why)
       else {
          fd := use {
             cw := FileWorker(),
             {
-               cw.op_open(dir || "/listen", FileOpt9.ORDWR)
+               cw.op_open(dir.child("listen").str(), FileOpt9.ORDWR)
                r := (if /task then DescStream else task).poll([cw, Poll.IN], timeout)
                if /r then
                   error("Timeout")
@@ -2392,18 +2389,14 @@ class NetStream(FileStream)
          cf := CtrlStream(fd)
       }
       name := cf.in(1024)
-      i := backto('/', dir)
-      new_dir := dir[1:i] || name
-      return NetStream(cf, new_dir)
+      return NetStream(cf, dir.sibling(name))
    end
 
    # Accept an incoming connection
    #
    public accept()
-      local i
-      i := backto('/', dir)
       # May fail, so ignore errors
-      save_why{write_ctrl("accept " || dir[i:0])}
+      save_why{write_ctrl("accept " || dir.get(-1))}
       # Open data stream
       return open_data()
    end
@@ -2411,14 +2404,12 @@ class NetStream(FileStream)
    # Reject an incoming connection
    #
    public reject(cause)
-      local i
-      i := backto('/', dir)
       # May fail, so ignore errors
-      save_why{write_ctrl("reject " || dir[i:0] || " " || cause)}
+      save_why{write_ctrl("reject " || dir.get(-1) || " " || cause)}
       return
    end
 
-   # Return the directory of the stream, eg "/net/tcp/6".
+   # Return the directory of the stream (eg "/net/tcp/6"), as a `FilePath` object.
    #
    public get_dir()
       return .dir
