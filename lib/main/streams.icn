@@ -2281,7 +2281,7 @@ class NetStream(FileStream)
          return error("data stream already open")
       self.fd := open_subfile("data", FileOpt.RDWR).get_fd() |
          return error("Couldn't open data stream: " || &why)
-      return
+      return self
    end
 
    # Connect to the given address, which should be in the form returned by cs_query, eg
@@ -2406,7 +2406,7 @@ class NetStream(FileStream)
    public reject(cause)
       # May fail, so ignore errors
       save_why{write_ctrl("reject " || dir.get(-1) || " " || cause)}
-      return
+      return self
    end
 
    # Return the directory of the stream (eg "/net/tcp/6"), as a `FilePath` object.
