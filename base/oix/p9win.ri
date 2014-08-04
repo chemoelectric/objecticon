@@ -540,6 +540,17 @@ void pollevent(wbp w)
                              mx,
                              my,
                              time, 0);
+                /* A wheel up or down (8 or 16) just gives one event,
+                 * but qmouseevents expects two, as though this were a
+                 * button press and release.  So enqueue another event
+                 * with the flag turned off.
+                 */
+                if (arg & 24)
+                    qmouseevents(ws, 
+                                 arg & ~24,
+                                 mx,
+                                 my,
+                                 time, 0);
                 break;
             }
             default:
