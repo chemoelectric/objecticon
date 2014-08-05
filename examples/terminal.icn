@@ -110,9 +110,8 @@ class TerminalDialog(Dialog)
          insert(bg_pids, pid)
          return
       }
-      # Get the working directory for the child process
-      if s := \runner.desktop_entry.path | System.getenv("HOME") then
-         Files.chdir(s)
+      # Set the working directory for the child process
+      Files.chdir(\runner.desktop_entry.path | System.getenv("HOME"))
       # Get the command to run.
       s := ucs(runner.link.url.get_decoded_path()) | syserr("Couldn't get ucs path from link")
       cmd := runner.desktop_entry.subst_file(Format.shell_escape(s), runner.link.line)
@@ -122,6 +121,7 @@ class TerminalDialog(Dialog)
          nul.close()
       }
       System.exec("/bin/bash", ["-c", "exec " || cmd]) | stop(&why)
+      syserr("Not reached")
    end
 
    private child_cleanup(t)

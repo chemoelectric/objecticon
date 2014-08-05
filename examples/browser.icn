@@ -117,16 +117,15 @@ class BrowserDialog(Dialog)
       last_file_dir
 
    public launch_prog(de, file)
-      local pid, nul, cmd, s
+      local pid, nul, cmd
       pid := System.fork() | fail
       if pid > 0 then {
          # Parent
          insert(bg_pids, pid)
          return
       }
-      # Get the working directory for the child process
-      if s := \de.path | System.getenv("HOME") then
-         Files.chdir(s)
+      # Set the working directory for the child process
+      Files.chdir(\de.path | System.getenv("HOME"))
       # Get the command to run.
       cmd := de.subst_file(Format.shell_escape(file))
       if \opts["v"] then 
@@ -137,6 +136,7 @@ class BrowserDialog(Dialog)
          nul.close()
       }
       System.exec("/bin/bash", ["-c", "exec " || cmd]) | stop(&why)
+      syserr("Not reached")
    end
 
    private child_cleanup(t)
