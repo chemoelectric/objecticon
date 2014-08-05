@@ -13,7 +13,8 @@ import
    ipl.wildcard,
    ipl.strings,
    ipl.lists,
-   ipl.filegui
+   ipl.filegui,
+   ipl.childwait
 
 global opts
 
@@ -68,7 +69,6 @@ end
 class TerminalDialog(Dialog)
    private readable
       favourite_dirs,
-      bg_pids,
       tabs
 
    private on_quit(ev)
@@ -107,12 +107,11 @@ class TerminalDialog(Dialog)
       pid := System.fork() | fail
       if pid > 0 then {
          # Parent
-         insert(bg_pids, pid)
+         ChildWait.add_pid(pid, on_child_exit)
          return
       }
-      # Get the working directory for the child process
-      if s := \runner.desktop_entry.path | System.getenv("HOME") then
-         Files.chdir(s)
+      # Set the working directory for the child process
+      Files.chdir(\runner.desktop_entry.path | Files.get_home())
       # Get the command to run.
       s := ucs(runner.link.url.get_decoded_path()) | syserr("Couldn't get ucs path from link")
       cmd := runner.desktop_entry.subst_file(Format.shell_escape(s), runner.link.line)
@@ -122,24 +121,16 @@ class TerminalDialog(Dialog)
          nul.close()
       }
       System.exec("/bin/bash", ["-c", "exec " || cmd]) | stop(&why)
+      syserr("Not reached")
    end
 
-   private child_cleanup(t)
-      local r, pid
-      repeat {
-         t.sleep(1000)
-         every pid := !bg_pids do {
-            if r := System.wait(pid, WaitOpt.WNOHANG) & r.pid > 0 then {
-               if \opts["v"] then
-                  write("Child process exited: ",to_string(r))
-               delete(bg_pids, pid)
-            }
-         }
-      }
+   private on_child_exit(r)
+      if \opts["v"] then
+         write("Child process exited: ",to_string(r))
    end
 
    public new()
-      local quit_menu_item, menu_bar, file_menu, bt, new_tab_item, favourite_dirs_item, t
+      local quit_menu_item, menu_bar, file_menu, bt, new_tab_item, favourite_dirs_item
       cast(self,Dialog).new()
       set_size(1000, 750)
       self.set_resize(&yes)
@@ -190,9 +181,6 @@ class TerminalDialog(Dialog)
       self.set_layout(GridLayout().set_extra("cells"))
       self.set_focus(bt.remembered_focus)
       set_label("Terminal")
-      t := Dispatcher.new_task{child_cleanup(t)}
-      t.start()
-      bg_pids := set()
       return
    end
 end
@@ -1448,7 +1436,7 @@ class Terminal(TabItem)
       env := []
       every put(env, System.environ())
       put(env, "TERMLINKS=1")
-      put(env, "PATH=" || System.getenv("HOME") || "/termlinks-extras/bin:" || System.getenv("PATH"))
+      put(env, "PATH=" || Files.get_home() || "/termlinks-extras/bin:" || System.getenv("PATH"))
       #      put(env, "PS1=" || prompt)
       #      put(env, "PS1=")
       tty := PttyStream() | fail

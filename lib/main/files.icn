@@ -100,6 +100,15 @@ $ifdef _PLAN9
    public static native bind(name, old, flag)
    public static native mount(f, af, old, flag, aname)
    public static native unmount(name, old)
+
+   public static unmount_windows()
+      local s
+      every s := (!Files.list("/n")).name do {
+         if match("oix-win.", s) then
+            unmount(, "/n/" || s)
+      }
+      return Files
+   end
 $else
    #
    # Read the given directory returning a list of `ListEntry` objects,

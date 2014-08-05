@@ -1366,7 +1366,8 @@ abstract class HasBgProc()
    #
    protected do_wait()
       \pid | runerr("do_wait() called out of sequence", self)
-      exit_info := System.wait(pid) | fail
+      # wait should never fail (even if the child crashed).
+      exit_info := System.wait(pid) | syserr("System.wait failed unexpectedly: " || &why)
       pid := &null
       return
    end
@@ -1421,7 +1422,7 @@ class ProgInputStream(FileStream, HasBgProc)
    #
    public close()
       cast(self,FileStream).close()
-      do_wait() | fail
+      do_wait()
       return self
    end
 
@@ -1479,7 +1480,7 @@ class ProgOutputStream(FileStream, HasBgProc)
    #
    public close()
       cast(self,FileStream).close()
-      do_wait() | fail
+      do_wait()
       return self
    end
 
@@ -1643,7 +1644,7 @@ class ProgInputStream(SocketStream, HasBgProc)
    public close()
       shutdown(Shut.RD)
       cast(self,SocketStream).close()
-      do_wait() | fail
+      do_wait()
       return self
    end
 
@@ -1703,7 +1704,7 @@ class ProgOutputStream(SocketStream, HasBgProc)
    public close()
       shutdown(Shut.WR)
       cast(self,SocketStream).close()
-      do_wait() | fail
+      do_wait()
       return self
    end
 
@@ -1961,7 +1962,7 @@ class FilterOutputStream(FilterStreamBase)
          sink.close() | (f := 1)
          (err_sink === sink) | err_sink.close() | (f := 1)
       }
-      do_wait() | (f := 1)
+      do_wait()
       return /f & self
    end
 
@@ -2096,7 +2097,7 @@ class FilterInputStream(FilterStreamBase)
          source.close() | (f := 1)
          err_sink.close() | (f := 1)
       }
-      do_wait() | (f := 1)
+      do_wait()
       self.buff := &null
       return /f & self
    end
