@@ -110,11 +110,9 @@ class Process(HasTask, HasBgProc)
    end
 
    private close_sock()
-      local f
-      sock.shutdown(Shut.RDWR) | (f := 1)
-      sock.close() | (f := 1)
+      sock.shutdown(Shut.RDWR)
+      sock.close()
       sock := &null
-      return /f & self
    end
 
    #
@@ -123,21 +121,20 @@ class Process(HasTask, HasBgProc)
    # &null and closes the socket.
    #
    public close()
-      local f
-      do_wait() | (f := 1)
-      close_sock() | (f := 1)
-      return /f & self
+      do_wait()
+      close_sock()
+      return self
    end
 
    #
    # Called by the parent to kill the child.  Then the {close} method is invoked.
    #
    public stop()
-      local f
       \pid | runerr("stop() called out of sequence", self)
-      System.kill(pid, Signal.SIGTERM) | (f := 1)
-      close() | (f := 1)
-      return /f & self
+      # kill should never fail (even if the child crashed).
+      System.kill(pid, Signal.SIGTERM) | syserr("System.kill failed unexpectedly: " || &why)
+      close()
+      return self
    end
 
    # Create a new instance, with the given co-expression as the body
