@@ -592,6 +592,7 @@ $ifdef _PLAN9
                              ForkOpt.RFNOTEG, ForkOpt.RFREND, ForkOpt.RFNOWAIT)) | fail
       if pid > 0 then
          return
+      Files.unmount_windows()
       System.exec("/bin/rc", ["-c", "exec " || f]) | stop(&why)
       syserr("Not reached")
    end
