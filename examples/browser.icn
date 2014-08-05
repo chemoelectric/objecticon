@@ -15,7 +15,8 @@ import
    ipl.strings,
    ipl.lists,
    ipl.pdco,
-   ipl.graphics
+   ipl.graphics,
+   ipl.childwait
 
 global opts
 
@@ -109,8 +110,7 @@ class BrowserDialog(Dialog)
       file_dialog,
       directory_dialog,
       downloads,
-      page_menu,
-      bg_pids
+      page_menu
 
    public
       last_download_dir,
@@ -121,7 +121,7 @@ class BrowserDialog(Dialog)
       pid := System.fork() | fail
       if pid > 0 then {
          # Parent
-         insert(bg_pids, pid)
+         ChildWait.add_pid(pid, on_child_exit)
          return
       }
       # Set the working directory for the child process
@@ -139,20 +139,11 @@ class BrowserDialog(Dialog)
       syserr("Not reached")
    end
 
-   private child_cleanup(t)
-      local r, pid
-      repeat {
-         t.sleep(1000)
-         every pid := !bg_pids do {
-            if r := System.wait(pid, WaitOpt.WNOHANG) & r.pid > 0 then {
-               if \opts["v"] then
-                  write("Child process exited: ",to_string(r))
-               delete(bg_pids, pid)
-            }
-         }
-      }
+   private on_child_exit(r)
+      if \opts["v"] then
+         write("Child process exited: ",to_string(r))
    end
-      
+
    private on_quit(ev)
       dispose()
    end
@@ -411,7 +402,7 @@ class BrowserDialog(Dialog)
    end
 
    public new(url, cookies, settings)
-      local quit_menu_item, menu_bar, file_menu, bt, new_tab_item, t
+      local quit_menu_item, menu_bar, file_menu, bt, new_tab_item
       cast(self,Dialog).new()
       self.settings := settings
       self.visited_set := set()
@@ -480,9 +471,6 @@ class BrowserDialog(Dialog)
       self.set_layout(GridLayout().set_extra("cells"))
       self.set_focus(bt.url_field.find_focus())
       set_label("Browser")
-      t := Dispatcher.new_task{child_cleanup(t)}
-      t.start()
-      bg_pids := set()
       return
    end
 end
