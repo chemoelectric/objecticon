@@ -125,7 +125,7 @@ class BrowserDialog(Dialog)
          return
       }
       # Set the working directory for the child process
-      Files.chdir(\de.path | System.getenv("HOME"))
+      Files.chdir(\de.path | Files.get_home())
       # Get the command to run.
       cmd := de.subst_file(Format.shell_escape(file))
       if \opts["v"] then 

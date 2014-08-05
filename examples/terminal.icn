@@ -111,7 +111,7 @@ class TerminalDialog(Dialog)
          return
       }
       # Set the working directory for the child process
-      Files.chdir(\runner.desktop_entry.path | System.getenv("HOME"))
+      Files.chdir(\runner.desktop_entry.path | Files.get_home())
       # Get the command to run.
       s := ucs(runner.link.url.get_decoded_path()) | syserr("Couldn't get ucs path from link")
       cmd := runner.desktop_entry.subst_file(Format.shell_escape(s), runner.link.line)
@@ -1448,7 +1448,7 @@ class Terminal(TabItem)
       env := []
       every put(env, System.environ())
       put(env, "TERMLINKS=1")
-      put(env, "PATH=" || System.getenv("HOME") || "/termlinks-extras/bin:" || System.getenv("PATH"))
+      put(env, "PATH=" || Files.get_home() || "/termlinks-extras/bin:" || System.getenv("PATH"))
       #      put(env, "PS1=" || prompt)
       #      put(env, "PS1=")
       tty := PttyStream() | fail
