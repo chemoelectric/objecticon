@@ -2206,13 +2206,17 @@ class NetStream(FileStream)
          # done whilst waiting for dns.
          use {
             nb := NonBlockStream(f, Stream.WRITE).
-               set_close_underlying(&no),
+               set_close_underlying(&no).
+               set_write_on_close(NonBlockStream.DISCARD),
             {
                nb.out(q)
-               # Poll with no timeout.  The close() of nb will flush
-               # and hence any error from the out() will percolate out
-               # to the use.
-               task.poll([nb, Poll.OUT])
+               # Poll with no timeout.  It may fail, since the task
+               # may be interrupted.  Otherwise, we call flush_out to
+               # check for any error from the underlying write.  This
+               # will not block, since the write has completed, but
+               # will fail if there was an error.
+               if task.poll([nb, Poll.OUT]) then 
+                  nb.flush_out()
             }
          } | fail
       }
