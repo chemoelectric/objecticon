@@ -2254,16 +2254,17 @@ class NetStream(FileStream)
             nb := NonBlockStream(ctrl, Stream.WRITE).
                set_close_underlying(&no).
                set_write_on_close(NonBlockStream.DISCARD),     # Needed since on a timeout the writer will still be writing
-            {                               # and would thus hang on a flush from close()
+            {                                                  # and would thus hang on a flush from close()
                nb.out(msg)
-               r := (if /task then DescStream else task).poll([nb, Poll.OUT], timeout)
-               # Any error here percolates out to the outer use.
-               if /r then
-                  error("Timeout")
-               else
-                  # Test the error status of the writer process - this won't hang since we
-                  # didn't timeout, but it may fail (eg connection refused).
-                  nb.flush_out()
+               # The poll may fail if the task is interrupted.
+               if r := (if /task then DescStream else task).poll([nb, Poll.OUT], timeout) then {
+                  if /r then
+                     error("Timeout")
+                  else
+                     # Test the error status of the writer process - this won't hang since we
+                     # didn't timeout, but it may fail (eg connection refused).
+                     nb.flush_out()
+               }
             }
          }
       }
@@ -2380,11 +2381,13 @@ class NetStream(FileStream)
             cw := FileWorker(),
             {
                cw.op_open(dir.child("listen").str(), FileOpt9.ORDWR)
-               r := (if /task then DescStream else task).poll([cw, Poll.IN], timeout)
-               if /r then
-                  error("Timeout")
-               else
-                  (cw.await(), cw.dup_fd()) | error("Couldn't open listen file: " || &why)
+               # The poll may fail if the task is interrupted.
+               if r := (if /task then DescStream else task).poll([cw, Poll.IN], timeout) then {
+                  if /r then
+                     error("Timeout")
+                  else
+                     (cw.await(), cw.dup_fd()) | error("Couldn't open listen file: " || &why)
+               }
             }
          } | fail
          cf := CtrlStream(fd)
