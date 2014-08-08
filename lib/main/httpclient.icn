@@ -215,14 +215,12 @@ class HttpClient(NetClient)
       self.abort_flag := 1
    end
 
-   private write_request_headers()
-      local e, v
+   private add_request_headers(l)
+      local e
       every e := !request.headers.sort() do {
          e[1][1] := map(e[1][1], &lcase, &ucase)
-         every v := !e[2] do
-            write_line(e[1] || ": " || v) | fail
+         every put(l, e[1] || ": " || !e[2])
       }
-      return
    end
 
    #
@@ -853,7 +851,7 @@ class HttpClient(NetClient)
    end
 
    private write_request()
-      local rs, sz, s, f, v
+      local rs, sz, s, f, v, l
       request.set_header("user-agent", user_agent)
       request.set_header("host", request.url.get_host())
       if v := \request.referer then {
@@ -882,16 +880,16 @@ class HttpClient(NetClient)
       else
          request.set_header("range", "bytes=" || rs)
 
-      write_line(request.method || " " || request.url.get_file() || 
-                 " HTTP/" || http_version) | fail
+      l := [request.method || " " || request.url.get_file() || " HTTP/" || http_version]
 
       if \request.input_stream then {
          request.set_header("content-type", request.content_type)
          sz := request.input_stream.seek(0) - 1 | fail
          request.set_header("content-length", sz)
          request.set_header("authorization", create_authorization_header())
-         write_request_headers() | fail
-         write_line() | fail
+         add_request_headers(l)
+         put(l, "")
+         write_lines(l) | fail
          request.input_stream.seek(1) | fail
          repeat {
             s := request.input_stream.in(1048576) | fail
@@ -902,8 +900,9 @@ class HttpClient(NetClient)
          }
       } else {
          request.set_header("authorization", create_authorization_header())
-         write_request_headers() | fail
-         write_line() | fail
+         add_request_headers(l)
+         put(l, "")
+         write_lines(l) | fail
       }
 
       return

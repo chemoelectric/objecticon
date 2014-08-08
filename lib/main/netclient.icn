@@ -303,6 +303,17 @@ class NetClient(Connectable, HasTask)
    end
 
    #
+   # Write several lines in one go, but firing separate events for each line.
+   #
+   protected write_lines(l)
+      local s
+      s := ""
+      every s ||:= (!l) || "\r\n"
+      every fire(WRITING_LINE_EVENT, !l)
+      return send(s)
+   end
+
+   #
    # Read a single line from the connection, and return it.  Returns {&null} on eof.
    #
    protected read_line()
