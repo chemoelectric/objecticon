@@ -114,14 +114,19 @@ $else
       local p, v
       if /task then
          return dns_query_impl()
-      v := use {
-         p := Process{dns_bg_query(p)}.set_task(task),
-         p.start().poll()
-      } | fail
-      return if type(v) == "list" then
-         v
-      else
-         error(v)
+      p := Process{dns_bg_query(p)}.set_task(task)
+      p.start() | fail
+      if v := p.poll() then {
+         p.close()
+         return if type(v) == "list" then
+            v
+         else
+            error(v)
+      } else
+         # poll() failed, meaning we were interrupted.  We don't want
+         # to call close(), which would hang whilst p exited, so we
+         # call stop() which kills it first.
+         p.stop()
    end
 
    #
