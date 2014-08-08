@@ -88,7 +88,7 @@ class SmtpClient(NetClient)
          }
          s ||:= tab(0)
       }
-      write_line(s)
+      write_line(s) | fail
       send_command(".", 250) | fail
 
       return self
@@ -100,7 +100,7 @@ class SmtpClient(NetClient)
 
    private send_command(msg, reply)
       local s, rc
-      write_line(msg)
+      write_line(msg) | fail
 
       s := read_response() | fail
 
@@ -123,48 +123,50 @@ class SmtpClient(NetClient)
    end
 
    # Output the first header with the key only
-   private send_first_header(m, key)
-      write_line(key || ": " || m.get_first_header(key))
+   private send_first_header(l, m, key)
+      put(l, key || ": " || m.get_first_header(key))
    end
 
    # Output all the headers with the key only, as separate header lines
-   private send_headers_list(m, key)
-      every write_line(key || ": " || !m.get_headers(key))
+   private send_headers_list(l, m, key)
+      every put(l, key || ": " || !m.get_headers(key))
    end
 
    # Output all the headers for the key catenated together
-   private send_catenated_header(m, key)
-      write_line(key || ": " || m.get_catenated_headers(key))
+   private send_catenated_header(l, m, key)
+      put(l, key || ": " || m.get_catenated_headers(key))
    end
 
    private send_headers(m)
-      local k
+      local k, l
 
-      send_first_header(m, "Resent-Date")
-      send_first_header(m, "Sender")
-      send_first_header(m, "From")
-      send_catenated_header(m, "Reply-To")
-      send_first_header(m, "Resent-Sender")
-      send_catenated_header(m, "Resent-From")
-      send_catenated_header(m, "Resent-Reply-To")
-      send_catenated_header(m, "To")
-      send_catenated_header(m, "Resent-To")
-      send_catenated_header(m, "cc")
-      send_catenated_header(m, "Resent-cc")
-      send_catenated_header(m, "bcc")
-      send_catenated_header(m, "Resent-bcc")
-      send_first_header(m, "Resent-Message-ID")
-      send_first_header(m, "In-Reply-To")
-      send_first_header(m, "References")
-      send_first_header(m, "Keywords")
-      send_first_header(m, "Subject")
-      send_first_header(m, "Comments")
-      send_first_header(m, "Encrypted")
+      l := []
+
+      send_first_header(l, m, "Resent-Date")
+      send_first_header(l, m, "Sender")
+      send_first_header(l, m, "From")
+      send_catenated_header(l, m, "Reply-To")
+      send_first_header(l, m, "Resent-Sender")
+      send_catenated_header(l, m, "Resent-From")
+      send_catenated_header(l, m, "Resent-Reply-To")
+      send_catenated_header(l, m, "To")
+      send_catenated_header(l, m, "Resent-To")
+      send_catenated_header(l, m, "cc")
+      send_catenated_header(l, m, "Resent-cc")
+      send_catenated_header(l, m, "bcc")
+      send_catenated_header(l, m, "Resent-bcc")
+      send_first_header(l, m, "Resent-Message-ID")
+      send_first_header(l, m, "In-Reply-To")
+      send_first_header(l, m, "References")
+      send_first_header(l, m, "Keywords")
+      send_first_header(l, m, "Subject")
+      send_first_header(l, m, "Comments")
+      send_first_header(l, m, "Encrypted")
 
       every k := (!m.headers.sort())[1] do
-         member(RFC822_HEADERS, map(k)) | send_headers_list(m, k)
+         member(RFC822_HEADERS, map(k)) | send_headers_list(l, m, k)
 
-      return
+      return write_lines(l)
    end
 
    public new()
