@@ -4,7 +4,7 @@ import plan9, io, posix, ipl.options, util
 
 procedure server_main_1(a, sess, run)
    local opts
-   opts := options(a, "-v! -s!")
+   opts := options(a, "-v! -s! -a! -b! -c! -C!")
    if *a = 0 then
       stop("usage: ", FilePath(&progname).get(-1), " [opts] mountpt/srvpt")
    server_main(a[1], "", opts, sess, run)
@@ -12,7 +12,7 @@ end
 
 procedure server_main_2(a, sess, run)
    local opts, attach
-   opts := options(a, "-v! -s!")
+   opts := options(a, "-v! -s! -a! -b! -c! -C!")
    if (*a = 0) | (/opts["s"] & (*a < 2)) then
       stop("usage: ", FilePath(&progname).get(-1), " [opts] mountpt attach/srvpt")
    attach := a[2] | ""
@@ -20,7 +20,7 @@ procedure server_main_2(a, sess, run)
 end
 
 procedure server_main(where, attach, opts, sess, run)
-   local p, pid, pname
+   local p, pid, pname, fl
    pname := FilePath(&progname).get(-1)
    /run := sess.io
    p := FileStream.pipe() | stop(&why)
@@ -43,7 +43,17 @@ procedure server_main(where, attach, opts, sess, run)
          Files.string_to_file("/srv/" || where, p[1].get_fd()) | stop(&why)
          ewrite(pname, ": serving on /srv/", where)
       } else {
-         Files.mount(p[1], &null, where, ior(MountOpt.MREPL, MountOpt.MCREATE), attach) | stop(&why)
+         fl := if \opts["a"] then
+            MountOpt.MAFTER
+         else if \opts["b"] then
+            MountOpt.MBEFORE
+         else
+            MountOpt.MREPL
+         if \opts["c"] then
+            fl := ior(fl, MountOpt.MCREATE)
+         if \opts["C"] then
+            fl := ior(fl, MountOpt.MCACHE)
+         Files.mount(p[1], &null, where, fl, attach) | stop(&why)
          ewrite(pname, ": mounted on ", where)
       }
       p[1].close()
