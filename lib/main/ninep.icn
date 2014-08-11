@@ -721,7 +721,7 @@ end
 
 abstract class Users()
    public abstract is_member(group, user)
-   public abstract get_leader(group)
+   public abstract is_leader(group, user)
 end
 
 class DefaultUsers(Users)
@@ -729,8 +729,8 @@ class DefaultUsers(Users)
       return group == user
    end
 
-   public get_leader(group)
-      return group
+   public is_leader(group, user)
+      return group == user
    end
 end
 
@@ -1126,7 +1126,7 @@ class Session9P()
             if \i.mtime | \i.mode then {
                # The mode and mtime can be changed by the owner of the
                # file or the group leader of the file's current group.
-               ((info.uid | users.get_leader(info.gid)) == o.uid) | throw("permission denied")
+               (info.uid == o.uid) | users.is_leader(info.gid, o.uid) | throw("permission denied")
                if \i.mode & iand(i.mode, Mode9.DMDIR) ~= iand(info.mode, Mode9.DMDIR) then
                   throw("directory bit cannot be changed")
             }
@@ -1135,7 +1135,7 @@ class Session9P()
                # of the new group; or by the group leader of the
                # file's current group if also leader of the new group
                (info.uid == o.uid & users.is_member(i.gid, o.uid)) |
-                  (users.get_leader(info.gid) == users.get_leader(i.gid) == o.uid) | throw("permission denied")
+                  (users.is_leader(info.gid, o.uid) & users.is_leader(i.gid, o.uid)) | throw("permission denied")
             }
             if \i.atime | \i.uid | \i.muid then
                throw("invalid value set in wstat")
