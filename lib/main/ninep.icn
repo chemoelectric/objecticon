@@ -207,7 +207,7 @@ class Dir9PImpl(Dir9P)
    end
 
    public get_child(x)
-      return member(ent, x)
+      return .member(ent, x)
    end
 
    public gen_children()
@@ -741,7 +741,8 @@ record Group(name, leader, members)
 # Users database read from /adm/users file.
 #
 class AdmUsers(Users)
-   private readable
+   private
+      source,
       groups
 
    private parse(s)
@@ -756,7 +757,7 @@ class AdmUsers(Users)
 
    public refresh()
       local s, g
-      s := Files.file_to_string("/adm/users") | fail
+      s := Files.file_to_string(source) | fail
       groups := table()
       every g := parse(separate_lines(s)) do
          insert(groups, g.name, g)
@@ -780,7 +781,9 @@ class AdmUsers(Users)
       }
    end
 
-   public new()
+   public new(source)
+      /source := "/adm/users"
+      self.source := source
       refresh() | fail
       return
    end
@@ -983,7 +986,7 @@ class Session9P()
    end
 
    public is_path_referenced(p)
-      return member(ref_cnt, p)
+      return .member(ref_cnt, p)
    end
 
    public is_path_unreferenced(p)
