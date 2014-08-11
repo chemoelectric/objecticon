@@ -420,7 +420,7 @@ class HttpClient(NetClient)
          # Calculate H(entity)
          t := MD5()
          if \request.input_stream then {
-            # Just fail; the whole request will surely fail anyway.
+            # On failure, these become don't retry failures (see write_request())
             request.input_stream.seek(1) | fail
             repeat {
                s := request.input_stream.in(1048576) | fail
@@ -506,19 +506,14 @@ class HttpClient(NetClient)
       return res
    end
 
-   private create_authorization_header()
+   private maybe_set_authorization_header()
       case auth_scheme of {
          "Basic":
-            return create_basic_authorization_header()
+            request.set_header("authorization", basic_auth_header)
          "Digest":
-            return create_digest_authorization_header()
-         default:
-            fail
+            request.set_header("authorization", create_digest_authorization_header()) | fail
       }
-   end
-
-   private create_basic_authorization_header()
-      return basic_auth_header
+      return
    end
 
    private parse_cookie_string(s)
@@ -884,22 +879,22 @@ class HttpClient(NetClient)
 
       if \request.input_stream then {
          request.set_header("content-type", request.content_type)
-         sz := request.input_stream.seek(0) - 1 | fail
+         sz := request.input_stream.seek(0) - 1 | return fail_dont_retry()
          request.set_header("content-length", sz)
-         request.set_header("authorization", create_authorization_header())
+         maybe_set_authorization_header() | return fail_dont_retry()
          add_request_headers(l)
          put(l, "")
          write_lines(l) | fail
-         request.input_stream.seek(1) | fail
+         request.input_stream.seek(1) | return fail_dont_retry()
          repeat {
-            s := request.input_stream.in(1048576) | fail
+            s := request.input_stream.in(1048576) | return fail_dont_retry()
             if /s then
                break
             if \abort_flag then fail
             write_str(s) | fail
          }
       } else {
-         request.set_header("authorization", create_authorization_header())
+         maybe_set_authorization_header() | return fail_dont_retry()
          add_request_headers(l)
          put(l, "")
          write_lines(l) | fail

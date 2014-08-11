@@ -168,11 +168,13 @@ class Task()
    end
 
    # Suspend this task, which must be the currently scheduled task,
-   # for {n} milliseconds.  If the task is interrupted this method
-   # fails, setting {&why}, otherwise it succeeds and returns {self}.
+   # for {n} milliseconds.  If the task is notified whilst it is
+   # sleeping, then it is woken up.  If the task is interrupted, then
+   # it is also woken, but this method then fails, setting {&why}.
+   # Otherwise, this method succeeds and returns {self}.
    #
    # @param n The time to wait for.  If {&null}, wait forever (or until
-   # @        interrupted).
+   # @        interrupted or notified).
    # @return {self} when the task awakes; fails on interrupt
    #
    public sleep(n)

@@ -232,7 +232,7 @@ $endif
    write(p, "once upon a midnight dreary")
    write(p, "two roads diverged in a yellow wood")
    write(p, "and the mome raths outgrabe")
-   write("--- closing output pipe")
+   #write("--- closing output pipe")
    close(p)
    write("--- done closing output pipe")
    Files.remove("tmp1")
