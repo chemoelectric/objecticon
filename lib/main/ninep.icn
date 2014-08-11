@@ -194,7 +194,9 @@ class Dir9PImpl(Dir9P)
 
    public add_child(x)
       \x.name | runerr("Child name not set")
-      (/ent[x.name] := x) | throw("Can't add child named " || x.name || " - already exists")
+      if member(ent, x.name) then
+         throw("Can't add child named " || x.name || " - already exists")
+      insert(ent, x.name, x)
       x.set_parent(self)
       return self
    end
@@ -205,7 +207,7 @@ class Dir9PImpl(Dir9P)
    end
 
    public get_child(x)
-      return .\ent[x]
+      return member(ent, x)
    end
 
    public gen_children()
@@ -218,9 +220,10 @@ class Dir9PImpl(Dir9P)
 
    package rename_child(x, s)
       if ent[x.name] === x & x.name ~== s then {
-         /ent[s] | throw("Can't change name to " || s || " - already exists")
+         if member(ent, s) then
+            throw("Can't change name to " || s || " - already exists")
          delete(ent, x.name)
-         ent[s] := x
+         insert(ent, s, x)
       }
       return self
    end
@@ -716,6 +719,21 @@ class Comms9P()
    end
 end
 
+abstract class Users()
+   public abstract is_member(group, user)
+   public abstract get_leader(group)
+end
+
+class DefaultUsers(Users)
+   public is_member(group, user)
+      return group == user
+   end
+
+   public get_leader(group)
+      return group
+   end
+end
+
 abstract class Data9P()
    public abstract get_root(aname)
    public abstract get_parent(p)
@@ -815,6 +833,7 @@ class Session9P()
    private
       fids,        # table mapping fid numbers to Fid() records
       data, 
+      users,
       paths,       # table mapping paths to sets of fid numbers representing those paths.  So
                    # for each fid number n, n is an element of paths[fids[n].path].
       ref_cnt,
@@ -897,7 +916,7 @@ class Session9P()
          if iand(p, m) = p then
             return
       }
-      if uid == info.gid then {
+      if users.is_member(info.gid, uid) then {
          m := ior(m, iand(ishift(info.mode, -3), 7))
          if iand(p, m) = p then
             return
@@ -1090,20 +1109,33 @@ class Session9P()
             i := Comms9P.decode_wstat(x.stat)  | throw("invalid wstat data")
             info := data.get_info(o.path)
             if \i.name then {
+               # The name can be changed by anyone with write
+               # permission in the parent directory
                p := tmp(data.get_parent(o.path), t)
                has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("permission denied")
                if tmp(data.get_child(p, i.name), t) then
                   throw("name already exists")
             }
             if \i.length then {
+               # The length can be changed by anyone with write
+               # permission on the file.
                has_perm(info, o.uid, Comms9P.AWRITE) | throw("permission denied")
                if i.length ~= 0 & iand(info.mode, Mode9.DMDIR) ~= 0 then
                   throw("cannot set length of directory to non-zero value")
             }
-            if \i.mtime | \i.mode | \i.gid then {
-               ((info.uid | info.gid) == o.uid) | throw("permission denied")
+            if \i.mtime | \i.mode then {
+               # The mode and mtime can be changed by the owner of the
+               # file or the group leader of the file's current group.
+               ((info.uid | users.get_leader(info.gid)) == o.uid) | throw("permission denied")
                if \i.mode & iand(i.mode, Mode9.DMDIR) ~= iand(info.mode, Mode9.DMDIR) then
                   throw("directory bit cannot be changed")
+            }
+            if \i.gid then {
+               # The gid can be changed: by the owner if also a member
+               # of the new group; or by the group leader of the
+               # file's current group if also leader of the new group
+               (info.uid == o.uid & users.is_member(i.gid, o.uid)) |
+                  (users.get_leader(info.gid) == users.get_leader(i.gid) == o.uid) | throw("permission denied")
             }
             if \i.atime | \i.uid | \i.muid then
                throw("invalid value set in wstat")
@@ -1204,6 +1236,11 @@ class Session9P()
       return self
    end
 
+   public set_users(u)
+      users := u
+      return self
+   end
+
    public set_verbose(x)
       self.verbose := check_flag(x)
       return self
@@ -1214,11 +1251,13 @@ class Session9P()
       return self
    end
 
-   public new(d)
+   public new(d, u)
+      /u := DefaultUsers()
       self.fids := table()
       self.paths := table()
       self.ref_cnt := table(0)
       set_data(d)
+      set_users(u)
       return
    end
 end
