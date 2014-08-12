@@ -347,7 +347,7 @@ do {
    switch (operation) { 
        case Error: {
            kywd_why = saved_why;
-           runerr(145, val); 
+           runerr(0); 
            break;
        }
        case Succeeded: {
