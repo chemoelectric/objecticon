@@ -273,6 +273,15 @@ static struct wcursor *ensure_wcursor(char *name)
     return rv;
 }
 
+#begdef CheckUnhidden(ws)
+do {
+   if (!ws->win) {
+      LitWhy("Window is hidden");
+      return Failed;
+   }
+} while(0)
+#enddef
+
 static void draw_error(Display *d, char *s)
 {
     fprintf(stderr, "Draw error on display %p: %s\n", d, s);
@@ -562,8 +571,7 @@ void pollevent(wbp w)
 int grabpointer(wbp w)
 {
     wsp ws = w->window;
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
     fprint(ws->wctl_fd, "grabpointer");
     return Succeeded;
 }
@@ -571,8 +579,7 @@ int grabpointer(wbp w)
 int ungrabpointer(wbp w)
 {
     wsp ws = w->window;
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
     fprint(ws->wctl_fd, "ungrabpointer");
     return Succeeded;
 }
@@ -580,8 +587,7 @@ int ungrabpointer(wbp w)
 int grabkeyboard(wbp w)
 {
     wsp ws = w->window;
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
     fprint(ws->wctl_fd, "grabkeyboard");
     return Succeeded;
 }
@@ -589,8 +595,7 @@ int grabkeyboard(wbp w)
 int ungrabkeyboard(wbp w)
 {
     wsp ws = w->window;
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
     fprint(ws->wctl_fd, "ungrabkeyboard");
     return Succeeded;
 }
@@ -1195,8 +1200,7 @@ int setfont(wbp w, char *s)
 int lowerwindow (wbp w)
 {
     wsp ws = w->window;
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
     fprint(ws->wctl_fd, "bottom");
     return Succeeded;
 }
@@ -1303,10 +1307,11 @@ int queryrootpointer(wbp w, int *x, int *y)
 {
     int mx, my, sx, sy;
     wsp ws = w->window;
-    if (!ws->win)
+    CheckUnhidden(ws);
+    if (read_screeninfo(ws, &mx, &my, &sx, &sy, 0,0) != Succeeded) {
+        LitWhy("failed to read screeninfo file");
         return Failed;
-    if (read_screeninfo(ws, &mx, &my, &sx, &sy, 0,0) != Succeeded)
-        return Failed;
+    }
     *x = mx - sx;
     *y = my - sy;
     return Succeeded;
@@ -1315,8 +1320,7 @@ int queryrootpointer(wbp w, int *x, int *y)
 int raisewindow(wbp w)
 {
     wsp ws = w->window;
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
     fprint(ws->wctl_fd, "unhide");
     fprint(ws->wctl_fd, "top");
     fprint(ws->wctl_fd, "current");
@@ -1388,8 +1392,7 @@ int ownselection(wbp w, char *selection)
     wsp ws = w->window;
     tended struct descrip tmp;
 
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
 
     /* Ignore anything other than CLIPBOARD selections. */
     if (strcmp(selection, "CLIPBOARD") == 0) {
@@ -1414,14 +1417,13 @@ int requestselection(wbp w, char *selection, char *target)
     int snarf_len = 0;
     char *snarf = 0;
 
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
 
     if (strcmp(selection, "CLIPBOARD") == 0 &&
         strcmp(target, "UTF8_STRING") == 0) {
         int fd, n_read;
         char buff[512];
-        if ((fd = open("/dev/snarf", OREAD)) < 0) {
+        if ((fd = open_winfile(ws, "snarf", OREAD)) < 0) {
             whyf("Can't open snarf file: %r");
             return Failed;
         }
@@ -1452,14 +1454,19 @@ int requestselection(wbp w, char *selection, char *target)
 int sendselectionresponse(wbp w, word requestor, char *property, 
                           char *selection, char *target, word time, dptr data)
 {
+    wsp ws = w->window;
     int fd;
+
+    CheckUnhidden(ws);
+
     /* data is &null if the selection doesn't support what we asked for (UTF8_STRING) */
     if (is:null(*data))
         return Succeeded;
 
     if (!cnv:string(*data, *data))
         ReturnErrVal(103, *data, Error);
-    if ((fd = open("/dev/snarf", OWRITE)) < 0) {
+
+    if ((fd = open_winfile(ws, "snarf", OWRITE)) < 0) {
         whyf("Can't open snarf file: %r");
         return Failed;
     }
@@ -1989,8 +1996,7 @@ int setdrawop(wbp w, char *val)
 int warppointer(wbp w, int x, int y)
 {
     wsp ws = w->window;
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
     fprint(ws->mouse_fd, 
            "m%11d %11d %11d %11d ", 
            ws->win->r.min.x + x, 
@@ -2006,8 +2012,7 @@ char *getdisplay(wbp w)
 int getpos(wbp w)
 {
     wsp ws = w->window;
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
     return Succeeded;
 }
 
@@ -2042,10 +2047,11 @@ int querypointer(wbp w, int *x, int *y)
 {
     int mx, my;
     wsp ws = w->window;
-    if (!ws->win)
+    CheckUnhidden(ws);
+    if (read_screeninfo(ws, &mx, &my, 0,0,0,0) != Succeeded) {
+        LitWhy("failed to read screeninfo file");
         return Failed;
-    if (read_screeninfo(ws, &mx, &my, 0,0,0,0) != Succeeded)
-        return Failed;
+    }
     *x = mx - ws->win->r.min.x;
     *y = my - ws->win->r.min.y;
     return Succeeded;
@@ -2064,11 +2070,15 @@ char *getdrawop(wbp w)
 int settransientfor(wbp w, wbp other)
 {
     wsp ws = w->window;
-    if (ws->win)
+    if (ws->win) {
+        LitWhy("Can't set transient_for on an open window");
         return Failed;
+    }
     if (other) {
-        if (!other->window->win)
+        if (!other->window->win) {
+            LitWhy("Can't set transient_for to a window that isn't open");
             return Failed;
+        }
         ws->transientfor_winid = other->window->winid;
     } else
         ws->transientfor_winid = -1;
@@ -2106,10 +2116,11 @@ int getdisplaysize(wbp w, int *width, int *height)
 {
     Rectangle r;
     wsp ws = w->window;
-    if (!ws->win)
+    CheckUnhidden(ws);
+    if (read_screeninfo(ws, 0,0, &r.min.x, &r.min.y, &r.max.x, &r.max.y) != Succeeded) {
+        LitWhy("failed to read screeninfo file");
         return Failed;
-    if (read_screeninfo(ws, 0,0, &r.min.x, &r.min.y, &r.max.x, &r.max.y) != Succeeded)
-        return Failed;
+    }
     *width = Dx(r);
     *height = Dy(r);
     return Succeeded;
