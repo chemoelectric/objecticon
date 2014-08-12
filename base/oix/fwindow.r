@@ -569,7 +569,8 @@ end
 function graphics_Window_lower(self)
    body {
       GetSelfW();
-      lowerwindow(self_w);
+      if (lowerwindow(self_w) != Succeeded)
+          fail;
       return self;
    }
 end
@@ -1752,10 +1753,7 @@ function graphics_Window_copy_pointer(self, dest, src)
        char *t1, *t2;
        GetSelfW();
        buffnstr(&dest, &t1, &src, &t2, NULL);
-       if (copypointer(self_w, t1, t2) != Succeeded) {
-           LitWhy("Invalid pointer");
-           fail;
-       }
+       AttemptAttr(copypointer(self_w, t1, t2), "Invalid pointer");
        return self;
    }
 end

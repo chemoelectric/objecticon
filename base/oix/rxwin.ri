@@ -449,6 +449,15 @@ static void setup_cursors(wdp wd)
     setup_cursor(wd, "xterm",		XC_xterm);
 }
 
+#begdef CheckUnhidden(ws)
+do {
+   if (!ws->win) {
+      LitWhy("Window is hidden");
+      return Failed;
+   }
+} while(0)
+#enddef
+
 static char *atom_fmt(wsp ws,Atom a) 
 {
     static int n = 0;
@@ -1321,8 +1330,7 @@ int ownselection(wbp w, char *selname)
     wsp ws = w->window;
     wdp wd = ws->display;
 
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
 
     selection = XInternAtom(wd->display, selname, False);
     curr = XGetSelectionOwner(wd->display, selection);
@@ -1374,8 +1382,7 @@ int requestselection(wbp w, char *selname, char *targetname)
     Atom selection, target, property;
     wsp ws = w->window;
     wdp wd = ws->display;
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
     selection = XInternAtom(wd->display, selname, False);
     target = XInternAtom(wd->display, targetname, False);
     /* 
@@ -1404,8 +1411,7 @@ int requestselection(wbp w, char *selname, char *targetname)
 int warppointer(wbp w, int x, int y)
 {
     wsp ws = w->window;
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
     XWarpPointer(ws->display->display, None, ws->win, 0,0,0,0, x, y);
     return Succeeded;
 }
@@ -1710,20 +1716,17 @@ int getpos(wbp w)
     unsigned int key_buttons;
     wsp ws = w->window;
     wdp wd = ws->display;
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
     /*
      * This call is made because it is guaranteed to generate
      * a synchronous request of the server, not just ask Xlib
      * what the window position was last it knew.
      */
     if (XQueryPointer(wd->display, ws->win, &garbage1, &garbage2,
-                      &root_x, &root_y, &win_x, &win_y, &key_buttons) ==
-        False) {
-        return Failed;
+                      &root_x, &root_y, &win_x, &win_y, &key_buttons) == True) {
+        ws->x = root_x - win_x;
+        ws->y = root_y - win_y;
     }
-    ws->x = root_x - win_x;
-    ws->y = root_y - win_y;
     return Succeeded;
 }
 
@@ -1755,21 +1758,20 @@ char *getdrawop(wbp w)
 int grabpointer(wbp w)
 {
     wsp ws = w->window;
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
     if (XGrabPointer(ws->display->display, ws->win,False, 
                      ButtonPressMask | ButtonReleaseMask | ButtonMotionMask | PointerMotionMask,
-                     GrabModeAsync, GrabModeAsync, None, None, CurrentTime) == GrabSuccess)
-        return Succeeded;
-    else
+                     GrabModeAsync, GrabModeAsync, None, None, CurrentTime) != GrabSuccess) {
+        LitWhy("XGrabPointer failed");
         return Failed;
+    }
+    return Succeeded;
 }
 
 int ungrabpointer(wbp w)
 {
     wsp ws = w->window;
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
     XUngrabPointer(ws->display->display, CurrentTime);
     return Succeeded;
 }
@@ -1777,20 +1779,19 @@ int ungrabpointer(wbp w)
 int grabkeyboard(wbp w)
 {
     wsp ws = w->window;
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
     if (XGrabKeyboard(ws->display->display, ws->win,False, 
-                     GrabModeAsync, GrabModeAsync, CurrentTime) == GrabSuccess)
-        return Succeeded;
-    else
+                      GrabModeAsync, GrabModeAsync, CurrentTime) != GrabSuccess) {
+        LitWhy("XGrabKeyboard failed");
         return Failed;
+    }
+    return Succeeded;
 }
 
 int ungrabkeyboard(wbp w)
 {
     wsp ws = w->window;
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
     XUngrabKeyboard(ws->display->display, CurrentTime);
     return Succeeded;
 }
@@ -3139,10 +3140,13 @@ int querypointer(wbp w, int *x, int *y)
     Window garbage1, garbage2;
     int root_x, root_y;
     unsigned int key_buttons;
-    if (!ws->win)
+    CheckUnhidden(ws);
+    /* XQueryPointer returns false if the pointer is not on the X11 Screen. */
+    if (XQueryPointer(wd->display, ws->win, &garbage1, &garbage2,
+                      &root_x, &root_y, x, y, &key_buttons) == False) {
+        LitWhy("pointer not on screen");
         return Failed;
-    XQueryPointer(wd->display, ws->win, &garbage1, &garbage2,
-                  &root_x, &root_y, x, y, &key_buttons);
+    }
     return Succeeded;
 }
 
@@ -3153,8 +3157,12 @@ int queryrootpointer(wbp w, int *x, int *y)
     Window garbage1, garbage2;
     int win_x, win_y;
     unsigned int key_buttons;
-    XQueryPointer(wd->display, GetRoot(wd), &garbage1, &garbage2,
-                  x, y, &win_x, &win_y, &key_buttons);
+    /* XQueryPointer returns false if the pointer is not on the X11 Screen. */
+    if (XQueryPointer(wd->display, GetRoot(wd), &garbage1, &garbage2,
+                      x, y, &win_x, &win_y, &key_buttons) == False) {
+        LitWhy("pointer not on screen");
+        return Failed;
+    }
     return Succeeded;
 }
 
@@ -3162,8 +3170,7 @@ int raisewindow(wbp w)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
 
     XMapRaised(wd->display, ws->win);
 
@@ -3187,8 +3194,7 @@ int raisewindow(wbp w)
 int lowerwindow(wbp w)
 {
     wsp ws = w->window;
-    if (!ws->win)
-        return Failed;
+    CheckUnhidden(ws);
     XLowerWindow(ws->display->display, ws->win);
     return Succeeded;
 }
