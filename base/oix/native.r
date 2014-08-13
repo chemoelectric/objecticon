@@ -4386,8 +4386,7 @@ static void fileworker_loop(struct fileworker *w)
         }
         set_fileworker_status(w, FW_COMPLETE);
         if (w->close_when_complete) {
-            if (w->buff)
-                free(w->buff);
+            free(w->buff);
             if (w->fd >= 0)
                 close(w->fd);
             free(w);
@@ -4407,8 +4406,7 @@ static void cleanup_fileworker(struct fileworker *w)
      */
     if (w->pid >= 0)
         kill_proc(w->pid);
-    if (w->buff)
-        free(w->buff);
+    free(w->buff);
     if (w->fd >= 0)
         close(w->fd);
     GUnlink4(w, fileworkers, next, prev);
