@@ -883,6 +883,7 @@ class TreeData9P(Data9P)
 end
 
 record Fid(path, uid, omode, dir)
+record WorkItem(req, resp, worker)
 
 class Session9P()
    private
@@ -894,6 +895,13 @@ class Session9P()
       ref_cnt,
       track_refs,
       verbose
+
+   # Vars used just by async_io
+   private
+      writer,      # The writer task
+      valid,       # Set of valid (non-flushed) WorkItems
+      done_flag,   # Flag to indicate writer to exit
+      queue        # Queue of WorkItems for output
 
    private new_fid(n, path, uid, mode)
       local s
@@ -1224,53 +1232,80 @@ class Session9P()
       }
    end
 
-   private worker(x, sched, f, valid)
-      local t, y, ts
+   private async_worker(item, sched)
+      local t
       t := Task(sched, create {
-         if member(valid, x) then {
-            y := respond(x)
-            if member(valid, x) then {
-               if \verbose then write("SEND:", to_string(y))
-               use {
-                  ts := TaskStream(f, t).set_close_underlying(&no),
-                  ts.writes1(Comms9P.encode(y))
-               }
-               delete(valid, x)
-            }
+         if member(valid, item) then {
+            item.resp := respond(item.req)
+            put(queue, item)
+            writer.notify()
          }
          t.revert()
       }, create throw_handler | cleanup)
-      t.start()
+      return t.start()
+   end
+
+   private async_writer(sched, f)
+      local ts, item, t
+      t := Task(sched, create {
+         use {
+            ts := TaskStream(f, t).set_close_underlying(&no),
+            repeat {
+               while /done_flag & *queue = 0 do
+                  t.sleep()
+               # If the queue is empty then done_flag must be set, so
+               # break.  Otherwise, send - so we flush the queue
+               # before exiting even after done_flag set.
+               item := get(queue) | break
+               if member(valid, item) then {
+                  if \verbose then write("SEND:", to_string(item.resp))
+                  ts.writes1(Comms9P.encode(item.resp))
+                  delete(valid, item)
+               }
+            }
+         }
+         if \verbose then write("WRITER EXITING")
+         t.revert()
+      }, create cleanup)
+      return t.start()
    end
 
    public async_io(sched, f)
-      local x, y, e, valid, t, ts
+      local x, e, t, ts, item
       t := Task(sched, create {
+         done_flag := &null
          valid := set()
+         queue := []
+         writer := async_writer(sched, f)
          use {
             ts := TaskStream(f, t).set_close_underlying(&no),
             while x := Comms9P.get(ts) do {
                if \verbose then write("GOT:", to_string(x))
+               item := WorkItem(x)
                if is(x, TFlush) then {
-                  y := respond(x)
-                  if \verbose then write("SEND:", to_string(y))
-                  ts.writes1(Comms9P.encode(y))
+                  item.resp := respond(x)
                   every e := !valid do {
-                     if e.tag = x.oldtag then {
-                        if \verbose then write("FLUSHING:", to_string(e))
+                     if e.req.tag = x.oldtag then {
+                        if \verbose then write("FLUSHING:", to_string(e.req))
                         delete(valid, e)
+                        (\e.worker).interrupt()
                      }
                   }
+                  insert(valid, item)
+                  put(queue, item)
+                  writer.notify()
                } else {
-                  insert(valid, x)
-                  worker(x, sched, f, valid)
+                  insert(valid, item)
+                  item.worker := async_worker(item, sched)
                }
             }
          }
+         done_flag := 1
+         writer.notify()
+         if \verbose then write("READER EXITING")
          t.revert()
       }, create throw_handler | cleanup)
-      t.start()
-      return t
+      return t.start()
    end
 
    public io_task(sched, f)
@@ -1281,9 +1316,8 @@ class Session9P()
             io(ts)
          }
          t.revert()
-      }, create cleanup)
-      t.start()
-      return t
+      }, create throw_handler | cleanup)
+      return t.start()
    end
 
    public set_data(d)
