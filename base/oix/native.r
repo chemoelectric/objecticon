@@ -4673,15 +4673,14 @@ function io_FileWorker_close_when_complete(self)
       GetSelfFileWorker()
       qlock(&self_fileworker->l);
       if (self_fileworker->status == FW_RUNNING) {
-         GUnlink4(self_fileworker, fileworkers, next, prev);
-         *self_fileworker_dptr = zerodesc;
          self_fileworker->close_when_complete = 1;
          qunlock(&self_fileworker->l);
+         GUnlink4(self_fileworker, fileworkers, next, prev);
       } else {
-          qunlock(&self_fileworker->l);
-          cleanup_fileworker(self_fileworker);
-          *self_fileworker_dptr = zerodesc;
+         qunlock(&self_fileworker->l);
+         cleanup_fileworker(self_fileworker);
       }
+      *self_fileworker_dptr = zerodesc;
       return self;
    }
 end
