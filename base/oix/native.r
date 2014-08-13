@@ -4314,6 +4314,8 @@ static void wait_for_fileworker_status(struct fileworker *w, int status)
 
 static void set_fileworker_status(struct fileworker *w, int status)
 {
+    if (w->status == status)
+        syserr("status in set_fileworker_status inconsistent");
     qlock(&w->l);
     w->status = status;
     rwakeup(&w->rz);
@@ -4599,6 +4601,7 @@ end
 function io_FileWorker_op_close(self)
    body {
       GetSelfFileWorker();
+      wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
       StartFileWorkerCmd(FW_CLOSE);
    }
 end
