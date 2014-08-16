@@ -19,7 +19,9 @@ class Untitled(Dialog)
       t,
       text_button_8,
       text_button_10,
-      text_button_9
+      text_button_9,
+      text_button_11,
+      text_button_12
 
    public component_setup()
       self.setup()
@@ -90,8 +92,19 @@ class Untitled(Dialog)
       other.raise()
    end
 
+   private on_text_button_11(ev)
+      other.focus()
+   end
+
+   private on_text_button_12(ev)
+      if other.get_canvas() == "iconic" then
+         other.set_canvas("normal")
+      else
+         other.raise().focus()
+   end
+
    private setup()
-      local paint_2, paint_7, paint_11, paint_4, layout_1, paint_1, paint_9, panel_1, paint_6, paint_10, paint_3, paint_8, paint_5, layout_2
+      local paint_2, paint_7, paint_11, paint_4, layout_1, paint_1, paint_9, panel_1, paint_13, paint_6, paint_10, paint_3, paint_8, paint_12, paint_5, layout_2
       paint_1 := TextPaint("->Iconic")
       text_button_1 := TextButton().
          clear_constraints().
@@ -157,9 +170,22 @@ class Untitled(Dialog)
       paint_11 := TextPaint("Lower")
       text_button_10 := TextButton().
          clear_constraints().
+         set_constraint("eol", &yes).
          connect(self.on_text_button_10, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_11)
+      paint_12 := TextPaint("Focus")
+      text_button_11 := TextButton().
+         clear_constraints().
+         connect(self.on_text_button_11, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_12)
+      paint_13 := TextPaint("Restore")
+      text_button_12 := TextButton().
+         clear_constraints().
+         connect(self.on_text_button_12, Event.ACTION).
+         set_toggles(&no).
+         set_paint(paint_13)
       layout_2 := GridLayout().
          set_doi(0).
          set_extra("cells")
@@ -168,7 +194,9 @@ class Untitled(Dialog)
          set_constraint("eol", &yes).
          set_layout(layout_2).
          add(text_button_9).
-         add(text_button_10)
+         add(text_button_10).
+         add(text_button_11).
+         add(text_button_12)
       self.add(panel_1)
       paint_5 := TextPaint("Label")
       label_1 := Label().

@@ -3166,28 +3166,26 @@ int queryrootpointer(wbp w, int *x, int *y)
     return Succeeded;
 }
 
-int raisewindow(wbp w)
+int focuswindow(wbp w)
 {
+    XWindowAttributes attr;
     wsp ws = w->window;
     wdp wd = ws->display;
     CheckUnhidden(ws);
+    /* From the manpage : The specified focus window must be viewable
+     * at the time XSetInputFocus is called, or a BadMatch error
+     * results. */
+    XGetWindowAttributes(wd->display, ws->win, &attr);
+    if (attr.map_state == IsViewable)
+        XSetInputFocus(wd->display, ws->win, RevertToParent, CurrentTime);
+    return Succeeded;
+}
 
-    XMapRaised(wd->display, ws->win);
-
-    /* Wait for the window to become viewable before giving
-       it the focus. */
-    for (;;) {
-        XWindowAttributes attr;
-        XGetWindowAttributes(wd->display, ws->win, &attr);
-        if (attr.map_state == IsViewable)
-            break;
-        /* Not viewable yet, so wait for a MapNotify event. */
-        pollevent(w);
-    }
-
-    /* Now it is viewable, so give it the focus. */
-    XSetInputFocus(wd->display, ws->win, RevertToParent, CurrentTime);
-
+int raisewindow(wbp w)
+{
+    wsp ws = w->window;
+    CheckUnhidden(ws);
+    XRaiseWindow(ws->display->display, ws->win);
     return Succeeded;
 }
 

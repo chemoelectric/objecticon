@@ -119,20 +119,35 @@ class Dialog(Component)
       return self
    end
 
+   # Restore the window, meaning try to de-iconify it, raise it and
+   # give it focus all in one go.
+   #
+   public restore_win()
+      return if win.get_canvas() == "iconic" then
+         win.set_canvas("normal") & self
+      else
+         win.raise().focus() & self
+   end
+
    #
    # Raise the window
    #
-   public raise()
-      self.win.raise()
-      return self
+   public raise_win()
+      return win.raise() & self
    end
 
    #
    # Lower the window
    #
-   public lower()
-      self.win.lower()
-      return self
+   public lower_win()
+      return win.lower() & self
+   end
+
+   #
+   # Focus the window
+   #
+   public focus_win()
+      return win.focus() & self
    end
 
    #
@@ -489,7 +504,7 @@ class Dialog(Component)
       Dispatcher.remove_dialog(self)
       if \self.owning_dialog then {
          delete(self.owning_dialog.child_dialogs, self)
-         self.owning_dialog.raise()
+         self.owning_dialog.restore_win()
          self.owning_dialog := &null
       }
       self.point_chain := self.point_chain_source := self.held := 

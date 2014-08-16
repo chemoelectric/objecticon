@@ -279,6 +279,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    int  queryrootpointer(wbp w, int *x, int *y);
    int  getdisplaysize  (wbp w, int *width, int *height);
    int  raisewindow     (wbp w);
+   int  focuswindow     (wbp w);
    int  setbg           (wbp w, char *s);
    int  setcanvas       (wbp w, char *s);
    int  setdrawop       (wbp w, char *val);
