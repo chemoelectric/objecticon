@@ -1321,8 +1321,14 @@ int raisewindow(wbp w)
 {
     wsp ws = w->window;
     CheckUnhidden(ws);
-    fprint(ws->wctl_fd, "unhide");
     fprint(ws->wctl_fd, "top");
+    return Succeeded;
+}
+
+int focuswindow(wbp w)
+{
+    wsp ws = w->window;
+    CheckUnhidden(ws);
     fprint(ws->wctl_fd, "current");
     return Succeeded;
 }
