@@ -1309,7 +1309,7 @@ int queryrootpointer(wbp w, int *x, int *y)
     wsp ws = w->window;
     CheckUnhidden(ws);
     if (read_screeninfo(ws, &mx, &my, &sx, &sy, 0,0) != Succeeded) {
-        LitWhy("failed to read screeninfo file");
+        LitWhy("Failed to read screeninfo file");
         return Failed;
     }
     *x = mx - sx;
@@ -1329,7 +1329,10 @@ int focuswindow(wbp w)
 {
     wsp ws = w->window;
     CheckUnhidden(ws);
-    fprint(ws->wctl_fd, "current");
+    if (fprint(ws->wctl_fd, "current") < 0) {
+        whyf("Can't focus window: %r");
+        return Failed;
+    }
     return Succeeded;
 }
 
@@ -2055,7 +2058,7 @@ int querypointer(wbp w, int *x, int *y)
     wsp ws = w->window;
     CheckUnhidden(ws);
     if (read_screeninfo(ws, &mx, &my, 0,0,0,0) != Succeeded) {
-        LitWhy("failed to read screeninfo file");
+        LitWhy("Failed to read screeninfo file");
         return Failed;
     }
     *x = mx - ws->win->r.min.x;
@@ -2124,7 +2127,7 @@ int getdisplaysize(wbp w, int *width, int *height)
     wsp ws = w->window;
     CheckUnhidden(ws);
     if (read_screeninfo(ws, 0,0, &r.min.x, &r.min.y, &r.max.x, &r.max.y) != Succeeded) {
-        LitWhy("failed to read screeninfo file");
+        LitWhy("Failed to read screeninfo file");
         return Failed;
     }
     *width = Dx(r);
@@ -2446,7 +2449,7 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
             whyf("Image writer failed: %s", w->msg);
             free(w);
         } else
-            LitWhy("child process not found");
+            LitWhy("Child process not found");
         remove(filename);
         return Failed;
     }
