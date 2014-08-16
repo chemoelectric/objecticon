@@ -870,6 +870,11 @@ final class Window(NoCopy)
    public native raise()
 
    #
+   # Give the window the input focus
+   #
+   public native focus()
+
+   #
    # Returns the width of string s, in pixels, as drawn using the
    # current font.
    #

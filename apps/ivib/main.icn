@@ -787,7 +787,7 @@ class Main(Dialog)
 
    public op_tree()
       if component_tree_dialog := gui.Dispatcher.find_dialog(ComponentTreeDialog) then {
-         component_tree_dialog.raise()
+         component_tree_dialog.restore_win()
       } else {
          component_tree_dialog := ComponentTreeDialog(self)
          component_tree_dialog.connect(self.on_component_tree_dialog_close, Event.DIALOG_DISPOSED)

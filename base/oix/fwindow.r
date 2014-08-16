@@ -777,6 +777,15 @@ function graphics_Window_raise(self)
    }
 end
 
+function graphics_Window_focus(self)
+   body {
+      GetSelfW();
+      if (focuswindow(self_w) != Succeeded)
+          fail;
+      return self;
+   }
+end
+
 function graphics_Window_text_width(self, s)
    if !cnv:string_or_ucs(s) then
       runerr(129, s)
