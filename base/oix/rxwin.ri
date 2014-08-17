@@ -3144,7 +3144,7 @@ int querypointer(wbp w, int *x, int *y)
     /* XQueryPointer returns false if the pointer is not on the X11 Screen. */
     if (XQueryPointer(wd->display, ws->win, &garbage1, &garbage2,
                       &root_x, &root_y, x, y, &key_buttons) == False) {
-        LitWhy("pointer not on screen");
+        LitWhy("Pointer not on screen");
         return Failed;
     }
     return Succeeded;
@@ -3160,7 +3160,7 @@ int queryrootpointer(wbp w, int *x, int *y)
     /* XQueryPointer returns false if the pointer is not on the X11 Screen. */
     if (XQueryPointer(wd->display, GetRoot(wd), &garbage1, &garbage2,
                       x, y, &win_x, &win_y, &key_buttons) == False) {
-        LitWhy("pointer not on screen");
+        LitWhy("Pointer not on screen");
         return Failed;
     }
     return Succeeded;
@@ -3176,8 +3176,11 @@ int focuswindow(wbp w)
      * at the time XSetInputFocus is called, or a BadMatch error
      * results. */
     XGetWindowAttributes(wd->display, ws->win, &attr);
-    if (attr.map_state == IsViewable)
-        XSetInputFocus(wd->display, ws->win, RevertToParent, CurrentTime);
+    if (attr.map_state != IsViewable) {
+        LitWhy("Can't focus window that is not viewable");
+        return Failed;
+    }
+    XSetInputFocus(wd->display, ws->win, RevertToParent, CurrentTime);
     return Succeeded;
 }
 
