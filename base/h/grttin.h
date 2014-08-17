@@ -339,7 +339,7 @@ if (!(w))
     runerr(142, p);
 #enddef
 
-#begdef AttemptAttr(operation, reason)
+#begdef GenAttemptAttr(operation, reason, cleanup)
 do {
    tended struct descrip saved_why;
    saved_why = kywd_why;
@@ -360,12 +360,37 @@ do {
            fail;
        }
        default: {
-           syserr("Invalid return code from graphics op"); 
-           fail;
+           syserr("Invalid return code from op"); 
+           break;
        }
    }
 } while(0)
 #enddef
+
+#begdef GenAttemptOp(operation, cleanup)
+do {
+   switch (operation) { 
+       case Error: {
+           runerr(0); 
+           break;
+       }
+       case Succeeded: {
+           break;
+       }
+       case Failed: {
+           cleanup;
+           fail;
+       }
+       default: {
+           syserr("Invalid return code from op"); 
+           break;
+       }
+   }
+} while(0)
+#enddef
+
+#define AttemptOp(operation) GenAttemptOp(operation,)
+#define AttemptAttr(operation, reason) GenAttemptAttr(operation, reason,)
 
 #begdef FdStaticParam(p, m)
 int m;

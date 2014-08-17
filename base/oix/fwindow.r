@@ -58,8 +58,7 @@ end
 function graphics_Window_grab_pointer(self)
    body {
       GetSelfW();
-      if (grabpointer(self_w) != Succeeded)
-          fail;
+      AttemptOp(grabpointer(self_w));
       return self;
    }
 end
@@ -67,8 +66,7 @@ end
 function graphics_Window_ungrab_pointer(self)
    body {
       GetSelfW();
-      if (ungrabpointer(self_w) != Succeeded)
-          fail;
+      AttemptOp(ungrabpointer(self_w));
       return self;
    }
 end
@@ -76,8 +74,7 @@ end
 function graphics_Window_grab_keyboard(self)
    body {
       GetSelfW();
-      if (grabkeyboard(self_w) != Succeeded)
-          fail;
+      AttemptOp(grabkeyboard(self_w));
       return self;
    }
 end
@@ -85,8 +82,7 @@ end
 function graphics_Window_ungrab_keyboard(self)
    body {
       GetSelfW();
-      if (ungrabkeyboard(self_w) != Succeeded)
-          fail;
+      AttemptOp(ungrabkeyboard(self_w));
       return self;
    }
 end
@@ -138,8 +134,7 @@ function graphics_Window_copy_to(self, x0, y0, w0, h0, dest, x1, y1)
       if (!reducerect(self_w, 0, &x, &y, &width, &height))
           return self;
 
-      if (copyarea(self_w, x, y, width, height, w2, x2 + (x - ox), y2 + (y - oy)) == Failed)
-          fail;
+      AttemptOp(copyarea(self_w, x, y, width, height, w2, x2 + (x - ox), y2 + (y - oy)));
 
       return self;
    }
@@ -569,8 +564,7 @@ end
 function graphics_Window_lower(self)
    body {
       GetSelfW();
-      if (lowerwindow(self_w) != Succeeded)
-          fail;
+      AttemptOp(lowerwindow(self_w));
       return self;
    }
 end
@@ -580,10 +574,7 @@ function graphics_Window_get_pattern_impl(self)
       struct imgdata *imd;
       GetSelfW();
       imd = newimgdata();
-      if (getpattern(self_w, imd) == Failed) {
-          unlinkimgdata(imd);
-          fail;
-      }
+      GenAttemptOp(getpattern(self_w, imd), unlinkimgdata(imd));
       return C_integer((word)imd);
    }
 end
@@ -616,12 +607,8 @@ function graphics_Pixels_new_open_impl(val)
       runerr(103, val)
    body {
       struct imgdata *imd = newimgdata();
-      if (interpimage(&val, imd) == Succeeded)
-          return C_integer((word)imd);
-      else {
-          unlinkimgdata(imd);
-          fail;
-      }
+      GenAttemptOp(interpimage(&val, imd), unlinkimgdata(imd));
+      return C_integer((word)imd);
    }
 end
 
@@ -632,8 +619,7 @@ function graphics_Pixels_to_file(self, fname)
       char *s;
       GetSelfPixels();
       s = buffstr(&fname);
-      if (writeimagefile(s, self_id) != Succeeded)
-          fail;
+      AttemptOp(writeimagefile(s, self_id));
       return self;
    }
 end
@@ -710,8 +696,7 @@ function graphics_Window_query_root_pointer(self)
       tended struct descrip result;
       struct descrip t;
       GetSelfW();
-      if (queryrootpointer(self_w, &x, &y) != Succeeded)
-          fail;
+      AttemptOp(queryrootpointer(self_w, &x, &y));
       create_list(2, &result);
       MakeInt(x, &t);
       list_put(&result, &t);
@@ -727,8 +712,7 @@ function graphics_Window_query_pointer(self)
       tended struct descrip result;
       struct descrip t;
       GetSelfW();
-      if (querypointer(self_w, &x, &y) != Succeeded)
-          fail;
+      AttemptOp(querypointer(self_w, &x, &y));
       create_list(2, &result);
       MakeInt(x - self_w->context->dx, &t);
       list_put(&result, &t);
@@ -744,8 +728,7 @@ function graphics_Window_get_display_size(self)
       tended struct descrip result;
       struct descrip t;
       GetSelfW();
-      if (getdisplaysize(self_w, &width, &height) != Succeeded)
-          fail;
+      AttemptOp(getdisplaysize(self_w, &width, &height));
       create_list(2, &result);
       MakeInt(width, &t);
       list_put(&result, &t);
@@ -762,8 +745,7 @@ function graphics_Window_warp_pointer(self, x, y)
       runerr(101, y)
    body {
       GetSelfW();
-      if (warppointer(self_w, x + self_w->context->dx, y + self_w->context->dy) != Succeeded)
-          fail;
+      AttemptOp(warppointer(self_w, x + self_w->context->dx, y + self_w->context->dy));
       return self;
    }
 end
@@ -771,8 +753,7 @@ end
 function graphics_Window_raise(self)
    body {
       GetSelfW();
-      if (raisewindow(self_w) != Succeeded)
-          fail;
+      AttemptOp(raisewindow(self_w));
       return self;
    }
 end
@@ -780,8 +761,7 @@ end
 function graphics_Window_focus(self)
    body {
       GetSelfW();
-      if (focuswindow(self_w) != Succeeded)
-          fail;
+      AttemptOp(focuswindow(self_w));
       return self;
    }
 end
@@ -817,8 +797,7 @@ function graphics_Window_own_selection(self, selection)
       runerr(103,selection)
    body {
        GetSelfW();
-       if (ownselection(self_w, buffstr(&selection)) != Succeeded)
-           fail;
+       AttemptOp(ownselection(self_w, buffstr(&selection)));
        return self;
    }
 end
@@ -838,21 +817,8 @@ function graphics_Window_send_selection_response(self, requestor, property, sele
        char *t1, *t2, *t3;
        GetSelfW();
        buffnstr(&property, &t1, &selection, &t2, &target, &t3, NULL);
-       switch (sendselectionresponse(self_w, requestor, t1, t2, t3, time, &data)) {
-           case Error: {
-               runerr(0);
-               break;
-           }
-           case Failed: {
-               fail;
-               break;
-           }
-           case Succeeded: {
-               return self;
-           }
-       }
-       /* Not reached */
-       fail;
+       AttemptOp(sendselectionresponse(self_w, requestor, t1, t2, t3, time, &data));
+       return self;
    }
 end
 
@@ -867,8 +833,7 @@ function graphics_Window_request_selection(self, selection, target_type)
        char *t1, *t2;
        GetSelfW();
        buffnstr(&selection, &t1, &target_type, &t2, NULL);
-       if (requestselection(self_w, t1, t2) == Failed)
-           fail;
+       AttemptOp(requestselection(self_w, t1, t2));
        return self;
    }
 end
@@ -982,8 +947,7 @@ function graphics_Window_get_depth(self)
    body {
        int i;
        GetSelfW();
-       if (getdepth(self_w, &i) == Failed)
-           fail;
+       AttemptOp(getdepth(self_w, &i));
        return C_integer i;
    }
 end
@@ -1074,8 +1038,7 @@ function graphics_Window_get_geometry(self)
        struct descrip t;
        wsp ws;
        GetSelfW();
-       if (getpos(self_w) != Succeeded)
-           fail;
+       AttemptOp(getpos(self_w));
        ws = self_w->window;
        create_list(4, &result);
        MakeInt(ws->x, &t);
@@ -1212,8 +1175,7 @@ function graphics_Window_get_pos(self)
        tended struct descrip result;
        struct descrip t;
        GetSelfW();
-       if (getpos(self_w) != Succeeded)
-           fail;
+       AttemptOp(getpos(self_w));
        create_list(2, &result);
        MakeInt(self_w->window->x, &t);
        list_put(&result, &t);
@@ -1226,8 +1188,7 @@ end
 function graphics_Window_get_x(self)
    body {
        GetSelfW();
-       if (getpos(self_w) != Succeeded)
-           fail;
+       AttemptOp(getpos(self_w));
        return C_integer self_w->window->x;
    }
 end
@@ -1235,8 +1196,7 @@ end
 function graphics_Window_get_y(self)
    body {
        GetSelfW();
-       if (getpos(self_w) != Succeeded)
-           fail;
+       AttemptOp(getpos(self_w));
        return C_integer self_w->window->y;
    }
 end
@@ -1734,8 +1694,7 @@ function graphics_Window_define_pointer(self, name, x, y)
        char *s;
        GetSelfW();
        s = buffstr(&name);
-       if (definepointer(self_w, s, x, y) != Succeeded)
-          fail;
+       AttemptOp(definepointer(self_w, s, x, y));
        return self;
    }
 end
