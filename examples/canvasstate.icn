@@ -1,189 +1,178 @@
 $load FLINTSTONES "flintstones10-hp.jpg"
 
 import
-   gui, graphics
+   gui, graphics, ipl.options
 
-global init_canvas
+global init_canvas, opts
 
 class Untitled(Dialog)
    private
-      text_button_1,
-      text_button_2,
-      text_field_1, other,
-      label_1,
-      text_button_3,
-      text_button_4,
-      text_button_5,
-      text_button_6,
-      text_button_7,
+      other,
       t,
-      text_button_8,
-      text_button_10,
-      text_button_9,
-      text_button_11,
-      text_button_12
+      state_label,
+      err_label
 
    public component_setup()
       self.setup()
       t := Dispatcher.new_task{tick()}
       t.start()
       set_pos(200,200)
+   end
+
+   public init_dialog()
       other := Window().
          set_pos(500,200).
          set_resize(&yes).
-         set_image(FLINTSTONES).
+         set_image(FLINTSTONES)
+      if \opts["t"] then
+         other.set_transient_for(win)
+      other.
          set_canvas(init_canvas)
    end
 
    public tick()
       local d
       repeat {
-         other.event()
+         while other.event()
          d := other.get_size()
-         label_1.set_label(other.get_canvas() || " (" || d[1] || "x" || d[2] || ")")
+         state_label.set_label(other.get_canvas() || " (" || d[1] || "x" || d[2] || ")")
          t.sleep(200)
       }
+   end
+
+   private attempt(e)
+      if @e then
+         err_label.set_fg("green").set_label("OK").set_tooltip().reset()
+      else
+         err_label.set_fg("red").set_paint(AbbreviatedTextPaint(&why)).set_tooltip(&why).reset()
    end
 
    public end_dialog()
       other.close()
    end
 
-   public init_dialog()
+   private on_focus_button(ev)
+      attempt{ other.focus() }
    end
 
-   private on_text_button_1(ev)
-      other.set_canvas("iconic")
+   private on_fullscreen_button(ev)
+      attempt{ other.set_canvas("fullscreen") }
    end
 
-   private on_text_button_2(ev)
+   private on_hidden_button(ev)
+      attempt{ other.set_canvas("hidden") }
+   end
+
+   private on_lower_button(ev)
+      attempt{ other.lower() }
+   end
+
+   private on_maximized_button(ev)
+      attempt{ other.set_canvas("maximized") }
+   end
+
+   private on_normal_button(ev)
+      attempt{ other.set_canvas("normal") }
+   end
+
+   private on_popup_button(ev)
+      attempt{ other.set_canvas("popup") }
+   end
+
+   private on_raise_button(ev)
+      attempt{ other.raise() }
+   end
+
+   private on_restore_button(ev)
+      attempt{ if other.get_canvas() == "iconic" then
+         other.set_canvas("normal")
+      else
+         other.raise().focus() }
+   end
+
+   private on_withdrawn_button(ev)
+      attempt{ other.set_canvas("withdrawn") }
+   end
+
+   private on_iconic_button(ev)
+      attempt{ other.set_canvas("iconic") }
+   end
+
+   private on_quit_button(ev)
       dispose()
    end
 
-   private on_text_button_3(ev)
-      other.set_canvas("hidden")
-   end
-
-   private on_text_button_4(ev)
-      other.set_canvas("normal")
-   end
-
-   private on_text_button_5(ev)
-      other.set_canvas("maximized")
-   end
-
-   private on_text_button_6(ev)
-      other.set_canvas("popup")
-   end
-
-   private on_text_button_7(ev)
-      other.set_canvas("fullscreen")
-   end
-
-   private on_text_button_8(ev)
-      other.set_canvas("withdrawn")
-   end
-
-   private on_text_button_10(ev)
-      other.lower()
-   end
-
-   private on_text_button_9(ev)
-      other.raise()
-   end
-
-   private on_text_button_11(ev)
-      other.focus()
-   end
-
-   private on_text_button_12(ev)
-      if other.get_canvas() == "iconic" then
-         other.set_canvas("normal")
-      else
-         other.raise().focus()
-   end
-
    private setup()
-      local paint_2, paint_7, paint_11, paint_4, layout_1, paint_1, paint_9, panel_1, paint_13, paint_6, paint_10, paint_3, paint_8, paint_12, paint_5, layout_2
+      local paint_2, paint_14, text_button_10, text_button_11, text_button_12, paint_7, paint_11, paint_4, layout_1, paint_1, paint_9, panel_1, paint_13, paint_6, paint_10, paint_3, paint_8, paint_12, paint_5, layout_2, text_button_1, text_button_3, text_button_4, text_button_5, text_button_7, text_button_6, text_button_8, text_button_9, text_button_2
       paint_1 := TextPaint("->Iconic")
       text_button_1 := TextButton().
          clear_constraints().
-         set_constraint("eol", &yes).
-         connect(self.on_text_button_1, Event.ACTION).
+         connect(self.on_iconic_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_1)
-      self.add(text_button_1)
       paint_3 := TextPaint("->Hidden")
       text_button_3 := TextButton().
          clear_constraints().
          set_constraint("eol", &yes).
-         connect(self.on_text_button_3, Event.ACTION).
+         connect(self.on_hidden_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_3)
-      self.add(text_button_3)
       paint_4 := TextPaint("->Normal")
       text_button_4 := TextButton().
          clear_constraints().
-         set_constraint("eol", &yes).
-         connect(self.on_text_button_4, Event.ACTION).
+         connect(self.on_normal_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_4)
-      self.add(text_button_4)
       paint_6 := TextPaint("->Maximized")
       text_button_5 := TextButton().
          clear_constraints().
          set_constraint("eol", &yes).
-         connect(self.on_text_button_5, Event.ACTION).
+         connect(self.on_maximized_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_6)
-      self.add(text_button_5)
       paint_8 := TextPaint("->Fullscreen")
       text_button_7 := TextButton().
          clear_constraints().
-         set_constraint("eol", &yes).
-         connect(self.on_text_button_7, Event.ACTION).
+         connect(self.on_fullscreen_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_8)
-      self.add(text_button_7)
       paint_7 := TextPaint("->Popup")
       text_button_6 := TextButton().
          clear_constraints().
          set_constraint("eol", &yes).
-         connect(self.on_text_button_6, Event.ACTION).
+         connect(self.on_popup_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_7)
-      self.add(text_button_6)
       paint_9 := TextPaint("->Withdrawn")
       text_button_8 := TextButton().
          clear_constraints().
          set_constraint("eol", &yes).
-         connect(self.on_text_button_8, Event.ACTION).
+         connect(self.on_withdrawn_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_9)
-      self.add(text_button_8)
       paint_10 := TextPaint("Raise")
       text_button_9 := TextButton().
          clear_constraints().
-         connect(self.on_text_button_9, Event.ACTION).
+         connect(self.on_raise_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_10)
       paint_11 := TextPaint("Lower")
       text_button_10 := TextButton().
          clear_constraints().
          set_constraint("eol", &yes).
-         connect(self.on_text_button_10, Event.ACTION).
+         connect(self.on_lower_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_11)
       paint_12 := TextPaint("Focus")
       text_button_11 := TextButton().
          clear_constraints().
-         connect(self.on_text_button_11, Event.ACTION).
+         connect(self.on_focus_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_12)
       paint_13 := TextPaint("Restore")
       text_button_12 := TextButton().
          clear_constraints().
-         connect(self.on_text_button_12, Event.ACTION).
+         connect(self.on_restore_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_13)
       layout_2 := GridLayout().
@@ -193,23 +182,42 @@ class Untitled(Dialog)
          clear_constraints().
          set_constraint("eol", &yes).
          set_layout(layout_2).
+         add(text_button_1).
+         add(text_button_3).
+         add(text_button_4).
+         add(text_button_5).
+         add(text_button_7).
+         add(text_button_6).
+         add(text_button_8).
          add(text_button_9).
          add(text_button_10).
          add(text_button_11).
          add(text_button_12)
       self.add(panel_1)
       paint_5 := TextPaint("Label")
-      label_1 := Label().
-         set_size(176, 26).
+      state_label := Label().
+         set_size("176", "26").
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
          set_paint(paint_5)
-      self.add(label_1)
+      self.add(state_label)
+      paint_14 := TextPaint("")
+      err_label := Label().
+         set_size("176", "26").
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_paint(paint_14)
+      self.add(err_label)
       paint_2 := TextPaint("Quit")
       text_button_2 := TextButton().
          clear_constraints().
-         connect(self.on_text_button_2, Event.ACTION).
+         connect(self.on_quit_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_2)
       self.add(text_button_2)
@@ -221,6 +229,7 @@ end
 
 procedure main(a)
    local d
+   opts := options(a, "-t!")
    init_canvas := a[1] | "normal"
    d := Untitled()
    d.show_modal()
