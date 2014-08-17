@@ -572,7 +572,10 @@ int grabpointer(wbp w)
 {
     wsp ws = w->window;
     CheckUnhidden(ws);
-    fprint(ws->wctl_fd, "grabpointer");
+    if (fprint(ws->wctl_fd, "grabpointer") < 0) {
+       whyf("Can't grab pointer: %r");
+       return Failed;
+    }
     return Succeeded;
 }
 
@@ -580,7 +583,10 @@ int ungrabpointer(wbp w)
 {
     wsp ws = w->window;
     CheckUnhidden(ws);
-    fprint(ws->wctl_fd, "ungrabpointer");
+    if (fprint(ws->wctl_fd, "ungrabpointer") < 0) {
+       whyf("Can't ungrab pointer: %r");
+       return Failed;
+    }
     return Succeeded;
 }
 
@@ -588,7 +594,10 @@ int grabkeyboard(wbp w)
 {
     wsp ws = w->window;
     CheckUnhidden(ws);
-    fprint(ws->wctl_fd, "grabkeyboard");
+    if (fprint(ws->wctl_fd, "grabkeyboard") < 0) {
+       whyf("Can't grab keyboard: %r");
+       return Failed;
+    }
     return Succeeded;
 }
 
@@ -596,7 +605,10 @@ int ungrabkeyboard(wbp w)
 {
     wsp ws = w->window;
     CheckUnhidden(ws);
-    fprint(ws->wctl_fd, "ungrabkeyboard");
+    if (fprint(ws->wctl_fd, "ungrabkeyboard") < 0) {
+       whyf("Can't ungrab keyboard: %r");
+       return Failed;
+    }
     return Succeeded;
 }
 
@@ -1201,7 +1213,10 @@ int lowerwindow (wbp w)
 {
     wsp ws = w->window;
     CheckUnhidden(ws);
-    fprint(ws->wctl_fd, "bottom");
+    if (fprint(ws->wctl_fd, "bottom") < 0) {
+        whyf("Can't lower window: %r");
+        return Failed;
+    }
     return Succeeded;
 }
 
@@ -1321,7 +1336,10 @@ int raisewindow(wbp w)
 {
     wsp ws = w->window;
     CheckUnhidden(ws);
-    fprint(ws->wctl_fd, "top");
+    if (fprint(ws->wctl_fd, "top") < 0) {
+        whyf("Can't raise window: %r");
+        return Failed;
+    }
     return Succeeded;
 }
 
@@ -1913,14 +1931,20 @@ int setcanvas(wbp w, char *s)
         case IconicCanvas: {
             if (ws->state == PopupCanvas)
                 return Failed;
-            fprint(ws->wctl_fd, "hide");
+            if (fprint(ws->wctl_fd, "hide") < 0) {
+                whyf("Can't make iconic: %r");
+                return Failed;
+            }
             break;
         }
 
         case NormalCanvas: {
             if (ws->state == PopupCanvas)
                 return Failed;
-            fprint(ws->wctl_fd, "unhide");
+            if (fprint(ws->wctl_fd, "unhide") < 0) {
+                whyf("Can't make normal: %r");
+                return Failed;
+            }
             break;
         }
 
