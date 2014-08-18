@@ -496,7 +496,7 @@ AC_DEFUN([AX_CHECK_ZLIB],
 )
 
     if test "$with_zlib" != "no"; then
-           ZLIB_CONFIG="zlib >= 1.2.8"
+           ZLIB_CONFIG="zlib >= 1.2.7"
            AC_MSG_CHECKING([for $ZLIB_CONFIG])
            if pkg-config $ZLIB_CONFIG; then
               CPPFLAGS="$CPPFLAGS `pkg-config --cflags $ZLIB_CONFIG`"
