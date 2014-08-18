@@ -343,7 +343,58 @@ if (!(w))
     runerr(142, p);
 #enddef
 
-#begdef GenAttemptAttr(operation, reason, cleanup)
+/*
+ * Op that can succeed or fail setting &why, with default value for
+ * &why if none set by op.
+ */
+#begdef AttemptAttr(operation, reason)
+do {
+   tended struct descrip saved_why;
+   saved_why = kywd_why;
+   kywd_why = emptystr;
+   switch (operation) { 
+       case Succeeded: {
+           kywd_why = saved_why;
+           break;
+       }
+       case Failed: {
+           if (StrLen(kywd_why) == 0)
+               LitWhy(reason);
+           fail;
+       }
+       default: {
+           syserr("Invalid return code from op"); 
+           break;
+       }
+   }
+} while(0)
+#enddef
+
+/*
+ * Op that can succeed or fail.
+ */
+#begdef AttemptOp(operation)
+do {
+   switch (operation) { 
+       case Succeeded: {
+           break;
+       }
+       case Failed: {
+           fail;
+       }
+       default: {
+           syserr("Invalid return code from op"); 
+           break;
+       }
+   }
+} while(0)
+#enddef
+
+/*
+ * Op that can succeed or fail setting &why or cause runtime error,
+ * with default value for &why if none set by op.
+ */
+#begdef AttemptAttrCanErr(operation, reason)
 do {
    tended struct descrip saved_why;
    saved_why = kywd_why;
@@ -371,7 +422,10 @@ do {
 } while(0)
 #enddef
 
-#begdef GenAttemptOp(operation, cleanup)
+/*
+ * Op that can succeed or fail or cause runtime error.
+ */
+#begdef AttemptOpCanErr(operation)
 do {
    switch (operation) { 
        case Error: {
@@ -382,7 +436,6 @@ do {
            break;
        }
        case Failed: {
-           cleanup;
            fail;
        }
        default: {
@@ -392,9 +445,6 @@ do {
    }
 } while(0)
 #enddef
-
-#define AttemptOp(operation) GenAttemptOp(operation,)
-#define AttemptAttr(operation, reason) GenAttemptAttr(operation, reason,)
 
 #begdef FdStaticParam(p, m)
 int m;

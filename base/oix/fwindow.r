@@ -572,9 +572,12 @@ end
 function graphics_Window_get_pattern_impl(self)
    body {
       struct imgdata *imd;
+      int rv;
       GetSelfW();
       imd = newimgdata();
-      GenAttemptOp(getpattern(self_w, imd), unlinkimgdata(imd));
+      if ((rv = getpattern(self_w, imd)) != Succeeded)
+          unlinkimgdata(imd);
+      AttemptOp(rv);
       return C_integer((word)imd);
    }
 end
@@ -606,8 +609,12 @@ function graphics_Pixels_new_open_impl(val)
    if !cnv:string(val) then
       runerr(103, val)
    body {
-      struct imgdata *imd = newimgdata();
-      GenAttemptOp(interpimage(&val, imd), unlinkimgdata(imd));
+      struct imgdata *imd;
+      int rv;
+      imd = newimgdata();
+      if ((rv = interpimage(&val, imd)) != Succeeded)
+          unlinkimgdata(imd);
+      AttemptOp(rv);
       return C_integer((word)imd);
    }
 end
@@ -817,7 +824,7 @@ function graphics_Window_send_selection_response(self, requestor, property, sele
        char *t1, *t2, *t3;
        GetSelfW();
        buffnstr(&property, &t1, &selection, &t2, &target, &t3, NULL);
-       AttemptOp(sendselectionresponse(self_w, requestor, t1, t2, t3, time, &data));
+       AttemptOpCanErr(sendselectionresponse(self_w, requestor, t1, t2, t3, time, &data));
        return self;
    }
 end
