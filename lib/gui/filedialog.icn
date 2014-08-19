@@ -477,7 +477,7 @@ class FileDialog(Dialog)
    end
 
    public msg(s)
-      message_label.set_label(s)
+      message_label.set_paint(AbbreviatedTextPaint(s))
    end
 
    public clear_msg()
