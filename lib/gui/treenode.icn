@@ -115,10 +115,11 @@ class TreeNode()
    # @param  The {TreeNode} to add.
    # @param i   The index to add at; if omitted then the new node
    # @          is appended to the end.
+   # @fail      If i is out of range
    #
    public add(n, i)
       /i := 0
-      insert(self.children, i, n)
+      insert(self.children, i, n) | fail
       n.parent := self
       return self
    end
@@ -141,9 +142,12 @@ class TreeNode()
    #
    # Remove the {TreeNode} at the given index from the list of children.
    # @param i    The index
+   # @fail      If i is out of range
    #
    public remove_index(i)
-      self.children[i].parent := &null
+      local c
+      c := self.children[i] | fail
+      c.parent := &null
       delete(self.children, i)
       return self
    end
