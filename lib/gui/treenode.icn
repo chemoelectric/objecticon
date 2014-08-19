@@ -105,6 +105,11 @@ class TreeNode()
    # the second is displayed if the {TreeNode} is closed and has
    # children, and the third is displayed if the node has no children.
    #
+   # Note that these instances are neither initialized or finalized by
+   # this class (nor by {Tree}) - that must be done externally by the
+   # owner.  (This does mean many nodes can share the same instance
+   # however).
+   #
    public set_icon_paint(i1, i2, i3)
       self.icon_paint := [i1, i2, i3]
       return self
@@ -204,6 +209,7 @@ class TreeNode()
    # Clear all the children
    #
    public clear_children()
+      every (!children).parent := &null
       clear(children)
       return self
    end
