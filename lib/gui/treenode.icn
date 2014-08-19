@@ -133,10 +133,10 @@ class TreeNode()
 
    #
    # Delete the given {TreeNode} from the children.
+   # @fail      If n is not a child of this instance.
    #
    public remove(n)
-      remove_index(get_index(n))
-      return self
+      return remove_index(get_index(n))
    end
 
    #

@@ -53,10 +53,10 @@ class MenuBar(Component, MenuSystem)
    #
    # Remove the {Menu} from the menu list.
    # @param c   The {Menu} to remove.
+   # @fail      If c is not a child menu of this instance.
    #
    public remove(c)
-      remove_index(get_index(c))
-      return self
+      return remove_index(get_index(c))
    end
 
    #

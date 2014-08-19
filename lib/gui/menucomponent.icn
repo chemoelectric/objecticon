@@ -80,10 +80,10 @@ abstract class MenuComponent(Rect,Connectable)
    #
    # Remove the {MenuComponent} from the menu.
    # @param c   The {MenuComponent} to remove.
+   # @fail      If c is not a child of this instance.
    #
    public remove(c)
-      remove_index(get_index(c))
-      return self
+      return remove_index(get_index(c))
    end
 
    #

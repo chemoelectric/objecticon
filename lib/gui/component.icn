@@ -1171,10 +1171,10 @@ class Component(Rect,Align,Connectable)
    #
    # Remove the {Component} from the list of children.
    # @param c   The {Component} to remove.
+   # @fail      If c is not a child of this instance.
    #
    public remove(c)
-      remove_index(get_index(c))
-      return self
+      return remove_index(get_index(c))
    end
 
    #
