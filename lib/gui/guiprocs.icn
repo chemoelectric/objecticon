@@ -468,19 +468,19 @@ procedure split_string(s, f, n)
    use {
       W := Window().set_font(f),
       {
-         r := u".cell\n.attr ia_x=l\n"
-         l := u""
+         r := ".cell\n.attr ia_x=l\n"
+         l := ""
          every w := words(s) do {
             if *l > 0 then
-               l ||:= u" "
+               l ||:= " "
             l ||:= w
             if W.text_width(l) > n then {
-               r ||:= l || u"\n.br\n"
-               l := u""
+               r ||:= l || "\n.br\n"
+               l := ""
             }
          }
          if *l > 0 then
-            r ||:= l || u"\n.br\n"
+            r ||:= l || "\n.br\n"
       }
    }
    return r
