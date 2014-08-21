@@ -477,11 +477,11 @@ class FileDialog(Dialog)
    end
 
    public msg(s)
-      message_label.set_paint(AbbreviatedTextPaint(s))
+      message_label.set(s)
    end
 
    public clear_msg()
-      msg("")
+      msg()
    end
 
    public refresh_dir()
@@ -684,7 +684,7 @@ class FileDialog(Dialog)
    end
 
    private setup()
-      local paint_2, paint_14, paint_45, layout_11, layout_7, refresh_menu_item, paint_11, paint_37, paint_42, layout_4, split_content_1, split_content_2, panel_4, paint_29, paint_9, split_1, paint_31, paint_3, paint_15, paint_46, layout_8, new_dir_menu_item, paint_12, paint_43, paint_35, panel_2, favourite_dirs_menu_item, paint_27, paint_32, paint_47, layout_9, paint_1, paint_13, paint_44, layout_10, layout_6, paint_10, paint_36, layout_3, panel_3, paint_28, paint, paint_30, paint_48
+      local paint_2, layout_7, paint_14, paint_45, layout_11, layout_4, paint_11, paint_37, paint_42, refresh_menu_item, panel_4, paint_29, split_content_1, split_content_2, paint_9, split_1, paint_31, paint_3, layout_8, paint_15, paint_46, paint_12, paint_43, new_dir_menu_item, paint_35, panel_2, paint_27, paint_32, favourite_dirs_menu_item, layout_9, paint_47, paint_1, layout_6, paint_13, paint_44, layout_10, layout_3, paint_10, paint_36, paint, panel_3, paint_28, paint_30, paint_48
       self.set_label("Select file")
       self.set_resize(&yes)
       self.set_size(700, 500)
@@ -952,7 +952,7 @@ class FileDialog(Dialog)
          set_toggles(&no).
          set_paint(paint_10)
       paint_11 := TextPaint("")
-      message_label := Label().
+      message_label := MessageLabel().
          set_size("130").
          set_align(Align.L, Align.B).
          set_fg("red").

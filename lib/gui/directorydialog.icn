@@ -332,11 +332,11 @@ $endif
    end
 
    public msg(s)
-      message_label.set_paint(AbbreviatedTextPaint(s))
+      message_label.set(s)
    end
 
    public clear_msg()
-      msg("")
+      msg()
    end
 
    public new()
@@ -381,7 +381,7 @@ $endif
    end
 
    private setup()
-      local paint_2, favourite_dirs_menu_item, paint_45, layout_7, refresh_menu_item, paint_11, paint_42, layout_4, panel_4, paint_47, paint_1, paint_9, paint_44, layout_6, paint_10, paint_3, panel_3, paint_46, paint, new_dir_menu_item, paint_43, paint_35
+      local paint_2, layout_7, paint_45, favourite_dirs_menu_item, layout_4, paint_11, paint_42, refresh_menu_item, panel_4, paint_47, paint_1, paint_9, layout_6, paint_44, paint_10, paint, paint_3, panel_3, paint_46, paint_43, new_dir_menu_item, paint_35
       self.set_label("Select directory")
       self.set_resize(&yes)
       paint_45 := ImagePaint().
@@ -490,7 +490,7 @@ $endif
          set_toggles(&no).
          set_paint(paint_10)
       paint_11 := TextPaint("")
-      message_label := Label().
+      message_label := MessageLabel().
          set_size("130").
          set_align(Align.L, Align.B).
          set_fg("red").

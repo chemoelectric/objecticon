@@ -42,9 +42,9 @@ class Untitled(Dialog)
 
    private attempt(e)
       if @e then
-         err_label.set_fg("green").set_label("OK").set_tooltip().reset()
+         err_label.set_fg("green").set("OK").reset()
       else
-         err_label.set_fg("red").set_paint(AbbreviatedTextPaint(&why)).set_tooltip(&why).reset()
+         err_label.set_fg("red").set(&why).reset()
    end
 
    public end_dialog()
@@ -205,7 +205,7 @@ class Untitled(Dialog)
          set_paint(paint_5)
       self.add(state_label)
       paint_14 := TextPaint("")
-      err_label := Label().
+      err_label := MessageLabel().
          set_size("176", "26").
          clear_constraints().
          set_constraint("eol", &yes).

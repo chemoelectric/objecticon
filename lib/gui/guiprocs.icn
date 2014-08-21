@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics, lang, util, xdg
+import graphics, lang, util, xdg, ipl.strings
 
 class Event()
    public static const
@@ -456,6 +456,34 @@ procedure limit_text(W, s, n)
       i -:= 1
    }
    return t
+end
+
+#
+# Given a string, font and width, return a `GridPaint` format string
+# which splits the string up into multiple lines broken at the given
+# width.
+#
+procedure split_string(s, f, n)
+   local W, w, l, r
+   use {
+      W := Window().set_font(f),
+      {
+         r := u".cell\n.attr ia_x=l\n"
+         l := u""
+         every w := words(s) do {
+            if *l > 0 then
+               l ||:= u" "
+            l ||:= w
+            if W.text_width(l) > n then {
+               r ||:= l || u"\n.br\n"
+               l := u""
+            }
+         }
+         if *l > 0 then
+            r ||:= l || u"\n.br\n"
+      }
+   }
+   return r
 end
 
 abstract class HasOrientation()

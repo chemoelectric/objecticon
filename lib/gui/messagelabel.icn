@@ -1,0 +1,57 @@
+package gui
+
+#
+# Useful class for displaying a status/error message
+#
+class MessageLabel(Label)
+   private
+      want, keep, message, message_tt
+
+   private set_impl(s)
+      local p
+      p := if /s then TextPaint("") else AbbreviatedTextPaint(s)
+      message := s
+      message_tt := &null
+      set_paint(p)
+   end
+
+   # Set the label to the given string {s}.  If {s} is &null, then the
+   # label is cleared.  If {n} is given then the label will remain
+   # unchanged for at least {n} milliseconds regardless of future
+   # calls to {set}.  This can be used for particularly important
+   # messages.
+   #
+   public set(s, n)
+      local t
+      want := s
+      if /keep then {
+         set_impl(s)
+         if \n then {
+            keep := 1
+            t := Dispatcher.new_task{{
+               t.sleep(n)
+               keep := &null
+               set_impl(\want)
+               t.revert()
+            }}
+            t.start()
+         }
+      }
+      return self
+   end
+
+   public get_tooltip()
+      if w - border.get_total_width() < cbwin.text_width(\message) then {
+         /message_tt := split_string(message,
+                                     Gui.style.create_tooltip_label().get_wattrib("font"),
+                                     500)
+         return message_tt
+      }
+   end
+
+   public new()
+      cast(self,Label).new()
+      set()
+      return
+   end
+end

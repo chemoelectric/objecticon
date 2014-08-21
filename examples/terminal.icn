@@ -23,30 +23,6 @@ $load SAVE "rpp.SAVE_24.gif"
 $load MIXFILE "rpp.MIXFILE_24.png"
 $load TERMINAL_LOGO "rpp.TERMINAL_LOGO.png"
 
-class MessageLabel(Label)
-   private
-      want, keep
-
-   public set(p, n)
-      local t
-      want := p
-      if /keep then {
-         /p := TextPaint("")
-         set_paint(p)
-         if \n then {
-            keep := 1
-            t := Dispatcher.new_task{{
-               t.sleep(n)
-               keep := &null
-               set_paint(\want)
-               t.revert()
-            }}
-            t.start()
-         }
-      }
-   end
-end
-
 class Runner()
    public const
       # The command to run.  Optional: either this is null, and the other
@@ -1423,11 +1399,11 @@ class Terminal(TabItem)
    end
 
    public msg(s, n)
-      message_label.set(AbbreviatedTextPaint(s), n)
+      message_label.set(s, n)
    end
 
    public clear_msg()
-      message_label.set()
+      msg()
    end
 
    private setup_shell()
