@@ -276,7 +276,7 @@ class Dialog(Component)
       t["display"] := get_wattrib("display")
       t["dx"] := get_wattrib("dx")
       t["dy"] :=  get_wattrib("dy")
-      self.buffer_win := open_win_with(t) | runerr("couldn't open buffer window:" || &why)
+      self.buffer_win := open_win_with(t) | runerr("couldn't open buffer window: " || &why)
    end
 
    #
@@ -307,7 +307,7 @@ class Dialog(Component)
       if pw := (\owning_dialog).win then
          t["transient_for"] := pw
       /t["canvas"] := "normal"
-      self.win := open_win_with(t) | runerr("Couldn't open window:" || &why)
+      self.win := open_win_with(t) | runerr("Couldn't open window: " || &why)
       # Make the buffer the same size as the visible win.
       self.buffer_win.set_size(self.win.get_width(), self.win.get_height())
    end
