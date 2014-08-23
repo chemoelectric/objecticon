@@ -3292,7 +3292,8 @@ class Browser(ComponentScrollArea)
       c.align := Align.L
       synch_font(c)
       traverse(doc, row, c)
-      get_favicon()
+      if \page_data then
+         get_favicon()
       curr_history_entry.title := page_title
       if page_resp.req.kind = Worker.NAVIGATE then
          restore_form_values()
