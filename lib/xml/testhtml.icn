@@ -16,10 +16,10 @@ procedure main(a)
    fmt := HtmlFormatter()
 
    every e := !a do {
-      s := Files.file_to_string(e) | stop("couldnt open" || e)
+      s := Files.file_to_string(e) | stop("Couldn't open ", e, ": ", &why)
       if \t["u"] then
          s := ucs(s) | stop("Couldn't convert to utf8")
-      d := p.parse(s) | stop("couldnt parse " || e)
+      d := p.parse(s) | stop("Couldn't parse ", e, ": ", &why)
       fmt.format(d)
       write("--- Document structure")
       to_stdout(d, 3)

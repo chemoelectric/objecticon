@@ -112,12 +112,12 @@ end
 
 procedure test(pat, l1, l2)
    local spec, x, l
-   spec := (pat ? p.parse_content_spec() ) | stop("Couldnt parse : " || pat)
+   spec := (pat ? p.parse_content_spec() ) | stop("Couldn't parse : " || pat)
    spec.print_structure()
    write(to_string(spec))
    every x := !l1 do {
       l := convert(x)
-      do_match(spec,l) | stop("couldnt match " , image(x))
+      do_match(spec,l) | stop("Couldn't match " , image(x))
    }
 
    every x := !l2 do {

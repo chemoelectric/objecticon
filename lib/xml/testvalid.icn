@@ -16,7 +16,7 @@ procedure main(a)
    opt := options(a, "-u!")
    *a > 0 | stop("usage: testcase source [output]")
 
-   s := Files.file_to_string(a[1]) | stop("couldn't open" || a[1])
+   s := Files.file_to_string(a[1]) | stop("Couldn't open ", a[1], ": ", &why)
    if \opt["u"] then
       s := ucs(s) | stop("Invalid utf-8 in valid case ", a[1])
 
@@ -32,7 +32,7 @@ procedure main(a)
       if *a = 1 then 
          exit(0)
 
-      t := Files.file_to_string(a[2]) | stop("couldnt open" || a[2])
+      t := Files.file_to_string(a[2]) | stop("Couldn't open ", a[2], ": ", &why)
 
       fmt.format(d)
       x := ss.done()
