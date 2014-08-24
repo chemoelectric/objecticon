@@ -827,7 +827,11 @@ class HttpClient(NetClient)
          (response.get_status_code() = 100) | break
       }
 
-      if request.method === "HEAD" then
+      #
+      # A 304 ("Not Modified") never has a body; nor of course does a
+      # HEAD request.
+      #
+      if (request.method === "HEAD") | (response.get_status_code() = 304) then
          maybe_close_connection()
       else
          read_data() | fail
