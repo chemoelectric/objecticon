@@ -112,6 +112,7 @@ class HttpClient(NetClient)
       cookies,
       authentications,
       authentication_function,
+      modify_redirect_function,
       abort_flag,
       dont_retry_flag,
       gzip_flag,
@@ -163,7 +164,7 @@ class HttpClient(NetClient)
    # Get the cookies table.
    #
    public get_cookies()
-      return self.cookies
+      return .self.cookies
    end
 
    #
@@ -178,11 +179,16 @@ class HttpClient(NetClient)
    # Get the authentications table.
    #
    public get_authentications()
-      return self.authentications
+      return .self.authentications
    end
 
    public set_authentication_function(f)
       self.authentication_function := f
+      return self
+   end
+
+   public set_modify_redirect_function(f)
+      self.modify_redirect_function := f
       return self
    end
 
@@ -198,14 +204,14 @@ class HttpClient(NetClient)
    # Get the current HttpRequest
    #
    public get_request()
-      return self.request
+      return .self.request
    end
 
    #
    # Get the current HttpResponse
    #
    public get_response()
-      return self.response
+      return .\self.response
    end
 
    #
@@ -244,6 +250,7 @@ class HttpClient(NetClient)
       # redirects
       self.request := HttpRequest().
          set_url(request.url).
+         set_user_data(request.user_data).
          set_method(request.method).
          set_headers(clone(request.headers)).
          set_referer(request.referer).
@@ -266,7 +273,7 @@ class HttpClient(NetClient)
       }
 
       redir_set := set()
-      previous_response := auth := auth_scheme := abort_flag := &null
+      response := previous_response := auth := auth_scheme := abort_flag := &null
       repeat {
          http_error := &null
 
@@ -306,6 +313,9 @@ class HttpClient(NetClient)
          return on_http_error("Circular redirection detected: " || s)
       insert(redir_set, s)
 
+      if (\modify_redirect_function)(request, response) then
+         return on_http_error(response.get_status())
+         
       #
       # On a redirect, a POST becomes a GET, except for code 307.
       #
@@ -698,7 +708,7 @@ class HttpClient(NetClient)
    # the latter case the error string is returned.
    #
    public get_http_error()
-      return \http_error
+      return .\http_error
    end
 
    #
@@ -806,6 +816,7 @@ class HttpClient(NetClient)
          #
          response := HttpResponse().
             set_url(request.url).
+            set_user_data(request.user_data).
             set_previous_response(previous_response)
 
          s := expect_line() | fail
@@ -831,7 +842,7 @@ class HttpClient(NetClient)
       # A 304 ("Not Modified") never has a body; nor of course does a
       # HEAD request.
       #
-      if (request.method === "HEAD") | (response.get_status_code() = 304) then
+      if (request.method == "HEAD") | (response.get_status_code() = 304) then
          maybe_close_connection()
       else
          read_data() | fail
@@ -1068,14 +1079,14 @@ class HttpClient(NetClient)
    # Return the length of the current download, or fail if unknown
    #
    public get_length()
-      return \self.length
+      return .\self.length
    end
 
    #
    # Return the number of bytes read so far, or fail if request has not begun to read
    #
    public get_read()
-      return \self.read
+      return .\self.read
    end
 
    private fail_dont_retry()

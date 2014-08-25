@@ -18,7 +18,8 @@ class HttpRequest(MimeHeaders)
       referer,
       range_start,
       range_end,
-      content_type
+      content_type,
+      user_data
 
    #
    # Set the desired url.
@@ -109,6 +110,21 @@ class HttpRequest(MimeHeaders)
    public set_output_stream(f)
       self.output_stream := f
       return self
+   end
+
+   #
+   # Set arbitrary user data, which is copied into the response.
+   #
+   public set_user_data(x)
+      self.user_data := x
+      return self
+   end
+
+   #
+   # Return the user data, or fail if it is null.
+   #
+   public get_user_data()
+      return .\user_data
    end
 
    public new()
