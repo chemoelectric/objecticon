@@ -182,11 +182,26 @@ class HttpClient(NetClient)
       return .self.authentications
    end
 
+   #
+   # If set, this function is called when an 401 Unauthorized response
+   # occurs.  The domain and realm are passed to the function, and it
+   # should return an `Authentication` instance to provide the
+   # username and password so the request can be retried.  If it
+   # fails, then the entire request fails.
+   #
    public set_authentication_function(f)
       self.authentication_function := f
       return self
    end
-
+   
+   #
+   # If set, this function is called on a redirect with the request
+   # and response objects.  It may modify those objects (eg by setting
+   # request headers).  If the function returns, then the redirect is
+   # not carried out and the whole request fails with the http error
+   # of the redirect.  If the function fails, then the redirect is
+   # carried out.
+   #
    public set_modify_redirect_function(f)
       self.modify_redirect_function := f
       return self
