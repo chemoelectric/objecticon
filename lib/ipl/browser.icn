@@ -134,7 +134,12 @@ class CacheData(CacheEntry, StaticData)
 end
 
 class Cache()
-   private t, lim, id
+   private t, size, id
+
+   public set_size(x)
+      self.size := x
+      return self
+   end
 
    public tidy()
       local now, ce, total
@@ -142,17 +147,18 @@ class Cache()
       total := 0
       every ce := !t do {
          if ce.is_valid(now) then {
-            if is(ce, CacheData) then
-               total +:= *ce.data
+            case classof(ce) of {
+               CacheData: total +:= *ce.data
+               CacheAlias: member(t, ce.dest.str()) | delete(t, ce.url.str())
+            }
          } else
             delete(t, ce.url.str())
       }
-      while *t > 0 & total > lim do {
+      while *t > 0 & total > size do {
          ce := ?t
-         if is(ce, CacheData) then {
-            delete(t, ce.url.str())
+         delete(t, ce.url.str())
+         if is(ce, CacheData) then
             total -:= *ce.data
-         }
       }
    end
 
@@ -242,19 +248,34 @@ class Cache()
 
       return "<html><title>Cache status</title>" || s1 || "<p>" || s2 || "<p>" ||
             "Usage " || Format.numeric_to_string(total, 0, ',') || " / " || 
-            Format.numeric_to_string(lim, 0, ',') || " (" || integer((total * 100) / lim) || "%)" ||
+            Format.numeric_to_string(size, 0, ',') || " (" || integer((total * 100) / size) || "%)" ||
             "</html>"
    end
 
    public modify_redirect(req, resp)
       local ce
       #write("modify redirect? ", req.url.str())
+      # Just in case we have made an if-modified request that's been
+      # answered with a redirect
+      req.
+         set_user_data().
+         unset_header("if-modified-since").
+         unset_header("if-none-match")
       (req.method == "GET") | fail
       ce := get(req.url) | fail
       if ce.hasnt_expired() then {
-         resp.set_user_data(ce)
+         # The cache can be used to satisfy the request; use a custom
+         # status code so the client can identify it.  It also avoids
+         # the possibility of muddling things up if a redirection
+         # leads to a genuine http error (eg circular redirection).
+         #
+         resp.
+            set_status("HTTP/1.1 999 Satisfied By Cache").
+            set_user_data(ce)
          return
       } else {
+         # The cache can be used to satisfy the request, but with
+         # validation, so setup the headers.
          req.set_user_data(ce)
          # At least one of these should succeed
          req.set_header("if-modified-since", \ce.last_modified)
@@ -262,9 +283,10 @@ class Cache()
       }
    end
 
-   public new(lim)
+   public new(size)
+      /size := 4 * 1024*1024
       t := table()
-      self.lim := lim
+      self.size := size
       id := 0
       return
    end
@@ -444,38 +466,35 @@ class HttpSubWorker(SubWorker)
       return url2
    end
 
-   private static update_cache(pool, hres, data, fname, ct)
-      local ctrl, pr, exp
-      ctrl := get_control(hres) | fail
-      pool.cache.add_data(hres.url, ctrl.expiry, data, fname, ct, ctrl.last_modified, ctrl.etag)
-      # Check for any cacheable redirection responses.
-      pr := hres
-      while pr := pr.get_previous_response() do {
-         #write("got a redirect ", pr.url.str(), "->",hres.url.str(), " code = ", pr.get_status_code())
-         case pr.get_status_code() of {
+   private static update_aliases(pool, hres, url)
+      local exp
+      repeat {
+         case hres.get_status_code() of {
             # Moved permanently, so cache permanently
-            301: pool.cache.add_alias(pr.url,, hres.url)
+            301: pool.cache.add_alias(hres.url,, url)
             # Redirect, cache only if we had an expiry
-            302: if exp := get_expiry(pr) then 
-               pool.cache.add_alias(pr.url, exp, hres.url)
+            302: if exp := get_expiry(hres) then 
+               pool.cache.add_alias(hres.url, exp, url)
          }
+         hres := hres.get_previous_response() | break
       }
    end
 
-   private static update_expiry(pool, hres)
-      local exp, pr
-      #io.write("update expiry for ", hres.url.str())
-      if exp := get_expiry(hres) then
-         pool.cache.update_expiry(hres.url, exp)
-      # Check for any cacheable redirection responses.
-      pr := hres
-      while pr := pr.get_previous_response() do {
-         case pr.get_status_code() of {
-            301: pool.cache.update_expiry(pr.url)
-            302: if exp := get_expiry(pr) then 
-               pool.cache.update_expiry(pr.url, exp)
-         }
-      }
+   private static update_cache_with_entry(pool, hres, ce)
+      local exp
+      if hres.get_status_code() = 304 then {
+         if exp := get_expiry(hres) then
+            ce.set_expiry(exp)
+         update_aliases(pool, hres.get_previous_response(), ce.url)
+      } else
+         update_aliases(pool, hres, ce.url)
+   end
+
+   private static update_cache_with_data(pool, hres, data, fname, ct)
+      local ctrl
+      ctrl := get_control(hres) | fail
+      pool.cache.add_data(hres.url, ctrl.expiry, data, fname, ct, ctrl.last_modified, ctrl.etag)
+      update_aliases(pool, hres.get_previous_response(), hres.url)
    end
 
    public get_data(worker)
@@ -522,12 +541,11 @@ class HttpSubWorker(SubWorker)
                      hres := httpc.get_response() &
                      sc := hres.get_status_code() &
                      ce := hres.get_user_data() &
-                     301 <= sc <= 304 then
+                     sc = (304 | 999) then 
                   {
                      # Redirect or 304 not modified with a cache entry, so return
                      # the cached data.
-                     if sc = 304 then
-                        update_expiry(worker.pool, hres)
+                     update_cache_with_entry(worker.pool, hres, ce)
                      Resp(req,, adjust_fragment(req.url, ce.url), ce.data, ce.fname, ce.content_type)
                   } else
                      Resp(req, &why, req.url)
@@ -565,19 +583,20 @@ class HttpSubWorker(SubWorker)
                ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
                # Check whether to cache any data, including redirections.  POST requests are never cached.
                if hreq.method == "GET" then
-                  update_cache(worker.pool, hres, data, fname, ct)
+                  update_cache_with_data(worker.pool, hres, data, fname, ct)
                Resp(req,, adjust_fragment(req.url, hres.url), data, fname, ct)
             } else {
                if httpc.get_http_error() & 
                   hres := httpc.get_response() &
                   sc := hres.get_status_code() then 
                {
-                  #write("**** code=",sc,"   userdata=",image(hres.user_data))
-                  if ce := hres.get_user_data() & 301 <= sc <= 304 then {
+                  #write("**** code=",sc," status=",image(hres.get_status()),"   userdata=",image(hres.user_data))
+                  if ce := hres.get_user_data() & 
+                     sc = (304 | 999) then 
+                  {
                      # Redirect or 304 not modified with a cache entry, so return
                      # the cached data.
-                     if sc = 304 then
-                        update_expiry(worker.pool, hres)
+                     update_cache_with_entry(worker.pool, hres, ce)
                      Resp(req,, adjust_fragment(req.url, ce.url), ce.data, ce.fname, ce.content_type)
                   } else if 400 <= sc <= 599 &
                      data := s.str() &

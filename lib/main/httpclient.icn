@@ -9,7 +9,8 @@ import util,
    net,
    io,
    ipl.base64,
-   ipl.strings
+   ipl.strings,
+   ipl.scan
 
 #
 # Little helper class to store cookie details
@@ -223,7 +224,9 @@ class HttpClient(NetClient)
    end
 
    #
-   # Get the current HttpResponse
+   # Get the current HttpResponse.  It generally only makes sense to
+   # examine this after an HTTP error, since otherwise it may be
+   # incomplete.
    #
    public get_response()
       return .\self.response
@@ -236,12 +239,23 @@ class HttpClient(NetClient)
       self.abort_flag := 1
    end
 
+   #
+   # Helper function to put a header string into the conventional
+   # capitalization used in HTTP; eg "abc-DEF" -> "Abc-Def".
+   #
+   public static capitalize_header(s)
+      local t
+      t := ""
+      s ? until pos(0) do {
+         t ||:= map(move(1), &lcase, &ucase) || map(tab(past("-") | 0))
+      }
+      return t
+   end
+
    private add_request_headers(l)
       local e
-      every e := !request.headers.sort() do {
-         e[1][1] := map(e[1][1], &lcase, &ucase)
-         every put(l, e[1] || ": " || !e[2])
-      }
+      every e := !request.headers.sort() do
+         every put(l, capitalize_header(e[1]) || ": " || !e[2])
    end
 
    #
@@ -808,11 +822,6 @@ class HttpClient(NetClient)
       }
    end
 
-   #
-   #
-   # Retrieve the given url.  A {HttpResponse} object is returned upon success.
-   # Failure occurs if the url could not be retrieved.
-   #
    private tryone()
       local s
       #
