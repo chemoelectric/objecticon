@@ -342,7 +342,7 @@ class HttpClient(NetClient)
          return on_http_error("Circular redirection detected: " || s)
       insert(redir_set, s)
 
-      if (\modify_redirect_function)(request, response) then
+      if (\modify_redirect_function)(self, request, response) then
          return on_http_error(response.get_status())
          
       #
@@ -378,7 +378,7 @@ class HttpClient(NetClient)
          # First 401 response, so see if we have a cached
          # authentication; if not then ask for one.
          (auth := member(authentications, k)) | {
-            if auth := (\authentication_function)(dom, realm) then
+            if auth := (\authentication_function)(self, dom, realm) then
                insert(authentications, k, auth)
             else
                return on_http_error("Authentication requested - please set username, password")
@@ -387,7 +387,7 @@ class HttpClient(NetClient)
          # 401 response to a request with authentication, so it must
          # have been wrong.  Delete bad value from cache and ask.
          delete(authentications, k)
-         if auth := (\authentication_function)(dom, realm) then
+         if auth := (\authentication_function)(self, dom, realm) then
             insert(authentications, k, auth)
          else
             return on_http_error("Failed to authenticate - correct username, password")
