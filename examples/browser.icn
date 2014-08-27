@@ -378,7 +378,7 @@ class BrowserDialog(Dialog)
       }
    end
 
-   private get_authentication(dom, realm)
+   private get_authentication(httpc, dom, realm)
       local d
       d := AuthenticationDialog(dom, realm)
       d.show_modal(self)

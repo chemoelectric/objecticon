@@ -133,6 +133,28 @@ class CacheData(CacheEntry, StaticData)
    end
 end
 
+class HttpRequestUserData()
+   public const
+      req
+   private readable
+      cache_entry
+
+   public set_cache_entry(ce)
+      self.cache_entry := ce
+      return self
+   end
+
+   public get_cache_entry()
+      return .\self.cache_entry
+   end
+
+   public new(req, ce)
+      self.req := req
+      self.cache_entry := ce
+      return
+   end
+end
+
 class Cache()
    private t, size, id
 
@@ -252,34 +274,41 @@ class Cache()
             "</html>"
    end
 
-   public modify_redirect(req, resp)
-      local ce
-      #write("modify redirect? ", req.url.str())
+   public modify_redirect(httpc, hreq, hresp)
+      local ce, ud
+      #write("modify redirect? ", hreq.url.str())
+      ud := hreq.get_user_data()
       # Just in case we have made an if-modified request that's been
-      # answered with a redirect
-      req.
-         set_user_data().
+      # answered with a redirect, we don't want the headers to go
+      # forward in the request.
+      ud.set_cache_entry()
+      hreq.
          unset_header("if-modified-since").
          unset_header("if-none-match")
-      (req.method == "GET") | fail
-      ce := get(req.url) | fail
+
+      # Never use the cache on a refresh
+      if ud.req.kind = Worker.REFRESH then
+         fail
+      # .. or on anything other than a GET
+      (hreq.method == "GET") | fail
+
+      ce := get(hreq.url) | fail
       if ce.hasnt_expired() then {
          # The cache can be used to satisfy the request; use a custom
          # status code so the client can identify it.  It also avoids
          # the possibility of muddling things up if a redirection
          # leads to a genuine http error (eg circular redirection).
          #
-         resp.
-            set_status("HTTP/1.1 999 Satisfied By Cache").
-            set_user_data(ce)
+         hresp.set_status("HTTP/1.1 999 Satisfied By Cache")
+         ud.set_cache_entry(ce)
          return
       } else {
          # The cache can be used to satisfy the request, but with
          # validation, so setup the headers.
-         req.set_user_data(ce)
+         ud.set_cache_entry(ce)
          # At least one of these should succeed
-         req.set_header("if-modified-since", \ce.last_modified)
-         req.set_header("if-none-match", \ce.etag)
+         hreq.set_header("if-modified-since", \ce.last_modified)
+         hreq.set_header("if-none-match", \ce.etag)
       }
    end
 
@@ -517,14 +546,13 @@ class HttpSubWorker(SubWorker)
                set_buff_size(8192),
             {
                hreq := HttpRequest().
+                  set_user_data(HttpRequestUserData(req, ce)).
                   set_output_stream(s). 
                   set_header("accept-charset", "UTF-8, ISO-8859-1")
                if /ce then 
                   hreq.set_url(req_url_no_frag)
                else {
-                  hreq.
-                     set_url(ce.url).
-                     set_user_data(ce)
+                  hreq.set_url(ce.url)
                   # At least one of these should succeed
                   hreq.set_header("if-modified-since", \ce.last_modified)
                   hreq.set_header("if-none-match", \ce.etag)
@@ -540,7 +568,7 @@ class HttpSubWorker(SubWorker)
                   if httpc.get_http_error() & 
                      hres := httpc.get_response() &
                      sc := hres.get_status_code() &
-                     ce := hres.get_user_data() &
+                     ce := hres.get_user_data().get_cache_entry() &
                      sc = (304 | 999) then 
                   {
                      # Redirect or 304 not modified with a cache entry, so return
@@ -556,14 +584,13 @@ class HttpSubWorker(SubWorker)
          s := RamStream(),
          {
             hreq := HttpRequest().
+               set_user_data(HttpRequestUserData(req, ce)).
                set_output_stream(s). 
                set_header("accept-charset", "UTF-8, ISO-8859-1")
             if /ce then 
                hreq.set_url(req_url_no_frag)
             else {
-               hreq.
-                  set_url(ce.url).
-                  set_user_data(ce)
+               hreq.set_url(ce.url)
                # At least one of these should succeed
                hreq.set_header("if-modified-since", \ce.last_modified)
                hreq.set_header("if-none-match", \ce.etag)
@@ -590,8 +617,8 @@ class HttpSubWorker(SubWorker)
                   hres := httpc.get_response() &
                   sc := hres.get_status_code() then 
                {
-                  #write("**** code=",sc," status=",image(hres.get_status()),"   userdata=",image(hres.user_data))
-                  if ce := hres.get_user_data() & 
+                  #write("**** code=",sc," status=",image(hres.get_status()),"   userdata.ce=",image(hres.user_data.cache_entry))
+                  if ce := hres.get_user_data().get_cache_entry() & 
                      sc = (304 | 999) then 
                   {
                      # Redirect or 304 not modified with a cache entry, so return
