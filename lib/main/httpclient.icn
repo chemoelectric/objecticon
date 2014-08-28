@@ -49,6 +49,9 @@ class Cookie()
    end
 end
 
+#
+# The result of a `HttpRequestHelper.get_authentication` call.
+#
 class Authentication()
    public const
       username, password
@@ -58,6 +61,29 @@ class Authentication()
       self.password := password
       return
    end
+end
+
+# This class contains an interface for additional functions which can
+# be called during a request.  It is set by setting the helper member
+# of `HttpRequest`.
+#
+abstract class HttpRequestHelper()
+   # This function is called when an 401 Unauthorized response occurs.
+   # The domain and realm are passed to the function, and it should
+   # return an `Authentication` instance to provide the username and
+   # password so the request can be retried.  If it fails, then the
+   # entire request fails.
+   #
+   public abstract get_authentication(httpc, dom, realm)
+
+   # This function is called on a redirect with the request and
+   # response objects.  It may modify those objects (eg by setting
+   # request headers).  If the function returns, then the redirect is
+   # not carried out and the whole request fails with the http error
+   # of the redirect.  If the function fails, then the redirect is
+   # carried out.
+   #
+   public abstract modify_redirect(httpc, request, response)
 end
 
 #
@@ -112,8 +138,6 @@ class HttpClient(NetClient)
       realm,
       cookies,
       authentications,
-      authentication_function,
-      modify_redirect_function,
       abort_flag,
       dont_retry_flag,
       gzip_flag,
@@ -181,31 +205,6 @@ class HttpClient(NetClient)
    #
    public get_authentications()
       return .self.authentications
-   end
-
-   #
-   # If set, this function is called when an 401 Unauthorized response
-   # occurs.  The domain and realm are passed to the function, and it
-   # should return an `Authentication` instance to provide the
-   # username and password so the request can be retried.  If it
-   # fails, then the entire request fails.
-   #
-   public set_authentication_function(f)
-      self.authentication_function := f
-      return self
-   end
-   
-   #
-   # If set, this function is called on a redirect with the request
-   # and response objects.  It may modify those objects (eg by setting
-   # request headers).  If the function returns, then the redirect is
-   # not carried out and the whole request fails with the http error
-   # of the redirect.  If the function fails, then the redirect is
-   # carried out.
-   #
-   public set_modify_redirect_function(f)
-      self.modify_redirect_function := f
-      return self
    end
 
    #
@@ -279,7 +278,7 @@ class HttpClient(NetClient)
       # redirects
       self.request := HttpRequest().
          set_url(request.url).
-         set_user_data(request.user_data).
+         set_helper(request.helper).
          set_method(request.method).
          set_headers(clone(request.headers)).
          set_referer(request.referer).
@@ -342,7 +341,7 @@ class HttpClient(NetClient)
          return on_http_error("Circular redirection detected: " || s)
       insert(redir_set, s)
 
-      if (\modify_redirect_function)(self, request, response) then
+      if (\request.helper).modify_redirect(self, request, response) then
          return on_http_error(response.get_status())
          
       #
@@ -378,7 +377,7 @@ class HttpClient(NetClient)
          # First 401 response, so see if we have a cached
          # authentication; if not then ask for one.
          (auth := member(authentications, k)) | {
-            if auth := (\authentication_function)(self, dom, realm) then
+            if auth := (\request.helper).get_authentication(self, dom, realm) then
                insert(authentications, k, auth)
             else
                return on_http_error("Authentication requested - please set username, password")
@@ -387,7 +386,7 @@ class HttpClient(NetClient)
          # 401 response to a request with authentication, so it must
          # have been wrong.  Delete bad value from cache and ask.
          delete(authentications, k)
-         if auth := (\authentication_function)(self, dom, realm) then
+         if auth := (\request.helper).get_authentication(self, dom, realm) then
             insert(authentications, k, auth)
          else
             return on_http_error("Failed to authenticate - correct username, password")
@@ -840,7 +839,6 @@ class HttpClient(NetClient)
          #
          response := HttpResponse().
             set_url(request.url).
-            set_user_data(request.user_data).
             set_previous_response(previous_response)
 
          s := expect_line() | fail

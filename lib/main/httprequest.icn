@@ -19,7 +19,7 @@ class HttpRequest(MimeHeaders)
       range_start,
       range_end,
       content_type,
-      user_data
+      helper
 
    #
    # Set the desired url.
@@ -113,18 +113,12 @@ class HttpRequest(MimeHeaders)
    end
 
    #
-   # Set arbitrary user data, which is copied into the response.
+   # Set an instance of `HttpRequestHelper` to provide extra functions
+   # which can be called during the request.
    #
-   public set_user_data(x)
-      self.user_data := x
+   public set_helper(x)
+      self.helper := x
       return self
-   end
-
-   #
-   # Return the user data, or fail if it is null.
-   #
-   public get_user_data()
-      return .\user_data
    end
 
    public new()

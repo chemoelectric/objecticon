@@ -17,7 +17,6 @@ class HttpResponse(MimeHeaders)
    private readable 
       url, 
       status,
-      user_data,
       previous_response
 
    #
@@ -94,20 +93,5 @@ class HttpResponse(MimeHeaders)
    public set_previous_response(other)
       self.previous_response := other
       return self
-   end
-
-   #
-   # Set arbitrary user data, which is copied from the request.
-   #
-   public set_user_data(x)
-      self.user_data := x
-      return self
-   end
-
-   #
-   # Return the user data, or fail if it is null.
-   #
-   public get_user_data()
-      return .\user_data
    end
 end

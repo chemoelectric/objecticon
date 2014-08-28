@@ -78,7 +78,7 @@ class PageMenu(DynamicMenu)
    end
 end
 
-class BrowserDialog(Dialog)
+class BrowserDialog(Dialog, WorkerPoolOwner)
    private readable
       settings,
       visited_set,
@@ -378,7 +378,7 @@ class BrowserDialog(Dialog)
       }
    end
 
-   private get_authentication(httpc, dom, realm)
+   public get_authentication(httpc, dom, realm)
       local d
       d := AuthenticationDialog(dom, realm)
       d.show_modal(self)
@@ -391,9 +391,8 @@ class BrowserDialog(Dialog)
       self.settings := settings
       self.visited_set := set()
       every insert(visited_set, (!settings.visited).url.str())
-      pool := WorkerPool(settings.pool_size).
+      pool := WorkerPool(self, settings.pool_size).
          set_cookies(cookies).
-         set_authentication_function(get_authentication).
          add_scheme_handler("config", config_handler)
       pool.set_authentications(\settings.authentications)
       pool.set_cache(\settings.cache)

@@ -133,23 +133,59 @@ class CacheData(CacheEntry, StaticData)
    end
 end
 
-class HttpRequestUserData()
+class HttpRequestHelperImpl(HttpRequestHelper)
    public const
-      req
+      worker
    private readable
       cache_entry
 
-   public set_cache_entry(ce)
-      self.cache_entry := ce
-      return self
+   public get_authentication(httpc, dom, realm)
+      return worker.pool.owner.get_authentication(httpc, dom, realm)
+   end
+
+   public modify_redirect(httpc, hreq, hresp)
+      local ce
+      #write("modify redirect? ", hreq.url.str())
+      # Just in case we have made an if-modified request that's been
+      # answered with a redirect, we don't want the headers to go
+      # forward in the request.
+      cache_entry := &null
+      hreq.
+         unset_header("if-modified-since").
+         unset_header("if-none-match")
+
+      # Never use the cache on a refresh
+      if worker.req.kind = Worker.REFRESH then
+         fail
+      # .. or on anything other than a GET
+      (hreq.method == "GET") | fail
+
+      ce := worker.pool.cache.get(hreq.url) | fail
+      if ce.hasnt_expired() then {
+         # The cache can be used to satisfy the request; use a custom
+         # status code so the client can identify it.  It also avoids
+         # the possibility of muddling things up if a redirection
+         # leads to a genuine http error (eg circular redirection).
+         #
+         hresp.set_status("HTTP/1.1 999 Satisfied By Cache")
+         cache_entry := ce
+         return
+      } else {
+         # The cache can be used to satisfy the request, but with
+         # validation, so setup the headers.
+         cache_entry := ce
+         # At least one of these should succeed
+         hreq.set_header("if-modified-since", \ce.last_modified)
+         hreq.set_header("if-none-match", \ce.etag)
+      }
    end
 
    public get_cache_entry()
       return .\self.cache_entry
    end
 
-   public new(req, ce)
-      self.req := req
+   public new(worker, ce)
+      self.worker := worker
       self.cache_entry := ce
       return
    end
@@ -272,44 +308,6 @@ class Cache()
             "Usage " || Format.numeric_to_string(total, 0, ',') || " / " || 
             Format.numeric_to_string(size, 0, ',') || " (" || integer((total * 100) / size) || "%)" ||
             "</html>"
-   end
-
-   public modify_redirect(httpc, hreq, hresp)
-      local ce, ud
-      #write("modify redirect? ", hreq.url.str())
-      ud := hreq.get_user_data()
-      # Just in case we have made an if-modified request that's been
-      # answered with a redirect, we don't want the headers to go
-      # forward in the request.
-      ud.set_cache_entry()
-      hreq.
-         unset_header("if-modified-since").
-         unset_header("if-none-match")
-
-      # Never use the cache on a refresh
-      if ud.req.kind = Worker.REFRESH then
-         fail
-      # .. or on anything other than a GET
-      (hreq.method == "GET") | fail
-
-      ce := get(hreq.url) | fail
-      if ce.hasnt_expired() then {
-         # The cache can be used to satisfy the request; use a custom
-         # status code so the client can identify it.  It also avoids
-         # the possibility of muddling things up if a redirection
-         # leads to a genuine http error (eg circular redirection).
-         #
-         hresp.set_status("HTTP/1.1 999 Satisfied By Cache")
-         ud.set_cache_entry(ce)
-         return
-      } else {
-         # The cache can be used to satisfy the request, but with
-         # validation, so setup the headers.
-         ud.set_cache_entry(ce)
-         # At least one of these should succeed
-         hreq.set_header("if-modified-since", \ce.last_modified)
-         hreq.set_header("if-none-match", \ce.etag)
-      }
    end
 
    public new(size)
@@ -527,7 +525,7 @@ class HttpSubWorker(SubWorker)
    end
 
    public get_data(worker)
-      local req, s, data, hreq, hres, fname, ct, ce, sc, req_url_no_frag
+      local req, s, data, hreq, hres, fname, ct, ce, sc, req_url_no_frag, helper
       httpc := worker.httpc
       req := worker.req
       # The request URL without the fragment
@@ -538,17 +536,55 @@ class HttpSubWorker(SubWorker)
 
       return if (\ce).hasnt_expired() then {
          Resp(req,, adjust_fragment(req.url, ce.url), ce.data, ce.fname, ce.content_type)
-      } else if req.kind = Worker.DOWNLOAD then {
-         tmp_file := Files.make_temp_filename("http_oibrowser.", ".bin") | stop("Couldn't create temp file: ", &why)
-         use {
-            s := BufferStream(FileStream(tmp_file, 
-                                         ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))).
-               set_buff_size(8192),
+      } else {
+         helper := HttpRequestHelperImpl(worker, ce)
+         hreq := HttpRequest().
+            set_helper(helper).
+            set_header("accept-charset", "UTF-8, ISO-8859-1")
+         if (\req.referer).scheme == (u"http" | u"https") then
+            hreq.set_referer(req.referer)
+
+         if req.kind = Worker.DOWNLOAD then {
+            tmp_file := Files.make_temp_filename("http_oibrowser.", ".bin") | stop("Couldn't create temp file: ", &why)
+            use {
+               s := BufferStream(FileStream(tmp_file, 
+                                            ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))).
+                  set_buff_size(8192),
+               {
+                  hreq.set_output_stream(s)
+                  if /ce then 
+                     hreq.set_url(req_url_no_frag)
+                  else {
+                     hreq.set_url(ce.url)
+                     # At least one of these should succeed
+                     hreq.set_header("if-modified-since", \ce.last_modified)
+                     hreq.set_header("if-none-match", \ce.etag)
+                  }
+                  if hres := httpc.retrieve(hreq) then {
+                     fname := hres.get_filename()
+                     ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
+                     Resp(req,, adjust_fragment(req.url, hres.url),, fname, ct, tmp_file)
+                  } else {
+                     rm_tmp()
+                     if httpc.get_http_error() & 
+                        hres := httpc.get_response() &
+                        sc := hres.get_status_code() &
+                        ce := helper.get_cache_entry() &
+                        sc = (304 | 999) then 
+                     {
+                        # Redirect or 304 not modified with a cache entry, so return
+                        # the cached data.
+                        update_cache_with_entry(worker.pool, hres, ce)
+                        Resp(req,, adjust_fragment(req.url, ce.url), ce.data, ce.fname, ce.content_type)
+                     } else
+                        Resp(req, &why, req.url)
+                  }
+               }
+            }
+         } else use {
+            s := RamStream(),
             {
-               hreq := HttpRequest().
-                  set_user_data(HttpRequestUserData(req, ce)).
-                  set_output_stream(s). 
-                  set_header("accept-charset", "UTF-8, ISO-8859-1")
+               hreq.set_output_stream(s)
                if /ce then 
                   hreq.set_url(req_url_no_frag)
                else {
@@ -557,87 +593,48 @@ class HttpSubWorker(SubWorker)
                   hreq.set_header("if-modified-since", \ce.last_modified)
                   hreq.set_header("if-none-match", \ce.etag)
                }
-               if (\req.referer).scheme == (u"http" | u"https") then
-                  hreq.set_referer(req.referer)
+               if \req.form_data then {
+                  if is(req.form_data, Message) then
+                     hreq.set_multipart_form_data(req.form_data)
+                  else
+                     hreq.set_html_form_data(req.form_data)
+               }
+
                if hres := httpc.retrieve(hreq) then {
+                  data := s.str()
                   fname := hres.get_filename()
                   ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
-                  Resp(req,, adjust_fragment(req.url, hres.url),, fname, ct, tmp_file)
+                  # Check whether to cache any data, including redirections.  POST requests are never cached.
+                  if hreq.method == "GET" then
+                     update_cache_with_data(worker.pool, hres, data, fname, ct)
+                  Resp(req,, adjust_fragment(req.url, hres.url), data, fname, ct)
                } else {
-                  rm_tmp()
                   if httpc.get_http_error() & 
                      hres := httpc.get_response() &
-                     sc := hres.get_status_code() &
-                     ce := hres.get_user_data().get_cache_entry() &
-                     sc = (304 | 999) then 
+                     sc := hres.get_status_code() then 
                   {
-                     # Redirect or 304 not modified with a cache entry, so return
-                     # the cached data.
-                     update_cache_with_entry(worker.pool, hres, ce)
-                     Resp(req,, adjust_fragment(req.url, ce.url), ce.data, ce.fname, ce.content_type)
+                     #write("**** code=",sc," status=",image(hres.get_status()),"   helper.ce=",image(helper.cache_entry))
+                     if ce := helper.get_cache_entry() & 
+                        sc = (304 | 999) then 
+                     {
+                        # Redirect or 304 not modified with a cache entry, so return
+                        # the cached data.
+                        update_cache_with_entry(worker.pool, hres, ce)
+                        Resp(req,, adjust_fragment(req.url, ce.url), ce.data, ce.fname, ce.content_type)
+                     } else if 400 <= sc <= 599 &
+                        data := s.str() &
+                        *data > 0 then
+                     {
+                        # Include http content together with the error
+                        # message, so it can be displayed
+                        fname := hres.get_filename()
+                        ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
+                        Resp(req, &why, adjust_fragment(req.url, hres.url), data, fname, ct)
+                     } else
+                        Resp(req, &why, req.url)
                   } else
                      Resp(req, &why, req.url)
                }
-            }
-         }
-      } else use {
-         s := RamStream(),
-         {
-            hreq := HttpRequest().
-               set_user_data(HttpRequestUserData(req, ce)).
-               set_output_stream(s). 
-               set_header("accept-charset", "UTF-8, ISO-8859-1")
-            if /ce then 
-               hreq.set_url(req_url_no_frag)
-            else {
-               hreq.set_url(ce.url)
-               # At least one of these should succeed
-               hreq.set_header("if-modified-since", \ce.last_modified)
-               hreq.set_header("if-none-match", \ce.etag)
-            }
-            if (\req.referer).scheme == (u"http" | u"https") then
-               hreq.set_referer(req.referer)
-            if \req.form_data then {
-               if is(req.form_data, Message) then
-                  hreq.set_multipart_form_data(req.form_data)
-               else
-                  hreq.set_html_form_data(req.form_data)
-            }
-
-            if hres := httpc.retrieve(hreq) then {
-               data := s.str()
-               fname := hres.get_filename()
-               ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
-               # Check whether to cache any data, including redirections.  POST requests are never cached.
-               if hreq.method == "GET" then
-                  update_cache_with_data(worker.pool, hres, data, fname, ct)
-               Resp(req,, adjust_fragment(req.url, hres.url), data, fname, ct)
-            } else {
-               if httpc.get_http_error() & 
-                  hres := httpc.get_response() &
-                  sc := hres.get_status_code() then 
-               {
-                  #write("**** code=",sc," status=",image(hres.get_status()),"   userdata.ce=",image(hres.user_data.cache_entry))
-                  if ce := hres.get_user_data().get_cache_entry() & 
-                     sc = (304 | 999) then 
-                  {
-                     # Redirect or 304 not modified with a cache entry, so return
-                     # the cached data.
-                     update_cache_with_entry(worker.pool, hres, ce)
-                     Resp(req,, adjust_fragment(req.url, ce.url), ce.data, ce.fname, ce.content_type)
-                  } else if 400 <= sc <= 599 &
-                     data := s.str() &
-                     *data > 0 then
-                  {
-                     # Include http content together with the error
-                     # message, so it can be displayed
-                     fname := hres.get_filename()
-                     ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
-                     Resp(req, &why, adjust_fragment(req.url, hres.url), data, fname, ct)
-                  } else
-                     Resp(req, &why, req.url)
-               } else
-                  Resp(req, &why, req.url)
             }
          }
       }
@@ -729,8 +726,6 @@ class Worker()
          set_task(task).
          set_cookies(pool.cookies).
          set_authentications(pool.authentications).
-         set_authentication_function(pool.authentication_function).
-         set_modify_redirect_function(pool.cache.modify_redirect).
          set_retry_while_data(&yes)
       httpc.set_user_agent(\pool.user_agent)
 
@@ -840,6 +835,10 @@ class Worker()
    end
 end
 
+abstract class WorkerPoolOwner()
+   public abstract get_authentication(httpc, dom, realm)
+end
+
 class WorkerPool()
    private
       queue,
@@ -847,13 +846,13 @@ class WorkerPool()
    package
       req_worker         # table mapping Req to Worker
    private readable
+      owner,
       active,
       log_http_flag,
       cookies,
       user_agent,
       cache,
       authentications,
-      authentication_function,
       scheme_handlers
 
    public set_log_http(s)
@@ -979,11 +978,6 @@ class WorkerPool()
       return self
    end
 
-   public set_authentication_function(f)
-      self.authentication_function := f
-      return self
-   end
-
    public set_cache(c)
       self.cache := c
       return self
@@ -1049,8 +1043,9 @@ class WorkerPool()
       return s
    end
 
-   public new(n)
+   public new(owner, n)
       /n := 6
+      self.owner := owner
       queue := table()
       cookies := table()
       cache := Cache(8*1024*1024)
@@ -2719,7 +2714,7 @@ end
 
 record GreyState(prev, nxt, refresh, copy_page, save_page, stop)
 
-class Browser(ComponentScrollArea)
+class Browser(ComponentScrollArea, WorkerPoolOwner)
    private
       ui,
       shared_worker_pool_flag,
@@ -3064,7 +3059,7 @@ class Browser(ComponentScrollArea)
       return self
    end
 
-   public get_authentication(dom, realm)
+   public get_authentication(httpc, dom, realm)
       local d
       d := AuthenticationDialog(dom, realm)
       d.show_modal(parent_dialog)
@@ -5320,8 +5315,7 @@ class Browser(ComponentScrollArea)
       cast(self,ComponentScrollArea).new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
       tidy_cache_task := Dispatcher.new_task{tidy_cache()}
-      worker_pool := WorkerPool().
-         set_authentication_function(get_authentication)
+      worker_pool := WorkerPool(self)
       status_ticker := Dispatcher.new_task{status()}
       primary_selection_owner := BrowserPrimarySelectionOwner(self)
       set_inner(TextFlow(self))
