@@ -5192,19 +5192,19 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    public get_page_info()
       local e, s, l, t, c, n, sz, m, f, imgs, ct
 
+      \page_url | fail
       s := "<html><title>Page info</title>"
       s ||:= "<h1>Page</h1>"
 
-      if l := \page_url then
-         s ||:= "URL: " || mk_anchor(l) || "<p>"
+      s ||:= "URL: " || mk_anchor(page_url) || "<p>"
       if sz := *\page_data then
          s ||:= "Size: " || Format.numeric_to_string(sz, 0, ',') || " bytes<p>"
       if \page_charset then
          s ||:= "Charset: " || to_content(page_charset) || "<p>"
-      if n := \page_name & *n > 0 then
-         s ||:= "Name: " || to_content(n) || "<p>"
-      if n := \page_title & *n > 0 then
-         s ||:= "Title: " || to_content(n) || "<p>"
+      if *\page_name > 0 then
+         s ||:= "Name: " || to_content(page_name) || "<p>"
+      if *\page_title > 0 then
+         s ||:= "Title: " || to_content(page_title) || "<p>"
       if ct := \page_resp.content_type then
          s ||:= "Content-type: " || to_content(ct.to_rfc1521()) || "<p>"
       if l := \page_resp.req.referer & (l.scheme == (u"http" | u"https")) then
