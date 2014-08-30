@@ -22,7 +22,8 @@ import
    ipl.colorgui,
    ipl.filegui,
    ipl.numbers,
-   ipl.imagedetect
+   ipl.imagedetect,
+   ipl.charset
 
 $load BROKEN_LINK "rpp.BROKEN_LINK_24.gif"
 
@@ -2744,6 +2745,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       page_links,
       page_base,
       page_resp,
+      page_charset,
       page_text_color,
       page_link_color,
       page_alink_color,
@@ -3390,8 +3392,19 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return self
    end
 
+   # Convert string s to ucs based on charset cs.  If cs is utf-8, or
+   # unknown, then just fail (the conversion is done by the caller).
+   private static convert_not_utf8(cs, s)
+      local i
+      map(cs) ? {
+         if ="iso-8859-" & i := integer(tab(many(&digits))) then
+            # This fails if i is an invalid number.
+            return ISO8859.to_ucs(s, i)
+      }
+   end
+
    private set_top_data(res)
-      local doc, s, row, c, cu, id
+      local doc, s, row, c, cu, id, cs, s2, ct, meta
       if \res.err & /res.data then {
          s := "<html><title>Error</title>" || 
             "<h1>Error:</h1>Getting " || mk_anchor(res.url) || "<br><br>" || res.err || "</html>"
@@ -3458,12 +3471,29 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       datalists := table()
       forms := []
       form_tab_children := []
-      # Convert s to ucs
-      s := if map((\res.content_type).get_parameter("charset")) == "iso-8859-1" then
-         Text.iso_8859_1_to_ucs(s)
-      else
-         Text.liberal_ucs(s)
-      doc := HtmlParser().parse(s)
+      # Check for content type charset in metadata
+      if cs := (\res.content_type).get_parameter("charset") then {
+         page_charset := cs || " (from metadata)"
+         s2 := convert_not_utf8(cs, s) | Text.liberal_ucs(s)
+         doc := HtmlParser().parse(s2)
+      } else {
+         # No charset info, so assume ucs to start with.
+         page_charset := "utf-8 (assumed)"
+         s2 := Text.liberal_ucs(s)
+         doc := HtmlParser().parse(s2)
+         # Check for meta tag content attribute
+         if meta := doc.get_root_element().search_tree(u"META") \ 1 &
+            ct := ContentType.parse_rfc2616(string(meta.get_attribute(u"CONTENT"))) &
+            cs := ct.get_parameter("charset") then 
+         {
+            page_charset := cs || " (from META tag)"
+            if s2 := convert_not_utf8(cs, s) then {
+               # Our assumption of ucs was wrong, so re-parse.
+               doc := HtmlParser().parse(s2)
+            }
+         }
+      }
+
       page_base := page_url
       row := TextFlow(self).
          set_border(outermost_border)
@@ -5169,6 +5199,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          s ||:= "URL: " || mk_anchor(l) || "<p>"
       if sz := *\page_data then
          s ||:= "Size: " || Format.numeric_to_string(sz, 0, ',') || " bytes<p>"
+      if \page_charset then
+         s ||:= "Charset: " || to_content(page_charset) || "<p>"
       if n := \page_name & *n > 0 then
          s ||:= "Name: " || to_content(n) || "<p>"
       if n := \page_title & *n > 0 then
