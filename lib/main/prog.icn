@@ -63,7 +63,7 @@ final abstract class Prog()
    public static native get_operator(s, n)
 
    #
-   # Get the builtin keyword named {s} (as invocable functions), or fail
+   # Get the builtin keyword named {s} (as an invocable function), or fail
    # if it doesn't exist.
    #
    public static native get_keyword(s)
@@ -86,7 +86,8 @@ final abstract class Prog()
 
    #
    # Find the variable with name s in program P and return a variable
-   # descriptor which points to its value.
+   # descriptor which points to its value.  Fails if `s` cannot be
+   # resolved to a variable.
    #
    public static native get_variable(s, P)
 
