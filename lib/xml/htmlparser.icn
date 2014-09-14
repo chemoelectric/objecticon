@@ -82,12 +82,13 @@ class HtmlParser()
    private static init()
       local container
 
+      # See http://www.w3.org/TR/html-markup/terminology.html#space
       SPACE := ' \t\n\r\f'
       IDINTRO := 'A-Za-z'
       IDCHARS := 'A-Za-z0-9.\-'
       KEYINTRO := 'A-Za-z_'
       KEYCHARS := 'A-Za-z_0-9.\-'
-      VALCHARS := ~' \t\n\r>'
+      VALCHARS := ~' \t\n\r\f>'
       DELIM := '\"\''
       PUBID_CHAR := ' \n\rA-Za-z0-9\-\'()+,./:=?;!*#@$_%'
       STANDALONE := set("IMG", "BR", "HR", "META", "BASE", "INPUT", "AREA", 
