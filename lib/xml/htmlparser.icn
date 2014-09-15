@@ -435,7 +435,7 @@ class HtmlParser()
          s := (any(IDINTRO) & tab(many(IDCHARS))) | fail
          res.set_name(s)
          repeat {
-            tab(upto(KEYINTRO ++ '/>')) | break
+            tab(upto(KEYINTRO ++ '/>')) | fail
             if =u">" then
                break
             if =u"/" then {
