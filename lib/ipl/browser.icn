@@ -463,7 +463,7 @@ class HttpSubWorker(SubWorker)
          exp := now + \ma
          if /exp &
             s := hres.get_first_header("Expires") then {
-               exp := Time.parse(s, "E, d MMM yyyy hh:mm:ss z") | fail
+               exp := Time.parse(s, "E, d MMM yyyy hh:mm:ss z").get_unix_seconds() | fail
             }
          if \ (lm | etag) then
             return CacheControl(exp, lm, etag)
@@ -473,8 +473,8 @@ class HttpSubWorker(SubWorker)
             return CacheControl(now + (0 < ma))
       }
       if s := hres.get_first_header("Expires") then {
-         t := Time.parse(s, "E, d MMM yyyy hh:mm:ss z") | fail
-         return CacheControl(now < t.get_unix_seconds())
+         exp := Time.parse(s, "E, d MMM yyyy hh:mm:ss z").get_unix_seconds() | fail
+         return CacheControl(now < exp)
       }
       return CacheControl()
    end
