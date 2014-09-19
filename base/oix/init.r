@@ -416,7 +416,7 @@ void syserr(char *fmt, ...)
     fflush(stderr);
     va_end(ap);
 
-    if (set_up) 		/* skip if start-up problem */
+    if (set_up && !collecting) 		/* skip if start-up problem or collecting */
         traceback(k_current, 1, 1);
 
     if (dodump)
