@@ -336,6 +336,22 @@ void env_word(char *name, word *variable, word min, word max)
 }
 
 /*
+ * env_uword - get the value of an uword-valued environment variable.
+ */
+void env_uword(char *name, uword *variable, uword min, uword max)
+{
+    unsigned long t;
+    char *value, ch;
+    if ((value = getenv(name)) == NULL || *value == '\0')
+        return;
+    if (sscanf(value, "%lu%c", &t, &ch) != 1)
+        ffatalerr("environment variable not numeric: %s=%s", name, value);
+    if (t < min || t > max)
+        ffatalerr("environment variable out of range: %s=%s", name, value);
+    *variable = t;
+}
+
+/*
  * env_float - get the value of a float-valued environment variable.
  */
 void env_float(char *name, float *variable, float min, float max)
@@ -1254,13 +1270,13 @@ int main(int argc, char **argv)
      */
     env_word(TRACE, &k_trace, MinWord, MaxWord);
     env_word(OIMAXLEVEL, &k_maxlevel, 16, MaxWord);
-    env_word(OISTRSIZE, &rootstring.size, 1024, MaxWord);
-    env_word(OIBLKSIZE, &rootblock.size, 1024, MaxWord); 
+    env_uword(OISTRSIZE, &rootstring.size, 1024, MaxUWord);
+    env_uword(OIBLKSIZE, &rootblock.size, 1024, MaxUWord); 
     env_word(OIMEMCUSHION, &memcushion, 0, 100);   /* max 100 % */
     env_word(OIMEMGROWTH, &memgrowth, 0, 10000);   /* max 100x growth */
     env_word(OICORE, &dodump, 0, 2);
     stacklim = rootblock.size / 2;
-    env_word(OISTKLIM, (word *)&stacklim, 1024, MaxWord);
+    env_uword(OISTKLIM, &stacklim, 1024, MaxUWord);
     env_word(OISTKCUSHION, &stackcushion, 0, 10000);
     env_float(OIFONTSIZE, &defaultfontsize, MIN_FONTSIZE, 1e32);
     t = getenv(OIFONT);

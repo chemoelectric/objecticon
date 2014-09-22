@@ -17,8 +17,9 @@
 
 #if WordBits == 64
    #define LogWordBits	6			/* log of WordBits */
-   #define MinWord  ((word)0x8000000000000000) /* smallest word */
+   #define MaxUWord  ((word)0xffffffffffffffff) /* largest uword */
    #define MaxWord  ((word)0x7fffffffffffffff) /* largest word */
+   #define MinWord  ((word)0x8000000000000000) /* smallest word */
 
    #define F_Nqual      0x8000000000000000	/* set if NOT string qualifier*/
    #define F_Var	0x4000000000000000	/* set if variable */
@@ -32,6 +33,7 @@
 
 #if WordBits == 32
    #define LogWordBits	        5		/* log of WordBits */
+   #define MaxUWord  ((word)0xffffffff)   /* largest uword */
    #define MaxWord  ((word)0x7fffffff)   /* largest word */
    #define MinWord  ((word)0x80000000)   /* smallest word */
    
