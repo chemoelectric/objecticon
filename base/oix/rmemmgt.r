@@ -999,7 +999,7 @@ static void adjust()
 
 static void compact()
 {
-    word size;
+    uword size;
     char *source = blkbase, *dest;
 
     /*

@@ -6,9 +6,8 @@
 /*
  * Prototypes.
  */
-static struct region *newregion	(word nbytes, word stdsize);
+static struct region *newregion	(uword nbytes, uword stdsize);
 static void check_stack_usage(void);
-
 
 /*
  * AlcBlk - allocate a block.
@@ -65,7 +64,7 @@ static void check_stack_usage(void);
 #begdef Alc2Blks(var1, struct_nm1, t_code1, nbytes1, event1, \
                  var2, struct_nm2, t_code2, nbytes2, event2)
 {
-   word nbytes = nbytes1 + nbytes2;
+   uword nbytes = nbytes1 + nbytes2;
 
    EVVal(nbytes1, event1);
    EVVal(nbytes2, event2);
@@ -140,11 +139,11 @@ alccoexp_macro(alccoexp_1,E_Coexpr)
  * 
  * Note that this memory is never freed.
  */
-struct progstate *alcprog(long icodesize)
+struct progstate *alcprog(word icodesize)
 {
    struct progstate *prog;
    char *icode;
-   int size = icodesize + sizeof(struct progstate);
+   word size = icodesize + sizeof(struct progstate);
 
    EVVal(size, E_Prog);
 
@@ -249,6 +248,19 @@ struct b_slots *f(word nslots)
 alcsegment_macro(alcsegment_0,0)
 alcsegment_macro(alcsegment_1,E_Slots)
 
+/*
+ * Check that we're not asking for a list element block that will have
+ * more descriptors than can be addressed with a StructVar.
+ */
+#begdef CheckSlots(nslots)
+{
+#if WordBits == 32
+if (nslots >= (OffsetMask - sizeof(struct b_lelem) / WordSize) / 2)
+    return NULL;
+#endif
+}
+#enddef
+
 #begdef alclist_raw_macro(f,e_list,e_lelem)
 /*
  * alclist - allocate a list header block in the block region.
@@ -262,9 +274,11 @@ alcsegment_macro(alcsegment_1,E_Slots)
 
 struct b_list *f(uword size, uword nslots)
    {
-   word i = sizeof(struct b_lelem)+(nslots-1)*sizeof(struct descrip);
+   uword i = sizeof(struct b_lelem)+(nslots-1)*sizeof(struct descrip);
    struct b_list *blk;
    struct b_lelem *lblk;
+
+   CheckSlots(nslots);
 
    Alc2Blks(blk, b_list, T_List, sizeof(struct b_list), e_list,
             lblk, b_lelem, T_Lelem, i, e_lelem)
@@ -294,9 +308,11 @@ alclist_raw_macro(alclist_raw_1,E_List,E_Lelem)
 
 struct b_list *f(uword size, uword nslots)
 {
-   word i = sizeof(struct b_lelem)+(nslots-1)*sizeof(struct descrip);
+   uword i = sizeof(struct b_lelem)+(nslots-1)*sizeof(struct descrip);
    struct b_list *blk;
    struct b_lelem *lblk;
+
+   CheckSlots(nslots);
 
    Alc2Blks(blk, b_list, T_List, sizeof(struct b_list), e_list,
             lblk, b_lelem, T_Lelem, i, e_lelem)
@@ -679,10 +695,10 @@ dealcstr_macro(dealcstr_1,E_StrDeAlc)
 /*
  * reserve -- ensure space in either string or block region.
  */
-char *f(int region, word nbytes)
+char *f(int region, uword nbytes)
 {
    struct region **pcurr, *curr, *rp;
-   word want, newsize;
+   uword want, newsize;
 
    if (region == Strings)
       pcurr = &curstring;
@@ -791,7 +807,7 @@ reserve_macro(reserve_1,E_TenureString,E_TenureBlock)
  * newregion - try to malloc a new region and tenure the old one,
  *  backing off if the requested size fails.
  */
-static struct region *newregion(word nbytes, word stdsize)
+static struct region *newregion(uword nbytes, uword stdsize)
 {
    uword minSize = MinAbrSize;
    struct region *rp;
