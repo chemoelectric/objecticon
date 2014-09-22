@@ -80,7 +80,7 @@ class CanvasBorder(CanvasComponent,Border)
    public remove(c)
       if c === self.title then
          self.title := &null
-      cast(self,Component).remove(c)
+      return cast(self,Component).remove(c)
    end
 
    public place_inside(c)

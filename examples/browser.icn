@@ -33,6 +33,7 @@ class Settings()
    public
       home_url,
       cache_size_mb,
+      cache,
       visited,
       visited_size,
       pool_size,
@@ -71,30 +72,6 @@ class VisitedEntry()
    end
 end
 
-class MessageLabel(Label)
-   private
-      want, keep
-
-   public set(p, n)
-      local t
-      want := p
-      if /keep then {
-         /p := TextPaint("")
-         set_paint(p)
-         if \n then {
-            keep := 1
-            t := Dispatcher.new_task{{
-               t.sleep(n)
-               keep := &null
-               set_paint(\want)
-               t.revert()
-            }}
-            t.start()
-         }
-      }
-   end
-end
-
 class PageMenu(DynamicMenu)
    public populate()
       local m
@@ -103,7 +80,7 @@ class PageMenu(DynamicMenu)
    end
 end
 
-class BrowserDialog(Dialog)
+class BrowserDialog(Dialog, WorkerPoolOwner)
    private readable
       settings,
       visited_set,
@@ -352,13 +329,18 @@ $endif
          pool.authentications
       else
          &null
+      settings.cache := if member(t, "persistent_cache") then
+         pool.cache
+      else
+         &null
       settings.home_url := home
       settings.cache_size_mb := cn
       settings.visited_size := vn
       settings.pool_size := pn
       settings.max_concurrent_downloads := mcd
       settings.font_factor := ff
-      return config_main("<p><font size=+1 color=green>Settings saved OK; cache and pool sizes only take effect on restart, font factor on new tab.</font><p>")
+      pool.cache.set_size(settings.cache_size_mb * 1024*1024)
+      return config_main("<p><font size=+1 color=green>Settings saved OK; pool size only takes effect on restart, font factor on new tab.</font><p>")
    end
 
    private config_main(msg)
@@ -380,6 +362,8 @@ $endif
                    <tr><td>Font size factor:</td><td><input type=number min=0.5 step=0.1 name=fontfactor value=" || settings.font_factor || " size=50 /></td></tr>_
                    <tr><td colspan=2><label><input type=checkbox name=authentications value=yes " || 
                                        (if /settings.authentications then "" else "checked") || "/> Save authentications</label></td></tr>_
+                   <tr><td colspan=2><label><input type=checkbox name=persistent_cache value=yes " || 
+                                       (if /settings.cache then "" else "checked") || "/> Persistent cache</label></td></tr>_
                  </table>_
                  <p>_
                  <input type=submit />_
@@ -427,7 +411,7 @@ $endif
       }
    end
 
-   private get_authentication(dom, realm)
+   public get_authentication(httpc, dom, realm)
       local d
       d := AuthenticationDialog(dom, realm)
       d.show_modal(self)
@@ -440,12 +424,12 @@ $endif
       self.settings := settings
       self.visited_set := set()
       every insert(visited_set, (!settings.visited).url.str())
-      pool := WorkerPool(settings.pool_size).
+      pool := WorkerPool(self, settings.pool_size).
          set_cookies(cookies).
-         set_cache(Cache(settings.cache_size_mb*1024*1024)).
-         set_authentication_function(get_authentication).
          add_scheme_handler("config", config_handler)
       pool.set_authentications(\settings.authentications)
+      pool.set_cache(\settings.cache)
+      pool.cache.set_size(settings.cache_size_mb * 1024*1024)
       pool.set_user_agent(\opts["agent"])
       if \opts["l"] then
          pool.set_log_http(&yes)
@@ -732,11 +716,11 @@ $endif
    end
 
    public msg(s, n)
-      message_label.set(AbbreviatedTextPaint(s), n)
+      message_label.set(s, n)
    end
 
    public clear_msg()
-      message_label.set()
+      msg()
    end
 
    private on_set_destination(ev)
@@ -1381,11 +1365,11 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public msg(s, n)
-      message_label.set(AbbreviatedTextPaint(s), n)
+      message_label.set(s, n)
    end
 
    public clear_msg()
-      message_label.set()
+      msg()
    end
 
    private static has_data(file, data)
@@ -1521,29 +1505,6 @@ class BrowserTab(TabItem, BrowserUI)
       every l ||:= words(s) || u" "
       l[-1] := u""
       return l
-   end
-
-   private static split_string(s, f, n)
-      local W, w, l, r
-      use {
-         W := Window().set_font(f),
-         {
-            r := u".cell\n.attr ia_x=l\n"
-            l := u""
-            every w := words(s) do {
-               if *l > 0 then
-                  l ||:= u" "
-               l ||:= w
-               if W.text_width(l) > n then {
-                  r ||:= l || u"\n.br\n"
-                  l := u""
-               }
-            }
-            if *l > 0 then
-               r ||:= l || u"\n.br\n"
-         }
-      }
-      return r
    end
 
    public get_tab_tooltip()
@@ -1795,13 +1756,13 @@ class BrowserTab(TabItem, BrowserUI)
 end
 
 procedure main(a)
-   local d, url, cookies, t, bak, settings, sf, home
+   local d, url, cookies_file, cookies, bak, settings, settings_file, home
    opts := options(a, "-k: -l! -agent: -v!")
    home := FilePath(Xdg.ensure_data_home()) | stop("Couldn't access data dir: ", &why)
-   sf := home.child("oibrowser").str()
-   cookies := \opts["k"] | home.child("oicookies").str()
-   t := decode(Files.file_to_string(cookies)) | table()
-   settings := decode(Files.file_to_string(sf)) | Settings()
+   settings_file := home.child("oibrowser").str()
+   cookies_file := \opts["k"] | home.child("oicookies").str()
+   cookies := decode(Files.file_to_string(cookies_file)) | table()
+   settings := decode(Files.file_to_string(settings_file)) | Settings()
    /settings.pool_size := 6
    /settings.max_concurrent_downloads := 3
    /settings.destination_dir := "/tmp"
@@ -1817,14 +1778,14 @@ procedure main(a)
       settings.home_url
    else
       URL(ucs(a[1])) | stop("Invalid url")
-   d := BrowserDialog(url, t, settings)
+   d := BrowserDialog(url, cookies, settings)
    d.show_modal()
    # Save cookies
-   bak := cookies || ".bak"
-   Files.string_to_file(bak, encode(Cookie.expire_cookies(t))) | 
+   bak := cookies_file || ".bak"
+   Files.string_to_file(bak, encode(Cookie.expire_cookies(cookies))) | 
       stop("Couldn't encode to temp cookie file ", bak, ": ", &why)
    # Use rename not move to ensure it's atomic
-   Files.rename(bak, cookies) | stop("Couldn't rename cookie file ", bak, ": ", &why)
+   Files.rename(bak, cookies_file) | stop("Couldn't rename cookie file ", bak, ": ", &why)
    # Save settings
-   Files.string_to_file(sf, encode(settings))
+   Files.string_to_file(settings_file, encode(settings))
 end

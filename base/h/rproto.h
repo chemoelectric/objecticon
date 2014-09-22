@@ -132,8 +132,8 @@ int             putstr          (FILE *f,dptr d);
 int             putn            (FILE *f, char *s, int n);
 int             radix           (int sign, register int r, register char *s,
                                    register char *end_s, union numeric *result);
-char            *reserve_0      (int region, word nbytes);
-char            *reserve_1      (int region, word nbytes);
+char            *reserve_0      (int region, uword nbytes);
+char            *reserve_1      (int region, uword nbytes);
 void            retderef        (dptr valp, struct frame_vars *dynamics);
 word            sub             (word a,word b);
 void            syserr          (char *fmt, ...);
@@ -412,7 +412,7 @@ void add_gc_global(dptr d);
 void del_gc_global(dptr d);
 
 
-struct progstate *alcprog(long icodesize);
+struct progstate *alcprog(word icodesize);
 
 int get_proc_kind(struct b_proc *bp);
 
@@ -447,6 +447,7 @@ int eq(dptr d1, dptr d2);
 int ceq(dptr dp, char *s);
 void env_int(char *name, int *variable, int min, int max);
 void env_word(char *name, word *variable, word min, word max);
+void env_uword(char *name, uword *variable, uword min, uword max);
 void env_float(char *name, float *variable, float min, float max);
 
 int stringint_str2int(stringint * sip, char *s);

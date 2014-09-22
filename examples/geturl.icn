@@ -89,6 +89,22 @@ class Monitor()
    end
 end
 
+class HttpRequestHelperImpl(HttpRequestHelper)
+   public get_authentication(httpc, dom, realm)
+      local u, p
+      \opts["a"] ? {
+         u := tab(upto(':')) | stop("Bad -a option")
+         move(1)
+         p := tab(0)
+         # Only succeed once, otherwise httpclient will loop forever retrying
+         delete(opts, "a")
+         return Authentication(u, p)
+      }
+   end
+
+   public modify_redirect(httpc, hreq, hresp)
+   end
+end
 
 procedure main(args)
    local l, f, t, cookies
@@ -137,8 +153,6 @@ procedure main(args)
    hc.set_timeout(\opts["t"] * 1000)
    hc.set_retries(\opts["r"])
    hc.set_user_agent(\opts["agent"])
-   if \opts["a"] then
-      hc.set_authentication_function(authenticate)
    if \opts["nsslv"] then
       hc.set_ssl_verify(&no)
 
@@ -222,18 +236,6 @@ procedure main(args)
       exit(1)
 end
 
-procedure authenticate()
-   local u, p
-   \opts["a"] ? {
-      u := tab(upto(':')) | stop("Bad -a option")
-      move(1)
-      p := tab(0)
-      # Only succeed once, otherwise httpclient will loop forever retrying
-      delete(opts, "a")
-      return Authentication(u, p)
-   }
-end
-
 procedure process_one(a)
    local hr, url, start_t, res, end_t, kbps, s, msg, tmp_file, output_stream, 
       input_stream, content_type, t, k, v, p
@@ -251,8 +253,10 @@ procedure process_one(a)
          write(FileStream.stderr, "Saving URL ", url.str())
    }
 
-   hr := HttpRequest()
-   hr.set_url(url)
+   hr := HttpRequest().
+      set_url(url).
+      set_helper(HttpRequestHelperImpl())
+
    if \opts["head"] then 
       hr.set_method("HEAD")
 

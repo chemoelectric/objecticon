@@ -1297,6 +1297,7 @@ void interp()
                 showcurrstack();
                 fprintf(stderr, "Halt instruction reached\n");
                 exit(1);
+                break; /* Not reached */
             }
 
             case Op_SysErr: {

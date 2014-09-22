@@ -32,10 +32,11 @@ class MenuBar(Component, MenuSystem)
    # @param c  The {Menu} to add.
    # @param i   The index to add at; if omitted then the new component
    # @          is appended to the end.
+   # @fail      If i is out of range
    #
    public add(c, i)
       /i := 0
-      insert(self.menus, i, c)
+      insert(self.menus, i, c) | fail
       c.set_component_link(self)
       if is_initialized() then
          c.initially()
@@ -52,15 +53,16 @@ class MenuBar(Component, MenuSystem)
    #
    # Remove the {Menu} from the menu list.
    # @param c   The {Menu} to remove.
+   # @fail      If c is not a child menu of this instance.
    #
    public remove(c)
-      remove_index(get_index(c))
-      return self
+      return remove_index(get_index(c))
    end
 
    #
    # Remove the {Menu} at the given index from the menu list.
    # @param i    The index
+   # @fail      If i is out of range
    #
    public remove_index(i)
       local c

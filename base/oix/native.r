@@ -751,8 +751,7 @@ function lang_Prog_get_region_info_impl(c)
    body {
        struct progstate *prog;
        struct region *rp;
-       struct descrip tmp;
-       tended struct descrip l, result;
+       tended struct descrip l, tmp, result;
        int n;
 
        if (!(prog = get_program_for(&c)))
@@ -768,15 +767,15 @@ function lang_Prog_get_region_info_impl(c)
        create_list(2 * n, &l);
        list_put(&result, &l);
        for (rp = prog->stringregion; rp; rp = rp->next) {
-           MakeInt(DiffPtrs(rp->free,rp->base), &tmp);
+           convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
            list_put(&l, &tmp);
-           MakeInt(DiffPtrs(rp->end,rp->base), &tmp);
+           convert_from_uword(DiffPtrs(rp->end,rp->base), &tmp);
            list_put(&l, &tmp);
        }
        for (rp = prog->stringregion->prev; rp; rp = rp->prev) {
-           MakeInt(DiffPtrs(rp->free,rp->base), &tmp);
+           convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
            list_put(&l, &tmp);
-           MakeInt(DiffPtrs(rp->end,rp->base), &tmp);
+           convert_from_uword(DiffPtrs(rp->end,rp->base), &tmp);
            list_put(&l, &tmp);
        }
 
@@ -788,15 +787,15 @@ function lang_Prog_get_region_info_impl(c)
        create_list(2 * n, &l);
        list_put(&result, &l);
        for (rp = prog->blockregion; rp; rp = rp->next) {
-           MakeInt(DiffPtrs(rp->free,rp->base), &tmp);
+           convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
            list_put(&l, &tmp);
-           MakeInt(DiffPtrs(rp->end,rp->base), &tmp);
+           convert_from_uword(DiffPtrs(rp->end,rp->base), &tmp);
            list_put(&l, &tmp);
        }
        for (rp = prog->blockregion->prev; rp; rp = rp->prev) {
-           MakeInt(DiffPtrs(rp->free,rp->base), &tmp);
+           convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
            list_put(&l, &tmp);
-           MakeInt(DiffPtrs(rp->end,rp->base), &tmp);
+           convert_from_uword(DiffPtrs(rp->end,rp->base), &tmp);
            list_put(&l, &tmp);
        }
 

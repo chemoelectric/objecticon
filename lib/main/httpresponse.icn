@@ -32,7 +32,7 @@ class HttpResponse(MimeHeaders)
    # @return  The status eg "HTTP/1.1 200 OK"
    #
    public get_status()
-      return status
+      return .status
    end
 
    #
@@ -84,7 +84,7 @@ class HttpResponse(MimeHeaders)
    # redirections.
    #
    public get_previous_response()
-      return \previous_response
+      return .\previous_response
    end
 
    #

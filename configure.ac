@@ -36,7 +36,7 @@ CCVER=`$CC --version`
 case $CCVER in
     gcc*) CFLAGS="$CFLAGS -Wall -fno-strict-aliasing -Wno-deprecated-declarations" ;;
     pcc*) CFLAGS="$CFLAGS -Wall" ;;
-    clang*) CFLAGS="$CFLAGS -Wall -Wno-parentheses-equality -Wno-tautological-compare" ;;
+    *clang*) CFLAGS="$CFLAGS -Wall -Wno-parentheses-equality -Wno-tautological-compare -Wno-deprecated-declarations" ;;
 esac
 
 AX_LIB_SOCKET_NSL()

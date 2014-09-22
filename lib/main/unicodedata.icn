@@ -1400,7 +1400,7 @@ class BidirectionalCategory()
 end
 
 class Mapping()
-   public static const
+   private static const
       LOWER, UPPER, TITLE
 
    private static init()
@@ -4628,19 +4628,19 @@ class Mapping()
       local x, ch
       x := ""
       every ch := ord(s) do
-         x ||:= Text.utf8_seq(\t[ch] | ch)
+         x ||:= Text.utf8_seq(member(t, ch) | ch)
       return ucs(x)
    end
 
    public static to_upper(s)
-      return convert_with(s, Mapping.UPPER)
+      return convert_with(s, UPPER)
    end
 
    public static to_lower(s)
-      return convert_with(s, Mapping.LOWER)
+      return convert_with(s, LOWER)
    end
 
    public static to_title(s)
-      return convert_with(s, Mapping.TITLE)
+      return convert_with(s, TITLE)
    end
 end

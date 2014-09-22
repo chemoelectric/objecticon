@@ -1147,10 +1147,11 @@ class Component(Rect,Align,Connectable)
    # @param c   The {Component} to add.
    # @param i   The index to add at; if omitted then the new component
    # @          is appended to the end.
+   # @fail      If i is out of range
    #
    public add(c, i)
       /i := 0
-      insert(self.children, i, c)
+      insert(self.children, i, c) | fail
       c.set_parent(self)
       if is_initialized() then {
          compute_z_order()
@@ -1170,15 +1171,16 @@ class Component(Rect,Align,Connectable)
    #
    # Remove the {Component} from the list of children.
    # @param c   The {Component} to remove.
+   # @fail      If c is not a child of this instance.
    #
    public remove(c)
-      remove_index(get_index(c))
-      return self
+      return remove_index(get_index(c))
    end
 
    #
    # Remove the {Component} at the given index from the list of children.
    # @param i    The index
+   # @fail      If i is out of range
    #
    public remove_index(i)
       local c

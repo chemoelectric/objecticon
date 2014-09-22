@@ -245,6 +245,7 @@ struct token *dflt;
             putc(s[i], stderr);
          putc('\n', stderr);
          show_usage();
+         return;  /* Not reached */
          }
       }
 

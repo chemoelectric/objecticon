@@ -133,7 +133,7 @@ void set_event_mask(struct progstate *p, struct b_cset *cs)
    {
        p->GeneralAccess = general_access_1;
    } else {
-       p->GeneralAccess = general_access_1;
+       p->GeneralAccess = general_access_0;
    }
 
    if ((Testb((word)(E_Objectref), bits)) ||

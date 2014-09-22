@@ -82,12 +82,13 @@ class HtmlParser()
    private static init()
       local container
 
-      SPACE := '\x20\x09\x0D\x0A'
+      # See http://www.w3.org/TR/html-markup/terminology.html#space
+      SPACE := ' \t\n\r\f'
       IDINTRO := 'A-Za-z'
       IDCHARS := 'A-Za-z0-9.\-'
       KEYINTRO := 'A-Za-z_'
       KEYCHARS := 'A-Za-z_0-9.\-'
-      VALCHARS := &ascii -- ' \t\n\r>/'
+      VALCHARS := ~' \t\n\r\f/>'
       DELIM := '\"\''
       PUBID_CHAR := ' \n\rA-Za-z0-9\-\'()+,./:=?;!*#@$_%'
       STANDALONE := set("IMG", "BR", "HR", "META", "BASE", "INPUT", "AREA", 
@@ -209,7 +210,7 @@ class HtmlParser()
             i := &pos
             # parse_node() must succeed since move_to_node() didn't
             # leave us at pos(0)
-            node := parse_node()
+            node := parse_node() | syserr("parse_node failed unexpectedly")
 
             if is(node, DocType | Comment) then
                doc.add(node)
@@ -248,7 +249,7 @@ class HtmlParser()
    # Parse and return an Element, given the starting tag
    #
    private parse_element(start_tag)
-      local res, i, node
+      local res, i, node, s
 
       res := HtmlElement()
 
@@ -270,12 +271,15 @@ class HtmlParser()
             if not(\start_tag.empty | is_standalone_tag(start_tag.name)) then {
                push(node_stack, string(start_tag.name))
                repeat {
-                  res.add("" ~== remove_entities(move_to_node()))
+                  s := move_to_node()
+                  res.add("" ~== remove_entities(s))
                   if pos(0) then
                      break
 
                   i := &pos
-                  node := parse_node(res) | break
+                  # parse_node() must succeed since move_to_node() didn't
+                  # leave us at pos(0)
+                  node := parse_node(res) | syserr("parse_node failed unexpectedly")
 
                   if is(node, Tag) then {
                      if /node.closed then {
@@ -421,39 +425,46 @@ class HtmlParser()
 
       res := Tag()
       =u"<" | fail
-      if =u"/" then
+      if =u"/" then {
          res.set_closed()
-      s := (any(IDINTRO) & tab(many(IDCHARS))) | fail
-      res.set_name(s)
-      repeat {
-         tab(upto(KEYINTRO ++ '/>'))
-         if =u"/>" then {
-            res.set_empty()
-            break
-         }
-         if =u">" then
-            break
-
-         key := tab(many(KEYCHARS)) | break
-
-         tab(upto(VALCHARS ++ '>/='))
-
-         if =u"=" then {
-            tab(upto(VALCHARS))   # Note DELIM is a subset of VALCHARS
-            if any(DELIM) then {
-               c := move(1)
-               s := tab(upto(c) | 0)
-               move(1)
+         s := (any(IDINTRO) & tab(many(IDCHARS))) | fail
+         res.set_name(s)
+         tab(many(SPACE))
+         =u">" | fail
+      } else {
+         s := (any(IDINTRO) & tab(many(IDCHARS))) | fail
+         res.set_name(s)
+         repeat {
+            tab(upto(KEYINTRO ++ '/>')) | fail
+            if =u">" then
+               break
+            if =u"/" then {
+               if =u">" then {
+                  res.set_empty()
+                  break
+               }
+               # Just discard this / and continue.
+               next
+            }
+            # Should now be at a KEYINTRO, which is a subset of KEYCHARS
+            key := tab(many(KEYCHARS))
+            tab(many(SPACE))
+            if =u"=" then {
+               tab(many(SPACE))
+               if any(DELIM) then {
+                  c := move(1)
+                  s := tab(upto(c) | 0)
+                  move(1)
+               } else
+                  s := tab(many(VALCHARS)) | next
+               value := remove_entities(s)
             } else
-               s := tab(many(VALCHARS)) | break
-            value := remove_entities(s)
-         } else
-            # See http://www.w3.org/TR/html4/intro/sgmltut.html#h-3.3.4.2
-            value := map(key)
+               # See http://www.w3.org/TR/html4/intro/sgmltut.html#h-3.3.4.2
+               value := map(key)
 
-         res.set_attribute(key, value)
+            res.set_attribute(key, value)
+         }
       }
-
       return res
    end
 

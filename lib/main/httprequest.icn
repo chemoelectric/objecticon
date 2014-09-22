@@ -18,7 +18,8 @@ class HttpRequest(MimeHeaders)
       referer,
       range_start,
       range_end,
-      content_type
+      content_type,
+      helper
 
    #
    # Set the desired url.
@@ -108,6 +109,15 @@ class HttpRequest(MimeHeaders)
    #
    public set_output_stream(f)
       self.output_stream := f
+      return self
+   end
+
+   #
+   # Set an instance of `HttpRequestHelper` to provide extra functions
+   # which can be called during the request.
+   #
+   public set_helper(x)
+      self.helper := x
       return self
    end
 

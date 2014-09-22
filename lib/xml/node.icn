@@ -39,10 +39,11 @@ class Node()
    #
    # @param obj - either a string/ucs or a Node subclass
    # @param pos - the pos to insert
+   # @fail      If pos is out of range
    #
    public add(obj, pos)
       /pos := 0
-      insert(children, pos, obj)
+      insert(children, pos, obj) | fail
       if not text(obj) then
          obj.parent := self
       return self
@@ -57,21 +58,16 @@ class Node()
    #
    # @param s - a string/ucs
    # @param pos - the pos to insert
+   # @fail      If pos is out of range
    #
    public add_string(s, pos)
-      if /pos then {
-         if text(children[-1]) then
-            children[-1] ||:= s
-         else
-            put(children, s)
-      } else {
-         if text(children[pos - 1]) then
-            children[pos - 1] ||:= s
-         else if text(children[pos]) then
-            children[pos] := s || children[pos]
-         else
-            insert(children, pos, s)
-      }
+      /pos := 0
+      if text(children[pos - 1]) then
+         children[pos - 1] ||:= s
+      else if text(children[pos]) then
+         children[pos] := s || children[pos]
+      else
+         insert(children, pos, s) | fail
       return self
    end
 

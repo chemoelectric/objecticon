@@ -4,9 +4,9 @@
 #define M_Method            01  /* method */
 #define M_Private           02  /* private access */
 #define M_Public            04  /* public access */
-#define M_Protected        010  /* public access */
-#define M_Package          020  /* public access */
-#define M_Static           040  /* public access */
+#define M_Protected        010  /* protected access */
+#define M_Package          020  /* package access */
+#define M_Static           040  /* static variable/method */
 #define M_Const           0100  /* const variable */
 #define M_Readable        0200  /* readable access */
 #define M_Defer           0400  /* deferred method */

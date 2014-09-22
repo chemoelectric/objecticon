@@ -344,7 +344,7 @@ struct inline_global_cache {
  * string and block regions.
  */
 struct region {
-    word  size;				/* allocated region size in bytes */
+    uword size;				/* allocated region size in bytes */
     char *base;				/* start of region */
     char *end;				/* end of region */
     char *free;				/* free pointer */
@@ -507,7 +507,7 @@ struct progstate {
     struct b_weakref *(*Alcweakref)(void);
     void (*Dealcblk)(union block *);
     void (*Dealcstr)(char *);
-    char * (*Reserve)(int, word);
+    char * (*Reserve)(int, uword);
 
     void (*GeneralCall)(word clo, dptr lhs, dptr expr, int argc, dptr args, word rval, word *failure_label);
 

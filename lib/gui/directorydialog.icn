@@ -74,13 +74,32 @@ class DirectoryDialog(Dialog)
    # Given a TreeNode n, load its children with the sub-directories.
    #
    public load_subtree(n)
-      local s, e, l
+      local s, e, l, i
       s := get_full_path(n).str()
-      n.clear_children()
-      l := list_directory(s) | fail
-      every e := !l do
-         n.add(TreeNode().set_label(e).set_always_expandable(&yes))
-      return self
+      if l := list_directory(s) then {
+         i := 1
+         every e := !l do {
+            while n.children[i].label.name << e.name do
+               n.remove_index(i)
+            if n.children[i].label.name == e.name then
+               n.children[i].set_label(e)
+            else
+               n.add(TreeNode().set_label(e).set_always_expandable(&yes), i)
+            i +:= 1
+         }
+         while n.remove_index(i)
+         return self
+      } else {
+         n.clear_children()
+         fail
+      }
+   end
+
+   public static name_key(data)
+      # This key ensures consistent results in sorting, so that eg
+      # abc, aBc, ABC are always sorted in the same order - needed if
+      # load_subtree is to work correctly.
+      return map(data.name) || Files.PATH_SEPARATOR || data.name
    end
 
    public list_directory(s)
@@ -95,7 +114,7 @@ class DirectoryDialog(Dialog)
                not(Files.is_hidden(t))) then
             put(dir_list, e)
       }
-      return isort(dir_list, Files.name_key)
+      return isort(dir_list, name_key)
    end
 
    #
@@ -287,13 +306,15 @@ $endif
       goto_dir(Files.get_home())
    end
 
+   public refresh_node(n)
+      if n.is_expanded() then {
+         load_subtree(n)
+         every refresh_node(!n.children)
+      }
+   end
+
    public on_refresh_menu_item(ev)
-      local n
-      n := tree.object_get_selections()[1] | fail
-      if load_subtree(n) then
-         check_existing()
-      else
-         msg(&why)
+      every refresh_node(!tree.get_root_node().children)
       tree.tree_structure_changed()
    end
 
@@ -311,11 +332,11 @@ $endif
    end
 
    public msg(s)
-      message_label.set_label(s)
+      message_label.set(s)
    end
 
    public clear_msg()
-      msg("")
+      msg()
    end
 
    public new()
@@ -360,7 +381,7 @@ $endif
    end
 
    private setup()
-      local paint_2, favourite_dirs_menu_item, paint_45, layout_7, refresh_menu_item, paint_11, paint_42, layout_4, panel_4, paint_47, paint_1, paint_9, paint_44, layout_6, paint_10, paint_3, panel_3, paint_46, paint, new_dir_menu_item, paint_43, paint_35
+      local paint_2, layout_7, paint_45, favourite_dirs_menu_item, layout_4, paint_11, paint_42, refresh_menu_item, panel_4, paint_47, paint_1, paint_9, layout_6, paint_44, paint_10, paint, paint_3, panel_3, paint_46, paint_43, new_dir_menu_item, paint_35
       self.set_label("Select directory")
       self.set_resize(&yes)
       paint_45 := ImagePaint().
@@ -469,7 +490,7 @@ $endif
          set_toggles(&no).
          set_paint(paint_10)
       paint_11 := TextPaint("")
-      message_label := Label().
+      message_label := MessageLabel().
          set_size("130").
          set_align(Align.L, Align.B).
          set_fg("red").

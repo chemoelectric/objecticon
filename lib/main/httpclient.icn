@@ -9,7 +9,8 @@ import util,
    net,
    io,
    ipl.base64,
-   ipl.strings
+   ipl.strings,
+   ipl.scan
 
 #
 # Little helper class to store cookie details
@@ -48,6 +49,9 @@ class Cookie()
    end
 end
 
+#
+# The result of a `HttpRequestHelper.get_authentication` call.
+#
 class Authentication()
    public const
       username, password
@@ -57,6 +61,29 @@ class Authentication()
       self.password := password
       return
    end
+end
+
+# This class contains an interface for additional functions which can
+# be called during a request.  It is set by setting the helper member
+# of `HttpRequest`.
+#
+abstract class HttpRequestHelper()
+   # This function is called when an 401 Unauthorized response occurs.
+   # The domain and realm are passed to the function, and it should
+   # return an `Authentication` instance to provide the username and
+   # password so the request can be retried.  If it fails, then the
+   # entire request fails.
+   #
+   public abstract get_authentication(httpc, dom, realm)
+
+   # This function is called on a redirect with the request and
+   # response objects.  It may modify those objects (eg by setting
+   # request headers).  If the function returns, then the redirect is
+   # not carried out and the whole request fails with the http error
+   # of the redirect.  If the function fails, then the redirect is
+   # carried out.
+   #
+   public abstract modify_redirect(httpc, request, response)
 end
 
 #
@@ -111,7 +138,6 @@ class HttpClient(NetClient)
       realm,
       cookies,
       authentications,
-      authentication_function,
       abort_flag,
       dont_retry_flag,
       gzip_flag,
@@ -163,7 +189,7 @@ class HttpClient(NetClient)
    # Get the cookies table.
    #
    public get_cookies()
-      return self.cookies
+      return .self.cookies
    end
 
    #
@@ -178,12 +204,7 @@ class HttpClient(NetClient)
    # Get the authentications table.
    #
    public get_authentications()
-      return self.authentications
-   end
-
-   public set_authentication_function(f)
-      self.authentication_function := f
-      return self
+      return .self.authentications
    end
 
    #
@@ -198,14 +219,16 @@ class HttpClient(NetClient)
    # Get the current HttpRequest
    #
    public get_request()
-      return self.request
+      return .self.request
    end
 
    #
-   # Get the current HttpResponse
+   # Get the current HttpResponse.  It generally only makes sense to
+   # examine this after an HTTP error, since otherwise it may be
+   # incomplete.
    #
    public get_response()
-      return self.response
+      return .\self.response
    end
 
    #
@@ -215,12 +238,23 @@ class HttpClient(NetClient)
       self.abort_flag := 1
    end
 
+   #
+   # Helper function to put a header string into the conventional
+   # capitalization used in HTTP; eg "abc-DEF" -> "Abc-Def".
+   #
+   public static capitalize_header(s)
+      local t
+      t := ""
+      s ? until pos(0) do {
+         t ||:= map(move(1), &lcase, &ucase) || map(tab(past("-") | 0))
+      }
+      return t
+   end
+
    private add_request_headers(l)
       local e
-      every e := !request.headers.sort() do {
-         e[1][1] := map(e[1][1], &lcase, &ucase)
-         every put(l, e[1] || ": " || !e[2])
-      }
+      every e := !request.headers.sort() do
+         every put(l, capitalize_header(e[1]) || ": " || !e[2])
    end
 
    #
@@ -244,6 +278,7 @@ class HttpClient(NetClient)
       # redirects
       self.request := HttpRequest().
          set_url(request.url).
+         set_helper(request.helper).
          set_method(request.method).
          set_headers(clone(request.headers)).
          set_referer(request.referer).
@@ -266,7 +301,7 @@ class HttpClient(NetClient)
       }
 
       redir_set := set()
-      previous_response := auth := auth_scheme := abort_flag := &null
+      response := previous_response := auth := auth_scheme := abort_flag := &null
       repeat {
          http_error := &null
 
@@ -306,6 +341,9 @@ class HttpClient(NetClient)
          return on_http_error("Circular redirection detected: " || s)
       insert(redir_set, s)
 
+      if (\request.helper).modify_redirect(self, request, response) then
+         return on_http_error(response.get_status())
+         
       #
       # On a redirect, a POST becomes a GET, except for code 307.
       #
@@ -339,7 +377,7 @@ class HttpClient(NetClient)
          # First 401 response, so see if we have a cached
          # authentication; if not then ask for one.
          (auth := member(authentications, k)) | {
-            if auth := (\authentication_function)(dom, realm) then
+            if auth := (\request.helper).get_authentication(self, dom, realm) then
                insert(authentications, k, auth)
             else
                return on_http_error("Authentication requested - please set username, password")
@@ -348,7 +386,7 @@ class HttpClient(NetClient)
          # 401 response to a request with authentication, so it must
          # have been wrong.  Delete bad value from cache and ask.
          delete(authentications, k)
-         if auth := (\authentication_function)(dom, realm) then
+         if auth := (\request.helper).get_authentication(self, dom, realm) then
             insert(authentications, k, auth)
          else
             return on_http_error("Failed to authenticate - correct username, password")
@@ -698,7 +736,7 @@ class HttpClient(NetClient)
    # the latter case the error string is returned.
    #
    public get_http_error()
-      return \http_error
+      return .\http_error
    end
 
    #
@@ -783,11 +821,6 @@ class HttpClient(NetClient)
       }
    end
 
-   #
-   #
-   # Retrieve the given url.  A {HttpResponse} object is returned upon success.
-   # Failure occurs if the url could not be retrieved.
-   #
    private tryone()
       local s
       #
@@ -827,7 +860,11 @@ class HttpClient(NetClient)
          (response.get_status_code() = 100) | break
       }
 
-      if request.method === "HEAD" then
+      #
+      # A 304 ("Not Modified") never has a body; nor of course does a
+      # HEAD request.
+      #
+      if (request.method == "HEAD") | (response.get_status_code() = 304) then
          maybe_close_connection()
       else
          read_data() | fail
@@ -1064,14 +1101,14 @@ class HttpClient(NetClient)
    # Return the length of the current download, or fail if unknown
    #
    public get_length()
-      return \self.length
+      return .\self.length
    end
 
    #
    # Return the number of bytes read so far, or fail if request has not begun to read
    #
    public get_read()
-      return \self.read
+      return .\self.read
    end
 
    private fail_dont_retry()

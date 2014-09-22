@@ -16,7 +16,7 @@ procedure main(a)
 
    *a > 0 | stop("usage: testcase source [output]")
 
-   s := Files.file_to_string(a[1]) | stop("couldnt open" || a[1])
+   s := Files.file_to_string(a[1]) | stop("Couldn't open ", a[1], ": ", &why)
    if \opt["u"] then
       s := ucs(s) | exit(0)     # Okay if invalid utf8
 
@@ -33,7 +33,7 @@ procedure main(a)
             exit(0)
          }
 
-         t := Files.file_to_string(a[2]) | stop("couldnt open" || a[2])
+         t := Files.file_to_string(a[2]) | stop("Couldn't open ", a[2], ": ", &why)
 
          fmt.format(d)
          x := ss.done()
