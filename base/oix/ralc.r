@@ -765,9 +765,7 @@ char *f(int region, uword nbytes)
       if (curr->Gprev) curr->Gprev->Gnext = rp;
       curr->Gprev = rp;
       *pcurr = rp;
-#if e_tenure
       EVVal((word)region,e_tenure);
-#endif					/* e_tenure */
       return rp->free;
    }
 
