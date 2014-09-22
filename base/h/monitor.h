@@ -147,8 +147,7 @@
 
 #define E_Collect	'\107'		/* Garbage collection */
 #define E_EndCollect	'\360'		/* End of garbage collection */
-#define E_TenureString	'\361'		/* Tenure a string region */
-#define E_TenureBlock	'\362'		/* Tenure a block region */
+#define E_Tenure	'\361'		/* Tenure a region */
 
 /*
  * Termination Events
