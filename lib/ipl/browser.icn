@@ -3924,8 +3924,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       use {
          mW := cbwin.clone().set_font(context.font),
          {
-            w := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"COLS")))) | 200
-            h := (2 * Gui.BORDER_WIDTH + e.get_attribute(u"ROWS") * mW.get_font_height()) | 100
+            w := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", integer(e.get_attribute(u"COLS"))))) | 200
+            h := (2 * Gui.BORDER_WIDTH + integer(e.get_attribute(u"ROWS")) * mW.get_font_height()) | 100
          }
       }
       # The ucs conversion is used here since an empty node will return "" (not u"").
@@ -3945,7 +3945,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          "file": {
             use {
                mW := cbwin.clone().set_font(context.font),
-               size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
+               size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | 160
             }
             q := FormBrowse(self, size)
             add_form_component(e, p, q, context)
@@ -4102,7 +4102,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             v := e.get_attribute(u"VALUE") | u""
             use {
                mW := cbwin.clone().set_font(context.font),
-               size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
+               size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + 
+                        mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | 160
             }
             q := FormURLField(v).
                set_width(size).
@@ -4118,7 +4119,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             did := map(string(e.get_attribute(u"LIST")))
             use {
                mW := cbwin.clone().set_font(context.font),
-               size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", e.get_attribute(u"SIZE")))) | 160
+               size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + 
+                        mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | 160
             }
             q := FormTextField(self, v, did).
                set_width(size).
