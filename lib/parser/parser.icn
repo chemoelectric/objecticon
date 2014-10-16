@@ -118,18 +118,15 @@ class Parser(Connectable)
       ed := ErrorDetail(token.filename, token.line, image(token.s) || ": " || s)
       fire(PARSER_ERROR_EVENT, ed)
       /first_err := ed.str()
-      return
    end
 
    private lxerror(ed)
       fire(LEXER_ERROR_EVENT, ed)
       /first_err := ed.str()
-      return
    end
 
    private pperror(ed)
       fire(PREPROCESSOR_ERROR_EVENT, ed)
       /first_err := ed.str()
-      return
    end
 end
