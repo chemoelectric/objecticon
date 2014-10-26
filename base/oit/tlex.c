@@ -98,7 +98,6 @@ static void lexfatal(char *fmt, ...)
     fflush(stderr);
     va_end(argp);
     tfatals++;
-    nocode++;
 }
 
 int yylex()
@@ -1036,7 +1035,6 @@ void yyerror(char *msg)
     }
 
     tfatals++;
-    nocode++;
 }
 
 /*

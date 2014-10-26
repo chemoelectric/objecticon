@@ -20,7 +20,6 @@ static	void	trans1		(char *filename);
 
 int tfatals;			/* number of fatal errors in file */
 int twarnings;			/* number of warning errors in file */
-int nocode;			/* non-zero to suppress code generation */
 int in_line;			/* current input line number */
 int incol;			/* current input column number */
 int peekc;			/* one-character look ahead */
@@ -54,7 +53,6 @@ void tfatal(char *fmt, ...)
     fflush(stderr);
     va_end(argp);
     tfatals++;
-    nocode++;
 }
 
 /*
@@ -81,7 +79,6 @@ void tfatal_at(struct node *n, char *fmt, ...)
     fprintf(stderr, "\n");
     va_end(argp);
     tfatals++;
-    nocode++;
 }
 
 /*
@@ -198,7 +195,6 @@ static void trans1(char *filename)
     char *outname;              /* output file name */
 
     twarnings = tfatals = 0;    /* reset error/warning counts */
-    nocode = 0;                 /* allow code generation */
     in_line = 1;                /* start with line 1, column 0 */
     incol = 0;
     peekc = 0;                  /* clear character lookahead */
