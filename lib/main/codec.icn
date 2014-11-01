@@ -171,7 +171,7 @@ class Encode(Stream, HasUnderlyingStream)
    end
 
    public encode(o)
-      local ty, i, cname, n, e, l
+      local ty, i, n, e, l
 
       if i := member(seen, o) then {
          writes(Codec.REF_CODE)
@@ -183,8 +183,7 @@ class Encode(Stream, HasUnderlyingStream)
       case ty of {
          "object" : {
             writes(Codec.OBJECT_CODE)
-            cname := Class.get_name(o)
-            line_out(cname)
+            line_out(Class.get_name(o))
             note_seen(o)
             if is(o, ObjectCodec) then
                o.object_encode(self)
