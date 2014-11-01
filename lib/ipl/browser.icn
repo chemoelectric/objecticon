@@ -5131,17 +5131,30 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private calculate_links_selection()
-      local l, c
+      local l, c, u, b, seen
       links_selection := &null
       l := []
+      seen := set()
       every c := !banded do {
-         if is(c, TextSelection) then
-            put(l, \c.textout.attr.url)
-         else if is(c, Img) then
-            every put(l, \c.gen_areas().url)
+         if is(c, TextSelection) then {
+            if u := \c.textout.attr.url & not member(seen, u) then {
+               b := c.get_bounds()
+               insert(seen, u)
+               put(l, PointResult(b.x, b.y, u))
+            }
+         } else if is(c, Img) then {
+            every u := \c.gen_areas().url do {
+               if not member(seen, u) then {
+                  insert(seen, u)
+                  put(l, PointResult(c.x, c.y, u))
+               }
+            }
+         }
       }
-      if *l > 0 then
-         links_selection := l
+      if *l > 0 then {
+         qsort(l, point_comp)
+         links_selection := ipl.pdco.List{ (!l).val }
+      }
    end
 
    private handle_lrelease(e)
@@ -5157,6 +5170,17 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
          self.primary := s
       }
+   end
+
+   public handle_select_all(e)
+      *parent_dialog.held = 0 | fail
+      /mark_x | fail
+      running === 0 | fail
+      mark_x := mark_y := 0
+      cursor_x := view.inner.w
+      cursor_y := view.inner.h
+      calculate_banded()
+      handle_lrelease(e)
    end
 
    private can_rpress(e)
@@ -5320,6 +5344,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          "-" : if \e.ctrl then do_decrease_font()
          "=" : if \e.ctrl then do_increase_font()
          "\^c" :  handle_copy(e)
+         "\^a" :  handle_select_all(e)
          "\^f" : (\ui).display_search()
       }
    end
