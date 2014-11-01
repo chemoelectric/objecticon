@@ -1208,6 +1208,10 @@ class BrowserTab(TabItem, BrowserUI)
       update_search_state()
    end
 
+   private on_select_all(e)
+      browser.handle_select_all(e)
+   end
+
    public create_page_menu()
       local m, s, l
       m := Menu()
@@ -1225,6 +1229,10 @@ class BrowserTab(TabItem, BrowserUI)
                   set_label("Search").
                   set_label_right("^F").
                   connect(open_search_panel, Event.ACTION))
+         m.add(TextMenuItem().
+               set_label("Select all").
+               set_label_right("^A").
+               connect(on_select_all, Event.ACTION))
          m.add(TextMenuItem().
                set_label("Page info").
                connect(page_info, Event.ACTION))
