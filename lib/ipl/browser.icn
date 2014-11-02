@@ -293,7 +293,7 @@ class Cache()
                sz := Format.numeric_to_string(*ce.data, 0, ',')
                ct := (\ce.content_type).to_rfc1521() | "-"
                s1 ||:= "<tr><td>" || Browser.to_content(n) || "</td><td align=right>" || sz || "&nbsp;</td><td>" || exp ||
-                  "</td><td nowrap>" || Browser.to_content(ct) || "</td>" || Browser.mk_anchor_cell(ce.url) || "</tr>" 
+                  "</td><td>" || Browser.to_content(ct) || "</td>" || Browser.mk_anchor_cell(ce.url) || "</tr>" 
                total +:= *ce.data
             }
             CacheAlias: {
