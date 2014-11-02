@@ -232,6 +232,11 @@ class Cache()
       }
    end
 
+   public clear()
+      default.clear(t)
+      return self
+   end
+
    public update_expiry(url, exp)
       local ce
       ce := member(t, url.str()) | fail
