@@ -165,15 +165,15 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
       if oo.simple{!!pairs | def} then {
          oo.object_start(self)
          if \def then {
-            oo.writes("default=").
+            oo.writes1("default=").
                traverse(def)
             sep := 1
          }
          every e := !pairs do {
             if \sep then
-               oo.writes(";")
+               oo.writes1(";")
             oo.traverse(e[1]).
-               writes("->").
+               writes1("->").
                traverse(e[2])
             sep := 1
          }
@@ -184,7 +184,7 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
             iplus()
          if \def then {
             oo.nl().
-               writes("default=").
+               writes1("default=").
                iplus().
                traverse(def).
                iminus()
@@ -192,7 +192,7 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
          every e := !pairs do {
             oo.nl().
                traverse(e[1]).
-               writes("->").
+               writes1("->").
                iplus().
                traverse(e[2]).
                iminus()

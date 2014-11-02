@@ -90,7 +90,7 @@ abstract class Set(ObjectOutput, ObjectHash, ObjectEquals)
          oo.object_start(self)
          every e := !elements do {
             if \sep then
-               oo.writes(",")
+               oo.writes1(",")
             oo.traverse(e)
             sep := 1
          }
@@ -101,7 +101,7 @@ abstract class Set(ObjectOutput, ObjectHash, ObjectEquals)
             iplus()
          every e := !elements do {
             if \sep then
-               oo.writes(",")
+               oo.writes1(",")
             oo.nl().
                traverse(e)
             sep := 1

@@ -167,18 +167,18 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
             s := ty || " " || Constructor.get_name(o) || "#" || serial(o)
             insert(seen, o, s)
             if /desc then 
-               writes(s)
+               writes1(s)
             else if simple{!o} then {
                writes(s, "(")
                i := 1
                every s := Constructor.get_field_names(o) do {
                   if i > 1 then
-                     writes(";")
+                     writes1(";")
                   writes(s, "=")
                   traverse(o[i])
                   i +:= 1
                }
-               writes(")")
+               writes1(")")
             } else {
                nl()
                writes(s, "(")
@@ -194,7 +194,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
                }
                iminus()
                nl()
-               writes(")")
+               writes1(")")
             }
          }
 
@@ -202,19 +202,19 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
             s := type(o) || " " || Class.get_name(o) || "#" || serial(o)
             insert(seen, o, s)
             if /desc then
-               writes(s)
+               writes1(s)
             else if /ignore_object_output_flag & is(o, ObjectOutput) then
                o.object_output(self)
             else if simple{Class.getf(o, 1 to Class.get_n_instance_fields(o))} then {
                writes(s, "(")
                every i := 1 to Class.get_n_instance_fields(o) do {
                   if i > 1 then
-                     writes(";")
+                     writes1(";")
                   writes(Class.get_field_name(o, i), "=")
                   traverse(Class.getf(o, i))
                   i +:= 1
                }
-               writes(")")
+               writes1(")")
             } else {
                nl()
                writes(s, "(")
@@ -229,7 +229,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
                }
                iminus()
                nl()
-               writes(")")
+               writes1(")")
             }
          }
 
@@ -237,30 +237,30 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
             s := ty || "#" || serial(o)
             insert(seen, o, s)
             if /desc then
-               writes(s)
+               writes1(s)
             else if simple{!o} then {
                writes(s, "{")
                every e := !sort(o) do {
                   if \sep then
-                     writes(",")
+                     writes1(",")
                   traverse(e)
                   sep := 1
                }
-               writes("}")
+               writes1("}")
             } else {
                nl()
                writes(s, "{")
                iplus()
                every e := !sort(o) do {
                   if \sep then
-                     writes(",")
+                     writes1(",")
                   nl()
                   traverse(e)
                   sep := 1
                }
                iminus()
                nl()
-               writes("}")
+               writes1("}")
             }
          }
 
@@ -268,30 +268,30 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
             s := ty || "#" || serial(o)
             insert(seen, o, s)
             if /desc then
-               writes(s)
+               writes1(s)
             else if simple{!o} then {
                writes(s, "[")
                every e := !o do {
                   if \sep then
-                     writes(",")
+                     writes1(",")
                   traverse(e)
                   sep := 1
                }
-               writes("]")
+               writes1("]")
             } else {
                nl()
                writes(s, "[")
                iplus()
                every e := !o do {
                   if \sep then
-                     writes(",")
+                     writes1(",")
                   nl()
                   traverse(e)
                   sep := 1
                }
                iminus()
                nl()
-               writes("]")
+               writes1("]")
             }
          }
 
@@ -299,20 +299,20 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
             s := ty || "#" || serial(o)
             insert(seen, o, s)
             if /desc then
-               writes(s)
+               writes1(s)
             else {
                def := o[[]]
                if simple{\def} then {
-                  writes(s)
+                  writes1(s)
                   if \def then {
                      writes(";def=")
                      traverse(def)
                   }
                } else {
                   nl()
-                  writes(s)
+                  writes1(s)
                   if \def then {
-                     writes(";def=")
+                     writes1(";def=")
                      iplus()
                      traverse(def)
                      iminus()
@@ -320,75 +320,75 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
                }
 
                if simple{keyval(o)} then {
-                  writes("{")
+                  writes1("{")
                   every e := !sort(o) do {
                      if \sep then
-                        writes(";")
+                        writes1(";")
                      traverse(e[1])
-                     writes("->")
+                     writes1("->")
                      traverse(e[2])
                      sep := 1
                   }
-                  writes("}")
+                  writes1("}")
                } else {
-                  writes("{")
+                  writes1("{")
                   iplus()
                   every e := !sort(o) do {
                      nl()
                      traverse(e[1])
-                     writes("->")
+                     writes1("->")
                      iplus()
                      traverse(e[2])
                      iminus()
                   }
                   iminus()
                   nl()
-                  writes("}")
+                  writes1("}")
                }
             }
          }
 
          "methp" : {
             if /desc then 
-               writes("methp()")
+               writes1("methp()")
             else if simple{Class.get_methp_object(o)} then {
-               writes("methp(")
+               writes1("methp(")
                traverse(Class.get_methp_object(o))
                writes(",", image(Class.get_methp_proc(o)), ")")
             } else {
                nl()
-               writes("methp(")
+               writes1("methp(")
                iplus()
                nl()
                traverse(Class.get_methp_object(o))
-               writes(",")
+               writes1(",")
                nl()
-               writes(image(Class.get_methp_proc(o)))
+               writes1(image(Class.get_methp_proc(o)))
                iminus()
                nl()
-               writes(")")
+               writes1(")")
             }
          }
 
          "cast" : {
             if /desc then 
-               writes("cast()")
+               writes1("cast()")
             else if simple{Class.get_cast_object(o)} then {
-               writes("cast(")
+               writes1("cast(")
                traverse(Class.get_cast_object(o))
                writes(",", image(Class.get_cast_class(o)), ")")
             } else {
                nl()
-               writes("cast(")
+               writes1("cast(")
                iplus()
                nl()
                traverse(Class.get_cast_object(o))
-               writes(",")
+               writes1(",")
                nl()
-               writes(image(Class.get_cast_class(o)))
+               writes1(image(Class.get_cast_class(o)))
                iminus()
                nl()
-               writes(")")
+               writes1(")")
             }
          }
 
@@ -396,12 +396,12 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
             s := ty || "#" || serial(o)
             insert(seen, o, s)
             if /desc then
-               writes(s)
+               writes1(s)
             else if e := weakrefval(o) then {
                if simple{e} then {
                   writes(s, "(")
                   traverse(e)
-                  writes(")")
+                  writes1(")")
                } else {
                   nl()
                   writes(s, "(")
@@ -410,14 +410,14 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
                   traverse(e)
                   iminus()
                   nl()
-                  writes(")")
+                  writes1(")")
                }
             } else
                writes(s, "()")
          }
 
          default : 
-            writes(image(o))
+            writes1(image(o))
       }
 
       level -:= 1
@@ -429,12 +429,12 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
    end
 
    public object_end(o)
-      return writes(")")
+      return writes1(")")
    end
 
    public object_string(o, s)
       object_start(o)
-      writes(\s)
+      writes1(\s)
       object_end(o)
       return self
    end
@@ -445,7 +445,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
          object_start(o)
          every s := !fields do {
             if \sep then
-               writes(";")
+               writes1(";")
             writes(s, "=")
             traverse(Class.getf(o, s))
             sep := 1
