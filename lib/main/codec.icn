@@ -237,7 +237,7 @@ class Encode(Stream, HasUnderlyingStream)
 
          "string" : {
             if \allow_binary_flag & (*o > 100 | upto(~Codec.PRINTABLE, o)) then
-               writes(Codec.BIN_STRING_CODE, *o, ":", o)
+               writes(Codec.BIN_STRING_CODE, *o, Codec.CODE_SEPARATOR, o)
             else {
                writes1(Codec.STRING_CODE)
                line_out(encode_string(o))
@@ -247,7 +247,7 @@ class Encode(Stream, HasUnderlyingStream)
          "ucs": {
             o := string(o)
             if \allow_binary_flag & (*o > 100 | upto(~Codec.PRINTABLE, o)) then
-               writes(Codec.BIN_UCS_CODE, *o, ":", o)
+               writes(Codec.BIN_UCS_CODE, *o, Codec.CODE_SEPARATOR, o)
             else {
                writes1(Codec.UCS_CODE)
                line_out(encode_string(o))
@@ -264,12 +264,12 @@ class Encode(Stream, HasUnderlyingStream)
          }
 
          "integer" : {
-            writes(Codec.INTEGER_CODE, string(o))
+            writes(Codec.INTEGER_CODE, o)
          }
 
          "real" : {
             writes1(Codec.REAL_CODE)
-            line_out(string(o))
+            line_out(o)
          }
 
          "record" : {
@@ -505,8 +505,7 @@ class Decode()
             return decode_string(line_in())
 
          Codec.BIN_STRING_CODE : {
-            i := int_in()
-            =":" | throw("Invalid bin string length")
+            i := integer(line_in()) | throw("Invalid bin string length")
             return move(i) | throw("Invalid bin string")
          }
 
@@ -528,8 +527,7 @@ class Decode()
             return ucs(decode_string(line_in())) | throw("Invalid ucs")
 
          Codec.BIN_UCS_CODE : {
-            i := int_in()
-            =":" | throw("Invalid bin ucs string length")
+            i := integer(line_in()) | throw("Invalid bin ucs string length")
             return ucs(move(i)) | throw("Invalid bin ucs string")
          }
 
