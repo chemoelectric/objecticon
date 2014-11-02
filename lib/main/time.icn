@@ -966,11 +966,8 @@ end
 #
 procedure note_time(s)
    static t
-   initial {
-      t := 0
-   }
-   if t > 0 then
-      write(Time.get_system_millis() - t, ": ", \s)
+   if \t & \s then
+      write(Time.get_system_millis() - t, ": ", s)
    t := Time.get_system_millis()
 end
 
