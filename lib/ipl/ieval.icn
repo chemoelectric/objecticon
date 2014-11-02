@@ -328,12 +328,12 @@ class Ieval(MinimalObjectOutput)
          do_stdin()
       else {
          hfile := FilePath(Xdg.ensure_data_home()).child("ieval").str() | stop("Couldn't access data dir: ", &why)
-         history := decode(Files.file_to_string(hfile)) | []
+         history := decode_from_file(hfile) | []
          if \opts["g"] then
             do_gui()
          else
             do_line_editor()
-         Files.string_to_file(hfile, encode(input.get_history())) | ewrite("History not saved: ", &why)
+         encode_to_file(hfile, input.get_history()) | ewrite("History not saved: ", &why)
       }
       write("Ciao")
    end

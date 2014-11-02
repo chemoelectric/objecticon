@@ -176,7 +176,7 @@ $endif
       local f
       return use {
          f := FileStream(fn, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)),
-         f.writes(s)
+         f.writes1(s)
       }
    end
 

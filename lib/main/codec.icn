@@ -81,12 +81,30 @@ procedure encode(o, fast, bin)
 end
 
 #
+# Like `encode`, but encodes directly to a file (rather than a string).
+#
+procedure encode_to_file(fn, o,fast, bin)
+   local f
+   return use {
+      f := FileStream(fn, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)),
+      Encode(f).set_fast(fast).set_allow_binary(bin).begin(o) & o
+   }
+end
+
+#
 # Recreate an object from the encoded string.
 #
 procedure decode(s)
    local d
    d := Decode()
    return d.parse(s)
+end
+
+#
+# Decode from the given file.
+#
+procedure decode_from_file(fn)
+   return decode(Files.file_to_string(fn))
 end
 
 class Encode(Stream, HasUnderlyingStream)
@@ -112,7 +130,7 @@ class Encode(Stream, HasUnderlyingStream)
 
    private begin1(o)
       if \fast_flag then
-         writes(Codec.FAST_FLAG)
+         writes1(Codec.FAST_FLAG)
       return encode(o)      
    end
 

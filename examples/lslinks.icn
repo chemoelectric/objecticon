@@ -1,6 +1,6 @@
 import
    http(HttpClient, HttpRequest),
-   lang(decode),
+   lang(decode_from_file),
    net(URL),
    xml(HtmlParser),
    ipl.scan(past),
@@ -35,7 +35,7 @@ procedure main(args)
    hc.set_retries(\opts["r"])
    hc.set_user_agent(\opts["agent"])
    cookies := \opts["k"] | System.getenv("OICOOKIES") | FilePath(Files.get_home()).child(".oicookies").str()
-   t := decode(Files.file_to_string(cookies)) | table()
+   t := decode_from_file(cookies) | table()
    hc.set_cookies(t)
 
    every do_one(!args)
