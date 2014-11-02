@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang(encode), gui, parser, io
+import lang(encode, encode_to_file), gui, parser, io
 
 #
 # Record to store a method to generate
@@ -189,10 +189,10 @@ class Code()
    end
 
    private write_file(dest_name, prog)
-      local f, g, temp_name, l_name, l_temp_name, hash
+      local f, temp_name, l_name, l_temp_name, hash
 
       temp_name := dest_name || ".temp"
-      f := open(temp_name, "w") | return alert_error("Couldn't open " || temp_name)
+      f := open(temp_name, "w") | return alert_error(["Couldn't open " || temp_name || ":", &why])
 
       prog.pos.output(f)
       writes(f, "\n\n")
@@ -203,13 +203,11 @@ class Code()
          # Output the encoded canvas to the layout file.
          #
          l_temp_name :=  l_name || ".temp"
-         if not(g := open(l_temp_name, "w")) then {
+         if not encode_to_file(l_temp_name, parent_Canvas) then {
             close(f)
-            return alert_error("Couldn't open " || l_temp_name)
+            return alert_error(["Couldn't encode to " || l_temp_name || ":", &why])
          }
          write(f, Ivib.V2i_MARKER, parent_Canvas.layout_filename)
-         write(g, encode(parent_Canvas))
-         close(g)
       } else {
          #
          # Output the encoded canvas to the source file, splitting the output over several
@@ -248,7 +246,7 @@ class Code()
    public interpose_code(src_name, dest)
       local prog, d, p, cl, fl, s, t, seen_importspec, e, im, ispec
       p := Parser()
-      s := Files.file_to_string(src_name) | return alert_error("Couldn't load " || src_name)
+      s := Files.file_to_string(src_name) | return alert_error(["Couldn't load " || src_name || ":", &why])
       prog := p.parse(s) | return alert_error(["Couldn't parse ", &why])
       seen_importspec := table()
 
