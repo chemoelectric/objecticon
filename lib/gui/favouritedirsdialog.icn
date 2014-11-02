@@ -69,7 +69,7 @@ class FavouriteDirectoriesDialog(Dialog)
 
    public static get_pair_list()
       local l
-      if l := decode(Files.file_to_string(get_favourites_file())) then
+      if l := decode_from_file(get_favourites_file()) then
          return l
       l := []
       every put(l, [&null, ucs(Files.get_home() | Files.get_temp() | Files.get_roots())])
@@ -156,7 +156,7 @@ class FavouriteDirectoriesDialog(Dialog)
    end
 
    private on_okay_button(ev)
-      if Files.string_to_file(get_favourites_file(), encode(etc.contents)) then {
+      if encode_to_file(get_favourites_file(), etc.contents) then {
          okay := 1
          dispose()
       } else

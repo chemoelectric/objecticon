@@ -175,7 +175,7 @@ procedure main(args)
       hc.set_retry_while_data(&yes)
 
    cookies := \opts["k"] | FilePath(Xdg.ensure_data_home()).child("oicookies").str() | stop("Couldn't access data dir: ", &why)
-   t := decode(Files.file_to_string(cookies)) | table()
+   t := decode_from_file(cookies) | table()
    hc.set_cookies(t)
 
    l := Monitor()
@@ -225,7 +225,7 @@ procedure main(args)
 
    # Save cookies
    t := cookies || ".bak"
-   Files.string_to_file(t, encode(Cookie.expire_cookies(hc.get_cookies()))) | 
+   encode_to_file(t, Cookie.expire_cookies(hc.get_cookies())) | 
       stop("Couldn't encode to temp cookie file ", t, ": ", &why)
    # Use rename not move to ensure it's atomic
    Files.rename(t, cookies) | stop("Couldn't rename cookie file ", t, ": ", &why)

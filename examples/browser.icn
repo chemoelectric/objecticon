@@ -345,12 +345,14 @@ $endif
 
    private config_main(msg)
       local s
-      s := "<html><title>Config</title><a href=config:cookies >Edit cookies</a><p>_
+      s := "<html><title>Config</title>"
+      s ||:= \msg
+      s ||:= "<a href=config:cookies >Edit cookies</a><p>_
               <a href=config:visited >Visited pages</a><p>_
               <a href=config:cache >Cache status</a><p>_
-              <a href=config:workers >Worker pool status</a><p>"
-      s ||:= \msg
-      s ||:= "<fieldset><form method=get action=submit >_
+              <a href=config:clear_cache >Clear cache</a><p>_
+              <a href=config:workers >Worker pool status</a><p>_
+              <fieldset><form method=get action=submit >_
                  <legend>Edit settings</legend>_
                  <table>_
                    <tr><td>Home page:</td><td><input type=url name=home value=" || xml_escape(settings.home_url.str(), ~(&letters++&digits)) || " size=50 /></td></tr>_
@@ -373,6 +375,11 @@ $endif
 
    private cache_status()
       return pool.cache.get_status()
+   end
+
+   private clear_cache()
+      pool.cache.clear()
+      return config_main("<p><font size=+1 color=green>Cache cleared.</font><p>")
    end
 
    private workers_status()
@@ -402,6 +409,7 @@ $endif
          "cookies": list_all_cookies()
          "cookie": list_cookie(req)
          "cache": cache_status()
+         "clear_cache": clear_cache()
          "workers": workers_status()
          "del_cookies": del_cookies(req)
          "del_cookie": del_cookie(req)
@@ -1246,6 +1254,10 @@ class BrowserTab(TabItem, BrowserUI)
       update_search_state()
    end
 
+   private on_select_all(e)
+      browser.handle_select_all(e)
+   end
+
    public create_page_menu()
       local m, s, l
       m := Menu()
@@ -1263,6 +1275,10 @@ class BrowserTab(TabItem, BrowserUI)
                   set_label("Search").
                   set_label_right("^F").
                   connect(open_search_panel, Event.ACTION))
+         m.add(TextMenuItem().
+               set_label("Select all").
+               set_label_right("^A").
+               connect(on_select_all, Event.ACTION))
          m.add(TextMenuItem().
                set_label("Page info").
                connect(page_info, Event.ACTION))
@@ -1761,8 +1777,8 @@ procedure main(a)
    home := FilePath(Xdg.ensure_data_home()) | stop("Couldn't access data dir: ", &why)
    settings_file := home.child("oibrowser").str()
    cookies_file := \opts["k"] | home.child("oicookies").str()
-   cookies := decode(Files.file_to_string(cookies_file)) | table()
-   settings := decode(Files.file_to_string(settings_file)) | Settings()
+   cookies := decode_from_file(cookies_file) | table()
+   settings := decode_from_file(settings_file) | Settings()
    /settings.pool_size := 6
    /settings.max_concurrent_downloads := 3
    /settings.destination_dir := "/tmp"
@@ -1782,10 +1798,10 @@ procedure main(a)
    d.show_modal()
    # Save cookies
    bak := cookies_file || ".bak"
-   Files.string_to_file(bak, encode(Cookie.expire_cookies(cookies))) | 
+   encode_to_file(bak, Cookie.expire_cookies(cookies)) | 
       stop("Couldn't encode to temp cookie file ", bak, ": ", &why)
    # Use rename not move to ensure it's atomic
    Files.rename(bak, cookies_file) | stop("Couldn't rename cookie file ", bak, ": ", &why)
    # Save settings
-   Files.string_to_file(settings_file, encode(settings))
+   encode_to_file(settings_file, settings,, 1)
 end

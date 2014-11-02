@@ -98,7 +98,7 @@ class SelectiveObjectCodec(ObjectCodec)
 
       pre_decode()
       m := p.fnum_map
-      n := integer(e.decode())
+      n := integer(e.decode()) | throw("Integer expected")
       if /e.fast_flag then {
          every 1 to n do {
             f := e.decode()

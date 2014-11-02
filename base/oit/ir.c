@@ -1125,7 +1125,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
              */
             if (aaop &&
                 is_assignable_var(x->child1)) {
-                right = ir_traverse(x->child2, st, rv, bounded && !aaop, is_rval(n->op, 2, rval));
+                right = ir_traverse(x->child2, st, rv, bounded, is_rval(n->op, 2, rval));
                 chunk1(res->start, ir_goto(n, right->start));
                 if (!bounded)
                     chunk1(res->resume, ir_goto(n, right->resume));
@@ -1248,7 +1248,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                     x->child2->op == Uop_Numne))
              {
                 lv = get_var(x->child1, st);
-                right = ir_traverse(x->child2, st, lv, 0, is_rval(n->op, 2, rval));
+                right = ir_traverse(x->child2, st, lv, bounded, is_rval(n->op, 2, rval));
                 chunk1(res->start, ir_goto(n, right->start));
                 if (!bounded)
                     chunk1(res->resume, ir_goto(n, right->resume));
@@ -1270,7 +1270,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             if (n->op == Uop_Asgn &&
                 is_assignable_var(x->child1))
             {
-                right = ir_traverse(x->child2, st, rv, 0, is_rval(n->op, 2, rval));
+                right = ir_traverse(x->child2, st, rv, bounded, is_rval(n->op, 2, rval));
                 chunk1(res->start, ir_goto(n, right->start));
                 if (!bounded)
                     chunk1(res->resume, ir_goto(n, right->resume));

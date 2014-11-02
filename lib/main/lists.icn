@@ -114,7 +114,7 @@ abstract class List(ObjectOutput, ObjectHash, ObjectEquals)
          oo.object_start(self)
          every e := gen() do {
             if \sep then
-               oo.writes(",")
+               oo.writes1(",")
             oo.traverse(e)
             sep := 1
          }
@@ -125,7 +125,7 @@ abstract class List(ObjectOutput, ObjectHash, ObjectEquals)
             iplus()
          every e := gen() do {
             if \sep then
-               oo.writes(",")
+               oo.writes1(",")
             oo.nl().
                traverse(e)
             sep := 1

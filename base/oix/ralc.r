@@ -691,7 +691,7 @@ dealcstr_macro(dealcstr_1,E_StrDeAlc)
 
 
 
-#begdef reserve_macro(f,e_tenurestring,e_tenureblock)
+#begdef reserve_macro(f,e_tenure)
 /*
  * reserve -- ensure space in either string or block region.
  */
@@ -765,12 +765,7 @@ char *f(int region, uword nbytes)
       if (curr->Gprev) curr->Gprev->Gnext = rp;
       curr->Gprev = rp;
       *pcurr = rp;
-#if e_tenurestring || e_tenureblock
-      if (region == Strings)
-         EVVal(rp->size, e_tenurestring);
-      else
-         EVVal(rp->size, e_tenureblock);
-#endif					/* e_tenurestring || e_tenureblock */
+      EVVal((word)region,e_tenure);
       return rp->free;
    }
 
@@ -800,8 +795,8 @@ char *f(int region, uword nbytes)
 }
 #enddef
 
-reserve_macro(reserve_0,0,0)
-reserve_macro(reserve_1,E_TenureString,E_TenureBlock)
+reserve_macro(reserve_0,0)
+reserve_macro(reserve_1,E_Tenure)
 
 /*
  * newregion - try to malloc a new region and tenure the old one,

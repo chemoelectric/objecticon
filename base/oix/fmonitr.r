@@ -83,8 +83,7 @@ void set_event_mask(struct progstate *p, struct b_cset *cs)
 	(Testb((word)(E_Set), bits)))
        ? alchash_1 : alchash_0);
    p->Reserve =
-      (((Testb((word)(E_TenureString), bits)) ||
-	(Testb((word)(E_TenureBlock), bits)))
+      (((Testb((word)(E_Tenure), bits)))
        ? reserve_1 : reserve_0);
 
    /*

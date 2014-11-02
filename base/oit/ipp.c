@@ -551,7 +551,6 @@ static void pfatal(char *fmt, ...)
     fflush(stderr);
     va_end(argp);
     tfatals++;
-    nocode++;
 }
 
 /*
