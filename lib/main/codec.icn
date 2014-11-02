@@ -30,8 +30,11 @@ class Codec()
       TABLE_CODE,
       REF_CODE,
       UCS_CODE,
+      BIN_STRING_CODE,
+      BIN_UCS_CODE,
       FAST_FLAG,
-      CODE_SEPARATOR
+      CODE_SEPARATOR,
+      PRINTABLE
 
    private static init()
       CODE_SEPARATOR := "|"
@@ -52,7 +55,10 @@ class Codec()
       TABLE_CODE := "T"
       UCS_CODE := "U"
       REF_CODE := "X"
+      BIN_STRING_CODE := "Y"
+      BIN_UCS_CODE := "Z"
       FAST_FLAG := "F"
+      PRINTABLE := '\x20-\x7e' -- '\\|'
    end
 end
 
@@ -60,13 +66,14 @@ end
 # Return a string, being the encoded representation of the given object.
 # @param o the object to encode
 # @param fast a flag - see {Encode.set_fast} below.
+# @param bin a flag - see {Encode.set_allow_binary} below.
 #
-procedure encode(o, fast)
+procedure encode(o, fast, bin)
    local e, f
    return use {
       f := RamStream(),
       {
-         e := Encode(f).set_fast(fast)
+         e := Encode(f).set_fast(fast).set_allow_binary(bin)
          if e.begin(o) then
             f.str()
       }
@@ -88,7 +95,8 @@ class Encode(Stream, HasUnderlyingStream)
       seen, 
       file
    private readable
-      fast_flag
+      fast_flag,
+      allow_binary_flag
 
    #
    # Reset everything and output a new object.
@@ -135,7 +143,7 @@ class Encode(Stream, HasUnderlyingStream)
       }
       r := ""
       s ? repeat {
-         r ||:= tab(many('\x20-\x7e' -- '\\' -- Codec.CODE_SEPARATOR))
+         r ||:= tab(many(Codec.PRINTABLE))
          ch := ord(move(1)) | break
          r ||:= "\\" || l[ch + 1]
       }
@@ -174,15 +182,14 @@ class Encode(Stream, HasUnderlyingStream)
       local ty, i, n, e, l
 
       if i := member(seen, o) then {
-         writes(Codec.REF_CODE)
-         writes(i)
+         writes(Codec.REF_CODE, i)
          return self
       }
 
       ty := type(o)
       case ty of {
          "object" : {
-            writes(Codec.OBJECT_CODE)
+            writes1(Codec.OBJECT_CODE)
             line_out(Class.get_name(o))
             note_seen(o)
             if is(o, ObjectCodec) then
@@ -190,7 +197,7 @@ class Encode(Stream, HasUnderlyingStream)
             else {
                n := Class.get_n_instance_fields(o)
                if \fast_flag then {
-                  writes(n)
+                  writes1(n)
                   every e := Class.get(o, 1 to n) do
                      encode(e)
                } else {
@@ -204,64 +211,72 @@ class Encode(Stream, HasUnderlyingStream)
          }
 
          "class": {
-            writes(Codec.CLASS_CODE)
+            writes1(Codec.CLASS_CODE)
             line_out(Class.get_name(o))
          }
 
          "cast": {
-            writes(Codec.CAST_CODE)
+            writes1(Codec.CAST_CODE)
             encode(Class.get_cast_object(o))
             encode(Class.get_cast_class(o))
          }
 
          "procedure" : {
-            writes(Codec.PROCEDURE_CODE)
+            writes1(Codec.PROCEDURE_CODE)
             # Need to encode string since can have eg binary operator "||"
             line_out(encode_string(get_proc_code(o)))
          }
 
          "constructor" : {
-            writes(Codec.CONSTRUCTOR_CODE)
+            writes1(Codec.CONSTRUCTOR_CODE)
             line_out(Constructor.get_name(o))
          }
 
          "null" :
-            writes(Codec.NULL_CODE)
+            writes1(Codec.NULL_CODE)
 
          "string" : {
-            writes(Codec.STRING_CODE)
-            line_out(encode_string(o))
+            if \allow_binary_flag & (*o > 100 | upto(~Codec.PRINTABLE, o)) then
+               writes(Codec.BIN_STRING_CODE, *o, ":", o)
+            else {
+               writes1(Codec.STRING_CODE)
+               line_out(encode_string(o))
+            }
          }
 
          "ucs": {
-            writes(Codec.UCS_CODE)
-            line_out(encode_string(string(o)))
+            o := string(o)
+            if \allow_binary_flag & (*o > 100 | upto(~Codec.PRINTABLE, o)) then
+               writes(Codec.BIN_UCS_CODE, *o, ":", o)
+            else {
+               writes1(Codec.UCS_CODE)
+               line_out(encode_string(o))
+            }
          }
 
          "cset" : {
-            writes(Codec.CSET_CODE)
+            writes1(Codec.CSET_CODE)
             l := []
             every put(l, Text.get_ord_range(o))
-            writes(*l)
+            writes1(*l)
             every e := !l do
                encode(e)
          }
 
          "integer" : {
-            writes(Codec.INTEGER_CODE)
-            writes(string(o))
+            writes(Codec.INTEGER_CODE, string(o))
          }
 
          "real" : {
-            writes(Codec.REAL_CODE)
+            writes1(Codec.REAL_CODE)
             line_out(string(o))
          }
 
          "record" : {
-            writes(Codec.RECORD_CODE)
+            writes1(Codec.RECORD_CODE)
             line_out(Constructor.get_name(o))
             note_seen(o)
-            writes(*o)
+            writes1(*o)
             if \fast_flag then {
                every e := !o do
                   encode(e)
@@ -274,24 +289,21 @@ class Encode(Stream, HasUnderlyingStream)
          }
 
          "list" : {
-            writes(Codec.LIST_CODE)
-            writes(*o)
+            writes(Codec.LIST_CODE, *o)
             note_seen(o)
             every e := !o do
                encode(e)
          }
 
          "set" : {
-            writes(Codec.SET_CODE)
-            writes(*o)
+            writes(Codec.SET_CODE, *o)
             note_seen(o)
             every e := !o do
                encode(e)
          }
 
          "table" : {
-            writes(Codec.TABLE_CODE)
-            writes(*o)
+            writes(Codec.TABLE_CODE, *o)
             encode(o[[]])
             note_seen(o)
             every e := keyval(o) do
@@ -316,6 +328,15 @@ class Encode(Stream, HasUnderlyingStream)
    #
    public set_fast(s)
       self.fast_flag := check_flag(s)
+      return self
+   end
+
+   #
+   # Indicate whether strings may be output as raw binary.  This will
+   # be faster for long strings such as jpeg images.  Default is no.
+   #
+   public set_allow_binary(s)
+      self.allow_binary_flag := check_flag(s)
       return self
    end
 
@@ -483,6 +504,12 @@ class Decode()
          Codec.STRING_CODE :
             return decode_string(line_in())
 
+         Codec.BIN_STRING_CODE : {
+            i := int_in()
+            =":" | throw("Invalid bin string length")
+            return move(i) | throw("Invalid bin string")
+         }
+
          Codec.INTEGER_CODE :
             return int_in()
 
@@ -499,6 +526,12 @@ class Decode()
 
          Codec.UCS_CODE :
             return ucs(decode_string(line_in())) | throw("Invalid ucs")
+
+         Codec.BIN_UCS_CODE : {
+            i := int_in()
+            =":" | throw("Invalid bin ucs string length")
+            return ucs(move(i)) | throw("Invalid bin ucs string")
+         }
 
          Codec.RECORD_CODE : {
             rname := line_in()
