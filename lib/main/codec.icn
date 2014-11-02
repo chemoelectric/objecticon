@@ -490,7 +490,7 @@ class Decode()
                   every i := 1 to n do
                      Class.get(res, i) := decode()
                } else {
-                  n := integer(decode())
+                  n := integer(decode()) | throw("Integer expected")
                   every 1 to n do {
                      t := decode()
                      v := decode()
