@@ -510,7 +510,7 @@ class Decode()
                } else {
                   n := integer(decode()) | throw("Integer expected")
                   every 1 to n do {
-                     t := decode()
+                     t := string(decode()) | throw("String expected")
                      v := decode()
                      Class.getq(res, t) := v
                   }
@@ -536,8 +536,10 @@ class Decode()
          Codec.CSET_CODE : {
              n := int_in()
              l := []
-             every 1 to n do 
-                put(l, decode())
+             every 1 to n do {
+                i := integer(decode()) | throw("Integer expected")
+                put(l, i)
+             }
              return Text.create_cset(l)
           }
 
@@ -561,7 +563,7 @@ class Decode()
                   res[i] := decode()
             } else {
                every 1 to n do {
-                  t := decode()
+                  t := string(decode()) | throw("String expected")
                   v := decode()
                   res[t] := v
                }
