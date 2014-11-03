@@ -70,6 +70,17 @@ static void print_clash(void)
     fputs(")\n", stderr);
 }
 
+static void print_see_also(struct lclass *cl)
+{
+    struct loc *pos = &cl->global->pos;
+    fprintf(stderr, "\tSee also class %s (", cl->global->name);
+    begin_esc(stderr, pos->file, pos->line);
+    fprintf(stderr, "File %s; Line %d", 
+            abbreviate(pos->file), pos->line);
+    end_esc(stderr);
+    fputs(")\n", stderr);
+}
+
 /*
  * Resolve the given name in the given file to a global entry.  There
  * are three possible results, as indicated by the variables
@@ -264,7 +275,7 @@ static struct gentry *resolve_super(struct lclass *class, struct lclass_super *s
 
 void resolve_supers()
 {
-    struct lclass *cl;
+    struct lclass *cl, *x;
     struct gentry *rsup;
     struct lclass_super *sup;
     struct lclass_ref *el;
@@ -273,6 +284,20 @@ void resolve_supers()
         for (sup = cl->supers; sup; sup = sup->next) {
             rsup = resolve_super(cl, sup);
             if (rsup) {
+                x = rsup->class;
+                /* Check that the superclass isn't final or restricted and in different package */
+                if (x->flag & M_Final)
+                    lfatal(cl->global->defined,
+                           &cl->global->pos,
+                           "Class %s cannot inherit from %s, which is marked final", 
+                           cl->global->name, x->global->name);
+                else if ((x->flag & M_Restricted) &&
+                         x->global->defined->package_id != cl->global->defined->package_id)
+                    lfatal(cl->global->defined,
+                           &cl->global->pos,
+                           "Class %s cannot inherit from %s, which is marked restricted", 
+                           cl->global->name, x->global->name);
+
                 el = Alloc(struct lclass_ref);
                 el->class = rsup->class;
                 if (cl->last_resolved_super) {
@@ -314,13 +339,6 @@ static void compute_impl(struct lclass *cl)
         /* If we've seen it, just go round again */
         if (x->seen == seen_no)
             continue;
-
-        /* Check that the superclass isn't final */
-        if (x != cl && (x->flag & M_Final))
-            lfatal(cl->global->defined,
-                   &cl->global->pos,
-                   "Class %s cannot inherit from %s, which is marked final", 
-                   cl->global->name, x->global->name);
 
         /* We have an implemented superclass, so merge methods etc into our
          * class.
@@ -372,7 +390,7 @@ static void merge(struct lclass *cl, struct lclass *super)
              */
             if (!(f->flag & M_Static) &&
                 !(((fr->field->flag & (M_Method | M_Static)) == M_Method) 
-                       && ((f->flag & (M_Method | M_Static)) == M_Method)))
+                  && ((f->flag & (M_Method | M_Static)) == M_Method))) {
                 lfatal2(fr->field->class->global->defined,
                         &fr->field->pos, &f->pos, ")",
                         "Inheritance clash: field '%s' encountered in class %s and class %s (",
@@ -380,11 +398,14 @@ static void merge(struct lclass *cl, struct lclass *super)
                         fr->field->class->global->name,
                         f->class->global->name
                     );
+                if (fr->field->class != cl)
+                    print_see_also(cl);
+            }
             /*
              * If the new field is final, then fr cannot override it.  Note that the translator
              * ensures only non-static methods can be marked final.
              */
-            else if (f->flag & M_Final)
+            else if (f->flag & M_Final) {
                 lfatal2(fr->field->class->global->defined,
                         &fr->field->pos, &f->pos, ")",
                         "Field %s encountered in class %s overrides a final field in class %s (",
@@ -392,6 +413,24 @@ static void merge(struct lclass *cl, struct lclass *super)
                         fr->field->class->global->name,
                         f->class->global->name
                     );
+                if (fr->field->class != cl)
+                    print_see_also(cl);
+            }
+            /*
+             * Similar check for restricted
+             */
+            else if ((f->flag & M_Restricted) &&
+                     super->global->defined->package_id != fr->field->class->global->defined->package_id) {
+                lfatal2(fr->field->class->global->defined,
+                        &fr->field->pos, &f->pos, ")",
+                        "Field %s encountered in class %s overrides a restricted field in class %s (",
+                        f->name,
+                        fr->field->class->global->name,
+                        f->class->global->name
+                    );
+                if (fr->field->class != cl)
+                    print_see_also(cl);
+            }
         } else {
             /* Not found, so add it */
             fr = Alloc(struct lclass_field_ref);

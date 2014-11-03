@@ -67,6 +67,7 @@ class Lex(Connectable)
       reswords["readable"] := [0, YY.READABLE]
       reswords["record"] := [0, YY.RECORD]
       reswords["repeat"] := [Beginner, YY.REPEAT]
+      reswords["restricted"] := [0, YY.RESTRICTED]
       reswords["return"] := [Beginner+Ender, YY.RETURN]
       reswords["static"] := [0, YY.STATIC]
       reswords["suspend"] := [Beginner+Ender, YY.SUSPEND]

@@ -44,6 +44,7 @@
 %token  READABLE    /* readable  */
 %token  RECORD      /* record    */
 %token  REPEAT      /* repeat    */
+%token  RESTRICTED  /* restricted*/
 %token  RETURN      /* return    */
 %token  STATIC      /* static    */
 %token  SUSPEND     /* suspend   */
@@ -220,6 +221,7 @@ classaccess : classaccess1 ;
 classaccess1 : { $$ := Node.EMPTY } ;
         | FINAL
         | ABSTRACT
+        | RESTRICTED
 
 fieldaccess : fieldaccess1 ;
         | fieldaccess fieldaccess1 { $$ := Node("fieldaccess", $1,$2) } ;
@@ -232,6 +234,7 @@ fieldaccess1 : PRIVATE
         | CONST
         | READABLE
         | FINAL
+        | RESTRICTED
 
 global  : GLOBAL idlist { $$ := Node("global", $1,$2) } ;
 

@@ -67,20 +67,6 @@ class Outputter()
             suspend e
    end
 
-   protected is_final(obj)
-      if is(obj, Tree) then
-         return obj.get_access().gen().str() == "final"
-      else
-         return iand(obj.flags, Class.Final) ~= 0
-   end
-
-   protected is_abstract(obj)
-      if is(obj, Tree) then
-         return obj.get_access().gen().str() == "abstract"
-      else
-         return iand(obj.flags, Class.Abstract) ~= 0
-   end
-
    protected get_param_string(obj)
       local s, a, has_self
       s := ""
@@ -140,6 +126,8 @@ class Outputter()
             s ||:= "defer "
          if iand(obj.flags, Class.Final) ~= 0 then
             s ||:= "final "
+         if iand(obj.flags, Class.Restricted) ~= 0 then
+            s ||:= "restricted "
          s[-1] := ""
       }
       return s

@@ -143,10 +143,9 @@ class HtmlOutputter(Outputter)
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
          write(f, "<html><head><title>", c.name, "</title></head><body>")
          write(f, "<h1>Class ", c.name, "</h1>")
-         if is_final(c.obj) then
-            write(f, "final<p>")
-         if is_abstract(c.obj) then
-            write(f, "abstract<p>")
+         s := get_access_string(c.obj)
+         if *s > 0 then
+            write(f, s, "<p>")
          write(f, "<dl>")
 
          # Superclass list

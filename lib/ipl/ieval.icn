@@ -102,6 +102,8 @@ class Ieval(MinimalObjectOutput)
          s ||:= "Final "
       if iand(f, lang.Class.Special) ~= 0 then
          s ||:= "Special "
+      if iand(f, lang.Class.Restricted) ~= 0 then
+         s ||:= "Restricted "
       s[-1] := ""
       return s
    end
@@ -172,13 +174,15 @@ class Ieval(MinimalObjectOutput)
    end
 
    private dir(a[])
-      local f, t, c
+      local f, t, c, s
       if *a = 0 then
          list_syms()
       else case type(c := a[1]) of {
          "object"|"cast"|"class": {
-            output.write(if iand(lang.Class.get_class_flags(c), lang.Class.Final) ~= 0 then "final class " else "class ",
-                         lang.Class.get_name(c), "(", supers_string(c), ")")
+            s := map(flags_string(lang.Class.get_class_flags(c)))
+            if *s > 0 then
+               output.writes(s, " ")
+            output.write("class ", lang.Class.get_name(c), "(", supers_string(c), ")")
             output.write("   ", locn_string(lang.Class.get_location(c))) 
             output.write("   implements ", implements_string(c))
             t := []

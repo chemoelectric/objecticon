@@ -49,6 +49,7 @@
 %token	READABLE    /* readable  */
 %token	RECORD      /* record    */
 %token	REPEAT      /* repeat    */
+%token	RESTRICTED  /* restricte */
 %token	RETURN      /* return    */
 %token	STATIC      /* static    */
 %token	SUSPEND     /* suspend   */

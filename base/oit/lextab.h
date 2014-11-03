@@ -55,13 +55,14 @@ struct toktab toktab[] = {
    { "readable",         READABLE,      0},                /*  37 */
    { "record",           RECORD,        0},                /*  38 */
    { "repeat",           REPEAT,        Beginner},         /*  39 */
-   { "return",           RETURN,        Beginner+Ender},   /*  40 */
-   { "static",           STATIC,        0},                /*  41 */
-   { "suspend",          SUSPEND,       Beginner+Ender},   /*  42 */
-   { "then",             THEN,          0},                /*  43 */
-   { "to",               TO,            0},                /*  44 */
-   { "until",            UNTIL,         Beginner},         /*  45 */
-   { "while",            WHILE,         Beginner},         /*  46 */
+   { "restricted",       RESTRICTED,    0},                /*  40 */
+   { "return",           RETURN,        Beginner+Ender},   /*  41 */
+   { "static",           STATIC,        0},                /*  42 */
+   { "suspend",          SUSPEND,       Beginner+Ender},   /*  43 */
+   { "then",             THEN,          0},                /*  44 */
+   { "to",               TO,            0},                /*  45 */
+   { "until",            UNTIL,         Beginner},         /*  46 */
+   { "while",            WHILE,         Beginner},         /*  47 */
    { "end-of-file",      0,             0},
    };
 
@@ -75,8 +76,8 @@ struct toktab *restab[] = {
    &toktab[17], &toktab[20], &toktab[22], NULL,        /* 65-68 efgh */
    &toktab[23], NULL,        NULL,        &toktab[27], /* 69-6C ijkl */
    NULL,        &toktab[28], &toktab[31], &toktab[32], /* 6D-70 mnop */
-   NULL,        &toktab[37], &toktab[41], &toktab[43], /* 71-74 qrst */
-   &toktab[45], NULL,        &toktab[46], NULL,        /* 75-78 uvwx */
+   NULL,        &toktab[37], &toktab[42], &toktab[44], /* 71-74 qrst */
+   &toktab[46], NULL,        &toktab[47], NULL,        /* 75-78 uvwx */
    NULL,        NULL,                                  /* 79-7A yz */
    };
 
