@@ -79,7 +79,7 @@ classaccess : classaccess1 ;
 classaccess1 : ;
         | FINAL {Modifier8();};
         | ABSTRACT {Modifier10();};
-        | RESTRICTED {Modifier12();};
+        | PACKAGE {Modifier4();};
 
 fieldaccess : fieldaccess1 ;
         | fieldaccess fieldaccess1 ;
@@ -92,7 +92,6 @@ fieldaccess1 : PRIVATE {Modifier1();};
         | CONST {Modifier6();};
         | READABLE {Modifier7();};
         | FINAL {Modifier8();};
-        | RESTRICTED {Modifier12();};
 
 global	: GLOBAL {Global0($1);} idlist  {Global1($1, $2, $3);} ;
 

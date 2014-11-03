@@ -127,7 +127,6 @@ int modflag;
 #define Modifier9()             modflag |= M_Defer
 #define Modifier10()            modflag |= M_Abstract
 #define Modifier11()            modflag |= M_Native
-#define Modifier12()            modflag |= M_Restricted
 
 #define Classbody0()            modflag = 0; idflag = F_Class
 #define Fielddecl1(x)           check_flags(modflag, x)

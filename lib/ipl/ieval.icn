@@ -102,8 +102,6 @@ class Ieval(MinimalObjectOutput)
          s ||:= "Final "
       if iand(f, lang.Class.Special) ~= 0 then
          s ||:= "Special "
-      if iand(f, lang.Class.Restricted) ~= 0 then
-         s ||:= "Restricted "
       s[-1] := ""
       return s
    end

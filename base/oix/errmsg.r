@@ -106,6 +106,7 @@ struct errtab errtab[] = {
     {603, "class expected"},
     {604, "cannot cast to a class which is not a superclass of object"},
     {605, "an abstract class is uninstantiable"},
+    {607, "a package class can only be instantiated from within the same package"},
     {608, "a private field can only be accessed from within the same class"},
     {609, "a protected instance field can only be accessed from within an implemented class of the instance"},
     {610, "a protected static field can only be accessed if it is within an implemented class of the caller"},

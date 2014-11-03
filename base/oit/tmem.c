@@ -73,9 +73,6 @@ void next_class(char *name, int flag, struct node *n)
 {
     struct tclass *c = FAlloc(struct tclass);
     c->flag = flag;
-    if ((flag & (M_Final | M_Restricted)) == (M_Final | M_Restricted))
-        tfatal_at(n, "A restricted class cannot be final: class %s", name);
-
     if (curr_class) {
         curr_class->next = c;
         curr_class = c;
@@ -129,10 +126,6 @@ void check_flags(int flag, struct node *n)
             tfatal_at(n, "A static method cannot be final: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
-        if ((flag & (M_Static | M_Restricted)) == (M_Static | M_Restricted))
-            tfatal_at(n, "A static method cannot be restricted: method %s in class %s", 
-                    curr_class->curr_field->name, curr_class->global->g_name);
-
         if ((flag & (M_Static | M_Abstract)) == (M_Static | M_Abstract))
             tfatal_at(n, "A static method cannot be abstract: method %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
@@ -171,10 +164,6 @@ void check_flags(int flag, struct node *n)
     } else {
         if (flag & M_Final)
             tfatal_at(n, "A class variable cannot be final: field %s in class %s", 
-                    curr_class->curr_field->name, curr_class->global->g_name);
-
-        if (flag & M_Restricted)
-            tfatal_at(n, "A class variable cannot be restricted: field %s in class %s", 
                     curr_class->curr_field->name, curr_class->global->g_name);
 
         if ((flag & (M_Public | M_Readable)) == (M_Public | M_Readable))

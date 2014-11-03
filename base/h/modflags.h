@@ -14,4 +14,3 @@
 #define M_Special        02000  /* special method (new/init) */
 #define M_Abstract       04000  /* abstract class/method */
 #define M_Native        010000  /* native method */
-#define M_Restricted    020000  /* restricted class/method */

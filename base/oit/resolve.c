@@ -285,17 +285,18 @@ void resolve_supers()
             rsup = resolve_super(cl, sup);
             if (rsup) {
                 x = rsup->class;
-                /* Check that the superclass isn't final or restricted and in different package */
+                /* Check that the superclass isn't final or marked package and in different package */
                 if (x->flag & M_Final)
                     lfatal(cl->global->defined,
                            &cl->global->pos,
                            "Class %s cannot inherit from %s, which is marked final", 
                            cl->global->name, x->global->name);
-                else if ((x->flag & M_Restricted) &&
+                else if ((x->flag & M_Package) &&
+                         cl->global->defined->package_id != 1 &&
                          x->global->defined->package_id != cl->global->defined->package_id)
                     lfatal(cl->global->defined,
                            &cl->global->pos,
-                           "Class %s cannot inherit from %s, which is marked restricted", 
+                           "Class %s cannot inherit from %s, which is marked package", 
                            cl->global->name, x->global->name);
 
                 el = Alloc(struct lclass_ref);
@@ -409,21 +410,6 @@ static void merge(struct lclass *cl, struct lclass *super)
                 lfatal2(fr->field->class->global->defined,
                         &fr->field->pos, &f->pos, ")",
                         "Field %s encountered in class %s overrides a final field in class %s (",
-                        f->name,
-                        fr->field->class->global->name,
-                        f->class->global->name
-                    );
-                if (fr->field->class != cl)
-                    print_see_also(cl);
-            }
-            /*
-             * Similar check for restricted
-             */
-            else if ((f->flag & M_Restricted) &&
-                     super->global->defined->package_id != fr->field->class->global->defined->package_id) {
-                lfatal2(fr->field->class->global->defined,
-                        &fr->field->pos, &f->pos, ")",
-                        "Field %s encountered in class %s overrides a restricted field in class %s (",
                         f->name,
                         fr->field->class->global->name,
                         f->class->global->name

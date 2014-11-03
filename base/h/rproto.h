@@ -363,6 +363,7 @@ struct b_tvsubs *alcsubs_0      (void);
 struct b_tvsubs *alcsubs_1      (void);
 struct b_weakref  *alcweakref_0     (void);
 struct b_weakref  *alcweakref_1     (void);
+int     check_package_access(struct b_class *cl);
 int     check_access(struct class_field *cf, struct b_class *instance_class);
 int     lookup_global_index(dptr name, struct progstate *prog);
 dptr    lookup_global(dptr name, struct progstate *prog);

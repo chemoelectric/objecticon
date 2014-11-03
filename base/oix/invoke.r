@@ -425,6 +425,18 @@ void construct_object(word clo, dptr lhs, dptr expr, int argc, dptr args, word r
     }
 
     new_field = class0->new_field;
+
+    if (class0->flags & M_Package &&
+        (!new_field || new_field->defining_class != class0)) {
+        if (check_package_access(class0) == Error) {
+            xexpr = expr;
+            xargp = 0;
+            skip_args(argc, args);
+            err_msg(0, NULL);
+            return;
+        }
+    }
+
     if (new_field) {
         struct frame *new_f;
         struct b_proc *bp = &ProcBlk(*new_field->field_descriptor);
