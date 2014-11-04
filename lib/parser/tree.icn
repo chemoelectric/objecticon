@@ -461,16 +461,22 @@ end
 
 class Body(LList)
    package flatten()
-      local l, n, t
+      local l, n, t, t2
       l := []
       n := pos.child(index)
       while n ~=== Node.EMPTY do {
          t := n.child(2)
          default.push(l, case t.label of {
-            "record" : Record(t)
-            "class" :  Class(t)
-            "proc" :  Procedure(t)
-            "global": Global(t)
+            "body" : {
+               t2 := t.child(2)
+               case t2.label of {
+                  "record" : Record(t)
+                  "class" :  Class(t)
+                  "proc" :  Procedure(t)
+                  "global": Global(t)
+                  default: syserr("Unknown body node:" || t2.label)
+               }
+            }
             "invocable": Invocable(t)
             default: syserr("Unknown declaration node:" || t.label)
          })
@@ -631,6 +637,11 @@ class Factory()
       return Leaf(Token(t, s, pad || s))
    end
 
+   public static new_package_flag(pad)
+      /pad := ""
+      return Leaf(Token(YY.PACKAGE, "package", pad || "package"))
+   end
+
    public static new_retention(pad, s)
       local t
       t := case s of {
@@ -645,17 +656,19 @@ class Factory()
    public static new_procedure(pad, name, args, epad)
       local t
       /epad := "\n"
-      t := Procedure(Node("proc",
-                          Token(YY.PROCEDURE, "procedure", pad || "procedure"),
-                          Token(YY.IDENT, name, " " || name),
-                          Token(YY.LPAREN, "(", "("),
+      t := Procedure(Node("body",
                           Node.EMPTY,
-                          Token(YY.RPAREN, ")", ")"),
-                          Node.EMPTY,
-                          Node.EMPTY,
-                          Node.EMPTY,
-                          Node.EMPTY,
-                          Token(YY.END, "end", epad || "end")))
+                          Node("proc",
+                               Token(YY.PROCEDURE, "procedure", pad || "procedure"),
+                               Token(YY.IDENT, name, " " || name),
+                               Token(YY.LPAREN, "(", "("),
+                               Node.EMPTY,
+                               Token(YY.RPAREN, ")", ")"),
+                               Node.EMPTY,
+                               Node.EMPTY,
+                               Node.EMPTY,
+                               Node.EMPTY,
+                               Token(YY.END, "end", epad || "end"))))
       t.get_args().put(new_id("", pop(args)))
       every t.get_args().put(new_id(" ", !args))
       return t
@@ -664,16 +677,18 @@ class Factory()
    public static new_class(pad, access, name, supers, epad)
       local t
       /epad := "\n"
-      t := Class(Node("class",
-                       Node.EMPTY,
-                       Token(YY.CLASS, "class", if *access > 0 then " class" else pad || "class"),
-                       Token(YY.IDENT, name, " " || name),
-                       Token(YY.LPAREN, "(", "("),
-                       Node.EMPTY,
-                       Token(YY.RPAREN, ")", ")"),
-                       Node.EMPTY,
-                       Node.EMPTY,
-                       Token(YY.END, "end", epad || "end")))
+      t := Class(Node("body",
+                      Node.EMPTY,
+                      Node("class",
+                           Node.EMPTY,
+                           Token(YY.CLASS, "class", if *access > 0 then " class" else pad || "class"),
+                           Token(YY.IDENT, name, " " || name),
+                           Token(YY.LPAREN, "(", "("),
+                           Node.EMPTY,
+                           Token(YY.RPAREN, ")", ")"),
+                           Node.EMPTY,
+                           Node.EMPTY,
+                           Token(YY.END, "end", epad || "end"))))
       t.get_access().put(new_access(pad, pop(access)))
       every t.get_access().put(new_access(" ", !access))
       t.get_supers().put(new_id("", pop(supers)))
@@ -752,24 +767,30 @@ class Factory()
    end
 
    public static new_record(pad, name, fields)
-      local t
-      t := Record(Node("record",
-                       Token(YY.RECORD, "record", pad || "record"),
-                       Token(YY.IDENT, name, " " || name),
-                       Token(YY.LPAREN, "(", "("),
+      local t, l
+      t := Record(Node("body",
                        Node.EMPTY,
-                       Token(YY.RPAREN, ")", ")")))
-      t.put(new_id("", pop(fields)))
-      every t.put(new_id(" ", !fields))
+                       Node("record",
+                            Token(YY.RECORD, "record", pad || "record"),
+                            Token(YY.IDENT, name, " " || name),
+                            Token(YY.LPAREN, "(", "("),
+                            Node.EMPTY,
+                            Token(YY.RPAREN, ")", ")"))))
+      l := t.get_ids()
+      l.put(new_id("", pop(fields)))
+      every l.put(new_id(" ", !fields))
       return t
    end
 
    public static new_global(pad, ids)
-      local t
-      t := Global(Node("global",
-                       Token(YY.GLOBAL, "global", pad || "global"),
-                       Node.EMPTY))
-      every t.put(new_id(" ", !ids))
+      local t, l
+      t := Global(Node("body",
+                       Node.EMPTY,
+                       Node("global",
+                            Token(YY.GLOBAL, "global", pad || "global"),
+                            Node.EMPTY)))
+      l := t.get_ids()
+      every l.put(new_id(" ", !ids))
       return t
    end
 
@@ -817,11 +838,7 @@ class Factory()
    end
 end
 
-class Class(LList)
-   public get_first_token()
-      return Util.first_token(pos)
-   end
-
+class ClassMembers(LList)
    package flatten()
       local l, n, t
       l := []
@@ -847,27 +864,46 @@ class Class(LList)
                           x.pos.child(3)))
       return self
    end
+end
+
+class Class(Tree)
+   public get_first_token()
+      return Util.first_token(pos)
+   end
+
+   public get_package_flag()
+      if pos.child(1) === Node.EMPTY then
+         fail
+      return Leaf(pos.child(1))
+   end
+
+   public set_package_flag(x)
+      if /x then
+         pos.set(1, Node.EMPTY)
+      else
+         pos.set(1, x.pos)
+      return self
+   end
 
    public get_name()
-      return Leaf(pos.child(3))
+      return Leaf(pos.child(2).child(3))
    end
 
    public set_name(x)
-      pos.set(3, x.pos)
+      pos.child(2).set(3, x.pos)
       return self
    end
 
    public get_supers()
-      return IdList(pos, 5, "super")
+      return IdList(pos.child(2), 5, "super")
    end
 
    public get_access()
-      return AccessList(pos, 1, "classaccess")
+      return AccessList(pos.child(2), 1, "classaccess")
    end
 
-   package new(pos)
-      cast(self,LList).new(pos, 7)
-      return
+   public get_members()
+      return ClassMembers(pos.child(2), 7)
    end
 end
 
@@ -1038,44 +1074,84 @@ end
 
 class Procedure(Tree, Function)
    public get_first_token()
-      return pos.child(1)
+      return Util.first_token(pos)
    end
 
-   package new(pos)
-      cast(self,Tree).new(pos)
-      cast(self,Function).new(pos, 2, 4, 6)
-      return
-   end
-end
-
-class Record(IdList)
-   public get_first_token()
-      return pos.child(1)
+   public get_package_flag()
+      if pos.child(1) === Node.EMPTY then
+         fail
+      return Leaf(pos.child(1))
    end
 
-   public get_name()
-      return Leaf(pos.child(2))
-   end
-
-   public set_name(x)
-      pos.set(2, x.pos)
+   public set_package_flag(x)
+      if /x then
+         pos.set(1, Node.EMPTY)
+      else
+         pos.set(1, x.pos)
       return self
    end
 
    package new(pos)
-      cast(self,IdList).new(pos, 4)
+      cast(self,Tree).new(pos)
+      cast(self,Function).new(pos.child(2), 2, 4, 6)
       return
    end
 end
 
-class Global(IdList)
+class Record(Tree)
    public get_first_token()
-      return pos.child(1)
+      return Util.first_token(pos)
    end
 
-   package new(pos)
-      cast(self,IdList).new(pos, 2)
-      return
+   public get_package_flag()
+      if pos.child(1) === Node.EMPTY then
+         fail
+      return Leaf(pos.child(1))
+   end
+
+   public set_package_flag(x)
+      if /x then
+         pos.set(1, Node.EMPTY)
+      else
+         pos.set(1, x.pos)
+      return self
+   end
+
+   public get_ids()
+      return IdList(pos.child(2), 4)
+   end
+
+   public get_name()
+      return Leaf(pos.child(2).child(2))
+   end
+
+   public set_name(x)
+      pos.child(2).set(2, x.pos)
+      return self
+   end
+end
+
+class Global(Tree)
+   public get_first_token()
+      return Util.first_token(pos)
+   end
+
+   public get_package_flag()
+      if pos.child(1) === Node.EMPTY then
+         fail
+      return Leaf(pos.child(1))
+   end
+
+   public set_package_flag(x)
+      if /x then
+         pos.set(1, Node.EMPTY)
+      else
+         pos.set(1, x.pos)
+      return self
+   end
+
+   public get_ids()
+      return IdList(pos.child(2), 2)
    end
 end
 

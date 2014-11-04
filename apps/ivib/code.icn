@@ -182,7 +182,7 @@ class Code()
       if *class_vars > 0 then {
          fl := Factory.new_fields(indent1, ["private"], [])
          every fl.put(Factory.new_id("\n      ", !class_vars))
-         cl.put(fl)
+         cl.get_members().put(fl)
       }
       generate_methods(prog, cl)
       return write_file(s, prog)
@@ -300,7 +300,7 @@ class Code()
       #
       # Generate any missing class variables.
       #
-      every d := cl.gen() do {
+      every d := cl.get_members().gen() do {
          if is(d, FieldList) then {
             if d.get_access().size() = 1 & d.get_access().get(1).str() == "private" then
                fl := d
@@ -368,7 +368,7 @@ class Code()
    end
 
    private nice_pad(cl)
-      if cl.size() > 0 then
+      if cl.get_members().size() > 0 then
          return "\n" || indent1
       else
          return indent1
@@ -390,7 +390,7 @@ class Code()
 
       delete(methods, "dispose")
 
-      every d := cl.gen() do {
+      every d := cl.get_members().gen() do {
          if is(d, Method | DeferredMethod) then
             delete(methods, d.get_name().str())
       }
@@ -408,7 +408,7 @@ class Code()
             every s ||:= indent2 || !rec.body
             t.set_body(s)
          }
-         cl.put(t)
+         cl.get_members().put(t)
       } 
    end
 
@@ -422,9 +422,9 @@ class Code()
       # Delete any existing "setup" method
       #
       i := 1
-      every d := cl.gen() do {
+      every d := cl.get_members().gen() do {
          if is(d, Method) & d.get_name().str() == "setup" then {
-            cl.delete(i)
+            cl.get_members().delete(i)
             break
          }
          i +:= 1
@@ -434,7 +434,7 @@ class Code()
       # Add a new setup method
       #
       x := Factory.new_method(nice_pad(cl), ["private"], "setup", [], indent1)
-      cl.put(x)
+      cl.get_members().put(x)
 
       #
       # Local variables.

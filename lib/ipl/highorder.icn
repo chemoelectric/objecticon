@@ -7,7 +7,7 @@ import
 #
 # Implementation class for {partial}
 #
-class Partial()
+package class Partial()
    private
       f, spec, v
 
@@ -55,7 +55,7 @@ end
 #
 # Implementation class for {lpartial}
 #
-class LPartial()
+package class LPartial()
    private
       f, l
 
@@ -80,7 +80,7 @@ end
 #
 # Implementation class for {rpartial}
 #
-class RPartial()
+package class RPartial()
    private
       f, l
 
@@ -105,7 +105,7 @@ end
 #
 # Implementation class for {compose}
 #
-class Compose()
+package class Compose()
    private
       f, g
 
@@ -130,7 +130,7 @@ end
 #
 # Implementation class for {lpartial2}
 #
-class LPartial2()
+package class LPartial2()
    private
       f, x
 
@@ -167,7 +167,7 @@ end
 #
 # Implementation class for {rpartial2}
 #
-class RPartial2()
+package class RPartial2()
    private
       f, x
 
@@ -202,7 +202,7 @@ end
 #
 # Implementation class for {methodf}
 #
-class Methodf()
+package class Methodf()
    private field
 
    package call(obj, a[])
@@ -230,7 +230,7 @@ end
 #
 # Implementation class for {coexf}
 #
-class Coexf()
+package class Coexf()
    private e
 
    package call()

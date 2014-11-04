@@ -408,14 +408,14 @@ class SymbolTable(Connectable)
       every d := prog.get_body().gen() do {
          case classof(d) of {
             Global : {
-               every s := d.gen() do
+               every s := d.get_ids().gen() do
                   add_symbol(GlobalSymbol(sf, s, s.str(), d)) | fail
             }
             Procedure : add_symbol(ProcedureSymbol(sf, d, d.get_name().str())) | fail
             Class : {
                c := ClassSymbol(sf, d, d.get_name().str())
                every c.add_super(d.get_supers().gen().str())
-               every e := d.gen() do {
+               every e := d.get_members().gen() do {
                   case classof(e) of {
                      FieldList: {
                         every f := e.gen() do

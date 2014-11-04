@@ -16,11 +16,16 @@ importdecls : ;
 bodydecls : ;	
 	| bodydecls body ;
 
-body    : record ;
+body :    invocable ;
+        | optpackage body1 ;
+
+optpackage : {OptPackage0();} ;
+        | PACKAGE {OptPackage1();} ;
+
+body1    : record ;
         | class ;
 	| proc ;
 	| global ;
-        | invocable ;
 
 optsemi : ;
         | SEMICOL ;
@@ -79,7 +84,6 @@ classaccess : classaccess1 ;
 classaccess1 : ;
         | FINAL {Modifier8();};
         | ABSTRACT {Modifier10();};
-        | PACKAGE {Modifier4();};
 
 fieldaccess : fieldaccess1 ;
         | fieldaccess fieldaccess1 ;

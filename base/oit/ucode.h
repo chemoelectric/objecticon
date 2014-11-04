@@ -147,6 +147,11 @@ extern struct ucode_op ucode_op_table[];
 #define Uop_Augmult     153
 #define Uop_Augunion    154
 
+#define Uop_PkRecord	155
+#define Uop_PkProcdecl	156
+#define Uop_PkClass     157
+#define Uop_PkGlobal    158
+
 /*
  * Unary ops
  */

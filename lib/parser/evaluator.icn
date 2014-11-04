@@ -2,8 +2,8 @@ package eval
 
 import ipl.pdco, ipl.lists, lang, util, exception, parser
 
-class EvaluatorEnv()
-   public defer get(k, ev)
+abstract class EvaluatorEnv()
+   public abstract get(k, ev)
 end
 
 class DefaultEvaluatorEnv(EvaluatorEnv)

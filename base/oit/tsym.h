@@ -17,6 +17,7 @@ extern struct tfunction *functions, *curr_func;
 extern struct tclass *classes, *curr_class;
 extern char *package_name;
 extern int modflag;
+extern int packageflag;
 extern struct timport *imports, *last_import, *curr_import;
 extern struct tinvocable *tinvocables, *last_tinvocable;
 

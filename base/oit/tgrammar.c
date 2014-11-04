@@ -28,6 +28,7 @@
 extern int fncargs[];
 int idflag;
 int modflag;
+int packageflag;
 
 #define EmptyNode tree1(N_Empty) 
 
@@ -184,6 +185,9 @@ int modflag;
 #define Proc1(x1,x2)            next_procedure(Str0(x2), x2); \
                                 idflag = F_Argument
 #define Proc2(x1,x2,x3,x4)      curr_func->code = tree6(N_Proc,x1,x1,x2,x3,x4)
+
+#define OptPackage0()            packageflag = 0
+#define OptPackage1()            packageflag = 1
 
 #define Progend(x1,x2)		/* Empty */
 #define Record1(x1,x2)		next_function(F_Record); idflag = F_Argument

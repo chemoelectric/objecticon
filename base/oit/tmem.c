@@ -72,6 +72,8 @@ void next_function(int flag)
 void next_class(char *name, int flag, struct node *n)
 {
     struct tclass *c = FAlloc(struct tclass);
+    if (packageflag)
+        flag |= M_Package;
     c->flag = flag;
     if (curr_class) {
         curr_class->next = c;

@@ -687,7 +687,7 @@ procedure equals(x, y, seen)
    delete(t, y)
 end
 
-procedure equals_impl(x, y, seen)
+package procedure equals_impl(x, y, seen)
    local i, mp
    case type(x) of {
       "object" : {
@@ -771,7 +771,7 @@ end
 # Search for element e in hash bucket l.  If found, the bucket element is
 # removed, so that it is matched only once.
 #
-procedure in_bucket(e, l, seen)
+package procedure in_bucket(e, l, seen)
    local i
    every i := 1 to *l do {
       if equals(e, l[i], seen) then {

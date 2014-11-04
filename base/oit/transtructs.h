@@ -26,6 +26,7 @@ struct tgentry {                /* global table entry */
     char *g_name;               /*   name of variable */
     struct node *pos;           /*   where defined */
     word g_flag;                /*   variable flags */
+    word packageflag;           /*   set if package visibility mod */
     struct tfunction *func;     /*   pointer to func if a proc/record */
     struct tclass *class;       /*   pointer to class if a class */
     struct tgentry *g_next;     /*   next global in table */

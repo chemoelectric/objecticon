@@ -81,6 +81,16 @@ static void print_see_also(struct lclass *cl)
     fputs(")\n", stderr);
 }
 
+static struct gentry *check_package_access(struct lfile *lf, struct gentry *gl)
+{
+    if (gl &&
+        gl->packageflag &&
+        lf->package_id != 1 &&
+        gl->defined->package_id != lf->package_id)
+        gl = 0;
+    return gl;
+}
+
 /*
  * Resolve the given name in the given file to a global entry.  There
  * are three possible results, as indicated by the variables
@@ -121,7 +131,7 @@ static void resolve_global(struct lfile *lf, char *name)
                 quit("Couldn't find import %s in file %s", package, lf->name);
             im->used = 1;
         }
-        rres_found = gb_locate(name);
+        rres_found = check_package_access(lf, gb_locate(name));
         return;
     }
 
@@ -144,7 +154,7 @@ static void resolve_global(struct lfile *lf, char *name)
          */
         if (!fp->qualified || (is = lookup_fimport_symbol(fp, name))) {
             abs = join(fp->name, ".", name, NULL);
-            gl = glocate(abs);
+            gl = check_package_access(lf, glocate(abs));
             if (gl) {
                 fp->used = 1;
                 if (is)
@@ -285,20 +295,12 @@ void resolve_supers()
             rsup = resolve_super(cl, sup);
             if (rsup) {
                 x = rsup->class;
-                /* Check that the superclass isn't final or marked package and in different package */
+                /* Check that the superclass isn't final */
                 if (x->flag & M_Final)
                     lfatal(cl->global->defined,
                            &cl->global->pos,
                            "Class %s cannot inherit from %s, which is marked final", 
                            cl->global->name, x->global->name);
-                else if ((x->flag & M_Package) &&
-                         cl->global->defined->package_id != 1 &&
-                         x->global->defined->package_id != cl->global->defined->package_id)
-                    lfatal(cl->global->defined,
-                           &cl->global->pos,
-                           "Class %s cannot inherit from %s, which is marked package", 
-                           cl->global->name, x->global->name);
-
                 el = Alloc(struct lclass_ref);
                 el->class = rsup->class;
                 if (cl->last_resolved_super) {

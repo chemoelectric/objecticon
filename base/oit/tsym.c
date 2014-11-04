@@ -104,6 +104,7 @@ struct tgentry *next_global(char *name, int flag, struct node *n)
     x->g_name = name;
     x->pos = n;
     x->g_flag = flag;
+    x->packageflag = packageflag;
     if (glast) {
         glast->g_next = x;
         glast = x;
@@ -278,7 +279,7 @@ static void clout(struct tclass *class)
     struct tclass_field *cf;
 
     ensure_pos(class->global->pos);
-    uout_op(Uop_Class);
+    uout_op(class->global->packageflag ? Uop_PkClass : Uop_Class);
     uout_32(class->flag);
     uout_str(class->global->g_name);
 
@@ -302,7 +303,7 @@ static void recout(struct tfunction *rec)
 {
     struct tlentry *lp;
     ensure_pos(rec->global->pos);
-    uout_op(Uop_Record);
+    uout_op(rec->global->packageflag ? Uop_PkRecord : Uop_Record);
     uout_str(rec->global->g_name);
     for (lp = rec->lfirst; lp; lp = lp->l_next) {
         ensure_pos(lp->pos);
@@ -314,7 +315,7 @@ static void recout(struct tfunction *rec)
 static void procout(struct tfunction *proc)
 {
     ensure_pos(proc->global->pos);
-    uout_op(Uop_Procdecl);
+    uout_op(proc->global->packageflag ? Uop_PkProcdecl : Uop_Procdecl);
     uout_str(proc->global->g_name);
     fout(proc);
 }
@@ -1166,7 +1167,7 @@ void output_code()
         switch (gp->g_flag) {
             case F_Global:
                 ensure_pos(gp->pos);
-                uout_op(Uop_Global);
+                uout_op(gp->packageflag ? Uop_PkGlobal : Uop_Global);
                 uout_str(gp->g_name);
                 break;
             case F_Global|F_Class:

@@ -1,6 +1,6 @@
 import
    lang(Class),
-   parser(ClassSymbol, DeferredMethod, Tree, ULocal,
+   parser(GlobalSymbol, ClassSymbol, DeferredMethod, Tree, ULocal,
           UMethod)
 
 class Outputter()
@@ -93,6 +93,20 @@ class Outputter()
             s ||:= "[]"
       }
       return s
+   end
+
+   protected has_package_flag(c)
+      if is(c, GlobalSymbol) then {
+         if is(c.decl_obj, Tree) then
+            return c.decl_obj.get_package_flag()
+         else
+            return \c.decl_obj.package_flag
+      } else {
+         if is(c.obj, Tree) then
+            return c.obj.get_package_flag()
+         else
+            return \c.obj.package_flag
+      }
    end
 
    protected get_access_string(obj)
