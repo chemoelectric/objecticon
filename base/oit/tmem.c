@@ -69,12 +69,12 @@ void next_function(int flag)
     }
 }
 
-void next_class(char *name, int flag, struct node *n)
+void next_class(char *name, struct node *n)
 {
     struct tclass *c = FAlloc(struct tclass);
+    c->flag = modflag;
     if (packageflag)
-        flag |= M_Package;
-    c->flag = flag;
+        c->flag |= M_Package;
     if (curr_class) {
         curr_class->next = c;
         curr_class = c;
@@ -208,9 +208,10 @@ void next_field(char *name, int flag, struct node *n)
         curr_class->fields = curr_class->curr_field = cv;
 }
 
-void next_method(char *name, int flag, struct node *n)
+void next_method(char *name, struct node *n)
 {
-    flag |= M_Method;
+    int flag;
+    flag = modflag | M_Method;
     next_field(name, flag, n);
     check_flags(flag, n);
     next_function(F_Method);
@@ -225,6 +226,13 @@ void next_procedure(char *name, struct node *n)
 {
     next_function(F_Proc);
     curr_func->global = next_global(name, F_Proc | F_Global, n);
+    curr_func->global->func = curr_func;
+}
+
+void next_record(char *name, struct node *n)
+{
+    next_function(F_Record);
+    curr_func->global = next_global(name, F_Record|F_Global, n);
     curr_func->global->func = curr_func;
 }
 

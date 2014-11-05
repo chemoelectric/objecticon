@@ -51,7 +51,7 @@ int get_package_id(char *s)
 void readglob(struct lfile *lf)
 {
     char *id;
-    int n, k;
+    int n, k, f;
     char *package, *name;
     struct gentry *gp;
     struct lclass *curr_class = 0;
@@ -109,8 +109,9 @@ void readglob(struct lfile *lf)
                             "class %s declared elsewhere at ", name);
                     curr_class = 0;
                 } else {
-                    gp = putglobal(name, F_Class, lf, &pos);
-                    gp->packageflag = (uop->opcode == Uop_PkClass);
+                    f = F_Class;
+                    if (uop->opcode == Uop_PkClass) f |= F_Package;
+                    gp = putglobal(name, f, lf, &pos);
                     curr_class = Alloc(struct lclass);
                     curr_class->global = gp;
                     curr_class->flag = k;
@@ -157,8 +158,9 @@ void readglob(struct lfile *lf)
                             "record %s declared elsewhere at ", name);
                     curr_record = 0;
                 } else {
-                    gp = putglobal(name, F_Record, lf, &pos);
-                    gp->packageflag = (uop->opcode == Uop_PkRecord);
+                    f = F_Record;
+                    if (uop->opcode == Uop_PkRecord) f |= F_Package;
+                    gp = putglobal(name, f, lf, &pos);
                     curr_record = Alloc(struct lrecord);
                     curr_record->global = gp;
                     gp->record = curr_record;
@@ -179,8 +181,9 @@ void readglob(struct lfile *lf)
                     lfatal2(lf, &pos, &gp->pos, "",
                            "procedure %s declared elsewhere at ", name);
                 else {
-                    gp = putglobal(name, F_Proc, lf, &pos);
-                    gp->packageflag = (uop->opcode == Uop_PkProcdecl);
+                    f = F_Proc;
+                    if (uop->opcode == Uop_PkProcdecl) f |= F_Package;
+                    gp = putglobal(name, f, lf, &pos);
                 }
                 curr_func = gp->func = Alloc(struct lfunction);
                 curr_func->defined = lf;
@@ -222,8 +225,8 @@ void readglob(struct lfile *lf)
                     lfatal2(lf, &pos, &gp->pos, "",
                             "global %s declared elsewhere at ", name);
                 else {
-                    gp = putglobal(name, 0, lf, &pos);
-                    gp->packageflag = (uop->opcode == Uop_PkGlobal);
+                    f = (uop->opcode == Uop_PkGlobal) ? F_Package : 0;
+                    gp = putglobal(name, f, lf, &pos);
                 }
                 break;
 

@@ -1602,7 +1602,7 @@ static void gentables()
     hdr.GpackageFlags = pc;
     w = i = 0;
     for (gp = lgfirst; gp != NULL; gp = gp->g_next) {
-        if (gp->packageflag)
+        if (gp->g_flag & F_Package)
             w |= ((word)1 << i);
         ++i;
         if (i == WordBits) {

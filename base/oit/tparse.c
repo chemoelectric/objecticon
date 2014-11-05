@@ -2376,7 +2376,7 @@ case 11:
 break;
 case 12:
 #line 240 "tgram.g"
-	{packageflag = 1;}
+	{packageflag = F_Package;;}
 break;
 case 20:
 #line 251 "tgram.g"
@@ -2420,7 +2420,7 @@ case 35:
 break;
 case 36:
 #line 274 "tgram.g"
-	{next_class(Str0(yystack.l_mark[0]),modflag, yystack.l_mark[0]);;}
+	{next_class(Str0(yystack.l_mark[0]), yystack.l_mark[0]);;}
 break;
 case 40:
 #line 279 "tgram.g"
@@ -2440,7 +2440,7 @@ case 45:
 break;
 case 48:
 #line 289 "tgram.g"
-	{next_method(Str0(yystack.l_mark[0]), modflag, yystack.l_mark[0]); idflag = F_Argument;}
+	{next_method(Str0(yystack.l_mark[0]), yystack.l_mark[0]); idflag = F_Argument;}
 break;
 case 49:
 #line 290 "tgram.g"
@@ -2448,7 +2448,7 @@ case 49:
 break;
 case 50:
 #line 292 "tgram.g"
-	{next_method(Str0(yystack.l_mark[0]), modflag, yystack.l_mark[0]); idflag = F_Argument;}
+	{next_method(Str0(yystack.l_mark[0]), yystack.l_mark[0]); idflag = F_Argument;}
 break;
 case 52:
 #line 294 "tgram.g"
@@ -2512,12 +2512,12 @@ case 71:
 break;
 case 72:
 #line 319 "tgram.g"
-	{next_function(F_Record); idflag = F_Argument;}
+	{next_record(Str0(yystack.l_mark[0]), yystack.l_mark[0]); idflag = F_Argument;}
 break;
 case 73:
 #line 319 "tgram.g"
 	{
-  curr_func->global = next_global(Str0(yystack.l_mark[-4]),F_Record|F_Global,yystack.l_mark[-4]); curr_func->global->func = curr_func; yyval = yystack.l_mark[-4];
+  yyval = yystack.l_mark[-4];
   }
 break;
 case 76:
@@ -2544,11 +2544,11 @@ case 80:
 break;
 case 81:
 #line 335 "tgram.g"
-	{install(Str0(yystack.l_mark[0]),idflag,yystack.l_mark[0]);}
+	{install(Str0(yystack.l_mark[0]),yystack.l_mark[0]);}
 break;
 case 82:
 #line 336 "tgram.g"
-	{install(Str0(yystack.l_mark[0]),idflag,yystack.l_mark[0]);}
+	{install(Str0(yystack.l_mark[0]),yystack.l_mark[0]);}
 break;
 case 83:
 #line 338 "tgram.g"

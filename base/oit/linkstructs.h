@@ -32,7 +32,6 @@ struct gentry {                 /* global table entry */
     char *name;                 /* interned name */
     struct loc pos;                   /* source line number */
     word g_flag;                        /*   variable flags */
-    word packageflag;           /* set if package modifier set */
     int g_index;                /*   "index" in global table */
     int ref;                    /* referenced flag */
     struct lfile *defined;      /* The file this global was defined in (except for F_Builtin) */
