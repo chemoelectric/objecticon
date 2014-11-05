@@ -53,15 +53,19 @@ class Ieval(MinimalObjectOutput)
    end
 
    private list_syms()
-      local s, e, w
+      local s, e, w, i
       w := if is(output, TermDialog) then
          output.get_term_width()
       else
          LineEditorStream.get_console_size()[1]
       s := set()
-      every e := lang.Prog.get_global_names() do
-         if e ? ((not upto('.')) | (=!imports & ="." & (not upto('.')))) then
-            insert(s, e)
+      every i := 1 to lang.Prog.get_n_globals() do {
+         if iand(lang.Prog.get_global_flags(i), lang.Prog.PackageFlag) = 0 then {
+            e := lang.Prog.get_global_name(i)
+            if e ? ((not upto('.')) | (=!imports & ="." & (not upto('.')))) then
+               insert(s, e)
+         }
+      }
       every output.write(colmize(isort(s, map), w))
    end
 

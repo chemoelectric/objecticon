@@ -365,6 +365,7 @@ struct b_weakref  *alcweakref_0     (void);
 struct b_weakref  *alcweakref_1     (void);
 int     check_access(struct class_field *cf, struct b_class *instance_class);
 int     lookup_global_index(dptr name, struct progstate *prog);
+int     lookup_global(dptr query, struct progstate *prog);
 dptr    lookup_named_global(dptr name, int incl, struct progstate *prog);
 int     lookup_class_field(struct b_class *class, dptr query, struct inline_field_cache *ic);
 int     lookup_class_field_by_name(struct b_class *class, dptr name);

@@ -71,19 +71,26 @@ final abstract class Proc()
    #
    public static native get_kind(p)
 
-   public static native get_n_locals(p)
+   public static get_n_locals(p)
+      return get_n_arguments(p) + get_n_dynamics(p) + get_n_statics(p)
+   end
+
    public static native get_n_arguments(p)
    public static native has_varargs(p)
    public static native get_n_dynamics(p)
    public static native get_n_statics(p)
-   public static native get_local_names(p)
    public static native get_local_index(p, id)
+
+   public static get_local_names(p)
+      suspend get_local_name(p, 1 to get_n_locals(p))
+   end
 
    public static get_local_location(p, id)
       return Location!get_local_location_impl(p, id)
    end
 
    private static native get_local_location_impl(p, id)
+
    public static native get_local_name(p, id)
 
    #

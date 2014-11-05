@@ -22,41 +22,58 @@ final abstract class Prog()
    public static native load(s, arglist, blocksize, stringsize)
 
    #
-   # Generate the globals in program P
+   # Generate the number of globals in program P
    #
-   public static native get_globals(P)
+   public static native get_n_globals(P)
+
+   #
+   # Return the name of the given global.
+   # @param q either a global name or number
+   #
+   public static native get_global_name(q, P)
+
+   #
+   # Return the index number of the given global.
+   # @param q either a global name or number
+   #
+   public static native get_global_index(q, P)
+
+   #
+   # Return an integer flag value giving info about the global.
+   # @param q either a global name or number
+   #
+   public static native get_global_flags(q, P)
 
    #
    # Get the global named {s} in program P
+   # @param q either a global name or number
    #
-   public static native get_global(s, P)
+   public static get_global(q, P)
+      local i
+      if i := get_global_index(q, P) &
+         get_global_flags(i, P) = (0 | NamedGlobal) then
+         return get_global_impl(i, P)
+   end
 
    #
-   # Get the global named {s} in program P
+   # Get the global in program P, restricting results to named globals.
+   # @param q either a global name or number
    #
-   private static native for_name(s, P)
+   public static get_named_global(q, P)
+      local i
+      if i := get_global_index(q, P) &
+         get_global_flags(i, P) = NamedGlobal then
+         return get_global_impl(i, P)
+   end
+
+   private static native get_global_impl(q, P)
 
    #
    # Generate the global names in program P
-   # @param incl a flag; if set then package-visible names are returned too.
    #
-   public static native get_global_names(incl, P)
-
-   #
-   # Return an integer flag value giving info about the global name.
-   #
-   public static native get_global_flags(s, P)
-
-   #
-   # Generate the global definitions with names (records, classes and procedures)
-   # in program P.
-   #
-   public static native get_named_globals(P)
-
-   #
-   # Get the global definition with name {s} in program P.
-   #
-   public static native get_named_global(s, P)
+   public static get_global_names(P)
+      suspend get_global_name(1 to get_n_globals(P), P)
+   end
 
    #
    # Generate the builtin functions.
@@ -93,13 +110,14 @@ final abstract class Prog()
    #
    # Get the location of global {s} in program P, if that data is
    # available.
+   # @param q either a global name or number
    # @return a {Location} instance
    #
-   public static get_global_location(s, P)
-      return Location!get_global_location_impl(s, P)
+   public static get_global_location(q, P)
+      return Location!get_global_location_impl(q, P)
    end
 
-   private static native get_global_location_impl(s, P)
+   private static native get_global_location_impl(q, P)
 
    #
    # Return the value of the keyword {s} in program P.

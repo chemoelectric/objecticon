@@ -404,7 +404,7 @@ class Decode()
    end
 
    private static decode_proc_code(fn)
-      local c, s, i, j, cl, g
+      local c, s, i, j, cl
       fn ? {
          c := move(1)
          s := tab(0)
@@ -420,10 +420,7 @@ class Decode()
                return Prog.get_operator(s, i) | throw("No such function " || s || " arity " || i)
             }
             "P": {
-               if g := Prog.for_name(s) &
-                  match("procedure ", image(g)) then
-                  return g
-               throw("No such procedure " || s)
+               return lookup_procedure(s) | throw("No such procedure " || s)
             }
             "M": {
                i := backto('.', s)
@@ -461,14 +458,29 @@ class Decode()
    end
 
    private static lookup_class(s)
-      local t
-      if t := Prog.for_name(s) & type(t) == "class" then
+      local i, t
+      if i := Prog.get_global_index(s) &
+         iand(Prog.get_global_flags(i), Prog.NamedGlobal) ~= 0 &
+         t := Prog.get_global_impl(i) &
+         type(t) == "class" then
          return t
    end
 
    private static lookup_constructor(s)
-      local t
-      if t := Prog.for_name(s) & type(t) == "constructor" then
+      local i, t
+      if i := Prog.get_global_index(s) &
+         iand(Prog.get_global_flags(i), Prog.NamedGlobal) ~= 0 &
+         t := Prog.get_global_impl(i) &
+         type(t) == "constructor" then
+         return t
+   end
+
+   private static lookup_procedure(s)
+      local i, t
+      if i := Prog.get_global_index(s) &
+         iand(Prog.get_global_flags(i), Prog.NamedGlobal) ~= 0 &
+         t := Prog.get_global_impl(i) &
+         match("procedure ", image(t)) then
          return t
    end
 

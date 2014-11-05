@@ -2174,6 +2174,29 @@ int lookup_global_index(dptr name, struct progstate *prog)
     return (p - prog->Gnames);
 }
 
+int lookup_global(dptr query, struct progstate *prog)
+{
+    if (is:string(*query))
+        return lookup_global_index(query, prog);
+
+    if (query->dword == D_Integer) {
+        int nf = prog->NGlobals;
+        /*
+         * Simple index into fields array, using conventional icon
+         * semantics.
+         */
+        int i = cvpos(IntVal(*query), nf);
+        if (i != CvtFail && i <= nf)
+            return i - 1;
+        else
+            return -1;
+    }
+
+    syserr("Invalid query type to lookup_global");
+    /* Not reached */
+    return 0;
+}
+
 struct loc *lookup_global_loc(dptr name, struct progstate *prog)
 {
     int i;

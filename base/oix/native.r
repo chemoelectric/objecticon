@@ -372,120 +372,71 @@ function lang_Prog_eval_keyword(s,c)
    }
 end
 
-
-function lang_Prog_for_name(s, c)
-   if !cnv:string(s) then
-      runerr(103, s)
+function lang_Prog_get_global_impl(q, c)
    body {
        struct progstate *prog;
        int i;
        if (!(prog = get_program_for(&c)))
           runerr(0);
-       i = lookup_global_index(&s, prog);
-       if (i >= 0 && (prog->global_flags[i] & G_NamedGlobal))
+       CheckField(q);
+       i = lookup_global(&q, prog);
+       if (i < 0)
+           fail;
+       if (prog->global_flags[i] & G_NamedGlobal)
            return prog->Globals[i];
        else
-           fail;
+           return named_var(&prog->Globals[i]);
    }
 end
 
-function lang_Prog_get_global(s, c)
-   if !cnv:string(s) then
-      runerr(103, s)
+function lang_Prog_get_n_globals(c)
+   body {
+       struct progstate *prog;
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
+       return C_integer prog->NGlobals;
+   }
+end
+
+function lang_Prog_get_global_flags(q, c)
    body {
        struct progstate *prog;
        int i;
        if (!(prog = get_program_for(&c)))
           runerr(0);
-       i = lookup_global_index(&s, prog);
-       if (i >= 0 && !(prog->global_flags[i] & G_PackageFlag)) {
-           if (prog->global_flags[i] & G_NamedGlobal)
-               return prog->Globals[i];
-           else
-               return named_var(&prog->Globals[i]);
-       } else
+       CheckField(q);
+       i = lookup_global(&q, prog);
+       if (i < 0)
            fail;
+       return C_integer prog->global_flags[i];
    }
 end
 
-function lang_Prog_get_global_flags(s, c)
-   if !cnv:string(s) then
-      runerr(103, s)
+function lang_Prog_get_global_index(q, c)
    body {
        struct progstate *prog;
        int i;
        if (!(prog = get_program_for(&c)))
           runerr(0);
-       i = lookup_global_index(&s, prog);
-       if (i >= 0)
-           return C_integer prog->global_flags[i];
-       else
+       CheckField(q);
+       i = lookup_global(&q, prog);
+       if (i < 0)
            fail;
+       return C_integer i + 1;
    }
 end
 
-function lang_Prog_get_globals(c)
-   body {
-       struct progstate *prog;
-       word i;
-       if (!(prog = get_program_for(&c)))
-          runerr(0);
-       for (i = 0; i < prog->NGlobals; i++) {
-           if (!(prog->global_flags[i] & G_PackageFlag)) {
-               if (prog->global_flags[i] & G_NamedGlobal)
-                   suspend prog->Globals[i];
-               else
-                   suspend named_var(&prog->Globals[i]);
-           }
-       }
-       fail;
-   }
-end
-
-function lang_Prog_get_global_names(incl, c)
-   body {
-       struct progstate *prog;
-       dptr *dp;
-       word i;
-       if (!isflag(&incl))
-          runerr(171, incl);
-       if (!(prog = get_program_for(&c)))
-          runerr(0);
-       for (i = 0; i < prog->NGlobals; i++) {
-           if (!is:null(incl) || !(prog->global_flags[i] & G_PackageFlag))
-               suspend *prog->Gnames[i];
-       }
-       fail;
-   }
-end
-
-function lang_Prog_get_named_globals(c)
-   body {
-       struct progstate *prog;
-       word i;
-       if (!(prog = get_program_for(&c)))
-          runerr(0);
-       for (i = 0; i < prog->NGlobals; i++) {
-           if ((prog->global_flags[i] & (G_PackageFlag | G_NamedGlobal)) == G_NamedGlobal)
-               suspend prog->Globals[i];
-       }
-       fail;
-   }
-end
-
-function lang_Prog_get_named_global(s, c)
-   if !cnv:string(s) then
-      runerr(103, s)
+function lang_Prog_get_global_name(q, c)
    body {
        struct progstate *prog;
        int i;
        if (!(prog = get_program_for(&c)))
           runerr(0);
-       i = lookup_global_index(&s, prog);
-       if (i >= 0 && ((prog->global_flags[i] & (G_PackageFlag | G_NamedGlobal)) == G_NamedGlobal))
-           return prog->Globals[i];
-       else
+       CheckField(q);
+       i = lookup_global(&q, prog);
+       if (i < 0)
            fail;
+       return *prog->Gnames[i];
    }
 end
 
@@ -497,7 +448,7 @@ function lang_Prog_get_functions()
           suspend proc(fnc_tbl[i]);
 
       fail;
-      }
+   }
 end
 
 function lang_Prog_get_operators()
@@ -508,7 +459,7 @@ function lang_Prog_get_operators()
           suspend proc(op_tbl[i]);
 
       fail;
-      }
+   }
 end
 
 function lang_Prog_get_keywords()
@@ -519,7 +470,7 @@ function lang_Prog_get_keywords()
           suspend proc(keyword_tbl[i]);
 
       fail;
-      }
+   }
 end
 
 /*
@@ -576,26 +527,28 @@ function lang_Prog_get_keyword(s)
 end
 
 
-function lang_Prog_get_global_location_impl(s, c)
-   if !cnv:string(s) then
-      runerr(103, s)
+function lang_Prog_get_global_location_impl(q, c)
    body {
        struct progstate *prog;
        struct loc *p;
+       int i;
        tended struct descrip result;
        if (!(prog = get_program_for(&c)))
           runerr(0);
+       CheckField(q);
 
        if (prog->Glocs == prog->Eglocs) {
            LitWhy("No global location data in icode");
            fail;
        }
-           
-       p = lookup_global_loc(&s, prog);
-       if (!p) {
+
+       i = lookup_global(&q, prog);
+       if (i < 0) {
            LitWhy("Unknown symbol");
            fail;
        }
+
+       p = prog->Glocs + i;
 
        if (!p->fname) {
            LitWhy("Symbol is builtin, has no location");
@@ -1131,15 +1084,6 @@ function lang_Class_get_field_defining_class(c, field)
      }
 end
 
-function lang_Class_get_n_fields(c)
-   body {
-        struct b_class *class0;
-        if (!(class0 = get_class_for(&c)))
-            runerr(0);
-        return C_integer class0->n_instance_fields + class0->n_class_fields;
-     }
-end
-
 function lang_Class_get_n_class_fields(c)
    body {
         struct b_class *class0;
@@ -1156,49 +1100,6 @@ function lang_Class_get_n_instance_fields(c)
             runerr(0);
         return C_integer class0->n_instance_fields;
      }
-end
-
-function lang_Class_get_field_names(c)
-    body {
-        struct b_class *class0;
-        dptr *fn;
-        word i;
-        if (!(class0 = get_class_for(&c)))
-            runerr(0);
-        fn = class0->program->Fnames;
-        for (i = 0; i < class0->n_instance_fields + class0->n_class_fields; ++i)
-            suspend *fn[class0->fields[i]->fnum];
-        fail;
-    }
-end
-
-function lang_Class_get_instance_field_names(c)
-    body {
-        struct b_class *class0;
-        dptr *fn;
-        word i;
-        if (!(class0 = get_class_for(&c)))
-            runerr(0);
-        fn = class0->program->Fnames;
-        for (i = 0; i < class0->n_instance_fields; ++i)
-            suspend *fn[class0->fields[i]->fnum];
-        fail;
-    }
-end
-
-function lang_Class_get_class_field_names(c)
-    body {
-        struct b_class *class0;
-        dptr *fn;
-        word i;
-        if (!(class0 = get_class_for(&c)))
-            runerr(0);
-        fn = class0->program->Fnames;
-        for (i = class0->n_instance_fields; 
-             i < class0->n_instance_fields + class0->n_class_fields; ++i)
-            suspend *fn[class0->fields[i]->fnum];
-        fail;
-    }
 end
 
 struct b_proc *clone_b_proc(struct b_proc *bp)
@@ -3258,20 +3159,6 @@ function lang_Constructor_get_location_impl(c)
     }
 end
 
-function lang_Constructor_get_field_names(c)
-    body {
-        struct b_constructor *constructor0;
-        dptr *fn;
-        word i;
-        if (!(constructor0 = get_constructor_for(&c)))
-            runerr(0);
-        fn = constructor0->program->Fnames;
-        for (i = 0; i < constructor0->n_fields; ++i)
-            suspend *fn[constructor0->fnums[i]];
-        fail;
-    }
-end
-
 function lang_Constructor_get_n_fields(c)
    body {
         struct b_constructor *constructor0;
@@ -3373,18 +3260,6 @@ static struct p_proc *get_procedure(struct b_proc *bp)
     return pp;
 }
 
-function lang_Proc_get_n_locals(c)
-   body {
-        struct b_proc *proc0;
-        struct p_proc *pp;
-        if (!(proc0 = get_proc_for(&c)))
-           runerr(0);
-        if (!(pp = get_procedure(proc0)))
-            fail;
-        return C_integer pp->nparam + pp->ndynam + pp->nstatic;
-     }
-end
-
 function lang_Proc_get_n_arguments(c)
    body {
       struct b_proc *proc0;
@@ -3428,22 +3303,6 @@ function lang_Proc_get_n_statics(c)
            fail;
         return C_integer pp->nstatic;
      }
-end
-
-function lang_Proc_get_local_names(c)
-   body {
-        struct b_proc *proc0;
-        struct p_proc *pp;
-        word i, nf;
-        if (!(proc0 = get_proc_for(&c)))
-           runerr(0);
-        if (!(pp = get_procedure(proc0)))
-           fail;
-        nf = pp->nparam + pp->ndynam + pp->nstatic;
-        for (i = 0; i < nf; ++i)
-            suspend *pp->lnames[i];
-        fail;
-    }
 end
 
 function lang_Proc_get_local_index(c, id)
