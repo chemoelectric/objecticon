@@ -419,6 +419,7 @@ struct progstate {
     dptr *Fnames, *Efnames;
     dptr Globals, Eglobals;
     dptr *Gnames, *Egnames;
+    word *GpackageFlags, *EgpackageFlags;
     struct loc *Glocs, *Eglocs;
     dptr Statics, Estatics;
     dptr TCaseTables, ETCaseTables;
@@ -431,7 +432,7 @@ struct progstate {
     struct ipc_fname * Current_fname_ptr;
     dptr MainProc;
 
-    int  *is_named_global;              /* Array matching Globals, indicating which are named globals (ie pre-set and constant) */
+    int  *global_flags;                 /* Array matching Globals, giving info about globals */
 
     uword Coexp_ser;			/* this program's serial numbers */
     uword List_ser;

@@ -28,31 +28,6 @@ struct progstate *get_current_program_of(struct b_coexpr *ce)
 }
 
 /*
- * Check access for a class declared with the package modifier.
- */
-int check_package_access(struct b_class *cl)
-{
-    struct p_proc *caller_proc;
-    struct class_field *caller_field;
-
-    caller_proc = get_current_user_proc();
-
-    if (caller_proc->package_id == 1)  /* Is the caller in lang? */
-        return Succeeded;
-
-    caller_field = caller_proc->field;
-
-    if ((caller_proc->program == cl->program &&
-         caller_proc->package_id == cl->package_id) ||
-        (caller_field &&
-         caller_field->defining_class->program == cl->program &&
-         caller_field->defining_class->package_id == cl->package_id))
-        return Succeeded;
-
-    ReturnErrNum(607, Error);
-}
-
-/*
  * Check whether the calling procedure (deduced from the stack) has
  * access to the given field of the given instance class (which is
  * null for a static access).  Returns Succeeded if it does have
@@ -375,12 +350,12 @@ int c_is(dptr x, dptr cname, struct inline_global_cache *ic)
         if (class0->program == ic->program)
             p = ic->global;
         else {
-            p = lookup_named_global(cname, class0->program);
+            p = lookup_named_global(cname, 1, class0->program);
             ic->program = class0->program;
             ic->global = p;
         }
     } else
-        p = lookup_named_global(cname, class0->program);
+        p = lookup_named_global(cname, 1, class0->program);
 
     return p && is:class(*p) && class_is(class0, &ClassBlk(*p));
 }

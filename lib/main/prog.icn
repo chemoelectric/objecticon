@@ -6,6 +6,17 @@ package lang
 # and default to the currently executing program if omitted.
 #
 final abstract class Prog()
+   public static const 
+      # Integer flag for a named global
+      NamedGlobal,
+      # Integer flag for a global with package visibility
+      PackageFlag
+
+   private static init()
+      NamedGlobal := 1
+      PackageFlag := 2
+   end
+
    # Load and return a program from file {s}.
    #
    public static native load(s, arglist, blocksize, stringsize)
@@ -21,9 +32,20 @@ final abstract class Prog()
    public static native get_global(s, P)
 
    #
-   # Generate the global names in program P
+   # Get the global named {s} in program P
    #
-   public static native get_global_names(P)
+   private static native for_name(s, P)
+
+   #
+   # Generate the global names in program P
+   # @param incl a flag; if set then package-visible names are returned too.
+   #
+   public static native get_global_names(incl, P)
+
+   #
+   # Return an integer flag value giving info about the global name.
+   #
+   public static native get_global_flags(s, P)
 
    #
    # Generate the global definitions with names (records, classes and procedures)

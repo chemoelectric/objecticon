@@ -1436,6 +1436,7 @@ static void gentables()
     struct ipc_fname *fnptr;
     struct ipc_line *lnptr;
     struct centry *ce;
+    word w;
 
     if (Dflag) {
         fprintf(dbgfile,"\n\n# global tables\n");
@@ -1594,6 +1595,26 @@ static void gentables()
     flushcode();
 
     /*
+     * Output bitmap for global variable package flags.
+     */
+    if (Dflag)
+        fprintf(dbgfile, "\n# Global variable package flag bitmap\n");
+    hdr.GpackageFlags = pc;
+    w = i = 0;
+    for (gp = lgfirst; gp != NULL; gp = gp->g_next) {
+        if (gp->packageflag)
+            w |= ((word)1 << i);
+        ++i;
+        if (i == WordBits) {
+            outwordx(w, "map");
+            w = i = 0;
+        }
+    }
+    if (i > 0)
+        outwordx(w, "map");
+    flushcode();
+
+    /*
      * Output locations for global variables.
      */
     if (Dflag)
@@ -1741,6 +1762,7 @@ static void gentables()
         fprintf(dbgfile, "fnames:           " WordFmt "\n", (long)hdr.Fnames);
         fprintf(dbgfile, "globals:          " WordFmt "\n", (long)hdr.Globals);
         fprintf(dbgfile, "gnames:           " WordFmt "\n", (long)hdr.Gnames);
+        fprintf(dbgfile, "gpackageflags:    " WordFmt "\n", (long)hdr.GpackageFlags);
         fprintf(dbgfile, "glocs:            " WordFmt "\n", (long)hdr.Glocs);
         fprintf(dbgfile, "statics:          " WordFmt "\n", (long)hdr.Statics);
         fprintf(dbgfile, "tcasetables:      " WordFmt "\n", (long)hdr.TCaseTables);
@@ -1770,7 +1792,8 @@ static void gentables()
         report("  Records         %7ld", (long)(hdr.Fnames - hdr.Records));
         report("  Field names     %7ld", (long)(hdr.Globals - hdr.Fnames));
         report("  Globals         %7ld", (long)(hdr.Gnames  - hdr.Globals));
-        report("  Global names    %7ld", (long)(hdr.Glocs - hdr.Gnames));
+        report("  Global names    %7ld", (long)(hdr.GpackageFlags - hdr.Gnames));
+        report("  Global pk flags %7ld", (long)(hdr.Glocs - hdr.GpackageFlags));
         report("  Global locs     %7ld", (long)(hdr.Statics - hdr.Glocs));
         report("  Statics         %7ld", (long)(hdr.TCaseTables - hdr.Statics));
         report("  TCaseTables     %7ld", (long)(hdr.Filenms - hdr.TCaseTables));

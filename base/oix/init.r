@@ -605,8 +605,10 @@ static void initptrs(struct progstate *p, struct header *h)
     p->Globals = (dptr)p->Efnames;
     p->Eglobals = (dptr)(p->Code + h->Gnames);
     p->Gnames = (dptr *)p->Eglobals;
-    p->Egnames = (dptr *)(p->Code + h->Glocs);
-    p->Glocs = (struct loc *)(p->Egnames);
+    p->Egnames = (dptr *)(p->Code + h->GpackageFlags);
+    p->GpackageFlags = (word *)p->Egnames;
+    p->EgpackageFlags = (word *)(p->Code + h->Glocs);
+    p->Glocs = (struct loc *)(p->EgpackageFlags);
     p->Eglocs = (struct loc *)(p->Code + h->Statics);
     p->NGlobals = p->Eglobals - p->Globals;
     p->Statics = (dptr)(p->Eglocs);
@@ -907,7 +909,7 @@ void resolve(struct progstate *p)
      * note the main procedure if found, and create the table of named globals.
      */
     p->MainProc = 0;
-    MemProtect(p->is_named_global = malloc(p->NGlobals * sizeof(int)));
+    MemProtect(p->global_flags = calloc(p->NGlobals, sizeof(int)));
     for (j = 0; j < p->NGlobals; j++) {
         switch (p->Globals[j].dword) {
             case D_Class: {
@@ -1023,7 +1025,10 @@ void resolve(struct progstate *p)
                 break;
             }
         }
-        p->is_named_global[j] = !is:null(p->Globals[j]);
+        if (!is:null(p->Globals[j]))
+            p->global_flags[j] |= G_NamedGlobal;
+        if ((p->GpackageFlags[j / WordBits] >> (j % WordBits)) & 1)
+            p->global_flags[j] |= G_PackageFlag;
     }
 
     /*

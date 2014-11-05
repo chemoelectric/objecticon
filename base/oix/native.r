@@ -373,6 +373,22 @@ function lang_Prog_eval_keyword(s,c)
 end
 
 
+function lang_Prog_for_name(s, c)
+   if !cnv:string(s) then
+      runerr(103, s)
+   body {
+       struct progstate *prog;
+       int i;
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
+       i = lookup_global_index(&s, prog);
+       if (i >= 0 && (prog->global_flags[i] & G_NamedGlobal))
+           return prog->Globals[i];
+       else
+           fail;
+   }
+end
+
 function lang_Prog_get_global(s, c)
    if !cnv:string(s) then
       runerr(103, s)
@@ -382,12 +398,28 @@ function lang_Prog_get_global(s, c)
        if (!(prog = get_program_for(&c)))
           runerr(0);
        i = lookup_global_index(&s, prog);
-       if (i >= 0) {
-           if (prog->is_named_global[i])
+       if (i >= 0 && !(prog->global_flags[i] & G_PackageFlag)) {
+           if (prog->global_flags[i] & G_NamedGlobal)
                return prog->Globals[i];
            else
                return named_var(&prog->Globals[i]);
        } else
+           fail;
+   }
+end
+
+function lang_Prog_get_global_flags(s, c)
+   if !cnv:string(s) then
+      runerr(103, s)
+   body {
+       struct progstate *prog;
+       int i;
+       if (!(prog = get_program_for(&c)))
+          runerr(0);
+       i = lookup_global_index(&s, prog);
+       if (i >= 0)
+           return C_integer prog->global_flags[i];
+       else
            fail;
    }
 end
@@ -399,24 +431,31 @@ function lang_Prog_get_globals(c)
        if (!(prog = get_program_for(&c)))
           runerr(0);
        for (i = 0; i < prog->NGlobals; i++) {
-           if (prog->is_named_global[i])
-               suspend prog->Globals[i];
-           else
-               suspend named_var(&prog->Globals[i]);
+           if (!(prog->global_flags[i] & G_PackageFlag)) {
+               if (prog->global_flags[i] & G_NamedGlobal)
+                   suspend prog->Globals[i];
+               else
+                   suspend named_var(&prog->Globals[i]);
+           }
        }
        fail;
    }
 end
 
-function lang_Prog_get_global_names(c)
+function lang_Prog_get_global_names(incl, c)
    body {
        struct progstate *prog;
        dptr *dp;
+       word i;
+       if (!isflag(&incl))
+          runerr(171, incl);
        if (!(prog = get_program_for(&c)))
           runerr(0);
-      for (dp = prog->Gnames; dp != prog->Egnames; dp++)
-         suspend **dp;
-      fail;
+       for (i = 0; i < prog->NGlobals; i++) {
+           if (!is:null(incl) || !(prog->global_flags[i] & G_PackageFlag))
+               suspend *prog->Gnames[i];
+       }
+       fail;
    }
 end
 
@@ -427,7 +466,7 @@ function lang_Prog_get_named_globals(c)
        if (!(prog = get_program_for(&c)))
           runerr(0);
        for (i = 0; i < prog->NGlobals; i++) {
-           if (prog->is_named_global[i])
+           if ((prog->global_flags[i] & (G_PackageFlag | G_NamedGlobal)) == G_NamedGlobal)
                suspend prog->Globals[i];
        }
        fail;
@@ -439,12 +478,12 @@ function lang_Prog_get_named_global(s, c)
       runerr(103, s)
    body {
        struct progstate *prog;
-       dptr p;
+       int i;
        if (!(prog = get_program_for(&c)))
           runerr(0);
-       p = lookup_named_global(&s, prog);
-       if (p)
-           return *p;
+       i = lookup_global_index(&s, prog);
+       if (i >= 0 && ((prog->global_flags[i] & (G_PackageFlag | G_NamedGlobal)) == G_NamedGlobal))
+           return prog->Globals[i];
        else
            fail;
    }
@@ -800,7 +839,7 @@ struct b_proc *string_to_proc(dptr s, int arity, struct progstate *prog)
    /*
     * See if the string is the name of a global variable in prog.
     */
-    if (prog && (t = lookup_named_global(s, prog))) {
+    if (prog && (t = lookup_named_global(s, 0, prog))) {
        if (is:proc(*t))
            return &ProcBlk(*t);
    }

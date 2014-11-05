@@ -420,14 +420,14 @@ class Decode()
                return Prog.get_operator(s, i) | throw("No such function " || s || " arity " || i)
             }
             "P": {
-               if g := Prog.get_named_global(s) &
+               if g := Prog.for_name(s) &
                   match("procedure ", image(g)) then
                   return g
                throw("No such procedure " || s)
             }
             "M": {
                i := backto('.', s)
-               if cl := Class.for_name(s[1:i-1]) &
+               if cl := lookup_class(s[1:i-1]) &
                   j := Class.get_field_flags(cl, s[i:0]) &
                   iand(j, PUBLIC_STATIC_METHOD) = PUBLIC_STATIC_METHOD 
                then
@@ -460,6 +460,18 @@ class Decode()
       seen[tag_count +:= 1] := o
    end
 
+   private static lookup_class(s)
+      local t
+      if t := Prog.for_name(s) & type(t) == "class" then
+         return t
+   end
+
+   private static lookup_constructor(s)
+      local t
+      if t := Prog.for_name(s) & type(t) == "constructor" then
+         return t
+   end
+
    public decode()
       local i, n, rname, t, v, res, def, con, cl, cname, l
 
@@ -476,12 +488,12 @@ class Decode()
 
          Codec.CLASS_CODE : {
             cname := line_in()
-            return Class.for_name(cname) | throw("No such class " || cname)
+            return lookup_class(cname) | throw("No such class " || cname)
          }
 
          Codec.CONSTRUCTOR_CODE : {
             rname := line_in()
-            return Constructor.for_name(rname) | throw("No such constructor " || rname)
+            return lookup_constructor(rname) | throw("No such constructor " || rname)
          }
 
          Codec.PROCEDURE_CODE : {
@@ -494,7 +506,7 @@ class Decode()
             #
             # Create an instance
             #
-            cl := Class.for_name(cname) | throw("No such class: " || cname)
+            cl := lookup_class(cname) | throw("No such class: " || cname)
             (iand(Class.get_class_flags(cl), Class.Abstract) = 0) | throw("Class is abstract: " || cname)
             res := Class.create_raw_instance_of(cl)
             note_seen(res)
@@ -553,7 +565,7 @@ class Decode()
 
          Codec.RECORD_CODE : {
             rname := line_in()
-            con := Constructor.for_name(rname) | throw("No such constructor " || rname)
+            con := lookup_constructor(rname) | throw("No such constructor " || rname)
             res := con() 
             note_seen(res)
             n := int_in()
