@@ -92,3 +92,29 @@ Translating this will give the following error :-
 File junk.icn; Line 1 # Reference to unimported package: 'xml'
 }}}
 This can be resolved by simply importing the `xml` package, either as a qualified or unqualified import.   The reasoning behind this error is to avoid library code which translates correctly to a `.u` file, but depends on some other file, or the client program, importing (and hence linking) a particular package.
+
+== Package scope ==
+A symbol in a package can be declared so that it is not visible outside of the declaring package.  This is useful for hiding implementation classes, helper procedures and so on.
+
+To declare something with package scope, prefix the declaration with the keyword `package`.  For example :-
+{{{
+package my.pack
+
+package class Abc()
+  ...
+end
+
+package procedure abc()
+  ...
+end
+
+package record rec(a, b, c)
+
+package global a, b, c
+}}}
+
+Now none of these symbols will be visible outside of the package `my.pack`.
+
+Symbols with package scope cannot be looked up using `proc()`, `Prog.get_global()` and similar functions, even from within the declaring package.  Nor can they be used with string invocation.
+
+If a final or abstract class is declared with package scope, the `package` keyword must precede the `final` or `abstract` keyword, otherwise a syntax error results.  So, one must say `package final class Abc()` rather than `final package class Abc()`.
