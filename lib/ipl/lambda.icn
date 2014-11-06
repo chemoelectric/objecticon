@@ -8,7 +8,7 @@ global _a, _l
 package class Lambda()
    private e
 
-   package call(a[])
+   public call(a[])
       local ta, tl
       ta := _a
       _a := a
@@ -22,7 +22,7 @@ package class Lambda()
       _l := tl
    end
 
-   package new(e)
+   public new(e)
       self.e := e
       return
    end

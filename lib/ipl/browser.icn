@@ -2579,17 +2579,17 @@ class Form()
    end
 end
 
-record TableContext(tbl, caption, x, y, occ, cell_border, tr, rowgroups, colgroups, curr_colgroup)
-record TableColGroup(align, valign, width, span, cols)
-record TableCol(align, valign, width, span)
-record ListContext(tbl, index, type, kind)
-record DefListContext(tbl)
-record FieldSetContext(legend)
-record MapContext(map)
-record SelectContext(options, optgroup)
-record DataListContext(options)
-record Context(form, form_label, title, url, fg, font, align, pre, nowrap, underline, strike, underdash, mark,
-               family, size, bold, italic, table, list, def_list, fieldset, select, map, datalist)
+package record TableContext(tbl, caption, x, y, occ, cell_border, tr, rowgroups, colgroups, curr_colgroup)
+package record TableColGroup(align, valign, width, span, cols)
+package record TableCol(align, valign, width, span)
+package record ListContext(tbl, index, type, kind)
+package record DefListContext(tbl)
+package record FieldSetContext(legend)
+package record MapContext(map)
+package record SelectContext(options, optgroup)
+package record DataListContext(options)
+package record Context(form, form_label, title, url, fg, font, align, pre, nowrap, underline, strike, underdash, mark,
+                       family, size, bold, italic, table, list, def_list, fieldset, select, map, datalist)
 
 class MapArea()
    public const
