@@ -396,7 +396,7 @@ class Canvas(Component,SelectiveObjectCodec)
    # Save the component
    #
    public component_save(cc)
-      local fd, s, f, c
+      local fd, s, c
 
       fd := FileDialog().
          set_directory(Ivib.last_layout_dir).
@@ -404,34 +404,27 @@ class Canvas(Component,SelectiveObjectCodec)
          show_modal(parent_dialog)
       s := fd.get_result() | fail
       Ivib.last_layout_dir := fd.get_directory()
-      f := io.open(s, "w") | return alert_error(parent_dialog, "Couldn't open " || s)
 
       c := cc.dup()
       c.change_canvas(&null)
 
-      write(f, lang.encode(c))
-
-      close(f)
+      encode_to_file(s, c) | return alert_error(parent_dialog, ["Couldn't encode:", &why])
    end
 
    #
    # Load a component into cc
    #
    public component_load(cc)
-      local fd, s, f, c
+      local fd, s, c
       fd := FileDialog().
          set_directory(Ivib.last_layout_dir).
          set_existing_file_mode(FileDialog.REQUIRE).
          show_modal(parent_dialog)
       s := fd.get_result() | fail
       Ivib.last_layout_dir := fd.get_directory()
-      f := io.open(s) | return alert_error(parent_dialog, "Couldn't open " || s)
 
-      if not(c := lang.decode(read(f))) then {
-         close(f)
-         return alert_error(parent_dialog, "Invalid file format")
-      }
-      close(f)
+      c := decode_from_file(s) |
+         return alert_error(parent_dialog, ["Couldn't decode:", &why])
 
       push_undo()
 

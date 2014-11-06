@@ -143,10 +143,12 @@ class HtmlOutputter(Outputter)
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
          write(f, "<html><head><title>", c.name, "</title></head><body>")
          write(f, "<h1>Class ", c.name, "</h1>")
-         if is_final(c.obj) then
-            write(f, "final<p>")
-         if is_abstract(c.obj) then
-            write(f, "abstract<p>")
+         s := get_access_string(c.obj)
+         if *s > 0 then
+            write(f, s, "<p>")
+         if has_package_flag(c) then
+            write(f, "Package visibility<p>")
+
          write(f, "<dl>")
 
          # Superclass list
@@ -497,7 +499,10 @@ class HtmlOutputter(Outputter)
          write(f, "<dl>")
          s := c.get_package() | "default"
          write(f, "<dt>Package :</dt><dd><a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a></dd>")
-         write(f, "<dt>Type :</dt><dd>", type, "</dd>")
+         write(f, "<dt>Type :</dt><dd>", type)
+         if has_package_flag(c) then
+            write(f, ".  Package visibility")
+         write(f, "</dd>")
          write(f, "</dl><p>")
          if is(c.obj, Tree) then {
             output_file(c)

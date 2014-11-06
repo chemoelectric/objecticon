@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, gui, io, graphics, ipl.pdco, util, xdg, ipl.filegui
+import lang, gui, io, graphics, ipl.pdco, xdg, ipl.filegui
 
 $include "version.icn"
 
@@ -998,21 +998,15 @@ class Main(Dialog)
    end
 
    public read_config_file()
-      local f
       self.prefs := Prefs()
       Files.access(config_file_name) | return
-      return use {
-         f := io.open(config_file_name),
-         self.prefs := lang.decode(f.read())
-      } | alert_error(self, "Problem reading config file " || config_file_name || ": " || &why)
+      self.prefs := decode_from_file(config_file_name) |
+         alert_error(self, ["Problem reading config file " || config_file_name || ":", &why])
    end
 
    public save_config_file()
-      local f
-      return use {
-         f := io.open(config_file_name, "w"),
-         f.write(lang.encode(self.prefs))
-      } | alert_error(self, "Couldn't save to config file " || config_file_name || ": " || &why)
+      return encode_to_file(config_file_name, prefs) | 
+         alert_error(self, ["Couldn't save to config file " || config_file_name || ":", &why])
    end
 
    public synch_named_images()

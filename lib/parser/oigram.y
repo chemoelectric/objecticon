@@ -155,11 +155,16 @@ importdecls : { $$ := Node.EMPTY } ;
 bodydecls : { $$ := Node.EMPTY } ;
         | bodydecls body { $$ := Node("bodydecls", $1, $2); } ;
 
-body    : record ;
+body :    invocable ;
+        | optpackage body1 { $$ := Node("body", $1, $2) } ;
+
+optpackage : { $$ := Node.EMPTY } ;
+        | PACKAGE;
+
+body1    : record ;
         | class ;
-        | proc ;
-        | global ;
-        | invocable ;
+	| proc ;
+	| global ;
 
 optsemi : { $$ := Node.EMPTY } ; 
         | SEMICOL;

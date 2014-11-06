@@ -58,17 +58,17 @@ static void binop(int op);
  *  the identifier if it isn't already there.  Some semantic checks
  *  are performed.
  */
-void install(char *name, int flag, struct node *n)
+void install(char *name, struct node *n)
 {
-    switch (flag) {
+    switch (idflag) {
         case F_Global:	/* a variable in a global declaration */
-            next_global(name, flag, n);
+            next_global(name, idflag, n);
             break;
 
         case F_Static:	/* static declaration */
         case F_Dynamic:	/* local declaration (possibly implicit?) */
         case F_Argument:	/* formal parameter */
-            put_local(name, flag, n, 1);
+            put_local(name, idflag, n, 1);
             break;
 
         case F_Class:
@@ -80,7 +80,7 @@ void install(char *name, int flag, struct node *n)
             break;
 
         default:
-            quit("install: unrecognized symbol table flag %d.", flag);
+            quit("install: unrecognized symbol table flag %d.", idflag);
     }
 }
 
@@ -103,7 +103,7 @@ struct tgentry *next_global(char *name, int flag, struct node *n)
     ghash[i] = x;
     x->g_name = name;
     x->pos = n;
-    x->g_flag = flag;
+    x->g_flag = flag | packageflag;
     if (glast) {
         glast->g_next = x;
         glast = x;
@@ -278,7 +278,7 @@ static void clout(struct tclass *class)
     struct tclass_field *cf;
 
     ensure_pos(class->global->pos);
-    uout_op(Uop_Class);
+    uout_op((class->global->g_flag & F_Package) ? Uop_PkClass : Uop_Class);
     uout_32(class->flag);
     uout_str(class->global->g_name);
 
@@ -302,7 +302,7 @@ static void recout(struct tfunction *rec)
 {
     struct tlentry *lp;
     ensure_pos(rec->global->pos);
-    uout_op(Uop_Record);
+    uout_op((rec->global->g_flag & F_Package) ? Uop_PkRecord : Uop_Record);
     uout_str(rec->global->g_name);
     for (lp = rec->lfirst; lp; lp = lp->l_next) {
         ensure_pos(lp->pos);
@@ -314,7 +314,7 @@ static void recout(struct tfunction *rec)
 static void procout(struct tfunction *proc)
 {
     ensure_pos(proc->global->pos);
-    uout_op(Uop_Procdecl);
+    uout_op((proc->global->g_flag & F_Package) ? Uop_PkProcdecl : Uop_Procdecl);
     uout_str(proc->global->g_name);
     fout(proc);
 }
@@ -1163,10 +1163,10 @@ void output_code()
     }
 
     for (gp = gfirst; gp; gp = gp->g_next) {
-        switch (gp->g_flag) {
+        switch (gp->g_flag & (F_Global|F_Class|F_Proc|F_Record)) {
             case F_Global:
                 ensure_pos(gp->pos);
-                uout_op(Uop_Global);
+                uout_op((gp->g_flag & F_Package) ? Uop_PkGlobal : Uop_Global);
                 uout_str(gp->g_name);
                 break;
             case F_Global|F_Class:

@@ -188,7 +188,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
     }
 
     /* Check the global variable names. */
-    if ((i = lookup_global_index(s, p)) >= 0 && !p->is_named_global[i]) {
+    if ((i = lookup_global_index(s, p)) >= 0 && !(p->global_flags[i] & G_NamedGlobal)) {
         vp->dword    =  D_NamedVar;
         VarLoc(*vp) =  p->Globals + i;
         return GlobalName;
@@ -2180,14 +2180,28 @@ int lookup_global_index(dptr name, struct progstate *prog)
     return (p - prog->Gnames);
 }
 
-dptr lookup_global(dptr name, struct progstate *prog)
+int lookup_global(dptr query, struct progstate *prog)
 {
-    int i = lookup_global_index(name, prog);
-    if (i < 0)
-        return 0;
-    return prog->Globals + i;
-}
+    if (is:string(*query))
+        return lookup_global_index(query, prog);
 
+    if (query->dword == D_Integer) {
+        int nf = prog->NGlobals;
+        /*
+         * Simple index into fields array, using conventional icon
+         * semantics.
+         */
+        int i = cvpos(IntVal(*query), nf);
+        if (i != CvtFail && i <= nf)
+            return i - 1;
+        else
+            return -1;
+    }
+
+    syserr("Invalid query type to lookup_global");
+    /* Not reached */
+    return 0;
+}
 
 struct loc *lookup_global_loc(dptr name, struct progstate *prog)
 {
@@ -2204,10 +2218,10 @@ struct loc *lookup_global_loc(dptr name, struct progstate *prog)
     return prog->Glocs + i;
 }
 
-dptr lookup_named_global(dptr name, struct progstate *prog)
+dptr lookup_named_global(dptr name, int incl, struct progstate *prog)
 {
     int i = lookup_global_index(name, prog);
-    if (i < 0 || !prog->is_named_global[i])
+    if (i < 0 || !(prog->global_flags[i] & G_NamedGlobal) || (!incl && (prog->global_flags[i] & G_PackageFlag)))
         return 0;
     return prog->Globals + i;
 }

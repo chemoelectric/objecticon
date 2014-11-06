@@ -425,6 +425,7 @@ void construct_object(word clo, dptr lhs, dptr expr, int argc, dptr args, word r
     }
 
     new_field = class0->new_field;
+
     if (new_field) {
         struct frame *new_f;
         struct b_proc *bp = &ProcBlk(*new_field->field_descriptor);
@@ -605,7 +606,7 @@ static void invoke_misc(word clo, dptr lhs, dptr expr, int argc, dptr args, word
         /*
          * Is it a global class or procedure (or record)?
          */
-        dptr p = lookup_named_global(&sexpr, curpstate);
+        dptr p = lookup_named_global(&sexpr, 0, curpstate);
         if (p) {
             /* p must be a proc, class or constructor */
             general_call(clo, lhs, p, argc, args, rval, failure_label);

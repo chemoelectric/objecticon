@@ -28,6 +28,7 @@
 extern int fncargs[];
 int idflag;
 int modflag;
+int packageflag;
 
 #define EmptyNode tree1(N_Empty) 
 
@@ -107,7 +108,7 @@ int modflag;
 #define Cclause1(x1,x2,x3)	$$ = tree4(N_Ccls,x2,x1,x3) 
 
 #define Package(x1,x2)          set_package(dottedid2string(x2), x2);
-#define Class1(x1,x2)           next_class(Str0(x2),modflag, x2);
+#define Class1(x1,x2)           next_class(Str0(x2), x2);
 #define Super(x)                next_super(dottedid2string(x),x);
 #define Importspec1(x)          next_import(dottedid2string(x),0,x);
 #define Importspec2(x)          next_import(dottedid2string(x),1,x);idflag = F_Importsym
@@ -131,7 +132,7 @@ int modflag;
 #define Classbody0()            modflag = 0; idflag = F_Class
 #define Fielddecl1(x)           check_flags(modflag, x)
 
-#define Method1(x)              next_method(Str0(x), modflag, x); \
+#define Method1(x)              next_method(Str0(x), x); \
                                 idflag = F_Argument
 #define Method2(x1,x2,x3,x4)    curr_func->code = tree6(N_Proc,x1,x1,x2,x3,x4)
 
@@ -148,8 +149,8 @@ int modflag;
 #define Field(x1,x2,x3)		$$ = tree4(N_Field,x2,x1,x3)
 #define Global0(x)		idflag = F_Global
 #define Global1(x1,x2,x3)	/* empty */
-#define Ident(x)		install(Str0(x),idflag,x)
-#define Idlist(x1,x2,x3)	install(Str0(x3),idflag,x3)
+#define Ident(x)		install(Str0(x),x)
+#define Idlist(x1,x2,x3)	install(Str0(x3),x3)
 #define If0(x1,x2,x3,x4)	$$ = tree4(N_If,x1,x2,x4) 
 #define If1(x1,x2,x3,x4,x5,x6)	$$ = tree5(N_Ifelse,x1,x2,x4,x6) 
 #define Iliter(x)		if (x->n_type == N_Int)\
@@ -185,11 +186,12 @@ int modflag;
                                 idflag = F_Argument
 #define Proc2(x1,x2,x3,x4)      curr_func->code = tree6(N_Proc,x1,x1,x2,x3,x4)
 
+#define OptPackage0()            packageflag = 0
+#define OptPackage1()            packageflag = F_Package;
+
 #define Progend(x1,x2)		/* Empty */
-#define Record1(x1,x2)		next_function(F_Record); idflag = F_Argument
-#define Record2(x1,x2,x3,x4,x5,x6) curr_func->global = next_global(Str0(x2),F_Record|F_Global,x2); \
-                                curr_func->global->func = curr_func; \
-                                $$ = x2
+#define Record1(x1,x2)		next_record(Str0(x2), x2); idflag = F_Argument
+#define Record2(x1,x2,x3,x4,x5,x6) $$ = x2
 #define Repeat(x1,x2)		$$ = tree4(N_Repeat,x1,x1,x2) 
 #define Return0(x1)		$$ = tree3(N_Return,x1,x1) 
 #define Return1(x1,x2)		$$ = tree4(N_Returnexpr,x1,x1,x2) 

@@ -404,7 +404,7 @@ class Decode()
    end
 
    private static decode_proc_code(fn)
-      local c, s, i, j, cl, g
+      local c, s, i, j, cl
       fn ? {
          c := move(1)
          s := tab(0)
@@ -420,14 +420,11 @@ class Decode()
                return Prog.get_operator(s, i) | throw("No such function " || s || " arity " || i)
             }
             "P": {
-               if g := Prog.get_named_global(s) &
-                  match("procedure ", image(g)) then
-                  return g
-               throw("No such procedure " || s)
+               return lookup_procedure(s) | throw("No such procedure " || s)
             }
             "M": {
                i := backto('.', s)
-               if cl := Class.for_name(s[1:i-1]) &
+               if cl := lookup_class(s[1:i-1]) &
                   j := Class.get_field_flags(cl, s[i:0]) &
                   iand(j, PUBLIC_STATIC_METHOD) = PUBLIC_STATIC_METHOD 
                then
@@ -460,6 +457,33 @@ class Decode()
       seen[tag_count +:= 1] := o
    end
 
+   private static lookup_class(s)
+      local i, t
+      if i := Prog.get_global_index(s) &
+         iand(Prog.get_global_flags(i), Prog.NamedGlobal) ~= 0 &
+         t := Prog.get_global_impl(i) &
+         type(t) == "class" then
+         return t
+   end
+
+   private static lookup_constructor(s)
+      local i, t
+      if i := Prog.get_global_index(s) &
+         iand(Prog.get_global_flags(i), Prog.NamedGlobal) ~= 0 &
+         t := Prog.get_global_impl(i) &
+         type(t) == "constructor" then
+         return t
+   end
+
+   private static lookup_procedure(s)
+      local i, t
+      if i := Prog.get_global_index(s) &
+         iand(Prog.get_global_flags(i), Prog.NamedGlobal) ~= 0 &
+         t := Prog.get_global_impl(i) &
+         match("procedure ", image(t)) then
+         return t
+   end
+
    public decode()
       local i, n, rname, t, v, res, def, con, cl, cname, l
 
@@ -476,12 +500,12 @@ class Decode()
 
          Codec.CLASS_CODE : {
             cname := line_in()
-            return Class.for_name(cname) | throw("No such class " || cname)
+            return lookup_class(cname) | throw("No such class " || cname)
          }
 
          Codec.CONSTRUCTOR_CODE : {
             rname := line_in()
-            return Constructor.for_name(rname) | throw("No such constructor " || rname)
+            return lookup_constructor(rname) | throw("No such constructor " || rname)
          }
 
          Codec.PROCEDURE_CODE : {
@@ -494,7 +518,7 @@ class Decode()
             #
             # Create an instance
             #
-            cl := Class.for_name(cname) | throw("No such class: " || cname)
+            cl := lookup_class(cname) | throw("No such class: " || cname)
             (iand(Class.get_class_flags(cl), Class.Abstract) = 0) | throw("Class is abstract: " || cname)
             res := Class.create_raw_instance_of(cl)
             note_seen(res)
@@ -510,7 +534,7 @@ class Decode()
                } else {
                   n := integer(decode()) | throw("Integer expected")
                   every 1 to n do {
-                     t := decode()
+                     t := string(decode()) | throw("String expected")
                      v := decode()
                      Class.getq(res, t) := v
                   }
@@ -536,8 +560,10 @@ class Decode()
          Codec.CSET_CODE : {
              n := int_in()
              l := []
-             every 1 to n do 
-                put(l, decode())
+             every 1 to n do {
+                i := integer(decode()) | throw("Integer expected")
+                put(l, i)
+             }
              return Text.create_cset(l)
           }
 
@@ -551,7 +577,7 @@ class Decode()
 
          Codec.RECORD_CODE : {
             rname := line_in()
-            con := Constructor.for_name(rname) | throw("No such constructor " || rname)
+            con := lookup_constructor(rname) | throw("No such constructor " || rname)
             res := con() 
             note_seen(res)
             n := int_in()
@@ -561,7 +587,7 @@ class Decode()
                   res[i] := decode()
             } else {
                every 1 to n do {
-                  t := decode()
+                  t := string(decode()) | throw("String expected")
                   v := decode()
                   res[t] := v
                }

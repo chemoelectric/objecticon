@@ -53,15 +53,19 @@ class Ieval(MinimalObjectOutput)
    end
 
    private list_syms()
-      local s, e, w
+      local s, e, w, i
       w := if is(output, TermDialog) then
          output.get_term_width()
       else
          LineEditorStream.get_console_size()[1]
       s := set()
-      every e := lang.Prog.get_global_names() do
-         if e ? ((not upto('.')) | (=!imports & ="." & (not upto('.')))) then
-            insert(s, e)
+      every i := 1 to lang.Prog.get_n_globals() do {
+         if iand(lang.Prog.get_global_flags(i), lang.Prog.PackageFlag) = 0 then {
+            e := lang.Prog.get_global_name(i)
+            if e ? ((not upto('.')) | (=!imports & ="." & (not upto('.')))) then
+               insert(s, e)
+         }
+      }
       every output.write(colmize(isort(s, map), w))
    end
 
@@ -172,13 +176,15 @@ class Ieval(MinimalObjectOutput)
    end
 
    private dir(a[])
-      local f, t, c
+      local f, t, c, s
       if *a = 0 then
          list_syms()
       else case type(c := a[1]) of {
          "object"|"cast"|"class": {
-            output.write(if iand(lang.Class.get_class_flags(c), lang.Class.Final) ~= 0 then "final class " else "class ",
-                         lang.Class.get_name(c), "(", supers_string(c), ")")
+            s := map(flags_string(lang.Class.get_class_flags(c)))
+            if *s > 0 then
+               output.writes(s, " ")
+            output.write("class ", lang.Class.get_name(c), "(", supers_string(c), ")")
             output.write("   ", locn_string(lang.Class.get_location(c))) 
             output.write("   implements ", implements_string(c))
             t := []

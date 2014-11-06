@@ -7,16 +7,17 @@ class Comment()
       keys
 
    private list_extract(sym)
-      if sym.decl_obj.size() = 1 then
-         return sym.decl_obj.get_first_token().get_pad()
-      return sym.obj.get_first_token().get_pad()
+      return if sym.decl_obj.size() = 1 then
+         sym.decl_obj.get_first_token().get_pad()
+      else
+         sym.obj.get_first_token().get_pad()
    end
 
    private get_comment_str(sym)
-      if is(sym, ClassVariable | GlobalSymbol) then
-         return list_extract(sym)
+      return if is(sym, ClassVariable | GlobalSymbol) then
+         list_extract(sym)
       else
-         return sym.obj.get_first_token().get_pad()
+         sym.obj.get_first_token().get_pad()
    end
 
    public new(sym)

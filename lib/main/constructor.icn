@@ -34,7 +34,9 @@ final abstract class Constructor()
 
    # Generate the field names of the constructor {c}.
    #
-   public static native get_field_names(c)
+   public static get_field_names(c)
+      suspend get_field_name(c, 1 to get_n_fields(c))
+   end
 
    # Return the number of fields in the constructor {c}.
    #
@@ -55,7 +57,6 @@ final abstract class Constructor()
    # @fail if the field is unknown
    #
    public static native get_field_name(c, field)
-
 
    # Return the source location of the given field in constructor{c}.
    # @param c the constructor
@@ -78,9 +79,13 @@ final abstract class Constructor()
    # @fail if the constructor is unknown
    #
    public static for_name(s, ce)
-      local t
-      if t := Prog.get_named_global(s, ce) & type(t) == "constructor" then
+      local i, t
+      s := string(s) | runerr(103, s)
+      if not(integer(s)) &
+         i := Prog.get_global_index(s) &
+         Prog.get_global_flags(i, ce) = Prog.NamedGlobal &
+         t := Prog.get_global_impl(i, ce) &
+         type(t) == "constructor" then
          return t
    end
-
 end

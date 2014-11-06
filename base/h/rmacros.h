@@ -432,6 +432,9 @@
 #define TypeMask	63	/* type mask */
 #define OffsetMask	(~(F_Var | F_Nqual | F_Ptr | F_Typecode)) /* offset mask for variables */
 
+#define G_NamedGlobal   1
+#define G_PackageFlag   2
+
 /*
  * "In place" dereferencing.
  */
@@ -552,6 +555,8 @@
 #define eglobals (curpstate->Eglobals)
 #define gnames (curpstate->Gnames)
 #define egnames (curpstate->Egnames)
+#define gpackageflags (curpstate->GpackageFlags)
+#define egpackageflags (curpstate->EgpackageFlags)
 #define glocs (curpstate->Glocs)
 #define eglocs (curpstate->Eglocs)
 #define statics (curpstate->Statics)

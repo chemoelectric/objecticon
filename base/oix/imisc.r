@@ -350,12 +350,12 @@ int c_is(dptr x, dptr cname, struct inline_global_cache *ic)
         if (class0->program == ic->program)
             p = ic->global;
         else {
-            p = lookup_named_global(cname, class0->program);
+            p = lookup_named_global(cname, 1, class0->program);
             ic->program = class0->program;
             ic->global = p;
         }
     } else
-        p = lookup_named_global(cname, class0->program);
+        p = lookup_named_global(cname, 1, class0->program);
 
     return p && is:class(*p) && class_is(class0, &ClassBlk(*p));
 }

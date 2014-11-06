@@ -7,11 +7,11 @@ import
 #
 # Implementation class for {partial}
 #
-class Partial()
+package class Partial()
    private
       f, spec, v
 
-   package call(a[])
+   public call(a[])
       local e, c, r
       e := create !v
       r := []
@@ -28,7 +28,7 @@ class Partial()
       suspend f!r
    end
 
-   package new(f, spec, v)
+   public new(f, spec, v)
       self.f := f
       self.spec := spec
       self.v := v
@@ -55,15 +55,15 @@ end
 #
 # Implementation class for {lpartial}
 #
-class LPartial()
+package class LPartial()
    private
       f, l
 
-   package call(a[])
+   public call(a[])
       suspend f!(l ||| a)
    end
 
-   package new(f, l)
+   public new(f, l)
       self.f := f
       self.l := l
       return
@@ -80,15 +80,15 @@ end
 #
 # Implementation class for {rpartial}
 #
-class RPartial()
+package class RPartial()
    private
       f, l
 
-   package call(a[])
+   public call(a[])
       suspend f!(a ||| l)
    end
 
-   package new(f, l)
+   public new(f, l)
       self.f := f
       self.l := l
       return
@@ -105,15 +105,15 @@ end
 #
 # Implementation class for {compose}
 #
-class Compose()
+package class Compose()
    private
       f, g
 
-   package call(a[])
+   public call(a[])
       suspend f(g!a)
    end
 
-   package new(f, g)
+   public new(f, g)
       self.f := f
       self.g := g
       return
@@ -130,15 +130,15 @@ end
 #
 # Implementation class for {lpartial2}
 #
-class LPartial2()
+package class LPartial2()
    private
       f, x
 
-   package call(a)
+   public call(a)
       suspend f(x, a)
    end
 
-   package new(f, x)
+   public new(f, x)
       self.f := f
       self.x := x
       return
@@ -167,15 +167,15 @@ end
 #
 # Implementation class for {rpartial2}
 #
-class RPartial2()
+package class RPartial2()
    private
       f, x
 
-   package call(a)
+   public call(a)
       suspend f(a, x)
    end
 
-   package new(f, x)
+   public new(f, x)
       self.f := f
       self.x := x
       return
@@ -202,14 +202,14 @@ end
 #
 # Implementation class for {methodf}
 #
-class Methodf()
+package class Methodf()
    private field
 
-   package call(obj, a[])
+   public call(obj, a[])
       suspend Class.get(obj, field)!a
    end
 
-   package new(field)
+   public new(field)
       self.field := field
       return
    end
@@ -230,14 +230,14 @@ end
 #
 # Implementation class for {coexf}
 #
-class Coexf()
+package class Coexf()
    private e
 
-   package call()
+   public call()
       return @e
    end
 
-   package new(e)
+   public new(e)
       self.e := e
       return
    end

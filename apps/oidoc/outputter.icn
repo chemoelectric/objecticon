@@ -1,6 +1,6 @@
 import
    lang(Class),
-   parser(ClassSymbol, DeferredMethod, Tree, ULocal,
+   parser(GlobalSymbol, ClassSymbol, DeferredMethod, Tree, ULocal,
           UMethod)
 
 class Outputter()
@@ -67,20 +67,6 @@ class Outputter()
             suspend e
    end
 
-   protected is_final(obj)
-      if is(obj, Tree) then
-         return obj.get_access().gen().str() == "final"
-      else
-         return iand(obj.flags, Class.Final) ~= 0
-   end
-
-   protected is_abstract(obj)
-      if is(obj, Tree) then
-         return obj.get_access().gen().str() == "abstract"
-      else
-         return iand(obj.flags, Class.Abstract) ~= 0
-   end
-
    protected get_param_string(obj)
       local s, a, has_self
       s := ""
@@ -107,6 +93,20 @@ class Outputter()
             s ||:= "[]"
       }
       return s
+   end
+
+   protected has_package_flag(c)
+      if is(c, GlobalSymbol) then {
+         if is(c.decl_obj, Tree) then
+            return c.decl_obj.get_package_flag()
+         else
+            return \c.decl_obj.package_flag
+      } else {
+         if is(c.obj, Tree) then
+            return c.obj.get_package_flag()
+         else
+            return \c.obj.package_flag
+      }
    end
 
    protected get_access_string(obj)

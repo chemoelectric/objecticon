@@ -415,7 +415,7 @@ class SymbolTable(Connectable)
             Class : {
                c := ClassSymbol(sf, d, d.get_name().str())
                every c.add_super(d.get_supers().gen().str())
-               every e := d.gen() do {
+               every e := d.get_members().gen() do {
                   case classof(e) of {
                      FieldList: {
                         every f := e.gen() do

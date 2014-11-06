@@ -42,7 +42,9 @@ class SimpleConstructor()
    end
 end
 
-# Helper function for {save_vars}.
+# Given a co-expression generating one or more variables, and a list
+# of corresponding values, this values swaps the variables values
+# and the values in the list.
 #
 procedure swap_vars(e, l)
    if *l = 1 then
@@ -62,7 +64,7 @@ end
 # global variables, which are normally &null, except for certain
 # keyword variables.
 #
-procedure init_val(e)
+package procedure init_val(e)
    local t
    every t := Prog.get_variable_name(!e) do
       suspend case t of {
@@ -74,7 +76,12 @@ procedure init_val(e)
       }
 end
 
-# Helper function for {save_vars}.
+# Given a co-expression generating one or more variables, this returns
+# a list of the present values of the variables.  At the same time, it
+# also sets the variables to default values, independent of their
+# old values.  For example, if e generated g1 and g2, and their values
+# were 100 and 200 respectively, this would return [100,200], and set
+# both variables to null.
 #
 procedure init_vars(e)
    local l, f
@@ -147,7 +154,7 @@ end
 
 # Stores a list of cleanup expressions to be run.  See {use} and {clean}.
 #
-global cleanup
+package global cleanup
 
 #
 # This procedure is used to automatically close a {Stream} or other

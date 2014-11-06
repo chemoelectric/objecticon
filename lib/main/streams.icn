@@ -1526,7 +1526,7 @@ end
 #
 # Base class for FilterOutputStream and FilterInputStream
 #
-abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
+package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
    protected
       cmd,
       err_sink,
@@ -1753,7 +1753,7 @@ end
 #
 # Base class for FilterOutputStream and FilterInputStream
 #
-abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
+package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, HasTask, NoCopy)
    protected
       cmd,
       err_sink,

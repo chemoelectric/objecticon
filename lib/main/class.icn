@@ -118,11 +118,15 @@ final abstract class Class()
    # Generate the field names of the class {c}.  The instance fields
    # come first, followed by the class fields.
    #
-   public static native get_field_names(c)
+   public static get_field_names(c)
+      suspend get_field_name(c, 1 to get_n_fields(c))
+   end
 
    # Return the number of fields in the class {c}.
    #
-   public static native get_n_fields(c)
+   public static get_n_fields(c)
+      return get_n_instance_fields(c) + get_n_class_fields(c)
+   end
 
    # Return the flags for the class {c}, which can include
    # {Abstract} or {Final}.
@@ -131,7 +135,9 @@ final abstract class Class()
 
    # Generate the field names of the class fields of class {c}.
    #
-   public static native get_class_field_names(c)
+   public static get_class_field_names(c)
+      suspend get_field_name(c, get_n_instance_fields(c) + 1 to get_n_fields(c))
+   end
 
    # Return the number of class fields of class {c}.
    #
@@ -139,7 +145,9 @@ final abstract class Class()
 
    # Generate the field names of the instance fields of class {c}.
    #
-   public static native get_instance_field_names(c)
+   public static get_instance_field_names(c)
+      suspend get_field_name(c, 1 to get_n_instance_fields(c))
+   end
 
    # Return the number of instance fields of class {c}.
    #
@@ -168,7 +176,6 @@ final abstract class Class()
    # @fail if the field is unknown
    #
    public static native get_field_name(c, field)
-
 
    # Return the source location of the given field in class{c}.
    # @param c the class
@@ -281,8 +288,13 @@ final abstract class Class()
    # @fail if the class is unknown
    #
    public static for_name(s, ce)
-      local t
-      if t := Prog.get_named_global(s, ce) & type(t) == "class" then
+      local i, t
+      s := string(s) | runerr(103, s)
+      if not(integer(s)) &
+         i := Prog.get_global_index(s) &
+         Prog.get_global_flags(i, ce) = Prog.NamedGlobal &
+         t := Prog.get_global_impl(i, ce) &
+         type(t) == "class" then
          return t
    end
 

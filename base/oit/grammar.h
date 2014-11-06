@@ -16,11 +16,16 @@ importdecls : ;
 bodydecls : ;	
 	| bodydecls body ;
 
-body    : record ;
+body :    invocable ;
+        | optpackage body1 ;
+
+optpackage : {OptPackage0();} ;
+        | PACKAGE {OptPackage1();} ;
+
+body1    : record ;
         | class ;
 	| proc ;
 	| global ;
-        | invocable ;
 
 optsemi : ;
         | SEMICOL ;

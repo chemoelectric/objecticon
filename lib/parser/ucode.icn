@@ -82,7 +82,8 @@ class UClass(UObject)
    public const
       supers,
       fields,
-      flags
+      flags,
+      package_flag
 
    package add_field(o)
       put(fields, o)
@@ -100,8 +101,9 @@ class UClass(UObject)
       suspend .!supers
    end
 
-   package new(name, file, line, flags)
+   package new(name, package_flag, file, line, flags)
       cast(self,UObject).new(name, file, line)
+      self.package_flag := package_flag
       self.flags := flags
       self.supers := []
       self.fields := []
@@ -225,9 +227,13 @@ class UMethod(UObject, UFunction)
 end
 
 class UProcedure(UObject, UFunction)
-   package new(name, file, line)
+   public const
+      package_flag
+
+   package new(name, package_flag, file, line)
       cast(self,UObject).new(name, file, line)
       cast(self,UFunction).new()
+      self.package_flag := package_flag
       return
    end
 end
@@ -235,6 +241,8 @@ end
 class URecord(UObject)
    private
       fields
+   public const
+      package_flag
 
    public get_fields()
       suspend .!fields
@@ -244,14 +252,23 @@ class URecord(UObject)
       put(fields, s)
    end
 
-   package new(name, file, line)
+   package new(name, package_flag, file, line)
       cast(self,UObject).new(name, file, line)
+      self.package_flag := package_flag
       self.fields := []
       return
    end
 end
 
 class UGlobal(UObject)
+   public const
+      package_flag
+
+   package new(name, package_flag, file, line)
+      cast(self,UObject).new(name, file, line)
+      self.package_flag := package_flag
+      return
+   end
 end
 
 class UReader()
@@ -297,7 +314,14 @@ class UReader()
             UcodeOp.Class: {
                n := uin_32() | fail
                s := uin_str() | fail
-               curr_class := UClass(s, file, line, n)
+               curr_class := UClass(s, &no, file, line, n)
+               uf.add_symbol(curr_class)
+            }
+
+            UcodeOp.PkClass: {
+               n := uin_32() | fail
+               s := uin_str() | fail
+               curr_class := UClass(s, &yes, file, line, n)
                uf.add_symbol(curr_class)
             }
 
@@ -323,13 +347,25 @@ class UReader()
 
              UcodeOp.Record: {
                 s := uin_str() | fail
-                curr_record := URecord(s, file, line)
+                curr_record := URecord(s, &no, file, line)
+                uf.add_symbol(curr_record)
+             }
+
+             UcodeOp.PkRecord: {
+                s := uin_str() | fail
+                curr_record := URecord(s, &yes, file, line)
                 uf.add_symbol(curr_record)
              }
 
              UcodeOp.Procdecl: {
                 s := uin_str() | fail
-                curr_func := UProcedure(s, file, line)
+                curr_func := UProcedure(s, &no, file, line)
+                uf.add_symbol(curr_func)
+             }
+
+             UcodeOp.PkProcdecl: {
+                s := uin_str() | fail
+                curr_func := UProcedure(s, &yes, file, line)
                 uf.add_symbol(curr_func)
              }
 
@@ -353,7 +389,12 @@ class UReader()
 
              UcodeOp.Global: {
                 s := uin_str() | fail
-                uf.add_symbol(UGlobal(s, file, line))
+                uf.add_symbol(UGlobal(s, &no, file, line))
+             }
+
+             UcodeOp.PkGlobal: {
+                s := uin_str() | fail
+                uf.add_symbol(UGlobal(s, &yes, file, line))
              }
 
              UcodeOp.Invocable: {
@@ -365,7 +406,7 @@ class UReader()
              }
 
             default:
-               return error("ill-formed ufile")
+               return error("ill-formed ufile"||uop)
          }
       }
 
