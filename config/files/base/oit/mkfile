@@ -45,5 +45,5 @@ lmem.$O:
 lsym.$O:		
 
 tparse_mod.c: tparse.c
-              sed -e 's/^#include <stdlib.h>$//'  \
-              -e 's/^#include <string.h>$//' tparse.c >tparse_mod.c
+              sed -e 's/^#include <stdlib.h>.*$//'  \
+              -e 's/^#include <string.h>.*$//' tparse.c >tparse_mod.c
