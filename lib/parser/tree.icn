@@ -125,8 +125,8 @@ abstract class Tree()
    end
 end
 
-abstract class List(Tree)
-   package index
+abstract class List()
+   public const lpos, index
 
    package abstract flatten()
    package abstract unflatten()
@@ -134,7 +134,7 @@ abstract class List(Tree)
    public abstract push(o)
 
    public clear()
-      pos.set(index, Node.EMPTY)
+      lpos.set(index, Node.EMPTY)
       return self
    end
 
@@ -174,8 +174,8 @@ abstract class List(Tree)
       return self
    end
 
-   package new(pos, index)
-      cast(self,Tree).new(pos)
+   package new(lpos, index)
+      self.lpos := lpos
       self.index := index
       return
    end
@@ -259,13 +259,13 @@ class Id(Tree)
    end
 end
 
-class IdList(LList)
+abstract class IdList(LList)
    private const lab
 
    package flatten()
       local l, n
       l := []
-      n := pos.child(index)
+      n := lpos.child(index)
       while n ~=== Node.EMPTY do {
          if is(n, Node) & n.label == lab then {
             default.push(l, Id(n.child(3), n.child(2)))
@@ -280,31 +280,55 @@ class IdList(LList)
    end
 
    public put(s)
-      if pos.child(index) === Node.EMPTY then
-         pos.set(index, s.pos)
+      if lpos.child(index) === Node.EMPTY then
+         lpos.set(index, s.pos)
       else
-         pos.set(index, Node(lab, 
-                             pos.child(index),
-                             s.comma,
-                             s.pos))
+         lpos.set(index, Node(lab, 
+                              lpos.child(index),
+                              s.comma,
+                              s.pos))
       return self
    end
 
-   package new(pos, index, lab)
-      cast(self,LList).new(pos, index)
+   package new(lpos, index, lab)
+      cast(self,LList).new(lpos, index)
       /lab := "idlist"
       self.lab := lab
       return
    end
 end
 
-class AccessList(LList)
+abstract class SimpleLList(Tree, LList)
+   package new(pos, index)
+      cast(self,Tree).new(pos)
+      cast(self,LList).new(pos, index)
+      return
+   end
+end
+
+abstract class SimpleRList(Tree, RList)
+   package new(pos, index)
+      cast(self,Tree).new(pos)
+      cast(self,RList).new(pos, index)
+      return
+   end
+end
+
+class SimpleIdList(Tree, IdList)
+   package new(pos, index, lab)
+      cast(self,Tree).new(pos)
+      cast(self,IdList).new(pos, index, lab)
+      return
+   end
+end
+
+class AccessList(SimpleLList)
    private const lab
 
    package flatten()
       local l, n
       l := []
-      n := pos.child(index)
+      n := lpos.child(index)
       while n ~=== Node.EMPTY do {
          if is(n, Node) then {
             default.push(l, Leaf(n.child(2)))
@@ -318,28 +342,28 @@ class AccessList(LList)
    end
 
    public put(x)
-      if pos.child(index) === Node.EMPTY then
-         pos.set(index, x.pos)
+      if lpos.child(index) === Node.EMPTY then
+         lpos.set(index, x.pos)
       else
-         pos.set(index, Node(lab,
-                             pos.child(index),
-                             x.pos))
+         lpos.set(index, Node(lab,
+                              lpos.child(index),
+                              x.pos))
       return self
    end
 
-   package new(pos, index, lab)
-      cast(self,LList).new(pos, index)
+   package new(lpos, index, lab)
+      cast(self,SimpleLList).new(lpos, index)
       /lab := "fieldaccess"
       self.lab := lab
       return
    end
 end
 
-class LocalsList(LList)
+class LocalsList(SimpleLList)
    package flatten()
       local l, n
       l := []
-      n := pos.child(index)
+      n := lpos.child(index)
       while n ~=== Node.EMPTY do {
          default.push(l, Local(n))
          n := n.child(1)
@@ -348,15 +372,15 @@ class LocalsList(LList)
    end
 
    public put(x)
-      pos.set(index, Node("locals", 
-                          pos.child(index),
-                          x.pos.child(2),
-                          x.pos.child(3)))
+      lpos.set(index, Node("locals", 
+                           lpos.child(index),
+                           x.pos.child(2),
+                           x.pos.child(3)))
       return self
    end
 end
 
-class Invocable(LList)
+class Invocable(SimpleLList)
    public get_first_token()
       return pos.child(1)
    end
@@ -364,7 +388,7 @@ class Invocable(LList)
    package flatten()
       local l, n
       l := []
-      n := pos.child(index)
+      n := lpos.child(index)
       while n ~=== Node.EMPTY do {
          if is(n, Node) & n.label == "invoclist" then {
             default.push(l, Id(n.child(3), n.child(2)))
@@ -378,23 +402,23 @@ class Invocable(LList)
    end
 
    public put(x)
-      if pos.child(index) === Node.EMPTY then
-         pos.set(index, x.pos)
+      if lpos.child(index) === Node.EMPTY then
+         lpos.set(index, x.pos)
       else
-         pos.set(index, Node("invoclist",
-                             pos.child(index),
-                             x.comma,
-                             x.pos))
+         lpos.set(index, Node("invoclist",
+                              lpos.child(index),
+                              x.comma,
+                              x.pos))
       return self
    end
 
    package new(pos)
-      cast(self,LList).new(pos, 2)
+      cast(self,SimpleLList).new(pos, 2)
       return
    end
 end
 
-class Import(LList)
+class Import(SimpleLList)
    public get_first_token()
       return pos.child(1)
    end
@@ -402,7 +426,7 @@ class Import(LList)
    package flatten()
       local l, n, t
       l := []
-      n := pos.child(index)
+      n := lpos.child(index)
       while n ~=== Node.EMPTY do {
          if is(n, Node) & n.label == "importlist" then {
             t := n.child(3)
@@ -423,23 +447,23 @@ class Import(LList)
    end
 
    public put(x)
-      if pos.child(index) === Node.EMPTY then
-         pos.set(index, x.pos)
+      if lpos.child(index) === Node.EMPTY then
+         lpos.set(index, x.pos)
       else
-         pos.set(index, Node("importlist",
-                             pos.child(index),
-                             x.comma,
-                             x.pos))
+         lpos.set(index, Node("importlist",
+                              lpos.child(index),
+                              x.comma,
+                              x.pos))
       return self
    end
 
    package new(pos)
-      cast(self,LList).new(pos, 2)
+      cast(self,SimpleLList).new(pos, 2)
       return
    end
 end
 
-class Imports(LList)
+class Imports(SimpleLList)
    package flatten()
       local l, n
       l := []
@@ -459,11 +483,11 @@ class Imports(LList)
    end
 end
 
-class Body(LList)
+class Body(SimpleLList)
    package flatten()
       local l, n, t, t2
       l := []
-      n := pos.child(index)
+      n := lpos.child(index)
       while n ~=== Node.EMPTY do {
          t := n.child(2)
          default.push(l, case t.label of {
@@ -486,9 +510,9 @@ class Body(LList)
    end
 
    public put(x)
-      pos.set(index, Node("bodydecls", 
-                          pos.child(index),
-                          x.pos))
+      lpos.set(index, Node("bodydecls", 
+                           lpos.child(index),
+                           x.pos))
       return self
    end
 end
@@ -548,7 +572,7 @@ class InvocableOp(Tree)
    end
 end
 
-class ImportSpec(IdList)
+class ImportSpec(SimpleIdList)
    public const comma
 
    public get_package()
@@ -556,7 +580,7 @@ class ImportSpec(IdList)
    end
 
    package new(pos, comma)
-      cast(self,IdList).new(pos,3)
+      cast(self,SimpleIdList).new(pos,3)
       /comma := Token(YY.COMMA, ",", ",")
       self.comma := comma
       return
@@ -635,11 +659,6 @@ class Factory()
          default: runerr("Bad access value", s)
       }
       return Leaf(Token(t, s, pad || s))
-   end
-
-   public static new_package_flag(pad)
-      /pad := ""
-      return Leaf(Token(YY.PACKAGE, "package", pad || "package"))
    end
 
    public static new_retention(pad, s)
@@ -838,11 +857,11 @@ class Factory()
    end
 end
 
-class ClassMembers(LList)
+class ClassMembers(SimpleLList)
    package flatten()
       local l, n, t
       l := []
-      n := pos.child(index)
+      n := lpos.child(index)
       while n ~=== Node.EMPTY do {
          t := n.child(3)
          default.push(l, 
@@ -858,19 +877,15 @@ class ClassMembers(LList)
    end
 
    public put(x)
-      pos.set(index, Node("classbody", 
-                          pos.child(index),
-                          x.pos.child(2),
-                          x.pos.child(3)))
+      lpos.set(index, Node("classbody", 
+                           lpos.child(index),
+                           x.pos.child(2),
+                           x.pos.child(3)))
       return self
    end
 end
 
-class Class(Tree)
-   public get_first_token()
-      return Util.first_token(pos)
-   end
-
+abstract class GlobalObj(Tree)
    public get_package_flag()
       if pos.child(1) === Node.EMPTY then
          fail
@@ -884,6 +899,12 @@ class Class(Tree)
          pos.set(1, x.pos)
       return self
    end
+end
+
+class Class(GlobalObj)
+   public get_first_token()
+      return Util.first_token(pos)
+   end
 
    public get_name()
       return Leaf(pos.child(2).child(3))
@@ -895,7 +916,7 @@ class Class(Tree)
    end
 
    public get_supers()
-      return IdList(pos.child(2), 5, "super")
+      return SimpleIdList(pos.child(2), 5, "super")
    end
 
    public get_access()
@@ -907,7 +928,7 @@ class Class(Tree)
    end
 end
 
-class Function()
+abstract class Function()
    public const
       fpos,
       name_index,
@@ -948,9 +969,9 @@ class Function()
       local l
       l := fpos.child(arglist_index)
       if is(l, Node) & l.label == "arglist" then
-         return IdList(l, 1)
+         return SimpleIdList(l, 1)
       else
-         return IdList(fpos, arglist_index)
+         return SimpleIdList(fpos, arglist_index)
    end
 
    public get_locals_list()
@@ -996,7 +1017,7 @@ class Function()
    end
 end
 
-class Local(IdList)
+class Local(SimpleIdList)
    public get_first_token()
       return pos.child(2)
    end
@@ -1011,12 +1032,12 @@ class Local(IdList)
    end
 
    package new(pos)
-      cast(self,IdList).new(pos, 3)
+      cast(self,SimpleIdList).new(pos, 3)
       return
    end
 end
 
-class FieldList(IdList)
+class FieldList(SimpleIdList)
    public get_first_token()
       return Util.first_token(pos.child(2))
    end
@@ -1026,7 +1047,7 @@ class FieldList(IdList)
    end
 
    package new(pos)
-      cast(self,IdList).new(pos, 3)
+      cast(self,SimpleIdList).new(pos, 3)
       return
    end
 end
@@ -1072,23 +1093,9 @@ class DeferredMethod(Tree, Function)
    end
 end
 
-class Procedure(Tree, Function)
+class Procedure(GlobalObj, Function)
    public get_first_token()
       return Util.first_token(pos)
-   end
-
-   public get_package_flag()
-      if pos.child(1) === Node.EMPTY then
-         fail
-      return Leaf(pos.child(1))
-   end
-
-   public set_package_flag(x)
-      if /x then
-         pos.set(1, Node.EMPTY)
-      else
-         pos.set(1, x.pos)
-      return self
    end
 
    package new(pos)
@@ -1098,27 +1105,13 @@ class Procedure(Tree, Function)
    end
 end
 
-class Record(Tree)
+class Record(GlobalObj)
    public get_first_token()
       return Util.first_token(pos)
    end
 
-   public get_package_flag()
-      if pos.child(1) === Node.EMPTY then
-         fail
-      return Leaf(pos.child(1))
-   end
-
-   public set_package_flag(x)
-      if /x then
-         pos.set(1, Node.EMPTY)
-      else
-         pos.set(1, x.pos)
-      return self
-   end
-
    public get_ids()
-      return IdList(pos.child(2), 4)
+      return SimpleIdList(pos.child(2), 4)
    end
 
    public get_name()
@@ -1131,27 +1124,15 @@ class Record(Tree)
    end
 end
 
-class Global(Tree)
+class Global(GlobalObj, IdList)
    public get_first_token()
       return Util.first_token(pos)
    end
 
-   public get_package_flag()
-      if pos.child(1) === Node.EMPTY then
-         fail
-      return Leaf(pos.child(1))
-   end
-
-   public set_package_flag(x)
-      if /x then
-         pos.set(1, Node.EMPTY)
-      else
-         pos.set(1, x.pos)
-      return self
-   end
-
-   public get_ids()
-      return IdList(pos.child(2), 2)
+   package new(pos, index)
+      cast(self,Tree).new(pos)
+      cast(self,IdList).new(pos.child(2), 2)
+      return
    end
 end
 
@@ -1192,11 +1173,11 @@ end
 #
 # List for handling a "exprlist" Node
 #
-class ExprList(LList)
+class ExprList(SimpleLList)
    package flatten()
       local l, n
       l := []
-      n := pos.child(index)
+      n := lpos.child(index)
       if n ~=== Node.EMPTY then {
          repeat {
             if is(n, Node) & n.label == "exprlist" then {
@@ -1213,22 +1194,21 @@ class ExprList(LList)
    end
 
    public put(s)
-      if pos.child(index) === Node.EMPTY then
-         pos.set(index, s.pos)
+      if lpos.child(index) === Node.EMPTY then
+         lpos.set(index, s.pos)
       else
-         pos.set(index, Node("exprlist",
-                             pos.child(index),
-                             s.comma,
-                             s.pos))
+         lpos.set(index, Node("exprlist",
+                              lpos.child(index),
+                              s.comma,
+                              s.pos))
       return self
    end
 
    public new(pos, index)
-      cast(self,LList).new(pos, index)
+      cast(self,SimpleLList).new(pos, index)
       return
    end
 end
-
 
 class CompoundElement(Tree)
    public const semi
@@ -1248,11 +1228,11 @@ end
 #
 # List for handling a "compound" Node
 #
-class Compound(RList)
+class Compound(SimpleRList)
    package flatten()
       local l, n
       l := []
-      n := pos.child(index)
+      n := lpos.child(index)
       if n ~=== Node.EMPTY then {
          repeat {
             if is(n, Node) & n.label == "compound" then {
@@ -1270,19 +1250,19 @@ class Compound(RList)
 
    public push(s)
       local n
-      n := pos.child(index)
+      n := lpos.child(index)
       if n === Node.EMPTY then
-         pos.set(index, s.pos)
+         lpos.set(index, s.pos)
       else
-         pos.set(index, Node("compound",
-                             s.pos,
-                             s.semi,
-                             pos.child(index)))
+         lpos.set(index, Node("compound",
+                              s.pos,
+                              s.semi,
+                              lpos.child(index)))
       return self
    end
 
    public new(pos, index)
-      cast(self,RList).new(pos, index)
+      cast(self,SimpleRList).new(pos, index)
       return
    end
 end
@@ -1305,11 +1285,11 @@ end
 #
 # List for handling a "caselist" Node
 #
-class CaseList(LList)
+class CaseList(SimpleLList)
    package flatten()
       local l, n
       l := []
-      n := pos.child(index)
+      n := lpos.child(index)
       if n ~=== Node.EMPTY then {
          repeat {
             if is(n, Node) & n.label == "caselist" then {
@@ -1326,18 +1306,18 @@ class CaseList(LList)
    end
 
    public put(s)
-      if pos.child(index) === Node.EMPTY then
-         pos.set(index, s.pos)
+      if lpos.child(index) === Node.EMPTY then
+         lpos.set(index, s.pos)
       else
-         pos.set(index, Node("caselist",
-                             pos.child(index),
-                             s.semi,
-                             s.pos))
+         lpos.set(index, Node("caselist",
+                              lpos.child(index),
+                              s.semi,
+                              s.pos))
       return self
    end
 
    public new(pos, index)
-      cast(self,LList).new(pos, index)
+      cast(self,SimpleLList).new(pos, index)
       return
    end
 end
@@ -1357,15 +1337,14 @@ class DottedIdentListElement(Tree)
    end
 end
 
-
 #
 # List for handling a "dottedident" Node
 #
-class DottedIdentList(LList)
+class DottedIdentList(SimpleLList)
    package flatten()
       local l, n
       l := []
-      n := pos.child(index)
+      n := lpos.child(index)
       if n ~=== Node.EMPTY then {
          repeat {
             if is(n, Node) & n.label == "dottedident" then {
@@ -1382,18 +1361,18 @@ class DottedIdentList(LList)
    end
 
    public put(s)
-      if pos.child(index) === Node.EMPTY then
-         pos.set(index, s.pos)
+      if lpos.child(index) === Node.EMPTY then
+         lpos.set(index, s.pos)
       else
-         pos.set(index, Node("dottedident",
-                             pos.child(index),
-                             s.dot,
-                             s.pos))
+         lpos.set(index, Node("dottedident",
+                              lpos.child(index),
+                              s.dot,
+                              s.pos))
       return self
    end
 
    public new(pos, index)
-      cast(self,LList).new(pos, index)
+      cast(self,SimpleLList).new(pos, index)
       return
    end
 end

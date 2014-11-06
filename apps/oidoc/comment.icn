@@ -6,26 +6,18 @@ class Comment()
       fields,
       keys
 
-   private list_extract1(sym)
+   private list_extract(sym)
       return if sym.decl_obj.size() = 1 then
          sym.decl_obj.get_first_token().get_pad()
       else
          sym.obj.get_first_token().get_pad()
    end
 
-   private list_extract2(sym)
-      return if sym.decl_obj.get_ids().size() = 1 then
-         sym.decl_obj.get_first_token().get_pad()
+   private get_comment_str(sym)
+      return if is(sym, ClassVariable | GlobalSymbol) then
+         list_extract(sym)
       else
          sym.obj.get_first_token().get_pad()
-   end
-
-   private get_comment_str(sym)
-      return case classof(sym) of {
-         ClassVariable : list_extract1(sym)
-         GlobalSymbol :  list_extract2(sym)         
-         default : sym.obj.get_first_token().get_pad()
-      }
    end
 
    public new(sym)
