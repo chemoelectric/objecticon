@@ -188,7 +188,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
     }
 
     /* Check the global variable names. */
-    if ((i = lookup_global_index(s, p)) >= 0 && !(p->global_flags[i] & G_NamedGlobal)) {
+    if ((i = lookup_global_index(s, p)) >= 0 && (p->global_flags[i] & (G_PackageFlag | G_NamedGlobal)) == 0) {
         vp->dword    =  D_NamedVar;
         VarLoc(*vp) =  p->Globals + i;
         return GlobalName;
