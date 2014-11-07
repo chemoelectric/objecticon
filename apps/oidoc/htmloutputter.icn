@@ -138,18 +138,18 @@ class HtmlOutputter(Outputter)
 
    # Output one class description
    private output_class(c)
-      local s, f, fname, supers, o, subs, d, overrides, meths, m, vars, mm, x
+      local s, f, fname, supers, o, subs, d, overrides, meths, m, vars, mm, x, type
       fname := output_dir || "/" || get_serial_no(c) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
          write(f, "<html><head><title>", c.name, "</title></head><body>")
-         write(f, "<h1>Class ", c.name, "</h1>")
-         s := get_access_string(c.obj)
-         if *s > 0 then
-            write(f, s, "<p>")
-         if has_package_flag(c) then
-            write(f, "Package visibility<p>")
-
+         type := get_class_prefix(c)
+         if *type > 0 then
+            type ||:= " class "
+         else
+            type := "class "
+         write(f, "<h1>", c.name, "</h1>")
          write(f, "<dl>")
+         write(f, "<dt>Type :</dt><dd>", type, "</dd>")
 
          # Superclass list
          supers := []
@@ -492,6 +492,8 @@ class HtmlOutputter(Outputter)
          default : stop("Unknown type:", image(c))
       }
 
+      if has_package_flag(c) then
+         type := "package " || type
       fname := output_dir || "/" || get_serial_no(c) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
          write(f, "<html><head><title>", c.name, "</title></head><body>")
@@ -499,10 +501,7 @@ class HtmlOutputter(Outputter)
          write(f, "<dl>")
          s := c.get_package() | "default"
          write(f, "<dt>Package :</dt><dd><a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a></dd>")
-         write(f, "<dt>Type :</dt><dd>", type)
-         if has_package_flag(c) then
-            write(f, ".  Package visibility")
-         write(f, "</dd>")
+         write(f, "<dt>Type :</dt><dd>", type, "</dd>")
          write(f, "</dl><p>")
          if is(c.obj, Tree) then {
             output_file(c)

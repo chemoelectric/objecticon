@@ -96,6 +96,7 @@ class Outputter()
    end
 
    protected has_package_flag(c)
+      # If it's a global var we check the "global" node (rather than the ident node).
       if is(c, GlobalSymbol) then {
          if is(c.decl_obj, Tree) then
             return c.decl_obj.get_package_flag()
@@ -109,6 +110,33 @@ class Outputter()
       }
    end
 
+   protected is_final(c)
+      if is(c.obj, Tree) then
+         return c.obj.get_access().gen().str() == "final"
+      else
+         return iand(c.obj.flags, Class.Final) ~= 0
+   end
+
+   protected is_abstract(c)
+      if is(c.obj, Tree) then
+         return c.obj.get_access().gen().str() == "abstract"
+      else
+         return iand(c.obj.flags, Class.Abstract) ~= 0
+   end
+
+   protected get_class_prefix(c)
+      local s
+      s := ""
+      if has_package_flag(c) then
+         s ||:= "package "
+      if is_final(c) then
+         s ||:= "final "
+      if is_abstract(c) then
+         s ||:= "abstract "
+      s[-1] := ""
+      return s
+   end
+
    protected get_access_string(obj)
       local s
       s := ""
@@ -116,7 +144,6 @@ class Outputter()
          every s ||:= obj.get_access().gen().str() || " "
          if is(obj, DeferredMethod) then
             s ||:= obj.get_defer_type().str() || " "
-         s[-1] := ""
       } else {
          if iand(obj.flags, Class.Private) ~= 0 then
             s ||:= "private "
@@ -140,8 +167,8 @@ class Outputter()
             s ||:= "defer "
          if iand(obj.flags, Class.Final) ~= 0 then
             s ||:= "final "
-         s[-1] := ""
       }
+      s[-1] := ""
       return s
    end
 
