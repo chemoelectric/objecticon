@@ -143,6 +143,13 @@ static void report_errors(int f)
 static int ldbg(int argc, char **argv);
 static void init_strings(void);
 
+static void remove_intermediate_files()
+{
+    struct file_param *rptr;
+    /* delete intermediate files */
+    for (rptr = remove_files; rptr; rptr = rptr->next)
+        remove(rptr->name);
+}
 
 /*
  *  main program
@@ -154,7 +161,6 @@ int main(int argc, char **argv)
     int c;
     char ch;
     struct fileparts *fp;
-    struct file_param *rptr;
 
     init_strings();
 
@@ -338,9 +344,7 @@ int main(int argc, char **argv)
      *  Execute the linked program if so requested and if there were no errors.
      */
 
-    /* delete intermediate files */
-    for (rptr = remove_files; rptr; rptr = rptr->next)
-        remove(rptr->name);
+    remove_intermediate_files();
 
     report_errors(0);
 
@@ -549,6 +553,7 @@ void quit(char *fmt, ...)
     fprintf(stderr,"\n");
     fflush(stderr);
     va_end(argp);
+    remove_intermediate_files();
     if (ofile)
         remove(ofile);			/* remove bad icode file */
     exit(EXIT_FAILURE);
