@@ -242,7 +242,7 @@ function lang_Prog_eval_keyword(s,c)
           runerr(0);
 
       if (StrLen(s) == 0 || *StrLoc(s) != '&')
-         fail;
+          runerr(637, s);
 
       t = StrLoc(s) + 1;
       switch (StrLen(s)) {
@@ -356,7 +356,7 @@ function lang_Prog_eval_keyword(s,c)
           }
       }
 
-      runerr(205, s);
+      runerr(637, s);
    }
 end
 

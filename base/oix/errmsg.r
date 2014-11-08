@@ -134,6 +134,7 @@ struct errtab errtab[] = {
     {634, "class or constructor expected"},
     {635, "class, cast, object, constructor or record expected"},
     {636, "invalid program monitoring sequence"},
+    {637, "keyword expected"},
    };
 
 
@@ -174,13 +175,12 @@ void err_msg(int n, dptr v)
     }
     else {
         k_errornumber = n;
-        if (v == NULL) {
-            k_errorvalue = nulldesc;
-            have_errval = 0;
-        }
-        else {
+        if (v) {
             k_errorvalue = *v;
             have_errval = 1;
+        } else {
+            k_errorvalue = nulldesc;
+            have_errval = 0;
         }
     }
     if (k_errornumber == -1)

@@ -66,8 +66,10 @@ cairo_pattern_t *x;
 dptr x##_dptr;
 static struct inline_field_cache x##_ic;
 static struct inline_global_cache x##_igc;
-if (!c_is(&p, (dptr)&patternclassname, &x##_igc))
-    runerr(205, p);
+if (!c_is(&p, (dptr)&patternclassname, &x##_igc)) {
+    CMakeStr("cairo.Pattern expected", &t_errortext);
+    runerr(-1, p);
+}
 x##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &x##_ic);
 if (!x##_dptr)
     syserr("Missing ptr field");
@@ -83,8 +85,10 @@ cairo_surface_t *x;
 dptr x##_dptr;
 static struct inline_field_cache x##_ic;
 static struct inline_global_cache x##_igc;
-if (!c_is(&p, (dptr)&surfaceclassname, &x##_igc))
-    runerr(205, p);
+if (!c_is(&p, (dptr)&surfaceclassname, &x##_igc)) {
+   CMakeStr("cairo.Surface expected", &t_errortext);
+   runerr(-1, p);
+}
 x##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &x##_ic);
 if (!x##_dptr)
     syserr("Missing ptr field");
@@ -100,8 +104,10 @@ cairo_t *x;
 dptr x##_dptr;
 static struct inline_field_cache x##_ic;
 static struct inline_global_cache x##_igc;
-if (!c_is(&p, (dptr)&crclassname, &x##_igc))
-    runerr(205, p);
+if (!c_is(&p, (dptr)&crclassname, &x##_igc)) {
+   CMakeStr("cairo.Context expected", &t_errortext);
+   runerr(-1, p);
+}
 x##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &x##_ic);
 if (!x##_dptr)
     syserr("Missing ptr field");
