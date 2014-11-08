@@ -151,18 +151,6 @@ int class_is(struct b_class *class, struct b_class *target)
     return 0;
 }
 
-static void extract_package(dptr s, dptr d)
-{
-    char *p = StrLoc(*s) + StrLen(*s);
-    while (--p >= StrLoc(*s)) {
-        if (*p == '.') {
-            MakeStr(StrLoc(*s), p - StrLoc(*s), d);
-            return;
-        }
-    }
-    syserr("In a package, but no dots");  
-}
-
 convert_to_macro(off_t)
 convert_from_macro(off_t)
 convert_to_macro(time_t)
@@ -882,19 +870,6 @@ function lang_Class_get_class(c)
         if (!(class0 = get_class_for(&c)))
             runerr(0);
         return class(class0);
-    }
-end
-
-function lang_Class_get_package(c)
-    body {
-        struct b_class *class0;
-        tended struct descrip result;
-        if (!(class0 = get_class_for(&c)))
-            runerr(0);
-        if (class0->package_id == 0)
-            fail;
-        extract_package(class0->name, &result);
-        return result;
     }
 end
 
@@ -3114,19 +3089,6 @@ function lang_Constructor_get_constructor(c)
     }
 end
 
-function lang_Constructor_get_package(c)
-    body {
-        struct b_constructor *constructor0;
-        tended struct descrip result;
-        if (!(constructor0 = get_constructor_for(&c)))
-            runerr(0);
-        if (constructor0->package_id == 0)
-            fail;
-        extract_package(constructor0->name, &result);
-        return result;
-    }
-end
-
 function lang_Constructor_get_program(c)
     body {
         struct b_constructor *constructor0;
@@ -3409,30 +3371,6 @@ function lang_Proc_get_name(c, flag)
         } else
             return *proc0->name;
      }
-end
-
-function lang_Proc_get_package(c, flag)
-   body {
-        struct b_proc *proc0;
-        tended struct descrip result;
-        if (!(proc0 = get_proc_for(&c)))
-            runerr(0);
-        if (!isflag(&flag))
-           runerr(171, flag);
-        if (proc0->field && is:null(flag)) {
-            if (proc0->field->defining_class->package_id == 0)
-                fail;
-            extract_package(proc0->field->defining_class->name, &result);
-        } else {
-            struct p_proc *pp;
-            if (!(pp = get_procedure(proc0)))
-                fail;
-            if (pp->package_id == 0)
-                fail;
-            extract_package(pp->name, &result);
-        }
-        return result;
-    }
 end
 
 function lang_Proc_get_program(c, flag)

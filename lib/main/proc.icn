@@ -1,5 +1,7 @@
 package lang
 
+import util(check_flag)
+
 final abstract class Proc()
    public static const
       Procedure,
@@ -31,12 +33,19 @@ final abstract class Proc()
    # Return the program this proc resides in.  The program's &main
    # co-expression is returned.
    #
-   public static native get_program(p)
+   public static native get_program(p, flag)
 
    # Return the name of the package in which this proc resides; fails
    # if the proc is not in a package.
    #
-   public static native get_package(p)
+   public static get_package(p, flag)
+      local cl
+      check_flag(flag)
+      if /flag & cl := get_defining_class(p) then
+         return Class.get_package(cl)
+      if get_kind(p) = Procedure then
+         return extract_package(get_name(p, &yes))
+   end
 
    # Return the source location of the proc.  For a native method, {flag}
    # indicates whether to return the location of the native method

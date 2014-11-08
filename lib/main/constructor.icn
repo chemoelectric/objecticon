@@ -21,7 +21,9 @@ final abstract class Constructor()
    # Return the name of the package in which this constructor resides; fails
    # if the constructor is not in a package.
    #
-   public static native get_package(c)
+   public static get_package(c)
+      return extract_package(get_name(c))
+   end
 
    # Return the source location of the constructor
    # @return a {Location} instance
