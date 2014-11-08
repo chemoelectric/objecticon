@@ -288,12 +288,10 @@ final abstract class Class()
    # @fail if the class is unknown
    #
    public static for_name(s, ce)
-      local i, t
+      local t
       s := string(s) | runerr(103, s)
       if not(integer(s)) &
-         i := Prog.get_global_index(s) &
-         Prog.get_global_flags(i, ce) = Prog.NamedGlobal &
-         t := Prog.get_global_impl(i, ce) &
+         t := Prog.get_named_global(s, ce) &
          type(t) == "class" then
          return t
    end
