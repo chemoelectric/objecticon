@@ -464,7 +464,7 @@ abstract class ScrollArea(Component)
    # Configure whether or not to use the default cursor movement keys; default no.
    #
    public set_use_default_keys(s)
-      s := check_flag(s)
+      check_flag(s)
       disconnect(\default_key_listener)
       if /s then {
          set_accepts_focus(&no)
