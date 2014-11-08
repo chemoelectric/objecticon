@@ -28,6 +28,7 @@ int Bflag       =0;     /* -B: bundle iconx in output file */
 int loclevel	=1;	/* -l n: amount of location info in icode 0 = none, 1 = trace info (default), 
                          *       2 = trace & symbol info */
 int Olevel      =1;     /* -O n: optimisation */
+int nolink      =0;	/* suppress linking? */
 
 /*
  * Some convenient interned strings.
@@ -97,7 +98,7 @@ static void add_link_file(char *s)
         link_files = last_link_file = p;
 }
 
-static void add_remove_file(char *s)
+void add_remove_file(char *s)
 {
     struct file_param *p = Alloc(struct file_param);
     p->name = intern(s);
@@ -157,7 +158,6 @@ static void remove_intermediate_files()
 
 int main(int argc, char **argv)
 {
-    int nolink = 0;			/* suppress linking? */
     int c;
     char ch;
     struct fileparts *fp;
@@ -262,9 +262,8 @@ int main(int argc, char **argv)
         if (strcmp(argv[optind],"-x") == 0)	/* stop at -x */
             break;
         else if (strcmp(argv[optind],"-") == 0) {
-            add_trans_file("-");      /* "-" means standard input */
+            add_trans_file("stdin");      /* "-" means standard input */
             add_link_file("stdin.u");
-            add_remove_file("stdin.u");
         }
         else {
             fp = fparse(argv[optind]);		/* parse file name */
@@ -273,7 +272,6 @@ int main(int argc, char **argv)
                 add_trans_file(makename(0, argv[optind],  SourceSuffix));
                 t = makename(0, argv[optind], USuffix);
                 add_link_file(t);
-                add_remove_file(t);
             }
             else if (smatch(fp->ext, USuffix))
                 add_link_file(makename(0, argv[optind], USuffix));
@@ -294,8 +292,10 @@ int main(int argc, char **argv)
             report("Translating:");
         trans(trans_files, &errors, &warnings);
         report_errors(1);
-        if (errors > 0)			/* exit if errors seen */
+        if (errors > 0)	{		/* exit if errors seen */
+            remove_intermediate_files();
             exit(EXIT_FAILURE);
+        }
     }
 
     /*
