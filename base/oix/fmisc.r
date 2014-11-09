@@ -119,19 +119,6 @@ function copy(x)
 end
 
 
-"errorclear() - clear error condition."
-
-function errorclear()
-   body {
-      k_errornumber = 0;
-      k_errortext = emptystr;
-      k_errorvalue = nulldesc;
-      k_errorcoexpr = 0;
-      have_errval = 0;
-      return nulldesc;
-      }
-end
-
 
 /*
  * the bitwise operators are identical enough to be expansions

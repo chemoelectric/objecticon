@@ -192,6 +192,21 @@ function lang_Prog_set_event_mask(cs, ce)
    }
 end
 
+
+function errorclear(ce)
+   body {
+      struct progstate *prog;
+      if (!(prog = get_program_for(&ce)))
+         runerr(0);
+      prog->K_errornumber = 0;
+      prog->K_errortext = emptystr;
+      prog->K_errorvalue = nulldesc;
+      prog->K_errorcoexpr = 0;
+      prog->Have_errval = 0;
+      return nulldesc;
+      }
+end
+
 function lang_Prog_get_variable_name(underef v)
    /*
     * v must be a variable
