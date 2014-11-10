@@ -53,8 +53,10 @@ static word lang_Prog_get_event_impl_impl_code[] = {
 static word activate_handler_impl_code[] = {
    Op_Custom,
    (word)coact_handler,
-   (word)&activate_handler_impl_code[3],
+   Op_Tmp,
+   0,
+   (word)&activate_handler_impl_code[5],
    Op_Custom,
    (word)fatalerr_139,
 };
-#passthru CustomProc(activate_handler_impl,activate_handler_impl_code,0,0,0,0,0,0,0,"activate_handler_impl")
+#passthru CustomProc(activate_handler_impl,activate_handler_impl_code,0,0,0,0,1,0,0,"activate_handler_impl")

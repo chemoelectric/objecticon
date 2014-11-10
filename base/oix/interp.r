@@ -88,16 +88,35 @@ void tail_invoke_frame(struct frame *f)
 {
     switch (f->type) {
         case C_Frame: {
+            int rc;
+            struct progstate *p, *q;
+            struct class_field *field;
             curr_cf = (struct c_frame *)f;
+            field = curr_cf->proc->field;
+            /*
+             * A native method should run with curpstate set to its
+             * enclosing class's defining program.
+             */
+            p = field ? field->defining_class->program : curpstate;
             Desc_EVValD(curr_cf->proc, E_Pcall, D_Proc);
-            if (k_trace && curr_cf->proc->field) {
+            if (field && k_trace) {
                 /*
                  * Same logic as below, but with tracing.
                  */   
                 struct p_frame *old_curr_pf = curr_pf;
                 k_trace--;
                 c_call_trace(curr_cf);
-                if (curr_cf->proc->ccode(curr_cf)) {
+                if (p == curpstate)
+                    rc = curr_cf->proc->ccode(curr_cf);
+                else {
+                    q = curpstate;
+                    p->K_current = k_current;
+                    curpstate = p;
+                    rc = curr_cf->proc->ccode(curr_cf);
+                    if (q->K_current != k_current) syserr("C code changed k_current");
+                    curpstate = q;
+                }
+                if (rc) {
                     /*
                      * If curr_pf != old_curr_pf, then the c function
                      * has pushed a frame, called tail_invoke_frame,
@@ -118,7 +137,17 @@ void tail_invoke_frame(struct frame *f)
                     pop_to(f->parent_sp);
                 }
             } else {
-                if (!curr_cf->proc->ccode(curr_cf)) {
+                if (p == curpstate)
+                    rc = curr_cf->proc->ccode(curr_cf);
+                else {
+                    q = curpstate;
+                    p->K_current = k_current;
+                    curpstate = p;
+                    rc = curr_cf->proc->ccode(curr_cf);
+                    if (q->K_current != k_current) syserr("C code changed k_current");
+                    curpstate = q;
+                }
+                if (!rc) {
                     ipc = f->failure_label;
                     pop_to(f->parent_sp);
                 }
@@ -544,8 +573,7 @@ static void coact_ex()
     if (get_current_user_frame_of(&CoexprBlk(*ce))->fvars != upf->fvars)
         retderef(val, upf->fvars);
 
-    if (curpstate->monitor)
-        EVValD(ce, E_Coact);
+    EVValD(ce, E_Coact);
 
     if (k_trace) {
         --k_trace;
@@ -621,8 +649,7 @@ static void cofail_ex()
     activator = get_dptr();    /* Activator */
     failure_label = GetAddr;
 
-    if (curpstate->monitor)
-        EVValD(ce, E_Cofail);
+    EVValD(ce, E_Cofail);
 
     if (k_trace) {
         --k_trace;
@@ -724,11 +751,19 @@ static void fatalerr_139()
 
 static void coact_handler()
 {
-    word *failure_label;
-    failure_label = GetAddr;
+    dptr ce = get_dptr();           /* &main of program causing error */
+    word *failure_label = GetAddr;
+    struct progstate *p = CoexprBlk(*ce).main_of;
 
-    if (curpstate->monitor)
-        EVValD(&kywd_handler, E_Coact);
+    /*
+     * Temporarily switch back to the program causing the error; we
+     * may have switched away if the error was in a native method
+     * called from another program.
+     */
+    if (p->K_current != k_current) syserr("Unexpected change of k_current");
+    curpstate = p;
+
+    EVValD(&kywd_handler, E_Coact);
 
     if (k_trace) {
         --k_trace;
@@ -739,8 +774,12 @@ static void coact_handler()
     k_current->failure_label = failure_label;
 
     /* The handler must have an activator, since we don't set it */
-    if (!CoexprBlk(kywd_handler).activator)
-        fatalerr(140, &kywd_handler);
+    if (!CoexprBlk(kywd_handler).activator) {
+        tended struct descrip d;
+        /* Use a copy since fatalerr sets kywd_handler to nulldesc. */
+        d = kywd_handler;
+        fatalerr(140, &d);
+    }
 
     /* Fail to the handler coexpression */
     switch_to(&CoexprBlk(kywd_handler));
@@ -752,6 +791,8 @@ void activate_handler(void)
     struct p_frame *pf;
     MemProtect(pf = alc_p_frame(&Bactivate_handler_impl, 0));
     push_frame((struct frame *)pf);
+    pf->tmp[0].dword = D_Coexpr;
+    pf->tmp[0].vword.bptr = (union block *)curpstate->K_main;
     tail_invoke_frame((struct frame *)pf);
 }
 

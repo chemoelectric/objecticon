@@ -234,3 +234,32 @@ procedure child32()
 
    return create 1 to 3
 end
+
+procedure child_33_proc1()
+   suspend 1 to 10
+end
+
+class Child33()
+   public static native fun1()
+   public static native fun2()
+
+   public static fun3()
+      return &why
+   end
+
+   public static fun4()
+      runerr("ciao")
+   end
+
+   public static fun5()
+      return FileStream.stdout
+   end
+
+   public static native fun6()
+
+   private static init()
+      Class.set_method("fun1", child_33_proc1)
+      Class.set_method("fun2", Prog.get_keyword("&why"))
+      Class.set_method("fun6", tab)
+   end
+end

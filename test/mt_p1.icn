@@ -452,3 +452,45 @@ procedure test32()
    print{"e: &errornumber",Prog.eval_keyword("&errornumber",c)}
    print{"e: &errorcoexpr",Prog.eval_keyword("&errorcoexpr",c)}
 end
+
+procedure test33()
+   local x, e, f
+   x := Prog.get_global("Child33",c)
+   print{"x", x}
+
+   &why := "My oh my"
+   &handler := &null
+   errorclear()
+   errorclear(c)
+   Prog.eval_keyword("&why",c) := "Why oh why"   
+   pr_seq{"Child33.fun1()", x.fun1()}
+   print{"Child33.fun2()", x.fun2()}
+   print{"Child33.fun3()", x.fun3()}
+
+   Prog.eval_keyword("&handler", c) := &current
+   e := create x.fun4()
+   @e
+   print{"&errortext", &errortext}
+   print{"c: &errortext",Prog.eval_keyword("&errortext",c)}
+   errorclear(c)
+   print{"c: &errortext",Prog.eval_keyword("&errortext",c)}
+
+   # f is now c's FileStream.stdout.  Calling out with a list should give err 103.
+   f := x.fun5()
+   e := create f.out([])
+   @e
+   print{"&errornumber", &errornumber}
+   print{"c: &errornumber",Prog.eval_keyword("&errornumber",c)}
+
+   &subject := "the quick brown fox"
+   &pos := 4
+   Prog.eval_keyword("&subject", c) := "jumped over the lazy dog"
+   Prog.eval_keyword("&pos", c) := 7
+   print{"Child33.fun6(5)", x.fun6(5)}
+   print{"c: &pos", Prog.eval_keyword("&pos", c)}
+   pr_seq{"Child33.fun6(11)", x.fun6(11)}
+   # Should still be 5 since we forced tab through its results.
+   print{"c: &pos", Prog.eval_keyword("&pos", c)}
+   print{"&subject", &subject}
+   print{"&pos", &pos}
+end
