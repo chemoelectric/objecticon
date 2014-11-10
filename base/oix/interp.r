@@ -3,7 +3,7 @@
 
 static void coact_ex(void);
 static void cofail_ex(void);
-static void coact_handler();
+static void coact_handler(void);
 static void get_child_prog_result(void);
 static void activate_child_prog(void);
 static void do_cofail(void);
