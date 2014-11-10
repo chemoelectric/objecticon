@@ -256,122 +256,120 @@ function lang_Prog_eval_keyword(s,c)
        if (!(p = get_program_for(&c)))
           runerr(0);
 
-      if (StrLen(s) == 0 || *StrLoc(s) != '&')
-          runerr(637, s);
+       if (StrLen(s) > 0 && *StrLoc(s) == '&') {
+           t = StrLoc(s) + 1;
+           switch (StrLen(s)) {
+               case 4 : {
+                   if (strncmp(t,"pos",3) == 0) {
+                       return kywdpos(&(p->Kywd_pos));
+                   }
+                   if (strncmp(t,"why",3) == 0) {
+                       return kywdstr(&(p->Kywd_why));
+                   }
+                   break;
+               }
+               case 5 : {
+                   if (strncmp(t,"file",4) == 0) {
+                       struct ipc_fname *t = frame_ipc_fname(p->K_current->curr_pf);
+                       if (!t)
+                           fail;
+                       return *t->fname;
+                   }
+                   if (strncmp(t,"line",4) == 0) {
+                       struct ipc_line *t = frame_ipc_line(p->K_current->curr_pf);
+                       if (!t)
+                           fail;
+                       return C_integer t->line;
+                   }
+                   if (strncmp(t,"dump",4) == 0) {
+                       return kywdint(&(p->Kywd_dump));
+                   }
+                   if (strncmp(t,"main",4) == 0) {
+                       return coexpr(p->K_main);
+                   }
+                   if (strncmp(t,"time",4) == 0) {
+                       /*
+                        * &time in this program = total time - time spent in other programs
+                        */
+                       if (p != curpstate)
+                           return C_integer p->Kywd_time_out - p->Kywd_time_elsewhere;
+                       else
+                           return C_integer millisec() - p->Kywd_time_elsewhere;
+                   }
+                   break;
+               }
+               case 6 : {
+                   if (strncmp(t,"trace",5) == 0) {
+                       return kywdint(&(p->Kywd_trace));
+                   }
+                   if (strncmp(t,"level",5) == 0) {
+                       return C_integer p->K_current->level;
+                   }
+                   break;
+               }
+               case 7 : {
+                   if (strncmp(t,"random",6) == 0) {
+                       return kywdint(&(p->Kywd_ran));
+                   }
+                   if (strncmp(t,"source",6) == 0) {
+                       return coexpr(p->K_current->activator);
+                   }
+                   break;
+               }
+               case 8 : {
+                   if (strncmp(t,"subject",7) == 0) {
+                       return kywdsubj(&(p->Kywd_subject));
+                   }
+                   if (strncmp(t,"current",7) == 0) {
+                       return coexpr(p->K_current);
+                   }
+                   if (strncmp(t,"handler",7) == 0) {
+                       return kywdhandler(&(p->Kywd_handler));
+                   }
+                   break;
+               }
+               case 9 : {
+                   if (strncmp(t,"maxlevel",8) == 0) {
+                       return kywdint(&(p->Kywd_maxlevel));
+                   }
+                   if (strncmp(t,"progname",8) == 0) {
+                       return kywdstr(&(p->Kywd_prog));
+                   }
+                   break;
+               }
+               case 10: {
+                   if (strncmp(t,"errortext",9) == 0) {
+                       if (p->K_errornumber == 0)
+                           fail;
+                       return p->K_errortext;
+                   }
+                   break;
+               }
 
-      t = StrLoc(s) + 1;
-      switch (StrLen(s)) {
-          case 4 : {
-              if (strncmp(t,"pos",3) == 0) {
-                  return kywdpos(&(p->Kywd_pos));
-              }
-              if (strncmp(t,"why",3) == 0) {
-                  return kywdstr(&(p->Kywd_why));
-              }
-              break;
-          }
-          case 5 : {
-              if (strncmp(t,"file",4) == 0) {
-                  struct ipc_fname *t = frame_ipc_fname(p->K_current->curr_pf);
-                  if (!t)
-                      fail;
-                  return *t->fname;
-              }
-              if (strncmp(t,"line",4) == 0) {
-                  struct ipc_line *t = frame_ipc_line(p->K_current->curr_pf);
-                  if (!t)
-                      fail;
-                  return C_integer t->line;
-              }
-              if (strncmp(t,"dump",4) == 0) {
-                  return kywdint(&(p->Kywd_dump));
-              }
-              if (strncmp(t,"main",4) == 0) {
-                  return coexpr(p->K_main);
-              }
-              if (strncmp(t,"time",4) == 0) {
-                  /*
-                   * &time in this program = total time - time spent in other programs
-                   */
-                  if (p != curpstate)
-                      return C_integer p->Kywd_time_out - p->Kywd_time_elsewhere;
-                  else
-                      return C_integer millisec() - p->Kywd_time_elsewhere;
-              }
-              break;
-          }
-          case 6 : {
-              if (strncmp(t,"trace",5) == 0) {
-                  return kywdint(&(p->Kywd_trace));
-              }
-              if (strncmp(t,"level",5) == 0) {
-                  return C_integer p->K_current->level;
-              }
-              break;
-          }
-          case 7 : {
-              if (strncmp(t,"random",6) == 0) {
-                  return kywdint(&(p->Kywd_ran));
-              }
-              if (strncmp(t,"source",6) == 0) {
-                  return coexpr(p->K_current->activator);
-              }
-              break;
-          }
-          case 8 : {
-              if (strncmp(t,"subject",7) == 0) {
-                  return kywdsubj(&(p->Kywd_subject));
-              }
-              if (strncmp(t,"current",7) == 0) {
-                  return coexpr(p->K_current);
-              }
-              if (strncmp(t,"handler",7) == 0) {
-                  return kywdhandler(&(p->Kywd_handler));
-              }
-              break;
-          }
-          case 9 : {
-              if (strncmp(t,"maxlevel",8) == 0) {
-                  return kywdint(&(p->Kywd_maxlevel));
-              }
-              if (strncmp(t,"progname",8) == 0) {
-                  return kywdstr(&(p->Kywd_prog));
-              }
-              break;
-          }
-          case 10: {
-              if (strncmp(t,"errortext",9) == 0) {
-                  if (p->K_errornumber == 0)
-                      fail;
-                  return p->K_errortext;
-              }
-              break;
-          }
-
-          case 11 : {
-              if (strncmp(t,"errorvalue",10) == 0) {
-                  if (!p->Have_errval)
-                      fail;
-                  return p->K_errorvalue;
-              }
-              break;
-          }
-          case 12 : {
-              if (strncmp(t,"errorcoexpr",11) == 0) {
-                  if (p->K_errornumber == 0)
-                      fail;
-                  return coexpr(p->K_errorcoexpr);
-              }
-              if (strncmp(t,"errornumber",11) == 0) {
-                  if (p->K_errornumber <= 0)
-                      fail;
-                  return C_integer p->K_errornumber;
-              }
-              break;
-          }
-      }
-
-      runerr(637, s);
+               case 11 : {
+                   if (strncmp(t,"errorvalue",10) == 0) {
+                       if (!p->Have_errval)
+                           fail;
+                       return p->K_errorvalue;
+                   }
+                   break;
+               }
+               case 12 : {
+                   if (strncmp(t,"errorcoexpr",11) == 0) {
+                       if (p->K_errornumber == 0)
+                           fail;
+                       return coexpr(p->K_errorcoexpr);
+                   }
+                   if (strncmp(t,"errornumber",11) == 0) {
+                       if (p->K_errornumber <= 0)
+                           fail;
+                       return C_integer p->K_errornumber;
+                   }
+                   break;
+               }
+           }
+       }
+       runerr(637, s);
    }
 end
 
