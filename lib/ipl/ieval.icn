@@ -48,6 +48,8 @@ class Ieval(MinimalObjectOutput)
          write("hlim(n)     Set the history limit to n.").
          write("elim(n)     Set the expression limit to n.").
          write("llim(n)     Set the gui log area line limit to n.").
+         write("load(s)     Load the given prog, and set its error handler.")
+         write("gg(s,p)     Get the given global from the the given prog (shorthand for Prog.get_global).")
          write("oos         The ObjectOutputStream used to output results.").
          write("out         The OutputStream of the terminal.")
    end
@@ -65,6 +67,20 @@ class Ieval(MinimalObjectOutput)
             if e ? ((not upto('.')) | (=!imports & ="." & (not upto('.')))) then
                insert(s, e)
          }
+      }
+      every output.write(colmize(isort(s, map), w))
+   end
+
+   private list_prog_syms(prog)
+      local s, w, i
+      w := if is(output, TermDialog) then
+         output.get_term_width()
+      else
+         LineEditorStream.get_console_size()[1]
+      s := set()
+      every i := 1 to lang.Prog.get_n_globals(prog) do {
+         if iand(lang.Prog.get_global_flags(i, prog), lang.Prog.PackageFlag) = 0 then
+            insert(s, lang.Prog.get_global_name(i, prog))
       }
       every output.write(colmize(isort(s, map), w))
    end
@@ -210,6 +226,14 @@ class Ieval(MinimalObjectOutput)
                          Constructor.get_name(c), "(", fields_string(c), ")")
             output.write("   ", locn_string(Constructor.get_location(c))) 
          }
+         "co-expression": {
+            if Coexpression.is_main(c) then
+               list_prog_syms(c)
+            else {
+               oos.show(c)
+               output.write()
+            }
+         }
          default: {
             oos.show(c)
             output.write()
@@ -252,6 +276,32 @@ class Ieval(MinimalObjectOutput)
       if is(input, TermDialog) then
          input.set_log_limit(llim)
       return llim
+   end
+
+   private load_handler(prog)
+      local s, i
+      coact()
+      repeat {
+         if s := lang.Prog.eval_keyword("&errortext", prog) then {
+            if i := lang.Prog.eval_keyword("&errornumber", prog) then
+               error.write("Runtime error ", i, ": ", s)
+            else
+               error.write("Runtime error: ", s)
+            error.write("offending value: ", image(lang.Prog.eval_keyword("&errorvalue", prog)))
+            last_runerr := lang.Prog.eval_keyword("&errorcoexpr", prog)
+            errorclear(prog)
+         }
+         cofail(&handler)
+      }
+   end
+
+   private load(s)
+      local p, e
+      p := lang.Prog.load(s) | fail
+      e := create load_handler(p)
+      @e
+      lang.Prog.eval_keyword("&handler", p) := e
+      return p
    end
 
    private traceback()
@@ -358,6 +408,8 @@ class Ieval(MinimalObjectOutput)
       consts["elim"] := set_elim
       consts["hlim"] := set_hlim
       consts["llim"] := set_llim
+      consts["load"] := load
+      consts["gg"] := lang.Prog.get_global
       consts["traceback"] := create traceback()
       consts["cmd"] := cmd
       consts["oos"] := oos := ObjectOutputStream(output).set_indent(3)
