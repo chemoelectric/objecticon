@@ -1086,6 +1086,7 @@ void showstack(FILE *f, struct b_coexpr *c)
         fprintf(f, "\tlhs=%p\n",x->lhs);
         fprintf(f, "\tfailure_label=%p\n", x->failure_label);
         fprintf(f, "\tparent_sp=%p\n", x->parent_sp);
+        fprintf(f, "\tcreator=%p\n", x->creator);
         fprintf(f, "\texhausted=%d\n", x->exhausted);
         fprintf(f, "\trval=%d\n", x->rval);
         switch (x->type) {
