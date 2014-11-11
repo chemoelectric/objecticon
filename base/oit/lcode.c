@@ -87,6 +87,7 @@ codeb = (char *) expand_table(codeb, &codep, &maxcode, 1,                   \
 
 static void writescript(void);
 static word cnv_op(int n);
+static void genstaticnames(struct lfunction *lf);
 static void gentables(void);
 static void synch_file(void);
 static void synch_line(void);
@@ -1420,6 +1421,18 @@ static void genclasses(void)
         genclass(cl);
 }
 
+static void genstaticnames(struct lfunction *lf)
+{
+    struct lentry *le;
+    struct centry *ce;
+    for (le = lf->locals; le; le = le->next) {
+        if (le->l_flag & F_Static) {
+            ce = inst_sdescrip(le->name);
+            outsdescrip(ce, "Local name (static %s)", le->name);
+        }
+    }
+}
+
 /*
  * gentables - generate interpreter code for global, static,
  *  identifier, and record tables, and built-in procedure blocks.
@@ -1647,6 +1660,25 @@ static void gentables()
     flushcode();
 
     /*
+     * Output descriptors for static variable names.
+     */
+    if (Dflag)
+        fprintf(dbgfile, "\n# Static variable names\n");
+    hdr.Snames = pc;
+    for (gp = lgfirst; gp; gp = gp->g_next) {
+        if (gp->func)
+            genstaticnames(gp->func);
+        else if (gp->class) {
+            struct lclass_field *me;
+            for (me = gp->class->fields; me; me = me->next) {
+                if (me->func && !(me->flag & (M_Defer | M_Abstract | M_Native))) 
+                    genstaticnames(me->func);
+            }
+        }
+    }
+    flushcode();
+
+    /*
      * Output a null descriptor for each tcase table.
      */
     if (Dflag)
@@ -1765,6 +1797,7 @@ static void gentables()
         fprintf(dbgfile, "gpackageflags:    " WordFmt "\n", (long)hdr.GpackageFlags);
         fprintf(dbgfile, "glocs:            " WordFmt "\n", (long)hdr.Glocs);
         fprintf(dbgfile, "statics:          " WordFmt "\n", (long)hdr.Statics);
+        fprintf(dbgfile, "snames:           " WordFmt "\n", (long)hdr.Snames);
         fprintf(dbgfile, "tcasetables:      " WordFmt "\n", (long)hdr.TCaseTables);
         fprintf(dbgfile, "filenms:          " WordFmt "\n", (long)hdr.Filenms);
         fprintf(dbgfile, "linenums:         " WordFmt "\n", (long)hdr.linenums);
@@ -1795,7 +1828,8 @@ static void gentables()
         report("  Global names    %7ld", (long)(hdr.GpackageFlags - hdr.Gnames));
         report("  Global pk flags %7ld", (long)(hdr.Glocs - hdr.GpackageFlags));
         report("  Global locs     %7ld", (long)(hdr.Statics - hdr.Glocs));
-        report("  Statics         %7ld", (long)(hdr.TCaseTables - hdr.Statics));
+        report("  Statics         %7ld", (long)(hdr.Snames - hdr.Statics));
+        report("  Static names    %7ld", (long)(hdr.TCaseTables - hdr.Snames));
         report("  TCaseTables     %7ld", (long)(hdr.Filenms - hdr.TCaseTables));
         report("  Filenms         %7ld", (long)(hdr.linenums - hdr.Filenms));
         report("  Linenums        %7ld", (long)(hdr.Constants - hdr.linenums));

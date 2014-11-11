@@ -422,6 +422,7 @@ struct progstate {
     word *GpackageFlags, *EgpackageFlags;
     struct loc *Glocs, *Eglocs;
     dptr Statics, Estatics;
+    dptr *Snames, *Esnames;
     dptr TCaseTables, ETCaseTables;
     dptr Constants, Econstants;
     int NGlobals, NStatics, NConstants, NTCaseTables;

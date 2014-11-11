@@ -612,9 +612,11 @@ static void initptrs(struct progstate *p, struct header *h)
     p->Eglocs = (struct loc *)(p->Code + h->Statics);
     p->NGlobals = p->Eglobals - p->Globals;
     p->Statics = (dptr)(p->Eglocs);
-    p->Estatics = (dptr)(p->Code + h->TCaseTables);
+    p->Estatics = (dptr)(p->Code + h->Snames);
     p->NStatics = p->Estatics - p->Statics;
-    p->TCaseTables = (dptr)(p->Estatics);
+    p->Snames = (dptr *)p->Estatics;
+    p->Esnames = (dptr *)(p->Code + h->TCaseTables);
+    p->TCaseTables = (dptr)(p->Esnames);
     p->ETCaseTables = (dptr)(p->Code + h->Filenms);
     p->NTCaseTables = p->ETCaseTables - p->TCaseTables;
     p->Filenms = (struct ipc_fname *)(p->ETCaseTables);
@@ -895,6 +897,12 @@ void resolve(struct progstate *p)
      * Relocate the names of the global variables.
      */
     for (dpp = p->Gnames; dpp < p->Egnames; dpp++)
+        *dpp = p->Constants + (uword)*dpp;
+
+    /*
+     * Relocate the names of the static variables.
+     */
+    for (dpp = p->Snames; dpp < p->Esnames; dpp++)
         *dpp = p->Constants + (uword)*dpp;
 
     /*

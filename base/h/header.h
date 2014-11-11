@@ -16,6 +16,7 @@ struct header {
     word GpackageFlags;         /* location of global variable package flag map */
     word Glocs;                 /* location of positions of globals */
     word Statics;		/* location of static variables in procs/methods */
+    word Snames;		/* location of names of statics */
     word TCaseTables;		/* location of tcase tables */
     word Constants;             /* location of constant descriptors */
     word Strcons;		/* location of identifier table */

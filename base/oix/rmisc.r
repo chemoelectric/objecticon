@@ -934,12 +934,8 @@ void outimage(FILE *f, dptr dp, int noimage)
                      (int)StrLen(*c->name), StrLoc(*c->name),
                      (int)StrLen(*fname), StrLoc(*fname));
          }
-         else if (InRange(proc0->program->Statics, vp, proc0->program->Estatics)) {
-             i = vp - proc0->fstatic;	/* static */
-             if (i < 0 || i >= proc0->nstatic)
-                 syserr("unreferencable static variable");
-             i += proc0->nparam + proc0->ndynam;
-             putstr(f, proc0->lnames[i]);
+         else if ((prog = find_procedure_static(vp))) {
+             putstr(f, prog->Snames[vp - prog->Statics]); 		/* static in procedure */
          }
          else if (InRange(uf->fvars->desc, vp, uf->fvars->desc_end)) {
              putstr(f, proc0->lnames[vp - uf->fvars->desc]);          /* argument/local */
@@ -1598,6 +1594,17 @@ struct progstate *find_class_static(dptr s)
     return 0;
 }
 
+struct progstate *find_procedure_static(dptr s)
+{
+    struct progstate *p;
+    for (p = progs; p; p = p->next) {
+        if (InRange(p->Statics, s, p->Estatics)) {
+            return p;
+        }
+    }
+    return 0;
+}
+
 /*
  * keyref(bp,dp) -- print name of subscripted table
  */
@@ -1736,12 +1743,8 @@ int getname(dptr dp1, dptr dp2)
                 alcstr(".", 1);
                 alcstr(StrLoc(*fname), StrLen(*fname));
             }
-            else if (InRange(proc0->program->Statics, vp, proc0->program->Estatics)) {
-                i = vp - proc0->fstatic;	/* static */
-                if (i < 0 || i >= proc0->nstatic)
-                    syserr("name: unreferencable static variable");
-                i += proc0->nparam + proc0->ndynam;
-                *dp2 = *proc0->lnames[i];
+            else if ((prog = find_procedure_static(vp))) {
+                *dp2 = *prog->Snames[vp - prog->Statics]; 		/* static in procedure */
             }
             else if (InRange(uf->fvars->desc, vp, uf->fvars->desc_end)) {
                 *dp2 = *proc0->lnames[vp - uf->fvars->desc];          /* argument/local */
