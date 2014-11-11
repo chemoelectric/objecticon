@@ -113,8 +113,10 @@ void tail_invoke_frame(struct frame *f)
                     p->K_current = k_current;
                     curpstate = p;
                     rc = curr_cf->proc->ccode(curr_cf);
-                    if (q->K_current != k_current) syserr("C code changed k_current");
-                    curpstate = q;
+                    if (curr_pf == old_curr_pf) {
+                        if (q->K_current != k_current) syserr("C code changed k_current");
+                        curpstate = q;
+                    }
                 }
                 if (rc) {
                     /*
@@ -140,12 +142,15 @@ void tail_invoke_frame(struct frame *f)
                 if (p == curpstate)
                     rc = curr_cf->proc->ccode(curr_cf);
                 else {
+                    struct p_frame *old_curr_pf = curr_pf;
                     q = curpstate;
                     p->K_current = k_current;
                     curpstate = p;
                     rc = curr_cf->proc->ccode(curr_cf);
-                    if (q->K_current != k_current) syserr("C code changed k_current");
-                    curpstate = q;
+                    if (curr_pf == old_curr_pf) {
+                        if (q->K_current != k_current) syserr("C code changed k_current");
+                        curpstate = q;
+                    }
                 }
                 if (!rc) {
                     ipc = f->failure_label;
@@ -751,17 +756,7 @@ static void fatalerr_139()
 
 static void coact_handler()
 {
-    dptr ce = get_dptr();           /* &main of program causing error */
     word *failure_label = GetAddr;
-    struct progstate *p = CoexprBlk(*ce).main_of;
-
-    /*
-     * Temporarily switch back to the program causing the error; we
-     * may have switched away if the error was in a native method
-     * called from another program.
-     */
-    if (p->K_current != k_current) syserr("Unexpected change of k_current");
-    curpstate = p;
 
     EVValD(&kywd_handler, E_Coact);
 
@@ -791,8 +786,6 @@ void activate_handler(void)
     struct p_frame *pf;
     MemProtect(pf = alc_p_frame(&Bactivate_handler_impl, 0));
     push_frame((struct frame *)pf);
-    pf->tmp[0].dword = D_Coexpr;
-    pf->tmp[0].vword.bptr = (union block *)curpstate->K_main;
     tail_invoke_frame((struct frame *)pf);
 }
 
