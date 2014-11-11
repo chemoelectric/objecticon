@@ -74,6 +74,7 @@ void switch_to(struct b_coexpr *ce)
 void set_curr_pf(struct p_frame *pf)
 {
     struct progstate *p = pf->proc->program;
+    if (!p) p = pf->creator;
     curr_pf->ipc = ipc;
     /* Check whether we are changing to a different program. */
     if (p && p != curpstate) {
@@ -147,6 +148,13 @@ void tail_invoke_frame(struct frame *f)
                     p->K_current = k_current;
                     curpstate = p;
                     rc = curr_cf->proc->ccode(curr_cf);
+                    /*
+                     * If curr_pf != old_curr_pf, then the c function
+                     * has pushed a frame, called tail_invoke_frame,
+                     * and returned.  So we stay in procstate p while the
+                     * pushed frame runs.  We return to procstate q when
+                     * Op_C[Return/Suspend/Fail] calls set_curr_pf.
+                     */
                     if (curr_pf == old_curr_pf) {
                         if (q->K_current != k_current) syserr("C code changed k_current");
                         curpstate = q;
@@ -1194,12 +1202,12 @@ void interp()
             case Op_CFail: {
                 struct p_frame *t = curr_pf;
                 set_curr_pf(curr_pf->caller);
+                /* Goto the failure_label stored in the C frame */
+                ipc = t->parent_sp->failure_label;
                 if (k_trace && ((struct c_frame *)t->parent_sp)->proc->field) {
                     k_trace--;
                     c_fail_trace((struct c_frame *)t->parent_sp);
                 }
-                /* Goto the failure_label stored in the C frame */
-                ipc = t->parent_sp->failure_label;
                 /* Pop off this frame AND the parent C frame */
                 pop_to(t->parent_sp->parent_sp);
                 break;
@@ -1207,56 +1215,58 @@ void interp()
 
             case Op_Fail: {
                 struct p_frame *t = curr_pf;
+                set_curr_pf(curr_pf->caller);
+                ipc = t->failure_label;
                 Desc_EVValD(t->proc, E_Pfail, D_Proc);
-                if (curr_pf->proc->program) {
+                if (t->proc->program) {
                     --k_level;
                     if (k_trace) {
                         k_trace--;
-                        fail_trace(curr_pf);
+                        fail_trace(t);
                     }
                 }
-                set_curr_pf(curr_pf->caller);
-                ipc = t->failure_label;
                 pop_to(t->parent_sp);
                 break;
             }
 
             case Op_Suspend: {
+                struct p_frame *t = curr_pf;
                 tended struct descrip tmp;
-                Desc_EVValD(curr_pf->proc, E_Psusp, D_Proc);
                 get_variable(&tmp);
                 retderef(&tmp, curr_pf->fvars);
                 if (curr_pf->lhs)
                     *curr_pf->lhs = tmp;
-                if (curr_pf->proc->program) {
+                set_curr_pf(curr_pf->caller);
+                Desc_EVValD(t->proc, E_Psusp, D_Proc);
+                if (t->proc->program) {
                     --k_level;
                     if (k_trace) {
                         k_trace--;
-                        suspend_trace(curr_pf, &tmp);
+                        suspend_trace(t, &tmp);
                     }
                 }
-                set_curr_pf(curr_pf->caller);
                 break;
             }
 
             case Op_Return: {
+                struct p_frame *t = curr_pf;
                 tended struct descrip tmp;
-                Desc_EVValD(curr_pf->proc, E_Pret, D_Proc);
                 get_variable(&tmp);
                 retderef(&tmp, curr_pf->fvars);
                 if (curr_pf->lhs)
                     *curr_pf->lhs = tmp;
                 curr_pf->exhausted = 1;
-                if (curr_pf->proc->program) {
-                    --k_level;
-                    if (k_trace) {
-                        k_trace--;
-                        return_trace(curr_pf, &tmp);
-                    }
-                }
                 /* Pop any frames below the returning procedure frame */
                 pop_to((struct frame *)curr_pf);
                 set_curr_pf(curr_pf->caller);
+                Desc_EVValD(t->proc, E_Pret, D_Proc);
+                if (t->proc->program) {
+                    --k_level;
+                    if (k_trace) {
+                        k_trace--;
+                        return_trace(t, &tmp);
+                    }
+                }
                 break;
             }
 
