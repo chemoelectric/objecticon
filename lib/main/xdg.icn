@@ -36,7 +36,7 @@ end
 # An object for holding info about a theme and the icons in its
 # various directories.
 #
-class ThemeIndex()
+package class ThemeIndex()
    public const
       directories,   # A list of ThemeDirectory objects
       parents        # A list of parent theme names (strings)
@@ -71,7 +71,7 @@ end
 # and the cached contents of those directories are stored in CachedDir
 # instances in the cached_dirs list.
 #
-class ThemeDirectory()
+package class ThemeDirectory()
    public const
       type,         # Type, a string
       size,         # Sizes etc, all integers
@@ -129,7 +129,7 @@ end
 #
 # Encapsulates cached info about a directory.
 #
-class CachedDir()
+package class CachedDir()
    public const
       file_path,    # A FilePath, giving the directory
       contents      # A set of strings, being the entries in the directory.
@@ -898,7 +898,7 @@ end
 #
 # An entry in the `Globs` object.
 #
-class GlobMatch()
+package class GlobMatch()
    public const
       weight,      # The integer weight
       mime_type,   # The mime mime_type (string)
@@ -915,7 +915,7 @@ end
 # A helper class used to store wildcard ("globbing") information
 # associated with mime-types.
 #
-class Globs()
+package class Globs()
    private const
       literal,
       simple,
