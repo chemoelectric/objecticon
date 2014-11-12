@@ -34,6 +34,14 @@ word *ipc;                         /* Notionally curpstate->K_current->curr_pf->
                                     * curr_pf is changed */
 struct c_frame *curr_cf;           /* currently executing c frame */
 
+/*
+ * An invariant should also be maintained in the interpreter loop (but
+ * not necessarily in a native C method) :-
+ * 
+ *       curpstate == get_current_program_of(k_current)
+ * This is maintained by set_curpstate, switch_to and set_curr_pf below.
+ */
+
 void synch_ipc()
 {
     curr_pf->ipc = ipc;
@@ -44,10 +52,7 @@ void synch_ipc()
  */
 void set_curpstate(struct progstate *p)
 {
-    struct p_frame *pf = get_current_user_frame_of(p->K_current);
-    /* Ensure that p can validly be made current, ie that one of its
-     * own procedures is current */
-    if (pf && pf->proc->program != p)
+    if (get_current_program_of(p->K_current) != p)
         fatalerr(636, NULL);
     curr_pf->ipc = ipc;
     curpstate = p;
@@ -74,10 +79,11 @@ void switch_to(struct b_coexpr *ce)
 void set_curr_pf(struct p_frame *pf)
 {
     struct progstate *p = pf->proc->program;
-    if (!p) p = pf->creator;
+    if (!p) 
+        p = pf->creator;
     curr_pf->ipc = ipc;
     /* Check whether we are changing to a different program. */
-    if (p && p != curpstate) {
+    if (p != curpstate) {
         p->K_current = k_current;
         curpstate = p;
     }
@@ -903,6 +909,7 @@ void interp()
             /* Switch to parent program */
             set_curpstate(curpstate->monitor);
         }
+
         curr_pf->curr_inst = ipc;
         curr_op = GetWord;
         /*printf("ipc=%p(%d) curr_op=%d (%s)\n", ipc,get_offset(ipc),(int)curr_op, op_names[curr_op]);fflush(stdout);*/

@@ -742,7 +742,16 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
           fatalerr(117, NULL);
 
        main_bp = &ProcBlk(*pstate->MainProc);
-       MemProtect(new_pf = alc_p_frame(&Bmain_wrapper, 0));
+       {
+           /*
+            * Allocate the top frame in the new program; this ensures
+            * set_curr_pf into this frame sets curpstate correctly.
+            */
+           struct progstate *t = curpstate;
+           curpstate = pstate;
+           MemProtect(new_pf = alc_p_frame(&Bmain_wrapper, 0));
+           curpstate = t;
+       }
        new_pf->tmp[0] = *pstate->MainProc;
        coex->sp = (struct frame *)new_pf;
        coex->base_pf = coex->curr_pf = new_pf;

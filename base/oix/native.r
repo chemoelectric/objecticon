@@ -563,15 +563,20 @@ end
 
 function lang_Coexpression_get_program(ce)
    body {
-       tended struct b_coexpr *b;
-       struct p_frame *pf;
+       struct b_coexpr *b;
+       struct progstate *p;
        if (!(b = get_coexpr_for(&ce)))
           runerr(0);
-       pf = get_current_user_frame_of(b);
-       if (pf)
-           return coexpr(pf->proc->program->K_main);
+       /*
+        * get_current_program_of() shouldn't be used for k_current in
+        * a native method, since tail_invoke_frame will have set
+        * curpstate to the enclosing class's defining program.
+        */
+       if (b == k_current)
+           p = curpstate;
        else
-           fail;
+           p = get_current_program_of(b);
+       return coexpr(p->K_main);
    }
 end
 
@@ -628,7 +633,6 @@ function display(i, ce)
        return nulldesc;
    }
 end
-
 
 function lang_Prog_get_runtime_millis(c)
    body {
