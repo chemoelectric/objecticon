@@ -72,7 +72,6 @@ class XmlParser(Connectable)
 
    private
       doc,
-      resolver, 
       current_divert_id,
       divert_stack,
       current_base,
@@ -81,6 +80,7 @@ class XmlParser(Connectable)
       dtd_insert_shown_error
 
    private readable
+      resolver, 
       do_namespaces_flag,
       preserve_insignificant_whitespace_flag,
       preserve_comments_flag,
@@ -93,13 +93,6 @@ class XmlParser(Connectable)
    public set_resolver(r)
       self.resolver := r
       return self
-   end
-
-   #
-   # Get the resolver being used
-   #
-   public get_resolver()
-      return self.resolver
    end
 
    #
