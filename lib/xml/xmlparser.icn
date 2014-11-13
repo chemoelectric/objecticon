@@ -96,6 +96,13 @@ class XmlParser(Connectable)
    end
 
    #
+   # Get the resolver being used
+   #
+   public get_resolver()
+      return .resolver
+   end
+
+   #
    # Configure whether the parser does namespace post-processing (the
    # default is yes).
    #

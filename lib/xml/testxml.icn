@@ -8,12 +8,6 @@
 
 import xml, ipl.options, io, lang
 
-class EmptyResolver(Resolver)
-   public resolve(base, external_id)
-      return Resolved(base, "")
-   end
-end
-
 procedure main(a)
    local p, fmt, t, e, s, d, eh
    if *a = 0 then {

@@ -37,3 +37,13 @@ class Resolved()
    end
 end
 
+#
+# A simple implementation that just returns the empty string as
+# resolution of any external id.
+#
+class EmptyResolver(Resolver)
+   public resolve(base, external_id)
+      return Resolved(base, "")
+   end
+end
+
