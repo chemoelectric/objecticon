@@ -1,6 +1,6 @@
 package lang
 
-import util(check_flag)
+import util(check_flag, error)
 
 final abstract class Proc()
    public static const
@@ -53,10 +53,23 @@ final abstract class Proc()
    # @return a {Location} instance
    #
    public static get_location(p, flag)
-      return Location!get_location_impl(p, flag)
+      local cl, i, prog
+      check_flag(flag)
+      # The check for Native here is to avoid (if flag is 1), looking up
+      # a non-native method's name in the global name table.  Eg, without
+      # the check, if we had a procedure abc and also a method Xyz.abc,
+      # then get_location(Xyz.abc, 1) would erroneously return the
+      # location of procedure abc.
+      if cl := get_defining_class(p) &
+         i := get_field_index(p) &
+         (/flag | iand(Class.get_field_flags(cl, i), Class.Native) = 0) then 
+      {
+         return Class.get_field_location(cl, i)
+      } else {
+         prog := get_program(p, 1) | return error("Proc not a procedure, has no location")
+         return Prog.get_global_location(get_name(p, 1), prog)
+      }
    end
-
-   private static native get_location_impl(p, flag)
 
    # Return the class in which this method is defined; fails if this is not a method.
    #

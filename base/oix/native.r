@@ -899,25 +899,6 @@ function lang_Class_get_program(c)
     }
 end
 
-function lang_Class_get_location_impl(c)
-    body {
-        struct b_class *class0;
-        struct loc *p;
-        tended struct descrip result;
-        if (!(class0 = get_class_for(&c)))
-            runerr(0);
-        if (class0->program->Glocs == class0->program->Eglocs) {
-            LitWhy("No global location data in icode");
-            fail;
-        }
-        p = lookup_global_loc(class0->name, class0->program);
-        if (!p)
-            syserr("Class name not found in global table");
-        loc_to_list(p, &result);
-        return result;
-    }
-end
-
 function lang_Class_get_supers(c)
     body {
         struct b_class *class0;
@@ -3119,25 +3100,6 @@ function lang_Constructor_get_program(c)
     }
 end
 
-function lang_Constructor_get_location_impl(c)
-    body {
-        struct b_constructor *constructor0;
-        struct loc *p;
-        tended struct descrip result;
-        if (!(constructor0 = get_constructor_for(&c)))
-            runerr(0);
-        if (constructor0->program->Glocs == constructor0->program->Eglocs) {
-            LitWhy("No global location data in icode");
-            fail;
-        }
-        p = lookup_global_loc(constructor0->name, constructor0->program);
-        if (!p)
-            syserr("Constructor name not found in global table");
-        loc_to_list(p, &result);
-        return result;
-    }
-end
-
 function lang_Constructor_get_n_fields(c)
    body {
         struct b_constructor *constructor0;
@@ -3410,45 +3372,6 @@ function lang_Proc_get_program(c, flag)
     }
 end
 
-function lang_Proc_get_location_impl(c, flag)
-   body {
-        tended struct descrip result;
-        struct b_proc *proc0;
-        struct p_proc *pp;
-        struct loc *p;
-        if (!(proc0 = get_proc_for(&c)))
-            runerr(0);
-        if (!isflag(&flag))
-           runerr(171, flag);
-        /* The check for M_Native here is to avoid (if flag is 1), looking up a non-deferred
-         * method's name in the global name table.
-         */
-        if (proc0->field && (is:null(flag) ||
-                            !(proc0->field->flags & M_Native))) {
-            struct progstate *prog = proc0->field->defining_class->program;
-            if (prog->ClassFieldLocs == prog->EClassFieldLocs) {
-                LitWhy("No field location data in icode");
-                fail;
-            }
-            p = &prog->ClassFieldLocs[proc0->field - prog->ClassFields];
-        } else {
-            if (!(pp = get_procedure(proc0))) {
-                LitWhy("Proc not a procedure, has no location");
-                fail;
-            }
-            if (pp->program->Glocs == pp->program->Eglocs) {
-                LitWhy("No global location data in icode");
-                fail;
-            }
-            p = lookup_global_loc(pp->name, pp->program);
-            if (!p)
-                syserr("Procedure name not found in global table");
-        }
-        loc_to_list(p, &result);
-        return result;
-     }
-end
-
 function lang_Proc_get_kind(c)
    body {
         struct b_proc *proc0;
@@ -3500,7 +3423,7 @@ function lang_Proc_get_field_index(c)
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
         if (proc0->field)
-            return C_integer 1 + proc0->field - *proc0->field->defining_class->fields;
+            return C_integer 1 + lookup_class_field_by_fnum(proc0->field->defining_class, proc0->field->fnum);
         else
             fail;
      }

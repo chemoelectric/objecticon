@@ -29,10 +29,8 @@ final abstract class Constructor()
    # @return a {Location} instance
    #
    public static get_location(c)
-      return Location!get_location_impl(c)
+      return Prog.get_global_location(get_name(c), get_program(c))
    end
-
-   private static native get_location_impl(c)
 
    # Generate the field names of the constructor {c}.
    #
