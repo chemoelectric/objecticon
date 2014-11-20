@@ -78,12 +78,22 @@ class UObject()
    end
 end
 
-class UClass(UObject)
+class UGlobalObject(UObject)
+   public const
+      package_flag
+
+   package new(name, package_flag, file, line)
+      cast(self,UObject).new(name, file, line)
+      self.package_flag := package_flag
+      return
+   end
+end
+
+class UClass(UGlobalObject)
    public const
       supers,
       fields,
-      flags,
-      package_flag
+      flags
 
    package add_field(o)
       put(fields, o)
@@ -102,8 +112,7 @@ class UClass(UObject)
    end
 
    package new(name, package_flag, file, line, flags)
-      cast(self,UObject).new(name, file, line)
-      self.package_flag := package_flag
+      cast(self,UGlobalObject).new(name, package_flag, file, line)
       self.flags := flags
       self.supers := []
       self.fields := []
@@ -226,23 +235,18 @@ class UMethod(UObject, UFunction)
    end
 end
 
-class UProcedure(UObject, UFunction)
-   public const
-      package_flag
-
+class UProcedure(UGlobalObject, UFunction)
    package new(name, package_flag, file, line)
-      cast(self,UObject).new(name, file, line)
+      cast(self,UGlobalObject).new(name, package_flag, file, line)
       cast(self,UFunction).new()
       self.package_flag := package_flag
       return
    end
 end
 
-class URecord(UObject)
+class URecord(UGlobalObject)
    private
       fields
-   public const
-      package_flag
 
    public get_fields()
       suspend .!fields
@@ -253,21 +257,18 @@ class URecord(UObject)
    end
 
    package new(name, package_flag, file, line)
-      cast(self,UObject).new(name, file, line)
-      self.package_flag := package_flag
+      cast(self,UGlobalObject).new(name, package_flag, file, line)
       self.fields := []
       return
    end
 end
 
-class UGlobal(UObject)
+class UGlobal(UGlobalObject)
    public const
-      package_flag,
       readable_flag
 
    package new(name, package_flag, readable_flag, file, line)
-      cast(self,UObject).new(name, file, line)
-      self.package_flag := package_flag
+      cast(self,UGlobalObject).new(name, package_flag, file, line)
       self.readable_flag := readable_flag
       return
    end
