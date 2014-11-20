@@ -1398,7 +1398,7 @@ static void conv_var()
             ++pc;
             break;
         }
-        case Op_NamedGlobal:
+        case Op_GlobalVal:
         case Op_Global: {
             *pc = (word)&prog->Globals[*pc];
             ++pc;

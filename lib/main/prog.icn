@@ -8,14 +8,14 @@ package lang
 final abstract class Prog()
    public static const 
       # Integer flag for a named global
-      NamedGlobal,
+      Named,
       # Integer flag for a global with package visibility
       Package,
       # Integer flag for a global with readable visibility
       Readable
 
    private static init()
-      NamedGlobal := 1
+      Named := 1
       Package := 2
       Readable := 4
    end
@@ -56,7 +56,7 @@ final abstract class Prog()
       i := get_global_index(q, P) | fail
       return case get_global_flags(i, P) of {
          Package+Readable : .get_global_impl(i, P)
-         0 | NamedGlobal : get_global_impl(i, P)
+         0 | Named : get_global_impl(i, P)
       }
    end
 
@@ -67,7 +67,7 @@ final abstract class Prog()
    public static get_named_global(q, P)
       local i
       if i := get_global_index(q, P) &
-         get_global_flags(i, P) = NamedGlobal then
+         get_global_flags(i, P) = Named then
          return get_global_impl(i, P)
    end
 

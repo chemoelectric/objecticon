@@ -221,11 +221,11 @@ static void emit_ir_var(struct ir_var *v, char *desc)
                 if ((ge->g_flag & F_Readable) &&
                     curr_lfunc->defined->package_id != 1 &&
                     ge->defined->package_id != curr_lfunc->defined->package_id)
-                    outwordx(Op_NamedGlobal, "   %s=global readable", desc);
+                    outwordx(Op_GlobalVal, "   %s=globalval", desc);
                 else 
                     outwordx(Op_Global, "   %s=global", desc);
             } else
-                outwordx(Op_NamedGlobal, "   %s=namedglobal", desc);
+                outwordx(Op_GlobalVal, "   %s=globalval", desc);
             outwordx(ge->g_index, "      %d (%s)", ge->g_index, ge->name);
             break;
         }
@@ -1628,7 +1628,7 @@ static void gentables()
         if (gp->g_flag & F_Readable)
             f |= G_Readable;
         if (gp->g_flag & (F_Builtin|F_Proc|F_Record|F_Class))
-            f |= G_NamedGlobal;
+            f |= G_Named;
         outbytex(f, "Flag %s", gp->name);
     }
     align();

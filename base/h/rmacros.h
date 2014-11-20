@@ -432,7 +432,7 @@
 #define TypeMask	63	/* type mask */
 #define OffsetMask	(~(F_Var | F_Nqual | F_Ptr | F_Typecode)) /* offset mask for variables */
 
-#define G_NamedGlobal   1
+#define G_Named         1
 #define G_Package       2
 #define G_Readable      4
 
