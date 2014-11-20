@@ -127,6 +127,6 @@ package my.pack
 package readable global g
 }}}
 
-This means that the symbol `g`will be visible for reading and writing inside the package `my.pack`, but visible only for reading outside of `my.pack`.  String lookup is allowed, but always returns the readable value.
+This means that the symbol `g` will be visible for reading and writing inside the package `my.pack`, but visible only for reading outside of `my.pack`.  String lookup is allowed, but always returns the readable value.
 
 The `package` keyword must always precede the `readable` keyword.
