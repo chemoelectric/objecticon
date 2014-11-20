@@ -4,6 +4,7 @@ invocable all
 
 procedure main()
    local s
+   set_globals()
    every s := ("g" || (1 to 12)) |"r1"|"r2"|"p1"|"p2"|"C1"|"C2"|"junk" do {
       s := "first." || s
       yes_no{s || ": index check", s == Prog.get_global_name(Prog.get_global_index(s))}
