@@ -213,9 +213,14 @@ static void emit_ir_var(struct ir_var *v, char *desc)
         }
         case GLOBAL: {
             struct gentry *ge = v->global;
-            if ((ge->g_flag & (F_Builtin|F_Proc|F_Record|F_Class)) == 0)
-                outwordx(Op_Global, "   %s=global", desc);
-            else
+            if ((ge->g_flag & (F_Builtin|F_Proc|F_Record|F_Class)) == 0) {
+                if ((ge->g_flag & F_Readable) &&
+                    curr_lfunc->defined->package_id != 1 &&
+                    ge->defined->package_id != curr_lfunc->defined->package_id)
+                    outwordx(Op_NamedGlobal, "   %s=global readable", desc);
+                else 
+                    outwordx(Op_Global, "   %s=global", desc);
+            } else
                 outwordx(Op_NamedGlobal, "   %s=namedglobal", desc);
             outwordx(ge->g_index, "      %d (%s)", ge->g_index, ge->name);
             break;

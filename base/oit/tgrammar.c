@@ -147,8 +147,8 @@ int packageflag;
 #define Every1(x1,x2,x3,x4)	$$ = tree5(N_Everydo,x1,x1,x2,x4) 
 #define Fail(x)			$$ = tree2(N_Fail,x)
 #define Field(x1,x2,x3)		$$ = tree4(N_Field,x2,x1,x3)
-#define Global0(x)		idflag = F_Global
-#define Global1(x1,x2,x3)	/* empty */
+#define Global0(x)		check_globalflag(x) ; idflag = F_Global
+#define Global1(x1,x2,x3,x4)	/* empty */
 #define Ident(x)		install(Str0(x),x)
 #define Idlist(x1,x2,x3)	install(Str0(x3),x3)
 #define If0(x1,x2,x3,x4)	$$ = tree4(N_If,x1,x2,x4) 
@@ -188,6 +188,9 @@ int packageflag;
 
 #define OptPackage0()            packageflag = 0
 #define OptPackage1()            packageflag = F_Package;
+
+#define OptReadable0()
+#define OptReadable1()          packageflag |= F_Readable;
 
 #define Progend(x1,x2)		/* Empty */
 #define Record1(x1,x2)		next_record(Str0(x2), x2); idflag = F_Argument

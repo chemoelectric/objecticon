@@ -84,6 +84,12 @@ void install(char *name, struct node *n)
     }
 }
 
+void check_globalflag(struct node *n)
+{
+    if ((packageflag & (F_Package | F_Readable)) == F_Readable)
+        tfatal_at(n, "A readable global must be declared package readable");
+}
+
 struct tgentry *next_global(char *name, int flag, struct node *n)
 {
     int i = hasher(name, ghash);
@@ -1166,7 +1172,11 @@ void output_code()
         switch (gp->g_flag & (F_Global|F_Class|F_Proc|F_Record)) {
             case F_Global:
                 ensure_pos(gp->pos);
-                uout_op((gp->g_flag & F_Package) ? Uop_PkGlobal : Uop_Global);
+                switch (gp->g_flag & (F_Package|F_Readable)) {
+                    case 0 : uout_op(Uop_Global); break;
+                    case F_Package : uout_op(Uop_PkGlobal); break;
+                    case F_Package|F_Readable : uout_op(Uop_PkRdGlobal); break;
+                }
                 uout_str(gp->g_name);
                 break;
             case F_Global|F_Class:

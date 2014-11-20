@@ -806,6 +806,7 @@ class Factory()
       t := Global(Node("body",
                        Node.EMPTY,
                        Node("global",
+                            Node.EMPTY,
                             Token(YY.GLOBAL, "global", pad || "global"),
                             Node.EMPTY)))
       l := t.get_ids()
@@ -1125,13 +1126,31 @@ class Record(GlobalObj)
 end
 
 class Global(GlobalObj, IdList)
+   public const
+      gpos
+
    public get_first_token()
       return Util.first_token(pos)
    end
 
-   package new(pos, index)
+   public get_readable_flag()
+      if gpos.child(1) === Node.EMPTY then
+         fail
+      return Leaf(gpos.child(1))
+   end
+
+   public set_readable_flag(x)
+      if /x then
+         gpos.set(1, Node.EMPTY)
+      else
+         gpos.set(1, x.pos)
+      return self
+   end
+
+   package new(pos)
       cast(self,Tree).new(pos)
-      cast(self,IdList).new(pos.child(2), 2)
+      gpos := pos.child(2)
+      cast(self,IdList).new(gpos, 3)
       return
    end
 end

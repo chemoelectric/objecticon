@@ -218,6 +218,7 @@ void readglob(struct lfile *lf)
             }
 
             case Uop_PkGlobal:
+            case Uop_PkRdGlobal:
             case Uop_Global:
                 name = uin_fqid(lf->package);	/* get variable name */
                 gp = glocate(name);
@@ -225,7 +226,12 @@ void readglob(struct lfile *lf)
                     lfatal2(lf, &pos, &gp->pos, "",
                             "global %s declared elsewhere at ", name);
                 else {
-                    f = (uop->opcode == Uop_PkGlobal) ? F_Package : 0;
+                    f = 0;
+                    switch (uop->opcode) {
+                        case Uop_PkGlobal: f = F_Package; break;
+                        case Uop_PkRdGlobal: f = F_Package|F_Readable; break;
+                        case Uop_Global: f = 0; break;
+                    }
                     gp = putglobal(name, f, lf, &pos);
                 }
                 break;

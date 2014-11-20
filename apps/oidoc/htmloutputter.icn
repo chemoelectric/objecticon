@@ -492,7 +492,9 @@ class HtmlOutputter(Outputter)
          default : stop("Unknown type:", image(c))
       }
 
-      if has_package_flag(c) then
+      if has_readable_flag(c) then
+         type := "package readable " || type
+      else if has_package_flag(c) then
          type := "package " || type
       fname := output_dir || "/" || get_serial_no(c) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {

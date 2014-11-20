@@ -110,6 +110,16 @@ class Outputter()
       }
    end
 
+   protected has_readable_flag(c)
+      # If it's a global var we check the "global" node (rather than the ident node).
+      if is(c, GlobalSymbol) then {
+         if is(c.decl_obj, Tree) then
+            return c.decl_obj.get_readable_flag()
+         else
+            return \c.decl_obj.readable_flag
+      }
+   end
+
    protected is_final(c)
       if is(c.obj, Tree) then
          return c.obj.get_access().gen().str() == "final"

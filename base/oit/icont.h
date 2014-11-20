@@ -37,6 +37,7 @@
 #define F_Field       01000000  /* local X is really self.X or Class.X */
 #define F_Method      02000000  /* function is a method */
 #define F_Package     04000000  /* global has package-level scope */
+#define F_Readable   010000000  /* global has (package) readable scope */
 
 #define MemProtect(notnull) do {if (!(notnull)) quit("Out of memory");} while(0)
 #define Abs(x) (((x) < 0) ? (-(x)) : (x))

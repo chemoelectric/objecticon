@@ -262,11 +262,13 @@ end
 
 class UGlobal(UObject)
    public const
-      package_flag
+      package_flag,
+      readable_flag
 
-   package new(name, package_flag, file, line)
+   package new(name, package_flag, readable_flag, file, line)
       cast(self,UObject).new(name, file, line)
       self.package_flag := package_flag
+      self.readable_flag := readable_flag
       return
    end
 end
@@ -389,12 +391,15 @@ class UReader()
 
              UcodeOp.Global: {
                 s := uin_str() | fail
-                uf.add_symbol(UGlobal(s, &no, file, line))
+                uf.add_symbol(UGlobal(s, &no, &no, file, line))
              }
-
              UcodeOp.PkGlobal: {
                 s := uin_str() | fail
-                uf.add_symbol(UGlobal(s, &yes, file, line))
+                uf.add_symbol(UGlobal(s, &yes, &no, file, line))
+             }
+             UcodeOp.PkRdGlobal: {
+                s := uin_str() | fail
+                uf.add_symbol(UGlobal(s, &yes, &yes, file, line))
              }
 
              UcodeOp.Invocable: {

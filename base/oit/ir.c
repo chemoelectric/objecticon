@@ -732,8 +732,18 @@ static int is_assignable_var(struct lnode *n)
     switch (n->op) {
         case Uop_Local: 
             return 1;
-        case Uop_Global:
-            return (((struct lnode_global *)n)->global->g_flag & (F_Builtin|F_Proc|F_Record|F_Class)) == 0;
+        case Uop_Global: {
+            struct gentry *ge = ((struct lnode_global *)n)->global;
+            if ((ge->g_flag & (F_Builtin|F_Proc|F_Record|F_Class)) == 0) {
+                if ((ge->g_flag & F_Readable) &&
+                    curr_lfunc->defined->package_id != 1 &&
+                    ge->defined->package_id != curr_lfunc->defined->package_id)
+                    return 0;
+                else 
+                    return 1;
+            } else
+                return 0;
+        }
     }
     return 0;
 }
