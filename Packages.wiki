@@ -118,3 +118,15 @@ Now none of these symbols will be visible outside of the package `my.pack`.
 Symbols with package scope cannot be looked up using `proc()`, `Prog.get_global()` and similar functions, even from within the declaring package.  Nor can they be used with string invocation.
 
 If a final or abstract class is declared with package scope, the `package` keyword must precede the `final` or `abstract` keyword, otherwise a syntax error results.  So, one must say `package final class Abc()` rather than `final package class Abc()`.
+
+== Package readable scope ==
+A global variable can also be declared with `package readable` scope, as follows :-
+{{{
+package my.pack
+
+package readable global g
+}}}
+
+This means that the symbol `g`will be visible for reading and writing inside the package `my.pack`, but visible only for reading outside of `my.pack`.  String lookup is allowed, but always returns the readable value.
+
+The `package` keyword must always precede the `readable` keyword.
