@@ -62,7 +62,7 @@ class Ieval(MinimalObjectOutput)
          LineEditorStream.get_console_size()[1]
       s := set()
       every i := 1 to lang.Prog.get_n_globals() do {
-         if iand(lang.Prog.get_global_flags(i), lang.Prog.PackageFlag) = 0 then {
+         if iand(lang.Prog.get_global_flags(i), lang.Prog.Package + lang.Prog.Readable) ~= lang.Prog.Package then {
             e := lang.Prog.get_global_name(i)
             if e ? ((not upto('.')) | (=!imports & ="." & (not upto('.')))) then
                insert(s, e)
@@ -79,7 +79,7 @@ class Ieval(MinimalObjectOutput)
          LineEditorStream.get_console_size()[1]
       s := set()
       every i := 1 to lang.Prog.get_n_globals(prog) do {
-         if iand(lang.Prog.get_global_flags(i, prog), lang.Prog.PackageFlag) = 0 then
+         if iand(lang.Prog.get_global_flags(i, prog), lang.Prog.Package + lang.Prog.Readable) ~= lang.Prog.Package then
             insert(s, lang.Prog.get_global_name(i, prog))
       }
       every output.write(colmize(isort(s, map), w))

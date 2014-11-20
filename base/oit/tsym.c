@@ -86,7 +86,7 @@ void install(char *name, struct node *n)
 
 void check_globalflag(struct node *n)
 {
-    if ((packageflag & (F_Package | F_Readable)) == F_Readable)
+    if ((globalflag & (F_Package | F_Readable)) == F_Readable)
         tfatal_at(n, "A readable global must be declared package readable");
 }
 
@@ -109,7 +109,7 @@ struct tgentry *next_global(char *name, int flag, struct node *n)
     ghash[i] = x;
     x->g_name = name;
     x->pos = n;
-    x->g_flag = flag | packageflag;
+    x->g_flag = flag | globalflag;
     if (glast) {
         glast->g_next = x;
         glast = x;

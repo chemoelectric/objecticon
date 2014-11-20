@@ -39,7 +39,7 @@ static const char yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93";
 extern int fncargs[];
 int idflag;
 int modflag;
-int packageflag;
+int globalflag;
 #line 43 "y.tab.c"
 
 #ifndef YYSTYPE
@@ -2386,11 +2386,11 @@ case 1:
 break;
 case 11:
 #line 239 "tgram.g"
-	{packageflag = 0;}
+	{globalflag = 0;}
 break;
 case 12:
 #line 240 "tgram.g"
-	{packageflag = F_Package;;}
+	{globalflag = F_Package;;}
 break;
 case 13:
 #line 242 "tgram.g"
@@ -2398,7 +2398,7 @@ case 13:
 break;
 case 14:
 #line 243 "tgram.g"
-	{packageflag |= F_Readable;;}
+	{globalflag |= F_Readable;;}
 break;
 case 22:
 #line 254 "tgram.g"

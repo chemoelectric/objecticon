@@ -419,7 +419,7 @@ struct progstate {
     dptr *Fnames, *Efnames;
     dptr Globals, Eglobals;
     dptr *Gnames, *Egnames;
-    word *GpackageFlags, *EgpackageFlags;
+    char *Gflags, *Egflags;
     struct loc *Glocs, *Eglocs;
     dptr Statics, Estatics;
     dptr *Snames, *Esnames;
@@ -432,8 +432,6 @@ struct progstate {
     struct ipc_line * Current_line_ptr;
     struct ipc_fname * Current_fname_ptr;
     dptr MainProc;
-
-    int  *global_flags;                 /* Array matching Globals, giving info about globals */
 
     uword Coexp_ser;			/* this program's serial numbers */
     uword List_ser;

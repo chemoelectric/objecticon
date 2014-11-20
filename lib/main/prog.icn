@@ -10,11 +10,14 @@ final abstract class Prog()
       # Integer flag for a named global
       NamedGlobal,
       # Integer flag for a global with package visibility
-      PackageFlag
+      Package,
+      # Integer flag for a global with readable visibility
+      Readable
 
    private static init()
       NamedGlobal := 1
-      PackageFlag := 2
+      Package := 2
+      Readable := 4
    end
 
    # Load and return a program from file {s}.
@@ -50,9 +53,11 @@ final abstract class Prog()
    #
    public static get_global(q, P)
       local i
-      if i := get_global_index(q, P) &
-         get_global_flags(i, P) = (0 | NamedGlobal) then
-         return get_global_impl(i, P)
+      i := get_global_index(q, P) | fail
+      return case get_global_flags(i, P) of {
+         Package+Readable : .get_global_impl(i, P)
+         0 | NamedGlobal : get_global_impl(i, P)
+      }
    end
 
    #

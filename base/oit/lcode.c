@@ -122,6 +122,7 @@ struct ipc_line {
 static struct strconst *first_strconst, *last_strconst, *strconst_hash[128];
 static int strconst_offset;
 static struct centry *constblock_hash[128];
+static void outbytex(char b, char *fmt, ...);
 static void outshortx(short s, char *fmt, ...);
 static void outwordx(word oword, char *fmt, ...);
 static void outwordz(word oword, char *fmt, ...);
@@ -130,11 +131,14 @@ static void outsdescrip(struct centry *ce, char *fmt, ...);
 
 #if WordBits == 32
 #define WordFmt "%08lx"
+#define ShortFmt "%04lx    "
+#define ByteFmt "%02lx      "
 #else
 #define WordFmt "%016lx"
+#define ShortFmt "%04lx            "
+#define ByteFmt "%02lx              "
 #endif
 
-#define ShortFmt "%04lx"
 
 static struct header hdr;
 
@@ -1454,7 +1458,6 @@ static void gentables()
     struct ipc_fname *fnptr;
     struct ipc_line *lnptr;
     struct centry *ce;
-    word w;
 
     if (Dflag) {
         fprintf(dbgfile,"\n\n# global tables\n");
@@ -1613,23 +1616,22 @@ static void gentables()
     flushcode();
 
     /*
-     * Output bitmap for global variable package flags.
+     * Output global variable flags.
      */
     if (Dflag)
-        fprintf(dbgfile, "\n# Global variable package flag bitmap\n");
-    hdr.GpackageFlags = pc;
-    w = i = 0;
+        fprintf(dbgfile, "\n# Global variable flags\n");
+    hdr.Gflags = pc;
     for (gp = lgfirst; gp != NULL; gp = gp->g_next) {
+        char f = 0;
         if (gp->g_flag & F_Package)
-            w |= ((word)1 << i);
-        ++i;
-        if (i == WordBits) {
-            outwordx(w, "map");
-            w = i = 0;
-        }
+            f |= G_Package;
+        if (gp->g_flag & F_Readable)
+            f |= G_Readable;
+        if (gp->g_flag & (F_Builtin|F_Proc|F_Record|F_Class))
+            f |= G_NamedGlobal;
+        outbytex(f, "Flag %s", gp->name);
     }
-    if (i > 0)
-        outwordx(w, "map");
+    align();
     flushcode();
 
     /*
@@ -1799,7 +1801,7 @@ static void gentables()
         fprintf(dbgfile, "fnames:           " WordFmt "\n", (long)hdr.Fnames);
         fprintf(dbgfile, "globals:          " WordFmt "\n", (long)hdr.Globals);
         fprintf(dbgfile, "gnames:           " WordFmt "\n", (long)hdr.Gnames);
-        fprintf(dbgfile, "gpackageflags:    " WordFmt "\n", (long)hdr.GpackageFlags);
+        fprintf(dbgfile, "gflags:           " WordFmt "\n", (long)hdr.Gflags);
         fprintf(dbgfile, "glocs:            " WordFmt "\n", (long)hdr.Glocs);
         fprintf(dbgfile, "statics:          " WordFmt "\n", (long)hdr.Statics);
         fprintf(dbgfile, "snames:           " WordFmt "\n", (long)hdr.Snames);
@@ -1830,8 +1832,8 @@ static void gentables()
         report("  Records         %7ld", (long)(hdr.Fnames - hdr.Records));
         report("  Field names     %7ld", (long)(hdr.Globals - hdr.Fnames));
         report("  Globals         %7ld", (long)(hdr.Gnames  - hdr.Globals));
-        report("  Global names    %7ld", (long)(hdr.GpackageFlags - hdr.Gnames));
-        report("  Global pk flags %7ld", (long)(hdr.Glocs - hdr.GpackageFlags));
+        report("  Global names    %7ld", (long)(hdr.Gflags - hdr.Gnames));
+        report("  Global flags    %7ld", (long)(hdr.Glocs - hdr.Gflags));
         report("  Global locs     %7ld", (long)(hdr.Statics - hdr.Glocs));
         report("  Statics         %7ld", (long)(hdr.Snames - hdr.Statics));
         report("  Static names    %7ld", (long)(hdr.TCaseTables - hdr.Snames));
@@ -1856,7 +1858,7 @@ static void align()
     n = WordSize - n;
     if (Dflag) {
         for (i = 0; i < n; ++i)
-            fprintf(dbgfile, WordFmt ":   00          # Padding byte\n", (long)pc + i);
+            fprintf(dbgfile, WordFmt ":   " ByteFmt "    # Padding byte\n", (long)pc + i, (long)0);
     }
     CodeCheck(n);
     for (i = 0; i < n; ++i)
@@ -1918,7 +1920,7 @@ static void outshortx(short s, char *fmt, ...)
     if (Dflag) {
         va_list ap;
         va_start(ap, fmt);
-        fprintf(dbgfile, WordFmt ":   " ShortFmt "        # ", (long)pc, (long)s);
+        fprintf(dbgfile, WordFmt ":   " ShortFmt "    # ", (long)pc, (long)s);
         vfprintf(dbgfile, fmt, ap);
         putc('\n', dbgfile);
         va_end(ap);
@@ -1927,6 +1929,21 @@ static void outshortx(short s, char *fmt, ...)
     memcpy(codep, &s, sizeof(short));
     codep += sizeof(short);
     pc += sizeof(short);
+}
+
+static void outbytex(char b, char *fmt, ...)
+{
+    if (Dflag) {
+        va_list ap;
+        va_start(ap, fmt);
+        fprintf(dbgfile, WordFmt ":   " ByteFmt "    # ", (long)pc, (long)b);
+        vfprintf(dbgfile, fmt, ap);
+        putc('\n', dbgfile);
+        va_end(ap);
+    }
+    CodeCheck(1);
+    *codep++ = b;
+    pc++;
 }
 
 static void outwordz(word oword, char *fmt, ...)

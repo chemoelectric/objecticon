@@ -433,7 +433,8 @@
 #define OffsetMask	(~(F_Var | F_Nqual | F_Ptr | F_Typecode)) /* offset mask for variables */
 
 #define G_NamedGlobal   1
-#define G_PackageFlag   2
+#define G_Package       2
+#define G_Readable      4
 
 /*
  * "In place" dereferencing.

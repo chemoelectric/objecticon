@@ -4,12 +4,13 @@ invocable all
 
 procedure main()
    local s
-   every s := "g1"|"g2"|"g3"|"g4"|"g5"|"g6"|"g7"|"g8"|"r1"|"r2"|"p1"|"p2"|"C1"|"C2"|"junk" do {
+   every s := ("g" || (1 to 12)) |"r1"|"r2"|"p1"|"p2"|"C1"|"C2"|"junk" do {
       s := "first." || s
       yes_no{s || ": index check", s == Prog.get_global_name(Prog.get_global_index(s))}
       print{s || ": Prog.get_global_name", Prog.get_global_name(s)}
       print{s || ": Prog.get_global_flags", Prog.get_global_flags(s)}
       print{s || ": Prog.get_global", Prog.get_global(s)}
+      try{s || ": Prog.get_global assignable", Prog.get_global(s) := 1}
       print{s || ": Prog.get_named_global", Prog.get_named_global(s)}
       print{s || ": Class.for_name", Class.for_name(s)}
       print{s || ": Constructor.for_name", Constructor.for_name(s)}

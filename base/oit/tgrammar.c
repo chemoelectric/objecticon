@@ -28,7 +28,7 @@
 extern int fncargs[];
 int idflag;
 int modflag;
-int packageflag;
+int globalflag;
 
 #define EmptyNode tree1(N_Empty) 
 
@@ -186,11 +186,11 @@ int packageflag;
                                 idflag = F_Argument
 #define Proc2(x1,x2,x3,x4)      curr_func->code = tree6(N_Proc,x1,x1,x2,x3,x4)
 
-#define OptPackage0()            packageflag = 0
-#define OptPackage1()            packageflag = F_Package;
+#define OptPackage0()            globalflag = 0
+#define OptPackage1()            globalflag = F_Package;
 
 #define OptReadable0()
-#define OptReadable1()          packageflag |= F_Readable;
+#define OptReadable1()          globalflag |= F_Readable;
 
 #define Progend(x1,x2)		/* Empty */
 #define Record1(x1,x2)		next_record(Str0(x2), x2); idflag = F_Argument
