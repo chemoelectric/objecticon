@@ -460,7 +460,7 @@ class Decode()
    private static lookup_class(s)
       local i, t
       if i := Prog.get_global_index(s) &
-         iand(Prog.get_global_flags(i), Prog.Named) ~= 0 &
+         iand(Prog.get_global_flags(i), Prog.Const) ~= 0 &
          t := Prog.get_global_impl(i) &
          type(t) == "class" then
          return t
@@ -469,7 +469,7 @@ class Decode()
    private static lookup_constructor(s)
       local i, t
       if i := Prog.get_global_index(s) &
-         iand(Prog.get_global_flags(i), Prog.Named) ~= 0 &
+         iand(Prog.get_global_flags(i), Prog.Const) ~= 0 &
          t := Prog.get_global_impl(i) &
          type(t) == "constructor" then
          return t
@@ -478,7 +478,7 @@ class Decode()
    private static lookup_procedure(s)
       local i, t
       if i := Prog.get_global_index(s) &
-         iand(Prog.get_global_flags(i), Prog.Named) ~= 0 &
+         iand(Prog.get_global_flags(i), Prog.Const) ~= 0 &
          t := Prog.get_global_impl(i) &
          match("procedure ", image(t)) then
          return t

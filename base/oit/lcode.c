@@ -1628,7 +1628,7 @@ static void gentables()
         if (gp->g_flag & F_Readable)
             f |= G_Readable;
         if (gp->g_flag & (F_Builtin|F_Proc|F_Record|F_Class))
-            f |= G_Named;
+            f |= G_Const;
         outbytex(f, "Flag %s", gp->name);
     }
     align();

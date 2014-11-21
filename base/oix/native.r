@@ -383,7 +383,7 @@ function lang_Prog_get_global_impl(q, c)
        i = lookup_global(&q, prog);
        if (i < 0)
            fail;
-       if (prog->Gflags[i] & G_Named)
+       if (prog->Gflags[i] & G_Const)
            return prog->Globals[i];
        else
            return named_var(&prog->Globals[i]);
