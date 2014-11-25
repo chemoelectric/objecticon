@@ -18,7 +18,7 @@ class CanvasOverlayItemDialog(CanvasComponentDialog)
       if (/c.parent.w_spec | /c.parent.h_spec) & /c.layout_delegate then
          return alert_error(self, "This item must have a layout manager set.")
 
-      cast(self,CanvasComponentDialog).validate_input() | fail 
+      CanvasComponentDialog.validate_input() | fail 
       return
    end
 end

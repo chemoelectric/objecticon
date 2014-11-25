@@ -21,7 +21,7 @@ class CanvasButton(CanvasComponent)
       #
       # Extend superclass method
       #
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       #
       # Add the code
       #
@@ -55,7 +55,7 @@ class CanvasButton(CanvasComponent)
    end
 
    public dup_fields(c)
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       c.accepts_focus_flag := self.accepts_focus_flag
       c.no_click_focus_flag := self.no_click_focus_flag
       c.toggles_flag := self.toggles_flag

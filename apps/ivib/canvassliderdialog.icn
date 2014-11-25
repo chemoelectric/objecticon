@@ -46,7 +46,7 @@ class CanvasSliderDialog(CanvasComponentDialog)
       if init_val < \lo_val | init_val > \hi_val then
          return alert_error(self, "Init value is outside range")
 
-      return cast(self,CanvasComponentDialog).validate_input()
+      return CanvasComponentDialog.validate_input()
    end
 
    public set_vals()
@@ -66,7 +66,7 @@ class CanvasSliderDialog(CanvasComponentDialog)
       if snaps_flag.is_checked() then 
          snaps_val := numeric(snaps.get_contents())
 
-      cast(self,CanvasComponentDialog).set_vals()
+      CanvasComponentDialog.set_vals()
 
       c.set_range(lo_val, hi_val)
       c.set_value(init_val)
@@ -91,7 +91,7 @@ class CanvasSliderDialog(CanvasComponentDialog)
    public setup()
       local l, l3, l4, l5, p
 
-      cast(self,CanvasComponentDialog).setup()
+      CanvasComponentDialog.setup()
 
       p := TabItem()
       p.set_layout(GridLayout().set_extra("borders"))

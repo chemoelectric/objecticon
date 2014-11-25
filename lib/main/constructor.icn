@@ -21,16 +21,16 @@ final abstract class Constructor()
    # Return the name of the package in which this constructor resides; fails
    # if the constructor is not in a package.
    #
-   public static native get_package(c)
+   public static get_package(c)
+      return extract_package(get_name(c))
+   end
 
    # Return the source location of the constructor
    # @return a {Location} instance
    #
    public static get_location(c)
-      return Location!get_location_impl(c)
+      return Prog.get_global_location(get_name(c), get_program(c))
    end
-
-   private static native get_location_impl(c)
 
    # Generate the field names of the constructor {c}.
    #
@@ -79,12 +79,10 @@ final abstract class Constructor()
    # @fail if the constructor is unknown
    #
    public static for_name(s, ce)
-      local i, t
+      local t
       s := string(s) | runerr(103, s)
       if not(integer(s)) &
-         i := Prog.get_global_index(s) &
-         Prog.get_global_flags(i, ce) = Prog.NamedGlobal &
-         t := Prog.get_global_impl(i, ce) &
+         t := Prog.get_named_global(s, ce) &
          type(t) == "constructor" then
          return t
    end

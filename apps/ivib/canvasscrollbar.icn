@@ -18,7 +18,7 @@ class CanvasScrollBar(CanvasComponent,ScrollBar)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       c.chain("set_value(" || self.value || ")")
       c.chain("set_increment_size(" || self.increment_size || ")")
       if \self.is_range_flag then
@@ -37,7 +37,7 @@ class CanvasScrollBar(CanvasComponent,ScrollBar)
    public dup()
       local c
       c := CanvasScrollBar()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       c.increment_size := self.increment_size
       c.value := self.value
       c.is_range_flag := self.is_range_flag
@@ -80,8 +80,8 @@ class CanvasScrollBar(CanvasComponent,ScrollBar)
    end
 
    public new()
-      cast(self,ScrollBar).new()
-      cast(self,CanvasComponent).new()
+      ScrollBar.new()
+      CanvasComponent.new()
       self.class_name := "ScrollBar"
       self.import_name := "gui"
       self.name := "scroll_bar"

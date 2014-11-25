@@ -24,7 +24,11 @@ struct p_proc *get_current_user_proc()
 
 struct progstate *get_current_program_of(struct b_coexpr *ce)
 {
-    return get_current_user_frame_of(ce)->proc->program;
+    struct p_frame *pf = ce->curr_pf;
+    struct progstate *p = pf->proc->program;
+    if (!p) 
+        p = pf->creator;
+    return p;
 }
 
 /*

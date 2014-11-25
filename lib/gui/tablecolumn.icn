@@ -44,7 +44,7 @@ class TableColumn(TextButton)
          self.parent.parent.no_more_sizing := 1
          self.drag_offset := e.x - (self.x + self.w)
       } else
-         cast(self,TextButton).handle_lpress(e)
+         TextButton.handle_lpress(e)
    end
 
    public handle_ldrag(e)
@@ -56,14 +56,14 @@ class TableColumn(TextButton)
          self.parent.layout()
          self.parent.parent.invalidate()
       } else
-         cast(self,TextButton).handle_ldrag(e)
+         TextButton.handle_ldrag(e)
    end
 
    public handle_lrelease(e)
       if \self.is_resizing then {
          self.is_resizing := &null
       } else
-         cast(self,TextButton).handle_lrelease(e)
+         TextButton.handle_lrelease(e)
    end
 
    public get_pointer(e)
@@ -91,7 +91,7 @@ class TableColumn(TextButton)
    end
 
    public display()
-      cast(self,TextButton).display()
+      TextButton.display()
       Gui.style.fill_shadow_rectangle(self.cbwin, self.x + self.w - 1, self.y, 1, self.h)
    end
 
@@ -136,7 +136,7 @@ class TableColumn(TextButton)
    end
 
    public shift(dx, dy)
-      cast(self,TextButton).shift(dx, dy)
+      TextButton.shift(dx, dy)
       self.tx +:= dx
    end
 
@@ -174,7 +174,7 @@ class TableColumn(TextButton)
    end
 
    public new()
-      cast(self,TextButton).new()
+      TextButton.new()
       self.set_accepts_focus(&no)
       self.set_border(EmptyBorder().
                       set_l_inset(Gui.TEXT_INSET).

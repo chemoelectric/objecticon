@@ -15,7 +15,7 @@ class CanvasSplit(CanvasComponent,Split)
    public gen_code(c)
       self.first.gen_code(c)
       self.second.gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       if /self.sizer.is_horizontal_flag then {
          c.chain("set_left(" || self.first.name || ")")
          c.chain("set_right(" || self.second.name || ")")
@@ -37,7 +37,7 @@ class CanvasSplit(CanvasComponent,Split)
    public dup()
       local c
       c := CanvasSplit()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       if /self.sizer.is_horizontal_flag then {
          c.set_left(self.first.dup())
          c.set_right(self.second.dup())
@@ -67,14 +67,14 @@ class CanvasSplit(CanvasComponent,Split)
    end
 
    public pre_encode()
-      cast(self,CanvasComponent).pre_encode()
+      CanvasComponent.pre_encode()
       # Because we don't save the sizer...
       self.sizer_is_horizontal_flag := self.sizer.is_horizontal_flag
       self.sizer_show_inter_flag := self.sizer.show_inter_flag
    end
 
    public post_decode()
-      cast(self,CanvasComponent).post_decode()
+      CanvasComponent.post_decode()
       if /self.sizer_is_horizontal_flag then {
          self.set_left(first)
          self.set_right(second)
@@ -100,7 +100,7 @@ class CanvasSplit(CanvasComponent,Split)
    #
    public which_cursor_over(e)
       local o
-      cast(self,CanvasComponent).which_cursor_over(e) | fail
+      CanvasComponent.which_cursor_over(e) | fail
       if in_resize_region(e) then
          return self
       if o := (self.first | self.second).which_cursor_over(e) then
@@ -110,7 +110,7 @@ class CanvasSplit(CanvasComponent,Split)
 
    public display()
       if in_preview() then
-         cast(self,Split).display()
+         Split.display()
       else {
          # Fiddly to get the label "<Split>" above the sizer, but below the
          # contents of first and second.  (See also CanvasSplitContent.display() below).
@@ -138,12 +138,12 @@ class CanvasSplit(CanvasComponent,Split)
    end
 
    public gen_cos()
-      suspend cast(self,CanvasComponent).gen_cos() | self.first | self.second
+      suspend CanvasComponent.gen_cos() | self.first | self.second
    end
 
    public new()
-      cast(self,Split).new()
-      cast(self,CanvasComponent).new()
+      Split.new()
+      CanvasComponent.new()
       self.class_name := "Split"
       self.import_name := "gui"
       self.name := "split"
@@ -158,7 +158,7 @@ class CanvasSplitContent(CanvasComponent,Component)
    #
    public gen_code(c)
       every (!self.children).gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       every c.chain("add(" || (!self.children).name || ")")
    end
 
@@ -175,7 +175,7 @@ class CanvasSplitContent(CanvasComponent,Component)
    public dup()
       local c
       c := CanvasSplitContent()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       every c.add((!self.children).dup())
       return c
    end
@@ -219,7 +219,7 @@ class CanvasSplitContent(CanvasComponent,Component)
 
    public display()
       if in_preview() then
-         cast(self,Component).display()
+         Component.display()
       else {
          parent.cbwin.draw_rectangle(parent.x, parent.y, parent.w, parent.h)
          center_string(self.cbwin, parent.x + parent.w / 2, parent.y + 10, "<Split>")
@@ -235,12 +235,12 @@ class CanvasSplitContent(CanvasComponent,Component)
    end
 
    public gen_cos()
-     suspend cast(self,CanvasComponent).gen_cos() | !self.children
+     suspend CanvasComponent.gen_cos() | !self.children
    end
 
    public new()
-      cast(self,Component).new()
-      cast(self,CanvasComponent).new()
+      Component.new()
+      CanvasComponent.new()
       self.set_show_layout(&yes)
       self.class_name := "Component"
       self.import_name := "gui"

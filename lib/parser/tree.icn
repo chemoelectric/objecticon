@@ -252,7 +252,7 @@ class Id(Tree)
    end
 
    package new(pos, comma)
-      cast(self,Tree).new(pos)
+      Tree.new(pos)
       /comma := Token(YY.COMMA, ",", ",")
       self.comma := comma
       return
@@ -291,7 +291,7 @@ abstract class IdList(LList)
    end
 
    package new(lpos, index, lab)
-      cast(self,LList).new(lpos, index)
+      LList.new(lpos, index)
       /lab := "idlist"
       self.lab := lab
       return
@@ -300,24 +300,24 @@ end
 
 abstract class SimpleLList(Tree, LList)
    package new(pos, index)
-      cast(self,Tree).new(pos)
-      cast(self,LList).new(pos, index)
+      Tree.new(pos)
+      LList.new(pos, index)
       return
    end
 end
 
 abstract class SimpleRList(Tree, RList)
    package new(pos, index)
-      cast(self,Tree).new(pos)
-      cast(self,RList).new(pos, index)
+      Tree.new(pos)
+      RList.new(pos, index)
       return
    end
 end
 
 class SimpleIdList(Tree, IdList)
    package new(pos, index, lab)
-      cast(self,Tree).new(pos)
-      cast(self,IdList).new(pos, index, lab)
+      Tree.new(pos)
+      IdList.new(pos, index, lab)
       return
    end
 end
@@ -352,7 +352,7 @@ class AccessList(SimpleLList)
    end
 
    package new(lpos, index, lab)
-      cast(self,SimpleLList).new(lpos, index)
+      SimpleLList.new(lpos, index)
       /lab := "fieldaccess"
       self.lab := lab
       return
@@ -413,7 +413,7 @@ class Invocable(SimpleLList)
    end
 
    package new(pos)
-      cast(self,SimpleLList).new(pos, 2)
+      SimpleLList.new(pos, 2)
       return
    end
 end
@@ -458,7 +458,7 @@ class Import(SimpleLList)
    end
 
    package new(pos)
-      cast(self,SimpleLList).new(pos, 2)
+      SimpleLList.new(pos, 2)
       return
    end
 end
@@ -543,7 +543,7 @@ class Prog(Tree)
    end
 
    package new(pos)
-      cast(self,Tree).new(pos)
+      Tree.new(pos)
       decls := pos.child(1)
       return
    end
@@ -565,7 +565,7 @@ class InvocableOp(Tree)
    end
 
    package new(pos, comma)
-      cast(self,Tree).new(pos)
+      Tree.new(pos)
       /comma := Token(YY.COMMA, ",", ",")
       self.comma := comma
       return
@@ -580,7 +580,7 @@ class ImportSpec(SimpleIdList)
    end
 
    package new(pos, comma)
-      cast(self,SimpleIdList).new(pos,3)
+      SimpleIdList.new(pos,3)
       /comma := Token(YY.COMMA, ",", ",")
       self.comma := comma
       return
@@ -806,6 +806,7 @@ class Factory()
       t := Global(Node("body",
                        Node.EMPTY,
                        Node("global",
+                            Node.EMPTY,
                             Token(YY.GLOBAL, "global", pad || "global"),
                             Node.EMPTY)))
       l := t.get_ids()
@@ -1032,7 +1033,7 @@ class Local(SimpleIdList)
    end
 
    package new(pos)
-      cast(self,SimpleIdList).new(pos, 3)
+      SimpleIdList.new(pos, 3)
       return
    end
 end
@@ -1047,7 +1048,7 @@ class FieldList(SimpleIdList)
    end
 
    package new(pos)
-      cast(self,SimpleIdList).new(pos, 3)
+      SimpleIdList.new(pos, 3)
       return
    end
 end
@@ -1062,8 +1063,8 @@ class Method(Tree, Function)
    end
 
    package new(pos)
-      cast(self,Tree).new(pos)
-      cast(self,Function).new(pos.child(3), 1, 3, 5)
+      Tree.new(pos)
+      Function.new(pos.child(3), 1, 3, 5)
       return
    end
 end
@@ -1087,8 +1088,8 @@ class DeferredMethod(Tree, Function)
    end
 
    package new(pos)
-      cast(self,Tree).new(pos)
-      cast(self,Function).new(pos.child(3), 2, 4)
+      Tree.new(pos)
+      Function.new(pos.child(3), 2, 4)
       return
    end
 end
@@ -1099,8 +1100,8 @@ class Procedure(GlobalObj, Function)
    end
 
    package new(pos)
-      cast(self,Tree).new(pos)
-      cast(self,Function).new(pos.child(2), 2, 4, 6)
+      Tree.new(pos)
+      Function.new(pos.child(2), 2, 4, 6)
       return
    end
 end
@@ -1125,13 +1126,31 @@ class Record(GlobalObj)
 end
 
 class Global(GlobalObj, IdList)
+   public const
+      gpos
+
    public get_first_token()
       return Util.first_token(pos)
    end
 
-   package new(pos, index)
-      cast(self,Tree).new(pos)
-      cast(self,IdList).new(pos.child(2), 2)
+   public get_readable_flag()
+      if gpos.child(1) === Node.EMPTY then
+         fail
+      return Leaf(gpos.child(1))
+   end
+
+   public set_readable_flag(x)
+      if /x then
+         gpos.set(1, Node.EMPTY)
+      else
+         gpos.set(1, x.pos)
+      return self
+   end
+
+   package new(pos)
+      Tree.new(pos)
+      gpos := pos.child(2)
+      IdList.new(gpos, 3)
       return
    end
 end
@@ -1163,7 +1182,7 @@ class ExprListElement(Tree)
    end
 
    public new(pos, comma)
-      cast(self,Tree).new(pos)
+      Tree.new(pos)
       /comma := Token(YY.COMMA, ",", ",")
       self.comma := comma
       return
@@ -1205,7 +1224,7 @@ class ExprList(SimpleLList)
    end
 
    public new(pos, index)
-      cast(self,SimpleLList).new(pos, index)
+      SimpleLList.new(pos, index)
       return
    end
 end
@@ -1218,7 +1237,7 @@ class CompoundElement(Tree)
    end
 
    public new(pos, semi)
-      cast(self,Tree).new(pos)
+      Tree.new(pos)
       /semi := Token(YY.SEMICOL, ";", ";")
       self.semi := semi
       return
@@ -1262,7 +1281,7 @@ class Compound(SimpleRList)
    end
 
    public new(pos, index)
-      cast(self,SimpleRList).new(pos, index)
+      SimpleRList.new(pos, index)
       return
    end
 end
@@ -1275,7 +1294,7 @@ class CaseListElement(Tree)
    end
 
    public new(pos, semi)
-      cast(self,Tree).new(pos)
+      Tree.new(pos)
       /semi := Token(YY.SEMICOL, ";", ";")
       self.semi := semi
       return
@@ -1317,7 +1336,7 @@ class CaseList(SimpleLList)
    end
 
    public new(pos, index)
-      cast(self,SimpleLList).new(pos, index)
+      SimpleLList.new(pos, index)
       return
    end
 end
@@ -1330,7 +1349,7 @@ class DottedIdentListElement(Tree)
    end
 
    public new(pos, dot)
-      cast(self,Tree).new(pos)
+      Tree.new(pos)
       /dot := Token(YY.DOT, ".", ".")
       self.dot := dot
       return
@@ -1372,7 +1391,7 @@ class DottedIdentList(SimpleLList)
    end
 
    public new(pos, index)
-      cast(self,SimpleLList).new(pos, index)
+      SimpleLList.new(pos, index)
       return
    end
 end

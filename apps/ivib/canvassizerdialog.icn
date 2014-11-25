@@ -29,7 +29,7 @@ class CanvasSizerDialog(CanvasComponentDialog)
          hi_val := integer(hi.get_contents()) | return alert_error(self, "Hi is not integer")
       if \lo_val & \hi_val then
          lo_val < hi_val | return alert_error(self, "Lo must be less than hi")
-      return cast(self,CanvasComponentDialog).validate_input()
+      return CanvasComponentDialog.validate_input()
    end
 
    public set_vals()
@@ -40,7 +40,7 @@ class CanvasSizerDialog(CanvasComponentDialog)
       if hi_flag.is_checked() then
          hi_val := integer(hi.get_contents())
 
-      cast(self,CanvasComponentDialog).set_vals()
+      CanvasComponentDialog.set_vals()
 
       c.set_range(lo_val, hi_val)
    end
@@ -56,7 +56,7 @@ class CanvasSizerDialog(CanvasComponentDialog)
    public setup()
       local p
 
-      cast(self,CanvasComponentDialog).setup()
+      CanvasComponentDialog.setup()
 
       p := TabItem()
       p.set_layout(GridLayout().set_extra("borders"))

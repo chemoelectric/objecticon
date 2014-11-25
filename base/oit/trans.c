@@ -199,9 +199,6 @@ static void trans1(char *filename)
     incol = 0;
     peekc = 0;                  /* clear character lookahead */
 
-    if (strcmp(filename,"-") == 0)
-        filename = stdin_string;
-
     outname = intern(makename(0, filename, USuffix));
 
     report("%s:", filename);
@@ -237,12 +234,27 @@ static void trans1(char *filename)
             quit("cannot create %s", outname);
         output_code();
         fclose(ucodefile);
-
-        /*
-         * Update the package database if needed.
-         */
-        if (package_name)
+        if (tfatals)
+            /*
+             * output_code detected a tfatal error (eg break out of
+             * loop) - delete the ucode file.
+             */
+            remove(outname);
+        else if (package_name)
+            /*
+             * The file is in a package; update the package database
+             * if needed, and the ucode file will be kept regardless,
+             * even if -c wasn't given.  This helps to avoid having an
+             * inconsistent package database, ie with an entry in the
+             * packages.txt file with no corresponding .u file.
+             */
             ensure_file_in_package(filename, package_name);
+        else if (!nolink)
+            /*
+             * The file is not in a package and the -c option wasn't
+             * given, so the ucode file will be removed.
+             */
+            add_remove_file(outname);
     }
 
     tmfilefree();

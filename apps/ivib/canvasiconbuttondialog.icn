@@ -14,7 +14,7 @@
 class CanvasIconButtonDialog(CanvasButtonDialog)
    public setup()
       has_label_down := 1
-      cast(self,CanvasButtonDialog).setup()
+      CanvasButtonDialog.setup()
    end
 end
 

@@ -144,6 +144,7 @@ void showstack(FILE *f, struct b_coexpr *c);
 void showbig(FILE *f, struct b_bignum *x);
 struct progstate *find_global(dptr s);
 struct progstate *find_class_static(dptr s);
+struct progstate *find_procedure_static(dptr s);
 struct class_field *find_class_field_for_dptr(dptr d, struct progstate *prog);
 
 void print_desc(FILE *f, dptr d);
@@ -366,8 +367,6 @@ struct b_record *alcrecd_0      (struct b_constructor *con);
 struct b_record *alcrecd_1      (struct b_constructor *con);
 struct b_object *alcobject_0    (struct b_class *class);
 struct b_object *alcobject_1    (struct b_class *class);
-struct b_cast   *alccast_0      (void);
-struct b_cast   *alccast_1      (void);
 struct b_methp  *alcmethp_0     (void);
 struct b_methp  *alcmethp_1     (void);
 struct b_ucs    *alcucs_0     (int n);

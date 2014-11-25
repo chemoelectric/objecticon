@@ -10,7 +10,7 @@ package xml
 
 import io, lang, util, ipl.scan
 
-class Tag()
+package class Tag()
    public const
       attributes
    private readable
@@ -51,13 +51,13 @@ class Tag()
       return self
    end
 
-   package new()
+   public new()
       self.attributes := table()
       return
    end
 end
 
-record TagInfo(limit, autoclose)
+package record TagInfo(limit, autoclose)
 
 class HtmlParser()
    private 

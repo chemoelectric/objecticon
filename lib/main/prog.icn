@@ -7,14 +7,18 @@ package lang
 #
 final abstract class Prog()
    public static const 
-      # Integer flag for a named global
-      NamedGlobal,
+      # Integer flag for a pre-defined constant global, which will be
+      # either a class, record or procedure.
+      Const,
       # Integer flag for a global with package visibility
-      PackageFlag
+      Package,
+      # Integer flag for a global with readable visibility
+      Readable
 
    private static init()
-      NamedGlobal := 1
-      PackageFlag := 2
+      Const := 1
+      Package := 2
+      Readable := 4
    end
 
    # Load and return a program from file {s}.
@@ -50,19 +54,21 @@ final abstract class Prog()
    #
    public static get_global(q, P)
       local i
-      if i := get_global_index(q, P) &
-         get_global_flags(i, P) = (0 | NamedGlobal) then
-         return get_global_impl(i, P)
+      i := get_global_index(q, P) | fail
+      return case get_global_flags(i, P) of {
+         Package+Readable : .get_global_impl(i, P)
+         0 | Const : get_global_impl(i, P)
+      }
    end
 
    #
-   # Get the global in program P, restricting results to named globals.
+   # Get the global in program P, restricting results to named (constant) globals.
    # @param q either a global name or number
    #
    public static get_named_global(q, P)
       local i
       if i := get_global_index(q, P) &
-         get_global_flags(i, P) = NamedGlobal then
+         get_global_flags(i, P) = Const then
          return get_global_impl(i, P)
    end
 

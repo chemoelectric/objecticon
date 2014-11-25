@@ -36,7 +36,7 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
    public dup()
       local c
       c := CanvasOverlayItem()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       every c.add((!self.children).dup())
       return c
    end
@@ -52,7 +52,7 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
 
    public display()
       if in_preview() then
-         cast(self,OverlayItem).display()
+         OverlayItem.display()
       else {
          # Display the OverlaySet title here rather than in CanvasOverlaySet,
          # otherwise it would have to be on top, or be overwritten
@@ -116,7 +116,7 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
 
    public create_menu()
       local m, i
-      m := cast(self,CanvasComponent).create_menu()
+      m := CanvasComponent.create_menu()
       if self ~=== parent.which_one then {
          i := TextMenuItem().set_label("Which")
          i.connect(self.op_which, Event.ACTION)
@@ -144,12 +144,12 @@ class CanvasOverlayItem(CanvasComponent,OverlayItem)
    end
 
    public gen_cos()
-      suspend cast(self,CanvasComponent).gen_cos() | !self.children
+      suspend CanvasComponent.gen_cos() | !self.children
    end
 
    public new()
-      cast(self,OverlayItem).new()
-      cast(self,CanvasComponent).new()
+      OverlayItem.new()
+      CanvasComponent.new()
       self.set_show_layout(&yes)
       self.class_name := "OverlayItem"
       self.import_name := "gui"

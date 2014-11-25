@@ -956,11 +956,11 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    public finally()
       scroll_ticker.stop()
-      cast(self,LineBasedScrollArea).finally()
+      LineBasedScrollArea.finally()
    end
 
    public new()
-      cast(self,LineBasedScrollArea).new()
+      LineBasedScrollArea.new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
       self.set_accepts_focus(&yes)
       self.select_mode := Select.NONE

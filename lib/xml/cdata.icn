@@ -30,7 +30,7 @@ class CData(Node)
    end
 
    public new(s)
-      cast(self,Node).new()
+      Node.new()
       content := s
       return
    end

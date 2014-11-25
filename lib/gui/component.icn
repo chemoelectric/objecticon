@@ -293,7 +293,7 @@ class Component(Rect,Align,Connectable)
    # Set the hidden status of the component.
    #
    public set_is_hidden(s)
-      s := check_flag(s)
+      check_flag(s)
       if s ~=== self.is_hidden_flag then {
          # NB - try invalidate before and after, since invalidating a hidden
          # component is a no-op.
@@ -396,7 +396,7 @@ class Component(Rect,Align,Connectable)
    # Set the shaded status of the component.
    #
    public set_is_shaded(s)
-      s := check_flag(s)
+      check_flag(s)
       if s ~=== self.is_shaded_flag then {
          self.is_shaded_flag := s
          self.shaded_change()
@@ -1377,7 +1377,7 @@ class Component(Rect,Align,Connectable)
    end
 
    public new()
-      cast(self,Connectable).new()
+      Connectable.new()
       self.wattribs := table()
       self.children := []
       self.x_align := Align.L

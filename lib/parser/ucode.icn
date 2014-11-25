@@ -78,12 +78,22 @@ class UObject()
    end
 end
 
-class UClass(UObject)
+class UGlobalObject(UObject)
+   public const
+      package_flag
+
+   package new(name, package_flag, file, line)
+      UObject.new(name, file, line)
+      self.package_flag := package_flag
+      return
+   end
+end
+
+class UClass(UGlobalObject)
    public const
       supers,
       fields,
-      flags,
-      package_flag
+      flags
 
    package add_field(o)
       put(fields, o)
@@ -102,8 +112,7 @@ class UClass(UObject)
    end
 
    package new(name, package_flag, file, line, flags)
-      cast(self,UObject).new(name, file, line)
-      self.package_flag := package_flag
+      UGlobalObject.new(name, package_flag, file, line)
       self.flags := flags
       self.supers := []
       self.fields := []
@@ -116,7 +125,7 @@ class UVariable(UObject)
       flags
 
    package new(name, file, line, flags)
-      cast(self,UObject).new(name, file, line)
+      UObject.new(name, file, line)
       self.flags := flags
       return
    end
@@ -219,30 +228,25 @@ class UMethod(UObject, UFunction)
       flags
 
    package new(name, file, line, flags)
-      cast(self,UObject).new(name, file, line)
-      cast(self,UFunction).new()
+      UObject.new(name, file, line)
+      UFunction.new()
       self.flags := flags
       return
    end
 end
 
-class UProcedure(UObject, UFunction)
-   public const
-      package_flag
-
+class UProcedure(UGlobalObject, UFunction)
    package new(name, package_flag, file, line)
-      cast(self,UObject).new(name, file, line)
-      cast(self,UFunction).new()
+      UGlobalObject.new(name, package_flag, file, line)
+      UFunction.new()
       self.package_flag := package_flag
       return
    end
 end
 
-class URecord(UObject)
+class URecord(UGlobalObject)
    private
       fields
-   public const
-      package_flag
 
    public get_fields()
       suspend .!fields
@@ -253,20 +257,19 @@ class URecord(UObject)
    end
 
    package new(name, package_flag, file, line)
-      cast(self,UObject).new(name, file, line)
-      self.package_flag := package_flag
+      UGlobalObject.new(name, package_flag, file, line)
       self.fields := []
       return
    end
 end
 
-class UGlobal(UObject)
+class UGlobal(UGlobalObject)
    public const
-      package_flag
+      readable_flag
 
-   package new(name, package_flag, file, line)
-      cast(self,UObject).new(name, file, line)
-      self.package_flag := package_flag
+   package new(name, package_flag, readable_flag, file, line)
+      UGlobalObject.new(name, package_flag, file, line)
+      self.readable_flag := readable_flag
       return
    end
 end
@@ -389,12 +392,15 @@ class UReader()
 
              UcodeOp.Global: {
                 s := uin_str() | fail
-                uf.add_symbol(UGlobal(s, &no, file, line))
+                uf.add_symbol(UGlobal(s, &no, &no, file, line))
              }
-
              UcodeOp.PkGlobal: {
                 s := uin_str() | fail
-                uf.add_symbol(UGlobal(s, &yes, file, line))
+                uf.add_symbol(UGlobal(s, &yes, &no, file, line))
+             }
+             UcodeOp.PkRdGlobal: {
+                s := uin_str() | fail
+                uf.add_symbol(UGlobal(s, &yes, &yes, file, line))
              }
 
              UcodeOp.Invocable: {

@@ -55,7 +55,7 @@ class OverlaySet(Component)
          runerr("no OverlayItems in OverlaySet")
       /self.which_one := self.children[1]
       set_hidden_flags()
-      cast(self,Component).initially()
+      Component.initially()
    end
 
    public get_default_width()
@@ -93,7 +93,7 @@ class OverlaySet(Component)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       self.set_constraint("x_fill", &yes)
       self.set_constraint("y_fill", &yes)
       self.set_constraint("x_weight", 1.0)

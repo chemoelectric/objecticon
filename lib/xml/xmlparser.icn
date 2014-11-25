@@ -13,14 +13,14 @@ import lang, util, ipl.scan, exception
 #
 # Holds detail of a parse position in a file
 #
-class Diversion()
+package class Diversion()
    private readable
       base,
       id,
       subject, 
       pos
 
-   package new(base, id, subject, pos)
+   public new(base, id, subject, pos)
       self.base := base
       self.id := id
       self.subject := subject
@@ -46,12 +46,12 @@ end
 #
 # Holds a attribute usage of IDREF.  Just used for validation.
 #
-class IdAttributeRef()
+package class IdAttributeRef()
    private readable 
       val,
       pos
 
-   package new(val, pos)
+   public new(val, pos)
       self.val := val
       self.pos := pos
       return
@@ -72,7 +72,6 @@ class XmlParser(Connectable)
 
    private
       doc,
-      resolver, 
       current_divert_id,
       divert_stack,
       current_base,
@@ -81,6 +80,7 @@ class XmlParser(Connectable)
       dtd_insert_shown_error
 
    private readable
+      resolver, 
       do_namespaces_flag,
       preserve_insignificant_whitespace_flag,
       preserve_comments_flag,
@@ -99,7 +99,7 @@ class XmlParser(Connectable)
    # Get the resolver being used
    #
    public get_resolver()
-      return self.resolver
+      return .resolver
    end
 
    #
@@ -2352,7 +2352,7 @@ class XmlParser(Connectable)
    end
 
    public new()
-      cast(self,Connectable).new()
+      Connectable.new()
       resolver := DefaultResolver()
       do_namespaces_flag := 1
       validate_flag := 1

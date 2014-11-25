@@ -135,21 +135,6 @@ int anycmp(dptr dp1, dptr dp2)
          return iresult;
       }
 
-      cast: {
-         /*
-          * Collate on cast class name within cast object id within cast object class name.
-          */
-          iresult = lexcmp(CastBlk(*dp1).object->class->name,
-                           CastBlk(*dp2).object->class->name);
-          if (iresult == Equal) {
-              iresult = idcmp(CastBlk(*dp1).object->id, CastBlk(*dp2).object->id);
-              if (iresult == Equal)
-                  return lexcmp(CastBlk(*dp1).class->name,
-                                CastBlk(*dp2).class->name);
-          }
-          return iresult;
-      }
-
       methp: {
          /*
           * Collate on methp proc name within methp object id within methp object class name.
@@ -213,9 +198,8 @@ int order(dptr dp)
      ucs:         return 12;
      class:       return 13;
      object:      return 14;
-     cast:        return 15;
-     methp:       return 16;
-     weakref:     return 17;
+     methp:       return 15;
+     weakref:     return 16;
      default: {
 	 syserr("order: unknown datatype.");
 	 /*NOTREACHED*/

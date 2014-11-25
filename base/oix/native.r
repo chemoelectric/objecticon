@@ -20,9 +20,6 @@ static struct b_class *get_class_for(dptr x)
       object: 
             return ObjectBlk(*x).class;
 
-      cast:
-            return CastBlk(*x).class;
-                    
      default: 
             ReturnErrVal(620, *x, 0);
     }
@@ -113,7 +110,6 @@ function classof(o)
        type_case o of {
          object: return class(ObjectBlk(o).class);
          class: return o; 
-         cast: return class(CastBlk(o).class);
          record: return constructor(RecordBlk(o).constructor);
          constructor: return o;
          default: runerr(635, o);
@@ -170,18 +166,6 @@ int class_is(struct b_class *class, struct b_class *target)
     return 0;
 }
 
-static void extract_package(dptr s, dptr d)
-{
-    char *p = StrLoc(*s) + StrLen(*s);
-    while (--p >= StrLoc(*s)) {
-        if (*p == '.') {
-            MakeStr(StrLoc(*s), p - StrLoc(*s), d);
-            return;
-        }
-    }
-    syserr("In a package, but no dots");  
-}
-
 convert_to_macro(off_t)
 convert_from_macro(off_t)
 convert_to_macro(time_t)
@@ -228,6 +212,21 @@ function lang_Prog_set_event_mask(cs, ce)
        set_event_mask(prog, &CsetBlk(cs));
        return cs;
    }
+end
+
+
+function errorclear(ce)
+   body {
+      struct progstate *prog;
+      if (!(prog = get_program_for(&ce)))
+         runerr(0);
+      prog->K_errornumber = 0;
+      prog->K_errortext = emptystr;
+      prog->K_errorvalue = nulldesc;
+      prog->K_errorcoexpr = 0;
+      prog->Have_errval = 0;
+      return nulldesc;
+      }
 end
 
 function lang_Prog_get_variable_name(underef v)
@@ -279,122 +278,120 @@ function lang_Prog_eval_keyword(s,c)
        if (!(p = get_program_for(&c)))
           runerr(0);
 
-      if (StrLen(s) == 0 || *StrLoc(s) != '&')
-         fail;
+       if (StrLen(s) > 0 && *StrLoc(s) == '&') {
+           t = StrLoc(s) + 1;
+           switch (StrLen(s)) {
+               case 4 : {
+                   if (strncmp(t,"pos",3) == 0) {
+                       return kywdpos(&(p->Kywd_pos));
+                   }
+                   if (strncmp(t,"why",3) == 0) {
+                       return kywdstr(&(p->Kywd_why));
+                   }
+                   break;
+               }
+               case 5 : {
+                   if (strncmp(t,"file",4) == 0) {
+                       struct ipc_fname *t = frame_ipc_fname(p->K_current->curr_pf);
+                       if (!t)
+                           fail;
+                       return *t->fname;
+                   }
+                   if (strncmp(t,"line",4) == 0) {
+                       struct ipc_line *t = frame_ipc_line(p->K_current->curr_pf);
+                       if (!t)
+                           fail;
+                       return C_integer t->line;
+                   }
+                   if (strncmp(t,"dump",4) == 0) {
+                       return kywdint(&(p->Kywd_dump));
+                   }
+                   if (strncmp(t,"main",4) == 0) {
+                       return coexpr(p->K_main);
+                   }
+                   if (strncmp(t,"time",4) == 0) {
+                       /*
+                        * &time in this program = total time - time spent in other programs
+                        */
+                       if (p != curpstate)
+                           return C_integer p->Kywd_time_out - p->Kywd_time_elsewhere;
+                       else
+                           return C_integer millisec() - p->Kywd_time_elsewhere;
+                   }
+                   break;
+               }
+               case 6 : {
+                   if (strncmp(t,"trace",5) == 0) {
+                       return kywdint(&(p->Kywd_trace));
+                   }
+                   if (strncmp(t,"level",5) == 0) {
+                       return C_integer p->K_current->level;
+                   }
+                   break;
+               }
+               case 7 : {
+                   if (strncmp(t,"random",6) == 0) {
+                       return kywdint(&(p->Kywd_ran));
+                   }
+                   if (strncmp(t,"source",6) == 0) {
+                       return coexpr(p->K_current->activator);
+                   }
+                   break;
+               }
+               case 8 : {
+                   if (strncmp(t,"subject",7) == 0) {
+                       return kywdsubj(&(p->Kywd_subject));
+                   }
+                   if (strncmp(t,"current",7) == 0) {
+                       return coexpr(p->K_current);
+                   }
+                   if (strncmp(t,"handler",7) == 0) {
+                       return kywdhandler(&(p->Kywd_handler));
+                   }
+                   break;
+               }
+               case 9 : {
+                   if (strncmp(t,"maxlevel",8) == 0) {
+                       return kywdint(&(p->Kywd_maxlevel));
+                   }
+                   if (strncmp(t,"progname",8) == 0) {
+                       return kywdstr(&(p->Kywd_prog));
+                   }
+                   break;
+               }
+               case 10: {
+                   if (strncmp(t,"errortext",9) == 0) {
+                       if (p->K_errornumber == 0)
+                           fail;
+                       return p->K_errortext;
+                   }
+                   break;
+               }
 
-      t = StrLoc(s) + 1;
-      switch (StrLen(s)) {
-          case 4 : {
-              if (strncmp(t,"pos",3) == 0) {
-                  return kywdpos(&(p->Kywd_pos));
-              }
-              if (strncmp(t,"why",3) == 0) {
-                  return kywdstr(&(p->Kywd_why));
-              }
-              break;
-          }
-          case 5 : {
-              if (strncmp(t,"file",4) == 0) {
-                  struct ipc_fname *t = frame_ipc_fname(p->K_current->curr_pf);
-                  if (!t)
-                      fail;
-                  return *t->fname;
-              }
-              if (strncmp(t,"line",4) == 0) {
-                  struct ipc_line *t = frame_ipc_line(p->K_current->curr_pf);
-                  if (!t)
-                      fail;
-                  return C_integer t->line;
-              }
-              if (strncmp(t,"dump",4) == 0) {
-                  return kywdint(&(p->Kywd_dump));
-              }
-              if (strncmp(t,"main",4) == 0) {
-                  return coexpr(p->K_main);
-              }
-              if (strncmp(t,"time",4) == 0) {
-                  /*
-                   * &time in this program = total time - time spent in other programs
-                   */
-                  if (p != curpstate)
-                      return C_integer p->Kywd_time_out - p->Kywd_time_elsewhere;
-                  else
-                      return C_integer millisec() - p->Kywd_time_elsewhere;
-              }
-              break;
-          }
-          case 6 : {
-              if (strncmp(t,"trace",5) == 0) {
-                  return kywdint(&(p->Kywd_trace));
-              }
-              if (strncmp(t,"level",5) == 0) {
-                  return C_integer p->K_current->level;
-              }
-              break;
-          }
-          case 7 : {
-              if (strncmp(t,"random",6) == 0) {
-                  return kywdint(&(p->Kywd_ran));
-              }
-              if (strncmp(t,"source",6) == 0) {
-                  return coexpr(p->K_current->activator);
-              }
-              break;
-          }
-          case 8 : {
-              if (strncmp(t,"subject",7) == 0) {
-                  return kywdsubj(&(p->Kywd_subject));
-              }
-              if (strncmp(t,"current",7) == 0) {
-                  return coexpr(p->K_current);
-              }
-              if (strncmp(t,"handler",7) == 0) {
-                  return kywdhandler(&(p->Kywd_handler));
-              }
-              break;
-          }
-          case 9 : {
-              if (strncmp(t,"maxlevel",8) == 0) {
-                  return kywdint(&(p->Kywd_maxlevel));
-              }
-              if (strncmp(t,"progname",8) == 0) {
-                  return kywdstr(&(p->Kywd_prog));
-              }
-              break;
-          }
-          case 10: {
-              if (strncmp(t,"errortext",9) == 0) {
-                  if (p->K_errornumber == 0)
-                      fail;
-                  return p->K_errortext;
-              }
-              break;
-          }
-
-          case 11 : {
-              if (strncmp(t,"errorvalue",10) == 0) {
-                  if (!p->Have_errval)
-                      fail;
-                  return p->K_errorvalue;
-              }
-              break;
-          }
-          case 12 : {
-              if (strncmp(t,"errorcoexpr",11) == 0) {
-                  if (p->K_errornumber == 0)
-                      fail;
-                  return coexpr(p->K_errorcoexpr);
-              }
-              if (strncmp(t,"errornumber",11) == 0) {
-                  if (p->K_errornumber <= 0)
-                      fail;
-                  return C_integer p->K_errornumber;
-              }
-              break;
-          }
-      }
-
-      runerr(205, s);
+               case 11 : {
+                   if (strncmp(t,"errorvalue",10) == 0) {
+                       if (!p->Have_errval)
+                           fail;
+                       return p->K_errorvalue;
+                   }
+                   break;
+               }
+               case 12 : {
+                   if (strncmp(t,"errorcoexpr",11) == 0) {
+                       if (p->K_errornumber == 0)
+                           fail;
+                       return coexpr(p->K_errorcoexpr);
+                   }
+                   if (strncmp(t,"errornumber",11) == 0) {
+                       if (p->K_errornumber <= 0)
+                           fail;
+                       return C_integer p->K_errornumber;
+                   }
+                   break;
+               }
+           }
+       }
+       runerr(637, s);
    }
 end
 
@@ -408,7 +405,7 @@ function lang_Prog_get_global_impl(q, c)
        i = lookup_global(&q, prog);
        if (i < 0)
            fail;
-       if (prog->global_flags[i] & G_NamedGlobal)
+       if (prog->Gflags[i] & G_Const)
            return prog->Globals[i];
        else
            return named_var(&prog->Globals[i]);
@@ -434,7 +431,7 @@ function lang_Prog_get_global_flags(q, c)
        i = lookup_global(&q, prog);
        if (i < 0)
            fail;
-       return C_integer prog->global_flags[i];
+       return C_integer prog->Gflags[i];
    }
 end
 
@@ -588,15 +585,20 @@ end
 
 function lang_Coexpression_get_program(ce)
    body {
-       tended struct b_coexpr *b;
-       struct p_frame *pf;
+       struct b_coexpr *b;
+       struct progstate *p;
        if (!(b = get_coexpr_for(&ce)))
           runerr(0);
-       pf = get_current_user_frame_of(b);
-       if (pf)
-           return coexpr(pf->proc->program->K_main);
+       /*
+        * get_current_program_of() shouldn't be used for k_current in
+        * a native method, since tail_invoke_frame will have set
+        * curpstate to the enclosing class's defining program.
+        */
+       if (b == k_current)
+           p = curpstate;
        else
-           fail;
+           p = get_current_program_of(b);
+       return coexpr(p->K_main);
    }
 end
 
@@ -653,7 +655,6 @@ function display(i, ce)
        return nulldesc;
    }
 end
-
 
 function lang_Prog_get_runtime_millis(c)
    body {
@@ -911,44 +912,12 @@ function lang_Class_get_class(c)
     }
 end
 
-function lang_Class_get_package(c)
-    body {
-        struct b_class *class0;
-        tended struct descrip result;
-        if (!(class0 = get_class_for(&c)))
-            runerr(0);
-        if (class0->package_id == 0)
-            fail;
-        extract_package(class0->name, &result);
-        return result;
-    }
-end
-
 function lang_Class_get_program(c)
     body {
         struct b_class *class0;
         if (!(class0 = get_class_for(&c)))
             runerr(0);
         return coexpr(class0->program->K_main);
-    }
-end
-
-function lang_Class_get_location_impl(c)
-    body {
-        struct b_class *class0;
-        struct loc *p;
-        tended struct descrip result;
-        if (!(class0 = get_class_for(&c)))
-            runerr(0);
-        if (class0->program->Glocs == class0->program->Eglocs) {
-            LitWhy("No global location data in icode");
-            fail;
-        }
-        p = lookup_global_loc(class0->name, class0->program);
-        if (!p)
-            syserr("Class name not found in global table");
-        loc_to_list(p, &result);
-        return result;
     }
 end
 
@@ -1003,22 +972,6 @@ function lang_Class_get_methp_proc(mp)
        runerr(613, mp)
     body {
         return proc(MethpBlk(mp).proc);
-    }
-end
-
-function lang_Class_get_cast_object(c)
-   if !is:cast(c) then
-       runerr(614, c)
-    body {
-       return object(CastBlk(c).object);
-    }
-end
-
-function lang_Class_get_cast_class(c)
-   if !is:cast(c) then
-       runerr(614, c)
-    body {
-       return class(CastBlk(c).class);
     }
 end
 
@@ -3587,19 +3540,6 @@ function lang_Constructor_get_constructor(c)
     }
 end
 
-function lang_Constructor_get_package(c)
-    body {
-        struct b_constructor *constructor0;
-        tended struct descrip result;
-        if (!(constructor0 = get_constructor_for(&c)))
-            runerr(0);
-        if (constructor0->package_id == 0)
-            fail;
-        extract_package(constructor0->name, &result);
-        return result;
-    }
-end
-
 function lang_Constructor_get_program(c)
     body {
         struct b_constructor *constructor0;
@@ -3610,25 +3550,6 @@ function lang_Constructor_get_program(c)
         if (!prog)
             fail;
         return coexpr(prog->K_main);
-    }
-end
-
-function lang_Constructor_get_location_impl(c)
-    body {
-        struct b_constructor *constructor0;
-        struct loc *p;
-        tended struct descrip result;
-        if (!(constructor0 = get_constructor_for(&c)))
-            runerr(0);
-        if (constructor0->program->Glocs == constructor0->program->Eglocs) {
-            LitWhy("No global location data in icode");
-            fail;
-        }
-        p = lookup_global_loc(constructor0->name, constructor0->program);
-        if (!p)
-            syserr("Constructor name not found in global table");
-        loc_to_list(p, &result);
-        return result;
     }
 end
 
@@ -3884,30 +3805,6 @@ function lang_Proc_get_name(c, flag)
      }
 end
 
-function lang_Proc_get_package(c, flag)
-   body {
-        struct b_proc *proc0;
-        tended struct descrip result;
-        if (!(proc0 = get_proc_for(&c)))
-            runerr(0);
-        if (!isflag(&flag))
-           runerr(171, flag);
-        if (proc0->field && is:null(flag)) {
-            if (proc0->field->defining_class->package_id == 0)
-                fail;
-            extract_package(proc0->field->defining_class->name, &result);
-        } else {
-            struct p_proc *pp;
-            if (!(pp = get_procedure(proc0)))
-                fail;
-            if (pp->package_id == 0)
-                fail;
-            extract_package(pp->name, &result);
-        }
-        return result;
-    }
-end
-
 function lang_Proc_get_program(c, flag)
     body {
         struct b_proc *proc0;
@@ -3926,45 +3823,6 @@ function lang_Proc_get_program(c, flag)
         }
         return coexpr(prog->K_main);
     }
-end
-
-function lang_Proc_get_location_impl(c, flag)
-   body {
-        tended struct descrip result;
-        struct b_proc *proc0;
-        struct p_proc *pp;
-        struct loc *p;
-        if (!(proc0 = get_proc_for(&c)))
-            runerr(0);
-        if (!isflag(&flag))
-           runerr(171, flag);
-        /* The check for M_Native here is to avoid (if flag is 1), looking up a non-deferred
-         * method's name in the global name table.
-         */
-        if (proc0->field && (is:null(flag) ||
-                            !(proc0->field->flags & M_Native))) {
-            struct progstate *prog = proc0->field->defining_class->program;
-            if (prog->ClassFieldLocs == prog->EClassFieldLocs) {
-                LitWhy("No field location data in icode");
-                fail;
-            }
-            p = &prog->ClassFieldLocs[proc0->field - prog->ClassFields];
-        } else {
-            if (!(pp = get_procedure(proc0))) {
-                LitWhy("Proc not a procedure, has no location");
-                fail;
-            }
-            if (pp->program->Glocs == pp->program->Eglocs) {
-                LitWhy("No global location data in icode");
-                fail;
-            }
-            p = lookup_global_loc(pp->name, pp->program);
-            if (!p)
-                syserr("Procedure name not found in global table");
-        }
-        loc_to_list(p, &result);
-        return result;
-     }
 end
 
 function lang_Proc_get_kind(c)
@@ -4018,7 +3876,7 @@ function lang_Proc_get_field_index(c)
         if (!(proc0 = get_proc_for(&c)))
             runerr(0);
         if (proc0->field)
-            return C_integer 1 + proc0->field - *proc0->field->defining_class->fields;
+            return C_integer 1 + lookup_class_field_by_fnum(proc0->field->defining_class, proc0->field->fnum);
         else
             fail;
      }
@@ -4602,7 +4460,6 @@ function weakref(val)
         table: 
         record:
         methp:
-        cast:
         object:
         coexpr: {
               struct b_weakref *p;

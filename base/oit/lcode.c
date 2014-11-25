@@ -87,6 +87,7 @@ codeb = (char *) expand_table(codeb, &codep, &maxcode, 1,                   \
 
 static void writescript(void);
 static word cnv_op(int n);
+static void genstaticnames(struct lfunction *lf);
 static void gentables(void);
 static void synch_file(void);
 static void synch_line(void);
@@ -121,6 +122,7 @@ struct ipc_line {
 static struct strconst *first_strconst, *last_strconst, *strconst_hash[128];
 static int strconst_offset;
 static struct centry *constblock_hash[128];
+static void outbytex(char b, char *fmt, ...);
 static void outshortx(short s, char *fmt, ...);
 static void outwordx(word oword, char *fmt, ...);
 static void outwordz(word oword, char *fmt, ...);
@@ -129,11 +131,14 @@ static void outsdescrip(struct centry *ce, char *fmt, ...);
 
 #if WordBits == 32
 #define WordFmt "%08lx"
+#define ShortFmt "%04lx    "
+#define ByteFmt "%02lx      "
 #else
 #define WordFmt "%016lx"
+#define ShortFmt "%04lx            "
+#define ByteFmt "%02lx              "
 #endif
 
-#define ShortFmt "%04lx"
 
 static struct header hdr;
 
@@ -212,10 +217,15 @@ static void emit_ir_var(struct ir_var *v, char *desc)
         }
         case GLOBAL: {
             struct gentry *ge = v->global;
-            if ((ge->g_flag & (F_Builtin|F_Proc|F_Record|F_Class)) == 0)
-                outwordx(Op_Global, "   %s=global", desc);
-            else
-                outwordx(Op_NamedGlobal, "   %s=namedglobal", desc);
+            if ((ge->g_flag & (F_Builtin|F_Proc|F_Record|F_Class)) == 0) {
+                if ((ge->g_flag & F_Readable) &&
+                    curr_lfunc->defined->package_id != 1 &&
+                    ge->defined->package_id != curr_lfunc->defined->package_id)
+                    outwordx(Op_GlobalVal, "   %s=globalval", desc);
+                else 
+                    outwordx(Op_Global, "   %s=global", desc);
+            } else
+                outwordx(Op_GlobalVal, "   %s=globalval", desc);
             outwordx(ge->g_index, "      %d (%s)", ge->g_index, ge->name);
             break;
         }
@@ -1420,6 +1430,18 @@ static void genclasses(void)
         genclass(cl);
 }
 
+static void genstaticnames(struct lfunction *lf)
+{
+    struct lentry *le;
+    struct centry *ce;
+    for (le = lf->locals; le; le = le->next) {
+        if (le->l_flag & F_Static) {
+            ce = inst_sdescrip(le->name);
+            outsdescrip(ce, "Local name (static %s)", le->name);
+        }
+    }
+}
+
 /*
  * gentables - generate interpreter code for global, static,
  *  identifier, and record tables, and built-in procedure blocks.
@@ -1436,7 +1458,6 @@ static void gentables()
     struct ipc_fname *fnptr;
     struct ipc_line *lnptr;
     struct centry *ce;
-    word w;
 
     if (Dflag) {
         fprintf(dbgfile,"\n\n# global tables\n");
@@ -1595,23 +1616,22 @@ static void gentables()
     flushcode();
 
     /*
-     * Output bitmap for global variable package flags.
+     * Output global variable flags.
      */
     if (Dflag)
-        fprintf(dbgfile, "\n# Global variable package flag bitmap\n");
-    hdr.GpackageFlags = pc;
-    w = i = 0;
+        fprintf(dbgfile, "\n# Global variable flags\n");
+    hdr.Gflags = pc;
     for (gp = lgfirst; gp != NULL; gp = gp->g_next) {
+        char f = 0;
         if (gp->g_flag & F_Package)
-            w |= ((word)1 << i);
-        ++i;
-        if (i == WordBits) {
-            outwordx(w, "map");
-            w = i = 0;
-        }
+            f |= G_Package;
+        if (gp->g_flag & F_Readable)
+            f |= G_Readable;
+        if (gp->g_flag & (F_Builtin|F_Proc|F_Record|F_Class))
+            f |= G_Const;
+        outbytex(f, "Flag %s", gp->name);
     }
-    if (i > 0)
-        outwordx(w, "map");
+    align();
     flushcode();
 
     /*
@@ -1643,6 +1663,25 @@ static void gentables()
     for (i = 0; i < nstatics; ++i) {
         outwordx(D_Null, "D_Null");
         outwordx(0, "");
+    }
+    flushcode();
+
+    /*
+     * Output descriptors for static variable names.
+     */
+    if (Dflag)
+        fprintf(dbgfile, "\n# Static variable names\n");
+    hdr.Snames = pc;
+    for (gp = lgfirst; gp; gp = gp->g_next) {
+        if (gp->func)
+            genstaticnames(gp->func);
+        else if (gp->class) {
+            struct lclass_field *me;
+            for (me = gp->class->fields; me; me = me->next) {
+                if (me->func && !(me->flag & (M_Defer | M_Abstract | M_Native))) 
+                    genstaticnames(me->func);
+            }
+        }
     }
     flushcode();
 
@@ -1762,9 +1801,10 @@ static void gentables()
         fprintf(dbgfile, "fnames:           " WordFmt "\n", (long)hdr.Fnames);
         fprintf(dbgfile, "globals:          " WordFmt "\n", (long)hdr.Globals);
         fprintf(dbgfile, "gnames:           " WordFmt "\n", (long)hdr.Gnames);
-        fprintf(dbgfile, "gpackageflags:    " WordFmt "\n", (long)hdr.GpackageFlags);
+        fprintf(dbgfile, "gflags:           " WordFmt "\n", (long)hdr.Gflags);
         fprintf(dbgfile, "glocs:            " WordFmt "\n", (long)hdr.Glocs);
         fprintf(dbgfile, "statics:          " WordFmt "\n", (long)hdr.Statics);
+        fprintf(dbgfile, "snames:           " WordFmt "\n", (long)hdr.Snames);
         fprintf(dbgfile, "tcasetables:      " WordFmt "\n", (long)hdr.TCaseTables);
         fprintf(dbgfile, "filenms:          " WordFmt "\n", (long)hdr.Filenms);
         fprintf(dbgfile, "linenums:         " WordFmt "\n", (long)hdr.linenums);
@@ -1792,10 +1832,11 @@ static void gentables()
         report("  Records         %7ld", (long)(hdr.Fnames - hdr.Records));
         report("  Field names     %7ld", (long)(hdr.Globals - hdr.Fnames));
         report("  Globals         %7ld", (long)(hdr.Gnames  - hdr.Globals));
-        report("  Global names    %7ld", (long)(hdr.GpackageFlags - hdr.Gnames));
-        report("  Global pk flags %7ld", (long)(hdr.Glocs - hdr.GpackageFlags));
+        report("  Global names    %7ld", (long)(hdr.Gflags - hdr.Gnames));
+        report("  Global flags    %7ld", (long)(hdr.Glocs - hdr.Gflags));
         report("  Global locs     %7ld", (long)(hdr.Statics - hdr.Glocs));
-        report("  Statics         %7ld", (long)(hdr.TCaseTables - hdr.Statics));
+        report("  Statics         %7ld", (long)(hdr.Snames - hdr.Statics));
+        report("  Static names    %7ld", (long)(hdr.TCaseTables - hdr.Snames));
         report("  TCaseTables     %7ld", (long)(hdr.Filenms - hdr.TCaseTables));
         report("  Filenms         %7ld", (long)(hdr.linenums - hdr.Filenms));
         report("  Linenums        %7ld", (long)(hdr.Constants - hdr.linenums));
@@ -1817,7 +1858,7 @@ static void align()
     n = WordSize - n;
     if (Dflag) {
         for (i = 0; i < n; ++i)
-            fprintf(dbgfile, WordFmt ":   00          # Padding byte\n", (long)pc + i);
+            fprintf(dbgfile, WordFmt ":   " ByteFmt "    # Padding byte\n", (long)pc + i, (long)0);
     }
     CodeCheck(n);
     for (i = 0; i < n; ++i)
@@ -1879,7 +1920,7 @@ static void outshortx(short s, char *fmt, ...)
     if (Dflag) {
         va_list ap;
         va_start(ap, fmt);
-        fprintf(dbgfile, WordFmt ":   " ShortFmt "        # ", (long)pc, (long)s);
+        fprintf(dbgfile, WordFmt ":   " ShortFmt "    # ", (long)pc, (long)s);
         vfprintf(dbgfile, fmt, ap);
         putc('\n', dbgfile);
         va_end(ap);
@@ -1888,6 +1929,21 @@ static void outshortx(short s, char *fmt, ...)
     memcpy(codep, &s, sizeof(short));
     codep += sizeof(short);
     pc += sizeof(short);
+}
+
+static void outbytex(char b, char *fmt, ...)
+{
+    if (Dflag) {
+        va_list ap;
+        va_start(ap, fmt);
+        fprintf(dbgfile, WordFmt ":   " ByteFmt "    # ", (long)pc, (long)b);
+        vfprintf(dbgfile, fmt, ap);
+        putc('\n', dbgfile);
+        va_end(ap);
+    }
+    CodeCheck(1);
+    *codep++ = b;
+    pc++;
 }
 
 static void outwordz(word oword, char *fmt, ...)

@@ -22,7 +22,7 @@ class CDialog(Dialog,SelectiveObjectCodec)
    end
 
    public new()
-      cast(self,Dialog).new()
+      Dialog.new()
       self.clear_wattribs()
       return
    end

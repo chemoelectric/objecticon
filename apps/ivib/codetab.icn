@@ -44,7 +44,7 @@ class CodeTab(TabItem)
 
    public new(c)
       local l, p
-      cast(self,TabItem).new()
+      TabItem.new()
       set_label("Code")
       self.c := c
 

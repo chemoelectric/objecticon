@@ -19,6 +19,7 @@ extern int Iflag;       /* -I: ir code dump */
 extern int Zflag;	/* -Z: icode-gz compression */
 extern int loclevel;    /* -l n: location info */
 extern int Olevel;      /* -O n: optimisation */
+extern int nolink;
 
 extern char *progname;
 
@@ -53,5 +54,6 @@ void quit(char *fmt, ...);
 char *abbreviate(char *path);
 void begin_esc(FILE *f, char *fname, int line);
 void end_esc(FILE *f);
+void add_remove_file(char *s);
 
 #endif

@@ -104,36 +104,35 @@ struct errtab errtab[] = {
     {601, "attempt to access static field via instance"},
     {602, "object expected"},
     {603, "class expected"},
-    {604, "cannot cast to a class which is not a superclass of object"},
     {605, "an abstract class is uninstantiable"},
+    {606, "can only access instance method via a class from within an instance method"},
+    {607, "can only access instance method via a class from one of its implemented classes"},
     {608, "a private field can only be accessed from within the same class"},
     {609, "a protected instance field can only be accessed from within an implemented class of the instance"},
     {610, "a protected static field can only be accessed if it is within an implemented class of the caller"},
     {611, "a package field can only be accessed from within the same package"},
     {612, "unresolved deferred method"},
     {613, "methp expected"},
-    {614, "cast expected"},
     {615, "procedure expected"},
     {616, "can only set a method from within the defining class"},
     {617, "the given field is not a native method"},
     {618, "the given procedure is a method"},
-    {619, "class or object expected"},
-    {620, "class, cast or object expected"},
+    {620, "class or object expected"},
     {621, "init cannot be accessed via a field"},
     {622, "new cannot be accessed on an initialized object"},
     {623, "can only set a method on an unresolved field"},
-    {624, "record, class, cast or object expected"},
+    {624, "record, class or object expected"},
     {625, "record or constructor expected"},
     {626, "setting an instance method requires at least one parameter"},
     {627, "this method must be called from within a class"},
-    {628, "attempt to access non-method via a cast"},
     {630, "weakref expected"},
     {631, "procedure or methp expected"},
     {632, "co-expression which is a program's &main expected"},
     {633, "given program not a child of this program"},
     {634, "class or constructor expected"},
-    {635, "class, cast, object, constructor or record expected"},
+    {635, "class, object, constructor or record expected"},
     {636, "invalid program monitoring sequence"},
+    {637, "keyword expected"},
    };
 
 
@@ -174,13 +173,12 @@ void err_msg(int n, dptr v)
     }
     else {
         k_errornumber = n;
-        if (v == NULL) {
-            k_errorvalue = nulldesc;
-            have_errval = 0;
-        }
-        else {
+        if (v) {
             k_errorvalue = *v;
             have_errval = 1;
+        } else {
+            k_errorvalue = nulldesc;
+            have_errval = 0;
         }
     }
     if (k_errornumber == -1)

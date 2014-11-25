@@ -48,7 +48,7 @@ class Line(Component, HasOrientation)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       self.line_width := Gui.BORDER_WIDTH
       self.is_horizontal_flag := 1
       return

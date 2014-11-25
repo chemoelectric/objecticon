@@ -26,7 +26,7 @@ class CanvasLabel(CanvasComponent,Label)
    #
    public gen_code(c)
       self.paint.gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       c.chain("set_paint(" || self.paint.name || ")")
    end
 
@@ -36,7 +36,7 @@ class CanvasLabel(CanvasComponent,Label)
    public dup()
       local c
       c := CanvasLabel()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       c.set_paint(self.paint.dup(c))
       return c
    end
@@ -64,12 +64,12 @@ class CanvasLabel(CanvasComponent,Label)
    end
 
    public gen_cos()
-      suspend cast(self,CanvasComponent).gen_cos() | self.paint
+      suspend CanvasComponent.gen_cos() | self.paint
    end
 
    public new()
-      cast(self,Label).new()
-      cast(self,CanvasComponent).new()
+      Label.new()
+      CanvasComponent.new()
       self.class_name := "Label"
       self.import_name := "gui"
       self.name := "label"

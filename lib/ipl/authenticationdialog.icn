@@ -23,7 +23,7 @@ class AuthenticationDialog(Dialog)
    end
 
    public new(domain, realm)
-      cast(self,Dialog).new()
+      Dialog.new()
       self.setup()
       domain_label.set_label(domain)
       realm_label.set_label(realm)

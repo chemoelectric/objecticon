@@ -32,7 +32,7 @@ class ColorField(Component)
    end
 
    public initially()
-      cast(self,Component).initially()
+      Component.initially()
       tf.set_width(cbwin.text_width(if /opaque_flag then "00000,00000,00000,00000 " else "00000,00000,00000 ") + tf.border.get_total_width())
    end
 
@@ -85,7 +85,7 @@ class ColorField(Component)
    public new(val)
       local p, t
       /val := "black"
-      cast(self,Component).new() 
+      Component.new() 
       set_layout(GridLayout().set_doi(0).set_dii(0))
       p := Component().
          set_layout(GridLayout().set_doi(0).set_dii(0))

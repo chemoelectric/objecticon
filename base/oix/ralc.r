@@ -441,24 +441,6 @@ alcobject_macro(alcobject_0,0)
 alcobject_macro(alcobject_1,E_Object)
 
 
-#begdef alccast_macro(f,e_cast)
-/*
- * alccast - allocate a cast value in the block region.
- */
-
-struct b_cast *f()
-   {
-   struct b_cast *blk;
-
-   AlcFixBlk(blk, b_cast, T_Cast, e_cast)
-   blk->object = 0;
-   return blk;
-   }
-#enddef
-
-alccast_macro(alccast_0,0)
-alccast_macro(alccast_1,E_Cast)
-
 #begdef alcmethp_macro(f,e_methp)
 /*
  * alcmethp - allocate a methp value in the block region.
@@ -470,6 +452,7 @@ struct b_methp *f()
 
    AlcFixBlk(blk, b_methp, T_Methp, e_methp)
    blk->object = 0;
+   blk->proc = 0;
    return blk;
    }
 #enddef

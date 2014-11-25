@@ -20,7 +20,7 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
    # CanvasComponent has an in_resize_region too, but we want TableColumn's (for preview).
    #
    public in_resize_region(e)
-      return cast(self,TableColumn).in_resize_region(e)
+      return TableColumn.in_resize_region(e)
    end
 
    #
@@ -46,7 +46,7 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
 
    public set_column_align(x)
       self.column_align := x
-      cast(self,TableColumn).set_column_align(x)
+      TableColumn.set_column_align(x)
       return self
    end
 
@@ -56,7 +56,7 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
    public dup()
       local c
       c := CanvasTableColumn()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       c.column_width := self.column_width
       c.set_column_align(self.column_align)
       c.set_paint(self.paint.dup(c))
@@ -99,7 +99,7 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
 
    public post_decode()
       self.set_column_align(self.column_align)
-      cast(self,CanvasComponent).post_decode()
+      CanvasComponent.post_decode()
    end
 
    #
@@ -115,12 +115,12 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
    end
 
    public gen_cos()
-      suspend cast(self,CanvasComponent).gen_cos() | self.paint
+      suspend CanvasComponent.gen_cos() | self.paint
    end
 
    public new()
-      cast(self,TableColumn).new()
-      cast(self,CanvasComponent).new()
+      TableColumn.new()
+      CanvasComponent.new()
       self.column_align := Align.L
       self.class_name := "TableColumn"
       self.import_name := "gui"

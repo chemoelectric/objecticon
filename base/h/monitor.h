@@ -17,7 +17,6 @@
 #define E_Cset		'\145'		/* Cset allocation */
 #define E_Record	'\150'		/* Record allocation */
 #define E_Object	'\200'		/* Object allocation */
-#define E_Cast	        '\201'		/* Cast allocation */
 #define E_Methp	        '\202'		/* Methp allocation */
 #define E_Ucs	        '\203'		/* Ucs allocation */
 #define E_Tvsubs	'\151'		/* Substring tv allocation */
@@ -98,8 +97,6 @@
 #define E_Objectsub	'\211'		/* Object subscript */
 #define	E_Classref	'\212'		/* Class reference */
 #define E_Classsub	'\213'		/* Class subscript */
-#define	E_Castref	'\214'		/* Cast reference */
-#define E_Castsub	'\215'		/* Cast subscript */
 #define	E_Objectcreate	'\216'		/* Object creation */
 #define E_Lclear	'\223'		/* List clear */
 #define	E_Sclear	'\224'		/* Set clear */

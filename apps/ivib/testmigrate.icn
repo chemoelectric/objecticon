@@ -161,7 +161,7 @@ class LegacyCodePrinter(LegacyDecode)
    end
 
    public new()
-      cast(self,LegacyDecode).new()
+      LegacyDecode.new()
       col := 0
       return
    end
@@ -311,7 +311,7 @@ class CodePrinter(Decode)
    end
 
    public new()
-      cast(self,Decode).new()
+      Decode.new()
       col := 0
       return
    end

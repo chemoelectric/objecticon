@@ -1171,8 +1171,7 @@ procedure Unique(e)
    done := set()
 
    while x := @e do
-      if member(done, x) then next
-      else {
+      if not member(done, x) then {
          insert(done, x)
          suspend x
          }

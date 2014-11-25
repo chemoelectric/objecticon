@@ -62,7 +62,7 @@ class PaintEdit(Dialog)
    end
 
    public new(c)
-      cast(self,Dialog).new()
+      Dialog.new()
       self.c := c
       setup()
       return
@@ -90,7 +90,7 @@ class ImagePaintEdit(PaintEdit)
    end
 
    public set_vals()
-      cast(self,PaintEdit).set_vals()
+      PaintEdit.set_vals()
       c.max_w := if max_w.is_checked() then
          integer(max_w_field.get_contents())
       else
@@ -149,7 +149,7 @@ class ImagePaintEdit(PaintEdit)
 
    public setup()
       local p, q
-      cast(self,PaintEdit).setup()
+      PaintEdit.setup()
 
       p := TabItem().set_label("General")
       p.set_layout(GridLayout().set_extra("borders"))
@@ -232,7 +232,7 @@ class GridPaintEdit(PaintEdit)
    end
 
    public set_vals()
-      cast(self,PaintEdit).set_vals()
+      PaintEdit.set_vals()
       c.fmt := input.get_contents_str()
    end
 
@@ -317,7 +317,7 @@ class GridPaintEdit(PaintEdit)
 
    public setup()
       local p
-      cast(self,PaintEdit).setup()
+      PaintEdit.setup()
 
       p := TabItem().set_label("Edit")
       p.set_layout(GridLayout())
@@ -368,7 +368,7 @@ class ShowGridPaint(DrawScrollArea)
    end
 
    public finally()
-      cast(self,DrawScrollArea).finally()
+      DrawScrollArea.finally()
       (\d).finally()
    end
 
@@ -433,7 +433,7 @@ class NamedImageDialog(Dialog)
    end
 
    public new(curr)
-      cast(self,Dialog).new()
+      Dialog.new()
       self.curr := curr
       setup()
       return

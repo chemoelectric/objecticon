@@ -19,7 +19,7 @@ class CanvasOverlaySet(CanvasComponent,OverlaySet)
    #
    public gen_code(c)
       every (!self.children).gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       c.chain("add(" || (!self.children).name || ")")
       c.chain("set_which_one(" || self.which_one.name || ")")
    end
@@ -30,7 +30,7 @@ class CanvasOverlaySet(CanvasComponent,OverlaySet)
    public dup()
       local c, e, e1
       c := CanvasOverlaySet()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       every e := !self.children do {
          e1 := e.dup()
          c.add(e1)
@@ -61,7 +61,7 @@ class CanvasOverlaySet(CanvasComponent,OverlaySet)
    #
    public which_cursor_over(e)
       local o
-      cast(self,CanvasComponent).which_cursor_over(e) | fail
+      CanvasComponent.which_cursor_over(e) | fail
       if in_resize_region(e) then
          return self
       if o := self.which_one.which_cursor_over(e) then
@@ -104,12 +104,12 @@ class CanvasOverlaySet(CanvasComponent,OverlaySet)
    end
 
    public gen_cos()
-      suspend cast(self,CanvasComponent).gen_cos() | !self.children
+      suspend CanvasComponent.gen_cos() | !self.children
    end
 
    public new()
-      cast(self,OverlaySet).new()
-      cast(self,CanvasComponent).new()
+      OverlaySet.new()
+      CanvasComponent.new()
       self.class_name := "OverlaySet"
       self.import_name := "gui"
       self.name := "overlay_set"

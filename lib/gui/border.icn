@@ -72,7 +72,7 @@ class Border(Component)
 
    public initially()
       \self.content | runerr("no content component specified")
-      cast(self,Component).initially()
+      Component.initially()
    end
 
    public display()
@@ -141,12 +141,12 @@ class Border(Component)
    end
 
    public shift(dx, dy)
-      cast(self,Component).shift(dx, dy)
+      Component.shift(dx, dy)
       y0 +:= dy
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       self.internal_align := Align.L
       self.set_border(BevelledBorder())
       self.set_constraint("x_fill", &yes)

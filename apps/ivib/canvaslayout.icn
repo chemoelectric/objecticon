@@ -39,7 +39,7 @@ end
 class CanvasGridLayout(CanvasLayout,GridLayout)
    public doi_val, dii_val
    public gen_code(c)
-      cast(self,CanvasLayout).gen_code(c)
+      CanvasLayout.gen_code(c)
       c.chain("set_doi(" || \self.doi_val || ")")
       c.chain("set_dii(" || \self.dii_val || ")")
       c.chain("set_extra(" || image(self.extra) || ")")
@@ -51,7 +51,7 @@ class CanvasGridLayout(CanvasLayout,GridLayout)
    public dup()
       local c
       c := CanvasGridLayout()
-      cast(self,CanvasObject).dup_fields(c)
+      CanvasObject.dup_fields(c)
       c.doi_val := self.doi_val
       c.dii_val := self.dii_val
       c.extra := self.extra
@@ -79,8 +79,8 @@ class CanvasGridLayout(CanvasLayout,GridLayout)
    end
 
    public new()
-      cast(self,CanvasLayout).new()
-      cast(self,GridLayout).new()
+      CanvasLayout.new()
+      GridLayout.new()
       self.class_name := "GridLayout"
       #self.debug := 1
       return

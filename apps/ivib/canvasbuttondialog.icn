@@ -31,7 +31,7 @@ class CanvasButtonDialog(CanvasComponentDialog)
       has_label_down
 
    public validate_input()
-      cast(self,CanvasComponentDialog).validate_input() | fail
+      CanvasComponentDialog.validate_input() | fail
       \self.paint_field.get_contents() | return alert_error(self, "Label cannot be null")
       self.paint_field.validate_input() | fail
       if \has_label_down then
@@ -40,7 +40,7 @@ class CanvasButtonDialog(CanvasComponentDialog)
    end
       
    public set_vals()
-      cast(self,CanvasComponentDialog).set_vals()
+      CanvasComponentDialog.set_vals()
 
       c.set_paint(paint_field.get_contents())
 
@@ -96,7 +96,7 @@ class CanvasButtonDialog(CanvasComponentDialog)
    end
 
    public setup()
-      cast(self,CanvasComponentDialog).setup()
+      CanvasComponentDialog.setup()
 
       tab_basic := TabItem().set_label("General")
       tab_basic.set_layout(GridLayout())

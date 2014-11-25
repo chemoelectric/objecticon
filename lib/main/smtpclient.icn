@@ -170,7 +170,7 @@ class SmtpClient(NetClient)
    end
 
    public new()
-      cast(self,NetClient).new()
+      NetClient.new()
       set_port(25)
       set_server("localhost")
       set_hostname(&host)

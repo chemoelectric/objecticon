@@ -18,7 +18,7 @@ class CanvasImage(CanvasComponent,Image)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       c.chain("set_image(" || image(\self.image_str) || ")")
       c.chain("set_cache(" || image(\self.image_cache) || ")")
       c.chain("set_fill_dimensions(" || (0 < self.fill_dimensions) || ")")
@@ -30,7 +30,7 @@ class CanvasImage(CanvasComponent,Image)
    public dup()
       local c
       c := CanvasImage()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       c.fill_dimensions := self.fill_dimensions
       c.image_str := self.image_str
       c.image_cache := self.image_cache
@@ -52,7 +52,7 @@ class CanvasImage(CanvasComponent,Image)
    #
    public display()
       if in_preview() | \self.win then
-         cast(self,Image).display()
+         Image.display()
       else {
          self.cbwin.draw_rectangle(self.x, self.y, self.w, self.h)
          center_string(self.cbwin, self.x + self.w / 2, self.y + 10, "<Image>")
@@ -75,8 +75,8 @@ class CanvasImage(CanvasComponent,Image)
    end
 
    public new()
-      cast(self,Image).new()
-      cast(self,CanvasComponent).new()
+      Image.new()
+      CanvasComponent.new()
       self.class_name := "Image"
       self.import_name := "gui"
       self.name := "image"

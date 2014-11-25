@@ -22,7 +22,7 @@ class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
          self.set_box_paint(ImagePaint().set_cache("gui.DIAMOND_UP"), ImagePaint().set_cache("gui.DIAMOND_DOWN"))
       else
          self.set_box_paint(ImagePaint().set_cache("gui.BOX_UP"), ImagePaint().set_cache("gui.BOX_DOWN"))
-      cast(self,CheckBoxMenuItem).set_parent_check_box_group(x)
+      CheckBoxMenuItem.set_parent_check_box_group(x)
       return self
    end
 
@@ -32,7 +32,7 @@ class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
    public gen_code(c)
       self.paint_mid.gen_code(c)
       (\self.paint_right).gen_code(c)
-      cast(self,CanvasMenuComponent).gen_code(c)
+      CanvasMenuComponent.gen_code(c)
 
       c.chain("set_paint_mid(" || self.paint_mid.name || ")")
 
@@ -50,7 +50,7 @@ class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
    public dup()
       local c
       c := CanvasCheckBoxMenuItem()
-      cast(self,CanvasMenuComponent).dup_fields(c)
+      CanvasMenuComponent.dup_fields(c)
       # Don't copy the left image, it's not a CanvasObject, just a Paint.
       c.set_paint_mid(self.paint_mid.dup())
       c.set_paint_right((\self.paint_right).dup())
@@ -86,12 +86,12 @@ class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
    end
 
    public gen_cos()
-      suspend cast(self,CanvasMenuComponent).gen_cos() | self.paint_mid | \self.paint_right
+      suspend CanvasMenuComponent.gen_cos() | self.paint_mid | \self.paint_right
    end
 
    public new()
-      cast(self,CanvasTextMenuItem).new()
-      cast(self,CheckBoxMenuItem).new()
+      CanvasTextMenuItem.new()
+      CheckBoxMenuItem.new()
       self.class_name := "CheckBoxMenuItem"
       self.import_name := "gui"
       self.name := "check_box_menu_item"

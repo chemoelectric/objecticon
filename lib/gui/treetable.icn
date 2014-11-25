@@ -46,7 +46,7 @@ class TreeTableContent(Tree)
       cols := parent.table_header.children
       every j := 1 to *cols do {
          h := if j = 1 then
-            cast(self,Tree).calculate_line_height()
+            Tree.calculate_line_height()
          else
             cols[j].calculate_line_height(self.cbwin)
          if integer(h) then
@@ -83,17 +83,17 @@ class TreeTableContent(Tree)
    end
 
    public on_hsb()
-      cast(self,Tree).on_hsb()
+      Tree.on_hsb()
       synch_header()
    end
 
    public handle_key_right(e)
-      cast(self,Tree).handle_key_right(e)
+      Tree.handle_key_right(e)
       synch_header()
    end
 
    public handle_key_left(e)
-      cast(self,Tree).handle_key_left(e)
+      Tree.handle_key_left(e)
       synch_header()
    end
 
@@ -129,7 +129,7 @@ class TreeTableContent(Tree)
          # Write each line in this column
          every i := info.first to info.last do {
             lh := integer(h) | h[i]
-            cast(self,Tree).draw_line(xp, yp, lh, i)
+            Tree.draw_line(xp, yp, lh, i)
             yp +:= lh
          }
          # Reset the clip.
@@ -160,7 +160,7 @@ class TreeTableContent(Tree)
          }
       }
       # Call the superclass draw to do the selection, highlight etc.
-      cast(self,SelectableScrollArea).draw()
+      SelectableScrollArea.draw()
    end
 
    # Re-override draw_line so that call to SelectableScrollArea.draw() above draws
@@ -193,7 +193,7 @@ class ItemPaintTreeTableContent(ItemPaintTree, TreeTableContent)
       cols := parent.table_header.children
       every j := 1 to *cols do {
          h := if j = 1 then
-            cast(self,ItemPaintTree).calculate_line_height()
+            ItemPaintTree.calculate_line_height()
          else
             cols[j].calculate_line_height(self.cbwin)
          if integer(h) then

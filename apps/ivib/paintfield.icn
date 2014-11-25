@@ -151,7 +151,7 @@ class PaintField(Border)
    end
 
    public new()
-      cast(self,Border).new()
+      Border.new()
       setup()
       self.clear_constraints()
       self.set_constraint("x_fill", &yes)

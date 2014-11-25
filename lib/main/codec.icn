@@ -15,7 +15,6 @@ class Codec()
    public static const 
       OBJECT_CODE,
       CLASS_CODE,
-      CAST_CODE,
       METHP_CODE,
       RECORD_CODE,
       CONSTRUCTOR_CODE,
@@ -40,7 +39,6 @@ class Codec()
       CODE_SEPARATOR := "|"
       OBJECT_CODE := "C"
       CLASS_CODE := "D"
-      CAST_CODE := "G"
       METHP_CODE := "H"
       RECORD_CODE := "R"
       CONSTRUCTOR_CODE := "K"
@@ -177,7 +175,11 @@ class Encode(Stream, HasUnderlyingStream)
       local s, j
       image(f) ? {
          s := case tab(upto(' ')) of {
-            "function": "F"
+            "function": {
+               (Prog.get_function(Proc.get_name(f)) === f) |  
+                  throw("Can only encode a function which is a builtin function")
+               "F"
+            }
             "keyword": "K"
             "operator": "O"
             "procedure": "P"
@@ -231,12 +233,6 @@ class Encode(Stream, HasUnderlyingStream)
          "class": {
             writes1(Codec.CLASS_CODE)
             line_out(Class.get_name(o))
-         }
-
-         "cast": {
-            writes1(Codec.CAST_CODE)
-            encode(Class.get_cast_object(o))
-            encode(Class.get_cast_class(o))
          }
 
          "procedure" : {
@@ -457,29 +453,31 @@ class Decode()
       seen[tag_count +:= 1] := o
    end
 
+   private static lookup_global(s)
+      local i
+      if not(integer(s)) &
+         i := Prog.get_global_index(s) &
+         iand(Prog.get_global_flags(i), Prog.Const) ~= 0 then
+         return Prog.get_global_impl(i)
+   end
+
    private static lookup_class(s)
-      local i, t
-      if i := Prog.get_global_index(s) &
-         iand(Prog.get_global_flags(i), Prog.NamedGlobal) ~= 0 &
-         t := Prog.get_global_impl(i) &
+      local t
+      if t := lookup_global(s) &
          type(t) == "class" then
          return t
    end
 
    private static lookup_constructor(s)
-      local i, t
-      if i := Prog.get_global_index(s) &
-         iand(Prog.get_global_flags(i), Prog.NamedGlobal) ~= 0 &
-         t := Prog.get_global_impl(i) &
+      local t
+      if t := lookup_global(s) &
          type(t) == "constructor" then
          return t
    end
 
    private static lookup_procedure(s)
-      local i, t
-      if i := Prog.get_global_index(s) &
-         iand(Prog.get_global_flags(i), Prog.NamedGlobal) ~= 0 &
-         t := Prog.get_global_impl(i) &
+      local t
+      if t := lookup_global(s) &
          match("procedure ", image(t)) then
          return t
    end
@@ -622,13 +620,6 @@ class Decode()
                insert(res, decode(), decode())
             return res
          }            
-
-         Codec.CAST_CODE : {
-            t := decode()
-            cl := decode()
-            is(t, cl) | throw("Cast to " || image(cl) || " from " || image(t) || " not valid")
-            return cast(t, cl)
-         }
 
          default :
             throw("Unknown type code:" || image(t))

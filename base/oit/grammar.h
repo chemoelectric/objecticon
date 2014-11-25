@@ -22,6 +22,9 @@ body :    invocable ;
 optpackage : {OptPackage0();} ;
         | PACKAGE {OptPackage1();} ;
 
+optreadable : {OptReadable0();} ;
+        | READABLE {OptReadable1();} ;
+
 body1    : record ;
         | class ;
 	| proc ;
@@ -97,7 +100,7 @@ fieldaccess1 : PRIVATE {Modifier1();};
         | READABLE {Modifier7();};
         | FINAL {Modifier8();};
 
-global	: GLOBAL {Global0($1);} idlist  {Global1($1, $2, $3);} ;
+global	: optreadable GLOBAL {Global0($2);} idlist  {Global1($1,$2,$3,$4);} ;
 
 record	: RECORD IDENT {Record1($1,$2);} LPAREN eidlist RPAREN {
 		Record2($1,$2,$3,$4,$5,$6);

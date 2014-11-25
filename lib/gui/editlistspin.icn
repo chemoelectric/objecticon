@@ -79,7 +79,7 @@ class EditListSpin(SelectionSpin)
    end
 
    public new()
-      cast(self,SelectionSpin).new()
+      SelectionSpin.new()
       every view.connect(self.on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       return
    end

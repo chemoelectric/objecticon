@@ -73,7 +73,7 @@ void next_class(char *name, struct node *n)
 {
     struct tclass *c = FAlloc(struct tclass);
     c->flag = modflag;
-    if (packageflag)
+    if (globalflag)
         c->flag |= M_Package;
     if (curr_class) {
         curr_class->next = c;

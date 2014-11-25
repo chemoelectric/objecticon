@@ -18,11 +18,12 @@ extern struct tclass *classes, *curr_class;
 extern char *package_name;
 extern int idflag;
 extern int modflag;
-extern int packageflag;
+extern int globalflag;
 extern struct timport *imports, *last_import, *curr_import;
 extern struct tinvocable *tinvocables, *last_tinvocable;
 
 void install(char *name, struct node *n);
+void check_globalflag(struct node *n);
 struct tgentry *next_global(char *name, int flag, struct node *n);
 struct tlentry *put_local(char *name, int flag, struct node *n, int unique);
 int putlit(char *id, int idtype, int len);

@@ -40,7 +40,7 @@ class InfoDialog(Dialog)
    end
 
    public new(lines, title, button_text, alignment)
-      cast(self,Dialog).new()
+      Dialog.new()
       self.lines := lines
       self.title := title
       self.button_text := button_text

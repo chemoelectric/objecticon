@@ -222,4 +222,20 @@ e: &errortext: Failed
 e: &errorvalue: Failed
 e: &errornumber: Failed
 e: &errorcoexpr: Failed
+Test test33
+x: class Child33
+Child33.fun1(): {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+Child33.fun2(): "Why oh why"
+Child33.fun3(): "Why oh why"
+&errortext: Failed
+c: &errortext: "ciao"
+c: &errortext: Failed
+&errornumber: Failed
+c: &errornumber: 103
+Child33.fun6(5): "ed"
+c: &pos: 5
+Child33.fun6(11): {"ed ove"}
+c: &pos: 5
+&subject: "the quick brown fox"
+&pos: 4
 exit

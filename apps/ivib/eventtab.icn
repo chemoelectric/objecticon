@@ -89,7 +89,7 @@ class EventTab(TabItem)
 
    public new(l, name_field)
       local c1, c2, p
-      cast(self,TabItem).new()
+      TabItem.new()
       set_label("Events")
 
       set_layout(GridLayout())

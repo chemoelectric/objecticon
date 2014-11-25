@@ -705,7 +705,7 @@ class Message(MimeHeaders)
    end
 
    public new()
-      cast(self,MimeHeaders).new()
+      MimeHeaders.new()
       content := ""
       return
    end

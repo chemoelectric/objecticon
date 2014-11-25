@@ -1237,7 +1237,6 @@ Const(SEEK_END)
         Const(T_Kywdany)
         Const(T_Class)
         Const(T_Object)
-        Const(T_Cast)
         Const(T_Methp)
     end_class();
 

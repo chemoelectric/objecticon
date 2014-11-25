@@ -19,7 +19,7 @@ class CanvasCustom(CanvasComponent,Custom)
    public dup()
       local c
       c := CanvasCustom()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       return c
    end
 
@@ -31,8 +31,8 @@ class CanvasCustom(CanvasComponent,Custom)
    end
 
    public new()
-      cast(self,Custom).new()
-      cast(self,CanvasComponent).new()
+      Custom.new()
+      CanvasComponent.new()
       self.class_name := "Custom"
       self.import_name := "gui"
       self.name := "custom"

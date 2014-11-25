@@ -31,7 +31,7 @@ class Comment(Node)
    end
 
    public new(s)
-      cast(self,Node).new()
+      Node.new()
       comment := s
       return
    end

@@ -531,14 +531,6 @@ procedure test_langprocs()
    equals_check(a.f, c.f)
    equals_check(a.f, a.g)
 
-   a := cast(Sixteen(), Fifteen)
-   b := cast(Sixteen(), Fifteen)
-   c := cast(Fifteen(), Fifteen)
-   d := cast(Sixteen(), Sixteen)
-   equals_check(a, b)
-   equals_check(a, c)
-   equals_check(a, d)
-
    a := Fifteen()
    b := Fifteen()
    a.val := a.f
@@ -673,10 +665,90 @@ procedure test_inherit_equals()
    yes_no{"equals(x1,x2)", equals(x1,x2)}
 end
 
+class Par()
+   public f1()
+      return 1
+   end
+
+   private f2()
+      return 2
+   end
+
+   protected f3()
+      return 3
+   end
+
+   public static f4()
+      return 4
+   end
+
+   public new()
+      write("in Par.new")
+      return
+   end
+end
+
+class Other()
+   public f1()
+      return 1
+   end
+end
+
+class Sub(Par)
+   public f()
+      try{"Other.f1()", Other.f1()}
+      try{"Par.new()", Par.new()}
+      try{"Par.f1()", Par.f1()}
+      try{"Par.f2()", Par.f2()}
+      try{"Par.f3()", Par.f3()}
+      try{"Par.f4()", Par.f4()}
+      try{"Other.f1", Other.f1}
+      try{"Par.new", Par.new}
+      try{"Par.f1", Par.f1}
+      try{"Par.f2", Par.f2}
+      try{"Par.f3", Par.f3}
+      try{"Par.f4", Par.f4}
+      try{"Class.get(Other,f1)", Class.get(Other,"f1")}
+      try{"Class.get(Par,new)", Class.get(Par,"new")}
+      try{"Class.get(Par,f1)", Class.get(Par,"f1")}
+      try{"Class.get(Par,f2)", Class.get(Par,"f2")}
+      try{"Class.get(Par,f3)", Class.get(Par,"f3")}
+      try{"Class.get(Par,f4)", Class.get(Par,"f4")}
+   end
+
+   public new()
+      write("in Sub.new")
+      Par.new()
+      return
+   end
+end
+
+procedure test_overridden()
+   local o
+   o := Sub()
+   o.f()
+   try{"from proc Par.new()", Par.new()}
+   try{"from proc Par.f1()", Par.f1()}
+   try{"from proc Par.f2()", Par.f2()}
+   try{"from proc Par.f3()", Par.f3()}
+   try{"from proc Par.f4()", Par.f4()}
+   try{"from proc Par.new", Par.f1}
+   try{"from proc Par.f1", Par.f1}
+   try{"from proc Par.f2", Par.f2}
+   try{"from proc Par.f3", Par.f3}
+   try{"from proc Par.f4", Par.f4}
+   try{"from proc Class.get(Par,new)", Class.get(Par,"new")}
+   try{"from proc Class.get(Par,f1)", Class.get(Par,"f1")}
+   try{"from proc Class.get(Par,f2)", Class.get(Par,"f2")}
+   try{"from proc Class.get(Par,f3)", Class.get(Par,"f3")}
+   try{"from proc Class.get(Par,f4)", Class.get(Par,"f4")}
+end
+
 procedure main()
    test_Class()
    test_langprocs()
    test_set_method()
    test_rand_objects()
    test_inherit_equals()
+   test_overridden()
 end

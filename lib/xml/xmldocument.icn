@@ -159,7 +159,7 @@ class XmlDocument(Document)
    end
 
    public new()
-      cast(self,Document).new()
+      Document.new()
       parameter_entities := table()
       general_entities := table()
       element_declarations := table()

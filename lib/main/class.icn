@@ -78,7 +78,7 @@ final abstract class Class()
    #
    public static native get_name(c)
 
-   # Return the class of the object or cast
+   # Return the class of the object
    #
    public static native get_class(c)
 
@@ -90,16 +90,16 @@ final abstract class Class()
    # Return the name of the package in which this class resides; fails
    # if the class is not in a package.
    #
-   public static native get_package(c)
+   public static get_package(c)
+      return extract_package(get_name(c))
+   end
 
    # Return the source location of the class
    # @return a {Location} instance
    #
    public static get_location(c)
-      return Location!get_location_impl(c)
+      return Prog.get_global_location(get_name(c), get_program(c))
    end
-
-   private static native get_location_impl(c)
 
    # Generate the superclasses of the class {c}
    #
@@ -209,22 +209,10 @@ final abstract class Class()
    #
    private static native get_methp_proc(mp)
 
-   # Return the object part of a cast.
-   # @param mp a cast structure created with the {cast()} function
-   # @return an object
-   #
-   private static native get_cast_object(c)
-   
-   # Return the class part of a cast.
-   # @param mp a cast structure created with the {cast()} function
-   # @return a class
-   #
-   private static native get_cast_class(c)
-
    # Get the value of the field in {x}, behaving in exactly the same way
    # as though the "." operation had been invoked with equivalent values.
    #
-   # @param x either a record, class, cast or object
+   # @param x either a record, class or object
    # @param field either a field name or number
    # @return the field value
    # @runerr if the field is unknown or access is not permitted
@@ -236,7 +224,7 @@ final abstract class Class()
    # or access is denied.  On failure, {&why} is set to an appropriate
    # message.
    #
-   # @param x either a record, class, cast or object
+   # @param x either a record, class or object
    # @param field either a field name or number
    # @return the field value
    # @fail if the field is unknown or access is not permitted
@@ -246,7 +234,7 @@ final abstract class Class()
    # This behaves in exactly the same way as {getf} above, but
    # doesn't set {&why} on failure.
    #
-   # @param x either a record, class, cast or object
+   # @param x either a record, class or object
    # @param field either a field name or number
    # @return the field value
    # @fail if the field is unknown or access is not permitted
@@ -288,12 +276,10 @@ final abstract class Class()
    # @fail if the class is unknown
    #
    public static for_name(s, ce)
-      local i, t
+      local t
       s := string(s) | runerr(103, s)
       if not(integer(s)) &
-         i := Prog.get_global_index(s) &
-         Prog.get_global_flags(i, ce) = Prog.NamedGlobal &
-         t := Prog.get_global_impl(i, ce) &
+         t := Prog.get_named_global(s, ce) &
          type(t) == "class" then
          return t
    end

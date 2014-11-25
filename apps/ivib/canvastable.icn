@@ -37,7 +37,7 @@ class CanvasTable(CanvasComponent,Table)
    #
    public gen_code(c)
       every (!self.get_columns()).gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       c.chain("set_select_mode(" || c.select_str(self.select_mode) || ")")
       c.add_import("gui", "Select")
       c.chain("set_contents([])")
@@ -50,7 +50,7 @@ class CanvasTable(CanvasComponent,Table)
    public dup()
       local c
       c := CanvasTable()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       every c.add_column((!self.get_columns()).dup())
       c.select_mode := self.select_mode
       c.set_contents([])
@@ -68,7 +68,7 @@ class CanvasTable(CanvasComponent,Table)
 
    public add_column(c)
       c.parent_Canvas := self.parent_Canvas
-      return cast(self,Table).add_column(c)
+      return Table.add_column(c)
    end
 
    #
@@ -79,12 +79,12 @@ class CanvasTable(CanvasComponent,Table)
    #
 
    public pre_encode()
-      cast(self,CanvasComponent).pre_encode()
+      CanvasComponent.pre_encode()
       self.columns := get_columns()
    end
 
    public post_decode()
-      cast(self,CanvasComponent).post_decode()
+      CanvasComponent.post_decode()
       every add_column(!self.columns)
    end
 
@@ -112,12 +112,12 @@ class CanvasTable(CanvasComponent,Table)
    end
 
    public gen_cos()
-      suspend cast(self,CanvasComponent).gen_cos() | !self.get_columns()
+      suspend CanvasComponent.gen_cos() | !self.get_columns()
    end
 
    public new()
-      cast(self,Table).new()
-      cast(self,CanvasComponent).new()
+      Table.new()
+      CanvasComponent.new()
       self.set_contents([])
       self.class_name := "Table"
       self.import_name := "gui"

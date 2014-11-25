@@ -257,7 +257,7 @@ class Dir9PImpl(Dir9P)
    end
 
    public new()
-      cast(self,Dir9P).new()
+      Dir9P.new()
       ent := table()
       return
    end
@@ -316,7 +316,7 @@ class Regular9PImpl(Regular9P)
    end
 
    public new()
-      cast(self,Regular9P).new()
+      Regular9P.new()
       data := ""
       return
    end

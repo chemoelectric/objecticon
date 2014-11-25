@@ -76,7 +76,7 @@
 
 #begdef Blkrunerr(n, bp, type)
    do {
-       BlkLoc(t_errorvalue) = (union block*)(bp);
+      BlkLoc(t_errorvalue) = (union block*)(bp);
       t_errorvalue.dword = type;
       t_errornumber = n;
       t_have_val = 1;
@@ -318,8 +318,10 @@ struct imgdata *x;
 dptr x##_dptr;
 static struct inline_field_cache x##_ic;
 static struct inline_global_cache x##_igc;
-if (!c_is(&p, (dptr)&pixclassname, &x##_igc))
-    runerr(205, p);
+if (!c_is(&p, (dptr)&pixclassname, &x##_igc)) {
+   CMakeStr("graphics.Pixels expected", &t_errortext);
+   runerr(-1, p);
+}
 x##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &x##_ic);
 if (!x##_dptr)
     syserr("Missing idp field");
@@ -333,8 +335,10 @@ wbp w;
 dptr w##_dptr;
 static struct inline_field_cache w##_ic;
 static struct inline_global_cache w##_igc;
-if (!c_is(&p, (dptr)&wclassname, &w##_igc))
-    runerr(205, p);
+if (!c_is(&p, (dptr)&wclassname, &w##_igc)) {
+   CMakeStr("graphics.Window expected", &t_errortext);
+   runerr(-1, p);
+}
 w##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &w##_ic);
 if (!w##_dptr)
     syserr("Missing wbp field");
@@ -451,8 +455,10 @@ int m;
 dptr m##_dptr;
 static struct inline_field_cache m##_ic;
 static struct inline_global_cache m##_igc;
-if (!c_is(&p, (dptr)&dsclassname, &m##_igc))
-    runerr(205, p);
+if (!c_is(&p, (dptr)&dsclassname, &m##_igc)) {
+   CMakeStr("io.DescStream expected", &t_errortext);
+   runerr(-1, p);
+}
 m##_dptr = c_get_instance_data(&p, (dptr)&fdf, &m##_ic);
 if (!m##_dptr)
     syserr("Missing fd field");

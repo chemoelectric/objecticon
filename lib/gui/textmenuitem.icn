@@ -13,7 +13,7 @@ class TextMenuItem(MenuComponent)
       border_right
 
    public initially()
-      cast(self,MenuComponent).initially()
+      MenuComponent.initially()
       # Note that having no paints is the case for a PopupMenu
       (\paint_mid).initially(parent_component, self.accel)
       (\paint_left).initially(parent_component)
@@ -24,7 +24,7 @@ class TextMenuItem(MenuComponent)
    end
 
    public finally()
-      cast(self,MenuComponent).finally()
+      MenuComponent.finally()
       (\paint_mid).finally()
       (\paint_left).finally()
       (\paint_right).finally()
@@ -187,7 +187,7 @@ class TextMenuItem(MenuComponent)
    end
 
    public new()
-      cast(self,MenuComponent).new()
+      MenuComponent.new()
       #
       # The three labels use the following X insets by default :-
       #      XllllXcccXrrrrX

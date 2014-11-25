@@ -28,12 +28,12 @@ class CanvasSplitDialog(CanvasComponentDialog)
       c.set_min(integer(min_first.get_contents()),
                 integer(min_second.get_contents()))
       c.set_weight(numeric(weight.get_contents()))
-      cast(self,CanvasComponentDialog).set_vals()
+      CanvasComponentDialog.set_vals()
    end
 
    public setup()
       local p
-      cast(self,CanvasComponentDialog).setup()
+      CanvasComponentDialog.setup()
       
       p := TabItem()
       p.set_layout(GridLayout().set_extra("borders"))

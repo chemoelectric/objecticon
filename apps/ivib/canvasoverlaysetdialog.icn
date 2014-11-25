@@ -115,7 +115,7 @@ class CanvasOverlaySetDialog(CanvasComponentDialog)
          return alert_error(self, ["Can't have a null width (some items",
                                    "don't have a layout manager)."])
 
-      return cast(self,CanvasComponentDialog).validate_input()
+      return CanvasComponentDialog.validate_input()
    end
 
    public on_up()
@@ -152,7 +152,7 @@ class CanvasOverlaySetDialog(CanvasComponentDialog)
    public setup()
       local p, q
 
-      cast(self,CanvasComponentDialog).setup()
+      CanvasComponentDialog.setup()
 
       p := TabItem()
       p.set_layout(GridLayout())

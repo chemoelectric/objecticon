@@ -86,7 +86,7 @@ class CheckBox(Button)
             self.set_box_paint(ImagePaint().set_cache("gui.DIAMOND_UP"), ImagePaint().set_cache("gui.DIAMOND_DOWN"))
       }
       \self.paint | runerr("no label specified")
-      cast(self,Component).initially()
+      Component.initially()
       self.paint.initially(self, self.accel)
       self.unchecked_paint.initially(self)
       self.checked_paint.initially(self)
@@ -95,7 +95,7 @@ class CheckBox(Button)
    end
 
    public finally()
-      cast(self,Component).finally()
+      Component.finally()
       paint.finally()
       unchecked_paint.finally()
       checked_paint.finally()
@@ -118,7 +118,7 @@ class CheckBox(Button)
    end
 
    public shift(dx, dy)
-      cast(self,Button).shift(dx, dy)
+      Button.shift(dx, dy)
       tx +:= dx
    end
 
@@ -151,7 +151,7 @@ class CheckBox(Button)
    end
 
    public new()
-      cast(self,Button).new()
+      Button.new()
       self.toggles_flag := 1
       self.set_constraint("x_align", Align.L)
       return

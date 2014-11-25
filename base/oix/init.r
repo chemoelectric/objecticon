@@ -583,7 +583,6 @@ static void initprogstate(struct progstate *p)
 #endif
     p->Alcrecd = alcrecd_0;
     p->Alcobject = alcobject_0;
-    p->Alccast = alccast_0;
     p->Alcmethp = alcmethp_0;
     p->Alcweakref = alcweakref_0;
     p->Alcucs = alcucs_0;
@@ -618,16 +617,18 @@ static void initptrs(struct progstate *p, struct header *h)
     p->Globals = (dptr)p->Efnames;
     p->Eglobals = (dptr)(p->Code + h->Gnames);
     p->Gnames = (dptr *)p->Eglobals;
-    p->Egnames = (dptr *)(p->Code + h->GpackageFlags);
-    p->GpackageFlags = (word *)p->Egnames;
-    p->EgpackageFlags = (word *)(p->Code + h->Glocs);
-    p->Glocs = (struct loc *)(p->EgpackageFlags);
+    p->Egnames = (dptr *)(p->Code + h->Gflags);
+    p->Gflags = (char *)p->Egnames;
+    p->Egflags = (char *)(p->Code + h->Glocs);
+    p->Glocs = (struct loc *)(p->Egflags);
     p->Eglocs = (struct loc *)(p->Code + h->Statics);
     p->NGlobals = p->Eglobals - p->Globals;
     p->Statics = (dptr)(p->Eglocs);
-    p->Estatics = (dptr)(p->Code + h->TCaseTables);
+    p->Estatics = (dptr)(p->Code + h->Snames);
     p->NStatics = p->Estatics - p->Statics;
-    p->TCaseTables = (dptr)(p->Estatics);
+    p->Snames = (dptr *)p->Estatics;
+    p->Esnames = (dptr *)(p->Code + h->TCaseTables);
+    p->TCaseTables = (dptr)(p->Esnames);
     p->ETCaseTables = (dptr)(p->Code + h->Filenms);
     p->NTCaseTables = p->ETCaseTables - p->TCaseTables;
     p->Filenms = (struct ipc_fname *)(p->ETCaseTables);
@@ -753,7 +754,16 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
           fatalerr(117, NULL);
 
        main_bp = &ProcBlk(*pstate->MainProc);
-       MemProtect(new_pf = alc_p_frame(&Bmain_wrapper, 0));
+       {
+           /*
+            * Allocate the top frame in the new program; this ensures
+            * set_curr_pf into this frame sets curpstate correctly.
+            */
+           struct progstate *t = curpstate;
+           curpstate = pstate;
+           MemProtect(new_pf = alc_p_frame(&Bmain_wrapper, 0));
+           curpstate = t;
+       }
        new_pf->tmp[0] = *pstate->MainProc;
        coex->sp = (struct frame *)new_pf;
        coex->base_pf = coex->curr_pf = new_pf;
@@ -911,6 +921,12 @@ void resolve(struct progstate *p)
         *dpp = p->Constants + (uword)*dpp;
 
     /*
+     * Relocate the names of the static variables.
+     */
+    for (dpp = p->Snames; dpp < p->Esnames; dpp++)
+        *dpp = p->Constants + (uword)*dpp;
+
+    /*
      * Relocate the location file names of the global variables.
      */
     for (lp = p->Glocs; lp < p->Eglocs; lp++)
@@ -922,7 +938,6 @@ void resolve(struct progstate *p)
      * note the main procedure if found, and create the table of named globals.
      */
     p->MainProc = 0;
-    MemProtect(p->global_flags = calloc(p->NGlobals, sizeof(int)));
     for (j = 0; j < p->NGlobals; j++) {
         switch (p->Globals[j].dword) {
             case D_Class: {
@@ -1038,10 +1053,6 @@ void resolve(struct progstate *p)
                 break;
             }
         }
-        if (!is:null(p->Globals[j]))
-            p->global_flags[j] |= G_NamedGlobal;
-        if ((p->GpackageFlags[j / WordBits] >> (j % WordBits)) & 1)
-            p->global_flags[j] |= G_PackageFlag;
     }
 
     /*
@@ -1404,7 +1415,7 @@ static void conv_var()
             ++pc;
             break;
         }
-        case Op_NamedGlobal:
+        case Op_GlobalVal:
         case Op_Global: {
             *pc = (word)&prog->Globals[*pc];
             ++pc;

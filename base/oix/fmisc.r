@@ -48,7 +48,6 @@ function copy(x)
       real:
       proc:
       methp:
-      cast:
       object:
       class:
       constructor:
@@ -118,19 +117,6 @@ function copy(x)
    }
 end
 
-
-"errorclear() - clear error condition."
-
-function errorclear()
-   body {
-      k_errornumber = 0;
-      k_errortext = emptystr;
-      k_errorvalue = nulldesc;
-      k_errorcoexpr = 0;
-      have_errval = 0;
-      return nulldesc;
-      }
-end
 
 
 /*
@@ -894,36 +880,12 @@ function type(x)
          record:      return C_string "record";
          object:      return C_string "object";
          methp:       return C_string "methp";
-         cast:        return C_string "cast";
          ucs:         return C_string "ucs";
          coexpr:      return C_string "co-expression";
          weakref:     return C_string "weakref";
          default:     runerr(123,x);
       }
    }
-end
-
-
-"cast(o,c) - cast object o to class c."
-
-function cast(o,c)
-   if !is:object(o) then
-       runerr(602, o)
-   if !is:class(c) then
-       runerr(603, c)
-   body {
-      struct b_cast *p;
-      /* 
-       * Check the cast makes sense, ie it is to a class the object
-       * implements 
-       */
-      if (!class_is(ObjectBlk(o).class, &ClassBlk(c)))
-          runerr(604, c);
-      MemProtect(p = alccast());
-      p->object = &ObjectBlk(o);
-      p->class = &ClassBlk(c);
-      return cast(p);
-      }
 end
 
 /*

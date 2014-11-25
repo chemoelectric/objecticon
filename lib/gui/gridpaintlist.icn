@@ -44,7 +44,7 @@ class GridPaintList(SelectableScrollArea)
    end
 
    public finally()
-      cast(self,SelectableScrollArea).finally()
+      SelectableScrollArea.finally()
       every (!cache).finally()
       cache := cache_k := &null
    end

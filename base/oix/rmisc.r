@@ -188,7 +188,7 @@ int getvar(dptr s, dptr vp, struct progstate *p)
     }
 
     /* Check the global variable names. */
-    if ((i = lookup_global_index(s, p)) >= 0 && !(p->global_flags[i] & G_NamedGlobal)) {
+    if ((i = lookup_global_index(s, p)) >= 0 && (p->Gflags[i] & (G_Package | G_Const)) == 0) {
         vp->dword    =  D_NamedVar;
         VarLoc(*vp) =  p->Globals + i;
         return GlobalName;
@@ -319,10 +319,6 @@ uword hash(dptr dp)
 	    dp = ConstructorBlk(*dp).name;
 	    goto hashstring;
 
-         case T_Cast:
-            i = (13255 * CastBlk(*dp).object->id) >> 10;
-            break;
- 
          case T_Methp:
             i = (13255 * MethpBlk(*dp).object->id) >> 10;
             break;
@@ -657,19 +653,6 @@ void outimage(FILE *f, dptr dp, int noimage)
            (long)SetBlk(*dp).size);
         }
 
-     cast: {
-             /* Call recursively on the two elements of the cast */
-             fprintf(f, "cast(");
-             tdp.dword = D_Object;
-             BlkLoc(tdp) = (union block*)CastBlk(*dp).object;
-             outimage(f, &tdp, noimage);
-             fprintf(f, ",");
-             tdp.dword = D_Class;
-             BlkLoc(tdp) = (union block*)CastBlk(*dp).class;
-             outimage(f, &tdp, noimage);
-             fprintf(f, ")");
-     }
-
      methp: {
              fprintf(f, "methp(");
              tdp.dword = D_Object;
@@ -934,12 +917,8 @@ void outimage(FILE *f, dptr dp, int noimage)
                      (int)StrLen(*c->name), StrLoc(*c->name),
                      (int)StrLen(*fname), StrLoc(*fname));
          }
-         else if (InRange(proc0->program->Statics, vp, proc0->program->Estatics)) {
-             i = vp - proc0->fstatic;	/* static */
-             if (i < 0 || i >= proc0->nstatic)
-                 syserr("unreferencable static variable");
-             i += proc0->nparam + proc0->ndynam;
-             putstr(f, proc0->lnames[i]);
+         else if ((prog = find_procedure_static(vp))) {
+             putstr(f, prog->Snames[vp - prog->Statics]); 		/* static in procedure */
          }
          else if (InRange(uf->fvars->desc, vp, uf->fvars->desc_end)) {
              putstr(f, proc0->lnames[vp - uf->fvars->desc]);          /* argument/local */
@@ -1409,28 +1388,6 @@ void getimage(dptr dp1, dptr dp2)
          alcstr(")", 1);
      }
 
-     cast: {
-         /*
-          * Produce:
-          *  "cast(object image,class image)"
-          */
-         tended struct descrip td1, td2, td3;
-         td1.dword = D_Object;
-         BlkLoc(td1) = (union block*)CastBlk(*dp1).object;
-         getimage(&td1, &td2);
-         td1.dword = D_Class;
-         BlkLoc(td1) = (union block*)CastBlk(*dp1).class;
-         getimage(&td1, &td3);
-         len = 5 + StrLen(td2) + 1 + StrLen(td3) + 1;
-         MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-         StrLen(*dp2) = len;
-         alcstr("cast(", 5);
-         alcstr(StrLoc(td2),StrLen(td2));
-         alcstr(",", 1);
-         alcstr(StrLoc(td3),StrLen(td3));
-         alcstr(")", 1);
-     }
-
      weakref: {
          /*
           * Produce:
@@ -1598,6 +1555,17 @@ struct progstate *find_class_static(dptr s)
     return 0;
 }
 
+struct progstate *find_procedure_static(dptr s)
+{
+    struct progstate *p;
+    for (p = progs; p; p = p->next) {
+        if (InRange(p->Statics, s, p->Estatics)) {
+            return p;
+        }
+    }
+    return 0;
+}
+
 /*
  * keyref(bp,dp) -- print name of subscripted table
  */
@@ -1736,12 +1704,8 @@ int getname(dptr dp1, dptr dp2)
                 alcstr(".", 1);
                 alcstr(StrLoc(*fname), StrLen(*fname));
             }
-            else if (InRange(proc0->program->Statics, vp, proc0->program->Estatics)) {
-                i = vp - proc0->fstatic;	/* static */
-                if (i < 0 || i >= proc0->nstatic)
-                    syserr("name: unreferencable static variable");
-                i += proc0->nparam + proc0->ndynam;
-                *dp2 = *proc0->lnames[i];
+            else if ((prog = find_procedure_static(vp))) {
+                *dp2 = *prog->Snames[vp - prog->Statics]; 		/* static in procedure */
             }
             else if (InRange(uf->fvars->desc, vp, uf->fvars->desc_end)) {
                 *dp2 = *proc0->lnames[vp - uf->fvars->desc];          /* argument/local */
@@ -2221,7 +2185,7 @@ struct loc *lookup_global_loc(dptr name, struct progstate *prog)
 dptr lookup_named_global(dptr name, int incl, struct progstate *prog)
 {
     int i = lookup_global_index(name, prog);
-    if (i < 0 || !(prog->global_flags[i] & G_NamedGlobal) || (!incl && (prog->global_flags[i] & G_PackageFlag)))
+    if (i < 0 || !(prog->Gflags[i] & G_Const) || (!incl && (prog->Gflags[i] & G_Package)))
         return 0;
     return prog->Globals + i;
 }

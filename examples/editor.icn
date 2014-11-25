@@ -11,7 +11,7 @@ class EditMenu(DynamicMenu)
    end
 
    public new(text)
-      cast(self,DynamicMenu).new()
+      DynamicMenu.new()
       self.text := text
       return
    end
@@ -263,7 +263,7 @@ class Editor(Dialog)
    end
 
    public new()
-      cast(self,Dialog).new()
+      Dialog.new()
       setup()
       return
    end
@@ -289,7 +289,7 @@ class SaveChangesDialog(Dialog)
 
    public new()
       local l, p, yes, no, cancel
-      cast(self,Dialog).new()
+      Dialog.new()
       self.set_label("Save changes?")
 
       set_layout(GridLayout())

@@ -308,7 +308,7 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
 
    public setup()
       local p, q
-      cast(self,CanvasComponentDialog).setup()
+      CanvasComponentDialog.setup()
 
       p := TabItem()
       p.set_layout(GridLayout())

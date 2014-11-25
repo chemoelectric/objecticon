@@ -28,7 +28,7 @@ class CanvasMenu(CanvasTextMenuItem,Menu)
          r := 1
       }
       every (!self.children).gen_code(c)
-      cast(self,CanvasMenuComponent).gen_code(c)
+      CanvasMenuComponent.gen_code(c)
 
       c.chain("set_paint_mid(" || self.paint_mid.name || ")")
       if \self.paint_left then
@@ -45,7 +45,7 @@ class CanvasMenu(CanvasTextMenuItem,Menu)
    public dup(mb)
       local c
       c := CanvasMenu()
-      cast(self,CanvasTextMenuItem).dup_fields(c)
+      CanvasTextMenuItem.dup_fields(c)
       every c.add((!self.children).dup())
       return c
    end
@@ -86,8 +86,8 @@ class CanvasMenu(CanvasTextMenuItem,Menu)
    end
 
    public new()
-      cast(self,CanvasTextMenuItem).new()
-      cast(self,Menu).new()
+      CanvasTextMenuItem.new()
+      Menu.new()
       self.class_name := "Menu"
       self.import_name := "gui"
       self.name := "menu"

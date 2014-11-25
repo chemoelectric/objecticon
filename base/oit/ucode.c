@@ -164,7 +164,7 @@ struct ucode_op ucode_op_table[] = {
     /* 156 */         { Uop_PkProcdecl, "pkprocdecl", { TYPE_STR,0 }, "\t%-12s %s" },
     /* 157 */         { Uop_PkClass, "pkclass", { TYPE_32,TYPE_STR }, "\t%-12s %08o %s" }, 
     /* 158 */         { Uop_PkGlobal, "pkglobal", { TYPE_STR,0 }, "\t%-12s %s" },
-    /* 159 */         INVALID,
+    /* 159 */         { Uop_PkRdGlobal, "pkrdglobal", { TYPE_STR,0 }, "\t%-12s %s" },
     /* 160 */         { Uop_Value, "value", {0,0}, "\t%-12s" },
     /* 161 */         { Uop_Nonnull, "nonnull", {0,0}, "\t%-12s" },
     /* 162 */         { Uop_Bang, "bang", {0,0}, "\t%-12s" },

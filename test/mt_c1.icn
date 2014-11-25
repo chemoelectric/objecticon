@@ -162,7 +162,7 @@ record dummy(v1,meth3)
 procedure child21(obj, pc)
    write("in child21")
    write(obj.v1)
-   cast(obj,pc).meth1()
+   obj.meth2(pc)
    obj.meth3()
 end
 
@@ -233,4 +233,33 @@ procedure child32()
    print{"&errorcoexpr",&errorcoexpr}
 
    return create 1 to 3
+end
+
+procedure child_33_proc1()
+   suspend 1 to 10
+end
+
+class Child33()
+   public static native fun1()
+   public static native fun2()
+
+   public static fun3()
+      return &why
+   end
+
+   public static fun4()
+      runerr("ciao")
+   end
+
+   public static fun5()
+      return FileStream.stdout
+   end
+
+   public static native fun6()
+
+   private static init()
+      Class.set_method("fun1", child_33_proc1)
+      Class.set_method("fun2", Prog.get_keyword("&why"))
+      Class.set_method("fun6", tab)
+   end
 end

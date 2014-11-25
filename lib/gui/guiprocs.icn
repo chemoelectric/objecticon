@@ -517,7 +517,7 @@ class GetSelection(Dialog)
    end
 
    public show()
-      cast(self, Dialog).show()
+      Dialog.show()
       # Now we have an underlying window, we can request the selection.
       request_selection(sel,
                         [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
@@ -526,7 +526,7 @@ class GetSelection(Dialog)
    end
 
    public new(sel)
-      cast(self, Dialog).new()
+      Dialog.new()
       set_canvas("withdrawn")
       set_size(100, 100)
       self.sel := sel

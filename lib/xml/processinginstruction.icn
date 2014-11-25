@@ -47,7 +47,7 @@ class ProcessingInstruction(Node)
    end
 
    public new(t, c)
-      cast(self,Node).new()
+      Node.new()
       self.target := t
       self.content := c
       return

@@ -40,7 +40,7 @@ class IntersperseStream(GeneratorStream, HasUnderlyingStream)
 
    public new(a[])
       self.a := a
-      return cast(self,GeneratorStream).new{line_gen()}
+      return GeneratorStream.new{line_gen()}
    end
 end
 

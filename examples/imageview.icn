@@ -24,7 +24,7 @@ class ImageViewTest(Dialog)
    end
 
    public new()
-      cast(self,Dialog).new()
+      Dialog.new()
       return
    end
 
@@ -87,7 +87,7 @@ class ImageView(DrawScrollArea)
    end
 
    public new()
-      cast(self,DrawScrollArea).new()
+      DrawScrollArea.new()
       set_use_default_keys(&yes)
       return
    end

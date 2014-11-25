@@ -63,7 +63,7 @@ class XmlDecl(Node)
    end
 
    public new(v, e, s)
-      cast(self,Node).new()
+      Node.new()
       self.version := v
       self.encoding := e
       self.standalone := s

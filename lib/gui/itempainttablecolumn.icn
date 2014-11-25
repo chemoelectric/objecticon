@@ -7,13 +7,13 @@ class ItemPaintTableColumn(TableColumn)
 
    public initially()
       \self.item_paint | runerr("ItemPaint not set")
-      cast(self,TableColumn).initially()
+      TableColumn.initially()
       self.item_paint.initially(self)
       self.item_border.initially(self)
    end
 
    public finally()
-      cast(self,TableColumn).finally()
+      TableColumn.finally()
       self.item_paint.finally()
       self.item_border.finally()
    end
@@ -42,7 +42,7 @@ class ItemPaintTableColumn(TableColumn)
    end
 
    public set_column_align(x)
-      cast(self,TableColumn).set_column_align(x)
+      TableColumn.set_column_align(x)
       self.item_border.x_align := x
       return self
    end
@@ -67,7 +67,7 @@ class ItemPaintTableColumn(TableColumn)
    end
 
    public new()
-      cast(self,TableColumn).new()
+      TableColumn.new()
       self.set_item_border(NullBorder().
                            set_x_align(Align.L))
       return

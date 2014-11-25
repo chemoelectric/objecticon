@@ -47,7 +47,7 @@ class DocType(Node)
    end
 
    public new(n, i)
-      cast(self,Node).new()
+      Node.new()
       self.name := n
       self.external_id := i
       return

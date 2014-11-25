@@ -20,7 +20,7 @@ class CanvasEditableTextListDialog(CanvasComponentDialog)
       ucs_cb
 
    public set_vals()
-      cast(self,CanvasComponentDialog).set_vals()
+      CanvasComponentDialog.set_vals()
       c.set_contents(contents.get_contents())
       c.is_editable_flag := is_editable_cb.get_status()
       c.move_on_rpress_flag := move_on_rpress_cb.get_status()
@@ -36,7 +36,7 @@ class CanvasEditableTextListDialog(CanvasComponentDialog)
    public setup()
       local p
 
-      cast(self,CanvasComponentDialog).setup()
+      CanvasComponentDialog.setup()
 
       p := TabItem()
       p.set_layout(GridLayout())

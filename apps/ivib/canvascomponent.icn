@@ -147,7 +147,7 @@ class CanvasComponent(CanvasObject)
    # Copy the fields from self to c.
    #
    public dup_fields(c)
-      cast(self,CanvasObject).dup_fields(c)
+      CanvasObject.dup_fields(c)
       c.x := self.x
       c.y := self.y
       c.w := self.w
@@ -649,7 +649,7 @@ class SetConstraintItem(TextMenuItem)
    end
 
    public new(obj, name, val)
-      cast(self,TextMenuItem).new()
+      TextMenuItem.new()
       self.obj := obj
       self.name := name
       self.val := val
@@ -669,7 +669,7 @@ class RemoveConstraintItem(TextMenuItem)
    end
 
    public new(obj, name)
-      cast(self,TextMenuItem).new()
+      TextMenuItem.new()
       self.obj := obj
       self.name := name
       self.connect(self.on_event, Event.ACTION)

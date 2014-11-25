@@ -364,11 +364,11 @@ class FileSuggestField(SuggestField)
       if e.code == "\t" then
          handle_tab(e)
       else
-         cast(self,SuggestField).handle_key(e)
+         SuggestField.handle_key(e)
    end
 
    public new()
-      cast(self,SuggestField).new()
+      SuggestField.new()
       self.set_contents(u"")
       cwd := Files.getcwd()
       set_direction(Direction.DOWN)

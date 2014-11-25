@@ -11,7 +11,7 @@ class HTMLMessageDialog(Dialog)
       browser
 
    public new()
-      cast(self,Dialog).new()
+      Dialog.new()
       self.setup()
       return
    end

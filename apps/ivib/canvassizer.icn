@@ -33,7 +33,7 @@ class CanvasSizer(CanvasComponent,Sizer)
    #
    public gen_code(c)
       local s
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       if \self.lo | \self.hi then {
          s := "set_range(" || (\self.lo|"&null") || ", " ||
             (\self.hi|"&null") || ")" 
@@ -49,7 +49,7 @@ class CanvasSizer(CanvasComponent,Sizer)
    public dup()
       local c
       c := CanvasSizer()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       c.is_horizontal_flag := self.is_horizontal_flag
       c.lo := self.lo
       c.hi := self.hi
@@ -82,8 +82,8 @@ class CanvasSizer(CanvasComponent,Sizer)
    end
 
    public new()
-      cast(self,Sizer).new()
-      cast(self,CanvasComponent).new()
+      Sizer.new()
+      CanvasComponent.new()
       self.class_name := "Sizer"
       self.import_name := "gui"
       self.name := "sizer"

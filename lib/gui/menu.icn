@@ -314,7 +314,7 @@ class Menu(TextMenuItem)
       # Recursively close any open sub-menu.
       #
       set_which_highlight()
-      cast(self,TextMenuItem).hide()
+      TextMenuItem.hide()
    end
 
    # A helpful method to tidy up a menu by removing any redundant
@@ -335,7 +335,7 @@ class Menu(TextMenuItem)
    end
 
    public new()
-      cast(self,TextMenuItem).new()
+      TextMenuItem.new()
       self.set_border(RaisedBorder())
       self.is_sub_menu_flag := 1
       self.set_paint_right(ImagePaint().set_cache("gui.ARROW_RIGHT"))

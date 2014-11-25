@@ -39,7 +39,7 @@ class MenuButton(Component, BorderWhilstEntered, MenuSystem)
 
    public initially()
       \self.menu | runerr("no menu set")
-      cast(self,Component).initially()
+      Component.initially()
       self.menu.initially()
    end
 
@@ -47,7 +47,7 @@ class MenuButton(Component, BorderWhilstEntered, MenuSystem)
       if \self.which_open then
          self.close_menu()
       self.menu.finally()
-      cast(self,Component).finally()
+      Component.finally()
    end
 
    public display()
@@ -131,7 +131,7 @@ class MenuButton(Component, BorderWhilstEntered, MenuSystem)
    end
 
    public shift(dx, dy)
-      cast(self,Component).shift(dx, dy)
+      Component.shift(dx, dy)
       self.menu.label_x +:= dx
       self.menu.label_y +:= dy
    end
@@ -148,8 +148,8 @@ class MenuButton(Component, BorderWhilstEntered, MenuSystem)
    end
 
    public new()
-      cast(self,Component).new()
-      cast(self,BorderWhilstEntered).new()
+      Component.new()
+      BorderWhilstEntered.new()
       self.set_border(RaisedBorder())
       every connect(handle_press, Event.MOUSE_LEFT_PRESS | Event.MOUSE_MIDDLE_PRESS | Event.MOUSE_RIGHT_PRESS)
       return

@@ -7,13 +7,13 @@ class ItemPaintTree(Tree)
 
    public initially()
       \self.item_paint | runerr("ItemPaint not set")
-      cast(self,Tree).initially()
+      Tree.initially()
       self.item_paint.initially(self)
       self.item_border.initially(self)
    end
 
    public finally()
-      cast(self,Tree).finally()
+      Tree.finally()
       self.item_paint.finally()
       self.item_border.finally()
    end
@@ -103,7 +103,7 @@ class ItemPaintTree(Tree)
    end
 
    public new()
-      cast(self,Tree).new()
+      Tree.new()
       self.set_item_border(NullBorder().
                            set_x_align(Align.L))
       return

@@ -14,7 +14,7 @@ package gui
 #
 class Panel(Component)
    public new()
-      cast(self,Component).new()
+      Component.new()
       self.set_constraint("x_fill", &yes)
       self.set_constraint("y_fill", &yes)
       self.set_constraint("x_weight", 1.0)

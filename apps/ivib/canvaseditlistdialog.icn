@@ -27,11 +27,11 @@ class CanvasEditListDialog(CanvasComponentDialog)
    public validate_input()
       if (group.get_which_one() === set_selection) & not(integer(selection.get_contents())) then
          return alert_error(self, "Selection is non-integer")
-      return cast(self,CanvasComponentDialog).validate_input()
+      return CanvasComponentDialog.validate_input()
    end
 
    public set_vals()
-      cast(self,CanvasComponentDialog).set_vals()
+      CanvasComponentDialog.set_vals()
       c.set_selection_list(selection_list.get_contents())
       case group.get_which_one() of {
          set_initial_text : c.set_contents(initial_text.get_contents())
@@ -72,7 +72,7 @@ class CanvasEditListDialog(CanvasComponentDialog)
    public setup()
       local p, q, l, sn
 
-      cast(self,CanvasComponentDialog).setup()
+      CanvasComponentDialog.setup()
 
       p := TabItem()
       p.set_layout(GridLayout())

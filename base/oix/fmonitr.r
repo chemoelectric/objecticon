@@ -66,8 +66,6 @@ void set_event_mask(struct progstate *p, struct b_cset *cs)
       ((Testb((word)(E_StrDeAlc), bits)) ? dealcstr_1 : dealcstr_0);
    p->Alcobject =
       ((Testb((word)(E_Object), bits)) ? alcobject_1 : alcobject_0);
-   p->Alccast =
-      ((Testb((word)(E_Cast), bits)) ? alccast_1 : alccast_0);
    p->Alcmethp =
       ((Testb((word)(E_Methp), bits)) ? alcmethp_1 : alcmethp_0);
    p->Alcucs =
@@ -123,8 +121,6 @@ void set_event_mask(struct progstate *p, struct b_cset *cs)
 
    if ((Testb((word)(E_Objectref), bits)) ||
        (Testb((word)(E_Objectsub), bits)) ||
-       (Testb((word)(E_Castref), bits)) ||
-       (Testb((word)(E_Castsub), bits)) ||
        (Testb((word)(E_Classref), bits)) ||
        (Testb((word)(E_Classsub), bits)) ||
        (Testb((word)(E_Rref), bits)) ||
@@ -137,8 +133,6 @@ void set_event_mask(struct progstate *p, struct b_cset *cs)
 
    if ((Testb((word)(E_Objectref), bits)) ||
        (Testb((word)(E_Objectsub), bits)) ||
-       (Testb((word)(E_Castref), bits)) ||
-       (Testb((word)(E_Castsub), bits)) ||
        (Testb((word)(E_Classref), bits)) ||
        (Testb((word)(E_Classsub), bits)) ||
        (Testb((word)(E_Rref), bits)) ||

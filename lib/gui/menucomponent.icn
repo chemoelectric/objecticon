@@ -149,7 +149,7 @@ abstract class MenuComponent(Rect,Connectable)
    # Set the shaded status of the component.
    #
    public set_is_shaded(s)
-      s := check_flag(s)
+      check_flag(s)
       if (s ~=== self.is_shaded_flag) then {
          self.is_shaded_flag := s
          possibly_invalidate()
@@ -464,7 +464,7 @@ abstract class MenuComponent(Rect,Connectable)
    end
 
    public new()
-      cast(self,Connectable).new()
+      Connectable.new()
       self.children := []
       return
    end
@@ -515,7 +515,7 @@ class SubMenuProxyComponent(Component, MenuMode)
    end
 
    public new(m)
-      cast(self,Component).new()
+      Component.new()
       self.menu := m
       set_tooltip_follows_mouse(&yes)
       return

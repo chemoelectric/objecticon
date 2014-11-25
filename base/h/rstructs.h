@@ -198,12 +198,6 @@ struct b_object {		/* object block */
     struct descrip fields[1];	/*   instance fields */
 };
 
-struct b_cast {                 /* object cast */
-    word title;                 /*   T_Cast */
-    struct b_object *object;	/*   the thing being cast */
-    struct b_class *class;	/*   the target class */
-};
-
 /*
  * Block for a method pointer.
  */
@@ -419,9 +413,10 @@ struct progstate {
     dptr *Fnames, *Efnames;
     dptr Globals, Eglobals;
     dptr *Gnames, *Egnames;
-    word *GpackageFlags, *EgpackageFlags;
+    char *Gflags, *Egflags;
     struct loc *Glocs, *Eglocs;
     dptr Statics, Estatics;
+    dptr *Snames, *Esnames;
     dptr TCaseTables, ETCaseTables;
     dptr Constants, Econstants;
     int NGlobals, NStatics, NConstants, NTCaseTables;
@@ -431,8 +426,6 @@ struct progstate {
     struct ipc_line * Current_line_ptr;
     struct ipc_fname * Current_fname_ptr;
     dptr MainProc;
-
-    int  *global_flags;                 /* Array matching Globals, giving info about globals */
 
     uword Coexp_ser;			/* this program's serial numbers */
     uword List_ser;
@@ -496,7 +489,6 @@ struct progstate {
 #endif
     struct b_record *(*Alcrecd)(struct b_constructor *);
     struct b_object *(*Alcobject)(struct b_class *);
-    struct b_cast *(*Alccast)(void);
     struct b_methp *(*Alcmethp)(void);
     struct b_coexpr *(*Alccoexp)(void);
     struct b_ucs *(*Alcucs)(int);
@@ -554,7 +546,6 @@ union block {			/* general block */
     struct b_slots slots;
     struct b_class class;
     struct b_object object;
-    struct b_cast cast;
     struct b_methp methp;
     struct b_constructor constructor;
     struct b_ucs ucs;

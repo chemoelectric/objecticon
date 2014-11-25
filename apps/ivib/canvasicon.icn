@@ -19,7 +19,7 @@ class CanvasIcon(CanvasComponent,Icon)
    #
    public gen_code(c)
       self.paint.gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       c.chain("set_paint(" || self.paint.name || ")")
    end
 
@@ -29,7 +29,7 @@ class CanvasIcon(CanvasComponent,Icon)
    public dup()
       local c
       c := CanvasIcon()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       c.set_paint(self.paint.dup(c))
       return c
    end
@@ -57,12 +57,12 @@ class CanvasIcon(CanvasComponent,Icon)
    end
 
    public gen_cos()
-      suspend cast(self,CanvasComponent).gen_cos() | self.paint
+      suspend CanvasComponent.gen_cos() | self.paint
    end
 
    public new()
-      cast(self,Icon).new()
-      cast(self,CanvasComponent).new()
+      Icon.new()
+      CanvasComponent.new()
       self.class_name := "Icon"
       self.import_name := "gui"
       self.name := "icon"

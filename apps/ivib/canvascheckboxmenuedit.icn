@@ -31,11 +31,11 @@ class CanvasCheckBoxMenuEdit(MenuComponentEdit)
       \self.paint_field.get_contents() | return alert_error(self, "Label cannot be null")
       self.paint_field.validate_input() | fail
       self.paint_field_r.validate_input() | fail
-      return cast(self,MenuComponentEdit).validate_input()
+      return MenuComponentEdit.validate_input()
    end
 
    public set_vals()
-      cast(self,MenuComponentEdit).set_vals()
+      MenuComponentEdit.set_vals()
 
       #
       # If in cbg and on, turn off, since may go out of cbg or into
@@ -71,7 +71,7 @@ class CanvasCheckBoxMenuEdit(MenuComponentEdit)
    public setup()
       local main_panel
 
-      cast(self,MenuComponentEdit).setup()
+      MenuComponentEdit.setup()
 
       main_panel := TabItem()
       main_panel.set_layout(GridLayout().set_extra("borders"))

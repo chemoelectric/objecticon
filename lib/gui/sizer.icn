@@ -88,12 +88,12 @@ class Sizer(Component, HasOrientation)
          set_pointer("sb h double arrow")
          gp.set_cache("gui.VERT_GRID")
       }
-      cast(self,Component).initially()
+      Component.initially()
       gp.initially(self)
    end
 
    public finally()
-      cast(self,Component).finally()
+      Component.finally()
       gp.finally()
    end
 
@@ -157,7 +157,7 @@ class Sizer(Component, HasOrientation)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)

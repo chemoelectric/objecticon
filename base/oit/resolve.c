@@ -84,7 +84,7 @@ static void print_see_also(struct lclass *cl)
 static struct gentry *check_package_access(struct lfile *lf, struct gentry *gl)
 {
     if (gl &&
-        (gl->g_flag & F_Package) &&
+        (gl->g_flag & (F_Package|F_Readable)) == F_Package &&
         lf->package_id != 1 &&
         gl->defined->package_id != lf->package_id)
         gl = 0;

@@ -179,7 +179,7 @@ class StockDialog(Dialog)
    end
 
    public new(a)
-      cast(self,Dialog).new()
+      Dialog.new()
       init_syms := a
       slist := []
       ticker := Dispatcher.new_task{data_tick()}

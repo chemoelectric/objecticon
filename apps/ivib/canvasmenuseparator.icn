@@ -26,7 +26,7 @@ class CanvasMenuSeparator(CanvasMenuComponent,MenuSeparator)
    public dup()
       local c
       c := CanvasMenuSeparator()
-      cast(self,CanvasMenuComponent).dup_fields(c)
+      CanvasMenuComponent.dup_fields(c)
       return c
    end
 
@@ -38,8 +38,8 @@ class CanvasMenuSeparator(CanvasMenuComponent,MenuSeparator)
    end
 
    public new()
-      cast(self,CanvasMenuComponent).new()
-      cast(self,MenuSeparator).new()
+      CanvasMenuComponent.new()
+      MenuSeparator.new()
       #class_variable := 1
       self.class_name := "MenuSeparator"
       self.import_name := "gui"

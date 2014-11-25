@@ -1154,7 +1154,7 @@ class Tbl(Border, HasMaxWidth)
    end
 
    public new()
-      cast(self,Border).new()
+      Border.new()
       set_content(TblContent(). 
                     set_layout(TableLayout()))
       set_border(NullBorder())
@@ -1378,7 +1378,7 @@ class Img(Image, HasLastHighlight)
 
    public display()
       local r
-      cast(self,Image).display()
+      Image.display()
       if r := browser.is_banded(self) then
          Gui.style.fill_selection_rectangle(cbwin, x, y, w, h)
       if \last_highlight then
@@ -1386,7 +1386,7 @@ class Img(Image, HasLastHighlight)
    end
 
    public new(browser, context, img_url, alt, form, map_id)
-      cast(self,Image).new()
+      Image.new()
       clear_constraints()
       self.browser := browser
       self.context := context
@@ -1457,7 +1457,7 @@ class FormToggle(ToggleTextButton, FormEntry)
    end
 
    public new(value, init_checked)
-      cast(self,ToggleTextButton).new()
+      ToggleTextButton.new()
       self.value := value
       self.init_checked := init_checked
       set_is_checked(init_checked)
@@ -1479,7 +1479,7 @@ class FormButton(TextButton, FormEntry, HasAscent)
    end
 
    public new(value)
-      cast(self,TextButton).new()
+      TextButton.new()
       self.value := value
       set_label(value)
       return
@@ -1543,7 +1543,7 @@ class FormTextFlowButton(Button, FormEntry, HasMaxWidth, HasAscent)
    end
 
    public new(form, value, type)
-      cast(self,Button).new()
+      Button.new()
       tf := TextFlow(form.browser).
          set_border(CompoundBorder().
                     set_outer(RaisedBorder()).
@@ -1634,7 +1634,7 @@ class FormBrowse(Component, FormEntry, HasAscent)
    end
 
    public new(browser, tf_size)
-      cast(self,Component).new()
+      Component.new()
       self.browser := browser
       set_layout(GridLayout().set_doi(0).set_dii(0))
       tf := FileSuggestField().set_size(tf_size).set_contents(u"")
@@ -1724,11 +1724,11 @@ class FormTextField(SuggestField, FormEntry, HasAscent)
       if \tl then
          keep_closed()
       else
-         cast(self,TextField).handle_return(e)
+         TextField.handle_return(e)
    end
 
    public new(browser, init_val, datalist_id)
-      cast(self,SuggestField).new()
+      SuggestField.new()
       self.browser := browser
       self.init_val := init_val
       self.datalist_id := datalist_id
@@ -1766,7 +1766,7 @@ class FormURLField(TextField, FormEntry, HasAscent)
    end
 
    public new(init_val)
-      cast(self,TextField).new()
+      TextField.new()
       self.init_val := init_val
       set_contents(init_val)
       return
@@ -1802,7 +1802,7 @@ class FormDateField(DateField, FormEntry, HasAscent)
    end
 
    public new(init_val)
-      cast(self,DateField).new(init_val)
+      DateField.new(init_val)
       self.init_val := init_val
       return
    end
@@ -1850,7 +1850,7 @@ class FormWeekField(WeekField, FormEntry, HasAscent)
    end
 
    public new(init_val)
-      cast(self,WeekField).new(init_val)
+      WeekField.new(init_val)
       self.init_val := init_val
       return
    end
@@ -1890,7 +1890,7 @@ class FormTimeField(TimeField, FormEntry, HasAscent)
    end
 
    public new(init_val)
-      cast(self,TimeField).new(init_val)
+      TimeField.new(init_val)
       self.init_val := init_val
       return
    end
@@ -1933,7 +1933,7 @@ class FormDateTimeLocalField(Component, FormEntry, HasAscent)
    end
 
    public new(init_val)
-      cast(self,Component).new()
+      Component.new()
       set_layout(GridLayout().set_doi(0).set_dii(0))
       add(date := FormDateField(init_val))
       add(time := FormTimeField(init_val))
@@ -1976,7 +1976,7 @@ class FormTimezoneField(TimezoneField, FormEntry, HasAscent)
    end
 
    public new(init_val)
-      cast(self,TimezoneField).new(init_val)
+      TimezoneField.new(init_val)
       self.init_val := init_val
       return
    end
@@ -2011,7 +2011,7 @@ class FormYearField(YearField, FormEntry, HasAscent)
    end
 
    public new(init_val)
-      cast(self,YearField).new()
+      YearField.new()
       set_value(init_val)
       self.init_val := init_val
       return
@@ -2043,7 +2043,7 @@ class FormMonthField(MonthField, FormEntry, HasAscent)
    end
 
    public new(init_val)
-      cast(self,MonthField).new()
+      MonthField.new()
       set_selection(init_val)
       self.init_val := init_val
       return
@@ -2096,7 +2096,7 @@ class FormDateTimeField(Component, FormEntry, HasAscent)
    end
 
    public new(init_val)
-      cast(self,Component).new()
+      Component.new()
       set_layout(GridLayout().set_doi(0).set_dii(0))
       add(date := FormDateField(init_val))
       add(time := FormTimeField(init_val))
@@ -2151,7 +2151,7 @@ class FormMonthYearField(Component, FormEntry, HasAscent)
    end
 
    public new(init_val)
-      cast(self,Component).new()
+      Component.new()
       set_layout(GridLayout().set_doi(0).set_dii(0))
       add(month := FormMonthField(init_val.month))
       add(year := FormYearField(init_val.year))
@@ -2180,7 +2180,7 @@ class FormRange(Slider, FormEntry)
    end
 
    public new(init_val)
-      cast(self,Slider).new()
+      Slider.new()
       set_value(init_val)
       self.init_val := init_val
       return
@@ -2216,7 +2216,7 @@ class FormNumberField(RangeSpin, FormEntry, HasAscent)
    end
 
    public new(init_val)
-      cast(self,RangeSpin).new()
+      RangeSpin.new()
       set_value(init_val)
       self.init_val := init_val
       return
@@ -2260,7 +2260,7 @@ class FormColorField(ColorField, FormEntry, HasAscent)
    end
 
    public new(init_val)
-      cast(self,ColorField).new(init_val)
+      ColorField.new(init_val)
       self.init_val := init_val
       set_opaque(&yes)
       return
@@ -2289,7 +2289,7 @@ class FormEditableTextList(EditableTextList, FormEntry)
    end
 
    public new(init_val)
-      cast(self,EditableTextList).new()
+      EditableTextList.new()
       self.init_val := init_val
       set_contents_str(init_val)
       return
@@ -2321,7 +2321,7 @@ class FormOptionList(SelectableScrollArea, FormEntry)
          if /contents[i].value then
             delete(selections, i)
       }
-      cast(self,SelectableScrollArea).end_handle(e)
+      SelectableScrollArea.end_handle(e)
    end
 
    public get_form_value(ev, src)
@@ -2365,7 +2365,7 @@ class FormOptionList(SelectableScrollArea, FormEntry)
    end
 
    public new(init_val)
-      cast(self,SelectableScrollArea).new()
+      SelectableScrollArea.new()
       self.init_val := init_val
       return
    end
@@ -2439,7 +2439,7 @@ class FormList(gui.List, FormEntry, HasAscent)
    end
 
    public new(init_val)
-      cast(self,gui.List).new()
+      gui.List.new()
       self.init_val := init_val
       return
    end
@@ -3159,7 +3159,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public initially()
-      cast(self,ComponentScrollArea).initially()
+      ComponentScrollArea.initially()
       if /shared_worker_pool_flag then
          worker_pool.initially()
       status_ticker.start()
@@ -3168,7 +3168,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public finally()
-      cast(self,ComponentScrollArea).finally()
+      ComponentScrollArea.finally()
       if /shared_worker_pool_flag then
          worker_pool.finally()
       else
@@ -5001,7 +5001,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public layout()
-      cast(self,ComponentScrollArea).layout()
+      ComponentScrollArea.layout()
       clear_mark()
       clear_banded()
       redo_search()
@@ -5010,7 +5010,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public display()
       local W, r
-      cast(self,ComponentScrollArea).display()
+      ComponentScrollArea.display()
       if r := get_band_rect() then {
          use {
             W := view.cbwin.clone().set_fg("purple").set_masked_pattern("gray"),
@@ -5410,7 +5410,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public new()
-      cast(self,ComponentScrollArea).new()
+      ComponentScrollArea.new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
       tidy_cache_task := Dispatcher.new_task{tidy_cache()}
       worker_pool := WorkerPool(self)
@@ -5459,13 +5459,13 @@ class SimpleBrowser(Browser)
    end
 
    public link_left_clicked(url)
-      cast(self, Browser).link_left_clicked(url)
+      Browser.link_left_clicked(url)
       fire(LINK_LEFT_CLICKED, url)
       return self
    end
 
    public link_middle_clicked(url)
-      cast(self, Browser).link_middle_clicked(url)
+      Browser.link_middle_clicked(url)
       fire(LINK_MIDDLE_CLICKED, url)
       return self
    end
@@ -5490,7 +5490,7 @@ class SimpleBrowser(Browser)
    end
 
    public new()
-      cast(self,Browser).new()
+      Browser.new()
       worker_pool.
          add_scheme_handler("page", page_handler).
          add_scheme_handler("img", img_handler)

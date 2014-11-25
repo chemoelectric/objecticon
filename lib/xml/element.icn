@@ -152,7 +152,7 @@ class Element(Node)
    end
 
    public new(n)
-      cast(self,Node).new()
+      Node.new()
       self.attributes := table()
       self.name := n
       return

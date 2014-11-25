@@ -122,7 +122,7 @@ class FifoFile9P(Regular9P)
    end
 
    public new()
-      cast(self,Regular9P).new()
+      Regular9P.new()
       data := ""
       return
    end
@@ -225,7 +225,7 @@ class QueueFile9P(Regular9P)
    end
 
    public new()
-      cast(self,Regular9P).new()
+      Regular9P.new()
       clear()
       return
    end

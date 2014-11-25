@@ -679,14 +679,12 @@ void do_field()
 #enddef
 
 
-#begdef access_macro(general_access, cast_access,instance_access,class_access,record_access,e_objectref,e_objectsub,e_castref,e_castsub,e_classref,e_classsub,e_rref,e_rsub)
+#begdef access_macro(general_access, instance_access,class_access,record_access,e_objectref,e_objectsub,e_classref,e_classsub,e_rref,e_rsub)
 
 static void record_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                           word *failure_label);
 static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                             word *failure_label);
-static void cast_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
-                        word *failure_label);
 static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                          word *failure_label);
 
@@ -697,10 +695,6 @@ void general_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *
     type_case *expr of {
       record: {
             record_access(lhs, expr, query, ic, failure_label);
-      }
-
-      cast: {
-            cast_access(lhs, expr, query, ic, failure_label);
       }
 
       class: {
@@ -718,53 +712,6 @@ void general_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *
           return;
       }
    }
-}
-
-static void cast_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
-                        word *failure_label)
-{
-    struct b_methp *mp;   /* Doesn't need to be tended */
-    struct b_class *obj_class, *cast_class;
-    struct class_field *cf;
-    int i, ac;
-
-    cast_class = CastBlk(*expr).class;
-    obj_class = CastBlk(*expr).object->class;
-
-    /* Lookup in the cast's class */
-    i = lookup_class_field(cast_class, query, ic);
-    if (i < 0)
-        AccessErr(207);
-
-    cf = cast_class->fields[i];
-
-    if (cf->flags & M_Static) 
-        AccessErr(601);
-
-    if (!(cf->flags & M_Method)) 
-        AccessErr(628);
-
-    /* Can't access new except whilst initializing */
-    if ((cf->flags & M_Special) && CastBlk(*expr).object->init_state != Initializing) 
-        AccessErr(622);
-
-    ac = check_access(cf, obj_class);
-    if (ac == Error) 
-        AccessErr(0);
-
-    /*
-     * Instance method.
-     */
-    MemProtect(mp = alcmethp());
-    mp->object = CastBlk(*expr).object;
-    mp->proc = &ProcBlk(*cf->field_descriptor);
-    if (lhs) {
-        lhs->dword = D_Methp;
-        BlkLoc(*lhs) = (union block *)mp;
-    }
-
-    EVValD(expr, e_castref);
-    EVVal(i + 1, e_castsub);
 }
 
 static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
@@ -791,34 +738,76 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
 
     cf = class0->fields[i];
 
-    /* Can only access a static field (var or meth) via the class */
-    if (!(cf->flags & M_Static)) 
-        AccessErr(600);
+    if (cf->flags & M_Static) {
+        /* Can't access static init method via a field */
+        if (cf->flags & M_Special) 
+            AccessErr(621);
 
-    /* Can't access static init method via a field */
-    if (cf->flags & M_Special) 
-        AccessErr(621);
+        dp = cf->field_descriptor;
+        ac = check_access(cf, 0);
 
-    dp = cf->field_descriptor;
-    ac = check_access(cf, 0);
+        if (ac == Succeeded &&
+            !(cf->flags & M_Method) &&        /* Don't return a ref to a static method */
+            (!(cf->flags & M_Const) ||
+             (class0->init_state == Initializing &&
+              ic &&                      /* No Class.get(..) := ... */
+              class0->init_field &&       /* .. and must be in init() method */
+              (struct b_proc *)get_current_user_proc() == &ProcBlk(*class0->init_field->field_descriptor))))
+        {
+            if (lhs) {
+                lhs->dword = D_NamedVar;
+                VarLoc(*lhs) = dp;
+            }
+        } else if (ac == Succeeded || (cf->flags & M_Readable)) {
+            if (lhs)
+                *lhs = *dp;
+        } else 
+            AccessErr(0);
+    } else {
+        dptr self;
+        struct b_class *self_class;
+        struct p_frame *pf;
+        struct b_methp *mp;  /* Doesn't need to be tended */
 
-    if (ac == Succeeded &&
-        !(cf->flags & M_Method) &&        /* Don't return a ref to a static method */
-        (!(cf->flags & M_Const) ||
-              (class0->init_state == Initializing &&
-               ic &&                      /* No Class.get(..) := ... */
-               class0->init_field &&       /* .. and must be in init() method */
-               (struct b_proc *)get_current_user_proc() == &ProcBlk(*class0->init_field->field_descriptor))))
-    {
+        /* Cannot access an instance field via the class */
+        if (!(cf->flags & M_Method)) 
+            AccessErr(600);
+
+        pf = get_current_user_frame();
+        /* We must be in an instance method */
+        if (!pf->proc->field ||
+            (pf->proc->field->flags & (M_Method | M_Static)) != M_Method)
+            AccessErr(606);
+
+        self = &pf->fvars->desc[0];
+        self_class = ObjectBlk(*self).class;
+
+        /* 
+         * Check the access makes sense, ie it is to a class the object (self)
+         * implements 
+         */
+        if (!class_is(self_class, class0))
+            AccessErr(607);
+
+        /* Can't access new except whilst initializing */
+        if ((cf->flags & M_Special) && ObjectBlk(*self).init_state != Initializing) 
+            AccessErr(622);
+
+        ac = check_access(cf, self_class);
+        if (ac == Error) 
+            AccessErr(0);
+
+        /*
+         * Instance method.  Return a method pointer.
+         */
         if (lhs) {
-            lhs->dword = D_NamedVar;
-            VarLoc(*lhs) = dp;
+            MemProtect(mp = alcmethp());
+            mp->object = &ObjectBlk(*self);
+            mp->proc = &ProcBlk(*cf->field_descriptor);
+            lhs->dword = D_Methp;
+            BlkLoc(*lhs) = (union block *)mp;
         }
-    } else if (ac == Succeeded || (cf->flags & M_Readable)) {
-        if (lhs)
-            *lhs = *dp;
-    } else 
-        AccessErr(0);
+    }
 
     EVValD(expr, e_classref);
     EVVal(i + 1, e_classsub);
@@ -856,10 +845,10 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
         /*
          * Instance method.  Return a method pointer.
          */
-        MemProtect(mp = alcmethp());
-        mp->object = &ObjectBlk(*expr);
-        mp->proc = &ProcBlk(*cf->field_descriptor);
         if (lhs) {
+            MemProtect(mp = alcmethp());
+            mp->object = &ObjectBlk(*expr);
+            mp->proc = &ProcBlk(*cf->field_descriptor);
             lhs->dword = D_Methp;
             BlkLoc(*lhs) = (union block *)mp;
         }
@@ -908,9 +897,9 @@ static void record_access(dptr lhs, dptr expr, dptr query, struct inline_field_c
 
 #enddef
 
-access_macro(general_access_0, cast_access_0,instance_access_0,class_access_0,record_access_0,0,0,0,0,0,0,0,0)
+access_macro(general_access_0,instance_access_0,class_access_0,record_access_0,0,0,0,0,0,0)
 
-access_macro(general_access_1, cast_access_1,instance_access_1,class_access_1,record_access_1,E_Objectref,E_Objectsub,E_Castref,E_Castsub,E_Classref,E_Classsub,E_Rref,E_Rsub)
+access_macro(general_access_1,instance_access_1,class_access_1,record_access_1,E_Objectref,E_Objectsub,E_Classref,E_Classsub,E_Rref,E_Rsub)
 
 
 #begdef InvokefErr(err_num)
@@ -924,11 +913,9 @@ access_macro(general_access_1, cast_access_1,instance_access_1,class_access_1,re
    } while (0)
 #enddef
 
-#begdef invokef_macro(general_invokef, cast_invokef,instance_invokef,class_invokef,record_invokef,e_objectref,e_objectsub,e_castref,e_castsub,e_classref,e_classsub,e_rref,e_rsub)
+#begdef invokef_macro(general_invokef,instance_invokef,class_invokef,record_invokef,e_objectref,e_objectsub,e_classref,e_classsub,e_rref,e_rsub)
 
 static void class_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
-                             int argc, dptr args, word rval, word *failure_label);
-static void cast_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                              int argc, dptr args, word rval, word *failure_label);
 static void instance_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
                              int argc, dptr args, word rval, word *failure_label);
@@ -945,9 +932,6 @@ void general_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inline_fi
       }
       class: {
             class_invokef(clo, lhs, expr, query, ic, argc, args, rval, failure_label);
-        }
-      cast: {
-            cast_invokef(clo, lhs, expr, query, ic, argc, args, rval, failure_label);
         }
       record: {
             record_invokef(clo, lhs, expr, query, ic, argc, args, rval, failure_label);
@@ -986,23 +970,69 @@ static void class_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inli
 
     cf = class0->fields[i];
 
-    /* Can only access a static field (var or meth) via the class */
-    if (!(cf->flags & M_Static)) 
-        InvokefErr(600);
+    if (cf->flags & M_Static) {
+        /* Can only access a static field (var or meth) via the class */
+        if (!(cf->flags & M_Static)) 
+            InvokefErr(600);
 
-    /* Can't access static init method via a field */
-    if (cf->flags & M_Special) 
-        InvokefErr(621);
+        /* Can't access static init method via a field */
+        if (cf->flags & M_Special) 
+            InvokefErr(621);
 
-    ac = check_access(cf, 0);
-    if (!(ac == Succeeded || (cf->flags & M_Readable))) 
-        InvokefErr(0);
+        ac = check_access(cf, 0);
+        if (!(ac == Succeeded || (cf->flags & M_Readable))) 
+            InvokefErr(0);
 
-    EVValD(expr, e_classref);
-    EVVal(i + 1, e_classsub);
+        EVValD(expr, e_classref);
+        EVVal(i + 1, e_classsub);
 
-    curr_op = Op_Invoke; /* In case of error, xtrace acts like Op_Invoke */
-    general_call(clo, lhs, cf->field_descriptor, argc, args, rval, failure_label);
+        curr_op = Op_Invoke; /* In case of error, xtrace acts like Op_Invoke */
+        general_call(clo, lhs, cf->field_descriptor, argc, args, rval, failure_label);
+    } else {
+        struct frame *f;
+        dptr self;
+        struct p_frame *pf;
+        struct b_class *self_class;
+
+        /* Cannot access an instance field via the class */ 
+       if (!(cf->flags & M_Method)) 
+            InvokefErr(600);
+
+        pf = get_current_user_frame();
+        /* We must be in an instance method */
+        if (!pf->proc->field ||
+            (pf->proc->field->flags & (M_Method | M_Static)) != M_Method)
+            InvokefErr(606);
+
+        self = &pf->fvars->desc[0];
+        self_class = ObjectBlk(*self).class;
+
+        /* 
+         * Check the invocation makes sense, ie the method is in a
+         * class the object (self) implements
+         */
+        if (!class_is(self_class, class0))
+            InvokefErr(607);
+
+        /* Can't access new except whilst initializing */
+        if ((cf->flags & M_Special) && ObjectBlk(*self).init_state != Initializing) 
+            InvokefErr(622);
+
+        ac = check_access(cf, self_class);
+        if (ac == Error) 
+            InvokefErr(0);
+
+        EVValD(expr, e_classref);
+        EVVal(i + 1, e_classsub);
+
+        f = push_frame_for_proc(&ProcBlk(*cf->field_descriptor), 
+                                argc, args, self);
+        curr_pf->clo[clo] = f;
+        f->lhs = lhs;
+        f->failure_label = failure_label;
+        f->rval = rval;
+        tail_invoke_frame(f);
+    }
 }
 
 static void record_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
@@ -1023,55 +1053,6 @@ static void record_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inl
     tmp = RecordBlk(*expr).fields[i];
     curr_op = Op_Invoke; /* In case of error, xtrace acts like Op_Invoke */
     general_call(clo, lhs, &tmp, argc, args, rval, failure_label);
-}
-
-
-static void cast_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
-                         int argc, dptr args, word rval, word *failure_label)
-{
-    struct b_class *obj_class, *cast_class;
-    struct class_field *cf;
-    int i, ac;
-    struct frame *f;
-    tended struct descrip tmp;
-
-    cast_class = CastBlk(*expr).class;
-    obj_class = CastBlk(*expr).object->class;
-
-    /* Lookup in the cast's class */
-    i = lookup_class_field(cast_class, query, ic);
-    if (i < 0) 
-        InvokefErr(207);
-
-    cf = cast_class->fields[i];
-
-    if (cf->flags & M_Static) 
-        InvokefErr(601);
-
-    if (!(cf->flags & M_Method)) 
-        InvokefErr(628);
-
-    /* Can't access new except whilst initializing */
-    if ((cf->flags & M_Special) && CastBlk(*expr).object->init_state != Initializing) 
-        InvokefErr(622);
-
-    ac = check_access(cf, obj_class);
-    if (ac == Error) 
-        InvokefErr(0);
-
-    EVValD(expr, e_castref);
-    EVVal(i + 1, e_castsub);
-
-    /* Create the "self" parameter in a tended descriptor */
-    tmp.dword = D_Object;
-    BlkLoc(tmp) = (union block *)CastBlk(*expr).object;
-    f = push_frame_for_proc(&ProcBlk(*cf->field_descriptor), 
-                            argc, args, &tmp);
-    curr_pf->clo[clo] = f;
-    f->lhs = lhs;
-    f->failure_label = failure_label;
-    f->rval = rval;
-    tail_invoke_frame(f);
 }
 
 static void instance_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inline_field_cache *ic, 
@@ -1134,9 +1115,9 @@ static void instance_invokef(word clo, dptr lhs, dptr expr, dptr query, struct i
 }
 #enddef
 
-invokef_macro(general_invokef_0, cast_invokef_0,instance_invokef_0,class_invokef_0,record_invokef_0,0,0,0,0,0,0,0,0)
+invokef_macro(general_invokef_0,instance_invokef_0,class_invokef_0,record_invokef_0,0,0,0,0,0,0)
 
-invokef_macro(general_invokef_1, cast_invokef_1,instance_invokef_1,class_invokef_1,record_invokef_1,E_Objectref,E_Objectsub,E_Castref,E_Castsub,E_Classref,E_Classsub,E_Rref,E_Rsub)
+invokef_macro(general_invokef_1,instance_invokef_1,class_invokef_1,record_invokef_1,E_Objectref,E_Objectsub,E_Classref,E_Classsub,E_Rref,E_Rsub)
 
 
 static void simple_access()

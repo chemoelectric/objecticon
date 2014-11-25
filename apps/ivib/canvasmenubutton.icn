@@ -22,7 +22,7 @@ class CanvasMenuButton(CanvasComponent,MenuButton)
    #
    public gen_code(c)
       self.menu.gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       c.chain("set_menu(" || self.menu.name || ")")
    end
 
@@ -32,7 +32,7 @@ class CanvasMenuButton(CanvasComponent,MenuButton)
    public dup()
       local c
       c := CanvasMenuButton()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       c.set_menu(self.menu.dup())
       return c
    end
@@ -45,7 +45,7 @@ class CanvasMenuButton(CanvasComponent,MenuButton)
    end
 
    protected post_decode()
-      cast(self,CanvasComponent).post_decode()
+      CanvasComponent.post_decode()
       self.menu.component_link := self
    end
 
@@ -75,12 +75,12 @@ class CanvasMenuButton(CanvasComponent,MenuButton)
    end
 
    public gen_cos()
-      suspend cast(self,CanvasComponent).gen_cos() | self.menu
+      suspend CanvasComponent.gen_cos() | self.menu
    end
 
    public new()
-      cast(self,MenuButton).new()
-      cast(self,CanvasComponent).new()
+      MenuButton.new()
+      CanvasComponent.new()
       self.class_name := "MenuButton"
       self.import_name := "gui"
       self.name := "menu_button"

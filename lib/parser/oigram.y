@@ -161,6 +161,9 @@ body :    invocable ;
 optpackage : { $$ := Node.EMPTY } ;
         | PACKAGE;
 
+optreadable : { $$ := Node.EMPTY } ;
+        | READABLE;
+
 body1    : record ;
         | class ;
 	| proc ;
@@ -238,7 +241,7 @@ fieldaccess1 : PRIVATE
         | READABLE
         | FINAL
 
-global  : GLOBAL idlist { $$ := Node("global", $1,$2) } ;
+global  : optreadable GLOBAL idlist { $$ := Node("global", $1,$2,$3) } ;
 
 record  : RECORD IDENT LPAREN eidlist RPAREN { $$ := Node("record", $1,$2,$3,$4,$5) } ;
 

@@ -150,11 +150,11 @@ class CanvasTabSetDialog(CanvasComponentDialog)
          return alert_error(self, ["Can't have a null width (some tabs",
                                    "don't have a layout manager)."])
 
-      return cast(self,CanvasComponentDialog).validate_input()
+      return CanvasComponentDialog.validate_input()
    end
 
    public set_vals()
-      cast(self,CanvasComponentDialog).set_vals()
+      CanvasComponentDialog.set_vals()
       # Forces use of a new line_break when the TabSet's layout() is called.  This is
       # necessary to stop it keeping the old line_break if we have only moved a tab.
       c.line_break := &null
@@ -166,7 +166,7 @@ class CanvasTabSetDialog(CanvasComponentDialog)
    public setup()
       local p, q
 
-      cast(self,CanvasComponentDialog).setup()
+      CanvasComponentDialog.setup()
 
       p := TabItem()
       p.set_layout(GridLayout())

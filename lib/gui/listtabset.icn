@@ -28,7 +28,7 @@ class ListTabSet(Component)
    public dl, oa
 
    public initially()
-      cast(self,Component).initially()
+      Component.initially()
       self.dl.set_ideal_size(100, 200, 100, 400)
       if *self.dl.get_selections() = 0 then
          set_which_one(self.oa.children[1])
@@ -83,7 +83,7 @@ class ListTabSet(Component)
 
    public new()
       local b
-      cast(self,Component).new()
+      Component.new()
       self.set_constraint("x_fill", &yes)
       self.set_constraint("y_fill", &yes)
       self.set_constraint("x_weight", 1.0)

@@ -13,9 +13,10 @@ struct header {
     word Fnames;		/* location of names of fields */
     word Globals;		/* location of global variables */
     word Gnames;		/* location of names of globals */
-    word GpackageFlags;         /* location of global variable package flag map */
+    word Gflags;                /* location of global flag array */
     word Glocs;                 /* location of positions of globals */
     word Statics;		/* location of static variables in procs/methods */
+    word Snames;		/* location of names of statics */
     word TCaseTables;		/* location of tcase tables */
     word Constants;             /* location of constant descriptors */
     word Strcons;		/* location of identifier table */
