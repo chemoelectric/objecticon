@@ -719,7 +719,6 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
 {
     struct b_class *class0 = &ClassBlk(*expr);
     struct class_field *cf;
-    dptr dp;
     int i, ac;
 
     if (class0->init_state == Uninitialized) {
@@ -739,6 +738,8 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
     cf = class0->fields[i];
 
     if (cf->flags & M_Static) {
+        dptr dp;
+
         /* Can't access static init method via a field */
         if (cf->flags & M_Special) 
             AccessErr(621);
@@ -767,7 +768,6 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
         dptr self;
         struct b_class *self_class;
         struct p_frame *pf;
-        struct b_methp *mp;  /* Doesn't need to be tended */
 
         /* Cannot access an instance field via the class */
         if (!(cf->flags & M_Method)) 
@@ -801,6 +801,7 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
          * Instance method.  Return a method pointer.
          */
         if (lhs) {
+            struct b_methp *mp;  /* Doesn't need to be tended */
             MemProtect(mp = alcmethp());
             mp->object = &ObjectBlk(*self);
             mp->proc = &ProcBlk(*cf->field_descriptor);
@@ -817,7 +818,6 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
                             word *failure_label)
 {
     struct b_class *class0;
-    struct b_methp *mp;  /* Doesn't need to be tended */
     struct class_field *cf;
     int i, ac;
 
@@ -846,6 +846,7 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
          * Instance method.  Return a method pointer.
          */
         if (lhs) {
+            struct b_methp *mp;  /* Doesn't need to be tended */
             MemProtect(mp = alcmethp());
             mp->object = &ObjectBlk(*expr);
             mp->proc = &ProcBlk(*cf->field_descriptor);
