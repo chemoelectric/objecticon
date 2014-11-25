@@ -108,7 +108,7 @@ abstract class Spin(Component)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       self.set_border(SunkenBorder())
       self.up := IconButton().
          set_width(ScrollArea.predict_scrollbar_size()).  # Consistent with DropDown
@@ -164,7 +164,7 @@ abstract class SelectionSpin(SelectionList, Spin)
 
    public initially()
       \self.selection_list | runerr("no selection list specified")
-      cast(self,Spin).initially()
+      Spin.initially()
    end
 end
 
@@ -182,7 +182,7 @@ class SpinTextField(TextField)
    end
 
    public new()
-      cast(self,TextField).new()
+      TextField.new()
       self.connect(self.on_key, Event.KEY_PRESS)
       self.set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
       return
@@ -203,7 +203,7 @@ class SpinLabel(Label)
    end
 
    public new()
-      cast(self,Label).new()
+      Label.new()
       self.set_label("")
       self.connect(self.on_key, Event.KEY_PRESS)
       self.set_accepts_focus(&yes)

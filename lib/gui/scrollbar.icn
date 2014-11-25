@@ -468,7 +468,7 @@ class ScrollBar(Component, HasOrientation)
          b1.set_paint(ImagePaint().set_cache("gui.ARROW_LEFT"))
          b2.set_paint(ImagePaint().set_cache("gui.ARROW_RIGHT"))
       }
-      cast(self,Component).initially()
+      Component.initially()
    end
 
    public layout()
@@ -537,7 +537,7 @@ class ScrollBar(Component, HasOrientation)
    end
 
    public shift(dx, dy)
-      cast(self,Component).shift(dx, dy)
+      Component.shift(dx, dy)
       if /self.is_horizontal_flag then {
          self.bar_pos +:= dy
          self.bar_area_pos +:= dy
@@ -554,11 +554,11 @@ class ScrollBar(Component, HasOrientation)
    public finally()
       repeat_ticker.stop()
       old_bar_area_pos := old_bar_area_size := &null
-      cast(self,Component).finally()
+      Component.finally()
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
       self.b1 := IconButton().
          set_border(NullBorder()).

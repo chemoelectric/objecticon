@@ -15,7 +15,6 @@ class Codec()
    public static const 
       OBJECT_CODE,
       CLASS_CODE,
-      CAST_CODE,
       METHP_CODE,
       RECORD_CODE,
       CONSTRUCTOR_CODE,
@@ -40,7 +39,6 @@ class Codec()
       CODE_SEPARATOR := "|"
       OBJECT_CODE := "C"
       CLASS_CODE := "D"
-      CAST_CODE := "G"
       METHP_CODE := "H"
       RECORD_CODE := "R"
       CONSTRUCTOR_CODE := "K"
@@ -235,12 +233,6 @@ class Encode(Stream, HasUnderlyingStream)
          "class": {
             writes1(Codec.CLASS_CODE)
             line_out(Class.get_name(o))
-         }
-
-         "cast": {
-            writes1(Codec.CAST_CODE)
-            encode(Class.get_cast_object(o))
-            encode(Class.get_cast_class(o))
          }
 
          "procedure" : {
@@ -628,13 +620,6 @@ class Decode()
                insert(res, decode(), decode())
             return res
          }            
-
-         Codec.CAST_CODE : {
-            t := decode()
-            cl := decode()
-            is(t, cl) | throw("Cast to " || image(cl) || " from " || image(t) || " not valid")
-            return cast(t, cl)
-         }
 
          default :
             throw("Unknown type code:" || image(t))

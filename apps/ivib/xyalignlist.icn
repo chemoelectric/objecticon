@@ -32,7 +32,7 @@ class XYAlignList(List)
    end
 
    public new()
-      cast(self,List).new()
+      List.new()
       set_selection_list(["(l, t)", "(l, c)", "(l, b)", 
                           "(c, t)", "(c, c)", "(c, b)", 
                           "(r, t)", "(r, c)", "(r, b)"])

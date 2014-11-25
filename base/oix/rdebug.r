@@ -999,7 +999,6 @@ void print_vword(FILE *f, dptr d) {
             case D_Methp :
             case D_Weakref :
             case D_Ucs :
-            case D_Cast :
             case D_Object : {
                 fprintf(f, "%p -> ", BlkLoc(*d));
                 outimage(f, d, 1);
@@ -1046,7 +1045,6 @@ void print_dword(FILE *f, dptr d) {
             case D_Coexpr : fputs("D_Coexpr", f); break;
             case D_Class : fputs("D_Class", f); break;
             case D_Object : fputs("D_Object", f); break;
-            case D_Cast : fputs("D_Cast", f); break;
             case D_Constructor : fputs("D_Constructor", f); break;
             case D_Methp : fputs("D_Methp", f); break;
             case D_Weakref : fputs("D_Weakref", f); break;

@@ -45,12 +45,12 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
             self.set_box_paint(ImagePaint().set_cache("gui.DIAMOND_UP"), ImagePaint().set_cache("gui.DIAMOND_DOWN"))
       }
       synch_left_image()
-      cast(self,TextMenuItem).initially()
+      TextMenuItem.initially()
    end
 
    public draw_label(cw, lw, mw, rw)
       synch_left_image()
-      cast(self,TextMenuItem).draw_label(cw, lw, mw, rw)
+      TextMenuItem.draw_label(cw, lw, mw, rw)
    end
 
    #
@@ -68,7 +68,7 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
 
    public succeed(e)
       toggle_action(e)
-      cast(self,TextMenuItem).succeed(e)
+      TextMenuItem.succeed(e)
    end
 end
 

@@ -23,7 +23,7 @@ class CirculateLabel(Label)
    end
 
    public new()
-      cast(self,Label).new()
+      Label.new()
       self.set_label("")
       connect(self.on_key, Event.KEY_PRESS)
       # Align with the text in the textlist.
@@ -129,11 +129,11 @@ class Circulate(SelectionList,Component)
 
    public initially()
       \self.selection_list | runerr("no selection list specified")
-      cast(self,Component).initially()
+      Component.initially()
    end
 
    public new() 
-      cast(self,Component).new()
+      Component.new()
       self.set_border(SunkenBorder())
       self.preferred_focus := self.l := CirculateLabel()
       self.l.set_accepts_focus(&yes)

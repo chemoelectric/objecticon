@@ -88,7 +88,7 @@ class TabItem(Component)
 
    public initially()
       \self.paint | runerr("no label specified")
-      cast(self,Component).initially()
+      Component.initially()
       # We are painted on the TabSet's attributes, so init
       # the label border and paint on it too.
       self.label_border.initially(parent)
@@ -96,7 +96,7 @@ class TabItem(Component)
    end
 
    public finally()
-      cast(self,Component).finally()
+      Component.finally()
       paint.finally()
    end
 
@@ -118,7 +118,7 @@ class TabItem(Component)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       self.label_border := EmptyBorder()
       return
    end

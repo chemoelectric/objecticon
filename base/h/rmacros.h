@@ -345,10 +345,9 @@
 #define T_Kywdany	24	/* keyword of any type */
 #define T_Class         25      /* class */
 #define T_Object        26      /* object */
-#define T_Cast          27      /* cast */
-#define T_Kywdhandler   28      /* keyword &handler */
-#define T_Weakref       29      /* weak reference */
-#define MaxType		29	/* maximum type number */
+#define T_Kywdhandler   27      /* keyword &handler */
+#define T_Weakref       28      /* weak reference */
+#define MaxType		28	/* maximum type number */
 
 /*
  * Convenient macros for access to a block from a descriptor
@@ -369,7 +368,6 @@
 #define SlotsBlk(x) BlkLoc(x)->slots
 #define ClassBlk(x) BlkLoc(x)->class
 #define ObjectBlk(x) BlkLoc(x)->object
-#define CastBlk(x) BlkLoc(x)->cast
 #define MethpBlk(x) BlkLoc(x)->methp
 #define ConstructorBlk(x) BlkLoc(x)->constructor
 #define UcsBlk(x) BlkLoc(x)->ucs
@@ -402,7 +400,6 @@
 #define D_Proc		(T_Proc     | D_Typecode)
 #define D_Class		(T_Class    | D_Typecode)
 #define D_Object	(T_Object   | D_Typecode | F_Ptr)
-#define D_Cast  	(T_Cast     | D_Typecode | F_Ptr)
 #define D_Methp 	(T_Methp    | D_Typecode | F_Ptr)
 #define D_Constructor 	(T_Constructor | D_Typecode)
 #define D_List		(T_List     | D_Typecode | F_Ptr)
@@ -625,7 +622,6 @@
 #define alcreal	    (curpstate->Alcreal)
 #define alcrecd	    (curpstate->Alcrecd)
 #define alcobject	    (curpstate->Alcobject)
-#define alccast  	    (curpstate->Alccast)
 #define alcmethp      (curpstate->Alcmethp)
 #define alcweakref    (curpstate->Alcweakref)
 #define alcucs        (curpstate->Alcucs)

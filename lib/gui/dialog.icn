@@ -1367,7 +1367,7 @@ class Dialog(Component)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       self.set_all_wattribs(ROOT_WATTRIBS)
       self.child_dialogs := set()
       self.menu_mode_stack := []
@@ -1383,7 +1383,7 @@ end
 #
 class PureDialog(Dialog)
    public new()
-      cast(self,Dialog).new()
+      Dialog.new()
       self.clear_wattribs()
       return
    end
@@ -1548,7 +1548,7 @@ class Accelerator(Component)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       self.x_spec := self.y_spec := self.w_spec := self.h_spec := 0
       return
    end
@@ -1568,7 +1568,7 @@ class WindowControl(Component)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       set_layout(GridLayout().set_doi(0).set_dii(0))
       set_pos("100%","0")
       set_align("r","t")

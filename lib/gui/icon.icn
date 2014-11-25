@@ -16,7 +16,7 @@ package gui
 class Icon(Label)
    public new()
       # Bypass Label's constructor to save creating a border twice.
-      cast(self,Component).new()
+      Component.new()
       self.set_border(NullBorder())
       return
    end

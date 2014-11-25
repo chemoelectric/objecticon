@@ -18,7 +18,7 @@ class CanvasSlider(CanvasComponent,Slider)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       c.chain("set_range(" || self.lo || ", " || self.hi || ")")
       c.chain("set_value(" || self.value || ")")
       c.chain("set_increment_size(" || self.increment_size || ")")
@@ -35,7 +35,7 @@ class CanvasSlider(CanvasComponent,Slider)
    public dup()
       local c
       c := CanvasSlider()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       c.set_range(self.lo, self.hi)
       c.set_value(self.value)
       c.set_increment_size(self.increment_size)
@@ -77,8 +77,8 @@ class CanvasSlider(CanvasComponent,Slider)
    end
 
    public new()
-      cast(self,Slider).new()
-      cast(self,CanvasComponent).new()
+      Slider.new()
+      CanvasComponent.new()
       self.class_name := "Slider"
       self.import_name := "gui"
       self.name := "slider"

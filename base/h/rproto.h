@@ -354,8 +354,6 @@ struct b_record *alcrecd_0      (struct b_constructor *con);
 struct b_record *alcrecd_1      (struct b_constructor *con);
 struct b_object *alcobject_0    (struct b_class *class);
 struct b_object *alcobject_1    (struct b_class *class);
-struct b_cast   *alccast_0      (void);
-struct b_cast   *alccast_1      (void);
 struct b_methp  *alcmethp_0     (void);
 struct b_methp  *alcmethp_1     (void);
 struct b_ucs    *alcucs_0     (int n);

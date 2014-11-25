@@ -250,6 +250,10 @@ class Class21(Class21a)
       write("21.meth3")
    end
 
+   public meth2(c)
+      c.meth1()
+   end
+
    public new(v1,v2,v3)
       self.v1 := v1
       self.v2 := v2
@@ -263,7 +267,7 @@ procedure test21()
    p := Prog.get_global("child21",c) | stop("no child21 found")
    r := Class21(1,2,3)
    write(r.v1)
-   cast(r,Class21a).meth1()
+   r.meth2(Class21a)
    r.meth3()
    p(r,Class21a)
 end

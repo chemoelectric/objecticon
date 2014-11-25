@@ -22,7 +22,7 @@ class CanvasMenuBar(CanvasComponent,MenuBar)
    #
    public gen_code(c)
       every (!self.menus).gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       every c.chain("add(" || (!self.menus).name || ")")
    end
 
@@ -32,7 +32,7 @@ class CanvasMenuBar(CanvasComponent,MenuBar)
    public dup(pc)
       local c
       c := CanvasMenuBar()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       every c.add((!self.menus).dup())
       return c
    end
@@ -79,12 +79,12 @@ class CanvasMenuBar(CanvasComponent,MenuBar)
    end
 
    public gen_cos()
-      suspend cast(self,CanvasComponent).gen_cos() | !self.menus
+      suspend CanvasComponent.gen_cos() | !self.menus
    end
 
    public new()
-      cast(self,MenuBar).new()
-      cast(self,CanvasComponent).new()
+      MenuBar.new()
+      CanvasComponent.new()
       self.class_name := "MenuBar"
       self.import_name := "gui"
       self.name := "menu_bar"

@@ -19,7 +19,7 @@ class CanvasProgressBar(CanvasComponent,ProgressBar)
    public dup()
       local c
       c := CanvasProgressBar()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       return c
    end
 
@@ -35,8 +35,8 @@ class CanvasProgressBar(CanvasComponent,ProgressBar)
    end
 
    public new()
-      cast(self,ProgressBar).new()
-      cast(self,CanvasComponent).new()
+      ProgressBar.new()
+      CanvasComponent.new()
       self.class_name := "ProgressBar"
       self.import_name := "gui"
       self.name := "progress_bar"

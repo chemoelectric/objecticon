@@ -17,7 +17,7 @@ class CanvasTextDisplayDialog(CanvasComponentDialog)
       ucs_cb
 
    public set_vals()
-      cast(self,CanvasComponentDialog).set_vals()
+      CanvasComponentDialog.set_vals()
       if *contents.get_contents_str() = 0 then
          c.set_contents([])
       else
@@ -34,7 +34,7 @@ class CanvasTextDisplayDialog(CanvasComponentDialog)
    public setup()
       local p
 
-      cast(self,CanvasComponentDialog).setup()
+      CanvasComponentDialog.setup()
 
       p := TabItem()
       p.set_layout(GridLayout())

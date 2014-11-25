@@ -16,9 +16,6 @@ static struct b_class *get_class_for(dptr x)
       object: 
             return ObjectBlk(*x).class;
 
-      cast:
-            return CastBlk(*x).class;
-                    
      default: 
             ReturnErrVal(620, *x, 0);
     }
@@ -94,7 +91,6 @@ function classof(o)
        type_case o of {
          object: return class(ObjectBlk(o).class);
          class: return o; 
-         cast: return class(CastBlk(o).class);
          record: return constructor(RecordBlk(o).constructor);
          constructor: return o;
          default: runerr(635, o);
@@ -950,22 +946,6 @@ function lang_Class_get_methp_proc(mp)
        runerr(613, mp)
     body {
         return proc(MethpBlk(mp).proc);
-    }
-end
-
-function lang_Class_get_cast_object(c)
-   if !is:cast(c) then
-       runerr(614, c)
-    body {
-       return object(CastBlk(c).object);
-    }
-end
-
-function lang_Class_get_cast_class(c)
-   if !is:cast(c) then
-       runerr(614, c)
-    body {
-       return class(CastBlk(c).class);
     }
 end
 
@@ -3513,7 +3493,6 @@ function weakref(val)
         table: 
         record:
         methp:
-        cast:
         object:
         coexpr: {
               struct b_weakref *p;

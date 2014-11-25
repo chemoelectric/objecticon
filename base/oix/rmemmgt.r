@@ -76,9 +76,8 @@ int bsizes[] = {
      -1,                      /* T_Kywdany (24), event keyword variable */
      sizeof(struct b_class),  /* T_Class (25), class */
      0,                       /* T_Object (26), object */
-     sizeof(struct b_cast),   /* T_Cast (27), cast */
-     -1,                      /* T_Kywdhandler (28), error handler keyword variable */
-     sizeof(struct b_weakref),/* T_Weakref (29), weak reference block */
+     -1,                      /* T_Kywdhandler (27), error handler keyword variable */
+     sizeof(struct b_weakref),/* T_Weakref (28), weak reference block */
     };
 
 /*
@@ -117,9 +116,8 @@ int firstd[] = {
      -1,                      /* T_Kywdany (24), event keyword variable */
      -1,                      /* T_Class (25), class, just contains static data in icode */
      5*WordSize,              /* T_Object (26), object */
-     0,                       /* T_Cast (27), cast */
-     -1,                      /* T_Kywdhandler (28), error handler keyword variable */
-     0,                       /* T_Weakref (29), weak reference block */
+     -1,                      /* T_Kywdhandler (27), error handler keyword variable */
+     0,                       /* T_Weakref (28), weak reference block */
     };
 
 /*
@@ -158,9 +156,8 @@ int firstp[] = {
      -1,                      /* T_Kywdany (24), event keyword variable */
      -1,                      /* T_Class (25), class, just contains static data in icode */
      0,                       /* T_Object (26), object, just a pointer to the class, which is static */
-     1*WordSize,              /* T_Cast (27), cast */
-     -1,                      /* T_Kywdhandler (28), error handler keyword variable */
-     0,                       /* T_Weakref (29), weak reference block */
+     -1,                      /* T_Kywdhandler (27), error handler keyword variable */
+     0,                       /* T_Weakref (28), weak reference block */
     };
 
 /*
@@ -195,9 +192,8 @@ int ptrno[] = {
     -1,                       /* T_Kywdany (24), event keyword variable */
     -1,                       /* T_Class (25), class */
     -1,                       /* T_Object (26), object */
-     1,                       /* T_Cast (27), cast */
-    -1,                       /* T_Kywdhandler (28), error handler keyword variable */
-    -1,                       /* T_Weakref (29), weak reference block */
+    -1,                       /* T_Kywdhandler (27), error handler keyword variable */
+    -1,                       /* T_Weakref (28), weak reference block */
     };
 
 /*
@@ -232,9 +228,8 @@ int descno[] = {
     -1,                       /* T_Kywdany (24), event keyword variable */
     -1,                       /* T_Class (25), class, just contains static data in icode */
      0,                       /* T_Object (26), object */
-    -1,                       /* T_Cast (27), cast */
-    -1,                       /* T_Kywdhandler (28), error handler keyword variable */
-    -1,                       /* T_Weakref (29), weak reference block */
+    -1,                       /* T_Kywdhandler (27), error handler keyword variable */
+    -1,                       /* T_Weakref (28), weak reference block */
 };
 
 /*
@@ -272,9 +267,8 @@ char *blkname[] = {
    "illegal object",                    /* T_Kywdany (24) */
    "class",                             /* T_Class (25) */
    "object",                            /* T_Object (26) */
-   "cast",                              /* T_Cast (27) */
-   "&handler",                          /* T_Kywdhandler (28), error handler keyword variable */
-   "weak reference",                    /* T_Weakref (29), weak reference block */
+   "&handler",                          /* T_Kywdhandler (27), error handler keyword variable */
+   "weak reference",                    /* T_Weakref (28), weak reference block */
    };
 
 /*

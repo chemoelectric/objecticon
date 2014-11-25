@@ -32,7 +32,7 @@ class DateField(DropDown)
    end
 
    public initially()
-      cast(self,DropDown).initially()
+      DropDown.initially()
       view.set_width(estimate_width(cbwin, format) + view.border.get_total_width())
    end
 
@@ -94,7 +94,7 @@ class DateField(DropDown)
    # the field, as a `Time` instance.
    #
    public new(val)
-      cast(self,DropDown).new()
+      DropDown.new()
       every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       /val := Time()
       format := "dd-MMM-yyyy"
@@ -177,7 +177,7 @@ class TimeField(Spin)
    end
 
    public initially()
-      cast(self,Spin).initially()
+      Spin.initially()
       view.set_width(estimate_width(cbwin, format) + view.border.get_total_width())
    end
 
@@ -185,7 +185,7 @@ class TimeField(Spin)
    # the field, as a `Time` instance.
    #
    public new(val)
-      cast(self,Spin).new()
+      Spin.new()
       every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       /val := Time()
       format := "HH:mm:ss"
@@ -225,7 +225,7 @@ class TimezoneField(EditList)
          view.remove_wattrib("fg").reset()
       else
          view.set_fg("red").reset()
-      cast(self,EditList).on_textfield(ev, src, type)
+      EditList.on_textfield(ev, src, type)
    end
 
    # Create a new instance optionally with the given initial value of
@@ -233,7 +233,7 @@ class TimezoneField(EditList)
    #
    public new(val)
       local l
-      cast(self,EditList).new()
+      EditList.new()
       view.set_filter(&digits ++ &ucase ++ '+\-')
       /val := Timezone.UTC_TIMEZONE
       l := []
@@ -268,7 +268,7 @@ class WeekField(DropDown)
    end
 
    public initially()
-      cast(self,DropDown).initially()
+      DropDown.initially()
       view.set_width(estimate_width(cbwin, format) + view.border.get_total_width())
    end
 
@@ -330,7 +330,7 @@ class WeekField(DropDown)
    # the field, as a `Time` instance.
    #
    public new(val)
-      cast(self,DropDown).new()
+      DropDown.new()
       every view.connect(on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       /val := Time()
       format := "vvvv 'week' ww"
@@ -343,7 +343,7 @@ end
 #
 class MonthField(List)
    public new()
-      cast(self,List).new()
+      List.new()
       set_selection_list(Time.MONTHS)
       return
    end
@@ -353,7 +353,7 @@ end
 #
 class YearField(RangeSpin)
    public new()
-      cast(self,RangeSpin).new()
+      RangeSpin.new()
       set_range(1000, 9999)
       return
    end
@@ -365,7 +365,7 @@ class DayButton(TextButton)
    private readable
       time
    public new(t)
-      cast(self,TextButton).new()
+      TextButton.new()
       self.time := clone(t)
       set_constraint("x_fill", &yes)
       set_border(EmptyBorder())
@@ -381,7 +381,7 @@ class WeekButton(TextButton)
    private readable
       time
    public new(t)
-      cast(self,TextButton).new()
+      TextButton.new()
       self.time := clone(t)
       set_constraint("x_fill", &yes)
       set_border(EmptyBorder())
@@ -515,7 +515,7 @@ class Calendar(Component)
 
    public new(val)
       local p
-      cast(self,Component).new()
+      Component.new()
       /val := Time()
       curr := clone(val).edit_fields(,,, 0, 0, 0)
       showing := clone(curr).set_mday(1)

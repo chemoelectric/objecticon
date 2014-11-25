@@ -74,14 +74,14 @@ class MenuBar(Component, MenuSystem)
    end
 
    public initially()
-      cast(self,Component).initially()
+      Component.initially()
       every (!self.menus).initially()
    end
 
    public finally()
       self.set_which_highlight()
       every (!self.menus).finally()
-      cast(self,Component).finally()
+      Component.finally()
    end
 
    public display()
@@ -362,7 +362,7 @@ class MenuBar(Component, MenuSystem)
 
    public shift(dx, dy)
       local m
-      cast(self,Component).shift(dx, dy)
+      Component.shift(dx, dy)
       every m := !self.menus do {
          m.label_x +:= dx
          m.label_y +:= dy
@@ -381,7 +381,7 @@ class MenuBar(Component, MenuSystem)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       self.set_border(RaisedBorder())
       set_tooltip_follows_mouse(&yes)
       self.menus := []

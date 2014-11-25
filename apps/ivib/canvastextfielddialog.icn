@@ -22,7 +22,7 @@ class CanvasTextFieldDialog(CanvasComponentDialog)
       ucs_cb
 
    public set_vals()
-      cast(self,CanvasComponentDialog).set_vals()
+      CanvasComponentDialog.set_vals()
       c.set_contents(contents.get_contents())
       c.filter_str := filter.get_contents()
       c.is_editable_flag := is_editable_cb.get_status()
@@ -42,7 +42,7 @@ class CanvasTextFieldDialog(CanvasComponentDialog)
    public setup()
       local p, l
 
-      cast(self,CanvasComponentDialog).setup()
+      CanvasComponentDialog.setup()
 
       p := TabItem()
       p.set_layout(GridLayout().set_extra("cells"))

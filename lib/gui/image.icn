@@ -85,7 +85,7 @@ class Image(Component)
    end
 
    public initially()
-      cast(self,Component).initially()
+      Component.initially()
       load_image()
    end
 
@@ -199,12 +199,12 @@ class Image(Component)
    end
 
    public finally()
-      cast(self,Component).finally()
+      Component.finally()
       close_image()
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       self.set_constraint("x_fill", &yes)
       self.set_constraint("y_fill", &yes)
       self.set_constraint("x_weight", 1.0)

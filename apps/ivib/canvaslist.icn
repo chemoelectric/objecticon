@@ -18,7 +18,7 @@ class CanvasList(CanvasComponent,List)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       c.chain("set_constant_label(" || image(\self.constant_label) || ")")
       c.chain("set_selection_list(" || contents_string(self.selection_list) || ")")
       if \self.selection ~= 1 then
@@ -31,7 +31,7 @@ class CanvasList(CanvasComponent,List)
    public dup()
       local c
       c := CanvasList()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       c.constant_label := self.constant_label
       c.set_selection_list(copy(self.selection_list))
       c.set_selection(self.selection)
@@ -49,7 +49,7 @@ class CanvasList(CanvasComponent,List)
    end
 
    private post_decode()
-      cast(self,CanvasComponent).post_decode()
+      CanvasComponent.post_decode()
       # Little trick to initialize the selection index nicely
       set_selection_list(self.selection_list)
    end
@@ -70,8 +70,8 @@ class CanvasList(CanvasComponent,List)
    end
 
    public new()
-      cast(self,List).new()
-      cast(self,CanvasComponent).new()
+      List.new()
+      CanvasComponent.new()
       self.class_name := "List"
       self.import_name := "gui"
       self.name := "list"

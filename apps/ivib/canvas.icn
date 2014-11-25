@@ -156,7 +156,7 @@ class BorderOfCanvas(Component)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
       connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
@@ -1057,11 +1057,11 @@ class Canvas(Component,SelectiveObjectCodec)
       wa := copy(self.dialog_struct.wattribs)
       default.delete(wa, "canvas")
       item_buff_win := open_win_with(wa)
-      cast(self,Component).initially()
+      Component.initially()
    end
 
    public finally()
-      cast(self,Component).finally()
+      Component.finally()
       item_buff_win.close()
    end
 
@@ -1071,7 +1071,7 @@ class Canvas(Component,SelectiveObjectCodec)
    public layout()
       item_buff_win.set_size(self.parent_dialog.w,
                              self.parent_dialog.h)
-      cast(self,Component).layout()
+      Component.layout()
    end
 
    public reset_all()
@@ -1934,7 +1934,7 @@ class Canvas(Component,SelectiveObjectCodec)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       self.parent_Canvas := self
       gen_main := gen_component_setup := gen_constructor := gen_init_dialog := 1
       self.gen_indent := 3

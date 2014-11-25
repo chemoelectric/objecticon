@@ -123,13 +123,13 @@ class ItemPaintPTableColumn(PTableColumn)
 
    public initially(c)
       \self.item_paint | runerr("ItemPaint not set")
-      cast(self,PTableColumn).initially()
+      PTableColumn.initially()
       self.item_paint.initially(c)
       self.item_border.initially(c)
    end
 
    public finally()
-      cast(self,PTableColumn).finally()
+      PTableColumn.finally()
       self.item_paint.finally()
       self.item_border.finally()
    end
@@ -158,7 +158,7 @@ class ItemPaintPTableColumn(PTableColumn)
    end
 
    public set_align(x)
-      cast(self,PTableColumn).set_align(x)
+      PTableColumn.set_align(x)
       self.item_border.x_align := x
       return self
    end
@@ -192,7 +192,7 @@ class ItemPaintPTableColumn(PTableColumn)
    end
 
    public new()
-      cast(self,PTableColumn).new()
+      PTableColumn.new()
       self.set_item_border(NullBorder().
                            set_x_align(Align.L))
       return
@@ -263,13 +263,13 @@ class PTable(SelectableScrollArea)
    public initially()
       if *cols = 0 then
          runerr("no PTableColumns in PTable")
-      cast(self,SelectableScrollArea).initially()
+      SelectableScrollArea.initially()
       every (!cols).initially(self)
    end
 
    public finally()
       every (!cols).finally()
-      cast(self,SelectableScrollArea).finally()
+      SelectableScrollArea.finally()
    end
 
    public calculate_line_height()
@@ -365,7 +365,7 @@ class PTable(SelectableScrollArea)
          }
       }
       # Call the superclass draw to do the selection, highlight etc.
-      cast(self,SelectableScrollArea).draw()
+      SelectableScrollArea.draw()
    end
 
    public draw_line_data(xp, yp, lh, i)
@@ -373,7 +373,7 @@ class PTable(SelectableScrollArea)
 
    public set_internal_fields()
       local extra, tw, c, lc, ta, t
-      cast(self,SelectableScrollArea).set_internal_fields()
+      SelectableScrollArea.set_internal_fields()
       # Distribute any extra width to weighted columns.
       every c := !cols do
          c.width := c.calc_width
@@ -398,7 +398,7 @@ class PTable(SelectableScrollArea)
    end
    
    public new()
-      cast(self,SelectableScrollArea).new()
+      SelectableScrollArea.new()
       cols := []
       inset := Gui.TEXT_INSET
       return

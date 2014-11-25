@@ -466,7 +466,7 @@ class Slider(Component, HasOrientation)
    end
 
    public shift(dx, dy)
-      cast(self,Component).shift(dx, dy)
+      Component.shift(dx, dy)
       if /self.is_horizontal_flag then {
          (\labels_pos) +:= dx
          (\ticks_pos) +:= dx
@@ -531,7 +531,7 @@ class Slider(Component, HasOrientation)
          runerr("Range not set")
       # Ensure value in lo..hi range.
       move_value(self.value)
-      cast(self,Component).initially()
+      Component.initially()
    end
 
    public display()
@@ -552,7 +552,7 @@ class Slider(Component, HasOrientation)
    public finally()
       repeat_ticker.stop()
       old_slider_area_pos := old_slider_area_size := &null
-      cast(self,Component).finally()
+      Component.finally()
    end
 
    public keeps(e)
@@ -560,7 +560,7 @@ class Slider(Component, HasOrientation)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
       self.slider_area := SliderArea()
       self.accepts_focus_flag := 1

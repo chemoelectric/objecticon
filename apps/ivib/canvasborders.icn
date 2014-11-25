@@ -15,7 +15,7 @@ class CanvasABorder(CanvasObject)
    # Copy fields from self to c.
    #
    public dup_fields(c)
-      cast(self,CanvasObject).dup_fields(c)
+      CanvasObject.dup_fields(c)
       c.empty_l_inset := self.empty_l_inset
       c.empty_r_inset := self.empty_r_inset
       c.empty_t_inset := self.empty_t_inset
@@ -81,7 +81,7 @@ class CanvasEmptyBorder(CanvasABorder)
    end
 
    public new()
-      cast(self,CanvasABorder).new()
+      CanvasABorder.new()
       self.class_name := "EmptyBorder"
       return
    end
@@ -112,7 +112,7 @@ class CanvasNullBorder(CanvasABorder)
    end
 
    public new()
-      cast(self,CanvasABorder).new()
+      CanvasABorder.new()
       self.class_name := "NullBorder"
       return
    end
@@ -154,7 +154,7 @@ class CanvasLineBorder(CanvasABorder)
    end
 
    public dup_fields(c)
-      cast(self,CanvasABorder).dup_fields(c)
+      CanvasABorder.dup_fields(c)
       c.line_width_val := self.line_width_val
       c.has_empty := self.has_empty
    end
@@ -184,7 +184,7 @@ class CanvasPlainBorder(CanvasLineBorder)
    public dup()
       local c
       c := CanvasPlainBorder()
-      cast(self,CanvasLineBorder).dup_fields(c)
+      CanvasLineBorder.dup_fields(c)
       return c
    end
 
@@ -193,7 +193,7 @@ class CanvasPlainBorder(CanvasLineBorder)
    end
 
    public new()
-      cast(self,CanvasLineBorder).new()
+      CanvasLineBorder.new()
       self.class_name := "PlainBorder"
       return
    end
@@ -203,7 +203,7 @@ class CanvasBevelledBorder(CanvasLineBorder)
    public dup()
       local c
       c := CanvasBevelledBorder()
-      cast(self,CanvasLineBorder).dup_fields(c)
+      CanvasLineBorder.dup_fields(c)
       return c
    end
 
@@ -212,7 +212,7 @@ class CanvasBevelledBorder(CanvasLineBorder)
    end
 
    public new()
-      cast(self,CanvasLineBorder).new()
+      CanvasLineBorder.new()
       self.class_name := "BevelledBorder"
       return
    end
@@ -222,7 +222,7 @@ class CanvasRaisedBorder(CanvasLineBorder)
    public dup()
       local c
       c := CanvasRaisedBorder()
-      cast(self,CanvasLineBorder).dup_fields(c)
+      CanvasLineBorder.dup_fields(c)
       return c
    end
 
@@ -231,7 +231,7 @@ class CanvasRaisedBorder(CanvasLineBorder)
    end
 
    public new()
-      cast(self,CanvasLineBorder).new()
+      CanvasLineBorder.new()
       self.class_name := "RaisedBorder"
       return
    end
@@ -241,7 +241,7 @@ class CanvasSunkenBorder(CanvasLineBorder)
    public dup()
       local c
       c := CanvasSunkenBorder()
-      cast(self,CanvasLineBorder).dup_fields(c)
+      CanvasLineBorder.dup_fields(c)
       return c
    end
 
@@ -250,7 +250,7 @@ class CanvasSunkenBorder(CanvasLineBorder)
    end
 
    public new()
-      cast(self,CanvasLineBorder).new()
+      CanvasLineBorder.new()
       self.class_name := "SunkenBorder"
       return
    end

@@ -110,14 +110,14 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public initially()
-      cast(self,LineBasedScrollArea).initially()
+      LineBasedScrollArea.initially()
       cursor_ticker.start()
    end
    
    public finally()
       scroll_ticker.stop()
       cursor_ticker.stop()
-      cast(self,LineBasedScrollArea).finally()
+      LineBasedScrollArea.finally()
       # In case the component changes the contents and is then re-inited.
       clear_split_list()
    end
@@ -1087,14 +1087,14 @@ class EditableTextList(LineBasedScrollArea)
    public layout()
       if \wrap_mode == "width" then
          clear_view_list()
-      cast(self,ScrollArea).layout()
+      ScrollArea.layout()
       self.constrain_line()
    end
 
    public set_internal_fields()
       local had_vsb
       had_vsb := self.vsb
-      cast(self,LineBasedScrollArea).set_internal_fields()
+      LineBasedScrollArea.set_internal_fields()
       self.tx := self.view.x + Gui.TEXT_INSET
       self.tw := self.view.w - 2 * Gui.TEXT_INSET
       if \wrap_mode == "width" & had_vsb ~=== self.vsb then {
@@ -1104,7 +1104,7 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public shift(dx, dy)
-      cast(self,LineBasedScrollArea).shift(dx, dy)
+      LineBasedScrollArea.shift(dx, dy)
       self.tx +:= dx
    end
 
@@ -1428,7 +1428,7 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public new()
-      cast(self,LineBasedScrollArea).new()
+      LineBasedScrollArea.new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
       cursor_ticker := Dispatcher.new_task{cursor_tick()}
       cursor_on := -1
@@ -1584,7 +1584,7 @@ class EditableTextListDefaultEdit(EditableTextListEdit)
    end
 
    public new(parent, e)
-      cast(self,EditableTextListEdit).new(parent)
+      EditableTextListEdit.new(parent)
       self.s := e
       return
    end
@@ -1609,7 +1609,7 @@ class EditableTextListReturnEdit(EditableTextListEdit)
    end
 
    public new(parent)
-      cast(self,EditableTextListEdit).new(parent)
+      EditableTextListEdit.new(parent)
       return
    end
 end
@@ -1649,7 +1649,7 @@ class EditableTextListDeleteRightEdit(EditableTextListEdit)
    end
 
    public new(parent)
-      cast(self,EditableTextListEdit).new(parent)
+      EditableTextListEdit.new(parent)
       return
    end
 end
@@ -1693,7 +1693,7 @@ class EditableTextListDeleteLeftEdit(EditableTextListEdit)
    end
 
    public new(parent)
-      cast(self,EditableTextListEdit).new(parent)
+      EditableTextListEdit.new(parent)
       return
    end
 end
@@ -1726,7 +1726,7 @@ class EditableTextListDeleteLineEdit(EditableTextListEdit)
    end
 
    public new(parent)
-      cast(self,EditableTextListEdit).new(parent)
+      EditableTextListEdit.new(parent)
       return
    end
 end
@@ -1778,7 +1778,7 @@ class EditableTextListDeleteRegionEdit(EditableTextListEdit)
    end
 
    public new(parent)
-      cast(self,EditableTextListEdit).new(parent)
+      EditableTextListEdit.new(parent)
       return
    end
 end
@@ -1821,7 +1821,7 @@ class EditableTextListPasteEdit(EditableTextListEdit)
    end
 
    public new(parent, s)
-      cast(self,EditableTextListEdit).new(parent)
+      EditableTextListEdit.new(parent)
       self.s := s
       return
    end
@@ -1871,7 +1871,7 @@ class ColumnLineSplitter(LineSplitter)
    end
 
    public new(parent, wrap_col)
-      cast(self,LineSplitter).new(parent)
+      LineSplitter.new(parent)
       self.wrap_col := wrap_col
       return
    end

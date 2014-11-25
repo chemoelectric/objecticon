@@ -536,7 +536,7 @@ class TextFlow(Component, HasLastHighlight)
          }
       }
       W.close()
-      cast(self,Component).display()
+      Component.display()
    end
 
    private static text_bg(W, c, x, y, w, h)
@@ -1504,7 +1504,7 @@ class TextFlow(Component, HasLastHighlight)
    end
 
    public new(browser)
-      cast(self,Component).new()
+      Component.new()
       self.browser := browser
       set_border(NullBorder())
       input := []

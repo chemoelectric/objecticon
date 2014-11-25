@@ -76,7 +76,7 @@ class Tree(SelectableScrollArea)
    public initially()
       # Ensure we start off with an up-to-date representation.
       tree_structure_changed()
-      cast(self,SelectableScrollArea).initially()
+      SelectableScrollArea.initially()
       self.plus.initially(self)
       self.minus.initially(self)
       plus.w = minus.w | runerr("Handle image widths differ")
@@ -85,7 +85,7 @@ class Tree(SelectableScrollArea)
    end
 
    public finally()
-      cast(self,SelectableScrollArea).finally()
+      SelectableScrollArea.finally()
       self.plus.finally()
       self.minus.finally()
       every (!default_icon_paint).finally()
@@ -272,7 +272,7 @@ class Tree(SelectableScrollArea)
             }
          }
       }
-      cast(self,SelectableScrollArea).handle_lpress(e)
+      SelectableScrollArea.handle_lpress(e)
    end
 
    public get_last_expanded()
@@ -338,7 +338,7 @@ class Tree(SelectableScrollArea)
    end
 
    public new()
-      cast(self,SelectableScrollArea).new()
+      SelectableScrollArea.new()
       plus := ImagePaint().set_cache("gui.PLUS")
       minus := ImagePaint().set_cache("gui.MINUS")
       set_default_icon_paint(ImagePaint().set_cache("gui.CLOSED_FOLDER"), 

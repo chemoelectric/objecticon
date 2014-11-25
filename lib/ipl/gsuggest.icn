@@ -27,7 +27,7 @@ abstract class GSuggestField(SuggestField)
    end
 
    public new()
-      cast(self,SuggestField).new()
+      SuggestField.new()
       set_contents(u"")
       domain := "www.google.com"
       hc := HttpClient().
@@ -83,7 +83,7 @@ class GoogleSuggestField(GSuggestField)
    end
 
    public new()
-      cast(self,GSuggestField).new()
+      GSuggestField.new()
       set_lang("en")
       return
    end

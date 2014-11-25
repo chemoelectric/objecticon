@@ -37,13 +37,13 @@ class CanvasRangeSpinDialog(CanvasComponentDialog)
       if init_val < \lo_val | init_val > \hi_val then
          return alert_error(self, "Init value is outside range")
 
-      return cast(self,CanvasComponentDialog).validate_input()
+      return CanvasComponentDialog.validate_input()
    end
 
    public set_vals()
       local hi_val, lo_val, inc_val, init_val
 
-      cast(self,CanvasComponentDialog).set_vals()
+      CanvasComponentDialog.set_vals()
 
       if hi_flag.is_checked() then 
          hi_val := numeric(hi.get_contents())
@@ -72,7 +72,7 @@ class CanvasRangeSpinDialog(CanvasComponentDialog)
    public setup()
       local l, l2, p
 
-      cast(self,CanvasComponentDialog).setup()
+      CanvasComponentDialog.setup()
 
       p := TabItem()
       p.set_layout(GridLayout().set_extra("borders"))

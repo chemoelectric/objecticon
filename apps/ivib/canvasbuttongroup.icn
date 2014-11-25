@@ -22,7 +22,7 @@ class CanvasButtonGroup(CanvasObject,ButtonGroup)
       #
       # Extend superclass method
       #
-      cast(self,CanvasObject).gen_code(c)
+      CanvasObject.gen_code(c)
       every e := !get_members() do
          c.chain("add(" || e.name || ")")
    end
@@ -30,7 +30,7 @@ class CanvasButtonGroup(CanvasObject,ButtonGroup)
    public dup()
       local c
       c := CanvasButtonGroup()
-      cast(self,CanvasObject).dup_fields(c)
+      CanvasObject.dup_fields(c)
       return c
    end
 
@@ -46,7 +46,7 @@ class CanvasButtonGroup(CanvasObject,ButtonGroup)
    end
 
    public new()
-      cast(self,ButtonGroup).new()
+      ButtonGroup.new()
       self.class_name := "ButtonGroup"
       self.import_name := "gui"
       self.name := "button_group"

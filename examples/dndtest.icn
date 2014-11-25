@@ -166,7 +166,7 @@ class FolderNode(TreeNode)
    public is_folder_flag
 
    public new(is_folder_flag)
-      cast(self,TreeNode).new()
+      TreeNode.new()
       self.is_folder_flag := is_folder_flag
       if \is_folder_flag then
          set_icon_paint(DNDTest.folder_paint,DNDTest.folder_paint,DNDTest.folder_paint)

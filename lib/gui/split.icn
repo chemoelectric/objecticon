@@ -64,7 +64,7 @@ class Split(Component)
       \self.first | runerr("Left/top not set")
       \self.second | runerr("Right/bottom not set")
       *self.children = 3 | runerr("Should be exactly 3 children")
-      cast(self,Component).initially()
+      Component.initially()
    end
 
    public get_default_width()
@@ -201,7 +201,7 @@ class Split(Component)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       sizer := Sizer()
       add(sizer)
       sizer.connect(self.on_sizer_drag, Event.SIZER_DRAG)

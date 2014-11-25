@@ -30,7 +30,7 @@ class RangeSpin(Spin)
       if /lo | /hi | (lo < 0) then
          f ++:= '\-'
       view.set_filter(f)
-      cast(self,Spin).initially()
+      Spin.initially()
    end
 
    public do_increment(ev)
@@ -115,7 +115,7 @@ class RangeSpin(Spin)
    end
 
    public new()
-      cast(self,Spin).new()
+      Spin.new()
       self.increment_size := 1
       every view.connect(self.on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       return

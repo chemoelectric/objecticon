@@ -1156,7 +1156,7 @@ final class DirStream(LineBasedInputStream, NoCopy)
    private static native new_impl(path)
 
    public new(path)
-      cast(self,LineBasedInputStream).new()
+      LineBasedInputStream.new()
 $ifdef _MS_WIN32
       if *path = 0 then
          path := "*"
@@ -1237,7 +1237,7 @@ class ProgInputStream(SocketStream, HasBgProc)
    #
    public close()
       shutdown(Shut.RD)
-      cast(self,SocketStream).close()
+      SocketStream.close()
       do_wait()
       return self
    end
@@ -1297,7 +1297,7 @@ class ProgOutputStream(SocketStream, HasBgProc)
    #
    public close()
       shutdown(Shut.WR)
-      cast(self,SocketStream).close()
+      SocketStream.close()
       do_wait()
       return self
    end
@@ -1841,7 +1841,7 @@ class GeneratorStream(LineBasedInputStream, NoCopy)
 
    public new(coex)
       self.coex := coex
-      cast(self,LineBasedInputStream).new()
+      LineBasedInputStream.new()
       return
    end
 end
@@ -1872,7 +1872,7 @@ class ExprStream(LineBasedInputStream, NoCopy)
 
    public new(coex)
       self.coex := coex
-      return cast(self,LineBasedInputStream).new()
+      return LineBasedInputStream.new()
    end
 end
 

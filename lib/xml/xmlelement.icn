@@ -146,7 +146,7 @@ class XmlElement(Element)
       local s, x, i, e, j
 
       if /flags then {
-         cast(self,Element).print_structure(f, indent, flags)
+         Element.print_structure(f, indent, flags)
          return
       }
 
@@ -173,7 +173,7 @@ class XmlElement(Element)
    end
 
    public new(n)
-      cast(self,Element).new(n)
+      Element.new(n)
       attributes_global_name := table()
       namespace_declarations := table()
       return

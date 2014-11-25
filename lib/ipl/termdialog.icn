@@ -117,8 +117,8 @@ class TermDialog(Dialog, LineBasedOutputStream)
    end
 
    public new()
-      cast(self,Dialog).new()
-      cast(self,LineBasedOutputStream).new()
+      Dialog.new()
+      LineBasedOutputStream.new()
       history := []
       history_start_no := 1
       log_limit := 600

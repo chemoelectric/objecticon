@@ -741,30 +741,6 @@ Equals check: methp(object Sixteen#*(val=&null),method Fifteen.f) -v- methp(obje
 	hash(a)=hash(b): no
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Error 123
-Equals check: cast(object Sixteen#*(val=&null),class Fifteen) -v- cast(object Sixteen#*(val=&null),class Fifteen)
-	equals(a,a): yes
-	equals(b,b): yes
-	equals(a,b): yes
-	equals(b,a): yes
-	hash(a)=hash(b): yes
-	type(a)==type(b): yes
-	subtype(a)==subtype(b): Error 123
-Equals check: cast(object Sixteen#*(val=&null),class Fifteen) -v- cast(object Fifteen#*(val=&null),class Fifteen)
-	equals(a,a): yes
-	equals(b,b): yes
-	equals(a,b): no
-	equals(b,a): no
-	hash(a)=hash(b): yes
-	type(a)==type(b): yes
-	subtype(a)==subtype(b): Error 123
-Equals check: cast(object Sixteen#*(val=&null),class Fifteen) -v- cast(object Sixteen#*(val=&null),class Sixteen)
-	equals(a,a): yes
-	equals(b,b): yes
-	equals(a,b): no
-	equals(b,a): no
-	hash(a)=hash(b): no
-	type(a)==type(b): yes
-	subtype(a)==subtype(b): Error 123
 Equals check: object Fifteen#*(val=methp(ref object Fifteen#*,method Fifteen.f)) -v- object Fifteen#*(val=methp(ref object Fifteen#*,method Fifteen.f))
 	equals(a,a): yes
 	equals(b,b): yes
@@ -807,3 +783,38 @@ equals(x1,x2): yes
 equals(x1,x2): yes
 equals(x1,x2): yes
 equals(x1,x2): no
+in Sub.new
+in Par.new
+Other.f1(): Error 607
+Par.new(): Error 622
+Par.f1(): Succeeded with 1
+Par.f2(): Error 608
+Par.f3(): Succeeded with 3
+Par.f4(): Succeeded with 4
+Other.f1: Error 607
+Par.new: Error 622
+Par.f1: Succeeded with methp(object Sub#*(0),method Par.f1)
+Par.f2: Error 608
+Par.f3: Succeeded with methp(object Sub#*(0),method Par.f3)
+Par.f4: Succeeded with method Par.f4
+Class.get(Other,f1): Error 607
+Class.get(Par,new): Error 622
+Class.get(Par,f1): Succeeded with methp(object Sub#*(0),method Par.f1)
+Class.get(Par,f2): Error 608
+Class.get(Par,f3): Succeeded with methp(object Sub#*(0),method Par.f3)
+Class.get(Par,f4): Succeeded with method Par.f4
+from proc Par.new(): Error 606
+from proc Par.f1(): Error 606
+from proc Par.f2(): Error 606
+from proc Par.f3(): Error 606
+from proc Par.f4(): Succeeded with 4
+from proc Par.new: Error 606
+from proc Par.f1: Error 606
+from proc Par.f2: Error 606
+from proc Par.f3: Error 606
+from proc Par.f4: Succeeded with method Par.f4
+from proc Class.get(Par,new): Error 606
+from proc Class.get(Par,f1): Error 606
+from proc Class.get(Par,f2): Error 606
+from proc Class.get(Par,f3): Error 606
+from proc Class.get(Par,f4): Succeeded with method Par.f4

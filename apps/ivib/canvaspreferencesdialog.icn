@@ -152,7 +152,7 @@ class CanvasPreferencesDialog(Dialog)
 
    public new(c)
       local label, l, code_tab, oc
-      cast(self,Dialog).new()
+      Dialog.new()
       self.c := c
       label := "Dialog Preferences"
       self.set_label(label)

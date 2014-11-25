@@ -37,7 +37,7 @@ class SaveChangesDialog(Dialog)
 
    public new()
       local l, p, yes, no, cancel
-      cast(self,Dialog).new()
+      Dialog.new()
       set_label("Save changes?")
 
       set_layout(GridLayout())

@@ -446,7 +446,7 @@ class TabSet(Component)
          if member(Mouse.PRESS, e.code) & not self.in_tab_region(e) then
             fail
       }
-      return cast(self,Component).accepts_focus(e)
+      return Component.accepts_focus(e)
    end
 
    public get_tooltip(e)
@@ -522,7 +522,7 @@ class TabSet(Component)
          runerr("no TabItems in TabSet")
       /self.which_one := self.children[1]
       set_hidden_flags()
-      cast(self,Component).initially()
+      Component.initially()
    end
 
    public get_default_width()
@@ -735,13 +735,13 @@ class TabSet(Component)
 
    public shift(dx, dy)
       local c
-      cast(self,Component).shift(dx, dy)
+      Component.shift(dx, dy)
        every c := !self.children do
           c.tab_x +:= dx
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       self.accepts_focus_flag := 1
       self.set_constraint("x_fill", &yes)
       self.set_constraint("y_fill", &yes)

@@ -19,7 +19,7 @@ class CanvasIconButton(CanvasButton,IconButton)
    public gen_code(c)
       self.paint.gen_code(c)
       (\self.paint_down).gen_code(c)
-      cast(self,CanvasButton).gen_code(c)
+      CanvasButton.gen_code(c)
       c.chain("set_paint(" || self.paint.name || ")")
       if \self.paint_down then
          c.chain("set_paint_down(" || self.paint_down.name || ")")
@@ -40,7 +40,7 @@ class CanvasIconButton(CanvasButton,IconButton)
    public dup(pc)
       local c
       c := CanvasIconButton()
-      cast(self,CanvasButton).dup_fields(c)
+      CanvasButton.dup_fields(c)
       c.set_paint(self.paint.dup(c))
       c.set_paint_down((\self.paint_down).dup(c))
       return c
@@ -54,12 +54,12 @@ class CanvasIconButton(CanvasButton,IconButton)
    end
 
    public gen_cos()
-      suspend cast(self,CanvasComponent).gen_cos() | self.paint | \self.paint_down
+      suspend CanvasComponent.gen_cos() | self.paint | \self.paint_down
    end
 
    public new()
-      cast(self,IconButton).new()
-      cast(self,CanvasButton).new()
+      IconButton.new()
+      CanvasButton.new()
       self.class_name := "IconButton"
       self.import_name := "gui"
       self.name := "icon_button"

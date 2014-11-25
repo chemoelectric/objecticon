@@ -319,10 +319,6 @@ uword hash(dptr dp)
 	    dp = ConstructorBlk(*dp).name;
 	    goto hashstring;
 
-         case T_Cast:
-            i = (13255 * CastBlk(*dp).object->id) >> 10;
-            break;
- 
          case T_Methp:
             i = (13255 * MethpBlk(*dp).object->id) >> 10;
             break;
@@ -656,19 +652,6 @@ void outimage(FILE *f, dptr dp, int noimage)
 	fprintf(f,"set#%lu(%ld)",(unsigned long)SetBlk(*dp).id,
            (long)SetBlk(*dp).size);
         }
-
-     cast: {
-             /* Call recursively on the two elements of the cast */
-             fprintf(f, "cast(");
-             tdp.dword = D_Object;
-             BlkLoc(tdp) = (union block*)CastBlk(*dp).object;
-             outimage(f, &tdp, noimage);
-             fprintf(f, ",");
-             tdp.dword = D_Class;
-             BlkLoc(tdp) = (union block*)CastBlk(*dp).class;
-             outimage(f, &tdp, noimage);
-             fprintf(f, ")");
-     }
 
      methp: {
              fprintf(f, "methp(");
@@ -1399,28 +1382,6 @@ void getimage(dptr dp1, dptr dp2)
          MemProtect (StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
          alcstr("methp(", 6);
-         alcstr(StrLoc(td2),StrLen(td2));
-         alcstr(",", 1);
-         alcstr(StrLoc(td3),StrLen(td3));
-         alcstr(")", 1);
-     }
-
-     cast: {
-         /*
-          * Produce:
-          *  "cast(object image,class image)"
-          */
-         tended struct descrip td1, td2, td3;
-         td1.dword = D_Object;
-         BlkLoc(td1) = (union block*)CastBlk(*dp1).object;
-         getimage(&td1, &td2);
-         td1.dword = D_Class;
-         BlkLoc(td1) = (union block*)CastBlk(*dp1).class;
-         getimage(&td1, &td3);
-         len = 5 + StrLen(td2) + 1 + StrLen(td3) + 1;
-         MemProtect (StrLoc(*dp2) = reserve(Strings, len));
-         StrLen(*dp2) = len;
-         alcstr("cast(", 5);
          alcstr(StrLoc(td2),StrLen(td2));
          alcstr(",", 1);
          alcstr(StrLoc(td3),StrLen(td3));

@@ -1377,7 +1377,7 @@ class Component(Rect,Align,Connectable)
    end
 
    public new()
-      cast(self,Connectable).new()
+      Connectable.new()
       self.wattribs := table()
       self.children := []
       self.x_align := Align.L

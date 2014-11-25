@@ -89,7 +89,7 @@ class PopupMenu(Component, MenuSystem)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       self.x_spec := self.y_spec := self.w_spec := self.h_spec := 0
       set_inherit_wattribs(&no)
       return

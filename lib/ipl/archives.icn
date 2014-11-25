@@ -67,7 +67,7 @@ abstract class ArchiveListerStream(GeneratorStream)
 
    protected new(prog, args)
       self.bf := BufferStream(f := FilterInputStream(, prog, args))
-      return cast(self,GeneratorStream).new{line_gen()}
+      return GeneratorStream.new{line_gen()}
    end
 end
 
@@ -89,7 +89,7 @@ class ZipDirStream(ArchiveListerStream)
    end
 
    public new(zname)
-      return cast(self,ArchiveListerStream).new("unzip", ["-l", zname])
+      return ArchiveListerStream.new("unzip", ["-l", zname])
    end
 end
 
@@ -120,7 +120,7 @@ class RarDirStream(ArchiveListerStream)
    end
 
    public new(rname)
-      return cast(self,ArchiveListerStream).new("unrar", ["v", "-c-", rname])
+      return ArchiveListerStream.new("unrar", ["v", "-c-", rname])
    end
 end
 
@@ -150,7 +150,7 @@ class TarDirStream(ArchiveListerStream)
    end
 
    public new(tname)
-      return cast(self,ArchiveListerStream).new("tar", ["tf" || tartype(tname), tname])
+      return ArchiveListerStream.new("tar", ["tf" || tartype(tname), tname])
    end
 end
 

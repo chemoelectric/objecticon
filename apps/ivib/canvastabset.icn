@@ -19,7 +19,7 @@ class CanvasTabSet(CanvasComponent,TabSet)
    #
    public gen_code(c)
       every (!self.children).gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       if \self.no_click_focus_flag then
          c.chain("set_no_click_focus(&yes)")
       if \self.prefer_one_row_flag then
@@ -36,7 +36,7 @@ class CanvasTabSet(CanvasComponent,TabSet)
    public dup()
       local c, e, e1
       c := CanvasTabSet()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       c.tabs_at_bottom_flag := self.tabs_at_bottom_flag
       c.no_click_focus_flag := self.no_click_focus_flag
       c.prefer_one_row_flag := self.prefer_one_row_flag
@@ -73,7 +73,7 @@ class CanvasTabSet(CanvasComponent,TabSet)
    #
    public which_cursor_over(e)
       local o
-      cast(self,CanvasComponent).which_cursor_over(e) | fail
+      CanvasComponent.which_cursor_over(e) | fail
       if in_resize_region(e) then
          return self
       if o := self.which_one.which_cursor_over(e) then
@@ -116,12 +116,12 @@ class CanvasTabSet(CanvasComponent,TabSet)
    end
 
    public gen_cos()
-      suspend cast(self,CanvasComponent).gen_cos() | !self.children
+      suspend CanvasComponent.gen_cos() | !self.children
    end
 
    public new()
-      cast(self,TabSet).new()
-      cast(self,CanvasComponent).new()
+      TabSet.new()
+      CanvasComponent.new()
       self.class_name := "TabSet"
       self.import_name := "gui"
       self.name := "tab_set"

@@ -597,7 +597,7 @@ class FileDialog(Dialog)
    end
 
    public new()
-      cast(self,Dialog).new()
+      Dialog.new()
       self.setup()
       tools_menu.set_border_mid(NullBorder())
       # Try themed icon buttons

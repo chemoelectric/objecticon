@@ -133,7 +133,7 @@ class TextField(Component)
    end
 
    public shift(dx, dy)
-      cast(self,Component).shift(dx, dy)
+      Component.shift(dx, dy)
       self.tx +:= dx
    end
 
@@ -409,14 +409,14 @@ class TextField(Component)
    end
 
    public initially()
-      cast(self,Component).initially()
+      Component.initially()
       cursor_ticker.start()
    end
 
    public finally()
       scroll_ticker.stop()
       cursor_ticker.stop()
-      cast(self,Component).finally()
+      Component.finally()
    end
 
    #
@@ -797,7 +797,7 @@ class TextField(Component)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
       cursor_ticker := Dispatcher.new_task{cursor_tick()}
       cursor_on := -1
@@ -913,7 +913,7 @@ class TextFieldDeleteRightEdit(TextFieldEdit)
    end
 
    public new(parent)
-      cast(self,TextFieldEdit).new(parent)
+      TextFieldEdit.new(parent)
       return
    end
 end
@@ -936,7 +936,7 @@ class TextFieldDeleteLeftEdit(TextFieldEdit)
    end
 
    public new(parent)
-      cast(self,TextFieldEdit).new(parent)
+      TextFieldEdit.new(parent)
       return
    end
 end
@@ -964,7 +964,7 @@ class TextFieldDeleteRegionEdit(TextFieldEdit)
    end
 
    public new(parent)
-      cast(self,TextFieldEdit).new(parent)
+      TextFieldEdit.new(parent)
       return
    end
 end
@@ -982,7 +982,7 @@ class TextFieldPasteEdit(TextFieldEdit)
    end
 
    public new(parent, s)
-      cast(self,TextFieldEdit).new(parent)
+      TextFieldEdit.new(parent)
       self.s := s
       return
    end
@@ -1010,7 +1010,7 @@ class TextFieldDefaultEdit(TextFieldEdit)
    end
 
    public new(parent, e)
-      cast(self,TextFieldEdit).new(parent)
+      TextFieldEdit.new(parent)
       s := e
       return
    end
@@ -1031,7 +1031,7 @@ class TextFieldDeleteLineEdit(TextFieldEdit)
    end
 
    public new(parent)
-      cast(self,TextFieldEdit).new(parent)
+      TextFieldEdit.new(parent)
       return
    end
 end
@@ -1058,7 +1058,7 @@ class TextFieldAssignEdit(TextFieldEdit)
    end
 
    public new(parent, s, coalesce)
-      cast(self,TextFieldEdit).new(parent)
+      TextFieldEdit.new(parent)
       self.s := s
       self.coalesce := coalesce
       return

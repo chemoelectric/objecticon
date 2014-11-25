@@ -570,7 +570,6 @@ static void initprogstate(struct progstate *p)
 #endif
     p->Alcrecd = alcrecd_0;
     p->Alcobject = alcobject_0;
-    p->Alccast = alccast_0;
     p->Alcmethp = alcmethp_0;
     p->Alcweakref = alcweakref_0;
     p->Alcucs = alcucs_0;

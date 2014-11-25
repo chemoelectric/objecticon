@@ -22,7 +22,7 @@ class UndoManager(CompoundEdit)
 
    public redo()
       if \closed then
-         return cast(self,CompoundEdit).redo()
+         return CompoundEdit.redo()
       if index <= *l then {
          last := l[index]
          l[index].redo()
@@ -33,7 +33,7 @@ class UndoManager(CompoundEdit)
 
    public undo()
       if \closed then
-         return cast(self,CompoundEdit).undo()
+         return CompoundEdit.undo()
       if index > 1 then {
          index -:= 1
          last := l[index]
@@ -59,7 +59,7 @@ class UndoManager(CompoundEdit)
 
    public add_edit(other)
       if \closed then
-         return cast(self,CompoundEdit).add_edit(other)
+         return CompoundEdit.add_edit(other)
 
       last := other
 
@@ -97,13 +97,13 @@ class UndoManager(CompoundEdit)
    end
 
    public clear()
-      cast(self,CompoundEdit).clear()
+      CompoundEdit.clear()
       self.index := 1
       return self
    end
 
    public new()
-      cast(self,CompoundEdit).new()
+      CompoundEdit.new()
       self.limit := 100
       self.index := 1
       return

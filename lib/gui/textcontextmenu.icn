@@ -20,7 +20,7 @@ class TextContextMenu(Menu)
    end
 
    public new(parent)
-      cast(self,Menu).new()
+      Menu.new()
       if parent.has_region() then {
          if parent.is_editable() then
             add(TextMenuItem().

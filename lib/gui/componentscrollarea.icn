@@ -18,7 +18,7 @@ class ComponentScrollAreaView(Component)
 
    public initially()
       \self.inner | runerr("no inner component specified")
-      cast(self,Component).initially()
+      Component.initially()
    end
 
    public scrolled()
@@ -84,7 +84,7 @@ class ComponentScrollArea(ScrollArea)
          view.size_inner()
          invalidate_subject_width()
          invalidate_subject_height()
-         cast(self,ScrollArea).layout()
+         ScrollArea.layout()
          if i > 0 & ((self.hsb === t1 & self.vsb === t2) | (\self.hsb & \self.vsb)) then
             break
       }

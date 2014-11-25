@@ -117,7 +117,7 @@ class EmptyBorder(ABorder)
    end
 
    public new()
-      cast(self,ABorder).new()
+      ABorder.new()
       l_inset := r_inset := Gui.X_INSET
       t_inset := b_inset := Gui.Y_INSET
       return
@@ -164,7 +164,7 @@ abstract class LineBorder(ABorder)
    end
 
    public new()
-      cast(self,ABorder).new()
+      ABorder.new()
       line_width := Gui.BORDER_WIDTH
       return
    end

@@ -15,13 +15,13 @@ class ItemPaintList(SelectableScrollArea)
 
    public initially()
       \self.item_paint | runerr("ItemPaint not set")
-      cast(self,SelectableScrollArea).initially()
+      SelectableScrollArea.initially()
       self.item_paint.initially(self)
       self.item_border.initially(self)
    end
 
    public finally()
-      cast(self,SelectableScrollArea).finally()
+      SelectableScrollArea.finally()
       self.item_paint.finally()
       self.item_border.finally()
    end
@@ -81,7 +81,7 @@ class ItemPaintList(SelectableScrollArea)
    end
 
    public new()
-      cast(self,SelectableScrollArea).new()
+      SelectableScrollArea.new()
       self.set_item_border(NullBorder().
                            set_x_align(Align.L))
       return

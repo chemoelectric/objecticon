@@ -2352,7 +2352,7 @@ class XmlParser(Connectable)
    end
 
    public new()
-      cast(self,Connectable).new()
+      Connectable.new()
       resolver := DefaultResolver()
       do_namespaces_flag := 1
       validate_flag := 1

@@ -46,7 +46,7 @@ class GlobalSymbol(Symbol)
       decl_obj
 
    package new(scanned_file, obj, name, decl_obj)
-      cast(self,Symbol).new(scanned_file, obj, name)
+      Symbol.new(scanned_file, obj, name)
       self.decl_obj := decl_obj
       return
    end
@@ -111,7 +111,7 @@ class ClassSymbol(Symbol)
    end
 
    package new(scanned_file, obj, name)
-      cast(self,Symbol).new(scanned_file, obj, name)
+      Symbol.new(scanned_file, obj, name)
       self.fields := table()
       self.supers := []
       self.resolved_supers := []
@@ -126,7 +126,7 @@ class ClassField(Symbol)
       defining_class
 
    package new(defining_class, obj, name)
-      cast(self,Symbol).new(defining_class.scanned_file, obj, name)
+      Symbol.new(defining_class.scanned_file, obj, name)
       self.defining_class := defining_class
       return
    end
@@ -137,7 +137,7 @@ class ClassVariable(ClassField)
       decl_obj
 
    package new(defining_class, obj, name, decl_obj)
-      cast(self,ClassField).new(defining_class, obj, name)
+      ClassField.new(defining_class, obj, name)
       self.decl_obj := decl_obj
       return
    end
@@ -675,7 +675,7 @@ class SymbolTable(Connectable)
    end
 
    public new()
-      cast(self,Connectable).new()
+      Connectable.new()
       symbol_table := table()
       scanned_files := table()
       scanned_packages := set()

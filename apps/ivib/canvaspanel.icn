@@ -19,7 +19,7 @@ class CanvasPanel(CanvasComponent,Panel)
    #
    public gen_code(c)
       every (!self.children).gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       every c.chain("add(" || (!self.children).name || ")")
    end
 
@@ -29,7 +29,7 @@ class CanvasPanel(CanvasComponent,Panel)
    public dup(pc)
       local c
       c := CanvasPanel()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       every c.add((!self.children).dup())
       return c
    end
@@ -60,7 +60,7 @@ class CanvasPanel(CanvasComponent,Panel)
    #
    public which_cursor_over(e)
       local t, o
-      cast(self,CanvasComponent).which_cursor_over(e) | fail
+      CanvasComponent.which_cursor_over(e) | fail
       if in_resize_region(e) then
          return self
       every t := back(self.z_children) do
@@ -78,7 +78,7 @@ class CanvasPanel(CanvasComponent,Panel)
 
    public display()
       if in_preview() then
-         cast(self,Panel).display()
+         Panel.display()
       else {
          center_string(self.cbwin, self.x + self.w / 2, self.y + 10, "<Panel>")
          display_children()
@@ -91,12 +91,12 @@ class CanvasPanel(CanvasComponent,Panel)
    end
 
    public gen_cos()
-      suspend cast(self,CanvasComponent).gen_cos() | !self.children
+      suspend CanvasComponent.gen_cos() | !self.children
    end
 
    public new()
-      cast(self,Panel).new()
-      cast(self,CanvasComponent).new()
+      Panel.new()
+      CanvasComponent.new()
       self.set_show_layout(&yes)
       self.class_name := "Panel"
       self.import_name := "gui"

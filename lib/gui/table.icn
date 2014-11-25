@@ -55,17 +55,17 @@ class TableContent(SelectableScrollArea)
    end
 
    public on_hsb()
-      cast(self,SelectableScrollArea).on_hsb()
+      SelectableScrollArea.on_hsb()
       synch_header()
    end
 
    public handle_key_right(e)
-      cast(self,SelectableScrollArea).handle_key_right(e)
+      SelectableScrollArea.handle_key_right(e)
       synch_header()
    end
 
    public handle_key_left(e)
-      cast(self,SelectableScrollArea).handle_key_left(e)
+      SelectableScrollArea.handle_key_left(e)
       synch_header()
    end
 
@@ -114,7 +114,7 @@ class TableContent(SelectableScrollArea)
          }
       }
       # Call the superclass draw to do the selection, highlight etc.
-      cast(self,SelectableScrollArea).draw()
+      SelectableScrollArea.draw()
    end
 
    public draw_line_data(xp, yp, lh, i)
@@ -168,7 +168,7 @@ class Table(Component)
    public initially()
       if *table_header.children = 0 then
          runerr("no TableColumns in Table")
-      cast(self,Component).initially()
+      Component.initially()
    end
 
    #
@@ -450,7 +450,7 @@ class Table(Component)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       self.preferred_focus := self.table_content := create_table_content()
       self.table_content.set_border(NullBorder())
       self.set_border(SunkenBorder())

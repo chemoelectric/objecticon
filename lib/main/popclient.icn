@@ -231,7 +231,7 @@ class PopClient(NetClient)
    end
 
    public new()
-      cast(self,NetClient).new()
+      NetClient.new()
       set_port(110)
       set_server("localhost")
       return

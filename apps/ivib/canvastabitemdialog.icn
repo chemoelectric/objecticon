@@ -23,20 +23,20 @@ class CanvasTabItemDialog(CanvasComponentDialog)
       if (/c.parent.w_spec | /c.parent.h_spec) & /c.layout_delegate then
          return alert_error(self, ["This tab must have a layout manager set."])
 
-      cast(self,CanvasComponentDialog).validate_input() | fail 
+      CanvasComponentDialog.validate_input() | fail 
       \self.paint_field.get_contents() | return alert_error(self, "Label cannot be null")
       self.paint_field.validate_input() | fail
       return
    end
 
    public set_vals()
-      cast(self,CanvasComponentDialog).set_vals()
+      CanvasComponentDialog.set_vals()
       c.set_paint(paint_field.get_contents())
    end
 
    public setup() 
       local p
-      cast(self,CanvasComponentDialog).setup()
+      CanvasComponentDialog.setup()
 
       p := TabItem()
       p.set_layout(GridLayout().set_extra("borders"))

@@ -22,7 +22,7 @@ class MonitorCodeSet()
                         MonitorCode.Table || MonitorCode.Telem || MonitorCode.Tvsubs || 
                         MonitorCode.Tvtbl || MonitorCode.Cset || MonitorCode.Refresh || 
                         MonitorCode.String || MonitorCode.Coexpr || MonitorCode.Weakref ||
-                        MonitorCode.Object || MonitorCode.Cast || MonitorCode.Methp || 
+                        MonitorCode.Object || MonitorCode.Methp || 
                         MonitorCode.Ucs || MonitorCode.BlkDeAlc || MonitorCode.StrDeAlc)
 
       AssignMask := cset(MonitorCode.Assign || MonitorCode.Value)
@@ -49,8 +49,7 @@ class MonitorCodeSet()
                         MonitorCode.Trand || MonitorCode.Tsub || MonitorCode.Tclear)
 
       OOMask := cset(MonitorCode.Objectref || MonitorCode.Objectsub || MonitorCode.Classref ||
-                     MonitorCode.Classsub || MonitorCode.Castref || MonitorCode.Castsub ||
-                     MonitorCode.Objectcreate)
+                     MonitorCode.Classsub || MonitorCode.Objectcreate)
 
       StructMask := ListMask ++ RecordMask ++ SetMask ++ TableMask ++ OOMask
       EmptyMask := ''

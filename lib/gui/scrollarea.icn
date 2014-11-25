@@ -549,7 +549,7 @@ abstract class ScrollArea(Component)
    public abstract create_view()
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       self.set_border(SunkenBorder())
       use_wheel_flag := &yes
       self.view := create_view()

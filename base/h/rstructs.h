@@ -198,12 +198,6 @@ struct b_object {		/* object block */
     struct descrip fields[1];	/*   instance fields */
 };
 
-struct b_cast {                 /* object cast */
-    word title;                 /*   T_Cast */
-    struct b_object *object;	/*   the thing being cast */
-    struct b_class *class;	/*   the target class */
-};
-
 /*
  * Block for a method pointer.
  */
@@ -495,7 +489,6 @@ struct progstate {
 #endif
     struct b_record *(*Alcrecd)(struct b_constructor *);
     struct b_object *(*Alcobject)(struct b_class *);
-    struct b_cast *(*Alccast)(void);
     struct b_methp *(*Alcmethp)(void);
     struct b_coexpr *(*Alccoexp)(void);
     struct b_ucs *(*Alcucs)(int);
@@ -553,7 +546,6 @@ union block {			/* general block */
     struct b_slots slots;
     struct b_class class;
     struct b_object object;
-    struct b_cast cast;
     struct b_methp methp;
     struct b_constructor constructor;
     struct b_ucs ucs;

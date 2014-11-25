@@ -397,7 +397,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
    end
 
    public new()
-      cast(self,LineBasedInputStream).new()
+      LineBasedInputStream.new()
       tty := FileStream.stdin
       if run_stty() then
          isatty := &yes
@@ -470,7 +470,7 @@ class LineEditorDefaultEdit(LineEditorEdit)
    end
 
    public new(parent, e)
-      cast(self,LineEditorEdit).new(parent)
+      LineEditorEdit.new(parent)
       s := e
       return
    end
@@ -493,7 +493,7 @@ class LineEditorDeleteLeftEdit(LineEditorEdit)
    end
 
    public new(parent)
-      cast(self,LineEditorEdit).new(parent)
+      LineEditorEdit.new(parent)
       return
    end
 end
@@ -514,7 +514,7 @@ class LineEditorDeleteRightEdit(LineEditorEdit)
    end
 
    public new(parent)
-      cast(self,LineEditorEdit).new(parent)
+      LineEditorEdit.new(parent)
       return
    end
 end
@@ -532,7 +532,7 @@ class LineEditorDeleteToEndOfLineEdit(LineEditorEdit)
    end
 
    public new(parent)
-      cast(self,LineEditorEdit).new(parent)
+      LineEditorEdit.new(parent)
       return
    end
 end
@@ -558,7 +558,7 @@ class LineEditorAssignEdit(LineEditorEdit)
    end
 
    public new(parent, s)
-      cast(self,LineEditorEdit).new(parent)
+      LineEditorEdit.new(parent)
       self.s := s
       return
    end

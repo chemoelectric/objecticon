@@ -31,7 +31,7 @@ class CanvasTextDisplay(CanvasComponent,TextDisplay)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       c.chain("set_contents(" || contents_string(self.contents) || ")")
    end
 
@@ -41,7 +41,7 @@ class CanvasTextDisplay(CanvasComponent,TextDisplay)
    public dup()
       local c
       c := CanvasTextDisplay()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       c.set_contents(copy(self.contents))
       return c
    end
@@ -69,8 +69,8 @@ class CanvasTextDisplay(CanvasComponent,TextDisplay)
    end
 
    public new()
-      cast(self,TextDisplay).new()
-      cast(self,CanvasComponent).new()
+      TextDisplay.new()
+      CanvasComponent.new()
       self.class_name := "TextDisplay"
       self.import_name := "gui"
       self.name := "text_display"

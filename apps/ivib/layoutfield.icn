@@ -65,7 +65,7 @@ class LayoutField(Component)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       setup()
       self.set_constraint("x_fill", &yes)
       self.set_constraint("x_weight", "1")

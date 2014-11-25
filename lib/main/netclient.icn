@@ -414,7 +414,7 @@ class NetClient(Connectable, HasTask)
    end
 
    protected new()
-      cast(self,Connectable).new()
+      Connectable.new()
       sbuff := ""
       ssl_verify_flag := &yes
       return

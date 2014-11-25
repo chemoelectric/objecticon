@@ -107,7 +107,7 @@ class TerminalDialog(Dialog)
 
    public new()
       local quit_menu_item, menu_bar, file_menu, bt, new_tab_item, favourite_dirs_item
-      cast(self,Dialog).new()
+      Dialog.new()
       set_size(1000, 750)
       self.set_resize(&yes)
       new_tab_item := TextMenuItem().
@@ -177,13 +177,13 @@ class Columns(LineBasedScrollArea)
 
    public initially()
       \self.item_paint | runerr("ItemPaint not set")
-      cast(self,LineBasedScrollArea).initially()
+      LineBasedScrollArea.initially()
       self.item_paint.initially(self)
       self.item_border.initially(self)
    end
 
    public finally()
-      cast(self,LineBasedScrollArea).finally()
+      LineBasedScrollArea.finally()
       self.item_paint.finally()
       self.item_border.finally()
    end
@@ -259,16 +259,16 @@ class Columns(LineBasedScrollArea)
 
    public layout()
       invalidate_split()
-      cast(self,ScrollArea).layout()
+      ScrollArea.layout()
    end
 
    public set_internal_fields()
       local had_vsb
       had_vsb := self.vsb
-      cast(self,ScrollArea).set_internal_fields()
+      ScrollArea.set_internal_fields()
       if had_vsb ~=== self.vsb then {
          invalidate_split()
-         cast(self,ScrollArea).set_internal_fields()
+         ScrollArea.set_internal_fields()
       }
    end
 
@@ -448,7 +448,7 @@ class Columns(LineBasedScrollArea)
    end
 
    public new()
-      cast(self,LineBasedScrollArea).new()
+      LineBasedScrollArea.new()
       data := []
       gutter := 8
       item_paint := TextItemPaint()
@@ -479,13 +479,13 @@ class Commands(EditableTextList, MenuMode)
    public handle_return(e)
       local s
       if \e.shift then
-         return cast(self, EditableTextList).handle_return(e)
+         return EditableTextList.handle_return(e)
       s := contents[cursor_y]
       if \opts["v"] then write("Input line: ", image(s))
       parent.parent.parent.parent.parent.clear_msg()
       if cursor_y = *contents then {
          move_cursor(*contents[cursor_y] + 1, cursor_y)
-         cast(self, EditableTextList).handle_return(e)
+         EditableTextList.handle_return(e)
       } else
          move_cursor(1, cursor_y + 1)
       terminal.got_input(s || u"\n")
@@ -827,7 +827,7 @@ class Commands(EditableTextList, MenuMode)
          case e.code of {
             "\t" : handle_tab(e)
             "\^d" | "\^c" : terminal.got_input(ucs(e.code))
-            default : cast(self,EditableTextList).handle_key(e)
+            default : EditableTextList.handle_key(e)
          }
       }
    end
@@ -843,7 +843,7 @@ class Commands(EditableTextList, MenuMode)
    end
 
    public new()
-      cast(self, EditableTextList).new()
+      EditableTextList.new()
       every connect(self.forward_key, Event.KEY_PRESS)
       connect(self.reset_alt_dot, Event.CONTENT_CHANGED)
       return
@@ -1191,7 +1191,7 @@ class Output(EditableTextList)
       if \held then {
          handle_lmdrag(ev)
       } else {
-         cast(self,EditableTextList).handle_ldrag(ev)
+         EditableTextList.handle_ldrag(ev)
       }
    end
 
@@ -1210,7 +1210,7 @@ class Output(EditableTextList)
          held := over
       } else {
          e.shift := &null   # Stop confusion with the shift handling in handle_in_chain below.
-         cast(self,EditableTextList).handle_lpress(e)
+         EditableTextList.handle_lpress(e)
       }
    end
 
@@ -1222,7 +1222,7 @@ class Output(EditableTextList)
       local m, pm
       if /over then
          # Normal text menu
-         cast(self,EditableTextList).handle_rpress(e)
+         EditableTextList.handle_rpress(e)
       else {
          m := terminal.create_link_menu(over.link)
          set_highlight(over)
@@ -1276,7 +1276,7 @@ class Output(EditableTextList)
          }
          held := &null
       } else {
-         cast(self,EditableTextList).handle_lrelease(e)
+         EditableTextList.handle_lrelease(e)
       }
    end
 
@@ -1336,7 +1336,7 @@ class Output(EditableTextList)
    end
 
    public new()
-      cast(self,EditableTextList).new()
+      EditableTextList.new()
       blocks := [mk_block(contents[1])]
       view.connect(self.handle_in_chain, Event.IN_POINT_CHAIN)
       view.connect(self.handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
@@ -1903,12 +1903,12 @@ class Terminal(TabItem)
    end
 
    public finally()
-      cast(self,TabItem).finally()
+      TabItem.finally()
       close_all()
    end
 
    public new()
-      cast(self,TabItem).new()
+      TabItem.new()
       component_setup()
       return
    end

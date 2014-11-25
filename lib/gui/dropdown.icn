@@ -266,7 +266,7 @@ abstract class DropDown(Component, MenuMode)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       self.set_border(SunkenBorder())
       # Make the same width as the button in the scrollbar of the dropdown.
       self.b := create_button().
@@ -477,7 +477,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
 
    public initially()
       \self.selection_list | runerr("no selection list specified")
-      cast(self,Component).initially()
+      Component.initially()
    end
 
    public finally()
@@ -486,7 +486,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       #
       if \self.popup then 
          self.close_popup()
-      cast(self,Component).finally()
+      Component.finally()
    end
 end
 
@@ -503,7 +503,7 @@ class DropDownLabel(Label)
    end
 
    public new()
-      cast(self,Label).new()
+      Label.new()
       self.set_label("")
       self.set_accepts_focus(&yes)
       self.connect(self.on_key, Event.KEY_PRESS)
@@ -529,7 +529,7 @@ class DropDownTextField(TextField)
    end
 
    public new()
-      cast(self,TextField).new()
+      TextField.new()
       self.connect(self.on_key, Event.KEY_PRESS)
       self.set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
       return

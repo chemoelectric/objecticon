@@ -73,7 +73,7 @@ class Parser(Connectable)
    end
 
    public new()
-      cast(self,Connectable).new()
+      Connectable.new()
       pp := Preprocessor().connect(pperror)
       lex := Lex().connect(lxerror)
       yy := YY().connect(yyerror)

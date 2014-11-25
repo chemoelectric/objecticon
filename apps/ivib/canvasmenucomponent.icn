@@ -49,7 +49,7 @@ class CanvasMenuComponent(CanvasObject)
    # Copy fields from self to c.
    #
    public dup_fields(c)
-      cast(self,CanvasObject).dup_fields(c)
+      CanvasObject.dup_fields(c)
       c.accel := self.accel
       c.event_method := self.event_method
       c.is_shaded_flag := self.is_shaded_flag

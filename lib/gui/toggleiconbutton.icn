@@ -15,7 +15,7 @@ package gui
 #
 class ToggleIconButton(IconButton)
    public new()
-      cast(self,IconButton).new()
+      IconButton.new()
       self.toggles_flag := 1
       return
    end

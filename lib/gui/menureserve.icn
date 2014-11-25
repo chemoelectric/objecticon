@@ -57,7 +57,7 @@ class MenuReserve(MenuComponent)
    end
 
    public new()
-      cast(self,MenuComponent).new()
+      MenuComponent.new()
       self.is_decorative_flag := 1
       return
    end

@@ -11,7 +11,7 @@ class DragLabel(Label)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       set_allow_drag(1)
       return
    end

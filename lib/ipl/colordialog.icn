@@ -65,7 +65,7 @@ class ColorDialog(Dialog)
 
    public new(v)
       local l
-      cast(self,Dialog).new()
+      Dialog.new()
       self.setup()
       if l := Window.parse_color(\v) then {
          red.set_value(l[1])

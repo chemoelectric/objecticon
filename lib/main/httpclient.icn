@@ -1125,7 +1125,7 @@ class HttpClient(NetClient)
    end
 
    public new()
-      cast(self,NetClient).new()
+      NetClient.new()
       cookies := table()
       authentications := table()
       set_timeout(12000)

@@ -50,7 +50,7 @@ class MessageLabel(Label)
    end
 
    public new()
-      cast(self,Label).new()
+      Label.new()
       set()
       return
    end

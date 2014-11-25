@@ -22,7 +22,7 @@ class CanvasCheckBox(CanvasButton,CheckBox)
          self.set_box_paint(ImagePaint().set_cache("gui.DIAMOND_UP"), ImagePaint().set_cache("gui.DIAMOND_DOWN"))
       else
          self.set_box_paint(ImagePaint().set_cache("gui.BOX_UP"), ImagePaint().set_cache("gui.BOX_DOWN"))
-      cast(self,CheckBox).set_parent_check_box_group(x)
+      CheckBox.set_parent_check_box_group(x)
       return self
    end
 
@@ -31,7 +31,7 @@ class CanvasCheckBox(CanvasButton,CheckBox)
    #
    public gen_code(c)
       self.paint.gen_code(c)
-      cast(self,CanvasButton).gen_code(c)
+      CanvasButton.gen_code(c)
       c.chain("set_paint(" || self.paint.name || ")")
    end
 
@@ -49,7 +49,7 @@ class CanvasCheckBox(CanvasButton,CheckBox)
    public dup(pc)
       local c
       c := CanvasCheckBox()
-      cast(self,CanvasButton).dup_fields(c)
+      CanvasButton.dup_fields(c)
       c.set_paint(self.paint.dup(c))
       return c
    end
@@ -62,12 +62,12 @@ class CanvasCheckBox(CanvasButton,CheckBox)
    end
 
    public gen_cos()
-      suspend cast(self,CanvasComponent).gen_cos() | self.paint
+      suspend CanvasComponent.gen_cos() | self.paint
    end
 
    public new()
-      cast(self,CheckBox).new()
-      cast(self,CanvasButton).new()
+      CheckBox.new()
+      CanvasButton.new()
       self.class_name := "CheckBox"
       self.import_name := "gui"
       self.name := "check_box"

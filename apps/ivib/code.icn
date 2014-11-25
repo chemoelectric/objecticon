@@ -347,7 +347,7 @@ class Code()
          add_method("public", "component_setup", [], ["self.setup()"])
 
       if \self.parent_Canvas.gen_constructor then {
-         body := ["cast(self," || self.parent_Canvas.superclass_name || ").new()"]
+         body := [self.parent_Canvas.superclass_name || ".new()"]
          if /self.parent_Canvas.is_component then {
             if /self.parent_Canvas.gen_component_setup then
                put(body, "self.setup()")

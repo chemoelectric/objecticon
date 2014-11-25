@@ -92,7 +92,7 @@ class CustomToolBar(Component)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       x1 := y1 := 0
       bg := ButtonGroup()
       img_w := img_h := 44
@@ -1046,7 +1046,7 @@ class Main(Dialog)
          uis, objects_menu, tb, ui, listener, mi, ui_button, p,
          order_sub_menu, f, ce, plugin, pp, fn, i, fp, ext
 
-      cast(self,Dialog).new()
+      Dialog.new()
       config_file_name := FilePath(Xdg.ensure_data_home()).child("ivib").str() | stop("Couldn't access data dir: ", &why)
       set_layout(GridLayout().set_doi(0).set_dii(0))
       connect(self.dialog_event, Event.ICON)
@@ -1425,7 +1425,7 @@ class Preferences(Dialog)
 
    public new(c)
       local tabset, t, oc
-      cast(self,Dialog).new()
+      Dialog.new()
       self.c := c
       self.set_label("Program Preferences")
 
@@ -1538,7 +1538,7 @@ class PathTab(TabItem)
 
    public new(c)
       local p
-      cast(self,TabItem).new()
+      TabItem.new()
       self.c := c
       contents := copy(c.named_image_path)
       set_layout(GridLayout())

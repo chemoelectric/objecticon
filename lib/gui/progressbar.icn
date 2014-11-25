@@ -48,7 +48,7 @@ class ProgressBar(Component)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       self.set_border(CompoundBorder().
                            set_outer(RaisedBorder()).
                            set_inner(EmptyBorder()))

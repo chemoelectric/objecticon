@@ -97,14 +97,14 @@ class MapTab(TabItem)
    public set_one(f)
       case f.attr of {
          "table": set_table(f.table_val())
-         default: return cast(self,TabItem).set_one(f)
+         default: return TabItem.set_one(f)
       }
       return
    end
 
    public new()
       local c1, c2, p
-      cast(self,TabItem).new()
+      TabItem.new()
 
       set_layout(GridLayout())
 

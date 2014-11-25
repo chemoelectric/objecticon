@@ -21,7 +21,7 @@ class CanvasTextPaint(CanvasPaint,TextPaint)
    public dup()
       local c
       c := CanvasTextPaint()
-      cast(self,CanvasObject).dup_fields(c)
+      CanvasObject.dup_fields(c)
       c.str := self.str
       return c
    end
@@ -37,8 +37,8 @@ class CanvasTextPaint(CanvasPaint,TextPaint)
    end
 
    public new(s)
-      cast(self,TextPaint).new(s)
-      cast(self,CanvasPaint).new()
+      TextPaint.new(s)
+      CanvasPaint.new()
       self.class_name := "TextPaint"
       return
    end
@@ -53,7 +53,7 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
    public dup()
       local c
       c := CanvasImagePaint()
-      cast(self,CanvasObject).dup_fields(c)
+      CanvasObject.dup_fields(c)
       c.image_str := self.image_str
       c.image_cache := self.image_cache
       c.fill_dimensions := self.fill_dimensions
@@ -84,8 +84,8 @@ class CanvasImagePaint(CanvasPaint,ImagePaint)
    end
 
    public new()
-      cast(self,ImagePaint).new()
-      cast(self,CanvasPaint).new()
+      ImagePaint.new()
+      CanvasPaint.new()
       self.class_name := "ImagePaint"
       return
    end
@@ -100,7 +100,7 @@ class CanvasGridPaint(CanvasPaint,GridPaint)
    public dup()
       local c
       c := CanvasGridPaint()
-      cast(self,CanvasObject).dup_fields(c)
+      CanvasObject.dup_fields(c)
       c.fmt := self.fmt
       return c
    end
@@ -116,8 +116,8 @@ class CanvasGridPaint(CanvasPaint,GridPaint)
    end
 
    public new(s)
-      cast(self,GridPaint).new(s)
-      cast(self,CanvasPaint).new()
+      GridPaint.new(s)
+      CanvasPaint.new()
       self.class_name := "GridPaint"
       return
    end

@@ -81,7 +81,7 @@ class CanvasTableDialog(CanvasComponentDialog)
    end
 
    public set_vals()
-      cast(self,CanvasComponentDialog).set_vals()
+      CanvasComponentDialog.set_vals()
       c.select_mode := select_group.get_select_mode()
       c.get_table_content().invalidate_subject_width()
    end
@@ -115,7 +115,7 @@ class CanvasTableDialog(CanvasComponentDialog)
    public setup()
       local p, t1, t2, t3, q
 
-      cast(self,CanvasComponentDialog).setup()
+      CanvasComponentDialog.setup()
 
       p := TabItem()
       p.set_layout(GridLayout())

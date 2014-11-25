@@ -43,7 +43,7 @@ class PopupEditor(Component)
    end
 
    public new(editor)
-      cast(self,Component).new()
+      Component.new()
       self.editor := editor
       editor.connect(close_all, Event.ACTION)
       self.add(editor)

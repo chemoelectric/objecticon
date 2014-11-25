@@ -370,28 +370,6 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
             }
          }
 
-         "cast" : {
-            if /desc then 
-               writes1("cast()")
-            else if simple{Class.get_cast_object(o)} then {
-               writes1("cast(")
-               traverse(Class.get_cast_object(o))
-               writes(",", image(Class.get_cast_class(o)), ")")
-            } else {
-               nl()
-               writes1("cast(")
-               iplus()
-               nl()
-               traverse(Class.get_cast_object(o))
-               writes1(",")
-               nl()
-               writes1(image(Class.get_cast_class(o)))
-               iminus()
-               nl()
-               writes1(")")
-            }
-         }
-
          "weakref" : {
             s := ty || "#" || serial(o)
             insert(seen, o, s)
@@ -598,11 +576,6 @@ procedure clone(o, seen)
          return res
       }
 
-      "cast" : {
-         return cast(clone(Class.get_cast_object(o), seen),
-                     Class.get_cast_class(o))
-      }
-
       default : 
          return o
    }
@@ -653,10 +626,6 @@ procedure hash(x, depth)
             every n +:= hash(key(x), depth - 1)
          }
       }
-
-      "cast" :
-         n := hash(Class.get_cast_object(x), depth - 1) +
-                   hash(Class.get_cast_class(x), depth - 1)
 
       "methp" :
          n := hash(Class.get_methp_object(x), depth - 1) +
@@ -734,13 +703,6 @@ package procedure equals_impl(x, y, seen)
          Class.get_methp_proc(x) === Class.get_methp_proc(y) | fail
          equals(Class.get_methp_object(x),
                 Class.get_methp_object(y), seen) | fail
-         return
-      }
-
-      "cast": {
-         Class.get_cast_class(x) === Class.get_cast_class(y) | fail
-         equals(Class.get_cast_object(x),
-                Class.get_cast_object(y), seen) | fail
          return
       }
 

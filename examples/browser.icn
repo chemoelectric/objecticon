@@ -137,12 +137,12 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
    end
 
    public initially()
-      cast(self,Dialog).initially()
+      Dialog.initially()
       pool.initially()
    end
 
    public finally()
-      cast(self,Dialog).finally()
+      Dialog.finally()
       pool.finally()
    end
 
@@ -395,7 +395,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
 
    public new(url, cookies, settings)
       local quit_menu_item, menu_bar, file_menu, bt, new_tab_item
-      cast(self,Dialog).new()
+      Dialog.new()
       self.settings := settings
       self.visited_set := set()
       every insert(visited_set, (!settings.visited).url.str())
@@ -472,7 +472,7 @@ class MessageDialog(Dialog)
 
    public new()
       local close_button
-      cast(self,Dialog).new()
+      Dialog.new()
       set_resize(&yes)
       set_remember_size(&yes)
       text := EditableTextList().
@@ -819,12 +819,12 @@ class DownloadTab(TabItem)
    end
 
    public initially()
-      cast(self,TabItem).initially()
+      TabItem.initially()
       ticker.start()
    end
 
    public finally()
-      cast(self,TabItem).finally() 
+      TabItem.finally() 
       ticker.stop()
    end
 
@@ -834,7 +834,7 @@ class DownloadTab(TabItem)
    end
 
    public new()
-      cast(self,TabItem).new()
+      TabItem.new()
       set_label_border(EmptyBorder().set_x_align(Align.L))
       setup()
       theme_toolbar_button(paste_url_button, "edit-paste")
@@ -1531,7 +1531,7 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public new(browser_dialog, url, referer_url, pool, revert_tab)
-      cast(self,TabItem).new()
+      TabItem.new()
       self.revert_tab := revert_tab
       set_label_border(EmptyBorder().set_x_align(Align.L))
       set_title()

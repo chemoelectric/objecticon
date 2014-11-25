@@ -464,7 +464,7 @@ abstract class MenuComponent(Rect,Connectable)
    end
 
    public new()
-      cast(self,Connectable).new()
+      Connectable.new()
       self.children := []
       return
    end
@@ -515,7 +515,7 @@ class SubMenuProxyComponent(Component, MenuMode)
    end
 
    public new(m)
-      cast(self,Component).new()
+      Component.new()
       self.menu := m
       set_tooltip_follows_mouse(&yes)
       return

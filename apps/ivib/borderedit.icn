@@ -267,7 +267,7 @@ class BorderEdit(Dialog)
    end
 
    public new(c)
-      cast(self,Dialog).new()
+      Dialog.new()
       self.c := c
       setup(c)
       return

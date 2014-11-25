@@ -158,7 +158,7 @@ class MenuComponentEdit(Dialog)
    end
 
    public new(c)
-      cast(self,Dialog).new()
+      Dialog.new()
       self.c := c
       setup()
       return

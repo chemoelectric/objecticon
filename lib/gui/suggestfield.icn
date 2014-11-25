@@ -307,7 +307,7 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public initially()
-      cast(self,TextField).initially()
+      TextField.initially()
       mod := &null
       req.start()
    end
@@ -324,7 +324,7 @@ abstract class SuggestField(TextField, MenuMode)
       #
       if \self.tl then 
          self.close_textlist()
-      cast(self,TextField).finally()
+      TextField.finally()
    end
 
    public keeps(e)
@@ -335,7 +335,7 @@ abstract class SuggestField(TextField, MenuMode)
       if \select_using_enter_flag & \tl then
          tl.fire(Event.KEY_PRESS, e)
       else
-         cast(self,TextField).handle_return(e)
+         TextField.handle_return(e)
       keep_closed()
    end
 
@@ -369,14 +369,14 @@ abstract class SuggestField(TextField, MenuMode)
       if \tl & \forward_home_end_flag then
          tl.fire(Event.KEY_PRESS, e)
       else
-         cast(self,TextField).handle_key_home(e)
+         TextField.handle_key_home(e)
    end
 
    public handle_key_end(e)
       if \tl & \forward_home_end_flag then
          tl.fire(Event.KEY_PRESS, e)
       else
-         cast(self,TextField).handle_key_end(e)
+         TextField.handle_key_end(e)
    end
 
    public handle_key(e)
@@ -387,12 +387,12 @@ abstract class SuggestField(TextField, MenuMode)
          Key.PGUP : handle_key_page_up(e)
          Key.PGDN : handle_key_page_down(e)
          default:
-            cast(self,TextField).handle_key(e)
+            TextField.handle_key(e)
       }
    end
 
    public new()
-      cast(self,TextField).new()
+      TextField.new()
       connect(on_change, Event.CONTENT_CHANGED)
       req := Dispatcher.new_task{requests()}
       self.direction := Direction.BEST

@@ -12,7 +12,7 @@ class OkCancel(Component)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       set_constraint("x_align", "l")
       set_layout(GridLayout().set_doi(0))
 

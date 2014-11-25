@@ -58,7 +58,7 @@ class Button(Toggle,Component)
 
    public finally()
       stop_held()
-      cast(self,Component).finally()
+      Component.finally()
    end
 
    public repeat_tick()
@@ -168,7 +168,7 @@ class Button(Toggle,Component)
    public set_is_checked(s)
       check_flag(s)
       if s ~=== self.is_checked_flag then {
-         cast(self,Toggle).set_is_checked(s)
+         Toggle.set_is_checked(s)
          self.invalidate()
       }
       return self
@@ -177,7 +177,7 @@ class Button(Toggle,Component)
    public accepts_focus(e)
       if (\e).code === Mouse.LEFT_PRESS & \self.no_click_focus_flag then
          fail
-      return cast(self,Component).accepts_focus(e)
+      return Component.accepts_focus(e)
    end
 
    #
@@ -196,7 +196,7 @@ class Button(Toggle,Component)
    end
 
    public new()
-      cast(self,Component).new()
+      Component.new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
       self.accepts_focus_flag := 1
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)

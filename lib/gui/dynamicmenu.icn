@@ -7,7 +7,7 @@ abstract class DynamicMenu(Menu)
       while *children > 0 do
          remove_index(1)
       populate()
-      cast(self,Menu).show(x, y, xa, ya)
+      Menu.show(x, y, xa, ya)
    end
 
    #

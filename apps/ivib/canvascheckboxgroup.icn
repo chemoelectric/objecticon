@@ -22,7 +22,7 @@ class CanvasCheckBoxGroup(CanvasObject,CheckBoxGroup)
       #
       # Extend superclass method
       #
-      cast(self,CanvasObject).gen_code(c)
+      CanvasObject.gen_code(c)
       every e := !get_members() do {
          c.chain("add(" || e.name || ")")
          if e.is_checked() then
@@ -46,7 +46,7 @@ class CanvasCheckBoxGroup(CanvasObject,CheckBoxGroup)
    public dup()
       local c
       c := CanvasCheckBoxGroup()
-      cast(self,CanvasObject).dup_fields(c)
+      CanvasObject.dup_fields(c)
       return c
    end
 
@@ -62,7 +62,7 @@ class CanvasCheckBoxGroup(CanvasObject,CheckBoxGroup)
    end
 
    public new()
-      cast(self,CheckBoxGroup).new()
+      CheckBoxGroup.new()
       self.class_name := "CheckBoxGroup"
       self.import_name := "gui"
       self.name := "check_box_group"

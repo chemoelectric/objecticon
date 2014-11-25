@@ -32,7 +32,7 @@ class CanvasTree(CanvasComponent,Tree)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       c.chain("set_select_mode(" || c.select_str(self.select_mode) || ")")
       c.add_import("gui", "Select")
       if /self.show_root_flag then
@@ -42,7 +42,7 @@ class CanvasTree(CanvasComponent,Tree)
    end
 
    public post_decode()
-      cast(self,CanvasComponent).post_decode()
+      CanvasComponent.post_decode()
       tree_structure_changed()
    end
 
@@ -52,7 +52,7 @@ class CanvasTree(CanvasComponent,Tree)
    public dup()
       local c
       c := CanvasTree()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       c.select_mode := self.select_mode
       c.show_root_flag := self.show_root_flag
       c.show_root_handles_flag := self.show_root_handles_flag
@@ -79,8 +79,8 @@ class CanvasTree(CanvasComponent,Tree)
 
    public new()
       local m, n, p
-      cast(self,Tree).new()
-      cast(self,CanvasComponent).new()
+      Tree.new()
+      CanvasComponent.new()
       self.class_name := "Tree"
       self.import_name := "gui"
       self.name := "tree"

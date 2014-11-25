@@ -18,7 +18,7 @@ class CanvasListSpin(CanvasComponent,ListSpin)
    # Generate code into Code object c.
    #
    public gen_code(c)
-      cast(self,CanvasComponent).gen_code(c)
+      CanvasComponent.gen_code(c)
       c.chain("set_selection_list(" || contents_string(self.selection_list) || ")")
       if \self.selection ~= 1 then
          c.chain("set_selection(" || self.selection || ")")
@@ -30,7 +30,7 @@ class CanvasListSpin(CanvasComponent,ListSpin)
    public dup()
       local c
       c := CanvasListSpin()
-      cast(self,CanvasComponent).dup_fields(c)
+      CanvasComponent.dup_fields(c)
       c.set_selection_list(copy(self.selection_list))
       c.set_selection(self.selection)
       return c
@@ -46,7 +46,7 @@ class CanvasListSpin(CanvasComponent,ListSpin)
    end
 
    private post_decode()
-      cast(self,CanvasComponent).post_decode()
+      CanvasComponent.post_decode()
       # Little trick to initialize the selection index nicely
       set_selection_list(self.selection_list)
    end
@@ -67,8 +67,8 @@ class CanvasListSpin(CanvasComponent,ListSpin)
    end
 
    public new()
-      cast(self,ListSpin).new()
-      cast(self,CanvasComponent).new()
+      ListSpin.new()
+      CanvasComponent.new()
       self.class_name := "ListSpin"
       self.import_name := "gui"
       self.name := "list_spin"

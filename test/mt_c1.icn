@@ -162,7 +162,7 @@ record dummy(v1,meth3)
 procedure child21(obj, pc)
    write("in child21")
    write(obj.v1)
-   cast(obj,pc).meth1()
+   obj.meth2(pc)
    obj.meth3()
 end
 

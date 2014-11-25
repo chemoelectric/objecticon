@@ -101,7 +101,7 @@ class TextDisplay(LineBasedScrollArea)
    end
 
    public finally()
-      cast(self,LineBasedScrollArea).finally()
+      LineBasedScrollArea.finally()
       # In case the component changes the contents and is then re-inited.
       clear_split_list()
    end
@@ -309,7 +309,7 @@ class TextDisplay(LineBasedScrollArea)
    public set_internal_fields()
       local had_vsb
       had_vsb := self.vsb
-      cast(self,LineBasedScrollArea).set_internal_fields()
+      LineBasedScrollArea.set_internal_fields()
       if \wrap_mode == "width" & had_vsb ~=== self.vsb then {
          clear_split_list()
          set_internal_fields()
@@ -331,7 +331,7 @@ class TextDisplay(LineBasedScrollArea)
    public layout()
       if \wrap_mode == "width" then
          clear_view_list()
-      cast(self,ScrollArea).layout()
+      ScrollArea.layout()
    end
 
    #
@@ -376,7 +376,7 @@ class TextDisplay(LineBasedScrollArea)
    end
 
    public new()
-      cast(self,LineBasedScrollArea).new()
+      LineBasedScrollArea.new()
       tab_width := Gui.TAB_WIDTH
       set_contents([])
       set_wrap_mode("off")
