@@ -42,11 +42,6 @@ Defaults:
 
 See also: `find()` and `upto()`
 
-== cast ==
-`cast (o, cl) : ca` -- create cast
-
-Create a cast from object `o` and class `cl`
-
 == center ==
 `center (s1,i,s2) : s3` -- position string at center
 
@@ -68,7 +63,7 @@ See also: `ord()`
 == classof ==
 `classof (o) : cl` -- return the class of object `o`
 
-If `o` is a class, object or cast, the corresponding class is returned.  If `o` is a record or a constructor, then the corresponding constructor is returned.
+If `o` is a class or an object, the corresponding class is returned.  If `o` is a record or a constructor, then the corresponding constructor is returned.
 
 == clear ==
 `clear (X) : X` -- clear structure
@@ -554,7 +549,7 @@ See also: `bal() and find()`
 `weakref (x) : w` -- create a weak reference
 
 Creates a `weakref` to `x`.  This means that the reference to `x` inside the `weakref` will not prevent `x` being garbage collected.  `x` must be a list,
-set, table, record, methp, cast, object or coexpression.   Any other type causes `weakref` to fail.
+set, table, record, methp, object or coexpression.   Any other type causes `weakref` to fail.
 
 == weakrefval ==
 `weakrefval (w) : x` -- get weak reference value

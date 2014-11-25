@@ -179,7 +179,7 @@ If a method is declared `abstract` then it has no body, and must be overridden a
 
 Static methods cannot be `abstract`, since they cannot be overridden, and for a similar reason, an `abstract` method cannot appear in a `final` class.  Due to the limitations of the Yacc parser, the `abstract` method modifier must be the last modifier specified.
 
-The visibility modifier of an `abstract` method does not have any real significance, other than to indicate how an overriding method should be declared.  An `abstract` method can in fact be invoked (via a cast), and in this case the visibility modifier will be checked by the interpreter in the usual way.  However, such an invocation will simply cause a runtime error.
+The visibility modifier of an `abstract` method does not have any real significance, other than to indicate how an overriding method should be declared.  An `abstract` method can in fact be invoked from a subclass using the same syntax which allows access to an overridden method (`Superclass.methodname()`), and in this case the visibility modifier will be checked by the interpreter in the usual way.  However, such an invocation will simply cause a runtime error.
 
 Abstract classes and methods allow an "interface" of methods to be defined which a subclass must implement.  For example :-
 {{{
