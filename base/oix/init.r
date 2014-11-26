@@ -1388,6 +1388,7 @@ static void conv_var()
 {
     /*printf("conv_var: pc=%p(%d) ->op %d (%s)\n", pc, (char *)pc - prog->Code, (int)*pc, op_names[*pc]);*/
     switch (*pc++) {
+        case Op_Self:
         case Op_Knull:
         case Op_Nil: {
             break;

@@ -297,6 +297,10 @@ void get_deref(dptr dest)
             *dest = curr_pf->fvars->desc[GetWord];
             break;
         }
+        case Op_Self: {
+            *dest = curr_pf->fvars->desc[0];
+            break;
+        }
         case Op_Tmp: {
             deref(&curr_pf->tmp[GetWord], dest);
             break;
@@ -344,6 +348,10 @@ void get_variable(dptr dest)
             MakeNamedVar(&curr_pf->fvars->desc[GetWord], dest);
             break;
         }
+        case Op_Self: {
+            *dest = curr_pf->fvars->desc[0];
+            break;
+        }
         case Op_Tmp: {
             *dest = curr_pf->tmp[GetWord];
             break;
@@ -375,6 +383,7 @@ void skip_descrip()
             ipc++;
             break;
         }
+        case Op_Self:
         case Op_Knull: {
             break;
         }

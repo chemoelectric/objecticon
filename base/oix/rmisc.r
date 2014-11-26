@@ -157,6 +157,9 @@ int getvar(dptr s, dptr vp, struct progstate *p)
         dp = pf->fvars->desc;
         for (i = bp->nparam; i > 0; i--) {
             if (eq(s, *np)) {
+               /* Don't allow var access to the self argument in an instance method */
+               if (bp->field && !(bp->field->flags & M_Static) && i == bp->nparam)
+                   return Failed;
                 vp->dword = D_NamedVar;
                 VarLoc(*vp) = (dptr)dp;
                 return ParamName;

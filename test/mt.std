@@ -86,9 +86,6 @@ test24.o: {1, 2, 3}
 subtype(o): "othertype"
 test24.names: {"record othertype#*.a", "record othertype#*.b", "record othertype#*.c"}
 Test test25
-child25:object X25#1(0),3,4
-99
-100
 Test test26
 object any.pack.P#1(1)
 Class.getf(o, "var"): yes
@@ -142,15 +139,7 @@ main &why: ""
 child &why: "failure message"
 Test test30
 Q.f: method any.pack.Q.f
-In some_proc
-Access any.pack.Q.var: Succeeded with &null
-In some_proc
-Access any.pack.Q.var: Error 611
 Q.f: method any.pack.Q.f
-In some_proc2, what=50
-Access any.pack.Q.var: Succeeded with &null
-In some_proc2, what=50
-Access any.pack.Q.var: Error 611
 Test test31
 Parent scan 0:""
 Parent scan 1:"parent1"
@@ -174,7 +163,7 @@ Test test32
 &pos: 1
 &why: "why oh why"
 &file: string
-&line: 220
+&line: 214
 &main: co-expression#*(0)
 &time: integer
 &trace: 0
@@ -208,7 +197,7 @@ c: &errorcoexpr: Failed
 e: &pos: 1
 e: &why: "why oh why"
 e: &file: string
-e: &line: 235
+e: &line: 229
 e: &main: co-expression#*(0)
 e: &time: integer
 e: &trace: 0
@@ -232,10 +221,10 @@ c: &errortext: "ciao"
 c: &errortext: Failed
 &errornumber: Failed
 c: &errornumber: 103
-Child33.fun6(5): "ed"
-c: &pos: 5
-Child33.fun6(11): {"ed ove"}
-c: &pos: 5
+Child33.fun6(5): Failed
+c: &pos: 7
+Child33.fun6(11): {}
+c: &pos: 7
 &subject: "the quick brown fox"
 &pos: 4
 exit

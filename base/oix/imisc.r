@@ -77,17 +77,10 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
 
         case M_Package: {
             /* Check for same package.  Note that packages in
-             * different programs are distinct.  Note also that the
-             * field's prog/package - may be different from the proc's
-             * if it was created via set_method.  In any case, we
-             * allow access for a prog/package match on either field
-             * or proc.
+             * different programs are distinct.
              */
             if ((caller_proc->program == cf->defining_class->program &&
-                 caller_proc->package_id == cf->defining_class->package_id) ||
-                (caller_field &&
-                 caller_field->defining_class->program == cf->defining_class->program &&
-                 caller_field->defining_class->package_id == cf->defining_class->package_id))
+                 caller_proc->package_id == cf->defining_class->package_id))
                 return Succeeded;
             ReturnErrNum(611, Error);
         }

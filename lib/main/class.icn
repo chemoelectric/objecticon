@@ -241,18 +241,6 @@ final abstract class Class()
    #
    public static native getq(x, field)
 
-   # Set the given field, which must be a method, in the class from
-   # which this method was invoked, to be the given procedure.
-   #
-   # @param field either a field name or number
-   # @param proc a procedure
-   # @runerr if the field is unkown, the field already has a method,
-   # @ or isn't a method field, the procedure is already a method or the
-   # @ field is not defined in the class from which this method was
-   # @ invoked.
-   #
-   public static native set_method(field, proc)   
-
    # This method tries to resolve all the unresolved deferred methods
    # declared in the class from which is called, from the dll {lib}.
    # Methods are matched to functions in the dll using the same scheme

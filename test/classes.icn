@@ -216,6 +216,10 @@ procedure test_Class()
    try{ "Class.get(Eleven, \"rubbish\")", Class.get(Eleven, "rubbish") }
    try{ "Class.get(Eleven, \"a\")", Class.get(Eleven, "a") }
    try{ "Class.junk", Class.junk }
+
+   try{ "first.FirstOne.var", first.FirstOne.var }
+   try{ "second.SecondOne.var", second.SecondOne.var }
+   second.p()
 end
 
 procedure subtype(x)
@@ -552,32 +556,6 @@ procedure test_rand_objects()
    write("Random object test finished")
 end
 
-class Thirteen()
-   private var
-
-   public native tryit1()
-
-   public native tryit2()
-
-   public native tryit3()
-
-   public static setup1()
-      Class.set_method("tryit1", default.tryit1)
-   end
-
-   public static setup3()
-      try{"Setup err4", Class.set_method("var", default.tryit2)}
-      try{"Setup err5", Class.set_method("setup1", default.tryit2)}
-      try{"Setup err6", Class.set_method("tryit3", Fourteen.setup2)}
-   end
-end
-
-class Fourteen(Thirteen)
-   public static setup2()
-      try{"Setup err3", Class.set_method("tryit2", default.tryit2)}
-   end
-end
-
 class Fifteen()
    public val
 
@@ -588,40 +566,6 @@ end
 class Sixteen(Fifteen)
    public g()
    end
-end
-
-procedure tryit1(o)
-   write("Tryit1 ", imagex(o))
-   yes_no{"getf", Class.getf(o, "var")}
-end
-
-procedure tryit2()
-end
-
-procedure test_set_method()
-   local t, e
-   t := Thirteen()
-   tryit1(t)
-   Thirteen.setup1()
-   tryit1(t)
-   t.tryit1()
-   try{"Setup err1", Thirteen.setup1()}
-   try{"Setup err2", Class.set_method("abc", tryit2)}
-   Fourteen.setup2()
-   Thirteen.setup3()
-   
-   second.p()
-   first.FirstOne.inject(second.p)
-   second.p()
-   first.FirstOne.f()
-   write(Proc.get_name(second.p))
-   write(Proc.get_name(FirstOne.f))
-   write(Proc.get_name(FirstOne.f,1))
-   write(Proc.get_package(second.p))
-   write(Proc.get_package(FirstOne.f))
-   write(Proc.get_package(FirstOne.f,1))
-   every e := Proc.get_location(second.p) | Proc.get_location(FirstOne.f) | Proc.get_location(FirstOne.f,1) do
-      write(e.file[-21:0],",",e.line)
 end
 
 class E1(ObjectEquals)
@@ -747,7 +691,6 @@ end
 procedure main()
    test_Class()
    test_langprocs()
-   test_set_method()
    test_rand_objects()
    test_inherit_equals()
    test_overridden()

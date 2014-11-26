@@ -243,6 +243,10 @@ to_string: list#*[object Seven#*(a=1;c=3),ref object Seven#*]
 Class.get(Eleven, "rubbish"): Error 207
 Class.get(Eleven, "a"): Succeeded with &null
 Class.junk: Error 207
+first.FirstOne.var: Error 611
+second.SecondOne.var: Error 611
+Access One.var from p2: Error 611
+Access Two.var from p2: Succeeded with &null
 Clone check: object One#*(x=1;y=2)
 	equals(a,a): yes
 	equals(b,b): yes
@@ -750,33 +754,6 @@ Equals check: object Fifteen#*(val=methp(ref object Fifteen#*,method Fifteen.f))
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Succeeded with "Fifteen"
 	classof(a)===classof(b): yes
-Tryit1 object Thirteen#*(1)
-getf: no
-Tryit1 object Thirteen#*(1)
-getf: no
-Tryit1 object Thirteen#*(1)
-getf: yes
-Setup err1: Error 623
-Setup err2: Error 616
-Setup err3: Error 616
-Setup err4: Error 617
-Setup err5: Error 617
-Setup err6: Error 618
-Access One.var from p2: Error 611
-Access Two.var from p2: Succeeded with &null
-Access One.var from p2: Error 611
-Access Two.var from p2: Succeeded with &null
-Access One.var from p2: Succeeded with &null
-Access Two.var from p2: Succeeded with &null
-second.p
-first.FirstOne.f
-second.p
-second
-first
-second
-classes_packtest2.icn,10
-classes_packtest1.icn,8
-classes_packtest2.icn,10
 Random object test starting
 Random object test finished
 equals(x1,x2): yes

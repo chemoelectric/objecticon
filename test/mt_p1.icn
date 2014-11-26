@@ -1,4 +1,4 @@
-import lang(Class,Proc,Constructor,Prog), any.pack, io, ipl.test
+import lang(Proc,Constructor,Prog), any.pack, io, ipl.test
 
 invocable all
 
@@ -304,24 +304,7 @@ procedure test24()
    pr_seq{"test24.names", Prog.get_variable_name(!o)}
 end
 
-class X25()
-   public native f()
-
-   public g()
-      return 99
-   end
-
-   private static init()
-      local p
-      p := Prog.get_global("child25",c) | stop("no child25 found")
-      Class.set_method("f", p)
-   end
-end
-
 procedure test25()
-   local i
-   i := X25()
-   write(i.f(3,4))
 end
 
 procedure test26()
@@ -377,28 +360,13 @@ procedure test29()
    print{"child &why", Prog.eval_keyword("&why", Proc.get_program(p))}
 end
 
-procedure some_proc()
-   write("In some_proc")
-   try{"Access any.pack.Q.var", any.pack.Q.var}
-end
-
-procedure some_proc2()
-   write("In some_proc2, what=",what)
-   try{"Access any.pack.Q.var", Prog.get_global("any.pack.Q",c).var}
-end
-
 procedure test30()
-   any.pack.Q.inject(some_proc)
    print{"Q.f", Q.f}
    Q.f()
-   some_proc()
 
    # Same again in prog c
-   Prog.get_global("any.pack.Q",c).inject(some_proc2)
    print{"Q.f", Prog.get_global("any.pack.Q",c).f}
    Prog.get_global("any.pack.Q",c).f()
-   some_proc2()
-   
 end
 
 procedure test31()

@@ -49,25 +49,30 @@ final abstract class Proc()
 
    # Return the source location of the proc.  For a native method, {flag}
    # indicates whether to return the location of the native method
-   # declaration or the proc defined as its body.
+   # declaration, or to fail.
    # @return a {Location} instance
    #
    public static get_location(p, flag)
       local cl, i, prog
       check_flag(flag)
-      # The check for Native here is to avoid (if flag is 1), looking up
-      # a non-native method's name in the global name table.  Eg, without
-      # the check, if we had a procedure abc and also a method Xyz.abc,
-      # then get_location(Xyz.abc, 1) would erroneously return the
-      # location of procedure abc.
-      if cl := get_defining_class(p) &
-         i := get_field_index(p) &
-         (/flag | iand(Class.get_field_flags(cl, i), Class.Native) = 0) then 
-      {
-         return Class.get_field_location(cl, i)
+      return if prog := get_program(p, &yes) then {
+         # Note that we ignore flag in this case since we don't want
+         # to lookup (if flag is 1), a method's name in the global
+         # table.  Otherwise, for example, if we had a procedure abc
+         # and also a method Xyz.abc, then get_location(Xyz.abc, 1)
+         # would erroneously return the location of procedure abc.
+         if cl := get_defining_class(p) &
+            i := get_field_index(p) then
+            Class.get_field_location(cl, i)
+         else
+            Prog.get_global_location(get_name(p, &yes), prog)
       } else {
-         prog := get_program(p, 1) | return error("Proc not a procedure, has no location")
-         return Prog.get_global_location(get_name(p, 1), prog)
+         if cl := get_defining_class(p) &
+            i := get_field_index(p) &
+            /flag then
+            Class.get_field_location(cl, i)
+         else
+            error("Proc not a procedure, has no location")
       }
    end
 

@@ -730,8 +730,12 @@ static struct ir_var *make_global(struct lnode *n)
 static int is_assignable_var(struct lnode *n)
 {
     switch (n->op) {
-        case Uop_Local: 
+        case Uop_Local: {
+            struct lentry *le = ((struct lnode_local *)n)->local;
+            if (curr_lfunc->method && !(curr_lfunc->method->flag & M_Static) && (le->l_flag & F_Argument) && le->l_val.index == 0)
+                return 0;
             return 1;
+        }
         case Uop_Global: {
             struct gentry *ge = ((struct lnode_global *)n)->global;
             if ((ge->g_flag & (F_Builtin|F_Proc|F_Record|F_Class)) == 0) {

@@ -1077,53 +1077,6 @@ struct b_proc *clone_b_proc(struct b_proc *bp)
     return new0;
 }
 
-function lang_Class_set_method(field, pr)
-   body {
-        struct p_proc *caller_proc;
-        struct b_proc *new_proc;
-        struct b_class *class0;
-        struct class_field *cf;
-        int i;
-
-        CheckField(field);
-        if (!is:proc(pr))
-            runerr(615, pr);
-
-        caller_proc = get_current_user_proc();
-        if (!caller_proc->field)
-            runerr(616);
-        class0 = caller_proc->field->defining_class;
-
-        i = lookup_class_field(class0, &field, 0);
-        if (i < 0)
-            runerr(207, field);
-        cf = class0->fields[i];
-
-        if (cf->defining_class != class0)
-            runerr(616);
-
-        if (!(cf->flags & M_Native))
-            runerr(617, field);
-
-        new_proc = &ProcBlk(pr);
-        if (new_proc->field)
-            runerr(618, pr);
-
-        /* For a non-static method, must have at least one param for self. */
-        if (!(cf->flags & M_Static) && new_proc->nparam == 0)
-            runerr(626, pr);
-
-        if (BlkLoc(*cf->field_descriptor) != (union block *)&Bdeferred_method_stub)
-            runerr(623, field);
-
-        new_proc = clone_b_proc(new_proc);
-        BlkLoc(*cf->field_descriptor) = (union block *)new_proc;
-        new_proc->field = cf;
-
-        return pr;
-   }
-end
-
 #if HAVE_LIBDL
 
 static struct b_proc *try_load(void *handle, struct b_class *class0,  struct class_field *cf)
