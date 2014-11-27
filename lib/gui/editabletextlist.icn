@@ -1607,11 +1607,6 @@ class EditableTextListReturnEdit(EditableTextListEdit)
       delete(parent.contents, self.cursor_y + 1)
       parent.update_view_list(self.cursor_y, 2, 1)
    end
-
-   public new(parent)
-      EditableTextListEdit.new(parent)
-      return
-   end
 end
 
 class EditableTextListDeleteRightEdit(EditableTextListEdit)
@@ -1646,11 +1641,6 @@ class EditableTextListDeleteRightEdit(EditableTextListEdit)
             parent.contents[self.cursor_y][self.cursor_x] := ch || parent.contents[self.cursor_y][self.cursor_x]
          parent.update_view_list(self.cursor_y, 1, 1)
       }
-   end
-
-   public new(parent)
-      EditableTextListEdit.new(parent)
-      return
    end
 end
 
@@ -1691,11 +1681,6 @@ class EditableTextListDeleteLeftEdit(EditableTextListEdit)
          parent.update_view_list(self.cursor_y, 1, 1)
       }
    end
-
-   public new(parent)
-      EditableTextListEdit.new(parent)
-      return
-   end
 end
 
 class EditableTextListDeleteLineEdit(EditableTextListEdit)
@@ -1723,11 +1708,6 @@ class EditableTextListDeleteLineEdit(EditableTextListEdit)
          insert(parent.contents, self.cursor_y, s)
          parent.update_view_list(self.cursor_y, 0, 1)
       }
-   end
-
-   public new(parent)
-      EditableTextListEdit.new(parent)
-      return
    end
 end
 
@@ -1775,11 +1755,6 @@ class EditableTextListDeleteRegionEdit(EditableTextListEdit)
       delete(parent.contents, pos)
       while insert(parent.contents, pos, pull(l))
       parent.update_view_list(pos, 1, n)
-   end
-
-   public new(parent)
-      EditableTextListEdit.new(parent)
-      return
    end
 end
 
