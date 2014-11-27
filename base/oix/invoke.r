@@ -766,6 +766,7 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
             AccessErr(0);
     } else {
         dptr self;
+        struct b_class *self_class;
         struct p_frame *pf;
 
         /* Cannot access an instance field via the class */
@@ -777,21 +778,24 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
         if (!pf->proc->field || (pf->proc->field->flags & M_Static))
             AccessErr(606);
 
-        /* 
-         * Check the target class is one the current method's implementing classes.
-         */
-        if (!class_is(pf->proc->field->defining_class, class0))
-            AccessErr(607);
 
         self = &pf->fvars->desc[0];
         if (!is:object(*self))
             syserr("self is not an object");
+        self_class = ObjectBlk(*self).class;
+
+        /* 
+         * Check the access makes sense, ie it is to a class the object (self)
+         * implements 
+         */
+        if (!class_is(self_class, class0))
+            AccessErr(607);
 
         /* Can't access new except whilst initializing */
         if ((cf->flags & M_Special) && ObjectBlk(*self).init_state != Initializing) 
             AccessErr(622);
 
-        ac = check_access(cf, ObjectBlk(*self).class);
+        ac = check_access(cf, self_class);
         if (ac == Error) 
             AccessErr(0);
 
@@ -991,6 +995,7 @@ static void class_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inli
         struct frame *f;
         dptr self;
         struct p_frame *pf;
+        struct b_class *self_class;
 
         /* Cannot access an instance field via the class */ 
        if (!(cf->flags & M_Method)) 
@@ -1001,21 +1006,23 @@ static void class_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inli
         if (!pf->proc->field || (pf->proc->field->flags & M_Static))
             InvokefErr(606);
 
-        /* 
-         * Check the target class is one the current method's implementing classes.
-         */
-        if (!class_is(pf->proc->field->defining_class, class0))
-            InvokefErr(607);
-
         self = &pf->fvars->desc[0];
         if (!is:object(*self))
             syserr("self is not an object");
+        self_class = ObjectBlk(*self).class;
+
+        /* 
+         * Check the invocation makes sense, ie the method is in a
+         * class the object (self) implements
+         */
+        if (!class_is(self_class, class0))
+            InvokefErr(607);
 
         /* Can't access new except whilst initializing */
         if ((cf->flags & M_Special) && ObjectBlk(*self).init_state != Initializing) 
             InvokefErr(622);
 
-        ac = check_access(cf, ObjectBlk(*self).class);
+        ac = check_access(cf, self_class);
         if (ac == Error) 
             InvokefErr(0);
 
