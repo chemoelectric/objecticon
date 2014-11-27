@@ -55,56 +55,6 @@ make install
 again.
 
 == Native methods resolved at runtime ==
-This involves setting an arbitrary procedure value to be the implementation of the method, as the following example shows :-
+This involves writing a dynamic library (a ".so" file) of RTL/C code.  The contents are loaded and the functions in the library are matched to the corresponding native methods by the `Class.load_library` method.  This is explained in more detail [DynamicLoadC here].
 
-{{{
-import lang(Class), io(write)
-
-procedure myproc(self, x)
-   write("in myproc self=", image(self), " x=", image(x))
-end
-
-class X()
-   public native f()
-
-   private static init()
-      Class.set_method("f", myproc)
-   end
-end
-
-procedure main()
-   local i
-   i := X()
-   i.f(33)
-end
-}}}
-
-This prints `"in myproc self=object X_1(0) x=33"`.
-
-This example uses the static method `Class.set_method` in the `lang` package to set the native method `f` to point to the procedure `mproc`.  The result is that when `f` is invoked, `mproc` is called, with the instance `i` as the first parameter, and the value `33` as the second.  Note that unlike a normal method, the `self` parameter has to be placed in the parameter list.
-
-There are some restrictions which `set_method()` imposes :-
-
- * The method must be defined in the class from which `set_method()` is called.
- * The method must be a native method.
- * The method must be unresolved, i.e. currently point to the deferred method stub function; this means you can't set the method more than once.
- * The procedure supplied may not be a method, so for example you cannot use a static method in one class to implement a method in another.
-
-Setting a normal procedure to be a native method's definition isn't particularly useful, because you could always implement the method and just call the procedure.  However, `set_method` does still have one important use, and that is to set method implementations to procedures loaded via the `Proc.load` function, which loads code from a dynamic native library (a .so file).  This enables you to implement methods in C and RTL without editing or re-compiling the runtime system itself.  In this case, the init method might look like this :-
-
-{{{
-   import lang(Proc)
-
-   ...
-
-   private static init()
-      Class.set_method("f", Proc.load("mylib.so", "my_method"))
-   end
-}}}
-
-For a page explaining how to create a dynamic library of RTL/C code, see [DynamicLoadC here].
-
-== Resolving several methods at once ==
-The above technique of using `Class.set_method` to resolve a method loaded from a dynamic library can be pretty tedious if you have several methods to resolve.  For this reason, another method is provided, `Class.load_library`, which resolves many methods at once.  It does this by going through the native methods in the class from which it was called and trying to match them to methods in the given library.  It uses the same method naming convention used for native methods in the runtime, described above.  Any methods which don't have a match are simply skipped.
-
-For working examples, see the source files `lib/main/mysql.icn` and its corresponding RTL source files in `lib/native`.
+For working examples, see the source files `lib/main/mysql.icn` and `lib/main/cairo.icn` and their corresponding RTL source files in `lib/native`.
