@@ -57,11 +57,6 @@ function posix_System_fork()
          errno2why();
          fail;
          }
-#if XWindows
-      /* A child process can't interact with the graphics system */
-      if (pid == 0)
-        wdsplys = 0;
-#endif
       convert_from_pid_t(pid, &result);      
       return result;
 #else

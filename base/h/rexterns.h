@@ -103,10 +103,6 @@ extern dptr xarg1, xarg2, xarg3;   /* Operator args */
 extern char c1list[], c2list[], c3list[], c4list[];
 #if Graphics
    
-#if XWindows
-      extern struct _wdisplay * wdsplys;
-#endif				/* XWindows */
-
 #if MSWIN32
       extern HINSTANCE mswinInstance;
       extern int ncmdShow;
