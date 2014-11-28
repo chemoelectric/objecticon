@@ -12,12 +12,6 @@ class NewDirectoryDialog(Dialog)
       self.setup()
    end
 
-   public end_dialog()
-   end
-
-   public init_dialog()
-   end
-
    public on_cancel_button(ev)
       dispose()
    end
@@ -28,15 +22,10 @@ class NewDirectoryDialog(Dialog)
       dispose()
    end
 
-   public new()
-      Dialog.new()
-      return
-   end
-
    private setup()
-      local paint_2, panel_2, layout_4, line_1, layout_1, paint_1, panel_1, label_1, paint, layout_2
-      set_label("New directory")
-      set_resize(&yes)
+      local paint_2, panel_2, layout_4, line_1, layout_1, label_1, paint_1, panel_1, paint, layout_2
+      self.set_label("New directory")
+      self.set_resize(&yes)
       paint := TextPaint("Name")
       label_1 := Label().
          set_align(Align.L, Align.C).
@@ -50,7 +39,7 @@ class NewDirectoryDialog(Dialog)
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
-         connect(on_okay_button, Event.ACTION).
+         connect(self.on_okay_button, Event.ACTION).
          set_contents(u"")
       layout_1 := GridLayout().
          set_doi(0).
@@ -65,25 +54,25 @@ class NewDirectoryDialog(Dialog)
          set_layout(layout_1).
          add(label_1).
          add(file_field)
-      add(panel_1)
+      self.add(panel_1)
       line_1 := Line().
          set_size("100").
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes)
-      add(line_1)
+      self.add(line_1)
       paint_1 := TextPaint("Okay")
       okay_button := TextButton().
          set_align(Align.L, Align.B).
          clear_constraints().
-         connect(on_okay_button, Event.ACTION).
+         connect(self.on_okay_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_1)
       paint_2 := TextPaint("Cancel")
       cancel_button := TextButton().
          set_align(Align.L, Align.B).
          clear_constraints().
-         connect(on_cancel_button, Event.ACTION).
+         connect(self.on_cancel_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_2)
       layout_2 := GridLayout().
@@ -95,11 +84,11 @@ class NewDirectoryDialog(Dialog)
          set_layout(layout_2).
          add(okay_button).
          add(cancel_button)
-      add(panel_2)
+      self.add(panel_2)
       layout_4 := GridLayout().
          set_extra("cells")
-      set_layout(layout_4)
-      set_focus(file_field.find_focus())
+      self.set_layout(layout_4)
+      self.set_focus(file_field.find_focus())
    end
 end
 
