@@ -1140,6 +1140,8 @@ function lang_Class_load_library(lib)
         if (!caller_proc->field)
             runerr(616);
         class0 = caller_proc->field->defining_class;
+        if (class0->init_state != Initializing)
+            runerr(617);
 
         handle = get_handle(lib);
         if (!handle) {

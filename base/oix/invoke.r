@@ -778,7 +778,6 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
         if (!pf->proc->field || (pf->proc->field->flags & M_Static))
             AccessErr(606);
 
-
         self = &pf->fvars->desc[0];
         if (!is:object(*self))
             syserr("self is not an object");
