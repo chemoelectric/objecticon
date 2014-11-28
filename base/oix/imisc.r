@@ -60,17 +60,22 @@ int check_access(struct class_field *cf, struct b_class *instance_class)
         }
 
         case M_Protected: {
+            /* The definition must be in caller's implemented classes */
+            if (caller_field && class_is(caller_field->defining_class, 
+                                         cf->defining_class))
+                return Succeeded;
             if (instance_class) {
-                /* Instance access, caller must be in instance's implemented classes */
+                /* Alternatively for an instance access, the caller
+                 * may be in instance's implemented classes.  This allows
+                 * a superclass to call an overridden protected method in
+                 * a subclass (or even a sibling mixin class).
+                 */
                 if (caller_field && class_is(instance_class, 
                                              caller_field->defining_class))
                     return Succeeded;
                 ReturnErrNum(609, Error);
             } else {
-                /* Static access, definition must be in caller's implemented classes */
-                if (caller_field && class_is(caller_field->defining_class, 
-                                             cf->defining_class))
-                    return Succeeded;
+                /* Static access */
                 ReturnErrNum(610, Error);
             }
         }
