@@ -980,6 +980,13 @@ class URLList(SelectableScrollArea)
 end
 
 class URLEditList(IndependentEditList)
+   public create_view()
+      # Using a standard textfield inhibits cursor up/down from going
+      # back/forward in the history, which interacts poorly with the
+      # focus.
+      return TextField()
+   end
+
    public create_popup()
       return URLList()
    end
