@@ -108,7 +108,7 @@ struct errtab errtab[] = {
     {606, "can only access instance method via a class from an instance method"},
     {607, "can only access instance method via a class which is an implemented class of self"},
     {608, "a private field can only be accessed from within the same class"},
-    {609, "a protected instance field can only be accessed from a subclass, or from an implemented class of the instance"},
+    {609, "a protected instance field can only be accessed from an implemented class of the instance"},
     {610, "a protected static field can only be accessed from a subclass"},
     {611, "a package field can only be accessed from the same package"},
     {612, "unresolved deferred method"},
