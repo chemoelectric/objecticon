@@ -697,7 +697,7 @@ procedure range(e, min, max)
    suspend range_impl(e, 0, min, max)
 end
 
-procedure range_impl(e, i, min, max)
+package procedure range_impl(e, i, min, max)
    if /max | (i <= max) then
       suspend (|@e || range_impl(^e, i + 1, min, max)) | (if i >= min then move(0))
 end
@@ -925,10 +925,11 @@ procedure revany0(c, s, i, j)
    return revany(c, a.s, a.i, a.j) | .a.j
 end
 
-# This is a helper function to extract part of &subject relative to
-# &pos.  First &pos is added to `off`, then the substring of length
-# `len` is taken from that position.  Either parameter may be -ve; no
-# change is made to &subject or &pos.
+#
+# This is a function to extract part of &subject relative to &pos.
+# First &pos is added to `off`, then the substring of length `len` is
+# taken from that position.  Either parameter may be -ve; no change is
+# made to &subject or &pos.
 #
 procedure posoff(off, len)
    /len := 1
