@@ -204,7 +204,7 @@ end
 #
 # A node in a `LinkedList`.
 #
-class LinkedListNode()
+package class LinkedListNode()
    public
       nxt, val
    public new(nxt, val)
@@ -326,10 +326,14 @@ class LinkedList(List)
    end
 
    public back()
-      local l
+      local l, n
       l := []
-      every default.put(l, gen())
-      suspend default.back(l)
+      n := nhead
+      while \n do {
+         default.put(l, n)
+         n := n.nxt
+      }
+      suspend default.back(l).val
    end
 
    public size()
@@ -381,7 +385,7 @@ class LinkedList(List)
    #
    # Create an instance given a `LinkedListNode` as the list's head node.
    #
-   public static from_node(n)
+   private static from_node(n)
       local i
       i := Class.create_instance()
       i.nhead := n
