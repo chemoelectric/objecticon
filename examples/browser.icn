@@ -984,7 +984,8 @@ class URLEditList(IndependentEditList)
       # Using a standard textfield inhibits cursor up/down from going
       # back/forward in the history, which interacts poorly with the
       # focus.
-      return TextField()
+      return TextField().
+         set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
    end
 
    public create_popup()
