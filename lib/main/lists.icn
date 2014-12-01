@@ -144,13 +144,11 @@ class BuiltinList(List)
    private l
 
    public insert(i, x)
-      default.insert(l, i, x) | fail
-      return self
+      return default.insert(l, i, x) & self
    end
 
    public delete(i)
-      default.delete(l, i) | fail
-      return self
+      return default.delete(l, i) & self
    end
 
    public at(i)
