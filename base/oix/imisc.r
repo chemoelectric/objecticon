@@ -196,11 +196,10 @@ int lookup_class_field(struct b_class *class, dptr query, struct inline_field_ca
              * Simple index into fields array, using conventional icon
              * semantics.
              */
-            int i = cvpos(IntVal(*query), nf);
-            if (i != CvtFail && i <= nf)
-                return i - 1;
-            else
+            int i = cvpos_item(IntVal(*query), nf);
+            if (i == CvtFail)
                 return -1;
+            return i - 1;
         }
 
         syserr("Invalid query type to lookup_class_field");
@@ -281,11 +280,10 @@ int lookup_record_field(struct b_constructor *recdef, dptr query, struct inline_
              * Simple index into fields array, using conventional icon
              * semantics.
              */
-            int i = cvpos(IntVal(*query), nf);
-            if (i != CvtFail && i <= nf)
-                return i - 1;
-            else
+            int i = cvpos_item(IntVal(*query), nf);
+            if (i == CvtFail)
                 return -1;
+            return i - 1;
         }
 
         syserr("Invalid query type to lookup_record_field");

@@ -3113,11 +3113,10 @@ static int lookup_proc_local(struct p_proc *proc, dptr query)
     }
 
     if (query->dword == D_Integer) {
-        word i = cvpos(IntVal(*query), nf);
-        if (i != CvtFail && i <= nf)
-            return i - 1;
-        else
+        word i = cvpos_item(IntVal(*query), nf);
+        if (i == CvtFail)
             return -1;
+        return i - 1;
     }
 
     syserr("Invalid query type to lookup_proc_local");

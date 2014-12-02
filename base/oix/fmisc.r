@@ -834,8 +834,8 @@ static dptr nth(dptr d)
          * Find the nth field of a record.
          */
         bp = BlkLoc(*d);
-        i = cvpos(sort_field, bp->record.constructor->n_fields);
-        if (i != CvtFail && i <= bp->record.constructor->n_fields)
+        i = cvpos_item(sort_field, bp->record.constructor->n_fields);
+        if (i != CvtFail)
             rv = &bp->record.fields[i-1];
     }
     else if (d->dword == D_List) {
@@ -844,8 +844,8 @@ static dptr nth(dptr d)
          * Find the nth element of a list.
          */
         lp = &ListBlk(*d);
-        i = cvpos (sort_field, lp->size);
-        if (i != CvtFail && i <= lp->size) {
+        i = cvpos_item(sort_field, lp->size);
+        if (i != CvtFail) {
             struct b_lelem *le;
             word pos;
             le = get_lelem_for_index(lp, i, &pos);

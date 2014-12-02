@@ -930,11 +930,11 @@ static int ston(dptr sp, union numeric *result)
 
 /*
  * cvpos - convert position to strictly positive position
- *  given length.
+ *  given length.  The returned value is >= 1 and <= len+1
  */
 
 word cvpos(word pos, word len)
-   {
+{
    /*
     * Make sure the position is within range.
     */
@@ -947,4 +947,24 @@ word cvpos(word pos, word len)
    if (pos > 0)
       return pos;
    return (len + pos + 1);
-   }
+}
+
+/*
+ * As above, but disallow the rightmost position (ie, position zero).  The
+ * returned value is >= 1 and <= len
+ */
+word cvpos_item(word pos, word len)
+{
+   /*
+    * Make sure the position is within range.
+    */
+   if (pos < -len || pos > len || pos == 0)
+      return CvtFail;
+   /*
+    * If the position is greater than zero, just return it.  Otherwise,
+    *  convert the negative position.
+    */
+   if (pos > 0)
+      return pos;
+   return (len + pos + 1);
+}

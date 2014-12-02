@@ -576,8 +576,8 @@ static void invoke_misc(word clo, dptr lhs, dptr expr, int argc, dptr args, word
 
         /* Integer expression; return nth argument */
 
-        int i = cvpos(iexpr, argc);
-        if (i == CvtFail || i > argc) {
+        int i = cvpos_item(iexpr, argc);
+        if (i == CvtFail) {
             ipc = failure_label;
             return;
         }

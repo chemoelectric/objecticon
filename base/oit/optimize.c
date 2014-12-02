@@ -30,6 +30,7 @@ struct literal {
 #define Greater         1
 
 static word cvpos(word pos, word len);
+static word cvpos_item(word pos, word len);
 static int changes(struct lnode *n);
 static int lexcmp(struct literal *x, struct literal *y);
 static int equiv(struct literal *x, struct literal *y);
@@ -2975,8 +2976,8 @@ static void fold_subsc(struct lnode *n)
         case UCS: {
             int len = ucs_length(l1.u.str.s, l1.u.str.len);
             char *p = l1.u.str.s, *t;
-            i = cvpos(l2.u.i, len);
-            if (i == CvtFail || i > len) {
+            i = cvpos_item(l2.u.i, len);
+            if (i == CvtFail) {
                 replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
             }
@@ -2994,8 +2995,8 @@ static void fold_subsc(struct lnode *n)
         }
         case CSET: {
             int k, ch, count, len = cset_size(l1.u.rs);
-            i = cvpos(l2.u.i, len);
-            if (i == CvtFail || i > len) {
+            i = cvpos_item(l2.u.i, len);
+            if (i == CvtFail) {
                 replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
             }
@@ -3023,8 +3024,8 @@ static void fold_subsc(struct lnode *n)
             char t;
             if (!cnv_string(&l1))
                 break;
-            i = cvpos(l2.u.i, l1.u.str.len);
-            if (i == CvtFail || i > l1.u.str.len) {
+            i = cvpos_item(l2.u.i, l1.u.str.len);
+            if (i == CvtFail) {
                 replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
             }
@@ -3300,6 +3301,22 @@ static word cvpos(word pos, word len)
     if (pos > 0)
         return pos;
     return (len + pos + 1);
+}
+
+static word cvpos_item(word pos, word len)
+{
+   /*
+    * Make sure the position is within range.
+    */
+   if (pos < -len || pos > len || pos == 0)
+      return CvtFail;
+   /*
+    * If the position is greater than zero, just return it.  Otherwise,
+    *  convert the negative position.
+    */
+   if (pos > 0)
+      return pos;
+   return (len + pos + 1);
 }
 
 static int cset_range_of_pos(struct rangeset *rs, word pos, int *count)

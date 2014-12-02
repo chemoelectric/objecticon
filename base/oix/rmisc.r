@@ -2149,14 +2149,13 @@ int lookup_global(dptr query, struct progstate *prog)
     if (query->dword == D_Integer) {
         int nf = prog->NGlobals;
         /*
-         * Simple index into fields array, using conventional icon
+         * Simple index into globals array, using conventional icon
          * semantics.
          */
-        int i = cvpos(IntVal(*query), nf);
-        if (i != CvtFail && i <= nf)
-            return i - 1;
-        else
+        int i = cvpos_item(IntVal(*query), nf);
+        if (i == CvtFail)
             return -1;
+        return i - 1;
     }
 
     syserr("Invalid query type to lookup_global");
