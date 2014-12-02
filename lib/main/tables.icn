@@ -4,7 +4,7 @@
 
 package datastruct
 
-import ipl.pdco(Seq), lang
+import ipl.pdco(Seq), lang, util
 
 #
 # This is a common superclass for several table-like data structures.
@@ -284,179 +284,337 @@ class ClTable(Table)
 end
 
 package class SortTableNode()
-   public const key
-   public val
-   private l, r
-
-   public insert(k, v, tbl)
-      local i
-      i := tbl.cmp(k, key)
-      if i = 0 then {
-         self.val := v
-         return self
-      } else if i < 0 then {
-         if /l := SortTableNode(k, v) then {
-            tbl.sz +:= 1
-            return l
-         } else
-            return l.insert(k, v, tbl)
-      } else {
-         if /r := SortTableNode(k, v) then {
-            tbl.sz +:= 1
-            return r
-         } else 
-            return r.insert(k, v, tbl)
-      }
-   end
-
-   public add(k, tbl)
-      local i
-      i := tbl.cmp(k, key)
-      if i = 0 then
-         return self
-      else if i < 0 then {
-         if /l := SortTableNode(k, tbl.def) then {
-            tbl.sz +:= 1
-            return l
-         } else
-            return l.add(k, tbl)
-      } else {
-         if /r := SortTableNode(k, tbl.def) then {
-            tbl.sz +:= 1
-            return r
-         } else 
-            return r.add(k, tbl)
-      }
-   end
-
-   public member(k, tbl)
-      local i
-      i := tbl.cmp(k, key)
-      return if i = 0 then
-         self
-      else if i < 0 then
-         (\l).member(k, tbl)
-      else
-         (\r).member(k, tbl)
-   end
-
-   public delete(k, tbl)
-      local i
-      i := tbl.cmp(k, key)
-      if i = 0 then {
-         tbl.sz -:= 1
-         if /l then
-            return r
-         if /r then
-            return l
-         # Make l the left child of the smallest node in r.
-         Seq{r.traverse()}.l := l
-         return r
-      } else if i < 0 then {
-         \l := l.delete(k, tbl)
-         return self
-      } else {
-         \r := r.delete(k, tbl)
-         return self
-      }
-   end
-
-   public traverse()
-      (\l).traverse()
-      coact(self)
-      (\r).traverse()
-   end
-
-   public back_traverse()
-      (\r).back_traverse()
-      coact(self)
-      (\l).back_traverse()
-   end
+   public key, val,
+      l, r, is_red_flag, N
 
    public new(k, v)
       self.key := k
       self.val := v
+      self.is_red_flag := &yes
+      self.N := 1
       return
    end
 end
 
 #
-# A {Table} which uses a binary tree so that its members are always
+# A {Table} which uses a red-black binary tree so that its members are always
 # in sorted order.
 #
 class SortTable(Table)
    private root
    public const cmp
-   package readable sz
 
    public insert(key, val)
-      if /root := SortTableNode(key, val) then
-         sz := 1
-      else
-         root.insert(key, val, self)
+      root := insert1(root, key, val)
+      root.is_red_flag := &no
       return self
    end
 
-   public add(key)
-      if /root := SortTableNode(key, def) then {
-         sz := 1
-         return root.val
-      } else
-         return root.add(key, self).val
+   private insert1(n, key, val)
+      local i
+      if /n then
+         return SortTableNode(key, val)
+      i := cmp(key, n.key)
+      if i < 0 then
+         n.l := insert1(n.l, key, val)
+      else if i > 0 then
+         n.r := insert1(n.r, key, val)
+      else {
+         n.val := val
+         return n
+      }
+      
+      if is_red(n.r) & not is_red(n.l) then
+         n := rotate_left(n)
+      if is_red(n.l) & is_red(n.l.l) then
+         n := rotate_right(n)
+      if is_red(n.l) & is_red(n.r) then
+         flip_colors(n)
+      
+      n.N := size1(n.l) + size1(n.r) + 1
+
+      return n
    end
 
    public member(key)
-      return (\root).member(key, self).val
+      local n, i
+      n := root
+      while \n do {
+         i := cmp(key, n.key)
+         if i = 0 then
+            return n.val
+         n := if i < 0 then
+            n.l
+         else
+            n.r
+      }
    end
 
    public delete(key)
-      local t
-      t := sz
-      \root := root.delete(key, self)
-      if sz < t then
-         return self
+      member(key) | fail
+      if not(is_red(root.l | root.r)) then
+         root.is_red_flag := &yes
+      root := delete1(root, key)
+      (\root).is_red_flag := &no
+      return self
+   end
+
+   private delete1(n, key)
+      local x
+      if cmp(key, n.key) < 0 then {
+         if not(is_red(n.l | n.l.l)) then
+            n := move_red_left(n)
+         n.l := delete1(n.l, key)
+      } else {
+         if is_red(n.l) then
+            n := rotate_right(n)
+         if cmp(key, n.key) = 0 & /n.r then
+            return
+         if not(is_red(n.r | n.r.l)) then
+            n := move_red_right(n)
+         if cmp(key, n.key) = 0 then {
+            x := min1(n.r)
+            n.key := x.key
+            n.val := x.val
+            n.r := delete_min1(n.r)
+         } else
+            n.r := delete1(n.r, key)
+      }
+      return balance(n)
+   end
+
+   private min1(n)
+      while \n.l do
+         n := n.l
+      return n
+   end
+
+   private delete_min1(n)
+      if /n.l then
+         return
+      if not(is_red(n.l | n.l.l)) then
+         n := move_red_left(n)
+      n.l := delete_min1(n.l)
+      return balance(n)
+   end
+
+   private balance(n)
+      if is_red(n.r) then
+         n := rotate_left(n)
+      if is_red(n.l) & is_red(n.l.l) then
+         n := rotate_right(n)
+      if is_red(n.l) & is_red(n.r) then
+         flip_colors(n)
+      n.N := size1(n.l) + size1(n.r) + 1
+      return n
+   end
+
+   private rotate_right(n)
+      local x
+      x := n.l
+      n.l := x.r
+      x.r := n
+      x.is_red_flag := x.r.is_red_flag
+      x.r.is_red_flag := &yes
+      x.N := n.N
+      n.N := size1(n.l) + size1(n.r) + 1
+      return x
+   end
+
+   private rotate_left(n)
+      local x
+      x := n.r
+      n.r := x.l
+      x.l := n
+      x.is_red_flag := x.l.is_red_flag
+      x.l.is_red_flag := &yes
+      x.N := n.N
+      n.N := size1(n.l) + size1(n.r) + 1
+      return x
+   end
+   
+   private move_red_left(n)
+      flip_colors(n)
+      if is_red(n.r.l) then {
+         n.r := rotate_right(n.r)
+         n := rotate_left(n)
+      }
+      return n
+   end
+
+   private move_red_right(n)
+      flip_colors(n)
+      if is_red(n.l.l) then
+         n := rotate_right(n)
+      return n
+   end
+
+   private flip_colors(n)
+      n.is_red_flag := toggle_flag(n.is_red_flag)
+      n.l.is_red_flag := toggle_flag(n.l.is_red_flag)
+      n.r.is_red_flag := toggle_flag(n.r.is_red_flag)
+      return self
+   end
+
+   private traverse(n)
+      \n | fail
+      traverse(n.l)
+      coact(n)
+      traverse(n.r)
+   end
+
+   private back_traverse(n)
+      \n | fail
+      back_traverse(n.r)
+      coact(n)
+      back_traverse(n.l)
+   end
+
+   private is_red(n)
+      return \ (\n).is_red_flag
+   end
+
+   private size1(n)
+      return if /n then 0 else n.N
    end
 
    public sort()
       local e, l
       l := []
-      every e := Seq{(\root).traverse()} do
+      every e := Seq{traverse(root)} do
          put(l, [e.key, e.val])
       return l
    end
 
    public key()
-      suspend Seq{(\root).traverse()}.key
+      suspend .Seq{traverse(root)}.key
    end
 
    public keyval()
       local e
-      every e := Seq{(\root).traverse()} do
-         suspend e.key | e.val
+      every e := Seq{traverse(root)} do
+         suspend .e.key | e.val
    end
 
    public back_key()
-      suspend Seq{(\root).back_traverse()}.key
+      suspend .Seq{back_traverse(root)}.key
    end
 
    public back_keyval()
       local e
-      every e := Seq{(\root).back_traverse()} do
-         suspend e.key | e.val
+      every e := Seq{back_traverse(root)} do
+         suspend .e.key | e.val
    end
 
    public gen()
-      suspend Seq{(\root).traverse()}.val
+      suspend Seq{traverse(root)}.val
    end
 
    public clear()
       root := &null
-      sz := 0
       return self
    end
 
    public size()
-      return .sz
+      return size1(root)
+   end
+
+   #
+   # Return the `i`th key, in order, in the table.  Fails if `i` is
+   # out of range, using standard icon indexing semantics.
+   #
+   public select(i)
+      i := cvpos(i, size()) | fail
+      return .select1(root, i - 1).key
+   end
+
+   #
+   # Return the rank of the given key `k`, ie its order number in the
+   # table; fails if there is no matching key in the table.
+   #
+   public rank(k)
+      return rank1(root, k) + 1
+   end
+
+   private select1(n, i)
+      local t
+      t := size1(n.l)
+      return if t > i then
+         select1(n.l, i)
+      else if t < i then
+         select1(n.r, i - t - 1)
+      else
+         n
+   end
+   
+   private rank1(n, k)
+      local t
+      \n | fail
+      t := cmp(k, n.key)
+      return if t < 0 then
+         rank1(n.l, k)
+      else if t > 0 then 
+         1 + size1(n.l) + rank1(n.r, k)
+      else 
+         size1(n.l)
+   end
+
+   #
+   # Check the table for internal consistency.
+   #
+   public check()
+      is_bst(root) | return error("Not in symmetric order")
+      is_size_consistent(root)  | return error("Subtree counts not consistent")
+      is_rank_consistent(root)  | return error("Ranks not consistent")
+      is_23(root) | return error("Not a 2-3 tree")
+      is_balanced() | return error("Not balanced")
+      return self
+   end
+
+   private is_balanced()
+      local b, n
+      b := 0
+      n := root
+      while \n do {
+         is_red(n) | (b +:= 1)
+         n := n.l
+      }
+      return is_balanced1(root, b)
+   end
+
+   private is_balanced1(n, b)
+      if /n then return b = 0
+      is_red(n) | (b -:= 1)
+      return is_balanced1(n.l, b) & is_balanced1(n.r, b)
+   end
+
+   private is_23(n)
+      if /n then return
+      if is_red(n.r) then fail
+      if n ~=== root & is_red(n) & is_red(n.l) then fail
+      return is_23(n.l) & is_23(n.r)
+   end
+
+   private is_bst(n, min, max)
+      if /n then return
+      if cmp(n.key, \min) <= 0 then fail
+      if cmp(n.key, \max) >= 0 then fail
+      return is_bst(n.l, min, n.key) & is_bst(n.r, n.key, max)
+   end
+
+   private is_size_consistent(n)
+      if /n then return
+      (n.N = size1(n.l) + size1(n.r) + 1) | fail
+      return is_size_consistent(n.l) & is_size_consistent(n.r)
+   end
+
+   private is_rank_consistent()
+      local i, k
+      every i := 1 to size() do
+         (i = rank(select(i))) | fail
+      every k := key() do
+         (cmp(k, select(rank(k))) = 0) | fail
+      return
    end
 
    #
@@ -472,7 +630,6 @@ class SortTable(Table)
       self.def := def
       /cmp := Internal.compare
       self.cmp := cmp
-      self.sz := 0
       init_entries(entries)
       return
    end
