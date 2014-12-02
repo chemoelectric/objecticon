@@ -82,6 +82,20 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
    public defer back_keyval()
 
    #
+   # Return the rank of the given key, ie its order number in the
+   # table; fails if there is no matching key in the table.  Only
+   # implemented for tables which store their keys in sorted order.
+   #
+   public defer rank(key)
+
+   #
+   # Return the `i`th key, in order, in the table.  Fails if `i` is
+   # out of range, using standard icon indexing semantics.  Only
+   # implemented for tables which store their keys in sorted order.
+   #
+   public defer select(i)
+
+   #
    # Generate the values (cf !t for a table).
    #
    public abstract gen()
@@ -519,19 +533,11 @@ class SortTable(Table)
       return size1(root)
    end
 
-   #
-   # Return the `i`th key, in order, in the table.  Fails if `i` is
-   # out of range, using standard icon indexing semantics.
-   #
    public select(i)
-      i := cvpos(i, size()) | fail
+      i := cvpos_item(i, size()) | fail
       return .select1(root, i - 1).key
    end
 
-   #
-   # Return the rank of the given key `k`, ie its order number in the
-   # table; fails if there is no matching key in the table.
-   #
    public rank(k)
       return rank1(root, k) + 1
    end

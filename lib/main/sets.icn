@@ -42,6 +42,20 @@ abstract class Set(ObjectOutput, ObjectHash, ObjectEquals)
    public defer back()
 
    #
+   # Return the rank of the given entry, ie its order number in the
+   # set; fails if there is no matching entry in the set.  Only
+   # implemented for sets which store their keys in sorted order.
+   #
+   public defer rank(x)
+
+   #
+   # Return the `i`th entry, in order, in the set.  Fails if `i` is
+   # out of range, using standard icon indexing semantics.  Only
+   # implemented for sets which store their keys in sorted order.
+   #
+   public defer select(i)
+
+   #
    # Return the size of the set.
    #
    public abstract size()
@@ -146,6 +160,14 @@ class TableSet(Set)
 
    public back()
       suspend t.back_key()
+   end
+
+   public rank(x)
+      return t.rank(x)
+   end
+
+   public select(i)
+      return t.select(i)
    end
 
    public size()

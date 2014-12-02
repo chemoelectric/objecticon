@@ -254,7 +254,7 @@ class LinkedList(List)
    public delete(i)
       local n
       if i <= 0 then
-         i := cvpos(i, size()) | fail
+         i := cvpos_item(i, size()) | fail
       if i = 1 then
          nhead := (\nhead).nxt | fail
       else {
@@ -271,7 +271,7 @@ class LinkedList(List)
    public at(i)
       local n
       if i <= 0 then
-         i := cvpos(i, size()) | fail
+         i := cvpos_item(i, size()) | fail
       n := nhead
       while \n & i > 1 do {
          n := n.nxt
