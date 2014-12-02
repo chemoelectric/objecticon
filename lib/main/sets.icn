@@ -130,8 +130,7 @@ class TableSet(Set)
    end
 
    public delete(x)
-      t.delete(x)
-      return self
+      return t.delete(x) & self
    end
 
    public sort()
@@ -191,8 +190,7 @@ class BuiltinSet(Set)
    end
 
    public delete(x)
-      default.delete(s, x)
-      return self
+      return default.delete(s, x) & self
    end
 
    public sort()

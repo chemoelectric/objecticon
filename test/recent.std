@@ -421,7 +421,7 @@ delete(t, "xyz") -- > table#*(2)
 	3 : 4
 	&digits : &null
 
-delete(t, "xyz") -- > table#*(2)
+delete(t, "xyz") -- > failure
    *t --> 2
    t["xyz"] --> "default"
    member(t, "xyz") --> failure

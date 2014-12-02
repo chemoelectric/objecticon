@@ -3,22 +3,21 @@
  */
 
 
-"delete(s,x) - delete element x from set or table or list s if it is there"
-" (always succeeds and returns s)."
-
 function delete(s,x)
    body {
 
    type_case s of {
      set: {
-            set_del(&s, &x);
+            if (!set_del(&s, &x))
+               fail;
             EVValD(&s, E_Sdelete);
             EVValD(&x, E_Sval);
             return s;
          }
 
      table: {
-            table_del(&s, &x);
+            if (!table_del(&s, &x))
+               fail;
             EVValD(&s, E_Tdelete);
             EVValD(&x, E_Tsub);
             return s;

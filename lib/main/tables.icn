@@ -24,7 +24,8 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
    public abstract member(key)
 
    #
-   # Delete the entry with the given key.  Always succeeds and returns {self}.
+   # Delete the entry with the given key.  Fails if the key was not
+   # present, otherwise succeeds and returns {self}.
    #
    public abstract delete(key)
 
@@ -235,8 +236,7 @@ class ClTable(Table)
    end
 
    public delete(key)
-      default.delete(t, map(key))
-      return self
+      return default.delete(t, map(key)) & self
    end
 
    public sort()
@@ -410,8 +410,11 @@ class SortTable(Table)
    end
 
    public delete(key)
+      local t
+      t := sz
       \root := root.delete(key, self)
-      return self
+      if sz < t then
+         return self
    end
 
    public sort()
@@ -453,7 +456,7 @@ class SortTable(Table)
    end
 
    public size()
-      return sz
+      return .sz
    end
 
    #
@@ -537,11 +540,10 @@ class EqTable(Table)
             if *l = 0 then
                default.delete(t, h)
             sz -:= 1
-            break
+            return self
          }
          i +:= 1
       }
-      return self
    end
 
    public sort()
@@ -566,7 +568,7 @@ class EqTable(Table)
    end
 
    public size()
-      return sz
+      return .sz
    end
 
    public clear()
@@ -606,8 +608,7 @@ class BuiltinTable(Table)
    end
 
    public delete(key)
-      default.delete(t, key)
-      return self
+      return default.delete(t, key) & self
    end
 
    public sort()
@@ -715,11 +716,10 @@ class WeakrefTable(Table)
             if *l = 0 then
                default.delete(t, h)
             sz -:= 1
-            break
+            return self
          }
          i +:= 1
       }
-      return self
    end
 
    public sort()
@@ -756,7 +756,7 @@ class WeakrefTable(Table)
 
    public size()
       maybe_purge()
-      return sz
+      return .sz
    end
 
    public maybe_purge()
