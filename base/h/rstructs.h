@@ -427,12 +427,6 @@ struct progstate {
     struct ipc_fname * Current_fname_ptr;
     dptr MainProc;
 
-    uword Coexp_ser;			/* this program's serial numbers */
-    uword List_ser;
-    uword Set_ser;
-    uword Table_ser;
-    uword Weakref_ser;
-
     word Kywd_time_elsewhere;		/* &time spent in other programs */
     word Kywd_time_out;			/* &time at last program switch out */
     struct timeval start_time;          /* time program started */

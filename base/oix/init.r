@@ -181,6 +181,11 @@ word dodump = 1;			/* if zero never core dump;
                                          * if 2 core dump on all errors
                                          */
 
+uword coexp_ser = 1;                     /* Serial numbers for object creation */
+uword list_ser = 1;
+uword set_ser = 1;
+uword table_ser = 1;
+uword weakref_ser = 1;
 
 struct progstate *progs;        /* list of progstates */
 
@@ -538,11 +543,6 @@ static void initprogstate(struct progstate *p)
     p->K_errorcoexpr = 0;
     p->T_errorvalue = nulldesc;
     p->T_errortext = emptystr;
-    p->Coexp_ser = 1;
-    p->List_ser = 1;
-    p->Set_ser = 1;
-    p->Table_ser = 1;
-    p->Weakref_ser = 1;
     gettimeofday(&p->start_time, 0);
 
     p->stringtotal = p->blocktotal = p->stackcurr = p->colluser = 
