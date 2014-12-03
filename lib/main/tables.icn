@@ -55,7 +55,9 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Return a sorted list of key-value pairs.
    #
-   public abstract sort()
+   public sort()
+      return sortf(entry_list(), 1)
+   end
 
    #
    # Generate the keys (cf the builtin key() function.)
@@ -65,7 +67,11 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Generate alternating key/values (cf the builtin keyval() function.)
    #
-   public abstract keyval()
+   public keyval()
+      local k
+      every k := key() do
+         suspend k | member(k)
+   end
 
    #
    # Generate the keys (cf the builtin key() function.) in reverse
@@ -79,7 +85,11 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
    # function.) in reverse order.  Only implemented for tables which
    # store their keys in sorted order.
    #
-   public defer back_keyval()
+   public back_keyval()
+      local k
+      every k := back_key() do
+         suspend k | member(k)
+   end
 
    #
    # Return the rank of the given key, ie its order number in the
@@ -98,7 +108,9 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Generate the values (cf !t for a table).
    #
-   public abstract gen()
+   public gen()
+      suspend member(key())
+   end
 
    #
    # Return the size of the table.
@@ -223,6 +235,65 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
           runerr(134)
       while *entries > 0 do
          insert(default.get(entries), default.get(entries))
+   end
+end
+
+#
+# A class to provide an unmodifiable view of another table.
+#
+class UnmodifiableTable(Table)
+   private const t
+
+   public defer insert(key, val)
+
+   public member(key)
+      return .t.member(key)
+   end
+
+   public defer delete(key)
+
+   public sort()
+      return t.sort()
+   end
+
+   public key()
+      suspend t.key()
+   end
+
+   public keyval()
+      suspend .t.keyval()
+   end
+
+   public back_key()
+      suspend t.back_key()
+   end
+
+   public back_keyval()
+      suspend .t.back_keyval()
+   end
+
+   public rank(key)
+      return t.rank(key)
+   end
+
+   public select(i)
+      return t.select(i)
+   end
+
+   public gen()
+      suspend .t.gen()
+   end
+
+   public size()
+      return t.size()
+   end
+
+   public defer clear()
+
+   public new(t)
+      self.t := t
+      self.def := t.def
+      return
    end
 end
 

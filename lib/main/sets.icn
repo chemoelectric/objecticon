@@ -11,24 +11,27 @@ import lang
 #
 abstract class Set(ObjectOutput, ObjectHash, ObjectEquals)
    #
-   # Insert a new member.
+   # Insert a new member.  Always succeeds and returns {self}.
    #
    public abstract insert(x)
 
    #
-   # Succeed iff {x} is a member of the set.
+   # Succeed with `x` if it is a member of the set.
    #
    public abstract member(x)
 
    #
-   # Delete {x} from the set.
+   # Delete `x` from the set.  Fails if the key was not present,
+   # otherwise succeeds and returns {self}.
    #
    public abstract delete(x)
 
    #
    # Return a sorted list of members.
    #
-   public abstract sort()
+   public sort()
+      return default.sort(member_list())
+   end
 
    #
    # Generate the members.
@@ -124,6 +127,52 @@ abstract class Set(ObjectOutput, ObjectHash, ObjectEquals)
             nl().
             object_end(self)
       }
+   end
+end
+
+#
+# A class to provide an unmodifiable view of another set.
+#
+class UnmodifiableSet(Set)
+   private const s
+
+   public defer insert(x)
+
+   public member(x)
+      return s.member(x)
+   end
+
+   public defer delete(x)
+
+   public sort()
+      return s.sort()
+   end
+
+   public gen()
+      suspend s.gen()
+   end
+
+   public back()
+      suspend s.back()
+   end
+
+   public rank(x)
+      return s.rank(x)
+   end
+
+   public select(i)
+      return s.select(i)
+   end
+
+   public size()
+      return s.size()
+   end
+
+   public defer clear()
+
+   public new(s)
+      self.s := s
+      return
    end
 end
 

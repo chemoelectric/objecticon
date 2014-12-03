@@ -11,29 +11,35 @@ import lang, util
 #
 abstract class List(ObjectOutput, ObjectHash, ObjectEquals)
    #
-   # Insert a new element `x` at position `i`
+   # Insert a new element `x` at position `i`.  Fails if `i` is
+   # invalid; otherwise succeeds and returns {self}.
    #
    public abstract insert(i, x)
 
    #
-   # Delete element at position `i` from the list.
+   # Delete element at position `i` from the list.  Fails if `i` is
+   # invalid; otherwise succeeds and returns {self}.
    #
    public abstract delete(i)
 
    #
-   # Return the member at position `i`.
+   # Return the member at position `i`, as a variable.
    #
    public abstract at(i)
 
    #
    # Remove and return an element from the left end of list.
    #
-   public abstract get()
+   public get()
+      return 1(.at(1), delete(1))
+   end
 
    #
    # Remove and return an element from the right end of the list.
    #
-   public abstract pull()
+   public pull()
+      return 1(.at(-1), delete(-1))
+   end
 
    #
    # Push an element onto the left end of the list.
@@ -52,12 +58,16 @@ abstract class List(ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Generate the members.
    #
-   public abstract gen()
+   public gen()
+      suspend at(1 to size())
+   end
 
    #
    # Generate the members in reverse order.
    #
-   public abstract back()
+   public back()
+      suspend at(size() to 1 by -1)
+   end
 
    #
    # Return the size of the list.
@@ -134,6 +144,36 @@ abstract class List(ObjectOutput, ObjectHash, ObjectEquals)
             nl().
             object_end(self)
       }
+   end
+end
+
+class UnmodifiableList(List)
+   private const l
+
+   public defer insert(i, x)
+   public defer delete(i)
+
+   public at(i)
+      return .l.at(i)
+   end
+
+   public gen()
+      suspend .l.gen()
+   end
+
+   public back()
+      suspend .l.back()
+   end
+
+   public size()
+      return l.size()
+   end
+
+   public defer clear()
+
+   public new(l)
+      self.l := l
+      return
    end
 end
 
