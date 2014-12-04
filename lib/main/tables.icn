@@ -4,7 +4,7 @@
 
 package datastruct
 
-import ipl.pdco(Seq), lang, util
+import ipl.pdco(Seq,Length,Index), lang, util
 
 #
 # This is a common superclass for several table-like data structures.
@@ -12,22 +12,56 @@ import ipl.pdco(Seq), lang, util
 abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
    public const def
 
-   #
-   # Insert a new entry.  Always succeeds and returns {self}.
-   #
-   public abstract insert(key, val)
+   public static const
+      # Empty table implementation
+      EMPTY_TABLE,
+      # Constant indicating modifiable capability
+      MODIFY,
+      # Constant indicating insert capability
+      INSERT,
+      # Constant indicating delete capability
+      DELETE,
+      # Constant indicating keys are stored in order
+      ORDER
+
+   private static init()
+      EMPTY_TABLE := EmptyTable()
+      MODIFY := 1
+      INSERT := 2
+      DELETE := 4
+      ORDER := 8
+   end
 
    #
-   # Return the value for the given key (as a variable) if it is in
-   # the table, or fail if it is not present.
+   # Return the capability flag combination
+   #
+   public abstract get_capability()
+
+   #
+   # Succeed iff the table's capability has all the flags in {c}
+   #
+   public can(c)
+      return iand(get_capability(), c) = c
+   end
+   
+   #
+   # Insert a new entry.  Always succeeds and returns {self}.  Only
+   # implemented with INSERT capability.
+   #
+   public defer insert(key, val)
+
+   # Return the value for the given key if it is in the table, or fail
+   # if it is not present.  If the table has MODIFY capability, a
+   # variable is returned; otherwise the value.
    #
    public abstract member(key)
-
+   
    #
    # Delete the entry with the given key.  Fails if the key was not
-   # present, otherwise succeeds and returns {self}.
+   # present, otherwise succeeds and returns {self}.  Only implemented
+   # with DELETE capability.
    #
-   public abstract delete(key)
+   public defer delete(key)
 
    #
    # Return the value with the given key, or the default value if
@@ -39,8 +73,9 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
 
    #
    # Like {member}, but if the key is not present a new entry is added
-   # (with the default value).  In any case a variable for the new
-   # entry is returned.
+   # (with the default value).  If the table has MODIFY capability, a
+   # variable for the new entry is returned, otherwise a value is
+   # returned.
    #
    # @example
    # @  # Word counting
@@ -56,16 +91,21 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
    # Return a sorted list of key-value pairs.
    #
    public sort()
-      return sortf(entry_list(), 1)
+      local l
+      l := entry_list()
+      return if can(ORDER) then l else sortf(l, 1)
    end
 
    #
-   # Generate the keys (cf the builtin key() function.)
+   # Generate the keys (cf the builtin key() function).  With
+   # ORDER capability, the keys are generated in sorted order.
    #
    public abstract key()
 
    #
-   # Generate alternating key/values (cf the builtin keyval() function.)
+   # Generate alternating key/value pairs (cf the builtin keyval()
+   # function.)  If the table has MODIFY capability, the entry values
+   # will be generated as variables, otherwise as values.
    #
    public keyval()
       local k
@@ -74,16 +114,16 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
-   # Generate the keys (cf the builtin key() function.) in reverse
-   # order.  Only implemented for tables which store their keys in
-   # sorted order.
+   # Generate the keys (cf the builtin key() function) in reverse
+   # order.  Only implemented with ORDER capability.
    #
    public defer back_key()
 
    #
    # Generate alternating key/values (cf the builtin keyval()
-   # function.) in reverse order.  Only implemented for tables which
-   # store their keys in sorted order.
+   # function.) in reverse order.  Only implemented with ORDER
+   # capability.  If the table has MODIFY capability, the entry values
+   # will be generated as variables, otherwise as values.
    #
    public back_keyval()
       local k
@@ -94,33 +134,53 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Return the rank of the given key, ie its order number in the
    # table; fails if there is no matching key in the table.  Only
-   # implemented for tables which store their keys in sorted order.
+   # implemented for tables with ORDER capability.
    #
    public defer rank(key)
 
    #
    # Return the `i`th key, in order, in the table.  Fails if `i` is
    # out of range, using standard icon indexing semantics.  Only
-   # implemented for tables which store their keys in sorted order.
+   # implemented for tables with ORDER capability.
    #
-   public defer select(i)
+   public select(i)
+      can(ORDER) | runerr("Table doesn't have ORDER capability: ", self)
+      return Index{key(), cvpos_item(i, size())}
+   end
 
    #
-   # Generate the values (cf !t for a table).
+   # Generate the values (cf !t for a table).  If the table has MODIFY
+   # capability, variables are generated, otherwise values.
    #
    public gen()
       suspend member(key())
    end
 
    #
-   # Return the size of the table.
+   # Generate the values in reverse order.  Only implemented with
+   # ORDER capability.  If the table has MODIFY capability, variables
+   # are generated, otherwise values.
    #
-   public abstract size()
+   public back()
+      suspend member(back_key())
+   end
 
    #
-   # Clear the table of all elements. Always succeeds and returns {self}.
+   # Return the size of the table.
    #
-   public abstract clear()
+   public size()
+      return Length{key()}
+   end
+      
+   #
+   # Clear the table of all elements. Always succeeds and returns
+   # {self}.  Only implemented with DELETE capability.
+   #
+   public clear()
+      while size() > 0 do
+         delete(key())
+      return self
+   end
 
    #
    # Generate key-value pairs as a sequence of 2-element lists.  NB - for each
@@ -244,13 +304,9 @@ end
 class UnmodifiableTable(Table)
    private const t
 
-   public defer insert(key, val)
-
    public member(key)
       return .t.member(key)
    end
-
-   public defer delete(key)
 
    public sort()
       return t.sort()
@@ -284,11 +340,17 @@ class UnmodifiableTable(Table)
       suspend .t.gen()
    end
 
+   public back()
+      suspend .t.back()
+   end
+
    public size()
       return t.size()
    end
 
-   public defer clear()
+   public get_capability()
+      return iand(ORDER, t.get_capability())
+   end
 
    public new(t)
       self.t := t
@@ -301,8 +363,7 @@ end
 # A {Table} that ignores case in its keys.
 #
 class ClTable(Table)
-   private 
-      t
+   private const t
 
    public insert(key, val)
       default.insert(t, map(key), [key, val])
@@ -354,6 +415,10 @@ class ClTable(Table)
       return *t
    end
 
+   public get_capability()
+      return MODIFY + INSERT + DELETE
+   end
+
    #
    # Create a new instance.
    #
@@ -366,6 +431,55 @@ class ClTable(Table)
       init_entries(entries)
       return
    end
+end
+
+#
+# A list-view of the keys of a table with ORDER capability.
+#
+class TableKeyList(List)
+   private const t
+
+   public at(i)
+      return t.select(i)
+   end
+
+   public delete(i)
+      return t.delete(t.select(i)) & self
+   end
+
+   public gen()
+      suspend t.key()
+   end
+
+   public back()
+      suspend t.back_key()
+   end
+
+   public size()
+      return t.size()
+   end
+
+   public clear()
+      t.clear()
+      return self
+   end
+
+   public get_capability()
+      return iand(DELETE, t.get_capability())
+   end
+
+   public new(t)
+      t.can(Table.ORDER) | runerr("Table doesn't have ORDER capability: ", t)
+      self.t := t
+      return
+   end
+end
+
+#
+# A caseless string comparator function, for use with `SortTable`.
+#
+procedure cl_cmp(s1, s2)
+   return Internal.compare(map(s1), map(s2))
 end
 
 package class SortTableNode()
@@ -405,6 +519,7 @@ class SortTable(Table)
       else if i > 0 then
          n.r := insert1(n.r, key, val)
       else {
+         n.key := key
          n.val := val
          return n
       }
@@ -595,6 +710,10 @@ class SortTable(Table)
       suspend Seq{traverse(root)}.val
    end
 
+   public back()
+      suspend Seq{back_traverse(root)}.val
+   end
+
    public clear()
       root := &null
       return self
@@ -694,13 +813,20 @@ class SortTable(Table)
       return
    end
 
+   public get_capability()
+      return MODIFY + INSERT + DELETE + ORDER
+   end
+
    #
    # Create a new instance.
    #
    # @param def the default value
    # @param cmp a comparator function taking two arbitrary values and
    # @   returning {-1}, {0} or {+1} by way of comparison.  The default
-   # @   value is {Internal.compare}.
+   # @   value is {Internal.compare}.  The function must satisfy 
+   # @      cmp(a,b)=-cmp(b,a) for all a,b
+   # @      cmp(a,b)>0 & cmp(b,c)>0 => cmp(a,c)>0
+   # @      cmp(a,b)=0 <=> cmp(a,x)=cmp(b,x) for all other x.
    # @param entries initial key-value entries.
    #
    public new(def, cmp, entries[])
@@ -717,16 +843,18 @@ end
 # rather than the builtin {===} operator.
 #
 class EqTable(Table)
-   private t, sz
+   private const t
+   private sz
 
    public insert(key, val)
       local h, l, e, n
       h := hash(key)
-      l := t[h]
-      every e := !\l do {
-         if equals(e[1], key) then {
-            e[2] := val
-            return self
+      if l := default.member(t, h) then {
+         every e := !l do {
+            if equals(e[1], key) then {
+               e[2] := val
+               return self
+            }
          }
       }
       n := [key, val]
@@ -741,10 +869,11 @@ class EqTable(Table)
    public add(key)
       local h, l, e, n
       h := hash(key)
-      l := t[h]
-      every e := !\l do {
-         if equals(e[1], key) then
-            return e[2]
+      if l := default.member(t, h) then {
+         every e := !l do {
+            if equals(e[1], key) then
+               return e[2]
+         }
       }
       n := [key, def]
       if \l then
@@ -757,7 +886,7 @@ class EqTable(Table)
 
    public member(key)
       local e
-      every e := !\t[hash(key)] do {
+      every e := !default.member(t, hash(key)) do {
          if equals(e[1], key) then
             return e[2]
       }
@@ -766,9 +895,9 @@ class EqTable(Table)
    public delete(key)
       local h, l, e, i
       h := hash(key)
-      l := t[h]
+      l := default.member(t, h) | fail
       i := 1
-      every e := !\l do {
+      every e := !l do {
          if equals(e[1], key) then {
             default.delete(l, i)
             if *l = 0 then
@@ -811,6 +940,10 @@ class EqTable(Table)
       return self
    end
 
+   public get_capability()
+      return MODIFY + INSERT + DELETE
+   end
+
    #
    # Create a new instance.
    #
@@ -830,7 +963,7 @@ end
 # A {Table} which is just a wrapper around a builtin table.
 #
 class BuiltinTable(Table)
-   private t
+   private const t
 
    public insert(key, val)
       default.insert(t, key, val)
@@ -870,6 +1003,10 @@ class BuiltinTable(Table)
       return *t
    end
 
+   public get_capability()
+      return MODIFY + INSERT + DELETE
+   end
+
    #
    # Create a new instance.
    #
@@ -884,22 +1021,35 @@ class BuiltinTable(Table)
    end
 end
 
+package class EmptyTable(Table)
+   public member(x)
+   end
+
+   public key()
+   end
+
+   public get_capability()
+      return 0
+   end
+end
+
 #
 # A {Table} which uses weak references
 #
 class WeakrefTable(Table)
-   private 
-      t, sz, last_purge
+   private const t
+   private sz, last_purge
 
    public insert(key, val)
       local h, l, e, n
       maybe_purge()
       h := Internal.hash(key)
-      l := t[h]
-      every e := !\l do {
-         if weakrefval(e[1]) === key then {
-            e[2] := val
-            return self
+      if l := default.member(t, h) then {
+         every e := !l do {
+            if weakrefval(e[1]) === key then {
+               e[2] := val
+               return self
+            }
          }
       }
       n := [weakref(key), val] | runerr("Type of key cannot be used with weakref")
@@ -915,10 +1065,11 @@ class WeakrefTable(Table)
       local h, l, e, n
       maybe_purge()
       h := Internal.hash(key)
-      l := t[h]
-      every e := !\l do {
-         if weakrefval(e[1]) === key then
-            return e[2]
+      if l := default.member(t, h) then {
+         every e := !l do {
+            if weakrefval(e[1]) === key then
+               return e[2]
+         }
       }
       n := [weakref(key), def] | runerr("Type of key cannot be used with weakref")
       if \l then
@@ -932,7 +1083,7 @@ class WeakrefTable(Table)
    public member(key)
       local e
       maybe_purge()
-      every e := !\t[Internal.hash(key)] do {
+      every e := !default.member(t, Internal.hash(key)) do {
          if weakrefval(e[1]) === key then
             return e[2]
       }
@@ -942,9 +1093,9 @@ class WeakrefTable(Table)
       local h, l, e, i
       maybe_purge()
       h := Internal.hash(key)
-      l := t[h]
+      l := default.member(t, h) | fail
       i := 1
-      every e := !\l do {
+      every e := !l do {
          if weakrefval(e[1]) === key then {
             default.delete(l, i)
             if *l = 0 then
@@ -1016,6 +1167,10 @@ class WeakrefTable(Table)
          if *l = 0 then
             default.delete(t, h)
       }
+   end
+
+   public get_capability()
+      return MODIFY + INSERT + DELETE
    end
 
    #

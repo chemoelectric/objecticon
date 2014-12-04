@@ -10,20 +10,53 @@ import lang, util
 # This is a common superclass for a list-like data structure.
 #
 abstract class List(ObjectOutput, ObjectHash, ObjectEquals)
+   public static const
+      # An empty list instance
+      EMPTY_LIST,
+      # Constant indicating modifiable capability
+      MODIFY,
+      # Constant indicating insert capability
+      INSERT,
+      # Constant indicating delete capability
+      DELETE
+
+   private static init()
+      EMPTY_LIST := EmptyList()
+      MODIFY := 1
+      INSERT := 2
+      DELETE := 4
+   end
+
+   #
+   # Return the capability flag combination
+   #
+   public abstract get_capability()
+
+   #
+   # Succeed iff the list's capability has all the flags in {c}
+   #
+   public can(c)
+      return iand(get_capability(), c) = c
+   end
+
    #
    # Insert a new element `x` at position `i`.  Fails if `i` is
-   # invalid; otherwise succeeds and returns {self}.
+   # invalid; otherwise succeeds and returns {self}.  Only implemented
+   # with INSERT capability.
    #
-   public abstract insert(i, x)
-
+   public defer insert(i, x)
+   
    #
    # Delete element at position `i` from the list.  Fails if `i` is
-   # invalid; otherwise succeeds and returns {self}.
+   # invalid; otherwise succeeds and returns {self}.  Only implemented
+   # with DELETE capability.
    #
-   public abstract delete(i)
+   public defer delete(i)
 
    #
-   # Return the member at position `i`, as a variable.
+   # Return the member at position `i`.  If the list has MODIFY
+   # capability, a variable is returned, otherwise a value is
+   # returned.
    #
    public abstract at(i)
 
@@ -56,17 +89,30 @@ abstract class List(ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
-   # Generate the members.
+   # Generate the members.  If the list has MODIFY capability,
+   # variables are generated, otherwise values are generated.
    #
    public gen()
-      suspend at(1 to size())
+      local i
+      i := 1
+      while i <= size() do {
+         suspend at(i)
+         i +:= 1
+      }
    end
 
    #
-   # Generate the members in reverse order.
+   # Generate the members in reverse order.  If the list has MODIFY
+   # capability, variables are generated, otherwise values are
+   # generated.
    #
    public back()
-      suspend at(size() to 1 by -1)
+      local i
+      i := size()
+      while i > 0 do {
+         suspend at(i)
+         i := min(i - 1, size())
+      }
    end
 
    #
@@ -75,19 +121,26 @@ abstract class List(ObjectOutput, ObjectHash, ObjectEquals)
    public abstract size()
 
    #
-   # Clear the list of all elements.
+   # Clear the list of all elements. Always succeeds and returns
+   # {self}.  Only implemented with DELETE capability.
    #
-   public abstract clear()
+   public clear()
+      while delete(1)
+      return self
+   end
 
    #
    # Generate the indices i such that at(i) === x
    #
    public keyof(x)
-      local i
+      local i, sz
       i := 1
-      while i <= size() do {
-         if x === at(i) then
+      sz := size()
+      while i <= sz do {
+         if x === at(i) then {
             suspend i
+            sz := size()
+         }
          i +:= 1
       }
    end
@@ -150,9 +203,6 @@ end
 class UnmodifiableList(List)
    private const l
 
-   public defer insert(i, x)
-   public defer delete(i)
-
    public at(i)
       return .l.at(i)
    end
@@ -169,7 +219,9 @@ class UnmodifiableList(List)
       return l.size()
    end
 
-   public defer clear()
+   public get_capability()
+      return 0
+   end
 
    public new(l)
       self.l := l
@@ -181,7 +233,7 @@ end
 # A `List` that is just a wrapper around a builtin list
 #
 class BuiltinList(List)
-   private l
+   private const l
 
    public insert(i, x)
       return default.insert(l, i, x) & self
@@ -234,10 +286,27 @@ class BuiltinList(List)
       return self
    end
 
+   public get_capability()
+      return MODIFY + INSERT + DELETE
+   end
+
    public new(l)
       /l := []
       self.l := l
       return
+   end
+end
+
+package class EmptyList(List)
+   public at(i)
+   end
+
+   public size()
+      return 0
+   end
+
+   public get_capability()
+      return 0
    end
 end
 
@@ -390,6 +459,10 @@ class LinkedList(List)
    public clear()
       nhead := &null
       return self
+   end
+
+   public get_capability()
+      return MODIFY + INSERT + DELETE
    end
 
    #
