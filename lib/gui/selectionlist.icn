@@ -39,6 +39,7 @@ abstract class SelectionList()
          self.selection <:= 1
          self.selection >:= *self.selection_list
       }
+      return self
    end
 
    #
