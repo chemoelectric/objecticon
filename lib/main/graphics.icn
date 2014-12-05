@@ -1,14 +1,14 @@
 package graphics
 
 import 
-   lang(Class, NoCopy, ObjectClone),
+   lang(Class, NoCopy, ObjectClone, Unencodable),
    util(use, error)
 
 # This object contains pixel data either read from a file, extracted
 # from a Window, or created from scratch.  The data is stored in
 # various underlying formats depending on the source.
 #
-final class Pixels(ObjectClone)
+final class Pixels(ObjectClone, Unencodable)
    private
       ptr
 
