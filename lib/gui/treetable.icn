@@ -17,8 +17,9 @@ import util
 # {TreeTableNode} might be created as follows :-
 #
 # @example
-# @ n := TreeTableNode("label=Col A label")
-# @ n.set_contents(["Col B data", "Col C data"])
+# @ n := TreeTableNode().
+# @         set_label("Col A label").
+# @         set_contents(["Col B data", "Col C data"])
 #
 class TreeTableNode(TreeNode)
    public contents
@@ -31,7 +32,6 @@ class TreeTableNode(TreeNode)
       return self
    end
 end
-
 
 #
 # This class provides the table content for a TreeTable.  It extends
@@ -169,7 +169,6 @@ class TreeTableContent(Tree)
       draw_line_sel_cur(self.view.x, yp, self.view.w, lh, sel, cur, hi)
    end
 end
-
 
 #
 # A {TreeTable} is a {Table} where the first column is
