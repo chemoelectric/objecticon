@@ -115,10 +115,7 @@ abstract class Set(ObjectOutput, ObjectHash, ObjectEquals)
    # Return a list of the members, in the order produced by {gen()}.
    #
    public member_list()
-      local l
-      l := []
-      every put(l, gen())
-      return l
+      return ipl.pdco.List{gen()}
    end
 
    #
@@ -290,15 +287,23 @@ class TableSet(Set)
    end
 end
 
-package class EmptySet(Set)
+package class EmptySet(Set, SelfClone)
    public member(x)
    end
 
    public gen()
    end
 
+   public size()
+      return 0
+   end
+
    public get_capability()
       return 0
+   end
+
+   package new()
+      return
    end
 end
 

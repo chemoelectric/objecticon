@@ -200,10 +200,7 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
 
    # Return a flat list, with alternating key-value entries.
    public flatten()
-      local l
-      l := []
-      every put(l, keyval())
-      return l
+      return ipl.pdco.List{keyval()}
    end
 
    # Return an (unsorted) list of pairs of key-values.
@@ -1021,15 +1018,23 @@ class BuiltinTable(Table)
    end
 end
 
-package class EmptyTable(Table)
+package class EmptyTable(Table, SelfClone)
    public member(x)
    end
 
    public key()
    end
 
+   public size()
+      return 0
+   end
+
    public get_capability()
       return 0
+   end
+
+   package new()
+      return
    end
 end
 

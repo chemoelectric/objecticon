@@ -4,7 +4,7 @@
 
 package datastruct
 
-import lang, util
+import lang, util, ipl.pdco(Positions)
 
 #
 # This is a common superclass for a list-like data structure.
@@ -133,17 +133,9 @@ abstract class List(ObjectOutput, ObjectHash, ObjectEquals)
    # Generate the indices i such that at(i) === x
    #
    public keyof(x)
-      local i, sz
-      i := 1
-      sz := size()
-      while i <= sz do {
-         if x === at(i) then {
-            suspend i
-            sz := size()
-         }
-         i +:= 1
-      }
+      suspend Positions{gen(), x}
    end
+
 
    #
    # Custom equals mirrors the {equals()} behaviour for builtin lists.
@@ -217,6 +209,10 @@ class UnmodifiableList(List)
 
    public size()
       return l.size()
+   end
+
+   public keyof(x)
+      suspend l.keyof(x)
    end
 
    public get_capability()
@@ -297,7 +293,7 @@ class BuiltinList(List)
    end
 end
 
-package class EmptyList(List)
+package class EmptyList(List, SelfClone)
    public at(i)
    end
 
@@ -307,6 +303,10 @@ package class EmptyList(List)
 
    public get_capability()
       return 0
+   end
+
+   package new()
+      return
    end
 end
 
