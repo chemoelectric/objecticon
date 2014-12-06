@@ -6,8 +6,6 @@
 #include "../h/modflags.h"
 
 static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args, dptr self);
-static void ensure_class_initialized(void);
-
 static void simple_access(void);
 static void create_raw_instance(void);
 static void handle_access_failure(void);
