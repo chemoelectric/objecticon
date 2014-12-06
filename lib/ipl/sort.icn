@@ -60,7 +60,7 @@
 
 package ipl.sort
 
-import lang(Prog)
+import lang(Prog,Internal)
 
 procedure isort(x,keyproc,y)
    local items,item,key,result
@@ -95,7 +95,7 @@ procedure sortff(L, fields[])
     return sortff_1(L, fields, 1, [])
 end
 
-procedure sortff_1(L, fields, k, uniqueObject)
+package procedure sortff_1(L, fields, k, uniqueObject)
 
     local sortField, cachedKeyValue, i, startOfRun, thisKey
 
@@ -177,12 +177,48 @@ procedure sortt(T, i)
 end
 
 #
+# A caseless string comparator function.
+#
+procedure cl_cmp(s1, s2)
+   return Internal.compare(map(s1), map(s2))
+end
+
+# Implementation class for `rev_cmp`.
+package class RevCmpImpl()
+   private f
+
+   public call(a, b)
+      return f(b, a)
+   end
+
+   public new(f)
+      self.f := f
+      return
+   end
+end
+
+# Take one comparison function and return another which reverse its
+# ordering; in other words f(a,b) is mapped to f(b,a).
+#
+procedure rev_cmp(f)
+   return RevCmpImpl(f).call
+end
+
+# This is a comparison function that just reverses the order of the
+# `Internal.compare` function.
+#
+procedure rev_cmp_internal(a, b)
+   return Internal.compare(b, a)
+end
+
+#
 # The classic quick sort procedure.
 #
-procedure qsort(l, comp, first, last)
+procedure qsort(l, cmp, first, last)
    local i, j, pivot
    /first := 1
    /last := *l
+   /cmp := Internal.compare
 
    i := first
    j := last
@@ -192,8 +228,8 @@ procedure qsort(l, comp, first, last)
 
    pivot := l[(i + j) / 2]
    repeat {
-      while comp(l[i], pivot) do i +:= 1
-      while comp(pivot, l[j]) do j -:= 1
+      while cmp(l[i], pivot) < 0 do i +:= 1
+      while cmp(l[j], pivot) > 0 do j -:= 1
       if i <= j then {
          l[i] :=: l[j]
          i +:= 1
@@ -203,8 +239,8 @@ procedure qsort(l, comp, first, last)
          break
    }
    if first < j then
-      qsort(l, comp, first, j)
+      qsort(l, cmp, first, j)
    if i < last then
-      qsort(l, comp, i, last)
+      qsort(l, cmp, i, last)
    return l
 end

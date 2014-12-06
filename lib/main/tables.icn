@@ -472,13 +472,6 @@ class TableKeyList(List)
    end
 end
 
-#
-# A caseless string comparator function, for use with `SortTable`.
-#
-procedure cl_cmp(s1, s2)
-   return Internal.compare(map(s1), map(s2))
-end
-
 package class SortTableNode()
    public key, val,
       l, r, is_red_flag, N
@@ -819,11 +812,11 @@ class SortTable(Table)
    #
    # @param def the default value
    # @param cmp a comparator function taking two arbitrary values and
-   # @   returning {-1}, {0} or {+1} by way of comparison.  The default
-   # @   value is {Internal.compare}.  The function must satisfy 
-   # @      cmp(a,b)=-cmp(b,a) for all a,b
+   # @   returning {<0}, {0} or {>0} by way of comparison.  The default
+   # @   value is {Internal.compare}.  The function must satisfy
+   # @      sign(cmp(a,b)) = -sign(cmp(b,a)) for all a,b
    # @      cmp(a,b)>0 & cmp(b,c)>0 => cmp(a,c)>0
-   # @      cmp(a,b)=0 <=> cmp(a,x)=cmp(b,x) for all other x.
+   # @      cmp(a,b)=0 <=> sign(cmp(a,x))=sign(cmp(b,x)) for all other x.
    # @param entries initial key-value entries.
    #
    public new(def, cmp, entries[])

@@ -3168,10 +3168,6 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return self
    end
 
-   private static point_comp(a, b)
-      return (a.y < b.y) | (a.y = b.y & a.x < b.x)
-   end
-
    private redo_search()
       local c, i
       \searched_term | fail
@@ -3181,7 +3177,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       every c := Seq{traverse_postorder()} do
          if is(c,TextFlow) then
             c.search(searched_term, searched, sorted_searched)
-      qsort(sorted_searched, point_comp)
+      qsort(sorted_searched, Point.comp_yx)
       highlighted_searched := sorted_searched[\i] | &null
    end
 
@@ -3198,7 +3194,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             if is(c,TextFlow) then
                c.search(l, searched, sorted_searched)
          highlighted_searched := &null
-         qsort(sorted_searched, point_comp)
+         qsort(sorted_searched, Point.comp_yx)
       } else
          clear_searched()
       refresh()
@@ -5119,7 +5115,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          if is(c, TextFlow) then
             c.get_selected_text(br, l)
       }
-      qsort(l, point_comp)
+      qsort(l, Point.comp_yx)
       s := u""
       every e := !l do {
          if *s > 0 then
@@ -5157,7 +5153,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          }
       }
       if *l > 0 then {
-         qsort(l, point_comp)
+         qsort(l, Point.comp_yx)
          links_selection := ipl.pdco.List{ (!l).val }
       }
    end

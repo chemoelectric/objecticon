@@ -16,6 +16,16 @@ class Point()
       self.y := y
       return
    end
+
+   # A comparator function for points, ordering by y first, then x.
+   public static comp_yx(p, q)
+      return if p.y = q.y then p.x - q.x else p.y - q.y
+   end
+
+   # A comparator function for points, ordering by x first, then y.
+   public static comp_xy(p, q)
+      return if p.x = q.x then p.y - q.y else p.x - q.x
+   end
 end
 
 

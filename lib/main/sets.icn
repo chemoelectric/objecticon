@@ -235,10 +235,10 @@ class TableSet(Set)
    end
 
    public sort()
-      local l
-      l := []
-      every put(l, (!t.sort())[1])
-      return l
+      return if can(ORDER) then
+         member_list()
+      else
+         ipl.pdco.List{(!t.sort())[1]}
    end
 
    public gen()
