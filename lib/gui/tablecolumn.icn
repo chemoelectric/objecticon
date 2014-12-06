@@ -18,7 +18,7 @@ package gui
 # The label is set by calling the {set_label(x)} method of the
 # parent class, {TextButton}.
 # 
-class TableColumn(TextButton)
+abstract class BaseTableColumn(TextButton)
    public 
       column_width,  
       drag_offset,
@@ -141,8 +141,7 @@ class TableColumn(TextButton)
    end
 
    #
-   # Draw an individual cell for this column.  By default, string
-   # data is drawn.
+   # Draw an individual cell for this column.
    #
    # @param W the cloned window to draw into
    # @param data the data to draw
@@ -151,17 +150,7 @@ class TableColumn(TextButton)
    # @param cy the y position of the cell
    # @param ch the height of the cell
    #
-   public draw_cell(W, data, line, col, cy, ch)
-      local x1, y1
-      x1 := case border.x_align of {
-         Align.R : self.tx + self.tw - W.text_width(data)
-         Align.C : self.tx + (self.tw - W.text_width(data)) / 2
-         Align.L : self.tx
-         default : runerr("Bad column alignment", border.x_align)
-      }
-      y1 := cy + (ch - W.get_font_height()) / 2
-      draw_string_ex(W, x1, y1, data)
-   end
+   public abstract draw_cell(W, data, line, col, cy, ch)
 
    #
    # Return the desired height of the lines for the cells in this column.  This should
@@ -169,9 +158,7 @@ class TableColumn(TextButton)
    # heights for each line.
    # @param W the cloned window to draw into
    #
-   public calculate_line_height(W)
-      return W.get_font_height()
-   end
+   public abstract calculate_line_height(W)
 
    public new()
       TextButton.new()
@@ -184,6 +171,101 @@ class TableColumn(TextButton)
    end
 end
 
+#
+# The basic table column, which displays simple textual data.
+#
+class TableColumn(BaseTableColumn)
+   public draw_cell(W, data, line, col, cy, ch)
+      local x1, y1
+      x1 := case border.x_align of {
+         Align.R : self.tx + self.tw - W.text_width(data)
+         Align.C : self.tx + (self.tw - W.text_width(data)) / 2
+         Align.L : self.tx
+         default : runerr("Bad column alignment", border.x_align)
+      }
+      y1 := cy + (ch - W.get_font_height()) / 2
+      draw_string_ex(W, x1, y1, data)
+   end
 
+   public calculate_line_height(W)
+      return W.get_font_height()
+   end
+end
 
+#
+# A table column which delegates interpretation of the data to
+# an `ItemPaint` instance.
+#
+class ItemPaintTableColumn(BaseTableColumn)
+   public
+      item_paint,
+      item_border
 
+   public initially()
+      \self.item_paint | runerr("ItemPaint not set")
+      BaseTableColumn.initially()
+      self.item_paint.initially(self)
+      self.item_border.initially(self)
+   end
+
+   public finally()
+      BaseTableColumn.finally()
+      self.item_paint.finally()
+      self.item_border.finally()
+   end
+
+   public set_item_paint(r)
+      if is_initialized() then {
+         (\self.item_paint).finally()
+         self.item_paint := r
+         self.item_paint.initially(self)
+      } else
+         self.item_paint := r
+      return self
+   end
+
+   #
+   # Set a border to draw along with each Paint instance.
+   #
+   public set_item_border(b)
+      if is_initialized() then {
+         (\self.item_border).finally()
+         self.item_border := b
+         self.item_border.initially(self)
+      } else
+         self.item_border := b
+      return self
+   end
+
+   public set_column_align(x)
+      BaseTableColumn.set_column_align(x)
+      self.item_border.x_align := x
+      return self
+   end
+
+   public calculate_line_height(W)
+      local h
+      if not(h := item_paint.get_constant_height(W) +
+                   item_border.get_total_height()) then
+      {
+         h := []
+         every put(h, item_paint.get_height(W, slice()) +
+                   item_border.get_total_height())
+      }
+      return h
+   end
+
+   public draw_cell(W, data, line, col, cy, ch)
+      local r
+      r := Rect(self.x, cy, self.w, ch)
+      item_paint.draw_rect(W, data, item_border.float(r, item_paint.get_size(W, data)))
+      item_border.draw_rect(W, r)
+   end
+
+   public new()
+      BaseTableColumn.new()
+      self.set_item_border(NullBorder().
+                           set_x_align(Align.L))
+      return
+   end
+end

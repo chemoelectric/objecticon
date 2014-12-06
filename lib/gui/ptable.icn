@@ -3,13 +3,11 @@ package gui
 import util
 
 #
-# A column in a {PTable}.  The default column handles simple string data, but may
-# be subclassed to handle any type of data.
+# A column in a {PTable}.
 #
-class PTableColumn()
+abstract class BasePTableColumn()
    public
       ptable,
-      align,
       fixed_width,   # Optional fixed width
       calc_width,    # Width set from calculate_column_width
       width,         # Width after allocation of extra space
@@ -42,14 +40,6 @@ class PTableColumn()
    end
 
    #
-   # Set the column alignment
-   # @param x A constant from {Align}
-   public set_align(x)
-      self.align := x
-      return self
-   end
-
-   #
    # The column's index
    #
    public get_column_index()
@@ -64,11 +54,50 @@ class PTableColumn()
    end
 
    #
-   # Return the desired height of the lines for the cells in this column.  This should
-   # return an integer if the heights are all the same, or a list containing the different
-   # heights for each line.
+   # Return the desired height of the lines for the cells in this
+   # column.  This should return an integer if the heights are all the
+   # same, or a list containing the different heights for each line.
+   #
    # @param W the cloned window to draw into
    #
+   public abstract calculate_line_height(W)
+
+   public abstract calculate_column_width(W)
+
+   #
+   # Draw an individual cell for this column.
+   #
+   # @param W the cloned window to draw into
+   # @param data the data to draw
+   # @param line the line number of the data
+   # @param col the column number of the data
+   # @param cx the x position of the cell
+   # @param cy the y position of the cell
+   # @param ch the height of the cell
+   #
+   public abstract draw_cell(W, data, line, col, cx, cy, ch)
+
+   public new()
+      weight := 0
+      return
+   end
+end
+
+#
+# The basic column, which displays simple textual data.
+#
+class PTableColumn(BasePTableColumn)
+   public
+      align
+
+   #
+   # Set the column alignment
+   # @param x A constant from {Align}
+   public set_align(x)
+      self.align := x
+      return self
+   end
+
    public calculate_line_height(W)
       return W.get_font_height()
    end
@@ -82,18 +111,6 @@ class PTableColumn()
       return w
    end
 
-   #
-   # Draw an individual cell for this column.  By default, string
-   # data is drawn.
-   #
-   # @param W the cloned window to draw into
-   # @param data the data to draw
-   # @param line the line number of the data
-   # @param col the column number of the data
-   # @param cx the x position of the cell
-   # @param cy the y position of the cell
-   # @param ch the height of the cell
-   #
    public draw_cell(W, data, line, col, cx, cy, ch)
       local x1, y1
       x1 := case align of {
@@ -107,29 +124,29 @@ class PTableColumn()
    end
 
    public new()
+      BasePTableColumn.new()
       align := Align.L
-      weight := 0
       return
    end
 end
 
+# A table column which delegates interpretation of the data to
+# an `ItemPaint` instance.
 #
-# A {PTableColumn} which uses and {ItemPaint} and a {ABorder} for display.
-#
-class ItemPaintPTableColumn(PTableColumn)
+class ItemPaintPTableColumn(BasePTableColumn)
    public
       item_paint,
       item_border
 
    public initially(c)
       \self.item_paint | runerr("ItemPaint not set")
-      PTableColumn.initially()
+      BasePTableColumn.initially()
       self.item_paint.initially(c)
       self.item_border.initially(c)
    end
 
    public finally()
-      PTableColumn.finally()
+      BasePTableColumn.finally()
       self.item_paint.finally()
       self.item_border.finally()
    end
@@ -158,7 +175,6 @@ class ItemPaintPTableColumn(PTableColumn)
    end
 
    public set_align(x)
-      PTableColumn.set_align(x)
       self.item_border.x_align := x
       return self
    end
@@ -192,7 +208,7 @@ class ItemPaintPTableColumn(PTableColumn)
    end
 
    public new()
-      PTableColumn.new()
+      BasePTableColumn.new()
       self.set_item_border(NullBorder().
                            set_x_align(Align.L))
       return
