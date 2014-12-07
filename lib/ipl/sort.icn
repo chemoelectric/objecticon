@@ -60,7 +60,7 @@
 
 package ipl.sort
 
-import lang(Prog,Internal)
+import lang(Class,Prog,Internal)
 
 procedure isort(x,keyproc,y)
    local items,item,key,result
@@ -211,6 +211,64 @@ procedure rev_cmp_internal(a, b)
    return Internal.compare(b, a)
 end
 
+# Implementation class for `cmp_index`.
+package class CmpIndexImpl()
+   private f, i
+
+   public call(a, b)
+      return f(a[i], b[i]) | runerr("Invalid index given to cmp_index")
+   end
+
+   public new(i, f)
+      self.i := i
+      /f := Internal.compare
+      self.f := f
+      return
+   end
+end
+
+#
+# Return a compare function which applies the comparator function `f` to the
+# `i`th field of each item.  `f` defaults to `Internal.compare`.
+#
+# @example
+# @    l := [ [1,54,2], [4,56,23], [4325,1,23], [123,4576,23]]
+# @    # sort by the middle element of each item
+# @    qsort(l, cmp_index(2))
+#
+procedure cmp_index(i, f)
+   return CmpIndexImpl(i, f).call
+end
+
+# Implementation class for `cmp_field`.
+package class CmpFieldImpl()
+   private f, q
+
+   public call(a, b)
+      return f(Class.get(a, q), Class.get(b, q))
+   end
+
+   public new(q, f)
+      self.q := q
+      /f := Internal.compare
+      self.f := f
+      return
+   end
+end
+
+#
+# Return a compare function which applies the comparator function `f` to the
+# field named `q` in each item.  `f` defaults to `Internal.compare`.
+#
+# @example
+# @    l := [Point(1,2),Point(34,4),Point(3,56),Point(23,55)]
+# @    # sort by the x element of each item
+# @    qsort(l, cmp_field("x"))
+#
+procedure cmp_field(q, f)
+   return CmpFieldImpl(q, f).call
+end
+
 #
 # The classic quick sort procedure.
 #
@@ -243,4 +301,24 @@ procedure qsort(l, cmp, first, last)
    if i < last then
       qsort(l, cmp, i, last)
    return l
+end
+
+#
+# A binary search algorithm
+#
+procedure bsearch(l, val, cmp, first, last)
+   local m, c
+   /first := 1
+   /last := *l
+   /cmp := Internal.compare
+   while first <= last do {
+      m := (first + last) / 2
+      c := cmp(val, l[m])
+      if c = 0 then
+         return m
+      if c > 0 then
+         first := m + 1
+      else # c < 0
+         last := m - 1
+   }
 end
