@@ -13,7 +13,7 @@ abstract class BasePTableColumn()
       width,         # Width after allocation of extra space
       weight
    
-   public initially(c)
+   public initially()
    end
 
    public finally()
@@ -138,11 +138,11 @@ class ItemPaintPTableColumn(BasePTableColumn)
       item_paint,
       item_border
 
-   public initially(c)
+   public initially()
       \self.item_paint | runerr("ItemPaint not set")
       BasePTableColumn.initially()
-      self.item_paint.initially(c)
-      self.item_border.initially(c)
+      self.item_paint.initially(ptable)
+      self.item_border.initially(ptable)
    end
 
    public finally()
@@ -280,7 +280,7 @@ class PTable(SelectableScrollArea)
       if *cols = 0 then
          runerr("no PTableColumns in PTable")
       SelectableScrollArea.initially()
-      every (!cols).initially(self)
+      every (!cols).initially()
    end
 
    public finally()
