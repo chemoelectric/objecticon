@@ -9,7 +9,7 @@ import lang, util, ipl.pdco(Positions)
 #
 # This is a common superclass for a list-like data structure.
 #
-abstract class List(ObjectOutput, ObjectHash, ObjectEquals)
+abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public static const
       # An empty list instance
       EMPTY_LIST,
@@ -25,18 +25,6 @@ abstract class List(ObjectOutput, ObjectHash, ObjectEquals)
       MODIFY := 1
       INSERT := 2
       DELETE := 4
-   end
-
-   #
-   # Return the capability flag combination
-   #
-   public abstract get_capability()
-
-   #
-   # Succeed iff the list's capability has all the flags in {c}
-   #
-   public can(c)
-      return iand(get_capability(), c) = c
    end
 
    #
@@ -136,6 +124,12 @@ abstract class List(ObjectOutput, ObjectHash, ObjectEquals)
       suspend Positions{gen(), x}
    end
 
+   #
+   # Return an icon list of the elements.
+   #
+   public list()
+      return ipl.pdco.List{gen()}
+   end
 
    #
    # Custom equals mirrors the {equals()} behaviour for builtin lists.
@@ -215,7 +209,7 @@ class UnmodifiableList(List)
       suspend l.keyof(x)
    end
 
-   public get_capability()
+   public get_mode()
       return 0
    end
 
@@ -282,7 +276,7 @@ class BuiltinList(List)
       return self
    end
 
-   public get_capability()
+   public get_mode()
       return MODIFY + INSERT + DELETE
    end
 
@@ -301,7 +295,7 @@ package class EmptyList(List, SelfClone)
       return 0
    end
 
-   public get_capability()
+   public get_mode()
       return 0
    end
 
@@ -461,7 +455,7 @@ class LinkedList(List)
       return self
    end
 
-   public get_capability()
+   public get_mode()
       return MODIFY + INSERT + DELETE
    end
 

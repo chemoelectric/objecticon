@@ -9,7 +9,7 @@ import ipl.pdco(Length,Index), lang, util
 #
 # This is a common superclass for a set-like data structure.
 #
-abstract class Set(ObjectOutput, ObjectHash, ObjectEquals)
+abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public static const
       # An empty set instance
       EMPTY_SET,
@@ -27,18 +27,6 @@ abstract class Set(ObjectOutput, ObjectHash, ObjectEquals)
       ORDER := 8
    end
 
-   #
-   # Return the capability flag combination
-   #
-   public abstract get_capability()
-
-   #
-   # Succeed iff the set's capability has all the flags in {c}
-   #
-   public can(c)
-      return iand(get_capability(), c) = c
-   end
-   
    #
    # Insert a new member.  Always succeeds and returns {self}.  Only
    # implemented with INSERT capability.
@@ -204,8 +192,8 @@ class UnmodifiableSet(Set)
       return s.size()
    end
 
-   public get_capability()
-      return iand(ORDER, s.get_capability())
+   public get_mode()
+      return iand(ORDER, s.get_mode())
    end
 
    public new(s)
@@ -235,10 +223,7 @@ class TableSet(Set)
    end
 
    public sort()
-      return if can(ORDER) then
-         member_list()
-      else
-         ipl.pdco.List{(!t.sort())[1]}
+      return t.key_sort()
    end
 
    public gen()
@@ -266,8 +251,8 @@ class TableSet(Set)
       return self
    end
 
-   public get_capability()
-      return iand(INSERT + DELETE + ORDER, t.get_capability())
+   public get_mode()
+      return iand(INSERT + DELETE + ORDER, t.get_mode())
    end
 
    #
@@ -298,7 +283,7 @@ package class EmptySet(Set, SelfClone)
       return 0
    end
 
-   public get_capability()
+   public get_mode()
       return 0
    end
 
@@ -343,7 +328,7 @@ class BuiltinSet(Set)
       return self
    end
 
-   public get_capability()
+   public get_mode()
       return INSERT + DELETE
    end
 

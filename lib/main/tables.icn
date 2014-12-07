@@ -9,7 +9,7 @@ import ipl.pdco(Seq,Length,Index), lang, util
 #
 # This is a common superclass for several table-like data structures.
 #
-abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
+abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public const def
 
    public static const
@@ -30,18 +30,6 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
       INSERT := 2
       DELETE := 4
       ORDER := 8
-   end
-
-   #
-   # Return the capability flag combination
-   #
-   public abstract get_capability()
-
-   #
-   # Succeed iff the table's capability has all the flags in {c}
-   #
-   public can(c)
-      return iand(get_capability(), c) = c
    end
    
    #
@@ -94,6 +82,16 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
       local l
       l := entry_list()
       return if can(ORDER) then l else sortf(l, 1)
+   end
+
+   #
+   # Return a sorted list of keys.
+   #
+   public key_sort()
+      # This is defined in terms of sort() above rather than just
+      # sorting key_list(), so that classes with custom ordering (eg
+      # ClTable) don't need to override both sort methods.
+      return if can(ORDER) then key_list() else ipl.pdco.List{(!sort())[1]}
    end
 
    #
@@ -203,6 +201,11 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
       return ipl.pdco.List{keyval()}
    end
 
+   # Return an unsorted list of the keys.
+   public key_list()
+      return ipl.pdco.List{key()}
+   end
+
    # Return an (unsorted) list of pairs of key-values.
    public entry_list()
       local l, e, r
@@ -309,6 +312,10 @@ class UnmodifiableTable(Table)
       return t.sort()
    end
 
+   public key_sort()
+      return t.key_sort()
+   end
+
    public key()
       suspend t.key()
    end
@@ -345,8 +352,8 @@ class UnmodifiableTable(Table)
       return t.size()
    end
 
-   public get_capability()
-      return iand(ORDER, t.get_capability())
+   public get_mode()
+      return iand(ORDER, t.get_mode())
    end
 
    public new(t)
@@ -412,7 +419,7 @@ class ClTable(Table)
       return *t
    end
 
-   public get_capability()
+   public get_mode()
       return MODIFY + INSERT + DELETE
    end
 
@@ -461,8 +468,8 @@ class TableKeyList(List)
       return self
    end
 
-   public get_capability()
-      return iand(DELETE, t.get_capability())
+   public get_mode()
+      return iand(DELETE, t.get_mode())
    end
 
    public new(t)
@@ -668,14 +675,6 @@ class SortTable(Table)
       return if /n then 0 else n.N
    end
 
-   public sort()
-      local e, l
-      l := []
-      every e := Seq{traverse(root)} do
-         put(l, [e.key, e.val])
-      return l
-   end
-
    public key()
       suspend .Seq{traverse(root)}.key
    end
@@ -803,7 +802,7 @@ class SortTable(Table)
       return
    end
 
-   public get_capability()
+   public get_mode()
       return MODIFY + INSERT + DELETE + ORDER
    end
 
@@ -899,13 +898,6 @@ class EqTable(Table)
       }
    end
 
-   public sort()
-      local l
-      l := []
-      every put(l, copy(!!t))
-      return default.sortf(l, 1)
-   end
-
    public key()
       suspend .(!!t)[1]
    end
@@ -930,7 +922,7 @@ class EqTable(Table)
       return self
    end
 
-   public get_capability()
+   public get_mode()
       return MODIFY + INSERT + DELETE
    end
 
@@ -993,7 +985,7 @@ class BuiltinTable(Table)
       return *t
    end
 
-   public get_capability()
+   public get_mode()
       return MODIFY + INSERT + DELETE
    end
 
@@ -1022,7 +1014,7 @@ package class EmptyTable(Table, SelfClone)
       return 0
    end
 
-   public get_capability()
+   public get_mode()
       return 0
    end
 
@@ -1105,15 +1097,6 @@ class WeakrefTable(Table)
       }
    end
 
-   public sort()
-      local e, x
-      maybe_purge()
-      x := table()
-      every e := !!t do
-         default.insert(x, weakrefval(e[1]), e[2])
-      return default.sort(x)
-   end
-
    public key()
       maybe_purge()
       suspend weakrefval((!!t)[1])
@@ -1167,7 +1150,7 @@ class WeakrefTable(Table)
       }
    end
 
-   public get_capability()
+   public get_mode()
       return MODIFY + INSERT + DELETE
    end
 

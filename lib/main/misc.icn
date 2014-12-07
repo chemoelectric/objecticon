@@ -231,4 +231,22 @@ procedure cvpos_item(pos, len)
    return pos + len + 1
 end
 
+# This class can be used by a class which has various capabilities or
+# permitted operations, and needs to give clients a simple way of
+# seeing what it is capable of, by way of an integer bit flag
+# combination.
+#
+abstract class HasMode()
+   #
+   # Succeed iff the object's mode has all the flags in {c}
+   #
+   public can(c)
+      return iand(get_mode(), c) = c
+   end
+
+   # This method is implemented to return the integer bit flag
+   # describing the object's capabilities.
+   #
+   public abstract get_mode()
+end
 
