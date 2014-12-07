@@ -360,7 +360,6 @@ static void invoke_class_init()
     }
 }
 
-
 static void ensure_class_initialized()
 {
     struct p_frame *pf;
@@ -724,7 +723,6 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
         MemProtect(pf = alc_p_frame(&Binitialize_class_and_repeat, 0));
         push_frame((struct frame *)pf);
         pf->tmp[0] = *expr;
-        pf->failure_label = failure_label;
         tail_invoke_frame((struct frame *)pf);
         return;
     }
@@ -959,7 +957,6 @@ static void class_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inli
         MemProtect(pf = alc_p_frame(&Binitialize_class_and_repeat, 0));
         push_frame((struct frame *)pf);
         pf->tmp[0] = *expr;
-        pf->failure_label = failure_label;
         tail_invoke_frame((struct frame *)pf);
         return;
     }
@@ -1213,6 +1210,8 @@ function lang_Class_create_raw_instance()
        if (!caller_proc->field)
            runerr(627);
        cl = caller_proc->field->defining_class;
+       if (cl->init_state == Uninitialized)
+           syserr("In method of Uninitialized class");
        if (cl->flags & M_Abstract)
            Blkrunerr(605, cl, D_Class);
        MemProtect(BlkLoc(result) = (union block*)alcobject(cl));
@@ -1240,6 +1239,8 @@ function lang_Class_create_instance()
        if (!caller_proc->field)
            runerr(627);
        cl = caller_proc->field->defining_class;
+       if (cl->init_state == Uninitialized)
+           syserr("In method of Uninitialized class");
        if (cl->flags & M_Abstract)
            Blkrunerr(605, cl, D_Class);
        MemProtect(BlkLoc(result) = (union block*)alcobject(cl));
