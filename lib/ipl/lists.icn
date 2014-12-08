@@ -687,17 +687,17 @@ procedure lrepl(L, i)
 
 end
 
-# list reverse
+# list reverse, returning a new list
 procedure lreverse(L)			
+   return lreverse_mod(copy(L))
+end
+
+# list reverse, modifying L
+procedure lreverse_mod(L)			
    local i
-
-   L := copy(L)
-
    every i := 1 to *L / 2 do
       L[i] :=: L[-i]
-
    return L
-
 end
 
 # list rotation
