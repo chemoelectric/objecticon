@@ -94,24 +94,24 @@ $endif
    # A useful function to help sort the result of the various list
    # functions.  Sorts by case-insensitive name.
    #
-   public static name_key(data)
-      return map(data.name)
+   public static name_cmp(d1, d2)
+      return Internal.compare(map(d1.name), map(d2.name))
    end
 
    #
    # A useful function to help sort the result of the various list
    # functions.  Sorts by size in bytes.
    #
-   public static size_key(data)
-      return data.lstat.size
+   public static size_cmp(d1, d2)
+      return d1.lstat.size - d2.lstat.size
    end
 
    #
    # A useful function to help sort the result of the various list
    # functions.  Sorts by modification time.
    #
-   public static date_key(data)
-      return data.lstat.mtime
+   public static date_cmp(d1, d2)
+      return d1.lstat.mtime - d2.lstat.mtime
    end
 
    #

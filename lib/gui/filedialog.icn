@@ -6,6 +6,7 @@ import
    ipl.lists,
    ipl.filegui,
    ipl.pdco,
+   ipl.functional,
    util,
    io
 
@@ -560,7 +561,7 @@ class FileDialog(Dialog)
    # Read a directory.
    #
    public list_directory(s)
-      local e, dir_list, file_list, l, pats, t, tf, z, zf, n, now, fl
+      local e, dir_list, file_list, l, pats, t, tf, z, zf, n, now
       pats := get_pats()
       l := Files.ucs_list(s, ListEntryWithIcon) | fail
       dir_list := []
@@ -590,10 +591,9 @@ class FileDialog(Dialog)
             }
          }
       }
-      fl := isort(file_list, sorter)
-      if \ascending then
-         fl := lreverse(fl)
-      return [isort(dir_list, Files.name_key), fl]
+      qsort(file_list, if /ascending then sorter else flip(sorter))
+      qsort(dir_list, Files.name_cmp)
+      return [dir_list, file_list]
    end
 
    public new()
@@ -619,7 +619,7 @@ class FileDialog(Dialog)
          set_item_border(EmptyBorder().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                              set_x_align(Align.L))
-      sorter := Files.name_key
+      sorter := Files.name_cmp
       synch_paints()
       existing_file_mode := IGNORE
       history := []
@@ -635,19 +635,19 @@ class FileDialog(Dialog)
       sp := ImagePaint().set_cache("gui.FILESIZE_24")
       dp := ImagePaint().set_cache("gui.CLOCK_24")
       case sorter of {
-         Files.name_key: {
+         Files.name_cmp: {
             name_button.set_paint(cp.set_bottom(np))
             date_button.set_paint(dp)
             size_button.set_paint(sp)
             flist.set_item_paint(IconFilesItemPaint())
          }
-         Files.size_key: {
+         Files.size_cmp: {
             name_button.set_paint(np)
             date_button.set_paint(dp)
             size_button.set_paint(cp.set_bottom(sp))
             flist.set_item_paint(IconFilesItemPaintSize())
          }
-         Files.date_key: {
+         Files.date_cmp: {
             name_button.set_paint(np)
             date_button.set_paint(cp.set_bottom(dp))
             size_button.set_paint(sp)
@@ -657,28 +657,28 @@ class FileDialog(Dialog)
    end
 
    private on_date_button(ev)
-      if sorter === Files.date_key then
+      if sorter === Files.date_cmp then
          ascending := toggle_flag(ascending)
       else
-         sorter := Files.date_key
+         sorter := Files.date_cmp
       synch_paints()
       refresh_dir()
    end
 
    private on_name_button(ev)
-      if sorter === Files.name_key then
+      if sorter === Files.name_cmp then
          ascending := toggle_flag(ascending)
       else
-         sorter := Files.name_key
+         sorter := Files.name_cmp
       synch_paints()
       refresh_dir()
    end
 
    private on_size_button(ev)
-      if sorter === Files.size_key then
+      if sorter === Files.size_cmp then
          ascending := toggle_flag(ascending)
       else
-         sorter := Files.size_key
+         sorter := Files.size_cmp
       synch_paints()
       refresh_dir()
    end

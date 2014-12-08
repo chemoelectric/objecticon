@@ -65,7 +65,7 @@ class Explorer(Dialog)
       s := get_full_path(n)
 
       l := get_directory_list(s)[1]
-      l := isort(l, Files.name_key)
+      qsort(l, Files.name_cmp)
       n.clear_children()
       every e := !l do {
          r1 := TreeNode().set_always_expandable(&yes)
@@ -93,7 +93,7 @@ class Explorer(Dialog)
       s := get_full_path(n)
 
       t := get_directory_list(s) | fail
-      t := isort(t[1] ||| t[2], Files.name_key)
+      t := qsort(t[1] ||| t[2], Files.name_cmp)
 
       l := []
       every el := !t do {

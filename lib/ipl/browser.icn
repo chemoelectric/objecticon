@@ -394,7 +394,7 @@ class FileSubWorker(SubWorker)
       local f, e, l, t, path, rs, now, tf, gcache, ucache, ts
       f := worker.req.url.get_decoded_path()
       if Files.is_directory(f) then {
-         l := isort(Files.ucs_list(f), Files.name_key) | fail
+         l := qsort(Files.ucs_list(f), Files.name_cmp) | fail
          now := Time.get_system_seconds()
          ucache := table()
          gcache := table()
