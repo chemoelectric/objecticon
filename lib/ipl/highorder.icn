@@ -2,7 +2,8 @@ package ipl.functional
 
 import
    lang(Class),
-   ipl.callable(callable)
+   ipl.callable(callable),
+   ipl.lists(lreverse_mod)
 
 #
 # Implementation class for {partial}
@@ -249,4 +250,47 @@ end
 #
 procedure coexf(e)
    return Coexf(e).call
+end
+
+# Implementation class for `flip`.
+package class Flip()
+   private f
+
+   public call(a, b)
+      suspend f(b, a)
+   end
+
+   public new(f)
+      self.f := f
+      return
+   end
+end
+
+# This function takes a binary function and returns another function
+# which invokes the original, but swapping its two arguments.
+#
+procedure flip(f)
+   return Flip(f).call
+end
+
+# Implementation class for `revargs`.
+package class RevArgs()
+   private f
+
+   public call(a[])
+      suspend f!lreverse_mod(a)
+   end
+
+   public new(f)
+      self.f := f
+      return
+   end
+end
+
+# This function takes a function and returns another function which
+# invokes the original, but reversing all its arguments.  This is like
+# `flip` above, but more general (and slower).
+#
+procedure revargs(f)
+   return RevArgs(f).call
 end
