@@ -180,28 +180,13 @@ end
 # A caseless string comparator function.
 #
 procedure cl_cmp(s1, s2)
-   return Internal.compare(map(s1), map(s2))
-end
-
-# Implementation class for `rev_cmp`.
-package class RevCmp()
-   private f
-
-   public call(a, b)
-      return f(b, a)
-   end
-
-   public new(f)
-      self.f := f
-      return
-   end
-end
-
-# Take one comparison function and return another which reverse its
-# ordering; in other words f(a,b) is mapped to f(b,a).
-#
-procedure rev_cmp(f)
-   return RevCmp(f).call
+   local i
+   i := Internal.compare(map(s1), map(s2))
+   # The following sub-compare ensures consistent results in sorting,
+   # so that eg abc, aBc, ABC are always sorted in the same order.
+   if i = 0 then
+      i := Internal.compare(s1, s2)
+   return i
 end
 
 # This is a comparison function that just reverses the order of the
