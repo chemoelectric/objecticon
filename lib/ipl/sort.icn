@@ -184,7 +184,7 @@ procedure cl_cmp(s1, s2)
 end
 
 # Implementation class for `rev_cmp`.
-package class RevCmpImpl()
+package class RevCmp()
    private f
 
    public call(a, b)
@@ -201,7 +201,7 @@ end
 # ordering; in other words f(a,b) is mapped to f(b,a).
 #
 procedure rev_cmp(f)
-   return RevCmpImpl(f).call
+   return RevCmp(f).call
 end
 
 # This is a comparison function that just reverses the order of the
@@ -212,7 +212,7 @@ procedure rev_cmp_internal(a, b)
 end
 
 # Implementation class for `cmp_index`.
-package class CmpIndexImpl()
+package class CmpIndex()
    private f, i
 
    public call(a, b)
@@ -237,11 +237,11 @@ end
 # @    qsort(l, cmp_index(2))
 #
 procedure cmp_index(i, f)
-   return CmpIndexImpl(i, f).call
+   return CmpIndex(i, f).call
 end
 
 # Implementation class for `cmp_field`.
-package class CmpFieldImpl()
+package class CmpField()
    private f, q
 
    public call(a, b)
@@ -266,7 +266,7 @@ end
 # @    qsort(l, cmp_field("x"))
 #
 procedure cmp_field(q, f)
-   return CmpFieldImpl(q, f).call
+   return CmpField(q, f).call
 end
 
 #
