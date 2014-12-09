@@ -349,15 +349,17 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
          }
 
          "methp" : {
+            s := ty || "#" || serial(o)
+            insert(seen, o, s)
             if /desc then 
-               writes1("methp()")
+               writes1(s)
             else if simple{Class.get_methp_object(o)} then {
-               writes1("methp(")
+               writes(s, "(")
                traverse(Class.get_methp_object(o))
                writes(",", image(Class.get_methp_proc(o)), ")")
             } else {
                nl()
-               writes1("methp(")
+               writes(s, "(")
                iplus()
                nl()
                traverse(Class.get_methp_object(o))

@@ -186,6 +186,7 @@ uword list_ser = 1;
 uword set_ser = 1;
 uword table_ser = 1;
 uword weakref_ser = 1;
+uword methp_ser = 1;
 
 struct progstate *progs;        /* list of progstates */
 

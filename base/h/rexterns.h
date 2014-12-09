@@ -26,6 +26,7 @@ extern uword list_ser;
 extern uword set_ser;
 extern uword table_ser;
 extern uword weakref_ser;
+extern uword methp_ser;
 
 extern char *allchars;          /* array for making one-character strings */
 extern char *blkname[];		/* print names for block types. */

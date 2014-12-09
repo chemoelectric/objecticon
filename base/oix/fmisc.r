@@ -381,6 +381,7 @@ function serial(x)
       record:   id = RecordBlk(x).id;
       object:   id = ObjectBlk(x).id;
       coexpr:   id = CoexprBlk(x).id;
+      methp:    id = MethpBlk(x).id;
       weakref:  id = WeakrefBlk(x).id;
       default:  runerr(123,x);
     }

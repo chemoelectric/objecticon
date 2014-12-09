@@ -9,7 +9,6 @@ static int objectcmp(struct b_object *o1, struct b_object *o2);
 static int constructorcmp(struct b_constructor *c1, struct b_constructor *c2);
 static int recordcmp(struct b_record *r1, struct b_record *r2);
 static int proccmp(struct b_proc *p1, struct b_proc *p2);
-static int methpcmp(struct b_methp *m1, struct b_methp *m2);
 static int progcmp(struct progstate *p1, struct progstate *p2);
 
 /*
@@ -123,7 +122,10 @@ int anycmp(dptr dp1, dptr dp2)
          return objectcmp(&ObjectBlk(*dp1), &ObjectBlk(*dp2));
 
       methp:
-         return methpcmp(&MethpBlk(*dp1), &MethpBlk(*dp2));
+         /*
+          * Collate on id.
+          */
+         return uwordcmp(MethpBlk(*dp1).id, MethpBlk(*dp2).id);
 
       weakref:
          /*
@@ -384,20 +386,6 @@ static int recordcmp(struct b_record *r1, struct b_record *r2)
     i = constructorcmp(r1->constructor, r2->constructor);
     if (i == Equal)
         i = uwordcmp(r1->id, r2->id);
-    return i;
-}
-
-static int methpcmp(struct b_methp *m1, struct b_methp *m2)
-{
-    int i;
-    /*
-     * Collate on object, proc.
-     */
-    if (m1 == m2)
-        return Equal;
-    i = objectcmp(m1->object, m2->object);
-    if (i == Equal)
-        i = proccmp(m1->proc, m2->proc);
     return i;
 }
 

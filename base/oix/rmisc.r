@@ -310,6 +310,10 @@ uword hash(dptr dp)
             i = (13255 * CoexprBlk(*dp).id) >> 10;
             break;
 
+         case T_Methp:
+            i = (13255 * MethpBlk(*dp).id) >> 10;
+            break;
+
 	 case T_Weakref:
             i = (13255 * WeakrefBlk(*dp).id) >> 10;
             break;
@@ -321,10 +325,6 @@ uword hash(dptr dp)
          case T_Constructor:
 	    dp = ConstructorBlk(*dp).name;
 	    goto hashstring;
-
-         case T_Methp:
-            i = (13255 * MethpBlk(*dp).object->id) >> 10;
-            break;
 
 	 case T_Ucs:
 	    dp = &(UcsBlk(*dp).utf8);
@@ -657,7 +657,7 @@ void outimage(FILE *f, dptr dp, int noimage)
         }
 
      methp: {
-             fprintf(f, "methp(");
+             fprintf(f, "methp#%lu(",(unsigned long)MethpBlk(*dp).id);
              tdp.dword = D_Object;
              BlkLoc(tdp) = (union block*)MethpBlk(*dp).object;
              outimage(f, &tdp, noimage);
@@ -1372,7 +1372,7 @@ void getimage(dptr dp1, dptr dp2)
      methp: {
          /*
           * Produce:
-          *  "methp(object image,method image)"
+          *  "methp#n(object image,method image)"
           */
          tended struct descrip td1, td2, td3;
          td1.dword = D_Object;
@@ -1381,10 +1381,11 @@ void getimage(dptr dp1, dptr dp2)
          td1.dword = D_Proc;
          BlkLoc(td1) = (union block*)MethpBlk(*dp1).proc;
          getimage(&td1, &td3);
-         len = 6 + StrLen(td2) + 1 + StrLen(td3) + 1;
+         sprintf(sbuf, "methp#%lu(", (unsigned long)MethpBlk(*dp1).id);
+         len = strlen(sbuf) + StrLen(td2) + 1 + StrLen(td3) + 1;
          MemProtect (StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
-         alcstr("methp(", 6);
+         alcstr(sbuf, strlen(sbuf));
          alcstr(StrLoc(td2),StrLen(td2));
          alcstr(",", 1);
          alcstr(StrLoc(td3),StrLen(td3));
@@ -1440,12 +1441,10 @@ void getimage(dptr dp1, dptr dp2)
           *  number of results that have been produced.
           */
 
-         sprintf(sbuf, "#%lu(%ld)", (unsigned long)CoexprBlk(*dp1).id, (long)CoexprBlk(*dp1).size);
-         len = strlen(sbuf) + 13;
-	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
+         sprintf(sbuf, "co-expression#%lu(%ld)", (unsigned long)CoexprBlk(*dp1).id, (long)CoexprBlk(*dp1).size);
+         len = strlen(sbuf);
+         MemProtect(StrLoc(*dp2) = alcstr(sbuf, len));
          StrLen(*dp2) = len;
-         alcstr("co-expression", 13);
-         alcstr(sbuf, strlen(sbuf));
          }
 
       default:

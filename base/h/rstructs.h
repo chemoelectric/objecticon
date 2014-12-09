@@ -203,6 +203,7 @@ struct b_object {		/* object block */
  */
 struct b_methp {                /* method pointer */
     word title;                 /*   T_Methp */
+    uword id;			/*   identification number */
     struct b_object *object;	/*   the instance */
     struct b_proc *proc;	/*   the method */
 };

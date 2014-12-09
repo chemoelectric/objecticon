@@ -451,6 +451,7 @@ struct b_methp *f()
    struct b_methp *blk;
 
    AlcFixBlk(blk, b_methp, T_Methp, e_methp)
+   blk->id = methp_ser++;
    blk->object = 0;
    blk->proc = 0;
    return blk;
