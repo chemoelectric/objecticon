@@ -3443,19 +3443,20 @@ static int lexcmp(struct literal *x, struct literal *y)
      * Compare as many bytes as are in the smaller string.  If an
      *  inequality is found, compare the differing bytes.
      */
-    while (minlen--)
-        if (*s1++ != *s2++)
-            return ((*--s1 & 0377) > (*--s2 & 0377) ?
-                    Greater : Less);
+    while (minlen--) {
+        unsigned char c1, c2;
+        c1 = *s1++;
+        c2 = *s2++;
+        if (c1 != c2)
+            return (c1 > c2) ? Greater : Less;
+    }
+
     /*
      * The strings compared equal for the length of the shorter.
      */
     if (l1 == l2)
         return Equal;
-    else if (l1 > l2)
-        return Greater;
-    else
-        return Less;
+    return (l1 > l2) ? Greater : Less;
 }
 
 static int equiv(struct literal *x, struct literal *y)

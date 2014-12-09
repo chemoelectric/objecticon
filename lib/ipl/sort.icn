@@ -60,7 +60,7 @@
 
 package ipl.sort
 
-import lang(Class,Prog,Internal)
+import lang(Class,Prog,Internal,Text)
 
 procedure isort(x,keyproc,y)
    local items,item,key,result
@@ -176,14 +176,17 @@ procedure sortt(T, i)
 
 end
 
+# A caseless string comparator function with consistent ordering
+# amongst items which compare caselessly equal, so that for example
+# abc, aBc, ABC are always sorted in the same order.
 #
-# A caseless string comparator function.
+# This function would not make much sense for use with a SortTable,
+# since it would result in duplicate entries which are caselessly
+# equal; rather the simpler `Text.cl_compare` should be used.
 #
-procedure cl_cmp(s1, s2)
+procedure consistent_cl_cmp(s1, s2)
    local i
-   i := Internal.compare(map(s1), map(s2))
-   # The following sub-compare ensures consistent results in sorting,
-   # so that eg abc, aBc, ABC are always sorted in the same order.
+   i := Text.cl_compare(s1, s2)
    if i = 0 then
       i := Internal.compare(s1, s2)
    return i

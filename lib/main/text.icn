@@ -19,6 +19,12 @@ final abstract class Text()
    #
    public static native utf8_seq(i)
 
+   # Caseless string comparator function.  This works just like
+   # Internal.compare (so no conversions are done), but uses caseless
+   # text comparison.
+   #
+   public static native cl_compare(s1, s2)
+
    # Succeed if all the chars in x are in cset y.
    #
    public static subset(x, y)

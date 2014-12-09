@@ -1305,6 +1305,17 @@ function lang_Text_utf8_seq(i)
    }
 end
 
+function lang_Text_cl_compare(s1, s2)
+   body {
+      if (EqlDesc(s1,s2))
+          return C_integer Equal;
+      if (is:string(s1) && is:string(s2))
+          return C_integer cl_lexcmp(&s1, &s2);
+      if (is:ucs(s1) && is:ucs(s2))
+          return C_integer cl_lexcmp(&UcsBlk(s1).utf8, &UcsBlk(s2).utf8);
+      return C_integer anycmp(&s1, &s2);
+   }
+end
 
 function lang_Text_create_cset(x[n])
    body {

@@ -48,9 +48,6 @@ int anycmp(dptr dp1, dptr dp2)
          return bigcmp(dp1, dp2);
 
       coexpr:
-         /*
-          * Collate on co-expression id.
-          */
          return uwordcmp(CoexprBlk(*dp1).id, CoexprBlk(*dp2).id);
 
       cset: {
@@ -82,9 +79,6 @@ int anycmp(dptr dp1, dptr dp2)
       }
 
       list:
-         /*
-          * Collate on list id.
-          */
          return uwordcmp(ListBlk(*dp1).id, ListBlk(*dp2).id);
 
       null:
@@ -94,9 +88,6 @@ int anycmp(dptr dp1, dptr dp2)
          return proccmp(&ProcBlk(*dp1), &ProcBlk(*dp2));
 
       ucs:
-         /*
-          * Collate on utf8 data.
-          */
          return lexcmp(&(UcsBlk(*dp1).utf8), &(UcsBlk(*dp2).utf8));
 
       real: {
@@ -122,27 +113,15 @@ int anycmp(dptr dp1, dptr dp2)
          return objectcmp(&ObjectBlk(*dp1), &ObjectBlk(*dp2));
 
       methp:
-         /*
-          * Collate on id.
-          */
          return uwordcmp(MethpBlk(*dp1).id, MethpBlk(*dp2).id);
 
       weakref:
-         /*
-          * Collate on id.
-          */
          return uwordcmp(WeakrefBlk(*dp1).id, WeakrefBlk(*dp2).id);
 
       set:
-         /*
-          * Collate on set id.
-          */
          return uwordcmp(SetBlk(*dp1).id, SetBlk(*dp2).id);
 
       table:
-         /*
-          * Collate on table id.
-          */
          return uwordcmp(TableBlk(*dp1).id, TableBlk(*dp2).id);
 
       default: {
@@ -301,10 +280,13 @@ int lexcmp(dptr dp1, dptr dp2)
         * Compare as many bytes as are in the smaller string.  If an
         *  inequality is found, compare the differing bytes.
         */
-       while (minlen--)
-           if (*s1++ != *s2++)
-               return ((*--s1 & 0377) > (*--s2 & 0377) ?
-                       Greater : Less);
+       while (minlen--) {
+           unsigned char c1, c2;
+           c1 = *s1++;
+           c2 = *s2++;
+           if (c1 != c2)
+               return (c1 > c2) ? Greater : Less;
+       }
    }
 
    /*
@@ -313,7 +295,53 @@ int lexcmp(dptr dp1, dptr dp2)
    if (l1 == l2)
       return Equal;
    return (l1 > l2) ? Greater : Less;
+}
 
+/*
+ * Caseless string comparison
+ */
+
+int cl_lexcmp(dptr dp1, dptr dp2)
+{
+   char *s1, *s2;
+   word l1, l2;
+
+   /*
+    * Get length and starting address of both strings.
+    */
+   l1 = StrLen(*dp1);
+   s1 = StrLoc(*dp1);
+   l2 = StrLen(*dp2);
+   s2 = StrLoc(*dp2);
+
+   if (s1 != s2) {
+       /*
+        * Set minlen to length of the shorter string.
+        */
+       word minlen = Min(l1, l2);
+
+       /*
+        * Compare as many bytes as are in the smaller string.  If an
+        *  inequality is found, compare the differing bytes.
+        */
+       while (minlen--) {
+           unsigned char c1, c2;
+           c1 = *s1++;
+           c2 = *s2++;
+           /* Don't use tolower since that is locale dependent. */
+           if (c1 >= 'A' && c1 <= 'Z') c1 += 'a' - 'A';
+           if (c2 >= 'A' && c2 <= 'Z') c2 += 'a' - 'A';
+           if (c1 != c2)
+               return (c1 > c2) ? Greater : Less;
+       }
+   }
+
+   /*
+    * The strings compared equal for the length of the shorter.
+    */
+   if (l1 == l2)
+      return Equal;
+   return (l1 > l2) ? Greater : Less;
 }
 
 /*
