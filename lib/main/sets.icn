@@ -4,31 +4,55 @@
 
 package datastruct
 
-import lang
+import ipl.pdco(Length,Index), lang, util
 
 #
 # This is a common superclass for a set-like data structure.
 #
-abstract class Set(ObjectOutput, ObjectHash, ObjectEquals)
-   #
-   # Insert a new member.
-   #
-   public abstract insert(x)
+abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
+   public static const
+      # An empty set instance
+      EMPTY_SET,
+      # Constant indicating insert capability
+      INSERT,
+      # Constant indicating delete capability
+      DELETE,
+      # Constant indicating entries are stored in order
+      ORDER
+
+   private static init()
+      EMPTY_SET := EmptySet()
+      INSERT := 2
+      DELETE := 4
+      ORDER := 8
+   end
 
    #
-   # Succeed iff {x} is a member of the set.
+   # Insert a new member.  Always succeeds and returns {self}.  Only
+   # implemented with INSERT capability.
+   #
+   public defer insert(x)
+
+   #
+   # Succeed with `x` if it is a member of the set.
    #
    public abstract member(x)
 
    #
-   # Delete {x} from the set.
+   # Delete `x` from the set.  Fails if the key was not present,
+   # otherwise succeeds and returns {self}.  Only implemented with
+   # DELETE capability.
    #
-   public abstract delete(x)
+   public defer delete(x)
 
    #
    # Return a sorted list of members.
    #
-   public abstract sort()
+   public sort()
+      local l
+      l := member_list()
+      return if can(ORDER) then l else default.sort(member_list())
+   end
 
    #
    # Generate the members.
@@ -36,29 +60,50 @@ abstract class Set(ObjectOutput, ObjectHash, ObjectEquals)
    public abstract gen()
 
    #
-   # Generate the members in reverse order.  Only implemented for sets which store their
-   # members in sorted order.
+   # Generate the entries in reverse order.  Only implemented with
+   # ORDER capability.
    #
    public defer back()
 
    #
-   # Return the size of the set.
+   # Return the rank of the given entry, ie its order number in the
+   # set; fails if there is no matching entry in the set.  Only
+   # implemented for sets with ORDER capability.
    #
-   public abstract size()
+   public defer rank(x)
 
    #
-   # Clear the set of all elements.
+   # Return the `i`th entry, in order, in the set.  Fails if `i` is
+   # out of range, using standard icon indexing semantics.  Only
+   # implemented for sets with ORDER capability.
    #
-   public abstract clear()
+   public select(i)
+      can(ORDER) | runerr("Set doesn't have ORDER capability: ", self)
+      return Index{gen(), cvpos_item(i, size())}
+   end
+
+   #
+   # Return the size of the set.
+   #
+   public size()
+      return Length{gen()}
+   end
+
+   #
+   # Clear the set of all elements. Always succeeds and returns
+   # {self}.  Only implemented with DELETE capability.
+   #
+   public clear()
+      while size() > 0 do
+         delete(gen())
+      return self
+   end
 
    #
    # Return a list of the members, in the order produced by {gen()}.
    #
    public member_list()
-      local l
-      l := []
-      every put(l, gen())
-      return l
+      return ipl.pdco.List{gen()}
    end
 
    #
@@ -114,10 +159,54 @@ abstract class Set(ObjectOutput, ObjectHash, ObjectEquals)
 end
 
 #
+# A class to provide an unmodifiable view of another set.
+#
+class UnmodifiableSet(Set)
+   private const s
+
+   public member(x)
+      return s.member(x)
+   end
+
+   public sort()
+      return s.sort()
+   end
+
+   public gen()
+      suspend s.gen()
+   end
+
+   public back()
+      suspend s.back()
+   end
+
+   public rank(x)
+      return s.rank(x)
+   end
+
+   public select(i)
+      return s.select(i)
+   end
+
+   public size()
+      return s.size()
+   end
+
+   public get_mode()
+      return iand(ORDER, s.get_mode())
+   end
+
+   public new(s)
+      self.s := s
+      return
+   end
+end
+
+#
 # A Set which is a view of the keys of a {Table}.
 #
 class TableSet(Set)
-   private t
+   private const t
 
    public insert(x)
       t.insert(x, t.def)
@@ -130,15 +219,11 @@ class TableSet(Set)
    end
 
    public delete(x)
-      t.delete(x)
-      return self
+      return t.delete(x) & self
    end
 
    public sort()
-      local l
-      l := []
-      every put(l, (!t.sort())[1])
-      return l
+      return t.key_sort()
    end
 
    public gen()
@@ -149,6 +234,14 @@ class TableSet(Set)
       suspend t.back_key()
    end
 
+   public rank(x)
+      return t.rank(x)
+   end
+
+   public select(i)
+      return t.select(i)
+   end
+
    public size()
       return t.size()
    end
@@ -156,6 +249,10 @@ class TableSet(Set)
    public clear()
       t.clear()
       return self
+   end
+
+   public get_mode()
+      return iand(INSERT + DELETE + ORDER, t.get_mode())
    end
 
    #
@@ -175,11 +272,31 @@ class TableSet(Set)
    end
 end
 
+package class EmptySet(Set, SelfClone)
+   public member(x)
+   end
+
+   public gen()
+   end
+
+   public size()
+      return 0
+   end
+
+   public get_mode()
+      return 0
+   end
+
+   package new()
+      return
+   end
+end
+
 #
 # A {Set} that is just a wrapper around a builtin set
 #
 class BuiltinSet(Set)
-   private s
+   private const s
 
    public insert(x)
       default.insert(s, x)
@@ -191,8 +308,7 @@ class BuiltinSet(Set)
    end
 
    public delete(x)
-      default.delete(s, x)
-      return self
+      return default.delete(s, x) & self
    end
 
    public sort()
@@ -210,6 +326,10 @@ class BuiltinSet(Set)
    public clear()
       default.clear(s)
       return self
+   end
+
+   public get_mode()
+      return INSERT + DELETE
    end
 
    #

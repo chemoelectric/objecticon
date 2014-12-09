@@ -21,6 +21,13 @@ extern int collection_count;    /* global collection count of all collections */
 extern uword stacklim;          /* limit of stack use which may trigger a GC */
 extern word stackcushion;       /* % factor to apply to total stack usage to avoid GC thrashing */
 
+extern uword coexp_ser;         /* Serial numbers for object creation */
+extern uword list_ser;
+extern uword set_ser;
+extern uword table_ser;
+extern uword weakref_ser;
+extern uword methp_ser;
+
 extern char *allchars;          /* array for making one-character strings */
 extern char *blkname[];		/* print names for block types. */
 extern char *currend;		/* current end of memory region */
@@ -103,10 +110,6 @@ extern dptr xarg1, xarg2, xarg3;   /* Operator args */
 extern char c1list[], c2list[], c3list[], c4list[];
 #if Graphics
    
-#if XWindows
-      extern struct _wdisplay * wdsplys;
-#endif				/* XWindows */
-
 #if MSWIN32
       extern HINSTANCE mswinInstance;
       extern int ncmdShow;

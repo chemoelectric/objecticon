@@ -146,7 +146,7 @@ int firstp[] = {
      1*WordSize,              /* T_Tvtbl (14), table element trapped variable */
      2*WordSize,              /* T_Slots (15), set/table hash block */
      0,                       /* T_Tvsubs (16), substring trapped variable */
-     1*WordSize,              /* T_Methp (17), methp */
+     2*WordSize,              /* T_Methp (17), methp */
     -1,                       /* T_Coexpr (18), co-expression block */
      0,                       /* T_Ucs (19), unicode string */
      -1,                      /* T_Kywdint (20), integer keyword variable */

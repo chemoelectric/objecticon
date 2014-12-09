@@ -565,8 +565,8 @@ dptr get_element(dptr d, word i)
          struct b_list *lp;        /* doesn't need to be tended */
          word j;
          lp = &ListBlk(*d);
-         i = cvpos(i, lp->size);
-         if (i == CvtFail || i > lp->size)
+         i = cvpos_item(i, lp->size);
+         if (i == CvtFail)
              return 0;
          /*
           * Locate the desired element and return a pointer to it.
@@ -585,8 +585,8 @@ dptr get_element(dptr d, word i)
       record: {
          struct b_record *bp;        /* doesn't need to be tended */
          bp = &RecordBlk(*d);
-         i = cvpos(i, bp->constructor->n_fields);
-         if (i == CvtFail || i > bp->constructor->n_fields)
+         i = cvpos_item(i, bp->constructor->n_fields);
+         if (i == CvtFail)
              return 0;
          return &bp->fields[i - 1];
         }

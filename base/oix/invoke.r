@@ -6,8 +6,6 @@
 #include "../h/modflags.h"
 
 static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args, dptr self);
-static void ensure_class_initialized(void);
-
 static void simple_access(void);
 static void create_raw_instance(void);
 static void handle_access_failure(void);
@@ -362,7 +360,6 @@ static void invoke_class_init()
     }
 }
 
-
 static void ensure_class_initialized()
 {
     struct p_frame *pf;
@@ -576,8 +573,8 @@ static void invoke_misc(word clo, dptr lhs, dptr expr, int argc, dptr args, word
 
         /* Integer expression; return nth argument */
 
-        int i = cvpos(iexpr, argc);
-        if (i == CvtFail || i > argc) {
+        int i = cvpos_item(iexpr, argc);
+        if (i == CvtFail) {
             ipc = failure_label;
             return;
         }
@@ -719,7 +716,6 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
 {
     struct b_class *class0 = &ClassBlk(*expr);
     struct class_field *cf;
-    dptr dp;
     int i, ac;
 
     if (class0->init_state == Uninitialized) {
@@ -727,7 +723,6 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
         MemProtect(pf = alc_p_frame(&Binitialize_class_and_repeat, 0));
         push_frame((struct frame *)pf);
         pf->tmp[0] = *expr;
-        pf->failure_label = failure_label;
         tail_invoke_frame((struct frame *)pf);
         return;
     }
@@ -739,6 +734,8 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
     cf = class0->fields[i];
 
     if (cf->flags & M_Static) {
+        dptr dp;
+
         /* Can't access static init method via a field */
         if (cf->flags & M_Special) 
             AccessErr(621);
@@ -767,7 +764,6 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
         dptr self;
         struct b_class *self_class;
         struct p_frame *pf;
-        struct b_methp *mp;  /* Doesn't need to be tended */
 
         /* Cannot access an instance field via the class */
         if (!(cf->flags & M_Method)) 
@@ -775,11 +771,12 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
 
         pf = get_current_user_frame();
         /* We must be in an instance method */
-        if (!pf->proc->field ||
-            (pf->proc->field->flags & (M_Method | M_Static)) != M_Method)
+        if (!pf->proc->field || (pf->proc->field->flags & M_Static))
             AccessErr(606);
 
         self = &pf->fvars->desc[0];
+        if (!is:object(*self))
+            syserr("self is not an object");
         self_class = ObjectBlk(*self).class;
 
         /* 
@@ -801,6 +798,7 @@ static void class_access(dptr lhs, dptr expr, dptr query, struct inline_field_ca
          * Instance method.  Return a method pointer.
          */
         if (lhs) {
+            struct b_methp *mp;  /* Doesn't need to be tended */
             MemProtect(mp = alcmethp());
             mp->object = &ObjectBlk(*self);
             mp->proc = &ProcBlk(*cf->field_descriptor);
@@ -817,7 +815,6 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
                             word *failure_label)
 {
     struct b_class *class0;
-    struct b_methp *mp;  /* Doesn't need to be tended */
     struct class_field *cf;
     int i, ac;
 
@@ -846,6 +843,7 @@ static void instance_access(dptr lhs, dptr expr, dptr query, struct inline_field
          * Instance method.  Return a method pointer.
          */
         if (lhs) {
+            struct b_methp *mp;  /* Doesn't need to be tended */
             MemProtect(mp = alcmethp());
             mp->object = &ObjectBlk(*expr);
             mp->proc = &ProcBlk(*cf->field_descriptor);
@@ -959,7 +957,6 @@ static void class_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inli
         MemProtect(pf = alc_p_frame(&Binitialize_class_and_repeat, 0));
         push_frame((struct frame *)pf);
         pf->tmp[0] = *expr;
-        pf->failure_label = failure_label;
         tail_invoke_frame((struct frame *)pf);
         return;
     }
@@ -1000,11 +997,12 @@ static void class_invokef(word clo, dptr lhs, dptr expr, dptr query, struct inli
 
         pf = get_current_user_frame();
         /* We must be in an instance method */
-        if (!pf->proc->field ||
-            (pf->proc->field->flags & (M_Method | M_Static)) != M_Method)
+        if (!pf->proc->field || (pf->proc->field->flags & M_Static))
             InvokefErr(606);
 
         self = &pf->fvars->desc[0];
+        if (!is:object(*self))
+            syserr("self is not an object");
         self_class = ObjectBlk(*self).class;
 
         /* 
@@ -1212,6 +1210,8 @@ function lang_Class_create_raw_instance()
        if (!caller_proc->field)
            runerr(627);
        cl = caller_proc->field->defining_class;
+       if (cl->init_state == Uninitialized)
+           syserr("In method of Uninitialized class");
        if (cl->flags & M_Abstract)
            Blkrunerr(605, cl, D_Class);
        MemProtect(BlkLoc(result) = (union block*)alcobject(cl));
@@ -1239,6 +1239,8 @@ function lang_Class_create_instance()
        if (!caller_proc->field)
            runerr(627);
        cl = caller_proc->field->defining_class;
+       if (cl->init_state == Uninitialized)
+           syserr("In method of Uninitialized class");
        if (cl->flags & M_Abstract)
            Blkrunerr(605, cl, D_Class);
        MemProtect(BlkLoc(result) = (union block*)alcobject(cl));

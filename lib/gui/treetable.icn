@@ -17,8 +17,9 @@ import util
 # {TreeTableNode} might be created as follows :-
 #
 # @example
-# @ n := TreeTableNode("label=Col A label")
-# @ n.set_contents(["Col B data", "Col C data"])
+# @ n := TreeTableNode().
+# @         set_label("Col A label").
+# @         set_contents(["Col B data", "Col C data"])
 #
 class TreeTableNode(TreeNode)
    public contents
@@ -32,44 +33,12 @@ class TreeTableNode(TreeNode)
    end
 end
 
-
 #
-# This class provides the table content for a TreeTable.  It extends
-# Tree, and uses that class's methods for event handling and drawing
-# of the first column.
+# This abstract class provides the table content for a {TreeTable}.
+# It extends {BaseTree}, and uses that class's methods for event
+# handling and drawing of the first column.
 #
-class TreeTableContent(Tree)
-   public calculate_line_height()
-      local t, m, h, r, e, i, j, cols
-      t := []
-      m := 0
-      cols := parent.table_header.children
-      every j := 1 to *cols do {
-         h := if j = 1 then
-            Tree.calculate_line_height()
-         else
-            cols[j].calculate_line_height(self.cbwin)
-         if integer(h) then
-            m <:= h
-         else
-            put(t, h)
-      }
-      #
-      # Easy case, all columns report fixed row heights, so the row height for the
-      # table is the maximum.
-      if *t = 0 then
-         return m
-
-      r := list(*t[1], m)
-      every e := !t do {
-         *e = *r | syserr("Inconsistent table column row height list sizes returned")
-         every i := 1 to *r do
-            r[i] <:= e[i]
-      }
-
-      return r
-   end
-
+abstract class BaseTreeTableContent(BaseTree)
    public slice(col)
       suspend (\(!contents).contents)[col - 1]
    end
@@ -78,32 +47,27 @@ class TreeTableContent(Tree)
       return (\contents[row].contents)[col - 1]
    end
 
-   public calculate_subject_width()
-      return parent.get_total_column_width()
+   public get_column(n)
+      return parent.table_header.children[n]
    end
 
    public on_hsb()
-      Tree.on_hsb()
+      BaseTree.on_hsb()
       synch_header()
    end
 
    public handle_key_right(e)
-      Tree.handle_key_right(e)
+      BaseTree.handle_key_right(e)
       synch_header()
    end
 
    public handle_key_left(e)
-      Tree.handle_key_left(e)
+      BaseTree.handle_key_left(e)
       synch_header()
    end
 
-   # Synch buttons because of the horizontal movement.
    public synch_header()
       parent.table_header.synch_with_content()
-   end
-
-   public get_column(n)
-      return parent.table_header.children[n]
    end
 
    public draw()
@@ -129,7 +93,7 @@ class TreeTableContent(Tree)
          # Write each line in this column
          every i := info.first to info.last do {
             lh := integer(h) | h[i]
-            Tree.draw_line(xp, yp, lh, i)
+            BaseTree.draw_line(xp, yp, lh, i)
             yp +:= lh
          }
          # Reset the clip.
@@ -163,29 +127,12 @@ class TreeTableContent(Tree)
       SelectableScrollArea.draw()
    end
 
-   # Re-override draw_line so that call to SelectableScrollArea.draw() above draws
+   # Override draw_line so that call to SelectableScrollArea.draw() above draws
    # the selections etc (rather than displaying the tree column again).
    public draw_line(xp, yp, lh, i, sel, cur, hi)
       draw_line_sel_cur(self.view.x, yp, self.view.w, lh, sel, cur, hi)
    end
-end
 
-
-#
-# A {TreeTable} is a {Table} where the first column is
-# a Tree.  The data for the component is provided as
-# a tree of {TreeTableNode}s.
-#
-# See the example program ttexplorer.icn for one in use.
-#
-class TreeTable(Table)
-   public create_table_content()
-      return TreeTableContent()
-   end
-end
-
-class ItemPaintTreeTableContent(ItemPaintTree, TreeTableContent)
-   # We have to override this since ItemPaintTree overrides calculate_line_height
    public calculate_line_height()
       local t, m, h, r, e, i, j, cols
       t := []
@@ -193,7 +140,7 @@ class ItemPaintTreeTableContent(ItemPaintTree, TreeTableContent)
       cols := parent.table_header.children
       every j := 1 to *cols do {
          h := if j = 1 then
-            ItemPaintTree.calculate_line_height()
+            calculate_tree_line_height()
          else
             cols[j].calculate_line_height(self.cbwin)
          if integer(h) then
@@ -219,6 +166,40 @@ class ItemPaintTreeTableContent(ItemPaintTree, TreeTableContent)
 
    public calculate_subject_width()
       return parent.get_total_column_width()
+   end
+
+   protected abstract calculate_tree_line_height()
+end
+
+# The basic content implementation, which displays simple textual node
+# data in the tree column.
+#
+class TreeTableContent(BaseTreeTableContent,Tree)
+   protected calculate_tree_line_height()
+      return Tree.calculate_line_height()
+   end
+end
+
+#
+# A {TreeTable} is a {Table} where the first column is
+# a Tree.  The data for the component is provided as
+# a tree of {TreeTableNode}s.
+#
+# See the example program ttexplorer.icn for one in use.
+#
+class TreeTable(Table)
+   public create_table_content()
+      return TreeTableContent()
+   end
+end
+
+#
+# A content implementation which delegates interpretation of the tree
+# node data to an `ItemPaint` instance.
+#
+class ItemPaintTreeTableContent(BaseTreeTableContent,ItemPaintTree)
+   protected calculate_tree_line_height()
+      return ItemPaintTree.calculate_line_height()
    end
 
    public draw_node_data(n, xp, yp, lh)

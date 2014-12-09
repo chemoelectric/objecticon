@@ -842,7 +842,7 @@ final abstract class Xdg()
       local ip1, ip2
       ip1 := \d1.initial_preference | -1
       ip2 := \d2.initial_preference | -1
-      return (ip1 > ip2) | (ip1 = ip2 & d1.list_pos > d2.list_pos)
+      return if ip1 = ip2 then d2.list_pos - d1.list_pos else ip2 - ip1
    end
 
    private static sort_by_preference(l)

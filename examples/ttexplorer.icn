@@ -86,8 +86,8 @@ class TTExplorer(Dialog)
                put(file_list, e)
          }
       }
-      return [isort(dir_list, Files.name_key),
-              isort(file_list, Files.name_key)]
+      return [qsort(dir_list, Files.name_cmp),
+              qsort(file_list, Files.name_cmp)]
    end
 
    public component_setup()

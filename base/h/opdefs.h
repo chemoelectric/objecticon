@@ -108,3 +108,4 @@
 #define Op_TCaseChoose   96
 #define Op_TCaseChoosex  97
 #define Op_GlobalVal     98
+#define Op_Self          99

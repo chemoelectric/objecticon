@@ -381,6 +381,7 @@ function serial(x)
       record:   id = RecordBlk(x).id;
       object:   id = ObjectBlk(x).id;
       coexpr:   id = CoexprBlk(x).id;
+      methp:    id = MethpBlk(x).id;
       weakref:  id = WeakrefBlk(x).id;
       default:  runerr(123,x);
     }
@@ -834,8 +835,8 @@ static dptr nth(dptr d)
          * Find the nth field of a record.
          */
         bp = BlkLoc(*d);
-        i = cvpos(sort_field, bp->record.constructor->n_fields);
-        if (i != CvtFail && i <= bp->record.constructor->n_fields)
+        i = cvpos_item(sort_field, bp->record.constructor->n_fields);
+        if (i != CvtFail)
             rv = &bp->record.fields[i-1];
     }
     else if (d->dword == D_List) {
@@ -844,8 +845,8 @@ static dptr nth(dptr d)
          * Find the nth element of a list.
          */
         lp = &ListBlk(*d);
-        i = cvpos (sort_field, lp->size);
-        if (i != CvtFail && i <= lp->size) {
+        i = cvpos_item(sort_field, lp->size);
+        if (i != CvtFail) {
             struct b_lelem *le;
             word pos;
             le = get_lelem_for_index(lp, i, &pos);
@@ -1304,6 +1305,17 @@ function lang_Text_utf8_seq(i)
    }
 end
 
+function lang_Text_cl_compare(s1, s2)
+   body {
+      if (EqlDesc(s1,s2))
+          return C_integer Equal;
+      if (is:string(s1) && is:string(s2))
+          return C_integer cl_lexcmp(&s1, &s2);
+      if (is:ucs(s1) && is:ucs(s2))
+          return C_integer cl_lexcmp(&UcsBlk(s1).utf8, &UcsBlk(s2).utf8);
+      return C_integer anycmp(&s1, &s2);
+   }
+end
 
 function lang_Text_create_cset(x[n])
    body {

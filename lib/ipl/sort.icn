@@ -60,7 +60,7 @@
 
 package ipl.sort
 
-import lang(Prog)
+import lang(Class,Prog,Internal,Text)
 
 procedure isort(x,keyproc,y)
    local items,item,key,result
@@ -95,7 +95,7 @@ procedure sortff(L, fields[])
     return sortff_1(L, fields, 1, [])
 end
 
-procedure sortff_1(L, fields, k, uniqueObject)
+package procedure sortff_1(L, fields, k, uniqueObject)
 
     local sortField, cachedKeyValue, i, startOfRun, thisKey
 
@@ -176,13 +176,95 @@ procedure sortt(T, i)
 
 end
 
+# A caseless string comparator function with consistent ordering
+# amongst items which compare caselessly equal, so that for example
+# abc, aBc, ABC are always sorted in the same order.
+#
+# This function would not make much sense for use with a SortTable,
+# since it would result in duplicate entries which are caselessly
+# equal; rather the simpler `Text.cl_compare` should be used.
+#
+procedure consistent_cl_cmp(s1, s2)
+   local i
+   i := Text.cl_compare(s1, s2)
+   if i = 0 then
+      i := Internal.compare(s1, s2)
+   return i
+end
+
+# This is a comparison function that just reverses the order of the
+# `Internal.compare` function.
+#
+procedure rev_cmp_internal(a, b)
+   return Internal.compare(b, a)
+end
+
+# Implementation class for `cmp_index`.
+package class CmpIndex()
+   private f, i
+
+   public call(a, b)
+      return f(a[i], b[i]) | runerr("Invalid index given to cmp_index")
+   end
+
+   public new(i, f)
+      self.i := i
+      /f := Internal.compare
+      self.f := f
+      return
+   end
+end
+
+#
+# Return a compare function which applies the comparator function `f` to the
+# `i`th field of each item.  `f` defaults to `Internal.compare`.
+#
+# @example
+# @    l := [ [1,54,2], [4,56,23], [4325,1,23], [123,4576,23]]
+# @    # sort by the middle element of each item
+# @    qsort(l, cmp_index(2))
+#
+procedure cmp_index(i, f)
+   return CmpIndex(i, f).call
+end
+
+# Implementation class for `cmp_field`.
+package class CmpField()
+   private f, q
+
+   public call(a, b)
+      return f(Class.get(a, q), Class.get(b, q))
+   end
+
+   public new(q, f)
+      self.q := q
+      /f := Internal.compare
+      self.f := f
+      return
+   end
+end
+
+#
+# Return a compare function which applies the comparator function `f` to the
+# field named `q` in each item.  `f` defaults to `Internal.compare`.
+#
+# @example
+# @    l := [Point(1,2),Point(34,4),Point(3,56),Point(23,55)]
+# @    # sort by the x element of each item
+# @    qsort(l, cmp_field("x"))
+#
+procedure cmp_field(q, f)
+   return CmpField(q, f).call
+end
+
 #
 # The classic quick sort procedure.
 #
-procedure qsort(l, comp, first, last)
+procedure qsort(l, cmp, first, last)
    local i, j, pivot
    /first := 1
    /last := *l
+   /cmp := Internal.compare
 
    i := first
    j := last
@@ -192,8 +274,8 @@ procedure qsort(l, comp, first, last)
 
    pivot := l[(i + j) / 2]
    repeat {
-      while comp(l[i], pivot) do i +:= 1
-      while comp(pivot, l[j]) do j -:= 1
+      while cmp(l[i], pivot) < 0 do i +:= 1
+      while cmp(l[j], pivot) > 0 do j -:= 1
       if i <= j then {
          l[i] :=: l[j]
          i +:= 1
@@ -203,8 +285,28 @@ procedure qsort(l, comp, first, last)
          break
    }
    if first < j then
-      qsort(l, comp, first, j)
+      qsort(l, cmp, first, j)
    if i < last then
-      qsort(l, comp, i, last)
+      qsort(l, cmp, i, last)
    return l
+end
+
+#
+# A binary search algorithm
+#
+procedure bsearch(l, val, cmp, first, last)
+   local m, c
+   /first := 1
+   /last := *l
+   /cmp := Internal.compare
+   while first <= last do {
+      m := (first + last) / 2
+      c := cmp(val, l[m])
+      if c = 0 then
+         return m
+      if c > 0 then
+         first := m + 1
+      else # c < 0
+         last := m - 1
+   }
 end

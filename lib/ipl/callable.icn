@@ -16,7 +16,6 @@ procedure callable(x, n)
       return x
    if x := integer(x) then
       return x
-   if x := string(x) &
-      x := (Prog.get_named_global(x) | Prog.get_operator(x, \n) | Prog.get_function(x) | Prog.get_keyword(x)) then
-      return x
+   if x := string(x) then
+      return Prog.get_named_global(x) | Prog.get_operator(x, \n) | Prog.get_function(x) | Prog.get_keyword(x)
 end

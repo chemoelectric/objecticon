@@ -206,8 +206,12 @@ static void emit_ir_var(struct ir_var *v, char *desc)
                 outwordx(Op_Static, "   %s=static", desc);
                 outwordx(le->l_val.index, "      %d  (%s)", le->l_val.index, le->name);
             } else if (le->l_flag & F_Argument) {
-                outwordx(Op_FrameVar, "   %s=framevar", desc);
-                outwordx(le->l_val.index, "      %d (%s)", le->l_val.index, le->name);
+                if (curr_lfunc->method && !(curr_lfunc->method->flag & M_Static) && (le->l_flag & F_Argument) && le->l_val.index == 0) {
+                    outwordx(Op_Self, "   %s=self", desc);
+                } else {
+                    outwordx(Op_FrameVar, "   %s=framevar", desc);
+                    outwordx(le->l_val.index, "      %d (%s)", le->l_val.index, le->name);
+                }
             } else {
                 outwordx(Op_FrameVar, "   %s=framevar", desc);
                 outwordx(curr_lfunc->narguments + le->l_val.index, "      %d  (%s)", 

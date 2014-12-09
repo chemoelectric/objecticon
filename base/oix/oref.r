@@ -542,8 +542,8 @@ operator [] subsc(underef x -> dx,y)
            * Make sure that subscript y is in range.
            */
           lp = &ListBlk(dx);
-          i = cvpos(yi, lp->size);
-          if (i == CvtFail || i > lp->size)
+          i = cvpos_item(yi, lp->size);
+          if (i == CvtFail)
               fail;
 
           EVValD(&dx, E_Lref);
@@ -636,8 +636,8 @@ operator [] subsc(underef x -> dx,y)
          * Convert y to a position in x and fail if the position
          *  is out of bounds.
          */
-        i = cvpos(yi, UcsBlk(dx).length);
-        if (i == CvtFail || i > UcsBlk(dx).length)
+        i = cvpos_item(yi, UcsBlk(dx).length);
+        if (i == CvtFail)
             fail;
         if (use_trap)
             /*
@@ -665,8 +665,8 @@ operator [] subsc(underef x -> dx,y)
             runerr(101, y);
          }
 
-         i = cvpos(yi, CsetBlk(dx).size);
-         if (i == CvtFail || i > CsetBlk(dx).size)
+         i = cvpos_item(yi, CsetBlk(dx).size);
+         if (i == CvtFail)
              fail;
          k = cset_range_of_pos(&CsetBlk(dx), i);
          ch = CsetBlk(dx).range[k].from + i - 1 - CsetBlk(dx).range[k].index;
@@ -706,8 +706,8 @@ operator [] subsc(underef x -> dx,y)
           * Convert y to a position in x and fail if the position
           *  is out of bounds.
           */
-         i = cvpos(yi, StrLen(dx));
-         if (i == CvtFail || i > StrLen(dx))
+         i = cvpos_item(yi, StrLen(dx));
+         if (i == CvtFail)
              fail;
          if (use_trap) {
              /*

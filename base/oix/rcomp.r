@@ -2,7 +2,14 @@
  * File: rcomp.r
  */
 
-static int idcmp(uword i, uword j);
+static int uwordcmp(uword i, uword j);
+static int classcmp(struct b_class *c1, struct b_class *c2);
+static int fieldcmp(struct class_field *f1, struct class_field *f2);
+static int objectcmp(struct b_object *o1, struct b_object *o2);
+static int constructorcmp(struct b_constructor *c1, struct b_constructor *c2);
+static int recordcmp(struct b_record *r1, struct b_record *r2);
+static int proccmp(struct b_proc *p1, struct b_proc *p2);
+static int progcmp(struct progstate *p1, struct progstate *p2);
 
 /*
  * anycmp - compare any two objects.
@@ -11,7 +18,12 @@ static int idcmp(uword i, uword j);
 int anycmp(dptr dp1, dptr dp2)
 {
    int o1, o2;
-   int iresult;
+
+   /*
+    * Identical descriptors must always compare Equal.
+    */
+   if (EqlDesc(*dp1,*dp2))
+       return Equal;
 
    /*
     * Get a collating number for dp1 and dp2.
@@ -36,10 +48,7 @@ int anycmp(dptr dp1, dptr dp2)
          return bigcmp(dp1, dp2);
 
       coexpr:
-         /*
-          * Collate on co-expression id.
-          */
-         return idcmp(CoexprBlk(*dp1).id, CoexprBlk(*dp2).id);
+         return uwordcmp(CoexprBlk(*dp1).id, CoexprBlk(*dp2).id);
 
       cset: {
           int i = 0, j = 0;
@@ -69,26 +78,16 @@ int anycmp(dptr dp1, dptr dp2)
           return Equal;
       }
 
-      list: {
-         /*
-          * Collate on list id.
-          */
-         return idcmp(ListBlk(*dp1).id, ListBlk(*dp2).id);
-      }
+      list:
+         return uwordcmp(ListBlk(*dp1).id, ListBlk(*dp2).id);
 
       null:
          return Equal;
 
       proc:
-         /*
-          * Collate on procedure name.
-          */
-         return lexcmp(ProcBlk(*dp1).name, ProcBlk(*dp2).name);
+         return proccmp(&ProcBlk(*dp1), &ProcBlk(*dp2));
 
       ucs:
-         /*
-          * Collate on utf8 data.
-          */
          return lexcmp(&(UcsBlk(*dp1).utf8), &(UcsBlk(*dp2).utf8));
 
       real: {
@@ -102,71 +101,28 @@ int anycmp(dptr dp1, dptr dp2)
       }
 
       class:
-          /*
-           * Collate on class name.
-           */
-         return lexcmp(ClassBlk(*dp1).name, ClassBlk(*dp2).name);
+         return classcmp(&ClassBlk(*dp1), &ClassBlk(*dp2));
 
       constructor:
-          /*
-           * Collate on type name.
-           */
-         return lexcmp(ConstructorBlk(*dp1).name, ConstructorBlk(*dp2).name);
+         return constructorcmp(&ConstructorBlk(*dp1), &ConstructorBlk(*dp2));
 
-      record: {
-         /*
-          * Collate on record id within record name.
-          */
-         iresult = lexcmp(RecordBlk(*dp1).constructor->name,
-                          RecordBlk(*dp2).constructor->name);
-         if (iresult == Equal)
-             return idcmp(RecordBlk(*dp1).id, RecordBlk(*dp2).id);
-         return iresult;
-      }
+      record:
+         return recordcmp(&RecordBlk(*dp1), &RecordBlk(*dp2));
 
-      object: {
-         /*
-          * Collate on object id within class name.
-          */
-         iresult = lexcmp(ObjectBlk(*dp1).class->name,
-                          ObjectBlk(*dp2).class->name);
-         if (iresult == Equal)
-            return idcmp(ObjectBlk(*dp1).id, ObjectBlk(*dp2).id);
-         return iresult;
-      }
+      object:
+         return objectcmp(&ObjectBlk(*dp1), &ObjectBlk(*dp2));
 
-      methp: {
-         /*
-          * Collate on methp proc name within methp object id within methp object class name.
-          */
-          iresult = lexcmp(MethpBlk(*dp1).object->class->name,
-                           MethpBlk(*dp2).object->class->name);
-          if (iresult == Equal) {
-              iresult = idcmp(MethpBlk(*dp1).object->id, MethpBlk(*dp2).object->id);
-              if (iresult == Equal)
-                  return lexcmp(MethpBlk(*dp1).proc->name,
-                                MethpBlk(*dp2).proc->name);
-          }
-          return iresult;
-      }
+      methp:
+         return uwordcmp(MethpBlk(*dp1).id, MethpBlk(*dp2).id);
 
       weakref:
-         /*
-          * Collate on id.
-          */
-         return idcmp(WeakrefBlk(*dp1).id, WeakrefBlk(*dp2).id);
+         return uwordcmp(WeakrefBlk(*dp1).id, WeakrefBlk(*dp2).id);
 
       set:
-         /*
-          * Collate on set id.
-          */
-         return idcmp(SetBlk(*dp1).id, SetBlk(*dp2).id);
+         return uwordcmp(SetBlk(*dp1).id, SetBlk(*dp2).id);
 
       table:
-         /*
-          * Collate on table id.
-          */
-         return idcmp(TableBlk(*dp1).id, TableBlk(*dp2).id);
+         return uwordcmp(TableBlk(*dp1).id, TableBlk(*dp2).id);
 
       default: {
 	 syserr("anycmp: unknown datatype.");
@@ -175,6 +131,7 @@ int anycmp(dptr dp1, dptr dp2)
       }
    }
 }
+
 
 /*
  * order(x) - return collating number for object x.
@@ -323,10 +280,13 @@ int lexcmp(dptr dp1, dptr dp2)
         * Compare as many bytes as are in the smaller string.  If an
         *  inequality is found, compare the differing bytes.
         */
-       while (minlen--)
-           if (*s1++ != *s2++)
-               return ((*--s1 & 0377) > (*--s2 & 0377) ?
-                       Greater : Less);
+       while (minlen--) {
+           unsigned char c1, c2;
+           c1 = *s1++;
+           c2 = *s2++;
+           if (c1 != c2)
+               return (c1 > c2) ? Greater : Less;
+       }
    }
 
    /*
@@ -334,16 +294,185 @@ int lexcmp(dptr dp1, dptr dp2)
     */
    if (l1 == l2)
       return Equal;
-   return ( (l1 > l2) ? Greater : Less);
-
+   return (l1 > l2) ? Greater : Less;
 }
 
 /*
- * Compare two id's (uwords).
+ * Caseless string comparison
  */
-static int idcmp(uword i, uword j)
+
+int cl_lexcmp(dptr dp1, dptr dp2)
+{
+   char *s1, *s2;
+   word l1, l2;
+
+   /*
+    * Get length and starting address of both strings.
+    */
+   l1 = StrLen(*dp1);
+   s1 = StrLoc(*dp1);
+   l2 = StrLen(*dp2);
+   s2 = StrLoc(*dp2);
+
+   if (s1 != s2) {
+       /*
+        * Set minlen to length of the shorter string.
+        */
+       word minlen = Min(l1, l2);
+
+       /*
+        * Compare as many bytes as are in the smaller string.  If an
+        *  inequality is found, compare the differing bytes.
+        */
+       while (minlen--) {
+           unsigned char c1, c2;
+           c1 = *s1++;
+           c2 = *s2++;
+           /* Don't use tolower since that is locale dependent. */
+           if (c1 >= 'A' && c1 <= 'Z') c1 += 'a' - 'A';
+           if (c2 >= 'A' && c2 <= 'Z') c2 += 'a' - 'A';
+           if (c1 != c2)
+               return (c1 > c2) ? Greater : Less;
+       }
+   }
+
+   /*
+    * The strings compared equal for the length of the shorter.
+    */
+   if (l1 == l2)
+      return Equal;
+   return (l1 > l2) ? Greater : Less;
+}
+
+/*
+ * Compare two unsigned words.
+ */
+static int uwordcmp(uword i, uword j)
 {
     if (i == j)
       return Equal;
-   return ( (i > j) ? Greater : Less);
+   return (i > j) ? Greater : Less;
 }
+
+static int progcmp(struct progstate *p1, struct progstate *p2)
+{
+    if (p1 == p2)
+      return Equal;
+    return uwordcmp(p1->K_main->id, p2->K_main->id);
+}
+
+static int classcmp(struct b_class *c1, struct b_class *c2)
+{
+    int i;
+    /*
+     * Collate on class name and program.
+     */
+    if (c1 == c2)
+        return Equal;
+    i = lexcmp(c1->name, c2->name);
+    if (i == Equal)
+        i = progcmp(c1->program, c2->program);
+    return i;
+}
+
+static int objectcmp(struct b_object *o1, struct b_object *o2)
+{
+    int i;
+    /*
+     * Collate on class, object id
+     */
+    if (o1 == o2)
+        return Equal;
+    i = classcmp(o1->class, o2->class);
+    if (i == Equal)
+        i = uwordcmp(o1->id, o2->id);
+    return i;
+}
+
+static int constructorcmp(struct b_constructor *c1, struct b_constructor *c2)
+{
+    int i;
+    /*
+     * Collate on record type name and program.
+     */
+    if (c1 == c2)
+        return Equal;
+    i =  lexcmp(c1->name, c2->name);
+    if (i == Equal)
+        i = progcmp(c1->program, c2->program);
+    return i;
+}
+
+static int recordcmp(struct b_record *r1, struct b_record *r2)
+{
+    int i;
+    /*
+     * Collate on constructor, record id
+     */
+    if (r1 == r2)
+        return Equal;
+    i = constructorcmp(r1->constructor, r2->constructor);
+    if (i == Equal)
+        i = uwordcmp(r1->id, r2->id);
+    return i;
+}
+
+static int fieldcmp(struct class_field *f1, struct class_field *f2)
+{
+    int i;
+    /*
+     * Collate on class, fnum
+     */
+    if (f1 == f2)
+        return Equal;
+    i = classcmp(f1->defining_class, f2->defining_class);
+    if (i == Equal)
+        i = uwordcmp(f1->fnum, f2->fnum);
+    return i;
+}
+
+static int proccmp(struct b_proc *p1, struct b_proc *p2)
+{
+    int i;
+    struct progstate *prog1, *prog2;
+
+    if (p1 == p2)
+        return Equal;
+
+    /*
+     * Try to resolve on name
+     */
+    i =  lexcmp(p1->name, p2->name);
+    if (i != Equal)
+        return i;
+
+    /*
+     * If either or both are class fields, collate on the field.
+     */
+    if (p1->field && !p2->field)
+        return Less;
+    if (!p1->field && p2->field)
+        return Greater;
+    if (p1->field && p2->field)
+        return fieldcmp(p1->field, p2->field);
+
+    /*
+     * Neither are class fields.
+     * If either or both are in programs, collate on that.
+     */
+    prog1 = (p1->type == P_Proc) ? ((struct p_proc *)p1)->program : 0;
+    prog2 = (p2->type == P_Proc) ? ((struct p_proc *)p2)->program : 0;
+    if (prog1 && !prog2)
+        return Less;
+    if (!prog1 && prog2)
+        return Greater;
+    if (prog1 && prog2)
+        return progcmp(prog1, prog2);
+
+    /*
+     * Now both have same name, neither a class field, neither in a program.
+     * In desperation, collate on address of block.
+     */
+    return uwordcmp((uword)p1, (uword)p2);
+}
+

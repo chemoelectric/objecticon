@@ -103,7 +103,7 @@ static char *op_names[] = {
     /*  96 */         "tcasechoose",                                    
     /*  97 */         "tcasechoosex",                                    
     /*  98 */         "globalval",
-    /*  99 */         INVALID,
+    /*  99 */         "self",
     /* 100 */         INVALID,
     /* 101 */         INVALID,
     /* 102 */         INVALID,

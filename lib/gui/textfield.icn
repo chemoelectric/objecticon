@@ -911,11 +911,6 @@ class TextFieldDeleteRightEdit(TextFieldEdit)
       else
          parent.contents[self.cursor] := ch || parent.contents[self.cursor]
    end
-
-   public new(parent)
-      TextFieldEdit.new(parent)
-      return
-   end
 end
 
 class TextFieldDeleteLeftEdit(TextFieldEdit)
@@ -933,11 +928,6 @@ class TextFieldDeleteLeftEdit(TextFieldEdit)
          parent.contents ||:= ch
       else
          parent.contents[self.cursor - 1] := ch || parent.contents[self.cursor - 1]
-   end
-
-   public new(parent)
-      TextFieldEdit.new(parent)
-      return
    end
 end
 
@@ -961,11 +951,6 @@ class TextFieldDeleteRegionEdit(TextFieldEdit)
          parent.contents := parent.contents[1:self.mark] || pre || parent.contents[self.mark:0]
       else
          parent.contents := parent.contents[1:self.cursor] || pre || parent.contents[self.cursor:0]
-   end
-
-   public new(parent)
-      TextFieldEdit.new(parent)
-      return
    end
 end
 
@@ -1028,11 +1013,6 @@ class TextFieldDeleteLineEdit(TextFieldEdit)
 
    public undo_impl()
       parent.contents := pre
-   end
-
-   public new(parent)
-      TextFieldEdit.new(parent)
-      return
    end
 end
 

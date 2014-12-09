@@ -1,7 +1,7 @@
 package io
 
 import
-   util(error, check_flag, check_positive_int, save_why),
+   util(error, check_flag, check_positive_int, save_why, HasMode),
 $ifdef _PLAN9
    lang(Class, NoCopy, Prog),
    posix(System), util(use),
@@ -15,7 +15,7 @@ $endif
 # This is the top-level stream class.  It is not instantiated
 # directly.
 #
-abstract class Stream()
+abstract class Stream(HasMode)
    public static const
       # Constant indicating read capability
       READ,
@@ -79,27 +79,10 @@ abstract class Stream()
    public defer truncate(len)
 
    #
-   # Return an integer indicating which functions the stream supports.
-   # The possible bits which can be set are listed as constants above.
-   # If the integer has the {READ} bit set, the stream is readable;
-   # {WRITE} indicates the stream is writable, {SEEK} indicates that
-   # it is seekable (and supports {tell} too), and {TRUNCATE} that it
-   # is truncatable.
-   #
-   public abstract get_mode()
-
-   #
    # Close the stream.  After being closed, any further calls on the
    # stream may stop with a runtime error.
    #
    public abstract close()
-
-   #
-   # Succeed iff the stream's mode has all the flags in {c}
-   #
-   public can(c)
-      return iand(get_mode(), c) = c
-   end
 
    #
    # Read a complete line from the stream, reading up to the next "\n"

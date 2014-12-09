@@ -4,29 +4,52 @@
 
 package datastruct
 
-import ipl.pdco(Seq), lang
+import ipl.pdco(Seq,Length,Index), lang, util
 
 #
 # This is a common superclass for several table-like data structures.
 #
-abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
+abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    public const def
 
-   #
-   # Insert a new entry.  Always succeeds and returns {self}.
-   #
-   public abstract insert(key, val)
+   public static const
+      # Empty table implementation
+      EMPTY_TABLE,
+      # Constant indicating modifiable capability
+      MODIFY,
+      # Constant indicating insert capability
+      INSERT,
+      # Constant indicating delete capability
+      DELETE,
+      # Constant indicating keys are stored in order
+      ORDER
 
+   private static init()
+      EMPTY_TABLE := EmptyTable()
+      MODIFY := 1
+      INSERT := 2
+      DELETE := 4
+      ORDER := 8
+   end
+   
    #
-   # Return the value for the given key (as a variable) if it is in
-   # the table, or fail if it is not present.
+   # Insert a new entry.  Always succeeds and returns {self}.  Only
+   # implemented with INSERT capability.
+   #
+   public defer insert(key, val)
+
+   # Return the value for the given key if it is in the table, or fail
+   # if it is not present.  If the table has MODIFY capability, a
+   # variable is returned; otherwise the value.
    #
    public abstract member(key)
-
+   
    #
-   # Delete the entry with the given key.  Always succeeds and returns {self}.
+   # Delete the entry with the given key.  Fails if the key was not
+   # present, otherwise succeeds and returns {self}.  Only implemented
+   # with DELETE capability.
    #
-   public abstract delete(key)
+   public defer delete(key)
 
    #
    # Return the value with the given key, or the default value if
@@ -38,8 +61,9 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
 
    #
    # Like {member}, but if the key is not present a new entry is added
-   # (with the default value).  In any case a variable for the new
-   # entry is returned.
+   # (with the default value).  If the table has MODIFY capability, a
+   # variable for the new entry is returned, otherwise a value is
+   # returned.
    #
    # @example
    # @  # Word counting
@@ -54,46 +78,107 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
    #
    # Return a sorted list of key-value pairs.
    #
-   public abstract sort()
+   public sort()
+      local l
+      l := entry_list()
+      return if can(ORDER) then l else sortf(l, 1)
+   end
 
    #
-   # Generate the keys (cf the builtin key() function.)
+   # Return a sorted list of keys.
+   #
+   public key_sort()
+      # This is defined in terms of sort() above rather than just
+      # sorting key_list(), so that classes with custom ordering (eg
+      # ClTable) don't need to override both sort methods.
+      return if can(ORDER) then key_list() else ipl.pdco.List{(!sort())[1]}
+   end
+
+   #
+   # Generate the keys (cf the builtin key() function).  With
+   # ORDER capability, the keys are generated in sorted order.
    #
    public abstract key()
 
    #
-   # Generate alternating key/values (cf the builtin keyval() function.)
+   # Generate alternating key/value pairs (cf the builtin keyval()
+   # function.)  If the table has MODIFY capability, the entry values
+   # will be generated as variables, otherwise as values.
    #
-   public abstract keyval()
+   public keyval()
+      local k
+      every k := key() do
+         suspend k | member(k)
+   end
 
    #
-   # Generate the keys (cf the builtin key() function.) in reverse
-   # order.  Only implemented for tables which store their keys in
-   # sorted order.
+   # Generate the keys (cf the builtin key() function) in reverse
+   # order.  Only implemented with ORDER capability.
    #
    public defer back_key()
 
    #
    # Generate alternating key/values (cf the builtin keyval()
-   # function.) in reverse order.  Only implemented for tables which
-   # store their keys in sorted order.
+   # function.) in reverse order.  Only implemented with ORDER
+   # capability.  If the table has MODIFY capability, the entry values
+   # will be generated as variables, otherwise as values.
    #
-   public defer back_keyval()
+   public back_keyval()
+      local k
+      every k := back_key() do
+         suspend k | member(k)
+   end
 
    #
-   # Generate the values (cf !t for a table).
+   # Return the rank of the given key, ie its order number in the
+   # table; fails if there is no matching key in the table.  Only
+   # implemented for tables with ORDER capability.
    #
-   public abstract gen()
+   public defer rank(key)
+
+   #
+   # Return the `i`th key, in order, in the table.  Fails if `i` is
+   # out of range, using standard icon indexing semantics.  Only
+   # implemented for tables with ORDER capability.
+   #
+   public select(i)
+      can(ORDER) | runerr("Table doesn't have ORDER capability: ", self)
+      return Index{key(), cvpos_item(i, size())}
+   end
+
+   #
+   # Generate the values (cf !t for a table).  If the table has MODIFY
+   # capability, variables are generated, otherwise values.
+   #
+   public gen()
+      suspend member(key())
+   end
+
+   #
+   # Generate the values in reverse order.  Only implemented with
+   # ORDER capability.  If the table has MODIFY capability, variables
+   # are generated, otherwise values.
+   #
+   public back()
+      suspend member(back_key())
+   end
 
    #
    # Return the size of the table.
    #
-   public abstract size()
-
+   public size()
+      return Length{key()}
+   end
+      
    #
-   # Clear the table of all elements. Always succeeds and returns {self}.
+   # Clear the table of all elements. Always succeeds and returns
+   # {self}.  Only implemented with DELETE capability.
    #
-   public abstract clear()
+   public clear()
+      while size() > 0 do
+         delete(key())
+      return self
+   end
 
    #
    # Generate key-value pairs as a sequence of 2-element lists.  NB - for each
@@ -113,10 +198,12 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
 
    # Return a flat list, with alternating key-value entries.
    public flatten()
-      local l
-      l := []
-      every put(l, keyval())
-      return l
+      return ipl.pdco.List{keyval()}
+   end
+
+   # Return an unsorted list of the keys.
+   public key_list()
+      return ipl.pdco.List{key()}
    end
 
    # Return an (unsorted) list of pairs of key-values.
@@ -212,11 +299,75 @@ abstract class Table(ObjectOutput, ObjectHash, ObjectEquals)
 end
 
 #
+# A class to provide an unmodifiable view of another table.
+#
+class UnmodifiableTable(Table)
+   private const t
+
+   public member(key)
+      return .t.member(key)
+   end
+
+   public sort()
+      return t.sort()
+   end
+
+   public key_sort()
+      return t.key_sort()
+   end
+
+   public key()
+      suspend t.key()
+   end
+
+   public keyval()
+      suspend .t.keyval()
+   end
+
+   public back_key()
+      suspend t.back_key()
+   end
+
+   public back_keyval()
+      suspend .t.back_keyval()
+   end
+
+   public rank(key)
+      return t.rank(key)
+   end
+
+   public select(i)
+      return t.select(i)
+   end
+
+   public gen()
+      suspend .t.gen()
+   end
+
+   public back()
+      suspend .t.back()
+   end
+
+   public size()
+      return t.size()
+   end
+
+   public get_mode()
+      return iand(ORDER, t.get_mode())
+   end
+
+   public new(t)
+      self.t := t
+      self.def := t.def
+      return
+   end
+end
+
+#
 # A {Table} that ignores case in its keys.
 #
 class ClTable(Table)
-   private 
-      t
+   private const t
 
    public insert(key, val)
       default.insert(t, map(key), [key, val])
@@ -235,8 +386,7 @@ class ClTable(Table)
    end
 
    public delete(key)
-      default.delete(t, map(key))
-      return self
+      return default.delete(t, map(key)) & self
    end
 
    public sort()
@@ -269,6 +419,10 @@ class ClTable(Table)
       return *t
    end
 
+   public get_mode()
+      return MODIFY + INSERT + DELETE
+   end
+
    #
    # Create a new instance.
    #
@@ -283,177 +437,373 @@ class ClTable(Table)
    end
 end
 
-class SortTableNode()
-   public const key
-   public val
-   private l, r
+#
+# A list-view of the keys of a table with ORDER capability.
+#
+class TableKeyList(List)
+   private const t
 
-   public insert(k, v, tbl)
-      local i
-      i := tbl.cmp(k, key)
-      if i = 0 then {
-         self.val := v
-         return self
-      } else if i < 0 then {
-         if /l := SortTableNode(k, v) then {
-            tbl.sz +:= 1
-            return l
-         } else
-            return l.insert(k, v, tbl)
-      } else {
-         if /r := SortTableNode(k, v) then {
-            tbl.sz +:= 1
-            return r
-         } else 
-            return r.insert(k, v, tbl)
-      }
+   public at(i)
+      return t.select(i)
    end
 
-   public add(k, tbl)
-      local i
-      i := tbl.cmp(k, key)
-      if i = 0 then
-         return self
-      else if i < 0 then {
-         if /l := SortTableNode(k, tbl.def) then {
-            tbl.sz +:= 1
-            return l
-         } else
-            return l.add(k, tbl)
-      } else {
-         if /r := SortTableNode(k, tbl.def) then {
-            tbl.sz +:= 1
-            return r
-         } else 
-            return r.add(k, tbl)
-      }
+   public delete(i)
+      return t.delete(t.select(i)) & self
    end
 
-   public member(k, tbl)
-      local i
-      i := tbl.cmp(k, key)
-      return if i = 0 then
-         self
-      else if i < 0 then
-         (\l).member(k, tbl)
-      else
-         (\r).member(k, tbl)
+   public gen()
+      suspend t.key()
    end
 
-   public delete(k, tbl)
-      local i
-      i := tbl.cmp(k, key)
-      if i = 0 then {
-         tbl.sz -:= 1
-         if /l then
-            return r
-         if /r then
-            return l
-         # Make l the left child of the smallest node in r.
-         Seq{r.traverse()}.l := l
-         return r
-      } else if i < 0 then {
-         \l := l.delete(k, tbl)
-         return self
-      } else {
-         \r := r.delete(k, tbl)
-         return self
-      }
+   public back()
+      suspend t.back_key()
    end
 
-   public traverse()
-      (\l).traverse()
-      coact(self)
-      (\r).traverse()
+   public size()
+      return t.size()
    end
 
-   public back_traverse()
-      (\r).back_traverse()
-      coact(self)
-      (\l).back_traverse()
+   public clear()
+      t.clear()
+      return self
    end
+
+   public get_mode()
+      return iand(DELETE, t.get_mode())
+   end
+
+   public new(t)
+      t.can(Table.ORDER) | runerr("Table doesn't have ORDER capability: ", t)
+      self.t := t
+      return
+   end
+end
+
+package class SortTableNode()
+   public key, val,
+      l, r, is_red_flag, N
 
    public new(k, v)
       self.key := k
       self.val := v
+      self.is_red_flag := &yes
+      self.N := 1
       return
    end
 end
 
 #
-# A {Table} which uses a binary tree so that its members are always
+# A {Table} which uses a red-black binary tree so that its members are always
 # in sorted order.
 #
 class SortTable(Table)
    private root
    public const cmp
-   package readable sz
 
    public insert(key, val)
-      if /root := SortTableNode(key, val) then
-         sz := 1
-      else
-         root.insert(key, val, self)
+      root := insert1(root, key, val)
+      root.is_red_flag := &no
       return self
    end
 
-   public add(key)
-      if /root := SortTableNode(key, def) then {
-         sz := 1
-         return root.val
-      } else
-         return root.add(key, self).val
+   private insert1(n, key, val)
+      local i
+      if /n then
+         return SortTableNode(key, val)
+      i := cmp(key, n.key)
+      if i < 0 then
+         n.l := insert1(n.l, key, val)
+      else if i > 0 then
+         n.r := insert1(n.r, key, val)
+      else {
+         n.key := key
+         n.val := val
+         return n
+      }
+      
+      if is_red(n.r) & not is_red(n.l) then
+         n := rotate_left(n)
+      if is_red(n.l) & is_red(n.l.l) then
+         n := rotate_right(n)
+      if is_red(n.l) & is_red(n.r) then
+         flip_colors(n)
+      
+      n.N := size1(n.l) + size1(n.r) + 1
+
+      return n
    end
 
    public member(key)
-      return (\root).member(key, self).val
+      local n, i
+      n := root
+      while \n do {
+         i := cmp(key, n.key)
+         if i = 0 then
+            return n.val
+         n := if i < 0 then
+            n.l
+         else
+            n.r
+      }
    end
 
    public delete(key)
-      \root := root.delete(key, self)
+      member(key) | fail
+      if not(is_red(root.l | root.r)) then
+         root.is_red_flag := &yes
+      root := delete1(root, key)
+      (\root).is_red_flag := &no
       return self
    end
 
-   public sort()
-      local e, l
-      l := []
-      every e := Seq{(\root).traverse()} do
-         put(l, [e.key, e.val])
-      return l
+   private delete1(n, key)
+      local x
+      if cmp(key, n.key) < 0 then {
+         if not(is_red(n.l | n.l.l)) then
+            n := move_red_left(n)
+         n.l := delete1(n.l, key)
+      } else {
+         if is_red(n.l) then
+            n := rotate_right(n)
+         if cmp(key, n.key) = 0 & /n.r then
+            return
+         if not(is_red(n.r | n.r.l)) then
+            n := move_red_right(n)
+         if cmp(key, n.key) = 0 then {
+            x := min1(n.r)
+            n.key := x.key
+            n.val := x.val
+            n.r := delete_min1(n.r)
+         } else
+            n.r := delete1(n.r, key)
+      }
+      return balance(n)
+   end
+
+   private min1(n)
+      while \n.l do
+         n := n.l
+      return n
+   end
+
+   private delete_min1(n)
+      if /n.l then
+         return
+      if not(is_red(n.l | n.l.l)) then
+         n := move_red_left(n)
+      n.l := delete_min1(n.l)
+      return balance(n)
+   end
+
+   private balance(n)
+      if is_red(n.r) then
+         n := rotate_left(n)
+      if is_red(n.l) & is_red(n.l.l) then
+         n := rotate_right(n)
+      if is_red(n.l) & is_red(n.r) then
+         flip_colors(n)
+      n.N := size1(n.l) + size1(n.r) + 1
+      return n
+   end
+
+   private rotate_right(n)
+      local x
+      x := n.l
+      n.l := x.r
+      x.r := n
+      x.is_red_flag := x.r.is_red_flag
+      x.r.is_red_flag := &yes
+      x.N := n.N
+      n.N := size1(n.l) + size1(n.r) + 1
+      return x
+   end
+
+   private rotate_left(n)
+      local x
+      x := n.r
+      n.r := x.l
+      x.l := n
+      x.is_red_flag := x.l.is_red_flag
+      x.l.is_red_flag := &yes
+      x.N := n.N
+      n.N := size1(n.l) + size1(n.r) + 1
+      return x
+   end
+   
+   private move_red_left(n)
+      flip_colors(n)
+      if is_red(n.r.l) then {
+         n.r := rotate_right(n.r)
+         n := rotate_left(n)
+      }
+      return n
+   end
+
+   private move_red_right(n)
+      flip_colors(n)
+      if is_red(n.l.l) then
+         n := rotate_right(n)
+      return n
+   end
+
+   private flip_colors(n)
+      n.is_red_flag := toggle_flag(n.is_red_flag)
+      n.l.is_red_flag := toggle_flag(n.l.is_red_flag)
+      n.r.is_red_flag := toggle_flag(n.r.is_red_flag)
+      return self
+   end
+
+   private traverse(n)
+      \n | fail
+      traverse(n.l)
+      coact(n)
+      traverse(n.r)
+   end
+
+   private back_traverse(n)
+      \n | fail
+      back_traverse(n.r)
+      coact(n)
+      back_traverse(n.l)
+   end
+
+   private is_red(n)
+      return \ (\n).is_red_flag
+   end
+
+   private size1(n)
+      return if /n then 0 else n.N
    end
 
    public key()
-      suspend Seq{(\root).traverse()}.key
+      suspend .Seq{traverse(root)}.key
    end
 
    public keyval()
       local e
-      every e := Seq{(\root).traverse()} do
-         suspend e.key | e.val
+      every e := Seq{traverse(root)} do
+         suspend .e.key | e.val
    end
 
    public back_key()
-      suspend Seq{(\root).back_traverse()}.key
+      suspend .Seq{back_traverse(root)}.key
    end
 
    public back_keyval()
       local e
-      every e := Seq{(\root).back_traverse()} do
-         suspend e.key | e.val
+      every e := Seq{back_traverse(root)} do
+         suspend .e.key | e.val
    end
 
    public gen()
-      suspend Seq{(\root).traverse()}.val
+      suspend Seq{traverse(root)}.val
+   end
+
+   public back()
+      suspend Seq{back_traverse(root)}.val
    end
 
    public clear()
       root := &null
-      sz := 0
       return self
    end
 
    public size()
-      return sz
+      return size1(root)
+   end
+
+   public select(i)
+      i := cvpos_item(i, size()) | fail
+      return .select1(root, i - 1).key
+   end
+
+   public rank(k)
+      return rank1(root, k) + 1
+   end
+
+   private select1(n, i)
+      local t
+      t := size1(n.l)
+      return if t > i then
+         select1(n.l, i)
+      else if t < i then
+         select1(n.r, i - t - 1)
+      else
+         n
+   end
+   
+   private rank1(n, k)
+      local t
+      \n | fail
+      t := cmp(k, n.key)
+      return if t < 0 then
+         rank1(n.l, k)
+      else if t > 0 then 
+         1 + size1(n.l) + rank1(n.r, k)
+      else 
+         size1(n.l)
+   end
+
+   #
+   # Check the table for internal consistency.
+   #
+   public check()
+      is_bst(root) | return error("Not in symmetric order")
+      is_size_consistent(root)  | return error("Subtree counts not consistent")
+      is_rank_consistent(root)  | return error("Ranks not consistent")
+      is_23(root) | return error("Not a 2-3 tree")
+      is_balanced() | return error("Not balanced")
+      return self
+   end
+
+   private is_balanced()
+      local b, n
+      b := 0
+      n := root
+      while \n do {
+         is_red(n) | (b +:= 1)
+         n := n.l
+      }
+      return is_balanced1(root, b)
+   end
+
+   private is_balanced1(n, b)
+      if /n then return b = 0
+      is_red(n) | (b -:= 1)
+      return is_balanced1(n.l, b) & is_balanced1(n.r, b)
+   end
+
+   private is_23(n)
+      if /n then return
+      if is_red(n.r) then fail
+      if n ~=== root & is_red(n) & is_red(n.l) then fail
+      return is_23(n.l) & is_23(n.r)
+   end
+
+   private is_bst(n, min, max)
+      if /n then return
+      if cmp(n.key, \min) <= 0 then fail
+      if cmp(n.key, \max) >= 0 then fail
+      return is_bst(n.l, min, n.key) & is_bst(n.r, n.key, max)
+   end
+
+   private is_size_consistent(n)
+      if /n then return
+      (n.N = size1(n.l) + size1(n.r) + 1) | fail
+      return is_size_consistent(n.l) & is_size_consistent(n.r)
+   end
+
+   private is_rank_consistent()
+      local i, k
+      every i := 1 to size() do
+         (i = rank(select(i))) | fail
+      every k := key() do
+         (cmp(k, select(rank(k))) = 0) | fail
+      return
+   end
+
+   public get_mode()
+      return MODIFY + INSERT + DELETE + ORDER
    end
 
    #
@@ -461,15 +811,17 @@ class SortTable(Table)
    #
    # @param def the default value
    # @param cmp a comparator function taking two arbitrary values and
-   # @   returning {-1}, {0} or {+1} by way of comparison.  The default
-   # @   value is {Internal.compare}.
+   # @   returning {<0}, {0} or {>0} by way of comparison.  The default
+   # @   value is {Internal.compare}.  The function must satisfy
+   # @      sign(cmp(a,b)) = -sign(cmp(b,a)) for all a,b
+   # @      cmp(a,b)>0 & cmp(b,c)>0 => cmp(a,c)>0
+   # @      cmp(a,b)=0 <=> sign(cmp(a,x))=sign(cmp(b,x)) for all other x.
    # @param entries initial key-value entries.
    #
    public new(def, cmp, entries[])
       self.def := def
       /cmp := Internal.compare
       self.cmp := cmp
-      self.sz := 0
       init_entries(entries)
       return
    end
@@ -480,16 +832,18 @@ end
 # rather than the builtin {===} operator.
 #
 class EqTable(Table)
-   private t, sz
+   private const t
+   private sz
 
    public insert(key, val)
       local h, l, e, n
       h := hash(key)
-      l := t[h]
-      every e := !\l do {
-         if equals(e[1], key) then {
-            e[2] := val
-            return self
+      if l := default.member(t, h) then {
+         every e := !l do {
+            if equals(e[1], key) then {
+               e[2] := val
+               return self
+            }
          }
       }
       n := [key, val]
@@ -504,10 +858,11 @@ class EqTable(Table)
    public add(key)
       local h, l, e, n
       h := hash(key)
-      l := t[h]
-      every e := !\l do {
-         if equals(e[1], key) then
-            return e[2]
+      if l := default.member(t, h) then {
+         every e := !l do {
+            if equals(e[1], key) then
+               return e[2]
+         }
       }
       n := [key, def]
       if \l then
@@ -520,7 +875,7 @@ class EqTable(Table)
 
    public member(key)
       local e
-      every e := !\t[hash(key)] do {
+      every e := !default.member(t, hash(key)) do {
          if equals(e[1], key) then
             return e[2]
       }
@@ -529,26 +884,18 @@ class EqTable(Table)
    public delete(key)
       local h, l, e, i
       h := hash(key)
-      l := t[h]
+      l := default.member(t, h) | fail
       i := 1
-      every e := !\l do {
+      every e := !l do {
          if equals(e[1], key) then {
             default.delete(l, i)
             if *l = 0 then
                default.delete(t, h)
             sz -:= 1
-            break
+            return self
          }
          i +:= 1
       }
-      return self
-   end
-
-   public sort()
-      local l
-      l := []
-      every put(l, copy(!!t))
-      return default.sortf(l, 1)
    end
 
    public key()
@@ -566,13 +913,17 @@ class EqTable(Table)
    end
 
    public size()
-      return sz
+      return .sz
    end
 
    public clear()
       default.clear(t)
       sz := 0
       return self
+   end
+
+   public get_mode()
+      return MODIFY + INSERT + DELETE
    end
 
    #
@@ -594,7 +945,7 @@ end
 # A {Table} which is just a wrapper around a builtin table.
 #
 class BuiltinTable(Table)
-   private t
+   private const t
 
    public insert(key, val)
       default.insert(t, key, val)
@@ -606,8 +957,7 @@ class BuiltinTable(Table)
    end
 
    public delete(key)
-      default.delete(t, key)
-      return self
+      return default.delete(t, key) & self
    end
 
    public sort()
@@ -635,6 +985,10 @@ class BuiltinTable(Table)
       return *t
    end
 
+   public get_mode()
+      return MODIFY + INSERT + DELETE
+   end
+
    #
    # Create a new instance.
    #
@@ -649,22 +1003,43 @@ class BuiltinTable(Table)
    end
 end
 
+package class EmptyTable(Table, SelfClone)
+   public member(x)
+   end
+
+   public key()
+   end
+
+   public size()
+      return 0
+   end
+
+   public get_mode()
+      return 0
+   end
+
+   package new()
+      return
+   end
+end
+
 #
 # A {Table} which uses weak references
 #
 class WeakrefTable(Table)
-   private 
-      t, sz, last_purge
+   private const t
+   private sz, last_purge
 
    public insert(key, val)
       local h, l, e, n
       maybe_purge()
       h := Internal.hash(key)
-      l := t[h]
-      every e := !\l do {
-         if weakrefval(e[1]) === key then {
-            e[2] := val
-            return self
+      if l := default.member(t, h) then {
+         every e := !l do {
+            if weakrefval(e[1]) === key then {
+               e[2] := val
+               return self
+            }
          }
       }
       n := [weakref(key), val] | runerr("Type of key cannot be used with weakref")
@@ -680,10 +1055,11 @@ class WeakrefTable(Table)
       local h, l, e, n
       maybe_purge()
       h := Internal.hash(key)
-      l := t[h]
-      every e := !\l do {
-         if weakrefval(e[1]) === key then
-            return e[2]
+      if l := default.member(t, h) then {
+         every e := !l do {
+            if weakrefval(e[1]) === key then
+               return e[2]
+         }
       }
       n := [weakref(key), def] | runerr("Type of key cannot be used with weakref")
       if \l then
@@ -697,7 +1073,7 @@ class WeakrefTable(Table)
    public member(key)
       local e
       maybe_purge()
-      every e := !\t[Internal.hash(key)] do {
+      every e := !default.member(t, Internal.hash(key)) do {
          if weakrefval(e[1]) === key then
             return e[2]
       }
@@ -707,28 +1083,18 @@ class WeakrefTable(Table)
       local h, l, e, i
       maybe_purge()
       h := Internal.hash(key)
-      l := t[h]
+      l := default.member(t, h) | fail
       i := 1
-      every e := !\l do {
+      every e := !l do {
          if weakrefval(e[1]) === key then {
             default.delete(l, i)
             if *l = 0 then
                default.delete(t, h)
             sz -:= 1
-            break
+            return self
          }
          i +:= 1
       }
-      return self
-   end
-
-   public sort()
-      local e, x
-      maybe_purge()
-      x := table()
-      every e := !!t do
-         default.insert(x, weakrefval(e[1]), e[2])
-      return default.sort(x)
    end
 
    public key()
@@ -756,7 +1122,7 @@ class WeakrefTable(Table)
 
    public size()
       maybe_purge()
-      return sz
+      return .sz
    end
 
    public maybe_purge()
@@ -782,6 +1148,10 @@ class WeakrefTable(Table)
          if *l = 0 then
             default.delete(t, h)
       }
+   end
+
+   public get_mode()
+      return MODIFY + INSERT + DELETE
    end
 
    #

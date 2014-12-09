@@ -574,12 +574,6 @@
 #define current_fname_ptr (curpstate->Current_fname_ptr)
 #define main_proc (curpstate->MainProc)
 
-#define coexp_ser (curpstate->Coexp_ser)
-#define list_ser  (curpstate->List_ser)
-#define set_ser   (curpstate->Set_ser)
-#define table_ser (curpstate->Table_ser)
-#define weakref_ser (curpstate->Weakref_ser)
-      
 #define curstring (curpstate->stringregion)
 #define curblock  (curpstate->blockregion)
 #define strtotal  (curpstate->stringtotal)

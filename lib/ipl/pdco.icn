@@ -943,8 +943,7 @@ end
 procedure Reduce(e1, e2, e3)	
    local op, x
 
-   op := pdco_param(e1) | fail
-   op := callable(op, 2) | runerr("invalid operation for Reduce{}", op)
+   op := pdco_param(e1,, callable2, "invalid operation for Reduce{}") | fail
 
    x := @e2 | fail
 
@@ -1364,4 +1363,8 @@ procedure pdco_param(v, def, cvt, err)
    if \cvt then
       v := cvt(v) | runerr(err, v)
    return v
+end
+
+package procedure callable2(e)
+   return callable(e, 2)
 end

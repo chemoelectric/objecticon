@@ -349,15 +349,17 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
          }
 
          "methp" : {
+            s := ty || "#" || serial(o)
+            insert(seen, o, s)
             if /desc then 
-               writes1("methp()")
+               writes1(s)
             else if simple{Class.get_methp_object(o)} then {
-               writes1("methp(")
+               writes(s, "(")
                traverse(Class.get_methp_object(o))
                writes(",", image(Class.get_methp_proc(o)), ")")
             } else {
                nl()
-               writes1("methp(")
+               writes(s, "(")
                iplus()
                nl()
                traverse(Class.get_methp_object(o))
@@ -765,14 +767,21 @@ final abstract class Internal()
    public static native hash(x)
 end
 
-class NoCopy(ObjectClone)
+#
+# Parent class for a class which returns self on clone (useful for
+# immutable classes).
+#
+class SelfClone(ObjectClone)
    private final object_clone()
       return self
    end
+end
 
-   private final object_encode()
-      throw("Not encodable: " || image(self))
-   end
+#
+# Parent class for a class which wishes to prevent copying of itself,
+# either by clone or encode/decode.
+#
+class NoCopy(SelfClone, Unencodable)
 end
 
 #

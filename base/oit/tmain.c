@@ -70,6 +70,7 @@ static void file_comp(void);
 static void bundle_iconx(void);
 static void execute(char **args);
 static void usage(void);
+static void remove_intermediate_files(void);
 
 
 struct file_param *trans_files = 0, *last_trans_file = 0, 

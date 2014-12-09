@@ -186,12 +186,6 @@ procedure child24()
    return othertype
 end
 
-procedure child25(self,x,y)
-   write("child25:", image(self), ",", image(x), ",", image(y))
-   write(self.g())
-   return 100
-end
-
 procedure child29()
    &why := "failure message"
 end
@@ -235,13 +229,14 @@ procedure child32()
    return create 1 to 3
 end
 
-procedure child_33_proc1()
-   suspend 1 to 10
-end
-
 class Child33()
-   public static native fun1()
-   public static native fun2()
+   public static fun1()
+      suspend 1 to 10
+   end
+
+   public static fun2()
+      return &why
+   end
 
    public static fun3()
       return &why
@@ -255,11 +250,9 @@ class Child33()
       return FileStream.stdout
    end
 
-   public static native fun6()
+   public static fun6()
+   end
 
    private static init()
-      Class.set_method("fun1", child_33_proc1)
-      Class.set_method("fun2", Prog.get_keyword("&why"))
-      Class.set_method("fun6", tab)
    end
 end

@@ -129,7 +129,7 @@ Field eleven1 index 13
 	Flags: 5
 	Defining class: class Eleven
 	Value via class: Not accessible
-	Value via instance: methp(object Eleven#*(9),method Eleven.eleven1)
+	Value via instance: methp#*(object Eleven#*(9),method Eleven.eleven1)
 Field new index 14
 	Name: new
 	Index: 14
@@ -143,14 +143,14 @@ Field thing index 15
 	Flags: 5
 	Defining class: class Eight
 	Value via class: Not accessible
-	Value via instance: methp(object Eleven#*(9),method Eight.thing)
+	Value via instance: methp#*(object Eleven#*(9),method Eight.thing)
 Field dm index 16
 	Name: dm
 	Index: 16
 	Flags: 261
 	Defining class: class Eight
 	Value via class: Not accessible
-	Value via instance: methp(object Eleven#*(9),deferred method)
+	Value via instance: methp#*(object Eleven#*(9),deferred method)
 Field ten1 index 17
 	Name: ten1
 	Index: 17
@@ -183,14 +183,14 @@ Field thing index 1
 	Flags: 5
 	Defining class: class Eight
 	Value via class: Not accessible
-	Value via instance: methp(object Eight#*(0),method Eight.thing)
+	Value via instance: methp#*(object Eight#*(0),method Eight.thing)
 Field dm index 2
 	Name: dm
 	Index: 2
 	Flags: 261
 	Defining class: class Eight
 	Value via class: Not accessible
-	Value via instance: methp(object Eight#*(0),deferred method)
+	Value via instance: methp#*(object Eight#*(0),deferred method)
 -------------
 Class Nine
 Supers: {}
@@ -243,6 +243,10 @@ to_string: list#*[object Seven#*(a=1;c=3),ref object Seven#*]
 Class.get(Eleven, "rubbish"): Error 207
 Class.get(Eleven, "a"): Succeeded with &null
 Class.junk: Error 207
+first.FirstOne.var: Error 611
+second.SecondOne.var: Error 611
+Access One.var from p2: Error 611
+Access Two.var from p2: Succeeded with &null
 Clone check: object One#*(x=1;y=2)
 	equals(a,a): yes
 	equals(b,b): yes
@@ -717,7 +721,7 @@ Equals check: object util.Time#*(October 10, 2000 20:11.33 BST) -v- object One#*
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Failed
 	classof(a)===classof(b): no
-Equals check: methp(object Sixteen#*(val=&null),method Sixteen.g) -v- methp(object Sixteen#*(val=&null),method Sixteen.g)
+Equals check: methp#*(object Sixteen#*(val=&null),method Sixteen.g) -v- methp#*(object Sixteen#*(val=&null),method Sixteen.g)
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): yes
@@ -725,7 +729,7 @@ Equals check: methp(object Sixteen#*(val=&null),method Sixteen.g) -v- methp(obje
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Error 123
-Equals check: methp(object Sixteen#*(val=&null),method Fifteen.f) -v- methp(object Fifteen#*(val=&null),method Fifteen.f)
+Equals check: methp#*(object Sixteen#*(val=&null),method Fifteen.f) -v- methp#*(object Fifteen#*(val=&null),method Fifteen.f)
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): no
@@ -733,7 +737,7 @@ Equals check: methp(object Sixteen#*(val=&null),method Fifteen.f) -v- methp(obje
 	hash(a)=hash(b): yes
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Error 123
-Equals check: methp(object Sixteen#*(val=&null),method Fifteen.f) -v- methp(object Sixteen#*(val=&null),method Sixteen.g)
+Equals check: methp#*(object Sixteen#*(val=&null),method Fifteen.f) -v- methp#*(object Sixteen#*(val=&null),method Sixteen.g)
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): no
@@ -741,7 +745,7 @@ Equals check: methp(object Sixteen#*(val=&null),method Fifteen.f) -v- methp(obje
 	hash(a)=hash(b): no
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Error 123
-Equals check: object Fifteen#*(val=methp(ref object Fifteen#*,method Fifteen.f)) -v- object Fifteen#*(val=methp(ref object Fifteen#*,method Fifteen.f))
+Equals check: object Fifteen#*(val=methp#*(ref object Fifteen#*,method Fifteen.f)) -v- object Fifteen#*(val=methp#*(ref object Fifteen#*,method Fifteen.f))
 	equals(a,a): yes
 	equals(b,b): yes
 	equals(a,b): yes
@@ -750,33 +754,6 @@ Equals check: object Fifteen#*(val=methp(ref object Fifteen#*,method Fifteen.f))
 	type(a)==type(b): yes
 	subtype(a)==subtype(b): Succeeded with "Fifteen"
 	classof(a)===classof(b): yes
-Tryit1 object Thirteen#*(1)
-getf: no
-Tryit1 object Thirteen#*(1)
-getf: no
-Tryit1 object Thirteen#*(1)
-getf: yes
-Setup err1: Error 623
-Setup err2: Error 616
-Setup err3: Error 616
-Setup err4: Error 617
-Setup err5: Error 617
-Setup err6: Error 618
-Access One.var from p2: Error 611
-Access Two.var from p2: Succeeded with &null
-Access One.var from p2: Error 611
-Access Two.var from p2: Succeeded with &null
-Access One.var from p2: Succeeded with &null
-Access Two.var from p2: Succeeded with &null
-second.p
-first.FirstOne.f
-second.p
-second
-first
-second
-classes_packtest2.icn,10
-classes_packtest1.icn,8
-classes_packtest2.icn,10
 Random object test starting
 Random object test finished
 equals(x1,x2): yes
@@ -793,15 +770,15 @@ Par.f3(): Succeeded with 3
 Par.f4(): Succeeded with 4
 Other.f1: Error 607
 Par.new: Error 622
-Par.f1: Succeeded with methp(object Sub#*(0),method Par.f1)
+Par.f1: Succeeded with methp#*(object Sub#*(0),method Par.f1)
 Par.f2: Error 608
-Par.f3: Succeeded with methp(object Sub#*(0),method Par.f3)
+Par.f3: Succeeded with methp#*(object Sub#*(0),method Par.f3)
 Par.f4: Succeeded with method Par.f4
 Class.get(Other,f1): Error 607
 Class.get(Par,new): Error 622
-Class.get(Par,f1): Succeeded with methp(object Sub#*(0),method Par.f1)
+Class.get(Par,f1): Succeeded with methp#*(object Sub#*(0),method Par.f1)
 Class.get(Par,f2): Error 608
-Class.get(Par,f3): Succeeded with methp(object Sub#*(0),method Par.f3)
+Class.get(Par,f3): Succeeded with methp#*(object Sub#*(0),method Par.f3)
 Class.get(Par,f4): Succeeded with method Par.f4
 from proc Par.new(): Error 606
 from proc Par.f1(): Error 606

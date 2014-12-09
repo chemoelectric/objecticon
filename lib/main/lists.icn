@@ -4,36 +4,63 @@
 
 package datastruct
 
-import lang, util
+import lang, util, ipl.pdco(Positions)
 
 #
 # This is a common superclass for a list-like data structure.
 #
-abstract class List(ObjectOutput, ObjectHash, ObjectEquals)
-   #
-   # Insert a new element `x` at position `i`
-   #
-   public abstract insert(i, x)
+abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
+   public static const
+      # An empty list instance
+      EMPTY_LIST,
+      # Constant indicating modifiable capability
+      MODIFY,
+      # Constant indicating insert capability
+      INSERT,
+      # Constant indicating delete capability
+      DELETE
+
+   private static init()
+      EMPTY_LIST := EmptyList()
+      MODIFY := 1
+      INSERT := 2
+      DELETE := 4
+   end
 
    #
-   # Delete element at position `i` from the list.
+   # Insert a new element `x` at position `i`.  Fails if `i` is
+   # invalid; otherwise succeeds and returns {self}.  Only implemented
+   # with INSERT capability.
    #
-   public abstract delete(i)
+   public defer insert(i, x)
+   
+   #
+   # Delete element at position `i` from the list.  Fails if `i` is
+   # invalid; otherwise succeeds and returns {self}.  Only implemented
+   # with DELETE capability.
+   #
+   public defer delete(i)
 
    #
-   # Return the member at position `i`.
+   # Return the member at position `i`.  If the list has MODIFY
+   # capability, a variable is returned, otherwise a value is
+   # returned.
    #
    public abstract at(i)
 
    #
    # Remove and return an element from the left end of list.
    #
-   public abstract get()
+   public get()
+      return 1(.at(1), delete(1))
+   end
 
    #
    # Remove and return an element from the right end of the list.
    #
-   public abstract pull()
+   public pull()
+      return 1(.at(-1), delete(-1))
+   end
 
    #
    # Push an element onto the left end of the list.
@@ -50,14 +77,31 @@ abstract class List(ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
-   # Generate the members.
+   # Generate the members.  If the list has MODIFY capability,
+   # variables are generated, otherwise values are generated.
    #
-   public abstract gen()
+   public gen()
+      local i
+      i := 1
+      while i <= size() do {
+         suspend at(i)
+         i +:= 1
+      }
+   end
 
    #
-   # Generate the members in reverse order.
+   # Generate the members in reverse order.  If the list has MODIFY
+   # capability, variables are generated, otherwise values are
+   # generated.
    #
-   public abstract back()
+   public back()
+      local i
+      i := size()
+      while i > 0 do {
+         suspend at(i)
+         i := min(i - 1, size())
+      }
+   end
 
    #
    # Return the size of the list.
@@ -65,21 +109,26 @@ abstract class List(ObjectOutput, ObjectHash, ObjectEquals)
    public abstract size()
 
    #
-   # Clear the list of all elements.
+   # Clear the list of all elements. Always succeeds and returns
+   # {self}.  Only implemented with DELETE capability.
    #
-   public abstract clear()
+   public clear()
+      while delete(1)
+      return self
+   end
 
    #
    # Generate the indices i such that at(i) === x
    #
    public keyof(x)
-      local i
-      i := 1
-      while i <= size() do {
-         if x === at(i) then
-            suspend i
-         i +:= 1
-      }
+      suspend Positions{gen(), x}
+   end
+
+   #
+   # Return an icon list of the elements.
+   #
+   public list()
+      return ipl.pdco.List{gen()}
    end
 
    #
@@ -137,20 +186,51 @@ abstract class List(ObjectOutput, ObjectHash, ObjectEquals)
    end
 end
 
+class UnmodifiableList(List)
+   private const l
+
+   public at(i)
+      return .l.at(i)
+   end
+
+   public gen()
+      suspend .l.gen()
+   end
+
+   public back()
+      suspend .l.back()
+   end
+
+   public size()
+      return l.size()
+   end
+
+   public keyof(x)
+      suspend l.keyof(x)
+   end
+
+   public get_mode()
+      return 0
+   end
+
+   public new(l)
+      self.l := l
+      return
+   end
+end
+
 #
 # A `List` that is just a wrapper around a builtin list
 #
 class BuiltinList(List)
-   private l
+   private const l
 
    public insert(i, x)
-      default.insert(l, i, x) | fail
-      return self
+      return default.insert(l, i, x) & self
    end
 
    public delete(i)
-      default.delete(l, i) | fail
-      return self
+      return default.delete(l, i) & self
    end
 
    public at(i)
@@ -196,6 +276,10 @@ class BuiltinList(List)
       return self
    end
 
+   public get_mode()
+      return MODIFY + INSERT + DELETE
+   end
+
    public new(l)
       /l := []
       self.l := l
@@ -203,10 +287,27 @@ class BuiltinList(List)
    end
 end
 
+package class EmptyList(List, SelfClone)
+   public at(i)
+   end
+
+   public size()
+      return 0
+   end
+
+   public get_mode()
+      return 0
+   end
+
+   package new()
+      return
+   end
+end
+
 #
 # A node in a `LinkedList`.
 #
-class LinkedListNode()
+package class LinkedListNode()
    public
       nxt, val
    public new(nxt, val)
@@ -256,7 +357,7 @@ class LinkedList(List)
    public delete(i)
       local n
       if i <= 0 then
-         i := cvpos(i, size()) | fail
+         i := cvpos_item(i, size()) | fail
       if i = 1 then
          nhead := (\nhead).nxt | fail
       else {
@@ -273,7 +374,7 @@ class LinkedList(List)
    public at(i)
       local n
       if i <= 0 then
-         i := cvpos(i, size()) | fail
+         i := cvpos_item(i, size()) | fail
       n := nhead
       while \n & i > 1 do {
          n := n.nxt
@@ -328,10 +429,14 @@ class LinkedList(List)
    end
 
    public back()
-      local l
+      local l, n
       l := []
-      every default.put(l, gen())
-      suspend default.back(l)
+      n := nhead
+      while \n do {
+         default.put(l, n)
+         n := n.nxt
+      }
+      suspend default.back(l).val
    end
 
    public size()
@@ -348,6 +453,10 @@ class LinkedList(List)
    public clear()
       nhead := &null
       return self
+   end
+
+   public get_mode()
+      return MODIFY + INSERT + DELETE
    end
 
    #
@@ -383,7 +492,7 @@ class LinkedList(List)
    #
    # Create an instance given a `LinkedListNode` as the list's head node.
    #
-   public static from_node(n)
+   private static from_node(n)
       local i
       i := Class.create_instance()
       i.nhead := n

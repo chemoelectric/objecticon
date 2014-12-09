@@ -57,11 +57,11 @@ procedure fprintf(file, format, args[])
 end
 
 procedure printf(format, args[])
-        writes(, _doprnt(format, args))
+        writes(_doprnt(format, args))
         return
 end
 
-procedure _doprnt(format, args)
+package procedure _doprnt(format, args)
    local out, v, just, width, conv, prec, pad, flag
 
         out := ""
@@ -105,23 +105,23 @@ procedure _doprnt(format, args)
         return out
 end
 
-procedure hexstr(x)
+package procedure hexstr(x)
    x := integer(x) | return image(x)
    return Format.int_to_string(x)
 end
 
-procedure octstr(x)
+package procedure octstr(x)
    x := integer(x) | return image(x)
    return Format.int_to_string(x, 8)
 end
 
-procedure fixnum(x, prec, flag)
+package procedure fixnum(x, prec, flag)
    /prec := 6
    x := real(x) | return image(x)
    return Format.numeric_to_string(x, prec, flag)
 end
 
-procedure decimal(x, prec, flag)
+package procedure decimal(x, prec, flag)
    x := integer(x) | return image(x)
    return Format.numeric_to_string(x, 0, flag)
 end
@@ -129,7 +129,7 @@ end
 
 # e-format:  [-]m.ddddddE(+|-)xxx
 #
-procedure eformatstr(x, prec, flag)
+package procedure eformatstr(x, prec, flag)
    /prec := 6
    x := real(x) | return image(x)
    return Format.numeric_to_string(x, prec, flag ++ 'e')

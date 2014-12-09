@@ -451,6 +451,7 @@ struct b_methp *f()
    struct b_methp *blk;
 
    AlcFixBlk(blk, b_methp, T_Methp, e_methp)
+   blk->id = methp_ser++;
    blk->object = 0;
    blk->proc = 0;
    return blk;
@@ -516,6 +517,7 @@ struct b_selem *f()
 
    AlcFixBlk(blk, b_selem, T_Selem, e_selem)
    blk->clink = NULL;
+   blk->hashnum = 0;
    blk->setmem = nulldesc;
    return blk;
    }
@@ -582,6 +584,7 @@ struct b_tvsubs *f()
 {
     struct b_tvsubs *blk;
     AlcFixBlk(blk, b_tvsubs, T_Tvsubs, e_tvsubs)
+    blk->sslen = blk->sspos = 0;
     blk->ssvar = nulldesc;
     return blk;
 }
@@ -601,7 +604,9 @@ struct b_telem *f()
 
    AlcFixBlk(blk, b_telem, T_Telem, e_telem)
    blk->clink = NULL;
+   blk->hashnum = 0;
    blk->tref = nulldesc;
+   blk->tval = nulldesc;
    return blk;
    }
 #enddef
@@ -620,6 +625,7 @@ struct b_tvtbl *f()
     struct b_tvtbl *blk;
     AlcFixBlk(blk, b_tvtbl, T_Tvtbl, e_tvtbl)
     blk->clink = NULL;
+    blk->hashnum = 0;
     blk->tref = nulldesc;
     return blk;
 }

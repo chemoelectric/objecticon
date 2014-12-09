@@ -203,6 +203,7 @@ struct b_object {		/* object block */
  */
 struct b_methp {                /* method pointer */
     word title;                 /*   T_Methp */
+    uword id;			/*   identification number */
     struct b_object *object;	/*   the instance */
     struct b_proc *proc;	/*   the method */
 };
@@ -426,12 +427,6 @@ struct progstate {
     struct ipc_line * Current_line_ptr;
     struct ipc_fname * Current_fname_ptr;
     dptr MainProc;
-
-    uword Coexp_ser;			/* this program's serial numbers */
-    uword List_ser;
-    uword Set_ser;
-    uword Table_ser;
-    uword Weakref_ser;
 
     word Kywd_time_elsewhere;		/* &time spent in other programs */
     word Kywd_time_out;			/* &time at last program switch out */
