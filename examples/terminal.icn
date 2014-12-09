@@ -338,6 +338,11 @@ class Columns(LineBasedScrollArea)
       }
    end
 
+   private handle_exit(e)
+      *parent_dialog.held = 0 | fail
+      set_over()
+   end
+
    private set_over(n)
       local s, url
       if n ~=== over then {
@@ -461,6 +466,7 @@ class Columns(LineBasedScrollArea)
       view.connect(self.handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
       view.connect(self.handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
       view.connect(self.handle_in_chain, Event.IN_POINT_CHAIN)
+      view.connect(self.handle_exit, Event.MOUSE_EXIT)
       return
    end
 end
