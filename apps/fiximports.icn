@@ -133,7 +133,7 @@ procedure do_class(c)
    every id := c.get_supers().gen().str() do {
       seen(id)
    }
-   every o := c.gen() do {
+   every o := c.get_members().gen() do {
       if is(o, Method) then
          do_method(csym, o)
    }
