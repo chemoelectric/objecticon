@@ -179,6 +179,14 @@ class Encode(Stream, HasUnderlyingStream)
       return r
    end
 
+   private encode_methp(mp)
+      writes1(Codec.METHP_CODE)
+      Proc.get_defining_class(mp) | throw("Can't encode a deferred methp")
+      note_seen(mp)
+      line_out(Proc.get_name(mp))
+      encode(Class.get_methp_object(mp))
+   end
+
    # Get a code for a procedure value; the first char is "F" for a
    # builtin function like upto, "K" for a keyword function, "1","2"
    # or "3" for a builtin operator like "+" or "||", "P" for a
@@ -337,6 +345,9 @@ class Encode(Stream, HasUnderlyingStream)
                encode(e)
          }
 
+         "methp" :
+            encode_methp(o)
+
          default : 
             throw("Type not encodable: " || ty)
       }
@@ -399,6 +410,24 @@ class Decode()
             self.seen := &null
          }
       }
+   end
+
+   private defer nothing()
+   private static native decode_methp_impl(obj, cl, fn, target)
+
+   private decode_methp()
+      local o, fn, cn, res, i, cl
+      # Create a result methp, albeit with the wrong fields.
+      res := nothing
+      note_seen(res)
+      fn := line_in()
+      i := backto('.', fn)
+      cn := fn[1:i-1]
+      cl := lookup_class(cn) | throw("No such class in methp " || fn)
+      o := decode()
+      # Error check and place the correct fields in the result methp
+      decode_methp_impl(o, cl, fn[i:0], res) | throw("Unable to decode methp " || fn || ": " || &why)
+      return res
    end
 
    private static decode_string(s)
@@ -633,6 +662,9 @@ class Decode()
                insert(res, decode(), decode())
             return res
          }            
+
+         Codec.METHP_CODE :
+            return decode_methp()
 
          default :
             throw("Unknown type code:" || image(t))
