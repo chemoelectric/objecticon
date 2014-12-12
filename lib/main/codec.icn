@@ -421,10 +421,11 @@ class Decode()
       res := nothing
       note_seen(res)
       fn := line_in()
-      i := backto('.', fn)
+      (i := backto('.', fn)) | throw("Invalid method name: " || fn)
       cn := fn[1:i-1]
-      cl := lookup_class(cn) | throw("No such class in methp " || fn)
+      cl := lookup_class(cn) | throw("No such class in methp: " || cn)
       o := decode()
+      (type(o) == "object") | throw("Object expected in methp")
       # Error check and place the correct fields in the result methp
       decode_methp_impl(o, cl, fn[i:0], res) | throw("Unable to decode methp " || fn || ": " || &why)
       return res
@@ -447,8 +448,8 @@ class Decode()
          c := move(1)
          s := tab(0)
          case c of {
-            "F": return Prog.get_function(s) | throw("No such function " || s)
-            "K": return Prog.get_keyword(s) | throw("No such keyword " || s)
+            "F": return Prog.get_function(s) | throw("No such function: " || s)
+            "K": return Prog.get_keyword(s) | throw("No such keyword: " || s)
             "O": s ? {
                i := if ="unary " then 1 
                else if ="binary " then 2
@@ -461,13 +462,13 @@ class Decode()
                return lookup_procedure(s) | throw("No such procedure " || s)
             }
             "M": {
-               i := backto('.', s)
+               (i := backto('.', s)) | throw("Invalid method name: " || s)
                if cl := lookup_class(s[1:i-1]) &
                   j := Class.get_field_flags(cl, s[i:0]) &
                   iand(j, PUBLIC_STATIC_METHOD) = PUBLIC_STATIC_METHOD 
                then
                   return Class.get(cl, s[i:0]) 
-               throw("No such public static method " || s)
+               throw("No such public static method: " || s)
             }
             default: throw("Unknown proc code")
          }
@@ -540,12 +541,12 @@ class Decode()
 
          Codec.CLASS_CODE : {
             cname := line_in()
-            return lookup_class(cname) | throw("No such class " || cname)
+            return lookup_class(cname) | throw("No such class: " || cname)
          }
 
          Codec.CONSTRUCTOR_CODE : {
             rname := line_in()
-            return lookup_constructor(rname) | throw("No such constructor " || rname)
+            return lookup_constructor(rname) | throw("No such constructor: " || rname)
          }
 
          Codec.PROCEDURE_CODE : {
@@ -617,7 +618,7 @@ class Decode()
 
          Codec.RECORD_CODE : {
             rname := line_in()
-            con := lookup_constructor(rname) | throw("No such constructor " || rname)
+            con := lookup_constructor(rname) | throw("No such constructor: " || rname)
             res := con() 
             note_seen(res)
             n := int_in()

@@ -51,6 +51,8 @@ procedure main()
    yes_no { "Deferred", decode("HA.df|CB|I1Sx|N") }
    yes_no { "Not implemented", decode("HZ.f|CB|I1Sx|N") }
    yes_no { "Static method", decode("HA.sf|CB|I1Sx|N") }
+   yes_no { "Object expected", decode("Hio.StringStream.out|I1") }
+   yes_no { "No dots in name", decode("Hnodots|Cio.StringStream|I2Ssubj|S|Spos|I1") }
 
    # Reference test
    write("---\nReference test")
