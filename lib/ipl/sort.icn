@@ -60,7 +60,7 @@
 
 package ipl.sort
 
-import lang(Class,Prog,Internal,Text)
+import lang(Class,Prog,Internal,Text), util(cvslice)
 
 procedure isort(x,keyproc,y)
    local items,item,key,result
@@ -258,20 +258,28 @@ procedure cmp_field(q, f)
 end
 
 #
-# The classic quick sort procedure.
+# The classic quick sort procedure.  The given list is sorted
+# in-place, and returned.  If pos1 and pos2 are given, then only
+# the sublist l[pos1:pos2] is sorted.
 #
-procedure qsort(l, cmp, first, last)
-   local i, j, pivot
-   /first := 1
-   /last := *l
+# @param l the list to sort
+# @param cmp a comparator function, default `Internal.compare`
+# @param pos1 the first slice index, default 1
+# @param pos2 the second slice index, default 0
+#
+procedure qsort(l, cmp, pos1, pos2)
+   local s
+   s := cvslice(pos1, pos2, *l) | fail
    /cmp := Internal.compare
+   return qsort1(l, cmp, s.lo, s.hi - 1)
+end
 
+package procedure qsort1(l, cmp, first, last)
+   local i, j, pivot
+   if last <= first then
+      return l
    i := first
    j := last
-
-   if i = j then
-      return l
-
    pivot := l[(i + j) / 2]
    repeat {
       while cmp(l[i], pivot) < 0 do i +:= 1
@@ -285,20 +293,30 @@ procedure qsort(l, cmp, first, last)
          break
    }
    if first < j then
-      qsort(l, cmp, first, j)
+      qsort1(l, cmp, first, j)
    if i < last then
-      qsort(l, cmp, i, last)
+      qsort1(l, cmp, i, last)
    return l
 end
 
+# A binary search algorithm.  If pos1 and pos2 are given, then only
+# the sublist l[pos1:pos2] is searched.
 #
-# A binary search algorithm
+# @param l the list to search
+# @param val the value to search for
+# @param cmp a comparator function, default `Internal.compare`
+# @param pos1 the first slice index, default 1
+# @param pos2 the second slice index, default 0
 #
-procedure bsearch(l, val, cmp, first, last)
-   local m, c
-   /first := 1
-   /last := *l
+procedure bsearch(l, val, cmp, pos1, pos2)
+   local s
+   s := cvslice(pos1, pos2, *l) | fail
    /cmp := Internal.compare
+   return bsearch1(l, val, cmp, s.lo, s.hi - 1)
+end
+
+package procedure bsearch1(l, val, cmp, first, last)
+   local m, c
    while first <= last do {
       m := (first + last) / 2
       c := cmp(val, l[m])
@@ -309,4 +327,38 @@ procedure bsearch(l, val, cmp, first, last)
       else # c < 0
          last := m - 1
    }
+end
+
+# A merge sort implementation.  Unlike `qsort`, this returns a sorted
+# copy, leaving the original unchanged.  If pos1 and pos2 are given,
+# then only the sublist l[pos1:pos2] is sorted, and that sublist is
+# returned.
+#
+# @param l the list to sort
+# @param cmp a comparator function, default `Internal.compare`
+# @param pos1 the first slice index, default 1
+# @param pos2 the second slice index, default 0
+#
+procedure mergesort(l, cmp, pos1, pos2)
+   local s
+   s := cvslice(pos1, pos2, *l) | fail
+   /cmp := Internal.compare
+   return mergesort1(l, cmp, s.lo, s.hi - 1)
+end
+
+package procedure mergesort1(l, cmp, first, last)
+   local l1, l2, l3, m, v1
+   if last <= first then
+      return l[first:last+1]
+   m := (first + last) / 2
+   l1 := mergesort1(l, cmp, first, m)
+   l2 := mergesort1(l, cmp, m+1, last)
+   l3 := []
+   every v1 := !l1 do {
+      while cmp(v1, l2[1]) > 0 do
+         put(l3, get(l2))
+      put(l3, v1)
+   }
+   every put(l3, !l2)
+   return l3
 end
