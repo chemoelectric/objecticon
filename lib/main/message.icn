@@ -162,7 +162,7 @@ class Message(MimeHeaders)
    #
    public to_rfc822_stream(f)
       local h, t
-      every h := !headers.sort() do {
+      every h := gen_header_entries() do {
          every t := !h[2] do
             f.writes(fold(h[1] || ": " || t), "\r\n") | fail
       }

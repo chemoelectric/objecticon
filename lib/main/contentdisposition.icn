@@ -4,7 +4,7 @@
 
 package mail
 
-import datastruct(ClTable), util(error)
+import datastruct(SortTable), util(error), lang(Text)
 
 #
 # This class represents a content disposition
@@ -150,17 +150,14 @@ class ContentDisposition()
    public to_rfc1521()
       local s, e
       s := type 
-      every e := !parameters.sort() do
+      every e := parameters.entries() do
          s ||:= "; " || e[1] || "=" || RFC822Parser.escape_1521_value(e[2])
       return s
    end
 
-   public new(type, parameters)
-      /parameters := ClTable()
+   public new(type)
       self.type := type
-      self.parameters := parameters
+      self.parameters := SortTable(, Text.cl_compare)
       return
    end
 end
-
-

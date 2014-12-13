@@ -780,7 +780,7 @@ procedure clcset(c)
    return c ++ cset(ls || map(ls, &lcase, &ucase))
 end
 
-record StringAnalysis(s, i, j)
+package record StringAnalysis(s, i, j)
 
 #
 # This procedure can be used to normalize the three parameters

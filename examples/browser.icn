@@ -1749,10 +1749,6 @@ procedure main(a)
    cookies_file := \opts["k"] | home.child("oicookies").str()
    cookies := decode_from_file(cookies_file) | table()
    settings := decode_from_file(settings_file) | Settings()
-   /settings.pool_size := 6
-   /settings.max_concurrent_downloads := 3
-   /settings.destination_dir := "/tmp"
-   /settings.font_factor := 1.0
    ImageCache.
       name_image("rpp.EXIT_24", EXIT).
       name_image("rpp.PASTE_24", PASTE).

@@ -253,7 +253,7 @@ class HttpClient(NetClient)
 
    private add_request_headers(l)
       local e
-      every e := !request.headers.sort() do
+      every e := request.gen_header_entries() do
          every put(l, capitalize_header(e[1]) || ": " || !e[2])
    end
 
@@ -280,7 +280,7 @@ class HttpClient(NetClient)
          set_url(request.url).
          set_helper(request.helper).
          set_method(request.method).
-         set_headers(clone(request.headers)).
+         copy_headers_from(request).
          set_referer(request.referer).
          set_range(request.range_start, request.range_end)
       if /request.output_stream then
