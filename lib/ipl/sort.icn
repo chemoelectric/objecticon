@@ -309,14 +309,11 @@ end
 # @param pos2 the second slice index, default 0
 #
 procedure bsearch(l, val, cmp, pos1, pos2)
-   local s
+   local s, m, c, first, last
    s := cvslice(pos1, pos2, *l) | fail
    /cmp := Internal.compare
-   return bsearch1(l, val, cmp, s.lo, s.hi - 1)
-end
-
-package procedure bsearch1(l, val, cmp, first, last)
-   local m, c
+   first := s.lo
+   last := s.hi - 1
    while first <= last do {
       m := (first + last) / 2
       c := cmp(val, l[m])
