@@ -189,7 +189,8 @@ import
    ipl.numbers(residue),
    ipl.sets(elementset),
    ipl.strings(separate,separate_lines),
-   lang(equals,Prog)
+   lang(equals,Prog),
+   util(cvslice)
 
 # create list from lines in file
 procedure file2lst(s)			
@@ -687,16 +688,24 @@ procedure lrepl(L, i)
 
 end
 
-# list reverse, returning a new list
-procedure lreverse(L)			
-   return lreverse_mod(copy(L))
+# list reverse, returning a new list.  If pos1 and pos2 are given, then
+# only the sublist pos1:pos2 is reversed
+procedure lreverse(L, pos1, pos2)			
+   return lreverse_mod(copy(L), pos1, pos2)
 end
 
-# list reverse, modifying L
-procedure lreverse_mod(L)			
-   local i
-   every i := 1 to *L / 2 do
-      L[i] :=: L[-i]
+# list reverse, modifying L.  If pos1 and pos2 are given, then only
+# the sublist pos1:pos2 is reversed
+procedure lreverse_mod(L, pos1, pos2)
+   local s, i, j
+   s := cvslice(pos1, pos2, *L) | fail
+   i := s.lo
+   j := s.hi - 1
+   while i < j do {
+      L[i] :=: L[j]
+      i +:= 1
+      j -:= 1
+   }
    return L
 end
 
