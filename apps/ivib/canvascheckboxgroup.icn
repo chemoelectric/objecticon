@@ -34,7 +34,7 @@ class CanvasCheckBoxGroup(CanvasObject,CheckBoxGroup)
    #
    # Return the I/O template.
    #
-   public static get_template()
+   public get_template()
       suspend CanvasObject.get_template() | ["Which One", "which_one"]
    end
 

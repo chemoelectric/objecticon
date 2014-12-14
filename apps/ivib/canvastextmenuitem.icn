@@ -56,7 +56,7 @@ class CanvasTextMenuItem(CanvasMenuComponent,TextMenuItem)
          return Class.get_name(self.paint_mid) || "(Txt)"
    end
 
-   public static get_template()
+   public get_template()
       suspend CanvasMenuComponent.get_template() |
          ["Paint mid", "paint_mid"] |
          ["Paint left", "paint_left"] |

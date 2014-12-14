@@ -52,7 +52,7 @@ class CanvasTabSet(CanvasComponent,TabSet)
    #
    # Return the I/O template.
    #
-   public static get_template()
+   public get_template()
       suspend CanvasComponent.get_template() |
          ["Children", "children"] |
          ["Which One", "which_one"] |

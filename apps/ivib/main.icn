@@ -45,7 +45,7 @@ class Prefs(SelectiveObjectCodec)
       plugin_directory,
       named_image_path
 
-   public static get_template()
+   public get_template()
       suspend ["Undo Size", "undo_size"] |
               ["Plugin Directory", "plugin_directory"] |
               ["Named Image Path", "named_image_path"]

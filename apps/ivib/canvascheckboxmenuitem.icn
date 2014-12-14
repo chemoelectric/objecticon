@@ -60,7 +60,7 @@ class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
    #
    # Return the I/O template.
    #
-   public static get_template()
+   public get_template()
       # An abbreviated set... we don't want the left Paint.
       suspend CanvasMenuComponent.get_template() |
           ["Paint mid", "paint_mid"] |

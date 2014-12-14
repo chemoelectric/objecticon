@@ -27,7 +27,7 @@ class CanvasABorder(CanvasObject)
    #
    # Return the I/O template.
    #
-   public static get_template()
+   public get_template()
       suspend CanvasObject.get_template() |
          ["Left inset", "empty_l_inset"] |
          ["Right inset", "empty_r_inset"] |
@@ -123,7 +123,7 @@ class CanvasLineBorder(CanvasABorder)
       line_width_val,
       has_empty
 
-   public static get_template()
+   public get_template()
       suspend CanvasABorder.get_template() |
          [ "Line width", "line_width_val"] |
          [ "Has empty", "has_empty"]

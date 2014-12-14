@@ -127,7 +127,7 @@ class CanvasObject(SelectiveObjectCodec)
       every gen_cos().traverse_tree()
    end
 
-   public static get_template()
+   public get_template()
       suspend ["Parent Canvas", "parent_Canvas"] |
               ["Name", "name"] |
               ["Class Name", "class_name"] |

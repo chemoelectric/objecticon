@@ -39,7 +39,7 @@ class CanvasListSpin(CanvasComponent,ListSpin)
    #
    # Return the I/O template.
    #
-   public static get_template()
+   public get_template()
       suspend CanvasComponent.get_template() |
           ["Selection", "selection"] |
           ["Selection List", "selection_list"]

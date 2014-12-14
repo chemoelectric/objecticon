@@ -67,7 +67,7 @@ class CanvasMenuComponent(CanvasObject)
    #
    # Return the I/O template.
    #
-   public static get_template()
+   public get_template()
       suspend ["Name", "name"] |
               ["Class Name", "class_name"] |
               ["Import Name", "import_name"] |

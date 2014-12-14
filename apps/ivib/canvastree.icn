@@ -63,7 +63,7 @@ class CanvasTree(CanvasComponent,Tree)
    #
    # Return the I/O template.
    #
-   public static get_template()
+   public get_template()
       suspend CanvasComponent.get_template() |
          ["Select Mode", "select_mode"] |
          ["Show Root Handles", "show_root_handles_flag"] |

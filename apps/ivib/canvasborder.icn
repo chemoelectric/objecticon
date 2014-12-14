@@ -95,7 +95,7 @@ class CanvasBorder(CanvasComponent,Border)
    #
    # Return the I/O template.
    #
-   public static get_template()
+   public get_template()
       suspend CanvasComponent.get_template() |
          ["Internal Alignment", "internal_align"] |
          ["Children", "children"] |
@@ -187,7 +187,7 @@ class CanvasBorderContent(CanvasComponent,Component)
    #
    # Return the I/O template.
    #
-   public static get_template()
+   public get_template()
       suspend CanvasComponent.get_template() | ["Children", "children"]
    end
 

@@ -949,7 +949,7 @@ class Canvas(Component,SelectiveObjectCodec)
       return self
    end
    
-   public static get_template()
+   public get_template()
       suspend ["SuperClass Name", "superclass_name"] |
               ["Import Name", "import_name"] |
               ["Button Groups", "button_groups"] |
