@@ -399,88 +399,50 @@ operator [:] sect(underef x -> dx, i, j)
 
    body {
       int use_trap = 0;
+      word len;
 
       type_case dx of {
       list: {
-         word t;
          tended struct descrip result;
-
-         i = cvpos(i, ListBlk(dx).size);
-         if (i == CvtFail)
-            fail;
-         j = cvpos(j, ListBlk(dx).size);
-         if (j == CvtFail)
-            fail;
-         if (i > j) {
-            t = i;
-            i = j;
-            j = t;
-            }
+         if (cvslice(&i, &j, ListBlk(dx).size) != Succeeded)
+             fail;
          cplist(&dx, &result, i, j);
          return result;
       }
 
      ucs: {
-         word t;
          if (is:variable(x) && !_rval)
                use_trap = 1;
-
-         i = cvpos(i, UcsBlk(dx).length);
-         if (i == CvtFail)
+         if (cvslice(&i, &j, UcsBlk(dx).length) != Succeeded)
              fail;
-         j = cvpos(j, UcsBlk(dx).length);
-         if (j == CvtFail)
-             fail;
-         if (i > j) { 			/* convert section to substring */
-             t = i;
-             i = j;
-             j = t - j;
-         }
-         else
-             j = j - i;
-   
+         len = j - i;
          if (use_trap) 
-             return tvsubs(make_tvsubs(&x, i, j));
+             return tvsubs(make_tvsubs(&x, i, len));
          else 
-             return ucs(make_ucs_substring(&UcsBlk(dx), i, j));
-
+             return ucs(make_ucs_substring(&UcsBlk(dx), i, len));
       }       
 
      cset: {
-         word t;
          int k, last;
-
-         i = cvpos(i, CsetBlk(dx).size);
-         if (i == CvtFail)
+         if (cvslice(&i, &j, CsetBlk(dx).size) != Succeeded)
              fail;
-         j = cvpos(j, CsetBlk(dx).size);
-         if (j == CvtFail)
-             fail;
-         if (i > j) { 			/* convert section to substring */
-             t = i;
-             i = j;
-             j = t - j;
-         }
-         else
-             j = j - i;
+         len = j - i;
 
-         if (j == 0)
+         if (len == 0)
              return emptystr;
 
          /* Search for the last char, see if it's < 256 */
-         last = i + j - 1;
+         last = j - 1;
          k = cset_range_of_pos(&CsetBlk(dx), last);
          if (CsetBlk(dx).range[k].from + last - 1 - CsetBlk(dx).range[k].index < 256) {
              tended struct descrip result;
-             cset_to_string(&CsetBlk(dx), i, j, &result);
+             cset_to_string(&CsetBlk(dx), i, len, &result);
              return result;
          } else
-             return ucs(cset_to_ucs_block(&CsetBlk(dx), i, j));
+             return ucs(cset_to_ucs_block(&CsetBlk(dx), i, len));
       }       
 
     default: {
-         word t;
-
         /*
          * x should be a string. If x is a variable, we must create a
          *  substring trapped variable.
@@ -490,24 +452,14 @@ operator [:] sect(underef x -> dx, i, j)
          else if (!cnv:string(dx,dx))
              runerr(131, dx);
 
-         i = cvpos(i, StrLen(dx));
-         if (i == CvtFail)
-            fail;
-         j = cvpos(j, StrLen(dx));
-         if (j == CvtFail)
-            fail;
-         if (i > j) { 			/* convert section to substring */
-            t = i;
-            i = j;
-            j = t - j;
-            }
-         else
-            j = j - i;
+         if (cvslice(&i, &j, StrLen(dx)) != Succeeded)
+             fail;
+         len = j - i;
    
          if (use_trap)
-             return tvsubs(make_tvsubs(&x, i, j));
+            return tvsubs(make_tvsubs(&x, i, len));
          else
-            return string(j, StrLoc(dx)+i-1);
+            return string(len, StrLoc(dx) + i -1);
        }
      }
    }

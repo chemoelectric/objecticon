@@ -79,6 +79,7 @@ void            cpslots         (dptr dp1,dptr slotptr,word i, word j);
 int             csetcmp         (unsigned int *cs1,unsigned int *cs2);
 word            cvpos           (word pos, word len);
 word            cvpos_item      (word pos, word len);
+int             cvslice         (word *i, word *j, word len);
 void            dealcblk_0      (union block *bp);
 void            dealcblk_1      (union block *bp);
 void            dealcstr_0      (char *p);
