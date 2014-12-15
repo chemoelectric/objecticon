@@ -406,7 +406,8 @@ operator [:] sect(underef x -> dx, i, j)
          tended struct descrip result;
          if (cvslice(&i, &j, ListBlk(dx).size) != Succeeded)
              fail;
-         cplist(&dx, &result, i, j);
+         len = j - i;
+         cplist(&dx, &result, i, len);
          return result;
       }
 
@@ -459,7 +460,7 @@ operator [:] sect(underef x -> dx, i, j)
          if (use_trap)
             return tvsubs(make_tvsubs(&x, i, len));
          else
-            return string(len, StrLoc(dx) + i -1);
+            return string(len, StrLoc(dx) + i - 1);
        }
      }
    }

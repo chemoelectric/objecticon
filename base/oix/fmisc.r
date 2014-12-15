@@ -67,7 +67,7 @@ function copy(x)
             /*
              * Pass the buck to cplist to copy a list.
              */
-            cplist(&x, &result, 1, ListBlk(x).size + 1);
+            cplist(&x, &result, 1, ListBlk(x).size);
             return result;
             }
       table: {
@@ -404,7 +404,7 @@ function sort(t, i)
              *  qsort to sort the descriptors.  (That was easy!)
              */
             size = ListBlk(t).size;
-            cplist(&t, &result, 1, size + 1);
+            cplist(&t, &result, 1, size);
             qsort(ListBlk(result).listhead->lelem.lslots,
                   size, sizeof(struct descrip),(QSortFncCast) anycmp);
 
@@ -703,7 +703,7 @@ function sortf(t, i)
           *  qsort to sort the descriptors.  (That was easy!)
           */
          size = ListBlk(t).size;
-         cplist(&t, &result, 1, size + 1);
+         cplist(&t, &result, 1, size);
          sort_field = i;
          qsort(ListBlk(result).listhead->lelem.lslots,
                size, sizeof(struct descrip),(QSortFncCast) nthcmp);
