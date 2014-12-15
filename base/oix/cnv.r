@@ -969,6 +969,11 @@ word cvpos_item(word pos, word len)
    return (len + pos + 1);
 }
 
+/*
+ * Convert a slice of the form i:j into the corresponding positions,
+ * based on the given len.  On success, i is replaced by the lower
+ * position, j the higher.
+ */
 int cvslice(word *i, word *j, word len)
 {
     word p1, p2;
