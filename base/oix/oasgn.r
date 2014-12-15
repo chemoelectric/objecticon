@@ -45,8 +45,12 @@ static int overlap      (struct b_tvsubs *tv1, struct b_tvsubs *tv2);
             word i;
             dptr sub;
 
-            if (!cnv:C_integer(y, i))
+            if (!cnv:C_integer(y, i)) {
+               /* Fail on bigint */
+               if (cnv:integer(y,y))
+                   fail;
                runerr(101, y);
+            }
 
             sub = VarLoc(x)+1;
             if (is:string(*sub))

@@ -38,9 +38,12 @@
       if (cnv:C_integer(i,cnv_ ## i)) {
          if ((cnv_ ## i = cvpos(cnv_ ## i, slen)) == CvtFail)
             fail;
-      }
-      else
+      } else {
+         /* Fail on bigint i */
+         if (cnv:integer(i,i))
+             fail;
          runerr(101,i);
+      }
    }
 
    if (is:null(j))
@@ -54,10 +57,12 @@
           cnv_ ## i = cnv_ ## j;
           cnv_ ## j = tmp;
        }
-   }
-   else
+   } else {
+       /* Fail on bigint j */
+       if (cnv:integer(j,j))
+           fail;
        runerr(101,j);
-
+   }
 
    }
 #enddef
