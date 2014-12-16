@@ -304,7 +304,7 @@ package class Memoize()
    public call(a[])
       local l
       (l := t.member(a)) | t.insert(a, l := List{f!a})
-      suspend !l
+      suspend .!l
    end
 
    public new(f)
