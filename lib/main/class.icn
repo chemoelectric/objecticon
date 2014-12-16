@@ -115,6 +115,19 @@ final abstract class Class()
    #
    public static native implements(c, target)
 
+   # This is similar to the builtin is() function.  However, if obj is
+   # in a different program to cl, then the class with the same name
+   # as cl is looked up in obj's program.  Then is(obj, cl) is invoked
+   # and the result returned.
+   #
+   public static is_by_name(obj, cl)
+      local p
+      p := get_program(obj) 
+      if p ~=== get_program(cl) then
+         cl := for_name(get_name(cl), p) | fail
+      return is(obj, cl)
+   end
+
    # Generate the field names of the class {c}.  The instance fields
    # come first, followed by the class fields.
    #
@@ -208,6 +221,14 @@ final abstract class Class()
    # @return a procedure object (which will be an instance method)
    #
    private static native get_methp_proc(mp)
+
+   # Set the component parts of a methp.
+   # @param mp a methp structure
+   # @param obj the object part
+   # @param proc the proc part
+   # @return the methp
+   #
+   private static native set_methp(mp, obj, proc)
 
    # Get the value of the field in {x}, behaving in exactly the same way
    # as though the "." operation had been invoked with equivalent values.

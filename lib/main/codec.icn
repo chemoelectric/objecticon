@@ -181,7 +181,7 @@ class Encode(Stream, HasUnderlyingStream)
 
    private encode_methp(mp)
       writes1(Codec.METHP_CODE)
-      Proc.get_defining_class(mp) | throw("Can't encode a deferred methp")
+      Proc.get_defining_class(mp) | throw("Can't encode a deferred methp: " || image(mp))
       note_seen(mp)
       line_out(Proc.get_name(mp))
       encode(Class.get_methp_object(mp))
@@ -198,7 +198,7 @@ class Encode(Stream, HasUnderlyingStream)
          s := case tab(upto(' ')) of {
             "function": {
                (Prog.get_function(Proc.get_name(f)) === f) |  
-                  throw("Can only encode a function which is a builtin function")
+                  throw("Can only encode a function which is a builtin function: " || image(f))
                "F"
             }
             "keyword": "K"
@@ -207,7 +207,7 @@ class Encode(Stream, HasUnderlyingStream)
             "method": {
                j := Class.get_field_flags(Proc.get_defining_class(f), Proc.get_field_name(f))
                iand(j, PUBLIC_STATIC_METHOD) = PUBLIC_STATIC_METHOD |
-                  throw("Can only encode a public static method")
+                  throw("Can only encode a public static method: " || image(f))
                "M"
             }
             "deferred": throw("Can't encode a deferred method")
@@ -217,6 +217,10 @@ class Encode(Stream, HasUnderlyingStream)
          move(1)
          return s || tab(0)
       }
+   end
+
+   private static check_program(o, p)
+      (p === &main) | throw("Can't encode from another program: " || image(o))
    end
 
    public encode(o)
@@ -230,6 +234,7 @@ class Encode(Stream, HasUnderlyingStream)
       ty := type(o)
       case ty of {
          "object" : {
+            check_program(o, Class.get_program(o))
             writes1(Codec.OBJECT_CODE)
             line_out(Class.get_name(o))
             note_seen(o)
@@ -252,17 +257,20 @@ class Encode(Stream, HasUnderlyingStream)
          }
 
          "class": {
+            check_program(o, Class.get_program(o))
             writes1(Codec.CLASS_CODE)
             line_out(Class.get_name(o))
          }
 
          "procedure" : {
+            check_program(o, Proc.get_program(o))
             writes1(Codec.PROCEDURE_CODE)
             # Need to encode string since can have eg binary operator "||"
             line_out(encode_string(get_proc_code(o)))
          }
 
          "constructor" : {
+            check_program(o, Constructor.get_program(o))
             writes1(Codec.CONSTRUCTOR_CODE)
             line_out(Constructor.get_name(o))
          }
@@ -308,6 +316,7 @@ class Encode(Stream, HasUnderlyingStream)
          }
 
          "record" : {
+            check_program(o, Constructor.get_program(o))
             writes1(Codec.RECORD_CODE)
             line_out(Constructor.get_name(o))
             note_seen(o)
@@ -345,8 +354,10 @@ class Encode(Stream, HasUnderlyingStream)
                encode(e)
          }
 
-         "methp" :
+         "methp" : {
+            check_program(o, Proc.get_program(o))
             encode_methp(o)
+         }
 
          default : 
             throw("Type not encodable: " || ty)

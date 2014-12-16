@@ -987,6 +987,20 @@ function lang_Decode_decode_methp_impl(obj, cl, fn, target)
     }
 end
 
+function lang_Class_set_methp(mp, obj, p)
+   if !is:methp(mp) then
+       runerr(613, mp)
+   if !is:object(obj) then
+       runerr(602, obj)
+   if !is:proc(p) then
+       runerr(615, p)
+    body {
+       MethpBlk(mp).object = &ObjectBlk(obj);
+       MethpBlk(mp).proc = &ProcBlk(p);
+       return mp;
+    }
+end
+
 function lang_Class_get_field_flags(c, field)
    body {
         struct b_class *class0;
