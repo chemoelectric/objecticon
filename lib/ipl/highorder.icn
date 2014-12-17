@@ -254,6 +254,30 @@ procedure coexf(e)
    return Coexf(e).call
 end
 
+#
+# Implementation class for {exprf}
+#
+package class Exprf()
+   private e
+
+   public call()
+      suspend !e
+   end
+
+   public new(e)
+      self.e := e
+      return
+   end
+end
+
+#
+# Given a co-expression {e}, this returns a function which generates !e
+# on each evaluation.  Arguments to the function are discarded.
+#
+procedure exprf(e)
+   return Exprf(e).call
+end
+
 # Implementation class for `flip`.
 package class Flip()
    private f
