@@ -14,7 +14,6 @@ package util
 class Listener()
    private readable 
       proc,
-      coex,
       type,
       saved_type
 
@@ -39,10 +38,6 @@ class Listener()
    #
    public get_type()
       return type
-   end
-
-   private fire_coex()
-      @^coex
    end
 
    #
@@ -70,11 +65,7 @@ class Listener()
    end
 
    package new(proc, type)
-      if default.type(proc) == "co-expression" then {
-         self.coex := proc
-         self.proc := self.fire_coex
-      } else
-         self.proc := proc
+      self.proc := proc
       self.type := type
       return
    end
