@@ -210,6 +210,7 @@ import
    ipl.numbers(residue),
    ipl.periodic(repeater),
    ipl.rational(rational),
+   lang(Internal),
    util(cvpos_item)
 
 # PDCO to add tabby to treadling
@@ -1287,7 +1288,7 @@ end
 procedure TakeWhile(f, e)
    local i
    f := @f | fail
-   f := callable(f, 1) | runerr("invalid function for TakeWhile{}", f)
+   f := callable(f) | runerr("invalid function for TakeWhile{}", f)
    while f(i := @e) do
       suspend i
 end
@@ -1300,7 +1301,7 @@ end
 procedure DropWhile(f, e)
    local i
    f := @f | fail
-   f := callable(f, 1) | runerr("invalid function for DropWhile{}", f)
+   f := callable(f) | runerr("invalid function for DropWhile{}", f)
    repeat {
       i := @e | fail
       f(i) | break
@@ -1314,7 +1315,7 @@ end
 procedure Filter(f, e)
    local i
    f := @f | fail
-   f := callable(f, 1) | runerr("invalid function for Filter{}", f)
+   f := callable(f) | runerr("invalid function for Filter{}", f)
    while i := @e do
       if f(i) then
          suspend i
@@ -1340,6 +1341,31 @@ procedure Zip(ef, el[])
       if f := @ef then
          f := callable(f, n) | runerr("invalid operation for Zip{}", f)
    }
+end
+
+package procedure MinMaxImpl(e, cmp, dir)
+   local i, v
+   cmp := pdco_param(cmp, Internal.compare, callable, "invalid function for Min/Max{}") | fail
+   v := @e | fail
+   while i := @e do {
+      if dir * cmp(i, v) > 0 then
+         v := i
+   }
+   return v
+end
+
+# Return the maximum element in the sequence `e`, based on the
+# comparison function `cmp`, which defaults to `Internal.compare`.
+#
+procedure Max(e, cmp)
+   return MinMaxImpl(e, cmp, 1)
+end
+
+# Return the minimum element in the sequence `e`, based on the
+# comparison function `cmp`, which defaults to `Internal.compare`.
+#
+procedure Min(e, cmp)
+   return MinMaxImpl(e, cmp, -1)
 end
 
 # Helper function to convert an optional parameter specified in a pdco
