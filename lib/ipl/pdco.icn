@@ -1309,6 +1309,18 @@ procedure DropWhile(f, e)
 end
 
 #
+# Generate results from co-expression `e`, filtered by function `f`.
+#
+procedure Filter(f, e)
+   local i
+   f := @f | fail
+   f := callable(f, 1) | runerr("invalid function for Filter{}", f)
+   while i := @e do
+      if f(i) then
+         suspend i
+end
+
+#
 # Apply a function, given by the first parameter, to the remaining sequences.
 #
 procedure Zip(ef, el[])
