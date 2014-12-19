@@ -1,5 +1,7 @@
 package ipl.functional
 
+import util(State, save_state)
+
 global _a, _l
 
 #
@@ -9,17 +11,7 @@ package class Lambda()
    private e
 
    public call(a[])
-      local ta, tl
-      ta := _a
-      _a := a
-      tl := _l
-      _l := &null
-      suspend 1(!e, _a :=: ta, _l :=: tl) do {
-         _a :=: ta
-         _l :=: tl
-      }
-      _a := ta
-      _l := tl
+      suspend save_state(^e, LambdaState(a))
    end
 
    public new(e)
@@ -50,8 +42,7 @@ end
 
 # Evaluates coexpression {e}, saving the value of {_a} and {_l}.  This
 # can be necessary if a lambda calls another lambda which exits via an
-# exception or a runtime error.  Note this just does the same as
-#      `util.save_vars{..., _a|_l}`
+# exception or a runtime error.
 #
 # @example
 # @   f := lambda{
@@ -66,13 +57,29 @@ end
 # @   }}
 #
 procedure save_lambda(e)
-   local ta, tl
-   ta := _a
-   tl := _l
-   suspend 1(|@e, _a :=: ta, _l :=: tl) do {
+   suspend save_state(e, LambdaState())
+end
+
+# A `State` class for saving the two global state variables.  An
+# initial value for `_a` may be optionally specified.
+#
+class LambdaState(State)
+   private ta, tl, i
+
+   public begin()
+      ta := _a
+      tl := _l
+      _a := i
+      _l := &null
+   end
+
+   public swap()
       _a :=: ta
       _l :=: tl
-   }
-   _a := ta
-   _l := tl
+   end
+
+   public new(i)
+      self.i := i
+      return
+   end
 end

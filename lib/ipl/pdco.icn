@@ -211,7 +211,7 @@ import
    ipl.periodic(repeater),
    ipl.rational(rational),
    lang(Internal),
-   util(cvpos_item)
+   util(save_state, HandlerState, cvpos_item)
 
 # PDCO to add tabby to treadling
 procedure AddTabby(e, i)	
@@ -1185,12 +1185,7 @@ end
 # caused by a runtime error.
 #
 procedure Safe(e)
-   local t
-   t := &handler
-   &handler := &current
-   suspend 1(|@e, &handler :=: t) do
-      &handler :=: t                                         
-   &handler := t
+   suspend save_state(e, HandlerState(&current))
 end
 
 # A useful wrapper around {Safe}.  {Safe} is called with {e} to get

@@ -42,56 +42,6 @@ class SimpleConstructor()
    end
 end
 
-# Given a co-expression generating one or more variables, and a list
-# of corresponding values, this values swaps the variables values
-# and the values in the list.
-#
-procedure swap_vars(e, l)
-   if *l = 1 then
-      # Simple case
-      !e :=: l[1]
-   else {
-      # Complex case.  Done in two stages (as opposed to swapping with
-      # existing elements of l), so that it works okay with &subject
-      # and &pos (swapping to &subject would change &pos).
-      every put(l, !e)
-      every !e := pop(l)
-   }
-   return
-end
-
-# Helper function for {init_vars}.  It generates initial values for
-# global variables, which are normally &null, except for certain
-# keyword variables.
-#
-package procedure init_val(e)
-   local t
-   every t := Prog.get_variable_name(!e) do
-      suspend case t of {
-         "&subject" | "&why" | "&progname": ""
-         "&pos": 1
-         "&trace" | "&random" | "&dump": 0
-         "&maxlevel": 500
-         default: &null
-      }
-end
-
-# Given a co-expression generating one or more variables, this returns
-# a list of the present values of the variables.  At the same time, it
-# also sets the variables to default values, independent of their
-# old values.  For example, if e generated g1 and g2, and their values
-# were 100 and 200 respectively, this would return [100,200], and set
-# both variables to null.
-#
-procedure init_vars(e)
-   local l, f
-   l := []
-   every put(l, !e)
-   f := create init_val(e)
-   every !e := @f
-   return l
-end
-
 # Invoke co-expression {e}, generating its results, in such a way that
 # changes to {vars} made by {e} will not be seen by the caller, and
 # vice versa.
@@ -103,36 +53,14 @@ end
 # @ save_vars{ io_cleanup(), g1 | g2 }
 #
 procedure save_vars(e, vars)
-   local t
-   t := init_vars(vars)
-   suspend 1(|@e, swap_vars(vars, t)) do
-      swap_vars(vars, t)
-   every !vars := pop(t)
-end
-
-# A single-variable case of {save_vars}.
-#
-# @param vars a coexpression generating exactly one variable.
-#
-procedure save_var(e, var)
-   local t
-   t := !var
-   !var := init_val(var)
-   suspend 1(|@e, !var :=: t) do
-      !var :=: t
-   !var := t
+   suspend save_state(e, VarState(vars))
 end
 
 #
-# A common case, having the same effect as `save_var{..., &why}`.
+# A common case, having the same effect as `save_vars{..., &why}`.
 #
 procedure save_why(e)
-   local t
-   t := &why
-   &why := ""
-   suspend 1(|@e, &why :=: t) do
-      &why :=: t
-   &why := t
+   suspend save_state(e, WhyState())
 end
 
 # This function saves {&why} before evaluating {e}.  If {e} succeeds,
@@ -266,3 +194,190 @@ abstract class HasMode()
    public abstract get_mode()
 end
 
+# This class is used to save and restore some arbitrary global state.
+#
+abstract class State()
+   # Called once to initialize the saved state from the global state,
+   # and perhaps to initialize the global state.
+   public abstract begin()
+
+   # Called several times to swap the saved state with the global state
+   public abstract swap()
+end
+
+# A `State` instance which saves several global variables, specified as
+# a co-expression generating those variables.
+#
+class VarState(State)
+   private vars, state
+
+   # Return an appropriate initial value for a global named `s`;
+   # normally &null, except for certain keyword variables.
+   #
+   private static init_val(s)
+      return case s of {
+         "&subject" | "&why" | "&progname": ""
+         "&pos": 1
+         "&trace" | "&random" | "&dump": 0
+         "&maxlevel": 500
+         default: &null
+      }
+   end
+
+   public begin()
+      local f
+      state := []
+      every put(state, !vars)
+      f := create init_val(Prog.get_variable_name(!vars))
+      every !vars := @f
+   end
+
+   public swap()
+      if *state = 1 then
+         # Simple case
+         !vars :=: state[1]
+      else {
+         # Complex case.  Done in two stages (as opposed to swapping with
+         # existing elements of state), so that it works okay with &subject
+         # and &pos (swapping to &subject would change &pos).
+         every put(state, !vars)
+         every !vars := pop(state)
+      }
+   end
+
+   public new(e)
+      vars := e
+      return
+   end
+end
+
+# A `State` which saves &subject and &pos
+#
+class ScanState(State)
+   private ks, kp
+
+   public begin()
+      ks := &subject
+      kp := &pos
+      &subject := ""
+   end
+
+   public swap()
+      local t
+      t := &pos
+      &subject :=: ks
+      &pos := kp
+      kp := t
+   end
+end
+
+# A `State` which saves &pos, and doesn't set its initial value.
+#
+class PosExcursionState(State)
+   private kp
+
+   public begin()
+      kp := &pos
+   end
+
+   public swap()
+      &pos :=: kp
+   end
+end
+
+# A `State` to save the global cleanup list used by `clean` and `use`.
+#
+class CleanupState(State)
+   private t
+
+   public begin()
+      t := cleanup
+      cleanup := &null
+   end
+
+   public swap()
+      cleanup :=: t
+   end
+end
+
+# A `State` to save `&why`.
+#
+class WhyState(State)
+   private w
+
+   public begin()
+      w := &why
+      &why := ""
+   end
+
+   public swap()
+      &why :=: w
+   end
+end
+
+# A `State` to save `&trace`.
+#
+class TraceState(State)
+   private t
+
+   public begin()
+      t := &trace
+      &trace := 0
+   end
+
+   public swap()
+      &trace :=: t
+   end
+end
+
+# A `State` to save `&handler`.  An initial value may be specified.
+#
+class HandlerState(State)
+   private h, i
+
+   public begin()
+      h := &handler
+      &handler := i
+   end
+
+   public swap()
+      &handler :=: h
+   end
+
+   public new(i)
+      self.i := i
+      return
+   end
+end
+
+# A `State` which just brings a list of several other `State`s together.
+#
+class States(State)
+   private l
+
+   public begin()
+      every (!l).begin()
+   end
+
+   public swap()
+      every (!l).swap()
+   end
+
+   public new(l[])
+      self.l := l
+      return
+   end
+end
+
+# Evaluate the given co-expression `e`, suspending its results, whilst
+# using the given `State` instance to save and restore some global
+# state.
+#
+procedure save_state(e, state)
+   if type(state) == "co-expression" then
+      state := @state
+   state.begin()
+   suspend 1(|@e, (state.swap() | &null)\1) do
+      state.swap()
+   state.swap()
+end

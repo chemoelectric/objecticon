@@ -74,7 +74,8 @@ $encoding UTF-8
 package ipl.scan
 
 import
-   io(write, writes)
+   io(write, writes),
+   util(save_state, PosExcursionState)
 
 # bal() with escapes
 procedure slashbal(c1, c2, c3, s, i, j)	
@@ -568,11 +569,7 @@ end
 # Evaluate e, restoring &pos with each suspended result.
 #
 procedure excursion(e)
-   local t
-   t := &pos
-   suspend 1(|@e, &pos :=: t) do
-      &pos :=: t
-   &pos := t
+   suspend save_state(e, PosExcursionState())
 end
 
 #

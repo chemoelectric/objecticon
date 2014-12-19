@@ -440,7 +440,7 @@ class Ieval(MinimalObjectOutput)
       local n, i, v, run
 
       run := create
-         save_var{ { if \trace_flag then &trace := -1 ; Safe{ev.eval()} }, &trace }
+         save_state{ { if \trace_flag then &trace := -1 ; Safe{ev.eval()} }, TraceState() }
 
       if n := par.parse_expression(s, "UTF-8") then {
          if \parse_flag & s ~== "!parse" then
