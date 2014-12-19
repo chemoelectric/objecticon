@@ -182,29 +182,35 @@ end
 #
 # This function would not make much sense for use with a SortTable,
 # since it would result in duplicate entries which are caselessly
-# equal; rather the simpler `Text.cl_compare` should be used.
+# equal; rather the simpler `cl_text_cmp` should be used.
 #
-procedure consistent_cl_cmp(s1, s2)
-   local i
-   i := Text.cl_compare(s1, s2)
-   if i = 0 then
-      i := Internal.compare(s1, s2)
+procedure consistent_cl_cmp(x, y)
+   local i, x1, y1
+   x1 := string(x) | runerr(103, x)
+   y1 := string(y) | runerr(103, y)
+   i := Text.cl_compare(x1, y1)
+   if i = 0 then {
+      i := Internal.compare(x1, y1)
+      # If still tied, sort by type (ucs/string)
+      if i = 0 then
+         i := Internal.compare(x, y)
+   }
    return i
 end
 
 # This is a comparison function that just reverses the order of the
 # `Internal.compare` function.
 #
-procedure rev_cmp_internal(a, b)
+procedure rev_internal_cmp(a, b)
    return Internal.compare(b, a)
 end
 
-# Implementation class for `cmp_index`.
-package class CmpIndex()
+# Implementation class for `index_cmp`.
+package class IndexCmp()
    private f, i
 
    public call(a, b)
-      return f(a[i], b[i]) | runerr("Invalid index given to cmp_index")
+      return f(a[i], b[i]) | runerr("Invalid index given to index_cmp")
    end
 
    public new(i, f)
@@ -222,14 +228,14 @@ end
 # @example
 # @    l := [ [1,54,2], [4,56,23], [4325,1,23], [123,4576,23]]
 # @    # sort by the middle element of each item
-# @    qsort(l, cmp_index(2))
+# @    qsort(l, index_cmp(2))
 #
-procedure cmp_index(i, f)
-   return CmpIndex(i, f).call
+procedure index_cmp(i, f)
+   return IndexCmp(i, f).call
 end
 
-# Implementation class for `cmp_field`.
-package class CmpField()
+# Implementation class for `field_cmp`.
+package class FieldCmp()
    private f, q
 
    public call(a, b)
@@ -251,10 +257,39 @@ end
 # @example
 # @    l := [Point(1,2),Point(34,4),Point(3,56),Point(23,55)]
 # @    # sort by the x element of each item
-# @    qsort(l, cmp_field("x"))
+# @    qsort(l, field_cmp("x"))
 #
-procedure cmp_field(q, f)
-   return CmpField(q, f).call
+procedure field_cmp(q, f)
+   return FieldCmp(q, f).call
+end
+
+# A numeric comparison function; unlike `Internal.compare`, reals and
+# integers are sorted in their natural sort order.
+#
+procedure num_cmp(x, y)
+   return if x < y then
+      -1
+   else if x > y then
+      1
+   else
+      0
+end
+
+# A text comparison function; unlike `Internal.compare`, ucs and
+# string are sorted together.
+#
+procedure text_cmp(x, y)
+   x := string(x) | runerr(103, x)
+   y := string(y) | runerr(103, y)
+   return Internal.compare(x, y)
+end
+
+# A caseless version of `text_cmp`.
+#
+procedure cl_text_cmp(x, y)
+   x := string(x) | runerr(103, x)
+   y := string(y) | runerr(103, y)
+   return Text.cl_compare(x, y)
 end
 
 #
