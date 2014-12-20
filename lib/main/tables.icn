@@ -89,8 +89,8 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    #
    public key_sort()
       # This is defined in terms of sort() above rather than just
-      # sorting key_list(), so that classes with custom ordering (eg
-      # ClTable) don't need to override both sort methods.
+      # sorting key_list(), so that classes with a custom sort()
+      # ordering don't need to override both sort methods.
       return if can(ORDER) then key_list() else ipl.pdco.List{(!sort())[1]}
    end
 
