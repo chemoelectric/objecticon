@@ -3,7 +3,9 @@ package ipl.functional
 import
    lang(Class),
    ipl.callable(callable),
-   ipl.lists(lreverse_mod)
+   ipl.lists(lreverse_mod),
+   ipl.pdco(List,Parallel),
+   datastruct(EqTable)
 
 #
 # Implementation class for {partial}
@@ -252,6 +254,30 @@ procedure coexf(e)
    return Coexf(e).call
 end
 
+#
+# Implementation class for {exprf}
+#
+package class Exprf()
+   private e
+
+   public call()
+      suspend !e
+   end
+
+   public new(e)
+      self.e := e
+      return
+   end
+end
+
+#
+# Given a co-expression {e}, this returns a function which generates !e
+# on each evaluation.  Arguments to the function are discarded.
+#
+procedure exprf(e)
+   return Exprf(e).call
+end
+
 # Implementation class for `flip`.
 package class Flip()
    private f
@@ -294,3 +320,57 @@ end
 procedure revargs(f)
    return RevArgs(f).call
 end
+
+# Implementation class for `memoize`.
+package class Memoize()
+   private f, t
+
+   public call(a[])
+      local l
+      (l := t.member(a)) | t.insert(a, l := List{f!a})
+      suspend .!l
+   end
+
+   public new(f)
+      self.f := f
+      self.t := EqTable()
+      return
+   end
+end
+
+# This procedure returns a function which memoizes the passed
+# function.  Subsequent arguments to and results from this function
+# are cached in an `EqTable` so that the underlying function is only
+# called for parameters that haven't been seen before.
+#
+procedure memoize(f)
+   return Memoize(f).call
+end
+
+# Implementation class for `adjoin`.
+package class Adjoin()
+   private f, t
+
+   private mk(f, a)
+      return create f!a
+   end
+
+   public call(a[])
+      suspend Parallel!List{mk(!f, a)}
+   end
+
+   public new(f)
+      self.f := f
+      return
+   end
+end
+
+# This procedure puts several functions together and returns another
+# function.  When the returned function is called, the results of the
+# individual functions are generated in parallel, and a sequence of
+# lists containing those results is generated.
+#
+procedure adjoin(f[])
+   return Adjoin(f).call
+end
+

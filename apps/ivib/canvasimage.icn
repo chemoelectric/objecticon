@@ -40,7 +40,7 @@ class CanvasImage(CanvasComponent,Image)
    #
    # Return the I/O template.
    #
-   public static get_template()
+   public get_template()
       suspend CanvasComponent.get_template() |
          ["Image Str", "image_str"] |
          ["Image Cache", "image_cache"] |

@@ -1,13 +1,13 @@
 package util
 
-import io(write), datastruct
+import io(write), lang(Text), datastruct
 
 #
 # Base class for an object which has headers (Message, and HTTP response
 # and request objects).
 #
 class MimeHeaders()
-   private readable 
+   private readable
       headers
 
    #
@@ -15,9 +15,23 @@ class MimeHeaders()
    #
    public show_headers()
       local h
-      every h := !headers.sort() do {
+      every h := gen_header_entries() do {
          every write(h[1], ": ", !h[2])
       }
+   end
+
+   #
+   # Generate the header keys in sorted order.
+   #
+   public gen_header_keys()
+      suspend headers.key()
+   end
+
+   #
+   # Generate a list of sorted key-entrylist header pairs.
+   #
+   public gen_header_entries()
+      suspend headers.entries()
    end
 
    #
@@ -100,16 +114,8 @@ class MimeHeaders()
       return headers.member(key)
    end
 
-   #
-   # Set all the headers from the given {ClTable}
-   #
-   public set_headers(t)
-      self.headers := t
-      return self
-   end
-
    public new()
-      headers := ClTable()
+      headers := SortTable(, Text.cl_compare)
       return
    end
 end

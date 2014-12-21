@@ -60,7 +60,7 @@ class CanvasTable(CanvasComponent,Table)
    #
    # Return the I/O template.
    #
-   public static get_template()
+   public get_template()
       suspend CanvasComponent.get_template() |
          ["Select Mode", "select_mode"] |
          ["Columns", "columns"]

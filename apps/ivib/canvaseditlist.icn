@@ -65,7 +65,7 @@ class CanvasEditList(CanvasComponent,EditList)
    #
    # Return the I/O template.
    #
-   public static get_template()
+   public get_template()
       suspend CanvasComponent.get_template() |
          ["Contents", "tmp"] |
          ["Selection", "selection"] |

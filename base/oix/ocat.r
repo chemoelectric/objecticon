@@ -155,8 +155,8 @@ operator ||| lconcat(x, y)
        * Make a copy of both lists in adjacent slots.
        */
       lp1 = (struct b_lelem *) (bp1->listhead);
-      cpslots(&x, lp1->lslots, 1, size1 + 1);
-      cpslots(&y, lp1->lslots + size1, 1, size2 + 1);
+      cpslots(&x, lp1->lslots, 1, size1);
+      cpslots(&y, lp1->lslots + size1, 1, size2);
 
       BlkLoc(x) = (union block *)bp1;
 

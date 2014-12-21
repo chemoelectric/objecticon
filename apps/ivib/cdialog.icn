@@ -17,7 +17,7 @@ class CDialog(Dialog,SelectiveObjectCodec)
       new()
    end
 
-   public static get_template()
+   public get_template()
       suspend ["WAttribs", "wattribs"]
    end
 

@@ -203,7 +203,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
             insert(seen, o, s)
             if /desc then
                writes1(s)
-            else if /ignore_object_output_flag & is(o, ObjectOutput) then
+            else if /ignore_object_output_flag & Class.is_by_name(o, ObjectOutput) then
                o.object_output(self)
             else if simple{Class.getf(o, 1 to Class.get_n_instance_fields(o))} then {
                writes(s, "(")
@@ -516,6 +516,10 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
    end
 end
 
+package class CloneMethp()
+   private defer nothing()
+end
+
 #
 # Clone the given object
 #
@@ -531,8 +535,9 @@ procedure clone(o, seen)
 
    case ty of {
       "object" : {
-         if is(o, ObjectClone) then {
+         if Class.is_by_name(o, ObjectClone) then {
             res := o.object_clone(seen)
+            (classof(res) === classof(o)) | runerr("Invalid cloned object", res)
             insert(seen, o, res)
          } else {
             #
@@ -578,6 +583,12 @@ procedure clone(o, seen)
          return res
       }
 
+      "methp" : {
+         res := CloneMethp().nothing
+         insert(seen, o, res)
+         return Class.set_methp(res, clone(Class.get_methp_object(o), seen), Class.get_methp_proc(o))
+      }
+
       default : 
          return o
    }
@@ -596,7 +607,7 @@ procedure hash(x, depth)
    
    case type(x) of {
       "object" : {
-         if is(x, ObjectHash) then
+         if Class.is_by_name(x, ObjectHash) then
             n := x.object_hash(depth)
          else {
             l := n := Class.get_n_instance_fields(x)
@@ -662,7 +673,7 @@ package procedure equals_impl(x, y, seen)
    local i, mp
    case type(x) of {
       "object" : {
-         if is(x, ObjectEquals) then {
+         if Class.is_by_name(x, ObjectEquals) then {
             # x has an object_equals method, so y must inherit the
             # same object_equals method as x.
             mp := x.object_equals

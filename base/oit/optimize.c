@@ -28,9 +28,12 @@ struct literal {
 #define Less           -1
 #define Equal           0
 #define Greater         1
+#define Failed		-5
+#define Succeeded	-7
 
 static word cvpos(word pos, word len);
 static word cvpos_item(word pos, word len);
+static int cvslice(word *i, word *j, word len);
 static int changes(struct lnode *n);
 static int lexcmp(struct literal *x, struct literal *y);
 static int equiv(struct literal *x, struct literal *y);
@@ -3063,7 +3066,7 @@ static void fold_subsc(struct lnode *n)
 static void fold_sect(struct lnode *n, int op)
 {
     struct lnode_3 *x = (struct lnode_3 *)n;
-    word i, j, t;
+    word i, j, l;
     struct literal l1, l2, l3;
 
     if (!get_literal(x->child1, &l1))
@@ -3114,24 +3117,16 @@ static void fold_sect(struct lnode *n, int op)
         case UCS: {
             int len = ucs_length(l1.u.str.s, l1.u.str.len);
             char *start = l1.u.str.s, *end;
-            i = cvpos(i, len);
-            j = cvpos(j, len);
-            if (i == CvtFail || j == CvtFail) {
+            if (cvslice(&i, &j, len) != Succeeded) {
                 replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
             }
-            if (i > j) { 			/* convert section to substring */
-                t = i;
-                i = j;
-                j = t - j;
-            }
-            else
-                j = j - i;
+            l = j - i;
 
             while (i-- > 1) 
                 utf8_iter(&start);
             end = start;
-            while (j-- > 0)
+            while (l-- > 0)
                 utf8_iter(&end);
 
             replace_node(n, (struct lnode*)
@@ -3142,23 +3137,15 @@ static void fold_sect(struct lnode *n, int op)
             break;
         }
         case CSET: {
-            int k, last, ch, count, len = cset_size(l1.u.rs), type;
-            word from, to, m, out_len;
-            i = cvpos(i, len);
-            j = cvpos(j, len);
-            if (i == CvtFail || j == CvtFail) {
+            int k, ch, count, len = cset_size(l1.u.rs), type;
+            word last, from, to, m, out_len;
+            if (cvslice(&i, &j, len) != Succeeded) {
                 replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
             }
-            if (i > j) { 			/* convert section to substring */
-                t = i;
-                i = j;
-                j = t - j;
-            }
-            else
-                j = j - i;
+            l = j - i;
 
-            if (j == 0) {
+            if (l == 0) {
                 replace_node(n, (struct lnode*)
                              lnode_const(&n->loc,
                                          new_constant(F_StrLit, 
@@ -3168,7 +3155,7 @@ static void fold_sect(struct lnode *n, int op)
             }
 
             /* Search for the last char, see if it's < 256 */
-            last = i + j - 1;
+            last = j - 1;
             k = cset_range_of_pos(l1.u.rs, last, &count);
             ch = l1.u.rs->range[k].from + last - 1 - count;
 
@@ -3178,31 +3165,31 @@ static void fold_sect(struct lnode *n, int op)
             zero_sbuf(&opt_sbuf);
             if (ch < 256) {
                 type = F_StrLit;
-                for (; j > 0 && k < l1.u.rs->n_ranges; ++k) {
+                for (; l > 0 && k < l1.u.rs->n_ranges; ++k) {
                     from = l1.u.rs->range[k].from;
                     to = l1.u.rs->range[k].to;
-                    for (m = i + from; j > 0 && m <= to; ++m) {
+                    for (m = i + from; l > 0 && m <= to; ++m) {
                         AppChar(opt_sbuf, m);
-                        --j;
+                        --l;
                     }
                     i = 0;
                 }
             } else {
                 type = F_UcsLit;
-                for (; j > 0 && k < l1.u.rs->n_ranges; ++k) {
+                for (; l > 0 && k < l1.u.rs->n_ranges; ++k) {
                     from = l1.u.rs->range[k].from;
                     to = l1.u.rs->range[k].to;
-                    for (m = i + from; j > 0 && m <= to; ++m) {
+                    for (m = i + from; l > 0 && m <= to; ++m) {
                         char buf[MAX_UTF8_SEQ_LEN];
                         int n = utf8_seq(m, buf);
                         append_n(&opt_sbuf, buf, n);
-                        --j;
+                        --l;
                     }
                     i = 0;
                 }
             }
             /* Ensure we found right num of chars. */
-            if (j)
+            if (l)
                 quit("cset to str inconsistent parameters");
             out_len = CurrLen(opt_sbuf);
             replace_node(n, (struct lnode*)
@@ -3215,25 +3202,17 @@ static void fold_sect(struct lnode *n, int op)
         default: {
             if (!cnv_string(&l1))
                 break;
-            i = cvpos(i, l1.u.str.len);
-            j = cvpos(j, l1.u.str.len);
-            if (i == CvtFail || j == CvtFail) {
+            if (cvslice(&i, &j, l1.u.str.len) != Succeeded) {
                 replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_FAIL));
                 break;
             }
-            if (i > j) { 			/* convert section to substring */
-                t = i;
-                i = j;
-                j = t - j;
-            }
-            else
-                j = j - i;
+            l = j - i;
 
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
                                      new_constant(F_StrLit, 
-                                                  intern_n(l1.u.str.s + i - 1, j),
-                                                  j)));
+                                                  intern_n(l1.u.str.s + i - 1, l),
+                                                  l)));
             break;
         }
     }
@@ -3335,6 +3314,25 @@ static word cvpos_item(word pos, word len)
    if (pos > 0)
       return pos;
    return (len + pos + 1);
+}
+
+static int cvslice(word *i, word *j, word len)
+{
+    word p1, p2;
+    p1 = cvpos(*i, len);
+    if (p1 == CvtFail)
+        return Failed;
+    p2 = cvpos(*j, len);
+    if (p2 == CvtFail)
+        return Failed;
+    if (p1 > p2) {
+        *i = p2;
+        *j = p1;
+    } else {
+        *i = p1;
+        *j = p2;
+    }
+    return Succeeded;
 }
 
 static int cset_range_of_pos(struct rangeset *rs, word pos, int *count)

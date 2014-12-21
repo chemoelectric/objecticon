@@ -179,6 +179,14 @@ class Encode(Stream, HasUnderlyingStream)
       return r
    end
 
+   private encode_methp(mp)
+      writes1(Codec.METHP_CODE)
+      Proc.get_defining_class(mp) | throw("Can't encode a deferred methp: " || image(mp))
+      note_seen(mp)
+      line_out(Proc.get_name(mp))
+      encode(Class.get_methp_object(mp))
+   end
+
    # Get a code for a procedure value; the first char is "F" for a
    # builtin function like upto, "K" for a keyword function, "1","2"
    # or "3" for a builtin operator like "+" or "||", "P" for a
@@ -190,7 +198,7 @@ class Encode(Stream, HasUnderlyingStream)
          s := case tab(upto(' ')) of {
             "function": {
                (Prog.get_function(Proc.get_name(f)) === f) |  
-                  throw("Can only encode a function which is a builtin function")
+                  throw("Can only encode a function which is a builtin function: " || image(f))
                "F"
             }
             "keyword": "K"
@@ -199,7 +207,7 @@ class Encode(Stream, HasUnderlyingStream)
             "method": {
                j := Class.get_field_flags(Proc.get_defining_class(f), Proc.get_field_name(f))
                iand(j, PUBLIC_STATIC_METHOD) = PUBLIC_STATIC_METHOD |
-                  throw("Can only encode a public static method")
+                  throw("Can only encode a public static method: " || image(f))
                "M"
             }
             "deferred": throw("Can't encode a deferred method")
@@ -209,6 +217,10 @@ class Encode(Stream, HasUnderlyingStream)
          move(1)
          return s || tab(0)
       }
+   end
+
+   private static check_program(o, p)
+      (p === &main) | throw("Can't encode from another program: " || image(o))
    end
 
    public encode(o)
@@ -222,6 +234,7 @@ class Encode(Stream, HasUnderlyingStream)
       ty := type(o)
       case ty of {
          "object" : {
+            check_program(o, Class.get_program(o))
             writes1(Codec.OBJECT_CODE)
             line_out(Class.get_name(o))
             note_seen(o)
@@ -244,17 +257,20 @@ class Encode(Stream, HasUnderlyingStream)
          }
 
          "class": {
+            check_program(o, Class.get_program(o))
             writes1(Codec.CLASS_CODE)
             line_out(Class.get_name(o))
          }
 
          "procedure" : {
+            check_program(o, Proc.get_program(o))
             writes1(Codec.PROCEDURE_CODE)
             # Need to encode string since can have eg binary operator "||"
             line_out(encode_string(get_proc_code(o)))
          }
 
          "constructor" : {
+            check_program(o, Constructor.get_program(o))
             writes1(Codec.CONSTRUCTOR_CODE)
             line_out(Constructor.get_name(o))
          }
@@ -300,6 +316,7 @@ class Encode(Stream, HasUnderlyingStream)
          }
 
          "record" : {
+            check_program(o, Constructor.get_program(o))
             writes1(Codec.RECORD_CODE)
             line_out(Constructor.get_name(o))
             note_seen(o)
@@ -335,6 +352,11 @@ class Encode(Stream, HasUnderlyingStream)
             note_seen(o)
             every e := keyval(o) do
                encode(e)
+         }
+
+         "methp" : {
+            check_program(o, Proc.get_program(o))
+            encode_methp(o)
          }
 
          default : 
@@ -401,6 +423,25 @@ class Decode()
       }
    end
 
+   private defer nothing()
+   private static native decode_methp_impl(obj, cl, fn, target)
+
+   private decode_methp()
+      local o, fn, cn, res, i, cl
+      # Create a result methp, albeit with the wrong fields.
+      res := nothing
+      note_seen(res)
+      fn := line_in()
+      (i := backto('.', fn)) | throw("Invalid method name: " || fn)
+      cn := fn[1:i-1]
+      cl := lookup_class(cn) | throw("No such class in methp: " || cn)
+      o := decode()
+      (type(o) == "object") | throw("Object expected in methp")
+      # Error check and place the correct fields in the result methp
+      decode_methp_impl(o, cl, fn[i:0], res) | throw("Unable to decode methp " || fn || ": " || &why)
+      return res
+   end
+
    private static decode_string(s)
       local r
       r := ""
@@ -418,8 +459,8 @@ class Decode()
          c := move(1)
          s := tab(0)
          case c of {
-            "F": return Prog.get_function(s) | throw("No such function " || s)
-            "K": return Prog.get_keyword(s) | throw("No such keyword " || s)
+            "F": return Prog.get_function(s) | throw("No such function: " || s)
+            "K": return Prog.get_keyword(s) | throw("No such keyword: " || s)
             "O": s ? {
                i := if ="unary " then 1 
                else if ="binary " then 2
@@ -432,13 +473,13 @@ class Decode()
                return lookup_procedure(s) | throw("No such procedure " || s)
             }
             "M": {
-               i := backto('.', s)
+               (i := backto('.', s)) | throw("Invalid method name: " || s)
                if cl := lookup_class(s[1:i-1]) &
                   j := Class.get_field_flags(cl, s[i:0]) &
                   iand(j, PUBLIC_STATIC_METHOD) = PUBLIC_STATIC_METHOD 
                then
                   return Class.get(cl, s[i:0]) 
-               throw("No such public static method " || s)
+               throw("No such public static method: " || s)
             }
             default: throw("Unknown proc code")
          }
@@ -511,12 +552,12 @@ class Decode()
 
          Codec.CLASS_CODE : {
             cname := line_in()
-            return lookup_class(cname) | throw("No such class " || cname)
+            return lookup_class(cname) | throw("No such class: " || cname)
          }
 
          Codec.CONSTRUCTOR_CODE : {
             rname := line_in()
-            return lookup_constructor(rname) | throw("No such constructor " || rname)
+            return lookup_constructor(rname) | throw("No such constructor: " || rname)
          }
 
          Codec.PROCEDURE_CODE : {
@@ -588,7 +629,7 @@ class Decode()
 
          Codec.RECORD_CODE : {
             rname := line_in()
-            con := lookup_constructor(rname) | throw("No such constructor " || rname)
+            con := lookup_constructor(rname) | throw("No such constructor: " || rname)
             res := con() 
             note_seen(res)
             n := int_in()
@@ -633,6 +674,9 @@ class Decode()
                insert(res, decode(), decode())
             return res
          }            
+
+         Codec.METHP_CODE :
+            return decode_methp()
 
          default :
             throw("Unknown type code:" || image(t))

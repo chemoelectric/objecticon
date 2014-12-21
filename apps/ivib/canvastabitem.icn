@@ -50,7 +50,7 @@ class CanvasTabItem(CanvasComponent,TabItem)
    #
    # Return the I/O template.
    #
-   public static get_template()
+   public get_template()
       suspend CanvasComponent.get_template() |
          ["Paint", "paint"] |
          ["Children", "children"]

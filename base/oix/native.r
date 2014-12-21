@@ -975,6 +975,58 @@ function lang_Class_get_methp_proc(mp)
     }
 end
 
+function lang_Decode_decode_methp_impl(obj, cl, fn, target)
+   if !is:object(obj) then
+       runerr(602, obj)
+   if !is:class(cl) then
+       runerr(603, cl)
+   if !is:string(fn) then
+      runerr(103, fn)
+   if !is:methp(target) then
+       runerr(613, target)
+    body {
+       int i;
+       struct class_field *cf;
+       struct b_class *class0 = &ClassBlk(cl);
+
+       if (!class_is(ObjectBlk(obj).class, class0)) {
+           LitWhy("Object doesn't implement class");
+           fail;
+       }
+       i = lookup_class_field(class0, &fn, 0);
+       if (i < 0) {
+           LitWhy("Field not found");
+           fail;
+       }
+       cf = class0->fields[i];
+       if ((cf->flags & (M_Method | M_Static | M_Special)) != M_Method) {
+           LitWhy("Field not a valid instance method");
+           fail;
+       }
+       if (BlkLoc(*cf->field_descriptor) == (union block *)&Bdeferred_method_stub) {
+           LitWhy("Field is the deferred method stub");
+           fail;
+       }
+       MethpBlk(target).object = &ObjectBlk(obj);
+       MethpBlk(target).proc = &ProcBlk(*cf->field_descriptor);
+       return target;
+    }
+end
+
+function lang_Class_set_methp(mp, obj, p)
+   if !is:methp(mp) then
+       runerr(613, mp)
+   if !is:object(obj) then
+       runerr(602, obj)
+   if !is:proc(p) then
+       runerr(615, p)
+    body {
+       MethpBlk(mp).object = &ObjectBlk(obj);
+       MethpBlk(mp).proc = &ProcBlk(p);
+       return mp;
+    }
+end
+
 function lang_Class_get_field_flags(c, field)
    body {
         struct b_class *class0;

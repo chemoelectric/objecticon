@@ -29,7 +29,7 @@ $load CLEAR "rpp.CLEAR_24.gif"
 $load FONT "rpp.FONT_24.gif"
 $load BROWSER_LOGO "rpp.BROWSER_LOGO.png"
 
-class Settings()
+class Settings2()
    public
       home_url,
       cache_size_mb,
@@ -1786,11 +1786,7 @@ procedure main(a)
    settings_file := home.child("oibrowser").str()
    cookies_file := \opts["k"] | home.child("oicookies").str()
    cookies := decode_from_file(cookies_file) | table()
-   settings := decode_from_file(settings_file) | Settings()
-   /settings.pool_size := 6
-   /settings.max_concurrent_downloads := 3
-   /settings.destination_dir := "/tmp"
-   /settings.font_factor := 1.0
+   settings := decode_from_file(settings_file) | Settings2()
    ImageCache.
       name_image("rpp.EXIT_24", EXIT).
       name_image("rpp.PASTE_24", PASTE).

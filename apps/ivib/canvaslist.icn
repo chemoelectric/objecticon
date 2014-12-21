@@ -41,7 +41,7 @@ class CanvasList(CanvasComponent,List)
    #
    # Return the I/O template.
    #
-   public static get_template()
+   public get_template()
       suspend CanvasComponent.get_template() |
          ["Constant Label", "constant_label"] |
          ["Selection", "selection"] |

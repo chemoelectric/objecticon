@@ -56,7 +56,7 @@ class CanvasEditableTextList(CanvasComponent,EditableTextList)
    #
    # Return the I/O template.
    #
-   public static get_template()
+   public get_template()
       suspend CanvasComponent.get_template() |
          ["Contents", "contents"] |
          ["Is editable flag", "is_editable_flag"] |

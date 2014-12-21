@@ -67,7 +67,7 @@ function copy(x)
             /*
              * Pass the buck to cplist to copy a list.
              */
-            cplist(&x, &result, 1, ListBlk(x).size + 1);
+            cplist(&x, &result, 1, ListBlk(x).size);
             return result;
             }
       table: {
@@ -404,7 +404,7 @@ function sort(t, i)
              *  qsort to sort the descriptors.  (That was easy!)
              */
             size = ListBlk(t).size;
-            cplist(&t, &result, 1, size + 1);
+            cplist(&t, &result, 1, size);
             qsort(ListBlk(result).listhead->lelem.lslots,
                   size, sizeof(struct descrip),(QSortFncCast) anycmp);
 
@@ -703,7 +703,7 @@ function sortf(t, i)
           *  qsort to sort the descriptors.  (That was easy!)
           */
          size = ListBlk(t).size;
-         cplist(&t, &result, 1, size + 1);
+         cplist(&t, &result, 1, size);
          sort_field = i;
          qsort(ListBlk(result).listhead->lelem.lslots,
                size, sizeof(struct descrip),(QSortFncCast) nthcmp);
@@ -1410,29 +1410,24 @@ end
 
 function lang_Text_slice(c, i, j)
    if !cnv:cset(c) then
-      runerr(120, c)
-   if !cnv:C_integer(i) then
+      runerr(104, c)
+    /* Same error check as in operator [:] */
+   if !cnv:C_integer(i) then {
+      if cnv : integer(i) then body { fail; }
       runerr(101, i)
-   if !cnv:C_integer(j) then
+   }
+   if !cnv:C_integer(j) then {
+      if cnv : integer(j) then body { fail; }
       runerr(101, j)
+   }
    body {
        struct rangeset *rs;
        tended struct b_cset *blk;
        word len;
 
-       i = cvpos(i, CsetBlk(c).size);
-       if (i == CvtFail)
-           fail;
-       j = cvpos(j, CsetBlk(c).size);
-       if (j == CvtFail)
-           fail;
-       if (i > j) {
-           word t = i;
-           i = j;
-           len = t - j;
-       }
-       else
-           len = j - i;
+       if (cvslice(&i, &j, CsetBlk(c).size) != Succeeded)
+          fail;
+       len = j - i;
 
        MemProtect(rs = init_rangeset());
        if (len > 0) {
@@ -1489,10 +1484,15 @@ end
 "ord(c) - generate the code points in a cset, ucs or string for the range of entries i:j"
 
 function ord(x, i, j)
-   if !def:C_integer(i, 1) then
+    /* Similar error check as in operator [:] */
+   if !def:C_integer(i, 1) then {
+      if cnv : integer(i) then body { fail; }
       runerr(101, i)
-   if !def:C_integer(j, 0) then
+   }
+   if !def:C_integer(j, 0) then {
+      if cnv : integer(j) then body { fail; }
       runerr(101, j)
+   }
    body {
        word len;
 
@@ -1500,18 +1500,9 @@ function ord(x, i, j)
          cset: {
             int a, b, pos, from, to;
 
-            i = cvpos(i, CsetBlk(x).size);
-            if (i == CvtFail)
+            if (cvslice(&i, &j, CsetBlk(x).size) != Succeeded)
                 fail;
-            j = cvpos(j, CsetBlk(x).size);
-            if (j == CvtFail)
-                fail;
-            if (i > j) {
-                word t = i;
-                i = j;
-                len = t - j;
-            } else
-                len = j - i;
+            len = j - i;
 
             if (len == 0)
                 fail;
@@ -1535,18 +1526,9 @@ function ord(x, i, j)
          ucs : {
             tended char *p;
 
-            i = cvpos(i, UcsBlk(x).length);
-            if (i == CvtFail)
+            if (cvslice(&i, &j, UcsBlk(x).length) != Succeeded)
                 fail;
-            j = cvpos(j, UcsBlk(x).length);
-            if (j == CvtFail)
-                fail;
-            if (i > j) {
-                word t = i;
-                i = j;
-                len = t - j;
-            } else
-                len = j - i;
+            len = j - i;
 
             if (len == 0)
                 fail;
@@ -1564,18 +1546,9 @@ function ord(x, i, j)
             if (!cnv:string(x,x))
                 runerr(132, x);
 
-            i = cvpos(i, StrLen(x));
-            if (i == CvtFail)
+            if (cvslice(&i, &j, StrLen(x)) != Succeeded)
                 fail;
-            j = cvpos(j, StrLen(x));
-            if (j == CvtFail)
-                fail;
-            if (i > j) {
-                word t = i;
-                i = j;
-                len = t - j;
-            } else
-                len = j - i;
+            len = j - i;
 
             if (len == 0)
                 fail;

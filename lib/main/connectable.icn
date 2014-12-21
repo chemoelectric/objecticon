@@ -1,5 +1,7 @@
 package util
 
+import ipl.functional
+
 class Connectable()
    private listeners
 
@@ -16,6 +18,7 @@ class Connectable()
          if /l.type | l.type === type then
             l.proc(param, self, type)
       }
+      return self
    end
 
    #
@@ -24,6 +27,11 @@ class Connectable()
    #
    public connect_and_return(proc, etype)
       local l
+      if type(proc) == "co-expression" then {
+         proc := exprf(proc)
+         if type(etype) == "co-expression" then
+            etype := @etype
+      }
       l := Listener(proc,
                     etype)
       listeners := copy(listeners)
@@ -36,11 +44,7 @@ class Connectable()
    # @return self
    #
    public connect(proc, etype)
-      local l
-      l := Listener(proc,
-                    etype)
-      listeners := copy(listeners)
-      put(listeners, l)
+      connect_and_return(proc, etype)
       return self
    end
 
@@ -70,22 +74,6 @@ class Connectable()
       t := []
       every l := !listeners do {
          if l.proc === proc then
-            l.disable()
-         else 
-            put(t, l)
-      }
-      listeners := t
-      return self
-   end
-
-   #
-   # Remove all {Listener}s created with the given co-expression
-   #
-   public disconnect_coexpression(coex)
-      local t, l
-      t := []
-      every l := !listeners do {
-         if l.coex === coex then
             l.disable()
          else 
             put(t, l)

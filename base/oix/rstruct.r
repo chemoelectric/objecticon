@@ -24,9 +24,9 @@ void addmem(struct b_set *ps,struct b_selem *pe,union block **pl)
  *  No allocation is done.
  */
 
-void cpslots(dptr dp1, dptr slotptr, word i, word j)
+void cpslots(dptr dp1, dptr slotptr, word i, word size)
    {
-   word size, pos;
+   word pos;
    struct b_list *lp1;     /* Neither pointer need be tended since no allocation is done. */
    struct b_lelem *bp1;
    /*
@@ -34,8 +34,6 @@ void cpslots(dptr dp1, dptr slotptr, word i, word j)
     *  (bp1, lp1).
     */
    lp1 = &ListBlk(*dp1);
-   size = j - i;
-
    bp1 = get_lelem_for_index(lp1, i, &pos);
    if (!bp1)
        return;
@@ -46,7 +44,7 @@ void cpslots(dptr dp1, dptr slotptr, word i, word j)
     *  block have been copied.
     */
    while (size > 0) {
-      j = bp1->first + pos;
+      word j = bp1->first + pos;
       if (j >= bp1->nslots)
          j -= bp1->nslots;
       *slotptr++ = bp1->lslots[j];
@@ -61,22 +59,22 @@ void cpslots(dptr dp1, dptr slotptr, word i, word j)
 
 #begdef cplist_macro(f, e)
 /*
- * cplist(dp1,dp2,i,j) - copy sublist dp1[i:j] into dp2.
+ * cplist(dp1,dp2,i,size) - copy sublist dp1[i+:size] into dp2.
  */
-void f(dptr dp1, dptr dp2, word i, word j)
+void f(dptr dp1, dptr dp2, word i, word size)
    {
-   word size, nslots;
+   word nslots;
    tended struct b_list *lp2;
 
    /*
     * Calculate the size of the sublist.
     */
-   size = nslots = j - i;
+   nslots = size;
    if (nslots == 0)
       nslots = MinListSlots;
 
    MemProtect(lp2 = alclist(size, nslots));
-   cpslots(dp1, lp2->listhead->lelem.lslots, i, j);
+   cpslots(dp1, lp2->listhead->lelem.lslots, i, size);
 
    /*
     * Fix type and location fields for the new list.

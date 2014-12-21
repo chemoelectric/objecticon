@@ -1,6 +1,6 @@
 package exception
 
-import util(clean)
+import util(clean,State,save_state)
 
 package readable global 
    # The co-expression currently ready to handle an exception
@@ -9,6 +9,27 @@ package readable global
    thrown,
    # The co-expression of the last thrower
    thrower
+
+# A `State` class for saving the `throw_handler` global variables.  An
+# optional initial value may be specified.
+#
+class ThrowHandlerState(State)
+   private i, th
+
+   public begin()
+      th := throw_handler
+      throw_handler := i
+   end
+
+   public swap()
+      th :=: throw_handler
+   end
+
+   public new(i)
+      self.i := i
+      return
+   end
+end
 
 #
 # "throw" an exception, setting {thrown} to {x} and {thrower} to
@@ -50,12 +71,7 @@ end
 # for an exception by testing the values of {thrown} and/or {thrower}.
 #
 procedure try(e)
-   local t
-   t := throw_handler
-   throw_handler := &current
-   suspend 1(|@e, throw_handler :=: t) do
-      throw_handler :=: t
-   throw_handler := t
+   suspend save_state(e, ThrowHandlerState(&current))
 end
 
 # A useful wrapper around {try}.  {try} is called with {e} to get its

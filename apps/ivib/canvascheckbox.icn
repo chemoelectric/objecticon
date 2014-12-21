@@ -38,7 +38,7 @@ class CanvasCheckBox(CanvasButton,CheckBox)
    #
    # Return the I/O template.
    #
-   public static get_template()
+   public get_template()
       suspend CanvasButton.get_template() |
          ["Paint", "paint"]
    end

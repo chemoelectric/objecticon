@@ -11,7 +11,7 @@ end
 class Two(SelectiveObjectCodec)
    private a,b,c
 
-   private static get_template()
+   private get_template()
       suspend ["Fred","a"]|["Jim","b"]|["Mary","c"]
    end
 
