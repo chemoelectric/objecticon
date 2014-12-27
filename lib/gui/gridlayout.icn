@@ -12,13 +12,13 @@ class GridLayout(Layout)
       debug
 
    # Default insets between components in a GridLayout.
-   public static const
+   public static
       DEFAULT_OUTER_INSET,
       DEFAULT_INNER_INSET
 
    private static init()
-      DEFAULT_OUTER_INSET := 10
-      DEFAULT_INNER_INSET := 5
+      DEFAULT_OUTER_INSET := scale(10)
+      DEFAULT_INNER_INSET := scale(5)
    end
 
    public reset()

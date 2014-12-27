@@ -43,7 +43,7 @@ final abstract class ImageCache()
       name_image("gui.FAVOURITES_24", FAVOURITES)
       name_image("gui.CONFIGURE_24", CONFIGURE)
 
-      name_image("gui.BOX_UP", "13,(0=shadow;1=hilite;~=transparent),_
+      name_image("gui.BOX_UP", scale_image_string("13,(0=shadow;1=hilite;~=transparent),_
 ~~~~~~~~~~~~~_
 ~11111111111~_
 ~11111111110~_
@@ -57,8 +57,8 @@ final abstract class ImageCache()
 ~11000000000~_
 ~10000000000~_
 ~~~~~~~~~~~~~_
-")
-      name_image("gui.BOX_DOWN", "13,(b=black;0=shadow;1=hilite;~=transparent),_
+"))
+      name_image("gui.BOX_DOWN", scale_image_string("13,(b=black;0=shadow;1=hilite;~=transparent),_
 ~~~~~~~~~~~~~_
 ~00000000001~_
 ~00000000001~_
@@ -72,8 +72,8 @@ final abstract class ImageCache()
 ~01111111111~_
 ~11111111111~_
 ~~~~~~~~~~~~~_
-")
-      name_image("gui.DIAMOND_UP", "13,(0=shadow;1=hilite;~=transparent),_
+"))
+      name_image("gui.DIAMOND_UP", scale_image_string("13,(0=shadow;1=hilite;~=transparent),_
 ~~~~~~1~~~~~~_
 ~~~~~111~~~~~_
 ~~~~11~11~~~~_
@@ -87,8 +87,8 @@ final abstract class ImageCache()
 ~~~~00~00~~~~_
 ~~~~~000~~~~~_
 ~~~~~~0~~~~~~_
-")
-      name_image("gui.DIAMOND_DOWN", "13,(b=black;0=shadow;1=hilite;~=transparent),_
+"))
+      name_image("gui.DIAMOND_DOWN", scale_image_string("13,(b=black;0=shadow;1=hilite;~=transparent),_
 ~~~~~~0~~~~~~_
 ~~~~~000~~~~~_
 ~~~~00~00~~~~_
@@ -102,24 +102,24 @@ final abstract class ImageCache()
 ~~~~11~11~~~~_
 ~~~~~111~~~~~_
 ~~~~~~1~~~~~~_
-")
-      name_image("gui.ARROW_UP", "11,(b=black;c=black 50%;~=transparent),_
+"))
+      name_image("gui.ARROW_UP", scale_image_string("11,(b=black;c=black 50%;~=transparent),_
 ~~~~~c~~~~~_
 ~~~~cbc~~~~_
 ~~~cbbbc~~~_
 ~~cbbbbbc~~_
 ~cbbbbbbbc~_
 cbbbbbbbbbc_
-")
-      name_image("gui.ARROW_DOWN", "11,(b=black;c=black 50%;~=transparent),_
+"))
+      name_image("gui.ARROW_DOWN", scale_image_string("11,(b=black;c=black 50%;~=transparent),_
 cbbbbbbbbbc_
 ~cbbbbbbbc~_
 ~~cbbbbbc~~_
 ~~~cbbbc~~~_
 ~~~~cbc~~~~_
 ~~~~~c~~~~~_
-")
-      name_image("gui.ARROW_LEFT", "9,(b=black;c=black 50%;~=transparent),_
+"))
+      name_image("gui.ARROW_LEFT", scale_image_string("9,(b=black;c=black 50%;~=transparent),_
 ~~~~~~~~c_
 ~~~~~~cbb_
 ~~~~cbbbb_
@@ -129,8 +129,8 @@ cbbbbbbbb_
 ~~~~cbbbb_
 ~~~~~~cbb_
 ~~~~~~~~c_
-")
-      name_image("gui.ARROW_RIGHT", "9,(b=black;c=black 50%;~=transparent),_
+"))
+      name_image("gui.ARROW_RIGHT", scale_image_string("9,(b=black;c=black 50%;~=transparent),_
 c~~~~~~~~_
 bbc~~~~~~_
 bbbbc~~~~_
@@ -140,20 +140,20 @@ bbbbbbc~~_
 bbbbc~~~~_
 bbc~~~~~~_
 c~~~~~~~~_
-")
-      name_image("gui.TINY_ARROW_UP", "7,(b=black;c=black 50%;~=transparent),_
+"))
+      name_image("gui.TINY_ARROW_UP", scale_image_string("7,(b=black;c=black 50%;~=transparent),_
 ~~~c~~~_
 ~~cbc~~_
 ~cbbbc~_
 cbbbbbc_
-")
-      name_image("gui.TINY_ARROW_DOWN", "7,(b=black;c=black 50%;~=transparent),_
+"))
+      name_image("gui.TINY_ARROW_DOWN", scale_image_string("7,(b=black;c=black 50%;~=transparent),_
 cbbbbbc_
 ~cbbbc~_
 ~~cbc~~_
 ~~~c~~~_
-")
-      name_image("gui.PLUS", "9,(b=black;~=transparent),_
+"))
+      name_image("gui.PLUS", scale_image_string("9,(b=black;~=transparent),_
 bbbbbbbbb_
 b~~~~~~~b_
 b~~~b~~~b_
@@ -163,8 +163,8 @@ b~~~b~~~b_
 b~~~b~~~b_
 b~~~~~~~b_
 bbbbbbbbb_
-")
-      name_image("gui.MINUS", "9,(b=black;~=transparent),_
+"))
+      name_image("gui.MINUS", scale_image_string("9,(b=black;~=transparent),_
 bbbbbbbbb_
 b~~~~~~~b_
 b~~~~~~~b_
@@ -174,21 +174,21 @@ b~~~~~~~b_
 b~~~~~~~b_
 b~~~~~~~b_
 bbbbbbbbb_
-")
-      name_image("gui.TINY_X", "8,(b=black;~=transparent),_
+"))
+      name_image("gui.TINY_X", scale_image_string("8,(b=black;~=transparent),_
 bb~~~~bb_
 ~bb~~bb~_
 ~~~bb~~~_
 ~bb~~bb~_
 bb~~~~bb_
-")
-      name_image("gui.HORIZ_GRID", "24,(0=shadow;1=hilite;~=transparent),_
+"))
+      name_image("gui.HORIZ_GRID", scale_image_string("24,(0=shadow;1=hilite;~=transparent),_
 ~00~~~~~~~~00~~~~~~~~00~_
 0011~~~~~~0011~~~~~~0011_
 0111~~~~~~0111~~~~~~0111_
 ~11~~~~~~~~11~~~~~~~~11~_
-")
-      name_image("gui.VERT_GRID", "4,(0=shadow;1=hilite;~=transparent),_
+"))
+      name_image("gui.VERT_GRID", scale_image_string("4,(0=shadow;1=hilite;~=transparent),_
 ~00~_
 0011_
 0111_
@@ -213,8 +213,8 @@ bb~~~~bb_
 0011_
 0111_
 ~11~_
-")
-      name_image("gui.CLOSED_FOLDER", "16,c1,_
+"))
+      name_image("gui.CLOSED_FOLDER", scale_image_string("16,c1,_
 ~~~~~~~~~~~~~~~~_
 ~~~~0000~~~~~~~~_
 ~~~0;;;;0~~~~~~~_
@@ -229,8 +229,8 @@ bb~~~~bb_
 ~0;;;;;;;;;;;0~~_
 ~0000000000000~~_
 ~~~~~~~~~~~~~~~~_
-")
-      name_image("gui.OPEN_FOLDER", "16,c1,_
+"))
+      name_image("gui.OPEN_FOLDER", scale_image_string("16,c1,_
 ~~~~~~~~~~~~~~~~_
 ~~~0000~~~~~~~~~_
 ~~0DDDD0~~~~~~~~_
@@ -245,8 +245,8 @@ bb~~~~bb_
 00DDDDDDDDDD00~~_
 0000000000000~~~_
 ~~~~~~~~~~~~~~~~_
-")
-      name_image("gui.FILE", "16,c1,_
+"))
+      name_image("gui.FILE", scale_image_string("16,c1,_
 ~~~~~~~~~~~~~~~~_
 ~~~0000000~~~~~~_
 ~~~06666600~~~~~_
@@ -261,8 +261,8 @@ bb~~~~bb_
 ~~~0666666660~~~_
 ~~~0000000000~~~_
 ~~~~~~~~~~~~~~~~_
-")
-      name_image("gui.WINDOW_CLOSE_BUTTON", "16,c1,_
+"))
+      name_image("gui.WINDOW_CLOSE_BUTTON", scale_image_string("16,c1,_
 ~>>>>>>>>>>>>>>~_
 >>iiiiiiiiiiii>>_
 >iiiiiiiiiiiiii>_
@@ -279,8 +279,8 @@ bb~~~~bb_
 >iiiiiiiiiiiiii>_
 >>iiiiiiiiiiii>>_
 ~>>>>>>>>>>>>>>~_
-")
-      name_image("gui.WINDOW_ICONIFY_BUTTON", "16,c1,_
+"))
+      name_image("gui.WINDOW_ICONIFY_BUTTON", scale_image_string("16,c1,_
 ~>>>>>>>>>>>>>>~_
 >>iiiiiiiiiiii>>_
 >iiiiiiiiiiiiii>_
@@ -297,7 +297,7 @@ bb~~~~bb_
 >ii6666666666ii>_
 >>iiiiiiiiiiii>>_
 ~>>>>>>>>>>>>>>~_
-")
+"))
    end
 
    # Associate arbitrary image data (eg gif file data), with a name.

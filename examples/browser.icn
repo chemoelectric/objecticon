@@ -411,7 +411,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       file_dialog := FileDialog().set_remember_size(&yes)
       directory_dialog := DirectoryDialog().set_remember_size(&yes)
       last_file_dir := last_download_dir := Files.getcwd()
-      self.set_size(600, 650)
+      self.set_size(scale(600), scale(650))
       self.set_resize(&yes)
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
@@ -428,7 +428,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
          set_accel("p").
          set_label("Page")
       menu_bar := MenuBar().
-         set_size("100").
+         set_size(scale(100)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("l_inset", 0).
@@ -442,7 +442,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       bt := BrowserTab(self, url)
       downloads := DownloadTab()
       tabs := TabSet().
-         set_size("200", "150").
+         set_size(scale(200), scale(150)).
          clear_constraints().
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
@@ -839,6 +839,7 @@ class DownloadTab(TabItem)
       setup()
       theme_toolbar_button(paste_url_button, "edit-paste")
       theme_toolbar_button(destination_button, "go-up")
+      theme_toolbar_button(clear_done_button)
       ticker := Dispatcher.new_task{tick()}
       dl := []
       update_title()
@@ -1550,7 +1551,7 @@ class BrowserTab(TabItem, BrowserUI)
       theme_toolbar_button(prev_button, "go-previous")
       theme_toolbar_button(next_button, "go-next")
       theme_toolbar_button(home_button, "go-home")
-      #theme_toolbar_button(stop_button, "process-stop")
+      theme_toolbar_button(stop_button)
       theme_toolbar_button(refresh_button, "view-refresh")
       theme_toolbar_button(paste_url_button, "edit-paste")
       theme_toolbar_button(search_close_button, "window-close")
@@ -1662,7 +1663,7 @@ class BrowserTab(TabItem, BrowserUI)
       url_field := URLEditList().
          set_selection_list([]).
          set_contents(u"").
-         set_size("100").
+         set_size(scale(100)).
          set_align(Align.C, Align.T).
          set_direction(Direction.DOWN).
          clear_constraints().
@@ -1674,7 +1675,7 @@ class BrowserTab(TabItem, BrowserUI)
          connect(self.on_url_field_selection, Event.SELECTION_CHANGED)
       self.add(url_field)
       browser := Browser().
-         set_size("651", "337").
+         set_size(scale(650), scale(330)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -1688,7 +1689,7 @@ class BrowserTab(TabItem, BrowserUI)
             set_l_inset(3)).
          set_x_align(Align.L)
       message_label := MessageLabel().
-         set_size("100").
+         set_size(scale(100)).
          set_align(Align.L, Align.B).
          set_fg("red").
          clear_constraints().

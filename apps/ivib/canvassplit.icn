@@ -24,7 +24,7 @@ class CanvasSplit(CanvasComponent,Split)
          c.chain("set_bottom(" || self.second.name || ")")
       }
       if (self.min_first | self.min_second) ~= 0 then
-         c.chain("set_min(" || self.min_first || ", " || self.min_second || ")")
+         c.chain("set_min(" || c.scalable_dim(self.min_first) || ", " || c.scalable_dim(self.min_second) || ")")
       if self.weight ~= 0 then
          c.chain("set_weight(" || self.weight || ")")
       if \self.sizer.show_inter_flag then

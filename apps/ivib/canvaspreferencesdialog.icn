@@ -13,6 +13,7 @@ class CanvasPreferencesDialog(Dialog)
       h_spec_tf,               # TextField
       set_w_default,           # CheckBoxes                     
       set_h_default,           #                     
+      scale_dimensions_cb,
       okay_result,             # Flag indicating result
       name,                    # TextField - object name
       is_component_cb,         # Component or not
@@ -109,6 +110,7 @@ class CanvasPreferencesDialog(Dialog)
 
       c.dialog_iw := if w_spec_tf.is_shaded() then &null else w_spec_tf.get_contents()
       c.dialog_ih := if h_spec_tf.is_shaded() then &null else h_spec_tf.get_contents()
+      c.scale_dimensions_flag := scale_dimensions_cb.get_status()
 
       self.okay_result := 1
       self.dispose()
@@ -216,7 +218,12 @@ class CanvasPreferencesDialog(Dialog)
       layout_field.connect(self.on_layout_change, Event.SELECTION_CHANGED)
       pos_tab.add(layout_field)
       orig_layout := c.layout_delegate
-     
+
+      scale_dimensions_cb := CheckBox().set_label("Scale Dimensions").set_constraint("eol", &yes).set_constraint("w", 3)
+      pos_tab.add(scale_dimensions_cb)
+      if \c.scale_dimensions_flag then
+         scale_dimensions_cb.set_is_checked(&yes)
+
       self.attrib_tab := MapTab().set_label("WAttribs").set_table(stringify_wattribs(c.dialog_struct.wattribs))
       add_tab(self.attrib_tab)
 

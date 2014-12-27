@@ -210,6 +210,7 @@ class Canvas(Component,SelectiveObjectCodec)
       gen_init_dialog,
       gen_indent,
       event_handlers,          # List of event, handler pairs
+      scale_dimensions_flag,   # Apply scale() to dimensions on output
       item_buff_win,
       dialog_iw,               # Initial size to set dialog; may be null if
       dialog_ih,               # default is to be used.
@@ -967,7 +968,8 @@ class Canvas(Component,SelectiveObjectCodec)
               ["Children", "children"] |
               ["Initial Focus", "initial_focus"] |
               ["Event Handlers", "event_handlers"] |
-              ["Layout delegate", "layout_delegate"]
+              ["Layout delegate", "layout_delegate"] |
+              ["Scale Dimensions Flag", "scale_dimensions_flag"]
    end
 
    #
@@ -991,6 +993,7 @@ class Canvas(Component,SelectiveObjectCodec)
       c.is_component := self.is_component
       c.superclass_name := self.superclass_name
       c.import_name := self.import_name
+      c.scale_dimensions_flag := self.scale_dimensions_flag
       c.event_handlers := copy(\self.event_handlers)
       c.set_pos(self.x_spec, self.y_spec)
       c.dialog_iw := self.dialog_iw

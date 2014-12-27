@@ -81,7 +81,7 @@ class IconFilesItemPaint(ItemPaint)
    public static const ICON_SIZE
 
    private static init()
-      ICON_SIZE := 16
+      ICON_SIZE := scale(16)
       ImageCache.
          name_image("fi.PDF_16", PDF_16).
          name_image("fi.IMAGE_16", IMAGE_16).
@@ -174,7 +174,7 @@ $endif
       local i
       if not(i := \data.icon) then
          i := data.icon := get_icon(data)
-      i.copy_to(,,,, W, x, y + (h - ICON_SIZE) / 2)
+      i.copy_to(,,,, W, x + (ICON_SIZE - i.get_width()) / 2, y + (h - i.get_height()) / 2)
       x +:= ICON_SIZE + Gui.TEXT_INSET
       w -:= ICON_SIZE + Gui.TEXT_INSET
       draw_string_ex(W, x, y, limit_text(W, get_string(data), w))

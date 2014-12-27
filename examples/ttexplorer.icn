@@ -91,19 +91,20 @@ class TTExplorer(Dialog)
    end
 
    public component_setup()
-      local root_node, w, bw
+      local root_node, w, bw, p
       self.setup()
       tree := tt.get_table_content()
+      p := scale(2)
       tree.
-         set_fixed_col_w(16 + 2 * 2).
+         set_fixed_col_w(IconFilesItemPaint.ICON_SIZE + 2 * p).
          set_item_paint(IconFilesItemPaint()).
          set_item_border(EmptyBorder().
-                            set_insets(2, Gui.TEXT_INSET, 0, 0).
+                            set_insets(p, Gui.TEXT_INSET, 0, 0).
                             set_x_align(Align.L)).
          connect(self.handle_tree_expansion, Event.TREE_NODE_EXPANSION)
 
       bw := TableColumn().border.get_total_width()
-      set_size(800, 600)
+      set_size(scale(800), scale(600))
       use {
          w := Window(),
          {

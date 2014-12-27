@@ -405,7 +405,7 @@ class NamedImageDialog(Dialog)
       set_label("Select image")
       set_layout(GridLayout())
 
-      lst := TextList().set_size(250,300).set_select_mode("one").set_constraint("eol", &yes).set_contents(get_names())
+      lst := TextList().set_size(scale(250),scale(300)).set_select_mode("one").set_constraint("eol", &yes).set_contents(get_names())
       lst.object_set_selections([\curr])
       lst.set_cursor(lst.get_selections()[1])
       set_focus(lst)

@@ -629,11 +629,12 @@ class FileDialog(Dialog)
    end
 
    private synch_paints()
-      local cp, np, sp, dp
+      local cp, np, sp, dp, sz
+      sz := Gui.TOOLBAR_ICON_SIZE
       cp := CompoundPaint().set_top(ImagePaint().set_cache(if /ascending then "gui.TINY_ARROW_DOWN" else "gui.TINY_ARROW_UP"))
-      np := ImagePaint().set_cache("gui.FONT_24")
-      sp := ImagePaint().set_cache("gui.FILESIZE_24")
-      dp := ImagePaint().set_cache("gui.CLOCK_24")
+      np := ImagePaint().set_cache(ImageCache.get_key_with_resize("gui.FONT_24", sz, sz))
+      sp := ImagePaint().set_cache(ImageCache.get_key_with_resize("gui.FILESIZE_24", sz, sz))
+      dp := ImagePaint().set_cache(ImageCache.get_key_with_resize("gui.CLOCK_24", sz, sz))
       case sorter of {
          Files.name_cmp: {
             name_button.set_paint(cp.set_bottom(np))
@@ -687,7 +688,7 @@ class FileDialog(Dialog)
       local paint_2, layout_7, paint_14, paint_45, layout_11, layout_4, paint_11, paint_37, paint_42, refresh_menu_item, panel_4, paint_29, split_content_1, split_content_2, paint_9, split_1, paint_31, paint_3, layout_8, paint_15, paint_46, paint_12, paint_43, new_dir_menu_item, paint_35, panel_2, paint_27, paint_32, favourite_dirs_menu_item, layout_9, paint_47, paint_1, layout_6, paint_13, paint_44, layout_10, layout_3, paint_10, paint_36, paint, panel_3, paint_28, paint_30, paint_48
       self.set_label("Select file")
       self.set_resize(&yes)
-      self.set_size(700, 500)
+      self.set_size(scale(700), scale(500))
       paint_45 := ImagePaint().
          set_cache("gui.CONFIGURE_24")
       paint_42 := TextPaint("New directory...")
@@ -796,7 +797,7 @@ class FileDialog(Dialog)
          set_paint(paint_32)
       paint_36 := TextPaint("Directory")
       dir := EditList().
-         set_size("150").
+         set_size(scale(150)).
          set_align(Align.L, Align.C).
          clear_constraints().
          set_constraint("x_align", Align.L).
@@ -827,7 +828,7 @@ class FileDialog(Dialog)
          add(dir)
       self.add(panel_4)
       dlist := ItemPaintList().
-         set_size("210", "200").
+         set_size(scale(210), scale(200)).
          clear_constraints().
          set_constraint("r_inset", 0).
          set_constraint("x_fill", &yes).
@@ -845,7 +846,7 @@ class FileDialog(Dialog)
          set_layout(layout_8).
          add(dlist)
       flist := ItemPaintList().
-         set_size("270", "200").
+         set_size(scale(270), scale(200)).
          clear_constraints().
          set_constraint("l_inset", 0).
          set_constraint("x_fill", &yes).
@@ -871,11 +872,11 @@ class FileDialog(Dialog)
          set_constraint("y_weight", 1.0).
          set_left(split_content_1).
          set_right(split_content_2).
-         set_min(100, 100)
+         set_min(scale(100), scale(100))
       self.add(split_1)
       paint_35 := TextPaint("Filter")
       filter := EditList().
-         set_size("150").
+         set_size(scale(150)).
          set_align(Align.L, Align.B).
          clear_constraints().
          set_constraint("x_align", Align.L).
@@ -889,7 +890,7 @@ class FileDialog(Dialog)
          set_extra("cells")
       paint_37 := TextPaint("File")
       file := EditList().
-         set_size("150").
+         set_size(scale(150)).
          set_align(Align.L, Align.B).
          clear_constraints().
          set_constraint("x_align", Align.L).
@@ -953,7 +954,7 @@ class FileDialog(Dialog)
          set_paint(paint_10)
       paint_11 := TextPaint("")
       message_label := MessageLabel().
-         set_size("130").
+         set_size(scale(130)).
          set_align(Align.L, Align.B).
          set_fg("red").
          clear_constraints().

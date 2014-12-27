@@ -162,7 +162,7 @@ abstract class BaseTree(SelectableScrollArea)
          #
          # The column width is slightly wider than the bitmap width
          #
-         col_w := img_w + 4
+         col_w := img_w + scale(4)
       } else
          col_w := fixed_col_w
    end

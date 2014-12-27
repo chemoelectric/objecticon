@@ -97,7 +97,7 @@ class Style()
       local cw
       return use {
          cw := get_dashed_clone(W),
-         cw.draw_rectangle(x, y, w, h)
+         cw.draw_rectangle(x, y, w, h, Gui.UNIT)
       }
    end
 
@@ -105,7 +105,7 @@ class Style()
       local cw
       return use {
          cw := get_focus_clone(W),
-         cw.draw_rectangle(x, y, w, h)
+         cw.draw_rectangle(x, y, w, h, Gui.UNIT)
       }
    end
 
@@ -113,7 +113,7 @@ class Style()
       local cw
       return use {
          cw := get_highlight_clone(W),
-         cw.draw_rectangle(x, y, w, h)
+         cw.draw_rectangle(x, y, w, h, Gui.UNIT)
       }
    end
 
@@ -121,7 +121,7 @@ class Style()
       local cw
       return use {
          cw := get_shadow_clone(W),
-         cw.fill_rectangle(x - 1, y, 2, h)
+         cw.fill_rectangle(x - Gui.UNIT, y, 2 * Gui.UNIT, h)
       }
    end
 
@@ -129,7 +129,7 @@ class Style()
       local cw
       return use {
          cw := get_cursor_clone(W),
-         cw.fill_rectangle(x - 1, y, 2, h)
+         cw.fill_rectangle(x - Gui.UNIT, y, 2 * Gui.UNIT, h)
       }
    end
 
@@ -139,8 +139,8 @@ class Style()
          set_font("sans,-2").
          set_fg("black").
          set_border(CompoundBorder().
-                      set_outer(PlainBorder().set_line_width(1)).
-                      set_inner(EmptyBorder().set_insets(3,3,2,2)))
+                      set_outer(PlainBorder().set_line_width(Gui.UNIT)).
+                      set_inner(EmptyBorder().set_insets(scale(3), scale(3), scale(2), scale(2))))
    end
 
    public polish(obj)

@@ -243,6 +243,9 @@ class Editor(Dialog)
          connect(handle_save, Event.ACTION)
       tb.add(save_button)
 
+      theme_toolbar_button(close_button, "window-close")
+      theme_toolbar_button(save_button, "document-save")
+
       self.add(text)
 
       message_label := MessageLabel().

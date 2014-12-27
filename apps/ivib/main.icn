@@ -231,7 +231,7 @@ class Main(Dialog)
    end      
 
    public init_dialog()
-      win.set_min_size(win.get_width(), win.get_height())
+      #win.set_min_size(win.get_width(), win.get_height())
    end
 
    #
@@ -1340,7 +1340,7 @@ class Main(Dialog)
       #
       p := Component().set_constraint("eol", &yes).set_constraint("x_fill", &yes).set_layout(GridLayout().set_doi(0).set_dii(0))
 
-      filename_label := Label().set_size(200).set_constraint("y_fill", &yes)
+      filename_label := Label().set_size(scale(200)).set_constraint("y_fill", &yes)
       filename_label.set_border(CompoundBorder().set_outer(SunkenBorder()).set_inner(EmptyBorder().set_l_inset(Gui.TEXT_INSET)).set_x_align("l"))
       filename_label.set_label("")
       p.add(filename_label)
@@ -1350,7 +1350,7 @@ class Main(Dialog)
       info_label.set_label("")
       p.add(info_label)
 
-      pos_label := Label().set_size(200).set_constraint("y_fill", &yes).set_font("serif,10")
+      pos_label := Label().set_size(scale(200)).set_constraint("y_fill", &yes).set_font("serif,-2")
       pos_label.set_border(CompoundBorder().set_outer(SunkenBorder()).set_inner(EmptyBorder().set_l_inset(Gui.TEXT_INSET)).set_x_align("l"))
       pos_label.set_label("")
       p.add(pos_label)
@@ -1360,8 +1360,8 @@ class Main(Dialog)
       self.connect(self.op_quit, Event.WINDOW_CLOSE_BUTTON)
 
       set_label("Ivib")
-      set_height(600)
-      set_min_height(400)
+      set_size(scale(16*44), scale(600))
+      set_min_size(16*44, 600)
       canvas_zone := Panel().set_bg("blue").set_size(50,50)
       self.add(canvas_zone)
 
