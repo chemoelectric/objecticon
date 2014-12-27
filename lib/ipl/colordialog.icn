@@ -152,16 +152,16 @@ class ColorDialog(Dialog)
    end
 
    private setup()
-      local paint_2, panel_2, label_2, layout_7, paint_11, layout_4, paint_4, layout_1, paint_1, paint_9, panel_1, label_1, border_2, layout_6, paint_10, layout_3, paint_3, panel_3, border_content_1, border_content_2, border_content_3, label_3, paint_12, border_1, layout_5, layout_2
+      local label_2, paint_2, panel_2, layout_7, layout_4, paint_11, paint_4, layout_1, label_1, paint_1, paint_9, panel_1, border_2, layout_6, layout_3, paint_10, label_3, paint_3, panel_3, border_content_1, border_content_2, border_content_3, border_1, layout_5, paint_12, layout_2
       self.set_label("Select color")
       paint_2 := TextPaint("RGB")
       label_1 := Label().
-         set_pos("286", "248").
+         set_pos(scale(286), scale(248)).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_paint(paint_2)
       red := Slider().
-         set_size(196).
+         set_size(scale(196)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -172,7 +172,7 @@ class ColorDialog(Dialog)
          set_increment_size(1024).
          set_is_horizontal(&yes)
       green := Slider().
-         set_size("169").
+         set_size(scale(169)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -182,7 +182,7 @@ class ColorDialog(Dialog)
          set_increment_size(1024).
          set_is_horizontal(&yes)
       blue := Slider().
-         set_size("169").
+         set_size(scale(169)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -217,12 +217,12 @@ class ColorDialog(Dialog)
          set_content(border_content_1)
       paint_4 := TextPaint("HLS")
       label_2 := Label().
-         set_pos("406", "228").
+         set_pos(scale(406), scale(228)).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_paint(paint_4)
       hue := Slider().
-         set_size(169).
+         set_size(scale(169)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -233,7 +233,7 @@ class ColorDialog(Dialog)
          set_increment_size(10).
          set_is_horizontal(&yes)
       light := Slider().
-         set_size("100").
+         set_size(scale(100)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -243,7 +243,7 @@ class ColorDialog(Dialog)
          set_increment_size(5).
          set_is_horizontal(&yes)
       saturation := Slider().
-         set_size("100").
+         set_size(scale(100)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -278,12 +278,12 @@ class ColorDialog(Dialog)
          set_content(border_content_2)
       paint_11 := TextPaint("Alpha")
       label_3 := Label().
-         set_pos(215, 398).
+         set_pos(scale(215), scale(398)).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_paint(paint_11)
       alpha := Slider().
-         set_size("100").
+         set_size(scale(100)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -329,7 +329,7 @@ class ColorDialog(Dialog)
          add(alpha_panel)
       self.add(panel_2)
       colr := ColorRectangle().
-         set_size(154, "134").
+         set_size(scale(154), scale(134)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).

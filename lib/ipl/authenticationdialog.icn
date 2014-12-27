@@ -41,7 +41,7 @@ class AuthenticationDialog(Dialog)
    end
 
    private setup()
-      local paint_2, paint_14, label_2, okay_button, paint_11, layout_4, label_4, layout_1, paint_1, paint_9, panel_1, paint_13, label_1, paint_10, panel_3, label_3, cancel_button, paint_12, layout_5
+      local label_2, paint_2, paint_14, okay_button, layout_4, paint_11, label_4, layout_1, label_1, paint_1, paint_9, panel_1, paint_13, paint_10, label_3, panel_3, cancel_button, layout_5, paint_12
       self.set_label("Authentication required")
       self.set_resize(&yes)
       paint_13 := TextPaint("Domain")
@@ -74,7 +74,7 @@ class AuthenticationDialog(Dialog)
          set_constraint("x_align", Align.L).
          set_paint(paint_1)
       user_name_field := TextField().
-         set_size("282").
+         set_size(scale(282)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_align", Align.L).
@@ -88,7 +88,7 @@ class AuthenticationDialog(Dialog)
          set_constraint("x_align", Align.L).
          set_paint(paint_2)
       password_field := TextField().
-         set_size("60").
+         set_size(scale(60)).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
@@ -146,6 +146,12 @@ class AuthenticationDialog(Dialog)
       self.set_layout(layout_5)
       self.set_focus(user_name_field.find_focus())
    end
+end
+
+procedure main()
+   local d
+   d := AuthenticationDialog()
+   d.show_modal()
 end
 
 ### Ivib-v2 layout: layouts/$.layout
