@@ -21,7 +21,7 @@ class CanvasComponentUI()
       local b, icon
       icon := get_icon() | fail
       b := IconButton()
-      b.set_image(icon)
+      b.set_paint(ImagePaint().set_cache(icon))
       b.set_tooltip(get_name())
       return b
    end
