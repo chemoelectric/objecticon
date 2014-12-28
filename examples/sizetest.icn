@@ -1,7 +1,7 @@
 import
    gui(Align, CheckBox, Dialog, Dispatcher,
        Event, GridLayout, Label, Panel,
-       TextButton, TextField, TextPaint)
+       TextButton, TextField, TextPaint, scale)
 
 class Untitled(Dialog)
    private
@@ -89,12 +89,12 @@ class Untitled(Dialog)
    end
 
    private setup()
-      local paint_2, paint_7, paint_11, paint_4, paint_1, paint_9, paint_6, paint_10, paint_3, paint, paint_8, paint_12, paint_5, layout_2
+      local paint_2, paint_7, paint_11, paint_4, paint_1, paint_9, paint_6, paint_10, paint, paint_3, paint_8, paint_12, paint_5, layout_2
       self.set_pos(100, 100)
       self.set_resize(&yes)
       paint := TextPaint("Geom:")
       label_1 := Label().
-         set_size("275").
+         set_size(scale(275)).
          clear_constraints().
          set_constraint("anchor", "w").
          set_constraint("eol", &yes).
@@ -158,7 +158,7 @@ class Untitled(Dialog)
          set_paint(paint_12)
       self.add(label_8)
       text_field_1 := TextField().
-         set_size(60).
+         set_size(scale(60)).
          clear_constraints().
          set_constraint("anchor", "w").
          set_constraint("fill", "h").
@@ -174,7 +174,7 @@ class Untitled(Dialog)
          set_toggles(&no).
          set_paint(paint_4)
       text_field_3 := TextField().
-         set_size(60).
+         set_size(scale(60)).
          clear_constraints().
          set_constraint("anchor", "w").
          set_constraint("fill", "h").
@@ -189,7 +189,7 @@ class Untitled(Dialog)
          set_toggles(&no).
          set_paint(paint_5)
       text_field_2 := TextField().
-         set_size(60).
+         set_size(scale(60)).
          clear_constraints().
          set_constraint("anchor", "w").
          set_constraint("fill", "h").
@@ -204,7 +204,7 @@ class Untitled(Dialog)
          set_toggles(&no).
          set_paint(paint_6)
       text_field_4 := TextField().
-         set_size(60).
+         set_size(scale(60)).
          clear_constraints().
          set_constraint("anchor", "w").
          set_constraint("fill", "h").

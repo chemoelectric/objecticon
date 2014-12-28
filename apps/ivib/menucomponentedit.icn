@@ -101,7 +101,7 @@ class MenuComponentEdit(Dialog)
       other_tab.add(event_flag)
 
       event_method := TextField().set_constraint("eol", &yes)
-      event_method.set_size(120)
+      event_method.set_size(scale(120))
       other_tab.add(event_method)
 
       if /c.event_method then
@@ -129,7 +129,7 @@ class MenuComponentEdit(Dialog)
       other_tab.add(accel_flag)
 
       accel_tf := TextField().set_constraint("eol", &yes)
-      accel_tf.set_size(100)
+      accel_tf.set_size(scale(100))
       other_tab.add(accel_tf)
 
       if /c.accel then

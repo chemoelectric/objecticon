@@ -29,18 +29,20 @@ class ImageViewTest(Dialog)
    end
 
    private setup()
-      local quit, paint
+      local layout_1, quit, paint
       self.set_resize(&yes)
-      self.set_size(362, 344)
       iv := ImageView().
-         set_pos("50%", "10").
-         set_size("100%-20", "100%-60").
+         set_size(scale(342), scale(284)).
          set_align(Align.C, Align.T).
-         clear_constraints()
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0)
       self.add(iv)
       paint := TextPaint("Quit")
       quit := TextButton().
-         set_pos("50%", "100%-25").
          set_align(Align.C, Align.C).
          clear_constraints().
          set_accel("q").
@@ -48,6 +50,9 @@ class ImageViewTest(Dialog)
          set_toggles(&no).
          set_paint(paint)
       self.add(quit)
+      layout_1 := GridLayout().
+         set_extra("cells")
+      self.set_layout(layout_1)
    end
 end
 

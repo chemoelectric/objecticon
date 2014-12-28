@@ -1,13 +1,13 @@
 import
    gui(Dialog, Event, GridLayout, PlainBorder,
-       TextButton, TextDisplay, TextPaint)
+       TextButton, TextDisplay, TextPaint, scale)
 
 class TextButtonEx(TextButton)
    public create_tooltip_component(tip)
       return TextDisplay().
          set_contents(tip).
          set_wrap_mode("width").
-         set_width(200).
+         set_width(scale(200)).
          set_bg("yellow").
          set_border(PlainBorder())
    end
@@ -33,7 +33,7 @@ class Untitled(Dialog)
    private setup()
       local paint_2, layout_1, paint_1
       self.set_resize(&yes)
-      self.set_size(161, 161)
+      self.set_size(scale(161), scale(161))
       paint_1 := TextPaint("Button")
       text_button_1 := TextButtonEx().
          clear_constraints().

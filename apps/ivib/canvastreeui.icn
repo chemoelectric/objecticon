@@ -5,12 +5,13 @@
 #
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
+import gui
 
 class CanvasTreeUI(CanvasComponentUI)
    public create_canvas_component(canvas)
       local t
       t := CanvasTree()
-      t.set_size(180, 120)
+      t.set_size(scale(180), scale(120))
       return t
    end
 

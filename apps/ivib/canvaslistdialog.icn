@@ -80,7 +80,7 @@ class CanvasListDialog(CanvasComponentDialog)
       p.set_label("General")
 
       selection_list := EditableTextList()
-      selection_list.set_size(150, 200)
+      selection_list.set_size(scale(150), scale(200))
       selection_list.set_contents(copy(c.selection_list))
       p.add(selection_list)
 
@@ -96,7 +96,7 @@ class CanvasListDialog(CanvasComponentDialog)
       group.add(set_selection)
 
       selection := TextField().set_constraint("eol", &yes).set_filter(&digits)
-      selection.set_size(100)
+      selection.set_size(scale(100))
       selection.set_contents(c.selection)
       q.add(selection)
 
@@ -107,7 +107,7 @@ class CanvasListDialog(CanvasComponentDialog)
       group.add(use_constant_label)
 
       constant_label := TextField().set_constraint("eol", &yes)
-      constant_label.set_size(100)
+      constant_label.set_size(scale(100))
       q.add(constant_label)
 
       default_setting := CheckBox().set_constraint("eol", &yes)

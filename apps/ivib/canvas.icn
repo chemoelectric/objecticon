@@ -8,16 +8,6 @@
 
 import lang, gui, io, graphics, ipl.pdco, util
 
-#
-# Constant definitions.
-#
-
-# Length of resize line at bottom right corner
-$define RSW      12       
-
-# Width of the border around the Canvas.
-$define EDGE      4
-
 class BorderOfCanvas(Component)
    public
       canvas,
@@ -29,7 +19,7 @@ class BorderOfCanvas(Component)
 
    public set_canvas(c)
       self.canvas := c
-      self.canvas.set_pos(EDGE, EDGE)
+      self.canvas.set_pos(Canvas.EDGE, Canvas.EDGE)
       self.add(self.canvas)
    end
 
@@ -76,10 +66,10 @@ class BorderOfCanvas(Component)
          #
          # Adjust within acceptable range.
          #
-         x1 >:= self.parent_dialog.w - EDGE
-         x1 <:= self.x + canvas.min_width() + 2 * EDGE
-         y1 >:= self.parent_dialog.h - EDGE
-         y1 <:= self.y + canvas.min_height() + 2 *EDGE
+         x1 >:= self.parent_dialog.w - Canvas.EDGE
+         x1 <:= self.x + canvas.min_width() + 2 * Canvas.EDGE
+         y1 >:= self.parent_dialog.h - Canvas.EDGE
+         y1 <:= self.y + canvas.min_height() + 2 *Canvas.EDGE
 
          w_new := x1 - self.x
          h_new := y1 - self.y
@@ -87,8 +77,8 @@ class BorderOfCanvas(Component)
          #
          # Resize.
          #
-         canvas.dialog_iw := w_new - 2 *EDGE
-         canvas.dialog_ih := h_new - 2*EDGE
+         canvas.dialog_iw := w_new - 2 *Canvas.EDGE
+         canvas.dialog_ih := h_new - 2*Canvas.EDGE
          canvas.synch_size()
       }
    end
@@ -125,10 +115,10 @@ class BorderOfCanvas(Component)
    # Return whether the pointer is on the resize corner in the bottom right hand corner.
    #
    public in_resize_corner(e)
-      return ((self.x + self.w - EDGE <= e.x < self.x + self.w) & 
-              (self.y + self.h - RSW <= e.y < self.y + self.h)) | 
-         ((self.x + self.w - RSW <= e.x < self.x + self.w) & 
-          (self.y + self.h - EDGE <= e.y < self.y + self.h)) 
+      return ((self.x + self.w - Canvas.EDGE <= e.x < self.x + self.w) & 
+              (self.y + self.h - Canvas.RSW <= e.y < self.y + self.h)) | 
+         ((self.x + self.w - Canvas.RSW <= e.x < self.x + self.w) & 
+          (self.y + self.h - Canvas.EDGE <= e.y < self.y + self.h)) 
    end
 
    public display()
@@ -139,17 +129,17 @@ class BorderOfCanvas(Component)
       use {
          cw := self.cbwin.clone().set_fg("black"),
          {
-            every i := 0 to EDGE - 1 do
+            every i := 0 to Canvas.EDGE - 1 do
                cw.draw_rectangle(self.x + i , self.y + i, self.w - 2 * i, self.h - 2 *i)
 
             #
             # Draw the resizing corner in the bottom right hand corner.
             #
             cw.set_fg("red")
-            every i := 0 to EDGE - 1 do
-               cw.draw_line(self.x + self.w - EDGE - 1 - RSW, self.y + self.h - EDGE + i, 
-                            self.x + self.w - EDGE + i, self.y + self.h - EDGE + i, 
-                            self.x + self.w - EDGE + i, self.y + self.h - EDGE - 1 - RSW)
+            every i := 0 to Canvas.EDGE - 1 do
+               cw.draw_line(self.x + self.w - Canvas.EDGE - 1 - Canvas.RSW, self.y + self.h - Canvas.EDGE + i, 
+                            self.x + self.w - Canvas.EDGE + i, self.y + self.h - Canvas.EDGE + i, 
+                            self.x + self.w - Canvas.EDGE + i, self.y + self.h - Canvas.EDGE - 1 - Canvas.RSW)
          }
       }
       display_children()
@@ -221,12 +211,18 @@ class Canvas(Component,SelectiveObjectCodec)
    public static const
       DEFAULT_WIDTH,
       DEFAULT_HEIGHT,
-      SURROUND
+      SURROUND,
+      RSW,
+      EDGE
 
    private static init()
-      DEFAULT_WIDTH := 500
-      DEFAULT_HEIGHT := 350
-      SURROUND := 30
+      DEFAULT_WIDTH := scale(500)
+      DEFAULT_HEIGHT := scale(350)
+      SURROUND := scale(30)
+      # Length of resize line at bottom right corner
+      RSW := scale(12)
+      # Width of the border around the Canvas.
+      EDGE := scale(4)
    end
 
    public push_undo()
@@ -871,13 +867,31 @@ class Canvas(Component,SelectiveObjectCodec)
    # Generate code output (see also code.iol).
    #
    public gen_code()
-      local c, i
+      local c, i, m, a
 
       #
       # Create a Code object to contain the generated code.
       #
       c := Code()
       c.set_parent_Canvas(self)
+
+      #
+      # Dialog attribs.
+      #
+      m := copy(self.parent_Canvas.dialog_struct.wattribs)
+      every default.delete(m, "height" | "width" | "size")
+      if /is_component & 
+         \ (dialog_iw | dialog_ih) then 
+      {
+         if /dialog_iw then
+            insert(m, "height", dialog_ih)
+         else if /dialog_ih then
+            insert(m, "width", dialog_iw)
+         else
+            insert(m, "size", [dialog_iw, dialog_ih])
+      }
+      every a := !sort(m) do
+         c.line("self.set_" || a[1] || "(" || c.scale_and_stringify_wattrib(a[1], a[2]) || ")")
 
       #
       # Generate code for all the items.

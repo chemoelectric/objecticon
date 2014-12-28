@@ -1362,7 +1362,7 @@ class Main(Dialog)
       set_label("Ivib")
       set_size(scale(16*44), scale(600))
       set_min_size(16*44, 600)
-      canvas_zone := Panel().set_bg("blue").set_size(50,50)
+      canvas_zone := Panel().set_bg("blue").set_size(scale(50),scale(50))
       self.add(canvas_zone)
 
       #
@@ -1439,12 +1439,12 @@ class Preferences(Dialog)
       t.set_layout(GridLayout())
 
       t.add(Label().set_label("Undo buffer size"))
-      undo_size := TextField().set_constraint("eol", &yes).set_constraint("w", 2).set_size(100)
+      undo_size := TextField().set_constraint("eol", &yes).set_constraint("w", 2).set_size(scale(100))
       undo_size.set_contents(c.undo_size)
       t.add(undo_size)
 
       t.add(Label().set_label("Plugin directory"))
-      plugin_dir_field := FileSuggestField().set_directories_only(&yes).set_size(150)
+      plugin_dir_field := FileSuggestField().set_directories_only(&yes).set_size(scale(150))
       plugin_dir_field.set_contents(c.plugin_directory)
       t.add(plugin_dir_field)
       t.add(TextButton().set_label("...").set_constraint("eol", &yes).connect(on_plugin_dir_browse, Event.ACTION))
@@ -1544,12 +1544,12 @@ class PathTab(TabItem)
       set_layout(GridLayout())
       set_label("Named Image Paths")
 
-      path_list := TextList().set_size(250,150).set_constraint("eol", &yes).set_select_mode("one").set_contents(contents)
+      path_list := TextList().set_size(scale(250),scale(150)).set_constraint("eol", &yes).set_select_mode("one").set_contents(contents)
       path_list.connect(self.on_list, Event.SELECTION_CHANGED)
       add(path_list)
 
       p := Panel().set_constraint("eol", &yes).set_constraint("y_weight", 0).set_layout(GridLayout().set_doi(0))
-      path := FileSuggestField().set_directories_only(&yes).set_size(150)
+      path := FileSuggestField().set_directories_only(&yes).set_size(scale(150))
       path.connect(self.on_apply, Event.ACTION)
       p.add(path)
 

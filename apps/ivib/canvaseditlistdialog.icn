@@ -80,7 +80,7 @@ class CanvasEditListDialog(CanvasComponentDialog)
       p.set_label("General")
 
       selection_list := EditableTextList()
-      selection_list.set_size(150, 250)
+      selection_list.set_size(scale(150), scale(250))
       selection_list.set_contents(copy(c.selection_list))
       p.add(selection_list)
 
@@ -96,7 +96,7 @@ class CanvasEditListDialog(CanvasComponentDialog)
       group.add(set_selection)
 
       selection := TextField().set_constraint("eol", &yes).set_filter(&digits)
-      selection.set_size(100)
+      selection.set_size(scale(100))
       selection.set_contents(c.selection)
       q.add(selection)
 
@@ -107,7 +107,7 @@ class CanvasEditListDialog(CanvasComponentDialog)
       group.add(set_initial_text)
 
       initial_text := TextField().set_constraint("eol", &yes)
-      initial_text.set_size(100)
+      initial_text.set_size(scale(100))
       initial_text.set_contents(c.get_contents())
       q.add(initial_text)
 
@@ -135,7 +135,7 @@ class CanvasEditListDialog(CanvasComponentDialog)
       q.add(l)
       
       filter := TextField().set_constraint("eol", &yes)
-      filter.set_size(100)
+      filter.set_size(scale(100))
       filter.set_align("l", "c")
       filter.set_contents(c.filter_str)
       q.add(filter)

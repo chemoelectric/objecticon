@@ -175,7 +175,7 @@ class CanvasPreferencesDialog(Dialog)
       pos_tab.add(l)
 
       w_spec_tf := TextField()
-      w_spec_tf.set_size(130)
+      w_spec_tf.set_size(scale(130))
       pos_tab.add(w_spec_tf)
 
       set_w_default := CheckBox().set_constraint("eol", &yes)
@@ -196,7 +196,7 @@ class CanvasPreferencesDialog(Dialog)
       pos_tab.add(l)
 
       h_spec_tf := TextField()
-      h_spec_tf.set_size(130)
+      h_spec_tf.set_size(scale(130))
       pos_tab.add(h_spec_tf)
 
       set_h_default := CheckBox().set_constraint("eol", &yes)
@@ -266,7 +266,7 @@ class CanvasPreferencesDialog(Dialog)
       methods_tab.add(l)
 
       gen_indent := TextField()
-      gen_indent.set_size(50)
+      gen_indent.set_size(scale(50))
       methods_tab.add(gen_indent)
       gen_indent.set_contents(c.gen_indent)
       
@@ -280,7 +280,7 @@ class CanvasPreferencesDialog(Dialog)
       code_tab.add(l)
 
       name := TextField().set_constraint("eol", &yes)
-      name.set_size(200)
+      name.set_size(scale(200))
       code_tab.add(name)
 
       name.set_contents(c.name)
@@ -290,7 +290,7 @@ class CanvasPreferencesDialog(Dialog)
       code_tab.add(l)
 
       self.superclass_name := TextField().set_constraint("eol", &yes)
-      self.superclass_name.set_size(200)
+      self.superclass_name.set_size(scale(200))
       code_tab.add(self.superclass_name)
       self.superclass_name.set_contents(c.superclass_name)
 
@@ -304,13 +304,13 @@ class CanvasPreferencesDialog(Dialog)
       code_tab.add(self.is_component_cb)
 
       code_tab.add(Label().set_label("Import"))
-      self.import_name := TextField().set_constraint("eol", &yes).set_size(200)
+      self.import_name := TextField().set_constraint("eol", &yes).set_size(scale(200))
       code_tab.add(self.import_name)
       self.import_name.set_contents(c.import_name)
 
       self.layout_filename_cb := CheckBox().set_label("Save layout in")
       code_tab.add(self.layout_filename_cb)
-      self.layout_filename := TextField().set_constraint("eol", &yes).set_size(200)
+      self.layout_filename := TextField().set_constraint("eol", &yes).set_size(scale(200))
       code_tab.add(self.layout_filename)
       if \c.layout_filename then {
          self.layout_filename_cb.set_is_checked(&yes)

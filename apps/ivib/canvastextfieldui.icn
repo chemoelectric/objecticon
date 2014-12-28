@@ -5,14 +5,13 @@
 #
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
-
-
+import gui
 
 class CanvasTextFieldUI(CanvasComponentUI)
    public create_canvas_component(canvas)
       local t
       t := CanvasTextField()
-      t.set_size(60)
+      t.set_size(scale(60))
       t.set_contents("")
       t.h_fixed := 1
       return t

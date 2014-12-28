@@ -92,7 +92,7 @@ class CanvasCheckBoxMenuEdit(MenuComponentEdit)
       main_panel.add(in_checkbox_group)
 
       group_list := List().set_constraint("eol", &yes)
-      group_list.set_size(200)
+      group_list.set_size(scale(200))
       group_list.set_selection_list(cos_names(c.parent_component.parent_Canvas.checkbox_groups))
       main_panel.add(group_list)
 

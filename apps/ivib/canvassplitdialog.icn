@@ -46,15 +46,15 @@ class CanvasSplitDialog(CanvasComponentDialog)
       p.add(show_inter)
 
       p.add(Label().set_label("Min left/top size:"))
-      min_first := TextField().set_size(100).set_filter(&digits).set_contents(c.min_first).set_constraint("eol", &yes)
+      min_first := TextField().set_size(scale(100)).set_filter(&digits).set_contents(c.min_first).set_constraint("eol", &yes)
       p.add(min_first)
 
       p.add(Label().set_label("Min right/bottom size:"))
-      min_second := TextField().set_size(100).set_filter(&digits).set_contents(c.min_second).set_constraint("eol", &yes)
+      min_second := TextField().set_size(scale(100)).set_filter(&digits).set_contents(c.min_second).set_constraint("eol", &yes)
       p.add(min_second)
 
       p.add(Label().set_label("Weight:"))
-      weight := TextField().set_size(100).set_filter(&digits ++ '.').set_contents(c.weight).set_constraint("eol", &yes)
+      weight := TextField().set_size(scale(100)).set_filter(&digits ++ '.').set_contents(c.weight).set_constraint("eol", &yes)
       p.add(weight)
    end
 end

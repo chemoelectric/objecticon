@@ -29,7 +29,7 @@ class ListTabSet(Component)
 
    public initially()
       Component.initially()
-      self.dl.set_ideal_size(100, 200, 100, 400)
+      self.dl.set_ideal_size(scale(100), scale(200), scale(100), scale(400))
       if *self.dl.get_selections() = 0 then
          set_which_one(self.oa.children[1])
    end

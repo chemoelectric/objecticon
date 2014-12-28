@@ -152,7 +152,7 @@ class CanvasComponentDialog(Dialog)
          pos_tab.add(l)
 
          x_spec_list := EditList()
-         x_spec_list.set_size(100)
+         x_spec_list.set_size(scale(100))
          x_spec_list.set_selection_list(size_list)
          x_spec_list.set_contents(c.x_spec)
          pos_tab.add(x_spec_list)
@@ -173,7 +173,7 @@ class CanvasComponentDialog(Dialog)
          pos_tab.add(l)
 
          y_spec_list := EditList()
-         y_spec_list.set_size(100)
+         y_spec_list.set_size(scale(100))
          y_spec_list.set_selection_list(size_list)
          y_spec_list.set_contents(c.y_spec)
          pos_tab.add(y_spec_list)
@@ -194,7 +194,7 @@ class CanvasComponentDialog(Dialog)
          pos_tab.add(l)
 
          w_spec_list := EditList()
-         w_spec_list.set_size(100)
+         w_spec_list.set_size(scale(100))
          w_spec_list.set_selection_list(size_list)
          pos_tab.add(w_spec_list)
 
@@ -224,7 +224,7 @@ class CanvasComponentDialog(Dialog)
          pos_tab.add(l)
 
          h_spec_list := EditList()
-         h_spec_list.set_size(100)
+         h_spec_list.set_size(scale(100))
          h_spec_list.set_selection_list(size_list)
          pos_tab.add(h_spec_list)
 
@@ -277,7 +277,7 @@ class CanvasComponentDialog(Dialog)
       other_tab.add(accel_flag)
 
       accel_tf := TextField().set_constraint("eol", &yes)
-      accel_tf.set_size(125)
+      accel_tf.set_size(scale(125))
       other_tab.add(accel_tf)
 
       if /c.accel then

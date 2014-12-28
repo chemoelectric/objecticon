@@ -5,13 +5,14 @@
 #
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
+import gui
 
 class CanvasTextListUI(CanvasComponentUI)
    public create_canvas_component(canvas)
       local t
       t := CanvasTextList()
       t.set_contents([])
-      t.set_size(200, 150)
+      t.set_size(scale(200), scale(150))
       return t
    end
 

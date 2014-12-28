@@ -78,7 +78,7 @@ class CanvasScrollBarDialog(CanvasComponentDialog)
       p.add(l)
       
       increment_size := TextField().set_constraint("eol", &yes)
-      increment_size.set_size(100)
+      increment_size.set_size(scale(100))
       increment_size.set_contents(c.increment_size)
       p.add(increment_size)
 
@@ -87,7 +87,7 @@ class CanvasScrollBarDialog(CanvasComponentDialog)
       p.add(l)
       
       page_size := TextField().set_constraint("eol", &yes)
-      page_size.set_size(100)
+      page_size.set_size(scale(100))
       p.add(page_size)
 
       l := Label()
@@ -95,7 +95,7 @@ class CanvasScrollBarDialog(CanvasComponentDialog)
       p.add(l)
       
       total_size := TextField().set_constraint("eol", &yes)
-      total_size.set_size(100)
+      total_size.set_size(scale(100))
       p.add(total_size)
 
       l := Label()
@@ -103,7 +103,7 @@ class CanvasScrollBarDialog(CanvasComponentDialog)
       p.add(l)
       
       range_from := TextField()
-      range_from.set_size(100)
+      range_from.set_size(scale(100))
       p.add(range_from)
 
       l := Label()
@@ -111,7 +111,7 @@ class CanvasScrollBarDialog(CanvasComponentDialog)
       p.add(l)
       
       range_to := TextField().set_constraint("eol", &yes)
-      range_to.set_size(100)
+      range_to.set_size(scale(100))
       p.add(range_to)
 
       if \c.is_range_flag then {
@@ -132,7 +132,7 @@ class CanvasScrollBarDialog(CanvasComponentDialog)
       p.add(l)
       
       initial_value := TextField()
-      initial_value.set_size(100)
+      initial_value.set_size(scale(100))
       initial_value.set_contents(c.get_value())
       p.add(initial_value)
    end
