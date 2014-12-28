@@ -5,6 +5,7 @@
 #
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
+import gui
 
 class CanvasVScrollBarUI(CanvasComponentUI)
    public create_canvas_component(canvas)
@@ -15,7 +16,7 @@ class CanvasVScrollBarUI(CanvasComponentUI)
       t.set_range(0, 100)
       t.set_increment_size(1)
       t.set_value(0)
-      t.set_size(, 100)
+      t.set_size(, scale(100))
       return t
    end
 

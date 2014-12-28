@@ -5,13 +5,14 @@
 #
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
+import gui
 
 class CanvasVLineUI(CanvasComponentUI)
    public create_canvas_component(canvas)
       local t
       t := CanvasLine()
       t.set_is_horizontal(&no)
-      t.set_size(, 100)
+      t.set_size(, scale(100))
       return t
    end
 
