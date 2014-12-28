@@ -206,7 +206,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       s := "<html><title>Visited</title>" || Browser.get_table_tag() || ""
       s ||:= "<tr><th align=left>Title</th><th align=right>Times&nbsp;</th><th>Last visit</th><th align=left>URL</th></tr>"
       every e := !settings.visited do {
-         n := Browser.limit_text(\e.title, 200) | ""
+         n := Browser.limit_text(\e.title, scale(200)) | ""
          s ||:= "<tr><td nowrap>" || Browser.to_content(n) || "</td><td align=right>" || e.times || "&nbsp;</td><td>" || 
                 e.last_time.format("MMM'&nbsp;'dd'&nbsp;'HH:mm") || "</td>" || Browser.mk_anchor_cell(e.url) || "</tr>"
       }
@@ -476,7 +476,7 @@ class MessageDialog(Dialog)
       set_resize(&yes)
       set_remember_size(&yes)
       text := EditableTextList().
-         set_size(500, 269).
+         set_size(scale(500), scale(275)).
          set_constraint("eol", &yes).
          set_contents([""]).
          set_is_editable(&no)
@@ -882,7 +882,7 @@ class DownloadTab(TabItem)
          add(paste_url_button)
       self.add(panel)
       url_field := TextField().
-         set_size("100").
+         set_size(scale(100)).
          set_align(Align.C, Align.T).
          clear_constraints().
          set_constraint("eol", &yes).
@@ -895,7 +895,7 @@ class DownloadTab(TabItem)
       use {
          w := Window(),
          url_table := gui.Table().
-            set_size("600", "258").
+            set_size(scale(600), scale(260)).
             set_select_mode(Select.MANY).
             set_constraint("eol", &yes).
             set_contents([]).
@@ -916,7 +916,7 @@ class DownloadTab(TabItem)
             set_l_inset(3)).
          set_x_align(Align.L)
       message_label := MessageLabel().
-         set_size("100").
+         set_size(scale(100)).
          set_align(Align.L, Align.B).
          set_fg("red").
          clear_constraints().
@@ -957,7 +957,7 @@ class URLList(SelectableScrollArea)
       # A nominal minimum width; the width will be expanded by the
       # owning EditList to its own width, and then we use limit_text
       # to draw nicely in the allocated view.
-      return 250
+      return scale(250)
    end
 
    public draw_line_data(xp, yp, lh, i)
@@ -1083,7 +1083,7 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public get_label_width()
-      return 100
+      return scale(100)
    end
 
    private on_next(ev)
@@ -1500,7 +1500,7 @@ class BrowserTab(TabItem, BrowserUI)
          fail
       /title_tt := split_string(paint.str, 
                                 Gui.style.create_tooltip_label().get_wattrib("font"),
-                                500)
+                                scale(500))
       return title_tt
    end
 

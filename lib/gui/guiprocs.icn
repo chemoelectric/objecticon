@@ -578,6 +578,9 @@ end
 
 # This standardizes a toolbar button, and attempts to apply the
 # optional Xdg icon (overwriting the one already set for the button).
+# Failing that, or if `icon` is not given, the existing image is
+# scaled to the standard size.  The button is then set to the standard
+# toolbar button size.
 #
 procedure theme_toolbar_button(b, icon)
    local sz
@@ -590,7 +593,7 @@ procedure theme_toolbar_button(b, icon)
    return b
 end
 
-procedure get_toolbar_theme_paint(paint, icon)
+package procedure get_toolbar_theme_paint(paint, icon)
    local k, w, sz
    sz := Gui.TOOLBAR_ICON_SIZE
    if k := Xdg.find_icon_and_cache(\icon, sz) then {
