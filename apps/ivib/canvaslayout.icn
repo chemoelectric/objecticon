@@ -40,8 +40,8 @@ class CanvasGridLayout(CanvasLayout,GridLayout)
    public doi_val, dii_val
    public gen_code(c)
       CanvasLayout.gen_code(c)
-      c.chain("set_doi(" || \self.doi_val || ")")
-      c.chain("set_dii(" || \self.dii_val || ")")
+      c.chain("set_doi(" || c.scalable_dim(\self.doi_val) || ")")
+      c.chain("set_dii(" || c.scalable_dim(\self.dii_val) || ")")
       c.chain("set_extra(" || image(self.extra) || ")")
    end
 

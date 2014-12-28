@@ -1642,15 +1642,21 @@ $load ICN6 "icon/icn6.gif"
 $load ICN7 "icon/icn7.gif"
 $load ICN8 "icon/icn8.gif"
 $load ICN9 "icon/icn9.gif"
-$load ICONBUTTON "icon/iconbutton.gif"
 $load ICON "icon/icon.gif"
-$load PROTO "icon/proto.gif"
 
 procedure load_tb_icon(key, data)
    local k
    k := key || ".raw"
    ImageCache.name_image(k, data)
    ImageCache.copy_key(key, ImageCache.get_key_with_resize(k, Ivib.TB_ICON_SIZE, Ivib.TB_ICON_SIZE))
+end
+
+procedure load_icon(key, data)
+   local k, w
+   k := key || ".raw"
+   ImageCache.name_image(k, data)
+   w := ImageCache.get(k)
+   ImageCache.copy_key(key, ImageCache.get_key_with_resize(k, Gui.UNIT * w.get_width(), Gui.UNIT * w.get_height()))
 end
 
 procedure load_icons()
@@ -1694,8 +1700,6 @@ procedure load_icons()
    load_tb_icon("ivib.icn7", ICN7)
    load_tb_icon("ivib.icn8", ICN8)
    load_tb_icon("ivib.icn9", ICN9)
-   load_tb_icon("ivib.proto", PROTO)
-   ImageCache.name_image("ivib.iconbutton", ICONBUTTON)
-   ImageCache.name_image("ivib.icon", ICON)
+   load_icon("ivib.icon", ICON)
    ImageCache.name_image("ivib.logo", LOGO)
 end

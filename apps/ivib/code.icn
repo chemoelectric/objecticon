@@ -102,7 +102,7 @@ class Code()
    end
 
    public constraint_line(key, val)
-      chain("set_constraint(" || image(key) || ", " || stringify_constraint(key, val, 1, self) || ")")
+      chain("set_constraint(" || image(key) || ", " || scale_and_stringify_constraint(key, val) || ")")
    end
 
    public scalable_dim(dim)
@@ -431,6 +431,14 @@ class Code()
          "size"|"max_size"|"min_size": 
             scalable_dim(val[1]) || ", " || scalable_dim(val[2])
          default: stringify_wattrib(key, val, 1)
+      }
+   end
+
+   public scale_and_stringify_constraint(key, val)
+      return case key of {
+         "l_inset"|"r_inset"|"t_inset"|"b_inset":
+            scalable_dim(val)
+         default: stringify_constraint(key, val, 1, self)
       }
    end
 
