@@ -20,6 +20,11 @@ $load FILESIZE "images/gui.FILESIZE_24.gif"
 $load HIDDENFILE "images/gui.HIDDENFILE_24.gif"
 $load FAVOURITES "images/gui.FAVOURITES_24.gif"
 $load CONFIGURE "images/gui.CONFIGURE_24.gif"
+$load OPEN_FOLDER "images/gui.OPEN_FOLDER_16.gif"
+$load CLOSED_FOLDER "images/gui.CLOSED_FOLDER_16.gif"
+$load FILE "images/gui.FILE_16.gif"
+$load WINDOW_CLOSE "images/gui.WINDOW_CLOSE_16.gif"
+$load WINDOW_ICONIFY "images/gui.WINDOW_ICONIFY_16.gif"
 
 final abstract class ImageCache()
    public static 
@@ -42,6 +47,11 @@ final abstract class ImageCache()
       name_image("gui.HIDDENFILE_24", HIDDENFILE)
       name_image("gui.FAVOURITES_24", FAVOURITES)
       name_image("gui.CONFIGURE_24", CONFIGURE)
+      name_image("gui.CLOSED_FOLDER_16", CLOSED_FOLDER)
+      name_image("gui.OPEN_FOLDER_16", OPEN_FOLDER)
+      name_image("gui.FILE_16", FILE)
+      name_image("gui.WINDOW_CLOSE_16", WINDOW_CLOSE)
+      name_image("gui.WINDOW_ICONIFY_16", WINDOW_ICONIFY)
 
       name_image("gui.BOX_UP", scale_image_string("13,(0=shadow;1=hilite;~=transparent),_
 ~~~~~~~~~~~~~_
@@ -214,96 +224,6 @@ bb~~~~bb_
 0111_
 ~11~_
 "))
-      name_image("gui.CLOSED_FOLDER", scale_image_string("16,c1,_
-~~~~~~~~~~~~~~~~_
-~~~~~~~~~~~~~~~~_
-~~~~0000~~~~~~~~_
-~~~0;;;;0~~~~~~~_
-~~0;;;;;;0~~~~~~_
-~0000000000000~~_
-~0;;;;;;;;;;;0~~_
-~0;;;;;;;;;;;0~~_
-~0;;;;;;;;;;;0~~_
-~0;;;;;;;;;;;0~~_
-~0;;;;;;;;;;;0~~_
-~0;;;;;;;;;;;0~~_
-~0;;;;;;;;;;;0~~_
-~0000000000000~~_
-~~~~~~~~~~~~~~~~_
-~~~~~~~~~~~~~~~~_
-"))
-      name_image("gui.OPEN_FOLDER", scale_image_string("16,c1,_
-~~~~~~~~~~~~~~~~_
-~~~~~~~~~~~~~~~~_
-~~~0000~~~~~~~~~_
-~~0DDDD0~~~~~~~~_
-~0DDDDDD0~~~~~~~_
-0000000000000~~~_
-02D2D2D2D2D20~~~_
-0D2D000000000000_
-02D0DDDDDDDDDDD0_
-0D20DDDDDDDDDD0~_
-020DDDDDDDDDDD0~_
-0D0DDDDDDDDDDD0~_
-00DDDDDDDDDD00~~_
-0000000000000~~~_
-~~~~~~~~~~~~~~~~_
-~~~~~~~~~~~~~~~~_
-"))
-      name_image("gui.FILE", scale_image_string("16,c1,_
-~~~~~~~~~~~~~~~~_
-~~~~~~~~~~~~~~~~_
-~~~0000000~~~~~~_
-~~~06666600~~~~~_
-~~~0606060~0~~~~_
-~~~0666660000~~~_
-~~~0600606660~~~_
-~~~0666666660~~~_
-~~~0600600060~~~_
-~~~0666666660~~~_
-~~~0600060660~~~_
-~~~0666666660~~~_
-~~~0666666660~~~_
-~~~0000000000~~~_
-~~~~~~~~~~~~~~~~_
-~~~~~~~~~~~~~~~~_
-"))
-      name_image("gui.WINDOW_CLOSE_BUTTON", scale_image_string("16,c1,_
-~>>>>>>>>>>>>>>~_
->>iiiiiiiiiiii>>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iii<<iiii<<iii>_
->iii<6<ii<6<iii>_
->iiii<6<<6<iiii>_
->iiiii<66<iiiii>_
->iiiii<66<iiiii>_
->iiii<6<<6<iiii>_
->iii<6<ii<6<iii>_
->iii(<iiii<(iii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->>iiiiiiiiiiii>>_
-~>>>>>>>>>>>>>>~_
-"))
-      name_image("gui.WINDOW_ICONIFY_BUTTON", scale_image_string("16,c1,_
-~>>>>>>>>>>>>>>~_
->>iiiiiiiiiiii>>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->ii<<<<<<<<<<ii>_
->ii6666666666ii>_
->>iiiiiiiiiiii>>_
-~>>>>>>>>>>>>>>~_
-"))
    end
 
    # Associate arbitrary image data (eg gif file data), with a name.
@@ -418,6 +338,13 @@ bb~~~~bb_
    end
 
    #
+   # Convenient method to combine `copy_key` and `get_key_with_resize`
+   #
+   public static copy_key_with_resize(new_key, s, width, height, win)
+      return copy_key(new_key, get_key_with_resize(s, width, height, win))
+   end
+
+   #
    # This is like `get`, but if the resulting window is not of the
    # given dimensions, then another window is created (and cached),
    # which is the result of resizing to the desired size.
@@ -427,12 +354,16 @@ bb~~~~bb_
    end
 
    #
-   # Like `get_with_resize`, but returns the key rather than the window.
+   # Like `get_with_resize`, but returns the key rather than the
+   # window.  `width` and `height` default to the value of `scale()`
+   # applied to the raw image's dimensions.
    #
    public static get_key_with_resize(s, width, height, win)
       local w, key, w2
       key := get_key(s, win) | fail
       w := member(imap, key)
+      /width := scale(w.get_width())
+      /height := scale(w.get_height())
       if w.get_width() = width & w.get_height() = height then
          return key
       key ||:= "#Resized to " || width || "x" || height

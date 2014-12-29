@@ -96,7 +96,7 @@ class IconFilesItemPaint(ItemPaint)
          name_image("fi.PIPE_16", PIPE_16).
          name_image("fi.HTML_16", HTML_16)
 
-      try_xdg("fi.folder", "folder", "gui.CLOSED_FOLDER")
+      try_xdg("fi.folder", "folder", "gui.CLOSED_FOLDER_16")
       try_xdg("fi.symlink", "emblem-symbolic-link", "fi.SYMLINK_16")
       try_xdg("fi.exe", "application-x-executable", "fi.EXE_16")
       resize("fi.pdf", "fi.PDF_16")
@@ -109,11 +109,11 @@ class IconFilesItemPaint(ItemPaint)
       resize("fi.socket", "fi.SOCKET_16")
       resize("fi.pipe", "fi.PIPE_16")
       resize("fi.html", "fi.HTML_16")
-      resize("fi.file", "gui.FILE")
+      resize("fi.file", "gui.FILE_16")
    end
 
    private static resize(dest, src)
-      ImageCache.copy_key(dest, ImageCache.get_key_with_resize(src, ICON_SIZE, ICON_SIZE))
+      ImageCache.copy_key_with_resize(dest, src, ICON_SIZE, ICON_SIZE)
    end
 
    private static try_xdg(key, icon, alt)

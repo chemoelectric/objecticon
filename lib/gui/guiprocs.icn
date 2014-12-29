@@ -139,6 +139,8 @@ class Gui()
 
    public static 
       BORDER_WIDTH,
+      CURSOR_WIDTH,
+      FINE_WIDTH,
       TOOLBAR_ICON_SIZE,
       TEXT_INSET,
       X_INSET,
@@ -160,6 +162,8 @@ class Gui()
    private static init()
       SCALE_FACTOR := (1.0 < real(System.getenv("OIGUISCALE"))) | 1.0
       UNIT := scale(1)
+      FINE_WIDTH := UNIT
+      CURSOR_WIDTH := 2 * UNIT
       BORDER_WIDTH := 2 * UNIT
       TEXT_INSET := scale(3)
       X_INSET := scale(6)
@@ -350,8 +354,8 @@ procedure draw_string_ex(win, x, y, s, k)
    win.draw_string(x, y, s)
    if i := upto(\k, map(s)) then {
       win.fill_rectangle(x + win.text_width(s[1:i]),
-                         y + win.get_font_descent() - Gui.UNIT,
-                         win.text_width(s[i]), Gui.UNIT)
+                         y + win.get_font_descent() - Gui.FINE_WIDTH,
+                         win.text_width(s[i]), Gui.FINE_WIDTH)
    }
 end
 

@@ -28,6 +28,12 @@ abstract class BaseTree(SelectableScrollArea)
       last_expanded,
       show_root_flag,
       show_root_handles_flag
+
+   private static init()
+      ImageCache.copy_key_with_resize("tree.CLOSED_FOLDER", "gui.CLOSED_FOLDER_16")
+      ImageCache.copy_key_with_resize("tree.OPEN_FOLDER", "gui.OPEN_FOLDER_16")
+      ImageCache.copy_key_with_resize("tree.FILE", "gui.FILE_16")
+   end
    
    public abstract calculate_line_height()
 
@@ -78,14 +84,35 @@ abstract class BaseTree(SelectableScrollArea)
    #
    public set_default_icon_paint(i1, i2, i3)
       if is_initialized() then {
-         every (!\default_icon_paint).finally()
+         every (!default_icon_paint).finally()
          self.default_icon_paint := [i1, i2, i3]
          every (!default_icon_paint).initially(self)
+         invalidate_node_images()
+         compute_and_invalidate()
       } else
          self.default_icon_paint := [i1, i2, i3]
       return self
    end
-   
+
+   # Set the handle {Paint}s (ie the little + and - icons).  The two
+   # parameters should be distinct instances.
+   #
+   public set_handle_paint(p, m)
+      if is_initialized() then {
+         every (plus | minus).finally()
+         self.plus := p
+         self.minus := m
+         every (plus | minus).initially(self)
+         invalidate()
+         plus.w = minus.w | runerr("Handle image widths differ")
+         plus.h = minus.h | runerr("Handle image heights differ")
+      } else {
+         self.plus := p
+         self.minus := m
+      }
+      return self
+   end
+
    #
    # Set the root node of the {Tree}.
    #
@@ -253,7 +280,7 @@ abstract class BaseTree(SelectableScrollArea)
       local N, dashed, lp, j, icon_paint, img, little, y0, thick, thick2
 
       y0 := yp + lh / 2
-      thick := Gui.UNIT
+      thick := Gui.FINE_WIDTH
       thick2 := thick / 2
       N := contents[i]
       use {
@@ -308,11 +335,11 @@ abstract class BaseTree(SelectableScrollArea)
 
    public new()
       SelectableScrollArea.new()
-      plus := ImagePaint().set_cache("gui.PLUS")
-      minus := ImagePaint().set_cache("gui.MINUS")
-      set_default_icon_paint(ImagePaint().set_cache("gui.CLOSED_FOLDER"), 
-                             ImagePaint().set_cache("gui.OPEN_FOLDER"),
-                             ImagePaint().set_cache("gui.FILE"))
+      set_handle_paint(ImagePaint().set_cache("gui.PLUS"),
+                       ImagePaint().set_cache("gui.MINUS"))
+      set_default_icon_paint(ImagePaint().set_cache("tree.CLOSED_FOLDER"), 
+                             ImagePaint().set_cache("tree.OPEN_FOLDER"),
+                             ImagePaint().set_cache("tree.FILE"))
       show_root_flag := show_root_handles_flag := 1
       return
    end

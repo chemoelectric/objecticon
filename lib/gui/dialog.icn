@@ -1559,6 +1559,11 @@ end
 # systems that don't provide such controls themselves.
 #
 class WindowControl(Component)
+   private static init()
+      ImageCache.copy_key_with_resize("win.WINDOW_ICONIFY", "gui.WINDOW_ICONIFY_16")
+      ImageCache.copy_key_with_resize("win.WINDOW_CLOSE", "gui.WINDOW_CLOSE_16")
+   end
+
    private close_window()
       parent_dialog.win.pending(Window.CLOSE_BUTTON)
    end
@@ -1573,13 +1578,13 @@ class WindowControl(Component)
       set_pos("100%","0")
       set_align("r","t")
       add(IconButton().
-          set_paint(ImagePaint().set_cache("gui.WINDOW_ICONIFY_BUTTON")).
+          set_paint(ImagePaint().set_cache("win.WINDOW_ICONIFY")).
           set_border(NullBorder()).
           set_accepts_focus(&no).
           set_tooltip("Iconify").
           connect(iconify_window, Event.ACTION))
       add(IconButton().
-          set_paint(ImagePaint().set_cache("gui.WINDOW_CLOSE_BUTTON")).
+          set_paint(ImagePaint().set_cache("win.WINDOW_CLOSE")).
           set_border(NullBorder()).
           set_accepts_focus(&no).
           set_tooltip("Close").
