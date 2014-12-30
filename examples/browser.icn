@@ -1714,7 +1714,7 @@ class BrowserTab(TabItem, BrowserUI)
          set_paint(ImagePaint().set_cache("gui.CLOSE_24"))
       search_panel.add(search_close_button)
       search_field := TextField().
-         set_width(150).
+         set_width(scale(150)).
          set_contents(u"").
          connect(on_search_field, Event.CONTENT_CHANGED).
          connect(on_search_field, Event.ACTION)
@@ -1737,7 +1737,7 @@ class BrowserTab(TabItem, BrowserUI)
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_constraint("l_inset", 5).
-         set_width(75)
+         set_width(scale(75))
       search_panel.add(search_label)
    end
 end

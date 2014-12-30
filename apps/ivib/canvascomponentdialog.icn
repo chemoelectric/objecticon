@@ -252,7 +252,7 @@ class CanvasComponentDialog(Dialog)
          l.set_label("Z : ")
          pos_tab.add(l)
 
-         z_field := TextField().set_width(100).set_filter(&digits)
+         z_field := TextField().set_width(scale(100)).set_filter(&digits)
          z_field.set_contents(c.z)
          pos_tab.add(z_field)
       }
@@ -316,7 +316,7 @@ class CanvasComponentDialog(Dialog)
       }
 
       other_tab.add(Label().set_label("Tab order:"))
-      tab_field := TextField().set_width(100).set_filter(&digits)
+      tab_field := TextField().set_width(scale(100)).set_filter(&digits)
       tab_field.set_contents(c.tab_ord)
       other_tab.add(tab_field)
 

@@ -109,7 +109,7 @@ class TerminalDialog(Dialog)
    public new()
       local quit_menu_item, menu_bar, file_menu, bt, new_tab_item, favourite_dirs_item
       Dialog.new()
-      set_size(1000, 750)
+      set_size(scale(1000), scale(750))
       self.set_resize(&yes)
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
@@ -127,7 +127,7 @@ class TerminalDialog(Dialog)
          add(favourite_dirs_item).
          add(quit_menu_item)
       menu_bar := MenuBar().
-         set_size("100").
+         set_size(scale(100)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("l_inset", 0).
@@ -139,7 +139,7 @@ class TerminalDialog(Dialog)
       self.add(menu_bar)
       bt := Terminal()
       tabs := TabSet().
-         set_size("200", "150").
+         set_size(scale(200), scale(150)).
          clear_constraints().
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
@@ -456,7 +456,7 @@ class Columns(LineBasedScrollArea)
    public new()
       LineBasedScrollArea.new()
       data := []
-      gutter := 8
+      gutter := scale(8)
       item_paint := TextItemPaint()
       item_border := NullBorder().set_x_align(Align.L)
       view.connect(self.handle_lmpress, Event.MOUSE_LEFT_PRESS)
@@ -1866,7 +1866,7 @@ class Terminal(TabItem)
       synch_paints()
       set_label_border(EmptyBorder().set_x_align(Align.L))
       columns.
-         set_width(300).
+         set_width(scale(300)).
          set_item_paint(IconFilesItemPaint()).
          set_item_border(EmptyBorder().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
@@ -1994,7 +1994,7 @@ class Terminal(TabItem)
    end
 
    private setup()
-      local paint_2, paint_14, layout_7, paint_11, paint_37, layout_4, split_content_3, split_content_1, split_content_2, split_content_4, panel_4, paint_29, paint_34, layout_1, paint_9, split_1, paint_31, paint_6, paint_23, paint_3, layout_8, paint_12, paint_38, layout_5, panel_5, paint_35, paint_40, layout_2, split_2, paint_27, paint_32, paint_7, paint_13, paint_39, layout_6, panel_6, paint_10, paint_36, layout_3, paint_28, paint_33, paint, paint_8, paint_30, border_1
+      local paint_2, layout_7, paint_14, layout_4, paint_11, paint_37, panel_4, layout_1, paint_29, paint_34, split_content_3, split_content_1, split_content_2, split_content_4, paint_9, split_1, paint_31, paint_6, paint_23, paint_3, layout_8, layout_5, paint_12, paint_38, panel_5, layout_2, paint_35, paint_40, split_2, paint_27, paint_32, paint_7, layout_6, paint_13, paint_39, panel_6, layout_3, paint_10, paint_36, paint, paint_28, paint_33, paint_8, border_1, paint_30
       paint_10 := ImagePaint().
          set_cache("rpp.EXIT_24")
       paint_9 := TextPaint("Close")
@@ -2064,7 +2064,7 @@ class Terminal(TabItem)
          set_paint(paint_14)
       paint_23 := TextPaint("Filter")
       filter := EditList().
-         set_size("150").
+         set_size(scale(150)).
          set_align(Align.L, Align.B).
          clear_constraints().
          set_constraint("x_align", Align.L).
@@ -2130,7 +2130,7 @@ class Terminal(TabItem)
          set_paint(paint_36)
       paint_37 := TextPaint("Favourite directories")
       favourites_list := DirList().
-         set_size("37", "30").
+         set_size(scale(37), scale(30)).
          clear_constraints().
          set_tooltip(paint_37).
          connect(self.on_favourites_list, Event.SELECTION_CHANGED)
@@ -2146,8 +2146,8 @@ class Terminal(TabItem)
          set_toggles(&no).
          set_paint(paint_39)
       layout_6 := GridLayout().
-         set_doi(0).
-         set_dii(2).
+         set_doi(scale(0)).
+         set_dii(scale(2)).
          set_extra("cells")
       panel_4 := Panel().
          clear_constraints().
@@ -2169,7 +2169,7 @@ class Terminal(TabItem)
          add(favourites_list).
          add(save_button)
       layout_7 := GridLayout().
-         set_doi(0).
+         set_doi(scale(0)).
          set_extra("cells")
       panel_5 := Panel().
          clear_constraints().
@@ -2179,14 +2179,14 @@ class Terminal(TabItem)
          add(panel_4)
       self.add(panel_5)
       columns := Columns().
-         set_size("100", "100").
+         set_size(scale(100), scale(100)).
          clear_constraints().
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_constraint("y_fill", &yes).
          set_constraint("y_weight", 1.0)
       layout_8 := GridLayout().
-         set_doi(0).
+         set_doi(scale(0)).
          set_extra("cells")
       panel_6 := Panel().
          clear_constraints().
@@ -2197,14 +2197,14 @@ class Terminal(TabItem)
          set_layout(layout_8).
          add(columns)
       layout_5 := GridLayout().
-         set_doi(0).
+         set_doi(scale(0)).
          set_extra("cells")
       split_content_3 := Component().
          clear_constraints().
          set_layout(layout_5).
          add(panel_6)
       commands := Commands().
-         set_size("200", "150").
+         set_size(scale(200), scale(150)).
          clear_constraints().
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
@@ -2213,14 +2213,14 @@ class Terminal(TabItem)
          connect(self.on_commands_content_changed, Event.CONTENT_CHANGED).
          set_contents([u""])
       layout_2 := GridLayout().
-         set_doi(0).
+         set_doi(scale(0)).
          set_extra("cells")
       split_content_1 := Component().
          clear_constraints().
          set_layout(layout_2).
          add(commands)
       output := Output().
-         set_size("200", "150").
+         set_size(scale(200), scale(150)).
          clear_constraints().
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
@@ -2229,14 +2229,14 @@ class Terminal(TabItem)
          set_contents([u""]).
          set_is_editable(&no)
       layout_1 := GridLayout().
-         set_doi(0).
+         set_doi(scale(0)).
          set_extra("cells")
       split_content_2 := Component().
          clear_constraints().
          set_layout(layout_1).
          add(output)
       split_1 := Split().
-         set_size("286", "184").
+         set_size(scale(286), scale(184)).
          clear_constraints().
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
@@ -2246,7 +2246,7 @@ class Terminal(TabItem)
          set_bottom(split_content_2).
          set_weight(0.5)
       layout_4 := GridLayout().
-         set_doi(0).
+         set_doi(scale(0)).
          set_extra("cells")
       split_content_4 := Component().
          clear_constraints().
@@ -2266,14 +2266,14 @@ class Terminal(TabItem)
       border_1 := CompoundBorder().
          set_outer(SunkenBorder()).
          set_inner(EmptyBorder().
-            set_l_inset(3)).
+            set_l_inset(scale(3))).
          set_x_align(Align.L)
       message_label := MessageLabel().
          set_fg("red").
          clear_constraints().
-         set_constraint("b_inset", 0).
-         set_constraint("l_inset", 0).
-         set_constraint("r_inset", 0).
+         set_constraint("b_inset", scale(0)).
+         set_constraint("l_inset", scale(0)).
+         set_constraint("r_inset", scale(0)).
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
          set_border(border_1).
