@@ -175,12 +175,12 @@ class FrameBar(Component)
       lab := Label().
          set_constraint("x_weight", 1).
          set_constraint("x_fill", &yes).
-         set_constraint("l_inset", 3).
+         set_constraint("l_inset", scale(3)).
          set_label("Frame")
       add(lab)
       b := IconButton().
          set_accepts_focus(&no).
-         set_constraint("r_inset", 3).
+         set_constraint("r_inset", scale(3)).
          set_tooltip("Close")
       b.set_border(NullBorder())
       b.set_paint(ImagePaint().set_cache("gui.TINY_X"))

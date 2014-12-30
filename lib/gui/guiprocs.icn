@@ -128,8 +128,11 @@ class Direction()
    end
 end
 
+#
+# Scale the given number using the current scale factor.
+#
 procedure scale(i)
-   return integer(Gui.SCALE_FACTOR * i)
+   return integer(Gui.SCALE_FACTOR * i + 0.5)
 end
 
 class Gui()
@@ -199,7 +202,7 @@ class Gui()
    end
 end
 
-procedure tab_ws()
+package procedure tab_ws()
    return tab(many(' \t\n\r'))
 end
 
@@ -270,8 +273,11 @@ class ImageStringInfo()
    end
 end
 
-procedure parse_image_string(s, W)
-   local q, k, v, r
+# Convert an image string to a `Pixels` object, based on the window
+# `W` for hilite, shadow colours etc.
+#
+procedure image_string_to_Pixels(s, W)
+   local q, k, v, r, w
    r := ImageStringInfo(s) | fail
 
    q := Pixels(r.width, r.height, Pixels.PALETTE8).
@@ -293,11 +299,16 @@ procedure parse_image_string(s, W)
             return error("= expected")
          }
          v := tab(upto(';') | 0)
-         case v of {
-            "hilite" : v := Gui.style.get_hilite_color(W)
-            "shadow" : v := Gui.style.get_shadow_color(W)
-            "fg" : v := W.get_fg()
-            "bg" : v := W.get_bg()
+         v ? {
+            w := tab(upto(', ') | 0)
+            case w of {
+               "hilite" : v := Gui.style.get_hilite_color(W)
+               "shadow" : v := Gui.style.get_shadow_color(W)
+               "fg" : v := W.get_fg()
+               "bg" : v := W.get_bg()
+               default : v := w
+            }
+            v ||:= tab(0)
          }
          move(1)
          q.set_palette(ord(k), v) | {
@@ -307,26 +318,6 @@ procedure parse_image_string(s, W)
       }
    }
    return q
-end
-
-#
-# Given an image string, scale it up Gui.UNIT times.  Fails on an invalid string.
-#
-procedure scale_image_string(s)
-   local data2, row, row2, r
-   if Gui.UNIT = 1 then
-      return s
-   r := ImageStringInfo(s) | fail
-   data2 := ""
-   r.data ? repeat {
-      row := move(r.width) | break
-      row2 := ""
-      every row2 ||:= repl(!row, Gui.UNIT)
-      data2 ||:= row2 || row2
-   }
-   r.width *:= Gui.UNIT
-   r.data := data2
-   return r.to_image_string()
 end
 
 #
@@ -348,6 +339,9 @@ procedure text_width_ex(win, s, i, j, tw)
    return win.text_width(detab(s[1:j], tw + 1)) - win.text_width(detab(s[1:i], tw + 1))
 end
 
+# Draw a string in the normal way, but including an underscore below
+# the first character `k`.
+#
 procedure draw_string_ex(win, x, y, s, k)
    local i
    y +:= win.get_font_ascent()

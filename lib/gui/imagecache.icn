@@ -32,6 +32,7 @@ final abstract class ImageCache()
       names
 
    private static init()
+      local i, j
       names := table()
       imap := table()
       name_image("gui.HOME_24", HOME)
@@ -53,152 +54,48 @@ final abstract class ImageCache()
       name_image("gui.WINDOW_CLOSE_16", WINDOW_CLOSE)
       name_image("gui.WINDOW_ICONIFY_16", WINDOW_ICONIFY)
 
-      name_image("gui.BOX_UP", scale_image_string("13,(0=shadow;1=hilite;~=transparent),_
-~~~~~~~~~~~~~_
-~11111111111~_
-~11111111110~_
-~11~~~~~~~00~_
-~11~~~~~~~00~_
-~11~~~~~~~00~_
-~11~~~~~~~00~_
-~11~~~~~~~00~_
-~11~~~~~~~00~_
-~11~~~~~~~00~_
-~11000000000~_
-~10000000000~_
-~~~~~~~~~~~~~_
-"))
-      name_image("gui.BOX_DOWN", scale_image_string("13,(b=black;0=shadow;1=hilite;~=transparent),_
-~~~~~~~~~~~~~_
-~00000000001~_
-~00000000001~_
-~00~~~~~~~11~_
-~00~bbbbb~11~_
-~00~bbbbb~11~_
-~00~bbbbb~11~_
-~00~bbbbb~11~_
-~00~bbbbb~11~_
-~00~~~~~~~11~_
-~01111111111~_
-~11111111111~_
-~~~~~~~~~~~~~_
-"))
-      name_image("gui.DIAMOND_UP", scale_image_string("13,(0=shadow;1=hilite;~=transparent),_
-~~~~~~1~~~~~~_
-~~~~~111~~~~~_
-~~~~11~11~~~~_
-~~~11~~~11~~~_
-~~11~~~~~11~~_
-~11~~~~~~~11~_
-11~~~~~~~~~11_
-~00~~~~~~~00~_
-~~00~~~~~00~~_
-~~~00~~~00~~~_
-~~~~00~00~~~~_
-~~~~~000~~~~~_
-~~~~~~0~~~~~~_
-"))
-      name_image("gui.DIAMOND_DOWN", scale_image_string("13,(b=black;0=shadow;1=hilite;~=transparent),_
-~~~~~~0~~~~~~_
-~~~~~000~~~~~_
-~~~~00~00~~~~_
-~~~00~b~00~~~_
-~~00~bbb~00~~_
-~00~bbbbb~00~_
-00~bbbbbbb~00_
-~11~bbbbb~11~_
-~~11~bbb~11~~_
-~~~11~b~11~~~_
-~~~~11~11~~~~_
-~~~~~111~~~~~_
-~~~~~~1~~~~~~_
-"))
-      name_image("gui.ARROW_UP", scale_image_string("11,(b=black;c=black 50%;~=transparent),_
-~~~~~c~~~~~_
-~~~~cbc~~~~_
-~~~cbbbc~~~_
-~~cbbbbbc~~_
-~cbbbbbbbc~_
-cbbbbbbbbbc_
-"))
-      name_image("gui.ARROW_DOWN", scale_image_string("11,(b=black;c=black 50%;~=transparent),_
-cbbbbbbbbbc_
-~cbbbbbbbc~_
-~~cbbbbbc~~_
-~~~cbbbc~~~_
-~~~~cbc~~~~_
-~~~~~c~~~~~_
-"))
-      name_image("gui.ARROW_LEFT", scale_image_string("9,(b=black;c=black 50%;~=transparent),_
-~~~~~~~~c_
-~~~~~~cbb_
-~~~~cbbbb_
-~~cbbbbbb_
-cbbbbbbbb_
-~~cbbbbbb_
-~~~~cbbbb_
-~~~~~~cbb_
-~~~~~~~~c_
-"))
-      name_image("gui.ARROW_RIGHT", scale_image_string("9,(b=black;c=black 50%;~=transparent),_
-c~~~~~~~~_
-bbc~~~~~~_
-bbbbc~~~~_
-bbbbbbc~~_
-bbbbbbbbc_
-bbbbbbc~~_
-bbbbc~~~~_
-bbc~~~~~~_
-c~~~~~~~~_
-"))
-      name_image("gui.TINY_ARROW_UP", scale_image_string("7,(b=black;c=black 50%;~=transparent),_
-~~~c~~~_
-~~cbc~~_
-~cbbbc~_
-cbbbbbc_
-"))
-      name_image("gui.TINY_ARROW_DOWN", scale_image_string("7,(b=black;c=black 50%;~=transparent),_
-cbbbbbc_
-~cbbbc~_
-~~cbc~~_
-~~~c~~~_
-"))
-      name_image("gui.PLUS", scale_image_string("9,(b=black;~=transparent),_
-bbbbbbbbb_
-b~~~~~~~b_
-b~~~b~~~b_
-b~~~b~~~b_
-b~bbbbb~b_
-b~~~b~~~b_
-b~~~b~~~b_
-b~~~~~~~b_
-bbbbbbbbb_
-"))
-      name_image("gui.MINUS", scale_image_string("9,(b=black;~=transparent),_
-bbbbbbbbb_
-b~~~~~~~b_
-b~~~~~~~b_
-b~~~~~~~b_
-b~bbbbb~b_
-b~~~~~~~b_
-b~~~~~~~b_
-b~~~~~~~b_
-bbbbbbbbb_
-"))
-      name_image("gui.TINY_X", scale_image_string("8,(b=black;~=transparent),_
+      i := scale(13)
+      if i % 2 = 0 then i +:= 1
+      j := scale(2)
+      name_image("gui.BOX_UP", mk_box_up(i, j))
+      name_image("gui.BOX_DOWN",  mk_box_down(i, j))
+      name_image("gui.DIAMOND_UP", mk_diamond_up(i, j))
+      name_image("gui.DIAMOND_DOWN",  mk_diamond_down(i, j))
+
+      i := scale(11)
+      if i % 2 = 0 then i +:= 1
+      name_image("gui.ARROW_UP", mk_arrow_up(i))
+      name_image("gui.ARROW_DOWN", mk_arrow_down(i))
+
+      i := scale(9)
+      if i % 2 = 0 then i +:= 1
+      name_image("gui.ARROW_LEFT", mk_arrow_left(i))
+      name_image("gui.ARROW_RIGHT", mk_arrow_right(i))
+
+      i := scale(7)
+      if i % 2 = 0 then i +:= 1
+      name_image("gui.TINY_ARROW_UP", mk_arrow_up(i))
+      name_image("gui.TINY_ARROW_DOWN", mk_arrow_down(i))
+
+      i := scale(9)
+      j := scale(1)
+      name_image("gui.PLUS", mk_handle(i, j))
+      name_image("gui.MINUS", mk_handle(i, j, &yes))
+
+      name_image("gui.TINY_X", "8,(b=black;~=transparent),_
 bb~~~~bb_
 ~bb~~bb~_
 ~~~bb~~~_
 ~bb~~bb~_
 bb~~~~bb_
-"))
-      name_image("gui.HORIZ_GRID", scale_image_string("24,(0=shadow;1=hilite;~=transparent),_
+")
+      name_image("gui.HORIZ_GRID", "24,(0=shadow;1=hilite;~=transparent),_
 ~00~~~~~~~~00~~~~~~~~00~_
 0011~~~~~~0011~~~~~~0011_
 0111~~~~~~0111~~~~~~0111_
 ~11~~~~~~~~11~~~~~~~~11~_
-"))
-      name_image("gui.VERT_GRID", scale_image_string("4,(0=shadow;1=hilite;~=transparent),_
+")
+      name_image("gui.VERT_GRID", "4,(0=shadow;1=hilite;~=transparent),_
 ~00~_
 0011_
 0111_
@@ -223,7 +120,7 @@ bb~~~~bb_
 0011_
 0111_
 ~11~_
-"))
+")
    end
 
    # Associate arbitrary image data (eg gif file data), with a name.
@@ -301,12 +198,12 @@ bb~~~~bb_
          fl := &yes
       if is_image_string(s) then {
          if \win then
-            key := Window.color_value(win.get_fg()) || "/" || Window.color_value(win.get_bg()) || "#" || key
+            key ||:= "#With colour "|| Window.color_value(win.get_fg()) || "/" || Window.color_value(win.get_bg())
          if w := member(imap, key) then
             return key
          \fl | return error("Invalid key for ImageCache")
          w := use {
-            p := parse_image_string(s, win),
+            p := image_string_to_Pixels(s, win),
             Window.open_image(p)
          } | fail
       } else {
@@ -330,7 +227,7 @@ bb~~~~bb_
       s := member(names, s)
       return if is_image_string(s) then {
          use {
-            p := parse_image_string(s, win),
+            p := image_string_to_Pixels(s, win),
             Window.open_image(p)
          }
       } else
