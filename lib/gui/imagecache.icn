@@ -54,26 +54,22 @@ final abstract class ImageCache()
       name_image("gui.WINDOW_CLOSE_16", WINDOW_CLOSE)
       name_image("gui.WINDOW_ICONIFY_16", WINDOW_ICONIFY)
 
-      i := scale(13)
-      if i % 2 = 0 then i +:= 1
+      i := scale_odd(13)
       j := scale(2)
       name_image("gui.BOX_UP", mk_box_up(i, j))
       name_image("gui.BOX_DOWN",  mk_box_down(i, j))
       name_image("gui.DIAMOND_UP", mk_diamond_up(i, j))
       name_image("gui.DIAMOND_DOWN",  mk_diamond_down(i, j))
 
-      i := scale(11)
-      if i % 2 = 0 then i +:= 1
+      i := scale_odd(11)
       name_image("gui.ARROW_UP", mk_arrow_up(i))
       name_image("gui.ARROW_DOWN", mk_arrow_down(i))
 
-      i := scale(9)
-      if i % 2 = 0 then i +:= 1
+      i := scale_odd(9)
       name_image("gui.ARROW_LEFT", mk_arrow_left(i))
       name_image("gui.ARROW_RIGHT", mk_arrow_right(i))
 
-      i := scale(7)
-      if i % 2 = 0 then i +:= 1
+      i := scale_odd(7)
       name_image("gui.TINY_ARROW_UP", mk_arrow_up(i))
       name_image("gui.TINY_ARROW_DOWN", mk_arrow_down(i))
 
@@ -82,45 +78,10 @@ final abstract class ImageCache()
       name_image("gui.PLUS", mk_handle(i, j))
       name_image("gui.MINUS", mk_handle(i, j, &yes))
 
-      name_image("gui.TINY_X", "8,(b=black;~=transparent),_
-bb~~~~bb_
-~bb~~bb~_
-~~~bb~~~_
-~bb~~bb~_
-bb~~~~bb_
-")
-      name_image("gui.HORIZ_GRID", "24,(0=shadow;1=hilite;~=transparent),_
-~00~~~~~~~~00~~~~~~~~00~_
-0011~~~~~~0011~~~~~~0011_
-0111~~~~~~0111~~~~~~0111_
-~11~~~~~~~~11~~~~~~~~11~_
-")
-      name_image("gui.VERT_GRID", "4,(0=shadow;1=hilite;~=transparent),_
-~00~_
-0011_
-0111_
-~11~_
-~~~~_
-~~~~_
-~~~~_
-~~~~_
-~~~~_
-~~~~_
-~00~_
-0011_
-0111_
-~11~_
-~~~~_
-~~~~_
-~~~~_
-~~~~_
-~~~~_
-~~~~_
-~00~_
-0011_
-0111_
-~11~_
-")
+      i := scale_odd(5)
+      j := scale(6)
+      name_image("gui.VERT_GRID", mk_v_grid(i, j))
+      name_image("gui.HORIZ_GRID", mk_h_grid(i, j))
    end
 
    # Associate arbitrary image data (eg gif file data), with a name.

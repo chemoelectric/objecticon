@@ -161,3 +161,33 @@ package procedure mk_handle(d, b, fl)
       s ||:= repl("b", d)
    return ImageStringInfo.from_parts(d,, "b=black;~=transparent", s).to_image_string()
 end
+
+package procedure mk_dot(d)
+   local s, i, j, m
+   s := ""
+   every i := (d / 2 to 0 by - 1) | (1 to d / 2) do {
+      j := d - 2 * i
+      m := repl("0", j)
+      m[1] := m[-1] := "2"
+      s ||:= repl("~", i) || m || repl("~", i)
+   }
+   return s
+end
+
+package procedure mk_v_grid(d, i)
+   local s, t
+   s := mk_dot(d)
+   t := repl("~", d * i)
+   s := s || t || s || t || s
+   return ImageStringInfo.from_parts(d,, "0=shadow;2=shadow,0.5;~=transparent", s).to_image_string()
+end
+
+package procedure mk_h_grid(d, i)
+   local r, s, t, u
+   s := mk_dot(d)
+   t := repl("~", i)
+   u := ""
+   s ? while r := move(d) do
+      u ||:= r || t || r || t || r 
+   return ImageStringInfo.from_parts(3 * d + 2 * i,, "0=shadow;2=shadow,0.5;~=transparent", u).to_image_string()
+end

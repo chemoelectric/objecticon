@@ -124,7 +124,7 @@ class TTExplorer(Dialog)
    end
 
    private setup()
-      local paint_2, layout_1, paint_1, paint_3, paint
+      local paint_2, layout_1, paint_1, paint, paint_3
       self.set_resize(&yes)
       paint := TextPaint("File")
       file_col := TableColumn().
@@ -134,19 +134,19 @@ class TTExplorer(Dialog)
       size_col := TableColumn().
          set_paint(paint_1).
          set_column_align(Align.R).
-         set_column_width(75)
+         set_column_width(scale(75))
       paint_2 := TextPaint("Date")
       date_col := TableColumn().
          set_paint(paint_2).
          set_column_align(Align.L).
-         set_column_width(100)
+         set_column_width(scale(100))
       paint_3 := TextPaint("Bits")
       bits_col := TableColumn().
          set_paint(paint_3).
          set_column_align(Align.L).
-         set_column_width(100)
+         set_column_width(scale(100))
       tt := ItemPaintTreeTable().
-         set_size("475", "265").
+         set_size(scale(475), scale(265)).
          set_align(Align.C, Align.T).
          clear_constraints().
          set_constraint("eol", &yes).

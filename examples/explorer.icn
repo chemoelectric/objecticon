@@ -171,13 +171,13 @@ class Explorer(Dialog)
             add_column(TableColumn().set_label("Bits").set_column_width(bw + w.text_width("drwxrwxrwx  ")))
       }
 
-      split := Split().set_left(tree).set_right(tbl).set_min(50,50)
+      split := Split().set_left(tree).set_right(tbl).set_min(scale(50), scale(50))
       add(split)
 
       #
       # Initialize the tree data structure.
       #
-      root_node := TreeTableNode().set_label(ListEntryWithIcon(u"/", Files.lstat("/"), Files.stat("/")))
+      root_node := TreeNode().set_label(ListEntryWithIcon(u"/", Files.lstat("/"), Files.stat("/")))
       load_subtree(root_node)
       tree.set_root_node(root_node)
       tree.object_set_selections([root_node])
@@ -185,14 +185,8 @@ class Explorer(Dialog)
    end
 end
 
-
-
 procedure main()
    local d
    d := Explorer()
    d.show_modal()
 end
-
-
-
-

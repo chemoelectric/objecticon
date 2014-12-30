@@ -135,6 +135,24 @@ procedure scale(i)
    return integer(Gui.SCALE_FACTOR * i + 0.5)
 end
 
+#
+# Like `scale`, but ensure an odd number results.
+#
+procedure scale_odd(i)
+   i := scale(i)
+   if i % 2 = 0 then i +:= 1
+   return i
+end
+
+#
+# Like `scale`, but ensure an even number results.
+#
+procedure scale_even(i)
+   i := scale(i)
+   if i % 2 = 1 then i +:= 1
+   return i
+end
+
 class Gui()
    public static const
       SCALE_FACTOR,
