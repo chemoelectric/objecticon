@@ -1,6 +1,6 @@
 import
    lang(Class),
-   parser(GlobalSymbol, ClassSymbol, DeferredMethod, Tree, ULocal,
+   parser(ClassSymbol, DeferredMethod, Tree, ULocal,
           UMethod)
 
 class Outputter()
@@ -95,53 +95,14 @@ class Outputter()
       return s
    end
 
-   protected has_package_flag(c)
-      # If it's a global var we check the "global" node (rather than the ident node).
-      if is(c, GlobalSymbol) then {
-         if is(c.decl_obj, Tree) then
-            return c.decl_obj.get_package_flag()
-         else
-            return \c.decl_obj.package_flag
-      } else {
-         if is(c.obj, Tree) then
-            return c.obj.get_package_flag()
-         else
-            return \c.obj.package_flag
-      }
-   end
-
-   protected has_readable_flag(c)
-      # If it's a global var we check the "global" node (rather than the ident node).
-      if is(c, GlobalSymbol) then {
-         if is(c.decl_obj, Tree) then
-            return c.decl_obj.get_readable_flag()
-         else
-            return \c.decl_obj.readable_flag
-      }
-   end
-
-   protected is_final(c)
-      if is(c.obj, Tree) then
-         return c.obj.get_access().gen().str() == "final"
-      else
-         return iand(c.obj.flags, Class.Final) ~= 0
-   end
-
-   protected is_abstract(c)
-      if is(c.obj, Tree) then
-         return c.obj.get_access().gen().str() == "abstract"
-      else
-         return iand(c.obj.flags, Class.Abstract) ~= 0
-   end
-
    protected get_class_prefix(c)
       local s
       s := ""
-      if has_package_flag(c) then
+      if c.has_package_flag() then
          s ||:= "package "
-      if is_final(c) then
+      if c.is_final() then
          s ||:= "final "
-      if is_abstract(c) then
+      if c.is_abstract() then
          s ||:= "abstract "
       s[-1] := ""
       return s

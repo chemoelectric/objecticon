@@ -28,22 +28,57 @@ class Symbol()
    end
 end
 
-class ProcedureSymbol(Symbol)
+abstract class TopLevelSymbol(Symbol)
+   public abstract has_package_flag()
 end
 
-class BuiltinSymbol(Symbol)
+class ProcedureSymbol(TopLevelSymbol)
+   public has_package_flag()
+      if is(obj, Tree) then
+         return obj.get_package_flag()
+      else
+         return \obj.package_flag
+   end
+end
+
+class BuiltinSymbol(TopLevelSymbol)
+   public has_package_flag()
+   end
+
    package new(name)
       self.name := name
       return
    end
 end
 
-class RecordSymbol(Symbol)
+class RecordSymbol(TopLevelSymbol)
+   public has_package_flag()
+      if is(obj, Tree) then
+         return obj.get_package_flag()
+      else
+         return \obj.package_flag
+   end
 end
 
-class GlobalSymbol(Symbol)
+class GlobalSymbol(TopLevelSymbol)
    public const
       decl_obj
+
+   public has_package_flag()
+      # Check the "global" node (rather than the ident node).
+      if is(decl_obj, Tree) then
+         return decl_obj.get_package_flag()
+      else
+         return \decl_obj.package_flag
+   end
+
+   public has_readable_flag(c)
+      # Check the "global" node (rather than the ident node).
+      if is(decl_obj, Tree) then
+         return decl_obj.get_readable_flag()
+      else
+         return \decl_obj.readable_flag
+   end
 
    package new(scanned_file, obj, name, decl_obj)
       Symbol.new(scanned_file, obj, name)
@@ -52,7 +87,7 @@ class GlobalSymbol(Symbol)
    end
 end
 
-class ClassSymbol(Symbol)
+class ClassSymbol(TopLevelSymbol)
    package
       fields,
       supers,
@@ -108,6 +143,27 @@ class ClassSymbol(Symbol)
    package add_field(f)
       insert(fields, f.name, f)
       return self
+   end
+
+   public has_package_flag()
+      if is(obj, Tree) then
+         return obj.get_package_flag()
+      else
+         return \obj.package_flag
+   end
+
+   public is_final()
+      if is(obj, Tree) then
+         return obj.get_access().gen().str() == "final"
+      else
+         return iand(obj.flags, Class.Final) ~= 0
+   end
+
+   public is_abstract()
+      if is(obj, Tree) then
+         return obj.get_access().gen().str() == "abstract"
+      else
+         return iand(obj.flags, Class.Abstract) ~= 0
    end
 
    package new(scanned_file, obj, name)
@@ -584,13 +640,22 @@ class SymbolTable(Connectable)
       return member(scanned_files, get_stem(FilePath(f).canonical().str()))
    end
 
+   private static check_package_access(sf, sym)
+      if sym.has_package_flag() &
+         sf.pack ~=== "lang" &
+         sf.pack ~=== sym.scanned_file.pack then
+         fail
+      return sym
+   end
+
    public resolve_n(sf, name)
       local r, i
+
       r := []
       name ? if upto('.') then {
          if ="default." then
             name := tab(0)
-         put(r, gb_locate(name))
+         put(r, check_package_access(sf, gb_locate(name)))
          return r
       }
       if \sf.pack then
@@ -599,7 +664,7 @@ class SymbolTable(Connectable)
          put(r, gb_locate(name))
       every i := sf.get_imports() do {
          if /i.qualified | i.has(name) then
-            put(r, glocate(i.name || "." || name))
+            put(r, check_package_access(sf, glocate(i.name || "." || name)))
       }
       if \sf.pack & (*r = 0) then
          put(r, gb_locate(name))

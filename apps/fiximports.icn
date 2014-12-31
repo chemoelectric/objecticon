@@ -128,8 +128,9 @@ procedure seen(id)
 end
 
 procedure do_class(c)
-   local csym, o, id
-   csym := scanned_file.get_symbol(c.get_name().str()) | stop("internal error")
+   local csym, o, id, s
+   s := c.get_name().str()
+   csym := scanned_file.get_symbol(s) | stop("couldn't find class ", s, " in symbol table (source and u files may be out of synch)")
    every id := c.get_supers().gen().str() do {
       seen(id)
    }
