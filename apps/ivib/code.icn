@@ -110,7 +110,10 @@ class Code()
       if \parent_Canvas.scale_dimensions_flag & 
          i := integer(dim) then
       {
-         dim := "scale(" || i || ")"
+         dim := if parent_Canvas.edit_scale = 1.0 then
+            "scale(" || i || ")"
+         else
+            "scale(" || i || " / " || parent_Canvas.edit_scale || ")"
          add_import("gui", "scale")
       }
       return dim

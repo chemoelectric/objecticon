@@ -14,6 +14,7 @@ class CanvasPreferencesDialog(Dialog)
       set_w_default,           # CheckBoxes                     
       set_h_default,           #                     
       scale_dimensions_cb,
+      edit_scale_tf,
       okay_result,             # Flag indicating result
       name,                    # TextField - object name
       is_component_cb,         # Component or not
@@ -75,6 +76,7 @@ class CanvasPreferencesDialog(Dialog)
       if h_spec_tf.is_unshaded() then
          integer(h_spec_tf.get_contents()) | return alert_error(self, "Invalid height")
       util_check_attribs(self, attrib_tab.get_table(), Gui.WATTRIB_SET) | fail
+      real(edit_scale_tf.get_contents()) | return alert_error(self, "Edit scale not real")
 
       #
       # Set the attribs list.
@@ -111,6 +113,7 @@ class CanvasPreferencesDialog(Dialog)
       c.dialog_iw := if w_spec_tf.is_shaded() then &null else w_spec_tf.get_contents()
       c.dialog_ih := if h_spec_tf.is_shaded() then &null else h_spec_tf.get_contents()
       c.scale_dimensions_flag := scale_dimensions_cb.get_status()
+      c.edit_scale := real(edit_scale_tf.get_contents())
 
       self.okay_result := 1
       self.dispose()
@@ -219,8 +222,21 @@ class CanvasPreferencesDialog(Dialog)
       pos_tab.add(layout_field)
       orig_layout := c.layout_delegate
 
-      scale_dimensions_cb := CheckBox().set_label("Scale Dimensions").set_constraint("eol", &yes).set_constraint("w", 3)
+      pos_tab.add(Label().set_label("Edit scale"))
+      edit_scale_tf := TextField().
+         set_contents(c.edit_scale).
+         set_filter(&digits ++ '.').
+         set_constraint("eol", &yes).
+         set_size(scale(100))
+      pos_tab.add(edit_scale_tf)
+
+      scale_dimensions_cb := CheckBox().
+         set_label("Scale output dimensions").
+         set_constraint("eol", &yes).
+         set_constraint("x_tab", 1).
+         set_constraint("w", 2)
       pos_tab.add(scale_dimensions_cb)
+
       if \c.scale_dimensions_flag then
          scale_dimensions_cb.set_is_checked(&yes)
 

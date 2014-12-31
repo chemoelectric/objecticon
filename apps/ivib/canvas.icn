@@ -201,6 +201,7 @@ class Canvas(Component,SelectiveObjectCodec)
       gen_indent,
       event_handlers,          # List of event, handler pairs
       scale_dimensions_flag,   # Apply scale() to dimensions on output
+      edit_scale,              # The scale the canvas was edited at
       item_buff_win,
       dialog_iw,               # Initial size to set dialog; may be null if
       dialog_ih,               # default is to be used.
@@ -983,7 +984,8 @@ class Canvas(Component,SelectiveObjectCodec)
               ["Initial Focus", "initial_focus"] |
               ["Event Handlers", "event_handlers"] |
               ["Layout delegate", "layout_delegate"] |
-              ["Scale Dimensions Flag", "scale_dimensions_flag"]
+              ["Scale Dimensions Flag", "scale_dimensions_flag"] |
+              ["Edit Scale", "edit_scale"]
    end
 
    #
@@ -1008,6 +1010,7 @@ class Canvas(Component,SelectiveObjectCodec)
       c.superclass_name := self.superclass_name
       c.import_name := self.import_name
       c.scale_dimensions_flag := self.scale_dimensions_flag
+      c.edit_scale := self.edit_scale
       c.event_handlers := copy(\self.event_handlers)
       c.set_pos(self.x_spec, self.y_spec)
       c.dialog_iw := self.dialog_iw
@@ -1965,6 +1968,7 @@ class Canvas(Component,SelectiveObjectCodec)
       self.dialog_struct := CDialog()
       self.dialog_iw := Canvas.DEFAULT_WIDTH
       self.dialog_ih := Canvas.DEFAULT_HEIGHT
+      self.edit_scale := Gui.SCALE_FACTOR
       set_accepts_focus(&yes)
       connect(self.handle_move, Event.MOUSE_MOVEMENT)
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
