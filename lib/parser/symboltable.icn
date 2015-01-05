@@ -72,7 +72,7 @@ class GlobalSymbol(TopLevelSymbol)
          return \decl_obj.package_flag
    end
 
-   public has_readable_flag(c)
+   public has_readable_flag()
       # Check the "global" node (rather than the ident node).
       if is(decl_obj, Tree) then
          return decl_obj.get_readable_flag()
@@ -642,6 +642,7 @@ class SymbolTable(Connectable)
 
    private static check_package_access(sf, sym)
       if sym.has_package_flag() &
+         not(is(sym, GlobalSymbol) & sym.has_readable_flag()) &
          sf.pack ~=== "lang" &
          sf.pack ~=== sym.scanned_file.pack then
          fail
