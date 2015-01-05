@@ -1,5 +1,5 @@
 AC_INIT([Object Icon],
-        m4_esyscmd([echo 2.12svn-`svnversion` | tr : - | tr -d '\n']),
+        [2.12],
         [r.parlett@gmail.com],
         [objecticon])
 
