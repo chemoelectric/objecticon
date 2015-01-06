@@ -30,7 +30,7 @@ class Connectable()
       if type(proc) == "co-expression" then {
          proc := exprf(proc)
          if type(etype) == "co-expression" then
-            etype := @etype
+            etype := @etype | fail
       }
       l := Listener(proc,
                     etype)
@@ -44,8 +44,7 @@ class Connectable()
    # @return self
    #
    public connect(proc, etype)
-      connect_and_return(proc, etype)
-      return self
+      return connect_and_return(proc, etype) & self
    end
 
    #
