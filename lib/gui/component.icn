@@ -830,7 +830,7 @@ class Component(Rect,Align,Connectable)
          if member(Gui.CONTEXT_WATTRIB_SET, t) then
             insert(self.effective_wattribs, t, self.wattribs[t])
          else
-            runerr("Invalid (non-graphics context) attribute for component:" || t)
+            runerr("Invalid (non-graphics context) attribute for component", t)
       }
       self.compute_z_order()
       self.compute_tab_order()

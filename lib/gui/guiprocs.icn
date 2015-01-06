@@ -202,13 +202,12 @@ class Gui()
                             "x_fill", "y_fill", "x_align", "y_align", "x_weight", "y_weight")
       WATTRIB_SET := set("label", "x", "pos", "y", "resize", "size", "height", 
                          "width", "w", "h", "image", "canvas", "pointer", 
-                         "display", "depth", "fg", "bg", "draw_op", "icon",
+                         "display", "fg", "bg", "draw_op", "icon",
                          "font", "line_width", "geometry", "transient_for",
                          "line_style", "pattern", "clip", "unclip",
                          "dx", "dy", "input_mask", "min_width", "min_height", "min_size", "max_width", 
                          "max_height", "max_size")
-      CONTEXT_WATTRIB_SET := set("fg", "bg", "draw_op", "font", "line_width", "line_style", 
-                                 "pattern")
+      CONTEXT_WATTRIB_SET := set("fg", "bg", "draw_op", "font", "line_width", "line_style", "pattern")
    end
 
    public static is_constraint(s)
@@ -442,8 +441,8 @@ procedure open_win_with(t)
          "transient_for": w.set_transient_for(v)
          "line_style": w.set_line_style(v)
          "pattern": w.set_pattern(v)
-         "clip": w.set_clip(v[1],v[2],v[3],v[4])
-         "unclip": w.set_unclip()
+         "clip": w.clip(v[1],v[2],v[3],v[4])
+         "unclip": w.unclip()
          "dx": w.set_dx(v)
          "dy": w.set_dy(v)
          "input_mask": w.set_input_mask(v)
@@ -477,10 +476,6 @@ procedure apply_context_table(w, t)
          "line_width": w.set_line_width(v)
          "line_style": w.set_line_style(v)
          "pattern": w.set_pattern(v)
-         "clip": w.set_clip(v[1],v[2],v[3],v[4])
-         "unclip": w.set_unclip()
-         "dx": w.set_dx(v)
-         "dy": w.set_dy(v)
       }
    }
    return w
