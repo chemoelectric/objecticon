@@ -136,6 +136,13 @@ procedure scale(i)
 end
 
 #
+# Scale, but don't round and convert to integer.
+#
+procedure scale_real(r)
+   return Gui.SCALE_FACTOR * r
+end
+
+#
 # Like `scale`, but ensure an odd number results.
 #
 procedure scale_odd(i)
