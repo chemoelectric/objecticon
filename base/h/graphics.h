@@ -407,8 +407,8 @@ struct filter {
    void (*f)(struct filter *);
    union {
       struct {
-         float mr, mb, mg;
-         int cr, cb, cg;
+         float mr, mb, mg, ma;
+         int cr, cb, cg, ca;
       } linear;
       struct {
          int p;
