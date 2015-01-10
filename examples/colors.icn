@@ -116,15 +116,15 @@ class Untitled(Dialog)
 
    private setup()
       local paint_2, layout_4, paint_4, layout_1, paint_1, layout_3, paint_3, layout_5, paint_5, layout_2
-      self.set_size(397, 320)
+      self.set_size(scale(397), scale(320))
       paint_2 := TextPaint("RGB")
       label_1 := Label().
-         set_pos("286", "248").
+         set_pos(scale(286), scale(248)).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_paint(paint_2)
       red := Slider().
-         set_size("169", "20").
+         set_size(scale(169), scale(20)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -135,7 +135,7 @@ class Untitled(Dialog)
          set_increment_size(1024).
          set_is_horizontal(&yes)
       green := Slider().
-         set_size("169", "20").
+         set_size(scale(169), scale(20)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -145,7 +145,7 @@ class Untitled(Dialog)
          set_increment_size(1024).
          set_is_horizontal(&yes)
       blue := Slider().
-         set_size("169", "20").
+         set_size(scale(169), scale(20)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -180,12 +180,12 @@ class Untitled(Dialog)
          set_content(border_content_1)
       paint_4 := TextPaint("HLS")
       label_2 := Label().
-         set_pos("406", "228").
+         set_pos(scale(406), scale(228)).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_paint(paint_4)
       hue := Slider().
-         set_size(169).
+         set_size(scale(169)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -196,7 +196,7 @@ class Untitled(Dialog)
          set_increment_size(10).
          set_is_horizontal(&yes)
       light := Slider().
-         set_size("100").
+         set_size(scale(100)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -206,7 +206,7 @@ class Untitled(Dialog)
          set_increment_size(5).
          set_is_horizontal(&yes)
       saturation := Slider().
-         set_size("100").
+         set_size(scale(100)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -252,7 +252,7 @@ class Untitled(Dialog)
          add(border_2)
       self.add(panel_2)
       colr := ColorRectangle().
-         set_size("136", "134").
+         set_size(scale(136), scale(134)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).

@@ -222,6 +222,7 @@ static void linearfilter(struct filter *f)
             linearfilter_impl(&r, f->p.linear.mr, f->p.linear.cr);
             linearfilter_impl(&g, f->p.linear.mg, f->p.linear.cg);
             linearfilter_impl(&b, f->p.linear.mb, f->p.linear.cb);
+            linearfilter_impl(&a, f->p.linear.ma, f->p.linear.ca);
             imd->format->setpixel(imd, i, j, r, g, b, a);
         }
     }
@@ -310,14 +311,14 @@ int parsefilter(wbp w, char *s, struct filter *res)
     if (strncmp(s, "linear,", 7) == 0) {
         int n;
         res->f = linearfilter;
-        n = sscanf(s + 7, "%f,%f,%f,%d,%d,%d%c", 
-                   &res->p.linear.mr, &res->p.linear.mg, &res->p.linear.mb,
-                   &res->p.linear.cr, &res->p.linear.cg, &res->p.linear.cb, 
+        n = sscanf(s + 7, "%f,%f,%f,%f,%d,%d,%d,%d%c", 
+                   &res->p.linear.mr, &res->p.linear.mg, &res->p.linear.mb, &res->p.linear.ma,
+                   &res->p.linear.cr, &res->p.linear.cg, &res->p.linear.cb, &res->p.linear.ca, 
                    &eof);
-        if (n != 3 && n != 6)
+        if (n != 4 && n != 8)
             return 0;
-        if (n == 3)
-            res->p.linear.cr = res->p.linear.cg = res->p.linear.cb = 0;
+        if (n == 4)
+            res->p.linear.cr = res->p.linear.cg = res->p.linear.cb = res->p.linear.ca = 0;
         return 1;
     }
     if (strncmp(s, "shade,", 6) == 0) {

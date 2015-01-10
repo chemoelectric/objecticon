@@ -20,6 +20,11 @@ $load FILESIZE "images/gui.FILESIZE_24.gif"
 $load HIDDENFILE "images/gui.HIDDENFILE_24.gif"
 $load FAVOURITES "images/gui.FAVOURITES_24.gif"
 $load CONFIGURE "images/gui.CONFIGURE_24.gif"
+$load OPEN_FOLDER "images/gui.OPEN_FOLDER_16.gif"
+$load CLOSED_FOLDER "images/gui.CLOSED_FOLDER_16.gif"
+$load FILE "images/gui.FILE_16.gif"
+$load WINDOW_CLOSE "images/gui.WINDOW_CLOSE_16.gif"
+$load WINDOW_ICONIFY "images/gui.WINDOW_ICONIFY_16.gif"
 
 final abstract class ImageCache()
    public static 
@@ -27,6 +32,7 @@ final abstract class ImageCache()
       names
 
    private static init()
+      local i, j
       names := table()
       imap := table()
       name_image("gui.HOME_24", HOME)
@@ -42,262 +48,40 @@ final abstract class ImageCache()
       name_image("gui.HIDDENFILE_24", HIDDENFILE)
       name_image("gui.FAVOURITES_24", FAVOURITES)
       name_image("gui.CONFIGURE_24", CONFIGURE)
+      name_image("gui.CLOSED_FOLDER_16", CLOSED_FOLDER)
+      name_image("gui.OPEN_FOLDER_16", OPEN_FOLDER)
+      name_image("gui.FILE_16", FILE)
+      name_image("gui.WINDOW_CLOSE_16", WINDOW_CLOSE)
+      name_image("gui.WINDOW_ICONIFY_16", WINDOW_ICONIFY)
 
-      name_image("gui.BOX_UP", "13,(0=shadow;1=hilite;~=transparent),_
-~~~~~~~~~~~~~_
-~11111111111~_
-~11111111110~_
-~11~~~~~~~00~_
-~11~~~~~~~00~_
-~11~~~~~~~00~_
-~11~~~~~~~00~_
-~11~~~~~~~00~_
-~11~~~~~~~00~_
-~11~~~~~~~00~_
-~11000000000~_
-~10000000000~_
-~~~~~~~~~~~~~_
-")
-      name_image("gui.BOX_DOWN", "13,(b=black;0=shadow;1=hilite;~=transparent),_
-~~~~~~~~~~~~~_
-~00000000001~_
-~00000000001~_
-~00~~~~~~~11~_
-~00~bbbbb~11~_
-~00~bbbbb~11~_
-~00~bbbbb~11~_
-~00~bbbbb~11~_
-~00~bbbbb~11~_
-~00~~~~~~~11~_
-~01111111111~_
-~11111111111~_
-~~~~~~~~~~~~~_
-")
-      name_image("gui.DIAMOND_UP", "13,(0=shadow;1=hilite;~=transparent),_
-~~~~~~1~~~~~~_
-~~~~~111~~~~~_
-~~~~11~11~~~~_
-~~~11~~~11~~~_
-~~11~~~~~11~~_
-~11~~~~~~~11~_
-11~~~~~~~~~11_
-~00~~~~~~~00~_
-~~00~~~~~00~~_
-~~~00~~~00~~~_
-~~~~00~00~~~~_
-~~~~~000~~~~~_
-~~~~~~0~~~~~~_
-")
-      name_image("gui.DIAMOND_DOWN", "13,(b=black;0=shadow;1=hilite;~=transparent),_
-~~~~~~0~~~~~~_
-~~~~~000~~~~~_
-~~~~00~00~~~~_
-~~~00~b~00~~~_
-~~00~bbb~00~~_
-~00~bbbbb~00~_
-00~bbbbbbb~00_
-~11~bbbbb~11~_
-~~11~bbb~11~~_
-~~~11~b~11~~~_
-~~~~11~11~~~~_
-~~~~~111~~~~~_
-~~~~~~1~~~~~~_
-")
-      name_image("gui.ARROW_UP", "11,(b=black;c=black 50%;~=transparent),_
-~~~~~c~~~~~_
-~~~~cbc~~~~_
-~~~cbbbc~~~_
-~~cbbbbbc~~_
-~cbbbbbbbc~_
-cbbbbbbbbbc_
-")
-      name_image("gui.ARROW_DOWN", "11,(b=black;c=black 50%;~=transparent),_
-cbbbbbbbbbc_
-~cbbbbbbbc~_
-~~cbbbbbc~~_
-~~~cbbbc~~~_
-~~~~cbc~~~~_
-~~~~~c~~~~~_
-")
-      name_image("gui.ARROW_LEFT", "9,(b=black;c=black 50%;~=transparent),_
-~~~~~~~~c_
-~~~~~~cbb_
-~~~~cbbbb_
-~~cbbbbbb_
-cbbbbbbbb_
-~~cbbbbbb_
-~~~~cbbbb_
-~~~~~~cbb_
-~~~~~~~~c_
-")
-      name_image("gui.ARROW_RIGHT", "9,(b=black;c=black 50%;~=transparent),_
-c~~~~~~~~_
-bbc~~~~~~_
-bbbbc~~~~_
-bbbbbbc~~_
-bbbbbbbbc_
-bbbbbbc~~_
-bbbbc~~~~_
-bbc~~~~~~_
-c~~~~~~~~_
-")
-      name_image("gui.TINY_ARROW_UP", "7,(b=black;c=black 50%;~=transparent),_
-~~~c~~~_
-~~cbc~~_
-~cbbbc~_
-cbbbbbc_
-")
-      name_image("gui.TINY_ARROW_DOWN", "7,(b=black;c=black 50%;~=transparent),_
-cbbbbbc_
-~cbbbc~_
-~~cbc~~_
-~~~c~~~_
-")
-      name_image("gui.PLUS", "9,(b=black;~=transparent),_
-bbbbbbbbb_
-b~~~~~~~b_
-b~~~b~~~b_
-b~~~b~~~b_
-b~bbbbb~b_
-b~~~b~~~b_
-b~~~b~~~b_
-b~~~~~~~b_
-bbbbbbbbb_
-")
-      name_image("gui.MINUS", "9,(b=black;~=transparent),_
-bbbbbbbbb_
-b~~~~~~~b_
-b~~~~~~~b_
-b~~~~~~~b_
-b~bbbbb~b_
-b~~~~~~~b_
-b~~~~~~~b_
-b~~~~~~~b_
-bbbbbbbbb_
-")
-      name_image("gui.TINY_X", "8,(b=black;~=transparent),_
-bb~~~~bb_
-~bb~~bb~_
-~~~bb~~~_
-~bb~~bb~_
-bb~~~~bb_
-")
-      name_image("gui.HORIZ_GRID", "24,(0=shadow;1=hilite;~=transparent),_
-~00~~~~~~~~00~~~~~~~~00~_
-0011~~~~~~0011~~~~~~0011_
-0111~~~~~~0111~~~~~~0111_
-~11~~~~~~~~11~~~~~~~~11~_
-")
-      name_image("gui.VERT_GRID", "4,(0=shadow;1=hilite;~=transparent),_
-~00~_
-0011_
-0111_
-~11~_
-~~~~_
-~~~~_
-~~~~_
-~~~~_
-~~~~_
-~~~~_
-~00~_
-0011_
-0111_
-~11~_
-~~~~_
-~~~~_
-~~~~_
-~~~~_
-~~~~_
-~~~~_
-~00~_
-0011_
-0111_
-~11~_
-")
-      name_image("gui.CLOSED_FOLDER", "16,c1,_
-~~~~~~~~~~~~~~~~_
-~~~~0000~~~~~~~~_
-~~~0;;;;0~~~~~~~_
-~~0;;;;;;0~~~~~~_
-~0000000000000~~_
-~0;;;;;;;;;;;0~~_
-~0;;;;;;;;;;;0~~_
-~0;;;;;;;;;;;0~~_
-~0;;;;;;;;;;;0~~_
-~0;;;;;;;;;;;0~~_
-~0;;;;;;;;;;;0~~_
-~0;;;;;;;;;;;0~~_
-~0000000000000~~_
-~~~~~~~~~~~~~~~~_
-")
-      name_image("gui.OPEN_FOLDER", "16,c1,_
-~~~~~~~~~~~~~~~~_
-~~~0000~~~~~~~~~_
-~~0DDDD0~~~~~~~~_
-~0DDDDDD0~~~~~~~_
-0000000000000~~~_
-02D2D2D2D2D20~~~_
-0D2D000000000000_
-02D0DDDDDDDDDDD0_
-0D20DDDDDDDDDD0~_
-020DDDDDDDDDDD0~_
-0D0DDDDDDDDDDD0~_
-00DDDDDDDDDD00~~_
-0000000000000~~~_
-~~~~~~~~~~~~~~~~_
-")
-      name_image("gui.FILE", "16,c1,_
-~~~~~~~~~~~~~~~~_
-~~~0000000~~~~~~_
-~~~06666600~~~~~_
-~~~0606060~0~~~~_
-~~~0666660000~~~_
-~~~0600606660~~~_
-~~~0666666660~~~_
-~~~0600600060~~~_
-~~~0666666660~~~_
-~~~0600060660~~~_
-~~~0666666660~~~_
-~~~0666666660~~~_
-~~~0000000000~~~_
-~~~~~~~~~~~~~~~~_
-")
-      name_image("gui.WINDOW_CLOSE_BUTTON", "16,c1,_
-~>>>>>>>>>>>>>>~_
->>iiiiiiiiiiii>>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iii<<iiii<<iii>_
->iii<6<ii<6<iii>_
->iiii<6<<6<iiii>_
->iiiii<66<iiiii>_
->iiiii<66<iiiii>_
->iiii<6<<6<iiii>_
->iii<6<ii<6<iii>_
->iii(<iiii<(iii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->>iiiiiiiiiiii>>_
-~>>>>>>>>>>>>>>~_
-")
-      name_image("gui.WINDOW_ICONIFY_BUTTON", "16,c1,_
-~>>>>>>>>>>>>>>~_
->>iiiiiiiiiiii>>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->iiiiiiiiiiiiii>_
->ii<<<<<<<<<<ii>_
->ii6666666666ii>_
->>iiiiiiiiiiii>>_
-~>>>>>>>>>>>>>>~_
-")
+      i := scale_odd(13)
+      j := scale(2)
+      name_image("gui.BOX_UP", mk_box_up(i, j))
+      name_image("gui.BOX_DOWN",  mk_box_down(i, j))
+      name_image("gui.DIAMOND_UP", mk_diamond_up(i, j))
+      name_image("gui.DIAMOND_DOWN",  mk_diamond_down(i, j))
+
+      i := scale_odd(11)
+      name_image("gui.ARROW_UP", mk_arrow_up(i))
+      name_image("gui.ARROW_DOWN", mk_arrow_down(i))
+
+      i := scale_odd(9)
+      name_image("gui.ARROW_LEFT", mk_arrow_left(i))
+      name_image("gui.ARROW_RIGHT", mk_arrow_right(i))
+
+      i := scale_odd(7)
+      name_image("gui.TINY_ARROW_UP", mk_arrow_up(i))
+      name_image("gui.TINY_ARROW_DOWN", mk_arrow_down(i))
+
+      i := scale(9)
+      j := scale(1)
+      name_image("gui.PLUS", mk_handle(i, j))
+      name_image("gui.MINUS", mk_handle(i, j, &yes))
+
+      i := scale_odd(5)
+      j := scale(6)
+      name_image("gui.VERT_GRID", mk_v_grid(i, j))
+      name_image("gui.HORIZ_GRID", mk_h_grid(i, j))
    end
 
    # Associate arbitrary image data (eg gif file data), with a name.
@@ -375,12 +159,12 @@ bb~~~~bb_
          fl := &yes
       if is_image_string(s) then {
          if \win then
-            key := Window.color_value(win.get_fg()) || "/" || Window.color_value(win.get_bg()) || "#" || key
+            key ||:= "#With colour "|| Window.color_value(win.get_fg()) || "/" || Window.color_value(win.get_bg())
          if w := member(imap, key) then
             return key
          \fl | return error("Invalid key for ImageCache")
          w := use {
-            p := parse_image_string(s, win),
+            p := image_string_to_Pixels(s, win),
             Window.open_image(p)
          } | fail
       } else {
@@ -404,11 +188,18 @@ bb~~~~bb_
       s := member(names, s)
       return if is_image_string(s) then {
          use {
-            p := parse_image_string(s, win),
+            p := image_string_to_Pixels(s, win),
             Window.open_image(p)
          }
       } else
          Window.open_image(s)
+   end
+
+   #
+   # Convenient method to combine `copy_key` and `get_key_with_resize`
+   #
+   public static copy_key_with_resize(new_key, s, width, height, win)
+      return copy_key(new_key, get_key_with_resize(s, width, height, win))
    end
 
    #
@@ -421,12 +212,16 @@ bb~~~~bb_
    end
 
    #
-   # Like `get_with_resize`, but returns the key rather than the window.
+   # Like `get_with_resize`, but returns the key rather than the
+   # window.  `width` and `height` default to the value of `scale()`
+   # applied to the raw image's dimensions.
    #
    public static get_key_with_resize(s, width, height, win)
       local w, key, w2
       key := get_key(s, win) | fail
       w := member(imap, key)
+      /width := scale(w.get_width())
+      /height := scale(w.get_height())
       if w.get_width() = width & w.get_height() = height then
          return key
       key ||:= "#Resized to " || width || "x" || height

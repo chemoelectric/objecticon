@@ -28,6 +28,12 @@ abstract class BaseTree(SelectableScrollArea)
       last_expanded,
       show_root_flag,
       show_root_handles_flag
+
+   private static init()
+      ImageCache.copy_key_with_resize("tree.CLOSED_FOLDER", "gui.CLOSED_FOLDER_16")
+      ImageCache.copy_key_with_resize("tree.OPEN_FOLDER", "gui.OPEN_FOLDER_16")
+      ImageCache.copy_key_with_resize("tree.FILE", "gui.FILE_16")
+   end
    
    public abstract calculate_line_height()
 
@@ -78,14 +84,35 @@ abstract class BaseTree(SelectableScrollArea)
    #
    public set_default_icon_paint(i1, i2, i3)
       if is_initialized() then {
-         every (!\default_icon_paint).finally()
+         every (!default_icon_paint).finally()
          self.default_icon_paint := [i1, i2, i3]
          every (!default_icon_paint).initially(self)
+         invalidate_node_images()
+         compute_and_invalidate()
       } else
          self.default_icon_paint := [i1, i2, i3]
       return self
    end
-   
+
+   # Set the handle {Paint}s (ie the little + and - icons).  The two
+   # parameters should be distinct instances.
+   #
+   public set_handle_paint(p, m)
+      if is_initialized() then {
+         every (plus | minus).finally()
+         self.plus := p
+         self.minus := m
+         every (plus | minus).initially(self)
+         invalidate()
+         plus.w = minus.w | runerr("Handle image widths differ")
+         plus.h = minus.h | runerr("Handle image heights differ")
+      } else {
+         self.plus := p
+         self.minus := m
+      }
+      return self
+   end
+
    #
    # Set the root node of the {Tree}.
    #
@@ -162,7 +189,7 @@ abstract class BaseTree(SelectableScrollArea)
          #
          # The column width is slightly wider than the bitmap width
          #
-         col_w := img_w + 4
+         col_w := img_w + scale(4)
       } else
          col_w := fixed_col_w
    end
@@ -250,10 +277,11 @@ abstract class BaseTree(SelectableScrollArea)
    end
 
    public draw_line(xp, yp, lh, i, sel, cur, hi)
-      local N, dashed, lp, j, icon_paint, img, little, y0
+      local N, dashed, lp, j, icon_paint, img, little, y0, thick, thick2
 
       y0 := yp + lh / 2
-
+      thick := Gui.FINE_WIDTH
+      thick2 := thick / 2
       N := contents[i]
       use {
          dashed := view.cbwin.clone().set_masked_pattern("gray"),
@@ -261,19 +289,17 @@ abstract class BaseTree(SelectableScrollArea)
             lp := xp
             every j := 1 to N.depth - 1 do {
                if N.draw_line[j] == ("f"|"d") then
-                  dashed.fill_rectangle(lp + col_w / 2, yp, 1, lh)
+                  dashed.fill_rectangle(lp + col_w / 2 - thick2, yp, thick, lh)
                
                lp +:= col_w
             }
             if N.depth > 0 then {
-               if N.draw_line[N.depth] == "d" then
-                  dashed.fill_rectangle(lp + col_w / 2, y0, 1, lh / 2)
-               else if N.draw_line[N.depth] == "f" then
-                  dashed.fill_rectangle(lp + col_w / 2, yp, 1, lh)
-               else if N.draw_line[N.depth] == "u" then
-                  dashed.fill_rectangle(lp + col_w / 2, yp, 1, lh / 2 + 1)
-
-               dashed.fill_rectangle(lp + col_w / 2, y0, col_w + 1, 1)
+               case N.draw_line[N.depth] of {
+                  "d": dashed.fill_rectangle(lp + col_w / 2 - thick2, y0, thick, lh / 2 + 1)
+                  "f": dashed.fill_rectangle(lp + col_w / 2 - thick2, yp, thick, lh)
+                  "u": dashed.fill_rectangle(lp + col_w / 2 - thick2, yp, thick, lh / 2 + 1)
+               }
+               dashed.fill_rectangle(lp + col_w / 2, y0 - thick2, col_w + 1, thick)
 
                lp +:= col_w
             }
@@ -286,7 +312,7 @@ abstract class BaseTree(SelectableScrollArea)
                   img := icon_paint[2]
                   little := minus
                   if *N.children > 0 then
-                     dashed.fill_rectangle(lp + col_w / 2, yp + lh / 2, 1, lh / 2)
+                     dashed.fill_rectangle(lp + col_w / 2 - thick2, y0, thick, lh / 2 + 1)
                } else {
                   img := icon_paint[1]
                   little := plus
@@ -309,11 +335,11 @@ abstract class BaseTree(SelectableScrollArea)
 
    public new()
       SelectableScrollArea.new()
-      plus := ImagePaint().set_cache("gui.PLUS")
-      minus := ImagePaint().set_cache("gui.MINUS")
-      set_default_icon_paint(ImagePaint().set_cache("gui.CLOSED_FOLDER"), 
-                             ImagePaint().set_cache("gui.OPEN_FOLDER"),
-                             ImagePaint().set_cache("gui.FILE"))
+      set_handle_paint(ImagePaint().set_cache("gui.PLUS"),
+                       ImagePaint().set_cache("gui.MINUS"))
+      set_default_icon_paint(ImagePaint().set_cache("tree.CLOSED_FOLDER"), 
+                             ImagePaint().set_cache("tree.OPEN_FOLDER"),
+                             ImagePaint().set_cache("tree.FILE"))
       show_root_flag := show_root_handles_flag := 1
       return
    end

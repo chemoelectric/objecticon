@@ -175,7 +175,7 @@ class CanvasTabSetDialog(CanvasComponentDialog)
 
       struct := TextList()
       struct.connect(self.update_grey, Event.SELECTION_CHANGED)
-      struct.set_size(175, 100)
+      struct.set_size(scale(175), scale(100))
       struct.set_select_mode(Select.ONE)
       struct.set_contents(c.string_rep())
       p.add(struct)

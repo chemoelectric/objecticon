@@ -296,7 +296,7 @@ class Cache()
          case classof(ce) of {
             CacheData: {
                exp := format_expiry(ce.expiry) | (if ce.may_revalidate() then "revalidate" else "expired")
-               n := Browser.limit_text(\ce.fname, 200) | "-"
+               n := Browser.limit_text(\ce.fname, scale(200)) | "-"
                sz := Format.numeric_to_string(*ce.data, 0, ',')
                ct := (\ce.content_type).to_rfc1521() | "-"
                s1 ||:= "<tr><td>" || Browser.to_content(n) || "</td><td align=right>" || sz || "&nbsp;</td><td>" || exp ||
@@ -2811,7 +2811,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public static const 
       COLORS,
-      SIZES
+      SIZES,
+      SCROLL_INCREMENT
 
    private static const
       default_font_clone
@@ -2965,6 +2966,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       SIZES := [0.5 * t, 0.75 * t, t, 1.25 * t, 1.5 * t, 1.75 * t, 2.0 * t]
       ImageCache.name_image("rpp.BROKEN_LINK", BROKEN_LINK)
       default_font_clone := Window().set_font("sans")
+      SCROLL_INCREMENT := scale(20)
    end
 
    public get_map(s)
@@ -3371,7 +3373,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public static mk_anchor(url, lim)
       local s1, s2
-      /lim := 1000
+      /lim := scale(1000)
       s1 := s2 := url.str()
       s2 := limit_text(s2, lim)
       return "<a href=\"" || to_attr(s1) || "\">" || Browser.to_content(s2) || "</a>"
@@ -3959,8 +3961,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       use {
          mW := cbwin.clone().set_font(context.font),
          {
-            w := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", integer(e.get_attribute(u"COLS"))))) | 200
-            h := (2 * Gui.BORDER_WIDTH + integer(e.get_attribute(u"ROWS")) * mW.get_font_height()) | 100
+            w := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", integer(e.get_attribute(u"COLS"))))) | scale(200)
+            h := (2 * Gui.BORDER_WIDTH + integer(e.get_attribute(u"ROWS")) * mW.get_font_height()) | scale(100)
          }
       }
       # The ucs conversion is used here since an empty node will return "" (not u"").
@@ -3980,7 +3982,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          "file": {
             use {
                mW := cbwin.clone().set_font(context.font),
-               size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | 160
+               size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | scale(160)
             }
             q := FormBrowse(self, size)
             add_form_component(e, p, q, context)
@@ -4130,7 +4132,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
                set_range(min, max).
                set_increment_size(step)
             if /max then
-               q.set_width(100)
+               q.set_width(scale(100))
             add_form_component(e, p, q, context)
          }
          "url": {
@@ -4138,7 +4140,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             use {
                mW := cbwin.clone().set_font(context.font),
                size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + 
-                        mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | 160
+                        mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | scale(160)
             }
             q := FormURLField(v).
                set_width(size).
@@ -4155,7 +4157,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             use {
                mW := cbwin.clone().set_font(context.font),
                size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + 
-                        mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | 160
+                        mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | scale(160)
             }
             q := FormTextField(self, v, did).
                set_width(size).
@@ -5044,14 +5046,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          case v_direction of {
             "up": {
                if cursor_y > 0 then {
-                  cursor_y := max(0, cursor_y - 20)
+                  cursor_y := max(0, cursor_y - SCROLL_INCREMENT)
                   set_area_y(cursor_y)
                   f := 1
                }
             }
             "down": {
                if cursor_y < view.inner.h then {
-                  cursor_y := min(view.inner.h, cursor_y + 20)
+                  cursor_y := min(view.inner.h, cursor_y + SCROLL_INCREMENT)
                   set_area_y(cursor_y - view.h)
                   f := 1
                }
@@ -5060,14 +5062,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          case h_direction of {
             "left": {
                if cursor_x > 0 then {
-                  cursor_x := max(0, cursor_x - 20)
+                  cursor_x := max(0, cursor_x - SCROLL_INCREMENT)
                   set_area_x(cursor_x)
                   f := 1
                }
             }
             "right": {
                if cursor_x < view.inner.w then {
-                  cursor_x := min(view.inner.w, cursor_x + 20)
+                  cursor_x := min(view.inner.w, cursor_x + SCROLL_INCREMENT)
                   set_area_x(cursor_x - view.w)
                   f := 1
                }
@@ -5298,7 +5300,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          s ||:= "<h1>Images</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=right>Size&nbsp;<th align=left>URL</tr>"
          every c := !imgs do {
             l := c.img_url
-            n := limit_text(\c.img_name, 200) | "-"
+            n := limit_text(\c.img_name, scale(200)) | "-"
             sz := Format.numeric_to_string(*\c.img_data, 0, ',') | "-"
             s ||:= "<tr><td>" || to_content(n) || "<td align=right>" || sz || "&nbsp;" || mk_anchor_cell(l) || "</tr>"
          }
@@ -5308,7 +5310,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       if *page_links > 0 then {
          s ||:= "<h1>Links</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=left>URL</tr>"
          every l := !page_links do {
-            n := limit_text(t[l], 200)
+            n := limit_text(t[l], scale(200))
             s ||:= "<tr><td nowrap>" || to_content(n) || mk_anchor_cell(l) || "</tr>" 
          }      
          s ||:= "</table>"

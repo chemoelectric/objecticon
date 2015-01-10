@@ -91,19 +91,20 @@ class TTExplorer(Dialog)
    end
 
    public component_setup()
-      local root_node, w, bw
+      local root_node, w, bw, p
       self.setup()
       tree := tt.get_table_content()
+      p := scale(2)
       tree.
-         set_fixed_col_w(16 + 2 * 2).
+         set_fixed_col_w(IconFilesItemPaint.ICON_SIZE + 2 * p).
          set_item_paint(IconFilesItemPaint()).
          set_item_border(EmptyBorder().
-                            set_insets(2, Gui.TEXT_INSET, 0, 0).
+                            set_insets(p, Gui.TEXT_INSET, 0, 0).
                             set_x_align(Align.L)).
          connect(self.handle_tree_expansion, Event.TREE_NODE_EXPANSION)
 
       bw := TableColumn().border.get_total_width()
-      set_size(800, 600)
+      set_size(scale(800), scale(600))
       use {
          w := Window(),
          {
@@ -123,7 +124,7 @@ class TTExplorer(Dialog)
    end
 
    private setup()
-      local paint_2, layout_1, paint_1, paint_3, paint
+      local paint_2, layout_1, paint_1, paint, paint_3
       self.set_resize(&yes)
       paint := TextPaint("File")
       file_col := TableColumn().
@@ -133,19 +134,19 @@ class TTExplorer(Dialog)
       size_col := TableColumn().
          set_paint(paint_1).
          set_column_align(Align.R).
-         set_column_width(75)
+         set_column_width(scale(75))
       paint_2 := TextPaint("Date")
       date_col := TableColumn().
          set_paint(paint_2).
          set_column_align(Align.L).
-         set_column_width(100)
+         set_column_width(scale(100))
       paint_3 := TextPaint("Bits")
       bits_col := TableColumn().
          set_paint(paint_3).
          set_column_align(Align.L).
-         set_column_width(100)
+         set_column_width(scale(100))
       tt := ItemPaintTreeTable().
-         set_size("475", "265").
+         set_size(scale(475), scale(265)).
          set_align(Align.C, Align.T).
          clear_constraints().
          set_constraint("eol", &yes).

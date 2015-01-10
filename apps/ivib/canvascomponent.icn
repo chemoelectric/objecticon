@@ -82,12 +82,19 @@ class CanvasComponent(CanvasObject)
 
       if \self.x_spec | \self.y_spec then {
          t := "set_pos("
-         if \self.x_spec then
-            t ||:= image(self.x_spec)
+         if \self.x_spec then {
+            t ||:= if integer(self.x_spec) then
+               c.scalable_dim(self.x_spec)
+            else
+               image(self.x_spec)
+         }
          t ||:= ", "
 
          if \self.y_spec then
-            t ||:= image(self.y_spec)
+            t ||:= if integer(self.y_spec) then
+               c.scalable_dim(self.y_spec)
+            else
+               image(self.y_spec)
 
          t ||:= ")"
          c.chain(t)
@@ -95,10 +102,19 @@ class CanvasComponent(CanvasObject)
 
       if \self.w_spec | \self.h_spec then {
          t := "set_size("
-         if \self.w_spec then
-            t ||:= image(self.w_spec)
-         if \self.h_spec then
-            t ||:= ", " || image(self.h_spec)
+         if \self.w_spec then {
+            t ||:= if integer(self.w_spec) then
+               c.scalable_dim(self.w_spec)
+            else
+               image(self.w_spec)
+         }
+         if \self.h_spec then {
+            t ||:= ", "
+            t ||:= if integer(self.h_spec) then
+               c.scalable_dim(self.h_spec)
+            else
+               image(self.h_spec)
+         }
          t ||:= ")"
          c.chain(t)
       }

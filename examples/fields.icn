@@ -30,22 +30,22 @@ class Untitled(Dialog)
    end
 
    private setup()
-      local panel_2, label_2, border_3, layout_7, paint_11, layout_1, paint_9, panel_1, label_1, border_2, layout_6, paint_10, layout_3, border_content_1, border_content_2, border_content_3, label_3, layout_8, paint_12, border_1, text_button_1, layout_2
+      local label_2, panel_2, border_3, layout_7, paint_11, layout_1, label_1, paint_9, panel_1, border_2, layout_6, layout_3, paint_10, label_3, layout_8, border_content_1, border_content_2, border_content_3, border_1, paint_12, layout_2, text_button_1
       self.set_resize(&yes)
       paint_10 := TextPaint("Date & Time")
       label_1 := Label().
-         set_pos("575", "381").
+         set_pos(scale(575), scale(381)).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_paint(paint_10)
       time_field := TimeField().
-         set_size("123", "47").
+         set_size(scale(123), scale(47)).
          clear_constraints()
       year_field := YearField().
-         set_size("159", "75").
+         set_size(scale(159), scale(75)).
          clear_constraints()
       timezone_field := TimezoneField().
-         set_size("171", "44").
+         set_size(scale(171), scale(44)).
          clear_constraints()
       layout_3 := GridLayout().
          set_doi(0).
@@ -58,13 +58,13 @@ class Untitled(Dialog)
          add(year_field).
          add(timezone_field)
       date_field := DateField().
-         set_size("132", "41").
+         set_size(scale(132), scale(41)).
          clear_constraints()
       week_field := WeekField().
-         set_size("132", "41").
+         set_size(scale(132), scale(41)).
          clear_constraints()
       month_field := MonthField().
-         set_size("132", "41").
+         set_size(scale(132), scale(41)).
          clear_constraints()
       layout_2 := GridLayout().
          set_doi(0).
@@ -95,12 +95,12 @@ class Untitled(Dialog)
       self.add(border_1)
       paint_11 := TextPaint("Color")
       label_2 := Label().
-         set_pos("600", "417").
+         set_pos(scale(600), scale(417)).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_paint(paint_11)
       color_field := ColorField().
-         set_size("196", "61").
+         set_size(scale(196), scale(61)).
          clear_constraints().
          set_constraint("eol", &yes)
       layout_7 := GridLayout().
@@ -121,12 +121,12 @@ class Untitled(Dialog)
       self.add(border_2)
       paint_12 := TextPaint("Filesystem")
       label_3 := Label().
-         set_pos("604", "461").
+         set_pos(scale(604), scale(461)).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_paint(paint_12)
       file_field := FileSuggestField().
-         set_size("320").
+         set_size(scale(320)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_align", Align.L).
@@ -134,7 +134,7 @@ class Untitled(Dialog)
          set_constraint("x_weight", 1.0).
          set_contents("")
       dir_field := FileSuggestField().
-         set_size("320").
+         set_size(scale(320)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_align", Align.L).

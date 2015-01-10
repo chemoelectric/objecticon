@@ -518,9 +518,7 @@ class Evaluator()
       suspend .!\imports
    end
 
-   public new(env, node)
-      self.env := env
-      self.node := node
+   public new()
       self.dispatch := table(do_default)
       every lang.Class.get_class_field_names(self) ? {
          if ="do_" then

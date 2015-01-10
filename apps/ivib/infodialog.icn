@@ -31,7 +31,7 @@ class InfoDialog(Dialog)
       every s ||:= !lines || "\n.br\n"
       l.set_label(s)
       add(l)
-      add(Line().set_constraint("eol", &yes).set_size(100).set_constraint("x_fill", &yes))
+      add(Line().set_constraint("eol", &yes).set_size(scale(100)).set_constraint("x_fill", &yes))
       b := TextButton()
       b.set_label(button_text)
       b.connect(self.dispose, Event.ACTION)

@@ -97,7 +97,7 @@ class Style()
       local cw
       return use {
          cw := get_dashed_clone(W),
-         cw.draw_rectangle(x, y, w, h)
+         cw.draw_rectangle(x, y, w, h, Gui.FINE_WIDTH)
       }
    end
 
@@ -105,7 +105,7 @@ class Style()
       local cw
       return use {
          cw := get_focus_clone(W),
-         cw.draw_rectangle(x, y, w, h)
+         cw.draw_rectangle(x, y, w, h, Gui.FINE_WIDTH)
       }
    end
 
@@ -113,7 +113,7 @@ class Style()
       local cw
       return use {
          cw := get_highlight_clone(W),
-         cw.draw_rectangle(x, y, w, h)
+         cw.draw_rectangle(x, y, w, h, Gui.FINE_WIDTH)
       }
    end
 
@@ -121,7 +121,7 @@ class Style()
       local cw
       return use {
          cw := get_shadow_clone(W),
-         cw.fill_rectangle(x - 1, y, 2, h)
+         cw.fill_rectangle(x - Gui.CURSOR_WIDTH / 2, y, Gui.CURSOR_WIDTH, h)
       }
    end
 
@@ -129,7 +129,7 @@ class Style()
       local cw
       return use {
          cw := get_cursor_clone(W),
-         cw.fill_rectangle(x - 1, y, 2, h)
+         cw.fill_rectangle(x - Gui.CURSOR_WIDTH / 2, y, Gui.CURSOR_WIDTH, h)
       }
    end
 
@@ -139,8 +139,8 @@ class Style()
          set_font("sans,-2").
          set_fg("black").
          set_border(CompoundBorder().
-                      set_outer(PlainBorder().set_line_width(1)).
-                      set_inner(EmptyBorder().set_insets(3,3,2,2)))
+                      set_outer(PlainBorder().set_line_width(Gui.FINE_WIDTH)).
+                      set_inner(EmptyBorder().set_insets(scale(3), scale(3), scale(2), scale(2))))
    end
 
    public polish(obj)
@@ -148,11 +148,11 @@ class Style()
 
    public distance2ticker_rate(d)
       local r
-      r := 200 - 6*d
+      # Awkward since we're going from scaled pixels to unit pixels
+      # (rather than the other way round).
+      r := 200 - integer(d * (6.0 / Gui.SCALE_FACTOR))
       r <:= 20
       r >:= 200
       return r
    end
 end
-
-

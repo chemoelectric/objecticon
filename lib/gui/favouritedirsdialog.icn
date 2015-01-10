@@ -208,13 +208,13 @@ class FavouriteDirectoriesDialog(Dialog)
       application_column := ItemPaintTableColumn().
          set_paint(paint_1).
          set_column_align(Align.L).
-         set_column_width(90)
+         set_column_width(scale(90))
       paint_2 := TextPaint("Directory")
       directory_column := ItemPaintTableColumn().
          set_paint(paint_2).
          set_column_align(Align.L)
       entry_table := FavouriteDirectoriesTable().
-         set_size(420, "202").
+         set_size(scale(420), scale(202)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -232,7 +232,7 @@ class FavouriteDirectoriesDialog(Dialog)
          set_constraint("x_align", Align.L).
          set_paint(paint_3)
       application_field := TextField().
-         set_size("203").
+         set_size(scale(203)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_align", Align.L).
@@ -255,7 +255,7 @@ class FavouriteDirectoriesDialog(Dialog)
          set_constraint("x_align", Align.L).
          set_paint(paint_4)
       directory_field := FileSuggestField().
-         set_size("205").
+         set_size(scale(205)).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
@@ -337,7 +337,7 @@ class FavouriteDirectoriesDialog(Dialog)
          set_paint(paint_6)
       paint_11 := TextPaint("")
       message_label := MessageLabel().
-         set_size("130").
+         set_size(scale(130)).
          set_align(Align.L, Align.B).
          set_fg("red").
          clear_constraints().

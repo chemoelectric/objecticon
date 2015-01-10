@@ -81,7 +81,7 @@ class IconFilesItemPaint(ItemPaint)
    public static const ICON_SIZE
 
    private static init()
-      ICON_SIZE := 16
+      ICON_SIZE := scale(16)
       ImageCache.
          name_image("fi.PDF_16", PDF_16).
          name_image("fi.IMAGE_16", IMAGE_16).
@@ -96,13 +96,35 @@ class IconFilesItemPaint(ItemPaint)
          name_image("fi.PIPE_16", PIPE_16).
          name_image("fi.HTML_16", HTML_16)
 
-      try_xdg("fi.folder", "folder", "gui.CLOSED_FOLDER")
+      try_xdg("fi.folder", "folder", "gui.CLOSED_FOLDER_16")
       try_xdg("fi.symlink", "emblem-symbolic-link", "fi.SYMLINK_16")
       try_xdg("fi.exe", "application-x-executable", "fi.EXE_16")
+      resize("fi.pdf", "fi.PDF_16")
+      resize("fi.image", "fi.IMAGE_16")
+      resize("fi.video", "fi.VIDEO_16")
+      resize("fi.archive", "fi.ARCHIVE_16")
+      resize("fi.audio", "fi.AUDIO_16")
+      resize("fi.chardevice", "fi.CHARDEVICE_16")
+      resize("fi.blockdevice", "fi.BLOCKDEVICE_16")
+      resize("fi.socket", "fi.SOCKET_16")
+      resize("fi.pipe", "fi.PIPE_16")
+      resize("fi.html", "fi.HTML_16")
+      resize("fi.file", "gui.FILE_16")
+   end
+
+   private static resize(dest, src)
+      ImageCache.copy_key_with_resize(dest, src, ICON_SIZE, ICON_SIZE)
    end
 
    private static try_xdg(key, icon, alt)
-      ImageCache.copy_key(key, Xdg.find_icon_and_cache(icon, ICON_SIZE) | ImageCache.get_key(alt))
+      local k, w
+      if k := Xdg.find_icon_and_cache(icon, ICON_SIZE) then {
+         w := ImageCache.get(k)
+         if w.get_width() > ICON_SIZE then
+            k := ImageCache.get_key_with_resize(k, ICON_SIZE, ICON_SIZE)
+      } else
+         k := ImageCache.get_key_with_resize(alt, ICON_SIZE, ICON_SIZE)
+      ImageCache.copy_key(key, k)
    end
 
    public get_width(W, data)
@@ -137,35 +159,35 @@ $ifdef _PNG
       k := case st.mode_str[1] of {
          "d" : "fi.folder"
          "l" : "fi.symlink"
-         "s" : "fi.SOCKET_16"
-         "p" : "fi.PIPE_16"
-         "b" : "fi.BLOCKDEVICE_16"
-         "c" : "fi.CHARDEVICE_16"
+         "s" : "fi.socket"
+         "p" : "fi.pipe"
+         "b" : "fi.blockdevice"
+         "c" : "fi.chardevice"
          default : {
             if st.mode_str[-7] == ("x" | "s") then
                "fi.exe"
             else {
-                get_xdg_for_file(data.name) | case map(string(Files.get_extension(data.name))) of {
-                  "pdf": "fi.PDF_16"
-                  "cmd"|"exe"|"com"|"btm"|"bat" : "fi.EXE_16"
-                  "tar"|"tgz"|"arj"|"taz"|"lzh"|"zip"|"z"|"Z"|"gz"|"xz"|"bz2"|"rar" : "fi.ARCHIVE_16"
-                  "jpg"|"jpeg"|"png"|"gif"|"bmp"|"xbm"|"xpm": "fi.IMAGE_16"
-                  "mp4"|"flv"|"avi"|"wmv"|"webm"|"3gp"|"mpeg"|"mpg"|"m4v"|"mkv": "fi.VIDEO_16"
-                  "mp3"|"wav"|"mid"|"rm": "fi.AUDIO_16"
-                  "htm"|"html": "fi.HTML_16"
+               get_xdg_for_file(data.name) | case map(string(Files.get_extension(data.name))) of {
+                  "pdf": "fi.pdf"
+                  "cmd"|"exe"|"com"|"btm"|"bat" : "fi.exe"
+                  "tar"|"tgz"|"arj"|"taz"|"lzh"|"zip"|"z"|"Z"|"gz"|"xz"|"bz2"|"rar" : "fi.archive"
+                  "jpg"|"jpeg"|"png"|"gif"|"bmp"|"xbm"|"xpm": "fi.image"
+                  "mp4"|"flv"|"avi"|"wmv"|"webm"|"3gp"|"mpeg"|"mpg"|"m4v"|"mkv": "fi.video"
+                  "mp3"|"wav"|"mid"|"rm": "fi.audio"
+                  "htm"|"html": "fi.html"
                }
             }
          }
-      } | "gui.FILE"
+      } | "fi.file"
       return ImageCache.get(k) | syserr("Bad cache key in IconFilesItemPaint")
    end
 $else
    public get_icon(data)
       local k
       k := if data.stat.mode_str[1] == "d" then
-         "gui.CLOSED_FOLDER"
+         "fi.folder"
       else
-         "gui.FILE"
+         "fi.file"
       return ImageCache.get(k) | syserr("Bad cache key in IconFilesItemPaint")
    end
 $endif
@@ -174,7 +196,7 @@ $endif
       local i
       if not(i := \data.icon) then
          i := data.icon := get_icon(data)
-      i.copy_to(,,,, W, x, y + (h - ICON_SIZE) / 2)
+      i.copy_to(,,,, W, x + (ICON_SIZE - i.get_width()) / 2, y + (h - i.get_height()) / 2)
       x +:= ICON_SIZE + Gui.TEXT_INSET
       w -:= ICON_SIZE + Gui.TEXT_INSET
       draw_string_ex(W, x, y, limit_text(W, get_string(data), w))

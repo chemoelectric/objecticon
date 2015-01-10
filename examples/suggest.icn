@@ -32,10 +32,10 @@ class Untitled(Dialog)
    private setup()
       local paint_2, layout_1, paint_1, border_1, layout_2
       self.set_resize(&yes)
-      self.set_size(502, 395)
+      self.set_size(scale(502), scale(395))
       border_1 := EmptyBorder()
       image_1 := Image().
-         set_size("60", "60").
+         set_size(scale(60), scale(60)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -46,7 +46,7 @@ class Untitled(Dialog)
          set_image("")
       self.add(image_1)
       text_field_1 := GoogleSuggestField().
-         set_size("373").
+         set_size(scale(373)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_align", Align.L).

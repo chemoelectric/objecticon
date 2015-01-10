@@ -160,7 +160,7 @@ class Editor(Dialog)
       set_layout(GridLayout())
       connect(self.dispose, Event.WINDOW_CLOSE_BUTTON)
       text := EditableTextList().set_constraint("eol", &yes)
-      text.set_size(400, 300)
+      text.set_size(scale(400), scale(300))
       text.set_contents([u""])
       text.connect(self.update_grey, Event.SELECTION_CHANGED)
       text.connect(self.update_grey, Event.CONTENT_CHANGED)
@@ -243,6 +243,9 @@ class Editor(Dialog)
          connect(handle_save, Event.ACTION)
       tb.add(save_button)
 
+      theme_toolbar_button(close_button, "window-close")
+      theme_toolbar_button(save_button, "document-save")
+
       self.add(text)
 
       message_label := MessageLabel().
@@ -297,7 +300,7 @@ class SaveChangesDialog(Dialog)
       l := Label().set_constraint("eol", &yes).set_constraint("y_weight", 1).set_constraint("x_align", "c")
       l.set_label(".cell\nThe text has been modified.\n.br\nDo you wish to save these changes?\n.br")
       add(l)
-      add(Line().set_constraint("eol", &yes).set_size(100).set_constraint("x_fill", &yes))
+      add(Line().set_constraint("eol", &yes).set_size(scale(100)).set_constraint("x_fill", &yes))
 
       p := Panel().set_constraint("y_weight", 0)
       p.set_layout(GridLayout().set_doi(0))

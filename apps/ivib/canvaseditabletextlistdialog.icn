@@ -43,7 +43,7 @@ class CanvasEditableTextListDialog(CanvasComponentDialog)
       add_tab_at_front(p)
       p.set_label("Contents")
       contents := EditableTextList().set_constraint("eol", &yes)
-      contents.set_size(200, 200)
+      contents.set_size(scale(200), scale(200))
       contents.set_contents(copy(c.get_contents()))
       p.add(contents)
 

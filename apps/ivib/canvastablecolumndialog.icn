@@ -60,7 +60,7 @@ class CanvasTableColumnDialog(CanvasComponentDialog)
       p.add(l)
       
       size := TextField()
-      size.set_size(50)
+      size.set_size(scale(50))
       p.add(size)
 
       auto_width_cb := CheckBox().set_constraint("eol", &yes)
@@ -82,7 +82,7 @@ class CanvasTableColumnDialog(CanvasComponentDialog)
       p.add(l)
 
       internal_alignment := List().set_constraint("eol", &yes).set_constraint("w", 2)
-      internal_alignment.set_size(50)
+      internal_alignment.set_size(scale(50))
       internal_alignment.set_selection_list(["c", "l", "r"])
       internal_alignment.object_set_selection(c.column_align)
       p.add(internal_alignment)

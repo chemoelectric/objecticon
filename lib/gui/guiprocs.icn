@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics, lang, util, xdg, ipl.strings
+import graphics, lang, util, xdg, ipl.strings, posix
 
 class Event()
    public static const
@@ -128,9 +128,48 @@ class Direction()
    end
 end
 
+#
+# Scale the given number using the current scale factor.
+#
+procedure scale(i)
+   return integer(Gui.SCALE_FACTOR * i + 0.5)
+end
+
+#
+# Scale, but don't round and convert to integer.
+#
+procedure scale_real(r)
+   return Gui.SCALE_FACTOR * r
+end
+
+#
+# Like `scale`, but ensure an odd number results.
+#
+procedure scale_odd(i)
+   i := scale(i)
+   if i % 2 = 0 then i +:= 1
+   return i
+end
+
+#
+# Like `scale`, but ensure an even number results.
+#
+procedure scale_even(i)
+   i := scale(i)
+   if i % 2 = 1 then i +:= 1
+   return i
+end
+
 class Gui()
+   public static const
+      SCALE_FACTOR,
+      UNIT
+
    public static 
       BORDER_WIDTH,
+      CURSOR_WIDTH,
+      FINE_WIDTH,
+      TOOLBAR_ICON_SIZE,
       TEXT_INSET,
       X_INSET,
       Y_INSET,
@@ -149,15 +188,20 @@ class Gui()
       PRINTABLE_N               # Printable on multi lines of text
 
    private static init()
-      BORDER_WIDTH := 2
-      TEXT_INSET := 3
-      X_INSET := 6
-      Y_INSET := 3
+      SCALE_FACTOR := (1.0 < real(System.getenv("OIGUISCALE"))) | 1.0
+      UNIT := scale(1)
+      FINE_WIDTH := UNIT
+      CURSOR_WIDTH := 2 * UNIT
+      BORDER_WIDTH := 2 * UNIT
+      TEXT_INSET := scale(3)
+      X_INSET := scale(6)
+      Y_INSET := scale(3)
       REPEAT_DELAY := 500
       REPEAT_RATE := 100
       CURSOR_BLINK := 400
       TAB_WIDTH := 8
       IDLE_SLEEP := 50
+      TOOLBAR_ICON_SIZE := scale(24)
       style := Style()
       PRINTABLE_1 := '\x20-\x7e\x80-\U10ffff'
       PRINTABLE_N := '\t\n\x20-\x7e\x80-\U10ffff'
@@ -165,13 +209,12 @@ class Gui()
                             "x_fill", "y_fill", "x_align", "y_align", "x_weight", "y_weight")
       WATTRIB_SET := set("label", "x", "pos", "y", "resize", "size", "height", 
                          "width", "w", "h", "image", "canvas", "pointer", 
-                         "display", "depth", "fg", "bg", "draw_op", "icon",
+                         "display", "fg", "bg", "draw_op", "icon",
                          "font", "line_width", "geometry", "transient_for",
                          "line_style", "pattern", "clip", "unclip",
                          "dx", "dy", "input_mask", "min_width", "min_height", "min_size", "max_width", 
                          "max_height", "max_size")
-      CONTEXT_WATTRIB_SET := set("fg", "bg", "draw_op", "font", "line_width", "line_style", 
-                                 "pattern")
+      CONTEXT_WATTRIB_SET := set("fg", "bg", "draw_op", "font", "line_width", "line_style", "pattern")
    end
 
    public static is_constraint(s)
@@ -183,7 +226,7 @@ class Gui()
    end
 end
 
-procedure tab_ws()
+package procedure tab_ws()
    return tab(many(' \t\n\r'))
 end
 
@@ -198,60 +241,103 @@ procedure is_image_string(v)
    }
 end
 
-procedure parse_image_string(s, W)
-   local q, width, height, pal, data, extra, k, v
-   s := string(s) | runerr(103, s)
-   s ? {
-      tab_ws()
-      width := (0 < integer(tab(many(&digits)))) | return error("Width expected")
-      tab_ws()
-      ="," | return error("Comma expected")
-      tab_ws()
-      if any('cg') then {
-         pal := (move(1) || tab(many(&digits))) | return error("Palette expected")
+#
+# A simple helper class for parsing an image string.
+#
+class ImageStringInfo()
+   public
+     width, height, pal, extra, data
+
+   public new(s)
+      s := string(s) | runerr(103, s)
+      s ? {
          tab_ws()
-      }
-      if any('(') then {
-         move(1)
-         extra := tab(upto(')')) | return error("Missing )")
-         move(1)
+         width := (0 < integer(tab(many(&digits)))) | return error("Width expected")
          tab_ws()
+         ="," | return error("Comma expected")
+         tab_ws()
+         if any('cg') then {
+            pal := (move(1) || tab(many(&digits))) | return error("Palette expected")
+            tab_ws()
+         }
+         if any('(') then {
+            move(1)
+            extra := tab(upto(')')) | return error("Missing )")
+            move(1)
+            tab_ws()
+         }
+         ="," | return error("Comma expected")
+         data := tab(0)
+         if *data = 0 | *data % width ~= 0 then
+            return error("Wrong number of image characters")
+         height := *data / width
       }
-      ="," | return error("Comma expected")
-      data := tab(0)
+      return
+   end
+
+   public static from_parts(width, pal, extra, data)
+      local i
+      i := Class.create_instance()
+      i.width := width
+      i.pal := pal
+      i.extra := extra
+      i.data := data
       if *data = 0 | *data % width ~= 0 then
          return error("Wrong number of image characters")
-      height := *data / width
-      q := Pixels(width, height, Pixels.PALETTE8).
-         set_data(data)
-      # Add chars from palette, if specified.
-      if \pal then {
-         q.load_palette(pal) | {
-            q.close()
-            fail
-         }
+      i.height := *data / width
+      return i
+   end
+
+   public to_image_string()
+      local s
+      s := width || ","
+      s ||:= \pal
+      s ||:= "(" || \extra || ")"
+      return s || "," || data
+   end
+end
+
+# Convert an image string to a `Pixels` object, based on the window
+# `W` for hilite, shadow colours etc.
+#
+procedure image_string_to_Pixels(s, W)
+   local q, k, v, r, w
+   r := ImageStringInfo(s) | fail
+
+   q := Pixels(r.width, r.height, Pixels.PALETTE8).
+      set_data(r.data)
+   # Add chars from palette, if specified.
+   if \r.pal then {
+      q.load_palette(r.pal) | {
+         q.close()
+         fail
       }
-      # Add extra chars
-      if \extra then {
-         extra ? repeat {
-            tab_ws()
-            k := move(1) | break
-            ="=" | {
-               q.close()
-               return error("= expected")
-            }
-            v := tab(upto(';') | 0)
-            case v of {
+   }
+   # Add extra chars
+   if \r.extra then {
+      r.extra ? repeat {
+         tab_ws()
+         k := move(1) | break
+         ="=" | {
+            q.close()
+            return error("= expected")
+         }
+         v := tab(upto(';') | 0)
+         v ? {
+            w := tab(upto(', ') | 0)
+            case w of {
                "hilite" : v := Gui.style.get_hilite_color(W)
                "shadow" : v := Gui.style.get_shadow_color(W)
                "fg" : v := W.get_fg()
                "bg" : v := W.get_bg()
+               default : v := w
             }
-            move(1)
-            q.set_palette(ord(k), v) | {
-               q.close()
-               return error("invalid colour in image spec: " || v)
-            }
+            v ||:= tab(0)
+         }
+         move(1)
+         q.set_palette(ord(k), v) | {
+            q.close()
+            return error("invalid colour in image spec: " || v)
          }
       }
    }
@@ -277,39 +363,17 @@ procedure text_width_ex(win, s, i, j, tw)
    return win.text_width(detab(s[1:j], tw + 1)) - win.text_width(detab(s[1:i], tw + 1))
 end
 
+# Draw a string in the normal way, but including an underscore below
+# the first character `k`.
+#
 procedure draw_string_ex(win, x, y, s, k)
    local i
    y +:= win.get_font_ascent()
    win.draw_string(x, y, s)
    if i := upto(\k, map(s)) then {
       win.fill_rectangle(x + win.text_width(s[1:i]),
-                         y + win.get_font_descent() - 1,
-                         win.text_width(s[i]), 1)
-   }
-end
-
-procedure image_width(s)
-   s ? {
-      if ="(" then {
-         tab(upto(')')) 
-         move(1)
-      }
-      return integer(tab(upto(',')))
-   }
-end
-
-procedure image_height(s)
-   local w
-   s ? {
-      if ="(" then {
-         tab(upto(')')) 
-         move(1)
-      }
-      w := integer(tab(upto(',')))
-      move(1)
-      tab(upto(','))
-      move(1)
-      return *tab(0) / (0 ~= \w)
+                         y + win.get_font_descent() - Gui.FINE_WIDTH,
+                         win.text_width(s[i]), Gui.FINE_WIDTH)
    }
 end
 
@@ -384,8 +448,8 @@ procedure open_win_with(t)
          "transient_for": w.set_transient_for(v)
          "line_style": w.set_line_style(v)
          "pattern": w.set_pattern(v)
-         "clip": w.set_clip(v[1],v[2],v[3],v[4])
-         "unclip": w.set_unclip()
+         "clip": w.clip(v[1],v[2],v[3],v[4])
+         "unclip": w.unclip()
          "dx": w.set_dx(v)
          "dy": w.set_dy(v)
          "input_mask": w.set_input_mask(v)
@@ -419,10 +483,6 @@ procedure apply_context_table(w, t)
          "line_width": w.set_line_width(v)
          "line_style": w.set_line_style(v)
          "pattern": w.set_pattern(v)
-         "clip": w.set_clip(v[1],v[2],v[3],v[4])
-         "unclip": w.set_unclip()
-         "dx": w.set_dx(v)
-         "dy": w.set_dy(v)
       }
    }
    return w
@@ -534,20 +594,33 @@ class GetSelection(Dialog)
    end
 end
 
+# This standardizes a toolbar button, and attempts to apply the
+# optional Xdg icon (overwriting the one already set for the button).
+# Failing that, or if `icon` is not given, the existing image is
+# scaled to the standard size.  The button is then set to the standard
+# toolbar button size.
+#
 procedure theme_toolbar_button(b, icon)
+   local sz
    if is(b, IconButton) then
-      b.set_paint(get_toolbar_theme_paint(icon)) | fail
+      b.set_paint(get_toolbar_theme_paint(b.paint, icon))
    else if is(b, MenuButton) then
-      b.menu.set_paint_mid(get_toolbar_theme_paint(icon)) | fail
-   b.set_size(28, 28)
+      b.menu.set_paint_mid(b.menu.paint_mid, get_toolbar_theme_paint(icon))
+   sz := Gui.TOOLBAR_ICON_SIZE + 2 * Gui.BORDER_WIDTH
+   b.set_size(sz, sz)
    return b
 end
 
-procedure get_toolbar_theme_paint(icon)
-   local k, w
-   k := Xdg.find_icon_and_cache(icon, 24) | fail
-   w := ImageCache.get(k)
-   if w.get_width() > 24 then
-      k := ImageCache.get_key_with_resize(k, 24, 24)
+package procedure get_toolbar_theme_paint(paint, icon)
+   local k, w, sz
+   sz := Gui.TOOLBAR_ICON_SIZE
+   if k := Xdg.find_icon_and_cache(\icon, sz) then {
+      w := ImageCache.get(k)
+      if w.get_width() > sz then
+         k := ImageCache.get_key_with_resize(k, sz, sz)
+   } else if is(paint, ImagePaint) & k := \paint.image_cache then
+      k := ImageCache.get_key_with_resize(k, sz, sz)
+   else
+      fail
    return ImagePaint().set_cache(k)
 end

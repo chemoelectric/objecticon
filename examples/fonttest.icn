@@ -144,7 +144,7 @@ class FontTestDialog(Dialog)
    end
 
    private setup()
-      local paint_2, paint_14, layout_7, paint_11, layout_4, panel_4, label_4, layout_1, paint_9, panel_1, label_1, paint_6, paint_18, paint_23, paint_3, paint_15, paint_20, layout_8, paint_12, label_8, layout_5, panel_5, label_5, panel_2, label_2, paint_7, paint_19, paint_24, paint_4, paint_16, paint_21, layout_9, paint_1, paint_13, layout_10, layout_6, paint_10, label_6, layout_3, panel_3, paint, paint_8, paint_5, paint_17, paint_22, text_button_1
+      local paint_2, layout_7, paint_14, layout_4, paint_11, label_4, panel_4, layout_1, label_1, paint_9, panel_1, paint_6, paint_18, paint_23, paint_3, layout_8, paint_15, paint_20, label_8, layout_5, paint_12, label_5, panel_5, label_2, panel_2, paint_7, paint_19, paint_24, paint_4, layout_9, paint_16, paint_21, paint_1, layout_6, paint_13, layout_10, label_6, layout_3, paint_10, paint, panel_3, paint_8, paint_5, paint_17, paint_22, text_button_1
       paint := TextPaint("Font")
       label_1 := Label().
          clear_constraints().
@@ -153,7 +153,7 @@ class FontTestDialog(Dialog)
          set_paint(paint)
       paint_16 := TextPaint(u"")
       font_label := Label().
-         set_size("40").
+         set_size(scale(40)).
          clear_constraints().
          set_constraint("anchor", "w").
          set_constraint("eol", &yes).
@@ -168,7 +168,7 @@ class FontTestDialog(Dialog)
          set_paint(paint_1)
       paint_2 := TextPaint("")
       size_label := Label().
-         set_size("40").
+         set_size(scale(40)).
          clear_constraints().
          set_constraint("anchor", "w").
          set_constraint("eol", &yes).
@@ -189,7 +189,7 @@ class FontTestDialog(Dialog)
          add(size_label)
       self.add(panel_1)
       viewer := Viewer().
-         set_size(583, 109).
+         set_size(scale(583), scale(109)).
          clear_constraints().
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0)
@@ -225,7 +225,7 @@ class FontTestDialog(Dialog)
          set_paint(paint_11)
       paint_13 := TextPaint("")
       range_message := Label().
-         set_size("150").
+         set_size(scale(150)).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_paint(paint_13)
@@ -302,7 +302,7 @@ class FontTestDialog(Dialog)
          set_selection_list(["-", "condensed", "narrow", "normal", "wide", "extended"])
       paint_10 := TextPaint("size")
       font_size := EditList().
-         set_size("100").
+         set_size(scale(100)).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
@@ -371,7 +371,7 @@ class FontTestDialog(Dialog)
       layout_5 := GridLayout().
          set_extra("cells")
       native_list := TextList().
-         set_size("200", "150").
+         set_size(scale(200), scale(150)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -387,7 +387,7 @@ class FontTestDialog(Dialog)
          set_constraint("x_align", Align.L).
          set_paint(paint_17)
       command_field := TextField().
-         set_size("60").
+         set_size(scale(60)).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
@@ -415,7 +415,7 @@ class FontTestDialog(Dialog)
          add(command_field).
          add(text_button_1)
       native_field := TextField().
-         set_size("60").
+         set_size(scale(60)).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).

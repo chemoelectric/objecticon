@@ -239,7 +239,7 @@ $endif
       s := "<html><title>Visited</title>" || Browser.get_table_tag() || ""
       s ||:= "<tr><th align=left>Title</th><th align=right>Times&nbsp;</th><th>Last visit</th><th align=left>URL</th></tr>"
       every e := !settings.visited do {
-         n := Browser.limit_text(\e.title, 200) | ""
+         n := Browser.limit_text(\e.title, scale(200)) | ""
          s ||:= "<tr><td nowrap>" || Browser.to_content(n) || "</td><td align=right>" || e.times || "&nbsp;</td><td>" || 
                 e.last_time.format("MMM'&nbsp;'dd'&nbsp;'HH:mm") || "</td>" || Browser.mk_anchor_cell(e.url) || "</tr>"
       }
@@ -444,7 +444,7 @@ $endif
       file_dialog := FileDialog().set_remember_size(&yes)
       directory_dialog := DirectoryDialog().set_remember_size(&yes)
       last_file_dir := last_download_dir := Files.getcwd()
-      self.set_size(600, 650)
+      self.set_size(scale(600), scale(650))
       self.set_resize(&yes)
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
@@ -461,7 +461,7 @@ $endif
          set_accel("p").
          set_label("Page")
       menu_bar := MenuBar().
-         set_size("100").
+         set_size(scale(100)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("l_inset", 0).
@@ -475,7 +475,7 @@ $endif
       bt := BrowserTab(self, url)
       downloads := DownloadTab()
       tabs := TabSet().
-         set_size("200", "150").
+         set_size(scale(200), scale(150)).
          clear_constraints().
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
@@ -509,7 +509,7 @@ class MessageDialog(Dialog)
       set_resize(&yes)
       set_remember_size(&yes)
       text := EditableTextList().
-         set_size(500, 269).
+         set_size(scale(500), scale(275)).
          set_constraint("eol", &yes).
          set_contents([""]).
          set_is_editable(&no)
@@ -877,6 +877,7 @@ $endif
       setup()
       theme_toolbar_button(paste_url_button, "edit-paste")
       theme_toolbar_button(destination_button, "go-up")
+      theme_toolbar_button(clear_done_button)
       ticker := Dispatcher.new_task{tick()}
       dl := []
       update_title()
@@ -919,7 +920,7 @@ $endif
          add(paste_url_button)
       self.add(panel)
       url_field := TextField().
-         set_size("100").
+         set_size(scale(100)).
          set_align(Align.C, Align.T).
          clear_constraints().
          set_constraint("eol", &yes).
@@ -932,7 +933,7 @@ $endif
       use {
          w := Window(),
          url_table := gui.Table().
-            set_size("600", "258").
+            set_size(scale(600), scale(260)).
             set_select_mode(Select.MANY).
             set_constraint("eol", &yes).
             set_contents([]).
@@ -953,7 +954,7 @@ $endif
             set_l_inset(3)).
          set_x_align(Align.L)
       message_label := MessageLabel().
-         set_size("100").
+         set_size(scale(100)).
          set_align(Align.L, Align.B).
          set_fg("red").
          clear_constraints().
@@ -994,7 +995,7 @@ class URLList(SelectableScrollArea)
       # A nominal minimum width; the width will be expanded by the
       # owning EditList to its own width, and then we use limit_text
       # to draw nicely in the allocated view.
-      return 250
+      return scale(250)
    end
 
    public draw_line_data(xp, yp, lh, i)
@@ -1120,7 +1121,7 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public get_label_width()
-      return 100
+      return scale(100)
    end
 
    private on_next(ev)
@@ -1537,7 +1538,7 @@ class BrowserTab(TabItem, BrowserUI)
          fail
       /title_tt := split_string(paint.str, 
                                 Gui.style.create_tooltip_label().get_wattrib("font"),
-                                500)
+                                scale(500))
       return title_tt
    end
 
@@ -1588,7 +1589,7 @@ class BrowserTab(TabItem, BrowserUI)
       theme_toolbar_button(prev_button, "go-previous")
       theme_toolbar_button(next_button, "go-next")
       theme_toolbar_button(home_button, "go-home")
-      #theme_toolbar_button(stop_button, "process-stop")
+      theme_toolbar_button(stop_button)
       theme_toolbar_button(refresh_button, "view-refresh")
       theme_toolbar_button(paste_url_button, "edit-paste")
       theme_toolbar_button(search_close_button, "window-close")
@@ -1700,7 +1701,7 @@ class BrowserTab(TabItem, BrowserUI)
       url_field := URLEditList().
          set_selection_list([]).
          set_contents(u"").
-         set_size("100").
+         set_size(scale(100)).
          set_align(Align.C, Align.T).
          set_direction(Direction.DOWN).
          clear_constraints().
@@ -1712,7 +1713,7 @@ class BrowserTab(TabItem, BrowserUI)
          connect(self.on_url_field_selection, Event.SELECTION_CHANGED)
       self.add(url_field)
       browser := Browser().
-         set_size("651", "337").
+         set_size(scale(650), scale(330)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -1726,7 +1727,7 @@ class BrowserTab(TabItem, BrowserUI)
             set_l_inset(3)).
          set_x_align(Align.L)
       message_label := MessageLabel().
-         set_size("100").
+         set_size(scale(100)).
          set_align(Align.L, Align.B).
          set_fg("red").
          clear_constraints().
@@ -1751,7 +1752,7 @@ class BrowserTab(TabItem, BrowserUI)
          set_paint(ImagePaint().set_cache("gui.CLOSE_24"))
       search_panel.add(search_close_button)
       search_field := TextField().
-         set_width(150).
+         set_width(scale(150)).
          set_contents(u"").
          connect(on_search_field, Event.CONTENT_CHANGED).
          connect(on_search_field, Event.ACTION)
@@ -1774,7 +1775,7 @@ class BrowserTab(TabItem, BrowserUI)
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_constraint("l_inset", 5).
-         set_width(75)
+         set_width(scale(75))
       search_panel.add(search_label)
    end
 end

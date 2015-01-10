@@ -174,9 +174,9 @@ class TermDialog(Dialog, LineBasedOutputStream)
    private setup()
       local layout_1
       self.set_resize(&yes)
-      self.set_size(735, 510)
+      self.set_size(scale(735), scale(510))
       text := TermEditableTextList().
-         set_size("465", "256").
+         set_size(scale(465), scale(256)).
          set_font("fixed").
          clear_constraints().
          set_constraint("eol", &yes).
@@ -188,7 +188,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
          set_is_editable(&no)
       self.add(text)
       input := TermTextField().
-         set_size("458").
+         set_size(scale(458)).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).

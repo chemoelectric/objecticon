@@ -78,7 +78,7 @@ class UObject()
    end
 end
 
-class UGlobalObject(UObject)
+class UTopLevel(UObject)
    public const
       package_flag
 
@@ -89,7 +89,7 @@ class UGlobalObject(UObject)
    end
 end
 
-class UClass(UGlobalObject)
+class UClass(UTopLevel)
    public const
       supers,
       fields,
@@ -112,7 +112,7 @@ class UClass(UGlobalObject)
    end
 
    package new(name, package_flag, file, line, flags)
-      UGlobalObject.new(name, package_flag, file, line)
+      UTopLevel.new(name, package_flag, file, line)
       self.flags := flags
       self.supers := []
       self.fields := []
@@ -235,16 +235,16 @@ class UMethod(UObject, UFunction)
    end
 end
 
-class UProcedure(UGlobalObject, UFunction)
+class UProcedure(UTopLevel, UFunction)
    package new(name, package_flag, file, line)
-      UGlobalObject.new(name, package_flag, file, line)
+      UTopLevel.new(name, package_flag, file, line)
       UFunction.new()
       self.package_flag := package_flag
       return
    end
 end
 
-class URecord(UGlobalObject)
+class URecord(UTopLevel)
    private
       fields
 
@@ -257,18 +257,18 @@ class URecord(UGlobalObject)
    end
 
    package new(name, package_flag, file, line)
-      UGlobalObject.new(name, package_flag, file, line)
+      UTopLevel.new(name, package_flag, file, line)
       self.fields := []
       return
    end
 end
 
-class UGlobal(UGlobalObject)
+class UGlobal(UTopLevel)
    public const
       readable_flag
 
    package new(name, package_flag, readable_flag, file, line)
-      UGlobalObject.new(name, package_flag, file, line)
+      UTopLevel.new(name, package_flag, file, line)
       self.readable_flag := readable_flag
       return
    end

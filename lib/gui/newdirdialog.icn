@@ -33,7 +33,7 @@ class NewDirectoryDialog(Dialog)
          set_constraint("x_align", Align.L).
          set_paint(paint)
       file_field := TextField().
-         set_size("200").
+         set_size(scale(200)).
          set_align(Align.L, Align.C).
          clear_constraints().
          set_constraint("x_align", Align.L).
@@ -56,7 +56,7 @@ class NewDirectoryDialog(Dialog)
          add(file_field)
       self.add(panel_1)
       line_1 := Line().
-         set_size("100").
+         set_size(scale(100)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes)

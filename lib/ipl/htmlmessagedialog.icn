@@ -20,7 +20,7 @@ class HTMLMessageDialog(Dialog)
       local layout_1, paint_1, close_button
       self.set_resize(&yes)
       browser := SimpleBrowser().
-         set_size("353", "254").
+         set_size(scale(353), scale(254)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).

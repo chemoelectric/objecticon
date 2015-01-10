@@ -59,7 +59,7 @@ class Untitled(Dialog)
       local paint_2, layout_1, paint_1, paint_3
       self.set_resize(&yes)
       tree := Tree().
-         set_size(200, 159).
+         set_size(scale(200), scale(159)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).

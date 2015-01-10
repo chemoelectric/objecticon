@@ -5,15 +5,16 @@
 #
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
+import gui
 
 class CanvasVSplitUI(CanvasComponentUI)
    public create_canvas_component(canvas)
       local t, c1, c2
       t := CanvasSplit()
       c1 := CanvasSplitContent()
-      c1.set_size(150, 75)
+      c1.set_size(scale(150), scale(75))
       c2 := CanvasSplitContent()
-      c2.set_size(150, 75)
+      c2.set_size(scale(150), scale(75))
       t.set_top(c1)
       t.set_bottom(c2)
       return t

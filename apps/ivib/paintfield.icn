@@ -130,19 +130,19 @@ class PaintField(Border)
       os.add(Component().set_size(0,0))
 
       p := Panel().set_layout(GridLayout().set_doi(0))
-      tf1 := TextField().set_size(120)
+      tf1 := TextField().set_size(scale(120))
       tf1.connect(self.on_tf1, Event.CONTENT_CHANGED)
       p.add(tf1)
       os.add(p)
 
       p := Panel().set_layout(GridLayout().set_doi(0))
-      tf2 := TextField().set_size(120).set_contents(u"")
+      tf2 := TextField().set_size(scale(120)).set_contents(u"")
       tf2.connect(self.on_tf2, Event.CONTENT_CHANGED)
       p.add(tf2)
       os.add(p)
 
       p := Panel().set_layout(GridLayout().set_doi(0))
-      img := Image().set_size(40,40).set_border(PlainBorder())
+      img := Image().set_size(scale(40),scale(40)).set_border(PlainBorder())
       p.add(img)
       os.add(p)
 

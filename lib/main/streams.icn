@@ -50,8 +50,9 @@ abstract class Stream(HasMode)
 
    #
    # Output the given string to the stream.  The number of characters
-   # output is returned, which will always be greater than zero, but may
-   # be less than {*s}.  Fails on an error, setting {&why}.
+   # output is returned, which will always be greater than zero
+   # (unless s is empty), but may be less than {*s}.  Fails on an
+   # error, setting {&why}.
    #
    # @param s the string to write
    #
@@ -511,8 +512,10 @@ class BufferStream(Stream, HasUnderlyingStream)
    public out(s)
       s := string(s) | runerr(103, s)
       unbuff() | fail
-      put(wbuff, s)
-      wbuff_len +:= *s
+      if *s > 0 then {
+         put(wbuff, s)
+         wbuff_len +:= *s
+      }
       if wbuff_len > buff_size | (\flush_on_nl_flag & upto('\n', s)) then
          flush() | fail
       return *s
@@ -530,7 +533,7 @@ class BufferStream(Stream, HasUnderlyingStream)
       every s ||:= !wbuff
       wbuff := []
       wbuff_len := 0
-      return other.writes1(s)
+      return other.writes1(s) & self
    end
 
    #
@@ -579,7 +582,7 @@ class BufferStream(Stream, HasUnderlyingStream)
 
    public truncate(len)
       synch() | fail
-      return other.truncate(len)
+      return other.truncate(len) & self
    end
 
    public get_mode()

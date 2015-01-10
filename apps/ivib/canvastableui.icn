@@ -5,17 +5,18 @@
 #
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
+import gui
 
 class CanvasTableUI(CanvasComponentUI)
    public create_canvas_component(canvas)
       local t, c
       t := CanvasTable()
       t.set_contents([])
-      t.set_size(100, 100)
+      t.set_size(scale(100), scale(100))
 
       c := CanvasTableColumn()
       c.set_paint(CanvasTextPaint("Edit me"))
-      c.set_column_width(75)
+      c.set_column_width(scale(75))
       t.add_column(c)
 
       return t

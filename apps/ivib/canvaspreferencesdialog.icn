@@ -13,6 +13,8 @@ class CanvasPreferencesDialog(Dialog)
       h_spec_tf,               # TextField
       set_w_default,           # CheckBoxes                     
       set_h_default,           #                     
+      scale_dimensions_cb,
+      edit_scale_tf,
       okay_result,             # Flag indicating result
       name,                    # TextField - object name
       is_component_cb,         # Component or not
@@ -74,6 +76,7 @@ class CanvasPreferencesDialog(Dialog)
       if h_spec_tf.is_unshaded() then
          integer(h_spec_tf.get_contents()) | return alert_error(self, "Invalid height")
       util_check_attribs(self, attrib_tab.get_table(), Gui.WATTRIB_SET) | fail
+      real(edit_scale_tf.get_contents()) | return alert_error(self, "Edit scale not real")
 
       #
       # Set the attribs list.
@@ -109,6 +112,8 @@ class CanvasPreferencesDialog(Dialog)
 
       c.dialog_iw := if w_spec_tf.is_shaded() then &null else w_spec_tf.get_contents()
       c.dialog_ih := if h_spec_tf.is_shaded() then &null else h_spec_tf.get_contents()
+      c.scale_dimensions_flag := scale_dimensions_cb.get_status()
+      c.edit_scale := real(edit_scale_tf.get_contents())
 
       self.okay_result := 1
       self.dispose()
@@ -173,7 +178,7 @@ class CanvasPreferencesDialog(Dialog)
       pos_tab.add(l)
 
       w_spec_tf := TextField()
-      w_spec_tf.set_size(130)
+      w_spec_tf.set_size(scale(130))
       pos_tab.add(w_spec_tf)
 
       set_w_default := CheckBox().set_constraint("eol", &yes)
@@ -194,7 +199,7 @@ class CanvasPreferencesDialog(Dialog)
       pos_tab.add(l)
 
       h_spec_tf := TextField()
-      h_spec_tf.set_size(130)
+      h_spec_tf.set_size(scale(130))
       pos_tab.add(h_spec_tf)
 
       set_h_default := CheckBox().set_constraint("eol", &yes)
@@ -216,7 +221,25 @@ class CanvasPreferencesDialog(Dialog)
       layout_field.connect(self.on_layout_change, Event.SELECTION_CHANGED)
       pos_tab.add(layout_field)
       orig_layout := c.layout_delegate
-     
+
+      pos_tab.add(Label().set_label("Edit scale"))
+      edit_scale_tf := TextField().
+         set_contents(c.edit_scale).
+         set_filter(&digits ++ '.').
+         set_constraint("eol", &yes).
+         set_size(scale(100))
+      pos_tab.add(edit_scale_tf)
+
+      scale_dimensions_cb := CheckBox().
+         set_label("Scale output dimensions").
+         set_constraint("eol", &yes).
+         set_constraint("x_tab", 1).
+         set_constraint("w", 2)
+      pos_tab.add(scale_dimensions_cb)
+
+      if \c.scale_dimensions_flag then
+         scale_dimensions_cb.set_is_checked(&yes)
+
       self.attrib_tab := MapTab().set_label("WAttribs").set_table(stringify_wattribs(c.dialog_struct.wattribs))
       add_tab(self.attrib_tab)
 
@@ -259,7 +282,7 @@ class CanvasPreferencesDialog(Dialog)
       methods_tab.add(l)
 
       gen_indent := TextField()
-      gen_indent.set_size(50)
+      gen_indent.set_size(scale(50))
       methods_tab.add(gen_indent)
       gen_indent.set_contents(c.gen_indent)
       
@@ -273,7 +296,7 @@ class CanvasPreferencesDialog(Dialog)
       code_tab.add(l)
 
       name := TextField().set_constraint("eol", &yes)
-      name.set_size(200)
+      name.set_size(scale(200))
       code_tab.add(name)
 
       name.set_contents(c.name)
@@ -283,7 +306,7 @@ class CanvasPreferencesDialog(Dialog)
       code_tab.add(l)
 
       self.superclass_name := TextField().set_constraint("eol", &yes)
-      self.superclass_name.set_size(200)
+      self.superclass_name.set_size(scale(200))
       code_tab.add(self.superclass_name)
       self.superclass_name.set_contents(c.superclass_name)
 
@@ -297,13 +320,13 @@ class CanvasPreferencesDialog(Dialog)
       code_tab.add(self.is_component_cb)
 
       code_tab.add(Label().set_label("Import"))
-      self.import_name := TextField().set_constraint("eol", &yes).set_size(200)
+      self.import_name := TextField().set_constraint("eol", &yes).set_size(scale(200))
       code_tab.add(self.import_name)
       self.import_name.set_contents(c.import_name)
 
       self.layout_filename_cb := CheckBox().set_label("Save layout in")
       code_tab.add(self.layout_filename_cb)
-      self.layout_filename := TextField().set_constraint("eol", &yes).set_size(200)
+      self.layout_filename := TextField().set_constraint("eol", &yes).set_size(scale(200))
       code_tab.add(self.layout_filename)
       if \c.layout_filename then {
          self.layout_filename_cb.set_is_checked(&yes)

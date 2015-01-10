@@ -134,21 +134,22 @@ class Explorer(Dialog)
    end
 
    public component_setup()
-      local root_node, split, w, bw
+      local root_node, split, w, bw, p
 
-      set_size(900,600).set_resize(&yes).set_label("Explorer")
+      set_size(scale(900),scale(600)).set_resize(&yes).set_label("Explorer")
       connect(self.dispose, Event.WINDOW_CLOSE_BUTTON)
       connect(self.quit_check, Event.ICON)
 
       set_layout(GridLayout())
 
+      p := scale(2)
       tree := ItemPaintTree().
-         set_size(250,420).
+         set_size(scale(250),scale(420)).
          set_select_mode("one").
-         set_fixed_col_w(16 + 2 * 2).
+         set_fixed_col_w(IconFilesItemPaint.ICON_SIZE + 2 * p).
          set_item_paint(IconFilesItemPaint()).
          set_item_border(EmptyBorder().
-                            set_insets(2, Gui.TEXT_INSET, 0, 0).
+                            set_insets(p, Gui.TEXT_INSET, 0, 0).
                             set_x_align(Align.L)).
          connect(self.handle_tree_expansion, Event.TREE_NODE_EXPANSION).
          connect(self.handle_tree_selection, Event.SELECTION_CHANGED)
@@ -157,7 +158,7 @@ class Explorer(Dialog)
       use {
          w := Window(),
          tbl := Table().
-            set_size(470,420).
+            set_size(scale(470),scale(420)).
             set_select_mode("none").
             add_column(ItemPaintTableColumn().
                           set_label("File").
@@ -170,13 +171,13 @@ class Explorer(Dialog)
             add_column(TableColumn().set_label("Bits").set_column_width(bw + w.text_width("drwxrwxrwx  ")))
       }
 
-      split := Split().set_left(tree).set_right(tbl).set_min(50,50)
+      split := Split().set_left(tree).set_right(tbl).set_min(scale(50), scale(50))
       add(split)
 
       #
       # Initialize the tree data structure.
       #
-      root_node := TreeTableNode().set_label(ListEntryWithIcon(u"/", Files.lstat("/"), Files.stat("/")))
+      root_node := TreeNode().set_label(ListEntryWithIcon(u"/", Files.lstat("/"), Files.stat("/")))
       load_subtree(root_node)
       tree.set_root_node(root_node)
       tree.object_set_selections([root_node])
@@ -184,14 +185,8 @@ class Explorer(Dialog)
    end
 end
 
-
-
 procedure main()
    local d
    d := Explorer()
    d.show_modal()
 end
-
-
-
-

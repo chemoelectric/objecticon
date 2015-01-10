@@ -12,6 +12,7 @@ $include "version.icn"
 
 class Ivib()
    public static const
+      TB_ICON_SIZE,
       V1_MARKER,
       V2_MARKER,
       V2i_MARKER,
@@ -24,6 +25,7 @@ class Ivib()
       last_icn_dir
 
    private static init()
+      TB_ICON_SIZE := scale(44)
       load_icons()
       V1_MARKER := "### Ivib layout ###"
       V2_MARKER := "### Ivib-v2 layout ##"
@@ -74,8 +76,6 @@ class CustomToolBar(Component)
    public
       x1,
       y1,
-      img_w,
-      img_h,
       bg
 
    public add_button(t)
@@ -84,9 +84,9 @@ class CustomToolBar(Component)
       t.set_border(NullBorder())
       bg.add(t)
       self.add(t)
-      x1 +:= img_w
+      x1 +:= Ivib.TB_ICON_SIZE
       if *get_children() == 16 then {
-         y1 +:= img_h
+         y1 +:= Ivib.TB_ICON_SIZE
          x1 := 0
       }
    end
@@ -95,8 +95,7 @@ class CustomToolBar(Component)
       Component.new()
       x1 := y1 := 0
       bg := ButtonGroup()
-      img_w := img_h := 44
-      set_size(16 * img_w, 2 * img_h)
+      set_size(16 * Ivib.TB_ICON_SIZE, 2 * Ivib.TB_ICON_SIZE)
       return
    end
 end
@@ -1279,57 +1278,57 @@ class Main(Dialog)
       }
 
       save_button := IconButton().set_tooltip("Save")
-      save_button.set_image("ivib.icn35")
+      save_button.set_paint(ImagePaint().set_cache("ivib.icn35"))
       save_button.connect(self.op_save_button, Event.ACTION)
       tb.add_button(save_button)
 
       i := IconButton().set_tooltip("New")
-      i.set_image("ivib.icn40")
+      i.set_paint(ImagePaint().set_cache("ivib.icn40"))
       i.connect(self.op_new, Event.ACTION)
       tb.add_button(i)
 
       checkboxgroup_button := IconButton().set_tooltip("CheckBoxGroup")
-      checkboxgroup_button.set_image("ivib.icn22")
+      checkboxgroup_button.set_paint(ImagePaint().set_cache("ivib.icn22"))
       checkboxgroup_button.connect(self.op_selections_to_cbg, Event.ACTION)
       tb.add_button(checkboxgroup_button)
 
       buttongroup_button := IconButton().set_tooltip("ButtonGroup")
-      buttongroup_button.set_image("ivib.icn23")
+      buttongroup_button.set_paint(ImagePaint().set_cache("ivib.icn23"))
       buttongroup_button.connect(self.op_selections_to_bg, Event.ACTION)
       tb.add_button(buttongroup_button)
 
       delete_button := IconButton().set_tooltip("Delete")
-      delete_button.set_image("ivib.icn24")
+      delete_button.set_paint(ImagePaint().set_cache("ivib.icn24"))
       delete_button.connect(self.op_delete_selections, Event.ACTION)
       tb.add_button(delete_button)
 
       undo_button := IconButton().set_tooltip("Undo")
-      undo_button.set_image("ivib.icn25")
+      undo_button.set_paint(ImagePaint().set_cache("ivib.icn25"))
       undo_button.connect(self.op_undo, Event.ACTION)
       tb.add_button(undo_button)
 
       redo_button := IconButton().set_tooltip("Redo")
-      redo_button.set_image("ivib.icn26")
+      redo_button.set_paint(ImagePaint().set_cache("ivib.icn26"))
       redo_button.connect(self.op_redo, Event.ACTION)
       tb.add_button(redo_button)
 
       move_selection_up_order_button := IconButton().set_tooltip("Order Up")
-      move_selection_up_order_button.set_image("ivib.icn33")
+      move_selection_up_order_button.set_paint(ImagePaint().set_cache("ivib.icn33"))
       move_selection_up_order_button.connect(self.op_move_selection_up_order_button, Event.ACTION)
       tb.add_button(move_selection_up_order_button)
 
       move_selection_down_order_button := IconButton().set_tooltip("Order Down")
-      move_selection_down_order_button.set_image("ivib.icn34")
+      move_selection_down_order_button.set_paint(ImagePaint().set_cache("ivib.icn34"))
       move_selection_down_order_button.connect(self.op_move_selection_down_order_button, Event.ACTION)
       tb.add_button(move_selection_down_order_button)
 
       i := IconButton().set_tooltip("Preview")
-      i.set_image("ivib.icn38")
+      i.set_paint(ImagePaint().set_cache("ivib.icn38"))
       i.connect(self.op_preview, Event.ACTION)
       tb.add_button(i)
 
       i := IconButton().set_tooltip("Tree view")
-      i.set_image("ivib.icn39")
+      i.set_paint(ImagePaint().set_cache("ivib.icn39"))
       i.connect(self.op_tree, Event.ACTION)
       tb.add_button(i)
 
@@ -1340,7 +1339,7 @@ class Main(Dialog)
       #
       p := Component().set_constraint("eol", &yes).set_constraint("x_fill", &yes).set_layout(GridLayout().set_doi(0).set_dii(0))
 
-      filename_label := Label().set_size(200).set_constraint("y_fill", &yes)
+      filename_label := Label().set_size(scale(200)).set_constraint("y_fill", &yes)
       filename_label.set_border(CompoundBorder().set_outer(SunkenBorder()).set_inner(EmptyBorder().set_l_inset(Gui.TEXT_INSET)).set_x_align("l"))
       filename_label.set_label("")
       p.add(filename_label)
@@ -1350,7 +1349,7 @@ class Main(Dialog)
       info_label.set_label("")
       p.add(info_label)
 
-      pos_label := Label().set_size(200).set_constraint("y_fill", &yes).set_font("serif,10")
+      pos_label := Label().set_size(scale(200)).set_constraint("y_fill", &yes).set_font("serif,-2")
       pos_label.set_border(CompoundBorder().set_outer(SunkenBorder()).set_inner(EmptyBorder().set_l_inset(Gui.TEXT_INSET)).set_x_align("l"))
       pos_label.set_label("")
       p.add(pos_label)
@@ -1360,9 +1359,10 @@ class Main(Dialog)
       self.connect(self.op_quit, Event.WINDOW_CLOSE_BUTTON)
 
       set_label("Ivib")
-      set_height(600)
-      set_min_height(400)
-      canvas_zone := Panel().set_bg("blue").set_size(50,50)
+      canvas_zone := Panel().
+         set_bg("blue").
+         set_size(scale(50),
+                  Canvas.DEFAULT_HEIGHT + 2 * (Canvas.SURROUND + Canvas.EDGE))
       self.add(canvas_zone)
 
       #
@@ -1439,12 +1439,12 @@ class Preferences(Dialog)
       t.set_layout(GridLayout())
 
       t.add(Label().set_label("Undo buffer size"))
-      undo_size := TextField().set_constraint("eol", &yes).set_constraint("w", 2).set_size(100)
+      undo_size := TextField().set_constraint("eol", &yes).set_constraint("w", 2).set_size(scale(100))
       undo_size.set_contents(c.undo_size)
       t.add(undo_size)
 
       t.add(Label().set_label("Plugin directory"))
-      plugin_dir_field := FileSuggestField().set_directories_only(&yes).set_size(150)
+      plugin_dir_field := FileSuggestField().set_directories_only(&yes).set_size(scale(150))
       plugin_dir_field.set_contents(c.plugin_directory)
       t.add(plugin_dir_field)
       t.add(TextButton().set_label("...").set_constraint("eol", &yes).connect(on_plugin_dir_browse, Event.ACTION))
@@ -1544,12 +1544,12 @@ class PathTab(TabItem)
       set_layout(GridLayout())
       set_label("Named Image Paths")
 
-      path_list := TextList().set_size(250,150).set_constraint("eol", &yes).set_select_mode("one").set_contents(contents)
+      path_list := TextList().set_size(scale(250),scale(150)).set_constraint("eol", &yes).set_select_mode("one").set_contents(contents)
       path_list.connect(self.on_list, Event.SELECTION_CHANGED)
       add(path_list)
 
       p := Panel().set_constraint("eol", &yes).set_constraint("y_weight", 0).set_layout(GridLayout().set_doi(0))
-      path := FileSuggestField().set_directories_only(&yes).set_size(150)
+      path := FileSuggestField().set_directories_only(&yes).set_size(scale(150))
       path.connect(self.on_apply, Event.ACTION)
       p.add(path)
 
@@ -1643,53 +1643,56 @@ $load ICN6 "icon/icn6.gif"
 $load ICN7 "icon/icn7.gif"
 $load ICN8 "icon/icn8.gif"
 $load ICN9 "icon/icn9.gif"
-$load ICONBUTTON "icon/iconbutton.gif"
 $load ICON "icon/icon.gif"
-$load PROTO "icon/proto.gif"
+
+procedure load_icon(key, data)
+   local k
+   k := key || ".raw"
+   ImageCache.name_image(k, data)
+   ImageCache.copy_key_with_resize(key, k)
+end
 
 procedure load_icons()
-   ImageCache.name_image("ivib.icn10", ICN10)
-   ImageCache.name_image("ivib.icn11", ICN11)
-   ImageCache.name_image("ivib.icn12", ICN12)
-   ImageCache.name_image("ivib.icn13", ICN13)
-   ImageCache.name_image("ivib.icn14", ICN14)
-   ImageCache.name_image("ivib.icn15", ICN15)
-   ImageCache.name_image("ivib.icn16", ICN16)
-   ImageCache.name_image("ivib.icn17", ICN17)
-   ImageCache.name_image("ivib.icn18", ICN18)
-   ImageCache.name_image("ivib.icn19", ICN19)
-   ImageCache.name_image("ivib.icn1", ICN1)
-   ImageCache.name_image("ivib.icn20", ICN20)
-   ImageCache.name_image("ivib.icn21", ICN21)
-   ImageCache.name_image("ivib.icn22", ICN22)
-   ImageCache.name_image("ivib.icn23", ICN23)
-   ImageCache.name_image("ivib.icn24", ICN24)
-   ImageCache.name_image("ivib.icn25", ICN25)
-   ImageCache.name_image("ivib.icn26", ICN26)
-   ImageCache.name_image("ivib.icn27", ICN27)
-   ImageCache.name_image("ivib.icn28", ICN28)
-   ImageCache.name_image("ivib.icn29", ICN29)
-   ImageCache.name_image("ivib.icn2", ICN2)
-   ImageCache.name_image("ivib.icn30", ICN30)
-   ImageCache.name_image("ivib.icn31", ICN31)
-   ImageCache.name_image("ivib.icn32", ICN32)
-   ImageCache.name_image("ivib.icn33", ICN33)
-   ImageCache.name_image("ivib.icn34", ICN34)
-   ImageCache.name_image("ivib.icn35", ICN35)
-   ImageCache.name_image("ivib.icn36", ICN36)
-   ImageCache.name_image("ivib.icn37", ICN37)
-   ImageCache.name_image("ivib.icn38", ICN38)
-   ImageCache.name_image("ivib.icn39", ICN39)
-   ImageCache.name_image("ivib.icn3", ICN3)
-   ImageCache.name_image("ivib.icn40", ICN40)
-   ImageCache.name_image("ivib.icn4", ICN4)
-   ImageCache.name_image("ivib.icn5", ICN5)
-   ImageCache.name_image("ivib.icn6", ICN6)
-   ImageCache.name_image("ivib.icn7", ICN7)
-   ImageCache.name_image("ivib.icn8", ICN8)
-   ImageCache.name_image("ivib.icn9", ICN9)
-   ImageCache.name_image("ivib.iconbutton", ICONBUTTON)
-   ImageCache.name_image("ivib.icon", ICON)
-   ImageCache.name_image("ivib.proto", PROTO)
+   load_icon("ivib.icn10", ICN10)
+   load_icon("ivib.icn11", ICN11)
+   load_icon("ivib.icn12", ICN12)
+   load_icon("ivib.icn13", ICN13)
+   load_icon("ivib.icn14", ICN14)
+   load_icon("ivib.icn15", ICN15)
+   load_icon("ivib.icn16", ICN16)
+   load_icon("ivib.icn17", ICN17)
+   load_icon("ivib.icn18", ICN18)
+   load_icon("ivib.icn19", ICN19)
+   load_icon("ivib.icn1", ICN1)
+   load_icon("ivib.icn20", ICN20)
+   load_icon("ivib.icn21", ICN21)
+   load_icon("ivib.icn22", ICN22)
+   load_icon("ivib.icn23", ICN23)
+   load_icon("ivib.icn24", ICN24)
+   load_icon("ivib.icn25", ICN25)
+   load_icon("ivib.icn26", ICN26)
+   load_icon("ivib.icn27", ICN27)
+   load_icon("ivib.icn28", ICN28)
+   load_icon("ivib.icn29", ICN29)
+   load_icon("ivib.icn2", ICN2)
+   load_icon("ivib.icn30", ICN30)
+   load_icon("ivib.icn31", ICN31)
+   load_icon("ivib.icn32", ICN32)
+   load_icon("ivib.icn33", ICN33)
+   load_icon("ivib.icn34", ICN34)
+   load_icon("ivib.icn35", ICN35)
+   load_icon("ivib.icn36", ICN36)
+   load_icon("ivib.icn37", ICN37)
+   load_icon("ivib.icn38", ICN38)
+   load_icon("ivib.icn39", ICN39)
+   load_icon("ivib.icn3", ICN3)
+   load_icon("ivib.icn40", ICN40)
+   load_icon("ivib.icn4", ICN4)
+   load_icon("ivib.icn5", ICN5)
+   load_icon("ivib.icn6", ICN6)
+   load_icon("ivib.icn7", ICN7)
+   load_icon("ivib.icn8", ICN8)
+   load_icon("ivib.icn9", ICN9)
+   load_icon("ivib.icon", ICON)
    ImageCache.name_image("ivib.logo", LOGO)
 end

@@ -69,38 +69,38 @@ class Untitled(Dialog)
    end
 
    private setup()
-      local paint_2, layout_1, paint_1, qb, paint_3, paint
+      local paint_2, layout_1, paint_1, qb, paint, paint_3
       slider1 := Slider().
-         set_size("224", 100).
+         set_size(scale(224), scale(100)).
          clear_constraints()
       self.add(slider1)
       paint_1 := TextPaint("Label")
       label1 := Label().
-         set_size("88").
+         set_size(scale(88)).
          set_align(Align.C, Align.T).
          clear_constraints().
          set_constraint("eol", &yes).
          set_paint(paint_1)
       self.add(label1)
       slider2 := Slider().
-         set_size("224", 100).
+         set_size(scale(224), scale(100)).
          clear_constraints()
       self.add(slider2)
       paint_2 := TextPaint("Label")
       label2 := Label().
-         set_size("88", "14").
+         set_size(scale(88)).
          set_align(Align.C, Align.T).
          clear_constraints().
          set_constraint("eol", &yes).
          set_paint(paint_2)
       self.add(label2)
       slider3 := Slider().
-         set_size("224", 100).
+         set_size(scale(224), scale(100)).
          clear_constraints()
       self.add(slider3)
       paint_3 := TextPaint("Label")
       label3 := Label().
-         set_size("88", "14").
+         set_size(scale(88)).
          set_align(Align.C, Align.T).
          clear_constraints().
          set_constraint("eol", &yes).

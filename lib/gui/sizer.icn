@@ -28,6 +28,12 @@ class Sizer(Component, HasOrientation)
       curr_pos,
       start_pos
 
+   public static DEFAULT_SIZE
+
+   private static init()
+      DEFAULT_SIZE := scale_odd(7)
+   end
+
    #
    # Set the minimum and maximum values for the {Sizer}.  Whether these are
    # x or y values depends on the orientation of the {Sizer}.
@@ -99,12 +105,12 @@ class Sizer(Component, HasOrientation)
 
    public get_default_width()
       if /self.is_horizontal_flag then
-         return 6
+         return DEFAULT_SIZE
    end
 
    public get_default_height()
       if \self.is_horizontal_flag then
-         return 6
+         return DEFAULT_SIZE
    end
 
    public handle_lpress(e)

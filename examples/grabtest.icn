@@ -183,11 +183,11 @@ $endif
    end
 
    private setup()
-      local paint_2, paint_14, paint_7, paint_11, layout_4, paint_4, paint_9, paint_13, paint_6, paint_10, layout_3, paint_8, paint_12, border_1, layout_2
+      local paint_2, paint_14, paint_7, layout_4, paint_11, paint_4, paint_9, paint_13, paint_6, layout_3, paint_10, paint_8, border_1, paint_12, layout_2
       self.set_resize(&yes)
-      self.set_size(506, 393)
+      self.set_size(scale(506), scale(393))
       text_display_1 := TextDisplay().
-         set_size(299, 260).
+         set_size(scale(299), scale(260)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).

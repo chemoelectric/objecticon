@@ -39,7 +39,7 @@ class CanvasBorderDialog(CanvasComponentDialog)
       p.add(l)
 
       internal_align := List().set_constraint("eol", &yes)
-      internal_align.set_size(50)
+      internal_align.set_size(scale(50))
       internal_align.set_selection_list(internal_align_list)
       internal_align.object_set_selection(c.internal_align)
       p.add(internal_align)

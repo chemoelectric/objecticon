@@ -12,7 +12,7 @@ class Frame(Component)
       FRAME_RSW
 
    private static init()
-      FRAME_RSW := 12
+      FRAME_RSW := scale(12)
    end
 
    public can_drag(e)
@@ -156,6 +156,11 @@ end
 
 class FrameBar(Component)
    public lab
+
+   private static init()
+      ImageCache.copy_key_with_resize("frame.WINDOW_CLOSE", "gui.WINDOW_CLOSE_16")
+   end
+
    public on_close()
       self.parent.close()
    end
@@ -175,15 +180,15 @@ class FrameBar(Component)
       lab := Label().
          set_constraint("x_weight", 1).
          set_constraint("x_fill", &yes).
-         set_constraint("l_inset", 3).
+         set_constraint("l_inset", scale(3)).
          set_label("Frame")
       add(lab)
       b := IconButton().
          set_accepts_focus(&no).
-         set_constraint("r_inset", 3).
+         set_constraint("r_inset", scale(3)).
          set_tooltip("Close")
       b.set_border(NullBorder())
-      b.set_paint(ImagePaint().set_cache("gui.TINY_X"))
+      b.set_paint(ImagePaint().set_cache("frame.WINDOW_CLOSE"))
       b.connect(self.on_close, Event.ACTION)
       self.add(b)
    end
@@ -194,6 +199,3 @@ class FrameBar(Component)
       return
    end
 end
-
-
-

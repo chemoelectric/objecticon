@@ -23,13 +23,13 @@ LN_S=@LN_S@
 ETAGS=etags -a -o "$(OIHOME)/TAGS"
 
 ICNTAGS=--lang=none \
-	--regex='/[ \t]*global[ \t]+\([a-zA-Z0-9_, \t]+\)/\1/' \
-	--regex='/[ \t]*\(procedure\|record\)[ \t]+\([a-zA-Z0-9_]+\)[ \t]*(/\2/' \
-	--regex='/[ \t]*\(\(final\|abstract\)[ \t]+\)*class[ \t]+\([a-zA-Z0-9_]+\)[ \t]*(/\2/' \
+	--regex='/[ \t]*\(package[ \t]+\(readable[ \t]+\)?\)?global[ \t]+\([a-zA-Z0-9_, \t]+\)/\3/' \
+	--regex='/[ \t]*\(package[ \t]+\)?\(procedure\|record\)[ \t]+\([a-zA-Z0-9_]+\)[ \t]*(/\3/' \
+	--regex='/[ \t]*\(\(package\|final\|abstract\)[ \t]+\)*class[ \t]+\([a-zA-Z0-9_]+\)[ \t]*(/\3/' \
 	--regex='/[ \t]*\(\(public\|private\|package\|protected\|final\|static\|defer\|abstract\|native\)[ \t]+\)+\([a-zA-Z0-9_]+\)[ \t]*(/\3/'
 
 RTLTAGS=--lang=c \
-	--regex='/[ \t]*\#begdef[ \t]+\([a-zA-Z0-9_]+\)[ \t]*(/\2/'
+	--regex='/[ \t]*\#begdef[ \t]+\([a-zA-Z0-9_]+\)[ \t]*(/\1/'
 
 export OIPATH:=$(OILIB)/main:$(OILIB)/gui:$(OILIB)/xml:$(OILIB)/parser:$(OILIB)/ipl
 export OIINCL:=$(OILIB)/incl

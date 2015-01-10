@@ -886,7 +886,7 @@ class ClassMembers(SimpleLList)
    end
 end
 
-abstract class GlobalObj(Tree)
+abstract class TopLevel(Tree)
    public get_package_flag()
       if pos.child(1) === Node.EMPTY then
          fail
@@ -902,7 +902,7 @@ abstract class GlobalObj(Tree)
    end
 end
 
-class Class(GlobalObj)
+class Class(TopLevel)
    public get_first_token()
       return Util.first_token(pos)
    end
@@ -1094,7 +1094,7 @@ class DeferredMethod(Tree, Function)
    end
 end
 
-class Procedure(GlobalObj, Function)
+class Procedure(TopLevel, Function)
    public get_first_token()
       return Util.first_token(pos)
    end
@@ -1106,7 +1106,7 @@ class Procedure(GlobalObj, Function)
    end
 end
 
-class Record(GlobalObj)
+class Record(TopLevel)
    public get_first_token()
       return Util.first_token(pos)
    end
@@ -1125,7 +1125,7 @@ class Record(GlobalObj)
    end
 end
 
-class Global(GlobalObj, IdList)
+class Global(TopLevel, IdList)
    public const
       gpos
 
