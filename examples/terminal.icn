@@ -1401,6 +1401,7 @@ class Terminal(TabItem)
    private close_all()
       io_task.stop()
       #tty.out("exit\n\^d")
+      System.kill(pid, Signal.SIGHUP)
       tty.close()
       System.wait(pid)
    end
