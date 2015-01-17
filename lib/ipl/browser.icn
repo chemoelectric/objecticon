@@ -4360,14 +4360,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       hspace := (0 < integer(e.get_attribute(u"HSPACE"))) | 0
       vspace := (0 < integer(e.get_attribute(u"VSPACE"))) | 0
       cellpadding := (0 < integer(e.get_attribute(u"CELLPADDING"))) | 0
-      cellspacing := (0 <= integer(e.get_attribute(u"CELLSPACING"))) | 2
+      cellspacing := (0 <= integer(e.get_attribute(u"CELLSPACING"))) | scale(2)
 
       tbl.content.layout_delegate.set_doi(cellspacing).set_dii(cellspacing/2)
       tbl.set_bg(convert_color(e, u"BGCOLOR"))
 
       cell_border := if border > 0 & not(e.get_attribute(u"RULES")) then
          CompoundBorder().
-            set_outer(PlainBorder().set_line_width(1)).
+            set_outer(PlainBorder().set_line_width(Gui.FINE_WIDTH)).
             set_inner(EmptyBorder().set_insets(cellpadding, cellpadding, cellpadding, cellpadding))
          else
             EmptyBorder().set_insets(cellpadding, cellpadding, cellpadding, cellpadding)
@@ -5286,7 +5286,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public static get_table_tag()
-      return "<table cellspacing=4>"
+      return "<table cellspacing=" || scale(4) || ">"
    end
 
    public get_cache()
