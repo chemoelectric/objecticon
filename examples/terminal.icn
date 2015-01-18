@@ -165,7 +165,6 @@ end
 class Columns(LineBasedScrollArea)
    public
       data,
-      nrows,
       col_w,
       n_rows,
       gutter,
@@ -441,8 +440,7 @@ class Columns(LineBasedScrollArea)
    public set_data(l)
       self.data := l
       set_over()
-      invalidate_subject_width()
-      invalidate_line_count()
+      invalidate_split()
       compute_and_invalidate()
       constrain_last_highlight()
       return self
