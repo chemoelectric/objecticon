@@ -1813,7 +1813,7 @@ class Terminal(TabItem)
       cwd := ucs(s) | fail
       data := list_cwd()
       columns.set_data(data)
-
+      synch_favourites_list()
       ex := table(0)
       every e := !data do
          ex[Files.get_extension(e.name)] +:= 1
@@ -1857,7 +1857,11 @@ class Terminal(TabItem)
 
    public refresh_favourite_dirs()
       favourites_list.selection_list := get_favourites_directories()
-      favourites_list.constrain_selection().synch_selection()
+      synch_favourites_list()
+   end
+
+   private synch_favourites_list()
+      favourites_list.object_set_selection(cwd) | favourites_list.set_selection()
    end
 
    public component_setup()
