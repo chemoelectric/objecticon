@@ -978,11 +978,10 @@ class EditableTextList(LineBasedScrollArea)
          put(l, self.contents[self.mark_y][1:self.mark_x])
       } else {
          # mark_y = cursor_y
-         if self.mark_x < self.cursor_x then {
-            l := [self.contents[self.cursor_y][self.mark_x:self.cursor_x]]
-         } else {
-            l := [self.contents[self.cursor_y][self.cursor_x:self.mark_x]]
-         }
+         l := if self.mark_x < self.cursor_x then
+            [self.contents[self.cursor_y][self.mark_x:self.cursor_x]]
+         else
+            [self.contents[self.cursor_y][self.cursor_x:self.mark_x]]
       }
       return l
    end
