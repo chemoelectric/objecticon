@@ -520,12 +520,12 @@ class TextFlow(Component, HasLastHighlight)
                      text_line(W,
                                o.s, 
                                x1 + o.x, 
-                               y1 + o.y + W.get_font_ascent() + 1)
+                               y1 + o.y + W.get_font_ascent() + Gui.UNIT)
                   else if \o.attr.underdash | (o.attr.url === \last_highlight) then
                      text_dash(W,
                                o.s, 
                                x1 + o.x, 
-                               y1 + o.y + W.get_font_ascent() + 1)
+                               y1 + o.y + W.get_font_ascent() + Gui.UNIT)
                   if \o.attr.strike then
                      text_line(W,
                                o.s, 
@@ -564,7 +564,7 @@ class TextFlow(Component, HasLastHighlight)
             break
          t := tab(upto(WHITESPACE) | 0)
          w1 := W.text_width(t)
-         W.draw_rectangle(x, y, w1, 1)
+         W.fill_rectangle(x, y, w1, Gui.FINE_WIDTH)
          x +:= w1
       }
    end

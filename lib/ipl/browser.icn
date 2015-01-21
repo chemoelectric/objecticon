@@ -4690,7 +4690,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       local tbl, row, c, fc
       put_new_row(p, context)
       tbl := Tbl().set_border(CompoundBorder().
-                              set_outer(SunkenBorder().set_line_width(1)).
+                              set_outer(SunkenBorder().set_line_width(Gui.FINE_WIDTH)).
                               set_inner(EmptyBorder()))
       add_component(p, tbl, context)
       row := TextFlow(self)
@@ -4978,7 +4978,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       if r := get_band_rect() then {
          use {
             W := view.cbwin.clone().set_fg("purple").set_masked_pattern("gray"),
-            W.draw_rectangle(r.x, r.y, r.w, r.h)
+            W.draw_rectangle(r.x, r.y, r.w, r.h, Gui.FINE_WIDTH)
          }
       }
    end
