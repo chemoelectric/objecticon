@@ -553,7 +553,7 @@ class EditableTextList(LineBasedScrollArea)
             # Have and/or had regions, so invalidate whole range of lines involved
             put(t, get_view_list_index(\old_mark_x, \old_mark_y))
             put(t, get_view_list_index(\mark_x, \mark_y))
-            every invalidate_line(min!t to max!t, i)
+            invalidate_lines(min!t, max!t, i)
          }
       }
 
@@ -789,6 +789,10 @@ class EditableTextList(LineBasedScrollArea)
                   vi >:= *view_list
                   v := view_list[vi]
                   self.cursor_y := v.index
+                  # Set cursor_x to start of line, not end of line -
+                  # this prevents the horizontal scroll bar jiggling
+                  # about as we scroll down (as the cursor is
+                  # constrained to be visible).
                   self.cursor_x := v.first
                }
             }
@@ -1196,7 +1200,7 @@ class EditableTextList(LineBasedScrollArea)
          if \r then {
             off1 := text_width_ex(view.cbwin, s, 1, r[1] - v.first + 1, self.tab_width)
             off2 := text_width_ex(view.cbwin, s, 1, r[2] - v.first + 1, self.tab_width)
-            Gui.style.fill_selection_rectangle(self.cbwin, xp + off1, yp,  off2 - off1, self.line_height)
+            Gui.style.fill_selection_rectangle(view.cbwin, xp + off1, yp,  off2 - off1, self.line_height)
          }
       }
 
@@ -1215,21 +1219,6 @@ class EditableTextList(LineBasedScrollArea)
       }
    end
    
-   #
-   # Return the intersection of the range f1-t1 and f2-t2, or
-   # fail if the ranges don't intersect.  Example:
-   # range(2,20,10,30) = [10,20]
-   # 
-   public static range(f1, t1, f2, t2)
-      if f1 < f2 then {
-         if t1 >= f2 then
-            return [f2, min(t1, t2)]
-      } else {
-         if f1 <= t2 then
-            return [f1, min(t1, t2)]
-      }
-   end
-
    public calculate_line_height()
       return view.cbwin.get_font_height()
    end
