@@ -624,3 +624,19 @@ package procedure get_toolbar_theme_paint(paint, icon)
       fail
    return ImagePaint().set_cache(k)
 end
+
+#
+# Return the intersection of the range f1-t1 and f2-t2, or
+# fail if the ranges don't intersect.  Example:
+# range(2,20,10,30) = [10,20]
+# 
+procedure range(f1, t1, f2, t2)
+   if f1 < f2 then {
+      if t1 >= f2 then
+         return [f2, min(t1, t2)]
+   } else {
+      if f1 <= t2 then
+         return [f1, min(t1, t2)]
+   }
+end
+
