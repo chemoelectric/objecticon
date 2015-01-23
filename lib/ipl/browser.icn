@@ -2701,7 +2701,7 @@ abstract class BrowserUI()
    public abstract display_externally(res)
 end
 
-class BrowserPrimarySelectionOwner(TextSelectionOwner)
+package class BrowserPrimarySelectionOwner(TextSelectionOwner)
    private parent
 
    protected get_text()

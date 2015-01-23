@@ -158,7 +158,7 @@ class Editor(Dialog)
 
       self.set_label("Editor").set_resize(&yes)
       set_layout(GridLayout())
-      connect(self.dispose, Event.WINDOW_CLOSE_BUTTON)
+      connect(handle_quit, Event.WINDOW_CLOSE_BUTTON)
       text := EditableTextList().set_constraint("eol", &yes)
       text.set_size(scale(400), scale(300))
       text.set_contents([u""])
