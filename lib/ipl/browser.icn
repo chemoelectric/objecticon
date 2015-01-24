@@ -5176,7 +5176,6 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public handle_select_all(e)
-      *parent_dialog.held = 0 | fail
       /mark_x | fail
       running === 0 | fail
       mark_x := mark_y := 0
