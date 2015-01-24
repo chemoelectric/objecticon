@@ -982,10 +982,7 @@ class EditableTextList(LineBasedScrollArea)
          put(l, self.contents[self.mark_y][1:self.mark_x])
       } else {
          # mark_y = cursor_y
-         l := if self.mark_x < self.cursor_x then
-            [self.contents[self.cursor_y][self.mark_x:self.cursor_x]]
-         else
-            [self.contents[self.cursor_y][self.cursor_x:self.mark_x]]
+         l := [self.contents[self.cursor_y][self.cursor_x:self.mark_x]]
       }
       return l
    end
@@ -1177,25 +1174,22 @@ class EditableTextList(LineBasedScrollArea)
          # it is say wholly selected, using v.last would leave the
          # last char unhighlighted.
          #
-         if (self.mark_y < v.index < self.cursor_y) | (self.mark_y > v.index > self.cursor_y) then {
+         r := if (self.mark_y < v.index < self.cursor_y) | (self.mark_y > v.index > self.cursor_y) then {
             # Whole line selected
-            r := [v.first, v.first + *s]
+            [v.first, v.first + (0 < *s)]
          } else if v.index = self.mark_y = self.cursor_y then {
             # Part of line
-            if self.mark_x < self.cursor_x then
-               r := range(v.first, v.first + *s, self.mark_x, self.cursor_x)
-            else if self.mark_x > self.cursor_x then
-               r := range(v.first, v.first + *s, self.cursor_x, self.mark_x)
+            range1(v.first, v.first + *s, self.cursor_x, self.mark_x)
          } else if v.index = self.mark_y then {
             if self.mark_y < self.cursor_y then
-               r := range(v.first, v.first + *s, self.mark_x, *self.contents[v.index] + 1)
+               range1(v.first, v.first + *s, self.mark_x, *self.contents[v.index] + 1)
             else
-               r := range(v.first, v.first + *s, 1, self.mark_x)
+               range1(v.first, v.first + *s, 1, self.mark_x)
          } else if v.index = self.cursor_y then {
             if self.mark_y > self.cursor_y then
-               r := range(v.first, v.first + *s, self.cursor_x, *self.contents[v.index] + 1)
+               range1(v.first, v.first + *s, self.cursor_x, *self.contents[v.index] + 1)
             else
-               r := range(v.first, v.first + *s, 1, self.cursor_x)
+               range1(v.first, v.first + *s, 1, self.cursor_x)
          }
          if \r then {
             off1 := text_width_ex(view.cbwin, s, 1, r[1] - v.first + 1, self.tab_width)

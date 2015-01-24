@@ -214,15 +214,11 @@ abstract class LineBasedScrollArea(DrawScrollArea)
    # Invalidate all the lines from line1 to line2
    #
    public invalidate_lines(line1, line2, i)
+      local t
       is_live() | fail
       /i := get_line_info()
-      if line1 > line2 then
-         line1 :=: line2
-      if \i & line2 >= i.first & line1 <= i.last then {
-         line1 <:= i.first
-         line2 >:= i.last
-         view.invalidate(get_line_rect(line1).union(get_line_rect(line2)))
-      }
+      if \i & t := range(line1, line2, i.first, i.last) then
+         view.invalidate(get_line_rect(t[1]).union(get_line_rect(t[2])))
       return self
    end
 
