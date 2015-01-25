@@ -2718,7 +2718,7 @@ package class BrowserPrimarySelectionOwner(TextSelectionOwner)
    end
 end
 
-record GreyState(prev, nxt, refresh, copy_page, save_page, stop)
+record GreyState(prev, nxt, refresh, copy_page, save_page, stop, copy_text, copy_links)
 
 class Browser(ComponentScrollArea, WorkerPoolOwner)
    private
@@ -3081,7 +3081,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
                             if history[history_pos] then &no else &yes,
                             if \page_url then &no else &yes,
                             if \page_data then &no else &yes,
-                            if running === 0 then &yes else &no))
+                            if running === 0 then &yes else &no,
+                            if \text_selection then &no else &yes,
+                            if \links_selection then &no else &yes))
    end
 
    private page_fully_loaded()
@@ -4900,7 +4902,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       mark_x := cursor_x
       mark_y := cursor_y
       view.inner.invalidate(calculate_banded_rect())
-      clear_banded()
+      clear_selections()
    end
 
    private set_cursor_from_pos(e)
@@ -4967,7 +4969,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    public layout()
       ComponentScrollArea.layout()
       clear_mark()
-      clear_banded()
+      clear_selections()
       redo_search()
       scroll_ticker.stop()
    end
@@ -5052,20 +5054,21 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       cursor_x := cursor_y := mark_x := mark_y := &null
    end
 
-   private clear_banded()
+   private clear_selections()
       clear(banded)
       text_selection := links_selection := &null
+      do_update_grey()
    end
 
    package on_lost_primary_ownership()
       view.inner.invalidate(calculate_banded_rect())
-      clear_banded()
+      clear_selections()
       primary := &null
    end
 
    private calculate_banded()
       local c, br
-      clear_banded()
+      clear(banded)
       br := get_band_rect() | fail
       every c := Seq{traverse_intersecting(view.inner, br)} do {
          if is(c, TextFlow) then
@@ -5169,6 +5172,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       }
       calculate_text_selection()
       calculate_links_selection()
+      do_update_grey()
       if s := get_current_text_selection() then {
          parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
          self.primary := s
