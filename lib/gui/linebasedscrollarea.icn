@@ -391,7 +391,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
       if integer(h := get_line_height()) then
          return h
       else
-         return 16
+         return scale(16)
    end
 
    public get_default_horizontal_increment()
