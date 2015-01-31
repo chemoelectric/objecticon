@@ -16,7 +16,8 @@ abstract class DropDown(Component, MenuMode)
       view,
       popup,
       direction,
-      use_popup_win
+      use_popup_win,
+      old_focus
 
    #
    # Create the view component
@@ -111,6 +112,9 @@ abstract class DropDown(Component, MenuMode)
                use_direction := Direction.DOWN
          }
       }
+
+      old_focus := parent_dialog.focus
+
       parent_dialog.
          set_focus().
          enter_menu_mode(self)
@@ -152,7 +156,7 @@ abstract class DropDown(Component, MenuMode)
       local f
       # Allow views that don't accept focus, and ensure in that case
       # the focus isn't left with the popup.
-      f := view.find_focus()
+      f := view.find_focus() | old_focus
       self.parent_dialog.set_focus(f)
       if /use_popup_win then {
          self.popup.invalidate()
@@ -161,7 +165,7 @@ abstract class DropDown(Component, MenuMode)
          self.parent_dialog.remove_popup(self.popup.parent_dialog)
          self.popup.parent_dialog.dispose()
       }
-      self.popup := &null
+      self.popup := old_focus := &null
       self.parent_dialog.exit_menu_mode(self)
    end
 
@@ -427,6 +431,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
          }
       }
 
+      old_focus := parent_dialog.focus
       self.parent_dialog.enter_menu_mode(self)
 
       if \use_popup_win then {
@@ -514,7 +519,6 @@ class DropDownLabel(Label)
       return
    end
 end
-
 
 class DropDownTextField(TextField)
    public keeps(e)
