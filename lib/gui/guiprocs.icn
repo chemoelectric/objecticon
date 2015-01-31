@@ -649,3 +649,12 @@ procedure range1(f1, t1, f2, t2)
    if t := range(f1, t1, f2, t2) & t[1] ~= t[2] then
       return t
 end
+
+#
+# Succeed iff the range f1-t1 is wholly contained within f2-t2
+#
+procedure contained(f1, t1, f2, t2)
+   if f2 > t2 then f2 :=: t2
+   if f2 <= f1 <= t2 & f2 <= t1 <= t2 then
+      return
+end
