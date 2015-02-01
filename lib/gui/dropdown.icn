@@ -399,9 +399,8 @@ abstract class SelectionDropDown(SelectionList, DropDown)
          set_selection_on_key_moves(&no).
          set_z(self.parent_dialog.get_top_z())
       self.parent_dialog.add(popup)
-      self.popup.set_ideal_size(self.w, 
-                                max_w,
-                                0, max_h)
+      self.popup.set_ideal_size(self.w, max_w,
+                                scale(25), max_h)
 
       if popup.w_spec > win_spc_right then
          use_popup_win := 1

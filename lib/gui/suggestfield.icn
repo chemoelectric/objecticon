@@ -193,9 +193,8 @@ abstract class SuggestField(TextField, MenuMode)
          set_selection_on_key_moves(if /select_using_enter_flag then &yes else &no).
          set_z(self.parent_dialog.get_top_z())
       self.parent_dialog.add(tl)
-      self.tl.set_ideal_size(self.w, 
-                             max_w,
-                             0, max_h)
+      self.tl.set_ideal_size(self.w, max_w,
+                             scale(25), max_h)
 
       if tl.w_spec > win_spc_right then
          use_popup_win := 1
