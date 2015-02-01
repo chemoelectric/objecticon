@@ -542,12 +542,12 @@ $endif
    #
    public static begin_esc(f, line, ct)
       local s
-      s := "\e[\"url=file://" || &host || URL.percent_encode(f, URL.UNRESERVED ++ '/') || "\""
+      s := "\e[!\"url=file://" || &host || URL.percent_encode(f, URL.UNRESERVED ++ '/') || "\""
       if \line then
          s ||:= ";\"line=" || line || "\""
       if \ct then
          s ||:= ";\"ct=" || ct || "\""
-      s ||:= "Z"
+      s ||:= "L"
       return s
    end
 
@@ -555,7 +555,7 @@ $endif
    # Return the closing escape sequence for an embedded link
    #
    public static end_esc()
-      return "\e[Z"
+      return "\e[!L"
    end
 
    #

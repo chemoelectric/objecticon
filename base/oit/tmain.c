@@ -571,7 +571,7 @@ void begin_esc(FILE *f, char *fname, int line)
     char *s;
     if (!should_esc(f))
         return;
-    fprintf(f, "\x1b[\"url=file://");
+    fprintf(f, "\x1b[!\"url=file://");
     if ((s = get_hostname()))
         fputs(s, f);
     for (s = fname; *s; ++s) {
@@ -583,13 +583,13 @@ void begin_esc(FILE *f, char *fname, int line)
     fputs("\"", f);
     if (line)
         fprintf(f, ";\"line=%d\"", line);
-    fputs("Z", f);
+    fputs("L", f);
 }
 
 void end_esc(FILE *f)
 {
     if (should_esc(f))
-        fputs("\x1b[Z", f);
+        fputs("\x1b[!L", f);
 }
 #else
 void begin_esc(FILE *f, char *fname, int line) {}
