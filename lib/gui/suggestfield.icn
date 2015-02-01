@@ -194,7 +194,7 @@ abstract class SuggestField(TextField, MenuMode)
          set_z(self.parent_dialog.get_top_z())
       self.parent_dialog.add(tl)
       self.tl.set_ideal_size(self.w, max_w,
-                             scale(25), max_h)
+                             scale(5), max_h)
 
       if tl.w_spec > win_spc_right then
          use_popup_win := 1
