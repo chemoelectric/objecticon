@@ -214,8 +214,8 @@ abstract class SuggestField(TextField, MenuMode)
          self.parent_dialog.remove(tl)
          d := PureDialog().
             set_canvas("popup").
-            set_width(tl.w_spec).
-            set_height(tl.h_spec).
+            set_width(tl.w).
+            set_height(tl.h).
             set_dx(-tl.x).
             set_dy(-tl.y).
             set_x(win.get_x() + win.get_dx() + tl.x).

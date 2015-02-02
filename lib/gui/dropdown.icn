@@ -107,8 +107,8 @@ abstract class DropDown(Component, MenuMode)
          parent_dialog.remove(popup)
          d := PureDialog().
             set_canvas("popup").
-            set_width(pref_w).
-            set_height(pref_h).
+            set_width(popup.w).
+            set_height(popup.h).
             set_dx(-popup.x).
             set_dy(-popup.y).
             set_x(win.get_x() + win.get_dx() + popup.x).
@@ -395,8 +395,8 @@ abstract class SelectionDropDown(SelectionList, DropDown)
          self.parent_dialog.remove(popup)
          d := PureDialog().
             set_canvas("popup").
-            set_width(popup.w_spec).
-            set_height(popup.h_spec).
+            set_width(popup.w).
+            set_height(popup.h).
             set_dx(-popup.x).
             set_dy(-popup.y).
             set_x(win.get_x() + win.get_dx() + popup.x).
