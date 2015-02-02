@@ -37,7 +37,6 @@ abstract class MenuComponent(Rect,Connectable)
       accel,
       children,
       border,
-      use_popup_win,
       temp_win,
       accel_skip
 
@@ -363,55 +362,35 @@ abstract class MenuComponent(Rect,Connectable)
    # right and bottom of the screen respectively.
    #
    public show(x, y, xa, ya)
-      local d, win, x1, y1, pd, dim, rs, r, r0
+      local d, win, x1, y1, pd, dim, rs
       /self.temp_win | fail
 
       pd := self.parent_component.parent_dialog
       win := pd.win
-      use_popup_win := &null
 
       dim := win.get_display_size()
       # Screen rectangle, in adjusted co-ordinates
       rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim[1], dim[2])
-      # Intersection of dialog and screen, since it may be partly off-screen.
-      r := r0 := pd.intersect(rs)
       self.x := x
       self.y := y
       self.resize()
 
-      # Note the first test that we must use a popup for the menu if
-      # the parent's menu is a popup; otherwise it may appear below
-      # one of the parent popups.
-      if \ (\parent).temp_win.parent_dialog.popup_manager | not r.contains(self) then {
-         # Use screen dimensions for calculations.
-         r := rs
-         use_popup_win := 1
-      }
-
-      /xa := r.x + r.w
-      /ya := r.y + r.h
-      if self.x < r.x then
-         x1 := r.x
-      else if self.x + self.w > r.x + r.w then
-         x1 := max(r.x, xa - self.w)
-      if self.y < r.y then
-         y1 := r.y
-      else if self.y + self.h > r.y + r.h then
-         y1 := max(r.y, ya - self.h)
+      /xa := rs.x + rs.w
+      /ya := rs.y + rs.h
+      if self.x < rs.x then
+         x1 := rs.x
+      else if self.x + self.w > rs.x + rs.w then
+         x1 := max(rs.x, xa - self.w)
+      if self.y < rs.y then
+         y1 := rs.y
+      else if self.y + self.h > rs.y + rs.h then
+         y1 := max(rs.y, ya - self.h)
       if \x1 | \y1 then {
          /x1 := self.x
          /y1 := self.y
          self.x := x1
          self.y := y1
          self.resize()
-      }
-
-      # The above calculations may still let us avoid a popup window.
-      if \use_popup_win &
-         not (\ (\parent).temp_win.parent_dialog.popup_manager) &
-         r0.contains(self) then 
-      {
-         use_popup_win := &null
       }
 
       temp_win := create_proxy().
@@ -423,7 +402,12 @@ abstract class MenuComponent(Rect,Connectable)
 
       pd.enter_menu_mode(temp_win)
 
-      if /use_popup_win then {
+      # Note the test that we must use a popup for the menu if
+      # the parent's menu is a popup; otherwise it may appear below
+      # one of the parent popups.
+      if pd.contains(self) &
+         not (\ (\parent).temp_win.parent_dialog.popup_manager) then
+      {
          temp_win.
             set_pos(self.x + win.get_dx(), 
                     self.y + win.get_dy()).
@@ -452,7 +436,7 @@ abstract class MenuComponent(Rect,Connectable)
    #
    public hide()
       \self.temp_win | fail
-      if /use_popup_win then {
+      if temp_win.parent_dialog === parent_component.parent_dialog then {
          self.temp_win.invalidate()
          self.parent_component.parent_dialog.remove(self.temp_win)
       } else {

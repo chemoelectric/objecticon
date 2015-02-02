@@ -845,7 +845,7 @@ class Dialog(Component)
    # the current tooltip based on its current location.
    # 
    private show_tooltip(obj, tip, e)
-      local d, dim, use_popup_win, ox, oy, rs, r, r0
+      local d, dim, ox, oy, rs
       if \self.tooltip_component then {
          ox := tooltip_component.x
          oy := tooltip_component.y
@@ -865,43 +865,26 @@ class Dialog(Component)
       dim := win.get_display_size()
       # Screen rectangle, in adjusted co-ordinates
       rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim[1], dim[2])
-      r := r0 := self.intersect(rs)
-
-      # Note that if we have popups, we use a popup for a tooltip, so that it won't appear
-      # below the other popup window.
-      if ((*\popups > 0) | not r.contains(self.tooltip_component)) then {
-         # Use screen dimensions for calculations.
-         r := rs
-         use_popup_win := 1
-      }
 
       #
       # Ensure it's in area; adjust and resize again if not.
       #
-      if self.tooltip_component.x + self.tooltip_component.w > r.x + r.w then {
-         if /e then
-            self.tooltip_component.x_spec := win.get_dx() + max(r.x, r.x + r.w - self.tooltip_component.w)
-         else
-            self.tooltip_component.x_spec := win.get_dx() + max(r.x, e.x - TOOLTIP_X_OFFSET - self.tooltip_component.w)
-         self.tooltip_component.resize()
+      if self.tooltip_component.x + self.tooltip_component.w > rs.x + rs.w then {
+         tooltip_component.set_x(if /e then win.get_dx() + max(rs.x, rs.x + rs.w - self.tooltip_component.w)
+                                 else win.get_dx() + max(rs.x, e.x - TOOLTIP_X_OFFSET - self.tooltip_component.w)).
+                           resize()
       }
-      if self.tooltip_component.y + self.tooltip_component.h > r.y + r.h then {
-         if /e then
-            self.tooltip_component.y_spec := win.get_dy() + max(r.y, r.y + r.h - self.tooltip_component.h)
-         else
-            self.tooltip_component.y_spec := win.get_dy() + max(r.y, e.y - TOOLTIP_Y_OFFSET - self.tooltip_component.h)
-         self.tooltip_component.resize()
+      if self.tooltip_component.y + self.tooltip_component.h > rs.y + rs.h then {
+         tooltip_component.set_y(if /e then win.get_dy() + max(rs.y, rs.y + rs.h - self.tooltip_component.h)
+                                 else win.get_dy() + max(rs.y, e.y - TOOLTIP_Y_OFFSET - self.tooltip_component.h)).
+                           resize()
       }
 
-      # The above calculations may still let us avoid a popup window.
-      if \use_popup_win &
-         not(*\popups > 0) &
-         r0.contains(self.tooltip_component) then 
-      {
-         use_popup_win := &null
-      }
-
-      if \use_popup_win then {
+      # Note that if we have popups, we use a popup for a tooltip, so that it won't appear
+      # below the other popup window.
+      if contains(tooltip_component) & (/popups | *popups = 0) then {
+         self.tooltip_component.invalidate()
+      } else {
          self.remove(self.tooltip_component)
          d := PureDialog().
             set_canvas("popup").
@@ -915,8 +898,7 @@ class Dialog(Component)
             add(self.tooltip_component)
          self.tooltip_component.set_pos(0, 0)
          d.show()
-      } else
-         self.tooltip_component.invalidate()
+      }
    end
 
    #
