@@ -313,15 +313,14 @@ $endif
 
    public on_new_dir_menu_item(ev)
       local d, s
-      d := NewDirectoryDialog()
+      d := NameDialog().set_label("New Directory")
       d.show_modal(self)
-      if \d.okay then {
-         s := selected_path.child(d.result).str()
-         if Files.mkdir(s) then
-            goto_dir(s)
-         else
-            msg("mkdir failed: " || &why)
-      }
+      \d.result | fail
+      s := selected_path.child(d.result).str()
+      if Files.mkdir(s) then
+         goto_dir(s)
+      else
+         msg("mkdir failed: " || &why)
    end
 
    public msg(s)

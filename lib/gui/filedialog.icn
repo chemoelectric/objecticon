@@ -438,9 +438,9 @@ class FileDialog(Dialog)
 
    public on_new_dir_menu_item(ev)
       local d, s
-      d := NewDirectoryDialog()
+      d := NameDialog().set_label("New Directory")
       d.show_modal(self)
-      \d.okay | fail
+      \d.result | fail
       s := loaded_dir_path.child(d.result).str()
       if Files.mkdir(s) then
          goto_dir(s)
