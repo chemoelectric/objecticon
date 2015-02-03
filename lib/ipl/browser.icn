@@ -2718,7 +2718,7 @@ package class BrowserPrimarySelectionOwner(TextSelectionOwner)
    end
 end
 
-record GreyState(prev, nxt, refresh, copy_page, save_page, stop, copy_text, copy_links)
+record GreyState(prev, nxt, history, copy_page, save_page, stop, copy_text, copy_links)
 
 class Browser(ComponentScrollArea, WorkerPoolOwner)
    private
@@ -3076,9 +3076,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public do_update_grey()
-      update_grey(GreyState(if history_pos > 1 then &no else &yes,
-                            if history_pos < *history then &no else &yes,
-                            if history[history_pos] then &no else &yes,
+      update_grey(GreyState(if history_pos < *history then &no else &yes,
+                            if history_pos > 1 then &no else &yes,
+                            if *history > 0 then &no else &yes,
                             if \page_url then &no else &yes,
                             if \page_data then &no else &yes,
                             if running === 0 then &yes else &no,
@@ -3151,7 +3151,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    
    public do_next()
       local he
-      he := history[history_pos +:= 1] 
+      (history_pos > 1) | fail
+      he := history[history_pos -:= 1] 
       goto(he.url, he.referer, he.form_data, Worker.NAVIGATE)
       do_update_grey()
       return self
@@ -3159,7 +3160,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public do_prev()
       local he
-      he := history[history_pos -:= 1] 
+      (history_pos < *history) | fail
+      he := history[history_pos +:= 1] 
       goto(he.url, he.referer, he.form_data, Worker.NAVIGATE)
       do_update_grey()
       return self
@@ -3220,9 +3222,20 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return self
    end
 
+   private reset_history_pos()
+      history_pos := keyof(history, curr_history_entry) | fail
+      return self
+   end
+
    public do_refresh()
       local he
-      he := history[history_pos] 
+      # Reset history_pos in case we have done a navigate away from
+      # the currently viewed page (changing history_pos), that
+      # navigation hasn't loaded yet and we click refresh.  We want
+      # refresh to refer to the viewed page, not the one we're
+      # loading.
+      reset_history_pos() | fail
+      he := history[history_pos]
       goto(he.url, he.referer, he.form_data, Worker.REFRESH)
       do_update_grey()
       return self
@@ -3287,7 +3300,6 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          every c := !f.items do
             insert(t2, c.get_save_key(), c.get_save_value())
       }
-      #write(to_string(t1,3,1))
       curr_history_entry.form_values := t1
    end
 
@@ -3456,14 +3468,13 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          # Reset history_pos, since we may have done a navigate
          # back/forward (changing history_pos), and cancelled it with
          # a normal click whist it was pending.
-         history_pos := keyof(history, curr_history_entry)
-         while *history > history_pos do
-            pull(history)
+         reset_history_pos()
+         every 1 to history_pos - 1 do
+            pop(history)
          # Fields are set below
-         put(history, HistoryEntry())
-         history_pos +:= 1
+         push(history, HistoryEntry())
+         history_pos := 1
       }
-      do_update_grey()
       curr_history_entry := history[history_pos]
       # Note that the url/form_data may change even on a
       # navigate/refresh, if the server behaved differently (eg
@@ -3471,6 +3482,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       curr_history_entry.url := page_url
       curr_history_entry.referer := res.req.referer
       curr_history_entry.form_data := if page_url === res.req.url then res.req.form_data else &null
+      do_update_grey()
 
       maps := table()
       datalists := table()
