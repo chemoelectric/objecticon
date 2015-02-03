@@ -1,6 +1,6 @@
 package ipl.vt
 
-import gui, lang, util, graphics, net, ipl.lists, ipl.pdco, ipl.strings
+import gui, io, lang, util, graphics, net, ipl.lists, ipl.pdco, ipl.strings
 
 # Current attributes.  Treated as immutable, to alter a copy() is taken first.
 package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic, link, font)
@@ -148,7 +148,7 @@ abstract class VtUI()
    public abstract link_middle_clicked(link)
    public abstract create_link_menu(link)
    public abstract create_context_menu()
-   public abstract send_string(s)
+   public abstract send_tty(s)
    public abstract vt_size_changed(cols, rows)
    public abstract msg(s, n)
    public abstract clear_msg()
@@ -199,6 +199,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
 
    private readable
+      verbose_flag,
       cursor_x,                   # The selection cursor/mark
       cursor_y,
       mark_x,
@@ -552,8 +553,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          "?l" : do_dec_reset(int_param(param, 1))
          "!p" : do_soft_reset()
          "g" : do_tab_clear(int_param(param, 1, 0))
-         #default : write("csi not implemented: cmd=",cmd,"  params=", to_string(param))
-
+         default : if \verbose_flag then write("csi not implemented: cmd=",cmd,"  params=", to_string(param))
       }
    end
 
@@ -708,6 +708,14 @@ class Vt(LineBasedScrollArea, MenuMode)
          reset_margins()
          view.invalidate()
       }
+   end
+
+   #
+   # If set, some debug output is produced.
+   #
+   public set_verbose(f)
+      self.verbose_flag := check_flag(f)
+      return self
    end
 
    #
@@ -1046,7 +1054,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          ">" : do_application_keypad_mode(&no)
          "=" : do_application_keypad_mode(&yes)
          !"()*+-./" : do_charset_cmd(c)
-         #default : write("Unkown ESC char: ", c)
+         default : if \verbose_flag then write("Unknown ESC char: ", c)
       }
    end
 
@@ -1087,7 +1095,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       c := get_ch()
       case string(c) of {
          "8" : do_decaln()
-         #default : write("Unkown ESC# char: ", c)
+         default : if \verbose_flag then write("Unkown ESC# char: ", c)
       }
    end
 
@@ -1609,12 +1617,15 @@ class Vt(LineBasedScrollArea, MenuMode)
    private handle_default(e)
       local ch
       ch := e.code
-      if type(ch) == ("string" | "ucs") then
+      if type(ch) == ("string" | "ucs") then {
+         if \e.meta then
+            ch := "\e" || ch
          send(ch)
+      }
    end
 
    private send(s)
-      ui.send_string(s)
+      ui.send_tty(s)
    end
 
    private handle_key(e, src, ty)

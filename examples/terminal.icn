@@ -533,10 +533,10 @@ class Terminal(TabItem, VtUI)
       insert_link(link, ev)
    end
 
-   public send_string(s)
-      if \opts["v"] then
-         write("Out: ", s)
-      got_input(s)
+   public send_tty(s)
+      s := string(s) | runerr(103, s)
+      put(input, s)
+      return self
    end
 
    private close_all()
@@ -556,13 +556,10 @@ class Terminal(TabItem, VtUI)
 
    private setup_shell()
       local env, sh
-      #prompt := "OIX-SH-" || ?100000
       env := []
       every put(env, System.environ())
       put(env, "TERMLINKS=1")
       put(env, "PATH=" || Files.get_home() || "/termlinks-extras/bin:" || System.getenv("PATH"))
-      #      put(env, "PS1=" || prompt)
-      #      put(env, "PS1=")
       tty := PttyStream() | fail
       (tty.flag(FileOpt.NONBLOCK) &
        pid := System.fork()) | {
@@ -599,12 +596,6 @@ class Terminal(TabItem, VtUI)
       return pats
    end
 
-   public got_input(s)
-      s := string(s) | runerr(103, s)
-      put(input, s)
-      return self
-   end
-
    private check_pwd()
       local s
       s := Files.readlink("/proc/" || pid || "/cwd") | fail
@@ -625,14 +616,11 @@ class Terminal(TabItem, VtUI)
    end
 
    private update_grey()
-      set_is_shaded_ex(prev_button, if history_pos > 1 then &no else &yes)
-      set_is_shaded_ex(next_button, if history_pos < *history then &no else &yes)
-      history_list.set_is_shaded(if *history > 0 then &no else &yes)
+      set_is_shaded_ex(prev_button, if history_pos < *history then &no else &yes)
+      set_is_shaded_ex(next_button, if history_pos > 1 then &no else &yes)
    end
 
-   private send(s)
-      if \opts["v"] then
-         write("In: ", s)
+   private send_vt(s)
       output.input(s)
    end
 
@@ -652,7 +640,9 @@ class Terminal(TabItem, VtUI)
                err_msg(u"EOF on tty")
                break
             }
-            send(Text.liberal_ucs(t))
+            if \opts["v"] then
+               write("In: ", image(t))
+            send_vt(Text.liberal_ucs(t))
             check_pwd()
          } else if DescStream.poll_out_test(x[1]) then {
             if s := get(input) then {
@@ -662,7 +652,8 @@ class Terminal(TabItem, VtUI)
                }
                if n < *s then
                   push(input, s[n + 1:0])
-               #write("WROTE:",image(s))
+               if \opts["v"] then
+                  write("Out: ", image(s))
             } else {
                #write("asking for input but none here...break")
                io_task.sleep(50)
@@ -676,7 +667,7 @@ class Terminal(TabItem, VtUI)
       local r
       if link.url.scheme == u"text" then {
          write(to_string(link.url))
-         send(ucs(link.url.get_decoded_path()))
+         send_tty(ucs(link.url.get_decoded_path()))
       } else if r := get_runner(link) then {
          if \r.cmd then
             run_prog(r.cmd)
@@ -700,10 +691,10 @@ class Terminal(TabItem, VtUI)
                es ||:= u"/"
             else
                es ||:= u" "
-            send(es)
+            send_tty(es)
          }
       } else
-         send(link.url.ucs())
+         send_tty(link.url.ucs())
    end
 
    private err_msg(s)
@@ -773,7 +764,7 @@ class Terminal(TabItem, VtUI)
       local r, cmd
       if r := get_runner(link) then {
          cmd := \r.cmd | r.desktop_entry.subst_file(Format.shell_escape(r.subst), r.link.line)
-         send(cmd)
+         send_tty(cmd)
       }
    end
 
@@ -868,8 +859,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private run_prog(s)
-      s ||:= u"\r"
-      got_input(s)
+      send_tty(s || u"\r")
    end
 
    private goto_dir(d, nav)
@@ -1027,10 +1017,10 @@ class Terminal(TabItem, VtUI)
       }
 
       if /nav then {
-         while *history > history_pos do
-            pull(history)
-         put(history, cwd)
-         history_pos +:= 1
+         every 1 to history_pos - 1 do
+            pop(history)
+         push(history, cwd)
+         history_pos := 1
          synch_history_list()
          update_grey()
       }
@@ -1077,6 +1067,9 @@ class Terminal(TabItem, VtUI)
       output.
          set_ui(self)
       output.set_history_size(\opts["h"])
+      if \opts["v"] then
+         output.set_verbose(&yes)
+
       favourites_list.set_size().set_selection_list(get_favourites_directories())
       
       set_remembered_focus(output.find_focus())
@@ -1116,7 +1109,11 @@ class Terminal(TabItem, VtUI)
    end
 
    private on_history_list(ev)
-      goto_dir(history_list.object_get_selection(), &yes)
+      local s
+      history_pos := history_list.get_selection()
+      s := history[history_pos]
+      update_grey()
+      goto_dir(s, &yes)
    end
 
    private on_home_button(ev)
@@ -1160,7 +1157,7 @@ class Terminal(TabItem, VtUI)
       }
    end
 
-   private on_next_button(ev)
+   private on_prev_button(ev)
       local s
       (history_pos < *history) | fail
       s := history[history_pos +:= 1]
@@ -1169,7 +1166,7 @@ class Terminal(TabItem, VtUI)
       goto_dir(s, &yes)
    end
 
-   private on_prev_button(ev)
+   private on_next_button(ev)
       local s
       (history_pos > 1) | fail
       s := history[history_pos -:= 1]
