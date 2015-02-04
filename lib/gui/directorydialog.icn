@@ -369,8 +369,7 @@ $endif
       d := FavouriteDirectoriesDialog()
       d.show_modal(self)
       \d.okay | fail
-      dir.selection_list := get_favourites_directories()
-      dir.constrain_selection().synch_selection()
+      dir.synch_selection_list(get_favourites_directories())
    end
 
    private setup()

@@ -462,8 +462,7 @@ class FileDialog(Dialog)
       d := FavouriteDirectoriesDialog()
       d.show_modal(self)
       \d.okay | fail
-      dir.selection_list := get_favourites_directories()
-      dir.constrain_selection().synch_selection()
+      dir.synch_set_selection_list(get_favourites_directories())
    end
 
    public get_pats()
