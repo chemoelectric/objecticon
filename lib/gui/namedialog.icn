@@ -5,6 +5,7 @@ class NameDialog(Dialog)
       cancel_button,
       okay_button, 
       result, 
+      message_label,
       name_field
 
    public on_cancel_button(ev)
@@ -16,6 +17,14 @@ class NameDialog(Dialog)
       dispose()
    end
 
+   public msg(s, n)
+      message_label.set(s, n)
+   end
+
+   public clear_msg()
+      msg()
+   end
+
    public new(name)
       Dialog.new()
       setup()
@@ -24,7 +33,7 @@ class NameDialog(Dialog)
    end
 
    private setup()
-      local paint_2, panel_2, layout_4, line_1, layout_1, label_1, paint_1, panel_1, paint, layout_2
+      local paint_2, panel_2, paint_7, layout_4, line_1, layout_1, label_1, paint_1, panel_1, paint, layout_2
       self.set_resize(&yes)
       paint := TextPaint("Name")
       label_1 := Label().
@@ -75,6 +84,15 @@ class NameDialog(Dialog)
          connect(self.on_cancel_button, Event.ACTION).
          set_toggles(&no).
          set_paint(paint_2)
+      paint_7 := TextPaint("")
+      message_label := MessageLabel().
+         set_size(scale(150)).
+         set_align(Align.L, Align.B).
+         set_fg("red").
+         clear_constraints().
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_paint(paint_7)
       layout_2 := GridLayout().
          set_doi(scale(0)).
          set_extra("cells")
@@ -83,7 +101,8 @@ class NameDialog(Dialog)
          set_constraint("x_align", Align.L).
          set_layout(layout_2).
          add(okay_button).
-         add(cancel_button)
+         add(cancel_button).
+         add(message_label)
       self.add(panel_2)
       layout_4 := GridLayout().
          set_extra("cells")
