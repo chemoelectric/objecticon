@@ -73,6 +73,14 @@ class MenuBar(Component, MenuSystem)
       return self
    end
 
+   #
+   # Remove all the menus.
+   #
+   public remove_all()
+      while remove_index(1)
+      return self
+   end
+
    public initially()
       Component.initially()
       every (!self.menus).initially()

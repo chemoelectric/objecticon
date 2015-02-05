@@ -101,6 +101,14 @@ abstract class MenuComponent(Rect,Connectable)
    end
 
    #
+   # Remove all the children.
+   #
+   public remove_all()
+      while remove_index(1)
+      return self
+   end
+
+   #
    # Succeed iff the component has been initialized with {init()}, but
    # not yet cleaned up with {finally()}.
    #
