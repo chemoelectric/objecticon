@@ -4,6 +4,7 @@ import
    ipl.sort,
    ipl.strings,
    ipl.wildcard,
+   ipl.pdco,
    gui,
    io,
    xdg,
@@ -77,6 +78,10 @@ $load SOCKET_16 "fileicons/socket.png"
 $load PIPE_16 "fileicons/pipe.png"
 $load HTML_16 "fileicons/html.png"
 
+#
+# An `ItemPaint` which adds an appropriate icon to each lines displayed.  The data should be
+# `ListEntryWithIcon` instances.
+#
 class IconFilesItemPaint(ItemPaint)
    public static const ICON_SIZE
 
@@ -194,8 +199,11 @@ $endif
 
    public draw(W, data, x, y, w, h)
       local i
-      if not(i := \data.icon) then
-         i := data.icon := get_icon(data)
+      if is(data, ListEntryWithIcon) then {
+         if not(i := \data.icon) then
+            i := data.icon := get_icon(data)
+      } else
+         i := get_icon(data)
       i.copy_to(,,,, W, x + (ICON_SIZE - i.get_width()) / 2, y + (h - i.get_height()) / 2)
       x +:= ICON_SIZE + Gui.TEXT_INSET
       w -:= ICON_SIZE + Gui.TEXT_INSET
@@ -203,6 +211,24 @@ $endif
    end
 end
 
+#
+# An `ItemPaint` for a string list of directories, which adds a folder
+# icon to each line displayed.
+#
+#
+class StringDirItemPaint(IconFilesItemPaint)
+   public get_string(data)
+      return data
+   end
+
+   public get_icon(data)
+      return ImageCache.get("fi.folder")
+   end
+end
+
+#
+# A `SuggestField` for selecting files.
+#
 class FileSuggestField(SuggestField)
    public
       cwd,
@@ -360,8 +386,6 @@ class FileSuggestField(SuggestField)
          else
             get_longest_prefix()
 
-         #write("px=",image(px),  " contents=",image(contents)," t=",image(t),  " tl=",to_string(ipl.pdco.List{(!l).name}))
-
          # Again as above, insert the string if it's longer.
          # Otherwise trigger a change.  The only special case is if we
          # are in directories mode and press tab whilst contents is an
@@ -393,6 +417,294 @@ class FileSuggestField(SuggestField)
       self.set_contents(u"")
       cwd := Files.getcwd()
       set_direction(Direction.DOWN)
+      return
+   end
+end
+
+# The border used to highlight which element of the path the mouse is
+# over.
+#
+package class FileTrailBorder(LineBorder)
+   public draw(W, x, y, w, h)
+      local i, W2
+      use {
+         W2 := Gui.style.get_dashed_clone(W),
+         {
+            every i := 0 to line_width - 1 do
+               W2.draw_rectangle(x + i, y + i, w - 2 * i, h - 2 * i)
+         }
+      }
+   end
+end
+
+#
+# A directory button in the FileTrail - everything other than "/" elements.
+#
+package class FileTrailButton(TextButton)
+   private readable p
+
+   private changed()
+      parent.on_change(p.ucs())
+   end
+
+   # Set whether this element is disabled for input and displays "..." rather
+   # than its normal filename.
+   #
+   package set_dots(f)
+      if /f then {
+         set_is_shaded(&no)
+         set_label(p.get(-1))
+      } else {
+         set_is_shaded(&yes)
+         set_label("...")
+      }
+   end
+
+   public new(p)
+      TextButton.new()
+      self.p := p
+      set_dots()
+      set_accepts_focus(&no)
+      set_draw_own_shading(&yes)
+      set_border(CompoundBorder().
+                 set_outer(FileTrailBorder().set_line_width(1)).
+                 set_inner(EmptyBorder().
+                           set_l_inset(Gui.TEXT_INSET).
+                           set_r_inset(Gui.TEXT_INSET)).
+                 set_x_align(Align.L))
+      set_border_whilst_entered(&yes)
+      connect(changed, Event.ACTION)
+      return
+   end
+end
+
+#
+# A drop-down list in the FileTrail (shown by a "/" element).
+#
+package class FileTrailList(ButtonOnlyList)
+   private readable 
+      p,        # The FilePath giving the path to this point
+      child     # The optional child to the right, for setting the selection in the popup
+
+   public create_button()
+      return TextButton().set_label("/")
+   end
+
+   public create_popup()
+      return ItemPaintList().
+         set_item_paint(IconFilesItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                            set_x_align(Align.L))
+   end
+
+   public open_popup(ev)
+      local e, i, l
+      l := []
+      every e := !Files.ucs_list(p.str(), ListEntryWithIcon) do {
+         if e.stat.mode_str[1] == "d" & not (e.name == (u"." | u"..")) then
+            put(l, e)
+      }
+      qsort(l, Files.name_cmp)
+      set_selection_list(l)
+      if i := Positions{(!l).name, \child} then
+         set_selection(i)
+      ButtonOnlyList.open_popup(ev)
+   end
+
+   private changed()
+      local o
+      o := object_get_selection()
+      parent.on_change(p.child(o.name).ucs())
+   end
+
+   public new(p, child)
+      ButtonOnlyList.new()
+      self.p := p
+      self.child := child
+      set_accepts_focus(&no)
+      set_selection_list([])
+      clear_constraints()
+      b.set_border_whilst_entered(&yes).
+         set_border(CompoundBorder().
+                          set_outer(FileTrailBorder().set_line_width(1)).
+                          set_inner(EmptyBorder().
+                                    set_l_inset(Gui.TEXT_INSET).
+                                    set_r_inset(Gui.TEXT_INSET)))
+      connect(changed, Event.SELECTION_CHANGED)
+      return
+   end
+end
+
+# A component for displaying a path as a series of buttons which
+# select an element of the path, or popup a list of sibling
+# directories.  A {FileTrail.DIR_CHANGED_EVENT} event is fired
+# when a directory is selected.
+#
+class FileTrail(Component)
+   public static const
+      DIR_CHANGED_EVENT
+
+   private static init()
+      DIR_CHANGED_EVENT := "dir changed"
+   end
+
+   package on_change(s)
+      fire(DIR_CHANGED_EVENT, s)
+   end
+
+   public layout()
+      reset_all()
+      Component.layout()
+      check_limits()
+   end
+
+   # Set all the children back to their original state, as though we
+   # have enough space to display everything.
+   private reset_all()
+      local c
+      every c := !children do {
+         c.set_is_hidden(&no)
+         if is(c, FileTrailButton) then
+            c.set_dots(&no)
+      }
+      # The last FileTrailButton is shaded, since it represents the
+      # current directory.
+      children[-2].set_is_shaded(&yes)
+   end
+
+   # Go through the children to see at what point one cannot be fully
+   # displayed, and adjust accordingly to show a "..." element.
+   private check_limits()
+      local c, i, r
+      every c := children[i := 1 to *children] do {
+         # Calculate the intersection with this component - may fail
+         # if the child is completely obscured.
+         r := intersect(c) | &null
+         if /r | (r.w < c.w) then {
+            # c is fully or partially obscured; everything to the
+            # right of c is fully obscured.
+            if is(c, FileTrailList) then {
+               # c is a FileTrailList element; hide it and set the
+               # FileTrailButton to the left (if any) to show "..."
+               c.set_is_hidden(&yes)
+               children[i - 1].set_dots(&yes)
+            } else if (\r).w > c.border.l_inset + cbwin.text_width("...") then {
+               # c is a FileTrailButton and has enough room to show
+               # the "..." itself
+               c.set_dots(&yes)
+            } else {
+               # c is a FileTrailButton but hasn't enough room to show
+               # the "..." itself.  So hide it, the FileTrailList to
+               # the left, and show the dots in the FileTrailButton
+               # two places to the left.
+               c.set_is_hidden(&yes)
+               children[i - 1].set_is_hidden(&yes)
+               children[i - 2].set_dots(&yes)
+            }
+            break
+         }
+      }
+   end
+
+   # Set the path to show to the given (ucs) string.  If the path is
+   # not absolute, then it is converted to an absolute path, all
+   # elements of which must be ucs, or failure occurs.
+   #
+   public set_path(p)
+      local f, i, g
+      p := ucs(p) | runerr(128, p)
+      remove_all()
+      # Ensure all elements are ucs.
+      f := FilePath(p).canonical().ucs_path() | fail
+      every i := 2 to f.size() do {
+         g := f.slice(1, i)
+         if i > 2 then
+            add(FileTrailButton(g))
+         add(FileTrailList(g, f.get(i)))
+      }
+      if f.size() > 1 then
+         add(FileTrailButton(f))
+      # The rightmost element takes up the rest of the space to give
+      # left alignment.
+      add(FileTrailList(f).
+            set_constraint("x_align", Align.L).
+            set_constraint("x_weight", 1.0))
+      if is_live() then {
+         reset_layout()
+         layout()
+         invalidate()
+      }
+   end
+
+   public new()
+      Component.new()
+      set_layout(GridLayout().set_dii(0).set_doi(0))
+      set_constraint("x_fill", &yes)
+      set_constraint("x_align", Align.L)
+      set_constraint("x_weight", 1.0)
+      return
+   end
+end
+
+#
+# A dialog for renaming a file.
+#
+class RenameDialog(NameDialog)
+   private
+      p
+
+   public on_okay_button(ev)
+      local s
+      s := p.sibling(name_field.get_contents()).ucs()
+      if Files.access(s) then
+         msg("File already exists")
+      else if Files.rename(p.ucs(), s) then {
+         result := s
+         dispose()
+      }
+      else
+         msg("Failed: " || &why)
+   end
+
+   # The constructor requires a ucs string, being the file to be renamed.
+   public new(s)
+      s := ucs(s) | runerr(128, s)
+      p := FilePath(s)
+      NameDialog.new(p.get(-1))
+      set_label("Rename file")
+      # Start with text selected.
+      name_field.set_mark(1).set_size(scale(300))
+      return
+   end
+end
+
+#
+# A dialog for creating a new directory
+#
+class NewDirectoryDialog(NameDialog)
+   private
+      p
+
+   public on_okay_button(ev)
+      local s
+      s := p.child(name_field.get_contents()).ucs()
+      if Files.mkdir(s) then {
+         result := s
+         dispose()
+      }
+      else
+         msg("Failed: " || &why)
+   end
+
+   # The constructor requires a ucs string, being the directory in
+   # which the new directory is to be created. to be renamed.
+   public new(s)
+      s := ucs(s) | runerr(128, s)
+      p := FilePath(s)
+      NameDialog.new()
+      set_label("New directory")
+      name_field.set_size(scale(300))
       return
    end
 end
