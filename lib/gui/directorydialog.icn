@@ -313,14 +313,10 @@ $endif
 
    public on_new_dir_menu_item(ev)
       local d, s
-      d := NameDialog().set_label("New Directory")
-      d.show_modal(self)
-      \d.result | fail
-      s := selected_path.child(d.result).str()
-      if Files.mkdir(s) then
-         goto_dir(s)
-      else
-         msg("mkdir failed: " || &why)
+      s := selected_path.ucs() | return msg("Path not UTF-8")
+      d := NewDirectoryDialog(s).
+         show_modal(self)
+      goto_dir(\d.result)
    end
 
    public msg(s)
