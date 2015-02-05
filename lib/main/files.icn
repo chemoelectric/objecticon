@@ -746,6 +746,18 @@ class FilePath(ObjectOutput)
    end
 
    #
+   # Return another {FilePath} with the same elements, but as ucs
+   # strings.  Fails if any part cannot be converted to ucs.
+   #
+   public ucs_path()
+      local s, t
+      t := []
+      every s := !l do
+         put(t, default.ucs(s)) | fail
+      return from_list(t)
+   end
+
+   #
    # Create a new {FilePath} from the given list of path elements.
    #
    public static from_list(l)
