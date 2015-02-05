@@ -409,10 +409,14 @@ class Vt(LineBasedScrollArea, MenuMode)
       return self
    end
 
-   private get_chs()
-      local c
+   private wait_for_buff()
       while *buff = 0 do
          coact()
+   end
+
+   private get_chs()
+      local c
+      wait_for_buff()
       buff ? {
          c := tab(many(Gui.PRINTABLE_1)) | move(1)
          buff := tab(0)
@@ -422,8 +426,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private get_ch()
       local c
-      while *buff = 0 do
-         coact()
+      wait_for_buff()
       buff ? {
          c := move(1)
          buff := tab(0)
@@ -432,8 +435,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private peek_ch()
-      while *buff = 0 do
-         coact()
+      wait_for_buff()
       return buff[1]
    end
 

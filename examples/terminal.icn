@@ -382,7 +382,7 @@ class Columns(LineBasedScrollArea)
       set_highlight()
    end
 
-   private get_row_for_index(n)
+   public get_row_for_index(n)
       return (n - 1) / *col_w + 1
    end
 
@@ -477,6 +477,14 @@ class DirList(ButtonOnlyList)
       theme_toolbar_button(b, "emblem-favorite")
       return b
    end
+
+   public create_popup()
+      return ItemPaintList().
+         set_item_paint(StringDirItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                            set_x_align(Align.L))
+   end
 end
 
 class HistoryList(ButtonOnlyList)
@@ -485,6 +493,14 @@ class HistoryList(ButtonOnlyList)
       b := IconButton().set_paint(ImagePaint())
       theme_toolbar_button(b, "view-history")
       return b
+   end
+
+   public create_popup()
+      return ItemPaintList().
+         set_item_paint(StringDirItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                            set_x_align(Align.L))
    end
 end
 
@@ -499,7 +515,8 @@ class Terminal(TabItem, VtUI)
       mix_entries_button,
       favourites_list,
       message_label,
-      history_list
+      history_list,
+      trail
 
    private readable
       ascending,
@@ -516,10 +533,12 @@ class Terminal(TabItem, VtUI)
       history_pos,
       nav_dir,
       io_task,
+      check_cwd_task,
       pid, 
       tty,
       input,
-      cwd
+      cwd,
+      cwd_mtime
 
    public link_left_clicked(link)
       open_link(link)
@@ -540,6 +559,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private close_all()
+      check_cwd_task.stop()
       io_task.stop()
       System.kill(pid, Signal.SIGHUP)
       tty.close()
@@ -622,6 +642,17 @@ class Terminal(TabItem, VtUI)
 
    private send_vt(s)
       output.input(s)
+   end
+
+   private check_cwd()
+      local st
+      repeat {
+         if st := Files.stat(cwd) then {
+            if st.mtime ~= cwd_mtime then
+               resort_cwd()
+         }
+         check_cwd_task.sleep(500)
+      }
    end
 
    private service_tty()
@@ -768,6 +799,17 @@ class Terminal(TabItem, VtUI)
       }
    end
 
+   private rename(link)
+      local s, d
+      s := ucs(link.url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
+      d := RenameDialog(s)
+      d.show_modal()
+      s := \d.result | fail
+      msg("Renamed OK", 3000)
+      if cwd == FilePath(s).parent().ucs() then
+         resort_cwd()
+   end
+
    private connect_launch(m2, runner)
       m2.connect(create parent_dialog.launch_prog(runner), Event.ACTION)
    end
@@ -838,6 +880,11 @@ class Terminal(TabItem, VtUI)
          }
          if *m1.children > 0 then 
             m.add(m1)
+      }
+      if link.url.scheme == u"file" then {
+         m.add(TextMenuItem().
+               set_label("Rename").
+               connect(create rename(link), Event.ACTION))
       }
 
       return m
@@ -932,11 +979,28 @@ class Terminal(TabItem, VtUI)
    end
 
    private resort_cwd()
-      local s, i
-      s := columns.object_get_last_highlight().name
-      columns.set_data(list_cwd(get_pats()))
-      i := Positions{(!columns.data).name, s}
-      columns.set_last_highlight(i)
+      local i, ino, info, vis
+      if i := columns.get_row_for_index(columns.get_last_highlight()) then {
+         # Set vis to &yes if the last highlight is currently visible; also get the ino of
+         # the last highlight.
+         info := columns.get_line_info()
+         if info.first_whole <= i <= info.last_whole then
+            vis := &yes
+         ino := columns.object_get_last_highlight().stat.ino
+      }
+      load_cwd(get_pats())
+      # Search for the old ino in the new data.  If found, set the highlight and if the old
+      # last_highlight was visible, ensure the new one is too.
+      if i := Positions{(!columns.data).stat.ino, \ino} then {
+         columns.set_last_highlight(i)
+         if \vis then
+            columns.ensure_line_visible(columns.get_row_for_index(columns.get_last_highlight()))
+      }
+   end
+
+   private load_cwd(pats)
+      columns.set_data(list_cwd(pats))
+      cwd_mtime := Files.stat(cwd).mtime | 0
    end
 
    private list_cwd(pats)
@@ -979,12 +1043,8 @@ class Terminal(TabItem, VtUI)
       return dirs ||| files
    end
 
-   private refresh_cwd()
-      resort_cwd()
-   end
-
    private set_cwd(s, nav)
-      local data, ex, e, lh, t, l, i
+      local ex, e, lh, t, l, i
       if \cwd then {
          lh := columns.data[columns.get_last_highlight()].name
          insert(columns_pos_table, 
@@ -992,11 +1052,11 @@ class Terminal(TabItem, VtUI)
                 FileDialogPos(lh, columns.get_area_y()))
       }
       cwd := ucs(s) | fail
-      data := list_cwd()
-      columns.set_data(data)
+      trail.set_path(cwd)
+      load_cwd()
       synch_favourites_list()
       ex := table(0)
-      every e := !data do
+      every e := !columns.data do
          ex[Files.get_extension(e.name)] +:= 1
       l := [u"*"]
       every e := back(sort(ex, 2)) do
@@ -1006,7 +1066,7 @@ class Terminal(TabItem, VtUI)
       if is_live() then {
          if t := member(columns_pos_table, FilePath(cwd).canonical().str()) then {
             columns.set_area_y(t.area_y).set_area_x(0)
-            if i := Positions{(!data).name, \t.cursor_name} then
+            if i := Positions{(!columns.data).name, \t.cursor_name} then
                columns.set_last_highlight(i)
             else
                columns.set_last_highlight()
@@ -1024,7 +1084,7 @@ class Terminal(TabItem, VtUI)
          synch_history_list()
          update_grey()
       }
-      set_paint(AbbreviatedTextPaint(cwd))
+      set_paint(AbbreviatedTextPaint(FilePath(cwd).get(-1)))
       return self
    end
 
@@ -1038,7 +1098,7 @@ class Terminal(TabItem, VtUI)
    end
 
    public refresh_favourite_dirs()
-      favourites_list.selection_list := get_favourites_directories()
+      favourites_list.set_selection_list(get_favourites_directories())
       synch_favourites_list()
    end
 
@@ -1048,6 +1108,10 @@ class Terminal(TabItem, VtUI)
 
    private synch_history_list()
       history_list.set_selection(history_pos)
+   end
+
+   private on_trail(ev)
+      goto_dir(ev)
    end
 
    public component_setup()
@@ -1064,6 +1128,11 @@ class Terminal(TabItem, VtUI)
          connect(on_columns_lclick, "lclicked").
          connect(on_columns_mclick, "mclicked").
          connect(on_columns_rpress, Event.MOUSE_RIGHT_PRESS)
+      trail.
+         set_size().
+         set_constraint("l_inset", scale(10)).
+         connect(on_trail, FileTrail.DIR_CHANGED_EVENT)
+
       output.
          set_ui(self)
       output.set_history_size(\opts["h"])
@@ -1084,6 +1153,8 @@ class Terminal(TabItem, VtUI)
       input := []
       io_task := Dispatcher.new_task{service_tty()}
       io_task.start()
+      check_cwd_task := Dispatcher.new_task{check_cwd()}
+      check_cwd_task.start()
       theme_toolbar_button(close_button, "window-close")
       theme_toolbar_button(prev_button, "go-previous")
       theme_toolbar_button(next_button, "go-next")
@@ -1121,7 +1192,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private on_refresh_button(ev)
-      refresh_cwd()
+      resort_cwd()
    end
 
    private on_up_button(ev)
@@ -1152,7 +1223,7 @@ class Terminal(TabItem, VtUI)
 
    private on_filter(ev)
       if member(EditList.NAVIGATE, ev.code) then {
-         refresh_cwd()
+         resort_cwd()
          parent_dialog.set_focus(output)
       }
    end
@@ -1176,7 +1247,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private setup()
-      local paint_2, split_2, layout_7, paint_14, paint_27, paint_32, paint_7, layout_4, paint_11, paint_37, panel_4, paint_29, paint_34, split_content_3, split_content_4, paint_9, layout_6, paint_13, paint_31, paint_6, layout_3, paint_10, paint_23, paint_36, paint_41, paint, paint_3, paint_28, paint_33, paint_8, border_1, layout_5, paint_12, paint_30, panel_5, paint_35, paint_40
+      local paint_2, split_2, paint_14, paint_27, paint_32, paint_7, layout_4, paint_11, paint_37, panel_4, paint_29, paint_34, split_content_3, split_content_4, paint_9, layout_6, paint_13, paint_31, paint_6, layout_3, paint_10, paint_23, paint_36, paint_41, paint, paint_3, paint_28, paint_33, paint_8, border_1, layout_5, paint_12, paint_30, paint_35, paint_40
       paint_10 := ImagePaint().
          set_cache("rpp.EXIT_24")
       paint_9 := TextPaint("Close")
@@ -1322,13 +1393,21 @@ class Terminal(TabItem, VtUI)
          clear_constraints().
          set_tooltip(paint_37).
          connect(self.on_favourites_list, Event.SELECTION_CHANGED)
+      trail := FileTrail().
+         set_size(scale(100), scale(20)).
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0)
       layout_6 := GridLayout().
          set_doi(scale(0)).
          set_dii(scale(2)).
          set_extra("cells")
       panel_4 := Panel().
          clear_constraints().
+         set_constraint("eol", &yes).
          set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_layout(layout_6).
          add(close_button).
@@ -1344,17 +1423,9 @@ class Terminal(TabItem, VtUI)
          add(size_button).
          add(show_hidden_button).
          add(mix_entries_button).
-         add(favourites_list)
-      layout_7 := GridLayout().
-         set_doi(scale(0)).
-         set_extra("cells")
-      panel_5 := Panel().
-         clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_layout(layout_7).
-         add(panel_4)
-      self.add(panel_5)
+         add(favourites_list).
+         add(trail)
+      self.add(panel_4)
       columns := Columns().
          set_size(scale(100), scale(100)).
          clear_constraints().
