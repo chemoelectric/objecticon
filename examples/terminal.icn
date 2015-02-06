@@ -213,16 +213,19 @@ class Columns(LineBasedScrollArea)
    end
 
    public draw_line(xp, yp, lh, i)
-      local e, j, r, s, k, r2
+      local e, j, r, s, k
       every j := 1 to *col_w do {
          k := (i - 1) * *col_w  + j
          e := data[k] | break
          s := item_paint.get_size(view.cbwin, e)
-         r := Rect(xp, yp, col_w[j], lh)
-         item_paint.draw_rect(view.cbwin, e, r2 := item_border.float(r, s))
+         #r := Rect(xp, yp, col_w[j], lh)
+         r := Rect(xp, yp, s.w + item_border.get_total_width(), lh)
+         item_paint.draw_rect(view.cbwin, e, item_border.float(r, s))
          item_border.draw_rect(view.cbwin, r)
          if k === highlight then 
             Gui.style.fill_selection_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
+         if k === over then 
+            Gui.style.fill_over_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
          if k === last_highlight then 
             Gui.style.draw_dashed_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
          xp +:= col_w[j] + gutter
@@ -346,7 +349,9 @@ class Columns(LineBasedScrollArea)
    private set_over(n)
       local s, url
       if n ~=== over then {
+         invalidate_line(get_row_for_index(\over))
          over := n
+         invalidate_line(get_row_for_index(\over))
          if /over then
             parent.parent.parent.clear_msg()
          else {

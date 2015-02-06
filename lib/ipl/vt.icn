@@ -1020,7 +1020,7 @@ class Vt(LineBasedScrollArea, MenuMode)
             29 : attr.crossed := &no
             30: attr.fg := "black"
             31: attr.fg := "red"
-            32: attr.fg := "green"
+            32: attr.fg := "dark green"
             33: attr.fg := "yellow"
             34: attr.fg := "blue"
             35: attr.fg := "purple"
@@ -1030,7 +1030,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
             40: attr.bg := "black"
             41: attr.bg := "red"
-            42: attr.bg := "green"
+            42: attr.bg := "dark green"
             43: attr.bg := "yellow"
             44: attr.bg := "blue"
             45: attr.bg := "purple"
@@ -1451,6 +1451,8 @@ class Vt(LineBasedScrollArea, MenuMode)
 
          if \a.link === last_highlight then
             Gui.style.draw_dashed_rectangle(W, x1, yp, w1, char_h)
+         if \a.link === over then
+            Gui.style.fill_over_rectangle(W, x1, yp, w1, char_h)
 
          x1 +:= w1
       }
@@ -1762,7 +1764,9 @@ class Vt(LineBasedScrollArea, MenuMode)
    private set_over(l)
       local s
       if l ~=== over then {
+         invalidate_link(\over)
          over := l
+         invalidate_link(\over)
          if /over then
             ui.clear_msg()
          else {
