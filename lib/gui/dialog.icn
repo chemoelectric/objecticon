@@ -62,7 +62,7 @@ class Dialog(Component)
       tooltip_component, 
       point_chain,
       point_chain_source,
-      copy_rect,
+      invalid_rects,
       held,
       crossing,
       selection_requests,
@@ -74,28 +74,30 @@ class Dialog(Component)
       menu_mode_stack
 
    public needs_validate()
-      return \copy_rect
+      return \invalid_rects
    end
 
    public validate()
-      local r
+      local r, rs
 
-      \copy_rect | fail
+      \invalid_rects | fail
 
-      # Copy copy_rect just in case invoke_display invalidates something (and hence
-      # changes copy_rect unexpectedly).
-      r := copy_rect
-      copy_rect := &null
+      # Copy invalid_rects just in case invoke_display invalidates something (and hence
+      # changes invalid_rects unexpectedly).
+      rs := invalid_rects
+      invalid_rects := &null
 
-      self.invoke_display(r.x, r.y, r.w, r.h)
-      cbwin.copy_to(r.x, r.y, r.w, r.h, win, r.x, r.y)
+      every r := !rs.l do {
+         self.invoke_display(r.x, r.y, r.w, r.h)
+         cbwin.copy_to(r.x, r.y, r.w, r.h, win, r.x, r.y)
+      }
    end
 
    public invalidate_rect(r)
-      if /copy_rect then
-         copy_rect := Rect(r.x, r.y, r.w, r.h)
+      if /invalid_rects then
+         invalid_rects := Rects().add(Rect(r.x, r.y, r.w, r.h))
       else
-         copy_rect := copy_rect.union(r)
+         invalid_rects.add(r)
    end
 
    public is_blocked()
@@ -508,7 +510,7 @@ class Dialog(Component)
          self.owning_dialog := &null
       }
       self.point_chain := self.point_chain_source := self.held := 
-         self.prev_event := self.copy_rect := self.crossing := 
+         self.prev_event := self.invalid_rects := self.crossing := 
          self.selections := self.selection_requests := &null
       fire(Event.DIALOG_DISPOSED)
       return self
@@ -1581,4 +1583,28 @@ abstract class MenuMode()
    public abstract gen_popup_components()
    public abstract get_nesting_component()
    public abstract allow_nested(c)
+end
+
+#
+# Store a list of {Rect}s which need to be invalidated
+#
+package class Rects()
+   private readable l
+
+   public add(r)
+      local t, i
+      every t := l[i := 1 to *l] do {
+         if t.touches(r) then {
+            l[i] := t.union(r)
+            return self
+         }
+      }
+      put(l, r)
+      return self
+   end
+
+   public new()
+      l := []
+      return
+   end
 end

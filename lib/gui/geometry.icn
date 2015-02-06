@@ -103,6 +103,25 @@ class Rect(Point,Size)
       return Rect(ix, iy, iw, ih)
    end
 
+   public touches(r)
+      local ix, iw, iy, ih
+
+      if r === self then
+         return
+
+      ix := max(self.x, r.x)
+      iw := min(self.x + self.w, r.x + r.w) - ix
+      if iw < 0 then
+         fail
+
+      iy := max(self.y, r.y)
+      ih := min(self.y + self.h, r.y + r.h) - iy
+      if ih < 0 then
+         fail
+
+      return
+   end
+
    #
    # Float the given {Size} within this {Rect}, according to the given
    # {Align}, but limit the result so that it lies within this {Rect}.
