@@ -1250,6 +1250,8 @@ class Img(Image, HasLastHighlight)
    private set_over(u)
       if u ~=== over then {
          over := u
+         if visible_border() then
+            invalidate()
          if /over then
             browser.clear_msg(self)
          else
@@ -1299,7 +1301,7 @@ class Img(Image, HasLastHighlight)
       if u ~=== highlight then {
          browser.set_last_highlight(self, \u)
          # Avoid resetting since that will reload the image data, which is slow.
-         is(border, NullBorder | EmptyBorder) | {
+         if visible_border() then {
             set_fg(if \u then browser.page_alink_color else context.fg)
             reset()
          }
@@ -1342,13 +1344,24 @@ class Img(Image, HasLastHighlight)
       }
    end
 
+   private visible_border()
+      return not is(border, NullBorder | EmptyBorder)
+   end
+
    public display()
-      local r
+      local r, W
       Image.display()
       if r := browser.is_banded(self) then
          Gui.style.fill_selection_rectangle(cbwin, x, y, w, h)
       if \last_highlight then
          Gui.style.draw_dashed_rectangle(cbwin, x, y, w, h)
+      if \over & visible_border() then {
+         # Make the border colour consistent with foreground link text colour.
+         use {
+            W := Gui.style.get_over_clone(cbwin),
+            border.draw_rect(W, self)
+         }
+      }
    end
 
    public new(browser, context, img_url, alt, form, map_id)

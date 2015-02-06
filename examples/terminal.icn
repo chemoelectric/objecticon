@@ -224,10 +224,10 @@ class Columns(LineBasedScrollArea)
          item_border.draw_rect(view.cbwin, r)
          if k === highlight then 
             Gui.style.fill_selection_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
-         if k === over then 
-            Gui.style.fill_over_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
          if k === last_highlight then 
             Gui.style.draw_dashed_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
+         if k === over then 
+            Gui.style.fill_over_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
          xp +:= col_w[j] + gutter
       }
    end
