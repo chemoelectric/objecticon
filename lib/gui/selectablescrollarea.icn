@@ -23,8 +23,10 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       contents,
       select_mode,
       dnd_mode,
+      over,
       cursor,                                
       selections,
+      old_over,
       old_cursor,
       old_highlight,
       old_highlight_part,
@@ -34,6 +36,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       on_a_line,
       highlight,
       highlight_part,
+      show_over_flag,
       draggable_cursor_flag,
       motion_cursor_flag,
       selection_on_key_moves_flag,
@@ -130,6 +133,14 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    public set_motion_cursor(s)
       self.motion_cursor_flag := check_flag(s)
+      return self
+   end
+
+   #
+   # Configure the object so that the row the mouse is over is indicated.
+   #
+   public set_show_over(s)
+      self.show_over_flag := check_flag(s)
       return self
    end
 
@@ -488,6 +499,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    public start_handle(e)
       self.old_cursor := self.cursor
+      self.old_over := self.over
       self.old_highlight := self.highlight
       self.old_highlight_part := self.highlight_part
       self.old_selections := copy(self.selections)
@@ -506,6 +518,10 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          invalidate_line(\self.old_highlight, i)
       } else if self.highlight_part ~=== self.old_highlight_part then {
          invalidate_line(\self.highlight, i)
+      }
+      if self.over ~=== self.old_over then {
+         invalidate_line(\self.old_over, i)
+         invalidate_line(\self.over, i)
       }
       if not lang.equals(self.old_selections, self.selections) then {
          every invalidate_line(!(old_selections -- selections) | !(selections -- old_selections), i)
@@ -611,24 +627,42 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       end_handle(e)
    end
 
-   public handle_move(e)
-      \self.motion_cursor_flag | fail
-      start_handle(e)
-      self.cursor := get_nearest_line_to_pointer(e)
-      ensure_line_visible(self.cursor)
-      end_handle(e)
+   public handle_in_chain(e)
+      *parent_dialog.held = 0 | fail
+      if \self.motion_cursor_flag then {
+         start_handle(e)
+         self.cursor := get_nearest_line_to_pointer(e)
+         ensure_line_visible(self.cursor)
+         end_handle(e)
+      } else if \show_over_flag then {
+         start_handle(e)
+         self.over := get_line_under_pointer(e) | &null
+         end_handle(e)
+      }
+   end
+
+   private handle_exit(e)
+      *parent_dialog.held = 0 | fail
+      if \self.motion_cursor_flag then {
+         start_handle(e)
+         self.cursor := get_nearest_line_to_pointer(e)
+         ensure_line_visible(self.cursor)
+         end_handle(e)
+      } else if \show_over_flag then {
+         start_handle(e)
+         self.over := &null
+         end_handle(e)
+      } 
    end
 
    public on_vsb(e)
       self.refresh()
       #
-      # Simulate drag or move events if appropriate in order to
+      # Simulate drag events if appropriate in order to
       # keep the cursor in synch.
       #
       if view.is_held(Mouse.LEFT_PRESS) then
          handle_ldrag(e)
-      else if (parent_dialog.get_held_count() = 0) & view.in_region(e) then
-         handle_move(e)
    end
 
    public handle_ldrag(e)
@@ -772,7 +806,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    end
 
    public draw()
-      local xp, yp, i, info, h, lh, sel, cur, r, hi
+      local xp, yp, i, info, h, lh, sel, cur, r, hi, ov
 
       r := view.get_cbwin_clip()
 
@@ -796,13 +830,14 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
                "d"
          } else
             &null
-
+         
          sel := if member(self.selections, i) then 1 else &null
+         ov := if i = \self.over then 1 else &null
 
          lh := integer(h) | h[i]
          
          # Draw the line
-         draw_line(xp, yp, lh, i, sel, cur, hi)
+         draw_line(xp, yp, lh, i, sel, cur, hi, ov)
          yp +:= lh
       }
    end
@@ -827,16 +862,17 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # @          focus cursor "d" indicates disabled cursor.
    # @param hi  Indicates the dnd highlight for this row; &null indicates none, "t" indicates top
    # @          highlight, "m" indicates middle highlight, "b" indicates bottom highlight.
+   # @param ov  If non-null, the line must be drawn as showing the cursor over the line
    #
-   public draw_line(xp, yp, lh, i, sel, cur, hi)
+   public draw_line(xp, yp, lh, i, sel, cur, hi, ov)
       draw_line_data(xp, yp, lh, i)
-      draw_line_sel_cur(self.view.x, yp, self.view.w, lh, sel, cur, hi)
+      draw_line_sel_cur(self.view.x, yp, self.view.w, lh, sel, cur, hi, ov)
    end
 
    #
    # A helper method to draw the selection and cursor in the given rectangle.
    #
-   public draw_line_sel_cur(x, y, w, h, sel, cur, hi)
+   public draw_line_sel_cur(x, y, w, h, sel, cur, hi, ov)
       if \sel then
          Gui.style.fill_selection_rectangle(view.cbwin, x, y, w, h)
       case \cur of {
@@ -848,6 +884,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          "b": Gui.style.draw_highlight_rectangle(view.cbwin, x, y + h - 2, w, 2)
          "m": Gui.style.draw_highlight_rectangle(view.cbwin, x, y, w, h)
       }
+      if \ov then
+         Gui.style.fill_over_rectangle(view.cbwin, x, y, w, h)
    end
 
    public defer draw_line_data(xp, yp, lh, i)
@@ -972,7 +1010,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       view.connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
       view.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
       view.connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-      view.connect(self.handle_move, Event.MOUSE_MOVEMENT)
+      view.connect(self.handle_in_chain, Event.IN_POINT_CHAIN)
+      view.connect(self.handle_exit, Event.MOUSE_EXIT)
       connect(self.handle_key, Event.KEY_PRESS)
       return
    end
