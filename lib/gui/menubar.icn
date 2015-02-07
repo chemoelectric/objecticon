@@ -289,7 +289,7 @@ class MenuBar(Component, MenuSystem)
          self.set_which_highlight()
    end
 
-   public handle_in_chain(e)
+   public handle_move(e)
       local t
       if \self.which_highlight & t := which_item(e) then {
          #
@@ -395,7 +395,7 @@ class MenuBar(Component, MenuSystem)
       self.menus := []
       every connect(handle_press, Event.MOUSE_LEFT_PRESS | Event.MOUSE_MIDDLE_PRESS | Event.MOUSE_RIGHT_PRESS)
       every connect(handle_release, Event.MOUSE_LEFT_RELEASE_OVER | Event.MOUSE_MIDDLE_RELEASE_OVER | Event.MOUSE_RIGHT_RELEASE_OVER)
-      every connect(handle_in_chain, Event.IN_POINT_CHAIN)
+      every connect(handle_move, Event.MOUSE_MOVEMENT | Event.MOUSE_LEFT_DRAG_OVER | Event.MOUSE_MIDDLE_DRAG_OVER | Event.MOUSE_RIGHT_DRAG_OVER)
       connect(handle_exit, Event.MOUSE_EXIT)
       connect(handle_key, Event.KEY_PRESS)
       return

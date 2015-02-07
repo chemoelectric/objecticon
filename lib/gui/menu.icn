@@ -225,7 +225,7 @@ class Menu(TextMenuItem)
       }
    end
 
-   public handle_in_chain(e)
+   public handle_move(e)
       local m
       if m := self.which_item(e) then {
          # 
@@ -299,8 +299,8 @@ class Menu(TextMenuItem)
                              Event.MOUSE_LEFT_PRESS | Event.MOUSE_MIDDLE_PRESS | Event.MOUSE_RIGHT_PRESS)
       every c.connect(handle_release, 
                              Event.MOUSE_LEFT_RELEASE_OVER | Event.MOUSE_MIDDLE_RELEASE_OVER | Event.MOUSE_RIGHT_RELEASE_OVER)
-      every c.connect(handle_in_chain, 
-                             Event.IN_POINT_CHAIN)
+      every c.connect(handle_move, 
+                             Event.MOUSE_MOVEMENT | Event.MOUSE_LEFT_DRAG_OVER | Event.MOUSE_MIDDLE_DRAG_OVER | Event.MOUSE_RIGHT_DRAG_OVER)
       c.connect(handle_exit, Event.MOUSE_EXIT)
       c.connect(handle_key, Event.KEY_PRESS)
       return c
