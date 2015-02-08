@@ -80,24 +80,29 @@ class Dialog(Component)
    public validate()
       local r, rs
 
-      \invalid_rects | fail
-
       # Copy invalid_rects just in case invoke_display invalidates something (and hence
       # changes invalid_rects unexpectedly).
       rs := invalid_rects
       invalid_rects := &null
 
-      every r := !rs.l do {
+      every r := !\rs do {
          self.invoke_display(r.x, r.y, r.w, r.h)
          cbwin.copy_to(r.x, r.y, r.w, r.h, win, r.x, r.y)
       }
+      return self
    end
 
    public invalidate_rect(r)
-      if /invalid_rects then
-         invalid_rects := Rects().add(Rect(r.x, r.y, r.w, r.h))
-      else
-         invalid_rects.add(r)
+      local t, i
+      /invalid_rects := []
+      every t := invalid_rects[i := 1 to *invalid_rects] do {
+         if t.touches(r) then {
+            invalid_rects[i] := t.union(r)
+            return self
+         }
+      }
+      put(invalid_rects, r)
+      return self
    end
 
    public is_blocked()
@@ -1583,28 +1588,4 @@ abstract class MenuMode()
    public abstract gen_popup_components()
    public abstract get_nesting_component()
    public abstract allow_nested(c)
-end
-
-#
-# Store a list of {Rect}s which need to be invalidated
-#
-package class Rects()
-   private readable l
-
-   public add(r)
-      local t, i
-      every t := l[i := 1 to *l] do {
-         if t.touches(r) then {
-            l[i] := t.union(r)
-            return self
-         }
-      }
-      put(l, r)
-      return self
-   end
-
-   public new()
-      l := []
-      return
-   end
 end
