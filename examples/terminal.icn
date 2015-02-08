@@ -580,11 +580,24 @@ class Terminal(TabItem, VtUI)
    end
 
    private setup_shell()
-      local env, sh
+      local env, sh, xd, fp, s, sh2
       env := []
       every put(env, System.environ())
       put(env, "TERMLINKS=1")
-      put(env, "PATH=" || Files.get_home() || "/termlinks-extras/bin:" || System.getenv("PATH"))
+      put(env, "TERM=xterm")
+      s := \opts["x"] | Files.get_home() || "/termlinks-extras"
+      fp := FilePath(s).child("bin").canonical()
+      xd := fp.str()
+      sh := System.getpw(System.getuid()).shell | "/bin/sh"
+      if Files.access(xd) then {
+         put(env, "PATH=" || xd || ":" || System.getenv("PATH"))
+         sh2 := fp.child("bash").str()
+         if Files.access(sh2) then
+            sh := sh2
+         else
+            info_msg("Unable to access extras bash shell '" || sh2 || "'")
+      } else
+         info_msg("Unable to access extras bin directory '" || xd || "'")
       tty := PttyStream() | fail
       (tty.flag(FileOpt.NONBLOCK) &
        pid := System.fork()) | {
@@ -596,7 +609,6 @@ class Terminal(TabItem, VtUI)
          return
       } else {
          # Child
-         sh := System.getpw(System.getuid()).shell | "/bin/sh"
          System.setsid() | stop(&why)
          tty.close()
          tty := tty.open_slave() | stop(&why)
@@ -661,24 +673,24 @@ class Terminal(TabItem, VtUI)
    end
 
    private service_tty()
-      local t, x, s, n
+      local x, s, n
       repeat {
          x := io_task.poll([tty, Poll.IN + Poll.OUT]) | {
             err_msg(u"IO problem polling tty: " || ucs(&why))
             break
          }
          if DescStream.poll_in_test(x[1]) then {
-            t := tty.in(1048576) | {
+            s := tty.in(1048576) | {
                err_msg(u"IO problem on tty: " || ucs(&why))
                break
             }
-            if /t then {
+            if /s then {
                err_msg(u"EOF on tty")
                break
             }
             if \opts["v"] then
-               write("In: ", image(t))
-            send_vt(Text.liberal_ucs(t))
+               write("In: ", image(s))
+            send_vt(s)
             check_pwd()
          } else if DescStream.poll_out_test(x[1]) then {
             if s := get(input) then {
@@ -691,7 +703,7 @@ class Terminal(TabItem, VtUI)
                if \opts["v"] then
                   write("Out: ", image(s))
             } else {
-               #write("asking for input but none here...break")
+               # Asking for input but none here...sleep
                io_task.sleep(50)
             }
          }
@@ -734,12 +746,11 @@ class Terminal(TabItem, VtUI)
    end
 
    private err_msg(s)
-      #output.log_str(u"\n\e[31m(Message from terminal:) " || s || u"\e[0m\n")
+      send_vt(u"\n\e[31m(Message from terminal:) " || s || u"\e[m")
       msg(s, 3000)
    end
 
    private info_msg(s)
-      #output.log_str(u"\n\e[35m(Info from terminal:) " || s || u"\e[0m\n")
       msg(s, 3000)
    end
 
@@ -1494,7 +1505,7 @@ end
 
 procedure main(a)
    local d
-   opts := options(a, "-v! -h+")
+   opts := options(a, "-x: -v! -h+")
    ImageCache.
       name_image("rpp.EXIT_24", EXIT).
       name_image("rpp.SAVE_24", SAVE).
