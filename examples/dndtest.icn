@@ -5,6 +5,17 @@ import gui, ipl.pdco
 #
 class CustomList(TextList)
    #
+   # If the drag just consists of folders, indicate it can't drop
+   #
+   public can_drop(drag, e)
+      if is( drag.get_source(),CustomTree) then {
+         if not( /(!drag.get_content()).is_folder_flag ) then
+            fail
+      }
+      return TextList.can_drop(drag, e)
+   end
+
+   #
    # A drop has occurred; we succeed iff we accept it
    #
    public perform_drop(drag, drop)
