@@ -544,16 +544,22 @@ class TextFlow(Component, HasLastHighlight)
    private static text_bg(W, c, x, y, w, h)
       local W2
       use {
-         W2 := W.clone().set_fg(c),
-         W2.fill_rectangle(x, y, w, h)
+         W2 := W.clone(),
+         {
+            W2.set_fg(c)
+            W2.fill_rectangle(x, y, w, h)
+         }
       }
    end
 
    private static text_dash(W, s, x, y)
       local W2
       use {
-         W2 := W.clone().set_masked_pattern("gray"),
-         text_line(W2, s, x, y)
+         W2 := W.clone(),
+         {
+            W2.set_masked_pattern("gray")
+            text_line(W2, s, x, y)
+         }
       }
    end
 

@@ -2336,8 +2336,11 @@ class FormOptionList(SelectableScrollArea, FormEntry)
       o := contents[i]
       if \o.disabled then {
          use {
-            W := view.cbwin.clone().set_fg("gray"),
-            draw_string_ex(W, xp + Gui.TEXT_INSET, yp, o.txt)
+            W := view.cbwin.clone(),
+            {
+               W.set_fg("gray")
+               draw_string_ex(W, xp + Gui.TEXT_INSET, yp, o.txt)
+            }
          }
       } else 
          draw_string_ex(view.cbwin, xp + Gui.TEXT_INSET, yp, o.txt)
@@ -3876,8 +3879,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             put(sels, i)
       if size := (1 < integer(e.get_attribute(u"SIZE"))) then {
          use {
-            mW := cbwin.clone().set_font(context.font),
+            mW := cbwin.clone(),
             {
+               mW.set_font(context.font)
                w := 0
                every o := !sc.options do
                   w <:= mW.text_width(o.txt)
@@ -3952,8 +3956,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       local q, w, h, mW
       \context.form | fail
       use {
-         mW := cbwin.clone().set_font(context.font),
+         mW := cbwin.clone(),
          {
+            mW.set_font(context.font)
             w := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", integer(e.get_attribute(u"COLS"))))) | scale(200)
             h := (2 * Gui.BORDER_WIDTH + integer(e.get_attribute(u"ROWS")) * mW.get_font_height()) | scale(100)
          }
@@ -3974,8 +3979,11 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       case s of {
          "file": {
             use {
-               mW := cbwin.clone().set_font(context.font),
-               size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | scale(160)
+               mW := cbwin.clone(),
+               {
+                  mW.set_font(context.font)
+                  size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | scale(160)
+               }
             }
             q := FormBrowse(self, size)
             add_form_component(e, p, q, context)
@@ -4131,9 +4139,12 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          "url": {
             v := e.get_attribute(u"VALUE") | u""
             use {
-               mW := cbwin.clone().set_font(context.font),
-               size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + 
-                        mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | scale(160)
+               mW := cbwin.clone(),
+               {
+                  mW.set_font(context.font)
+                  size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + 
+                           mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | scale(160)
+               }
             }
             q := FormURLField(v).
                set_width(size).
@@ -4148,9 +4159,12 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             v := e.get_attribute(u"VALUE") | u""
             did := map(string(e.get_attribute(u"LIST")))
             use {
-               mW := cbwin.clone().set_font(context.font),
-               size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + 
-                        mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | scale(160)
+               mW := cbwin.clone(),
+               {
+                  mW.set_font(context.font)
+                  size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + 
+                           mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | scale(160)
+               }
             }
             q := FormTextField(self, v, did).
                set_width(size).
@@ -5004,8 +5018,11 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       ComponentScrollArea.display()
       if r := get_band_rect() then {
          use {
-            W := view.cbwin.clone().set_fg("purple").set_masked_pattern("gray"),
-            W.draw_rectangle(r.x, r.y, r.w, r.h, Gui.FINE_WIDTH)
+            W := view.cbwin.clone(),
+            {
+               W.set_fg("purple").set_masked_pattern("gray")
+               W.draw_rectangle(r.x, r.y, r.w, r.h, Gui.FINE_WIDTH)
+            }
          }
       }
    end
