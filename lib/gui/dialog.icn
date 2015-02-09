@@ -538,7 +538,7 @@ class Dialog(Component)
 
       # A popup window lets its event manager create its point chain for it.
       if \popup_manager then
-         fail
+         return popup_manager.create_point_chain(e)
 
       self.point_chain := []
       self.point_chain_source := e
@@ -671,17 +671,19 @@ class Dialog(Component)
                   break
             }
 
-            if /self.curr_drag then 
-               check_dnd(e)
-
-            if \self.curr_drag then
-               process_dnd(e)
-            else {
-               every (!\popups).process_normal(e)
-               process_normal(e)
-            }
+            every back(\popups).process_event1(e)
+            process_event1(e)
          }
       }
+   end
+
+   private process_event1(e)
+      if /self.curr_drag then 
+         check_dnd(e)
+      if \self.curr_drag then
+         process_dnd(e)
+      else
+         process_normal(e)
    end
 
    #
