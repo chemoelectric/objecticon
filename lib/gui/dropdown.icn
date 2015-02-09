@@ -93,10 +93,10 @@ abstract class DropDown(Component, MenuMode)
 
       popup.
          set_pos(win.get_dx() + x - x_adj,
-                 if use_direction == Direction.DOWN then 
-                     win.get_dy() + y + h
+                 win.get_dy() + if use_direction == Direction.DOWN then 
+                     y + h
                   else
-                     win.get_dy() + y - pref_h).
+                     y - pref_h).
          set_size(pref_w, pref_h).
          resize()
 
@@ -379,10 +379,10 @@ abstract class SelectionDropDown(SelectionList, DropDown)
 
       popup.
          set_pos(win.get_dx() + x,
-                 if use_direction == Direction.DOWN then 
-                    win.get_dy() + y + h
+                 win.get_dy() + if use_direction == Direction.DOWN then 
+                    y + h
                  else
-                    win.get_dy() + y - popup.h_spec).
+                    y - popup.h_spec).
          resize()
 
       if parent_dialog.contains(popup) then {

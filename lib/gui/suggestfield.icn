@@ -201,10 +201,10 @@ abstract class SuggestField(TextField, MenuMode)
 
       tl.
          set_pos(win.get_dx() + x,
-                 if use_direction == Direction.DOWN then 
-                    win.get_dy() + y + h
+                 win.get_dy() + if use_direction == Direction.DOWN then 
+                    y + h
                   else
-                     win.get_dy() + y - tl.h_spec).
+                    y - tl.h_spec).
          resize()
 
       if parent_dialog.contains(tl) then {
