@@ -2,7 +2,7 @@ $encoding UTF-8
 
 package ipl.vt
 
-import gui, io, lang, util, graphics, net, ipl.lists, ipl.pdco, ipl.strings
+import gui, io, lang, util, graphics, net, ipl.lists, ipl.pdco, ipl.strings, ipl.graphics
 
 # Current attributes.  Treated as immutable, to alter a copy() is taken first.
 package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic, link, font)
@@ -516,10 +516,13 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private do_tab()
       local i
+      # If in pos cols+1 (or cols), do nothing.  In particular tab doesn't reset cx=cols+1 to cols.
+      if cx >= cols then
+         fail
       i := cx
       repeat {
          i +:= 1
-         if (i > cols) | member(tab_stops, i) then
+         if (i >= cols) | member(tab_stops, i) then
             break
       }
       move_cursor(i)
@@ -611,7 +614,8 @@ class Vt(LineBasedScrollArea, MenuMode)
    private do_device_status_report(n)
       case n of {
          5 : send("\e[0n")
-         6 : send("\e[" || cy || ";" || cx || "R")
+         # cx may be in cols+1; xterm reports cols (but konsole reports cols+1).  Do as per xterm.
+         6 : send("\e[" || cy || ";" || min(cx, cols) || "R")
       }
    end
 
@@ -778,6 +782,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    # Set the fg colour to use in reverse mode.
    #
    public set_reverse_fg(c)
+      Window.parse_color(c) | fail
       self.reverse_fg := c
       if is_live() then
          view.invalidate()
@@ -788,6 +793,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    # Set the bg colour to use in reverse mode.
    #
    public set_reverse_bg(c)
+      Window.parse_color(c) | fail
       self.reverse_bg := c
       if is_live() then
          view.invalidate()
@@ -1489,8 +1495,8 @@ class Vt(LineBasedScrollArea, MenuMode)
       if \reverse_mode then {
          bg := \reverse_bg | view.cbwin.get_fg()
          use {
-            W := view.cbwin.clone().set_bg(bg),
-            W.erase_area(r.x, r.y, r.w, r.h)
+            W := view.cbwin.clone(),
+            W.set_bg(bg).erase_area(r.x, r.y, r.w, r.h)
          }
       }
 
@@ -1508,7 +1514,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private draw_line(xp, yp, i)
-      local s, ss, row, seg, x1, W, fg, bg, w1, want_fg, want_bg, want_font,
+      local s, ss, row, seg, x1, W, W2, fg, bg, w1, want_fg, want_bg, want_font,
          default_bg, default_fg, default_font, a, r, font
 
       # Don't draw partial lines at the top, since this looks poor
@@ -1544,10 +1550,10 @@ class Vt(LineBasedScrollArea, MenuMode)
          want_font := \a.font | default_font
          if font ~=== want_font | fg ~=== want_fg | bg ~=== want_bg then {
             W.close()
-            W := view.cbwin.clone().
-               set_fg(fg := want_fg).
-               set_bg(bg := want_bg).
-               set_font(font := want_font)
+            W := view.cbwin.clone()
+            W.set_fg(fg := want_fg).
+              set_bg(bg := want_bg).
+              set_font(font := want_font)
          }
          w1 := char_w * *ss
          if bg ~=== default_bg then
@@ -1556,8 +1562,15 @@ class Vt(LineBasedScrollArea, MenuMode)
          if /a.invisible then
             draw_string_ex(W, x1, yp, ss)
 
-         if \a.link | \a.underline then
+         if \a.underline then
             W.draw_rectangle(x1, yp + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+         else if \a.link then
+            use { 
+               W2 := W.clone(),
+               W2.set_fg(EditRGBA(fg,,,, 16000)).      # 25% alpha of the current fg.
+                  draw_rectangle(x1, yp + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+            }
+
          if \a.crossed then
             W.draw_rectangle(x1, yp + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
 

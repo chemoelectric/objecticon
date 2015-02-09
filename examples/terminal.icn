@@ -55,18 +55,15 @@ class TerminalDialog(Dialog)
       dispose()
    end
 
-   public new_tab(url, referer_url, sel)
+   public new_tab(sel)
       local bt
       bt := Terminal().
          set_is_hidden(&yes)
-      tabs.
-         add(bt, 0).
-         do_layout().
-         invalidate()
-      if \sel then {
+      tabs.add(bt, 0)
+      if is_live() then
+         tabs.do_layout().invalidate()
+      if \sel then
          tabs.set_which_one(bt)
-         #update_grey()
-      }
       return bt
    end
 
@@ -356,7 +353,7 @@ class Columns(LineBasedScrollArea)
             parent.parent.parent.clear_msg()
          else {
             s := FilePath(parent.parent.parent.cwd).child(data[n].name).ucs() | fail
-            url := URL(u"file://" || &host || URL.percent_encode(s, URL.UNRESERVED ++ '/')) | fail
+            url := URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/')) | fail
             parent.parent.parent.msg(url.ucs())
          }
       }
@@ -635,7 +632,7 @@ class Terminal(TabItem, VtUI)
 
    private check_pwd()
       local s
-      s := Files.readlink("/proc/" || pid || "/cwd") | fail
+      s := ucs(Files.readlink("/proc/" || pid || "/cwd")) | fail
       if s ~== cwd then {
          set_cwd(s, if s === nav_dir then &yes else &no)
          nav_dir := &null
@@ -714,7 +711,6 @@ class Terminal(TabItem, VtUI)
    public open_link(link)
       local r
       if link.url.scheme == u"text" then {
-         write(to_string(link.url))
          send_tty(ucs(link.url.get_decoded_path()))
       } else if r := get_runner(link) then {
          if \r.cmd then
@@ -729,7 +725,7 @@ class Terminal(TabItem, VtUI)
       if link.url.scheme == u"file" then {
          if s := ucs(link.url.get_decoded_path()) then {
             es := if /ev.ctrl & 
-               link.url.host == &host &
+               link.url.host == ("localhost" | &host) &
                s[1+:*cwd] == cwd & 
                s[*cwd + 1] == u"/" then
                Format.shell_escape(s[*cwd+2:0])
@@ -762,7 +758,7 @@ class Terminal(TabItem, VtUI)
       local s, de, url
       url := link.url
       if url.scheme == u"file" then {
-         (url.host == &host) | return info_msg(u"Can't run a file on another host (" || url.host || u")")
+         (url.host == ("localhost" | &host)) | return info_msg(u"Can't run a file on another host (" || url.host || u")")
          s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
          if Files.is_directory(s) then
             return Runner(u"cd " || Format.shell_escape(s))
@@ -786,7 +782,7 @@ class Terminal(TabItem, VtUI)
    private item_to_link(item)
       local s, url
       s := FilePath(cwd).child(item.name).ucs() | fail
-      url := URL(u"file://" || &host || URL.percent_encode(s, URL.UNRESERVED ++ '/')) | fail
+      url := URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/')) | fail
       return Link(url)
    end
 
@@ -925,9 +921,10 @@ class Terminal(TabItem, VtUI)
       send_tty(s || u"\r")
    end
 
-   private goto_dir(d, nav)
-      nav_dir := if /nav then &null else string(d)
-      run_prog(u"cd " || Format.shell_escape(ucs(d)))
+   public goto_dir(d, nav)
+      d := ucs(d) | fail
+      nav_dir := if /nav then &null else d
+      run_prog(u"cd " || Format.shell_escape(d))
    end
 
    private synch_paints()
@@ -1061,13 +1058,14 @@ class Terminal(TabItem, VtUI)
 
    private set_cwd(s, nav)
       local ex, e, lh, t, l, i
+      s := ucs(s) | fail
       if \cwd then {
          lh := columns.data[columns.get_last_highlight()].name
          insert(columns_pos_table, 
                 FilePath(cwd).canonical().str(), 
                 FileDialogPos(lh, columns.get_area_y()))
       }
-      cwd := ucs(s) | fail
+      cwd := s | fail
       trail.set_path(cwd)
       load_cwd()
       synch_favourites_list()
@@ -1504,14 +1502,16 @@ class Terminal(TabItem, VtUI)
 end
 
 procedure main(a)
-   local d
-   opts := options(a, "-x: -v! -h+")
+   local d, dir
+   opts := options(a, "-x: -v! -h+ -t:*")
    ImageCache.
       name_image("rpp.EXIT_24", EXIT).
       name_image("rpp.SAVE_24", SAVE).
       name_image("rpp.MIXFILE_24", MIXFILE)
    insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(TERMINAL_LOGO))
    d := TerminalDialog()
+   every dir := !\opts["t"] do
+      d.new_tab().goto_dir(dir)
    d.show_modal()
    if \opts["v"] then write("Exiting")
 end
