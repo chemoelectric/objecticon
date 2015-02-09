@@ -3,7 +3,7 @@ package ipl.timegui
 import
    gui, util, lang
 
-procedure estimate_width(cbwin, fmt)
+package procedure estimate_width(cbwin, fmt)
    local s
    s := map(Time(2000, 1, 1).format(fmt), &letters, repl("M", 26) || repl("m", 26)) || " "
    return cbwin.text_width(s)
