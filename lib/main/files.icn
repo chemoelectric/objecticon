@@ -633,12 +633,12 @@ $endif
    #
    public static begin_esc(f, line, ct)
       local s
-      s := "\e[\"url=file://" || &host || URL.percent_encode(f, URL.UNRESERVED ++ '/') || "\""
+      s := "\e[!\"url=file://" || &host || URL.percent_encode(f, URL.UNRESERVED ++ '/') || "\""
       if \line then
          s ||:= ";\"line=" || line || "\""
       if \ct then
          s ||:= ";\"ct=" || ct || "\""
-      s ||:= "Z"
+      s ||:= "L"
       return s
    end
 
@@ -646,7 +646,7 @@ $endif
    # Return the closing escape sequence for an embedded link
    #
    public static end_esc()
-      return "\e[Z"
+      return "\e[!L"
    end
 
    #
@@ -834,6 +834,18 @@ class FilePath(ObjectOutput)
    #
    public canonical()
       return Files.FS.filepath_canonical(absolute())
+   end
+
+   #
+   # Return another {FilePath} with the same elements, but as ucs
+   # strings.  Fails if any part cannot be converted to ucs.
+   #
+   public ucs_path()
+      local s, t
+      t := []
+      every s := !l do
+         put(t, default.ucs(s)) | fail
+      return from_list(t)
    end
 
    #

@@ -118,7 +118,7 @@ class ContentSpec(ObjectOutput)
                b := 0
                every y := arg1.pattern_match(subject, pos + x) do {
                   suspend x + y
-                  b := max(b, y)
+                  b <:= y
                }
                b > 0 | fail
                x +:= b
@@ -131,7 +131,7 @@ class ContentSpec(ObjectOutput)
                b := 0
                every y := arg1.pattern_match(subject, pos + x) do {
                   suspend x + y
-                  b := max(b, y)
+                  b <:= y
                }
                b > 0 | fail
                x +:= b

@@ -354,11 +354,11 @@ class ShowGridPaint(DrawScrollArea)
    end
 
    public get_default_vertical_increment()
-      return 10
+      return scale(10)
    end
 
    public get_default_horizontal_increment()
-      return 10
+      return scale(10)
    end
 
    public draw()

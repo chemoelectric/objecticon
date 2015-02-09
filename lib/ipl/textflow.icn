@@ -520,17 +520,19 @@ class TextFlow(Component, HasLastHighlight)
                      text_line(W,
                                o.s, 
                                x1 + o.x, 
-                               y1 + o.y + W.get_font_ascent() + 1)
+                               y1 + o.y + W.get_font_ascent() + Gui.UNIT)
                   else if \o.attr.underdash | (o.attr.url === \last_highlight) then
                      text_dash(W,
                                o.s, 
                                x1 + o.x, 
-                               y1 + o.y + W.get_font_ascent() + 1)
+                               y1 + o.y + W.get_font_ascent() + Gui.UNIT)
                   if \o.attr.strike then
                      text_line(W,
                                o.s, 
                                x1 + o.x,
                                y1 + o.y + (2 * W.get_font_ascent()) / 3)
+                  if o.attr.url === \over then
+                     Gui.style.fill_over_rectangle(W, x1 + o.x, y1 + o.y, o.w, o.h)
                }
             }
          }
@@ -542,16 +544,22 @@ class TextFlow(Component, HasLastHighlight)
    private static text_bg(W, c, x, y, w, h)
       local W2
       use {
-         W2 := W.clone().set_fg(c),
-         W2.fill_rectangle(x, y, w, h)
+         W2 := W.clone(),
+         {
+            W2.set_fg(c)
+            W2.fill_rectangle(x, y, w, h)
+         }
       }
    end
 
    private static text_dash(W, s, x, y)
       local W2
       use {
-         W2 := W.clone().set_masked_pattern("gray"),
-         text_line(W2, s, x, y)
+         W2 := W.clone(),
+         {
+            W2.set_masked_pattern("gray")
+            text_line(W2, s, x, y)
+         }
       }
    end
 
@@ -564,7 +572,7 @@ class TextFlow(Component, HasLastHighlight)
             break
          t := tab(upto(WHITESPACE) | 0)
          w1 := W.text_width(t)
-         W.draw_rectangle(x, y, w1, 1)
+         W.fill_rectangle(x, y, w1, Gui.FINE_WIDTH)
          x +:= w1
       }
    end
@@ -1442,7 +1450,9 @@ class TextFlow(Component, HasLastHighlight)
 
    private set_over(u)
       if u ~=== over then {
+         invalidate_url(\over)
          over := u
+         invalidate_url(\over)
          if /over then
             browser.clear_msg(self)
          else

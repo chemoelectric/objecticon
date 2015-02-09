@@ -129,8 +129,8 @@ abstract class BaseTreeTableContent(BaseTree)
 
    # Override draw_line so that call to SelectableScrollArea.draw() above draws
    # the selections etc (rather than displaying the tree column again).
-   public draw_line(xp, yp, lh, i, sel, cur, hi)
-      draw_line_sel_cur(self.view.x, yp, self.view.w, lh, sel, cur, hi)
+   public draw_line(xp, yp, lh, i, sel, cur, hi, ov)
+      draw_line_sel_cur(self.view.x, yp, self.view.w, lh, sel, cur, hi, ov)
    end
 
    public calculate_line_height()

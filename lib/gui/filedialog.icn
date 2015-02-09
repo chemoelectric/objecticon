@@ -415,7 +415,7 @@ class FileDialog(Dialog)
       refresh_dir()
    end
 
-   public on_next_button(ev)
+   public on_prev_button(ev)
       local s
       (history_pos < *history) | fail
       s := history[history_pos +:= 1]
@@ -423,7 +423,7 @@ class FileDialog(Dialog)
       goto_dir(s, &yes)
    end
    
-   public on_prev_button(ev)
+   public on_next_button(ev)
       local s
       (history_pos > 1) | fail
       s := history[history_pos -:= 1]
@@ -432,20 +432,16 @@ class FileDialog(Dialog)
    end
 
    public update_grey()
-      prev_button.set_is_shaded(if history_pos > 1 then &no else &yes)
-      next_button.set_is_shaded(if history_pos < *history then &no else &yes)
+      prev_button.set_is_shaded(if history_pos < *history then &no else &yes)
+      next_button.set_is_shaded(if history_pos > 1 then &no else &yes)
    end
 
    public on_new_dir_menu_item(ev)
       local d, s
-      d := NewDirectoryDialog()
-      d.show_modal(self)
-      \d.okay | fail
-      s := loaded_dir_path.child(d.result).str()
-      if Files.mkdir(s) then
-         goto_dir(s)
-      else
-         msg("mkdir failed: " || &why)
+      s := loaded_dir_path.ucs() | return msg("Path not UTF-8")
+      d := NewDirectoryDialog(s).
+         show_modal(self)
+      goto_dir(\d.result)
    end
 
    public get_favourites_directories()
@@ -462,8 +458,7 @@ class FileDialog(Dialog)
       d := FavouriteDirectoriesDialog()
       d.show_modal(self)
       \d.okay | fail
-      dir.selection_list := get_favourites_directories()
-      dir.constrain_selection().synch_selection()
+      dir.synch_set_selection_list(get_favourites_directories())
    end
 
    public get_pats()
@@ -516,10 +511,10 @@ class FileDialog(Dialog)
       loaded_dir_path := p
       restore_pos()
       if /nav then {
-         while *history > history_pos do
-            pull(history)
-         put(history, dir.get_contents())
-         history_pos +:= 1
+         every 1 to history_pos - 1 do
+            pop(history)
+         push(history, dir.get_contents())
+         history_pos := 1
          update_grey()
       }
    end

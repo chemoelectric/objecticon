@@ -49,6 +49,10 @@ class Style()
       return W.clone().set_fg("blue 30%")
    end
 
+   public get_over_clone(W)
+      return W.clone().set_fg("blue 8%")
+   end
+
    public get_hilite_color(W)
       return GetHiliteColor(W)
    end
@@ -73,6 +77,14 @@ class Style()
       local cw
       return use {
          cw := get_selection_clone(W),
+         cw.fill_rectangle(x, y, w, h)
+      }
+   end
+
+   public fill_over_rectangle(W, x, y, w, h)
+      local cw
+      return use {
+         cw := get_over_clone(W),
          cw.fill_rectangle(x, y, w, h)
       }
    end

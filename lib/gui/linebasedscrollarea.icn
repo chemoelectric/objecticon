@@ -211,6 +211,18 @@ abstract class LineBasedScrollArea(DrawScrollArea)
    end
 
    #
+   # Invalidate all the lines from line1 to line2
+   #
+   public invalidate_lines(line1, line2, i)
+      local t
+      is_live() | fail
+      /i := get_line_info()
+      if \i & t := range(line1, line2, i.first, i.last) then
+         view.invalidate(get_line_rect(t[1]).union(get_line_rect(t[2])))
+      return self
+   end
+
+   #
    # Return a {Rect} indicating the area occupied by the line; note
    # this may be outside of the view area.
    #
@@ -379,7 +391,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
       if integer(h := get_line_height()) then
          return h
       else
-         return 16
+         return scale(16)
    end
 
    public get_default_horizontal_increment()

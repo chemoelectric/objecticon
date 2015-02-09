@@ -1284,6 +1284,8 @@ class Img(Image, HasLastHighlight)
    private set_over(u)
       if u ~=== over then {
          over := u
+         if visible_border() then
+            invalidate()
          if /over then
             browser.clear_msg(self)
          else
@@ -1333,7 +1335,7 @@ class Img(Image, HasLastHighlight)
       if u ~=== highlight then {
          browser.set_last_highlight(self, \u)
          # Avoid resetting since that will reload the image data, which is slow.
-         is(border, NullBorder | EmptyBorder) | {
+         if visible_border() then {
             set_fg(if \u then browser.page_alink_color else context.fg)
             reset()
          }
@@ -1376,13 +1378,24 @@ class Img(Image, HasLastHighlight)
       }
    end
 
+   private visible_border()
+      return not is(border, NullBorder | EmptyBorder)
+   end
+
    public display()
-      local r
+      local r, W
       Image.display()
       if r := browser.is_banded(self) then
          Gui.style.fill_selection_rectangle(cbwin, x, y, w, h)
       if \last_highlight then
          Gui.style.draw_dashed_rectangle(cbwin, x, y, w, h)
+      if \over & visible_border() then {
+         # Make the border colour consistent with foreground link text colour.
+         use {
+            W := Gui.style.get_over_clone(cbwin),
+            border.draw_rect(W, self)
+         }
+      }
    end
 
    public new(browser, context, img_url, alt, form, map_id)
@@ -2357,8 +2370,11 @@ class FormOptionList(SelectableScrollArea, FormEntry)
       o := contents[i]
       if \o.disabled then {
          use {
-            W := view.cbwin.clone().set_fg("gray"),
-            draw_string_ex(W, xp + Gui.TEXT_INSET, yp, o.txt)
+            W := view.cbwin.clone(),
+            {
+               W.set_fg("gray")
+               draw_string_ex(W, xp + Gui.TEXT_INSET, yp, o.txt)
+            }
          }
       } else 
          draw_string_ex(view.cbwin, xp + Gui.TEXT_INSET, yp, o.txt)
@@ -2735,7 +2751,7 @@ abstract class BrowserUI()
    public abstract display_externally(res)
 end
 
-class BrowserPrimarySelectionOwner(TextSelectionOwner)
+package class BrowserPrimarySelectionOwner(TextSelectionOwner)
    private parent
 
    protected get_text()
@@ -2752,7 +2768,7 @@ class BrowserPrimarySelectionOwner(TextSelectionOwner)
    end
 end
 
-record GreyState(prev, nxt, refresh, copy_page, save_page, stop)
+record GreyState(prev, nxt, history, copy_page, save_page, stop, copy_text, copy_links)
 
 class Browser(ComponentScrollArea, WorkerPoolOwner)
    private
@@ -3110,12 +3126,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public do_update_grey()
-      update_grey(GreyState(if history_pos > 1 then &no else &yes,
-                            if history_pos < *history then &no else &yes,
-                            if history[history_pos] then &no else &yes,
+      update_grey(GreyState(if history_pos < *history then &no else &yes,
+                            if history_pos > 1 then &no else &yes,
+                            if *history > 0 then &no else &yes,
                             if \page_url then &no else &yes,
                             if \page_data then &no else &yes,
-                            if running === 0 then &yes else &no))
+                            if running === 0 then &yes else &no,
+                            if \text_selection then &no else &yes,
+                            if \links_selection then &no else &yes))
    end
 
    private page_fully_loaded()
@@ -3183,7 +3201,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    
    public do_next()
       local he
-      he := history[history_pos +:= 1] 
+      (history_pos > 1) | fail
+      he := history[history_pos -:= 1] 
       goto(he.url, he.referer, he.form_data, Worker.NAVIGATE)
       do_update_grey()
       return self
@@ -3191,7 +3210,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public do_prev()
       local he
-      he := history[history_pos -:= 1] 
+      (history_pos < *history) | fail
+      he := history[history_pos +:= 1] 
       goto(he.url, he.referer, he.form_data, Worker.NAVIGATE)
       do_update_grey()
       return self
@@ -3252,9 +3272,20 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return self
    end
 
+   private reset_history_pos()
+      history_pos := keyof(history, curr_history_entry) | fail
+      return self
+   end
+
    public do_refresh()
       local he
-      he := history[history_pos] 
+      # Reset history_pos in case we have done a navigate away from
+      # the currently viewed page (changing history_pos), that
+      # navigation hasn't loaded yet and we click refresh.  We want
+      # refresh to refer to the viewed page, not the one we're
+      # loading.
+      reset_history_pos() | fail
+      he := history[history_pos]
       goto(he.url, he.referer, he.form_data, Worker.REFRESH)
       do_update_grey()
       return self
@@ -3319,7 +3350,6 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          every c := !f.items do
             insert(t2, c.get_save_key(), c.get_save_value())
       }
-      #write(to_string(t1,3,1))
       curr_history_entry.form_values := t1
    end
 
@@ -3488,14 +3518,13 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          # Reset history_pos, since we may have done a navigate
          # back/forward (changing history_pos), and cancelled it with
          # a normal click whist it was pending.
-         history_pos := keyof(history, curr_history_entry)
-         while *history > history_pos do
-            pull(history)
+         reset_history_pos()
+         every 1 to history_pos - 1 do
+            pop(history)
          # Fields are set below
-         put(history, HistoryEntry())
-         history_pos +:= 1
+         push(history, HistoryEntry())
+         history_pos := 1
       }
-      do_update_grey()
       curr_history_entry := history[history_pos]
       # Note that the url/form_data may change even on a
       # navigate/refresh, if the server behaved differently (eg
@@ -3503,6 +3532,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       curr_history_entry.url := page_url
       curr_history_entry.referer := res.req.referer
       curr_history_entry.form_data := if page_url === res.req.url then res.req.form_data else &null
+      do_update_grey()
 
       maps := table()
       datalists := table()
@@ -3883,8 +3913,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             put(sels, i)
       if size := (1 < integer(e.get_attribute(u"SIZE"))) then {
          use {
-            mW := cbwin.clone().set_font(context.font),
+            mW := cbwin.clone(),
             {
+               mW.set_font(context.font)
                w := 0
                every o := !sc.options do
                   w <:= mW.text_width(o.txt)
@@ -3959,8 +3990,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       local q, w, h, mW
       \context.form | fail
       use {
-         mW := cbwin.clone().set_font(context.font),
+         mW := cbwin.clone(),
          {
+            mW.set_font(context.font)
             w := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", integer(e.get_attribute(u"COLS"))))) | scale(200)
             h := (2 * Gui.BORDER_WIDTH + integer(e.get_attribute(u"ROWS")) * mW.get_font_height()) | scale(100)
          }
@@ -3981,8 +4013,11 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       case s of {
          "file": {
             use {
-               mW := cbwin.clone().set_font(context.font),
-               size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | scale(160)
+               mW := cbwin.clone(),
+               {
+                  mW.set_font(context.font)
+                  size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | scale(160)
+               }
             }
             q := FormBrowse(self, size)
             add_form_component(e, p, q, context)
@@ -4138,9 +4173,12 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          "url": {
             v := e.get_attribute(u"VALUE") | u""
             use {
-               mW := cbwin.clone().set_font(context.font),
-               size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + 
-                        mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | scale(160)
+               mW := cbwin.clone(),
+               {
+                  mW.set_font(context.font)
+                  size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + 
+                           mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | scale(160)
+               }
             }
             q := FormURLField(v).
                set_width(size).
@@ -4155,9 +4193,12 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             v := e.get_attribute(u"VALUE") | u""
             did := map(string(e.get_attribute(u"LIST")))
             use {
-               mW := cbwin.clone().set_font(context.font),
-               size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + 
-                        mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | scale(160)
+               mW := cbwin.clone(),
+               {
+                  mW.set_font(context.font)
+                  size := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + 
+                           mW.text_width(repl("x", integer(e.get_attribute(u"SIZE"))))) | scale(160)
+               }
             }
             q := FormTextField(self, v, did).
                set_width(size).
@@ -4394,14 +4435,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       hspace := (0 < integer(e.get_attribute(u"HSPACE"))) | 0
       vspace := (0 < integer(e.get_attribute(u"VSPACE"))) | 0
       cellpadding := (0 < integer(e.get_attribute(u"CELLPADDING"))) | 0
-      cellspacing := (0 <= integer(e.get_attribute(u"CELLSPACING"))) | 2
+      cellspacing := (0 <= integer(e.get_attribute(u"CELLSPACING"))) | scale(2)
 
       tbl.content.layout_delegate.set_doi(cellspacing).set_dii(cellspacing/2)
       tbl.set_bg(convert_color(e, u"BGCOLOR"))
 
       cell_border := if border > 0 & not(e.get_attribute(u"RULES")) then
          CompoundBorder().
-            set_outer(PlainBorder().set_line_width(1)).
+            set_outer(PlainBorder().set_line_width(Gui.FINE_WIDTH)).
             set_inner(EmptyBorder().set_insets(cellpadding, cellpadding, cellpadding, cellpadding))
          else
             EmptyBorder().set_insets(cellpadding, cellpadding, cellpadding, cellpadding)
@@ -4724,7 +4765,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       local tbl, row, c, fc
       put_new_row(p, context)
       tbl := Tbl().set_border(CompoundBorder().
-                              set_outer(SunkenBorder().set_line_width(1)).
+                              set_outer(SunkenBorder().set_line_width(Gui.FINE_WIDTH)).
                               set_inner(EmptyBorder()))
       add_component(p, tbl, context)
       row := TextFlow(self)
@@ -4934,7 +4975,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       mark_x := cursor_x
       mark_y := cursor_y
       view.inner.invalidate(calculate_banded_rect())
-      clear_banded()
+      clear_selections()
    end
 
    private set_cursor_from_pos(e)
@@ -5001,7 +5042,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    public layout()
       ComponentScrollArea.layout()
       clear_mark()
-      clear_banded()
+      clear_selections()
       redo_search()
       scroll_ticker.stop()
    end
@@ -5011,8 +5052,11 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       ComponentScrollArea.display()
       if r := get_band_rect() then {
          use {
-            W := view.cbwin.clone().set_fg("purple").set_masked_pattern("gray"),
-            W.draw_rectangle(r.x, r.y, r.w, r.h)
+            W := view.cbwin.clone(),
+            {
+               W.set_fg("purple").set_masked_pattern("gray")
+               W.draw_rectangle(r.x, r.y, r.w, r.h, Gui.FINE_WIDTH)
+            }
          }
       }
    end
@@ -5086,20 +5130,21 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       cursor_x := cursor_y := mark_x := mark_y := &null
    end
 
-   private clear_banded()
+   private clear_selections()
       clear(banded)
       text_selection := links_selection := &null
+      do_update_grey()
    end
 
    package on_lost_primary_ownership()
       view.inner.invalidate(calculate_banded_rect())
-      clear_banded()
+      clear_selections()
       primary := &null
    end
 
    private calculate_banded()
       local c, br
-      clear_banded()
+      clear(banded)
       br := get_band_rect() | fail
       every c := Seq{traverse_intersecting(view.inner, br)} do {
          if is(c, TextFlow) then
@@ -5203,6 +5248,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       }
       calculate_text_selection()
       calculate_links_selection()
+      do_update_grey()
       if s := get_current_text_selection() then {
          parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
          self.primary := s
@@ -5210,7 +5256,6 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public handle_select_all(e)
-      *parent_dialog.held = 0 | fail
       /mark_x | fail
       running === 0 | fail
       mark_x := mark_y := 0
@@ -5320,7 +5365,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public static get_table_tag()
-      return "<table cellspacing=4>"
+      return "<table cellspacing=" || scale(4) || ">"
    end
 
    public get_cache()

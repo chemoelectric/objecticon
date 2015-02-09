@@ -553,7 +553,7 @@ class EditableTextList(LineBasedScrollArea)
             # Have and/or had regions, so invalidate whole range of lines involved
             put(t, get_view_list_index(\old_mark_x, \old_mark_y))
             put(t, get_view_list_index(\mark_x, \mark_y))
-            every invalidate_line(min!t to max!t, i)
+            invalidate_lines(min!t, max!t, i)
          }
       }
 
@@ -789,6 +789,10 @@ class EditableTextList(LineBasedScrollArea)
                   vi >:= *view_list
                   v := view_list[vi]
                   self.cursor_y := v.index
+                  # Set cursor_x to start of line, not end of line -
+                  # this prevents the horizontal scroll bar jiggling
+                  # about as we scroll down (as the cursor is
+                  # constrained to be visible).
                   self.cursor_x := v.first
                }
             }
@@ -978,11 +982,7 @@ class EditableTextList(LineBasedScrollArea)
          put(l, self.contents[self.mark_y][1:self.mark_x])
       } else {
          # mark_y = cursor_y
-         if self.mark_x < self.cursor_x then {
-            l := [self.contents[self.cursor_y][self.mark_x:self.cursor_x]]
-         } else {
-            l := [self.contents[self.cursor_y][self.cursor_x:self.mark_x]]
-         }
+         l := [self.contents[self.cursor_y][self.cursor_x:self.mark_x]]
       }
       return l
    end
@@ -1174,30 +1174,27 @@ class EditableTextList(LineBasedScrollArea)
          # it is say wholly selected, using v.last would leave the
          # last char unhighlighted.
          #
-         if (self.mark_y < v.index < self.cursor_y) | (self.mark_y > v.index > self.cursor_y) then {
+         r := if (self.mark_y < v.index < self.cursor_y) | (self.mark_y > v.index > self.cursor_y) then {
             # Whole line selected
-            r := [v.first, v.first + *s]
+            [v.first, v.first + (0 < *s)]
          } else if v.index = self.mark_y = self.cursor_y then {
             # Part of line
-            if self.mark_x < self.cursor_x then
-               r := range(v.first, v.first + *s, self.mark_x, self.cursor_x)
-            else if self.mark_x > self.cursor_x then
-               r := range(v.first, v.first + *s, self.cursor_x, self.mark_x)
+            range1(v.first, v.first + *s, self.cursor_x, self.mark_x)
          } else if v.index = self.mark_y then {
             if self.mark_y < self.cursor_y then
-               r := range(v.first, v.first + *s, self.mark_x, *self.contents[v.index] + 1)
+               range1(v.first, v.first + *s, self.mark_x, *self.contents[v.index] + 1)
             else
-               r := range(v.first, v.first + *s, 1, self.mark_x)
+               range1(v.first, v.first + *s, 1, self.mark_x)
          } else if v.index = self.cursor_y then {
             if self.mark_y > self.cursor_y then
-               r := range(v.first, v.first + *s, self.cursor_x, *self.contents[v.index] + 1)
+               range1(v.first, v.first + *s, self.cursor_x, *self.contents[v.index] + 1)
             else
-               r := range(v.first, v.first + *s, 1, self.cursor_x)
+               range1(v.first, v.first + *s, 1, self.cursor_x)
          }
          if \r then {
             off1 := text_width_ex(view.cbwin, s, 1, r[1] - v.first + 1, self.tab_width)
             off2 := text_width_ex(view.cbwin, s, 1, r[2] - v.first + 1, self.tab_width)
-            Gui.style.fill_selection_rectangle(self.cbwin, xp + off1, yp,  off2 - off1, self.line_height)
+            Gui.style.fill_selection_rectangle(view.cbwin, xp + off1, yp,  off2 - off1, self.line_height)
          }
       }
 
@@ -1216,21 +1213,6 @@ class EditableTextList(LineBasedScrollArea)
       }
    end
    
-   #
-   # Return the intersection of the range f1-t1 and f2-t2, or
-   # fail if the ranges don't intersect.  Example:
-   # range(2,20,10,30) = [10,20]
-   # 
-   public static range(f1, t1, f2, t2)
-      if f1 < f2 then {
-         if t1 >= f2 then
-            return [f2, min(t1, t2)]
-      } else {
-         if f1 <= t2 then
-            return [f1, min(t1, t2)]
-      }
-   end
-
    public calculate_line_height()
       return view.cbwin.get_font_height()
    end

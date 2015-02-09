@@ -1,0 +1,2247 @@
+$encoding UTF-8
+
+package ipl.vt
+
+import gui, io, lang, util, graphics, net, ipl.lists, ipl.pdco, ipl.strings, ipl.graphics
+
+# Current attributes.  Treated as immutable, to alter a copy() is taken first.
+package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic, link, font)
+
+package record SavedCursor(cx, cy, attr, charsets, curr_charset)
+
+package record SavedBuffer(cx, cy, attr, charsets, curr_charset, contents, history_size)
+
+package record PopupElement(label, str)
+
+package class PopupElementItemPaint(ItemPaint)
+   public get_width(W, data)
+      return W.text_width(data.label)
+   end
+
+   public get_constant_height(W)
+      return W.get_font_height()
+   end
+
+   public get_size(W, data)
+      return Size(W.text_width(data.label), W.get_font_height())
+   end
+
+   public draw(W, data, x, y)
+      draw_string_ex(W, x, y, data.label)
+   end
+end
+
+package class KeyEntry()
+   public const 
+      bits,       # The bits which must be set in the mask set
+      mask,       # The mask, ie the bits to be considered
+      str         # The code to send
+
+   public matches(i)
+      if iand(mask, i) = bits then
+         return
+   end
+
+   public new(bits, mask, str)
+      self.bits := bits
+      self.mask := mask
+      self.str := str
+      return
+   end
+end
+
+# Class for storing key code strings.
+package class KeyTable()
+   private const t
+
+   public add(code, bits, mask, str)
+      local l
+      (l := member(t, code)) | insert(t, code, l := [])
+      put(l, KeyEntry(bits, mask, str))
+      return self
+   end
+
+   public lookup(code, i)
+      local e
+      every e := !member(t, code) do {
+         if e.matches(i) then
+            return e
+      }
+   end
+
+   public check_integrity()
+      local l, e, f, code
+      every code := key(t) do {
+         l := member(t, code)
+         every (e := !l) ~=== (f := !l) do {
+            if iand(e.bits, e.mask) ~= e.bits then
+               syserr("KeyTable entry has nonsense bits/mask: ", to_string(e))
+            # Given two entries, assume i matches both e and f.  Clearly i must
+            # be be|bf|z for some other bits z.  Since both match
+            # be = i&me and bf=i&mf. So
+            # be & i & mf = bf & i & me.  Subsitute i:
+            # be & mf & (be|bf|z) = bf & me & (be|bf|z)
+            # be&mf | be&mf&bf | be&mf&z = be&bf&me | bf&me | bf&me&z.  Since me&z=mf&z=0 :
+            # be&mf | be&mf&bf = be&bf&me | bf&me.  ie
+            # be&mf(1|bf) = bf&me(1|be), ie
+            # be&mf = bf&me
+            if iand(e.bits, f.mask) = iand(f.bits, e.mask) then {
+               syserr("KeyTable inconsistent: code=" || image(code) || 
+                      "; e=" || to_string(e) || "; f=" || to_string(f))
+            }
+         }
+      }
+   end
+
+   public new()
+      t := table()
+      return
+   end
+end
+
+# Part of a line
+package class Segment()
+   public const
+      s,      # The string for this segment
+      attr    # The attributes
+
+   public new(s, attr)
+      self.s := s
+      self.attr := attr
+      return
+   end
+end
+
+# Represents one line
+package class Row()
+   public const
+      l,  # List of Segments
+      bg  # Bg colour for right part of row not covered by segments (null -> current bg).
+
+   public new(l, bg)
+      /l := []
+      self.l := l
+      self.bg := bg
+      return
+   end
+end
+
+# A link, being a url plus other info such as line, column etc.
+class Link()
+   public const
+      url,
+      line,
+      col,
+      offset
+
+   public new(url, line, col, offset)
+      self.url := url
+      self.line := line
+      self.col := col
+      self.offset := offset
+      return
+   end
+end
+
+#
+# This interface provides external required functionality for the terminal.
+abstract class VtUI()
+   public abstract link_left_clicked(link)
+   public abstract link_middle_clicked(link)
+   public abstract create_link_menu(link)
+   public abstract create_context_menu()
+   public abstract send_tty(s)
+   public abstract vt_size_changed(cols, rows)
+   public abstract msg(s, n)
+   public abstract clear_msg()
+end
+
+package class VtPrimarySelectionOwner(TextSelectionOwner)
+   private parent
+
+   protected get_text()
+      return \parent.primary
+   end
+
+   public lost_ownership()
+      parent.on_lost_primary_ownership()
+   end
+
+   public new(parent)
+      self.parent := parent
+      return
+   end
+end
+
+package class Charset()
+   public const id, src, dest
+
+   public new(id, src, dest)
+      self.id := id
+      self.src := src
+      self.dest := dest
+      return
+   end
+end
+
+#
+# A VT emulator.
+#
+class Vt(LineBasedScrollArea, MenuMode)
+   private
+      primary_selection_owner,
+      ui,                         # The VtUI instance providing external functionality.
+      contents,                   # List of Segments
+      tab_stops,                  # Set of column numbers.
+      cursor_ticker,
+      cursor_on,
+      direction,                  # Selection scrolling direction
+      scroll_ticker,
+      scroll_ticker_interval,
+      highlight,                  # Link clicked on (shown red).
+      last_highlight,             # Link last clicked, shown with a dotted rectangle
+      held,                       # Link held by mouse down
+      over,                       # Link mouse is over
+      got,                        # Raw input, a string.
+      part_ch,                    # Partial utf-8 char, a string.
+      buff,                       # Input buffer, a ucs string.
+      input_handler_coex,
+      attr,
+      saved_cursor,               # A SavedCursor instance for implementing decset 1048
+      saved_buffer,               # A SavedBuffer instance for implementing decset 1049
+      popup_ev,
+      popup
+
+
+   private readable
+      verbose_flag,
+      cursor_x,                   # The selection cursor/mark
+      cursor_y,
+      mark_x,
+      mark_y,
+      char_w,                     # Character width dimensions of the font in use.
+      char_h,
+      rows,                       # Size of the emulated screen
+      cols,
+      cx,                         # The cursor position (in screen co-ordinates)
+      cy,
+      top_margin,                 # Optional margins
+      bottom_margin,
+      origin_mode,                # Various mode flags
+      reverse_mode,
+      insert_mode,
+      wraparound_mode,
+      col_mode,
+      application_keypad_mode,
+      application_cursor_mode,
+      hide_cursor_mode,
+      text_selection,             # Current text selection, or null
+      font_family,                # Font details
+      font_size,
+      primary,                    # Primary selection string, or null
+      history_size,               # Size of history scroll lines; 0 -> no vsb
+      reverse_fg,                 # Colours of reverse mode, or null implying true reverse.
+      reverse_bg,
+      charsets,                   # List of 4 Charsets G0..G4
+      curr_charset                # Current charset 1=G0 etc.  
+
+   private static const
+      EMPTY_ATTR,
+      KEY_TABLE,
+      C, S, A, K, U, V, CSA,
+      CHARSET
+
+   private static init()
+      EMPTY_ATTR := Attr()
+      C := 1
+      S := 2
+      A := 4
+      K := 8
+      U := 16
+      V := 32
+      CSA := C + S + A
+      KEY_TABLE := KeyTable()
+      setup_key_table()
+      CHARSET := table()
+      setup_charsets()
+   end
+
+   private static setup_charsets()
+      insert(CHARSET, "0", Charset("DEC Special Character and Line Drawing",
+                                   u"`abcdefghijklmnopqrstuvwxyz{|}~",
+                                   u"◆▒␉␌␍␊°±␤␋┘┐┌└┼─├┤┴┬│≤≥π≠£·"))
+      insert(CHARSET, "A", Charset("United Kingdom", u"#", u"£"))
+      insert(CHARSET, "B", Charset("United States", u"", u""))
+   end
+
+   private static setup_key_table()
+      add_cursor_key(Key.UP, "A")
+      add_cursor_key(Key.DOWN, "B")
+      add_cursor_key(Key.RIGHT, "C")
+      add_cursor_key(Key.LEFT, "D")
+      add_cursor_key(Key.HOME, "H")
+      add_cursor_key(Key.END, "F")
+
+      KEY_TABLE.add("\b", 0, A, "\d")
+      KEY_TABLE.add("\b", A, A, "\e\d")
+      KEY_TABLE.add("\d", 0, 0, "\e[3~")
+
+      add_std_key(Key.PGUP, "\e[5~")
+      add_std_key(Key.PGDN, "\e[6~")
+      add_std_key(Key.INSERT, "\e[2~")
+
+      add_std_key(Key.F1, "\eOP")
+      add_std_key(Key.F2, "\eOQ")
+      add_std_key(Key.F3, "\eOR")
+      add_std_key(Key.F4, "\eOS")
+      add_std_key(Key.F5, "\e[15~")
+      add_std_key(Key.F6, "\e[17~")
+      add_std_key(Key.F7, "\e[18~")
+      add_std_key(Key.F8, "\e[19~")
+      add_std_key(Key.F9, "\e[20~")
+      add_std_key(Key.F10, "\e[21~")
+      add_std_key(Key.F11, "\e[23~")
+      add_std_key(Key.F12, "\e[24~")
+
+      KEY_TABLE.check_integrity()
+   end
+
+   private static add_std_key(k, s)
+      local l, r
+      KEY_TABLE.add(k, 0, CSA, s)
+      if any(&digits, s[3]) then {
+         l := s[1:4]
+         r := s[4:0]
+      } else {
+         l := s[1:3] || "1"
+         r := s[3:0]
+      }
+      KEY_TABLE.add(k, S, CSA, l || ";2" || r)
+      KEY_TABLE.add(k, A, CSA, l || ";3" || r)
+      KEY_TABLE.add(k, C, CSA, l || ";5" || r)
+      KEY_TABLE.add(k, S+A, CSA, l || ";4" || r)
+      KEY_TABLE.add(k, C+A, CSA, l || ";7" || r)
+      KEY_TABLE.add(k, C+S, CSA, l || ";6" || r)
+      KEY_TABLE.add(k, CSA, CSA, l || ";8" || r)
+   end
+
+   private static add_cursor_key(k, c)
+      KEY_TABLE.add(k, 0, CSA+U, "\e[" || c)
+      KEY_TABLE.add(k, U, CSA+U, "\eO" || c)
+      KEY_TABLE.add(k, S, CSA, "\e[1;2" || c)
+      KEY_TABLE.add(k, A, CSA, "\e[1;3" || c)
+      KEY_TABLE.add(k, C, CSA, "\e[1;5" || c)
+      KEY_TABLE.add(k, S+A, CSA, "\e[1;4" || c)
+      KEY_TABLE.add(k, C+A, CSA, "\e[1;7" || c)
+      KEY_TABLE.add(k, C+S, CSA, "\e[1;6" || c)
+      KEY_TABLE.add(k, CSA, CSA, "\e[1;8" || c)
+   end
+
+   package on_lost_primary_ownership()
+      primary := &null
+      invalidate_region()
+      clear_mark()
+   end
+
+   public layout()
+      check_changed_size()
+      LineBasedScrollArea.layout()
+   end
+
+   public get_default_width()
+      return predict_total_width(80 * char_w + 2 * Gui.TEXT_INSET, if history_size > 0 then &yes else &no)
+   end
+
+   public get_default_height()
+      return predict_total_height(25 * char_h)
+   end
+
+   private check_changed_size()
+      local old_cols, old_rows
+      old_cols := cols
+      old_rows := rows
+      cols := (predict_view_width(w, if history_size > 0 then &yes else &no) - 2 * Gui.TEXT_INSET) / char_w
+      cols >:= \col_mode
+      cols <:= 16
+      rows := predict_view_height(h) / char_h
+      rows <:= 1
+      if old_cols ~=== cols | old_rows ~=== rows then {
+         cx >:= cols + 1
+         cy >:= rows
+         (\ui).vt_size_changed(cols, rows)
+         if *contents < rows then {
+            while *contents < rows do {
+               put(contents, Row(, attr.bg))
+               #cy +:= 1
+            }
+         }
+         trim_history()
+         trim_screen()
+         clear_mark()
+         reset_margins()
+         reset_tab_stops()
+         invalidate_line_count()
+         compute_and_invalidate()
+      }
+   end
+
+   private reset_margins()
+      top_margin := 1
+      bottom_margin := rows
+   end
+
+   public initially()
+      setup_font() | runerr("font not in required format", self)
+      LineBasedScrollArea.initially()
+      cursor_ticker.start()
+      char_w := cbwin.text_width("m")
+      (char_w = cbwin.text_width("i")) | runerr("font is not monospace", self)
+      char_h := cbwin.get_font_height()
+   end
+
+   private setup_font()
+      local s
+      if s := get_wattrib("font") then {
+         s ? {
+            font_family := tab(upto(',') | 0)
+            (*font_family > 0) | fail
+            font_size := if ="," then
+               integer(tab(0)) | fail
+            else
+               Window.get_default_font_size()
+         }
+      } else {
+         font_family := "fixed"
+         font_size := Window.get_default_font_size()
+         set_font(font_family || "," || font_size)
+      }
+      return
+   end
+
+   public finally()
+      scroll_ticker.stop()
+      cursor_ticker.stop()
+      LineBasedScrollArea.finally()
+   end
+
+   #
+   # Provide input to the terminal
+   #
+   public input(s)
+      got := string(s) | runerr(103, s)
+      @input_handler_coex
+      return self
+   end
+
+   private wait_for_buff()
+      local i
+      while *buff = 0 do {
+         # Note that *got will not be 0 here on the first time
+         # through, since we are activated for the first time by
+         # input().
+         while *got = 0 do
+            coact()
+         # Add any partial utf-8 char saved from last time
+         got := part_ch || got
+         # Find the last utf-8 char in got; may be part of a char
+         i := *got
+         while i > 1 & 127 < ord(got[i]) < 192 do
+            i -:= 1
+         # Now got[i:0] gives us the last utf-8 char or part of it.
+         # Split got into got and part_ch, depending on whether the
+         # last utf-8 sequence is complete or not.
+         if ucs(got[i:0]) then 
+            part_ch := ""
+         else {
+            part_ch := got[i:0]
+            got := got[1:i]
+         }
+         buff := Text.liberal_ucs(got)
+         got := ""
+       }
+   end
+
+   private get_chs()
+      local c
+      wait_for_buff()
+      buff ? {
+         c := tab(many(Gui.PRINTABLE_1)) | move(1)
+         buff := tab(0)
+      }
+      return c
+   end
+
+   private get_ch()
+      local c
+      wait_for_buff()
+      buff ? {
+         c := move(1)
+         buff := tab(0)
+      }
+      return c
+   end
+
+   private peek_ch()
+      wait_for_buff()
+      return buff[1]
+   end
+
+   private input_handler()
+      local c
+      repeat {
+         c := get_chs()
+         case string(c) of {
+            "\r" : do_cr()
+            "\n" : do_nl()
+            "\e" : do_esc()
+            "\b" : do_backspace()
+            "\t" : do_tab()
+            "\^g" : {}
+            "\^o" : do_set_charset(1)
+            "\^n" : do_set_charset(2)
+            default: do_default_str(apply_charset(c, curr_charset))
+         }
+      }
+   end
+
+   private do_set_charset(n)
+      curr_charset := n
+   end
+
+   private apply_charset(s, n)
+      local cs
+      cs := charsets[n]
+      return map(s, cs.src, cs.dest)
+   end
+
+   private do_tab()
+      local i
+      # If in pos cols+1 (or cols), do nothing.  In particular tab doesn't reset cx=cols+1 to cols.
+      if cx >= cols then
+         fail
+      i := cx
+      repeat {
+         i +:= 1
+         if (i >= cols) | member(tab_stops, i) then
+            break
+      }
+      move_cursor(i)
+   end
+
+   private do_backspace()
+      cx >:= cols
+      move_cursor(cx - 1)
+   end
+
+   private read_params()
+      local l, c, t
+      l := []
+      repeat {
+         c := peek_ch()
+         if any(&digits, c) then {
+            t := get_ch()
+            repeat {
+               if any(&digits, peek_ch()) then
+                  t ||:= get_ch()
+               else
+                  break
+            }
+            put(l, integer(t))
+         } else if c == u"\"" then {
+            get_ch()  # opening "
+            t := u""
+            repeat {
+               c := get_ch()
+               if c == u"\"" then
+                  break
+               else
+                  t ||:= c
+            }
+            put(l, t)
+         } else if c == u";" then
+            # Empty param
+            put(l)
+         if peek_ch() ~== u";" then
+            break
+         get_ch()  # skip ;
+      }
+      return l
+   end
+
+   private do_csi()
+      local cmd, param
+      cmd := if any('>?!', peek_ch()) then get_ch() else u""
+      param := read_params()
+      cmd ||:= get_ch()
+      # See ecma 5.4
+      while any(' !"#$%&\'()*+,\-./', cmd[-1]) do
+         cmd ||:= get_ch()
+      #write("cmd=",cmd,"  params=", to_string(param))
+      case string(cmd) of {
+         "m" : every do_set_attr(int_params(param, 0))
+         "!L" : do_set_link(param)
+         "!P" : do_popup(param)
+         "A" : do_cursor_up(int_param(param, 1, 1))
+         "B" : do_cursor_down(int_param(param, 1, 1))
+         "C" : do_cursor_right(int_param(param, 1, 1))
+         "D" : do_cursor_left(int_param(param, 1, 1))
+         "P" : do_delete_chars(int_param(param, 1, 1))
+         "J" : do_erase_in_display(int_param(param, 1, 0))
+         "K" : do_erase_in_line(int_param(param, 1, 0))
+         "X" : do_erase_characters(int_param(param, 1, 1))
+         "G" : do_move_cursor_x(int_param(param, 1, 1))
+         "H" : do_move_cursor(int_param(param, 1, 1), int_param(param, 2, 1))
+         "r" : do_set_margins(int_param(param, 1, 1), int_param(param, 2, rows))
+         "c" : do_send_device_attrs(int_param(param, 1, 0))
+         "@" : do_insert_blanks(int_param(param, 1, 1))
+         "S" : do_scroll_up(int_param(param, 1, 1))
+         "L" : do_insert_lines(int_param(param, 1, 1))
+         "M" : do_delete_lines(int_param(param, 1, 1))
+         "d" : do_vertical_pos_absolute(int_param(param, 1, 1))
+         "e" : do_vertical_pos_relative(int_param(param, 1, 1))
+         "f" : do_vertical_and_horizontal_pos(int_param(param, 1, 1), int_param(param, 2, 1))
+         "h" : do_set_mode(int_param(param, 1))
+         "l" : do_reset_mode(int_param(param, 1))
+         "n" : do_device_status_report(int_param(param, 1))
+         "?h" : do_dec_set(int_param(param, 1))
+         "?l" : do_dec_reset(int_param(param, 1))
+         "!p" : do_soft_reset()
+         "g" : do_tab_clear(int_param(param, 1, 0))
+         default : if \verbose_flag then write("csi not implemented: cmd=",cmd,"  params=", to_string(param))
+      }
+   end
+
+   private do_device_status_report(n)
+      case n of {
+         5 : send("\e[0n")
+         # cx may be in cols+1; xterm reports cols (but konsole reports cols+1).  Do as per xterm.
+         6 : send("\e[" || cy || ";" || min(cx, cols) || "R")
+      }
+   end
+
+   private do_set_mode(n)
+      case n of {
+         4 : insert_mode := &yes
+      }
+   end
+
+   private do_reset_mode(n)
+      case n of {
+         4 : insert_mode := &no
+      }
+   end
+
+   private do_tab_clear(n)
+      case n of {
+         0 : delete(tab_stops, cx)
+         3 : clear(tab_stops)
+      }
+   end
+
+   private do_soft_reset()
+      #write("soft reset")
+      reset_term()
+   end
+
+   private do_dec_set(n)
+      #write("decset:",n)
+      case n of {
+         1 : do_application_cursor_keys_mode(&yes)
+         3 : set_col_mode(132)
+         5 : do_reverse_video(&yes)
+         6 : origin_mode := &yes
+         7 : wraparound_mode := &yes
+         25 : do_hide_cursor(&no)
+         1047 | 1049 : do_use_alternate_buffer()
+         1048 : do_save_cursor()
+      }
+   end
+
+   private do_dec_reset(n)
+      #write("decreset:",n)
+      case n of {
+         1 : do_application_cursor_keys_mode(&no)
+         3 : set_col_mode(80)
+         5 : do_reverse_video(&no)
+         6 : origin_mode := &no
+         7 : wraparound_mode := &no
+         25 : do_hide_cursor(&yes)
+         1047 | 1049 : do_use_normal_buffer()
+         1048 : do_restore_cursor()
+      }
+   end
+
+   private do_use_alternate_buffer()
+      saved_buffer := SavedBuffer(cx, cy, attr, copy(charsets), curr_charset, contents, history_size)
+      history_size := 0
+      contents := []
+      every 1 to rows do put(contents, Row())
+      reset_term()
+      invalidate_line_count()
+      compute_and_invalidate()
+   end
+
+   private do_use_normal_buffer()
+      \saved_buffer | fail
+      contents := saved_buffer.contents
+      history_size := saved_buffer.history_size
+      reset_term()
+      attr := saved_buffer.attr
+      charsets := saved_buffer.charsets
+      curr_charset := saved_buffer.curr_charset
+      move_cursor(saved_buffer.cx, saved_buffer.cy)
+      saved_buffer := &null
+      # Trim in case the screen size changed during the alternate
+      # buffer.  (No change may be noticed when we call
+      # check_changed_size() via compute_and_invalidated(); this would
+      # certainly be the case if there is no scrollbar in normal
+      # mode).
+      trim_history()
+      trim_screen()
+      invalidate_line_count()
+      compute_and_invalidate()
+   end
+
+   private do_reverse_video(f)
+      reverse_mode := f
+      view.invalidate()
+   end
+
+   private set_col_mode(n)
+      col_mode := n
+      do_erase_all()
+      move_cursor(1, 1)
+      check_changed_size()
+   end
+
+   private do_vertical_pos_absolute(n)
+      move_cursor(, n)
+   end
+
+   private do_vertical_pos_relative(n)
+      move_cursor(, cy + n)
+   end
+
+   private do_vertical_and_horizontal_pos(m, n)
+      move_cursor(n, m)
+   end
+
+   private do_insert_lines(n)
+      scroll_down(cy, n)
+   end
+
+   private do_scroll_up(n)
+      scroll_up(bottom_margin, n)
+   end
+
+   private do_delete_lines(n)
+      delete_lines(cy, n)
+   end
+
+   private do_insert_blanks(n)
+      do_insert(repl(u" ", n))
+   end
+
+   private reset_tab_stops()
+      tab_stops := Set{1 to cols by 8}
+   end
+
+   private reset_term()
+      origin_mode := &no
+      wraparound_mode := &yes
+      cx := cy := 1
+      col_mode := &no
+      reverse_mode := &no
+      insert_mode := &no
+      application_keypad_mode := &no
+      application_cursor_mode := &no
+      hide_cursor_mode := &no
+      charsets := []
+      every 1 to 4 do put(charsets, CHARSET["B"])
+      curr_charset := 1
+      attr := EMPTY_ATTR
+      if is_live() then {
+         # Size may have changed since col_mode changed
+         check_changed_size()
+         clear_mark()
+         reset_tab_stops()
+         reset_margins()
+         view.invalidate()
+      }
+   end
+
+   #
+   # If set, some debug output is produced.
+   #
+   public set_verbose(f)
+      self.verbose_flag := check_flag(f)
+      return self
+   end
+
+   #
+   # Set the fg colour to use in reverse mode.
+   #
+   public set_reverse_fg(c)
+      Window.parse_color(c) | fail
+      self.reverse_fg := c
+      if is_live() then
+         view.invalidate()
+      return self
+   end
+
+   #
+   # Set the bg colour to use in reverse mode.
+   #
+   public set_reverse_bg(c)
+      Window.parse_color(c) | fail
+      self.reverse_bg := c
+      if is_live() then
+         view.invalidate()
+      return self
+   end
+
+   #
+   # Set the history size; 0 implies no scrollbar.
+   #
+   public set_history_size(n)
+      self.history_size := n
+      trim_history()
+      invalidate_line_count()
+      if is_live() then
+         compute_and_invalidate()
+      return self
+   end
+
+   private do_send_device_attrs(n)
+      case n of {
+         0 : send("\e[?631;2c")
+      }
+   end
+
+   private do_erase_in_display(n)
+      case n of {
+         0 : do_erase_below()
+         1 : do_erase_above()
+         2 : do_erase_all()
+      }
+   end
+
+   private do_erase_in_line(n)
+      case n of {
+         0 : do_erase_right()
+         1 : do_erase_left()
+         2 : do_erase_line()
+      }
+   end
+
+   private do_erase_characters(n)
+      local i, r, m
+      r := contents[i := cy_to_index()]
+      cx >:= cols
+      n >:= cols - cx + 1
+      m := split_upto(r, cx - 1, &yes)
+      put_segment(m, repl(u" ", n), attr)
+      content_edit(i, split_from(r, cx + n - 1, m), r.bg)
+      invalidate_line(i)
+   end
+
+   private do_erase_below()
+      local i
+      do_erase_right()
+      i := cy_to_index()
+      every content_edit(i + 1 to *contents,, attr.bg)
+      invalidate_lines(i + 1, *contents)
+   end
+
+   private do_erase_above()
+      local i, j
+      do_erase_left()
+      i := row_to_index(1)
+      j := cy_to_index()
+      every content_edit(i to j - 1,, attr.bg)
+      invalidate_lines(i, j - 1)
+   end
+
+   private do_erase_all()
+      every content_edit(row_to_index(1) to *contents,, attr.bg)
+      view.invalidate()
+   end
+
+   # Change line i in the contents; the caller is responsible for invalidating the line i.
+   private content_edit(i, l, bg)
+      contents[i] := Row(l, bg)
+      if \mark_y & region_contains(i) then {
+         invalidate_region()
+         clear_mark()
+      }
+   end
+
+   private do_move_cursor(r, c)
+      if \origin_mode then {
+         r +:= top_margin - 1
+         r >:= bottom_margin
+      }
+      move_cursor(c, r)
+   end
+
+   private do_move_cursor_x(c)
+      move_cursor(c)
+   end
+
+   private do_set_margins(top, bottom)
+      bottom <:= 1
+      bottom >:= rows
+      top <:= 1
+      top >:= bottom
+      top_margin := top
+      bottom_margin := bottom
+      if /origin_mode then
+         move_cursor(1, 1)
+      else
+         move_cursor(1, top)
+   end
+
+   private static int_param(param, n, def)
+      return (0 < integer(param[n])) | \def
+   end
+
+   private static int_params(param, def)
+      local i
+      if *param = 0 then
+         return def
+      every i := !param do
+         suspend ((0 < integer(i)) | \def)\1
+   end
+
+   private put_segment(l, s, attr)
+      if equals(attr, l[-1].attr) then
+         l[-1] := Segment(l[-1].s || s, attr)
+      else
+         put(l, Segment(s, attr))
+   end
+
+   private split_upto(r, j, pad)
+      local k, t, m, l
+      l := r.l
+      m := []
+      k := 1
+      while j >= *l[k].s do {
+         put(m, l[k])
+         j -:= *l[k].s
+         k +:= 1
+      }
+      if j > 0 then {
+         if t := l[k] then
+            # We know j < *t.s from the above while loop
+            put_segment(m, t.s[1:j+1], t.attr)
+         else if \pad then
+            put_segment(m, repl(u" ", j), Attr(, r.bg))
+      }
+      return m
+   end
+
+   private split_from(r, j, m)
+      local k, t, l
+      l := r.l
+      k := 1
+      while j >= *l[k].s do {
+         j -:= *l[k].s
+         k +:= 1
+      }
+      /m := []
+      if j > 0 & t := l[k] then {
+         put_segment(m, t.s[j+1:0], t.attr)
+         k +:= 1
+      }
+      while put(m, l[k]) do k +:= 1
+      return m
+   end
+
+   private do_delete_chars(n)
+      local i, r, m
+      r := contents[i := cy_to_index()]
+      cx >:= cols
+      m := split_upto(r, cx - 1)
+      content_edit(i, split_from(r, cx + n - 1, m), r.bg)
+      invalidate_line(i)
+   end
+
+   private do_erase_right()
+      local i, r
+      r := contents[i := cy_to_index()]
+      cx >:= cols
+      content_edit(i, split_upto(r, cx - 1, &yes), attr.bg)
+      invalidate_line(i)
+   end
+
+   private do_erase_left()
+      local i, r, m
+      r := contents[i := cy_to_index()]
+      cx >:= cols
+      m := [Segment(repl(u" ", cx), Attr(, attr.bg))]
+      content_edit(i, split_from(r, cx, m), r.bg)
+      invalidate_line(i)
+   end
+
+   private do_erase_line()
+      local i, r
+      r := contents[i := cy_to_index()]
+      cx >:= cols
+      content_edit(i,, attr.bg)
+      invalidate_line(i)
+   end
+
+   private move_cursor(x, y)
+      if \y then {
+         invalidate_cursor()
+         y <:= 1
+         y >:= rows
+         cy := y
+      }
+      if \x then {
+         x <:= 1
+         #x >:= cols
+         cx := x
+      }
+      cx >:= cols
+      reset_blink()
+      invalidate_cursor()
+   end
+
+   private do_cursor_up(n)
+      local lim, y1
+      lim := if cy < top_margin then 1 else top_margin
+      y1 := cy - n
+      y1 <:= lim
+      move_cursor(, y1)
+   end
+
+   private do_cursor_down(n)
+      local lim, y1
+      lim := if cy > bottom_margin then rows else bottom_margin
+      y1 := cy + n
+      y1 >:= lim
+      move_cursor(, y1)
+   end
+
+   private do_cursor_right(n)
+      move_cursor(cx + n)
+   end
+
+   private do_cursor_left(n)
+      cx >:= cols
+      move_cursor(cx - n)
+   end
+
+   private static mk_link(l)
+      local url, line, col, e, k, v, offset
+      every e := !l do {
+         e ? {
+            k := 1(tab(many(&letters)), ="=") | fail
+            v := tab(0)
+            case map(string(k)) of {
+               "line": line := integer(v) | fail
+               "col": col := integer(v) | fail
+               "offset": offset := integer(v) | fail
+               "url": url := URL(v) | fail
+               default: fail
+            }
+         }
+      }
+      return Link(url, line, col, offset)
+   end
+
+   private do_popup(l)
+      local t, e, px, py, info
+      t := []
+      e := create !l
+      while put(t, PopupElement(ucs(URL.percent_decode(@e)),
+                                ucs(URL.percent_decode(@e))))
+      (*t > 0) | fail
+      info := get_line_info() | fail
+      px := view.x + Gui.TEXT_INSET + (cx - 1) * char_w + Gui.TEXT_INSET
+      info := get_line_info() | fail
+      py := view.y - info.offset + (cy_to_index() - info.first) * char_h
+      # Ensure cursor is entirely within view
+      (view.y <= py & py + char_h - 1 < view.y + view.h) | fail
+      #write(view.y,"-",view.y+view.h," -v-",py, " view.h=",view.h, " char_h=",char_h,"  lines=",rows)
+      # Get perfect alignment with between the cursor line and the first line in the popup.
+      py -:= Gui.BORDER_WIDTH
+      open_popup(px, py, t)
+   end
+
+   private do_set_link(l)
+      attr := copy(attr)
+      attr.link := (if *l > 0 then mk_link(l)) | &null
+   end
+
+   private synch_font()
+      local s
+      if \ (attr.bold | attr.font) then {
+         s := font_family
+         if \attr.bold then
+            s ||:= ",bold"
+         if \attr.italic then
+            s ||:= ",italic"
+         s ||:= "," || font_size
+      }
+      attr.font := s
+   end
+
+   # ESC[{n}m
+   private do_set_attr(n)
+      if n = 0 then
+         attr := EMPTY_ATTR
+      else {
+         attr := copy(attr)
+         case n of {
+            1 : {
+               attr.bold := &yes
+               synch_font()
+            }
+            3 : {
+               attr.italic := &yes
+               synch_font()
+            }
+            4 : attr.underline := &yes
+            7 : attr.inverse := &yes
+            8 : attr.invisible := &yes
+            9 : attr.crossed := &yes
+            22 : {
+               attr.bold := &no
+               synch_font()
+            }
+            23 : {
+               attr.italic := &no
+               synch_font()
+            }
+            24 : attr.underline := &no
+            27 : attr.inverse := &no
+            28 : attr.invisible := &no
+            29 : attr.crossed := &no
+            30: attr.fg := "black"
+            31: attr.fg := "red"
+            32: attr.fg := "dark green"
+            33: attr.fg := "yellow"
+            34: attr.fg := "blue"
+            35: attr.fg := "purple"
+            36: attr.fg := "cyan"
+            37: attr.fg := "pale gray"
+            39: attr.fg := &null
+
+            40: attr.bg := "black"
+            41: attr.bg := "red"
+            42: attr.bg := "dark green"
+            43: attr.bg := "yellow"
+            44: attr.bg := "blue"
+            45: attr.bg := "purple"
+            46: attr.bg := "cyan"
+            47: attr.bg := "pale gray"
+            49: attr.bg := &null
+         }
+      }
+   end
+
+   private do_esc()
+      local c
+      c := get_ch()
+      case string(c) of {
+         "D" : do_index()
+         "M" : do_reverse_index()
+         "E" : do_next_line()
+         "H" : do_tab_set()
+         "#" : do_esc_hash()
+         "[" : do_csi()
+         "7" : do_save_cursor()
+         "8" : do_restore_cursor()
+         ">" : do_application_keypad_mode(&no)
+         "=" : do_application_keypad_mode(&yes)
+         "(" : do_designate_charset(1)
+         ")" : do_designate_charset(2)
+         "*" : do_designate_charset(3)
+         "+" : do_designate_charset(4)
+         "n" : do_set_charset(3)
+         "o" : do_set_charset(4)
+         "N" : do_single_shift(3)
+         "O" : do_single_shift(4)
+         default : if \verbose_flag then write("Unknown ESC char: ", c)
+      }
+   end
+
+   private do_application_keypad_mode(f)
+      application_keypad_mode := f
+   end
+
+   private do_application_cursor_keys_mode(f)
+      application_cursor_mode := f
+   end
+
+   private do_hide_cursor(f)
+      hide_cursor_mode := f
+      invalidate_cursor()
+   end
+
+   private do_single_shift(n)
+      local c
+      c := get_ch()
+      do_default_str(apply_charset(c, n))
+   end
+
+   private do_designate_charset(n)
+      local c
+      c := get_ch()
+      charsets[n] := member(CHARSET, string(c) | "B")
+   end
+
+   private do_save_cursor()
+      saved_cursor := SavedCursor(cx, cy, attr, copy(charsets), curr_charset)
+   end
+
+   private do_restore_cursor()
+      \saved_cursor | fail
+      attr := saved_cursor.attr
+      curr_charset := saved_cursor.curr_charset
+      charsets := saved_cursor.charsets
+      move_cursor(saved_cursor.cx, saved_cursor.cy)
+      saved_cursor := &null
+   end
+
+   private do_tab_set()
+      insert(tab_stops, cx)
+   end
+
+   private do_esc_hash()
+      local c
+      c := get_ch()
+      case string(c) of {
+         "8" : do_decaln()
+         default : if \verbose_flag then write("Unkown ESC# char: ", c)
+      }
+   end
+
+   private do_decaln()
+      local s
+      s := Segment(repl(u"E", cols), EMPTY_ATTR)
+      every content_edit(row_to_index(1) to *contents, [s])
+      view.invalidate()
+   end
+
+   private scroll_down(r, n)
+      local i, j
+      if r < 1 | r > bottom_margin then
+         fail
+      /n := 1
+      i := row_to_index(r)
+      j := row_to_index(bottom_margin)
+      every 1 to n do {
+         content_delete(j)
+         content_insert(i)
+      }
+      view.invalidate()
+   end
+
+   # Trim the contents of the screen to be within cols; caller must
+   # clear mark and invalidate view.
+   private trim_screen()
+      every truncate(contents[row_to_index(1) to *contents].l, cols)
+   end
+
+   # Trim the history list so that it is within range; caller must
+   # invalidate line count.
+   private trim_history()
+      local n
+      \rows | fail
+      n := *contents - (rows + history_size)
+      (n > 0) | fail
+      #write("trimming ",n)
+      every 1 to n do
+         content_delete(1)
+      # Adjust the vsb so that if we are above the bottom then the
+      # line we're looking at stays the same.
+      if not at_bottom() then
+         vsb.set_value(vsb.value - n * char_h)
+   end
+
+   private scroll_up(r, n)
+      local i, j, t
+      if r < 1 | r > bottom_margin then
+         fail
+      /n := 1
+      t := if r < top_margin then 1 else top_margin
+      i := row_to_index(r)
+      if t = 1 & history_size > 0 then {
+         every 1 to n do
+            content_insert(i + 1)
+         trim_history()
+         invalidate_line_count()
+         compute_and_invalidate()
+      } else {
+         j := row_to_index(t)
+         every 1 to n do {
+            content_delete(j)
+            content_insert(i)
+         }
+         view.invalidate()
+      }
+   end
+
+   # Delete a line from the content; the caller must invalidate the view
+   private content_delete(i)
+      delete(contents, i)
+      if \mark_y then {
+         if region_contains(i) then
+            clear_mark()
+         else if cursor_y > i then {
+            cursor_y -:= 1
+            mark_y -:= 1
+         }
+      }
+   end
+
+   # Delete a line from the content; the caller must invalidate the view
+   private content_insert(i)
+      insert(contents, i, Row(, attr.bg))
+      if \mark_y then {
+         if region_contains(i) then
+            clear_mark()
+         else if cursor_y > i then {
+            cursor_y +:= 1
+            mark_y +:= 1
+         }
+      }
+   end
+
+   private region_contains(i)
+      return contained(i, i, cursor_y, mark_y)
+   end
+
+   private delete_lines(r, n)
+      local i, j
+      if r < 1 | r > bottom_margin then
+         fail
+      /n := 1
+      if n > bottom_margin - r + 1 then
+         fail
+      i := row_to_index(r)
+      j := row_to_index(bottom_margin)
+      every 1 to n do {
+         content_delete(i)
+         content_insert(j)
+      }
+      view.invalidate()
+   end
+
+   private do_index()
+      if cy = bottom_margin then {
+         cx >:= cols
+         scroll_up(cy)
+      } else
+         move_cursor(, cy + 1)
+   end
+
+   private do_reverse_index()
+      if cy = top_margin then {
+         cx >:= cols
+         scroll_down(cy)
+      } else
+         move_cursor(, cy - 1)
+   end
+
+   private do_next_line()
+      if cy = bottom_margin then {
+         scroll_up(cy)
+         move_cursor(1)
+      } else
+         move_cursor(1, cy + 1)
+   end
+
+   private cy_to_index()
+      return *contents - rows + cy
+   end
+
+   private row_to_index(r)
+      return *contents - rows + r
+   end
+
+   private do_cr()
+      move_cursor(1)
+   end
+
+   private do_nl()
+      if cy = bottom_margin then
+         scroll_up(cy)
+      else
+         move_cursor(, cy + 1)
+   end
+
+   private do_crnl()
+      do_cr()
+      do_nl()
+   end
+
+   private do_insert_or_put(s)
+      if /insert_mode then
+         do_put(s)
+      else
+         do_insert(s)
+   end
+
+   private do_put(s)
+      local i, r, m
+      if *s = 0 then
+         fail
+      i := cy_to_index()
+      r := contents[i]
+      m := split_upto(r, cx - 1, &yes)
+      put_segment(m, s, attr)
+      split_from(r, cx + *s - 1, m)
+      content_edit(i, m, r.bg)
+      invalidate_line(i)
+   end
+
+   private truncate(l, lim)
+      local n, t
+      n := line_len(l)
+      while n > lim do {
+         t := l[-1]
+         if *t.s <= n - lim then {
+            n -:= *t.s
+            pull(l)
+         } else {
+            l[-1] := Segment(t.s[1:lim - n], t.attr)
+            break
+         }
+      }
+   end
+
+   private do_insert(s)
+      local i, r, m
+      if *s = 0 then
+         fail
+      i := cy_to_index()
+      r := contents[i]
+      m := split_upto(r, cx - 1, &yes)
+      put_segment(m, s, attr)
+      split_from(r, cx - 1, m)
+      truncate(m, cols)
+      content_edit(i, m, r.bg)
+      invalidate_line(i)
+   end
+
+   private do_default_str(s)
+      local s1
+      if /wraparound_mode then {
+         if *s > cols - cx then {
+            s := s[1+:cols - cx] || s[-1]
+            do_insert_or_put(s)
+            cx := cols
+         } else {
+            do_insert_or_put(s)
+            cx +:= *s
+         }
+      } else {
+         while *s > 0 do {
+            if cx > cols then
+               do_crnl()
+            s ? {
+               s1 := tab(cols - cx + 2 | 0)
+               if *s1 = 0 then syserr("cx out of range")
+               s := tab(0)
+            }
+            do_insert_or_put(s1)
+            # Since *s1 <= cols - cx + 1, this leaves cx <= cols + 1
+            cx +:= *s1
+         }
+      }
+      reset_blink()
+   end
+
+   public keeps(e)
+      return
+   end
+
+   public set_internal_fields()
+      local bf
+      bf := if at_bottom() then &yes
+      LineBasedScrollArea.set_internal_fields()
+      if \bf then goto_bottom()
+   end
+
+   public calculate_line_count()
+      return *contents
+   end
+
+   public calculate_line_height()
+      return char_h
+   end
+
+   public calculate_subject_width()
+      return 0
+   end
+
+   private at_bottom()
+      if /vsb | (vsb.bar_pos + vsb.bar_size = vsb.bar_area_pos + vsb.bar_area_size) then return
+   end
+
+   private goto_bottom()
+      goto_last(get_line_count())
+   end
+
+   public draw()
+      local xp, yp, i, info, r, W, bg
+
+      r := view.get_cbwin_clip()
+
+      if \reverse_mode then {
+         bg := \reverse_bg | view.cbwin.get_fg()
+         use {
+            W := view.cbwin.clone(),
+            W.set_bg(bg).erase_area(r.x, r.y, r.w, r.h)
+         }
+      }
+
+      info := get_line_info(r) | fail
+      yp := r.y - info.offset
+      xp := get_subject_x()
+
+      #
+      # Write the lines
+      #
+      every i := info.first to info.last do {
+         draw_line(xp, yp, i)
+         yp +:= line_height
+      }
+   end
+
+   private draw_line(xp, yp, i)
+      local s, ss, row, seg, x1, W, W2, fg, bg, w1, want_fg, want_bg, want_font,
+         default_bg, default_fg, default_font, a, r, font
+
+      # Don't draw partial lines at the top, since this looks poor
+      # when running full-screen editing style apps (eg emacs)
+      if yp < view.y then
+         fail
+
+      row := contents[i]
+      s := contents_str(i)
+
+      xp +:= Gui.TEXT_INSET
+      x1 := xp
+      W := view.cbwin.clone()
+      bg := W.get_bg()
+      fg := W.get_fg()
+      font := default_font := get_wattrib("font")
+      if /reverse_mode then {
+         default_bg := bg
+         default_fg := fg
+      } else {
+         default_bg := \reverse_bg | fg
+         default_fg := \reverse_fg | bg
+      }
+
+      every seg := !row.l do {
+         a := seg.attr
+         ss := seg.s
+         want_fg := if \a.link === highlight then "red" else (\a.fg | default_fg)
+         want_bg := \a.bg | default_bg
+         if \a.inverse then
+            want_fg :=: want_bg
+
+         want_font := \a.font | default_font
+         if font ~=== want_font | fg ~=== want_fg | bg ~=== want_bg then {
+            W.close()
+            W := view.cbwin.clone()
+            W.set_fg(fg := want_fg).
+              set_bg(bg := want_bg).
+              set_font(font := want_font)
+         }
+         w1 := char_w * *ss
+         if bg ~=== default_bg then
+            W.erase_area(x1, yp, w1, char_h)
+
+         if /a.invisible then
+            draw_string_ex(W, x1, yp, ss)
+
+         if \a.underline then
+            W.draw_rectangle(x1, yp + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+         else if \a.link then
+            use { 
+               W2 := W.clone(),
+               W2.set_fg(EditRGBA(fg,,,, 16000)).      # 25% alpha of the current fg.
+                  draw_rectangle(x1, yp + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+            }
+
+         if \a.crossed then
+            W.draw_rectangle(x1, yp + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
+
+         if \a.link === last_highlight then
+            Gui.style.draw_dashed_rectangle(W, x1, yp, w1, char_h)
+         if \a.link === over then
+            Gui.style.fill_over_rectangle(W, x1, yp, w1, char_h)
+
+         x1 +:= w1
+      }
+
+      if \row.bg ~=== default_bg then {
+         w1 := xp + cols * char_w - x1
+         W.set_bg(row.bg).erase_area(x1, yp, w1, char_h)
+      }
+      W.close()
+
+      if \mark_y then {
+         r := if (mark_y < i < cursor_y) | (mark_y > i > cursor_y) then
+            [1, 1 + (0 < *s)]
+         else if i = mark_y = cursor_y then
+            range1(1, *s + 1, cursor_x, mark_x)
+         else if i = mark_y then {
+            if mark_y < cursor_y then
+               range1(1, *s + 1, mark_x, *s + 1)
+            else
+               range1(1, *s + 1, 1, mark_x)
+         } else if i = cursor_y then {
+            if mark_y > cursor_y then
+               range1(1, *s + 1, cursor_x, *s + 1)
+            else
+               range1(1, *s + 1, 1, cursor_x)
+         }
+
+         if \r then
+            Gui.style.fill_selection_rectangle(view.cbwin, xp + (r[1] - 1) * char_w, yp,  
+                                               (r[2] - r[1]) * char_w, line_height)
+      }
+
+      if /hide_cursor_mode & i = cy_to_index() then {
+         if has_focus() & is_unshaded() then {
+            if cursor_on ~= 2 then
+               Gui.style.draw_text_cursor(view.cbwin,
+                                          xp + (cx - 1) * char_w,
+                                          yp, 
+                                          line_height)
+         } else 
+            Gui.style.draw_shadow_text_cursor(view.cbwin,
+                                              xp + (cx - 1) * char_w,
+                                              yp, 
+                                              line_height)
+      }
+   end
+
+   #
+   # Set cursor from the given event
+   #
+   private set_cursor_from_pos(e)
+      cursor_y := get_nearest_line_to_pointer(e)
+      cursor_x := col_for_x(e.x)
+      cursor_x >:= cols + 1
+   end
+
+   private reset_blink()
+      cursor_on := -1
+   end
+
+   private clear_mark()
+      mark_x := mark_y := &null
+      return self
+   end
+
+   private line_len(l)
+      local n
+      n := 0
+      every n +:= *(!l).s
+      return n
+   end
+
+   private contents_str(i)
+      return line_str(contents[i].l)
+   end
+
+   private line_str(l)
+      local s
+      s := u""
+      every s ||:= (!l).s
+      return s
+   end
+
+   private handle_ldrag(e)
+      if \held then
+         handle_mdrag(e)
+      else {
+         invalidate_region()
+         if cursor_y > 1 & e.y < self.view.y then {
+            direction := "up"
+            check_scroll_ticker(self.view.y - e.y)
+         } else if cursor_y < *contents & e.y >= self.view.y + self.view.h then {
+            direction := "down"
+            check_scroll_ticker(e.y - (self.view.y + self.view.h))
+         } else {
+            direction := &null
+            scroll_ticker.stop()
+            set_cursor_from_pos(e)
+         }
+         invalidate_region()
+      }
+   end
+
+   private check_scroll_ticker(d)
+      scroll_ticker_interval := Gui.style.distance2ticker_rate(d)
+      scroll_ticker.change_sleep(scroll_ticker_interval)
+      # Start it (if it isn't already running)
+      scroll_ticker.start()
+   end
+
+   private dont_blink()
+      local c
+      if parent_dialog.is_blocked() then
+         return
+      c := parent_dialog.in_menu_mode() | fail
+      if c === self then
+         fail
+      if c.gen_popup_components() === gen_parents() then
+         fail
+      return
+   end
+
+   private scroll_tick()
+      local i
+      repeat {
+         invalidate_region()
+         case self.direction of {
+            "up" : {
+               if cursor_y > 1 & i := get_line_info() then {
+                  cursor_y := i.first_whole - 1
+                  cursor_y <:= 1
+                  #cursor_x := 1
+                  ensure_line_visible(cursor_y)
+               }
+            }
+            "down" : {
+               if cursor_y < *contents & i := get_line_info() then {
+                  cursor_y := i.last_whole + 1
+                  cursor_y >:= *contents
+                  #cursor_x := cols
+                  ensure_line_visible(cursor_y)
+               }
+            }
+         }
+         invalidate_region()
+         scroll_ticker.sleep(scroll_ticker_interval)
+      }
+   end
+
+   private cursor_tick()
+      local t
+      repeat {
+         if /hide_cursor_mode & self.has_focus() & self.is_unshaded() & self.is_unhidden() then {
+            t := cursor_on
+            cursor_on := if dont_blink() then
+               0
+            else
+               (cursor_on + 1) % 3
+
+            if (t | cursor_on) = 2 then
+               invalidate_cursor()
+         }
+         cursor_ticker.sleep(Gui.CURSOR_BLINK)
+      }
+   end
+
+   private handle_default(e)
+      local ch
+      ch := e.code
+      if type(ch) == ("string" | "ucs") then {
+         if \e.meta then
+            ch := "\e" || ch
+         send(ch)
+      }
+   end
+
+   private send(s)
+      ui.send_tty(s)
+   end
+
+   private handle_key(e, src, ty)
+      if /popup then
+         handle_normal_key(e)
+      else
+         handle_popup_key(e, src, ty)
+   end
+
+   private handle_popup_key(e, src, ty)
+      if e === popup_ev then
+         fail
+      if member(Key.NAVIGATE ++ set("\r"), e.code) then
+         (\popup).fire(ty, e)
+      else if e.code === "\e" then
+         close_all()
+      else if type(e.code) == ("string" | "ucs") then {
+         close_all()
+         handle_normal_key(e)
+      }
+   end
+
+   public handle_paste(e)
+      goto_bottom()
+      parent_dialog.request_selection(Selection.CLIPBOARD, 
+                                      [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                                      handle_paste_response, 
+                                      e)
+   end
+
+   private handle_paste_response(target_type, data, e)
+      send(replace(text_convert(selection_convert(target_type, data), "ucs"), u"\n", u"\r"))
+   end
+
+   public handle_copy(e)
+      local s
+      if s := get_current_text_selection() then
+         parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
+   end
+
+   private handle_special_key(e)
+      case e.code of {
+         # Prevent the pressing of the shift key calling goto_bottom()
+         Key.SHIFT_L | Key.SHIFT_R : 
+            return
+         # Standard navigation if shift is pressed
+         Key.HOME | Key.END | Key.PGUP | Key.PGDN : if \e.shift then {
+            on_default_key(e)
+            return
+         }
+         Key.F10 : {
+            handle_copy(e)
+            return
+         }
+         Key.INSERT :  {
+            if \e.ctrl then {
+               handle_copy(e)
+               return
+            }  else if \e.shift then {
+               handle_paste(e)
+               return
+            }
+         }
+      }
+   end
+
+   private handle_normal_key(e)
+      local i, ke
+      #write(to_string(e))
+      if handle_special_key(e) then
+         return
+      goto_bottom()
+      i := 0
+      if \e.shift then i +:= S
+      if \e.ctrl then i +:= C
+      if \e.meta then i +:= A
+      if \application_keypad_mode then i +:= K
+      if \application_cursor_mode then i +:= U
+      if ke := KEY_TABLE.lookup(e.code, i) then  {
+         #write("Lookup: ", image(e.code), " i=",i," -> ", image(ke))
+         send(ke.str)
+      } else
+         handle_default(e)
+   end
+
+   private invalidate_link(l)
+      local info, i, r
+      info := get_line_info() | fail
+      every i := info.first to info.last do {
+         r := contents[i]
+         if (!r.l).attr.link === l then
+            invalidate_line(i, info)
+      }
+   end
+
+   private set_last_highlight(l)
+      if l ~=== last_highlight then {
+         invalidate_link(\last_highlight)
+         last_highlight := l
+         invalidate_link(\last_highlight)
+      }
+      return self
+   end
+
+   private set_highlight(l)
+      if l ~=== highlight then {
+         set_last_highlight(\l)
+         invalidate_link(\highlight)
+         highlight := l
+         invalidate_link(\highlight)
+      }
+      return self
+   end
+
+   private col_for_x(x)
+      x := x - (view.x + Gui.TEXT_INSET)
+      x <:= 0
+      return 1 + x / char_w
+   end
+
+   private get_segment_for_pos(ev)
+      local r, c, seg
+      r := contents[get_line_under_pointer(ev)] | fail
+      c := col_for_x(ev.x)
+      every seg := !r.l do {
+         if c <= *seg.s then
+            return seg
+         c -:= *seg.s
+      }
+   end
+
+   private set_over(l)
+      local s
+      if l ~=== over then {
+         invalidate_link(\over)
+         over := l
+         invalidate_link(\over)
+         if /over then
+            ui.clear_msg()
+         else {
+            s := l.url.ucs()
+            s ||:= u" (line=" || \l.line || u")"
+            s ||:= u" (col=" || \l.col || u")"
+            s ||:= u" (offset=" || \l.offset || u")"
+            ui.msg(s)
+         }
+      }
+   end
+
+   private handle_mpress_response(target_type, data, e)
+      send(text_convert(selection_convert(target_type, data), "ucs"))
+   end
+
+   private handle_mpress(e)
+      *parent_dialog.held = 1 | fail
+      if \over then {
+         set_highlight(over)
+         held := over
+      } else {
+         parent_dialog.request_selection(Selection.PRIMARY, 
+                                         [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                                         handle_mpress_response, 
+                                         e)
+      }
+   end
+
+   #
+   # Return the currently selected text, or fail if none is selected.
+   #
+   public get_current_text_selection()
+      return \.text_selection
+   end
+
+   private calculate_text_selection()
+      local r, s, t
+      text_selection := &null
+      \mark_y | fail
+      if mark_y < cursor_y then {
+         r := []
+         s := contents_str(mark_y)
+         put(r, if t := range(1, *s + 1, mark_x, *s + 1) then s[t[1]:t[2]] else u"")
+         every put(r, contents_str(mark_y + 1 to cursor_y - 1))
+         s := contents_str(cursor_y)
+         put(r, if t := range(1, *s + 1, 1, cursor_x) then s[t[1]:t[2]] else u"")
+      } else if mark_y > cursor_y then {
+         r := []
+         s := contents_str(cursor_y)
+         put(r, if t := range(1, *s + 1, cursor_x, *s + 1) then s[t[1]:t[2]] else u"")
+         every put(r, contents_str(cursor_y + 1 to mark_y - 1))
+         s := contents_str(mark_y)
+         put(r, if t := range(1, *s + 1, 1, mark_x) then s[t[1]:t[2]] else u"")
+      } else {
+         # mark_y = cursor_y
+         s := contents_str(mark_y)
+         t := range1(1, *s + 1, cursor_x, mark_x) | fail
+         r := [ s[t[1]:t[2]] ]
+      }
+      text_selection := cat_lines(r)
+   end
+
+   private handle_lrelease(e)
+      local s
+      if \held then {
+         if \over then {
+            set_highlight()
+            ui.link_left_clicked(over)
+         }
+         held := &null
+      } else {
+         scroll_ticker.stop()
+         calculate_text_selection()
+         if s := get_current_text_selection() then {
+            parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
+            self.primary := s
+         }
+      }
+   end
+
+   public handle_select_all(e)
+      mark_x := mark_y := 1
+      cursor_y := *contents
+      cursor_x := *contents_str(cursor_y) + 1
+      handle_lrelease()
+      view.invalidate()
+   end
+
+   private handle_mdrag(e)
+      local seg
+      \held | fail
+      if (seg := get_segment_for_pos(e)) & (seg.attr.link === held) then {
+         set_over(held)
+         set_highlight(held)
+      } else {
+         set_over()
+         set_highlight()
+      }
+   end
+
+   private handle_mrelease(e)
+      \held | fail
+      if \over then {
+         set_highlight()
+         ui.link_middle_clicked(over, e)
+      }
+      held := &null
+   end
+
+   private invalidate_region()
+      invalidate_lines(\cursor_y, \mark_y)
+   end
+
+   private invalidate_cursor()
+      invalidate_line(cy_to_index())
+   end
+
+   private handle_lpress1(e)
+      local s
+      invalidate_region()
+      if \e.shift then {
+         /self.mark_y := self.cursor_y
+         /self.mark_x := self.cursor_x
+         set_cursor_from_pos(e)
+      } else {
+         set_cursor_from_pos(e)
+         case (parent_dialog.get_click_count() - 1) % 3 of {
+            0 : {
+               self.mark_y := self.cursor_y
+               self.mark_x := self.cursor_x
+            }
+            1 : {
+               self.mark_y := self.cursor_y
+               self.mark_x := self.cursor_x
+               s := contents_str(cursor_y)
+               while any(~'\t ', s, self.cursor_x) do
+                  self.cursor_x +:= 1
+               while any(~'\t ', s, self.mark_x - 1) do
+                  self.mark_x -:= 1
+            }
+            2 : {
+               s := contents_str(cursor_y)
+               self.cursor_x := *s + 1
+               self.mark_y := self.cursor_y
+               self.mark_x := 1
+            }
+         }
+      }
+      invalidate_region()
+   end
+
+   private handle_lpress(e)
+      *parent_dialog.held = 1 | fail
+      if \over then {
+         set_highlight(over)
+         held := over
+      } else {
+         handle_lpress1(e)
+      }
+   end
+
+   private handle_rpress(e)
+      local m, pm
+      *parent_dialog.held = 1 | fail
+      if /over then {
+         if m := ui.create_context_menu() & *m.children > 0 then {
+            pm := PopupMenu()
+            pm.popup(self, m, e.x, e.y)
+         }
+      } else {
+         m := ui.create_link_menu(over)
+         set_highlight(over)
+         set_over()
+         pm := PopupMenu()
+         pm.connect(on_popup_closed, Event.POPUP_CLOSED)
+         pm.popup(parent_dialog, m, e.x, e.y)
+      }
+   end
+
+   private on_popup_closed()
+      set_highlight()
+   end
+
+   private handle_in_chain(ev)
+      local seg, f
+      *parent_dialog.held = 0 | fail
+      if ev.code === (Key.SHIFT_L | Key.SHIFT_R) then {
+         if /ev.release then
+            f := 1
+      } else f := \ev.shift
+      if /f & (seg := get_segment_for_pos(ev)) & \seg.attr.link then {
+         set_over(seg.attr.link)
+         view.set_pointer("hand1")
+      } else {
+         set_over()
+         view.set_pointer("xterm")
+      }
+   end
+
+   private handle_exit(e)
+      *parent_dialog.held = 0 | fail
+      set_over()
+   end
+
+   #
+   # Set the VtUI to use.
+   #
+   public set_ui(ui)
+      self.ui := ui
+      return self
+   end
+
+   public should_close(e)
+      if (member(Mouse.PRESS, e.code) & 
+                not(popup.in_region(e))) then 
+         return
+   end
+
+   public gen_popup_components()
+      return popup
+   end
+
+   public get_nesting_component()
+   end
+
+   public allow_nested(c)
+   end
+
+   public close_all()
+      close_popup()
+   end
+
+   private close_popup()
+      self.parent_dialog.set_focus(self)
+      if popup.parent_dialog === parent_dialog then {
+         self.popup.invalidate()
+         self.parent_dialog.remove(popup)
+      } else {
+         self.parent_dialog.remove_popup(self.popup.parent_dialog)
+         self.popup.parent_dialog.dispose()
+      }
+      self.popup := &null
+      self.parent_dialog.exit_menu_mode(self)
+   end
+
+   private on_popup_selection()
+      local pe
+      pe := popup.object_get_selections()[1]
+      close_popup()
+      send(pe.str)
+   end
+
+   private open_popup(px, py, l)
+      local spc_below, spc_right, d, dim, win,
+         rs, max_h, max_w
+
+      win := parent_dialog.win
+      dim := win.get_display_size()
+      # Screen rectangle, in adjusted co-ordinates
+      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim[1], dim[2])
+
+      # Check popup position is in the visible part of the screen.
+      parent_dialog.intersect(rs).inside(px, py) | fail
+
+      # Space available for popup limited by screen size
+      spc_below := rs.y + rs.h - py
+      spc_right := rs.x + rs.w - px
+
+      max_h := dim[2]
+      max_w := spc_right
+
+      self.popup := ItemPaintList().
+         set_item_paint(PopupElementItemPaint()).
+         set_item_border(EmptyBorder().
+                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                             set_x_align(Align.L)).
+         set_all_wattribs(self.get_effective_wattribs()).
+         set_inherit_wattribs(&no).
+         connect(on_popup_selection, Event.SELECTION_CHANGED).
+         set_select_mode(Select.ONE).
+         set_accepts_focus(&no).
+         set_draggable_cursor(&yes).
+         set_motion_cursor(&yes).
+         set_always_show_focus_cursor(&yes).
+         set_selection_on_key_moves(&no).
+         set_contents(l).
+         set_z(self.parent_dialog.get_top_z())
+      self.parent_dialog.add(popup)
+      self.popup.set_ideal_size(scale(25), max_w,
+                                scale(25), max_h)
+
+      if popup.h_spec > spc_below then
+         py -:= popup.h_spec - spc_below
+
+      popup.
+         set_pos(win.get_dx() + px,
+                 win.get_dy() + py).
+         resize()
+
+      self.parent_dialog.enter_menu_mode(self)
+
+      if parent_dialog.contains(popup) then {
+         popup.invalidate()
+      } else {
+         # Remove popup from dialog and add to popup window.
+         self.parent_dialog.remove(popup)
+         d := PureDialog().
+            set_canvas("popup").
+            set_width(popup.w_spec).
+            set_height(popup.h_spec).
+            set_dx(-popup.x).
+            set_dy(-popup.y).
+            set_x(win.get_x() + win.get_dx() + popup.x).
+            set_y(win.get_y() + win.get_dy() + popup.y).
+            copy_wattrib("display", parent_dialog).
+            add(popup)
+
+         self.popup.set_pos(0, 0)
+         self.parent_dialog.
+            add_popup(d)
+         d.show()
+      }
+   end
+
+   public new()
+      LineBasedScrollArea.new()
+      scroll_ticker := Dispatcher.new_task{scroll_tick()}
+      cursor_ticker := Dispatcher.new_task{cursor_tick()}
+      cursor_on := -1
+      primary_selection_owner := VtPrimarySelectionOwner(self)
+      contents := []
+      buff := u""
+      part_ch := got := ""
+      set_accepts_focus(&yes)
+      view.connect(handle_in_chain, Event.IN_POINT_CHAIN)
+      view.connect(handle_mdrag, Event.MOUSE_MIDDLE_DRAG)
+      view.connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
+      view.connect(handle_exit, Event.MOUSE_EXIT)
+      view.connect(handle_lpress, Event.MOUSE_LEFT_PRESS)
+      view.connect(handle_rpress, Event.MOUSE_RIGHT_PRESS)
+      view.connect(handle_mpress, Event.MOUSE_MIDDLE_PRESS)
+      view.connect(handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      view.connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      connect(handle_key, Event.KEY_PRESS)
+      view.set_pointer("xterm")
+      input_handler_coex := create input_handler()
+      history_size := 100
+      reset_term()
+      return
+   end
+end

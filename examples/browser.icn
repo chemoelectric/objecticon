@@ -1370,7 +1370,8 @@ class BrowserTab(TabItem, BrowserUI)
    public update_grey(gs)
       set_is_shaded_ex(prev_button, gs.prev)
       set_is_shaded_ex(next_button, gs.nxt)
-      set_is_shaded_ex(refresh_button, gs.refresh)
+      set_is_shaded_ex(refresh_button, gs.history)
+      set_is_shaded_ex(url_field.b, gs.history)
       set_is_shaded_ex(stop_button, gs.stop)
    end
 
@@ -1480,7 +1481,6 @@ class BrowserTab(TabItem, BrowserUI)
       }
       url_field.
          set_contents(browser.curr_history_entry.url.liberal_ucs()).
-         set_selection_list(lreverse(browser.history)).
          object_set_selection(browser.curr_history_entry)
       set_title(browser.page_title)
       parent_dialog.set_focus(browser.find_focus())
@@ -1597,6 +1597,7 @@ class BrowserTab(TabItem, BrowserUI)
       theme_toolbar_button(search_next_button, "go-next")
       theme_toolbar_button(increase_font_button, "format-font-size-more")
       theme_toolbar_button(decrease_font_button, "format-font-size-less")
+      url_field.set_selection_list(browser.history)
       browser.
          set_ui(self).
          set_worker_pool(browser_dialog.pool).

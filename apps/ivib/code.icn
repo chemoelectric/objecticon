@@ -326,7 +326,7 @@ class Code()
          if /fl then {
             fl := Factory.new_fields(indent1, ["private"], [])
             every fl.put(Factory.new_id("\n      ", !class_vars))
-            cl.insert(1, fl)
+            cl.get_members().insert(1, fl)
          } else
             every fl.put(Factory.new_id("\n      ", !class_vars))
       }

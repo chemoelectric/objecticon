@@ -276,7 +276,7 @@ abstract class BaseTree(SelectableScrollArea)
       return self.last_expanded
    end
 
-   public draw_line(xp, yp, lh, i, sel, cur, hi)
+   public draw_line(xp, yp, lh, i, sel, cur, hi, ov)
       local N, dashed, lp, j, icon_paint, img, little, y0, thick, thick2
 
       y0 := yp + lh / 2
@@ -324,10 +324,10 @@ abstract class BaseTree(SelectableScrollArea)
             if /fixed_col_w then {
                (\img).draw(view.cbwin, lp + col_w / 2 - img.w / 2, y0 - img.h / 2)
                draw_node_data(N, lp + col_w, yp, lh)
-               draw_line_sel_cur(lp + col_w, yp, get_node_data_width(N), lh, sel, cur, hi)
+               draw_line_sel_cur(lp + col_w, yp, get_node_data_width(N), lh, sel, cur, hi, ov)
             } else {
                draw_node_data(N, lp, yp, lh)
-               draw_line_sel_cur(lp, yp, get_node_data_width(N), lh, sel, cur, hi)
+               draw_line_sel_cur(lp, yp, get_node_data_width(N), lh, sel, cur, hi, ov)
             }
          }
       }

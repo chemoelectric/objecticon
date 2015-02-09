@@ -247,6 +247,11 @@ class Table(Component)
       return self
    end
 
+   public set_show_over(s)
+      self.table_content.set_show_over(s)
+      return self
+   end
+
    #
    # Return a list of lines selected
    # @return A list of lines currently selected

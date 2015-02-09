@@ -5,6 +5,17 @@ import gui, ipl.pdco
 #
 class CustomList(TextList)
    #
+   # If the drag just consists of folders, indicate it can't drop
+   #
+   public can_drop(drag, e)
+      if is( drag.get_source(),CustomTree) then {
+         if not( /(!drag.get_content()).is_folder_flag ) then
+            fail
+      }
+      return TextList.can_drop(drag, e)
+   end
+
+   #
    # A drop has occurred; we succeed iff we accept it
    #
    public perform_drop(drag, drop)
@@ -375,6 +386,7 @@ class DNDTest(Dialog)
 
       tree := CustomTree().
          set_size(scale(150), scale(220)).
+         set_show_over(&yes).
          set_allow_drag(&yes).
          set_allow_drop(&yes).
          set_select_mode("many").
@@ -388,6 +400,7 @@ class DNDTest(Dialog)
       lst := CustomList().
          set_constraint("eol", &yes).
          set_size(scale(150), scale(220)).
+         set_show_over(&yes).
          set_allow_drag(&yes).
          set_allow_drop(&yes).
          set_select_mode("many").
