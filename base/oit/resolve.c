@@ -58,15 +58,15 @@ static struct gentry *rres_found, *rres_ambig;
 static void print_clash(void)
 {
     fprintf(stderr, "\t%s (", rres_found->name);
-    begin_esc(stderr, rres_found->pos.file, rres_found->pos.line);
+    begin_link_esc(stderr, rres_found->pos.file, rres_found->pos.line);
     fprintf(stderr, "File %s; Line %d", 
             abbreviate(rres_found->pos.file), rres_found->pos.line);
-    end_esc(stderr);
+    end_link_esc(stderr);
     fprintf(stderr, ")\n\t%s (", rres_ambig->name);
-    begin_esc(stderr, rres_ambig->pos.file, rres_ambig->pos.line);
+    begin_link_esc(stderr, rres_ambig->pos.file, rres_ambig->pos.line);
     fprintf(stderr, "File %s; Line %d", 
             abbreviate(rres_ambig->pos.file), rres_ambig->pos.line);
-    end_esc(stderr);
+    end_link_esc(stderr);
     fputs(")\n", stderr);
 }
 
@@ -74,10 +74,10 @@ static void print_see_also(struct lclass *cl)
 {
     struct loc *pos = &cl->global->pos;
     fprintf(stderr, "\tSee also class %s (", cl->global->name);
-    begin_esc(stderr, pos->file, pos->line);
+    begin_link_esc(stderr, pos->file, pos->line);
     fprintf(stderr, "File %s; Line %d", 
             abbreviate(pos->file), pos->line);
-    end_esc(stderr);
+    end_link_esc(stderr);
     fputs(")\n", stderr);
 }
 

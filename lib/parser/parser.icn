@@ -25,12 +25,12 @@ class ErrorDetail()
    public esc_str()
       local s
       if \src then
-         s := Files.begin_esc(src, line, "text/plain") || "File " || abbreviate(src) || "; "
+         s := Files.begin_link_esc(src, line, "text/plain") || "File " || abbreviate(src) || "; "
       else
          s := ""
       s ||:= "Line " || line
       if \src then
-         s ||:= Files.end_esc()
+         s ||:= Files.end_link_esc()
       s ||:= " # " || msg
       return s
    end

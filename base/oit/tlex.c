@@ -82,13 +82,13 @@ static void lexfatal(char *fmt, ...)
 {
     va_list argp;
     if (File(&tok_loc)) {
-        begin_esc(stderr, File(&tok_loc), in_line);
+        begin_link_esc(stderr, File(&tok_loc), in_line);
         fprintf(stderr, "File %s; ", abbreviate(File(&tok_loc)));
     }
     if (in_line)
         fprintf(stderr, "Line %d", in_line);
     if (File(&tok_loc))
-        end_esc(stderr);
+        end_link_esc(stderr);
     if (in_line)
         fputs(" # ", stderr);
 
@@ -1016,18 +1016,18 @@ void yyerror(char *msg)
         line = Line(yylval);
 
     if (tok_loc.n_file) {
-        begin_esc(stderr, tok_loc.n_file, line);
+        begin_link_esc(stderr, tok_loc.n_file, line);
         fprintf(stderr, "File %s; ", abbreviate(tok_loc.n_file));
     }
 
     if (yychar == EOFX) {   /* special case end of file */
         if (tok_loc.n_file)
-            end_esc(stderr);
+            end_link_esc(stderr);
         fprintf(stderr, "unexpected end of file\n");
     } else {
         fprintf(stderr, "Line %d", line);
         if (tok_loc.n_file)
-            end_esc(stderr);
+            end_link_esc(stderr);
         fputs(" # ", stderr);
         if (Col(yylval))
             fprintf(stderr, "\"%s\": ", mapterm(yychar, yylval));

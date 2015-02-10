@@ -204,9 +204,9 @@ void err_msg(int n, dptr v)
                 if (pline && pfile) {
                     struct descrip t;
                     abbr_fname(pfile->fname, &t);
-                    begin_esc(stderr, pfile->fname, pline->line);
+                    begin_link_esc(stderr, pfile->fname, pline->line);
                     fprintf(stderr, "File %.*s; Line %d", (int)StrLen(t), StrLoc(t), (int)pline->line);
-                    end_esc(stderr);
+                    end_link_esc(stderr);
                     fputc('\n', stderr);
                 } else
                     fprintf(stderr, "File ?; Line ?\n");
@@ -217,9 +217,9 @@ void err_msg(int n, dptr v)
                 if (pline && pfile) {
                     struct descrip t;
                     abbr_fname(pfile->fname, &t);
-                    begin_esc(stderr, pfile->fname, pline->line);
+                    begin_link_esc(stderr, pfile->fname, pline->line);
                     fprintf(stderr, "File %.*s; Line %d", (int)StrLen(t), StrLoc(t), (int)pline->line);
-                    end_esc(stderr);
+                    end_link_esc(stderr);
                     fputc('\n', stderr);
                 } else
                     fprintf(stderr, "File ?; Line ?\n");
