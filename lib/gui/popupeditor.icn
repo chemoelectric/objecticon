@@ -1,6 +1,6 @@
 package gui
 
-import graphics, ipl.pdco
+import graphics
 
 #
 # A class for wrapping a transient popup editor.
@@ -53,21 +53,14 @@ class PopupEditor(Component, MenuMode)
       if /ev.release & ev.code === "\e" then
          close_all()
       else
-         (\editor.parent_dialog.focus).fire(type, ev)
+         (\parent_dialog.focus).fire(type, ev)
    end
 
    public close_all()
-      if \parent_dialog.focus === Seq{traverse_postorder()} then
-         parent_dialog.set_focus(old_focus)
+      parent_dialog.set_focus(old_focus)
       invalidate()
       parent_dialog.exit_menu_mode(self)
       parent.remove(self)
-   end
-
-   public dialog_event(e)
-      # Close on escape being pressed.
-      if /e.release & (e.code === "\e") then 
-         close_all()
    end
 
    public new(editor)
