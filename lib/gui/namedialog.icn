@@ -99,6 +99,8 @@ class NameDialog(Dialog)
       panel_2 := Panel().
          clear_constraints().
          set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
          set_layout(layout_2).
          add(okay_button).
          add(cancel_button).
