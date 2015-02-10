@@ -542,6 +542,10 @@ class Terminal(TabItem, VtUI)
       cwd,
       cwd_mtime
 
+   public get_label_width()
+      return scale(100)
+   end
+
    public link_left_clicked(link)
       open_link(link)
    end
@@ -725,7 +729,7 @@ class Terminal(TabItem, VtUI)
       if link.url.scheme == u"file" then {
          if s := ucs(link.url.get_decoded_path()) then {
             es := if /ev.ctrl & 
-               link.url.host == ("localhost" | &host) &
+               is_local_host(link.url) &
                s[1+:*cwd] == cwd & 
                s[*cwd + 1] == u"/" then
                Format.shell_escape(s[*cwd+2:0])
@@ -754,18 +758,22 @@ class Terminal(TabItem, VtUI)
       suspend Unique{Xdg.gen_desktop_entries(Xdg.alternative_mime_types(Xdg.get_mime_type_for_file(FilePath(s).get(-1))))}
    end
 
+   private static is_local_host(url)
+      return url.host == ("localhost" | &host)
+   end
+
    private get_runner(link)
       local s, de, url
       url := link.url
       if url.scheme == u"file" then {
-         (url.host == ("localhost" | &host)) | return info_msg(u"Can't run a file on another host (" || url.host || u")")
+         is_local_host(url) | return info_msg(u"Can't run a file on another host (" || url.host || u")")
          s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
          if Files.is_directory(s) then
             return Runner(u"cd " || Format.shell_escape(s))
          # Get a DesktopEntry based on the content-type if available, or the filename.
          de := get_possible_desktop_entries(s) | return info_msg(u"No matching desktop entry for this URL")
          if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1))
-         return Runner(, de, link, ucs(link.url.get_decoded_path()))
+         return Runner(, de, link, s)
       } else {
          de := Xdg.gen_desktop_entries("x-scheme-handler/" || string(url.scheme))  | return info_msg(u"No desktop entry for url scheme " || url.scheme)
          if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1))
@@ -811,9 +819,8 @@ class Terminal(TabItem, VtUI)
       }
    end
 
-   private rename(link)
-      local s, d
-      s := ucs(link.url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
+   private rename(s)
+      local d
       d := RenameDialog(s)
       d.show_modal()
       s := \d.result | fail
@@ -836,6 +843,10 @@ class Terminal(TabItem, VtUI)
 
    private on_select_all()
       output.handle_select_all()
+   end
+
+   private open_in_new_tab(dir)
+      parent_dialog.new_tab().goto_dir(dir)
    end
 
    public create_context_menu()
@@ -878,25 +889,29 @@ class Terminal(TabItem, VtUI)
             set_label("Insert command").
             connect(create insert_cmd(link), Event.ACTION))
 
-      if s := ucs(link.url.get_decoded_path()) &
-         link.url.scheme == u"file" &
-         not Files.is_directory(s) then
+      if link.url.scheme == u"file" &
+         is_local_host(link.url) &
+         s := ucs(link.url.get_decoded_path()) then
       {
-         m1 := Menu().set_label("Open with")
-         every de := get_possible_desktop_entries(s) do {
-            m2 := TextMenuItem().
-               set_label(de.name)
-            m2.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
-            connect_launch(m2, Runner(, de, link))
-            m1.add(m2)
+         if Files.is_directory(s) then {
+            m.add(TextMenuItem().
+                  set_label("Open in new tab").
+                  connect(create open_in_new_tab(s), Event.ACTION))
+         } else {
+            m1 := Menu().set_label("Open with")
+            every de := get_possible_desktop_entries(s) do {
+               m2 := TextMenuItem().
+                  set_label(de.name)
+               m2.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
+               connect_launch(m2, Runner(, de, link, s))
+               m1.add(m2)
+            }
+            if *m1.children > 0 then 
+               m.add(m1)
          }
-         if *m1.children > 0 then 
-            m.add(m1)
-      }
-      if link.url.scheme == u"file" then {
          m.add(TextMenuItem().
                set_label("Rename").
-               connect(create rename(link), Event.ACTION))
+               connect(create rename(s), Event.ACTION))
       }
 
       return m

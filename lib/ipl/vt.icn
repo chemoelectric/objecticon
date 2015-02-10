@@ -1053,6 +1053,9 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private do_popup(l)
       local t, e, px, py, info
+      # Validate params; must be even number, and no empty ones.
+      if (*l % 2 ~= 0) | /!l then
+         fail
       t := []
       e := create !l
       while put(t, PopupElement(ucs(URL.percent_decode(@e)),
@@ -1564,7 +1567,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
          if \a.underline then
             W.draw_rectangle(x1, yp + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
-         else if \a.link then
+         else if \a.link ~=== last_highlight then
             use { 
                W2 := W.clone(),
                W2.set_fg(EditRGBA(fg,,,, 16000)).      # 25% alpha of the current fg.
@@ -2183,7 +2186,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          set_z(self.parent_dialog.get_top_z())
       self.parent_dialog.add(popup)
       self.popup.set_ideal_size(scale(25), max_w,
-                                scale(25), max_h)
+                                scale(5), max_h)
 
       if popup.h_spec > spc_below then
          py -:= popup.h_spec - spc_below
