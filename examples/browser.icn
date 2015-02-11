@@ -174,11 +174,14 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
    end
 
    public new_tab(url, referer_url, sel)
-      local bt
+      local bt, np
+      # Add to end, unless the DownloadTab is at the end, in which
+      # case add at one from the end.
+      np := if is(tabs.children[-1], DownloadTab) then -1 else 0
       bt := BrowserTab(self, url, referer_url, tabs.which_one).
          set_is_hidden(&yes)
       tabs.
-         add(bt, -1).
+         add(bt, np).
          do_layout().
          invalidate()
       if \sel then {
@@ -457,6 +460,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
          set_which_one(bt).
          connect(on_tab_changed, Event.SELECTION_CHANGED).
          set_remember_focus(&yes).
+         set_draggable_tabs(&yes).
          set_no_click_focus(&yes)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
@@ -1072,7 +1076,7 @@ class BrowserTab(TabItem, BrowserUI)
       # revert_tab may have been removed from the TabSet previously.
       (i := parent.get_index(\revert_tab)) | {
          i := parent.get_index(self)
-         # There will always be a tab to the right of this one (it may be the download tab).
+         # If i=1, there will always be a tab to the right of this one (it may be the download tab).
          if i > 1 then
             i -:= 1
          else
@@ -1539,7 +1543,7 @@ class BrowserTab(TabItem, BrowserUI)
       browser.do_increase_font()
    end
 
-   public new(browser_dialog, url, referer_url, pool, revert_tab)
+   public new(browser_dialog, url, referer_url, revert_tab)
       TabItem.new()
       self.revert_tab := revert_tab
       set_label_border(EmptyBorder().set_x_align(Align.L))

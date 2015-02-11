@@ -46,6 +46,14 @@ class Runner()
    end
 end
 
+class TerminalMenu(DynamicMenu)
+   public populate()
+      local m
+      if m := parent_component.parent_dialog.tabs.which_one.create_context_menu() then
+         every add(!m.children)
+   end
+end
+
 class TerminalDialog(Dialog)
    private readable
       favourite_dirs,
@@ -69,6 +77,14 @@ class TerminalDialog(Dialog)
 
    private on_new_tab(ev)
       new_tab(1)
+   end
+
+   private on_clone_tab(ev)
+      local curr, t
+      curr := tabs.which_one
+      t := new_tab(1)
+      t.clone_history(curr)
+      t.goto_dir(curr.cwd, &yes)
    end
 
    public on_favourite_dirs(ev)
@@ -106,13 +122,16 @@ class TerminalDialog(Dialog)
    end
 
    public new()
-      local quit_menu_item, menu_bar, file_menu, bt, new_tab_item, favourite_dirs_item
+      local quit_menu_item, menu_bar, file_menu, terminal_menu, bt, new_tab_item, clone_tab_item, favourite_dirs_item
       Dialog.new()
       set_size(scale(1200), scale(850))
       self.set_resize(&yes)
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
          set_paint_mid(TextPaint("New Tab"))
+      clone_tab_item := TextMenuItem().
+         connect(on_clone_tab, Event.ACTION).
+         set_paint_mid(TextPaint("Clone Tab"))
       favourite_dirs_item := TextMenuItem().
          connect(on_favourite_dirs, Event.ACTION).
          set_paint_mid(TextPaint("Favourite dirs..."))
@@ -120,11 +139,15 @@ class TerminalDialog(Dialog)
          connect(on_quit, Event.ACTION).
          set_paint_mid(TextPaint("Quit"))
       file_menu := Menu().
-         set_accel("f").
+         #set_accel("f").
          set_label("File").
          add(new_tab_item).
+         add(clone_tab_item).
          add(favourite_dirs_item).
          add(quit_menu_item)
+      terminal_menu := TerminalMenu().
+         #set_accel("p").
+         set_label("Terminal")
       menu_bar := MenuBar().
          set_size(scale(100)).
          clear_constraints().
@@ -134,7 +157,8 @@ class TerminalDialog(Dialog)
          set_constraint("t_inset", 0).
          set_constraint("b_inset", 0).
          set_constraint("x_fill", &yes).
-         add(file_menu)
+         add(file_menu).
+         add(terminal_menu)
       self.add(menu_bar)
       bt := Terminal()
       tabs := TabSet().
@@ -150,6 +174,7 @@ class TerminalDialog(Dialog)
          add(bt).
          set_which_one(bt).
          set_remember_focus(&yes).
+         set_draggable_tabs(&yes).
          set_no_click_focus(&yes)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
@@ -546,6 +571,15 @@ class Terminal(TabItem, VtUI)
       return scale(100)
    end
 
+   public clone_history(other)
+      self.history := copy(other.history)
+      self.history_pos := other.history_pos
+      history_list.set_selection_list(history)
+      synch_history_list()
+      update_grey()
+      return self
+   end
+
    public link_left_clicked(link)
       open_link(link)
    end
@@ -841,6 +875,11 @@ class Terminal(TabItem, VtUI)
       output.handle_copy(e)
    end
 
+   private on_copy_cwd(e)
+      parent_dialog.own_selection(Selection.CLIPBOARD, 
+                                  StaticTextSelectionOwner(Format.shell_escape(cwd)))
+   end
+
    private on_select_all()
       output.handle_select_all()
    end
@@ -865,12 +904,16 @@ class Terminal(TabItem, VtUI)
             set_paint_left(ImagePaint().set_cache("txt.paste")).
             set_accel("p").
             connect(on_paste, Event.ACTION))
-      m.add(MenuSeparator())
       m.add(TextMenuItem().
             set_label("Select all").
             set_paint_left(ImagePaint().set_cache("txt.select-all")).
             set_accel("a").
             connect(on_select_all, Event.ACTION))
+      m.add(MenuSeparator())
+      m.add(TextMenuItem().
+            set_label("Copy cwd").
+            connect(on_copy_cwd, Event.ACTION))
+
       return m
    end
 

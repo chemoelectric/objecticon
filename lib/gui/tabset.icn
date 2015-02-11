@@ -25,10 +25,13 @@ class TabSet(Component)
       label_h,                               
       line_break,
       no_click_focus_flag,
+      draggable_tabs_flag,
       prefer_one_row_flag,
       old_which_one,
       tabs_at_bottom_flag,
-      remember_focus_flag
+      remember_focus_flag,
+      veto_drag,
+      dragging
 
    # Vertical layout :-
    #           border top margin
@@ -84,6 +87,14 @@ class TabSet(Component)
    #
    public set_no_click_focus(s)
       self.no_click_focus_flag := check_flag(s)
+      return self
+   end
+
+   #
+   # Set the draggable tabs behaviour.  If set, the tabs can be moved.
+   #
+   public set_draggable_tabs(s)
+      self.draggable_tabs_flag := check_flag(s)
       return self
    end
 
@@ -293,7 +304,6 @@ class TabSet(Component)
    #
    # Determine which tab if any mouse is over.
    #
-   # @p
    public which_tab(e)
       local l, c
       in_tab_region(e) | fail
@@ -302,8 +312,7 @@ class TabSet(Component)
       else
          (self.y + self.h - border.get_b_inset() - e.y - 1) / (self.label_h + Gui.BORDER_WIDTH) + 1
       every c := !self.line_break[l] do {
-         if c.is_unshaded() & 
-            (c.tab_x - Gui.BORDER_WIDTH <= e.x < c.tab_x + c.tab_w + Gui.BORDER_WIDTH) then
+         if (c.tab_x - Gui.BORDER_WIDTH <= e.x < c.tab_x + c.tab_w + Gui.BORDER_WIDTH) then
             return c
       }
    end
@@ -311,7 +320,6 @@ class TabSet(Component)
    #
    # Ensure which_one is at front of tab lines
    #
-   # @p
    public adjust_lines()
       local i
       every i := 1 to *self.line_break - 1 do {
@@ -389,19 +397,35 @@ class TabSet(Component)
    end
 
    public handle_lpress(e)
+      local t
       start_handle(e)
-      set_which_one(which_tab(e))
+      if t := which_tab(e) & allow_navigation_to(t) then {
+         set_which_one(t)
+         # If t is no longer which_tab(e), then we have shuffled the
+         # lines around, and moved t to the front.  It would be ugly
+         # to drag the tab in this case, so it is disallowed.
+         veto_drag := if t === which_tab(e) then &no else &yes
+      } else
+         veto_drag := &yes
       end_handle(e)
    end
 
+   public allow_navigation_to(c)
+      # Always allow navigation to a tab if draggable_tabs is enabled, so that we
+      # can arrange all tabs.
+      return \draggable_tabs_flag | c.is_unshaded()
+   end
+
    public handle_key_left(e)
-      local c, i
+      local c, i, j
       start_handle(e)
-      every i := 1 to *self.children do {
-         if self.children[i] === which_one then {
-            c := self.children[i - 1 | -1]
-            # We don't allow remembered focus, since the cursor key would then be
-            # applied by the dialog on the new focus, and would move off it.
+      i := get_index(which_one)
+      every j := (i - 1 to 1 by -1) | (*children to i + 1 by -1) do {
+         c := children[j]
+         if allow_navigation_to(c) then {
+            # We don't allow remembered focus, since the cursor key
+            # would then be applied by the dialog on the new focus,
+            # and would move off it.
             set_which_one(c, &yes)
             break
          }
@@ -410,11 +434,12 @@ class TabSet(Component)
    end
 
    public handle_key_right(e)
-      local c, i
+      local c, i, j
       start_handle(e)
-      every i := 1 to *self.children do {
-         if self.children[i] === which_one then {
-            c := self.children[i + 1 | 1]
+      i := get_index(which_one)
+      every j := (i + 1 to *children) | (1 to *children to i - 1) do {
+         c := children[j]
+         if allow_navigation_to(c) then {
             set_which_one(c, &yes)
             break
          }
@@ -427,6 +452,28 @@ class TabSet(Component)
          handle_key_left(e)
       else if e.code === Key.RIGHT then
          handle_key_right(e)
+   end
+
+   public handle_ldrag(e)
+      (/veto_drag & \draggable_tabs_flag) | fail
+      dragging := &yes
+      if which_tab(e) then
+         set_pointer("sb h double arrow")
+      else
+         set_pointer()
+      parent_dialog.synch_pointer()
+   end
+
+   public handle_lrelease(e)
+      local t
+      \dragging | fail
+      dragging := &no
+      set_pointer()
+      t := (which_one ~=== which_tab(e)) | fail
+      reposition(which_one, get_index(t))
+      line_break := &null
+      layout()
+      invalidate()
    end
 
    public in_tab_region(e)
@@ -749,11 +796,9 @@ class TabSet(Component)
       self.set_constraint("y_weight",  1.0)
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_key, Event.KEY_PRESS)
+      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       set_border(RaisedBorder())
       return
    end
 end
-
-
-
-
