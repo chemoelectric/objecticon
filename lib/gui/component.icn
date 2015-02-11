@@ -11,6 +11,7 @@ package gui
 import 
    ipl.sort,
    ipl.pdco,
+   ipl.lists,
    util
 
 #
@@ -1225,8 +1226,36 @@ class Component(Rect,Align,Connectable)
          c.finally()
       }
       clear(children)
-      compute_z_order()
-      compute_tab_order()
+      if is_initialized() then {
+         compute_z_order()
+         compute_tab_order()
+      }
+      return self
+   end
+
+   #
+   # Move the {Component} to the given index position.
+   # @param c   The {Component} to move.
+   # @param j   The new position.
+   # @fail      If c is not a child of this instance, 
+   # @           or j is out of range.
+   #
+   public reposition(c, j)
+      return reposition_index(get_index(c), j)
+   end
+
+   #
+   # Move the {Component} at position {i} to {j}.
+   # @param i   The old position.
+   # @param j   The new position.
+   # @fail      If either index is out of range.
+   #
+   public reposition_index(i, j)
+      lmove(children, i, j) | fail
+      if is_initialized() then {
+         compute_z_order()
+         compute_tab_order()
+      }
       return self
    end
 
