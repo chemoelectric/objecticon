@@ -1074,7 +1074,7 @@ void begin_link_esc(FILE *f, dptr fname, word line)
     int i;
     if (!is_termlinks_tty(f))
         return;
-    fprintf(f, "\x1b[!\"url=file://");
+    fprintf(f, "\x1b[!\"file://");
     if ((s = get_hostname()))
         fputs(s, f);
     i = StrLen(*fname);
@@ -1086,10 +1086,9 @@ void begin_link_esc(FILE *f, dptr fname, word line)
             fprintf(f, "%%%02x", *s & 0xff);
         s++;
     }
-    fputs("\"", f);
     if (line)
-        fprintf(f, ";\"line=%d\"", (int)line);
-    fputs("L", f);
+        fprintf(f, "?line=%d", (int)line);
+    fputs("\"L", f);
 }
 
 void end_link_esc(FILE *f)
