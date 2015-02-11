@@ -36,6 +36,8 @@ class PopupEditor(Component, MenuMode)
    end
 
    public allow_nested(c)
+      c := c.get_nesting_component()
+      return c.gen_parents() === editor
    end
 
    public get_nesting_component()
