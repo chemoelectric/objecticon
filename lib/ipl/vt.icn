@@ -2017,7 +2017,8 @@ class Vt(LineBasedScrollArea, MenuMode)
    private handle_lpress1(e)
       local s
       invalidate_region()
-      if \e.shift then {
+      # This would be \e.shift, but shift is used to disable the link click functionality.
+      if \e.ctrl then {
          /self.mark_y := self.cursor_y
          /self.mark_x := self.cursor_x
          set_cursor_from_pos(e)
