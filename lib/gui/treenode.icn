@@ -8,7 +8,7 @@
 
 package gui
 
-import util, ipl.pdco
+import util, ipl.pdco, ipl.lists
 
 #
 # This class represents a node in a {Tree} object.
@@ -162,6 +162,28 @@ class TreeNode()
    #
    public remove_all()
       while remove_index(1)
+      return self
+   end
+
+   #
+   # Move the {TreeNode} to the given index position.
+   # @param c   The {TreeNode} to move.
+   # @param j   The new position.
+   # @fail      If c is not a child of this instance, 
+   # @           or j is out of range.
+   #
+   public reposition(c, j)
+      return reposition_index(get_index(c), j)
+   end
+
+   #
+   # Move the {TreeNode} at position {i} to {j}.
+   # @param i   The old position.
+   # @param j   The new position.
+   # @fail      If either index is out of range.
+   #
+   public reposition_index(i, j)
+      lmove(children, i, j) | fail
       return self
    end
 

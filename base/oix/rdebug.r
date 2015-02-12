@@ -168,9 +168,9 @@ static void trace_at(struct p_frame *pf)
         struct descrip t;
         abbr_fname(pfile->fname, &t);
         fputs("   at ", stderr);
-        begin_esc(stderr, pfile->fname, pline->line);
+        begin_link(stderr, pfile->fname, pline->line);
         fprintf(stderr, "line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
-        end_esc(stderr);
+        end_link(stderr);
     } else
         fprintf(stderr, "   at ?");
     putc('\n', stderr);
@@ -200,9 +200,9 @@ static void trace_frame(struct p_frame *pf)
         struct descrip t;
         abbr_fname(pfile->fname, &t);
         fputs(" from ", stderr);
-        begin_esc(stderr, pfile->fname, pline->line);
+        begin_link(stderr, pfile->fname, pline->line);
         fprintf(stderr, "line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
-        end_esc(stderr);
+        end_link(stderr);
     }
     putc('\n', stderr);
 }
@@ -265,6 +265,7 @@ static void showline(struct p_frame *pf)
             struct descrip t;
             char *p;
             int i;
+            begin_link(stderr, pfile->fname, pline->line);
             abbr_fname(pfile->fname, &t);
             i = StrLen(t);
             p = StrLoc(t);
@@ -272,8 +273,8 @@ static void showline(struct p_frame *pf)
                 p++;
                 i--;
             }
-
             fprintf(stderr, "%-13.*s: %4d  ",i,p, (int)pline->line);
+            end_link(stderr);
         } else {
             fprintf(stderr, "%-13s: %4d  ","?", (int)pline->line);
         }
@@ -623,9 +624,9 @@ static void xtrace()
         struct descrip t;
         abbr_fname(pfile->fname, &t);
         fputs(" from ", stderr);
-        begin_esc(stderr, pfile->fname, pline->line);
+        begin_link(stderr, pfile->fname, pline->line);
         fprintf(stderr, "line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
-        end_esc(stderr);
+        end_link(stderr);
     } else
         fprintf(stderr, " from ?");
 

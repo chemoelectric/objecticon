@@ -8,7 +8,7 @@
 
 package gui
 
-import util, graphics
+import util, graphics, ipl.lists
 
 #
 # This is the superclass of all the objects that make up the
@@ -105,6 +105,28 @@ abstract class MenuComponent(Rect,Connectable)
    #
    public remove_all()
       while remove_index(1)
+      return self
+   end
+
+   #
+   # Move the {MenuComponent} to the given index position.
+   # @param c   The {MenuComponent} to move.
+   # @param j   The new position.
+   # @fail      If c is not a child of this instance, 
+   # @           or j is out of range.
+   #
+   public reposition(c, j)
+      return reposition_index(get_index(c), j)
+   end
+
+   #
+   # Move the {MenuComponent} at position {i} to {j}.
+   # @param i   The old position.
+   # @param j   The new position.
+   # @fail      If either index is out of range.
+   #
+   public reposition_index(i, j)
+      lmove(children, i, j) | fail
       return self
    end
 

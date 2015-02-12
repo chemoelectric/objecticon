@@ -133,7 +133,25 @@ static char *tryfile(char *dir, char *name, char *extn)
     else
         return 0;
 }
+#endif
 
+#if UNIX
+int is_termlinks_tty(FILE *f)
+{
+    static int init, env, prev_isatty;
+    static FILE *prev;
+    if (!init) {
+        init = 1;
+        env = (getenv("TERMLINKS") != 0);
+    }
+    if (!env)
+        return 0;
+    if (prev != f) {
+        prev = f;
+        prev_isatty = isatty(fileno(f));
+    }
+    return prev_isatty;
+}
 #endif
 
 #if MSWIN32

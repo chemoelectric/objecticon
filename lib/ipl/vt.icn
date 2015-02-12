@@ -5,7 +5,7 @@ package ipl.vt
 import gui, io, lang, util, graphics, net, ipl.lists, ipl.pdco, ipl.strings, ipl.graphics
 
 # Current attributes.  Treated as immutable, to alter a copy() is taken first.
-package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic, link, font)
+package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic, url, font)
 
 package record SavedCursor(cx, cy, attr, charsets, curr_charset)
 
@@ -126,29 +126,12 @@ package class Row()
    end
 end
 
-# A link, being a url plus other info such as line, column etc.
-class Link()
-   public const
-      url,
-      line,
-      col,
-      offset
-
-   public new(url, line, col, offset)
-      self.url := url
-      self.line := line
-      self.col := col
-      self.offset := offset
-      return
-   end
-end
-
 #
 # This interface provides external required functionality for the terminal.
 abstract class VtUI()
-   public abstract link_left_clicked(link)
-   public abstract link_middle_clicked(link)
-   public abstract create_link_menu(link)
+   public abstract link_left_clicked(url)
+   public abstract link_middle_clicked(url)
+   public abstract create_link_menu(url)
    public abstract create_context_menu()
    public abstract send_tty(s)
    public abstract vt_size_changed(cols, rows)
@@ -210,7 +193,9 @@ class Vt(LineBasedScrollArea, MenuMode)
       saved_cursor,               # A SavedCursor instance for implementing decset 1048
       saved_buffer,               # A SavedBuffer instance for implementing decset 1049
       popup_ev,
-      popup
+      popup,
+      quieten                     # A flag to stop distracting in_chain cursor updates
+
 
 
    private readable
@@ -490,6 +475,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       local c
       repeat {
          c := get_chs()
+         quieten_cursor()
          case string(c) of {
             "\r" : do_cr()
             "\n" : do_nl()
@@ -592,7 +578,8 @@ class Vt(LineBasedScrollArea, MenuMode)
          "G" : do_move_cursor_x(int_param(param, 1, 1))
          "H" : do_move_cursor(int_param(param, 1, 1), int_param(param, 2, 1))
          "r" : do_set_margins(int_param(param, 1, 1), int_param(param, 2, rows))
-         "c" : do_send_device_attrs(int_param(param, 1, 0))
+         "c" : do_send_primary_device_attrs(int_param(param, 1, 0))
+         ">c" : do_send_secondary_device_attrs(int_param(param, 1, 0))
          "@" : do_insert_blanks(int_param(param, 1, 1))
          "S" : do_scroll_up(int_param(param, 1, 1))
          "L" : do_insert_lines(int_param(param, 1, 1))
@@ -812,9 +799,15 @@ class Vt(LineBasedScrollArea, MenuMode)
       return self
    end
 
-   private do_send_device_attrs(n)
+   private do_send_primary_device_attrs(n)
       case n of {
-         0 : send("\e[?631;2c")
+         0 : send("\e[?1;2c")
+      }
+   end
+
+   private do_send_secondary_device_attrs(n)
+      case n of {
+         0 : send("\e[>0;115;0c")
       }
    end
 
@@ -1033,26 +1026,11 @@ class Vt(LineBasedScrollArea, MenuMode)
       move_cursor(cx - n)
    end
 
-   private static mk_link(l)
-      local url, line, col, e, k, v, offset
-      every e := !l do {
-         e ? {
-            k := 1(tab(many(&letters)), ="=") | fail
-            v := tab(0)
-            case map(string(k)) of {
-               "line": line := integer(v) | fail
-               "col": col := integer(v) | fail
-               "offset": offset := integer(v) | fail
-               "url": url := URL(v) | fail
-               default: fail
-            }
-         }
-      }
-      return Link(url, line, col, offset)
-   end
-
    private do_popup(l)
       local t, e, px, py, info
+      # Validate params; must be even number, and no empty ones.
+      if (*l % 2 ~= 0) | /!l then
+         fail
       t := []
       e := create !l
       while put(t, PopupElement(ucs(URL.percent_decode(@e)),
@@ -1072,7 +1050,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private do_set_link(l)
       attr := copy(attr)
-      attr.link := (if *l > 0 then mk_link(l)) | &null
+      attr.url := URL(l[1]) | &null
    end
 
    private synch_font()
@@ -1542,7 +1520,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       every seg := !row.l do {
          a := seg.attr
          ss := seg.s
-         want_fg := if \a.link === highlight then "red" else (\a.fg | default_fg)
+         want_fg := if \a.url === highlight then "red" else (\a.fg | default_fg)
          want_bg := \a.bg | default_bg
          if \a.inverse then
             want_fg :=: want_bg
@@ -1564,7 +1542,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
          if \a.underline then
             W.draw_rectangle(x1, yp + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
-         else if \a.link then
+         else if \a.url ~=== last_highlight then
             use { 
                W2 := W.clone(),
                W2.set_fg(EditRGBA(fg,,,, 16000)).      # 25% alpha of the current fg.
@@ -1574,9 +1552,9 @@ class Vt(LineBasedScrollArea, MenuMode)
          if \a.crossed then
             W.draw_rectangle(x1, yp + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
 
-         if \a.link === last_highlight then
+         if \a.url === last_highlight then
             Gui.style.draw_dashed_rectangle(W, x1, yp, w1, char_h)
-         if \a.link === over then
+         if \a.url === over then
             Gui.style.fill_over_rectangle(W, x1, yp, w1, char_h)
 
          x1 +:= w1
@@ -1846,7 +1824,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       info := get_line_info() | fail
       every i := info.first to info.last do {
          r := contents[i]
-         if (!r.l).attr.link === l then
+         if (!r.l).attr.url === l then
             invalidate_line(i, info)
       }
    end
@@ -1887,21 +1865,15 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
-   private set_over(l)
-      local s
-      if l ~=== over then {
+   private set_over(u)
+      if u ~=== over then {
          invalidate_link(\over)
-         over := l
+         over := u
          invalidate_link(\over)
          if /over then
             ui.clear_msg()
-         else {
-            s := l.url.ucs()
-            s ||:= u" (line=" || \l.line || u")"
-            s ||:= u" (col=" || \l.col || u")"
-            s ||:= u" (offset=" || \l.offset || u")"
-            ui.msg(s)
-         }
+         else
+            ui.msg(u.ucs())
       }
    end
 
@@ -1985,7 +1957,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private handle_mdrag(e)
       local seg
       \held | fail
-      if (seg := get_segment_for_pos(e)) & (seg.attr.link === held) then {
+      if (seg := get_segment_for_pos(e)) & (seg.attr.url === held) then {
          set_over(held)
          set_highlight(held)
       } else {
@@ -2014,7 +1986,8 @@ class Vt(LineBasedScrollArea, MenuMode)
    private handle_lpress1(e)
       local s
       invalidate_region()
-      if \e.shift then {
+      # This would be \e.shift, but shift is used to disable the link click functionality.
+      if \e.ctrl then {
          /self.mark_y := self.cursor_y
          /self.mark_x := self.cursor_x
          set_cursor_from_pos(e)
@@ -2077,15 +2050,28 @@ class Vt(LineBasedScrollArea, MenuMode)
       set_highlight()
    end
 
+   private quieten_cursor()
+      (/quieten & *parent_dialog.held = 0) | fail
+      set_over()
+      view.set_pointer("xterm")
+      # Synch pointer since this call doesn't come from an event.
+      parent_dialog.synch_pointer()
+      quieten := 1
+   end
+
+   private handle_move(ev)
+      quieten := &null
+   end
+
    private handle_in_chain(ev)
       local seg, f
-      *parent_dialog.held = 0 | fail
+      (/quieten & *parent_dialog.held = 0) | fail
       if ev.code === (Key.SHIFT_L | Key.SHIFT_R) then {
          if /ev.release then
             f := 1
       } else f := \ev.shift
-      if /f & (seg := get_segment_for_pos(ev)) & \seg.attr.link then {
-         set_over(seg.attr.link)
+      if /f & (seg := get_segment_for_pos(ev)) & \seg.attr.url then {
+         set_over(seg.attr.url)
          view.set_pointer("hand1")
       } else {
          set_over()
@@ -2183,7 +2169,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          set_z(self.parent_dialog.get_top_z())
       self.parent_dialog.add(popup)
       self.popup.set_ideal_size(scale(25), max_w,
-                                scale(25), max_h)
+                                scale(5), max_h)
 
       if popup.h_spec > spc_below then
          py -:= popup.h_spec - spc_below
@@ -2229,6 +2215,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       part_ch := got := ""
       set_accepts_focus(&yes)
       view.connect(handle_in_chain, Event.IN_POINT_CHAIN)
+      view.connect(handle_move, Event.MOUSE_MOVEMENT)
       view.connect(handle_mdrag, Event.MOUSE_MIDDLE_DRAG)
       view.connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
       view.connect(handle_exit, Event.MOUSE_EXIT)
@@ -2240,7 +2227,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       connect(handle_key, Event.KEY_PRESS)
       view.set_pointer("xterm")
       input_handler_coex := create input_handler()
-      history_size := 100
+      history_size := 500
       reset_term()
       return
    end

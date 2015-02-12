@@ -67,3 +67,4 @@ char *word2cstr(word n);
 unsigned int hashcstr(char *s);
 
 char *get_hostname(void);
+int is_termlinks_tty(FILE *f);

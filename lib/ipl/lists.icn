@@ -190,7 +190,7 @@ import
    ipl.sets(elementset),
    ipl.strings(separate,separate_lines),
    lang(equals,Prog),
-   util(cvslice)
+   util(cvslice, cvpos_item)
 
 # create list from lines in file
 procedure file2lst(s)			
@@ -943,4 +943,19 @@ end
 procedure push_n(l, a[])
    every push(l, !a)
    return l
+end
+
+procedure lmove(L, i, j)
+   i := cvpos_item(i, *L) | fail
+   j := cvpos_item(j, *L) | fail
+   if i ~= j then {
+      if i > j then {
+         insert(L, j, L[i])
+         delete(L, i + 1)
+      } else {
+         insert(L, j + 1, L[i])
+         delete(L, i)
+      }
+   }
+   return L
 end

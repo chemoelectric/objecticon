@@ -631,21 +631,19 @@ $endif
    #
    # Return the opening escape sequence for an embedded link.  File f must be an absolute path.
    #
-   public static begin_esc(f, line, ct)
+   public static begin_link(f, line)
       local s
-      s := "\e[!\"url=file://" || &host || URL.percent_encode(f, URL.UNRESERVED ++ '/') || "\""
+      s := "\e[!\"file://" || &host || URL.percent_encode(f, URL.UNRESERVED ++ '/')
       if \line then
-         s ||:= ";\"line=" || line || "\""
-      if \ct then
-         s ||:= ";\"ct=" || ct || "\""
-      s ||:= "L"
+         s ||:= "?line=" || line
+      s ||:= "\"L"
       return s
    end
 
    #
    # Return the closing escape sequence for an embedded link
    #
-   public static end_esc()
+   public static end_link()
       return "\e[!L"
    end
 

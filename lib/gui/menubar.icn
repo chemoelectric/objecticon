@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics
+import graphics, ipl.lists
 
 #
 # This class is the base from which menu systems are created,
@@ -78,6 +78,28 @@ class MenuBar(Component, MenuSystem)
    #
    public remove_all()
       while remove_index(1)
+      return self
+   end
+
+   #
+   # Move the {Menu} to the given index position.
+   # @param c   The {Menu} to move.
+   # @param j   The new position.
+   # @fail      If c is not a child of this instance, 
+   # @           or j is out of range.
+   #
+   public reposition(c, j)
+      return reposition_index(get_index(c), j)
+   end
+
+   #
+   # Move the {Menu} at position {i} to {j}.
+   # @param i   The old position.
+   # @param j   The new position.
+   # @fail      If either index is out of range.
+   #
+   public reposition_index(i, j)
+      lmove(menus, i, j) | fail
       return self
    end
 

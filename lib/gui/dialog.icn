@@ -178,8 +178,15 @@ class Dialog(Component)
    # Change pointer
    #
    public change_pointer(s)
-      if curr_pointer ~=== s then
-         self.win.set_pointer(curr_pointer := s)
+      # If we have a popup manager, then we are in mouse grab mode;
+      # this means that the pointer for the whole screen comes from
+      # the popup manager's window, so we must delegate.
+      if \popup_manager then
+         popup_manager.change_pointer(s)
+      else {
+         if curr_pointer ~=== s then
+            self.win.set_pointer(curr_pointer := s)
+      }
       return self
    end
 
@@ -1049,14 +1056,19 @@ class Dialog(Component)
    #
    public synch_pointer(e)
       local c, ptr
-      ptr := DEFAULT_POINTER
-      if /is_blocked_flag | \popup_manager then {
-         every c := !\(back(\popups) | self).point_chain do {
-            if c.is_unshaded() & (ptr := c.get_pointer(e)) then
-               break
+
+      if \popup_manager then
+         popup_manager.synch_pointer(e)
+      else {
+         ptr := DEFAULT_POINTER
+         if /is_blocked_flag then {
+            every c := !\ (back(\popups) | self).point_chain do {
+               if c.is_unshaded() & (ptr := c.get_pointer(e)) then
+                  break
+            }
          }
+         change_pointer(ptr)
       }
-      change_pointer(ptr)
       return self
    end
 
@@ -1122,6 +1134,7 @@ class Dialog(Component)
    # Check whether we should start a dnd (by setting curr_drag)
    # 
    private check_dnd(e)
+      \self.win | fail
       #
       # There must be only one button held, and the event must be
       # a drag.

@@ -34,15 +34,30 @@ class Runner()
       desktop_entry,
       # The string to substitute to create a command to run
       subst,
-      # The link itself (a Link object).
-      link
+      # The url itself (a URL object).
+      url
 
-   public new(cmd, desktop_entry, link, subst)
+   public get_command()
+      local line
+      if url.scheme == u"file" then
+         line := integer(url.extract_cgi_parameters()["line"][1])
+      return desktop_entry.subst_file(Format.shell_escape(subst), line)
+   end
+
+   public new(cmd, desktop_entry, url, subst)
       self.cmd := cmd
       self.desktop_entry := desktop_entry
-      self.link := link
+      self.url := url
       self.subst := subst
       return
+   end
+end
+
+class TerminalMenu(DynamicMenu)
+   public populate()
+      local m
+      if m := parent_component.parent_dialog.tabs.which_one.create_context_menu() then
+         every add(!m.children)
    end
 end
 
@@ -71,6 +86,14 @@ class TerminalDialog(Dialog)
       new_tab(1)
    end
 
+   private on_clone_tab(ev)
+      local curr, t
+      curr := tabs.which_one
+      t := new_tab(1)
+      t.clone_history(curr)
+      t.goto_dir(curr.cwd, &yes)
+   end
+
    public on_favourite_dirs(ev)
       local d
       d := FavouriteDirectoriesDialog()
@@ -90,7 +113,7 @@ class TerminalDialog(Dialog)
       # Set the working directory for the child process
       Files.chdir(\runner.desktop_entry.path | Files.get_home())
       # Get the command to run.
-      cmd := runner.desktop_entry.subst_file(Format.shell_escape(runner.subst), runner.link.line)
+      cmd := runner.get_command()
       System.setpgid()
       if nul := FileStream("/dev/null", FileOpt.RDWR) then {
          every nul.dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
@@ -106,13 +129,16 @@ class TerminalDialog(Dialog)
    end
 
    public new()
-      local quit_menu_item, menu_bar, file_menu, bt, new_tab_item, favourite_dirs_item
+      local quit_menu_item, menu_bar, file_menu, terminal_menu, bt, new_tab_item, clone_tab_item, favourite_dirs_item
       Dialog.new()
       set_size(scale(1200), scale(850))
       self.set_resize(&yes)
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
          set_paint_mid(TextPaint("New Tab"))
+      clone_tab_item := TextMenuItem().
+         connect(on_clone_tab, Event.ACTION).
+         set_paint_mid(TextPaint("Clone Tab"))
       favourite_dirs_item := TextMenuItem().
          connect(on_favourite_dirs, Event.ACTION).
          set_paint_mid(TextPaint("Favourite dirs..."))
@@ -120,11 +146,15 @@ class TerminalDialog(Dialog)
          connect(on_quit, Event.ACTION).
          set_paint_mid(TextPaint("Quit"))
       file_menu := Menu().
-         set_accel("f").
+         #set_accel("f").
          set_label("File").
          add(new_tab_item).
+         add(clone_tab_item).
          add(favourite_dirs_item).
          add(quit_menu_item)
+      terminal_menu := TerminalMenu().
+         #set_accel("p").
+         set_label("Terminal")
       menu_bar := MenuBar().
          set_size(scale(100)).
          clear_constraints().
@@ -134,7 +164,8 @@ class TerminalDialog(Dialog)
          set_constraint("t_inset", 0).
          set_constraint("b_inset", 0).
          set_constraint("x_fill", &yes).
-         add(file_menu)
+         add(file_menu).
+         add(terminal_menu)
       self.add(menu_bar)
       bt := Terminal()
       tabs := TabSet().
@@ -150,6 +181,7 @@ class TerminalDialog(Dialog)
          add(bt).
          set_which_one(bt).
          set_remember_focus(&yes).
+         set_draggable_tabs(&yes).
          set_no_click_focus(&yes)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
@@ -542,16 +574,29 @@ class Terminal(TabItem, VtUI)
       cwd,
       cwd_mtime
 
-   public link_left_clicked(link)
-      open_link(link)
+   public get_label_width()
+      return scale(100)
+   end
+
+   public clone_history(other)
+      self.history := copy(other.history)
+      self.history_pos := other.history_pos
+      history_list.set_selection_list(history)
+      synch_history_list()
+      update_grey()
+      return self
+   end
+
+   public link_left_clicked(url)
+      open_link(url)
    end
 
    public vt_size_changed(cols, rows)
       tty.set_size(cols, rows)
    end
 
-   public link_middle_clicked(link, ev)
-      insert_link(link, ev)
+   public link_middle_clicked(url, ev)
+      insert_link(url, ev)
    end
 
    public send_tty(s)
@@ -708,11 +753,11 @@ class Terminal(TabItem, VtUI)
       io_task.revert()
    end
 
-   public open_link(link)
+   public open_link(url)
       local r
-      if link.url.scheme == u"text" then {
-         send_tty(ucs(link.url.get_decoded_path()))
-      } else if r := get_runner(link) then {
+      if url.scheme == u"text" then {
+         send_tty(ucs(url.get_decoded_path()))
+      } else if r := get_runner(url) then {
          if \r.cmd then
             run_prog(r.cmd)
          else
@@ -720,12 +765,12 @@ class Terminal(TabItem, VtUI)
       }
    end
 
-   public insert_link(link, ev)
+   public insert_link(url, ev)
       local s, es
-      if link.url.scheme == u"file" then {
-         if s := ucs(link.url.get_decoded_path()) then {
+      if url.scheme == u"file" then {
+         if s := ucs(url.get_decoded_path()) then {
             es := if /ev.ctrl & 
-               link.url.host == ("localhost" | &host) &
+               is_local_host(url) &
                s[1+:*cwd] == cwd & 
                s[*cwd + 1] == u"/" then
                Format.shell_escape(s[*cwd+2:0])
@@ -738,7 +783,7 @@ class Terminal(TabItem, VtUI)
             send_tty(es)
          }
       } else
-         send_tty(link.url.ucs())
+         send_tty(url.ucs())
    end
 
    private err_msg(s)
@@ -754,66 +799,67 @@ class Terminal(TabItem, VtUI)
       suspend Unique{Xdg.gen_desktop_entries(Xdg.alternative_mime_types(Xdg.get_mime_type_for_file(FilePath(s).get(-1))))}
    end
 
-   private get_runner(link)
-      local s, de, url
-      url := link.url
+   private static is_local_host(url)
+      return url.host == ("localhost" | &host)
+   end
+
+   private get_runner(url)
+      local s, de
       if url.scheme == u"file" then {
-         (url.host == ("localhost" | &host)) | return info_msg(u"Can't run a file on another host (" || url.host || u")")
+         is_local_host(url) | return info_msg(u"Can't run a file on another host (" || url.host || u")")
          s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
          if Files.is_directory(s) then
             return Runner(u"cd " || Format.shell_escape(s))
          # Get a DesktopEntry based on the content-type if available, or the filename.
          de := get_possible_desktop_entries(s) | return info_msg(u"No matching desktop entry for this URL")
          if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1))
-         return Runner(, de, link, ucs(link.url.get_decoded_path()))
+         return Runner(, de, url, s)
       } else {
          de := Xdg.gen_desktop_entries("x-scheme-handler/" || string(url.scheme))  | return info_msg(u"No desktop entry for url scheme " || url.scheme)
          if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1))
-         return Runner(, de, link, link.url.ucs())
+         return Runner(, de, url, url.ucs())
       }
    end
 
    private on_columns_lclick()
       local item
       item := columns.data[columns.get_highlight()]
-      open_link(item_to_link(item))
+      open_link(item_to_url(item))
    end
 
-   private item_to_link(item)
-      local s, url
+   private item_to_url(item)
+      local s
       s := FilePath(cwd).child(item.name).ucs() | fail
-      url := URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/')) | fail
-      return Link(url)
+      return URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/'))
    end
 
    private on_columns_mclick(ev)
       local item
       item := columns.data[columns.get_highlight()]
-      insert_link(item_to_link(item), ev)
+      insert_link(item_to_url(item), ev)
    end
 
-   private copy_link(link)
-      if link.url.scheme == (u"file" | u"text") then
+   private copy_link(url)
+      if url.scheme == (u"file" | u"text") then
          parent_dialog.own_selection(Selection.CLIPBOARD, 
-                                     StaticTextSelectionOwner(Format.shell_escape(ucs(link.url.get_decoded_path()))))
+                                     StaticTextSelectionOwner(Format.shell_escape(ucs(url.get_decoded_path()))))
    end
 
-   private copy_link_url(link)
+   private copy_link_url(url)
       parent_dialog.own_selection(Selection.CLIPBOARD,
-                                  URLSelectionOwner([link.url]))
+                                  URLSelectionOwner([url]))
    end 
 
-   private insert_cmd(link)
+   private insert_cmd(url)
       local r, cmd
-      if r := get_runner(link) then {
-         cmd := \r.cmd | r.desktop_entry.subst_file(Format.shell_escape(r.subst), r.link.line)
+      if r := get_runner(url) then {
+         cmd := \r.cmd | r.get_command()
          send_tty(cmd)
       }
    end
 
-   private rename(link)
-      local s, d
-      s := ucs(link.url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
+   private rename(s)
+      local d
       d := RenameDialog(s)
       d.show_modal()
       s := \d.result | fail
@@ -834,8 +880,17 @@ class Terminal(TabItem, VtUI)
       output.handle_copy(e)
    end
 
+   private on_copy_cwd(e)
+      parent_dialog.own_selection(Selection.CLIPBOARD, 
+                                  StaticTextSelectionOwner(Format.shell_escape(cwd)))
+   end
+
    private on_select_all()
       output.handle_select_all()
+   end
+
+   private open_in_new_tab(dir)
+      parent_dialog.new_tab().goto_dir(dir)
    end
 
    public create_context_menu()
@@ -854,60 +909,68 @@ class Terminal(TabItem, VtUI)
             set_paint_left(ImagePaint().set_cache("txt.paste")).
             set_accel("p").
             connect(on_paste, Event.ACTION))
-      m.add(MenuSeparator())
       m.add(TextMenuItem().
             set_label("Select all").
             set_paint_left(ImagePaint().set_cache("txt.select-all")).
             set_accel("a").
             connect(on_select_all, Event.ACTION))
+      m.add(MenuSeparator())
+      m.add(TextMenuItem().
+            set_label("Copy cwd").
+            connect(on_copy_cwd, Event.ACTION))
+
       return m
    end
 
-   public create_link_menu(link)
+   public create_link_menu(url)
       local m, m1, m2, s, de
       m := Menu()
-      if link.url.scheme == (u"file" | u"text") then {
+      if url.scheme == (u"file" | u"text") then {
          m.add(TextMenuItem().
                set_label("Copy").
-               connect(create copy_link(link), Event.ACTION))
+               connect(create copy_link(url), Event.ACTION))
       }
       m.add(TextMenuItem().
             set_label("Copy URL").
-            connect(create copy_link_url(link), Event.ACTION))
+            connect(create copy_link_url(url), Event.ACTION))
       m.add(TextMenuItem().
             set_label("Insert command").
-            connect(create insert_cmd(link), Event.ACTION))
+            connect(create insert_cmd(url), Event.ACTION))
 
-      if s := ucs(link.url.get_decoded_path()) &
-         link.url.scheme == u"file" &
-         not Files.is_directory(s) then
+      if url.scheme == u"file" &
+         is_local_host(url) &
+         s := ucs(url.get_decoded_path()) then
       {
-         m1 := Menu().set_label("Open with")
-         every de := get_possible_desktop_entries(s) do {
-            m2 := TextMenuItem().
-               set_label(de.name)
-            m2.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
-            connect_launch(m2, Runner(, de, link))
-            m1.add(m2)
+         if Files.is_directory(s) then {
+            m.add(TextMenuItem().
+                  set_label("Open in new tab").
+                  connect(create open_in_new_tab(s), Event.ACTION))
+         } else {
+            m1 := Menu().set_label("Open with")
+            every de := get_possible_desktop_entries(s) do {
+               m2 := TextMenuItem().
+                  set_label(de.name)
+               m2.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
+               connect_launch(m2, Runner(, de, url, s))
+               m1.add(m2)
+            }
+            if *m1.children > 0 then 
+               m.add(m1)
          }
-         if *m1.children > 0 then 
-            m.add(m1)
-      }
-      if link.url.scheme == u"file" then {
          m.add(TextMenuItem().
                set_label("Rename").
-               connect(create rename(link), Event.ACTION))
+               connect(create rename(s), Event.ACTION))
       }
 
       return m
    end
 
   private on_columns_rpress(e)
-      local i, m, pm, item, link
+      local i, m, pm, item, url
       item := columns.data[i := columns.get_element_under_pointer(e)] | fail
-      link := item_to_link(item) | fail
+      url := item_to_url(item) | fail
       columns.set_highlight(i)
-      m := create_link_menu(link)
+      m := create_link_menu(url)
       pm := PopupMenu()
       pm.connect(on_popup_closed, Event.POPUP_CLOSED)
       pm.popup(parent_dialog, m, e.x, e.y)

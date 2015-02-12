@@ -565,17 +565,12 @@ void quit(char *fmt, ...)
 }
 
 #if UNIX
-static int should_esc(FILE *f)
-{
-    return isatty(fileno(f)) && getenv("TERMLINKS");
-}
-
-void begin_esc(FILE *f, char *fname, int line)
+void begin_link(FILE *f, char *fname, int line)
 {
     char *s;
-    if (!should_esc(f))
+    if (!is_termlinks_tty(f))
         return;
-    fprintf(f, "\x1b[!\"url=file://");
+    fputs("\x1b[!\"file://", f);
     if ((s = get_hostname()))
         fputs(s, f);
     for (s = fname; *s; ++s) {
@@ -584,20 +579,19 @@ void begin_esc(FILE *f, char *fname, int line)
         else
             fprintf(f, "%%%02x", *s & 0xff);
     }
-    fputs("\"", f);
     if (line)
-        fprintf(f, ";\"line=%d\"", line);
-    fputs("L", f);
+        fprintf(f, "?line=%d", line);
+    fputs("\"L", f);
 }
 
-void end_esc(FILE *f)
+void end_link(FILE *f)
 {
-    if (should_esc(f))
+    if (is_termlinks_tty(f))
         fputs("\x1b[!L", f);
 }
 #else
-void begin_esc(FILE *f, char *fname, int line) {}
-void end_esc(FILE *f) {}
+void begin_link(FILE *f, char *fname, int line) {}
+void end_link(FILE *f) {}
 #endif
 
 /*
