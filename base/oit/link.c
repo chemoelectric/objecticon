@@ -157,13 +157,13 @@ void lfatal(struct lfile *lf, struct loc *pos, char *fmt, ...)
         fprintf(stderr, "%s:\n", lf->name);
     if (pos) {
         if (pos->file) {
-            begin_link_esc(stderr, pos->file, pos->line);
+            begin_link(stderr, pos->file, pos->line);
             fprintf(stderr, "File %s; ", abbreviate(pos->file));
         }
         if (pos->line)
             fprintf(stderr, "Line %d", pos->line);
         if (pos->file)
-            end_link_esc(stderr);
+            end_link(stderr);
         if (pos->line)
             fputs(" # ", stderr);
     }
@@ -185,13 +185,13 @@ void lfatal2(struct lfile *lf, struct loc *pos, struct loc *pos2, char *tail, ch
         fprintf(stderr, "%s:\n", lf->name);
     if (pos) {
         if (pos->file) {
-            begin_link_esc(stderr, pos->file, pos->line);
+            begin_link(stderr, pos->file, pos->line);
             fprintf(stderr, "File %s; ", abbreviate(pos->file));
         }
         if (pos->line)
             fprintf(stderr, "Line %d", pos->line);
         if (pos->file)
-            end_link_esc(stderr);
+            end_link(stderr);
         if (pos->line)
             fputs(" # ", stderr);
     }
@@ -200,13 +200,13 @@ void lfatal2(struct lfile *lf, struct loc *pos, struct loc *pos2, char *tail, ch
     va_end(argp);
     if (pos2) {
         if (pos2->file) {
-            begin_link_esc(stderr, pos2->file, pos2->line);
+            begin_link(stderr, pos2->file, pos2->line);
             fprintf(stderr, "File %s; ", abbreviate(pos2->file));
         }
         if (pos2->line)
             fprintf(stderr, "Line %d", pos2->line);
         if (pos2->file)
-            end_link_esc(stderr);
+            end_link(stderr);
     }
     fputs(tail, stderr);
     putc('\n', stderr);
@@ -225,13 +225,13 @@ void lwarn(struct lfile *lf, struct loc *pos, char *fmt, ...)
         fprintf(stderr, "%s:\n", lf->name);
     if (pos) {
         if (pos->file) {
-            begin_link_esc(stderr, pos->file, pos->line);
+            begin_link(stderr, pos->file, pos->line);
             fprintf(stderr, "File %s; ", abbreviate(pos->file));
         }
         if (pos->line)
             fprintf(stderr, "Line %d", pos->line);
         if (pos->file)
-            end_link_esc(stderr);
+            end_link(stderr);
         if (pos->line)
             fputs(" # ", stderr);
     }

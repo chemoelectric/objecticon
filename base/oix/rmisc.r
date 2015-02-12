@@ -1063,18 +1063,13 @@ struct ipc_fname *find_ipc_fname(word *ipc, struct progstate *p)
 }
 
 #if UNIX
-static int is_termlinks_tty(FILE *f)
-{
-    return isatty(fileno(f)) && getenv("TERMLINKS");
-}
-
-void begin_link_esc(FILE *f, dptr fname, word line)
+void begin_link(FILE *f, dptr fname, word line)
 {
     char *s;
     int i;
     if (!is_termlinks_tty(f))
         return;
-    fprintf(f, "\x1b[!\"file://");
+    fputs("\x1b[!\"file://", f);
     if ((s = get_hostname()))
         fputs(s, f);
     i = StrLen(*fname);
@@ -1091,14 +1086,14 @@ void begin_link_esc(FILE *f, dptr fname, word line)
     fputs("\"L", f);
 }
 
-void end_link_esc(FILE *f)
+void end_link(FILE *f)
 {
     if (is_termlinks_tty(f))
         fputs("\x1b[!L", f);
 }
 #else
-void begin_link_esc(FILE *f, dptr fname, word line) {}
-void end_link_esc(FILE *f) {}
+void begin_link(FILE *f, dptr fname, word line) {}
+void end_link(FILE *f) {}
 #endif
 
 /*

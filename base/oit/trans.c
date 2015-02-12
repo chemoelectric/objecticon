@@ -37,13 +37,13 @@ void tfatal(char *fmt, ...)
 {
     va_list argp;
     if (File(&tok_loc)) {
-        begin_link_esc(stderr, File(&tok_loc), Line(&tok_loc));
+        begin_link(stderr, File(&tok_loc), Line(&tok_loc));
         fprintf(stderr, "File %s; ", abbreviate(File(&tok_loc)));
     }
     if (Line(&tok_loc))
         fprintf(stderr, "Line %d", Line(&tok_loc));
     if (File(&tok_loc))
-        end_link_esc(stderr);
+        end_link(stderr);
     if (Line(&tok_loc))
         fputs(" # ", stderr);
 
@@ -64,13 +64,13 @@ void tfatal_at(struct node *n, char *fmt, ...)
     va_list argp;
     if (n) {
         if (File(n)) {
-            begin_link_esc(stderr, File(n), Line(n));
+            begin_link(stderr, File(n), Line(n));
             fprintf(stderr, "File %s; ", abbreviate(File(n)));
         }
         if (Line(n))
             fprintf(stderr, "Line %d", Line(n));
         if (File(n))
-            end_link_esc(stderr);
+            end_link(stderr);
         if (Line(n))
             fputs(" # ", stderr);
     }
@@ -90,13 +90,13 @@ void twarn_at(struct node *n, char *fmt, ...)
     va_list argp;
     if (n) {
         if (File(n)) {
-            begin_link_esc(stderr, File(n), Line(n));
+            begin_link(stderr, File(n), Line(n));
             fprintf(stderr, "File %s; ", abbreviate(File(n)));
         }
         if (Line(n))
             fprintf(stderr, "Line %d", Line(n));
         if (File(n))
-            end_link_esc(stderr);
+            end_link(stderr);
         if (Line(n))
             fputs(" # ", stderr);
     }

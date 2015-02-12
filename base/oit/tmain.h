@@ -52,8 +52,8 @@ int main(int argc, char **argv);
 void report(char *fmt, ...);
 void quit(char *fmt, ...);
 char *abbreviate(char *path);
-void begin_link_esc(FILE *f, char *fname, int line);
-void end_link_esc(FILE *f);
+void begin_link(FILE *f, char *fname, int line);
+void end_link(FILE *f);
 void add_remove_file(char *s);
 
 #endif
