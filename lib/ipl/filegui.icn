@@ -502,7 +502,7 @@ package class FileTrailList(ButtonOnlyList)
       local e, i, l
       l := []
       every e := !Files.ucs_list(p.str(), ListEntryWithIcon) do {
-         if e.stat.mode_str[1] == "d" & not (e.name == (u"." | u"..")) then
+         if e.stat.mode_str[1] == "d" & not Files.is_hidden(e.name) then
             put(l, e)
       }
       qsort(l, Files.name_cmp)
