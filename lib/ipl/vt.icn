@@ -475,7 +475,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       local c
       repeat {
          c := get_chs()
-         quieten_cursor()
          case string(c) of {
             "\r" : do_cr()
             "\n" : do_nl()
@@ -487,6 +486,7 @@ class Vt(LineBasedScrollArea, MenuMode)
             "\^n" : do_set_charset(2)
             default: do_default_str(apply_charset(c, curr_charset))
          }
+         parent_dialog.resynch_pointer()
       }
    end
 
@@ -1802,7 +1802,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private handle_normal_key(e)
       local i, ke
-      #write(to_string(e))
+      quieten_cursor()
       if handle_special_key(e) then
          return
       goto_bottom()
@@ -1812,10 +1812,9 @@ class Vt(LineBasedScrollArea, MenuMode)
       if \e.meta then i +:= A
       if \application_keypad_mode then i +:= K
       if \application_cursor_mode then i +:= U
-      if ke := KEY_TABLE.lookup(e.code, i) then  {
-         #write("Lookup: ", image(e.code), " i=",i," -> ", image(ke))
+      if ke := KEY_TABLE.lookup(e.code, i) then
          send(ke.str)
-      } else
+      else
          handle_default(e)
    end
 
@@ -2053,9 +2052,9 @@ class Vt(LineBasedScrollArea, MenuMode)
    private quieten_cursor()
       (/quieten & *parent_dialog.held = 0) | fail
       set_over()
+      # No need to synch_pointer since we call this method out of the
+      # keyboard handler.
       view.set_pointer("xterm")
-      # Synch pointer since this call doesn't come from an event.
-      parent_dialog.synch_pointer()
       quieten := 1
    end
 
