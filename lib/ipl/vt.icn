@@ -193,7 +193,9 @@ class Vt(LineBasedScrollArea, MenuMode)
       saved_cursor,               # A SavedCursor instance for implementing decset 1048
       saved_buffer,               # A SavedBuffer instance for implementing decset 1049
       popup_ev,
-      popup
+      popup,
+      quieten                     # A flag to stop distracting in_chain cursor updates
+
 
 
    private readable
@@ -473,6 +475,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       local c
       repeat {
          c := get_chs()
+         quieten_cursor()
          case string(c) of {
             "\r" : do_cr()
             "\n" : do_nl()
@@ -575,7 +578,8 @@ class Vt(LineBasedScrollArea, MenuMode)
          "G" : do_move_cursor_x(int_param(param, 1, 1))
          "H" : do_move_cursor(int_param(param, 1, 1), int_param(param, 2, 1))
          "r" : do_set_margins(int_param(param, 1, 1), int_param(param, 2, rows))
-         "c" : do_send_device_attrs(int_param(param, 1, 0))
+         "c" : do_send_primary_device_attrs(int_param(param, 1, 0))
+         ">c" : do_send_secondary_device_attrs(int_param(param, 1, 0))
          "@" : do_insert_blanks(int_param(param, 1, 1))
          "S" : do_scroll_up(int_param(param, 1, 1))
          "L" : do_insert_lines(int_param(param, 1, 1))
@@ -795,9 +799,15 @@ class Vt(LineBasedScrollArea, MenuMode)
       return self
    end
 
-   private do_send_device_attrs(n)
+   private do_send_primary_device_attrs(n)
       case n of {
-         0 : send("\e[?631;2c")
+         0 : send("\e[?1;2c")
+      }
+   end
+
+   private do_send_secondary_device_attrs(n)
+      case n of {
+         0 : send("\e[>0;115;0c")
       }
    end
 
@@ -2040,9 +2050,22 @@ class Vt(LineBasedScrollArea, MenuMode)
       set_highlight()
    end
 
+   private quieten_cursor()
+      (/quieten & *parent_dialog.held = 0) | fail
+      set_over()
+      view.set_pointer("xterm")
+      # Synch pointer since this call doesn't come from an event.
+      parent_dialog.synch_pointer()
+      quieten := 1
+   end
+
+   private handle_move(ev)
+      quieten := &null
+   end
+
    private handle_in_chain(ev)
       local seg, f
-      *parent_dialog.held = 0 | fail
+      (/quieten & *parent_dialog.held = 0) | fail
       if ev.code === (Key.SHIFT_L | Key.SHIFT_R) then {
          if /ev.release then
             f := 1
@@ -2192,6 +2215,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       part_ch := got := ""
       set_accepts_focus(&yes)
       view.connect(handle_in_chain, Event.IN_POINT_CHAIN)
+      view.connect(handle_move, Event.MOUSE_MOVEMENT)
       view.connect(handle_mdrag, Event.MOUSE_MIDDLE_DRAG)
       view.connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
       view.connect(handle_exit, Event.MOUSE_EXIT)
