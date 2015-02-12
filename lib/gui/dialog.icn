@@ -538,6 +538,7 @@ class Dialog(Component)
          generate_crossing_events(point_chain_source) 
          synch_pointer(point_chain_source)
       }
+      return self
    end
 
    private create_point_chain(e)
