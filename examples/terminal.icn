@@ -146,14 +146,12 @@ class TerminalDialog(Dialog)
          connect(on_quit, Event.ACTION).
          set_paint_mid(TextPaint("Quit"))
       file_menu := Menu().
-         #set_accel("f").
          set_label("File").
          add(new_tab_item).
          add(clone_tab_item).
          add(favourite_dirs_item).
          add(quit_menu_item)
       terminal_menu := TerminalMenu().
-         #set_accel("p").
          set_label("Terminal")
       menu_bar := MenuBar().
          set_size(scale(100)).
@@ -550,7 +548,8 @@ class Terminal(TabItem, VtUI)
       favourites_list,
       message_label,
       history_list,
-      trail
+      trail,
+      split
 
    private readable
       ascending,
@@ -602,15 +601,8 @@ class Terminal(TabItem, VtUI)
    public send_tty(s)
       s := string(s) | runerr(103, s)
       put(input, s)
+      io_task.interrupt()
       return self
-   end
-
-   private close_all()
-      check_cwd_task.stop()
-      io_task.stop()
-      System.kill(pid, Signal.SIGHUP)
-      tty.close()
-      System.wait(pid)
    end
 
    public msg(s, n)
@@ -715,13 +707,30 @@ class Terminal(TabItem, VtUI)
    end
 
    private service_tty()
-      local x, s, n
+      local x, s, n, i
       repeat {
-         x := io_task.poll([tty, Poll.IN + Poll.OUT]) | {
-            err_msg(u"IO problem polling tty: " || ucs(&why))
-            break
+         i := if *input > 0 then Poll.IN + Poll.OUT else Poll.IN
+         x := io_task.poll([tty, i]) | {
+            if /io_task.interrupt_flag then {
+               err_msg(u"IO problem polling tty: " || ucs(&why))
+               break
+            } else {
+               # We were interrupted, meaning that some input has gone into the
+               # buffer; so go round again.
+               next
+            }
          }
-         if DescStream.poll_in_test(x[1]) then {
+         if DescStream.poll_out_test(x[1]) then {
+            s := get(input) | syserr("Poll out, but input buffer empty")
+            n := tty.out(s) | {
+               err_msg(u"IO problem on tty: " || ucs(&why))
+               break
+            }
+            if n < *s then
+               push(input, s[n + 1:0])
+            if \opts["v"] then
+               write("Out: ", image(s))
+         } else if DescStream.poll_in_test(x[1]) then {
             s := tty.in(1048576) | {
                err_msg(u"IO problem on tty: " || ucs(&why))
                break
@@ -734,20 +743,6 @@ class Terminal(TabItem, VtUI)
                write("In: ", image(s))
             send_vt(s)
             check_pwd()
-         } else if DescStream.poll_out_test(x[1]) then {
-            if s := get(input) then {
-               n := tty.out(s) | {
-                  err_msg(u"IO problem on tty: " || ucs(&why))
-                  break
-               }
-               if n < *s then
-                  push(input, s[n + 1:0])
-               if \opts["v"] then
-                  write("Out: ", image(s))
-            } else {
-               # Asking for input but none here...sleep
-               io_task.sleep(50)
-            }
          }
       }
       io_task.revert()
@@ -893,6 +888,10 @@ class Terminal(TabItem, VtUI)
       parent_dialog.new_tab().goto_dir(dir)
    end
 
+   private on_reorient(e)
+      split.reorient()
+   end
+
    public create_context_menu()
       local m
       Class.ensure_initialized(TextContextMenu)
@@ -918,6 +917,10 @@ class Terminal(TabItem, VtUI)
       m.add(TextMenuItem().
             set_label("Copy cwd").
             connect(on_copy_cwd, Event.ACTION))
+
+      m.add(TextMenuItem().
+            set_label("Reorient").
+            connect(on_reorient, Event.ACTION))
 
       return m
    end
@@ -1191,8 +1194,11 @@ class Terminal(TabItem, VtUI)
       goto_dir(ev)
    end
 
-   public component_setup()
+   public new()
+      TabItem.new()
       self.setup()
+      if \opts["hs"] then
+         split.reorient()
       sorter := Files.name_cmp
       synch_paints()
       set_label_border(EmptyBorder().set_x_align(Align.L))
@@ -1226,12 +1232,7 @@ class Terminal(TabItem, VtUI)
       update_grey()
       columns_pos_table := table()
       set_cwd(Files.getcwd())
-      setup_shell() | stop(&why)
       input := []
-      io_task := Dispatcher.new_task{service_tty()}
-      io_task.start()
-      check_cwd_task := Dispatcher.new_task{check_cwd()}
-      check_cwd_task.start()
       theme_toolbar_button(close_button, "window-close")
       theme_toolbar_button(prev_button, "go-previous")
       theme_toolbar_button(next_button, "go-next")
@@ -1239,17 +1240,25 @@ class Terminal(TabItem, VtUI)
       theme_toolbar_button(home_button, "go-home")
       theme_toolbar_button(refresh_button, "view-refresh")
       every theme_toolbar_button(show_hidden_button | mix_entries_button)
+      return
+   end
+
+   public initially()
+      TabItem.initially()
+      setup_shell() | stop(&why)
+      io_task := Dispatcher.new_task{service_tty()}
+      io_task.start()
+      check_cwd_task := Dispatcher.new_task{check_cwd()}
+      check_cwd_task.start()
    end
 
    public finally()
       TabItem.finally()
-      close_all()
-   end
-
-   public new()
-      TabItem.new()
-      component_setup()
-      return
+      check_cwd_task.stop()
+      io_task.stop()
+      System.kill(pid, Signal.SIGHUP)
+      tty.close()
+      System.wait(pid)
    end
 
    private on_favourites_list(ev)
@@ -1324,7 +1333,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private setup()
-      local paint_2, split_2, paint_14, paint_27, paint_32, paint_7, layout_4, paint_11, paint_37, panel_4, paint_29, paint_34, split_content_3, split_content_4, paint_9, layout_6, paint_13, paint_31, paint_6, layout_3, paint_10, paint_23, paint_36, paint_41, paint, paint_3, paint_28, paint_33, paint_8, border_1, layout_5, paint_12, paint_30, paint_35, paint_40
+      local paint_2, paint_14, paint_27, paint_32, paint_7, layout_4, paint_11, paint_37, panel_4, paint_29, paint_34, split_content_3, split_content_4, paint_9, layout_6, paint_13, paint_31, paint_6, layout_3, paint_10, paint_23, paint_36, paint_41, paint, paint_3, paint_28, paint_33, paint_8, border_1, layout_5, paint_12, paint_30, paint_35, paint_40
       paint_10 := ImagePaint().
          set_cache("rpp.EXIT_24")
       paint_9 := TextPaint("Close")
@@ -1504,7 +1513,7 @@ class Terminal(TabItem, VtUI)
          add(trail)
       self.add(panel_4)
       columns := Columns().
-         set_size(scale(100), scale(100)).
+         set_size(scale(100), scale(175)).
          clear_constraints().
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
@@ -1531,7 +1540,7 @@ class Terminal(TabItem, VtUI)
          clear_constraints().
          set_layout(layout_4).
          add(output)
-      split_2 := Split().
+      split := Split().
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -1540,7 +1549,7 @@ class Terminal(TabItem, VtUI)
          set_constraint("y_weight", 1.0).
          set_left(split_content_3).
          set_right(split_content_4)
-      self.add(split_2)
+      self.add(split)
       paint_40 := TextPaint("")
       border_1 := CompoundBorder().
          set_outer(SunkenBorder()).
@@ -1566,7 +1575,7 @@ end
 
 procedure main(a)
    local d, dir
-   opts := options(a, "-x: -v! -h+ -t:*")
+   opts := options(a, "-x: -v! -h+ -t:* -hs!")
    ImageCache.
       name_image("rpp.EXIT_24", EXIT).
       name_image("rpp.SAVE_24", SAVE).
