@@ -192,7 +192,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       attr,
       saved_cursor,               # A SavedCursor instance for implementing decset 1048
       saved_buffer,               # A SavedBuffer instance for implementing decset 1049
-      popup_ev,
       popup,
       quieten                     # A flag to stop distracting in_chain cursor updates
 
@@ -1100,20 +1099,20 @@ class Vt(LineBasedScrollArea, MenuMode)
             30: attr.fg := "black"
             31: attr.fg := "red"
             32: attr.fg := "dark green"
-            33: attr.fg := "yellow"
+            33: attr.fg := "dark yellow"
             34: attr.fg := "blue"
             35: attr.fg := "purple"
-            36: attr.fg := "cyan"
+            36: attr.fg := "dark cyan"
             37: attr.fg := "pale gray"
             39: attr.fg := &null
 
             40: attr.bg := "black"
             41: attr.bg := "red"
             42: attr.bg := "dark green"
-            43: attr.bg := "yellow"
+            43: attr.bg := "dark yellow"
             44: attr.bg := "blue"
             45: attr.bg := "purple"
-            46: attr.bg := "cyan"
+            46: attr.bg := "dark cyan"
             47: attr.bg := "pale gray"
             49: attr.bg := &null
          }
@@ -1722,38 +1721,8 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
-   private handle_default(e)
-      local ch
-      ch := e.code
-      if type(ch) == ("string" | "ucs") then {
-         if \e.meta then
-            ch := "\e" || ch
-         send(ch)
-      }
-   end
-
    private send(s)
       ui.send_tty(s)
-   end
-
-   private handle_key(e, src, ty)
-      if /popup then
-         handle_normal_key(e)
-      else
-         handle_popup_key(e, src, ty)
-   end
-
-   private handle_popup_key(e, src, ty)
-      if e === popup_ev then
-         fail
-      if member(Key.NAVIGATE ++ set("\r"), e.code) then
-         (\popup).fire(ty, e)
-      else if e.code === "\e" then
-         close_all()
-      else if type(e.code) == ("string" | "ucs") then {
-         close_all()
-         handle_normal_key(e)
-      }
    end
 
    public handle_paste(e)
@@ -1774,11 +1743,23 @@ class Vt(LineBasedScrollArea, MenuMode)
          parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
    end
 
+   private handle_default_key(e)
+      local ch
+      ch := e.code
+      if type(ch) == ("string" | "ucs") then {
+         if \e.meta then
+            ch := "\e" || ch
+         send(ch)
+         quieten_cursor()
+         goto_bottom()
+      }
+   end
+
    private handle_special_key(e)
       case e.code of {
          # Prevent the pressing of the shift key calling goto_bottom()
-         Key.SHIFT_L | Key.SHIFT_R : 
-            return
+         #Key.SHIFT_L | Key.SHIFT_R : 
+         #   return
          # Standard navigation if shift is pressed
          Key.HOME | Key.END | Key.PGUP | Key.PGDN : if \e.shift then {
             on_default_key(e)
@@ -1800,22 +1781,39 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
-   private handle_normal_key(e)
+   private handle_table_key(e)
       local i, ke
-      quieten_cursor()
-      if handle_special_key(e) then
-         return
-      goto_bottom()
       i := 0
       if \e.shift then i +:= S
       if \e.ctrl then i +:= C
       if \e.meta then i +:= A
       if \application_keypad_mode then i +:= K
       if \application_cursor_mode then i +:= U
-      if ke := KEY_TABLE.lookup(e.code, i) then
+      if ke := KEY_TABLE.lookup(e.code, i) then {
          send(ke.str)
-      else
-         handle_default(e)
+         quieten_cursor()
+         goto_bottom()
+         return
+      }
+   end
+
+   private handle_popup_key(e, src, ty)
+      \popup | fail
+      if member(Key.NAVIGATE ++ set("\r"), e.code) then {
+         (\popup).fire(ty, e)
+         return
+      } else if e.code === "\e" then {
+         close_all()
+         return
+      } else if type(e.code) == ("string" | "ucs") then {
+         # A char has been pressed; close popup, fail, and so "fall
+         # through" to the other key handlers
+         close_all()
+      }
+   end
+
+   private handle_key(e, src, ty)
+      handle_popup_key(e, src, ty) | handle_special_key(e) | handle_table_key(e) | handle_default_key(e)
    end
 
    private invalidate_link(l)
@@ -1886,6 +1884,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          set_highlight(over)
          held := over
       } else {
+         goto_bottom()
          parent_dialog.request_selection(Selection.PRIMARY, 
                                          [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
                                          handle_mpress_response, 
