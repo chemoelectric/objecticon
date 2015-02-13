@@ -3,6 +3,8 @@
 
 package gui
 
+import util
+
 #
 # This {Component} contains two children whose sizes can be adjusted with
 # a {Sizer} component between them.
@@ -198,6 +200,19 @@ class Split(Component)
       }
       layout()
       invalidate()
+   end
+
+   # A useful function to dynamically reorient the split (reverse the
+   # horizontal/vertical orientation).
+   #
+   public reorient()
+      sizer.set_is_horizontal(toggle_flag(sizer.is_horizontal_flag))
+      if is_live() then {
+         sizer.reset()
+         layout()
+         invalidate()
+      }
+      return self
    end
 
    public new()
