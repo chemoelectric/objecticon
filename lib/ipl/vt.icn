@@ -342,22 +342,37 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private check_changed_size()
       local old_cols, old_rows
-      old_cols := cols
-      old_rows := rows
+      old_cols := \cols | 0
+      old_rows := \rows | 0
       cols := (predict_view_width(w, if history_size > 0 then &yes else &no) - 2 * Gui.TEXT_INSET) / char_w
       cols >:= \col_mode
       cols <:= 16
       rows := predict_view_height(h) / char_h
       rows <:= 1
-      if old_cols ~=== cols | old_rows ~=== rows then {
+      if old_cols ~= cols | old_rows ~= rows then {
          cx >:= cols + 1
-         cy >:= rows
-         (\ui).vt_size_changed(cols, rows)
-         if *contents < rows then {
-            while *contents < rows do {
-               put(contents, Row(, attr.bg))
-               #cy +:= 1
+         ui.vt_size_changed(cols, rows)
+         # The objective is to leave the value of cy_to_index() unchanged as we adjust *contents, rows and cy.
+         # Say the old is i1 = *c1 - rows1 + cy1; the new is i2 = *c2 - rows2 + cy2
+         if rows < old_rows then {
+            if cy <= rows then {
+               # We leave cy unchanged so for i1 = i2, *c1 - *c2 = rows1 - rows2
+               # So we pull (old_rows - rows) rows from the end.
+               every 1 to old_rows - rows do
+                  pull(contents)
+            } else {
+               # Since cy is now out of range, we must set it.  So cy2 = rows2.  So i2 = *c2, and for i1 = i2,
+               # *c1 - *c2 = rows1 - cy1 (ie the old distance to the end of the screen).
+               # So we pull (old_rows - cy) rows from the end.
+               every 1 to old_rows - cy do
+                  pull(contents)
+               cy := rows
             }
+         } else {
+            # rows >= old_rows, so we leave cy2 = cy1.  for i1 = i2, *c2 - *c1 = rows2 - rows1.  So we
+            # add (rows - old_rows) new rows to the end.
+            every 1 to rows - old_rows do
+               put(contents, Row(, attr.bg))
          }
          trim_history()
          trim_screen()
@@ -625,12 +640,10 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_soft_reset()
-      #write("soft reset")
       reset_term()
    end
 
    private do_dec_set(n)
-      #write("decset:",n)
       case n of {
          1 : do_application_cursor_keys_mode(&yes)
          3 : set_col_mode(132)
@@ -644,7 +657,6 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_dec_reset(n)
-      #write("decreset:",n)
       case n of {
          1 : do_application_cursor_keys_mode(&no)
          3 : set_col_mode(80)
@@ -800,7 +812,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private do_send_primary_device_attrs(n)
       case n of {
-         0 : send("\e[?1;2c")
+         0 : send("\e[?1;2;75c")
       }
    end
 
@@ -1230,7 +1242,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       \rows | fail
       n := *contents - (rows + history_size)
       (n > 0) | fail
-      #write("trimming ",n)
       every 1 to n do
          content_delete(1)
       # Adjust the vsb so that if we are above the bottom then the

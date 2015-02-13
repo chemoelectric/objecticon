@@ -601,7 +601,12 @@ class Terminal(TabItem, VtUI)
    public send_tty(s)
       s := string(s) | runerr(103, s)
       put(input, s)
-      io_task.interrupt()
+      # We may be in the io_task already since some writes to the vt
+      # cause it to output something (eg device attr string).  So in
+      # that case we must not interrupt.  Otherwise, the io_task
+      # must be sleeping in poll().  Interrupt it so it goes round
+      # its loop again, and polls for both input and output.
+      (Dispatcher.get_curr_task() === io_task) | io_task.interrupt()
       return self
    end
 
