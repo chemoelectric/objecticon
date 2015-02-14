@@ -635,16 +635,20 @@ class Dialog(Component)
 
    public own_selection(selection, obj)
       local curr
-      if curr := member(selections, selection) then {
-         # Check if current owner is asserting selection.
-         if curr ~=== obj then {
-            curr.lost_ownership()
+      if \popup_manager then
+         popup_manager.own_selection(selection, obj)
+      else {
+         if curr := member(selections, selection) then {
+            # Check if current owner is asserting selection.
+            if curr ~=== obj then {
+               curr.lost_ownership()
+               insert(selections, selection, obj)
+            }
+         } else
             insert(selections, selection, obj)
-         }
-      } else
-         insert(selections, selection, obj)
-      obj.reset_timestamp()
-      win.own_selection(selection)
+         obj.reset_timestamp()
+         win.own_selection(selection)
+      }
       return self
    end
 
