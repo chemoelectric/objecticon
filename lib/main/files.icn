@@ -538,6 +538,14 @@ $endif
    end
 
    #
+   # Succeed if the given `FileStream` represents a tty supporting links.
+   #
+   public static is_links_tty(f)
+      if f.ttyname() & System.getenv("TERMLINKS") then
+         return
+   end
+
+   #
    # Return the opening escape sequence for an embedded link.  File f must be an absolute path.
    #
    public static begin_link(f, line)
