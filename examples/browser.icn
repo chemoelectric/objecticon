@@ -203,6 +203,16 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
    private on_new_tab(ev)
       new_tab(settings.home_url,, 1)
    end
+
+   private on_clone_tab(ev)
+      local curr, t
+      curr := tabs.which_one
+      t := new_tab(,, 1)
+      t.browser.clone_history(curr.browser)
+      t.url_field.
+         set_selection_list(t.browser.history).
+         set_selection(curr.url_field.get_selection())
+   end
    
    private list_visited()
       local s, e, n
@@ -397,7 +407,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
    end
 
    public new(url, cookies, settings)
-      local quit_menu_item, menu_bar, file_menu, bt, new_tab_item
+      local quit_menu_item, menu_bar, file_menu, bt, new_tab_item, clone_tab_item
       Dialog.new()
       self.settings := settings
       self.visited_set := set()
@@ -419,6 +429,9 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
          set_paint_mid(TextPaint("New Tab"))
+      clone_tab_item := TextMenuItem().
+         connect(on_clone_tab, Event.ACTION).
+         set_paint_mid(TextPaint("Clone Tab"))
       quit_menu_item := TextMenuItem().
          connect(on_quit, Event.ACTION).
          set_paint_mid(TextPaint("Quit"))
@@ -426,6 +439,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
          set_accel("f").
          set_label("File").
          add(new_tab_item).
+         add(clone_tab_item).
          add(quit_menu_item)
       page_menu := PageMenu().
          set_accel("p").

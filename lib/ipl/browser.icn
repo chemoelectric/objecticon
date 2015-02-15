@@ -3100,6 +3100,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
                             if running === 0 then &yes else &no,
                             if \text_selection then &no else &yes,
                             if \links_selection then &no else &yes))
+      return self
    end
 
    private page_fully_loaded()
@@ -5416,6 +5417,16 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          (\vsb).handle_wheel_down(e)
       else
          do_decrease_font()
+   end
+
+   public clone_history(other)
+      local he
+      history := clone(other.history)
+      history_pos := other.history_pos
+      do_update_grey()
+      he := history[history_pos]
+      goto(he.url, he.referer, he.form_data, Worker.NAVIGATE)
+      return self
    end
 
    public new()
