@@ -4,12 +4,21 @@ abstract class DynamicMenu(Menu)
    public show(x, y, xa, ya)
       /self.temp_win | fail
       # Clear current menu contents.
-      while *children > 0 do
-         remove_index(1)
+      remove_all()
       populate()
       Menu.show(x, y, xa, ya)
    end
 
+   public hide()
+      \self.temp_win | fail
+      Menu.hide()
+      # It is important to remove the items here (rather than wait for
+      # the next show, or finally), since some of the elements may
+      # wish to be added to other menus elsewhere, eg a PopupMenu.  If
+      # they were left here, they would be in two menus at once.
+      remove_all()
+   end
+   
    #
    # Helper method to remove the items from the `Menu` other, adding them to this `Menu`.
    #
