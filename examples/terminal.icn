@@ -82,9 +82,9 @@ class TerminalDialog(Dialog)
       dispose()
    end
 
-   public new_tab(sel, other)
+   public new_tab(sel, dir, other)
       local bt
-      bt := Terminal(other).
+      bt := Terminal(dir, other, tabs.which_one).
          set_is_hidden(&yes)
       tabs.add(bt, 0)
       if is_live() then
@@ -95,15 +95,11 @@ class TerminalDialog(Dialog)
    end
 
    private on_new_tab(ev)
-      new_tab(1)
+      new_tab(&yes)
    end
 
    private on_clone_tab(ev)
-      local curr, t
-      curr := tabs.which_one
-      t := new_tab(1, curr)
-      if t.cwd ~== curr.cwd then
-         t.goto_dir(curr.cwd, &yes)
+      new_tab(&yes,, tabs.which_one)
    end
 
    public on_favourite_dirs(ev)
@@ -142,7 +138,7 @@ class TerminalDialog(Dialog)
 
    public new()
       local quit_menu_item, menu_bar, file_menu, terminal_menu, columns_menu, 
-         bt, new_tab_item, clone_tab_item, favourite_dirs_item
+         new_tab_item, clone_tab_item, favourite_dirs_item
       Dialog.new()
       set_size(scale(1200), scale(850))
       self.set_resize(&yes)
@@ -181,7 +177,6 @@ class TerminalDialog(Dialog)
          add(columns_menu).
          add(terminal_menu)
       self.add(menu_bar)
-      bt := Terminal()
       tabs := TabSet().
          clear_constraints().
          set_constraint("x_fill", &yes).
@@ -192,15 +187,12 @@ class TerminalDialog(Dialog)
          set_constraint("r_inset", 0).
          set_constraint("t_inset", 0).
          set_constraint("b_inset", 0).
-         add(bt).
-         set_which_one(bt).
          set_remember_focus(&yes).
          set_draggable_tabs(&yes).
          set_no_click_focus(&yes)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
       self.set_layout(GridLayout().set_extra("cells"))
-      self.set_focus(bt.remembered_focus)
       set_label("Terminal")
       return
    end
@@ -675,7 +667,8 @@ class Terminal(TabItem, VtUI)
       cwd_mtime,
       show_hidden_menu_item,
       mix_entries_menu_item,
-      sort_dirs_menu_item
+      sort_dirs_menu_item,
+      revert_tab
 
    public get_label_width()
       return scale(100)
@@ -687,6 +680,19 @@ class Terminal(TabItem, VtUI)
 
    public vt_size_changed(cols, rows)
       tty.set_size(cols, rows)
+   end
+
+   public process_command(args)
+      local dir, sel
+      if \opts["v"] then
+         write("Command: ", to_string(args))
+      case string(args[1]) of {
+         "new-tab" : {
+            dir := args[2]
+            sel := flag(args[3])
+            parent_dialog.new_tab(sel, dir)
+         }
+      }
    end
 
    public link_middle_clicked(url, ev)
@@ -985,7 +991,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private open_in_new_tab(dir)
-      parent_dialog.new_tab().goto_dir(dir)
+      parent_dialog.new_tab(, dir)
    end
 
    private on_reorient(e)
@@ -994,33 +1000,24 @@ class Terminal(TabItem, VtUI)
 
    public create_context_menu()
       local m
-      Class.ensure_initialized(TextContextMenu)
       m := Menu()
       if output.get_current_text_selection() then {
          m.add(TextMenuItem().
-               set_label("Copy").
-               set_paint_left(ImagePaint().set_cache("txt.copy")).
-               set_accel("c").
+               set_label("Copy text").
                connect(on_copy, Event.ACTION))
       }
       m.add(TextMenuItem().
             set_label("Paste").
-            set_paint_left(ImagePaint().set_cache("txt.paste")).
-            set_accel("p").
             connect(on_paste, Event.ACTION))
       m.add(TextMenuItem().
             set_label("Select all").
-            set_paint_left(ImagePaint().set_cache("txt.select-all")).
-            set_accel("a").
             connect(on_select_all, Event.ACTION))
-      m.add(MenuSeparator())
       m.add(TextMenuItem().
             set_label("Copy cwd").
             connect(on_copy_cwd, Event.ACTION))
       m.add(TextMenuItem().
             set_label("Reorient").
             connect(on_reorient, Event.ACTION))
-
       return m
    end
 
@@ -1192,7 +1189,7 @@ class Terminal(TabItem, VtUI)
    private resort_cwd(track_cursor)
       local i, ino, info, vis
       \cwd | fail
-      if i := columns.get_row_for_index(columns.get_cursor()) then {
+      if \track_cursor & i := columns.get_row_for_index(columns.get_cursor()) then {
          # Set vis to &yes if the last highlight is currently visible; also get the ino of
          # the last highlight.
          info := columns.get_line_info()
@@ -1203,11 +1200,12 @@ class Terminal(TabItem, VtUI)
       load_cwd(get_pats())
       # Search for the old ino in the new data.  If found, set the highlight and if the old
       # cursor was visible, ensure the new one is too.
-      if i := Positions{(!columns.data).stat.ino, \ino} then {
+      if \track_cursor & i := Positions{(!columns.data).stat.ino, \ino} then {
          columns.set_cursor(i)
-         if \track_cursor & \vis then
+         if \vis then
             columns.ensure_line_visible(columns.get_row_for_index(columns.get_cursor()))
-      }
+      } else
+         columns.set_cursor()
    end
 
    private load_cwd(pats)
@@ -1216,30 +1214,37 @@ class Terminal(TabItem, VtUI)
    end
 
    private list_cwd(pats)
-      local dirs, files, e, l, s, t, now, tf, m, z, zf
+      local dirs, files, e, l, s, t, now, tf, m, z, zf, fl
       l := Files.ucs_list(cwd) | fail
       dirs := []
       files := []
       now := Time.get_system_seconds()
+      # flag indicates whether to annotate dirs with size/date
+      if mix_entries_menu_item.is_checked() | sort_dirs_menu_item.is_checked() then
+         fl := &yes
       every e := !l do {
          s := e.name
          if (/pats | (!pats).match(s) = *s + 1)\1 &
             (show_hidden_menu_item.is_checked() | not(Files.is_hidden(s))) then
          {
-            t := e.lstat.mtime
-            tf := if now - t > 180 * 86400 then
-               Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d yyyy")
-            else
-               Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d HH:mm")
-            tf := s || " (" || tf || ")"
-            z := e.lstat.size
-            zf := if z < 1024 then
-               Format.numeric_to_string(z, 0, ',') || "B"
-            else if z < 1024*1024 then
-               Format.numeric_to_string(z/1024.0, 1, ',') || "KB"
-            else
-               Format.numeric_to_string(z/(1024.0*1024.0), 1, ',') || "MB"
-            zf := s || " (" || zf || ")"
+            if /fl &e.stat.mode_str[1] == "d" then {
+               tf := zf := s
+            } else {
+               t := e.lstat.mtime
+               tf := if now - t > 180 * 86400 then
+                  Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d yyyy")
+               else
+                  Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d HH:mm")
+               tf := s || " (" || tf || ")"
+               z := e.lstat.size
+               zf := if z < 1024 then
+                  Format.numeric_to_string(z, 0, ',') || "B"
+               else if z < 1024*1024 then
+                  Format.numeric_to_string(z/1024.0, 1, ',') || "KB"
+               else
+                  Format.numeric_to_string(z/(1024.0*1024.0), 1, ',') || "MB"
+               zf := s || " (" || zf || ")"
+            }
             m := ListEntryEx(s, e.lstat, e.stat, tf, zf)
             if e.stat.mode_str[1] == "d" then
                put(dirs, m)
@@ -1268,7 +1273,7 @@ class Terminal(TabItem, VtUI)
                 FilePath(cwd).canonical().str(), 
                 FileDialogPos(lh, columns.get_area_y()))
       }
-      cwd := s | fail
+      cwd := s
       trail.set_path(cwd)
       load_cwd()
       synch_favourites_list()
@@ -1331,8 +1336,10 @@ class Terminal(TabItem, VtUI)
       goto_dir(ev)
    end
 
-   public new(other)
+   public new(dir, other, revert_tab)
+      local cd
       TabItem.new()
+      self.revert_tab := revert_tab
       self.setup()
 
       name_painter := IconFilesItemPaint()
@@ -1395,25 +1402,9 @@ class Terminal(TabItem, VtUI)
          mix_entries_menu_item.set_is_checked(other.mix_entries_menu_item.get_status())
          show_hidden_menu_item.set_is_checked(other.show_hidden_menu_item.get_status())
       }
-
       set_remembered_focus(output.find_focus())
       filter.set_selection_list([u"*"])
       history_list.set_size()
-      if \other then {
-         history := copy(other.history)
-         history_pos := other.history_pos
-         history_list.set_selection_list(history)
-         history_list.set_selection(history_pos)
-         columns_pos_table := clone(other.columns_pos_table)
-         set_cwd(Files.getcwd(), &yes)
-      } else {
-         history := []
-         history_pos := 0
-         history_list.set_selection_list(history)
-         columns_pos_table := table()
-         set_cwd(Files.getcwd())
-      }
-      update_grey()
       input := []
       theme_toolbar_button(close_button, "window-close")
       theme_toolbar_button(prev_button, "go-previous")
@@ -1422,6 +1413,26 @@ class Terminal(TabItem, VtUI)
       theme_toolbar_button(home_button, "go-home")
       theme_toolbar_button(refresh_button, "view-refresh")
       theme_toolbar_button(focus_columns_button, "key-enter")
+      cd := ucs(Files.getcwd()) | u"/"
+      if \other then {
+         history := copy(other.history)
+         history_pos := other.history_pos
+         history_list.set_selection_list(history)
+         history_list.set_selection(history_pos)
+         columns_pos_table := clone(other.columns_pos_table)
+         set_cwd(cd, &yes)
+         if other.cwd ~== cwd then
+            goto_dir(other.cwd, &yes)
+      } else {
+         history := []
+         history_pos := 0
+         history_list.set_selection_list(history)
+         columns_pos_table := table()
+         set_cwd(cd)
+         if \dir ~== cwd then
+            goto_dir(dir)
+      }
+      update_grey()
       return
    end
 
@@ -1476,11 +1487,13 @@ class Terminal(TabItem, VtUI)
       if *parent.children = 1 then
          parent_dialog.dispose()
       else {
-         i := parent.get_index(self)
-         if i > 1 then
-            i -:= 1
-         else
-            i +:= 1
+         (i := parent.get_index(\revert_tab)) | {
+            i := parent.get_index(self)
+            if i > 1 then
+               i -:= 1
+            else
+               i +:= 1
+         }
          t := parent.children[i] | syserr("Couldn't find other tab")
          parent.
             remove(self).
@@ -1769,15 +1782,20 @@ end
 
 procedure main(a)
    local d, dir
-   opts := options(a, "-x: -v! -h+ -t:* -hs!")
+   opts := options(a, "-x: -v! -h+ -hs!")
    ImageCache.
       name_image("rpp.EXIT_24", EXIT).
       name_image("rpp.SAVE_24", SAVE).
       name_image("rpp.MIXFILE_24", MIXFILE)
    insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(TERMINAL_LOGO))
    d := TerminalDialog()
-   every dir := !\opts["t"] do
-      d.new_tab().goto_dir(dir)
+   if *a = 0 then
+      d.new_tab()
+   else {
+      every dir := !a do
+         d.new_tab(, dir)
+   }
+   d.set_focus(d.tabs.children[1].remembered_focus)
    d.show_modal()
    if \opts["v"] then write("Exiting")
 end
