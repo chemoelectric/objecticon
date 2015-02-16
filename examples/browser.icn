@@ -180,10 +180,9 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       np := if is(tabs.children[-1], DownloadTab) then -1 else 0
       bt := BrowserTab(self, url, referer_url, tabs.which_one).
          set_is_hidden(&yes)
-      tabs.
-         add(bt, np).
-         do_layout().
-         invalidate()
+      tabs.add(bt, np)
+      if is_live() then
+         tabs.do_layout().invalidate()
       if \sel then {
          tabs.set_which_one(bt)
          update_grey()
@@ -406,8 +405,8 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       return \d.result
    end
 
-   public new(url, cookies, settings)
-      local quit_menu_item, menu_bar, file_menu, bt, new_tab_item, clone_tab_item
+   public new(cookies, settings)
+      local quit_menu_item, menu_bar, file_menu, new_tab_item, clone_tab_item
       Dialog.new()
       self.settings := settings
       self.visited_set := set()
@@ -456,7 +455,6 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
          add(file_menu).
          add(page_menu)
       self.add(menu_bar)
-      bt := BrowserTab(self, url)
       downloads := DownloadTab()
       tabs := TabSet().
          set_size(scale(200), scale(150)).
@@ -469,9 +467,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
          set_constraint("r_inset", 0).
          set_constraint("t_inset", 0).
          set_constraint("b_inset", 0).
-         add(bt).
          add(downloads).
-         set_which_one(bt).
          connect(on_tab_changed, Event.SELECTION_CHANGED).
          set_remember_focus(&yes).
          set_draggable_tabs(&yes).
@@ -479,7 +475,6 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
       self.set_layout(GridLayout().set_extra("cells"))
-      self.set_focus(bt.url_field.find_focus())
       set_label("Browser")
       return
    end
@@ -1762,7 +1757,7 @@ class BrowserTab(TabItem, BrowserUI)
 end
 
 procedure main(a)
-   local d, url, cookies_file, cookies, bak, settings, settings_file, home
+   local d, url, cookies_file, cookies, bak, settings, settings_file, home, s
    opts := options(a, "-k: -l! -agent: -v!")
    home := FilePath(Xdg.ensure_data_home()) | stop("Couldn't access data dir: ", &why)
    settings_file := home.child("oibrowser").str()
@@ -1776,11 +1771,16 @@ procedure main(a)
       name_image("rpp.CLEAR_24", CLEAR).
       name_image("rpp.FONT_24", FONT)
    insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(BROWSER_LOGO))
-   url := if *a = 0 then
-      settings.home_url
-   else
-      URL(ucs(a[1])) | stop("Invalid url")
-   d := BrowserDialog(url, cookies, settings)
+   d := BrowserDialog(cookies, settings)
+   if *a = 0 then
+      d.new_tab(settings.home_url)
+   else {
+      every s := !a do {
+         url := URL(ucs(s)) | stop("Invalid url: ", s)
+         d.new_tab(url)
+      }
+   }
+   d.set_focus(d.tabs.children[1].url_field.find_focus())
    d.show_modal()
    # Save cookies
    bak := cookies_file || ".bak"
