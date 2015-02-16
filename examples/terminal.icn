@@ -248,17 +248,26 @@ class Columns(LineBasedScrollArea)
    end
 
    public draw_line(xp, yp, lh, i)
-      local e, j, r, s, k
+      local e, j, r, s, k, W
       every j := 1 to *col_w do {
          k := (i - 1) * *col_w  + j
          e := data[k] | break
          s := item_paint.get_size(view.cbwin, e)
          #r := Rect(xp, yp, col_w[j], lh)
          r := Rect(xp, yp, s.w + item_border.get_total_width(), lh)
-         item_paint.draw_rect(view.cbwin, e, item_border.float(r, s))
-         item_border.draw_rect(view.cbwin, r)
-         if k === highlight then 
-            Gui.style.fill_selection_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
+         if k === highlight then  {
+            use {
+               W := view.cbwin.clone(),
+               {
+                  W.set_fg("red")
+                  item_paint.draw_rect(W, e, item_border.float(r, s))
+                  item_border.draw_rect(W, r)
+               }
+            }
+         } else {
+            item_paint.draw_rect(view.cbwin, e, item_border.float(r, s))
+            item_border.draw_rect(view.cbwin, r)
+         }
          if k === cursor then {
             if has_focus() & is_unshaded() then
                Gui.style.draw_focus_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
@@ -414,7 +423,6 @@ class Columns(LineBasedScrollArea)
    end
 
    public handle_lrelease(e)
-      #if \highlight & /accepts_focus_flag then
       if \highlight then
          fire("lclicked", e)
       down := &null
@@ -528,7 +536,17 @@ class Columns(LineBasedScrollArea)
    end
 
    public handle_return(e)
-      fire("lclicked", e)
+      local t
+      \cursor | fail
+      set_highlight(cursor)
+      t := Dispatcher.new_task{{
+         t.sleep(50)
+         set_highlight()
+         fire("lclicked", e)
+         t.revert()
+      }}
+      t.start()
+
    end
 
    public handle_key(e)
@@ -813,9 +831,14 @@ class Terminal(TabItem, VtUI)
    end
 
    private service_tty()
-      local x, s, n, i
+      local x, s, n, i, some_in
       repeat {
-         i := if *input > 0 then Poll.IN + Poll.OUT else Poll.IN
+         # The some_in flag ensures we don't send anything to the tty
+         # until we've seen some input (a prompt).  This is since
+         # readline will misinterpret what's in the buffer before it
+         # starts up, muddling up \n with \r, because readline clears the
+         # ICRNL bit in the termios c_iflag structure (see rltty.c).
+         i := if *input > 0 & \some_in then Poll.IN + Poll.OUT else Poll.IN
          x := io_task.poll([tty, i]) | {
             if /io_task.interrupt_flag then {
                err_msg(u"IO problem polling tty: " || ucs(&why))
@@ -849,6 +872,7 @@ class Terminal(TabItem, VtUI)
                write("In: ", image(s))
             send_vt(s)
             check_pwd()
+            some_in := &yes
          }
       }
       io_task.revert()
@@ -924,7 +948,7 @@ class Terminal(TabItem, VtUI)
 
    private on_columns_lclick()
       local item
-      item := columns.data[columns.get_cursor()]
+      item := columns.data[columns.get_cursor()] | fail
       open_link(item_to_url(item))
    end
 
