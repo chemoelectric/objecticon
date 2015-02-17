@@ -211,6 +211,9 @@ class Columns(LineBasedScrollArea)
       highlight,
       cursor
 
+   private 
+      prev_split_dw
+
    public initially()
       \self.item_paint | runerr("ItemPaint not set")
       LineBasedScrollArea.initially()
@@ -297,16 +300,22 @@ class Columns(LineBasedScrollArea)
    end
 
    public calculate_subject_width()
-      local mw, e
+      local mw
+      mk_best_split(predict_view_width(w, vsb))
       mw := 0
-      every e := !data do
-         mw <:= item_paint.get_width(view.cbwin, e)
-      return mw + item_border.get_total_width()
+      every mw <:= !col_w
+      return mw
    end
 
-   public invalidate_split()
+   private invalidate_split()
       invalidate_subject_width()
       invalidate_line_count()
+      return self
+   end
+
+   private invalidate_cached_split()
+      prev_split_dw := &null
+      invalidate_split()
       return self
    end
 
@@ -332,6 +341,11 @@ class Columns(LineBasedScrollArea)
 
    private mk_best_split(dw)
       local n, tw
+      if \prev_split_dw &
+         (dw = prev_split_dw |
+          (*col_w = 1 & dw < prev_split_dw)) then
+         return
+      prev_split_dw := dw
       n := 1
       repeat {
          mk_split(n)
@@ -573,10 +587,17 @@ class Columns(LineBasedScrollArea)
       }
    end
 
+   public change_painter(p)
+      set_item_paint(p)
+      invalidate_cached_split()
+      compute_and_invalidate()
+      return self
+   end
+
    public set_data(l)
       self.data := l
       set_over()
-      invalidate_split()
+      invalidate_cached_split()
       compute_and_invalidate()
       constrain_cursor()
       return self
@@ -636,6 +657,10 @@ class HistoryList(ButtonOnlyList)
    end
 
    public create_popup()
+      local t
+      t := parent.parent
+      set_selection_list(copy(t.history))
+      set_selection(t.history_pos)
       return ItemPaintList().
          set_item_paint(StringDirItemPaint()).
          set_item_border(EmptyBorder().
@@ -645,6 +670,9 @@ class HistoryList(ButtonOnlyList)
 end
 
 class Terminal(TabItem, VtUI)
+   public static const
+      MAX_HISTORY_SIZE
+
    private
       prev_button,
       next_button,
@@ -687,6 +715,10 @@ class Terminal(TabItem, VtUI)
       mix_entries_menu_item,
       sort_dirs_menu_item,
       revert_tab
+
+   private static init()
+      MAX_HISTORY_SIZE := 100
+   end
 
    public get_label_width()
       return scale(100)
@@ -1102,8 +1134,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private change_painter(p)
-      columns.set_item_paint(p)
-      columns.invalidate_split().compute_and_invalidate()
+      columns.change_painter(p)
    end
 
    public get_tab_tooltip()
@@ -1327,7 +1358,8 @@ class Terminal(TabItem, VtUI)
             pop(history)
          push(history, cwd)
          history_pos := 1
-         synch_history_list()
+         while *history > MAX_HISTORY_SIZE do
+            pull(history)
          update_grey()
       }
       set_paint(AbbreviatedTextPaint(FilePath(cwd).get(-1)))
@@ -1350,10 +1382,6 @@ class Terminal(TabItem, VtUI)
 
    private synch_favourites_list()
       favourites_list.object_set_selection(cwd) | favourites_list.set_selection()
-   end
-
-   private synch_history_list()
-      history_list.set_selection(history_pos)
    end
 
    private on_trail(ev)
@@ -1428,7 +1456,7 @@ class Terminal(TabItem, VtUI)
       }
       set_remembered_focus(output.find_focus())
       filter.set_selection_list([u"*"])
-      history_list.set_size()
+      history_list.set_size().set_selection_list([])
       input := []
       theme_toolbar_button(close_button, "window-close")
       theme_toolbar_button(prev_button, "go-previous")
@@ -1441,8 +1469,6 @@ class Terminal(TabItem, VtUI)
       if \other then {
          history := copy(other.history)
          history_pos := other.history_pos
-         history_list.set_selection_list(history)
-         history_list.set_selection(history_pos)
          columns_pos_table := clone(other.columns_pos_table)
          set_cwd(cd, &yes)
          if other.cwd ~== cwd then
@@ -1450,7 +1476,6 @@ class Terminal(TabItem, VtUI)
       } else {
          history := []
          history_pos := 0
-         history_list.set_selection_list(history)
          columns_pos_table := table()
          set_cwd(cd)
          if \dir ~== cwd then
@@ -1538,7 +1563,6 @@ class Terminal(TabItem, VtUI)
       local s
       (history_pos < *history) | fail
       s := history[history_pos +:= 1]
-      synch_history_list()      
       update_grey()
       goto_dir(s, &yes)
    end
@@ -1547,7 +1571,6 @@ class Terminal(TabItem, VtUI)
       local s
       (history_pos > 1) | fail
       s := history[history_pos -:= 1]
-      synch_history_list()      
       update_grey()
       goto_dir(s, &yes)
    end

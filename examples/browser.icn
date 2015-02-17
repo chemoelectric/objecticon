@@ -208,9 +208,6 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       curr := tabs.which_one
       t := new_tab(,, 1)
       t.browser.clone_history(curr.browser)
-      t.url_field.
-         set_selection_list(t.browser.history).
-         set_selection(curr.url_field.get_selection())
    end
    
    private list_visited()
@@ -1003,6 +1000,8 @@ class URLEditList(IndependentEditList)
    end
 
    public create_popup()
+      set_selection_list(copy(parent.browser.history))
+      set_selection(parent.browser.history_pos)
       return URLList()
    end
 end
@@ -1345,7 +1344,7 @@ class BrowserTab(TabItem, BrowserUI)
    public update_grey(gs)
       set_is_shaded_ex(prev_button, gs.prev)
       set_is_shaded_ex(next_button, gs.nxt)
-      set_is_shaded_ex(refresh_button, gs.history)
+      set_is_shaded_ex(refresh_button, gs.refresh)
       set_is_shaded_ex(url_field.b, gs.history)
       set_is_shaded_ex(stop_button, gs.stop)
    end
@@ -1454,9 +1453,7 @@ class BrowserTab(TabItem, BrowserUI)
          if ru ~=== browser.page_url then
             parent_dialog.update_visited(ru, browser.page_title)
       }
-      url_field.
-         set_contents(browser.curr_history_entry.url.liberal_ucs()).
-         object_set_selection(browser.curr_history_entry)
+      url_field.set_contents(browser.curr_history_entry.url.liberal_ucs())
       set_title(browser.page_title)
       parent_dialog.set_focus(browser.find_focus())
       update_search_state()
@@ -1518,7 +1515,7 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    private on_stop(ev)
-      browser.cancel()
+      browser.do_stop()
    end
 
    private on_home(ev)
@@ -1572,7 +1569,6 @@ class BrowserTab(TabItem, BrowserUI)
       theme_toolbar_button(search_next_button, "go-next")
       theme_toolbar_button(increase_font_button, "format-font-size-more")
       theme_toolbar_button(decrease_font_button, "format-font-size-less")
-      url_field.set_selection_list(browser.history)
       browser.
          set_ui(self).
          set_worker_pool(browser_dialog.pool).

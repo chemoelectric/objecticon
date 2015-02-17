@@ -2734,7 +2734,7 @@ package class BrowserPrimarySelectionOwner(TextSelectionOwner)
    end
 end
 
-record GreyState(prev, nxt, history, copy_page, save_page, stop, copy_text, copy_links)
+record GreyState(prev, nxt, history, refresh, copy_page, save_page, stop, copy_text, copy_links)
 
 class Browser(ComponentScrollArea, WorkerPoolOwner)
    private
@@ -2757,7 +2757,10 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private readable
       history,
       history_pos,
-      curr_history_entry,   # History entry currently being viewed.
+      max_history_size,
+      curr_history_entry,   # History entry currently being viewed.  Note this may not be history[history_pos]
+                            # if we've just done a navigation to a slowly loading page.  It may even be &null
+                            # on a new browser or one with a cloned history.
       worker_pool,
       page_url,
       page_data,
@@ -3095,6 +3098,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       update_grey(GreyState(if history_pos < *history then &no else &yes,
                             if history_pos > 1 then &no else &yes,
                             if *history > 0 then &no else &yes,
+                            if \curr_history_entry then &no else &yes,
                             if \page_url then &no else &yes,
                             if \page_data then &no else &yes,
                             if running === 0 then &yes else &no,
@@ -3240,21 +3244,23 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private reset_history_pos()
-      history_pos := keyof(history, curr_history_entry) | fail
+      if history_pos ~=:= keyof(history, curr_history_entry) then
+         do_update_grey()
+      return self
+   end
+
+   public do_stop()
+      cancel()
+      # Since we may have done a navigate, then stopped it, we may as
+      # well reset the history pos back to the thing we're viewing.
+      reset_history_pos()
       return self
    end
 
    public do_refresh()
-      local he
-      # Reset history_pos in case we have done a navigate away from
-      # the currently viewed page (changing history_pos), that
-      # navigation hasn't loaded yet and we click refresh.  We want
-      # refresh to refer to the viewed page, not the one we're
-      # loading.
-      reset_history_pos() | fail
-      he := history[history_pos]
-      goto(he.url, he.referer, he.form_data, Worker.REFRESH)
-      do_update_grey()
+      \curr_history_entry | fail
+      goto(curr_history_entry.url, curr_history_entry.referer, 
+           curr_history_entry.form_data, Worker.REFRESH)
       return self
    end
 
@@ -3482,15 +3488,13 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       page_url := res.url
       clear_searched()
       if res.req.kind = Worker.NORMAL then {
-         # Reset history_pos, since we may have done a navigate
-         # back/forward (changing history_pos), and cancelled it with
-         # a normal click whist it was pending.
-         reset_history_pos()
          every 1 to history_pos - 1 do
             pop(history)
          # Fields are set below
          push(history, HistoryEntry())
          history_pos := 1
+         while *history > max_history_size do
+            pull(history)
       }
       curr_history_entry := history[history_pos]
       # Note that the url/form_data may change even on a
@@ -4929,6 +4933,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    public goto(url, referer, form_data, kind)
       /kind := Worker.NORMAL
       cancel()
+      # Anything other than a navigate puts us back at the page we're viewing.
+      if kind ~= Worker.NAVIGATE then
+         reset_history_pos()
       enqueue(Req(self, url, referer, set_top_data, kind, form_data))
       return self
    end
@@ -5405,6 +5412,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return self
    end
 
+   #
+   # Set the maximum size of the history, default 100
+   #
+   public set_max_history_size(n)
+      self.max_history_size := n
+      return self
+   end
+
    private on_wheel_up(e)
       if /e.ctrl then
          (\vsb).handle_wheel_up(e)
@@ -5421,8 +5436,11 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public clone_history(other)
       local he
+      # Note that we don't clone curr_history_entry, since we're not
+      # actually looking at that page in the cloned browser tab.
       history := clone(other.history)
       history_pos := other.history_pos
+      curr_history_entry := &null
       do_update_grey()
       he := history[history_pos]
       goto(he.url, he.referer, he.form_data, Worker.NAVIGATE)
@@ -5444,6 +5462,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       connect(additional_keys, Event.KEY_PRESS)
       history := []
       history_pos := 0
+      max_history_size := 100
       running := 0
       banded := table()
       searched := table()
