@@ -648,6 +648,19 @@ class DirList(ButtonOnlyList)
    end
 end
 
+# Store objects rather than just strings in the history list to avoid
+# confusion when the dir changes whilst the history list is open.
+# With just strings we wouldn't be able to match up the selected
+# string with a position in the (possibly changed) history.
+
+record HistoryEntry(dir)
+
+class HistoryEntryItemPaint(StringDirItemPaint)
+   public get_string(data)
+      return data.dir
+   end
+end
+
 class HistoryList(ButtonOnlyList)
    public create_button()
       local b
@@ -662,7 +675,7 @@ class HistoryList(ButtonOnlyList)
       set_selection_list(copy(t.history))
       set_selection(t.history_pos)
       return ItemPaintList().
-         set_item_paint(StringDirItemPaint()).
+         set_item_paint(HistoryEntryItemPaint()).
          set_item_border(EmptyBorder().
                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                             set_x_align(Align.L))
@@ -1356,7 +1369,7 @@ class Terminal(TabItem, VtUI)
       if /nav then {
          every 1 to history_pos - 1 do
             pop(history)
-         push(history, cwd)
+         push(history, HistoryEntry(cwd))
          history_pos := 1
          while *history > MAX_HISTORY_SIZE do
             pull(history)
@@ -1467,7 +1480,7 @@ class Terminal(TabItem, VtUI)
       theme_toolbar_button(focus_columns_button, "key-enter")
       cd := ucs(Files.getcwd()) | u"/"
       if \other then {
-         history := copy(other.history)
+         history := clone(other.history)
          history_pos := other.history_pos
          columns_pos_table := clone(other.columns_pos_table)
          set_cwd(cd, &yes)
@@ -1509,11 +1522,11 @@ class Terminal(TabItem, VtUI)
    end
 
    private on_history_list(ev)
-      local s
-      history_pos := history_list.get_selection()
-      s := history[history_pos]
+      local he
+      he := history_list.object_get_selection()
+      history_pos := keyof(history, he) | fail
       update_grey()
-      goto_dir(s, &yes)
+      goto_dir(he.dir, &yes)
    end
 
    private on_home_button(ev)
@@ -1560,19 +1573,19 @@ class Terminal(TabItem, VtUI)
    end
 
    private on_prev_button(ev)
-      local s
+      local he
       (history_pos < *history) | fail
-      s := history[history_pos +:= 1]
+      he := history[history_pos +:= 1]
       update_grey()
-      goto_dir(s, &yes)
+      goto_dir(he.dir, &yes)
    end
 
    private on_next_button(ev)
-      local s
+      local he
       (history_pos > 1) | fail
-      s := history[history_pos -:= 1]
+      he := history[history_pos -:= 1]
       update_grey()
-      goto_dir(s, &yes)
+      goto_dir(he.dir, &yes)
    end
 
    private on_focus_columns_button(ev)
