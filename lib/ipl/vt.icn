@@ -217,6 +217,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       insert_mode,
       wraparound_mode,
       col_mode,
+      allow_80_132_mode,
       application_keypad_mode,
       application_cursor_mode,
       hide_cursor_mode,
@@ -360,13 +361,13 @@ class Vt(LineBasedScrollArea, MenuMode)
                # We leave cy unchanged so for i1 = i2, *c1 - *c2 = rows1 - rows2
                # So we pull (old_rows - rows) rows from the end.
                every 1 to old_rows - rows do
-                  pull(contents)
+                  content_delete(*contents)
             } else {
                # Since cy is now out of range, we must set it.  So cy2 = rows2.  So i2 = *c2, and for i1 = i2,
                # *c1 - *c2 = rows1 - cy1 (ie the old distance to the end of the screen).
                # So we pull (old_rows - cy) rows from the end.
                every 1 to old_rows - cy do
-                  pull(contents)
+                  content_delete(*contents)
                cy := rows
             }
          } else {
@@ -376,8 +377,6 @@ class Vt(LineBasedScrollArea, MenuMode)
                put(contents, Row(, attr.bg))
          }
          trim_history()
-         trim_screen()
-         clear_mark()
          reset_margins()
          reset_tab_stops()
          invalidate_line_count()
@@ -433,6 +432,10 @@ class Vt(LineBasedScrollArea, MenuMode)
       return self
    end
 
+   private static is_partial_utf8(s)
+      return *s < (5 > Text.get_utf8_seq_len(s[1]))
+   end
+
    private wait_for_buff()
       local i
       while *buff = 0 do {
@@ -449,13 +452,12 @@ class Vt(LineBasedScrollArea, MenuMode)
             i -:= 1
          # Now got[i:0] gives us the last utf-8 char or part of it.
          # Split got into got and part_ch, depending on whether the
-         # last utf-8 sequence is complete or not.
-         if ucs(got[i:0]) then 
-            part_ch := ""
-         else {
+         # last utf-8 sequence is partial or not.
+         if is_partial_utf8(got[i:0]) then {
             part_ch := got[i:0]
             got := got[1:i]
-         }
+         } else
+            part_ch := ""
          buff := Text.liberal_ucs(got)
          got := ""
        }
@@ -645,6 +647,12 @@ class Vt(LineBasedScrollArea, MenuMode)
       reset_term()
    end
 
+   private do_full_reset()
+      reset_term()
+      do_erase_all()
+      move_cursor(1, 1)
+   end
+
    private do_dec_set(n)
       case n of {
          1 : do_application_cursor_keys_mode(&yes)
@@ -653,6 +661,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          6 : origin_mode := &yes
          7 : wraparound_mode := &yes
          25 : do_hide_cursor(&no)
+         40 : allow_80_132_mode := &yes
          1047 | 1049 : do_use_alternate_buffer()
          1048 : do_save_cursor()
       }
@@ -666,6 +675,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          6 : origin_mode := &no
          7 : wraparound_mode := &no
          25 : do_hide_cursor(&yes)
+         40 : allow_80_132_mode := &no
          1047 | 1049 : do_use_normal_buffer()
          1048 : do_restore_cursor()
       }
@@ -693,11 +703,10 @@ class Vt(LineBasedScrollArea, MenuMode)
       saved_buffer := &null
       # Trim in case the screen size changed during the alternate
       # buffer.  (No change may be noticed when we call
-      # check_changed_size() via compute_and_invalidated(); this would
+      # check_changed_size() via compute_and_invalidate(); this would
       # certainly be the case if there is no scrollbar in normal
       # mode).
       trim_history()
-      trim_screen()
       invalidate_line_count()
       compute_and_invalidate()
    end
@@ -708,6 +717,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private set_col_mode(n)
+      \allow_80_132_mode | fail
       col_mode := n
       do_erase_all()
       move_cursor(1, 1)
@@ -751,6 +761,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       wraparound_mode := &yes
       cx := cy := 1
       col_mode := &no
+      allow_80_132_mode := &no
       reverse_mode := &no
       insert_mode := &no
       application_keypad_mode := &no
@@ -1168,6 +1179,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          "o" : do_set_charset(4)
          "N" : do_single_shift(3)
          "O" : do_single_shift(4)
+         "c" : do_full_reset()
          default : if \verbose_flag then write("Unknown ESC char: ", c)
       }
    end
@@ -1244,12 +1256,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       view.invalidate()
    end
 
-   # Trim the contents of the screen to be within cols; caller must
-   # clear mark and invalidate view.
-   private trim_screen()
-      every truncate(contents[row_to_index(1) to *contents].l, cols)
-   end
-
    # Trim the history list so that it is within range; caller must
    # invalidate line count.
    private trim_history()
@@ -1301,7 +1307,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
-   # Delete a line from the content; the caller must invalidate the view
+   # Add a line to the content; the caller must invalidate the view
    private content_insert(i)
       insert(contents, i, Row(, attr.bg))
       if \mark_y then {
@@ -1773,8 +1779,9 @@ class Vt(LineBasedScrollArea, MenuMode)
       local ch
       ch := e.code
       if type(ch) == ("string" | "ucs") then {
+         ch := text_convert(ch, "ucs") | fail
          if \e.meta then
-            ch := "\e" || ch
+            ch := u"\e" || ch
          send(ch)
          quieten_cursor()
          goto_bottom()
@@ -1783,9 +1790,6 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private handle_special_key(e)
       case e.code of {
-         # Prevent the pressing of the shift key calling goto_bottom()
-         #Key.SHIFT_L | Key.SHIFT_R : 
-         #   return
          # Standard navigation if shift is pressed
          Key.HOME | Key.END | Key.PGUP | Key.PGDN : if \e.shift then {
             on_default_key(e)
