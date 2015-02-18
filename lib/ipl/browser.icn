@@ -3607,7 +3607,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          c.url := url
          c.fg := if is_visited(url) then page_vlink_color else page_link_color
          traverse(e, p, c)
-      }
+      } else
+         traverse(e, p, context)
    end
 
    private traverse_hN(e, p, context)
