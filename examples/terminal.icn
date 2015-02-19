@@ -15,7 +15,8 @@ import
    ipl.functional,
    ipl.filegui,
    ipl.childwait,
-   ipl.vt
+   ipl.vt,
+   ipl.columnize
 
 global opts
 
@@ -253,10 +254,9 @@ class Columns(LineBasedScrollArea)
    public draw_line(xp, yp, lh, i)
       local e, j, r, s, k, W
       every j := 1 to *col_w do {
-         k := (i - 1) * *col_w  + j
+         k := i + (j - 1) * n_rows
          e := data[k] | break
          s := item_paint.get_size(view.cbwin, e)
-         #r := Rect(xp, yp, col_w[j], lh)
          r := Rect(xp, yp, s.w + item_border.get_total_width(), lh)
          if k === highlight then  {
             use {
@@ -281,22 +281,6 @@ class Columns(LineBasedScrollArea)
             Gui.style.fill_over_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
          xp +:= col_w[j] + gutter
       }
-   end
-
-   private mk_split(n)
-      local i, e
-      col_w := list(n, 0)
-      i := 1
-      n_rows := 0
-      every e := !data do {
-         if i = 1 then
-            n_rows +:= 1
-         col_w[i] <:= item_paint.get_width(view.cbwin, e)
-         i +:= 1
-         if i > n then
-            i := 1
-      }
-      every (!col_w) +:= item_border.get_total_width()
    end
 
    public calculate_subject_width()
@@ -340,26 +324,17 @@ class Columns(LineBasedScrollArea)
    end
 
    private mk_best_split(dw)
-      local n, tw
+      local t, tb, cr
       if \prev_split_dw &
          (dw = prev_split_dw |
           (*col_w = 1 & dw < prev_split_dw)) then
          return
       prev_split_dw := dw
-      n := 1
-      repeat {
-         mk_split(n)
-         tw := gutter * (*col_w - 1)
-         every tw +:= !col_w
-         if tw > dw then {
-            if n > 1 then
-               mk_split(n - 1)
-            return
-         }
-         if n >= *data then
-            return
-         n +:= 1
-      }
+      tb := item_border.get_total_width( )
+      t := ipl.pdco.List{ item_paint.get_width(view.cbwin, (!data)) + tb }
+      cr := columnize(t, dw, gutter)
+      n_rows := cr.rows
+      col_w := cr.width
    end
 
    public calculate_line_height()
@@ -378,7 +353,7 @@ class Columns(LineBasedScrollArea)
       yp := get_subject_y() + get_line_height() * (i - 1)
       every j := 1 to *col_w do {
          if xp <= e.x < xp + col_w[j] then {
-            k := (i - 1) * *col_w + j
+            k := i + (j - 1) * n_rows
             d := data[k] | fail
             s := item_paint.get_size(view.cbwin, d)
             r := Rect(xp, yp, col_w[j], get_line_height())
@@ -451,11 +426,11 @@ class Columns(LineBasedScrollArea)
    end
 
    public get_row_for_index(n)
-      return (n - 1) / *col_w + 1
+      return (n - 1) % n_rows + 1
    end
 
    public get_col_for_index(n)
-      return (n - 1) % *col_w + 1
+      return (n - 1) / n_rows + 1
    end
 
    public set_cursor(n)
@@ -511,34 +486,33 @@ class Columns(LineBasedScrollArea)
    public handle_key_page_up(e)
       local t
       \cursor | fail
-      t := cursor + *col_w * get_page_movement(0, -1)
-      t <:= get_col_for_index(cursor)
+      t := get_page_movement(cursor, -1)
+      t <:= n_rows * (get_col_for_index(cursor) - 1) + 1
       move_cursor(t)
    end
 
    public handle_key_page_down(e)
       local t
       \cursor | fail
-      t := cursor + *col_w * get_page_movement(0, 1)
-      while t > *data do
-         t -:= *col_w
+      t := get_page_movement(cursor, 1)
+      t >:= min(*data, n_rows * get_col_for_index(cursor))
       move_cursor(t)
    end
 
    public handle_key_up(e)
-      move_cursor(\cursor - *col_w)
-   end
-
-   public handle_key_down(e)
-      move_cursor(\cursor + *col_w)
-   end
-
-   public handle_key_left(e)
       move_cursor(\cursor - 1)
    end
 
-   public handle_key_right(e)
+   public handle_key_down(e)
       move_cursor(\cursor + 1)
+   end
+
+   public handle_key_left(e)
+      move_cursor(\cursor - n_rows)
+   end
+
+   public handle_key_right(e)
+      move_cursor(\cursor + n_rows)
    end
 
    public handle_key_home(e)
@@ -1227,30 +1201,24 @@ class Terminal(TabItem, VtUI)
    private on_date_button(ev)
       if sorter === Files.date_cmp then
          ascending := toggle_flag(ascending)
-      else {
+      else
          sorter := Files.date_cmp
-         columns.set_item_paint(date_painter)
-      }
       synch_paints()
    end
 
    private on_name_button(ev)
       if sorter === Files.name_cmp then
          ascending := toggle_flag(ascending)
-      else {
+      else
          sorter := Files.name_cmp
-         columns.set_item_paint(name_painter)
-      }
       synch_paints()
    end
 
    private on_size_button(ev)
       if sorter === Files.size_cmp then
          ascending := toggle_flag(ascending)
-      else {
+      else
          sorter := Files.size_cmp
-         columns.set_item_paint(size_painter)
-      }
       synch_paints()
    end
 
