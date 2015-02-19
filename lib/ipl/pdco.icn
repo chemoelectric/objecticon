@@ -321,6 +321,17 @@ procedure Cumsum(e)
 
 end
 
+# PDCO to produce sum
+procedure Sum(e)		
+   local i
+
+   i := 0
+
+   while i +:= @e
+
+   return i
+end
+
 # parallel evaluation with cycling
 procedure Cyclepar(L[])	
    local i, L1, done
