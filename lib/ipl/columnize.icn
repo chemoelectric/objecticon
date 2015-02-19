@@ -58,7 +58,7 @@ procedure columnize(l, screen_width, gutter, rowwise)
       mean := Sum{!l} / *l
       est := 2 * screen_width / (mean + gutter)
       est >:= *l
-      every cols := est to 1 by -1 do {
+      every cols := est to 2 by -1 do {
          if rows := compute_rows(l, cols, rowwise) then {
             widths := calc_widths(l, rows, cols, rowwise)
             w := gutter * (cols - 1) + Sum{!widths}
@@ -67,7 +67,7 @@ procedure columnize(l, screen_width, gutter, rowwise)
          }
       }
    }
-   return ColumnizeResult(*l, 1, [Max{!l}])
+   return ColumnizeResult(*l, 1, [Max{!l} | 0])
 end
 
 package procedure compute_rows(l, cols, rowwise)
