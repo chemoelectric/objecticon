@@ -4,7 +4,7 @@
 
 package ipl.ieval
 
-import io, gui, lang, xdg, ipl.colmize, parser, eval, util, ipl.pdco, ipl.sort, ipl.termdialog, ipl.lists
+import io, gui, lang, xdg, ipl.columnize, parser, eval, util, ipl.pdco, ipl.sort, ipl.termdialog, ipl.lists
 
 $load IEVAL_LOGO "rpp.IEVAL_LOGO.png"
 
@@ -68,7 +68,7 @@ class Ieval(MinimalObjectOutput)
                insert(s, e)
          }
       }
-      every output.write(colmize(isort(s, map), w))
+      every output.write(columnize_gen(isort(s, map), w))
    end
 
    private list_prog_syms(prog)
@@ -82,7 +82,7 @@ class Ieval(MinimalObjectOutput)
          if lang.Prog.get_global(i, prog) then
             insert(s, lang.Prog.get_global_name(i, prog))
       }
-      every output.write(colmize(isort(s, map), w))
+      every output.write(columnize_gen(isort(s, map), w))
    end
 
    private show_parse(x, level)
