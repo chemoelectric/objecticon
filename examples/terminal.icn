@@ -284,11 +284,8 @@ class Columns(LineBasedScrollArea)
    end
 
    public calculate_subject_width()
-      local mw
       mk_best_split(predict_view_width(w, vsb))
-      mw := 0
-      every mw <:= !col_w
-      return mw
+      return col_w[1]
    end
 
    private invalidate_split()
