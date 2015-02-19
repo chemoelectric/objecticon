@@ -1,0 +1,108 @@
+############################################################################
+#
+#	File:     columnize.icn
+#
+#	Subject:  Procedures to arrange data into columns
+#
+#	Author:   Robert J. Alexander
+#
+#	Date:     June 15, 1990
+#
+############################################################################
+#
+#   This file is in the public domain.
+#
+############################################################################
+#
+#  columnize() -- Arrange data into columns.
+#
+#  Procedure to arrange a number of data items into multiple columns.
+#  Items are arranged in column-wise order, that is, the sequence runs
+#  down the first column, then down the second, etc.
+#
+#  This procedure goes to great lengths to print the items in as few
+#  vertical lines as possible.
+#
+############################################################################
+
+package ipl.columnize
+
+import ipl.pdco
+
+record ColumnizeResult(rows, cols, width)
+
+procedure columnize_gen(l, screen_width, gutter, rowwise)
+   local cr, s, i, j, k, w
+   /gutter := 2
+   cr := columnize(List{*!l}, screen_width, gutter, rowwise)
+   every i := 1 to cr.rows do {
+      s := ""
+      every j := 1 to cr.cols do {
+         w := cr.width[j]
+         if j < cr.cols then
+            w +:= gutter
+         k := if /rowwise then 
+            i + cr.rows * (j - 1)
+         else
+            (i -1) * cr.cols + j
+         s ||:= left(l[k], w)
+      }
+      suspend s
+   }
+end
+
+procedure columnize(l, screen_width, gutter, rowwise)
+   local cols, rows, w, mean, est, widths
+   if *l >= 2 then {
+      /gutter := 2
+      mean := Sum{!l} / *l
+      est := 2 * screen_width / (mean + gutter)
+      est >:= *l
+      every cols := est to 1 by -1 do {
+         if rows := compute_rows(l, cols, rowwise) then {
+            widths := calc_widths(l, rows, cols, rowwise)
+            w := gutter * (cols - 1) + Sum{!widths}
+            if w <= screen_width then
+               return ColumnizeResult(rows, cols, widths)
+         }
+      }
+   }
+   return ColumnizeResult(*l, 1, [Max{!l}])
+end
+
+package procedure compute_rows(l, cols, rowwise)
+   local rows
+
+   if cols < 2 then
+      return *l
+
+   rows := *l / cols
+   if *l % cols ~= 0 then
+      rows +:= 1
+
+   # For column-wise orientation, check if the end of the first row is
+   # in range... if not then these dimensions don't fit (eg 49 in 8
+   # columns doesn't fit - the last column would be empty).
+   if /rowwise & rows * (cols-1) >= *l then
+      fail
+
+   return rows
+end
+
+package procedure calc_widths(l, rows, cols, rowwise)
+   local w, i, e
+   w := list(cols, 0)
+   i := 0
+   if /rowwise then {
+      every e := !l do {
+         w[i / rows + 1] <:= e
+         i +:= 1
+      }
+   } else {
+      every e := !l do {
+         w[i % cols + 1] <:= e
+         i +:= 1
+      }
+   }
+   return w
+end
