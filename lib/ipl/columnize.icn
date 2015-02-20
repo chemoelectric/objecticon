@@ -52,8 +52,9 @@ procedure columnize_gen(l, screen_width, gutter, rowwise)
 end
 
 procedure columnize(l, screen_width, gutter, rowwise)
-   local cols, rows, w, mean, est, widths
-   if *l >= 2 then {
+   local cols, rows, w, mean, est, widths, mx
+   mx := Max{!l} | 0
+   if *l >= 2 & mx < screen_width then {
       /gutter := 2
       mean := Sum{!l} / *l
       est := 2 * screen_width / (mean + gutter)
@@ -67,7 +68,7 @@ procedure columnize(l, screen_width, gutter, rowwise)
          }
       }
    }
-   return ColumnizeResult(*l, 1, [Max{!l} | 0])
+   return ColumnizeResult(*l, 1, [mx])
 end
 
 package procedure compute_rows(l, cols, rowwise)
