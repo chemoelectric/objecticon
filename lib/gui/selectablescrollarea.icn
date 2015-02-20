@@ -90,7 +90,6 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # set with {set_contents()}, has changed.
    #
    public contents_changed()
-      over := &null
       constrain_selections()
       constrain_cursor()
       invalidate_subject_width()
