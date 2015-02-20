@@ -1106,7 +1106,8 @@ class Vt(LineBasedScrollArea, MenuMode)
    # ESC[{n}m
    private do_set_attr(n)
       if n = 0 then
-         attr := EMPTY_ATTR
+         # Keep just the url setting.
+         attr := Attr(,,,,,,,, attr.url)
       else {
          attr := copy(attr)
          case n of {
