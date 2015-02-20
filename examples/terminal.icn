@@ -200,20 +200,21 @@ class TerminalDialog(Dialog)
 end
 
 class Columns(LineBasedScrollArea)
-   public
+   private readable
       data,
-      col_w,
-      n_rows,
-      gutter,
       item_border,
       item_paint,
+      gutter,
       down,
       over,
       highlight,
       cursor
 
-   private 
-      prev_split_dw
+   private
+      data_w,
+      col_w,
+      n_rows,
+      prev_columnize_dw
 
    public initially()
       \self.item_paint | runerr("ItemPaint not set")
@@ -284,24 +285,18 @@ class Columns(LineBasedScrollArea)
    end
 
    public calculate_subject_width()
-      mk_best_split(predict_view_width(w, vsb))
+      do_columnize(predict_view_width(w, vsb))
       return col_w[1]
    end
 
-   private invalidate_split()
-      invalidate_subject_width()
-      invalidate_line_count()
-      return self
-   end
-
-   private invalidate_cached_split()
-      prev_split_dw := &null
-      invalidate_split()
+   private invalidate_columnize()
+      data_w := prev_columnize_dw := &null
       return self
    end
 
    public layout()
-      invalidate_split()
+      invalidate_subject_width()
+      invalidate_line_count()
       ScrollArea.layout()
    end
 
@@ -310,26 +305,29 @@ class Columns(LineBasedScrollArea)
       had_vsb := self.vsb
       ScrollArea.set_internal_fields()
       if had_vsb ~=== self.vsb then {
-         invalidate_split()
+         invalidate_subject_width()
+         invalidate_line_count()
          ScrollArea.set_internal_fields()
       }
    end
 
    public get_default_subject_height(dw)
-      mk_best_split(dw)
+      do_columnize(dw)
       return n_rows * get_line_height()
    end
 
-   private mk_best_split(dw)
-      local t, tb, cr
-      if \prev_split_dw &
-         (dw = prev_split_dw |
-          (*col_w = 1 & dw < prev_split_dw)) then
+   private do_columnize(dw)
+      local cr, tb
+      if \prev_columnize_dw &
+         (dw = prev_columnize_dw |
+          (*col_w = 1 & dw < prev_columnize_dw)) then
          return
-      prev_split_dw := dw
-      tb := item_border.get_total_width( )
-      t := ipl.pdco.List{ item_paint.get_width(view.cbwin, (!data)) + tb }
-      cr := columnize(t, dw, gutter)
+      prev_columnize_dw := dw
+      if /data_w then {
+         tb := item_border.get_total_width( )
+         data_w := ipl.pdco.List{ item_paint.get_width(view.cbwin, (!data)) + tb }
+      }
+      cr := columnize(data_w, dw, gutter)
       n_rows := cr.rows
       col_w := cr.width
    end
@@ -339,7 +337,7 @@ class Columns(LineBasedScrollArea)
    end
 
    public calculate_line_count()
-      mk_best_split(predict_view_width(w, vsb))
+      do_columnize(predict_view_width(w, vsb))
       return n_rows
    end
 
@@ -381,19 +379,12 @@ class Columns(LineBasedScrollArea)
       set_over()
    end
 
-   private set_over(n)
-      local s, url
+   public set_over(n)
       if n ~=== over then {
          invalidate_line(get_row_for_index(\over))
          over := n
          invalidate_line(get_row_for_index(\over))
-         if /over then
-            parent.parent.parent.clear_msg()
-         else {
-            s := FilePath(parent.parent.parent.cwd).child(data[n].name).ucs() | fail
-            url := URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/')) | fail
-            parent.parent.parent.msg(url.ucs())
-         }
+         fire("over-changed")
       }
       return self
    end
@@ -531,7 +522,6 @@ class Columns(LineBasedScrollArea)
          t.revert()
       }}
       t.start()
-
    end
 
    public handle_key(e)
@@ -558,17 +548,30 @@ class Columns(LineBasedScrollArea)
       }
    end
 
+   public set_down(d)
+      self.down := d
+      return self
+   end
+
    public change_painter(p)
       set_item_paint(p)
-      invalidate_cached_split()
+      set_over()
+      invalidate_columnize()
+      invalidate_subject_width()
+      invalidate_line_count()
       compute_and_invalidate()
       return self
    end
 
    public set_data(l)
       self.data := l
+      # set_over() is necessary even if the caller does a
+      # resynch_pointer, since we store over as an index (which may
+      # change) rather than the underlying object.
       set_over()
-      invalidate_cached_split()
+      invalidate_columnize()
+      invalidate_subject_width()
+      invalidate_line_count()
       compute_and_invalidate()
       constrain_cursor()
       return self
@@ -980,6 +983,17 @@ class Terminal(TabItem, VtUI)
       insert_link(item_to_url(item), ev)
    end
 
+   private on_columns_over_changed(ev)
+      local s, url
+      if /columns.over then
+         clear_msg()
+      else {
+         s := FilePath(cwd).child(columns.data[columns.over].name).ucs() | fail
+         url := URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/')) | fail
+         msg(url.ucs())
+      }
+   end
+
    private copy_link(url)
       if url.scheme == (u"file" | u"text") then
          parent_dialog.own_selection(Selection.CLIPBOARD, 
@@ -1109,7 +1123,7 @@ class Terminal(TabItem, VtUI)
       pm := PopupMenu()
       if item := columns.data[i := columns.get_element_under_pointer(e)] then {
          url := item_to_url(item) | fail
-         columns.set_highlight(i)
+         columns.set_highlight(i).set_over()
          m := create_link_menu(url)
          pm.connect(on_popup_closed, Event.POPUP_CLOSED)
       } else
@@ -1220,7 +1234,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private resort_cwd(track_cursor)
-      local i, ino, info, vis
+      local i, ino, info, vis, high, down
       \cwd | fail
       if \track_cursor & i := columns.get_row_for_index(columns.get_cursor()) then {
          # Set vis to &yes if the last highlight is currently visible; also get the ino of
@@ -1229,6 +1243,10 @@ class Terminal(TabItem, VtUI)
          if info.first_whole <= i <= info.last_whole then
             vis := &yes
          ino := columns.object_get_cursor().stat.ino
+         if columns.get_cursor() === columns.get_highlight() then
+            high := &yes
+         if columns.get_cursor() === columns.get_highlight() then
+            down := &yes
       }
       load_cwd(get_pats())
       # Search for the old ino in the new data.  If found, set the highlight and if the old
@@ -1237,8 +1255,16 @@ class Terminal(TabItem, VtUI)
          columns.set_cursor(i)
          if \vis then
             columns.ensure_line_visible(columns.get_row_for_index(columns.get_cursor()))
+         if \high then
+            columns.set_highlight(i)
+         if \down then
+            columns.set_down(i)
       } else
          columns.set_cursor()
+      if is_live() then {
+         # Since the pointer may be over the files list, update the pointer.
+         parent_dialog.resynch_pointer()
+      }
    end
 
    private load_cwd(pats)
@@ -1405,6 +1431,7 @@ class Terminal(TabItem, VtUI)
                              set_x_align(Align.L)).
          connect(on_columns_lclick, "lclicked").
          connect(on_columns_mclick, "mclicked").
+         connect(on_columns_over_changed, "over-changed").
          connect(on_columns_rpress, Event.MOUSE_RIGHT_PRESS)
       trail.
          set_size().
