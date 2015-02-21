@@ -540,16 +540,24 @@ $endif
    #
    # Succeed if the given `FileStream` represents a tty supporting links.
    #
-   public static is_links_tty(f)
-      if f.ttyname() & System.getenv("TERMLINKS") then
-         return
+   public static is_termlinks_tty(f)
+      static termlinks
+      initial
+         termlinks := integer(System.getenv("TERMLINKS"))
+      return case termlinks of {
+         1 : f.isatty()
+         2 : &null
+      }
    end
 
    #
-   # Return the opening escape sequence for an embedded link.  File f must be an absolute path.
+   # Return the opening escape sequence for an embedded link.  File f
+   # must be a `URL` (properly url-encoded), or an absolute path.
    #
    public static begin_link(f, line)
       local s
+      if is(f, URL) then
+         return "\e[!\"" || f.str() || "\"L"
       s := "\e[!\"file://" || &host || URL.percent_encode(f, URL.UNRESERVED ++ '/')
       if \line then
          s ||:= "?line=" || line
