@@ -561,8 +561,7 @@ $endif
       s := "\e[!\"file://" || &host || URL.percent_encode(f, URL.UNRESERVED ++ '/')
       if \line then
          s ||:= "?line=" || line
-      s ||:= "\"L"
-      return s
+      return s || "\"L"
    end
 
    #
