@@ -1277,8 +1277,8 @@ class Terminal(TabItem, VtUI)
    end
 
    private load_cwd(pats)
-      columns.set_data(list_cwd(pats))
       cwd_mtime := Files.stat(cwd).mtime | 0
+      columns.set_data(list_cwd(pats))
    end
 
    private list_cwd(pats)
