@@ -87,9 +87,15 @@ procedure do_one(a)
    }
 end
 
+procedure print(pfx, url)
+   if Files.is_termlinks_tty(FileStream.stdout) then
+      write(pfx, Files.begin_link(url), url.str(), Files.end_link())
+   else
+      write(pfx, url.str())
+end
 
 procedure do_search(url, src, doc, tag, attr, pfx)
-   local base, n, s, l_url
+   local base, n, s
 
    base := url
    if n := doc.get_root_element().search_tree("BASE") then {
@@ -103,11 +109,9 @@ procedure do_search(url, src, doc, tag, attr, pfx)
                if s := tab(upto("\"")) then {
                   s := remove_entities(s)
                   if match("http://" | "https://", s) then
-                     write(pfx, s)
-                  else {
-                     l_url := base.get_relative(s)
-                     write(pfx, l_url.str())
-                  }
+                     print(pfx, URL(s))
+                  else
+                     print(pfx, base.get_relative(s))
                }
             }
          }
@@ -117,11 +121,9 @@ procedure do_search(url, src, doc, tag, attr, pfx)
       every n := doc.get_root_element().search_tree(tag) do {
          if s := n.get_attribute(attr) then {
             if match("http://" | "https://", s) then
-               write(pfx, s)
-            else {
-               l_url := base.get_relative(s)
-               write(pfx, l_url.str())
-            }
+               print(pfx, URL(s))
+            else
+               print(pfx, base.get_relative(s))
          }
       }
    }
