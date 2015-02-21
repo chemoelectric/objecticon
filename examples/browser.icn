@@ -210,6 +210,11 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       t.browser.clone_history(curr.browser)
    end
    
+   private on_xdg_refresh(ev)
+      Xdg.refresh()
+      tabs.which_one.msg("XDG database reloaded", 3000)
+   end
+
    private list_visited()
       local s, e, n
       s := "<html><title>Visited</title>" || Browser.get_table_tag() || ""
@@ -403,7 +408,8 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
    end
 
    public new(cookies, settings)
-      local quit_menu_item, menu_bar, file_menu, new_tab_item, clone_tab_item
+      local quit_menu_item, menu_bar, file_menu, new_tab_item, 
+         clone_tab_item, xdg_refresh_item
       Dialog.new()
       self.settings := settings
       self.visited_set := set()
@@ -428,6 +434,9 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       clone_tab_item := TextMenuItem().
          connect(on_clone_tab, Event.ACTION).
          set_paint_mid(TextPaint("Clone Tab"))
+      xdg_refresh_item := TextMenuItem().
+         connect(on_xdg_refresh, Event.ACTION).
+         set_paint_mid(TextPaint("Refresh XDG"))
       quit_menu_item := TextMenuItem().
          connect(on_quit, Event.ACTION).
          set_paint_mid(TextPaint("Quit"))
@@ -436,6 +445,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
          set_label("File").
          add(new_tab_item).
          add(clone_tab_item).
+         add(xdg_refresh_item).
          add(quit_menu_item)
       page_menu := PageMenu().
          set_accel("p").

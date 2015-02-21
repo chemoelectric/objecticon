@@ -103,6 +103,11 @@ class TerminalDialog(Dialog)
       new_tab(&yes,, tabs.which_one)
    end
 
+   private on_xdg_refresh(ev)
+      Xdg.refresh()
+      tabs.which_one.info_msg("XDG database reloaded")
+   end
+
    public on_favourite_dirs(ev)
       local d
       d := FavouriteDirectoriesDialog()
@@ -139,7 +144,7 @@ class TerminalDialog(Dialog)
 
    public new()
       local quit_menu_item, menu_bar, file_menu, terminal_menu, columns_menu, 
-         new_tab_item, clone_tab_item, favourite_dirs_item
+         new_tab_item, clone_tab_item, favourite_dirs_item, xdg_refresh_item
       Dialog.new()
       set_size(scale(1200), scale(850))
       self.set_resize(&yes)
@@ -152,6 +157,9 @@ class TerminalDialog(Dialog)
       favourite_dirs_item := TextMenuItem().
          connect(on_favourite_dirs, Event.ACTION).
          set_paint_mid(TextPaint("Favourite dirs..."))
+      xdg_refresh_item := TextMenuItem().
+         connect(on_xdg_refresh, Event.ACTION).
+         set_paint_mid(TextPaint("Refresh XDG"))
       quit_menu_item := TextMenuItem().
          connect(on_quit, Event.ACTION).
          set_paint_mid(TextPaint("Quit"))
@@ -160,6 +168,7 @@ class TerminalDialog(Dialog)
          add(new_tab_item).
          add(clone_tab_item).
          add(favourite_dirs_item).
+         add(xdg_refresh_item).
          add(quit_menu_item)
       terminal_menu := TerminalMenu().
          set_label("Terminal")
@@ -930,12 +939,12 @@ class Terminal(TabItem, VtUI)
          send_tty(url.ucs())
    end
 
-   private err_msg(s)
+   public err_msg(s)
       send_vt(u"\n\e[31m(Message from terminal:) " || s || u"\e[m")
       msg(s, 3000)
    end
 
-   private info_msg(s)
+   public info_msg(s)
       msg(s, 3000)
    end
 
