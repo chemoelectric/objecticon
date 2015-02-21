@@ -214,7 +214,7 @@ class Columns(LineBasedScrollArea)
       item_border,
       item_paint,
       gutter,
-      down,
+      held,
       over,
       highlight,
       cursor
@@ -399,9 +399,9 @@ class Columns(LineBasedScrollArea)
    end
 
    public handle_lmdrag(e)
-      if \down = get_element_under_pointer(e) then {
-         set_highlight(down)
-         set_over(down)
+      if \held = get_element_under_pointer(e) then {
+         set_highlight(held)
+         set_over(held)
       } else {
          set_highlight()
          set_over()
@@ -409,17 +409,21 @@ class Columns(LineBasedScrollArea)
    end
 
    public handle_lrelease(e)
-      if \highlight then
+      \held | fail
+      if \over then {
+         set_highlight()
          fire("lclicked", e)
-      down := &null
-      set_highlight()
+      }
+      held := &null
    end
 
    public handle_mrelease(e)
-      if \highlight then
+      \held | fail
+      if \over then {
+         set_highlight()
          fire("mclicked", e)
-      down := &null
-      set_highlight()
+      }
+      held := &null
    end
 
    public get_row_for_index(n)
@@ -455,6 +459,10 @@ class Columns(LineBasedScrollArea)
       return .\highlight
    end
 
+   public get_held()
+      return .\held
+   end
+
    public object_get_cursor()
       return data[.\cursor]
    end
@@ -468,61 +476,72 @@ class Columns(LineBasedScrollArea)
    end
 
    public handle_lmpress(e)
-      if down := get_element_under_pointer(e) then
-         set_highlight(down)
-      else
-         set_highlight()
-   end
-
-   private move_cursor(i)
-      (0 < i <= *data) | fail
-      set_cursor(i)
-      ensure_line_visible(get_row_for_index(cursor))
+      *parent_dialog.held = 1 | fail
+      if \over then {
+         if /e.shift then {
+            set_highlight(over)
+            held := over
+         } else
+            set_cursor(over)
+      } 
    end
 
    public handle_key_page_up(e)
       local t
-      \cursor | fail
       t := get_page_movement(cursor, -1)
       t <:= n_rows * (get_col_for_index(cursor) - 1) + 1
-      move_cursor(t)
+      return t
    end
 
    public handle_key_page_down(e)
       local t
-      \cursor | fail
       t := get_page_movement(cursor, 1)
-      t >:= min(*data, n_rows * get_col_for_index(cursor))
-      move_cursor(t)
+      t >:= n_rows * get_col_for_index(cursor)
+      return t
    end
 
    public handle_key_up(e)
-      move_cursor(\cursor - 1)
+      return cursor - 1
    end
 
    public handle_key_down(e)
-      move_cursor(\cursor + 1)
+      return cursor + 1
    end
 
    public handle_key_left(e)
-      move_cursor(\cursor - n_rows)
+      local t
+      (cursor > 1) | fail
+      t := cursor - n_rows
+      if t < 1 then {
+         t +:= *col_w * n_rows - 1
+         if t > *data then
+            t -:= n_rows
+      }
+      return t
    end
 
    public handle_key_right(e)
-      move_cursor(\cursor + n_rows)
+      local t
+      t := cursor + n_rows
+      if t > *data then {
+         t := (t - 1) % n_rows + 2
+         t <= n_rows | fail
+      }
+      return t
    end
 
    public handle_key_home(e)
-      move_cursor(1)
+      return 1
    end
 
    public handle_key_end(e)
-      move_cursor(*data)
+      return *data
    end
 
    public handle_return(e)
       local t
       \cursor | fail
+      ensure_line_visible(get_row_for_index(cursor))
       set_highlight(cursor)
       t := Dispatcher.new_task{{
          t.sleep(50)
@@ -533,16 +552,22 @@ class Columns(LineBasedScrollArea)
       t.start()
    end
 
+   private handle_key_move(f)
+      \cursor | fail
+      set_cursor(f())
+      ensure_line_visible(get_row_for_index(cursor))
+   end
+
    public handle_key(e)
       case e.code of {
-         Key.HOME : handle_key_home(e)
-         Key.END : handle_key_end(e)
-         Key.PGUP : handle_key_page_up(e)
-         Key.PGDN : handle_key_page_down(e)
-         Key.UP : handle_key_up(e)
-         Key.DOWN : handle_key_down(e)
-         Key.LEFT : handle_key_left(e)
-         Key.RIGHT : handle_key_right(e)
+         Key.HOME : handle_key_move(handle_key_home)
+         Key.END : handle_key_move(handle_key_end)
+         Key.PGUP : handle_key_move(handle_key_page_up)
+         Key.PGDN : handle_key_move(handle_key_page_down)
+         Key.UP : handle_key_move(handle_key_up)
+         Key.DOWN : handle_key_move(handle_key_down)
+         Key.LEFT : handle_key_move(handle_key_left)
+         Key.RIGHT : handle_key_move(handle_key_right)
          "\r" | "\l": handle_return(e)
       }
    end
@@ -557,8 +582,8 @@ class Columns(LineBasedScrollArea)
       }
    end
 
-   public set_down(d)
-      self.down := d
+   public set_held(d)
+      self.held := d
       return self
    end
 
@@ -1243,7 +1268,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private resort_cwd(track_cursor)
-      local i, ino, info, vis, high, down
+      local i, ino, info, vis, high, held
       \cwd | fail
       if \track_cursor & i := columns.get_row_for_index(columns.get_cursor()) then {
          # Set vis to &yes if the last highlight is currently visible; also get the ino of
@@ -1254,8 +1279,8 @@ class Terminal(TabItem, VtUI)
          ino := columns.object_get_cursor().stat.ino
          if columns.get_cursor() === columns.get_highlight() then
             high := &yes
-         if columns.get_cursor() === columns.get_highlight() then
-            down := &yes
+         if columns.get_cursor() === columns.get_held() then
+            held := &yes
       }
       load_cwd(get_pats())
       # Search for the old ino in the new data.  If found, set the highlight and if the old
@@ -1266,8 +1291,8 @@ class Terminal(TabItem, VtUI)
             columns.ensure_line_visible(columns.get_row_for_index(columns.get_cursor()))
          if \high then
             columns.set_highlight(i)
-         if \down then
-            columns.set_down(i)
+         if \held then
+            columns.set_held(i)
       } else
          columns.set_cursor()
       if is_live() then {
