@@ -620,9 +620,7 @@ end
 
 #
 # This class manipulates file paths by treating them as a list of
-# elements.  Instances are not created directly by the client, rather
-# they are created initially via {FilePath()} and then via other
-# methods in this class.
+# elements.
 #
 # Instances of this class are immutable.
 #
@@ -648,6 +646,13 @@ class FilePath(ObjectOutput)
    #
    public gen()
       suspend .!l
+   end
+
+   #
+   # Generate the elements in the path in reverse order
+   #
+   public back()
+      suspend .default.back(l)
    end
 
    #
