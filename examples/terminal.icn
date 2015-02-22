@@ -282,9 +282,12 @@ class Columns(LineBasedScrollArea)
             item_border.draw_rect(view.cbwin, r)
          }
          if k === cursor then {
-            if has_focus() & is_unshaded() then
-               Gui.style.draw_focus_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
-            else
+            if has_focus() & is_unshaded() then { 
+               use {
+                  W := Gui.style.get_cursor_clone(view.cbwin),
+                  W.draw_rectangle(r.x, r.y, r.w, r.h, Gui.FINE_WIDTH)
+               }
+            } else
                Gui.style.draw_dashed_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
          }
          if k === over then 
