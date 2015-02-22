@@ -1017,7 +1017,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
       if \x then {
          x <:= 1
-         #x >:= cols
          cx := x
       }
       cx >:= cols
@@ -2010,6 +2009,11 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private invalidate_cursor()
       invalidate_line(cy_to_index())
+   end
+
+   public focus_changed(e) 
+      if is_live() then
+         invalidate_cursor()
    end
 
    private handle_lpress1(e)

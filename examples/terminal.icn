@@ -306,6 +306,11 @@ class Columns(LineBasedScrollArea)
       return self
    end
 
+   public focus_changed(e) 
+      if is_live() then
+         invalidate_line(get_row_for_index(\cursor))
+   end
+
    public layout()
       invalidate_subject_width()
       invalidate_line_count()
