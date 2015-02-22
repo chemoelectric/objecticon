@@ -1649,7 +1649,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private clear_mark()
-      mark_x := mark_y := &null
+      text_selection := mark_x := mark_y := &null
       return self
    end
 
