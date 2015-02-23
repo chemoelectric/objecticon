@@ -205,7 +205,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       mark_x,
       mark_y,
       char_w,                     # Character width dimensions of the font in use.
-      char_h,
       rows,                       # Size of the emulated screen
       cols,
       cx,                         # The cursor position (in screen co-ordinates)
@@ -339,7 +338,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public get_default_height()
-      return predict_total_height(25 * char_h)
+      return predict_total_height(25 * get_line_height())
    end
 
    private check_changed_size()
@@ -349,7 +348,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       cols := (predict_view_width(w, if history_size > 0 then &yes else &no) - 2 * Gui.TEXT_INSET) / char_w
       cols >:= \col_mode
       cols <:= 16
-      rows := predict_view_height(h) / char_h
+      rows := predict_view_height(h) / get_line_height()
       rows <:= 1
       if old_cols ~= cols | old_rows ~= rows then {
          cx >:= cols + 1
@@ -393,9 +392,8 @@ class Vt(LineBasedScrollArea, MenuMode)
       setup_font() | runerr("font not in required format", self)
       LineBasedScrollArea.initially()
       cursor_ticker.start()
-      char_w := cbwin.text_width("m")
-      (char_w = cbwin.text_width("i")) | runerr("font is not monospace", self)
-      char_h := cbwin.get_font_height()
+      char_w := view.cbwin.text_width("m")
+      (char_w = view.cbwin.text_width("i")) | runerr("font is not monospace", self)
    end
 
    private setup_font()
@@ -1075,10 +1073,10 @@ class Vt(LineBasedScrollArea, MenuMode)
       info := get_line_info() | fail
       px := view.x + Gui.TEXT_INSET + (cx - 1) * char_w + Gui.TEXT_INSET
       info := get_line_info() | fail
-      py := view.y - info.offset + (cy_to_index() - info.first) * char_h
+      py := view.y - info.offset + (cy_to_index() - info.first) * line_height
       # Ensure cursor is entirely within view
-      (view.y <= py & py + char_h - 1 < view.y + view.h) | fail
-      #write(view.y,"-",view.y+view.h," -v-",py, " view.h=",view.h, " char_h=",char_h,"  lines=",rows)
+      (view.y <= py & py + line_height - 1 < view.y + view.h) | fail
+      #write(view.y,"-",view.y+view.h," -v-",py, " view.h=",view.h, " line_height=",line_height,"  lines=",rows)
       # Get perfect alignment with between the cursor line and the first line in the popup.
       py -:= Gui.BORDER_WIDTH
       open_popup(px, py, t)
@@ -1268,7 +1266,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       # Adjust the vsb so that if we are above the bottom then the
       # line we're looking at stays the same.
       if not at_bottom() then
-         vsb.set_value(vsb.value - n * char_h)
+         vsb.set_value(vsb.value - n * line_height)
    end
 
    private scroll_up(r, n)
@@ -1481,7 +1479,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public calculate_line_height()
-      return char_h
+      return view.cbwin.get_font_height()
    end
 
    public calculate_subject_width()
@@ -1566,7 +1564,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          }
          w1 := char_w * *ss
          if bg ~=== default_bg then
-            W.erase_area(x1, yp, w1, char_h)
+            W.erase_area(x1, yp, w1, line_height)
 
          if /a.invisible then
             draw_string_ex(W, x1, yp, ss)
@@ -1584,16 +1582,16 @@ class Vt(LineBasedScrollArea, MenuMode)
             W.draw_rectangle(x1, yp + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
 
          if \a.url === last_highlight then
-            Gui.style.draw_dashed_rectangle(W, x1, yp, w1, char_h)
+            Gui.style.draw_dashed_rectangle(W, x1, yp, w1, line_height)
          if \a.url === over then
-            Gui.style.fill_over_rectangle(W, x1, yp, w1, char_h)
+            Gui.style.fill_over_rectangle(W, x1, yp, w1, line_height)
 
          x1 +:= w1
       }
 
       if \row.bg ~=== default_bg then {
          w1 := xp + cols * char_w - x1
-         W.set_bg(row.bg).erase_area(x1, yp, w1, char_h)
+         W.set_bg(row.bg).erase_area(x1, yp, w1, line_height)
       }
       W.close()
 
