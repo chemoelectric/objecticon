@@ -77,7 +77,7 @@ struct FontInfo {
    char *path;
    char *family;
    int flags;
-   float size;
+   double size;
    struct FontInfo *next;
 };
 static struct FontInfo *font_info;
@@ -2486,7 +2486,7 @@ void registerplatformimgdataformats()
     registerimgdataformat(&imgdataformat_P9AG16);
 }
 
-static int acceptable_font(struct FontInfo *fi, char *family, int flags, float size)
+static int acceptable_font(struct FontInfo *fi, char *family, int flags, double size)
 {
     if (strcmp(fi->family, family) != 0)
         return 0;
@@ -2503,9 +2503,9 @@ do { \
         return f2; \
 } while(0)
 
-static struct FontInfo *best_font(struct FontInfo *f1, struct FontInfo *f2, int flags, float size)
+static struct FontInfo *best_font(struct FontInfo *f1, struct FontInfo *f2, int flags, double size)
 {
-    float n;
+    double n;
 
     PREFER(FONTFLAG_ROMAN);
     PREFER(FONTFLAG_MEDIUM);
@@ -2523,7 +2523,7 @@ static struct FontInfo *best_font(struct FontInfo *f1, struct FontInfo *f2, int 
 static struct FontInfo *match_font(char *s)
 {
     int flags;
-    float size;
+    double size;
     char family[MAXFONTWORD];
     struct FontInfo *best = 0, *curr;
 
@@ -2571,7 +2571,7 @@ static void load_font_info(void)
                 if (buff[0] == 0 || buff[0] != '#') {
                     char family[MAXFONTWORD];
                     int flags;
-                    float size;
+                    double size;
                     struct FontInfo *fi;
                     if (!parsefont(info, family, &flags, &size))
                         ffatalerr("Couldn't parse line %d in font info file %s", line, fn);

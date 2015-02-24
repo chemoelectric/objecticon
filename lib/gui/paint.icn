@@ -346,7 +346,7 @@ class GridPaint(Paint)
       local y1
       if pass = 1 then {
          llen +:= win.text_width(s)
-         lheight <:= win.get_font_height()
+         lheight <:= win.get_line_height()
       } else {
          ready_to_output() | fail
          y1 := case ia_y of {

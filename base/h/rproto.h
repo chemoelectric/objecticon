@@ -256,7 +256,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    void freewbinding(wbp w);
    void drawcurve       (wbp w, struct point *p, int n);
    int  parsefilter     (wbp w, char *s, struct filter *res);
-   int  parsefont       (char *s, char *fam, int *sty, float *sz);
+   int  parsefont       (char *s, char *fam, int *sty, double *sz);
    int  parseinputmask  (char *s, int *res);
    void qevent          (wsp ws, dptr e, int x, int y, uword t, int mod);
    void qeventcode      (wsp, int);
@@ -450,7 +450,7 @@ int ceq(dptr dp, char *s);
 void env_int(char *name, int *variable, int min, int max);
 void env_word(char *name, word *variable, word min, word max);
 void env_uword(char *name, uword *variable, uword min, uword max);
-void env_float(char *name, float *variable, float min, float max);
+void env_double(char *name, double *variable, double min, double max);
 
 int stringint_str2int(stringint * sip, char *s);
 char *stringint_int2str(stringint * sip, int i);

@@ -173,9 +173,9 @@ int set_up = 0;				/* set-up switch */
 char *currend = NULL;			/* current end of memory region */
 word memcushion = RegionCushion;	/* memory region cushion factor */
 word memgrowth = RegionGrowth;		/* memory region growth factor */
-float defaultfontsize = 12.0;
+double defaultfontsize = 12.0;
 char *defaultfont = "fixed";
-float defaultleading = 0.0;
+double defaultleading = 0.075;
 
 word dodump = 1;			/* if zero never core dump;
                                          * if 1 core dump on C-level internal error (call to syserr)
@@ -359,9 +359,9 @@ void env_uword(char *name, uword *variable, uword min, uword max)
 }
 
 /*
- * env_float - get the value of a float-valued environment variable.
+ * env_double - get the value of a double-valued environment variable.
  */
-void env_float(char *name, float *variable, float min, float max)
+void env_double(char *name, double *variable, double min, double max)
 {
     double t;
     char *value, ch;
@@ -1314,8 +1314,8 @@ int main(int argc, char **argv)
     stacklim = rootblock.size / 2;
     env_uword(OISTKLIM, &stacklim, 1024, MaxUWord);
     env_word(OISTKCUSHION, &stackcushion, 0, 10000);
-    env_float(OIFONTSIZE, &defaultfontsize, MIN_FONTSIZE, 1e32);
-    env_float(OILEADING, &defaultleading, 0.0, 1e32);
+    env_double(OIFONTSIZE, &defaultfontsize, MIN_FONTSIZE, 1e32);
+    env_double(OILEADING, &defaultleading, 0.0, 1e32);
     t = getenv(OIFONT);
     if (t)
         defaultfont = salloc(t);

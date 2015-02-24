@@ -347,7 +347,6 @@ final class Window(NoCopy)
    public native get_draw_op()
    public native get_dx()
    public native get_dy()
-   public native get_absolute_leading()
    public native get_leading()
    public native get_fg()
    public native get_font()
@@ -399,7 +398,8 @@ final class Window(NoCopy)
    #
    # The graphics context attribute leading specifies extra space to
    # add to font ascent, descent and height, to calculate line ascent,
-   # descent and height.
+   # descent and height.  It is specified as a real number, being the
+   # proportion of font height.
    #
    public native set_leading(v)
 
@@ -928,18 +928,43 @@ $ifdef _PLAN9
    public native get_dir()
 $endif
 
+   #
+   # Return the absolute leading, which is the pixels equivalent of
+   # the leading attribute.  It is the rounded value of the current
+   # font height multiplied by the leading attribute.
+   #
+   public native get_absolute_leading()
+
+   #
+   # Return the font height, which is always the sum of the font
+   # ascent and the descent.
+   #
    public get_font_height()
       return get_font_ascent() + get_font_descent()
    end
 
+   #
+   # Return the line height, which is always the sum of the font
+   # ascent, the font descent, and two amounts of the absolute leading
+   # (notionally one for the top and one for the bottom of the line).
+   # This sum is also equal to the line ascent plus the line descent.
+   #
    public get_line_height()
       return get_font_ascent() + get_font_descent() + 2 * get_absolute_leading()
    end
 
+   #
+   # Return the line ascent, which is the font ascent plus the
+   # absolute leading.
+   #
    public get_line_ascent()
       return get_font_ascent() + get_absolute_leading()
    end
 
+   #
+   # Return the line descent, which is the font descent plus the
+   # absolute leading.
+   #
    public get_line_descent()
       return get_font_descent() + get_absolute_leading()
    end
