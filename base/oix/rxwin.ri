@@ -3457,7 +3457,7 @@ char *tofcpatternstr(char *s)
 {
     static char res[256];
     int flags;
-    float size;
+    double size;
     char *t, family[MAXFONTWORD];
     FcPattern *p;
 
@@ -3500,7 +3500,7 @@ char *tofcpatternstr(char *s)
     else
         FcPatternAddString(p, FC_FAMILY, (FcChar8 *)family);
 
-    FcPatternAddDouble(p, FC_SIZE, (double)size);
+    FcPatternAddDouble(p, FC_SIZE, size);
 
     if (flags & FONTFLAG_MEDIUM)
         FcPatternAddInteger(p, FC_WEIGHT, FC_WEIGHT_MEDIUM);

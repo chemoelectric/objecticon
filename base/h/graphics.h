@@ -313,7 +313,7 @@ typedef struct _wcontext {
   int		clipx, clipy, clipw, cliph;
   wfp		font;
   int		dx, dy;
-  float         leading;
+  double        leading;
 #if XWindows
   wdp		display;
   struct SharedColor *fg, *bg;

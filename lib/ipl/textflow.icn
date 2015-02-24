@@ -378,7 +378,7 @@ class TextFlow(Component, HasLastHighlight)
             }
             ParaCmd: {
                if /at_new_para then {
-                  new_row(W.get_font_height() / 2)
+                  new_row(W.get_line_height() / 2)
                   at_new_para := 1
                }
             }
@@ -392,7 +392,7 @@ class TextFlow(Component, HasLastHighlight)
                if *row > 0 then
                   new_row()
                else
-                  new_row(W.get_font_height())
+                  new_row(W.get_line_height())
                case \cmd.clear of {
                   Align.L: 
                      until row_x = 0 do new_row()

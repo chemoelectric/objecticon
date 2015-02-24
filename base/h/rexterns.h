@@ -58,9 +58,9 @@ extern struct c_proc Bdeferred_method_stub;  /* Deferred method block */
 
 extern word memcushion;		/* memory region cushion factor */
 extern word memgrowth;		/* memory region growth factor */
-extern float defaultfontsize;   /* default font size */
+extern double defaultfontsize;  /* default font size */
 extern char *defaultfont;       /* default font spec */
-extern float defaultleading;    /* default leading */
+extern double defaultleading;   /* default leading */
 
 extern struct tend_desc *tend;  /* chain of tended descriptors */
 
