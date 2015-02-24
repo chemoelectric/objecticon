@@ -58,7 +58,7 @@ class TextDisplay(LineBasedScrollArea)
    public get_default_subject_height(dw)
       local spl
       spl := get_split(dw  - 2 * Gui.TEXT_INSET)
-      return view.cbwin.get_font_height() * *spl.lines
+      return get_line_height() * *spl.lines
    end
 
    public get_default_subject_width()
@@ -261,7 +261,7 @@ class TextDisplay(LineBasedScrollArea)
    end
 
    public calculate_line_height()
-      return view.cbwin.get_font_height()
+      return view.cbwin.get_line_height()
    end
 
    public calculate_subject_width()
@@ -272,7 +272,7 @@ class TextDisplay(LineBasedScrollArea)
    end
 
    public draw_line(xp, yp, lh, i)
-      draw_string_ex(view.cbwin, xp + Gui.TEXT_INSET, yp, detab(view_list[i].str, self.tab_width + 1))
+      view.cbwin.draw_string(xp + Gui.TEXT_INSET, yp + view.cbwin.get_line_ascent(), detab(view_list[i].str, self.tab_width + 1))
    end
 
    #

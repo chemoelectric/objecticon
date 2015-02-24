@@ -2320,7 +2320,7 @@ class FormOptionList(SelectableScrollArea, FormEntry)
    end
 
    public calculate_line_height()
-      return view.cbwin.get_font_height()
+      return view.cbwin.get_line_height()
    end
 
    public calculate_subject_width()
@@ -2339,11 +2339,11 @@ class FormOptionList(SelectableScrollArea, FormEntry)
             W := view.cbwin.clone(),
             {
                W.set_fg("gray")
-               draw_string_ex(W, xp + Gui.TEXT_INSET, yp, o.txt)
+               W.draw_string(xp + Gui.TEXT_INSET, yp + W.get_line_ascent(), o.txt)
             }
          }
       } else 
-         draw_string_ex(view.cbwin, xp + Gui.TEXT_INSET, yp, o.txt)
+         view.cbwin.draw_string(xp + Gui.TEXT_INSET, yp + view.cbwin.get_line_ascent(), o.txt)
    end
 
    public new(init_val)
@@ -3892,7 +3892,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
                every o := !sc.options do
                   w <:= mW.text_width(o.txt)
                w +:= 2 * Gui.TEXT_INSET + 2 * Gui.BORDER_WIDTH
-               h := (2 * Gui.BORDER_WIDTH + size * mW.get_font_height())
+               h := (2 * Gui.BORDER_WIDTH + size * mW.get_line_height())
                if size < *sc.options then
                   w +:= ScrollArea.predict_scrollbar_size()
             }
@@ -3966,7 +3966,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          {
             mW.set_font(context.font)
             w := (2 * (Gui.BORDER_WIDTH + Gui.TEXT_INSET) + mW.text_width(repl("x", integer(e.get_attribute(u"COLS"))))) | scale(200)
-            h := (2 * Gui.BORDER_WIDTH + integer(e.get_attribute(u"ROWS")) * mW.get_font_height()) | scale(100)
+            h := (2 * Gui.BORDER_WIDTH + integer(e.get_attribute(u"ROWS")) * mW.get_line_height()) | scale(100)
          }
       }
       # The ucs conversion is used here since an empty node will return "" (not u"").

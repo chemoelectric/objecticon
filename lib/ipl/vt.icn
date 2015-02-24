@@ -19,15 +19,15 @@ package class PopupElementItemPaint(ItemPaint)
    end
 
    public get_constant_height(W)
-      return W.get_font_height()
+      return W.get_line_height()
    end
 
    public get_size(W, data)
-      return Size(W.text_width(data.label), W.get_font_height())
+      return Size(W.text_width(data.label), W.get_line_height())
    end
 
    public draw(W, data, x, y)
-      draw_string_ex(W, x, y, data.label)
+      W.draw_string(x, y + W.get_line_ascent(), data.label)
    end
 end
 
@@ -1479,7 +1479,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public calculate_line_height()
-      return view.cbwin.get_font_height()
+      return view.cbwin.get_line_height()
    end
 
    public calculate_subject_width()
@@ -1522,7 +1522,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private draw_line(xp, yp, i)
       local s, ss, row, seg, x1, W, W2, fg, bg, w1, want_fg, want_bg, want_font,
-         default_bg, default_fg, default_font, a, r, font
+         default_bg, default_fg, default_font, a, r, font, y1
 
       # Don't draw partial lines at the top, since this looks poor
       # when running full-screen editing style apps (eg emacs)
@@ -1534,6 +1534,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
       xp +:= Gui.TEXT_INSET
       x1 := xp
+      y1 := yp + view.cbwin.get_absolute_leading()
       W := view.cbwin.clone()
       bg := W.get_bg()
       fg := W.get_fg()
@@ -1567,19 +1568,19 @@ class Vt(LineBasedScrollArea, MenuMode)
             W.erase_area(x1, yp, w1, line_height)
 
          if /a.invisible then
-            draw_string_ex(W, x1, yp, ss)
+            W.draw_string(x1, yp + W.get_line_ascent(), ss)
 
          if \a.underline then
-            W.draw_rectangle(x1, yp + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+            W.draw_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
          else if \a.url ~=== last_highlight then
             use { 
                W2 := W.clone(),
                W2.set_fg(EditRGBA(fg,,,, 16000)).      # 25% alpha of the current fg.
-                  draw_rectangle(x1, yp + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+                  draw_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
             }
 
          if \a.crossed then
-            W.draw_rectangle(x1, yp + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
+            W.draw_rectangle(x1, y1 + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
 
          if \a.url === last_highlight then
             Gui.style.draw_dashed_rectangle(W, x1, yp, w1, line_height)
@@ -1622,13 +1623,13 @@ class Vt(LineBasedScrollArea, MenuMode)
             if cursor_on ~= 2 then
                Gui.style.draw_text_cursor(view.cbwin,
                                           xp + (cx - 1) * char_w,
-                                          yp, 
-                                          line_height)
+                                          y1, 
+                                          view.cbwin.get_font_height())
          } else 
             Gui.style.draw_shadow_text_cursor(view.cbwin,
                                               xp + (cx - 1) * char_w,
-                                              yp, 
-                                              line_height)
+                                              y1, 
+                                              view.cbwin.get_font_height())
       }
    end
 

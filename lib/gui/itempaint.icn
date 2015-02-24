@@ -104,15 +104,15 @@ class TextItemPaint(ItemPaint)
    end
 
    public get_constant_height(W)
-      return W.get_font_height()
+      return W.get_line_height()
    end
 
    public get_size(W, data)
-      return Size(W.text_width(detab(data)), W.get_font_height())
+      return Size(W.text_width(detab(data)), W.get_line_height())
    end
 
    public draw(W, data, x, y)
-      draw_string_ex(W, x, y, detab(data))
+      W.draw_string(x, y + W.get_line_ascent(), detab(data))
    end
 end
 
@@ -126,15 +126,15 @@ class AbbreviatedTextItemPaint(ItemPaint)
    end
 
    public get_constant_height(W)
-      return W.get_font_height()
+      return W.get_line_height()
    end
 
    public get_size(W, data)
-      return Size(W.text_width(detab(data)), W.get_font_height())
+      return Size(W.text_width(detab(data)), W.get_line_height())
    end
 
    public draw(W, data, x, y, w)
-      draw_string_ex(W, x, y, limit_text(W, detab(data), w))
+      W.draw_string(x, y + W.get_line_ascent(), limit_text(W, detab(data), w))
    end
 end
 
@@ -173,16 +173,17 @@ abstract class AttributedTextItemPaint(WithCloneItemPaint)
    end
 
    public get_constant_height(W)
-      return get_clone(W, 1).get_font_height()
+      return get_clone(W, 1).get_line_height()
    end
 
    public get_size(W, data)
       W := get_clone(W, 1)
-      return Size(W.text_width(detab(data)), W.get_font_height())
+      return Size(W.text_width(detab(data)), W.get_line_height())
    end
 
    public draw(W, data, x, y)
-      draw_string_ex(get_clone(W), x, y, detab(data))
+      W := get_clone(W)
+      W.draw_string(x, y + W.get_line_ascent(), detab(data))
    end
 end
 

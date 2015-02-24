@@ -52,16 +52,16 @@ class ColorFilesItemPaint(WithCloneItemPaint)
    end
 
    public get_constant_height(W)
-      return W.get_font_height()
+      return W.get_line_height()
    end
 
    public get_size(W, data)
-      return Size(get_width(W, data), W.get_font_height())
+      return Size(get_width(W, data), W.get_line_height())
    end
 
    public draw(W, data, x, y)
       W := get_clone(W).set_fg(get_color(data))
-      draw_string_ex(W, x, y, get_string(data))
+      W.draw_string(x, y + W.get_line_ascent(), get_string(data))
    end
 end
 
@@ -137,7 +137,7 @@ class IconFilesItemPaint(ItemPaint)
    end
 
    public get_constant_height(W)
-      return max(W.get_font_height(), ICON_SIZE)
+      return max(W.get_line_height(), ICON_SIZE)
    end
 
    public get_size(W, data)
@@ -207,7 +207,7 @@ $endif
       i.copy_to(,,,, W, x + (ICON_SIZE - i.get_width()) / 2, y + (h - i.get_height()) / 2)
       x +:= ICON_SIZE + Gui.TEXT_INSET
       w -:= ICON_SIZE + Gui.TEXT_INSET
-      draw_string_ex(W, x, y, limit_text(W, get_string(data), w))
+      W.draw_string(x, y + W.get_line_ascent(), limit_text(W, get_string(data), w))
    end
 end
 

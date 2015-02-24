@@ -965,9 +965,9 @@ class URLList(SelectableScrollArea)
       use {
          W := view.cbwin.clone().set_font(TITLE_FONT),
          {
-            v := W.get_font_height()
+            v := W.get_line_height()
             W.set_font(URL_FONT)
-            v +:= W.get_font_height()
+            v +:= W.get_line_height()
          }
       }
       return v
@@ -985,16 +985,14 @@ class URLList(SelectableScrollArea)
       use {
          W := view.cbwin.clone().set_font(TITLE_FONT),
          {
-            draw_string_ex(W, 
-                           xp + Gui.TEXT_INSET, 
-                           yp, 
-                           limit_text(W, \contents[i].title, view.w - 2 * Gui.TEXT_INSET))
-            yp +:= W.get_font_height()
+            W.draw_string(xp + Gui.TEXT_INSET, 
+                          yp + W.get_line_ascent(), 
+                          limit_text(W, \contents[i].title, view.w - 2 * Gui.TEXT_INSET))
+            yp +:= W.get_line_height()
             W.set_font(URL_FONT).set_fg("blue")
-            draw_string_ex(W, 
-                           xp + Gui.TEXT_INSET, 
-                           yp, 
-                           limit_text(W, u"    " || contents[i].url.liberal_ucs(), view.w - 2 * Gui.TEXT_INSET))
+            W.draw_string(xp + Gui.TEXT_INSET, 
+                          yp + W.get_line_ascent(), 
+                          limit_text(W, u"    " || contents[i].url.liberal_ucs(), view.w - 2 * Gui.TEXT_INSET))
          }
       }
    end
@@ -1045,9 +1043,9 @@ class TabHeaderPaint(Paint)
          icon_win.copy_to(,,,, W, x, y + (h - icon_win.get_height()) / 2)
          x +:= icon_win.get_width() + Gui.TEXT_INSET
          w -:= icon_win.get_width() + Gui.TEXT_INSET
-         draw_string_ex(W, x, y, limit_text(W, str, w))
+         W.draw_string(x, y + W.get_font_ascent(), limit_text(W, str, w))
       } else
-         draw_string_ex(W, x, y, limit_text(W, str, w))
+         W.draw_string(x, y + W.get_font_ascent(), limit_text(W, str, w))
    end
 
    public label_will_fit(W, w)

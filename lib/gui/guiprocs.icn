@@ -209,12 +209,12 @@ class Gui()
                             "x_fill", "y_fill", "x_align", "y_align", "x_weight", "y_weight")
       WATTRIB_SET := set("label", "x", "pos", "y", "resize", "size", "height", 
                          "width", "w", "h", "image", "canvas", "pointer", 
-                         "display", "fg", "bg", "draw_op", "icon",
+                         "display", "fg", "bg", "draw_op", "icon", "leading",
                          "font", "line_width", "geometry", "transient_for",
                          "line_style", "pattern", "clip", "unclip",
                          "dx", "dy", "input_mask", "min_width", "min_height", "min_size", "max_width", 
                          "max_height", "max_size")
-      CONTEXT_WATTRIB_SET := set("fg", "bg", "draw_op", "font", "line_width", "line_style", "pattern")
+      CONTEXT_WATTRIB_SET := set("fg", "bg", "draw_op", "font", "leading", "line_width", "line_style", "pattern")
    end
 
    public static is_constraint(s)
@@ -368,7 +368,6 @@ end
 #
 procedure draw_string_ex(win, x, y, s, k)
    local i
-   y +:= win.get_font_ascent()
    win.draw_string(x, y, s)
    if i := upto(\k, map(s)) then {
       win.fill_rectangle(x + win.text_width(s[1:i]),
@@ -443,6 +442,7 @@ procedure open_win_with(t)
          "draw_op": w.set_draw_op(v)
          "icon": w.set_icon(v)
          "font": w.set_font(v)
+         "leading": w.set_leading(v)
          "line_width": w.set_line_width(v)
          "geometry": w.set_geometry(v[1],v[2],v[3],v[4])
          "transient_for": w.set_transient_for(v)
@@ -480,6 +480,7 @@ procedure apply_context_table(w, t)
          "bg": w.set_bg(v)
          "draw_op": w.set_draw_op(v)
          "font": w.set_font(v)
+         "leading": w.set_leading(v)
          "line_width": w.set_line_width(v)
          "line_style": w.set_line_style(v)
          "pattern": w.set_pattern(v)

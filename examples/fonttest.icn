@@ -522,7 +522,7 @@ class Viewer(DrawScrollArea)
       cw.set_fg("red")
       cw.draw_rectangle(px, py+ah, get_subject_width()-20, dh)
       cw.set_fg("black")
-      draw_string_ex(cw, px, py, self.text)
+      cw.draw_string(px, py + cw.get_font_ascent(), self.text)
 
       cw.close()
    end

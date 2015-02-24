@@ -32,15 +32,15 @@ class ApplicationItemPaint(ItemPaint)
    end
 
    public get_constant_height(W)
-      return W.get_font_height()
+      return W.get_line_height()
    end
 
    public get_size(W, data)
-      return Size(W.text_width(convert(data)), W.get_font_height())
+      return Size(W.text_width(convert(data)), W.get_line_height())
    end
 
    public draw(W, data, x, y, w)
-      draw_string_ex(W, x, y, limit_text(W, convert(data), w))
+      W.draw_string(x, y + W.get_line_ascent(), limit_text(W, convert(data), w))
    end
 end
 
