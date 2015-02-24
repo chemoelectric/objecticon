@@ -336,6 +336,7 @@ wbp wopen(char *display)
     wc->fg = link_sharedcolor(black);
     wc->bg = link_sharedcolor(white);
     wc->font = default_font;
+    wc->leading = defaultleading;
     wc->drawop = stringint_lookup(drawops, "over");
     wc->linestyle = stringint_lookup(linestyles, "endsquare");
     wc->linewidth = 1;

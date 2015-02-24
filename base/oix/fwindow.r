@@ -1009,7 +1009,7 @@ end
 function graphics_Window_get_absolute_leading(self)
    body {
        GetSelfW();
-       return C_integer roundf(self_w->context->leading * (self_w->context->font->ascent + self_w->context->font->descent));
+       return C_integer (0.5f + self_w->context->leading * (self_w->context->font->ascent + self_w->context->font->descent));
    }
 end
 
