@@ -119,7 +119,7 @@ class TextField(Component)
    end
 
    public get_default_height()
-      return self.cbwin.get_font_height() + border.get_total_height()
+      return self.cbwin.get_line_height() + border.get_total_height()
    end
 
    public get_default_width()
