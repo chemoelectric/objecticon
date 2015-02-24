@@ -99,7 +99,7 @@ class PTableColumn(BasePTableColumn)
    end
 
    public calculate_line_height(W)
-      return W.get_font_height()
+      return W.get_line_height()
    end
 
    public calculate_column_width(W)
@@ -119,8 +119,8 @@ class PTableColumn(BasePTableColumn)
          Align.L : cx
          default : runerr("Bad column alignment", align)
       }
-      y1 := cy + (ch - W.get_font_height()) / 2
-      draw_string_ex(W, x1, y1, data)
+      y1 := cy + (ch - W.get_line_height()) / 2
+      W.draw_string(x1, y1 + W.get_line_ascent(), data)
    end
 
    public new()

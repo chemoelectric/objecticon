@@ -154,7 +154,6 @@ function graphics_Window_couple_impl(self, other)
    }
 end
 
-
 function graphics_Window_draw_arc(self, x0, y0, rx0, ry0, ang1, ang2)
    body {
       double x, y, rx, ry, a1, a2;
@@ -1007,19 +1006,26 @@ function graphics_Window_get_dy(self)
    }
 end
 
+function graphics_Window_get_absolute_leading(self)
+   body {
+       GetSelfW();
+       return C_integer roundf(self_w->context->leading * (self_w->context->font->ascent + self_w->context->font->descent));
+   }
+end
+
+function graphics_Window_get_leading(self)
+   body {
+       GetSelfW();
+       return C_double self_w->context->leading;
+   }
+end
+
 function graphics_Window_get_fg(self)
    body {
        tended struct descrip result;
        GetSelfW();
        cstr2string(getfg(self_w), &result);
        return result;
-   }
-end
-
-function graphics_Window_get_font_height(self)
-   body {
-       GetSelfW();
-       return C_integer self_w->context->font->height;
    }
 end
 
@@ -1105,10 +1111,8 @@ end
 
 function graphics_Window_get_line_width(self)
    body {
-       tended struct descrip result;
        GetSelfW();
-       MakeReal(getlinewidth(self_w), &result);
-       return result;
+       return C_double getlinewidth(self_w);
    }
 end
 
@@ -1339,6 +1343,19 @@ function graphics_Window_set_dy(self, val)
    }
 end
 
+function graphics_Window_set_leading(self, val)
+   body {
+       double d;
+       GetSelfW();
+       if (!cnv:C_double(val, d))
+           runerr(102, val);
+       if (d < 0.0)
+           Drunerr(148, d);
+       self_w->context->leading = d;
+       return self;
+   }
+end
+
 function graphics_Window_set_fg(self, val)
    if !cnv:string(val) then
       runerr(103, val)
@@ -1454,7 +1471,7 @@ function graphics_Window_set_line_width(self, val)
        GetSelfW();
        if (!cnv:C_double(val, d))
            runerr(102, val);
-       if (d <= 0)
+       if (d <= 0.0)
            Drunerr(148, d);
        AttemptAttr(setlinewidth(self_w, d), "Invalid line_width");
        return self;

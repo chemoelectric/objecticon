@@ -84,11 +84,10 @@ procedure resolve_layout_filename(src, layout)
 end
 
 
-procedure center_string(win, x, y, s, k)
-   draw_string_ex(win, 
-                x - win.text_width(s) / 2, 
-                y - win.get_font_height() / 2, 
-                s, k)
+procedure center_string(win, x, y, s)
+   win.draw_string(x - win.text_width(s) / 2, 
+                   y - win.get_font_height() / 2 + win.get_font_ascent(), 
+                   s)
 end
 
 
@@ -146,7 +145,7 @@ procedure normalize_wattrib(key, val)
          "min_height"|"max_width"|"max_height":
          return integer(val)
 
-      "line_width":
+      "leading" | "line_width":
          return real(val)
 
       "fg"|"bg"|"draw_op"|"icon"|"font"|"label"|

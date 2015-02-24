@@ -360,8 +360,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       if line ~=== self.cursor then {
          invalidate_line(\self.cursor)
          self.cursor := line
-         invalidate_line(\self.cursor)
          constrain_cursor()
+         invalidate_line(\self.cursor)
       }
       return self
    end
@@ -625,16 +625,6 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       start_handle(e)
       every insert(self.selections, 1 to *self.contents)
       end_handle(e)
-   end
-
-   public handle_move0(e)
-#      *parent_dialog.held = 0 | fail
-      if \self.motion_cursor_flag then {
-         start_handle(e)
-         self.cursor := get_nearest_line_to_pointer(e)
-         ensure_line_visible(self.cursor)
-         end_handle(e)
-      }
    end
 
    public handle_move(e)

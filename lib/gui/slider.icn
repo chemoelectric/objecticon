@@ -512,14 +512,14 @@ class Slider(Component, HasOrientation)
          i := self.lo
          while i <= self.hi do {
             yp := self.slider_area_pos + integer(((i - self.lo) * (self.slider_area_size) / (self.hi - self.lo)))
-            draw_string_ex(self.cbwin, labels_pos, yp - fh / 2, i)
+            cbwin.draw_string(labels_pos, yp - fh / 2 + cbwin.get_font_ascent(), i)
             i +:= labels
          }
       } else {
          i := self.lo
          while i <= self.hi do {
             xp := self.slider_area_pos + integer(((i - self.lo) * (self.slider_area_size) / (self.hi - self.lo)))
-            draw_string_ex(self.cbwin, xp - self.cbwin.text_width(i) / 2, labels_pos - fh / 2, i)
+            cbwin.draw_string(xp - self.cbwin.text_width(i) / 2, labels_pos - fh / 2 + cbwin.get_font_ascent(), i)
             i +:= labels
          }
       }

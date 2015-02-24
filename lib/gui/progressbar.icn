@@ -11,18 +11,18 @@ class ProgressBar(Component)
    public p
 
    public get_default_height()
-      return self.cbwin.get_font_height() + border.get_total_height()
+      return self.cbwin.get_line_height() + border.get_total_height()
    end
 
    public display()
-      local s, r
+      local s, r, y1
       border.draw_rect(self.cbwin, self)
       r := border.get_inner_rect(self)
       s := p || "%"
-      draw_string_ex(self.cbwin,
-                   r.x + (r.w - self.cbwin.text_width(s)) / 2,
-                   r.y + (r.h - self.cbwin.get_font_height()) / 2,
-                   s)
+      y1 := r.y + (r.h - cbwin.get_font_height()) / 2
+      cbwin.draw_string(r.x + (r.w - self.cbwin.text_width(s)) / 2,
+                        y1 + cbwin.get_font_ascent(),
+                        s)
       #
       # Draw the bar in 'down' mode
       #

@@ -52,16 +52,16 @@ class ColorFilesItemPaint(WithCloneItemPaint)
    end
 
    public get_constant_height(W)
-      return W.get_font_height()
+      return W.get_line_height()
    end
 
    public get_size(W, data)
-      return Size(get_width(W, data), W.get_font_height())
+      return Size(get_width(W, data), W.get_line_height())
    end
 
    public draw(W, data, x, y)
       W := get_clone(W).set_fg(get_color(data))
-      draw_string_ex(W, x, y, get_string(data))
+      W.draw_string(x, y + W.get_line_ascent(), get_string(data))
    end
 end
 
@@ -137,7 +137,7 @@ class IconFilesItemPaint(ItemPaint)
    end
 
    public get_constant_height(W)
-      return max(W.get_font_height(), ICON_SIZE)
+      return max(W.get_line_height(), ICON_SIZE)
    end
 
    public get_size(W, data)
@@ -207,7 +207,7 @@ $endif
       i.copy_to(,,,, W, x + (ICON_SIZE - i.get_width()) / 2, y + (h - i.get_height()) / 2)
       x +:= ICON_SIZE + Gui.TEXT_INSET
       w -:= ICON_SIZE + Gui.TEXT_INSET
-      draw_string_ex(W, x, y, limit_text(W, get_string(data), w))
+      W.draw_string(x, y + W.get_line_ascent(), limit_text(W, get_string(data), w))
    end
 end
 
@@ -441,33 +441,47 @@ end
 # A directory button in the FileTrail - everything other than "/" elements.
 #
 package class FileTrailButton(TextButton)
-   private readable p
+   private readable p, tt
 
    private changed()
       parent.on_change(p.ucs())
    end
 
-   # Set whether this element is disabled for input and displays "..." rather
-   # than its normal filename.
+   # Set whether this element is disabled for input and displays "..."
+   # rather than its normal filename.  If f is set, then spc gives the
+   # amount of space available for the filename.  If null, it means
+   # the whole area is available, but we need to end with dots anyway.
    #
-   package set_dots(f)
+   package set_dots(f, spc)
+      local s
       if /f then {
          set_is_shaded(&no)
          set_label(p.get(-1))
+         set_tooltip()
       } else {
+         # Get the filename, but with dots at the end.
+         s := p.get(-1)
+         if *s < 3 then
+            s := u"..."
+         else
+            s[-3:0] := u"..."
+         while *s > 3 & cbwin.text_width(s) > \spc do
+            s[-4:0] := u"..."
          set_is_shaded(&yes)
-         set_label("...")
+         set_label(s)
+         set_tooltip(tt)
       }
    end
 
-   public new(p)
+   public new(p, tt)
       TextButton.new()
       self.p := p
+      self.tt := tt
       set_dots()
       set_accepts_focus(&no)
       set_draw_own_shading(&yes)
       set_border(CompoundBorder().
-                 set_outer(FileTrailBorder().set_line_width(1)).
+                 set_outer(FileTrailBorder().set_line_width(Gui.FINE_WIDTH)).
                  set_inner(EmptyBorder().
                            set_l_inset(Gui.TEXT_INSET).
                            set_r_inset(Gui.TEXT_INSET)).
@@ -505,6 +519,8 @@ package class FileTrailList(ButtonOnlyList)
          if e.stat.mode_str[1] == "d" & not Files.is_hidden(e.name) then
             put(l, e)
       }
+      if *l = 0 then
+         fail
       qsort(l, Files.name_cmp)
       set_selection_list(l)
       if i := Positions{(!l).name, \child} then
@@ -527,7 +543,7 @@ package class FileTrailList(ButtonOnlyList)
       clear_constraints()
       b.set_border_whilst_entered(&yes).
          set_border(CompoundBorder().
-                          set_outer(FileTrailBorder().set_line_width(1)).
+                          set_outer(FileTrailBorder().set_line_width(Gui.FINE_WIDTH)).
                           set_inner(EmptyBorder().
                                     set_l_inset(Gui.TEXT_INSET).
                                     set_r_inset(Gui.TEXT_INSET)))
@@ -576,23 +592,24 @@ class FileTrail(Component)
    # Go through the children to see at what point one cannot be fully
    # displayed, and adjust accordingly to show a "..." element.
    private check_limits()
-      local c, i, r
+      local c, i, r, spc
       every c := children[i := 1 to *children] do {
          # Calculate the intersection with this component - may fail
          # if the child is completely obscured.
          r := intersect(c) | &null
          if /r | (r.w < c.w) then {
             # c is fully or partially obscured; everything to the
-            # right of c is fully obscured.
+            # right of c is fully obscured, everything to the left is
+            # fully visible.
             if is(c, FileTrailList) then {
                # c is a FileTrailList element; hide it and set the
-               # FileTrailButton to the left (if any) to show "..."
+               # FileTrailButton to the left (if any) to end with "..."
                c.set_is_hidden(&yes)
                children[i - 1].set_dots(&yes)
-            } else if (\r).w > c.border.l_inset + cbwin.text_width("...") then {
+            } else if (spc := (\r).w - (c.border.l_inset + cbwin.text_width("..."))) > 0 then {
                # c is a FileTrailButton and has enough room to show
-               # the "..." itself
-               c.set_dots(&yes)
+               # the "..." itself, and perhaps some of the filename.
+               c.set_dots(&yes, spc)
             } else {
                # c is a FileTrailButton but hasn't enough room to show
                # the "..." itself.  So hide it, the FileTrailList to
@@ -620,11 +637,11 @@ class FileTrail(Component)
       every i := 2 to f.size() do {
          g := f.slice(1, i)
          if i > 2 then
-            add(FileTrailButton(g))
+            add(FileTrailButton(g, f.slice(i - 1, 0).ucs()))
          add(FileTrailList(g, f.get(i)))
       }
       if f.size() > 1 then
-         add(FileTrailButton(f))
+         add(FileTrailButton(f, f.get(-1)))
       # The rightmost element takes up the rest of the space to give
       # left alignment.
       add(FileTrailList(f).

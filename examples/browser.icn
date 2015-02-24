@@ -213,10 +213,9 @@ $endif
       np := if is(tabs.children[-1], DownloadTab) then -1 else 0
       bt := BrowserTab(self, url, referer_url, tabs.which_one).
          set_is_hidden(&yes)
-      tabs.
-         add(bt, np).
-         do_layout().
-         invalidate()
+      tabs.add(bt, np)
+      if is_live() then
+         tabs.do_layout().invalidate()
       if \sel then {
          tabs.set_which_one(bt)
          update_grey()
@@ -236,7 +235,19 @@ $endif
    private on_new_tab(ev)
       new_tab(settings.home_url,, 1)
    end
+
+   private on_clone_tab(ev)
+      local curr, t
+      curr := tabs.which_one
+      t := new_tab(,, 1)
+      t.browser.clone_history(curr.browser)
+   end
    
+   private on_xdg_refresh(ev)
+      Xdg.refresh()
+      tabs.which_one.msg("XDG database reloaded", 3000)
+   end
+
    private list_visited()
       local s, e, n
       s := "<html><title>Visited</title>" || Browser.get_table_tag() || ""
@@ -429,8 +440,9 @@ $endif
       return \d.result
    end
 
-   public new(url, cookies, settings)
-      local quit_menu_item, menu_bar, file_menu, bt, new_tab_item
+   public new(cookies, settings)
+      local quit_menu_item, menu_bar, file_menu, new_tab_item, 
+         clone_tab_item, xdg_refresh_item
       Dialog.new()
       self.settings := settings
       self.visited_set := set()
@@ -452,6 +464,12 @@ $endif
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
          set_paint_mid(TextPaint("New Tab"))
+      clone_tab_item := TextMenuItem().
+         connect(on_clone_tab, Event.ACTION).
+         set_paint_mid(TextPaint("Clone Tab"))
+      xdg_refresh_item := TextMenuItem().
+         connect(on_xdg_refresh, Event.ACTION).
+         set_paint_mid(TextPaint("Refresh XDG"))
       quit_menu_item := TextMenuItem().
          connect(on_quit, Event.ACTION).
          set_paint_mid(TextPaint("Quit"))
@@ -459,6 +477,8 @@ $endif
          set_accel("f").
          set_label("File").
          add(new_tab_item).
+         add(clone_tab_item).
+         add(xdg_refresh_item).
          add(quit_menu_item)
       page_menu := PageMenu().
          set_accel("p").
@@ -475,7 +495,6 @@ $endif
          add(file_menu).
          add(page_menu)
       self.add(menu_bar)
-      bt := BrowserTab(self, url)
       downloads := DownloadTab()
       tabs := TabSet().
          set_size(scale(200), scale(150)).
@@ -488,9 +507,7 @@ $endif
          set_constraint("r_inset", 0).
          set_constraint("t_inset", 0).
          set_constraint("b_inset", 0).
-         add(bt).
          add(downloads).
-         set_which_one(bt).
          connect(on_tab_changed, Event.SELECTION_CHANGED).
          set_remember_focus(&yes).
          set_draggable_tabs(&yes).
@@ -498,7 +515,6 @@ $endif
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
       self.set_layout(GridLayout().set_extra("cells"))
-      self.set_focus(bt.url_field.find_focus())
       set_label("Browser")
       return
    end
@@ -987,9 +1003,9 @@ class URLList(SelectableScrollArea)
       use {
          W := view.cbwin.clone().set_font(TITLE_FONT),
          {
-            v := W.get_font_height()
+            v := W.get_line_height()
             W.set_font(URL_FONT)
-            v +:= W.get_font_height()
+            v +:= W.get_line_height()
          }
       }
       return v
@@ -1007,16 +1023,14 @@ class URLList(SelectableScrollArea)
       use {
          W := view.cbwin.clone().set_font(TITLE_FONT),
          {
-            draw_string_ex(W, 
-                           xp + Gui.TEXT_INSET, 
-                           yp, 
-                           limit_text(W, \contents[i].title, view.w - 2 * Gui.TEXT_INSET))
-            yp +:= W.get_font_height()
+            W.draw_string(xp + Gui.TEXT_INSET, 
+                          yp + W.get_line_ascent(), 
+                          limit_text(W, \contents[i].title, view.w - 2 * Gui.TEXT_INSET))
+            yp +:= W.get_line_height()
             W.set_font(URL_FONT).set_fg("blue")
-            draw_string_ex(W, 
-                           xp + Gui.TEXT_INSET, 
-                           yp, 
-                           limit_text(W, u"    " || contents[i].url.liberal_ucs(), view.w - 2 * Gui.TEXT_INSET))
+            W.draw_string(xp + Gui.TEXT_INSET, 
+                          yp + W.get_line_ascent(), 
+                          limit_text(W, u"    " || contents[i].url.liberal_ucs(), view.w - 2 * Gui.TEXT_INSET))
          }
       }
    end
@@ -1032,6 +1046,8 @@ class URLEditList(IndependentEditList)
    end
 
    public create_popup()
+      set_selection_list(copy(parent.browser.history))
+      set_selection(parent.browser.history_pos)
       return URLList()
    end
 end
@@ -1065,9 +1081,9 @@ class TabHeaderPaint(Paint)
          icon_win.copy_to(,,,, W, x, y + (h - icon_win.get_height()) / 2)
          x +:= icon_win.get_width() + Gui.TEXT_INSET
          w -:= icon_win.get_width() + Gui.TEXT_INSET
-         draw_string_ex(W, x, y, limit_text(W, str, w))
+         W.draw_string(x, y + W.get_font_ascent(), limit_text(W, str, w))
       } else
-         draw_string_ex(W, x, y, limit_text(W, str, w))
+         W.draw_string(x, y + W.get_font_ascent(), limit_text(W, str, w))
    end
 
    public label_will_fit(W, w)
@@ -1374,7 +1390,7 @@ class BrowserTab(TabItem, BrowserUI)
    public update_grey(gs)
       set_is_shaded_ex(prev_button, gs.prev)
       set_is_shaded_ex(next_button, gs.nxt)
-      set_is_shaded_ex(refresh_button, gs.history)
+      set_is_shaded_ex(refresh_button, gs.refresh)
       set_is_shaded_ex(url_field.b, gs.history)
       set_is_shaded_ex(stop_button, gs.stop)
    end
@@ -1483,9 +1499,7 @@ class BrowserTab(TabItem, BrowserUI)
          if ru ~=== browser.page_url then
             parent_dialog.update_visited(ru, browser.page_title)
       }
-      url_field.
-         set_contents(browser.curr_history_entry.url.liberal_ucs()).
-         object_set_selection(browser.curr_history_entry)
+      url_field.set_contents(browser.curr_history_entry.url.liberal_ucs())
       set_title(browser.page_title)
       parent_dialog.set_focus(browser.find_focus())
       update_search_state()
@@ -1547,7 +1561,7 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    private on_stop(ev)
-      browser.cancel()
+      browser.do_stop()
    end
 
    private on_home(ev)
@@ -1582,6 +1596,7 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public new(browser_dialog, url, referer_url, revert_tab)
+      local b
       TabItem.new()
       self.revert_tab := revert_tab
       set_label_border(EmptyBorder().set_x_align(Align.L))
@@ -1601,11 +1616,12 @@ class BrowserTab(TabItem, BrowserUI)
       theme_toolbar_button(search_next_button, "go-next")
       theme_toolbar_button(increase_font_button, "format-font-size-more")
       theme_toolbar_button(decrease_font_button, "format-font-size-less")
-      url_field.set_selection_list(browser.history)
+      # Narrow border around outermost TextFlow
+      b := scale(2)
       browser.
          set_ui(self).
          set_worker_pool(browser_dialog.pool).
-         set_outermost_border(EmptyBorder().set_insets(2, 2, 2, 2)).
+         set_outermost_border(EmptyBorder().set_insets(b, b, b, b)).
          set_font_factor(browser_dialog.settings.font_factor)
       browser.goto(\url, referer_url)
       return
@@ -1786,7 +1802,7 @@ class BrowserTab(TabItem, BrowserUI)
 end
 
 procedure main(a)
-   local d, url, cookies_file, cookies, bak, settings, settings_file, home
+   local d, url, cookies_file, cookies, bak, settings, settings_file, home, s
    opts := options(a, "-k: -l! -agent: -v!")
    home := FilePath(Xdg.ensure_data_home()) | stop("Couldn't access data dir: ", &why)
    settings_file := home.child("oibrowser").str()
@@ -1800,11 +1816,16 @@ procedure main(a)
       name_image("rpp.CLEAR_24", CLEAR).
       name_image("rpp.FONT_24", FONT)
    insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(BROWSER_LOGO))
-   url := if *a = 0 then
-      settings.home_url
-   else
-      URL(ucs(a[1])) | stop("Invalid url")
-   d := BrowserDialog(url, cookies, settings)
+   d := BrowserDialog(cookies, settings)
+   if *a = 0 then
+      d.new_tab(settings.home_url)
+   else {
+      every s := !a do {
+         url := URL(ucs(s)) | stop("Invalid url: ", s)
+         d.new_tab(url)
+      }
+   }
+   d.set_focus(d.tabs.children[1].url_field.find_focus())
    d.show_modal()
    # Save cookies
    bak := cookies_file || ".bak"

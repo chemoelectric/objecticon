@@ -14,7 +14,7 @@ package gui
 #
 class TextList(SelectableScrollArea)
    public calculate_line_height()
-      return view.cbwin.get_font_height()
+      return view.cbwin.get_line_height()
    end
 
    public calculate_subject_width()
@@ -29,7 +29,9 @@ class TextList(SelectableScrollArea)
       # Cosmetic - add a little to the left of xp; this looks better 
       # with the cursor, selection and highlight.
       #
-      draw_string_ex(view.cbwin, xp + Gui.TEXT_INSET, yp, detab(contents[i]))
+      view.cbwin.draw_string(xp + Gui.TEXT_INSET, 
+                             yp + view.cbwin.get_line_ascent(),
+                             detab(contents[i]))
    end
 end
 

@@ -532,12 +532,15 @@ class Dialog(Component)
    # This is useful, for example, if a component in the point chain
    # has been removed.
    #
-   public resynch_pointer()
-      if \point_chain_source then {
+   public resynch_pointer() 
+      if \popup_manager then
+         popup_manager.resynch_pointer()
+      else if \point_chain_source then {
          create_point_chain(point_chain_source)
-         generate_crossing_events(point_chain_source) 
+         every (back(\popups) | self).generate_crossing_events(point_chain_source) 
          synch_pointer(point_chain_source)
       }
+      return self
    end
 
    private create_point_chain(e)
@@ -632,16 +635,20 @@ class Dialog(Component)
 
    public own_selection(selection, obj)
       local curr
-      if curr := member(selections, selection) then {
-         # Check if current owner is asserting selection.
-         if curr ~=== obj then {
-            curr.lost_ownership()
+      if \popup_manager then
+         popup_manager.own_selection(selection, obj)
+      else {
+         if curr := member(selections, selection) then {
+            # Check if current owner is asserting selection.
+            if curr ~=== obj then {
+               curr.lost_ownership()
+               insert(selections, selection, obj)
+            }
+         } else
             insert(selections, selection, obj)
-         }
-      } else
-         insert(selections, selection, obj)
-      obj.reset_timestamp()
-      win.own_selection(selection)
+         obj.reset_timestamp()
+         win.own_selection(selection)
+      }
       return self
    end
 
@@ -678,8 +685,7 @@ class Dialog(Component)
                   break
             }
 
-            every back(\popups).process_event1(e)
-            process_event1(e)
+            every (back(\popups) | self).process_event1(e)
          }
       }
    end

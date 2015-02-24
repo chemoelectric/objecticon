@@ -53,12 +53,12 @@ class TextPaint(Paint)
 
    public initially(c, accel)
       self.accel := accel
-      self.h := c.cbwin.get_font_height()
+      self.h := c.cbwin.get_line_height()
       self.w := c.cbwin.text_width(str)
    end
 
    public draw(W, x, y)
-      draw_string_ex(W, x, y, str, accel)
+      draw_string_ex(W, x, y + W.get_line_ascent(), str, accel)
    end
 
    # Create a new instance.
@@ -78,12 +78,12 @@ class AbbreviatedTextPaint(Paint)
 
    public initially(c, accel)
       self.accel := accel
-      self.h := c.cbwin.get_font_height()
+      self.h := c.cbwin.get_line_height()
       self.w := c.cbwin.text_width(str)
    end
 
    public draw(W, x, y, w)
-      draw_string_ex(W, x, y, limit_text(W, str, w), accel)
+      draw_string_ex(W, x, y + W.get_line_ascent(), limit_text(W, str, w), accel)
    end
 
    # Create a new instance.
@@ -354,7 +354,7 @@ class GridPaint(Paint)
             Align.C : y + (curr_cell.obj[lno].h - win.get_font_height()) / 2
             Align.B : y + curr_cell.obj[lno].h - win.get_font_height()
          }
-         draw_string_ex(win, x, y1, s, accel)
+         draw_string_ex(win, x, y1 + win.get_font_ascent(), s, accel)
          # Just print the accelerator once.
          if upto(\accel, map(s)) then
             accel := &null

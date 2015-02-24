@@ -175,6 +175,7 @@ word memcushion = RegionCushion;	/* memory region cushion factor */
 word memgrowth = RegionGrowth;		/* memory region growth factor */
 float defaultfontsize = 12.0;
 char *defaultfont = "fixed";
+float defaultleading = 0.0;
 
 word dodump = 1;			/* if zero never core dump;
                                          * if 1 core dump on C-level internal error (call to syserr)
@@ -1314,6 +1315,7 @@ int main(int argc, char **argv)
     env_uword(OISTKLIM, &stacklim, 1024, MaxUWord);
     env_word(OISTKCUSHION, &stackcushion, 0, 10000);
     env_float(OIFONTSIZE, &defaultfontsize, MIN_FONTSIZE, 1e32);
+    env_float(OILEADING, &defaultleading, 0.0, 1e32);
     t = getenv(OIFONT);
     if (t)
         defaultfont = salloc(t);

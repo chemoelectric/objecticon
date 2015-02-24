@@ -236,7 +236,6 @@ typedef struct _wfont {
   char	        *name;			/* name for WAttrib and fontsearch */
   int           ascent;                 /* font dimensions */
   int           descent;
-  int		height;			
   int           maxwidth;               /* max width of one char */
 #if XWindows
   XftFont     * fsp;
@@ -338,6 +337,7 @@ typedef struct _wcontext {
   int		clipx, clipy, clipw, cliph;
   wfp		font;
   int		dx, dy;
+  float         leading;
 #if XWindows
   wdp		display;
   struct SharedColor *fg, *bg;

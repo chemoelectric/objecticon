@@ -1009,7 +1009,7 @@ void drawstring(wbp w, int x, int y, char *str, int slen)
                p.x, 
                p.y, 
                stringnwidth(wc->font->font, str, slen) + wc->font->font->width,   /* Add 1xwidth for italics */
-               wc->font->height);
+               wc->font->ascent + wc->font->descent);
     unclip(w);
     flushimage(display, 1);
 }
@@ -1040,7 +1040,7 @@ void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
                p.x, 
                p.y, 
                runestringnwidth(wc->font->font, r, nchars) + wc->font->font->width,   /* Add 1xwidth for italics */
-               wc->font->height);
+               wc->font->ascent + wc->font->descent);
     unclip(w);
     flushimage(display, 1);
     free(r);
@@ -1192,7 +1192,6 @@ static wfp load_font(char *s)
     sprint(rv->name, "p9:%s", s);
     rv->ascent = f->ascent;               /* font dimensions */
     rv->descent = f->height - f->ascent;
-    rv->height = f->height;
     rv->maxwidth = f->width;               /* max width of one char */
     rv->font = f;
     rv->next = fonts[i];
@@ -2176,6 +2175,7 @@ static wcp clonecontext(wcp src)
     GAlloc(wc, _wcontext);
     wc->dx = src->dx;
     wc->dy = src->dy;
+    wc->leading = src->leading;
     wc->clipx = src->clipx;
     wc->clipy = src->clipy;
     wc->clipw = src->clipw;

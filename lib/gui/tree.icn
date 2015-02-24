@@ -353,7 +353,7 @@ class Tree(BaseTree)
       local res
       if /col_w then
          compute_img_wh()
-      res:= view.cbwin.get_font_height()
+      res:= view.cbwin.get_line_height()
       #
       # Ensure the line height is slightly greater than the
       # bitmap height
@@ -381,10 +381,11 @@ class Tree(BaseTree)
    end
 
    public draw_node_data(n, xp, yp)
-      draw_string_ex(view.cbwin, 
-                     xp + Gui.TEXT_INSET,
-                     yp + (self.line_height - view.cbwin.get_font_height()) / 2,
-                     n.label)
+      local W
+      W := view.cbwin
+      W.draw_string(xp + Gui.TEXT_INSET,
+                    yp + W.get_line_ascent() + (line_height - W.get_line_height()) / 2,
+                    n.label)
    end
 end
 

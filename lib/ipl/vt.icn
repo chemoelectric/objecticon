@@ -19,15 +19,15 @@ package class PopupElementItemPaint(ItemPaint)
    end
 
    public get_constant_height(W)
-      return W.get_font_height()
+      return W.get_line_height()
    end
 
    public get_size(W, data)
-      return Size(W.text_width(data.label), W.get_font_height())
+      return Size(W.text_width(data.label), W.get_line_height())
    end
 
    public draw(W, data, x, y)
-      draw_string_ex(W, x, y, data.label)
+      W.draw_string(x, y + W.get_line_ascent(), data.label)
    end
 end
 
@@ -135,6 +135,7 @@ abstract class VtUI()
    public abstract create_context_menu()
    public abstract send_tty(s)
    public abstract vt_size_changed(cols, rows)
+   public abstract process_command(args)
    public abstract msg(s, n)
    public abstract clear_msg()
 end
@@ -192,7 +193,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       attr,
       saved_cursor,               # A SavedCursor instance for implementing decset 1048
       saved_buffer,               # A SavedBuffer instance for implementing decset 1049
-      popup_ev,
       popup,
       quieten                     # A flag to stop distracting in_chain cursor updates
 
@@ -205,7 +205,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       mark_x,
       mark_y,
       char_w,                     # Character width dimensions of the font in use.
-      char_h,
       rows,                       # Size of the emulated screen
       cols,
       cx,                         # The cursor position (in screen co-ordinates)
@@ -217,6 +216,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       insert_mode,
       wraparound_mode,
       col_mode,
+      allow_80_132_mode,
       application_keypad_mode,
       application_cursor_mode,
       hide_cursor_mode,
@@ -338,31 +338,44 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public get_default_height()
-      return predict_total_height(25 * char_h)
+      return predict_total_height(25 * get_line_height())
    end
 
    private check_changed_size()
       local old_cols, old_rows
-      old_cols := cols
-      old_rows := rows
+      old_cols := \cols | 0
+      old_rows := \rows | 0
       cols := (predict_view_width(w, if history_size > 0 then &yes else &no) - 2 * Gui.TEXT_INSET) / char_w
       cols >:= \col_mode
       cols <:= 16
-      rows := predict_view_height(h) / char_h
+      rows := predict_view_height(h) / get_line_height()
       rows <:= 1
-      if old_cols ~=== cols | old_rows ~=== rows then {
+      if old_cols ~= cols | old_rows ~= rows then {
          cx >:= cols + 1
-         cy >:= rows
-         (\ui).vt_size_changed(cols, rows)
-         if *contents < rows then {
-            while *contents < rows do {
-               put(contents, Row(, attr.bg))
-               #cy +:= 1
+         ui.vt_size_changed(cols, rows)
+         # The objective is to leave the value of cy_to_index() unchanged as we adjust *contents, rows and cy.
+         # Say the old is i1 = *c1 - rows1 + cy1; the new is i2 = *c2 - rows2 + cy2
+         if rows < old_rows then {
+            if cy <= rows then {
+               # We leave cy unchanged so for i1 = i2, *c1 - *c2 = rows1 - rows2
+               # So we pull (old_rows - rows) rows from the end.
+               every 1 to old_rows - rows do
+                  content_delete(*contents)
+            } else {
+               # Since cy is now out of range, we must set it.  So cy2 = rows2.  So i2 = *c2, and for i1 = i2,
+               # *c1 - *c2 = rows1 - cy1 (ie the old distance to the end of the screen).
+               # So we pull (old_rows - cy) rows from the end.
+               every 1 to old_rows - cy do
+                  content_delete(*contents)
+               cy := rows
             }
+         } else {
+            # rows >= old_rows, so we leave cy2 = cy1.  for i1 = i2, *c2 - *c1 = rows2 - rows1.  So we
+            # add (rows - old_rows) new rows to the end.
+            every 1 to rows - old_rows do
+               put(contents, Row(, attr.bg))
          }
          trim_history()
-         trim_screen()
-         clear_mark()
          reset_margins()
          reset_tab_stops()
          invalidate_line_count()
@@ -379,9 +392,8 @@ class Vt(LineBasedScrollArea, MenuMode)
       setup_font() | runerr("font not in required format", self)
       LineBasedScrollArea.initially()
       cursor_ticker.start()
-      char_w := cbwin.text_width("m")
-      (char_w = cbwin.text_width("i")) | runerr("font is not monospace", self)
-      char_h := cbwin.get_font_height()
+      char_w := view.cbwin.text_width("m")
+      (char_w = view.cbwin.text_width("i")) | runerr("font is not monospace", self)
    end
 
    private setup_font()
@@ -418,6 +430,10 @@ class Vt(LineBasedScrollArea, MenuMode)
       return self
    end
 
+   private static is_partial_utf8(s)
+      return *s < (5 > Text.get_utf8_seq_len(s[1]))
+   end
+
    private wait_for_buff()
       local i
       while *buff = 0 do {
@@ -434,13 +450,12 @@ class Vt(LineBasedScrollArea, MenuMode)
             i -:= 1
          # Now got[i:0] gives us the last utf-8 char or part of it.
          # Split got into got and part_ch, depending on whether the
-         # last utf-8 sequence is complete or not.
-         if ucs(got[i:0]) then 
-            part_ch := ""
-         else {
+         # last utf-8 sequence is partial or not.
+         if is_partial_utf8(got[i:0]) then {
             part_ch := got[i:0]
             got := got[1:i]
-         }
+         } else
+            part_ch := ""
          buff := Text.liberal_ucs(got)
          got := ""
        }
@@ -475,7 +490,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       local c
       repeat {
          c := get_chs()
-         quieten_cursor()
          case string(c) of {
             "\r" : do_cr()
             "\n" : do_nl()
@@ -487,6 +501,7 @@ class Vt(LineBasedScrollArea, MenuMode)
             "\^n" : do_set_charset(2)
             default: do_default_str(apply_charset(c, curr_charset))
          }
+         parent_dialog.resynch_pointer()
       }
    end
 
@@ -567,6 +582,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          "m" : every do_set_attr(int_params(param, 0))
          "!L" : do_set_link(param)
          "!P" : do_popup(param)
+         "!C" : do_command(param)
          "A" : do_cursor_up(int_param(param, 1, 1))
          "B" : do_cursor_down(int_param(param, 1, 1))
          "C" : do_cursor_right(int_param(param, 1, 1))
@@ -626,12 +642,16 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_soft_reset()
-      #write("soft reset")
       reset_term()
    end
 
+   private do_full_reset()
+      reset_term()
+      do_erase_all()
+      move_cursor(1, 1)
+   end
+
    private do_dec_set(n)
-      #write("decset:",n)
       case n of {
          1 : do_application_cursor_keys_mode(&yes)
          3 : set_col_mode(132)
@@ -639,13 +659,13 @@ class Vt(LineBasedScrollArea, MenuMode)
          6 : origin_mode := &yes
          7 : wraparound_mode := &yes
          25 : do_hide_cursor(&no)
+         40 : allow_80_132_mode := &yes
          1047 | 1049 : do_use_alternate_buffer()
          1048 : do_save_cursor()
       }
    end
 
    private do_dec_reset(n)
-      #write("decreset:",n)
       case n of {
          1 : do_application_cursor_keys_mode(&no)
          3 : set_col_mode(80)
@@ -653,6 +673,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          6 : origin_mode := &no
          7 : wraparound_mode := &no
          25 : do_hide_cursor(&yes)
+         40 : allow_80_132_mode := &no
          1047 | 1049 : do_use_normal_buffer()
          1048 : do_restore_cursor()
       }
@@ -680,11 +701,10 @@ class Vt(LineBasedScrollArea, MenuMode)
       saved_buffer := &null
       # Trim in case the screen size changed during the alternate
       # buffer.  (No change may be noticed when we call
-      # check_changed_size() via compute_and_invalidated(); this would
+      # check_changed_size() via compute_and_invalidate(); this would
       # certainly be the case if there is no scrollbar in normal
       # mode).
       trim_history()
-      trim_screen()
       invalidate_line_count()
       compute_and_invalidate()
    end
@@ -695,6 +715,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private set_col_mode(n)
+      \allow_80_132_mode | fail
       col_mode := n
       do_erase_all()
       move_cursor(1, 1)
@@ -738,6 +759,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       wraparound_mode := &yes
       cx := cy := 1
       col_mode := &no
+      allow_80_132_mode := &no
       reverse_mode := &no
       insert_mode := &no
       application_keypad_mode := &no
@@ -801,7 +823,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private do_send_primary_device_attrs(n)
       case n of {
-         0 : send("\e[?1;2c")
+         0 : send("\e[?1;2;75c")
       }
    end
 
@@ -993,7 +1015,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
       if \x then {
          x <:= 1
-         #x >:= cols
          cx := x
       }
       cx >:= cols
@@ -1026,23 +1047,36 @@ class Vt(LineBasedScrollArea, MenuMode)
       move_cursor(cx - n)
    end
 
+   private static decode_list(l)
+      local s, t
+      t := []
+      every s := !l do
+         put(t, ucs(URL.percent_decode(s))) | fail
+      return t
+   end
+
+   private do_command(l)
+      if *l > 0 then
+         ui.process_command(decode_list(l))
+   end
+
    private do_popup(l)
       local t, e, px, py, info
-      # Validate params; must be even number, and no empty ones.
+      # Validate params; must be ucs encoded list, even number, and no empty ones.
+      l := decode_list(l) | fail
       if (*l % 2 ~= 0) | /!l then
          fail
       t := []
       e := create !l
-      while put(t, PopupElement(ucs(URL.percent_decode(@e)),
-                                ucs(URL.percent_decode(@e))))
+      while put(t, PopupElement(@e, @e))
       (*t > 0) | fail
       info := get_line_info() | fail
       px := view.x + Gui.TEXT_INSET + (cx - 1) * char_w + Gui.TEXT_INSET
       info := get_line_info() | fail
-      py := view.y - info.offset + (cy_to_index() - info.first) * char_h
+      py := view.y - info.offset + (cy_to_index() - info.first) * line_height
       # Ensure cursor is entirely within view
-      (view.y <= py & py + char_h - 1 < view.y + view.h) | fail
-      #write(view.y,"-",view.y+view.h," -v-",py, " view.h=",view.h, " char_h=",char_h,"  lines=",rows)
+      (view.y <= py & py + line_height - 1 < view.y + view.h) | fail
+      #write(view.y,"-",view.y+view.h," -v-",py, " view.h=",view.h, " line_height=",line_height,"  lines=",rows)
       # Get perfect alignment with between the cursor line and the first line in the popup.
       py -:= Gui.BORDER_WIDTH
       open_popup(px, py, t)
@@ -1069,7 +1103,8 @@ class Vt(LineBasedScrollArea, MenuMode)
    # ESC[{n}m
    private do_set_attr(n)
       if n = 0 then
-         attr := EMPTY_ATTR
+         # Keep just the url setting.
+         attr := Attr(,,,,,,,, attr.url)
       else {
          attr := copy(attr)
          case n of {
@@ -1100,20 +1135,20 @@ class Vt(LineBasedScrollArea, MenuMode)
             30: attr.fg := "black"
             31: attr.fg := "red"
             32: attr.fg := "dark green"
-            33: attr.fg := "yellow"
+            33: attr.fg := "dark yellow"
             34: attr.fg := "blue"
             35: attr.fg := "purple"
-            36: attr.fg := "cyan"
+            36: attr.fg := "dark cyan"
             37: attr.fg := "pale gray"
             39: attr.fg := &null
 
             40: attr.bg := "black"
             41: attr.bg := "red"
             42: attr.bg := "dark green"
-            43: attr.bg := "yellow"
+            43: attr.bg := "dark yellow"
             44: attr.bg := "blue"
             45: attr.bg := "purple"
-            46: attr.bg := "cyan"
+            46: attr.bg := "dark cyan"
             47: attr.bg := "pale gray"
             49: attr.bg := &null
          }
@@ -1142,6 +1177,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          "o" : do_set_charset(4)
          "N" : do_single_shift(3)
          "O" : do_single_shift(4)
+         "c" : do_full_reset()
          default : if \verbose_flag then write("Unknown ESC char: ", c)
       }
    end
@@ -1218,12 +1254,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       view.invalidate()
    end
 
-   # Trim the contents of the screen to be within cols; caller must
-   # clear mark and invalidate view.
-   private trim_screen()
-      every truncate(contents[row_to_index(1) to *contents].l, cols)
-   end
-
    # Trim the history list so that it is within range; caller must
    # invalidate line count.
    private trim_history()
@@ -1231,13 +1261,12 @@ class Vt(LineBasedScrollArea, MenuMode)
       \rows | fail
       n := *contents - (rows + history_size)
       (n > 0) | fail
-      #write("trimming ",n)
       every 1 to n do
          content_delete(1)
       # Adjust the vsb so that if we are above the bottom then the
       # line we're looking at stays the same.
       if not at_bottom() then
-         vsb.set_value(vsb.value - n * char_h)
+         vsb.set_value(vsb.value - n * line_height)
    end
 
    private scroll_up(r, n)
@@ -1276,7 +1305,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
-   # Delete a line from the content; the caller must invalidate the view
+   # Add a line to the content; the caller must invalidate the view
    private content_insert(i)
       insert(contents, i, Row(, attr.bg))
       if \mark_y then {
@@ -1450,7 +1479,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public calculate_line_height()
-      return char_h
+      return view.cbwin.get_line_height()
    end
 
    public calculate_subject_width()
@@ -1493,7 +1522,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private draw_line(xp, yp, i)
       local s, ss, row, seg, x1, W, W2, fg, bg, w1, want_fg, want_bg, want_font,
-         default_bg, default_fg, default_font, a, r, font
+         default_bg, default_fg, default_font, a, r, font, y1
 
       # Don't draw partial lines at the top, since this looks poor
       # when running full-screen editing style apps (eg emacs)
@@ -1505,6 +1534,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
       xp +:= Gui.TEXT_INSET
       x1 := xp
+      y1 := yp + view.cbwin.get_absolute_leading()
       W := view.cbwin.clone()
       bg := W.get_bg()
       fg := W.get_fg()
@@ -1535,34 +1565,34 @@ class Vt(LineBasedScrollArea, MenuMode)
          }
          w1 := char_w * *ss
          if bg ~=== default_bg then
-            W.erase_area(x1, yp, w1, char_h)
+            W.erase_area(x1, yp, w1, line_height)
 
          if /a.invisible then
-            draw_string_ex(W, x1, yp, ss)
+            W.draw_string(x1, yp + W.get_line_ascent(), ss)
 
          if \a.underline then
-            W.draw_rectangle(x1, yp + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+            W.draw_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
          else if \a.url ~=== last_highlight then
             use { 
                W2 := W.clone(),
                W2.set_fg(EditRGBA(fg,,,, 16000)).      # 25% alpha of the current fg.
-                  draw_rectangle(x1, yp + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+                  draw_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
             }
 
          if \a.crossed then
-            W.draw_rectangle(x1, yp + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
+            W.draw_rectangle(x1, y1 + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
 
          if \a.url === last_highlight then
-            Gui.style.draw_dashed_rectangle(W, x1, yp, w1, char_h)
+            Gui.style.draw_dashed_rectangle(W, x1, yp, w1, line_height)
          if \a.url === over then
-            Gui.style.fill_over_rectangle(W, x1, yp, w1, char_h)
+            Gui.style.fill_over_rectangle(W, x1, yp, w1, line_height)
 
          x1 +:= w1
       }
 
       if \row.bg ~=== default_bg then {
          w1 := xp + cols * char_w - x1
-         W.set_bg(row.bg).erase_area(x1, yp, w1, char_h)
+         W.set_bg(row.bg).erase_area(x1, yp, w1, line_height)
       }
       W.close()
 
@@ -1593,13 +1623,13 @@ class Vt(LineBasedScrollArea, MenuMode)
             if cursor_on ~= 2 then
                Gui.style.draw_text_cursor(view.cbwin,
                                           xp + (cx - 1) * char_w,
-                                          yp, 
-                                          line_height)
+                                          y1, 
+                                          view.cbwin.get_font_height())
          } else 
             Gui.style.draw_shadow_text_cursor(view.cbwin,
                                               xp + (cx - 1) * char_w,
-                                              yp, 
-                                              line_height)
+                                              y1, 
+                                              view.cbwin.get_font_height())
       }
    end
 
@@ -1617,7 +1647,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private clear_mark()
-      mark_x := mark_y := &null
+      text_selection := mark_x := mark_y := &null
       return self
    end
 
@@ -1722,38 +1752,8 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
-   private handle_default(e)
-      local ch
-      ch := e.code
-      if type(ch) == ("string" | "ucs") then {
-         if \e.meta then
-            ch := "\e" || ch
-         send(ch)
-      }
-   end
-
    private send(s)
       ui.send_tty(s)
-   end
-
-   private handle_key(e, src, ty)
-      if /popup then
-         handle_normal_key(e)
-      else
-         handle_popup_key(e, src, ty)
-   end
-
-   private handle_popup_key(e, src, ty)
-      if e === popup_ev then
-         fail
-      if member(Key.NAVIGATE ++ set("\r"), e.code) then
-         (\popup).fire(ty, e)
-      else if e.code === "\e" then
-         close_all()
-      else if type(e.code) == ("string" | "ucs") then {
-         close_all()
-         handle_normal_key(e)
-      }
    end
 
    public handle_paste(e)
@@ -1774,11 +1774,21 @@ class Vt(LineBasedScrollArea, MenuMode)
          parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
    end
 
+   private handle_default_key(e)
+      local ch
+      ch := e.code
+      if type(ch) == ("string" | "ucs") then {
+         ch := text_convert(ch, "ucs") | fail
+         if \e.meta then
+            ch := u"\e" || ch
+         send(ch)
+         quieten_cursor()
+         goto_bottom()
+      }
+   end
+
    private handle_special_key(e)
       case e.code of {
-         # Prevent the pressing of the shift key calling goto_bottom()
-         Key.SHIFT_L | Key.SHIFT_R : 
-            return
          # Standard navigation if shift is pressed
          Key.HOME | Key.END | Key.PGUP | Key.PGDN : if \e.shift then {
             on_default_key(e)
@@ -1800,23 +1810,39 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
-   private handle_normal_key(e)
+   private handle_table_key(e)
       local i, ke
-      #write(to_string(e))
-      if handle_special_key(e) then
-         return
-      goto_bottom()
       i := 0
       if \e.shift then i +:= S
       if \e.ctrl then i +:= C
       if \e.meta then i +:= A
       if \application_keypad_mode then i +:= K
       if \application_cursor_mode then i +:= U
-      if ke := KEY_TABLE.lookup(e.code, i) then  {
-         #write("Lookup: ", image(e.code), " i=",i," -> ", image(ke))
+      if ke := KEY_TABLE.lookup(e.code, i) then {
          send(ke.str)
-      } else
-         handle_default(e)
+         quieten_cursor()
+         goto_bottom()
+         return
+      }
+   end
+
+   private handle_popup_key(e, src, ty)
+      \popup | fail
+      if member(Key.NAVIGATE ++ set("\r"), e.code) then {
+         (\popup).fire(ty, e)
+         return
+      } else if e.code === "\e" then {
+         close_all()
+         return
+      } else if type(e.code) == ("string" | "ucs") then {
+         # A char has been pressed; close popup, fail, and so "fall
+         # through" to the other key handlers
+         close_all()
+      }
+   end
+
+   private handle_key(e, src, ty)
+      handle_popup_key(e, src, ty) | handle_special_key(e) | handle_table_key(e) | handle_default_key(e)
    end
 
    private invalidate_link(l)
@@ -1887,6 +1913,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          set_highlight(over)
          held := over
       } else {
+         goto_bottom()
          parent_dialog.request_selection(Selection.PRIMARY, 
                                          [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
                                          handle_mpress_response, 
@@ -1983,6 +2010,11 @@ class Vt(LineBasedScrollArea, MenuMode)
       invalidate_line(cy_to_index())
    end
 
+   public focus_changed(e) 
+      if is_live() then
+         invalidate_cursor()
+   end
+
    private handle_lpress1(e)
       local s
       invalidate_region()
@@ -2053,9 +2085,9 @@ class Vt(LineBasedScrollArea, MenuMode)
    private quieten_cursor()
       (/quieten & *parent_dialog.held = 0) | fail
       set_over()
+      # No need to synch_pointer since we call this method out of the
+      # keyboard handler.
       view.set_pointer("xterm")
-      # Synch pointer since this call doesn't come from an event.
-      parent_dialog.synch_pointer()
       quieten := 1
    end
 

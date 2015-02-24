@@ -629,15 +629,30 @@ $endif
    end
 
    #
-   # Return the opening escape sequence for an embedded link.  File f must be an absolute path.
+   # Succeed if the given `FileStream` represents a tty supporting links.
+   #
+   public static is_termlinks_tty(f)
+      static termlinks
+      initial
+         termlinks := integer(System.getenv("TERMLINKS"))
+      return case termlinks of {
+         1 : f.isatty()
+         2 : &null
+      }
+   end
+
+   #
+   # Return the opening escape sequence for an embedded link.  File f
+   # must be a `URL` (properly url-encoded), or an absolute path.
    #
    public static begin_link(f, line)
       local s
+      if is(f, URL) then
+         return "\e[!\"" || f.str() || "\"L"
       s := "\e[!\"file://" || &host || URL.percent_encode(f, URL.UNRESERVED ++ '/')
       if \line then
          s ||:= "?line=" || line
-      s ||:= "\"L"
-      return s
+      return s || "\"L"
    end
 
    #
@@ -696,9 +711,7 @@ end
 
 #
 # This class manipulates file paths by treating them as a list of
-# elements.  Instances are not created directly by the client, rather
-# they are created initially via {FilePath()} and then via other
-# methods in this class.
+# elements.
 #
 # Instances of this class are immutable.
 #
@@ -724,6 +737,13 @@ class FilePath(ObjectOutput)
    #
    public gen()
       suspend .!l
+   end
+
+   #
+   # Generate the elements in the path in reverse order
+   #
+   public back()
+      suspend .default.back(l)
    end
 
    #

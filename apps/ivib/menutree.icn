@@ -13,7 +13,7 @@ $define SPACING 25
 
 class MenuTree(SelectableScrollArea)
    public calculate_line_height()
-      return self.cbwin.get_font_height()
+      return self.cbwin.get_line_height()
    end
 
    public draw_line_data(xp, yp, lh, i)
@@ -35,7 +35,7 @@ class MenuTree(SelectableScrollArea)
 
          dashed.fill_rectangle(lp - SPACING / 2, y0, SPACING /2 + SPACING, 1)
          lp +:= SPACING
-         draw_string_ex(view.cbwin, lp, yp, s.owner.get_string_label())
+         view.cbwin.draw_string(lp, yp + view.cbwin.get_line_ascent(), s.owner.get_string_label())
       }
 
       dashed.close()

@@ -1165,7 +1165,7 @@ class EditableTextList(LineBasedScrollArea)
       v := self.view_list[i]
       s := v.str
       si := self.cursor_x - v.first + 1
-      draw_string_ex(view.cbwin, xp, yp, detab(s, self.tab_width + 1))
+      view.cbwin.draw_string(xp, yp + view.cbwin.get_line_ascent(), detab(s, self.tab_width + 1))
       if \self.mark_y then {
          #
          # Note use of v.first + *s, rather than v.last.  v.last is
@@ -1203,18 +1203,18 @@ class EditableTextList(LineBasedScrollArea)
             if self.cursor_on ~= 2 then
                Gui.style.draw_text_cursor(view.cbwin,
                                           xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
-                                          yp, 
-                                          self.line_height)
+                                          yp + view.cbwin.get_absolute_leading(), 
+                                          view.cbwin.get_font_height())
          } else if \self.is_editable_flag then
             Gui.style.draw_shadow_text_cursor(view.cbwin,
                                               xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
-                                              yp, 
-                                              self.line_height)
+                                              yp + view.cbwin.get_absolute_leading(), 
+                                              view.cbwin.get_font_height())
       }
    end
    
    public calculate_line_height()
-      return view.cbwin.get_font_height()
+      return view.cbwin.get_line_height()
    end
 
    public keeps(e)

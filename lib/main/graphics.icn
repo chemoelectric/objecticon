@@ -347,8 +347,9 @@ final class Window(NoCopy)
    public native get_draw_op()
    public native get_dx()
    public native get_dy()
+   public native get_absolute_leading()
+   public native get_leading()
    public native get_fg()
-   public native get_font_height()
    public native get_font()
    public native get_font_width()
    public native get_geometry()
@@ -394,6 +395,13 @@ final class Window(NoCopy)
    # in a window.
    #
    public native set_draw_op(v)
+
+   #
+   # The graphics context attribute leading specifies extra space to
+   # add to font ascent, descent and height, to calculate line ascent,
+   # descent and height.
+   #
+   public native set_leading(v)
 
    #
    # The graphics context attribute dx specifies a horizontal offset
@@ -919,6 +927,22 @@ final class Window(NoCopy)
 $ifdef _PLAN9
    public native get_dir()
 $endif
+
+   public get_font_height()
+      return get_font_ascent() + get_font_descent()
+   end
+
+   public get_line_height()
+      return get_font_ascent() + get_font_descent() + 2 * get_absolute_leading()
+   end
+
+   public get_line_ascent()
+      return get_font_ascent() + get_absolute_leading()
+   end
+
+   public get_line_descent()
+      return get_font_descent() + get_absolute_leading()
+   end
 
    #
    # Enqueue a window event.

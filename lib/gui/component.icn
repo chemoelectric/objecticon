@@ -1425,6 +1425,11 @@ class Component(Rect,Align,Connectable)
       return self
    end
 
+   public set_leading(v)
+      set_wattrib("leading", v)
+      return self
+   end
+
    public set_line_width(v)
       set_wattrib("line_width", v)
       return self

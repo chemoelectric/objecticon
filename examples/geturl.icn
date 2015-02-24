@@ -236,6 +236,15 @@ procedure main(args)
       exit(1)
 end
 
+procedure pp_out()
+   local s
+   return if Files.is_termlinks_tty(FileStream.stderr) & 
+      s := FilePath(out).canonical().ucs() then
+      Files.begin_link(s) || out || Files.end_link()
+   else
+      out
+end
+
 procedure process_one(a)
    local hr, url, start_t, res, end_t, kbps, s, msg, tmp_file, output_stream, 
       input_stream, content_type, t, k, v, p
@@ -342,15 +351,15 @@ procedure process_one(a)
                   stop("Unable to append ", tmp_file, " to ", out, ": ", &why)
                }
                Files.remove(tmp_file)
-               msg ||:= " ->> " || out
+               msg ||:= " ->> " || pp_out()
             } else if \opts["over"] then {
                Files.move(tmp_file, out) | {
                   save_why{every Files.remove(tmp_file | out)}
                   stop("Unable to move ", tmp_file, " to ", out, ": ", &why)
                }
-               msg ||:= " -> " || out
+               msg ||:= " -> " || pp_out()
             } else if Files.equal_files(tmp_file, out) then {
-               msg ||:= " : Existing file " || out || " is identical."
+               msg ||:= " : Existing file " || pp_out() || " is identical."
                Files.remove(tmp_file)
             } else {
                out := Files.ensure_unique_filename(out)
@@ -358,7 +367,7 @@ procedure process_one(a)
                   save_why{every Files.remove(tmp_file | out)}
                   stop("Unable to move ", tmp_file, " to ", out, ": ", &why)
                }
-               msg ||:= " -> " || out
+               msg ||:= " -> " || pp_out()
             }
 
             if /opts["q"] then

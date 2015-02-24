@@ -26,8 +26,6 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
    # {CheckBoxGroup} in which case the default is diamonds.
    #
    public set_box_paint(x, y)
-      (\self.unchecked_paint).finally()
-      (\self.checked_paint).finally()
       self.unchecked_paint := x
       self.checked_paint := y
       synch_left_image()

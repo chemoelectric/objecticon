@@ -138,19 +138,19 @@ static char *tryfile(char *dir, char *name, char *extn)
 #if UNIX
 int is_termlinks_tty(FILE *f)
 {
-    static int init, env, prev_isatty;
-    static FILE *prev;
+    static int init, termlinks;
     if (!init) {
+        char *s;
         init = 1;
-        env = (getenv("TERMLINKS") != 0);
+        s = getenv("TERMLINKS");
+        if (s)
+            termlinks = atoi(s);
     }
-    if (!env)
-        return 0;
-    if (prev != f) {
-        prev = f;
-        prev_isatty = isatty(fileno(f));
+    switch (termlinks) {
+        case 1 : return isatty(fileno(f));
+        case 2 : return 1;
+        default : return 0;
     }
-    return prev_isatty;
 }
 #endif
 

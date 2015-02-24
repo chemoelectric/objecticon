@@ -119,7 +119,7 @@ class TextField(Component)
    end
 
    public get_default_height()
-      return self.cbwin.get_font_height() + border.get_total_height()
+      return self.cbwin.get_line_height() + border.get_total_height()
    end
 
    public get_default_width()
@@ -761,10 +761,10 @@ class TextField(Component)
       if *s = 0 & \placeholder then {
          use {
             W := Gui.style.get_shadow_clone(cbwin),
-            draw_string_ex(W, self.tx, y1, placeholder)
+            W.draw_string(self.tx, y1 + W.get_font_ascent(), placeholder)
          }
       } else
-         draw_string_ex(self.cbwin, self.tx - loff, y1, s)
+         cbwin.draw_string(self.tx - loff, y1 + cbwin.get_font_ascent(), s)
 
       if has_region() then {
          mp := self.mark

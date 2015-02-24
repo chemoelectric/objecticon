@@ -1570,6 +1570,39 @@ function io_FileStream_chdir(self)
    }
 end
 
+function io_FileStream_ttyname(self)
+   body {
+#if UNIX
+       tended struct descrip result;
+       char *s;
+       GetSelfFd();
+       s = ttyname(self_fd);
+       if (!s) {
+           errno2why();
+           fail;
+       }
+       cstr2string(s, &result);
+       return result;
+#else
+       Unsupported;
+#endif
+   }
+end
+
+function io_FileStream_isatty(self)
+   body {
+#if UNIX
+       GetSelfFd();
+       if (isatty(self_fd))
+           return nulldesc;
+       else
+           fail;
+#else
+       Unsupported;
+#endif
+   }
+end
+
 function io_FileStream_seek(self, offset)
    if !cnv:integer(offset) then
       runerr(101, offset)

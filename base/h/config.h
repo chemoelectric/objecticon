@@ -51,6 +51,10 @@
    #define OIFONTSIZE "OIFONTSIZE"
 #endif
 
+#ifndef OILEADING
+   #define OILEADING "OILEADING"
+#endif
+
 #ifndef OISTKLIM
    #define OISTKLIM "OISTKLIM"
 #endif

@@ -15,7 +15,8 @@ import
    ipl.functional,
    ipl.filegui,
    ipl.childwait,
-   ipl.vt
+   ipl.vt,
+   ipl.columnize
 
 global opts
 
@@ -61,6 +62,18 @@ class TerminalMenu(DynamicMenu)
    end
 end
 
+class ColumnsMenu(DynamicMenu)
+   public populate()
+      local m
+      if m := parent_component.parent_dialog.tabs.which_one.create_columns_context_menu() then
+         every add(!m.children)
+   end
+
+   public finally()
+      DynamicMenu.finally()
+   end
+end
+
 class TerminalDialog(Dialog)
    private readable
       favourite_dirs,
@@ -70,9 +83,9 @@ class TerminalDialog(Dialog)
       dispose()
    end
 
-   public new_tab(sel)
+   public new_tab(sel, dir, other)
       local bt
-      bt := Terminal().
+      bt := Terminal(dir, other, tabs.which_one).
          set_is_hidden(&yes)
       tabs.add(bt, 0)
       if is_live() then
@@ -83,15 +96,16 @@ class TerminalDialog(Dialog)
    end
 
    private on_new_tab(ev)
-      new_tab(1)
+      new_tab(&yes)
    end
 
    private on_clone_tab(ev)
-      local curr, t
-      curr := tabs.which_one
-      t := new_tab(1)
-      t.clone_history(curr)
-      t.goto_dir(curr.cwd, &yes)
+      new_tab(&yes,, tabs.which_one)
+   end
+
+   private on_xdg_refresh(ev)
+      Xdg.refresh()
+      tabs.which_one.info_msg("XDG database reloaded")
    end
 
    public on_favourite_dirs(ev)
@@ -129,7 +143,8 @@ class TerminalDialog(Dialog)
    end
 
    public new()
-      local quit_menu_item, menu_bar, file_menu, terminal_menu, bt, new_tab_item, clone_tab_item, favourite_dirs_item
+      local quit_menu_item, menu_bar, file_menu, terminal_menu, columns_menu, 
+         new_tab_item, clone_tab_item, favourite_dirs_item, xdg_refresh_item
       Dialog.new()
       set_size(scale(1200), scale(850))
       self.set_resize(&yes)
@@ -142,19 +157,23 @@ class TerminalDialog(Dialog)
       favourite_dirs_item := TextMenuItem().
          connect(on_favourite_dirs, Event.ACTION).
          set_paint_mid(TextPaint("Favourite dirs..."))
+      xdg_refresh_item := TextMenuItem().
+         connect(on_xdg_refresh, Event.ACTION).
+         set_paint_mid(TextPaint("Refresh XDG"))
       quit_menu_item := TextMenuItem().
          connect(on_quit, Event.ACTION).
          set_paint_mid(TextPaint("Quit"))
       file_menu := Menu().
-         #set_accel("f").
          set_label("File").
          add(new_tab_item).
          add(clone_tab_item).
          add(favourite_dirs_item).
+         add(xdg_refresh_item).
          add(quit_menu_item)
       terminal_menu := TerminalMenu().
-         #set_accel("p").
          set_label("Terminal")
+      columns_menu := ColumnsMenu().
+         set_label("List")
       menu_bar := MenuBar().
          set_size(scale(100)).
          clear_constraints().
@@ -165,9 +184,9 @@ class TerminalDialog(Dialog)
          set_constraint("b_inset", 0).
          set_constraint("x_fill", &yes).
          add(file_menu).
+         add(columns_menu).
          add(terminal_menu)
       self.add(menu_bar)
-      bt := Terminal()
       tabs := TabSet().
          clear_constraints().
          set_constraint("x_fill", &yes).
@@ -178,32 +197,33 @@ class TerminalDialog(Dialog)
          set_constraint("r_inset", 0).
          set_constraint("t_inset", 0).
          set_constraint("b_inset", 0).
-         add(bt).
-         set_which_one(bt).
          set_remember_focus(&yes).
          set_draggable_tabs(&yes).
          set_no_click_focus(&yes)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
       self.set_layout(GridLayout().set_extra("cells"))
-      self.set_focus(bt.remembered_focus)
       set_label("Terminal")
       return
    end
 end
 
 class Columns(LineBasedScrollArea)
-   public
+   private readable
       data,
-      col_w,
-      n_rows,
-      gutter,
       item_border,
       item_paint,
-      down,
+      gutter,
+      held,
       over,
       highlight,
-      last_highlight
+      cursor
+
+   private
+      data_w,
+      col_w,
+      n_rows,
+      prev_columnize_dw
 
    public initially()
       \self.item_paint | runerr("ItemPaint not set")
@@ -242,56 +262,58 @@ class Columns(LineBasedScrollArea)
    end
 
    public draw_line(xp, yp, lh, i)
-      local e, j, r, s, k
+      local e, j, r, s, k, W
       every j := 1 to *col_w do {
-         k := (i - 1) * *col_w  + j
+         k := i + (j - 1) * n_rows
          e := data[k] | break
          s := item_paint.get_size(view.cbwin, e)
-         #r := Rect(xp, yp, col_w[j], lh)
          r := Rect(xp, yp, s.w + item_border.get_total_width(), lh)
-         item_paint.draw_rect(view.cbwin, e, item_border.float(r, s))
-         item_border.draw_rect(view.cbwin, r)
-         if k === highlight then 
-            Gui.style.fill_selection_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
-         if k === last_highlight then 
-            Gui.style.draw_dashed_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
+         if k === highlight then  {
+            use {
+               W := view.cbwin.clone(),
+               {
+                  W.set_fg("red")
+                  item_paint.draw_rect(W, e, item_border.float(r, s))
+                  item_border.draw_rect(W, r)
+               }
+            }
+         } else {
+            item_paint.draw_rect(view.cbwin, e, item_border.float(r, s))
+            item_border.draw_rect(view.cbwin, r)
+         }
+         if k === cursor then {
+            if has_focus() & is_unshaded() then { 
+               use {
+                  W := Gui.style.get_cursor_clone(view.cbwin),
+                  W.draw_rectangle(r.x, r.y, r.w, r.h, Gui.FINE_WIDTH)
+               }
+            } else
+               Gui.style.draw_dashed_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
+         }
          if k === over then 
             Gui.style.fill_over_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
          xp +:= col_w[j] + gutter
       }
    end
 
-   private mk_split(n)
-      local i, e
-      col_w := list(n, 0)
-      i := 1
-      n_rows := 0
-      every e := !data do {
-         if i = 1 then
-            n_rows +:= 1
-         col_w[i] <:= item_paint.get_width(view.cbwin, e)
-         i +:= 1
-         if i > n then
-            i := 1
-      }
-      every (!col_w) +:= item_border.get_total_width()
-   end
-
    public calculate_subject_width()
-      local mw, e
-      mw := 0
-      every e := !data do
-         mw <:= item_paint.get_width(view.cbwin, e)
-      return mw + item_border.get_total_width()
+      do_columnize(predict_view_width(w, vsb))
+      return col_w[1]
    end
 
-   private invalidate_split()
-      invalidate_subject_width()
-      invalidate_line_count()
+   private invalidate_columnize()
+      data_w := prev_columnize_dw := &null
+      return self
+   end
+
+   public focus_changed(e) 
+      if is_live() then
+         invalidate_line(get_row_for_index(\cursor))
    end
 
    public layout()
-      invalidate_split()
+      invalidate_subject_width()
+      invalidate_line_count()
       ScrollArea.layout()
    end
 
@@ -300,32 +322,31 @@ class Columns(LineBasedScrollArea)
       had_vsb := self.vsb
       ScrollArea.set_internal_fields()
       if had_vsb ~=== self.vsb then {
-         invalidate_split()
+         invalidate_subject_width()
+         invalidate_line_count()
          ScrollArea.set_internal_fields()
       }
    end
 
    public get_default_subject_height(dw)
-      mk_best_split(dw)
+      do_columnize(dw)
       return n_rows * get_line_height()
    end
 
-   private mk_best_split(dw)
-      local n, tw
-      n := 1
-      repeat {
-         mk_split(n)
-         tw := gutter * (*col_w - 1)
-         every tw +:= !col_w
-         if tw > dw then {
-            if n > 1 then
-               mk_split(n - 1)
-            return
-         }
-         if n >= *data then
-            return
-         n +:= 1
+   private do_columnize(dw)
+      local cr, tb
+      if \prev_columnize_dw &
+         (dw = prev_columnize_dw |
+          (*col_w = 1 & dw < prev_columnize_dw)) then
+         return
+      prev_columnize_dw := dw
+      if /data_w then {
+         tb := item_border.get_total_width( )
+         data_w := ipl.pdco.List{ item_paint.get_width(view.cbwin, (!data)) + tb }
       }
+      cr := columnize(data_w, dw, gutter)
+      n_rows := cr.rows
+      col_w := cr.width
    end
 
    public calculate_line_height()
@@ -333,7 +354,7 @@ class Columns(LineBasedScrollArea)
    end
 
    public calculate_line_count()
-      mk_best_split(predict_view_width(w, vsb))
+      do_columnize(predict_view_width(w, vsb))
       return n_rows
    end
 
@@ -344,7 +365,7 @@ class Columns(LineBasedScrollArea)
       yp := get_subject_y() + get_line_height() * (i - 1)
       every j := 1 to *col_w do {
          if xp <= e.x < xp + col_w[j] then {
-            k := (i - 1) * *col_w + j
+            k := i + (j - 1) * n_rows
             d := data[k] | fail
             s := item_paint.get_size(view.cbwin, d)
             r := Rect(xp, yp, col_w[j], get_line_height())
@@ -375,27 +396,20 @@ class Columns(LineBasedScrollArea)
       set_over()
    end
 
-   private set_over(n)
-      local s, url
+   public set_over(n)
       if n ~=== over then {
          invalidate_line(get_row_for_index(\over))
          over := n
          invalidate_line(get_row_for_index(\over))
-         if /over then
-            parent.parent.parent.clear_msg()
-         else {
-            s := FilePath(parent.parent.parent.cwd).child(data[n].name).ucs() | fail
-            url := URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/')) | fail
-            parent.parent.parent.msg(url.ucs())
-         }
+         fire("over-changed")
       }
       return self
    end
 
    public handle_lmdrag(e)
-      if \down = get_element_under_pointer(e) then {
-         set_highlight(down)
-         set_over(down)
+      if \held = get_element_under_pointer(e) then {
+         set_highlight(held)
+         set_over(held)
       } else {
          set_highlight()
          set_over()
@@ -403,35 +417,44 @@ class Columns(LineBasedScrollArea)
    end
 
    public handle_lrelease(e)
-      if \highlight then
+      \held | fail
+      if \over then {
+         set_highlight()
          fire("lclicked", e)
-      down := &null
-      set_highlight()
+      }
+      held := &null
    end
 
    public handle_mrelease(e)
-      if \highlight then
+      \held | fail
+      if \over then {
+         set_highlight()
          fire("mclicked", e)
-      down := &null
-      set_highlight()
+      }
+      held := &null
    end
 
    public get_row_for_index(n)
-      return (n - 1) / *col_w + 1
+      return (n - 1) % n_rows + 1
    end
 
-   public set_last_highlight(n)
-      if last_highlight ~=== n then {
-         invalidate_line(get_row_for_index(\last_highlight))
-         last_highlight := n
-         invalidate_line(get_row_for_index(\last_highlight))
+   public get_col_for_index(n)
+      return (n - 1) / n_rows + 1
+   end
+
+   public set_cursor(n)
+      if cursor ~=== n then {
+         invalidate_line(get_row_for_index(\cursor))
+         cursor := n
+         constrain_cursor()
+         invalidate_line(get_row_for_index(\cursor))
       }
       return self
    end
 
    public set_highlight(n)
       if highlight ~=== n then {
-         set_last_highlight(\n)
+         set_cursor(\n)
          invalidate_line(get_row_for_index(\highlight))
          highlight := n
          ensure_line_visible(get_row_for_index(\highlight)) 
@@ -444,46 +467,165 @@ class Columns(LineBasedScrollArea)
       return .\highlight
    end
 
-   public object_get_last_highlight()
-      return data[.\last_highlight]
+   public get_held()
+      return .\held
    end
 
-   public object_set_last_highlight(o)
-      return set_last_highlight(keyof(data, o))
+   public object_get_cursor()
+      return data[.\cursor]
+   end
+
+   public object_set_cursor(o)
+      return set_cursor(keyof(data, o))
    end
    
-   public get_last_highlight()
-      return .\last_highlight
+   public get_cursor()
+      return .\cursor
    end
 
    public handle_lmpress(e)
-      if down := get_element_under_pointer(e) then
-         set_highlight(down)
-      else
-         set_highlight()
+      *parent_dialog.held = 1 | fail
+      if \over then {
+         if /e.shift then {
+            set_highlight(over)
+            held := over
+         } else
+            set_cursor(over)
+      } 
    end
 
-   public constrain_last_highlight()
-      if *data = 0 then
-         last_highlight := &null
-      else if \last_highlight then {
-         last_highlight <:= 1
-         last_highlight >:= *data
+   public handle_key_page_up(e)
+      local t
+      t := get_page_movement(cursor, -1)
+      t <:= n_rows * (get_col_for_index(cursor) - 1) + 1
+      return t
+   end
+
+   public handle_key_page_down(e)
+      local t
+      t := get_page_movement(cursor, 1)
+      t >:= n_rows * get_col_for_index(cursor)
+      return t
+   end
+
+   public handle_key_up(e)
+      return cursor - 1
+   end
+
+   public handle_key_down(e)
+      return cursor + 1
+   end
+
+   public handle_key_left(e)
+      local t
+      (cursor > 1) | fail
+      t := cursor - n_rows
+      if t < 1 then {
+         t +:= *col_w * n_rows - 1
+         if t > *data then
+            t -:= n_rows
       }
+      return t
+   end
+
+   public handle_key_right(e)
+      local t
+      t := cursor + n_rows
+      if t > *data then {
+         t := (t - 1) % n_rows + 2
+         t <= n_rows | fail
+      }
+      return t
+   end
+
+   public handle_key_home(e)
+      return 1
+   end
+
+   public handle_key_end(e)
+      return *data
+   end
+
+   public handle_return(e)
+      local t
+      \cursor | fail
+      ensure_line_visible(get_row_for_index(cursor))
+      set_highlight(cursor)
+      t := Dispatcher.new_task{{
+         t.sleep(50)
+         set_highlight()
+         fire("lclicked", e)
+         t.revert()
+      }}
+      t.start()
+   end
+
+   private handle_key_move(f)
+      \cursor | fail
+      set_cursor(f())
+      ensure_line_visible(get_row_for_index(cursor))
+   end
+
+   public handle_key(e)
+      case e.code of {
+         Key.HOME : handle_key_move(handle_key_home)
+         Key.END : handle_key_move(handle_key_end)
+         Key.PGUP : handle_key_move(handle_key_page_up)
+         Key.PGDN : handle_key_move(handle_key_page_down)
+         Key.UP : handle_key_move(handle_key_up)
+         Key.DOWN : handle_key_move(handle_key_down)
+         Key.LEFT : handle_key_move(handle_key_left)
+         Key.RIGHT : handle_key_move(handle_key_right)
+         "\r" | "\l": handle_return(e)
+      }
+   end
+
+   public constrain_cursor()
+      if *data = 0 then
+         cursor := &null
+      else {
+         /cursor := 1
+         cursor <:= 1
+         cursor >:= *data
+      }
+   end
+
+   public set_held(d)
+      self.held := d
+      return self
+   end
+
+   public change_painter(p)
+      set_item_paint(p)
+      set_over()
+      invalidate_columnize()
+      invalidate_subject_width()
+      invalidate_line_count()
+      compute_and_invalidate()
+      return self
    end
 
    public set_data(l)
       self.data := l
+      # set_over() is necessary even if the caller does a
+      # resynch_pointer, since we store over as an index (which may
+      # change) rather than the underlying object.
       set_over()
-      invalidate_split()
+      invalidate_columnize()
+      invalidate_subject_width()
+      invalidate_line_count()
       compute_and_invalidate()
-      constrain_last_highlight()
+      constrain_cursor()
       return self
    end
 
    public set_gutter(n)
       self.gutter := n
       return self
+   end
+
+   public keeps(e)
+      return member(Key.CURSOR, e.code)
    end
 
    public new()
@@ -500,6 +642,7 @@ class Columns(LineBasedScrollArea)
       view.connect(self.handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
       view.connect(self.handle_in_chain, Event.IN_POINT_CHAIN)
       view.connect(self.handle_exit, Event.MOUSE_EXIT)
+      connect(self.handle_key, Event.KEY_PRESS)
       return
    end
 end
@@ -521,6 +664,19 @@ class DirList(ButtonOnlyList)
    end
 end
 
+# Store objects rather than just strings in the history list to avoid
+# confusion when the dir changes whilst the history list is open.
+# With just strings we wouldn't be able to match up the selected
+# string with a position in the (possibly changed) history.
+
+record HistoryEntry(dir)
+
+class HistoryEntryItemPaint(StringDirItemPaint)
+   public get_string(data)
+      return data.dir
+   end
+end
+
 class HistoryList(ButtonOnlyList)
    public create_button()
       local b
@@ -530,8 +686,12 @@ class HistoryList(ButtonOnlyList)
    end
 
    public create_popup()
+      local t
+      t := parent.parent
+      set_selection_list(copy(t.history))
+      set_selection(t.history_pos)
       return ItemPaintList().
-         set_item_paint(StringDirItemPaint()).
+         set_item_paint(HistoryEntryItemPaint()).
          set_item_border(EmptyBorder().
                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                             set_x_align(Align.L))
@@ -539,29 +699,36 @@ class HistoryList(ButtonOnlyList)
 end
 
 class Terminal(TabItem, VtUI)
+   public static const
+      MAX_HISTORY_SIZE
+
    private
       prev_button,
       next_button,
       date_button,
       name_button,
       size_button,
-      show_hidden_button,
-      mix_entries_button,
       favourites_list,
       message_label,
       history_list,
-      trail
+      trail,
+      best_focus         # Either columns or output (the vt)
 
    private readable
       ascending,
       sorter,
+      name_painter,
+      size_painter,
+      date_painter,
       filter,
       refresh_button,
       up_button,
       home_button,
       close_button,
+      focus_columns_button,
       output,
       columns,
+      split,
       columns_pos_table,
       history,
       history_pos,
@@ -572,19 +739,18 @@ class Terminal(TabItem, VtUI)
       tty,
       input,
       cwd,
-      cwd_mtime
+      cwd_mtime,
+      show_hidden_menu_item,
+      mix_entries_menu_item,
+      sort_dirs_menu_item,
+      revert_tab
+
+   private static init()
+      MAX_HISTORY_SIZE := 100
+   end
 
    public get_label_width()
       return scale(100)
-   end
-
-   public clone_history(other)
-      self.history := copy(other.history)
-      self.history_pos := other.history_pos
-      history_list.set_selection_list(history)
-      synch_history_list()
-      update_grey()
-      return self
    end
 
    public link_left_clicked(url)
@@ -595,6 +761,19 @@ class Terminal(TabItem, VtUI)
       tty.set_size(cols, rows)
    end
 
+   public process_command(args)
+      local dir, sel
+      if \opts["v"] then
+         write("Command: ", to_string(args))
+      case string(args[1]) of {
+         "new-tab" : {
+            dir := args[2]
+            sel := flag(args[3])
+            parent_dialog.new_tab(sel, dir)
+         }
+      }
+   end
+
    public link_middle_clicked(url, ev)
       insert_link(url, ev)
    end
@@ -602,15 +781,13 @@ class Terminal(TabItem, VtUI)
    public send_tty(s)
       s := string(s) | runerr(103, s)
       put(input, s)
+      # We may be in the io_task already since some writes to the vt
+      # cause it to output something (eg device attr string).  So in
+      # that case we must not interrupt.  Otherwise, the io_task
+      # must be sleeping in poll().  Interrupt it so it goes round
+      # its loop again, and polls for both input and output.
+      (/io_task | Dispatcher.get_curr_task() === io_task) | io_task.interrupt()
       return self
-   end
-
-   private close_all()
-      check_cwd_task.stop()
-      io_task.stop()
-      System.kill(pid, Signal.SIGHUP)
-      tty.close()
-      System.wait(pid)
    end
 
    public msg(s, n)
@@ -708,20 +885,42 @@ class Terminal(TabItem, VtUI)
       repeat {
          if st := Files.stat(cwd) then {
             if st.mtime ~= cwd_mtime then
-               resort_cwd()
+               resort_cwd(&yes)
          }
          check_cwd_task.sleep(500)
       }
    end
 
    private service_tty()
-      local x, s, n
+      local x, s, n, i, some_in
       repeat {
-         x := io_task.poll([tty, Poll.IN + Poll.OUT]) | {
-            err_msg(u"IO problem polling tty: " || ucs(&why))
-            break
+         # The some_in flag ensures we don't send anything to the tty
+         # until we've seen some input (a prompt).  This is since
+         # readline will misinterpret what's in the buffer before it
+         # starts up, muddling up \n with \r, because readline clears the
+         # ICRNL bit in the termios c_iflag structure (see rltty.c).
+         i := if *input > 0 & \some_in then Poll.IN + Poll.OUT else Poll.IN
+         x := io_task.poll([tty, i]) | {
+            if /io_task.interrupt_flag then {
+               err_msg(u"IO problem polling tty: " || ucs(&why))
+               break
+            } else {
+               # We were interrupted, meaning that some input has gone into the
+               # buffer; so go round again.
+               next
+            }
          }
-         if DescStream.poll_in_test(x[1]) then {
+         if DescStream.poll_out_test(x[1]) then {
+            s := get(input) | syserr("Poll out, but input buffer empty")
+            n := tty.out(s) | {
+               err_msg(u"IO problem on tty: " || ucs(&why))
+               break
+            }
+            if n < *s then
+               push(input, s[n + 1:0])
+            if \opts["v"] then
+               write("Out: ", image(s))
+         } else if DescStream.poll_in_test(x[1]) then {
             s := tty.in(1048576) | {
                err_msg(u"IO problem on tty: " || ucs(&why))
                break
@@ -734,20 +933,7 @@ class Terminal(TabItem, VtUI)
                write("In: ", image(s))
             send_vt(s)
             check_pwd()
-         } else if DescStream.poll_out_test(x[1]) then {
-            if s := get(input) then {
-               n := tty.out(s) | {
-                  err_msg(u"IO problem on tty: " || ucs(&why))
-                  break
-               }
-               if n < *s then
-                  push(input, s[n + 1:0])
-               if \opts["v"] then
-                  write("Out: ", image(s))
-            } else {
-               # Asking for input but none here...sleep
-               io_task.sleep(50)
-            }
+            some_in := &yes
          }
       }
       io_task.revert()
@@ -786,12 +972,12 @@ class Terminal(TabItem, VtUI)
          send_tty(url.ucs())
    end
 
-   private err_msg(s)
+   public err_msg(s)
       send_vt(u"\n\e[31m(Message from terminal:) " || s || u"\e[m")
       msg(s, 3000)
    end
 
-   private info_msg(s)
+   public info_msg(s)
       msg(s, 3000)
    end
 
@@ -823,7 +1009,7 @@ class Terminal(TabItem, VtUI)
 
    private on_columns_lclick()
       local item
-      item := columns.data[columns.get_highlight()]
+      item := columns.data[columns.get_cursor()] | fail
       open_link(item_to_url(item))
    end
 
@@ -835,8 +1021,19 @@ class Terminal(TabItem, VtUI)
 
    private on_columns_mclick(ev)
       local item
-      item := columns.data[columns.get_highlight()]
+      item := columns.data[columns.get_cursor()]
       insert_link(item_to_url(item), ev)
+   end
+
+   private on_columns_over_changed(ev)
+      local s, url
+      if /columns.over then
+         clear_msg()
+      else {
+         s := FilePath(cwd).child(columns.data[columns.over].name).ucs() | fail
+         url := URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/')) | fail
+         msg(url.ucs())
+      }
    end
 
    private copy_link(url)
@@ -865,7 +1062,7 @@ class Terminal(TabItem, VtUI)
       s := \d.result | fail
       msg("Renamed OK", 3000)
       if cwd == FilePath(s).parent().ucs() then
-         resort_cwd()
+         resort_cwd(&yes)
    end
 
    private connect_launch(m2, runner)
@@ -890,35 +1087,33 @@ class Terminal(TabItem, VtUI)
    end
 
    private open_in_new_tab(dir)
-      parent_dialog.new_tab().goto_dir(dir)
+      parent_dialog.new_tab(, dir)
+   end
+
+   private on_reorient(e)
+      split.reorient()
    end
 
    public create_context_menu()
       local m
-      Class.ensure_initialized(TextContextMenu)
       m := Menu()
       if output.get_current_text_selection() then {
          m.add(TextMenuItem().
-               set_label("Copy").
-               set_paint_left(ImagePaint().set_cache("txt.copy")).
-               set_accel("c").
+               set_label("Copy text").
                connect(on_copy, Event.ACTION))
       }
       m.add(TextMenuItem().
             set_label("Paste").
-            set_paint_left(ImagePaint().set_cache("txt.paste")).
-            set_accel("p").
             connect(on_paste, Event.ACTION))
       m.add(TextMenuItem().
             set_label("Select all").
-            set_paint_left(ImagePaint().set_cache("txt.select-all")).
-            set_accel("a").
             connect(on_select_all, Event.ACTION))
-      m.add(MenuSeparator())
       m.add(TextMenuItem().
             set_label("Copy cwd").
             connect(on_copy_cwd, Event.ACTION))
-
+      m.add(TextMenuItem().
+            set_label("Reorient").
+            connect(on_reorient, Event.ACTION))
       return m
    end
 
@@ -967,13 +1162,52 @@ class Terminal(TabItem, VtUI)
 
   private on_columns_rpress(e)
       local i, m, pm, item, url
-      item := columns.data[i := columns.get_element_under_pointer(e)] | fail
-      url := item_to_url(item) | fail
-      columns.set_highlight(i)
-      m := create_link_menu(url)
       pm := PopupMenu()
-      pm.connect(on_popup_closed, Event.POPUP_CLOSED)
+      if item := columns.data[i := columns.get_element_under_pointer(e)] then {
+         url := item_to_url(item) | fail
+         columns.set_highlight(i).set_over()
+         m := create_link_menu(url)
+         pm.connect(on_popup_closed, Event.POPUP_CLOSED)
+      } else
+         m := create_columns_context_menu()
       pm.popup(parent_dialog, m, e.x, e.y)
+   end
+
+   private change_painter(p)
+      columns.change_painter(p)
+   end
+
+   public get_tab_tooltip()
+      if tab_w - label_border.get_total_width() < cbwin.text_width(paint.str) then
+         return paint.str
+   end
+
+   public create_columns_context_menu()
+      local cbg, ni, si, di, m
+      m := Menu().
+         add(ni := CheckBoxMenuItem().
+            set_label("Name only").
+            connect(create change_painter(name_painter), Event.ACTION)).
+         add(di := CheckBoxMenuItem().
+            set_label("Show date").
+            connect(create change_painter(date_painter), Event.ACTION)).
+         add(si := CheckBoxMenuItem().
+            set_label("Show size").
+            connect(create change_painter(size_painter), Event.ACTION)).
+         add(MenuSeparator()).
+         add(show_hidden_menu_item)
+      if mix_entries_menu_item.is_unchecked() then
+         m.add(sort_dirs_menu_item)
+      m.add(mix_entries_menu_item)
+
+      cbg := CheckBoxGroup().
+         add(ni).add(si).add(di)
+      case columns.item_paint of {
+         name_painter : cbg.set_which_one(ni)
+         size_painter : cbg.set_which_one(si)
+         date_painter : cbg.set_which_one(di)
+      }
+      return m
    end
 
    private on_popup_closed()
@@ -1002,28 +1236,18 @@ class Terminal(TabItem, VtUI)
             name_button.set_paint(cp.set_bottom(np))
             date_button.set_paint(dp)
             size_button.set_paint(sp)
-            columns.set_item_paint(IconFilesItemPaint())
          }
          Files.size_cmp: {
             name_button.set_paint(np)
             date_button.set_paint(dp)
             size_button.set_paint(cp.set_bottom(sp))
-            columns.set_item_paint(IconFilesItemPaintSize())
          }
          Files.date_cmp: {
             name_button.set_paint(np)
             date_button.set_paint(cp.set_bottom(dp))
             size_button.set_paint(sp)
-            columns.set_item_paint(IconFilesItemPaintDate())
          }
       }
-   end
-
-   private on_mix_entries_button(ev)
-      resort_cwd()
-   end
-
-   private on_show_hidden_button(ev)
       resort_cwd()
    end
 
@@ -1033,7 +1257,6 @@ class Terminal(TabItem, VtUI)
       else
          sorter := Files.date_cmp
       synch_paints()
-      resort_cwd()
    end
 
    private on_name_button(ev)
@@ -1042,7 +1265,6 @@ class Terminal(TabItem, VtUI)
       else
          sorter := Files.name_cmp
       synch_paints()
-      resort_cwd()
    end
 
    private on_size_button(ev)
@@ -1051,59 +1273,79 @@ class Terminal(TabItem, VtUI)
       else
          sorter := Files.size_cmp
       synch_paints()
-      resort_cwd()
    end
 
-   private resort_cwd()
-      local i, ino, info, vis
-      if i := columns.get_row_for_index(columns.get_last_highlight()) then {
+   private resort_cwd(track_cursor)
+      local i, ino, info, vis, high, held
+      \cwd | fail
+      if \track_cursor & i := columns.get_row_for_index(columns.get_cursor()) then {
          # Set vis to &yes if the last highlight is currently visible; also get the ino of
          # the last highlight.
          info := columns.get_line_info()
          if info.first_whole <= i <= info.last_whole then
             vis := &yes
-         ino := columns.object_get_last_highlight().stat.ino
+         ino := columns.object_get_cursor().stat.ino
+         if columns.get_cursor() === columns.get_highlight() then
+            high := &yes
+         if columns.get_cursor() === columns.get_held() then
+            held := &yes
       }
       load_cwd(get_pats())
       # Search for the old ino in the new data.  If found, set the highlight and if the old
-      # last_highlight was visible, ensure the new one is too.
-      if i := Positions{(!columns.data).stat.ino, \ino} then {
-         columns.set_last_highlight(i)
+      # cursor was visible, ensure the new one is too.
+      if \track_cursor & i := Positions{(!columns.data).stat.ino, \ino} then {
+         columns.set_cursor(i)
          if \vis then
-            columns.ensure_line_visible(columns.get_row_for_index(columns.get_last_highlight()))
+            columns.ensure_line_visible(columns.get_row_for_index(columns.get_cursor()))
+         if \high then
+            columns.set_highlight(i)
+         if \held then
+            columns.set_held(i)
+      } else
+         columns.set_cursor()
+      if is_live() then {
+         # Since the pointer may be over the files list, update the pointer.
+         parent_dialog.resynch_pointer()
       }
    end
 
    private load_cwd(pats)
-      columns.set_data(list_cwd(pats))
       cwd_mtime := Files.stat(cwd).mtime | 0
+      columns.set_data(list_cwd(pats))
    end
 
    private list_cwd(pats)
-      local dirs, files, e, l, s, t, now, tf, m, z, zf
+      local dirs, files, e, l, s, t, now, tf, m, z, zf, fl
       l := Files.ucs_list(cwd) | fail
       dirs := []
       files := []
       now := Time.get_system_seconds()
+      # flag indicates whether to annotate dirs with size/date
+      if mix_entries_menu_item.is_checked() | sort_dirs_menu_item.is_checked() then
+         fl := &yes
       every e := !l do {
          s := e.name
          if (/pats | (!pats).match(s) = *s + 1)\1 &
-            (show_hidden_button.is_checked() | not(Files.is_hidden(s))) then
+            (show_hidden_menu_item.is_checked() | not(Files.is_hidden(s))) then
          {
-            t := e.lstat.mtime
-            tf := if now - t > 180 * 86400 then
-               Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d yyyy")
-            else
-               Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d HH:mm")
-            tf := s || " (" || tf || ")"
-            z := e.lstat.size
-            zf := if z < 1024 then
-               Format.numeric_to_string(z, 0, ',') || "B"
-            else if z < 1024*1024 then
-               Format.numeric_to_string(z/1024.0, 1, ',') || "KB"
-            else
-               Format.numeric_to_string(z/(1024.0*1024.0), 1, ',') || "MB"
-            zf := s || " (" || zf || ")"
+            if /fl &e.stat.mode_str[1] == "d" then {
+               tf := zf := s
+            } else {
+               t := e.lstat.mtime
+               tf := if now - t > 180 * 86400 then
+                  Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d yyyy")
+               else
+                  Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d HH:mm")
+               tf := s || " (" || tf || ")"
+               z := e.lstat.size
+               zf := if z < 1024 then
+                  Format.numeric_to_string(z, 0, ',') || "B"
+               else if z < 1024*1024 then
+                  Format.numeric_to_string(z/1024.0, 1, ',') || "KB"
+               else
+                  Format.numeric_to_string(z/(1024.0*1024.0), 1, ',') || "MB"
+               zf := s || " (" || zf || ")"
+            }
             m := ListEntryEx(s, e.lstat, e.stat, tf, zf)
             if e.stat.mode_str[1] == "d" then
                put(dirs, m)
@@ -1111,10 +1353,14 @@ class Terminal(TabItem, VtUI)
                put(files, m)
          }
       }
-      if mix_entries_button.is_checked() then
-         while put(dirs, get(files))
-
-      qsort(dirs, if /ascending then sorter else flip(sorter))
+      if mix_entries_menu_item.is_checked() then
+         while put(files, get(dirs))
+      else {
+         if sort_dirs_menu_item.is_checked() then
+            qsort(dirs, if /ascending then sorter else flip(sorter))
+         else
+            qsort(dirs, Files.name_cmp)
+      }
       qsort(files, if /ascending then sorter else flip(sorter))
       return dirs ||| files
    end
@@ -1123,12 +1369,12 @@ class Terminal(TabItem, VtUI)
       local ex, e, lh, t, l, i
       s := ucs(s) | fail
       if \cwd then {
-         lh := columns.data[columns.get_last_highlight()].name
+         lh := columns.data[columns.get_cursor()].name
          insert(columns_pos_table, 
                 FilePath(cwd).canonical().str(), 
                 FileDialogPos(lh, columns.get_area_y()))
       }
-      cwd := s | fail
+      cwd := s
       trail.set_path(cwd)
       load_cwd()
       synch_favourites_list()
@@ -1144,11 +1390,11 @@ class Terminal(TabItem, VtUI)
          if t := member(columns_pos_table, FilePath(cwd).canonical().str()) then {
             columns.set_area_y(t.area_y).set_area_x(0)
             if i := Positions{(!columns.data).name, \t.cursor_name} then
-               columns.set_last_highlight(i)
+               columns.set_cursor(i)
             else
-               columns.set_last_highlight()
+               columns.set_cursor()
          } else {
-            columns.set_area_y(0).set_area_x(0).set_last_highlight()
+            columns.set_area_y(0).set_area_x(0).set_cursor()
          }
          parent_dialog.resynch_pointer()
       }
@@ -1156,9 +1402,10 @@ class Terminal(TabItem, VtUI)
       if /nav then {
          every 1 to history_pos - 1 do
             pop(history)
-         push(history, cwd)
+         push(history, HistoryEntry(cwd))
          history_pos := 1
-         synch_history_list()
+         while *history > MAX_HISTORY_SIZE do
+            pull(history)
          update_grey()
       }
       set_paint(AbbreviatedTextPaint(FilePath(cwd).get(-1)))
@@ -1183,27 +1430,50 @@ class Terminal(TabItem, VtUI)
       favourites_list.object_set_selection(cwd) | favourites_list.set_selection()
    end
 
-   private synch_history_list()
-      history_list.set_selection(history_pos)
-   end
-
    private on_trail(ev)
       goto_dir(ev)
    end
 
-   public component_setup()
+   public new(dir, other, revert_tab)
+      local cd
+      TabItem.new()
+      self.revert_tab := revert_tab
       self.setup()
-      sorter := Files.name_cmp
+
+      name_painter := IconFilesItemPaint()
+      size_painter := IconFilesItemPaintSize()
+      date_painter := IconFilesItemPaintDate()
+
+      if \other then {
+         if other.focus_columns_button.is_checked() then {
+            focus_columns_button.set_is_checked(&yes)
+            columns.set_accepts_focus(&yes)
+         }
+         if \other.split.sizer.is_horizontal_flag then
+            split.reorient()
+         sorter := other.sorter
+         ascending := other.ascending
+         columns.set_item_paint(case other.columns.item_paint of {
+            other.name_painter : name_painter
+            other.size_painter : size_painter
+            other.date_painter : date_painter
+         })
+      } else {
+         if \opts["hs"] then
+            split.reorient()
+         sorter := Files.name_cmp
+         columns.set_item_paint(name_painter)
+      }
       synch_paints()
       set_label_border(EmptyBorder().set_x_align(Align.L))
       columns.
          set_width(scale(300)).
-         set_item_paint(IconFilesItemPaint()).
          set_item_border(EmptyBorder().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                              set_x_align(Align.L)).
          connect(on_columns_lclick, "lclicked").
          connect(on_columns_mclick, "mclicked").
+         connect(on_columns_over_changed, "over-changed").
          connect(on_columns_rpress, Event.MOUSE_RIGHT_PRESS)
       trail.
          set_size().
@@ -1217,39 +1487,68 @@ class Terminal(TabItem, VtUI)
          output.set_verbose(&yes)
 
       favourites_list.set_size().set_selection_list(get_favourites_directories())
-      
+      sort_dirs_menu_item := CheckBoxMenuItem().
+         set_label("Sort dirs").
+         connect(resort_cwd, Event.ACTION)
+      mix_entries_menu_item := CheckBoxMenuItem().
+         set_label("Mix files & dirs").
+         connect(resort_cwd, Event.ACTION)
+      show_hidden_menu_item := CheckBoxMenuItem().
+         set_label("Show hidden files").
+         connect(resort_cwd, Event.ACTION)
+      if \other then {
+         sort_dirs_menu_item.set_is_checked(other.sort_dirs_menu_item.get_status())
+         mix_entries_menu_item.set_is_checked(other.mix_entries_menu_item.get_status())
+         show_hidden_menu_item.set_is_checked(other.show_hidden_menu_item.get_status())
+      }
       set_remembered_focus(output.find_focus())
       filter.set_selection_list([u"*"])
-      history := []
-      history_pos := 0
-      history_list.set_size().set_selection_list(history)
-      update_grey()
-      columns_pos_table := table()
-      set_cwd(Files.getcwd())
-      setup_shell() | stop(&why)
+      history_list.set_size().set_selection_list([])
       input := []
-      io_task := Dispatcher.new_task{service_tty()}
-      io_task.start()
-      check_cwd_task := Dispatcher.new_task{check_cwd()}
-      check_cwd_task.start()
       theme_toolbar_button(close_button, "window-close")
       theme_toolbar_button(prev_button, "go-previous")
       theme_toolbar_button(next_button, "go-next")
       theme_toolbar_button(up_button, "go-up")
       theme_toolbar_button(home_button, "go-home")
       theme_toolbar_button(refresh_button, "view-refresh")
-      every theme_toolbar_button(show_hidden_button | mix_entries_button)
+      theme_toolbar_button(focus_columns_button, "key-enter")
+      cd := ucs(Files.getcwd()) | u"/"
+      if \other then {
+         history := clone(other.history)
+         history_pos := other.history_pos
+         columns_pos_table := clone(other.columns_pos_table)
+         set_cwd(cd, &yes)
+         if other.cwd ~== cwd then
+            goto_dir(other.cwd, &yes)
+      } else {
+         history := []
+         history_pos := 0
+         columns_pos_table := table()
+         set_cwd(cd)
+         if \dir ~== cwd then
+            goto_dir(dir)
+      }
+      update_grey()
+      return
+   end
+
+   public initially()
+      TabItem.initially()
+      setup_shell() | stop(&why)
+      io_task := Dispatcher.new_task{service_tty()}
+      io_task.start()
+      check_cwd_task := Dispatcher.new_task{check_cwd()}
+      check_cwd_task.start()
    end
 
    public finally()
       TabItem.finally()
-      close_all()
-   end
-
-   public new()
-      TabItem.new()
-      component_setup()
-      return
+      check_cwd_task.stop()
+      io_task.stop()
+      System.kill(pid, Signal.SIGHUP)
+      tty.close()
+      System.wait(pid)
+      check_cwd_task := io_task := tty := &null
    end
 
    private on_favourites_list(ev)
@@ -1257,11 +1556,11 @@ class Terminal(TabItem, VtUI)
    end
 
    private on_history_list(ev)
-      local s
-      history_pos := history_list.get_selection()
-      s := history[history_pos]
+      local he
+      he := history_list.object_get_selection()
+      history_pos := keyof(history, he) | fail
       update_grey()
-      goto_dir(s, &yes)
+      goto_dir(he.dir, &yes)
    end
 
    private on_home_button(ev)
@@ -1269,7 +1568,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private on_refresh_button(ev)
-      resort_cwd()
+      resort_cwd(&yes)
    end
 
    private on_up_button(ev)
@@ -1284,11 +1583,13 @@ class Terminal(TabItem, VtUI)
       if *parent.children = 1 then
          parent_dialog.dispose()
       else {
-         i := parent.get_index(self)
-         if i > 1 then
-            i -:= 1
-         else
-            i +:= 1
+         (i := parent.get_index(\revert_tab)) | {
+            i := parent.get_index(self)
+            if i > 1 then
+               i -:= 1
+            else
+               i +:= 1
+         }
          t := parent.children[i] | syserr("Couldn't find other tab")
          parent.
             remove(self).
@@ -1301,30 +1602,50 @@ class Terminal(TabItem, VtUI)
    private on_filter(ev)
       if member(EditList.NAVIGATE, ev.code) then {
          resort_cwd()
-         parent_dialog.set_focus(output)
+         parent_dialog.set_focus(best_focus)
       }
    end
 
    private on_prev_button(ev)
-      local s
+      local he
       (history_pos < *history) | fail
-      s := history[history_pos +:= 1]
-      synch_history_list()      
+      he := history[history_pos +:= 1]
       update_grey()
-      goto_dir(s, &yes)
+      goto_dir(he.dir, &yes)
    end
 
    private on_next_button(ev)
-      local s
+      local he
       (history_pos > 1) | fail
-      s := history[history_pos -:= 1]
-      synch_history_list()      
+      he := history[history_pos -:= 1]
       update_grey()
-      goto_dir(s, &yes)
+      goto_dir(he.dir, &yes)
+   end
+
+   private on_focus_columns_button(ev)
+      local f
+      f := focus_columns_button.get_status()
+      columns.set_accepts_focus(f)
+      if /f then
+         parent_dialog.set_focus(output)
+      else
+         parent_dialog.set_focus(columns)
+   end
+
+   public component_setup()
+      self.setup()
+   end
+
+   private on_columns_focus(ev)
+      best_focus := columns
+   end
+
+   private on_vt_focus(ev)
+      best_focus := output
    end
 
    private setup()
-      local paint_2, split_2, paint_14, paint_27, paint_32, paint_7, layout_4, paint_11, paint_37, panel_4, paint_29, paint_34, split_content_3, split_content_4, paint_9, layout_6, paint_13, paint_31, paint_6, layout_3, paint_10, paint_23, paint_36, paint_41, paint, paint_3, paint_28, paint_33, paint_8, border_1, layout_5, paint_12, paint_30, paint_35, paint_40
+      local paint_2, paint_14, paint_27, paint_32, paint_7, layout_4, paint_11, paint_37, paint_42, panel_4, paint_29, split_content_3, split_content_4, paint_9, layout_6, paint_13, paint_31, paint_44, paint_6, layout_3, paint_10, paint_23, paint_41, paint, paint_3, paint_28, paint_8, border_1, layout_5, paint_12, paint_30, paint_40
       paint_10 := ImagePaint().
          set_cache("rpp.EXIT_24")
       paint_9 := TextPaint("Close")
@@ -1398,6 +1719,16 @@ class Terminal(TabItem, VtUI)
          clear_constraints().
          set_tooltip(paint_41).
          connect(self.on_history_list, Event.SELECTION_CHANGED)
+      paint_44 := TextPaint("")
+      paint_42 := TextPaint("Columns focus")
+      focus_columns_button := IconButton().
+         set_align(Align.L, Align.C).
+         clear_constraints().
+         set_tooltip(paint_42).
+         connect(self.on_focus_columns_button, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_toggles(&yes).
+         set_paint(paint_44)
       paint_23 := TextPaint("Filter")
       filter := EditList().
          set_size(scale(150)).
@@ -1442,28 +1773,6 @@ class Terminal(TabItem, VtUI)
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_32)
-      paint_34 := ImagePaint().
-         set_cache("gui.HIDDENFILE_24")
-      paint_33 := TextPaint("Hidden files")
-      show_hidden_button := IconButton().
-         set_align(Align.L, Align.C).
-         clear_constraints().
-         set_tooltip(paint_33).
-         connect(self.on_show_hidden_button, Event.ACTION).
-         set_no_click_focus(&yes).
-         set_toggles(&yes).
-         set_paint(paint_34)
-      paint_36 := ImagePaint().
-         set_cache("rpp.MIXFILE_24")
-      paint_35 := TextPaint("Mix files & dirs")
-      mix_entries_button := IconButton().
-         set_align(Align.L, Align.C).
-         clear_constraints().
-         set_tooltip(paint_35).
-         connect(self.on_mix_entries_button, Event.ACTION).
-         set_no_click_focus(&yes).
-         set_toggles(&yes).
-         set_paint(paint_36)
       paint_37 := TextPaint("Favourite directories")
       favourites_list := DirList().
          set_size(scale(37), scale(30)).
@@ -1494,22 +1803,22 @@ class Terminal(TabItem, VtUI)
          add(prev_button).
          add(next_button).
          add(history_list).
+         add(focus_columns_button).
          add(filter).
          add(name_button).
          add(date_button).
          add(size_button).
-         add(show_hidden_button).
-         add(mix_entries_button).
          add(favourites_list).
          add(trail)
       self.add(panel_4)
       columns := Columns().
-         set_size(scale(100), scale(100)).
+         set_size(scale(100), scale(175)).
          clear_constraints().
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0)
+         set_constraint("y_weight", 1.0).
+         connect(self.on_columns_focus, Event.GOT_FOCUS)
       layout_5 := GridLayout().
          set_doi(scale(0)).
          set_extra("cells")
@@ -1523,7 +1832,8 @@ class Terminal(TabItem, VtUI)
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0)
+         set_constraint("y_weight", 1.0).
+         connect(self.on_vt_focus, Event.GOT_FOCUS)
       layout_4 := GridLayout().
          set_doi(scale(0)).
          set_extra("cells")
@@ -1531,7 +1841,7 @@ class Terminal(TabItem, VtUI)
          clear_constraints().
          set_layout(layout_4).
          add(output)
-      split_2 := Split().
+      split := Split().
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
@@ -1540,7 +1850,7 @@ class Terminal(TabItem, VtUI)
          set_constraint("y_weight", 1.0).
          set_left(split_content_3).
          set_right(split_content_4)
-      self.add(split_2)
+      self.add(split)
       paint_40 := TextPaint("")
       border_1 := CompoundBorder().
          set_outer(SunkenBorder()).
@@ -1566,15 +1876,20 @@ end
 
 procedure main(a)
    local d, dir
-   opts := options(a, "-x: -v! -h+ -t:*")
+   opts := options(a, "-x: -v! -h+ -hs!")
    ImageCache.
       name_image("rpp.EXIT_24", EXIT).
       name_image("rpp.SAVE_24", SAVE).
       name_image("rpp.MIXFILE_24", MIXFILE)
    insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(TERMINAL_LOGO))
    d := TerminalDialog()
-   every dir := !\opts["t"] do
-      d.new_tab().goto_dir(dir)
+   if *a = 0 then
+      d.new_tab()
+   else {
+      every dir := !a do
+         d.new_tab(, dir)
+   }
+   d.set_focus(d.tabs.children[1].remembered_focus)
    d.show_modal()
    if \opts["v"] then write("Exiting")
 end

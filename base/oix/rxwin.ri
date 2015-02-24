@@ -820,6 +820,7 @@ wbp wopen(char *display)
     wc->bg = link_sharedcolor(wd->white);
     wc->fg = link_sharedcolor(wd->black);
     wc->font = wd->defaultfont;
+    wc->leading = defaultleading;
     wc->drawop = stringint_lookup(drawops, "over");
     wc->clipx = wc->clipy = 0;
     wc->clipw = wc->cliph = -1;
@@ -3270,7 +3271,10 @@ void drawstring(wbp w, int x, int y, char *str, int slen)
                     (FcChar8 *)str,
                     slen);
     clip(w);
-    pix_to_win(ws, x, y - wc->font->ascent, textwidth(w, str, slen) + wc->font->maxwidth, wc->font->height);
+    pix_to_win(ws, 
+               x, y - wc->font->ascent, 
+               textwidth(w, str, slen) + wc->font->maxwidth,
+               wc->font->ascent + wc->font->descent);
     unclip(w);
 }
 
@@ -3290,7 +3294,10 @@ void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
                        (FcChar8 *)str,
                        slen);
     clip(w);
-    pix_to_win(ws, x, y - wc->font->ascent, utf8width(w, str, slen, nchars) + wc->font->maxwidth, wc->font->height);
+    pix_to_win(ws, 
+               x, y - wc->font->ascent, 
+               utf8width(w, str, slen, nchars) + wc->font->maxwidth,
+               wc->font->ascent + wc->font->descent);
     unclip(w);
 }
 
@@ -3594,7 +3601,6 @@ static wfp newfont(wdp wd, char *s)
     rv->ascent = Max(rv->fsp->ascent, extents.y);
     rv->descent = Max(rv->fsp->descent, extents.height - extents.y);
     rv->maxwidth = rv->fsp->max_advance_width;
-    rv->height = rv->ascent + rv->descent;
     return rv;
 }
 
@@ -3608,6 +3614,7 @@ static wcp clonecontext(wcp wc)
     rv->display = wc->display;
     rv->dx = wc->dx;
     rv->dy = wc->dy;
+    rv->leading = wc->leading;
     rv->clipx = wc->clipx;
     rv->clipy = wc->clipy;
     rv->clipw = wc->clipw;
