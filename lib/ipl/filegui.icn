@@ -528,7 +528,13 @@ package class FileTrailList(ButtonOnlyList)
       ButtonOnlyList.open_popup(ev)
    end
 
-   private changed()
+   # Override end_change rather than use a listener, since we want to
+   # notify the FileTrail even if we've clicked on the selected item
+   # (child).  Unless we represent the parent of the FileTrail's cd,
+   # then this does represent a change of dir (namely to a parent dir
+   # of the FileTrail's cd).  FileTrail will then decided whether this
+   # represents a change and whether or not to fire to the owner.
+   public end_change(e)
       local o
       o := object_get_selection()
       parent.on_change(p.child(o.name).ucs())
@@ -547,7 +553,6 @@ package class FileTrailList(ButtonOnlyList)
                           set_inner(EmptyBorder().
                                     set_l_inset(Gui.TEXT_INSET).
                                     set_r_inset(Gui.TEXT_INSET)))
-      connect(changed, Event.SELECTION_CHANGED)
       return
    end
 end
@@ -558,6 +563,9 @@ end
 # when a directory is selected.
 #
 class FileTrail(Component)
+   private
+      path_str
+
    public static const
       DIR_CHANGED_EVENT
 
@@ -566,7 +574,8 @@ class FileTrail(Component)
    end
 
    package on_change(s)
-      fire(DIR_CHANGED_EVENT, s)
+      if s ~== path_str then
+         fire(DIR_CHANGED_EVENT, s)
    end
 
    public layout()
@@ -584,9 +593,6 @@ class FileTrail(Component)
          if is(c, FileTrailButton) then
             c.set_dots(&no)
       }
-      # The last FileTrailButton is shaded, since it represents the
-      # current directory.
-      children[-2].set_is_shaded(&yes)
    end
 
    # Go through the children to see at what point one cannot be fully
@@ -634,6 +640,7 @@ class FileTrail(Component)
       remove_all()
       # Ensure all elements are ucs.
       f := FilePath(p).canonical().ucs_path() | fail
+      path_str := f.ucs()
       every i := 2 to f.size() do {
          g := f.slice(1, i)
          if i > 2 then
