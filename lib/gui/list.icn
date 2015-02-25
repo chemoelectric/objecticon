@@ -94,6 +94,17 @@ abstract class ButtonOnlyList(List)
       return b.get_preferred_height(dw)
    end
 
+   public set_selection_list(x)
+      # This is overridden to avoid setting the selection to 1 if
+      # &null.  Since we can't see the label, it makes no sense to set
+      # the selection to 1.  If we did that, and opened the list, and
+      # selected the first item, we wouldn't fire an event.
+      self.selection_list := x
+      constrain_selection()
+      apply_selection()
+      return self
+   end
+
    public new()
       List.new()
       view.set_accepts_focus(&no)
@@ -101,5 +112,3 @@ abstract class ButtonOnlyList(List)
       return
    end
 end
-
-
