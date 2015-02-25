@@ -237,10 +237,16 @@ class FileSuggestField(SuggestField)
       dir_list,
       dir_list_name,
       directories_only_flag,
+      show_hidden_files_flag,
       pats
 
    public set_directories_only(s)
       self.directories_only_flag := check_flag(s)
+      return self
+   end
+
+   public set_show_hidden_files(s)
+      self.show_hidden_files_flag := check_flag(s)
       return self
    end
 
@@ -263,6 +269,8 @@ class FileSuggestField(SuggestField)
    private match_entry(e)
       local n
       n := e.name
+      if /show_hidden_files_flag & Files.is_hidden(n) then
+         fail
       if e.stat.mode_str[1] == "d" then {
          if not Files.is_relative_dir(n) then
             return
@@ -512,11 +520,20 @@ package class FileTrailList(ButtonOnlyList)
                             set_x_align(Align.L))
    end
 
+   private match_entry(e)
+      local n
+      (e.stat.mode_str[1] == "d") | fail
+      n := e.name
+      if (/parent.show_hidden_files_flag & Files.is_hidden(n)) | Files.is_relative_dir(n) then
+         fail
+      return
+   end
+
    public open_popup(ev)
       local e, i, l
       l := []
       every e := !Files.ucs_list(p.str(), ListEntryWithIcon) do {
-         if e.stat.mode_str[1] == "d" & not Files.is_hidden(e.name) then
+         if match_entry(e) then
             put(l, e)
       }
       if *l = 0 then
@@ -570,6 +587,8 @@ end
 class FileTrail(Component)
    private
       path_str
+   package
+      show_hidden_files_flag
 
    public static const
       DIR_CHANGED_EVENT
@@ -581,6 +600,14 @@ class FileTrail(Component)
    package on_change(s)
       if s ~== path_str then
          fire(DIR_CHANGED_EVENT, s)
+   end
+
+   # Configure whether or not to show hidden files in the directory
+   # lists.
+   #
+   public set_show_hidden_files(s)
+      self.show_hidden_files_flag := check_flag(s)
+      return self
    end
 
    public layout()
