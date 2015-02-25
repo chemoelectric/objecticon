@@ -522,19 +522,23 @@ package class FileTrailList(ButtonOnlyList)
       if *l = 0 then
          fail
       qsort(l, Files.name_cmp)
+      # Clear the selection, but set the cursor as though selection was
+      # set.  This is so we get an event even if we've clicked on the
+      # child directory (if any).  Unless we represent the parent of the
+      # FileTrail's cd, then this does represent a change of dir (namely
+      # to a parent dir of the FileTrail's cd).  FileTrail will then
+      # decided whether this represents a change and whether or not to
+      # fire to the owner.
       set_selection_list(l)
-      if i := Positions{(!l).name, \child} then
-         set_selection(i)
+      set_selection()
       ButtonOnlyList.open_popup(ev)
+      if i := Positions{(!l).name, \child} then
+         popup.
+            set_cursor(i).
+            center_line(i)
    end
 
-   # Override end_change rather than use a listener, since we want to
-   # notify the FileTrail even if we've clicked on the selected item
-   # (child).  Unless we represent the parent of the FileTrail's cd,
-   # then this does represent a change of dir (namely to a parent dir
-   # of the FileTrail's cd).  FileTrail will then decided whether this
-   # represents a change and whether or not to fire to the owner.
-   public end_change(e)
+   private changed()
       local o
       o := object_get_selection()
       parent.on_change(p.child(o.name).ucs())
@@ -553,6 +557,7 @@ package class FileTrailList(ButtonOnlyList)
                           set_inner(EmptyBorder().
                                     set_l_inset(Gui.TEXT_INSET).
                                     set_r_inset(Gui.TEXT_INSET)))
+      connect(changed, Event.SELECTION_CHANGED)
       return
    end
 end
