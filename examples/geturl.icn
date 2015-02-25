@@ -424,7 +424,7 @@ procedure check_skip()
    \opts["skip"] | fail
    Files.access(out) | fail
    if /opts["q"] then
-      write(FileStream.stderr, "Skipping existing file ", out)
+      write(FileStream.stderr, "Skipping existing file ", pp_out())
    skipped +:= 1
    return
 end
