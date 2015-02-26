@@ -435,11 +435,11 @@ class Columns(LineBasedScrollArea)
    end
 
    public get_row_for_index(n)
-      return (n - 1) % n_rows + 1
+      return (n - 1) % \n_rows + 1
    end
 
    public get_col_for_index(n)
-      return (n - 1) / n_rows + 1
+      return (n - 1) / \n_rows + 1
    end
 
    public set_cursor(n)
@@ -759,6 +759,31 @@ class Terminal(TabItem, VtUI)
 
    public vt_size_changed(cols, rows)
       tty.set_size(cols, rows)
+   end
+
+   public do_modify_arg(s)
+      case s of {
+         "reorient" | "re-orient" : on_reorient()
+         "sort-name" : on_name_button()
+         "sort-date" : on_date_button()
+         "sort-size" : on_size_button()
+         "show-name-only" : on_show_name_only()
+         "show-date" : on_show_date()
+         "show-size" : on_show_size()
+         "mix-entries" : {
+            mix_entries_menu_item.toggle_is_checked()
+            on_mix_entries_menu_item()
+         }
+         "show-hidden" : {
+            show_hidden_menu_item.toggle_is_checked()
+            on_show_hidden_menu_item()
+         }
+         "sort-dirs" : {
+            sort_dirs_menu_item.toggle_is_checked()
+            on_sort_dirs_menu_item()
+         }
+         default: stop("Invalid modifier arg: ", s)
+      }
    end
 
    public process_command(args)
@@ -1182,18 +1207,42 @@ class Terminal(TabItem, VtUI)
          return paint.str
    end
 
+   private on_show_name_only(e)
+      change_painter(name_painter)
+   end
+
+   private on_show_date(e)
+      change_painter(date_painter)
+   end
+
+   private on_show_size(e)
+      change_painter(size_painter)
+   end
+
+   private on_mix_entries_menu_item(e)
+      resort_cwd()
+   end
+
+   private on_sort_dirs_menu_item(e)
+      resort_cwd()
+   end
+
+   private on_show_hidden_menu_item(e)
+      resort_cwd()
+   end
+
    public create_columns_context_menu()
       local cbg, ni, si, di, m
       m := Menu().
          add(ni := CheckBoxMenuItem().
             set_label("Name only").
-            connect(create change_painter(name_painter), Event.ACTION)).
+            connect(on_show_name_only , Event.ACTION)).
          add(di := CheckBoxMenuItem().
             set_label("Show date").
-            connect(create change_painter(date_painter), Event.ACTION)).
+            connect(on_show_date, Event.ACTION)).
          add(si := CheckBoxMenuItem().
             set_label("Show size").
-            connect(create change_painter(size_painter), Event.ACTION)).
+            connect(on_show_size, Event.ACTION)).
          add(MenuSeparator()).
          add(show_hidden_menu_item)
       if mix_entries_menu_item.is_unchecked() then
@@ -1278,35 +1327,36 @@ class Terminal(TabItem, VtUI)
    private resort_cwd(track_cursor)
       local i, ino, info, vis, high, held
       \cwd | fail
-      if \track_cursor & i := columns.get_row_for_index(columns.get_cursor()) then {
-         # Set vis to &yes if the last highlight is currently visible; also get the ino of
-         # the last highlight.
-         info := columns.get_line_info()
-         if info.first_whole <= i <= info.last_whole then
-            vis := &yes
-         ino := columns.object_get_cursor().stat.ino
-         if columns.get_cursor() === columns.get_highlight() then
-            high := &yes
-         if columns.get_cursor() === columns.get_held() then
-            held := &yes
-      }
-      load_cwd(get_pats())
-      # Search for the old ino in the new data.  If found, set the highlight and if the old
-      # cursor was visible, ensure the new one is too.
-      if \track_cursor & i := Positions{(!columns.data).stat.ino, \ino} then {
-         columns.set_cursor(i)
-         if \vis then
-            columns.ensure_line_visible(columns.get_row_for_index(columns.get_cursor()))
-         if \high then
-            columns.set_highlight(i)
-         if \held then
-            columns.set_held(i)
-      } else
-         columns.set_cursor()
       if is_live() then {
+         if \track_cursor & i := columns.get_row_for_index(columns.get_cursor()) then {
+            # Set vis to &yes if the last highlight is currently visible; also get the ino of
+            # the last highlight.
+            info := columns.get_line_info()
+            if info.first_whole <= i <= info.last_whole then
+               vis := &yes
+            ino := columns.object_get_cursor().stat.ino
+            if columns.get_cursor() === columns.get_highlight() then
+               high := &yes
+            if columns.get_cursor() === columns.get_held() then
+               held := &yes
+         }
+         load_cwd(get_pats())
+         # Search for the old ino in the new data.  If found, set the highlight and if the old
+         # cursor was visible, ensure the new one is too.
+         if \track_cursor & i := Positions{(!columns.data).stat.ino, \ino} then {
+            columns.set_cursor(i)
+            if \vis then
+               columns.ensure_line_visible(columns.get_row_for_index(columns.get_cursor()))
+            if \high then
+               columns.set_highlight(i)
+            if \held then
+               columns.set_held(i)
+         } else
+            columns.set_cursor()
          # Since the pointer may be over the files list, update the pointer.
          parent_dialog.resynch_pointer()
-      }
+      } else
+         load_cwd(get_pats())
    end
 
    private load_cwd(pats)
@@ -1489,13 +1539,13 @@ class Terminal(TabItem, VtUI)
       favourites_list.set_size().set_selection_list(get_favourites_directories())
       sort_dirs_menu_item := CheckBoxMenuItem().
          set_label("Sort dirs").
-         connect(resort_cwd, Event.ACTION)
+         connect(on_sort_dirs_menu_item, Event.ACTION)
       mix_entries_menu_item := CheckBoxMenuItem().
          set_label("Mix files & dirs").
-         connect(resort_cwd, Event.ACTION)
+         connect(on_mix_entries_menu_item, Event.ACTION)
       show_hidden_menu_item := CheckBoxMenuItem().
          set_label("Show hidden files").
-         connect(resort_cwd, Event.ACTION)
+         connect(on_show_hidden_menu_item, Event.ACTION)
       if \other then {
          sort_dirs_menu_item.set_is_checked(other.sort_dirs_menu_item.get_status())
          mix_entries_menu_item.set_is_checked(other.mix_entries_menu_item.get_status())
@@ -1875,7 +1925,7 @@ class Terminal(TabItem, VtUI)
 end
 
 procedure main(a)
-   local d, dir
+   local d, p
    opts := options(a, "-x: -v! -h+ -hs!")
    ImageCache.
       name_image("rpp.EXIT_24", EXIT).
@@ -1886,8 +1936,14 @@ procedure main(a)
    if *a = 0 then
       d.new_tab()
    else {
-      every dir := !a do
-         d.new_tab(, dir)
+      every p := !a do {
+         p ? {
+            if =":" then
+               d.tabs.children[-1].do_modify_arg(tab(0))
+            else
+               d.new_tab(, p)
+         }
+      }
    }
    d.set_focus(d.tabs.children[1].remembered_focus)
    d.show_modal()
