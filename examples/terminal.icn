@@ -984,7 +984,7 @@ class Terminal(TabItem, VtUI)
                is_local_host(url) &
                s[1+:*cwd] == cwd & 
                s[*cwd + 1] == u"/" then
-               Format.shell_escape(s[*cwd+2:0])
+               u"./" || Format.shell_escape(s[*cwd+2:0])
             else
                Format.shell_escape(s)
             if Files.is_directory(s) then
