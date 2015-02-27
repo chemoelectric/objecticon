@@ -753,7 +753,12 @@ class RenameDialog(NameDialog)
 
    public on_okay_button(ev)
       local s
-      s := p.sibling(name_field.get_contents()).ucs()
+      s := name_field.get_contents()
+      if upto('/', s) then {
+         msg("A file can't contain a / character")
+         fail
+      }
+      s := p.sibling(s).ucs()
       if Files.access(s) then
          msg("File already exists")
       else if Files.rename(p.ucs(), s) then {
@@ -785,7 +790,12 @@ class NewDirectoryDialog(NameDialog)
 
    public on_okay_button(ev)
       local s
-      s := p.child(name_field.get_contents()).ucs()
+      s := name_field.get_contents()
+      if upto('/', s) then {
+         msg("A filename can't contain a / character")
+         fail
+      }
+      s := p.child(s).ucs()
       if Files.mkdir(s) then {
          result := s
          dispose()
