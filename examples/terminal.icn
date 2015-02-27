@@ -595,8 +595,7 @@ class Columns(LineBasedScrollArea)
       return self
    end
 
-   public change_painter(p)
-      set_item_paint(p)
+   public data_changed()
       set_over()
       invalidate_columnize()
       invalidate_subject_width()
@@ -700,7 +699,10 @@ end
 
 class Terminal(TabItem, VtUI)
    public static const
-      MAX_HISTORY_SIZE
+      MAX_HISTORY_SIZE,
+      SHOW_NAME_ONLY,
+      SHOW_DATE,
+      SHOW_SIZE
 
    private
       prev_button,
@@ -717,9 +719,7 @@ class Terminal(TabItem, VtUI)
    private readable
       ascending,
       sorter,
-      name_painter,
-      size_painter,
-      date_painter,
+      annotate_opt,
       filter,
       refresh_button,
       up_button,
@@ -740,6 +740,7 @@ class Terminal(TabItem, VtUI)
       input,
       cwd,
       cwd_mtime,
+      cwd_list,
       show_hidden_menu_item,
       mix_entries_menu_item,
       sort_dirs_menu_item,
@@ -747,6 +748,9 @@ class Terminal(TabItem, VtUI)
 
    private static init()
       MAX_HISTORY_SIZE := 100
+      SHOW_NAME_ONLY := 1
+      SHOW_DATE := 2
+      SHOW_SIZE := 3
    end
 
    public get_label_width()
@@ -910,7 +914,7 @@ class Terminal(TabItem, VtUI)
       repeat {
          if st := Files.stat(cwd) then {
             if st.mtime ~= cwd_mtime then
-               resort_cwd(&yes)
+               refresh_cwd()
          }
          check_cwd_task.sleep(500)
       }
@@ -1087,7 +1091,7 @@ class Terminal(TabItem, VtUI)
       s := \d.result | fail
       msg("Renamed OK", 3000)
       if cwd == FilePath(s).parent().ucs() then
-         resort_cwd(&yes)
+         refresh_cwd()
    end
 
    private connect_launch(m2, runner)
@@ -1198,32 +1202,36 @@ class Terminal(TabItem, VtUI)
       pm.popup(parent_dialog, m, e.x, e.y)
    end
 
-   private change_painter(p)
-      columns.change_painter(p)
-   end
-
    public get_tab_tooltip()
       if tab_w - label_border.get_total_width() < cbwin.text_width(paint.str) then
          return paint.str
    end
 
    private on_show_name_only(e)
-      change_painter(name_painter)
+      annotate_opt := SHOW_NAME_ONLY
+      annotate_cwd_list()
+      columns.data_changed()
    end
 
    private on_show_date(e)
-      change_painter(date_painter)
+      annotate_opt := SHOW_DATE
+      annotate_cwd_list()
+      columns.data_changed()
    end
 
    private on_show_size(e)
-      change_painter(size_painter)
+      annotate_opt := SHOW_SIZE
+      annotate_cwd_list()
+      columns.data_changed()
    end
 
    private on_mix_entries_menu_item(e)
+      annotate_cwd_list()
       resort_cwd()
    end
 
    private on_sort_dirs_menu_item(e)
+      annotate_cwd_list()
       resort_cwd()
    end
 
@@ -1251,10 +1259,10 @@ class Terminal(TabItem, VtUI)
 
       cbg := CheckBoxGroup().
          add(ni).add(si).add(di)
-      case columns.item_paint of {
-         name_painter : cbg.set_which_one(ni)
-         size_painter : cbg.set_which_one(si)
-         date_painter : cbg.set_which_one(di)
+      case annotate_opt of {
+         SHOW_NAME_ONLY : cbg.set_which_one(ni)
+         SHOW_SIZE : cbg.set_which_one(si)
+         SHOW_DATE : cbg.set_which_one(di)
       }
       return m
    end
@@ -1324,6 +1332,58 @@ class Terminal(TabItem, VtUI)
       synch_paints()
    end
 
+   private load_cwd_list()
+      cwd_mtime := Files.stat(cwd).mtime | 0
+      (cwd_list := Files.ucs_list(cwd, AnnotatedListEntryWithIcon)) | {
+         info_msg("Failed to read cwd: " || &why)
+         cwd_list := []
+      }
+   end
+
+   private annotate_cwd_list()
+      local e, fl, now
+      # flag indicates whether to annotate dirs with size/date
+      if mix_entries_menu_item.is_checked() | sort_dirs_menu_item.is_checked() then
+         fl := &yes
+      now := Time.get_system_seconds()
+      every e := !cwd_list do {
+         if /fl & e.stat.mode_str[1] == "d" then
+            e.annotate_name()
+         else case annotate_opt of {
+            SHOW_NAME_ONLY : e.annotate_name()
+            SHOW_DATE : e.annotate_date(now)
+            SHOW_SIZE : e.annotate_size()
+            default : syserr("Bad annotate_opt")
+         }
+      }
+   end
+
+   private sort_cwd_list(pats)
+      local dirs, files, e, s
+      dirs := []
+      files := []
+      every e := !cwd_list do {
+         s := e.name
+         if (/pats | (!pats).match(s) = *s + 1)\1 &
+            (show_hidden_menu_item.is_checked() | not(Files.is_hidden(s))) then {
+            if e.stat.mode_str[1] == "d" then
+               Files.is_relative_dir(s) | put(dirs, e)
+            else
+               put(files, e)
+         }
+      }
+      if mix_entries_menu_item.is_checked() then
+         while put(files, get(dirs))
+      else {
+         if sort_dirs_menu_item.is_checked() then
+            qsort(dirs, if /ascending then sorter else flip(sorter))
+         else
+            qsort(dirs, Files.name_cmp)
+      }
+      qsort(files, if /ascending then sorter else flip(sorter))
+      columns.set_data(dirs ||| files)
+   end
+
    private resort_cwd(track_cursor)
       local i, ino, info, vis, high, held
       \cwd | fail
@@ -1340,7 +1400,7 @@ class Terminal(TabItem, VtUI)
             if columns.get_cursor() === columns.get_held() then
                held := &yes
          }
-         load_cwd(get_pats())
+         sort_cwd_list(get_pats())
          # Search for the old ino in the new data.  If found, set the highlight and if the old
          # cursor was visible, ensure the new one is too.
          if \track_cursor & i := Positions{(!columns.data).stat.ino, \ino} then {
@@ -1356,63 +1416,13 @@ class Terminal(TabItem, VtUI)
          # Since the pointer may be over the files list, update the pointer.
          parent_dialog.resynch_pointer()
       } else
-         load_cwd(get_pats())
+         sort_cwd_list(get_pats())
    end
 
-   private load_cwd(pats)
-      cwd_mtime := Files.stat(cwd).mtime | 0
-      columns.set_data(list_cwd(pats))
-   end
-
-   private list_cwd(pats)
-      local dirs, files, e, l, s, t, now, tf, m, z, zf, fl
-      l := Files.ucs_list(cwd) | fail
-      dirs := []
-      files := []
-      now := Time.get_system_seconds()
-      # flag indicates whether to annotate dirs with size/date
-      if mix_entries_menu_item.is_checked() | sort_dirs_menu_item.is_checked() then
-         fl := &yes
-      every e := !l do {
-         s := e.name
-         if (/pats | (!pats).match(s) = *s + 1)\1 &
-            (show_hidden_menu_item.is_checked() | not(Files.is_hidden(s))) then
-         {
-            if /fl &e.stat.mode_str[1] == "d" then {
-               tf := zf := s
-            } else {
-               t := e.lstat.mtime
-               tf := if now - t > 180 * 86400 then
-                  Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d yyyy")
-               else
-                  Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d HH:mm")
-               tf := s || " (" || tf || ")"
-               z := e.lstat.size
-               zf := if z < 1024 then
-                  Format.numeric_to_string(z, 0, ',') || "B"
-               else if z < 1024*1024 then
-                  Format.numeric_to_string(z/1024.0, 1, ',') || "KB"
-               else
-                  Format.numeric_to_string(z/(1024.0*1024.0), 1, ',') || "MB"
-               zf := s || " (" || zf || ")"
-            }
-            m := ListEntryEx(s, e.lstat, e.stat, tf, zf)
-            if e.stat.mode_str[1] == "d" then
-               put(dirs, m)
-            else
-               put(files, m)
-         }
-      }
-      if mix_entries_menu_item.is_checked() then
-         while put(files, get(dirs))
-      else {
-         if sort_dirs_menu_item.is_checked() then
-            qsort(dirs, if /ascending then sorter else flip(sorter))
-         else
-            qsort(dirs, Files.name_cmp)
-      }
-      qsort(files, if /ascending then sorter else flip(sorter))
-      return dirs ||| files
+   private refresh_cwd()
+      load_cwd_list()
+      annotate_cwd_list()
+      resort_cwd(&yes)
    end
 
    private set_cwd(s, nav)
@@ -1426,7 +1436,9 @@ class Terminal(TabItem, VtUI)
       }
       cwd := s
       trail.set_path(cwd)
-      load_cwd()
+      load_cwd_list()
+      annotate_cwd_list()
+      sort_cwd_list()
       synch_favourites_list()
       ex := table(0)
       every e := !columns.data do
@@ -1443,9 +1455,8 @@ class Terminal(TabItem, VtUI)
                columns.set_cursor(i)
             else
                columns.set_cursor()
-         } else {
+         } else
             columns.set_area_y(0).set_area_x(0).set_cursor()
-         }
          parent_dialog.resynch_pointer()
       }
 
@@ -1489,11 +1500,6 @@ class Terminal(TabItem, VtUI)
       TabItem.new()
       self.revert_tab := revert_tab
       self.setup()
-
-      name_painter := IconFilesItemPaint()
-      size_painter := IconFilesItemPaintSize()
-      date_painter := IconFilesItemPaintDate()
-
       if \other then {
          if other.focus_columns_button.is_checked() then {
             focus_columns_button.set_is_checked(&yes)
@@ -1503,21 +1509,18 @@ class Terminal(TabItem, VtUI)
             split.reorient()
          sorter := other.sorter
          ascending := other.ascending
-         columns.set_item_paint(case other.columns.item_paint of {
-            other.name_painter : name_painter
-            other.size_painter : size_painter
-            other.date_painter : date_painter
-         })
+         annotate_opt := other.annotate_opt
       } else {
          if \opts["hs"] then
             split.reorient()
          sorter := Files.name_cmp
-         columns.set_item_paint(name_painter)
+         annotate_opt := SHOW_NAME_ONLY
       }
       synch_paints()
       set_label_border(EmptyBorder().set_x_align(Align.L))
       columns.
          set_width(scale(300)).
+         set_item_paint(AnnotatedIconFilesItemPaint()).
          set_item_border(EmptyBorder().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                              set_x_align(Align.L)).
@@ -1618,7 +1621,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private on_refresh_button(ev)
-      resort_cwd(&yes)
+      refresh_cwd()
    end
 
    private on_up_button(ev)

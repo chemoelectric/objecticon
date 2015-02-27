@@ -10,24 +10,6 @@ import
    util,
    io
 
-#
-# Extend `ListEntry` to add formatted date and size strings.
-#
-class ListEntryEx(ListEntryWithIcon)
-   public const
-      fmt_date,
-      fmt_size
-
-   public new(name, lstat, stat, fmt_date, fmt_size)
-      self.name := name
-      self.lstat := lstat
-      self.stat := stat
-      self.fmt_date := fmt_date
-      self.fmt_size := fmt_size
-      return
-   end
-end
-
 class FileDialogPos()
    public const
       cursor_name,
@@ -37,18 +19,6 @@ class FileDialogPos()
       self.cursor_name := cursor_name
       self.area_y := area_y
       return
-   end
-end
-
-class IconFilesItemPaintSize(IconFilesItemPaint)
-   public get_string(data)
-      return data.fmt_size
-   end
-end
-
-class IconFilesItemPaintDate(IconFilesItemPaint)
-   public get_string(data)
-      return data.fmt_date
    end
 end
 
@@ -82,6 +52,7 @@ class FileDialog(Dialog)
       history_pos,
       pos_table,
       loaded_dir_path,
+      loaded_dir_list,
       cancel_button, 
       file, 
       filter, 
@@ -155,7 +126,6 @@ class FileDialog(Dialog)
 
    public check_existing()
       local f
-      clear_msg()
       /multiple_files_flag | fail
       f := get_current_selection().str() | fail
       if Files.is_directory(f) then
@@ -165,6 +135,7 @@ class FileDialog(Dialog)
    end
 
    public on_file_content(ev)
+      clear_msg()
       check_existing()
       synch_file()
    end
@@ -384,6 +355,7 @@ class FileDialog(Dialog)
    end
 
    public on_dir(ev)
+      clear_msg()
       if member(EditList.NAVIGATE, ev.code) then
          goto_dir(dir.get_contents())
       else
@@ -412,7 +384,7 @@ class FileDialog(Dialog)
    end
 
    public on_refresh_menu_item(ev)
-      refresh_dir()
+      refresh_dir(&yes)
    end
 
    public on_prev_button(ev)
@@ -480,10 +452,14 @@ class FileDialog(Dialog)
       msg()
    end
 
-   public refresh_dir()
+   public refresh_dir(load)
       dir.set_contents(loaded_dir_path.liberal_ucs())
       save_pos()
-      load_dir(loaded_dir_path.str())
+      clear_msg()
+      if \load then
+         load_dir_list()
+      annotate_dir_list()
+      set_lists(sort_dir_list())
       restore_pos()
    end
 
@@ -503,12 +479,13 @@ class FileDialog(Dialog)
    end
 
    public goto_dir(d, nav)
-      local p
       save_pos()
       dir.set_contents(FilePath(d).canonical().liberal_ucs())
-      p := get_dir_path()
-      load_dir(p.str())
-      loaded_dir_path := p
+      clear_msg()
+      loaded_dir_path := get_dir_path()
+      load_dir_list()
+      annotate_dir_list()
+      set_lists(sort_dir_list())
       restore_pos()
       if /nav then {
          every 1 to history_pos - 1 do
@@ -519,21 +496,10 @@ class FileDialog(Dialog)
       }
    end
 
-   public load_dir(s)
-      local l
-
+   public set_lists(l)
       #
       # Update directory and file lists.
       #
-      l := list_directory(s) | {
-         msg(&why)
-         dlist.set_contents([])
-         flist.set_contents([])
-         fail
-      }
-
-      clear_msg()
-
       dlist.
          set_contents(l[1]).
          set_area_x(0).
@@ -552,38 +518,40 @@ class FileDialog(Dialog)
       check_existing()
    end
 
-   #
-   # Read a directory.
-   #
-   public list_directory(s)
-      local e, dir_list, file_list, l, pats, t, tf, z, zf, n, now
+   public load_dir_list()
+      (loaded_dir_list := Files.ucs_list(loaded_dir_path.str(), AnnotatedListEntryWithIcon)) | {
+         msg(&why)
+         loaded_dir_list := []
+      }
+   end
+
+   public annotate_dir_list()
+      local e, now
+      now := Time.get_system_seconds()
+      every e := !loaded_dir_list do {
+         if e.stat.mode_str[1] == "d" then
+            e.annotate_name()
+         else case sorter of {
+            Files.name_cmp : e.annotate_name()
+            Files.date_cmp : e.annotate_date(now)
+            Files.size_cmp : e.annotate_size()
+            default : syserr("Bad sorter_opt")
+         }
+      }
+   end
+
+   public sort_dir_list()
+      local e, dir_list, file_list, pats, n
       pats := get_pats()
-      l := Files.ucs_list(s, ListEntryWithIcon) | fail
       dir_list := []
       file_list := []
-      now := Time.get_system_seconds()
-      every e := !l do {
+      every e := !loaded_dir_list do {
          n := e.name
          if show_hidden_menu_item.is_checked() | not(Files.is_hidden(n)) then {
             if e.stat.mode_str[1] == "d" then
                Files.is_relative_dir(n) | put(dir_list, e)
-            else if (!pats).match(n) = *n + 1 then {
-               t := e.lstat.mtime
-               tf := if now - t > 180 * 86400 then
-                  Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d yyyy")
-               else
-                  Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d HH:mm")
-               tf := n || " (" || tf || ")"
-               z := e.lstat.size
-               zf := if z < 1024 then
-                  Format.numeric_to_string(z, 0, ',') || "B"
-               else if z < 1024*1024 then
-                  Format.numeric_to_string(z/1024.0, 1, ',') || "KB"
-               else
-                  Format.numeric_to_string(z/(1024.0*1024.0), 1, ',') || "MB"
-               zf := n || " (" || zf || ")"
-               put(file_list, ListEntryEx(n, e.lstat, e.stat, tf, zf))
-            }
+            else if (!pats).match(n) = *n + 1 then
+               put(file_list, e)
          }
       }
       qsort(file_list, if /ascending then sorter else flip(sorter))
@@ -611,6 +579,7 @@ class FileDialog(Dialog)
                              set_x_align(Align.L))
       flist.
          set_draggable_cursor(&yes).
+         set_item_paint(AnnotatedIconFilesItemPaint()).
          set_item_border(EmptyBorder().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                              set_x_align(Align.L))
@@ -635,19 +604,16 @@ class FileDialog(Dialog)
             name_button.set_paint(cp.set_bottom(np))
             date_button.set_paint(dp)
             size_button.set_paint(sp)
-            flist.set_item_paint(IconFilesItemPaint())
          }
          Files.size_cmp: {
             name_button.set_paint(np)
             date_button.set_paint(dp)
             size_button.set_paint(cp.set_bottom(sp))
-            flist.set_item_paint(IconFilesItemPaintSize())
          }
          Files.date_cmp: {
             name_button.set_paint(np)
             date_button.set_paint(cp.set_bottom(dp))
             size_button.set_paint(sp)
-            flist.set_item_paint(IconFilesItemPaintDate())
          }
       }
    end

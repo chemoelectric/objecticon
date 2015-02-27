@@ -15,6 +15,47 @@ class ListEntryWithIcon(ListEntry)
       icon
 end
 
+class AnnotatedListEntryWithIcon(ListEntryWithIcon)
+   package readable
+      annotation
+
+   public annotate_name()
+      annotation := name
+      return self
+   end
+
+   public annotate_date(now)
+      local t, tf
+      /now := Time.get_system_seconds()
+      t := lstat.mtime
+      tf := if now - t > 180 * 86400 then
+         Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d yyyy")
+      else
+         Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d HH:mm")
+      annotation := name || " (" || tf || ")"
+      return self
+   end
+
+   public annotate_size()
+      local z, zf
+      z := lstat.size
+      zf := if z < 1024 then
+         Format.numeric_to_string(z, 0, ',') || "B"
+      else if z < 1024*1024 then
+         Format.numeric_to_string(z/1024.0, 1, ',') || "KB"
+      else
+         Format.numeric_to_string(z/(1024.0*1024.0), 1, ',') || "MB"
+      annotation := name || " (" || zf || ")"
+      return self
+   end
+end
+
+class AnnotatedIconFilesItemPaint(IconFilesItemPaint)
+   public get_string(data)
+      return data.annotation
+   end
+end
+
 class ColorFilesItemPaint(WithCloneItemPaint)
    protected make_clone(W)
       return W.clone()
