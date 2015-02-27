@@ -596,16 +596,6 @@ class Columns(LineBasedScrollArea)
    end
 
    public data_changed()
-      set_over()
-      invalidate_columnize()
-      invalidate_subject_width()
-      invalidate_line_count()
-      compute_and_invalidate()
-      return self
-   end
-
-   public set_data(l)
-      self.data := l
       # set_over() is necessary even if the caller does a
       # resynch_pointer, since we store over as an index (which may
       # change) rather than the underlying object.
@@ -615,6 +605,12 @@ class Columns(LineBasedScrollArea)
       invalidate_line_count()
       compute_and_invalidate()
       constrain_cursor()
+      return self
+   end
+
+   public set_data(l)
+      self.data := l
+      data_changed()
       return self
    end
 
@@ -1236,7 +1232,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private on_show_hidden_menu_item(e)
-      resort_cwd()
+      resort_cwd(&yes)
    end
 
    public create_columns_context_menu()
