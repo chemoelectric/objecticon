@@ -8,20 +8,25 @@
 
 package gui
 
-
-
 #
 # This class is one "pane" in an {OverlaySet}, which is rather
 # like a {TabSet} except that there are no tabs, and control
 # over which pane is displayed is entirely the affair of the
 # program.
 #
-# The components inside have their size and position computed
-# relative to the parent OverlaySet and also inherit the
-# OverlaySet's windowing attributes.
-# Components are added using the {add} method of {Component}.
-#
 class OverlayItem(Component)
+   public
+      remembered_focus
+
+   #
+   # Set the remembered focus component, which will received the focus
+   # when the item is selected (if the parent OverlaySet is configured with
+   # set_remember_focus to on).
+   #
+   public set_remembered_focus(c)
+      remembered_focus := c
+      return self
+   end
 end
 
 
