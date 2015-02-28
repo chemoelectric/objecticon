@@ -1650,7 +1650,7 @@ class Terminal(TabItem, VtUI)
 
    private on_filter(ev)
       if member(EditList.NAVIGATE, ev.code) then {
-         resort_cwd()
+         resort_cwd(&yes)
          parent_dialog.set_focus(best_focus)
       }
    end
