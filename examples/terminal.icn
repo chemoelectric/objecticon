@@ -16,7 +16,8 @@ import
    ipl.filegui,
    ipl.childwait,
    ipl.vt,
-   ipl.columnize
+   ipl.columnize,
+   ipl.strings
 
 global opts
 
@@ -81,6 +82,21 @@ class TerminalDialog(Dialog)
 
    private on_quit(ev)
       dispose()
+   end
+
+   public do_tab_cmd(l)
+      local s, t, cmd
+      # l is a list of strings (not ucs).
+      t := tabs.which_one
+      while s := get(l) do {
+         s ? if =":" then {
+            cmd := tab(0)
+            \t | return error("Command before tab directory: " || cmd)
+            t.do_tab_cmd(cmd) | fail
+         } else
+            t := if *s > 0 then new_tab(, s) else new_tab()
+      }
+      return self
    end
 
    public new_tab(sel, dir, other)
@@ -761,8 +777,8 @@ class Terminal(TabItem, VtUI)
       tty.set_size(cols, rows)
    end
 
-   public do_modify_arg(s)
-      case s of {
+   public do_tab_cmd(s)
+      case string(s) of {
          "reorient" | "re-orient" : on_reorient()
          "sort-name" : on_name_button()
          "sort-date" : on_date_button()
@@ -782,21 +798,12 @@ class Terminal(TabItem, VtUI)
             sort_dirs_menu_item.toggle_is_checked()
             on_sort_dirs_menu_item()
          }
-         default: stop("Invalid modifier arg: ", s)
-      }
-   end
-
-   public process_command(args)
-      local dir, sel
-      if \opts["v"] then
-         write("Command: ", to_string(args))
-      case string(args[1]) of {
-         "new-tab" : {
-            dir := args[2]
-            sel := flag(args[3])
-            parent_dialog.new_tab(sel, dir)
+         "select" : {
+            parent.set_which_one(self)
          }
+         default: return error("Invalid command: " || s)
       }
+      return self
    end
 
    public link_middle_clicked(url, ev)
@@ -966,13 +973,20 @@ class Terminal(TabItem, VtUI)
 
    public open_link(url)
       local r
-      if url.scheme == u"text" then {
-         send_tty(ucs(url.get_decoded_path()))
-      } else if r := get_runner(url) then {
-         if \r.cmd then
-            run_prog(r.cmd)
-         else
-            parent_dialog.launch_prog(r)
+      case string(url.scheme) of {
+         "text": send_tty(ucs(url.get_decoded_path()))
+         "tab": {
+            parent_dialog.do_tab_cmd(ipl.pdco.List{ URL.percent_decode(separate(url.get_path(), ';')) }) |
+               info_msg(&why)
+         }
+         default: {
+            if r := get_runner(url) then {
+               if \r.cmd then
+                  run_prog(r.cmd)
+               else
+                  parent_dialog.launch_prog(r)
+            }
+         }
       }
    end
 
@@ -1153,10 +1167,11 @@ class Terminal(TabItem, VtUI)
       m.add(TextMenuItem().
             set_label("Copy URL").
             connect(create copy_link_url(url), Event.ACTION))
-      m.add(TextMenuItem().
-            set_label("Insert command").
-            connect(create insert_cmd(url), Event.ACTION))
-
+      if not(url.scheme == (u"text" | u"tab")) then {
+         m.add(TextMenuItem().
+               set_label("Insert command").
+               connect(create insert_cmd(url), Event.ACTION))
+      }
       if url.scheme == u"file" &
          is_local_host(url) &
          s := ucs(url.get_decoded_path()) then
@@ -1515,7 +1530,6 @@ class Terminal(TabItem, VtUI)
       synch_paints()
       set_label_border(EmptyBorder().set_x_align(Align.L))
       columns.
-         set_width(scale(300)).
          set_item_paint(AnnotatedIconFilesItemPaint()).
          set_item_border(EmptyBorder().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
@@ -1861,7 +1875,7 @@ class Terminal(TabItem, VtUI)
          add(trail)
       self.add(panel_4)
       columns := Columns().
-         set_size(scale(100), scale(175)).
+         set_size(scale(300), scale(300)).
          clear_constraints().
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
@@ -1924,7 +1938,7 @@ class Terminal(TabItem, VtUI)
 end
 
 procedure main(a)
-   local d, p
+   local d, t
    opts := options(a, "-x: -v! -h+ -hs!")
    ImageCache.
       name_image("rpp.EXIT_24", EXIT).
@@ -1933,18 +1947,10 @@ procedure main(a)
    insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(TERMINAL_LOGO))
    d := TerminalDialog()
    if *a = 0 then
-      d.new_tab()
-   else {
-      every p := !a do {
-         p ? {
-            if =":" then
-               d.tabs.children[-1].do_modify_arg(tab(0))
-            else
-               d.new_tab(, p)
-         }
-      }
-   }
-   d.set_focus(d.tabs.children[1].remembered_focus)
+      put(a, "")
+   d.do_tab_cmd(a) | stop(&why)
+   t := \d.tabs.which_one | d.tabs.children[1]
+   d.set_focus(t.remembered_focus)
    d.show_modal()
    if \opts["v"] then write("Exiting")
 end
