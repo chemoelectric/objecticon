@@ -135,7 +135,6 @@ abstract class VtUI()
    public abstract create_context_menu()
    public abstract send_tty(s)
    public abstract vt_size_changed(cols, rows)
-   public abstract process_command(args)
    public abstract msg(s, n)
    public abstract clear_msg()
 end
@@ -582,7 +581,6 @@ class Vt(LineBasedScrollArea, MenuMode)
          "m" : every do_set_attr(int_params(param, 0))
          "!L" : do_set_link(param)
          "!P" : do_popup(param)
-         "!C" : do_command(param)
          "A" : do_cursor_up(int_param(param, 1, 1))
          "B" : do_cursor_down(int_param(param, 1, 1))
          "C" : do_cursor_right(int_param(param, 1, 1))
@@ -1053,11 +1051,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       every s := !l do
          put(t, ucs(URL.percent_decode(s))) | fail
       return t
-   end
-
-   private do_command(l)
-      if *l > 0 then
-         ui.process_command(decode_list(l))
    end
 
    private do_popup(l)
