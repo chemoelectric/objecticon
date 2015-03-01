@@ -26,18 +26,60 @@ $load SAVE "rpp.SAVE_24.gif"
 $load MIXFILE "rpp.MIXFILE_24.png"
 $load TERMINAL_LOGO "rpp.TERMINAL_LOGO.png"
 
-class Runner()
+abstract class Runner()
+   public abstract get_command()
+end
+
+class ImmediateRunner(Runner)
    public const
-      # The command to run.  Optional: either this is null, and the other
-      # fields are set, or this is set and the other two are ignored.
-      # At present if it is set, it is just used for a "cd" command.
-      cmd, 
+      cmd
+
+   public get_command()
+      return cmd
+   end
+
+   public new(cmd)
+      self.cmd := cmd
+      return
+   end
+end
+
+abstract class ExternalRunner(Runner)
+   public abstract get_working_dir()
+end
+
+class LaunchRunner(ExternalRunner)
+   public const
+      cmd,
+      wd
+
+   public get_working_dir()
+      return \wd
+   end
+
+   public get_command()
+      return cmd
+   end
+
+   public new(cmd, wd)
+      self.cmd := cmd
+      self.wd := wd
+      return
+   end
+end
+
+class DesktopRunner(ExternalRunner)
+   public const
       # The DesktopEntry giving the command and other parameters.
       desktop_entry,
       # The string to substitute to create a command to run
       subst,
       # The url itself (a URL object).
       url
+
+   public get_working_dir()
+      return \desktop_entry.path
+   end
 
    public get_command()
       local line
@@ -46,8 +88,7 @@ class Runner()
       return desktop_entry.subst_file(Format.shell_escape(subst), line)
    end
 
-   public new(cmd, desktop_entry, url, subst)
-      self.cmd := cmd
+   public new(desktop_entry, url, subst)
       self.desktop_entry := desktop_entry
       self.url := url
       self.subst := subst
@@ -141,7 +182,7 @@ class TerminalDialog(Dialog)
          return
       }
       # Set the working directory for the child process
-      Files.chdir(\runner.desktop_entry.path | Files.get_home())
+      Files.chdir(runner.get_working_dir() | Files.get_home())
       # Get the command to run.
       cmd := runner.get_command()
       System.setpgid()
@@ -779,6 +820,13 @@ class Terminal(TabItem, VtUI)
 
    public do_tab_cmd(s)
       case string(s) of {
+         "min-term" : on_min_terminal()
+         "max-term" : on_max_terminal()
+         "normal-term" : on_normal_terminal()
+         "list-focus" : {
+            focus_columns_button.toggle_is_checked().invalidate()
+            on_focus_columns_button()
+         }
          "reorient" | "re-orient" : on_reorient()
          "sort-name" : on_name_button()
          "sort-date" : on_date_button()
@@ -804,6 +852,24 @@ class Terminal(TabItem, VtUI)
          default: return error("Invalid command: " || s)
       }
       return self
+   end
+
+   private on_max_terminal()
+      split.first.set_size(0, 0).reset_layout()
+      if is_live() then
+         split.do_layout().invalidate()
+   end
+
+   private on_min_terminal()
+      split.first.set_size(lang.Limit.MaxWord, lang.Limit.MaxWord).reset_layout()
+      if is_live() then
+         split.do_layout().invalidate()
+   end
+
+   private on_normal_terminal()
+      split.first.set_size()
+      if is_live() then
+         split.do_layout().invalidate()
    end
 
    public link_middle_clicked(url, ev)
@@ -981,10 +1047,10 @@ class Terminal(TabItem, VtUI)
          }
          default: {
             if r := get_runner(url) then {
-               if \r.cmd then
-                  run_prog(r.cmd)
-               else
+               if is(r, ExternalRunner) then
                   parent_dialog.launch_prog(r)
+               else
+                  run_prog(r.get_command())
             }
          }
       }
@@ -1030,19 +1096,30 @@ class Terminal(TabItem, VtUI)
 
    private get_runner(url)
       local s, de
-      if url.scheme == u"file" then {
-         is_local_host(url) | return info_msg(u"Can't run a file on another host (" || url.host || u")")
-         s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
-         if Files.is_directory(s) then
-            return Runner(u"cd " || Format.shell_escape(s))
-         # Get a DesktopEntry based on the content-type if available, or the filename.
-         de := get_possible_desktop_entries(s) | return info_msg(u"No matching desktop entry for this URL")
-         if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1))
-         return Runner(, de, url, s)
-      } else {
-         de := Xdg.gen_desktop_entries("x-scheme-handler/" || string(url.scheme))  | return info_msg(u"No desktop entry for url scheme " || url.scheme)
-         if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1))
-         return Runner(, de, url, url.ucs())
+      case string(url.scheme) of {
+         "file" : {
+            is_local_host(url) | return info_msg(u"Can't run a file on another host (" || url.host || u")")
+            s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
+            if Files.is_directory(s) then
+               return ImmediateRunner(u"cd " || Format.shell_escape(s))
+            # Get a DesktopEntry based on the content-type if available, or the filename.
+            de := get_possible_desktop_entries(s) | return info_msg(u"No matching desktop entry for this URL")
+            if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1))
+            return DesktopRunner(de, url, s)
+         }
+         "run" : {
+            s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
+            return ImmediateRunner(s)
+         }
+         "launch" : {
+            s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
+            return LaunchRunner(s)
+         }
+         default : {
+            de := Xdg.gen_desktop_entries("x-scheme-handler/" || string(url.scheme))  | return info_msg(u"No desktop entry for url scheme " || url.scheme)
+            if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1))
+            return DesktopRunner(de, url, url.ucs())
+         }
       }
    end
 
@@ -1076,9 +1153,12 @@ class Terminal(TabItem, VtUI)
    end
 
    private copy_link(url)
-      if url.scheme == (u"file" | u"text") then
-         parent_dialog.own_selection(Selection.CLIPBOARD, 
-                                     StaticTextSelectionOwner(Format.shell_escape(ucs(url.get_decoded_path()))))
+      local s
+      s := ucs(url.get_decoded_path()) | fail
+      if url.scheme == u"file" then
+         s := Format.shell_escape(s)
+      parent_dialog.own_selection(Selection.CLIPBOARD, 
+                                  StaticTextSelectionOwner(s))
    end
 
    private copy_link_url(url)
@@ -1089,7 +1169,7 @@ class Terminal(TabItem, VtUI)
    private insert_cmd(url)
       local r, cmd
       if r := get_runner(url) then {
-         cmd := \r.cmd | r.get_command()
+         cmd := r.get_command()
          send_tty(cmd)
       }
    end
@@ -1130,6 +1210,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private on_reorient(e)
+      split.first.set_size().reset_layout()
       split.reorient()
    end
 
@@ -1153,13 +1234,28 @@ class Terminal(TabItem, VtUI)
       m.add(TextMenuItem().
             set_label("Reorient").
             connect(on_reorient, Event.ACTION))
+      if split.first.w_spec ~=== 0 then {
+         m.add(TextMenuItem().
+               set_label("Maximize").
+               connect(on_max_terminal, Event.ACTION))
+      }
+      if split.first.w_spec ~=== lang.Limit.MaxWord then {
+         m.add(TextMenuItem().
+               set_label("Minimize").
+               connect(on_min_terminal, Event.ACTION))
+      }
+      if split.first.w_spec === (0 | lang.Limit.MaxWord) then {
+         m.add(TextMenuItem().
+               set_label("Normal size").
+               connect(on_normal_terminal, Event.ACTION))
+      }
       return m
    end
 
    public create_link_menu(url)
       local m, m1, m2, s, de
       m := Menu()
-      if url.scheme == (u"file" | u"text") then {
+      if url.scheme == (u"file" | u"text" | u"run") then {
          m.add(TextMenuItem().
                set_label("Copy").
                connect(create copy_link(url), Event.ACTION))
@@ -1186,7 +1282,7 @@ class Terminal(TabItem, VtUI)
                m2 := TextMenuItem().
                   set_label(de.name)
                m2.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
-               connect_launch(m2, Runner(, de, url, s))
+               connect_launch(m2, DesktopRunner(de, url, s))
                m1.add(m2)
             }
             if *m1.children > 0 then 
@@ -1251,30 +1347,25 @@ class Terminal(TabItem, VtUI)
    end
 
    public create_columns_context_menu()
-      local cbg, ni, si, di, m
-      m := Menu().
-         add(ni := CheckBoxMenuItem().
+      local m
+      m := Menu()
+      if annotate_opt ~= SHOW_NAME_ONLY then
+         m.add(TextMenuItem().
             set_label("Name only").
-            connect(on_show_name_only , Event.ACTION)).
-         add(di := CheckBoxMenuItem().
+            connect(on_show_name_only , Event.ACTION))
+      if annotate_opt ~= SHOW_DATE then
+         m.add(TextMenuItem().
             set_label("Show date").
-            connect(on_show_date, Event.ACTION)).
-         add(si := CheckBoxMenuItem().
+            connect(on_show_date, Event.ACTION))
+      if annotate_opt ~= SHOW_SIZE then
+         m.add(TextMenuItem().
             set_label("Show size").
-            connect(on_show_size, Event.ACTION)).
-         add(MenuSeparator()).
-         add(show_hidden_menu_item)
+            connect(on_show_size, Event.ACTION))
+      m.add(MenuSeparator())
+      m.add(show_hidden_menu_item)
       if mix_entries_menu_item.is_unchecked() then
          m.add(sort_dirs_menu_item)
       m.add(mix_entries_menu_item)
-
-      cbg := CheckBoxGroup().
-         add(ni).add(si).add(di)
-      case annotate_opt of {
-         SHOW_NAME_ONLY : cbg.set_which_one(ni)
-         SHOW_SIZE : cbg.set_which_one(si)
-         SHOW_DATE : cbg.set_which_one(di)
-      }
       return m
    end
 
@@ -1689,10 +1780,17 @@ class Terminal(TabItem, VtUI)
       local f
       f := focus_columns_button.get_status()
       columns.set_accepts_focus(f)
-      if /f then
-         parent_dialog.set_focus(output)
-      else
-         parent_dialog.set_focus(columns)
+      if is_live() then {
+         if /f then
+            parent_dialog.set_focus(output)
+         else
+            parent_dialog.set_focus(columns)
+      } else {
+         if /f then
+            set_remembered_focus(output)
+         else
+            set_remembered_focus(columns)
+      }
    end
 
    public component_setup()
