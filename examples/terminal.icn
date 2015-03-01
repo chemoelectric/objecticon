@@ -1095,7 +1095,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private get_runner(url)
-      local s, de
+      local s, cd, de
       case string(url.scheme) of {
          "file" : {
             is_local_host(url) | return info_msg(u"Can't run a file on another host (" || url.host || u")")
@@ -1112,8 +1112,13 @@ class Terminal(TabItem, VtUI)
             return ImmediateRunner(s)
          }
          "launch" : {
-            s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
-            return LaunchRunner(s)
+            url.get_path() ? {
+               s := tab(upto(';') | 0)
+               s := ucs(URL.percent_decode(s)) | return info_msg(u"URL decoded path not utf8")
+               if move(1) then
+                  cd := ucs(URL.percent_decode(tab(0))) | return info_msg(u"CD decoded path not utf8")
+            }
+            return LaunchRunner(s, cd)
          }
          default : {
             de := Xdg.gen_desktop_entries("x-scheme-handler/" || string(url.scheme))  | return info_msg(u"No desktop entry for url scheme " || url.scheme)
