@@ -37,10 +37,18 @@ class CheckBoxGroup(Connectable)
    end
 
    #
-   # Returns the object which is currently checked.
+   # Returns the object which is currently checked, or fail if none are.
    #
    public get_which_one()
-      return self.which_one
+      return \self.which_one
+   end
+
+   #
+   # Return the index of the checked object in the checkboxes list, or fail if
+   # no object is selected.
+   #
+   public get_which_index()
+      return keyof(checkboxes, which_one)
    end
 
    #
