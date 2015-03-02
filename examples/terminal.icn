@@ -1614,6 +1614,7 @@ class Terminal(TabItem, VtUI)
          }
          if \other.split.sizer.is_horizontal_flag then
             split.reorient()
+         split.first.set_size(other.split.first.w_spec, other.split.first.h_spec)
          sorter := other.sorter
          ascending := other.ascending
          annotate_opt := other.annotate_opt
