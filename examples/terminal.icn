@@ -1618,11 +1618,16 @@ class Terminal(TabItem, VtUI)
          sorter := other.sorter
          ascending := other.ascending
          annotate_opt := other.annotate_opt
+         set_remembered_focus(if other.parent_dialog.focus === other.columns.find_focus() then
+            columns.find_focus()
+         else
+            output.find_focus())
       } else {
          if \opts["hs"] then
             split.reorient()
          sorter := Files.name_cmp
          annotate_opt := SHOW_NAME_ONLY
+         set_remembered_focus(output.find_focus())
       }
       synch_paints()
       set_label_border(EmptyBorder().set_x_align(Align.L))
@@ -1661,7 +1666,6 @@ class Terminal(TabItem, VtUI)
          mix_entries_menu_item.set_is_checked(other.mix_entries_menu_item.get_status())
          show_hidden_menu_item.set_is_checked(other.show_hidden_menu_item.get_status())
       }
-      set_remembered_focus(output.find_focus())
       filter.set_selection_list([u"*"])
       history_list.set_size().set_selection_list([])
       input := []
