@@ -820,9 +820,9 @@ class Terminal(TabItem, VtUI)
 
    public do_tab_cmd(s)
       case string(s) of {
-         "min-term" : on_min_terminal()
-         "max-term" : on_max_terminal()
-         "normal-term" : on_normal_terminal()
+         "minimize" : on_min_terminal()
+         "maximize" : on_max_terminal()
+         "normal-size" : on_normal_terminal()
          "list-focus" : {
             focus_columns_button.toggle_is_checked().invalidate()
             on_focus_columns_button()
