@@ -2049,8 +2049,8 @@ procedure main(a)
       name_image("rpp.MIXFILE_24", MIXFILE)
    insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(TERMINAL_LOGO))
    d := TerminalDialog()
-   if *a = 0 then
-      put(a, "")
+   if *a = 0 | a[1][1] == ":" then
+      push(a, "")
    d.do_tab_cmd(a) | stop(&why)
    t := \d.tabs.which_one | d.tabs.children[1]
    d.set_focus(t.remembered_focus)
