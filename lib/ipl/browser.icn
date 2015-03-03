@@ -1186,7 +1186,7 @@ class Img(Image, HasLastHighlight)
          set_over()
          pm := PopupMenu()
          pm.connect(on_popup_closed, Event.POPUP_CLOSED)
-         pm.popup(parent_dialog, pm_menu, e.x, e.y)
+         pm.popup(self, pm_menu, e.x, e.y)
       }
    end
 
@@ -5268,7 +5268,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       can_rpress(e) | fail
       if pm_menu := create_page_menu() then {
          pm := PopupMenu()
-         pm.popup(parent_dialog, pm_menu, e.x, e.y)
+         pm.popup(self, pm_menu, e.x, e.y)
       }
    end
 
