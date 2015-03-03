@@ -1650,6 +1650,11 @@ class Terminal(TabItem, VtUI)
       output.set_history_size(\opts["h"])
       if \opts["v"] then
          output.set_verbose(&yes)
+      output.set_normal_fg(\opts["tfg"])
+      output.set_normal_bg(\opts["tbg"])
+      output.set_reverse_fg(\opts["trevfg"])
+      output.set_reverse_bg(\opts["trevbg"])
+      output.set_font(\opts["tfont"])
 
       favourites_list.set_size().set_selection_list(get_favourites_directories())
       sort_dirs_menu_item := CheckBoxMenuItem().
@@ -1801,10 +1806,6 @@ class Terminal(TabItem, VtUI)
          else
             set_remembered_focus(columns)
       }
-   end
-
-   public component_setup()
-      self.setup()
    end
 
    private on_columns_focus(ev)
@@ -2047,7 +2048,7 @@ end
 
 procedure main(a)
    local d, t
-   opts := options(a, "-x: -v! -h+ -hs!")
+   opts := options(a, "-x: -v! -h+ -hs! -tfg: -tbg: -trevfg: -trevbg: -tfont:")
    ImageCache.
       name_image("rpp.EXIT_24", EXIT).
       name_image("rpp.SAVE_24", SAVE).
