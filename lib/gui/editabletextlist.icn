@@ -1174,24 +1174,24 @@ class EditableTextList(LineBasedScrollArea)
          # it is say wholly selected, using v.last would leave the
          # last char unhighlighted.
          #
-         r := if (self.mark_y < v.index < self.cursor_y) | (self.mark_y > v.index > self.cursor_y) then {
-            # Whole line selected
-            [v.first, v.first + (0 < *s)]
-         } else if v.index = self.mark_y = self.cursor_y then {
-            # Part of line
-            range1(v.first, v.first + *s, self.cursor_x, self.mark_x)
-         } else if v.index = self.mark_y then {
-            if self.mark_y < self.cursor_y then
-               range1(v.first, v.first + *s, self.mark_x, *self.contents[v.index] + 1)
-            else
-               range1(v.first, v.first + *s, 1, self.mark_x)
-         } else if v.index = self.cursor_y then {
-            if self.mark_y > self.cursor_y then
-               range1(v.first, v.first + *s, self.cursor_x, *self.contents[v.index] + 1)
-            else
-               range1(v.first, v.first + *s, 1, self.cursor_x)
-         }
-         if \r then {
+         if (r := if (self.mark_y < v.index < self.cursor_y) | (self.mark_y > v.index > self.cursor_y) then {
+                     # Whole line selected
+                     [v.first, v.first + (0 < *s)]
+                  } else if v.index = self.mark_y = self.cursor_y then {
+                     # Part of line
+                     range1(v.first, v.first + *s, self.cursor_x, self.mark_x)
+                  } else if v.index = self.mark_y then {
+                     if self.mark_y < self.cursor_y then
+                        range1(v.first, v.first + *s, self.mark_x, *self.contents[v.index] + 1)
+                     else
+                        range1(v.first, v.first + *s, 1, self.mark_x)
+                  } else if v.index = self.cursor_y then {
+                     if self.mark_y > self.cursor_y then
+                        range1(v.first, v.first + *s, self.cursor_x, *self.contents[v.index] + 1)
+                     else
+                        range1(v.first, v.first + *s, 1, self.cursor_x)
+                  })
+         then {
             off1 := text_width_ex(view.cbwin, s, 1, r[1] - v.first + 1, self.tab_width)
             off2 := text_width_ex(view.cbwin, s, 1, r[2] - v.first + 1, self.tab_width)
             Gui.style.fill_selection_rectangle(view.cbwin, xp + off1, yp,  off2 - off1, self.line_height)
