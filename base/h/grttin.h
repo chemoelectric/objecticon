@@ -185,7 +185,7 @@ struct timeval {
    long    tv_sec;
    long    tv_usec;
 };
-typedef int time_t, DIR, uid_t, gid_t, pid_t, stringint;
+typedef int time_t, DIR, uid_t, gid_t, pid_t, stringint, socklen_t;
 
 /*
  * graphics

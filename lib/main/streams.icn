@@ -1012,6 +1012,11 @@ class SocketStream(DescStream)
    public native listen(backlog)
 
    #
+   # Returns the address of the peer connected to the socket.
+   #
+   public native get_peer()
+
+   #
    # Accept a new connection, returning a new {SocketStream}.
    #
    public accept()
