@@ -167,6 +167,13 @@ package class Charset()
    end
 end
 
+package class VtView(DrawScrollAreaView)
+   public initially()
+      parent.synch_view_colours()
+      DrawScrollAreaView.initially()
+   end
+end
+
 #
 # A VT emulator.
 #
@@ -226,6 +233,8 @@ class Vt(LineBasedScrollArea, MenuMode)
       history_size,               # Size of history scroll lines; 0 -> no vsb
       reverse_fg,                 # Colours of reverse mode, or null implying true reverse.
       reverse_bg,
+      normal_fg,                  # Colours of non-reverse mode, or null implying use cbwin colours.
+      normal_bg,
       charsets,                   # List of 4 Charsets G0..G4
       curr_charset                # Current charset 1=G0 etc.  
 
@@ -325,6 +334,10 @@ class Vt(LineBasedScrollArea, MenuMode)
       primary := &null
       invalidate_region()
       clear_mark()
+   end
+
+   public create_view()
+      return VtView()
    end
 
    public layout()
@@ -708,8 +721,10 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_reverse_video(f)
-      reverse_mode := f
-      view.invalidate()
+      if reverse_mode ~=== f then {
+         reverse_mode := f
+         view.reset()
+      }
    end
 
    private set_col_mode(n)
@@ -773,7 +788,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          clear_mark()
          reset_tab_stops()
          reset_margins()
-         view.invalidate()
+         view.reset()
       }
    end
 
@@ -785,14 +800,12 @@ class Vt(LineBasedScrollArea, MenuMode)
       return self
    end
 
-   #
-   # Set the fg colour to use in reverse mode.
+   # Set the fg colour to use in reverse mode.  Requires reset if set
+   # whilst live.
    #
    public set_reverse_fg(c)
       Window.parse_color(c) | fail
       self.reverse_fg := c
-      if is_live() then
-         view.invalidate()
       return self
    end
 
@@ -802,8 +815,24 @@ class Vt(LineBasedScrollArea, MenuMode)
    public set_reverse_bg(c)
       Window.parse_color(c) | fail
       self.reverse_bg := c
-      if is_live() then
-         view.invalidate()
+      return self
+   end
+
+   # Set the fg colour to use in normal (non-reverse) mode.  Requires
+   # reset if set whilst live.
+   #
+   public set_normal_fg(c)
+      Window.parse_color(c) | fail
+      self.normal_fg := c
+      return self
+   end
+
+   #
+   # Set the bg colour to use in non-reverse mode.
+   #
+   public set_normal_bg(c)
+      Window.parse_color(c) | fail
+      self.normal_bg := c
       return self
    end
 
@@ -1080,6 +1109,19 @@ class Vt(LineBasedScrollArea, MenuMode)
       attr.url := URL(l[1]) | &null
    end
 
+   # This is called (from view's initially) just after cbwin has been
+   # initialized, and just before view.cbwin is to be initialized.
+   package synch_view_colours()
+      if /reverse_mode then {
+         view.clear_wattribs()
+         view.set_fg(\normal_fg)
+         view.set_bg(\normal_bg)
+      } else {
+         view.set_fg(\reverse_fg | \normal_bg | cbwin.get_bg())
+         view.set_bg(\reverse_bg | \normal_fg | cbwin.get_fg())
+      }
+   end
+
    private synch_font()
       local s
       if \ (attr.bold | attr.font) then {
@@ -1126,7 +1168,7 @@ class Vt(LineBasedScrollArea, MenuMode)
             28 : attr.invisible := &no
             29 : attr.crossed := &no
             30: attr.fg := "black"
-            31: attr.fg := "red"
+            31: attr.fg := "dark red"
             32: attr.fg := "dark green"
             33: attr.fg := "dark yellow"
             34: attr.fg := "blue"
@@ -1136,7 +1178,7 @@ class Vt(LineBasedScrollArea, MenuMode)
             39: attr.fg := &null
 
             40: attr.bg := "black"
-            41: attr.bg := "red"
+            41: attr.bg := "dark red"
             42: attr.bg := "dark green"
             43: attr.bg := "dark yellow"
             44: attr.bg := "blue"
@@ -1184,8 +1226,10 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_hide_cursor(f)
-      hide_cursor_mode := f
-      invalidate_cursor()
+      if hide_cursor_mode ~=== f then {
+         hide_cursor_mode := f
+         invalidate_cursor()
+      }
    end
 
    private do_single_shift(n)
@@ -1487,143 +1531,120 @@ class Vt(LineBasedScrollArea, MenuMode)
       goto_last(get_line_count())
    end
 
+   public defer draw_line()
+
    public draw()
-      local xp, yp, i, info, r, W, bg
+      local s, ss, row, seg, x1, W, W2, fg, bg, w1, want_fg, want_bg, want_font,
+         default_bg, default_fg, default_font, a, r, font, y1, cr, info, xp, yp, i
 
-      r := view.get_cbwin_clip()
+      cr := view.get_cbwin_clip()
+      info := get_line_info(cr) | fail
+      yp := cr.y - info.offset
+      xp := get_subject_x() + Gui.TEXT_INSET
 
-      if \reverse_mode then {
-         bg := \reverse_bg | view.cbwin.get_fg()
-         use {
-            W := view.cbwin.clone(),
-            W.set_bg(bg).erase_area(r.x, r.y, r.w, r.h)
-         }
-      }
-
-      info := get_line_info(r) | fail
-      yp := r.y - info.offset
-      xp := get_subject_x()
+      W := view.cbwin.clone()
+      bg := default_bg := W.get_bg()
+      fg := default_fg := W.get_fg()
+      font := default_font := get_wattrib("font")
 
       #
       # Write the lines
       #
       every i := info.first to info.last do {
-         draw_line(xp, yp, i)
-         yp +:= line_height
-      }
-   end
+         # Don't draw partial lines at the top, since this looks poor
+         # when running full-screen editing style apps (eg emacs)
+         if yp >= view.y then {
+            row := contents[i]
+            s := contents_str(i)
 
-   private draw_line(xp, yp, i)
-      local s, ss, row, seg, x1, W, W2, fg, bg, w1, want_fg, want_bg, want_font,
-         default_bg, default_fg, default_font, a, r, font, y1
+            x1 := xp
+            y1 := yp + view.cbwin.get_absolute_leading()
+            every seg := !row.l do {
+               a := seg.attr
+               ss := seg.s
+               want_fg := if \a.url === highlight then "red" else (\a.fg | default_fg)
+               want_bg := \a.bg | default_bg
+               if \a.inverse then
+                  want_fg :=: want_bg
+               want_font := \a.font | default_font
+               if font ~=== want_font | fg ~=== want_fg | bg ~=== want_bg then {
+                  W.close()
+                  W := view.cbwin.clone()
+                  W.set_fg(fg := want_fg).
+                     set_bg(bg := want_bg).
+                     set_font(font := want_font)
+               }
+               w1 := char_w * *ss
+               if bg ~=== default_bg then
+                  W.erase_area(x1, yp, w1, line_height)
 
-      # Don't draw partial lines at the top, since this looks poor
-      # when running full-screen editing style apps (eg emacs)
-      if yp < view.y then
-         fail
+               if /a.invisible then
+                  W.draw_string(x1, yp + W.get_line_ascent(), ss)
 
-      row := contents[i]
-      s := contents_str(i)
+               if \a.underline then
+                  W.draw_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+               else if \a.url ~=== last_highlight then
+                  use { 
+                     W2 := W.clone(),
+                          W2.set_fg(EditRGBA(fg,,,, 16000)).      # 25% alpha of the current fg.
+                          draw_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+                  }
 
-      xp +:= Gui.TEXT_INSET
-      x1 := xp
-      y1 := yp + view.cbwin.get_absolute_leading()
-      W := view.cbwin.clone()
-      bg := W.get_bg()
-      fg := W.get_fg()
-      font := default_font := get_wattrib("font")
-      if /reverse_mode then {
-         default_bg := bg
-         default_fg := fg
-      } else {
-         default_bg := \reverse_bg | fg
-         default_fg := \reverse_fg | bg
-      }
+               if \a.crossed then
+                  W.draw_rectangle(x1, y1 + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
 
-      every seg := !row.l do {
-         a := seg.attr
-         ss := seg.s
-         want_fg := if \a.url === highlight then "red" else (\a.fg | default_fg)
-         want_bg := \a.bg | default_bg
-         if \a.inverse then
-            want_fg :=: want_bg
+               if \a.url === last_highlight then
+                  Gui.style.draw_dashed_rectangle(W, x1, yp, w1, line_height)
+               if \a.url === over then
+                  Gui.style.fill_over_rectangle(W, x1, yp, w1, line_height)
 
-         want_font := \a.font | default_font
-         if font ~=== want_font | fg ~=== want_fg | bg ~=== want_bg then {
-            W.close()
-            W := view.cbwin.clone()
-            W.set_fg(fg := want_fg).
-              set_bg(bg := want_bg).
-              set_font(font := want_font)
-         }
-         w1 := char_w * *ss
-         if bg ~=== default_bg then
-            W.erase_area(x1, yp, w1, line_height)
-
-         if /a.invisible then
-            W.draw_string(x1, yp + W.get_line_ascent(), ss)
-
-         if \a.underline then
-            W.draw_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
-         else if \a.url ~=== last_highlight then
-            use { 
-               W2 := W.clone(),
-               W2.set_fg(EditRGBA(fg,,,, 16000)).      # 25% alpha of the current fg.
-                  draw_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+               x1 +:= w1
             }
 
-         if \a.crossed then
-            W.draw_rectangle(x1, y1 + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
+            if \row.bg ~=== default_bg then {
+               w1 := xp + cols * char_w - x1
+               W.set_bg(row.bg).erase_area(x1, yp, w1, line_height)
+            }
 
-         if \a.url === last_highlight then
-            Gui.style.draw_dashed_rectangle(W, x1, yp, w1, line_height)
-         if \a.url === over then
-            Gui.style.fill_over_rectangle(W, x1, yp, w1, line_height)
+            if \mark_y then {
+               if (r := if (mark_y < i < cursor_y) | (mark_y > i > cursor_y) then
+                            [1, 1 + (0 < *s)]
+                         else if i = mark_y = cursor_y then
+                            range1(1, *s + 1, cursor_x, mark_x)
+                         else if i = mark_y then {
+                            if mark_y < cursor_y then
+                               range1(1, *s + 1, mark_x, *s + 1)
+                            else
+                               range1(1, *s + 1, 1, mark_x)
+                         } else if i = cursor_y then {
+                            if mark_y > cursor_y then
+                               range1(1, *s + 1, cursor_x, *s + 1)
+                            else
+                               range1(1, *s + 1, 1, cursor_x)
+                         })
+               then
+                  Gui.style.fill_selection_rectangle(view.cbwin, xp + (r[1] - 1) * char_w, yp,  
+                                                     (r[2] - r[1]) * char_w, line_height)
+            }
 
-         x1 +:= w1
-      }
-
-      if \row.bg ~=== default_bg then {
-         w1 := xp + cols * char_w - x1
-         W.set_bg(row.bg).erase_area(x1, yp, w1, line_height)
-      }
-      W.close()
-
-      if \mark_y then {
-         r := if (mark_y < i < cursor_y) | (mark_y > i > cursor_y) then
-            [1, 1 + (0 < *s)]
-         else if i = mark_y = cursor_y then
-            range1(1, *s + 1, cursor_x, mark_x)
-         else if i = mark_y then {
-            if mark_y < cursor_y then
-               range1(1, *s + 1, mark_x, *s + 1)
-            else
-               range1(1, *s + 1, 1, mark_x)
-         } else if i = cursor_y then {
-            if mark_y > cursor_y then
-               range1(1, *s + 1, cursor_x, *s + 1)
-            else
-               range1(1, *s + 1, 1, cursor_x)
+            if /hide_cursor_mode & i = cy_to_index() then {
+               if has_focus() & is_unshaded() then {
+                  if cursor_on ~= 2 then
+                     Gui.style.draw_text_cursor(view.cbwin,
+                                                xp + (cx - 1) * char_w,
+                                                y1, 
+                                                view.cbwin.get_font_height())
+               } else 
+                  Gui.style.draw_shadow_text_cursor(view.cbwin,
+                                                    xp + (cx - 1) * char_w,
+                                                    y1, 
+                                                    view.cbwin.get_font_height())
+            }
          }
-
-         if \r then
-            Gui.style.fill_selection_rectangle(view.cbwin, xp + (r[1] - 1) * char_w, yp,  
-                                               (r[2] - r[1]) * char_w, line_height)
+         yp +:= line_height
       }
 
-      if /hide_cursor_mode & i = cy_to_index() then {
-         if has_focus() & is_unshaded() then {
-            if cursor_on ~= 2 then
-               Gui.style.draw_text_cursor(view.cbwin,
-                                          xp + (cx - 1) * char_w,
-                                          y1, 
-                                          view.cbwin.get_font_height())
-         } else 
-            Gui.style.draw_shadow_text_cursor(view.cbwin,
-                                              xp + (cx - 1) * char_w,
-                                              y1, 
-                                              view.cbwin.get_font_height())
-      }
+      W.close()
    end
 
    #
@@ -2067,7 +2088,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          set_over()
          pm := PopupMenu()
          pm.connect(on_popup_closed, Event.POPUP_CLOSED)
-         pm.popup(parent_dialog, m, e.x, e.y)
+         pm.popup(self, m, e.x, e.y)
       }
    end
 
@@ -2181,7 +2202,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          set_item_border(EmptyBorder().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                              set_x_align(Align.L)).
-         set_all_wattribs(self.get_effective_wattribs()).
+         set_all_wattribs(view.get_effective_wattribs()).
          set_inherit_wattribs(&no).
          connect(on_popup_selection, Event.SELECTION_CHANGED).
          set_select_mode(Select.ONE).
@@ -2192,6 +2213,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          set_selection_on_key_moves(&no).
          set_contents(l).
          set_z(self.parent_dialog.get_top_z())
+
       self.parent_dialog.add(popup)
       self.popup.set_ideal_size(scale(25), max_w,
                                 scale(5), max_h)
