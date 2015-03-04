@@ -222,14 +222,23 @@ abstract class LineBasedScrollArea(DrawScrollArea)
       return self
    end
 
-   #
-   # Return a {Rect} indicating the area occupied by the line; note
-   # this may be outside of the view area.
+   # Return a {Rect} (in dialog-based coordinates) indicating the area
+   # occupied by the line; note this may be outside of the view area.
    #
    public get_line_rect(line)
       return Rect(view.x, 
                   get_subject_y() + get_cum_line_height(line),
                   view.w,
+                  get_height_for_line(line))
+   end
+
+   # Return a {Rect} (in area-based coordinates) indicating the area
+   # occupied by the line.
+   #
+   public get_area_line_rect(line)
+      return Rect(0, 
+                  get_cum_line_height(line),
+                  get_subject_width(),
                   get_height_for_line(line))
    end
 

@@ -209,6 +209,34 @@ abstract class ScrollArea(Component)
       return h1
    end
 
+   # Ensure the given region (in area co-ordinates) is visible.
+   #
+   public ensure_region_visible(r)
+      if r.y + r.h > get_area_y() + view.h then
+         set_area_y(min(r.y, r.y + r.h - view.h))
+      else if r.y < get_area_y() then
+         set_area_y(r.y)
+
+      if r.x + r.w > get_area_x() + view.w then
+         set_area_x(min(r.x, r.x + r.w - view.w))
+      else if r.x < get_area_x() then
+         set_area_x(r.x)
+
+      return self
+   end
+
+   # Center the given region (in area co-ordinates) vertically.
+   #
+   public center_region_vertically(r)
+      return set_area_y(r.y + r.h / 2 - view.h / 2)
+   end
+
+   # Center the given region (in area co-ordinates) horizontally.
+   #
+   public center_region_horizontally(r)
+      return set_area_y(r.x + r.w / 2 - view.w / 2)
+   end
+
    #
    # Set an ideal size (into w_spec/h_spec) based on the given min and max
    # dimensions.
