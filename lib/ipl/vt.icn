@@ -136,7 +136,7 @@ abstract class VtUI()
    public abstract send_tty(s)
    public abstract vt_size_changed(cols, rows)
    public abstract msg(s, n)
-   public abstract clear_msg()
+   public abstract search_msg(s)
 end
 
 package class VtPrimarySelectionOwner(TextSelectionOwner)
@@ -181,7 +181,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private
       primary_selection_owner,
       ui,                         # The VtUI instance providing external functionality.
-      contents,                   # List of Segments
+      contents,                   # List of Rows
       tab_stops,                  # Set of column numbers.
       cursor_ticker,
       cursor_on,
@@ -201,8 +201,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       saved_buffer,               # A SavedBuffer instance for implementing decset 1049
       popup,
       quieten                     # A flag to stop distracting in_chain cursor updates
-
-
 
    private readable
       verbose_flag,
@@ -236,7 +234,9 @@ class Vt(LineBasedScrollArea, MenuMode)
       normal_fg,                  # Colours of non-reverse mode, or null implying use cbwin colours.
       normal_bg,
       charsets,                   # List of 4 Charsets G0..G4
-      curr_charset                # Current charset 1=G0 etc.  
+      curr_charset,               # Current charset 1=G0 etc.  
+      search_term,                # Current string being searched for.
+      search_increment_flag       # Should next search forward/backward be incremental? (ie from mark).
 
    private static const
       EMPTY_ATTR,
@@ -1555,7 +1555,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          # when running full-screen editing style apps (eg emacs)
          if yp >= view.y then {
             row := contents[i]
-            s := contents_str(i)
+            s := line_str(row.l)
 
             x1 := xp
             y1 := yp + view.cbwin.get_absolute_leading()
@@ -1606,26 +1606,25 @@ class Vt(LineBasedScrollArea, MenuMode)
                W.set_bg(row.bg).erase_area(x1, yp, w1, line_height)
             }
 
-            if \mark_y then {
-               if (r := if (mark_y < i < cursor_y) | (mark_y > i > cursor_y) then
-                            [1, 1 + (0 < *s)]
-                         else if i = mark_y = cursor_y then
-                            range1(1, *s + 1, cursor_x, mark_x)
-                         else if i = mark_y then {
-                            if mark_y < cursor_y then
-                               range1(1, *s + 1, mark_x, *s + 1)
-                            else
-                               range1(1, *s + 1, 1, mark_x)
-                         } else if i = cursor_y then {
-                            if mark_y > cursor_y then
-                               range1(1, *s + 1, cursor_x, *s + 1)
-                            else
-                               range1(1, *s + 1, 1, cursor_x)
-                         })
-               then
-                  Gui.style.fill_selection_rectangle(view.cbwin, xp + (r[1] - 1) * char_w, yp,  
-                                                     (r[2] - r[1]) * char_w, line_height)
-            }
+            if \mark_y & 
+               (r := if (mark_y < i < cursor_y) | (mark_y > i > cursor_y) then
+                         [1, 1 + (0 < *s)]
+                      else if i = mark_y = cursor_y then
+                         range1(1, *s + 1, cursor_x, mark_x)
+                      else if i = mark_y then {
+                         if mark_y < cursor_y then
+                            range1(1, *s + 1, mark_x, *s + 1)
+                         else
+                            range1(1, *s + 1, 1, mark_x)
+                      } else if i = cursor_y then {
+                         if mark_y > cursor_y then
+                            range1(1, *s + 1, cursor_x, *s + 1)
+                         else
+                            range1(1, *s + 1, 1, cursor_x)
+                      })
+            then
+               Gui.style.fill_selection_rectangle(view.cbwin, xp + (r[1] - 1) * char_w, yp,  
+                                                  (r[2] - r[1]) * char_w, line_height)
 
             if /hide_cursor_mode & i = cy_to_index() then {
                if has_focus() & is_unshaded() then {
@@ -1661,6 +1660,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private clear_mark()
+      reset_search()
       text_selection := mark_x := mark_y := &null
       return self
    end
@@ -1911,7 +1911,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          over := u
          invalidate_link(\over)
          if /over then
-            ui.clear_msg()
+            ui.msg()
          else
             ui.msg(u.ucs())
       }
@@ -1970,7 +1970,6 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private handle_lrelease(e)
-      local s
       if \held then {
          if \over then {
             set_highlight()
@@ -1979,11 +1978,16 @@ class Vt(LineBasedScrollArea, MenuMode)
          held := &null
       } else {
          scroll_ticker.stop()
-         calculate_text_selection()
-         if s := get_current_text_selection() then {
-            parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
-            self.primary := s
-         }
+         own_primary()
+      }
+   end
+
+   private own_primary()
+      local s
+      calculate_text_selection()
+      if s := get_current_text_selection() then {
+         parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
+         self.primary := s
       }
    end
 
@@ -1991,7 +1995,8 @@ class Vt(LineBasedScrollArea, MenuMode)
       mark_x := mark_y := 1
       cursor_y := *contents
       cursor_x := *contents_str(cursor_y) + 1
-      handle_lrelease()
+      reset_search()
+      own_primary()
       view.invalidate()
    end
 
@@ -2032,6 +2037,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private handle_lpress1(e)
       local s
       invalidate_region()
+      reset_search()
       # This would be \e.shift, but shift is used to disable the link click functionality.
       if \e.ctrl then {
          /self.mark_y := self.cursor_y
@@ -2249,6 +2255,103 @@ class Vt(LineBasedScrollArea, MenuMode)
             add_popup(d)
          d.show()
       }
+   end
+
+   public do_search(s)
+      reset_search()
+      if *s = 0 then {
+         search_term := &null
+         invalidate_region()
+         clear_mark()
+         ui.search_msg("No results")
+      } else {
+         search_term := s
+         do_search_prev()
+      }
+      return self
+   end
+
+   public do_search_prev()
+      local i, r, j, ls, num, min_x, min_y, last_x, last_y, matching
+      \search_term | fail
+      if \search_increment_flag then {
+         min_y := cursor_y
+         min_x := cursor_x
+      }
+      num := 0
+      every i := 1 to *contents do {
+         r := contents[i]
+         ls := line_str(r.l)
+         every j := find(search_term, ls) do {
+            num +:= 1
+            if /last_y | /min_y | (i < min_y) | (i = min_y & j < min_x) then {
+               matching := num
+               last_y := i
+               last_x := j
+            }
+         }
+      }
+      if \last_y then {
+         invalidate_region()
+         mark_y := cursor_y := last_y
+         cursor_x := last_x
+         mark_x := cursor_x + *search_term
+         center_line(cursor_y)
+         own_primary()
+         search_increment_flag := &yes
+         invalidate_region()
+         ui.search_msg(matching || "/" || num)
+      } else
+         ui.search_msg("No results")
+      return self
+   end
+
+   public do_search_next()
+      local i, r, j, ls, num, max_x, max_y, first_x, first_y, matching, last_x, last_y
+      \search_term | fail
+      if \search_increment_flag then {
+         max_y := mark_y
+         max_x := mark_x
+      }
+      num := 0
+      every i := 1 to *contents do {
+         r := contents[i]
+         ls := line_str(r.l)
+         every j := find(search_term, ls) do {
+            num +:= 1
+            if /first_y & (/max_y | (i > max_y) | (i = max_y & j > max_x)) then {
+               first_y := i
+               first_x := j
+               matching := num
+            } else {
+               last_y := i
+               last_x := j
+            }
+         }
+      }
+      if /first_y & \last_y then {
+         first_y := last_y
+         first_x := last_x
+         matching := num
+      }
+      if \first_y then {
+         invalidate_region()
+         mark_y := cursor_y := first_y
+         cursor_x := first_x
+         mark_x := cursor_x + *search_term
+         center_line(cursor_y)
+         own_primary()
+         search_increment_flag := &yes
+         invalidate_region()
+         ui.search_msg(matching || "/" || num)
+      } else
+         ui.search_msg("No results")
+      return self
+   end
+
+   private reset_search()
+      ui.search_msg()
+      search_increment_flag := &no
    end
 
    public new()

@@ -765,6 +765,12 @@ class Terminal(TabItem, VtUI)
       size_button,
       favourites_list,
       message_label,
+      search_panel,
+      search_field,
+      search_label, 
+      search_close_button,
+      search_next_button,
+      search_prev_button, 
       history_list,
       trail,
       best_focus         # Either columns or output (the vt)
@@ -890,10 +896,6 @@ class Terminal(TabItem, VtUI)
 
    public msg(s, n)
       message_label.set(s, n)
-   end
-
-   public clear_msg()
-      msg()
    end
 
    private setup_shell()
@@ -1149,7 +1151,7 @@ class Terminal(TabItem, VtUI)
    private on_columns_over_changed(ev)
       local s, url
       if /columns.over then
-         clear_msg()
+         msg()
       else {
          s := FilePath(cwd).child(columns.data[columns.over].name).ucs() | fail
          url := URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/')) | fail
@@ -1254,6 +1256,10 @@ class Terminal(TabItem, VtUI)
                set_label("Normal size").
                connect(on_normal_terminal, Event.ACTION))
       }
+      if not search_panel.is_live() then
+         m.add(TextMenuItem().
+               set_label("Search").
+               connect(open_search_panel, Event.ACTION))
       return m
    end
 
@@ -1606,7 +1612,9 @@ class Terminal(TabItem, VtUI)
       local cd
       TabItem.new()
       self.revert_tab := revert_tab
-      self.setup()
+      setup()
+      setup_search_panel()
+
       if \other then {
          if other.focus_columns_button.is_checked() then {
             focus_columns_button.set_is_checked(&yes)
@@ -1816,6 +1824,81 @@ class Terminal(TabItem, VtUI)
       best_focus := output
    end
 
+   private open_search_panel()
+      split.second.
+         add(search_panel, 0).
+         reset_layout().
+         do_layout().
+         invalidate()
+      parent_dialog.set_focus(search_field)
+   end
+
+   private close_search_panel()
+      split.second.
+         remove(search_panel).
+         reset_layout().
+         do_layout().
+         invalidate()
+      parent_dialog.set_focus(output.find_focus())
+   end
+
+   public search_msg(s)
+      /s := ""
+      search_label.set_label(s)
+   end
+
+   private on_search_field()
+      output.do_search(search_field.get_contents())
+   end
+
+   private on_search_next()
+      output.do_search_next()
+   end
+
+   private on_search_prev()
+      output.do_search_prev()
+   end
+
+   private setup_search_panel()
+      search_panel := Component().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_layout(GridLayout().set_doi(0).set_dii(2).set_extra("cells"))
+      search_close_button := IconButton().
+         set_tooltip(TextPaint("Close")).
+         connect(close_search_panel, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_paint(ImagePaint().set_cache("gui.CLOSE_24"))
+      search_panel.add(search_close_button)
+      search_field := TextField().
+         set_width(scale(150)).
+         set_contents(u"").
+         connect(on_search_field, Event.CONTENT_CHANGED).
+         connect(on_search_field, Event.ACTION)
+      search_panel.add(search_field)
+      search_prev_button := IconButton().
+         set_tooltip(TextPaint("Prev")).
+         connect(self.on_search_prev, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_paint(ImagePaint().set_cache("gui.PREV_24"))
+      search_panel.add(search_prev_button)
+      search_next_button := IconButton().
+         set_tooltip(TextPaint("Next")).
+         connect(self.on_search_next, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_paint(ImagePaint().set_cache("gui.NEXT_24"))
+      search_panel.add(search_next_button)
+      search_label := Label().
+         set_label("").
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("l_inset", 5).
+         set_width(scale(75))
+      search_panel.add(search_label)
+   end
+
    private setup()
       local paint_2, paint_14, paint_27, paint_32, paint_7, layout_4, paint_11, paint_37, paint_42, panel_4, paint_29, split_content_3, split_content_4, paint_9, layout_6, paint_13, paint_31, paint_44, paint_6, layout_3, paint_10, paint_23, paint_41, paint, paint_3, paint_28, paint_8, border_1, layout_5, paint_12, paint_30, paint_40
       paint_10 := ImagePaint().
@@ -2001,6 +2084,7 @@ class Terminal(TabItem, VtUI)
       output := Vt().
          set_size(scale(100), scale(100)).
          clear_constraints().
+         set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_constraint("y_fill", &yes).
