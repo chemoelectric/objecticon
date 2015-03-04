@@ -135,7 +135,7 @@ class FileDialog(Dialog)
    end
 
    public on_file_content(ev)
-      clear_msg()
+      msg()
       check_existing()
       synch_file()
    end
@@ -345,7 +345,7 @@ class FileDialog(Dialog)
       #
       # Clicked in file list; set TextField
       #
-      clear_msg()
+      msg()
       dir.set_contents(loaded_dir_path.liberal_ucs())
       if /multiple_files_flag then
          file.set_contents(flist.object_get_selections()[1].name)
@@ -355,7 +355,7 @@ class FileDialog(Dialog)
    end
 
    public on_dir(ev)
-      clear_msg()
+      msg()
       if member(EditList.NAVIGATE, ev.code) then
          goto_dir(dir.get_contents())
       else
@@ -448,14 +448,10 @@ class FileDialog(Dialog)
       message_label.set(s)
    end
 
-   public clear_msg()
-      msg()
-   end
-
    public refresh_dir(load)
       dir.set_contents(loaded_dir_path.liberal_ucs())
       save_pos()
-      clear_msg()
+      msg()
       if \load then
          load_dir_list()
       annotate_dir_list()
@@ -481,7 +477,7 @@ class FileDialog(Dialog)
    public goto_dir(d, nav)
       save_pos()
       dir.set_contents(FilePath(d).canonical().liberal_ucs())
-      clear_msg()
+      msg()
       loaded_dir_path := get_dir_path()
       load_dir_list()
       annotate_dir_list()

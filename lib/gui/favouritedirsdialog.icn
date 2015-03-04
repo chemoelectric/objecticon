@@ -91,10 +91,6 @@ class FavouriteDirectoriesDialog(Dialog)
       message_label.set(s)
    end
 
-   public clear_msg()
-      msg()
-   end
-
    public component_setup()
       self.setup()
       entry_table.set_contents(get_pair_list())
@@ -131,7 +127,7 @@ class FavouriteDirectoriesDialog(Dialog)
             application_check_box.set_is_checked(&no)
       }
       update_grey()
-      clear_msg()
+      msg()
    end
 
    private update_grey()
@@ -177,13 +173,13 @@ class FavouriteDirectoriesDialog(Dialog)
       parent_dialog.set_focus(directory_field)
       on_table_selection()
       directory_field.handle_select_all()
-      clear_msg()
+      msg()
    end
 
    private on_delete_button(ev)
       etc.delete_lines(etc.get_selections()) 
       update_grey()
-      clear_msg()
+      msg()
    end
 
    private on_apply_button(ev)
@@ -192,14 +188,14 @@ class FavouriteDirectoriesDialog(Dialog)
                     etc.get_selections()[1])
       etc.clear_selections()
       update_grey()
-      clear_msg()
+      msg()
    end
 
    private on_application_check_box(ev)
       if application_check_box.is_unchecked() & *application_field.get_contents() = 0 then
          application_field.set_contents(Files.get_application_name())
       update_grey()
-      clear_msg()
+      msg()
    end
 
    private on_directory_field(ev)
@@ -213,7 +209,7 @@ class FavouriteDirectoriesDialog(Dialog)
       l := etc.get_selections()
       etc.move_lines(l, l[1] + 2)
       update_grey()
-      clear_msg()
+      msg()
    end
 
    private on_up_button(ev)
@@ -221,7 +217,7 @@ class FavouriteDirectoriesDialog(Dialog)
       l := etc.get_selections()
       etc.move_lines(l, l[1] - 1)
       update_grey()
-      clear_msg()
+      msg()
    end
 
    private setup()

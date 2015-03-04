@@ -2702,7 +2702,6 @@ record HistoryEntry(url,          # URL displayed (on a redirect may differ from
 
 abstract class BrowserUI()
    public abstract msg(s, n)
-   public abstract clear_msg()
    public abstract page_loaded()
    public abstract page_fully_loaded()
    public abstract update_grey(gs)
@@ -3071,7 +3070,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public clear_msg(owner)
       if /msg_owner | /owner | (owner === msg_owner) then {
-         (\ui).clear_msg()
+         (\ui).msg()
          msg_owner := &null
       }
       return self
