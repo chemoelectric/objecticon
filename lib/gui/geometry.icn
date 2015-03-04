@@ -160,6 +160,13 @@ class Rect(Point,Size)
       return Rect(x1, y1, w1, h1)
    end
 
+   # Return a new Rect, being this Rect surrounded by the given
+   # padding in the x and y directions.
+   #
+   public pad(xa, ya)
+      return Rect(x - xa, y - ya, w + 2 * xa, h + 2 * ya)
+   end
+
    public new(x, y, w, h)
       self.x := x
       self.y := y
