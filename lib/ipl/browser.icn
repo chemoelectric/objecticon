@@ -3211,8 +3211,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    public do_search(s)
       local c, l
       s := map(s)
-      l := []
-      every put(l, words(s))
+      l := ipl.pdco.List{words(s)}
       if *l > 0 then {
          searched_term := l
          clear(searched)
