@@ -2265,7 +2265,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          clear_mark()
          ui.search_msg("No results")
       } else {
-         search_term := s
+         search_term := map(s)
          do_search_prev()
       }
       return self
@@ -2281,7 +2281,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       num := 0
       every i := 1 to *contents do {
          r := contents[i]
-         ls := line_str(r.l)
+         ls := map(line_str(r.l))
          every j := find(search_term, ls) do {
             num +:= 1
             if /last_y | /min_y | (i < min_y) | (i = min_y & j < min_x) then {
@@ -2316,7 +2316,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       num := 0
       every i := 1 to *contents do {
          r := contents[i]
-         ls := line_str(r.l)
+         ls := map(line_str(r.l))
          every j := find(search_term, ls) do {
             num +:= 1
             if /first_y & (/max_y | (i > max_y) | (i = max_y & j > max_x)) then {
