@@ -9,7 +9,8 @@ package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic
 
 package record SavedCursor(cx, cy, attr, charsets, curr_charset)
 
-package record SavedBuffer(cx, cy, attr, charsets, curr_charset, contents, history_size)
+package record SavedBuffer(cx, cy, attr, charsets, curr_charset, 
+                           reverse_mode, rows, cols, contents, history_size)
 
 package record PopupElement(label, str)
 
@@ -363,35 +364,39 @@ class Vt(LineBasedScrollArea, MenuMode)
       rows := predict_view_height(h) / get_line_height()
       rows <:= 1
       if old_cols ~= cols | old_rows ~= rows then {
-         cx >:= cols + 1
          ui.vt_size_changed(cols, rows)
-         # The objective is to leave the value of cy_to_index() unchanged as we adjust *contents, rows and cy.
-         # Say the old is i1 = *c1 - rows1 + cy1; the new is i2 = *c2 - rows2 + cy2
-         if rows < old_rows then {
-            if cy <= rows then {
-               # We leave cy unchanged so for i1 = i2, *c1 - *c2 = rows1 - rows2
-               # So we pull (old_rows - rows) rows from the end.
-               every 1 to old_rows - rows do
-                  content_delete(*contents)
-            } else {
-               # Since cy is now out of range, we must set it.  So cy2 = rows2.  So i2 = *c2, and for i1 = i2,
-               # *c1 - *c2 = rows1 - cy1 (ie the old distance to the end of the screen).
-               # So we pull (old_rows - cy) rows from the end.
-               every 1 to old_rows - cy do
-                  content_delete(*contents)
-               cy := rows
-            }
-         } else {
-            # rows >= old_rows, so we leave cy2 = cy1.  for i1 = i2, *c2 - *c1 = rows2 - rows1.  So we
-            # add (rows - old_rows) new rows to the end.
-            every 1 to rows - old_rows do
-               put(contents, Row(, attr.bg))
-         }
+         normalize_after_size_changed(old_cols, old_rows)
          trim_history()
          reset_margins()
          reset_tab_stops()
          invalidate_line_count()
          compute_and_invalidate()
+      }
+   end
+
+   private normalize_after_size_changed(old_cols, old_rows)
+      cx >:= cols + 1
+      # The objective is to leave the value of cy_to_index() unchanged as we adjust *contents, rows and cy.
+      # Say the old is i1 = *c1 - rows1 + cy1; the new is i2 = *c2 - rows2 + cy2
+      if rows < old_rows then {
+         if cy <= rows then {
+            # We leave cy unchanged so for i1 = i2, *c1 - *c2 = rows1 - rows2
+            # So we pull (old_rows - rows) rows from the end.
+            every 1 to old_rows - rows do
+               content_delete(*contents)
+         } else {
+            # Since cy is now out of range, we must set it.  So cy2 = rows2.  So i2 = *c2, and for i1 = i2,
+            # *c1 - *c2 = rows1 - cy1 (ie the old distance to the end of the screen).
+            # So we pull (old_rows - cy) rows from the end.
+            every 1 to old_rows - cy do
+               content_delete(*contents)
+            cy := rows
+         }
+      } else {
+         # rows >= old_rows, so we leave cy2 = cy1.  for i1 = i2, *c2 - *c1 = rows2 - rows1.  So we
+         # add (rows - old_rows) new rows to the end.
+         every 1 to rows - old_rows do
+            put(contents, Row(, attr.bg))
       }
    end
 
@@ -691,7 +696,8 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_use_alternate_buffer()
-      saved_buffer := SavedBuffer(cx, cy, attr, copy(charsets), curr_charset, contents, history_size)
+      saved_buffer := SavedBuffer(cx, cy, attr, copy(charsets), curr_charset, 
+                                  reverse_mode, rows, cols, contents, history_size)
       history_size := 0
       contents := []
       every 1 to rows do put(contents, Row())
@@ -704,18 +710,22 @@ class Vt(LineBasedScrollArea, MenuMode)
       \saved_buffer | fail
       contents := saved_buffer.contents
       history_size := saved_buffer.history_size
+      if saved_buffer.cols ~= cols | saved_buffer.rows ~= rows then {
+         # Normalize needs cy to be set for its calculations.  It also sets cy >:= rows, which
+         # we will in fact do anyway in move_cursor below.  (Also note that reset_term resets
+         # cx, cy).
+         cx := saved_buffer.cx
+         cy := saved_buffer.cy
+         normalize_after_size_changed(saved_buffer.cols, saved_buffer.rows)      
+         trim_history()
+      }
       reset_term()
       attr := saved_buffer.attr
       charsets := saved_buffer.charsets
       curr_charset := saved_buffer.curr_charset
+      do_reverse_video(saved_buffer.reverse_mode)
       move_cursor(saved_buffer.cx, saved_buffer.cy)
       saved_buffer := &null
-      # Trim in case the screen size changed during the alternate
-      # buffer.  (No change may be noticed when we call
-      # check_changed_size() via compute_and_invalidate(); this would
-      # certainly be the case if there is no scrollbar in normal
-      # mode).
-      trim_history()
       invalidate_line_count()
       compute_and_invalidate()
    end
@@ -786,8 +796,11 @@ class Vt(LineBasedScrollArea, MenuMode)
          # Size may have changed since col_mode changed
          check_changed_size()
          clear_mark()
+         # The next two need rows/cols to be set, so can only be done
+         # if live.
          reset_tab_stops()
          reset_margins()
+         # Since reverse_mode may have changed.
          view.reset()
       }
    end
