@@ -3237,7 +3237,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       (\highlighted_searched).textflow.invalidate(highlighted_searched.get_bounds())
       highlighted_searched := t
       highlighted_searched.textflow.invalidate(highlighted_searched.get_bounds())
-      ensure_visible(highlighted_searched.get_bounds())
+      ensure_region_visible(convert_to_area(highlighted_searched.get_bounds()).pad(scale(10), scale(30)))
       return self
    end
 
@@ -3575,7 +3575,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             break
          }
       }
-      ensure_visible(c)
+      ensure_region_visible(convert_to_area(c).pad(scale(10), scale(30)))
    end
 
    private setup_tabbing()

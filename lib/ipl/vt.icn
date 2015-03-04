@@ -2272,7 +2272,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public do_search_prev()
-      local i, r, j, ls, num, min_x, min_y, last_x, last_y, matching
+      local i, j, num, min_x, min_y, last_x, last_y, matching
       \search_term | fail
       if \search_increment_flag then {
          min_y := cursor_y
@@ -2280,9 +2280,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
       num := 0
       every i := 1 to *contents do {
-         r := contents[i]
-         ls := map(line_str(r.l))
-         every j := find(search_term, ls) do {
+         every j := find(search_term, map(contents_str(i))) do {
             num +:= 1
             if /last_y | /min_y | (i < min_y) | (i = min_y & j < min_x) then {
                matching := num
@@ -2291,23 +2289,12 @@ class Vt(LineBasedScrollArea, MenuMode)
             }
          }
       }
-      if \last_y then {
-         invalidate_region()
-         mark_y := cursor_y := last_y
-         cursor_x := last_x
-         mark_x := cursor_x + *search_term
-         center_line(cursor_y)
-         own_primary()
-         search_increment_flag := &yes
-         invalidate_region()
-         ui.search_msg(matching || "/" || num)
-      } else
-         ui.search_msg("No results")
+      done_search(last_x, last_y, matching, num)
       return self
    end
 
    public do_search_next()
-      local i, r, j, ls, num, max_x, max_y, first_x, first_y, matching, last_x, last_y
+      local i, j, num, max_x, max_y, first_x, first_y, matching, last_x, last_y
       \search_term | fail
       if \search_increment_flag then {
          max_y := mark_y
@@ -2315,9 +2302,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
       num := 0
       every i := 1 to *contents do {
-         r := contents[i]
-         ls := map(line_str(r.l))
-         every j := find(search_term, ls) do {
+         every j := find(search_term, map(contents_str(i))) do {
             num +:= 1
             if /first_y & (/max_y | (i > max_y) | (i = max_y & j > max_x)) then {
                first_y := i
@@ -2334,19 +2319,24 @@ class Vt(LineBasedScrollArea, MenuMode)
          first_x := last_x
          matching := num
       }
-      if \first_y then {
+      done_search(first_x, first_y, matching, num)
+      return self
+   end
+
+   private done_search(at_x, at_y, matching, num)
+      if \at_y then {
          invalidate_region()
-         mark_y := cursor_y := first_y
-         cursor_x := first_x
+         mark_y := cursor_y := at_y
+         cursor_x := at_x
          mark_x := cursor_x + *search_term
-         center_line(cursor_y)
+         # Ensure the line is visible with context of at least 3 lines above/below.
+         ensure_region_visible(get_area_line_rect(cursor_y).pad(0, 3 * line_height))
          own_primary()
          search_increment_flag := &yes
          invalidate_region()
          ui.search_msg(matching || "/" || num)
       } else
          ui.search_msg("No results")
-      return self
    end
 
    private reset_search()
