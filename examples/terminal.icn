@@ -821,6 +821,8 @@ class Terminal(TabItem, VtUI)
    end
 
    public vt_size_changed(cols, rows)
+      if \opts["v"] then
+         write("Vt size changed to: ", cols, ",", rows)
       tty.set_size(cols, rows)
    end
 
