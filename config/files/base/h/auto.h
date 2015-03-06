@@ -81,6 +81,9 @@
 /* define as 1 if we have computed gotos */
 #undef HAVE_COMPUTED_GOTO
 
+/* define as 1 if TIOCSCTTY is defined */
+#undef HAVE_TIOCSCTTY
+
 /* sizes of various fundamental types */
 #undef SIZEOF_SHORT
 #undef SIZEOF_INT

@@ -3619,7 +3619,7 @@ end
 function io_PttyStream_prepare_slave(f)
     body {
        FdStaticParam(f, fd);
-#ifdef TIOCSCTTY                        /* Acquire controlling tty on BSD */
+#if HAVE_TIOCSCTTY                        /* Acquire controlling tty on BSD */
        if (ioctl(fd, TIOCSCTTY, 0) < 0) {
            errno2why();
            fail;

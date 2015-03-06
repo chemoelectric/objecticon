@@ -52,6 +52,8 @@ if test "$found_x11" = yes; then
    fi
 fi
 
+AX_CHECK_TIOCSCTTY()
+
 AX_CHECK_ZLIB()
 OI_ADD_LIB(m)
 if ! test "$ac_cv_lib_m_main" = yes; then
