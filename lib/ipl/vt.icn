@@ -10,7 +10,12 @@ package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic
 package record SavedCursor(cx, cy, attr, charsets, curr_charset)
 
 package record SavedBuffer(cx, cy, attr, charsets, curr_charset, 
-                           reverse_mode, rows, cols, contents, history_size)
+                           top_margin, bottom_margin, tab_stops,
+                           reverse_mode, origin_mode, wraparound_mode,
+                           col_mode, allow_80_132_mode, insert_mode,
+                           hide_cursor_mode, application_keypad_mode,
+                           application_cursor_mode,
+                           rows, cols, contents, history_size)
 
 package record PopupElement(label, str)
 
@@ -358,11 +363,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       local old_cols, old_rows
       old_cols := \cols | 0
       old_rows := \rows | 0
-      cols := (predict_view_width(w, if history_size > 0 then &yes else &no) - 2 * Gui.TEXT_INSET) / char_w
-      cols >:= \col_mode
-      cols <:= 16
-      rows := predict_view_height(h) / get_line_height()
-      rows <:= 1
+      calc_size()
       if old_cols ~= cols | old_rows ~= rows then {
          ui.vt_size_changed(cols, rows)
          normalize_after_size_changed(old_cols, old_rows)
@@ -372,6 +373,18 @@ class Vt(LineBasedScrollArea, MenuMode)
          invalidate_line_count()
          compute_and_invalidate()
       }
+   end
+
+   private calc_size()
+      local hsz
+      # See notes for explanation.
+      hsz := history_size
+      hsz <:= (\saved_buffer).history_size
+      cols := (predict_view_width(w, if hsz > 0 then &yes else &no) - 2 * Gui.TEXT_INSET) / char_w
+      cols >:= \col_mode
+      cols <:= 16
+      rows := predict_view_height(h) / get_line_height()
+      rows <:= 1
    end
 
    private normalize_after_size_changed(old_cols, old_rows)
@@ -696,36 +709,71 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_use_alternate_buffer()
-      saved_buffer := SavedBuffer(cx, cy, attr, copy(charsets), curr_charset, 
-                                  reverse_mode, rows, cols, contents, history_size)
+      saved_buffer := SavedBuffer(cx, cy, attr, charsets, curr_charset, 
+                                  top_margin, bottom_margin, tab_stops,
+                                  reverse_mode, origin_mode, wraparound_mode,
+                                  col_mode, allow_80_132_mode, insert_mode,
+                                  hide_cursor_mode, application_keypad_mode,
+                                  application_cursor_mode,
+                                  rows, cols, contents, history_size)
       history_size := 0
       contents := []
       every 1 to rows do put(contents, Row())
-      reset_term()
+      origin_mode := &no
+      wraparound_mode := &yes
+      cx := cy := 1
+      col_mode := &no
+      allow_80_132_mode := &no
+      insert_mode := &no
+      hide_cursor_mode := &no
+      reset_charsets()
+      attr := EMPTY_ATTR
+      check_changed_size()
+      clear_mark()
+      reset_tab_stops()
+      reset_margins()
       invalidate_line_count()
       compute_and_invalidate()
    end
 
    private do_use_normal_buffer()
+      local old_cols, old_rows
       \saved_buffer | fail
       contents := saved_buffer.contents
       history_size := saved_buffer.history_size
+      col_mode := saved_buffer.col_mode
+      old_cols := cols
+      old_rows := rows
+      calc_size()
+      if old_cols ~= cols | old_rows ~= rows then
+         ui.vt_size_changed(cols, rows)
       if saved_buffer.cols ~= cols | saved_buffer.rows ~= rows then {
-         # Normalize needs cy to be set for its calculations.  It also sets cy >:= rows, which
-         # we will in fact do anyway in move_cursor below.  (Also note that reset_term resets
-         # cx, cy).
+         # Normalize needs cy to be set for its calculations, then limits it (and cx).
          cx := saved_buffer.cx
          cy := saved_buffer.cy
          normalize_after_size_changed(saved_buffer.cols, saved_buffer.rows)      
          trim_history()
+         reset_tab_stops()
+         reset_margins()
+      } else {
+         top_margin := saved_buffer.top_margin
+         bottom_margin := saved_buffer.bottom_margin
+         tab_stops := saved_buffer.tab_stops
+         move_cursor(saved_buffer.cx, saved_buffer.cy)
       }
-      reset_term()
       attr := saved_buffer.attr
       charsets := saved_buffer.charsets
       curr_charset := saved_buffer.curr_charset
       do_reverse_video(saved_buffer.reverse_mode)
-      move_cursor(saved_buffer.cx, saved_buffer.cy)
+      origin_mode := saved_buffer.origin_mode
+      wraparound_mode := saved_buffer.wraparound_mode
+      allow_80_132_mode := saved_buffer.allow_80_132_mode
+      insert_mode := saved_buffer.insert_mode
+      hide_cursor_mode := saved_buffer.hide_cursor_mode
+      application_keypad_mode := saved_buffer.application_keypad_mode
+      application_cursor_mode := saved_buffer.application_cursor_mode
       saved_buffer := &null
+      clear_mark()
       invalidate_line_count()
       compute_and_invalidate()
    end
@@ -777,6 +825,12 @@ class Vt(LineBasedScrollArea, MenuMode)
       tab_stops := Set{1 to cols by 8}
    end
 
+   private reset_charsets()
+      charsets := []
+      every 1 to 4 do put(charsets, CHARSET["B"])
+      curr_charset := 1
+   end
+
    private reset_term()
       origin_mode := &no
       wraparound_mode := &yes
@@ -788,9 +842,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       application_keypad_mode := &no
       application_cursor_mode := &no
       hide_cursor_mode := &no
-      charsets := []
-      every 1 to 4 do put(charsets, CHARSET["B"])
-      curr_charset := 1
+      reset_charsets()
       attr := EMPTY_ATTR
       if is_live() then {
          # Size may have changed since col_mode changed
@@ -856,8 +908,10 @@ class Vt(LineBasedScrollArea, MenuMode)
       self.history_size := n
       trim_history()
       invalidate_line_count()
-      if is_live() then
+      if is_live() then {
+         check_changed_size()
          compute_and_invalidate()
+      }
       return self
    end
 
@@ -1547,7 +1601,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    public defer draw_line()
 
    public draw()
-      local s, ss, row, seg, x1, W, W2, fg, bg, w1, want_fg, want_bg, want_font,
+      local s, ss, row, seg, x1, W, W2, w1, want_fg, want_bg, want_font,
          default_bg, default_fg, default_font, a, r, font, y1, cr, info, xp, yp, i
 
       cr := view.get_cbwin_clip()
@@ -1556,8 +1610,8 @@ class Vt(LineBasedScrollArea, MenuMode)
       xp := get_subject_x() + Gui.TEXT_INSET
 
       W := view.cbwin.clone()
-      bg := default_bg := W.get_bg()
-      fg := default_fg := W.get_fg()
+      default_bg := W.get_bg()
+      default_fg := W.get_fg()
       font := default_font := get_wattrib("font")
 
       #
@@ -1580,15 +1634,12 @@ class Vt(LineBasedScrollArea, MenuMode)
                if \a.inverse then
                   want_fg :=: want_bg
                want_font := \a.font | default_font
-               if font ~=== want_font | fg ~=== want_fg | bg ~=== want_bg then {
-                  W.close()
-                  W := view.cbwin.clone()
-                  W.set_fg(fg := want_fg).
-                     set_bg(bg := want_bg).
-                     set_font(font := want_font)
-               }
+
+               W.set_fg(want_fg).set_bg(want_bg)
+               W.set_font(font ~===:= want_font)
+
                w1 := char_w * *ss
-               if bg ~=== default_bg then
+               if want_bg ~=== default_bg then
                   W.erase_area(x1, yp, w1, line_height)
 
                if /a.invisible then
@@ -1599,8 +1650,8 @@ class Vt(LineBasedScrollArea, MenuMode)
                else if \a.url ~=== last_highlight then
                   use { 
                      W2 := W.clone(),
-                          W2.set_fg(EditRGBA(fg,,,, 16000)).      # 25% alpha of the current fg.
-                          draw_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+                     W2.set_fg(EditRGBA(want_fg,,,, 16000)).      # 25% alpha of the current fg.
+                        draw_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
                   }
 
                if \a.crossed then
@@ -1797,8 +1848,13 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    public handle_copy(e)
       local s
-      if s := get_current_text_selection() then
+      if s := \text_selection then {
          parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
+         # This indicates to handle_special_key() below that we've
+         # handled the key; otherwise it is passed on.  (this is what
+         # konsole does).
+         return
+      }
    end
 
    private handle_default_key(e)
@@ -1821,15 +1877,12 @@ class Vt(LineBasedScrollArea, MenuMode)
             on_default_key(e)
             return
          }
-         Key.F10 : {
-            handle_copy(e)
-            return
-         }
+         Key.F10 :
+            return handle_copy(e)
          Key.INSERT :  {
-            if \e.ctrl then {
-               handle_copy(e)
-               return
-            }  else if \e.shift then {
+            if \e.ctrl then
+               return handle_copy(e)
+            else if \e.shift then {
                handle_paste(e)
                return
             }
@@ -1996,12 +2049,9 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private own_primary()
-      local s
       calculate_text_selection()
-      if s := get_current_text_selection() then {
+      if primary := \text_selection then
          parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
-         self.primary := s
-      }
    end
 
    public handle_select_all(e)
