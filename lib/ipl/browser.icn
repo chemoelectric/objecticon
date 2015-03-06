@@ -5213,7 +5213,6 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private handle_lrelease(e)
-      local s
       scroll_ticker.stop()
       if \mark_x then {
          view.inner.invalidate(get_band_rect())
@@ -5222,10 +5221,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       calculate_text_selection()
       calculate_links_selection()
       do_update_grey()
-      if s := get_current_text_selection() then {
+      if primary := \text_selection then
          parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
-         self.primary := s
-      }
    end
 
    public handle_select_all(e)
@@ -5347,7 +5344,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public handle_copy(e)
       local s
-      if s := get_current_text_selection() then
+      if s := \text_selection then
          parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
    end
 
