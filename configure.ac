@@ -36,7 +36,7 @@ CCVER=`$CC --version`
 case $CCVER in
     gcc*) CFLAGS="$CFLAGS -Wall -fno-strict-aliasing -Wno-deprecated-declarations" ;;
     pcc*) CFLAGS="$CFLAGS -Wall" ;;
-    *clang*) CFLAGS="$CFLAGS -Wall -Wno-parentheses-equality -Wno-tautological-compare -Wno-deprecated-declarations" ;;
+    *clang*) CFLAGS="$CFLAGS -Wall -Wno-unused-const-variable -Wno-parentheses-equality -Wno-tautological-compare -Wno-deprecated-declarations" ;;
 esac
 
 AX_LIB_SOCKET_NSL()
@@ -141,7 +141,6 @@ fi
 AC_CONFIG_HEADERS([base/h/auto.h:config/files/base/h/auto.h])
 AC_OUTPUT
 echo "Summary:-"
-echo    "Installation prefix    :" $prefix
 if test "$found_x11" = yes; then
         echo "X11 graphics           : yes"
         if test "$ac_cv_lib_jpeg_main" = yes; then
