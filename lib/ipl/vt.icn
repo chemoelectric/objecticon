@@ -9,7 +9,13 @@ package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic
 
 package record SavedCursor(cx, cy, attr, charsets, curr_charset)
 
-package record SavedBuffer(cx, cy, attr, charsets, curr_charset, contents, history_size)
+package record SavedBuffer(cx, cy, attr, charsets, curr_charset, 
+                           top_margin, bottom_margin, tab_stops,
+                           reverse_mode, origin_mode, wraparound_mode,
+                           col_mode, allow_80_132_mode, insert_mode,
+                           hide_cursor_mode, application_keypad_mode,
+                           application_cursor_mode,
+                           rows, cols, contents, history_size)
 
 package record PopupElement(label, str)
 
@@ -135,9 +141,8 @@ abstract class VtUI()
    public abstract create_context_menu()
    public abstract send_tty(s)
    public abstract vt_size_changed(cols, rows)
-   public abstract process_command(args)
    public abstract msg(s, n)
-   public abstract clear_msg()
+   public abstract search_msg(s)
 end
 
 package class VtPrimarySelectionOwner(TextSelectionOwner)
@@ -168,6 +173,13 @@ package class Charset()
    end
 end
 
+package class VtView(DrawScrollAreaView)
+   public initially()
+      parent.synch_view_colours()
+      DrawScrollAreaView.initially()
+   end
+end
+
 #
 # A VT emulator.
 #
@@ -175,7 +187,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private
       primary_selection_owner,
       ui,                         # The VtUI instance providing external functionality.
-      contents,                   # List of Segments
+      contents,                   # List of Rows
       tab_stops,                  # Set of column numbers.
       cursor_ticker,
       cursor_on,
@@ -195,8 +207,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       saved_buffer,               # A SavedBuffer instance for implementing decset 1049
       popup,
       quieten                     # A flag to stop distracting in_chain cursor updates
-
-
 
    private readable
       verbose_flag,
@@ -227,8 +237,12 @@ class Vt(LineBasedScrollArea, MenuMode)
       history_size,               # Size of history scroll lines; 0 -> no vsb
       reverse_fg,                 # Colours of reverse mode, or null implying true reverse.
       reverse_bg,
+      normal_fg,                  # Colours of non-reverse mode, or null implying use cbwin colours.
+      normal_bg,
       charsets,                   # List of 4 Charsets G0..G4
-      curr_charset                # Current charset 1=G0 etc.  
+      curr_charset,               # Current charset 1=G0 etc.  
+      search_term,                # Current string being searched for.
+      search_increment_flag       # Should next search forward/backward be incremental? (ie from mark).
 
    private static const
       EMPTY_ATTR,
@@ -328,6 +342,10 @@ class Vt(LineBasedScrollArea, MenuMode)
       clear_mark()
    end
 
+   public create_view()
+      return VtView()
+   end
+
    public layout()
       check_changed_size()
       LineBasedScrollArea.layout()
@@ -345,41 +363,53 @@ class Vt(LineBasedScrollArea, MenuMode)
       local old_cols, old_rows
       old_cols := \cols | 0
       old_rows := \rows | 0
-      cols := (predict_view_width(w, if history_size > 0 then &yes else &no) - 2 * Gui.TEXT_INSET) / char_w
-      cols >:= \col_mode
-      cols <:= 16
-      rows := predict_view_height(h) / get_line_height()
-      rows <:= 1
+      calc_size()
       if old_cols ~= cols | old_rows ~= rows then {
-         cx >:= cols + 1
          ui.vt_size_changed(cols, rows)
-         # The objective is to leave the value of cy_to_index() unchanged as we adjust *contents, rows and cy.
-         # Say the old is i1 = *c1 - rows1 + cy1; the new is i2 = *c2 - rows2 + cy2
-         if rows < old_rows then {
-            if cy <= rows then {
-               # We leave cy unchanged so for i1 = i2, *c1 - *c2 = rows1 - rows2
-               # So we pull (old_rows - rows) rows from the end.
-               every 1 to old_rows - rows do
-                  content_delete(*contents)
-            } else {
-               # Since cy is now out of range, we must set it.  So cy2 = rows2.  So i2 = *c2, and for i1 = i2,
-               # *c1 - *c2 = rows1 - cy1 (ie the old distance to the end of the screen).
-               # So we pull (old_rows - cy) rows from the end.
-               every 1 to old_rows - cy do
-                  content_delete(*contents)
-               cy := rows
-            }
-         } else {
-            # rows >= old_rows, so we leave cy2 = cy1.  for i1 = i2, *c2 - *c1 = rows2 - rows1.  So we
-            # add (rows - old_rows) new rows to the end.
-            every 1 to rows - old_rows do
-               put(contents, Row(, attr.bg))
-         }
+         normalize_after_size_changed(old_cols, old_rows)
          trim_history()
          reset_margins()
          reset_tab_stops()
          invalidate_line_count()
          compute_and_invalidate()
+      }
+   end
+
+   private calc_size()
+      local hsz
+      # See notes for explanation.
+      hsz := history_size
+      hsz <:= (\saved_buffer).history_size
+      cols := (predict_view_width(w, if hsz > 0 then &yes else &no) - 2 * Gui.TEXT_INSET) / char_w
+      cols >:= \col_mode
+      cols <:= 16
+      rows := predict_view_height(h) / get_line_height()
+      rows <:= 1
+   end
+
+   private normalize_after_size_changed(old_cols, old_rows)
+      cx >:= cols + 1
+      # The objective is to leave the value of cy_to_index() unchanged as we adjust *contents, rows and cy.
+      # Say the old is i1 = *c1 - rows1 + cy1; the new is i2 = *c2 - rows2 + cy2
+      if rows < old_rows then {
+         if cy <= rows then {
+            # We leave cy unchanged so for i1 = i2, *c1 - *c2 = rows1 - rows2
+            # So we pull (old_rows - rows) rows from the end.
+            every 1 to old_rows - rows do
+               content_delete(*contents)
+         } else {
+            # Since cy is now out of range, we must set it.  So cy2 = rows2.  So i2 = *c2, and for i1 = i2,
+            # *c1 - *c2 = rows1 - cy1 (ie the old distance to the end of the screen).
+            # So we pull (old_rows - cy) rows from the end.
+            every 1 to old_rows - cy do
+               content_delete(*contents)
+            cy := rows
+         }
+      } else {
+         # rows >= old_rows, so we leave cy2 = cy1.  for i1 = i2, *c2 - *c1 = rows2 - rows1.  So we
+         # add (rows - old_rows) new rows to the end.
+         every 1 to rows - old_rows do
+            put(contents, Row(, attr.bg))
       }
    end
 
@@ -582,7 +612,6 @@ class Vt(LineBasedScrollArea, MenuMode)
          "m" : every do_set_attr(int_params(param, 0))
          "!L" : do_set_link(param)
          "!P" : do_popup(param)
-         "!C" : do_command(param)
          "A" : do_cursor_up(int_param(param, 1, 1))
          "B" : do_cursor_down(int_param(param, 1, 1))
          "C" : do_cursor_right(int_param(param, 1, 1))
@@ -680,38 +709,80 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_use_alternate_buffer()
-      saved_buffer := SavedBuffer(cx, cy, attr, copy(charsets), curr_charset, contents, history_size)
+      saved_buffer := SavedBuffer(cx, cy, attr, charsets, curr_charset, 
+                                  top_margin, bottom_margin, tab_stops,
+                                  reverse_mode, origin_mode, wraparound_mode,
+                                  col_mode, allow_80_132_mode, insert_mode,
+                                  hide_cursor_mode, application_keypad_mode,
+                                  application_cursor_mode,
+                                  rows, cols, contents, history_size)
       history_size := 0
       contents := []
       every 1 to rows do put(contents, Row())
-      reset_term()
+      origin_mode := &no
+      wraparound_mode := &yes
+      cx := cy := 1
+      col_mode := &no
+      allow_80_132_mode := &no
+      insert_mode := &no
+      hide_cursor_mode := &no
+      reset_charsets()
+      attr := EMPTY_ATTR
+      check_changed_size()
+      clear_mark()
+      reset_tab_stops()
+      reset_margins()
       invalidate_line_count()
       compute_and_invalidate()
    end
 
    private do_use_normal_buffer()
+      local old_cols, old_rows
       \saved_buffer | fail
       contents := saved_buffer.contents
       history_size := saved_buffer.history_size
-      reset_term()
+      col_mode := saved_buffer.col_mode
+      old_cols := cols
+      old_rows := rows
+      calc_size()
+      if old_cols ~= cols | old_rows ~= rows then
+         ui.vt_size_changed(cols, rows)
+      if saved_buffer.cols ~= cols | saved_buffer.rows ~= rows then {
+         # Normalize needs cy to be set for its calculations, then limits it (and cx).
+         cx := saved_buffer.cx
+         cy := saved_buffer.cy
+         normalize_after_size_changed(saved_buffer.cols, saved_buffer.rows)      
+         trim_history()
+         reset_tab_stops()
+         reset_margins()
+      } else {
+         top_margin := saved_buffer.top_margin
+         bottom_margin := saved_buffer.bottom_margin
+         tab_stops := saved_buffer.tab_stops
+         move_cursor(saved_buffer.cx, saved_buffer.cy)
+      }
       attr := saved_buffer.attr
       charsets := saved_buffer.charsets
       curr_charset := saved_buffer.curr_charset
-      move_cursor(saved_buffer.cx, saved_buffer.cy)
+      do_reverse_video(saved_buffer.reverse_mode)
+      origin_mode := saved_buffer.origin_mode
+      wraparound_mode := saved_buffer.wraparound_mode
+      allow_80_132_mode := saved_buffer.allow_80_132_mode
+      insert_mode := saved_buffer.insert_mode
+      hide_cursor_mode := saved_buffer.hide_cursor_mode
+      application_keypad_mode := saved_buffer.application_keypad_mode
+      application_cursor_mode := saved_buffer.application_cursor_mode
       saved_buffer := &null
-      # Trim in case the screen size changed during the alternate
-      # buffer.  (No change may be noticed when we call
-      # check_changed_size() via compute_and_invalidate(); this would
-      # certainly be the case if there is no scrollbar in normal
-      # mode).
-      trim_history()
+      clear_mark()
       invalidate_line_count()
       compute_and_invalidate()
    end
 
    private do_reverse_video(f)
-      reverse_mode := f
-      view.invalidate()
+      if reverse_mode ~=== f then {
+         reverse_mode := f
+         view.reset()
+      }
    end
 
    private set_col_mode(n)
@@ -754,6 +825,12 @@ class Vt(LineBasedScrollArea, MenuMode)
       tab_stops := Set{1 to cols by 8}
    end
 
+   private reset_charsets()
+      charsets := []
+      every 1 to 4 do put(charsets, CHARSET["B"])
+      curr_charset := 1
+   end
+
    private reset_term()
       origin_mode := &no
       wraparound_mode := &yes
@@ -765,17 +842,18 @@ class Vt(LineBasedScrollArea, MenuMode)
       application_keypad_mode := &no
       application_cursor_mode := &no
       hide_cursor_mode := &no
-      charsets := []
-      every 1 to 4 do put(charsets, CHARSET["B"])
-      curr_charset := 1
+      reset_charsets()
       attr := EMPTY_ATTR
       if is_live() then {
          # Size may have changed since col_mode changed
          check_changed_size()
          clear_mark()
+         # The next two need rows/cols to be set, so can only be done
+         # if live.
          reset_tab_stops()
          reset_margins()
-         view.invalidate()
+         # Since reverse_mode may have changed.
+         view.reset()
       }
    end
 
@@ -787,14 +865,12 @@ class Vt(LineBasedScrollArea, MenuMode)
       return self
    end
 
-   #
-   # Set the fg colour to use in reverse mode.
+   # Set the fg colour to use in reverse mode.  Requires reset if set
+   # whilst live.
    #
    public set_reverse_fg(c)
       Window.parse_color(c) | fail
       self.reverse_fg := c
-      if is_live() then
-         view.invalidate()
       return self
    end
 
@@ -804,8 +880,24 @@ class Vt(LineBasedScrollArea, MenuMode)
    public set_reverse_bg(c)
       Window.parse_color(c) | fail
       self.reverse_bg := c
-      if is_live() then
-         view.invalidate()
+      return self
+   end
+
+   # Set the fg colour to use in normal (non-reverse) mode.  Requires
+   # reset if set whilst live.
+   #
+   public set_normal_fg(c)
+      Window.parse_color(c) | fail
+      self.normal_fg := c
+      return self
+   end
+
+   #
+   # Set the bg colour to use in non-reverse mode.
+   #
+   public set_normal_bg(c)
+      Window.parse_color(c) | fail
+      self.normal_bg := c
       return self
    end
 
@@ -816,8 +908,10 @@ class Vt(LineBasedScrollArea, MenuMode)
       self.history_size := n
       trim_history()
       invalidate_line_count()
-      if is_live() then
+      if is_live() then {
+         check_changed_size()
          compute_and_invalidate()
+      }
       return self
    end
 
@@ -1055,11 +1149,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       return t
    end
 
-   private do_command(l)
-      if *l > 0 then
-         ui.process_command(decode_list(l))
-   end
-
    private do_popup(l)
       local t, e, px, py, info
       # Validate params; must be ucs encoded list, even number, and no empty ones.
@@ -1085,6 +1174,19 @@ class Vt(LineBasedScrollArea, MenuMode)
    private do_set_link(l)
       attr := copy(attr)
       attr.url := URL(l[1]) | &null
+   end
+
+   # This is called (from view's initially) just after cbwin has been
+   # initialized, and just before view.cbwin is to be initialized.
+   package synch_view_colours()
+      if /reverse_mode then {
+         view.clear_wattribs()
+         view.set_fg(\normal_fg)
+         view.set_bg(\normal_bg)
+      } else {
+         view.set_fg(\reverse_fg | \normal_bg | cbwin.get_bg())
+         view.set_bg(\reverse_bg | \normal_fg | cbwin.get_fg())
+      }
    end
 
    private synch_font()
@@ -1133,7 +1235,7 @@ class Vt(LineBasedScrollArea, MenuMode)
             28 : attr.invisible := &no
             29 : attr.crossed := &no
             30: attr.fg := "black"
-            31: attr.fg := "red"
+            31: attr.fg := "dark red"
             32: attr.fg := "dark green"
             33: attr.fg := "dark yellow"
             34: attr.fg := "blue"
@@ -1143,7 +1245,7 @@ class Vt(LineBasedScrollArea, MenuMode)
             39: attr.fg := &null
 
             40: attr.bg := "black"
-            41: attr.bg := "red"
+            41: attr.bg := "dark red"
             42: attr.bg := "dark green"
             43: attr.bg := "dark yellow"
             44: attr.bg := "blue"
@@ -1191,8 +1293,10 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_hide_cursor(f)
-      hide_cursor_mode := f
-      invalidate_cursor()
+      if hide_cursor_mode ~=== f then {
+         hide_cursor_mode := f
+         invalidate_cursor()
+      }
    end
 
    private do_single_shift(n)
@@ -1494,143 +1598,118 @@ class Vt(LineBasedScrollArea, MenuMode)
       goto_last(get_line_count())
    end
 
+   public defer draw_line()
+
    public draw()
-      local xp, yp, i, info, r, W, bg
+      local s, ss, row, seg, x1, W, W2, fg, bg, w1, want_fg, want_bg, want_font,
+         default_bg, default_fg, default_font, a, r, font, y1, cr, info, xp, yp, i
 
-      r := view.get_cbwin_clip()
+      cr := view.get_cbwin_clip()
+      info := get_line_info(cr) | fail
+      yp := cr.y - info.offset
+      xp := get_subject_x() + Gui.TEXT_INSET
 
-      if \reverse_mode then {
-         bg := \reverse_bg | view.cbwin.get_fg()
-         use {
-            W := view.cbwin.clone(),
-            W.set_bg(bg).erase_area(r.x, r.y, r.w, r.h)
-         }
-      }
-
-      info := get_line_info(r) | fail
-      yp := r.y - info.offset
-      xp := get_subject_x()
+      W := view.cbwin.clone()
+      bg := default_bg := W.get_bg()
+      fg := default_fg := W.get_fg()
+      font := default_font := get_wattrib("font")
 
       #
       # Write the lines
       #
       every i := info.first to info.last do {
-         draw_line(xp, yp, i)
-         yp +:= line_height
-      }
-   end
+         # Don't draw partial lines at the top, since this looks poor
+         # when running full-screen editing style apps (eg emacs)
+         if yp >= view.y then {
+            row := contents[i]
+            s := line_str(row.l)
 
-   private draw_line(xp, yp, i)
-      local s, ss, row, seg, x1, W, W2, fg, bg, w1, want_fg, want_bg, want_font,
-         default_bg, default_fg, default_font, a, r, font, y1
+            x1 := xp
+            y1 := yp + view.cbwin.get_absolute_leading()
+            every seg := !row.l do {
+               a := seg.attr
+               ss := seg.s
+               want_fg := if \a.url === highlight then "red" else (\a.fg | default_fg)
+               want_bg := \a.bg | default_bg
+               if \a.inverse then
+                  want_fg :=: want_bg
+               want_font := \a.font | default_font
 
-      # Don't draw partial lines at the top, since this looks poor
-      # when running full-screen editing style apps (eg emacs)
-      if yp < view.y then
-         fail
+               W.set_fg(fg ~===:= want_fg)
+               W.set_bg(bg ~===:= want_bg)
+               W.set_font(font ~===:= want_font)
 
-      row := contents[i]
-      s := contents_str(i)
+               w1 := char_w * *ss
+               if want_bg ~=== default_bg then
+                  W.erase_area(x1, yp, w1, line_height)
 
-      xp +:= Gui.TEXT_INSET
-      x1 := xp
-      y1 := yp + view.cbwin.get_absolute_leading()
-      W := view.cbwin.clone()
-      bg := W.get_bg()
-      fg := W.get_fg()
-      font := default_font := get_wattrib("font")
-      if /reverse_mode then {
-         default_bg := bg
-         default_fg := fg
-      } else {
-         default_bg := \reverse_bg | fg
-         default_fg := \reverse_fg | bg
-      }
+               if /a.invisible then
+                  W.draw_string(x1, yp + W.get_line_ascent(), ss)
 
-      every seg := !row.l do {
-         a := seg.attr
-         ss := seg.s
-         want_fg := if \a.url === highlight then "red" else (\a.fg | default_fg)
-         want_bg := \a.bg | default_bg
-         if \a.inverse then
-            want_fg :=: want_bg
+               if \a.underline then
+                  W.draw_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+               else if \a.url ~=== last_highlight then
+                  use { 
+                     W2 := W.clone(),
+                     W2.set_fg(EditRGBA(want_fg,,,, 16000)).      # 25% alpha of the current fg.
+                        draw_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+                  }
 
-         want_font := \a.font | default_font
-         if font ~=== want_font | fg ~=== want_fg | bg ~=== want_bg then {
-            W.close()
-            W := view.cbwin.clone()
-            W.set_fg(fg := want_fg).
-              set_bg(bg := want_bg).
-              set_font(font := want_font)
-         }
-         w1 := char_w * *ss
-         if bg ~=== default_bg then
-            W.erase_area(x1, yp, w1, line_height)
+               if \a.crossed then
+                  W.draw_rectangle(x1, y1 + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
 
-         if /a.invisible then
-            W.draw_string(x1, yp + W.get_line_ascent(), ss)
+               if \a.url === last_highlight then
+                  Gui.style.draw_dashed_rectangle(W, x1, yp, w1, line_height)
+               if \a.url === over then
+                  Gui.style.fill_over_rectangle(W, x1, yp, w1, line_height)
 
-         if \a.underline then
-            W.draw_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
-         else if \a.url ~=== last_highlight then
-            use { 
-               W2 := W.clone(),
-               W2.set_fg(EditRGBA(fg,,,, 16000)).      # 25% alpha of the current fg.
-                  draw_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+               x1 +:= w1
             }
 
-         if \a.crossed then
-            W.draw_rectangle(x1, y1 + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
+            if \row.bg ~=== default_bg then {
+               w1 := xp + cols * char_w - x1
+               W.set_bg(bg ~===:= row.bg)
+               W.erase_area(x1, yp, w1, line_height)
+            }
 
-         if \a.url === last_highlight then
-            Gui.style.draw_dashed_rectangle(W, x1, yp, w1, line_height)
-         if \a.url === over then
-            Gui.style.fill_over_rectangle(W, x1, yp, w1, line_height)
+            if \mark_y & 
+               (r := if (mark_y < i < cursor_y) | (mark_y > i > cursor_y) then
+                         [1, 1 + (0 < *s)]
+                      else if i = mark_y = cursor_y then
+                         range1(1, *s + 1, cursor_x, mark_x)
+                      else if i = mark_y then {
+                         if mark_y < cursor_y then
+                            range1(1, *s + 1, mark_x, *s + 1)
+                         else
+                            range1(1, *s + 1, 1, mark_x)
+                      } else if i = cursor_y then {
+                         if mark_y > cursor_y then
+                            range1(1, *s + 1, cursor_x, *s + 1)
+                         else
+                            range1(1, *s + 1, 1, cursor_x)
+                      })
+            then
+               Gui.style.fill_selection_rectangle(view.cbwin, xp + (r[1] - 1) * char_w, yp,  
+                                                  (r[2] - r[1]) * char_w, line_height)
 
-         x1 +:= w1
-      }
-
-      if \row.bg ~=== default_bg then {
-         w1 := xp + cols * char_w - x1
-         W.set_bg(row.bg).erase_area(x1, yp, w1, line_height)
-      }
-      W.close()
-
-      if \mark_y then {
-         r := if (mark_y < i < cursor_y) | (mark_y > i > cursor_y) then
-            [1, 1 + (0 < *s)]
-         else if i = mark_y = cursor_y then
-            range1(1, *s + 1, cursor_x, mark_x)
-         else if i = mark_y then {
-            if mark_y < cursor_y then
-               range1(1, *s + 1, mark_x, *s + 1)
-            else
-               range1(1, *s + 1, 1, mark_x)
-         } else if i = cursor_y then {
-            if mark_y > cursor_y then
-               range1(1, *s + 1, cursor_x, *s + 1)
-            else
-               range1(1, *s + 1, 1, cursor_x)
+            if /hide_cursor_mode & i = cy_to_index() then {
+               if has_focus() & is_unshaded() then {
+                  if cursor_on ~= 2 then
+                     Gui.style.draw_text_cursor(view.cbwin,
+                                                xp + (cx - 1) * char_w,
+                                                y1, 
+                                                view.cbwin.get_font_height())
+               } else 
+                  Gui.style.draw_shadow_text_cursor(view.cbwin,
+                                                    xp + (cx - 1) * char_w,
+                                                    y1, 
+                                                    view.cbwin.get_font_height())
+            }
          }
-
-         if \r then
-            Gui.style.fill_selection_rectangle(view.cbwin, xp + (r[1] - 1) * char_w, yp,  
-                                               (r[2] - r[1]) * char_w, line_height)
+         yp +:= line_height
       }
 
-      if /hide_cursor_mode & i = cy_to_index() then {
-         if has_focus() & is_unshaded() then {
-            if cursor_on ~= 2 then
-               Gui.style.draw_text_cursor(view.cbwin,
-                                          xp + (cx - 1) * char_w,
-                                          y1, 
-                                          view.cbwin.get_font_height())
-         } else 
-            Gui.style.draw_shadow_text_cursor(view.cbwin,
-                                              xp + (cx - 1) * char_w,
-                                              y1, 
-                                              view.cbwin.get_font_height())
-      }
+      W.close()
    end
 
    #
@@ -1647,6 +1726,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private clear_mark()
+      reset_search()
       text_selection := mark_x := mark_y := &null
       return self
    end
@@ -1770,8 +1850,13 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    public handle_copy(e)
       local s
-      if s := get_current_text_selection() then
+      if s := \text_selection then {
          parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
+         # This indicates to handle_special_key() below that we've
+         # handled the key; otherwise it is passed on.  (this is what
+         # konsole does).
+         return
+      }
    end
 
    private handle_default_key(e)
@@ -1794,15 +1879,12 @@ class Vt(LineBasedScrollArea, MenuMode)
             on_default_key(e)
             return
          }
-         Key.F10 : {
-            handle_copy(e)
-            return
-         }
+         Key.F10 :
+            return handle_copy(e)
          Key.INSERT :  {
-            if \e.ctrl then {
-               handle_copy(e)
-               return
-            }  else if \e.shift then {
+            if \e.ctrl then
+               return handle_copy(e)
+            else if \e.shift then {
                handle_paste(e)
                return
             }
@@ -1897,7 +1979,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          over := u
          invalidate_link(\over)
          if /over then
-            ui.clear_msg()
+            ui.msg()
          else
             ui.msg(u.ucs())
       }
@@ -1956,7 +2038,6 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private handle_lrelease(e)
-      local s
       if \held then {
          if \over then {
             set_highlight()
@@ -1965,19 +2046,22 @@ class Vt(LineBasedScrollArea, MenuMode)
          held := &null
       } else {
          scroll_ticker.stop()
-         calculate_text_selection()
-         if s := get_current_text_selection() then {
-            parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
-            self.primary := s
-         }
+         own_primary()
       }
+   end
+
+   private own_primary()
+      calculate_text_selection()
+      if primary := \text_selection then
+         parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
    end
 
    public handle_select_all(e)
       mark_x := mark_y := 1
       cursor_y := *contents
       cursor_x := *contents_str(cursor_y) + 1
-      handle_lrelease()
+      reset_search()
+      own_primary()
       view.invalidate()
    end
 
@@ -2018,6 +2102,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private handle_lpress1(e)
       local s
       invalidate_region()
+      reset_search()
       # This would be \e.shift, but shift is used to disable the link click functionality.
       if \e.ctrl then {
          /self.mark_y := self.cursor_y
@@ -2074,7 +2159,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          set_over()
          pm := PopupMenu()
          pm.connect(on_popup_closed, Event.POPUP_CLOSED)
-         pm.popup(parent_dialog, m, e.x, e.y)
+         pm.popup(self, m, e.x, e.y)
       }
    end
 
@@ -2188,7 +2273,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          set_item_border(EmptyBorder().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                              set_x_align(Align.L)).
-         set_all_wattribs(self.get_effective_wattribs()).
+         set_all_wattribs(view.get_effective_wattribs()).
          set_inherit_wattribs(&no).
          connect(on_popup_selection, Event.SELECTION_CHANGED).
          set_select_mode(Select.ONE).
@@ -2199,6 +2284,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          set_selection_on_key_moves(&no).
          set_contents(l).
          set_z(self.parent_dialog.get_top_z())
+
       self.parent_dialog.add(popup)
       self.popup.set_ideal_size(scale(25), max_w,
                                 scale(5), max_h)
@@ -2234,6 +2320,93 @@ class Vt(LineBasedScrollArea, MenuMode)
             add_popup(d)
          d.show()
       }
+   end
+
+   public do_search(s)
+      reset_search()
+      if *s = 0 then {
+         search_term := &null
+         invalidate_region()
+         clear_mark()
+         ui.search_msg("No results")
+      } else {
+         search_term := map(s)
+         do_search_prev()
+      }
+      return self
+   end
+
+   public do_search_prev()
+      local i, j, num, min_x, min_y, last_x, last_y, matching
+      \search_term | fail
+      if \search_increment_flag then {
+         min_y := cursor_y
+         min_x := cursor_x
+      }
+      num := 0
+      every i := 1 to *contents do {
+         every j := find(search_term, map(contents_str(i))) do {
+            num +:= 1
+            if /last_y | /min_y | (i < min_y) | (i = min_y & j < min_x) then {
+               matching := num
+               last_y := i
+               last_x := j
+            }
+         }
+      }
+      done_search(last_x, last_y, matching, num)
+      return self
+   end
+
+   public do_search_next()
+      local i, j, num, max_x, max_y, first_x, first_y, matching, last_x, last_y
+      \search_term | fail
+      if \search_increment_flag then {
+         max_y := mark_y
+         max_x := mark_x
+      }
+      num := 0
+      every i := 1 to *contents do {
+         every j := find(search_term, map(contents_str(i))) do {
+            num +:= 1
+            if /first_y & (/max_y | (i > max_y) | (i = max_y & j > max_x)) then {
+               first_y := i
+               first_x := j
+               matching := num
+            } else {
+               last_y := i
+               last_x := j
+            }
+         }
+      }
+      if /first_y & \last_y then {
+         first_y := last_y
+         first_x := last_x
+         matching := num
+      }
+      done_search(first_x, first_y, matching, num)
+      return self
+   end
+
+   private done_search(at_x, at_y, matching, num)
+      if \at_y then {
+         invalidate_region()
+         mark_y := cursor_y := at_y
+         cursor_x := at_x
+         mark_x := cursor_x + *search_term
+         # Ensure the line is visible with context of at least 3 lines above/below.
+         ensure_region_visible(get_area_line_rect(cursor_y).pad(0, 3 * line_height))
+         own_primary()
+         search_increment_flag := &yes
+         invalidate_region()
+         ui.search_msg(matching || "/" || num)
+      } else
+         ui.search_msg("No results")
+   end
+
+   private reset_search()
+      ui.search_msg()
+      search_increment_flag := &no
    end
 
    public new()

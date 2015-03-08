@@ -551,3 +551,22 @@ AC_DEFUN([AX_CHECK_X11],
            fi
     fi
 ])
+
+AC_DEFUN([AX_CHECK_TIOCSCTTY],
+[
+AC_MSG_CHECKING(if TIOCSCTTY is defined)
+AC_EGREP_CPP(yes,
+[
+#include <sys/ioctl.h>
+#ifdef TIOCSCTTY
+  yes
+#endif
+],
+[
+  AC_MSG_RESULT(yes)
+  AC_DEFINE(HAVE_TIOCSCTTY)
+],
+[
+  AC_MSG_RESULT(no)
+])
+])

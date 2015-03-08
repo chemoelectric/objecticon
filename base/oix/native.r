@@ -2075,6 +2075,24 @@ function io_SocketStream_listen(self, backlog)
    }
 end
 
+function io_SocketStream_get_peer(self)
+   body {
+       tended struct descrip result;
+       struct sockaddr_in iss;
+       socklen_t iss_len;
+       char buf[128];
+       GetSelfFd();
+       iss_len = sizeof(iss);
+       if (getpeername(self_fd, (struct sockaddr *)&iss, &iss_len) < 0) {
+           errno2why();
+           fail;
+       }
+       snprintf(buf, sizeof(buf), "%s:%u", inet_ntoa(iss.sin_addr), (unsigned)ntohs(iss.sin_port));
+       cstr2string(buf, &result);
+       return result;
+   }
+end
+
 function io_SocketStream_accept_impl(self)
    body {
        int sockfd;
@@ -4568,7 +4586,7 @@ end
 function io_PttyStream_prepare_slave(f)
     body {
        FdStaticParam(f, fd);
-#ifdef TIOCSCTTY                        /* Acquire controlling tty on BSD */
+#if HAVE_TIOCSCTTY                        /* Acquire controlling tty on BSD */
        if (ioctl(fd, TIOCSCTTY, 0) < 0) {
            errno2why();
            fail;

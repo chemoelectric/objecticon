@@ -747,13 +747,9 @@ $endif
       message_label.set(s, n)
    end
 
-   public clear_msg()
-      msg()
-   end
-
    private on_set_destination(ev)
       local d
-      clear_msg()
+      msg()
       d := parent_dialog.directory_dialog
       d.set_directory(parent_dialog.settings.destination_dir).set_existing_file_mode(DirectoryDialog.REQUIRE).show_modal(parent_dialog)
       parent_dialog.settings.destination_dir := d.get_result()
@@ -789,7 +785,7 @@ $endif
    private on_table_rpress(ev)
       local popup, menu, l, d, m1, m2, de
 
-      clear_msg()
+      msg()
 
       # Ensure something is there to popup onto...
       url_table.get_line_under_pointer(ev) | fail
@@ -1412,10 +1408,6 @@ class BrowserTab(TabItem, BrowserUI)
 
    public msg(s, n)
       message_label.set(s, n)
-   end
-
-   public clear_msg()
-      msg()
    end
 
    private static has_data(file, data)

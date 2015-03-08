@@ -1220,7 +1220,7 @@ class Img(Image, HasLastHighlight)
          set_over()
          pm := PopupMenu()
          pm.connect(on_popup_closed, Event.POPUP_CLOSED)
-         pm.popup(parent_dialog, pm_menu, e.x, e.y)
+         pm.popup(self, pm_menu, e.x, e.y)
       }
    end
 
@@ -2736,7 +2736,6 @@ record HistoryEntry(url,          # URL displayed (on a redirect may differ from
 
 abstract class BrowserUI()
    public abstract msg(s, n)
-   public abstract clear_msg()
    public abstract page_loaded()
    public abstract page_fully_loaded()
    public abstract update_grey(gs)
@@ -3105,7 +3104,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public clear_msg(owner)
       if /msg_owner | /owner | (owner === msg_owner) then {
-         (\ui).clear_msg()
+         (\ui).msg()
          msg_owner := &null
       }
       return self
@@ -3245,8 +3244,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    public do_search(s)
       local c, l
       s := map(s)
-      l := []
-      every put(l, words(s))
+      l := ipl.pdco.List{words(s)}
       if *l > 0 then {
          searched_term := l
          clear(searched)
@@ -3273,7 +3271,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       (\highlighted_searched).textflow.invalidate(highlighted_searched.get_bounds())
       highlighted_searched := t
       highlighted_searched.textflow.invalidate(highlighted_searched.get_bounds())
-      ensure_visible(highlighted_searched.get_bounds())
+      ensure_region_visible(convert_to_area(highlighted_searched.get_bounds()).pad(scale(10), scale(30)))
       return self
    end
 
@@ -3611,7 +3609,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             break
          }
       }
-      ensure_visible(c)
+      ensure_region_visible(convert_to_area(c).pad(scale(10), scale(30)))
    end
 
    private setup_tabbing()
@@ -5249,7 +5247,6 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private handle_lrelease(e)
-      local s
       scroll_ticker.stop()
       if \mark_x then {
          view.inner.invalidate(get_band_rect())
@@ -5258,10 +5255,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       calculate_text_selection()
       calculate_links_selection()
       do_update_grey()
-      if s := get_current_text_selection() then {
+      if primary := \text_selection then
          parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
-         self.primary := s
-      }
    end
 
    public handle_select_all(e)
@@ -5302,7 +5297,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       can_rpress(e) | fail
       if pm_menu := create_page_menu() then {
          pm := PopupMenu()
-         pm.popup(parent_dialog, pm_menu, e.x, e.y)
+         pm.popup(self, pm_menu, e.x, e.y)
       }
    end
 
@@ -5383,7 +5378,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public handle_copy(e)
       local s
-      if s := get_current_text_selection() then
+      if s := \text_selection then
          parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
    end
 

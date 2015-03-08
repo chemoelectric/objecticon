@@ -242,7 +242,7 @@ $endif
 
    public check_existing()
       local f
-      clear_msg()
+      msg()
       f := get_dir_path().str()
       if Files.access(f) then {
          if not Files.is_directory(f) then
@@ -321,10 +321,6 @@ $endif
 
    public msg(s)
       message_label.set(s)
-   end
-
-   public clear_msg()
-      msg()
    end
 
    public new()

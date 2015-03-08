@@ -1260,7 +1260,7 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Succeed iff the component has been initialized with {init()}, but
+   # Succeed iff the component has been initialized with {initially()}, but
    # not yet cleaned up with {finally()}.
    #
    public is_initialized()

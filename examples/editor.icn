@@ -134,16 +134,12 @@ class Editor(Dialog)
    end
 
    private msg(s)
-      message_label.set_label(s)
-   end
-
-   private clear_msg()
-      msg("")
+      message_label.set(s)
    end
 
    private update_grey()
       if text.can_undo() then {
-         clear_msg()
+         msg()
          save_button.set_is_shaded(&no)
          save_item.set_is_shaded(&no)
       } else {  

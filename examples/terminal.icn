@@ -16,7 +16,8 @@ import
    ipl.filegui,
    ipl.childwait,
    ipl.vt,
-   ipl.columnize
+   ipl.columnize,
+   ipl.strings
 
 global opts
 
@@ -25,18 +26,60 @@ $load SAVE "rpp.SAVE_24.gif"
 $load MIXFILE "rpp.MIXFILE_24.png"
 $load TERMINAL_LOGO "rpp.TERMINAL_LOGO.png"
 
-class Runner()
+abstract class Runner()
+   public abstract get_command()
+end
+
+class ImmediateRunner(Runner)
    public const
-      # The command to run.  Optional: either this is null, and the other
-      # fields are set, or this is set and the other two are ignored.
-      # At present if it is set, it is just used for a "cd" command.
-      cmd, 
+      cmd
+
+   public get_command()
+      return cmd
+   end
+
+   public new(cmd)
+      self.cmd := cmd
+      return
+   end
+end
+
+abstract class ExternalRunner(Runner)
+   public abstract get_working_dir()
+end
+
+class LaunchRunner(ExternalRunner)
+   public const
+      cmd,
+      wd
+
+   public get_working_dir()
+      return \wd
+   end
+
+   public get_command()
+      return cmd
+   end
+
+   public new(cmd, wd)
+      self.cmd := cmd
+      self.wd := wd
+      return
+   end
+end
+
+class DesktopRunner(ExternalRunner)
+   public const
       # The DesktopEntry giving the command and other parameters.
       desktop_entry,
       # The string to substitute to create a command to run
       subst,
       # The url itself (a URL object).
       url
+
+   public get_working_dir()
+      return \desktop_entry.path
+   end
 
    public get_command()
       local line
@@ -45,8 +88,7 @@ class Runner()
       return desktop_entry.subst_file(Format.shell_escape(subst), line)
    end
 
-   public new(cmd, desktop_entry, url, subst)
-      self.cmd := cmd
+   public new(desktop_entry, url, subst)
       self.desktop_entry := desktop_entry
       self.url := url
       self.subst := subst
@@ -81,6 +123,21 @@ class TerminalDialog(Dialog)
 
    private on_quit(ev)
       dispose()
+   end
+
+   public do_tab_cmd(l)
+      local s, t, cmd
+      # l is a list of strings (not ucs).
+      t := tabs.which_one
+      while s := get(l) do {
+         s ? if =":" then {
+            cmd := tab(0)
+            \t | return error("Command before tab directory: " || cmd)
+            t.do_tab_cmd(cmd) | fail
+         } else
+            t := if *s > 0 then new_tab(, s) else new_tab()
+      }
+      return self
    end
 
    public new_tab(sel, dir, other)
@@ -125,7 +182,7 @@ class TerminalDialog(Dialog)
          return
       }
       # Set the working directory for the child process
-      Files.chdir(\runner.desktop_entry.path | Files.get_home())
+      Files.chdir(runner.get_working_dir() | Files.get_home())
       # Get the command to run.
       cmd := runner.get_command()
       System.setpgid()
@@ -435,11 +492,11 @@ class Columns(LineBasedScrollArea)
    end
 
    public get_row_for_index(n)
-      return (n - 1) % n_rows + 1
+      return (n - 1) % \n_rows + 1
    end
 
    public get_col_for_index(n)
-      return (n - 1) / n_rows + 1
+      return (n - 1) / \n_rows + 1
    end
 
    public set_cursor(n)
@@ -595,18 +652,7 @@ class Columns(LineBasedScrollArea)
       return self
    end
 
-   public change_painter(p)
-      set_item_paint(p)
-      set_over()
-      invalidate_columnize()
-      invalidate_subject_width()
-      invalidate_line_count()
-      compute_and_invalidate()
-      return self
-   end
-
-   public set_data(l)
-      self.data := l
+   public data_changed()
       # set_over() is necessary even if the caller does a
       # resynch_pointer, since we store over as an index (which may
       # change) rather than the underlying object.
@@ -616,6 +662,12 @@ class Columns(LineBasedScrollArea)
       invalidate_line_count()
       compute_and_invalidate()
       constrain_cursor()
+      return self
+   end
+
+   public set_data(l)
+      self.data := l
+      data_changed()
       return self
    end
 
@@ -700,7 +752,10 @@ end
 
 class Terminal(TabItem, VtUI)
    public static const
-      MAX_HISTORY_SIZE
+      MAX_HISTORY_SIZE,
+      SHOW_NAME_ONLY,
+      SHOW_DATE,
+      SHOW_SIZE
 
    private
       prev_button,
@@ -710,6 +765,12 @@ class Terminal(TabItem, VtUI)
       size_button,
       favourites_list,
       message_label,
+      search_panel,
+      search_field,
+      search_label, 
+      search_close_button,
+      search_next_button,
+      search_prev_button, 
       history_list,
       trail,
       best_focus         # Either columns or output (the vt)
@@ -717,9 +778,7 @@ class Terminal(TabItem, VtUI)
    private readable
       ascending,
       sorter,
-      name_painter,
-      size_painter,
-      date_painter,
+      annotate_opt,
       filter,
       refresh_button,
       up_button,
@@ -740,6 +799,7 @@ class Terminal(TabItem, VtUI)
       input,
       cwd,
       cwd_mtime,
+      cwd_list,
       show_hidden_menu_item,
       mix_entries_menu_item,
       sort_dirs_menu_item,
@@ -747,6 +807,9 @@ class Terminal(TabItem, VtUI)
 
    private static init()
       MAX_HISTORY_SIZE := 100
+      SHOW_NAME_ONLY := 1
+      SHOW_DATE := 2
+      SHOW_SIZE := 3
    end
 
    public get_label_width()
@@ -758,20 +821,63 @@ class Terminal(TabItem, VtUI)
    end
 
    public vt_size_changed(cols, rows)
+      if \opts["v"] then
+         write("Vt size changed to: ", cols, ",", rows)
       tty.set_size(cols, rows)
    end
 
-   public process_command(args)
-      local dir, sel
-      if \opts["v"] then
-         write("Command: ", to_string(args))
-      case string(args[1]) of {
-         "new-tab" : {
-            dir := args[2]
-            sel := flag(args[3])
-            parent_dialog.new_tab(sel, dir)
+   public do_tab_cmd(s)
+      case string(s) of {
+         "minimize" : on_min_terminal()
+         "maximize" : on_max_terminal()
+         "normal-size" : on_normal_terminal()
+         "list-focus" : {
+            focus_columns_button.toggle_is_checked().invalidate()
+            on_focus_columns_button()
          }
+         "reorient" | "re-orient" : on_reorient()
+         "sort-name" : on_name_button()
+         "sort-date" : on_date_button()
+         "sort-size" : on_size_button()
+         "show-name-only" : on_show_name_only()
+         "show-date" : on_show_date()
+         "show-size" : on_show_size()
+         "mix-entries" : {
+            mix_entries_menu_item.toggle_is_checked()
+            on_mix_entries_menu_item()
+         }
+         "show-hidden" : {
+            show_hidden_menu_item.toggle_is_checked()
+            on_show_hidden_menu_item()
+         }
+         "sort-dirs" : {
+            sort_dirs_menu_item.toggle_is_checked()
+            on_sort_dirs_menu_item()
+         }
+         "select" : {
+            parent.set_which_one(self)
+         }
+         default: return error("Invalid command: " || s)
       }
+      return self
+   end
+
+   private on_max_terminal()
+      split.first.set_size(0, 0).reset_layout()
+      if is_live() then
+         split.do_layout().invalidate()
+   end
+
+   private on_min_terminal()
+      split.first.set_size(lang.Limit.MaxWord, lang.Limit.MaxWord).reset_layout()
+      if is_live() then
+         split.do_layout().invalidate()
+   end
+
+   private on_normal_terminal()
+      split.first.set_size()
+      if is_live() then
+         split.do_layout().invalidate()
    end
 
    public link_middle_clicked(url, ev)
@@ -792,10 +898,6 @@ class Terminal(TabItem, VtUI)
 
    public msg(s, n)
       message_label.set(s, n)
-   end
-
-   public clear_msg()
-      msg()
    end
 
    private setup_shell()
@@ -885,7 +987,7 @@ class Terminal(TabItem, VtUI)
       repeat {
          if st := Files.stat(cwd) then {
             if st.mtime ~= cwd_mtime then
-               resort_cwd(&yes)
+               refresh_cwd()
          }
          check_cwd_task.sleep(500)
       }
@@ -941,13 +1043,20 @@ class Terminal(TabItem, VtUI)
 
    public open_link(url)
       local r
-      if url.scheme == u"text" then {
-         send_tty(ucs(url.get_decoded_path()))
-      } else if r := get_runner(url) then {
-         if \r.cmd then
-            run_prog(r.cmd)
-         else
-            parent_dialog.launch_prog(r)
+      case string(url.scheme) of {
+         "text": send_tty(ucs(url.get_decoded_path()))
+         "tab": {
+            parent_dialog.do_tab_cmd(ipl.pdco.List{ URL.percent_decode(separate(url.get_path(), ';')) }) |
+               info_msg(&why)
+         }
+         default: {
+            if r := get_runner(url) then {
+               if is(r, ExternalRunner) then
+                  parent_dialog.launch_prog(r)
+               else
+                  run_prog(r.get_command())
+            }
+         }
       }
    end
 
@@ -959,7 +1068,7 @@ class Terminal(TabItem, VtUI)
                is_local_host(url) &
                s[1+:*cwd] == cwd & 
                s[*cwd + 1] == u"/" then
-               Format.shell_escape(s[*cwd+2:0])
+               u"./" || Format.shell_escape(s[*cwd+2:0])
             else
                Format.shell_escape(s)
             if Files.is_directory(s) then
@@ -990,20 +1099,36 @@ class Terminal(TabItem, VtUI)
    end
 
    private get_runner(url)
-      local s, de
-      if url.scheme == u"file" then {
-         is_local_host(url) | return info_msg(u"Can't run a file on another host (" || url.host || u")")
-         s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
-         if Files.is_directory(s) then
-            return Runner(u"cd " || Format.shell_escape(s))
-         # Get a DesktopEntry based on the content-type if available, or the filename.
-         de := get_possible_desktop_entries(s) | return info_msg(u"No matching desktop entry for this URL")
-         if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1))
-         return Runner(, de, url, s)
-      } else {
-         de := Xdg.gen_desktop_entries("x-scheme-handler/" || string(url.scheme))  | return info_msg(u"No desktop entry for url scheme " || url.scheme)
-         if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1))
-         return Runner(, de, url, url.ucs())
+      local s, cd, de
+      case string(url.scheme) of {
+         "file" : {
+            is_local_host(url) | return info_msg(u"Can't run a file on another host (" || url.host || u")")
+            s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
+            if Files.is_directory(s) then
+               return ImmediateRunner(u"cd " || Format.shell_escape(s))
+            # Get a DesktopEntry based on the content-type if available, or the filename.
+            de := get_possible_desktop_entries(s) | return info_msg(u"No matching desktop entry for this URL")
+            if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1))
+            return DesktopRunner(de, url, s)
+         }
+         "run" : {
+            s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
+            return ImmediateRunner(s)
+         }
+         "launch" : {
+            url.get_path() ? {
+               s := tab(upto(';') | 0)
+               s := ucs(URL.percent_decode(s)) | return info_msg(u"URL decoded path not utf8")
+               if move(1) then
+                  cd := ucs(URL.percent_decode(tab(0))) | return info_msg(u"CD decoded path not utf8")
+            }
+            return LaunchRunner(s, cd)
+         }
+         default : {
+            de := Xdg.gen_desktop_entries("x-scheme-handler/" || string(url.scheme))  | return info_msg(u"No desktop entry for url scheme " || url.scheme)
+            if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1))
+            return DesktopRunner(de, url, url.ucs())
+         }
       }
    end
 
@@ -1028,7 +1153,7 @@ class Terminal(TabItem, VtUI)
    private on_columns_over_changed(ev)
       local s, url
       if /columns.over then
-         clear_msg()
+         msg()
       else {
          s := FilePath(cwd).child(columns.data[columns.over].name).ucs() | fail
          url := URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/')) | fail
@@ -1037,9 +1162,12 @@ class Terminal(TabItem, VtUI)
    end
 
    private copy_link(url)
-      if url.scheme == (u"file" | u"text") then
-         parent_dialog.own_selection(Selection.CLIPBOARD, 
-                                     StaticTextSelectionOwner(Format.shell_escape(ucs(url.get_decoded_path()))))
+      local s
+      s := ucs(url.get_decoded_path()) | fail
+      if url.scheme == u"file" then
+         s := Format.shell_escape(s)
+      parent_dialog.own_selection(Selection.CLIPBOARD, 
+                                  StaticTextSelectionOwner(s))
    end
 
    private copy_link_url(url)
@@ -1050,7 +1178,7 @@ class Terminal(TabItem, VtUI)
    private insert_cmd(url)
       local r, cmd
       if r := get_runner(url) then {
-         cmd := \r.cmd | r.get_command()
+         cmd := r.get_command()
          send_tty(cmd)
       }
    end
@@ -1062,7 +1190,7 @@ class Terminal(TabItem, VtUI)
       s := \d.result | fail
       msg("Renamed OK", 3000)
       if cwd == FilePath(s).parent().ucs() then
-         resort_cwd(&yes)
+         refresh_cwd()
    end
 
    private connect_launch(m2, runner)
@@ -1091,6 +1219,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private on_reorient(e)
+      split.first.set_size().reset_layout()
       split.reorient()
    end
 
@@ -1114,13 +1243,32 @@ class Terminal(TabItem, VtUI)
       m.add(TextMenuItem().
             set_label("Reorient").
             connect(on_reorient, Event.ACTION))
+      if split.first.w_spec ~=== 0 then {
+         m.add(TextMenuItem().
+               set_label("Maximize").
+               connect(on_max_terminal, Event.ACTION))
+      }
+      if split.first.w_spec ~=== lang.Limit.MaxWord then {
+         m.add(TextMenuItem().
+               set_label("Minimize").
+               connect(on_min_terminal, Event.ACTION))
+      }
+      if split.first.w_spec === (0 | lang.Limit.MaxWord) then {
+         m.add(TextMenuItem().
+               set_label("Normal size").
+               connect(on_normal_terminal, Event.ACTION))
+      }
+      if not search_panel.is_live() then
+         m.add(TextMenuItem().
+               set_label("Search").
+               connect(open_search_panel, Event.ACTION))
       return m
    end
 
    public create_link_menu(url)
       local m, m1, m2, s, de
       m := Menu()
-      if url.scheme == (u"file" | u"text") then {
+      if url.scheme == (u"file" | u"text" | u"run") then {
          m.add(TextMenuItem().
                set_label("Copy").
                connect(create copy_link(url), Event.ACTION))
@@ -1128,10 +1276,11 @@ class Terminal(TabItem, VtUI)
       m.add(TextMenuItem().
             set_label("Copy URL").
             connect(create copy_link_url(url), Event.ACTION))
-      m.add(TextMenuItem().
-            set_label("Insert command").
-            connect(create insert_cmd(url), Event.ACTION))
-
+      if not(url.scheme == (u"text" | u"tab")) then {
+         m.add(TextMenuItem().
+               set_label("Insert command").
+               connect(create insert_cmd(url), Event.ACTION))
+      }
       if url.scheme == u"file" &
          is_local_host(url) &
          s := ucs(url.get_decoded_path()) then
@@ -1146,7 +1295,7 @@ class Terminal(TabItem, VtUI)
                m2 := TextMenuItem().
                   set_label(de.name)
                m2.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
-               connect_launch(m2, Runner(, de, url, s))
+               connect_launch(m2, DesktopRunner(de, url, s))
                m1.add(m2)
             }
             if *m1.children > 0 then 
@@ -1173,40 +1322,63 @@ class Terminal(TabItem, VtUI)
       pm.popup(parent_dialog, m, e.x, e.y)
    end
 
-   private change_painter(p)
-      columns.change_painter(p)
-   end
-
    public get_tab_tooltip()
       if tab_w - label_border.get_total_width() < cbwin.text_width(paint.str) then
          return paint.str
    end
 
+   private on_show_name_only(e)
+      annotate_opt := SHOW_NAME_ONLY
+      annotate_cwd_list()
+      columns.data_changed()
+   end
+
+   private on_show_date(e)
+      annotate_opt := SHOW_DATE
+      annotate_cwd_list()
+      columns.data_changed()
+   end
+
+   private on_show_size(e)
+      annotate_opt := SHOW_SIZE
+      annotate_cwd_list()
+      columns.data_changed()
+   end
+
+   private on_mix_entries_menu_item(e)
+      annotate_cwd_list()
+      resort_cwd()
+   end
+
+   private on_sort_dirs_menu_item(e)
+      annotate_cwd_list()
+      resort_cwd()
+   end
+
+   private on_show_hidden_menu_item(e)
+      resort_cwd(&yes)
+   end
+
    public create_columns_context_menu()
-      local cbg, ni, si, di, m
-      m := Menu().
-         add(ni := CheckBoxMenuItem().
+      local m
+      m := Menu()
+      if annotate_opt ~= SHOW_NAME_ONLY then
+         m.add(TextMenuItem().
             set_label("Name only").
-            connect(create change_painter(name_painter), Event.ACTION)).
-         add(di := CheckBoxMenuItem().
+            connect(on_show_name_only , Event.ACTION))
+      if annotate_opt ~= SHOW_DATE then
+         m.add(TextMenuItem().
             set_label("Show date").
-            connect(create change_painter(date_painter), Event.ACTION)).
-         add(si := CheckBoxMenuItem().
+            connect(on_show_date, Event.ACTION))
+      if annotate_opt ~= SHOW_SIZE then
+         m.add(TextMenuItem().
             set_label("Show size").
-            connect(create change_painter(size_painter), Event.ACTION)).
-         add(MenuSeparator()).
-         add(show_hidden_menu_item)
+            connect(on_show_size, Event.ACTION))
+      m.add(MenuSeparator())
+      m.add(show_hidden_menu_item)
       if mix_entries_menu_item.is_unchecked() then
          m.add(sort_dirs_menu_item)
       m.add(mix_entries_menu_item)
-
-      cbg := CheckBoxGroup().
-         add(ni).add(si).add(di)
-      case columns.item_paint of {
-         name_painter : cbg.set_which_one(ni)
-         size_painter : cbg.set_which_one(si)
-         date_painter : cbg.set_which_one(di)
-      }
       return m
    end
 
@@ -1275,82 +1447,44 @@ class Terminal(TabItem, VtUI)
       synch_paints()
    end
 
-   private resort_cwd(track_cursor)
-      local i, ino, info, vis, high, held
-      \cwd | fail
-      if \track_cursor & i := columns.get_row_for_index(columns.get_cursor()) then {
-         # Set vis to &yes if the last highlight is currently visible; also get the ino of
-         # the last highlight.
-         info := columns.get_line_info()
-         if info.first_whole <= i <= info.last_whole then
-            vis := &yes
-         ino := columns.object_get_cursor().stat.ino
-         if columns.get_cursor() === columns.get_highlight() then
-            high := &yes
-         if columns.get_cursor() === columns.get_held() then
-            held := &yes
-      }
-      load_cwd(get_pats())
-      # Search for the old ino in the new data.  If found, set the highlight and if the old
-      # cursor was visible, ensure the new one is too.
-      if \track_cursor & i := Positions{(!columns.data).stat.ino, \ino} then {
-         columns.set_cursor(i)
-         if \vis then
-            columns.ensure_line_visible(columns.get_row_for_index(columns.get_cursor()))
-         if \high then
-            columns.set_highlight(i)
-         if \held then
-            columns.set_held(i)
-      } else
-         columns.set_cursor()
-      if is_live() then {
-         # Since the pointer may be over the files list, update the pointer.
-         parent_dialog.resynch_pointer()
-      }
-   end
-
-   private load_cwd(pats)
+   private load_cwd_list()
       cwd_mtime := Files.stat(cwd).mtime | 0
-      columns.set_data(list_cwd(pats))
+      (cwd_list := Files.ucs_list(cwd, AnnotatedListEntryWithIcon)) | {
+         info_msg("Failed to read cwd: " || &why)
+         cwd_list := []
+      }
    end
 
-   private list_cwd(pats)
-      local dirs, files, e, l, s, t, now, tf, m, z, zf, fl
-      l := Files.ucs_list(cwd) | fail
-      dirs := []
-      files := []
-      now := Time.get_system_seconds()
+   private annotate_cwd_list()
+      local e, fl, now
       # flag indicates whether to annotate dirs with size/date
       if mix_entries_menu_item.is_checked() | sort_dirs_menu_item.is_checked() then
          fl := &yes
-      every e := !l do {
+      now := Time.get_system_seconds()
+      every e := !cwd_list do {
+         if /fl & e.stat.mode_str[1] == "d" then
+            e.annotate_name()
+         else case annotate_opt of {
+            SHOW_NAME_ONLY : e.annotate_name()
+            SHOW_DATE : e.annotate_date(now)
+            SHOW_SIZE : e.annotate_size()
+            default : syserr("Bad annotate_opt")
+         }
+      }
+   end
+
+   private sort_cwd_list(pats)
+      local dirs, files, e, s
+      dirs := []
+      files := []
+      every e := !cwd_list do {
          s := e.name
          if (/pats | (!pats).match(s) = *s + 1)\1 &
-            (show_hidden_menu_item.is_checked() | not(Files.is_hidden(s))) then
-         {
-            if /fl &e.stat.mode_str[1] == "d" then {
-               tf := zf := s
-            } else {
-               t := e.lstat.mtime
-               tf := if now - t > 180 * 86400 then
-                  Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d yyyy")
-               else
-                  Time(t + Time.SYSTEM_BASE_OFFSET).format("MMM d HH:mm")
-               tf := s || " (" || tf || ")"
-               z := e.lstat.size
-               zf := if z < 1024 then
-                  Format.numeric_to_string(z, 0, ',') || "B"
-               else if z < 1024*1024 then
-                  Format.numeric_to_string(z/1024.0, 1, ',') || "KB"
-               else
-                  Format.numeric_to_string(z/(1024.0*1024.0), 1, ',') || "MB"
-               zf := s || " (" || zf || ")"
-            }
-            m := ListEntryEx(s, e.lstat, e.stat, tf, zf)
+            (show_hidden_menu_item.is_checked() | not(Files.is_hidden(s))) then {
             if e.stat.mode_str[1] == "d" then
-               put(dirs, m)
+               Files.is_relative_dir(s) | put(dirs, e)
             else
-               put(files, m)
+               put(files, e)
          }
       }
       if mix_entries_menu_item.is_checked() then
@@ -1362,7 +1496,48 @@ class Terminal(TabItem, VtUI)
             qsort(dirs, Files.name_cmp)
       }
       qsort(files, if /ascending then sorter else flip(sorter))
-      return dirs ||| files
+      columns.set_data(dirs ||| files)
+   end
+
+   private resort_cwd(track_cursor)
+      local i, ino, info, vis, high, held
+      \cwd | fail
+      if is_live() then {
+         if \track_cursor & i := columns.get_row_for_index(columns.get_cursor()) then {
+            # Set vis to &yes if the last highlight is currently visible; also get the ino of
+            # the last highlight.
+            info := columns.get_line_info()
+            if info.first_whole <= i <= info.last_whole then
+               vis := &yes
+            ino := columns.object_get_cursor().stat.ino
+            if columns.get_cursor() === columns.get_highlight() then
+               high := &yes
+            if columns.get_cursor() === columns.get_held() then
+               held := &yes
+         }
+         sort_cwd_list(get_pats())
+         # Search for the old ino in the new data.  If found, set the highlight and if the old
+         # cursor was visible, ensure the new one is too.
+         if \track_cursor & i := Positions{(!columns.data).stat.ino, \ino} then {
+            columns.set_cursor(i)
+            if \vis then
+               columns.ensure_line_visible(columns.get_row_for_index(columns.get_cursor()))
+            if \high then
+               columns.set_highlight(i)
+            if \held then
+               columns.set_held(i)
+         } else
+            columns.set_cursor()
+         # Since the pointer may be over the files list, update the pointer.
+         parent_dialog.resynch_pointer()
+      } else
+         sort_cwd_list(get_pats())
+   end
+
+   private refresh_cwd()
+      load_cwd_list()
+      annotate_cwd_list()
+      resort_cwd(&yes)
    end
 
    private set_cwd(s, nav)
@@ -1376,7 +1551,9 @@ class Terminal(TabItem, VtUI)
       }
       cwd := s
       trail.set_path(cwd)
-      load_cwd()
+      load_cwd_list()
+      annotate_cwd_list()
+      sort_cwd_list()
       synch_favourites_list()
       ex := table(0)
       every e := !columns.data do
@@ -1393,9 +1570,8 @@ class Terminal(TabItem, VtUI)
                columns.set_cursor(i)
             else
                columns.set_cursor()
-         } else {
+         } else
             columns.set_area_y(0).set_area_x(0).set_cursor()
-         }
          parent_dialog.resynch_pointer()
       }
 
@@ -1438,11 +1614,8 @@ class Terminal(TabItem, VtUI)
       local cd
       TabItem.new()
       self.revert_tab := revert_tab
-      self.setup()
-
-      name_painter := IconFilesItemPaint()
-      size_painter := IconFilesItemPaintSize()
-      date_painter := IconFilesItemPaintDate()
+      setup()
+      setup_search_panel()
 
       if \other then {
          if other.focus_columns_button.is_checked() then {
@@ -1451,23 +1624,25 @@ class Terminal(TabItem, VtUI)
          }
          if \other.split.sizer.is_horizontal_flag then
             split.reorient()
+         split.first.set_size(other.split.first.w_spec, other.split.first.h_spec)
          sorter := other.sorter
          ascending := other.ascending
-         columns.set_item_paint(case other.columns.item_paint of {
-            other.name_painter : name_painter
-            other.size_painter : size_painter
-            other.date_painter : date_painter
-         })
+         annotate_opt := other.annotate_opt
+         set_remembered_focus(if other.parent_dialog.focus === other.columns.find_focus() then
+            columns.find_focus()
+         else
+            output.find_focus())
       } else {
          if \opts["hs"] then
             split.reorient()
          sorter := Files.name_cmp
-         columns.set_item_paint(name_painter)
+         annotate_opt := SHOW_NAME_ONLY
+         set_remembered_focus(output.find_focus())
       }
       synch_paints()
       set_label_border(EmptyBorder().set_x_align(Align.L))
       columns.
-         set_width(scale(300)).
+         set_item_paint(AnnotatedIconFilesItemPaint()).
          set_item_border(EmptyBorder().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                              set_x_align(Align.L)).
@@ -1485,23 +1660,27 @@ class Terminal(TabItem, VtUI)
       output.set_history_size(\opts["h"])
       if \opts["v"] then
          output.set_verbose(&yes)
+      output.set_normal_fg(\opts["tfg"])
+      output.set_normal_bg(\opts["tbg"])
+      output.set_reverse_fg(\opts["trevfg"])
+      output.set_reverse_bg(\opts["trevbg"])
+      output.set_font(\opts["tfont"])
 
       favourites_list.set_size().set_selection_list(get_favourites_directories())
       sort_dirs_menu_item := CheckBoxMenuItem().
          set_label("Sort dirs").
-         connect(resort_cwd, Event.ACTION)
+         connect(on_sort_dirs_menu_item, Event.ACTION)
       mix_entries_menu_item := CheckBoxMenuItem().
          set_label("Mix files & dirs").
-         connect(resort_cwd, Event.ACTION)
+         connect(on_mix_entries_menu_item, Event.ACTION)
       show_hidden_menu_item := CheckBoxMenuItem().
          set_label("Show hidden files").
-         connect(resort_cwd, Event.ACTION)
+         connect(on_show_hidden_menu_item, Event.ACTION)
       if \other then {
          sort_dirs_menu_item.set_is_checked(other.sort_dirs_menu_item.get_status())
          mix_entries_menu_item.set_is_checked(other.mix_entries_menu_item.get_status())
          show_hidden_menu_item.set_is_checked(other.show_hidden_menu_item.get_status())
       }
-      set_remembered_focus(output.find_focus())
       filter.set_selection_list([u"*"])
       history_list.set_size().set_selection_list([])
       input := []
@@ -1568,7 +1747,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private on_refresh_button(ev)
-      resort_cwd(&yes)
+      refresh_cwd()
    end
 
    private on_up_button(ev)
@@ -1601,7 +1780,7 @@ class Terminal(TabItem, VtUI)
 
    private on_filter(ev)
       if member(EditList.NAVIGATE, ev.code) then {
-         resort_cwd()
+         resort_cwd(&yes)
          parent_dialog.set_focus(best_focus)
       }
    end
@@ -1626,14 +1805,17 @@ class Terminal(TabItem, VtUI)
       local f
       f := focus_columns_button.get_status()
       columns.set_accepts_focus(f)
-      if /f then
-         parent_dialog.set_focus(output)
-      else
-         parent_dialog.set_focus(columns)
-   end
-
-   public component_setup()
-      self.setup()
+      if is_live() then {
+         if /f then
+            parent_dialog.set_focus(output)
+         else
+            parent_dialog.set_focus(columns)
+      } else {
+         if /f then
+            set_remembered_focus(output)
+         else
+            set_remembered_focus(columns)
+      }
    end
 
    private on_columns_focus(ev)
@@ -1642,6 +1824,81 @@ class Terminal(TabItem, VtUI)
 
    private on_vt_focus(ev)
       best_focus := output
+   end
+
+   private open_search_panel()
+      split.second.
+         add(search_panel, 0).
+         reset_layout().
+         do_layout().
+         invalidate()
+      parent_dialog.set_focus(search_field)
+   end
+
+   private close_search_panel()
+      split.second.
+         remove(search_panel).
+         reset_layout().
+         do_layout().
+         invalidate()
+      parent_dialog.set_focus(output.find_focus())
+   end
+
+   public search_msg(s)
+      /s := ""
+      search_label.set_label(s)
+   end
+
+   private on_search_field()
+      output.do_search(search_field.get_contents())
+   end
+
+   private on_search_next()
+      output.do_search_next()
+   end
+
+   private on_search_prev()
+      output.do_search_prev()
+   end
+
+   private setup_search_panel()
+      search_panel := Component().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_layout(GridLayout().set_doi(0).set_dii(2).set_extra("cells"))
+      search_close_button := IconButton().
+         set_tooltip(TextPaint("Close")).
+         connect(close_search_panel, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_paint(ImagePaint().set_cache("gui.CLOSE_24"))
+      search_panel.add(search_close_button)
+      search_field := TextField().
+         set_width(scale(150)).
+         set_contents(u"").
+         connect(on_search_field, Event.CONTENT_CHANGED).
+         connect(on_search_field, Event.ACTION)
+      search_panel.add(search_field)
+      search_prev_button := IconButton().
+         set_tooltip(TextPaint("Prev")).
+         connect(self.on_search_prev, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_paint(ImagePaint().set_cache("gui.PREV_24"))
+      search_panel.add(search_prev_button)
+      search_next_button := IconButton().
+         set_tooltip(TextPaint("Next")).
+         connect(self.on_search_next, Event.ACTION).
+         set_no_click_focus(&yes).
+         set_paint(ImagePaint().set_cache("gui.NEXT_24"))
+      search_panel.add(search_next_button)
+      search_label := Label().
+         set_label("").
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("l_inset", 5).
+         set_width(scale(75))
+      search_panel.add(search_label)
    end
 
    private setup()
@@ -1812,7 +2069,7 @@ class Terminal(TabItem, VtUI)
          add(trail)
       self.add(panel_4)
       columns := Columns().
-         set_size(scale(100), scale(175)).
+         set_size(scale(300), scale(300)).
          clear_constraints().
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
@@ -1829,6 +2086,7 @@ class Terminal(TabItem, VtUI)
       output := Vt().
          set_size(scale(100), scale(100)).
          clear_constraints().
+         set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_constraint("y_fill", &yes).
@@ -1875,21 +2133,19 @@ class Terminal(TabItem, VtUI)
 end
 
 procedure main(a)
-   local d, dir
-   opts := options(a, "-x: -v! -h+ -hs!")
+   local d, t
+   opts := options(a, "-x: -v! -h+ -hs! -tfg: -tbg: -trevfg: -trevbg: -tfont:")
    ImageCache.
       name_image("rpp.EXIT_24", EXIT).
       name_image("rpp.SAVE_24", SAVE).
       name_image("rpp.MIXFILE_24", MIXFILE)
    insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(TERMINAL_LOGO))
    d := TerminalDialog()
-   if *a = 0 then
-      d.new_tab()
-   else {
-      every dir := !a do
-         d.new_tab(, dir)
-   }
-   d.set_focus(d.tabs.children[1].remembered_focus)
+   if *a = 0 | a[1][1] == ":" then
+      push(a, "")
+   d.do_tab_cmd(a) | stop(&why)
+   t := \d.tabs.which_one | d.tabs.children[1]
+   d.set_focus(t.remembered_focus)
    d.show_modal()
    if \opts["v"] then write("Exiting")
 end

@@ -162,7 +162,7 @@ class StockDialog(Dialog)
    private data_tick()
       repeat {
          if get_data() then
-            clear_msg()
+            msg()
          else
             msg(&why)
          do_change()
@@ -188,11 +188,7 @@ class StockDialog(Dialog)
    end
 
    private msg(s)
-      message_label.set_label(s)
-   end
-
-   private clear_msg()
-      msg("")
+      message_label.set(s)
    end
 
    private on_close_button(ev)
