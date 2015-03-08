@@ -1600,7 +1600,12 @@ int setcanvas(wbp w, char *s)
                 wmhints.initial_state = NormalState;
                 XSetWMHints(wd->display, ws->win, &wmhints);
             }
-            XMapWindow(wd->display, ws->win);
+            /*
+             * Use XMapRaised to try to give more consistent results
+             * (kwin will restore an iconified window to its previous
+             * position in the stack, whilst fvwm puts it to the top)
+             */
+            XMapRaised(wd->display, ws->win);
             synch_net_wm_state(ws, e->i);
             break;
         }
