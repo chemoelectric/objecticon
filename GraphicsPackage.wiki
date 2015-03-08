@@ -72,7 +72,7 @@ Most of the attributes have corresponding `get` methods.
 == Fonts ==
 Fonts follow the same format as in Icon, with some minor enhancements.  The environment variable `OIFONT` specifies the default font to use in a window, and `OIFONTSIZE` specifies the default fontsize; if not given the default font size is 12.  Font sizes need not be integers.  Font sizes can also be specified as relative to the default font size, byprefixing with a `+` or a `-`.  So for example, if `OIFONTSIZE` was set to "11.5", then "sans" would be the same as "sans,11.5", and "sans,+2" would be the same as "sans,13.5".  A static method in the `Window` class, `get_default_font_size()`, returns the default font size.
 
-On X11, Xft, Fontconfig and Freetype are used for fonts.  With fontconfig, further customization can be achieved by editing the `~/.fonts.conf` file and defining patterns for the following family names :-
+On X11, Xft, Fontconfig and Freetype are used for fonts.  With fontconfig, further customization can be achieved by editing the user configuration file, found in `~/.config/fontconfig/fonts.conf`, and defining patterns for the following family names :-
 
 || *Icon font family* || *Xft family name* || *Default value* ||
 || fixed || Object Icon fixed || mono ||
@@ -213,9 +213,9 @@ http://objecticon.googlecode.com/svn/wiki/maskresult.png
 == Filters ==
 The `filter` method is used to efficiently transform a rectangular area of pixels, according to one of several pre-defined filters.  The available filters are as follows :-
 
- * *linear*.  The linear filter accepts 3 float parameters followed by 3 optional integer parameters (which default to zero).  Each pair provides a linear transformation to apply to the red, green and blue values of each pixel.  For example
+ * *linear*.  The linear filter accepts 4 float parameters followed by 4 optional integer parameters (which default to zero).  Each pair provides a linear transformation to apply to the red, green, blue and alpha values of each pixel.  For example
 {{{
-W.filter("linear,0.6,0.75,1.0")
+W.filter("linear,0.6,0.75,1.0,1.0")
 }}}
  * *shade*.  This filter accepts three integer parameters.  It is a rather specialised filter, used to "grey-out" gui components.  The first parameter specifies a range of grey bands.  The grey band of the background is calculated.  Then each pixel's grey band value is calculated.  If it differs from the background's band value, then a new grey pixel is calculated by multipling the existing pixel's grey band value by the second parameter, and adding the third parameter.  The default filter used by the "gui" package is :-
 {{{

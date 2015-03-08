@@ -46,14 +46,6 @@ Finally, both the translator and the runtime must be re-compiled.  The easiest w
 make clean all
 }}}
 
-If you have previously installed the distribution, you then need to go to the top-level directory and run
-
-{{{
-make install
-}}}
-
-again.
-
 == Native methods resolved at runtime ==
 This involves writing a dynamic library (a ".so" file) of RTL/C code.  The contents are loaded and the functions in the library are matched to the corresponding native methods by the `Class.load_library` method.  This is explained in more detail [DynamicLoadC here].
 

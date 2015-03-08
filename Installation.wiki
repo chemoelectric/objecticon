@@ -4,18 +4,51 @@
 
  * GNU make
  * autoconf (at least version 2.61), if you build direct from the subversion source
+ * gcc, or clang
+ 
+Please note that Object Icon runs from the directory you compile it in (there is no `make install` step), so please bear that in mind when choosing where you extract the tar file, or checkout the subversion repository from.
 
+== Debian packages ==
+If you are using a debian-based system, the following may be helpful.
 
-== Installing from the subversion source repository ==
+If compiling from the subversion source, rather than the tar file, you need the `autoconf` package.
+
+To compile a text-only basic system, you need
+{{{
+        gcc or clang
+        make
+}}}
+
+To compile a graphics system, you also need
+{{{
+        pkg-config
+        libx11-dev
+        libxrender-dev
+        libxft-dev
+        libjpeg-dev
+}}}
+
+For a graphics system, the package `oxygen-icon-theme` is also recommended in order to provide some standard icons.
+
+Finally, to compile the optional dynamically loaded libraries (cairo, ssl and mysql), you need
+{{{
+        librsvg2-dev
+        libcairo2-dev
+        libpango1.0-dev
+        libssl-dev
+        libmysqlclient-dev
+}}}
+
+== Compiling from the subversion source repository ==
 Use the following command to checkout a read-only copy of the source code :-
 
-{{{svn co http://objecticon.googlecode.com/svn/trunk/ objecticon}}}
+{{{svn co http://objecticon.googlecode.com/svn/trunk objecticon}}}
 
 This will create a directory `objecticon` under the present directory (you can change the last parameter to create a different directory name if you want).
 
 Then `cd` into that directory and run the command `autoconf`.  This will create a `configure` script.
 
-Then proceed just the same as if you had downloaded the .tar.gz file.
+Then proceed just the same as if you had downloaded the .tar.gz file, as explained below.
 
 If you later wish to update your copy of the repository, `cd` into the directory and run the following :-
 
@@ -24,14 +57,14 @@ If you later wish to update your copy of the repository, `cd` into the directory
 {{{make clean}}}
 
 Then run `autoconf` again, and then `configure`, and then proceed as before.
-== Installing from a tar.gz file ==
+== Compiling from a tar.gz file ==
 
 Extract the source code from the .tar.gz file with a command like
 
 {{{tar xfz objecticon-1.0.tar.gz}}}
 
 This will create a directory `objecticon-1.0` under the current directory.  Obviously the
-version number may be different.
+version number may be different.  You can rename this directory if you like.
 
 Change to the new directory and run 
 
@@ -41,11 +74,16 @@ This command accepts various options - run
 
 {{{./configure --help}}}
 
-to see them.  The `configure` script prints a summary of features when it finishes. For example.
+to see them.
+
+If you are using the `clang` C compiler, specify this with :-
+
+{{{CC=clang ./configure}}}
+
+The `configure` script prints a summary of features when it finishes. For example.
 
 {{{
 Summary:-
-Installation prefix    : /usr/local
 X11 graphics           : yes
 jpeg library           : yes
 png library            : yes
@@ -58,7 +96,6 @@ ssl lib                : yes
 
 The meaning of these various options is as follows.
 
- * *Install prefix* - The root of the place to install to.  By default `/usr/local`, but can be changed with the `configure` option `--prefix`.  Note that you can also choose to run Object Icon from the same directory it was built in.
  * *X11 graphics* - Determines whether the Icon graphics facilities are built. The following two options only apply if this is 'yes'.
  * *jpeg library* -Allows loading of jpeg images.
  * *png library* -Allows loading of png images.
@@ -69,12 +106,14 @@ The meaning of these various options is as follows.
  * *ssl lib* -Allows a dynamic library to be built which provides an interface to the openssl library (see the class `io.SsslStream`).
 
 If you later wish to run `configure` again, please remember to run `make clean` afterwards in order to remove any object files built under the previous configuration.
+
 == Compilation ==
 After running `configure` successfully, just run the command
 {{{
 make
 }}}
 to build everything.  Note that GNU make is required.
+
 == Testing ==
 After `make` has completed successfully, you can optionally run some tests, as follows :-
 {{{
@@ -86,30 +125,24 @@ cd test
 diff io.out io.std
 }}}
 to see the problem.
+
 == Installing ==
-You can optionally install to the directory specified with the `configure --prefix` option (by default `/usr/local`).   This is optional, because it is quite possible to run Object Icon from the same directory it was compiled in (see below).
-
-If you do wish to install to the `--prefix` directory, then run the command
-{{{
-make install
-}}}
-After completion, `make install` prints the locations of some useful files which can be used to setup environment variables, define symbols in Makefiles, and peform an uninstall.  Please keep a note of these files' locations.
-
-You might also wish to install a local copy of the auto-generated library documentation.  It is not installed by default because it is rather large (about 25MB).  If you want this to be installed, run
-{{{
-make install-libref
-}}}
-This command will take a couple of minutes to run.
+There is no installation stage; rather Object Icon runs from the directory it was compiled in.  
 
 == Environment variables ==
-Object Icon requires some environment variables to be setup correctly.  To make doing this a bit easier, a file named `paths.sh` is provided which contains appropriate definitions.  Its location is printed by `make install`, or if you are running from the source distribution, it is in the distribution top-level directory.
+Object Icon requires some environment variables to be setup correctly.  To make doing this a bit easier, a file named `paths.sh` is created by `configure`, which contains appropriate definitions.
 
 Include this file by adding a line like this to your `.bashrc` file (or equivalent); obviously the actual path will vary, and note the dot at the beginning of the line.
 {{{
-. /usr/local/lib/objecticon-2.xx/paths.sh
+. /opt/objecticon-2.xx/paths.sh
 }}}
 
 If you are using bash, you can also use the `source` command instead of the dot syntax; but don't try to run `paths.sh` directly, since its contents must be loaded into the current shell environment.
 
-== Uninstallation ==
-There is an uninstallation script named `uninstall.sh`.  Its location is also printed by `make install`.  Running it will remove all of the files installed by `make install`.  Some empty directories may remain however.
+== Libref documentation ==
+You might also create a local copy of the auto-generated library documentation.  It is not done by default because it is rather large (about 25MB).  If you want this, run
+{{{
+make libref
+}}}
+This command will take a couple of minutes to run.  A directory `libref` is created, and contains the top-level file of the documentation, `index.html`.
+
