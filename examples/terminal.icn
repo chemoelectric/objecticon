@@ -906,19 +906,23 @@ class Terminal(TabItem, VtUI)
       every put(env, System.environ())
       put(env, "TERMLINKS=1")
       put(env, "TERM=xterm")
-      s := \opts["x"] | Files.get_home() || "/termlinks-extras"
-      fp := FilePath(s).child("bin").canonical()
-      xd := fp.str()
       sh := System.getpw(System.getuid()).shell | "/bin/sh"
-      if Files.access(xd) then {
-         put(env, "PATH=" || xd || ":" || System.getenv("PATH"))
-         sh2 := fp.child("bash").str()
-         if Files.access(sh2) then
-            sh := sh2
-         else
-            info_msg("Unable to access extras bash shell '" || sh2 || "'")
-      } else
-         info_msg("Unable to access extras bin directory '" || xd || "'")
+      if /opts["nx"] then {
+         s := \opts["x"] | Files.get_home() || "/termlinks-extras/bin"
+         fp := FilePath(s).canonical()
+         xd := fp.str()
+         if Files.access(xd) then {
+            put(env, "PATH=" || xd || ":" || System.getenv("PATH"))
+            if sh == "/bin/sh" | find("bash", sh) then {
+               sh2 := fp.child("bash").str()
+               if Files.access(sh2) then
+                  sh := sh2
+               else
+                  info_msg("Unable to access extras bash shell '" || sh2 || "'")
+            }
+         } else
+            info_msg("Unable to access extras bin directory '" || xd || "'")
+      }
       tty := PttyStream() | fail
       (tty.flag(FileOpt.NONBLOCK) &
        pid := System.fork()) | {
@@ -1116,12 +1120,9 @@ class Terminal(TabItem, VtUI)
             return ImmediateRunner(s)
          }
          "launch" : {
-            url.get_path() ? {
-               s := tab(upto(';') | 0)
-               s := ucs(URL.percent_decode(s)) | return info_msg(u"URL decoded path not utf8")
-               if move(1) then
-                  cd := ucs(URL.percent_decode(tab(0))) | return info_msg(u"CD decoded path not utf8")
-            }
+            s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
+            if cd := member(url.extract_cgi_parameters(), "wd")[1] then
+               cd := ucs(cd) | return info_msg(u"CD decoded path not utf8")
             return LaunchRunner(s, cd)
          }
          default : {
@@ -2134,7 +2135,7 @@ end
 
 procedure main(a)
    local d, t
-   opts := options(a, "-x: -v! -h+ -hs! -tfg: -tbg: -trevfg: -trevbg: -tfont:")
+   opts := options(a, "-x: -nx! -v! -h+ -hs! -tfg: -tbg: -trevfg: -trevbg: -tfont:")
    ImageCache.
       name_image("rpp.EXIT_24", EXIT).
       name_image("rpp.SAVE_24", SAVE).
