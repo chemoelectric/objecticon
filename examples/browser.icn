@@ -430,16 +430,16 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       self.set_resize(&yes)
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
-         set_paint_mid(TextPaint("New Tab"))
+         set_label("New Tab")
       clone_tab_item := TextMenuItem().
          connect(on_clone_tab, Event.ACTION).
-         set_paint_mid(TextPaint("Clone Tab"))
+         set_label("Clone Tab")
       xdg_refresh_item := TextMenuItem().
          connect(on_xdg_refresh, Event.ACTION).
-         set_paint_mid(TextPaint("Refresh XDG"))
+         set_label("Refresh XDG")
       quit_menu_item := TextMenuItem().
          connect(on_quit, Event.ACTION).
-         set_paint_mid(TextPaint("Quit"))
+         set_label("Quit")
       file_menu := Menu().
          set_accel("f").
          set_label("File").
