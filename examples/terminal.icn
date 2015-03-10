@@ -1535,14 +1535,26 @@ class Terminal(TabItem, VtUI)
          sort_cwd_list(get_pats())
    end
 
+   private update_filter_list()
+      local e, l, ex
+      ex := table(0)
+      every e := !cwd_list do
+         ex[Files.get_extension(e.name)] +:= 1
+      l := [u"*"]
+      every e := back(sort(ex, 2)) do
+         put(l, u"*." || e[1])
+      filter.set_selection_only().synch_set_selection_list(l)
+   end
+
    private refresh_cwd()
       load_cwd_list()
       annotate_cwd_list()
       resort_cwd(&yes)
+      update_filter_list()
    end
 
    private set_cwd(s, nav)
-      local ex, e, lh, t, l, i
+      local lh, t, i
       s := ucs(s) | fail
       if \cwd then {
          lh := columns.data[columns.get_cursor()].name
@@ -1556,13 +1568,8 @@ class Terminal(TabItem, VtUI)
       annotate_cwd_list()
       sort_cwd_list()
       synch_favourites_list()
-      ex := table(0)
-      every e := !columns.data do
-         ex[Files.get_extension(e.name)] +:= 1
-      l := [u"*"]
-      every e := back(sort(ex, 2)) do
-         put(l, u"*." || e[1])
-      filter.set_selection_list(l).set_selection(1)
+      update_filter_list()
+      filter.set_selection(1)
 
       if is_live() then {
          if t := member(columns_pos_table, FilePath(cwd).canonical().str()) then {
