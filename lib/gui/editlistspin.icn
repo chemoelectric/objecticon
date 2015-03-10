@@ -59,6 +59,20 @@ class EditListSpin(SelectionSpin)
       return self
    end
 
+   # Set the list selection items to the list x, but then synchronize
+   # the selection in the list with the view, rather than the other
+   # way around (as `set_selection_list` does).
+   #
+   # @param  The list of items
+   #
+   public synch_set_selection_list(x)
+      self.selection_list := x
+      /self.selection := 1
+      constrain_selection()
+      synch_selection()
+      return self
+   end
+
    public synch_selection()
       local s, i
       s := view.get_contents()
