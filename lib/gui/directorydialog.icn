@@ -361,7 +361,7 @@ $endif
       d := FavouriteDirectoriesDialog()
       d.show_modal(self)
       \d.okay | fail
-      dir.synch_selection_list(get_favourites_directories())
+      dir.set_selection_only().synch_set_selection_list(get_favourites_directories())
    end
 
    private setup()
