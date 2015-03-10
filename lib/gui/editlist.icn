@@ -8,8 +8,6 @@
 
 package gui
 
-import graphics
-
 #
 # This component functions in the same way as List above, but
 # the item selected may be edited by the user.  An extra
@@ -21,13 +19,9 @@ import graphics
 # text.
 #
 class EditList(SelectionDropDown)
-   public static const
-      # A set of event codes which indicate edits via navigation of the selection list.
-      NAVIGATE
-
-   private static init()
-      NAVIGATE := set("\r", Mouse.LEFT_RELEASE, Mouse.WHEEL_UP, Mouse.WHEEL_DOWN, Key.UP, Key.DOWN)
-   end
+   public
+      # The last event which changed the view via a change in selection (as opposed to editing).
+      applied_event
 
    #
    # Set the text field's filter (see {TextField} for details).
@@ -82,13 +76,17 @@ class EditList(SelectionDropDown)
       }
    end
 
+   public was_applied(ev)
+      return ev === applied_event
+   end
+
    public apply_selection(ev)
       local s 
       s := convert_element(object_get_selection()) | ""
       if /ev then
          self.view.set_contents(s)
       else
-         self.view.assign_contents(s, ev, &yes)
+         self.view.assign_contents(s, applied_event := ev, &yes)
    end
 
    public on_textfield(ev, src, type)

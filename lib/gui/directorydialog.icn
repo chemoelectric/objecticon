@@ -148,12 +148,17 @@ class DirectoryDialog(Dialog)
       check_existing()
    end
 
-   public on_dir(ev)
-      if member(EditList.NAVIGATE, ev.code) then
+   public on_dir_action(ev)
+      goto_dir(dir.get_contents())
+   end
+
+   public on_dir_content_changed(ev)
+      if dir.was_applied(ev) then
          goto_dir(dir.get_contents())
       else
          check_existing()
    end
+
 
    #
    # Get the result, (will fail if cancel was pressed).
@@ -420,8 +425,8 @@ $endif
          set_toggles(&no).
          set_paint(paint_3)
       layout_6 := GridLayout().
-         set_doi(0).
-         set_dii(2).
+         set_doi(scale(0)).
+         set_dii(scale(2)).
          set_extra("cells")
       panel_4 := Panel().
          clear_constraints().
@@ -455,8 +460,8 @@ $endif
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_tooltip(paint_35).
-         connect(self.on_dir, Event.ACTION).
-         connect(self.on_dir, Event.CONTENT_CHANGED).
+         connect(self.on_dir_action, Event.ACTION).
+         connect(self.on_dir_content_changed, Event.CONTENT_CHANGED).
          set_selection_list([""])
       self.add(dir)
       paint_9 := TextPaint("Okay")
@@ -484,7 +489,7 @@ $endif
          set_constraint("x_weight", 1.0).
          set_paint(paint_11)
       layout_4 := GridLayout().
-         set_doi(0).
+         set_doi(scale(0)).
          set_extra("cells")
       panel_3 := Panel().
          clear_constraints().

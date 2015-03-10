@@ -1538,8 +1538,11 @@ class Terminal(TabItem, VtUI)
    private update_filter_list()
       local e, l, ex
       ex := table(0)
-      every e := !cwd_list do
-         ex[Files.get_extension(e.name)] +:= 1
+      every e := !cwd_list do {
+         (e.stat.mode_str[1] == "d") |
+            Files.is_hidden(e.name) |
+            (ex[Files.get_extension(e.name)] +:= 1)
+      }
       l := [u"*"]
       every e := back(sort(ex, 2)) do
          put(l, u"*." || e[1])
@@ -1786,11 +1789,14 @@ class Terminal(TabItem, VtUI)
       }
    end
 
-   private on_filter(ev)
-      if member(EditList.NAVIGATE, ev.code) then {
-         resort_cwd(&yes)
-         parent_dialog.set_focus(best_focus)
-      }
+   private on_filter_action(ev)
+      resort_cwd(&yes)
+      parent_dialog.set_focus(best_focus)
+   end
+
+   private on_filter_content_changed(ev)
+      if filter.was_applied(ev) then
+         on_filter_action()
    end
 
    private on_prev_button(ev)
@@ -2002,8 +2008,8 @@ class Terminal(TabItem, VtUI)
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
          set_tooltip(paint_23).
-         connect(self.on_filter, Event.ACTION).
-         connect(self.on_filter, Event.CONTENT_CHANGED).
+         connect(self.on_filter_action, Event.ACTION).
+         connect(self.on_filter_content_changed, Event.CONTENT_CHANGED).
          set_selection_list([""])
       paint_28 := ImagePaint().
          set_cache("gui.FONT_24")
