@@ -382,6 +382,12 @@ $endif
    public static native access(s, mode)
 
    #
+   # Get the mtime of the given file in nanoseconds, with the highest
+   # precision available.
+   #
+   public static native get_ns_mtime(s)
+
+   #
    # Copy a file.
    # @param s1 the source filename
    # @param s2 the target filename

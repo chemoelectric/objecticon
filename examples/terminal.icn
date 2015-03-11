@@ -987,10 +987,10 @@ class Terminal(TabItem, VtUI)
    end
 
    private check_cwd()
-      local st
+      local t
       repeat {
-         if st := Files.stat(cwd) then {
-            if st.mtime ~= cwd_mtime then
+         if t := Files.get_ns_mtime(cwd) then {
+            if t ~= cwd_mtime then
                refresh_cwd()
          }
          check_cwd_task.sleep(500)
@@ -1449,7 +1449,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private load_cwd_list()
-      cwd_mtime := Files.stat(cwd).mtime | 0
+      cwd_mtime := Files.get_ns_mtime(cwd) | 0
       (cwd_list := Files.ucs_list(cwd, AnnotatedListEntryWithIcon)) | {
          info_msg("Failed to read cwd: " || &why)
          cwd_list := []

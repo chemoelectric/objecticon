@@ -345,12 +345,32 @@ AC_DEFUN([CHECK_COMPUTED_GOTO],
         [
           AC_MSG_RESULT(yes)
           AC_DEFINE(HAVE_COMPUTED_GOTO)
-                   ],
-                   [
-                   AC_MSG_RESULT(no)
-                   ])
+        ],
+        [
+          AC_MSG_RESULT(no)
+        ])
 ])
 
+
+AC_DEFUN([CHECK_NS_FILE_STAT],
+   [ AC_MSG_CHECKING(for nanosecond file stat support)
+     AC_COMPILE_IFELSE(
+         [AC_LANG_PROGRAM([[
+               #include <sys/types.h>
+               #include <sys/stat.h>
+               #include <unistd.h>
+            ]], [[
+               struct stat st;
+               st.st_mtim.tv_nsec = 0;
+             ]])], 
+        [
+          AC_MSG_RESULT(yes)
+          AC_DEFINE(HAVE_NS_FILE_STAT)
+        ],
+        [
+          AC_MSG_RESULT(no)
+        ])
+])
 
 
 
