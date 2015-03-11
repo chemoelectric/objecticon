@@ -2912,10 +2912,9 @@ static void stat2list(struct Dir *st, dptr result)
    struct passwd *pw;
    struct group *gr;
 
-   create_list(17, result);
+   create_list(14, result);
    convert_from_uint(st->dev, &tmp);
    list_put(result, &tmp);
-   list_put(result, &zerodesc);
 
    convert_from_ulong(st->mode, &tmp);
    list_put(result, &tmp);
@@ -2939,8 +2938,6 @@ static void stat2list(struct Dir *st, dptr result)
    convert_from_uint(st->type, &tmp);      /* server type */
    list_put(result, &tmp);
 
-   list_put(result, &onedesc);  /* nlinks = 1 */
-
    cstr2string(st->uid, &tmp);
    list_put(result, &tmp);
 
@@ -2950,12 +2947,8 @@ static void stat2list(struct Dir *st, dptr result)
    cstr2string(st->muid, &tmp);
    list_put(result, &tmp);
 
-   list_put(result, &zerodesc);  /* dev no */
    convert_from_vlong(st->length, &tmp);
    list_put(result, &tmp);
-
-   list_put(result, &zerodesc);  /* blocksize */
-   list_put(result, &zerodesc);  /* block count */
 
    cstr2string(st->name, &tmp);   /* name */
    list_put(result, &tmp);
@@ -2963,7 +2956,6 @@ static void stat2list(struct Dir *st, dptr result)
    convert_from_ulong(st->atime, &tmp);
    list_put(result, &tmp);
    convert_from_ulong(st->mtime, &tmp);
-   list_put(result, &tmp);
    list_put(result, &tmp);
 
    convert_from_uvlong(st->qid.path, &tmp);
@@ -3062,6 +3054,18 @@ static void stat2list(struct stat *st, dptr result)
    list_put(result, &tmp);
    convert_from_time_t(st->st_ctime, &tmp);
    list_put(result, &tmp);
+#if HAVE_NS_FILE_STAT
+   MakeInt(st->st_atim.tv_nsec, &tmp);
+   list_put(result, &tmp);
+   MakeInt(st->st_mtim.tv_nsec, &tmp);
+   list_put(result, &tmp);
+   MakeInt(st->st_ctim.tv_nsec, &tmp);
+   list_put(result, &tmp);
+#else
+   list_put(result, &zerodesc);
+   list_put(result, &zerodesc);
+   list_put(result, &zerodesc);
+#endif
 }
 #endif /* PLAN9 */
 
@@ -3240,45 +3244,6 @@ function io_Files_wstat(s, mode, uid, gid, atime, mtime)
    }
 end
 #endif
-
-function io_Files_get_ns_mtime(s)
-   if !cnv:C_string(s) then
-      runerr(103,s)
-   body {
-#if HAVE_NS_FILE_STAT
-      struct descrip lm;
-      tended struct descrip ls, lt, result;
-      struct stat st;
-      if (stat(s, &st) < 0) {
-          errno2why();
-          fail;
-      }
-      convert_from_time_t(st.st_mtim.tv_sec, &ls);
-      MakeInt(st.st_mtim.tv_nsec, &lm);
-      bigmul(&ls, &billiondesc, &lt);
-      bigadd(&lt, &lm, &result);
-#else
-      tended struct descrip ls, result;
-#if PLAN9
-      struct Dir *st;
-      if (!(st = dirstat(s))) {
-          errno2why();
-          fail;
-      }
-      convert_from_ulong(st->mtime, &ls);
-#else
-      struct stat st;
-      if (stat(s, &st) < 0) {
-          errno2why();
-          fail;
-      }
-      convert_from_time_t(st.st_mtim.tv_sec, &ls);
-#endif /* PLAN9 */
-      bigmul(&ls, &billiondesc, &result);
-#endif /* HAVE_NS_FILE_STAT */
-      return result;
-   }
-end
 
 function io_Files_access(s, mode)
    if !cnv:C_string(s) then
