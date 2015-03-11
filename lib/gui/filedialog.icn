@@ -354,12 +354,17 @@ class FileDialog(Dialog)
       check_existing()
    end
 
-   public on_dir(ev)
-      msg()
-      if member(EditList.NAVIGATE, ev.code) then
+   public on_dir_action(ev)
+      goto_dir(dir.get_contents())
+   end
+
+   public on_dir_content_changed(ev)
+      if dir.was_applied(ev) then
          goto_dir(dir.get_contents())
-      else
+      else {
+         msg()
          check_existing()
+      }
    end
 
    public on_filter(ev)
@@ -430,7 +435,7 @@ class FileDialog(Dialog)
       d := FavouriteDirectoriesDialog()
       d.show_modal(self)
       \d.okay | fail
-      dir.synch_set_selection_list(get_favourites_directories())
+      dir.set_selection_only().synch_set_selection_list(get_favourites_directories())
    end
 
    public get_pats()
@@ -761,12 +766,12 @@ class FileDialog(Dialog)
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_tooltip(paint_36).
-         connect(self.on_dir, Event.ACTION).
-         connect(self.on_dir, Event.CONTENT_CHANGED).
+         connect(self.on_dir_action, Event.ACTION).
+         connect(self.on_dir_content_changed, Event.CONTENT_CHANGED).
          set_selection_list([""])
       layout_6 := GridLayout().
-         set_doi(0).
-         set_dii(2).
+         set_doi(scale(0)).
+         set_dii(scale(2)).
          set_extra("cells")
       panel_4 := Panel().
          clear_constraints().
@@ -787,7 +792,7 @@ class FileDialog(Dialog)
       dlist := ItemPaintList().
          set_size(scale(210), scale(200)).
          clear_constraints().
-         set_constraint("r_inset", 0).
+         set_constraint("r_inset", scale(0)).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_constraint("y_fill", &yes).
@@ -796,7 +801,7 @@ class FileDialog(Dialog)
          set_select_mode(Select.ONE).
          set_contents([])
       layout_8 := GridLayout().
-         set_doi(0).
+         set_doi(scale(0)).
          set_extra("cells")
       split_content_1 := Component().
          clear_constraints().
@@ -805,7 +810,7 @@ class FileDialog(Dialog)
       flist := ItemPaintList().
          set_size(scale(270), scale(200)).
          clear_constraints().
-         set_constraint("l_inset", 0).
+         set_constraint("l_inset", scale(0)).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_constraint("y_fill", &yes).
@@ -814,7 +819,7 @@ class FileDialog(Dialog)
          set_select_mode(Select.ONE).
          set_contents([])
       layout_9 := GridLayout().
-         set_doi(0).
+         set_doi(scale(0)).
          set_extra("cells")
       split_content_2 := Component().
          clear_constraints().
@@ -843,7 +848,7 @@ class FileDialog(Dialog)
          connect(self.on_filter, Event.CONTENT_CHANGED).
          set_selection_list([""])
       layout_10 := GridLayout().
-         set_doi(0).
+         set_doi(scale(0)).
          set_extra("cells")
       paint_37 := TextPaint("File")
       file := EditList().
@@ -861,7 +866,7 @@ class FileDialog(Dialog)
          set_layout(layout_10).
          add(file)
       layout_11 := GridLayout().
-         set_doi(0).
+         set_doi(scale(0)).
          set_extra("cells")
       paint_48 := TextPaint("Label")
       file_label := Label().
@@ -884,7 +889,7 @@ class FileDialog(Dialog)
          add(multiple_files_overlay_item).
          set_which_one(single_file_overlay_item)
       layout_3 := GridLayout().
-         set_doi(0).
+         set_doi(scale(0)).
          set_extra("cells")
       panel_2 := Panel().
          clear_constraints().
@@ -920,7 +925,7 @@ class FileDialog(Dialog)
          set_constraint("x_weight", 1.0).
          set_paint(paint_11)
       layout_4 := GridLayout().
-         set_doi(0).
+         set_doi(scale(0)).
          set_extra("cells")
       panel_3 := Panel().
          clear_constraints().

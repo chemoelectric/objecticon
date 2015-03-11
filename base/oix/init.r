@@ -103,6 +103,7 @@ struct descrip zerodesc;              	/* integer 0 */
 struct descrip minusonedesc;           	/* integer -1 */
 struct descrip thousanddesc;	        /* 1000 */
 struct descrip milliondesc;	        /* 1000000 */
+struct descrip billiondesc;	        /* 10^9 */
 
 struct b_cset *emptycs;   /* '' */
 struct b_cset *blankcs;   /* ' ' */
@@ -1220,6 +1221,7 @@ int main(int argc, char **argv)
     MakeInt(0, &zerodesc);
     MakeInt(1, &onedesc);
     MakeInt(-1, &minusonedesc);
+    MakeInt(1000000000, &billiondesc);
     MakeInt(1000000, &milliondesc);
     MakeInt(1000, &thousanddesc);
 

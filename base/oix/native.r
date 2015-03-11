@@ -3241,6 +3241,45 @@ function io_Files_wstat(s, mode, uid, gid, atime, mtime)
 end
 #endif
 
+function io_Files_get_ns_mtime(s)
+   if !cnv:C_string(s) then
+      runerr(103,s)
+   body {
+#if HAVE_NS_FILE_STAT
+      struct descrip lm;
+      tended struct descrip ls, lt, result;
+      struct stat st;
+      if (stat(s, &st) < 0) {
+          errno2why();
+          fail;
+      }
+      convert_from_time_t(st.st_mtim.tv_sec, &ls);
+      MakeInt(st.st_mtim.tv_nsec, &lm);
+      bigmul(&ls, &billiondesc, &lt);
+      bigadd(&lt, &lm, &result);
+#else
+      tended struct descrip ls, result;
+#if PLAN9
+      struct Dir *st;
+      if (!(st = dirstat(s))) {
+          errno2why();
+          fail;
+      }
+      convert_from_ulong(st->mtime, &ls);
+#else
+      struct stat st;
+      if (stat(s, &st) < 0) {
+          errno2why();
+          fail;
+      }
+      convert_from_time_t(st.st_mtim.tv_sec, &ls);
+#endif /* PLAN9 */
+      bigmul(&ls, &billiondesc, &result);
+#endif /* HAVE_NS_FILE_STAT */
+      return result;
+   }
+end
+
 function io_Files_access(s, mode)
    if !cnv:C_string(s) then
       runerr(103,s)

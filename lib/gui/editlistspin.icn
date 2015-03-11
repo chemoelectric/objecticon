@@ -12,13 +12,21 @@ package gui
 # Selection from a list with edit
 #
 class EditListSpin(SelectionSpin)
+   public
+      # The last event which changed the view via a change in selection (as opposed to editing).
+      applied_event
+
+   public was_applied(ev)
+      return ev === applied_event
+   end
+
    public apply_selection(ev)
       local s 
       s := convert_element(object_get_selection()) | ""
       if /ev then
          self.view.set_contents(s)
       else
-         self.view.assign_contents(s, ev, &yes)
+         self.view.assign_contents(s, applied_event := ev, &yes)
    end
 
    public on_textfield(ev, src, type)
@@ -55,6 +63,20 @@ class EditListSpin(SelectionSpin)
    #
    public set_contents(x)
       self.view.set_contents(x)
+      synch_selection()
+      return self
+   end
+
+   # Set the list selection items to the list x, but then synchronize
+   # the selection in the list with the view, rather than the other
+   # way around (as `set_selection_list` does).
+   #
+   # @param  The list of items
+   #
+   public synch_set_selection_list(x)
+      self.selection_list := x
+      /self.selection := 1
+      constrain_selection()
       synch_selection()
       return self
    end

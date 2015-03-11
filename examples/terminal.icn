@@ -207,19 +207,19 @@ class TerminalDialog(Dialog)
       self.set_resize(&yes)
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
-         set_paint_mid(TextPaint("New Tab"))
+         set_label("New Tab")
       clone_tab_item := TextMenuItem().
          connect(on_clone_tab, Event.ACTION).
-         set_paint_mid(TextPaint("Clone Tab"))
+         set_label("Clone Tab")
       favourite_dirs_item := TextMenuItem().
          connect(on_favourite_dirs, Event.ACTION).
-         set_paint_mid(TextPaint("Favourite dirs..."))
+         set_label("Favourite dirs...")
       xdg_refresh_item := TextMenuItem().
          connect(on_xdg_refresh, Event.ACTION).
-         set_paint_mid(TextPaint("Refresh XDG"))
+         set_label("Refresh XDG")
       quit_menu_item := TextMenuItem().
          connect(on_quit, Event.ACTION).
-         set_paint_mid(TextPaint("Quit"))
+         set_label("Quit")
       file_menu := Menu().
          set_label("File").
          add(new_tab_item).
@@ -906,19 +906,23 @@ class Terminal(TabItem, VtUI)
       every put(env, System.environ())
       put(env, "TERMLINKS=1")
       put(env, "TERM=xterm")
-      s := \opts["x"] | Files.get_home() || "/termlinks-extras"
-      fp := FilePath(s).child("bin").canonical()
-      xd := fp.str()
       sh := System.getpw(System.getuid()).shell | "/bin/sh"
-      if Files.access(xd) then {
-         put(env, "PATH=" || xd || ":" || System.getenv("PATH"))
-         sh2 := fp.child("bash").str()
-         if Files.access(sh2) then
-            sh := sh2
-         else
-            info_msg("Unable to access extras bash shell '" || sh2 || "'")
-      } else
-         info_msg("Unable to access extras bin directory '" || xd || "'")
+      if /opts["nx"] then {
+         s := \opts["x"] | Files.get_home() || "/termlinks-extras/bin"
+         fp := FilePath(s).canonical()
+         xd := fp.str()
+         if Files.access(xd) then {
+            put(env, "PATH=" || xd || ":" || System.getenv("PATH"))
+            if sh == "/bin/sh" | find("bash", sh) then {
+               sh2 := fp.child("bash").str()
+               if Files.access(sh2) then
+                  sh := sh2
+               else
+                  info_msg("Unable to access extras bash shell '" || sh2 || "'")
+            }
+         } else
+            info_msg("Unable to access extras bin directory '" || xd || "'")
+      }
       tty := PttyStream() | fail
       (tty.flag(FileOpt.NONBLOCK) &
        pid := System.fork()) | {
@@ -983,10 +987,10 @@ class Terminal(TabItem, VtUI)
    end
 
    private check_cwd()
-      local st
+      local t
       repeat {
-         if st := Files.stat(cwd) then {
-            if st.mtime ~= cwd_mtime then
+         if t := Files.get_ns_mtime(cwd) then {
+            if t ~= cwd_mtime then
                refresh_cwd()
          }
          check_cwd_task.sleep(500)
@@ -1116,12 +1120,9 @@ class Terminal(TabItem, VtUI)
             return ImmediateRunner(s)
          }
          "launch" : {
-            url.get_path() ? {
-               s := tab(upto(';') | 0)
-               s := ucs(URL.percent_decode(s)) | return info_msg(u"URL decoded path not utf8")
-               if move(1) then
-                  cd := ucs(URL.percent_decode(tab(0))) | return info_msg(u"CD decoded path not utf8")
-            }
+            s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
+            if cd := member(url.extract_cgi_parameters(), "wd")[1] then
+               cd := ucs(cd) | return info_msg(u"CD decoded path not utf8")
             return LaunchRunner(s, cd)
          }
          default : {
@@ -1448,7 +1449,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private load_cwd_list()
-      cwd_mtime := Files.stat(cwd).mtime | 0
+      cwd_mtime := Files.get_ns_mtime(cwd) | 0
       (cwd_list := Files.ucs_list(cwd, AnnotatedListEntryWithIcon)) | {
          info_msg("Failed to read cwd: " || &why)
          cwd_list := []
@@ -1473,8 +1474,9 @@ class Terminal(TabItem, VtUI)
       }
    end
 
-   private sort_cwd_list(pats)
-      local dirs, files, e, s
+   private sort_cwd_list()
+      local dirs, files, e, s, pats
+      pats := get_pats()
       dirs := []
       files := []
       every e := !cwd_list do {
@@ -1515,7 +1517,7 @@ class Terminal(TabItem, VtUI)
             if columns.get_cursor() === columns.get_held() then
                held := &yes
          }
-         sort_cwd_list(get_pats())
+         sort_cwd_list()
          # Search for the old ino in the new data.  If found, set the highlight and if the old
          # cursor was visible, ensure the new one is too.
          if \track_cursor & i := Positions{(!columns.data).stat.ino, \ino} then {
@@ -1531,17 +1533,32 @@ class Terminal(TabItem, VtUI)
          # Since the pointer may be over the files list, update the pointer.
          parent_dialog.resynch_pointer()
       } else
-         sort_cwd_list(get_pats())
+         sort_cwd_list()
+   end
+
+   private update_filter_list()
+      local e, l, ex
+      ex := table(0)
+      every e := !cwd_list do {
+         (e.stat.mode_str[1] == "d") |
+            Files.is_hidden(e.name) |
+            (ex[Files.get_extension(e.name)] +:= 1)
+      }
+      l := [u"*"]
+      every e := back(sort(ex, 2)) do
+         put(l, u"*." || e[1])
+      filter.set_selection_only().synch_set_selection_list(l)
    end
 
    private refresh_cwd()
       load_cwd_list()
       annotate_cwd_list()
       resort_cwd(&yes)
+      update_filter_list()
    end
 
    private set_cwd(s, nav)
-      local ex, e, lh, t, l, i
+      local lh, t, i
       s := ucs(s) | fail
       if \cwd then {
          lh := columns.data[columns.get_cursor()].name
@@ -1553,15 +1570,11 @@ class Terminal(TabItem, VtUI)
       trail.set_path(cwd)
       load_cwd_list()
       annotate_cwd_list()
+      # Reset filter to "*"
+      filter.set_selection(1)
       sort_cwd_list()
       synch_favourites_list()
-      ex := table(0)
-      every e := !columns.data do
-         ex[Files.get_extension(e.name)] +:= 1
-      l := [u"*"]
-      every e := back(sort(ex, 2)) do
-         put(l, u"*." || e[1])
-      filter.set_selection_list(l).set_selection(1)
+      update_filter_list()
 
       if is_live() then {
          if t := member(columns_pos_table, FilePath(cwd).canonical().str()) then {
@@ -1778,11 +1791,14 @@ class Terminal(TabItem, VtUI)
       }
    end
 
-   private on_filter(ev)
-      if member(EditList.NAVIGATE, ev.code) then {
-         resort_cwd(&yes)
-         parent_dialog.set_focus(best_focus)
-      }
+   private on_filter_action(ev)
+      resort_cwd(&yes)
+      parent_dialog.set_focus(best_focus)
+   end
+
+   private on_filter_content_changed(ev)
+      if filter.was_applied(ev) then
+         on_filter_action()
    end
 
    private on_prev_button(ev)
@@ -1994,8 +2010,8 @@ class Terminal(TabItem, VtUI)
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
          set_tooltip(paint_23).
-         connect(self.on_filter, Event.ACTION).
-         connect(self.on_filter, Event.CONTENT_CHANGED).
+         connect(self.on_filter_action, Event.ACTION).
+         connect(self.on_filter_content_changed, Event.CONTENT_CHANGED).
          set_selection_list([""])
       paint_28 := ImagePaint().
          set_cache("gui.FONT_24")
@@ -2134,7 +2150,7 @@ end
 
 procedure main(a)
    local d, t
-   opts := options(a, "-x: -v! -h+ -hs! -tfg: -tbg: -trevfg: -trevbg: -tfont:")
+   opts := options(a, "-x: -nx! -v! -h+ -hs! -tfg: -tbg: -trevfg: -trevbg: -tfont:")
    ImageCache.
       name_image("rpp.EXIT_24", EXIT).
       name_image("rpp.SAVE_24", SAVE).

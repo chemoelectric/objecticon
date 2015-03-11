@@ -84,6 +84,9 @@
 /* define as 1 if TIOCSCTTY is defined */
 #undef HAVE_TIOCSCTTY
 
+/* define as 1 if nanosecond file stat times are available */
+#undef HAVE_NS_FILE_STAT
+
 /* sizes of various fundamental types */
 #undef SIZEOF_SHORT
 #undef SIZEOF_INT
