@@ -382,12 +382,6 @@ $endif
    public static native access(s, mode)
 
    #
-   # Get the mtime of the given file in nanoseconds, with the highest
-   # precision available.
-   #
-   public static native get_ns_mtime(s)
-
-   #
    # Copy a file.
    # @param s1 the source filename
    # @param s2 the target filename
@@ -818,7 +812,10 @@ class Stat()
       blocks,
       atime,
       mtime,
-      ctime
+      ctime,
+      atime_ns,
+      mtime_ns,
+      ctime_ns
 
    package new(dev,
                ino,
@@ -833,7 +830,10 @@ class Stat()
                blocks,
                atime,
                mtime,
-               ctime)
+               ctime,
+               atime_ns,
+               mtime_ns,
+               ctime_ns)
       self.dev := dev
       self.ino := ino
       self.mode := mode
@@ -848,6 +848,9 @@ class Stat()
       self.atime := atime
       self.mtime := mtime
       self.ctime := ctime
+      self.atime_ns := atime_ns
+      self.mtime_ns := mtime_ns
+      self.ctime_ns := ctime_ns
       return
    end
 end
