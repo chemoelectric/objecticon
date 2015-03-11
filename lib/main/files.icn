@@ -73,7 +73,7 @@ $ifdef _PLAN9
    end
 
    private static list1(s, f, g)
-      local l, t, e, st
+      local l, t, st
       /f := ListEntry
       l := []
       st := stat(s) | fail
@@ -81,10 +81,8 @@ $ifdef _PLAN9
       st := stat(FilePath(s).child("..").str()) | fail
       put(l, f(g(".."), st, st))
       t := dir_read_impl(s) | fail
-      every e := !t do {
-         st := Stat!e
+      every st := Stat!!t do
          put(l, f(g(st.name), st, st))
-      }
       return l
    end
 
