@@ -1451,7 +1451,6 @@ class Terminal(TabItem, VtUI)
    private static get_ns_mtime(f)
       local st
       st := Files.stat(f) | fail
-write(to_string(st,3,1),st.mtime * 1000000000 + st.mtime_ns)
       return st.mtime * 1000000000 + st.mtime_ns
    end
 
