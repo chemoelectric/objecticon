@@ -1,7 +1,23 @@
 #summary terminal - an experimental terminal program
 
-= terminal =
+= Introduction =
 This page provides some notes about one of the programs in the `examples` directory, namely `terminal`.  It is an experimental replacement for terminal emulator programs like `xterm` and `konsole`.  It also has some features found in file manager programs like `dolphin` and `nautilus`.
+
+= Tabs =
+The program presents one or more tabs to the user, each of which is contains an independent shell process.  Each tab contains a split pane.  To the left (or top if so oriented), is a list of the contents of the shell process's current directory.  To the right (or bottom) is a fairly conventional terminal emulator, albeit one with some important extensions.
+
+http://objecticon.googlecode.com/svn/wiki/terminal-full.jpg
+
+= Clickable links =
+The most significant thing that the `terminal` program does differently to conventional terminal emulators like `xterm`, is the provision of clickable hyperlinks to files and other objects.  For example, look at the following image, showing the output of `ls`.
+
+http://objecticon.googlecode.com/svn/wiki/terminal-link.png
+
+As the mouse pointer moves over the filename output by `ls`, the mouse pointer changes and the link is highlighted.  Left-clicking on the link opens the system-registered application for viewing that particular file type; right-clicking brings up a context menu.
+
+This effect is achieved by a combination of two things.  Firstly, the terminal emulator understands special escape sequences which encapsulate file links in much the same way as a web browser understands HTML anchor tags.  Secondly, a small collection of programs, including `ls`, have been modified to produce these special escape sequences, and thus provide the desired links in the terminal emulator.  To continue the web analogy, if the terminal emulator is the browser, then these programs are the analogy of web servers, but instead of producing HTML containing anchor tags, they produce their normal textual output, but containing embedded link escape sequences.
+
+The modified programs include `ls`, `grep` and `find`.
 
 = Toolbar =
 The various items in the toolbar should be mostly self-explanatory.
@@ -14,7 +30,7 @@ Then comes buttons to go backward and forward in the history, and to display the
 
 Next is the "columns focus" button, which is a toggle button.  When set, it allows the list to take the keyboard focus.  The cursor keys can then be used to navigate, and the return key used to "open" the currently selected item (equivalent to left-clicking).
 
-The drop-down edit list is a filter, which restricts the files on view in the list.  The contents of the drop-down provides a convenient list of file extensions in the current directory.  The filter resets to "*" (display all) whenever the directory is changed.
+The drop-down edit list is a filter, which restricts the files on view in the list.  The contents of the drop-down provides a convenient list of file extensions in the current directory.  The filter resets to `*` (display all) whenever the directory is changed.
 
 The three buttons to the right of the filter drop-down are used to control the sort used in the list, which is by default alphabetic in descending order.  The small arrow in the corner of the button indicates which sort is in use, and whether it is ascending or descending.  Clicking on the button with the arrow toggles the order between ascending and descending, whilst clicking on one of the other buttons sets the sort to the corresponding button, leaving the order unchanged.
 
@@ -24,6 +40,26 @@ Finally, to the right of that comes the file trail.  This shows the current dire
 
 http://objecticon.googlecode.com/svn/wiki/terminal-trail.png
 
+== termlinks-extras ==
+This is a collection of common utility programs, modified to provide output containing escape sequences recognised by the terminal program.  For example, a version of `ls` is provided which turns each file output into a clickable link to a `file:` URL.
+
+To build the termlinks-extras programs, proceeds as follows.
+
+Firstly, download the `.tar.gz` file, from the following location :-
+
+[http://www.zenadsl6357.zen.co.uk/objecticon/termlinks-extras.tar.gz]
+
+It is best to extract this file in your home directory, since it will then be found automatically by the `terminal` program.  (If you extract it somewhere else, then you will need to provide the `-x` option to tell `terminal` where).
+
+In any case, extract it as follows :-
+{{{tar xfz termlinks-extras.tar.gz}}}
+
+This will create a `termlinks-extras` directory.  Cd into that directory, and run
+
+{{{./build.sh}}}
+
+A considerable amount of output will be produced, but if everything was successful, the message "Finished OK" will be printed.  In that case, a directory `bin` will have been created, containing the resulting executables.  The `build.sh` script doesn't actually install anything outside of its directory, and can simply be deleted if you no longer have any use for it.
+
 = Escape sequences =
 There are two special escape sequences recognised by the terminal, as follows.
 == The link escape sequence ==
@@ -31,7 +67,7 @@ This takes the form
 {{{
 \e[!"url"Lvisible-text\e[!L
 }}}
-where `\e` is the escape character (ascii 27), `url` is a URL, (with the normal percent encoding), and `visible-text` is the text which appears on the screen to represent the clickable URL.  In fact, the above actually represents two separate escape sequences; the second comes after the `visible-text`, in order to denote its endpoint.  If you're familiar with HTML, then you will see the similarity with an anchor tag.  The first escape sequence mirrors the opening `<A HREF=URL>` tag, the second is the counterpart of the closing `</A>` tag, and the text in between fulfils the same role as `visible-text`.
+where `\e` is the escape character (ascii 27), `url` is a URL, (with the normal percent encoding), and `visible-text` is the text which appears on the screen to represent the clickable URL.  In fact, the above actually represents two separate escape sequences; the second comes after the `visible-text`, in order to denote its endpoint.  If you're familiar with HTML, then you will see the similarity with an anchor tag.  The first escape sequence mirrors the opening `<A HREF=URL>` tag, and the second the closing `</A>` tag, whilst `visible-text` fulfils the same role as the content between the tags.
 
 Most URLs in these escape sequences will be `file` URLs, but as explained below, other types of URLs, including custom ones, are allowed too.  These can be particularly useful when they are placed in simple "favourites" files which, when printed to the terminal, provide a selection of clickable links to launch applications, open new tabs, and so on.
 
@@ -142,6 +178,10 @@ tab:/mnt/disk/films;:reorient;:sort-date;:sort-date;:select
 When clicked, this URL opens a new tab, changes its directory to `/mnt/disk/films`, toggles the orientation of the split, sets the sort to ascending date order, and selects the tab.
 == Other URL schemes ==
 All other URL schemes are handled by looking up the desktop entry matching the mime type `x-scheme-handler/[scheme]`.  The matching application is then launched in a forked process.
+
+= The TERMLINKS environment variable =
+
+
 = Command line options =
 `terminal` accepts the following command-line options :-
 
