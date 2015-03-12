@@ -1,0 +1,1981 @@
+$encoding UTF-8
+$load BUS_LOGO "rpp.BUS_LOGO.png"
+
+import gui, graphics, io, ipl.options, lang, util, 
+   ipl.graphics, ipl.sort, ipl.sets, ipl.strings, ipl.tables
+
+global opts
+
+record Loc(long, lat)
+record VisArc(off, a1, a2, arc, reversible, routes)
+
+record Path(cost, dist, hops, last_hop, prev_routes, curr_routes)
+
+class Route(SelectiveObjectCodec)
+   public number, stops, direction, colour, reverse
+
+   private get_template()
+      suspend "number" | "stops" | "reverse"
+   end
+
+   public new(number)
+      self.number := number
+      self.stops := []
+      return
+   end
+end
+
+class Stop(SelectiveObjectCodec)
+   public loc, code, arcs, ptrs, routes, name, letter, scale_times_long, scale_times_lat, px, py, deleted, label_weight, areas
+
+   private get_template()
+      suspend "loc" | "code" | "name" | "letter"
+   end
+
+   public new(loc, code, arcs, ptrs, routes, name, letter, areas)
+      self.loc := loc
+      self.code := code
+      self.arcs := arcs
+      self.ptrs := ptrs
+      self.routes := routes
+      self.name := name
+      self.letter := letter
+      self.areas := areas
+      return
+   end
+end
+
+class Arc()
+   public routes, src, dest, dist, sin, cos, pods
+
+   public new(routes, src, dest)
+      self.routes := routes
+      self.src := src
+      self.dest := dest
+      return
+   end
+end
+
+class MapSearchField(SuggestField)
+   private map
+
+   public create_popup()
+      return PTable().
+         add_column(PTableColumn()).
+         add_column(PTableColumn().set_weight(1).set_align(Align.R))
+   end
+
+   public convert_element(o)
+      return o[1] || " {" || o[2] || "}"
+   end
+
+   protected do_request()
+      return map.match_stops(contents)
+   end
+
+   public set_map(m)
+      map := m
+      return self
+   end
+end
+
+class Map(Panel)
+   public static const CENTRE_EASTING, CENTRE_NORTHING, SCALE, POD_SIZE,
+      SAME_NAME_STOP_TOL, STOP_STOP_TOL, STOP_ARC_TOL, ARC_WIDTHS, CHANGE_COST_M, NAME_TWEAKS
+
+   private I, origin, scale, drag_start, drag_off, routes, stops, vis_stops, stop_size, route_numbers, stop_codes, vis_arcs,
+      arc_width, stop_pod, scale_times_origin_long, scale_times_origin_lat, mw, mh, filter, mark, labels_flag, highlight,
+      arc_pod, animate_task, saved_filters, filter_name, data_dir
+
+   private static init()
+      # Arbitrary centre point
+      CENTRE_EASTING := 538920
+      CENTRE_NORTHING := 179792
+
+      SCALE := integer(100 / Gui.SCALE_FACTOR)
+      # Size of neighbour pods in meters
+      POD_SIZE := 100
+      # Spacing tolerances
+      SAME_NAME_STOP_TOL := 300
+      STOP_STOP_TOL := 55
+      STOP_ARC_TOL := 75
+      CHANGE_COST_M := 2000
+
+      ARC_WIDTHS := table(scale_real(6),
+                          1,scale_real(1),
+                          2,scale_real(1),
+                          4,scale_real(2),
+                          8,scale_real(3),
+                          16,scale_real(4),
+                          32,scale_real(5),
+                          64,scale_real(6))
+
+      NAME_TWEAKS := table(,
+                           "Hatton Cross Bus Station", "Hatton Cross Station",
+                           "Gallymead Road", "Galleymead Road"
+                           )
+                           
+   end
+
+   public match_stops(s)
+      local l, st
+      l := []
+      if *s = 0 then
+         return l
+      s := map(s)
+      every st := !stops do {
+         if match(s, map(st.name)) then
+            put(l, [st.name, st.code])
+      }
+      return isort(l, 1)
+   end
+
+   public finally()
+      Component.finally()
+      close_win()
+   end
+
+   private close_win()
+      if \I then {
+         I.close()
+         I := &null
+      }
+   end
+
+   public display()
+      if /I | (I.get_height() ~= h) | (I.get_width() ~= w) then {
+         close_win()
+         I := Window().set_size(w, h)
+         draw_all()
+      }
+      if \drag_off then
+         I.copy_to(drag_off.x, drag_off.y,,, 
+                   self.cbwin, self.x, self.y)
+      else
+         I.copy_to(,,,, 
+                   self.cbwin, self.x, self.y)
+   end
+
+   private handle_lpress(e)
+      set_pointer("fleur")
+      parent_dialog.synch_pointer(e)
+      drag_start := e
+   end
+
+   private sort_routes(x)
+      return isort(x, route_key)
+   end
+
+   private static route_key(rt)
+      return (10 * integer(rt.number) + dir_no(rt)) | (rt.number || dir_no(rt))
+   end
+
+   private create_toggle_filter_menu_item(rt)
+      local m
+      return m := CheckBoxMenuItem().
+         set_label(".cell\n.attr 'fg=" || rt.colour || "'\n" || rt.number || "\n.br\n" ||
+                   ".cell\n.img " || route_icon(rt) || "\n.br\n").
+         set_is_checked(if member(\filter, rt) then &yes else &no).
+         connect(create if m.is_checked() then filter_route(rt) else unfilter_route(rt), Event.ACTION)
+   end
+
+   private create_filter_menu(rt)
+      local m
+      m := Menu().
+         set_label(".cell\n.attr 'fg=" || rt.colour || "'\n" || rt.number || "\n.br\n")
+      if dir_no(rt) > dir_no(\rt.reverse) then
+         rt := rt.reverse
+      m.add(create_toggle_filter_menu_item(rt))
+      if \rt.reverse then {
+         m.add(create_toggle_filter_menu_item(rt.reverse))
+         if /filter | not member(filter, rt|rt.reverse) then
+            m.add(TextMenuItem().
+                  set_label("Both").
+                  connect(create { filter_route(rt); filter_route(rt.reverse) } , Event.ACTION), 1)
+         if \filter then {
+            if member(filter, rt) & member(filter, rt.reverse) then
+               m.add(TextMenuItem().
+                     set_label("Neither").
+                     connect(create { unfilter_route(rt); unfilter_route(rt.reverse) } , Event.ACTION), 1)
+            if member(filter, rt) & not member(filter, rt.reverse) then
+               m.add(TextMenuItem().
+                     set_label("Toggle").
+                     connect(create { unfilter_route(rt); filter_route(rt.reverse) } , Event.ACTION))
+            if not member(filter, rt) & member(filter, rt.reverse) then
+               m.add(TextMenuItem().
+                     set_label("Toggle").
+                     connect(create { filter_route(rt); unfilter_route(rt.reverse) } , Event.ACTION))
+         }
+      }
+      return m
+   end
+
+   private create_filter_all_menu_item(routes)
+      return TextMenuItem().
+         set_label("All").
+         connect(create filter_routes(routes), Event.ACTION)
+   end
+
+   private create_filter_none_menu_item(routes)
+      return TextMenuItem().
+         set_label("None").
+         connect(create unfilter_routes(routes), Event.ACTION)
+   end
+
+   private qinsert(q, new_path)
+      local i, j, m
+      i := 1
+      j := *q
+      while i <= j do {
+         m := (i + j) / 2
+         if q[m].cost > new_path.cost then
+            j := m - 1
+         else if q[m].cost < new_path.cost then
+            i := m + 1
+         else {
+            i := m
+            break
+         }
+      }
+      insert(q, i, new_path)
+   end
+
+   private append_to_path(path, arc, target)
+      local new_prev_routes, new_curr_routes, cost
+      new_curr_routes := path.curr_routes ** arc.routes
+      if *new_curr_routes = 0 then {
+         # All change please
+         new_prev_routes := path.prev_routes ++ path.curr_routes
+         new_curr_routes := arc.routes
+         cost := CHANGE_COST_M + path.cost + arc.dist
+      } else {
+         new_prev_routes := path.prev_routes
+         cost := path.cost + arc.dist
+      }
+      return Path(cost, 
+                  distance(arc.dest.loc, target.loc),
+                  insert(copy(path.hops), arc.dest), arc.dest, new_prev_routes, new_curr_routes)
+   end
+
+   private bfs(st1, st2)
+      local q, arc, u, new, prune1, prune2, t
+      prune1 := table()
+      prune2 := table()
+      q := [Path(0, distance(st1.loc, st2.loc), set(st1), st1, set(), st1.routes)]
+      while u := pop(q) do {
+         #         ObjectOutputStream(FileStream.stdout).set_indent(3).set_depth(4).set_always_structure(1).show(u)
+         #         write(*q,",",u.last_hop.name,"  cost=",u.cost, "  dist=", u.dist)
+         if u.last_hop === st2 then
+            return u
+
+         every arc := !u.last_hop.arcs do {
+            if member(u.hops, arc.dest) then next
+            new := append_to_path(u, arc, st2)
+
+            t := new.cost / 1000
+
+            if new.dist > \prune2[t] + 5000 |
+               new.cost > \prune1[new.last_hop] + CHANGE_COST_M then 
+            {
+               #write("\t****prune:",left(new.last_hop.name,32),"  cost=",new.cost, "  dist=", new.dist, 
+               #      " pf1=",(new.cost-(\prune1[new.last_hop]))|"-",
+               #      " pf2=",(new.dist-(\prune2[new.cost/1000]))|"-")
+               next
+            }
+            (/prune2[t] := new.dist) | (prune2[t] >:= new.dist)
+            (/prune1[new.last_hop] := new.cost) | (prune1[new.last_hop] >:= new.cost)
+
+            qinsert(q, new)
+         }
+      }
+      #write("failed")
+   end
+
+   private join(st1, st2)
+      local path
+      path := bfs(st1, st2) | fail
+      highlight := path.hops
+      set_filter(path.prev_routes ++ path.curr_routes)
+   end
+
+   private filter_sort_routes(routes)
+      local l, rt
+      l := []
+      every rt := !sort_routes(routes) do {
+         if member(routes, rt.reverse) & serial(rt.reverse) < serial(rt) then
+            next
+         put(l, rt)
+      }
+      return l
+   end
+
+   private create_how_far_menu_item(st)
+      return TextMenuItem().
+         set_label("Distances").
+         connect(create how_far(st), Event.ACTION)
+   end
+
+   private save_filter_as()
+      local d
+      d := NameDialog().set_label("New filter").show_modal()
+      if \d.result then {
+         saved_filters[d.result] := copy(filter)
+         store_named_filters()
+         filter_name := d.result
+      }
+   end
+
+   private save_filter()
+      saved_filters[filter_name] := copy(filter)
+      store_named_filters()
+   end
+
+   private create_saved_filter_menu_item(name)
+      local m
+      m := Menu().set_label(name)
+      m.add(TextMenuItem().
+             set_label("Set").
+             connect(create {
+                set_filter(saved_filters[name])
+                filter_name := name
+             }, Event.ACTION))
+      m.add(TextMenuItem().
+             set_label("Add").
+             connect(create filter_routes(saved_filters[name]) , Event.ACTION))
+      m.add(TextMenuItem().
+             set_label("Delete").
+             connect(create {
+                delete(saved_filters, name)
+                store_named_filters()
+             }, Event.ACTION))
+      return m
+   end
+
+   private store_named_filters()
+      local f, s, rt, k
+      use {
+         f := open(get_file("filters.txt"), "w"),
+         every k := key(saved_filters) do {
+            s := ""
+            every rt := !saved_filters[k] do
+               s ||:= rt.number || rt.direction || ","
+            s[-1] := ""
+            write(f, k || ":", s)
+         }
+      }
+   end
+
+   private load_named_filters()
+      local f, s, rt, routes, k, rn
+      saved_filters := table()
+      use {
+         f := open(get_file("filters.txt")),
+         while s := f.read() do {
+            s ? {
+               k := 1(tab(upto(':')), move(1)) | next
+               routes := set()
+               every rn := separate(tab(0)) do {
+                  rt := string_to_route(rn[1:-1]) | next
+                  case rn[-1] of {
+                     rt.direction:
+                        insert(routes, rt)
+                     (\rt.reverse).direction:
+                        insert(routes, rt.reverse)
+                  }
+               }
+               saved_filters[k] := routes
+            }
+         }
+      }
+   end
+
+   private handle_rpress(e)
+      local m, m2, pm, st, va, routes
+      if st := which_stop(e) then {
+         m := Menu()
+         m2 := Menu().set_label("Filter")
+         routes := filter_sort_routes(st.routes)
+         if *routes > 1 then {
+            if not setle(st.routes, \filter) then
+               m2.add(create_filter_all_menu_item(st.routes))
+            if *(\filter ** st.routes) > 0 then
+               m2.add(create_filter_none_menu_item(st.routes))
+            m2.add(MenuSeparator())
+         }
+         every m2.add(create_filter_menu(!routes))
+         m.add(m2)
+         m.add(TextMenuItem().
+               set_label("Mark").
+               connect(create mark := st, Event.ACTION))
+         if \mark then {
+            m.add(TextMenuItem().
+                  set_label("Join").
+                  connect(create join(mark, st), Event.ACTION))
+         }
+         m.add(create_how_far_menu_item(st))
+         pm := PopupMenu()
+         pm.popup(self, m, e.x, e.y)
+      } else if va := which_vis_arc(e) then {
+         m := Menu()
+         m2 := Menu().set_label("Filter")
+         routes := filter_sort_routes(va.routes)
+         if *routes > 1 then {
+            if not setle(va.routes, \filter) then
+               m2.add(create_filter_all_menu_item(va.routes))
+            if *(\filter ** va.routes) > 0 then
+               m2.add(create_filter_none_menu_item(va.routes))
+            m2.add(MenuSeparator())
+         }
+         every m2.add(create_filter_menu(!routes))
+         m.add(m2)
+         pm := PopupMenu()
+         pm.popup(self, m, e.x, e.y)
+      } else {
+         m := Menu()
+         if routes := filter_sort_routes(\filter) & (*routes > 0) then {
+            m2 := Menu().set_label("Filter")
+            if \filter_name then 
+               m2.add(TextMenuItem().
+                      set_label("Save " || filter_name).
+                      connect(create save_filter(), Event.ACTION))
+            m2.add(TextMenuItem().
+                   set_label("Save as...").
+                   connect(create save_filter_as(), Event.ACTION))
+            m2.add(MenuSeparator())
+            every m2.add(create_filter_menu(!routes))
+            m.add(m2)
+         }
+         if \ (filter_name | filter | mark | highlight) then
+            m.add(TextMenuItem().
+                  set_label("Reset").
+                  connect(create reset_state(), Event.ACTION))
+         if *saved_filters > 0 then {
+            m2 := Menu().set_label("Saved filters")
+            every m2.add(create_saved_filter_menu_item(!keylist(saved_filters)))
+            m.add(m2)
+         }
+
+         if \opts["s"] then {
+            if /animate_task | animate_task.is_dormant() then {
+               m.add(TextMenuItem().
+                     set_label("Animate start").
+                     connect(create { 
+                        /animate_task := Dispatcher.new_task{animate()}; 
+                        animate_task.start()
+                     }, Event.ACTION))
+            } else {
+               m.add(TextMenuItem().
+                     set_label("Animate stop").
+                     connect(create {
+                        animate_task.stop()
+                     }, Event.ACTION))
+            }
+         }
+         m.add(TextMenuItem().
+                  set_label("Quit").
+                  connect(create parent_dialog.dispose(), Event.ACTION))
+         m.add(CheckBoxMenuItem().
+                  set_label("Labels").
+                  set_is_checked(labels_flag).
+                  connect(toggle_labels, Event.ACTION))
+         pm := PopupMenu()
+         pm.popup(self, m, e.x, e.y)
+      }
+   end
+
+   private toggle_labels()
+      labels_flag := toggle_flag(labels_flag)
+      invalidate()
+      draw_all()
+   end
+
+   private handle_ldrag(e)
+      drag_off := Point(drag_start.x - e.x, drag_start.y - e.y) 
+      invalidate()
+   end
+
+   private handle_lrelease(e)
+      drag_off := &null
+      if drag_start.x ~= e.x | drag_start.y ~= e.y then {
+         origin := Loc(origin.long + (SCALE * (drag_start.x - e.x)) / scale,
+                       origin.lat + (SCALE * (drag_start.y - e.y)) / scale)
+         invalidate()
+         draw_all()
+      }
+      set_pointer()
+   end
+
+   private stop_title(st)
+      local s
+      s := st.name
+      if *st.letter > 0 then
+         s ||:= " (" || st.letter || ")"
+      return s
+   end
+
+   private which_stop(e)
+      local st, dx, dy
+      if scale < 8 then fail
+      every st := !\vis_stops do {
+         dx := e.x - self.x - st.px
+         dy := e.y - self.y - st.py
+         if dx*dx + dy*dy < stop_size*stop_size then
+            return st
+      }
+   end
+
+   private which_vis_arc(e)
+      local va, e1
+      if scale < 8 then fail
+      every va := !\vis_arcs do {
+         e1 := Point(e.x - self.x - va.off.x, e.y - self.y - va.off.y)
+         e1 := xrrotate(e1, va.arc)
+         if (va.a1.x <= e1.x < va.a2.x) & (va.a1.y - arc_width/2.0 <= e1.y < va.a2.y + arc_width/2.0) then
+            return va
+      }
+   end
+
+   private static route_icon(rt)
+      return case rt.direction of {
+         "N" : "gui.ARROW_UP"
+         "S" : "gui.ARROW_DOWN"
+         "E" : "gui.ARROW_RIGHT"
+         "W" : "gui.ARROW_LEFT"
+      }
+   end
+
+   private static dir_no(rt)
+      return case rt.direction of {
+         "N" : 0
+         "S" : 1
+         "W" : 2
+         "E" : 3
+      }
+   end
+
+   private handle_mouse_move(e)
+      local st, r, f1, f2, va
+      if st := which_stop(e) then {
+         f1 := ".cell\n" || stop_title(st)
+         f1 ||:= "\n.br\n"
+         f2 := ""
+         every r := !sort_routes(st.routes) do {
+            if member(st.routes, r.reverse) then {
+               if serial(r.reverse) < serial(r) then {
+                  if *f2 = 0 then f2 := ".cell\n" else f2 ||:= ".cell l_inset=8\n"
+                  f2 ||:= ".attr 'fg=" || r.colour || "'\n" || r.number || "\n.br\n"
+               }
+            } else {
+               if *f2 = 0 then f2 := ".cell\n" else f2 ||:= ".cell l_inset=8\n"
+               f2 ||:= ".attr 'fg=" || r.colour || "'\n" || r.number || 
+                  "\n.br\n.cell\n.img " || route_icon(r) || "\n.br\n"
+            }
+         }
+         parent_dialog.set_labels(f1, f2)
+         return
+      }
+
+      if va := which_vis_arc(e) then {
+         f1 := ".cell\n" || stop_title(va.arc.src)
+         f1 ||:= if \va.reversible then "<->" else "->"
+         f1 ||:= stop_title(va.arc.dest)
+         f1 ||:= "\n.br\n"
+         f2 := ""
+         every r := !sort_routes(va.routes) do {
+            if \va.reversible then {
+               if *f2 = 0 then f2 := ".cell\n" else f2 ||:= ".cell l_inset=8\n"
+               f2 ||:= ".attr 'fg=" || r.colour || "'\n" || r.number || "\n.br\n"
+            } else {
+               if *f2 = 0 then f2 := ".cell\n" else f2 ||:= ".cell l_inset=8\n"
+               f2 ||:= ".attr 'fg=" || r.colour || "'\n" || r.number || 
+                  "\n.br\n.cell\n.img " || route_icon(r) || "\n.br\n"
+            }
+         }
+         parent_dialog.set_labels(f1, f2)
+         return
+      }
+      parent_dialog.clear_labels()
+   end
+
+   private handle_mouse_exit(e)
+      parent_dialog.clear_labels()
+   end
+
+   private set_scale(v)
+      scale := v
+      arc_width := ARC_WIDTHS[scale]
+      stop_size := integer(arc_width)
+      precalc()
+      return self
+   end
+
+   private change_scale(e, fac)
+      local c, new_scale
+      new_scale := integer(scale * fac)
+      (1 <= new_scale <= 64) | fail
+      c := point_to_loc(e)
+      set_scale(new_scale)
+      origin := Loc(c.long - (SCALE * (e.x - self.x)) / scale, c.lat - (SCALE * (e.y - self.y)) / scale)
+      invalidate()
+      draw_all()
+   end
+
+   private draw_pod(pk)
+      local x, y, w, h
+      pk ? {
+         x := integer(tab(upto(','))) * POD_SIZE
+         move(1)
+         y := integer(tab(0)) * POD_SIZE
+      }
+      w := h := (scale * POD_SIZE) / SCALE
+      I.set_line_width(1)
+      I.set_fg("black")
+      if x = 0 then {
+         x := -w - scale_times_origin_long
+         w *:= 2
+      } else {
+         if x < 0 then
+            w := -w
+         x := (scale * x) / SCALE - scale_times_origin_long
+      }
+      if y = 0 then {
+         y := -h - scale_times_origin_lat
+         h *:= 2
+      } else {
+         if y < 0 then
+            h := -h
+         y := (scale * y) / SCALE - scale_times_origin_lat
+      }
+      I.draw_rectangle(x,y,w,h)
+   end
+
+   private precalc()
+      local s
+      every s := !stops do {
+         s.scale_times_long := (s.loc.long * scale) / SCALE
+         s.scale_times_lat :=  (s.loc.lat * scale) / SCALE
+      }
+   end
+
+   private handle_wheel_up(e)
+      change_scale(e, 2.0)
+   end
+
+   private handle_wheel_down(e)
+      change_scale(e, 0.5)
+   end
+
+   private static grid_to_loc(easting, northing)
+      # Note that latitude increases going east, whilst long increases going south
+      return Loc(easting - CENTRE_EASTING, CENTRE_NORTHING - northing)
+   end
+
+   private point_to_loc(p)
+      return Loc((SCALE * (p.x - self.x)) / scale + origin.long,
+                 (SCALE * (p.y - self.y)) / scale + origin.lat)
+   end
+
+   private loc_to_point(l)
+      return Point(((l.long - origin.long) * scale) / SCALE,
+                   ((l.lat - origin.lat) * scale) / SCALE)
+   end
+
+   private static near(m, l1, l2)
+      local t1, t2
+      t1 := l1.loc.long - l2.loc.long
+      t2 := l1.loc.lat - l2.loc.lat
+      return t1*t1 + t2*t2 < m*m
+   end
+
+   private static join_letters(x, y)
+      if *x > 0 & *y > 0 then
+         return x || "/" || y
+      return x || y
+   end
+
+   private arc_union(s1, s2)
+      local r, s
+      r := copy(s1.arcs)
+      every s := key(s2.arcs) do {
+         if member(r, s) then
+            r[s].routes ++:= s2.arcs[s].routes
+         else
+            r[s] := s2.arcs[s]
+      }
+      # Delete reciprocal arcs
+      delete(r, s1)
+      delete(r, s2)
+      return r
+   end
+
+   private ptr_union(s1, s2)
+      local r
+      r := s1.ptrs ++ s2.ptrs
+      # Delete reciprocal ptrs
+      delete(r, s1)
+      delete(r, s2)
+      return r
+   end
+
+   private alloc_colours()
+      local st, rt, cols, cols0, colno, coltbl, i, h, l, s, k
+      note_time()
+      every (!routes).colour := &null
+      cols0 := set()
+      colno := 0
+      every rt := !routes do {
+         if \rt.colour then next
+         cols := copy(cols0)
+         every st := (!rt.stops | !(\rt.reverse).stops) do {
+            every delete(cols, \ (!st.routes).colour)
+         }
+         if *cols = 0 then {
+            colno +:= 1
+            insert(cols0, colno)
+            insert(cols, colno)
+         }
+         rt.colour := ?cols
+         (\rt.reverse).colour := rt.colour
+         #write("allocated ",rt.colour," to route ",rt.number)
+      }
+      #write("need ", colno, " colours")
+
+      k := 4
+      coltbl := table()
+      every i := 1 to colno do {
+         h := (360 * k*((i - 1)/k)) / (colno)
+         case (i-1)%k of {
+            0: { l := 0.30 ; s := 0.60 }
+            1: { l := 0.60 ; s := 0.50 }
+            2: { l := 0.40 ; s := 1.0 }
+            3: { l := 0.50 ; s := 1.0 }
+
+         }
+         #write(h || ":" || l || ":" || s)
+         coltbl[i] := Window.color_value(rgb2color(hls2rgb( hls(h, l, s) ))) | stop("HLS failed")
+      }
+
+      every rt := !routes do
+         rt.colour := coltbl[rt.colour]
+
+      note_time("alloc_colours()")
+   end
+
+   private alloc_label_weights()
+      local n, rt, st
+      every st := !stops do {
+         n := 0
+         every rt := !st.routes do {
+            if member(st.routes, rt.reverse) & serial(rt.reverse) < serial(rt) then
+               next
+            n +:= 1
+         }
+         st.label_weight := n
+      }
+   end
+
+   private move_stop(st, x, y)
+      local pk, other, arc
+      pk := pod_key(st.loc)
+      delete(stop_pod[pk], st)
+      st.loc.long := x
+      st.loc.lat := y
+      pk := pod_key(st.loc)
+      /stop_pod[pk] := set()
+      insert(stop_pod[pk], st)
+      every calc_arc_geometry(st, key(st.arcs))         
+      every calc_arc_geometry(!st.ptrs, st)
+
+      every other := key(st.arcs) do {
+         arc := st.arcs[other]
+         every delete(arc_pod[!arc.pods], arc)
+         arc.pods := []
+         every pk := inter_pods(st, other, 0) do {
+            /arc_pod[pk] := set()
+            insert(arc_pod[pk], arc)
+            put(arc.pods, pk)
+         }
+      }
+      every other := !st.ptrs do {
+         arc := other.arcs[st]
+         every delete(arc_pod[!arc.pods], arc)
+         arc.pods := []
+         every pk := inter_pods(other, st, 0) do {
+            /arc_pod[pk] := set()
+            insert(arc_pod[pk], arc)
+            put(arc.pods, pk)
+         }
+      }
+
+   end
+
+   private static pod_key(loc)
+      return (loc.long / POD_SIZE) || "," || (loc.lat / POD_SIZE)
+   end
+
+   private static pod_neighbours(loc, dist)
+      local x, y, k
+      k := 1 + dist / POD_SIZE
+      x := loc.long / POD_SIZE
+      y := loc.lat / POD_SIZE
+      suspend (x + (-k to k)) || "," || (y + (-k to k))
+   end
+
+   private put_pod(st)
+      local pk
+      pk := pod_key(st.loc)
+      /stop_pod[pk] := set()
+      insert(stop_pod[pk], st)
+   end
+
+   private nearby(loc, dist)
+      suspend !\stop_pod[pod_neighbours(loc, dist)]
+   end
+
+   private inter_pods(st, other, dist)
+      local stx, sty, otherx, othery, x, y, dx, dy, k
+      k := 1 + dist / POD_SIZE
+      stx := st.loc.long / POD_SIZE
+      sty := st.loc.lat / POD_SIZE
+      otherx := other.loc.long / POD_SIZE
+      othery := other.loc.lat / POD_SIZE
+      dx := otherx - stx
+      dy := othery - sty
+      if dx = dy = 0 then
+         return stx  || "," || sty
+      if abs(dx) > abs(dy) then {
+         if dx > 0 then {
+            every x := -k to dx + k do
+               suspend (stx + x) || "," || (sty + (dy*x)/dx + (-k to k))
+         } else {
+            every x := k to dx - k by -1 do
+               suspend (stx + x) || "," || (sty + (dy*x)/dx + (-k to k))
+         }
+      } else {
+         if dy > 0 then {
+            every y := -k to dy + k do
+               suspend (stx + (dx * y)/dy + (-k to k)) || "," || (sty + y)
+         } else {
+            every y := k to dy - k by -1 do
+               suspend (stx + (dx * y)/dy + (-k to k)) || "," || (sty + y)
+         }
+      }
+   end
+
+   private check_integrity()
+      local st, pst, other, arc, rt
+
+      every st := !stops do {
+         /st.deleted | stop("stop deleted ", st.name)
+         every other := key(st.arcs) do {
+            arc := st.arcs[other]
+            /arc.src.deleted | stop("arc.src.deleted ", st.name)
+            /arc.dest.deleted | stop("arc.dest.deleted ", st.name)
+            arc.src === st | stop("incorrect arc.src ", arc.src.name, " instead of ", st.name)
+            arc.dest === other | stop("incorrect arc.dest ", arc.src.name, " instead of ", other.name)
+            member(other.ptrs, st) | stop("missing element in ptrs of ", other.name)
+         }          
+      }
+      every rt := !routes do {
+         pst := &null
+         every st := !rt.stops do {
+            member(st.routes, rt) | stop("Route not in stop's route set: ", rt.number)
+            member(stops, st) | stop("Rogue stop in route stop list:",rt.number)
+            if \pst then {
+               if pst === st then stop("Duplicate stop on route stop list:",rt.number)
+               arc := \pst.arcs[st] | stop("No arc between ", pst.name,"->",st.name)
+               member(arc.routes, rt) | stop("Route not in arc's route set: ", rt.number)
+            }
+            pst := st
+         }
+      }
+   end
+
+   private how_far(st)
+      local arc, p0, p1, t1, t2, other, seen
+      write("Distances for stop ", st.name)
+      seen := set()
+      every arc := (!vis_arcs).arc do {
+         if st === (arc.src | arc.dest) then next
+         if member(arc.dest.arcs, arc.src) & serial(arc.dest) < serial(arc.src) then next
+         if member(seen, arc) then next
+         insert(seen, arc)
+         p0 := Point(st.loc.long - arc.src.loc.long, st.loc.lat - arc.src.loc.lat)
+         p1 := rrotate(p0, arc)
+         if (0 <= p1.x < arc.dist) then
+            write("\tto arc ", arc.src.name, "->", arc.dest.name, "=", p1.y, "m")
+      }
+      every other := !vis_stops do {
+         if other === st then next
+         t1 := st.loc.long - other.loc.long
+         t2 := st.loc.lat - other.loc.lat
+         write("\tto stop ", other.name, "=", Math.sqrt(t1^2 + t2^2))
+      }
+   end
+
+   private animate()
+      local e, done
+      e := create space_nodes(1)
+      repeat {
+         @e | (done := 1)
+         precalc()
+         invalidate()
+         draw_all()
+         /done | break
+         animate_task.sleep(500)
+      }
+      repeat animate_task.revert()
+   end
+
+   private space_stops(st, other)
+      local dx, dy, th, mx, my
+      if near(STOP_STOP_TOL, st, other) then {
+         dx := other.loc.long - st.loc.long
+         dy := other.loc.lat - st.loc.lat
+         th := get_angle(dx, dy)
+         mx := integer(10 * Math.cos(th))
+         my := integer(10 * Math.sin(th))
+         move_stop(st, st.loc.long - mx, st.loc.lat - my)
+         move_stop(other, other.loc.long + mx, other.loc.lat + my)
+         return
+      }
+   end
+
+   private space_stop_arc(st, arc)
+      local p0, p1, mx, my
+      p0 := Point(st.loc.long - arc.src.loc.long, st.loc.lat - arc.src.loc.lat)
+      p1 := rrotate(p0, arc)
+      if (0 <= p1.x < arc.dist) & abs(p1.y) < STOP_ARC_TOL then {
+         p1.y := if p1.y < 0 then -STOP_ARC_TOL-1 else STOP_ARC_TOL+1
+         p1 := rotate(p1, arc)
+         mx := p0.x - p1.x
+         my := p0.y - p1.y
+         if mx = my = 0 then 
+            fail
+         move_stop(st, st.loc.long - mx, st.loc.lat - my)
+         move_stop(arc.src, arc.src.loc.long + mx, arc.src.loc.lat + my)
+         move_stop(arc.dest, arc.dest.loc.long + mx, arc.dest.loc.lat + my)
+         return
+      }
+   end
+
+   private space_nodes_iter(q, st)
+      local other, arc, lim
+
+      lim := -1
+
+      every other := nearby(st.loc, STOP_STOP_TOL) do {
+         if other === st then next
+         if space_stops(st, other) then {
+            if *q < lim then
+               write("moved ",other.name," and ", st.name)
+            insert(q, st)
+            insert(q, other)
+            return
+         }
+      }
+
+      every arc := !\arc_pod[pod_neighbours(st.loc, STOP_ARC_TOL)] do {
+         if (arc.src | arc.dest) === st then next
+         if space_stop_arc(st, arc) then {
+            if *q < lim then
+               write("1.moved st=",st.name, " and ",arc.src.name,"->",arc.dest.name)
+            insert(q, arc.src)
+            insert(q, arc.dest)
+            insert(q, st)
+            return
+         }
+      }
+
+      every arc := !st.arcs | (!st.ptrs).arcs[st] do {
+         every other := !\stop_pod[inter_pods(arc.src, arc.dest, STOP_ARC_TOL)] do {
+            if (arc.src | arc.dest) === other then next
+            if space_stop_arc(other, arc) then {
+               if *q < lim then
+                  write("2.moved ",other.name, " and ",arc.src.name,"->",arc.dest.name)
+               insert(q, arc.src)
+               insert(q, arc.dest)
+               insert(q, other)
+               return
+            }
+         }
+      }
+   end
+
+   private space_nodes(coex)
+      local st, q, itno
+      q := set()
+      note_time()
+      every insert(q, !stops)
+      itno := 0
+      while st := ?q do {
+         delete(q, st)
+         space_nodes_iter(q, st)
+         writes(*q,"              \r")
+         itno +:= 1
+         if \coex & (itno % 100 = 0) then 
+            suspend
+      }
+      note_time("space_nodes()")
+   end
+
+   private static normal_name(s)
+      local t
+      t := ""
+      s := member(NAME_TWEAKS, s)
+      s ? {
+         while tab(upto(&letters ++ &digits)) do
+            t ||:= tab(many(&letters ++ &digits))
+      }
+      return map(t)
+   end
+
+   private join_same_named_stops()
+      local st, t, other, l, p, x, rt, n
+
+      note_time()
+
+      t := table()
+      every st := !stops do {
+         n := normal_name(st.name)
+         /t[n] := []
+         put(t[n], st)
+      }
+
+      every l := !t do {
+         every st := !l do {
+            every other := !l do {
+               if st === other | \st.deleted | \other.deleted then next
+
+               # If different areas and too far apart
+               (!other.areas == !st.areas) | near(SAME_NAME_STOP_TOL, st, other) | next
+
+               p := Stop(Loc((st.loc.long + other.loc.long)/2, (st.loc.lat + other.loc.lat)/2),
+                         st.code || "/" || other.code,
+                         arc_union(st, other),
+                         ptr_union(st, other),
+                         st.routes ++ other.routes,
+                         st.name,
+                         join_letters(st.letter, other.letter),
+                         st.areas ++ other.areas)
+
+               # Patch all references to st, other to refer to p.  We have to remember that st/other may
+               # have pointed to each other.
+               every x := (other ~=== key(st.arcs)) do {
+                  delete(x.ptrs, st)
+                  insert(x.ptrs, p)
+               }
+               every x := (other ~=== !st.ptrs) do {
+                  insert(x.arcs, p, x.arcs[st])
+                  delete(x.arcs, st)
+               }
+               every rt := !st.routes do
+                  every rt.stops[keyof(rt.stops, st)] := p
+
+               delete(stops, st)
+               st.deleted := 1
+
+               every x := (st ~=== key(other.arcs)) do {
+                  delete(x.ptrs, other)
+                  insert(x.ptrs, p)
+               }
+               every x := (st ~=== !other.ptrs) do {
+                  # Note x.arcs may already contain p since s and
+                  # other might both be pointed to by the same node
+                  # (ie, x was in s.ptrs above, hence x.arcs[p] has
+                  # some routes in already.
+                  if member(x.arcs, p) then
+                     x.arcs[p].routes ++:= x.arcs[other].routes
+                  else
+                     insert(x.arcs, p, x.arcs[other])
+                  delete(x.arcs, other)
+               }
+               every rt := !other.routes do {
+                  every rt.stops[keyof(rt.stops, other)] := p
+                  # We may be left with adjacent instances of p if
+                  # there were arcs between st and other
+                  del_adj(rt.stops, p)
+               }
+
+               delete(stops, other)
+               other.deleted := 1
+
+               every (!p.arcs).src := p
+               every (!p.ptrs).arcs[p].dest := p
+
+               insert(stops, p)
+
+               put(l, p)
+            }
+         }
+      }
+      note_time("join_same_named_stops()")
+   end
+
+   private static del_adj(l, p)
+      local i
+      repeat {
+         every i := keyof(l, p) do {
+            if l[i + 1] === p then {
+               delete(l, i + 1)
+               break next
+            }
+         }
+         break
+      }
+   end
+
+   private draw_all()
+      I.erase_area()
+      vis_stops := []
+      vis_arcs := []
+      scale_times_origin_long := (scale * origin.long) / SCALE
+      scale_times_origin_lat :=  (scale * origin.lat) / SCALE
+      mw := I.get_width()
+      mh := I.get_height()
+      every draw_arcs(!stops)
+      I.set_fg("black").set_font("sans," || scale_real(max(8, (scale/5))))
+      if scale > 2 then
+         every draw_stop(!vis_stops)
+      draw_labels()
+   end
+
+   private static label_weight_sort(st)
+      return st.label_weight
+   end
+
+   private draw_labels()
+      local lab_sort, st, areas, r
+      if /labels_flag then fail
+      lab_sort := isort(vis_stops, label_weight_sort)
+      areas := []
+      every st := back(lab_sort) do {
+         if *areas > 20 then break
+         r := Rect(st.px + stop_size, st.py - I.get_font_ascent(), I.text_width(st.name), I.get_font_height())
+         if not r.intersect(!areas) then {
+            if \filter then {
+               if member(st.routes, !filter) then
+                  I.set_fg("black")
+               else
+                  I.set_fg("light gray")
+            } else
+               I.set_fg("black")
+            I.filter(r.x, r.y, r.w, r.h, "shade,4,5000,40000")
+            I.draw_string(st.px + stop_size, st.py, st.name)
+            put(areas, r)
+         }
+      }
+   end
+
+   private static xrotate(p, arc)
+      return Point(p.x * arc.cos - p.y * arc.sin,
+                   p.x * arc.sin + p.y * arc.cos) 
+   end
+
+   private static xrrotate(p, arc)
+      return Point(p.x * arc.cos + p.y * arc.sin,
+                   -p.x * arc.sin + p.y * arc.cos) 
+   end
+
+   private static rotate(p, arc)
+      return Point(integer(p.x * arc.cos - p.y * arc.sin),
+                   integer(p.x * arc.sin + p.y * arc.cos)) 
+   end
+
+   private static rrotate(p, arc)
+      return Point(integer(p.x * arc.cos + p.y * arc.sin),
+                   integer(-p.x * arc.sin + p.y * arc.cos)) 
+   end
+
+   private static addp(p, q)
+      return Point(p.x + q.x, p.y + q.y)
+   end
+
+   private static get_angle(dx, dy)
+      return if dx = 0 then {
+         if dy < 0 then 3*Math.PI/2 else Math.PI/2
+      } else if dx<0 then
+         Math.PI + Math.atan(real(dy)/dx)
+      else if dy<0 then
+         2*Math.PI + Math.atan(real(dy)/dx)
+      else
+         Math.atan(real(dy)/dx)
+   end
+
+   private draw_arrow(off, p, q, arc)
+      local dx, a1, a3, a2, k1, k2, mx
+      dx := q.x - p.x
+      if dx = 0 then fail
+      k1 := (scale * 20) / SCALE
+      k2 := (scale * 30) / SCALE
+      mx := p.x + dx/2
+      I.set_fg("black").set_line_width(max(1.0, arc_width / 2.0))
+      a1 := Point(mx - k2, p.y+k1)
+      a3 := Point(mx - k2, p.y-k1)
+      a2 := Point(mx, p.y)
+      a1 := addp(off, xrotate(a1, arc))
+      a3 := addp(off, xrotate(a3, arc))
+      a2 := addp(off, xrotate(a2, arc))
+      I.draw_line(a1.x, a1.y, a2.x, a2.y, a3.x, a3.y)
+   end
+
+   private draw_line(p, q, routes)
+      local rt, x0, y0, x1, y1, dx, dy
+      x1 := p.x
+      y1 := p.y
+      dx := real(q.x - p.x) / *routes
+      dy := real(q.y - p.y) / *routes
+      I.set_line_width(arc_width)
+      every rt := !routes do {
+         x0 := x1
+         y0 := y1
+         x1 +:= dx
+         y1 +:= dy
+         I.set_fg(rt.colour).draw_line(x0, y0, x1, y1)
+      }
+   end
+
+   private draw_arcs(st)
+      local other, px, py, qx, qy, rroutes, uroutes1, uroutes2, routes, other_routes, 
+         r2, l, p, q, a1, a2, n, z, arc, other_arc
+
+      px := st.scale_times_long - scale_times_origin_long
+      py := st.scale_times_lat - scale_times_origin_lat
+      if (0 <= px < mw) & (0 <= py < mh) then {
+         put(vis_stops, st)
+         st.px := px
+         st.py := py
+      }
+
+      every other := key(st.arcs) do {
+         qx := other.scale_times_long - scale_times_origin_long
+         qy := other.scale_times_lat - scale_times_origin_lat
+         if not ((px < 0 & qx < 0) | (py < 0 & qy < 0) | (px > mw & qx > mw) | (py > mh & qy > mh)) then {
+            if scale < 8 then {
+               if member(other.arcs, st) then {
+                  if serial(other) < serial(st) then
+                     next
+                  routes := st.arcs[other].routes ++ other.arcs[st].routes
+               } else
+                  routes := st.arcs[other].routes
+               if \filter then
+                  routes **:= filter
+               if *routes > 0 then
+                  draw_line(Point(px, py), Point(qx, qy), routes)
+               next
+            }
+            rroutes := set()     # routes both ways
+            uroutes2 := set()    # routes st<-other only
+            if member(other.arcs, st) then {
+               if serial(other) < serial(st) then
+                  next
+
+               other_routes := other.arcs[st].routes
+               routes := st.arcs[other].routes
+
+               if \filter then {
+                  other_routes **:= filter
+                  routes **:= filter
+               }
+
+               uroutes1 := set()    # routes st->other only
+               every r2 := !routes do {
+                  if member(other_routes, r2.reverse) then
+                     insert(rroutes, r2)
+                  else
+                     insert(uroutes1, r2)
+               }
+
+               every r2 := !other_routes do {
+                  member(routes, r2.reverse) | insert(uroutes2, r2)
+               }
+            } else {
+               uroutes1 := st.arcs[other].routes
+               if \filter then
+                  uroutes1 **:= filter
+            }
+
+            arc := st.arcs[other]
+            other_arc := other.arcs[st]
+            l := (arc.dist * scale) / SCALE
+            p := Point(px, py)
+            q := Point(qx, qy)
+            
+            n := 0
+            if *uroutes1 > 0 then n +:= 1
+            if *rroutes > 0 then n +:= 1
+            if *uroutes2 > 0 then n +:= 1
+            if *rroutes > 0 then {
+               z := case n of {
+                  1: 0
+                  2: -arc_width/2.0 - 1
+                  3: 0
+               }
+               a1 := Point(0, z)
+               a2 := Point(l, z)
+               draw_line(addp(p, xrotate(a1, arc)), addp(p, xrotate(a2, arc)), rroutes)
+               push(vis_arcs, VisArc(p, a1, a2, arc, &yes, rroutes))
+            }
+            if *uroutes1 > 0 then {
+               z := case n of {
+                  1: 0
+                  2: if *rroutes>0 then arc_width/2.0+1 else -arc_width/2.0-1
+                  3: -arc_width - 2.0
+               }
+               a1 := Point(0, z)
+               a2 := Point(l, z)
+               draw_line(addp(p, xrotate(a1, arc)), addp(p, xrotate(a2, arc)), uroutes1)
+               push(vis_arcs, VisArc(p, a1, a2, arc, &no, uroutes1))
+               draw_arrow(p, a1, a2, arc)
+            }
+            if *uroutes2 > 0 then {
+               z := case n of {
+                  1: 0
+                  2: -arc_width/2.0 - 1
+                  3: -arc_width - 2.0
+               }
+               a1 := Point(0, z)
+               a2 := Point(l, z)
+               draw_line(addp(q, xrotate(a1, other_arc)), addp(q, xrotate(a2, other_arc)), uroutes2)
+               push(vis_arcs, VisArc(q, a1, a2, other_arc, &no, uroutes2))
+               draw_arrow(q, a1, a2, other_arc)
+            }
+         }
+      }
+   end
+
+   private draw_stop(st)
+      if \filter then {
+         if member(st.routes, !filter) then
+            I.set_fg("black")
+         else
+            I.set_fg("light gray")
+      } else
+         I.set_fg("black")
+      I.fill_circle(st.px, st.py, stop_size)
+      if member(\highlight, st) then {
+         I.set_fg("red")
+         I.fill_circle(st.px, st.py, stop_size/2)
+      }
+   end
+
+   private static direction(loc1, loc2)
+      return if abs(loc1.lat - loc2.lat) > abs(loc1.long - loc2.long) then
+         if loc1.lat > loc2.lat then "N" else "S"
+      else
+         if loc1.long > loc2.long then "W" else "E"
+   end
+
+   private static distance(loc1, loc2)
+      local dx, dy
+      dx := loc1.long - loc2.long
+      dy := loc2.lat - loc2.lat
+      return integer(Math.sqrt(dx*dx + dy*dy))
+   end
+
+   private static calc_arc_geometry(st, other)
+      local arc, th, dx, dy
+      arc := st.arcs[other]
+      dx := other.loc.long - st.loc.long
+      dy := other.loc.lat - st.loc.lat
+      th := get_angle(dx, dy)
+      arc.dist := integer(Math.sqrt(dx*dx + dy*dy))
+      arc.sin := Math.sin(th)
+      arc.cos := Math.cos(th)
+   end
+
+   private init_pod()
+      local st, other, arc, pk
+
+      note_time()
+
+      stop_pod := table()
+      every put_pod(!stops)
+
+      arc_pod := table()
+      every st := !stops do {
+         every other := key(st.arcs) do {
+            arc := st.arcs[other]
+            arc.pods := []
+            every pk := inter_pods(st, other, 0) do {
+               /arc_pod[pk] := set()
+               insert(arc_pod[pk], arc)
+               put(arc.pods, pk)
+            }
+         }
+      }
+      note_time("init_pod()")
+   end
+
+   private calc_geometry()
+      local st
+      note_time()
+      every st := !stops do
+         every calc_arc_geometry(st, key(st.arcs))
+      note_time("calc_geometry()")
+   end
+
+   public control(s)
+      local rt, st
+      if rt := string_to_route(s) then
+         every filter_route(rt | \rt.reverse)
+      else if st := string_to_stop(s) then
+         centre_stop(st)
+   end
+
+   private reset_state()
+      filter_name := filter := mark := highlight := &null
+      invalidate()
+      draw_all()
+   end
+
+   private clear_filter()
+      filter := &null
+      invalidate()
+      draw_all()
+   end
+
+   private unfilter_route(rt)
+      delete(filter, rt)
+      invalidate()
+      draw_all()
+   end
+
+   private filter_route(rt)
+      /filter := set()
+      insert(filter, rt)
+      invalidate()
+      draw_all()
+   end
+
+   private filter_routes(routes)
+      /filter := set()
+      filter ++:= routes
+      invalidate()
+      draw_all()
+   end
+
+   private unfilter_routes(routes)
+      \filter | fail
+      filter --:= routes
+      invalidate()
+      draw_all()
+   end
+
+   private set_filter(routes)
+      filter := copy(routes)
+      invalidate()
+      draw_all()
+      return self
+   end
+
+   private set_highlight(stops)
+      highlight := copy(stops)
+      invalidate()
+      draw_all()
+      return self
+   end
+
+   private centre_stop(st)
+      set_scale(64)
+      origin := Loc(st.loc.long - ((self.w/2) * SCALE) / scale, st.loc.lat - ((self.h/2) * SCALE) / scale)
+      invalidate()
+      draw_all()
+   end
+
+   public string_to_route(name)
+      local rt
+      every rt := !routes do
+         if rt.number == name then
+            return rt
+   end
+
+   public string_to_stop(name)
+      local st, code
+      name ? {
+         if tab(upto('{')) then {
+            move(1)
+            code := tab(upto('}'))
+         }
+      }
+      if \code then {
+         every st := !stops do {
+            if st.code == code then
+               return st
+         }
+      } else {
+         name := map(name)
+         every st := !stops do {
+            if map(st.name) == name then
+               return st
+         }
+      }
+   end
+
+   public string_to_arc(src, dest)
+      local st, other
+      st := string_to_stop(src) | fail
+      other := string_to_stop(dest) | fail
+      return \st.arcs[other]
+   end
+
+   private want_route(rt)
+      local t
+      if t := \opts["r"] then
+         return rt == !t
+      if rt[1] == "N" then
+         return \opts["n"]
+      else if \opts["n"] then
+         fail
+      if rt[1] == ("6"|"9") & *rt = 3 then
+         fail
+      return
+   end
+
+   private static gen_csv_fields(s)
+      local t
+      s ? repeat {
+         if ="\"" then {
+            t := tab(upto('"') | 0)
+            move(1)
+         } else
+            t := tab(upto(',') | 0)
+         suspend t
+         if pos(0) then
+            break
+         =","
+      }
+   end
+
+   private complete_route(rt)
+      local other
+      rt.direction := direction(rt.stops[1].loc, rt.stops[-1].loc)
+      insert(routes, rt)
+      # Set up reverse routes
+      if other := member(route_numbers, rt.number) then {
+         (/other.reverse := rt) | stop("Duplicate route data for route ", rt.number)
+         rt.reverse := other
+      } else
+         insert(route_numbers, rt.number, rt)
+   end
+
+   private load_routes()
+      local f, s, e, route, p_route, run, p_run, stop_code, rt, st, p_st, skip
+      f := open(get_file("bus-sequences.csv")) | stop("Couldn't open bus route data file: ", &why)
+      # Header line
+      f.read() | fail
+      while s := f.read() do {
+         if s == "\x1a" then
+            break
+         e := create gen_csv_fields(s)
+         (route := @e &
+          run := @e &
+          @e &
+          stop_code := @e) | stop("Bad data in route file: ", image(s))
+
+         (run = (1 | 2)) | next
+
+         if not(route === p_route & run === p_run) then {
+            complete_route(\rt)
+            if want_route(route) then {
+               rt := Route(route)
+               p_st := &null
+               skip := &null
+            } else {
+               rt := &null
+               p_st := &null
+               skip := 1
+            }
+            p_route := route
+            p_run := run
+         }
+         if \skip then
+            next
+
+         st := member(stop_codes, stop_code) | stop("No such stop: ", stop_code)
+         put(rt.stops, st)
+         insert(st.routes, rt)
+         if \p_st then {
+            /p_st.arcs[st] := Arc(set(), p_st, st)
+            insert(p_st.arcs[st].routes, rt)
+            insert(st.ptrs, p_st)
+         }
+         p_st := st
+      }
+      complete_route(\rt)
+
+      # Purge stops with no routes.
+      every st := !stops do {
+         if *st.routes = 0 then {
+            delete(stops, st)
+            delete(stop_codes, st.code)
+         }
+      }
+   end
+
+   private static cleanup_name(s)
+      local t, w, i
+      t := ""
+      # Ensure spaces around /
+      if i := upto('/', s) then
+         s := s[1:i] || " / " || s[i + 1:0]
+      every w := words(map(s), ' \t\r\n\v\f#<>') do {
+        if not(w == ("and" | "of")) then
+            w[1] := map(w[1], &lcase, &ucase)
+         if *t > 0 then
+            t ||:= " "
+         t ||:= w
+      }
+      return t
+   end
+
+   private load_stops()
+      local f, s, e, st,
+         code, naptan, name, easting, northing, area, loc, point_letter
+      f := open(get_file("bus-stops.csv")) | stop("Couldn't open bus stop data file: ", &why)
+      # Header line
+      f.read() | fail
+      while s := f.read() do {
+         if s == "\x1a" then
+            break
+         e := create gen_csv_fields(s)
+         (code := @e &
+          @e &            # bus_stop_code 
+          naptan := @e &
+          name := @e &
+          easting := @e &
+          northing := @e &
+          @e &            # heading
+          area := @e) | stop("Bad data in bus file: ", image(s))
+         loc := grid_to_loc(easting, northing)
+         name := cleanup_name(name)
+         point_letter := if any(&letters, naptan[-2]) then naptan[-2:0] else naptan[-1]
+         insert(stops, st := Stop(loc,
+                                  code, table(), set(), set(), name, point_letter, set(area)))
+         stop_codes[code] := st
+      }
+      f.close()
+   end
+
+   private fixup_data()
+      local rt, st, pst
+      note_time()
+      stops := set()
+      every rt := !routes do {
+         rt.direction := direction(rt.stops[1].loc, rt.stops[-1].loc)
+         pst := &null
+         every st := !rt.stops do {
+            /st.routes := set()
+            /st.arcs := table()
+            insert(st.routes, rt)
+            insert(stops, st)
+            if \pst then {
+               /pst.arcs[st] := Arc(set(), pst, st)
+               insert(pst.arcs[st].routes, rt)
+               /st.ptrs := set()
+               insert(st.ptrs, pst)
+            }
+            pst := st
+         }
+      }
+      note_time("fixup_data()")
+   end
+
+   private load_data()
+      note_time()
+      load_stops()
+      load_routes()
+      note_time("load_data()")
+      return
+   end
+
+   private get_file(s)
+      return data_dir.child(s).str()
+   end
+
+   private find_data_dir()
+      if \opts["d"] then
+         data_dir := FilePath(opts["d"])
+      else {
+         data_dir := FilePath(&progname).sibling("busroutes")
+         Files.is_directory(data_dir.str()) |
+            (data_dir := FilePath(Files.get_home()).child("busroutes"))
+      }
+      Files.is_directory(data_dir.str()) | stop("Data directory doesn't exist: ", data_dir.str())
+   end
+
+   private setup_data()
+      local name, s
+
+      find_data_dir()
+      write("data_dir: ", data_dir.str())
+
+      if /opts["j"] & /opts["s"] & /opts["r"] then {
+         name := get_file(if /opts["n"] then "bus.data" else "nightbus.data")
+         if /opts["l"] & /opts["L"] & (s := Files.file_to_string(name)) then {
+            note_time()
+            routes := decode(s) | stop("Decode failed: ", &why)
+            note_time("decoded")
+            fixup_data()
+            calc_geometry()
+            alloc_colours()
+            alloc_label_weights()
+            return
+         }
+      }
+
+      routes := set()
+      stops := set()
+      route_numbers := table()
+      stop_codes := table()
+
+      load_data()
+
+      if /opts["j"] then
+         join_same_named_stops()
+
+      init_pod()
+      calc_geometry()
+
+      if /opts["s"] then
+         space_nodes()
+      alloc_colours()
+      alloc_label_weights()
+
+      if \name & /opts["L"] then {
+         note_time()
+         Files.string_to_file(name, encode(routes, &yes)) | stop("Encode failed: ", &why)
+         note_time("encoded")
+      }
+   end
+
+   public new()
+      Panel.new()
+      connect(handle_lpress, Event.MOUSE_LEFT_PRESS)
+      connect(handle_rpress, Event.MOUSE_RIGHT_PRESS)
+      connect(handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      connect(handle_wheel_up, Event.MOUSE_WHEEL_UP)
+      connect(handle_wheel_down, Event.MOUSE_WHEEL_DOWN)
+      connect(handle_mouse_move, Event.MOUSE_MOVEMENT)
+      connect(handle_mouse_exit, Event.MOUSE_EXIT)
+      #
+      # top left of window; easting is based on the western most stop
+      # (QUEENSMERE CENTRE); northing is based on the northernmost
+      # stop (CRANBORNE ROAD INDUSTRIAL ESTATE)
+      origin := grid_to_loc(497660 - 500, 202380 - 500)
+      labels_flag := &yes
+      setup_data()
+      check_integrity()
+      load_named_filters()
+      set_scale(1)
+      return
+   end
+end
+
+class BusView(Dialog)
+   private
+      csa,
+      stop_label,
+      route_label,
+      search_field
+
+   public set_labels(s1, s2)
+      stop_label.set_label(s1)
+      route_label.set_label(s2)
+   end
+
+   public clear_labels(s)
+      stop_label.set_label("")
+      route_label.set_label("")
+   end
+
+   public component_setup()
+      self.setup()
+      search_field.set_map(csa)
+   end
+
+   public end_dialog()
+   end
+
+   public init_dialog()
+   end
+
+   public on_quit(ev)
+      dispose()
+   end
+
+   public new()
+      Dialog.new()
+      return
+   end
+
+   private on_close_button(ev)
+      dispose()
+   end
+
+   private on_icon_event(ev)
+      if ev.code === "\^q" then
+         dispose()
+   end
+
+   private on_search_field_action(ev)
+      csa.control(search_field.get_contents())
+   end
+
+   private on_search_field_change(ev)
+      # Check for change via click in suggest list
+      if ev.code === Mouse.LEFT_RELEASE then
+         csa.control(search_field.get_contents())
+   end
+
+   private setup()
+      local panel_2, layout_4, line_1, paint_4, layout_1, layout_3, paint_3, panel_3
+      self.set_label("Bus")
+      self.set_pos(100, 100)
+      self.set_resize(&yes)
+      search_field := MapSearchField().
+         set_size(scale(60)).
+         clear_constraints().
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         connect(self.on_search_field_action, Event.ACTION).
+         connect(self.on_search_field_change, Event.CONTENT_CHANGED).
+         set_contents("")
+      layout_4 := GridLayout().
+         set_doi(scale(0)).
+         set_extra("cells")
+      panel_3 := Panel().
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes).
+         set_layout(layout_4).
+         add(search_field)
+      self.add(panel_3)
+      csa := Map().
+         set_size(scale(700), scale(500)).
+         clear_constraints().
+         set_constraint("b_inset", scale(0)).
+         set_constraint("eol", &yes).
+         set_constraint("l_inset", scale(0)).
+         set_constraint("r_inset", scale(0)).
+         set_constraint("t_inset", scale(0)).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_constraint("y_fill", &yes).
+         set_constraint("y_weight", 1.0)
+      self.add(csa)
+      line_1 := Line().
+         set_size(scale(100)).
+         clear_constraints().
+         set_constraint("eol", &yes).
+         set_constraint("x_fill", &yes)
+      self.add(line_1)
+      paint_3 := TextPaint("")
+      stop_label := Label().
+         clear_constraints().
+         set_constraint("b_inset", scale(0)).
+         set_constraint("eol", &yes).
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_paint(paint_3)
+      paint_4 := TextPaint("")
+      route_label := Label().
+         clear_constraints().
+         set_constraint("t_inset", scale(0)).
+         set_constraint("x_align", Align.L).
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_paint(paint_4)
+      layout_3 := GridLayout().
+         set_doi(scale(0)).
+         set_extra("cells")
+      panel_2 := Panel().
+         clear_constraints().
+         set_constraint("x_fill", &yes).
+         set_constraint("x_weight", 1.0).
+         set_layout(layout_3).
+         add(stop_label).
+         add(route_label)
+      self.add(panel_2)
+      self.connect(self.on_close_button, Event.WINDOW_CLOSE_BUTTON)
+      self.connect(self.on_icon_event, Event.ICON)
+      layout_1 := GridLayout().
+         set_extra("cells")
+      self.set_layout(layout_1)
+      self.set_focus(search_field.find_focus())
+   end
+end
+
+procedure main(a)
+   local d
+   &maxlevel := 50000
+   ImageCache.name_image("rpp.BUS_LOGO", BUS_LOGO)
+   insert(Dialog.ROOT_WATTRIBS, "icon", BUS_LOGO)
+   opts := options(a, "-n! -r:* -s! -j! -l! -L! -d:")
+   d := BusView()
+   d.show_modal()
+end
+
+### Ivib-v2 layout ##
+#CCanvas|I20SSuperClass Name|SDialog|SImport Name|Sgui|SButton Groups|L
+#0SCheckbox Groups|L0SGen Indent|I3SGen Main|I1SGen Component Setup|I1S
+#Gen Init Dialog|I1SGen Constructor|I1SDialog Struct|CCDialog|I1SWAttri
+#bs|T3NSpos|L2I100I100Sresize|I1Slabel|SBus|SName|SBusView|SIs Componen
+#t|NSWidth|NSHeight|NSChildren|L4CCanvasPanel|I27SParent Canvas|X1SName
+#|Spanel_3|SClass Name|SPanel|SImport Name|Sgui|SClass Variable|NSX Fix
+#|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align
+#|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|
+#T2NSx_fill|I1Seol|I1STooltip|NSAccel|NSLayout delegate|CCanvasGridLayo
+#ut|I8SDII val|NSDOI val|I0SExtra|Scells|SName|Slayout_4|SClass Name|SG
+#ridLayout|SImport Name|Sgui|SClass Variable|NSParent|X8SBorder opts|NS
+#Event Handlers|L0SParent Component|X1SChildren|L1CCanvasTextField|I30S
+#Parent Canvas|X1SName|Ssearch_field|SClass Name|SMapSearchField|SImpor
+#t Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|I1SX Spec
+#|NSY Spec|NSW Spec|S60|SH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|
+#I0SIs shaded|NSWAttribs|T0NSConstraints|T3NSx_align|Sl|Sx_weight|B1.0|
+#Sx_fill|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Han
+#dlers|L2L2SEvent.ACTION|Son_search_field_action|L2SEvent.CONTENT_CHANG
+#ED|Son_search_field_change|SParent Component|X8SContents|S|SFilter Str
+#ing|S|SIs editable flag|I1SMove on rpress flag|I1CCanvasCustom|I26SPar
+#ent Canvas|X1SName|Scsa|SClass Name|SMap|SImport Name|Sgui|SClass Vari
+#able|I1SX Fix|I1SY Fix|I1SW Fix|I1SH Fix|I1SX Spec|NSY Spec|NSW Spec|S
+#700|SH Spec|S500|SX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NS
+#WAttribs|T0NSConstraints|T9NSb_inset|I0Sr_inset|I0Sx_weight|B1.0|Sx_fi
+#ll|I1Sy_weight|B1.0|Sy_fill|I1Sl_inset|I0St_inset|I0Seol|I1STooltip|NS
+#Accel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L0SParent Compo
+#nent|X1CCanvasLine|I27SParent Canvas|X1SName|Sline_1|SClass Name|SLine
+#|SImport Name|Sgui|SClass Variable|NSX Fix|NSY Fix|NSW Fix|NSH Fix|NSX
+# Spec|NSY Spec|NSW Spec|S100|SH Spec|NSX Align|Sl|SY Align|St|SZ|I0STa
+#b ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T2NSx_fill|I1Seol|I1SToo
+#ltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L0SParen
+#t Component|X1SIs horizontal flag|I1CCanvasPanel|I27SParent Canvas|X1S
+#Name|Spanel_2|SClass Name|SPanel|SImport Name|Sgui|SClass Variable|NSX
+# Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX A
+#lign|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstrai
+#nts|T2NSx_weight|B1.0|Sx_fill|I1STooltip|NSAccel|NSLayout delegate|CCa
+#nvasGridLayout|I8SDII val|NSDOI val|I0SExtra|Scells|SName|Slayout_3|SC
+#lass Name|SGridLayout|SImport Name|Sgui|SClass Variable|NSParent|X28SB
+#order opts|NSEvent Handlers|L0SParent Component|X1SChildren|L2CCanvasL
+#abel|I27SParent Canvas|X1SName|Sstop_label|SClass Name|SLabel|SImport 
+#Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NS
+#Y Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs 
+#shaded|NSWAttribs|T0NSConstraints|T5NSx_align|Sl|Sb_inset|I0Sx_weight|
+#B1.0|Sx_fill|I1Seol|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts
+#|NSEvent Handlers|L0SParent Component|X28SPaint|CCanvasTextPaint|I6SPa
+#rent Canvas|X1SName|Spaint_3|SClass Name|STextPaint|SImport Name|Sgui|
+#SClass Variable|NSStr|S|CCanvasLabel|I27SParent Canvas|X1SName|Sroute_
+#label|SClass Name|SLabel|SImport Name|Sgui|SClass Variable|I1SX Fix|NS
+#Y Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl
+#|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T4N
+#Sx_align|Sl|Sx_weight|B1.0|Sx_fill|I1St_inset|I0STooltip|NSAccel|NSLay
+#out delegate|NSBorder opts|NSEvent Handlers|L0SParent Component|X28SPa
+#int|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_4|SClass Name|STe
+#xtPaint|SImport Name|Sgui|SClass Variable|NSStr|S|SInitial Focus|X14SE
+#vent Handlers|L2L2SEvent.WINDOW_CLOSE_BUTTON|Son_close_button|L2SEvent
+#.ICON|Son_icon_event|SLayout delegate|CCanvasGridLayout|I8SDII val|NSD
+#OI val|NSExtra|Scells|SName|Slayout_1|SClass Name|SGridLayout|SImport 
+#Name|Sgui|SClass Variable|NSParent|X1SScale Dimensions Flag|I1SEdit Sc
+#ale|B1.0|
