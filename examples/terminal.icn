@@ -175,6 +175,7 @@ class TerminalDialog(Dialog)
 
    public launch_prog(runner)
       local pid, nul, cmd
+      if \opts["v"] then write("Desktop entry: ", to_string(runner.desktop_entry, 3, 1))
       pid := System.fork() | fail
       if pid > 0 then {
          # Parent
@@ -1054,12 +1055,13 @@ class Terminal(TabItem, VtUI)
                info_msg(&why)
          }
          default: {
-            if r := get_runner(url) then {
+            if r := get_runners(url) then {
                if is(r, ExternalRunner) then
                   parent_dialog.launch_prog(r)
                else
                   run_prog(r.get_command())
-            }
+            } else
+               info_msg(&why)
          }
       }
    end
@@ -1098,37 +1100,45 @@ class Terminal(TabItem, VtUI)
       suspend Unique{Xdg.gen_desktop_entries(Xdg.alternative_mime_types(Xdg.get_mime_type_for_file(FilePath(s).get(-1))))}
    end
 
+   private static get_possible_scheme_handler_desktop_entries(url)
+      suspend Xdg.gen_desktop_entries("x-scheme-handler/" || string(url.scheme))
+   end
+
    private static is_local_host(url)
       return url.host == ("localhost" | &host)
    end
 
-   private get_runner(url)
-      local s, cd, de
+   private get_runners(url)
+      local s, cd, de, fl
       case string(url.scheme) of {
          "file" : {
-            is_local_host(url) | return info_msg(u"Can't run a file on another host (" || url.host || u")")
-            s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
+            is_local_host(url) | return error(u"Can't run a file on another host (" || url.host || u")")
+            s := ucs(url.get_decoded_path()) | return error(u"URL decoded path not utf8")
             if Files.is_directory(s) then
                return ImmediateRunner(u"cd " || Format.shell_escape(s))
             # Get a DesktopEntry based on the content-type if available, or the filename.
-            de := get_possible_desktop_entries(s) | return info_msg(u"No matching desktop entry for this URL")
-            if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1))
-            return DesktopRunner(de, url, s)
+            every de := get_possible_desktop_entries(s) do {
+               fl := 1
+               suspend DesktopRunner(de, url, s)
+            }
+            return if /fl then error(u"No matching desktop entry for this URL")
          }
          "run" : {
-            s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
+            s := ucs(url.get_decoded_path()) | return error(u"URL decoded path not utf8")
             return ImmediateRunner(s)
          }
          "launch" : {
-            s := ucs(url.get_decoded_path()) | return info_msg(u"URL decoded path not utf8")
+            s := ucs(url.get_decoded_path()) | return error(u"URL decoded path not utf8")
             if cd := member(url.extract_cgi_parameters(), "wd")[1] then
-               cd := ucs(cd) | return info_msg(u"CD decoded path not utf8")
+               cd := ucs(cd) | return error(u"CD decoded path not utf8")
             return LaunchRunner(s, cd)
          }
          default : {
-            de := Xdg.gen_desktop_entries("x-scheme-handler/" || string(url.scheme))  | return info_msg(u"No desktop entry for url scheme " || url.scheme)
-            if \opts["v"] then write("Desktop entry: ", to_string(de, 3, 1))
-            return DesktopRunner(de, url, url.ucs())
+            every de := get_possible_scheme_handler_desktop_entries(url) do {
+               fl := 1
+               suspend DesktopRunner(de, url, url.ucs())
+            }
+            return if /fl then error(u"No desktop entry for url scheme " || url.scheme)
          }
       }
    end
@@ -1176,14 +1186,6 @@ class Terminal(TabItem, VtUI)
                                   URLSelectionOwner([url]))
    end 
 
-   private insert_cmd(url)
-      local r, cmd
-      if r := get_runner(url) then {
-         cmd := r.get_command()
-         send_tty(cmd)
-      }
-   end
-
    private rename(s)
       local d
       d := RenameDialog(s)
@@ -1192,10 +1194,6 @@ class Terminal(TabItem, VtUI)
       msg("Renamed OK", 3000)
       if cwd == FilePath(s).parent().ucs() then
          refresh_cwd()
-   end
-
-   private connect_launch(m2, runner)
-      m2.connect(create parent_dialog.launch_prog(runner), Event.ACTION)
    end
 
    private on_paste(e)
@@ -1266,8 +1264,33 @@ class Terminal(TabItem, VtUI)
       return m
    end
 
+   private create_insert_cmd(r)
+      return create send_tty(r.get_command())
+   end
+
+   private create_launch(r)
+      return create parent_dialog.launch_prog(r)
+   end
+
+   private create_open_with_menu(url)
+      local m, m1, r, de
+      m := Menu().set_label("Open with")
+      every r := get_runners(url) do {
+         if is(r, DesktopRunner) then {
+            de := r.desktop_entry
+            m1 := TextMenuItem().
+               set_label(de.name).
+               connect(create_launch(r), Event.ACTION)
+            m1.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
+            m.add(m1)
+         }
+      }
+      if *m.children > 0 then
+         return m
+   end
+
    public create_link_menu(url)
-      local m, m1, m2, s, de
+      local m, s, r
       m := Menu()
       if url.scheme == (u"file" | u"text" | u"run") then {
          m.add(TextMenuItem().
@@ -1277,36 +1300,25 @@ class Terminal(TabItem, VtUI)
       m.add(TextMenuItem().
             set_label("Copy URL").
             connect(create copy_link_url(url), Event.ACTION))
-      if not(url.scheme == (u"text" | u"tab")) then {
+      if r := get_runners(url) then
          m.add(TextMenuItem().
-               set_label("Insert command").
-               connect(create insert_cmd(url), Event.ACTION))
-      }
-      if url.scheme == u"file" &
-         is_local_host(url) &
-         s := ucs(url.get_decoded_path()) then
-      {
-         if Files.is_directory(s) then {
-            m.add(TextMenuItem().
-                  set_label("Open in new tab").
-                  connect(create open_in_new_tab(s), Event.ACTION))
-         } else {
-            m1 := Menu().set_label("Open with")
-            every de := get_possible_desktop_entries(s) do {
-               m2 := TextMenuItem().
-                  set_label(de.name)
-               m2.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
-               connect_launch(m2, DesktopRunner(de, url, s))
-               m1.add(m2)
-            }
-            if *m1.children > 0 then 
-               m.add(m1)
-         }
-         m.add(TextMenuItem().
-               set_label("Rename").
-               connect(create rename(s), Event.ACTION))
-      }
+            set_label("Insert command").
+            connect(create_insert_cmd(r), Event.ACTION))
+      if url.scheme == u"file" then {
+         if is_local_host(url) & s := ucs(url.get_decoded_path()) then {
+            if Files.is_directory(s) then {
+               m.add(TextMenuItem().
+                     set_label("Open in new tab").
+                     connect(create open_in_new_tab(s), Event.ACTION))
+            } else
+               m.add(create_open_with_menu(url))
 
+            m.add(TextMenuItem().
+                  set_label("Rename").
+                  connect(create rename(s), Event.ACTION))
+         }
+      } else
+         m.add(create_open_with_menu(url))
       return m
    end
 
