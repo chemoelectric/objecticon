@@ -1,5 +1,5 @@
 #summary terminal - an experimental terminal program
-
+<wiki:toc max_depth="3" />
 = Introduction =
 This page provides some notes about one of the programs in the `examples` directory, namely `terminal`.  It is an experimental replacement for terminal emulator programs like `xterm` and `konsole`.  It also has some features found in file manager programs like `dolphin` and `nautilus`.
 
@@ -15,10 +15,18 @@ http://objecticon.googlecode.com/svn/wiki/terminal-link.png
 
 As the mouse pointer moves over the filename output by `ls`, the mouse pointer changes and the link is highlighted.  Left-clicking on the link opens the system-registered application for viewing that particular file type; right-clicking brings up a context menu.
 
-This effect is achieved by a combination of two things.  Firstly, the terminal emulator understands special escape sequences which encapsulate file links in much the same way as a web browser understands HTML anchor tags.  Secondly, a small collection of programs, including `ls`, have been modified to produce these special escape sequences, and thus provide the desired links in the terminal emulator.  To continue the web analogy, if the terminal emulator is the browser, then these programs are the analogy of web servers, but instead of producing HTML containing anchor tags, they produce their normal textual output, but containing embedded link escape sequences.
+This effect is achieved by a combination of two things.  Firstly, the terminal emulator understands special escape sequences which encapsulate file links in much the same way as a web browser understands HTML anchor tags.  Secondly, a small collection of programs, including `ls`, have been modified to produce these special escape sequences, and thus provide the desired links in the terminal emulator.  To continue the web analogy, if the terminal emulator is the browser, then these programs are the equivalent of web servers, but instead of producing HTML containing anchor tags, they produce their normal textual output, but containing embedded link escape sequences.
 
-The modified programs include `ls`, `grep` and `find`.
+The modified programs include `ls`, `grep` and `find`.  Although the selection of programs cannot be complete, it is large enough to considerably improves the usability of the shell.
 
+= Graphical completion =
+Another frustation of using the shell which the `terminal` program tries to address is filename completion (in fact completion in general, not just files).  Users of bash will certainly be familiar with how annoying its completion facility can be.  To alleviate this distress, another escape sequence is employed, and `bash` is modified to send this escape sequence when tab completion occurs (in fact, `bash` is not modified, rather its readline library, which is statically linked into it, is modified instead).
+
+With this modification, a popup list appears to implement tab completion, as shown in the following image :-
+
+http://objecticon.googlecode.com/svn/wiki/terminal-link.png
+
+The user may now use the mouse or the cursor keys in order to select from the list in the normal way.
 = Toolbar =
 The various items in the toolbar should be mostly self-explanatory.
 
@@ -39,6 +47,27 @@ Next to the sort buttons comes the favourites button.  This is a list of directo
 Finally, to the right of that comes the file trail.  This shows the current directory.  Clicking on one of the file names in the trail changes the directory.  Also, clicking on one of the slash separators pops up the list of directories for that location.  Selecting from one goes to that directory.  The following image shows that in action :-
 
 http://objecticon.googlecode.com/svn/wiki/terminal-trail.png
+
+== Popup menus ==
+Both the file list and terminal portions of the tab have popup menus.  They appear either by clicking in an area without links, or via the menu bar at the top of the window.
+
+The terminal menu is shown below.
+
+http://objecticon.googlecode.com/svn/wiki/terminal-vt-menu.png
+
+The first four items relate to copy and paste.  Reorient toggles the horizontal/vertical orientation of the split.  Horizontal orientation is especially useful if you have a directory containing many very long file names.  The maximize and minimize options make the terminal take up all of the tab's space, or none of the space, respectively.
+
+The file list's popup menu is as follows :-
+
+http://objecticon.googlecode.com/svn/wiki/terminal-list-menu.png
+
+The first two items indicate that the date or size should be shown alongside the name.  To reduce clutter, this is only applied to directory entries if the "Sort dirs" or "Mix files & dirs" option is checked.  "Sort dirs" means apply the same sort to directories as to files; normally they are just sorted by alphabetical order regardless of the sort option selected in the toolbar.  "Mix files & dirs" means sort and display files and directories together; normally directories come first.
+
+When a URL link (or an entry in the file list) is left-clicked, a menu such as the following is shown.  Some entries may not appear, depending on the type of the link.
+
+http://objecticon.googlecode.com/svn/wiki/terminal-url-menu.png
+
+"Copy" will copy the filename to the clipboard, appropriately shell-escaped with backslashes, whereas "Copy URL" just copies the source URL to the clipboard.  "Insert command" sends the text of the command that a left-click would run, to the shell process (this would normally be echoed by the shell, and appear on the terminal).  "Open with" is a submenu listing all of the system's dekstop applications which can recognise this file or URL type.  For files, "Rename" opens a window where the file can be renamed.  This is the only file manager-like option which the `terminal` program provides.
 
 == termlinks-extras ==
 This is a collection of common utility programs, modified to provide output containing escape sequences recognised by the terminal program.  For example, a version of `ls` is provided which turns each file output into a clickable link to a `file:` URL.
@@ -179,8 +208,50 @@ When clicked, this URL opens a new tab, changes its directory to `/mnt/disk/film
 == Other URL schemes ==
 All other URL schemes are handled by looking up the desktop entry matching the mime type `x-scheme-handler/[scheme]`.  The matching application is then launched in a forked process.
 
-= The TERMLINKS environment variable =
+= Favourites files and other useful tips =
 
+= The TERMLINKS environment variable =
+One problem that faces programs that output the special link and popup escape sequences (such as the termlinks-extras programs), is the question of what kind of terminal the program is connected to.  It is obviously undesirable to output these escape sequences on a conventional terminal, since the output will be garbled.  However, detecting the type of the terminal is awkward.   Therefore, a simple environment variable is set, which is used by programs to determine whether or not to output the special escape sequences.  The following values are used :-
+ * *0 or unset* Don't output special escape sequences.
+ * *1* Output special escape sequences, but only if the output file is a tty.  This is the default setting at `terminal` startup.
+ * *2* Always output special escape sequences
+The last option can be useful if using a pipeline.  For example, assuming `TERMLINKS` is `1`, the output of
+{{{
+ls -t | head
+}}}
+will not contain escape sequences, since `ls` will detect that its output is a pipe, rather than a tty.  (For the same reason, if you use colour ls output, you won't see colours either).
+
+To fix this, set `TERMLINKS` to `2` when invoking `ls`, thus :-
+{{{
+TERMLINKS=2 ls -t | head
+}}}
+
+= Limitations =
+The terminal emulator has a few features which are found in `xterm`, but which are not implemented :-
+ * Blinking characters
+ * Embedded escape sequences
+ * Double width and double height characters
+
+The coordination between the file list and the terminal emulator also has some limitations.  The list's current directory is kept synchronized with the shell process's current directory, as read from the file `/proc/<pid>/cwd`, where `pid` is the shell process's process id.  This means that the list doesn't synchronize with a sub-shell process.  For example, if you start another shell program, such as `zsh`, as in
+{{{
+bash $ zsh
+$ cd /tmp
+}}}
+then the list won't synchronize to `/tmp`, since the original bash process is still in whatever directory it was in when `zsh` started.  If you know you won't return to bash, you can instead type
+{{{
+bash $ exec zsh
+$ cd /tmp
+}}}
+Then it will work as desired, since `zsh` has taken over (and replaced) the bash shell's process.
+
+The `screen` program also suffers from the same problem, since it starts its own processes.  Also, since it implements its own internal terminal emulation,  it cannot understand understand the special escape sequences used by `terminal`.  Therefore it is desirable to set `TERMLINKS` to zero (or unset it) before launching `screen`.
+{{{
+$ TERMLINKS=0 screen
+}}}
+In view of these limitations, there is in fact no advantage to running `screen` in the `terminal` program, and it may just as well be started in a conventional terminal emulator program :-
+{{{
+$ konsole -e screen
+}}}
 
 = Command line options =
 `terminal` accepts the following command-line options :-
