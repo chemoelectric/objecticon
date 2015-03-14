@@ -66,8 +66,6 @@ fi
 
 ])
 
-
-
 AC_DEFUN([AC_STRUCT_TIMEZONE_GMTOFF],
 [ AC_REQUIRE([AC_STRUCT_TIMEZONE])dnl
   AC_CACHE_CHECK(for struct tm.tm_gmtoff, rb_cv_member_struct_tm_tm_gmtoff,
