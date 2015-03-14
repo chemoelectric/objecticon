@@ -19,12 +19,13 @@ This effect is achieved by a combination of two things.  Firstly, the terminal e
 
 The modified programs include `ls`, `grep` and `find`.  Although the selection of programs cannot be complete, it is large enough to considerably improves the usability of the shell.
 
+These modified programs are provided in a separate download; the section [Terminal#The_termlinks-extras_programs Termlinks extras] below explains more.
 = Graphical completion =
 Another frustation of using the shell which the `terminal` program tries to address is filename completion (in fact completion in general, not just files).  Users of bash will certainly be familiar with how annoying its completion facility can be.  To alleviate this distress, another escape sequence is employed, and `bash` is modified to send this escape sequence when tab completion occurs (in fact, `bash` is not modified, rather its readline library, which is statically linked into it, is modified instead).
 
 With this modification, a popup list appears to implement tab completion, as shown in the following image :-
 
-http://objecticon.googlecode.com/svn/wiki/terminal-link.png
+http://objecticon.googlecode.com/svn/wiki/terminal-popup.png
 
 The user may now use the mouse or the cursor keys in order to select from the list in the normal way.
 = Toolbar =
