@@ -50,6 +50,7 @@ class ImageViewTest(Dialog)
          set_toggles(&no).
          set_paint(paint)
       self.add(quit)
+      self.connect(self.dispose, Event.WINDOW_CLOSE_BUTTON)
       layout_1 := GridLayout().
          set_extra("cells")
       self.set_layout(layout_1)

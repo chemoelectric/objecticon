@@ -25,7 +25,7 @@ static int builtin_table_cmp(char *key, char **item)
  * Lookup a builtin function name; returns -1 if not found, or the
  * index otherwise.
  */
-static int blocate(char *s)
+static int blookup(char *s)
 {
     char **p = bsearch(s, builtin_table, ElemCount(builtin_table), 
                        sizeof(char *), (BSearchFncCast)builtin_table_cmp);
@@ -43,7 +43,7 @@ static struct gentry *gb_locate(char *name)
 {
     struct gentry *gl = glocate(name);
     int bn;
-    if (!gl && (bn = blocate(name)) >= 0) {	
+    if (!gl && (bn = blookup(name)) >= 0) {	
         struct loc bl = {"Builtin", 0};
         /* Builtin function, add to global table so we see it next time */
         gl = putglobal(name, F_Builtin | F_Proc, 0, &bl);
@@ -169,11 +169,14 @@ static void resolve_global(struct lfile *lf, char *name)
     }
 
     /*
-     * If not found yet, and not tried already, try as a unqualified
-     * top level symbol.
+     * If not found yet, and not tried already, try as an unqualified
+     * top level symbol, which must be a builtin.
      */
-    if (lf->package && !rres_found)
-        rres_found = gb_locate(name);
+    if (lf->package && !rres_found) {
+        gl = gb_locate(name);
+        if (gl && gl->g_flag & F_Builtin)
+            rres_found = gl;
+    }
 }
 
 /*

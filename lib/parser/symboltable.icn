@@ -650,7 +650,7 @@ class SymbolTable(Connectable)
    end
 
    public resolve_n(sf, name)
-      local r, i
+      local r, i, g
 
       r := []
       name ? if upto('.') then {
@@ -667,8 +667,10 @@ class SymbolTable(Connectable)
          if /i.qualified | i.has(name) then
             put(r, check_package_access(sf, glocate(i.name || "." || name)))
       }
-      if \sf.pack & (*r = 0) then
-         put(r, gb_locate(name))
+      if \sf.pack & (*r = 0) then {
+         if g := gb_locate(name) & is(g, BuiltinSymbol) then
+            put(r, g)
+      }
       return r
    end
 

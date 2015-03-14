@@ -176,7 +176,9 @@ $endif
    # functions.  Sorts by modification time.
    #
    public static date_cmp(d1, d2)
-      return d1.lstat.mtime - d2.lstat.mtime
+      local t
+      t := d1.lstat.mtime - d2.lstat.mtime
+      return if t = 0 then d1.lstat.mtime_ns - d2.lstat.mtime_ns else t
    end
 
    #

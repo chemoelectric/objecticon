@@ -219,7 +219,7 @@ class Untitled(Dialog)
          set_toggles(&no).
          set_paint(paint_9)
       layout_2 := GridLayout().
-         set_doi(0).
+         set_doi(scale(0)).
          set_extra("cells")
       panel_1 := Panel().
          clear_constraints().
@@ -252,6 +252,7 @@ class Untitled(Dialog)
          set_toggles(&no).
          set_paint(paint_8)
       self.add(text_button_3)
+      self.connect(self.dispose, Event.WINDOW_CLOSE_BUTTON)
       layout_1 := GridLayout().
          set_extra("cells")
       self.set_layout(layout_1)

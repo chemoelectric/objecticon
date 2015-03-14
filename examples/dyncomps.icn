@@ -136,6 +136,7 @@ class DynComps(Dialog)
          add(repos).
          add(quit)
       self.add(panel_1)
+      self.connect(self.dispose, Event.WINDOW_CLOSE_BUTTON)
       layout := GridLayout().
          set_extra("cells")
       self.set_layout(layout)
