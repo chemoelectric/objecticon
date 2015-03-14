@@ -83,11 +83,15 @@ Firstly, download the `.tar.gz` file, from the following location :-
 It is best to extract this file in your home directory, since it will then be found automatically by the `terminal` program.  (If you extract it somewhere else, then you will need to provide the `-x` option to tell `terminal` where).
 
 In any case, extract it as follows :-
-{{{tar xfz termlinks-extras.tar.gz}}}
+{{{
+tar xfz termlinks-extras.tar.gz
+}}}
 
 This will create a `termlinks-extras` directory.  Cd into that directory, and run
 
-{{{./build.sh}}}
+{{{
+./build.sh
+}}}
 
 A considerable amount of output will be produced, but if everything was successful, the message "Finished OK" will be printed.  In that case, a directory `bin` will have been created, containing the resulting executables.  The `build.sh` script doesn't actually install anything outside of its directory, and can simply be deleted if you no longer have any use for it.
 
@@ -209,9 +213,24 @@ When clicked, this URL opens a new tab, changes its directory to `/mnt/disk/film
 All other URL schemes are handled by looking up the desktop entry matching the mime type `x-scheme-handler/[scheme]`.  The matching application is then launched in a forked process.
 
 = Favourites files and other useful tips =
+It is very easy and useful to create small shell script files which simple output links which can be clicked on.  These links can be `file:` URLs, in order to change to particular directories, or launch specific files.  They could also use some of the custom schemes mentioned [Terminal#URL_schemes above], which can launch applications, open new tabs, and so on.
+
+For example, if I created the following file, called it `favs`, and put it somewhere on my path (and made it executable)
+{{{
+#!/bin/bash
+cat <<EOF
+\e[!"tab:/mnt/sg1/music;:reorient;:sort-date;:sort-date;:mix-entries;:select"LMusic tab\e[!L
+\e[!"launch:qemu-system-x86_64 -hda caldera.img -m 3G -net nic -net bridge -enable-kvm?wd=/mnt/qemu-stuff"Lcaldera emulation\e[!L
+\e[!"launch:konsole -e ssh rparlett@somehost"Lssh to somehost\e[!L
+\e[!"file:///tmp"Lcd to /tmp\e[!L
+EOF
+}}}
+then whenever I typed `favs` at the prompt, the above links would be printed, and I would simply have to click on one of them to perform the desired action.
+
+Note that creating the above file with a text editor does present one problem, namely how to input the escape character (ascii 27), shown in the above as the two characters '\e'.  In emacs, this character can be input by typing control-q, and then pressing the escape key.
 
 = The TERMLINKS environment variable =
-One problem that faces programs that output the special link and popup escape sequences (such as the termlinks-extras programs), is the question of what kind of terminal the program is connected to.  It is obviously undesirable to output these escape sequences on a conventional terminal, since the output will be garbled.  However, detecting the type of the terminal is awkward.   Therefore, a simple environment variable is set, which is used by programs to determine whether or not to output the special escape sequences.  The following values are used :-
+One problem that faces programs that output the special link and popup escape sequences (such as the `termlinks-extras` programs), is the question of what kind of terminal the program is connected to.  It is obviously undesirable to output these escape sequences on a conventional terminal, since the output will be garbled.  However, detecting the type of the terminal is awkward.   Therefore, a simple environment variable is set, which is used by programs to determine whether or not to output the special escape sequences.  The following values are used :-
  * *0 or unset* Don't output special escape sequences.
  * *1* Output special escape sequences, but only if the output file is a tty.  This is the default setting at `terminal` startup.
  * *2* Always output special escape sequences
