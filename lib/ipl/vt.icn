@@ -1874,8 +1874,16 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private handle_special_key(e)
       case e.code of {
-         # Standard navigation if shift is pressed
-         Key.HOME | Key.END | Key.PGUP | Key.PGDN : if \e.shift then {
+         # Navigation if shift is pressed
+         Key.PGUP : if \e.shift then {
+            goto_first(get_line_info().first_whole - max(rows - 3, 1))
+            return
+         }
+         Key.PGDN : if \e.shift then {
+            goto_last(get_line_info().last_whole + max(rows - 3, 1))
+            return
+         }
+         Key.HOME | Key.END : if \e.shift then {
             on_default_key(e)
             return
          }
