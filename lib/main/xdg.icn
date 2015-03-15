@@ -574,9 +574,9 @@ final abstract class Xdg()
    end
 
    private static parse_ini_file(s)
-      local group, groups, gn, l
+      local group, groups, gn
       groups := table()
-      every l := separate_lines(s) do l ? {
+      every separate_lines(s) ? {
          if pos(0) | match(u"#") then
             next
          if =u"[" & gn := tab(upto(']')) then {
