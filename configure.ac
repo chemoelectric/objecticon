@@ -1,5 +1,5 @@
 AC_INIT([Object Icon],
-        m4_esyscmd([2.13]),
+        [2.13],
         [r.parlett@gmail.com],
         [objecticon])
 
