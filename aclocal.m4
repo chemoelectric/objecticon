@@ -66,62 +66,60 @@ fi
 
 ])
 
+
 AC_DEFUN([AC_STRUCT_TIMEZONE_GMTOFF],
-[ AC_REQUIRE([AC_STRUCT_TIMEZONE])dnl
-  AC_CACHE_CHECK(for struct tm.tm_gmtoff, rb_cv_member_struct_tm_tm_gmtoff,
-  [AC_TRY_COMPILE([#include <time.h>],[struct tm t; t.tm_gmtoff = 3600;],
-        [rb_cv_member_struct_tm_tm_gmtoff=yes],
-        [rb_cv_member_struct_tm_tm_gmtoff=no])])
-  AC_CACHE_CHECK(for struct tm.tm_isdst, rb_cv_member_struct_tm_tm_isdst,
-  [AC_TRY_COMPILE([#include <time.h>],[struct tm t; t.tm_isdst = 1;],
-        [rb_cv_member_struct_tm_tm_isdst=yes],
-        [rb_cv_member_struct_tm_tm_isdst=no])])
-  if test "$rb_cv_member_struct_tm_tm_gmtoff" = yes; then
-     AC_DEFINE(HAVE_STRUCT_TM_TM_GMTOFF)
-  fi
-  if test "$rb_cv_member_struct_tm_tm_isdst" = yes; then
-     AC_DEFINE(HAVE_STRUCT_TM_TM_ISDST)
-  fi
+[
+   AC_MSG_CHECKING(for struct tm.tm_gmtoff)
+   AC_TRY_COMPILE([#include <time.h>],[struct tm t; t.tm_gmtoff = 3600;],
+               [  AC_MSG_RESULT(yes)
+                  AC_DEFINE(HAVE_STRUCT_TM_TM_GMTOFF)
+               ],[
+                  AC_MSG_RESULT(no)
+               ])
+
+   AC_MSG_CHECKING(for struct tm.tm_isdst)
+   AC_TRY_COMPILE([#include <time.h>],[struct tm t; t.tm_isdst = 1;],
+               [  AC_MSG_RESULT(yes)
+                  AC_DEFINE(HAVE_STRUCT_TM_TM_ISDST)
+               ],[
+                  AC_MSG_RESULT(no)
+               ])
 ])
+
 
 AC_DEFUN([AC_VAR_TIMEZONE_EXTERNALS],
 [  
-   AC_CACHE_CHECK(for timezone external, mb_cv_var_timezone,
-   [  AC_TRY_LINK([#include <time.h>], [return (int)timezone;],
-         mb_cv_var_timezone=yes,
-         mb_cv_var_timezone=no)
-   ])
-   AC_CACHE_CHECK(for altzone external, mb_cv_var_altzone,
-   [  AC_TRY_LINK([#include <time.h>], [return (int)altzone;],
-         mb_cv_var_altzone=yes,
-         mb_cv_var_altzone=no)
-   ])
-   AC_CACHE_CHECK(for daylight external, mb_cv_var_daylight,
-   [  AC_TRY_LINK([#include <time.h>], [return (int)daylight;],
-         mb_cv_var_daylight=yes,
-         mb_cv_var_daylight=no)
-   ])
-   AC_CACHE_CHECK(for tzname external, mb_cv_var_tzname,
-   [  AC_TRY_LINK([#include <time.h>], [return (int)tzname;],
-         mb_cv_var_tzname=yes,
-         mb_cv_var_tzname=no)
-   ])
-   if test $mb_cv_var_timezone = yes; then
-      AC_DEFINE([HAVE_TIMEZONE], 1,
-              [Define if you have the external `timezone' variable.])
-   fi
-   if test $mb_cv_var_altzone = yes; then
-      AC_DEFINE([HAVE_ALTZONE], 1,
-              [Define if you have the external `altzone' variable.])
-   fi
-   if test $mb_cv_var_daylight = yes; then
-      AC_DEFINE([HAVE_DAYLIGHT], 1,
-              [Define if you have the external `daylight' variable.])
-   fi
-   if test $mb_cv_var_tzname = yes; then
-      AC_DEFINE([HAVE_TZNAME], 1,
-              [Define if you have the external `tzname' variable.])
-   fi
+   AC_MSG_CHECKING(for timezone external)
+   AC_TRY_LINK([#include <time.h>], [return (int)timezone;],
+               [  AC_MSG_RESULT(yes)
+                  AC_DEFINE(HAVE_TIMEZONE)
+               ],[
+                  AC_MSG_RESULT(no)
+               ])
+
+   AC_MSG_CHECKING(for altzone external)
+   AC_TRY_LINK([#include <time.h>], [return (int)altzone;],
+               [  AC_MSG_RESULT(yes)
+                  AC_DEFINE(HAVE_ALTZONE)
+               ],[
+                  AC_MSG_RESULT(no)
+               ])
+
+   AC_MSG_CHECKING(for daylight external)
+   AC_TRY_LINK([#include <time.h>], [return (int)daylight;],
+               [  AC_MSG_RESULT(yes)
+                  AC_DEFINE(HAVE_DAYLIGHT)
+               ],[
+                  AC_MSG_RESULT(no)
+               ])
+
+   AC_MSG_CHECKING(for tzname external)
+   AC_TRY_LINK([#include <time.h>], [return (int)tzname;],
+               [  AC_MSG_RESULT(yes)
+                  AC_DEFINE(HAVE_TZNAME)
+               ],[
+                  AC_MSG_RESULT(no)
+               ])
 ])
 
 AC_DEFUN(AC_CHECK_GLOBAL,
@@ -191,43 +189,39 @@ AC_DEFUN([AX_LIB_MYSQL],
 ])
 
 
+AC_DEFUN([CHECK_MSG_NOSIGNAL],
+[ AC_MSG_CHECKING(for MSG_NOSIGNAL)
+  AC_COMPILE_IFELSE(
+                    [AC_LANG_PROGRAM([[
+                     #include <sys/types.h>
+                     #include <sys/socket.h>]], [[
+                        int flags = MSG_NOSIGNAL;
+                     ]])],
+                     [
+                      AC_MSG_RESULT(yes)
+                      AC_DEFINE(HAVE_MSG_NOSIGNAL)
+                     ],
+                     [
+                      AC_MSG_RESULT(no)
+                     ])
+])
 
-dnl ======================================================================
-dnl Check for MSG_NOSIGNAL flag
-dnl ======================================================================
-AC_DEFUN([AC_FLAG_MSG_NOSIGNAL], [
-AC_REQUIRE([AC_PROG_CC])
-AC_CACHE_CHECK([for MSG_NOSIGNAL], 
-  ac_cv_flag_msg_nosignal, [
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#include <sys/types.h>
-#include <sys/socket.h>]], [[
-  int flags = MSG_NOSIGNAL;
-]])],[ac_cv_flag_msg_nosignal=yes],[ac_cv_flag_msg_nosignal=no])])
-if test "$ac_cv_flag_msg_nosignal" = yes ; then
-	AC_DEFINE([HAVE_MSG_NOSIGNAL], 1,
-		[Define to 1 if you have MSG_NOSIGNAL flag for send()]) 
-fi
-])dnl
 
-dnl ======================================================================
-dnl Check for unsetenv returning an int
-dnl ======================================================================
-AC_DEFUN([CHECK_UNSETENV], [
-AC_REQUIRE([AC_PROG_CC])
-AC_CACHE_CHECK([if unsetenv returns int], 
-  ac_cv_flag_unsetenv_int_return, [
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#include <stdlib.h>
-]], [[
-  int x = unsetenv("dummy");
-]])],[ac_cv_flag_unsetenv_int_return=yes],[ac_cv_flag_unsetenv_int_return=no])])
-if test "$ac_cv_flag_unsetenv_int_return" = yes ; then
-	AC_DEFINE([HAVE_UNSETENV_INT_RETURN], 1,
-		[Define to 1 if unsetenv returns an int]) 
-fi
-])dnl
-
+AC_DEFUN([CHECK_UNSETENV_RETURNS_INT],
+[ AC_MSG_CHECKING(if unsetenv returns int)
+  AC_COMPILE_IFELSE(
+                    [AC_LANG_PROGRAM([[
+                     #include <stdlib.h>]], [[
+                        int x = unsetenv("dummy");
+                     ]])],
+                     [
+                      AC_MSG_RESULT(yes)
+                      AC_DEFINE(HAVE_UNSETENV_INT_RETURN)
+                     ],
+                     [
+                      AC_MSG_RESULT(no)
+                     ])
+])
 
 AC_DEFUN([CHECK_DOUBLE_HAS_WORD_ALIGNMENT],
    [ AC_MSG_CHECKING(if double has word alignment)
