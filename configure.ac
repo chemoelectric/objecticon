@@ -31,6 +31,8 @@ CONFIG_DATE=$(date)
 AC_CONFIG_SRCDIR([base/oix/init.r])
 
 AC_PROG_CC
+dnl Needed by ancient autoconf for AC_EGREP_CPP to work
+AC_PROG_EGREP
 
 CCVER=`$CC --version`
 case $CCVER in
