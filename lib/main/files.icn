@@ -542,11 +542,11 @@ $endif
    #
    # Succeed if the given `FileStream` represents a tty supporting links.
    #
-   public static is_termlinks_tty(f)
-      static termlinks
+   public static is_flowterm_tty(f)
+      static flowterm
       initial
-         termlinks := integer(System.getenv("TERMLINKS"))
-      return case termlinks of {
+         flowterm := integer(System.getenv("FLOWTERM"))
+      return case flowterm of {
          1 : f.isatty()
          2 : &null
       }

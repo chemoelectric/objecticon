@@ -238,7 +238,7 @@ end
 
 procedure pp_out()
    local s
-   return if Files.is_termlinks_tty(FileStream.stderr) & 
+   return if Files.is_flowterm_tty(FileStream.stderr) & 
       s := FilePath(out).canonical().ucs() then
       Files.begin_link(s) || out || Files.end_link()
    else
