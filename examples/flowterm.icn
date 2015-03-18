@@ -175,7 +175,7 @@ class FlowTermDialog(Dialog)
 
    public launch_prog(runner)
       local pid, nul, cmd
-      if \opts["v"] then write("Desktop entry: ", to_string(runner.desktop_entry, 3, 1))
+      if \opts["v"] then write("Launch runner: ", to_string(runner, 3, 1))
       pid := System.fork() | fail
       if pid > 0 then {
          # Parent
