@@ -1284,11 +1284,14 @@ class Vt(LineBasedScrollArea, MenuMode)
          "_" : do_apc()
          "P" : do_dcs()
          "]" : do_osc()
+         "X" : do_sos()
          default : if \verbose_flag then write("Unknown ESC char: ", c)
       }
    end
 
-   private read_string()
+   # Read a string according to ecma 8.3.27, 8.3.89 and others.  The
+   # stuck loop check is non-standard.
+   private read_string1()
       local t, c
       t := u""
       repeat {
@@ -1302,7 +1305,6 @@ class Vt(LineBasedScrollArea, MenuMode)
                get_ch()
             break
          }
-         # See ecma 8.3.27 and 8.3.89
          if any('\x08-\x0D\x20-\x7E', c) then
             t ||:= c
          else
@@ -1311,20 +1313,46 @@ class Vt(LineBasedScrollArea, MenuMode)
       return t
    end
 
+   # Read a string according to ecma 8.3.128.  The stuck loop check is
+   # non-standard.
+   private read_string2()
+      local t, c
+      t := u""
+      repeat {
+         # Avoid stuck loop; see comment in read_params() above.
+         if any('\r\n', peek_ch()) then
+            break
+         c := get_ch()
+         if c == u"\e" then {
+            # Only ESC\ terminates.
+            if peek_ch() == u"\\" then {
+               get_ch()
+               break
+            }
+         }
+         t ||:= c
+      }
+      return t
+   end
+
    private do_privacy_message()
-      read_string()
+      read_string1()
    end
 
    private do_apc()
-      read_string()
+      read_string1()
    end
 
    private do_dcs()
-      read_string()
+      read_string1()
    end
 
    private do_osc()
-      read_string()
+      read_string1()
+   end
+
+   private do_sos()
+      read_string2()
    end
 
    private do_application_keypad_mode(f)
