@@ -1280,6 +1280,8 @@ class Vt(LineBasedScrollArea, MenuMode)
          "N" : do_single_shift(3)
          "O" : do_single_shift(4)
          "c" : do_full_reset()
+         "^" : do_privacy_message()
+         "_" : do_apc()
          "P" : do_dcs()
          "]" : do_osc()
          default : if \verbose_flag then write("Unknown ESC char: ", c)
@@ -1290,6 +1292,9 @@ class Vt(LineBasedScrollArea, MenuMode)
       local t, c
       t := u""
       repeat {
+         # Avoid stuck loop; see comment in read_params() above.
+         if any('\r\n', peek_ch()) then
+            break
          c := get_ch()
          if c == u"\e" then {
             # ESC\ terminates, as does ESC on its own.
@@ -1304,6 +1309,14 @@ class Vt(LineBasedScrollArea, MenuMode)
             break
       }
       return t
+   end
+
+   private do_privacy_message()
+      read_string()
+   end
+
+   private do_apc()
+      read_string()
    end
 
    private do_dcs()
