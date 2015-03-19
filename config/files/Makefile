@@ -53,14 +53,14 @@ tar :
 		-regex ".*\.\(icn\|layout\|gif\|jpg\|png\)" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
-	@for f in $$( find misc -type f ) ; do \
+	@for f in $$( find misc -type f -not -regex ".*\.svn.*" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
 	@for f in $$( find bmark \
 		-regex ".*\.\(icn\|dat\|sh\)" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
-	@for f in $$( find config -type f ) ; do \
+	@for f in $$( find config -type f -not -regex ".*\.svn.*" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
 	@cp README configure config.guess config.sub install-sh $(T)
