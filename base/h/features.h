@@ -54,3 +54,19 @@
 #if HAVE_LIBPNG
    Feature("_PNG", "PNG images")
 #endif
+
+#if OS_LINUX
+   Feature("_LINUX", "Linux")
+#endif
+
+#if OS_SOLARIS
+   Feature("_SOLARIS", "Solaris")
+#endif
+
+#if OS_AIX
+   Feature("_AIX", "AIX")
+#endif
+
+#if OS_BSD
+   Feature("_BSD", "BSD")
+#endif
