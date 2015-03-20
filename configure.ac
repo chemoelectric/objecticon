@@ -5,6 +5,21 @@ AC_INIT([Object Icon],
 
 AC_GNU_SOURCE
 AC_CANONICAL_HOST
+case $host_os in
+     *linux*)
+        AC_DEFINE(OS_LINUX)
+        ;;
+     *solaris*)
+        AC_DEFINE(OS_SOLARIS)
+        ;;
+     *aix*)
+        AC_DEFINE(OS_AIX)
+        ;;
+     *bsd*)
+        AC_DEFINE(OS_BSD)
+        ;;
+esac
+
 
 AC_DEFUN([OI_ADD_LIB],[
  AC_CHECK_LIB($1,main)
