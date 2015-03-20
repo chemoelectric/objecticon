@@ -45,12 +45,23 @@ class IntersperseStream(GeneratorStream, HasUnderlyingStream)
 end
 
 #
-# Return a writable file to /dev/null.  The returned file is shared
+# Return an open file to /dev/null.  The returned file is shared
 # and so should not be closed.
 #
 procedure get_null()
    static nul
    initial
-      nul := FileStream("/dev/null", FileOpt.WRONLY) | stop("Can't open /dev/null: ", &why)
+      nul := FileStream("/dev/null", FileOpt.RDWR) | stop("Can't open /dev/null: ", &why)
    return nul
+end
+
+#
+# Return an open file to /dev/zero.  The returned file is shared
+# and so should not be closed.
+#
+procedure get_zero()
+   static zero
+   initial
+      zero := FileStream("/dev/zero", FileOpt.RDWR) | stop("Can't open /dev/zero: ", &why)
+   return zero
 end
