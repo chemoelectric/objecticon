@@ -99,6 +99,7 @@
    #include <netdb.h>
    #include <pwd.h>
    #include <grp.h>
+   #include <stropts.h>
 #endif					/* UNIX */
 
 #if XWindows
