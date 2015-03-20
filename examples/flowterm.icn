@@ -191,7 +191,7 @@ class FlowTermDialog(Dialog)
          every nul.dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
          nul.close()
       }
-      System.exec("/bin/bash", ["-c", "exec " || cmd]) | stop(&why)
+      System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
    end
 
@@ -1041,6 +1041,9 @@ class Terminal(TabItem, VtUI)
             send_vt(s)
             check_pwd()
             some_in := &yes
+         } else {
+            err_msg(u"IO problem on tty, neither poll in or out ready")
+            break
          }
       }
       io_task.revert()
