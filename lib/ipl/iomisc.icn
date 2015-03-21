@@ -1,0 +1,44 @@
+package ipl.io
+
+import
+   io(FileOpt, Files, FileStream, stop)
+
+$ifdef Solaris
+import
+   util(use)
+$endif
+
+#
+# Return an open file to /dev/null.  The returned file is shared
+# and so should not be closed.
+#
+procedure get_null()
+   static nul
+   initial
+      nul := FileStream("/dev/null", FileOpt.RDWR) | stop("Can't open /dev/null: ", &why)
+   return nul
+end
+
+#
+# Return an open file to /dev/zero.  The returned file is shared
+# and so should not be closed.
+#
+procedure get_zero()
+   static zero
+   initial
+      zero := FileStream("/dev/zero", FileOpt.RDWR) | stop("Can't open /dev/zero: ", &why)
+   return zero
+end
+
+procedure get_process_cwd(pid)
+$ifdef Solaris
+   local t
+   return use {
+      t := Files.getcwd(),
+      Files.chdir(Files.readlink("/proc/" || pid || "/cwd")) & Files.getcwd(),
+      Files.chdir(t)
+   }
+$else
+   return Files.readlink("/proc/" || pid || "/cwd")
+$endif
+end
