@@ -17,7 +17,8 @@ import
    ipl.childwait,
    ipl.vt,
    ipl.columnize,
-   ipl.strings
+   ipl.strings,
+   ipl.io
 
 global opts
 
@@ -794,7 +795,7 @@ class Terminal(TabItem, VtUI)
       history_pos,
       nav_dir,
       io_task,
-      check_cwd_task,
+      check_cwd_time_task,
       pid, 
       tty,
       input,
@@ -959,9 +960,9 @@ class Terminal(TabItem, VtUI)
       return pats
    end
 
-   private check_pwd()
+   private check_cwd_change()
       local s
-      s := ucs(Files.readlink("/proc/" || pid || "/cwd")) | fail
+      s := ucs(get_process_cwd(pid)) | fail
       if s ~== cwd then {
          set_cwd(s, if s === nav_dir then &yes else &no)
          nav_dir := &null
@@ -987,14 +988,14 @@ class Terminal(TabItem, VtUI)
       output.input(s)
    end
 
-   private check_cwd()
+   private check_cwd_time()
       local t
       repeat {
          if t := get_ns_mtime(cwd) then {
             if t ~= cwd_mtime then
                refresh_cwd()
          }
-         check_cwd_task.sleep(500)
+         check_cwd_time_task.sleep(500)
       }
    end
 
@@ -1039,7 +1040,7 @@ class Terminal(TabItem, VtUI)
             if \opts["v"] then
                write("In: ", image(s))
             send_vt(s)
-            check_pwd()
+            check_cwd_change()
             some_in := &yes
          } else {
             err_msg(u"IO problem on tty, neither poll in or out ready")
@@ -1750,18 +1751,18 @@ class Terminal(TabItem, VtUI)
       setup_shell() | stop(&why)
       io_task := Dispatcher.new_task{service_tty()}
       io_task.start()
-      check_cwd_task := Dispatcher.new_task{check_cwd()}
-      check_cwd_task.start()
+      check_cwd_time_task := Dispatcher.new_task{check_cwd_time()}
+      check_cwd_time_task.start()
    end
 
    public finally()
       TabItem.finally()
-      check_cwd_task.stop()
+      check_cwd_time_task.stop()
       io_task.stop()
       System.kill(pid, Signal.SIGHUP)
       tty.close()
       System.wait(pid)
-      check_cwd_task := io_task := tty := &null
+      check_cwd_time_task := io_task := tty := &null
    end
 
    private on_favourites_list(ev)
