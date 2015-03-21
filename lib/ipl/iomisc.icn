@@ -3,7 +3,7 @@ package ipl.io
 import
    io(FileOpt, Files, FileStream, stop)
 
-$ifdef Solaris
+$ifdef _SOLARIS
 import
    util(use)
 $endif
@@ -30,12 +30,15 @@ procedure get_zero()
    return zero
 end
 
+#
+# Return the cwd of the process with the given process id.
+#
 procedure get_process_cwd(pid)
-$ifdef Solaris
+$ifdef _SOLARIS
    local t
    return use {
       t := Files.getcwd(),
-      Files.chdir(Files.readlink("/proc/" || pid || "/cwd")) & Files.getcwd(),
+      Files.chdir("/proc/" || pid || "/cwd") & Files.getcwd(),
       Files.chdir(t)
    }
 $else
