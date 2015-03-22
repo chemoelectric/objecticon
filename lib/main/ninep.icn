@@ -1241,7 +1241,7 @@ class Session9P()
             writer.notify()
          }
          t.revert()
-      }, create throw_handler | cleanup)
+      }, States(ThrowHandlerState(), CleanupState()))
       return t.start()
    end
 
@@ -1266,7 +1266,7 @@ class Session9P()
          }
          if \verbose then write("WRITER EXITING")
          t.revert()
-      }, create cleanup)
+      }, CleanupState())
       return t.start()
    end
 
@@ -1304,7 +1304,7 @@ class Session9P()
          writer.notify()
          if \verbose then write("READER EXITING")
          t.revert()
-      }, create throw_handler | cleanup)
+      }, States(ThrowHandlerState(), CleanupState()))
       return t.start()
    end
 
@@ -1316,7 +1316,7 @@ class Session9P()
             io(ts)
          }
          t.revert()
-      }, create throw_handler | cleanup)
+      }, States(ThrowHandlerState(), CleanupState()))
       return t.start()
    end
 
