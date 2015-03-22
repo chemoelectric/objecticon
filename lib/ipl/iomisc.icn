@@ -34,7 +34,9 @@ end
 # Return the cwd of the process with the given process id.
 #
 procedure get_process_cwd(pid)
-$ifdef _SOLARIS
+$ifdef _PLAN9
+   return Files.file_to_string("/proc/" || pid || "/fd") ? tab(upto('\n'))
+$elsifdef _SOLARIS
    local t
    return use {
       t := Files.getcwd(),
