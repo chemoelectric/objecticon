@@ -97,3 +97,9 @@
 
 /* double has word alignment test */
 #undef DOUBLE_HAS_WORD_ALIGNMENT
+
+/* O/S type */
+#undef OS_LINUX
+#undef OS_SOLARIS
+#undef OS_AIX
+#undef OS_BSD

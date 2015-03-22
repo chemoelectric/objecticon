@@ -571,22 +571,23 @@ class Vt(LineBasedScrollArea, MenuMode)
          c := peek_ch()
          if any(&digits, c) then {
             t := get_ch()
-            repeat {
-               if any(&digits, peek_ch()) then
-                  t ||:= get_ch()
-               else
-                  break
-            }
+            while any(&digits, peek_ch()) do
+               t ||:= get_ch()
             put(l, integer(t))
          } else if c == u"\"" then {
             get_ch()  # opening "
             t := u""
             repeat {
+               # This check is to avoid getting stuck in the loop.  ^C
+               # will certainly be followed by a newline, or the user
+               # will press newline to get the prompt, or the prompt
+               # itself will produce a newline.
+               if any('\r\n', peek_ch()) then
+                  break
                c := get_ch()
                if c == u"\"" then
                   break
-               else
-                  t ||:= c
+               t ||:= c
             }
             put(l, t)
          } else if c == u";" then
@@ -607,7 +608,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       # See ecma 5.4
       while any(' !"#$%&\'()*+,\-./', cmd[-1]) do
          cmd ||:= get_ch()
-      #write("cmd=",cmd,"  params=", to_string(param))
       case string(cmd) of {
          "m" : every do_set_attr(int_params(param, 0))
          "!L" : do_set_link(param)
@@ -639,7 +639,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          "?l" : do_dec_reset(int_param(param, 1))
          "!p" : do_soft_reset()
          "g" : do_tab_clear(int_param(param, 1, 0))
-         default : if \verbose_flag then write("csi not implemented: cmd=",cmd,"  params=", to_string(param))
+         default : if \verbose_flag then write("csi not implemented: cmd=", image(cmd), "  params=", to_string(param))
       }
    end
 
@@ -1280,8 +1280,79 @@ class Vt(LineBasedScrollArea, MenuMode)
          "N" : do_single_shift(3)
          "O" : do_single_shift(4)
          "c" : do_full_reset()
+         "^" : do_privacy_message()
+         "_" : do_apc()
+         "P" : do_dcs()
+         "]" : do_osc()
+         "X" : do_sos()
          default : if \verbose_flag then write("Unknown ESC char: ", c)
       }
+   end
+
+   # Read a string according to ecma 8.3.27, 8.3.89 and others.  The
+   # stuck loop check is non-standard.
+   private read_string1()
+      local t, c
+      t := u""
+      repeat {
+         # Avoid stuck loop; see comment in read_params() above.
+         if any('\r\n', peek_ch()) then
+            break
+         c := get_ch()
+         if c == u"\e" then {
+            # ESC\ terminates, as does ESC on its own.
+            if peek_ch() == u"\\" then
+               get_ch()
+            break
+         }
+         if any('\x08-\x0D\x20-\x7E', c) then
+            t ||:= c
+         else
+            break
+      }
+      return t
+   end
+
+   # Read a string according to ecma 8.3.128.  The stuck loop check is
+   # non-standard.
+   private read_string2()
+      local t, c
+      t := u""
+      repeat {
+         # Avoid stuck loop; see comment in read_params() above.
+         if any('\r\n', peek_ch()) then
+            break
+         c := get_ch()
+         if c == u"\e" then {
+            # Only ESC\ terminates.
+            if peek_ch() == u"\\" then {
+               get_ch()
+               break
+            }
+         }
+         t ||:= c
+      }
+      return t
+   end
+
+   private do_privacy_message()
+      read_string1()
+   end
+
+   private do_apc()
+      read_string1()
+   end
+
+   private do_dcs()
+      read_string1()
+   end
+
+   private do_osc()
+      read_string1()
+   end
+
+   private do_sos()
+      read_string2()
    end
 
    private do_application_keypad_mode(f)
@@ -1874,8 +1945,16 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private handle_special_key(e)
       case e.code of {
-         # Standard navigation if shift is pressed
-         Key.HOME | Key.END | Key.PGUP | Key.PGDN : if \e.shift then {
+         # Navigation if shift is pressed
+         Key.PGUP : if \e.shift then {
+            goto_first(get_line_info().first_whole - max(rows - 3, 1))
+            return
+         }
+         Key.PGDN : if \e.shift then {
+            goto_last(get_line_info().last_whole + max(rows - 3, 1))
+            return
+         }
+         Key.HOME | Key.END : if \e.shift then {
             on_default_key(e)
             return
          }

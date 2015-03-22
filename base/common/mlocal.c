@@ -136,17 +136,17 @@ static char *tryfile(char *dir, char *name, char *extn)
 #endif
 
 #if UNIX
-int is_termlinks_tty(FILE *f)
+int is_flowterm_tty(FILE *f)
 {
-    static int init, termlinks;
+    static int init, flowterm;
     if (!init) {
         char *s;
         init = 1;
-        s = getenv("TERMLINKS");
+        s = getenv("FLOWTERM");
         if (s)
-            termlinks = atoi(s);
+            flowterm = atoi(s);
     }
-    switch (termlinks) {
+    switch (flowterm) {
         case 1 : return isatty(fileno(f));
         case 2 : return 1;
         default : return 0;

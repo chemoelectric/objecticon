@@ -66,61 +66,145 @@ fi
 
 ])
 
-AC_DEFUN([AC_STRUCT_TIMEZONE_GMTOFF],
-[ AC_REQUIRE([AC_STRUCT_TIMEZONE])dnl
-  AC_CACHE_CHECK(for struct tm.tm_gmtoff, rb_cv_member_struct_tm_tm_gmtoff,
+AC_DEFUN([AX_STRUCT_TIMEZONE_GMTOFF],
+[
+  AC_CACHE_CHECK(for struct tm.tm_gmtoff, ax_cv_member_struct_tm_tm_gmtoff,
   [AC_TRY_COMPILE([#include <time.h>],[struct tm t; t.tm_gmtoff = 3600;],
-        [rb_cv_member_struct_tm_tm_gmtoff=yes],
-        [rb_cv_member_struct_tm_tm_gmtoff=no])])
-  AC_CACHE_CHECK(for struct tm.tm_isdst, rb_cv_member_struct_tm_tm_isdst,
+        [ax_cv_member_struct_tm_tm_gmtoff=yes],
+        [ax_cv_member_struct_tm_tm_gmtoff=no])])
+  AC_CACHE_CHECK(for struct tm.tm_isdst, ax_cv_member_struct_tm_tm_isdst,
   [AC_TRY_COMPILE([#include <time.h>],[struct tm t; t.tm_isdst = 1;],
-        [rb_cv_member_struct_tm_tm_isdst=yes],
-        [rb_cv_member_struct_tm_tm_isdst=no])])
-  if test "$rb_cv_member_struct_tm_tm_gmtoff" = yes; then
+        [ax_cv_member_struct_tm_tm_isdst=yes],
+        [ax_cv_member_struct_tm_tm_isdst=no])])
+  if test "$ax_cv_member_struct_tm_tm_gmtoff" = yes; then
      AC_DEFINE(HAVE_STRUCT_TM_TM_GMTOFF)
   fi
-  if test "$rb_cv_member_struct_tm_tm_isdst" = yes; then
+  if test "$ax_cv_member_struct_tm_tm_isdst" = yes; then
      AC_DEFINE(HAVE_STRUCT_TM_TM_ISDST)
   fi
 ])
 
-AC_DEFUN([AC_VAR_TIMEZONE_EXTERNALS],
+AC_DEFUN([AX_VAR_TIMEZONE_EXTERNALS],
 [  
-   AC_CACHE_CHECK(for timezone external, mb_cv_var_timezone,
+   AC_CACHE_CHECK(for timezone external, ax_cv_var_timezone,
    [  AC_TRY_LINK([#include <time.h>], [return (int)timezone;],
-         mb_cv_var_timezone=yes,
-         mb_cv_var_timezone=no)
+         ax_cv_var_timezone=yes,
+         ax_cv_var_timezone=no)
    ])
-   AC_CACHE_CHECK(for altzone external, mb_cv_var_altzone,
+   AC_CACHE_CHECK(for altzone external, ax_cv_var_altzone,
    [  AC_TRY_LINK([#include <time.h>], [return (int)altzone;],
-         mb_cv_var_altzone=yes,
-         mb_cv_var_altzone=no)
+         ax_cv_var_altzone=yes,
+         ax_cv_var_altzone=no)
    ])
-   AC_CACHE_CHECK(for daylight external, mb_cv_var_daylight,
+   AC_CACHE_CHECK(for daylight external, ax_cv_var_daylight,
    [  AC_TRY_LINK([#include <time.h>], [return (int)daylight;],
-         mb_cv_var_daylight=yes,
-         mb_cv_var_daylight=no)
+         ax_cv_var_daylight=yes,
+         ax_cv_var_daylight=no)
    ])
-   AC_CACHE_CHECK(for tzname external, mb_cv_var_tzname,
+   AC_CACHE_CHECK(for tzname external, ax_cv_var_tzname,
    [  AC_TRY_LINK([#include <time.h>], [return (int)tzname;],
-         mb_cv_var_tzname=yes,
-         mb_cv_var_tzname=no)
+         ax_cv_var_tzname=yes,
+         ax_cv_var_tzname=no)
    ])
-   if test $mb_cv_var_timezone = yes; then
-      AC_DEFINE([HAVE_TIMEZONE], 1,
-              [Define if you have the external `timezone' variable.])
+   if test $ax_cv_var_timezone = yes; then
+      AC_DEFINE(HAVE_TIMEZONE)
    fi
-   if test $mb_cv_var_altzone = yes; then
-      AC_DEFINE([HAVE_ALTZONE], 1,
-              [Define if you have the external `altzone' variable.])
+   if test $ax_cv_var_altzone = yes; then
+      AC_DEFINE(HAVE_ALTZONE)
    fi
-   if test $mb_cv_var_daylight = yes; then
-      AC_DEFINE([HAVE_DAYLIGHT], 1,
-              [Define if you have the external `daylight' variable.])
+   if test $ax_cv_var_daylight = yes; then
+      AC_DEFINE(HAVE_DAYLIGHT)
    fi
-   if test $mb_cv_var_tzname = yes; then
-      AC_DEFINE([HAVE_TZNAME], 1,
-              [Define if you have the external `tzname' variable.])
+   if test $ax_cv_var_tzname = yes; then
+      AC_DEFINE(HAVE_TZNAME)
+   fi
+])
+
+AC_DEFUN([AX_CHECK_MSG_NOSIGNAL],
+[
+  AC_CACHE_CHECK(for MSG_NOSIGNAL,  ax_cv_flag_msg_nosignal,
+     [AC_TRY_COMPILE([#include <sys/types.h>
+                      #include <sys/socket.h>],[int flags = MSG_NOSIGNAL;],
+        [ax_cv_flag_msg_nosignal=yes],
+        [ax_cv_flag_msg_nosignal=no])])
+   if test "$ax_cv_flag_msg_nosignal" = yes ; then
+	AC_DEFINE(HAVE_MSG_NOSIGNAL)
+   fi
+])
+
+AC_DEFUN([AX_CHECK_UNSETENV_RETURNS_INT],
+[
+   AC_CACHE_CHECK(if unsetenv returns int, ax_cv_flag_unsetenv_int_return,
+      [AC_TRY_COMPILE([#include <stdlib.h>], [int x = unsetenv("dummy");],
+         [ax_cv_flag_unsetenv_int_return=yes],
+         [ax_cv_flag_unsetenv_int_return=no])])
+   if test "$ax_cv_flag_unsetenv_int_return" = yes ; then
+      AC_DEFINE(HAVE_UNSETENV_INT_RETURN)
+   fi
+])
+
+AC_DEFUN([AX_CHECK_DOUBLE_HAS_WORD_ALIGNMENT],
+[
+   AC_CACHE_CHECK(if double has word alignment, ax_cv_flag_double_has_word_alignment,
+   [AC_RUN_IFELSE([AC_LANG_PROGRAM([[
+                     #include <stdio.h>
+                     #include <stddef.h>]],[[
+                        struct t { char x; double d; };
+                        return (sizeof(double) % sizeof(void*) == 0 &&
+                                offsetof(struct t, d) == sizeof(void *)) ? 0:1;
+                     ]])],
+                   [ax_cv_flag_double_has_word_alignment=yes],
+                   [ax_cv_flag_double_has_word_alignment=no])])
+   if test "$ax_cv_flag_double_has_word_alignment" = yes ; then
+      AC_DEFINE(DOUBLE_HAS_WORD_ALIGNMENT)
+   fi
+])
+
+AC_DEFUN([AX_CHECK_TIOCSCTTY],
+[
+   AC_CACHE_CHECK(if TIOCSCTTY is defined, ax_cv_flag_tiocsctty_is_defined,
+   [AC_EGREP_CPP(yes,
+                 [#include <sys/ioctl.h>
+                  #ifdef TIOCSCTTY
+                      yes
+                  #endif],
+                 [ax_cv_flag_tiocsctty_is_defined=yes],
+                 [ax_cv_flag_tiocsctty_is_defined=no])])
+   if test "$ax_cv_flag_tiocsctty_is_defined" = yes ; then
+      AC_DEFINE(HAVE_TIOCSCTTY)
+   fi
+])
+
+AC_DEFUN([AX_CHECK_NS_FILE_STAT],
+[
+   AC_CACHE_CHECK(for nanosecond file stat support, ax_cv_flag_have_ns_file_stat,
+      [AC_TRY_COMPILE([#include <sys/types.h>
+                       #include <sys/stat.h>
+                       #include <unistd.h>],
+                      [struct stat st;
+                       st.st_mtim.tv_nsec = 0;],
+         [ax_cv_flag_have_ns_file_stat=yes],
+         [ax_cv_flag_have_ns_file_stat=no])])
+   if test "$ax_cv_flag_have_ns_file_stat" = yes ; then
+      AC_DEFINE(HAVE_NS_FILE_STAT)
+   fi
+])
+
+AC_DEFUN([AX_CHECK_COMPUTED_GOTO],
+[
+   AC_CACHE_CHECK(for computed goto support, ax_cv_flag_have_computed_goto,
+     [AC_TRY_COMPILE([],
+         [ static void *labels[] = {&&label0, &&label1, &&label2};
+           unsigned char *pc = 0;
+           goto *labels[*pc];
+           label0: ;
+           label1: ;
+           label2: ;
+         ], 
+         [ax_cv_flag_have_computed_goto=yes],
+         [ax_cv_flag_have_computed_goto=no])])
+   if test "$ax_cv_flag_have_computed_goto" = yes ; then
+      AC_DEFINE(HAVE_COMPUTED_GOTO)
    fi
 ])
 
@@ -190,66 +274,7 @@ AC_DEFUN([AX_LIB_MYSQL],
     AC_SUBST([MYSQL_LDFLAGS])
 ])
 
-
-
-dnl ======================================================================
-dnl Check for MSG_NOSIGNAL flag
-dnl ======================================================================
-AC_DEFUN([AC_FLAG_MSG_NOSIGNAL], [
-AC_REQUIRE([AC_PROG_CC])
-AC_CACHE_CHECK([for MSG_NOSIGNAL], 
-  ac_cv_flag_msg_nosignal, [
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#include <sys/types.h>
-#include <sys/socket.h>]], [[
-  int flags = MSG_NOSIGNAL;
-]])],[ac_cv_flag_msg_nosignal=yes],[ac_cv_flag_msg_nosignal=no])])
-if test "$ac_cv_flag_msg_nosignal" = yes ; then
-	AC_DEFINE([HAVE_MSG_NOSIGNAL], 1,
-		[Define to 1 if you have MSG_NOSIGNAL flag for send()]) 
-fi
-])dnl
-
-dnl ======================================================================
-dnl Check for unsetenv returning an int
-dnl ======================================================================
-AC_DEFUN([CHECK_UNSETENV], [
-AC_REQUIRE([AC_PROG_CC])
-AC_CACHE_CHECK([if unsetenv returns int], 
-  ac_cv_flag_unsetenv_int_return, [
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-#include <stdlib.h>
-]], [[
-  int x = unsetenv("dummy");
-]])],[ac_cv_flag_unsetenv_int_return=yes],[ac_cv_flag_unsetenv_int_return=no])])
-if test "$ac_cv_flag_unsetenv_int_return" = yes ; then
-	AC_DEFINE([HAVE_UNSETENV_INT_RETURN], 1,
-		[Define to 1 if unsetenv returns an int]) 
-fi
-])dnl
-
-
-AC_DEFUN([CHECK_DOUBLE_HAS_WORD_ALIGNMENT],
-   [ AC_MSG_CHECKING(if double has word alignment)
-     AC_RUN_IFELSE(
-                   [AC_LANG_PROGRAM([[
-                     #include <stdio.h>
-                     #include <stddef.h>]],[[
-                        struct t { char x; double d; };
-                        return (sizeof(double) % sizeof(void*) == 0 &&
-                                offsetof(struct t, d) == sizeof(void *)) ? 0:1;
-                     ]])],
-                   [
-                   AC_MSG_RESULT(yes)
-                   AC_DEFINE(DOUBLE_HAS_WORD_ALIGNMENT)
-                   ],
-                   [
-                   AC_MSG_RESULT(no)
-                   ])
-])
-
-
-AC_DEFUN([CHECK_DYNAMIC_LINKING],
+AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
    [ 
      dnl Save $LIBS since we won't want -ldl if we find we can't use dynamic linking
      my_save_libs=$LIBS
@@ -327,50 +352,6 @@ AC_DEFUN([CHECK_DYNAMIC_LINKING],
      AC_SUBST(DYNAMIC_EXPORT_LDFLAGS)
      AC_SUBST(HAVE_DYNAMIC_LINKING)
 ])
-
-
-AC_DEFUN([CHECK_COMPUTED_GOTO],
-   [ AC_MSG_CHECKING(for computed goto support)
-     AC_COMPILE_IFELSE(
-         [AC_LANG_PROGRAM([[]], [[
-             static void *labels[] = {&&label0, &&label1, &&label2};
-             unsigned char *pc = 0;
-             goto *labels[*pc];
-             label0: ;
-             label1: ;
-             label2: ;
-             ]])], 
-        [
-          AC_MSG_RESULT(yes)
-          AC_DEFINE(HAVE_COMPUTED_GOTO)
-        ],
-        [
-          AC_MSG_RESULT(no)
-        ])
-])
-
-
-AC_DEFUN([CHECK_NS_FILE_STAT],
-   [ AC_MSG_CHECKING(for nanosecond file stat support)
-     AC_COMPILE_IFELSE(
-         [AC_LANG_PROGRAM([[
-               #include <sys/types.h>
-               #include <sys/stat.h>
-               #include <unistd.h>
-            ]], [[
-               struct stat st;
-               st.st_mtim.tv_nsec = 0;
-             ]])], 
-        [
-          AC_MSG_RESULT(yes)
-          AC_DEFINE(HAVE_NS_FILE_STAT)
-        ],
-        [
-          AC_MSG_RESULT(no)
-        ])
-])
-
-
 
 
 AC_DEFUN([AX_CHECK_CAIRO],
@@ -531,9 +512,6 @@ AC_DEFUN([AX_CHECK_ZLIB],
     fi
 ])
 
-
-
-
 AC_DEFUN([AX_CHECK_X11],
 [
     AC_MSG_CHECKING(if X11 graphics are wanted)
@@ -568,23 +546,4 @@ AC_DEFUN([AX_CHECK_X11],
               AC_MSG_RESULT([$PKGERR])
            fi
     fi
-])
-
-AC_DEFUN([AX_CHECK_TIOCSCTTY],
-[
-AC_MSG_CHECKING(if TIOCSCTTY is defined)
-AC_EGREP_CPP(yes,
-[
-#include <sys/ioctl.h>
-#ifdef TIOCSCTTY
-  yes
-#endif
-],
-[
-  AC_MSG_RESULT(yes)
-  AC_DEFINE(HAVE_TIOCSCTTY)
-],
-[
-  AC_MSG_RESULT(no)
-])
 ])

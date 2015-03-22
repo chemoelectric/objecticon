@@ -67,4 +67,4 @@ char *word2cstr(word n);
 unsigned int hashcstr(char *s);
 
 char *get_hostname(void);
-int is_termlinks_tty(FILE *f);
+int is_flowterm_tty(FILE *f);

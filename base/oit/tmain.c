@@ -568,7 +568,7 @@ void quit(char *fmt, ...)
 void begin_link(FILE *f, char *fname, int line)
 {
     char *s;
-    if (!is_termlinks_tty(f))
+    if (!is_flowterm_tty(f))
         return;
     fputs("\x1b[!\"file://", f);
     if ((s = get_hostname()))
@@ -586,7 +586,7 @@ void begin_link(FILE *f, char *fname, int line)
 
 void end_link(FILE *f)
 {
-    if (is_termlinks_tty(f))
+    if (is_flowterm_tty(f))
         fputs("\x1b[!L", f);
 }
 #else

@@ -17,14 +17,15 @@ import
    ipl.childwait,
    ipl.vt,
    ipl.columnize,
-   ipl.strings
+   ipl.strings,
+   ipl.io
 
 global opts
 
 $load EXIT "rpp.EXIT_24.gif"
 $load SAVE "rpp.SAVE_24.gif"
 $load MIXFILE "rpp.MIXFILE_24.png"
-$load TERMINAL_LOGO "rpp.TERMINAL_LOGO.png"
+$load FLOWTERM_LOGO "rpp.FLOWTERM_LOGO.png"
 
 abstract class Runner()
    public abstract get_command()
@@ -116,7 +117,7 @@ class ColumnsMenu(DynamicMenu)
    end
 end
 
-class TerminalDialog(Dialog)
+class FlowTermDialog(Dialog)
    private readable
       favourite_dirs,
       tabs
@@ -175,7 +176,7 @@ class TerminalDialog(Dialog)
 
    public launch_prog(runner)
       local pid, nul, cmd
-      if \opts["v"] then write("Desktop entry: ", to_string(runner.desktop_entry, 3, 1))
+      if \opts["v"] then write("Launch runner: ", to_string(runner, 3, 1))
       pid := System.fork() | fail
       if pid > 0 then {
          # Parent
@@ -191,7 +192,7 @@ class TerminalDialog(Dialog)
          every nul.dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
          nul.close()
       }
-      System.exec("/bin/bash", ["-c", "exec " || cmd]) | stop(&why)
+      System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
    end
 
@@ -261,7 +262,7 @@ class TerminalDialog(Dialog)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
       self.set_layout(GridLayout().set_extra("cells"))
-      set_label("Terminal")
+      set_label("FlowTerm")
       return
    end
 end
@@ -794,7 +795,7 @@ class Terminal(TabItem, VtUI)
       history_pos,
       nav_dir,
       io_task,
-      check_cwd_task,
+      check_cwd_time_task,
       pid, 
       tty,
       input,
@@ -905,11 +906,11 @@ class Terminal(TabItem, VtUI)
       local env, sh, xd, fp, s, sh2
       env := []
       every put(env, System.environ())
-      put(env, "TERMLINKS=1")
+      put(env, "FLOWTERM=1")
       put(env, "TERM=xterm")
       sh := System.getpw(System.getuid()).shell | "/bin/sh"
       if /opts["nx"] then {
-         s := \opts["x"] | Files.get_home() || "/termlinks-extras/bin"
+         s := \opts["x"] | Files.get_home() || "/flowterm-extras/bin"
          fp := FilePath(s).canonical()
          xd := fp.str()
          if Files.access(xd) then {
@@ -959,9 +960,9 @@ class Terminal(TabItem, VtUI)
       return pats
    end
 
-   private check_pwd()
+   private check_cwd_change()
       local s
-      s := ucs(Files.readlink("/proc/" || pid || "/cwd")) | fail
+      s := ucs(get_process_cwd(pid)) | fail
       if s ~== cwd then {
          set_cwd(s, if s === nav_dir then &yes else &no)
          nav_dir := &null
@@ -987,14 +988,14 @@ class Terminal(TabItem, VtUI)
       output.input(s)
    end
 
-   private check_cwd()
+   private check_cwd_time()
       local t
       repeat {
          if t := get_ns_mtime(cwd) then {
             if t ~= cwd_mtime then
                refresh_cwd()
          }
-         check_cwd_task.sleep(500)
+         check_cwd_time_task.sleep(500)
       }
    end
 
@@ -1039,8 +1040,11 @@ class Terminal(TabItem, VtUI)
             if \opts["v"] then
                write("In: ", image(s))
             send_vt(s)
-            check_pwd()
+            check_cwd_change()
             some_in := &yes
+         } else {
+            err_msg(u"IO problem on tty, neither poll in or out ready")
+            break
          }
       }
       io_task.revert()
@@ -1747,18 +1751,18 @@ class Terminal(TabItem, VtUI)
       setup_shell() | stop(&why)
       io_task := Dispatcher.new_task{service_tty()}
       io_task.start()
-      check_cwd_task := Dispatcher.new_task{check_cwd()}
-      check_cwd_task.start()
+      check_cwd_time_task := Dispatcher.new_task{check_cwd_time()}
+      check_cwd_time_task.start()
    end
 
    public finally()
       TabItem.finally()
-      check_cwd_task.stop()
+      check_cwd_time_task.stop()
       io_task.stop()
       System.kill(pid, Signal.SIGHUP)
       tty.close()
       System.wait(pid)
-      check_cwd_task := io_task := tty := &null
+      check_cwd_time_task := io_task := tty := &null
    end
 
    private on_favourites_list(ev)
@@ -2173,8 +2177,8 @@ procedure main(a)
       name_image("rpp.EXIT_24", EXIT).
       name_image("rpp.SAVE_24", SAVE).
       name_image("rpp.MIXFILE_24", MIXFILE)
-   insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(TERMINAL_LOGO))
-   d := TerminalDialog()
+   insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(FLOWTERM_LOGO))
+   d := FlowTermDialog()
    if *a = 0 | a[1][1] == ":" then
       push(a, "")
    d.do_tab_cmd(a) | stop(&why)

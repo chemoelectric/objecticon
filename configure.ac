@@ -1,10 +1,25 @@
 AC_INIT([Object Icon],
-        m4_esyscmd([echo 2.13svn-`svnversion` | tr : - | tr -d '\n']),
+        m4_esyscmd([svnversion | tr : - | tr -d '\n']),
         [r.parlett@gmail.com],
         [objecticon])
 
 AC_GNU_SOURCE
 AC_CANONICAL_HOST
+case $host_os in
+     *linux*)
+        AC_DEFINE(OS_LINUX)
+        ;;
+     *solaris*)
+        AC_DEFINE(OS_SOLARIS)
+        ;;
+     *aix*)
+        AC_DEFINE(OS_AIX)
+        ;;
+     *bsd*)
+        AC_DEFINE(OS_BSD)
+        ;;
+esac
+
 
 AC_DEFUN([OI_ADD_LIB],[
  AC_CHECK_LIB($1,main)
@@ -31,6 +46,8 @@ CONFIG_DATE=$(date)
 AC_CONFIG_SRCDIR([base/oix/init.r])
 
 AC_PROG_CC
+dnl Needed by ancient autoconf for AC_EGREP_CPP to work
+AC_PROG_EGREP
 
 CCVER=`$CC --version`
 case $CCVER in
@@ -41,7 +58,7 @@ esac
 
 AX_LIB_SOCKET_NSL()
 
-CHECK_DYNAMIC_LINKING()
+AX_CHECK_DYNAMIC_LINKING()
 
 AX_CHECK_X11()
 if test "$found_x11" = yes; then
@@ -65,8 +82,6 @@ if test "$HAVE_DYNAMIC_LINKING" = yes; then
    AX_CHECK_OPENSSL()
 fi
 
-AC_FLAG_MSG_NOSIGNAL()
-
 AC_PROG_INSTALL()
 AC_PROG_LN_S()
 AC_PROG_MAKE_SET()
@@ -85,9 +100,9 @@ AC_FUNC_ALLOCA()
 AC_CHECK_FUNCS(gethostent getrlimit setrlimit strerror vfork poll uname truncate)
 AC_CHECK_GLOBAL(sys_nerr)
 AC_CHECK_GLOBAL(sys_errlist)
-AC_VAR_TIMEZONE_EXTERNALS()
-AC_STRUCT_TIMEZONE_GMTOFF()
-CHECK_UNSETENV()
+AX_VAR_TIMEZONE_EXTERNALS()
+AC_STRUCT_TIMEZONE()
+AX_STRUCT_TIMEZONE_GMTOFF()
 AC_CHECK_GLOBAL(_etext)
 AC_CYGWIN()
 AC_SUBST([CYGWIN])
@@ -98,9 +113,11 @@ AC_CHECK_SIZEOF(void*)
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(long long)
 
-CHECK_DOUBLE_HAS_WORD_ALIGNMENT()
-CHECK_COMPUTED_GOTO()
-CHECK_NS_FILE_STAT()
+AX_CHECK_UNSETENV_RETURNS_INT()
+AX_CHECK_DOUBLE_HAS_WORD_ALIGNMENT()
+AX_CHECK_COMPUTED_GOTO()
+AX_CHECK_NS_FILE_STAT()
+AX_CHECK_MSG_NOSIGNAL()
 
 AC_CONFIG_COMMANDS(system, [
 	AS_MKDIR_P(bin)

@@ -4596,6 +4596,16 @@ function io_PttyStream_prepare_slave(f)
            fail;
        }
 #endif
+#if OS_SOLARIS
+       if (ioctl(fd, I_PUSH, "ptem") < 0) {
+           errno2why();
+           fail;
+       }
+       if (ioctl(fd, I_PUSH, "ldterm") < 0) {
+           errno2why();
+           fail;
+       }
+#endif
        return nulldesc;
     }
 end

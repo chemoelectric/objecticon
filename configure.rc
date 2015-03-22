@@ -50,7 +50,7 @@ EOF
 echo creating base/h/version.h
 x=`{date}
 sed -e 's/@CONFIG_DATE@/'^$"x^'/'  \
-    -e 's/@PACKAGE_VERSION@/2.13svn-p9/' \
+    -e 's/@PACKAGE_VERSION@/plan9/' \
     <./config/files/base/h/version.h >base/h/version.h
 echo creating base/h/auto.h
 cat >base/h/auto.h <<EOF
