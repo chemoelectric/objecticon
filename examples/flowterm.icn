@@ -23,9 +23,9 @@ import
 global opts
 
 $load EXIT "rpp.EXIT_24.gif"
-$load SAVE "rpp.SAVE_24.gif"
-$load MIXFILE "rpp.MIXFILE_24.png"
 $load FLOWTERM_LOGO "rpp.FLOWTERM_LOGO.png"
+$load HOURGLASS "rpp.HOURGLASS_24.png"
+$load KEYBOARD "rpp.KEYBOARD_24.png"
 
 abstract class Runner()
    public abstract get_command()
@@ -734,7 +734,7 @@ end
 class HistoryList(ButtonOnlyList)
    public create_button()
       local b
-      b := IconButton().set_paint(ImagePaint())
+      b := IconButton().set_paint(ImagePaint().set_cache("rpp.HOURGLASS_24"))
       theme_toolbar_button(b, "view-history")
       return b
    end
@@ -1940,7 +1940,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private setup()
-      local paint_2, paint_14, paint_27, paint_32, paint_7, layout_4, paint_11, paint_37, paint_42, panel_4, paint_29, split_content_3, split_content_4, paint_9, layout_6, paint_13, paint_31, paint_44, paint_6, layout_3, paint_10, paint_23, paint_41, paint, paint_3, paint_28, paint_8, border_1, layout_5, paint_12, paint_30, paint_40
+      local paint_2, paint_14, paint_27, paint_32, paint_45, paint_7, layout_4, paint_11, paint_37, paint_42, panel_4, paint_29, split_content_3, split_content_4, paint_9, layout_6, paint_13, paint_31, paint_6, layout_3, paint_10, paint_23, paint_41, paint, paint_3, paint_28, paint_8, border_1, layout_5, paint_12, paint_30, paint_40
       paint_10 := ImagePaint().
          set_cache("rpp.EXIT_24")
       paint_9 := TextPaint("Close")
@@ -2014,7 +2014,8 @@ class Terminal(TabItem, VtUI)
          clear_constraints().
          set_tooltip(paint_41).
          connect(self.on_history_list, Event.SELECTION_CHANGED)
-      paint_44 := TextPaint("")
+      paint_45 := ImagePaint().
+         set_cache("rpp.KEYBOARD_24")
       paint_42 := TextPaint("Columns focus")
       focus_columns_button := IconButton().
          set_align(Align.L, Align.C).
@@ -2023,7 +2024,7 @@ class Terminal(TabItem, VtUI)
          connect(self.on_focus_columns_button, Event.ACTION).
          set_no_click_focus(&yes).
          set_toggles(&yes).
-         set_paint(paint_44)
+         set_paint(paint_45)
       paint_23 := TextPaint("Filter")
       filter := EditList().
          set_size(scale(150)).
@@ -2174,9 +2175,9 @@ procedure main(a)
    local d, t
    opts := options(a, "-x: -nx! -v! -h+ -hs! -tfg: -tbg: -trevfg: -trevbg: -tfont:")
    ImageCache.
-      name_image("rpp.EXIT_24", EXIT).
-      name_image("rpp.SAVE_24", SAVE).
-      name_image("rpp.MIXFILE_24", MIXFILE)
+      name_image("rpp.HOURGLASS_24", HOURGLASS).
+      name_image("rpp.KEYBOARD_24", KEYBOARD).
+      name_image("rpp.EXIT_24", EXIT)
    insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(FLOWTERM_LOGO))
    d := FlowTermDialog()
    if *a = 0 | a[1][1] == ":" then

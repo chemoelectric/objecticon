@@ -24,7 +24,8 @@ $load EXIT "rpp.EXIT_24.gif"
 $load STOP "rpp.STOP_24.gif"
 $load PASTE "rpp.PASTE_24.gif"
 $load CLEAR "rpp.CLEAR_24.gif"
-$load FONT "rpp.FONT_24.gif"
+$load INCREASE_FONT "rpp.INCREASE_FONT_24.png"
+$load DECREASE_FONT "rpp.DECREASE_FONT_24.png"
 $load BROWSER_LOGO "rpp.BROWSER_LOGO.png"
 
 class Settings2()
@@ -1648,7 +1649,7 @@ class BrowserTab(TabItem, BrowserUI)
          connect(self.on_increase_font, Event.ACTION).
          set_no_click_focus(&yes).
          set_toggles(&no).
-         set_paint(ImagePaint().set_cache("rpp.FONT_24"))
+         set_paint(ImagePaint().set_cache("rpp.INCREASE_FONT_24"))
       decrease_font_button := IconButton().
          set_align(Align.L, Align.C).
          clear_constraints().
@@ -1656,7 +1657,7 @@ class BrowserTab(TabItem, BrowserUI)
          connect(self.on_decrease_font, Event.ACTION).
          set_no_click_focus(&yes).
          set_toggles(&no).
-         set_paint(ImagePaint().set_cache("rpp.FONT_24"))
+         set_paint(ImagePaint().set_cache("rpp.DECREASE_FONT_24"))
 
       panel := Panel().
          clear_constraints().
@@ -1768,7 +1769,8 @@ procedure main(a)
       name_image("rpp.PASTE_24", PASTE).
       name_image("rpp.STOP_24", STOP).
       name_image("rpp.CLEAR_24", CLEAR).
-      name_image("rpp.FONT_24", FONT)
+      name_image("rpp.INCREASE_FONT_24", INCREASE_FONT).
+      name_image("rpp.DECREASE_FONT_24", DECREASE_FONT)
    insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(BROWSER_LOGO))
    d := BrowserDialog(cookies, settings)
    if *a = 0 then
