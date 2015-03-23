@@ -7,16 +7,23 @@ import
    io,
    ipl.graphics
 
+$ifdef _PNG
+$load CLOCK "images/gui.CLOCK_24.png"
+$load CLOSE "images/gui.CLOSE_24.png"
+$load FONT "images/gui.FONT_24.png"
+$load FILESIZE "images/gui.FILESIZE_24.png"
+$else
+$load CLOCK "images/gui.CLOCK_24.gif"
+$load CLOSE "images/gui.CLOSE_24.gif"
+$load FONT "images/gui.FONT_24.gif"
+$load FILESIZE "images/gui.FILESIZE_24.gif"
+$endif
 $load HOME "images/gui.HOME_24.gif"
 $load NEW_FOLDER "images/gui.NEW_FOLDER_24.gif"
 $load REFRESH "images/gui.REFRESH_24.gif"
 $load UP "images/gui.UP_24.gif"
 $load PREV "images/gui.PREV_24.gif"
 $load NEXT "images/gui.NEXT_24.gif"
-$load CLOSE "images/gui.CLOSE_24.png"
-$load CLOCK "images/gui.CLOCK_24.gif"
-$load FONT "images/gui.FONT_24.gif"
-$load FILESIZE "images/gui.FILESIZE_24.gif"
 $load HIDDENFILE "images/gui.HIDDENFILE_24.gif"
 $load FAVOURITES "images/gui.FAVOURITES_24.gif"
 $load CONFIGURE "images/gui.CONFIGURE_24.gif"
