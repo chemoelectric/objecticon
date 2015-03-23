@@ -20,12 +20,17 @@ import
 
 global opts
 
+$ifdef _PNG
+$load INCREASE_FONT "rpp.INCREASE_FONT_24.png"
+$load DECREASE_FONT "rpp.DECREASE_FONT_24.png"
+$else
+$load INCREASE_FONT "rpp.INCREASE_FONT_24.gif"
+$load DECREASE_FONT "rpp.DECREASE_FONT_24.gif"
+$endif
 $load EXIT "rpp.EXIT_24.gif"
 $load STOP "rpp.STOP_24.gif"
 $load PASTE "rpp.PASTE_24.gif"
 $load CLEAR "rpp.CLEAR_24.gif"
-$load INCREASE_FONT "rpp.INCREASE_FONT_24.png"
-$load DECREASE_FONT "rpp.DECREASE_FONT_24.png"
 $load BROWSER_LOGO "rpp.BROWSER_LOGO.png"
 
 class Settings2()

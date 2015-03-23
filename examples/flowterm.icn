@@ -22,10 +22,15 @@ import
 
 global opts
 
-$load EXIT "rpp.EXIT_24.gif"
-$load FLOWTERM_LOGO "rpp.FLOWTERM_LOGO.png"
+$ifdef _PNG
 $load HOURGLASS "rpp.HOURGLASS_24.png"
 $load KEYBOARD "rpp.KEYBOARD_24.png"
+$else
+$load HOURGLASS "rpp.HOURGLASS_24.gif"
+$load KEYBOARD "rpp.KEYBOARD_24.gif"
+$endif
+$load EXIT "rpp.EXIT_24.gif"
+$load FLOWTERM_LOGO "rpp.FLOWTERM_LOGO.png"
 
 abstract class Runner()
    public abstract get_command()
