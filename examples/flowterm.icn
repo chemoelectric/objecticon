@@ -267,7 +267,7 @@ class FlowTermDialog(Dialog)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
       self.set_layout(GridLayout().set_extra("cells"))
-      set_label("FlowTerm")
+      set_label(\opts["t"] | "FlowTerm")
       return
    end
 end
@@ -2178,7 +2178,7 @@ end
 
 procedure main(a)
    local d, t
-   opts := options(a, "-x: -nx! -v! -h+ -hs! -tfg: -tbg: -trevfg: -trevbg: -tfont:")
+   opts := options(a, "-x: -nx! -v! -h+ -hs! -tfg: -tbg: -trevfg: -trevbg: -tfont: -t:")
    ImageCache.
       name_image("rpp.HOURGLASS_24", HOURGLASS).
       name_image("rpp.KEYBOARD_24", KEYBOARD).
