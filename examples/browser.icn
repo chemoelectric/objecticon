@@ -432,8 +432,8 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       file_dialog := FileDialog().set_remember_size(&yes)
       directory_dialog := DirectoryDialog().set_remember_size(&yes)
       last_file_dir := last_download_dir := Files.getcwd()
-      self.set_size(scale(600), scale(650))
-      self.set_resize(&yes)
+      set_size(scale(850), scale(750))
+      set_resize(&yes)
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
          set_label("New Tab")
