@@ -1273,14 +1273,6 @@ class Terminal(TabItem, VtUI)
       return m
    end
 
-   private create_insert_cmd(r)
-      return create send_tty(r.get_command())
-   end
-
-   private create_launch(r)
-      return create parent_dialog.launch_prog(r)
-   end
-
    private create_open_with_menu(url)
       local m, m1, r, de
       m := Menu().set_label("Open with")
@@ -1289,7 +1281,7 @@ class Terminal(TabItem, VtUI)
             de := r.desktop_entry
             m1 := TextMenuItem().
                set_label(de.name).
-               connect(create_launch(r), Event.ACTION)
+               connect(cocopy{parent_dialog.launch_prog(r)}, Event.ACTION)
             m1.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
             m.add(m1)
          }
@@ -1312,7 +1304,7 @@ class Terminal(TabItem, VtUI)
       if r := get_runners(url) then
          m.add(TextMenuItem().
             set_label("Insert command").
-            connect(create_insert_cmd(r), Event.ACTION))
+            connect(create send_tty(r.get_command()), Event.ACTION))
       if url.scheme == u"file" then {
          if is_local_host(url) & s := ucs(url.get_decoded_path()) then {
             if Files.is_directory(s) then {
