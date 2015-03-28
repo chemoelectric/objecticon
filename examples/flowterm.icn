@@ -1597,11 +1597,8 @@ class Terminal(TabItem, VtUI)
 
       if is_live() then {
          if t := member(columns_pos_table, FilePath(cwd).canonical().str()) then {
-            columns.set_area_y(t.area_y).set_area_x(0)
-            if i := Positions{(!columns.data).name, \t.cursor_name} then
-               columns.set_cursor(i)
-            else
-               columns.set_cursor()
+            i := Positions{(!columns.data).name, \t.cursor_name}
+            columns.set_area_y(t.area_y).set_area_x(0).set_cursor(i)
          } else
             columns.set_area_y(0).set_area_x(0).set_cursor()
          parent_dialog.resynch_pointer()
