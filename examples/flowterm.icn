@@ -911,7 +911,6 @@ class Terminal(TabItem, VtUI)
       }
       if pid > 0 then {
          # Parent
-         ChildWait.add_pid(pid, on_shell_exit)
          return
       } else {
          # Child
@@ -1761,7 +1760,8 @@ class Terminal(TabItem, VtUI)
       io_task.stop()
       System.kill(pid, Signal.SIGHUP)
       tty.close()
-      check_cwd_time_task := io_task := tty := &null
+      ChildWait.add_pid(pid, on_shell_exit)
+      check_cwd_time_task := io_task := tty := pid := &null
    end
 
    private on_favourites_list(ev)
