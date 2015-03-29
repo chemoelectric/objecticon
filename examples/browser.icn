@@ -102,7 +102,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       last_file_dir
 
 $ifdef _PLAN9
-   public launch_prog(de, file)
+   public static launch_prog(de, file)
       local pid, nul, cmd
 
       pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
@@ -131,12 +131,12 @@ $ifdef _PLAN9
       syserr("Not reached")
    end
 $else
-   public launch_prog(de, file)
+   public static launch_prog(de, file)
       local pid, nul, cmd, s
       pid := System.fork() | fail
       if pid > 0 then {
          # Parent
-         ChildWait.add_pid(pid, on_child_exit)
+         ChildWait.add_pid(pid, on_prog_exit)
          return
       }
       # Set the working directory for the child process
@@ -150,13 +150,13 @@ $else
          every nul.dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
          nul.close()
       }
-      System.exec("/bin/bash", ["-c", "exec " || cmd]) | stop(&why)
+      System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
    end
 
-   private on_child_exit(r)
+   private static on_prog_exit(r)
       if \opts["v"] then
-         write("Child process exited: ",to_string(r))
+         write("Child application exited: ", to_string(r))
    end
 $endif
 
@@ -465,8 +465,8 @@ $endif
       file_dialog := FileDialog().set_remember_size(&yes)
       directory_dialog := DirectoryDialog().set_remember_size(&yes)
       last_file_dir := last_download_dir := Files.getcwd()
-      self.set_size(scale(600), scale(650))
-      self.set_resize(&yes)
+      set_size(scale(850), scale(750))
+      set_resize(&yes)
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
          set_label("New Tab")
@@ -784,10 +784,6 @@ $endif
                      Xdg.gen_desktop_entries(Xdg.alternative_mime_types(Xdg.get_mime_type_for_file(\res.fname)))}
    end
 
-   private connect_launch(m2, de, file)
-      m2.connect(create parent_dialog.launch_prog(de, file), Event.ACTION)
-   end
-
    private on_table_rpress(ev)
       local popup, menu, l, d, m1, m2, de
 
@@ -818,7 +814,7 @@ $endif
                m2 := TextMenuItem().
                   set_label(de.name)
                m2.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
-               connect_launch(m2, de, d.full_path)
+               m2.connect(cocopy{BrowserDialog.launch_prog(de, d.full_path)}, Event.ACTION)
                m1.add(m2)
             }
             if *m1.children > 0 then 
@@ -1446,7 +1442,7 @@ class BrowserTab(TabItem, BrowserUI)
       file := make_display_file(res)
       if \opts["v"] then 
          write("Display file: ", image(file))
-      parent_dialog.launch_prog(de, file)
+      BrowserDialog.launch_prog(de, file)
       parent_dialog.update_visited(res.url)
       return
    end

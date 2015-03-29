@@ -179,33 +179,6 @@ class FlowTermDialog(Dialog)
       every (!tabs.children).refresh_favourite_dirs()
    end
 
-   public launch_prog(runner)
-      local pid, nul, cmd
-      if \opts["v"] then write("Launch runner: ", to_string(runner, 3, 1))
-      pid := System.fork() | fail
-      if pid > 0 then {
-         # Parent
-         ChildWait.add_pid(pid, on_child_exit)
-         return
-      }
-      # Set the working directory for the child process
-      Files.chdir(runner.get_working_dir() | Files.get_home())
-      # Get the command to run.
-      cmd := runner.get_command()
-      System.setpgid()
-      if nul := FileStream("/dev/null", FileOpt.RDWR) then {
-         every nul.dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
-         nul.close()
-      }
-      System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
-      syserr("Not reached")
-   end
-
-   private on_child_exit(r)
-      if \opts["v"] then
-         write("Child process exited: ",to_string(r))
-   end
-
    public new()
       local quit_menu_item, menu_bar, file_menu, terminal_menu, columns_menu, 
          new_tab_item, clone_tab_item, favourite_dirs_item, xdg_refresh_item
@@ -267,7 +240,7 @@ class FlowTermDialog(Dialog)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
       self.set_layout(GridLayout().set_extra("cells"))
-      set_label("FlowTerm")
+      set_label(\opts["t"] | "FlowTerm")
       return
    end
 end
@@ -952,6 +925,11 @@ class Terminal(TabItem, VtUI)
       }
    end
 
+   private static on_shell_exit(r)
+      if \opts["v"] then
+         write("Shell process exited: ", to_string(r))
+   end
+
    public get_pats()
       local pat, pats
       pats := []
@@ -1055,6 +1033,33 @@ class Terminal(TabItem, VtUI)
       io_task.revert()
    end
 
+   public static launch_prog(runner)
+      local pid, nul, cmd
+      if \opts["v"] then write("Launch runner: ", to_string(runner, 3, 1))
+      pid := System.fork() | fail
+      if pid > 0 then {
+         # Parent
+         ChildWait.add_pid(pid, on_prog_exit)
+         return
+      }
+      # Set the working directory for the child process
+      Files.chdir(runner.get_working_dir() | Files.get_home())
+      # Get the command to run.
+      cmd := runner.get_command()
+      System.setpgid()
+      if nul := FileStream("/dev/null", FileOpt.RDWR) then {
+         every nul.dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
+         nul.close()
+      }
+      System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
+      syserr("Not reached")
+   end
+
+   private static on_prog_exit(r)
+      if \opts["v"] then
+         write("Child application exited: ",to_string(r))
+   end
+
    public open_link(url)
       local r
       case string(url.scheme) of {
@@ -1066,7 +1071,7 @@ class Terminal(TabItem, VtUI)
          default: {
             if r := get_runners(url) then {
                if is(r, ExternalRunner) then
-                  parent_dialog.launch_prog(r)
+                  launch_prog(r)
                else
                   run_prog(r.get_command())
             } else
@@ -1273,14 +1278,6 @@ class Terminal(TabItem, VtUI)
       return m
    end
 
-   private create_insert_cmd(r)
-      return create send_tty(r.get_command())
-   end
-
-   private create_launch(r)
-      return create parent_dialog.launch_prog(r)
-   end
-
    private create_open_with_menu(url)
       local m, m1, r, de
       m := Menu().set_label("Open with")
@@ -1289,7 +1286,7 @@ class Terminal(TabItem, VtUI)
             de := r.desktop_entry
             m1 := TextMenuItem().
                set_label(de.name).
-               connect(create_launch(r), Event.ACTION)
+               connect(cocopy{launch_prog(r)}, Event.ACTION)
             m1.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
             m.add(m1)
          }
@@ -1312,7 +1309,7 @@ class Terminal(TabItem, VtUI)
       if r := get_runners(url) then
          m.add(TextMenuItem().
             set_label("Insert command").
-            connect(create_insert_cmd(r), Event.ACTION))
+            connect(create send_tty(r.get_command()), Event.ACTION))
       if url.scheme == u"file" then {
          if is_local_host(url) & s := ucs(url.get_decoded_path()) then {
             if Files.is_directory(s) then {
@@ -1605,11 +1602,8 @@ class Terminal(TabItem, VtUI)
 
       if is_live() then {
          if t := member(columns_pos_table, FilePath(cwd).canonical().str()) then {
-            columns.set_area_y(t.area_y).set_area_x(0)
-            if i := Positions{(!columns.data).name, \t.cursor_name} then
-               columns.set_cursor(i)
-            else
-               columns.set_cursor()
+            i := Positions{(!columns.data).name, \t.cursor_name}
+            columns.set_area_y(t.area_y).set_area_x(0).set_cursor(i)
          } else
             columns.set_area_y(0).set_area_x(0).set_cursor()
          parent_dialog.resynch_pointer()
@@ -1766,8 +1760,8 @@ class Terminal(TabItem, VtUI)
       io_task.stop()
       System.kill(pid, Signal.SIGHUP)
       tty.close()
-      System.wait(pid)
-      check_cwd_time_task := io_task := tty := &null
+      ChildWait.add_pid(pid, on_shell_exit)
+      check_cwd_time_task := io_task := tty := pid := &null
    end
 
    private on_favourites_list(ev)
@@ -2178,7 +2172,7 @@ end
 
 procedure main(a)
    local d, t
-   opts := options(a, "-x: -nx! -v! -h+ -hs! -tfg: -tbg: -trevfg: -trevbg: -tfont:")
+   opts := options(a, "-x: -nx! -v! -h+ -hs! -tfg: -tbg: -trevfg: -trevbg: -tfont: -t:")
    ImageCache.
       name_image("rpp.HOURGLASS_24", HOURGLASS).
       name_image("rpp.KEYBOARD_24", KEYBOARD).

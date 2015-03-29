@@ -179,7 +179,7 @@ abstract class MenuComponent(Rect,Connectable)
    #
    public set_is_shaded(s)
       check_flag(s)
-      if (s ~=== self.is_shaded_flag) then {
+      if s ~=== self.is_shaded_flag then {
          self.is_shaded_flag := s
          possibly_invalidate()
       }
