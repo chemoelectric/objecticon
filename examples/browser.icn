@@ -99,12 +99,12 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       last_download_dir,
       last_file_dir
 
-   public launch_prog(de, file)
+   public static launch_prog(de, file)
       local pid, nul, cmd
       pid := System.fork() | fail
       if pid > 0 then {
          # Parent
-         ChildWait.add_pid(pid, on_child_exit)
+         ChildWait.add_pid(pid, on_prog_exit)
          return
       }
       # Set the working directory for the child process
@@ -118,13 +118,13 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
          every nul.dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
          nul.close()
       }
-      System.exec("/bin/bash", ["-c", "exec " || cmd]) | stop(&why)
+      System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
    end
 
-   private on_child_exit(r)
+   private static on_prog_exit(r)
       if \opts["v"] then
-         write("Child process exited: ",to_string(r))
+         write("Child application exited: ", to_string(r))
    end
 
    private on_quit(ev)
@@ -776,7 +776,7 @@ class DownloadTab(TabItem)
                m2 := TextMenuItem().
                   set_label(de.name)
                m2.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
-               m2.connect(cocopy{parent_dialog.launch_prog(de, d.full_path)}, Event.ACTION)
+               m2.connect(cocopy{BrowserDialog.launch_prog(de, d.full_path)}, Event.ACTION)
                m1.add(m2)
             }
             if *m1.children > 0 then 
@@ -1404,7 +1404,7 @@ class BrowserTab(TabItem, BrowserUI)
       file := make_display_file(res)
       if \opts["v"] then 
          write("Display file: ", image(file))
-      parent_dialog.launch_prog(de, file)
+      BrowserDialog.launch_prog(de, file)
       parent_dialog.update_visited(res.url)
       return
    end
