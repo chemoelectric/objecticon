@@ -13,8 +13,10 @@ all:V:
            if(test -e fontinfo.txt) 
                 ;
            if not
-                if(oit -s ./mkfontinfo.icn)
-                       ./mkfontinfo >fontinfo.txt
+                if(oit -s ./mkfontinfo.icn -x >fontinfo.txt)
+                     ;
+                if not
+                     rm -f fontinfo.txt
          }
 
 clean:V:
