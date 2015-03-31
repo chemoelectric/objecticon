@@ -22,7 +22,7 @@ case $host_os in
         AC_DEFINE(OS_DARWIN)
         ;;
      *cygwin*)
-        AC_DEFINE(OS_DARWIN)
+        AC_DEFINE(OS_CYGWIN)
         ;;
 esac
 
