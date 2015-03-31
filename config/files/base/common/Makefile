@@ -1,6 +1,6 @@
 include ../../Makedefs
 
-OBJS=	getopt.o strtbl.o \
+OBJS=	strtbl.o \
 	mlocal.o alloc.o
 
 CSRC=$(OBJS:.o=.c)
