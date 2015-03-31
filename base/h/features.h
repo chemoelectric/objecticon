@@ -74,3 +74,7 @@
 #if OS_DARWIN
    Feature("_DARWIN", "Darwin")
 #endif
+
+#if OS_CYGWIN
+   Feature("_CYGWIN", "Cygwin")
+#endif

@@ -21,6 +21,9 @@ case $host_os in
      *darwin*)
         AC_DEFINE(OS_DARWIN)
         ;;
+     *cygwin*)
+        AC_DEFINE(OS_DARWIN)
+        ;;
 esac
 
 
