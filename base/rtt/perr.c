@@ -1,8 +1,7 @@
 /*
  * The functions in this file print error messages.
  */
-#include "preproc.h"
-#include "pproto.h"
+#include "rtt.h"
 
 /*
  * Prototypes for static functions.

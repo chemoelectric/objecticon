@@ -110,6 +110,7 @@ extern char *op_sym;               /* For an op, its symbol (eg ">=") */
 extern int op_generator;           /* Does this op generate a sequence */
 extern char *fname;                /* current source file name */
 extern struct token *comment;      /* descriptive comment for current oper */
+extern char *progname;
 extern struct sym_entry *params;   /* current list of parameters */
 extern struct sym_entry *decl_lst; /* declarations from "declare {...}" */
 extern struct init_tend *tend_lst; /* list of allocated tended slots */
