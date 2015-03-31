@@ -87,7 +87,7 @@ int main(argc, argv)
     /*
      * Process options.
      */
-    while ((c = getopt(argc, argv, ostr)) != EOF)
+    while ((c = oi_getopt(argc, argv, ostr)) != EOF)
         switch (c) {
             case 'E': /* run preprocessor only */
                 pp_only = 1;
@@ -101,13 +101,13 @@ int main(argc, argv)
                 line_cntrl = 0;
                 break;
             case 'r':  /* -r path: location of include files */
-                refpath = optarg;
+                refpath = oi_optarg;
                 break;
             case 'h':  /* -h path: location of initialization header */
-                xin_header = optarg;
+                xin_header = oi_optarg;
                 break;
             case 't':  /* -t ident : treat ident as a typedef name */
-                add_tdef(optarg);
+                add_tdef(oi_optarg);
                 break;
             case 'D':  /* define preprocessor symbol */
             case 'I':  /* path to search for preprocessor includes */
@@ -117,7 +117,7 @@ int main(argc, argv)
                  * Save these options for the preprocessor initialization routine.
                  */
                 opt_lst[nopts] = c;
-                opt_args[nopts] = optarg;
+                opt_args[nopts] = oi_optarg;
                 ++nopts;
                 break;
             default:
@@ -142,32 +142,32 @@ int main(argc, argv)
     /*
      * At least one file name must be given on the command line.
      */
-    if (optind == argc)
+    if (oi_optind == argc)
         show_usage();
 
 
     /*
      * Scan file name arguments, and translate the files.
      */
-    while (optind < argc)  {
+    while (oi_optind < argc)  {
 
 #if PatternMatch
         FINDDATA_T fd;
 
-        if (!FINDFIRST(argv[optind], &fd)) {
-            fprintf(stderr,"File %s: no match\n", argv[optind]);
+        if (!FINDFIRST(argv[oi_optind], &fd)) {
+            fprintf(stderr,"File %s: no match\n", argv[oi_optind]);
             fflush(stderr);
             exit(EXIT_FAILURE);
         }
         do {
-            argv[optind] = FILENAME(&fd);
+            argv[oi_optind] = FILENAME(&fd);
 #endif					/* PatternMatch */
-            trans(argv[optind]);
+            trans(argv[oi_optind]);
 #if PatternMatch
         } while (FINDNEXT(&fd));
         FINDCLOSE(&fd);
 #endif					/* PatternMatch */
-        optind++;
+        oi_optind++;
     }
 
 
