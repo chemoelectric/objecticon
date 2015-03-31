@@ -110,13 +110,6 @@ void add_remove_file(char *s)
         remove_files = last_remove_file = p;
 }
 
-/*
- * getopt() variables
- */
-extern int optind;		/* index into parent argv vector */
-extern int optopt;		/* character checked for validity */
-extern char *optarg;		/* argument associated with option */
-
 
 static void report_errors(int f)
 {

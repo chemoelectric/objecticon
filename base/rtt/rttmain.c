@@ -53,14 +53,6 @@ static char *in_header;
 static char *xin_header;
 static struct tdefnm *tdefnm_lst = NULL;
 
-/*
- * getopt() variables
- */
-extern int optind;		/* index into parent argv vector */
-extern int optopt;		/* character checked for validity */
-extern char *optarg;		/* argument associated with option */
-
-
 int main(argc, argv)
     int argc;
     char **argv;

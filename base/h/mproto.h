@@ -30,7 +30,13 @@ struct str_buf *get_sbuf(void);
 void    rel_sbuf(struct str_buf *sbuf);
 void    clear_local_sbufs(void);
 
-int	getopt		(int argc, char * const argv[], const char *optstring);
+/*
+ * getopt() variables
+ */
+extern int optind;		/* index into parent argv vector */
+extern int optopt;		/* character checked for validity */
+extern char *optarg;		/* argument associated with option */
+int getopt(int argc, char * const argv[], const char *optstring);
 
 char *findexe(char *name);
 char *relfile	(char *prog, char *mod);
