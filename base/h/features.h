@@ -70,3 +70,7 @@
 #if OS_BSD
    Feature("_BSD", "BSD")
 #endif
+
+#if OS_DARWIN
+   Feature("_DARWIN", "Darwin")
+#endif

@@ -99,7 +99,9 @@
    #include <netdb.h>
    #include <pwd.h>
    #include <grp.h>
+   #if OS_SOLARIS
    #include <stropts.h>
+   #endif
 #endif					/* UNIX */
 
 #if XWindows

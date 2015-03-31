@@ -103,3 +103,4 @@
 #undef OS_SOLARIS
 #undef OS_AIX
 #undef OS_BSD
+#undef OS_DARWIN
