@@ -5,7 +5,7 @@ OITOBJS=	trans.o tlex.o tparse.o tsym.o tmem.o \
 		package.o resolve.o tmain.o \
 		link.o lglob.o lcode.o lmem.o lsym.o ltree.o optimize.o
 
-COBJS=		../common/getopt.o ../common/alloc.o \
+COBJS=		../common/alloc.o \
 		../common/strtbl.o ../common/mlocal.o
 
 OBJS=		$(OITOBJS) $(COBJS)

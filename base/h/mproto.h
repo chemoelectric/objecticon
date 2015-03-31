@@ -30,8 +30,6 @@ struct str_buf *get_sbuf(void);
 void    rel_sbuf(struct str_buf *sbuf);
 void    clear_local_sbufs(void);
 
-int	getopt		(int argc, char * const argv[], const char *optstring);
-
 char *findexe(char *name);
 char *relfile	(char *prog, char *mod);
 void normalize(char *path);
@@ -68,3 +66,5 @@ unsigned int hashcstr(char *s);
 
 char *get_hostname(void);
 int is_flowterm_tty(FILE *f);
+
+extern char *progname;

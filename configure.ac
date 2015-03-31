@@ -18,6 +18,12 @@ case $host_os in
      *bsd*)
         AC_DEFINE(OS_BSD)
         ;;
+     *darwin*)
+        AC_DEFINE(OS_DARWIN)
+        ;;
+     *cygwin*)
+        AC_DEFINE(OS_CYGWIN)
+        ;;
 esac
 
 

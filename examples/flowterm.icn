@@ -1186,16 +1186,12 @@ class Terminal(TabItem, VtUI)
       }
    end
 
-   private copy_link(url)
-      local s
-      s := ucs(url.get_decoded_path()) | fail
-      if url.scheme == u"file" then
-         s := Format.shell_escape(s)
+   private copy_text(s)
       parent_dialog.own_selection(Selection.CLIPBOARD, 
                                   StaticTextSelectionOwner(s))
    end
 
-   private copy_link_url(url)
+   private copy_url(url)
       parent_dialog.own_selection(Selection.CLIPBOARD,
                                   URLSelectionOwner([url]))
    end 
@@ -1219,8 +1215,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private on_copy_cwd(e)
-      parent_dialog.own_selection(Selection.CLIPBOARD, 
-                                  StaticTextSelectionOwner(Format.shell_escape(cwd)))
+      copy_text(Format.shell_escape(cwd))
    end
 
    private on_select_all()
@@ -1296,32 +1291,41 @@ class Terminal(TabItem, VtUI)
    end
 
    public create_link_menu(url)
-      local m, s, r
+      local m, r, udp
       m := Menu()
-      if url.scheme == (u"file" | u"text" | u"run") then {
-         m.add(TextMenuItem().
-               set_label("Copy").
-               connect(create copy_link(url), Event.ACTION))
+      if udp := ucs(url.get_decoded_path()) then {
+         case string(url.scheme) of {
+            "file" : {
+               m.add(TextMenuItem().
+                     set_label("Copy").
+                     connect(create copy_text(Format.shell_escape(udp)), Event.ACTION))
+            }
+            "text" | "run" : {
+               m.add(TextMenuItem().
+                     set_label("Copy").
+                     connect(create copy_text(udp), Event.ACTION))
+            }
+         }
       }
       m.add(TextMenuItem().
             set_label("Copy URL").
-            connect(create copy_link_url(url), Event.ACTION))
+            connect(create copy_url(url), Event.ACTION))
       if r := get_runners(url) then
          m.add(TextMenuItem().
             set_label("Insert command").
             connect(create send_tty(r.get_command()), Event.ACTION))
       if url.scheme == u"file" then {
-         if is_local_host(url) & s := ucs(url.get_decoded_path()) then {
-            if Files.is_directory(s) then {
+         if is_local_host(url) & \udp then {
+            if Files.is_directory(udp) then {
                m.add(TextMenuItem().
                      set_label("Open in new tab").
-                     connect(create open_in_new_tab(s), Event.ACTION))
+                     connect(create open_in_new_tab(udp), Event.ACTION))
             } else
                m.add(create_open_with_menu(url))
 
             m.add(TextMenuItem().
                   set_label("Rename").
-                  connect(create rename(s), Event.ACTION))
+                  connect(create rename(udp), Event.ACTION))
          }
       } else
          m.add(create_open_with_menu(url))

@@ -21,7 +21,6 @@ extern int loclevel;    /* -l n: location info */
 extern int Olevel;      /* -O n: optimisation */
 extern int nolink;
 
-extern char *progname;
 
 /*
  * Files and related globals.
