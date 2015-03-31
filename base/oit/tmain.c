@@ -50,7 +50,7 @@ char *iso_8859_1_string;
 /*
  * Variables related to command processing.
  */
-char *progname	="oit";	/* program name for diagnostics */
+static char *progname	="oit";	/* program name for diagnostics */
 
 /*
  * Files and related globals.
@@ -70,6 +70,7 @@ static void file_comp(void);
 static void bundle_iconx(void);
 static void execute(char **args);
 static void usage(void);
+static void long_usage(void);
 static void remove_intermediate_files(void);
 
 
@@ -172,11 +173,14 @@ int main(int argc, char **argv)
         quit("Couldn't find oix on PATH");
     oixloc = intern(canonicalize(oixloc));
 
+    if (argc == 1)
+        long_usage();
+
     /*
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
-#define Usage "[-cBsELI] [-f s] [-o ofile] [-v i] [-l i]"	/* omit -e from doc */
-    while ((c = getopt(argc,argv, "cBfmno:sv:ELIZTVl:O:")) != EOF) {
+#define Usage "[-cBfmnsELIZTV] [-o ofile] [-v i] [-l i] [-O i]"	/* omit -e from doc */
+    while ((c = oi_getopt(argc,argv, "cBfmno:sv:ELIZTVl:O:")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
@@ -217,7 +221,7 @@ int main(int argc, char **argv)
                 break;
 
             case 'o':			/* -o file: name output file */
-                ofile = optarg;
+                ofile = oi_optarg;
                 break;
 
             case 's':			/* -s: suppress informative messages */
@@ -225,18 +229,18 @@ int main(int argc, char **argv)
                 break;
 
             case 'v':			/* -v n: set verbosity level */
-                if (sscanf(optarg, "%d%c", &verbose, &ch) != 1)
-                    quit("bad operand to -v option: %s",optarg);
+                if (sscanf(oi_optarg, "%d%c", &verbose, &ch) != 1)
+                    quit("bad operand to -v option: %s",oi_optarg);
                 break;
 
             case 'l':			/* -l n: source location store level */
-                if (sscanf(optarg, "%d%c", &loclevel, &ch) != 1)
-                    quit("bad operand to -l option: %s",optarg);
+                if (sscanf(oi_optarg, "%d%c", &loclevel, &ch) != 1)
+                    quit("bad operand to -l option: %s",oi_optarg);
                 break;
 
             case 'O':			/* -O n: optimisation level */
-                if (sscanf(optarg, "%d%c", &Olevel, &ch) != 1)
-                    quit("bad operand to -O option: %s",optarg);
+                if (sscanf(oi_optarg, "%d%c", &Olevel, &ch) != 1)
+                    quit("bad operand to -O option: %s",oi_optarg);
                 break;
 
             case 'Z':
@@ -252,27 +256,27 @@ int main(int argc, char **argv)
     /*
      * Scan file name arguments.
      */
-    while (optind < argc)  {
-        if (strcmp(argv[optind],"-x") == 0)	/* stop at -x */
+    while (oi_optind < argc)  {
+        if (strcmp(argv[oi_optind],"-x") == 0)	/* stop at -x */
             break;
-        else if (strcmp(argv[optind],"-") == 0) {
+        else if (strcmp(argv[oi_optind],"-") == 0) {
             add_trans_file("stdin");      /* "-" means standard input */
             add_link_file("stdin.u");
         }
         else {
-            fp = fparse(argv[optind]);		/* parse file name */
+            fp = fparse(argv[oi_optind]);		/* parse file name */
             if (*fp->ext == '\0' || smatch(fp->ext, SourceSuffix)) {
                 char *t;
-                add_trans_file(makename(0, argv[optind],  SourceSuffix));
-                t = makename(0, argv[optind], USuffix);
+                add_trans_file(makename(0, argv[oi_optind],  SourceSuffix));
+                t = makename(0, argv[oi_optind], USuffix);
                 add_link_file(t);
             }
             else if (smatch(fp->ext, USuffix))
-                add_link_file(makename(0, argv[optind], USuffix));
+                add_link_file(makename(0, argv[oi_optind], USuffix));
             else
-                quit("bad argument %s", argv[optind]);
+                quit("bad argument %s", argv[oi_optind]);
         }
-        optind++;
+        oi_optind++;
     }
 
     if (!link_files)
@@ -347,9 +351,9 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    if (optind < argc)  {
+    if (oi_optind < argc)  {
         report("Executing:");
-        execute(argv + optind + 1);
+        execute(argv + oi_optind + 1);
     }
 
     exit(EXIT_SUCCESS);
@@ -535,7 +539,39 @@ void report(char *fmt, ...)
 static void usage()
 {
    fprintf(stderr,"usage: %s %s file ... [-x args]\n", progname, Usage);
+   fprintf(stderr,"run %s with no options or arguments for full option details\n", progname);
    exit(EXIT_FAILURE);
+}
+
+static void long_usage()
+{
+    fprintf(stderr,"-n      Only translate a .icn to a .u file if it is out-of-date\n"
+                   "-B      Bundle the oix executable in the output\n"
+                   "-m      Preprocess using m4\n"
+                   "-Z      Use zlib compression on the icode file\n"
+                   "-c      Stop after producing ucode files.\n"
+                   "-f      Enable full string invocation by preserving unreferenced globals during linking\n"
+                   "        (equivalent to 'invocable all' in a source file).\n"
+                   "-o file Write the executable program to the specified file.\n"
+                   "-s      Suppress informative messages during translation and linking (equivalent to\n"
+                   "        '-v 0')\n"
+                   "-O i    Optimization level during linking. 1 means do optimizations, 0 means don't\n"
+                   "        (default is 1).\n"
+                   "-v i    Set verbosity level of informative messages to i.\n"
+                   "-l i    Configure the amount of source location info to store in the icode. 0 means none,\n"
+                   "        1 means store location info for procedure call and stack tracebacks (the default,\n"
+                   "        1, adds about 10%% more space compared to option 0) and 2 means additionally\n"
+                   "        store location info of all symbols (costs another 5%% of space).\n"
+                   "-L      During linking, output a '.ux' file giving information about the icode file.\n"
+                   "        This is only useful if you are interested in the virtual machine instructions used\n"
+                   "        by oix.\n"
+                   "-I      During code generation, output a dump of the intermediate code, both in its raw\n"
+                   "        and optimized state.  This is only useful if you are interested in the internals\n"
+                   "        of oit.\n"
+                   "-E      Direct the results of preprocessing to standard output and inhibit further\n"
+                   "        processing.\n"
+                   "-V      Announce version and configuration information on standard error.\n");
+    exit(EXIT_SUCCESS);
 }
 
 /*

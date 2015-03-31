@@ -99,11 +99,6 @@
    int execve(const char *path, char *const argv[], char *const envp[]);
    int rename(const char *old, const char *new);
    int unlink(const char *path);
-   /* getopt() implementation. */
-   extern int optind;		/* index into parent argv vector */
-   extern int optopt;		/* character checked for validity */
-   extern char *optarg;		/* argument associated with option */
-   int getopt(int argc, char * const argv[], const char *optstring);
 #else
    #include <ctype.h>
    #include <errno.h>
