@@ -8,7 +8,7 @@ ROBJS = rttparse.o rttmain.o rttlex.o rttsym.o rttnode.o rttout.o rttmisc.o\
 	pout.o pchars.o  perr.o pmem.o  bldtok.o macro.o \
 	preproc.o evaluate.o files.o gettok.o pinit.o
 
-COBJS = ../common/getopt.o ../common/alloc.o \
+COBJS = ../common/alloc.o \
 	  ../common/strtbl.o\
 	  ../common/mlocal.o
 
