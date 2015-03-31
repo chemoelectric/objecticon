@@ -38,7 +38,6 @@
 #define PpSkip     1022   /* directive specific to an application discard */
 #define Invalid    9999   /* marker */
 
-extern char *progname; /* name of this program: for error messages */
 extern int line_cntrl; /* flag: are line directives needed in the output */
 
 /*

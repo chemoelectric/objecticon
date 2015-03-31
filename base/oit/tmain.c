@@ -540,7 +540,6 @@ static void usage()
 void quit(char *fmt, ...)
 {
     va_list argp;
-    extern char *progname;
     va_start(argp, fmt);
     fprintf(stderr,"%s: ",progname);
     vfprintf(stderr, fmt, argp);

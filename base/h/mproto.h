@@ -62,3 +62,5 @@ unsigned int hashcstr(char *s);
 
 char *get_hostname(void);
 int is_flowterm_tty(FILE *f);
+
+extern char *progname;

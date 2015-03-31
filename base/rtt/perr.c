@@ -3,7 +3,6 @@
  */
 #include "preproc.h"
 #include "pproto.h"
-extern char *progname;
 
 /*
  * Prototypes for static functions.
