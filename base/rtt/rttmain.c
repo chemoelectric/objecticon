@@ -25,7 +25,7 @@ static char *options =
  *   stand-alone preprocessor for examples of what's needed.
  */
 
-char *progname = "rtt";
+char *progname;
 FILE *out_file;
 char *cname;
 char *inclname;
@@ -59,6 +59,8 @@ int main(argc, argv)
 {
     int c;
     int nopts;
+
+    progname = *argv;
 
     /*
      * Initialize the string table and indicate that File must be treated

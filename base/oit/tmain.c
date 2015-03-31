@@ -50,7 +50,7 @@ char *iso_8859_1_string;
 /*
  * Variables related to command processing.
  */
-static char *progname	="oit";	/* program name for diagnostics */
+static char *progname;	/* program name for diagnostics */
 
 /*
  * Files and related globals.
@@ -156,6 +156,8 @@ int main(int argc, char **argv)
     int c;
     char ch;
     struct fileparts *fp;
+
+    progname = *argv;
 
     init_strings();
 
