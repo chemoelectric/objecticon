@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 #  special test of MT icon - dynamic loading of icon code
-[ -f custom.sh ] && . custom.sh
+[ -f custom.sh ] && . ./custom.sh
 rm -f packages.txt
 oit -s -c mt_packtest.icn
 oit -s mt_c1.icn

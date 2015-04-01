@@ -4,7 +4,7 @@
 # Script to make sure that each IPL package can be imported
 # without error/warning.
 #
-[ -f custom.sh ] && . custom.sh
+[ -f custom.sh ] && . ./custom.sh
 . ../paths.sh
 cd ../lib/ipl
 

@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 #  special test of package scope
-[ -f custom.sh ] && . custom.sh
+[ -f custom.sh ] && . ./custom.sh
 oit -c -s packscope_first.icn
 oit -s packscope2.icn
 ./packscope2  >packscope2.out 2>&1

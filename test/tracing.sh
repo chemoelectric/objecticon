@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 #  special test of procedure tracing output
-[ -f custom.sh ] && . custom.sh
+[ -f custom.sh ] && . ./custom.sh
 rm -f tracing.out
 oit -s tracing.icn 
 ./tracing 2>tracing.out
