@@ -393,7 +393,7 @@ void skip_descrip()
     }
 }
 
-void do_key_features() { syserr("Dummy func"); }
+void do_key_features(void) { syserr("Dummy func"); }
 
 #define KDef(p,n) do_key_##p,
 void (*keyword_qfuncs[])(void) = {
