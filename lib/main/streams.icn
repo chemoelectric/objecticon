@@ -990,6 +990,22 @@ class SocketStream(DescStream)
       return [create_for_fd(t[1], READ_WRITE), create_for_fd(t[2], READ_WRITE)]
    end
 
+   #
+   # Create a pair of sockets of the given type, but communication is limited to
+   # one direction.  The first socket is the reader, and the second the writer.
+   #
+   # @param typ the type from {SocketType}.  The default is
+   # {SocketType.STREAM}.
+   #
+   public static one_way_socketpair(typ)
+      local t, l
+      t := socketpair_impl(typ) | fail
+      l := [create_for_fd(t[1], READ), create_for_fd(t[2], WRITE)]
+      l[2].shutdown(Shut.RD)
+      l[1].shutdown(Shut.WR)
+      return l
+   end
+
    public native in(n)
 
    #
@@ -1252,9 +1268,8 @@ class ProgInputStream(SocketStream, HasBgProc)
    #
    public new(cmd, args, env, stdin, stderr)
       local l
-      l := socketpair() | fail
-      (l[1].shutdown(Shut.WR) &
-       pid := System.fork()) | {
+      l := one_way_socketpair() | fail
+      (pid := System.fork()) | {
          l[1].close()
          l[2].close()
          fail
@@ -1312,9 +1327,8 @@ class ProgOutputStream(SocketStream, HasBgProc)
    #
    public new(cmd, args, env, stdout, stderr)
       local l
-      l := socketpair() | fail
+      l := one_way_socketpair() | fail
       (l[2].dflag(DescOpt.CLOEXEC) &
-       l[2].shutdown(Shut.RD) &
        pid := System.fork()) | {
           l[1].close()
           l[2].close()
@@ -1431,19 +1445,13 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, 
       self.cmd := cmd
       /err_sink := StringStream()
       self.err_sink := err_sink
-      l := SocketStream.socketpair() | fail
-      (l |||:= SocketStream.socketpair() &
-       l |||:= SocketStream.socketpair() &
+      l := SocketStream.one_way_socketpair() | fail
+      (l |||:= SocketStream.one_way_socketpair() &
+       l |||:= SocketStream.one_way_socketpair() &
        l[1].flag(FileOpt.NONBLOCK) & 
        l[4].dflag(DescOpt.CLOEXEC) &
        l[4].flag(FileOpt.NONBLOCK) & 
        l[5].flag(FileOpt.NONBLOCK) &
-       l[1].shutdown(Shut.WR) &
-       l[3].shutdown(Shut.WR) &
-       l[5].shutdown(Shut.WR) &
-       l[2].shutdown(Shut.RD) &
-       l[4].shutdown(Shut.RD) &
-       l[6].shutdown(Shut.RD) &
        pid := System.fork()) | {
           every (!l).close()
           fail
