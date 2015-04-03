@@ -209,21 +209,21 @@ typedef int time_t, DIR, uid_t, gid_t, pid_t, stringint, socklen_t;
       typedef int XPointFixed, XLineFixed, XTriangle, XTrapezoid, XTransform;
       typedef int XPointDouble;
    #endif				/* XWindows */
-      
-   #if MSWIN32
-      typedef int clock_t, jmp_buf, MINMAXINFO, OSVERSIONINFO, BOOL_CALLBACK;
-      typedef int int_PASCAL, LRESULT_CALLBACK, MSG, BYTE, WORD, DWORD;
-      typedef int HINSTANCE, HGLOBAL, HPEN, HBRUSH, HRGN;
-      typedef int LPSTR, HBITMAP, WNDCLASS, PAINTSTRUCT, POINT, RECT;
-      typedef int HWND, HDC, UINT, WPARAM, LPARAM, SIZE;
-      typedef int COLORREF, HFONT, LOGFONT, TEXTMETRIC, FONTENUMPROC, FARPROC;
-      typedef int LOGPALETTE, HPALETTE, PALETTEENTRY, HCURSOR, BITMAP, HDIB;
-      typedef int LOGPEN, LOGBRUSH, LPVOID, MCI_PLAY_PARMS;
-      typedef int MCI_OPEN_PARMS, MCI_STATUS_PARMS, MCI_SEQ_SET_PARMS;
-      typedef int CHOOSEFONT, CHOOSECOLOR, OPENFILENAME, HMENU, LPBITMAPINFO;
-      typedef int childcontrol, CPINFO, BITMAPINFO, BITMAPINFOHEADER, RGBQUAD;
-   #endif				/* MSWIN32 */
 #endif					/* Graphics */
+
+#if MSWIN32
+   typedef int clock_t, jmp_buf, MINMAXINFO, OSVERSIONINFO, BOOL_CALLBACK;
+   typedef int int_PASCAL, LRESULT_CALLBACK, MSG, BYTE, WORD, DWORD;
+   typedef int HINSTANCE, HGLOBAL, HPEN, HBRUSH, HRGN;
+   typedef int LPSTR, HBITMAP, WNDCLASS, PAINTSTRUCT, POINT, RECT;
+   typedef int HWND, HDC, UINT, WPARAM, LPARAM, SIZE;
+   typedef int COLORREF, HFONT, LOGFONT, TEXTMETRIC, FONTENUMPROC, FARPROC;
+   typedef int LOGPALETTE, HPALETTE, PALETTEENTRY, HCURSOR, BITMAP, HDIB;
+   typedef int LOGPEN, LOGBRUSH, LPVOID, MCI_PLAY_PARMS;
+   typedef int MCI_OPEN_PARMS, MCI_STATUS_PARMS, MCI_SEQ_SET_PARMS;
+   typedef int CHOOSEFONT, CHOOSECOLOR, OPENFILENAME, HMENU, LPBITMAPINFO;
+   typedef int childcontrol, CPINFO, BITMAPINFO, BITMAPINFOHEADER, RGBQUAD;
+#endif				/* MSWIN32 */
 
 /*
  * Convenience macros to make up for RTL's long-windedness.

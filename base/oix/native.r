@@ -1673,7 +1673,11 @@ end
 function io_SocketStream_close(self)
    body {
        GetSelfFd();
+#if MSWIN32
+       if (closesocket(self_fd) < 0) {
+#else
        if (close(self_fd) < 0) {
+#endif
            errno2why();
            *self_fd_dptr = minusonedesc;
            fail;

@@ -60,6 +60,8 @@
    #define alloca _alloca
    #define qsort myqsort
    typedef int mode_t;
+   typedef int socklen_t;
+   #define O_ACCMODE 3
    #include <sys/timeb.h>
    #include <sys/locking.h>
    #include <sys/utime.h>

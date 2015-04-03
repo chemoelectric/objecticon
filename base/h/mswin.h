@@ -20,7 +20,6 @@
 #define DRAWOP_SET			R2_WHITE
 #define DRAWOP_XOR			R2_XORPEN
 
-#define SysColor unsigned long
 #define RED(x) GetRValue(x)
 #define GREEN(x) GetGValue(x)
 #define BLUE(x) GetBValue(x)
@@ -67,38 +66,9 @@
 typedef struct wcolor {
   int		refcount;
   char		name[6+MAXCOLORNAME];	/* name for WAttrib & WColor reads */
-  SysColor	c;
+  COLORREF	c;
   int           type;			/* SHARED or MUTABLE */
 } *wclrp;
-
-/*
- * we make the segment structure look like this so that we can
- * cast it to POINTL structures that can be passed to GpiPolyLineDisjoint
- */
-typedef struct {
-   int x1, y1;
-   int x2, y2;
-   } XSegment;
-
-typedef POINT XPoint;
-typedef RECT XRectangle;
-
-typedef struct {
-  int x, y;
-  int width, height;
-  double angle1, angle2;
-  } XArc;
-
-/*
- * macros performing row/column to pixel y,x translations
- * computation is 1-based and depends on the current font's size.
- * exception: XTOCOL as defined is 0-based, because that's what its
- * clients seem to need.
- */
-#define ROWTOY(wb, row)  ((row - 1) * LEADING(wb) + ASCENT(wb))
-#define COLTOX(wb, col)  ((col - 1) * FWIDTH(wb))
-#define YTOROW(wb, y)    (((y) - ASCENT(w)) /  LEADING(wb) + 1)
-#define XTOCOL(w,x)  (!FWIDTH(w) ? (x) : ((x) / FWIDTH(w)))
 
 /*
  * system size values
@@ -121,13 +91,3 @@ typedef struct {
    { if(stdwin)SelectObject(stddc, wc->font->font); SelectObject(pixdc,wc->font->font); }
 
 #define FREE_STDLOCALS(w) do { SelectObject(pixdc, (w)->window->theOldPix); ReleaseDC((w)->window->iconwin, stddc); DeleteDC(pixdc); } while (0)
-
-#define glXSwapBuffers(foo, bar) { \
-HDC stddc = CreateWinDC(w);\
-         SwapBuffers(stddc);\
-ReleaseDC(w->window->iconwin, stddc);\
-}
-
-#ifndef WM_MOUSEWHEEL
-#define WM_MOUSEWHEEL 0x20A
-#endif

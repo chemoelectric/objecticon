@@ -48,6 +48,12 @@ char *findexe(char *name)
             return tryexe(0, name);
     }
 
+#if MSWIN32
+    /* On windows, the cd is always on the path. */    
+    if ((p = tryexe(0, name)))
+        return p;
+#endif
+
     path = getenv("PATH");
     if (!path)
         path = "";

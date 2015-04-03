@@ -205,6 +205,8 @@ extern struct imgdataformat imgdataformat_X11BGRA32;
  */
 
 #if MSWIN32
+#include "mswin.h"
+
 #define ISTOBEHIDDEN(ws)  ((ws)->bits & 4096)
 #define SETTOBEHIDDEN(ws)  ((ws)->bits |= 4096)
 #define CLRTOBEHIDDEN(ws)  ((ws)->bits &= ~4096)
@@ -328,8 +330,8 @@ typedef struct _wcontext {
   LOGBRUSH	bgbrush;
   HRGN          cliprgn;
   HBITMAP	pattern;
-  SysColor	fg, bg;
-  char		*patternname, *fgname, *bgname;
+  COLORREF	fg, bg;
+  char		*fgname, *bgname;
   int		bkmode;
   int		fillstyle;
   int		drawop;
@@ -376,6 +378,7 @@ typedef struct _wstate {
   int           propcount;              /* counter for selection requests*/
 #elif MSWIN32
   char		*windowlabel;		/* window label */
+  struct _wstate *previous, *next;      /* List of states */
   int		bits;			/* window bits */
   HWND		win;			/* client window */
   HWND		iconwin;		/* client window when iconic */

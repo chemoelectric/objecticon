@@ -462,7 +462,7 @@ void c_exit(int i)
 
 #if MSWIN32
     PostQuitMessage(0);
-    while (wstates != NULL) pollevent(0);
+    /* while (wstates != NULL) pollevent(0); */
 #endif					/* MSWIN32 */
 
     exit(i);
@@ -1056,7 +1056,7 @@ void resolve(struct progstate *p)
 
 
 
-#if MSWIN32
+#if MSWIN32 && Graphics && 0
 
 /*
  * CmdParamToArgv() - convert a command line to an argv array.  Return argc.
@@ -1119,7 +1119,7 @@ void MSStartup(HINSTANCE hInstance, HINSTANCE hPrevInstance)
     WNDCLASS wc;
     if (!hPrevInstance) {
         wc.style = CS_HREDRAW | CS_VREDRAW;
-        wc.lpfnWndProc = WndProc;
+/*        wc.lpfnWndProc = WndProc; */
         wc.cbClsExtra = 0;
         wc.cbWndExtra = 0;
         wc.hInstance  = hInstance;
@@ -1142,8 +1142,10 @@ int_PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     int argc;
     char **argv;
 
+#if Graphics
     mswinInstance = hInstance;
     ncmdShow = nCmdShow;
+#endif
 
     argc = CmdParamToArgv(GetCommandLine(), &argv, 1);
     MSStartup(hInstance, hPrevInstance);
@@ -1152,7 +1154,9 @@ int_PASCAL WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     while (--argc>=0)
         free(argv[argc]);
     free(argv);
+#if Graphics
     wfreersc();
+#endif
     return 0;
 }
 #define main iconx
