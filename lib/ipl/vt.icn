@@ -457,6 +457,11 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
       contents := t
 
+      # Ensure the reflowed contents is consistent with old_rows; pad
+      # with blank lines so that it covers the screen.
+      while *contents < old_rows do
+         put(contents, Row(, attr.bg))
+
       # Finally, reset the cursor, mark and cx/cy, from their
       # normalized values to coordinates based on the new contents.
       if \cursor & p := reflow_loc(cursor.x, cursor.y) then {
@@ -473,11 +478,6 @@ class Vt(LineBasedScrollArea, MenuMode)
          cy <:= 1
          cy >:= old_rows
       } 
-
-      # Ensure the reflowed contents is consistent with old_rows; pad
-      # with blank lines so that it covers the screen.
-      while *contents < old_rows do
-         put(contents, Row(, attr.bg))
    end
 
    private calc_size()
