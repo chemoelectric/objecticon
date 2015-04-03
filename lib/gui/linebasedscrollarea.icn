@@ -218,7 +218,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
       is_live() | fail
       /i := get_line_info()
       if \i & t := range(line1, line2, i.first, i.last) then
-         view.invalidate(get_line_rect(t[1]).union(get_line_rect(t[2])))
+         view.invalidate(get_line_rect(t.lo).union(get_line_rect(t.hi)))
       return self
    end
 
