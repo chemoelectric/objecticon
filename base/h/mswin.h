@@ -57,19 +57,6 @@
 #define MAKEFNTSIZE(height, width) (((height) << 16) | (width))
 #define WaitForEvent(msgnum, msgstruc) ObtainEvents(NULL, WAIT_EVT, msgnum, msgstruc)
 
-#define SHARED          0
-#define MUTABLE         1
-
-/*
- * color structure, inspired by X code (xwin.h)
- */
-typedef struct wcolor {
-  int		refcount;
-  char		name[6+MAXCOLORNAME];	/* name for WAttrib & WColor reads */
-  COLORREF	c;
-  int           type;			/* SHARED or MUTABLE */
-} *wclrp;
-
 /*
  * system size values
  */

@@ -59,6 +59,9 @@
    #define lstat stat
    #define alloca _alloca
    #define qsort myqsort
+   #define strdup _strdup
+   #define unlink _unlink
+   #define snprintf _snprintf
    typedef int mode_t;
    typedef int socklen_t;
    #define O_ACCMODE 3

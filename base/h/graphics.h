@@ -207,6 +207,12 @@ extern struct imgdataformat imgdataformat_X11BGRA32;
 #if MSWIN32
 #include "mswin.h"
 
+struct SharedColor {
+   COLORREF color;
+   char  *name;
+   int   refcount;
+};
+
 #define ISTOBEHIDDEN(ws)  ((ws)->bits & 4096)
 #define SETTOBEHIDDEN(ws)  ((ws)->bits |= 4096)
 #define CLRTOBEHIDDEN(ws)  ((ws)->bits &= ~4096)
@@ -330,8 +336,7 @@ typedef struct _wcontext {
   LOGBRUSH	bgbrush;
   HRGN          cliprgn;
   HBITMAP	pattern;
-  COLORREF	fg, bg;
-  char		*fgname, *bgname;
+  struct SharedColor *fg, *bg;
   int		bkmode;
   int		fillstyle;
   int		drawop;

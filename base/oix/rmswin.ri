@@ -3,14 +3,15 @@
  *
  */
 
-static wcp           alc_context      (wbp w);
+static wcp alccontext      (wbp w);
+static void init_window_system(void);
+static int inited;
 
+static wcp clonecontext(wcp src);
 static void freecontext(wcp wc);
 static void freewindow(wsp ws);
 static int setpatternbits(wbp w, int width, int height, int *bits);
 static HFONT mkfont              (char *s);
-static int sysTextWidth          (wbp w, char *s, int n);
-static int sysFontHeight         (wbp w);
 static int mswinsystem           (char *s);
 static void UpdateCursorPos      (wsp ws, wcp wc);
 static HDC CreateWinDC           (wbp);
@@ -23,8 +24,12 @@ static void unsetclip(wbp w);
 static struct imgdataformat imgdataformat_MSXBGR32;
 static POINT *convert_points(struct point *points0, int npoints);
 
+static struct SharedColor *new_sharedcolor(char *name, COLORREF color);
+static struct SharedColor *link_sharedcolor(struct SharedColor *i);
+static void unlink_sharedcolor(struct SharedColor *i);
+static struct SharedColor *black, *white;
+
 void SetDCPixelFormat(HDC h);
-int alc_rgb(wbp w, COLORREF rgb);
 int numRealized;
 
 static wsp wstates;
@@ -33,7 +38,6 @@ static wbp wbndngs;
 #define PALCLR(c) (c | 0x2000000L)
 #define MAX_PATTERN_HEIGHT 32
 
-int winInitialized = 0;
 int BORDHEIGHT;
 int BORDWIDTH;
 int CLIENT_XOFF;
@@ -44,12 +48,6 @@ int CLIENT_YOFF;
  */
 CPINFO cpinfo;
 int MAXBYTESPERCHAR;
-
-wclrp scp;
-HPALETTE palette;
-int numColors = 0;
-
-char szAppName[] = "Icon";
 
 
 /*
@@ -263,6 +261,7 @@ static wbp alcwbinding(void)
  */
 void freewbinding(wbp w)
 {
+    /*fprintf(stderr, "Free binding %p count now %d\n", w, w->window->refcount-1);fflush(stderr);*/
     freewindow(w->window);
     freecontext(w->context);
     GUnlink(w, wbndngs);
@@ -285,19 +284,15 @@ wbp wopen(char *display)
    HDC hdc, hdc2, hdc3;
    DWORD winstyles = 0;
    TEXTMETRIC	metrics;
-   LOGPALETTE logpal[4]; /* really 1 + space for an extra palette entry */
    HBRUSH brush;
    HBITMAP oldpix, oldpix2;
    HFONT oldfont;
 
-   if (! winInitialized++) {
-      BORDWIDTH = FRAMEWIDTH * 2;
-      BORDHEIGHT = TITLEHEIGHT + FRAMEHEIGHT * 2;
-      CLIENT_XOFF = FRAMEWIDTH;
-      CLIENT_YOFF = TITLEHEIGHT + FRAMEHEIGHT;
-      GetCPInfo(CP_ACP, &cpinfo);
-      MAXBYTESPERCHAR = cpinfo.MaxCharSize;
-      }
+    if (!inited) {
+        init_window_system();
+        inited = 1;
+    }
+
    /*
     * allocate a binding, a window state, and a context
     */
@@ -313,7 +308,8 @@ wbp wopen(char *display)
    GLink(ws, wstates);
 
    w->window = ws;
-   w->context = alc_context(w);
+   w->context = alccontext(w);
+
    ws = w->window;
    add_gc_global(&ws->listp);
    create_list(64, &ws->listp);
@@ -342,33 +338,10 @@ wbp wopen(char *display)
    ws->iconwin = CreateWindow( "oix", ws->windowlabel,
 		   winstyles,
 		   ws->x, ws->y,
-		   ws->width == 0 ? 400 : ws->width + BORDWIDTH,
-		   ws->height == 0 ? 400: ws->height + BORDHEIGHT,
+		   ws->width + BORDWIDTH,
+		   ws->height + BORDHEIGHT,
 		   NULL, NULL, mswinInstance, NULL);
    hdc = GetDC(ws->iconwin);
-   if ((GetDeviceCaps(hdc, RASTERCAPS) & RC_PALETTE) && (numColors == 0)){
-      /* This window is on a device that supports palettes */
-      numColors = 2;
-      logpal[0].palNumEntries = 2;
-      logpal[0].palVersion = 0x300;
-      logpal[0].palPalEntry[0].peFlags = 0;
-      logpal[0].palPalEntry[0].peRed = 0;
-      logpal[0].palPalEntry[0].peGreen = 0;
-      logpal[0].palPalEntry[0].peBlue = 0;
-      logpal[0].palPalEntry[1].peFlags = 0;
-      logpal[0].palPalEntry[1].peRed = 255;
-      logpal[0].palPalEntry[1].peGreen = 255;
-      logpal[0].palPalEntry[1].peBlue = 255;
-      palette = CreatePalette(logpal);
-      if ((scp = malloc(2 * sizeof (struct wcolor))) == NULL) 
-	 return 0;
-      scp[0].c = RGB(0,0,0);
-      scp[0].type = SHARED;
-      strcpy(scp[0].name, "black");
-      scp[1].c = RGB(255,255,255);
-      scp[1].type = SHARED;
-      strcpy(scp[1].name, "white");
-      }
    oldfont = SelectObject(hdc, wc->font->font);
    GetTextMetrics(hdc, &metrics);
    wc->font->maxwidth = dc_maxcharwidth(hdc);
@@ -376,33 +349,13 @@ wbp wopen(char *display)
    ReleaseDC(ws->iconwin, hdc);
    wc->font->ascent = metrics.tmAscent;
    wc->font->descent = metrics.tmDescent;
-   /*   wc->font->maxwidth = metrics.tmMaxCharWidth; buggy */
-   /* wc->font->height = metrics.tmHeight; */
 
-   /*
-    * set the generic window's true default sizes
-    */
-   if (!ws->width || !ws->height) {
-      if (!ws->width) ws->width = metrics.tmMaxCharWidth * 80;
-      if (!ws->height) ws->height = metrics.tmHeight * 12;
-      SetWindowPos(ws->iconwin, ws->iconwin,
-		   ws->x,
-		   ws->y,
-		   ws->width + BORDWIDTH, ws->height + BORDHEIGHT,
-		   SWP_NOZORDER);
-      }
    if (!ws->pix) {
       hdc = GetDC(ws->iconwin);
       ws->pix = CreateCompatibleBitmap(hdc, ws->width, ws->height);
       ReleaseDC(ws->iconwin, hdc);
       }
 
-   if (alc_rgb(w, wc->fg) == Failed) {
-      return 0;
-      }
-   if (alc_rgb(w, wc->bg) == Failed) {
-      return 0;
-      }
    ws->pixwidth = ws->width;
    ws->pixheight = ws->height;
    ws->win = 0;
@@ -417,12 +370,6 @@ wbp wopen(char *display)
    rec.left = rec.top = 0;
    rec.right = ws->width;
    rec.bottom = ws->height;
-   if (palette) {
-      SelectPalette(hdc, palette, FALSE);
-      SelectPalette(hdc2, palette, FALSE);
-      RealizePalette(hdc);
-      RealizePalette(hdc2);
-   }
    brush = CreateBrushIndirect(&(wc->bgbrush));
    FillRect(hdc2, &rec, brush);
    DeleteObject(brush);
@@ -735,9 +682,11 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
       if (ws->refcount > 0) {
           qeventcode(ws, WINDOWCLOSED);
          }
+#if 0 
       else if (ws->refcount < 0) { /* window was closed by program */
          ws->refcount = -ws->refcount;
 	 }
+#endif
       }
       break;
    case MM_MCINOTIFY:
@@ -753,9 +702,8 @@ void pollevent(wbp w)
    MSG m;
    /* some while PeekMessage loops here, maybe one per window ? */
    while (PeekMessage(&m, NULL, 0, 0, PM_NOREMOVE)) {
-      if (GetMessage(&m, NULL, 0, 0) == 0) {
-          exit(0);
-      }
+      if (GetMessage(&m, NULL, 0, 0) <= 0)
+          return;
       TranslateMessage(&m);
       DispatchMessage(&m);
       }
@@ -961,17 +909,6 @@ char *s;
    return Failed;
    }
 
-/*
- * rebind() - bind w's context to that of w2.
- */
-int rebind(w, w2)
-wbp w, w2;
-   {
-   wsp ws = w->window;
-   /* decrement w->context->refcount?  increment w2->context->refcount? */
-   w->context = w2->context;
-   return Succeeded;
-   }
 
 static void setclip(w)
 wbp w;
@@ -1016,7 +953,7 @@ int raisewindow(wbp w)
 /*
  * convert an Icon linear color into an MS Windows color value
  */
-COLORREF mscolor(wbp w, int r, int g, int b)
+static COLORREF mscolor(int r, int g, int b)
 {
    return RGB(r >> 8, g >> 8, b >> 8);
 }
@@ -1032,18 +969,18 @@ char *s;
 
    if (!strcmp(s, "solid")) {
       wc->brush.lbStyle = wc->fillstyle = BS_SOLID;
-      wc->brush.lbColor = PALCLR(wc->fg);
+      wc->brush.lbColor = PALCLR(wc->fg->color);
       }
    else {
       if (!strcmp(s, "masked")) {
 	 wc->brush.lbStyle = wc->fillstyle = BS_PATTERN;
-	 wc->brush.lbColor = PALCLR(wc->fg);
+	 wc->brush.lbColor = PALCLR(wc->fg->color);
 	 wc->brush.lbHatch = (int)wc->pattern;
          wc->bkmode = TRANSPARENT;
 	 }
       else if (!strcmp(s, "textured")) {
 	 wc->brush.lbStyle = wc->fillstyle = BS_PATTERN;
-	 wc->brush.lbColor = PALCLR(wc->fg);
+	 wc->brush.lbColor = PALCLR(wc->fg->color);
 	 wc->brush.lbHatch = (int)wc->pattern;
          wc->bkmode = OPAQUE;
 	 }
@@ -1080,7 +1017,6 @@ char *s;
    if ((ltype = stringint_str2int(siLineTypes, s)) < 0)
       return Failed;
    wc->pen.lopnStyle = ltype;
-   resetfg(w);
    if(!strcmp(s, "striped")) wc->bkmode = OPAQUE;
    else wc->bkmode = TRANSPARENT;
    return Succeeded;
@@ -1128,76 +1064,22 @@ int devicecaps(wbp w, int i)
 }
 
 /*
- * Reset the context's foreground color to whatever it is supposed to be.
- */
-int resetfg(w)
-wbp w;
-   {
-   return setfg(w, w->context->fgname);
-   }
-
-int alc_rgb(wbp w, COLORREF rgb)
-{
-   int i;
-   wsp ws = w->window;
-   HDC hdc;
-   PALETTEENTRY pe;
-   LOGPALETTE lp;
-   if (palette) {
-      for (i=0; i < numColors; i++) {
-         if (rgb == scp[i].c && scp[i].type == SHARED) break;
-	 }
-      if (i == numColors) {
-         numColors++;
-	 if (ResizePalette(palette, numColors) == 0) {
-	    numColors--;
-	    return Failed;
-            }
-         scp = realloc(scp, numColors * sizeof(struct wcolor));
-         if (scp == NULL) { numColors--; return Failed; }
-	 scp[numColors - 1].c = rgb;
-	 scp[numColors - 1].type = SHARED;
-	 sprintf(scp[numColors - 1].name, "%d,%d,%d",
-                 RED(rgb), GREEN(rgb), BLUE(rgb));
-         lp.palNumEntries = 1;
-	 lp.palVersion = 0x300;
-	 lp.palPalEntry[0].peFlags = 0;
-	 lp.palPalEntry[0].peRed = RED(rgb);
-	 lp.palPalEntry[0].peGreen = GREEN(rgb);
-	 lp.palPalEntry[0].peBlue = BLUE(rgb);
-         SetPaletteEntries(palette, numColors - 1, 1, lp.palPalEntry);
-	 hdc = GetDC(ws->iconwin);
-	 SelectPalette(hdc, palette, FALSE);
-	 RealizePalette(hdc);
-	 ReleaseDC(ws->iconwin, hdc);
-	 }
-      }
-   return Succeeded;
-}
-
-/*
  * Set the context's foreground color
  */
 int setfg(wbp w, char *val)
 {
-    int r, g, b;
+    int r, g, b, a;
     wcp wc = w->context;
-    if (!parseopaquecolor(val, &r, &g, &b))
+    if (!parsecolor(val, &r, &g, &b, &a))
         return Failed;
-
-    wc->fg = mscolor(w, r, g, b);
-    if (alc_rgb(w, wc->fg) == Failed) return Failed;
-    if (!wc->fgname) wc->fgname = salloc(val);
-    else if (strcmp(wc->fgname, val)) {
-        free(wc->fgname);
-        wc->fgname = salloc(val);
-    }
-    wc->brush.lbColor = PALCLR(wc->fg);
-    wc->pen.lopnColor = wc->brush.lbColor;
-    wc->brush.lbStyle = wc->fillstyle;
-    if (wc->fillstyle == BS_PATTERN)
-        wc->brush.lbHatch = (int)wc->pattern;
+    unlink_sharedcolor(wc->fg);
+    wc->fg = new_sharedcolor(val, mscolor(r, g, b));
     return Succeeded;
+}
+
+char *getfg(wbp w)
+{
+    return w->context->fg->name;
 }
 
 /*
@@ -1205,24 +1087,19 @@ int setfg(wbp w, char *val)
  */
 int setbg(wbp w, char *val)
 {
-    int r, g, b;
+    int r, g, b, a;
     wcp wc = w->context;
-    if (!parseopaquecolor(val, &r, &g, &b))
+    if (!parsecolor(val, &r, &g, &b, &a))
         return Failed;
-
-    wc->bg = mscolor(w, r, g, b);
-    if (alc_rgb(w, wc->bg) == Failed) return Failed;
-    if (!wc->bgname) wc->bgname = salloc(val);
-    else if (strcmp(wc->bgname, val)) {
-        free(wc->bgname);
-        wc->bgname = salloc(val);
-    }
-    wc->bgpen.lopnColor = PALCLR(wc->bg);
-    wc->bgbrush.lbStyle = BS_SOLID;
-    wc->bgbrush.lbColor = PALCLR(wc->bg);
+    unlink_sharedcolor(wc->bg);
+    wc->bg = new_sharedcolor(val, mscolor(r, g, b));
     return Succeeded;
 }
 
+char *getbg(wbp w)
+{
+    return w->context->bg->name;
+}
 
 /*
  * setpointer() - define a mouse pointer shape
@@ -1278,25 +1155,6 @@ int setdrawop(w, val)
     return Succeeded;
 }
 
-void togglefgbg(w)
-wbp w;
-   {
-   COLORREF tmp;
-   LOGPEN tpen;
-   LOGBRUSH tbrush;
-   wcp wc = w->context;
-   tmp = wc->fg;
-   wc->fg = wc->bg;
-   wc->bg = tmp;
-   tpen = wc->pen;
-   wc->pen = wc->bgpen;
-   wc->bgpen = tpen;
-   tbrush = wc->brush;
-   wc->brush = wc->bgbrush;
-   wc->bgbrush = tbrush;
-   }
-
-
 char *getwindowlabel(wbp w)
 {
     return w->window->windowlabel;
@@ -1314,16 +1172,6 @@ wbp w;
 int getpattern(wbp w, struct imgdata *imd)
 {
     return Failed;
-}
-
-char *getfg(wbp w)
-{
-    return w->context->fgname;
-}
-
-char *getbg(wbp w)
-{
-    return w->context->bgname;
 }
 
 char *getlinestyle(wbp w)
@@ -1371,13 +1219,14 @@ char *getcanvas(wbp w)
 /*
  * erase an area
  */
-void erasearea(w,x,y,width,height)
-wbp w;
-int x, y, width, height;
+void erasearea(wbp w, int x, int y, int width, int height)
    {
    HBRUSH hb, oldbrush, oldbrush2;
    RECT rect;
    STDLOCALS(w);
+
+   wc->bgbrush.lbColor = PALCLR(wc->bg->color);
+
    hb = CreateBrushIndirect(&(wc->bgbrush));
    if (stdwin) oldbrush = SelectObject(stddc, hb);
    oldbrush2 = SelectObject(pixdc, hb);
@@ -1523,7 +1372,6 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
    HDC stddc = GetDC(ws->iconwin), pixdc = CreateCompatibleDC(stddc);
    HBITMAP oldpix;
 
-   if (palette) SelectPalette(pixdc, palette, FALSE);
    oldpix = SelectObject(pixdc, ws->pix);
 
    MemProtect(crp = malloc( imd->width * imd->height * sizeof(COLORREF)));
@@ -1546,7 +1394,6 @@ void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
    HDC stddc = GetDC(ws->iconwin), pixdc = CreateCompatibleDC(stddc);
    HBITMAP oldpix;
 
-   if (palette) SelectPalette(pixdc, palette, FALSE);
    oldpix = SelectObject(pixdc, ws->pix);
 
    p = (COLORREF *)imd->data;
@@ -1678,7 +1525,7 @@ void drawpoint(wbp wb, int x, int y)
 {
     COLORREF palfg;
     STDLOCALS(wb);
-    palfg = PALCLR(wc->fg);
+    palfg = PALCLR(wc->fg->color);
     if (stdwin) {
         SetPixel(stddc, x, y, palfg);
         SetPixel(pixdc, x, y, palfg);
@@ -1701,15 +1548,15 @@ void drawstring(wbinding *wb, int x, int y, char *s, int slen)
    if (stdwin) {
       oldfont=SelectObject(stddc, wc->font->font);
       SetBkMode(stddc, TRANSPARENT);
-      SetTextColor(stddc, PALCLR(wc->fg));
-      SetBkColor(stddc, PALCLR(wc->bg));
+      SetTextColor(stddc, PALCLR(wc->fg->color));
+      SetBkColor(stddc, PALCLR(wc->bg->color));
       TextOut(stddc, x, y - wc->font->ascent, s, slen);
       SelectObject(stddc, oldfont);
       }
    oldfont=SelectObject(pixdc,wc->font->font);
    SetBkMode(pixdc, TRANSPARENT);
-   SetTextColor(pixdc, PALCLR(wc->fg));
-   SetBkColor(pixdc, PALCLR(wc->bg));
+   SetTextColor(pixdc, PALCLR(wc->fg->color));
+   SetBkColor(pixdc, PALCLR(wc->bg->color));
    TextOut(pixdc, x, y - wc->font->ascent, s, slen);
    SelectObject(pixdc, oldfont);
    FREE_STDLOCALS(wb);
@@ -1738,10 +1585,10 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
    hb = CreateBrushIndirect(&(wc->brush));
    if (stdwin) oldbrush = SelectObject(stddc, hb);
    oldbrush2 = SelectObject(pixdc, hb);
-   SetTextColor(pixdc, PALCLR(wc->fg));
-   if (stdwin) SetTextColor(stddc, PALCLR(wc->fg));
-   SetBkColor(pixdc, PALCLR(wc->bg));
-   if (stdwin) SetBkColor(stddc, PALCLR(wc->bg));
+   SetTextColor(pixdc, PALCLR(wc->fg->color));
+   if (stdwin) SetTextColor(stddc, PALCLR(wc->fg->color));
+   SetBkColor(pixdc, PALCLR(wc->bg->color));
+   if (stdwin) SetBkColor(stddc, PALCLR(wc->bg->color));
    if (stdwin) SetBkMode(stddc, wc->bkmode);
    SetBkMode(pixdc, wc->bkmode);
  
@@ -1804,10 +1651,10 @@ void fillrectangle   (wbp wb, int x, int y, int width, int height)
    hb = CreateBrushIndirect(&(wc->brush));
    if (stdwin) oldbrush = SelectObject(stddc, hb);
    oldbrush2 = SelectObject(pixdc, hb);
-   SetTextColor(pixdc, PALCLR(wc->fg));
-   if (stdwin) SetTextColor(stddc, PALCLR(wc->fg));
-   SetBkColor(pixdc, PALCLR(wc->bg));
-   if (stdwin) SetBkColor(stddc, PALCLR(wc->bg));
+   SetTextColor(pixdc, PALCLR(wc->fg->color));
+   if (stdwin) SetTextColor(stddc, PALCLR(wc->fg->color));
+   SetBkColor(pixdc, PALCLR(wc->bg->color));
+   if (stdwin) SetBkColor(stddc, PALCLR(wc->bg->color));
    if (stdwin) SetBkMode(stddc, wc->bkmode);
    SetBkMode(pixdc, wc->bkmode);
    r.left = x;
@@ -1922,8 +1769,7 @@ int NumWindows = 0;
 /*
  * allocate a context.  Can't be called until w has a window.
  */
-static wcp alc_context(w)
-wbp w;
+static wcp alccontext(wbp w)
    {
    int i;
    wcp wc;
@@ -1931,21 +1777,19 @@ wbp w;
 
    GAlloc(wc, _wcontext);
    wc->bkmode = OPAQUE;        /* at present, only used in line drawing */
-   wc->fg = RGB(0,0,0);
-   wc->bg = RGB(255,255,255);
-   wc->fgname = salloc("black");
-   wc->bgname = salloc("white");
+   wc->fg = link_sharedcolor(black);
+   wc->bg = link_sharedcolor(white);
    wc->pen.lopnStyle = PS_SOLID;
    wc->pen.lopnWidth.x = wc->pen.lopnWidth.y = 1;
-   wc->pen.lopnColor = PALCLR(wc->fg);
+   wc->pen.lopnColor = PALCLR(wc->fg->color);
    wc->bgpen.lopnStyle = PS_SOLID;
    wc->bgpen.lopnWidth.x = wc->bgpen.lopnWidth.y = 1;
-   wc->bgpen.lopnColor = PALCLR(wc->bg);
+   wc->bgpen.lopnColor = PALCLR(wc->bg->color);
    wc->fillstyle = BS_SOLID;
    wc->brush.lbStyle = BS_SOLID;
-   wc->brush.lbColor = PALCLR(wc->fg);
+   wc->brush.lbColor = PALCLR(wc->fg->color);
    wc->bgbrush.lbStyle = BS_SOLID;
-   wc->bgbrush.lbColor = PALCLR(wc->bg);
+   wc->bgbrush.lbColor = PALCLR(wc->bg->color);
    wc->drawop = R2_COPYPEN;
    MemProtect(wc->font = calloc(1, sizeof (struct _wfont)));
    wc->font->name = salloc(defaultfont);
@@ -1967,52 +1811,47 @@ wbp w;
 /*
  * allocate a context, cloning attributes from an existing context
  */
-wcp clonecontext(w)
-wbp w;
-   {
-   wcp wc, wc2 = w->context;
-   wsp ws = w->window;
-   wbinding tmp;
-   int i;
+static wcp clonecontext(wcp src)
+{
+    wcp wc;
 
    GAlloc(wc, _wcontext);
 
    /*
     * copy over some stuff
     */
-   wc->clipx = wc2->clipx;
-   wc->clipy = wc2->clipy;
-   wc->clipw = wc2->clipw;
-   wc->cliph = wc2->cliph;
-   if (wc2->cliprgn)
+   wc->clipx = src->clipx;
+   wc->clipy = src->clipy;
+   wc->clipw = src->clipw;
+   wc->cliph = src->cliph;
+   if (src->cliprgn)
       wc->cliprgn = CreateRectRgn(wc->clipx,wc->clipy,
 			wc->clipx+wc->clipw,
 			wc->clipy+wc->cliph);
-   wc->dx = wc2->dx;
-   wc->dy = wc2->dy;
+   wc->dx = src->dx;
+   wc->dy = src->dy;
 
    /*
     * clone needs to make a copy of the pattern
-    *   if (wc2->pattern) {
-    *      wc->pattern = copy+somehow(wc2->pattern);
-    *      if (wc2->patternname)
-    *         wc->patternname = salloc(wc2->patternname);
+    *   if (src->pattern) {
+    *      wc->pattern = copy+somehow(src->pattern);
+    *      if (src->patternname)
+    *         wc->patternname = salloc(src->patternname);
     *      }
     */
 
-   wc->bkmode = wc2->bkmode;
-   wc->fg = wc2->fg;
-   wc->bg = wc2->bg;
-   wc->fgname = salloc(wc2->fgname);
-   wc->bgname = salloc(wc2->bgname);
-   wc->pen = wc2->pen;
-   wc->brush.lbColor = PALCLR(wc->fg);
-   wc->bgpen = wc2->bgpen;
-   wc->fillstyle = wc2->fillstyle;
+
+   wc->bkmode = src->bkmode;
+   wc->fg = link_sharedcolor(src->fg);
+   wc->bg = link_sharedcolor(src->bg);
+   wc->pen = src->pen;
+   wc->brush.lbColor = PALCLR(wc->fg->color);
+   wc->bgpen = src->bgpen;
+   wc->fillstyle = src->fillstyle;
    wc->brush.lbStyle = wc->fillstyle;
    wc->bgbrush.lbStyle = wc->fillstyle;
-   wc->bgbrush.lbColor = PALCLR(wc->bg);
-   wc->drawop = wc2->drawop;
+   wc->bgbrush.lbColor = PALCLR(wc->bg->color);
+   wc->drawop = src->drawop;
    MemProtect(wc->font = calloc(1, sizeof (struct _wfont)));
    wc->font->name = salloc(defaultfont);
    wc->font->font = CreateFont(13,0,0,0,FW_NORMAL,0,0,0,
@@ -2020,10 +1859,8 @@ wbp w;
 	 OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,
 	 DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
 	 getenv("ICONFONT"));
-   tmp.window = ws;
-   tmp.context = wc;
-   setfont(&tmp, wc2->font->name);  /*rpp:check*/
-
+   wc->font->ascent = src->font->ascent;
+   wc->font->descent = src->font->descent;
 
    return wc;
    }
@@ -2034,8 +1871,8 @@ wbp w;
  */
 static void freewindow(wsp ws)
    {
-   int i;
    ws->refcount--;
+/*   fprintf(stderr, "Free %p now %d\n", ws, ws->refcount);fflush(stderr);*/
    if(ws->refcount == 0) {
       if (ws->win) /* && IsWindowVisible(ws->win))*/
 	 DestroyWindow(ws->win);
@@ -2072,10 +1909,8 @@ static void freecontext(wcp wc)
       if (wc->pattern)
 	 DeleteObject(wc->pattern);
       wc->pattern = 0;
-      if (wc->fgname) free(wc->fgname);
-      wc->fgname = 0;
-      if (wc->bgname) free(wc->bgname);
-      wc->bgname = 0;
+      unlink_sharedcolor(wc->fg);
+      unlink_sharedcolor(wc->bg);
       if (wc->font) {
 	 if (wc->font->font)
 	    DeleteObject(wc->font->font);
@@ -2165,7 +2000,7 @@ int height;
    wc->pattern = p;
    if (wc->fillstyle == BS_PATTERN) {
       wc->brush.lbStyle = BS_PATTERN;
-      wc->brush.lbColor = PALCLR(wc->fg);
+      wc->brush.lbColor = PALCLR(wc->fg->color);
       wc->brush.lbHatch = (int)p;
       }     
    return Succeeded;
@@ -2316,16 +2151,8 @@ void resizePixmap(wbp w, int width, int height)
       }
    hdc3 = CreateCompatibleDC(hdc);
    oldpix2 = SelectObject(hdc3, newpix);
-   if (palette) {
-      SelectPalette(hdc, palette, FALSE);
-      if (ws->pix) SelectPalette(hdc2, palette, FALSE);
-      SelectPalette(hdc3, palette, FALSE);
-      RealizePalette(hdc);
-      if (ws->pix) RealizePalette(hdc2);
-      RealizePalette(hdc3);
-      }
    lb.lbStyle = BS_SOLID;
-   lb.lbColor = PALCLR(w->context->bg);
+   lb.lbColor = PALCLR(w->context->bg->color);
    hb = CreateBrushIndirect(&lb);
    /*
     * initialize the new pixmap, including areas not in the old pixmap.
@@ -2363,15 +2190,6 @@ HDC CreateWinDC(wbp w)
    wsp ws = w->window;
    wcp wc = w->context;
    HDC hdc = GetDC(ws->iconwin);
-   if (numColors > 0) {
-      SelectPalette(hdc, palette, FALSE);
-/*      UnrealizeObject(palette); */
-      RealizePalette(hdc);
-      if (numRealized < numColors) {
-         numRealized = numColors;
-         if (RealizePalette(hdc) == 0) /* noop */;
-         }
-      }
    SetROP2(hdc, wc->drawop);
    if (wc->clipw >= 0){
       SelectClipRgn(hdc, wc->cliprgn);
@@ -2387,10 +2205,6 @@ HDC CreatePixDC(wbp w, HDC hdc)
    wcp wc = w->context;
    HBITMAP oldpix;
    HDC hdc2 = CreateCompatibleDC(hdc);
-   if (numColors > 0) {
-      SelectPalette(hdc2, palette, FALSE);
-      RealizePalette(hdc2);
-      }
    ws->theOldPix = SelectObject(hdc2, ws->pix);
    SetROP2(hdc2, wc->drawop);
    if (wc->clipw >= 0){
@@ -2424,37 +2238,6 @@ int dc_textwidth(HDC dc, char *s, int n)
     */
    GetTextExtentPoint(dc, s, n, &sz);
    return (int)sz.cx;
-}
-
-int sysScrollWidth()
-{
-   return GetSystemMetrics(SM_CXVSCROLL);
-}
-
-int sysFontHeight(wbp w)
-{
-   TEXTMETRIC tm;
-   int rv;
-   wsp ws = w->window;
-   HDC dc = GetDC(ws->iconwin);
-   HFONT oldfont = SelectObject(dc, GetStockObject(SYSTEM_FIXED_FONT));
-   GetTextMetrics(dc, &tm);
-   SelectObject(dc, oldfont);
-   ReleaseDC(ws->iconwin, dc);
-   return tm.tmHeight + tm.tmExternalLeading;
-}
-
-int sysTextWidth(wbp w, char *s, int n)
-{
-   int rv;
-   wsp ws = w->window;
-   HDC dc = GetDC(ws->iconwin);
-   HFONT oldfont;
-   oldfont = SelectObject(dc, GetStockObject(SYSTEM_FIXED_FONT));
-   rv = dc_textwidth(dc, s, n);
-   SelectObject(dc, oldfont);
-   ReleaseDC(ws->iconwin, dc);
-   return rv;
 }
 
 int textwidth(wbp w, char *s, int n)
@@ -2497,14 +2280,6 @@ void wfreersc()
    while (wstates != NULL) {
       wstates->refcount = 1;
       freewindow(wstates);
-      }
-   if (palette) {
-      DeleteObject(palette);
-      palette = 0;
-      }
-   if (scp) {
-      free(scp);
-      scp = 0;
       }
    if (wlhead)
       wlfree();
@@ -2552,6 +2327,7 @@ wbp clonewindow(wbp w)
     w2 = alcwbinding();
     w2->window = linkwindow(w->window);
     w2->context = clonecontext(w->context);
+    /*fprintf(stderr, "Clone %p giving %p count now %d\n", w, w2, w->window->refcount);fflush(stderr);*/
     return w2;
 }
 
@@ -2562,6 +2338,30 @@ wbp couplewindows(wbp w1, wbp w2)
     w3->window = linkwindow(w1->window);
     w3->context = linkcontext(w2->context);
     return w3;
+}
+
+static struct SharedColor *new_sharedcolor(char *name, COLORREF color)
+{
+    struct SharedColor *res;
+    GAlloc(res, SharedColor);
+    res->name = salloc(name);
+    res->color = color;
+    return res;
+}
+
+static struct SharedColor *link_sharedcolor(struct SharedColor *x)
+{
+    ++x->refcount;
+    return x;
+}
+
+static void unlink_sharedcolor(struct SharedColor *x)
+{
+    --x->refcount;
+    if (x->refcount == 0) {
+        free(x->name);
+        free(x);
+    }
 }
 
 void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
@@ -2589,6 +2389,32 @@ int definepointer(wbp w, char *name, int x, int y)
 int copypointer(wbp w, char *dest, char *src)
 {
     return Succeeded;
+}
+
+static void init_window_system(void)
+{
+    WNDCLASSEX wc;
+    wc.cbSize =         sizeof(WNDCLASSEX); 
+    wc.style =          CS_DBLCLKS;
+    wc.lpfnWndProc =    WndProc;
+    wc.cbClsExtra =     0;
+    wc.cbWndExtra =     0;
+    wc.hInstance =      GetModuleHandle(0);
+    wc.hIcon =          LoadIcon(0,IDI_APPLICATION);
+    wc.hCursor =        LoadCursor(0,IDC_ARROW);
+    wc.hbrBackground =  GetStockObject(WHITE_BRUSH);
+    wc.lpszMenuName =   0;
+    wc.lpszClassName =  "oix";
+    wc.hIconSm =        LoadIcon(0,IDI_APPLICATION);
+    RegisterClassEx(&wc);
+    BORDWIDTH = FRAMEWIDTH * 2;
+    BORDHEIGHT = TITLEHEIGHT + FRAMEHEIGHT * 2;
+    CLIENT_XOFF = FRAMEWIDTH;
+    CLIENT_YOFF = TITLEHEIGHT + FRAMEHEIGHT;
+    GetCPInfo(CP_ACP, &cpinfo);
+    MAXBYTESPERCHAR = cpinfo.MaxCharSize;
+    black = new_sharedcolor("black", mscolor(0,0,0));
+    white = new_sharedcolor("white", mscolor(0xffff,0xffff,0xffff));
 }
 
 static void set_MSXBGR32(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
