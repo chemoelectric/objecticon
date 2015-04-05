@@ -25,7 +25,6 @@
  */
 
 #if MSWIN32
-   #define  _WIN32_WINNT 0x0400
    #include <windows.h>
    #undef Type
    #undef MOD_SHIFT

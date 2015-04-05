@@ -72,9 +72,12 @@
    HWND stdwin = ws->win;\
    HBITMAP stdpix = ws->pix;\
    HDC stddc = CreateWinDC(w);\
-   HDC pixdc = CreatePixDC(w, stddc);
+   HDC pixdc = CreatePixDC(w);
 
 #define STDFONT \
    { if(stdwin)SelectObject(stddc, wc->font->font); SelectObject(pixdc,wc->font->font); }
 
-#define FREE_STDLOCALS(w) do { SelectObject(pixdc, (w)->window->theOldPix); ReleaseDC((w)->window->iconwin, stddc); DeleteDC(pixdc); } while (0)
+#define FREE_STDLOCALS(w) do { \
+   SelectObject(pixdc, (w)->window->theOldPix); \
+   if (stddc) ReleaseDC((w)->window->win, stddc);    \
+   DeleteDC(pixdc); } while (0)

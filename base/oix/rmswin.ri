@@ -6,24 +6,33 @@
 static wcp alccontext      (wbp w);
 static void init_window_system(void);
 static int inited;
-
+static void pix_to_win(wsp ws);
+static void open_screen_win(wsp ws);
+static void close_screen_win(wsp ws);
+#define FONTHASH_SIZE 64
+static wfp fonts[FONTHASH_SIZE], default_font;
+static wfp load_font(char *s);
+static int font_maxcharwidth(HFONT f);
+static int dc_textwidth(HDC dc, char *s, int n);
+static char *convert_spec(char *s);
+static HFONT findfont(char *family, int size, int flags, int ansi);
+static HFONT mkfont(char *s);
+static HWND dummy_win;
+static HDC dummy_hdc;
 static wcp clonecontext(wcp src);
 static void freecontext(wcp wc);
 static void freewindow(wsp ws);
 static int setpatternbits(wbp w, int width, int height, int *bits);
-static HFONT mkfont              (char *s);
-static int mswinsystem           (char *s);
-static void UpdateCursorPos      (wsp ws, wcp wc);
-static HDC CreateWinDC           (wbp);
-static HDC CreatePixDC           (wbp, HDC);
+static HDC CreateWinDC(wbp);
+static HDC CreatePixDC(wbp);
 static HBITMAP CreateBitmapFromData(char *data);
-static void resizePixmap(wbp w, int width, int height);
+static void resize_pixmap(wbp w, int width, int height);
 static int devicecaps(wbp w, int i);
 static void setclip(wbp w);
 static void unsetclip(wbp w);
-static struct imgdataformat imgdataformat_MSXBGR32;
+static struct imgdataformat imgdataformat_MSRGBX32;
 static POINT *convert_points(struct point *points0, int npoints);
-
+static COLORREF mscolor(int r, int g, int b);
 static struct SharedColor *new_sharedcolor(char *name, COLORREF color);
 static struct SharedColor *link_sharedcolor(struct SharedColor *i);
 static void unlink_sharedcolor(struct SharedColor *i);
@@ -86,6 +95,21 @@ stringint siLineTypes[] = {
   {"striped",           PS_DOT}
 };
 
+#define NormalCanvas 1
+#define HiddenCanvas 2
+#define IconicCanvas 3
+#define PopupCanvas  4
+#define MaximizedCanvas  5
+
+static stringint canvastypes[] = {
+    {0, 5},
+    {"hidden",      HiddenCanvas},
+    {"iconic",      IconicCanvas},
+    {"maximized",   MaximizedCanvas},
+    {"normal",      NormalCanvas},
+    {"popup",       PopupCanvas},
+};
+
 HINSTANCE mswinInstance;
 int ncmdShow;
 
@@ -123,21 +147,6 @@ void wlfree()
       }
 }
 
-BOOL_CALLBACK myenumproc(HWND w, LPARAM l)
-{
-   wlinsert(w);
-   return 1;
-}
-
-BOOL_CALLBACK myenumproc2(HWND w, LPARAM l)
-{
-   if (!wlsearch(w)) {
-      FoundNew++;
-      NewWin = w;
-      }
-   return 1;
-}
-
 static POINT *convert_points(struct point *points0, int npoints)
 {
     POINT *points;
@@ -160,25 +169,6 @@ char * strcasestr(char *haystack, char *needle)
    return 0;
 }
 
-BOOL_CALLBACK myenumproc3(HWND w, LPARAM l)
-{
-   char s[64], s2[64];
-   GetWindowText(w, s2, 63);
-   /*
-    * Conditions to find a window:
-    * 1) wasn't in the list of windows already present when we launched.
-    * 2) either contains the argv[0] program name, or
-    *    was first window to appear after we called WinExec().
-    */
-   if (!wlsearch(w)) {
-      FoundNew++;
-      if ((strcasestr(s2, lookingfor) != NULL) || (NewWin && (NewWin == w))) {
-         FoundIt++;
-         }
-      }
-   return 1;
-}
-
 char *lookcmdname(char *buf, char *s)
 {
   char *t = buf;
@@ -194,55 +184,6 @@ char *lookcmdname(char *buf, char *s)
     s++;
     }
   return buf;
-}
-
-int mswinsystem(char *s)
-{
-   int i, rv, j, background = 0;
-   char *s2;
-   char **argv;
-   char cmd[256];
-   int argc;
-
-
-   if (s == NULL) return -1;
-   for(i=0; ((s[i] == ' ') || (s[i] == '\t')) ;i++) ;
-   if (s[i] == '\0') return -1;
-
-   s2 = strdup(s + i);
-   if (s2 == NULL) return -1;
-
-   for(j=strlen(s2)-1; j > 0 && (s2[j] == ' ' || s2[j] == '\t'); j--)
-      s2[j] = '\0';
-
-   /*
-    * if it is a "background task", launch using WinExec.
-    */
-   if ((j>0) && (s2[j] == '&')) {
-      s2[j] = '\0';
-      while (s2[--j] == ' ') s2[j] = '\0';
-
-      i = WinExec(s2, SW_SHOW);
-      if ( i >= 32 ) return 0;
-      return -1;
-      }
-
-   /*
-    * launch using spawnvp
-    * and wait for _P_WAIT.  _P_WAIT's semantics do not seem to actually
-    * work some of the time; the program is launched but we don't wait for it.
-    * CmdParamToArgv() is called so as leave quoted arguments quoted, but
-    * spawnvp's command name argument (redundant with argv[0]) must not
-    * be quoted.
-    */
-      argc = CmdParamToArgv(s, &argv, 0);
-      if (argv[0][0] == '\"') strcpy(cmd, argv[0]+1);
-	else strcpy(cmd, argv[0]);
-      if (cmd[strlen(cmd)-1] == '\"') cmd[strlen(cmd)-1] = '\0';
-      rv = _spawnvp(_P_WAIT, cmd, argv);
-      for(i=0; i<argc; i++) free(argv[i]);
-      free(argv);
-      return rv;
 }
 
 /*
@@ -261,7 +202,6 @@ static wbp alcwbinding(void)
  */
 void freewbinding(wbp w)
 {
-    /*fprintf(stderr, "Free binding %p count now %d\n", w, w->window->refcount-1);fflush(stderr);*/
     freewindow(w->window);
     freecontext(w->context);
     GUnlink(w, wbndngs);
@@ -276,17 +216,11 @@ wbp wopen(char *display)
    wbp w;
    wsp ws;
    wcp wc;
-   char answer[256];
    int i, r;
    RECT rec;
-   tended struct b_list *tlp;
-   tended struct descrip attrrslt;
-   HDC hdc, hdc2, hdc3;
-   DWORD winstyles = 0;
-   TEXTMETRIC	metrics;
+   HDC hdc2;
    HBRUSH brush;
-   HBITMAP oldpix, oldpix2;
-   HFONT oldfont;
+   HBITMAP oldpix;
 
     if (!inited) {
         init_window_system();
@@ -318,54 +252,21 @@ wbp wopen(char *display)
     * set the title
     */
    ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
-   SETTOBEHIDDEN(ws);
 
    wc = w->context;
 
    if (ws->x < 0) ws->x = 0;
    if (ws->y < 0) ws->y = 0;
 
-   /*
-    * create the window
-    */
-/*   winstyles=(ISTITLEBAR(ws)?WS_OVERLAPPEDWINDOW:(WS_DLGFRAME|WS_THICKFRAME));*/
-   winstyles=WS_OVERLAPPEDWINDOW;
-/*
-   winstyles |= WS_CLIPCHILDREN;
-   if (!ISTOBEHIDDEN(ws))
-      winstyles |= WS_VISIBLE;
-*/
-   ws->iconwin = CreateWindow( "oix", ws->windowlabel,
-		   winstyles,
-		   ws->x, ws->y,
-		   ws->width + BORDWIDTH,
-		   ws->height + BORDHEIGHT,
-		   NULL, NULL, mswinInstance, NULL);
-   hdc = GetDC(ws->iconwin);
-   oldfont = SelectObject(hdc, wc->font->font);
-   GetTextMetrics(hdc, &metrics);
-   wc->font->maxwidth = dc_maxcharwidth(hdc);
-   SelectObject(hdc, oldfont);
-   ReleaseDC(ws->iconwin, hdc);
-   wc->font->ascent = metrics.tmAscent;
-   wc->font->descent = metrics.tmDescent;
-
-   if (!ws->pix) {
-      hdc = GetDC(ws->iconwin);
-      ws->pix = CreateCompatibleBitmap(hdc, ws->width, ws->height);
-      ReleaseDC(ws->iconwin, hdc);
-      }
-
+   ws->pix = CreateCompatibleBitmap(dummy_hdc, ws->width, ws->height);
    ws->pixwidth = ws->width;
    ws->pixheight = ws->height;
    ws->win = 0;
 
-   /*BringWindowToTop(ws->win);*/
    /*
     * initialize the image with the background color
     */
-   hdc = GetDC(ws->iconwin);
-   hdc2 = CreateCompatibleDC(hdc);
+   hdc2 = CreateCompatibleDC(dummy_hdc);
    oldpix = SelectObject(hdc2, ws->pix);
    rec.left = rec.top = 0;
    rec.right = ws->width;
@@ -374,7 +275,6 @@ wbp wopen(char *display)
    FillRect(hdc2, &rec, brush);
    DeleteObject(brush);
    SelectObject(hdc2, oldpix);
-   ReleaseDC(ws->iconwin, hdc);
    DeleteDC(hdc2);
 
    return w;
@@ -385,17 +285,22 @@ int handle_config(wbp w, UINT msg, WPARAM wp, LPARAM lp)
    int neww, newh;
    wsp ws = w->window;
 
-   if (wp == SIZE_MINIMIZED) {
-      if (ws->win) {
-         SetWindowText(ws->win, ws->windowlabel);
-         ws->win = NULL;
-	 }
-      return 1;
-      }
+   switch (wp) {
+       case SIZE_MINIMIZED: {
+           ws->state = IconicCanvas;
+           return 1;
+       }
+       case SIZE_MAXIMIZED: {
+           ws->state = MaximizedCanvas;
+           break;
+       }
+       case SIZE_RESTORED: {
+           ws->state = NormalCanvas;
+           break;
+       }
+   }
 
-   if (ws->win)
-      SetWindowText(ws->win, ws->windowlabel);
-   ws->win = ws->iconwin;
+   SetWindowText(ws->win, ws->windowlabel);
 
    neww = LOWORD(lp);
    newh = HIWORD(lp);
@@ -409,11 +314,7 @@ int handle_config(wbp w, UINT msg, WPARAM wp, LPARAM lp)
 
    ws->width = neww;
    ws->height = newh;
-   resizePixmap(w, ws->width, ws->height);
-   if (!ISEXPOSED(ws)) {
-      SETEXPOSED(ws);
-      return 1;
-      }
+   resize_pixmap(w, ws->width, ws->height);
    qeventcode(w->window, WINDOWRESIZED);
    return 1;
    }
@@ -536,7 +437,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
    for (wb = wbndngs; wb; wb=wb->next) {
       ws = wb->window;
 
-      if ((ws->win == hwnd) || (ws->iconwin == hwnd)) break;
+      if (ws->win == hwnd) break;
       }
    if (msg == WM_QUIT) {
       wfreersc();
@@ -550,7 +451,6 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
    else
    switch(msg) {
    case WM_PAINT:
-      SETEXPOSED(wb->window);
       hdc = BeginPaint(hwnd, &ps);
       GetClientRect(hwnd, &rect);
       if (IsIconic(hwnd)) {
@@ -639,8 +539,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
    case WM_COMMAND:
       break;
    case WM_SIZE:
-      if (hwnd == ws->win)
-         handle_config(wb, msg, wp, lp);
+      handle_config(wb, msg, wp, lp);
       break;
    case WM_MOVE:
       /* x,y represents the position of the drawable area. Casting to
@@ -670,24 +569,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
    }
 
    /* case WM_QUIT is handled prior to the switch*/
-   case WM_DESTROY: {
-      wbp tmp_wb, w = wb;
-      struct wbind_list *wbl, *t, *b;
-
-      if (ws->win == hwnd)
-	 ws->win = NULL;
-      if (ws->iconwin == hwnd)
-	 ws->iconwin = NULL;
-
-      if (ws->refcount > 0) {
-          qeventcode(ws, WINDOWCLOSED);
-         }
-#if 0 
-      else if (ws->refcount < 0) { /* window was closed by program */
-         ws->refcount = -ws->refcount;
-	 }
-#endif
-      }
+   case WM_DESTROY:
       break;
    case MM_MCINOTIFY:
       mciSendCommand(LOWORD(lp), MCI_CLOSE, 0, (DWORD)NULL);
@@ -724,41 +606,95 @@ int sendselectionresponse(wbp w, word requestor, char *property, char *target, c
     return Succeeded;
 }
 
-int setcanvas(w,s)
-wbp w;
-char *s;
-   {
-   int cmd;
-   wsp ws = w->window;
-   HWND stdwin = ws->win;
+static void close_screen_win(wsp ws)
+{
+    if (ws->win) {
+        DestroyWindow(ws->win);
+        ws->win = 0;
+        ws->state = HiddenCanvas;
+    }
+}
 
-   if (!strcmp(s, "iconic")) {
-      cmd = SW_MINIMIZE;
-      CLRTOBEHIDDEN(ws);
-      }
-   else if (!strcmp(s, "normal")) {
-      cmd = SW_RESTORE;
-      stdwin = ws->win = ws->iconwin;
-      CLRTOBEHIDDEN(ws);
-      }
-   else if (!strcmp(s, "maximized")) {
-      cmd = SW_SHOWMAXIMIZED;
-      stdwin = ws->win = ws->iconwin;
-      CLRTOBEHIDDEN(ws);
-      }
-   else if (!strcmp(s, "hidden")) {
-      cmd = SW_HIDE;
-      SETTOBEHIDDEN(ws);
-      }
-   else {
-      return Failed;
-      }
-   if (stdwin)
-      ShowWindow(stdwin, cmd);
+static void open_screen_win(wsp ws)
+{
+    switch (ws->state) {
+        case PopupCanvas: {
+            ws->win = CreateWindowEx(WS_EX_NOACTIVATE|WS_EX_TOPMOST,
+                                     "oix", ws->windowlabel,
+                                     WS_POPUP,
+                                     ws->x, ws->y,
+                                     ws->width,
+                                     ws->height,
+                                     NULL, NULL, mswinInstance, NULL); 
+           break;
+        } 
+        default: {
+            ws->win = CreateWindowEx(0,
+                                     "oix", ws->windowlabel,
+                                     WS_OVERLAPPEDWINDOW,
+                                     ws->x, ws->y,
+                                     ws->width + BORDWIDTH,
+                                     ws->height + BORDHEIGHT,
+                                     NULL, NULL, mswinInstance, NULL); 
+        }
+    }
+}
 
-   return Succeeded;
-   }
+int setcanvas(wbp w, char *s)
+{
+    int cmd, curr;
+    wsp ws = w->window;
+    HWND stdwin = ws->win;
+    stringint *e;
 
+    e = stringint_lookup(canvastypes, s);
+    if (!e)
+        return Failed;
+
+    if (e->i == ws->state)
+        return Succeeded;
+
+    /*
+     * If we're presently hidden, just open the visible window.
+     */
+    if (!ws->win) {
+        if (e->i != HiddenCanvas) {
+            ws->state = e->i;
+            open_screen_win(ws);
+            pix_to_win(ws);
+            ShowWindow(ws->win, SW_RESTORE);
+        }
+        return Succeeded;
+    }
+
+    /*
+     * More complex cases, with the window already unhidden.
+     */
+    switch (e->i) {
+        case HiddenCanvas: {
+            close_screen_win(ws);
+            break;
+        }
+
+        case IconicCanvas: {
+            if (ws->state == PopupCanvas)
+                return Failed;
+            ShowWindow(ws->win, SW_MINIMIZE);
+            break;
+        }
+
+        case NormalCanvas: {
+            if (ws->state == PopupCanvas)
+                return Failed;
+            ShowWindow(ws->win, SW_RESTORE);
+            break;
+        }
+
+        case PopupCanvas:
+            return Failed;
+    }
+    return Succeeded;
+}
 
 int setwindowlabel(w, val)
 wbp w;
@@ -781,7 +717,7 @@ char *val;
    }
 
 
-HFONT findfont(char *family, int size, int flags, int ansi)
+static HFONT findfont(char *family, int size, int flags, int ansi)
 {
    int charset, weight;
    char slant, spacing;
@@ -819,7 +755,7 @@ HFONT findfont(char *family, int size, int flags, int ansi)
 		spacing, family);
 }
 
-HFONT mkfont(char *s)
+static HFONT mkfont(char *s)
 {
    int flags;
    double size;
@@ -872,43 +808,14 @@ HFONT mkfont(char *s)
 /*
  * Set the window's font by name.
  */
-int setfont(w, s)
-wbp w;
-char *s;
-   {
-   wsp ws = w->window;
-   wcp wc = w->context;
-   HFONT hf, oldfont;
-   TEXTMETRIC	metrics;
-   HDC tmpdc;
-
-   hf = mkfont(s);
-   if (hf != NULL) {
-      if (wc->font->font)
-	 DeleteObject(wc->font->font);
-      wc->font->font = hf;
-      if (wc->font->name)
-         free(wc->font->name);
-      wc->font->name = salloc(s);
-
-      tmpdc = GetDC(ws->iconwin);
-      oldfont = SelectObject(tmpdc, hf);
-      wc->font->maxwidth = dc_maxcharwidth(tmpdc);
-      if (GetTextMetrics(tmpdc, &metrics) == 0) {
-         /* gettextmetrics can fail; what should we do about it? */
-         ;
-         }
-      SelectObject(tmpdc, oldfont);
-      ReleaseDC(ws->iconwin, tmpdc);
-      wc->font->ascent = metrics.tmAscent;
-      wc->font->descent = metrics.tmDescent;
-/*    wc->font->maxwidth = metrics.tmMaxCharWidth; unreliable due to MS bug */
-/*      wc->font->height = metrics.tmHeight; */
-      return Succeeded;
-      }
-   return Failed;
-   }
-
+int setfont(wbp w, char *s)
+{
+    wfp f = load_font(s);
+    if (!f)
+        return Failed;
+    w->context->font = f;
+    return Succeeded;
+}
 
 static void setclip(w)
 wbp w;
@@ -1140,18 +1047,13 @@ char *val;
    return Succeeded;
    }
 
-/*
- * setdrawop() - set the drawing operation
- */
-int setdrawop(w, val)
-    wbp w;
-    char *val;
+int setdrawop(wbp w, char *val)
 {
-    int i;
     wcp wc = w->context;
-    if ((i = stringint_str2int(drawops,val)) < 0)
-       return Failed;
-    wc->drawop = i;
+    stringint *e = stringint_lookup(drawops, val);
+    if (!e)
+        return Failed;
+    wc->drawop = e;
     return Succeeded;
 }
 
@@ -1196,24 +1098,15 @@ char *getdisplay(wbp w)
 
 char *getdrawop(wbp w)
 {
-    char *s = stringint_int2str(drawops, w->context->drawop);
-    if (s) 
-        return s;
-    else 
-        return "unknown";
+    return w->context->drawop->s;
 }
-
 
 char *getcanvas(wbp w)
 {
-    wsp ws = w->window;
-    if (ws->iconwin) {
-        if (!IsWindowVisible(ws->iconwin)) return "hidden";
-        else if (IsIconic(ws->iconwin)) return "iconic";
-        else if (IsZoomed(ws->iconwin)) return "maximized";
-        else return "normal";
-    }
-    else return "hidden";
+    char *v = stringint_int2str(canvastypes, w->window->state);
+    if (!v)
+        syserr("Invalid value of state");
+    return v;
 }
 
 /*
@@ -1248,11 +1141,12 @@ int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2)
    {
    int lpad, rpad, tpad, bpad;
    RECT r;
-   HDC srcdc, srcpixdc;
+   HDC srcpixdc;
    HBRUSH hb;
    wsp ws1 = w->window;
    HBITMAP oldpix;
    STDLOCALS(w2);
+
    /*
     * setup device contexts for area copy
     */
@@ -1261,12 +1155,10 @@ int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2)
    if (stdwin)
       SetROP2(stddc, R2_COPYPEN);
    if (w2->window == w->window) {
-      srcdc = pixdc;
       srcpixdc = pixdc;
       }
    else {
-      srcdc = GetDC(w->window->iconwin);
-      srcpixdc = CreateCompatibleDC(srcdc);
+      srcpixdc = CreateCompatibleDC(dummy_hdc);
       SetROP2(srcpixdc, R2_COPYPEN);
       }
    oldpix = SelectObject(srcpixdc, w->window->pix);
@@ -1355,7 +1247,6 @@ int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2)
     */
    SelectObject(srcpixdc, oldpix);
    if (w2->window != w->window) {
-      ReleaseDC(w->window->iconwin, srcdc);
       DeleteDC(srcpixdc);
       }
    DeleteObject(hb);
@@ -1369,7 +1260,7 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
    wsp ws = w->window;
    int i, j;
    COLORREF *p, *crp;
-   HDC stddc = GetDC(ws->iconwin), pixdc = CreateCompatibleDC(stddc);
+   HDC pixdc = CreateCompatibleDC(dummy_hdc);
    HBITMAP oldpix;
 
    oldpix = SelectObject(pixdc, ws->pix);
@@ -1380,26 +1271,55 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
        for(j = x; j < x + imd->width; j++)
            *p++ = GetPixel(pixdc, j, i);
 
-   imd->format = &imgdataformat_MSXBGR32;
+   imd->format = &imgdataformat_MSRGBX32;
    imd->data = (unsigned char *)crp;
    SelectObject(pixdc, oldpix);
+   DeleteDC(pixdc);
+}
+
+static void pix_to_win0(wbp w)
+{
+   STDLOCALS(w);
+   BitBlt(stddc, 0, 0, ws->width, ws->height, 
+          pixdc, 0, 0, SRCCOPY);
    FREE_STDLOCALS(w);
 }
 
-void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
+static void pix_to_win(wsp ws)
+{
+    HDC windc = GetDC(ws->win);
+    HDC pixdc = CreateCompatibleDC(dummy_hdc);
+    HBITMAP oldpix;
+    oldpix = SelectObject(pixdc, ws->pix);
+    BitBlt(windc, 0, 0, ws->width, ws->height, 
+           pixdc, 0, 0, SRCCOPY);
+    ReleaseDC(ws->win, windc);
+    SelectObject(pixdc, oldpix);
+    DeleteDC(pixdc);
+}
+
+void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
    COLORREF *p;
-   wsp ws = w->window;
    int i, j;
-   HDC stddc = GetDC(ws->iconwin), pixdc = CreateCompatibleDC(stddc);
-   HBITMAP oldpix;
+   struct imgdata *tmp;
+   STDLOCALS(w);
 
-   oldpix = SelectObject(pixdc, ws->pix);
+   if (imd->format != &imgdataformat_MSRGBX32) {
+       tmp = initimgdata(imd->width, imd->height, &imgdataformat_MSRGBX32);
+       copyimgdata(tmp, imd);
+       p = (COLORREF *)tmp->data;
+   } else {
+       tmp = 0;
+       p = (COLORREF *)imd->data;
+   }
 
-   p = (COLORREF *)imd->data;
    for(i = y; i < y + imd->height; i++)
-      for(j = x; j < x + imd->width; j++)
-         SetPixel(pixdc, j, i, *p++);
+       for(j = x; j < x + imd->width; j++)
+           SetPixel(pixdc, j, i, *p++);
+
+   if (tmp)
+       unlinkimgdata(tmp);
 
    /*
     * Copy it from the pixmap onto the screen.
@@ -1409,14 +1329,12 @@ void outputimgdata(wbp w, int x, int y, struct imgdata *imd)
 	     pixdc, x, y, SRCCOPY);
    }
 
-   SelectObject(pixdc, oldpix);
-
    FREE_STDLOCALS(w);
 }
 
 struct imgdataformat *getimgdataformat(wbp w)
 {
-    return &imgdataformat_MSXBGR32;
+    return &imgdataformat_MSRGBX32;
 }
 
 int  getdisplaysize  (wbp w, int *width, int *height)
@@ -1544,7 +1462,6 @@ void drawstring(wbinding *wb, int x, int y, char *s, int slen)
    {
    HFONT oldfont;
    STDLOCALS(wb);
-
    if (stdwin) {
       oldfont=SelectObject(stddc, wc->font->font);
       SetBkMode(stddc, TRANSPARENT);
@@ -1790,18 +1707,9 @@ static wcp alccontext(wbp w)
    wc->brush.lbColor = PALCLR(wc->fg->color);
    wc->bgbrush.lbStyle = BS_SOLID;
    wc->bgbrush.lbColor = PALCLR(wc->bg->color);
-   wc->drawop = R2_COPYPEN;
-   MemProtect(wc->font = calloc(1, sizeof (struct _wfont)));
-   wc->font->name = salloc(defaultfont);
-   wc->font->font = CreateFont(16,0,0,0,FW_NORMAL,0,0,0,
-	 ((MAXBYTESPERCHAR==1)?ANSI_CHARSET:DEFAULT_CHARSET),
-	 OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,
-	 DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
-	 getenv("ICONFONT"));
-   wc->font->maxwidth = 8; /* looks like a bug */
-   tmp.window = w->window;
-   tmp.context = wc;
-   setfont(&tmp, defaultfont);
+   wc->drawop = stringint_lookup(drawops, "copy");
+   wc->font = default_font;
+   wc->leading = defaultleading;
    wc->clipx = wc->clipy = 0;
    wc->clipw = wc->cliph = -1;
 
@@ -1852,16 +1760,7 @@ static wcp clonecontext(wcp src)
    wc->bgbrush.lbStyle = wc->fillstyle;
    wc->bgbrush.lbColor = PALCLR(wc->bg->color);
    wc->drawop = src->drawop;
-   MemProtect(wc->font = calloc(1, sizeof (struct _wfont)));
-   wc->font->name = salloc(defaultfont);
-   wc->font->font = CreateFont(13,0,0,0,FW_NORMAL,0,0,0,
-	 ((MAXBYTESPERCHAR==1)?ANSI_CHARSET:DEFAULT_CHARSET),
-	 OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,
-	 DEFAULT_QUALITY, FIXED_PITCH | FF_MODERN,
-	 getenv("ICONFONT"));
-   wc->font->ascent = src->font->ascent;
-   wc->font->descent = src->font->descent;
-
+   wc->font = src->font;
    return wc;
    }
 
@@ -1872,24 +1771,11 @@ static wcp clonecontext(wcp src)
 static void freewindow(wsp ws)
    {
    ws->refcount--;
-/*   fprintf(stderr, "Free %p now %d\n", ws, ws->refcount);fflush(stderr);*/
    if(ws->refcount == 0) {
-      if (ws->win) /* && IsWindowVisible(ws->win))*/
+      if (ws->win)
 	 DestroyWindow(ws->win);
-/*      ws->win = 0;*/
-      if (ws->iconwin && ws->iconwin != ws->win) {
-         if (IsWindowVisible(ws->iconwin))
-	    DestroyWindow(ws->iconwin);
-         else DestroyWindow(ws->iconwin);
-	 }
-/*      ws->iconwin = 0;*/
-      if (ws->windowlabel) { free(ws->windowlabel); ws->windowlabel=0;}
-      if (ws->pix)
-	 DeleteObject(ws->pix);
-      ws->pix = 0;
-      if (ws->iconpix)
-	 DeleteObject(ws->iconpix);
-      ws->iconpix = 0;
+      free(ws->windowlabel);
+      DeleteObject(ws->pix);
       free(ws->cursorname);
       GUnlink(ws, wstates);
       free(ws);
@@ -1911,17 +1797,6 @@ static void freecontext(wcp wc)
       wc->pattern = 0;
       unlink_sharedcolor(wc->fg);
       unlink_sharedcolor(wc->bg);
-      if (wc->font) {
-	 if (wc->font->font)
-	    DeleteObject(wc->font->font);
-	 wc->font->font = 0;
-	 if (wc->font->name)
-	    free(wc->font->name);
-	 wc->font->name = 0;
-	 free(wc->font);
-	 }
-      wc->font = 0;
-
       free(wc);
       }
    }
@@ -1937,10 +1812,6 @@ int walert(wbp w, int volume)
  */
 int setpattern(wbp w, struct imgdata *imd)
 {
-/*
-    if (w->window->iconwin != NULL)
-        setpatternbits(w, width, height, rowdata);
-*/
     return Succeeded;
 }
 
@@ -2034,7 +1905,7 @@ int pixmap_init(w)
 wbp w;
    {
    wsp ws = w->window;
-   resizePixmap(w, ws->width, ws->height);
+   resize_pixmap(w, ws->width, ws->height);
    return Succeeded;
    }
 
@@ -2058,7 +1929,7 @@ void doconfig(w, status)
     }
 
     if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
-        resizePixmap(w, wid, ht);
+        resize_pixmap(w, wid, ht);
         if (ws->win) {
             pollevent(w);
             switch (status & (C_POS|C_SIZE)) {
@@ -2083,33 +1954,8 @@ void doconfig(w, status)
                 }
             }
         }
-        else if (ws->iconwin) {
-            switch (status & (C_POS|C_SIZE)) {
-                case C_POS|C_SIZE: {
-		   SetWindowPos(ws->iconwin, ws->iconwin,
-				posx,
-				posy,
-                                wid + BORDWIDTH, ht + BORDHEIGHT,
-				SWP_NOZORDER|SWP_NOACTIVATE);
-		   break;
-		}
-                case C_SIZE: {
-		   SetWindowPos(ws->iconwin, ws->iconwin, 0, 0,
-                                wid + BORDWIDTH, ht + BORDHEIGHT,
-                        	SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
-		   break;
-		}
-                case C_POS: {
-		   SetWindowPos(ws->iconwin, ws->iconwin,
-				posx,
-				posy,
-				0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
-		}
-	    }
-        }
     }
 }
-
 
 int grabpointer(wbp w)
 {
@@ -2121,9 +1967,9 @@ int ungrabpointer(wbp w)
    return Failed;
 }
 
-void resizePixmap(wbp w, int width, int height)
+static void resize_pixmap(wbp w, int width, int height)
    {
-   HDC hdc, hdc2, hdc3;
+   HDC hdc2, hdc3;
    HBITMAP newpix, oldpix, oldpix2;
    HBRUSH hb;
    LOGBRUSH lb;
@@ -2131,25 +1977,17 @@ void resizePixmap(wbp w, int width, int height)
    wsp ws = w->window;
    wcp wc = w->context;
    int x = ws->pixwidth, y = ws->pixheight;
+   if (ws->pixwidth == width && ws->pixheight == height)
+       return;
+   ws->pixwidth = width;
+   ws->pixheight = height;
 
-   if (ISEXPOSED(ws)) {
-        if (ws->pixwidth >= width && ws->pixheight >= height) {
-           return;
-        }
-      ws->pixheight = Max(ws->pixheight, height);
-      ws->pixwidth = Max(ws->pixwidth, width);
-      }
-   else {
-      ws->pixwidth = width;
-      ws->pixheight = height;
-      }
-   hdc = GetDC(ws->iconwin);
-   newpix = CreateCompatibleBitmap (hdc, ws->pixwidth, ws->pixheight);
+   newpix = CreateCompatibleBitmap (dummy_hdc, ws->pixwidth, ws->pixheight);
    if (ws->pix) {
-      hdc2 = CreateCompatibleDC(hdc);
+      hdc2 = CreateCompatibleDC(dummy_hdc);
       oldpix = SelectObject(hdc2, ws->pix);
       }
-   hdc3 = CreateCompatibleDC(hdc);
+   hdc3 = CreateCompatibleDC(dummy_hdc);
    oldpix2 = SelectObject(hdc3, newpix);
    lb.lbStyle = BS_SOLID;
    lb.lbColor = PALCLR(w->context->bg->color);
@@ -2160,21 +1998,20 @@ void resizePixmap(wbp w, int width, int height)
    rect.left = 0; rect.right = ws->pixwidth;
    rect.top = 0; rect.bottom = ws->pixheight;
    FillRect(hdc3, &rect, hb);
+   BitBlt(hdc3, 0, 0, ws->pixwidth, ws->pixheight, hdc2, 0, 0, SRCCOPY);
    if (ws->win) {
-      FillRect(hdc, &rect, hb);
+       HDC hdc = GetDC(ws->win);
+       FillRect(hdc, &rect, hb);
+       BitBlt(hdc, 0, 0, ws->pixwidth, ws->pixheight, hdc2, 0, 0, SRCCOPY);
+       ReleaseDC(ws->win, hdc);
    }
 
-   if (ws->pix) 
-	 BitBlt(hdc3, 0, 0, x - 2, y - 1, hdc2, 0, 0, SRCCOPY);
-   if (ws->win)
-      BitBlt(hdc, 0, 0, ws->pixwidth, ws->pixheight, hdc3, 0, 0, SRCCOPY);
    SelectObject(hdc3, oldpix2);
    DeleteDC(hdc3);
    if (ws->pix) {
       SelectObject(hdc2, oldpix);
       DeleteDC(hdc2);
       }
-   ReleaseDC(ws->iconwin, hdc);
    if (ws->pix) DeleteObject(ws->pix);
    DeleteObject(hb);
    ws->pix = newpix;
@@ -2185,12 +2022,15 @@ void resizePixmap(wbp w, int width, int height)
  * CreateWinDC - create a device context for drawing on the window
  *  In addition, select objects specified by flags.
  */
-HDC CreateWinDC(wbp w)
+static HDC CreateWinDC(wbp w)
    {
    wsp ws = w->window;
    wcp wc = w->context;
-   HDC hdc = GetDC(ws->iconwin);
-   SetROP2(hdc, wc->drawop);
+   HDC hdc;
+   if (!ws->win)
+       return 0;
+   hdc = GetDC(ws->win);
+   SetROP2(hdc, wc->drawop->i);
    if (wc->clipw >= 0){
       SelectClipRgn(hdc, wc->cliprgn);
       }
@@ -2199,37 +2039,38 @@ HDC CreateWinDC(wbp w)
    return hdc;
    }
 
-HDC CreatePixDC(wbp w, HDC hdc)
+static HDC CreatePixDC(wbp w)
    {
    wsp ws = w->window;
    wcp wc = w->context;
-   HBITMAP oldpix;
-   HDC hdc2 = CreateCompatibleDC(hdc);
+   HDC hdc2 = CreateCompatibleDC(dummy_hdc);
    ws->theOldPix = SelectObject(hdc2, ws->pix);
-   SetROP2(hdc2, wc->drawop);
+   SetROP2(hdc2, wc->drawop->i);
    if (wc->clipw >= 0){
       SelectClipRgn(hdc2, wc->cliprgn);
       }
    return hdc2;
    }
 
-int dc_maxcharwidth(HDC dc)
+static int font_maxcharwidth(HFONT f)
 {
   int i, m = -1, x;
   char s[2];
+  HFONT oldfont = SelectObject(dummy_hdc, f);
   s[1] = '\0';
   for (i=0; i<256; i++) {
     s[0] = i;
-    x = dc_textwidth(dc, s, 1);
+    x = dc_textwidth(dummy_hdc, s, 1);
     if (x > m) m = x;
   }
+  SelectObject(dummy_hdc, oldfont);
   return m;
 }
 
 /*
  * compute a text width for a current device context (typically pixdc)
  */
-int dc_textwidth(HDC dc, char *s, int n)
+static int dc_textwidth(HDC dc, char *s, int n)
 {
    SIZE sz;
    /*
@@ -2241,16 +2082,13 @@ int dc_textwidth(HDC dc, char *s, int n)
 }
 
 int textwidth(wbp w, char *s, int n)
-   {
+{
    int rv;
-   wsp ws = w->window;
-   HDC stddc = GetDC(ws->iconwin);
-   HFONT oldfont = SelectObject(stddc, w->context->font->font);
-   rv = dc_textwidth(stddc, s, n);
-   SelectObject(stddc, oldfont);
-   ReleaseDC(ws->iconwin, stddc);
+   HFONT oldfont = SelectObject(dummy_hdc, w->context->font->font);
+   rv = dc_textwidth(dummy_hdc, s, n);
+   SelectObject(dummy_hdc, oldfont);
    return rv;
-   }
+}
 
 int utf8width(wbp w, char *s, int n, int nchars)
 {
@@ -2327,7 +2165,6 @@ wbp clonewindow(wbp w)
     w2 = alcwbinding();
     w2->window = linkwindow(w->window);
     w2->context = clonecontext(w->context);
-    /*fprintf(stderr, "Clone %p giving %p count now %d\n", w, w2, w->window->refcount);fflush(stderr);*/
     return w2;
 }
 
@@ -2364,8 +2201,49 @@ static void unlink_sharedcolor(struct SharedColor *x)
     }
 }
 
-void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
+static char *convert_spec(char *s)
 {
+    return s;
+}
+
+static wfp load_font(char *s)
+{
+    wfp rv;
+    int i;
+    HFONT f;
+    TEXTMETRIC metrics;
+
+    /*
+     * Normalize font name.
+     */
+    s = convert_spec(s);
+    if (!s)
+        return 0;
+
+    /*
+     * See if the font is already loaded.
+     */
+    i = hasher(hashcstr(s), fonts);
+    for(rv = fonts[i]; rv; rv = rv->next) {
+        if (!strcmp(s, rv->name))
+            return rv;
+    }
+
+    f = mkfont(s);
+    if (!f)
+        return 0;
+
+    MemProtect(rv = calloc(1, sizeof(struct _wfont)));
+    rv->name = salloc(s);
+    SelectObject(dummy_hdc, f);
+    GetTextMetrics(dummy_hdc, &metrics);
+    rv->ascent = metrics.tmAscent;
+    rv->descent = metrics.tmDescent;
+    rv->maxwidth = font_maxcharwidth(f);
+    rv->font = f;
+    rv->next = fonts[i];
+    fonts[i] = rv;
+    return rv;
 }
 
 void filltrapezoids(wbp w, struct trapezoid *traps, int ntraps)
@@ -2413,34 +2291,43 @@ static void init_window_system(void)
     CLIENT_YOFF = TITLEHEIGHT + FRAMEHEIGHT;
     GetCPInfo(CP_ACP, &cpinfo);
     MAXBYTESPERCHAR = cpinfo.MaxCharSize;
+
+    dummy_win = CreateWindow( "oix", "oix",
+                              WS_OVERLAPPEDWINDOW,
+                              0, 0,
+                              10, 10,
+                              NULL, NULL, mswinInstance, NULL);
+    dummy_hdc = GetDC(dummy_win);
     black = new_sharedcolor("black", mscolor(0,0,0));
     white = new_sharedcolor("white", mscolor(0xffff,0xffff,0xffff));
+    default_font = load_font(defaultfont);
+    if (!default_font)
+        ffatalerr("Couldn't load default font");
 }
 
-static void set_MSXBGR32(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
+static void set_MSRGBX32(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
 {
     int n = imd->width * y + x;
     unsigned char *s = imd->data + 4 * n;
-    ++s;
-    *s++ = b / 256;
-    *s++ = g / 256;
     *s++ = r / 256;
+    *s++ = g / 256;
+    *s++ = b / 256;
+    *s++ = 0;
 }
 
-static void get_MSXBGR32(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
+static void get_MSRGBX32(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
 {
     int n = imd->width * y + x;
     unsigned char *s = imd->data + 4 * n;
-    ++s;
-    *b = 257 * (*s++);
-    *g = 257 * (*s++);
     *r = 257 * (*s++);
+    *g = 257 * (*s++);
+    *b = 257 * (*s++);
     *a = 65535;
 }
 
-static struct imgdataformat imgdataformat_MSXBGR32 =   {set_MSXBGR32,get_MSXBGR32,0,0,getlength_32,0,0,0,"MSXBGR32"};
+static struct imgdataformat imgdataformat_MSRGBX32 =   {set_MSRGBX32,get_MSRGBX32,0,0,getlength_32,0,24,0,"MSRGBX32"};
 
 void registerplatformimgdataformats()
 {
-    registerimgdataformat(&imgdataformat_MSXBGR32);
+    registerimgdataformat(&imgdataformat_MSRGBX32);
 }

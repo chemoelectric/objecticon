@@ -213,12 +213,6 @@ struct SharedColor {
    int   refcount;
 };
 
-#define ISTOBEHIDDEN(ws)  ((ws)->bits & 4096)
-#define SETTOBEHIDDEN(ws)  ((ws)->bits |= 4096)
-#define CLRTOBEHIDDEN(ws)  ((ws)->bits &= ~4096)
-#define ISEXPOSED(ws)    ((ws)->bits & 256)
-#define SETEXPOSED(ws)   ((ws)->bits |= 256)
-#define CLREXPOSED(w)   ((ws)->bits &= ~256)
 #endif
 
 #define DEFAULT_WINDOW_LABEL "Object Icon"
@@ -339,7 +333,7 @@ typedef struct _wcontext {
   struct SharedColor *fg, *bg;
   int		bkmode;
   int		fillstyle;
-  int		drawop;
+  stringint     *drawop;
 #endif
 
 } wcontext, *wcp;
@@ -384,14 +378,12 @@ typedef struct _wstate {
 #elif MSWIN32
   char		*windowlabel;		/* window label */
   struct _wstate *previous, *next;      /* List of states */
-  int		bits;			/* window bits */
   HWND		win;			/* client window */
-  HWND		iconwin;		/* client window when iconic */
   HBITMAP	pix;			/* backing bitmap */
-  HBITMAP	iconpix;		/* backing bitmap */
   HBITMAP	theOldPix;
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
+  int		state;			/* window state; icon, window or root*/
   HCURSOR	curcursor;
   HCURSOR	savedcursor;
   char		*cursorname;
