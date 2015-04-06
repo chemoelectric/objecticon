@@ -1009,11 +1009,11 @@ class WindowsFileSystem(FileSystem)
    private static native getdcwd(d)
 
    public get_home()
-      return System.getenv("HOME")
+      return System.getenv("USERPROFILE") | get_temp()
    end
 
    public get_temp()
-      return System.getenv("TEMP") | "C:\\TEMP"
+      return System.getenv("TEMP") | "C:\\WINDOWS\\TEMP"
    end
 
    public is_hidden(s)
