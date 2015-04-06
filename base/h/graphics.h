@@ -213,6 +213,21 @@ struct SharedColor {
    int   refcount;
 };
 
+struct SharedBitmap {
+   HBITMAP bitmap;
+   int refcount;
+};
+
+struct SharedCursor {
+   HCURSOR cursor;
+   int refcount;
+};
+
+struct wcursor {
+   struct wcursor *next;
+   char *name;
+   struct SharedCursor *shared_cursor;
+};
 #endif
 
 #define DEFAULT_WINDOW_LABEL "Object Icon"
@@ -324,15 +339,11 @@ typedef struct _wcontext {
   double	linewidth;
   stringint     *drawop;
 #elif MSWIN32
-  LOGPEN	pen;
-  LOGPEN	bgpen;
-  LOGBRUSH	brush;
-  LOGBRUSH	bgbrush;
   HRGN          cliprgn;
-  HBITMAP	pattern;
   struct SharedColor *fg, *bg;
-  int		bkmode;
-  int		fillstyle;
+  struct SharedBitmap  *pattern;
+  stringint     *linestyle;
+  int           linewidth;
   stringint     *drawop;
 #endif
 
@@ -377,6 +388,7 @@ typedef struct _wstate {
   int           propcount;              /* counter for selection requests*/
 #elif MSWIN32
   char		*windowlabel;		/* window label */
+  struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   struct _wstate *previous, *next;      /* List of states */
   HWND		win;			/* client window */
   HBITMAP	pix;			/* backing bitmap */
@@ -384,9 +396,8 @@ typedef struct _wstate {
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
   int		state;			/* window state; icon, window or root*/
-  HCURSOR	curcursor;
+  struct wcursor *cursor;               /* current cursor */
   HCURSOR	savedcursor;
-  char		*cursorname;
 #endif
 } wstate, *wsp;
 

@@ -1,0 +1,18 @@
+include ../Makedefs
+
+PROGS=  ieval
+PROGSRC=$(PROGS:=.icn)
+PROGEXE=$(PROGS:=.exe)
+
+all :	$(PROGS)
+	$(MAKE) -C ivib all
+	$(MAKE) -C oidoc all
+
+clean :
+	$(RM) *.u packages.txt $(PROGEXE)
+	$(MAKE) -C ivib clean
+	$(MAKE) -C oidoc clean
+
+%: 	%.icn
+	oit -s $<
+	cp $@ $(OIBIN)

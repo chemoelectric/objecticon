@@ -1,0 +1,16 @@
+all :
+	make -C iyacc all
+	make -C ipl all
+	make -C main all
+	make -C gui all
+	make -C xml all
+	make -C parser all
+#	make -C native all
+
+clean :
+	make -C iyacc clean
+	make -C ipl clean
+	make -C main clean
+	make -C gui clean
+	make -C xml clean
+	make -C parser clean

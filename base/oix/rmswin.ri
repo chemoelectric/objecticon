@@ -3,14 +3,19 @@
  *
  */
 
+#define FONTHASH_SIZE 64
+#define CURSORHASH_SIZE 128
+
+static struct SharedCursor *null_cursor;
 static wcp alccontext      (wbp w);
 static void init_window_system(void);
+static void setup_cursors(void);
 static int inited;
 static void pix_to_win(wsp ws);
 static void open_screen_win(wsp ws);
 static void close_screen_win(wsp ws);
-#define FONTHASH_SIZE 64
 static wfp fonts[FONTHASH_SIZE], default_font;
+static struct wcursor *cursors[CURSORHASH_SIZE];
 static wfp load_font(char *s);
 static int font_maxcharwidth(HFONT f);
 static int dc_textwidth(HDC dc, char *s, int n);
@@ -22,11 +27,9 @@ static HDC dummy_hdc;
 static wcp clonecontext(wcp src);
 static void freecontext(wcp wc);
 static void freewindow(wsp ws);
-static int setpatternbits(wbp w, int width, int height, int *bits);
 static HDC CreateWinDC(wbp);
 static HDC CreatePixDC(wbp);
-static HBITMAP CreateBitmapFromData(char *data);
-static void resize_pixmap(wbp w, int width, int height);
+static void resizepixmap(wbp w);
 static int devicecaps(wbp w, int i);
 static void setclip(wbp w);
 static void unsetclip(wbp w);
@@ -36,16 +39,38 @@ static COLORREF mscolor(int r, int g, int b);
 static struct SharedColor *new_sharedcolor(char *name, COLORREF color);
 static struct SharedColor *link_sharedcolor(struct SharedColor *i);
 static void unlink_sharedcolor(struct SharedColor *i);
+static struct SharedBitmap *new_sharedbitmap(struct imgdata *imd);
+static struct SharedBitmap *link_sharedbitmap(struct SharedBitmap *x);
+static void unlink_sharedbitmap(struct SharedBitmap *x);
+static struct SharedCursor *new_sharedcursor(HCURSOR cursor);
+static struct SharedCursor *link_sharedcursor(struct SharedCursor *x);
+static void unlink_sharedcursor(struct SharedCursor *x);
+static struct wcursor *lookup_wcursor(char *name);
+static struct wcursor *ensure_wcursor(char *name);
+static void synch_cursor(wsp ws);
+static HBITMAP imgdata_to_BITMAP(struct imgdata *imd);
+static HBITMAP imgdata_to_BITMAP1(struct imgdata *imd);
+static HBRUSH get_fg_brush(wcp wc);
+static HPEN get_fg_pen(wcp wc);
+static HBRUSH get_bg_brush(wcp wc);
+static wbp findwbp(wsp ws);
+static void handle_mouse(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
+static void handle_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
+static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp, int meta);
+static void handle_config(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
+
 static struct SharedColor *black, *white;
 
-void SetDCPixelFormat(HDC h);
-int numRealized;
+/* List of windows with win non-null */
+static wsp vwstates;
 
-static wsp wstates;
+/* List of bindings */
 static wbp wbndngs;
 
+/* List of windows */
+static wsp wstates;
+
 #define PALCLR(c) (c | 0x2000000L)
-#define MAX_PATTERN_HEIGHT 32
 
 int BORDHEIGHT;
 int BORDWIDTH;
@@ -63,36 +88,36 @@ int MAXBYTESPERCHAR;
  * draw ops
  */
 stringint drawops[] = {
-   { 0, 16},
-   {"and",              R2_MASKPEN},
-   {"andInverted",      R2_MASKPENNOT},
-   {"andReverse",       R2_MASKNOTPEN},
-   {"clear",            R2_BLACK},
-   {"copy",             R2_COPYPEN},
-   {"copyInverted",     R2_NOTCOPYPEN},
-   {"equiv",            R2_NOTXORPEN},
-   {"invert",           R2_NOT},
-   {"nand",             R2_NOTMASKPEN},
-   {"noop",             R2_NOP},
-   {"nor",              R2_NOTMERGEPEN},
-   {"or",               R2_MERGEPEN},
-   {"orInverted",       R2_MERGEPENNOT},
-   {"orReverse",        R2_MERGENOTPEN},
-   {"set",              R2_WHITE},
-   {"xor",              R2_XORPEN},
+    { 0, 16},
+    {"and",              R2_MASKPEN},
+    {"andInverted",      R2_MASKPENNOT},
+    {"andReverse",       R2_MASKNOTPEN},
+    {"clear",            R2_BLACK},
+    {"copy",             R2_COPYPEN},
+    {"copyInverted",     R2_NOTCOPYPEN},
+    {"equiv",            R2_NOTXORPEN},
+    {"invert",           R2_NOT},
+    {"nand",             R2_NOTMASKPEN},
+    {"noop",             R2_NOP},
+    {"nor",              R2_NOTMERGEPEN},
+    {"or",               R2_MERGEPEN},
+    {"orInverted",       R2_MERGEPENNOT},
+    {"orReverse",        R2_MERGENOTPEN},
+    {"set",              R2_WHITE},
+    {"xor",              R2_XORPEN},
 };
 
 /*
  * line types
  */
-stringint siLineTypes[] = {
-  {0, 6},
-  {"dashdotted",        PS_DASHDOT},
-  {"dashdotdotted",     PS_DASHDOTDOT},
-  {"dashed",            PS_DOT},
-  {"longdashed",        PS_DASH},
-  {"solid",             PS_SOLID},
-  {"striped",           PS_DOT}
+stringint linestyles[] = {
+    {0, 6},
+    {"dashdotdotted",     PS_DASHDOTDOT},
+    {"dashdotted",        PS_DASHDOT},
+    {"dashed",            PS_DOT},
+    {"longdashed",        PS_DASH},
+    {"solid",             PS_SOLID},
+    {"striped",           PS_DOT}
 };
 
 #define NormalCanvas 1
@@ -110,42 +135,44 @@ static stringint canvastypes[] = {
     {"popup",       PopupCanvas},
 };
 
-HINSTANCE mswinInstance;
-int ncmdShow;
-
-int FoundIt, FoundNew;
-HWND NewWin;
-char *lookingfor;
-struct WNDlist {
-   HWND w;
-   struct WNDlist *next;
-   } * wlhead;
-
-struct WNDlist *wlinsert(HWND w)
+#if 0
+static void dump_all(void)
 {
-   struct WNDlist *x = malloc(sizeof (struct WNDlist));
-   x->w = w;
-   x->next = wlhead;
-   wlhead = x;
-   return x;
-}
+    int i,j,k;
+    wsp x;
+    wbp y;
+    i = 0;
+    for (y = wbndngs; y; y = y->next) {
+        printf("Binding %p\n",y);
+        printf("\tcanvas %p\n",y->window);
+        printf("\tcontext %p\n",y->context);
+        ++i;
+    }
+    printf("============\n");
+    j = 0;
+    for (x = wstates; x; x = x->next) {
+        printf("Canvas %p\n",x);
+        printf("\trefcount=%d\n", x->refcount);
+        printf("\tlabel=%s\n", x->windowlabel);
+        printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
+        printf("\twin=%d\n", (int)x->win);
+        ++j; 
+    }
+    printf("============\n");
+    k = 0;
+    for (x = vwstates; x; x = x->vnext) {
+        printf("Non-hidden Canvas %p\n",x);
+        printf("\trefcount=%d\n", x->refcount);
+        printf("\tlabel=%s\n", x->windowlabel);
+        printf("\tgeometry=%d,%d %dx%d\n", x->x,x->y,x->width,x->height);
+        printf("\twin=%d\n", (int)x->win);
+        ++k; 
+    }
 
-int wlsearch(HWND w)
-{
-   struct WNDlist *x;
-   for(x=wlhead;x;x=x->next) if (x->w == w) return 1;
-   return 0;
+    printf("Total %d bindings %d canvases (%d non-hidden)\n",i,j,k);
+    fflush(stdout);
 }
-
-void wlfree()
-{
-   struct WNDlist *x = wlhead;
-   while (wlhead) {
-      x = wlhead->next;
-      free(wlhead);
-      wlhead = x;
-      }
-}
+#endif
 
 static POINT *convert_points(struct point *points0, int npoints)
 {
@@ -157,33 +184,6 @@ static POINT *convert_points(struct point *points0, int npoints)
         points[i].y = points0[i].y;
     }
     return points;
-}
-
-char * strcasestr(char *haystack, char *needle)
-{
-   int len = strlen(needle);
-   while (*haystack) {
-      if (strncasecmp(haystack, needle, len) == 0) return haystack;
-      haystack++;
-      }
-   return 0;
-}
-
-char *lookcmdname(char *buf, char *s)
-{
-  char *t = buf;
-  while (*s) {
-    *t++ = *s;
-    if (*s == '\\') t = buf;
-    s++;
-    }
-  *t++ = '\0';
-  s = buf;
-  while (*s) {
-    if (*s == '.') *s = '\0';
-    s++;
-    }
-  return buf;
 }
 
 /*
@@ -212,384 +212,354 @@ void freewbinding(wbp w)
  * wopen
  */
 wbp wopen(char *display)
-   {
-   wbp w;
-   wsp ws;
-   wcp wc;
-   int i, r;
-   RECT rec;
-   HDC hdc2;
-   HBRUSH brush;
-   HBITMAP oldpix;
+{
+    wbp w;
+    wsp ws;
+    wcp wc;
+    int i, r;
+    RECT rec;
+    HDC hdc2;
+    HBRUSH brush;
+    HBITMAP oldpix;
 
     if (!inited) {
         init_window_system();
         inited = 1;
     }
 
-   /*
-    * allocate a binding, a window state, and a context
-    */
-   w = alcwbinding();
+    /*
+     * allocate a binding, a window state, and a context
+     */
+    w = alcwbinding();
 
-   GAlloc(ws, _wstate);
-   ws->listp = nulldesc;
-   ws->cursorname = salloc("arrow");
-   ws->curcursor = LoadCursor(NULL, IDC_ARROW);
-   ws->minwidth = ws->minheight = 1;
-   ws->maxwidth = ws->maxheight = INT_MAX;
-   /*SETTITLEBAR(ws);*/
-   GLink(ws, wstates);
+    GAlloc(ws, _wstate);
+    ws->listp = nulldesc;
+    ws->cursor = lookup_wcursor("arrow");
+    ws->minwidth = ws->minheight = 1;
+    ws->maxwidth = ws->maxheight = INT_MAX;
+    /*SETTITLEBAR(ws);*/
+    GLink(ws, wstates);
 
-   w->window = ws;
-   w->context = alccontext(w);
+    w->window = ws;
+    w->context = alccontext(w);
 
-   ws = w->window;
-   add_gc_global(&ws->listp);
-   create_list(64, &ws->listp);
-   ws->width = ws->height = 1;
-   /*
-    * set the title
-    */
-   ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
+    ws = w->window;
+    add_gc_global(&ws->listp);
+    create_list(64, &ws->listp);
+    ws->width = ws->height = 1;
+    /*
+     * set the title
+     */
+    ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
 
-   wc = w->context;
+    wc = w->context;
 
-   if (ws->x < 0) ws->x = 0;
-   if (ws->y < 0) ws->y = 0;
+    if (ws->x < 0) ws->x = 0;
+    if (ws->y < 0) ws->y = 0;
 
-   ws->pix = CreateCompatibleBitmap(dummy_hdc, ws->width, ws->height);
-   ws->pixwidth = ws->width;
-   ws->pixheight = ws->height;
-   ws->win = 0;
+    ws->pix = CreateCompatibleBitmap(dummy_hdc, ws->width, ws->height);
+    ws->pixwidth = ws->width;
+    ws->pixheight = ws->height;
+    ws->win = 0;
 
-   /*
-    * initialize the image with the background color
-    */
-   hdc2 = CreateCompatibleDC(dummy_hdc);
-   oldpix = SelectObject(hdc2, ws->pix);
-   rec.left = rec.top = 0;
-   rec.right = ws->width;
-   rec.bottom = ws->height;
-   brush = CreateBrushIndirect(&(wc->bgbrush));
-   FillRect(hdc2, &rec, brush);
-   DeleteObject(brush);
-   SelectObject(hdc2, oldpix);
-   DeleteDC(hdc2);
+    /*
+     * initialize the image with the background color
+     */
+    hdc2 = CreateCompatibleDC(dummy_hdc);
+    oldpix = SelectObject(hdc2, ws->pix);
+    rec.left = rec.top = 0;
+    rec.right = ws->width;
+    rec.bottom = ws->height;
+    brush = get_bg_brush(wc);
+    FillRect(hdc2, &rec, brush);
+    DeleteObject(brush);
+    SelectObject(hdc2, oldpix);
+    DeleteDC(hdc2);
 
-   return w;
-   }
-
-int handle_config(wbp w, UINT msg, WPARAM wp, LPARAM lp)
-   {
-   int neww, newh;
-   wsp ws = w->window;
-
-   switch (wp) {
-       case SIZE_MINIMIZED: {
-           ws->state = IconicCanvas;
-           return 1;
-       }
-       case SIZE_MAXIMIZED: {
-           ws->state = MaximizedCanvas;
-           break;
-       }
-       case SIZE_RESTORED: {
-           ws->state = NormalCanvas;
-           break;
-       }
-   }
-
-   SetWindowText(ws->win, ws->windowlabel);
-
-   neww = LOWORD(lp);
-   newh = HIWORD(lp);
-
-   /*
-    * if it was not a resize, drop it
-    */
-   if ((ws->width == neww) && (ws->height == newh)) {
-      return 1;
-      }
-
-   ws->width = neww;
-   ws->height = newh;
-   resize_pixmap(w, ws->width, ws->height);
-   qeventcode(w->window, WINDOWRESIZED);
-   return 1;
-   }
-
-
-void handle_keypress(wbp wb, UINT msg, WPARAM wp, LPARAM lp, int meta)
-   {
-   wsp ws = wb->window;
-   DWORD dw;
-   int t;
-   WORD x, y;
-   struct descrip d;
-   int fl = 0;
-   static struct descrip curr_down;
-
-   if (msg == WM_KEYUP)
-      d = curr_down;     
-   else if (msg == WM_CHAR || msg == WM_SYSCHAR) {
-      StrLen(d) = 1;
-      StrLoc(d) = &allchars[wp & 0xFF];
-      curr_down = d;
-      }
-   else { /* WM_KEYDOWN or WM_SYSKEYDOWN */
-      MakeInt(wp, &d);
-      curr_down = d;
-      }
-   dw = GetMessagePos(); /* mouse location in SCREEN coordinates */
-   x = LOWORD(dw) - ws->x - FRAMEWIDTH;
-   y = HIWORD(dw) - ws->y - TITLEHEIGHT - (FRAMEHEIGHT-1);
-
-   t = GetMessageTime();
-
-   if (GetKeyState(VK_CONTROL) < 0)
-       fl |= MOD_CTRL;
-   if (GetKeyState(VK_SHIFT) < 0)
-       fl |= MOD_SHIFT;
-   if (meta)
-       fl |= MOD_META;
-   if (msg == WM_KEYUP)
-        fl |= MOD_RELEASE;
-   qevent(ws, &d, x, y, t, fl);
-   }
-
-void handle_wheel(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
-{
-   wsp ws = wb->window;
-   int t;
-   WORD x, y;
-   RECT r;
-   int state = 0;
-   int fl = 0;
-
-   if (MK_LBUTTON & wp) state |= 1;
-   if (MK_MBUTTON & wp) state |= 2;
-   if (MK_RBUTTON & wp) state |= 4;
-
-   /* Unlike normal mouse events, the co-ordinates are absolute, so
-    * convert to relative.
-    */
-   GetWindowRect(ws->win, &r);
-   x = LOWORD(lp) - (r.left + CLIENT_XOFF);
-   y = HIWORD(lp) - (r.top + CLIENT_YOFF);
-
-   t = GetMessageTime();
-
-   if (MK_CONTROL & wp)
-       fl |= MOD_CTRL;
-   if (MK_SHIFT & wp)
-       fl |= MOD_SHIFT;
-
-   /*
-    * We only get one MS event for a wheel movement, so call
-    * qmouseevents twice, once with the button 4 or 5 going down and
-    * again with it coming up.  This generates one icon event, on the
-    * second qmouseevents call.
-    */
-   if ((long)wp > 0) {
-       qmouseevents(ws, state|8, x, y, t, fl);
-   } else {
-       qmouseevents(ws, state|16, x, y, t, fl);
-   }
-   qmouseevents(ws, state, x, y, t, fl);
+    return w;
 }
 
-void handle_mouse(wbp wb, UINT msg, WPARAM wp, LPARAM lp)
+static void handle_config(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-   wsp ws = wb->window;
-   int t;
-   WORD x, y;
-   int state = 0;
-   int fl = 0;
-   if (MK_LBUTTON & wp) state |= 1;
-   if (MK_MBUTTON & wp) state |= 2;
-   if (MK_RBUTTON & wp) state |= 4;
+    int neww, newh;
 
-   x = LOWORD(lp);
-   y = HIWORD(lp);
-   t = GetMessageTime();
+    switch (wp) {
+        case SIZE_MINIMIZED: {
+            ws->state = IconicCanvas;
+            return;
+        }
+        case SIZE_MAXIMIZED: {
+            ws->state = MaximizedCanvas;
+            break;
+        }
+        case SIZE_RESTORED: {
+            ws->state = NormalCanvas;
+            break;
+        }
+    }
 
-   if (MK_CONTROL & wp)
-       fl |= MOD_CTRL;
-   if (MK_SHIFT & wp)
-       fl |= MOD_SHIFT;
+    SetWindowText(ws->win, ws->windowlabel);
 
-   qmouseevents(ws, state, x, y, t, fl);
+    neww = LOWORD(lp);
+    newh = HIWORD(lp);
+
+    /*
+     * if it was not a resize, drop it
+     */
+    if ((ws->width == neww) && (ws->height == newh))
+        return;
+
+    ws->width = neww;
+    ws->height = newh;
+    resizepixmap(findwbp(ws));
+    qeventcode(ws, WINDOWRESIZED);
+}
+
+
+static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp, int meta)
+{
+    DWORD dw;
+    int t;
+    WORD x, y;
+    struct descrip d;
+    int fl = 0;
+    static struct descrip curr_down;
+
+    if (msg == WM_KEYUP)
+        d = curr_down;     
+    else if (msg == WM_CHAR || msg == WM_SYSCHAR) {
+        StrLen(d) = 1;
+        StrLoc(d) = &allchars[wp & 0xFF];
+        curr_down = d;
+    }
+    else { /* WM_KEYDOWN or WM_SYSKEYDOWN */
+        MakeInt(wp, &d);
+        curr_down = d;
+    }
+    dw = GetMessagePos(); /* mouse location in SCREEN coordinates */
+    x = LOWORD(dw) - ws->x - FRAMEWIDTH;
+    y = HIWORD(dw) - ws->y - TITLEHEIGHT - (FRAMEHEIGHT-1);
+
+    t = GetMessageTime();
+
+    if (GetKeyState(VK_CONTROL) < 0)
+        fl |= MOD_CTRL;
+    if (GetKeyState(VK_SHIFT) < 0)
+        fl |= MOD_SHIFT;
+    if (meta)
+        fl |= MOD_META;
+    if (msg == WM_KEYUP)
+        fl |= MOD_RELEASE;
+    qevent(ws, &d, x, y, t, fl);
+}
+
+static void handle_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
+{
+    int t;
+    WORD x, y;
+    RECT r;
+    int state = 0;
+    int fl = 0;
+
+    if (MK_LBUTTON & wp) state |= 1;
+    if (MK_MBUTTON & wp) state |= 2;
+    if (MK_RBUTTON & wp) state |= 4;
+
+    /* Unlike normal mouse events, the co-ordinates are absolute, so
+     * convert to relative.
+     */
+    GetWindowRect(ws->win, &r);
+    x = LOWORD(lp) - (r.left + CLIENT_XOFF);
+    y = HIWORD(lp) - (r.top + CLIENT_YOFF);
+
+    t = GetMessageTime();
+
+    if (MK_CONTROL & wp)
+        fl |= MOD_CTRL;
+    if (MK_SHIFT & wp)
+        fl |= MOD_SHIFT;
+
+    /*
+     * We only get one MS event for a wheel movement, so call
+     * qmouseevents twice, once with the button 4 or 5 going down and
+     * again with it coming up.  This generates one icon event, on the
+     * second qmouseevents call.
+     */
+    if ((long)wp > 0) {
+        qmouseevents(ws, state|8, x, y, t, fl);
+    } else {
+        qmouseevents(ws, state|16, x, y, t, fl);
+    }
+    qmouseevents(ws, state, x, y, t, fl);
+}
+
+static void handle_mouse(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
+{
+    int t;
+    WORD x, y;
+    int state = 0;
+    int fl = 0;
+    if (MK_LBUTTON & wp) state |= 1;
+    if (MK_MBUTTON & wp) state |= 2;
+    if (MK_RBUTTON & wp) state |= 4;
+
+    x = LOWORD(lp);
+    y = HIWORD(lp);
+    t = GetMessageTime();
+
+    if (MK_CONTROL & wp)
+        fl |= MOD_CTRL;
+    if (MK_SHIFT & wp)
+        fl |= MOD_SHIFT;
+
+    qmouseevents(ws, state, x, y, t, fl);
 }
 
 LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-   HDC hdc, hdc2;
-   PAINTSTRUCT ps;
-   RECT rect;
-   wbp wb = NULL;
-   wsp ws = NULL;
-   int n, i, imin, imax;
+    HDC hdc, hdc2;
+    PAINTSTRUCT ps;
+    RECT rect;
+    wsp ws = NULL;
+    int n, i, imin, imax;
 
-   /*
-    * find a binding associated with the given window.
-    */
-   for (wb = wbndngs; wb; wb=wb->next) {
-      ws = wb->window;
+    for (ws = vwstates; ws; ws = ws->vnext) {
+        if (ws->win == hwnd) 
+            break;
+    }
 
-      if (ws->win == hwnd) break;
-      }
-   if (msg == WM_QUIT) {
-      wfreersc();
-      }
-   else if (!wb) {
-      /* 
-       * doesn't look like its for one of our windows, pass it to
-       * DefWindowProc and hope for the best.
-       */
-      }
-   else
-   switch(msg) {
-   case WM_PAINT:
-      hdc = BeginPaint(hwnd, &ps);
-      GetClientRect(hwnd, &rect);
-      if (IsIconic(hwnd)) {
-         HBRUSH hb = CreateBrushIndirect(&(wb->context->brush));
-	 FrameRect(hdc, &rect, hb);
-	 DeleteObject(hb);
-	 DrawText(hdc, "oix", 3, &rect, DT_WORDBREAK);
-	 }
-      else {
-         HBITMAP oldpix;
-	 hdc2 = CreateCompatibleDC(hdc);
-	 oldpix = SelectObject(hdc2, ws->pix);
-	 BitBlt(hdc, rect.left, rect.top,
-		rect.right - rect.left + 1, rect.bottom - rect.top + 1,
-		hdc2, rect.left, rect.top, SRCCOPY);
-         SelectObject(hdc2, oldpix);
-	 DeleteDC(hdc2);
-	 }
-      EndPaint(hwnd, &ps);
-      return 0;
-   case WM_MOUSEMOVE:
-      if (ws->curcursor)
-         SetCursor(ws->curcursor);
-      handle_mouse(wb,msg,wp,lp);
-      return 0;
-   case WM_MOUSEWHEEL:
-      handle_wheel(wb,msg,wp,lp);
-      return 0;
-   case WM_LBUTTONDOWN: case WM_RBUTTONDOWN: case WM_MBUTTONDOWN:
-   case WM_LBUTTONUP:   case WM_RBUTTONUP:   case WM_MBUTTONUP:
-      handle_mouse(wb,msg,wp,lp);
-      return 0;
-   case WM_KEYUP:
-      if (ws->inputmask & IM_KEY_RELEASE) handle_keypress(wb, msg, wp, lp, 0);
-      return 0;
-   case WM_KEYDOWN:
-      switch (wp) { /* VK defn's from <winuser.h> */
-      case VK_F1: case VK_F2: case VK_F3: case VK_F4:
-      case VK_F5: case VK_F6: case VK_F7: case VK_F8:
-      case VK_F9: case VK_F10: case VK_F11: case VK_F12:
-      case VK_HOME: case VK_END: case VK_PRIOR: case VK_NEXT:
-      case VK_LEFT: case VK_RIGHT: case VK_UP: case VK_DOWN:
-      case VK_INSERT: case VK_SELECT: case VK_PRINT:
-      case VK_EXECUTE: case VK_SNAPSHOT: case VK_HELP: case VK_SEPARATOR:
-      case VK_CLEAR: case VK_PAUSE: case VK_SCROLL:
-	 handle_keypress(wb, msg, wp, lp, 0);
-	 return 0;
-      case VK_DELETE:
-	 handle_keypress(wb, WM_CHAR, '\177', lp, 0);
-	 return 0;
-      default:
-         if (ws->inputmask & IM_KEY_RELEASE) {
-            handle_keypress(wb, msg, wp, lp, 0);
-            return 0;
+    if (ws) 
+        switch(msg) {
+            case WM_PAINT: {
+                HBITMAP oldpix;
+                hdc = BeginPaint(hwnd, &ps);
+                GetClientRect(hwnd, &rect);
+                hdc2 = CreateCompatibleDC(hdc);
+                oldpix = SelectObject(hdc2, ws->pix);
+                BitBlt(hdc, rect.left, rect.top,
+                       rect.right - rect.left + 1, rect.bottom - rect.top + 1,
+                       hdc2, rect.left, rect.top, SRCCOPY);
+                SelectObject(hdc2, oldpix);
+                DeleteDC(hdc2);
+                EndPaint(hwnd, &ps);
+                return 0;
             }
-      }
-      break;
-   case WM_SYSKEYDOWN:
-      switch (wp) {
-      case VK_F1: case VK_F2: case VK_F3: /* alt-F4 terminates */
-      case VK_F5: case VK_F6: case VK_F7: case VK_F8:
-      case VK_F9: case VK_F10: case VK_F11: case VK_F12:
-      case VK_HOME: case VK_END: case VK_PRIOR: case VK_NEXT:
-      case VK_LEFT: case VK_RIGHT: case VK_UP: case VK_DOWN:
-      case VK_INSERT: case VK_DELETE: case VK_SELECT: case VK_PRINT:
-      case VK_EXECUTE: case VK_SNAPSHOT: case VK_HELP: case VK_SEPARATOR:
-      case VK_CLEAR: case VK_PAUSE:
-	 handle_keypress(wb, msg, wp, lp, 1);
-	 return 0;
-      default:
-         if (ws->inputmask & IM_KEY_RELEASE) {
-            handle_keypress(wb, msg, wp, lp, 0);
-            return 0;
+            case WM_MOUSEMOVE:
+                synch_cursor(ws);
+                handle_mouse(ws, msg, wp, lp);
+                return 0;
+            case WM_MOUSEWHEEL:
+                handle_wheel(ws, msg, wp, lp);
+                return 0;
+            case WM_LBUTTONDOWN: case WM_RBUTTONDOWN: case WM_MBUTTONDOWN:
+            case WM_LBUTTONUP:   case WM_RBUTTONUP:   case WM_MBUTTONUP:
+                handle_mouse(ws, msg, wp, lp);
+                return 0;
+            case WM_KEYUP:
+                if (ws->inputmask & IM_KEY_RELEASE)
+                    handle_keypress(ws, msg, wp, lp, 0);
+                return 0;
+            case WM_KEYDOWN:
+                switch (wp) { /* VK defn's from <winuser.h> */
+                    case VK_F1: case VK_F2: case VK_F3: case VK_F4:
+                    case VK_F5: case VK_F6: case VK_F7: case VK_F8:
+                    case VK_F9: case VK_F10: case VK_F11: case VK_F12:
+                    case VK_HOME: case VK_END: case VK_PRIOR: case VK_NEXT:
+                    case VK_LEFT: case VK_RIGHT: case VK_UP: case VK_DOWN:
+                    case VK_INSERT: case VK_SELECT: case VK_PRINT:
+                    case VK_EXECUTE: case VK_SNAPSHOT: case VK_HELP: case VK_SEPARATOR:
+                    case VK_CLEAR: case VK_PAUSE: case VK_SCROLL:
+                        handle_keypress(ws, msg, wp, lp, 0);
+                        return 0;
+                    case VK_DELETE:
+                        handle_keypress(ws, WM_CHAR, '\177', lp, 0);
+                        return 0;
+                    default:
+                        if (ws->inputmask & IM_KEY_RELEASE) {
+                            handle_keypress(ws, msg, wp, lp, 0);
+                            return 0;
+                        }
+                }
+                break;
+            case WM_SYSKEYDOWN:
+                switch (wp) {
+                    case VK_F1: case VK_F2: case VK_F3: /* alt-F4 terminates */
+                    case VK_F5: case VK_F6: case VK_F7: case VK_F8:
+                    case VK_F9: case VK_F10: case VK_F11: case VK_F12:
+                    case VK_HOME: case VK_END: case VK_PRIOR: case VK_NEXT:
+                    case VK_LEFT: case VK_RIGHT: case VK_UP: case VK_DOWN:
+                    case VK_INSERT: case VK_DELETE: case VK_SELECT: case VK_PRINT:
+                    case VK_EXECUTE: case VK_SNAPSHOT: case VK_HELP: case VK_SEPARATOR:
+                    case VK_CLEAR: case VK_PAUSE:
+                        handle_keypress(ws, msg, wp, lp, 1);
+                        return 0;
+                    default:
+                        if (ws->inputmask & IM_KEY_RELEASE) {
+                            handle_keypress(ws, msg, wp, lp, 0);
+                            return 0;
+                        }
+                }
+                break;
+            case WM_CHAR:
+                handle_keypress(ws, msg, wp, lp, 0);
+                return 0;
+            case WM_SYSCHAR:
+                handle_keypress(ws, msg, wp, lp, 1);
+                break;
+            case WM_HSCROLL:
+            case WM_VSCROLL:
+                break;
+            case WM_COMMAND:
+                break;
+            case WM_SIZE:
+                handle_config(ws, msg, wp, lp);
+                break;
+            case WM_MOVE:
+                /* x,y represents the position of the drawable area. Casting to
+                   short ensures -ve values are handle correctly */
+                ws->x = (short)LOWORD(lp);
+                ws->y = (short)HIWORD(lp); 
+                break;
+            case WM_ACTIVATE:
+                break;
+            case WM_GETMINMAXINFO: {
+                MINMAXINFO *mmi = (MINMAXINFO *)lp;
+                if (!ws->resizable) {
+                    mmi->ptMinTrackSize.x = mmi->ptMaxTrackSize.x =
+                        ws->width + BORDWIDTH;
+                    mmi->ptMinTrackSize.y = mmi->ptMaxTrackSize.y =
+                        ws->height + BORDHEIGHT;
+                }
+                return 0;
             }
-	}
-      break;
-   case WM_CHAR:
-      handle_keypress(wb, msg, wp, lp, 0);
-      return 0;
-   case WM_SYSCHAR:
-      handle_keypress(wb, msg, wp, lp, 1);
-      break;
-   case WM_HSCROLL:
-   case WM_VSCROLL:
-      break;
-   case WM_COMMAND:
-      break;
-   case WM_SIZE:
-      handle_config(wb, msg, wp, lp);
-      break;
-   case WM_MOVE:
-      /* x,y represents the position of the drawable area. Casting to
-         short ensures -ve values are handle correctly */
-      ws->x = (short)LOWORD(lp);
-      ws->y = (short)HIWORD(lp); 
-      break;
-   case WM_ACTIVATE:
-      break;
-   case WM_GETMINMAXINFO: {
-      MINMAXINFO *mmi = (MINMAXINFO *)lp;
-      if (!wb->window->resizable) {
-	 mmi->ptMinTrackSize.x = mmi->ptMaxTrackSize.x =
-	    ws->width + BORDWIDTH;
-	 mmi->ptMinTrackSize.y = mmi->ptMaxTrackSize.y =
-	    ws->height + BORDHEIGHT;
-	 }
-      return 0;
-      }
-   case WM_KILLFOCUS:
-      break;
-   case WM_SETFOCUS:
-      break;
-   case WM_CLOSE: {
-      qeventcode(ws, WINDOWCLOSED);
-      return 0;
-   }
+            case WM_KILLFOCUS:
+                break;
+            case WM_SETFOCUS:
+                break;
+            case WM_CLOSE: {
+                qeventcode(ws, WINDOWCLOSED);
+                return 0;
+            }
 
-   /* case WM_QUIT is handled prior to the switch*/
-   case WM_DESTROY:
-      break;
-   case MM_MCINOTIFY:
-      mciSendCommand(LOWORD(lp), MCI_CLOSE, 0, (DWORD)NULL);
-      break;
-   }
+                /* case WM_QUIT is handled prior to the switch*/
+            case WM_DESTROY:
+                break;
+        }
 
-   return DefWindowProc(hwnd, msg, wp, lp);
+    return DefWindowProc(hwnd, msg, wp, lp);
 }
 
 void pollevent(wbp w)
-   {
-   MSG m;
-   /* some while PeekMessage loops here, maybe one per window ? */
-   while (PeekMessage(&m, NULL, 0, 0, PM_NOREMOVE)) {
-      if (GetMessage(&m, NULL, 0, 0) <= 0)
-          return;
-      TranslateMessage(&m);
-      DispatchMessage(&m);
-      }
-   }
+{
+    MSG m;
+    /* some while PeekMessage loops here, maybe one per window ? */
+    while (PeekMessage(&m, NULL, 0, 0, PM_NOREMOVE)) {
+        if (GetMessage(&m, NULL, 0, 0) <= 0)
+            return;
+        TranslateMessage(&m);
+        DispatchMessage(&m);
+    }
+}
 
 int ownselection(wbp w, char *selname)
 {
@@ -612,6 +582,7 @@ static void close_screen_win(wsp ws)
         DestroyWindow(ws->win);
         ws->win = 0;
         ws->state = HiddenCanvas;
+        GUnlink4(ws, vwstates, vnext, vprevious);
     }
 }
 
@@ -625,8 +596,8 @@ static void open_screen_win(wsp ws)
                                      ws->x, ws->y,
                                      ws->width,
                                      ws->height,
-                                     NULL, NULL, mswinInstance, NULL); 
-           break;
+                                     NULL, NULL, NULL, NULL); 
+            break;
         } 
         default: {
             ws->win = CreateWindowEx(0,
@@ -635,9 +606,10 @@ static void open_screen_win(wsp ws)
                                      ws->x, ws->y,
                                      ws->width + BORDWIDTH,
                                      ws->height + BORDHEIGHT,
-                                     NULL, NULL, mswinInstance, NULL); 
+                                     NULL, NULL, NULL, NULL); 
         }
     }
+    GLink4(ws, vwstates, vnext, vprevious);
 }
 
 int setcanvas(wbp w, char *s)
@@ -697,112 +669,112 @@ int setcanvas(wbp w, char *s)
 }
 
 int setwindowlabel(w, val)
-wbp w;
-char *val;
-   {
-   wsp ws = w->window;
-   /*
-    * plug in the new string
-    */
-   if (ws->windowlabel != NULL)
-      free(ws->windowlabel);
-   ws->windowlabel = salloc(val);
+    wbp w;
+    char *val;
+{
+    wsp ws = w->window;
+    /*
+     * plug in the new string
+     */
+    if (ws->windowlabel != NULL)
+        free(ws->windowlabel);
+    ws->windowlabel = salloc(val);
 
-   /*
-    * if we have to update, do it
-    */
-   if (ws->win && !IsIconic(ws->win))
-      SetWindowText(ws->win, ws->windowlabel);
-   return Succeeded;
-   }
+    /*
+     * if we have to update, do it
+     */
+    if (ws->win && !IsIconic(ws->win))
+        SetWindowText(ws->win, ws->windowlabel);
+    return Succeeded;
+}
 
 
 static HFONT findfont(char *family, int size, int flags, int ansi)
 {
-   int charset, weight;
-   char slant, spacing;
+    int charset, weight;
+    char slant, spacing;
 
-   if (size < 0) size = defaultfontsize;
+    if (size < 0) size = defaultfontsize;
 
-   if (flags & FONTFLAG_MEDIUM)
-      weight = FW_MEDIUM;
-   else if ((flags & FONTFLAG_DEMI) && (flags & FONTFLAG_BOLD))
-      weight = FW_DEMIBOLD;
-   else if (flags & FONTFLAG_BOLD)
-      weight = FW_BOLD;
-   else if (flags & FONTFLAG_DEMI)
-      weight = FW_SEMIBOLD;
-   else if (flags & FONTFLAG_LIGHT)
-      weight = FW_LIGHT;
-   else
-      weight = FW_DONTCARE;
+    if (flags & FONTFLAG_MEDIUM)
+        weight = FW_MEDIUM;
+    else if ((flags & FONTFLAG_DEMI) && (flags & FONTFLAG_BOLD))
+        weight = FW_DEMIBOLD;
+    else if (flags & FONTFLAG_BOLD)
+        weight = FW_BOLD;
+    else if (flags & FONTFLAG_DEMI)
+        weight = FW_SEMIBOLD;
+    else if (flags & FONTFLAG_LIGHT)
+        weight = FW_LIGHT;
+    else
+        weight = FW_DONTCARE;
 
-   if (flags & FONTFLAG_ITALIC)
-      slant = 1;
-   else
-      slant = 0;
+    if (flags & FONTFLAG_ITALIC)
+        slant = 1;
+    else
+        slant = 0;
 
-   charset = (ansi && (MAXBYTESPERCHAR==1)) ? ANSI_CHARSET:DEFAULT_CHARSET;
+    charset = (ansi && (MAXBYTESPERCHAR==1)) ? ANSI_CHARSET:DEFAULT_CHARSET;
 
-   if (flags & FONTFLAG_PROPORTIONAL)
-      spacing = VARIABLE_PITCH;
-   else if (flags & FONTFLAG_MONO)
-      spacing = FIXED_PITCH;
-   else spacing = DEFAULT_PITCH;
+    if (flags & FONTFLAG_PROPORTIONAL)
+        spacing = VARIABLE_PITCH;
+    else if (flags & FONTFLAG_MONO)
+        spacing = FIXED_PITCH;
+    else spacing = DEFAULT_PITCH;
 
-   return CreateFont(size, 0, 0, 0, weight, slant, 0, 0, charset,
-		OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-		spacing, family);
+    return CreateFont(size, 0, 0, 0, weight, slant, 0, 0, charset,
+                      OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
+                      spacing, family);
 }
 
 static HFONT mkfont(char *s)
 {
-   int flags;
-   double size;
-   char family[MAXFONTWORD];
-   char *stdfam = NULL;
-   HFONT hf = 0;
+    int flags;
+    double size;
+    char family[MAXFONTWORD];
+    char *stdfam = NULL;
+    HFONT hf = 0;
 
-   if (parsefont(s, family, &flags, &size)) {
-      /*
-       * This is a legal Icon font spec.
-       * Check first for special "standard" family names.
-       */
-      if (!strcmp(family, "mono") || !strcmp(family, "fixed")) {
-	 stdfam = "Lucida Sans"; /* Lucida Console? */
-	 flags |= FONTFLAG_MONO + FONTFLAG_SANS;
-	 }
-      else if (!strcmp(family, "typewriter")) {
-	 stdfam = "Courier New"; /* was "courier" */
-	 flags |= FONTFLAG_MONO + FONTFLAG_SERIF;
-	 }
-      else if (!strcmp(family, "sans")) {
-	 stdfam = "Arial"; /* was "swiss" */
-	 flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SANS;
-	 }
-      else if (!strcmp(family, "serif")) {
-	 stdfam = "Times New Roman";
-	 flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SERIF;
-	 }
-      else stdfam = NULL;
+    if (parsefont(s, family, &flags, &size)) {
+        /*
+         * This is a legal Icon font spec.
+         * Check first for special "standard" family names.
+         */
+        if (!strcmp(family, "mono") || !strcmp(family, "fixed")) {
+            stdfam = "Lucida Sans"; /* Lucida Console? */
+            flags |= FONTFLAG_MONO + FONTFLAG_SANS;
+        }
+        else if (!strcmp(family, "typewriter")) {
+            stdfam = "Courier New"; /* was "courier" */
+            flags |= FONTFLAG_MONO + FONTFLAG_SERIF;
+        }
+        else if (!strcmp(family, "sans")) {
+            stdfam = "Arial"; /* was "swiss" */
+            flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SANS;
+        }
+        else if (!strcmp(family, "serif")) {
+            stdfam = "Times New Roman";
+            flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SERIF;
+        }
+        else stdfam = NULL;
    
-      if (stdfam) {
-	 /*
-	  * Standard name: first try preferred family, then generalize.
-	  * ICONFONT can be NULL, in which case Windows chooses.
-	  */
-	 hf = findfont(stdfam, size, flags, 1);
-	 if (hf == NULL)
-	    hf = findfont(getenv("ICONFONT"), size, flags, 1);
-	 }
-      else {
-	 /*
-	  * Any other name: must match as specified.
-	  */
-	 hf = findfont(family, size, flags, 0);
-	 }
-      }
-   return hf;
+        if (stdfam) {
+            /*
+             * Standard name: first try preferred family, then generalize.
+             * ICONFONT can be NULL, in which case Windows chooses.
+             */
+            hf = findfont(stdfam, size, flags, 1);
+            if (hf == NULL)
+                hf = findfont(getenv("ICONFONT"), size, flags, 1);
+        }
+        else {
+            /*
+             * Any other name: must match as specified.
+             */
+            hf = findfont(family, size, flags, 0);
+        }
+    }
+    return hf;
 }
 
 /*
@@ -818,43 +790,43 @@ int setfont(wbp w, char *s)
 }
 
 static void setclip(w)
-wbp w;
-   {
-   wcp wc = w->context;
-   if (wc->cliprgn)
-      DeleteObject(wc->cliprgn);
-   if (wc->clipw >= 0)
-      wc->cliprgn = CreateRectRgn(wc->clipx, wc->clipy,
-				  wc->clipx + wc->clipw,
-				  wc->clipy + wc->cliph);
-   else
-      wc->cliprgn = NULL;
-   }
+    wbp w;
+{
+    wcp wc = w->context;
+    if (wc->cliprgn)
+        DeleteObject(wc->cliprgn);
+    if (wc->clipw >= 0)
+        wc->cliprgn = CreateRectRgn(wc->clipx, wc->clipy,
+                                    wc->clipx + wc->clipw,
+                                    wc->clipy + wc->cliph);
+    else
+        wc->cliprgn = NULL;
+}
 
 static void unsetclip(w)
-wbp w;
-   {
-   wcp wc = w->context;
-   if (wc->cliprgn)
-      DeleteObject(wc->cliprgn);
-   wc->cliprgn = NULL;
-   }
+    wbp w;
+{
+    wcp wc = w->context;
+    if (wc->cliprgn)
+        DeleteObject(wc->cliprgn);
+    wc->cliprgn = NULL;
+}
 
- int lowerwindow(wbp w)
-   {
-   wsp ws = w->window;
-   if (ws->win)
-      SetWindowPos(ws->win, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-   return Succeeded;
-   }
+int lowerwindow(wbp w)
+{
+    wsp ws = w->window;
+    if (ws->win)
+        SetWindowPos(ws->win, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    return Succeeded;
+}
 
 int raisewindow(wbp w)
-   {
-   wsp ws = w->window;
-   if (ws->win)
-      SetWindowPos(ws->win, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-   return Succeeded;
-   }
+{
+    wsp ws = w->window;
+    if (ws->win)
+        SetWindowPos(ws->win, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    return Succeeded;
+}
 
 
 /*
@@ -862,112 +834,50 @@ int raisewindow(wbp w)
  */
 static COLORREF mscolor(int r, int g, int b)
 {
-   return RGB(r >> 8, g >> 8, b >> 8);
+    return RGB(r >> 8, g >> 8, b >> 8);
 }
 
-/*
- * Set the context's fill style by name.
- */
-int setfillstyle(w, s)
-wbp w;
-char *s;
-   {
-   wcp wc = w->context;
+int setlinestyle(wbp w, char *val)
+{
+    stringint *e;
+    wcp wc = w->context;
+    e = stringint_lookup(linestyles, val);
+    if (!e)
+        return Failed;
+    wc->linestyle = e;
+    return Succeeded;
+}
 
-   if (!strcmp(s, "solid")) {
-      wc->brush.lbStyle = wc->fillstyle = BS_SOLID;
-      wc->brush.lbColor = PALCLR(wc->fg->color);
-      }
-   else {
-      if (!strcmp(s, "masked")) {
-	 wc->brush.lbStyle = wc->fillstyle = BS_PATTERN;
-	 wc->brush.lbColor = PALCLR(wc->fg->color);
-	 wc->brush.lbHatch = (int)wc->pattern;
-         wc->bkmode = TRANSPARENT;
-	 }
-      else if (!strcmp(s, "textured")) {
-	 wc->brush.lbStyle = wc->fillstyle = BS_PATTERN;
-	 wc->brush.lbColor = PALCLR(wc->fg->color);
-	 wc->brush.lbHatch = (int)wc->pattern;
-         wc->bkmode = OPAQUE;
-	 }
-      else {
-	 return Failed;
-	 }
-      }
-   return Succeeded;
-   }
-
-
-
-char *getfillstyle(wbp w)
+int setlinewidth(wbp w, double linewid)
 {
     wcp wc = w->context;
-    if (wc->fillstyle == BS_SOLID)
-        return "solid";
-    else if (wc->bkmode == TRANSPARENT)
-        return "masked";
-    else
-        return "textured";
+    wc->linewidth = linewid;
+    return Succeeded;
 }
-
-/*
- * Set the context's line style by name.
- */
-int setlinestyle(w, s)
-wbp w;
-char *s;
-   {
-   wcp wc = w->context;
-   int ltype;
-
-   if ((ltype = stringint_str2int(siLineTypes, s)) < 0)
-      return Failed;
-   wc->pen.lopnStyle = ltype;
-   if(!strcmp(s, "striped")) wc->bkmode = OPAQUE;
-   else wc->bkmode = TRANSPARENT;
-   return Succeeded;
-   }
-
-/*
- * Set the context's line width
- */
-int setlinewidth(wbp w, double linewid)
-   {
-   wcp wc = w->context;
-   wc->pen.lopnWidth.x = wc->pen.lopnWidth.y =
-      wc->bgpen.lopnWidth.x = wc->bgpen.lopnWidth.y = linewid;
-   return Succeeded;
-   }
 
 double getlinewidth(wbp w)
 {
-    return w->context->pen.lopnWidth.x;
-}
-
-int getdepthDC(HDC dc)
-{
-   return GetDeviceCaps(dc, BITSPIXEL) * GetDeviceCaps(dc, PLANES);
+    return w->context->linewidth;
 }
 
 int getdepth(wbp w, int *res)
 {
-   int i, j;
-   STDLOCALS(w);
-   i = GetDeviceCaps(pixdc, BITSPIXEL);
-   j = GetDeviceCaps(pixdc, PLANES);
-   FREE_STDLOCALS(w);
-   *res = i * j;
-   return Succeeded;
+    int i, j;
+    STDLOCALS(w);
+    i = GetDeviceCaps(pixdc, BITSPIXEL);
+    j = GetDeviceCaps(pixdc, PLANES);
+    FREE_STDLOCALS(w);
+    *res = i * j;
+    return Succeeded;
 }
 
-int devicecaps(wbp w, int i)
+static int devicecaps(wbp w, int i)
 {
-   int rv;
-   STDLOCALS(w);
-   rv = GetDeviceCaps(pixdc, i);
-   FREE_STDLOCALS(w);
-   return rv;
+    int rv;
+    STDLOCALS(w);
+    rv = GetDeviceCaps(pixdc, i);
+    FREE_STDLOCALS(w);
+    return rv;
 }
 
 /*
@@ -1008,44 +918,16 @@ char *getbg(wbp w)
     return w->context->bg->name;
 }
 
-/*
- * setpointer() - define a mouse pointer shape
- */
-int setpointer(w, val)
-wbp w;
-char *val;
-   {
-   HCURSOR c;
-   char *cval;
-   if (!strcmp(val,"arrow")) cval = IDC_ARROW;
-   else if (!strcmp(val,"cross")) cval = IDC_CROSS;
-   else if (!strcmp(val,"ibeam")) cval = IDC_IBEAM;
-   else if (!strcmp(val,"uparrow")) cval = IDC_UPARROW;
-   else if (!strcmp(val,"wait")) cval = IDC_WAIT;
-   else if (!strcmp(val,"starting")) cval = IDC_APPSTARTING;
-   else if (!strcmp(val,"icon")) cval = IDC_ICON;
-   else if (!strcmp(val,"size")) cval = IDC_SIZE;
-   else if (!strcmp(val,"sizenesw")) cval = IDC_SIZENESW;
-   else if (!strcmp(val,"sizens")) cval = IDC_SIZENS;
-   else if (!strcmp(val,"sizenwse")) cval = IDC_SIZENWSE;
-   else if (!strcmp(val,"sizewe")) cval = IDC_SIZEWE;
-   else if (!strcmp(val,"no")) cval = IDC_NO;
-   else {
-      return Failed;
-      }
-   c = LoadCursor(NULL, cval);
-   if (c == NULL) {
-     return Failed;
-     }
-   w->window->curcursor = c;
-   if (w->window->cursorname) free(w->window->cursorname);
-   w->window->cursorname = salloc(val);
-   if (! w->window->savedcursor)
-      w->window->savedcursor = SetCursor(c);
-   else (void) SetCursor(c);
-   /* should restore savedcursor when pointer moves outside our window */
-   return Succeeded;
-   }
+int setpointer(wbp w, char *val)
+{
+    struct wcursor *c;
+    wsp ws = w->window;
+    c = lookup_wcursor(val);
+    if (!c)
+        return Failed;
+    ws->cursor = c;
+    return Succeeded;
+}
 
 int setdrawop(wbp w, char *val)
 {
@@ -1065,11 +947,10 @@ char *getwindowlabel(wbp w)
 /*
  * getpos() - update the window state's notion of its current position
  */
-int getpos(w)
-wbp w;
-   {
-   return Succeeded;
-   }
+int getpos(wbp w)
+{
+    return Succeeded;
+}
 
 int getpattern(wbp w, struct imgdata *imd)
 {
@@ -1078,17 +959,12 @@ int getpattern(wbp w, struct imgdata *imd)
 
 char *getlinestyle(wbp w)
 {
-    wcp wc = w->context;
-    char *ptr = stringint_int2str(siLineTypes, wc->pen.lopnStyle);
-    if (ptr)
-        return ptr;
-    else 
-        return "unknown";
+    return w->context->linestyle->s;
 }
 
 char *getpointer(wbp w)
 {
-    return w->window->cursorname;
+    return w->window->cursor->name;
 }
 
 char *getdisplay(wbp w)
@@ -1113,176 +989,165 @@ char *getcanvas(wbp w)
  * erase an area
  */
 void erasearea(wbp w, int x, int y, int width, int height)
-   {
-   HBRUSH hb, oldbrush, oldbrush2;
-   RECT rect;
-   STDLOCALS(w);
+{
+    HBRUSH hb, oldbrush, oldbrush2;
+    RECT rect;
+    STDLOCALS(w);
 
-   wc->bgbrush.lbColor = PALCLR(wc->bg->color);
+    hb = get_bg_brush(wc);
+    if (stdwin) oldbrush = SelectObject(stddc, hb);
+    oldbrush2 = SelectObject(pixdc, hb);
+    rect.left = x; rect.right = x + width;
+    rect.top = y; rect.bottom = y + height;
 
-   hb = CreateBrushIndirect(&(wc->bgbrush));
-   if (stdwin) oldbrush = SelectObject(stddc, hb);
-   oldbrush2 = SelectObject(pixdc, hb);
-   rect.left = x; rect.right = x + width;
-   rect.top = y; rect.bottom = y + height;
-
-   if (stdwin) FillRect(stddc, &rect, hb);
-   FillRect(pixdc, &rect, hb);
-   if (stdwin) SelectObject(stddc, oldbrush);
-   SelectObject(pixdc, oldbrush2);
-   DeleteObject(hb);
-   FREE_STDLOCALS(w);
-   }
+    if (stdwin) FillRect(stddc, &rect, hb);
+    FillRect(pixdc, &rect, hb);
+    if (stdwin) SelectObject(stddc, oldbrush);
+    SelectObject(pixdc, oldbrush2);
+    DeleteObject(hb);
+    FREE_STDLOCALS(w);
+}
 
 /*
  * copy an area
  */
 int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2)
-   {
-   int lpad, rpad, tpad, bpad;
-   RECT r;
-   HDC srcpixdc;
-   HBRUSH hb;
-   wsp ws1 = w->window;
-   HBITMAP oldpix;
-   STDLOCALS(w2);
+{
+    int lpad, rpad, tpad, bpad;
+    RECT r;
+    HDC srcpixdc;
+    HBRUSH hb;
+    wsp ws1 = w->window;
+    HBITMAP oldpix;
+    STDLOCALS(w2);
 
-   /*
-    * setup device contexts for area copy
-    */
-   SetROP2(pixdc, R2_COPYPEN);
-   hb = CreateBrushIndirect(&(wc->bgbrush));
-   if (stdwin)
-      SetROP2(stddc, R2_COPYPEN);
-   if (w2->window == w->window) {
-      srcpixdc = pixdc;
-      }
-   else {
-      srcpixdc = CreateCompatibleDC(dummy_hdc);
-      SetROP2(srcpixdc, R2_COPYPEN);
-      }
-   oldpix = SelectObject(srcpixdc, w->window->pix);
+    /*
+     * setup device contexts for area copy
+     */
+    SetROP2(pixdc, R2_COPYPEN);
+    hb = get_bg_brush(wc);
+    if (stdwin)
+        SetROP2(stddc, R2_COPYPEN);
+    if (w2->window == w->window) {
+        srcpixdc = pixdc;
+    }
+    else {
+        srcpixdc = CreateCompatibleDC(dummy_hdc);
+        SetROP2(srcpixdc, R2_COPYPEN);
+    }
+    oldpix = SelectObject(srcpixdc, w->window->pix);
 
-   /*
-    * copy area, write unavailable areas with bg color
-    */
-   if (x + width < 0 || y + height < 0 || x >= ws1->pixwidth || y >= ws1->pixheight) {
-      /* source is entirely offscreen, just fill with background */
-      r.left = x2; r.top = y2;
-      r.right = x2 + width; r.bottom = y2 + height;
-      if (stdwin)
-         FillRect(stddc, &r, hb);
-      FillRect(pixdc, &r, hb);
-      }
-   else {
-	 /*
-	  * Check for source partially offscreen, but copy first and
-	  * fill later in case the source and destination overlap.
-	  */
-	 lpad = rpad = tpad = bpad = 0;
-         if (x < 0) {			/* source extends past left edge */
+    /*
+     * copy area, write unavailable areas with bg color
+     */
+    if (x + width < 0 || y + height < 0 || x >= ws1->pixwidth || y >= ws1->pixheight) {
+        /* source is entirely offscreen, just fill with background */
+        r.left = x2; r.top = y2;
+        r.right = x2 + width; r.bottom = y2 + height;
+        if (stdwin)
+            FillRect(stddc, &r, hb);
+        FillRect(pixdc, &r, hb);
+    }
+    else {
+        /*
+         * Check for source partially offscreen, but copy first and
+         * fill later in case the source and destination overlap.
+         */
+        lpad = rpad = tpad = bpad = 0;
+        if (x < 0) {			/* source extends past left edge */
 	    lpad = -x;
             width -= lpad;
             x2 += lpad;
             x = 0;
-            }
-         if (x + width > ws1->pixwidth) {  /* source extends past right edge */
+        }
+        if (x + width > ws1->pixwidth) {  /* source extends past right edge */
             rpad = x + width - ws1->pixwidth;
             width -= rpad;
-            }
-         if (y < 0) {			/* source extends above top edge */
+        }
+        if (y < 0) {			/* source extends above top edge */
 	    tpad = -y;
             height -= tpad;
             y2 += tpad;
             y = 0;
-            }
-         if (y + height > ws1->pixheight) {  /* source extends below bottom */
+        }
+        if (y + height > ws1->pixheight) {  /* source extends below bottom */
             bpad = y + height - ws1->pixheight;
             height -= bpad;
-            }
-      if (stdwin)
-         BitBlt(stddc, x2, y2, width, height, srcpixdc, x, y, SRCCOPY);
-      BitBlt(pixdc, x2, y2, width, height, srcpixdc, x, y, SRCCOPY);
+        }
+        if (stdwin)
+            BitBlt(stddc, x2, y2, width, height, srcpixdc, x, y, SRCCOPY);
+        BitBlt(pixdc, x2, y2, width, height, srcpixdc, x, y, SRCCOPY);
 
-	 if (lpad > 0) {
+        if (lpad > 0) {
             r.left = x2-lpad;
 	    r.top = y2-tpad;
 	    r.right = r.left + lpad;
 	    r.bottom = r.top + tpad+height+bpad;
             if (stdwin)
-               FillRect(stddc, &r, hb);
+                FillRect(stddc, &r, hb);
             FillRect(pixdc, &r, hb);
-            }
-	 if (rpad > 0) {
+        }
+        if (rpad > 0) {
             r.left = x2+width;
 	    r.top = y2-tpad;
 	    r.right = r.left + rpad;
 	    r.bottom = r.top + tpad+height+bpad;
             if (stdwin)
-               FillRect(stddc, &r, hb);
+                FillRect(stddc, &r, hb);
             FillRect(pixdc, &r, hb);
-	    }
-	 if (tpad > 0) {
+        }
+        if (tpad > 0) {
 	    r.left = x2;
 	    r.top = y2-tpad;
 	    r.right = r.left + width;
 	    r.bottom = r.top + tpad;
             if (stdwin)
-               FillRect(stddc, &r, hb);
+                FillRect(stddc, &r, hb);
             FillRect(pixdc, &r, hb);
-	    }
-	 if (bpad > 0) {
+        }
+        if (bpad > 0) {
 	    r.left = x2;
 	    r.top = y2+height;
 	    r.right = r.left + width;
 	    r.bottom = r.top + bpad;
             if (stdwin)
-               FillRect(stddc, &r, hb);
+                FillRect(stddc, &r, hb);
             FillRect(pixdc, &r, hb);
-	    }
-      }
+        }
+    }
 
-   /*
-    * free resources
-    */
-   SelectObject(srcpixdc, oldpix);
-   if (w2->window != w->window) {
-      DeleteDC(srcpixdc);
-      }
-   DeleteObject(hb);
-   FREE_STDLOCALS(w2);
-   return Succeeded;
-   }
-
+    /*
+     * free resources
+     */
+    SelectObject(srcpixdc, oldpix);
+    if (w2->window != w->window) {
+        DeleteDC(srcpixdc);
+    }
+    DeleteObject(hb);
+    FREE_STDLOCALS(w2);
+    return Succeeded;
+}
 
 void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
-   wsp ws = w->window;
-   int i, j;
-   COLORREF *p, *crp;
-   HDC pixdc = CreateCompatibleDC(dummy_hdc);
-   HBITMAP oldpix;
+    wsp ws = w->window;
+    int i, j;
+    COLORREF *p, *crp;
+    HDC pixdc = CreateCompatibleDC(dummy_hdc);
+    HBITMAP oldpix;
 
-   oldpix = SelectObject(pixdc, ws->pix);
+    oldpix = SelectObject(pixdc, ws->pix);
 
-   MemProtect(crp = malloc( imd->width * imd->height * sizeof(COLORREF)));
-   p = crp;
-   for(i = y; i < y + imd->height; i++)
-       for(j = x; j < x + imd->width; j++)
-           *p++ = GetPixel(pixdc, j, i);
+    MemProtect(crp = malloc( imd->width * imd->height * sizeof(COLORREF)));
+    p = crp;
+    for(i = y; i < y + imd->height; i++)
+        for(j = x; j < x + imd->width; j++)
+            *p++ = GetPixel(pixdc, j, i);
 
-   imd->format = &imgdataformat_MSRGBX32;
-   imd->data = (unsigned char *)crp;
-   SelectObject(pixdc, oldpix);
-   DeleteDC(pixdc);
-}
-
-static void pix_to_win0(wbp w)
-{
-   STDLOCALS(w);
-   BitBlt(stddc, 0, 0, ws->width, ws->height, 
-          pixdc, 0, 0, SRCCOPY);
-   FREE_STDLOCALS(w);
+    imd->format = &imgdataformat_MSRGBX32;
+    imd->data = (unsigned char *)crp;
+    SelectObject(pixdc, oldpix);
+    DeleteDC(pixdc);
 }
 
 static void pix_to_win(wsp ws)
@@ -1300,36 +1165,36 @@ static void pix_to_win(wsp ws)
 
 void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
-   COLORREF *p;
-   int i, j;
-   struct imgdata *tmp;
-   STDLOCALS(w);
+    COLORREF *p;
+    int i, j;
+    struct imgdata *tmp;
+    STDLOCALS(w);
 
-   if (imd->format != &imgdataformat_MSRGBX32) {
-       tmp = initimgdata(imd->width, imd->height, &imgdataformat_MSRGBX32);
-       copyimgdata(tmp, imd);
-       p = (COLORREF *)tmp->data;
-   } else {
-       tmp = 0;
-       p = (COLORREF *)imd->data;
-   }
+    if (imd->format != &imgdataformat_MSRGBX32) {
+        tmp = initimgdata(imd->width, imd->height, &imgdataformat_MSRGBX32);
+        copyimgdata(tmp, imd);
+        p = (COLORREF *)tmp->data;
+    } else {
+        tmp = 0;
+        p = (COLORREF *)imd->data;
+    }
 
-   for(i = y; i < y + imd->height; i++)
-       for(j = x; j < x + imd->width; j++)
-           SetPixel(pixdc, j, i, *p++);
+    for(i = y; i < y + imd->height; i++)
+        for(j = x; j < x + imd->width; j++)
+            SetPixel(pixdc, j, i, *p++);
 
-   if (tmp)
-       unlinkimgdata(tmp);
+    if (tmp)
+        unlinkimgdata(tmp);
 
-   /*
-    * Copy it from the pixmap onto the screen.
-    */
-   if (ws->win){
-      BitBlt(stddc, x, y, imd->width, imd->height, 
-	     pixdc, x, y, SRCCOPY);
-   }
+    /*
+     * Copy it from the pixmap onto the screen.
+     */
+    if (ws->win){
+        BitBlt(stddc, x, y, imd->width, imd->height, 
+               pixdc, x, y, SRCCOPY);
+    }
 
-   FREE_STDLOCALS(w);
+    FREE_STDLOCALS(w);
 }
 
 struct imgdataformat *getimgdataformat(wbp w)
@@ -1337,29 +1202,29 @@ struct imgdataformat *getimgdataformat(wbp w)
     return &imgdataformat_MSRGBX32;
 }
 
-int  getdisplaysize  (wbp w, int *width, int *height)
+int getdisplaysize(wbp w, int *width, int *height)
 {
     *width =  devicecaps(w, HORZRES);
     *height = devicecaps(w, VERTRES);
     return Succeeded;
 }
 
-int  querypointer(wbp w, int *x, int *y)
-   {
-   wsp ws = w->window;
-   RECT r;
-   if (ws->win) {
-      POINT pp;
-      GetCursorPos(&pp);
-      GetWindowRect(ws->win, &r);
-      pp.x -= r.left + CLIENT_XOFF;
-      pp.y -= r.top + CLIENT_YOFF;
-      *x = pp.x;
-      *y = pp.y;
-      return Succeeded;
-      }
-   return Failed;
-   }
+int querypointer(wbp w, int *x, int *y)
+{
+    wsp ws = w->window;
+    RECT r;
+    if (ws->win) {
+        POINT pp;
+        GetCursorPos(&pp);
+        GetWindowRect(ws->win, &r);
+        pp.x -= r.left + CLIENT_XOFF;
+        pp.y -= r.top + CLIENT_YOFF;
+        *x = pp.x;
+        *y = pp.y;
+        return Succeeded;
+    }
+    return Failed;
+}
 
 int  queryrootpointer(wbp w, int *x, int *y)
 {
@@ -1374,63 +1239,61 @@ int  queryrootpointer(wbp w, int *x, int *y)
  * drawarcs() - assumes x and y are already fixed up for the bitmap
  */
 void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
-   {
+{
 #if 0
-   int i, halfwidth, halfheight, x1, y1, x2, y2, right, bottom;
-   double a1_a2;
-   HPEN hp, oldpen, oldpen2;
-   STDLOCALS(wb);
-   hp = CreatePenIndirect(&(wc->pen));
-   if (stdwin) oldpen = SelectObject(stddc, hp);
-   oldpen2 = SelectObject(pixdc, hp);
-   halfwidth = width >> 1;
-   halfheight = height >> 1;
-   angle1 = -angle1 - angle2;
-   a1_a2 = angle1 + angle2;
-   x1 = x + halfwidth + (int)(halfwidth * cos(angle1));
-   y1 = y + halfheight - (int)(halfheight * sin(angle1));
-   x2 = x + halfwidth + (int)(halfwidth * cos(a1_a2));
-   y2 = y + halfheight - (int)(halfheight * sin(a1_a2));
-   right = x + width + 1;
-   bottom = y + height + 1;
-   if (ws->win)
-       Arc(stddc, x, y, right, bottom, x1, y1, x2, y2);
-   Arc(pixdc, x, y, right, bottom, x1, y1, x2, y2);
-   if (stdwin) SelectObject(stddc, oldpen);
-   SelectObject(pixdc, oldpen2);
-   DeleteObject(hp);
-   FREE_STDLOCALS(wb);
-   return;
+    int i, halfwidth, halfheight, x1, y1, x2, y2, right, bottom;
+    double a1_a2;
+    HPEN hp, oldpen, oldpen2;
+    STDLOCALS(wb);
+    hp = create_fg_pen(wc);
+    if (stdwin) oldpen = SelectObject(stddc, hp);
+    oldpen2 = SelectObject(pixdc, hp);
+    halfwidth = width >> 1;
+    halfheight = height >> 1;
+    angle1 = -angle1 - angle2;
+    a1_a2 = angle1 + angle2;
+    x1 = x + halfwidth + (int)(halfwidth * cos(angle1));
+    y1 = y + halfheight - (int)(halfheight * sin(angle1));
+    x2 = x + halfwidth + (int)(halfwidth * cos(a1_a2));
+    y2 = y + halfheight - (int)(halfheight * sin(a1_a2));
+    right = x + width + 1;
+    bottom = y + height + 1;
+    if (ws->win)
+        Arc(stddc, x, y, right, bottom, x1, y1, x2, y2);
+    Arc(pixdc, x, y, right, bottom, x1, y1, x2, y2);
+    if (stdwin) SelectObject(stddc, oldpen);
+    SelectObject(pixdc, oldpen2);
+    DeleteObject(hp);
+    FREE_STDLOCALS(wb);
+    return;
 #endif
-   }
+}
 
 
 /*
  * drawlines - Support routine for DrawLine
  */
 void drawlines(wbp w, struct point *points, int npoints)
-   {
-   int i, diff, bheight;
-   HPEN hp, oldpen, oldpen2;
-   POINT *p2;
-   STDLOCALS(w);
-   p2 = convert_points(points, npoints);
-   hp = CreatePenIndirect(&(wc->pen));
-   if (stdwin) {
-      oldpen = SelectObject(stddc, hp);
-      SetBkMode(stddc, wc->bkmode);
-      Polyline(stddc, p2, npoints);
-      SelectObject(stddc, oldpen);
-      }
-   oldpen2 = SelectObject(pixdc, hp);
-   SetBkMode(pixdc, wc->bkmode);
-   Polyline(pixdc, p2, npoints);
-   SelectObject(pixdc, oldpen2);
-   DeleteObject(hp);
-   FREE_STDLOCALS(w);
-   free(p2);
-   return;
-   }
+{
+    int i, diff, bheight;
+    HPEN hp, oldpen, oldpen2;
+    POINT *p2;
+    STDLOCALS(w);
+    p2 = convert_points(points, npoints);
+    hp = get_fg_pen(wc);
+    if (stdwin) {
+        oldpen = SelectObject(stddc, hp);
+        Polyline(stddc, p2, npoints);
+        SelectObject(stddc, oldpen);
+    }
+    oldpen2 = SelectObject(pixdc, hp);
+    Polyline(pixdc, p2, npoints);
+    SelectObject(pixdc, oldpen2);
+    DeleteObject(hp);
+    FREE_STDLOCALS(w);
+    free(p2);
+    return;
+}
 
 
 /*
@@ -1454,31 +1317,30 @@ void drawpoint(wbp wb, int x, int y)
     FREE_STDLOCALS(wb);
 }
 
-
 /*
  * drawstring()
  */
 void drawstring(wbinding *wb, int x, int y, char *s, int slen)
-   {
-   HFONT oldfont;
-   STDLOCALS(wb);
-   if (stdwin) {
-      oldfont=SelectObject(stddc, wc->font->font);
-      SetBkMode(stddc, TRANSPARENT);
-      SetTextColor(stddc, PALCLR(wc->fg->color));
-      SetBkColor(stddc, PALCLR(wc->bg->color));
-      TextOut(stddc, x, y - wc->font->ascent, s, slen);
-      SelectObject(stddc, oldfont);
-      }
-   oldfont=SelectObject(pixdc,wc->font->font);
-   SetBkMode(pixdc, TRANSPARENT);
-   SetTextColor(pixdc, PALCLR(wc->fg->color));
-   SetBkColor(pixdc, PALCLR(wc->bg->color));
-   TextOut(pixdc, x, y - wc->font->ascent, s, slen);
-   SelectObject(pixdc, oldfont);
-   FREE_STDLOCALS(wb);
-   return;
-   }
+{
+    HFONT oldfont;
+    STDLOCALS(wb);
+    if (stdwin) {
+        oldfont=SelectObject(stddc, wc->font->font);
+        SetBkMode(stddc, TRANSPARENT);
+        SetTextColor(stddc, PALCLR(wc->fg->color));
+        SetBkColor(stddc, PALCLR(wc->bg->color));
+        TextOut(stddc, x, y - wc->font->ascent, s, slen);
+        SelectObject(stddc, oldfont);
+    }
+    oldfont=SelectObject(pixdc,wc->font->font);
+    SetBkMode(pixdc, TRANSPARENT);
+    SetTextColor(pixdc, PALCLR(wc->fg->color));
+    SetBkColor(pixdc, PALCLR(wc->bg->color));
+    TextOut(pixdc, x, y - wc->font->ascent, s, slen);
+    SelectObject(pixdc, oldfont);
+    FREE_STDLOCALS(wb);
+    return;
+}
 
 void drawutf8(wbp w, int x, int y, char *s, int slen, int nchars)
 {
@@ -1489,232 +1351,232 @@ void drawutf8(wbp w, int x, int y, char *s, int slen, int nchars)
  * fillarcs
  */
 void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
-   {
+{
 #if 0
-   int diff, bheight;
-   HBRUSH hb, oldbrush, oldbrush2;
-   POINT pts[3];
-   HPEN hp, oldpen, oldpen2;
-   STDLOCALS(wb);
-   hp = CreatePenIndirect(&(wc->pen));
-   if (stdwin) oldpen = SelectObject(stddc, hp);
-   oldpen2 = SelectObject(pixdc, hp);
-   hb = CreateBrushIndirect(&(wc->brush));
-   if (stdwin) oldbrush = SelectObject(stddc, hb);
-   oldbrush2 = SelectObject(pixdc, hb);
-   SetTextColor(pixdc, PALCLR(wc->fg->color));
-   if (stdwin) SetTextColor(stddc, PALCLR(wc->fg->color));
-   SetBkColor(pixdc, PALCLR(wc->bg->color));
-   if (stdwin) SetBkColor(stddc, PALCLR(wc->bg->color));
-   if (stdwin) SetBkMode(stddc, wc->bkmode);
-   SetBkMode(pixdc, wc->bkmode);
+    int diff, bheight;
+    HBRUSH hb, oldbrush, oldbrush2;
+    POINT pts[3];
+    HPEN hp, oldpen, oldpen2;
+    STDLOCALS(wb);
+    hp = create_fg_pen(wc);
+    if (stdwin) oldpen = SelectObject(stddc, hp);
+    oldpen2 = SelectObject(pixdc, hp);
+    hb = CreateBrushIndirect(&(wc->brush));
+    if (stdwin) oldbrush = SelectObject(stddc, hb);
+    oldbrush2 = SelectObject(pixdc, hb);
+    SetTextColor(pixdc, PALCLR(wc->fg->color));
+    if (stdwin) SetTextColor(stddc, PALCLR(wc->fg->color));
+    SetBkColor(pixdc, PALCLR(wc->bg->color));
+    if (stdwin) SetBkColor(stddc, PALCLR(wc->bg->color));
+    if (stdwin) SetBkMode(stddc, wc->bkmode);
+    SetBkMode(pixdc, wc->bkmode);
  
-   if (angle2 >= 2 * Pi) {
-       /*
-        * from SDK reference: Ellipse() draws up to but not including
-        * the right and bottom coordinates.  Add +1 to compensate.
-        */
-       if (stdwin) 
-           Ellipse(stddc, x, y, 
-                   x + width + 1, y + height + 1);
-       Ellipse(pixdc, x, y, 
-               x + width + 1, y + height + 1);
-   }
-   else {
-       angle1 = -angle1 - angle2;
-       pts[0].x = x + (width>>1);
-       pts[0].y = y + (height>>1);
-       pts[1].x = x + (width>>1) +
-           (int)(((width + 1)>>1) * cos(angle1));
-       pts[1].y = y + (height>>1) -
-           (int)(((height )>>1) * sin(angle1));
-       pts[2].x = x + (width>> 1) +
-           (int)(((width + 1)>>1) * cos(angle1+angle2));
-       pts[2].y = y + (height>>1) -
-           (int)(((height )>>1) * sin(angle1+angle2));
-       if (stdwin) {
-           Pie(stddc, x, y,
-               x + width + 1, y + height + 1,
-               pts[1].x, pts[1].y, pts[2].x, pts[2].y);
-       }
-       Pie(pixdc, x, y,
-           x + width + 1, y + height + 1,
-           pts[1].x, pts[1].y, pts[2].x, pts[2].y);
-   }
-   if (stdwin) SelectObject(stddc, oldpen);
-   SelectObject(pixdc, oldpen2);
-   DeleteObject(hp);
-   if (stdwin) SelectObject(stddc, oldbrush);
-   SelectObject(pixdc, oldbrush2);
-   DeleteObject(hb);
-   FREE_STDLOCALS(wb);
-   return;
+    if (angle2 >= 2 * Pi) {
+        /*
+         * from SDK reference: Ellipse() draws up to but not including
+         * the right and bottom coordinates.  Add +1 to compensate.
+         */
+        if (stdwin) 
+            Ellipse(stddc, x, y, 
+                    x + width + 1, y + height + 1);
+        Ellipse(pixdc, x, y, 
+                x + width + 1, y + height + 1);
+    }
+    else {
+        angle1 = -angle1 - angle2;
+        pts[0].x = x + (width>>1);
+        pts[0].y = y + (height>>1);
+        pts[1].x = x + (width>>1) +
+            (int)(((width + 1)>>1) * cos(angle1));
+        pts[1].y = y + (height>>1) -
+            (int)(((height )>>1) * sin(angle1));
+        pts[2].x = x + (width>> 1) +
+            (int)(((width + 1)>>1) * cos(angle1+angle2));
+        pts[2].y = y + (height>>1) -
+            (int)(((height )>>1) * sin(angle1+angle2));
+        if (stdwin) {
+            Pie(stddc, x, y,
+                x + width + 1, y + height + 1,
+                pts[1].x, pts[1].y, pts[2].x, pts[2].y);
+        }
+        Pie(pixdc, x, y,
+            x + width + 1, y + height + 1,
+            pts[1].x, pts[1].y, pts[2].x, pts[2].y);
+    }
+    if (stdwin) SelectObject(stddc, oldpen);
+    SelectObject(pixdc, oldpen2);
+    DeleteObject(hp);
+    if (stdwin) SelectObject(stddc, oldbrush);
+    SelectObject(pixdc, oldbrush2);
+    DeleteObject(hb);
+    FREE_STDLOCALS(wb);
+    return;
 #endif
-   }
+}
+
+static HBRUSH get_fg_brush(wcp wc)
+{
+    if (wc->pattern)
+        return CreatePatternBrush(wc->pattern->bitmap);
+    else
+        return CreateSolidBrush(wc->fg->color);
+}
+
+static HPEN get_fg_pen0(wcp wc)
+{
+    return CreatePen(wc->linestyle->i, wc->linewidth, wc->fg->color);
+}
+
+static HPEN get_fg_pen(wcp wc)
+{
+    LOGBRUSH lb;
+    if (wc->pattern) {
+        lb.lbStyle = BS_PATTERN;
+        lb.lbColor = (COLORREF)0;
+        lb.lbHatch = (ULONG_PTR)wc->pattern->bitmap;
+    } else {    
+        lb.lbStyle = BS_SOLID;
+        lb.lbColor = wc->fg->color;
+        lb.lbHatch = (ULONG_PTR)0;
+    }
+    return ExtCreatePen(PS_GEOMETRIC | wc->linestyle->i, wc->linewidth, &lb, 0, 0);
+}
+
+static HBRUSH get_bg_brush(wcp wc)
+{
+    return CreateSolidBrush(wc->bg->color);
+}
 
 /*
  * fillrectangles
  */
-void fillrectangle   (wbp wb, int x, int y, int width, int height)
-   {
-   int diff, bheight;
-   HBRUSH hb, oldbrush, oldbrush2;
-   HPEN hp, oldpen, oldpen2;
-   HRGN hr; RECT r;
-   STDLOCALS(wb);
-   hp = CreatePenIndirect(&(wc->pen));
-   if (stdwin) oldpen = SelectObject(stddc, hp);
-   oldpen2 = SelectObject(pixdc, hp);
-   hb = CreateBrushIndirect(&(wc->brush));
-   if (stdwin) oldbrush = SelectObject(stddc, hb);
-   oldbrush2 = SelectObject(pixdc, hb);
-   SetTextColor(pixdc, PALCLR(wc->fg->color));
-   if (stdwin) SetTextColor(stddc, PALCLR(wc->fg->color));
-   SetBkColor(pixdc, PALCLR(wc->bg->color));
-   if (stdwin) SetBkColor(stddc, PALCLR(wc->bg->color));
-   if (stdwin) SetBkMode(stddc, wc->bkmode);
-   SetBkMode(pixdc, wc->bkmode);
-   r.left = x;
-   r.top = y;
-   r.right = x + width;
-   r.bottom = y + height;
-   /*
-    * Used to use FillRect(pixdc, (recs+i), hb); (with +1 for
-    * right & bottom coordinates) but it mystically didn't "stick"
-    * to the backing pixmap, although it showed OK on the window itself.
-    */
-   hr = CreateRectRgnIndirect(&r);
-   if (stdwin) FillRgn(stddc, hr, hb);
-   FillRgn(pixdc, hr, hb);
-   DeleteObject(hr);
-
-   if (stdwin) SelectObject(stddc, oldpen);
-   SelectObject(pixdc, oldpen2);
-   DeleteObject(hp);
-   if (stdwin) SelectObject(stddc, oldbrush);
-   SelectObject(pixdc, oldbrush2);
-   DeleteObject(hb);
-   FREE_STDLOCALS(wb);
-   return;
-   }
+void fillrectangle(wbp wb, int x, int y, int width, int height)
+{
+    HBRUSH hb, oldbrush, oldbrush2;
+    HRGN hr; RECT r;
+    STDLOCALS(wb);
+    hb = get_fg_brush(wc);
+    if (stdwin) oldbrush = SelectObject(stddc, hb);
+    oldbrush2 = SelectObject(pixdc, hb);
+    r.left = x;
+    r.top = y;
+    r.right = x + width;
+    r.bottom = y + height;
+    /*
+     * Used to use FillRect(pixdc, (recs+i), hb); (with +1 for
+     * right & bottom coordinates) but it mystically didn't "stick"
+     * to the backing pixmap, although it showed OK on the window itself.
+     */
+    hr = CreateRectRgnIndirect(&r);
+    if (stdwin) FillRgn(stddc, hr, hb);
+    FillRgn(pixdc, hr, hb);
+    DeleteObject(hr);
+    if (stdwin) SelectObject(stddc, oldbrush);
+    SelectObject(pixdc, oldbrush2);
+    DeleteObject(hb);
+    FREE_STDLOCALS(wb);
+    return;
+}
 
 
 /*
  * drawrectangles - draw nrecs # of rectangles in array recs to binding w
  */
 void drawrectangle(wbp w, int x, int y, int width, int height, int thick)
-   {
-   LOGBRUSH lb;
-   HBRUSH hb, oldbrush, oldbrush2;
-   HPEN hp, oldpen, oldpen2;
-   POINT tmp[5];
-   STDLOCALS(w);
-   hp = CreatePenIndirect(&(wc->pen));
-   lb.lbStyle = BS_NULL;
-   hb = CreateBrushIndirect(&lb);
-   SetBkMode(pixdc, wc->bkmode);
-   oldpen2 = SelectObject(pixdc, hp);
-   oldbrush2 = SelectObject(pixdc, hb);
+{
+    HBRUSH hb, oldbrush, oldbrush2;
+    HPEN hp, oldpen, oldpen2;
+    POINT tmp[5];
+    STDLOCALS(w);
+    hp = get_fg_pen(wc);
+    hb = GetStockObject(NULL_BRUSH);
+    oldpen2 = SelectObject(pixdc, hp);
+    oldbrush2 = SelectObject(pixdc, hb);
 
-   width += x;
-   height += y;
-   tmp[0].x = x;
-   tmp[0].y = y;
-   tmp[1].x = width-1;
-   tmp[1].y = y;
-   tmp[2].x = width-1;
-   tmp[2].y = height-1;
-   tmp[3].x = x;
-   tmp[3].y = height-1;
-   tmp[4].x = x;
-   tmp[4].y = y;
-   Polyline(pixdc, tmp, 5);
+    width += x;
+    height += y;
+    tmp[0].x = x;
+    tmp[0].y = y;
+    tmp[1].x = width-1;
+    tmp[1].y = y;
+    tmp[2].x = width-1;
+    tmp[2].y = height-1;
+    tmp[3].x = x;
+    tmp[3].y = height-1;
+    tmp[4].x = x;
+    tmp[4].y = y;
+    Polyline(pixdc, tmp, 5);
 
-   SelectObject(pixdc, oldpen2);
-   SelectObject(pixdc, oldbrush2);
+    SelectObject(pixdc, oldpen2);
+    SelectObject(pixdc, oldbrush2);
 
-   if (stdwin) {
-      SetBkMode(stddc, wc->bkmode);
-      oldpen = SelectObject(stddc, hp);
-      oldbrush = SelectObject(stddc, hb);
-      Rectangle(stddc, x, y, width, height);
-      SelectObject(stddc, oldpen);
-      SelectObject(stddc, oldbrush);
-      }
+    if (stdwin) {
+        oldpen = SelectObject(stddc, hp);
+        oldbrush = SelectObject(stddc, hb);
+        Rectangle(stddc, x, y, width, height);
+        SelectObject(stddc, oldpen);
+        SelectObject(stddc, oldbrush);
+    }
 
-   DeleteObject(hp);
-   DeleteObject(hb);
-   FREE_STDLOCALS(w);
-   return;
-   }
+    DeleteObject(hp);
+    DeleteObject(hb);
+    FREE_STDLOCALS(w);
+    return;
+}
 
 /*
  * fillpolygon
  */
 void fillpolygon(wbp w, struct point *points, int npts)
-   {
-   HBRUSH hb, oldbrush;
-   HPEN hp, oldpen, oldpen2;
-   POINT *pts;
-   STDLOCALS(w);
-   pts = convert_points(points, npts);
-   if (stdwin) SetBkMode(stddc, wc->bkmode);
-   SetBkMode(pixdc, wc->bkmode);
-   hp = CreatePenIndirect(&(wc->pen));
-   if (stdwin) oldpen = SelectObject(stddc, hp);
-   oldpen2 = SelectObject(pixdc, hp);
-   hb = CreateBrushIndirect(&(wc->brush));
-   if (stdwin) {
-      oldbrush = SelectObject(stddc, hb);
-      Polygon(stddc, pts, npts);
-      SelectObject(stddc, oldbrush);
-      }
-   oldbrush = SelectObject(pixdc, hb);
-   Polygon(pixdc, pts, npts);
-   SelectObject(pixdc, oldbrush);
-   DeleteObject(hb);
-   if (stdwin) SelectObject(stddc, oldpen);
-   SelectObject(pixdc, oldpen2);
-   DeleteObject(hp);
-   FREE_STDLOCALS(w);
-   free(pts);
-   }
-
-int NumWindows = 0;
+{
+    HBRUSH hb, oldbrush;
+    HPEN hp, oldpen, oldpen2;
+    POINT *pts;
+    STDLOCALS(w);
+    pts = convert_points(points, npts);
+    hp = GetStockObject(NULL_PEN);
+    if (stdwin) oldpen = SelectObject(stddc, hp);
+    oldpen2 = SelectObject(pixdc, hp);
+    hb = get_fg_brush(wc);
+    if (stdwin) {
+        oldbrush = SelectObject(stddc, hb);
+        Polygon(stddc, pts, npts);
+        SelectObject(stddc, oldbrush);
+    }
+    oldbrush = SelectObject(pixdc, hb);
+    Polygon(pixdc, pts, npts);
+    SelectObject(pixdc, oldbrush);
+    DeleteObject(hb);
+    if (stdwin) SelectObject(stddc, oldpen);
+    SelectObject(pixdc, oldpen2);
+    DeleteObject(hp);
+    FREE_STDLOCALS(w);
+    free(pts);
+}
 
 
 /*
  * allocate a context.  Can't be called until w has a window.
  */
 static wcp alccontext(wbp w)
-   {
-   int i;
-   wcp wc;
-   wbinding tmp;
+{
+    int i;
+    wcp wc;
+    wbinding tmp;
 
-   GAlloc(wc, _wcontext);
-   wc->bkmode = OPAQUE;        /* at present, only used in line drawing */
-   wc->fg = link_sharedcolor(black);
-   wc->bg = link_sharedcolor(white);
-   wc->pen.lopnStyle = PS_SOLID;
-   wc->pen.lopnWidth.x = wc->pen.lopnWidth.y = 1;
-   wc->pen.lopnColor = PALCLR(wc->fg->color);
-   wc->bgpen.lopnStyle = PS_SOLID;
-   wc->bgpen.lopnWidth.x = wc->bgpen.lopnWidth.y = 1;
-   wc->bgpen.lopnColor = PALCLR(wc->bg->color);
-   wc->fillstyle = BS_SOLID;
-   wc->brush.lbStyle = BS_SOLID;
-   wc->brush.lbColor = PALCLR(wc->fg->color);
-   wc->bgbrush.lbStyle = BS_SOLID;
-   wc->bgbrush.lbColor = PALCLR(wc->bg->color);
-   wc->drawop = stringint_lookup(drawops, "copy");
-   wc->font = default_font;
-   wc->leading = defaultleading;
-   wc->clipx = wc->clipy = 0;
-   wc->clipw = wc->cliph = -1;
+    GAlloc(wc, _wcontext);
+    wc->fg = link_sharedcolor(black);
+    wc->bg = link_sharedcolor(white);
+    wc->drawop = stringint_lookup(drawops, "copy");
+    wc->linestyle = stringint_lookup(linestyles, "solid");
+    wc->linewidth = 1;
+    wc->font = default_font;
+    wc->leading = defaultleading;
+    wc->clipx = wc->clipy = 0;
+    wc->clipw = wc->cliph = -1;
 
-   return wc;
-   }
+    return wc;
+}
 
 /*
  * allocate a context, cloning attributes from an existing context
@@ -1723,192 +1585,84 @@ static wcp clonecontext(wcp src)
 {
     wcp wc;
 
-   GAlloc(wc, _wcontext);
+    GAlloc(wc, _wcontext);
 
-   /*
-    * copy over some stuff
-    */
-   wc->clipx = src->clipx;
-   wc->clipy = src->clipy;
-   wc->clipw = src->clipw;
-   wc->cliph = src->cliph;
-   if (src->cliprgn)
-      wc->cliprgn = CreateRectRgn(wc->clipx,wc->clipy,
-			wc->clipx+wc->clipw,
-			wc->clipy+wc->cliph);
-   wc->dx = src->dx;
-   wc->dy = src->dy;
-
-   /*
-    * clone needs to make a copy of the pattern
-    *   if (src->pattern) {
-    *      wc->pattern = copy+somehow(src->pattern);
-    *      if (src->patternname)
-    *         wc->patternname = salloc(src->patternname);
-    *      }
-    */
-
-
-   wc->bkmode = src->bkmode;
-   wc->fg = link_sharedcolor(src->fg);
-   wc->bg = link_sharedcolor(src->bg);
-   wc->pen = src->pen;
-   wc->brush.lbColor = PALCLR(wc->fg->color);
-   wc->bgpen = src->bgpen;
-   wc->fillstyle = src->fillstyle;
-   wc->brush.lbStyle = wc->fillstyle;
-   wc->bgbrush.lbStyle = wc->fillstyle;
-   wc->bgbrush.lbColor = PALCLR(wc->bg->color);
-   wc->drawop = src->drawop;
-   wc->font = src->font;
-   return wc;
-   }
+    wc->clipx = src->clipx;
+    wc->clipy = src->clipy;
+    wc->clipw = src->clipw;
+    wc->cliph = src->cliph;
+    if (src->cliprgn)
+        wc->cliprgn = CreateRectRgn(wc->clipx,wc->clipy,
+                                    wc->clipx+wc->clipw,
+                                    wc->clipy+wc->cliph);
+    wc->dx = src->dx;
+    wc->dy = src->dy;
+    wc->fg = link_sharedcolor(src->fg);
+    wc->bg = link_sharedcolor(src->bg);
+    if (src->pattern)
+        wc->pattern = link_sharedbitmap(src->pattern);
+    wc->drawop = src->drawop;
+    wc->linewidth = src->linewidth;
+    wc->linestyle = src->linestyle;
+    wc->font = src->font;
+    return wc;
+}
 
 
 /*
  * free a window state
  */
 static void freewindow(wsp ws)
-   {
-   ws->refcount--;
-   if(ws->refcount == 0) {
-      if (ws->win)
-	 DestroyWindow(ws->win);
-      free(ws->windowlabel);
-      DeleteObject(ws->pix);
-      free(ws->cursorname);
-      GUnlink(ws, wstates);
-      free(ws);
-      }
-   }
+{
+    ws->refcount--;
+    if(ws->refcount == 0) {
+        close_screen_win(ws);
+        free(ws->windowlabel);
+        DeleteObject(ws->pix);
+        del_gc_global(&ws->listp);
+        GUnlink(ws, wstates);
+        free(ws);
+    }
+}
 
 /*
  * free a window context
  */
 static void freecontext(wcp wc)
-   {
-   wc->refcount--;
-   if(wc->refcount == 0) {
-      if (wc->cliprgn)
-	 DeleteObject(wc->cliprgn);
-      wc->cliprgn = 0;
-      if (wc->pattern)
-	 DeleteObject(wc->pattern);
-      wc->pattern = 0;
-      unlink_sharedcolor(wc->fg);
-      unlink_sharedcolor(wc->bg);
-      free(wc);
-      }
-   }
+{
+    wc->refcount--;
+    if(wc->refcount == 0) {
+        if (wc->cliprgn)
+            DeleteObject(wc->cliprgn);
+        wc->cliprgn = 0;
+        if (wc->pattern)
+            unlink_sharedbitmap(wc->pattern);
+        unlink_sharedcolor(wc->fg);
+        unlink_sharedcolor(wc->bg);
+        free(wc);
+    }
+}
 
 int walert(wbp w, int volume)
-   {
-   MessageBeep(0);
-   return Succeeded;
-   }
+{
+    MessageBeep(0);
+    return Succeeded;
+}
 
 /*
  * setpattern
  */
 int setpattern(wbp w, struct imgdata *imd)
 {
+    wcp wc = w->context;
+    if (wc->pattern)
+        unlink_sharedbitmap(wc->pattern);
+    if (imd)
+        wc->pattern = new_sharedbitmap(imd);
+    else
+        wc->pattern = 0;
     return Succeeded;
 }
-
-/*
- * Create an 8x8 bitmap from some data
- */
-HBITMAP CreateBitmapFromData(char *data)
-{
-   WORD *wBits;
-   HBITMAP rv;
-   int i;
-   static BITMAP bitmap = { 0, 8, 8, 2, 1, 1};
-   MemProtect(wBits = malloc(8 * sizeof(WORD)));
-   for (i = 0; i < 8; i++)
-      wBits[i] = data[i];
-   bitmap.bmBits = (LPSTR) wBits;
-   rv = CreateBitmapIndirect(&bitmap);
-   free(wBits);
-   return rv;
-}
-
-
-static int setpatternbits(w, width, height, rowdata)
-wbp w;
-int width;
-int *rowdata;
-int height;
-   {
-   int v;
-   int i, j, k;
-   HBITMAP p;
-   char data[2 * MAX_PATTERN_HEIGHT];
-   char *buf = data;
-   wcp wc = w->context;
-
-   if (width != height)
-      return Failed;
-
-   if (width == 8) {
-      for(i = 0; i < height; i++) {
-         v = rowdata[i];
-	 *buf++ = reversebits(~v);
-	 }
-      }
-   else if (width == 4) {
-      for(k=0; k < 2; k++) /* do twice to get 8 rows */
-          for(i = 0; i < height; i++) {
-              v = widenbits(rowdata[i]);
-              *buf++ = reversebits(~v);
-          }
-   }
-   else return Failed;
-
-   p = CreateBitmapFromData(data);
-   if (wc->pattern)
-      DeleteObject(wc->pattern);
-   wc->pattern = p;
-   if (wc->fillstyle == BS_PATTERN) {
-      wc->brush.lbStyle = BS_PATTERN;
-      wc->brush.lbColor = PALCLR(wc->fg->color);
-      wc->brush.lbHatch = (int)p;
-      }     
-   return Succeeded;
-   }
-
-int widenbits(int c)
-{
-   int rv = c;
-   if (c & 1) rv |= 16;
-   if (c & 2) rv |= 32;
-   if (c & 4) rv |= 64;
-   if (c & 8) rv |= 128;
-   return rv;
-}
-
-int reversebits(int c)
-{
-  int rv = 0;
-  if (c & 1) rv |= 128;
-  if (c & 2) rv |= 64;
-  if (c & 4) rv |= 32;
-  if (c & 8) rv |= 16;
-  if (c & 16) rv |= 8;
-  if (c & 32) rv |= 4;
-  if (c & 64) rv |= 2;
-  if (c & 128) rv |= 1;
-  return rv;
-}
-
-int pixmap_init(w)
-wbp w;
-   {
-   wsp ws = w->window;
-   resize_pixmap(w, ws->width, ws->height);
-   return Succeeded;
-   }
-
 
 void doconfig(w, status)
     wbp w;
@@ -1916,8 +1670,6 @@ void doconfig(w, status)
 {
     wsp ws = w->window;
     wcp wc = w->context;
-    int wid = ws->width, ht = ws->height;
-    int posx = ws->x, posy = ws->y;
     HDC hdc;
     HWND w_tmp;
 
@@ -1929,93 +1681,91 @@ void doconfig(w, status)
     }
 
     if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
-        resize_pixmap(w, wid, ht);
         if (ws->win) {
             pollevent(w);
             switch (status & (C_POS|C_SIZE)) {
                 case C_POS|C_SIZE: {
-                    SetWindowPos(ws->win, ws->win, posx, posy,
-                                 wid + BORDWIDTH, ht + BORDHEIGHT,
+                    SetWindowPos(ws->win, ws->win, ws->x, ws->y,
+                                 ws->width + BORDWIDTH, ws->height + BORDHEIGHT,
                                  SWP_NOZORDER|SWP_NOACTIVATE);
                     break;
                 }
                 case C_SIZE: {
                     SetWindowPos(ws->win, ws->win, 0, 0,
-                                 wid + BORDWIDTH, ht + BORDHEIGHT,
+                                 ws->width + BORDWIDTH, ws->height + BORDHEIGHT,
                                  SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
                     break;
                 }
                 case C_POS: {
                     SetWindowPos(ws->win, ws->win,
-                                 posx,
-                                 posy,
+                                 ws->x,
+                                 ws->y,
                                  0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
                     break;
                 }
             }
         }
     }
+    if (status & C_SIZE)
+        resizepixmap(w);
 }
 
 int grabpointer(wbp w)
 {
-   return Failed;
+    return Failed;
 }
 
 int ungrabpointer(wbp w)
 {
-   return Failed;
+    return Failed;
 }
 
-static void resize_pixmap(wbp w, int width, int height)
-   {
-   HDC hdc2, hdc3;
-   HBITMAP newpix, oldpix, oldpix2;
-   HBRUSH hb;
-   LOGBRUSH lb;
-   RECT rect;
-   wsp ws = w->window;
-   wcp wc = w->context;
-   int x = ws->pixwidth, y = ws->pixheight;
-   if (ws->pixwidth == width && ws->pixheight == height)
-       return;
-   ws->pixwidth = width;
-   ws->pixheight = height;
+static void resizepixmap(wbp w)
+{
+    HDC hdc2, hdc3;
+    HBITMAP newpix, oldpix, oldpix2;
+    HBRUSH hb;
+    RECT rect;
+    wsp ws = w->window;
+    wcp wc = w->context;
+    int x = ws->pixwidth, y = ws->pixheight;
+    if (ws->pixwidth == ws->width && ws->pixheight == ws->height)
+        return;
+    ws->pixwidth = ws->width;
+    ws->pixheight = ws->height;
 
-   newpix = CreateCompatibleBitmap (dummy_hdc, ws->pixwidth, ws->pixheight);
-   if (ws->pix) {
-      hdc2 = CreateCompatibleDC(dummy_hdc);
-      oldpix = SelectObject(hdc2, ws->pix);
-      }
-   hdc3 = CreateCompatibleDC(dummy_hdc);
-   oldpix2 = SelectObject(hdc3, newpix);
-   lb.lbStyle = BS_SOLID;
-   lb.lbColor = PALCLR(w->context->bg->color);
-   hb = CreateBrushIndirect(&lb);
-   /*
-    * initialize the new pixmap, including areas not in the old pixmap.
-    */
-   rect.left = 0; rect.right = ws->pixwidth;
-   rect.top = 0; rect.bottom = ws->pixheight;
-   FillRect(hdc3, &rect, hb);
-   BitBlt(hdc3, 0, 0, ws->pixwidth, ws->pixheight, hdc2, 0, 0, SRCCOPY);
-   if (ws->win) {
-       HDC hdc = GetDC(ws->win);
-       FillRect(hdc, &rect, hb);
-       BitBlt(hdc, 0, 0, ws->pixwidth, ws->pixheight, hdc2, 0, 0, SRCCOPY);
-       ReleaseDC(ws->win, hdc);
-   }
+    newpix = CreateCompatibleBitmap (dummy_hdc, ws->pixwidth, ws->pixheight);
+    if (ws->pix) {
+        hdc2 = CreateCompatibleDC(dummy_hdc);
+        oldpix = SelectObject(hdc2, ws->pix);
+    }
+    hdc3 = CreateCompatibleDC(dummy_hdc);
+    oldpix2 = SelectObject(hdc3, newpix);
+    hb = get_bg_brush(wc);
+    /*
+     * initialize the new pixmap, including areas not in the old pixmap.
+     */
+    rect.left = 0; rect.right = ws->pixwidth;
+    rect.top = 0; rect.bottom = ws->pixheight;
+    FillRect(hdc3, &rect, hb);
+    BitBlt(hdc3, 0, 0, ws->pixwidth, ws->pixheight, hdc2, 0, 0, SRCCOPY);
+    if (ws->win) {
+        HDC hdc = GetDC(ws->win);
+        FillRect(hdc, &rect, hb);
+        BitBlt(hdc, 0, 0, ws->pixwidth, ws->pixheight, hdc2, 0, 0, SRCCOPY);
+        ReleaseDC(ws->win, hdc);
+    }
 
-   SelectObject(hdc3, oldpix2);
-   DeleteDC(hdc3);
-   if (ws->pix) {
-      SelectObject(hdc2, oldpix);
-      DeleteDC(hdc2);
-      }
-   if (ws->pix) DeleteObject(ws->pix);
-   DeleteObject(hb);
-   ws->pix = newpix;
-   }
+    SelectObject(hdc3, oldpix2);
+    DeleteDC(hdc3);
+    if (ws->pix) {
+        SelectObject(hdc2, oldpix);
+        DeleteDC(hdc2);
+    }
+    if (ws->pix) DeleteObject(ws->pix);
+    DeleteObject(hb);
+    ws->pix = newpix;
+}
 
 
 /*
@@ -2023,48 +1773,48 @@ static void resize_pixmap(wbp w, int width, int height)
  *  In addition, select objects specified by flags.
  */
 static HDC CreateWinDC(wbp w)
-   {
-   wsp ws = w->window;
-   wcp wc = w->context;
-   HDC hdc;
-   if (!ws->win)
-       return 0;
-   hdc = GetDC(ws->win);
-   SetROP2(hdc, wc->drawop->i);
-   if (wc->clipw >= 0){
-      SelectClipRgn(hdc, wc->cliprgn);
-      }
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    HDC hdc;
+    if (!ws->win)
+        return 0;
+    hdc = GetDC(ws->win);
+    SetROP2(hdc, wc->drawop->i);
+    if (wc->clipw >= 0){
+        SelectClipRgn(hdc, wc->cliprgn);
+    }
 
 
-   return hdc;
-   }
+    return hdc;
+}
 
 static HDC CreatePixDC(wbp w)
-   {
-   wsp ws = w->window;
-   wcp wc = w->context;
-   HDC hdc2 = CreateCompatibleDC(dummy_hdc);
-   ws->theOldPix = SelectObject(hdc2, ws->pix);
-   SetROP2(hdc2, wc->drawop->i);
-   if (wc->clipw >= 0){
-      SelectClipRgn(hdc2, wc->cliprgn);
-      }
-   return hdc2;
-   }
+{
+    wsp ws = w->window;
+    wcp wc = w->context;
+    HDC hdc2 = CreateCompatibleDC(dummy_hdc);
+    ws->theOldPix = SelectObject(hdc2, ws->pix);
+    SetROP2(hdc2, wc->drawop->i);
+    if (wc->clipw >= 0){
+        SelectClipRgn(hdc2, wc->cliprgn);
+    }
+    return hdc2;
+}
 
 static int font_maxcharwidth(HFONT f)
 {
-  int i, m = -1, x;
-  char s[2];
-  HFONT oldfont = SelectObject(dummy_hdc, f);
-  s[1] = '\0';
-  for (i=0; i<256; i++) {
-    s[0] = i;
-    x = dc_textwidth(dummy_hdc, s, 1);
-    if (x > m) m = x;
-  }
-  SelectObject(dummy_hdc, oldfont);
-  return m;
+    int i, m = -1, x;
+    char s[2];
+    HFONT oldfont = SelectObject(dummy_hdc, f);
+    s[1] = '\0';
+    for (i=0; i<256; i++) {
+        s[0] = i;
+        x = dc_textwidth(dummy_hdc, s, 1);
+        if (x > m) m = x;
+    }
+    SelectObject(dummy_hdc, oldfont);
+    return m;
 }
 
 /*
@@ -2072,22 +1822,22 @@ static int font_maxcharwidth(HFONT f)
  */
 static int dc_textwidth(HDC dc, char *s, int n)
 {
-   SIZE sz;
-   /*
-    * GetTextExtentPoint32(dc, s, n, &sz) gives incorrect behavior
-    *  under Win32s
-    */
-   GetTextExtentPoint(dc, s, n, &sz);
-   return (int)sz.cx;
+    SIZE sz;
+    /*
+     * GetTextExtentPoint32(dc, s, n, &sz) gives incorrect behavior
+     *  under Win32s
+     */
+    GetTextExtentPoint(dc, s, n, &sz);
+    return (int)sz.cx;
 }
 
 int textwidth(wbp w, char *s, int n)
 {
-   int rv;
-   HFONT oldfont = SelectObject(dummy_hdc, w->context->font->font);
-   rv = dc_textwidth(dummy_hdc, s, n);
-   SelectObject(dummy_hdc, oldfont);
-   return rv;
+    int rv;
+    HFONT oldfont = SelectObject(dummy_hdc, w->context->font->font);
+    rv = dc_textwidth(dummy_hdc, s, n);
+    SelectObject(dummy_hdc, oldfont);
+    return rv;
 }
 
 int utf8width(wbp w, char *s, int n, int nchars)
@@ -2095,33 +1845,11 @@ int utf8width(wbp w, char *s, int n, int nchars)
     return textwidth(w, s, n);
 }
 
-int warppointer(w, x, y)
-wbp w;
-int x, y;
-   {
-   wsp ws = w->window;
-   SetCursorPos(ws->x + x, ws->y + y);
-   return Succeeded;
-   }
-
-/*
- * free all Windows resources allocated by this instantiation of iconx
- */
-void wfreersc()
+int warppointer(wbp w, int x, int y)
 {
-   wbp w;
-   while (wbndngs != NULL) {
-      w = wbndngs;
-      wbndngs = wbndngs->next;
-      free(w);
-      }
-   while (wstates != NULL) {
-      wstates->refcount = 1;
-      freewindow(wstates);
-      }
-   if (wlhead)
-      wlfree();
-   mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, 0, (DWORD)NULL);
+    wsp ws = w->window;
+    SetCursorPos(ws->x + x, ws->y + y);
+    return Succeeded;
 }
 
 int readimagefileimpl(char *filename, struct imgdata *imd) 
@@ -2201,6 +1929,98 @@ static void unlink_sharedcolor(struct SharedColor *x)
     }
 }
 
+static struct SharedCursor *new_sharedcursor(HCURSOR cursor)
+{
+    struct SharedCursor *res;
+    GAlloc(res, SharedCursor);
+    res->cursor = cursor;
+    return res;
+}
+
+static struct SharedCursor *link_sharedcursor(struct SharedCursor *x)
+{
+    ++x->refcount;
+    return x;
+}
+
+static void unlink_sharedcursor(struct SharedCursor *x)
+{
+    --x->refcount;
+    if (x->refcount == 0) {
+        free(x->cursor);
+        free(x);
+    }
+}
+
+static struct wcursor *lookup_wcursor(char *name)
+{
+    struct wcursor *rv;
+    int i;
+    i = hasher(hashcstr(name), cursors);
+    for(rv = cursors[i]; rv; rv = rv->next) {
+        if (!strcmp(name, rv->name))
+            return rv;
+    }
+    return 0;
+}
+
+static struct wcursor *ensure_wcursor(char *name)
+{
+    struct wcursor *rv;
+    int i;
+    i = hasher(hashcstr(name), cursors);
+    for(rv = cursors[i]; rv; rv = rv->next) {
+        if (!strcmp(name, rv->name))
+            return rv;
+    }
+    MemProtect(rv = calloc(1, sizeof(struct wcursor)));
+    rv->name = salloc(name);
+    rv->next = cursors[i];
+    cursors[i] = rv;
+    return rv;
+}
+
+static HBITMAP imgdata_to_BITMAP1(struct imgdata *imd)
+{
+    return CreateBitmap(imd->width, imd->height, 1, 32, imd->data);
+}
+
+static HBITMAP imgdata_to_BITMAP(struct imgdata *imd)
+{
+    struct imgdata *tmp;
+    HBITMAP im;
+    if (imd->format == &imgdataformat_RGBA32)
+        return imgdata_to_BITMAP1(imd);
+    tmp = initimgdata(imd->width, imd->height, &imgdataformat_RGBA32);
+    copyimgdata(tmp, imd);
+    im = imgdata_to_BITMAP(tmp);
+    unlinkimgdata(tmp);
+    return im;
+}
+
+static struct SharedBitmap *new_sharedbitmap(struct imgdata *imd)
+{
+    struct SharedBitmap *res;
+    GAlloc(res, SharedBitmap);
+    res->bitmap = imgdata_to_BITMAP(imd);
+    return res;
+}
+
+static struct SharedBitmap *link_sharedbitmap(struct SharedBitmap *x)
+{
+    ++x->refcount;
+    return x;
+}
+
+static void unlink_sharedbitmap(struct SharedBitmap *x)
+{
+    --x->refcount;
+    if (x->refcount == 0) {
+        DeleteObject(x->bitmap);
+        free(x);
+    }
+}
+
 static char *convert_spec(char *s)
 {
     return s;
@@ -2259,14 +2079,63 @@ int focuswindow(wbp w)
     return Succeeded;
 }
 
+static void synch_cursor(wsp ws)
+{
+    ws->savedcursor = SetCursor(ws->cursor->shared_cursor->cursor);
+}
+
 int definepointer(wbp w, char *name, int x, int y)
 {
+    struct wcursor *rv;
+    rv = ensure_wcursor(name);
+    if (rv->shared_cursor) {
+        unlink_sharedcursor(rv->shared_cursor);
+        rv->shared_cursor = link_sharedcursor(null_cursor);
+    } else
+        rv->shared_cursor = link_sharedcursor(null_cursor);
     return Succeeded;
 }
 
 int copypointer(wbp w, char *dest, char *src)
 {
+    struct wcursor *sc, *dc;
+    sc = lookup_wcursor(src);
+    if (!sc)
+        return Failed;
+    dc = ensure_wcursor(dest);
+    if (sc != dc) {
+        if (dc->shared_cursor) {
+            unlink_sharedcursor(dc->shared_cursor);
+            dc->shared_cursor = link_sharedcursor(sc->shared_cursor);
+        } else
+            dc->shared_cursor = link_sharedcursor(sc->shared_cursor);
+    }
     return Succeeded;
+}
+
+static wbp findwbp(wsp ws)
+{
+    wbp wb;
+    for (wb = wbndngs; wb; wb = wb->next)
+        if (wb->window == ws)
+            return wb;
+    syserr("Couldn't find wbp for wsp");
+    return 0;  /* not reached */
+}
+
+static void setup_cursor(char *name, LPCTSTR cid)
+{
+    int i;
+    struct wcursor *rv;
+    i = hasher(hashcstr(name), cursors);
+    MemProtect(rv = calloc(1, sizeof(struct wcursor)));
+    rv->name = name;
+    if (cid)
+        rv->shared_cursor = new_sharedcursor(LoadCursor(NULL, cid));
+    else
+        rv->shared_cursor = link_sharedcursor(null_cursor);
+    rv->next = cursors[i];
+    cursors[i] = rv;
 }
 
 static void init_window_system(void)
@@ -2296,13 +2165,112 @@ static void init_window_system(void)
                               WS_OVERLAPPEDWINDOW,
                               0, 0,
                               10, 10,
-                              NULL, NULL, mswinInstance, NULL);
+                              NULL, NULL, NULL, NULL);
     dummy_hdc = GetDC(dummy_win);
     black = new_sharedcolor("black", mscolor(0,0,0));
     white = new_sharedcolor("white", mscolor(0xffff,0xffff,0xffff));
     default_font = load_font(defaultfont);
     if (!default_font)
         ffatalerr("Couldn't load default font");
+
+    setup_cursors();
+}
+
+static void setup_cursors()
+{
+    null_cursor = new_sharedcursor(LoadCursor(NULL, IDC_ARROW));
+
+    /* Windows ones */
+    setup_cursor("help", IDC_HELP);
+    setup_cursor("hand", IDC_HAND);
+    setup_cursor("ibeam", IDC_IBEAM);
+    setup_cursor("uparrow", IDC_UPARROW);
+    setup_cursor("wait", IDC_WAIT);
+    setup_cursor("starting", IDC_APPSTARTING);
+    setup_cursor("sizeall", IDC_SIZEALL);
+    setup_cursor("sizenesw", IDC_SIZENESW);
+    setup_cursor("sizens", IDC_SIZENS);
+    setup_cursor("sizenwse", IDC_SIZENWSE);
+    setup_cursor("sizewe", IDC_SIZEWE);
+    setup_cursor("no", IDC_NO);
+
+    setup_cursor("X cursor", 0);
+    setup_cursor("arrow", IDC_ARROW);
+    setup_cursor("based arrow down", 0);
+    setup_cursor("based arrow up", 0);
+    setup_cursor("boat", 0);
+    setup_cursor("bogosity", 0);
+    copypointer(0, "bottom left corner", "sizenesw");
+    copypointer(0, "bottom right corner", "sizenwse");
+    setup_cursor("bottom side", 0);
+    setup_cursor("bottom tee", 0);
+    setup_cursor("box spiral", 0);
+    setup_cursor("center ptr", 0);
+    copypointer(0, "circle", "no");
+    setup_cursor("clock", 0);
+    setup_cursor("coffee mug", 0);
+    setup_cursor("cross", IDC_CROSS);
+    setup_cursor("cross reverse", 0);
+    setup_cursor("crosshair", 0);
+    setup_cursor("diamond cross", 0);
+    setup_cursor("dot", 0);
+    setup_cursor("dotbox", 0);
+    copypointer(0, "double arrow", "sizens");
+    setup_cursor("draft large", 0);
+    setup_cursor("draft small", 0);
+    setup_cursor("draped box", 0);
+    setup_cursor("exchange", 0);
+    copypointer(0, "fleur", "sizeall");
+    setup_cursor("gobbler", 0);
+    setup_cursor("gumby", IDC_SIZENESW);
+    copypointer(0, "hand1", "hand");
+    copypointer(0, "hand2", "hand");
+    setup_cursor("heart", 0);
+    setup_cursor("icon", 0);
+    setup_cursor("iron cross", 0);
+    setup_cursor("left ptr", 0);
+    setup_cursor("left side", 0);
+    setup_cursor("left tee", 0);
+    setup_cursor("leftbutton", 0);
+    setup_cursor("ll angle", 0);
+    setup_cursor("lr angle", 0);
+    setup_cursor("man", 0);
+    setup_cursor("middlebutton", 0);
+    setup_cursor("mouse", 0);
+    setup_cursor("pencil", 0);
+    setup_cursor("pirate", 0);
+    setup_cursor("plus", 0);
+    copypointer(0, "question arrow", "help");
+    setup_cursor("right ptr", 0);
+    setup_cursor("right side", 0);
+    setup_cursor("right tee", 0);
+    setup_cursor("rightbutton", 0);
+    setup_cursor("rtl logo", 0);
+    setup_cursor("sailboat", 0);
+    setup_cursor("sb down arrow", 0);
+    copypointer(0, "sb h double arrow", "sizewe");
+    setup_cursor("sb left arrow", 0);
+    setup_cursor("sb right arrow", 0);
+    copypointer(0, "sb up arrow", "uparrow");
+    copypointer(0, "sb v double arrow", "sizens");
+    setup_cursor("shuttle", 0);
+    setup_cursor("sizing", 0);
+    setup_cursor("spider", 0);
+    setup_cursor("spraycan", 0);
+    setup_cursor("star", 0);
+    setup_cursor("target", 0);
+    setup_cursor("tcross", 0);
+    setup_cursor("top left arrow", 0);
+    copypointer(0, "top left corner", "sizenwse");
+    copypointer(0, "top right corner", "sizenesw");
+    setup_cursor("top side", 0);
+    setup_cursor("top tee", 0);
+    setup_cursor("trek", 0);
+    setup_cursor("ul angle", 0);
+    setup_cursor("umbrella", 0);
+    setup_cursor("ur angle", 0);
+    copypointer(0, "watch", "wait");
+    copypointer(0, "xterm", "ibeam");
 }
 
 static void set_MSRGBX32(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
