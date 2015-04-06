@@ -21,12 +21,11 @@ clean:
 
 oit:		$(OBJS)
 		$(LD) -subsystem:console $(OBJS) $(LIBS) -out:oit.exe 
-		cp oit $(OIBIN)
-		cp oit $(OIBIN)/udis
+		$(INSTALL) oit "$(OIBIN)"
 
 win32header:	win32header.obj ../common/mlocal.obj
 		$(LD) -subsystem:console win32header.obj ../common/mlocal.obj $(LIBS) -out:win32header.exe 
-		cp win32header.exe $(OIBIN)
+		$(INSTALL) win32header "$(OIBIN)"
 
 $(OBJS):   ../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
 		   ../h/mproto.h ../h/typedefs.h ../h/cstructs.h
