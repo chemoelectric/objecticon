@@ -1,0 +1,5 @@
+include ../../Makedefs
+
+all:		
+
+clean:
