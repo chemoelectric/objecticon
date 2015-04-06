@@ -47,7 +47,7 @@ export OIBIN="\$OIHOME\\\\bin"
 export OILIB="\$OIHOME\\\\lib"
 export OIPATH="\$OILIB\\\\main;\$OILIB\\\\gui;\$OILIB\\\\xml;\$OILIB\\\\parser;\$OILIB\\\\ipl"
 export OIINCL="\$OILIB\\\\incl"
-PATH="\$PATH:\$OIBIN"
+PATH="\$PATH:$x/bin"
 export TRACE
 EOF
 echo creating base/h/version.h
