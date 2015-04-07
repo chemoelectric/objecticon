@@ -93,7 +93,7 @@ class TTExplorer(Dialog)
    end
 
    public component_setup()
-      local root_node, w, bw, p, d
+      local root_node, w, bw, p, d, c
       self.setup()
       tree := tt.get_table_content()
       p := scale(2)
@@ -122,8 +122,11 @@ class TTExplorer(Dialog)
                             set_label(ListEntryWithIcon(ucs(d), Files.lstat(d), Files.stat(d))).
                             set_always_expandable(&yes))
       tt.table_content.set_root_node(root_node).set_show_root(&no)
-      if *root_node.children = 1 then
-         load_subtree(root_node.children[1])
+      if *root_node.children = 1 then {
+         c := root_node.children[1]
+         load_subtree(c)
+         c.set_expanded(&yes)
+      }
    end
 
    private on_close_button(ev)

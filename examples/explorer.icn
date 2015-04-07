@@ -188,6 +188,7 @@ class Explorer(Dialog)
       if *root_node.children = 1 then {
          c := root_node.children[1]
          load_subtree(c)
+         c.set_expanded(&yes)
          tree.object_set_selections([c])
          load_table(c)
       }
