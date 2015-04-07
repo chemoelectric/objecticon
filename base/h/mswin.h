@@ -71,8 +71,8 @@
    wsp ws = (w)->window;\
    HWND stdwin = ws->win;\
    HBITMAP stdpix = ws->pix;\
-   HDC stddc = CreateWinDC(w);\
-   HDC pixdc = CreatePixDC(w);
+   HDC stddc = get_win_dc(w);\
+   HDC pixdc = get_pix_dc(w);
 
 #define STDFONT \
    { if(stdwin)SelectObject(stddc, wc->font->font); SelectObject(pixdc,wc->font->font); }

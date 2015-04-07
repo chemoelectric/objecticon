@@ -20,15 +20,15 @@ static wfp load_font(char *s);
 static int font_maxcharwidth(HFONT f);
 static int dc_textwidth(HDC dc, char *s, int n);
 static char *convert_spec(char *s);
-static HFONT findfont(char *family, int size, int flags, int ansi);
+static HFONT findfont(char *family, double size, int flags, int ansi);
 static HFONT mkfont(char *s);
 static HWND dummy_win;
 static HDC dummy_hdc;
 static wcp clonecontext(wcp src);
 static void freecontext(wcp wc);
 static void freewindow(wsp ws);
-static HDC CreateWinDC(wbp);
-static HDC CreatePixDC(wbp);
+static HDC get_win_dc(wbp);
+static HDC get_pix_dc(wbp);
 static void resizepixmap(wbp w);
 static int devicecaps(wbp w, int i);
 static void setclip(wbp w);
@@ -48,8 +48,8 @@ static void unlink_sharedcursor(struct SharedCursor *x);
 static struct wcursor *lookup_wcursor(char *name);
 static struct wcursor *ensure_wcursor(char *name);
 static void synch_cursor(wsp ws);
-static HBITMAP imgdata_to_BITMAP(struct imgdata *imd);
-static HBITMAP imgdata_to_BITMAP1(struct imgdata *imd);
+static HBITMAP imgdata_to_bitmap(struct imgdata *imd);
+static HBITMAP imgdata_to_bitmap1(struct imgdata *imd);
 static HBRUSH get_fg_brush(wcp wc);
 static HPEN get_fg_pen(wcp wc);
 static HBRUSH get_bg_brush(wcp wc);
@@ -58,6 +58,7 @@ static void handle_mouse(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp, int meta);
 static void handle_config(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
+static void rectanglehelper(HDC stddc, HDC pixdc, HBRUSH hb, int x, int y, int width, int height);
 
 static struct SharedColor *black, *white;
 
@@ -72,17 +73,16 @@ static wsp wstates;
 
 #define PALCLR(c) (c | 0x2000000L)
 
-int BORDHEIGHT;
-int BORDWIDTH;
-int CLIENT_XOFF;
-int CLIENT_YOFF;
+static int BORDHEIGHT;
+static int BORDWIDTH;
+static int CLIENT_XOFF;
+static int CLIENT_YOFF;
 
 /*
  * check for double-byte character set versions of Windows
  */
 CPINFO cpinfo;
 int MAXBYTESPERCHAR;
-
 
 /*
  * draw ops
@@ -180,8 +180,8 @@ static POINT *convert_points(struct point *points0, int npoints)
     int i;
     MemProtect(points = malloc(npoints * sizeof(POINT)));
     for (i = 0; i < npoints; ++i) {
-        points[i].x = points0[i].x;
-        points[i].y = points0[i].y;
+        points[i].x = (LONG)points0[i].x;
+        points[i].y = (LONG)points0[i].y;
     }
     return points;
 }
@@ -208,15 +208,11 @@ void freewbinding(wbp w)
     free(w);
 }
 
-/*
- * wopen
- */
 wbp wopen(char *display)
 {
     wbp w;
     wsp ws;
     wcp wc;
-    int i, r;
     RECT rec;
     HDC hdc2;
     HBRUSH brush;
@@ -275,7 +271,6 @@ wbp wopen(char *display)
     DeleteObject(brush);
     SelectObject(hdc2, oldpix);
     DeleteDC(hdc2);
-
     return w;
 }
 
@@ -314,7 +309,6 @@ static void handle_config(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     resizepixmap(findwbp(ws));
     qeventcode(ws, WINDOWRESIZED);
 }
-
 
 static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp, int meta)
 {
@@ -421,7 +415,6 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     PAINTSTRUCT ps;
     RECT rect;
     wsp ws = NULL;
-    int n, i, imin, imax;
 
     for (ws = vwstates; ws; ws = ws->vnext) {
         if (ws->win == hwnd) 
@@ -614,7 +607,6 @@ static void open_screen_win(wsp ws)
 
 int setcanvas(wbp w, char *s)
 {
-    int cmd, curr;
     wsp ws = w->window;
     HWND stdwin = ws->win;
     stringint *e;
@@ -688,13 +680,13 @@ int setwindowlabel(w, val)
     return Succeeded;
 }
 
-
-static HFONT findfont(char *family, int size, int flags, int ansi)
+static HFONT findfont(char *family, double size, int flags, int ansi)
 {
     int charset, weight;
     char slant, spacing;
 
-    if (size < 0) size = defaultfontsize;
+    if (size < 0)
+        size = defaultfontsize;
 
     if (flags & FONTFLAG_MEDIUM)
         weight = FW_MEDIUM;
@@ -828,7 +820,6 @@ int raisewindow(wbp w)
     return Succeeded;
 }
 
-
 /*
  * convert an Icon linear color into an MS Windows color value
  */
@@ -944,9 +935,6 @@ char *getwindowlabel(wbp w)
     return w->window->windowlabel;
 }
 
-/*
- * getpos() - update the window state's notion of its current position
- */
 int getpos(wbp w)
 {
     return Succeeded;
@@ -1204,7 +1192,7 @@ struct imgdataformat *getimgdataformat(wbp w)
 
 int getdisplaysize(wbp w, int *width, int *height)
 {
-    *width =  devicecaps(w, HORZRES);
+    *width = devicecaps(w, HORZRES);
     *height = devicecaps(w, VERTRES);
     return Succeeded;
 }
@@ -1226,7 +1214,7 @@ int querypointer(wbp w, int *x, int *y)
     return Failed;
 }
 
-int  queryrootpointer(wbp w, int *x, int *y)
+int queryrootpointer(wbp w, int *x, int *y)
 {
     POINT pp;
     GetCursorPos(&pp);
@@ -1235,47 +1223,34 @@ int  queryrootpointer(wbp w, int *x, int *y)
     return Succeeded;
 }
 
-/*
- * drawarcs() - assumes x and y are already fixed up for the bitmap
- */
-void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
+void drawarc(wbp wb, double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
-#if 0
-    int i, halfwidth, halfheight, x1, y1, x2, y2, right, bottom;
+    int x1, y1, x2, y2, right, bottom;
     double a1_a2;
     HPEN hp, oldpen, oldpen2;
     STDLOCALS(wb);
-    hp = create_fg_pen(wc);
+    hp = get_fg_pen(wc);
     if (stdwin) oldpen = SelectObject(stddc, hp);
     oldpen2 = SelectObject(pixdc, hp);
-    halfwidth = width >> 1;
-    halfheight = height >> 1;
     angle1 = -angle1 - angle2;
     a1_a2 = angle1 + angle2;
-    x1 = x + halfwidth + (int)(halfwidth * cos(angle1));
-    y1 = y + halfheight - (int)(halfheight * sin(angle1));
-    x2 = x + halfwidth + (int)(halfwidth * cos(a1_a2));
-    y2 = y + halfheight - (int)(halfheight * sin(a1_a2));
-    right = x + width + 1;
-    bottom = y + height + 1;
+    x1 = cx + rx * cos(angle1);
+    y1 = cy - ry * sin(angle1);
+    x2 = cx + rx * cos(a1_a2);
+    y2 = cy - ry * sin(a1_a2);
+    right = cx + rx + 1;
+    bottom = cy + ry + 1;
     if (ws->win)
-        Arc(stddc, x, y, right, bottom, x1, y1, x2, y2);
-    Arc(pixdc, x, y, right, bottom, x1, y1, x2, y2);
+        Arc(stddc, cx - rx, cy - ry, right, bottom, x1, y1, x2, y2);
+    Arc(pixdc, cx - rx, cy - ry, right, bottom, x1, y1, x2, y2);
     if (stdwin) SelectObject(stddc, oldpen);
     SelectObject(pixdc, oldpen2);
     DeleteObject(hp);
     FREE_STDLOCALS(wb);
-    return;
-#endif
 }
 
-
-/*
- * drawlines - Support routine for DrawLine
- */
 void drawlines(wbp w, struct point *points, int npoints)
 {
-    int i, diff, bheight;
     HPEN hp, oldpen, oldpen2;
     POINT *p2;
     STDLOCALS(w);
@@ -1292,17 +1267,9 @@ void drawlines(wbp w, struct point *points, int npoints)
     DeleteObject(hp);
     FREE_STDLOCALS(w);
     free(p2);
-    return;
 }
 
-
-/*
- * drawpoints() - 
- *  Parameters - the window binding for output, an array of points (assumed
- *               to be fixed up for bitmap) and the number of points
- */
 void drawpoint(wbp wb, int x, int y)
-
 {
     COLORREF palfg;
     STDLOCALS(wb);
@@ -1317,9 +1284,6 @@ void drawpoint(wbp wb, int x, int y)
     FREE_STDLOCALS(wb);
 }
 
-/*
- * drawstring()
- */
 void drawstring(wbinding *wb, int x, int y, char *s, int slen)
 {
     HFONT oldfont;
@@ -1339,7 +1303,6 @@ void drawstring(wbinding *wb, int x, int y, char *s, int slen)
     TextOut(pixdc, x, y - wc->font->ascent, s, slen);
     SelectObject(pixdc, oldfont);
     FREE_STDLOCALS(wb);
-    return;
 }
 
 void drawutf8(wbp w, int x, int y, char *s, int slen, int nchars)
@@ -1347,62 +1310,35 @@ void drawutf8(wbp w, int x, int y, char *s, int slen, int nchars)
     drawstring(w, x, y, s, slen);
 }
 
-/*
- * fillarcs
- */
-void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
+void fillarc(wbp wb, double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
-#if 0
-    int diff, bheight;
     HBRUSH hb, oldbrush, oldbrush2;
     POINT pts[3];
     HPEN hp, oldpen, oldpen2;
     STDLOCALS(wb);
-    hp = create_fg_pen(wc);
+    hp = GetStockObject(NULL_PEN);
     if (stdwin) oldpen = SelectObject(stddc, hp);
     oldpen2 = SelectObject(pixdc, hp);
-    hb = CreateBrushIndirect(&(wc->brush));
+    hb = get_fg_brush(wc);
     if (stdwin) oldbrush = SelectObject(stddc, hb);
     oldbrush2 = SelectObject(pixdc, hb);
-    SetTextColor(pixdc, PALCLR(wc->fg->color));
-    if (stdwin) SetTextColor(stddc, PALCLR(wc->fg->color));
-    SetBkColor(pixdc, PALCLR(wc->bg->color));
-    if (stdwin) SetBkColor(stddc, PALCLR(wc->bg->color));
-    if (stdwin) SetBkMode(stddc, wc->bkmode);
-    SetBkMode(pixdc, wc->bkmode);
  
-    if (angle2 >= 2 * Pi) {
-        /*
-         * from SDK reference: Ellipse() draws up to but not including
-         * the right and bottom coordinates.  Add +1 to compensate.
-         */
-        if (stdwin) 
-            Ellipse(stddc, x, y, 
-                    x + width + 1, y + height + 1);
-        Ellipse(pixdc, x, y, 
-                x + width + 1, y + height + 1);
-    }
-    else {
-        angle1 = -angle1 - angle2;
-        pts[0].x = x + (width>>1);
-        pts[0].y = y + (height>>1);
-        pts[1].x = x + (width>>1) +
-            (int)(((width + 1)>>1) * cos(angle1));
-        pts[1].y = y + (height>>1) -
-            (int)(((height )>>1) * sin(angle1));
-        pts[2].x = x + (width>> 1) +
-            (int)(((width + 1)>>1) * cos(angle1+angle2));
-        pts[2].y = y + (height>>1) -
-            (int)(((height )>>1) * sin(angle1+angle2));
-        if (stdwin) {
-            Pie(stddc, x, y,
-                x + width + 1, y + height + 1,
-                pts[1].x, pts[1].y, pts[2].x, pts[2].y);
-        }
-        Pie(pixdc, x, y,
-            x + width + 1, y + height + 1,
+    angle1 = -angle1 - angle2;
+    pts[0].x = cx;
+    pts[0].y = cy;
+    pts[1].x = cx + rx * cos(angle1);
+    pts[1].y = cy - ry * sin(angle1);
+    pts[2].x = cx + rx * cos(angle1+angle2);
+    pts[2].y = cy - ry * sin(angle1+angle2);
+    if (stdwin) {
+        Pie(stddc, cx - rx, cy - ry,
+            cx + rx + 1, cy + ry + 1,
             pts[1].x, pts[1].y, pts[2].x, pts[2].y);
     }
+    Pie(pixdc, cx - rx, cy - ry,
+        cx + rx + 1, cy + ry + 1,
+        pts[1].x, pts[1].y, pts[2].x, pts[2].y);
+
     if (stdwin) SelectObject(stddc, oldpen);
     SelectObject(pixdc, oldpen2);
     DeleteObject(hp);
@@ -1410,8 +1346,6 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     SelectObject(pixdc, oldbrush2);
     DeleteObject(hb);
     FREE_STDLOCALS(wb);
-    return;
-#endif
 }
 
 static HBRUSH get_fg_brush(wcp wc)
@@ -1420,11 +1354,6 @@ static HBRUSH get_fg_brush(wcp wc)
         return CreatePatternBrush(wc->pattern->bitmap);
     else
         return CreateSolidBrush(wc->fg->color);
-}
-
-static HPEN get_fg_pen0(wcp wc)
-{
-    return CreatePen(wc->linestyle->i, wc->linewidth, wc->fg->color);
 }
 
 static HPEN get_fg_pen(wcp wc)
@@ -1447,17 +1376,9 @@ static HBRUSH get_bg_brush(wcp wc)
     return CreateSolidBrush(wc->bg->color);
 }
 
-/*
- * fillrectangles
- */
-void fillrectangle(wbp wb, int x, int y, int width, int height)
+static void rectanglehelper(HDC stddc, HDC pixdc, HBRUSH hb, int x, int y, int width, int height)
 {
-    HBRUSH hb, oldbrush, oldbrush2;
     HRGN hr; RECT r;
-    STDLOCALS(wb);
-    hb = get_fg_brush(wc);
-    if (stdwin) oldbrush = SelectObject(stddc, hb);
-    oldbrush2 = SelectObject(pixdc, hb);
     r.left = x;
     r.top = y;
     r.right = x + width;
@@ -1468,65 +1389,55 @@ void fillrectangle(wbp wb, int x, int y, int width, int height)
      * to the backing pixmap, although it showed OK on the window itself.
      */
     hr = CreateRectRgnIndirect(&r);
-    if (stdwin) FillRgn(stddc, hr, hb);
+    if (stddc) FillRgn(stddc, hr, hb);
     FillRgn(pixdc, hr, hb);
     DeleteObject(hr);
+}
+
+void fillrectangle(wbp wb, int x, int y, int width, int height)
+{
+    HBRUSH hb, oldbrush, oldbrush2;
+    STDLOCALS(wb);
+    hb = get_fg_brush(wc);
+    if (stdwin) oldbrush = SelectObject(stddc, hb);
+    oldbrush2 = SelectObject(pixdc, hb);
+    rectanglehelper(stddc, pixdc, hb, x, y, width, height);
     if (stdwin) SelectObject(stddc, oldbrush);
     SelectObject(pixdc, oldbrush2);
     DeleteObject(hb);
     FREE_STDLOCALS(wb);
-    return;
 }
 
-
-/*
- * drawrectangles - draw nrecs # of rectangles in array recs to binding w
- */
-void drawrectangle(wbp w, int x, int y, int width, int height, int thick)
+void drawrectangle(wbp wb, int x, int y, int width, int height, int thick)
 {
     HBRUSH hb, oldbrush, oldbrush2;
-    HPEN hp, oldpen, oldpen2;
-    POINT tmp[5];
-    STDLOCALS(w);
-    hp = get_fg_pen(wc);
-    hb = GetStockObject(NULL_BRUSH);
-    oldpen2 = SelectObject(pixdc, hp);
+    STDLOCALS(wb);
+    hb = get_fg_brush(wc);
+    if (stdwin) oldbrush = SelectObject(stddc, hb);
     oldbrush2 = SelectObject(pixdc, hb);
 
-    width += x;
-    height += y;
-    tmp[0].x = x;
-    tmp[0].y = y;
-    tmp[1].x = width-1;
-    tmp[1].y = y;
-    tmp[2].x = width-1;
-    tmp[2].y = height-1;
-    tmp[3].x = x;
-    tmp[3].y = height-1;
-    tmp[4].x = x;
-    tmp[4].y = y;
-    Polyline(pixdc, tmp, 5);
-
-    SelectObject(pixdc, oldpen2);
-    SelectObject(pixdc, oldbrush2);
-
-    if (stdwin) {
-        oldpen = SelectObject(stddc, hp);
-        oldbrush = SelectObject(stddc, hb);
-        Rectangle(stddc, x, y, width, height);
-        SelectObject(stddc, oldpen);
-        SelectObject(stddc, oldbrush);
+    /* If too small to give a gap in the middle, then simply fill a
+     * rectangle, otherwise draw as four lines. */
+    if (width <= 2 * thick || height <= 2 * thick)
+        rectanglehelper(stddc, pixdc, hb, x, y, width, height);
+    else {
+        rectanglehelper(stddc, pixdc, hb, x, y, width, thick);
+        rectanglehelper(stddc, pixdc, hb,
+                        x, y +  thick,
+                        thick, height - 2 * thick);
+        rectanglehelper(stddc, pixdc, hb,
+                        x + width - thick, y + thick,
+                        thick, height - 2 * thick);
+        rectanglehelper(stddc, pixdc, hb,
+                        x, y + height - thick,
+                        width, thick);
     }
-
-    DeleteObject(hp);
+    if (stdwin) SelectObject(stddc, oldbrush);
+    SelectObject(pixdc, oldbrush2);
     DeleteObject(hb);
-    FREE_STDLOCALS(w);
-    return;
+    FREE_STDLOCALS(wb);
 }
 
-/*
- * fillpolygon
- */
 void fillpolygon(wbp w, struct point *points, int npts)
 {
     HBRUSH hb, oldbrush;
@@ -1554,16 +1465,9 @@ void fillpolygon(wbp w, struct point *points, int npts)
     free(pts);
 }
 
-
-/*
- * allocate a context.  Can't be called until w has a window.
- */
 static wcp alccontext(wbp w)
 {
-    int i;
     wcp wc;
-    wbinding tmp;
-
     GAlloc(wc, _wcontext);
     wc->fg = link_sharedcolor(black);
     wc->bg = link_sharedcolor(white);
@@ -1574,7 +1478,6 @@ static wcp alccontext(wbp w)
     wc->leading = defaultleading;
     wc->clipx = wc->clipy = 0;
     wc->clipw = wc->cliph = -1;
-
     return wc;
 }
 
@@ -1607,7 +1510,6 @@ static wcp clonecontext(wcp src)
     wc->font = src->font;
     return wc;
 }
-
 
 /*
  * free a window state
@@ -1649,9 +1551,6 @@ int walert(wbp w, int volume)
     return Succeeded;
 }
 
-/*
- * setpattern
- */
 int setpattern(wbp w, struct imgdata *imd)
 {
     wcp wc = w->context;
@@ -1664,14 +1563,10 @@ int setpattern(wbp w, struct imgdata *imd)
     return Succeeded;
 }
 
-void doconfig(w, status)
-    wbp w;
-    int status;
+void doconfig(wbp w, int status)
 {
     wsp ws = w->window;
     wcp wc = w->context;
-    HDC hdc;
-    HWND w_tmp;
 
     if (status & C_CLIP) {
         if (wc->clipw >= 0)
@@ -1728,7 +1623,6 @@ static void resizepixmap(wbp w)
     RECT rect;
     wsp ws = w->window;
     wcp wc = w->context;
-    int x = ws->pixwidth, y = ws->pixheight;
     if (ws->pixwidth == ws->width && ws->pixheight == ws->height)
         return;
     ws->pixwidth = ws->width;
@@ -1767,12 +1661,11 @@ static void resizepixmap(wbp w)
     ws->pix = newpix;
 }
 
-
 /*
- * CreateWinDC - create a device context for drawing on the window
+ * get_win_dc - create a device context for drawing on the window
  *  In addition, select objects specified by flags.
  */
-static HDC CreateWinDC(wbp w)
+static HDC get_win_dc(wbp w)
 {
     wsp ws = w->window;
     wcp wc = w->context;
@@ -1784,12 +1677,10 @@ static HDC CreateWinDC(wbp w)
     if (wc->clipw >= 0){
         SelectClipRgn(hdc, wc->cliprgn);
     }
-
-
     return hdc;
 }
 
-static HDC CreatePixDC(wbp w)
+static HDC get_pix_dc(wbp w)
 {
     wsp ws = w->window;
     wcp wc = w->context;
@@ -1980,20 +1871,20 @@ static struct wcursor *ensure_wcursor(char *name)
     return rv;
 }
 
-static HBITMAP imgdata_to_BITMAP1(struct imgdata *imd)
+static HBITMAP imgdata_to_bitmap1(struct imgdata *imd)
 {
     return CreateBitmap(imd->width, imd->height, 1, 32, imd->data);
 }
 
-static HBITMAP imgdata_to_BITMAP(struct imgdata *imd)
+static HBITMAP imgdata_to_bitmap(struct imgdata *imd)
 {
     struct imgdata *tmp;
     HBITMAP im;
     if (imd->format == &imgdataformat_RGBA32)
-        return imgdata_to_BITMAP1(imd);
+        return imgdata_to_bitmap1(imd);
     tmp = initimgdata(imd->width, imd->height, &imgdataformat_RGBA32);
     copyimgdata(tmp, imd);
-    im = imgdata_to_BITMAP(tmp);
+    im = imgdata_to_bitmap(tmp);
     unlinkimgdata(tmp);
     return im;
 }
@@ -2002,7 +1893,7 @@ static struct SharedBitmap *new_sharedbitmap(struct imgdata *imd)
 {
     struct SharedBitmap *res;
     GAlloc(res, SharedBitmap);
-    res->bitmap = imgdata_to_BITMAP(imd);
+    res->bitmap = imgdata_to_bitmap(imd);
     return res;
 }
 
@@ -2068,10 +1959,63 @@ static wfp load_font(char *s)
 
 void filltrapezoids(wbp w, struct trapezoid *traps, int ntraps)
 {
+    HBRUSH hb, oldbrush, oldbrush2;
+    HPEN hp, oldpen, oldpen2;
+    int i;
+    STDLOCALS(w);
+    hp = GetStockObject(NULL_PEN);
+    if (stdwin) oldpen = SelectObject(stddc, hp);
+    oldpen2 = SelectObject(pixdc, hp);
+    hb = get_fg_brush(wc);
+    if (stdwin) oldbrush = SelectObject(stddc, hb);
+    oldbrush2 = SelectObject(pixdc, hb);
+    for (i = 0; i < ntraps; ++i) {
+        POINT p[4];
+        p[0].x = traps[i].x1; p[0].y = traps[i].top;
+        p[1].x = traps[i].x2; p[1].y = traps[i].top;
+        p[2].x = traps[i].x4; p[2].y = traps[i].bottom;
+        p[3].x = traps[i].x3; p[3].y = traps[i].bottom;
+        if (stdwin)
+            Polygon(stddc, p, 4);
+        Polygon(pixdc, p, 4);
+    }
+    if (stdwin) SelectObject(stddc, oldbrush);
+    SelectObject(pixdc, oldbrush2);
+    DeleteObject(hb);
+    if (stdwin) SelectObject(stddc, oldpen);
+    SelectObject(pixdc, oldpen2);
+    DeleteObject(hp);
+    FREE_STDLOCALS(w);
 }
 
 void filltriangles(wbp w, struct triangle *tris, int ntris)
 {
+    HBRUSH hb, oldbrush, oldbrush2;
+    HPEN hp, oldpen, oldpen2;
+    int i;
+    STDLOCALS(w);
+    hp = GetStockObject(NULL_PEN);
+    if (stdwin) oldpen = SelectObject(stddc, hp);
+    oldpen2 = SelectObject(pixdc, hp);
+    hb = get_fg_brush(wc);
+    if (stdwin) oldbrush = SelectObject(stddc, hb);
+    oldbrush2 = SelectObject(pixdc, hb);
+    for (i = 0; i < ntris; ++i) {
+        POINT p[3];
+        p[0].x = tris[i].p1.x; p[0].y = tris[i].p1.y;
+        p[1].x = tris[i].p2.x; p[1].y = tris[i].p2.y;
+        p[2].x = tris[i].p3.x; p[2].y = tris[i].p3.y;
+        if (stdwin)
+            Polygon(stddc, p, 3);
+        Polygon(pixdc, p, 3);
+    }
+    if (stdwin) SelectObject(stddc, oldbrush);
+    SelectObject(pixdc, oldbrush2);
+    DeleteObject(hb);
+    if (stdwin) SelectObject(stddc, oldpen);
+    SelectObject(pixdc, oldpen2);
+    DeleteObject(hp);
+    FREE_STDLOCALS(w);
 }
 
 int focuswindow(wbp w)
@@ -2293,7 +2237,7 @@ static void get_MSRGBX32(struct imgdata *imd, int x, int y, int *r, int *g, int 
     *a = 65535;
 }
 
-static struct imgdataformat imgdataformat_MSRGBX32 =   {set_MSRGBX32,get_MSRGBX32,0,0,getlength_32,0,24,0,"MSRGBX32"};
+static struct imgdataformat imgdataformat_MSRGBX32 = {set_MSRGBX32,get_MSRGBX32,0,0,getlength_32,0,24,0,"MSRGBX32"};
 
 void registerplatformimgdataformats()
 {
