@@ -16,7 +16,9 @@ class Explorer(Dialog)
       l := []
       repeat {
          push(l, n.get_label().name)
-         n := n.get_parent() | break
+         n := n.get_parent()
+         if n === tree.get_root_node() then
+            break
       }
       return FilePath.from_list(l).str()
    end
@@ -123,7 +125,7 @@ class Explorer(Dialog)
       dir_list := []
       file_list := []
       every e := !l do {
-         if not(Files.is_hidden(e.name)) then {
+         if not(Files.is_hidden(e.name) | Files.is_relative_dir(e.name)) then {
             if e.stat.mode_str[1] == "d" then
                put(dir_list, e)
             else
@@ -134,7 +136,7 @@ class Explorer(Dialog)
    end
 
    public component_setup()
-      local root_node, split, w, bw, p
+      local root_node, split, w, bw, p, d, c
 
       set_size(scale(900),scale(600)).set_resize(&yes).set_label("Explorer")
       connect(self.dispose, Event.WINDOW_CLOSE_BUTTON)
@@ -177,11 +179,18 @@ class Explorer(Dialog)
       #
       # Initialize the tree data structure.
       #
-      root_node := TreeNode().set_label(ListEntryWithIcon(u"/", Files.lstat("/"), Files.stat("/")))
-      load_subtree(root_node)
-      tree.set_root_node(root_node)
-      tree.object_set_selections([root_node])
-      load_table(root_node)
+      root_node := TreeNode()
+      every d := Files.get_roots() do
+         root_node.add(TreeNode().
+                          set_label(ListEntryWithIcon(ucs(d), Files.lstat(d), Files.stat(d))).
+                          set_always_expandable(&yes))
+      tree.set_root_node(root_node).set_show_root(&no)
+      if *root_node.children = 1 then {
+         c := root_node.children[1]
+         load_subtree(c)
+         tree.object_set_selections([c])
+         load_table(c)
+      }
    end
 end
 

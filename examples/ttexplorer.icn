@@ -18,7 +18,9 @@ class TTExplorer(Dialog)
       l := []
       repeat {
          push(l, n.get_label().name)
-         n := n.get_parent() | break
+         n := n.get_parent()
+         if n === tree.get_root_node() then
+            break
       }
       return FilePath.from_list(l).str()
    end
@@ -79,7 +81,7 @@ class TTExplorer(Dialog)
       dir_list := []
       file_list := []
       every e := !l do {
-         if not(Files.is_hidden(e.name)) then {
+         if not(Files.is_hidden(e.name) | Files.is_relative_dir(e.name)) then {
             if e.stat.mode_str[1] == "d" then
                put(dir_list, e)
             else
@@ -91,7 +93,7 @@ class TTExplorer(Dialog)
    end
 
    public component_setup()
-      local root_node, w, bw, p
+      local root_node, w, bw, p, d
       self.setup()
       tree := tt.get_table_content()
       p := scale(2)
@@ -114,9 +116,14 @@ class TTExplorer(Dialog)
          }
       }
 
-      root_node := TreeTableNode().set_label(ListEntryWithIcon(u"/", Files.lstat("/"), Files.stat("/")))
-      load_subtree(root_node)
-      tt.table_content.set_root_node(root_node)
+      root_node := TreeTableNode()
+      every d := Files.get_roots() do
+         root_node.add(TreeTableNode().
+                            set_label(ListEntryWithIcon(ucs(d), Files.lstat(d), Files.stat(d))).
+                            set_always_expandable(&yes))
+      tt.table_content.set_root_node(root_node).set_show_root(&no)
+      if *root_node.children = 1 then
+         load_subtree(root_node.children[1])
    end
 
    private on_close_button(ev)
