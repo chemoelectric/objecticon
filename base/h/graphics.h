@@ -398,6 +398,7 @@ typedef struct _wstate {
   int		state;			/* window state; icon, window or root*/
   struct wcursor *cursor;               /* current cursor */
   HCURSOR	savedcursor;
+  HWND          savedgrab;
 #endif
 } wstate, *wsp;
 

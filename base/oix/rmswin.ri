@@ -33,7 +33,7 @@ static void resizepixmap(wbp w);
 static int devicecaps(wbp w, int i);
 static void setclip(wbp w);
 static void unsetclip(wbp w);
-static struct imgdataformat imgdataformat_MSRGBX32;
+static struct imgdataformat imgdataformat_MSBGRX32;
 static POINT *convert_points(struct point *points0, int npoints);
 static COLORREF mscolor(int r, int g, int b);
 static struct SharedColor *new_sharedcolor(char *name, COLORREF color);
@@ -49,7 +49,6 @@ static struct wcursor *lookup_wcursor(char *name);
 static struct wcursor *ensure_wcursor(char *name);
 static void synch_cursor(wsp ws);
 static HBITMAP imgdata_to_bitmap(struct imgdata *imd);
-static HBITMAP imgdata_to_bitmap1(struct imgdata *imd);
 static HBRUSH get_fg_brush(wcp wc);
 static HPEN get_fg_pen(wcp wc);
 static HBRUSH get_bg_brush(wcp wc);
@@ -61,6 +60,15 @@ static void handle_config(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void rectanglehelper(HDC stddc, HDC pixdc, HBRUSH hb, int x, int y, int width, int height);
 
 static struct SharedColor *black, *white;
+
+#begdef CheckUnhidden(ws)
+do {
+   if (!ws->win) {
+      LitWhy("Window is hidden");
+      return Failed;
+   }
+} while(0)
+#enddef
 
 /* List of windows with win non-null */
 static wsp vwstates;
@@ -781,8 +789,7 @@ int setfont(wbp w, char *s)
     return Succeeded;
 }
 
-static void setclip(w)
-    wbp w;
+static void setclip(wbp w)
 {
     wcp wc = w->context;
     if (wc->cliprgn)
@@ -795,8 +802,7 @@ static void setclip(w)
         wc->cliprgn = NULL;
 }
 
-static void unsetclip(w)
-    wbp w;
+static void unsetclip(wbp w)
 {
     wcp wc = w->context;
     if (wc->cliprgn)
@@ -807,16 +813,16 @@ static void unsetclip(w)
 int lowerwindow(wbp w)
 {
     wsp ws = w->window;
-    if (ws->win)
-        SetWindowPos(ws->win, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    CheckUnhidden(ws);
+    SetWindowPos(ws->win, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
     return Succeeded;
 }
 
 int raisewindow(wbp w)
 {
     wsp ws = w->window;
-    if (ws->win)
-        SetWindowPos(ws->win, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    CheckUnhidden(ws);
+    SetWindowPos(ws->win, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
     return Succeeded;
 }
 
@@ -1132,7 +1138,7 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
         for(j = x; j < x + imd->width; j++)
             *p++ = GetPixel(pixdc, j, i);
 
-    imd->format = &imgdataformat_MSRGBX32;
+    imd->format = &imgdataformat_MSBGRX32;
     imd->data = (unsigned char *)crp;
     SelectObject(pixdc, oldpix);
     DeleteDC(pixdc);
@@ -1153,31 +1159,20 @@ static void pix_to_win(wsp ws)
 
 void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
-    COLORREF *p;
     int i, j;
-    struct imgdata *tmp;
     STDLOCALS(w);
-
-    if (imd->format != &imgdataformat_MSRGBX32) {
-        tmp = initimgdata(imd->width, imd->height, &imgdataformat_MSRGBX32);
-        copyimgdata(tmp, imd);
-        p = (COLORREF *)tmp->data;
-    } else {
-        tmp = 0;
-        p = (COLORREF *)imd->data;
+    for(j = 0; j < imd->height; j++) {
+        for(i = 0; i < imd->width; i++) {
+            int r, g, b, a;
+            imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
+            if (a == 0xffff)
+                SetPixel(pixdc, i + x, j + y, mscolor(r, g, b));
+        }
     }
-
-    for(i = y; i < y + imd->height; i++)
-        for(j = x; j < x + imd->width; j++)
-            SetPixel(pixdc, j, i, *p++);
-
-    if (tmp)
-        unlinkimgdata(tmp);
-
     /*
      * Copy it from the pixmap onto the screen.
      */
-    if (ws->win){
+    if (stdwin){
         BitBlt(stddc, x, y, imd->width, imd->height, 
                pixdc, x, y, SRCCOPY);
     }
@@ -1187,7 +1182,7 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
 
 struct imgdataformat *getimgdataformat(wbp w)
 {
-    return &imgdataformat_MSRGBX32;
+    return &imgdataformat_MSBGRX32;
 }
 
 int getdisplaysize(wbp w, int *width, int *height)
@@ -1201,17 +1196,15 @@ int querypointer(wbp w, int *x, int *y)
 {
     wsp ws = w->window;
     RECT r;
-    if (ws->win) {
-        POINT pp;
-        GetCursorPos(&pp);
-        GetWindowRect(ws->win, &r);
-        pp.x -= r.left + CLIENT_XOFF;
-        pp.y -= r.top + CLIENT_YOFF;
-        *x = pp.x;
-        *y = pp.y;
-        return Succeeded;
-    }
-    return Failed;
+    POINT pp;
+    CheckUnhidden(ws);
+    GetCursorPos(&pp);
+    GetWindowRect(ws->win, &r);
+    pp.x -= r.left + CLIENT_XOFF;
+    pp.y -= r.top + CLIENT_YOFF;
+    *x = pp.x;
+    *y = pp.y;
+    return Succeeded;
 }
 
 int queryrootpointer(wbp w, int *x, int *y)
@@ -1536,7 +1529,6 @@ static void freecontext(wcp wc)
     if(wc->refcount == 0) {
         if (wc->cliprgn)
             DeleteObject(wc->cliprgn);
-        wc->cliprgn = 0;
         if (wc->pattern)
             unlink_sharedbitmap(wc->pattern);
         unlink_sharedcolor(wc->fg);
@@ -1607,11 +1599,17 @@ void doconfig(wbp w, int status)
 
 int grabpointer(wbp w)
 {
+    wsp ws = w->window;
+    CheckUnhidden(ws);
+    ws->savedgrab = SetCapture(ws->win);
     return Failed;
 }
 
 int ungrabpointer(wbp w)
 {
+    wsp ws = w->window;
+    CheckUnhidden(ws);
+    SetCapture(ws->savedgrab);
     return Failed;
 }
 
@@ -1739,6 +1737,7 @@ int utf8width(wbp w, char *s, int n, int nchars)
 int warppointer(wbp w, int x, int y)
 {
     wsp ws = w->window;
+    CheckUnhidden(ws);
     SetCursorPos(ws->x + x, ws->y + y);
     return Succeeded;
 }
@@ -1871,22 +1870,24 @@ static struct wcursor *ensure_wcursor(char *name)
     return rv;
 }
 
-static HBITMAP imgdata_to_bitmap1(struct imgdata *imd)
-{
-    return CreateBitmap(imd->width, imd->height, 1, 32, imd->data);
-}
-
 static HBITMAP imgdata_to_bitmap(struct imgdata *imd)
 {
-    struct imgdata *tmp;
-    HBITMAP im;
-    if (imd->format == &imgdataformat_RGBA32)
-        return imgdata_to_bitmap1(imd);
-    tmp = initimgdata(imd->width, imd->height, &imgdataformat_RGBA32);
-    copyimgdata(tmp, imd);
-    im = imgdata_to_bitmap(tmp);
-    unlinkimgdata(tmp);
-    return im;
+    HBITMAP oldbitmap, bitmap;
+    HDC hdc;
+    int i, j;
+    hdc = CreateCompatibleDC(dummy_hdc);
+    bitmap = CreateCompatibleBitmap(dummy_hdc, imd->width, imd->height);
+    oldbitmap = SelectObject(hdc, bitmap);
+    for(j = 0; j < imd->height; j++) {
+        for(i = 0; i < imd->width; i++) {
+            int r, g, b, a;
+            imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
+            SetPixel(hdc, i, j, mscolor(r, g, b));
+        }
+    }
+    SelectObject(hdc, oldbitmap);
+    DeleteDC(hdc);
+    return bitmap;
 }
 
 static struct SharedBitmap *new_sharedbitmap(struct imgdata *imd)
@@ -2217,29 +2218,29 @@ static void setup_cursors()
     copypointer(0, "xterm", "ibeam");
 }
 
-static void set_MSRGBX32(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
+static void set_MSBGRX32(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
 {
     int n = imd->width * y + x;
     unsigned char *s = imd->data + 4 * n;
-    *s++ = r / 256;
-    *s++ = g / 256;
     *s++ = b / 256;
+    *s++ = g / 256;
+    *s++ = r / 256;
     *s++ = 0;
 }
 
-static void get_MSRGBX32(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
+static void get_MSBGRX32(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
 {
     int n = imd->width * y + x;
     unsigned char *s = imd->data + 4 * n;
-    *r = 257 * (*s++);
-    *g = 257 * (*s++);
     *b = 257 * (*s++);
+    *g = 257 * (*s++);
+    *r = 257 * (*s++);
     *a = 65535;
 }
 
-static struct imgdataformat imgdataformat_MSRGBX32 = {set_MSRGBX32,get_MSRGBX32,0,0,getlength_32,0,24,0,"MSRGBX32"};
+static struct imgdataformat imgdataformat_MSBGRX32 = {set_MSBGRX32,get_MSBGRX32,0,0,getlength_32,0,24,0,"MSBGRX32"};
 
 void registerplatformimgdataformats()
 {
-    registerimgdataformat(&imgdataformat_MSRGBX32);
+    registerimgdataformat(&imgdataformat_MSBGRX32);
 }
