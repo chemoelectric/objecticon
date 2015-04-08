@@ -31,8 +31,6 @@ static HDC get_win_dc(wbp);
 static HDC get_pix_dc(wbp);
 static void resizepixmap(wbp w);
 static int devicecaps(wbp w, int i);
-static void setclip(wbp w);
-static void unsetclip(wbp w);
 static struct imgdataformat imgdataformat_MSBGRX32;
 static POINT *convert_points(struct point *points0, int npoints);
 static COLORREF mscolor(int r, int g, int b);
@@ -690,7 +688,7 @@ int setwindowlabel(w, val)
 
 static HFONT findfont(char *family, double size, int flags, int ansi)
 {
-    int charset, weight;
+    int charset, weight, nHeight;
     char slant, spacing;
 
     if (size < 0)
@@ -721,8 +719,9 @@ static HFONT findfont(char *family, double size, int flags, int ansi)
     else if (flags & FONTFLAG_MONO)
         spacing = FIXED_PITCH;
     else spacing = DEFAULT_PITCH;
-
-    return CreateFont(size, 0, 0, 0, weight, slant, 0, 0, charset,
+    /* Convert from point size to device units - see msdn manual page */
+    nHeight = -MulDiv(size, GetDeviceCaps(dummy_hdc, LOGPIXELSY), 72);
+    return CreateFont(nHeight, 0, 0, 0, weight, slant, 0, 0, charset,
                       OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
                       spacing, family);
 }
@@ -787,27 +786,6 @@ int setfont(wbp w, char *s)
         return Failed;
     w->context->font = f;
     return Succeeded;
-}
-
-static void setclip(wbp w)
-{
-    wcp wc = w->context;
-    if (wc->cliprgn)
-        DeleteObject(wc->cliprgn);
-    if (wc->clipw >= 0)
-        wc->cliprgn = CreateRectRgn(wc->clipx, wc->clipy,
-                                    wc->clipx + wc->clipw,
-                                    wc->clipy + wc->cliph);
-    else
-        wc->cliprgn = NULL;
-}
-
-static void unsetclip(wbp w)
-{
-    wcp wc = w->context;
-    if (wc->cliprgn)
-        DeleteObject(wc->cliprgn);
-    wc->cliprgn = NULL;
 }
 
 int lowerwindow(wbp w)
@@ -1487,10 +1465,6 @@ static wcp clonecontext(wcp src)
     wc->clipy = src->clipy;
     wc->clipw = src->clipw;
     wc->cliph = src->cliph;
-    if (src->cliprgn)
-        wc->cliprgn = CreateRectRgn(wc->clipx,wc->clipy,
-                                    wc->clipx+wc->clipw,
-                                    wc->clipy+wc->cliph);
     wc->dx = src->dx;
     wc->dy = src->dy;
     wc->fg = link_sharedcolor(src->fg);
@@ -1527,8 +1501,6 @@ static void freecontext(wcp wc)
 {
     wc->refcount--;
     if(wc->refcount == 0) {
-        if (wc->cliprgn)
-            DeleteObject(wc->cliprgn);
         if (wc->pattern)
             unlink_sharedbitmap(wc->pattern);
         unlink_sharedcolor(wc->fg);
@@ -1559,14 +1531,6 @@ void doconfig(wbp w, int status)
 {
     wsp ws = w->window;
     wcp wc = w->context;
-
-    if (status & C_CLIP) {
-        if (wc->clipw >= 0)
-            setclip(w);
-        else
-            unsetclip(w);
-    }
-
     if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
         if (ws->win) {
             pollevent(w);
@@ -1672,8 +1636,12 @@ static HDC get_win_dc(wbp w)
         return 0;
     hdc = GetDC(ws->win);
     SetROP2(hdc, wc->drawop->i);
-    if (wc->clipw >= 0){
-        SelectClipRgn(hdc, wc->cliprgn);
+    if (wc->clipw >= 0) {
+        HRGN r = CreateRectRgn(wc->clipx, wc->clipy,
+                               wc->clipx + wc->clipw,
+                               wc->clipy + wc->cliph);
+        SelectClipRgn(hdc, r);
+        DeleteObject(r);
     }
     return hdc;
 }
@@ -1682,13 +1650,17 @@ static HDC get_pix_dc(wbp w)
 {
     wsp ws = w->window;
     wcp wc = w->context;
-    HDC hdc2 = CreateCompatibleDC(dummy_hdc);
-    ws->theOldPix = SelectObject(hdc2, ws->pix);
-    SetROP2(hdc2, wc->drawop->i);
+    HDC hdc = CreateCompatibleDC(dummy_hdc);
+    ws->savedpix = SelectObject(hdc, ws->pix);
+    SetROP2(hdc, wc->drawop->i);
     if (wc->clipw >= 0){
-        SelectClipRgn(hdc2, wc->cliprgn);
+        HRGN r = CreateRectRgn(wc->clipx, wc->clipy,
+                               wc->clipx + wc->clipw,
+                               wc->clipy + wc->cliph);
+        SelectClipRgn(hdc, r);
+        DeleteObject(r);
     }
-    return hdc2;
+    return hdc;
 }
 
 static int font_maxcharwidth(HFONT f)

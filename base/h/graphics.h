@@ -339,7 +339,6 @@ typedef struct _wcontext {
   double	linewidth;
   stringint     *drawop;
 #elif MSWIN32
-  HRGN          cliprgn;
   struct SharedColor *fg, *bg;
   struct SharedBitmap  *pattern;
   stringint     *linestyle;
@@ -392,11 +391,11 @@ typedef struct _wstate {
   struct _wstate *previous, *next;      /* List of states */
   HWND		win;			/* client window */
   HBITMAP	pix;			/* backing bitmap */
-  HBITMAP	theOldPix;
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
   int		state;			/* window state; icon, window or root*/
   struct wcursor *cursor;               /* current cursor */
+  HBITMAP	savedpix;
   HCURSOR	savedcursor;
   HWND          savedgrab;
 #endif

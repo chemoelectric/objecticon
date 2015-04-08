@@ -74,10 +74,7 @@
    HDC stddc = get_win_dc(w);\
    HDC pixdc = get_pix_dc(w);
 
-#define STDFONT \
-   { if(stdwin)SelectObject(stddc, wc->font->font); SelectObject(pixdc,wc->font->font); }
-
 #define FREE_STDLOCALS(w) do { \
-   SelectObject(pixdc, (w)->window->theOldPix); \
+   SelectObject(pixdc, (w)->window->savedpix); \
    if (stddc) ReleaseDC((w)->window->win, stddc);    \
    DeleteDC(pixdc); } while (0)
