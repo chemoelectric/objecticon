@@ -24,6 +24,7 @@ static HFONT findfont(char *family, double size, int flags, int ansi);
 static HFONT mkfont(char *s);
 static HWND dummy_win;
 static HDC dummy_hdc;
+static wsp wsp_for_hwnd(HWND hwnd);
 static wcp clonecontext(wcp src);
 static void freecontext(wcp wc);
 static void freewindow(wsp ws);
@@ -420,13 +421,8 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     HDC hdc, hdc2;
     PAINTSTRUCT ps;
     RECT rect;
-    wsp ws = NULL;
-
-    for (ws = vwstates; ws; ws = ws->vnext) {
-        if (ws->win == hwnd) 
-            break;
-    }
-
+    wsp ws;
+    ws = wsp_for_hwnd(hwnd);
     if (ws) 
         switch(msg) {
             case WM_PAINT: {
@@ -539,8 +535,6 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 qeventcode(ws, WINDOWCLOSED);
                 return 0;
             }
-
-                /* case WM_QUIT is handled prior to the switch*/
             case WM_DESTROY:
                 break;
         }
@@ -585,27 +579,45 @@ static void close_screen_win(wsp ws)
     }
 }
 
+static wsp wsp_for_hwnd(HWND hwnd)
+{
+    wsp ws;
+    for (ws = vwstates; ws; ws = ws->vnext) {
+        if (ws->win == hwnd) 
+            return ws;
+    }
+    return 0;
+}
+
 static void open_screen_win(wsp ws)
 {
+    HWND parent;
+    if (ws->transientfor && wsp_for_hwnd(ws->transientfor))
+        parent = ws->transientfor;
+    else
+        parent = NULL;
+
     switch (ws->state) {
         case PopupCanvas: {
             ws->win = CreateWindowEx(WS_EX_NOACTIVATE|WS_EX_TOPMOST,
-                                     "oix", ws->windowlabel,
+                                     "oix", 
+                                     ws->windowlabel,
                                      WS_POPUP,
                                      ws->x, ws->y,
                                      ws->width,
                                      ws->height,
-                                     NULL, NULL, NULL, NULL); 
+                                     parent, NULL, NULL, NULL); 
             break;
         } 
         default: {
             ws->win = CreateWindowEx(0,
-                                     "oix", ws->windowlabel,
+                                     "oix", 
+                                     ws->windowlabel,
                                      WS_OVERLAPPEDWINDOW,
                                      ws->x, ws->y,
                                      ws->width + BORDWIDTH,
                                      ws->height + BORDHEIGHT,
-                                     NULL, NULL, NULL, NULL); 
+                                     parent, NULL, NULL, NULL); 
         }
     }
     GLink4(ws, vwstates, vnext, vprevious);
@@ -1731,7 +1743,21 @@ int readimagedataimpl(dptr data, struct imgdata *imd)
 
 int settransientfor(wbp w, wbp other)
 {
-    return Failed;
+    wsp ws = w->window;
+    if (ws->win) {
+        LitWhy("Can't set transient_for on an open window");
+        return Failed;
+    }
+    if (other) {
+        if (!other->window->win) {
+            LitWhy("Can't set transient_for to a window that isn't open");
+            return Failed;
+        }
+        ws->transientfor = other->window->win;
+    } else {
+        ws->transientfor = 0;
+    }
+    return Succeeded;
 }
 
 int setwindowicon(wbp w, struct imgdata *imd)

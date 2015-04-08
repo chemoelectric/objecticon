@@ -395,6 +395,7 @@ typedef struct _wstate {
   int		pixwidth;		/* pixmap width, in pixels */
   int		state;			/* window state; icon, window or root*/
   struct wcursor *cursor;               /* current cursor */
+  HWND          transientfor;
   HBITMAP	savedpix;
   HCURSOR	savedcursor;
   HWND          savedgrab;
