@@ -53,6 +53,8 @@ static HPEN get_fg_pen(wcp wc);
 static HBRUSH get_bg_brush(wcp wc);
 static wbp findwbp(wsp ws);
 static void handle_mouse(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
+static void handle_mouse_enter(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
+static void handle_mouse_leave(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp, int meta);
 static void handle_config(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
@@ -74,9 +76,6 @@ static wsp vwstates;
 
 /* List of bindings */
 static wbp wbndngs;
-
-/* List of windows */
-static wsp wstates;
 
 #define PALCLR(c) (c | 0x2000000L)
 
@@ -240,9 +239,6 @@ wbp wopen(char *display)
     ws->cursor = lookup_wcursor("arrow");
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
-    /*SETTITLEBAR(ws);*/
-    GLink(ws, wstates);
-
     w->window = ws;
     w->context = alccontext(w);
 
@@ -394,6 +390,27 @@ static void handle_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     qmouseevents(ws, state, x, y, t, fl);
 }
 
+static void handle_mouse_enter(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
+{
+    int t;
+    WORD x, y;
+    struct descrip d;
+    x = LOWORD(lp);
+    y = HIWORD(lp);
+    t = GetMessageTime();
+    MakeInt(MOUSEENTERED, &d);
+    qevent(ws, &d, x, y, t, 0);
+}
+
+static void handle_mouse_leave(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
+{
+    int t;
+    struct descrip d;
+    t = GetMessageTime();
+    MakeInt(MOUSEEXITED, &d);
+    qevent(ws, &d, 0, 0, t, 0);
+}
+
 static void handle_mouse(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     int t;
@@ -441,7 +458,20 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             }
             case WM_MOUSEMOVE:
                 synch_cursor(ws);
+                if (!ws->trackingmouse) {
+                    TRACKMOUSEEVENT tme;
+                    handle_mouse_enter(ws, msg, wp, lp);
+                    tme.cbSize = sizeof(TRACKMOUSEEVENT);
+                    tme.dwFlags = TME_LEAVE;
+                    tme.hwndTrack = ws->win;
+                    TrackMouseEvent(&tme); 
+                    ws->trackingmouse = 1;
+                }
                 handle_mouse(ws, msg, wp, lp);
+                return 0;
+            case WM_MOUSELEAVE:
+                handle_mouse_leave(ws, msg, wp, lp);
+                ws->trackingmouse = 0;
                 return 0;
             case WM_MOUSEWHEEL:
                 handle_wheel(ws, msg, wp, lp);
@@ -591,33 +621,37 @@ static wsp wsp_for_hwnd(HWND hwnd)
 
 static void open_screen_win(wsp ws)
 {
-    HWND parent;
-    if (ws->transientfor && wsp_for_hwnd(ws->transientfor))
-        parent = ws->transientfor;
-    else
-        parent = NULL;
-
     switch (ws->state) {
         case PopupCanvas: {
-            ws->win = CreateWindowEx(WS_EX_NOACTIVATE|WS_EX_TOPMOST,
+            ws->win = CreateWindowEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
                                      "oix", 
                                      ws->windowlabel,
-                                     WS_POPUP,
-                                     ws->x, ws->y,
+                                     WS_CHILD,
+                                     ws->x, 
+                                     ws->y,
                                      ws->width,
                                      ws->height,
-                                     parent, NULL, NULL, NULL); 
+                                     GetDesktopWindow(),
+                                     NULL, NULL, NULL); 
+            SetWindowPos(ws->win, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
             break;
         } 
         default: {
+            HWND parent;
+            if (ws->transientfor)
+                parent = ws->transientfor->win;
+            else
+                parent = NULL;
             ws->win = CreateWindowEx(0,
                                      "oix", 
                                      ws->windowlabel,
                                      WS_OVERLAPPEDWINDOW,
-                                     ws->x, ws->y,
+                                     ws->x, 
+                                     ws->y,
                                      ws->width + BORDWIDTH,
                                      ws->height + BORDHEIGHT,
-                                     parent, NULL, NULL, NULL); 
+                                     parent,
+                                     NULL, NULL, NULL); 
         }
     }
     GLink4(ws, vwstates, vnext, vprevious);
@@ -1501,7 +1535,8 @@ static void freewindow(wsp ws)
         free(ws->windowlabel);
         DeleteObject(ws->pix);
         del_gc_global(&ws->listp);
-        GUnlink(ws, wstates);
+        if (ws->transientfor)
+            freewindow(ws->transientfor);
         free(ws);
     }
 }
@@ -1749,12 +1784,12 @@ int settransientfor(wbp w, wbp other)
         return Failed;
     }
     if (other) {
-        if (!other->window->win) {
-            LitWhy("Can't set transient_for to a window that isn't open");
-            return Failed;
-        }
-        ws->transientfor = other->window->win;
+        if (ws->transientfor)
+            freewindow(ws->transientfor);
+        ws->transientfor = linkwindow(other->window);
     } else {
+        if (ws->transientfor)
+            freewindow(ws->transientfor);
         ws->transientfor = 0;
     }
     return Succeeded;

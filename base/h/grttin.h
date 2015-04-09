@@ -223,7 +223,7 @@ typedef int time_t, DIR, uid_t, gid_t, pid_t, stringint, socklen_t;
    typedef int MCI_OPEN_PARMS, MCI_STATUS_PARMS, MCI_SEQ_SET_PARMS;
    typedef int CHOOSEFONT, CHOOSECOLOR, OPENFILENAME, HMENU, LPBITMAPINFO;
    typedef int childcontrol, CPINFO, BITMAPINFO, BITMAPINFOHEADER, RGBQUAD;
-   typedef int WNDCLASSEX, LONG, ULONG_PTR, LPCTSTR;
+   typedef int WNDCLASSEX, LONG, ULONG_PTR, LPCTSTR, TRACKMOUSEEVENT;
 #endif				/* MSWIN32 */
 
 /*

@@ -462,7 +462,6 @@ void c_exit(int i)
 
 #if MSWIN32
     PostQuitMessage(0);
-    /* while (wstates != NULL) pollevent(0); */
 #endif					/* MSWIN32 */
 
     exit(i);

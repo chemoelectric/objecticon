@@ -388,17 +388,17 @@ typedef struct _wstate {
 #elif MSWIN32
   char		*windowlabel;		/* window label */
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
-  struct _wstate *previous, *next;      /* List of states */
   HWND		win;			/* client window */
   HBITMAP	pix;			/* backing bitmap */
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
   int		state;			/* window state; icon, window or root*/
   struct wcursor *cursor;               /* current cursor */
-  HWND          transientfor;
+  struct _wstate *transientfor;
   HBITMAP	savedpix;
   HCURSOR	savedcursor;
   HWND          savedgrab;
+  int           trackingmouse;          /* Set if TrackMouseEvent in use */
 #endif
 } wstate, *wsp;
 
