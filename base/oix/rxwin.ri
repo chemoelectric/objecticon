@@ -36,6 +36,7 @@ static void handle_keypress(wsp ws, XKeyEvent *event);
 static void handle_crossing(wsp ws, XCrossingEvent *event);
 static char *get_progname(void);
 static void wmap(wbp w);
+static wsp wsp_for_Window(wdp wd, Window w);
 static void synch_cursor(wsp ws);
 static void synch_cursors(wdp wd, struct wcursor *c);
 static void setup_cursors(wdp wd);
@@ -576,22 +577,28 @@ static char* property_to_string(wdp wd, Atom target, int number_items, void* dat
     return result;
 }
 
+static wsp wsp_for_Window(wdp wd, Window w)
+{
+    wsp ws;
+    for (ws = wd->vwstates; ws; ws = ws->vnext) {
+        if (ws->win == w)
+            return ws;
+    }
+    return 0;
+}
+
 void pollevent(wbp w)
 {
     wdp wd = w->window->display;
     XEvent event;
     Window evwin;
-    wsp ws = 0;
+    wsp ws;
     while (XPending(wd->display)) {
-
         XNextEvent(wd->display, &event);
         evwin = event.xexpose.window;  /* go ahead, criticize all you like */
-
-        for (ws = wd->vwstates; ws; ws = ws->vnext) {
-            if (ws->win == evwin) 
-                break;
-        }
-        if (!ws) continue;
+        ws = wsp_for_Window(wd, evwin);
+        if (!ws)
+            continue;
 
         switch (event.type) {
             case SelectionRequest: {
@@ -984,9 +991,9 @@ static void wmap(wbp w)
 
     ws->wpic = XRenderCreatePicture(wd->display, ws->win, wd->winfmt, 0, NULL);
 
-    /* If the window has a parent, set the WM_TRANSIENT_FOR hint. */
-    if (ws->transientfor)
-        XSetTransientForHint(wd->display, ws->win, ws->transientfor);
+    /* Set the optional WM_TRANSIENT_FOR hint. */
+    if (ws->transientfor && ws->transientfor->win)
+        XSetTransientForHint(wd->display, ws->win, ws->transientfor->win);
 
     /* Turn off background; this prevents X filling the background on an expose
        and hence prevents unsightly flicker on a resize. */
@@ -3651,6 +3658,8 @@ static void freewindow(wsp ws)
         free(ws->icondata);
         free(ws->windowlabel); 
         del_gc_global(&ws->listp);
+        if (ws->transientfor)
+            freewindow(ws->transientfor);
         free(ws);
     }
 }
@@ -3693,17 +3702,18 @@ int settransientfor(wbp w, wbp other)
         return Failed;
     }
     if (other) {
-        if (!other->window->win) {
-            LitWhy("Can't set transient_for to a window that isn't open");
-            return Failed;
-        }
         if (w->window->display != other->window->display) {
             LitWhy("Can't set transient_for with windows on different displays");
             return Failed;
         }
-        ws->transientfor = other->window->win;
-    } else
+        if (ws->transientfor)
+            freewindow(ws->transientfor);
+        ws->transientfor = linkwindow(other->window);
+    } else {
+        if (ws->transientfor)
+            freewindow(ws->transientfor);
         ws->transientfor = 0;
+    }
     return Succeeded;
 }
 

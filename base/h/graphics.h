@@ -383,7 +383,7 @@ typedef struct _wstate {
   int           iconlen;
   XftDraw       *pxft;
   int		state;			/* window state; icon, window or root*/
-  Window        transientfor;           /* transient-for hint */
+  struct _wstate *transientfor;         /* transient-for hint */
   int           propcount;              /* counter for selection requests*/
 #elif MSWIN32
   char		*windowlabel;		/* window label */
@@ -407,11 +407,6 @@ typedef struct _wbinding {
   wcp context;
   wsp window;
 } wbinding, *wbp;
-
-struct wbind_list {
-  struct _wbinding *child;
-  struct wbind_list *next;
-};
 
 struct filter {
    wbp w;
