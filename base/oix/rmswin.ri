@@ -7,7 +7,7 @@
 #define CURSORHASH_SIZE 128
 
 static struct SharedCursor *null_cursor;
-static wcp alccontext      (wbp w);
+static wcp alccontext(wbp w);
 static void init_window_system(void);
 static void setup_cursors(void);
 static int inited;
@@ -35,7 +35,7 @@ static int devicecaps(wbp w, int i);
 static struct imgdataformat imgdataformat_MSBGRX32;
 static POINT *convert_points(struct point *points0, int npoints);
 static COLORREF mscolor(int r, int g, int b);
-static struct SharedColor *new_sharedcolor(char *name, COLORREF color);
+static struct SharedColor *new_sharedcolor(char *name, COLORREF color, int a);
 static struct SharedColor *link_sharedcolor(struct SharedColor *i);
 static void unlink_sharedcolor(struct SharedColor *i);
 static struct SharedBitmap *new_sharedbitmap(struct imgdata *imd);
@@ -55,10 +55,19 @@ static wbp findwbp(wsp ws);
 static void handle_mouse(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_mouse_enter(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_mouse_leave(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
-static void handle_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
+static void handle_mouse_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
+static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
+static void handle_capture_changed(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp, int meta);
 static void handle_config(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
-static void rectanglehelper(HDC stddc, HDC pixdc, HBRUSH hb, int x, int y, int width, int height);
+static void rectanglehelper(wcp wc, HDC stddc, HDC pixdc, int x, int y, int width, int height);
+static void capture_mouse(wsp ws);
+static void uncapture_mouse(wsp ws);
+static void track_mouse(wsp ws);
+static WCHAR *ucs_to_wchars(dptr str);
+static void dbg(char *fmt, ...);
+
+static int mouse_debug = 0;
 
 static struct SharedColor *black, *white;
 
@@ -350,7 +359,7 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp, int meta)
     qevent(ws, &d, x, y, t, fl);
 }
 
-static void handle_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
+static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     int t;
     WORD x, y;
@@ -402,6 +411,62 @@ static void handle_mouse_enter(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     qevent(ws, &d, x, y, t, 0);
 }
 
+static void dbg(char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    fflush(stderr);
+}
+
+static void capture_mouse(wsp ws)
+{
+    if (mouse_debug) dbg("capture_mouse grabbingmouse=%d\n", ws->grabbingmouse);
+    if (ws->grabbingmouse == 0) {
+        ws->savedgrab = SetCapture(ws->win);
+        if (mouse_debug) dbg("SetCapture, saved grab=%x ourselves=%x\n",ws->savedgrab, ws->win);
+    }
+    ++ws->grabbingmouse;
+    if (mouse_debug) dbg("now grabbingmouse=%d\n", ws->grabbingmouse);
+}
+
+static void uncapture_mouse(wsp ws)
+{
+    if (mouse_debug) dbg("uncapture_mouse grabbingmouse=%d\n", ws->grabbingmouse);
+    if (ws->grabbingmouse > 0) {
+        --ws->grabbingmouse;
+        if (ws->grabbingmouse == 0) {
+            if (mouse_debug) dbg("SetCapture to %x\n",ws->savedgrab);
+            /* This will in fact now call handle_capture_changed() */
+            SetCapture(ws->savedgrab);
+            ws->savedgrab = 0;
+        }
+    }
+    if (mouse_debug) dbg("now grabbingmouse=%d\n", ws->grabbingmouse);
+}
+
+/*
+ * This may be called either when we release in uncapture_mouse above,
+ * or externally.  In either case, set the count and grab to zero.
+ * Some calls to uncapture_mouse() may follow, and do nothing.
+ */
+static void handle_capture_changed(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
+{
+    if (mouse_debug) dbg("handle_capture_changed, resetting grabbingmouse to 0\n");
+    ws->savedgrab = 0;
+    ws->grabbingmouse = 0;
+}
+
+static void track_mouse(wsp ws)
+{
+    TRACKMOUSEEVENT tme;
+    tme.cbSize = sizeof(TRACKMOUSEEVENT);
+    tme.dwFlags = TME_LEAVE;
+    tme.hwndTrack = ws->win;
+    TrackMouseEvent(&tme);
+    ws->trackingmouse = 1;
+}
+
 static void handle_mouse_leave(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     int t;
@@ -409,6 +474,17 @@ static void handle_mouse_leave(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     t = GetMessageTime();
     MakeInt(MOUSEEXITED, &d);
     qevent(ws, &d, 0, 0, t, 0);
+    ws->trackingmouse = 0;
+}
+
+static void handle_mouse_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
+{
+    synch_cursor(ws);
+    if (!ws->trackingmouse) {
+        handle_mouse_enter(ws, msg, wp, lp);
+        track_mouse(ws);
+    }
+    handle_mouse(ws, msg, wp, lp);
 }
 
 static void handle_mouse(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
@@ -457,27 +533,23 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 return 0;
             }
             case WM_MOUSEMOVE:
-                synch_cursor(ws);
-                if (!ws->trackingmouse) {
-                    TRACKMOUSEEVENT tme;
-                    handle_mouse_enter(ws, msg, wp, lp);
-                    tme.cbSize = sizeof(TRACKMOUSEEVENT);
-                    tme.dwFlags = TME_LEAVE;
-                    tme.hwndTrack = ws->win;
-                    TrackMouseEvent(&tme); 
-                    ws->trackingmouse = 1;
-                }
-                handle_mouse(ws, msg, wp, lp);
+                handle_mouse_move(ws, msg, wp, lp);
                 return 0;
             case WM_MOUSELEAVE:
                 handle_mouse_leave(ws, msg, wp, lp);
-                ws->trackingmouse = 0;
                 return 0;
             case WM_MOUSEWHEEL:
-                handle_wheel(ws, msg, wp, lp);
+                handle_mouse_wheel(ws, msg, wp, lp);
+                return 0;
+            case WM_CAPTURECHANGED:
+                handle_capture_changed(ws, msg, wp, lp);
                 return 0;
             case WM_LBUTTONDOWN: case WM_RBUTTONDOWN: case WM_MBUTTONDOWN:
+                capture_mouse(ws);
+                handle_mouse(ws, msg, wp, lp);
+                return 0;
             case WM_LBUTTONUP:   case WM_RBUTTONUP:   case WM_MBUTTONUP:
+                uncapture_mouse(ws);
                 handle_mouse(ws, msg, wp, lp);
                 return 0;
             case WM_KEYUP:
@@ -911,7 +983,7 @@ int setfg(wbp w, char *val)
     if (!parsecolor(val, &r, &g, &b, &a))
         return Failed;
     unlink_sharedcolor(wc->fg);
-    wc->fg = new_sharedcolor(val, mscolor(r, g, b));
+    wc->fg = new_sharedcolor(val, mscolor(r, g, b), a);
     return Succeeded;
 }
 
@@ -930,7 +1002,7 @@ int setbg(wbp w, char *val)
     if (!parsecolor(val, &r, &g, &b, &a))
         return Failed;
     unlink_sharedcolor(wc->bg);
-    wc->bg = new_sharedcolor(val, mscolor(r, g, b));
+    wc->bg = new_sharedcolor(val, mscolor(r, g, b), a);
     return Succeeded;
 }
 
@@ -1291,40 +1363,50 @@ void drawpoint(wbp wb, int x, int y)
     COLORREF palfg;
     STDLOCALS(wb);
     palfg = PALCLR(wc->fg->color);
-    if (stdwin) {
+    if (stdwin)
         SetPixel(stddc, x, y, palfg);
-        SetPixel(pixdc, x, y, palfg);
-    }
-    else {
-        SetPixel(pixdc, x, y, palfg);
-    }
+    SetPixel(pixdc, x, y, palfg);
     FREE_STDLOCALS(wb);
 }
 
-void drawstring(wbinding *wb, int x, int y, char *s, int slen)
+void drawstring(wbp wb, int x, int y, dptr str)
 {
     HFONT oldfont;
     STDLOCALS(wb);
-    if (stdwin) {
-        oldfont=SelectObject(stddc, wc->font->font);
-        SetBkMode(stddc, TRANSPARENT);
-        SetTextColor(stddc, PALCLR(wc->fg->color));
-        SetBkColor(stddc, PALCLR(wc->bg->color));
-        TextOut(stddc, x, y - wc->font->ascent, s, slen);
-        SelectObject(stddc, oldfont);
+    if (is:string(*str)) {
+        if (stdwin) {
+            oldfont = SelectObject(stddc, wc->font->font);
+            SetBkMode(stddc, TRANSPARENT);
+            SetTextColor(stddc, PALCLR(wc->fg->color));
+            SetBkColor(stddc, PALCLR(wc->bg->color));
+            TextOutA(stddc, x, y - wc->font->ascent, StrLoc(*str), StrLen(*str));
+            SelectObject(stddc, oldfont);
+        }
+        oldfont = SelectObject(pixdc,wc->font->font);
+        SetBkMode(pixdc, TRANSPARENT);
+        SetTextColor(pixdc, PALCLR(wc->fg->color));
+        SetBkColor(pixdc, PALCLR(wc->bg->color));
+        TextOutA(pixdc, x, y - wc->font->ascent, StrLoc(*str), StrLen(*str));
+        SelectObject(pixdc, oldfont);
+    } else {
+        WCHAR *mbs = ucs_to_wchars(str);
+        if (stdwin) {
+            oldfont = SelectObject(stddc, wc->font->font);
+            SetBkMode(stddc, TRANSPARENT);
+            SetTextColor(stddc, PALCLR(wc->fg->color));
+            SetBkColor(stddc, PALCLR(wc->bg->color));
+            TextOutW(stddc, x, y - wc->font->ascent, mbs, UcsBlk(*str).length);
+            SelectObject(stddc, oldfont);
+        }
+        oldfont = SelectObject(pixdc,wc->font->font);
+        SetBkMode(pixdc, TRANSPARENT);
+        SetTextColor(pixdc, PALCLR(wc->fg->color));
+        SetBkColor(pixdc, PALCLR(wc->bg->color));
+        TextOutW(pixdc, x, y - wc->font->ascent, mbs, UcsBlk(*str).length);
+        SelectObject(pixdc, oldfont);
+        free(mbs);
     }
-    oldfont=SelectObject(pixdc,wc->font->font);
-    SetBkMode(pixdc, TRANSPARENT);
-    SetTextColor(pixdc, PALCLR(wc->fg->color));
-    SetBkColor(pixdc, PALCLR(wc->bg->color));
-    TextOut(pixdc, x, y - wc->font->ascent, s, slen);
-    SelectObject(pixdc, oldfont);
     FREE_STDLOCALS(wb);
-}
-
-void drawutf8(wbp w, int x, int y, char *s, int slen, int nchars)
-{
-    drawstring(w, x, y, s, slen);
 }
 
 void fillarc(wbp wb, double cx, double cy, double rx, double ry, double angle1, double angle2)
@@ -1393,65 +1475,71 @@ static HBRUSH get_bg_brush(wcp wc)
     return CreateSolidBrush(wc->bg->color);
 }
 
-static void rectanglehelper(HDC stddc, HDC pixdc, HBRUSH hb, int x, int y, int width, int height)
+static void rectanglehelper(wcp wc, HDC stddc, HDC pixdc, int x, int y, int width, int height)
 {
-    HRGN hr; RECT r;
-    r.left = x;
-    r.top = y;
-    r.right = x + width;
-    r.bottom = y + height;
-    /*
-     * Used to use FillRect(pixdc, (recs+i), hb); (with +1 for
-     * right & bottom coordinates) but it mystically didn't "stick"
-     * to the backing pixmap, although it showed OK on the window itself.
-     */
-    hr = CreateRectRgnIndirect(&r);
-    if (stddc) FillRgn(stddc, hr, hb);
-    FillRgn(pixdc, hr, hb);
-    DeleteObject(hr);
+    HBRUSH hb;
+    hb = get_fg_brush(wc);
+    if (wc->fg->alpha < 255) {
+        HBITMAP bm, oldbm;
+        BLENDFUNCTION bf;
+        HDC bm_hdc;
+        RECT r;
+        bm = CreateCompatibleBitmap(dummy_hdc, width, height);
+        bm_hdc = CreateCompatibleDC(dummy_hdc);
+        oldbm = SelectObject(bm_hdc, bm);
+        r.left = 0;
+        r.top = 0;
+        r.right = width;
+        r.bottom = height;
+        FillRect(bm_hdc, &r, hb);
+        bf.BlendOp = AC_SRC_OVER;
+        bf.BlendFlags = 0;
+        bf.SourceConstantAlpha = wc->fg->alpha;
+        bf.AlphaFormat = 0;
+        AlphaBlend(pixdc, x, y, width, height, bm_hdc, 0, 0, width, height, bf);
+        if (stddc)
+            AlphaBlend(stddc, x, y, width, height, bm_hdc, 0, 0, width, height, bf);
+        SelectObject(bm_hdc, oldbm);
+        DeleteDC(bm_hdc);
+        DeleteObject(bm);
+    } else {
+        RECT r;
+        r.left = x;
+        r.top = y;
+        r.right = x + width;
+        r.bottom = y + height;
+        if (stddc) FillRect(stddc, &r, hb);
+        FillRect(pixdc, &r, hb);
+    }
+    DeleteObject(hb);
 }
 
 void fillrectangle(wbp wb, int x, int y, int width, int height)
 {
-    HBRUSH hb, oldbrush, oldbrush2;
     STDLOCALS(wb);
-    hb = get_fg_brush(wc);
-    if (stdwin) oldbrush = SelectObject(stddc, hb);
-    oldbrush2 = SelectObject(pixdc, hb);
-    rectanglehelper(stddc, pixdc, hb, x, y, width, height);
-    if (stdwin) SelectObject(stddc, oldbrush);
-    SelectObject(pixdc, oldbrush2);
-    DeleteObject(hb);
+    rectanglehelper(wc, stddc, pixdc, x, y, width, height);
     FREE_STDLOCALS(wb);
 }
 
 void drawrectangle(wbp wb, int x, int y, int width, int height, int thick)
 {
-    HBRUSH hb, oldbrush, oldbrush2;
     STDLOCALS(wb);
-    hb = get_fg_brush(wc);
-    if (stdwin) oldbrush = SelectObject(stddc, hb);
-    oldbrush2 = SelectObject(pixdc, hb);
-
     /* If too small to give a gap in the middle, then simply fill a
      * rectangle, otherwise draw as four lines. */
     if (width <= 2 * thick || height <= 2 * thick)
-        rectanglehelper(stddc, pixdc, hb, x, y, width, height);
+        rectanglehelper(wc, stddc, pixdc, x, y, width, height);
     else {
-        rectanglehelper(stddc, pixdc, hb, x, y, width, thick);
-        rectanglehelper(stddc, pixdc, hb,
+        rectanglehelper(wc, stddc, pixdc, x, y, width, thick);
+        rectanglehelper(wc, stddc, pixdc,
                         x, y +  thick,
                         thick, height - 2 * thick);
-        rectanglehelper(stddc, pixdc, hb,
+        rectanglehelper(wc, stddc, pixdc,
                         x + width - thick, y + thick,
                         thick, height - 2 * thick);
-        rectanglehelper(stddc, pixdc, hb,
+        rectanglehelper(wc, stddc, pixdc,
                         x, y + height - thick,
                         width, thick);
     }
-    if (stdwin) SelectObject(stddc, oldbrush);
-    SelectObject(pixdc, oldbrush2);
-    DeleteObject(hb);
     FREE_STDLOCALS(wb);
 }
 
@@ -1612,16 +1700,16 @@ int grabpointer(wbp w)
 {
     wsp ws = w->window;
     CheckUnhidden(ws);
-    ws->savedgrab = SetCapture(ws->win);
-    return Failed;
+    capture_mouse(ws);
+    return Succeeded;
 }
 
 int ungrabpointer(wbp w)
 {
     wsp ws = w->window;
     CheckUnhidden(ws);
-    SetCapture(ws->savedgrab);
-    return Failed;
+    uncapture_mouse(ws);
+    return Succeeded;
 }
 
 static void resizepixmap(wbp w)
@@ -1637,7 +1725,7 @@ static void resizepixmap(wbp w)
     ws->pixwidth = ws->width;
     ws->pixheight = ws->height;
 
-    newpix = CreateCompatibleBitmap (dummy_hdc, ws->pixwidth, ws->pixheight);
+    newpix = CreateCompatibleBitmap(dummy_hdc, ws->pixwidth, ws->pixheight);
     if (ws->pix) {
         hdc2 = CreateCompatibleDC(dummy_hdc);
         oldpix = SelectObject(hdc2, ws->pix);
@@ -1739,18 +1827,33 @@ static int dc_textwidth(HDC dc, char *s, int n)
     return (int)sz.cx;
 }
 
-int textwidth(wbp w, char *s, int n)
+static WCHAR *ucs_to_wchars(dptr str)
 {
-    int rv;
-    HFONT oldfont = SelectObject(dummy_hdc, w->context->font->font);
-    rv = dc_textwidth(dummy_hdc, s, n);
-    SelectObject(dummy_hdc, oldfont);
-    return rv;
+    WCHAR *mbs;
+    MemProtect(mbs = malloc(UcsBlk(*str).length * sizeof(WCHAR)));
+    MultiByteToWideChar(CP_UTF8,
+                        MB_ERR_INVALID_CHARS,
+                        StrLoc(UcsBlk(*str).utf8),
+                        StrLen(UcsBlk(*str).utf8),
+                        mbs,
+                        UcsBlk(*str).length);
+    return mbs;
 }
 
-int utf8width(wbp w, char *s, int n, int nchars)
+int textwidth(wbp w, dptr str)
 {
-    return textwidth(w, s, n);
+    int rv;
+    SIZE sz;
+    HFONT oldfont = SelectObject(dummy_hdc, w->context->font->font);
+    if (is:string(*str))
+        GetTextExtentPointA(dummy_hdc, StrLoc(*str), StrLen(*str), &sz);
+    else {
+        WCHAR *mbs = ucs_to_wchars(str);
+        GetTextExtentPointW(dummy_hdc, mbs, UcsBlk(*str).length, &sz);
+        free(mbs);
+    }
+    SelectObject(dummy_hdc, oldfont);
+    return (int)sz.cx;
 }
 
 int warppointer(wbp w, int x, int y)
@@ -1828,12 +1931,13 @@ wbp couplewindows(wbp w1, wbp w2)
     return w3;
 }
 
-static struct SharedColor *new_sharedcolor(char *name, COLORREF color)
+static struct SharedColor *new_sharedcolor(char *name, COLORREF color, int a)
 {
     struct SharedColor *res;
     GAlloc(res, SharedColor);
     res->name = salloc(name);
     res->color = color;
+    res->alpha = a >> 8;
     return res;
 }
 
@@ -2145,8 +2249,8 @@ static void init_window_system(void)
                               10, 10,
                               NULL, NULL, NULL, NULL);
     dummy_hdc = GetDC(dummy_win);
-    black = new_sharedcolor("black", mscolor(0,0,0));
-    white = new_sharedcolor("white", mscolor(0xffff,0xffff,0xffff));
+    black = new_sharedcolor("black", mscolor(0,0,0), 0xffff);
+    white = new_sharedcolor("white", mscolor(0xffff,0xffff,0xffff), 0xffff);
     default_font = load_font(defaultfont);
     if (!default_font)
         ffatalerr("Couldn't load default font");

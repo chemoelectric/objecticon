@@ -808,6 +808,9 @@ wbp wopen(char *display)
 
     GAlloc(ws, _wstate);
     ws->listp = nulldesc;
+    ws->windowlabel = nulldesc;
+    add_gc_global(&ws->windowlabel);
+    add_gc_global(&ws->listp);
     ws->cursor = lookup_wcursor(wd, "left ptr");
     ws->state = HiddenState;
     ws->x = ws->y = -INT_MAX;
@@ -815,11 +818,9 @@ wbp wopen(char *display)
     ws->maxwidth = ws->maxheight = INT_MAX;
     ws->width = ws->height = ws->pixwidth = ws->pixheight = 1;
     ws->pxft = NULL;
-    ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
+    defaultwindowlabel(&ws->windowlabel);
     ws->display = wd;
-
     w->window = ws;
-    add_gc_global(&ws->listp);
     create_list(64, &ws->listp);
 
     GAlloc(wc, _wcontext);
@@ -1037,8 +1038,8 @@ static void wmap(wbp w)
                         ATOM(wd, UTF8_STRING),
                         8,
                         PropModeReplace, 
-                        (unsigned char *)ws->windowlabel,
-                        strlen(ws->windowlabel));
+                        (unsigned char *)StrLoc(UcsBlk(ws->windowlabel).utf8),
+                        StrLen(UcsBlk(ws->windowlabel).utf8));
 
         XSetWMNormalHints(wd->display, ws->win, &size_hints);
         XSelectInput(wd->display, ws->win, 
@@ -1424,25 +1425,19 @@ int warppointer(wbp w, int x, int y)
     return Succeeded;
 }
 
-/*
- * setwindowlabel
- */
-int setwindowlabel(wbp w, char *s)
+int setwindowlabel(wbp w, dptr val)
 {
     wsp ws = w->window;
     wdp wd = ws->display;
-    free(ws->windowlabel);
-    ws->windowlabel = salloc(s);
-
+    ws->windowlabel = *val;
     if (ws->win)
         XChangeProperty(wd->display, ws->win,
                         ATOM(wd, _NET_WM_NAME), 
                         ATOM(wd, UTF8_STRING),
                         8,
                         PropModeReplace, 
-                        (unsigned char *)ws->windowlabel,
-                        strlen(ws->windowlabel));
-
+                        (unsigned char *)StrLoc(UcsBlk(ws->windowlabel).utf8),
+                        StrLen(UcsBlk(ws->windowlabel).utf8));
     return Succeeded;
 }
 
@@ -1699,11 +1694,6 @@ char *getdisplay(wbp w)
             return "";
     }
     else return wd->name;
-}
-
-char *getwindowlabel(wbp w)
-{
-    return w->window->windowlabel;
 }
 
 int getdisplaysize(wbp w, int *width, int *height)
@@ -3639,8 +3629,8 @@ static void freewindow(wsp ws)
         XFreePixmap(ws->display->display, ws->pix);
         XRenderFreePicture(ws->display->display, ws->ppic);
         free(ws->icondata);
-        free(ws->windowlabel); 
         del_gc_global(&ws->listp);
+        del_gc_global(&ws->windowlabel);
         if (ws->transientfor)
             freewindow(ws->transientfor);
         free(ws);

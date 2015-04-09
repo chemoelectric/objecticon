@@ -286,7 +286,6 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    char *getfg          (wbp w);
    double getlinewidth    (wbp w);
    int  getdepth        (wbp w, int *res);
-   char *getwindowlabel (wbp w);
    char *getlinestyle   (wbp w);
    char *getpointer     (wbp w);
    int  getpos          (wbp w);
@@ -311,7 +310,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    int  setwindowicon   (wbp w, struct imgdata *imd);
    int  setpattern  (wbp w, struct imgdata *imd);
    int  getpattern  (wbp w, struct imgdata *imd);
-   int  setwindowlabel  (wbp w, char *val);
+   int  setwindowlabel  (wbp w, dptr val);
    int  walert          (wbp w, int volume);
    int  warppointer     (wbp w, int x, int y);
    wbp  wopen           (char *display);
@@ -336,6 +335,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    void registerplatformimgdataformats(void);
    int definepointer(wbp w, char *name, int x, int y);
    int copypointer(wbp w, char *dest, char *src);
+   void defaultwindowlabel(dptr d);
 
 #if XWindows
    struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b, int a);

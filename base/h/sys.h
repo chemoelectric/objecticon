@@ -127,7 +127,6 @@
    #include <sys/stat.h>
    #include <fcntl.h>
    #include <direct.h>
-   #define int_PASCAL int PASCAL
    #define LRESULT_CALLBACK LRESULT CALLBACK
    #define BOOL_CALLBACK BOOL CALLBACK
    #include <mmsystem.h>
@@ -135,12 +134,9 @@
    #define Type(d) (int)((d).dword & TypeMask)
    #undef lst1
    #undef lst2
-   #ifndef F_OK
-     #define F_OK 0
-   #endif
-   #ifndef R_OK
-     #define R_OK 0
-   #endif
+   #define F_OK 0
+   #define R_OK 0
+   #define X_OK 0
    #define setenv(a,b,c) SetEnvironmentVariable(a,b)
    #define unsetenv(a) SetEnvironmentVariable(a,"")
    #ifndef vsnprintf
@@ -164,10 +160,6 @@
    #include <sys/utime.h>
    #include <io.h>
    #include <time.h>
-   extern WORD wVersionRequested;
-   extern WSADATA wsaData;
-   extern int werr;
-   extern int WINSOCK_INITIAL;
 #endif					/* MSWIN32 */
 
 #if UNIX

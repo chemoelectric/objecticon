@@ -315,6 +315,9 @@ wbp wopen(char *display)
 
     GAlloc(ws, _wstate);
     ws->listp = nulldesc;
+    ws->windowlabel = nulldesc;
+    add_gc_global(&ws->windowlabel);
+    add_gc_global(&ws->listp);
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->screeninfo_fd = ws->cursor_fd = ws->label_fd = ws->mouse_pid = ws->cons_pid =
         ws->wininfo_fd = ws->wsys_fd = ws->wctl_fd = ws->winid = -1;
@@ -324,11 +327,10 @@ wbp wopen(char *display)
     ws->maxwidth = ws->maxheight = INT_MAX;
     ws->width = ws->height = 1;
     ws->state = HiddenCanvas;
-    ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
-
+    defaultwindowlabel(&ws->windowlabel);
     w->window = ws;
-    add_gc_global(&ws->listp);
     ws->wsys = wsysstr;
+    create_list(64, &ws->listp);
 
     GAlloc(wc, _wcontext);
     wc->clipx = wc->clipy = 0;
@@ -342,7 +344,6 @@ wbp wopen(char *display)
     wc->linewidth = 1;
 
     w->context = wc;
-    create_list(64, &ws->listp);
 
     open_pix_win(ws);
     /* Fill pixmap with bg color */
@@ -1692,7 +1693,9 @@ static int open_screen_win(wsp ws)
     if (ws->using_win)
         /* Save label */
         pread(ws->label_fd, old_label, sizeof(old_label) - 1, 0);
-    pwrite(ws->label_fd, ws->windowlabel, strlen(ws->windowlabel), 0);
+    pwrite(ws->label_fd, 
+           StrLoc(UcsBlk(ws->windowlabel).utf8), 
+           StrLen(UcsBlk(ws->windowlabel).utf8), 0);
 
     if (pipe(ws->event_pipe) < 0) {
         whyf("Couldn't init event pipe: %r");
@@ -1869,11 +1872,11 @@ static void freewindow(wsp ws)
        if (ws->win)
            close_screen_win(ws);
        close_pix_win(ws);
-       free(ws->windowlabel); 
        free(ws->wsys);
        del_gc_global(&ws->listp);
-        if (ws->transientfor)
-            freewindow(ws->transientfor);
+       del_gc_global(&ws->windowlabel);
+       if (ws->transientfor)
+           freewindow(ws->transientfor);
        free(ws);
    }
 }
@@ -1948,14 +1951,14 @@ int setcanvas(wbp w, char *s)
     return Succeeded;
 }
 
-int setwindowlabel(wbp w, char *val)
+int setwindowlabel(wbp w, dptr val)
 {
     wsp ws = w->window;
-    if (ws->windowlabel) 
-        free(ws->windowlabel);
-    ws->windowlabel = salloc(val);
+    ws->windowlabel = *val;
     if (ws->win)
-        pwrite(ws->label_fd, val, strlen(val), 0);
+        pwrite(ws->label_fd, 
+               StrLoc(UcsBlk(ws->windowlabel).utf8), 
+               StrLen(UcsBlk(ws->windowlabel).utf8), 0);
     return Succeeded;
 }
 
@@ -2158,11 +2161,6 @@ int getdepth(wbp w, int *res)
 {
     *res = w->window->pix->depth;
     return Succeeded;
-}
-
-char *getwindowlabel(wbp w)
-{
-    return w->window->windowlabel;
 }
 
 static wcp clonecontext(wcp src)

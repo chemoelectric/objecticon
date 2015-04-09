@@ -209,6 +209,7 @@ extern struct imgdataformat imgdataformat_X11BGRA32;
 
 struct SharedColor {
    COLORREF color;
+   int alpha;
    char  *name;
    int   refcount;
 };
@@ -397,9 +398,9 @@ typedef struct _wstate {
   int           maxwidth;               /* maximum window width, in pixels */
   int           resizable;              /* flag, is window resizable */
   struct descrip listp;		        /* event list for this window */
+  struct descrip windowlabel;		/* window label */
   int           mousestate;             /* buttons down after last mouse event */
 #if XWindows
-  char		*windowlabel;		/* window label */
   wdp		display;
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   Window	win;			/* X window */
@@ -416,7 +417,6 @@ typedef struct _wstate {
   struct _wstate *transientfor;         /* transient-for hint */
   int           propcount;              /* counter for selection requests*/
 #elif PLAN9
-  char		*windowlabel;		/* window label */
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   Image         *win;
   Screen        *screen;
@@ -448,6 +448,7 @@ typedef struct _wstate {
   HCURSOR	savedcursor;
   HWND          savedgrab;
   int           trackingmouse;          /* Set if TrackMouseEvent in use */
+  int           grabbingmouse;          /* Set if SetCapture in use */
 #endif
 } wstate, *wsp;
 
