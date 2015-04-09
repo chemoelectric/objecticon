@@ -1743,10 +1743,19 @@ function io_SocketStream_out(self, s)
        GetSelfFd();
        /* 
         * If possible use MSG_NOSIGNAL so that we get the EPIPE error
-        * code, rather than the SIGPIPE signal.
+        * code, rather than the SIGPIPE signal.  Otherwise, temporarily
+        * change the SIGPIPE signal handler to SIG_IGN.
         */
 #if HAVE_MSG_NOSIGNAL
        rc = send(self_fd, StrLoc(s), StrLen(s), MSG_NOSIGNAL);
+#elif UNIX
+       {
+       struct sigaction saved, tmp;
+       tmp.sa_handler = SIG_IGN;
+       sigaction(SIGPIPE, &tmp, &saved);
+       rc = send(self_fd, StrLoc(s), StrLen(s), 0);
+       sigaction(SIGPIPE, &saved, NULL);
+       }
 #else
        rc = send(self_fd, StrLoc(s), StrLen(s), 0);
 #endif
@@ -1761,7 +1770,11 @@ end
 function io_SocketStream_close(self)
    body {
        GetSelfFd();
+#if MSWIN32
+       if (closesocket(self_fd) < 0) {
+#else
        if (close(self_fd) < 0) {
+#endif
            errno2why();
            *self_fd_dptr = minusonedesc;
            fail;

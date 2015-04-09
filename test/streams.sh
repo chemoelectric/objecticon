@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-[ -f custom.sh ] && . custom.sh
+[ -f custom.sh ] && . ./custom.sh
 mkdir -p testdir
 echo a >testdir/one
 echo a >testdir/two

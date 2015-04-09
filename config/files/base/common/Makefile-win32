@@ -1,0 +1,20 @@
+include ../../Makedefs
+
+CWARN = -Wall
+
+OBJS=	getopt.obj strtbl.obj \
+	mlocal.obj alloc.obj qsort.obj
+
+all:		$(OBJS)
+
+clean:		
+		rm -f *.obj
+
+$(OBJS): ../h/define.h ../h/config.h ../h/cstructs.h ../h/mproto.h \
+	  ../h/typedefs.h ../h/cpuconf.h
+
+identify.obj: ../h/version.h
+
+literals.obj: ../h/esctab.h
+
+xwindow.obj: ../h/graphics.h ../h/xwin.h

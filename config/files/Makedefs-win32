@@ -1,0 +1,27 @@
+.PHONY: all clean test
+
+OIHOME=@CONFIG_DIR@
+OIBIN=$(OIHOME)/bin
+
+CC=cl
+LD=link
+# /Ox for maximum optimzation, /Zi for debugging...
+CFLAGS=/O1 /Zi
+
+RM=rm -f
+RMDIR=rm -rf
+MKDIR=mkdir
+CP=cp
+INSTALL=/usr/bin/install -c
+WOIHOME=@WCONFIG_DIR@
+OILIB=$(WOIHOME)\lib
+
+export OIPATH:=$(OILIB)\main;$(OILIB)\gui;$(OILIB)\xml;$(OILIB)\parser;$(OILIB)\ipl
+export OIINCL:=$(OILIB)\incl
+export PATH:=$(OIBIN):$(PATH)
+
+%.obj: %.c
+	cl $(CFLAGS) /c $<
+
+%.u: %.icn
+	oit -c -s $<

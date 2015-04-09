@@ -1,7 +1,7 @@
-$load FLINTSTONES "flintstones10-hp.jpg"
+$load BABBAGE "babbage.gif"
 
 import
-   gui, graphics, ipl.options
+   io, gui, graphics, ipl.options
 
 global init_canvas, opts
 
@@ -23,7 +23,7 @@ class Untitled(Dialog)
       other := Window().
          set_pos(500,200).
          set_resize(&yes).
-         set_image(FLINTSTONES)
+         set_image(BABBAGE) | stop(&why)
       if \opts["t"] then
          other.set_transient_for(win)
       other.

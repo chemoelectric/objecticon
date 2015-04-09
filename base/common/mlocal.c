@@ -52,6 +52,10 @@ char *findexe(char *name)
     path = getenv("path");
     if (!path)
         path = ". /bin";
+#elif MSWIN32
+    /* On windows, the cd is always on the path. */    
+    if ((p = tryexe(0, name)))
+        return p;
 #else
     path = getenv("PATH");
     if (!path)

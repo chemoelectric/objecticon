@@ -550,7 +550,7 @@ package class FileTrailList(ButtonOnlyList)
       child     # The optional child to the right, for setting the selection in the popup
 
    public create_button()
-      return TextButton().set_label("/")
+      return TextButton().set_label(Files.PATH_SEPARATOR)
    end
 
    public create_popup()
@@ -754,8 +754,8 @@ class RenameDialog(NameDialog)
    public on_okay_button(ev)
       local s
       s := name_field.get_contents()
-      if upto('/', s) then {
-         msg("A file can't contain a / character")
+      if upto(Files.PATH_SPECIALS, s) then {
+         msg("Invalid character in filename entered")
          fail
       }
       s := p.sibling(s).ucs()
@@ -791,8 +791,8 @@ class NewDirectoryDialog(NameDialog)
    public on_okay_button(ev)
       local s
       s := name_field.get_contents()
-      if upto('/', s) then {
-         msg("A filename can't contain a / character")
+      if upto(Files.PATH_SPECIALS, s) then {
+         msg("Invalid character in filename entered")
          fail
       }
       s := p.child(s).ucs()

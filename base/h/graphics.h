@@ -205,12 +205,29 @@ extern struct imgdataformat imgdataformat_X11BGRA32;
  */
 
 #if MSWIN32
-#define ISTOBEHIDDEN(ws)  ((ws)->bits & 4096)
-#define SETTOBEHIDDEN(ws)  ((ws)->bits |= 4096)
-#define CLRTOBEHIDDEN(ws)  ((ws)->bits &= ~4096)
-#define ISEXPOSED(ws)    ((ws)->bits & 256)
-#define SETEXPOSED(ws)   ((ws)->bits |= 256)
-#define CLREXPOSED(w)   ((ws)->bits &= ~256)
+#include "mswin.h"
+
+struct SharedColor {
+   COLORREF color;
+   char  *name;
+   int   refcount;
+};
+
+struct SharedBitmap {
+   HBITMAP bitmap;
+   int refcount;
+};
+
+struct SharedCursor {
+   HCURSOR cursor;
+   int refcount;
+};
+
+struct wcursor {
+   struct wcursor *next;
+   char *name;
+   struct SharedCursor *shared_cursor;
+};
 #endif
 
 #define DEFAULT_WINDOW_LABEL "Object Icon"
@@ -352,17 +369,11 @@ typedef struct _wcontext {
   int           linewidth;
   stringint     *drawop;
 #elif MSWIN32
-  LOGPEN	pen;
-  LOGPEN	bgpen;
-  LOGBRUSH	brush;
-  LOGBRUSH	bgbrush;
-  HRGN          cliprgn;
-  HBITMAP	pattern;
-  SysColor	fg, bg;
-  char		*patternname, *fgname, *bgname;
-  int		bkmode;
-  int		fillstyle;
-  int		drawop;
+  struct SharedColor *fg, *bg;
+  struct SharedBitmap  *pattern;
+  stringint     *linestyle;
+  int           linewidth;
+  stringint     *drawop;
 #endif
 
 } wcontext, *wcp;
@@ -402,11 +413,10 @@ typedef struct _wstate {
   int           iconlen;
   XftDraw       *pxft;
   int		state;			/* window state; icon, window or root*/
-  Window        transientfor;           /* transient-for hint */
+  struct _wstate *transientfor;         /* transient-for hint */
   int           propcount;              /* counter for selection requests*/
 #elif PLAN9
   char		*windowlabel;		/* window label */
-  struct _wstate *wprevious, *wnext;    /* List of states */
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   Image         *win;
   Screen        *screen;
@@ -419,24 +429,25 @@ typedef struct _wstate {
                 wininfo_fd, screeninfo_fd, cursor_fd, label_fd;
   int           mouse_pid, cons_pid;
   int           winid;                  /* Id as per winid file */
-  int           transientfor_winid;     /* Winid of transient-for window, or -1 */
+  struct _wstate *transientfor;         /* Reference to  transient-for window */
   int           state;                  /* Current or desired window state */
   struct wcursor *cursor;               /* current cursor */
   int           using_win;
   int           border_width;
 #elif MSWIN32
   char		*windowlabel;		/* window label */
-  int		bits;			/* window bits */
+  struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   HWND		win;			/* client window */
-  HWND		iconwin;		/* client window when iconic */
   HBITMAP	pix;			/* backing bitmap */
-  HBITMAP	iconpix;		/* backing bitmap */
-  HBITMAP	theOldPix;
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
-  HCURSOR	curcursor;
+  int		state;			/* window state; icon, window or root*/
+  struct wcursor *cursor;               /* current cursor */
+  struct _wstate *transientfor;
+  HBITMAP	savedpix;
   HCURSOR	savedcursor;
-  char		*cursorname;
+  HWND          savedgrab;
+  int           trackingmouse;          /* Set if TrackMouseEvent in use */
 #endif
 } wstate, *wsp;
 
@@ -445,11 +456,6 @@ typedef struct _wbinding {
   wcp context;
   wsp window;
 } wbinding, *wbp;
-
-struct wbind_list {
-  struct _wbinding *child;
-  struct wbind_list *next;
-};
 
 struct filter {
    wbp w;

@@ -1,0 +1,52 @@
+#  Makefile for the Icon run-time system.
+
+include ../../Makedefs
+
+HDRS = ../h/define.h ../h/config.h ../h/typedefs.h ../h/monitor.h\
+	  ../h/cstructs.h ../h/cpuconf.h ../h/grttin.h\
+	  ../h/rmacros.h ../h/rexterns.h ../h/rstructs.h \
+	  ../h/rproto.h ../h/mproto.h ../h/sys.h
+
+GRAPHICSHDRS = ../h/graphics.h ../h/xwin.h
+
+default: oix
+
+XOBJS=	cnv.obj def.obj errmsg.obj fconv.obj fmath.obj\
+	fmisc.obj fmonitr.obj fscan.obj fstr.obj fstranl.obj fstruct.obj fsys.obj\
+	fwindow.obj imisc.obj init.obj interp.obj invoke.obj \
+	keyword.obj oarith.obj oasgn.obj ocat.obj ocomp.obj native.obj \
+	omisc.obj oref.obj oset.obj ovalue.obj ralc.obj rcomp.obj \
+	rdebug.obj rlrgint.obj rmemmgt.obj rmisc.obj rstruct.obj rsys.obj\
+	rwinsys.obj rwindow.obj posix.obj cstruct.obj
+
+RTTC=$(XOBJS:.obj=.c)
+RFILES=$(XOBJS:.obj=.r)
+RTTTMP=$(XOBJS:.obj=.tmp)
+
+COBJS=	../common/mlocal.obj ../common/qsort.obj
+
+OBJS=	$(XOBJS) $(COBJS)
+
+LIBS=	winmm.lib wsock32.lib odbc32.lib shell32.lib libcmt.lib oldnames.lib kernel32.lib \
+	ws2_32.lib mswsock.lib advapi32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib
+
+rwinsys.obj: rxwin.ri rmswin.ri rxkeysyms.ri
+invoke.obj: invokeiasm.ri
+interp.obj: interpiasm.ri
+init.obj: initiasm.ri
+oref.obj: orefiasm.ri
+
+all:	oix
+
+oix:	$(OBJS)
+	$(LD) /STACK:7680000 /NODEFAULTLIB /INCREMENTAL:NO /NOLOGO \
+		-subsystem:console $(OBJS) $(LIBS) -out:oix.exe
+	$(INSTALL) oix "$(OIBIN)"
+
+%.obj: %.r $(HDRS)
+	rtt $<
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $*.c
+	$(RM) $*.c
+
+clean:		
+	rm -f *.obj $(RTTC) $(RTTTMP) rt.db rt.a rttcur.lst rttfull.lst oix.exe

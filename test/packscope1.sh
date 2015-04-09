@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 #  special test of package scope
-[ -f custom.sh ] && . custom.sh
+[ -f custom.sh ] && . ./custom.sh
 oit -c -s packscope_first.icn
 oit -s packscope1.icn 2>err_tmp
 # Filter out absolute ufile path info

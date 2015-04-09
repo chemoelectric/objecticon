@@ -619,7 +619,7 @@ struct token *t;
 /*
  * interp_dir - interpret preprocessing directives and recognize macro calls.
  */
-struct token *interp_dir()
+struct token *interp_dir(void)
    {
    struct token *t, *t1;
    struct macro *m;

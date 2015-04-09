@@ -1,0 +1,19 @@
+include ../../../Makedefs
+
+export OIPATH:=$(OIPATH);$(WOIHOME)\apps\ivib
+
+PROGSRC:=$(wildcard *.icn)
+PROGU=$(PROGSRC:.icn=.u)
+PROGS=$(PROGSRC:.icn=)
+PROGEXE=$(PROGS:=.exe)
+
+all:    $(PROGS)
+
+clean:
+	rm -f *.u packages.txt $(PROGEXE)
+
+$(PROGU): %.u: %.icn
+	oit -snc $(PROGSRC)
+
+%:      %.u
+	oit -B -o $@ $@.u

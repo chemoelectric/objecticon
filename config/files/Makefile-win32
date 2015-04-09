@@ -1,0 +1,26 @@
+include Makedefs
+
+.PHONY:	libref test bmark tar install install-libref
+
+all :
+	make -C base all
+	make -C lib all
+	make -C apps all
+	make -C examples all
+
+clean :
+	make -C base clean
+	make -C lib clean
+	make -C apps clean
+	make -C examples clean
+
+test :
+	make -C test all
+
+bmark :
+	make -C bmark all
+
+libref :
+	rm -rf libref
+	mkdir libref
+	oidoc -html -d -o libref -a

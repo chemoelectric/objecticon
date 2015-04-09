@@ -1176,7 +1176,7 @@ class EditableTextList(LineBasedScrollArea)
       if \mark_y &
          (r := if (self.mark_y < v.index < self.cursor_y) | (self.mark_y > v.index > self.cursor_y) then {
                   # Whole line selected
-                  [v.first, v.first + (0 < *s)]
+                  Range(v.first, v.first + (0 < *s))
                } else if v.index = self.mark_y = self.cursor_y then {
                   # Part of line
                   range1(v.first, v.first + *s, self.cursor_x, self.mark_x)
@@ -1192,8 +1192,8 @@ class EditableTextList(LineBasedScrollArea)
                      range1(v.first, v.first + *s, 1, self.cursor_x)
                })
       then {
-         off1 := text_width_ex(view.cbwin, s, 1, r[1] - v.first + 1, self.tab_width)
-         off2 := text_width_ex(view.cbwin, s, 1, r[2] - v.first + 1, self.tab_width)
+         off1 := text_width_ex(view.cbwin, s, 1, r.lo - v.first + 1, self.tab_width)
+         off2 := text_width_ex(view.cbwin, s, 1, r.hi - v.first + 1, self.tab_width)
          Gui.style.fill_selection_rectangle(view.cbwin, xp + off1, yp,  off2 - off1, self.line_height)
       }
 

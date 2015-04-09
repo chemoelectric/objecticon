@@ -33,6 +33,7 @@ $ifdef _MS_WIN32
    clean := map(clean,"/","\\")
    if not(clean[2] == ":") then
       clean := drv || clean
+   clean := map(clean)
 $else
    s := FilePath(p).canonical().str()
 $endif

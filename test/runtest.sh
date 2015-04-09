@@ -3,7 +3,7 @@
 . ../paths.sh
 PATH="$OIBIN:$PATH"
 
-[ -f custom.sh ] && . custom.sh
+[ -f custom.sh ] && . ./custom.sh
 
 # if no files specifies, use all
 if [ $# = 0 ]; then

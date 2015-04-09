@@ -626,9 +626,12 @@ package procedure get_toolbar_theme_paint(paint, icon)
    return ImagePaint().set_cache(k)
 end
 
+record Range(lo, hi)
+
 #
 # Return the intersection of the range f1-t1 and f2-t2, or
-# fail if the ranges don't intersect.  Example:
+# fail if the ranges don't intersect, as a record
+# with lo and hi members.  Example:
 # range(2,20,10,30) = [10,20]
 # 
 procedure range(f1, t1, f2, t2)
@@ -637,17 +640,17 @@ procedure range(f1, t1, f2, t2)
    if t1 >= f2 & f1 <= t2 then {
       f1 <:= f2
       t1 >:= t2
-      return [f1,t1]
+      return Range(f1,t1)
    }
 end
 
-# Like `range` above, but require a result r where r[1] ~= r[2].  This
+# Like `range` above, but require a result r where r.lo ~= r.hi.  This
 # is useful if the ranges represent a string slice and we want a
 # non-empty intersection.
 #
 procedure range1(f1, t1, f2, t2)
    local t
-   if t := range(f1, t1, f2, t2) & t[1] ~= t[2] then
+   if t := range(f1, t1, f2, t2) & t.lo ~= t.hi then
       return t
 end
 
