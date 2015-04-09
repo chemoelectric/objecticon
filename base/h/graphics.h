@@ -209,6 +209,7 @@ extern struct imgdataformat imgdataformat_X11BGRA32;
 
 struct SharedColor {
    COLORREF color;
+   int alpha;
    char  *name;
    int   refcount;
 };
@@ -399,6 +400,7 @@ typedef struct _wstate {
   HCURSOR	savedcursor;
   HWND          savedgrab;
   int           trackingmouse;          /* Set if TrackMouseEvent in use */
+  int           grabbingmouse;          /* Set if SetCapture in use */
 #endif
 } wstate, *wsp;
 

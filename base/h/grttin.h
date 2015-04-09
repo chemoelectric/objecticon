@@ -213,7 +213,7 @@ typedef int time_t, DIR, uid_t, gid_t, pid_t, stringint, socklen_t;
 
 #if MSWIN32
    typedef int clock_t, jmp_buf, MINMAXINFO, OSVERSIONINFO, BOOL_CALLBACK;
-   typedef int int_PASCAL, LRESULT_CALLBACK, MSG, BYTE, WORD, DWORD;
+   typedef int LRESULT_CALLBACK, MSG, BYTE, WORD, DWORD;
    typedef int HINSTANCE, HGLOBAL, HPEN, HBRUSH, HRGN;
    typedef int LPSTR, HBITMAP, WNDCLASS, PAINTSTRUCT, POINT, RECT;
    typedef int HWND, HDC, UINT, WPARAM, LPARAM, SIZE;
@@ -224,6 +224,7 @@ typedef int time_t, DIR, uid_t, gid_t, pid_t, stringint, socklen_t;
    typedef int CHOOSEFONT, CHOOSECOLOR, OPENFILENAME, HMENU, LPBITMAPINFO;
    typedef int childcontrol, CPINFO, BITMAPINFO, BITMAPINFOHEADER, RGBQUAD;
    typedef int WNDCLASSEX, LONG, ULONG_PTR, LPCTSTR, TRACKMOUSEEVENT;
+   typedef int BLENDFUNCTION, WCHAR;
 #endif				/* MSWIN32 */
 
 /*
