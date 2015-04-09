@@ -1073,10 +1073,8 @@ end
 
 function graphics_Window_get_label(self)
    body {
-       tended struct descrip result;
        GetSelfW();
-       cstr2string(getwindowlabel(self_w), &result);
-       return result;
+       return self_w->window->windowlabel;
    }
 end
 
@@ -1426,11 +1424,11 @@ function graphics_Window_set_input_mask(self, val)
 end
 
 function graphics_Window_set_label(self, val)
-   if !cnv:string(val) then
-      runerr(103, val)
+   if !cnv:ucs(val) then
+      runerr(128, val)
    body {
        GetSelfW();
-       AttemptAttr(setwindowlabel(self_w, buffstr(&val)), "Failed to set window label");
+       AttemptAttr(setwindowlabel(self_w, &val), "Failed to set window label");
        return self;
    }
 end

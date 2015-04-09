@@ -368,9 +368,9 @@ typedef struct _wstate {
   int           maxwidth;               /* maximum window width, in pixels */
   int           resizable;              /* flag, is window resizable */
   struct descrip listp;		        /* event list for this window */
+  struct descrip windowlabel;		/* window label */
   int           mousestate;             /* buttons down after last mouse event */
 #if XWindows
-  char		*windowlabel;		/* window label */
   wdp		display;
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   Window	win;			/* X window */
