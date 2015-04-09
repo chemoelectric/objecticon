@@ -45,6 +45,11 @@ static void unlink_sharedcolor(struct SharedColor *i);
 static struct SharedImage *new_sharedimage(struct imgdata *imd);
 static struct SharedImage *link_sharedimage(struct SharedImage *x);
 static void unlink_sharedimage(struct SharedImage *x);
+static struct SharedCursor *new_sharedcursor(struct Cursor *cursor);
+static struct SharedCursor *link_sharedcursor(struct SharedCursor *x);
+static void unlink_sharedcursor(struct SharedCursor *x);
+static struct wcursor *lookup_wcursor(char *name);
+static struct wcursor *ensure_wcursor(char *name);
 static void synch_pos(wsp ws);
 static void synch_state(wsp ws);
 static void note_time(char *s);
@@ -87,9 +92,6 @@ static wsp vwstates;
 
 /* List of bindings */
 static wbp wbndngs;
-
-/* List of windows */
-static wsp wstates;
 
 static stringint drawops[] = {
    { 0, 12},
@@ -140,7 +142,7 @@ static void dump_all(void)
     }
     printf("============\n");
     j = 0;
-    for (x = wstates; x; x = x->next) {
+    for (x = wstates; x; x = x->wnext) {
         printf("Canvas %p\n",x);
         printf("\trefcount=%d\n", x->refcount);
         printf("\tlabel=%s\n", x->windowlabel);
@@ -216,8 +218,7 @@ static void unlink_sharedimage(struct SharedImage *x)
 {
     --x->refcount;
     if (x->refcount == 0) {
-        if (x->i)
-            freeimage(x->i);
+        freeimage(x->i);
         free(x);
     }
 }
@@ -316,7 +317,7 @@ wbp wopen(char *display)
     ws->listp = nulldesc;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->screeninfo_fd = ws->cursor_fd = ws->label_fd = ws->mouse_pid = ws->cons_pid =
-        ws->wininfo_fd = ws->wsys_fd = ws->wctl_fd = ws->winid = ws->transientfor_winid = -1;
+        ws->wininfo_fd = ws->wsys_fd = ws->wctl_fd = ws->winid = -1;
     ws->cursor = lookup_wcursor("left ptr");
     ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;
@@ -324,7 +325,6 @@ wbp wopen(char *display)
     ws->width = ws->height = 1;
     ws->state = HiddenCanvas;
     ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
-    GLink4(ws, wstates, wnext, wprevious);
 
     w->window = ws;
     add_gc_global(&ws->listp);
@@ -1638,8 +1638,8 @@ static int open_screen_win(wsp ws)
                 adjust(ws, maxw),
                 adjust(ws, minh),
                 adjust(ws, maxh));
-        if (ws->transientfor_winid >= 0)
-            sprintf(buff + strlen(buff), " -transientfor %d", ws->transientfor_winid);
+        if (ws->transientfor && ws->transientfor->winid >= 0)
+            sprintf(buff + strlen(buff), " -transientfor %d", ws->transientfor->winid);
 
         if (mount(ws->wsys_fd, -1, ws->mount_dir, MREPL, buff) < 0) {
             whyf("Can't mount new window: %r");
@@ -1879,7 +1879,8 @@ static void freewindow(wsp ws)
        free(ws->windowlabel); 
        free(ws->wsys);
        del_gc_global(&ws->listp);
-       GUnlink4(ws, wstates, wnext, wprevious);
+        if (ws->transientfor)
+            freewindow(ws->transientfor);
        free(ws);
    }
 }
@@ -2108,13 +2109,14 @@ int settransientfor(wbp w, wbp other)
         return Failed;
     }
     if (other) {
-        if (!other->window->win) {
-            LitWhy("Can't set transient_for to a window that isn't open");
-            return Failed;
-        }
-        ws->transientfor_winid = other->window->winid;
-    } else
-        ws->transientfor_winid = -1;
+        if (ws->transientfor)
+            freewindow(ws->transientfor);
+        ws->transientfor = linkwindow(other->window);
+    } else {
+        if (ws->transientfor)
+            freewindow(ws->transientfor);
+        ws->transientfor = 0;
+    }
     return Succeeded;
 }
 
@@ -2197,9 +2199,12 @@ static int black_pattern_data[] =  {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x
 static void close_window_system(void)
 {
     wsp ws;
-    for (ws = wstates; ws; ws = ws->wnext) {
-       if (ws->win)
-           close_screen_win(ws);
+    /* Close all screen windows */
+    ws = vwstates;
+    while (ws) {
+        wsp t = ws->vnext;
+        close_screen_win(ws);
+        ws = t;
     }
     closedisplay(display);
 }
