@@ -387,7 +387,6 @@ typedef struct _wstate {
   struct _wstate *transientfor;         /* transient-for hint */
   int           propcount;              /* counter for selection requests*/
 #elif MSWIN32
-  char		*windowlabel;		/* window label */
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   HWND		win;			/* client window */
   HBITMAP	pix;			/* backing bitmap */

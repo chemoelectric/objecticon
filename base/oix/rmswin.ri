@@ -18,7 +18,6 @@ static wfp fonts[FONTHASH_SIZE], default_font;
 static struct wcursor *cursors[CURSORHASH_SIZE];
 static wfp load_font(char *s);
 static int font_maxcharwidth(HFONT f);
-static int dc_textwidth(HDC dc, char *s, int n);
 static char *convert_spec(char *s);
 static HFONT findfont(char *family, double size, int flags, int ansi);
 static HFONT mkfont(char *s);
@@ -64,7 +63,9 @@ static void rectanglehelper(wcp wc, HDC stddc, HDC pixdc, int x, int y, int widt
 static void capture_mouse(wsp ws);
 static void uncapture_mouse(wsp ws);
 static void track_mouse(wsp ws);
-static WCHAR *ucs_to_wchars(dptr str);
+static WCHAR *ucs_to_wchars(dptr str, int nullterm);
+static void apply_windowlabel(wsp ws);
+
 static void dbg(char *fmt, ...);
 
 static int mouse_debug = 0;
@@ -227,7 +228,6 @@ wbp wopen(char *display)
 {
     wbp w;
     wsp ws;
-    wcp wc;
     RECT rec;
     HDC hdc2;
     HBRUSH brush;
@@ -245,22 +245,19 @@ wbp wopen(char *display)
 
     GAlloc(ws, _wstate);
     ws->listp = nulldesc;
+    ws->windowlabel = nulldesc;
+    add_gc_global(&ws->windowlabel);
+    add_gc_global(&ws->listp);
     ws->cursor = lookup_wcursor("arrow");
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
     w->window = ws;
-    w->context = alccontext(w);
-
+    defaultwindowlabel(&ws->windowlabel);
     ws = w->window;
-    add_gc_global(&ws->listp);
     create_list(64, &ws->listp);
     ws->width = ws->height = 1;
-    /*
-     * set the title
-     */
-    ws->windowlabel = salloc(DEFAULT_WINDOW_LABEL);
 
-    wc = w->context;
+    w->context = alccontext(w);
 
     if (ws->x < 0) ws->x = 0;
     if (ws->y < 0) ws->y = 0;
@@ -278,12 +275,19 @@ wbp wopen(char *display)
     rec.left = rec.top = 0;
     rec.right = ws->width;
     rec.bottom = ws->height;
-    brush = get_bg_brush(wc);
+    brush = get_bg_brush(w->context);
     FillRect(hdc2, &rec, brush);
     DeleteObject(brush);
     SelectObject(hdc2, oldpix);
     DeleteDC(hdc2);
     return w;
+}
+
+static void apply_windowlabel(wsp ws)
+{
+    WCHAR *mbs = ucs_to_wchars(&ws->windowlabel, 1);
+    SetWindowTextW(ws->win, mbs);
+    free(mbs);
 }
 
 static void handle_config(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
@@ -304,8 +308,6 @@ static void handle_config(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
             break;
         }
     }
-
-    SetWindowText(ws->win, ws->windowlabel);
 
     neww = LOWORD(lp);
     newh = HIWORD(lp);
@@ -391,11 +393,11 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
      * again with it coming up.  This generates one icon event, on the
      * second qmouseevents call.
      */
-    if ((long)wp > 0) {
+    if ((long)wp > 0)
         qmouseevents(ws, state|8, x, y, t, fl);
-    } else {
+    else
         qmouseevents(ws, state|16, x, y, t, fl);
-    }
+    
     qmouseevents(ws, state, x, y, t, fl);
 }
 
@@ -697,7 +699,7 @@ static void open_screen_win(wsp ws)
         case PopupCanvas: {
             ws->win = CreateWindowEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW,
                                      "oix", 
-                                     ws->windowlabel,
+                                     NULL,
                                      WS_CHILD,
                                      ws->x, 
                                      ws->y,
@@ -716,14 +718,15 @@ static void open_screen_win(wsp ws)
                 parent = NULL;
             ws->win = CreateWindowEx(0,
                                      "oix", 
-                                     ws->windowlabel,
+                                     NULL,
                                      WS_OVERLAPPEDWINDOW,
                                      ws->x, 
                                      ws->y,
                                      ws->width + BORDWIDTH,
                                      ws->height + BORDHEIGHT,
                                      parent,
-                                     NULL, NULL, NULL); 
+                                     NULL, NULL, NULL);
+            apply_windowlabel(ws);
         }
     }
     GLink4(ws, vwstates, vnext, vprevious);
@@ -784,23 +787,12 @@ int setcanvas(wbp w, char *s)
     return Succeeded;
 }
 
-int setwindowlabel(w, val)
-    wbp w;
-    char *val;
+int setwindowlabel(wbp w, dptr val)
 {
     wsp ws = w->window;
-    /*
-     * plug in the new string
-     */
-    if (ws->windowlabel != NULL)
-        free(ws->windowlabel);
-    ws->windowlabel = salloc(val);
-
-    /*
-     * if we have to update, do it
-     */
-    if (ws->win && !IsIconic(ws->win))
-        SetWindowText(ws->win, ws->windowlabel);
+    ws->windowlabel = *val;
+    if (ws->win)
+        apply_windowlabel(ws);
     return Succeeded;
 }
 
@@ -1030,11 +1022,6 @@ int setdrawop(wbp w, char *val)
         return Failed;
     wc->drawop = e;
     return Succeeded;
-}
-
-char *getwindowlabel(wbp w)
-{
-    return w->window->windowlabel;
 }
 
 int getpos(wbp w)
@@ -1389,7 +1376,7 @@ void drawstring(wbp wb, int x, int y, dptr str)
         TextOutA(pixdc, x, y - wc->font->ascent, StrLoc(*str), StrLen(*str));
         SelectObject(pixdc, oldfont);
     } else {
-        WCHAR *mbs = ucs_to_wchars(str);
+        WCHAR *mbs = ucs_to_wchars(str, 0);
         if (stdwin) {
             oldfont = SelectObject(stddc, wc->font->font);
             SetBkMode(stddc, TRANSPARENT);
@@ -1620,9 +1607,9 @@ static void freewindow(wsp ws)
     ws->refcount--;
     if(ws->refcount == 0) {
         close_screen_win(ws);
-        free(ws->windowlabel);
         DeleteObject(ws->pix);
         del_gc_global(&ws->listp);
+        del_gc_global(&ws->windowlabel);
         if (ws->transientfor)
             freewindow(ws->transientfor);
         free(ws);
@@ -1804,39 +1791,31 @@ static int font_maxcharwidth(HFONT f)
     char s[2];
     HFONT oldfont = SelectObject(dummy_hdc, f);
     s[1] = '\0';
-    for (i=0; i<256; i++) {
+    for (i = 0; i < 256; i++) {
+        SIZE sz;
+        int x;
         s[0] = i;
-        x = dc_textwidth(dummy_hdc, s, 1);
-        if (x > m) m = x;
+        GetTextExtentPoint(dummy_hdc, s, 1, &sz);
+        x = (int)sz.cx;
+        if (x > m)
+            m = x;
     }
     SelectObject(dummy_hdc, oldfont);
     return m;
 }
 
-/*
- * compute a text width for a current device context (typically pixdc)
- */
-static int dc_textwidth(HDC dc, char *s, int n)
-{
-    SIZE sz;
-    /*
-     * GetTextExtentPoint32(dc, s, n, &sz) gives incorrect behavior
-     *  under Win32s
-     */
-    GetTextExtentPoint(dc, s, n, &sz);
-    return (int)sz.cx;
-}
-
-static WCHAR *ucs_to_wchars(dptr str)
+static WCHAR *ucs_to_wchars(dptr str, int nullterm)
 {
     WCHAR *mbs;
-    MemProtect(mbs = malloc(UcsBlk(*str).length * sizeof(WCHAR)));
+    MemProtect(mbs = malloc((UcsBlk(*str).length + nullterm) * sizeof(WCHAR)));
     MultiByteToWideChar(CP_UTF8,
                         MB_ERR_INVALID_CHARS,
                         StrLoc(UcsBlk(*str).utf8),
                         StrLen(UcsBlk(*str).utf8),
                         mbs,
                         UcsBlk(*str).length);
+    if (nullterm)
+        mbs[UcsBlk(*str).length] = 0;
     return mbs;
 }
 
@@ -1848,7 +1827,7 @@ int textwidth(wbp w, dptr str)
     if (is:string(*str))
         GetTextExtentPointA(dummy_hdc, StrLoc(*str), StrLen(*str), &sz);
     else {
-        WCHAR *mbs = ucs_to_wchars(str);
+        WCHAR *mbs = ucs_to_wchars(str, 0);
         GetTextExtentPointW(dummy_hdc, mbs, UcsBlk(*str).length, &sz);
         free(mbs);
     }
