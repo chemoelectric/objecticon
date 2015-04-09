@@ -338,25 +338,13 @@ end
 
 function graphics_Window_draw_string(self, x0, y0, str)
    body {
-      int len;
       word x, y;
-      char *s;
       GetSelfW();
-
       if (pointargs(self_w, &x0, &x, &y) == Error)
           runerr(0);
       if (!cnv:string_or_ucs(str,str))
           runerr(129, str);
-
-      if (is:ucs(str)) {
-          s = StrLoc(UcsBlk(str).utf8);
-          len = StrLen(UcsBlk(str).utf8);
-          drawutf8(self_w, x, y, s, len, UcsBlk(str).length);
-      } else {
-          s = StrLoc(str);
-          len = StrLen(str);
-          drawstring(self_w, x, y, s, len);
-      }
+      drawstring(self_w, x, y, &str);
       return self;
    }
 end
@@ -776,16 +764,8 @@ function graphics_Window_text_width(self, s)
    if !cnv:string_or_ucs(s) then
       runerr(129, s)
    body {
-      word i;
       GetSelfW();
-      if (is:ucs(s))
-          i = utf8width(self_w, 
-                        StrLoc(UcsBlk(s).utf8), 
-                        StrLen(UcsBlk(s).utf8),
-                        UcsBlk(s).length);
-      else
-          i = textwidth(self_w, StrLoc(s), StrLen(s));
-      return C_integer i;
+      return C_integer textwidth(self_w, &s);
    }
 end
 
