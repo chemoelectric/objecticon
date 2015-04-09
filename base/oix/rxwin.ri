@@ -3222,28 +3222,25 @@ int walert(wbp w, int volume)
     return Succeeded;
 }
 
-int textwidth(wbp w, char *s, int n)
+int textwidth(wbp w, dptr str)
 {
     XGlyphInfo	extents; 
-    XftTextExtents8 (w->window->display->display,
-                     w->context->font->fsp,
-                     (FcChar8 *)s,
-                     n,
-                     &extents);
+    if (is:string(*str))
+        XftTextExtents8(w->window->display->display,
+                        w->context->font->fsp,
+                        (FcChar8 *)StrLoc(*str),
+                        StrLen(*str),
+                        &extents);
+    else
+        XftTextExtentsUtf8(w->window->display->display,
+                           w->context->font->fsp,
+                           (FcChar8 *)StrLoc(UcsBlk(*str).utf8),
+                           StrLen(UcsBlk(*str).utf8),
+                           &extents);
+    
     /* xOff is a short; on long strings it wraps round at 32k, so
      * anding with 0xffff doubles the range of sensible result
      * values. */
-    return extents.xOff & 0xffff;
-}
-
-int utf8width(wbp w, char *s, int n, int nchars)
-{
-    XGlyphInfo	extents; 
-    XftTextExtentsUtf8 (w->window->display->display,
-                        w->context->font->fsp,
-                        (FcChar8 *)s,
-                        n,
-                        &extents);
     return extents.xOff & 0xffff;
 }
 
@@ -3267,7 +3264,7 @@ static void prepare_xft(wbp w)
         XftDrawSetClip(w->window->pxft, 0);
 }
 
-void drawstring(wbp w, int x, int y, char *str, int slen)
+void drawstring(wbp w, int x, int y, dptr str)
 {
     XftColor color;
     wcp wc = w->context;
@@ -3275,40 +3272,26 @@ void drawstring(wbp w, int x, int y, char *str, int slen)
     prepare_xft(w);
     color.pixel = 0;
     color.color = wc->fg->color;
-    XftDrawString8 (ws->pxft,
-                    &color,
-                    wc->font->fsp,
-                    x,
-                    y,
-                    (FcChar8 *)str,
-                    slen);
-    clip(w);
-    pix_to_win(ws, 
-               x, y - wc->font->ascent, 
-               textwidth(w, str, slen) + wc->font->maxwidth,
-               wc->font->ascent + wc->font->descent);
-    unclip(w);
-}
-
-void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
-{
-    XftColor color;
-    wcp wc = w->context;
-    wsp ws = w->window;
-    prepare_xft(w);
-    color.pixel = 0;
-    color.color = wc->fg->color;
-    XftDrawStringUtf8 (ws->pxft,
+    if (is:string(*str))
+        XftDrawString8(ws->pxft,
                        &color,
                        wc->font->fsp,
                        x,
                        y,
-                       (FcChar8 *)str,
-                       slen);
+                       (FcChar8 *)StrLoc(*str),
+                       StrLen(*str));
+    else
+        XftDrawStringUtf8(ws->pxft,
+                          &color,
+                          wc->font->fsp,
+                          x,
+                          y,
+                          (FcChar8 *)StrLoc(UcsBlk(*str).utf8),
+                          StrLen(UcsBlk(*str).utf8));
     clip(w);
     pix_to_win(ws, 
                x, y - wc->font->ascent, 
-               utf8width(w, str, slen, nchars) + wc->font->maxwidth,
+               textwidth(w, str),
                wc->font->ascent + wc->font->descent);
     unclip(w);
 }

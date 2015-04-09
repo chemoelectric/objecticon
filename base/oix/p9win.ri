@@ -17,7 +17,7 @@ static void load_font_info(void);
 static void setup_cursors(void);
 static wfp alcfont(wbp w, char **s);
 static void mouse_loop(wsp ws);
-static Rune *utf8_to_runes(char *str, int nchars);
+static Rune *utf8_to_runes(dptr str);
 static void cons_loop(wsp ws);
 static wfp load_font(char *s);
 static void synch_cursor(wsp ws);
@@ -997,54 +997,49 @@ static void unclip(wbp w)
     }
 }
 
-void drawstring(wbp w, int x, int y, char *str, int slen)
+void drawstring(wbp w, int x, int y, dptr str)
 {
     wsp ws = w->window;
     wcp wc = w->context;
     Point p = Pt(x, y - wc->font->ascent);
     clip(w);
-    stringnop(ws->pix, p,
-              get_draw_img(wc), p,
-              wc->font->font, str, slen, wc->drawop->i);
-    pix_to_win(ws, 
-               p.x, 
-               p.y, 
-               stringnwidth(wc->font->font, str, slen) + wc->font->font->width,   /* Add 1xwidth for italics */
-               wc->font->ascent + wc->font->descent);
+    if (is:string(*str)) {
+        stringnop(ws->pix, p,
+                  get_draw_img(wc), p,
+                  wc->font->font, StrLoc(*str), StrLen(*str), wc->drawop->i);
+        pix_to_win(ws, 
+                   p.x, 
+                   p.y, 
+                   stringnwidth(wc->font->font, StrLoc(*str), StrLen(*str)) + wc->font->font->width,   /* Add 1xwidth for italics */
+                   wc->font->ascent + wc->font->descent);
+    } else {
+        Rune *r = utf8_to_runes(str);
+        runestringnop(ws->pix, p,
+                      get_draw_img(wc), p,
+                      wc->font->font, r, UcsBlk(*str).length, wc->drawop->i);
+        pix_to_win(ws, 
+                   p.x, 
+                   p.y, 
+                   runestringnwidth(wc->font->font, r, UcsBlk(*str).length) + wc->font->font->width,   /* Add 1xwidth for italics */
+                   wc->font->ascent + wc->font->descent);
+        free(r);
+    }
     unclip(w);
     flushimage(display, 1);
 }
 
-static Rune *utf8_to_runes(char *str, int nchars)
+static Rune *utf8_to_runes(dptr str)
 {
     Rune *r;
-    int i, j;
-    MemProtect(r = malloc(nchars * sizeof(Rune)));
-    for (i = 0; i < nchars; ++i) {
-        j = chartorune(&r[i], str);
-        str += j;
+    word i, j, len;
+    char *s = StrLoc(UcsBlk(*str).utf8);
+    len = UcsBlk(*str).length;
+    MemProtect(r = malloc(len * sizeof(Rune)));
+    for (i = 0; i < len; ++i) {
+        j = chartorune(&r[i], s);
+        s += j;
     }
     return r;
-}
-
-void drawutf8(wbp w, int x, int y, char *str, int slen, int nchars)
-{
-    wsp ws = w->window;
-    wcp wc = w->context;
-    Rune *r = utf8_to_runes(str, nchars);
-    Point p = Pt(x, y - wc->font->ascent);
-    clip(w);
-    runestringnop(ws->pix, p,
-                  get_draw_img(wc), p,
-                  wc->font->font, r, nchars, wc->drawop->i);
-    pix_to_win(ws, 
-               p.x, 
-               p.y, 
-               runestringnwidth(wc->font->font, r, nchars) + wc->font->font->width,   /* Add 1xwidth for italics */
-               wc->font->ascent + wc->font->descent);
-    unclip(w);
-    flushimage(display, 1);
-    free(r);
 }
 
 void erasearea(wbp w, int x, int y, int width, int height)
@@ -1354,20 +1349,18 @@ int focuswindow(wbp w)
     return Succeeded;
 }
 
-int textwidth(wbp w, char *s, int n)
+int textwidth(wbp w, dptr str)
 {
     wcp wc = w->context;
-    return stringnwidth(wc->font->font, s, n);
-}
-
-int utf8width(wbp w, char *s, int n, int nchars)
-{
-    wcp wc = w->context;
-    int width;
-    Rune *r = utf8_to_runes(s, nchars);
-    width = runestringnwidth(wc->font->font, r, nchars);
-    free(r);
-    return width;
+    if (is:string(*str))
+        return stringnwidth(wc->font->font, StrLoc(*str), StrLen(*str));
+    else {
+        int width;
+        Rune *r = utf8_to_runes(str);
+        width = runestringnwidth(wc->font->font, r, UcsBlk(*str).length);
+        free(r);
+        return width;
+    }
 }
 
 void doconfig(wbp w, int status)
