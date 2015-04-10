@@ -47,6 +47,7 @@ static struct wcursor *lookup_wcursor(char *name);
 static struct wcursor *ensure_wcursor(char *name);
 static void synch_cursor(wsp ws);
 static HBITMAP imgdata_to_bitmap(struct imgdata *imd);
+static void bitmap_to_imgdata(HBITMAP bitmap, struct imgdata *imd);
 static HBRUSH get_fg_brush(wcp wc);
 static HPEN get_fg_pen(wcp wc);
 static HBRUSH get_bg_brush(wcp wc);
@@ -1031,7 +1032,11 @@ int getpos(wbp w)
 
 int getpattern(wbp w, struct imgdata *imd)
 {
-    return Failed;
+    wcp wc = w->context;
+    if (!wc->pattern)
+        return Failed;
+    bitmap_to_imgdata(wc->pattern->bitmap, imd);
+    return Succeeded;
 }
 
 char *getlinestyle(wbp w)
@@ -1209,20 +1214,16 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     wsp ws = w->window;
     int i, j;
-    COLORREF *p, *crp;
+    COLORREF *p;
     HDC pixdc = CreateCompatibleDC(dummy_hdc);
     HBITMAP oldpix;
-
     oldpix = SelectObject(pixdc, ws->pix);
-
-    MemProtect(crp = malloc( imd->width * imd->height * sizeof(COLORREF)));
-    p = crp;
+    MemProtect(imd->data = malloc(imd->width * imd->height * sizeof(COLORREF)));
+    p = (COLORREF *)imd->data;
     for(i = y; i < y + imd->height; i++)
         for(j = x; j < x + imd->width; j++)
             *p++ = GetPixel(pixdc, j, i);
-
     imd->format = &imgdataformat_MSBGRX32;
-    imd->data = (unsigned char *)crp;
     SelectObject(pixdc, oldpix);
     DeleteDC(pixdc);
 }
@@ -1882,6 +1883,11 @@ int setwindowicon(wbp w, struct imgdata *imd)
     return Failed;
 }
 
+int getwindowicon(wbp w, struct imgdata *imd)
+{
+    return Failed;
+}
+
 int grabkeyboard(wbp w)
 {
     return Succeeded;
@@ -1984,6 +1990,29 @@ static struct wcursor *ensure_wcursor(char *name)
     rv->next = cursors[i];
     cursors[i] = rv;
     return rv;
+}
+
+static void bitmap_to_imgdata(HBITMAP bitmap, struct imgdata *imd)
+{
+    HBITMAP oldbitmap;
+    HDC hdc;
+    int i, j;
+    BITMAP info;
+    COLORREF *p;
+    GetObject(bitmap, sizeof(info), &info);
+    imd->format = &imgdataformat_MSBGRX32;
+    imd->width = info.bmWidth;
+    imd->height = info.bmHeight;
+    MemProtect(imd->data = malloc(imd->width * imd->height * sizeof(COLORREF)));
+    hdc = CreateCompatibleDC(dummy_hdc);
+    oldbitmap = SelectObject(hdc, bitmap);
+    p = (COLORREF *)imd->data;
+    for(j = 0; j < imd->height; j++) {
+        for(i = 0; i < imd->width; i++)
+            *p++ = GetPixel(hdc, j, i);
+    }
+    SelectObject(hdc, oldbitmap);
+    DeleteDC(hdc);
 }
 
 static HBITMAP imgdata_to_bitmap(struct imgdata *imd)
@@ -2208,12 +2237,12 @@ static void init_window_system(void)
     wc.cbClsExtra =     0;
     wc.cbWndExtra =     0;
     wc.hInstance =      GetModuleHandle(0);
-    wc.hIcon =          LoadIcon(0,IDI_APPLICATION);
-    wc.hCursor =        LoadCursor(0,IDC_ARROW);
+    wc.hIcon =          LoadIcon(0, IDI_APPLICATION);
+    wc.hCursor =        LoadCursor(0, IDC_ARROW);
     wc.hbrBackground =  GetStockObject(WHITE_BRUSH);
     wc.lpszMenuName =   0;
     wc.lpszClassName =  "oix";
-    wc.hIconSm =        LoadIcon(0,IDI_APPLICATION);
+    wc.hIconSm =        LoadIcon(0, IDI_APPLICATION);
     RegisterClassEx(&wc);
     BORDWIDTH = FRAMEWIDTH * 2;
     BORDHEIGHT = TITLEHEIGHT + FRAMEHEIGHT * 2;
