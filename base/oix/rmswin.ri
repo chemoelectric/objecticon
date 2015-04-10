@@ -64,7 +64,9 @@ static void rectanglehelper(wcp wc, HDC stddc, HDC pixdc, int x, int y, int widt
 static void capture_mouse(wsp ws);
 static void uncapture_mouse(wsp ws);
 static void track_mouse(wsp ws);
+static void ucs_to_wchars1(WCHAR *buff, dptr str, int nullterm);
 static WCHAR *ucs_to_wchars(dptr str, int nullterm);
+static void wchars_to_ucs(WCHAR *src, dptr res);
 static void apply_windowlabel(wsp ws);
 
 static void dbg(char *fmt, ...);
@@ -659,18 +661,94 @@ void pollevent(wbp w)
     }
 }
 
-int ownselection(wbp w, char *selname)
+int ownselection(wbp w, char *selection)
 {
+    wsp ws = w->window;
+    tended struct descrip tmp;
+
+    CheckUnhidden(ws);
+
+    /* Ignore anything other than CLIPBOARD selections. */
+    if (strcmp(selection, "CLIPBOARD") == 0) {
+        MakeInt(SELECTIONREQUEST, &tmp);
+        list_put(&ws->listp, &tmp);
+        list_put(&ws->listp, &zerodesc);/* req id */
+        LitStr("none", &tmp);           /* property */
+        list_put(&ws->listp, &tmp);
+        cstr2string(selection, &tmp);   /* selection */
+        list_put(&ws->listp, &tmp);
+        LitStr("UTF8_STRING", &tmp);    /* type */
+        list_put(&ws->listp, &tmp);
+        list_put(&ws->listp, &zerodesc); /* time */
+    }
     return Succeeded;
 }
 
-int requestselection(wbp w, char *selname, char *targetname)
+int requestselection(wbp w, char *selection, char *target)
 {
+    wsp ws = w->window;
+    tended struct descrip tmp, res;
+
+    CheckUnhidden(ws);
+    res = nulldesc;
+    if (strcmp(selection, "CLIPBOARD") == 0 &&
+        strcmp(target, "UTF8_STRING") == 0) {
+        HANDLE hg;
+        char *phg;
+        if (!OpenClipboard(NULL)) {
+            LitWhy("Failed to open windows clipboard");
+            return Failed;
+        }
+        hg = GetClipboardData(CF_UNICODETEXT);
+        if (hg) {
+            phg = (char *)GlobalLock(hg);
+            wchars_to_ucs((WCHAR *)phg, &res);
+            GlobalUnlock(hg);
+        }
+        CloseClipboard();
+    }
+
+    MakeInt(SELECTIONRESPONSE, &tmp);
+    list_put(&ws->listp, &tmp);
+    cstr2string(selection, &tmp);   /* selection */
+    list_put(&ws->listp, &tmp);
+    cstr2string(target, &tmp);      /* target */
+    list_put(&ws->listp, &tmp);
+    list_put(&ws->listp, &res);
+
     return Succeeded;
 }
 
-int sendselectionresponse(wbp w, word requestor, char *property, char *target, char *selection, word time, dptr data)
+int sendselectionresponse(wbp w, word requestor, char *property, 
+                          char *selection, char *target, word time, dptr data)
 {
+    wsp ws = w->window;
+    HGLOBAL hg;
+    char *phg;
+    unsigned long nbytes;
+
+    CheckUnhidden(ws);
+
+    /* data is &null if the selection doesn't support what we asked for (UTF8_STRING) */
+    if (is:null(*data))
+        return Succeeded;
+
+    if (!cnv:ucs(*data, *data))
+        ReturnErrVal(128, *data, Error);
+
+    if (!OpenClipboard(NULL)) {
+        LitWhy("Failed to open windows clipboard");
+        return Failed;
+    }
+
+    EmptyClipboard();
+    nbytes = (UcsBlk(*data).length + 1) * sizeof(WCHAR);
+    MemProtect(hg = GlobalAlloc(GMEM_DDESHARE, nbytes));
+    phg = (char *)GlobalLock(hg);
+    ucs_to_wchars1((WCHAR *)phg, data, 1);
+    GlobalUnlock(hg);
+    SetClipboardData(CF_UNICODETEXT, hg);
+    CloseClipboard();
     return Succeeded;
 }
 
@@ -1805,19 +1883,62 @@ static int font_maxcharwidth(HFONT f)
     return m;
 }
 
+static void ucs_to_wchars1(WCHAR *buff, dptr str, int nullterm)
+{
+    word len, i;
+    char *p;
+    len = UcsBlk(*str).length;
+    p = StrLoc(UcsBlk(*str).utf8);
+    for (i = 0; i < len; ++i) {
+        int ch = utf8_iter(&p);
+        buff[i] = (WCHAR)(ch < 0x10000 ? ch : 0xfffd);
+    }
+    if (nullterm)
+        buff[len] = 0;
+}
+
 static WCHAR *ucs_to_wchars(dptr str, int nullterm)
 {
     WCHAR *mbs;
     MemProtect(mbs = malloc((UcsBlk(*str).length + nullterm) * sizeof(WCHAR)));
-    MultiByteToWideChar(CP_UTF8,
-                        MB_ERR_INVALID_CHARS,
-                        StrLoc(UcsBlk(*str).utf8),
-                        StrLen(UcsBlk(*str).utf8),
-                        mbs,
-                        UcsBlk(*str).length);
-    if (nullterm)
-        mbs[UcsBlk(*str).length] = 0;
+    ucs_to_wchars1(mbs, str, nullterm);
     return mbs;
+}
+
+static void wchars_to_ucs(WCHAR *src, dptr res)
+{
+    tended char *ts;
+    tended struct b_ucs *bp;
+    tended struct descrip utf8;
+    unsigned long wlen;
+    word slen;
+    WCHAR *p;
+    char *q;
+
+    wlen = 0;
+    slen = 0;
+    p = src;
+    while (*p) {
+        slen += utf8_seq(*p, 0);
+        ++wlen;
+        ++p;
+    }
+
+    /*dbg("We got %d unicode chars -> %d utf8 len\n", (int)wlen, (int)slen);*/
+    MemProtect(ts = alcstr(0, slen));
+    p = src;
+    q = ts;
+    while (*p) {
+        int n = utf8_seq(*p, q);
+        /*dbg("wrote char %d as %d bytes\n", (int)(*p), n);*/
+        q += n;
+        ++p;
+    }
+
+    MakeStr(ts, slen, &utf8);
+    bp = make_ucs_block(&utf8, wlen);
+    res->dword = D_Ucs;
+    BlkLoc(*res) = (union block *)bp;
 }
 
 int textwidth(wbp w, dptr str)
@@ -2166,6 +2287,9 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
 
 int focuswindow(wbp w)
 {
+    wsp ws = w->window;
+    CheckUnhidden(ws);
+    SetFocus(ws->win);
     return Succeeded;
 }
 
