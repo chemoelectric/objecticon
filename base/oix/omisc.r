@@ -94,9 +94,8 @@ end
 
 operator = tabmat(x)
    body {
-      word l;
       char *s1, *s2;
-      word i, j;
+      word i, j, l;
       /*
        * Make a copy of &pos.
        */

@@ -569,7 +569,7 @@ function map(s1,s2,s3)
       if (is:ucs(s1)) {
           tended struct descrip utf8;
           static struct mappair *maptab = 0;
-          static int maptab_len = 0;
+          static word maptab_len = 0;
           char *p1, *p2, *p3;
           word utf8_size, i;
 

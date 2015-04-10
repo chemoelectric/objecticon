@@ -1119,9 +1119,8 @@ void abbr_fname(dptr s, dptr d)
  */
 
 void getimage(dptr dp1, dptr dp2)
-   {
-   word len;
-   int i, j;
+{
+   word len, i, j;
    tended char *s;
    char sbuf[64];
    char cbuf[CHAR_CVT_LEN];
@@ -1443,8 +1442,8 @@ void getimage(dptr dp1, dptr dp2)
 
       default:
          syserr("Invalid type to getimage");
-      }
    }
+}
 
 /*
  * csname(dp) -- return the name of a predefined cset matching dp.
@@ -1597,8 +1596,7 @@ static void keyref(dptr dp1, dptr dp2)
 int getname(dptr dp1, dptr dp2)
 {
     char sbuf[100];			/* buffer; might be too small */
-    int len;
-    word i;
+    word i, len;
     struct progstate *prog;
 
     type_case *dp1 of {
@@ -2013,8 +2011,6 @@ void cstrs2string(char **s, char *delim, dptr d)
         MakeStr(a, len, d);
     }
 }
-
-
 
 /*
  * the next section consists of code to deal with string-integer
