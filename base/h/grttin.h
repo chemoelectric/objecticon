@@ -161,14 +161,6 @@ typedef int gzFile;
 
 typedef int jmp_buf;
 
-#if MSWIN32
-typedef int HMODULE, WSADATA, WORD, HANDLE, MEMORYSTATUS, WIN32_FIND_DATA, 
-   PVOID, PFIBER_START_ROUTINE;
-#ifdef NTGCC
-typedef int STARTUPINFO, PROCESS_INFORMATION, SECURITY_ATTRIBUTES;
-#endif
-#endif					/* MSWIN32 */
-
 #if HAVE_LIBJPEG
 typedef int j_common_ptr, JSAMPARRAY, JSAMPROW;
 #endif					/* HAVE_LIBJPEG */
@@ -224,7 +216,8 @@ typedef int time_t, DIR, uid_t, gid_t, pid_t, stringint, socklen_t;
    typedef int CHOOSEFONT, CHOOSECOLOR, OPENFILENAME, HMENU, LPBITMAPINFO;
    typedef int childcontrol, CPINFO, BITMAPINFO, BITMAPINFOHEADER, RGBQUAD;
    typedef int WNDCLASSEX, LONG, ULONG_PTR, LPCTSTR, TRACKMOUSEEVENT;
-   typedef int BLENDFUNCTION, WCHAR;
+   typedef int BLENDFUNCTION, WCHAR, WSADATA, WORD, HANDLE, MEMORYSTATUS;
+   typedef int PVOID, PFIBER_START_ROUTINE, WIN32_FIND_DATA;
 #endif				/* MSWIN32 */
 
 /*

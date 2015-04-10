@@ -345,6 +345,9 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
 #ifdef MSWIN32
 LRESULT_CALLBACK WndProc  (HWND, UINT, WPARAM, LPARAM);
 void wfreersc(void);
+void ucs_to_wchars1(WCHAR *buff, dptr str, int nullterm);
+WCHAR *ucs_to_wchars(dptr str, int nullterm);
+void wchars_to_ucs(WCHAR *src, dptr res);
 #endif
 
 /*

@@ -59,14 +59,12 @@ static void handle_mouse_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_capture_changed(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp, int meta);
-static void handle_config(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
+static void handle_size(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
+static void handle_showwindow(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void rectanglehelper(wcp wc, HDC stddc, HDC pixdc, int x, int y, int width, int height);
 static void capture_mouse(wsp ws);
 static void uncapture_mouse(wsp ws);
 static void track_mouse(wsp ws);
-static void ucs_to_wchars1(WCHAR *buff, dptr str, int nullterm);
-static WCHAR *ucs_to_wchars(dptr str, int nullterm);
-static void wchars_to_ucs(WCHAR *src, dptr res);
 static void apply_windowlabel(wsp ws);
 
 static void dbg(char *fmt, ...);
@@ -144,14 +142,16 @@ stringint linestyles[] = {
 #define IconicCanvas 3
 #define PopupCanvas  4
 #define MaximizedCanvas  5
+#define WithdrawnCanvas  6
 
 static stringint canvastypes[] = {
-    {0, 5},
+    {0, 6},
     {"hidden",      HiddenCanvas},
     {"iconic",      IconicCanvas},
     {"maximized",   MaximizedCanvas},
     {"normal",      NormalCanvas},
     {"popup",       PopupCanvas},
+    {"withdrawn",   WithdrawnCanvas},
 };
 
 #if 0
@@ -293,10 +293,9 @@ static void apply_windowlabel(wsp ws)
     free(mbs);
 }
 
-static void handle_config(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
+static void handle_size(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     int neww, newh;
-
     switch (wp) {
         case SIZE_MINIMIZED: {
             ws->state = IconicCanvas;
@@ -327,11 +326,19 @@ static void handle_config(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     qeventcode(ws, WINDOWRESIZED);
 }
 
+static void handle_showwindow(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
+{
+    if (wp == 0)
+        ws->state = WithdrawnCanvas;
+    else
+        ws->state = NormalCanvas;
+}
+
 static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp, int meta)
 {
     DWORD dw;
-    int t;
-    WORD x, y;
+    int t, x, y;
+    RECT r;
     struct descrip d;
     int fl = 0;
     static struct descrip curr_down;
@@ -347,9 +354,12 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp, int meta)
         MakeInt(wp, &d);
         curr_down = d;
     }
-    dw = GetMessagePos(); /* mouse location in SCREEN coordinates */
-    x = LOWORD(dw) - ws->x - FRAMEWIDTH;
-    y = HIWORD(dw) - ws->y - TITLEHEIGHT - (FRAMEHEIGHT-1);
+
+   /* Mouse location in SCREEN coordinates */
+    dw = GetMessagePos();
+    GetWindowRect(ws->win, &r);
+    x = LOWORD(dw) - (r.left + CLIENT_XOFF);
+    y = HIWORD(dw) - (r.top + CLIENT_YOFF);
 
     t = GetMessageTime();
 
@@ -366,8 +376,7 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp, int meta)
 
 static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    int t;
-    WORD x, y;
+    int t, x, y;
     RECT r;
     int state = 0;
     int fl = 0;
@@ -521,7 +530,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     RECT rect;
     wsp ws;
     ws = wsp_for_hwnd(hwnd);
-    if (ws) 
+    if (ws) {
         switch(msg) {
             case WM_PAINT: {
                 HBITMAP oldpix;
@@ -614,7 +623,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             case WM_COMMAND:
                 break;
             case WM_SIZE:
-                handle_config(ws, msg, wp, lp);
+                handle_size(ws, msg, wp, lp);
                 break;
             case WM_MOVE:
                 /* x,y represents the position of the drawable area. Casting to
@@ -634,6 +643,10 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 }
                 return 0;
             }
+            case WM_SHOWWINDOW: {
+                handle_showwindow(ws, msg, wp, lp);
+                break;
+            }
             case WM_KILLFOCUS:
                 break;
             case WM_SETFOCUS:
@@ -645,7 +658,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             case WM_DESTROY:
                 break;
         }
-
+    }
     return DefWindowProc(hwnd, msg, wp, lp);
 }
 
@@ -832,7 +845,25 @@ int setcanvas(wbp w, char *s)
             ws->state = e->i;
             open_screen_win(ws);
             pix_to_win(ws);
-            ShowWindow(ws->win, SW_RESTORE);
+            switch (e->i) {
+                case WithdrawnCanvas: {
+                    ShowWindow(ws->win, SW_HIDE);
+                    break;
+                }
+                case IconicCanvas: {
+                    ShowWindow(ws->win, SW_MINIMIZE);
+                    break;
+                }
+                case MaximizedCanvas: {
+                    ShowWindow(ws->win, SW_MAXIMIZE);
+                    break;
+                }
+                case NormalCanvas:
+                case PopupCanvas: {
+                    ShowWindow(ws->win, SW_SHOWNORMAL);
+                    break;
+                }
+            }
         }
         return Succeeded;
     }
@@ -845,21 +876,30 @@ int setcanvas(wbp w, char *s)
             close_screen_win(ws);
             break;
         }
-
         case IconicCanvas: {
             if (ws->state == PopupCanvas)
                 return Failed;
             ShowWindow(ws->win, SW_MINIMIZE);
             break;
         }
-
+        case WithdrawnCanvas: {
+            if (ws->state == PopupCanvas)
+                return Failed;
+            ShowWindow(ws->win, SW_HIDE);
+            break;
+        }
+        case MaximizedCanvas: {
+            if (ws->state == PopupCanvas)
+                return Failed;
+            ShowWindow(ws->win, SW_MAXIMIZE);
+            break;
+        }
         case NormalCanvas: {
             if (ws->state == PopupCanvas)
                 return Failed;
-            ShowWindow(ws->win, SW_RESTORE);
+            ShowWindow(ws->win, SW_SHOWNORMAL);
             break;
         }
-
         case PopupCanvas:
             return Failed;
     }
@@ -1362,8 +1402,21 @@ int querypointer(wbp w, int *x, int *y)
     CheckUnhidden(ws);
     GetCursorPos(&pp);
     GetWindowRect(ws->win, &r);
-    pp.x -= r.left + CLIENT_XOFF;
-    pp.y -= r.top + CLIENT_YOFF;
+    switch (ws->state) {
+        case MaximizedCanvas:
+        case NormalCanvas: {
+            pp.x -= r.left + CLIENT_XOFF;
+            pp.y -= r.top + CLIENT_YOFF;
+            break;
+        }
+        case WithdrawnCanvas:
+        case IconicCanvas:
+        case PopupCanvas: {
+            pp.x -= r.left;
+            pp.y -= r.top;
+            break;
+        }
+    }
     *x = pp.x;
     *y = pp.y;
     return Succeeded;
@@ -1883,7 +1936,7 @@ static int font_maxcharwidth(HFONT f)
     return m;
 }
 
-static void ucs_to_wchars1(WCHAR *buff, dptr str, int nullterm)
+void ucs_to_wchars1(WCHAR *buff, dptr str, int nullterm)
 {
     word len, i;
     char *p;
@@ -1897,7 +1950,7 @@ static void ucs_to_wchars1(WCHAR *buff, dptr str, int nullterm)
         buff[len] = 0;
 }
 
-static WCHAR *ucs_to_wchars(dptr str, int nullterm)
+WCHAR *ucs_to_wchars(dptr str, int nullterm)
 {
     WCHAR *mbs;
     MemProtect(mbs = malloc((UcsBlk(*str).length + nullterm) * sizeof(WCHAR)));
@@ -1905,7 +1958,7 @@ static WCHAR *ucs_to_wchars(dptr str, int nullterm)
     return mbs;
 }
 
-static void wchars_to_ucs(WCHAR *src, dptr res)
+void wchars_to_ucs(WCHAR *src, dptr res)
 {
     tended char *ts;
     tended struct b_ucs *bp;
