@@ -466,10 +466,11 @@ final class Window(NoCopy)
 
    #
    # The canvas attribute icon specifies an image used to identify the
-   # window.  The parameter takes the same format as {set_image}.
+   # window.  If null, then the setting is cleared.  The parameter
+   # takes the same format as {set_image}.
    #
    public set_icon(v)
-      return if is(v, Pixels) then
+      return if /v | is(v, Pixels) then
          set_icon_impl(v)
       else use {
          v := Pixels(v),
@@ -478,6 +479,16 @@ final class Window(NoCopy)
    end
 
    private native set_icon_impl(id)
+
+   # Return a new {Pixels} instance which contains the current window
+   # icon Fails if no icon set.  Note a new distinct instance is
+   # always returned, which must be closed by the caller.
+   #
+   public get_icon()
+      return Pixels.create_for_ptr(get_icon_impl())
+   end
+
+   private native get_icon_impl()
 
    #
    # The canvas attribute label specifies a title used to identify the

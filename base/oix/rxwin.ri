@@ -78,6 +78,8 @@ static void getlineinfo(wcp wc, XPointDouble *p0, XPointDouble *q0, struct linei
 static wcp clonecontext(wcp wc);
 static void freecontext(wcp wc);
 static void freewindow(wsp ws);
+static void apply_windowlabel(wsp ws);
+static void apply_windowicon(wsp ws);
 
 static stringint drawops[] = {
    { 0, 12},
@@ -860,26 +862,50 @@ int setwindowicon(wbp w, struct imgdata *imd)
     wsp ws = w->window;
     int i, j, k;
     free(ws->icondata);
-    ws->iconlen = 2 + imd->width * imd->height;
-    MemProtect(ws->icondata = malloc(ws->iconlen * sizeof(unsigned long)));
-    k = 0;
-    ws->icondata[k++] = imd->width;
-    ws->icondata[k++] = imd->height;
+    if (imd) {
+        ws->iconlen = 2 + imd->width * imd->height;
+        MemProtect(ws->icondata = malloc(ws->iconlen * sizeof(unsigned long)));
+        k = 0;
+        ws->icondata[k++] = imd->width;
+        ws->icondata[k++] = imd->height;
+        for (j = 0; j < imd->height; ++j) {
+            for (i = 0; i < imd->width; ++i) {
+                int r, g, b, a;
+                imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
+                ws->icondata[k++] = ((a/256)<<24) | ((r/256)<<16) | ((g/256)<<8) | (b/256);
+            }
+        }
+        if (ws->win)
+            apply_windowicon(ws);
+    } else {
+        ws->icondata = 0;
+        ws->iconlen = 0;
+    }
+    return Succeeded;
+}
+
+int getwindowicon(wbp w, struct imgdata *imd)
+{
+    wsp ws = w->window;
+    int i, j;
+    unsigned long *p;
+    if (!ws->icondata)
+        return Failed;
+    p = ws->icondata;
+    imd->format = &imgdataformat_RGBA32;
+    imd->width = *p++;
+    imd->height = *p++;
+    MemProtect(imd->data = malloc(imd->format->getlength(imd)));
     for (j = 0; j < imd->height; ++j) {
         for (i = 0; i < imd->width; ++i) {
             int r, g, b, a;
-            imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
-            ws->icondata[k++] = ((a/256)<<24) | ((r/256)<<16) | ((g/256)<<8) | (b/256);
+            b = 257 * (*p & 0xff);
+            g = 257 * (*p>>8 & 0xff);
+            r = 257 * (*p>>16 & 0xff);
+            a = 257 * (*p>>24 & 0xff);
+            imd->format->setpixel(imd, i, j, r, g, b, a);
+            ++p;
         }
-    }
-    if (ws->win) {
-        XChangeProperty(ws->display->display, ws->win,
-                        ATOM(ws->display, _NET_WM_ICON), 
-                        XA_CARDINAL, 
-                        32,
-                        PropModeReplace, 
-                        (unsigned char *)ws->icondata,
-                        ws->iconlen);
     }
     return Succeeded;
 }
@@ -1033,13 +1059,7 @@ static void wmap(wbp w)
             size_hints.min_width = size_hints.max_width = ws->width;
             size_hints.min_height = size_hints.max_height = ws->height;
         }
-        XChangeProperty(wd->display, ws->win,
-                        ATOM(wd, _NET_WM_NAME), 
-                        ATOM(wd, UTF8_STRING),
-                        8,
-                        PropModeReplace, 
-                        (unsigned char *)StrLoc(UcsBlk(ws->windowlabel).utf8),
-                        StrLen(UcsBlk(ws->windowlabel).utf8));
+        apply_windowlabel(ws);
 
         XSetWMNormalHints(wd->display, ws->win, &size_hints);
         XSelectInput(wd->display, ws->win, 
@@ -1047,15 +1067,8 @@ static void wmap(wbp w)
                      ButtonPressMask | ButtonReleaseMask | ButtonMotionMask | PropertyChangeMask |
                      StructureNotifyMask | PointerMotionMask | KeyReleaseMask);
 
-        if (ws->icondata) {
-            XChangeProperty(wd->display, ws->win,
-                            ATOM(ws->display, _NET_WM_ICON), 
-                            XA_CARDINAL, 
-                            32,
-                            PropModeReplace, 
-                            (unsigned char *)ws->icondata,
-                            ws->iconlen);
-        }
+        if (ws->icondata)
+            apply_windowicon(ws);
     }
 
     wmhints.input = True;
@@ -1425,19 +1438,36 @@ int warppointer(wbp w, int x, int y)
     return Succeeded;
 }
 
+static void apply_windowlabel(wsp ws)
+{
+    wdp wd = ws->display;
+    XChangeProperty(wd->display, ws->win,
+                    ATOM(wd, _NET_WM_NAME), 
+                    ATOM(wd, UTF8_STRING),
+                    8,
+                    PropModeReplace, 
+                    (unsigned char *)StrLoc(UcsBlk(ws->windowlabel).utf8),
+                    StrLen(UcsBlk(ws->windowlabel).utf8));
+}
+
+static void apply_windowicon(wsp ws)
+{
+    wdp wd = ws->display;
+    XChangeProperty(wd->display, ws->win,
+                    ATOM(wd, _NET_WM_ICON), 
+                    XA_CARDINAL, 
+                    32,
+                    PropModeReplace, 
+                    (unsigned char *)ws->icondata,
+                    ws->iconlen);
+}
+
 int setwindowlabel(wbp w, dptr val)
 {
     wsp ws = w->window;
-    wdp wd = ws->display;
     ws->windowlabel = *val;
     if (ws->win)
-        XChangeProperty(wd->display, ws->win,
-                        ATOM(wd, _NET_WM_NAME), 
-                        ATOM(wd, UTF8_STRING),
-                        8,
-                        PropModeReplace, 
-                        (unsigned char *)StrLoc(UcsBlk(ws->windowlabel).utf8),
-                        StrLen(UcsBlk(ws->windowlabel).utf8));
+        apply_windowlabel(ws);
     return Succeeded;
 }
 

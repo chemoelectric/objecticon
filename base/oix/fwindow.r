@@ -569,6 +569,19 @@ function graphics_Window_get_pattern_impl(self)
    }
 end
 
+function graphics_Window_get_icon_impl(self)
+   body {
+      struct imgdata *imd;
+      int rv;
+      GetSelfW();
+      imd = newimgdata();
+      if ((rv = getwindowicon(self_w, imd)) != Succeeded)
+          unlinkimgdata(imd);
+      AttemptOp(rv);
+      return C_integer((word)imd);
+   }
+end
+
 function graphics_Window_get_pixels_impl(self, x0, y0, w0, h0)
    body {
       struct imgdata *imd;
@@ -1401,8 +1414,12 @@ function graphics_Window_set_icon_impl(self, val)
    body {
       GetSelfW();
       {
-      PixelsStaticParam(val, id);
-      AttemptAttr(setwindowicon(self_w, id), "Failed to set window icon");
+      if (is:null(val))
+          AttemptAttr(setwindowicon(self_w, 0), "Failed to clear window icon");
+      else {
+          PixelsStaticParam(val, id);
+          AttemptAttr(setwindowicon(self_w, id), "Failed to set window icon");
+      }
       return self;
       }
    }
