@@ -2702,6 +2702,7 @@ static void set_RGBA32(struct imgdata *imd, int x, int y, int r, int g, int b, i
     *s++ = b / 256;
     *s++ = a / 256;
 }
+
 static void get_RGBA32(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
 {
     int n = imd->width * y + x;

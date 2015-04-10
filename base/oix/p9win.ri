@@ -1099,6 +1099,11 @@ int setwindowicon(wbp w, struct imgdata *imd)
     return Succeeded;
 }
 
+int getwindowicon(wbp w, struct imgdata *imd)
+{
+    return Failed;
+}
+
 #passthru #undef fillarc
 #passthru #define fillarc oi_fillarc        
 

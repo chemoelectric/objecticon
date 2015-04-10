@@ -216,7 +216,7 @@ int f(dptr s, dptr d)
    if (is:ucs(*s)) {
        char *s1;
        struct rangeset *rs;
-       int l = UcsBlk(*s).length;
+       word l = UcsBlk(*s).length;
        MemProtect(rs = init_rangeset());
        s1 = StrLoc(UcsBlk(*s).utf8);
        while (l-- > 0) {

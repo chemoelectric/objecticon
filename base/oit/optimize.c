@@ -1109,7 +1109,7 @@ static int cnv_cset(struct literal *s)
             return 1;
         }
         default: {
-            int i;
+            word i;
             char *p;
             struct rangeset *rs;
             if (!cnv_string(s))
@@ -1673,7 +1673,7 @@ static void fold_cat(struct lnode *n)
 {
     struct lnode_2 *x = (struct lnode_2 *)n;
     struct literal l1, l2;
-    int i;
+    word i;
 
     if (!get_literal(x->child1, &l1))
         return;

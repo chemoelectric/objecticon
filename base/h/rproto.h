@@ -308,6 +308,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    int  requestselection(wbp w, char *selection, char *targetname);
    int  sendselectionresponse(wbp w, word requestor, char *property, char *selection, char *target, word time, dptr data);
    int  setwindowicon   (wbp w, struct imgdata *imd);
+   int  getwindowicon   (wbp w, struct imgdata *imd);
    int  setpattern  (wbp w, struct imgdata *imd);
    int  getpattern  (wbp w, struct imgdata *imd);
    int  setwindowlabel  (wbp w, dptr val);
@@ -357,6 +358,9 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
 #ifdef MSWIN32
 LRESULT_CALLBACK WndProc  (HWND, UINT, WPARAM, LPARAM);
 void wfreersc(void);
+void ucs_to_wchars1(WCHAR *buff, dptr str, int nullterm);
+WCHAR *ucs_to_wchars(dptr str, int nullterm);
+void wchars_to_ucs(WCHAR *src, dptr res);
 #endif
 
 /*

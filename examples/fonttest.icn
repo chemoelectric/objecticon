@@ -94,7 +94,8 @@ class FontTestDialog(Dialog)
          font_label.set_label(ucs(cw.get_font()))
          size_label.set_label("Height=" || cw.get_font_height() || ", " ||
                               "Ascent=" || cw.get_font_ascent() || ", " ||
-                              "Descent=" || cw.get_font_descent())
+                              "Descent=" || cw.get_font_descent() || ", " ||
+                              "Width=" || cw.get_font_width())
          cw.close()
       } else {
          font_label.set_label("-")

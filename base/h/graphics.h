@@ -435,7 +435,6 @@ typedef struct _wstate {
   int           using_win;
   int           border_width;
 #elif MSWIN32
-  char		*windowlabel;		/* window label */
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   HWND		win;			/* client window */
   HBITMAP	pix;			/* backing bitmap */
