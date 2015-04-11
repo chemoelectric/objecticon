@@ -8,12 +8,28 @@
 #if IntBits == WordBits
    typedef int word;
    typedef unsigned int uword;
+   #define WordFmtCh "d"
+   #define XWordFmtCh "x"
+   #define UWordFmtCh "u"
 #elif LongBits == WordBits
    typedef long word;
    typedef unsigned long uword;
+   #define WordFmtCh "ld"
+   #define XWordFmtCh "lx"
+   #define UWordFmtCh "lu"
+#elif LongLongBits == WordBits
+   typedef long long word;
+   typedef unsigned long long uword;
+   #define WordFmtCh "lld"
+   #define XWordFmtCh "llx"
+   #define UWordFmtCh "llu"
 #else
    #error "WordBits must equal either IntBits or LongBits"
 #endif
+
+#define WordFmt "%"WordFmtCh
+#define XWordFmt "%"XWordFmtCh
+#define UWordFmt "%"UWordFmtCh
 
 /*
  * Select a size for large int DIGIT type; DigitBits is defined as

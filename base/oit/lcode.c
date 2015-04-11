@@ -130,13 +130,13 @@ static void outstr(struct strconst *sp, char *fmt, ...);
 static void outsdescrip(struct centry *ce, char *fmt, ...);
 
 #if WordBits == 32
-#define WordFmt "%08lx"
-#define ShortFmt "%04lx    "
-#define ByteFmt "%02lx      "
+#define PadWordFmt "%08"XWordFmtCh
+#define PadShortFmt "%04lx    "
+#define PadByteFmt "%02lx      "
 #else
-#define WordFmt "%016lx"
-#define ShortFmt "%04lx            "
-#define ByteFmt "%02lx              "
+#define PadWordFmt "%016"XWordFmtCh
+#define PadShortFmt "%04lx            "
+#define PadByteFmt "%02lx              "
 #endif
 
 
@@ -157,7 +157,7 @@ static void out_op(word op)
 static void word_field(word w, char *desc)
 {
     if (Dflag)
-        fprintf(dbgfile, WordFmt ":   " WordFmt "    #    %s=%ld\n", (long)pc, (long)w, desc, (long)w);
+        fprintf(dbgfile, PadWordFmt ":   " PadWordFmt "    #    %s=" WordFmt "\n", pc, w, desc, w);
     outword(w);
 }
 
@@ -193,7 +193,7 @@ static void emit_ir_var(struct ir_var *v, char *desc)
         }
         case WORD: {
             outwordx(Op_Int, "   %s=int", desc);
-            outwordx(v->w, "      %ld", (long)v->w);
+            outwordx(v->w, "      " WordFmt, v->w);
             break;
         }
         case KNULL: {
@@ -1731,7 +1731,7 @@ static void gentables()
             word ival;
             memcpy(&ival, ce->data, sizeof(word));
             outwordx(D_Integer, "D_Integer");
-            outwordx(ival, "   %ld", (long)ival);
+            outwordx(ival, "   " WordFmt, ival);
         } else if (ce->c_flag & F_StrLit) {
             struct strconst *sp = inst_strconst(ce->data, ce->length);
             outstr(sp, "String");
@@ -1764,10 +1764,10 @@ static void gentables()
                 fprintf(dbgfile, "# Offset %04lx\n", (long)sp->offset);
                 for (i = 0; i < sp->len; ++i) {
                     if (i == 0)
-                        fprintf(dbgfile, WordFmt ":    ", (long)pc);
+                        fprintf(dbgfile, PadWordFmt ":    ", pc);
                     else if (i % 8 == 0) {
                         t[j] = 0;
-                        fprintf(dbgfile, "   %s\n" WordFmt ":    ", t, (long)pc + i);
+                        fprintf(dbgfile, "   %s\n" PadWordFmt ":    ", t, pc + i);
                         j = 0;
                     }
                     fprintf(dbgfile, " %02x", s[i] & 0xff);
@@ -1795,25 +1795,25 @@ static void gentables()
 
     if (Dflag) {
         fprintf(dbgfile, "\n");
-        fprintf(dbgfile, "icodesize:        " WordFmt "\n", (long)hdr.icodesize);
-        fprintf(dbgfile, "class statics:    " WordFmt "\n", (long)hdr.ClassStatics);
-        fprintf(dbgfile, "class methods:    " WordFmt "\n", (long)hdr.ClassMethods);
-        fprintf(dbgfile, "class fields:     " WordFmt "\n", (long)hdr.ClassFields);
-        fprintf(dbgfile, "class field locs: " WordFmt "\n", (long)hdr.ClassFieldLocs);
-        fprintf(dbgfile, "classes:          " WordFmt "\n", (long)hdr.Classes);
-        fprintf(dbgfile, "records:          " WordFmt "\n", (long)hdr.Records);
-        fprintf(dbgfile, "fnames:           " WordFmt "\n", (long)hdr.Fnames);
-        fprintf(dbgfile, "globals:          " WordFmt "\n", (long)hdr.Globals);
-        fprintf(dbgfile, "gnames:           " WordFmt "\n", (long)hdr.Gnames);
-        fprintf(dbgfile, "gflags:           " WordFmt "\n", (long)hdr.Gflags);
-        fprintf(dbgfile, "glocs:            " WordFmt "\n", (long)hdr.Glocs);
-        fprintf(dbgfile, "statics:          " WordFmt "\n", (long)hdr.Statics);
-        fprintf(dbgfile, "snames:           " WordFmt "\n", (long)hdr.Snames);
-        fprintf(dbgfile, "tcasetables:      " WordFmt "\n", (long)hdr.TCaseTables);
-        fprintf(dbgfile, "filenms:          " WordFmt "\n", (long)hdr.Filenms);
-        fprintf(dbgfile, "linenums:         " WordFmt "\n", (long)hdr.linenums);
-        fprintf(dbgfile, "constants:        " WordFmt "\n", (long)hdr.Constants);
-        fprintf(dbgfile, "strcons:          " WordFmt "\n", (long)hdr.Strcons);
+        fprintf(dbgfile, "icodesize:        " XWordFmt "\n", hdr.icodesize);
+        fprintf(dbgfile, "class statics:    " XWordFmt "\n", hdr.ClassStatics);
+        fprintf(dbgfile, "class methods:    " XWordFmt "\n", hdr.ClassMethods);
+        fprintf(dbgfile, "class fields:     " XWordFmt "\n", hdr.ClassFields);
+        fprintf(dbgfile, "class field locs: " XWordFmt "\n", hdr.ClassFieldLocs);
+        fprintf(dbgfile, "classes:          " XWordFmt "\n", hdr.Classes);
+        fprintf(dbgfile, "records:          " XWordFmt "\n", hdr.Records);
+        fprintf(dbgfile, "fnames:           " XWordFmt "\n", hdr.Fnames);
+        fprintf(dbgfile, "globals:          " XWordFmt "\n", hdr.Globals);
+        fprintf(dbgfile, "gnames:           " XWordFmt "\n", hdr.Gnames);
+        fprintf(dbgfile, "gflags:           " XWordFmt "\n", hdr.Gflags);
+        fprintf(dbgfile, "glocs:            " XWordFmt "\n", hdr.Glocs);
+        fprintf(dbgfile, "statics:          " XWordFmt "\n", hdr.Statics);
+        fprintf(dbgfile, "snames:           " XWordFmt "\n", hdr.Snames);
+        fprintf(dbgfile, "tcasetables:      " XWordFmt "\n", hdr.TCaseTables);
+        fprintf(dbgfile, "filenms:          " XWordFmt "\n", hdr.Filenms);
+        fprintf(dbgfile, "linenums:         " XWordFmt "\n", hdr.linenums);
+        fprintf(dbgfile, "constants:        " XWordFmt "\n", hdr.Constants);
+        fprintf(dbgfile, "strcons:          " XWordFmt "\n", hdr.Strcons);
         fprintf(dbgfile, "config:           %s\n", (char*)hdr.config);
     }
 
@@ -1862,7 +1862,7 @@ static void align()
     n = WordSize - n;
     if (Dflag) {
         for (i = 0; i < n; ++i)
-            fprintf(dbgfile, WordFmt ":   " ByteFmt "    # Padding byte\n", (long)pc + i, (long)0);
+            fprintf(dbgfile, PadWordFmt ":   " PadByteFmt "    # Padding byte\n", pc + i, (long)0);
     }
     CodeCheck(n);
     for (i = 0; i < n; ++i)
@@ -1886,10 +1886,10 @@ static void outstr(struct strconst *sp, char *fmt, ...)
     if (Dflag) {
         va_list ap;
         va_start(ap, fmt);
-        fprintf(dbgfile, WordFmt ":   " WordFmt "    # ", (long)pc, (long)sp->len);
+        fprintf(dbgfile, PadWordFmt ":   " PadWordFmt "    # ", pc, sp->len);
         vfprintf(dbgfile, fmt, ap);
-        fprintf(dbgfile, "\n" WordFmt ": S+" WordFmt "    #    \"%s\"\n", 
-                         (long)pc + WordSize, (long)sp->offset, sp->s);
+        fprintf(dbgfile, "\n" PadWordFmt ": S+" PadWordFmt "    #    \"%s\"\n", 
+                         pc + WordSize, sp->offset, sp->s);
         va_end(ap);
     }
 
@@ -1911,7 +1911,7 @@ static void outwordx(word oword, char *fmt, ...)
     if (Dflag) {
         va_list ap;
         va_start(ap, fmt);
-        fprintf(dbgfile, WordFmt ":   " WordFmt "    # ", (long)pc, (long)oword);
+        fprintf(dbgfile, PadWordFmt ":   " PadWordFmt "    # ", pc, oword);
         vfprintf(dbgfile, fmt, ap);
         putc('\n', dbgfile);
         va_end(ap);
@@ -1924,7 +1924,7 @@ static void outshortx(short s, char *fmt, ...)
     if (Dflag) {
         va_list ap;
         va_start(ap, fmt);
-        fprintf(dbgfile, WordFmt ":   " ShortFmt "    # ", (long)pc, (long)s);
+        fprintf(dbgfile, PadWordFmt ":   " PadShortFmt "    # ", pc, (long)s);
         vfprintf(dbgfile, fmt, ap);
         putc('\n', dbgfile);
         va_end(ap);
@@ -1940,7 +1940,7 @@ static void outbytex(char b, char *fmt, ...)
     if (Dflag) {
         va_list ap;
         va_start(ap, fmt);
-        fprintf(dbgfile, WordFmt ":   " ByteFmt "    # ", (long)pc, (long)b);
+        fprintf(dbgfile, PadWordFmt ":   " PadByteFmt "    # ", pc, (long)b);
         vfprintf(dbgfile, fmt, ap);
         putc('\n', dbgfile);
         va_end(ap);
@@ -1955,7 +1955,7 @@ static void outwordz(word oword, char *fmt, ...)
     if (Dflag) {
         va_list ap;
         va_start(ap, fmt);
-        fprintf(dbgfile, WordFmt ": Z+" WordFmt "    # ", (long)pc, (long)oword);
+        fprintf(dbgfile, PadWordFmt ": Z+" PadWordFmt "    # ", pc, oword);
         vfprintf(dbgfile, fmt, ap);
         putc('\n', dbgfile);
         va_end(ap);
@@ -1968,7 +1968,7 @@ static void outsdescrip(struct centry *ce, char *fmt, ...)
     if (Dflag) {
         va_list ap;
         va_start(ap, fmt);
-        fprintf(dbgfile, WordFmt ": C[" WordFmt "]   # ", (long)pc, (long)ce->desc_no);
+        fprintf(dbgfile, PadWordFmt ": C[" PadWordFmt "]   # ", pc, ce->desc_no);
         vfprintf(dbgfile, fmt, ap);
         putc('\n', dbgfile);
         va_end(ap);
@@ -2007,7 +2007,7 @@ static void labout(int i, char *desc)
     struct chunk *chunk = chunks[i];
     word t = pc;
     if (Dflag)
-        fprintf(dbgfile, WordFmt ":   " WordFmt "    #    %s=chunk %d\n", (long)pc, (long)0, desc, i);
+        fprintf(dbgfile, PadWordFmt ":   " PadWordFmt "    #    %s=chunk %d\n", pc, (word)0, desc, i);
     if (!chunk)
         quit("Missing chunk: %d\n", i);
     outword(chunk->refs);

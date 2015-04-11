@@ -1043,16 +1043,16 @@ void show_regions()
    while (br->Gprev)
        br = br->Gprev;
    for (; br; br = br->Gnext) {
-       printf("Block   %12p %12ld %12p %12p %12p %12ld\n",
-              br, (long)br->size, br->base, br->end, br->free, (long)(br->end-br->free));
+       printf("Block   %12p %12" UWordFmtCh " %12p %12p %12p %12" UWordFmtCh "\n",
+              br, br->size, br->base, br->end, br->free, (uword)(br->end-br->free));
    }
 
    br = curstring;
    while (br->Gprev)
        br = br->Gprev;
    for (; br; br = br->Gnext) {
-       printf("String  %12p %12ld %12p %12p %12p %12ld\n",
-              br, (long)br->size, br->base, br->end, br->free, (long)(br->end-br->free));
+       printf("String  %12p %12" UWordFmtCh " %12p %12p %12p %12" UWordFmtCh "\n",
+              br, br->size, br->base, br->end, br->free, (uword)(br->end-br->free));
    }
 }
 

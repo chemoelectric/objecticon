@@ -101,6 +101,10 @@
    #define LongBits (ByteBits * SIZEOF_LONG)
 #endif					/* LongBits */
 
+#ifndef LongLongBits
+   #define LongLongBits (ByteBits * SIZEOF_LONG_LONG)
+#endif					/* LongBits */
+
 #ifndef RealBits
    #define RealBits (ByteBits * SIZEOF_DOUBLE)
 #endif					/* RealBits */

@@ -265,22 +265,22 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
         lseek(tmp,ftell(ifile),SEEK_SET);
         zfd = gzdopen(tmp, "r");
         if ((cbread = gzread(zfd, codeptr, hdr->icodesize)) != hdr->icodesize) {
-            fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-                    (long)hdr->icodesize,(long)cbread);
+            fprintf(stderr,"Tried to read " WordFmt " bytes of code, got " WordFmt "\n",
+                    hdr->icodesize, cbread);
             ffatalerr("bad icode file: %s", name);
         }
         gzclose(zfd);
     } else {
         if ((cbread = fread(codeptr, 1, hdr->icodesize, ifile)) != hdr->icodesize) {
-            fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-                    (long)hdr->icodesize,(long)cbread);
+            fprintf(stderr,"Tried to read " WordFmt " bytes of code, got " WordFmt "\n",
+                    hdr->icodesize, cbread);
             ffatalerr("bad icode file: %s", name);
         }
     }
 #else					/* HAVE_LIBZ */
     if ((cbread = fread(codeptr, 1, hdr->icodesize, ifile)) != hdr->icodesize) {
-        fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-                (long)hdr->icodesize,(long)cbread);
+        fprintf(stderr,"Tried to read " WordFmt " bytes of code, got " WordFmt "\n",
+                hdr->icodesize, cbread);
         ffatalerr("bad icode file: %s", name);
     }
 #endif					/* HAVE_LIBZ */
@@ -363,11 +363,11 @@ void env_int(char *name, int *variable, int min, int max)
  */
 void env_word(char *name, word *variable, word min, word max)
 {
-    long t;
+    word t;
     char *value, ch;
     if ((value = getenv(name)) == NULL || *value == '\0')
         return;
-    if (sscanf(value, "%ld%c", &t, &ch) != 1)
+    if (sscanf(value, WordFmt "%c", &t, &ch) != 1)
         ffatalerr("environment variable not numeric: %s=%s", name, value);
     if (t < min || t > max)
         ffatalerr("environment variable out of range: %s=%s", name, value);
@@ -379,11 +379,11 @@ void env_word(char *name, word *variable, word min, word max)
  */
 void env_uword(char *name, uword *variable, uword min, uword max)
 {
-    unsigned long t;
+    uword t;
     char *value, ch;
     if ((value = getenv(name)) == NULL || *value == '\0')
         return;
-    if (sscanf(value, "%lu%c", &t, &ch) != 1)
+    if (sscanf(value, UWordFmt "%c", &t, &ch) != 1)
         ffatalerr("environment variable not numeric: %s=%s", name, value);
     if (t < min || t > max)
         ffatalerr("environment variable out of range: %s=%s", name, value);
