@@ -219,6 +219,7 @@ typedef int time_t, DIR, uid_t, gid_t, pid_t, stringint, socklen_t;
    typedef int BLENDFUNCTION, WCHAR, WSADATA, WORD, HANDLE, MEMORYSTATUS;
    typedef int PVOID, PFIBER_START_ROUTINE, WIN32_FIND_DATA;
    typedef int INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64;
+   typedef int SIZE_T, INT_PTR;
 #endif				/* MSWIN32 */
 
 /*

@@ -423,7 +423,7 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
      * again with it coming up.  This generates one icon event, on the
      * second qmouseevents call.
      */
-    if ((long)wp > 0)
+    if ((INT_PTR)wp > 0)
         qmouseevents(ws, state|8, x, y, t, fl);
     else
         qmouseevents(ws, state|16, x, y, t, fl);
@@ -749,7 +749,7 @@ int sendselectionresponse(wbp w, word requestor, char *property,
     wsp ws = w->window;
     HGLOBAL hg;
     char *phg;
-    unsigned long nbytes;
+    SIZE_T nbytes;
 
     CheckUnhidden(ws);
 
@@ -1973,8 +1973,7 @@ void wchars_to_ucs(WCHAR *src, dptr res)
     tended char *ts;
     tended struct b_ucs *bp;
     tended struct descrip utf8;
-    unsigned long wlen;
-    word slen;
+    word wlen, slen;
     WCHAR *p;
     char *q;
 
