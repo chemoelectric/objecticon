@@ -118,10 +118,10 @@ void traceback(struct b_coexpr *ce, int with_xtrace, int act_chain)
         } else {
             /* Will print some of this coexpression's calls, so print header */
             if (ae->coex->activator)
-                fprintf(stderr,"co-expression#%lu activated by co-expression#%lu\n", 
-                        (unsigned long)ae->coex->id, (unsigned long)ae->coex->activator->id);
+                fprintf(stderr,"co-expression#" UWordFmt " activated by co-expression#" UWordFmt "\n", 
+                        ae->coex->id, ae->coex->activator->id);
             else
-                fprintf(stderr,"co-expression#%lu (never activated)\n", (unsigned long)ae->coex->id);
+                fprintf(stderr,"co-expression#" UWordFmt " (never activated)\n", ae->coex->id);
 
             if (depth > LIMIT) {
                 if (depth == LIMIT + 1)
@@ -219,9 +219,9 @@ void trace_coact(struct b_coexpr *from, struct b_coexpr *to, dptr val)
 {
     uword to_id = to->id;  /* Save since outimage may collect */
     cotrace_line(from);
-    fprintf(stderr,"; co-expression#%lu : ", (unsigned long)from->id);
+    fprintf(stderr,"; co-expression#" UWordFmt " : ", from->id);
     outimage(stderr, val, 0);
-    fprintf(stderr, " @ co-expression#%lu\n", (unsigned long)to_id);
+    fprintf(stderr, " @ co-expression#" UWordFmt "\n", to_id);
     fflush(stderr);
 }
 
@@ -229,23 +229,23 @@ void trace_coret(struct b_coexpr *from, struct b_coexpr *to, dptr val)
 {
     uword to_id = to->id;  /* Save since outimage may collect */
     cotrace_line(from);
-    fprintf(stderr,"; co-expression#%lu returned ", (unsigned long)from->id);
+    fprintf(stderr,"; co-expression#" UWordFmt " returned ", from->id);
     outimage(stderr, val, 0);
-    fprintf(stderr, " to co-expression#%lu\n", (unsigned long)to_id);
+    fprintf(stderr, " to co-expression#" UWordFmt "\n", to_id);
     fflush(stderr);
 }
 
 void trace_cofail(struct b_coexpr *from, struct b_coexpr *to)
 {
     cotrace_line(from);
-    fprintf(stderr,"; co-expression#%lu failed to co-expression#%lu\n", (unsigned long)from->id, (unsigned long)to->id);
+    fprintf(stderr,"; co-expression#" UWordFmt " failed to co-expression#" UWordFmt "\n", from->id, to->id);
     fflush(stderr);
 }
 
 void trace_cofail_to_handler(struct b_coexpr *from, struct b_coexpr *to)
 {
     cotrace_line(from);
-    fprintf(stderr,"; co-expression#%lu failed to &handler co-expression#%lu\n", (unsigned long)from->id, (unsigned long)to->id);
+    fprintf(stderr,"; co-expression#" UWordFmt " failed to &handler co-expression#" UWordFmt "\n", from->id, to->id);
     fflush(stderr);
 }
 
@@ -776,7 +776,7 @@ void xdisp(struct b_coexpr *ce, int count, FILE *f)
     struct p_frame *pf, *upf;
     struct progstate *p;
 
-    fprintf(f,"co-expression#%lu(%ld)\n\n", (unsigned long)ce->id, (long)ce->size);
+    fprintf(f,"co-expression#" UWordFmt "(" WordFmt ")\n\n", ce->id, ce->size);
     pf = ce->curr_pf;
 
     /* The user pf will be null on a termination dump */
@@ -889,7 +889,7 @@ void print_vword(FILE *f, dptr d) {
         outimage(f, d, 1);
     } else if (is:struct_var(*d)) {
         /* D_StructVar (with an offset) */
-        fprintf(f, "%p+%lu -> ", BlkLoc(*d), (unsigned long)(WordSize*Offset(*d)));
+        fprintf(f, "%p+" UWordFmt " -> ", BlkLoc(*d), (uword)(WordSize*Offset(*d)));
         print_desc(f, OffsetVarLoc(*d));
     } else {
         switch (d->dword) {
@@ -901,7 +901,7 @@ void print_vword(FILE *f, dptr d) {
             }
             case D_Tvsubs : {
                 struct b_tvsubs *p = &TvsubsBlk(*d);
-                fprintf(f, "%p -> sub=%ld+:%ld ssvar=", p, (long)p->sspos, (long)p->sslen);
+                fprintf(f, "%p -> sub=" WordFmt "+:" WordFmt " ssvar=", p, p->sspos, p->sslen);
                 print_desc(f, &p->ssvar);
                 break;
             }
@@ -935,7 +935,7 @@ void print_vword(FILE *f, dptr d) {
             }
 
             case D_Integer : {
-                fprintf(f, "%ld", (long)IntVal(*d)); 
+                fprintf(f, WordFmt, IntVal(*d)); 
                 break;
             }
 
@@ -1014,10 +1014,10 @@ void print_vword(FILE *f, dptr d) {
 void print_dword(FILE *f, dptr d) {
     if (Qual(*d)) {
         /* String */
-        fprintf(f, "%ld", (long)d->dword);
+        fprintf(f, WordFmt, d->dword);
     } else if (is:struct_var(*d)) {
         /* D_StructVar (with an offset) */
-        fprintf(f, "D_StructVar off:%lu", (unsigned long)Offset(*d));
+        fprintf(f, "D_StructVar off:" UWordFmt "", (uword)Offset(*d));
     } else {
         switch (d->dword) {
             case D_TendPtr : fputs("D_TendPtr", f); break;
@@ -1094,7 +1094,7 @@ void showstack(FILE *f, struct b_coexpr *c)
                 tmp.dword = D_Proc;
                 BlkLoc(tmp) = (union block *)cf->proc;
                 fprintf(f, "\tproc="); print_vword(f, &tmp); fprintf(f, "\n");
-                fprintf(f, "\tpc=0x%lx\n", (long)cf->pc);
+                fprintf(f, "\tpc=0x" XWordFmt "\n", cf->pc);
                 fprintf(f, "\tnargs=%d\n", cf->nargs);
                 for (i = 0; i < cf->nargs; ++i) {
                     fprintf(f, "\targs[%d]=", i); print_desc(f, &cf->args[i]); fprintf(f, "\n");

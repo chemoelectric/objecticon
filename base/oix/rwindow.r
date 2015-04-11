@@ -211,20 +211,6 @@ static void linearfilter_impl(int *val, float m, int c)
     else if (*val > 65535) *val = 65535;
 }
 
-/*
- * Place in d a descriptor which is a ucs string giving the default
- * window label.  This function does an allocation.
- */
-void defaultwindowlabel(dptr d)
-{
-    struct descrip tmp;
-    struct b_ucs *p;                   /* Doesn't need to be tended */
-    LitStr(DEFAULT_WINDOW_LABEL, &tmp);
-    p = make_ucs_block(&tmp, strlen(DEFAULT_WINDOW_LABEL));
-    d->dword = D_Ucs;
-    BlkLoc(*d) = (union block *)p;
-}
-
 static void linearfilter(struct filter *f)
 {
     int i, j;

@@ -810,7 +810,7 @@ wbp wopen(char *display)
 
     GAlloc(ws, _wstate);
     ws->listp = nulldesc;
-    ws->windowlabel = nulldesc;
+    ws->windowlabel = defaultwindowlabel;
     add_gc_global(&ws->windowlabel);
     add_gc_global(&ws->listp);
     ws->cursor = lookup_wcursor(wd, "left ptr");
@@ -820,7 +820,6 @@ wbp wopen(char *display)
     ws->maxwidth = ws->maxheight = INT_MAX;
     ws->width = ws->height = ws->pixwidth = ws->pixheight = 1;
     ws->pxft = NULL;
-    defaultwindowlabel(&ws->windowlabel);
     ws->display = wd;
     w->window = ws;
     create_list(64, &ws->listp);

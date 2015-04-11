@@ -129,7 +129,7 @@ word            mod3            (word a,word b);
 word            mul             (word a,word b);
 word            neg             (word a);
 void            outimage        (FILE *f,dptr dp,int noimage);
-longlong        physicalmemorysize(void);
+ulonglong       physicalmemorysize(void);
 word            prescan         (dptr d);
 int             putstr          (FILE *f,dptr d);
 int             putn            (FILE *f, char *s, int n);
@@ -336,7 +336,6 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    void registerplatformimgdataformats(void);
    int definepointer(wbp w, char *name, int x, int y);
    int copypointer(wbp w, char *dest, char *src);
-   void defaultwindowlabel(dptr d);
 
 #if XWindows
    struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b, int a);

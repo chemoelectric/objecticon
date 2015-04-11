@@ -315,7 +315,7 @@ wbp wopen(char *display)
 
     GAlloc(ws, _wstate);
     ws->listp = nulldesc;
-    ws->windowlabel = nulldesc;
+    ws->windowlabel = defaultwindowlabel;
     add_gc_global(&ws->windowlabel);
     add_gc_global(&ws->listp);
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
@@ -327,7 +327,6 @@ wbp wopen(char *display)
     ws->maxwidth = ws->maxheight = INT_MAX;
     ws->width = ws->height = 1;
     ws->state = HiddenCanvas;
-    defaultwindowlabel(&ws->windowlabel);
     w->window = ws;
     ws->wsys = wsysstr;
     create_list(64, &ws->listp);

@@ -3060,7 +3060,7 @@ static void print_ir_var(struct ir_var *v)
             break;
         }
         case WORD: {
-            fprintf(stderr, "{word %ld}", (long)v->w);
+            fprintf(stderr, "{word " WordFmt "}", v->w);
             break;
         }
         case KNULL: {

@@ -395,7 +395,7 @@ void bigprint(FILE *f, dptr da)
         + log((double)blk->digits[blk->msd]) * 0.4342944819032518 + 0.5;
     /* 1 / ln(10) */
     if (dlen >= MaxDigits) {
-        fprintf(f, "integer(~10^%ld)",(long)dlen);
+        fprintf(f, "integer(~10^" WordFmt ")", dlen);
         return;
     }
 

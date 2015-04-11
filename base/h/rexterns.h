@@ -54,6 +54,7 @@ extern struct descrip minusonedesc;	/* -ve one */
 extern struct descrip thousanddesc;	/* 1000 */
 extern struct descrip milliondesc;	/* 1000000 */
 extern struct descrip billiondesc;	/* 10^9 */
+extern struct descrip defaultwindowlabel;	/* ucs string, the default window label */
 
 extern struct c_proc Bdeferred_method_stub;  /* Deferred method block */
 

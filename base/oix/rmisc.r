@@ -550,7 +550,7 @@ void outimage(FILE *f, dptr dp, int noimage)
          if (Type(*dp) == T_Lrgint)
             bigprint(f, dp);
          else
-            fprintf(f, "%ld", (long)IntVal(*dp));
+            fprintf(f, WordFmt, IntVal(*dp));
 
       real: {
          double rresult;
@@ -644,20 +644,18 @@ void outimage(FILE *f, dptr dp, int noimage)
          /*
           * Print "table#m(n)" where n is the size of the table.
           */
-         fprintf(f, "table#%lu(%ld)", (unsigned long)TableBlk(*dp).id,
-            (long)TableBlk(*dp).size);
+         fprintf(f, "table#" UWordFmt "(" WordFmt ")", TableBlk(*dp).id, TableBlk(*dp).size);
          }
 
       set: {
 	/*
          * print "set#m(n)" where n is the cardinality of the set
          */
-	fprintf(f,"set#%lu(%ld)",(unsigned long)SetBlk(*dp).id,
-           (long)SetBlk(*dp).size);
+	fprintf(f,"set#" UWordFmt "(" WordFmt ")", SetBlk(*dp).id, SetBlk(*dp).size);
         }
 
      methp: {
-             fprintf(f, "methp#%lu(",(unsigned long)MethpBlk(*dp).id);
+             fprintf(f, "methp#" UWordFmt "(", MethpBlk(*dp).id);
              tdp.dword = D_Object;
              BlkLoc(tdp) = (union block*)MethpBlk(*dp).object;
              outimage(f, &tdp, noimage);
@@ -676,12 +674,12 @@ void outimage(FILE *f, dptr dp, int noimage)
               */
              fprintf(f, "object ");
              putstr(f, ObjectBlk(*dp).class->name);
-             fprintf(f, "#%lu", (unsigned long)ObjectBlk(*dp).id);
+             fprintf(f, "#" UWordFmt "", ObjectBlk(*dp).id);
              j = ObjectBlk(*dp).class->n_instance_fields;
              if (j <= 0)
                  fprintf(f, "()");
              else if (noimage > 0)
-                 fprintf(f, "(%ld)", (long)j);
+                 fprintf(f, "(" WordFmt ")", j);
              else {
                  putc('(', f);
                  i = 0;
@@ -697,7 +695,7 @@ void outimage(FILE *f, dptr dp, int noimage)
          }
 
      weakref: {
-             fprintf(f, "weakref#%lu", (unsigned long)WeakrefBlk(*dp).id);
+             fprintf(f, "weakref#" UWordFmt "", WeakrefBlk(*dp).id);
              tdp = WeakrefBlk(*dp).val;
              if (is:null(tdp))
                  fprintf(f, "()");
@@ -716,12 +714,12 @@ void outimage(FILE *f, dptr dp, int noimage)
           */
          fprintf(f, "record ");
          putstr(f, RecordBlk(*dp).constructor->name);
-         fprintf(f, "#%lu", (unsigned long)RecordBlk(*dp).id);
+         fprintf(f, "#" UWordFmt "", RecordBlk(*dp).id);
          j = RecordBlk(*dp).constructor->n_fields;
          if (j <= 0)
             fprintf(f, "()");
          else if (noimage > 0)
-            fprintf(f, "(%ld)", (long)j);
+            fprintf(f, "(" WordFmt ")", j);
          else {
             putc('(', f);
             i = 0;
@@ -737,9 +735,8 @@ void outimage(FILE *f, dptr dp, int noimage)
          }
 
       coexpr: {
-         fprintf(f, "co-expression#%lu(%ld)",
-            (unsigned long)CoexprBlk(*dp).id,
-            (long)CoexprBlk(*dp).size);
+         fprintf(f, "co-expression#" UWordFmt "(" WordFmt ")",
+                 CoexprBlk(*dp).id, CoexprBlk(*dp).size);
          }
 
       tvsubs: {
@@ -754,9 +751,9 @@ void outimage(FILE *f, dptr dp, int noimage)
          outimage(f, &sv, noimage+1);
 
          if (TvsubsBlk(*dp).sslen == 1)
-            fprintf(f, "[%ld]", (long)TvsubsBlk(*dp).sspos);
+            fprintf(f, "[" WordFmt "]", TvsubsBlk(*dp).sspos);
          else
-            fprintf(f, "[%ld+:%ld]", (long)TvsubsBlk(*dp).sspos, (long)TvsubsBlk(*dp).sslen);
+            fprintf(f, "[" WordFmt "+:" WordFmt "]", TvsubsBlk(*dp).sspos, TvsubsBlk(*dp).sslen);
 
          if (!noimage) {
              deref(&sv, &tdp);
@@ -860,7 +857,7 @@ void outimage(FILE *f, dptr dp, int noimage)
                  tdp.dword = D_List;
                  BlkLoc(tdp) = bp->lelem.listprev;
                  outimage(f, &tdp, noimage + 1);
-                 fprintf(f,"[%ld]", (long)i);
+                 fprintf(f,"[" WordFmt "]", i);
                  break;
              }
              case T_Object: { 		/* object */
@@ -968,7 +965,7 @@ static void listimage(FILE *f, dptr dp, int noimage)
       /*
        * Just give indication of size if the list isn't empty.
        */
-      fprintf(f, "list#%lu(%ld)", (unsigned long)lp->id, (long)size);
+      fprintf(f, "list#" UWordFmt "(" WordFmt ")", lp->id, size);
       return;
       }
 
@@ -978,7 +975,7 @@ static void listimage(FILE *f, dptr dp, int noimage)
     *  last ListLimit elements.
     */
 
-   fprintf(f, "list#%lu = [", (unsigned long)lp->id);
+   fprintf(f, "list#" UWordFmt " = [", lp->id);
 
    count = 1;
    i = 0;
@@ -1202,7 +1199,7 @@ void getimage(dptr dp1, dptr dp2)
                + log((double)blk->digits[blk->msd]) * 0.4342944819032518 + 0.5;
 							/* 1 / ln(10) */
             if (dlen >= MaxDigits) {
-               sprintf(sbuf,"integer(~10^%ld)",(long)dlen);
+               sprintf(sbuf,"integer(~10^" WordFmt ")", dlen);
 	       len = strlen(sbuf);
                MemProtect(StrLoc(*dp2) = alcstr(sbuf,len));
 
@@ -1317,7 +1314,7 @@ void getimage(dptr dp1, dptr dp2)
           *  "list#m(n)"
           * where n is the current size of the list.
           */
-         sprintf(sbuf, "list#%lu(%ld)", (unsigned long)ListBlk(*dp1).id, (long)ListBlk(*dp1).size);
+         sprintf(sbuf, "list#" UWordFmt "(" WordFmt ")", ListBlk(*dp1).id, ListBlk(*dp1).size);
          len = strlen(sbuf);
          MemProtect(StrLoc(*dp2) = alcstr(sbuf, len));
          StrLen(*dp2) = len;
@@ -1329,7 +1326,7 @@ void getimage(dptr dp1, dptr dp2)
           *  "table#m(n)"
           * where n is the size of the table.
           */
-         sprintf(sbuf, "table#%lu(%ld)", (unsigned long)TableBlk(*dp1).id, (long)TableBlk(*dp1).size);
+         sprintf(sbuf, "table#" UWordFmt "(" WordFmt ")", TableBlk(*dp1).id, TableBlk(*dp1).size);
          len = strlen(sbuf);
          MemProtect(StrLoc(*dp2) = alcstr(sbuf, len));
          StrLen(*dp2) = len;
@@ -1339,7 +1336,7 @@ void getimage(dptr dp1, dptr dp2)
          /*
           * Produce "set#m(n)" where n is size of the set.
           */
-         sprintf(sbuf, "set#%lu(%ld)", (unsigned long)SetBlk(*dp1).id, (long)SetBlk(*dp1).size);
+         sprintf(sbuf, "set#" UWordFmt "(" WordFmt ")", SetBlk(*dp1).id, SetBlk(*dp1).size);
          len = strlen(sbuf);
          MemProtect(StrLoc(*dp2) = alcstr(sbuf,len));
          StrLen(*dp2) = len;
@@ -1352,7 +1349,7 @@ void getimage(dptr dp1, dptr dp2)
           * where n is the number of fields.
           */
          struct b_constructor *rec_const = RecordBlk(*dp1).constructor;
-         sprintf(sbuf, "#%lu(%ld)", (unsigned long)RecordBlk(*dp1).id, (long)rec_const->n_fields);
+         sprintf(sbuf, "#" UWordFmt "(" WordFmt ")", RecordBlk(*dp1).id, rec_const->n_fields);
          len = 7 + strlen(sbuf) + StrLen(*rec_const->name);
 	 MemProtect (StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
@@ -1374,7 +1371,7 @@ void getimage(dptr dp1, dptr dp2)
          td1.dword = D_Proc;
          BlkLoc(td1) = (union block*)MethpBlk(*dp1).proc;
          getimage(&td1, &td3);
-         sprintf(sbuf, "methp#%lu(", (unsigned long)MethpBlk(*dp1).id);
+         sprintf(sbuf, "methp#" UWordFmt "(", MethpBlk(*dp1).id);
          len = strlen(sbuf) + StrLen(td2) + 1 + StrLen(td3) + 1;
          MemProtect (StrLoc(*dp2) = reserve(Strings, len));
          StrLen(*dp2) = len;
@@ -1393,12 +1390,12 @@ void getimage(dptr dp1, dptr dp2)
          tended struct descrip td1, td2;
          td1 = WeakrefBlk(*dp1).val;
          if (is:null(td1)) {
-             sprintf(sbuf, "weakref#%lu()", (unsigned long)WeakrefBlk(*dp1).id);
+             sprintf(sbuf, "weakref#" UWordFmt "()", WeakrefBlk(*dp1).id);
              len = strlen(sbuf);
              MemProtect(StrLoc(*dp2) = alcstr(sbuf, len));
              StrLen(*dp2) = len;
          } else {
-             sprintf(sbuf, "weakref#%lu(", (unsigned long)WeakrefBlk(*dp1).id);
+             sprintf(sbuf, "weakref#" UWordFmt "(", WeakrefBlk(*dp1).id);
              getimage(&td1, &td2);
              len = strlen(sbuf) + StrLen(td2) + 1;
              MemProtect (StrLoc(*dp2) = reserve(Strings, len));
@@ -1416,7 +1413,7 @@ void getimage(dptr dp1, dptr dp2)
             * where n is the number of fields.
             */
            struct b_class *obj_class = ObjectBlk(*dp1).class;   
-           sprintf(sbuf, "#%lu(%ld)", (unsigned long)ObjectBlk(*dp1).id, (long)obj_class->n_instance_fields);
+           sprintf(sbuf, "#" UWordFmt "(" WordFmt ")", ObjectBlk(*dp1).id, obj_class->n_instance_fields);
            len = 7 + strlen(sbuf) + StrLen(*obj_class->name);
            MemProtect (StrLoc(*dp2) = reserve(Strings, len));
            StrLen(*dp2) = len;
@@ -1434,7 +1431,7 @@ void getimage(dptr dp1, dptr dp2)
           *  number of results that have been produced.
           */
 
-         sprintf(sbuf, "co-expression#%lu(%ld)", (unsigned long)CoexprBlk(*dp1).id, (long)CoexprBlk(*dp1).size);
+         sprintf(sbuf, "co-expression#" UWordFmt "(" WordFmt ")", CoexprBlk(*dp1).id, CoexprBlk(*dp1).size);
          len = strlen(sbuf);
          MemProtect(StrLoc(*dp2) = alcstr(sbuf, len));
          StrLen(*dp2) = len;
@@ -1577,7 +1574,7 @@ static void keyref(dptr dp1, dptr dp2)
     else
         while(BlkType(bp) == T_Telem)
             bp = bp->telem.clink;
-    sprintf(sbuf, "table#%lu[", (unsigned long)bp->table.id);
+    sprintf(sbuf, "table#" UWordFmt "[", bp->table.id);
 
     tr = TelemBlk(*dp1).tref;
     getimage(&tr, &td);
@@ -1603,9 +1600,9 @@ int getname(dptr dp1, dptr dp2)
       tvsubs: {
             tended struct descrip tdp1, tdp2;
             if (TvsubsBlk(*dp1).sslen == 1)
-                sprintf(sbuf, "[%ld]", (long)TvsubsBlk(*dp1).sspos);
+                sprintf(sbuf, "[" WordFmt "]", TvsubsBlk(*dp1).sspos);
             else
-                sprintf(sbuf, "[%ld+:%ld]", (long)TvsubsBlk(*dp1).sspos, (long)TvsubsBlk(*dp1).sslen);
+                sprintf(sbuf, "[" WordFmt "+:" WordFmt "]", TvsubsBlk(*dp1).sspos, TvsubsBlk(*dp1).sslen);
             tdp1 = TvsubsBlk(*dp1).ssvar;
             getname(&tdp1, &tdp2);
             len = StrLen(tdp2) + strlen(sbuf);
@@ -1725,8 +1722,8 @@ int getname(dptr dp1, dptr dp2)
                         bp = bp->lelem.listprev;
                         i += bp->lelem.nused;
                     }
-                    sprintf(sbuf,"list#%lu[%ld]",
-                            (unsigned long)bp->lelem.listprev->list.id, (long)i);
+                    sprintf(sbuf,"list#" UWordFmt "[" WordFmt "]",
+                            bp->lelem.listprev->list.id, i);
                     i = strlen(sbuf);
                     MemProtect(StrLoc(*dp2) = alcstr(sbuf,i));
                     StrLen(*dp2) = i;
@@ -1736,7 +1733,7 @@ int getname(dptr dp1, dptr dp2)
                     dptr fname;
                     i = varptr - RecordBlk(*dp1).fields;
                     fname = c->program->Fnames[c->fnums[i]];
-                    sprintf(sbuf,"#%lu", (unsigned long)RecordBlk(*dp1).id);
+                    sprintf(sbuf,"#" UWordFmt "", RecordBlk(*dp1).id);
                     len = 7 + StrLen(*c->name) + strlen(sbuf) + 1 + StrLen(*fname);
                     MemProtect(StrLoc(*dp2) = reserve(Strings, len));
                     StrLen(*dp2) = len;
@@ -1752,7 +1749,7 @@ int getname(dptr dp1, dptr dp2)
                     dptr fname;
                     i = varptr - ObjectBlk(*dp1).fields;
                     fname =  c->program->Fnames[c->fields[i]->fnum];
-                    sprintf(sbuf,"#%lu", (unsigned long)ObjectBlk(*dp1).id);
+                    sprintf(sbuf,"#" UWordFmt "", ObjectBlk(*dp1).id);
                     len = 7 + StrLen(*c->name) + strlen(sbuf) + 1 + StrLen(*fname);
                     MemProtect(StrLoc(*dp2) = reserve(Strings, len));
                     StrLen(*dp2) = len;

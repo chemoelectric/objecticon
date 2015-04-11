@@ -8,15 +8,18 @@
 #include "../h/opnames.h"
 #include "../h/modflags.h"
 
-static FILE    *readhdr	(char *name, struct header *hdr);
-static void    initptrs (struct progstate *p, struct header *h);
-static void    initprogstate(struct progstate *p);
-static void    initalloc(struct progstate *p);
-static void    handle_prog_exit(void);
-static void    relocate_code(struct progstate *ps, word *c);
-static void    startuperr(char *fmt, ...);
-static void    conv_addr(void);
-static void    conv_var(void);
+static FILE *readhdr(char *name, struct header *hdr);
+static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codeptr);
+static void initptrs (struct progstate *p, struct header *h);
+static void initprogstate(struct progstate *p);
+static void initalloc(struct progstate *p);
+static void handle_prog_exit(void);
+static void relocate_code(struct progstate *ps, word *c);
+static void startuperr(char *fmt, ...);
+static void conv_addr(void);
+static void conv_var(void);
+static struct b_cset *make_static_cset_block(int n_ranges, ...);
+static struct b_ucs *make_static_ucs_block(char *utf8);
 
 
 /*
@@ -104,6 +107,7 @@ struct descrip minusonedesc;           	/* integer -1 */
 struct descrip thousanddesc;	        /* 1000 */
 struct descrip milliondesc;	        /* 1000000 */
 struct descrip billiondesc;	        /* 10^9 */
+struct descrip defaultwindowlabel;	/* ucs string, the default window label */
 
 struct b_cset *emptycs;   /* '' */
 struct b_cset *blankcs;   /* ' ' */
@@ -261,22 +265,22 @@ static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codept
         lseek(tmp,ftell(ifile),SEEK_SET);
         zfd = gzdopen(tmp, "r");
         if ((cbread = gzread(zfd, codeptr, hdr->icodesize)) != hdr->icodesize) {
-            fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-                    (long)hdr->icodesize,(long)cbread);
+            fprintf(stderr,"Tried to read " WordFmt " bytes of code, got " WordFmt "\n",
+                    hdr->icodesize, cbread);
             ffatalerr("bad icode file: %s", name);
         }
         gzclose(zfd);
     } else {
         if ((cbread = fread(codeptr, 1, hdr->icodesize, ifile)) != hdr->icodesize) {
-            fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-                    (long)hdr->icodesize,(long)cbread);
+            fprintf(stderr,"Tried to read " WordFmt " bytes of code, got " WordFmt "\n",
+                    hdr->icodesize, cbread);
             ffatalerr("bad icode file: %s", name);
         }
     }
 #else					/* HAVE_LIBZ */
     if ((cbread = fread(codeptr, 1, hdr->icodesize, ifile)) != hdr->icodesize) {
-        fprintf(stderr,"Tried to read %ld bytes of code, got %ld\n",
-                (long)hdr->icodesize,(long)cbread);
+        fprintf(stderr,"Tried to read " WordFmt " bytes of code, got " WordFmt "\n",
+                hdr->icodesize, cbread);
         ffatalerr("bad icode file: %s", name);
     }
 #endif					/* HAVE_LIBZ */
@@ -310,6 +314,33 @@ static struct b_cset *make_static_cset_block(int n_ranges, ...)
     return b;
 }
 
+static struct b_ucs *make_static_ucs_block(char *utf8)
+{
+    word index_step, n_offs, length;
+    uword blksize;
+    char *t;
+    struct b_ucs *b;
+    t = utf8;
+    length = 0;
+    while (*t) {
+        utf8_iter(&t);
+        ++length;
+    }
+    if (length == 0)
+        index_step = n_offs = 0;
+    else {
+        index_step = calc_ucs_index_step(length);
+        n_offs = (length - 1) / index_step;
+    }
+    blksize = sizeof(struct b_ucs) + ((n_offs - 1) * sizeof(word));
+    Protect(b = calloc(blksize, 1), startuperr("Insufficient memory"));
+    b->blksize = blksize;
+    b->index_step = index_step;
+    CMakeStr(utf8, &b->utf8);
+    b->length = length;
+    b->n_off_indexed = 0;
+    return b;
+}
 
 /*
  * env_int - get the value of an integer-valued environment variable.
@@ -332,11 +363,11 @@ void env_int(char *name, int *variable, int min, int max)
  */
 void env_word(char *name, word *variable, word min, word max)
 {
-    long t;
+    word t;
     char *value, ch;
     if ((value = getenv(name)) == NULL || *value == '\0')
         return;
-    if (sscanf(value, "%ld%c", &t, &ch) != 1)
+    if (sscanf(value, WordFmt "%c", &t, &ch) != 1)
         ffatalerr("environment variable not numeric: %s=%s", name, value);
     if (t < min || t > max)
         ffatalerr("environment variable out of range: %s=%s", name, value);
@@ -348,11 +379,11 @@ void env_word(char *name, word *variable, word min, word max)
  */
 void env_uword(char *name, uword *variable, uword min, uword max)
 {
-    unsigned long t;
+    uword t;
     char *value, ch;
     if ((value = getenv(name)) == NULL || *value == '\0')
         return;
-    if (sscanf(value, "%lu%c", &t, &ch) != 1)
+    if (sscanf(value, UWordFmt "%c", &t, &ch) != 1)
         ffatalerr("environment variable not numeric: %s=%s", name, value);
     if (t < min || t > max)
         ffatalerr("environment variable out of range: %s=%s", name, value);
@@ -1073,7 +1104,7 @@ int main(int argc, char **argv)
     struct header hdr;
     FILE *ifile = 0;
     char *t, *name;
-    longlong pmem;
+    ulonglong pmem;
     double d;
 
 #if MSWIN32
@@ -1146,18 +1177,10 @@ int main(int argc, char **argv)
     blankcs = make_static_cset_block(1, ' ', ' ');
     emptycs = make_static_cset_block(0);
 
-    Protect(emptystr_ucs = calloc(sizeof(struct b_ucs), 1), startuperr("Insufficient memory"));
-    emptystr_ucs->utf8 = emptystr;
-    emptystr_ucs->length = 0;
-    emptystr_ucs->n_off_indexed = 0;
-    emptystr_ucs->index_step = 0;
-
-    Protect(blank_ucs = calloc(sizeof(struct b_ucs), 1), startuperr("Insufficient memory"));
-    blank_ucs->utf8 = blank;
-    blank_ucs->length = 1;
-    blank_ucs->n_off_indexed = 0;
-    blank_ucs->index_step = 4;
-
+    emptystr_ucs = make_static_ucs_block("");
+    blank_ucs = make_static_ucs_block(" ");
+    defaultwindowlabel.dword = D_Ucs;
+    BlkLoc(defaultwindowlabel) = (union block *)make_static_ucs_block(DEFAULT_WINDOW_LABEL);
     csetdesc.dword = D_Cset;
     BlkLoc(csetdesc) = (union block *)k_cset;
 

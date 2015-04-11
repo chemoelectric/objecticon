@@ -65,11 +65,21 @@ class Untitled(Dialog)
    end
 
    public on_text_button_1(ev)
-      win.set_min_size!(parse_pair(text_field_1.get_contents()))
+      local s
+      s := text_field_1.get_contents()
+      if *s = 0 then
+         win.set_min_size(1, 1)
+      else
+         win.set_min_size!(parse_pair(s))
    end
 
    private on_text_button_4(ev)
-      win.set_max_size!(parse_pair(text_field_3.get_contents()))
+      local s
+      s := text_field_3.get_contents()
+      if *s = 0 then
+         win.set_max_size()
+      else
+         win.set_max_size!(parse_pair(s))
    end
 
    public on_text_button_2(ev)

@@ -26,19 +26,19 @@ static void listdump(dptr d, int all)
     struct b_list *l = &ListBlk(*d);
     word i, j;
 
-    fprintf(stderr, "list at %p size=%ld head=%p tail=%p\n", l, (long)l->size, l->listhead, l->listtail);
+    fprintf(stderr, "list at %p size=" WordFmt " head=%p tail=%p\n", l, l->size, l->listhead, l->listtail);
     for (b = l->listhead; 
          BlkType(b) == T_Lelem;
          b = b->lelem.listnext) {
         struct b_lelem *e = (struct b_lelem *)b;
-        fprintf(stderr, "\telement block at %p nslots=%ld first=%ld used=%ld prev=%p next=%p\n",
-                e, (long)e->nslots, (long)e->first, (long)e->nused, e->listprev, e->listnext);
+        fprintf(stderr, "\telement block at %p nslots=" WordFmt " first=" WordFmt " used=" WordFmt " prev=%p next=%p\n",
+                e, e->nslots, (e->first, e->nused, e->listprev, e->listnext);
         if (all) {
             for (i = 0; i < e->nslots; i++) {
                 j = i - e->first;
                 if (j < 0)
                     j += e->nslots;
-                fprintf(stderr, "\t\tSlot %ld = ", (long)i);
+                fprintf(stderr, "\t\tSlot " WordFmt " = ", i);
                 print_desc(stderr, &e->lslots[i]);
                 if (j < e->nused)
                     fprintf(stderr, " (used)\n");
@@ -50,7 +50,7 @@ static void listdump(dptr d, int all)
                 j = e->first + i;
                 if (j >= e->nslots)
                     j -= e->nslots;
-                fprintf(stderr, "\t\tSlot %ld = ", (long)j);
+                fprintf(stderr, "\t\tSlot " WordFmt " = ", j);
                 print_desc(stderr, &e->lslots[j]);
                 fprintf(stderr, "\n");
             }
@@ -63,7 +63,7 @@ static void setdump(dptr d)
 {
     struct b_set *x = &SetBlk(*d);
     int i, j;
-    fprintf(stderr, "set at %p size=%ld mask=%lx\n", x, (long)x->size, (long)x->mask);
+    fprintf(stderr, "set at %p size=" WordFmt " mask=" XWordFmt "\n", x, x->size, x->mask);
     for (i = 0; i < HSegs; ++i) {
         struct b_slots *slot = x->hdir[i];
         fprintf(stderr, "\tslot %d at %p segsize=%d\n", i, slot, segsize[i]);
@@ -72,7 +72,7 @@ static void setdump(dptr d)
                 struct b_selem *elem = (struct b_selem *)slot->hslots[j];
                 fprintf(stderr, "\t\tbucket chain %d at %p\n", j, elem);
                 while (elem) {
-                    fprintf(stderr, "\t\t\telem %p hash=%lu mem=", elem, (long unsigned)elem->hashnum);
+                    fprintf(stderr, "\t\t\telem %p hash=" UWordFmt " mem=", elem, elem->hashnum);
                     print_desc(stderr, &elem->setmem);
                     fprintf(stderr, "\n");
                     elem = (struct b_selem *)elem->clink;
@@ -88,7 +88,7 @@ static void tabledump(dptr d)
 {
     struct b_table *x = &TableBlk(*d);
     int i, j;
-    fprintf(stderr, "table at %p size=%ld mask=%lx\n", x, (long)x->size, (long)x->mask);
+    fprintf(stderr, "table at %p size=" WordFmt " mask=" XWordFmt "\n", x, x->size, x->mask);
     for (i = 0; i < HSegs; ++i) {
         struct b_slots *slot = x->hdir[i];
         fprintf(stderr, "\tslot %d at %p segsize=%d\n", i, slot, segsize[i]);
@@ -98,7 +98,7 @@ static void tabledump(dptr d)
                 fprintf(stderr, "\t\tbucket chain %d at %p\n", j, elem);
                 while (elem && BlkType(elem) != T_Table) {
                     struct b_telem *telem = (struct b_telem *)elem;
-                    fprintf(stderr, "\t\t\telem %p hash=%lu mem=", telem, (long unsigned)telem->hashnum);
+                    fprintf(stderr, "\t\t\telem %p hash=" UWordFmt " mem=", telem, telem->hashnum);
                     print_desc(stderr, &telem->tref);
                     fprintf(stderr, "->");
                     print_desc(stderr, &telem->tval);

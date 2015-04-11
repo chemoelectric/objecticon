@@ -1044,7 +1044,7 @@ struct b_ucs *make_ucs_substring(struct b_ucs *b, word pos, word len)
 
 /*
  * Given a ucs block, this function returns (in res) the utf8
- * substring correspoding to the slice pos:len.  No allocation is
+ * substring corresponding to the slice pos:len.  No allocation is
  * done.  pos,len must be a valid range for the string.  NB pos is
  * one-based.
  */
@@ -1346,7 +1346,7 @@ function lang_Text_create_cset(x[n])
                          runerr(101, pb->lelem.lslots[k]);
                      }
                      if (to < 0 || to > MAX_CODE_POINT) {
-                         whyf("Invalid codepoint:%ld", (long)to);
+                         whyf("Invalid codepoint:" WordFmt, to);
                          free_rangeset(rs);
                          fail;
                      }
@@ -1367,7 +1367,7 @@ function lang_Text_create_cset(x[n])
                  runerr(101, x[i]);
              }
              if (from < 0 || from > MAX_CODE_POINT) {
-                 whyf("Invalid codepoint:%ld", (long)from);
+                 whyf("Invalid codepoint:" WordFmt, from);
                  free_rangeset(rs);
                  fail;
              }
@@ -1378,7 +1378,7 @@ function lang_Text_create_cset(x[n])
                      runerr(101, x[i]);
                  }
                  if (to < 0 || to > MAX_CODE_POINT) {
-                     whyf("Invalid codepoint:%ld", (long)to);
+                     whyf("Invalid codepoint:" WordFmt, to);
                      free_rangeset(rs);
                      fail;
                  }
