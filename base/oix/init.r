@@ -8,15 +8,18 @@
 #include "../h/opnames.h"
 #include "../h/modflags.h"
 
-static FILE    *readhdr	(char *name, struct header *hdr);
-static void    initptrs (struct progstate *p, struct header *h);
-static void    initprogstate(struct progstate *p);
-static void    initalloc(struct progstate *p);
-static void    handle_prog_exit(void);
-static void    relocate_code(struct progstate *ps, word *c);
-static void    startuperr(char *fmt, ...);
-static void    conv_addr(void);
-static void    conv_var(void);
+static FILE *readhdr(char *name, struct header *hdr);
+static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codeptr);
+static void initptrs (struct progstate *p, struct header *h);
+static void initprogstate(struct progstate *p);
+static void initalloc(struct progstate *p);
+static void handle_prog_exit(void);
+static void relocate_code(struct progstate *ps, word *c);
+static void startuperr(char *fmt, ...);
+static void conv_addr(void);
+static void conv_var(void);
+static struct b_cset *make_static_cset_block(int n_ranges, ...);
+static struct b_ucs *make_static_ucs_block(char *utf8);
 
 
 /*
@@ -104,6 +107,7 @@ struct descrip minusonedesc;           	/* integer -1 */
 struct descrip thousanddesc;	        /* 1000 */
 struct descrip milliondesc;	        /* 1000000 */
 struct descrip billiondesc;	        /* 10^9 */
+struct descrip defaultwindowlabel;	/* ucs string, the default window label */
 
 struct b_cset *emptycs;   /* '' */
 struct b_cset *blankcs;   /* ' ' */
@@ -310,6 +314,33 @@ static struct b_cset *make_static_cset_block(int n_ranges, ...)
     return b;
 }
 
+static struct b_ucs *make_static_ucs_block(char *utf8)
+{
+    word index_step, n_offs, length;
+    uword blksize;
+    char *t;
+    struct b_ucs *b;
+    t = utf8;
+    length = 0;
+    while (*t) {
+        utf8_iter(&t);
+        ++length;
+    }
+    if (length == 0)
+        index_step = n_offs = 0;
+    else {
+        index_step = calc_ucs_index_step(length);
+        n_offs = (length - 1) / index_step;
+    }
+    blksize = sizeof(struct b_ucs) + ((n_offs - 1) * sizeof(word));
+    Protect(b = calloc(blksize, 1), startuperr("Insufficient memory"));
+    b->blksize = blksize;
+    b->index_step = index_step;
+    CMakeStr(utf8, &b->utf8);
+    b->length = length;
+    b->n_off_indexed = 0;
+    return b;
+}
 
 /*
  * env_int - get the value of an integer-valued environment variable.
@@ -1128,18 +1159,10 @@ int main(int argc, char **argv)
     blankcs = make_static_cset_block(1, ' ', ' ');
     emptycs = make_static_cset_block(0);
 
-    Protect(emptystr_ucs = calloc(sizeof(struct b_ucs), 1), startuperr("Insufficient memory"));
-    emptystr_ucs->utf8 = emptystr;
-    emptystr_ucs->length = 0;
-    emptystr_ucs->n_off_indexed = 0;
-    emptystr_ucs->index_step = 0;
-
-    Protect(blank_ucs = calloc(sizeof(struct b_ucs), 1), startuperr("Insufficient memory"));
-    blank_ucs->utf8 = blank;
-    blank_ucs->length = 1;
-    blank_ucs->n_off_indexed = 0;
-    blank_ucs->index_step = 4;
-
+    emptystr_ucs = make_static_ucs_block("");
+    blank_ucs = make_static_ucs_block(" ");
+    defaultwindowlabel.dword = D_Ucs;
+    BlkLoc(defaultwindowlabel) = (union block *)make_static_ucs_block(DEFAULT_WINDOW_LABEL);
     csetdesc.dword = D_Cset;
     BlkLoc(csetdesc) = (union block *)k_cset;
 

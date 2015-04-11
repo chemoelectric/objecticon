@@ -323,7 +323,6 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    void registerplatformimgdataformats(void);
    int definepointer(wbp w, char *name, int x, int y);
    int copypointer(wbp w, char *dest, char *src);
-   void defaultwindowlabel(dptr d);
 
 #if XWindows
    struct SharedColor *new_sharedcolor(wdp wd, char *name, int r, int g, int b, int a);

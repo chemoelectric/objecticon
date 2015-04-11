@@ -1044,7 +1044,7 @@ struct b_ucs *make_ucs_substring(struct b_ucs *b, word pos, word len)
 
 /*
  * Given a ucs block, this function returns (in res) the utf8
- * substring correspoding to the slice pos:len.  No allocation is
+ * substring corresponding to the slice pos:len.  No allocation is
  * done.  pos,len must be a valid range for the string.  NB pos is
  * one-based.
  */

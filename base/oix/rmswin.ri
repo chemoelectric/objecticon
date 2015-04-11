@@ -248,14 +248,13 @@ wbp wopen(char *display)
 
     GAlloc(ws, _wstate);
     ws->listp = nulldesc;
-    ws->windowlabel = nulldesc;
+    ws->windowlabel = defaultwindowlabel;
     add_gc_global(&ws->windowlabel);
     add_gc_global(&ws->listp);
     ws->cursor = lookup_wcursor("arrow");
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
     w->window = ws;
-    defaultwindowlabel(&ws->windowlabel);
     ws = w->window;
     create_list(64, &ws->listp);
     ws->width = ws->height = 1;
