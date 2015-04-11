@@ -1091,7 +1091,7 @@ int main(int argc, char **argv)
     struct header hdr;
     FILE *ifile = 0;
     char *t, *name;
-    longlong pmem;
+    ulonglong pmem;
     double d;
 
 #if MSWIN32

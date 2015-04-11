@@ -123,7 +123,7 @@ word            mod3            (word a,word b);
 word            mul             (word a,word b);
 word            neg             (word a);
 void            outimage        (FILE *f,dptr dp,int noimage);
-longlong        physicalmemorysize(void);
+ulonglong       physicalmemorysize(void);
 word            prescan         (dptr d);
 int             putstr          (FILE *f,dptr d);
 int             putn            (FILE *f, char *s, int n);
