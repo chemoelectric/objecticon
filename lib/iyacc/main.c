@@ -293,16 +293,16 @@ void create_file_names(void)
     int i, len;
     char *tmpdir;
 
-    tmpdir = getenv("TMPDIR");
-#ifdef MSW  /*rwj -- make portable*/
-    if (tmpdir == 0) tmpdir = ".";
+    tmpdir = getenv("TEMP");
+#if MSWIN32
+    if (tmpdir == 0) tmpdir = "C:\\WINDOWS\\TEMP";
 #else
     if (tmpdir == 0) tmpdir = "/tmp";
 #endif
 
     len = strlen(tmpdir);
     i = len + 13;
-    if (len && tmpdir[len-1] != '/')
+    if (len && tmpdir[len-1] != FILESEP)
 	++i;
 
     action_file_name = MALLOC(i);
@@ -316,11 +316,11 @@ void create_file_names(void)
     strcpy(text_file_name, tmpdir);
     strcpy(union_file_name, tmpdir);
 
-    if (len && tmpdir[len - 1] != '/')
+    if (len && tmpdir[len - 1] != FILESEP)
     {
-	action_file_name[len] = '/';
-	text_file_name[len] = '/';
-	union_file_name[len] = '/';
+	action_file_name[len] = FILESEP;
+	text_file_name[len] = FILESEP;
+	union_file_name[len] = FILESEP;
 	++len;
     }
 
