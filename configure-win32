@@ -1,4 +1,17 @@
 #!/bin/sh
+clver=$(cl 2>&1|head -1)
+case "$clver" in
+    *x64*)
+        ptrbytes=8
+        ;;
+    *x86*)
+        ptrbytes=4
+        ;;
+    *)
+        echo "Unrecognised cl version: " $clver
+        exit 1
+        ;;
+esac
 echo copying config files
 cp config/files/Makefile-win32 ./Makefile
 cp config/files/lib/iyacc/Makefile-win32 lib/iyacc/Makefile
@@ -67,9 +80,9 @@ cat >base/h/auto.h <<EOF
 #define SIZEOF_SHORT 2
 #define SIZEOF_INT 4
 #define SIZEOF_LONG 4
-#define SIZEOF_VOIDP 4
+#define SIZEOF_VOIDP $ptrbytes
 #define SIZEOF_DOUBLE 8
-#define SIZEOF_LONG_LONG 0
+#define SIZEOF_LONG_LONG 8
 #define DOUBLE_HAS_WORD_ALIGNMENT 1
 EOF
 echo creating test/custom.sh
