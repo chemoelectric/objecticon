@@ -60,6 +60,7 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_capture_changed(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp, int meta);
 static void handle_size(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
+static void handle_getminmaxinfo(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_showwindow(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void rectanglehelper(wcp wc, HDC stddc, HDC pixdc, int x, int y, int width, int height);
 static void capture_mouse(wsp ws);
@@ -292,6 +293,24 @@ static void apply_windowlabel(wsp ws)
     free(mbs);
 }
 
+static void handle_getminmaxinfo(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
+{
+    MINMAXINFO *mmi = (MINMAXINFO *)lp;
+    if (ws->resizable) {
+        mmi->ptMinTrackSize.x = ws->minwidth + BORDWIDTH;
+        mmi->ptMinTrackSize.y = ws->minheight + BORDHEIGHT;
+        if (ws->maxwidth != INT_MAX)
+            mmi->ptMaxTrackSize.x = ws->maxwidth + BORDWIDTH;
+        if (ws->maxheight != INT_MAX)
+            mmi->ptMaxTrackSize.y = ws->maxheight + BORDHEIGHT;
+    } else {
+        mmi->ptMinTrackSize.x = mmi->ptMaxTrackSize.x =
+            ws->width + BORDWIDTH;
+        mmi->ptMinTrackSize.y = mmi->ptMaxTrackSize.y =
+            ws->height + BORDHEIGHT;
+    }
+}
+
 static void handle_size(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     int neww, newh;
@@ -357,8 +376,8 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp, int meta)
    /* Mouse location in SCREEN coordinates */
     dw = GetMessagePos();
     GetWindowRect(ws->win, &r);
-    x = LOWORD(dw) - (r.left + CLIENT_XOFF);
-    y = HIWORD(dw) - (r.top + CLIENT_YOFF);
+    x = (INT16)LOWORD(dw) - (r.left + CLIENT_XOFF);
+    y = (INT16)HIWORD(dw) - (r.top + CLIENT_YOFF);
 
     t = GetMessageTime();
 
@@ -388,8 +407,8 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
      * convert to relative.
      */
     GetWindowRect(ws->win, &r);
-    x = LOWORD(lp) - (r.left + CLIENT_XOFF);
-    y = HIWORD(lp) - (r.top + CLIENT_YOFF);
+    x = (INT16)LOWORD(lp) - (r.left + CLIENT_XOFF);
+    y = (INT16)HIWORD(lp) - (r.top + CLIENT_YOFF);
 
     t = GetMessageTime();
 
@@ -414,11 +433,10 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 
 static void handle_mouse_enter(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    int t;
-    WORD x, y;
+    int t, x, y;
     struct descrip d;
-    x = LOWORD(lp);
-    y = HIWORD(lp);
+    x = (INT16)LOWORD(lp);
+    y = (INT16)HIWORD(lp);
     t = GetMessageTime();
     MakeInt(MOUSEENTERED, &d);
     qevent(ws, &d, x, y, t, 0);
@@ -503,15 +521,15 @@ static void handle_mouse_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 static void handle_mouse(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     int t;
-    WORD x, y;
+    int x, y;
     int state = 0;
     int fl = 0;
     if (MK_LBUTTON & wp) state |= 1;
     if (MK_MBUTTON & wp) state |= 2;
     if (MK_RBUTTON & wp) state |= 4;
 
-    x = LOWORD(lp);
-    y = HIWORD(lp);
+    x = (INT16)LOWORD(lp);
+    y = (INT16)HIWORD(lp);
     t = GetMessageTime();
 
     if (MK_CONTROL & wp)
@@ -633,13 +651,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             case WM_ACTIVATE:
                 break;
             case WM_GETMINMAXINFO: {
-                MINMAXINFO *mmi = (MINMAXINFO *)lp;
-                if (!ws->resizable) {
-                    mmi->ptMinTrackSize.x = mmi->ptMaxTrackSize.x =
-                        ws->width + BORDWIDTH;
-                    mmi->ptMinTrackSize.y = mmi->ptMaxTrackSize.y =
-                        ws->height + BORDHEIGHT;
-                }
+                handle_getminmaxinfo(ws, msg, wp, lp);
                 return 0;
             }
             case WM_SHOWWINDOW: {
@@ -1786,7 +1798,6 @@ void doconfig(wbp w, int status)
     wcp wc = w->context;
     if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
         if (ws->win) {
-            pollevent(w);
             switch (status & (C_POS|C_SIZE)) {
                 case C_POS|C_SIZE: {
                     SetWindowPos(ws->win, ws->win, ws->x, ws->y,
