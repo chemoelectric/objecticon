@@ -52,6 +52,7 @@ static HBRUSH get_fg_brush(wcp wc);
 static HPEN get_fg_pen(wcp wc);
 static HBRUSH get_bg_brush(wcp wc);
 static wbp findwbp(wsp ws);
+static void handle_paint(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_mouse(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_mouse_enter(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_mouse_leave(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
@@ -540,29 +541,33 @@ static void handle_mouse(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     qmouseevents(ws, state, x, y, t, fl);
 }
 
-LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+static void handle_paint(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     HDC hdc, hdc2;
     PAINTSTRUCT ps;
     RECT rect;
+    HBITMAP oldpix;
+    hdc = BeginPaint(ws->win, &ps);
+    GetClientRect(ws->win, &rect);
+    hdc2 = CreateCompatibleDC(hdc);
+    oldpix = SelectObject(hdc2, ws->pix);
+    BitBlt(hdc, rect.left, rect.top,
+           rect.right - rect.left + 1, rect.bottom - rect.top + 1,
+           hdc2, rect.left, rect.top, SRCCOPY);
+    SelectObject(hdc2, oldpix);
+    DeleteDC(hdc2);
+    EndPaint(ws->win, &ps);
+}
+
+LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+{
     wsp ws;
     ws = wsp_for_hwnd(hwnd);
     if (ws) {
         switch(msg) {
-            case WM_PAINT: {
-                HBITMAP oldpix;
-                hdc = BeginPaint(hwnd, &ps);
-                GetClientRect(hwnd, &rect);
-                hdc2 = CreateCompatibleDC(hdc);
-                oldpix = SelectObject(hdc2, ws->pix);
-                BitBlt(hdc, rect.left, rect.top,
-                       rect.right - rect.left + 1, rect.bottom - rect.top + 1,
-                       hdc2, rect.left, rect.top, SRCCOPY);
-                SelectObject(hdc2, oldpix);
-                DeleteDC(hdc2);
-                EndPaint(hwnd, &ps);
+            case WM_PAINT:
+                handle_paint(ws, msg, wp, lp);
                 return 0;
-            }
             case WM_MOUSEMOVE:
                 handle_mouse_move(ws, msg, wp, lp);
                 return 0;
@@ -1855,10 +1860,9 @@ static void resizepixmap(wbp w)
     ws->pixheight = ws->height;
 
     newpix = CreateCompatibleBitmap(dummy_hdc, ws->pixwidth, ws->pixheight);
-    if (ws->pix) {
-        hdc2 = CreateCompatibleDC(dummy_hdc);
-        oldpix = SelectObject(hdc2, ws->pix);
-    }
+    hdc2 = CreateCompatibleDC(dummy_hdc);
+    oldpix = SelectObject(hdc2, ws->pix);
+
     hdc3 = CreateCompatibleDC(dummy_hdc);
     oldpix2 = SelectObject(hdc3, newpix);
     hb = get_bg_brush(wc);
@@ -1869,20 +1873,11 @@ static void resizepixmap(wbp w)
     rect.top = 0; rect.bottom = ws->pixheight;
     FillRect(hdc3, &rect, hb);
     BitBlt(hdc3, 0, 0, ws->pixwidth, ws->pixheight, hdc2, 0, 0, SRCCOPY);
-    if (ws->win) {
-        HDC hdc = GetDC(ws->win);
-        FillRect(hdc, &rect, hb);
-        BitBlt(hdc, 0, 0, ws->pixwidth, ws->pixheight, hdc2, 0, 0, SRCCOPY);
-        ReleaseDC(ws->win, hdc);
-    }
-
     SelectObject(hdc3, oldpix2);
     DeleteDC(hdc3);
-    if (ws->pix) {
-        SelectObject(hdc2, oldpix);
-        DeleteDC(hdc2);
-    }
-    if (ws->pix) DeleteObject(ws->pix);
+    SelectObject(hdc2, oldpix);
+    DeleteDC(hdc2);
+    DeleteObject(ws->pix);
     DeleteObject(hb);
     ws->pix = newpix;
 }
