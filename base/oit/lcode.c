@@ -175,7 +175,7 @@ static void emit_ir_var(struct ir_var *v, char *desc)
                 word ival;
                 memcpy(&ival, ce->data, sizeof(word));
                 outwordx(Op_Int, "   %s=int", desc);
-                outwordx(ival, "      %d", ival);
+                outwordx(ival, "      " WordFmt, ival);
 #if RealInDesc
             } else if (ce->c_flag & F_RealLit) {
                 word ival;

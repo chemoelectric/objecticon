@@ -1022,7 +1022,7 @@ char *double2cstr(double n)
  */
 char *word2cstr(word n)
 {
-    sprintf(sbuf, "%ld", (long)n);
+    sprintf(sbuf, WordFmt, n);
     return sbuf;
 }
 
