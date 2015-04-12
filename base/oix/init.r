@@ -1180,7 +1180,7 @@ int main(int argc, char **argv)
     emptystr_ucs = make_static_ucs_block("");
     blank_ucs = make_static_ucs_block(" ");
     defaultwindowlabel.dword = D_Ucs;
-    BlkLoc(defaultwindowlabel) = (union block *)make_static_ucs_block(DEFAULT_WINDOW_LABEL);
+    BlkLoc(defaultwindowlabel) = (union block *)make_static_ucs_block("Object Icon");
     csetdesc.dword = D_Cset;
     BlkLoc(csetdesc) = (union block *)k_cset;
 

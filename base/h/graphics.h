@@ -231,8 +231,6 @@ struct wcursor {
 };
 #endif
 
-#define DEFAULT_WINDOW_LABEL "Object Icon"
-
 #define Mul16(v, a) (((unsigned)(v)*(a))/65535)
 #define CombineAlpha(v1, v2, a) (Mul16(v1,a) + Mul16(v2,65535-a))
 

@@ -24,7 +24,7 @@
    #define XWordFmtCh "llx"
    #define UWordFmtCh "llu"
 #else
-   #error "WordBits must equal either IntBits or LongBits"
+   #error "WordBits must equal either IntBits, LongBits or LongLongBits"
 #endif
 
 #define WordFmt "%"WordFmtCh
