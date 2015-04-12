@@ -198,13 +198,6 @@
    #define ObjSuffix ".o"
 #endif					/* ObjSuffix */
 
-/*
- * Note, size of the hash table is a power of 2:
- */
-#define IHSize 128
-#define IHasher(x)	(((unsigned int)(unsigned long)(x))&(IHSize-1))
-
-
 #ifndef USuffix
    #define USuffix ".u"
 #endif				/* USuffix */
