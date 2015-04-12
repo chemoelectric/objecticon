@@ -59,7 +59,7 @@ static void handle_mouse_leave(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_mouse_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_capture_changed(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
-static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp, int meta);
+static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_size(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_getminmaxinfo(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_showwindow(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
@@ -353,25 +353,28 @@ static void handle_showwindow(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
         ws->state = NormalCanvas;
 }
 
-static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp, int meta)
+static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     DWORD dw;
-    int t, x, y;
+    int t, x, y, fl;
     RECT r;
-    struct descrip d;
-    int fl = 0;
-    static struct descrip curr_down;
+    static struct descrip curr;
+    static int inited = 0;
 
-    if (msg == WM_KEYUP)
-        d = curr_down;     
-    else if (msg == WM_CHAR || msg == WM_SYSCHAR) {
-        StrLen(d) = 1;
-        StrLoc(d) = &allchars[wp & 0xFF];
-        curr_down = d;
-    }
-    else { /* WM_KEYDOWN or WM_SYSKEYDOWN */
-        MakeInt(wp, &d);
-        curr_down = d;
+    if (msg == WM_KEYUP || msg == WM_SYSKEYUP) {
+        if (!inited)
+            return;
+    } else if (msg == WM_CHAR || msg == WM_SYSCHAR) {
+        StrLen(curr) = 1;
+        StrLoc(curr) = &allchars[wp & 0xFF];
+        inited = 1;
+    } else { /* WM_KEYDOWN or WM_SYSKEYDOWN */
+        if (wp == VK_DELETE) {
+            StrLen(curr) = 1;
+            StrLoc(curr) = &allchars[127];
+        } else 
+            MakeInt(wp, &curr);
+        inited = 1;
     }
 
    /* Mouse location in SCREEN coordinates */
@@ -382,15 +385,16 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp, int meta)
 
     t = GetMessageTime();
 
+    fl = 0;
     if (GetKeyState(VK_CONTROL) < 0)
         fl |= MOD_CTRL;
     if (GetKeyState(VK_SHIFT) < 0)
         fl |= MOD_SHIFT;
-    if (meta)
+    if (msg == WM_SYSKEYDOWN || msg == WM_SYSCHAR || msg == WM_SYSKEYUP)
         fl |= MOD_META;
-    if (msg == WM_KEYUP)
+    if (msg == WM_KEYUP || msg == WM_SYSKEYUP)
         fl |= MOD_RELEASE;
-    qevent(ws, &d, x, y, t, fl);
+    qevent(ws, &curr, x, y, t, fl);
 }
 
 static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
@@ -580,99 +584,47 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             case WM_CAPTURECHANGED:
                 handle_capture_changed(ws, msg, wp, lp);
                 return 0;
-            case WM_LBUTTONDOWN: case WM_RBUTTONDOWN: case WM_MBUTTONDOWN:
+            case WM_LBUTTONDOWN: 
+            case WM_RBUTTONDOWN:
+            case WM_MBUTTONDOWN:
                 capture_mouse(ws);
                 handle_mouse(ws, msg, wp, lp);
                 return 0;
-            case WM_LBUTTONUP:   case WM_RBUTTONUP:   case WM_MBUTTONUP:
+            case WM_LBUTTONUP:
+            case WM_RBUTTONUP:
+            case WM_MBUTTONUP:
                 uncapture_mouse(ws);
                 handle_mouse(ws, msg, wp, lp);
                 return 0;
-            case WM_KEYUP:
-                if (ws->inputmask & IM_KEY_RELEASE)
-                    handle_keypress(ws, msg, wp, lp, 0);
-                return 0;
             case WM_KEYDOWN:
-                switch (wp) { /* VK defn's from <winuser.h> */
-                    case VK_F1: case VK_F2: case VK_F3: case VK_F4:
-                    case VK_F5: case VK_F6: case VK_F7: case VK_F8:
-                    case VK_F9: case VK_F10: case VK_F11: case VK_F12:
-                    case VK_HOME: case VK_END: case VK_PRIOR: case VK_NEXT:
-                    case VK_LEFT: case VK_RIGHT: case VK_UP: case VK_DOWN:
-                    case VK_INSERT: case VK_SELECT: case VK_PRINT:
-                    case VK_EXECUTE: case VK_SNAPSHOT: case VK_HELP: case VK_SEPARATOR:
-                    case VK_CLEAR: case VK_PAUSE: case VK_SCROLL:
-                        handle_keypress(ws, msg, wp, lp, 0);
-                        return 0;
-                    case VK_DELETE:
-                        handle_keypress(ws, WM_CHAR, '\177', lp, 0);
-                        return 0;
-                    default:
-                        if (ws->inputmask & IM_KEY_RELEASE) {
-                            handle_keypress(ws, msg, wp, lp, 0);
-                            return 0;
-                        }
-                }
-                break;
             case WM_SYSKEYDOWN:
-                switch (wp) {
-                    case VK_F1: case VK_F2: case VK_F3: /* alt-F4 terminates */
-                    case VK_F5: case VK_F6: case VK_F7: case VK_F8:
-                    case VK_F9: case VK_F10: case VK_F11: case VK_F12:
-                    case VK_HOME: case VK_END: case VK_PRIOR: case VK_NEXT:
-                    case VK_LEFT: case VK_RIGHT: case VK_UP: case VK_DOWN:
-                    case VK_INSERT: case VK_DELETE: case VK_SELECT: case VK_PRINT:
-                    case VK_EXECUTE: case VK_SNAPSHOT: case VK_HELP: case VK_SEPARATOR:
-                    case VK_CLEAR: case VK_PAUSE:
-                        handle_keypress(ws, msg, wp, lp, 1);
-                        return 0;
-                    default:
-                        if (ws->inputmask & IM_KEY_RELEASE) {
-                            handle_keypress(ws, msg, wp, lp, 0);
-                            return 0;
-                        }
-                }
-                break;
             case WM_CHAR:
-                handle_keypress(ws, msg, wp, lp, 0);
-                return 0;
             case WM_SYSCHAR:
-                handle_keypress(ws, msg, wp, lp, 1);
-                break;
-            case WM_HSCROLL:
-            case WM_VSCROLL:
-                break;
-            case WM_COMMAND:
-                break;
+                handle_keypress(ws, msg, wp, lp);
+                return 0;
+            case WM_KEYUP:
+            case WM_SYSKEYUP:
+                if (ws->inputmask & IM_KEY_RELEASE)
+                    handle_keypress(ws, msg, wp, lp);
+                return 0;
             case WM_SIZE:
                 handle_size(ws, msg, wp, lp);
-                break;
+                return 0;
             case WM_MOVE:
                 /* x,y represents the position of the drawable area. Casting to
-                   short ensures -ve values are handle correctly */
-                ws->x = (short)LOWORD(lp);
-                ws->y = (short)HIWORD(lp); 
-                break;
-            case WM_ACTIVATE:
-                break;
-            case WM_GETMINMAXINFO: {
+                   INT16 ensures -ve values are handle correctly */
+                ws->x = (INT16)LOWORD(lp);
+                ws->y = (INT16)HIWORD(lp); 
+                return 0;
+            case WM_GETMINMAXINFO:
                 handle_getminmaxinfo(ws, msg, wp, lp);
                 return 0;
-            }
-            case WM_SHOWWINDOW: {
+            case WM_SHOWWINDOW:
                 handle_showwindow(ws, msg, wp, lp);
-                break;
-            }
-            case WM_KILLFOCUS:
-                break;
-            case WM_SETFOCUS:
-                break;
-            case WM_CLOSE: {
+                return 0;
+            case WM_CLOSE:
                 qeventcode(ws, WINDOWCLOSED);
                 return 0;
-            }
-            case WM_DESTROY:
-                break;
         }
     }
     return DefWindowProc(hwnd, msg, wp, lp);
