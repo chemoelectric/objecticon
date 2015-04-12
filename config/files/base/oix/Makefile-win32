@@ -23,7 +23,7 @@ RTTC=$(XOBJS:.obj=.c)
 RFILES=$(XOBJS:.obj=.r)
 RTTTMP=$(XOBJS:.obj=.tmp)
 
-COBJS=	../common/mlocal.obj ../common/qsort.obj
+COBJS=	../common/mlocal.obj
 
 OBJS=	$(XOBJS) $(COBJS)
 

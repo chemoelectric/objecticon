@@ -8,7 +8,7 @@ OITOBJS=	trans.obj tlex.obj tparse.obj tsym.obj tmem.obj \
 		link.obj lglob.obj lcode.obj lmem.obj lsym.obj ltree.obj optimize.obj
 
 COBJS=		../common/getopt.obj ../common/alloc.obj \
-		../common/strtbl.obj ../common/mlocal.obj ../common/qsort.obj
+		../common/strtbl.obj ../common/mlocal.obj
 
 OBJS=		$(OITOBJS) $(COBJS)
 
