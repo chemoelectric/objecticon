@@ -21,7 +21,6 @@ static int font_maxcharwidth(HFONT f);
 static char *convert_spec(char *s);
 static HFONT findfont(char *family, double size, int flags, int ansi);
 static HFONT mkfont(char *s);
-static HWND dummy_win;
 static HDC dummy_hdc;
 static wsp wsp_for_hwnd(HWND hwnd);
 static wcp clonecontext(wcp src);
@@ -96,12 +95,6 @@ static int BORDHEIGHT;
 static int BORDWIDTH;
 static int CLIENT_XOFF;
 static int CLIENT_YOFF;
-
-/*
- * check for double-byte character set versions of Windows
- */
-CPINFO cpinfo;
-int MAXBYTESPERCHAR;
 
 /*
  * draw ops
@@ -885,7 +878,7 @@ int setwindowlabel(wbp w, dptr val)
 
 static HFONT findfont(char *family, double size, int flags, int ansi)
 {
-    int charset, weight, nHeight;
+    int weight, nHeight;
     char slant, spacing;
 
     if (size < 0)
@@ -909,8 +902,6 @@ static HFONT findfont(char *family, double size, int flags, int ansi)
     else
         slant = 0;
 
-    charset = (ansi && (MAXBYTESPERCHAR==1)) ? ANSI_CHARSET:DEFAULT_CHARSET;
-
     if (flags & FONTFLAG_PROPORTIONAL)
         spacing = VARIABLE_PITCH;
     else if (flags & FONTFLAG_MONO)
@@ -918,7 +909,7 @@ static HFONT findfont(char *family, double size, int flags, int ansi)
     else spacing = DEFAULT_PITCH;
     /* Convert from point size to device units - see msdn manual page */
     nHeight = -MulDiv(size, GetDeviceCaps(dummy_hdc, LOGPIXELSY), 72);
-    return CreateFont(nHeight, 0, 0, 0, weight, slant, 0, 0, charset,
+    return CreateFont(nHeight, 0, 0, 0, weight, slant, 0, 0, DEFAULT_CHARSET,
                       OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
                       spacing, family);
 }
@@ -937,7 +928,7 @@ static HFONT mkfont(char *s)
          * Check first for special "standard" family names.
          */
         if (!strcmp(family, "mono") || !strcmp(family, "fixed")) {
-            stdfam = "Lucida Sans"; /* Lucida Console? */
+            stdfam = "Lucida Console"; /* Lucida Console? */
             flags |= FONTFLAG_MONO + FONTFLAG_SANS;
         }
         else if (!strcmp(family, "typewriter")) {
@@ -2381,15 +2372,7 @@ static void init_window_system(void)
     BORDHEIGHT = TITLEHEIGHT + FRAMEHEIGHT * 2;
     CLIENT_XOFF = FRAMEWIDTH;
     CLIENT_YOFF = TITLEHEIGHT + FRAMEHEIGHT;
-    GetCPInfo(CP_ACP, &cpinfo);
-    MAXBYTESPERCHAR = cpinfo.MaxCharSize;
-
-    dummy_win = CreateWindow( "oix", "oix",
-                              WS_OVERLAPPEDWINDOW,
-                              0, 0,
-                              10, 10,
-                              NULL, NULL, NULL, NULL);
-    dummy_hdc = GetDC(dummy_win);
+    dummy_hdc = GetDC(0);
     black = new_sharedcolor("black", mscolor(0,0,0), 0xffff);
     white = new_sharedcolor("white", mscolor(0xffff,0xffff,0xffff), 0xffff);
     default_font = load_font(defaultfont);
