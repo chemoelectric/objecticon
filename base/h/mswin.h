@@ -65,16 +65,3 @@
 #define TITLEHEIGHT      (GetSystemMetrics(SM_CYCAPTION)) /* 20 */
 #define FRAMEWIDTH	 (GetSystemMetrics(SM_CXFRAME))   /* 4 */
 #define FRAMEHEIGHT	 (GetSystemMetrics(SM_CYFRAME))   /* 4 */
-
-#define STDLOCALS(w) \
-   wcp wc = (w)->context;\
-   wsp ws = (w)->window;\
-   HWND stdwin = ws->win;\
-   HBITMAP stdpix = ws->pix;\
-   HDC stddc = get_win_dc(w);\
-   HDC pixdc = get_pix_dc(w);
-
-#define FREE_STDLOCALS(w) do { \
-   SelectObject(pixdc, (w)->window->savedpix); \
-   if (stddc) ReleaseDC((w)->window->win, stddc);    \
-   DeleteDC(pixdc); } while (0)

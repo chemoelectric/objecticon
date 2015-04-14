@@ -64,6 +64,7 @@
    #include <sys/utime.h>
    #include <io.h>
    #include <time.h>
+   #include "gdip.h"
 #endif					/* MSWIN32 */
 
 
