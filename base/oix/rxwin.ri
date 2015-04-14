@@ -3283,11 +3283,13 @@ static void prepare_xft(wbp w)
         XftDrawSetClip(w->window->pxft, 0);
 }
 
-void drawstring(wbp w, int x, int y, dptr str)
+void drawstring(wbp w, double rx, double ry, dptr str)
 {
     XftColor color;
     wcp wc = w->context;
     wsp ws = w->window;
+    int x = rx;
+    int y = ry;
     prepare_xft(w);
     color.pixel = 0;
     color.color = wc->fg->color;

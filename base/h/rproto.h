@@ -314,7 +314,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    void fillpolygon     (wbp w, struct point *pts, int npts);
    void filltrapezoids  (wbp w, struct trapezoid *traps, int ntraps);
    void filltriangles   (wbp w, struct triangle *tris, int ntris);
-   void drawstring      (wbp w, int x, int y, dptr str);
+   void drawstring      (wbp w, double x, double y, dptr str);
    int  textwidth       (wbp w, dptr str);
    int  readimagefileimpl(char *filename, struct imgdata *imd);
    int  writeimagefileimpl(char *filename, struct imgdata *imd);

@@ -338,9 +338,9 @@ end
 
 function graphics_Window_draw_string(self, x0, y0, str)
    body {
-      word x, y;
+      double x, y;
       GetSelfW();
-      if (pointargs(self_w, &x0, &x, &y) == Error)
+      if (dpointargs(self_w, &x0, &x, &y) == Error)
           runerr(0);
       if (!cnv:string_or_ucs(str,str))
           runerr(129, str);
