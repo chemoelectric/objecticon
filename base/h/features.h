@@ -47,11 +47,11 @@
    Feature("_X_WINDOW_SYSTEM", "X Windows")
 #endif
 
-#if HAVE_LIBJPEG
+#if HAVE_LIBJPEG || MSWIN32
    Feature("_JPEG", "JPEG images")
 #endif
 
-#if HAVE_LIBPNG
+#if HAVE_LIBPNG || MSWIN32
    Feature("_PNG", "PNG images")
 #endif
 

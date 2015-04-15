@@ -16,10 +16,7 @@ static void close_screen_win(wsp ws);
 static wfp fonts[FONTHASH_SIZE], default_font;
 static struct wcursor *cursors[CURSORHASH_SIZE];
 static wfp load_font(char *s);
-static int font_maxcharwidth(HFONT f);
-static char *convert_spec(char *s);
-static HFONT findfont(char *family, double size, int flags, int ansi);
-static HFONT mkfont(char *s);
+static gb_Font *mkfont(char *s);
 static HDC dummy_hdc;
 static wsp wsp_for_hwnd(HWND hwnd);
 static wcp clonecontext(wcp src);
@@ -93,36 +90,19 @@ static int CLIENT_YOFF;
  * draw ops
  */
 stringint drawops[] = {
-    { 0, 16},
-    {"and",              R2_MASKPEN},
-    {"andInverted",      R2_MASKPENNOT},
-    {"andReverse",       R2_MASKNOTPEN},
-    {"clear",            R2_BLACK},
-    {"copy",             R2_COPYPEN},
-    {"copyInverted",     R2_NOTCOPYPEN},
-    {"equiv",            R2_NOTXORPEN},
-    {"invert",           R2_NOT},
-    {"nand",             R2_NOTMASKPEN},
-    {"noop",             R2_NOP},
-    {"nor",              R2_NOTMERGEPEN},
-    {"or",               R2_MERGEPEN},
-    {"orInverted",       R2_MERGEPENNOT},
-    {"orReverse",        R2_MERGENOTPEN},
-    {"set",              R2_WHITE},
-    {"xor",              R2_XORPEN},
+    { 0, 2},
+    {"over",  0},
+    {"source",  1},
 };
 
 /*
  * line types
  */
 stringint linestyles[] = {
-    {0, 6},
-    {"dashdotdotted",     PS_DASHDOTDOT},
-    {"dashdotted",        PS_DASHDOT},
-    {"dashed",            PS_DOT},
-    {"longdashed",        PS_DASH},
-    {"solid",             PS_SOLID},
-    {"striped",           PS_DOT}
+    {0, 3},
+    {"enddisc",      EndDisc},
+    {"endsquare",    EndSquare},
+    {"solid",        EndSquare},
 };
 
 #define NormalCanvas 1
@@ -273,6 +253,8 @@ static void mk_Draw(wbp w, gb_Draw *d)
         d->pattern = wc->pattern->bitmap;
     else
         d->pattern = 0;
+    d->drawop = wc->drawop->i;
+    d->linestyle = wc->linestyle->i;
 }
 
 static void apply_windowlabel(wsp ws)
@@ -859,92 +841,43 @@ int setwindowlabel(wbp w, dptr val)
     return Succeeded;
 }
 
-static HFONT findfont(char *family, double size, int flags, int ansi)
-{
-    int weight, nHeight;
-    char slant, spacing;
-
-    if (size < 0)
-        size = defaultfontsize;
-
-    if (flags & FONTFLAG_MEDIUM)
-        weight = FW_MEDIUM;
-    else if ((flags & FONTFLAG_DEMI) && (flags & FONTFLAG_BOLD))
-        weight = FW_DEMIBOLD;
-    else if (flags & FONTFLAG_BOLD)
-        weight = FW_BOLD;
-    else if (flags & FONTFLAG_DEMI)
-        weight = FW_SEMIBOLD;
-    else if (flags & FONTFLAG_LIGHT)
-        weight = FW_LIGHT;
-    else
-        weight = FW_DONTCARE;
-
-    if (flags & FONTFLAG_ITALIC)
-        slant = 1;
-    else
-        slant = 0;
-
-    if (flags & FONTFLAG_PROPORTIONAL)
-        spacing = VARIABLE_PITCH;
-    else if (flags & FONTFLAG_MONO)
-        spacing = FIXED_PITCH;
-    else spacing = DEFAULT_PITCH;
-    /* Convert from point size to device units - see msdn manual page */
-    nHeight = -MulDiv(size, GetDeviceCaps(dummy_hdc, LOGPIXELSY), 72);
-    return CreateFont(nHeight, 0, 0, 0, weight, slant, 0, 0, DEFAULT_CHARSET,
-                      OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-                      spacing, family);
-}
-
-static HFONT mkfont(char *s)
+static gb_Font *mkfont(char *s)
 {
     int flags;
     double size;
     char family[MAXFONTWORD];
-    char *stdfam = NULL;
-    HFONT hf = 0;
+    if (!parsefont(s, family, &flags, &size))
+        return 0;
+    return gb_find_Font(family, flags, size);
+}
 
-    if (parsefont(s, family, &flags, &size)) {
-        /*
-         * This is a legal Icon font spec.
-         * Check first for special "standard" family names.
-         */
-        if (!strcmp(family, "mono") || !strcmp(family, "fixed")) {
-            stdfam = "Lucida Console";
-            flags |= FONTFLAG_MONO + FONTFLAG_SANS;
-        }
-        else if (!strcmp(family, "typewriter")) {
-            stdfam = "Courier New";
-            flags |= FONTFLAG_MONO + FONTFLAG_SERIF;
-        }
-        else if (!strcmp(family, "sans")) {
-            stdfam = "Arial";
-            flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SANS;
-        }
-        else if (!strcmp(family, "serif")) {
-            stdfam = "Times New Roman";
-            flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SERIF;
-        }
-        else stdfam = NULL;
-   
-        if (stdfam) {
-            /*
-             * Standard name: first try preferred family, then generalize.
-             * ICONFONT can be NULL, in which case Windows chooses.
-             */
-            hf = findfont(stdfam, size, flags, 1);
-            if (hf == NULL)
-                hf = findfont(getenv("ICONFONT"), size, flags, 1);
-        }
-        else {
-            /*
-             * Any other name: must match as specified.
-             */
-            hf = findfont(family, size, flags, 0);
-        }
+static wfp load_font(char *s)
+{
+    wfp rv;
+    int i;
+    gb_Font *f;
+
+    /*
+     * See if the font is already loaded.
+     */
+    i = hasher(hashcstr(s), fonts);
+    for(rv = fonts[i]; rv; rv = rv->next) {
+        if (!strcmp(s, rv->name))
+            return rv;
     }
-    return hf;
+
+    f = mkfont(s);
+    if (!f)
+        return 0;
+
+    MemProtect(rv = calloc(1, sizeof(struct _wfont)));
+    rv->name = salloc(s);
+    gb_get_metrics(dummy_hdc, f, &rv->ascent, &rv->descent, &rv->maxwidth);
+    /*dbg("ascent=%d descent=%d maxwidth=%d\n", rv->ascent,rv->descent,rv->maxwidth);*/
+    rv->font = f;
+    rv->next = fonts[i];
+    fonts[i] = rv;
+    return rv;
 }
 
 /*
@@ -1143,7 +1076,6 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     int i, j;
     gb_Color *p;
     MemProtect(imd->data = malloc(imd->width * imd->height * sizeof(gb_Color)));
-    dbg("capture: %d,%d %dx%d\n",x,y,imd->width,imd->height);
     p = (gb_Color *)imd->data;
     for(i = y; i < y + imd->height; i++)
         for(j = x; j < x + imd->width; j++)
@@ -1151,13 +1083,12 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     imd->format = &imgdataformat_MSBGRA32;
 }
 
-void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
+void drawimgdata0(wbp w, int x, int y, struct imgdata *imd)
 {
     wsp ws = w->window;
     int i, j;
     gb_Draw d;
     mk_Draw(w, &d);
-    dbg("drawimgdata @ %d,%d  %dx%d\n",x,y,imd->width,imd->height);
     for(j = 0; j < imd->height; j++) {
         for(i = 0; i < imd->width; i++) {
             int r, g, b, a;
@@ -1166,6 +1097,17 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
         }
     }
     gb_pix_to_win(&d, x, y, imd->width, imd->height);
+}
+
+void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
+{
+    gb_Bitmap *bm;
+    gb_Draw d;
+    mk_Draw(w, &d);
+    bm = imgdata_to_bitmap(imd);
+    gb_draw_Bitmap(&d, x, y, bm);
+    gb_free_Bitmap(bm);
+
 }
 
 struct imgdataformat *getimgdataformat(wbp w)
@@ -1217,13 +1159,6 @@ int queryrootpointer(wbp w, int *x, int *y)
     return Succeeded;
 }
 
-void drawarc(wbp wb, double cx, double cy, double rx, double ry, double angle1, double angle2)
-{
-    gb_Draw d;
-    mk_Draw(wb, &d);
-    gb_drawarc(&d, cx, cy, rx, ry, angle1, angle2);
-}
-
 void drawlines(wbp w, struct point *points, int npoints)
 {
     gb_Draw d;
@@ -1231,7 +1166,7 @@ void drawlines(wbp w, struct point *points, int npoints)
     mk_Draw(w, &d);
     points_extent(points, npoints, &x, &y, &width, &height);
     adj = d.linewidth;
-    gb_drawlines(&d, points, npoints, x - adj, y - adj, width + 2*adj, height + 2*adj);
+    gb_drawlines(&d, points, npoints, x - adj, y - adj, width + 2 * adj, height + 2 * adj);
 }
 
 void drawpoint(wbp wb, int x, int y)
@@ -1239,20 +1174,53 @@ void drawpoint(wbp wb, int x, int y)
     fillrectangle(wb, x, y, 1, 1);
 }
 
+void drawarc(wbp wb, double cx, double cy, double rx, double ry, double angle1, double angle2)
+{
+    gb_Draw d;
+    mk_Draw(wb, &d);
+    gb_drawarc(&d, cx, cy, rx, ry, angle1, angle2);
+}
+
 void fillarc(wbp wb, double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
+    gb_Draw d;
+    mk_Draw(wb, &d);
+    gb_fillarc(&d, cx, cy, rx, ry, angle1, angle2);
 }
 
 void filltrapezoids(wbp w, struct trapezoid *traps, int ntraps)
 {
+    int i;
+    for (i = 0; i < ntraps; ++i) {
+        struct point p[4];
+        p[0].x = traps[i].x1; p[0].y = traps[i].top;
+        p[1].x = traps[i].x2; p[1].y = traps[i].top;
+        p[2].x = traps[i].x4; p[2].y = traps[i].bottom;
+        p[3].x = traps[i].x3; p[3].y = traps[i].bottom;
+        fillpolygon(w, p, 4);
+    }
 }
 
 void filltriangles(wbp w, struct triangle *tris, int ntris)
 {
+    int i;
+    for (i = 0; i < ntris; ++i) {
+        struct point p[3];
+        p[0].x = tris[i].p1.x; p[0].y = tris[i].p1.y;
+        p[1].x = tris[i].p2.x; p[1].y = tris[i].p2.y;
+        p[2].x = tris[i].p3.x; p[2].y = tris[i].p3.y;
+        fillpolygon(w, p, 3);
+    }
 }
 
-void fillpolygon(wbp w, struct point *points, int npts)
+void fillpolygon(wbp w, struct point *points, int npoints)
 {
+    gb_Draw d;
+    int x, y, width, height, adj;
+    mk_Draw(w, &d);
+    points_extent(points, npoints, &x, &y, &width, &height);
+    adj = 4;
+    gb_fillpolygon(&d, points, npoints, x - adj, y - adj, width + 2 * adj, height + 2 * adj);
 }
 
 void fillrectangle(wbp wb, int x, int y, int width, int height)
@@ -1275,7 +1243,7 @@ static wcp alccontext(wbp w)
     GAlloc(wc, _wcontext);
     wc->fg = link_sharedcolor(black);
     wc->bg = link_sharedcolor(white);
-    wc->drawop = stringint_lookup(drawops, "copy");
+    wc->drawop = stringint_lookup(drawops, "over");
     wc->linestyle = stringint_lookup(linestyles, "solid");
     wc->linewidth = 1.0;
     wc->font = default_font;
@@ -1424,25 +1392,6 @@ static void resizepixmap(wbp w)
     ws->pix = np;
 }
 
-static int font_maxcharwidth(HFONT f)
-{
-    int i, m = -1, x;
-    char s[2];
-    HFONT oldfont = SelectObject(dummy_hdc, f);
-    s[1] = '\0';
-    for (i = 0; i < 256; i++) {
-        SIZE sz;
-        int x;
-        s[0] = i;
-        GetTextExtentPoint(dummy_hdc, s, 1, &sz);
-        x = (int)sz.cx;
-        if (x > m)
-            m = x;
-    }
-    SelectObject(dummy_hdc, oldfont);
-    return m;
-}
-
 void ucs_to_wchars1(WCHAR *buff, dptr str, int nullterm)
 {
     word len, i;
@@ -1567,7 +1516,13 @@ int warppointer(wbp w, int x, int y)
 
 int readimagefileimpl(char *filename, struct imgdata *imd) 
 {
-    return NoCvt;
+    gb_Bitmap *bm;
+    bm = gb_load_Bitmap(filename);
+    if (!bm)
+        return NoCvt;
+    bitmap_to_imgdata(bm, imd);
+    gb_free_Bitmap(bm);
+    return Succeeded;
 }
 
 int writeimagefileimpl(char *filename, struct imgdata *imd)
@@ -1577,7 +1532,38 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
 
 int readimagedataimpl(dptr data, struct imgdata *imd)
 {
-    return NoCvt;
+    int fd, rv;
+    word len;
+    char *fn, *p;
+    if (is_png(data))
+        fn = "temp.png";
+    else if (is_jpeg(data))
+        fn = "temp.jpg";
+    else
+        return NoCvt;
+    fd = open(fn, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0664);
+    if (fd < 0) {
+        LitWhy("Couldn't create tmp file");
+        return Failed;
+    }
+    len = StrLen(*data);
+    p = StrLoc(*data);
+    while (len > 0) {
+        int j;
+        j = write(fd, p, len);
+        if (j <= 0) {
+            dbg("j=%d\n",j);
+            close(fd);
+            LitWhy("Couldn't write to tmp file");
+            return Failed;
+        }
+        p += j;
+        len -= j;
+    }
+    close(fd);
+    rv = readimagefileimpl(fn, imd);
+    remove(fn);
+    return rv;
 }
 
 int settransientfor(wbp w, wbp other)
@@ -1725,7 +1711,7 @@ static void bitmap_to_imgdata(gb_Bitmap *bm, struct imgdata *imd)
     p = (gb_Color *)imd->data;
     for(j = 0; j < imd->height; j++) {
         for(i = 0; i < imd->width; i++)
-            *p++ = gb_getpixel(bm, j, i);
+            *p++ = gb_getpixel(bm, i, j);
     }
 }
 
@@ -1765,52 +1751,6 @@ static void unlink_sharedbitmap(struct SharedBitmap *x)
         gb_free_Bitmap(x->bitmap);
         free(x);
     }
-}
-
-static char *convert_spec(char *s)
-{
-    return s;
-}
-
-static wfp load_font(char *s)
-{
-    wfp rv;
-    int i;
-    HFONT f, old_font;
-    TEXTMETRIC metrics;
-
-    /*
-     * Normalize font name.
-     */
-    s = convert_spec(s);
-    if (!s)
-        return 0;
-
-    /*
-     * See if the font is already loaded.
-     */
-    i = hasher(hashcstr(s), fonts);
-    for(rv = fonts[i]; rv; rv = rv->next) {
-        if (!strcmp(s, rv->name))
-            return rv;
-    }
-
-    f = mkfont(s);
-    if (!f)
-        return 0;
-
-    MemProtect(rv = calloc(1, sizeof(struct _wfont)));
-    rv->name = salloc(s);
-    old_font = SelectObject(dummy_hdc, f);
-    GetTextMetrics(dummy_hdc, &metrics);
-    SelectObject(dummy_hdc, old_font);
-    rv->ascent = metrics.tmAscent;
-    rv->descent = metrics.tmDescent;
-    rv->maxwidth = font_maxcharwidth(f);
-    rv->font = gb_create_Font(dummy_hdc, f);
-    rv->next = fonts[i];
-    fonts[i] = rv;
-    return rv;
 }
 
 int focuswindow(wbp w)

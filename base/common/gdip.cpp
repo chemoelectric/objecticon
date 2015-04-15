@@ -2,9 +2,12 @@
 #include <objidl.h>
 #include <gdiplus.h>
 #include <stdio.h>
+#include <math.h>
 #include "../h/gdip.h"
 
 using namespace Gdiplus;
+
+static int draw_debug = 0;
 
 static void dbg(char *fmt, ...);
 
@@ -23,7 +26,7 @@ void gb_initialize(void)
 {
     GdiplusStartupInput gdiplusStartupInput;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
-    dbg("gb_initialize: hello from gdip.cpp\n");
+    if (draw_debug) dbg("gb_initialize: hello from gdip.cpp\n");
 }
 
 extern "C"
@@ -37,7 +40,7 @@ gb_Bitmap *gb_create_Bitmap(int width, int height, gb_Color bg, gb_Bitmap *cp)
     if (cp)
         g.DrawImage((Bitmap *)cp, 0, 0);
        
-    dbg("Returning new bitmap %p filled with %x\n",bm,(int)bg);
+    if (draw_debug) dbg("Returning new bitmap %p filled with %x\n",bm,(int)bg);
     return (gb_Bitmap*)bm;
 }
 
@@ -52,11 +55,11 @@ extern "C"
 void gb_free_Bitmap(gb_Bitmap *bm)
 {
     Bitmap *b = (Bitmap *)bm;
-    dbg("Deleting bitmap %p\n",b);
+    if (draw_debug) dbg("Deleting bitmap %p\n",b);
     delete b;
 }
 
-static Graphics *get_graphics(gb_Draw *d)
+static Graphics *get_graphics(gb_Draw *d, int aa=0)
 {
     Bitmap *b = (Bitmap *)d->pix;
     Graphics *g = Graphics::FromImage(b);
@@ -64,7 +67,9 @@ static Graphics *get_graphics(gb_Draw *d)
         Rect r(d->clipx, d->clipy, d->clipw, d->cliph);
         g->SetClip(r);
     }
-
+    g->SetCompositingMode((CompositingMode)d->drawop);
+    if (aa)
+        g->SetSmoothingMode(SmoothingModeHighQuality);
     return g;
 }
 
@@ -79,6 +84,17 @@ static Brush *get_fg_brush(gb_Draw *d)
     }
 }
 
+static Pen *get_fg_pen(gb_Draw *d, Brush *b)
+{
+    Pen *p = new Pen(b, d->linewidth);
+    if (d->linestyle == EndDisc) {
+        p->SetLineJoin(LineJoinRound);
+        p->SetEndCap(LineCapRound);
+        p->SetStartCap(LineCapRound);
+    }
+    return p;
+}
+
 static Brush *get_bg_brush(gb_Draw *d)
 {
     Color c = Color((ARGB)d->bg);
@@ -91,13 +107,26 @@ void gb_pix_to_win(gb_Draw *d, int x, int y, int width, int height)
     if (!d->win)
         return;
     Graphics h(d->win);
-    dbg("gb_pix_to_win %d %d %dx%d\n",x,y,width,height);
+    if (draw_debug) dbg("gb_pix_to_win %d %d %dx%d\n",x,y,width,height);
     if (d->clipw >= 0) {
         Rect r(d->clipx, d->clipy, d->clipw, d->cliph);
         h.SetClip(r);
     }
     Bitmap *b = (Bitmap *)d->pix;
+    h.SetCompositingMode(CompositingModeSourceCopy);
     h.DrawImage(b, x, y, x, y, width, height, UnitPixel);
+}
+
+extern "C"
+void gb_draw_Bitmap(gb_Draw *d, int x, int y, gb_Bitmap *src)
+{
+    Graphics *g = get_graphics(d);
+    Bitmap *bm = (Bitmap *)src;;
+    Bitmap *b = (Bitmap *)d->pix;
+    if (draw_debug) dbg("Draw bitmap at %d, %d\n", x, y);
+    g->DrawImage(bm, x, y);
+    gb_pix_to_win(d, x, y, b->GetWidth(), b->GetHeight());
+    delete g;
 }
 
 extern "C"
@@ -105,7 +134,7 @@ void gb_erasearea(gb_Draw *d, int x, int y, int width, int height)
 {
     Graphics *g = get_graphics(d);
     Brush *b = get_bg_brush(d);
-    dbg("Erase area g=%p fg=%x bg=%x\n", g, (int)d->fg, (int)d->bg);
+    if (draw_debug) dbg("Erase area g=%p fg=%x bg=%x\n", g, (int)d->fg, (int)d->bg);
     g->FillRectangle(b, x, y, width, height);
     gb_pix_to_win(d, x, y, width, height);
     delete b;
@@ -117,6 +146,7 @@ void gb_fillrectangle(gb_Draw *d, int x, int y, int width, int height)
 {
     Graphics *g = get_graphics(d);
     Brush *b = get_fg_brush(d);
+    if (draw_debug) dbg("Fill rectangle %d %d %dx%d\n", x, y, width, height);
     g->FillRectangle(b, x, y, width, height);
     gb_pix_to_win(d, x, y, width, height);
     delete b;
@@ -129,7 +159,7 @@ void gb_drawrectangle(gb_Draw *d, int x, int y, int width, int height, int thick
     Graphics *g = get_graphics(d);
     Brush *b = get_fg_brush(d);
 
-    dbg("Draw rectangle g=%p\n", g);
+    if (draw_debug) dbg("Draw rectangle %d %d %dx%d thick=%d\n", x, y, width, height, thick);
 
     if (width <= 2 * thick || height <= 2 * thick)
         g->FillRectangle(b, x, y, width, height);
@@ -154,7 +184,7 @@ void gb_do_paint(HWND hwnd, gb_Bitmap *pix)
     HDC hdc;
     PAINTSTRUCT ps;
     Bitmap *b = (Bitmap *)pix;
-    dbg("do_paint b=%p (%dx%d)\n",b ,   b->GetWidth(), b->GetHeight());
+    if (draw_debug) dbg("do_paint b=%p (%dx%d)\n",b ,   b->GetWidth(), b->GetHeight());
     hdc = BeginPaint(hwnd, &ps);
     Graphics g(hdc);
     g.DrawImage(b, 
@@ -180,7 +210,7 @@ void gb_copyarea(gb_Bitmap *src, int x, int y, int width, int height, gb_Draw *d
 {
     Graphics *g = get_graphics(d);
     Bitmap *bm = (Bitmap *)src;
-    dbg("copyarea %d %d -> %d %d\n",x,y,x2,y2);
+    if (draw_debug) dbg("copyarea %d %d -> %d %d\n",x,y,x2,y2);
     g->DrawImage(bm, 
                  x2, y2,
                  x, y, width, height,
@@ -210,7 +240,7 @@ extern "C"
 gb_Font *gb_create_Font(HDC hdc, HFONT hfont)
 {
     Font *f = new Font(hdc, hfont);
-    dbg("new font hfont=%x -> f=%p\n",(int)hfont,f);
+    if (draw_debug) dbg("new font hfont=%x -> f=%p\n",(int)hfont,f);
     return (gb_Font *)f;
 }
 
@@ -222,12 +252,11 @@ void gb_drawstring(gb_Draw *d, int x, int y, WCHAR *str, int length)
     Font *f = (Font *)d->font;
     PointF pf(x, y);
     RectF bound;
-    dbg("draw string length font=%p %d @ %d,%d\n", f,length,x,y);
+    if (draw_debug) dbg("draw string length font=%p %d @ %d,%d\n", f,length,x,y);
     g->DrawDriverString((UINT16 *)str, 
                         length, f, b, &pf, 
                         DriverStringOptionsRealizedAdvance | DriverStringOptionsCmapLookup,
                         0);
-
 
     g->MeasureDriverString((UINT16 *)str, 
                            length, f, &pf, 
@@ -259,7 +288,7 @@ void gb_get_Bitmap_size(gb_Bitmap *src, UINT *width, UINT *height)
 {
     Bitmap *bm = (Bitmap *)src;
     *width = bm->GetWidth();
-    *height = bm->GetWidth();
+    *height = bm->GetHeight();
 }
 
 static REAL to_degrees(double rad)
@@ -270,12 +299,43 @@ static REAL to_degrees(double rad)
 extern "C"
 void gb_drawarc(gb_Draw *d, double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
-    Graphics *g = get_graphics(d);
+    Graphics *g = get_graphics(d, 1);
     Brush *b = get_fg_brush(d);
-    Pen *p = new Pen(b, d->linewidth);
-    g->DrawArc(p, (REAL)cx - (REAL)rx, cy - ry, 2*rx, 2*ry, to_degrees(angle1), to_degrees(angle2)); 
-    gb_pix_to_win(d, cx - rx, cy - ry, 2*rx, 2*ry);
+    Pen *p = get_fg_pen(d, b);
+    g->DrawArc(p, 
+               (REAL)cx - (REAL)rx,
+               cy - ry,
+               2 * rx,
+               2 * ry,
+               to_degrees(angle1),
+               to_degrees(angle2)); 
+    gb_pix_to_win(d, 
+                  cx - rx - d->linewidth, 
+                  cy - ry - d->linewidth, 
+                  2 * rx + 2 * d->linewidth, 
+                  2 * ry + 2 * d->linewidth);
     delete p;
+    delete b;
+    delete g;
+}
+
+extern "C"
+void gb_fillarc(gb_Draw *d, double cx, double cy, double rx, double ry, double angle1, double angle2)
+{
+    Graphics *g = get_graphics(d, 1);
+    Brush *b = get_fg_brush(d);
+    g->FillPie(b, 
+               (REAL)cx - (REAL)rx,
+               cy - ry,
+               2 * rx,
+               2 * ry,
+               to_degrees(angle1),
+               to_degrees(angle2)); 
+    gb_pix_to_win(d, 
+                  cx - rx - 4, 
+                  cy - ry - 4, 
+                  2 * rx + 8, 
+                  2 * ry + 8);
     delete b;
     delete g;
 }
@@ -296,16 +356,199 @@ extern "C"
 void gb_drawlines(gb_Draw *d, struct point *points0, int npoints,
                   int ex_x, int ex_y, int ex_width, int ex_height)
 {
-    Graphics *g = get_graphics(d);
+    Graphics *g = get_graphics(d, 1);
     Brush *b = get_fg_brush(d);
-    Pen *p = new Pen(b, d->linewidth);
+    Pen *p = get_fg_pen(d, b);
     PointF *points = convert_points(points0, npoints);
-    dbg("doing %d points\n",npoints);
-    g->DrawLines(p, points, npoints);
+    if (draw_debug) dbg("doing %d points\n",npoints);
+    if (points0[0].x == points0[npoints - 1].x &&
+        points0[0].y == points0[npoints - 1].y)
+        g->DrawPolygon(p, points, npoints);
+    else
+        g->DrawLines(p, points, npoints);
     gb_pix_to_win(d, ex_x, ex_y, ex_width, ex_height);
     delete[] points;
     delete p;
     delete b;
     delete g;
+}
+
+extern "C"
+void gb_fillpolygon(gb_Draw *d, struct point *points0, int npoints,
+                      int ex_x, int ex_y, int ex_width, int ex_height)
+{
+    Graphics *g = get_graphics(d, 1);
+    Brush *b = get_fg_brush(d);
+    PointF *points = convert_points(points0, npoints);
+    g->FillPolygon(b, points, npoints);
+    gb_pix_to_win(d, ex_x, ex_y, ex_width, ex_height);
+    delete[] points;
+    delete b;
+    delete g;
+}
+
+static
+WCHAR *utf8_to_wchar(char *s)
+{
+    WCHAR *mbs;
+    int n;
+    n = MultiByteToWideChar(CP_UTF8,
+                            0,
+                            s,
+                            -1,
+                            0,
+                            0);
+    mbs = new WCHAR[n];
+    MultiByteToWideChar(CP_UTF8,
+                        0,
+                        s,
+                        -1,
+                        mbs,
+                        n);
+    return mbs;
+}
+
+static
+char *wchar_to_utf8(WCHAR *s)
+{
+    char *u;
+    int n;
+    n = WideCharToMultiByte(CP_UTF8,
+                            0,
+                            s,
+                            -1,
+                            0,
+                            0,
+                            NULL,
+                            NULL);
+    u = new char[n];
+
+    WideCharToMultiByte(CP_UTF8,
+                        0,
+                        s,
+                        -1,
+                        u,
+                        n,
+                        NULL,
+                        NULL);
+    return u;
+}
+
+extern "C"
+gb_Font *gb_find_Font(char *family, int flags, double size)
+{
+    const FontFamily *ff;
+
+    if (!strcmp(family, "mono") || !strcmp(family, "fixed")) {
+        ff = FontFamily::GenericMonospace()->Clone();
+        flags |= FONTFLAG_MONO + FONTFLAG_SANS;
+    } else if (!strcmp(family, "typewriter")) {
+        ff = new FontFamily(L"Courier New");
+        flags |= FONTFLAG_MONO + FONTFLAG_SERIF;
+    } else if (!strcmp(family, "sans")) {
+        ff = FontFamily::GenericSansSerif()->Clone();
+        flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SANS;
+    } else if (!strcmp(family, "serif")) {
+        ff = FontFamily::GenericSerif()->Clone();
+        flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SERIF;
+    } else {
+        WCHAR *t = utf8_to_wchar(family);
+        ff = new FontFamily(t);
+        delete[] t;
+    }
+
+    if (!ff->IsAvailable()) {
+        delete ff;
+        return 0;
+    }
+
+    INT style = 0;
+    if (flags & FONTFLAG_BOLD)
+        style |= FontStyleBold;
+    if (flags & FONTFLAG_ITALIC)
+        style |= FontStyleItalic;
+
+    Font *f = new Font(ff, size, style);
+    if (!f->IsAvailable()) {
+        delete f;
+        delete ff;
+        return 0;
+    }
+        
+    delete ff;
+    return (gb_Font *)f;
+}
+
+extern "C"
+void gb_get_metrics(HDC dc, gb_Font *fin, int *ascent, int *descent, int *maxwidth)
+{
+    FontFamily ff;
+    Font *f;
+    f = (Font *)fin;
+    f->GetFamily(&ff);
+
+    WCHAR familyName[LF_FACESIZE];
+    ff.GetFamilyName(familyName);
+
+    int ppi = (int)GetDeviceCaps(dc, LOGPIXELSY);
+    double pts_per_du = f->GetSize() / ff.GetEmHeight(f->GetStyle());
+    double asc_pts = ff.GetCellAscent(f->GetStyle()) * pts_per_du;
+    double desc_pts = ff.GetCellDescent(f->GetStyle()) * pts_per_du;
+    double asc_pix = ppi * asc_pts / 72.0;
+    double desc_pix = ppi * desc_pts / 72.0;
+    *ascent = ceil(asc_pix);
+    *descent = ceil(desc_pix);
+
+#if 0
+    char *t = wchar_to_utf8(familyName);
+    dbg("f=%p family name: %s\n",ff,t);
+    delete[] t;
+    dbg("\tsize = %f points\n",f->GetSize());
+    dbg("\t     = %d design units\n", (int)ff.GetEmHeight(f->GetStyle()));
+    dbg("\tppdu   = %f\n", pts_per_du);
+    dbg("\tppi  = %d\n", ppi);
+    dbg("\tasc  = %d design units\n", (int)ff.GetCellAscent(f->GetStyle()));
+    dbg("\t     = %f pts\n", asc_pts);
+    dbg("\t     = %f pixels\n", asc_pix);
+    dbg("\tdesc = %d design units\n", (int)ff.GetCellDescent(f->GetStyle()));
+    dbg("\t     = %f pts\n", desc_pts);
+    dbg("\t     = %f pixels\n", desc_pix);
+    dbg("\ta+d  = %f pixels\n", asc_pix + desc_pix);
+    dbg("\tgetheight = %f pixels\n", f->GetHeight(ppi));
+#endif
+
+    Graphics g(dc);
+    int mw = 0;
+    for (int i = 1; i < 256; ++i) {
+        int w;
+        WCHAR str[1];
+        PointF pf(0, 0);
+        RectF bound;
+        str[0] = i;
+        g.MeasureDriverString((UINT16 *)str, 
+                              1, f, &pf, 
+                              DriverStringOptionsRealizedAdvance | DriverStringOptionsCmapLookup,
+                              0, &bound);
+        w = ceil(bound.Width);
+        if (w > mw)
+            mw = w;
+    }
+    *maxwidth = mw;
+}
+
+extern "C"
+gb_Bitmap *gb_load_Bitmap(char *filename)
+{
+    Bitmap *b;
+    WCHAR *t = utf8_to_wchar(filename);
+    b = Bitmap::FromFile(t);
+    delete[] t;
+    dbg("Load bitmap from file %s -> %p\n", filename, b);
+    if (!b || b->GetWidth() == 0 || b->GetHeight() == 0) {
+        delete b;
+        return 0;
+    }
+    dbg("loaded bitmap %dx%d\n",b->GetWidth(),b->GetHeight());
+    return (gb_Bitmap *)b;
 }
 
