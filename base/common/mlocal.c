@@ -973,12 +973,6 @@ int strncasecmp(char *s1, char *s2, int n)
     }
     return 0;
 }
-
-int mkstemp(char *path)
-{
-    return _open(_mktemp(path), _O_CREAT | _O_TRUNC | _O_WRONLY |_O_BINARY, _S_IREAD | _S_IWRITE);
-}
-
 #endif					/* MSWIN32 */
 
 static char sbuf[Precision+32];

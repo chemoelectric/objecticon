@@ -23,7 +23,7 @@ RTTC=$(XOBJS:.obj=.c)
 RFILES=$(XOBJS:.obj=.r)
 RTTTMP=$(XOBJS:.obj=.tmp)
 
-COBJS=	../common/mlocal.obj ../common/gdip.obj
+COBJS=	../common/mlocal.obj ../common/win32.obj ../common/gdip.obj
 
 OBJS=	$(XOBJS) $(COBJS)
 

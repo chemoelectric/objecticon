@@ -1013,7 +1013,8 @@ class WindowsFileSystem(FileSystem)
    end
 
    public get_temp()
-      return System.getenv("TEMP") | "C:\\WINDOWS\\TEMP"
+      # Conform with what the Windows function GetTempPath() does.
+      return System.getenv("TMP" | "TEMP" | "USERPROFILE") | "C:\\WINDOWS\\TEMP"
    end
 
    public is_hidden(s)

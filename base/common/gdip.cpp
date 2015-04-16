@@ -38,10 +38,10 @@ gb_Bitmap *gb_create_Bitmap(int width, int height, gb_Color bg, gb_Bitmap *cp)
     Color c = Color((ARGB)bg);
     Graphics g(bm);
     SolidBrush br(c);
+    g.SetCompositingMode(CompositingModeSourceCopy);
     g.FillRectangle(&br, 0, 0, width, height);
     if (cp)
         g.DrawImage((Bitmap *)cp, 0, 0);
-       
     if (draw_debug) dbg("Returning new bitmap %p filled with %x\n",bm,(int)bg);
     return (gb_Bitmap*)bm;
 }
@@ -137,6 +137,7 @@ void gb_erasearea(gb_Draw *d, int x, int y, int width, int height)
     Graphics *g = get_graphics(d);
     Brush *b = get_bg_brush(d);
     if (draw_debug) dbg("Erase area g=%p fg=%x bg=%x\n", g, (int)d->fg, (int)d->bg);
+    g->SetCompositingMode(CompositingModeSourceCopy);
     g->FillRectangle(b, x, y, width, height);
     gb_pix_to_win(d, x, y, width, height);
     delete b;
@@ -189,6 +190,7 @@ void gb_do_paint(HWND hwnd, gb_Bitmap *pix)
     if (draw_debug) dbg("do_paint b=%p (%dx%d)\n",b ,   b->GetWidth(), b->GetHeight());
     hdc = BeginPaint(hwnd, &ps);
     Graphics g(hdc);
+    g.SetCompositingMode(CompositingModeSourceCopy);
     g.DrawImage(b, 
                 ps.rcPaint.left,
                 ps.rcPaint.top, 
@@ -441,19 +443,15 @@ gb_Font *gb_find_Font(char *family, int flags, double size)
 {
     const FontFamily *ff;
 
-    if (!strcmp(family, "mono") || !strcmp(family, "fixed")) {
+    if (!strcmp(family, "mono") || !strcmp(family, "fixed"))
+        ff = new FontFamily(L"Lucida Console");
+    else if (!strcmp(family, "typewriter"))
         ff = FontFamily::GenericMonospace()->Clone();
-        flags |= FONTFLAG_MONO + FONTFLAG_SANS;
-    } else if (!strcmp(family, "typewriter")) {
-        ff = new FontFamily(L"Courier New");
-        flags |= FONTFLAG_MONO + FONTFLAG_SERIF;
-    } else if (!strcmp(family, "sans")) {
+    else if (!strcmp(family, "sans"))
         ff = FontFamily::GenericSansSerif()->Clone();
-        flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SANS;
-    } else if (!strcmp(family, "serif")) {
+    else if (!strcmp(family, "serif"))
         ff = FontFamily::GenericSerif()->Clone();
-        flags |= FONTFLAG_PROPORTIONAL + FONTFLAG_SERIF;
-    } else {
+    else {
         WCHAR *t = utf8_to_wchar(family);
         ff = new FontFamily(t);
         delete[] t;

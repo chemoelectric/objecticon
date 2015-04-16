@@ -1809,7 +1809,7 @@ static void init_window_system(void)
     wc.hInstance =      GetModuleHandle(0);
     wc.hIcon =          LoadIcon(0, IDI_APPLICATION);
     wc.hCursor =        LoadCursor(0, IDC_ARROW);
-    wc.hbrBackground =  GetStockObject(WHITE_BRUSH);
+    wc.hbrBackground =  GetStockObject(BLACK_BRUSH);
     wc.lpszMenuName =   0;
     wc.lpszClassName =  "oix";
     wc.hIconSm =        LoadIcon(0, IDI_APPLICATION);
