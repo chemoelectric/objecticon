@@ -360,6 +360,8 @@ void wfreersc(void);
 void ucs_to_wchars1(WCHAR *buff, dptr str, int nullterm);
 WCHAR *ucs_to_wchars(dptr str, int nullterm);
 void wchars_to_ucs(WCHAR *src, dptr res);
+void string_to_wchars1(WCHAR *buff, dptr str, int nullterm);
+WCHAR *string_to_wchars(dptr str, int nullterm);
 #endif
 
 /*
@@ -532,6 +534,7 @@ void set_curpstate(struct progstate *p);
 void set_curr_pf(struct p_frame *x);
 void synch_ipc(void);
 int isflag(dptr d);
+char *datatofile(dptr data);
 
 extern void do_op_cat(void);
 extern void do_op_conj(void);

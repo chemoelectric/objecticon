@@ -16,7 +16,6 @@ char *file_prefix = "y";
 char *java_class_name = "YY";/*rwj*/
 char *java_extend_name = "Thread";/*rwj*/
 char *myname = "yacc";
-char *temp_form = "yacc.XXXXXXX";
 
 int lineno;
 int outline;
@@ -288,56 +287,35 @@ char *allocate(unsigned n)
     return (p);
 }
 
+/*
+ * salloc - allocate and initialize string
+ */
+static char *salloc(char *s)
+{
+    char *s1;
+    s1 = (char *)MALLOC(strlen(s) + 1);
+    return strcpy(s1, s);
+}
+
 void create_file_names(void)
 {
-    int i, len;
-    char *tmpdir;
+    int len;
+    int action_file_fd;
+    int text_file_fd;
+    int union_file_fd;
 
-    tmpdir = getenv("TEMP");
-#if MSWIN32
-    if (tmpdir == 0) tmpdir = "C:\\WINDOWS\\TEMP";
-#else
-    if (tmpdir == 0) tmpdir = "/tmp";
-#endif
-
-    len = strlen(tmpdir);
-    i = len + 13;
-    if (len && tmpdir[len-1] != FILESEP)
-	++i;
-
-    action_file_name = MALLOC(i);
-    if (action_file_name == 0) no_space();
-    text_file_name = MALLOC(i);
-    if (text_file_name == 0) no_space();
-    union_file_name = MALLOC(i);
-    if (union_file_name == 0) no_space();
-
-    strcpy(action_file_name, tmpdir);
-    strcpy(text_file_name, tmpdir);
-    strcpy(union_file_name, tmpdir);
-
-    if (len && tmpdir[len - 1] != FILESEP)
-    {
-	action_file_name[len] = FILESEP;
-	text_file_name[len] = FILESEP;
-	union_file_name[len] = FILESEP;
-	++len;
-    }
-
-    strcpy(action_file_name + len, temp_form);
-    strcpy(text_file_name + len, temp_form);
-    strcpy(union_file_name + len, temp_form);
-
-    action_file_name[len + 5] = 'a';
-    text_file_name[len + 5] = 't';
-    union_file_name[len + 5] = 'u';
-
-    if (mkstemp(action_file_name) < 0 ||
-	mkstemp(text_file_name) < 0 ||
-	mkstemp(union_file_name) < 0) {
+    action_file_name = salloc(maketemp("yacc.aXXXXXX"));
+    text_file_name = salloc(maketemp("yacc.tXXXXXX"));
+    union_file_name = salloc(maketemp("yacc.uXXXXXX"));
+    if ((action_file_fd = mkstemp(action_file_name)) < 0 ||
+	(text_file_fd = mkstemp(text_file_name)) < 0 ||
+	(union_file_fd = mkstemp(union_file_name)) < 0) {
       fprintf(stderr, "Couldn't mkstemp\n");
       exit(1);
     }
+    close(action_file_fd);
+    close(text_file_fd);
+    close(union_file_fd);
 
     if (jflag)/*rwj*/
       {

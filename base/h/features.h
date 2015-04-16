@@ -51,11 +51,11 @@
    Feature("_X_WINDOW_SYSTEM", "X Windows")
 #endif
 
-#if PLAN9 || HAVE_LIBJPEG
+#if HAVE_LIBJPEG || MSWIN32 || PLAN9
    Feature("_JPEG", "JPEG images")
 #endif
 
-#if PLAN9 || HAVE_LIBPNG
+#if HAVE_LIBPNG || MSWIN32 || PLAN9
    Feature("_PNG", "PNG images")
 #endif
 

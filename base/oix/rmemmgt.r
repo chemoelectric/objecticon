@@ -28,7 +28,7 @@ static void do_weakrefs(void);
 
 /* string qualifier list */
 static struct {
-   int listsize;
+   uword listsize;
    dptr *list, *elist, *free;
 } qual;
 
@@ -570,7 +570,7 @@ static void postqual(dptr dp)
  * Structure for holding a stack of union block ** items.
  */
 static struct {
-   int bufsize;
+   uword bufsize;
    union block ***buf, ***ebuf, ***top;
 } stk;
 

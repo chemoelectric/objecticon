@@ -142,13 +142,9 @@
    #ifndef vsnprintf
       #define vsnprintf(a,b,c,d) vsprintf(a,c,d)
    #endif
-   #ifndef mkstemp
-       #define mkstemp mktemp
-   #endif
    #define ftruncate _chsize
    #define lstat stat
    #define alloca _alloca
-   #define qsort myqsort
    #define strdup _strdup
    #define unlink _unlink
    #define snprintf _snprintf
@@ -160,6 +156,7 @@
    #include <sys/utime.h>
    #include <io.h>
    #include <time.h>
+   #include "gdip.h"
 #endif					/* MSWIN32 */
 
 #if UNIX

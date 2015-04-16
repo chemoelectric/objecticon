@@ -10,7 +10,7 @@
 /*  SETBIT sets the n-th bit starting from r		*/
 
 #define MAXTABLE	32500
-#define BITS_PER_WORD	32
+#define BITS_PER_WORD	IntBits
 #define	WORDSIZE(n)	(((n)+(BITS_PER_WORD-1))/BITS_PER_WORD)
 #define	BIT(r, n)	((((r)[(n)>>5])>>((n)&31))&1)
 #define	SETBIT(r, n)	((r)[(n)>>5]|=((unsigned)1<<((n)&31)))

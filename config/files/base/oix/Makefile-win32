@@ -23,13 +23,13 @@ RTTC=$(XOBJS:.obj=.c)
 RFILES=$(XOBJS:.obj=.r)
 RTTTMP=$(XOBJS:.obj=.tmp)
 
-COBJS=	../common/mlocal.obj ../common/qsort.obj
+COBJS=	../common/mlocal.obj ../common/win32.obj ../common/gdip.obj
 
 OBJS=	$(XOBJS) $(COBJS)
 
 LIBS=	winmm.lib wsock32.lib odbc32.lib shell32.lib libcmt.lib oldnames.lib kernel32.lib \
 	ws2_32.lib mswsock.lib advapi32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib \
-	msimg32.lib
+	msimg32.lib gdiplus.lib
 
 rwinsys.obj: rxwin.ri rmswin.ri rxkeysyms.ri
 invoke.obj: invokeiasm.ri

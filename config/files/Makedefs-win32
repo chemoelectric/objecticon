@@ -23,5 +23,8 @@ export PATH:=$(OIBIN):$(PATH)
 %.obj: %.c
 	cl $(CFLAGS) /c $<
 
+%.obj: %.cpp
+	cl $(CFLAGS) /c $<
+
 %.u: %.icn
 	oit -c -s $<

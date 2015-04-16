@@ -19,6 +19,8 @@ OBJS	      = closure.o \
 		verbose.o \
 		warshall.o
 
+COBJS         = ../../base/common/mlocal.o
+
 PRINT	      = pr -f -l88
 
 PROGRAM	      = iyacc
@@ -39,7 +41,7 @@ SRCS	      = closure.c \
 all:		$(PROGRAM)
 
 $(PROGRAM):     $(OBJS)
-		$(CC) $(CFLAGS) $(LDFLAGS) -o $(PROGRAM) $(OBJS) $(LIBS)
+		$(CC) $(CFLAGS) $(LDFLAGS) -o $(PROGRAM) $(OBJS) $(COBJS) $(LIBS)
 		$(INSTALL) iyacc "$(OIBIN)"
 
 clean:;		@rm -f $(OBJS) $(PROGRAM)

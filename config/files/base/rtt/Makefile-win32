@@ -11,8 +11,8 @@ ROBJS = rttparse.obj rttmain.obj rttlex.obj rttsym.obj rttnode.obj rttout.obj rt
 	preproc.obj evaluate.obj files.obj gettok.obj pinit.obj
 
 COBJS = ../common/getopt.obj ../common/alloc.obj \
-	../common/strtbl.obj\
-	../common/mlocal.obj
+	../common/strtbl.obj ../common/mlocal.obj \
+        ../common/win32.obj
 
 OBJ = $(ROBJS) $(COBJS)
 

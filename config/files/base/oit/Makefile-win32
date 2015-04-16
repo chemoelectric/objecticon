@@ -8,7 +8,8 @@ OITOBJS=	trans.obj tlex.obj tparse.obj tsym.obj tmem.obj \
 		link.obj lglob.obj lcode.obj lmem.obj lsym.obj ltree.obj optimize.obj
 
 COBJS=		../common/getopt.obj ../common/alloc.obj \
-		../common/strtbl.obj ../common/mlocal.obj ../common/qsort.obj
+		../common/strtbl.obj ../common/mlocal.obj \
+                ../common/win32.obj
 
 OBJS=		$(OITOBJS) $(COBJS)
 
@@ -23,8 +24,9 @@ oit:		$(OBJS)
 		$(LD) -subsystem:console $(OBJS) $(LIBS) -out:oit.exe 
 		$(INSTALL) oit "$(OIBIN)"
 
-win32header:	win32header.obj ../common/mlocal.obj
-		$(LD) -subsystem:console win32header.obj ../common/mlocal.obj $(LIBS) -out:win32header.exe 
+win32header:	win32header.obj ../common/mlocal.obj ../common/win32.obj
+		$(LD) -subsystem:console win32header.obj ../common/mlocal.obj \
+                ../common/win32.obj $(LIBS) -out:win32header.exe 
 		$(INSTALL) win32header "$(OIBIN)"
 
 $(OBJS):   ../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \

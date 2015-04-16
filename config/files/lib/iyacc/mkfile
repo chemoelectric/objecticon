@@ -15,6 +15,8 @@ OBJS	      = closure.$O \
 		verbose.$O \
 		warshall.$O
 
+COBJS         = ../../base/common/mlocal.$O
+
 PROGRAM	      = iyacc
 
 SRCS	      = closure.c \
@@ -33,7 +35,7 @@ SRCS	      = closure.c \
 all:V:		$PROGRAM
 
 $PROGRAM:       $OBJS
-		$LD -o $PROGRAM $OBJS $LIBS ../../base/common/plan9.$O
+		$LD -o $PROGRAM $OBJS $COBJS $LIBS ../../base/common/plan9.$O
 		cp iyacc $OIBIN
 
 clean:V:	

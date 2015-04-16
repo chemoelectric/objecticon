@@ -208,14 +208,13 @@ extern struct imgdataformat imgdataformat_X11BGRA32;
 #include "mswin.h"
 
 struct SharedColor {
-   COLORREF color;
-   int alpha;
+   gb_Color color;
    char  *name;
    int   refcount;
 };
 
 struct SharedBitmap {
-   HBITMAP bitmap;
+   gb_Bitmap *bitmap;
    int refcount;
 };
 
@@ -258,7 +257,7 @@ typedef struct _wfont {
 #elif PLAN9
   Font          *font;
 #elif MSWIN32
-  HFONT		font;
+  gb_Font	*font;
 #endif
 } wfont, *wfp;
 
@@ -371,7 +370,7 @@ typedef struct _wcontext {
   struct SharedColor *fg, *bg;
   struct SharedBitmap  *pattern;
   stringint     *linestyle;
-  int           linewidth;
+  double         linewidth;
   stringint     *drawop;
 #endif
 
@@ -435,13 +434,12 @@ typedef struct _wstate {
 #elif MSWIN32
   struct _wstate *vprevious, *vnext;    /* List of states with win non-null */
   HWND		win;			/* client window */
-  HBITMAP	pix;			/* backing bitmap */
+  gb_Bitmap     *pix;
   int		pixheight;		/* backing pixmap height, in pixels */
   int		pixwidth;		/* pixmap width, in pixels */
   int		state;			/* window state; icon, window or root*/
   struct wcursor *cursor;               /* current cursor */
   struct _wstate *transientfor;
-  HBITMAP	savedpix;
   HCURSOR	savedcursor;
   HWND          savedgrab;
   int           trackingmouse;          /* Set if TrackMouseEvent in use */

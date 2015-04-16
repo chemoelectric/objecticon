@@ -1793,7 +1793,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    public defer draw_line()
 
    public draw()
-      local s, ss, row, seg, x1, W, W2, fg, bg, w1, want_fg, want_bg, want_font,
+      local n, ss, row, seg, x1, W, W2, fg, bg, w1, want_fg, want_bg, want_font,
          default_bg, default_fg, default_font, a, r, font, y1, cr, info, xp, yp, i
 
       cr := view.get_cbwin_clip()
@@ -1814,7 +1814,6 @@ class Vt(LineBasedScrollArea, MenuMode)
          # when running full-screen editing style apps (eg emacs)
          if yp >= view.y then {
             row := contents[i]
-            s := line_str(row.l)
 
             x1 := xp
             y1 := yp + view.cbwin.get_absolute_leading()
@@ -1865,20 +1864,22 @@ class Vt(LineBasedScrollArea, MenuMode)
             }
 
             if \mark_y & 
+               ((mark_y <= i <= cursor_y) | (mark_y >= i >= cursor_y)) &
+               n := line_len(row.l) &
                (r := if (mark_y < i < cursor_y) | (mark_y > i > cursor_y) then
-                         Range(1, 1 + (0 < *s))
+                         Range(1, 1 + (0 < n))
                       else if i = mark_y = cursor_y then
-                         range1(1, *s + 1, cursor_x, mark_x)
+                         range1(1, n + 1, cursor_x, mark_x)
                       else if i = mark_y then {
                          if mark_y < cursor_y then
-                            range1(1, *s + 1, mark_x, *s + 1)
+                            range1(1, n + 1, mark_x, n + 1)
                          else
-                            range1(1, *s + 1, 1, mark_x)
+                            range1(1, n + 1, 1, mark_x)
                       } else if i = cursor_y then {
                          if mark_y > cursor_y then
-                            range1(1, *s + 1, cursor_x, *s + 1)
+                            range1(1, n + 1, cursor_x, n + 1)
                          else
-                            range1(1, *s + 1, 1, cursor_x)
+                            range1(1, n + 1, 1, cursor_x)
                       })
             then
                Gui.style.fill_selection_rectangle(view.cbwin, xp + (r.lo - 1) * char_w, yp,  

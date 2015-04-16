@@ -10,6 +10,7 @@ void	free_stbl	(void);
 void	init_sbuf	(struct str_buf *sbuf);
 void	init_str	(void);
 char	*makename	(char *d,char *name,char *e);
+char    *maketemp       (char *fn);
 struct il_code *new_il	(int il_type, int size);
 void	new_sbuf	(struct str_buf *sbuf);
 int     isabsolute      (char *s);
@@ -62,6 +63,7 @@ int calc_ucs_index_step(word length);
 #if MSWIN32 || PLAN9
 int strcasecmp(char *s1, char *s2);
 int strncasecmp(char *s1, char *s2, int n);
+int mkstemp(char *path);
 #endif
 
 #if PLAN9
