@@ -5,7 +5,7 @@ include ../../Makedefs
 DEST	      = .
 HDRS	      = defs.h
 LDFLAGS	      =
-LIBS	      =
+LIBS	      = ws2_32.lib
 LINKER	      = $(CC)
 MAKEFILE      = Makefile
 
@@ -21,6 +21,8 @@ OBJS	      = closure.obj \
 		symtab.obj \
 		verbose.obj \
 		warshall.obj
+
+COBJS         =	../../base/common/mlocal.obj
 
 PRINT	      = pr -f -l88
 
@@ -41,9 +43,9 @@ SRCS	      = closure.c \
 
 all:		$(PROGRAM)
 
-$(PROGRAM):     $(OBJS) $(LIBS)
+$(PROGRAM):     $(OBJS)
 		@echo -n "Loading $(PROGRAM) ... "
-		$(LD) -subsystem:console $(OBJS) -out:iyacc.exe 
+		$(LD) -subsystem:console $(OBJS) $(COBJS) $(LIBS) -out:iyacc.exe 
 		$(INSTALL) iyacc "$(OIBIN)"
 
 clean:;		@rm -f $(OBJS) $(PROGRAM)
