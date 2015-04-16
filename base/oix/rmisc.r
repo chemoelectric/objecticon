@@ -2221,21 +2221,10 @@ int isflag(dptr d)
  */
 char *datatofile(dptr data)
 {
-    static char path[128 + 16];
     word n;
     int c, fd;
-    char *p;
-#if MSWIN32
-    GetTempPath(128, path);
-    strcat(path, "oi_dataXXXXXX");
-#else
-    {
-    char *tmp = getenv("TEMP");
-    if (tmp == 0)
-        tmp = "/tmp";
-    snprintf(path, sizeof(path), "%s/oi_dataXXXXXX", tmp);
-    }
-#endif
+    char *p, *path;
+    path = maketemp("oi_dataXXXXXX");
     if ((fd = mkstemp(path)) < 0) {
         LitWhy("Couldn't create temp data file");
         return 0;

@@ -10,6 +10,7 @@ void	free_stbl	(void);
 void	init_sbuf	(struct str_buf *sbuf);
 void	init_str	(void);
 char	*makename	(char *d,char *name,char *e);
+char    *maketemp       (char *fn);
 struct il_code *new_il	(int il_type, int size);
 void	new_sbuf	(struct str_buf *sbuf);
 int     isabsolute      (char *s);

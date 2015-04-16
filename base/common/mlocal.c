@@ -1063,3 +1063,22 @@ char *get_hostname()
     return buff;
 #endif
 }
+
+/*
+ * Return a pointer to a static buffer giving a filepath which is the
+ * filename fn in the system's temporary directory.
+ */
+char *maketemp(char *fn)
+{
+    static char result[MaxPath];
+#if MSWIN32
+    GetTempPath(MaxPath - 16, result);
+    strcat(result, fn);
+#else
+    char *tmp = getenv("TEMP");
+    if (tmp == 0)
+        tmp = "/tmp";
+    snprintf(result, sizeof(result), "%s%c%s", tmp, FILESEP, fn);
+#endif
+    return result;
+}
