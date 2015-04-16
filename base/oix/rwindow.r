@@ -381,36 +381,6 @@ int reducerect(wbp w, int clip, word *x, word *y, word *width, word *height)
     return 1;
 }
 
-#if HAVE_LIBJPEG || HAVE_LIBPNG
-/*
- * Write string data to a temporary file.
- */
-static char *datatofile(dptr data)
-{
-    static char path[32];
-    int c, fd, n;
-    char *p;
-    strcpy(path, "/tmp/oi_imgXXXXXX");
-    if ((fd = mkstemp(path)) < 0) {
-        LitWhy("Couldn't create temp image file");
-        return 0;
-    }
-    n = StrLen(*data);
-    p = StrLoc(*data);
-    while (n > 0) {
-        if ((c = write(fd, p, n)) < 0) {
-            LitWhy("Couldn't write to temp image file");
-            close(fd);
-            return 0;
-        }
-        p += c;
-        n -= c;
-    }
-    close(fd);
-    return path;
-}
-#endif
-
 static int tryimagedata(dptr data, struct imgdata *imd)
 {
     int r;

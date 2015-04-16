@@ -521,6 +521,7 @@ void set_curpstate(struct progstate *p);
 void set_curr_pf(struct p_frame *x);
 void synch_ipc(void);
 int isflag(dptr d);
+char *datatofile(dptr data);
 
 extern void do_op_cat(void);
 extern void do_op_conj(void);

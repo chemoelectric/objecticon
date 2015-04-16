@@ -47,9 +47,6 @@
    #ifndef vsnprintf
       #define vsnprintf(a,b,c,d) vsprintf(a,c,d)
    #endif
-   #ifndef mkstemp
-       #define mkstemp mktemp
-   #endif
    #define ftruncate _chsize
    #define lstat stat
    #define alloca _alloca

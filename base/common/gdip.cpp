@@ -20,13 +20,15 @@ static void dbg(char *fmt, ...)
 }
 
 static ULONG_PTR gdiplusToken;
+static gb_fatalerr_func ffatalerr;
 
 extern "C"
-void gb_initialize(void)
+void gb_initialize(gb_fatalerr_func f)
 {
     GdiplusStartupInput gdiplusStartupInput;
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
     if (draw_debug) dbg("gb_initialize: hello from gdip.cpp\n");
+    ffatalerr = f;
 }
 
 extern "C"
@@ -543,12 +545,12 @@ gb_Bitmap *gb_load_Bitmap(char *filename)
     WCHAR *t = utf8_to_wchar(filename);
     b = Bitmap::FromFile(t);
     delete[] t;
-    dbg("Load bitmap from file %s -> %p\n", filename, b);
     if (!b || b->GetWidth() == 0 || b->GetHeight() == 0) {
+        dbg("Failed to Load bitmap from file %s\n", filename);
         delete b;
         return 0;
     }
-    dbg("loaded bitmap %dx%d\n",b->GetWidth(),b->GetHeight());
+    dbg("Loaded bitmap %dx%d\n",b->GetWidth(),b->GetHeight());
     return (gb_Bitmap *)b;
 }
 

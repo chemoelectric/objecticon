@@ -2214,3 +2214,43 @@ int isflag(dptr d)
 {
     return is:null(*d) || (d->dword == D_Integer && IntVal(*d) == 1);
 }
+
+/*
+ * Write string data to a temporary file.  The name of the temporary
+ * file is returned, which is a pointer to a static buffer.
+ */
+char *datatofile(dptr data)
+{
+    static char path[128 + 16];
+    word n;
+    int c, fd;
+    char *p;
+#if MSWIN32
+    GetTempPath(128, path);
+    strcat(path, "oi_dataXXXXXX");
+#else
+    {
+    char *tmp = getenv("TEMP");
+    if (tmp == 0)
+        tmp = "/tmp";
+    snprintf(path, sizeof(path), "%s/oi_dataXXXXXX", tmp);
+    }
+#endif
+    if ((fd = mkstemp(path)) < 0) {
+        LitWhy("Couldn't create temp data file");
+        return 0;
+    }
+    n = StrLen(*data);
+    p = StrLoc(*data);
+    while (n > 0) {
+        if ((c = write(fd, p, n)) < 0) {
+            LitWhy("Couldn't write to temp data file");
+            close(fd);
+            return 0;
+        }
+        p += c;
+        n -= c;
+    }
+    close(fd);
+    return path;
+}

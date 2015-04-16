@@ -58,8 +58,8 @@ struct point {
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-void gb_initialize(void);
+typedef void (*gb_fatalerr_func)(char *fmt, ...);
+void gb_initialize(gb_fatalerr_func f);
 gb_Bitmap *gb_create_Bitmap(int width, int height, gb_Color bg, gb_Bitmap *cp);
 gb_Bitmap *gb_create_empty_Bitmap(int width, int height);
 gb_Bitmap *gb_load_Bitmap(char *filename);

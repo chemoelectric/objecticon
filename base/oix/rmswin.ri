@@ -1532,35 +1532,13 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
 
 int readimagedataimpl(dptr data, struct imgdata *imd)
 {
-    int fd, rv;
-    word len;
-    char *fn, *p;
-    if (is_png(data))
-        fn = "temp.png";
-    else if (is_jpeg(data))
-        fn = "temp.jpg";
-    else
+    int rv;
+    char *fn;
+    if (!(is_png(data) || is_jpeg(data)))
         return NoCvt;
-    fd = open(fn, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0664);
-    if (fd < 0) {
-        LitWhy("Couldn't create tmp file");
+    fn = datatofile(data);
+    if (!fn)
         return Failed;
-    }
-    len = StrLen(*data);
-    p = StrLoc(*data);
-    while (len > 0) {
-        int j;
-        j = write(fd, p, len);
-        if (j <= 0) {
-            dbg("j=%d\n",j);
-            close(fd);
-            LitWhy("Couldn't write to tmp file");
-            return Failed;
-        }
-        p += j;
-        len -= j;
-    }
-    close(fd);
     rv = readimagefileimpl(fn, imd);
     remove(fn);
     return rv;
@@ -1840,7 +1818,7 @@ static void init_window_system(void)
     BORDHEIGHT = TITLEHEIGHT + FRAMEHEIGHT * 2;
     CLIENT_XOFF = FRAMEWIDTH;
     CLIENT_YOFF = TITLEHEIGHT + FRAMEHEIGHT;
-    gb_initialize();
+    gb_initialize(ffatalerr);
     dummy_hdc = GetDC(0);
     black = new_sharedcolor("black", 0, 0, 0, 0xffff);
     white = new_sharedcolor("white", 0xffff,0xffff,0xffff, 0xffff);

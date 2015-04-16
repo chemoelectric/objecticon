@@ -62,6 +62,7 @@ int calc_ucs_index_step(word length);
 #if MSWIN32
 int strcasecmp(char *s1, char *s2);
 int strncasecmp(char *s1, char *s2, int n);
+int mkstemp(char *path);
 #endif
 
 char *double2cstr(double n);
