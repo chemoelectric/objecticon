@@ -19,9 +19,6 @@ static int readpngdata         (dptr data, struct imgdata *imd);
 static int readpngfile          (char *filename, struct imgdata *imd);
 static int writepngfile         (char *filename, struct imgdata *imd);
 #endif
-#if HAVE_LIBJPEG || HAVE_LIBPNG
-static char *datatofile(dptr data);
-#endif
 static int readgifdata        (dptr data, struct imgdata *imd);
 static int readgiffile         (char *fname, struct imgdata *d);
 static  void wgetq(wbp w, dptr res);
