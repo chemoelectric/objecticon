@@ -336,14 +336,14 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    Pixmap imgdata_to_Pixmap(wdp wd, struct imgdata *imd);
    wbp alcwbinding(wdp wd);
    wbp findwbp(wsp ws);
+   void synch_pix_and_win(wsp ws, int x, int y, int w, int h);
 #endif
 
 #endif                                  /* Graphics */
 
 
 #ifdef MSWIN32
-LRESULT_CALLBACK WndProc  (HWND, UINT, WPARAM, LPARAM);
-void wfreersc(void);
+LRESULT_CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void ucs_to_wchars1(WCHAR *buff, dptr str, int nullterm);
 WCHAR *ucs_to_wchars(dptr str, int nullterm);
 void wchars_to_ucs(WCHAR *src, dptr res);
