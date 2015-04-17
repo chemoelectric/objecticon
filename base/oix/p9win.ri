@@ -35,7 +35,7 @@ static void handle_reshape(wsp ws);
 static void handle_limited(wsp ws);
 static void init_window_system(void);
 static void clip(wbp w);
-static void unclip(wbp w);
+static void no_clip(wsp ws, int and_win);
 static Rectangle InnerRect(Image *i, int x, int y, int w, int h);
 static Rectangle MkRect(int x, int y, int w, int h);
 static Point InnerPt(Image *i, int x, int y);
@@ -434,6 +434,7 @@ static void resize_pix_win(wbp w)
         return;
     MemProtect(t = allocimage(display, Rect(0, 0, ws->width, ws->height), RGBA32, 1, DNofill));
     gendrawop(t, t->r, w->context->bg->i, ZP, 0, ZP, S);
+    no_clip(ws, 0);
     copy_to(t, ws->pix);
     freeimage(ws->pix);
     ws->pix = t;
@@ -461,6 +462,7 @@ static void handle_reshape(wsp ws)
          * pix win and adjust the pos.  Don't fire an event.
          */
         synch_pos(ws);
+        no_clip(ws, 1);
         copy_to(ws->win, ws->pix);
     } else {
         wbp w;
@@ -473,6 +475,7 @@ static void handle_reshape(wsp ws)
         synch_pos(ws);
         w = findwbp(ws);
         resize_pix_win(w);
+        /* resize_pix_win has cleared any clip */
         copy_to(ws->win, ws->pix);
         qeventcode(ws, WINDOWRESIZED);
     }
@@ -623,6 +626,7 @@ int copyarea(wbp w1, int x, int y, int w, int h, wbp w2, int x2, int y2)
     wsp ws1 = w1->window;
     wsp ws2 = w2->window;
     wcp wc2 = w2->context;
+    no_clip(ws1, 0);
     clip(w2);
     gendrawop(ws2->pix,
               MkRect(x2, y2, w, h), 
@@ -631,7 +635,6 @@ int copyarea(wbp w1, int x, int y, int w, int h, wbp w2, int x2, int y2)
               0, ZP,
               wc2->drawop->i);
     pix_to_win(ws2, x2, y2, w, h);
-    unclip(w2);
     flushimage(display, 1);
     return Succeeded;
 }
@@ -708,7 +711,6 @@ void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
           alpha, phi,
           wc->drawop->i);
     pix_to_win(ws, x, y, width, height);
-    unclip(w);
     flushimage(display, 1);
 }
 
@@ -761,7 +763,6 @@ void drawlines(wbp w, struct point *points0, int npoints)
         polyop(ws->pix, points, npoints, term, term, thick, get_draw_img(wc), ZP, wc->drawop->i);
         pix_to_win(ws, x, y, width, height);
     }
-    unclip(w);
     free(points);
     flushimage(display, 1);
 }
@@ -832,7 +833,6 @@ void drawrectangle(wbp w, int x, int y, int width, int height, int thick)
               x, y + height - thick,
               width, thick);
         pix_to_win(ws, x, y, width, height);
-        unclip(w);
         flushimage(display, 1);
     }
 }
@@ -850,7 +850,6 @@ void fillpolygon(wbp w, struct point *points0, int npoints)
     clip(w);
     fillpolyop(ws->pix, points, npoints, 0, get_draw_img(wc), points[0], wc->drawop->i);
     pix_to_win(ws, x, y, width, height);
-    unclip(w);
     free(points);
     flushimage(display, 1);
 }
@@ -920,7 +919,6 @@ void filltrapezoids(wbp w, struct trapezoid *traps, int ntraps)
         }
         pix_to_win(ws, x, y, width, height);
     }
-    unclip(w);
     flushimage(display, 1);
 }
 
@@ -952,7 +950,6 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
         }
         pix_to_win(ws, x, y, width, height);
     }
-    unclip(w);
     flushimage(display, 1);
 }
 
@@ -983,18 +980,15 @@ static void clip(wbp w)
         replclipr(ws->pix, 0, MkRect(wc->clipx, wc->clipy, wc->clipw, wc->cliph));
         if (ws->win)
             replclipr(ws->win, 0, InnerRect(ws->win, wc->clipx, wc->clipy, wc->clipw, wc->cliph));
-    }
+    } else
+        no_clip(ws, 1);
 }
 
-static void unclip(wbp w)
+static void no_clip(wsp ws, int and_win)
 {
-    wsp ws = w->window;
-    wcp wc = w->context;
-    if (wc->clipw >= 0) {
-        replclipr(ws->pix, 0, max_rect);
-        if (ws->win)
-            replclipr(ws->win, 0, max_rect);
-    }
+    replclipr(ws->pix, 0, max_rect);
+    if (and_win && ws->win)
+        replclipr(ws->win, 0, max_rect);
 }
 
 void drawstring(wbp w, int x, int y, dptr str)
@@ -1024,7 +1018,6 @@ void drawstring(wbp w, int x, int y, dptr str)
                    wc->font->ascent + wc->font->descent);
         free(r);
     }
-    unclip(w);
     flushimage(display, 1);
 }
 
@@ -1048,7 +1041,6 @@ void erasearea(wbp w, int x, int y, int width, int height)
     wcp wc = w->context;
     clip(w);
     fill2(w, S, wc->bg->i, x, y, width, height);
-    unclip(w);
     flushimage(display, 1);
 }
 
@@ -1126,7 +1118,6 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
               alpha, phi,
               wc->drawop->i);
     pix_to_win(ws, x, y, width, height);
-    unclip(w);
     flushimage(display, 1);
 }
 
@@ -1144,7 +1135,6 @@ void fillrectangle(wbp w, int x, int y, int width, int height)
     wcp wc = w->context;
     clip(w);
     fill2(w, wc->drawop->i, get_draw_img(wc), x, y, width, height);
-    unclip(w);
     flushimage(display, 1);
 }
 
@@ -1308,7 +1298,6 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
               0, ZP, 
               wc->drawop->i);
     pix_to_win(ws, x, y, imd->width, imd->height);
-    unclip(w);
     freeimage(im);
     flushimage(display, 1);
 }
@@ -1770,6 +1759,7 @@ static int open_screen_win(wsp ws)
     ws->cons_pid = pid;
 
     /* Copy the pixmap to the window to initialize its contents */
+    no_clip(ws, 1);
     copy_to(ws->win, ws->pix);
     flushimage(display, 1);
 
