@@ -322,7 +322,7 @@ void load_package_db_from_ipath()
         char *e = pathelem(&s);
         if (!e)
             break;
-        load_path_impl(e);
+        load_path_impl(intern(e));
     }
 }
 
