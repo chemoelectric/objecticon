@@ -277,7 +277,7 @@ procedure process_one(a)
             move(1)
             tab(many(' \t'))
             v := tab(0)
-            hr.set_header(k, v)
+            hr.add_header(k, v)
          }
       }
    }
