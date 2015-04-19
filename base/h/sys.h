@@ -95,6 +95,10 @@
    #if OS_SOLARIS
    #include <stropts.h>
    #endif
+   #if OS_DARWIN
+   #include <sys/sysctl.h>
+   #include <libproc.h>
+   #endif
 #endif					/* UNIX */
 
 #if XWindows
