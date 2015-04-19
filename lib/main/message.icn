@@ -163,11 +163,11 @@ class Message(MimeHeaders)
    public to_rfc822_stream(f)
       local h, t
       every h := gen_header_entries() do {
-         every t := !h[2] do
-            f.writes(fold(h[1] || ": " || t), "\r\n") | fail
+         every t := !h.val do
+            f.writes(fold(h.key || ": " || t), "\r\n") | fail
       }
       f.writes("\r\n", content) | fail
-      return
+      return self
    end
 
    #

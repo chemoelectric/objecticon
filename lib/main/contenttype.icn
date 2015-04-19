@@ -75,7 +75,7 @@ class ContentType()
       local s, e
       s := type || "/" || subtype
       every e := parameters.entries() do
-         s ||:= "; " || e[1] || "=" || RFC822Parser.escape_1521_value(e[2])
+         s ||:= "; " || e.key || "=" || RFC822Parser.escape_1521_value(e.val)
       return s
    end
 

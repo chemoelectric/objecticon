@@ -16,7 +16,7 @@ class MimeHeaders()
    public show_headers()
       local h
       every h := gen_header_entries() do {
-         every write(h[1], ": ", !h[2])
+         every write(h.key, ": ", !h.val)
       }
    end
 
