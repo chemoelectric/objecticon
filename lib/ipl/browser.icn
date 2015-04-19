@@ -23,7 +23,8 @@ import
    ipl.filegui,
    ipl.numbers,
    ipl.imagedetect,
-   ipl.charset
+   ipl.charset,
+   ipl.dataurl
 
 $load BROKEN_LINK "rpp.BROKEN_LINK_24.gif"
 
@@ -802,11 +803,20 @@ class Worker()
       }
    end
 
+   private handle_data_req()
+      local du
+      return if du := DataURL(req.url) then
+         Resp(req,, req.url, du.data,, du.content_type)
+      else
+         Resp(req, &why, req.url)
+   end
+
    private handle_req()
       local f, t
       t := string(req.url.scheme)
       case t of {
          "file": handle_func(FileSubWorker)
+         "data": handle_func(handle_data_req)
          "prog": handle_func(ProgSubWorker)
          "run": handle_func(handle_run_req)
          "cache": handle_func(handle_cache_req)

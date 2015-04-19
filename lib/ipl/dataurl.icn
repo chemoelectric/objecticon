@@ -1,0 +1,36 @@
+package ipl.dataurl
+
+import mail, ipl.base64, util, net
+
+#
+# A parser for data: URLs - see rfc 2397.
+#
+class DataURL()
+   public const
+      content_type,
+      data
+
+   public new(url)
+      local t, p, e
+      url.get_path() ? {
+         t := tab(find(";base64," | ",")) | return error("No , found in data url path")
+         t ? content_type := if pos(0) then
+            ContentType("text", "plain").set_parameter("charset", "US-ASCII")
+         else if ="charset=" then
+            ContentType("text", "plain").set_parameter("charset", tab(0))
+         else
+            RFC822Parser().parse_content_type(t) | return error("Invalid content type in data url: " || &why)
+         # Remove %encoding from content type parameters
+         p := content_type.parameters
+         every e := p.entries() do
+            p.member(e.key) := URL.percent_decode(e.val)
+         data := if =";base64," then
+            base64decode(tab(0)) | return error("Invalid data url: " || &why)
+         else {
+            move(1)
+            URL.percent_decode(tab(0))
+         }
+      }
+      return
+   end
+end
