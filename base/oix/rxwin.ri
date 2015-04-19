@@ -51,7 +51,7 @@ static wfp newfont(wdp wd, char *s);
 static wdp alcdisplay (char *s);
 static void resizepixmap(wbp w);
 static void clip(wbp w);
-static void unclip(wbp w);
+static void no_clip(wsp ws, int and_win);
 static int make_mod(unsigned int state);
 static char* property_to_string(wdp wd, Atom target, int number_items, void* data);
 static Atom convert_target(wdp wd, Atom desired_target);
@@ -786,6 +786,7 @@ static void close_screen_win(wsp ws)
     XDestroyWindow(wd->display, ws->win);
     XFlush(wd->display);
     ws->win = 0;
+    ws->wpic = 0;
     GUnlink4(ws, wd->vwstates, vnext, vprevious);
     synch_state(ws);
 }
@@ -1545,27 +1546,24 @@ static void clip(wbp w)
             XRenderSetPictureClipRectangles(wd->display,
                                              ws->wpic,
                                              0, 0, &rec, 1);
-    }
+    } else
+        no_clip(ws, 1);
 }
 
-static void unclip(wbp w)
+static void no_clip(wsp ws, int and_win)
 {
     XRenderPictureAttributes attr;
-    wcp wc = w->context;
-    wsp ws = w->window;
     wdp wd = ws->display;
-    if (wc->clipw >= 0) {
-        attr.clip_mask = None;
+    attr.clip_mask = None;
+    XRenderChangePicture(wd->display,
+                         ws->ppic,
+                         CPClipMask,
+                         &attr);
+    if (and_win && ws->wpic)
         XRenderChangePicture(wd->display,
-                             ws->ppic,
+                             ws->wpic,
                              CPClipMask,
                              &attr);
-        if (ws->wpic)
-            XRenderChangePicture(wd->display,
-                                 ws->wpic,
-                                 CPClipMask,
-                                 &attr);
-    }
 }
 
 char *getcanvas(wbp w)
@@ -1845,12 +1843,20 @@ int setfont(wbp w, char *s)
     return Succeeded;
 }
 
+void synch_pix_and_win(wsp ws, int x, int y, int w, int h)
+{
+    if (ws->win) {
+        no_clip(ws, 1);
+        pix_to_win(ws, x, y, w, h);
+    }
+}
+
 static void pix_to_win(wsp ws, int x, int y, int w, int h)
 {
     wdp wd = ws->display;
     if (ws->win)
         XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, ws->wpic,
-                         x,y,0,0,x,y,w,h);
+                         x, y, 0, 0, x, y, w, h);
 }
 
 /*
@@ -1859,7 +1865,7 @@ static void pix_to_win(wsp ws, int x, int y, int w, int h)
 
 static void handle_exposures(wsp ws, XExposeEvent *event)
 {
-    pix_to_win(ws, event->x, event->y, event->width, event->height);
+    synch_pix_and_win(ws, event->x, event->y, event->width, event->height);
 }
 
 /*
@@ -1897,6 +1903,7 @@ static void resizepixmap(wbp w)
                          &wc->bg->color,
                          0, 0, ws->pixwidth, ws->pixheight);
 
+    no_clip(ws, 0);
     XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, pp,
                      0,0,0,0,0,0, old_w, old_h);
 
@@ -2305,7 +2312,6 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
         }
         clip(w);
         maskpic2(w, mask, x, y, width, height);
-        unclip(w);
         XRenderFreePicture(wd->display, mask);
     } else {
         clip(w);
@@ -2319,7 +2325,6 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
                                    0, 0, 0,
                                    traps, ntraps);
         pix_to_win(ws, cx - rx - 2, cy - ry - 2, 2 * rx + 4, 2 * ry + 4);
-        unclip(w);
     }
 }
 
@@ -2687,7 +2692,6 @@ static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed)
         drawlineinfos_impl(w, wc->drawop->i, get_draw_picture(wc), ws->ppic, lis, nlis, closed);
         pix_to_win(ws, x, y, width, height);
     }
-    unclip(w);
 }
 
 void drawlines(wbp w, struct point *points, int npoints)
@@ -2803,7 +2807,6 @@ void drawrectangle(wbp w, int x, int y, int width, int height, int thick)
         }
 
         pix_to_win(ws, x, y, width, height);
-        unclip(w);
     }
 }
 
@@ -2849,7 +2852,6 @@ void fillpolygon(wbp w, struct point *points, int npoints)
                                    xpoints, npoints, 0);
         pix_to_win(ws, x, y, width, height);
     }
-    unclip(w);
     free(xpoints);
 }
 
@@ -2890,7 +2892,6 @@ void filltrapezoids(wbp w, struct trapezoid *traps, int ntraps)
                                    xtraps, ntraps);
         pix_to_win(ws, x, y, width, height);
     }
-    unclip(w);
     free(xtraps);
 }
 
@@ -2933,7 +2934,6 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
                                   xtris, ntris);
         pix_to_win(ws, x, y, width, height);
     }
-    unclip(w);
     free(xtris);
 }
 
@@ -3071,7 +3071,6 @@ void fillrectangle(wbp w, int x, int y, int width, int height)
               wc->drawop->i,
               &wc->fg->color,
               x, y, width, height);
-    unclip(w);
 }
 
 /*
@@ -3088,7 +3087,6 @@ void erasearea(wbp w, int x, int y, int width, int height)
           PictOpSrc,
           &wc->bg->color,
           x, y, width, height);
-    unclip(w);
 }
 
 /*
@@ -3107,9 +3105,11 @@ int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2)
         return Failed;
     }
 
+
     /*
      * Copying is between windows on one display, perhaps the same window.
      */
+    no_clip(ws1, 0);
     clip(w2);
 
     /*
@@ -3125,7 +3125,6 @@ int copyarea(wbp w, int x, int y, int width, int height, wbp w2, int x2, int y2)
                      x2, y2,       /* dst x,y */
                      width, height);
     pix_to_win(ws2, x2, y2, width, height);
-    unclip(w2);
     return Succeeded;
 }
 
@@ -3155,7 +3154,6 @@ void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
     pic2(w,
          pic,
          x, y, imd->width, imd->height);
-    unclip(w);
     XFreePixmap(wd->display, pix);
     XRenderFreePicture(wd->display, pic);
 }
@@ -3278,9 +3276,9 @@ static void prepare_xft(wbp w)
         rec.y = wc->clipy;
         rec.width = wc->clipw;
         rec.height = wc->cliph;
-        XftDrawSetClipRectangles(w->window->pxft, 0, 0, &rec, 1);
+        XftDrawSetClipRectangles(ws->pxft, 0, 0, &rec, 1);
     } else
-        XftDrawSetClip(w->window->pxft, 0);
+        XftDrawSetClip(ws->pxft, 0);
 }
 
 void drawstring(wbp w, int x, int y, dptr str)
@@ -3312,7 +3310,6 @@ void drawstring(wbp w, int x, int y, dptr str)
                x, y - wc->font->ascent, 
                textwidth(w, str),
                wc->font->ascent + wc->font->descent);
-    unclip(w);
 }
 
 /* This array must correspond with the NUMATOMS and ATOM_xxx constants defined in xwin.h. */

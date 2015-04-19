@@ -6,6 +6,8 @@ package datastruct
 
 import ipl.pdco(Seq,Length,Index), lang, util
 
+record Entry(key, val)
+
 #
 # This is a common superclass for several table-like data structures.
 #
@@ -181,17 +183,21 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
-   # Generate key-value pairs as a sequence of 2-element lists.  NB - for each
-   # invocation, the same list is returned every time, with the values replaced.
+   # Generate key-value pairs as a sequence of `Entry` records.  NB -
+   # for each invocation, the same record is returned every time, with
+   # the values replaced.
    #
    public entries()
-      local l, e
-      l := []
-      every e := keyval() do {
-         put(l, e)
-         if *l = 2 then {
-            suspend l
-            default.clear(l)
+      local e, x, f
+      e := Entry()
+      every x := keyval() do {
+         if /f then {
+            e.key := x
+            f := 1
+         } else {
+            e.val := x
+            suspend e
+            f := &null
          }
       }
    end
@@ -208,14 +214,16 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
 
    # Return an (unsorted) list of pairs of key-values.
    public entry_list()
-      local l, e, r
+      local e, x, r, f
       r := []
-      l := []
-      every e := keyval() do {
-         put(l, e)
-         if *l = 2 then {
-            put(r, l)
-            l := []
+      every x := keyval() do {
+         if /f then {
+            e := Entry(x)
+            f := 1
+         } else {
+            e.val := x
+            put(r, e)
+            f := &null
          }
       }
       return r
@@ -259,9 +267,9 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
          every e := !pairs do {
             if \sep then
                oo.writes1(";")
-            oo.traverse(e[1]).
+            oo.traverse(e.key).
                writes1("->").
-               traverse(e[2])
+               traverse(e.val)
             sep := 1
          }
          oo.object_end(self)
@@ -278,10 +286,10 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
          }
          every e := !pairs do {
             oo.nl().
-               traverse(e[1]).
+               traverse(e.key).
                writes1("->").
                iplus().
-               traverse(e[2]).
+               traverse(e.val).
                iminus()
          }
          oo.iminus().
@@ -766,13 +774,13 @@ class EqTable(Table)
       h := hash(key)
       if l := default.member(t, h) then {
          every e := !l do {
-            if equals(e[1], key) then {
-               e[2] := val
+            if equals(e.key, key) then {
+               e.val := val
                return self
             }
          }
       }
-      n := [key, val]
+      n := Entry(key, val)
       if \l then
          put(l, n)
       else
@@ -786,24 +794,24 @@ class EqTable(Table)
       h := hash(key)
       if l := default.member(t, h) then {
          every e := !l do {
-            if equals(e[1], key) then
-               return e[2]
+            if equals(e.key, key) then
+               return e.val
          }
       }
-      n := [key, def]
+      n := Entry(key, def)
       if \l then
          put(l, n)
       else
          default.insert(t, h, [n])
       sz +:= 1
-      return n[2]
+      return n.val
    end
 
    public member(key)
       local e
       every e := !default.member(t, hash(key)) do {
-         if equals(e[1], key) then
-            return e[2]
+         if equals(e.key, key) then
+            return e.val
       }
    end
 
@@ -813,7 +821,7 @@ class EqTable(Table)
       l := default.member(t, h) | fail
       i := 1
       every e := !l do {
-         if equals(e[1], key) then {
+         if equals(e.key, key) then {
             default.delete(l, i)
             if *l = 0 then
                default.delete(t, h)
@@ -825,17 +833,17 @@ class EqTable(Table)
    end
 
    public key()
-      suspend .(!!t)[1]
+      suspend .(!!t).key
    end
 
    public keyval()
       local e
       every e := !!t do
-         suspend .e[1] | e[2]
+         suspend .e.key | e.val
    end
 
    public gen()
-      suspend (!!t)[2]
+      suspend (!!t).val
    end
 
    public size()
@@ -884,10 +892,6 @@ class BuiltinTable(Table)
 
    public delete(key)
       return default.delete(t, key) & self
-   end
-
-   public sort()
-      return default.sort(t)
    end
 
    public key()
@@ -962,13 +966,13 @@ class WeakrefTable(Table)
       h := Internal.hash(key)
       if l := default.member(t, h) then {
          every e := !l do {
-            if weakrefval(e[1]) === key then {
-               e[2] := val
+            if weakrefval(e.key) === key then {
+               e.val := val
                return self
             }
          }
       }
-      n := [weakref(key), val] | runerr("Type of key cannot be used with weakref")
+      n := Entry(weakref(key), val) | runerr("Type of key cannot be used with weakref")
       if \l then
          put(l, n)
       else
@@ -983,25 +987,25 @@ class WeakrefTable(Table)
       h := Internal.hash(key)
       if l := default.member(t, h) then {
          every e := !l do {
-            if weakrefval(e[1]) === key then
-               return e[2]
+            if weakrefval(e.key) === key then
+               return e.val
          }
       }
-      n := [weakref(key), def] | runerr("Type of key cannot be used with weakref")
+      n := Entry(weakref(key), def) | runerr("Type of key cannot be used with weakref")
       if \l then
          put(l, n)
       else
          default.insert(t, h, [n])
       sz +:= 1
-      return n[2]
+      return n.val
    end
 
    public member(key)
       local e
       maybe_purge()
       every e := !default.member(t, Internal.hash(key)) do {
-         if weakrefval(e[1]) === key then
-            return e[2]
+         if weakrefval(e.key) === key then
+            return e.val
       }
    end
 
@@ -1012,7 +1016,7 @@ class WeakrefTable(Table)
       l := default.member(t, h) | fail
       i := 1
       every e := !l do {
-         if weakrefval(e[1]) === key then {
+         if weakrefval(e.key) === key then {
             default.delete(l, i)
             if *l = 0 then
                default.delete(t, h)
@@ -1025,19 +1029,19 @@ class WeakrefTable(Table)
 
    public key()
       maybe_purge()
-      suspend weakrefval((!!t)[1])
+      suspend weakrefval((!!t).key)
    end
 
    public keyval()
       local e
       maybe_purge()
       every e := !!t do
-         suspend weakrefval(e[1]) | e[2]
+         suspend weakrefval(e.key) | e.val
    end
 
    public gen()
       maybe_purge()
-      suspend (!!t)[2]
+      suspend (!!t).val
    end
 
    public clear()
@@ -1056,6 +1060,7 @@ class WeakrefTable(Table)
          last_purge := Prog.get_global_collection_count()
          purge()
       }
+      return self
    end
 
    private purge()
@@ -1064,7 +1069,7 @@ class WeakrefTable(Table)
          l := t[h]
          i := 1
          while i <= *l do {
-            if weakrefval(l[i][1]) then
+            if weakrefval(l[i].key) then
                i +:= 1
             else {
                default.delete(l, i)

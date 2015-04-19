@@ -12,7 +12,7 @@ static FILE *readhdr(char *name, struct header *hdr);
 static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codeptr);
 static void initptrs (struct progstate *p, struct header *h);
 static void initprogstate(struct progstate *p);
-static void initalloc(struct progstate *p);
+static void initregion(struct region *r);
 static void handle_prog_exit(void);
 static void relocate_code(struct progstate *ps, word *c);
 static void startuperr(char *fmt, ...);
@@ -550,20 +550,13 @@ void ffatalerr(char *fmt, ...)
 }
 
 /*
- * initalloc - initialization routine to allocate string/block memory regions
+ * initregion - initialization routine to allocate memory region
  */
 
-static void initalloc(struct progstate *p)
+static void initregion(struct region *r)
 {
-    struct region *ps, *pb;
-
-    ps = p->stringregion;
-    Protect(ps->free = ps->base = malloc(ps->size), fatalerr(313, NULL));
-    ps->end = ps->base + ps->size;
-
-    pb = p->blockregion;
-    Protect(pb->free = pb->base = malloc(pb->size), fatalerr(314, NULL));
-    pb->end = pb->base + pb->size;
+    Protect(r->free = r->base = malloc(r->size), fatalerr(314, NULL));
+    r->end = r->base + r->size;
 }
 
 
@@ -741,31 +734,47 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
        pstate->Kywd_time_out = 0;
        pstate->K_current = pstate->K_main = coex;
 
-       MemProtect(pstate->stringregion = malloc(sizeof(struct region)));
-       MemProtect(pstate->blockregion  = malloc(sizeof(struct region)));
-       pstate->stringregion->size = stringsize;
-       pstate->blockregion->size = blocksize;
+       if (stringsize <= 0) {
+           pstate->stringregion = curpstate->stringregion;
+       } else {
+           MemProtect(pstate->stringregion = malloc(sizeof(struct region)));
+           pstate->stringregion->size = stringsize;
+           /*
+            * the local program region list starts out with this region only
+            */
+           pstate->stringregion->prev = NULL;
+           pstate->stringregion->next = NULL;
+           /*
+            * the global region list links this region with curpstate's
+            */
+           pstate->stringregion->Gprev = curpstate->stringregion;
+           pstate->stringregion->Gnext = curpstate->stringregion->Gnext;
+           if (curpstate->stringregion->Gnext)
+               curpstate->stringregion->Gnext->Gprev = pstate->stringregion;
+           curpstate->stringregion->Gnext = pstate->stringregion;
+           initregion(pstate->stringregion);
+       }
 
-       /*
-        * the local program region list starts out with this region only
-        */
-       pstate->stringregion->prev = NULL;
-       pstate->blockregion->prev = NULL;
-       pstate->stringregion->next = NULL;
-       pstate->blockregion->next = NULL;
-       /*
-        * the global region list links this region with curpstate's
-        */
-       pstate->stringregion->Gprev = curpstate->stringregion;
-       pstate->blockregion->Gprev = curpstate->blockregion;
-       pstate->stringregion->Gnext = curpstate->stringregion->Gnext;
-       pstate->blockregion->Gnext = curpstate->blockregion->Gnext;
-       if (curpstate->stringregion->Gnext)
-           curpstate->stringregion->Gnext->Gprev = pstate->stringregion;
-       curpstate->stringregion->Gnext = pstate->stringregion;
-       if (curpstate->blockregion->Gnext)
-           curpstate->blockregion->Gnext->Gprev = pstate->blockregion;
-       curpstate->blockregion->Gnext = pstate->blockregion;
+       if (blocksize <= 0) {
+           pstate->blockregion = curpstate->blockregion;
+       } else {
+           MemProtect(pstate->blockregion  = malloc(sizeof(struct region)));
+           pstate->blockregion->size = blocksize;
+           /*
+            * the local program region list starts out with this region only
+            */
+           pstate->blockregion->prev = NULL;
+           pstate->blockregion->next = NULL;
+           /*
+            * the global region list links this region with curpstate's
+            */
+           pstate->blockregion->Gprev = curpstate->blockregion;
+           pstate->blockregion->Gnext = curpstate->blockregion->Gnext;
+           if (curpstate->blockregion->Gnext)
+               curpstate->blockregion->Gnext->Gprev = pstate->blockregion;
+           curpstate->blockregion->Gnext = pstate->blockregion;
+           initregion(pstate->blockregion);
+       }
 
        CMakeStr(loadstring, &pstate->Kywd_prog);
 
@@ -773,7 +782,6 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
         * Establish pointers to icode data regions.		[[I?]]
         */
        initptrs(pstate, &hdr);
-       initalloc(pstate);
        check_version(&hdr, loadstring, ifile);
        read_icode(&hdr, loadstring, ifile, pstate->Code);
        fclose(ifile);
@@ -1249,7 +1257,8 @@ int main(int argc, char **argv)
     /*
      * Allocate memory for block & string regions.
      */
-    initalloc(&rootpstate);
+    initregion(rootpstate.stringregion);
+    initregion(rootpstate.blockregion);
 
     /*
      * Allocate and initialize &main.

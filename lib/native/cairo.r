@@ -430,17 +430,14 @@ static void pix_to_win(cairo_t *cr, double x1, double y1, double x2, double y2)
     int x, y, width, height;
     wbp w;
     wsp ws;
-    wdp wd;
     w = getwindow(cr);
     if (!w)
         return;
     ws = w->window;
     if (!ws->win)
         return;
-    wd = ws->display;
     range_extent(x1, y1, x2, y2, &x, &y, &width, &height);
-    XRenderComposite(wd->display, PictOpSrc, ws->ppic, 0, ws->wpic,
-                     x, y, 0, 0, x, y, width, height);
+    synch_pix_and_win(ws, x, y, width, height);
 }
 
 function cairo_Context_set_matrix_impl(self, xx, yx, xy, yy, x0, y0)

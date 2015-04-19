@@ -499,23 +499,23 @@ void gb_get_metrics(HDC dc, gb_Font *fin, int *ascent, int *descent, int *maxwid
     *ascent = ceil(asc_pix);
     *descent = ceil(desc_pix);
 
-#if 0
-    char *t = wchar_to_utf8(familyName);
-    dbg("f=%p family name: %s\n",ff,t);
-    delete[] t;
-    dbg("\tsize = %f points\n",f->GetSize());
-    dbg("\t     = %d design units\n", (int)ff.GetEmHeight(f->GetStyle()));
-    dbg("\tppdu   = %f\n", pts_per_du);
-    dbg("\tppi  = %d\n", ppi);
-    dbg("\tasc  = %d design units\n", (int)ff.GetCellAscent(f->GetStyle()));
-    dbg("\t     = %f pts\n", asc_pts);
-    dbg("\t     = %f pixels\n", asc_pix);
-    dbg("\tdesc = %d design units\n", (int)ff.GetCellDescent(f->GetStyle()));
-    dbg("\t     = %f pts\n", desc_pts);
-    dbg("\t     = %f pixels\n", desc_pix);
-    dbg("\ta+d  = %f pixels\n", asc_pix + desc_pix);
-    dbg("\tgetheight = %f pixels\n", f->GetHeight(ppi));
-#endif
+    if (draw_debug) {
+        char *t = wchar_to_utf8(familyName);
+        dbg("f=%p family name: %s\n",ff,t);
+        delete[] t;
+        dbg("\tsize = %f points\n",f->GetSize());
+        dbg("\t     = %d design units\n", (int)ff.GetEmHeight(f->GetStyle()));
+        dbg("\tppdu   = %f\n", pts_per_du);
+        dbg("\tppi  = %d\n", ppi);
+        dbg("\tasc  = %d design units\n", (int)ff.GetCellAscent(f->GetStyle()));
+        dbg("\t     = %f pts\n", asc_pts);
+        dbg("\t     = %f pixels\n", asc_pix);
+        dbg("\tdesc = %d design units\n", (int)ff.GetCellDescent(f->GetStyle()));
+        dbg("\t     = %f pts\n", desc_pts);
+        dbg("\t     = %f pixels\n", desc_pix);
+        dbg("\ta+d  = %f pixels\n", asc_pix + desc_pix);
+        dbg("\tgetheight = %f pixels\n", f->GetHeight(ppi));
+    }
 
     Graphics g(dc);
     int mw = 0;
@@ -544,11 +544,11 @@ gb_Bitmap *gb_load_Bitmap(char *filename)
     b = Bitmap::FromFile(t);
     delete[] t;
     if (!b || b->GetWidth() == 0 || b->GetHeight() == 0) {
-        dbg("Failed to Load bitmap from file %s\n", filename);
+        if (draw_debug) dbg("Failed to Load bitmap from file %s\n", filename);
         delete b;
         return 0;
     }
-    dbg("Loaded bitmap %dx%d\n",b->GetWidth(),b->GetHeight());
+    if (draw_debug) dbg("Loaded bitmap %dx%d\n",b->GetWidth(),b->GetHeight());
     return (gb_Bitmap *)b;
 }
 

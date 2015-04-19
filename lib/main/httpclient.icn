@@ -256,7 +256,7 @@ class HttpClient(NetClient)
    private add_request_headers(l)
       local e
       every e := request.gen_header_entries() do
-         every put(l, capitalize_header(e[1]) || ": " || !e[2])
+         every put(l, capitalize_header(e.key) || ": " || !e.val)
    end
 
    #
@@ -285,7 +285,7 @@ class HttpClient(NetClient)
          set_referer(request.referer).
          set_range(request.range_start, request.range_end)
       every e := request.gen_header_entries() do
-         every self.request.add_header(e[1], !e[2])
+         every self.request.add_header(e.key, !e.val)
       if /request.output_stream then
          request.method == "HEAD" | runerr("No output stream set")
       else {

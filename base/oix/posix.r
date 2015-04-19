@@ -779,3 +779,25 @@ function posix_System_getpgid(pid)
 #endif
     }
 end
+
+#if OS_DARWIN
+function posix_System_getcwd(pid)
+   if !cnv:integer(pid) then
+      runerr(101, pid)
+   body {
+        tended struct descrip result;
+	struct proc_vnodepathinfo pathinfo;
+	int ret;
+        pid_t i;
+        if (!convert_to_pid_t(&pid, &i))
+            runerr(0);
+	ret = proc_pidinfo(i, PROC_PIDVNODEPATHINFO, 0, &pathinfo, sizeof(pathinfo));
+	if (ret != sizeof(pathinfo)) { 
+            errno2why();
+            fail;
+        }
+        cstr2string(pathinfo.pvi_cdir.vip_path, &result);
+        return result;
+   }
+end
+#endif
