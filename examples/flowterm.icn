@@ -17,8 +17,7 @@ import
    ipl.childwait,
    ipl.vt,
    ipl.columnize,
-   ipl.strings,
-   ipl.io
+   ipl.strings
 
 global opts
 
@@ -904,11 +903,19 @@ class Terminal(TabItem, VtUI)
             info_msg("Unable to access extras bin directory '" || xd || "'")
       }
       tty := PttyStream() | fail
+$ifdef _DARWIN
+      # Darwin doesn't seem to allow NONBLOCK flag on a tty
+      (pid := System.fork()) | {
+         tty.close()
+         fail
+      }
+$else
       (tty.flag(FileOpt.NONBLOCK) &
        pid := System.fork()) | {
          tty.close()
          fail
       }
+$endif
       if pid > 0 then {
          # Parent
          return
@@ -945,7 +952,7 @@ class Terminal(TabItem, VtUI)
 
    private check_cwd_change()
       local s
-      s := ucs(get_process_cwd(pid)) | fail
+      s := ucs(System.getcwd(pid)) | fail
       if s ~== cwd then {
          set_cwd(s, if s === nav_dir then &yes else &no)
          nav_dir := &null

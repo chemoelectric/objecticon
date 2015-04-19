@@ -123,6 +123,19 @@ final abstract class System()
 
    # Get the process group ID for a process
    public static native getpgid(pid)
+
+   # Get current working directory of the given process
+$ifdef _SOLARIS
+   public static getcwd(pid)
+      return Files.readlink("/proc/" || pid || "/path/cwd")
+   end
+$elsifdef _DARWIN
+   public static native getcwd(pid)
+$else
+   public static getcwd(pid)
+      return Files.readlink("/proc/" || pid || "/cwd")
+   end
+$endif
 end
 
 # A structure returned by the {System.uname} method.

@@ -345,6 +345,9 @@ NativeDef(posix.System,setsid,posix_System_setsid)
 NativeDef(posix.System,getsid,posix_System_getsid)
 NativeDef(posix.System,setpgid,posix_System_setpgid)
 NativeDef(posix.System,getpgid,posix_System_getpgid)
+#if OS_DARWIN
+NativeDef(posix.System,getcwd,posix_System_getcwd)
+#endif
 NativeDef(util.Math,acos,util_Math_acos)
 NativeDef(util.Math,asin,util_Math_asin)
 NativeDef(util.Math,atan,util_Math_atan)
