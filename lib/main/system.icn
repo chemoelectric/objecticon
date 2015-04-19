@@ -127,13 +127,13 @@ final abstract class System()
    # Get current working directory of the given process
 $ifdef _SOLARIS
    public static getcwd(pid)
-      return Files.readlink("/proc/" || pid || "/path/cwd")
+      return Files.readlink("/proc/" || pid || "/path/cwd") | error("No such pid or permission denied")
    end
 $elsifdef _DARWIN
    public static native getcwd(pid)
 $else
    public static getcwd(pid)
-      return Files.readlink("/proc/" || pid || "/cwd")
+      return Files.readlink("/proc/" || pid || "/cwd") | error("No such pid or permission denied")
    end
 $endif
 end
