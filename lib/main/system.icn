@@ -131,6 +131,10 @@ $ifdef _SOLARIS
    end
 $elsifdef _DARWIN
    public static native getcwd(pid)
+$elsifdef _MS_WIN32
+   public static getcwd(pid)
+      error("Function not supported")
+   end
 $else
    public static getcwd(pid)
       return Files.readlink("/proc/" || pid || "/cwd") | error("No such pid or permission denied")

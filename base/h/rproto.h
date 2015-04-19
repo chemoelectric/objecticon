@@ -342,7 +342,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
 #endif                                  /* Graphics */
 
 
-#ifdef MSWIN32
+#if MSWIN32
 LRESULT_CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void ucs_to_wchars1(WCHAR *buff, dptr str, int nullterm);
 WCHAR *ucs_to_wchars(dptr str, int nullterm);
