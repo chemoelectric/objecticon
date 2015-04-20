@@ -26,7 +26,9 @@ final abstract class Files()
       PATH_SPECIALS,
       # The separator for individual paths in a list of paths (such as the PATH
       # environment variable).
-      PATHS_SEPARATOR
+      PATHS_SEPARATOR,
+      # Suffix for dynamic library
+      LIB_SUFFIX
 
    private static init()
 $ifdef _UNIX
@@ -34,12 +36,14 @@ $ifdef _UNIX
       PATH_SEPARATOR := "/"
       PATH_SPECIALS := '/'
       PATHS_SEPARATOR := ":"
+      LIB_SUFFIX := ".so"
       FS := UnixFileSystem()
 $elsifdef _MS_WIN32
       EOL := "\r\n"
       PATH_SEPARATOR := "\\"
       PATH_SPECIALS := ':\\/'
       PATHS_SEPARATOR := ";"
+      LIB_SUFFIX := ".dll"
       FS := WindowsFileSystem()
 $else
       runerr("Can't init_file_system: unknown o/s type")
@@ -524,7 +528,7 @@ $endif
    end
 
    #
-   # Search for a native (.so) library on the OINATIVE path.
+   # Search for a native library on the OINATIVE path.
    #
    public static find_native_lib(f)
       static seen
@@ -533,7 +537,7 @@ $endif
          seen := table()
       if t := member(seen, f) then
          return t
-      if t := find_exe(f, "OINATIVE") then {
+      if t := find_exe(f || LIB_SUFFIX, "OINATIVE") then {
          insert(seen, f, t)
          return t
       }
