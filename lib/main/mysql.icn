@@ -422,7 +422,7 @@ final class MySql(NoCopy)
       CLIENT_MULTI_RESULTS :=    131072  
       CLIENT_REMEMBER_OPTIONS := 2147483648  # ((ulong) (1L << 31))
 
-      if Class.load_library(t := Files.find_native_lib("objecticonmysqllib.so")) then
+      if Class.load_library(t := Files.find_native_lib("objecticonmysqllib")) then
          LOADED := t
    end
 

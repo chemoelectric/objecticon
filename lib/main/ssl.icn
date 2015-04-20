@@ -14,7 +14,7 @@ final class SslStream(Stream, HasUnderlyingStream, NoCopy)
 
    private static init()
       local t
-      if Class.load_library(t := Files.find_native_lib("objecticonssllib.so")) then
+      if Class.load_library(t := Files.find_native_lib("objecticonssllib")) then
          LOADED := t
    end
 

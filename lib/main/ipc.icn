@@ -10,7 +10,7 @@ final abstract class Ipc()
 
    private static init()
       local t
-      if Class.load_library(t := Files.find_native_lib("objecticonipclib.so")) then
+      if Class.load_library(t := Files.find_native_lib("objecticonipclib")) then
          LOADED := t
    end
 end

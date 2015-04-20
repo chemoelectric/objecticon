@@ -284,16 +284,33 @@ AC_DEFUN([AX_CHECK_DYNAMIC_LINKING],
      dnl Set default compiler options if not set externally
      if test -z "$DYNAMIC_LIB_CFLAGS" ; then
         dnl Flags for compiling source file which is part of a library
-        DYNAMIC_LIB_CFLAGS="-fPIC"
+        case $host_os in
+           *darwin* )
+                    dnl No flag needed
+                    ;;
+           *)
+                    DYNAMIC_LIB_CFLAGS="-fPIC"
+                    ;;
+        esac
      fi
      if test -z "$DYNAMIC_LIB_LDFLAGS" ; then
         dnl Flags for linking a library
-        DYNAMIC_LIB_LDFLAGS="-shared"
+        case $host_os in
+           *darwin* )
+                    DYNAMIC_LIB_LDFLAGS="-dynamiclib -undefined suppress -flat_namespace"
+                    ;;
+           *)
+                    DYNAMIC_LIB_LDFLAGS="-shared"
+                    ;;
+        esac
      fi
      if test -z "$DYNAMIC_EXPORT_LDFLAGS" ; then
         dnl Flags for linking the main program so its symbols are accessible to a loaded library
         case $host_os in
-           solaris* )
+           *solaris* )
+                    dnl No flag needed
+                    ;;
+           *darwin* )
                     dnl No flag needed
                     ;;
            *)

@@ -356,7 +356,7 @@ final class Context(NoCopy)
 
    private static init()
       local t
-      if Class.load_library(t := Files.find_native_lib("objecticoncairolib.so")) then
+      if Class.load_library(t := Files.find_native_lib("objecticoncairolib")) then
          LOADED := t
    end
 
