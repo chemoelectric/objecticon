@@ -12,13 +12,13 @@ int main(void)
     if (!oixloc) {
         oixloc = findexe("oix");
         if (!oixloc) {
-            fprintf(stderr, "Couldn't find oix on PATH");
+            fprintf(stderr, "Couldn't find oix on PATH\n");
             exit(1);
         }
     }
    if (!CreateProcess(oixloc, GetCommandLine(), NULL, NULL, TRUE, 0, NULL, NULL, 
 		      &siStartupInfo, &piProcessInfo)) {
-      fprintf(stderr, "CreateProcess failed GetLastError=%d\n",GetLastError());
+      fprintf(stderr, "CreateProcess failed GetLastError=%d\n", GetLastError());
       exit(1);
    }
    WaitForSingleObject(piProcessInfo.hProcess, INFINITE);
