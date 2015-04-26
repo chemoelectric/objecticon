@@ -1126,10 +1126,13 @@ abstract class LineBasedOutputStream(Stream)
 
    public out(s)
       local t
+      s := string(s) | runerr(103, s)
       buff ||:= s
       repeat {
          buff ? {
             t := tab(upto('\n')) | break
+            if t[-1] == "\r" then
+               t[-1] := ""
             buff := (move(1), tab(0))
             write_line_impl(t) | fail
          }
