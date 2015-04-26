@@ -137,7 +137,6 @@ class Menu(TextMenuItem)
 
    public handle_key_up(e)
       local m, last
-
       every m := !children do {
          if \last & m === which_highlight then {
             set_which_highlight(last)
@@ -150,7 +149,6 @@ class Menu(TextMenuItem)
 
    public handle_key_down(e)
       local m, t, first
-      
       every m := !children do {
          if not(m.is_shaded() | m.is_decorative()) then {
             if /self.which_highlight | \t then {
@@ -164,6 +162,26 @@ class Menu(TextMenuItem)
       }
       set_which_highlight(\first)
    end
+
+   public handle_key_home(e)
+      local m
+      every m := !children do {
+         if not(m.is_shaded() | m.is_decorative()) then {
+            set_which_highlight(m)
+            return
+         }
+      }
+   end
+
+   public handle_key_end(e)
+      local m
+      every m := back(children) do {
+         if not(m.is_shaded() | m.is_decorative()) then {
+            set_which_highlight(m)
+            return
+         }
+      } 
+  end
 
    public handle_key_right(e)
       if /self.which_highlight then
@@ -284,6 +302,8 @@ class Menu(TextMenuItem)
       else case /e.release & e.code of {
          Key.UP: handle_key_up(e)
          Key.DOWN: handle_key_down(e)
+         Key.HOME : handle_key_home(e)
+         Key.END : handle_key_end(e)
          Key.RIGHT: handle_key_right(e)
          Key.LEFT: handle_key_left(e)
          "\e" : handle_key_escape(e)

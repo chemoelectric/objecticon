@@ -218,7 +218,7 @@ void trans(src_file)
         fp = fparse(cur_src);
         if (*fp->ext == '\0')
             cur_src = salloc(makename(0, cur_src, RttSuffix));
-        else if (!smatch(fp->ext, RttSuffix))
+        else if (strcasecmp(fp->ext, RttSuffix) != 0)
             err2("unknown file suffix ", cur_src);
         cur_src = spec_str(cur_src);
 

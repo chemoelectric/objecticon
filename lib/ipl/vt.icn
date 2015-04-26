@@ -2041,6 +2041,18 @@ class Vt(LineBasedScrollArea, MenuMode)
       send(replace(text_convert(selection_convert(target_type, data), "ucs"), u"\n", u"\r"))
    end
 
+   public handle_paste_escaped(e)
+      goto_bottom()
+      parent_dialog.request_selection(Selection.CLIPBOARD, 
+                                      [Selection.UTF8_STRING_TARGET, Selection.STRING_TARGET], 
+                                      handle_paste_escaped_response, 
+                                      e)
+   end
+
+   private handle_paste_escaped_response(target_type, data, e)
+      send(replace(Format.shell_escape(text_convert(selection_convert(target_type, data), "ucs")), u"\n", u"\\\r"))
+   end
+
    public handle_copy(e)
       local s
       if s := \text_selection then {

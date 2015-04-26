@@ -165,9 +165,9 @@ int main(int argc, char **argv)
      * Check for alternate uses, udis and ldbg.
      */
     fp = fparse(*argv);
-    if (smatch(fp->name, "udis"))
+    if (strcasecmp(fp->name, "udis") == 0)
         return udis(argc, argv);
-    if (smatch(fp->name, "ldbg"))
+    if (strcasecmp(fp->name, "ldbg") == 0)
         return ldbg(argc, argv);
 
     oixloc = findexe("oix");
@@ -267,13 +267,13 @@ int main(int argc, char **argv)
         }
         else {
             fp = fparse(argv[oi_optind]);		/* parse file name */
-            if (*fp->ext == '\0' || smatch(fp->ext, SourceSuffix)) {
+            if (*fp->ext == '\0' || strcasecmp(fp->ext, SourceSuffix) == 0) {
                 char *t;
                 add_trans_file(makename(0, argv[oi_optind],  SourceSuffix));
                 t = makename(0, argv[oi_optind], USuffix);
                 add_link_file(t);
             }
-            else if (smatch(fp->ext, USuffix))
+            else if (strcasecmp(fp->ext, USuffix) == 0)
                 add_link_file(makename(0, argv[oi_optind], USuffix));
             else
                 quit("bad argument %s", argv[oi_optind]);

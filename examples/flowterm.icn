@@ -1213,20 +1213,8 @@ $endif
          refresh_cwd()
    end
 
-   private on_paste(e)
-      output.handle_paste(e)
-   end
-
-   private on_copy(e)
-      output.handle_copy(e)
-   end
-
    private on_copy_cwd(e)
       copy_text(Format.shell_escape(cwd))
-   end
-
-   private on_select_all()
-      output.handle_select_all()
    end
 
    private open_in_new_tab(dir)
@@ -1244,14 +1232,17 @@ $endif
       if output.get_current_text_selection() then {
          m.add(TextMenuItem().
                set_label("Copy text").
-               connect(on_copy, Event.ACTION))
+               connect(output.handle_copy, Event.ACTION))
       }
       m.add(TextMenuItem().
             set_label("Paste").
-            connect(on_paste, Event.ACTION))
+            connect(output.handle_paste, Event.ACTION))
+      m.add(TextMenuItem().
+            set_label("Paste escaped").
+            connect(output.handle_paste_escaped, Event.ACTION))
       m.add(TextMenuItem().
             set_label("Select all").
-            connect(on_select_all, Event.ACTION))
+            connect(output.handle_select_all, Event.ACTION))
       m.add(TextMenuItem().
             set_label("Copy cwd").
             connect(on_copy_cwd, Event.ACTION))

@@ -1131,7 +1131,7 @@ int main(int argc, char **argv)
      * if argv[0] is not a reference to our interpreter, take it as the
      * name of the icode file, and back up for it.
      */
-    if (!smatch(fp->name, "oix")) {
+    if (strcasecmp(fp->name, "oix") != 0) {
         argv--;
         argc++;
     }
