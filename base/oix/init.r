@@ -235,17 +235,17 @@ static FILE *readhdr_strict(char *name, struct header *hdr)
 
     ifile = fopen(name, ReadBinary);
     if (ifile == NULL)
-        ffatalerr("cannot open interpreter file %s", name);
+        ffatalerr("Can't open interpreter file %s", name);
 
     for (;;) {
         if (fgets(buf, sizeof(buf) - 1, ifile) == NULL)
-            ffatalerr("can't find header marker in interpreter file %s", name);
+            ffatalerr("Can't find header marker in interpreter file %s", name);
         if (strncmp(buf, IcodeDelim, n) == 0)
             break;
     }
 
     if (fread((char *)hdr, sizeof(char), sizeof(*hdr), ifile) != sizeof(*hdr))
-        ffatalerr("can't read interpreter file header in file %s", name);
+        ffatalerr("Can't read interpreter file header in file %s", name);
 
     if (!check_version(hdr)) {
         fprintf(stderr, "icode version mismatch in %s\n", name);
@@ -275,7 +275,7 @@ static FILE *readhdr_liberal(char *name, struct header *hdr)
 
     for (;;) {
         if (fgets(buf, sizeof(buf) - 1, ifile) == NULL) {
-            whyf("can't find header marker in interpreter file %s", name);
+            whyf("Can't find header marker in interpreter file %s", name);
             fclose(ifile);
             return NULL;
         }
@@ -284,13 +284,13 @@ static FILE *readhdr_liberal(char *name, struct header *hdr)
     }
 
     if (fread((char *)hdr, sizeof(char), sizeof(*hdr), ifile) != sizeof(*hdr)) {
-        whyf("can't read interpreter file header in file %s", name);
+        whyf("Can't read interpreter file header in file %s", name);
         fclose(ifile);
         return NULL;
     }
 
     if (!check_version(hdr)) {
-        whyf("Version mismatch in file %s", name);
+        whyf("Version mismatch (%s -vs- %s) in file %s", (char *)hdr->config, IVersion, name);
         fclose(ifile);
         return NULL;
     }
