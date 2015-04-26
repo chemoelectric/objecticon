@@ -24,7 +24,6 @@ static void freecontext(wcp wc);
 static void freewindow(wsp ws);
 static void resizepixmap(wbp w);
 static struct imgdataformat imgdataformat_MSBGRA32;
-static POINT *convert_points(struct point *points0, int npoints);
 static COLORREF mscolor(int r, int g, int b);
 static struct SharedColor *new_sharedcolor(char *name, int r, int g, int b, int a);
 static struct SharedColor *link_sharedcolor(struct SharedColor *i);
@@ -160,18 +159,6 @@ static void dump_all(void)
     fflush(stdout);
 }
 #endif
-
-static POINT *convert_points(struct point *points0, int npoints)
-{
-    POINT *points;
-    int i;
-    MemProtect(points = malloc(npoints * sizeof(POINT)));
-    for (i = 0; i < npoints; ++i) {
-        points[i].x = (LONG)points0[i].x;
-        points[i].y = (LONG)points0[i].y;
-    }
-    return points;
-}
 
 /*
  * allocate a window binding structure
@@ -1409,7 +1396,8 @@ void ucs_to_wchars1(WCHAR *buff, dptr str, int nullterm)
 WCHAR *ucs_to_wchars(dptr str, int nullterm)
 {
     WCHAR *mbs;
-    MemProtect(mbs = malloc((UcsBlk(*str).length + nullterm) * sizeof(WCHAR)));
+    /* +1 either for null terminator, or to avoid zero length alloc */
+    MemProtect(mbs = malloc((UcsBlk(*str).length + 1) * sizeof(WCHAR)));
     ucs_to_wchars1(mbs, str, nullterm);
     return mbs;
 }
@@ -1429,7 +1417,8 @@ void string_to_wchars1(WCHAR *buff, dptr str, int nullterm)
 WCHAR *string_to_wchars(dptr str, int nullterm)
 {
     WCHAR *mbs;
-    MemProtect(mbs = malloc((StrLen(*str) + nullterm) * sizeof(WCHAR)));
+    /* +1 either for null terminator, or to avoid zero length alloc */
+    MemProtect(mbs = malloc((StrLen(*str) + 1) * sizeof(WCHAR)));
     string_to_wchars1(mbs, str, nullterm);
     return mbs;
 }
