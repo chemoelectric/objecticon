@@ -466,28 +466,6 @@ char *makename(char *d, char *name, char *e)
     return path3;
 }
 
-/*
- * smatch - case-insensitive string match - returns nonzero if they match
- */
-int smatch(char *s, char *t)
-{
-    char a, b;
-    for (;;) {
-        while (*s == *t)
-            if (*s++ == '\0')
-                return 1;
-            else
-                t++;
-        a = *s++;
-        b = *t++;
-        if (isupper((unsigned char)a))  a = tolower((unsigned char)a);
-        if (isupper((unsigned char)b))  b = tolower((unsigned char)b);
-        if (a != b)
-            return 0;
-    }
-}
-
-
 struct rangeset *init_rangeset()
 {
     struct rangeset *rs = malloc(sizeof(struct rangeset));

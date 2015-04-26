@@ -18,7 +18,6 @@ char	*pathfind	(char *cd, char *path, char *name, char *extn);
 char    *pathelem       (char **s);
 int     newer_than(char *f1, char *f2);
 char    *last_pathelem(char *s);
-int	smatch		(char *s,char *t);
 char	*spec_str	(char *s);
 char	*str_install	(struct str_buf *sbuf);
 int	tonum		(int c);
