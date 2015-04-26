@@ -1091,17 +1091,22 @@ $endif
       local s, es
       if url.scheme == u"file" then {
          if s := ucs(url.get_decoded_path()) then {
-            es := if /ev.ctrl & 
-               is_local_host(url) &
-               s[1+:*cwd] == cwd & 
-               s[*cwd + 1] == u"/" then
-               u"./" || Format.shell_escape(s[*cwd+2:0])
-            else
-               Format.shell_escape(s)
-            if Files.is_directory(s) then
-               es ||:= u"/"
-            else
-               es ||:= u" "
+            es := if /ev.ctrl & is_local_host(url) & cwd ~== u"/" then {
+               if cwd == s then
+                  u"./"
+               else if match(cwd || u"/", s) then
+                  u"./" || s[*cwd + 2:0]
+               else
+                  s
+            } else
+               s
+            if Files.is_directory(s) then {
+               if es[-1] ~== u"/" then
+                  es ||:= u"/"
+               es := Format.shell_escape(es)
+               output.goto_bottom()
+            } else
+               es := Format.shell_escape(es) || u" "
             send_tty(es)
          }
       } else
@@ -1214,7 +1219,7 @@ $endif
    end
 
    private on_copy_cwd(e)
-      copy_text(Format.shell_escape(cwd))
+      copy_text(cwd)
    end
 
    private open_in_new_tab(dir)
@@ -1291,19 +1296,12 @@ $endif
    public create_link_menu(url)
       local m, r, udp
       m := Menu()
-      if udp := ucs(url.get_decoded_path()) then {
-         case string(url.scheme) of {
-            "file" : {
-               m.add(TextMenuItem().
-                     set_label("Copy").
-                     connect(create copy_text(Format.shell_escape(udp)), Event.ACTION))
-            }
-            "text" | "run" : {
-               m.add(TextMenuItem().
-                     set_label("Copy").
-                     connect(create copy_text(udp), Event.ACTION))
-            }
-         }
+      if udp := ucs(url.get_decoded_path()) &
+         url.scheme == (u"file" | u"text" | u"run") then 
+      {
+         m.add(TextMenuItem().
+               set_label("Copy").
+               connect(create copy_text(udp), Event.ACTION))
       }
       m.add(TextMenuItem().
             set_label("Copy URL").
