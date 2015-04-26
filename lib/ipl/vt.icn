@@ -1782,14 +1782,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       return 0
    end
 
-   private at_bottom()
-      if /vsb | (vsb.bar_pos + vsb.bar_size = vsb.bar_area_pos + vsb.bar_area_size) then return
-   end
-
-   private goto_bottom()
-      goto_last(get_line_count())
-   end
-
    public defer draw_line()
 
    public draw()
