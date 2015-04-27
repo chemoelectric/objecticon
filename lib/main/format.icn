@@ -267,34 +267,21 @@ final abstract class Format()
    #
    public static shell_escape(s)
       local t, ch
-      # A non-printable char produces a $'...' result.
-      if upto('\0-\x1f\x7f', s) then {
-         t := "$'"
-         s ? repeat {
-            t ||:= tab(upto('\0-\x1f\x7f\'"\\') | 0)
-            ch := move(1) | break
-            t ||:= case string(ch) of {
-               "\x07": "\\a"
-               "\b" : "\\b"
-               "\e" : "\\e"
-               "\f" : "\\f"
-               "\n" : "\\n"
-               "\r" : "\\r"
-               "\t" : "\\t"
-               "\v" : "\\v"
-               "\\" : "\\\\"
-               "'" : "\\'"
-               "\"" : "\\\""
-               default : "\\x" || int_to_string(ord(ch),,2)
-            }
-         }
-         t ||:= "'"
-      } else {
-         t := ""
-         s ? repeat {
-            t ||:= tab(upto('|\\*;?@+&#()<>[]{}!$`\'\" ') | 0)
-            ch := move(1) | break
-            t ||:= "\\" || ch
+      t := ""
+      s ? repeat {
+         t ||:= tab(upto('\0-\x1f\x7f|\\*;?@+&#()<>[]{}!$`\'\" ') | 0)
+         ch := move(1) | break
+         t ||:= case string(ch) of {
+            "\x07": "$'\\a'"
+            "\b" : "$'\\b'"
+            "\e" : "$'\\e'"
+            "\f" : "$'\\f'"
+            "\n" : "$'\\n'"
+            "\r" : "$'\\r'"
+            "\t" : "$'\\t'"
+            "\v" : "$'\\v'"
+            !'\0-\x1f\x7f' : "$'\\x" || int_to_string(ord(ch),,2) || "'"
+            default : "\\" || ch
          }
       }
       return t

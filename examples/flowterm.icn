@@ -1100,13 +1100,13 @@ $endif
                   s
             } else
                s
+            es := Format.shell_escape(es)
             if Files.is_directory(s) then {
                if es[-1] ~== u"/" then
                   es ||:= u"/"
-               es := Format.shell_escape(es)
                output.goto_bottom()
             } else
-               es := Format.shell_escape(es) || u" "
+               es ||:= u" "
             send_tty(es)
          }
       } else
