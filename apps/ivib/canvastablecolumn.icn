@@ -50,6 +50,11 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
       return self
    end
 
+   public rescale(f)
+      CanvasComponent.rescale(f)
+      self.column_width := integer(\self.column_width * f)
+   end
+
    #
    # Duplicate object.
    #

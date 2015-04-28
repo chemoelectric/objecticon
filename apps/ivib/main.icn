@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, gui, io, graphics, ipl.pdco, xdg, ipl.filegui
+import lang, gui, io, util, graphics, ipl.pdco, xdg, ipl.filegui
 
 $include "version.icn"
 
@@ -146,6 +146,7 @@ class Main(Dialog)
       reorder,                 # Reorder items command
       undo,                    # Undo
       redo,                    # Redo
+      rescale,                 # Rescale 
       checkboxgroup_button,    # Toolbar buttons
       buttongroup_button,
       delete_button,
@@ -365,6 +366,14 @@ class Main(Dialog)
    end
 
    #
+   # Rescale.
+   #
+   public op_rescale()
+      push_undo()
+      canvas.rescale()
+   end
+
+   #
    # Replace current canvas with c
    #
    public undo_to(c)
@@ -396,41 +405,17 @@ class Main(Dialog)
    end
 
    public update_grey()
-      local o
-      every o := selections_menu | checkboxgroup_button | buttongroup_button |
-         delete_button | move_selection_up_order_button | move_selection_down_order_button do 
-      {
-         if *self.canvas.selections > 0 then
-            o.set_is_shaded(&no)
-         else
-            o.set_is_shaded(&yes)
-      }
+      every (selections_menu | checkboxgroup_button | buttongroup_button |
+         delete_button | move_selection_up_order_button | move_selection_down_order_button).
+         set_is_shaded(flag_of{*canvas.selections = 0})
 
-      if *undo_list > 0 then {
-         self.undo.set_is_shaded(&no)
-         self.undo_button.set_is_shaded(&no)
-      } else {
-         self.undo.set_is_shaded(&yes)
-         self.undo_button.set_is_shaded(&yes)
-      }
+      every (undo | undo_button).set_is_shaded(flag_of{*undo_list = 0})
+      every (redo | redo_button).set_is_shaded(flag_of{*redo_list = 0})
 
-      if *redo_list > 0 then {
-         self.redo.set_is_shaded(&no)
-         self.redo_button.set_is_shaded(&no)
-      } else {
-         self.redo.set_is_shaded(&yes)
-         self.redo_button.set_is_shaded(&yes)
-      }
+      rescale.set_is_shaded(flag_of{Gui.SCALE_FACTOR = canvas.edit_scale})
 
-      if \self.canvas.modified & \self.canvas.filename then
-         save.set_is_shaded(&no)
-      else
-         save.set_is_shaded(&yes)
-
-      if \self.canvas.modified | /self.canvas.filename then
-         save_button.set_is_shaded(&no)
-      else
-         save_button.set_is_shaded(&yes)
+      save.set_is_shaded(flag_of{/canvas.modified | /canvas.filename})
+      save_button.set_is_shaded(flag_of{/canvas.modified & \canvas.filename})
    end
 
    #
@@ -1116,6 +1101,10 @@ class Main(Dialog)
       redo := TextMenuItem().set_label("Redo").set_label_right("Ctrl-y")
       redo.connect(self.op_redo, Event.ACTION)
       edit.add(redo)
+
+      rescale := TextMenuItem().set_label("Rescale")
+      rescale.connect(self.op_rescale, Event.ACTION)
+      edit.add(rescale)
 
       selections_menu := Menu().set_label("Selections").set_accel("s")
       mb.add(selections_menu)

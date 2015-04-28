@@ -24,6 +24,13 @@ class CanvasABorder(CanvasObject)
       c.y_align_val := self.y_align_val
    end
 
+   public rescale(f)
+      self.empty_l_inset := integer(\self.empty_l_inset * f)
+      self.empty_r_inset := integer(\self.empty_r_inset * f)
+      self.empty_t_inset := integer(\self.empty_t_inset * f)
+      self.empty_b_inset := integer(\self.empty_b_inset * f)
+   end
+
    #
    # Return the I/O template.
    #
@@ -127,6 +134,11 @@ class CanvasLineBorder(CanvasABorder)
       suspend CanvasABorder.get_template() |
          [ "Line width", "line_width_val"] |
          [ "Has empty", "has_empty"]
+   end
+
+   public rescale(f)
+      CanvasABorder.rescale(f)
+      self.line_width_val := integer(\self.line_width_val * f)
    end
 
    public gen_code(c)

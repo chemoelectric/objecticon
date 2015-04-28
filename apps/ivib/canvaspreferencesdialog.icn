@@ -84,10 +84,10 @@ class CanvasPreferencesDialog(Dialog)
       c.dialog_struct.wattribs := normalize_wattribs(attrib_tab.get_table())
 
       c.event_handlers := event_tab.get_contents()
-      c.gen_main := if self.gen_main.is_checked() then 1 else &null
-      c.gen_component_setup := if self.gen_component_setup.is_checked() then 1 else &null
-      c.gen_init_dialog := if self.gen_init_dialog.is_checked() then 1 else &null
-      c.gen_constructor := if self.gen_constructor.is_checked() then 1 else &null
+      c.gen_main := gen_main.get_status()
+      c.gen_component_setup := gen_component_setup.get_status()
+      c.gen_init_dialog := gen_init_dialog.get_status()
+      c.gen_constructor := gen_constructor.get_status()
       c.gen_indent := integer(self.gen_indent.get_contents()) 
 
       if c.layout_delegate ~=== orig_layout then {
@@ -105,7 +105,7 @@ class CanvasPreferencesDialog(Dialog)
 
       c.set_name(name.get_contents())
       c.superclass_name := self.superclass_name.get_contents()
-      c.is_component := if self.is_component_cb.is_checked() then 1 else &null
+      c.is_component := is_component_cb.get_status()
       c.import_name := self.import_name.get_contents()
       c.layout_filename := if self.layout_filename_cb.is_checked() then
          self.layout_filename.get_contents() else &null

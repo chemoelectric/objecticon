@@ -38,6 +38,7 @@ end
 
 class CanvasGridLayout(CanvasLayout,GridLayout)
    public doi_val, dii_val
+
    public gen_code(c)
       CanvasLayout.gen_code(c)
       c.chain("set_doi(" || c.scalable_dim(\self.doi_val) || ")")
@@ -70,6 +71,13 @@ class CanvasGridLayout(CanvasLayout,GridLayout)
    end
 
    public post_decode()
+      self.set_doi(\self.doi_val)
+      self.set_dii(\self.dii_val)
+   end
+
+   public rescale(f)
+      self.doi_val := integer(\self.doi_val * f)
+      self.dii_val := integer(\self.dii_val * f)
       self.set_doi(\self.doi_val)
       self.set_dii(\self.dii_val)
    end

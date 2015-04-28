@@ -879,7 +879,7 @@ class Canvas(Component,SelectiveObjectCodec)
       #
       # Dialog attribs.
       #
-      m := copy(self.parent_Canvas.dialog_struct.wattribs)
+      m := copy(dialog_struct.wattribs)
       every default.delete(m, "height" | "width" | "size")
       if /is_component & 
          \ (dialog_iw | dialog_ih) then 
@@ -918,7 +918,32 @@ class Canvas(Component,SelectiveObjectCodec)
 
       return c
    end
-   
+
+   public rescale()
+      local c, k, f
+      f := Gui.SCALE_FACTOR / edit_scale
+
+      every c := Seq{ gen_cos().traverse_tree_postorder() }  do
+         c.rescale(f)
+
+      every k := "height"|"width"|"min_width"|"min_height"|"max_width"|"max_height" do {
+         if c := dialog_struct.get_wattrib(k) then
+            dialog_struct.set_wattrib(k, integer(c * f))
+      }
+      every k := "size"|"max_size"|"min_size" do {
+         if c := dialog_struct.get_wattrib(k) then
+            dialog_struct.set_wattrib(k, [integer(c[1] * f), integer(c[2] * f)])
+      }
+      dialog_iw := integer(\dialog_iw * f)
+      dialog_ih := integer(\dialog_ih * f)
+      synch_size()
+      set_modified()
+      reset_all()
+      do_reset_all_layouts()
+      edit_scale := Gui.SCALE_FACTOR
+      parent_dialog.update_grey()
+   end
+
    #
    # Minimum width of canvas.
    #

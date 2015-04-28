@@ -52,6 +52,11 @@ class CanvasSplit(CanvasComponent,Split)
       return c
    end
 
+   public rescale(f)
+      self.min_first := integer(min_first * f)
+      self.min_second := integer(min_second * f)
+   end
+
    #
    # Return the I/O template.
    #

@@ -267,6 +267,19 @@ class CanvasComponent(CanvasObject)
       fail
    end
 
+   public rescale(f)
+      local c, k
+      self.x_spec := integer(\self.x_spec * f)
+      self.y_spec := integer(\self.y_spec * f)
+      self.w_spec := integer(\self.w_spec * f)
+      self.h_spec := integer(\self.h_spec * f)
+      every k := "l_inset"|"r_inset"|"t_inset"|"b_inset" do {
+         if c := self.get_constraint(k) then
+            self.set_constraint(k, integer(c * f))
+      }
+      set_border_opts(self.border_opts)
+   end
+
    #
    # Highlight the given object.
    #
