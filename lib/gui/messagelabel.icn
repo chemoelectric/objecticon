@@ -44,7 +44,7 @@ class MessageLabel(Label)
       if w - border.get_total_width() < cbwin.text_width(\message) then {
          /message_tt := split_string(message,
                                      Gui.style.create_tooltip_label().get_wattrib("font"),
-                                     500)
+                                     scale(500))
          return message_tt
       }
    end
