@@ -885,7 +885,7 @@ class Terminal(TabItem, VtUI)
       every put(env, System.environ())
       put(env, "FLOWTERM=1")
       put(env, "TERM=xterm")
-      sh := System.getpw(System.getuid()).shell | "/bin/sh"
+      sh := \opts["sh"] | System.getpw(System.getuid()).shell | "/bin/sh"
       if /opts["nx"] then {
          s := \opts["x"] | Files.get_home() || "/flowterm-extras/bin"
          fp := FilePath(s).canonical()
@@ -2172,7 +2172,7 @@ end
 
 procedure main(a)
    local d, t
-   opts := options(a, "-x: -nx! -v! -h+ -hs! -tfg: -tbg: -trevfg: -trevbg: -tfont: -t:")
+   opts := options(a, "-x: -nx! -v! -h+ -hs! -tfg: -tbg: -trevfg: -trevbg: -tfont: -t: -sh:")
    ImageCache.
       name_image("rpp.HOURGLASS_24", HOURGLASS).
       name_image("rpp.KEYBOARD_24", KEYBOARD).
