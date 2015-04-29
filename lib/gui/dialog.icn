@@ -25,6 +25,7 @@ class Dialog(Component)
       ROOT_WATTRIBS, 
       DEFAULT_POINTER,
       DOUBLE_CLICK_DELAY,        # Repeat event delays
+      DRAG_GESTURE_OFFSET,       # Distance before drag begins
       TOOLTIP_START_DELAY,       # Default tooltip delays
       TOOLTIP_END_DELAY,
       TOOLTIP_CONTINUE_DELAY,
@@ -712,6 +713,9 @@ class Dialog(Component)
 
       old_n_held := *held
       if member(Mouse.PRESS, ec) then {
+         # Note the position of the start of a potential drag
+         drag_gesture_x := e.x
+         drag_gesture_y := e.y
          check_click_count(e)
          if c := (!self.point_chain).find_focus(e) then
             self.set_focus(c, e)
@@ -1094,7 +1098,7 @@ class Dialog(Component)
    # Exit dnd mode.
    #
    private exit_dnd(e)
-      self.curr_drag_holder := self.curr_drop := self.curr_drag := &null
+      curr_drag_holder := curr_drop := curr_drag := &null
       self.invoke_drag_reset(e)
       generate_crossing_events(e)
       if /held[-1] then
@@ -1158,12 +1162,9 @@ class Dialog(Component)
       # a drag.
       #
       if (*self.held = 1) & (e.code === Mouse.DRAG) then {
-         # Note the position of the start of a drag
-         /self.drag_gesture_x := e.x
-         /self.drag_gesture_y := e.y
          if /self.tried_drag &
-            (abs(e.x - self.drag_gesture_x) > 3 |
-             abs(e.y - self.drag_gesture_y) > 3 ) then {
+            (abs(e.x - \drag_gesture_x) > DRAG_GESTURE_OFFSET |
+             abs(e.y - \drag_gesture_y) > DRAG_GESTURE_OFFSET ) then {
                 # Try to begin a drag.
                 self.curr_drag := self.invoke_can_drag(e) 
                 self.tried_drag := 1
@@ -1173,7 +1174,7 @@ class Dialog(Component)
                 }
              }
       } else
-         self.tried_drag := self.drag_gesture_x := self.drag_gesture_y := &null
+         self.tried_drag := &null
    end
 
    public invoke_can_drag(ev)
@@ -1378,8 +1379,9 @@ class Dialog(Component)
       TOOLTIP_START_DELAY := 1000
       TOOLTIP_END_DELAY := 4000
       TOOLTIP_CONTINUE_DELAY := 1500
-      TOOLTIP_X_OFFSET := 5
-      TOOLTIP_Y_OFFSET := 15
+      TOOLTIP_X_OFFSET := scale(5)
+      TOOLTIP_Y_OFFSET := scale(15)
+      DRAG_GESTURE_OFFSET := scale(4)
       DEFAULT_POINTER := "left ptr"
       FOCUS_UP := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
       FOCUS_DOWN := set("\t", Key.RIGHT, Key.DOWN)
