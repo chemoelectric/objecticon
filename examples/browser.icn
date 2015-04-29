@@ -136,10 +136,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
    end
 
    private update_grey()
-      if is(tabs.which_one, BrowserTab) then
-         page_menu.set_is_shaded(&no)
-      else
-         page_menu.set_is_shaded(&yes)
+      page_menu.set_is_shaded(Flag{ not is(tabs.which_one, BrowserTab) })
    end
 
    public initially()
@@ -1227,8 +1224,8 @@ class BrowserTab(TabItem, BrowserUI)
          search_prev_button.set_is_shaded(&yes)
          search_label.set_label("No search")
       } else {
-         search_next_button.set_is_shaded(if search_pos < *browser.sorted_searched then &no else &yes)
-         search_prev_button.set_is_shaded(if search_pos > 1 then &no else &yes)
+         search_next_button.set_is_shaded(Flag{ search_pos >= *browser.sorted_searched})
+         search_prev_button.set_is_shaded(Flag{ search_pos <= 1 })
          search_label.set_label(if *browser.sorted_searched = 0 then
             "No results"
          else

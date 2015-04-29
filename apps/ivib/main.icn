@@ -407,15 +407,15 @@ class Main(Dialog)
    public update_grey()
       every (selections_menu | checkboxgroup_button | buttongroup_button |
          delete_button | move_selection_up_order_button | move_selection_down_order_button).
-         set_is_shaded(flag_of{*canvas.selections = 0})
+         set_is_shaded(Flag{*canvas.selections = 0})
 
-      every (undo | undo_button).set_is_shaded(flag_of{*undo_list = 0})
-      every (redo | redo_button).set_is_shaded(flag_of{*redo_list = 0})
+      every (undo | undo_button).set_is_shaded(Flag{*undo_list = 0})
+      every (redo | redo_button).set_is_shaded(Flag{*redo_list = 0})
 
-      rescale.set_is_shaded(flag_of{Gui.SCALE_FACTOR = canvas.edit_scale})
+      rescale.set_is_shaded(Flag{Gui.SCALE_FACTOR = canvas.edit_scale})
 
-      save.set_is_shaded(flag_of{/canvas.modified | /canvas.filename})
-      save_button.set_is_shaded(flag_of{/canvas.modified & \canvas.filename})
+      save.set_is_shaded(Flag{/canvas.modified | /canvas.filename})
+      save_button.set_is_shaded(Flag{/canvas.modified & \canvas.filename})
    end
 
    #

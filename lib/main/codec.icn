@@ -414,7 +414,7 @@ class Decode()
    public parse(s)
       self.tag_count := 0
       s ? {
-         self.fast_flag := if =Codec.FAST_FLAG then 1 else &null
+         self.fast_flag := Flag{ =Codec.FAST_FLAG }
          return use {
             self.seen := table(),
             simple_try{decode()},

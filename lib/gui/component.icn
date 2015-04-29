@@ -1309,7 +1309,7 @@ class Component(Rect,Align,Connectable)
    # a potential drop or not.  By default, this method just uses two pre-defined pointers.
    #
    public define_dnd_pointers(drag)
-      cbwin.copy_pointer("dnd negative", "exchange")
+      cbwin.copy_pointer("dnd negative", "circle")
       cbwin.copy_pointer("dnd positive", "hand2")
    end
 

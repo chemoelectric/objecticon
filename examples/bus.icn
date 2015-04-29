@@ -175,7 +175,7 @@ class Map(Panel)
       return m := CheckBoxMenuItem().
          set_label(".cell\n.attr 'fg=" || rt.colour || "'\n" || rt.number || "\n.br\n" ||
                    ".cell\n.img " || route_icon(rt) || "\n.br\n").
-         set_is_checked(if member(\filter, rt) then &yes else &no).
+         set_is_checked(Flag{ member(\filter, rt) }).
          connect(create if m.is_checked() then filter_route(rt) else unfilter_route(rt), Event.ACTION)
    end
 

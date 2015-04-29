@@ -32,3 +32,10 @@ end
 procedure toggle_flag(f)
    return if /f then &yes else &no
 end
+
+#
+# Return a flag value based on whether the given expression succeeds.
+#
+procedure Flag(e)
+   return if @e then &yes else &no
+end
