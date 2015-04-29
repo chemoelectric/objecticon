@@ -193,7 +193,7 @@ class HtmlParser()
       local i, node
       doc := HtmlDocument()
 
-      utf8_flag := Flag{ type(s) == "ucs" }
+      utf8_flag := Yes{ type(s) == "ucs" }
       node_stack := []
 
       s ? {

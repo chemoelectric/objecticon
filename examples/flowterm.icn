@@ -954,7 +954,7 @@ $endif
       local s
       s := ucs(System.getcwd(pid)) | fail
       if s ~== cwd then {
-         set_cwd(s, Flag{ s === nav_dir })
+         set_cwd(s, Yes{ s === nav_dir })
          nav_dir := &null
       }
    end
@@ -970,8 +970,8 @@ $endif
    end
 
    private update_grey()
-      set_is_shaded_ex(prev_button, Flag{ history_pos >= *history })
-      set_is_shaded_ex(next_button, Flag{ history_pos <= 1 })
+      set_is_shaded_ex(prev_button, No{ history_pos < *history })
+      set_is_shaded_ex(next_button, No{ history_pos > 1 })
    end
 
    private send_vt(s)

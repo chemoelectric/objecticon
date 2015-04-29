@@ -270,7 +270,7 @@ class TextFlow(Component, HasLastHighlight)
       if width === compute_w then 
          return
       compute_w := width
-      calculating := Flag{ width = 16r7fffffff }
+      calculating := Yes{ width = 16r7fffffff }
       output_comps := []
       output_rows := []
       left_comps := []

@@ -3108,15 +3108,15 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public do_update_grey()
-      update_grey(GreyState(Flag{ history_pos >= *history },
-                            Flag{ history_pos <= 1 },
-                            Flag{ *history = 0 },
-                            Flag{ /curr_history_entry },
-                            Flag{ /page_url },
-                            Flag{ /page_data },
-                            Flag{ running === 0 },
-                            Flag{ /text_selection },
-                            Flag{ /links_selection }))
+      update_grey(GreyState(No { history_pos < *history },
+                            No { history_pos > 1 },
+                            Yes{ *history = 0 },
+                            Yes{ /curr_history_entry },
+                            Yes{ /page_url },
+                            Yes{ /page_data },
+                            Yes{ running === 0 },
+                            Yes{ /text_selection },
+                            Yes{ /links_selection }))
       return self
    end
 
@@ -4060,7 +4060,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          }
          "radio": {
             v := e.get_attribute(u"VALUE") | u"on"
-            checked := Flag{ e.get_attribute(u"CHECKED") }
+            checked := Yes{ e.get_attribute(u"CHECKED") }
             q := FormToggle(v, checked).
                set_paint(ImagePaint().set_cache("gui.DIAMOND_UP")).
                set_paint_down(ImagePaint().set_cache("gui.DIAMOND_DOWN")).
@@ -4070,7 +4070,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          }
          "checkbox": {
             v := e.get_attribute(u"VALUE") | u"on"
-            checked := Flag{ e.get_attribute(u"CHECKED") }
+            checked := Yes{ e.get_attribute(u"CHECKED") }
             q := FormToggle(v, checked).
                set_paint(ImagePaint().set_cache("gui.BOX_UP")).
                set_paint_down(ImagePaint().set_cache("gui.BOX_DOWN")).

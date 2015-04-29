@@ -21,7 +21,7 @@ class EventTab(TabItem)
 
    public update_grey()
       local f
-      f := Flag{ *tbl.get_selections() = 0 }
+      f := Yes{ *tbl.get_selections() = 0 }
       every (event | handler | delete | apply).set_is_shaded(f)
    end
 

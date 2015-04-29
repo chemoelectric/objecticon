@@ -34,8 +34,16 @@ procedure toggle_flag(f)
 end
 
 #
-# Return a flag value based on whether the given expression succeeds.
+# Return &yes if the given expression succeeds, otherwise &no.
 #
-procedure Flag(e)
+procedure Yes(e)
    return if @e then &yes else &no
 end
+
+#
+# Return &no if the given expression succeeds, otherwise &yes.
+#
+procedure No(e)
+   return if @e then &no else &yes
+end
+

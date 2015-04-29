@@ -162,7 +162,7 @@ class JSONParser()
    end
 
    public parse(s)
-      utf8_flag := Flag{ type(s) == "ucs" }
+      utf8_flag := Yes{ type(s) == "ucs" }
       return s ? simple_try{ end_check(parse_impl()) }
    end
 

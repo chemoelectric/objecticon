@@ -356,7 +356,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public get_default_width()
-      return predict_total_width(80 * char_w + 2 * Gui.TEXT_INSET, Flag{ history_size > 0 })
+      return predict_total_width(80 * char_w + 2 * Gui.TEXT_INSET, Yes{ history_size > 0 })
    end
 
    public get_default_height()
@@ -485,7 +485,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       # See notes for explanation.
       hsz := history_size
       hsz <:= (\saved_buffer).history_size
-      cols := (predict_view_width(w, Flag{ hsz > 0 }) - 2 * Gui.TEXT_INSET) / char_w
+      cols := (predict_view_width(w, Yes{ hsz > 0 }) - 2 * Gui.TEXT_INSET) / char_w
       cols >:= \col_mode
       cols <:= 16
       rows := predict_view_height(h) / get_line_height()

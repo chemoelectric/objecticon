@@ -19,7 +19,7 @@ class Untitled(Dialog)
 
    public update_grey()
       local f
-      f := Flag{*target_list.get_selections() = 0}
+      f := Yes{*target_list.get_selections() = 0}
       data_area.set_is_shaded(f)
       get_data_button.set_is_shaded(f)
    end

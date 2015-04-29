@@ -29,8 +29,8 @@ class CanvasTableDialog(CanvasComponentDialog)
          if *c.table_header.children > 1 then
             delete.set_is_shaded(&no)
          edit.set_is_shaded(&no)
-         up.set_is_shaded(Flag{i <= 1})
-         down.set_is_shaded(Flag{i >= *c.table_header.children })
+         up.set_is_shaded(No{i > 1})
+         down.set_is_shaded(No{i < *c.table_header.children })
       } else {
          edit.set_is_shaded(&yes)
          delete.set_is_shaded(&yes)

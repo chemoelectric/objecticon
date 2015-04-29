@@ -20,7 +20,7 @@ class TermEditableTextList(EditableTextList)
       m.add(MenuSeparator()).
          add(CheckBoxMenuItem().
              set_label("Word wrap").
-             set_is_checked(Flag{ wrap_mode === "width" }).
+             set_is_checked(Yes{ wrap_mode === "width" }).
              connect(on_word_wrap, Event.ACTION)).
          add(TextMenuItem().
                set_label("Clear").

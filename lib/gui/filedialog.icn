@@ -409,8 +409,8 @@ class FileDialog(Dialog)
    end
 
    public update_grey()
-      prev_button.set_is_shaded(Flag{ history_pos >= *history })
-      next_button.set_is_shaded(Flag{ history_pos <= 1 })
+      prev_button.set_is_shaded(No{ history_pos < *history })
+      next_button.set_is_shaded(No{ history_pos > 1 })
    end
 
    public on_new_dir_menu_item(ev)

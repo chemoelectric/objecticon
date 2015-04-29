@@ -16,7 +16,7 @@ class MapTab(TabItem)
 
    public update_grey()
       local f
-      f := Flag{ *tbl.get_selections() = 0}
+      f := Yes{ *tbl.get_selections() = 0}
       every (attrib_tf | value | delete | apply).set_is_shaded(f)
    end
 

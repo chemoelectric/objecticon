@@ -81,9 +81,9 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
          }
          if \select_rec.owner then {
             edit.set_is_shaded(&no)
-            delete.set_is_shaded(Flag{ is(c, CanvasMenuButton) & c.menu === select_rec.owner })
-            up.set_is_shaded(Flag{ not can_go_up() })
-            down.set_is_shaded(Flag{ not can_go_down() })
+            delete.set_is_shaded(Yes{ is(c, CanvasMenuButton) & c.menu === select_rec.owner })
+            up.set_is_shaded(No{ can_go_up() })
+            down.set_is_shaded(No{ can_go_down() })
          } else {
             delete.set_is_shaded(&yes)
             edit.set_is_shaded(&yes)

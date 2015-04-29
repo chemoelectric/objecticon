@@ -133,8 +133,8 @@ class FavouriteDirectoriesDialog(Dialog)
       if *etc.get_selections() = 1 then {
          apply_button.set_is_shaded(&no)
          i := etc.get_selections()[1]
-         up_button.set_is_shaded(Flag{ i <= 1})
-         down_button.set_is_shaded(Flag{ i >= *etc.contents })
+         up_button.set_is_shaded(No{ i > 1})
+         down_button.set_is_shaded(No{ i < *etc.contents })
          edit_panel.set_is_shaded(&no)
          application_field.set_is_shaded(toggle_flag(application_check_box.get_status()))
       } else {
@@ -144,7 +144,7 @@ class FavouriteDirectoriesDialog(Dialog)
          edit_panel.set_is_shaded(&yes)
       }
 
-      delete_button.set_is_shaded(Flag{ *etc.get_selections() = 0 })
+      delete_button.set_is_shaded(Yes{ *etc.get_selections() = 0 })
    end
 
    private on_cancel_button(ev)

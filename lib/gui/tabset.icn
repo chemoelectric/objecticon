@@ -154,7 +154,7 @@ class TabSet(Component)
                                      ypos, 
                                      c.tab_w, 
                                      self.label_h,
-                                     Flag{ self.has_focus() & self.is_unshaded() & c === self.which_one })
+                                     Yes{ self.has_focus() & self.is_unshaded() & c === self.which_one })
                         if c.is_shaded() then
                            Gui.style.shade_rectangle(W,
                                                      c.tab_x, ypos, c.tab_w, self.label_h)
@@ -214,7 +214,7 @@ class TabSet(Component)
                                      ypos, 
                                      c.tab_w, 
                                      self.label_h,
-                                     Flag{ self.has_focus() & self.is_unshaded() & c === self.which_one })
+                                     Yes{ self.has_focus() & self.is_unshaded() & c === self.which_one })
                         if c.is_shaded() then
                            Gui.style.shade_rectangle(W,
                                                      c.tab_x, ypos, c.tab_w, self.label_h)
@@ -399,7 +399,7 @@ class TabSet(Component)
          # If t is no longer which_tab(e), then we have shuffled the
          # lines around, and moved t to the front.  It would be ugly
          # to drag the tab in this case, so it is disallowed.
-         may_drag := Flag{ t === which_tab(e) }
+         may_drag := Yes{ t === which_tab(e) }
       } else
          may_drag := &no
       end_handle(e)
