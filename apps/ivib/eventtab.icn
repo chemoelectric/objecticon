@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui
+import gui, util
 
 class EventTab(TabItem)
    public 
@@ -20,17 +20,9 @@ class EventTab(TabItem)
       name_field
 
    public update_grey()
-      if *tbl.get_selections() > 0 then {
-         event.set_is_shaded(&no)
-         handler.set_is_shaded(&no)
-         delete.set_is_shaded(&no)
-         apply.set_is_shaded(&no)
-      } else {
-         event.set_is_shaded(&yes)
-         handler.set_is_shaded(&yes)
-         delete.set_is_shaded(&yes)
-         apply.set_is_shaded(&yes)
-      }
+      local f
+      f := Flag{ *tbl.get_selections() = 0 }
+      every (event | handler | delete | apply).set_is_shaded(f)
    end
 
    public on_add()

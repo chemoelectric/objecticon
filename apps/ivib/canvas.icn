@@ -6,7 +6,8 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, gui, io, graphics, ipl.pdco, util
+import lang, gui, io, graphics, util, 
+   ipl.pdco, ipl.numbers
 
 class BorderOfCanvas(Component)
    public
@@ -928,14 +929,14 @@ class Canvas(Component,SelectiveObjectCodec)
 
       every k := "height"|"width"|"min_width"|"min_height"|"max_width"|"max_height" do {
          if c := dialog_struct.get_wattrib(k) then
-            dialog_struct.set_wattrib(k, integer(c * f))
+            dialog_struct.set_wattrib(k, round(c * f))
       }
       every k := "size"|"max_size"|"min_size" do {
          if c := dialog_struct.get_wattrib(k) then
-            dialog_struct.set_wattrib(k, [integer(c[1] * f), integer(c[2] * f)])
+            dialog_struct.set_wattrib(k, [round(c[1] * f), round(c[2] * f)])
       }
-      dialog_iw := integer(\dialog_iw * f)
-      dialog_ih := integer(\dialog_ih * f)
+      dialog_iw := round(\dialog_iw * f)
+      dialog_ih := round(\dialog_ih * f)
       synch_size()
       set_modified()
       reset_all()

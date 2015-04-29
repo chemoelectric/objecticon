@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui
+import gui, ipl.numbers
 
 ############################################################################
 #
@@ -52,7 +52,7 @@ class CanvasTableColumn(CanvasComponent,TableColumn)
 
    public rescale(f)
       CanvasComponent.rescale(f)
-      self.column_width := integer(\self.column_width * f)
+      self.column_width := round(\self.column_width * f)
    end
 
    #

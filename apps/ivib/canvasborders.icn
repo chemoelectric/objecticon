@@ -1,4 +1,4 @@
-import gui
+import gui, ipl.numbers
 
 class CanvasABorder(CanvasObject)
    public 
@@ -25,10 +25,10 @@ class CanvasABorder(CanvasObject)
    end
 
    public rescale(f)
-      self.empty_l_inset := integer(\self.empty_l_inset * f)
-      self.empty_r_inset := integer(\self.empty_r_inset * f)
-      self.empty_t_inset := integer(\self.empty_t_inset * f)
-      self.empty_b_inset := integer(\self.empty_b_inset * f)
+      self.empty_l_inset := round(\self.empty_l_inset * f)
+      self.empty_r_inset := round(\self.empty_r_inset * f)
+      self.empty_t_inset := round(\self.empty_t_inset * f)
+      self.empty_b_inset := round(\self.empty_b_inset * f)
    end
 
    #
@@ -138,7 +138,7 @@ class CanvasLineBorder(CanvasABorder)
 
    public rescale(f)
       CanvasABorder.rescale(f)
-      self.line_width_val := integer(\self.line_width_val * f)
+      self.line_width_val := round(\self.line_width_val * f)
    end
 
    public gen_code(c)

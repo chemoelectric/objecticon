@@ -2,7 +2,7 @@
 # $Id$
 #
 
-import gui
+import gui, util
 
 class MapTab(TabItem)
    public 
@@ -15,17 +15,9 @@ class MapTab(TabItem)
       value
 
    public update_grey()
-      if *tbl.get_selections() > 0 then {
-         attrib_tf.set_is_shaded(&no)
-         value.set_is_shaded(&no)
-         delete.set_is_shaded(&no)
-         apply.set_is_shaded(&no)
-      } else {
-         attrib_tf.set_is_shaded(&yes)
-         value.set_is_shaded(&yes)
-         delete.set_is_shaded(&yes)
-         apply.set_is_shaded(&yes)
-      }
+      local f
+      f := Flag{ *tbl.get_selections() = 0}
+      every (attrib_tf | value | delete | apply).set_is_shaded(f)
    end
 
    public on_add()

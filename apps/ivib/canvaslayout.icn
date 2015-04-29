@@ -1,4 +1,4 @@
-import gui
+import gui, ipl.numbers
 
 
 class CanvasLayout(CanvasObject)
@@ -76,8 +76,8 @@ class CanvasGridLayout(CanvasLayout,GridLayout)
    end
 
    public rescale(f)
-      self.doi_val := integer(\self.doi_val * f)
-      self.dii_val := integer(\self.dii_val * f)
+      self.doi_val := round(\self.doi_val * f)
+      self.dii_val := round(\self.dii_val * f)
       self.set_doi(\self.doi_val)
       self.set_dii(\self.dii_val)
    end

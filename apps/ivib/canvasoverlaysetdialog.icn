@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui
+import gui, util
 
 ############################################################################
 #
@@ -30,14 +30,8 @@ class CanvasOverlaySetDialog(CanvasComponentDialog)
             delete.set_is_shaded(&no)
          edit.set_is_shaded(&no)
          which_one.set_is_shaded(&no)
-         if i > 1 then
-            up.set_is_shaded(&no)
-         else
-            up.set_is_shaded(&yes)
-         if i < *c.children then
-            down.set_is_shaded(&no)
-         else
-            down.set_is_shaded(&yes)
+         up.set_is_shaded(Flag{i <= 1})
+         down.set_is_shaded(Flag{i >= *c.children})
       } else {
          edit.set_is_shaded(&yes)
          which_one.set_is_shaded(&yes)
