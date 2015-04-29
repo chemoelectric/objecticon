@@ -262,20 +262,6 @@ final abstract class Format()
       return Text.create_cset(l)
    end
 
-   #
-   # Unescape a string in shell escape format.
-   #
-   public static shell_unescape(s)
-      local t, ch
-      t := ""
-      s ? repeat {
-         t ||:= tab(upto('\\') | 0)
-         ch := (move(1), move(1)) | break
-         t ||:= ch
-      }
-      return t
-   end
-
    # Convert a string into shell format by escaping certain special
    # shell characters.
    #
@@ -283,9 +269,20 @@ final abstract class Format()
       local t, ch
       t := ""
       s ? repeat {
-         t ||:= tab(upto('|\\*;?@+&#()<>[]{}!$`\'\" ') | 0)
+         t ||:= tab(upto('\0-\x1f\x7f|\\*;?@+&#()<>[]{}!$`\'\" ') | 0)
          ch := move(1) | break
-         t ||:= "\\" || ch
+         t ||:= case string(ch) of {
+            "\x07": "$'\\a'"
+            "\b" : "$'\\b'"
+            "\e" : "$'\\e'"
+            "\f" : "$'\\f'"
+            "\n" : "$'\\n'"
+            "\r" : "$'\\r'"
+            "\t" : "$'\\t'"
+            "\v" : "$'\\v'"
+            !'\0-\x1f\x7f' : "$'\\x" || int_to_string(ord(ch),,2) || "'"
+            default : "\\" || ch
+         }
       }
       return t
    end

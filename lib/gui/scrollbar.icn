@@ -551,6 +551,20 @@ class ScrollBar(Component, HasOrientation)
       self.bar_area.bar_y +:= dy
    end
 
+   #
+   # Succeed if the bar is at its topmost (or leftmost) position.
+   #
+   public at_top()
+      if bar_pos = bar_area_pos then return
+   end
+
+   #
+   # Succeed if the bar is at its bottommost (or rightmost) position.
+   #
+   public at_bottom()
+      if bar_pos + bar_size = bar_area_pos + bar_area_size then return
+   end
+
    public finally()
       repeat_ticker.stop()
       old_bar_area_pos := old_bar_area_size := &null

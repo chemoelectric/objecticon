@@ -476,10 +476,39 @@ abstract class ScrollArea(Component)
          Gui.style.draw_focus_rectangle(self.cbwin, self.x, self.y, self.w, self.h)
    end
 
+   #
+   # Move the vertical scrollbar (if any) to the topmost position
+   #
+   public goto_top()
+      return set_area_y(0)
+   end
+
+   #
+   # Move the vertical scrollbar (if any) to the bottommost position
+   #
+   public goto_bottom()
+      set_area_y((\self.vsb).total_size)
+      return self
+   end
+
+   #
+   # Succeed if there is no vertical scrollbar, or if it's at the topmost position.
+   #
+   public at_top()
+      return /vsb | vsb.at_top()
+   end
+
+   #
+   # Succeed if there is no vertical scrollbar, or if it's at the bottommost position.
+   #
+   public at_bottom()
+      return /vsb | vsb.at_bottom()
+   end
+
    public on_default_key(e)
       case e.code of {
-         Key.HOME : set_area_y(0)
-         Key.END : set_area_y((\self.vsb).total_size)
+         Key.HOME : goto_top()
+         Key.END : goto_bottom()
          Key.PGUP : set_area_y(get_area_y() - (\self.vsb).page_size)
          Key.PGDN : set_area_y(get_area_y() + (\self.vsb).page_size)
          Key.UP : set_area_y(get_area_y() - (\self.vsb).increment_size)

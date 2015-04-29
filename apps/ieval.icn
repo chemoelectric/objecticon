@@ -11,18 +11,32 @@ procedure main(imports, files, opts)\n_
     ipl.ieval.Ieval(imports, files, opts).run()\n_
 end\n"
    return use {
-      tf := Files.make_temp_filename("ieval"),
+      tf := Files.make_temp_filename("ieval", Files.PROG_SUFFIX),
       compile(prog, tf, links),
       save_why{Files.remove(tf)}      # save_why since oit may remove the output file on failure
    }
 end
 
+$ifdef _MS_WIN32
+procedure compile1(prog, pf, tf, links)
+   local s, i
+   Files.string_to_file(pf, prog) | fail
+   s := "oit -s -l 2 -o " || tf || " " || pf
+   every s ||:= " " || (!links)
+   i := system(s)
+   if i = 0 then
+      return
+   else
+      error("oit failed, exit status " || i)
+end
+$else
 procedure compile1(prog, pf, tf, links)
    local p
    Files.string_to_file(pf, prog) | fail
    use{ p := FilterOutputStream(, "oit", ["-s", "-l", "2", "-o", tf, pf] ||| links) } | fail
    return p.succeeded()
 end
+$endif
 
 procedure compile(prog, tf, links)
    local pf

@@ -107,6 +107,9 @@ class CanvasObject(SelectiveObjectCodec)
       every gen_cos().rename()
    end
 
+   public rescale(f)
+   end
+
    public change_canvas(nc)
       self.parent_Canvas := nc
       every gen_cos().change_canvas(nc)
@@ -125,6 +128,14 @@ class CanvasObject(SelectiveObjectCodec)
    public traverse_tree()
       coact(self)
       every gen_cos().traverse_tree()
+   end
+
+   #
+   # Traverse the tree of CanvasObjects rooted at this one.
+   #
+   public traverse_tree_postorder()
+      every gen_cos().traverse_tree_postorder()
+      coact(self)
    end
 
    public get_template()

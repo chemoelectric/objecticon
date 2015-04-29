@@ -6,7 +6,8 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, gui, io, graphics, ipl.pdco, util
+import lang, gui, io, graphics, util, 
+   ipl.pdco, ipl.numbers
 
 class BorderOfCanvas(Component)
    public
@@ -879,7 +880,7 @@ class Canvas(Component,SelectiveObjectCodec)
       #
       # Dialog attribs.
       #
-      m := copy(self.parent_Canvas.dialog_struct.wattribs)
+      m := copy(dialog_struct.wattribs)
       every default.delete(m, "height" | "width" | "size")
       if /is_component & 
          \ (dialog_iw | dialog_ih) then 
@@ -918,7 +919,32 @@ class Canvas(Component,SelectiveObjectCodec)
 
       return c
    end
-   
+
+   public rescale()
+      local c, k, f
+      f := Gui.SCALE_FACTOR / edit_scale
+
+      every c := Seq{ gen_cos().traverse_tree_postorder() }  do
+         c.rescale(f)
+
+      every k := "height"|"width"|"min_width"|"min_height"|"max_width"|"max_height" do {
+         if c := dialog_struct.get_wattrib(k) then
+            dialog_struct.set_wattrib(k, round(c * f))
+      }
+      every k := "size"|"max_size"|"min_size" do {
+         if c := dialog_struct.get_wattrib(k) then
+            dialog_struct.set_wattrib(k, [round(c[1] * f), round(c[2] * f)])
+      }
+      dialog_iw := round(\dialog_iw * f)
+      dialog_ih := round(\dialog_ih * f)
+      synch_size()
+      set_modified()
+      reset_all()
+      do_reset_all_layouts()
+      edit_scale := Gui.SCALE_FACTOR
+      parent_dialog.update_grey()
+   end
+
    #
    # Minimum width of canvas.
    #
@@ -1423,7 +1449,7 @@ class Canvas(Component,SelectiveObjectCodec)
          #
          # Select this object.
          #
-         self.select(moving, if \e.ctrl then 1 else &null)
+         self.select(moving, e.ctrl)
 
          #
          # Save for possible push onto undo list.
@@ -1598,7 +1624,7 @@ class Canvas(Component,SelectiveObjectCodec)
 
       /self.held_flag | fail
       if i := self.which_cursor_over(e) then {
-         self.select(i, if \e.ctrl then 1 else &null)
+         self.select(i, e.ctrl)
          if not(\e.ctrl) then {
             pm := PopupMenu()
             pm.popup(self.parent_dialog, i.create_menu(), e.x, e.y)

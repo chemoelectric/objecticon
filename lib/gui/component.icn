@@ -843,8 +843,8 @@ class Component(Rect,Align,Connectable)
       /cbwin | syserr("initially called out of sequence")
       \self.parent | runerr("incorrect ancestry (parent null)")
       parent_dialog := parent.get_parent_dialog()
-      self.effective_is_hidden_flag := if parent.is_hidden() | \self.is_hidden_flag then 1 else &null
-      self.effective_is_shaded_flag := if parent.is_shaded() | \self.is_shaded_flag then 1 else &null
+      self.effective_is_hidden_flag := Yes{ parent.is_hidden() | \self.is_hidden_flag }
+      self.effective_is_shaded_flag := Yes{ parent.is_shaded() | \self.is_shaded_flag }
       Gui.style.polish(self)
       self.effective_wattribs := if /inherit_wattribs_flag then table() else copy(parent.get_effective_wattribs())
       every t := key(self.wattribs) do {
@@ -1309,7 +1309,7 @@ class Component(Rect,Align,Connectable)
    # a potential drop or not.  By default, this method just uses two pre-defined pointers.
    #
    public define_dnd_pointers(drag)
-      cbwin.copy_pointer("dnd negative", "exchange")
+      cbwin.copy_pointer("dnd negative", "circle")
       cbwin.copy_pointer("dnd positive", "hand2")
    end
 

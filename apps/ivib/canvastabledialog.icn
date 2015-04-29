@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui
+import gui, util
 
 ############################################################################
 #
@@ -29,14 +29,8 @@ class CanvasTableDialog(CanvasComponentDialog)
          if *c.table_header.children > 1 then
             delete.set_is_shaded(&no)
          edit.set_is_shaded(&no)
-         if i > 1 then
-            up.set_is_shaded(&no)
-         else
-            up.set_is_shaded(&yes)
-         if i < *c.table_header.children then
-            down.set_is_shaded(&no)
-         else
-            down.set_is_shaded(&yes)
+         up.set_is_shaded(No{i > 1})
+         down.set_is_shaded(No{i < *c.table_header.children })
       } else {
          edit.set_is_shaded(&yes)
          delete.set_is_shaded(&yes)

@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, util, gui
+import lang, util, gui, ipl.numbers
 
 
 #
@@ -265,6 +265,19 @@ class CanvasComponent(CanvasObject)
    #
    public is_inside(obj)
       fail
+   end
+
+   public rescale(f)
+      local c, k
+      self.x_spec := round(\self.x_spec * f)
+      self.y_spec := round(\self.y_spec * f)
+      self.w_spec := round(\self.w_spec * f)
+      self.h_spec := round(\self.h_spec * f)
+      every k := "l_inset"|"r_inset"|"t_inset"|"b_inset" do {
+         if c := self.get_constraint(k) then
+            self.set_constraint(k, round(c * f))
+      }
+      set_border_opts(self.border_opts)
    end
 
    #

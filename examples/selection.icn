@@ -1,4 +1,4 @@
-import gui, ipl.lists, graphics
+import gui, ipl.lists, graphics, util
 
 class Untitled(Dialog)
    public target_list, clipboard_cb, primary_cb, data_area, get_data_button
@@ -18,13 +18,10 @@ class Untitled(Dialog)
    end
 
    public update_grey()
-      if *target_list.get_selections() > 0 then {
-         data_area.set_is_shaded(&no)
-         get_data_button.set_is_shaded(&no)
-      } else {
-         data_area.set_is_shaded(&yes)
-         get_data_button.set_is_shaded(&yes)
-      }
+      local f
+      f := Yes{*target_list.get_selections() = 0}
+      data_area.set_is_shaded(f)
+      get_data_button.set_is_shaded(f)
    end
 
    public on_target_list(ev)

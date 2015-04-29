@@ -833,8 +833,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          } else
             &null
          
-         sel := if member(self.selections, i) then 1 else &null
-         ov := if i = \self.over then 1 else &null
+         sel := if member(self.selections, i) then &yes else &no
+         ov := if i = \self.over then &yes else &no
 
          lh := integer(h) | h[i]
          

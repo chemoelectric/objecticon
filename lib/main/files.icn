@@ -28,7 +28,9 @@ final abstract class Files()
       # environment variable).
       PATHS_SEPARATOR,
       # Suffix for dynamic library
-      LIB_SUFFIX
+      LIB_SUFFIX,
+      # Suffix for executable
+      PROG_SUFFIX
 
    private static init()
 $ifdef _UNIX
@@ -37,6 +39,7 @@ $ifdef _UNIX
       PATH_SPECIALS := '/'
       PATHS_SEPARATOR := ":"
       LIB_SUFFIX := ".so"
+      PROG_SUFFIX := ""
       FS := UnixFileSystem()
 $elsifdef _PLAN9
       EOL := "\n"
@@ -44,6 +47,7 @@ $elsifdef _PLAN9
       PATH_SPECIALS := '/'
       PATHS_SEPARATOR := " "
       LIB_SUFFIX := ""
+      PROG_SUFFIX := ""
       FS := Plan9FileSystem()
 $elsifdef _MS_WIN32
       EOL := "\r\n"
@@ -51,6 +55,7 @@ $elsifdef _MS_WIN32
       PATH_SPECIALS := ':\\/'
       PATHS_SEPARATOR := ";"
       LIB_SUFFIX := ".dll"
+      PROG_SUFFIX := ".exe"
       FS := WindowsFileSystem()
 $else
       runerr("Can't init_file_system: unknown o/s type")

@@ -1,4 +1,4 @@
-import gui
+import gui, ipl.numbers
 
 class CanvasABorder(CanvasObject)
    public 
@@ -22,6 +22,13 @@ class CanvasABorder(CanvasObject)
       c.empty_b_inset := self.empty_b_inset
       c.x_align_val := self.x_align_val
       c.y_align_val := self.y_align_val
+   end
+
+   public rescale(f)
+      self.empty_l_inset := round(\self.empty_l_inset * f)
+      self.empty_r_inset := round(\self.empty_r_inset * f)
+      self.empty_t_inset := round(\self.empty_t_inset * f)
+      self.empty_b_inset := round(\self.empty_b_inset * f)
    end
 
    #
@@ -127,6 +134,11 @@ class CanvasLineBorder(CanvasABorder)
       suspend CanvasABorder.get_template() |
          [ "Line width", "line_width_val"] |
          [ "Has empty", "has_empty"]
+   end
+
+   public rescale(f)
+      CanvasABorder.rescale(f)
+      self.line_width_val := round(\self.line_width_val * f)
    end
 
    public gen_code(c)

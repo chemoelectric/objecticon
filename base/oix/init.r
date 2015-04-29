@@ -8,7 +8,9 @@
 #include "../h/opnames.h"
 #include "../h/modflags.h"
 
-static FILE *readhdr(char *name, struct header *hdr);
+static FILE *readhdr_strict(char *name, struct header *hdr);
+static FILE *readhdr_liberal(char *name, struct header *hdr);
+static int check_version(struct header *hdr);
 static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codeptr);
 static void initptrs (struct progstate *p, struct header *h);
 static void initprogstate(struct progstate *p);
@@ -210,11 +212,22 @@ int keyword_tbl_sz = ElemCount(keyword_tbl);
 struct progstate *curpstate;
 struct progstate rootpstate;
 
+/*
+ * Check the version number of the icode matches the interpreter version.
+ * The string must equal IVersion or IVersion || "Z".
+ */
+static int check_version(struct header *hdr)
+{
+    return strncmp((char *)hdr->config, IVersion, strlen(IVersion)) == 0 && 
+        ((((char *)hdr->config)[strlen(IVersion)]) == 0 ||
+         strcmp(((char *)hdr->config) + strlen(IVersion), "Z") == 0);
+}
 
 /*
- * Open the icode file and read the header.
+ * Open the icode file and read the header, stopping with a fatal
+ * error on a problem.
  */
-static FILE *readhdr(char *name, struct header *hdr)
+static FILE *readhdr_strict(char *name, struct header *hdr)
 {
     FILE *ifile;
     int n = strlen(IcodeDelim);
@@ -222,37 +235,67 @@ static FILE *readhdr(char *name, struct header *hdr)
 
     ifile = fopen(name, ReadBinary);
     if (ifile == NULL)
-        return NULL;
+        ffatalerr("Can't open interpreter file %s", name);
 
     for (;;) {
-        if (fgets(buf, sizeof buf-1, ifile) == NULL)
-            ffatalerr("can't find header marker in interpreter file %s", name);
+        if (fgets(buf, sizeof(buf) - 1, ifile) == NULL)
+            ffatalerr("Can't find header marker in interpreter file %s", name);
         if (strncmp(buf, IcodeDelim, n) == 0)
             break;
     }
 
     if (fread((char *)hdr, sizeof(char), sizeof(*hdr), ifile) != sizeof(*hdr))
-        ffatalerr("can't read interpreter file header in file %s", name);
+        ffatalerr("Can't read interpreter file header in file %s", name);
+
+    if (!check_version(hdr)) {
+        fprintf(stderr, "icode version mismatch in %s\n", name);
+        fprintf(stderr, "\ticode version: %s\n", (char *)hdr->config);
+        fprintf(stderr, "\texpected version: %s\n", IVersion);
+        ffatalerr("cannot run %s", name);
+    }
 
     return ifile;
 }
 
 /*
- * Make sure the version number of the icode matches the interpreter version.
- * The string must equal IVersion or IVersion || "Z".
+ * Open the icode file and read the header, returning null and setting
+ * &why on an error.
  */
-void check_version(struct header *hdr, char *name,FILE *fname)
+static FILE *readhdr_liberal(char *name, struct header *hdr)
 {
-    if (strncmp((char *)hdr->config,IVersion, strlen(IVersion)) ||
-        ((((char *)hdr->config)[strlen(IVersion)]) &&
-         strcmp(((char *)hdr->config)+strlen(IVersion), "Z"))
-        ) {
-        fprintf(stderr,"icode version mismatch in %s\n", name);
-        fprintf(stderr,"\ticode version: %s\n",(char *)hdr->config);
-        fprintf(stderr,"\texpected version: %s\n",IVersion);
-        fclose(fname);
-        ffatalerr("cannot run %s", name);
+    FILE *ifile;
+    int n = strlen(IcodeDelim);
+    char buf[200];
+
+    ifile = fopen(name, ReadBinary);
+    if (ifile == NULL) {
+        errno2why();
+        return NULL;
     }
+
+    for (;;) {
+        if (fgets(buf, sizeof(buf) - 1, ifile) == NULL) {
+            whyf("Can't find header marker in interpreter file %s", name);
+            fclose(ifile);
+            return NULL;
+        }
+        if (strncmp(buf, IcodeDelim, n) == 0)
+            break;
+    }
+
+    if (fread((char *)hdr, sizeof(char), sizeof(*hdr), ifile) != sizeof(*hdr)) {
+        whyf("Can't read interpreter file header in file %s", name);
+        fclose(ifile);
+        return NULL;
+    }
+
+    if (!check_version(hdr)) {
+        whyf("Version mismatch (%s -vs- %s) in file %s", (char *)hdr->config, IVersion, name);
+        fclose(ifile);
+        return NULL;
+    }
+
+    return ifile;
 }
 
 static void read_icode(struct header *hdr, char *name, FILE *ifile, char *codeptr)
@@ -706,12 +749,9 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
        /*
         * open the icode file and read the header
         */
-       ifile = readhdr(loadstring, &hdr);
-       if (ifile == NULL) {
-           /* The file couldn't be opened (any format error causes termination) */
-           errno2why();
+       ifile = readhdr_liberal(loadstring, &hdr);
+       if (ifile == NULL)
            fail;
-       }
 
        /*
         * Allocate memory for icode and the struct that describes it
@@ -782,7 +822,6 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
         * Establish pointers to icode data regions.		[[I?]]
         */
        initptrs(pstate, &hdr);
-       check_version(&hdr, loadstring, ifile);
        read_icode(&hdr, loadstring, ifile, pstate->Code);
        fclose(ifile);
 
@@ -1221,9 +1260,7 @@ int main(int argc, char **argv)
 
     name = salloc(t);
 
-    ifile = readhdr(name, &hdr);
-    if (ifile == NULL) 
-        ffatalerr("cannot open interpreter file %s", name);
+    ifile = readhdr_strict(name, &hdr);
 
     CMakeStr(name, &rootpstate.Kywd_prog);
 
@@ -1273,7 +1310,6 @@ int main(int argc, char **argv)
     k_current->failure_label = 0;
     k_current->tvalloc = 0;
 
-    check_version(&hdr, name, ifile);
     read_icode(&hdr, name, ifile, code);
     fclose(ifile);
 

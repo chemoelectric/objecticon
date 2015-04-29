@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import gui
+import gui, util
 
 ############################################################################
 #
@@ -81,18 +81,9 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
          }
          if \select_rec.owner then {
             edit.set_is_shaded(&no)
-            if is(c, CanvasMenuButton) & c.menu === select_rec.owner then
-               delete.set_is_shaded(&yes)
-            else
-               delete.set_is_shaded(&no)
-            if can_go_up() then
-               up.set_is_shaded(&no)
-            else
-               up.set_is_shaded(&yes)
-            if can_go_down() then
-               down.set_is_shaded(&no)
-            else
-               down.set_is_shaded(&yes)
+            delete.set_is_shaded(Yes{ is(c, CanvasMenuButton) & c.menu === select_rec.owner })
+            up.set_is_shaded(No{ can_go_up() })
+            down.set_is_shaded(No{ can_go_down() })
          } else {
             delete.set_is_shaded(&yes)
             edit.set_is_shaded(&yes)

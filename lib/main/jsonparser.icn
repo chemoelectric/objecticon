@@ -1,6 +1,7 @@
 package json
 
 import 
+   util,
    exception
 
 class JSONParser()
@@ -161,7 +162,7 @@ class JSONParser()
    end
 
    public parse(s)
-      utf8_flag := if type(s) == "ucs" then 1 else &null
+      utf8_flag := Yes{ type(s) == "ucs" }
       return s ? simple_try{ end_check(parse_impl()) }
    end
 

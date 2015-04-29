@@ -25,13 +25,11 @@ class TabSet(Component)
       label_h,                               
       line_break,
       no_click_focus_flag,
-      draggable_tabs_flag,
       prefer_one_row_flag,
       old_which_one,
       tabs_at_bottom_flag,
       remember_focus_flag,
-      veto_drag,
-      dragging
+      may_drag
 
    # Vertical layout :-
    #           border top margin
@@ -94,7 +92,7 @@ class TabSet(Component)
    # Set the draggable tabs behaviour.  If set, the tabs can be moved.
    #
    public set_draggable_tabs(s)
-      self.draggable_tabs_flag := check_flag(s)
+      allow_drop_flag := allow_drag_flag := check_flag(s)
       return self
    end
 
@@ -156,8 +154,7 @@ class TabSet(Component)
                                      ypos, 
                                      c.tab_w, 
                                      self.label_h,
-                                     if self.has_focus() & self.is_unshaded() & c === self.which_one 
-                                     then 1 else &null)
+                                     Yes{ self.has_focus() & self.is_unshaded() & c === self.which_one })
                         if c.is_shaded() then
                            Gui.style.shade_rectangle(W,
                                                      c.tab_x, ypos, c.tab_w, self.label_h)
@@ -217,9 +214,7 @@ class TabSet(Component)
                                      ypos, 
                                      c.tab_w, 
                                      self.label_h,
-                                     if self.has_focus() & self.is_unshaded() & c === self.which_one 
-                                     then 1 else &null)
-
+                                     Yes{ self.has_focus() & self.is_unshaded() & c === self.which_one })
                         if c.is_shaded() then
                            Gui.style.shade_rectangle(W,
                                                      c.tab_x, ypos, c.tab_w, self.label_h)
@@ -404,16 +399,16 @@ class TabSet(Component)
          # If t is no longer which_tab(e), then we have shuffled the
          # lines around, and moved t to the front.  It would be ugly
          # to drag the tab in this case, so it is disallowed.
-         veto_drag := if t === which_tab(e) then &no else &yes
+         may_drag := Yes{ t === which_tab(e) }
       } else
-         veto_drag := &yes
+         may_drag := &no
       end_handle(e)
    end
 
    public allow_navigation_to(c)
       # Always allow navigation to a tab if draggable_tabs is enabled, so that we
       # can arrange all tabs.
-      return \draggable_tabs_flag | c.is_unshaded()
+      return \allow_drag_flag | c.is_unshaded()
    end
 
    public handle_key_left(e)
@@ -454,26 +449,31 @@ class TabSet(Component)
          handle_key_right(e)
    end
 
-   public handle_ldrag(e)
-      (/veto_drag & \draggable_tabs_flag) | fail
-      dragging := &yes
-      if which_tab(e) then
-         set_pointer("sb h double arrow")
-      else
-         set_pointer()
-      parent_dialog.synch_pointer()
+   public can_drag(ev)
+      if \may_drag & is_held(Mouse.LEFT_PRESS) then
+         return which_one
    end
 
-   public handle_lrelease(e)
-      local t
-      \dragging | fail
-      dragging := &no
-      set_pointer()
-      t := (which_one ~=== which_tab(e)) | fail
-      reposition(which_one, get_index(t))
+   public define_dnd_pointers(drag)
+      cbwin.copy_pointer("dnd negative", "circle")
+      cbwin.copy_pointer("dnd positive", "sb h double arrow")
+   end
+
+   public drag_event(drag, e)
+      return which_tab(e)
+   end
+
+   public can_drop(drag, e)
+      if drag.get_source() === self then
+         return which_one ~=== which_tab(e)
+   end
+
+   public perform_drop(drag, drop, e)
+      reposition(which_one, get_index(drop.content))
       line_break := &null
       layout()
       invalidate()
+      return
    end
 
    public in_tab_region(e)
@@ -796,8 +796,6 @@ class TabSet(Component)
       self.set_constraint("y_weight",  1.0)
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(self.handle_key, Event.KEY_PRESS)
-      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
-      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       set_border(RaisedBorder())
       return
    end

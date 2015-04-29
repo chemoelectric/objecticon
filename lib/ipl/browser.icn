@@ -3142,15 +3142,15 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    public do_update_grey()
-      update_grey(GreyState(if history_pos < *history then &no else &yes,
-                            if history_pos > 1 then &no else &yes,
-                            if *history > 0 then &no else &yes,
-                            if \curr_history_entry then &no else &yes,
-                            if \page_url then &no else &yes,
-                            if \page_data then &no else &yes,
-                            if running === 0 then &yes else &no,
-                            if \text_selection then &no else &yes,
-                            if \links_selection then &no else &yes))
+      update_grey(GreyState(No { history_pos < *history },
+                            No { history_pos > 1 },
+                            Yes{ *history = 0 },
+                            Yes{ /curr_history_entry },
+                            Yes{ /page_url },
+                            Yes{ /page_data },
+                            Yes{ running === 0 },
+                            Yes{ /text_selection },
+                            Yes{ /links_selection }))
       return self
    end
 
@@ -4094,7 +4094,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          }
          "radio": {
             v := e.get_attribute(u"VALUE") | u"on"
-            checked := if e.get_attribute(u"CHECKED") then &yes else &no
+            checked := Yes{ e.get_attribute(u"CHECKED") }
             q := FormToggle(v, checked).
                set_paint(ImagePaint().set_cache("gui.DIAMOND_UP")).
                set_paint_down(ImagePaint().set_cache("gui.DIAMOND_DOWN")).
@@ -4104,7 +4104,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          }
          "checkbox": {
             v := e.get_attribute(u"VALUE") | u"on"
-            checked := if e.get_attribute(u"CHECKED") then &yes else &no
+            checked := Yes{ e.get_attribute(u"CHECKED") }
             q := FormToggle(v, checked).
                set_paint(ImagePaint().set_cache("gui.BOX_UP")).
                set_paint_down(ImagePaint().set_cache("gui.BOX_DOWN")).

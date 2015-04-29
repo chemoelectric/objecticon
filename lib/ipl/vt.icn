@@ -356,7 +356,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public get_default_width()
-      return predict_total_width(80 * char_w + 2 * Gui.TEXT_INSET, if history_size > 0 then &yes else &no)
+      return predict_total_width(80 * char_w + 2 * Gui.TEXT_INSET, Yes{ history_size > 0 })
    end
 
    public get_default_height()
@@ -485,7 +485,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       # See notes for explanation.
       hsz := history_size
       hsz <:= (\saved_buffer).history_size
-      cols := (predict_view_width(w, if hsz > 0 then &yes else &no) - 2 * Gui.TEXT_INSET) / char_w
+      cols := (predict_view_width(w, Yes{ hsz > 0 }) - 2 * Gui.TEXT_INSET) / char_w
       cols >:= \col_mode
       cols <:= 16
       rows := predict_view_height(h) / get_line_height()
@@ -1782,14 +1782,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       return 0
    end
 
-   private at_bottom()
-      if /vsb | (vsb.bar_pos + vsb.bar_size = vsb.bar_area_pos + vsb.bar_area_size) then return
-   end
-
-   private goto_bottom()
-      goto_last(get_line_count())
-   end
-
    public defer draw_line()
 
    public draw()
@@ -2025,6 +2017,10 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
+   private send_tr_nl(s)
+      send(replace(s, u"\n", u"\r"))
+   end
+
    private send(s)
       ui.send_tty(s)
    end
@@ -2038,7 +2034,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private handle_paste_response(target_type, data, e)
-      send(replace(text_convert(selection_convert(target_type, data), "ucs"), u"\n", u"\r"))
+      send_tr_nl(text_convert(selection_convert(target_type, data), "ucs"))
    end
 
    public handle_paste_escaped(e)
@@ -2050,7 +2046,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private handle_paste_escaped_response(target_type, data, e)
-      send(replace(Format.shell_escape(text_convert(selection_convert(target_type, data), "ucs")), u"\n", u"\\\r"))
+      send(Format.shell_escape(text_convert(selection_convert(target_type, data), "ucs")))
    end
 
    public handle_copy(e)
@@ -2199,7 +2195,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private handle_mpress_response(target_type, data, e)
-      send(text_convert(selection_convert(target_type, data), "ucs"))
+      send_tr_nl(text_convert(selection_convert(target_type, data), "ucs"))
    end
 
    private handle_mpress(e)
@@ -2476,7 +2472,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       local pe
       pe := popup.object_get_selections()[1]
       close_popup()
-      send(pe.str)
+      send_tr_nl(pe.str)
    end
 
    private open_popup(px, py, l)

@@ -2,7 +2,7 @@
 # $Id$
 #
 
-import gui
+import gui, ipl.numbers
 
 class CanvasSplit(CanvasComponent,Split)
    public 
@@ -50,6 +50,11 @@ class CanvasSplit(CanvasComponent,Split)
       c.weight := self.weight
       c.sizer.show_inter_flag := self.sizer.show_inter_flag
       return c
+   end
+
+   public rescale(f)
+      self.min_first := round(min_first * f)
+      self.min_second := round(min_second * f)
    end
 
    #
