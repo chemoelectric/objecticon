@@ -1449,7 +1449,7 @@ class Canvas(Component,SelectiveObjectCodec)
          #
          # Select this object.
          #
-         self.select(moving, if \e.ctrl then 1 else &null)
+         self.select(moving, e.ctrl)
 
          #
          # Save for possible push onto undo list.
@@ -1624,7 +1624,7 @@ class Canvas(Component,SelectiveObjectCodec)
 
       /self.held_flag | fail
       if i := self.which_cursor_over(e) then {
-         self.select(i, if \e.ctrl then 1 else &null)
+         self.select(i, e.ctrl)
          if not(\e.ctrl) then {
             pm := PopupMenu()
             pm.popup(self.parent_dialog, i.create_menu(), e.x, e.y)
