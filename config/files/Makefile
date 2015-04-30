@@ -63,7 +63,7 @@ tar :
 	@for f in $$( find config -type f -not -regex ".*\.svn.*" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
-	@cp README configure config.guess config.sub install-sh $(T)
+	@cp README configure-win32 configure config.guess config.sub install-sh $(T)
 	@rm -rf $(T)/base/h/auto.h $(T)/base/h/version.h $(T)/base/h/define.h \
 		$(T)/lib/main/posixconsts.icn \
 		$(T)/lib/main/ioconsts.icn \
