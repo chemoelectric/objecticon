@@ -55,11 +55,7 @@ abstract class DropDown(Component, MenuMode)
    end
 
    public finally()
-      #
-      # Disposed with popup showing, just get rid of it
-      #
-      if \popup then 
-         close_popup()
+      close_popup()
       Component.finally()
    end
 
@@ -133,6 +129,7 @@ abstract class DropDown(Component, MenuMode)
 
    protected close_popup()
       local f
+      \self.popup | fail
       # Allow views that don't accept focus, and ensure in that case
       # the focus isn't left with the popup.
       f := view.find_focus() | old_focus
@@ -283,7 +280,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       # Selection in list - close textlist, amend label.
       #
       tmp := popup.get_selections()[1]
-      self.close_popup()
+      close_popup()
       go_to(\tmp, ev)
    end
 

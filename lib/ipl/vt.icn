@@ -555,8 +555,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public finally()
-      if \popup then
-         close_popup()
+      close_popup()
       scroll_ticker.stop()
       cursor_ticker.stop()
       LineBasedScrollArea.finally()
@@ -2458,6 +2457,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private close_popup()
+      \self.popup | fail
       self.parent_dialog.set_focus(self)
       if popup.parent_dialog === parent_dialog then {
          self.popup.invalidate()
@@ -2481,8 +2481,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       local spc_below, spc_right, d, dim, win,
          rs, max_h, max_w
 
-      if \popup then
-         close_popup()
+      close_popup()
 
       win := parent_dialog.win
       dim := win.get_display_size()
