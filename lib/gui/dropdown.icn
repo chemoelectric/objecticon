@@ -54,7 +54,16 @@ abstract class DropDown(Component, MenuMode)
       return popup
    end
 
-   public open_popup(ev)
+   public finally()
+      #
+      # Disposed with popup showing, just get rid of it
+      #
+      if \popup then 
+         close_popup()
+      Component.finally()
+   end
+
+   protected open_popup(ev)
       local spc_below, spc_above, spc_right, d, dim, win,
          use_direction, rs, pref_w, pref_h, x_adj
 
@@ -122,7 +131,7 @@ abstract class DropDown(Component, MenuMode)
       }
    end
 
-   public close_popup()
+   protected close_popup()
       local f
       # Allow views that don't accept focus, and ensure in that case
       # the focus isn't left with the popup.
@@ -328,7 +337,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       end_change(e)
    end
 
-   public open_popup(ev)
+   protected open_popup(ev)
       local max_h, max_w, spc_below, spc_above, spc_right, d, dim, win,
          use_direction, rs
 
@@ -422,15 +431,6 @@ abstract class SelectionDropDown(SelectionList, DropDown)
    public initially()
       \self.selection_list | runerr("no selection list specified")
       Component.initially()
-   end
-
-   public finally()
-      #
-      # Disposed with text list showing, just get rid of it
-      #
-      if \self.popup then 
-         self.close_popup()
-      Component.finally()
    end
 end
 

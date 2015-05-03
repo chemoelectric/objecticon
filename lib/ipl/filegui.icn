@@ -570,7 +570,7 @@ package class FileTrailList(ButtonOnlyList)
       return
    end
 
-   public open_popup(ev)
+   protected open_popup(ev)
       local e, i, l
       l := []
       every e := !Files.ucs_list(p.str(), ListEntryWithIcon) do {
