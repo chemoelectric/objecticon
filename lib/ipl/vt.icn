@@ -528,30 +528,45 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public initially()
-      setup_font() | runerr("font not in required format", self)
+      local s, l
+      s := get_wattrib("font")
+      l := check_font(s) | runerr(&why, self)
+      font_family := l[1]
+      font_size := l[2]
+      char_w := l[3]
+      set_font(font_family || "," || font_size)
       LineBasedScrollArea.initially()
       cursor_ticker.start()
-      char_w := view.cbwin.text_width("m")
-      (char_w = view.cbwin.text_width("i")) | runerr("font is not monospace", self)
    end
 
-   private setup_font()
-      local s
-      if s := get_wattrib("font") then {
-         s ? {
-            font_family := tab(upto(',') | 0)
-            (*font_family > 0) | fail
-            font_size := if ="," then
-               integer(tab(0)) | fail
-            else
-               Window.get_default_font_size()
-         }
-      } else {
-         font_family := "fixed"
-         font_size := Window.get_default_font_size()
-         set_font(font_family || "," || font_size)
+   private check_font(s)
+      local fam, size, width, W
+      /s := "fixed"
+      s ? {
+         fam := tab(upto(',') | 0)
+         (*fam > 0) | return error("font not in required format")
+         size := if ="," then
+            integer(tab(0)) | return error("font not in required format")
+         else
+            Window.get_default_font_size()
       }
-      return
+      s := fam || "," || size
+      width := use {
+         W := Window(),
+         if W.set_font(s) then
+            (W.text_width("m") = W.text_width("i")) | error("font is not monospace")
+      } | fail
+      return [fam, size, width]
+   end
+
+   public set_vt_font(s)
+      check_font(s) | fail
+      set_font(s)
+      if is_live() then {
+         invalidate_line_height()
+         reset()
+      }
+      return self
    end
 
    public finally()
@@ -975,12 +990,13 @@ class Vt(LineBasedScrollArea, MenuMode)
       return self
    end
 
-   # Set the fg colour to use in reverse mode.  Requires reset if set
-   # whilst live.
+   # Set the fg colour to use in reverse mode.
    #
    public set_reverse_fg(c)
-      Window.parse_color(c) | fail
+      /c | Window.parse_color(c) | return error("invalid color")
       self.reverse_fg := c
+      if is_live() then
+         view.reset()
       return self
    end
 
@@ -988,17 +1004,20 @@ class Vt(LineBasedScrollArea, MenuMode)
    # Set the bg colour to use in reverse mode.
    #
    public set_reverse_bg(c)
-      Window.parse_color(c) | fail
+      /c | Window.parse_color(c) | return error("invalid color")
       self.reverse_bg := c
+      if is_live() then
+         view.reset()
       return self
    end
 
-   # Set the fg colour to use in normal (non-reverse) mode.  Requires
-   # reset if set whilst live.
+   # Set the fg colour to use in normal (non-reverse) mode.
    #
    public set_normal_fg(c)
-      Window.parse_color(c) | fail
+      /c | Window.parse_color(c) | return error("invalid color")
       self.normal_fg := c
+      if is_live() then
+         view.reset()
       return self
    end
 
@@ -1006,8 +1025,10 @@ class Vt(LineBasedScrollArea, MenuMode)
    # Set the bg colour to use in non-reverse mode.
    #
    public set_normal_bg(c)
-      Window.parse_color(c) | fail
+      /c | Window.parse_color(c) | return error("invalid color")
       self.normal_bg := c
+      if is_live() then
+         view.reset()
       return self
    end
 
