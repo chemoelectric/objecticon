@@ -139,22 +139,32 @@ class FlowTermDialog(Dialog)
             cmd := tab(0)
             \t | return error("Command before tab directory: " || cmd)
             t.do_tab_cmd(cmd) | fail
-         } else
-            t := if *s > 0 then new_tab(, s) else new_tab()
+         } else {
+            # Add t if it's not already added in the TabSet
+            if /(\t).parent then
+               add_tab(t)
+            t := Terminal(if *s > 0 then s else &null,, tabs.which_one)
+         }
       }
+      # Add t if it's not already added in the TabSet
+      if /(\t).parent then
+         add_tab(t)
       return self
    end
 
-   public new_tab(sel, dir, other)
-      local bt
-      bt := Terminal(dir, other, tabs.which_one).
-         set_is_hidden(&yes)
-      tabs.add(bt, 0)
+   private add_tab(t)
+      t.set_is_hidden(&yes)
+      tabs.add(t, 0)
       if is_live() then
          tabs.do_layout().invalidate()
-      if \sel then
-         tabs.set_which_one(bt)
-      return bt
+      if \t.select_flag then
+         tabs.set_which_one(t)
+      return t
+   end
+
+   public new_tab(sel, dir, other)
+      return add_tab(Terminal(dir, other, tabs.which_one).
+         set_select(sel))
    end
 
    private on_new_tab(ev)
@@ -782,13 +792,32 @@ class Terminal(TabItem, VtUI)
       show_hidden_menu_item,
       mix_entries_menu_item,
       sort_dirs_menu_item,
-      revert_tab
+      revert_tab,
+      shell,
+      auto_close_flag,
+      select_flag,
+      title
 
    private static init()
       MAX_HISTORY_SIZE := 100
       SHOW_NAME_ONLY := 1
       SHOW_DATE := 2
       SHOW_SIZE := 3
+   end
+
+   public set_select(f)
+      self.select_flag := check_flag(f)
+      return self
+   end
+
+   public set_auto_close(f)
+      self.auto_close_flag := check_flag(f)
+      return self
+   end
+
+   public set_shell(s)
+      self.shell := s
+      return self
    end
 
    public get_label_width()
@@ -805,8 +834,30 @@ class Terminal(TabItem, VtUI)
       tty.set_size(cols, rows)
    end
 
+   public set_title(s)
+      self.title := s
+      update_title()
+      return self
+   end
+
    public do_tab_cmd(s)
+      local param
+      s := ucs(s) | return error("Not a ucs string")
+      s ? if s := tab(upto('=')) then
+         param := (move(1), tab(0))
       case string(s) of {
+         "shell" : set_shell(param)
+         "run" : {
+            \param | return error("expected parameter to run")
+            run_prog(param)
+         }
+         "font" : output.set_vt_font(param) | fail
+         "fg": output.set_normal_fg(param) | fail
+         "bg": output.set_normal_bg(param) | fail
+         "revfg": output.set_reverse_fg(param) | fail
+         "revbg": output.set_reverse_bg(param) | fail
+         "auto-close" : set_auto_close(&yes)
+         "title" : set_title(param)
          "minimize" : on_min_terminal()
          "maximize" : on_max_terminal()
          "normal-size" : on_normal_terminal()
@@ -833,9 +884,7 @@ class Terminal(TabItem, VtUI)
             sort_dirs_menu_item.toggle_is_checked()
             on_sort_dirs_menu_item()
          }
-         "select" : {
-            parent.set_which_one(self)
-         }
+         "select" : set_select(&yes)
          default: return error("Invalid command: " || s)
       }
       return self
@@ -871,7 +920,7 @@ class Terminal(TabItem, VtUI)
       # that case we must not interrupt.  Otherwise, the io_task
       # must be sleeping in poll().  Interrupt it so it goes round
       # its loop again, and polls for both input and output.
-      (/io_task | Dispatcher.get_curr_task() === io_task) | io_task.interrupt()
+      /io_task | (Dispatcher.get_curr_task() === io_task) | io_task.interrupt()
       return self
    end
 
@@ -879,25 +928,40 @@ class Terminal(TabItem, VtUI)
       message_label.set(s, n)
    end
 
+   private static env_put(env, key, val)
+      local i
+      key ||:= "="
+      every i := 1 to *env do {
+         if match(key, env[i]) then {
+            env[i] := key || val
+            return
+         }
+      }
+      put(env, key || val)
+   end
+
    private setup_shell()
-      local env, sh, xd, fp, s, sh2
+      local env, sh, xd, fp, s, sh2, t
       env := []
       every put(env, System.environ())
-      put(env, "FLOWTERM=1")
-      put(env, "TERM=xterm")
-      sh := \opts["sh"] | System.getpw(System.getuid()).shell | "/bin/sh"
+      env_put(env, "FLOWTERM", "1")
+      env_put(env, "TERM", "xterm")
+      sh := \shell | \opts["sh"] | System.getpw(System.getuid()).shell
+      if /sh | *sh = 0 then
+         sh := "/bin/sh"
       if /opts["nx"] then {
-         s := \opts["x"] | Files.get_home() || "/flowterm-extras/bin"
-         fp := FilePath(s).canonical()
+         s := \opts["x"] | Files.get_home() || "/flowterm-extras"
+         fp := FilePath(s).child("bin").canonical()
          xd := fp.str()
          if Files.access(xd) then {
-            put(env, "PATH=" || xd || ":" || System.getenv("PATH"))
-            if sh == "/bin/sh" | find("bash", sh) then {
-               sh2 := fp.child("bash").str()
+            env_put(env, "PATH", xd || ":" || System.getenv("PATH"))
+            t := FilePath(sh).get(-1)
+            if t == ("bash" | "zsh") then {
+               sh2 := fp.child(t).str()
                if Files.access(sh2) then
                   sh := sh2
                else
-                  info_msg("Unable to access extras bash shell '" || sh2 || "'")
+                  info_msg("Unable to access extras " || t || " shell '" || sh2 || "'")
             }
          } else
             info_msg("Unable to access extras bin directory '" || xd || "'")
@@ -927,6 +991,7 @@ $endif
          tty.dup2(FileStream.stdout) | stop(&why)
          tty.dup2(FileStream.stdin) | stop(&why)
          tty.dup2(FileStream.stderr) | stop(&why)
+         Files.chdir(cwd)
          System.exec(sh, [], env) | stop(&why)
          syserr("Not reached")
       }
@@ -1037,6 +1102,9 @@ $endif
             break
          }
       }
+      if \auto_close_flag then
+         # invoke later since we can't call finally() from within the io_task
+         parent_dialog.invoke_later{on_close_button()}
       io_task.revert()
    end
 
@@ -1581,6 +1649,10 @@ $endif
       update_filter_list()
    end
 
+   private update_title()
+      set_paint(AbbreviatedTextPaint(\title | FilePath(cwd).get(-1)))
+   end
+
    private set_cwd(s, nav)
       local lh, t, i
       s := ucs(s) | fail
@@ -1618,7 +1690,7 @@ $endif
             pull(history)
          update_grey()
       }
-      set_paint(AbbreviatedTextPaint(FilePath(cwd).get(-1)))
+      update_title()
       return self
    end
 
@@ -1645,7 +1717,7 @@ $endif
    end
 
    public new(dir, other, revert_tab)
-      local cd
+      local start_dir, o
       TabItem.new()
       self.revert_tab := revert_tab
       setup()
@@ -1694,11 +1766,17 @@ $endif
       output.set_history_size(\opts["h"])
       if \opts["v"] then
          output.set_verbose(&yes)
-      output.set_normal_fg(\opts["tfg"])
-      output.set_normal_bg(\opts["tbg"])
-      output.set_reverse_fg(\opts["trevfg"])
-      output.set_reverse_bg(\opts["trevbg"])
-      output.set_font(\opts["tfont"])
+
+      if o := \opts["tfg"] then
+         output.set_normal_fg(o) | stop("Invalid -tfg: ", &why)
+      if o := \opts["tbg"] then
+         output.set_normal_bg(o) | stop("Invalid -tbg: ", &why)
+      if o := \opts["trevfg"] then
+         output.set_reverse_fg(o) | stop("Invalid -trevfg: ", &why)
+      if o := \opts["trevbg"] then
+         output.set_reverse_bg(o) | stop("Invalid -trevbg: ", &why)
+      if o := \opts["tfont"] then
+         output.set_vt_font(o) | stop("Invalid -tfont: ", &why)
 
       favourites_list.set_size().set_selection_list(get_favourites_directories())
       sort_dirs_menu_item := CheckBoxMenuItem().
@@ -1725,21 +1803,17 @@ $endif
       theme_toolbar_button(home_button, "go-home")
       theme_toolbar_button(refresh_button, "view-refresh")
       theme_toolbar_button(focus_columns_button, "key-enter")
-      cd := ucs(Files.getcwd()) | u"/"
       if \other then {
          history := clone(other.history)
          history_pos := other.history_pos
          columns_pos_table := clone(other.columns_pos_table)
-         set_cwd(cd, &yes)
-         if other.cwd ~== cwd then
-            goto_dir(other.cwd, &yes)
+         set_cwd(other.cwd, &yes)
       } else {
          history := []
          history_pos := 0
          columns_pos_table := table()
-         set_cwd(cd)
-         if \dir ~== cwd then
-            goto_dir(dir)
+         start_dir := \dir | ucs(Files.getcwd()) | u"/"
+         set_cwd(start_dir)
       }
       update_grey()
       return
