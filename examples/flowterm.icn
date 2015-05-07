@@ -1812,7 +1812,9 @@ $endif
          history := []
          history_pos := 0
          columns_pos_table := table()
-         start_dir := \dir | ucs(Files.getcwd()) | u"/"
+         if \dir then
+            start_dir := Files.realpath(\dir) | info_msg("Invalid tab start directory: " || &why)
+         /start_dir := ucs(Files.getcwd()) | u"/"
          set_cwd(start_dir)
       }
       update_grey()
