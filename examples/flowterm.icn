@@ -1307,16 +1307,14 @@ $endif
       m.add(TextMenuItem().
             set_label("Reorient").
             connect(on_reorient, Event.ACTION))
-      if /split.first.is_hidden_flag then {
+      if /split.first.is_hidden_flag then
          m.add(TextMenuItem().
                set_label("Maximize").
                connect(on_max_terminal, Event.ACTION))
-      }
-      if \ (split.first.is_hidden_flag | split.second.is_hidden_flag) then {
+      if \split.sizer.is_hidden_flag then
          m.add(TextMenuItem().
                set_label("Restore").
                connect(on_restore, Event.ACTION))
-      }
       if not search_panel.is_live() then
          m.add(TextMenuItem().
                set_label("Search").
@@ -1450,16 +1448,14 @@ $endif
       m.add(TextMenuItem().
             set_label("Reorient").
             connect(on_reorient, Event.ACTION))
-      if /split.second.is_hidden_flag then {
+      if /split.second.is_hidden_flag then
          m.add(TextMenuItem().
                set_label("Maximize").
                connect(on_max_list, Event.ACTION))
-      }
-      if \ (split.first.is_hidden_flag | split.second.is_hidden_flag) then {
+      if \split.sizer.is_hidden_flag then
          m.add(TextMenuItem().
                set_label("Restore").
                connect(on_restore, Event.ACTION))
-      }
       return m
    end
 
