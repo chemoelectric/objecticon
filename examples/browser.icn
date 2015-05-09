@@ -1334,22 +1334,12 @@ class BrowserTab(TabItem, BrowserUI)
       return m
    end
 
-   # Avoid a little glitch which happens when a button is greyed out
-   # while held down, leaving it stuck like that, since it never gets the
-   # release event.
-   #
-   private set_is_shaded_ex(b, v)
-      if \v then
-         b.clear_down()
-      b.set_is_shaded(v)
-   end
-
    public update_grey(gs)
-      set_is_shaded_ex(prev_button, gs.prev)
-      set_is_shaded_ex(next_button, gs.nxt)
-      set_is_shaded_ex(refresh_button, gs.refresh)
-      set_is_shaded_ex(url_field.b, gs.history)
-      set_is_shaded_ex(stop_button, gs.stop)
+      prev_button.set_is_shaded(gs.prev)
+      next_button.set_is_shaded(gs.nxt)
+      refresh_button.set_is_shaded(gs.refresh)
+      url_field.b.set_is_shaded(gs.history)
+      stop_button.set_is_shaded(gs.stop)
    end
 
    private on_url_field_selection(ev)
