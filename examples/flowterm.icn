@@ -858,9 +858,9 @@ class Terminal(TabItem, VtUI)
          "revbg": output.set_reverse_bg(param) | fail
          "auto-close" : set_auto_close(&yes)
          "title" : set_title(param)
-         "minimize" : on_min_terminal()
-         "maximize" : on_max_terminal()
-         "normal-size" : on_normal_terminal()
+         "max-list" : on_max_list()
+         "max-term" : on_max_terminal()
+         "restore" : on_restore()
          "list-focus" : {
             focus_columns_button.toggle_is_checked().invalidate()
             on_focus_columns_button()
@@ -891,21 +891,15 @@ class Terminal(TabItem, VtUI)
    end
 
    private on_max_terminal()
-      split.first.set_size(0, 0).reset_layout()
-      if is_live() then
-         split.do_layout().invalidate()
+      split.hide_first()
    end
 
-   private on_min_terminal()
-      split.first.set_size(lang.Limit.MaxWord, lang.Limit.MaxWord).reset_layout()
-      if is_live() then
-         split.do_layout().invalidate()
+   private on_max_list()
+      split.hide_second()
    end
 
-   private on_normal_terminal()
-      split.first.set_size()
-      if is_live() then
-         split.do_layout().invalidate()
+   private on_restore()
+      split.hide_neither()
    end
 
    public link_middle_clicked(url, ev)
@@ -1024,19 +1018,9 @@ $endif
       }
    end
 
-   # Avoid a little glitch which happens when a button is greyed out
-   # while held down, leaving it stuck like that, since it never gets the
-   # release event.
-   #
-   private set_is_shaded_ex(b, v)
-      if \v then
-         b.clear_down()
-      b.set_is_shaded(v)
-   end
-
    private update_grey()
-      set_is_shaded_ex(prev_button, No{ history_pos < *history })
-      set_is_shaded_ex(next_button, No{ history_pos > 1 })
+      prev_button.set_is_shaded(No{ history_pos < *history })
+      next_button.set_is_shaded(No{ history_pos > 1 })
    end
 
    private send_vt(s)
@@ -1319,23 +1303,19 @@ $endif
       m.add(TextMenuItem().
             set_label("Copy cwd").
             connect(on_copy_cwd, Event.ACTION))
+      m.add(MenuSeparator())
       m.add(TextMenuItem().
             set_label("Reorient").
             connect(on_reorient, Event.ACTION))
-      if split.first.w_spec ~=== 0 then {
+      if /split.first.is_hidden_flag then {
          m.add(TextMenuItem().
                set_label("Maximize").
                connect(on_max_terminal, Event.ACTION))
       }
-      if split.first.w_spec ~=== lang.Limit.MaxWord then {
+      if \ (split.first.is_hidden_flag | split.second.is_hidden_flag) then {
          m.add(TextMenuItem().
-               set_label("Minimize").
-               connect(on_min_terminal, Event.ACTION))
-      }
-      if split.first.w_spec === (0 | lang.Limit.MaxWord) then {
-         m.add(TextMenuItem().
-               set_label("Normal size").
-               connect(on_normal_terminal, Event.ACTION))
+               set_label("Restore").
+               connect(on_restore, Event.ACTION))
       }
       if not search_panel.is_live() then
          m.add(TextMenuItem().
@@ -1466,6 +1446,20 @@ $endif
       if mix_entries_menu_item.is_unchecked() then
          m.add(sort_dirs_menu_item)
       m.add(mix_entries_menu_item)
+      m.add(MenuSeparator())
+      m.add(TextMenuItem().
+            set_label("Reorient").
+            connect(on_reorient, Event.ACTION))
+      if /split.second.is_hidden_flag then {
+         m.add(TextMenuItem().
+               set_label("Maximize").
+               connect(on_max_list, Event.ACTION))
+      }
+      if \ (split.first.is_hidden_flag | split.second.is_hidden_flag) then {
+         m.add(TextMenuItem().
+               set_label("Restore").
+               connect(on_restore, Event.ACTION))
+      }
       return m
    end
 
@@ -1728,9 +1722,14 @@ $endif
             focus_columns_button.set_is_checked(&yes)
             columns.set_accepts_focus(&yes)
          }
+         split.first.set_size(other.split.first.w_spec, other.split.first.h_spec)
+         split.second.set_size(other.split.second.w_spec, other.split.second.h_spec)
          if \other.split.sizer.is_horizontal_flag then
             split.reorient()
-         split.first.set_size(other.split.first.w_spec, other.split.first.h_spec)
+         if \other.split.first.is_hidden_flag then
+            on_max_terminal()
+         else if \other.split.second.is_hidden_flag then
+            on_max_list()
          sorter := other.sorter
          ascending := other.ascending
          annotate_opt := other.annotate_opt
