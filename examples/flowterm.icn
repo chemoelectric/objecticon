@@ -902,6 +902,10 @@ class Terminal(TabItem, VtUI)
       split.hide_neither()
    end
 
+   private on_reorient(e)
+      split.reorient()
+   end
+
    public link_middle_clicked(url, ev)
       insert_link(url, ev)
    end
@@ -1276,11 +1280,6 @@ $endif
 
    private open_in_new_tab(dir)
       parent_dialog.new_tab(, dir)
-   end
-
-   private on_reorient(e)
-      split.first.set_size().reset_layout()
-      split.reorient()
    end
 
    public create_context_menu()
