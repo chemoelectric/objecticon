@@ -1171,7 +1171,7 @@ $endif
 
    public err_msg(s)
       send_vt(u"\n\e[31m(Message from terminal:) " || s || u"\e[m")
-      msg(s, 3000)
+      info_msg(s)
    end
 
    public info_msg(s)
@@ -1269,7 +1269,7 @@ $endif
       d := RenameDialog(s)
       d.show_modal()
       s := \d.result | fail
-      msg("Renamed OK", 3000)
+      info_msg("Renamed OK")
       if cwd == FilePath(s).parent().ucs() then
          refresh_cwd()
    end
