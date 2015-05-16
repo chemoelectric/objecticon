@@ -3399,7 +3399,6 @@ static wdp alcdisplay(char *s)
 
     MemProtect(wd = calloc(1, sizeof(struct _wdisplay)));
 
-    strcpy(wd->name,s);
     wd->program = curpstate;
     wd->display = XOpenDisplay((*s=='\0') ? NULL : s);
     if (wd->display == NULL) {
@@ -3447,6 +3446,7 @@ static wdp alcdisplay(char *s)
         free(wd);
         return NULL;
     }
+    wd->name = salloc(s);
     wd->pixfmt = XRenderFindStandardFormat(wd->display, PictStandardARGB32);
     wd->black = new_sharedcolor(wd, "black", 0, 0, 0, 65535);
     wd->white = new_sharedcolor(wd, "white", 65535, 65535, 65535, 65535);

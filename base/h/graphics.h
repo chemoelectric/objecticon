@@ -104,8 +104,6 @@ extern struct sdescrip wclassname;
 #define EndDisc 1
 #define EndSquare 2
 
-#define MAXDISPLAYNAME	64
-
 /* Interned atoms array */
 #define NUMATOMS        30
 #define ATOM_CHARACTER_POSITION            0
@@ -268,7 +266,7 @@ typedef struct _wfont {
  * Displays are maintained in a global list in rwinrsc.r.
  */
 typedef struct _wdisplay {
-  char		name[MAXDISPLAYNAME];
+  char		*name;
   Display *	display;
   struct _wbinding *wbndngs;          /* List of current window bindings */
   struct _wstate *vwstates;           /* List of windows with win non-null */
