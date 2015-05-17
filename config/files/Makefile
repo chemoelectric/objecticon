@@ -21,10 +21,10 @@ etags :
 	$(MAKE) -C apps etags
 
 test :
-	$(MAKE) -C test all
+	cd test && ./runtest.sh
 
 bmark :
-	$(MAKE) -C bmark all
+	cd bmark && ./runbmark.sh
 
 PACKAGE_NAME=@PACKAGE_NAME@
 PACKAGE_TARNAME=@PACKAGE_TARNAME@
