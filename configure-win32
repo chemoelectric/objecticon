@@ -89,14 +89,11 @@ echo creating test/custom.sh
 cat >test/custom.sh <<EOF
 cmp()
 {
-	[ -x ./rmcr ] || gcc -o rmcr rmcr.c
-	./rmcr <\$1 >junk
+        tr -d '\r' <\$1 >junk
 	mv junk \$1
 	/usr/bin/cmp \$1 \$2
 }
 EOF
-echo copying misc/rmcr.c to test
-cp misc/rmcr.c test
 if test -f base/h/define.h ; then
    echo base/h/define.h already exists and is left untouched
 else
