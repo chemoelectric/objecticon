@@ -15,10 +15,10 @@ clean :
 	make -C examples clean
 
 test :
-	make -C test all
+	cd test && ./runtest.sh
 
 bmark :
-	make -C bmark all
+	cd bmark && ./runbmark.sh
 
 libref :
 	rm -rf libref

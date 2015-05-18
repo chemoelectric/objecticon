@@ -91,6 +91,7 @@ class PopupMenu(Component, MenuSystem)
    public new()
       Component.new()
       self.x_spec := self.y_spec := self.w_spec := self.h_spec := 0
+      set_is_hidden(&yes)
       set_inherit_wattribs(&no)
       return
    end

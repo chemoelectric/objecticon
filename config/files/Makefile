@@ -21,10 +21,10 @@ etags :
 	$(MAKE) -C apps etags
 
 test :
-	$(MAKE) -C test all
+	cd test && ./runtest.sh
 
 bmark :
-	$(MAKE) -C bmark all
+	cd bmark && ./runbmark.sh
 
 PACKAGE_NAME=@PACKAGE_NAME@
 PACKAGE_TARNAME=@PACKAGE_TARNAME@
@@ -70,7 +70,7 @@ tar :
 	@for f in $$( find config -type f -not -regex ".*\.svn.*" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
-	@cp README configure configure.rc config.guess config.sub install-sh $(T)
+	@cp README configure-win32 configure configure.rc config.guess config.sub install-sh $(T)
 	@rm -rf $(T)/base/h/auto.h $(T)/base/h/version.h $(T)/base/h/define.h \
 		$(T)/lib/main/posixconsts.icn \
 		$(T)/lib/main/ioconsts.icn \

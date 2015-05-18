@@ -13,8 +13,6 @@ procedure flag(s)
       return &yes
    if s == ("n" | "&no" | "no" | "f" | "false" | "off" | "0") then
       return &no
-
-   fail
 end
 
 #

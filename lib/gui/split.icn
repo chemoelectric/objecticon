@@ -71,7 +71,11 @@ class Split(Component)
 
    public get_default_width()
       local t
-      if /self.sizer.is_horizontal_flag then {
+      if \first.is_hidden_flag then
+         return second.get_preferred_width()
+      else if \second.is_hidden_flag then
+         return first.get_preferred_width()
+      else if /self.sizer.is_horizontal_flag then {
          t := 0
          every t +:= (!self.children).get_preferred_width()
          return t
@@ -83,7 +87,11 @@ class Split(Component)
 
    public get_default_height(dw)
       local t
-      if /self.sizer.is_horizontal_flag then {
+      if \first.is_hidden_flag then
+         return second.get_preferred_height(dw)
+      else if \second.is_hidden_flag then
+         return first.get_preferred_height(dw)
+      else if /self.sizer.is_horizontal_flag then {
          return max(first.get_preferred_height(dw),
                     second.get_preferred_height(dw))
       } else {
@@ -93,19 +101,63 @@ class Split(Component)
       }
    end
 
+   # Hide the first component (and the sizer), so that the second
+   # component takes up all the space in the split.
+   #
+   public hide_first()
+      first.set_is_hidden(&yes)
+      sizer.set_is_hidden(&yes)
+      second.set_is_hidden(&no)
+      if is_live() then
+         do_layout().invalidate()
+   end
+
+   # Hide the second component (and the sizer), so that the first
+   # component takes up all the space in the split.
+   #
+   public hide_second()
+      first.set_is_hidden(&no)
+      sizer.set_is_hidden(&yes)
+      second.set_is_hidden(&yes)
+      if is_live() then
+         do_layout().invalidate()
+   end
+
+   # After a call to `hide_first()` or a `hide_second()`, reset the
+   # hidden state back to normal, so that both first and second
+   # components, and the sizer, are shown.
+   #
+   public hide_neither()
+      first.set_is_hidden(&no)
+      sizer.set_is_hidden(&no)
+      second.set_is_hidden(&no)
+      if is_live() then
+         do_layout().invalidate()
+   end
+
    public layout()
       local c, p1, p2, ex
       if /self.sizer.is_horizontal_flag then {
          first.x := self.x
          sizer.w := sizer.get_preferred_width()
-         p1 := first.get_preferred_width()
-         p2 := second.get_preferred_width()
-         ex := self.w - (sizer.w + p1 + p2)
-         first.w := p1 + integer(ex * weight)
-         # Ensure first.w in range that tries to keep both minimum
-         # values valid.
-         first.w <:= min_first
-         first.w >:= self.w - sizer.w - min_second
+         # If either first or second are hidden, then the other
+         # component gets all the space.
+         if \first.is_hidden_flag then {
+            sizer.w := first.w := 0
+         } else if \second.is_hidden_flag then {
+            sizer.w := 0
+            first.w := self.w
+         } else {
+            sizer.w := sizer.get_preferred_width()
+            p1 := first.get_preferred_width()
+            p2 := second.get_preferred_width()
+            ex := self.w - (sizer.w + p1 + p2)
+            first.w := p1 + integer(ex * weight)
+            # Ensure first.w in range that tries to keep both minimum
+            # values valid.
+            first.w <:= min_first
+            first.w >:= self.w - sizer.w - min_second
+         }
          sizer.x := first.x + first.w
          second.x := sizer.x + sizer.w
          # Set to ensure the total width is the sum of the parts.
@@ -117,13 +169,20 @@ class Split(Component)
          }
       } else {
          first.y := self.y
-         sizer.h := sizer.get_preferred_height(self.w)
-         p1 := first.get_preferred_height(self.w)
-         p2 := second.get_preferred_height(self.w)
-         ex := self.h - (sizer.h + p1 + p2)
-         first.h := p1 + integer(ex * weight)
-         first.h <:= min_first
-         first.h >:= self.h - sizer.h - min_second
+         if \first.is_hidden_flag then {
+            sizer.h := first.h := 0
+         } else if \second.is_hidden_flag then {
+            sizer.h := 0
+            first.h := self.h
+         } else {
+            sizer.h := sizer.get_preferred_height(self.w)
+            p1 := first.get_preferred_height(self.w)
+            p2 := second.get_preferred_height(self.w)
+            ex := self.h - (sizer.h + p1 + p2)
+            first.h := p1 + integer(ex * weight)
+            first.h <:= min_first
+            first.h >:= self.h - sizer.h - min_second
+         }
          sizer.y := first.y + first.h
          second.y := sizer.y + sizer.h
          second.h := self.h - sizer.h - first.h

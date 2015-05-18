@@ -143,12 +143,11 @@ abstract class SuggestField(TextField, MenuMode)
       }
    end
 
-   public open_textlist(data)
+   private open_textlist(data)
       local max_h, max_w, spc_below, spc_above, spc_right, d, dim, win,
          use_direction, rs
 
-      if \tl then
-         close_textlist()
+      close_textlist()
 
       if (*data = 0) | (parent_dialog.focus ~=== self) then
          return
@@ -229,7 +228,8 @@ abstract class SuggestField(TextField, MenuMode)
       }
    end
 
-   public close_textlist()
+   private close_textlist()
+      \self.tl | fail
       if tl.parent_dialog === parent_dialog then {
          self.tl.invalidate()
          self.parent_dialog.remove(tl)
@@ -266,8 +266,7 @@ abstract class SuggestField(TextField, MenuMode)
    # modification).
    #
    public keep_closed()
-      if \tl then
-         self.close_textlist()
+      close_textlist()
       if \req_doing then
          abort_request()
       mod := &null
@@ -286,11 +285,7 @@ abstract class SuggestField(TextField, MenuMode)
          close_request()
          req.stop()
       }
-      #
-      # Disposed with text list showing, just get rid of it
-      #
-      if \self.tl then 
-         self.close_textlist()
+      close_textlist()
       TextField.finally()
    end
 

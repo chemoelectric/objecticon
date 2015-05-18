@@ -107,7 +107,7 @@ abstract class ButtonOnlyList(List)
 
    public new()
       List.new()
-      view.set_accepts_focus(&no)
+      view.set_is_hidden(&yes)
       set_border(NullBorder())
       return
    end

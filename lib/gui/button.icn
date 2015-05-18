@@ -123,6 +123,7 @@ class Button(Toggle,Component)
          stop_held()
          invalidate()
       }
+      return self
    end
 
    public on_action(e)
@@ -131,6 +132,15 @@ class Button(Toggle,Component)
       fire(Event.ACTION, e)
    end
 
+   public set_is_shaded(s)
+      # Avoid a little glitch which happens when a button is greyed out
+      # while held down, leaving it stuck like that, since it never gets the
+      # release event.
+      if \s then
+         clear_down()
+      return Component.set_is_shaded(s)
+   end
+   
    #
    # Visualize the given (keyboard) event, by making the button go down
    # for a short time (50ms), before making it go up again, and then
@@ -149,6 +159,7 @@ class Button(Toggle,Component)
          }}
          t.start()
       }
+      return self
    end
 
    public handle_accel(e)
