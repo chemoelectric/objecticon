@@ -114,6 +114,9 @@ class TabItem(Component)
       r := Rect(x, y, w, h)
       label_border.draw_rect(W, r)
       paint.draw_rect(W, label_border.float(r, paint))
+      if is_shaded() then
+         Gui.style.shade_rectangle(W, x, y, w, h)
+      # The focus is drawn after shading, since it relates to the parent tabset.
       if \focus then
          label_border.draw_focus_rect(W, r)
    end
