@@ -79,9 +79,6 @@
 #			"n+tvqF:-geometry:-silent"
 #			"-silent!n+tvqF:-geometry:"
 #
-#		    If "optstring" is omitted any single letter is
-#		    assumed to be valid and require no data.
-#
 #	errproc	    a procedure which will be called if an error is
 #		    is detected in the command line options.  The
 #		    procedure is called with one argument:  a string
@@ -106,86 +103,183 @@
 package ipl.options
 
 import
-   io(open, read, stop)
+   io, lang, util, ipl.scan
 
-procedure options(arg,optstring,errproc)
-   local f,fList,fileArg,fn,ignore,optname,opttable,opttype,p,x,option,optcs,v
+class Opt()
+   public const
+      names, convert, multi, help, def
+
+   public new(s, convert, help, multi, def)
+      names := if type(s) == "list" then
+         s
+      else
+         [s]
+      self.convert := convert
+      self.multi := multi
+      self.help := help
+      self.def := def
+      return
+   end
+end
+
+package
+procedure get_help(opts)
+   local e, f, ns, h, ph, i, cols, res
+   cols := LineEditorStream.get_console_size()[1] | 80
+   res := RamStream()
+   every e := !opts do {
+      if res.tell() > 1 then
+         res.write()
+      ns := ""
+      every f := !e.names do
+         ns ||:= "-" || f || ", "
+      ns[-2:0] := ""
+      h := \e.help | ""
+      if \e.convert then {
+         h ? {
+            if ph := tab(upto('#')) then
+               h := (move(1), tab(0))
+            else
+               ph := map(Proc.get_name(e.convert), &lcase, &ucase)
+         }
+         ns ||:= " " || ph
+      }
+      if *ns > 16 then
+         res.writes(ns, "\n", repl(" ", 20))
+      else
+         res.writes(left(ns, 20))
+      repeat {
+         if i := backto(' ', h, 1, cols - 25) then {
+            res.writes(h[1:i], "\n", repl(" ", 20))
+            h := h[i:0]
+         } else {
+            res.writes(h)
+            break
+         }
+      }
+   }
+   return res.done()
+end
+
+package
+procedure default_usage(opt_help)
+   ewrite("Usage: ", FilePath(&progname).get(-1), " [OPTIONS...]")
+   ewrite(opt_help)
+end
+
+procedure options(arg, opts, usage, errproc)
+   local f,fList,fileArg,fn,ignore,optname,opttable,p,x,option,k,v,opt,opttype,convert
    #
    #  Initialize.
    #
-   /optstring := string(&letters++"_")
    /errproc := stop
+   /usage := default_usage
    option := table()
    fList := []
    opttable := table()
-   optcs := &letters ++ &digits ++ '_'
-   #
-   #  Scan the option specification string.
-   #
-   optstring ? {
-      while optname := move(1) do {
-	 if optname == " " then next
-	 if optname == "-" then
-	    optname := tab(many(optcs)) | move(1) | break
-	 opttype := tab(any('!:+.')) | "!"
-         opttype ||:= tab(any('*'))
-	 opttable[optname] := opttype
-	 }
+
+   if opts := text(opts) then {
+      #
+      #  Scan the option specification string.
+      #
+      opts ? {
+         opts := []
+         while optname := move(1) do {
+            if optname == " " then next
+            if optname == "-" then
+               optname := tab(many(&letters ++ &digits ++ '_')) | move(1) | break
+            opttype := tab(any('!:+.')) | "!"
+            convert := case string(opttype) of {
+               ":": string
+               "+": integer
+               ".": real
+               default: &null
+            }
+            put(opts, Opt(optname, convert,, Yes{tab(any('*'))}))
+         }
       }
+   }
+
+   every opt := !opts do
+      every insert(opttable, string(!opt.names), opt)
+
    #
    #  Iterate over program invocation argument words.
    #
    while x := get(arg) do {
       if /x then ignore := &null     # if end of args from file, stop ignoring
-      else x ? {
-	 if ="-" & not pos(0) & /ignore then {
-	    if ="-" & pos(0) then ignore := 1	# ignore following args if --
-	    else {
-	       tab(0) ? until pos(0) do {
-		  if opttype := \opttable[
-			optname := ((pos(1),tab(0)) | move(1))] then {
-                     v :=
-			if any(':+.',opttype) then {
-			   p := "" ~== tab(0) | get(arg) |
-			      return errproc(
-				    "No parameter following -" || optname)
-			   case opttype[1] of {
-			      ":": p
-			      "+": integer(p) |
-				 return errproc("-" || optname ||
-				       " needs numeric parameter")
-			      ".": real(p) |
-				 return errproc("-" || optname ||
-				       " needs numeric parameter")
-			      }
-			   }
-			else 1
-                     if upto('*',opttype) then {
-                        /option[optname] := []
-                        put(option[optname], v)
-                     } else
-                        option[optname] := v
-		     }
-		  else return errproc("Unrecognized option: -" || optname)
-		  }
-	       }
-	    }
-	 #
-	 #  If the argument begins with the character "@", fetch option
-	 #  words from lines of a text file.
-	 #
-	 else if ="@" & not pos(0) & /ignore then {
-	    f := open(fn := tab(0)) |
-	       return errproc("Can't open " || fn)
-	    fileArg := []
-	    while put(fileArg,read(f))
-	    f.close()
-	    push(arg)	# push null to signal end of args from file
-	    while push(arg,pull(fileArg))
-	    }
-	 else put(fList,x)
-	 }
+      else if x == ("-help" | "--help") & not member(opttable, "help") then {
+         usage(get_help(opts))
+         exit(0)
+      } else x ? {
+         if ="-" & not pos(0) & /ignore then {
+            if ="-" then {
+               if pos(0) then
+                  ignore := 1   # ignore following args if --
+               else {
+                  optname := tab(upto('=') | 0)
+                  if opt := member(opttable, string(optname)) then {
+                     if /opt.convert then
+                        v := 1
+                     else if pos(0) & (*arg = 0 | /arg[1] | any('-', arg[1])) & \opt.def then
+                        v := opt.def
+                     else {
+                        if ="=" then
+                           p := tab(0)
+                        else
+                           p := get(arg) | return errproc("No parameter following --" || optname)
+                        v := opt.convert(p) | return errproc("--" || optname || " needs " || 
+                                                             Proc.get_name(opt.convert)  || " parameter")
+                     }
+                     k := opt.names[1]
+                     if /opt.multi then
+                        option[k] := v
+                     else {
+                        /option[k] := []
+                        put(option[k], v)
+                     }
+                  } else return errproc("Unrecognized option: --" || optname)
+               }
+            } else {
+               tab(0) ? until pos(0) do {
+                  if opt := member(opttable, string(optname := ((pos(1),tab(0)) | move(1)))) then {
+                     if /opt.convert then
+                        v := 1
+                     else if pos(0) & (*arg = 0 | /arg[1] | any('-', arg[1])) & \opt.def then
+                        v := opt.def
+                     else {
+                        p := "" ~== tab(0) | get(arg) |
+                           return errproc("No parameter following -" || optname)
+                        v := opt.convert(p) | return errproc("-" || optname || " needs " || 
+                                                             Proc.get_name(opt.convert)  || " parameter")
+                     }
+                     k := opt.names[1]
+                     if /opt.multi then
+                        option[k] := v
+                     else {
+                        /option[k] := []
+                        put(option[k], v)
+                     }
+                  } else return errproc("Unrecognized option: -" || optname)
+               }
+            }
+         }
+         #
+         #  If the argument begins with the character "@", fetch option
+         #  words from lines of a text file.
+         #
+         else if ="@" & not pos(0) & /ignore then {
+            f := open(fn := tab(0)) |
+               return errproc("Can't open " || fn)
+            fileArg := []
+            while put(fileArg,read(f))
+            f.close()
+            push(arg)   # push null to signal end of args from file
+            while push(arg,pull(fileArg))
+         }
+         else put(fList,x)
       }
+   }
    while push(arg,pull(fList))
    return option
 end
