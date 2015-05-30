@@ -218,7 +218,7 @@ class GridPaint(Paint)
       attribs["size"] := [1, 1]
       attribs["canvas"] := "hidden"
       win := open_win_with(attribs) | runerr("Couldn't open window")
-      g := Grid().set_extra("ignore")
+      g := Grid().set_extra(Grid.EXTRA_IGNORE)
       pass := 1
       ia_x := ia_y := Align.C
       lines(fmt)
