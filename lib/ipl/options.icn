@@ -125,7 +125,7 @@ end
 package
 procedure get_help(opts)
    local e, f, ns, h, ph, i, cols, res
-   cols := LineEditorStream.get_console_size()[1] | 80
+   cols := LineEditorStream.get_console_width() | 80
    res := RamStream()
    every e := !opts do {
       if res.tell() > 1 then

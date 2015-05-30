@@ -93,6 +93,10 @@ class LineEditorStream(LineBasedInputStream, HasTask)
       }
    end
 
+   public static get_console_width()
+      return get_console_size()[1]
+   end
+
    private static run_stty(params[])
       local f, ss                   
       ss := StringStream()          
