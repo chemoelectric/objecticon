@@ -7,7 +7,7 @@ $ifdef _PLAN9
    posix(System), util(use),
 $else
    lang(Class, NoCopy),
-   posix(ExitInfo, System),
+   posix(System),
 $endif
    ipl.strings(replace)
 
@@ -1558,11 +1558,9 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, 
       local x
       is(err_sink, StringStream) | runerr("Must use a StringStream as error sink with succeeded()", err_sink)
       x := get_exit_info() | runerr("You can only call succeeded() after close()", self)
-      case x.reason of {
-         "exited normally" : return
-         "exited" : return error("exited with status " || x.param || ": " || trim(replace(err_sink.str(), "\n", " ")))
-         default : return error("finished for unknown reason " || x.reason || " with status " || x.param)
-      }
+      if x.succeeded() then
+         return
+      return error(cmd || " failed: " || &why || ": " || trim(replace(err_sink.str(), "\n", " ")))
    end
 
    protected do_poll()
@@ -1783,21 +1781,9 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, 
       local x
       is(err_sink, StringStream) | runerr("Must use a StringStream as error sink with succeeded()", err_sink)
       x := get_exit_info() | runerr("You can only call succeeded() after close()", self)
-      case x.reason of {
-         ExitInfo.EXITED: {
-            if x.param = 0 then
-               return
-            return error(cmd || " exited with status " || x.param || ": " || trim(replace(err_sink.str(), "\n", " ")))
-         }
-         ExitInfo.STOPPED:
-            return error(cmd || " stopped with signal " || x.param)
-         ExitInfo.TERMINATED:
-            return error(cmd || " terminated with signal " || x.param)
-         ExitInfo.COREDUMP:
-            return error(cmd || " dumped core with signal " || x.param)
-         default:
-            return error(cmd || " finished for unknown reason " || x.reason || "; param " || x.param)
-      }
+      if x.succeeded() then
+         return
+      return error(cmd || " failed: " || &why || ": " || trim(replace(err_sink.str(), "\n", " ")))
    end
 
    protected do_poll()

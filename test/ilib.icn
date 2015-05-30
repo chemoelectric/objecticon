@@ -169,7 +169,7 @@ $endif
    write()
    write("options:")			# options  (not part of core)
    argv := ["-abc","-","-s","-v","-i","42","-r","98.6","--","-b","x","y"] 
-   tbl(options, copy(argv))
+   tbl(options, copy(argv), &letters)
    tbl(options, copy(argv), "scrivab")
    tbl(options, copy(argv), "a:s:i:r:b:")
    tbl(options, copy(argv), "a:s!v!i+r.b!")

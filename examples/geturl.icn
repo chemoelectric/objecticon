@@ -106,45 +106,45 @@ class HttpRequestHelperImpl(HttpRequestHelper)
    end
 end
 
+procedure usage(opt_help)
+   ewrite("Usage: geturl [URL]... [OPTIONS]")
+   ewrite("Retrieve URL(s)")
+   ewrite(opt_help)
+   ewrite("URL may contain range expansions eg {1-2+8-11}")
+end
+
 procedure main(args)
    local l, f, t, cookies
 
-   opts := options(args, "-over! -i: -form:* -type: -o: -k: -q! -t+ -r+ -p: -d: -a: -f: -e: -l! -n: _
-                         -head! -nsslv! -help! -c! -put! -skip! -agent: -while! -close! -x:* -nz! -v1!")
-   if \opts["help"] then {
-      write(FileStream.stderr, "Usage: geturl [URL]... [OPTIONS]")
-      write(FileStream.stderr, "Retrieve URL(s)")
-      write(FileStream.stderr, "  -o OUTPUT FILE/DIR      Output file or directory")
-      write(FileStream.stderr, "  -i INPUT FILE           Input file for a POST request")
-      write(FileStream.stderr, "  -put                    With -i, do a PUT instead of a POST")
-      write(FileStream.stderr, "  -form K=V               Post an HTTP form with entry K=V; multiple uses allowed")
-      write(FileStream.stderr, "  -type TYPE              Content type for a POST request")
-      write(FileStream.stderr, "  -c                      Output to stdout (implies -q)")
-      write(FileStream.stderr, "  -p STRING               Prepend string to all output files")
-      write(FileStream.stderr, "  -d STRING               Append string to all output files")
-      write(FileStream.stderr, "  -q                      Quiet mode")
-      write(FileStream.stderr, "  -t TIMEOUT              Specify timeout (in seconds) to use")
-      write(FileStream.stderr, "  -r RETRIES              Specify number of retries to use")
-      write(FileStream.stderr, "  -while                  Set the retry-while-data flag")
-      write(FileStream.stderr, "  -a USER:PASS            Specify authorization")
-      write(FileStream.stderr, "  -f FILE                 Read URLs from file")
-      write(FileStream.stderr, "  -e URL                  Set referer header")
-      write(FileStream.stderr, "  -l                      Show HTTP headers and data flow")
-      write(FileStream.stderr, "  -close                  Use Connection: Close")
-      write(FileStream.stderr, "  -agent STRING           Set user agent field")
-      write(FileStream.stderr, "  -head                   Do an HTTP HEAD")
-      write(FileStream.stderr, "  -nsslv                  Don't verify SSL certificates")
-      write(FileStream.stderr, "  -n FILE                 Append to the given partial file")
-      write(FileStream.stderr, "  -k FILE                 Load cookies from file")
-      write(FileStream.stderr, "  -skip                   Skip over any existing files")
-      write(FileStream.stderr, "  -over                   Overwrite any existing files")
-      write(FileStream.stderr, "  -x HEADER:VALUE         Set extra HTTP header; multiple uses allowed")
-      write(FileStream.stderr, "  -nz                     Don't use gzip compression")
-      write(FileStream.stderr, "  -v1                     Use HTTP 1.0")
-      write(FileStream.stderr, "  -help                   Help message")
-      write(FileStream.stderr, "URL may contain range expansions eg {1-2+8-11}")
-      exit(1)
-   }
+   opts := options(args, [Opt("over",, "Overwrite any existing files"),
+                          Opt("i",string, "INPUT FILE#Input file for a POST request"),
+                          Opt("form",string, "K=V#Post an HTTP form with entry K=V; multiple uses allowed",&yes),
+                          Opt("type",string, "TYPE#Content type for a POST request"),
+                          Opt("o",string,"OUTPUT FILE/DIR#Output file or directory"),
+                          Opt("k",string, "FILE#Load cookies from file"),
+                          Opt("q",, "Quiet mode"),
+                          Opt("t",integer,"TIMEOUT#Specify timeout (in seconds) to use"),
+                          Opt("r",integer, "RETRIES#Specify number of retries to use"),
+                          Opt("p",string,"Prepend string to all output files"),
+                          Opt("d",string, "Append string to all output files"),
+                          Opt("a",string, "USER:PASS#Specify authorization"),
+                          Opt("f",string, "FILE#Read URLs from file"),
+                          Opt("e",string, "URL#Set referer header"),
+                          Opt("l",, "Show HTTP headers and data flow"),
+                          Opt("n",string, "FILE#Append to the given partial file"),
+                          Opt("head",, "Do an HTTP HEAD"),
+                          Opt("nsslv",, "Don't verify SSL certificates"),
+                          Opt("c",, "Output to stdout (implies -q)"),
+                          Opt("put",,"With -i, do a PUT instead of a POST"),
+                          Opt("skip",, "Skip over any existing files"),
+                          Opt("agent",string, "Set user agent field"),
+                          Opt("while",, "Set the retry-while-data flag"),
+                          Opt("close",, "Use Connection: Close"),
+                          Opt("x",string,"HEADER:VALUE#Set extra HTTP header; multiple uses allowed",&yes),
+                          Opt("nz",, "Don't use gzip compression"),
+                          Opt("v1",, "Use HTTP 1.0")],
+                          usage)
+
    total := ok := skipped := 0
    err := []
    failed := []

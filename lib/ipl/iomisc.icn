@@ -1,7 +1,7 @@
 package ipl.io
 
 import
-   io(FileOpt, FileStream, stop)
+   io(Files, FileOpt, FileStream, stop)
 
 #
 # Return an open file to /dev/null.  The returned file is shared
@@ -10,7 +10,7 @@ import
 procedure get_null()
    static nul
    initial
-      nul := FileStream("/dev/null", FileOpt.RDWR) | stop("Can't open /dev/null: ", &why)
+      nul := FileStream(Files.NULL_FILE, FileOpt.RDWR) | stop("Can't open " || Files.NULL_FILE || ": ", &why)
    return nul
 end
 

@@ -187,6 +187,35 @@ class ExitInfo()
       EXITED := "exited"
    end
 
+   # Convenient method to check if the exit info represents a command
+   # success.  If not, then &why is set appropriately.
+   #
+   public succeeded()
+$ifdef _PLAN9
+      case reason of {
+         "exited normally" : return
+         "exited" : return error("exited with status " || param)
+         default : return error("finished for unknown reason " || reason || "; param " || image(param))
+      }
+$else
+      case reason of {
+         EXITED: {
+            if param = 0 then
+               return
+            return error("exited with status " || param)
+         }
+         STOPPED:
+            return error("stopped with signal " || param)
+         TERMINATED:
+            return error("terminated with signal " || param)
+         COREDUMP:
+            return error("dumped core with signal " || param)
+         default:
+            return error("finished for unknown reason " || reason || "; param " || image(param))
+      }
+$endif
+   end
+
    package new(pid, reason, param)
       self.pid := pid
       self.reason := reason

@@ -93,6 +93,10 @@ class LineEditorStream(LineBasedInputStream, HasTask)
       }
    end
 
+   public static get_console_width()
+      return get_console_size()[1]
+   end
+
    private static run_stty(params[])
       local f, ss                   
       ss := StringStream()          
@@ -100,10 +104,10 @@ class LineEditorStream(LineBasedInputStream, HasTask)
          f := ProgInputStream("stty", params,,, get_null()),
          f.copy_to(ss)                                      
       } | fail                                              
-      return if f.get_exit_info().param = 0 then            
+      return if f.get_exit_info().succeeded() then
          ss.str()                                           
       else                                                  
-         error("stty returned non-zero status")             
+         error("stty failed: " || &why)
    end                                                      
 
    private static read_terminfo_escape()

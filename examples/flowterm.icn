@@ -2240,9 +2240,27 @@ $endif
    end
 end
 
+procedure usage(opt_help)
+   ewrite("Usage: flowterm [OPTIONS] [DIRS/TAB-CONFIG]")
+   ewrite(opt_help)
+   ewrite("For more details, visit http://objecticon.sourceforge.net/FlowTerm.html")
+end
+
 procedure main(a)
    local d, t
-   opts := options(a, "-x: -nx! -v! -h+ -hs! -tfg: -tbg: -trevfg: -trevbg: -tfont: -t: -sh:")
+   opts := options(a, [Opt("x",string,"The location of the 'flowterm-extras' directory; by default 'flowterm-extras' in your home directory.  This directory's 'bin' subdirectory is added to the front of the PATH variable"),
+                       Opt("nx",,"Don't add any flowterm extras directory to the PATH.  The -x option is ignored"),
+                       Opt("v",,"Verbose output"),
+                       Opt("h",integer,"History scrollback size"),
+                       Opt("hs",,"Start each tab by default with a horizontal rather than a vertical split"),
+                       Opt("tfg",string,"The foreground colour of the terminal"),
+                       Opt("tbg",string,"The backround colour of the terminal"),
+                       Opt("trevfg",string,"The reverse-mode foreground colour of the terminal, by default simply the terminal background"),
+                       Opt("trevbg",string,"The reverse-mode background colour of the terminal, by default simply the terminal foreground"),
+                       Opt("tfont",string,"The terminal font.  This must be a monospace font.  By default, \"fixed\" at the default font size"),
+                       Opt("t",string,"The window title, by default \"FlowTerm\""),
+                       Opt("sh",string,"The shell to run in each tab, by default the user's default shell")],
+                       usage)
    ImageCache.
       name_image("rpp.HOURGLASS_24", HOURGLASS).
       name_image("rpp.KEYBOARD_24", KEYBOARD).

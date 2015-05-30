@@ -59,7 +59,7 @@ class Ieval(MinimalObjectOutput)
       w := if is(output, TermDialog) then
          output.get_term_width()
       else
-         LineEditorStream.get_console_size()[1]
+         LineEditorStream.get_console_width()
       s := set()
       every i := 1 to lang.Prog.get_n_globals() do {
          if lang.Prog.get_global(i) then {
@@ -76,7 +76,7 @@ class Ieval(MinimalObjectOutput)
       w := if is(output, TermDialog) then
          output.get_term_width()
       else
-         LineEditorStream.get_console_size()[1]
+         LineEditorStream.get_console_width()
       s := set()
       every i := 1 to lang.Prog.get_n_globals(prog) do {
          if lang.Prog.get_global(i, prog) then

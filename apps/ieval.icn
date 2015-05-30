@@ -50,7 +50,14 @@ end
 
 procedure main(a)
    local opts, prog, imports, links
-   opts := options(a, "-i:*-l:*-wglob!-s!-g!-hlim+-elim+-llim+")
+   opts := options(a, [Opt("i", string, "Import the given package(s).  Several packages may be comma-separated, or several -i options may be given",&yes),
+                       Opt("l", string, "Link the given source file.  Several -l options may be given",&yes),
+                       Opt("wglob",, "If given, then assignments to global variables (eg procedures) are allowed"),
+                       Opt("s",, "Read commands from standard input rather than using a line editor"),
+                       Opt("g",, "Use a gui interface rather than the console"),
+                       Opt("hlim",integer,"Set the history limit for the line editor (default is 500)"),
+                       Opt("elim",integer,"Set the expression limit for evaluation (default is 35)"),
+                       Opt("llim",integer,"Set the gui interface's log area line limit (default is 600)")])
    imports := set()
    every insert(imports, !str2list(!\opts["i"]))
    links := \opts["l"] | []

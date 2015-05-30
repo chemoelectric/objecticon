@@ -46,6 +46,8 @@ static void handle_mouse_enter(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_mouse_leave(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_mouse_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
+static void handle_mouse_up(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
+static void handle_mouse_down(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_capture_changed(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_size(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
@@ -393,17 +395,6 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     qmouseevents(ws, state, x, y, t, fl);
 }
 
-static void handle_mouse_enter(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
-{
-    int t, x, y;
-    struct descrip d;
-    x = (INT16)LOWORD(lp);
-    y = (INT16)HIWORD(lp);
-    t = GetMessageTime();
-    MakeInt(MOUSEENTERED, &d);
-    qevent(ws, &d, x, y, t, 0);
-}
-
 static void dbg(char *fmt, ...)
 {
     va_list ap;
@@ -414,7 +405,7 @@ static void dbg(char *fmt, ...)
 
 static void capture_mouse(wsp ws)
 {
-    if (mouse_debug) dbg("capture_mouse grabbingmouse=%d\n", ws->grabbingmouse);
+    if (mouse_debug) dbg("capture_mouse() grabbingmouse=%d\n", ws->grabbingmouse);
     if (ws->grabbingmouse == 0) {
         ws->savedgrab = SetCapture(ws->win);
         if (mouse_debug) dbg("SetCapture, saved grab=%x ourselves=%x\n",ws->savedgrab, ws->win);
@@ -425,7 +416,7 @@ static void capture_mouse(wsp ws)
 
 static void uncapture_mouse(wsp ws)
 {
-    if (mouse_debug) dbg("uncapture_mouse grabbingmouse=%d\n", ws->grabbingmouse);
+    if (mouse_debug) dbg("uncapture_mouse() grabbingmouse=%d\n", ws->grabbingmouse);
     if (ws->grabbingmouse > 0) {
         --ws->grabbingmouse;
         if (ws->grabbingmouse == 0) {
@@ -445,7 +436,7 @@ static void uncapture_mouse(wsp ws)
  */
 static void handle_capture_changed(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    if (mouse_debug) dbg("handle_capture_changed, resetting grabbingmouse to 0\n");
+    if (mouse_debug) dbg("handle_capture_changed(), resetting grabbingmouse to 0\n");
     ws->savedgrab = 0;
     ws->grabbingmouse = 0;
 }
@@ -464,19 +455,49 @@ static void handle_mouse_leave(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     int t;
     struct descrip d;
+    if (mouse_debug) dbg("handle_mouse_leave()\n");
     t = GetMessageTime();
     MakeInt(MOUSEEXITED, &d);
     qevent(ws, &d, 0, 0, t, 0);
     ws->trackingmouse = 0;
 }
 
+static void handle_mouse_enter(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
+{
+    int t, x, y;
+    struct descrip d;
+    if (mouse_debug) dbg("handle_mouse_enter()\n");
+    x = (INT16)LOWORD(lp);
+    y = (INT16)HIWORD(lp);
+    t = GetMessageTime();
+    MakeInt(MOUSEENTERED, &d);
+    qevent(ws, &d, x, y, t, 0);
+}
+
 static void handle_mouse_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    synch_cursor(ws);
+    if (mouse_debug) dbg("handle_mouse_move()\n");
     if (!ws->trackingmouse) {
         handle_mouse_enter(ws, msg, wp, lp);
         track_mouse(ws);
     }
+    synch_cursor(ws);
+    handle_mouse(ws, msg, wp, lp);
+}
+
+static void handle_mouse_up(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
+{
+    if (mouse_debug) dbg("handle_mouse_up()\n");
+    uncapture_mouse(ws);
+    synch_cursor(ws);
+    handle_mouse(ws, msg, wp, lp);
+}
+
+static void handle_mouse_down(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
+{
+    if (mouse_debug) dbg("handle_mouse_down()\n");
+    capture_mouse(ws);
+    synch_cursor(ws);
     handle_mouse(ws, msg, wp, lp);
 }
 
@@ -486,6 +507,7 @@ static void handle_mouse(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     int x, y;
     int state = 0;
     int fl = 0;
+
     if (MK_LBUTTON & wp) state |= 1;
     if (MK_MBUTTON & wp) state |= 2;
     if (MK_RBUTTON & wp) state |= 4;
@@ -531,14 +553,12 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             case WM_LBUTTONDOWN: 
             case WM_RBUTTONDOWN:
             case WM_MBUTTONDOWN:
-                capture_mouse(ws);
-                handle_mouse(ws, msg, wp, lp);
+                handle_mouse_down(ws, msg, wp, lp);
                 return 0;
             case WM_LBUTTONUP:
             case WM_RBUTTONUP:
             case WM_MBUTTONUP:
-                uncapture_mouse(ws);
-                handle_mouse(ws, msg, wp, lp);
+                handle_mouse_up(ws, msg, wp, lp);
                 return 0;
             case WM_KEYDOWN:
             case WM_SYSKEYDOWN:
@@ -1731,6 +1751,7 @@ int focuswindow(wbp w)
 static void synch_cursor(wsp ws)
 {
     ws->savedcursor = SetCursor(ws->cursor->shared_cursor->cursor);
+    if (mouse_debug) dbg("synch_cursor to %s, savedcursor=%x\n", ws->cursor->name, ws->savedcursor);
 }
 
 int definepointer(wbp w, char *name, int x, int y)

@@ -1784,7 +1784,11 @@ end
 
 procedure main(a)
    local d, url, cookies_file, cookies, bak, settings, settings_file, home, s
-   opts := options(a, "-k: -l! -agent: -v!")
+   opts := options(a, [Opt("k",string, "FILE#Load cookies from file"),
+                       Opt("l",,"Show HTTP headers and data flow"),
+                       Opt("agent",string, "Set user agent field"),
+                       Opt("v",,"Verbose output")
+                       ])
    home := FilePath(Xdg.ensure_data_home()) | stop("Couldn't access data dir: ", &why)
    settings_file := home.child("oibrowser").str()
    cookies_file := \opts["k"] | home.child("oicookies").str()
