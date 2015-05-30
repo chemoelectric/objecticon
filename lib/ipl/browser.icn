@@ -347,7 +347,7 @@ class ProgSubWorker(SubWorker)
    end
 
    public get_data(worker)
-      local ts, f, d, ps, i
+      local ts, f, d, ps
       if (\worker.req.referer).scheme == (u"http" | u"https") then
          return error("Can't run a prog from an http page")
       f := worker.req.url.get_decoded_path()
@@ -356,22 +356,16 @@ $ifdef _PLAN9
          ts := TaskStream(NonBlockStream(ps := ProgInputStream("/bin/rc", ["-c", f]),, 1048576), worker.task),
          StaticData(read_all(ts), "")     # Return StaticData in order to set a blank filename.
       } | fail
-      i := ps.get_exit_info().param | syserr("No exit info")
-      return if /i then            
-         d
-      else
-         error("/bin/rc returned error status: " || i)
 $else
       d := use {
          ts := TaskStream(ps := ProgInputStream("/bin/sh", ["-c", f]), worker.task),
          StaticData(read_all(ts), "")     # Return StaticData in order to set a blank filename.
       } | fail
-      i := ps.get_exit_info().param | syserr("No exit info")
-      return if i = 0 then            
+$endif
+      return if ps.get_exit_info().succeeded() then
          d
       else
-         error("/bin/sh returned non-zero status: " || i)
-$endif
+         error("program failed: " || &why)
    end
 
    private read_all(ts)
