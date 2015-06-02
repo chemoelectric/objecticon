@@ -529,7 +529,7 @@ procedure split_string(s, f, n)
    use {
       W := Window().set_font(f),
       {
-         r := ".cell\n.attr ia_x=l\n"
+         r := ".cell\n.attr x_ia=l\n"
          l := ""
          every w := words(s) do {
             if *l > 0 then
