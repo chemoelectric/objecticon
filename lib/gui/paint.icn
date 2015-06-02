@@ -193,13 +193,14 @@ class GridPaint(Paint)
    public 
       fmt,          # Format string
       g,            # Grid object
+      parent,       # Parent component
       win,          # Window buffer
       pass,         # Pass number
       curr_cell,    # Current cell being read
       x,            # Text 'cursor' location in cell
       y, 
-      x_ia,         # Alignment of lines in a cell
-      y_ia,
+      x_ialign,     # Alignment of lines in a cell
+      y_ialign,
       llen,         # Current line len, height
       lheight, 
       lno,          # Line no. in cell 
@@ -214,13 +215,14 @@ class GridPaint(Paint)
       local attribs
 
       /win | syserr("initially called out of sequence")
+      parent := c
       attribs := copy(c.get_effective_wattribs())
       attribs["size"] := [1, 1]
       attribs["canvas"] := "hidden"
       win := open_win_with(attribs) | runerr("Couldn't open window")
       g := Grid().set_extra(Grid.EXTRA_IGNORE)
       pass := 1
-      x_ia := y_ia := Align.C
+      x_ialign := y_ialign := Align.C
       lines(fmt)
       close_win()
       g.dimension()
@@ -238,7 +240,7 @@ class GridPaint(Paint)
          pass := 2
          curr_cell := &null
          ii := 0
-         x_ia := y_ia := Align.C
+         x_ialign := y_ialign := Align.C
          self.accel := accel
          lines(fmt)
       }
@@ -274,9 +276,13 @@ class GridPaint(Paint)
                   "br" : do_brk(args)
                   "img" : do_img(args)
                   "imgl" : do_imgl(args)
-                  "xs" : do_xs(args)
-                  "ys" : do_ys(args)
-                  "attr" : do_attr(args)
+                  "x_spc" : do_x_spc(args)
+                  "y_spc" : do_y_spc(args)
+                  "fg": do_fg(args)
+                  "bg": do_bg(args)
+                  "font": do_font(args)
+                  "x_ialign" : do_x_ialign(args)
+                  "y_ialign" : do_y_ialign(args)
                }
             }
          } else if \got_cell then
@@ -284,7 +290,7 @@ class GridPaint(Paint)
       }
    end
 
-   public do_xs(args)
+   public do_x_spc(args)
       local n
       n := integer(args[1]) | 0
       if pass = 1 then {
@@ -295,7 +301,7 @@ class GridPaint(Paint)
       }
    end
 
-   public do_ys(args)
+   public do_y_spc(args)
       local n
       n := integer(args[1]) | 0
       if pass = 1 then {
@@ -349,7 +355,7 @@ class GridPaint(Paint)
          lheight <:= win.get_line_height()
       } else {
          ready_to_output() | fail
-         y1 := case y_ia of {
+         y1 := case y_ialign of {
             Align.T : y
             Align.C : y + (curr_cell.obj[lno].h - win.get_font_height()) / 2
             Align.B : y + curr_cell.obj[lno].h - win.get_font_height()
@@ -375,24 +381,24 @@ class GridPaint(Paint)
       }
    end
 
-   public do_attr(args)
-      local a, key, val
-      every a := !args do {
-         a ? {
-            key := tab(upto('=') | 0)
-            if ="=" then
-               val := tab(0)
-            else
-               val := ""
-         }
-         case key of {
-            "fg": win.set_fg(val)
-            "bg": win.set_bg(val)
-            "font": win.set_font(val)
-            "x_ia" : x_ia := (val == (Align.L | Align.R | Align.C))
-            "y_ia" : y_ia := (val == (Align.T | Align.B | Align.C))
-         }
-      }
+   public do_fg(args)
+      win.set_fg(if *args = 0 then parent.cbwin.get_fg() else args[1])
+   end
+
+   public do_bg(args)
+      win.set_bg(if *args = 0 then parent.cbwin.get_bg() else args[1])
+   end
+
+   public do_font(args)
+      win.set_font(if *args = 0 then parent.cbwin.get_font() else args[1])
+   end
+
+   public do_x_ialign(args)
+      x_ialign := (args[1] == (Align.L | Align.R | Align.C))
+   end
+
+   public do_y_ialign(args)
+      y_ialign := (args[1] == (Align.T | Align.B | Align.C))
    end
 
    public do_img(args)
@@ -403,7 +409,7 @@ class GridPaint(Paint)
          lheight <:= W.get_height()
       } else {
          ready_to_output() | fail
-         y1 := case y_ia of {
+         y1 := case y_ialign of {
             Align.T : y
             Align.C : y + (curr_cell.obj[lno].h - W.get_height()) / 2
             Align.B : y + curr_cell.obj[lno].h - W.get_height()
@@ -421,7 +427,7 @@ class GridPaint(Paint)
          lheight <:= W.get_height()
       } else {
          ready_to_output() | fail
-         y1 := case y_ia of {
+         y1 := case y_ialign of {
             Align.T : y
             Align.C : y + (curr_cell.obj[lno].h - W.get_height()) / 2
             Align.B : y + curr_cell.obj[lno].h - W.get_height()
@@ -435,7 +441,7 @@ class GridPaint(Paint)
    public ready_to_output()
       if lno > *curr_cell.obj then
          fail
-      /x :=  case x_ia of {
+      /x :=  case x_ialign of {
          Align.L : curr_cell.ax
          Align.R : curr_cell.ax + curr_cell.aw - curr_cell.obj[lno].w
          Align.C : curr_cell.ax + (curr_cell.aw - curr_cell.obj[lno].w) / 2

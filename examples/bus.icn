@@ -173,7 +173,7 @@ class Map(Panel)
    private create_toggle_filter_menu_item(rt)
       local m
       return m := CheckBoxMenuItem().
-         set_label(".cell\n.attr 'fg=" || rt.colour || "'\n" || rt.number || "\n.br\n" ||
+         set_label(".cell\n.fg '" || rt.colour || "'\n" || rt.number || "\n.br\n" ||
                    ".cell\n.img " || route_icon(rt) || "\n.br\n").
          set_is_checked(Yes{ member(\filter, rt) }).
          connect(create if m.is_checked() then filter_route(rt) else unfilter_route(rt), Event.ACTION)
@@ -182,7 +182,7 @@ class Map(Panel)
    private create_filter_menu(rt)
       local m
       m := Menu().
-         set_label(".cell\n.attr 'fg=" || rt.colour || "'\n" || rt.number || "\n.br\n")
+         set_label(".cell\n.fg '" || rt.colour || "'\n" || rt.number || "\n.br\n")
       if dir_no(rt) > dir_no(\rt.reverse) then
          rt := rt.reverse
       m.add(create_toggle_filter_menu_item(rt))
@@ -566,11 +566,11 @@ class Map(Panel)
             if member(st.routes, r.reverse) then {
                if serial(r.reverse) < serial(r) then {
                   if *f2 = 0 then f2 := ".cell\n" else f2 ||:= cli
-                  f2 ||:= ".attr 'fg=" || r.colour || "'\n" || r.number || "\n.br\n"
+                  f2 ||:= ".fg '" || r.colour || "'\n" || r.number || "\n.br\n"
                }
             } else {
                if *f2 = 0 then f2 := ".cell\n" else f2 ||:= cli
-               f2 ||:= ".attr 'fg=" || r.colour || "'\n" || r.number || 
+               f2 ||:= ".fg '" || r.colour || "'\n" || r.number || 
                   "\n.br\n.cell\n.img " || route_icon(r) || "\n.br\n"
             }
          }
@@ -587,10 +587,10 @@ class Map(Panel)
          every r := !sort_routes(va.routes) do {
             if \va.reversible then {
                if *f2 = 0 then f2 := ".cell\n" else f2 ||:= cli
-               f2 ||:= ".attr 'fg=" || r.colour || "'\n" || r.number || "\n.br\n"
+               f2 ||:= ".fg '" || r.colour || "'\n" || r.number || "\n.br\n"
             } else {
                if *f2 = 0 then f2 := ".cell\n" else f2 ||:= cli
-               f2 ||:= ".attr 'fg=" || r.colour || "'\n" || r.number || 
+               f2 ||:= ".fg '" || r.colour || "'\n" || r.number || 
                   "\n.br\n.cell\n.img " || route_icon(r) || "\n.br\n"
             }
          }
