@@ -555,6 +555,9 @@ class Map(Panel)
 
    private handle_mouse_move(e)
       local st, r, f1, f2, va
+      static cli
+      initial
+         cli := ".cell l_inset=" || gui.scale(8) || "\n"
       if st := which_stop(e) then {
          f1 := ".cell\n" || stop_title(st)
          f1 ||:= "\n.br\n"
@@ -562,11 +565,11 @@ class Map(Panel)
          every r := !sort_routes(st.routes) do {
             if member(st.routes, r.reverse) then {
                if serial(r.reverse) < serial(r) then {
-                  if *f2 = 0 then f2 := ".cell\n" else f2 ||:= ".cell l_inset=8\n"
+                  if *f2 = 0 then f2 := ".cell\n" else f2 ||:= cli
                   f2 ||:= ".attr 'fg=" || r.colour || "'\n" || r.number || "\n.br\n"
                }
             } else {
-               if *f2 = 0 then f2 := ".cell\n" else f2 ||:= ".cell l_inset=8\n"
+               if *f2 = 0 then f2 := ".cell\n" else f2 ||:= cli
                f2 ||:= ".attr 'fg=" || r.colour || "'\n" || r.number || 
                   "\n.br\n.cell\n.img " || route_icon(r) || "\n.br\n"
             }
@@ -583,10 +586,10 @@ class Map(Panel)
          f2 := ""
          every r := !sort_routes(va.routes) do {
             if \va.reversible then {
-               if *f2 = 0 then f2 := ".cell\n" else f2 ||:= ".cell l_inset=8\n"
+               if *f2 = 0 then f2 := ".cell\n" else f2 ||:= cli
                f2 ||:= ".attr 'fg=" || r.colour || "'\n" || r.number || "\n.br\n"
             } else {
-               if *f2 = 0 then f2 := ".cell\n" else f2 ||:= ".cell l_inset=8\n"
+               if *f2 = 0 then f2 := ".cell\n" else f2 ||:= cli
                f2 ||:= ".attr 'fg=" || r.colour || "'\n" || r.number || 
                   "\n.br\n.cell\n.img " || route_icon(r) || "\n.br\n"
             }
