@@ -281,6 +281,7 @@ class GridPaint(Paint)
                   "fg": do_fg(args)
                   "bg": do_bg(args)
                   "font": do_font(args)
+                  "leading": do_leading(args)
                   "x_ialign" : do_x_ialign(args)
                   "y_ialign" : do_y_ialign(args)
                }
@@ -391,6 +392,10 @@ class GridPaint(Paint)
 
    public do_font(args)
       win.set_font(if *args = 0 then parent.cbwin.get_font() else args[1])
+   end
+
+   public do_leading(args)
+      win.set_leading(if *args = 0 then parent.cbwin.get_leading() else real(args[1]))
    end
 
    public do_x_ialign(args)
