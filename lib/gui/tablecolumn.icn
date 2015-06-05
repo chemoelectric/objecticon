@@ -244,13 +244,11 @@ class ItemPaintTableColumn(BaseTableColumn)
    end
 
    public calculate_line_height(W)
-      local h
-      if not(h := item_paint.get_constant_height(W) +
-                   item_border.get_total_height()) then
-      {
+      local h, bh
+      bh := item_border.get_total_height()
+      if not(h := item_paint.get_constant_height(W) + bh) then {
          h := []
-         every put(h, item_paint.get_height(W, slice()) +
-                   item_border.get_total_height())
+         every put(h, item_paint.get_height(W, slice()) + bh)
       }
       return h
    end
