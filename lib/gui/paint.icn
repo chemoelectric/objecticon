@@ -406,9 +406,8 @@ class GridPaint(Paint)
       y_ialign := (args[1] == (Align.T | Align.B | Align.C))
    end
 
-   public do_img(args)
-      local W, y1
-      W := ImageCache.get(args[1], win) | fail
+   private do_imgx_impl(W)
+      local y1
       if pass = 1 then {
          llen +:= W.get_width()
          lheight <:= W.get_height()
@@ -422,25 +421,19 @@ class GridPaint(Paint)
          W.copy_to(,,,, win, x, y1)
          x +:= W.get_width()
       }
+      return
+   end
+
+   public do_img(args)
+      do_imgx_impl(ImageCache.get(args[1], win))
    end
 
    public do_imgl(args)
-      local W, y1
-      W := ImageCache.load(args[1], win) | fail
-      if pass = 1 then {
-         llen +:= W.get_width()
-         lheight <:= W.get_height()
-      } else {
-         ready_to_output() | fail
-         y1 := case y_ialign of {
-            Align.T : y
-            Align.C : y + (curr_cell.obj[lno].h - W.get_height()) / 2
-            Align.B : y + curr_cell.obj[lno].h - W.get_height()
-         }
-         W.copy_to(,,,, win, x, y1)
-         x +:= W.get_width()
+      local W
+      use {
+         W := ImageCache.load(args[1], win),
+         do_imgx_impl(W)
       }
-      W.close()
    end
 
    public ready_to_output()
