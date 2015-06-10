@@ -68,6 +68,7 @@ class MenuBar(Component, MenuSystem)
       local c
       c := self.menus[i] | fail
       delete(self.menus, i)
+      c.set_component_link(&null)
       if is_initialized() then
          c.finally()
       return self
@@ -115,6 +116,7 @@ class MenuBar(Component, MenuSystem)
       l := menus[s.lo:s.hi]
       every 1 to s.hi - s.lo do
          delete(menus, s.lo)
+      every (!l).set_component_link(&null)
       if is_initialized() then
          every (!l).finally()
       return l

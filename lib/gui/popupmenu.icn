@@ -29,6 +29,7 @@ class PopupMenu(Component, MenuSystem)
 
    public close_menu()
       self.menu.hide()
+      self.menu.set_component_link(&null)         
       self.menu.finally()
       self.menu := &null
       self.parent_dialog.exit_menu_mode(self)

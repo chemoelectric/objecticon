@@ -25,6 +25,7 @@ class MenuButton(Component, BorderWhilstEntered, MenuSystem)
    # @param c   The {Menu}.
    #
    public set_menu(c)
+      (\self.menu).set_component_link(&null)
       if is_initialized() then {
          (\self.menu).finally()
          self.menu := c
