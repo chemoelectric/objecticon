@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics, ipl.lists
+import util, graphics, ipl.lists
 
 #
 # This class is the base from which menu systems are created,
@@ -100,6 +100,44 @@ class MenuBar(Component, MenuSystem)
    #
    public reposition_index(i, j)
       lmove(menus, i, j) | fail
+      return self
+   end
+
+   # Remove the menus in the range `i:j`, returning the
+   # removed menus in a list.
+   # @param i   The start slice index, default 1
+   # @param j   The end slice index, default 0
+   # @fail      If the range is invalid.
+   #
+   #
+   public remove_list(i, j)
+      local l, s
+      s := cvslice(i, j, *menus) | fail
+      l := menus[s.lo:s.hi]
+      every 1 to s.hi - s.lo do
+         delete(menus, s.lo)
+      if is_initialized() then
+         every (!l).finally()
+      return l
+   end
+
+   # Add all the `Menu`s contained in list `l` at index `i`.
+   #
+   # @param l    The list to add
+   # @param i    The index
+   # @fail      If i is out of range
+   #
+   public add_list(l, i)
+      local c
+      /i := 0
+      i := cvpos(i, *menus) | fail
+      every c := !l do {
+         insert(menus, i, c)
+         c.set_component_link(self)
+         i +:= 1
+      }
+      if is_initialized() then
+         every (!l).initially()
       return self
    end
 

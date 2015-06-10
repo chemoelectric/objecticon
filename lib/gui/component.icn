@@ -1270,6 +1270,63 @@ class Component(Rect,Align,Connectable)
       return \self.parent_dialog
    end
 
+   # Remove the children in the range `i:j`, returning the
+   # removed children in a list.
+   # @param i   The start slice index, default 1
+   # @param j   The end slice index, default 0
+   # @fail      If the range is invalid.
+   #
+   #
+   public remove_list(i, j)
+      local l, s
+      s := cvslice(i, j, *children) | fail
+      l := children[s.lo:s.hi]
+      every 1 to s.hi - s.lo do
+         delete(children, s.lo)
+      every (!l).set_parent(&null)
+      if is_initialized() then {
+         compute_z_order()
+         compute_tab_order()
+         every (!l).finally()
+      }
+      return l
+   end
+
+   # Add all the `Component`s contained in list `l` at index `i`.
+   #
+   # @param l    The list to add
+   # @param i    The index
+   # @fail      If i is out of range
+   #
+   public add_list(l, i)
+      local c
+      /i := 0
+      i := cvpos(i, *children) | fail
+      every c := !l do {
+         insert(children, i, c)
+         c.set_parent(self)
+         i +:= 1
+      }
+      if is_initialized() then {
+         compute_z_order()
+         compute_tab_order()
+         every (!l).initially()
+      }
+      return self
+   end
+
+   # Move all the children of `other`, to this `Component`, adding
+   # them at index `i`.  `other` will be left empty.
+   #
+   # @param other The source {Component}.
+   # @param i     The index to add at; if omitted then the new components
+   # @            are appended to the end.
+   # @fail        If i is out of range
+   #
+   public move_all(other, i)
+      return add_list(other.remove_list(), i)
+   end
+
    #
    # Succeed iff the component has been initialized AND has a position and
    # size on the screen, ie has been laid out by its parent.

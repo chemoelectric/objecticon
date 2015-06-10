@@ -130,6 +130,45 @@ abstract class MenuComponent(Rect,Connectable)
       return self
    end
 
+   # Remove the children in the range `i:j`, returning the
+   # removed children in a list.
+   # @param i   The start slice index, default 1
+   # @param j   The end slice index, default 0
+   # @fail      If the range is invalid.
+   #
+   #
+   public remove_list(i, j)
+      local l, s
+      s := cvslice(i, j, *children) | fail
+      l := children[s.lo:s.hi]
+      every 1 to s.hi - s.lo do
+         delete(children, s.lo)
+      every (!l).set_parent(&null)
+      if is_initialized() then
+         every (!l).finally()
+      return l
+   end
+
+   # Add all the `MenuComponent`s contained in list `l` at index `i`.
+   #
+   # @param l    The list to add
+   # @param i    The index
+   # @fail      If i is out of range
+   #
+   public add_list(l, i)
+      local c
+      /i := 0
+      i := cvpos(i, *children) | fail
+      every c := !l do {
+         insert(children, i, c)
+         c.set_parent(self)
+         i +:= 1
+      }
+      if is_initialized() then
+         every (!l).initially()
+      return self
+   end
+
    # Move all the children of `MenuComponent` `other`, to this
    # `MenuComponent`, adding them at index `i`.  `other` will be left empty.
    #
@@ -139,15 +178,7 @@ abstract class MenuComponent(Rect,Connectable)
    # @fail        If i is out of range
    #
    public move_all(other, i)
-      local e
-      /i := 0
-      i := cvpos(i, *children) | fail
-      while e := other.children[1] do {
-         other.remove_index(1)
-         add(e, i)
-         i +:= 1
-      }
-      return self
+      return add_list(other.remove_list(), i)
    end
 
    #
