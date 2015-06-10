@@ -1230,8 +1230,7 @@ class Component(Rect,Align,Connectable)
          compute_z_order()
          compute_tab_order()
       } else {
-         every c := !children do
-            c.set_parent(&null)
+         every (!children).set_parent(&null)
          clear(children)
       }
       return self
