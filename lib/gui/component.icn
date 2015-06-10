@@ -1221,14 +1221,18 @@ class Component(Rect,Align,Connectable)
    #
    public remove_all()
       local c
-      every c := !children do {
-         c.set_parent(&null)
-         c.finally()
-      }
-      clear(children)
       if is_initialized() then {
+         every c := !children do {
+            c.set_parent(&null)
+            c.finally()
+         }
+         clear(children)
          compute_z_order()
          compute_tab_order()
+      } else {
+         every c := !children do
+            c.set_parent(&null)
+         clear(children)
       }
       return self
    end
