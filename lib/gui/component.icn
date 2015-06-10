@@ -1220,20 +1220,7 @@ class Component(Rect,Align,Connectable)
    # Remove all the children.
    #
    public remove_all()
-      local c
-      if is_initialized() then {
-         every c := !children do {
-            c.set_parent(&null)
-            c.finally()
-         }
-         clear(children)
-         compute_z_order()
-         compute_tab_order()
-      } else {
-         every (!children).set_parent(&null)
-         clear(children)
-      }
-      return self
+      return remove_list() & self
    end
 
    #

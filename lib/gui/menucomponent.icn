@@ -104,8 +104,7 @@ abstract class MenuComponent(Rect,Connectable)
    # Remove all the children.
    #
    public remove_all()
-      while remove_index(1)
-      return self
+      return remove_list() & self
    end
 
    #
