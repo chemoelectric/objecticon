@@ -249,7 +249,7 @@ class GridPaintEdit(PaintEdit)
    end
 
    public on_input_rpress(ev)
-      local m, i, pm, m2
+      local m, i, pm
       m := Menu()
       i := TextMenuItem().set_label("Save to...")
       i.connect(self.on_save_input, Event.ACTION)
@@ -268,8 +268,7 @@ class GridPaintEdit(PaintEdit)
       m.add(i)
       # Add the standard text edit menu options.
       m.add(MenuSeparator())
-      m2 := input.create_context_menu(ev)
-      every m.add(!m2.children)
+      m.move_all(input.create_context_menu(ev))
       pm := PopupMenu()
       pm.popup(self, m, ev.x, ev.y)
    end

@@ -19,18 +19,6 @@ abstract class DynamicMenu(Menu)
       remove_all()
    end
    
-   #
-   # Helper method to remove the items from the `Menu` other, adding them to this `Menu`.
-   #
-   public populate_from(other)
-      local i
-      while i := other.children[1] do {
-         other.remove_index(1)
-         add(i)
-      }
-      return self
-   end
-
    public abstract populate()
 end
 

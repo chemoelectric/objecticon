@@ -103,21 +103,13 @@ end
 
 class TerminalMenu(DynamicMenu)
    public populate()
-      local m
-      if m := parent_component.parent_dialog.tabs.which_one.create_context_menu() then
-         every add(!m.children)
+      move_all(parent_component.parent_dialog.tabs.which_one.create_context_menu())
    end
 end
 
 class ColumnsMenu(DynamicMenu)
    public populate()
-      local m
-      if m := parent_component.parent_dialog.tabs.which_one.create_columns_context_menu() then
-         every add(!m.children)
-   end
-
-   public finally()
-      DynamicMenu.finally()
+      move_all(parent_component.parent_dialog.tabs.which_one.create_columns_context_menu())
    end
 end
 
