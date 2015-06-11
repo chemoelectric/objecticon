@@ -152,8 +152,8 @@ class TreeNode()
    public remove_index(i)
       local c
       c := self.children[i] | fail
-      c.parent := &null
       delete(self.children, i)
+      c.parent := &null
       return self
    end
 
@@ -194,11 +194,8 @@ class TreeNode()
    #
    #
    public remove_list(i, j)
-      local l, s
-      s := cvslice(i, j, *children) | fail
-      l := children[s.lo:s.hi]
-      every 1 to s.hi - s.lo do
-         delete(children, s.lo)
+      local l
+      l := lextract(children, i, j) | fail
       every (!l).parent := &null
       return l
    end
@@ -210,14 +207,8 @@ class TreeNode()
    # @fail      If i is out of range
    #
    public add_list(l, i)
-      local c
-      /i := 0
-      i := cvpos(i, *children) | fail
-      every c := !l do {
-         insert(children, i, c)
-         c.parent := self
-         i +:= 1
-      }
+      linsert(children, l, i) | fail
+      every (!l).parent := self
       return self
    end
 
