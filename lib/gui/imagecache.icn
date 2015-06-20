@@ -93,20 +93,23 @@ final abstract class ImageCache()
 
    # Associate arbitrary image data (eg gif file data), with a name.
    # The name can then be passed to {get} or {load} to retrieve a
-   # window with the corresponding image.
+   # window with the corresponding image.   It is a runtime error
+   # if the key already exists in the table.
    #
    public static name_image(name, data)
+      if member(names, name) then
+         runerr("ImageCache duplicate name key", name)
       insert(names, name, data)
       return ImageCache
    end
 
    #
    # Given an existing key, add an entry to the name-data table with
-   # `new_key`, pointing to the same data.
+   # `new_key`, pointing to the same data.  Fails if `key` is not an
+   # existing key into the data table.
    #
    public static copy_name(new_key, key)
-      insert(names, new_key, member(names, key))
-      return ImageCache
+      return name_image(new_key, member(names, key))
    end
 
    #
@@ -119,20 +122,23 @@ final abstract class ImageCache()
 
    #
    # Place an entry into the window cache with the given key.  The
-   # window should not be subsequently closed.
+   # window should not be subsequently closed.  It is a runtime error
+   # if the key already exists in the table.
    #
    public static cache_window(key, win)
+      if member(imap, key) then
+         runerr("ImageCache duplicate image key", key)
       insert(imap, key, win)
       return ImageCache
    end
 
    #
    # Given an existing key, add an entry to the window cache with
-   # `new_key`, pointing to the same window.
+   # `new_key`, pointing to the same window.  Fails if `key` is not an
+   # existing key into the image table.
    #
    public static copy_key(new_key, key)
-      insert(imap, new_key, member(imap, key))
-      return ImageCache
+      return cache_window(new_key, member(imap, key))
    end
 
    #

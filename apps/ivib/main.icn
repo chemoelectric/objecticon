@@ -1028,7 +1028,7 @@ class Main(Dialog)
    public new()
       local mb, file, edit, alignment_sub_menu, copy_sub_menu, group_sub_menu,
          uis, objects_menu, tb, ui, listener, mi, ui_button, p,
-         order_sub_menu, f, ce, plugin, pp, fn, i, fp, ext
+         order_sub_menu, f, ce, plugin, pp, fn, i, fp, ext, k
 
       Dialog.new()
       config_file_name := FilePath(Xdg.ensure_data_home()).child("ivib").str() | stop("Couldn't access data dir: ", &why)
@@ -1261,8 +1261,11 @@ class Main(Dialog)
 
       every fp := FilePath(!prefs.named_image_path) do {
          every f := !Files.list(fp.str()) do {
-            if ext := is_image_file(f.name) then
-               ImageCache.name_image(f.name[1:-*ext - 1], Files.file_to_string(fp.child(f.name).str()))
+            if ext := is_image_file(f.name) then {
+               k := f.name[1:-*ext - 1]
+               ImageCache.get_named_image(k) |
+                  ImageCache.name_image(k, Files.file_to_string(fp.child(f.name).str()))
+            }
          }
       }
 
