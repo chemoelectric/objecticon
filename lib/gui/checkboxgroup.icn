@@ -44,20 +44,24 @@ class CheckBoxGroup(Connectable)
    end
 
    #
-   # Return the index of the checked object in the checkboxes list, or fail if
-   # no object is selected.
-   #
-   public get_which_index()
-      return keyof(checkboxes, which_one)
-   end
-
-   #
    # Add the object to the CheckBoxGroup.
    # @param c   The object to add, which must be a subclass of {Toggle}.
    #
    public add(c)
-      put(self.checkboxes, c)
+      insert(self.checkboxes, c)
       c.set_parent_check_box_group(self)
+      return self
+   end
+
+   #
+   # Remove the object from the CheckBoxGroup.
+   # @param c   The object to remove
+   #
+   public remove(c)
+      if c === which_one then
+         set_which_one()
+      delete(self.checkboxes, c)
+      c.set_parent_check_box_group()
       return self
    end
 
@@ -75,7 +79,7 @@ class CheckBoxGroup(Connectable)
 
    public new()
       Connectable.new()
-      self.checkboxes := []
+      self.checkboxes := set()
       return
    end
 end

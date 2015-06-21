@@ -33,13 +33,23 @@ class ButtonGroup()
    # @param c   The {Button} to add
    #
    public add(c)
-      put(self.buttons, c)
+      insert(self.buttons, c)
       c.set_parent_button_group(self)
       return self
    end
 
+   #
+   # Remove the given {Button} from the {ButtonGroup}.
+   # @param c   The {Button} to remove
+   #
+   public remove(c)
+      delete(self.buttons, c)
+      c.set_parent_button_group()
+      return self
+   end
+
    public new()
-      self.buttons := []
+      self.buttons := set()
       return
    end
 end
