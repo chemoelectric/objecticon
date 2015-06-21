@@ -418,9 +418,13 @@ class Columns(LineBasedScrollArea)
    end
 
    private handle_in_chain(e)
-      local k
+      local k, f
       *parent_dialog.held = 0 | fail
-      if k := get_element_under_pointer(e) then {
+      if e.code === (Key.SHIFT_L | Key.SHIFT_R) then {
+         if /e.release then
+            f := 1
+      } else f := \e.shift
+      if /f & (k := get_element_under_pointer(e)) then {
          set_over(k)
          view.set_pointer("hand1")
       } else {
@@ -507,6 +511,10 @@ class Columns(LineBasedScrollArea)
 
    public get_held()
       return .\held
+   end
+
+   public get_over()
+      return .\over
    end
 
    public object_get_cursor()
@@ -1368,7 +1376,7 @@ $endif
   private on_columns_rpress(e)
       local i, m, pm, item, url
       pm := PopupMenu()
-      if item := columns.data[i := columns.get_element_under_pointer(e)] then {
+      if item := columns.data[i := columns.get_over()] then {
          url := item_to_url(item) | fail
          columns.set_highlight(i).set_over()
          m := create_link_menu(url)
