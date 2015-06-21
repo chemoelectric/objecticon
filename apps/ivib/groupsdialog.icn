@@ -3,6 +3,7 @@
 import 
    gui, 
    ipl.lists,
+   util,
    lang
 
 class GroupsDialog(Dialog)
@@ -72,19 +73,13 @@ class GroupsDialog(Dialog)
    public update_grey()
       if *groups.get_selections() > 0 then {
          edit_group.set_is_shaded(&no)
-         if *member_objs > 0 then
-            delete_group.set_is_shaded(&yes)
-         else
-            delete_group.set_is_shaded(&no)
+         delete_group.set_is_shaded(Yes{ *member_objs > 0 })
       } else {
          delete_group.set_is_shaded(&yes)
          edit_group.set_is_shaded(&yes)
       }
 
-      if *members.get_selections() > 0 then
-         delete_member.set_is_shaded(&no)
-      else
-         delete_member.set_is_shaded(&yes)
+      delete_member.set_is_shaded(No{ *members.get_selections() > 0 })
    end
 
    public refresh_groups()

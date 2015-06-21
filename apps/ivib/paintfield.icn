@@ -1,4 +1,4 @@
-import gui
+import gui, util
 
 class PaintField(Border)
    public 
@@ -12,10 +12,7 @@ class PaintField(Border)
       edit_paint_button
 
    public on_sel_change()
-      if paints.get_selection() = 1 then
-         edit_paint_button.set_is_shaded(&yes)
-      else
-         edit_paint_button.set_is_shaded(&no)
+      edit_paint_button.set_is_shaded(Yes{ paints.get_selection() = 1 })
       os.set_which_one(os.children[paints.get_selection()])
    end
 
