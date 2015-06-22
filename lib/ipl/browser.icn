@@ -3622,9 +3622,15 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          traverse(e, p, context)
    end
 
+   private check_id(e, p, context)
+      local id
+      if id := e.get_attribute(u"ID") then
+         put(p.input, NamedAnchorCmd(id, context))
+   end
+
    private traverse_hN(e, p, context)
       local c
-      put_para(p, context)
+      put_para1(e, p, context)
       c := copy(context)
       c.size := 7 - e.name[-1]
       c.bold := 1
@@ -3766,7 +3772,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       c := copy(context)
       c.italic := 1
       synch_font(c)
-      put_new_row(p, c)
+      put_new_row1(e, p, c)
       traverse(e, p, c)
       put_new_row(p, c)
    end
@@ -3795,7 +3801,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       c := copy(context)
       c.form := Form(self, save_key, id, url, m, t)
       put(forms, c.form)
-      put_new_row(p, c)
+      put_new_row1(e, p, c)
       traverse(e, p, c)
       put_new_row(p, c)
       c.form.resolve_labels()
@@ -4252,7 +4258,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private traverse_div(e, p, context)
-      put_new_row(p, context)
+      put_new_row1(e, p, context)
       traverse(e, p, context)
    end
 
@@ -4279,7 +4285,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          set_width(1)
       do_width_param(e, l) | l.set_constraint("pct_w", 100)
       c := copy(context)
-      put_new_row(p, c)
+      put_new_row1(e, p, c)
       c.align := convert_halign(e, u"ALIGN") | Align.C
       add_component(p, l, c)
       put_new_row(p, c)
@@ -4294,7 +4300,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private traverse_p(e, p, context)
       local c
       c := copy(context)
-      put_para(p, c)
+      put_para1(e, p, c)
       c.align := convert_halign(e, u"ALIGN")
       traverse(e, p, c)
       put_para(p, c)
@@ -4326,7 +4332,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    private traverse_pre(e, p, context)
       local c
-      put_para(p, context)
+      put_para1(e, p, context)
       c := copy(context)
       c.family := "mono"
       strip_newlines(e)
@@ -4340,15 +4346,25 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       put(p.input, ParaCmd(context))
    end
 
+   private put_para1(e, p, context)
+      put_para(p, context)
+      check_id(e, p, context)
+   end
+
    private put_new_row(p, context)
       put(p.input, NewRowCmd(context))
+   end
+
+   private put_new_row1(e, p, context)
+      put_new_row(p, context)
+      check_id(e, p, context)
    end
 
    private traverse_center(e, p, context)
       local c
       c := copy(context)
       c.align := Align.C
-      put_new_row(p, context)
+      put_new_row1(e, p, context)
       traverse(e, p, c)
       put_new_row(p, context)
    end
@@ -4489,7 +4505,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       if align === (Align.L | Align.R) then
          add_component(p, t, c, align)
       else {
-         put_new_row(p, c)
+         put_new_row1(e, p, c)
          add_component(p, t, c, Align.B)
          put_new_row(p, c)
       }
@@ -4660,7 +4676,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       lc.kind := e.name
       c.list := lc
       traverse(e, p, c)
-      put_new_row(p, c)
+      put_new_row1(e, p, c)
       add_component(p, tbl, context, Align.B)
       put_new_row(p, c)
    end
@@ -4706,7 +4722,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       c := copy(context)
       c.def_list := dc
       traverse(e, p, c)
-      put_new_row(p, c)
+      put_new_row1(e, p, c)
       add_component(p, tbl, context, Align.B)
       put_new_row(p, c)
    end
@@ -4732,7 +4748,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    private traverse_blockquote(e, p, context)
       local tbl, row
-      put_new_row(p, context)
+      put_new_row1(e, p, context)
       tbl := Tbl()
       add_component(p, tbl, context)
       row := TextFlow(self)
@@ -4746,7 +4762,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    private traverse_fieldset(e, p, context)
       local tbl, row, c, fc
-      put_new_row(p, context)
+      put_new_row1(e, p, context)
       tbl := Tbl().set_border(CompoundBorder().
                               set_outer(SunkenBorder().set_line_width(Gui.FINE_WIDTH)).
                               set_inner(EmptyBorder()))
@@ -4856,13 +4872,12 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private traverse(n, p, context)
-      local e, id, title, c
+      local e, title, c
       every e := !n.children do {
          if text(e) then
             traverse_text(e, p, context)
          else if is(e, HtmlElement) then {
-            if id := e.get_attribute(u"ID") then
-               put(p.input, NamedAnchorCmd(id, context))
+            check_id(e, p, context)
             if title := (u"" ~== e.get_attribute(u"TITLE")) then {
                c := copy(context)
                c.title := title
@@ -5485,6 +5500,109 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 end
 
+#
+# A `BrowserUI` to use with `SimpleBrowser`
+#
+class SimpleBrowserUI(BrowserUI)
+   public const browser
+
+   public msg(s, n) end
+   public page_loaded() end
+   public page_fully_loaded() end
+   public update_grey(gs) end
+
+   public link_left_clicked(url)
+      browser.fire(SimpleBrowser.LINK_LEFT_CLICKED, url)
+   end
+
+   public link_middle_clicked(url)
+      browser.fire(SimpleBrowser.LINK_MIDDLE_CLICKED, url)
+   end
+
+   protected copy_link(url)
+      browser.parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([url]))
+   end
+
+   protected copy_links(urls)
+      browser.parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner(urls))
+   end
+
+   protected copy_text(s)
+      browser.parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
+   end
+
+   protected populate_link_menu(url, m)
+      m.add(TextMenuItem().
+            set_label("Copy link").
+            connect(create copy_link(url), Event.ACTION))
+   end
+
+   protected on_select_all(e)
+      browser.handle_select_all(e)
+   end
+
+   protected is_external(url)
+      return not(url.scheme == (u"page" | u"img"))
+   end
+
+   public create_link_menu(url)
+      local m
+      m := Menu()
+      populate_link_menu(url, m)
+      return m
+   end
+
+   public create_page_menu()
+      local m, s, l, u
+      m := Menu()
+      if u := \browser.page_url & is_external(u) then {
+         m.add(TextMenuItem().
+               set_label("Copy page").
+               connect(create copy_link(u), Event.ACTION))
+      }
+      if \browser.page_data then
+         m.add(TextMenuItem().
+               set_label("Select all").
+               set_label_right("^A").
+               connect(on_select_all, Event.ACTION))
+      if s := browser.get_current_text_selection() then
+         m.add(TextMenuItem().
+               set_label("Copy text").
+               set_label_right("^C").
+               connect(create copy_text(s), Event.ACTION))
+      if l := browser.get_current_links_selection() then
+         m.add(TextMenuItem().
+               set_label("Copy links").
+               connect(create copy_links(l), Event.ACTION))
+      if *m.children > 0 then
+         return m
+   end
+
+   public create_image_menu(img)
+      local m, url
+      url := if img.img_url.scheme == u"cache" then browser.page_url else img.img_url
+      m := Menu()
+      if is_external(url) then
+         m.add(TextMenuItem().
+               set_label("Copy image").
+               connect(create copy_link(url), Event.ACTION))
+      if \img.over then
+         populate_link_menu(img.over, m)
+      if *m.children > 0 then
+         return m
+   end
+
+   public browse_for_file(s) end
+   public is_visited(url) end
+   public display_search() end
+   public display_externally(res) end
+
+   public new(browser)
+      self.browser := browser
+      return
+   end
+end
+
 # A simple subclass of `Browser`, intended for displaying HTML pages
 # with no user navigation and a minimalist interface.
 #
@@ -5504,18 +5622,6 @@ class SimpleBrowser(Browser)
    private static init()
       LINK_LEFT_CLICKED := "link_left_clicked"
       LINK_MIDDLE_CLICKED := "link_middle_clicked"
-   end
-
-   public link_left_clicked(url)
-      Browser.link_left_clicked(url)
-      fire(LINK_LEFT_CLICKED, url)
-      return self
-   end
-
-   public link_middle_clicked(url)
-      Browser.link_middle_clicked(url)
-      fire(LINK_MIDDLE_CLICKED, url)
-      return self
    end
 
    # Set the page to display as a string representing an HTML
@@ -5539,6 +5645,7 @@ class SimpleBrowser(Browser)
 
    public new()
       Browser.new()
+      set_ui(SimpleBrowserUI(self))
       worker_pool.
          add_scheme_handler("page", page_handler).
          add_scheme_handler("img", img_handler)
