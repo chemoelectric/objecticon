@@ -17,16 +17,21 @@ import
    ipl.childwait,
    ipl.vt,
    ipl.columnize,
-   ipl.strings
+   ipl.strings,
+   ipl.browser
 
 global opts
 
 $ifdef _PNG
 $load HOURGLASS "rpp.HOURGLASS_24.png"
 $load KEYBOARD "rpp.KEYBOARD_24.png"
+$load HELP "rpp.HELP_64.png"
+$load ABOUT "rpp.ABOUT_64.png"
 $else
 $load HOURGLASS "rpp.HOURGLASS_24.gif"
 $load KEYBOARD "rpp.KEYBOARD_24.gif"
+$load HELP "rpp.HELP_64.gif"
+$load ABOUT "rpp.ABOUT_64.gif"
 $endif
 $load EXIT "rpp.EXIT_24.gif"
 $load FLOWTERM_LOGO "rpp.FLOWTERM_LOGO.png"
@@ -172,7 +177,45 @@ class FlowTermDialog(Dialog)
       tabs.which_one.info_msg("XDG database reloaded")
    end
 
-   public on_favourite_dirs(ev)
+   private on_html_click(url)
+      tabs.which_one.open_link(url)
+   end
+
+   private show_html(src)
+      local d
+      d := HTMLMessageDialog()
+      d.browser.
+         set_border(NullBorder()).
+         set_page(src).
+         set_size(scale(550), scale(350)).
+         connect(on_html_click, SimpleBrowser.LINK_LEFT_CLICKED)
+      d.show_modal(self)
+   end
+
+   private on_about(ev)
+      show_html("<html><h1><img src=img:rpp.ABOUT_64 width=64 height=64 align=absmiddle/>&nbsp;About FlowTerm</h1>_
+<h2>Author</h2>Robert Parlett_
+<h2>Contact</h2><a href=mailto:r.parlett@gmail.com</a>r.parlett@gmail.com</a>_
+<h2>Version</h2>" || &version ||
+"</html>")
+   end
+
+   private on_help(ev)
+      show_html("<html><h1><img src=img:rpp.HELP_64 width=64 height=64 align=absmiddle/>&nbsp;FlowTerm Help</h1>_
+FlowTerm is a terminal emulator which uses web-like hyperlinks, as well as some elements of a file explorer._
+<p>_
+It requires an additional set of programs, <i>FlowTerm extras</i>, in order to be fully functional._
+<p>_
+Simple command line option help can be obtained by running :-_
+<pre>    flowterm -help</pre>_
+<p>_
+Full documentation can be found at <a href=\"http://objecticon.sourceforge.net/FlowTerm.html\">this page</a>._
+<p>_
+The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects/objecticon/files/misc/flowterm-extras.tar.gz/download\">here</a>._
+</html>")
+   end
+
+   private on_favourite_dirs(ev)
       local d
       d := FavouriteDirectoriesDialog()
       d.show_modal(self)
@@ -182,7 +225,8 @@ class FlowTermDialog(Dialog)
 
    public new()
       local quit_menu_item, menu_bar, file_menu, terminal_menu, columns_menu, 
-         new_tab_item, clone_tab_item, favourite_dirs_item, xdg_refresh_item
+         new_tab_item, clone_tab_item, favourite_dirs_item, xdg_refresh_item,
+         help_menu, about_item, help_item
       Dialog.new()
       set_size(scale(1200), scale(850))
       self.set_resize(&yes)
@@ -212,6 +256,16 @@ class FlowTermDialog(Dialog)
          set_label("Terminal")
       columns_menu := ColumnsMenu().
          set_label("List")
+      help_item := TextMenuItem().
+         connect(on_help, Event.ACTION).
+         set_label("Help...")
+      about_item := TextMenuItem().
+         connect(on_about, Event.ACTION).
+         set_label("About...")
+      help_menu := Menu().
+         set_label("Help").
+         add(help_item).
+         add(about_item)
       menu_bar := MenuBar().
          set_size(scale(100)).
          clear_constraints().
@@ -223,7 +277,8 @@ class FlowTermDialog(Dialog)
          set_constraint("x_fill", &yes).
          add(file_menu).
          add(columns_menu).
-         add(terminal_menu)
+         add(terminal_menu).
+         add(help_menu)
       self.add(menu_bar)
       tabs := TabSet().
          clear_constraints().
@@ -1673,7 +1728,7 @@ $endif
       if /nav then {
          every 1 to history_pos - 1 do
             pop(history)
-         push(history, HistoryEntry(cwd))
+         push(history, default.HistoryEntry(cwd))
          history_pos := 1
          while *history > MAX_HISTORY_SIZE do
             pull(history)
@@ -2262,6 +2317,8 @@ procedure main(a)
                        Opt("sh",string,"The shell to run in each tab, by default the user's default shell")],
                        usage)
    ImageCache.
+      name_image("rpp.HELP_64", HELP).
+      name_image("rpp.ABOUT_64", ABOUT).
       name_image("rpp.HOURGLASS_24", HOURGLASS).
       name_image("rpp.KEYBOARD_24", KEYBOARD).
       name_image("rpp.EXIT_24", EXIT)
