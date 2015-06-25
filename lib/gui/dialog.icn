@@ -218,11 +218,7 @@ class Dialog(Component)
    # @param d   This optional parameter specifies the parent dialog.
    #
    public show_and_wait(task, d)
-      local x
-      x := connect_and_return(create {
-         task.notify()
-         disconnect(x)
-      }, Event.DIALOG_DISPOSED)
+      connect_n(create task.notify(), Event.DIALOG_DISPOSED)
       show(d)
       while \win do
          task.sleep()

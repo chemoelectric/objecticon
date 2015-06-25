@@ -22,29 +22,48 @@ class Connectable()
    end
 
    #
-   # Create and connect a Listener to this object.
-   # @return the Listener created and added.
+   # Create and connect a `Listener` to this object.  To get the actual `Listener`
+   # instance, use `last_listener()`.
+   # @return self
    #
-   public connect_and_return(proc, etype)
+   public connect(proc, etype)
       local l
-      if type(proc) == "co-expression" then {
+      if type(proc) == "co-expression" then
          proc := exprf(proc)
-         if type(etype) == "co-expression" then
-            etype := @etype | fail
-      }
       l := Listener(proc,
                     etype)
       listeners := copy(listeners)
       put(listeners, l)
-      return l
+      return self
    end
 
    #
-   # Create and connect a Listener to this object.
+   # This is like `connect`, but the listener is automatically disconnected
+   # after it is fired `n` times.  `n` defaults to 1.
    # @return self
    #
-   public connect(proc, etype)
-      return connect_and_return(proc, etype) & self
+   public connect_n(proc, etype, n)
+      local x
+      /n := 1
+      if type(proc) == "co-expression" then
+         proc := exprf(proc)
+      connect(lambda{{ 
+         proc!_a
+         n -:= 1
+         if n = 0 then
+            disconnect(x)
+      }}, etype)
+      x := last_listener()
+      return self
+   end
+
+   #
+   # This returns the last listener in the listener list.  Just after
+   # a call to `connect()`, this will be the `Listener` object just
+   # added.  This can then be passed (for example) to `disconnect()`.
+   #
+   public last_listener()
+      return .listeners[-1]
    end
 
    #
@@ -98,7 +117,7 @@ class Connectable()
    end
 
    #
-   # Remove a Listener previously returned by {connect}
+   # Remove a Listener previously added by {connect}
    #
    public disconnect(l)
       local t
@@ -110,7 +129,7 @@ class Connectable()
    end
 
    #
-   # Reconnect a Listener previously returned by {connect} and
+   # Reconnect a Listener previously added by {connect} and
    # then removed by {disconnect}.
    #
    public reconnect(l)
