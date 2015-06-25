@@ -379,8 +379,6 @@ end
 # state.
 #
 procedure save_state(e, state)
-   if type(state) == "co-expression" then
-      state := @state
    state.begin()
    suspend 1(|@e, { state.swap() ; &null} ) do
       state.swap()
