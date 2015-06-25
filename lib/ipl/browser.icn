@@ -5507,8 +5507,15 @@ class SimpleBrowserUI(BrowserUI)
    public const browser
 
    public msg(s, n) end
-   public page_loaded() end
-   public page_fully_loaded() end
+
+   public page_loaded()
+      browser.fire(SimpleBrowser.PAGE_LOADED)
+   end
+
+   public page_fully_loaded()  
+      browser.fire(SimpleBrowser.PAGE_FULLY_LOADED)
+   end
+
    public update_grey(gs) end
 
    public link_left_clicked(url)
@@ -5617,11 +5624,15 @@ class SimpleBrowser(Browser)
 
    public static const
       LINK_LEFT_CLICKED,
-      LINK_MIDDLE_CLICKED
+      LINK_MIDDLE_CLICKED,
+      PAGE_LOADED,
+      PAGE_FULLY_LOADED
 
    private static init()
       LINK_LEFT_CLICKED := "link_left_clicked"
-      LINK_MIDDLE_CLICKED := "link_middle_clicked"
+      LINK_MIDDLE_CLICKED := "link_middle_clicked" 
+      PAGE_LOADED := "page loaded"
+      PAGE_FULLY_LOADED := "page fully loaded"
    end
 
    # Set the page to display as a string representing an HTML
