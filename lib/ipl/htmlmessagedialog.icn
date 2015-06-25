@@ -1,7 +1,8 @@
 package ipl.browser
 
 import
-   gui
+   gui,
+   util
 
 # A simple dialog for displaying a single HTML page, typically
 # containing a help message.
@@ -9,6 +10,25 @@ import
 class HTMLMessageDialog(Dialog)
    public const
       browser
+   private readable
+      delay_open_flag
+
+   #
+   # If set, then the dialog is hidden until the page is fully loaded.
+   # This can be preferable for cosmetic reasons, so that the
+   # partially loaded page (without images), is not shown.
+   #
+   public set_delay_open(s)
+      self.delay_open_flag := check_flag(s)
+      return self
+   end
+
+   public component_setup()
+      if \delay_open_flag then {
+         set_canvas("hidden")
+         browser.connect_n(create win.set_canvas("normal"), SimpleBrowser.PAGE_FULLY_LOADED)
+      }
+   end
 
    public new()
       Dialog.new()
