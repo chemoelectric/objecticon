@@ -11,7 +11,8 @@ class HTMLMessageDialog(Dialog)
    public const
       browser
    private readable
-      delay_open_flag
+      delay_open_flag,
+      size_precisely_flag
 
    #
    # If set, then the dialog is hidden until the page is fully loaded.
@@ -23,10 +24,29 @@ class HTMLMessageDialog(Dialog)
       return self
    end
 
+   #
+   # This is like `set_delay_open()` above, but will size the dialog to the size of the
+   # browser's inner component.  The browser's size should also be set, since this
+   # influences the size of the inner component.
+   #
+   public set_size_precisely(s)
+      self.size_precisely_flag := check_flag(s)
+      return self
+   end
+
    public component_setup()
-      if \delay_open_flag then {
+      if \delay_open_flag | \size_precisely_flag then {
          set_canvas("hidden")
-         browser.connect_n(create win.set_canvas("normal"), SimpleBrowser.PAGE_FULLY_LOADED)
+         browser.connect_n(create {
+            if \size_precisely_flag then {
+               browser.
+                  set_size(browser.predict_total_width(browser.view.inner_w),
+                           browser.predict_total_height(browser.view.inner_h)).
+                  reset_layout_chain()
+               resize_win(get_preferred_width(), get_preferred_height())
+            }
+            win.set_canvas("normal")
+         }, SimpleBrowser.PAGE_FULLY_LOADED)
       }
    end
 
