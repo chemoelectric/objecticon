@@ -183,7 +183,8 @@ class FlowTermDialog(Dialog)
 
    private show_html(src)
       local d
-      d := HTMLMessageDialog()
+      d := HTMLMessageDialog().
+         set_label("FlowTerm")
       d.browser.
          set_border(NullBorder()).
          set_page(src).
