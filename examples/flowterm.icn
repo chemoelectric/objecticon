@@ -902,7 +902,7 @@ class Terminal(TabItem, VtUI)
       s ? if s := tab(upto('=')) then
          param := (move(1), tab(0))
       case string(s) of {
-         "shell" : set_shell(param)
+         "sh" : set_shell(param)
          "run" : {
             \param | return error("expected parameter to run")
             run_prog(param)
@@ -1817,16 +1817,16 @@ $endif
       if \opts["v"] then
          output.set_verbose(&yes)
 
-      if o := \opts["tfg"] then
-         output.set_normal_fg(o) | stop("Invalid -tfg: ", &why)
-      if o := \opts["tbg"] then
-         output.set_normal_bg(o) | stop("Invalid -tbg: ", &why)
-      if o := \opts["trevfg"] then
-         output.set_reverse_fg(o) | stop("Invalid -trevfg: ", &why)
-      if o := \opts["trevbg"] then
-         output.set_reverse_bg(o) | stop("Invalid -trevbg: ", &why)
-      if o := \opts["tfont"] then
-         output.set_vt_font(o) | stop("Invalid -tfont: ", &why)
+      if o := \opts["fg"] then
+         output.set_normal_fg(o) | stop("Invalid -fg: ", &why)
+      if o := \opts["bg"] then
+         output.set_normal_bg(o) | stop("Invalid -bg: ", &why)
+      if o := \opts["revfg"] then
+         output.set_reverse_fg(o) | stop("Invalid -revfg: ", &why)
+      if o := \opts["revbg"] then
+         output.set_reverse_bg(o) | stop("Invalid -revbg: ", &why)
+      if o := \opts["font"] then
+         output.set_vt_font(o) | stop("Invalid -font: ", &why)
 
       favourites_list.set_size().set_selection_list(get_favourites_directories())
       sort_dirs_menu_item := CheckBoxMenuItem().
@@ -2309,11 +2309,11 @@ procedure main(a)
                        Opt("v",,"Verbose output"),
                        Opt("h",integer,"History scrollback size"),
                        Opt("hs",,"Start each tab by default with a horizontal rather than a vertical split"),
-                       Opt("tfg",string,"The foreground colour of the terminal"),
-                       Opt("tbg",string,"The backround colour of the terminal"),
-                       Opt("trevfg",string,"The reverse-mode foreground colour of the terminal, by default simply the terminal background"),
-                       Opt("trevbg",string,"The reverse-mode background colour of the terminal, by default simply the terminal foreground"),
-                       Opt("tfont",string,"The terminal font.  This must be a monospace font.  By default, \"fixed\" at the default font size"),
+                       Opt("fg",string,"The foreground colour of the terminal"),
+                       Opt("bg",string,"The backround colour of the terminal"),
+                       Opt("revfg",string,"The reverse-mode foreground colour of the terminal, by default simply the terminal background"),
+                       Opt("revbg",string,"The reverse-mode background colour of the terminal, by default simply the terminal foreground"),
+                       Opt("font",string,"The terminal font.  This must be a monospace font.  By default, \"fixed\" at the default font size"),
                        Opt("t",string,"The window title, by default \"FlowTerm\""),
                        Opt("sh",string,"The shell to run in each tab, by default the user's default shell")],
                        usage)
