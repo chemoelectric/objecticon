@@ -224,12 +224,31 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
       every (!tabs.children).refresh_favourite_dirs()
    end
 
+   public component_setup()
+      local i, t
+      t := \tabs.which_one | tabs.children[1]
+      if i := \opts["width"] then {
+         i > 0 | stop("Invalid -width: integer > 0 expected")
+         t.output.
+            set_width().
+            set_vt_width(i)
+      } else
+         set_width(scale(1200))
+
+      if i := \opts["height"] then {
+         i > 0 | stop("Invalid -height: integer > 0 expected")
+         t.output.
+            set_height().
+            set_vt_height(i)
+      } else
+         set_height(scale(850))
+   end
+
    public new()
       local quit_menu_item, menu_bar, file_menu, terminal_menu, columns_menu, 
          new_tab_item, clone_tab_item, favourite_dirs_item, xdg_refresh_item,
          help_menu, about_item, help_item
       Dialog.new()
-      set_size(scale(1200), scale(850))
       self.set_resize(&yes)
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
@@ -896,6 +915,11 @@ class Terminal(TabItem, VtUI)
       return self
    end
 
+   public set_history_size(n)
+      output.set_history_size(0 <= integer(n)) | return error("integer >= 0 expected")
+      return self
+   end
+
    public do_tab_cmd(s)
       local param
       s := ucs(s) | return error("Not a ucs string")
@@ -912,6 +936,7 @@ class Terminal(TabItem, VtUI)
          "bg": output.set_normal_bg(param) | fail
          "revfg": output.set_reverse_fg(param) | fail
          "revbg": output.set_reverse_bg(param) | fail
+         "hist": set_history_size(param) | fail
          "auto-close" : set_auto_close(&yes)
          "title" : set_title(param)
          "max-list" : on_max_list()
@@ -1767,7 +1792,6 @@ $endif
       self.revert_tab := revert_tab
       setup()
       setup_search_panel()
-
       if \other then {
          if other.focus_columns_button.is_checked() then {
             focus_columns_button.set_is_checked(&yes)
@@ -1807,16 +1831,17 @@ $endif
          connect(on_columns_over_changed, "over-changed").
          connect(on_columns_rpress, Event.MOUSE_RIGHT_PRESS)
       trail.
-         set_size().
+         set_height().
          set_constraint("l_inset", scale(10)).
          connect(on_trail, FileTrail.DIR_CHANGED_EVENT)
 
       output.
          set_ui(self)
-      output.set_history_size(\opts["h"])
       if \opts["v"] then
          output.set_verbose(&yes)
 
+      if o := \opts["hist"] then
+         set_history_size(o) | stop("Invalid -hist: ", &why)
       if o := \opts["fg"] then
          output.set_normal_fg(o) | stop("Invalid -fg: ", &why)
       if o := \opts["bg"] then
@@ -2201,7 +2226,7 @@ $endif
          set_tooltip(paint_37).
          connect(self.on_favourites_list, Event.SELECTION_CHANGED)
       trail := FileTrail().
-         set_size(scale(100), scale(20)).
+         set_size(scale(200), scale(20)).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
@@ -2307,13 +2332,15 @@ procedure main(a)
    opts := options(a, [Opt("x",string,"The location of the 'flowterm-extras' directory; by default 'flowterm-extras' in your home directory.  This directory's 'bin' subdirectory is added to the front of the PATH variable"),
                        Opt("nx",,"Don't add any flowterm extras directory to the PATH.  The -x option is ignored"),
                        Opt("v",,"Verbose output"),
-                       Opt("h",integer,"History scrollback size"),
+                       Opt("hist",integer,"History scrollback size.  The default is 500"),
                        Opt("hs",,"Start each tab by default with a horizontal rather than a vertical split"),
                        Opt("fg",string,"The foreground colour of the terminal"),
                        Opt("bg",string,"The backround colour of the terminal"),
                        Opt("revfg",string,"The reverse-mode foreground colour of the terminal, by default simply the terminal background"),
                        Opt("revbg",string,"The reverse-mode background colour of the terminal, by default simply the terminal foreground"),
                        Opt("font",string,"The terminal font.  This must be a monospace font.  By default, \"fixed\" at the default font size"),
+                       Opt("width",integer,"The preferred width of the terminal, in characters"),
+                       Opt("height",integer,"The preferred height of the terminal, in lines"),
                        Opt("t",string,"The window title, by default \"FlowTerm\""),
                        Opt("sh",string,"The shell to run in each tab, by default the user's default shell")],
                        usage)
