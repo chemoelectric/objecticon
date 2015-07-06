@@ -125,7 +125,7 @@ package class Row()
    public const
       l,     # List of Segments
       bg,    # Bg colour for right part of row not covered by segments (null -> current bg).
-      join   # Lines is notionally joined with next one (used to reflow).
+      join   # Line is notionally joined with next one (used to reflow).
 
    public new(l, bg, join)
       /l := []
@@ -239,6 +239,8 @@ class Vt(LineBasedScrollArea, MenuMode)
       font_size,
       primary,                    # Primary selection string, or null
       history_size,               # Size of history scroll lines; 0 -> no vsb
+      vt_width,                   # Default width in chars, used by get_default_width()
+      vt_height,                  # Default height in chars, used by get_default_height()
       reverse_fg,                 # Colours of reverse mode, or null implying true reverse.
       reverse_bg,
       normal_fg,                  # Colours of non-reverse mode, or null implying use cbwin colours.
@@ -355,12 +357,30 @@ class Vt(LineBasedScrollArea, MenuMode)
       LineBasedScrollArea.layout()
    end
 
+   # Set the width of the vt in characters.  The default is 80. Only
+   # used if the size of the component is not set in pixels.
+   #
+   public set_vt_width(n)
+      n := (0 < integer(n)) | runerr(101, n)
+      self.vt_width := n
+      return self
+   end
+
+   # Set the height of the vt in lines.  The default is 25.  Only used
+   # if the size of the component is not set in pixels.
+   #
+   public set_vt_height(n)
+      n := (0 < integer(n)) | runerr(101, n)
+      self.vt_height := n
+      return self
+   end
+
    public get_default_width()
-      return predict_total_width(80 * char_w + 2 * Gui.TEXT_INSET, Yes{ history_size > 0 })
+      return predict_total_width(vt_width * char_w + 2 * Gui.TEXT_INSET, Yes{ history_size > 0 })
    end
 
    public get_default_height()
-      return predict_total_height(25 * get_line_height())
+      return predict_total_height(vt_height * get_line_height())
    end
 
    private check_changed_size()
@@ -1036,6 +1056,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    # Set the history size; 0 implies no scrollbar.
    #
    public set_history_size(n)
+      n := (0 <= integer(n)) | runerr(101, n)
       self.history_size := n
       trim_history()
       invalidate_line_count()
@@ -2696,6 +2717,8 @@ class Vt(LineBasedScrollArea, MenuMode)
       view.set_pointer("xterm")
       input_handler_coex := create input_handler()
       history_size := 500
+      vt_width := 80
+      vt_height := 25
       reset_term()
       return
    end
