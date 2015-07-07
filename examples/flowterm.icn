@@ -920,6 +920,24 @@ class Terminal(TabItem, VtUI)
       return self
    end
 
+   public set_list_width(n)
+      columns.set_width(0 < integer(n)) | return error("integer > 0 expected")
+      if is_live() then {
+         split.first.set_width().reset_layout()
+         split.do_layout().invalidate()
+      }
+      return self
+   end
+
+   public set_list_height(n)
+      columns.set_height(0 < integer(n)) | return error("integer > 0 expected")
+      if is_live() then {
+         split.first.set_height().reset_layout()
+         split.do_layout().invalidate()
+      }
+      return self
+   end
+
    public do_tab_cmd(s)
       local param
       s := ucs(s) | return error("Not a ucs string")
@@ -934,9 +952,11 @@ class Terminal(TabItem, VtUI)
          "font" : output.set_vt_font(param) | fail
          "fg": output.set_normal_fg(param) | fail
          "bg": output.set_normal_bg(param) | fail
-         "revfg": output.set_reverse_fg(param) | fail
-         "revbg": output.set_reverse_bg(param) | fail
+         "rev-fg": output.set_reverse_fg(param) | fail
+         "rev-bg": output.set_reverse_bg(param) | fail
          "hist": set_history_size(param) | fail
+         "list-width": set_list_width(param) | fail
+         "list-height": set_list_height(param) | fail
          "auto-close" : set_auto_close(&yes)
          "title" : set_title(param)
          "max-list" : on_max_list()
@@ -1842,14 +1862,18 @@ $endif
 
       if o := \opts["hist"] then
          set_history_size(o) | stop("Invalid -hist: ", &why)
+      if o := \opts["list-width"] then
+         set_list_width(o) | stop("Invalid -list-width: ", &why)
+      if o := \opts["list-height"] then
+         set_list_height(o) | stop("Invalid -list-height: ", &why)
       if o := \opts["fg"] then
          output.set_normal_fg(o) | stop("Invalid -fg: ", &why)
       if o := \opts["bg"] then
          output.set_normal_bg(o) | stop("Invalid -bg: ", &why)
-      if o := \opts["revfg"] then
-         output.set_reverse_fg(o) | stop("Invalid -revfg: ", &why)
-      if o := \opts["revbg"] then
-         output.set_reverse_bg(o) | stop("Invalid -revbg: ", &why)
+      if o := \opts["rev-fg"] then
+         output.set_reverse_fg(o) | stop("Invalid -rev-fg: ", &why)
+      if o := \opts["rev-bg"] then
+         output.set_reverse_bg(o) | stop("Invalid -rev-bg: ", &why)
       if o := \opts["font"] then
          output.set_vt_font(o) | stop("Invalid -font: ", &why)
 
@@ -2334,13 +2358,15 @@ procedure main(a)
                        Opt("v",,"Verbose output"),
                        Opt("hist",integer,"History scrollback size.  The default is 500"),
                        Opt("hs",,"Start each tab by default with a horizontal rather than a vertical split"),
-                       Opt("fg",string,"The foreground colour of the terminal"),
-                       Opt("bg",string,"The backround colour of the terminal"),
-                       Opt("revfg",string,"The reverse-mode foreground colour of the terminal, by default simply the terminal background"),
-                       Opt("revbg",string,"The reverse-mode background colour of the terminal, by default simply the terminal foreground"),
-                       Opt("font",string,"The terminal font.  This must be a monospace font.  By default, \"fixed\" at the default font size"),
-                       Opt("width",integer,"The preferred width of the terminal, in characters"),
-                       Opt("height",integer,"The preferred height of the terminal, in lines"),
+                       Opt("fg",string,"COLOUR#The foreground colour of the terminal"),
+                       Opt("bg",string,"COLOUR#The backround colour of the terminal"),
+                       Opt("rev-fg",string,"COLOUR#The reverse-mode foreground colour of the terminal, by default simply the terminal background"),
+                       Opt("rev-bg",string,"COLOUR#The reverse-mode background colour of the terminal, by default simply the terminal foreground"),
+                       Opt("font",string,"FONT#The terminal font.  This must be a monospace font.  By default, \"fixed\" at the default font size"),
+                       Opt("width",integer,"CHARS#The preferred width of the terminal, in characters.  This only applies to the first visible terminal tab."),
+                       Opt("height",integer,"LINES#The preferred height of the terminal, in lines.  This only applies to the first visible terminal tab."),
+                       Opt("list-width",integer,"PIXELS#The width of the list component in pixels"),
+                       Opt("list-height",integer,"PIXELS#The height of the list component in pixels"),
                        Opt("t",string,"The window title, by default \"FlowTerm\""),
                        Opt("sh",string,"The shell to run in each tab, by default the user's default shell")],
                        usage)
