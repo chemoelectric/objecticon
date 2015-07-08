@@ -22,7 +22,11 @@ class ThrowHandlerState(State)
    end
 
    public swap()
-      th :=: throw_handler
+      throw_handler :=: th
+   end
+
+   public finish()
+      throw_handler := th
    end
 
    public new(i)

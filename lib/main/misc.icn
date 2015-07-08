@@ -216,6 +216,9 @@ abstract class State()
 
    # Called several times to swap the saved state with the global state
    public abstract swap()
+
+   # Called once at the end to restore the global state from the saved state.
+   public abstract finish()
 end
 
 # A `State` instance which saves several global variables, specified as
@@ -258,6 +261,10 @@ class VarState(State)
       }
    end
 
+   public finish()
+      every !vars := pop(state)
+   end
+
    public new(e)
       vars := e
       return
@@ -282,6 +289,11 @@ class ScanState(State)
       &pos := kp
       kp := t
    end
+
+   public finish()
+      &subject := ks
+      &pos := kp
+   end
 end
 
 # A `State` to save the global cleanup list used by `clean` and `use`.
@@ -296,6 +308,10 @@ class CleanupState(State)
 
    public swap()
       cleanup :=: t
+   end
+
+   public finish()
+      cleanup := t
    end
 end
 
@@ -312,6 +328,10 @@ class WhyState(State)
    public swap()
       &why :=: w
    end
+
+   public finish()
+      &why := w
+   end
 end
 
 # A `State` to save `&trace`.
@@ -326,6 +346,10 @@ class TraceState(State)
 
    public swap()
       &trace :=: t
+   end
+
+   public finish()
+      &trace := t
    end
 
    public new(i)
@@ -349,6 +373,10 @@ class HandlerState(State)
       &handler :=: h
    end
 
+   public finish()
+      &handler := h
+   end
+
    public new(i)
       self.i := i
       return
@@ -368,6 +396,10 @@ class States(State)
       every (!l).swap()
    end
 
+   public finish()
+      every (!l).finish()
+   end
+
    public new(l[])
       self.l := l
       return
@@ -382,5 +414,5 @@ procedure save_state(e, state)
    state.begin()
    suspend 1(|@e, { state.swap() ; &null} ) do
       state.swap()
-   state.swap()
+   state.finish()
 end

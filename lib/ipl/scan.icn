@@ -577,6 +577,10 @@ package class PosExcursionState(State)
    public swap()
       &pos :=: kp
    end
+
+   public finish()
+      &pos := kp
+   end
 end
 
 #
