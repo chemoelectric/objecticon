@@ -607,7 +607,7 @@ class Columns(LineBasedScrollArea)
    public handle_lmpress(e)
       *parent_dialog.held = 1 | fail
       if \over then {
-         if /e.shift then {
+         if /e.ctrl then {
             set_highlight(over)
             held := over
          } else
