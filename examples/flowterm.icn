@@ -610,8 +610,10 @@ class Columns(LineBasedScrollArea)
          if /e.ctrl then {
             set_highlight(over)
             held := over
-         } else
+         } else {
             set_cursor(over)
+            ensure_line_visible(get_row_for_index(over)) 
+         }
       } 
    end
 
@@ -1261,9 +1263,8 @@ $endif
             if Files.is_directory(s) then {
                if es[-1] ~== u"/" then
                   es ||:= u"/"
-               output.goto_bottom()
-            } else
-               es ||:= u" "
+            }
+            es ||:= u" "
             send_tty(es)
          }
       } else
