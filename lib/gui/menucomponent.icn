@@ -172,6 +172,24 @@ abstract class MenuComponent(Rect,Connectable)
    end
 
    #
+   # Traverse all the components, including subcomponents, with a
+   # post-order traversal.
+   #
+   public traverse_postorder()
+      every (!self.children).traverse_postorder()
+      coact(self)
+   end
+
+   #
+   # Traverse all the components, including subcomponents, with a
+   # pre-order traversal.
+   #
+   public traverse_preorder()
+      coact(self)
+      every (!self.children).traverse_preorder()
+   end
+
+   #
    # Succeed iff the component has been initialized with {init()}, but
    # not yet cleaned up with {finally()}.
    #
