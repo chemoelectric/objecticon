@@ -489,7 +489,7 @@ end
 #
 # A directory button in the FileTrail - everything other than "/" elements.
 #
-package class FileTrailButton(TextButton)
+class FileTrailButton(TextButton)
    private readable p, tt
 
    private changed()
@@ -544,7 +544,7 @@ end
 #
 # A drop-down list in the FileTrail (shown by a "/" element).
 #
-package class FileTrailList(ButtonOnlyList)
+class FileTrailList(ButtonOnlyList)
    private readable 
       p,        # The FilePath giving the path to this point
       child     # The optional child to the right, for setting the selection in the popup
@@ -703,6 +703,14 @@ class FileTrail(Component)
       }
    end
 
+   public create_trail_list(p, child)
+      return FileTrailList(p, child)
+   end
+
+   public create_trail_button(p, tt)
+      return FileTrailButton(p, tt)
+   end
+
    # Set the path to show to the given (ucs) string.  If the path is
    # not absolute, then it is converted to an absolute path, all
    # elements of which must be ucs, or failure occurs.
@@ -717,14 +725,14 @@ class FileTrail(Component)
       every i := 2 to f.size() do {
          g := f.slice(1, i)
          if i > 2 then
-            add(FileTrailButton(g, f.slice(i - 1, 0).ucs()))
-         add(FileTrailList(g, f.get(i)))
+            add(create_trail_button(g, f.slice(i - 1, 0).ucs()))
+         add(create_trail_list(g, f.get(i)))
       }
       if f.size() > 1 then
-         add(FileTrailButton(f, f.get(-1)))
+         add(create_trail_button(f, f.get(-1)))
       # The rightmost element takes up the rest of the space to give
       # left alignment.
-      add(FileTrailList(f).
+      add(create_trail_list(f).
             set_constraint("x_align", Align.L).
             set_constraint("x_weight", 1.0))
       if is_live() then {
