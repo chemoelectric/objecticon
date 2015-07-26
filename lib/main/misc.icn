@@ -107,6 +107,22 @@ procedure use(e1, e2, e3)
    return /f & v
 end
 
+#
+# This is like `seq()`, but generates all results from `e2`.  So
+# unless the sequence is generated to its end, then the cleanup code
+# `e3` will not be run; in that case, the call should be wrapped in
+# `clean()`.
+#
+procedure use_seq(e1, e2, e3)
+   local x
+   x := @e1 | fail
+   /e3 := create x.close()
+   push(\cleanup, e3)
+   suspend |@\e2
+   ldel1(\cleanup, e3)
+   @e3
+end
+
 # This procedure can be used in conjunction with {use} to ensure that
 # all cleanup expressions are performed.  {e} is evaluated for its
 # first result only.  Then any outstanding cleanup expressions are
