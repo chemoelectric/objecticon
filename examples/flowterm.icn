@@ -784,6 +784,10 @@ class Columns(LineBasedScrollArea)
    end
 end
 
+procedure mk_file_URL(s)
+   return URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/'))
+end
+
 class DirList(ButtonOnlyList)
    public create_button()
       local b
@@ -792,12 +796,37 @@ class DirList(ButtonOnlyList)
       return b
    end
 
+   private cursor_to_url()
+      return mk_file_URL(popup.object_get_cursor())
+   end
+
+   private on_rpress(e)
+      local m, pm
+      m := parent.parent.create_link_menu(cursor_to_url()) | fail
+      every Seq{m.traverse_postorder()}.connect(close_popup, Event.ACTION)
+      pm := PopupMenu().
+         connect(create popup.clear_selections(), Event.POPUP_CLOSED)
+      pm.popup(popup, m, e.x, e.y)
+      popup.set_selections([popup.get_cursor()])
+   end
+
+   private on_mrelease(ev)
+      popup.get_cursor() = popup.get_line_under_pointer(ev) | fail
+      parent.parent.insert_link(cursor_to_url(), ev)
+      close_popup()
+   end
+
    public create_popup()
-      return ItemPaintList().
+      local l
+      l := ItemPaintList().
          set_item_paint(StringDirItemPaint()).
          set_item_border(EmptyBorder().
                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                             set_x_align(Align.L))
+      l.view.
+         connect(on_rpress, Event.MOUSE_RIGHT_PRESS).
+         connect(on_mrelease, Event.MOUSE_MIDDLE_RELEASE)
+      return l
    end
 end
 
@@ -822,16 +851,105 @@ class HistoryList(ButtonOnlyList)
       return b
    end
 
+   private cursor_to_url()
+      return mk_file_URL(popup.object_get_cursor().dir)
+   end
+
+   private on_rpress(e)
+      local m, pm
+      m := parent.parent.create_link_menu(cursor_to_url()) | fail
+      every Seq{m.traverse_postorder()}.connect(close_popup, Event.ACTION)
+      pm := PopupMenu().
+         connect(create popup.clear_selections(), Event.POPUP_CLOSED)
+      pm.popup(popup, m, e.x, e.y)
+      popup.set_selections([popup.get_cursor()])
+   end
+
+   private on_mrelease(ev)
+      popup.get_cursor() = popup.get_line_under_pointer(ev) | fail
+      parent.parent.insert_link(cursor_to_url(), ev)
+      close_popup()
+   end
+
    public create_popup()
-      local t
+      local t, l
       t := parent.parent
       set_selection_list(copy(t.history))
       set_selection(t.history_pos)
-      return ItemPaintList().
+      l := ItemPaintList().
          set_item_paint(HistoryEntryItemPaint()).
          set_item_border(EmptyBorder().
                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                             set_x_align(Align.L))
+      l.view.
+         connect(on_rpress, Event.MOUSE_RIGHT_PRESS).
+         connect(on_mrelease, Event.MOUSE_MIDDLE_RELEASE)
+      return l
+   end
+end
+
+class FileTrailListEx(FileTrailList)
+   private cursor_to_url()
+      return mk_file_URL(p.child(popup.object_get_cursor().name).ucs())
+   end
+
+   private on_rpress(e)
+      local m, pm
+      m := parent.parent.parent.create_link_menu(cursor_to_url()) | fail
+      every Seq{m.traverse_postorder()}.connect(close_popup, Event.ACTION)
+      pm := PopupMenu().
+         connect(create popup.clear_selections(), Event.POPUP_CLOSED)
+      pm.popup(popup, m, e.x, e.y)
+      popup.set_selections([popup.get_cursor()])
+   end
+
+   private on_mrelease(ev)
+      popup.get_cursor() = popup.get_line_under_pointer(ev) | fail
+      parent.parent.parent.insert_link(cursor_to_url(), ev)
+      close_popup()
+   end
+
+   public create_popup()
+      local l
+      l := FileTrailList.create_popup()
+      l.view.
+         connect(on_rpress, Event.MOUSE_RIGHT_PRESS).
+         connect(on_mrelease, Event.MOUSE_MIDDLE_RELEASE)
+      return l
+   end
+end
+
+class FileTrailButtonEx(FileTrailButton)
+   private button_to_url()
+      return mk_file_URL(p.ucs())
+   end
+
+   private on_rpress(e)
+      local m, pm
+      m := parent.parent.parent.create_link_menu(button_to_url()) | fail
+      pm := PopupMenu()
+      pm.popup(self, m, e.x, e.y)
+   end
+
+   private on_mrelease(ev)
+      parent.parent.parent.insert_link(button_to_url(), ev)
+   end
+
+   public new(p, tt)
+      FileTrailButton.new(p, tt)
+      connect(on_rpress, Event.MOUSE_RIGHT_PRESS)
+      connect(on_mrelease, Event.MOUSE_MIDDLE_RELEASE)
+      return
+   end   
+end
+
+class FileTrailEx(FileTrail)
+   public create_trail_list(p, child)
+      return FileTrailListEx(p, child)
+   end
+
+   public create_trail_button(p, tt)
+      return FileTrailButtonEx(p, tt)
    end
 end
 
@@ -1356,9 +1474,7 @@ $endif
    end
 
    private item_to_url(item)
-      local s
-      s := FilePath(cwd).child(item.name).ucs() | fail
-      return URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/'))
+      return mk_file_URL(FilePath(cwd).child(item.name).ucs())
    end
 
    private on_columns_mclick(ev)
@@ -1373,7 +1489,7 @@ $endif
          msg()
       else {
          s := FilePath(cwd).child(columns.data[columns.over].name).ucs() | fail
-         url := URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/')) | fail
+         url := mk_file_URL(s)
          msg(url.ucs())
       }
    end
@@ -2279,7 +2395,7 @@ $endif
          clear_constraints().
          set_tooltip(paint_37).
          connect(self.on_favourites_list, Event.SELECTION_CHANGED)
-      trail := FileTrail().
+      trail := FileTrailEx().
          set_size(scale(200), scale(20)).
          clear_constraints().
          set_constraint("x_align", Align.L).
