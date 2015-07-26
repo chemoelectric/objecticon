@@ -143,6 +143,7 @@ abstract class VtUI()
    public abstract link_middle_clicked(url)
    public abstract create_link_menu(url)
    public abstract create_context_menu()
+   public abstract quieten_cursor()
    public abstract send_tty(s)
    public abstract vt_size_changed(cols, rows)
    public abstract msg(s, n)
@@ -2443,10 +2444,15 @@ class Vt(LineBasedScrollArea, MenuMode)
       # keyboard handler.
       view.set_pointer("xterm")
       quieten := 1
+      ui.quieten_cursor()
+   end
+
+   public unquieten_cursor()
+      quieten := &null
    end
 
    private handle_move(ev)
-      quieten := &null
+      unquieten_cursor()
    end
 
    private handle_in_chain(ev)

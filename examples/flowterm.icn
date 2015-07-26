@@ -333,6 +333,7 @@ class Columns(LineBasedScrollArea)
       cursor
 
    private
+      quieten,
       data_w,
       col_w,
       n_rows,
@@ -492,9 +493,26 @@ class Columns(LineBasedScrollArea)
       }
    end
 
+   public quieten_cursor()
+      (/quieten & *parent_dialog.held = 0) | fail
+      set_over()
+      # No need to synch_pointer since we call this method out of the
+      # vt's keyboard handler.
+      view.set_pointer()
+      quieten := 1
+   end
+
+   public unquieten_cursor()
+      quieten := &null
+   end
+
+   private handle_move(ev)
+      unquieten_cursor()
+   end
+
    private handle_in_chain(e)
       local k, f
-      *parent_dialog.held = 0 | fail
+      (/quieten & *parent_dialog.held = 0) | fail
       if e.code === (Key.SHIFT_L | Key.SHIFT_R) then {
          if /e.release then
             f := 1
@@ -752,15 +770,16 @@ class Columns(LineBasedScrollArea)
       gutter := scale(8)
       item_paint := TextItemPaint()
       item_border := NullBorder().set_x_align(Align.L)
-      view.connect(self.handle_lmpress, Event.MOUSE_LEFT_PRESS)
-      view.connect(self.handle_lmpress, Event.MOUSE_MIDDLE_PRESS)
-      view.connect(self.handle_lmdrag, Event.MOUSE_LEFT_DRAG)
-      view.connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-      view.connect(self.handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
-      view.connect(self.handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
-      view.connect(self.handle_in_chain, Event.IN_POINT_CHAIN)
-      view.connect(self.handle_exit, Event.MOUSE_EXIT)
-      connect(self.handle_key, Event.KEY_PRESS)
+      view.connect(handle_lmpress, Event.MOUSE_LEFT_PRESS)
+      view.connect(handle_lmpress, Event.MOUSE_MIDDLE_PRESS)
+      view.connect(handle_lmdrag, Event.MOUSE_LEFT_DRAG)
+      view.connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      view.connect(handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
+      view.connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
+      view.connect(handle_in_chain, Event.IN_POINT_CHAIN)
+      view.connect(handle_exit, Event.MOUSE_EXIT)
+      view.connect(handle_move, Event.MOUSE_MOVEMENT)
+      connect(handle_key, Event.KEY_PRESS)
       return
    end
 end
@@ -1011,6 +1030,10 @@ class Terminal(TabItem, VtUI)
 
    public link_middle_clicked(url, ev)
       insert_link(url, ev)
+   end
+
+   public quieten_cursor()
+      columns.quieten_cursor()
    end
 
    public send_tty(s)
@@ -1264,11 +1287,10 @@ $endif
                if es[-1] ~== u"/" then
                   es ||:= u"/"
             }
-            es ||:= u" "
-            send_tty(es)
+            send_tty(es || u" ")
          }
       } else
-         send_tty(url.ucs())
+         send_tty(url.ucs() || u" ")
    end
 
    public err_msg(s)
@@ -1807,6 +1829,10 @@ $endif
       goto_dir(ev)
    end
 
+   private on_columns_move(ev)
+      output.unquieten_cursor()
+   end
+
    public new(dir, other, revert_tab)
       local start_dir, o
       TabItem.new()
@@ -1849,8 +1875,11 @@ $endif
                              set_x_align(Align.L)).
          connect(on_columns_lclick, "lclicked").
          connect(on_columns_mclick, "mclicked").
-         connect(on_columns_over_changed, "over-changed").
-         connect(on_columns_rpress, Event.MOUSE_RIGHT_PRESS)
+         connect(on_columns_over_changed, "over-changed")
+      columns.view.
+         connect(on_columns_rpress, Event.MOUSE_RIGHT_PRESS).
+         connect(on_columns_move, Event.MOUSE_MOVEMENT)
+
       trail.
          set_height().
          set_constraint("l_inset", scale(10)).
