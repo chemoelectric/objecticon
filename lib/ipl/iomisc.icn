@@ -1,7 +1,7 @@
 package ipl.io
 
 import
-   io(Files, FileOpt, FileStream, stop)
+   io(Files, FileOpt, FileStream, DirStream, FilePath, stop), util(use)
 
 #
 # Return an open file to /dev/null.  The returned file is shared
@@ -23,4 +23,48 @@ procedure get_zero()
    initial
       zero := FileStream("/dev/zero", FileOpt.RDWR) | stop("Can't open /dev/zero: ", &why)
    return zero
+end
+
+package record Msg(file, revert)
+
+package procedure dir_recurse1(f, revert)
+   local s, p, f2, l
+   use {
+      s := DirStream(f),
+      {
+         coact(Msg(f, &current), revert)
+         p := FilePath(f)
+         while l := s.read() do {
+            if Files.is_relative_dir(l) then
+               next
+            f2 := p.child(l).str() 
+            if Files.is_directory(f2) then
+               dir_recurse1(f2, revert)
+            else
+               coact(Msg(f2, &current), revert)
+         }
+      }
+   }
+end
+
+# Recursively traverse directory `f`, generating all the filenames
+# (including directories).  If this generator isn't used to
+# exhaustion, the call must be wrapped in the `util.clean()` function,
+# in order to close all outstanding files.
+#
+# @example
+# @   clean{{
+# @      every f := dir_recurse(d) \ 50 do
+# @         write("got ", f)
+# @   }}
+#
+procedure dir_recurse(f)
+   local v, here, e
+   here := &current
+   e := create dir_recurse1(f, here)
+   v := @e | fail
+   repeat {
+      suspend v.file
+      v := coact(, v.revert) | break
+   }
 end
