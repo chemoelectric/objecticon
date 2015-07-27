@@ -67,22 +67,15 @@ class Connectable()
    end
 
    #
-   # Remove all {Listener}s with method pointers associated
-   # with the given object.
+   # Move the last listener in the list to the given position (default
+   # 1).  The relative order of the other listeners is unchanged.
    #
-   public disconnect_object(obj)
-      local t, l
-      t := []
-      every l := !listeners do
-         if is_methp_with_object(l.proc, obj) then
-            l.disable()
-         else 
-            put(t, l)
-      listeners := t
+   public move_listener(pos)
+      /pos := 1
+      listeners := copy(listeners)
+      insert(listeners, pos, pull(listeners)) | fail
       return self
    end
-
-   private static native is_methp_with_object(mp, o)
 
    #
    # Remove all {Listener}s with the given proc field.
@@ -126,6 +119,13 @@ class Connectable()
       l.disable()
       listeners := t
       return self
+   end
+
+   #
+   # Generate the listeners
+   #
+   public gen_listeners()
+      suspend .!listeners
    end
 
    #
