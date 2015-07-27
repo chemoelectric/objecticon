@@ -803,7 +803,7 @@ class DirList(ButtonOnlyList)
    private on_rpress(e)
       local m, pm
       m := parent.parent.create_link_menu(cursor_to_url()) | fail
-      every Seq{m.traverse_postorder()}.connect(close_popup, Event.ACTION)
+      every Seq{m.traverse_postorder()}.connect(close_popup, Event.ACTION).move_listener()
       pm := PopupMenu().
          connect(create popup.clear_selections(), Event.POPUP_CLOSED)
       pm.popup(popup, m, e.x, e.y)
@@ -858,7 +858,7 @@ class HistoryList(ButtonOnlyList)
    private on_rpress(e)
       local m, pm
       m := parent.parent.create_link_menu(cursor_to_url()) | fail
-      every Seq{m.traverse_postorder()}.connect(close_popup, Event.ACTION)
+      every Seq{m.traverse_postorder()}.connect(close_popup, Event.ACTION).move_listener()
       pm := PopupMenu().
          connect(create popup.clear_selections(), Event.POPUP_CLOSED)
       pm.popup(popup, m, e.x, e.y)
@@ -896,7 +896,7 @@ class FileTrailListEx(FileTrailList)
    private on_rpress(e)
       local m, pm
       m := parent.parent.parent.create_link_menu(cursor_to_url()) | fail
-      every Seq{m.traverse_postorder()}.connect(close_popup, Event.ACTION)
+      every Seq{m.traverse_postorder()}.connect(close_popup, Event.ACTION).move_listener()
       pm := PopupMenu().
          connect(create popup.clear_selections(), Event.POPUP_CLOSED)
       pm.popup(popup, m, e.x, e.y)
@@ -1507,7 +1507,7 @@ $endif
    private rename(s)
       local d
       d := RenameDialog(s)
-      d.show_modal()
+      d.show_modal(parent_dialog)
       s := \d.result | fail
       info_msg("Renamed OK")
       if cwd == FilePath(s).parent().ucs() then
