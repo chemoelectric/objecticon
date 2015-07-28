@@ -34,19 +34,21 @@ class HTMLMessageDialog(Dialog)
       return self
    end
 
+   private on_first_load()
+      if \size_precisely_flag then {
+         browser.
+            set_size(browser.predict_total_width(browser.view.inner_w),
+                     browser.predict_total_height(browser.view.inner_h)).
+            reset_layout_chain()
+         resize_win(get_preferred_width(), get_preferred_height())
+      }
+      win.set_canvas("normal")
+   end
+
    public component_setup()
       if \delay_open_flag | \size_precisely_flag then {
          set_canvas("hidden")
-         browser.connect_n(create {
-            if \size_precisely_flag then {
-               browser.
-                  set_size(browser.predict_total_width(browser.view.inner_w),
-                           browser.predict_total_height(browser.view.inner_h)).
-                  reset_layout_chain()
-               resize_win(get_preferred_width(), get_preferred_height())
-            }
-            win.set_canvas("normal")
-         }, SimpleBrowser.PAGE_FULLY_LOADED)
+         browser.connect_n(on_first_load, SimpleBrowser.PAGE_FULLY_LOADED)
       }
    end
 
