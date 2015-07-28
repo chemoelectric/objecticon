@@ -5,6 +5,9 @@ import ipl.functional
 class Connectable()
    private listeners
 
+   # This variable contains the last `Listener` added with `connect()`.
+   private readable last_listener
+
    #
    # Helper method to create and fire an Event object from the given parameters.
    #
@@ -23,17 +26,21 @@ class Connectable()
 
    #
    # Create and connect a `Listener` to this object.  To get the actual `Listener`
-   # instance, use `last_listener()`.
+   # instance added, use the variable `last_listener`.
+   #
+   # @param proc The procedure or other invocable to call on an event.
+   # @param etype The particular event to listen for; null means all events
+   # @param pos The position in the listener list, default 0.
    # @return self
    #
-   public connect(proc, etype)
-      local l
+   public connect(proc, etype, pos)
       if type(proc) == "co-expression" then
          proc := exprf(proc)
-      l := Listener(proc,
-                    etype)
+      /pos := 0
       listeners := copy(listeners)
-      put(listeners, l)
+      insert(listeners, 
+             pos,
+             last_listener <- Listener(proc, etype)) | fail
       return self
    end
 
@@ -42,7 +49,7 @@ class Connectable()
    # after it is fired `n` times.  `n` defaults to 1.
    # @return self
    #
-   public connect_n(proc, etype, n)
+   public connect_n(proc, etype, pos, n)
       local x
       /n := 1
       if type(proc) == "co-expression" then
@@ -52,33 +59,21 @@ class Connectable()
          n -:= 1
          if n = 0 then
             disconnect(x)
-      }}, etype)
-      x := last_listener()
+      }}, etype, pos) | fail
+      x := last_listener
       return self
    end
 
    #
-   # This returns the last listener in the listener list.  Just after
-   # a call to `connect()`, this will be the `Listener` object just
-   # added.  This can then be passed (for example) to `disconnect()`.
+   # This returns the last `Listener` instance added with `connect`.
+   # This can then be passed (for example) to `disconnect()`.
    #
-   public last_listener()
-      return .listeners[-1]
+   public get_last_listener()
+      return .\last_listener
    end
 
    #
-   # Move the last listener in the list to the given position (default
-   # 1).  The relative order of the other listeners is unchanged.
-   #
-   public move_listener(pos)
-      /pos := 1
-      listeners := copy(listeners)
-      insert(listeners, pos, pull(listeners)) | fail
-      return self
-   end
-
-   #
-   # Remove all {Listener}s with the given proc field.
+   # Remove all `Listener`s with the given proc field.
    #
    public disconnect_proc(proc)
       local t, l
@@ -94,7 +89,7 @@ class Connectable()
    end
 
    #
-   # Remove all {Listener}s with the given type field.
+   # Remove all `Listener`s with the given type field.
    #
    public disconnect_type(type)
       local t, l
@@ -110,7 +105,8 @@ class Connectable()
    end
 
    #
-   # Remove a Listener previously added by {connect}
+   # Remove a `Listener` previously added by {connect}
+   # @param l The `Listener` to disconnect 
    #
    public disconnect(l)
       local t
@@ -129,13 +125,16 @@ class Connectable()
    end
 
    #
-   # Reconnect a Listener previously added by {connect} and
+   # Reconnect a `Listener` previously added by {connect} and
    # then removed by {disconnect}.
+   # @param l The `Listener` to reconnect 
+   # @param pos The position in the listener list, default 0.
    #
-   public reconnect(l)
+   public reconnect(l, pos)
+      /pos := 0
       listeners := copy(listeners)
+      insert(listeners, pos, l) | fail
       l.reenable()
-      put(listeners, l)
       return self
    end
 

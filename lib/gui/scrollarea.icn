@@ -528,7 +528,7 @@ abstract class ScrollArea(Component)
          default_key_listener := &null
       } else {
          set_accepts_focus(&yes)
-         default_key_listener := connect(on_default_key, Event.KEY_PRESS).last_listener()
+         default_key_listener := connect(on_default_key, Event.KEY_PRESS).last_listener
       }
       return self
    end

@@ -77,7 +77,7 @@ class CheckBoxTableColumn(BaseTableColumn)
          else
             self.set_box_paint(ImagePaint().set_cache("gui.DIAMOND_UP"), ImagePaint().set_cache("gui.DIAMOND_DOWN"))
       }
-      mouse_down_listener := get_table_content().connect(self.mouse_down, Event.MOUSE_LEFT_PRESS).last_listener()
+      mouse_down_listener := get_table_content().connect(self.mouse_down, Event.MOUSE_LEFT_PRESS).last_listener
       BaseTableColumn.initially()
       self.unchecked_paint.initially(self)
       self.checked_paint.initially(self)
