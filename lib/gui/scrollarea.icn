@@ -354,9 +354,8 @@ abstract class ScrollArea(Component)
          #
          view.w := max_tw
          view.h := max_th
-         self.remove(\self.vsb)
-         self.remove(\self.hsb)
-         self.vsb := self.hsb := &null
+         remove_vsb()
+         remove_hsb()
       } else if (need_hsb + need_vsb > 2) then {
          #
          # Two scroll bars.
@@ -386,8 +385,7 @@ abstract class ScrollArea(Component)
          #
          if /self.vsb := ScrollBar() then
             new_vsb := 1
-         self.remove(\self.hsb)
-         self.hsb := &null
+         remove_hsb()
 
          view.w := min_tw
          view.h := max_th
@@ -404,8 +402,7 @@ abstract class ScrollArea(Component)
             self.hsb.set_is_horizontal(&yes)
             new_hsb := 1
          }
-         self.remove(\self.vsb)
-         self.vsb := &null
+         remove_vsb()
 
          view.w := max_tw
          view.h := min_th
@@ -459,10 +456,21 @@ abstract class ScrollArea(Component)
       view.layout()
    end
 
+   public remove_hsb()
+      remove(\hsb)
+      hsb := &null
+      return self
+   end
+
+   public remove_vsb()
+      remove(\vsb)
+      vsb := &null
+      return self
+   end
+
    #
    # Invalidate the view area.
    #
-   # @p
    public refresh()
       view.invalidate()
    end
