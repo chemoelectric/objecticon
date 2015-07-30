@@ -1,7 +1,9 @@
 package ipl.io
 
 import
-   io(Files, FileOpt, FileStream, DirStream, FilePath, stop), util(use)
+   io(Files, FileOpt, FileStream, DirStream, FilePath, stop), 
+   util(use),
+   exception(throw)
 
 #
 # Return an open file to /dev/null.  The returned file is shared
@@ -27,41 +29,52 @@ end
 
 package record Msg(file, revert)
 
-package procedure dir_recurse1(f, revert)
-   local s, p, f2, l
-   use {
-      s := DirStream(f),
-      {
-         coact(Msg(f, &current), revert)
-         p := FilePath(f)
-         while l := s.read() do {
-            if Files.is_relative_dir(l) then
-               next
-            f2 := p.child(l).str() 
-            if Files.is_directory(f2) then
-               dir_recurse1(f2, revert)
-            else
-               coact(Msg(f2, &current), revert)
-         }
-      }
+package procedure dir_recurse2(s, f, revert, strict)
+   local p, f2, l
+   coact(Msg(f, &current), revert)
+   p := FilePath(f)
+   repeat {
+      l := s.read_line() | fail
+      if /l then
+         return
+      if Files.is_relative_dir(l) then
+         next
+      f2 := p.child(l).str() 
+      if Files.is_directory(f2) then
+         dir_recurse1(f2, revert, strict)
+      else
+         coact(Msg(f2, &current), revert)
    }
 end
 
+package procedure dir_recurse1(f, revert, strict)
+   local s, p, f2, l
+   use {
+      s := DirStream(f),
+      dir_recurse2(s, f, revert, strict)
+   } | if \strict then throw("Failed to read dir " || f || ": " || &why)
+end
+
+#
 # Recursively traverse directory `f`, generating all the filenames
 # (including directories).  If this generator isn't used to
 # exhaustion, the call must be wrapped in the `util.clean()` function,
-# in order to close all outstanding files.
+# in order to close all outstanding files.  If the `strict` flag is
+# set, then on an error reading a directory, an exception is thrown.
+# In this case the call should also be enclosed with one of the try
+# procedures, or a clean and try combination such as
+# `util.clean_try()`.
 #
 # @example
-# @   clean{{
-# @      every f := dir_recurse(d) \ 50 do
+# @   clean_try{{
+# @      every f := dir_recurse(d, &yes) \ 50 do
 # @         write("got ", f)
-# @   }}
+# @   }} | write("Problem: ", &why)
 #
-procedure dir_recurse(f)
+procedure dir_recurse(f, strict)
    local v, here, e
    here := &current
-   e := create dir_recurse1(f, here)
+   e := create dir_recurse1(f, here, strict)
    v := @e | fail
    repeat {
       suspend v.file
