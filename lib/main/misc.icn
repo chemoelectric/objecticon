@@ -145,7 +145,7 @@ end
 # Perform any outstanding cleanups in the {cleanup} list.  Fails if any of the
 # expressions fail, succeeds otherwise.
 #
-procedure do_cleanups()
+package procedure do_cleanups()
    local f, x
    while x := pop(cleanup) do
       @x | (f := 1)
