@@ -48,7 +48,7 @@ package procedure dir_recurse2(s, f, revert, strict)
 end
 
 package procedure dir_recurse1(f, revert, strict)
-   local s, p, f2, l
+   local s
    use {
       s := DirStream(f),
       dir_recurse2(s, f, revert, strict)
