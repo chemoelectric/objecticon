@@ -8,7 +8,7 @@
 
 package util
 
-import lang, ipl.scan(max_many)
+import lang, ipl.scan(max_many), io(RamStream)
 
 final abstract class Format()
    public static const
@@ -181,24 +181,27 @@ final abstract class Format()
    #
    public static unescape(subject)
       local res
-      res := ""
+      res := RamStream()
       subject ? repeat {
-         res ||:= string(tab(upto('\\') | 0))
+         res.out(tab(upto('\\') | 0))
          move(1) | break
-         res ||:= string(if any('01234567') then
-                         char(iand("8r" || tab(max_many('01234567', 3)), 8r377))
-         else if ="x" then
-         char("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
-         else if ="u" then
-         uchar("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
-         else if ="U" then
-         uchar("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6))) |
-         return error("code point out of range")
-         else if ="^" then
-         char(iand(ord(move(1)), 8r37))
-         else 
-         unescape_char(move(1))) | "\0"
+         res.out((if any('01234567') then
+                     char(iand("8r" || tab(max_many('01234567', 3)), 8r377))
+                  else if ="x" then
+                     char("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
+                  else if ="u" then
+                     uchar("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
+                  else if ="U" then
+                     uchar("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6))) | {
+                        res.close()
+                        return error("code point out of range")
+                     }
+                  else if ="^" then
+                     char(iand(ord(move(1)), 8r37))
+                  else 
+                     unescape_char(move(1))) | "\0")
       }
+      res := res.done()
       return if type(subject) == "ucs" then ucs(res) | error("invalid utf-8 escape sequence") else res
    end
 
@@ -215,18 +218,18 @@ final abstract class Format()
             esc_flag := &yes
             move(1)
             c := (if any('01234567') then
-                  iand("8r" || tab(max_many('01234567', 3)), 8r377)
-            else if ="x" then
-            integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
-            else if ="u" then
-            integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
-            else if ="U" then
-            (16r10FFFF >= integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6)))) |
-            return error("code point out of range")
-            else if ="^" then
-            iand(ord(move(1)), 8r37)
-            else 
-            ord(unescape_char(move(1)))) | 0
+                     iand("8r" || tab(max_many('01234567', 3)), 8r377)
+                  else if ="x" then
+                     integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
+                  else if ="u" then
+                     integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
+                  else if ="U" then
+                     (16r10FFFF >= integer("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6)))) |
+                        return error("code point out of range")
+                  else if ="^" then
+                     iand(ord(move(1)), 8r37)
+                  else 
+                     ord(unescape_char(move(1)))) | 0
          } else {
             esc_flag := &no
             c := ord(move(1))
