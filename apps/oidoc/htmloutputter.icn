@@ -19,14 +19,25 @@ class HtmlOutputter(Outputter)
       done_files,
       subclass_table
 
-   private get_serial_no(sym)
-      static serial_no_gen, sym_serial_no_table
+   private get_id(sym)
+      local v
+      static sym_id_table
       initial {
-         serial_no_gen := 0
-         sym_serial_no_table := table()
+         sym_id_table := table()
       }
-      /sym_serial_no_table[sym] := (serial_no_gen +:= 1)
-      return sym_serial_no_table[sym]
+
+      if v := member(sym_id_table, sym) then
+         return v
+
+      v := if is(sym, Symbol) then
+         sym.get_fq_name_default()
+      else if is(sym, ScannedFile) then
+         (\sym.pack | "default") || "_" || FilePath(sym.filename).get(-1)
+      else
+         syserr("Unknown type to get_id")
+
+      insert(sym_id_table, sym, v)
+      return v
    end
 
    public output()
@@ -78,7 +89,7 @@ class HtmlOutputter(Outputter)
          write(nav, "<a href=\"all.html\" target=\"listFrame\">All</a><p>")
          every s := get_packages() do {
             if should_print_package(s) then
-               write(nav, "<a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a><br>")
+               write(nav, "<a href=\"", s || ".html" || "\" target=\"listFrame\">", s, "</a><br>")
             output_package(s)
          }
          write(nav, "</body></html>")
@@ -91,7 +102,7 @@ class HtmlOutputter(Outputter)
          write(begin, "This is the automatically generated documentation for the following packages.<p>")
          every s := get_packages() do
             if should_print_package(s) then
-               write(begin, "<a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a><br>")
+               write(begin, "<a href=\"", s || ".html" || "\" target=\"listFrame\">", s, "</a><br>")
          write(begin, "</body></html>")
       }}
 
@@ -103,14 +114,14 @@ class HtmlOutputter(Outputter)
          every c := !isort(all_classes, name_sort) do {
             if should_print_symbol(c) then
                write(all, "<a href=\"", 
-                     get_serial_no(c) || ".html\" target=\"displayFrame\">", 
+                     get_id(c) || ".html\" target=\"displayFrame\">", 
                      c.name, "</a><br>")
          }
          write(all, "<p><h1>Other Symbols</h1><p>")
          every c := !isort(all_others, name_sort) do {
             if should_print_symbol(c) then
                write(all, 
-                     "<a href=\"", get_serial_no(c) || ".html\" target=\"displayFrame\">", 
+                     "<a href=\"", get_id(c) || ".html\" target=\"displayFrame\">", 
                      c.name, "</a><br>")
          }
       }}
@@ -119,19 +130,19 @@ class HtmlOutputter(Outputter)
    # Output the summary list for one package set
    private output_package(s)
       local f, fname, c
-      fname := output_dir || "/" || s || "_list.html"
+      fname := output_dir || "/" || s || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
          write(f, "<html><head><title>", s, "</title></head><body>")
          write(f, "<h1>Package ", s, "</h1><p>")
          write(f, "<h1>Classes</h1><p>")
          every c := get_classes_in(s) do {
             output_class(c)
-            write(f, "<a href=\"", get_serial_no(c) || ".html\" target=\"displayFrame\">", c.name, "</a><br>")
+            write(f, "<a href=\"", get_id(c) || ".html\" target=\"displayFrame\">", c.name, "</a><br>")
          }
          write(f, "<p><h1>Other Symbols</h1><p>")
          every c := get_others_in(s) do {
             output_other(c)
-            write(f, "<a href=\"", get_serial_no(c) || ".html\" target=\"displayFrame\">", c.name, "</a><br>")
+            write(f, "<a href=\"", get_id(c) || ".html\" target=\"displayFrame\">", c.name, "</a><br>")
          }
       }}
    end
@@ -139,7 +150,7 @@ class HtmlOutputter(Outputter)
    # Output one class description
    private output_class(c)
       local s, f, fname, supers, o, subs, d, overrides, meths, m, vars, mm, x, type
-      fname := output_dir || "/" || get_serial_no(c) || ".html"
+      fname := output_dir || "/" || get_id(c) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
          write(f, "<html><head><title>", c.name, "</title></head><body>")
          type := get_class_prefix(c)
@@ -154,7 +165,7 @@ class HtmlOutputter(Outputter)
          # Superclass list
          supers := []
          every o := c.get_resolved_supers() do {
-            put(supers, "<a href=\"" || get_serial_no(o) || ".html\" target=\"displayFrame\">" || o.get_fq_name() || "</a>")
+            put(supers, "<a href=\"" || get_id(o) || ".html\" target=\"displayFrame\">" || o.get_fq_name() || "</a>")
          }
          if *supers > 0 then {
             write(f, "<dt>Superclasses :</dt><dd>")
@@ -165,7 +176,7 @@ class HtmlOutputter(Outputter)
          # Subclass list
          subs := []
          every d := !\subclass_table[c] do {
-            put(subs, "<a href=\"" || get_serial_no(d) || ".html\">" || d.get_fq_name() || "</a>")
+            put(subs, "<a href=\"" || get_id(d) || ".html\">" || d.get_fq_name() || "</a>")
          }
          if *subs > 0 then {
             write(f, "<dt>Subclasses :</dt><dd>")
@@ -174,7 +185,7 @@ class HtmlOutputter(Outputter)
          }
 
          s := c.get_package() | "default"
-         write(f, "<dt>Package :</dt><dd><a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a></dd>")
+         write(f, "<dt>Package :</dt><dd><a href=\"", s || ".html" || "\" target=\"listFrame\">", s, "</a></dd>")
          write(f, "</dl><p>")
 
          if is(c.obj, Tree) then {
@@ -201,7 +212,7 @@ class HtmlOutputter(Outputter)
          if *meths > 0 then {
             tbl_start(f, "Methods defined in this class")
             every m := !meths do {
-               write(f,"<a href=\"#" || get_serial_no(m) || "\">" || m.name || "()</a>")
+               write(f,"<a href=\"#" || m.name || "\">" || m.name || "()</a>")
             }
             tbl_end(f)
          }
@@ -209,7 +220,7 @@ class HtmlOutputter(Outputter)
          if *vars > 0 then {
             tbl_start(f, "Variables defined in this class")
             every m := !vars do {
-               write(f,"<a href=\"#" || get_serial_no(m) || "\">" || m.name || "</a>")
+               write(f,"<a href=\"#" || m.name || "\">" || m.name || "</a>")
             }
             tbl_end(f)
          }
@@ -219,14 +230,14 @@ class HtmlOutputter(Outputter)
          if *meths > 0 then {
             pretty_heading(f, "Method detail")
             every m := !meths do {
-               write(f, "<a name=\"", get_serial_no(m), "\"/>")
+               write(f, "<a name=\"", m.name, "\"/>")
                write(f, "<h3>", m.name, "(", get_param_string(m.obj) ,")</h3>")
                write(f, get_access_string(m.obj), "<p>")
                write(f, "<dl>")
                if member(overrides, m.name) then {
                   o := overrides[m.name]
                   mm := o.get_field(m.name) | stop("Internal error")
-                  write(f,"<dd>Overrides <a href=\"" || get_serial_no(o) || ".html#" || get_serial_no(mm) || "\">" || mm.name || "()</a> in <a href=\"", get_serial_no(o), ".html\" target=\"displayFrame\">", o.get_fq_name(), "</a></dd>")
+                  write(f,"<dd>Overrides <a href=\"" || get_id(o) || ".html#" || mm.name || "\">" || mm.name || "()</a> in <a href=\"", get_id(o), ".html\" target=\"displayFrame\">", o.get_fq_name(), "</a></dd>")
                }
                if is(m.obj, Tree) then {
                   write(f, "<dd>")
@@ -240,7 +251,7 @@ class HtmlOutputter(Outputter)
          if *vars > 0 then {
             pretty_heading(f, "Variable detail")
             every m := !vars do {
-               write(f, "<a name=\"", get_serial_no(m), "\"/>")
+               write(f, "<a name=\"", m.name, "\"/>")
                write(f, "<h3>", m.name, "</h3>")
                write(f, get_access_string(m.decl_obj), "<p>")
                write(f, "<dl>")
@@ -284,14 +295,14 @@ class HtmlOutputter(Outputter)
          if *\tm[d] > 0 then {
             tbl_start(f, "Methods inherited from " || d.get_fq_name())
             every m := !isort(tm[d], name_sort) do {
-               write(f,"<a href=\"" || get_serial_no(d) || ".html#" || get_serial_no(m) || "\">" || m.name || "()</a>")
+               write(f,"<a href=\"" || get_id(d) || ".html#" || m.name || "\">" || m.name || "()</a>")
             }
             tbl_end(f)
          }
          if *\tv[d] > 0 then {
             tbl_start(f, "Variables inherited from " || d.get_fq_name())
             every m := !isort(tv[d], name_sort) do {
-               write(f,"<a href=\"" || get_serial_no(d) || ".html#" || get_serial_no(m) || "\">" || m.name || "</a>")
+               write(f,"<a href=\"" || get_id(d) || ".html#" || m.name || "\">" || m.name || "</a>")
             }
             tbl_end(f)
          }
@@ -326,7 +337,7 @@ class HtmlOutputter(Outputter)
       every k := !com.keys do
          html_fields(f, c, k, com.fields[k])
       write(f, "<dt><a href=\"", 
-            get_serial_no(c.obj.get_first_token().filename) || ".html#", 
+            get_id(c.scanned_file) || ".html#", 
             c.obj.get_first_token().line , 
             "\" target=\"displayFrame\">Source - ", 
             FilePath(c.obj.get_first_token().filename).get(-1),
@@ -446,11 +457,11 @@ class HtmlOutputter(Outputter)
       o := resolve_link(c, s) | return s
       if is(o, ClassField) then {
          # Link within the parent class's page
-         return "<a href=\"" || get_serial_no(o.defining_class) || ".html#" || 
-            get_serial_no(o) || "\">" || s || "</a>"
+         return "<a href=\"" || get_id(o.defining_class) || ".html#" || 
+            get_id(o) || "\">" || s || "</a>"
       } else {
          # Link to the absolute page
-         return "<a href=\"" || get_serial_no(o) || ".html\" target=\"displayFrame\">" || s || "</a>"
+         return "<a href=\"" || get_id(o) || ".html\" target=\"displayFrame\">" || s || "</a>"
       }
    end
 
@@ -462,7 +473,7 @@ class HtmlOutputter(Outputter)
          return
       insert(done_files, filename)
 
-      fname := output_dir || "/" || get_serial_no(filename) || ".html"
+      fname := output_dir || "/" || get_id(c.scanned_file) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
          write(f, "<html><head><title>", FilePath(filename).get(-1), "</title></head><body><pre>")
          # filename may be unavailable if a #line directive gave a path which was inaccessible
@@ -496,13 +507,13 @@ class HtmlOutputter(Outputter)
          type := "package readable " || type
       else if c.has_package_flag() then
          type := "package " || type
-      fname := output_dir || "/" || get_serial_no(c) || ".html"
+      fname := output_dir || "/" || get_id(c) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
          write(f, "<html><head><title>", c.name, "</title></head><body>")
          write(f, "<h1>", fullname, "</h1>")
          write(f, "<dl>")
          s := c.get_package() | "default"
-         write(f, "<dt>Package :</dt><dd><a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a></dd>")
+         write(f, "<dt>Package :</dt><dd><a href=\"", s || ".html" || "\" target=\"listFrame\">", s, "</a></dd>")
          write(f, "<dt>Type :</dt><dd>", type, "</dd>")
          write(f, "</dl><p>")
          if is(c.obj, Tree) then {
