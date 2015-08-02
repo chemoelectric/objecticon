@@ -236,7 +236,7 @@ class HtmlOutputter(Outputter)
                write(f, "<dl>")
                if member(overrides, m.name) then {
                   o := overrides[m.name]
-                  mm := o.get_field(m.name) | stop("Internal error")
+                  mm := o.get_field(m.name) | syserr("get_field() failed")
                   write(f,"<dd>Overrides <a href=\"" || get_id(o) || ".html#" || mm.name || "\">" || mm.name || "()</a> in <a href=\"", get_id(o), ".html\" target=\"displayFrame\">", o.get_fq_name(), "</a></dd>")
                }
                if is(m.obj, Tree) then {
@@ -500,7 +500,7 @@ class HtmlOutputter(Outputter)
          }
          RecordSymbol : type := "record"
          GlobalSymbol : type := "global"
-         default : stop("Unknown type:", image(c))
+         default : syserr("Unknown type to output_other")
       }
 
       if is(c, GlobalSymbol) & c.has_readable_flag() then
@@ -520,6 +520,11 @@ class HtmlOutputter(Outputter)
             output_file(c)
             comment_and_fields(f, c)
             write(f, "<p>")
+         }
+         if is(c, RecordSymbol) then {
+            write(f, "<dt>Fields :</dt><dl>")
+            every write(f, "<dd>", get_record_fields(c.obj), "</dd>")
+            write(f, "</dl>")
          }
          write(f, "</body></html>")
       }}

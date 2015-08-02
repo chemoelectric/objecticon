@@ -95,6 +95,13 @@ class Outputter()
       return s
    end
 
+   protected get_record_fields(obj)
+      suspend if is(obj, Tree) then
+         obj.get_ids().gen().str()
+      else
+         obj.get_fields()
+   end
+
    protected get_class_prefix(c)
       local s
       s := ""
