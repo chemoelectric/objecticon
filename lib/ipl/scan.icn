@@ -791,6 +791,7 @@ end
 #
 procedure clcset(c)
    local ls
+   c := cset(c) | runerr(104, c)
    ls := map(string(c ** &letters))
    return c ++ cset(ls || map(ls, &lcase, &ucase))
 end
@@ -856,7 +857,7 @@ procedure clfind(s1, s2, i, j)
    s1 := map(s1)
    # Cset of first char in upper and lower case; eg if searching for
    # "cat", c = 'cC'.
-   c := cset(s1[1] || map(s1[1], &lcase, &ucase))
+   c := clcset(s1[1])
    every t := upto(c, s2, i, j) do {
       if t > j - *s1 then
          break
@@ -938,6 +939,32 @@ procedure revany0(c, s, i, j)
    local a
    a := begin_analysis(s, i, j) | fail
    return revany(c, a.s, a.i, a.j) | .a.j
+end
+
+# Do a reverse find from the end of the string.  For each match, the
+# position just after the match is generated.
+#
+# The sequence generated should be equivalent to
+#      find(s1, s2, i, j) + *s1
+# but in reverse order.
+#
+procedure revfind(s1, s2, i, j)
+   local c, t, a
+   a := begin_analysis(s2, i, j) | fail
+   s2 := a.s; i := a.i; j := a.j
+   s1 := same_type(s1, s2)
+   # Special case if s1 empty
+   if *s1 = 0 then {
+      suspend j to i by -1
+      fail
+   }
+   c := cset(s1[-1])
+   every t := backto(c, s2, i, j) do {
+      if t < i + *s1 then
+         break
+      if s1 == s2[t-:*s1] then
+         suspend t
+   }
 end
 
 #
