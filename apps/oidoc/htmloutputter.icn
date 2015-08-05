@@ -20,23 +20,35 @@ class HtmlOutputter(Outputter)
       subclass_table
 
    private get_id(sym)
-      local v
-      static sym_id_table
+      local v, vo, i
+      static sym_id_table, seen_set
       initial {
          sym_id_table := table()
+         seen_set := set()
       }
 
       if v := member(sym_id_table, sym) then
          return v
 
-      v := if is(sym, Symbol) then
+      v := if type(sym) == "string" then
+         sym || "-package"
+      else if is(sym, Symbol) then
          sym.get_fq_name_default()
       else if is(sym, ScannedFile) then
-         (\sym.pack | "default") || "_" || FilePath(sym.filename).get(-1)
+         (\sym.pack | "default") || "-" || FilePath(sym.filename).get(-1)
       else
          syserr("Unknown type to get_id")
 
+      # Check the lower-cased id hasn't been used before; if so make a
+      # new one
+      i := 0
+      vo := v
+      while member(seen_set, map(v)) do
+         v := vo || "_" || (i +:= 1)
+      insert(seen_set, map(v))
+
       insert(sym_id_table, sym, v)
+
       return v
    end
 
@@ -89,7 +101,7 @@ class HtmlOutputter(Outputter)
          write(nav, "<a href=\"all.html\" target=\"listFrame\">All</a><p>")
          every s := get_packages() do {
             if should_print_package(s) then
-               write(nav, "<a href=\"", s || ".html" || "\" target=\"listFrame\">", s, "</a><br>")
+               write(nav, "<a href=\"", get_id(s) || ".html" || "\" target=\"listFrame\">", s, "</a><br>")
             output_package(s)
          }
          write(nav, "</body></html>")
@@ -102,7 +114,7 @@ class HtmlOutputter(Outputter)
          write(begin, "This is the automatically generated documentation for the following packages.<p>")
          every s := get_packages() do
             if should_print_package(s) then
-               write(begin, "<a href=\"", s || ".html" || "\" target=\"listFrame\">", s, "</a><br>")
+               write(begin, "<a href=\"", get_id(s) || ".html" || "\" target=\"listFrame\">", s, "</a><br>")
          write(begin, "</body></html>")
       }}
 
@@ -130,7 +142,7 @@ class HtmlOutputter(Outputter)
    # Output the summary list for one package set
    private output_package(s)
       local f, fname, c
-      fname := output_dir || "/" || s || ".html"
+      fname := output_dir || "/" || get_id(s) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
          write(f, "<html><head><title>", s, "</title></head><body>")
          write(f, "<h1>Package ", s, "</h1><p>")
@@ -185,7 +197,7 @@ class HtmlOutputter(Outputter)
          }
 
          s := c.get_package() | "default"
-         write(f, "<dt>Package :</dt><dd><a href=\"", s || ".html" || "\" target=\"listFrame\">", s, "</a></dd>")
+         write(f, "<dt>Package :</dt><dd><a href=\"", get_id(s) || ".html" || "\" target=\"listFrame\">", s, "</a></dd>")
          write(f, "</dl><p>")
 
          if is(c.obj, Tree) then {
@@ -513,7 +525,7 @@ class HtmlOutputter(Outputter)
          write(f, "<h1>", fullname, "</h1>")
          write(f, "<dl>")
          s := c.get_package() | "default"
-         write(f, "<dt>Package :</dt><dd><a href=\"", s || ".html" || "\" target=\"listFrame\">", s, "</a></dd>")
+         write(f, "<dt>Package :</dt><dd><a href=\"", get_id(s) || ".html" || "\" target=\"listFrame\">", s, "</a></dd>")
          write(f, "<dt>Type :</dt><dd>", type, "</dd>")
          write(f, "</dl><p>")
          if is(c.obj, Tree) then {
