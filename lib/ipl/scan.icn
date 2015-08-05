@@ -789,7 +789,7 @@ end
 # and uppercase, eg csetcl('Cat123') -> 'catCAT123'.  The result can then be used,
 # for example to do a caseless upto search.
 #
-procedure clcset(c)
+procedure cl_cset(c)
    local ls
    c := cset(c) | runerr(104, c)
    ls := map(string(c ** &letters))
@@ -832,7 +832,7 @@ end
 #
 # Caseless version of match()
 #
-procedure clmatch(s1, s2, i, j)
+procedure cl_match(s1, s2, i, j)
    local a
    a := begin_analysis(s2, i, j) | fail
    s2 := a.s; i := a.i; j := a.j
@@ -844,7 +844,7 @@ end
 #
 # Caseless version of find()
 #
-procedure clfind(s1, s2, i, j)
+procedure cl_find(s1, s2, i, j)
    local c, t, a
    a := begin_analysis(s2, i, j) | fail
    s2 := a.s; i := a.i; j := a.j
@@ -857,7 +857,7 @@ procedure clfind(s1, s2, i, j)
    s1 := map(s1)
    # Cset of first char in upper and lower case; eg if searching for
    # "cat", c = 'cC'.
-   c := clcset(s1[1])
+   c := cl_cset(s1[1])
    every t := upto(c, s2, i, j) do {
       if t > j - *s1 then
          break
@@ -898,10 +898,10 @@ end
 #
 # Note that the parameters still take the standard scanning form, so
 # to search backwards from &pos to the beginning of the string during
-# a scan, use revmany(c,,, 1) - otherwise it will search from the end
+# a scan, use rev_many(c,,, 1) - otherwise it will search from the end
 # of &subject towards &pos.
 #
-procedure revmany(c, s, i, j)
+procedure rev_many(c, s, i, j)
    local a
    c := cset(c) | runerr(104, c)
    a := begin_analysis(s, i, j) | fail
@@ -911,9 +911,9 @@ procedure revmany(c, s, i, j)
    return a.j ~= j
 end
 
-# This is like revmany, but is the corresponding function for any.
+# This is like rev_many, but is the corresponding function for any.
 #
-procedure revany(c, s, i, j)
+procedure rev_any(c, s, i, j)
    local a
    c := cset(c) | runerr(104, c)
    a := begin_analysis(s, i, j) | fail
@@ -923,22 +923,22 @@ procedure revany(c, s, i, j)
 end
 
 #
-# Like revmany, but succeeds with the position j if zero matching chars. Revmany needs
+# Like rev_many, but succeeds with the position j if zero matching chars. rev_many needs
 # one or more to succeed.
 #
-procedure revmany0(c, s, i, j)
+procedure rev_many0(c, s, i, j)
    local a
    a := begin_analysis(s, i, j) | fail
-   return revmany(c, a.s, a.i, a.j) | .a.j
+   return rev_many(c, a.s, a.i, a.j) | .a.j
 end
 
 #
-# Like revany, but succeeds with the position j if there is no matching char.
+# Like rev_any, but succeeds with the position j if there is no matching char.
 #
-procedure revany0(c, s, i, j)
+procedure rev_any0(c, s, i, j)
    local a
    a := begin_analysis(s, i, j) | fail
-   return revany(c, a.s, a.i, a.j) | .a.j
+   return rev_any(c, a.s, a.i, a.j) | .a.j
 end
 
 # Do a reverse find from the end of the string.  For each match, the
@@ -948,7 +948,7 @@ end
 #      find(s1, s2, i, j) + *s1
 # but in reverse order.
 #
-procedure revfind(s1, s2, i, j)
+procedure rev_find(s1, s2, i, j)
    local c, t, a
    a := begin_analysis(s2, i, j) | fail
    s2 := a.s; i := a.i; j := a.j
@@ -973,7 +973,7 @@ end
 # taken from that position.  Either parameter may be -ve; no change is
 # made to &subject or &pos.
 #
-procedure posoff(off, len)
+procedure pos_off(off, len)
    /len := 1
    off +:= &pos
    if off >= 1 then

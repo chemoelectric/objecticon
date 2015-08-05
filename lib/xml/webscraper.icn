@@ -38,7 +38,7 @@ class WebScraper()
          i := 0
          every s := text(!n.children) do {
             i +:= 1
-            s ? if tab(clmatch("$scrapeid=")) then {
+            s ? if tab(cl_match("$scrapeid=")) then {
                s := tab(upto('$')) | return error("Unclosed scrapeid")
                do_insert(s, n, anchors, i)
             }
@@ -68,7 +68,7 @@ class WebScraper()
       res := table()
       every n := Seq{d.traverse_nodes_preorder()} do {
          every s := text(!n.children) do {
-            s ? if tab(clmatch("$anchorid=")) then {
+            s ? if tab(cl_match("$anchorid=")) then {
                id := tab(upto('$')) | return error("Unclosed anchor id")
                move(1)
                str := tab(0)

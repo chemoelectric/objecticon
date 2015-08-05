@@ -3313,7 +3313,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          return
       s ? {
          while tab(upto('<')) do {
-            if clmatch("<!doctype" | "<html" | "<meta") then
+            if cl_match("<!doctype" | "<html" | "<meta") then
                return
             # Expect html comment (see htmlparser.icn)
             ="<!" | fail
