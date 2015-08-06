@@ -21,10 +21,11 @@ class HtmlOutputter(Outputter)
 
    private get_id(sym)
       local v, vo, i
-      static sym_id_table, seen_set
+      static sym_id_table, seen_set, cnv
       initial {
          sym_id_table := table()
          seen_set := set()
+         cnv := if has_feature("MS Win32") | \opts["ci"] then map else 1
       }
 
       if v := member(sym_id_table, sym) then
@@ -39,13 +40,13 @@ class HtmlOutputter(Outputter)
       else
          syserr("Unknown type to get_id")
 
-      # Check the lower-cased id hasn't been used before; if so make a
-      # new one
+      # Check the id hasn't been used before; if so make a
+      # new one.
       i := 0
       vo := v
-      while member(seen_set, map(v)) do
+      while member(seen_set, cnv(v)) do
          v := vo || "_" || (i +:= 1)
-      insert(seen_set, map(v))
+      insert(seen_set, cnv(v))
 
       insert(sym_id_table, sym, v)
 
@@ -63,9 +64,18 @@ class HtmlOutputter(Outputter)
          write(index, "<title>")
          write(index, "Generated Documentation")
          write(index, "</title>")
+         write(index, "<script type=\"text/javascript\">")
+         write(index, "   targetPage = \"\" + window.location.search;")
+         write(index, "   if (targetPage != \"\" && targetPage != \"undefined\")")
+         write(index, "      targetPage = decodeURIComponent(targetPage.substring(1));")
+         write(index, "   function loadFrames() {")
+         write(index, "      if (targetPage != \"\" && targetPage != \"undefined\")")
+         write(index, "         top.displayFrame.location = top.targetPage;")
+         write(index, "   }")
+         write(index, "</script>")
          write(index, "</head>")
-         write(index, "<frameset cols=\"20%,80%\">")
-         write(index, "<frameset rows=\"30%,70%\">")
+         write(index, "<frameset cols=\"20%,80%\" onload=\"top.loadFrames()\">")
+         write(index, "<frameset rows=\"30%,70%\" onload=\"top.loadFrames()\">")
          write(index, "<frame src=\"nav.html\" name=\"navFrame\">")
          write(index, "<frame src=\"all.html\" name=\"listFrame\">")
          write(index, "</frameset>")
