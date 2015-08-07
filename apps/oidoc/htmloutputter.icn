@@ -53,6 +53,10 @@ class HtmlOutputter(Outputter)
       return v
    end
 
+   private doctype(f)
+      write(f, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">")
+   end
+
    public output()
       local nav, fname, index, s, all_classes, all_others, begin, c, all
 
@@ -60,6 +64,7 @@ class HtmlOutputter(Outputter)
       output_dir := \opts["o"] | stop("Please specify an output directory")
       fname := output_dir || "/index.html"
       use {index := open(fname, "w") | stop("Couldn't open ", fname), {
+         doctype(index)
          write(index, "<html>")
          write(index, "<title>")
          write(index, "Generated Documentation")
@@ -106,6 +111,7 @@ class HtmlOutputter(Outputter)
 
       fname := output_dir || "/nav.html"
       use {nav := open(fname, "w") | stop("Couldn't open ", fname), {
+         doctype(nav)
          write(nav, "<html><body>")
          write(nav, "<h1>Packages</h1><p>")
          write(nav, "<a href=\"all.html\" target=\"listFrame\">All</a><p>")
@@ -119,6 +125,7 @@ class HtmlOutputter(Outputter)
            
       fname := output_dir || "/begin.html"
       use {begin := open(fname, "w") | stop("Couldn't open ", fname), {
+         doctype(begin)
          write(begin, "<html><body>")
          write(begin, "<h1>Object Icon generated documentation</h1>")
          write(begin, "This is the automatically generated documentation for the following packages.<p>")
@@ -130,6 +137,7 @@ class HtmlOutputter(Outputter)
 
       fname := output_dir || "/all.html"
       use {all := open(fname, "w") | stop("Couldn't open ", fname), {
+         doctype(all)
          write(all, "<html><body>")
          write(all, "<h1>All packages</h1><p>")
          write(all, "<h1>Classes</h1><p>")
@@ -154,6 +162,7 @@ class HtmlOutputter(Outputter)
       local f, fname, c
       fname := output_dir || "/" || get_id(s) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
+         doctype(f)
          write(f, "<html><head><title>", s, "</title></head><body>")
          write(f, "<h1>Package ", s, "</h1><p>")
          write(f, "<h1>Classes</h1><p>")
@@ -174,6 +183,7 @@ class HtmlOutputter(Outputter)
       local s, f, fname, supers, o, subs, d, overrides, meths, m, vars, mm, x, type
       fname := output_dir || "/" || get_id(c) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
+         doctype(f)
          write(f, "<html><head><title>", c.name, "</title></head><body>")
          type := get_class_prefix(c)
          if *type > 0 then
@@ -497,6 +507,7 @@ class HtmlOutputter(Outputter)
 
       fname := output_dir || "/" || get_id(c.scanned_file) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
+         doctype(f)
          write(f, "<html><head><title>", FilePath(filename).get(-1), "</title></head><body><pre>")
          # filename may be unavailable if a #line directive gave a path which was inaccessible
          use { g := open(filename) , {
@@ -531,6 +542,7 @@ class HtmlOutputter(Outputter)
          type := "package " || type
       fname := output_dir || "/" || get_id(c) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
+         doctype(f)
          write(f, "<html><head><title>", c.name, "</title></head><body>")
          write(f, "<h1>", fullname, "</h1>")
          write(f, "<dl>")
