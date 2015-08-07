@@ -490,7 +490,7 @@ class HtmlOutputter(Outputter)
       if is(o, ClassField) then {
          # Link within the parent class's page
          return "<a href=\"" || get_id(o.defining_class) || ".html#" || 
-            get_id(o) || "\">" || s || "</a>"
+            o.name || "\">" || s || "</a>"
       } else {
          # Link to the absolute page
          return "<a href=\"" || get_id(o) || ".html\" target=\"displayFrame\">" || s || "</a>"
