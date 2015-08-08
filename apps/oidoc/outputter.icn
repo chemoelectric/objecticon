@@ -1,7 +1,7 @@
 import
    lang(Class),
    parser(ClassSymbol, DeferredMethod, Tree, ULocal,
-          UMethod)
+          UMethod, ProcedureSymbol, RecordSymbol, GlobalSymbol)
 
 class Outputter()
    public static const
@@ -111,7 +111,30 @@ class Outputter()
          s ||:= "final "
       if c.is_abstract() then
          s ||:= "abstract "
-      s[-1] := ""
+      s ||:= "class"
+      return s
+   end
+
+   protected get_top_level_type(c)
+      local s
+      s := ""
+      if c.has_package_flag() then
+         s ||:= "package "
+      if is(c, GlobalSymbol) & c.has_readable_flag() then
+         s ||:= " readable "
+      if is(c, ClassSymbol) then {
+         if c.is_final() then
+            s ||:= "final "
+         if c.is_abstract() then
+            s ||:= "abstract "
+      }
+      s ||:= case classof(c) of {
+         ProcedureSymbol : "procedure"
+         RecordSymbol : "record"
+         GlobalSymbol : "global"
+         ClassSymbol : "class"
+         default : syserr("Unknown type")
+      }
       return s
    end
 

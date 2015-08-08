@@ -10,6 +10,7 @@ import
    xml(xml_escape),
    parser, 
    ipl.sort,
+   ipl.scan,
    io,
    util
 
@@ -18,6 +19,9 @@ class HtmlOutputter(Outputter)
       output_dir,
       done_files,
       subclass_table
+
+   private
+      ul, ol, li, pre, bar
 
    private get_id(sym)
       local v, vo, i
@@ -180,19 +184,14 @@ class HtmlOutputter(Outputter)
 
    # Output one class description
    private output_class(c)
-      local s, f, fname, supers, o, subs, d, overrides, meths, m, vars, mm, x, type
+      local s, f, fname, supers, o, subs, d, overrides, meths, m, vars, mm, x
       fname := output_dir || "/" || get_id(c) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
          doctype(f)
          write(f, "<html><head><title>", c.name, "</title></head><body>")
-         type := get_class_prefix(c)
-         if *type > 0 then
-            type ||:= " class "
-         else
-            type := "class "
          write(f, "<h1>", c.name, "</h1>")
          write(f, "<dl>")
-         write(f, "<dt>Type :</dt><dd>", type, "</dd>")
+         write(f, "<dt>Type :</dt><dd>", get_top_level_type(c), "</dd>")
 
          # Superclass list
          supers := []
@@ -269,7 +268,9 @@ class HtmlOutputter(Outputter)
                if member(overrides, m.name) then {
                   o := overrides[m.name]
                   mm := o.get_field(m.name) | syserr("get_field() failed")
-                  write(f,"<dd>Overrides <a href=\"" || get_id(o) || ".html#" || mm.name || "\">" || mm.name || "()</a> in <a href=\"", get_id(o), ".html\" target=\"displayFrame\">", o.get_fq_name(), "</a></dd>")
+                  write(f,"<dd>Overrides <a href=\"" || get_id(o) || ".html#" || 
+                        mm.name || "\">" || mm.name || "()</a> in <a href=\"", 
+                        get_id(o), ".html\" target=\"displayFrame\">", o.get_fq_name(), "</a></dd>")
                }
                if is(m.obj, Tree) then {
                   write(f, "<dd>")
@@ -364,17 +365,17 @@ class HtmlOutputter(Outputter)
    private comment_and_fields(f, c)
       local k, com
       com := Comment(c)
-      every write(f, html_unbracket(!com.comment, c))
+      html(f, com.comment, c)
       write(f, "<dl>")
       every k := !com.keys do
          html_fields(f, c, k, com.fields[k])
-      write(f, "<dt><a href=\"", 
+      write(f, "</dl>")
+      write(f, "<a href=\"", 
             get_id(c.scanned_file) || ".html#", 
             c.obj.get_first_token().line , 
             "\" target=\"displayFrame\">Source - ", 
             FilePath(c.obj.get_first_token().filename).get(-1),
-            " </a></dt>")
-      write(f, "</dl>")
+            " </a>")
    end
 
    private html_fields(f, c, key, vals)
@@ -388,8 +389,8 @@ class HtmlOutputter(Outputter)
                   name := tab(many(ID_CHAR))
                   l[1] := tab(0)
                }
-               writes(f, "<dd>", name, " - ")
-               every write(f, html_unbracket(!l, c))
+               writes(f, "<dd><code>", name, "</code> - ")
+               html(f, l, c)
                write(f, "</dd>")
             }
          }
@@ -397,64 +398,172 @@ class HtmlOutputter(Outputter)
          "return" : {
             write(f, "<dt>Returns :</dt>")
             write(f, "<dd>")
-            every write(f, html_unbracket(!vals[1], c))
+            html(f, vals[1], c)
             write(f, "</dd>")
          }
 
          "generate" : {
             write(f, "<dt>Generates :</dt>")
             write(f, "<dd>")
-            every write(f, html_unbracket(!vals[1], c))
+            html(f, vals[1], c)
             write(f, "</dd>")
          }
 
          "fail" : {
             write(f, "<dt>Fails :</dt>")
             write(f, "<dd>")
-            every write(f, html_unbracket(!vals[1], c))
+            html(f, vals[1], c)
             write(f, "</dd>")
          }
 
          "runerr" : {
             write(f, "<dt>Runtime error :</dt>")
             write(f, "<dd>")
-            every write(f, html_unbracket(!vals[1], c))
+            html(f, vals[1], c)
             write(f, "</dd>")
          }
 
          "example" : {
             write(f, "<dt>Example :</dt><dd><pre>")
             every l := !vals do
-               every write(f, l[2 to *l])
+               every write(f, esc(l[2 to *l]))
             write(f, "</pre></dd>")
          }
       }
    end
 
+   private esc(s)
+      return xml_escape(s, '<>&')
+   end
+
    private html_unbracket(s, c)
-      local r, t, w
+      local r, t
       r := ""
       s ? {
-         w := tab(many(WHITESPACE))
-         while r ||:= xml_escape(tab(upto('`{')), '<>&') do {
-            if any('`') then {
-               move(1)
+         while r ||:= esc(tab(upto('`{*_'))) do {
+            if ="`" then {
                t := tab(upto('`') | 0)
-            } else {
                move(1)
+               r ||:= "<code>" || create_link(t, c) || "</code>"
+            } else if ="{" then {
                t := tab(upto('}') | 0)
-            }
-            move(1)
-            r ||:= create_link(t, c)
+               move(1)
+               r ||:= "<code>" || create_link(t, c) || "</code>"
+            } else if ="**" then {
+               t := tab(find("**") | 0)
+               move(2)
+               r ||:= "<b>" || esc(t) || "</b>"
+            } else if ="__" then {
+               t := tab(find("__") | 0)
+               move(2)
+               r ||:= "<u>" || esc(t) || "</u>"
+            } else
+               r ||:= move(1)
          }
-         r ||:= xml_escape(tab(0), '<>&')
+         r ||:= esc(tab(0))
       }
-      if *r = 0 then
-         r := "<p>"
-      else if (*\w > 1) then
-         r := "<br>" || repl("&nbsp;", *w - 1) || r
-
       return r
+   end
+
+   private close_ul(f)
+      if \ul then {
+         write(f, "</ul>")
+         ul := &null
+      }
+   end
+
+   private close_ol(f)
+      if \ol then {
+         write(f, "</ol>")
+         ol := &null
+      }
+   end
+
+   private close_li(f)
+      if \li then {
+         write(f, "</li>")
+         li := &null
+      }
+   end
+
+   private close_pre(f)
+      if \pre then {
+         write(f, "</pre>")
+         pre := &null
+      }
+   end
+
+   private close_bar(f)
+      if \bar then {
+         write(f, "<br>")
+         bar := &null
+      }
+   end
+
+   private html_line(f, s)
+      write(f, s)
+      if s[-2:0] == "  " then
+         write(f, "<br>")
+   end
+
+   private html(f, l, c)
+      local w, pre_mark
+      every !l ? {
+         if \pre then {
+            if tab(many0(WHITESPACE)) & =pre_mark & pos(0) then
+               close_pre(f)
+            else
+               write(f, esc(tab(0)))
+         } else {
+            tab(many(WHITESPACE))
+            if (pre_mark <- tab(many('~'))) & pos(0) then {
+               close_bar(f)
+               write(f, "<pre>")
+               pre := 1
+            } else if ="|" then {
+               w := tab(many0(WHITESPACE))
+               write(f, "<br>", repl("&nbsp;", *w))
+               html_line(f, html_unbracket(tab(0), c))
+               bar := 1
+            } else if ="*" & tab(many(WHITESPACE)) then {
+               close_bar(f)
+               close_li(f)
+               if /ul then {
+                  close_ol(f)
+                  write(f, "<p><ul>")
+                  ul := 1
+               }
+               write(f, "<li>")
+               li := 1
+               html_line(f, html_unbracket(tab(0), c))
+            } else if tab(many(&digits)) & ="." & tab(many(WHITESPACE)) then {
+               close_bar(f)
+               close_li(f)
+               if /ol then {
+                  close_ul(f)
+                  write(f, "<p><ol>")
+                  ol := 1
+               }
+               write(f, "<li>")
+               li := 1
+               html_line(f, html_unbracket(tab(0), c))
+            } else if pos(0) then {
+               close_bar(f)
+               close_li(f)
+               close_ul(f)
+               close_ol(f)
+               write(f, "<p>")
+            } else {
+               close_bar(f)
+               html_line(f, html_unbracket(tab(0), c))
+            }
+         }
+      }
+      close_pre(f)
+      close_bar(f)
+      close_li(f)
+      close_ul(f)
+      close_ol(f)
    end
 
    private resolve_link(sym, name)
@@ -486,14 +595,14 @@ class HtmlOutputter(Outputter)
    #
    private create_link(s, c)
       local o
-      o := resolve_link(c, s) | return s
+      o := resolve_link(c, s) | return esc(s)
       if is(o, ClassField) then {
          # Link within the parent class's page
          return "<a href=\"" || get_id(o.defining_class) || ".html#" || 
-            o.name || "\">" || s || "</a>"
+            o.name || "\">" || esc(s) || "</a>"
       } else {
          # Link to the absolute page
-         return "<a href=\"" || get_id(o) || ".html\" target=\"displayFrame\">" || s || "</a>"
+         return "<a href=\"" || get_id(o) || ".html\" target=\"displayFrame\">" || esc(s) || "</a>"
       }
    end
 
@@ -524,22 +633,11 @@ class HtmlOutputter(Outputter)
    end
 
    private output_other(c)
-      local s, f, fname, type, fullname
+      local s, f, fname, fullname
       fullname := c.name
-      case classof(c) of {
-         ProcedureSymbol : {
-            type := "procedure"
-            fullname := c.name || "(" || get_param_string(c.obj) || ")"
-         }
-         RecordSymbol : type := "record"
-         GlobalSymbol : type := "global"
-         default : syserr("Unknown type to output_other")
-      }
-
-      if is(c, GlobalSymbol) & c.has_readable_flag() then
-         type := "package readable " || type
-      else if c.has_package_flag() then
-         type := "package " || type
+      if is(c, ProcedureSymbol) then
+         fullname ||:= "(" || get_param_string(c.obj) || ")"
+      
       fname := output_dir || "/" || get_id(c) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
          doctype(f)
@@ -548,7 +646,7 @@ class HtmlOutputter(Outputter)
          write(f, "<dl>")
          s := c.get_package() | "default"
          write(f, "<dt>Package :</dt><dd><a href=\"", get_id(s) || ".html" || "\" target=\"listFrame\">", s, "</a></dd>")
-         write(f, "<dt>Type :</dt><dd>", type, "</dd>")
+         write(f, "<dt>Type :</dt><dd>", get_top_level_type(c), "</dd>")
          write(f, "</dl><p>")
          if is(c.obj, Tree) then {
             output_file(c)
