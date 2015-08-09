@@ -2369,8 +2369,43 @@ class Vt(LineBasedScrollArea, MenuMode)
          invalidate_cursor()
    end
 
+   private handle_double_click()
+      local s, l, r, m, t
+      l := unflow_loc(cursor_x, cursor_y) | fail
+      r := Index{unflowed(), l.y} | fail
+      s := line_str(r.l)
+      t := l.x
+      while any(~'\t ', s, t) do
+         t +:= 1
+      if m := reflow_loc(t, l.y) then {
+         cursor_x := m.x
+         cursor_y := m.y
+      }
+      t := l.x
+      while any(~'\t ', s, t - 1) do
+         t -:= 1
+      if m := reflow_loc(t, l.y) then {
+         mark_x := m.x
+         mark_y := m.y
+      }
+   end
+
+   private handle_triple_click()
+      local s, l, r, m
+      l := unflow_loc(cursor_x, cursor_y) | fail
+      r := Index{unflowed(), l.y} | fail
+      s := line_str(r.l)
+      if m := reflow_loc(*s + 1, l.y) then {
+         cursor_x := m.x
+         cursor_y := m.y
+      }
+      if m := reflow_loc(1, l.y) then {
+         mark_x := m.x
+         mark_y := m.y
+      }
+   end
+
    private handle_lpress1(e)
-      local s
       invalidate_region()
       reset_search()
       # This would be \e.shift, but shift is used to disable the link click functionality.
@@ -2385,21 +2420,8 @@ class Vt(LineBasedScrollArea, MenuMode)
                self.mark_y := self.cursor_y
                self.mark_x := self.cursor_x
             }
-            1 : {
-               self.mark_y := self.cursor_y
-               self.mark_x := self.cursor_x
-               s := contents_str(cursor_y)
-               while any(~'\t ', s, self.cursor_x) do
-                  self.cursor_x +:= 1
-               while any(~'\t ', s, self.mark_x - 1) do
-                  self.mark_x -:= 1
-            }
-            2 : {
-               s := contents_str(cursor_y)
-               self.cursor_x := *s + 1
-               self.mark_y := self.cursor_y
-               self.mark_x := 1
-            }
+            1 : handle_double_click()
+            2 : handle_triple_click()
          }
       }
       invalidate_region()
