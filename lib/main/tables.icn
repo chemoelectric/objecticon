@@ -749,7 +749,7 @@ class SortTable(Table)
    # @   value is {Internal.compare}.  The function must satisfy
    # @   *  `sign(cmp(a,b)) = -sign(cmp(b,a))` for all `a,b`
    # @   *  `cmp(a,b)>0 & cmp(b,c)>0 => cmp(a,c)>0`
-   # @   *  `cmp(a,b)=0 <=> sign(cmp(a,x))=sign(cmp(b,x))` for all other `x`.
+   # @   *  `cmp(a,b)=0 <=> sign(cmp(a,x))=sign(cmp(b,x))` for all other `x'.
    # @param entries initial key-value entries.
    #
    public new(def, cmp, entries[])

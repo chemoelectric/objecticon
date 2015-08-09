@@ -72,7 +72,7 @@ class Component(Rect,Align,Connectable)
       effective_is_hidden_flag,
       #
       # A cloned window created by combining a buffer window with
-      # the {Component's} attributes.  The component draws itself
+      # the {Component}'s attributes.  The component draws itself
       # into this window.
       cbwin,
       #
@@ -737,11 +737,11 @@ class Component(Rect,Align,Connectable)
       return self
    end
 
-   #
-   # Set the alignment of the component.  Options for
-   # {x_align} are ``l'', ``c'' and ``r'', for left, centre, and right
-   # alignment.  Options for {y_align} are ``t'', ``c'' and ``b'', 
-   # for top centre and bottom alignment.  The default alignment is ``l'', ``t''.
+   # Set the alignment of the component.  Options for `x_align` are
+   # `Align.L`, `Align.C` and `Align.R`, for left, centre, and right
+   # alignment.  Options for `y_align` are `Align.T`, `Align.C` and
+   # `Align.B`, for top centre and bottom alignment.  The default
+   # alignment is `Align.L`, `Align.T`.
    #
    # @param x_align   The x alignment
    # @param y_align   The y alignment
@@ -1314,8 +1314,8 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Get the list of {Components} in this {Container}.
-   # @return   The list of {Components}
+   # Get the list of {Component}s in this {Container}.
+   # @return   The list of {Component}s
    #
    public get_children()
       return self.children
