@@ -10,15 +10,11 @@ import
    parser,
    ipl.strings, 
    ipl.sort,
-   ipl.scan,
    io
 
 class GroffOutputter(Outputter)
    private
       output_file
-
-   private
-      ul, ol, li, pre, bar
 
    public output()
       local c, l, s, t, u, m, el, com, meths, vars, x, fullname
@@ -43,7 +39,7 @@ class GroffOutputter(Outputter)
          write(output_file, ".HEAD \"", get_top_level_type(c), " ", c.name, "\" \"", s, "\"", " \"", t, "\"", " \"", u, "\"")
          if is(c.obj, Tree) then {
             com := Comment(c)
-            groff(com.comment)
+            markdown(com.comment)
          }
 
          meths := []
@@ -61,7 +57,7 @@ class GroffOutputter(Outputter)
             write(output_file, ".FUNC_START \"", get_access_string(m.obj), " ", m.name, "(", get_param_string(m.obj) ,")\"")
             if is(m.obj, Tree) then {
                com := Comment(m)
-               groff(com.comment)
+               markdown(com.comment)
                every el := !sort(com.fields) do
                   groff_fields(el[1], el[2])
             }
@@ -71,7 +67,7 @@ class GroffOutputter(Outputter)
             write(output_file, ".FUNC_START \"", get_access_string(m.decl_obj), " ", m.name, "\"")
             if is(m.obj, Tree) then {
                com := Comment(m)
-               groff(com.comment)
+               markdown(com.comment)
                every el := !sort(com.fields) do
                   groff_fields(el[1], el[2])
             }
@@ -92,7 +88,7 @@ class GroffOutputter(Outputter)
          write(output_file, ".FUNC_START \"", fullname ,"\"")
          if is(c.obj, Tree) then {
             com := Comment(c)
-            groff(com.comment)
+            markdown(com.comment)
             every el := !sort(com.fields) do
                groff_fields(el[1], el[2])
          }
@@ -123,7 +119,7 @@ class GroffOutputter(Outputter)
                   l[1] := tab(0)
                }
                write(output_file, ".LS_ITEM \\f[HR]", name, "\\fR")
-               groff(l)
+               markdown(l)
             }
             write(output_file, ".LS_END")
          }
@@ -132,28 +128,28 @@ class GroffOutputter(Outputter)
             write(output_file, ".P")
             write(output_file, "Returns :")
             write(output_file, ".P")
-            every groff(vals[1])
+            every markdown(vals[1])
          }
 
          "generate" : {
             write(output_file, ".P")
             write(output_file, "Generates :")
             write(output_file, ".P")
-            every groff(vals[1])
+            every markdown(vals[1])
          }
 
          "fail" : {
             write(output_file, ".P")
             write(output_file, "Fails :")
             write(output_file, ".P")
-            every groff(vals[1])
+            every markdown(vals[1])
          }
 
          "runerr" : {
             write(output_file, ".P")
             write(output_file, "Runtime error :")
             write(output_file, ".P")
-            every groff(vals[1])
+            every markdown(vals[1])
          }
 
          "example" : {
@@ -171,132 +167,78 @@ class GroffOutputter(Outputter)
       return replace(s, "\\", "\\\\")
    end
 
-   private groff_unbracket(s)
-      local r, t
-      r := ""
-      s ? {
-         while r ||:= esc(tab(upto('`{*_'))) do {
-            if ="`" then {
-               t := tab(upto('`') | 0)
-               move(1)
-               r ||:= "\\f[HR]" || esc(t) || "\\fR"
-            } else if ="{" then {
-               t := tab(upto('}') | 0)
-               move(1)
-               r ||:= "\\f[HR]" || esc(t) || "\\fR"
-            } else if ="**" then {
-               t := tab(find("**") | 0)
-               move(2)
-               r ||:= "\\fB" || esc(t) || "\\fP"
-            } else if ="__" then {
-               t := tab(find("__") | 0)
-               move(2)
-               r ||:= "\\fI" || esc(t) || "\\fP"
-            } else
-               r ||:= move(1)
-         }
-         r ||:= esc(tab(0))
-      }
-      return r
+   protected output_fragment(s)
+      writes(output_file, esc(s))
    end
 
-   private close_ul()
-      if \ul then {
-         write(output_file, ".LS_END")
-         ul := &null
-      }
+   protected output_link(s)
+      writes(output_file, "\\f[HR]", esc(s), "\\fR")
    end
 
-   private close_ol()
-      if \ol then {
-         write(output_file, ".LS_END")
-         ol := &null
-      }
+   protected output_code(s)
+      writes(output_file, "\\f[HR]", esc(s), "\\fR")
    end
 
-   private close_li()
-      li := &null
+   protected output_bold(s)
+      writes(output_file, "\\fB", esc(s), "\\fP")
    end
 
-   private close_pre()
-      if \pre then {
-         write(output_file, ".ft P\n.fi")
-         pre := &null
-      }
+   protected output_ul(s)
+      writes(output_file, "\\fI", esc(s), "\\fP")
    end
 
-   private close_bar()
-      if \bar then {
-         write(output_file, ".br")
-         bar := &null
-      }
+   protected end_line(fl)
+      if /fl then
+         write(output_file)
+      else
+         write(output_file, "\n.br")
    end
 
-   private groff_line(s)
-      write(output_file, s)
-      if s[-2:0] == "  " then
-         write(output_file, ".br")
+   protected begin_pre()
+      write(output_file, ".nf\n.ft C")
    end
 
-   private groff(l)
-      local w, pre_mark
-      every !l ? {
-         if \pre then {
-            if tab(many0(WHITESPACE)) & =pre_mark & pos(0) then
-               close_pre()
-            else
-               write(output_file, esc(tab(0)))
-         } else {
-            tab(many(WHITESPACE))
-            if (pre_mark <- tab(many('~'))) & pos(0) then {
-               close_bar()
-               write(output_file, ".nf\n.ft C")
-               pre := 1
-            } else if ="|" then {
-               w := tab(many0(WHITESPACE))
-               write(output_file, ".br\n", repl("\xa0", *w))
-               groff_line(groff_unbracket(tab(0)))
-               bar := 1
-            } else if ="*" & tab(many(WHITESPACE)) then {
-               close_bar()
-               close_li()
-               if /ul then {
-                  close_ol()
-                  write(output_file, ".LS_SET b")
-                  ul := 1
-               }
-               write(output_file, ".LS_ITEM")
-               li := 1
-               groff_line(groff_unbracket(tab(0)))
-            } else if tab(many(&digits)) & ="." & tab(many(WHITESPACE)) then {
-               close_bar()
-               close_li()
-               if /ol then {
-                  close_ul()
-                  write(output_file, ".LS_SET 1")
-                  ol := 1
-               }
-               write(output_file, ".LS_ITEM")
-               li := 1
-               groff_line(groff_unbracket(tab(0)))
-            } else if pos(0) then {
-               close_bar()
-               close_li()
-               close_ul()
-               close_ol()
-               write(output_file, ".P")
-            } else {
-               close_bar()
-               groff_line(groff_unbracket(tab(0)))
-            }
-         }
-      }
-      close_pre()
-      close_bar()
-      close_li()
-      close_ul()
-      close_ol()
+   protected output_pre(s)
+      write(output_file, esc(s))
    end
 
+   protected end_pre()
+      write(output_file, ".ft P\n.fi")
+   end
+
+   protected output_bar(n)
+      write(output_file, ".br\n", repl("\xa0", n))
+   end
+
+   protected end_bar()
+      write(output_file, ".br")
+   end
+
+   protected begin_ul()
+      write(output_file, ".LS_SET b")
+   end
+
+   protected end_ul()
+      write(output_file, ".LS_END")
+   end
+
+   protected begin_ol()
+      write(output_file, ".LS_SET 1")
+   end
+
+   protected end_ol()
+      write(output_file, ".LS_END")
+   end
+
+   protected begin_li()
+      write(output_file, ".LS_ITEM")
+   end
+
+   protected end_li()
+   end
+
+   protected new_para()
+      write(output_file, ".P")
+   end
 end
 

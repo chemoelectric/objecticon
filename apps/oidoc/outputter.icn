@@ -1,9 +1,11 @@
 import
    lang(Class),
    parser(ClassSymbol, DeferredMethod, Tree, ULocal,
-          UMethod, ProcedureSymbol, RecordSymbol, GlobalSymbol)
+          UMethod, ProcedureSymbol, RecordSymbol, GlobalSymbol),
+   ipl.scan(many0),
+   util(Yes)
 
-class Outputter()
+abstract class Outputter()
    public static const
       WHITESPACE,
       ID_CHAR
@@ -11,6 +13,9 @@ class Outputter()
    protected const
       symbol_table,
       opts
+
+   private
+      ul, ol, li, pre, bar
 
    private static init()
       WHITESPACE := ' \t'
@@ -172,6 +177,160 @@ class Outputter()
       s[-1] := ""
       return s
    end
+
+   private markdown_line(s)
+      local t
+      s ? {
+         while t := tab(upto('`{*_~')) do {
+            output_fragment(t)
+            if ="`" then {
+               t := tab(upto('`\'') | 0)
+               if move(1)\1 == "`" then
+                  output_link(t)
+               else
+                  output_code(t)
+            } else if ="{" then {
+               t := tab(upto('}') | 0)
+               move(1)
+               output_link(t)
+            } else if ="~~" then {
+               t := tab(find("~~") | 0)
+               move(2)
+               output_code(t)
+            } else if ="**" then {
+               t := tab(find("**") | 0)
+               move(2)
+               output_bold(t)
+            } else if ="__" then {
+               t := tab(find("__") | 0)
+               move(2)
+               output_ul(t)
+            } else {
+               t := move(1)
+               output_fragment(t)
+            }
+         }
+         t := tab(0)
+         output_fragment(t)
+      }
+      end_line(Yes{s[-2:0] == "  "})
+   end
+
+   private close_ul()
+      if \ul then {
+         end_ul()
+         ul := &null
+      }
+   end
+
+   private close_ol()
+      if \ol then {
+         end_ol()
+         ol := &null
+      }
+   end
+
+   private close_li()
+      if \li then {
+         end_li()
+         li := &null
+      }
+   end
+
+   private close_pre()
+      if \pre then {
+         end_pre()
+         pre := &null
+      }
+   end
+
+   private close_bar()
+      if \bar then {
+         end_bar()
+         bar := &null
+      }
+   end
+
+   protected markdown(l)
+      local pre_mark, s
+      every !l ? {
+         if \pre then {
+            if tab(many0(WHITESPACE)) & =pre_mark & pos(0) then
+               close_pre()
+            else {
+               s := tab(0)
+               output_pre(s)
+            }
+         } else {
+            tab(many(WHITESPACE))
+            if (pre_mark <- tab(many('~'))) & pos(0) then {
+               close_bar()
+               begin_pre()
+               pre := 1
+            } else if ="|" then {
+               s := tab(many0(WHITESPACE))
+               output_bar(*s)
+               markdown_line(tab(0))
+               bar := 1
+            } else if ="*" & tab(many(WHITESPACE)) then {
+               close_bar()
+               close_li()
+               if /ul then {
+                  close_ol()
+                  begin_ul()
+                  ul := 1
+               }
+               begin_li()
+               li := 1
+               markdown_line(tab(0))
+            } else if tab(many(&digits)) & ="." & tab(many(WHITESPACE)) then {
+               close_bar()
+               close_li()
+               if /ol then {
+                  close_ul()
+                  begin_ol()
+                  ol := 1
+               }
+               begin_li()
+               li := 1
+               markdown_line(tab(0))
+            } else if pos(0) then {
+               close_bar()
+               close_li()
+               close_ul()
+               close_ol()
+               new_para()
+            } else {
+               close_bar()
+               markdown_line(tab(0))
+            }
+         }
+      }
+      close_pre()
+      close_bar()
+      close_li()
+      close_ul()
+      close_ol()
+   end
+
+   protected abstract output_fragment(s)
+   protected abstract output_link(s)
+   protected abstract output_bold(s)
+   protected abstract output_code(s)
+   protected abstract output_ul(s)
+   protected abstract end_line(fl)
+   protected abstract begin_pre()
+   protected abstract output_pre(s)
+   protected abstract end_pre()
+   protected abstract output_bar(n)
+   protected abstract end_bar()
+   protected abstract begin_ul()
+   protected abstract end_ul()
+   protected abstract begin_ol()
+   protected abstract end_ol()
+   protected abstract begin_li()
+   protected abstract end_li()
+   protected abstract new_para()
 
    public new(opts, symbol_table)
       self.opts := opts

@@ -20,9 +20,6 @@ class HtmlOutputter(Outputter)
       done_files,
       subclass_table
 
-   private
-      ul, ol, li, pre, bar
-
    private get_id(sym)
       local v, vo, i
       static sym_id_table, seen_set, cnv
@@ -220,7 +217,7 @@ class HtmlOutputter(Outputter)
          write(f, "</dl><p>")
 
          if is(c.obj, Tree) then {
-            output_file(c)
+            output_a_file(c)
             comment_and_fields(f, c)
             write(f, "<p>")
          }
@@ -436,139 +433,97 @@ class HtmlOutputter(Outputter)
       return xml_escape(s, '<>&')
    end
 
-   private html_unbracket(s, c)
-      local r, t
-      r := ""
-      s ? {
-         while r ||:= esc(tab(upto('`{*_'))) do {
-            if ="`" then {
-               t := tab(upto('`') | 0)
-               move(1)
-               r ||:= "<code>" || create_link(t, c) || "</code>"
-            } else if ="{" then {
-               t := tab(upto('}') | 0)
-               move(1)
-               r ||:= "<code>" || create_link(t, c) || "</code>"
-            } else if ="**" then {
-               t := tab(find("**") | 0)
-               move(2)
-               r ||:= "<b>" || esc(t) || "</b>"
-            } else if ="__" then {
-               t := tab(find("__") | 0)
-               move(2)
-               r ||:= "<u>" || esc(t) || "</u>"
-            } else
-               r ||:= move(1)
-         }
-         r ||:= esc(tab(0))
-      }
-      return r
+   protected output_fragment(s)
+      writes(output_file, esc(s))
    end
 
-   private close_ul(f)
-      if \ul then {
-         write(f, "</ul>")
-         ul := &null
-      }
+   protected output_link(s)
+      writes(output_file, "<code>", create_link(s, output_sym), "</code>")
    end
 
-   private close_ol(f)
-      if \ol then {
-         write(f, "</ol>")
-         ol := &null
-      }
+   protected output_code(s)
+      writes(output_file, "<code>", esc(s), "</code>")
    end
 
-   private close_li(f)
-      if \li then {
-         write(f, "</li>")
-         li := &null
-      }
+   protected output_bold(s)
+      writes(output_file, "<b>", esc(s), "</b>")
    end
 
-   private close_pre(f)
-      if \pre then {
-         write(f, "</pre>")
-         pre := &null
-      }
+   protected output_ul(s)
+      writes(output_file, "<u>", esc(s), "</u>")
    end
 
-   private close_bar(f)
-      if \bar then {
-         write(f, "<br>")
-         bar := &null
-      }
+   protected end_line(fl)
+      if /fl then
+         write(output_file)
+      else
+         write(output_file, "<br>")
    end
 
-   private html_line(f, s)
-      write(f, s)
-      if s[-2:0] == "  " then
-         write(f, "<br>")
+   protected begin_pre()
+      write(output_file, "<pre>")
    end
+
+   protected output_pre(s)
+      write(output_file, esc(s))
+   end
+
+   protected end_pre()
+      write(output_file, "</pre>")
+   end
+
+   protected output_bar(n)
+      write(output_file, "<br>", repl("&nbsp;", n))
+   end
+
+   protected end_bar()
+      write(output_file, "<br>")
+   end
+
+   protected begin_ul()
+      write(output_file, "<p><ul>")
+   end
+
+   protected end_ul()
+      write(output_file, "</ul>")
+   end
+
+   protected begin_ol()
+      write(output_file, "<p><ol>")
+   end
+
+   protected end_ol()
+      write(output_file, "</ol>")
+   end
+
+   protected begin_li()
+      write(output_file, "<li>")
+   end
+
+   protected end_li()
+      write(output_file, "</li>")
+   end
+
+   protected new_para()
+      write(output_file, "<p>")
+   end
+
+   private output_file, output_sym
 
    private html(f, l, c)
-      local w, pre_mark
-      every !l ? {
-         if \pre then {
-            if tab(many0(WHITESPACE)) & =pre_mark & pos(0) then
-               close_pre(f)
-            else
-               write(f, esc(tab(0)))
-         } else {
-            tab(many(WHITESPACE))
-            if (pre_mark <- tab(many('~'))) & pos(0) then {
-               close_bar(f)
-               write(f, "<pre>")
-               pre := 1
-            } else if ="|" then {
-               w := tab(many0(WHITESPACE))
-               write(f, "<br>", repl("&nbsp;", *w))
-               html_line(f, html_unbracket(tab(0), c))
-               bar := 1
-            } else if ="*" & tab(many(WHITESPACE)) then {
-               close_bar(f)
-               close_li(f)
-               if /ul then {
-                  close_ol(f)
-                  write(f, "<p><ul>")
-                  ul := 1
-               }
-               write(f, "<li>")
-               li := 1
-               html_line(f, html_unbracket(tab(0), c))
-            } else if tab(many(&digits)) & ="." & tab(many(WHITESPACE)) then {
-               close_bar(f)
-               close_li(f)
-               if /ol then {
-                  close_ul(f)
-                  write(f, "<p><ol>")
-                  ol := 1
-               }
-               write(f, "<li>")
-               li := 1
-               html_line(f, html_unbracket(tab(0), c))
-            } else if pos(0) then {
-               close_bar(f)
-               close_li(f)
-               close_ul(f)
-               close_ol(f)
-               write(f, "<p>")
-            } else {
-               close_bar(f)
-               html_line(f, html_unbracket(tab(0), c))
-            }
-         }
-      }
-      close_pre(f)
-      close_bar(f)
-      close_li(f)
-      close_ul(f)
-      close_ol(f)
+      self.output_file := f
+      self.output_sym := c
+      markdown(l)
    end
 
    private resolve_link(sym, name)
       local i, j, d
       name := (name ? tab(upto('({') | 0))
+      # For a procedure or method, fail if the name matches one of the parameters.
+      if is(sym, ProcedureSymbol | ClassMethod) then {
+         if name == sym.obj.get_args().gen().str() then
+            fail
+      }
       if is(sym, ClassField) &
          i := sym.defining_class.get_implemented_field(name) then
             return i
@@ -583,10 +538,10 @@ class HtmlOutputter(Outputter)
 
       #
       # Is it in the form <Class>.<Field> ?
-      every d := find(".", name)
-      if \d & (i := symbol_table.resolve(sym.scanned_file, name[1:d])) & 
-              is(i, ClassSymbol) &
-              (j := i.get_implemented_field(name[d+1:0])) then
+      if d := backto('.', name) &
+         (i := symbol_table.resolve(sym.scanned_file, name[1:d-1])) & 
+         is(i, ClassSymbol) &
+         (j := i.get_implemented_field(name[d:0])) then
          return j
    end
 
@@ -606,7 +561,7 @@ class HtmlOutputter(Outputter)
       }
    end
 
-   private output_file(c)
+   private output_a_file(c)
       local f, fname, line_no, g, s, filename
 
       filename := c.obj.get_first_token().filename
@@ -649,7 +604,7 @@ class HtmlOutputter(Outputter)
          write(f, "<dt>Type :</dt><dd>", get_top_level_type(c), "</dd>")
          write(f, "</dl><p>")
          if is(c.obj, Tree) then {
-            output_file(c)
+            output_a_file(c)
             comment_and_fields(f, c)
             write(f, "<p>")
          }
