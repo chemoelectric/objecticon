@@ -669,8 +669,8 @@ static void markptr(union block **ptr)
 
         /*
          * The type is valid, which indicates that this block has not
-         *  been marked.  Point endblock to the byte past the end
-         *  of the block.
+         * been marked.  Point endblock to the byte past the end
+         * of the block.
          */
         endblock = block + BlkSize(block);
 
@@ -695,8 +695,8 @@ static void markptr(union block **ptr)
                 if (InRange(rp->base, block, rp->free)) break;
 
         /*
-         * If this block is not in a block region, its something else
-         *  like a procedure block.
+         * If this block is not in a block region, it's something else
+         * like a procedure block.
          */
         if (rp == NULL)
             return;
@@ -709,12 +709,12 @@ static void markptr(union block **ptr)
             return;
 
         /*
-         * this is an unmarked block outside the (collecting) block region;
+         * This is an unmarked block outside the (collecting) block region;
          * process pointers and descriptors within the block.
          *
          * The type is valid, which indicates that this block has not
-         *  been marked.  Point endblock to the byte past the end
-         *  of the block.
+         * been marked.  Point endblock to the byte past the end
+         * of the block.
          */
         endblock = block + BlkSize(block);
 
