@@ -432,8 +432,16 @@ class Vt(LineBasedScrollArea, MenuMode)
       i := j := 1
       l := 0
       every r := !contents do {
-         if i = y then
+         if i = y then {
+            # If this is line is part of a larger line, and x is
+            # beyond its end, then it makes sense to limit x to the
+            # end of the line; otherwise the returned result would
+            # notionally refer to a position some way into the next
+            # line.  In any case, this shouldn't occur under normal
+            # circumstances.
+            /r.join | i = *contents | (x >:= line_len(r.l) + 1)
             return Locn(l + x, j)
+         }
          if /r.join then {
             j +:= 1
             l := 0
