@@ -976,7 +976,9 @@ class Terminal(TabItem, VtUI)
       search_prev_button, 
       history_list,
       trail,
-      best_focus         # Either columns or output (the vt)
+      best_focus,         # Either columns or output (the vt)
+      log_file,
+      log
 
    private readable
       ascending,
@@ -1326,6 +1328,7 @@ $endif
             }
             if \opts["v"] then
                write("In: ", image(s))
+            (\log).writes1(s)
             send_vt(s)
             check_cwd_change()
             some_in := &yes
@@ -1522,6 +1525,31 @@ $endif
       parent_dialog.new_tab(, dir)
    end
 
+   private on_start_log()
+      local d
+      d := FileDialog().
+         set_existing_file_mode(FileDialog.WARN)
+      d.set_path(log_file)
+      d.show_modal()
+      if log_file := d.get_result() then {
+         if log := open(log_file, "w") then
+            info_msg("Logging to file " || log_file)
+         else
+            info_msg("Failed to open " || log_file || ": " || &why)
+      }
+   end
+
+   private close_log()
+      \log | fail
+      log.close()
+      log := &null
+   end
+
+   private on_end_log()
+      close_log()
+      info_msg("Closed log file " || log_file)
+   end
+
    public create_context_menu()
       local m
       m := Menu()
@@ -1558,6 +1586,15 @@ $endif
          m.add(TextMenuItem().
                set_label("Search").
                connect(open_search_panel, Event.ACTION))
+      if /log then
+         m.add(TextMenuItem().
+               set_label("Log...").
+               connect(on_start_log, Event.ACTION))
+      else
+         m.add(TextMenuItem().
+               set_label("End log").
+               connect(on_end_log, Event.ACTION))
+
       return m
    end
 
@@ -2068,6 +2105,7 @@ $endif
 
    public initially()
       TabItem.initially()
+      log_file := "log"
       setup_shell() | stop(&why)
       io_task := Dispatcher.new_task{service_tty()}
       io_task.start()
@@ -2081,6 +2119,7 @@ $endif
       io_task.stop()
       System.kill(pid, Signal.SIGHUP)
       tty.close()
+      close_log()
       ChildWait.add_pid(pid, on_shell_exit)
       check_cwd_time_task := io_task := tty := pid := &null
    end
