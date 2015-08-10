@@ -214,6 +214,7 @@ abstract class Outputter()
          output_fragment(t)
       }
       end_line(Yes{s[-2:0] == "  "})
+      return self
    end
 
    private close_ul()
@@ -311,6 +312,7 @@ abstract class Outputter()
       close_li()
       close_ul()
       close_ol()
+      return self
    end
 
    protected abstract output_fragment(s)
