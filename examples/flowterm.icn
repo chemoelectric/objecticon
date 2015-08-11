@@ -121,7 +121,11 @@ end
 class FlowTermDialog(Dialog)
    private readable
       favourite_dirs,
-      tabs
+      tabs,
+      file_dialog
+
+   public
+      last_log_file
 
    private on_quit(ev)
       dispose()
@@ -249,7 +253,8 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
          new_tab_item, clone_tab_item, favourite_dirs_item, xdg_refresh_item,
          help_menu, about_item, help_item
       Dialog.new()
-      self.set_resize(&yes)
+      set_resize(&yes)
+      file_dialog := FileDialog().set_remember_size(&yes)
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
          set_label("New Tab")
@@ -1299,7 +1304,7 @@ $endif
          i := if *input > 0 & \some_in then Poll.IN + Poll.OUT else Poll.IN
          x := io_task.poll([tty, i]) | {
             if /io_task.interrupt_flag then {
-               err_msg(u"IO problem polling tty: " || ucs(&why))
+               err_msg("IO problem polling tty: " || &why)
                break
             } else {
                # We were interrupted, meaning that some input has gone into the
@@ -1310,7 +1315,7 @@ $endif
          if DescStream.poll_out_test(x[1]) then {
             s := get(input) | syserr("Poll out, but input buffer empty")
             n := tty.out(s) | {
-               err_msg(u"IO problem on tty: " || ucs(&why))
+               err_msg("IO problem on tty: " || &why)
                break
             }
             if n < *s then
@@ -1319,11 +1324,11 @@ $endif
                write("Out: ", image(s))
          } else if DescStream.poll_in_test(x[1]) then {
             s := tty.in(1048576) | {
-               err_msg(u"IO problem on tty: " || ucs(&why))
+               err_msg("IO problem on tty: " || &why)
                break
             }
             if /s then {
-               err_msg(u"EOF on tty")
+               err_msg("EOF on tty")
                break
             }
             if \opts["v"] then
@@ -1333,7 +1338,7 @@ $endif
             check_cwd_change()
             some_in := &yes
          } else {
-            err_msg(u"IO problem on tty, neither poll in or out ready")
+            err_msg("IO problem on tty, neither poll in or out ready")
             break
          }
       }
@@ -1415,7 +1420,7 @@ $endif
    end
 
    public err_msg(s)
-      send_vt(u"\n\e[31m(Message from terminal:) " || s || u"\e[m")
+      send_vt("\n\e[31m(Message from terminal:) " || s || "\e[m")
       info_msg(s)
    end
 
@@ -1526,17 +1531,28 @@ $endif
    end
 
    private on_start_log()
-      local d
-      d := FileDialog().
-         set_existing_file_mode(FileDialog.WARN)
-      d.set_path(log_file)
-      d.show_modal()
-      if log_file := d.get_result() then {
-         if log := open(log_file, "w") then
-            info_msg("Logging to file " || log_file)
-         else
-            info_msg("Failed to open " || log_file || ": " || &why)
+      local d, s, dl, fl
+      d := parent_dialog.file_dialog
+      dl := [cwd]
+      fl := [u"log"]
+      if \parent_dialog.last_log_file then {
+         push(dl, parent_dialog.last_log_file.parent().ucs())
+         push(fl, parent_dialog.last_log_file.get(-1))
       }
+      if \log_file then {
+         push(dl, log_file.parent().ucs())
+         push(fl, log_file.get(-1))
+      }
+      d.set_directories(dl).
+         set_files(fl).
+         set_existing_file_mode(FileDialog.WARN).
+         show_modal(parent_dialog)
+      parent_dialog.last_log_file := log_file := d.get_result_path() | fail
+      s := log_file.ucs()
+      if log := open(s, "w") then
+         info_msg(u"Logging to file " || s)
+      else
+         info_msg(u"Failed to open " || s || u": " || ucs(&why))
    end
 
    private close_log()
@@ -1547,7 +1563,7 @@ $endif
 
    private on_end_log()
       close_log()
-      info_msg("Closed log file " || log_file)
+      info_msg(u"Closed log file " || log_file.ucs())
    end
 
    public create_context_menu()
@@ -2012,6 +2028,7 @@ $endif
             columns.find_focus()
          else
             output.find_focus())
+         log_file := other.log_file
       } else {
          if \opts["hs"] then
             split.reorient()
@@ -2105,7 +2122,6 @@ $endif
 
    public initially()
       TabItem.initially()
-      log_file := "log"
       setup_shell() | stop(&why)
       io_task := Dispatcher.new_task{service_tty()}
       io_task.start()
