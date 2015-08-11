@@ -119,10 +119,7 @@ class FavouriteDirectoriesDialog(Dialog)
          e := etc.object_get_selections()[1]
          application_field.set_contents(e[1])
          directory_field.set_contents(e[2])
-         if /e[1] then
-            application_check_box.set_is_checked(&yes)
-         else
-            application_check_box.set_is_checked(&no)
+         application_check_box.set_is_checked(Yes{/e[1]})
       }
       update_grey()
       msg()
@@ -136,14 +133,13 @@ class FavouriteDirectoriesDialog(Dialog)
          up_button.set_is_shaded(No{ i > 1})
          down_button.set_is_shaded(No{ i < *etc.contents })
          edit_panel.set_is_shaded(&no)
-         application_field.set_is_shaded(toggle_flag(application_check_box.get_status()))
+         application_field.set_is_shaded(application_check_box.get_status())
       } else {
          apply_button.set_is_shaded(&yes)
          up_button.set_is_shaded(&yes)
          down_button.set_is_shaded(&yes)
          edit_panel.set_is_shaded(&yes)
       }
-
       delete_button.set_is_shaded(Yes{ *etc.get_selections() = 0 })
    end
 
