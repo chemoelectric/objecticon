@@ -1266,9 +1266,9 @@ class Img(Image, HasLastHighlight)
          if visible_border() then
             invalidate()
          if /over then
-            browser.clear_msg(self)
+            browser.msg()
          else
-            browser.msg(over.str(),, self)
+            browser.msg(over.str())
       }
       return self
    end
@@ -1338,7 +1338,7 @@ class Img(Image, HasLastHighlight)
       return \over | \form
    end
 
-   private handle_in_chain(e)
+   package handle_in_chain(e)
       local u, t, a, f
       *parent_dialog.held = 0 | fail
       if e.code === (Key.SHIFT_L | Key.SHIFT_R) then {
@@ -1390,7 +1390,6 @@ class Img(Image, HasLastHighlight)
          set_pointer("hand1")
          connect(self.handle_form_lrelease, Event.MOUSE_LEFT_RELEASE)
       } else if \map_id | \context.url then {
-         connect(self.handle_in_chain, Event.IN_POINT_CHAIN)
          connect(self.handle_lmdrag, Event.MOUSE_LEFT_DRAG)
          connect(self.handle_lmpress, Event.MOUSE_LEFT_PRESS)
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
@@ -2762,7 +2761,6 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       h_direction,
       v_direction,
       primary_selection_owner,
-      msg_owner,
       outermost_border,
       tidy_cache_task
 
@@ -3074,18 +3072,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return self
    end
 
-   public msg(s, n, owner)
-      /owner := self
+   public msg(s, n)
       (\ui).msg(s, n)
-      msg_owner := owner
-      return self
-   end
-
-   public clear_msg(owner)
-      if /msg_owner | /owner | (owner === msg_owner) then {
-         (\ui).msg()
-         msg_owner := &null
-      }
       return self
    end
 
@@ -5184,6 +5172,25 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return \r
    end
 
+   # This is used to forward an in chain event to Imgs and TextFlows
+   # in the point chain.  The reason they don't simply listen
+   # themselves is that they would then process the event in the wrong
+   # order.  Since the bottom components come last (ie the base
+   # TextFlow), when the mouse leaves a link in the top-level and
+   # moves to a link in another TextFlow (above the base one), the
+   # base TextFlow would process the event last, and would clear the
+   # UI message, overwriting the new message written by the upper
+   # level link.  So this traverses the point chain backwards, which
+   # is the correct order for this case.
+   #
+   private handle_in_chain(e)
+      local c
+      every c := back(parent_dialog.point_chain) do {
+         if is(c, Img | TextFlow) then
+            c.handle_in_chain(e)
+      }
+   end
+
    public get_current_text_selection()
       return \.text_selection
    end
@@ -5277,9 +5284,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       local c
       is(parent_dialog.point_chain[1], Img | TextFlow | TblContent | Tbl) | fail
       every c := !parent_dialog.point_chain do {
-         if is(c, TextFlow) & c.wants_lpress(e) then
-            fail
-         if is(c, Img) & c.wants_lpress(e) then
+         if is(c, TextFlow | Img) & c.wants_lpress(e) then
             fail
       }
       return
@@ -5495,7 +5500,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       view.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG).
          connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS).
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE).
-         connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
+         connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS).
+         connect(self.handle_in_chain, Event.IN_POINT_CHAIN)
       return
    end
 end
