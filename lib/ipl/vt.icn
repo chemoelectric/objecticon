@@ -2121,6 +2121,7 @@ class Vt(LineBasedScrollArea, MenuMode)
             ch := u"\e" || ch
          send(ch)
          quieten_cursor()
+         ui.msg()
          goto_bottom()
       }
    end
