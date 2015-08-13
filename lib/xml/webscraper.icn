@@ -4,25 +4,97 @@
 
 package xml
 
-import util, ipl.scan, io, ipl.pdco
+import util, ipl.scan, io, ipl.pdco, lang
 
+package record Anchor(str, path)
+
+#
+# A class to help with web scraping.  In particular, it provides a way
+# to help lookup particular elements (tags) in a web page, which has a
+# known element structure.  Having found a desired element, then the
+# client program can extract the desired data.
+#
+# The class works by taking a sample web page which has the same
+# structure as the web pages we will subsequently be scraping data
+# from.  This sample page is called the template, and is like an
+# ordinary webpage, but contains special directives which mark the
+# particular points in the document we wish to locate in the pages we
+# will be scraping data from.
+#
+# There are two types of special directives.  The first is the "scrape
+# id".  This can either point to a tag, in which case it takes the
+# form of an attribute :-
+# ~
+#    <table scrapeid="spellingtable">
+# ~
+# or it can be placed at the start of text content :-
+# ~
+#    <a href="/news/special_reports" class="navigation-wide-list__link">
+#        <span>$scrapeid=title$Special Reports</span>
+#    </a>
+# ~
+#
+# The second type of directive is an "anchor".  The idea is that some
+# unique, non-changing text content is chosen, near to a scrape id
+# location.  This is then marked as an "anchor", and the scrape id is
+# made to refer to the anchor.  The scrape id will then be searched
+# for by first searching for the anchor text, and then by following
+# the relative path to the scrape location.  This relative path will
+# hopefully be less prone to change than the path from the scrape to
+# the root element, which must be used if there is no anchor for the
+# scrape.
+#
+# An example of an anchor and scrape used together is :-
+# ~
+#    <table scrapeid="pp:pastparticiple" border="0">
+#       <tr><td align="center">$anchorid=pp$Past participle</td></tr>
+#       <tr><td class="colVerbDef">gemacht&nbsp;</td></tr>
+#    </table>
+# ~
+#
+# Here the anchor id is "pp", and the anchor text is "Past
+# participle".  The scrapeid is "pastparticiple", and the link to the
+# anchor is indicated by prefixing this with "pp:".  Now, so long as
+# this relative structure doesn't change, and future documents still
+# contain the "Past participle" text in the same place, the scrape
+# will still successfully retrieve the desired element.
+#
+# A `WebScraper' instance is created by passing the text data
+# containing the template document.  This can either be loaded from a
+# file, or included using a `$load` directive, if it is not too
+# unwieldy.
+#
+# Once created, subject web pages can be searched using the `lookup`
+# method.  This takes a parsed document and a scrape id and returns
+# the element in the document which corresponds to the scrape id in
+# the template.
+#
 class WebScraper()
    private
-      paths
+      paths,
+      debug_flag
 
    #
-   # Generate the lookup ids this webscraper can search for
+   # Generate the lookup scrape ids this webscraper can search for
    #
    public get_ids()
       suspend key(paths)
    end
 
-   public load_file(fn)
-      return set_page(Files.file_to_string(fn)) 
+   #
+   # Turn on debugging info
+   #
+   public set_debug(s)
+      self.debug_flag := check_flag(s)
+      return self
    end
 
-   public set_page(data)
-      local p, d, n, s, i, anchors
+   #
+   # Create a new instance using the given template.
+   # @param data the template, either string or ucs.
+   #
+   public new(data)
+      local p, d, n, s, i, anchors, k
 
       p := HtmlParser()
       d := p.parse(data) | return error("Couldn't parse")
@@ -30,49 +102,50 @@ class WebScraper()
       anchors := create_anchors(d) | fail
 
       paths := table()
+      k := same_type(u"scrapeId", data)
 
       every n := Seq{d.traverse_nodes_preorder()} do {
-         if is(n, Element) & s := n.get_attribute("scrapeId") then {
+         if is(n, Element) & s := n.get_attribute(k) then {
             do_insert(s, n, anchors) | fail
          }
          i := 0
          every s := text(!n.children) do {
             i +:= 1
-            s ? if tab(cl_match("$scrapeid=")) then {
+            s ? if tab(cl_match(u"$scrapeid=")) then {
                s := tab(upto('$')) | return error("Unclosed scrapeid")
-               do_insert(s, n, anchors, i)
+               do_insert(s, n, anchors, i) | fail
             }
          }
       }
 
-      return self
+      return
    end
 
-   public do_insert(s, n, anchors, si)
-      local a, t, anchor_str, anchor_path, id
+   private do_insert(s, n, anchors, si)
+      local a, anchor, id
       s ? {
          if a := tab(upto(':')) then {
             move(1)
-            t := \anchors[a] | return error("Unknown anchor:" || a)
-            anchor_str := t[1]
-            anchor_path := t[2]
+            anchor := member(anchors, a) | return error("Unknown anchor: " || a)
          }
          id := tab(0)
       }
-      return insert(paths, id, create_path(n, anchor_str, anchor_path, si))
+      insert(paths, id, create_path(n, anchor, si))
+
+      return self
    end
 
-   public create_anchors(d)
+   private static create_anchors(d)
       local n, s, id, str, res
 
       res := table()
       every n := Seq{d.traverse_nodes_preorder()} do {
          every s := text(!n.children) do {
-            s ? if tab(cl_match("$anchorid=")) then {
+            s ? if tab(cl_match(u"$anchorid=")) then {
                id := tab(upto('$')) | return error("Unclosed anchor id")
                move(1)
                str := tab(0)
-               insert(res, id, [str, path_to_root(n)])
+               insert(res, id, Anchor(str, path_to_root(n)))
             }
          }
       }
@@ -80,20 +153,20 @@ class WebScraper()
       return res
    end
 
-   public create_path(n, anchor_str, anchor_path, si)
+   private static create_path(n, anchor, si)
       local p1, p2, res, el
 
       res := []
       p1 := path_to_root(n)
 
-      if \anchor_path then {
-         p2 := copy(anchor_path)
+      if \anchor then {
+         p2 := copy(anchor.path)
          while p1[1] === p2[1] do {
             pop(p1)
             pop(p2)
          }
 
-         put(res, ["A", anchor_str])
+         put(res, ["A", anchor.str])
          put(res, ["U", *p2])
       } else {
          put(res, ["R"])
@@ -109,7 +182,7 @@ class WebScraper()
       return res
    end
 
-   public get_tag_index(n)
+   private static get_tag_index(n)
       local i, e
       i := 0
       every e := !n.parent.children do {
@@ -121,7 +194,7 @@ class WebScraper()
       syserr("Couldn't find child in parent!")
    end
 
-   public path_to_root(n)
+   private static path_to_root(n)
       local l
       l := []
       repeat {
@@ -131,30 +204,42 @@ class WebScraper()
       }
    end
 
+   #
+   # Lookup the given scrape id in the given `HtmlDocument`.  Either
+   # an `HTMLElement` or text is returned, depending on whether the
+   # scrape directive was a tag attribute, or part of a text content
+   # in the template.
+   #
+   # @param d An `HtmlDocument`.
+   # @param id The particular scrape id, corresponding to one of the
+   # @         ids in the template.
    public lookup(d, id)
       local l, n, e
 
       l := \paths[id] | return error("Unknown id:" || id)
 
       every e := !l do {
-         #write("Doing:",to_string(e))
+         if \debug_flag then
+            ewrite("Command: ", to_string(e))
+
          case e[1] of {
             "R" : {
                n := d.get_root_element()
             }
             "A" : {
-               n := d.find_string(e[2]) | return error("Couldn't find anchor string:" || e[2])
+               n := d.find_string(e[2]) | return error("While looking up " || 
+                                                       id || ": Couldn't find anchor string:" || e[2])
             }
             "U" : {
                every 1 to e[2] do {
                   n := n.parent
-                  is(n, Element) | return error("Couldn't go up")
+                  is(n, Element) | return error("While looking up " || 
+                                                id || ":  Couldn't go up " || e[2] || " levels")
                }
             }
             "T" : {
-               #n.print_structure()
                n := n.get_nth_element(e[2], e[3]) | return error("While looking up " || 
-                                                                 id || ": Element " || e[3] || " not found.")
+                                                                 id || ": Element " || e[3] || " not found, n=" || e[2] || ".")
             }
             "S" : {
                n := n.get_nth_string(e[2]) | return error("While looking up " || 
@@ -162,14 +247,34 @@ class WebScraper()
             }
             default : syserr("Unknown command")
          }
+
+         if \debug_flag then {
+            if is(n, Element) then
+               ewrite("OK: Now at ", n.name, " ", to_string(n.attributes))
+            else
+               ewrite("OK: Now at ", image(n))
+         }
       }
       return n
    end
 
-   public new(fn)
-      if \fn then
-         return load_file(fn)
-      return
+   #
+   # Return an instance with template in the given file.
+   # @param fn the filename.
+   #
+   public static from_file(fn)
+      return WebScraper(Files.file_to_string(fn))
+   end
+ 
+   # Return an instance with template in the given file, which is
+   # first converted to a ucs string.
+   # @param fn the filename.
+   #
+   public static from_ucs_file(fn)
+      local s
+      s := Files.file_to_string(fn) | fail
+      s := ucs(s) | return error("File not utf8")
+      return WebScraper(s)
    end
 end
 
