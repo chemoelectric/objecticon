@@ -2,11 +2,17 @@
 # $Id$
 #
 
-package xml
+package ipl.webscraper
 
-import util, ipl.scan, io, ipl.pdco, lang
+import xml, util, ipl.scan, io, ipl.pdco, lang
 
 package record Anchor(str, path)
+
+package record AnchorCmd(str)
+package record UpCmd(n)
+package record RootCmd()
+package record TagCmd(n, name)
+package record StringCmd(n)
 
 #
 # A class to help with web scraping.  In particular, it provides a way
@@ -166,18 +172,18 @@ class WebScraper()
             pop(p2)
          }
 
-         put(res, ["A", anchor.str])
-         put(res, ["U", *p2])
+         put(res, AnchorCmd(anchor.str))
+         put(res, UpCmd(*p2))
       } else {
-         put(res, ["R"])
+         put(res, RootCmd())
          pop(p1)
       }
 
       every el := !p1 do
-         put(res, ["T", get_tag_index(el), el.name])
+         put(res, TagCmd(get_tag_index(el), el.name))
 
       if \si then
-         put(res, ["S", si])
+         put(res, StringCmd(si))
 
       return res
    end
@@ -222,28 +228,28 @@ class WebScraper()
          if \debug_flag then
             ewrite("Command: ", to_string(e))
 
-         case e[1] of {
-            "R" : {
+         case classof(e) of {
+            RootCmd : {
                n := d.get_root_element()
             }
-            "A" : {
-               n := d.find_string(e[2]) | return error("While looking up " || 
-                                                       id || ": Couldn't find anchor string:" || e[2])
+            AnchorCmd : {
+               n := d.find_string(e.str) | return error("While looking up " || 
+                                                        id || ": Couldn't find anchor string:" || e.str)
             }
-            "U" : {
-               every 1 to e[2] do {
+            UpCmd : {
+               every 1 to e.n do {
                   n := n.parent
                   is(n, Element) | return error("While looking up " || 
-                                                id || ":  Couldn't go up " || e[2] || " levels")
+                                                id || ":  Couldn't go up " || e.n || " levels")
                }
             }
-            "T" : {
-               n := n.get_nth_element(e[2], e[3]) | return error("While looking up " || 
-                                                                 id || ": Element " || e[3] || " not found, n=" || e[2] || ".")
+            TagCmd : {
+               n := n.get_nth_element(e.n, e.name) | return error("While looking up " || 
+                                                                  id || ": Element " || e.name || " not found, n=" || e.n || ".")
             }
-            "S" : {
-               n := n.get_nth_string(e[2]) | return error("While looking up " || 
-                                                       id || ": String at " || e[2] || " not found.")
+            StringCmd : {
+               n := n.get_nth_string(e.n) | return error("While looking up " || 
+                                                         id || ": String at " || e.n || " not found.")
             }
             default : syserr("Unknown command")
          }
