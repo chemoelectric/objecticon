@@ -200,8 +200,8 @@ class ScrollBar(Component, HasOrientation)
       if /self.wheel_component then 
          wu_listener := wd_listener := &null
       else {
-         wu_listener := self.wheel_component.connect_and_return(self.handle_wheel_up, Event.MOUSE_WHEEL_UP)
-         wd_listener := self.wheel_component.connect_and_return(self.handle_wheel_down, Event.MOUSE_WHEEL_DOWN)
+         wu_listener := wheel_component.connect(handle_wheel_up, Event.MOUSE_WHEEL_UP).last_listener
+         wd_listener := wheel_component.connect(handle_wheel_down, Event.MOUSE_WHEEL_DOWN).last_listener
       }
       return self
    end

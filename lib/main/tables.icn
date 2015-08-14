@@ -747,9 +747,9 @@ class SortTable(Table)
    # @param cmp a comparator function taking two arbitrary values and
    # @   returning {<0}, {0} or {>0} by way of comparison.  The default
    # @   value is {Internal.compare}.  The function must satisfy
-   # @      sign(cmp(a,b)) = -sign(cmp(b,a)) for all a,b
-   # @      cmp(a,b)>0 & cmp(b,c)>0 => cmp(a,c)>0
-   # @      cmp(a,b)=0 <=> sign(cmp(a,x))=sign(cmp(b,x)) for all other x.
+   # @   *  `sign(cmp(a,b)) = -sign(cmp(b,a))` for all `a,b`
+   # @   *  `cmp(a,b)>0 & cmp(b,c)>0 => cmp(a,c)>0`
+   # @   *  `cmp(a,b)=0 <=> sign(cmp(a,x))=sign(cmp(b,x))` for all other `x'.
    # @param entries initial key-value entries.
    #
    public new(def, cmp, entries[])

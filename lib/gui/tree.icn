@@ -435,12 +435,11 @@ class ItemPaintTree(BaseTree)
    end
 
    public calculate_line_height()
-      local h, h1
+      local h, h1, bh
       if /col_w then
          compute_img_wh()
-      if h := item_paint.get_constant_height(view.cbwin) +
-         item_border.get_total_height() then 
-      {
+      bh := item_border.get_total_height()
+      if h := item_paint.get_constant_height(view.cbwin) + bh then {
          #
          # Ensure the line height is slightly greater than the
          # bitmap height
@@ -448,9 +447,7 @@ class ItemPaintTree(BaseTree)
          h <:= \img_h + 4
       } else {
          h := []
-         every h1 := item_paint.get_height(view.cbwin, (!self.contents).label) + 
-                   item_border.get_total_height() do 
-         {
+         every h1 := item_paint.get_height(view.cbwin, (!self.contents).label) + bh do {
             h1 <:= \img_h + 4
             put(h, h1)
          }

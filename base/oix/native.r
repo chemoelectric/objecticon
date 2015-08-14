@@ -3586,17 +3586,6 @@ function io_RamStream_str(self)
    }
 end
 
-function util_Connectable_is_methp_with_object(mp, o)
-   if !is:object(o) then
-       runerr(602, o)
-    body {
-       if (is:methp(mp) && MethpBlk(mp).object == &ObjectBlk(o))
-           return nulldesc;
-       else
-           fail;
-    }
-end
-
 function lang_Constructor_get_name(c)
     body {
         struct b_constructor *constructor0;

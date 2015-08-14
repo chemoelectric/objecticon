@@ -11,7 +11,8 @@ class CheckBoxTableColumn(BaseTableColumn)
    public 
       single_selection_flag,
       unchecked_paint, 
-      checked_paint
+      checked_paint,
+      mouse_down_listener
 
    public calculate_line_height()
       return unchecked_paint.h + 8
@@ -76,7 +77,7 @@ class CheckBoxTableColumn(BaseTableColumn)
          else
             self.set_box_paint(ImagePaint().set_cache("gui.DIAMOND_UP"), ImagePaint().set_cache("gui.DIAMOND_DOWN"))
       }
-      get_table_content().connect(self.mouse_down, Event.MOUSE_LEFT_PRESS)
+      mouse_down_listener := get_table_content().connect(self.mouse_down, Event.MOUSE_LEFT_PRESS).last_listener
       BaseTableColumn.initially()
       self.unchecked_paint.initially(self)
       self.checked_paint.initially(self)
@@ -86,7 +87,7 @@ class CheckBoxTableColumn(BaseTableColumn)
 
    public finally()
       BaseTableColumn.finally()
-      get_table_content().disconnect_object(self)
+      get_table_content().disconnect(mouse_down_listener)
       unchecked_paint.finally()
       checked_paint.finally()
    end

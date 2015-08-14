@@ -17,16 +17,21 @@ import
    ipl.childwait,
    ipl.vt,
    ipl.columnize,
-   ipl.strings
+   ipl.strings,
+   ipl.browser
 
 global opts
 
 $ifdef _PNG
 $load HOURGLASS "rpp.HOURGLASS_24.png"
 $load KEYBOARD "rpp.KEYBOARD_24.png"
+$load HELP "rpp.HELP_64.png"
+$load ABOUT "rpp.ABOUT_64.png"
 $else
 $load HOURGLASS "rpp.HOURGLASS_24.gif"
 $load KEYBOARD "rpp.KEYBOARD_24.gif"
+$load HELP "rpp.HELP_64.gif"
+$load ABOUT "rpp.ABOUT_64.gif"
 $endif
 $load EXIT "rpp.EXIT_24.gif"
 $load FLOWTERM_LOGO "rpp.FLOWTERM_LOGO.png"
@@ -103,28 +108,24 @@ end
 
 class TerminalMenu(DynamicMenu)
    public populate()
-      local m
-      if m := parent_component.parent_dialog.tabs.which_one.create_context_menu() then
-         every add(!m.children)
+      move_all(parent_component.parent_dialog.tabs.which_one.create_context_menu())
    end
 end
 
 class ColumnsMenu(DynamicMenu)
    public populate()
-      local m
-      if m := parent_component.parent_dialog.tabs.which_one.create_columns_context_menu() then
-         every add(!m.children)
-   end
-
-   public finally()
-      DynamicMenu.finally()
+      move_all(parent_component.parent_dialog.tabs.which_one.create_columns_context_menu())
    end
 end
 
 class FlowTermDialog(Dialog)
    private readable
       favourite_dirs,
-      tabs
+      tabs,
+      file_dialog
+
+   public
+      last_log_file
 
    private on_quit(ev)
       dispose()
@@ -180,7 +181,46 @@ class FlowTermDialog(Dialog)
       tabs.which_one.info_msg("XDG database reloaded")
    end
 
-   public on_favourite_dirs(ev)
+   private on_html_click(url)
+      tabs.which_one.open_link(url)
+   end
+
+   private show_html(src)
+      local d
+      d := HTMLMessageDialog().
+         set_label("FlowTerm")
+      d.browser.
+         set_border(NullBorder()).
+         set_page(src).
+         set_size(scale(550), scale(350)).
+         connect(on_html_click, SimpleBrowser.LINK_LEFT_CLICKED)
+      d.show_modal(self)
+   end
+
+   private on_about(ev)
+      show_html("<html><h1><img src=img:rpp.ABOUT_64 width=64 height=64 align=absmiddle/>&nbsp;About FlowTerm</h1>_
+<h2>Author</h2>Robert Parlett_
+<h2>Contact</h2><a href=mailto:r.parlett@gmail.com</a>r.parlett@gmail.com</a>_
+<h2>Version</h2>" || &version ||
+"</html>")
+   end
+
+   private on_help(ev)
+      show_html("<html><h1><img src=img:rpp.HELP_64 width=64 height=64 align=absmiddle/>&nbsp;FlowTerm Help</h1>_
+FlowTerm is a terminal emulator which uses web-like hyperlinks, as well as some elements of a file explorer._
+<p>_
+It requires an additional set of programs, <i>FlowTerm extras</i>, in order to be fully functional._
+<p>_
+Simple command line option help can be obtained by running :-_
+<pre>    flowterm -help</pre>_
+<p>_
+Full documentation can be found at <a href=\"http://objecticon.sourceforge.net/FlowTerm.html\">this page</a>._
+<p>_
+The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects/objecticon/files/misc/flowterm-extras.tar.gz/download\">here</a>._
+</html>")
+   end
+
+   private on_favourite_dirs(ev)
       local d
       d := FavouriteDirectoriesDialog()
       d.show_modal(self)
@@ -188,12 +228,33 @@ class FlowTermDialog(Dialog)
       every (!tabs.children).refresh_favourite_dirs()
    end
 
+   public component_setup()
+      local i, t
+      t := \tabs.which_one | tabs.children[1]
+      if i := \opts["width"] then {
+         i > 0 | stop("Invalid -width: integer > 0 expected")
+         t.output.
+            set_width().
+            set_vt_width(i)
+      } else
+         set_width(scale(1200))
+
+      if i := \opts["height"] then {
+         i > 0 | stop("Invalid -height: integer > 0 expected")
+         t.output.
+            set_height().
+            set_vt_height(i)
+      } else
+         set_height(scale(850))
+   end
+
    public new()
       local quit_menu_item, menu_bar, file_menu, terminal_menu, columns_menu, 
-         new_tab_item, clone_tab_item, favourite_dirs_item, xdg_refresh_item
+         new_tab_item, clone_tab_item, favourite_dirs_item, xdg_refresh_item,
+         help_menu, about_item, help_item
       Dialog.new()
-      set_size(scale(1200), scale(850))
-      self.set_resize(&yes)
+      set_resize(&yes)
+      file_dialog := FileDialog().set_remember_size(&yes)
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
          set_label("New Tab")
@@ -220,6 +281,16 @@ class FlowTermDialog(Dialog)
          set_label("Terminal")
       columns_menu := ColumnsMenu().
          set_label("List")
+      help_item := TextMenuItem().
+         connect(on_help, Event.ACTION).
+         set_label("Help...")
+      about_item := TextMenuItem().
+         connect(on_about, Event.ACTION).
+         set_label("About...")
+      help_menu := Menu().
+         set_label("Help").
+         add(help_item).
+         add(about_item)
       menu_bar := MenuBar().
          set_size(scale(100)).
          clear_constraints().
@@ -231,7 +302,8 @@ class FlowTermDialog(Dialog)
          set_constraint("x_fill", &yes).
          add(file_menu).
          add(columns_menu).
-         add(terminal_menu)
+         add(terminal_menu).
+         add(help_menu)
       self.add(menu_bar)
       tabs := TabSet().
          clear_constraints().
@@ -266,6 +338,7 @@ class Columns(LineBasedScrollArea)
       cursor
 
    private
+      quieten,
       data_w,
       col_w,
       n_rows,
@@ -425,10 +498,31 @@ class Columns(LineBasedScrollArea)
       }
    end
 
+   public quieten_cursor()
+      (/quieten & *parent_dialog.held = 0) | fail
+      set_over()
+      # No need to synch_pointer since we call this method out of the
+      # vt's keyboard handler.
+      view.set_pointer()
+      quieten := 1
+   end
+
+   public unquieten_cursor()
+      quieten := &null
+   end
+
+   private handle_move(ev)
+      unquieten_cursor()
+   end
+
    private handle_in_chain(e)
-      local k
-      *parent_dialog.held = 0 | fail
-      if k := get_element_under_pointer(e) then {
+      local k, f
+      (/quieten & *parent_dialog.held = 0) | fail
+      if e.code === (Key.SHIFT_L | Key.SHIFT_R) then {
+         if /e.release then
+            f := 1
+      } else f := \e.shift
+      if /f & (k := get_element_under_pointer(e)) then {
          set_over(k)
          view.set_pointer("hand1")
       } else {
@@ -517,6 +611,10 @@ class Columns(LineBasedScrollArea)
       return .\held
    end
 
+   public get_over()
+      return .\over
+   end
+
    public object_get_cursor()
       return data[.\cursor]
    end
@@ -532,11 +630,13 @@ class Columns(LineBasedScrollArea)
    public handle_lmpress(e)
       *parent_dialog.held = 1 | fail
       if \over then {
-         if /e.shift then {
+         if /e.ctrl then {
             set_highlight(over)
             held := over
-         } else
+         } else {
             set_cursor(over)
+            ensure_line_visible(get_row_for_index(over)) 
+         }
       } 
    end
 
@@ -675,17 +775,22 @@ class Columns(LineBasedScrollArea)
       gutter := scale(8)
       item_paint := TextItemPaint()
       item_border := NullBorder().set_x_align(Align.L)
-      view.connect(self.handle_lmpress, Event.MOUSE_LEFT_PRESS)
-      view.connect(self.handle_lmpress, Event.MOUSE_MIDDLE_PRESS)
-      view.connect(self.handle_lmdrag, Event.MOUSE_LEFT_DRAG)
-      view.connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-      view.connect(self.handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
-      view.connect(self.handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
-      view.connect(self.handle_in_chain, Event.IN_POINT_CHAIN)
-      view.connect(self.handle_exit, Event.MOUSE_EXIT)
-      connect(self.handle_key, Event.KEY_PRESS)
+      view.connect(handle_lmpress, Event.MOUSE_LEFT_PRESS)
+      view.connect(handle_lmpress, Event.MOUSE_MIDDLE_PRESS)
+      view.connect(handle_lmdrag, Event.MOUSE_LEFT_DRAG)
+      view.connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      view.connect(handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
+      view.connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
+      view.connect(handle_in_chain, Event.IN_POINT_CHAIN)
+      view.connect(handle_exit, Event.MOUSE_EXIT)
+      view.connect(handle_move, Event.MOUSE_MOVEMENT)
+      connect(handle_key, Event.KEY_PRESS)
       return
    end
+end
+
+procedure mk_file_URL(s)
+   return URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/'))
 end
 
 class DirList(ButtonOnlyList)
@@ -696,12 +801,37 @@ class DirList(ButtonOnlyList)
       return b
    end
 
+   private cursor_to_url()
+      return mk_file_URL(popup.object_get_cursor())
+   end
+
+   private on_rpress(e)
+      local m, pm
+      m := parent.parent.create_link_menu(cursor_to_url()) | fail
+      every Seq{m.traverse_postorder()}.connect(close_popup, Event.ACTION, 1)
+      pm := PopupMenu().
+         connect(create popup.clear_selections(), Event.POPUP_CLOSED)
+      pm.popup(popup, m, e.x, e.y)
+      popup.set_selections([popup.get_cursor()])
+   end
+
+   private on_mrelease(ev)
+      popup.get_cursor() = popup.get_line_under_pointer(ev) | fail
+      parent.parent.insert_link(cursor_to_url(), ev)
+      close_popup()
+   end
+
    public create_popup()
-      return ItemPaintList().
+      local l
+      l := ItemPaintList().
          set_item_paint(StringDirItemPaint()).
          set_item_border(EmptyBorder().
                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                             set_x_align(Align.L))
+      l.view.
+         connect(on_rpress, Event.MOUSE_RIGHT_PRESS).
+         connect(on_mrelease, Event.MOUSE_MIDDLE_RELEASE)
+      return l
    end
 end
 
@@ -726,16 +856,105 @@ class HistoryList(ButtonOnlyList)
       return b
    end
 
+   private cursor_to_url()
+      return mk_file_URL(popup.object_get_cursor().dir)
+   end
+
+   private on_rpress(e)
+      local m, pm
+      m := parent.parent.create_link_menu(cursor_to_url()) | fail
+      every Seq{m.traverse_postorder()}.connect(close_popup, Event.ACTION, 1)
+      pm := PopupMenu().
+         connect(create popup.clear_selections(), Event.POPUP_CLOSED)
+      pm.popup(popup, m, e.x, e.y)
+      popup.set_selections([popup.get_cursor()])
+   end
+
+   private on_mrelease(ev)
+      popup.get_cursor() = popup.get_line_under_pointer(ev) | fail
+      parent.parent.insert_link(cursor_to_url(), ev)
+      close_popup()
+   end
+
    public create_popup()
-      local t
+      local t, l
       t := parent.parent
       set_selection_list(copy(t.history))
       set_selection(t.history_pos)
-      return ItemPaintList().
+      l := ItemPaintList().
          set_item_paint(HistoryEntryItemPaint()).
          set_item_border(EmptyBorder().
                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                             set_x_align(Align.L))
+      l.view.
+         connect(on_rpress, Event.MOUSE_RIGHT_PRESS).
+         connect(on_mrelease, Event.MOUSE_MIDDLE_RELEASE)
+      return l
+   end
+end
+
+class FileTrailListEx(FileTrailList)
+   private cursor_to_url()
+      return mk_file_URL(p.child(popup.object_get_cursor().name).ucs())
+   end
+
+   private on_rpress(e)
+      local m, pm
+      m := parent.parent.parent.create_link_menu(cursor_to_url()) | fail
+      every Seq{m.traverse_postorder()}.connect(close_popup, Event.ACTION, 1)
+      pm := PopupMenu().
+         connect(create popup.clear_selections(), Event.POPUP_CLOSED)
+      pm.popup(popup, m, e.x, e.y)
+      popup.set_selections([popup.get_cursor()])
+   end
+
+   private on_mrelease(ev)
+      popup.get_cursor() = popup.get_line_under_pointer(ev) | fail
+      parent.parent.parent.insert_link(cursor_to_url(), ev)
+      close_popup()
+   end
+
+   public create_popup()
+      local l
+      l := FileTrailList.create_popup()
+      l.view.
+         connect(on_rpress, Event.MOUSE_RIGHT_PRESS).
+         connect(on_mrelease, Event.MOUSE_MIDDLE_RELEASE)
+      return l
+   end
+end
+
+class FileTrailButtonEx(FileTrailButton)
+   private button_to_url()
+      return mk_file_URL(p.ucs())
+   end
+
+   private on_rpress(e)
+      local m, pm
+      m := parent.parent.parent.create_link_menu(button_to_url()) | fail
+      pm := PopupMenu()
+      pm.popup(self, m, e.x, e.y)
+   end
+
+   private on_mrelease(ev)
+      parent.parent.parent.insert_link(button_to_url(), ev)
+   end
+
+   public new(p, tt)
+      FileTrailButton.new(p, tt)
+      connect(on_rpress, Event.MOUSE_RIGHT_PRESS)
+      connect(on_mrelease, Event.MOUSE_MIDDLE_RELEASE)
+      return
+   end   
+end
+
+class FileTrailEx(FileTrail)
+   public create_trail_list(p, child)
+      return FileTrailListEx(p, child)
+   end
+
+   public create_trail_button(p, tt)
+      return FileTrailButtonEx(p, tt)
    end
 end
 
@@ -762,7 +981,9 @@ class Terminal(TabItem, VtUI)
       search_prev_button, 
       history_list,
       trail,
-      best_focus         # Either columns or output (the vt)
+      best_focus,         # Either columns or output (the vt)
+      log_file,
+      log
 
    private readable
       ascending,
@@ -840,13 +1061,36 @@ class Terminal(TabItem, VtUI)
       return self
    end
 
+   public set_history_size(n)
+      output.set_history_size(0 <= integer(n)) | return error("integer >= 0 expected")
+      return self
+   end
+
+   public set_list_width(n)
+      columns.set_width(0 < integer(n)) | return error("integer > 0 expected")
+      if is_live() then {
+         split.first.set_width().reset_layout()
+         split.do_layout().invalidate()
+      }
+      return self
+   end
+
+   public set_list_height(n)
+      columns.set_height(0 < integer(n)) | return error("integer > 0 expected")
+      if is_live() then {
+         split.first.set_height().reset_layout()
+         split.do_layout().invalidate()
+      }
+      return self
+   end
+
    public do_tab_cmd(s)
       local param
       s := ucs(s) | return error("Not a ucs string")
       s ? if s := tab(upto('=')) then
          param := (move(1), tab(0))
       case string(s) of {
-         "shell" : set_shell(param)
+         "sh" : set_shell(param)
          "run" : {
             \param | return error("expected parameter to run")
             run_prog(param)
@@ -854,8 +1098,11 @@ class Terminal(TabItem, VtUI)
          "font" : output.set_vt_font(param) | fail
          "fg": output.set_normal_fg(param) | fail
          "bg": output.set_normal_bg(param) | fail
-         "revfg": output.set_reverse_fg(param) | fail
-         "revbg": output.set_reverse_bg(param) | fail
+         "rev-fg": output.set_reverse_fg(param) | fail
+         "rev-bg": output.set_reverse_bg(param) | fail
+         "hist": set_history_size(param) | fail
+         "list-width": set_list_width(param) | fail
+         "list-height": set_list_height(param) | fail
          "auto-close" : set_auto_close(&yes)
          "title" : set_title(param)
          "max-list" : on_max_list()
@@ -908,6 +1155,10 @@ class Terminal(TabItem, VtUI)
 
    public link_middle_clicked(url, ev)
       insert_link(url, ev)
+   end
+
+   public quieten_cursor()
+      columns.quieten_cursor()
    end
 
    public send_tty(s)
@@ -1053,7 +1304,7 @@ $endif
          i := if *input > 0 & \some_in then Poll.IN + Poll.OUT else Poll.IN
          x := io_task.poll([tty, i]) | {
             if /io_task.interrupt_flag then {
-               err_msg(u"IO problem polling tty: " || ucs(&why))
+               err_msg("IO problem polling tty: " || &why)
                break
             } else {
                # We were interrupted, meaning that some input has gone into the
@@ -1064,7 +1315,7 @@ $endif
          if DescStream.poll_out_test(x[1]) then {
             s := get(input) | syserr("Poll out, but input buffer empty")
             n := tty.out(s) | {
-               err_msg(u"IO problem on tty: " || ucs(&why))
+               err_msg("IO problem on tty: " || &why)
                break
             }
             if n < *s then
@@ -1073,20 +1324,21 @@ $endif
                write("Out: ", image(s))
          } else if DescStream.poll_in_test(x[1]) then {
             s := tty.in(1048576) | {
-               err_msg(u"IO problem on tty: " || ucs(&why))
+               err_msg("IO problem on tty: " || &why)
                break
             }
             if /s then {
-               err_msg(u"EOF on tty")
+               err_msg("EOF on tty")
                break
             }
             if \opts["v"] then
                write("In: ", image(s))
+            (\log).writes1(s)
             send_vt(s)
             check_cwd_change()
             some_in := &yes
          } else {
-            err_msg(u"IO problem on tty, neither poll in or out ready")
+            err_msg("IO problem on tty, neither poll in or out ready")
             break
          }
       }
@@ -1160,17 +1412,15 @@ $endif
             if Files.is_directory(s) then {
                if es[-1] ~== u"/" then
                   es ||:= u"/"
-               output.goto_bottom()
-            } else
-               es ||:= u" "
-            send_tty(es)
+            }
+            send_tty(es || u" ")
          }
       } else
-         send_tty(url.ucs())
+         send_tty(url.ucs() || u" ")
    end
 
    public err_msg(s)
-      send_vt(u"\n\e[31m(Message from terminal:) " || s || u"\e[m")
+      send_vt("\n\e[31m(Message from terminal:) " || s || "\e[m")
       info_msg(s)
    end
 
@@ -1232,9 +1482,7 @@ $endif
    end
 
    private item_to_url(item)
-      local s
-      s := FilePath(cwd).child(item.name).ucs() | fail
-      return URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/'))
+      return mk_file_URL(FilePath(cwd).child(item.name).ucs())
    end
 
    private on_columns_mclick(ev)
@@ -1249,7 +1497,7 @@ $endif
          msg()
       else {
          s := FilePath(cwd).child(columns.data[columns.over].name).ucs() | fail
-         url := URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/')) | fail
+         url := mk_file_URL(s)
          msg(url.ucs())
       }
    end
@@ -1267,7 +1515,7 @@ $endif
    private rename(s)
       local d
       d := RenameDialog(s)
-      d.show_modal()
+      d.show_modal(parent_dialog)
       s := \d.result | fail
       info_msg("Renamed OK")
       if cwd == FilePath(s).parent().ucs() then
@@ -1280,6 +1528,42 @@ $endif
 
    private open_in_new_tab(dir)
       parent_dialog.new_tab(, dir)
+   end
+
+   private on_start_log()
+      local d, s, dl, fl
+      d := parent_dialog.file_dialog
+      dl := [cwd]
+      fl := [u"log"]
+      if \parent_dialog.last_log_file then {
+         push(dl, parent_dialog.last_log_file.parent().ucs())
+         push(fl, parent_dialog.last_log_file.get(-1))
+      }
+      if \log_file then {
+         push(dl, log_file.parent().ucs())
+         push(fl, log_file.get(-1))
+      }
+      d.set_directories(dl).
+         set_files(fl).
+         set_existing_file_mode(FileDialog.WARN).
+         show_modal(parent_dialog)
+      parent_dialog.last_log_file := log_file := d.get_result_path() | fail
+      s := log_file.ucs()
+      if log := open(s, "w") then
+         info_msg(u"Logging to file " || s)
+      else
+         info_msg(u"Failed to open " || s || u": " || ucs(&why))
+   end
+
+   private close_log()
+      \log | fail
+      log.close()
+      log := &null
+   end
+
+   private on_end_log()
+      close_log()
+      info_msg(u"Closed log file " || log_file.ucs())
    end
 
    public create_context_menu()
@@ -1318,6 +1602,15 @@ $endif
          m.add(TextMenuItem().
                set_label("Search").
                connect(open_search_panel, Event.ACTION))
+      if /log then
+         m.add(TextMenuItem().
+               set_label("Log...").
+               connect(on_start_log, Event.ACTION))
+      else
+         m.add(TextMenuItem().
+               set_label("End log").
+               connect(on_end_log, Event.ACTION))
+
       return m
    end
 
@@ -1376,7 +1669,7 @@ $endif
   private on_columns_rpress(e)
       local i, m, pm, item, url
       pm := PopupMenu()
-      if item := columns.data[i := columns.get_element_under_pointer(e)] then {
+      if item := columns.data[i := columns.get_over()] then {
          url := item_to_url(item) | fail
          columns.set_highlight(i).set_over()
          m := create_link_menu(url)
@@ -1673,7 +1966,7 @@ $endif
       if /nav then {
          every 1 to history_pos - 1 do
             pop(history)
-         push(history, HistoryEntry(cwd))
+         push(history, default.HistoryEntry(cwd))
          history_pos := 1
          while *history > MAX_HISTORY_SIZE do
             pull(history)
@@ -1705,13 +1998,16 @@ $endif
       goto_dir(ev)
    end
 
+   private on_columns_move(ev)
+      output.unquieten_cursor()
+   end
+
    public new(dir, other, revert_tab)
       local start_dir, o
       TabItem.new()
       self.revert_tab := revert_tab
       setup()
       setup_search_panel()
-
       if \other then {
          if other.focus_columns_button.is_checked() then {
             focus_columns_button.set_is_checked(&yes)
@@ -1732,6 +2028,7 @@ $endif
             columns.find_focus()
          else
             output.find_focus())
+         log_file := other.log_file
       } else {
          if \opts["hs"] then
             split.reorient()
@@ -1748,29 +2045,37 @@ $endif
                              set_x_align(Align.L)).
          connect(on_columns_lclick, "lclicked").
          connect(on_columns_mclick, "mclicked").
-         connect(on_columns_over_changed, "over-changed").
-         connect(on_columns_rpress, Event.MOUSE_RIGHT_PRESS)
+         connect(on_columns_over_changed, "over-changed")
+      columns.view.
+         connect(on_columns_rpress, Event.MOUSE_RIGHT_PRESS).
+         connect(on_columns_move, Event.MOUSE_MOVEMENT)
+
       trail.
-         set_size().
+         set_height().
          set_constraint("l_inset", scale(10)).
          connect(on_trail, FileTrail.DIR_CHANGED_EVENT)
 
       output.
          set_ui(self)
-      output.set_history_size(\opts["h"])
       if \opts["v"] then
          output.set_verbose(&yes)
 
-      if o := \opts["tfg"] then
-         output.set_normal_fg(o) | stop("Invalid -tfg: ", &why)
-      if o := \opts["tbg"] then
-         output.set_normal_bg(o) | stop("Invalid -tbg: ", &why)
-      if o := \opts["trevfg"] then
-         output.set_reverse_fg(o) | stop("Invalid -trevfg: ", &why)
-      if o := \opts["trevbg"] then
-         output.set_reverse_bg(o) | stop("Invalid -trevbg: ", &why)
-      if o := \opts["tfont"] then
-         output.set_vt_font(o) | stop("Invalid -tfont: ", &why)
+      if o := \opts["hist"] then
+         set_history_size(o) | stop("Invalid -hist: ", &why)
+      if o := \opts["list-width"] then
+         set_list_width(o) | stop("Invalid -list-width: ", &why)
+      if o := \opts["list-height"] then
+         set_list_height(o) | stop("Invalid -list-height: ", &why)
+      if o := \opts["fg"] then
+         output.set_normal_fg(o) | stop("Invalid -fg: ", &why)
+      if o := \opts["bg"] then
+         output.set_normal_bg(o) | stop("Invalid -bg: ", &why)
+      if o := \opts["rev-fg"] then
+         output.set_reverse_fg(o) | stop("Invalid -rev-fg: ", &why)
+      if o := \opts["rev-bg"] then
+         output.set_reverse_bg(o) | stop("Invalid -rev-bg: ", &why)
+      if o := \opts["font"] then
+         output.set_vt_font(o) | stop("Invalid -font: ", &why)
 
       favourites_list.set_size().set_selection_list(get_favourites_directories())
       sort_dirs_menu_item := CheckBoxMenuItem().
@@ -1830,6 +2135,7 @@ $endif
       io_task.stop()
       System.kill(pid, Signal.SIGHUP)
       tty.close()
+      close_log()
       ChildWait.add_pid(pid, on_shell_exit)
       check_cwd_time_task := io_task := tty := pid := &null
    end
@@ -2144,8 +2450,8 @@ $endif
          clear_constraints().
          set_tooltip(paint_37).
          connect(self.on_favourites_list, Event.SELECTION_CHANGED)
-      trail := FileTrail().
-         set_size(scale(100), scale(20)).
+      trail := FileTrailEx().
+         set_size(scale(200), scale(20)).
          clear_constraints().
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
@@ -2251,17 +2557,23 @@ procedure main(a)
    opts := options(a, [Opt("x",string,"The location of the 'flowterm-extras' directory; by default 'flowterm-extras' in your home directory.  This directory's 'bin' subdirectory is added to the front of the PATH variable"),
                        Opt("nx",,"Don't add any flowterm extras directory to the PATH.  The -x option is ignored"),
                        Opt("v",,"Verbose output"),
-                       Opt("h",integer,"History scrollback size"),
+                       Opt("hist",integer,"History scrollback size.  The default is 500"),
                        Opt("hs",,"Start each tab by default with a horizontal rather than a vertical split"),
-                       Opt("tfg",string,"The foreground colour of the terminal"),
-                       Opt("tbg",string,"The backround colour of the terminal"),
-                       Opt("trevfg",string,"The reverse-mode foreground colour of the terminal, by default simply the terminal background"),
-                       Opt("trevbg",string,"The reverse-mode background colour of the terminal, by default simply the terminal foreground"),
-                       Opt("tfont",string,"The terminal font.  This must be a monospace font.  By default, \"fixed\" at the default font size"),
+                       Opt("fg",string,"COLOUR#The foreground colour of the terminal"),
+                       Opt("bg",string,"COLOUR#The backround colour of the terminal"),
+                       Opt("rev-fg",string,"COLOUR#The reverse-mode foreground colour of the terminal, by default simply the terminal background"),
+                       Opt("rev-bg",string,"COLOUR#The reverse-mode background colour of the terminal, by default simply the terminal foreground"),
+                       Opt("font",string,"FONT#The terminal font.  This must be a monospace font.  By default, \"fixed\" at the default font size"),
+                       Opt("width",integer,"CHARS#The preferred width of the terminal, in characters.  This only applies to the first visible terminal tab."),
+                       Opt("height",integer,"LINES#The preferred height of the terminal, in lines.  This only applies to the first visible terminal tab."),
+                       Opt("list-width",integer,"PIXELS#The width of the list component in pixels"),
+                       Opt("list-height",integer,"PIXELS#The height of the list component in pixels"),
                        Opt("t",string,"The window title, by default \"FlowTerm\""),
                        Opt("sh",string,"The shell to run in each tab, by default the user's default shell")],
                        usage)
    ImageCache.
+      name_image("rpp.HELP_64", HELP).
+      name_image("rpp.ABOUT_64", ABOUT).
       name_image("rpp.HOURGLASS_24", HOURGLASS).
       name_image("rpp.KEYBOARD_24", KEYBOARD).
       name_image("rpp.EXIT_24", EXIT)

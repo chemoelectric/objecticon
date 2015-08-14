@@ -107,9 +107,9 @@ import
 
 class Opt()
    public const
-      names, convert, multi, help, def
+      names, convert, multi, help, def, err
 
-   public new(s, convert, help, multi, def)
+   public new(s, convert, help, multi, def, err)
       names := if type(s) == "list" then
          s
       else
@@ -118,6 +118,8 @@ class Opt()
       self.multi := multi
       self.help := help
       self.def := def
+      /err := Proc.get_name(\convert)
+      self.err := err
       return
    end
 end
@@ -229,7 +231,7 @@ procedure options(arg, opts, usage, errproc)
                         else
                            p := get(arg) | return errproc("No parameter following --" || optname)
                         v := opt.convert(p) | return errproc("--" || optname || " needs " || 
-                                                             Proc.get_name(opt.convert)  || " parameter")
+                                                             opt.err  || " parameter")
                      }
                      k := opt.names[1]
                      if /opt.multi then
@@ -251,7 +253,7 @@ procedure options(arg, opts, usage, errproc)
                         p := "" ~== tab(0) | get(arg) |
                            return errproc("No parameter following -" || optname)
                         v := opt.convert(p) | return errproc("-" || optname || " needs " || 
-                                                             Proc.get_name(opt.convert)  || " parameter")
+                                                             opt.err || " parameter")
                      }
                      k := opt.names[1]
                      if /opt.multi then

@@ -10,6 +10,7 @@ import
    xml(xml_escape),
    parser, 
    ipl.sort,
+   ipl.scan,
    io,
    util
 
@@ -19,14 +20,42 @@ class HtmlOutputter(Outputter)
       done_files,
       subclass_table
 
-   private get_serial_no(sym)
-      static serial_no_gen, sym_serial_no_table
+   private get_id(sym)
+      local v, vo, i
+      static sym_id_table, seen_set, cnv
       initial {
-         serial_no_gen := 0
-         sym_serial_no_table := table()
+         sym_id_table := table()
+         seen_set := set()
+         cnv := if has_feature("MS Win32") | \opts["ci"] then map else 1
       }
-      /sym_serial_no_table[sym] := (serial_no_gen +:= 1)
-      return sym_serial_no_table[sym]
+
+      if v := member(sym_id_table, sym) then
+         return v
+
+      v := if type(sym) == "string" then
+         sym || "-package"
+      else if is(sym, Symbol) then
+         sym.get_fq_name_default()
+      else if is(sym, ScannedFile) then
+         (\sym.pack | "default") || "-" || FilePath(sym.filename).get(-1)
+      else
+         syserr("Unknown type to get_id")
+
+      # Check the id hasn't been used before; if so make a
+      # new one.
+      i := 0
+      vo := v
+      while member(seen_set, cnv(v)) do
+         v := vo || "_" || (i +:= 1)
+      insert(seen_set, cnv(v))
+
+      insert(sym_id_table, sym, v)
+
+      return v
+   end
+
+   private doctype(f)
+      write(f, "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\">")
    end
 
    public output()
@@ -36,13 +65,23 @@ class HtmlOutputter(Outputter)
       output_dir := \opts["o"] | stop("Please specify an output directory")
       fname := output_dir || "/index.html"
       use {index := open(fname, "w") | stop("Couldn't open ", fname), {
+         doctype(index)
          write(index, "<html>")
          write(index, "<title>")
          write(index, "Generated Documentation")
          write(index, "</title>")
+         write(index, "<script type=\"text/javascript\">")
+         write(index, "   targetPage = \"\" + window.location.search;")
+         write(index, "   if (targetPage != \"\" && targetPage != \"undefined\")")
+         write(index, "      targetPage = decodeURIComponent(targetPage.substring(1));")
+         write(index, "   function loadFrames() {")
+         write(index, "      if (targetPage != \"\" && targetPage != \"undefined\")")
+         write(index, "         top.displayFrame.location = top.targetPage;")
+         write(index, "   }")
+         write(index, "</script>")
          write(index, "</head>")
-         write(index, "<frameset cols=\"20%,80%\">")
-         write(index, "<frameset rows=\"30%,70%\">")
+         write(index, "<frameset cols=\"20%,80%\" onload=\"top.loadFrames()\">")
+         write(index, "<frameset rows=\"30%,70%\" onload=\"top.loadFrames()\">")
          write(index, "<frame src=\"nav.html\" name=\"navFrame\">")
          write(index, "<frame src=\"all.html\" name=\"listFrame\">")
          write(index, "</frameset>")
@@ -73,12 +112,13 @@ class HtmlOutputter(Outputter)
 
       fname := output_dir || "/nav.html"
       use {nav := open(fname, "w") | stop("Couldn't open ", fname), {
+         doctype(nav)
          write(nav, "<html><body>")
          write(nav, "<h1>Packages</h1><p>")
          write(nav, "<a href=\"all.html\" target=\"listFrame\">All</a><p>")
          every s := get_packages() do {
             if should_print_package(s) then
-               write(nav, "<a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a><br>")
+               write(nav, "<a href=\"", get_id(s) || ".html" || "\" target=\"listFrame\">", s, "</a><br>")
             output_package(s)
          }
          write(nav, "</body></html>")
@@ -86,31 +126,33 @@ class HtmlOutputter(Outputter)
            
       fname := output_dir || "/begin.html"
       use {begin := open(fname, "w") | stop("Couldn't open ", fname), {
+         doctype(begin)
          write(begin, "<html><body>")
          write(begin, "<h1>Object Icon generated documentation</h1>")
          write(begin, "This is the automatically generated documentation for the following packages.<p>")
          every s := get_packages() do
             if should_print_package(s) then
-               write(begin, "<a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a><br>")
+               write(begin, "<a href=\"", get_id(s) || ".html" || "\" target=\"listFrame\">", s, "</a><br>")
          write(begin, "</body></html>")
       }}
 
       fname := output_dir || "/all.html"
       use {all := open(fname, "w") | stop("Couldn't open ", fname), {
+         doctype(all)
          write(all, "<html><body>")
          write(all, "<h1>All packages</h1><p>")
          write(all, "<h1>Classes</h1><p>")
          every c := !isort(all_classes, name_sort) do {
             if should_print_symbol(c) then
                write(all, "<a href=\"", 
-                     get_serial_no(c) || ".html\" target=\"displayFrame\">", 
+                     get_id(c) || ".html\" target=\"displayFrame\">", 
                      c.name, "</a><br>")
          }
          write(all, "<p><h1>Other Symbols</h1><p>")
          every c := !isort(all_others, name_sort) do {
             if should_print_symbol(c) then
                write(all, 
-                     "<a href=\"", get_serial_no(c) || ".html\" target=\"displayFrame\">", 
+                     "<a href=\"", get_id(c) || ".html\" target=\"displayFrame\">", 
                      c.name, "</a><br>")
          }
       }}
@@ -119,42 +161,39 @@ class HtmlOutputter(Outputter)
    # Output the summary list for one package set
    private output_package(s)
       local f, fname, c
-      fname := output_dir || "/" || s || "_list.html"
+      fname := output_dir || "/" || get_id(s) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
+         doctype(f)
          write(f, "<html><head><title>", s, "</title></head><body>")
          write(f, "<h1>Package ", s, "</h1><p>")
          write(f, "<h1>Classes</h1><p>")
          every c := get_classes_in(s) do {
             output_class(c)
-            write(f, "<a href=\"", get_serial_no(c) || ".html\" target=\"displayFrame\">", c.name, "</a><br>")
+            write(f, "<a href=\"", get_id(c) || ".html\" target=\"displayFrame\">", c.name, "</a><br>")
          }
          write(f, "<p><h1>Other Symbols</h1><p>")
          every c := get_others_in(s) do {
             output_other(c)
-            write(f, "<a href=\"", get_serial_no(c) || ".html\" target=\"displayFrame\">", c.name, "</a><br>")
+            write(f, "<a href=\"", get_id(c) || ".html\" target=\"displayFrame\">", c.name, "</a><br>")
          }
       }}
    end
 
    # Output one class description
    private output_class(c)
-      local s, f, fname, supers, o, subs, d, overrides, meths, m, vars, mm, x, type
-      fname := output_dir || "/" || get_serial_no(c) || ".html"
+      local s, f, fname, supers, o, subs, d, overrides, meths, m, vars, mm, x
+      fname := output_dir || "/" || get_id(c) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
+         doctype(f)
          write(f, "<html><head><title>", c.name, "</title></head><body>")
-         type := get_class_prefix(c)
-         if *type > 0 then
-            type ||:= " class "
-         else
-            type := "class "
          write(f, "<h1>", c.name, "</h1>")
          write(f, "<dl>")
-         write(f, "<dt>Type :</dt><dd>", type, "</dd>")
+         write(f, "<dt>Type :</dt><dd>", get_top_level_type(c), "</dd>")
 
          # Superclass list
          supers := []
          every o := c.get_resolved_supers() do {
-            put(supers, "<a href=\"" || get_serial_no(o) || ".html\" target=\"displayFrame\">" || o.get_fq_name() || "</a>")
+            put(supers, "<a href=\"" || get_id(o) || ".html\" target=\"displayFrame\">" || o.get_fq_name() || "</a>")
          }
          if *supers > 0 then {
             write(f, "<dt>Superclasses :</dt><dd>")
@@ -165,7 +204,7 @@ class HtmlOutputter(Outputter)
          # Subclass list
          subs := []
          every d := !\subclass_table[c] do {
-            put(subs, "<a href=\"" || get_serial_no(d) || ".html\">" || d.get_fq_name() || "</a>")
+            put(subs, "<a href=\"" || get_id(d) || ".html\">" || d.get_fq_name() || "</a>")
          }
          if *subs > 0 then {
             write(f, "<dt>Subclasses :</dt><dd>")
@@ -174,11 +213,11 @@ class HtmlOutputter(Outputter)
          }
 
          s := c.get_package() | "default"
-         write(f, "<dt>Package :</dt><dd><a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a></dd>")
+         write(f, "<dt>Package :</dt><dd><a href=\"", get_id(s) || ".html" || "\" target=\"listFrame\">", s, "</a></dd>")
          write(f, "</dl><p>")
 
          if is(c.obj, Tree) then {
-            output_file(c)
+            output_a_file(c)
             comment_and_fields(f, c)
             write(f, "<p>")
          }
@@ -201,7 +240,7 @@ class HtmlOutputter(Outputter)
          if *meths > 0 then {
             tbl_start(f, "Methods defined in this class")
             every m := !meths do {
-               write(f,"<a href=\"#" || get_serial_no(m) || "\">" || m.name || "()</a>")
+               write(f,"<a href=\"#" || m.name || "\">" || m.name || "()</a>")
             }
             tbl_end(f)
          }
@@ -209,7 +248,7 @@ class HtmlOutputter(Outputter)
          if *vars > 0 then {
             tbl_start(f, "Variables defined in this class")
             every m := !vars do {
-               write(f,"<a href=\"#" || get_serial_no(m) || "\">" || m.name || "</a>")
+               write(f,"<a href=\"#" || m.name || "\">" || m.name || "</a>")
             }
             tbl_end(f)
          }
@@ -219,14 +258,16 @@ class HtmlOutputter(Outputter)
          if *meths > 0 then {
             pretty_heading(f, "Method detail")
             every m := !meths do {
-               write(f, "<a name=\"", get_serial_no(m), "\"/>")
+               write(f, "<a name=\"", m.name, "\"/>")
                write(f, "<h3>", m.name, "(", get_param_string(m.obj) ,")</h3>")
                write(f, get_access_string(m.obj), "<p>")
                write(f, "<dl>")
                if member(overrides, m.name) then {
                   o := overrides[m.name]
-                  mm := o.get_field(m.name) | stop("Internal error")
-                  write(f,"<dd>Overrides <a href=\"" || get_serial_no(o) || ".html#" || get_serial_no(mm) || "\">" || mm.name || "()</a> in <a href=\"", get_serial_no(o), ".html\" target=\"displayFrame\">", o.get_fq_name(), "</a></dd>")
+                  mm := o.get_field(m.name) | syserr("get_field() failed")
+                  write(f,"<dd>Overrides <a href=\"" || get_id(o) || ".html#" || 
+                        mm.name || "\">" || mm.name || "()</a> in <a href=\"", 
+                        get_id(o), ".html\" target=\"displayFrame\">", o.get_fq_name(), "</a></dd>")
                }
                if is(m.obj, Tree) then {
                   write(f, "<dd>")
@@ -240,7 +281,7 @@ class HtmlOutputter(Outputter)
          if *vars > 0 then {
             pretty_heading(f, "Variable detail")
             every m := !vars do {
-               write(f, "<a name=\"", get_serial_no(m), "\"/>")
+               write(f, "<a name=\"", m.name, "\"/>")
                write(f, "<h3>", m.name, "</h3>")
                write(f, get_access_string(m.decl_obj), "<p>")
                write(f, "<dl>")
@@ -284,14 +325,14 @@ class HtmlOutputter(Outputter)
          if *\tm[d] > 0 then {
             tbl_start(f, "Methods inherited from " || d.get_fq_name())
             every m := !isort(tm[d], name_sort) do {
-               write(f,"<a href=\"" || get_serial_no(d) || ".html#" || get_serial_no(m) || "\">" || m.name || "()</a>")
+               write(f,"<a href=\"" || get_id(d) || ".html#" || m.name || "\">" || m.name || "()</a>")
             }
             tbl_end(f)
          }
          if *\tv[d] > 0 then {
             tbl_start(f, "Variables inherited from " || d.get_fq_name())
             every m := !isort(tv[d], name_sort) do {
-               write(f,"<a href=\"" || get_serial_no(d) || ".html#" || get_serial_no(m) || "\">" || m.name || "</a>")
+               write(f,"<a href=\"" || get_id(d) || ".html#" || m.name || "\">" || m.name || "</a>")
             }
             tbl_end(f)
          }
@@ -321,17 +362,17 @@ class HtmlOutputter(Outputter)
    private comment_and_fields(f, c)
       local k, com
       com := Comment(c)
-      every write(f, html_unbracket(!com.comment, c))
+      html(f, com.comment, c)
       write(f, "<dl>")
       every k := !com.keys do
          html_fields(f, c, k, com.fields[k])
-      write(f, "<dt><a href=\"", 
-            get_serial_no(c.obj.get_first_token().filename) || ".html#", 
+      write(f, "</dl>")
+      write(f, "<a href=\"", 
+            get_id(c.scanned_file) || ".html#", 
             c.obj.get_first_token().line , 
             "\" target=\"displayFrame\">Source - ", 
             FilePath(c.obj.get_first_token().filename).get(-1),
-            " </a></dt>")
-      write(f, "</dl>")
+            " </a>")
    end
 
    private html_fields(f, c, key, vals)
@@ -345,8 +386,8 @@ class HtmlOutputter(Outputter)
                   name := tab(many(ID_CHAR))
                   l[1] := tab(0)
                }
-               writes(f, "<dd>", name, " - ")
-               every write(f, html_unbracket(!l, c))
+               writes(f, "<dd><code>", name, "</code> - ")
+               html(f, l, c)
                write(f, "</dd>")
             }
          }
@@ -354,69 +395,135 @@ class HtmlOutputter(Outputter)
          "return" : {
             write(f, "<dt>Returns :</dt>")
             write(f, "<dd>")
-            every write(f, html_unbracket(!vals[1], c))
+            html(f, vals[1], c)
             write(f, "</dd>")
          }
 
          "generate" : {
             write(f, "<dt>Generates :</dt>")
             write(f, "<dd>")
-            every write(f, html_unbracket(!vals[1], c))
+            html(f, vals[1], c)
             write(f, "</dd>")
          }
 
          "fail" : {
             write(f, "<dt>Fails :</dt>")
             write(f, "<dd>")
-            every write(f, html_unbracket(!vals[1], c))
+            html(f, vals[1], c)
             write(f, "</dd>")
          }
 
          "runerr" : {
             write(f, "<dt>Runtime error :</dt>")
             write(f, "<dd>")
-            every write(f, html_unbracket(!vals[1], c))
+            html(f, vals[1], c)
             write(f, "</dd>")
          }
 
          "example" : {
             write(f, "<dt>Example :</dt><dd><pre>")
             every l := !vals do
-               every write(f, l[2 to *l])
+               every write(f, esc(l[2 to *l]))
             write(f, "</pre></dd>")
          }
       }
    end
 
-   private html_unbracket(s, c)
-      local r, t, w
-      r := ""
-      s ? {
-         w := tab(many(WHITESPACE))
-         while r ||:= xml_escape(tab(upto('`{')), '<>&') do {
-            if any('`') then {
-               move(1)
-               t := tab(upto('`') | 0)
-            } else {
-               move(1)
-               t := tab(upto('}') | 0)
-            }
-            move(1)
-            r ||:= create_link(t, c)
-         }
-         r ||:= xml_escape(tab(0), '<>&')
-      }
-      if *r = 0 then
-         r := "<p>"
-      else if (*\w > 1) then
-         r := "<br>" || repl("&nbsp;", *w - 1) || r
+   private esc(s)
+      return xml_escape(s, '<>&')
+   end
 
-      return r
+   protected output_fragment(s)
+      writes(output_file, esc(s))
+   end
+
+   protected output_link(s)
+      writes(output_file, "<code>", create_link(s, output_sym), "</code>")
+   end
+
+   protected output_code(s)
+      writes(output_file, "<code>", esc(s), "</code>")
+   end
+
+   protected output_bold(s)
+      writes(output_file, "<b>", esc(s), "</b>")
+   end
+
+   protected output_ul(s)
+      writes(output_file, "<u>", esc(s), "</u>")
+   end
+
+   protected end_line(fl)
+      if /fl then
+         write(output_file)
+      else
+         write(output_file, "<br>")
+   end
+
+   protected begin_pre()
+      write(output_file, "<pre>")
+   end
+
+   protected output_pre(s)
+      write(output_file, esc(s))
+   end
+
+   protected end_pre()
+      write(output_file, "</pre>")
+   end
+
+   protected output_bar(n)
+      write(output_file, "<br>", repl("&nbsp;", n))
+   end
+
+   protected end_bar()
+      write(output_file, "<br>")
+   end
+
+   protected begin_ul()
+      write(output_file, "<p><ul>")
+   end
+
+   protected end_ul()
+      write(output_file, "</ul>")
+   end
+
+   protected begin_ol()
+      write(output_file, "<p><ol>")
+   end
+
+   protected end_ol()
+      write(output_file, "</ol>")
+   end
+
+   protected begin_li()
+      write(output_file, "<li>")
+   end
+
+   protected end_li()
+      write(output_file, "</li>")
+   end
+
+   protected new_para()
+      write(output_file, "<p>")
+   end
+
+   private output_file, output_sym
+
+   private html(f, l, c)
+      self.output_file := f
+      self.output_sym := c
+      markdown(l)
    end
 
    private resolve_link(sym, name)
       local i, j, d
       name := (name ? tab(upto('({') | 0))
+      # For a procedure or method, fail if the name matches one of the parameters.
+      if is(sym, ProcedureSymbol | ClassMethod) then {
+         if name == sym.obj.get_args().gen().str() then
+            fail
+      }
       if is(sym, ClassField) &
          i := sym.defining_class.get_implemented_field(name) then
             return i
@@ -431,10 +538,10 @@ class HtmlOutputter(Outputter)
 
       #
       # Is it in the form <Class>.<Field> ?
-      every d := find(".", name)
-      if \d & (i := symbol_table.resolve(sym.scanned_file, name[1:d])) & 
-              is(i, ClassSymbol) &
-              (j := i.get_implemented_field(name[d+1:0])) then
+      if d := backto('.', name) &
+         (i := symbol_table.resolve(sym.scanned_file, name[1:d-1])) & 
+         is(i, ClassSymbol) &
+         (j := i.get_implemented_field(name[d:0])) then
          return j
    end
 
@@ -443,18 +550,18 @@ class HtmlOutputter(Outputter)
    #
    private create_link(s, c)
       local o
-      o := resolve_link(c, s) | return s
+      o := resolve_link(c, s) | return esc(s)
       if is(o, ClassField) then {
          # Link within the parent class's page
-         return "<a href=\"" || get_serial_no(o.defining_class) || ".html#" || 
-            get_serial_no(o) || "\">" || s || "</a>"
+         return "<a href=\"" || get_id(o.defining_class) || ".html#" || 
+            o.name || "\">" || esc(s) || "</a>"
       } else {
          # Link to the absolute page
-         return "<a href=\"" || get_serial_no(o) || ".html\" target=\"displayFrame\">" || s || "</a>"
+         return "<a href=\"" || get_id(o) || ".html\" target=\"displayFrame\">" || esc(s) || "</a>"
       }
    end
 
-   private output_file(c)
+   private output_a_file(c)
       local f, fname, line_no, g, s, filename
 
       filename := c.obj.get_first_token().filename
@@ -462,8 +569,9 @@ class HtmlOutputter(Outputter)
          return
       insert(done_files, filename)
 
-      fname := output_dir || "/" || get_serial_no(filename) || ".html"
+      fname := output_dir || "/" || get_id(c.scanned_file) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
+         doctype(f)
          write(f, "<html><head><title>", FilePath(filename).get(-1), "</title></head><body><pre>")
          # filename may be unavailable if a #line directive gave a path which was inaccessible
          use { g := open(filename) , {
@@ -480,35 +588,30 @@ class HtmlOutputter(Outputter)
    end
 
    private output_other(c)
-      local s, f, fname, type, fullname
+      local s, f, fname, fullname
       fullname := c.name
-      case classof(c) of {
-         ProcedureSymbol : {
-            type := "procedure"
-            fullname := c.name || "(" || get_param_string(c.obj) || ")"
-         }
-         RecordSymbol : type := "record"
-         GlobalSymbol : type := "global"
-         default : stop("Unknown type:", image(c))
-      }
-
-      if is(c, GlobalSymbol) & c.has_readable_flag() then
-         type := "package readable " || type
-      else if c.has_package_flag() then
-         type := "package " || type
-      fname := output_dir || "/" || get_serial_no(c) || ".html"
+      if is(c, ProcedureSymbol) then
+         fullname ||:= "(" || get_param_string(c.obj) || ")"
+      
+      fname := output_dir || "/" || get_id(c) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
+         doctype(f)
          write(f, "<html><head><title>", c.name, "</title></head><body>")
          write(f, "<h1>", fullname, "</h1>")
          write(f, "<dl>")
          s := c.get_package() | "default"
-         write(f, "<dt>Package :</dt><dd><a href=\"", s || "_list.html" || "\" target=\"listFrame\">", s, "</a></dd>")
-         write(f, "<dt>Type :</dt><dd>", type, "</dd>")
+         write(f, "<dt>Package :</dt><dd><a href=\"", get_id(s) || ".html" || "\" target=\"listFrame\">", s, "</a></dd>")
+         write(f, "<dt>Type :</dt><dd>", get_top_level_type(c), "</dd>")
          write(f, "</dl><p>")
          if is(c.obj, Tree) then {
-            output_file(c)
+            output_a_file(c)
             comment_and_fields(f, c)
             write(f, "<p>")
+         }
+         if is(c, RecordSymbol) then {
+            write(f, "<dt>Fields :</dt><dl>")
+            every write(f, "<dd>", get_record_fields(c.obj), "</dd>")
+            write(f, "</dl>")
          }
          write(f, "</body></html>")
       }}

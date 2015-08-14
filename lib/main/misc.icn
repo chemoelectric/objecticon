@@ -107,6 +107,22 @@ procedure use(e1, e2, e3)
    return /f & v
 end
 
+#
+# This is like `seq()`, but generates all results from `e2`.  So
+# unless the sequence is generated to its end, then the cleanup code
+# `e3` will not be run; in that case, the call should be wrapped in
+# `clean()`.
+#
+procedure use_seq(e1, e2, e3)
+   local x
+   x := @e1 | fail
+   /e3 := create x.close()
+   push(\cleanup, e3)
+   suspend |@\e2
+   ldel1(\cleanup, e3)
+   @e3
+end
+
 # This procedure can be used in conjunction with {use} to ensure that
 # all cleanup expressions are performed.  {e} is evaluated for its
 # first result only.  Then any outstanding cleanup expressions are
@@ -129,7 +145,7 @@ end
 # Perform any outstanding cleanups in the {cleanup} list.  Fails if any of the
 # expressions fail, succeeds otherwise.
 #
-procedure do_cleanups()
+package procedure do_cleanups()
    local f, x
    while x := pop(cleanup) do
       @x | (f := 1)
@@ -140,6 +156,8 @@ end
 # using Icon semantics of indices <= 0.  Fails if pos is out of range.
 #
 procedure cvpos(pos, len)
+   pos := integer(pos) | runerr(101, pos)
+   len := integer(len) | runerr(101, len)
    if pos < -len | pos > len + 1 then
       fail
    if pos > 0 then
@@ -152,6 +170,8 @@ end
 # or points at the end of the range (pos = 0 or equivalent).
 #
 procedure cvpos_item(pos, len)
+   pos := integer(pos) | runerr(101, pos)
+   len := integer(len) | runerr(101, len)
    if pos < -len | pos > len | pos = 0 then
       fail
    if pos > 0 then
@@ -168,11 +188,20 @@ package record Slice(lo, hi)
 # range.
 #
 procedure cvslice(pos1, pos2, len)
-   (/pos1 := 1) | (pos1 := cvpos(pos1, len)) | fail
-   (/pos2 := len + 1) | (pos2 := cvpos(pos2, len)) | fail
+   pos1 := cvpos(pos1, len) | fail
+   pos2 := cvpos(pos2, len) | fail
    if pos1 > pos2 then
       pos1 :=: pos2
    return Slice(pos1, pos2)
+end
+
+#
+# Like cvslice above, but pos1 defaults to 1, pos2 to 0.
+#
+procedure cvslice_def(pos1, pos2, len)
+   /pos1 := 1
+   /pos2 := 0
+   return cvslice(pos1, pos2, len)
 end
 
 # This class can be used by a class which has various capabilities or
@@ -203,6 +232,9 @@ abstract class State()
 
    # Called several times to swap the saved state with the global state
    public abstract swap()
+
+   # Called once at the end to restore the global state from the saved state.
+   public abstract finish()
 end
 
 # A `State` instance which saves several global variables, specified as
@@ -245,6 +277,10 @@ class VarState(State)
       }
    end
 
+   public finish()
+      every !vars := pop(state)
+   end
+
    public new(e)
       vars := e
       return
@@ -269,6 +305,11 @@ class ScanState(State)
       &pos := kp
       kp := t
    end
+
+   public finish()
+      &subject := ks
+      &pos := kp
+   end
 end
 
 # A `State` to save the global cleanup list used by `clean` and `use`.
@@ -283,6 +324,10 @@ class CleanupState(State)
 
    public swap()
       cleanup :=: t
+   end
+
+   public finish()
+      cleanup := t
    end
 end
 
@@ -299,6 +344,10 @@ class WhyState(State)
    public swap()
       &why :=: w
    end
+
+   public finish()
+      &why := w
+   end
 end
 
 # A `State` to save `&trace`.
@@ -313,6 +362,10 @@ class TraceState(State)
 
    public swap()
       &trace :=: t
+   end
+
+   public finish()
+      &trace := t
    end
 
    public new(i)
@@ -336,6 +389,10 @@ class HandlerState(State)
       &handler :=: h
    end
 
+   public finish()
+      &handler := h
+   end
+
    public new(i)
       self.i := i
       return
@@ -355,6 +412,10 @@ class States(State)
       every (!l).swap()
    end
 
+   public finish()
+      every (!l).finish()
+   end
+
    public new(l[])
       self.l := l
       return
@@ -366,10 +427,8 @@ end
 # state.
 #
 procedure save_state(e, state)
-   if type(state) == "co-expression" then
-      state := @state
    state.begin()
    suspend 1(|@e, { state.swap() ; &null} ) do
       state.swap()
-   state.swap()
+   state.finish()
 end

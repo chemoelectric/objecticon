@@ -80,9 +80,7 @@ end
 
 class PageMenu(DynamicMenu)
    public populate()
-      local m
-      if m := parent_component.parent_dialog.tabs.which_one.create_page_menu() then
-         every add(!m.children)
+      move_all(parent_component.parent_dialog.tabs.which_one.create_page_menu())
    end
 end
 

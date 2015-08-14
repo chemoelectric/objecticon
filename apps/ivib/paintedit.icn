@@ -248,7 +248,7 @@ class GridPaintEdit(PaintEdit)
       render()
    end
 
-   public on_input_press(ev)
+   public on_input_rpress(ev)
       local m, i, pm
       m := Menu()
       i := TextMenuItem().set_label("Save to...")
@@ -266,6 +266,9 @@ class GridPaintEdit(PaintEdit)
       i := TextMenuItem().set_label("Debug")
       i.connect(self.on_debug, Event.ACTION)
       m.add(i)
+      # Add the standard text edit menu options.
+      m.add(MenuSeparator())
+      m.move_all(input.create_context_menu(ev))
       pm := PopupMenu()
       pm.popup(self, m, ev.x, ev.y)
    end
@@ -323,13 +326,20 @@ class GridPaintEdit(PaintEdit)
       p.set_layout(GridLayout())
       add_tab_at_front(p)
 
-      input := EditableTextList().set_constraint("x_weight", 0).set_size(scale(250),scale(200)).set_move_on_rpress(&no)
+      input := EditableTextList().
+         set_constraint("x_weight", 0).
+         set_size(scale(250),scale(200)).
+         set_move_on_rpress(&no).
+         set_menu_on_rpress(&no)
+
       self.set_focus(input.find_focus())
       input.connect(self.on_input, Event.CONTENT_CHANGED)
-      input.connect(self.on_input_press, Event.MOUSE_RIGHT_PRESS)
+      input.connect(self.on_input_rpress, Event.MOUSE_RIGHT_PRESS)
       input.set_contents_str(\c.fmt)
 
-      output := ShowGridPaint().set_size(scale(150),scale(200)).set_constraint("eol", &yes)
+      output := ShowGridPaint().
+         set_size(scale(150),scale(200)).
+         set_constraint("eol", &yes)
 
       p.add(Split().set_left(input).set_right(output).set_constraint("eol", &yes))
 

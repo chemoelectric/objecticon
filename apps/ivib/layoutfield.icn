@@ -1,6 +1,6 @@
 # $Id$
 
-import gui, io
+import gui, io, util
 
 class LayoutField(Component)
    public 
@@ -13,10 +13,7 @@ class LayoutField(Component)
    end
 
    public on_layout_change()
-      if layouts.get_selection() = 1 then
-         edit_layout_button.set_is_shaded(&yes)
-      else
-         edit_layout_button.set_is_shaded(&no)
+      edit_layout_button.set_is_shaded(Yes{ layouts.get_selection() = 1 })
       fire(Event.SELECTION_CHANGED)
    end
 

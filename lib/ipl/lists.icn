@@ -190,7 +190,7 @@ import
    ipl.sets(elementset),
    ipl.strings(separate,separate_lines),
    lang(equals,Prog),
-   util(cvslice, cvpos_item)
+   util(cvpos, cvslice_def, cvpos_item)
 
 # create list from lines in file
 procedure file2lst(s)			
@@ -698,7 +698,7 @@ end
 # the sublist pos1:pos2 is reversed
 procedure lreverse_mod(L, pos1, pos2)
    local s, i, j
-   s := cvslice(pos1, pos2, *L) | fail
+   s := cvslice_def(pos1, pos2, *L) | fail
    i := s.lo
    j := s.hi - 1
    while i < j do {
@@ -945,6 +945,9 @@ procedure push_n(l, a[])
    return l
 end
 
+#
+# Move the element at position i to position j
+#
 procedure lmove(L, i, j)
    i := cvpos_item(i, *L) | fail
    j := cvpos_item(j, *L) | fail
@@ -957,5 +960,29 @@ procedure lmove(L, i, j)
          delete(L, i)
       }
    }
+   return L
+end
+
+#
+# Extract the elements L[i:j], from L, returning them as a list.
+# i defaults to 1, j to 0.
+#
+procedure lextract(L, i, j)
+   local l, s
+   s := cvslice_def(i, j, *L) | fail
+   l := L[s.lo:s.hi]
+   every 1 to s.hi - s.lo do
+      delete(L, s.lo)
+   return l
+end
+
+#
+# Insert the elements of l into L, starting at i.  l is left unchanged.
+#
+procedure linsert(L, l, i)
+   /i := 0
+   i := cvpos(i, *L) | fail
+   every insert(L, i, !l) do
+      i +:= 1
    return L
 end

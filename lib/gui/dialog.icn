@@ -218,11 +218,7 @@ class Dialog(Component)
    # @param d   This optional parameter specifies the parent dialog.
    #
    public show_and_wait(task, d)
-      local x
-      x := connect_and_return(create {
-         task.notify()
-         disconnect(x)
-      }, Event.DIALOG_DISPOSED)
+      connect_n(create task.notify(), Event.DIALOG_DISPOSED)
       show(d)
       while \win do
          task.sleep()
@@ -534,8 +530,10 @@ class Dialog(Component)
    # has been removed.
    #
    public resynch_pointer() 
+      # Fail if we have a button currently held down.
+      *held = 0 | fail
       if \popup_manager then
-         popup_manager.resynch_pointer()
+         popup_manager.resynch_pointer() | fail
       else if \point_chain_source then {
          create_point_chain(point_chain_source)
          every (back(\popups) | self).generate_crossing_events(point_chain_source) 

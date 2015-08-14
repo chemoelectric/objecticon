@@ -16,13 +16,13 @@ class Stock()
       colr := if i >= 0 then "dark green" else "dark red"
       n := if name[1] == "." then "." || name else name
       label.set_label(".cell eol x_align=l\n" ||
-                      ".attr 'font=sans,+20'\n" ||
+                      ".font sans,+20\n" ||
                       n || "\n" ||
                       ".br\n" ||
                       ".cell x_align=l\n" ||
-                      ".attr font=sans,+5\n" ||
+                      ".font sans,+5\n" ||
                       t["l"] || "\n" ||
-                      ".attr 'fg=" || colr || "'\n" ||
+                      ".fg '" || colr || "'\n" ||
                       "   " || t["c"] || "(" || t["cp"] || "%)\n" ||
                       ".br\n")
       id := t["id"]
@@ -55,7 +55,7 @@ class Stock()
       self.name := s
       label := Label().
          set_label(".cell eol x_align=l\n" ||
-                   ".attr 'font=sans,+20'\n" ||
+                   ".font sans,+20\n" ||
                    name || "\n" ||
                    ".br\n").
          set_constraint("y_fill", &yes).

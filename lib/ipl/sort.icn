@@ -60,7 +60,7 @@
 
 package ipl.sort
 
-import lang(Class,Prog,Internal,Text), util(cvslice)
+import lang(Class,Prog,Internal,Text), util(cvslice_def)
 
 procedure isort(x,keyproc,y)
    local items,item,key,result
@@ -304,7 +304,7 @@ end
 #
 procedure qsort(l, cmp, pos1, pos2)
    local s
-   s := cvslice(pos1, pos2, *l) | fail
+   s := cvslice_def(pos1, pos2, *l) | fail
    /cmp := Internal.compare
    return qsort1(l, cmp, s.lo, s.hi - 1)
 end
@@ -345,7 +345,7 @@ end
 #
 procedure bsearch(l, val, cmp, pos1, pos2)
    local s, m, c, first, last
-   s := cvslice(pos1, pos2, *l) | fail
+   s := cvslice_def(pos1, pos2, *l) | fail
    /cmp := Internal.compare
    first := s.lo
    last := s.hi - 1
@@ -373,7 +373,7 @@ end
 #
 procedure mergesort(l, cmp, pos1, pos2)
    local s
-   s := cvslice(pos1, pos2, *l) | fail
+   s := cvslice_def(pos1, pos2, *l) | fail
    /cmp := Internal.compare
    return mergesort1(l, cmp, s.lo, s.hi - 1)
 end

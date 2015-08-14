@@ -717,31 +717,13 @@ class TextField(Component)
          return self.contents
    end
 
-   public dont_blink()
-      local c
-      # If dialog is blocked, don't blink
-      if parent_dialog.is_blocked() then
-         return
-      # If not in menu mode, blink
-      c := parent_dialog.in_menu_mode() | fail
-      # If this component is the menu mode (eg SuggestField), blink
-      if c === self then
-         fail
-      # If this component is a child of the menu mode's popup (eg a textfield in
-      # a DropDown's popup, such as Calendar), blink.
-      if c.gen_popup_components() === gen_parents() then
-         fail
-      # Otherwise, don't blink.
-      return
-   end
-
    public cursor_tick()
       local t
       repeat {
          if self.has_focus() & self.is_unshaded() & self.is_unhidden() then 
          {
             t := cursor_on
-            cursor_on := if dont_blink() then
+            cursor_on := if dont_blink(self) then
                0
             else
                (cursor_on + 1) % 3

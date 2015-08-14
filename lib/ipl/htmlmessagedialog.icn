@@ -1,7 +1,8 @@
 package ipl.browser
 
 import
-   gui
+   gui,
+   util
 
 # A simple dialog for displaying a single HTML page, typically
 # containing a help message.
@@ -9,6 +10,55 @@ import
 class HTMLMessageDialog(Dialog)
    public const
       browser
+   private readable
+      delay_open_flag,
+      size_precisely_flag
+
+   #
+   # If set, then the dialog is hidden until the page is fully loaded.
+   # This can be preferable for cosmetic reasons, so that the
+   # partially loaded page (without images), is not shown.
+   #
+   public set_delay_open(s)
+      self.delay_open_flag := check_flag(s)
+      return self
+   end
+
+   #
+   # This is like `set_delay_open()` above, but will size the dialog
+   # to the size of the browser's inner component.  The browser's size
+   # should also be set with `browser.set_size()`, since this
+   # influences the size of the inner component.  In particular the
+   # width should be set to the desired resulting width and the height
+   # to a minimum desired height.
+   #
+   public set_size_precisely(s)
+      self.size_precisely_flag := check_flag(s)
+      return self
+   end
+
+   private on_first_load()
+      if \size_precisely_flag then {
+         # Remove the scrollbars, since they affect
+         # ComponentScrollArea's layout(), and we are setting the size
+         # based on there being no scrollbars.
+         browser.
+            remove_hsb().
+            remove_vsb().
+            set_size(browser.predict_total_width(browser.view.inner_w),
+                     browser.predict_total_height(browser.view.inner_h)).
+            reset_layout_chain()
+         resize_win(get_preferred_width(), get_preferred_height())
+      }
+      win.set_canvas("normal")
+   end
+
+   public component_setup()
+      if \delay_open_flag | \size_precisely_flag then {
+         set_canvas("hidden")
+         browser.connect_n(on_first_load, SimpleBrowser.PAGE_FULLY_LOADED)
+      }
+   end
 
    public new()
       Dialog.new()

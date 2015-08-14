@@ -18,10 +18,22 @@ procedure note(s)
    write("Scanning ", s)
 end
 
+procedure usage(opt_help)
+   ewrite("Usage: oidoc [OPTIONS] [SRC FILES/PACKAGES...]")
+   ewrite("Generate documentation")
+   ewrite(opt_help)
+end
+
 procedure main(a)
    local s, o, symbol_table
 
-   opts := options(a, "-html -o: -a! -d! -r!")
+   opts := options(a, [Opt("html",, "Generate HTML output"),
+                       Opt("o",string,"OUTPUT FILE/DIR#Output file or directory"),
+                       Opt("a",, "Generate documentation for all packages"),
+                       Opt("d",, "Generate scanning event debug output"),
+                       Opt("r",, "Restrict output to specified packages"),
+                       Opt("ci",, "Assume case-insensitive file system")],
+                       usage)
 
    symbol_table := SymbolTable()
    if \opts["d"] then

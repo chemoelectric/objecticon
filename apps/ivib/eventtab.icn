@@ -140,9 +140,17 @@ class EventTab(TabItem)
             "Event.MOUSE_EXIT",
             "Event.KEY_PRESS",
             "Event.KEY_RELEASE",
+            "Event.MOUSE_LEFT_DRAG_OVER",
+            "Event.MOUSE_MIDDLE_DRAG_OVER",
+            "Event.MOUSE_RIGHT_DRAG_OVER",
+            "Event.MOUSE_LEFT_RELEASE_OVER",
+            "Event.MOUSE_MIDDLE_RELEASE_OVER",
+            "Event.MOUSE_RIGHT_RELEASE_OVER",
             "Event.GOT_FOCUS",
             "Event.LOST_FOCUS",
-            "Event.DIALOG_DISPOSED"
+            "Event.DIALOG_DISPOSED",
+            "Event.IN_POINT_CHAIN",
+            "Event.POPUP_CLOSED"
             ]
       event.set_selection_list(l)
       event.connect(self.on_apply, Event.ACTION)

@@ -68,6 +68,7 @@ class MenuBar(Component, MenuSystem)
       local c
       c := self.menus[i] | fail
       delete(self.menus, i)
+      c.set_component_link(&null)
       if is_initialized() then
          c.finally()
       return self
@@ -77,8 +78,7 @@ class MenuBar(Component, MenuSystem)
    # Remove all the menus.
    #
    public remove_all()
-      while remove_index(1)
-      return self
+      return remove_list() & self
    end
 
    #
@@ -100,6 +100,36 @@ class MenuBar(Component, MenuSystem)
    #
    public reposition_index(i, j)
       lmove(menus, i, j) | fail
+      return self
+   end
+
+   # Remove the menus in the range `i:j`, returning the
+   # removed menus in a list.
+   # @param i   The start slice index, default 1
+   # @param j   The end slice index, default 0
+   # @fail      If the range is invalid.
+   #
+   #
+   public remove_list(i, j)
+      local l
+      l := lextract(menus, i, j) | fail
+      every (!l).set_component_link(&null)
+      if is_initialized() then
+         every (!l).finally()
+      return l
+   end
+
+   # Add all the `Menu`s contained in list `l` at index `i`.
+   #
+   # @param l    The list to add
+   # @param i    The index
+   # @fail      If i is out of range
+   #
+   public add_list(l, i)
+      linsert(menus, l, i) | fail
+      every (!l).set_component_link(self)
+      if is_initialized() then
+         every (!l).initially()
       return self
    end
 

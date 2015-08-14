@@ -22,19 +22,23 @@ end
 
 #
 # This is a procedure for making lambda-style functions.  For example:
+# ~~~
 #   f := lambda{ _a[1] + 100 }
-# sets f to be a function returning its first argument plus 100.  Note
-# that args are passed to the function via a global variable _a, since
+# ~~~
+# sets `f' to be a function returning its first argument plus 100.  Note
+# that args are passed to the function via a global variable `_a`, since
 # icon syntax allows no other way.  Further, although the function can
 # use any variables in scope, it cannot declare any itself.  To simulate
-# local variables, another global, _l, can be used.  It can be set
+# local variables, another global, `_l`, can be used.  It can be set
 # to any value.
 # 
 # Other examples:-
+# ~~~
 #   # Return the sum of the arguments, eg f(1,2,3) -> 6
 #   # - note that _l must be dereferenced, otherwise the caller sees the
 #   #   value before the function is called.
 #   f := lambda{{ _l := 0; every _l +:= !_a ; ._l }}
+# ~~~
 #
 procedure lambda(e)
    return Lambda(e).call
@@ -76,6 +80,11 @@ class LambdaState(State)
    public swap()
       _a :=: ta
       _l :=: tl
+   end
+
+   public finish()
+      _a := ta
+      _l := tl
    end
 
    public new(i)

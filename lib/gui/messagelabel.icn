@@ -9,10 +9,12 @@ class MessageLabel(Label)
 
    private set_impl(s)
       local p
-      p := if /s then TextPaint("") else AbbreviatedTextPaint(s)
-      message := s
-      message_tt := &null
-      set_paint(p)
+      if message ~=== s then {
+         p := if /s then TextPaint("") else AbbreviatedTextPaint(s)
+         message := s
+         message_tt := &null
+         set_paint(p)
+      }
    end
 
    # Set the label to the given string {s}.  If {s} is &null, then the
@@ -51,7 +53,7 @@ class MessageLabel(Label)
 
    public new()
       Label.new()
-      set()
+      set_label("")
       return
    end
 end

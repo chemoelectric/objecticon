@@ -7,7 +7,7 @@ class EditMenu(DynamicMenu)
    private text
 
    public populate()
-      populate_from(text.create_context_menu())
+      move_all(text.create_context_menu())
    end
 
    public new(text)

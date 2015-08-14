@@ -286,7 +286,7 @@
 package ipl.regexp
 
 import
-   ipl.scan(clcset, clmatch, clfind, begin_analysis),
+   ipl.scan(cl_cset, cl_match, cl_find, begin_analysis),
    lang(Prog),
    util(check_flag)
 
@@ -350,7 +350,7 @@ class Pattern()
    public set_case_dependent(f)
       check_open()
       if /check_flag(f) then {
-         Re__find := clfind
+         Re__find := cl_find
          Re__any := Re_c_any
          Re__upto := Re_c_upto
          Re__tabmatch := Re_c_tabmatch
@@ -911,15 +911,15 @@ class Pattern()
    ###################  Case Independence Procedures  ###################
 
    private static Re_c_tabmatch(s)
-      suspend tab(clmatch(s))
+      suspend tab(cl_match(s))
    end
 
    private static Re_c_any(c)
-      return any(clcset(c))
+      return any(cl_cset(c))
    end
 
    private static Re_c_upto(c)
-      suspend upto(clcset(c))
+      suspend upto(cl_cset(c))
    end
 
 end

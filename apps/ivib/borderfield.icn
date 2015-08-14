@@ -1,6 +1,6 @@
 # $Id$
 
-import gui, io
+import gui, io, util
 
 class BorderField(Component)
    public 
@@ -37,10 +37,7 @@ class BorderField(Component)
    end
 
    public on_border_change()
-      if borders.get_selection() = 1 then
-         edit_border_button.set_is_shaded(&yes)
-      else
-         edit_border_button.set_is_shaded(&no)
+      edit_border_button.set_is_shaded(Yes{ borders.get_selection() = 1 })
    end
 
    public set_contents(c)

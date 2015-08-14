@@ -152,8 +152,8 @@ class TreeNode()
    public remove_index(i)
       local c
       c := self.children[i] | fail
-      c.parent := &null
       delete(self.children, i)
+      c.parent := &null
       return self
    end
 
@@ -161,8 +161,7 @@ class TreeNode()
    # Remove all the children.
    #
    public remove_all()
-      while remove_index(1)
-      return self
+      return remove_list() & self
    end
 
    #
@@ -185,6 +184,44 @@ class TreeNode()
    public reposition_index(i, j)
       lmove(children, i, j) | fail
       return self
+   end
+
+   # Remove the children in the range `i:j`, returning the
+   # removed children in a list.
+   # @param i   The start slice index, default 1
+   # @param j   The end slice index, default 0
+   # @fail      If the range is invalid.
+   #
+   #
+   public remove_list(i, j)
+      local l
+      l := lextract(children, i, j) | fail
+      every (!l).parent := &null
+      return l
+   end
+
+   # Add all the `TreeNode`s contained in list `l` at index `i`.
+   #
+   # @param l    The list to add
+   # @param i    The index
+   # @fail      If i is out of range
+   #
+   public add_list(l, i)
+      linsert(children, l, i) | fail
+      every (!l).parent := self
+      return self
+   end
+
+   # Move all the children of `TreeNode` `other`, to this
+   # `TreeNode`, adding them at index `i`.  `other` will be left empty.
+   #
+   # @param other The source {TreeNode}.
+   # @param i     The index to add at; if omitted then the new components
+   # @            are appended to the end.
+   # @fail        If i is out of range
+   #
+   public move_all(other, i)
+      return add_list(other.remove_list(), i)
    end
 
    #

@@ -50,13 +50,12 @@ class ItemPaintList(SelectableScrollArea)
    end
 
    public calculate_line_height()
-      local h
-      if not(h := item_paint.get_constant_height(self.cbwin) +
-             item_border.get_total_height()) then 
+      local h, bh
+      bh := item_border.get_total_height()
+      if not(h := item_paint.get_constant_height(self.cbwin) + bh) then 
       {
          h := []
-         every put(h, item_paint.get_height(self.cbwin, !self.contents) + 
-                   item_border.get_total_height())
+         every put(h, item_paint.get_height(self.cbwin, !self.contents) + bh)
       }
       return h
    end

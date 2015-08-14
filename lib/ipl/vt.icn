@@ -125,7 +125,7 @@ package class Row()
    public const
       l,     # List of Segments
       bg,    # Bg colour for right part of row not covered by segments (null -> current bg).
-      join   # Lines is notionally joined with next one (used to reflow).
+      join   # Line is notionally joined with next one (used to reflow).
 
    public new(l, bg, join)
       /l := []
@@ -143,6 +143,7 @@ abstract class VtUI()
    public abstract link_middle_clicked(url)
    public abstract create_link_menu(url)
    public abstract create_context_menu()
+   public abstract quieten_cursor()
    public abstract send_tty(s)
    public abstract vt_size_changed(cols, rows)
    public abstract msg(s, n)
@@ -239,6 +240,8 @@ class Vt(LineBasedScrollArea, MenuMode)
       font_size,
       primary,                    # Primary selection string, or null
       history_size,               # Size of history scroll lines; 0 -> no vsb
+      vt_width,                   # Default width in chars, used by get_default_width()
+      vt_height,                  # Default height in chars, used by get_default_height()
       reverse_fg,                 # Colours of reverse mode, or null implying true reverse.
       reverse_bg,
       normal_fg,                  # Colours of non-reverse mode, or null implying use cbwin colours.
@@ -355,12 +358,30 @@ class Vt(LineBasedScrollArea, MenuMode)
       LineBasedScrollArea.layout()
    end
 
+   # Set the width of the vt in characters.  The default is 80. Only
+   # used if the size of the component is not set in pixels.
+   #
+   public set_vt_width(n)
+      n := (0 < integer(n)) | runerr(101, n)
+      self.vt_width := n
+      return self
+   end
+
+   # Set the height of the vt in lines.  The default is 25.  Only used
+   # if the size of the component is not set in pixels.
+   #
+   public set_vt_height(n)
+      n := (0 < integer(n)) | runerr(101, n)
+      self.vt_height := n
+      return self
+   end
+
    public get_default_width()
-      return predict_total_width(80 * char_w + 2 * Gui.TEXT_INSET, Yes{ history_size > 0 })
+      return predict_total_width(vt_width * char_w + 2 * Gui.TEXT_INSET, Yes{ history_size > 0 })
    end
 
    public get_default_height()
-      return predict_total_height(25 * get_line_height())
+      return predict_total_height(vt_height * get_line_height())
    end
 
    private check_changed_size()
@@ -411,8 +432,16 @@ class Vt(LineBasedScrollArea, MenuMode)
       i := j := 1
       l := 0
       every r := !contents do {
-         if i = y then
+         if i = y then {
+            # If this is line is part of a larger line, and x is
+            # beyond its end, then it makes sense to limit x to the
+            # end of the line; otherwise the returned result would
+            # notionally refer to a position some way into the next
+            # line.  In any case, this shouldn't occur under normal
+            # circumstances.
+            /r.join | i = *contents | (x >:= line_len(r.l) + 1)
             return Locn(l + x, j)
+         }
          if /r.join then {
             j +:= 1
             l := 0
@@ -546,7 +575,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          fam := tab(upto(',') | 0)
          (*fam > 0) | return error("font not in required format")
          size := if ="," then
-            integer(tab(0)) | return error("font not in required format")
+            numeric(tab(0)) | return error("font not in required format")
          else
             Window.get_default_font_size()
       }
@@ -1036,6 +1065,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    # Set the history size; 0 implies no scrollbar.
    #
    public set_history_size(n)
+      n := (0 <= integer(n)) | runerr(101, n)
       self.history_size := n
       trim_history()
       invalidate_line_count()
@@ -1983,18 +2013,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       scroll_ticker.start()
    end
 
-   private dont_blink()
-      local c
-      if parent_dialog.is_blocked() then
-         return
-      c := parent_dialog.in_menu_mode() | fail
-      if c === self then
-         fail
-      if c.gen_popup_components() === gen_parents() then
-         fail
-      return
-   end
-
    private scroll_tick()
       local i
       repeat {
@@ -2027,7 +2045,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       repeat {
          if /hide_cursor_mode & self.has_focus() & self.is_unshaded() & self.is_unhidden() then {
             t := cursor_on
-            cursor_on := if dont_blink() then
+            cursor_on := if dont_blink(self) then
                0
             else
                (cursor_on + 1) % 3
@@ -2091,6 +2109,7 @@ class Vt(LineBasedScrollArea, MenuMode)
             ch := u"\e" || ch
          send(ch)
          quieten_cursor()
+         ui.msg()
          goto_bottom()
       }
    end
@@ -2347,8 +2366,43 @@ class Vt(LineBasedScrollArea, MenuMode)
          invalidate_cursor()
    end
 
+   private handle_double_click()
+      local s, l, r, m, t
+      l := unflow_loc(cursor_x, cursor_y) | fail
+      r := Index{unflowed(), l.y} | fail
+      s := line_str(r.l)
+      t := l.x
+      while any(~'\t ', s, t) do
+         t +:= 1
+      if m := reflow_loc(t, l.y) then {
+         cursor_x := m.x
+         cursor_y := m.y
+      }
+      t := l.x
+      while any(~'\t ', s, t - 1) do
+         t -:= 1
+      if m := reflow_loc(t, l.y) then {
+         mark_x := m.x
+         mark_y := m.y
+      }
+   end
+
+   private handle_triple_click()
+      local s, l, r, m
+      l := unflow_loc(cursor_x, cursor_y) | fail
+      r := Index{unflowed(), l.y} | fail
+      s := line_str(r.l)
+      if m := reflow_loc(*s + 1, l.y) then {
+         cursor_x := m.x
+         cursor_y := m.y
+      }
+      if m := reflow_loc(1, l.y) then {
+         mark_x := m.x
+         mark_y := m.y
+      }
+   end
+
    private handle_lpress1(e)
-      local s
       invalidate_region()
       reset_search()
       # This would be \e.shift, but shift is used to disable the link click functionality.
@@ -2363,21 +2417,8 @@ class Vt(LineBasedScrollArea, MenuMode)
                self.mark_y := self.cursor_y
                self.mark_x := self.cursor_x
             }
-            1 : {
-               self.mark_y := self.cursor_y
-               self.mark_x := self.cursor_x
-               s := contents_str(cursor_y)
-               while any(~'\t ', s, self.cursor_x) do
-                  self.cursor_x +:= 1
-               while any(~'\t ', s, self.mark_x - 1) do
-                  self.mark_x -:= 1
-            }
-            2 : {
-               s := contents_str(cursor_y)
-               self.cursor_x := *s + 1
-               self.mark_y := self.cursor_y
-               self.mark_x := 1
-            }
+            1 : handle_double_click()
+            2 : handle_triple_click()
          }
       }
       invalidate_region()
@@ -2422,10 +2463,15 @@ class Vt(LineBasedScrollArea, MenuMode)
       # keyboard handler.
       view.set_pointer("xterm")
       quieten := 1
+      ui.quieten_cursor()
+   end
+
+   public unquieten_cursor()
+      quieten := &null
    end
 
    private handle_move(ev)
-      quieten := &null
+      unquieten_cursor()
    end
 
    private handle_in_chain(ev)
@@ -2696,6 +2742,8 @@ class Vt(LineBasedScrollArea, MenuMode)
       view.set_pointer("xterm")
       input_handler_coex := create input_handler()
       history_size := 500
+      vt_width := 80
+      vt_height := 25
       reset_term()
       return
    end

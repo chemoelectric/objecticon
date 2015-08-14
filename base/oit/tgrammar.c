@@ -83,7 +83,12 @@ int globalflag;
 #define Bplus(x1,x2,x3)		$$ = tree5(N_Binop,x2,x2,x1,x3)
 #define Bplusa(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
 #define Bques(x1,x2,x3)		$$ = tree5(N_Binop,x2,x2,x1,x3) 
-#define Brace(x1,x2,x3)		$$ = x2
+/* See notes for reason for line/file adjustment */
+#define Brace(x1,x2,x3)		if ((x2)->n_type == N_Slist) {  \
+                                   Line(x2) = Line(x1); \
+                                   File(x2) = File(x1); \
+                                } \
+                                $$ = x2
 #define Brack(x1,x2,x3)		$$ = tree3(N_List,x1,x2) 
 #define Brassgn(x1,x2,x3)	$$ = tree5(N_Binop,x2,x2,x1,x3)
 #define Break0(x1)		$$ = tree2(N_Break,x1) 

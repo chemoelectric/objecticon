@@ -6,7 +6,7 @@ import
    io,
    posix
 
-class Symbol()
+abstract class Symbol()
    public const
       scanned_file,
       obj,
@@ -16,9 +16,12 @@ class Symbol()
       return \scanned_file.pack
    end
 
-   public get_fq_name()
-      return (\scanned_file.pack || "." || name) | name
-   end
+   # Return the fully-qualified name of the Symbol.
+   public abstract get_fq_name()
+
+   # Return the fully-qualified name of the Symbol, but
+   # symbols not in a package are prefixed with "default.".
+   public abstract get_fq_name_default()
 
    package new(scanned_file, obj, name)
       self.scanned_file := scanned_file
@@ -30,6 +33,14 @@ end
 
 abstract class TopLevelSymbol(Symbol)
    public abstract has_package_flag()
+
+   public get_fq_name()
+      return (\scanned_file.pack || "." || name) | name
+   end
+
+   public get_fq_name_default()
+      return (\scanned_file.pack || "." || name) | ("default." || name)
+   end
 end
 
 class ProcedureSymbol(TopLevelSymbol)
@@ -180,6 +191,14 @@ end
 class ClassField(Symbol)
    public const
       defining_class
+
+   public get_fq_name()
+      return defining_class.get_fq_name() || "." || name
+   end
+
+   public get_fq_name_default()
+      return defining_class.get_fq_name_default() || "." || name
+   end
 
    package new(defining_class, obj, name)
       Symbol.new(defining_class.scanned_file, obj, name)

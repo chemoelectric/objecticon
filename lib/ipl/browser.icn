@@ -1295,9 +1295,9 @@ class Img(Image, HasLastHighlight)
          if visible_border() then
             invalidate()
          if /over then
-            browser.clear_msg(self)
+            browser.msg()
          else
-            browser.msg(over.str(),, self)
+            browser.msg(over.str())
       }
       return self
    end
@@ -1367,7 +1367,7 @@ class Img(Image, HasLastHighlight)
       return \over | \form
    end
 
-   private handle_in_chain(e)
+   package handle_in_chain(e)
       local u, t, a, f
       *parent_dialog.held = 0 | fail
       if e.code === (Key.SHIFT_L | Key.SHIFT_R) then {
@@ -1419,7 +1419,6 @@ class Img(Image, HasLastHighlight)
          set_pointer("hand1")
          connect(self.handle_form_lrelease, Event.MOUSE_LEFT_RELEASE)
       } else if \map_id | \context.url then {
-         connect(self.handle_in_chain, Event.IN_POINT_CHAIN)
          connect(self.handle_lmdrag, Event.MOUSE_LEFT_DRAG)
          connect(self.handle_lmpress, Event.MOUSE_LEFT_PRESS)
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
@@ -2791,7 +2790,6 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       h_direction,
       v_direction,
       primary_selection_owner,
-      msg_owner,
       outermost_border,
       tidy_cache_task
 
@@ -3103,18 +3101,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return self
    end
 
-   public msg(s, n, owner)
-      /owner := self
+   public msg(s, n)
       (\ui).msg(s, n)
-      msg_owner := owner
-      return self
-   end
-
-   public clear_msg(owner)
-      if /msg_owner | /owner | (owner === msg_owner) then {
-         (\ui).msg()
-         msg_owner := &null
-      }
       return self
    end
 
@@ -3342,7 +3330,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          return
       s ? {
          while tab(upto('<')) do {
-            if clmatch("<!doctype" | "<html" | "<meta") then
+            if cl_match("<!doctype" | "<html" | "<meta") then
                return
             # Expect html comment (see htmlparser.icn)
             ="<!" | fail
@@ -3651,9 +3639,15 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          traverse(e, p, context)
    end
 
+   private check_id(e, p, context)
+      local id
+      if id := e.get_attribute(u"ID") then
+         put(p.input, NamedAnchorCmd(id, context))
+   end
+
    private traverse_hN(e, p, context)
       local c
-      put_para(p, context)
+      put_para1(e, p, context)
       c := copy(context)
       c.size := 7 - e.name[-1]
       c.bold := 1
@@ -3795,7 +3789,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       c := copy(context)
       c.italic := 1
       synch_font(c)
-      put_new_row(p, c)
+      put_new_row1(e, p, c)
       traverse(e, p, c)
       put_new_row(p, c)
    end
@@ -3824,7 +3818,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       c := copy(context)
       c.form := Form(self, save_key, id, url, m, t)
       put(forms, c.form)
-      put_new_row(p, c)
+      put_new_row1(e, p, c)
       traverse(e, p, c)
       put_new_row(p, c)
       c.form.resolve_labels()
@@ -4281,7 +4275,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private traverse_div(e, p, context)
-      put_new_row(p, context)
+      put_new_row1(e, p, context)
       traverse(e, p, context)
    end
 
@@ -4308,7 +4302,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          set_width(1)
       do_width_param(e, l) | l.set_constraint("pct_w", 100)
       c := copy(context)
-      put_new_row(p, c)
+      put_new_row1(e, p, c)
       c.align := convert_halign(e, u"ALIGN") | Align.C
       add_component(p, l, c)
       put_new_row(p, c)
@@ -4323,7 +4317,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private traverse_p(e, p, context)
       local c
       c := copy(context)
-      put_para(p, c)
+      put_para1(e, p, c)
       c.align := convert_halign(e, u"ALIGN")
       traverse(e, p, c)
       put_para(p, c)
@@ -4355,7 +4349,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    private traverse_pre(e, p, context)
       local c
-      put_para(p, context)
+      put_para1(e, p, context)
       c := copy(context)
       c.family := "mono"
       strip_newlines(e)
@@ -4369,15 +4363,25 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       put(p.input, ParaCmd(context))
    end
 
+   private put_para1(e, p, context)
+      put_para(p, context)
+      check_id(e, p, context)
+   end
+
    private put_new_row(p, context)
       put(p.input, NewRowCmd(context))
+   end
+
+   private put_new_row1(e, p, context)
+      put_new_row(p, context)
+      check_id(e, p, context)
    end
 
    private traverse_center(e, p, context)
       local c
       c := copy(context)
       c.align := Align.C
-      put_new_row(p, context)
+      put_new_row1(e, p, context)
       traverse(e, p, c)
       put_new_row(p, context)
    end
@@ -4518,7 +4522,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       if align === (Align.L | Align.R) then
          add_component(p, t, c, align)
       else {
-         put_new_row(p, c)
+         put_new_row1(e, p, c)
          add_component(p, t, c, Align.B)
          put_new_row(p, c)
       }
@@ -4689,7 +4693,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       lc.kind := e.name
       c.list := lc
       traverse(e, p, c)
-      put_new_row(p, c)
+      put_new_row1(e, p, c)
       add_component(p, tbl, context, Align.B)
       put_new_row(p, c)
    end
@@ -4735,7 +4739,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       c := copy(context)
       c.def_list := dc
       traverse(e, p, c)
-      put_new_row(p, c)
+      put_new_row1(e, p, c)
       add_component(p, tbl, context, Align.B)
       put_new_row(p, c)
    end
@@ -4752,7 +4756,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       local dc, row
       dc := \context.def_list | fail
       row := TextFlow(self).set_v_align("baseline").set_constraint("eol", &no)
-      put(row.input, TextCmd(u"\u2022\ua0\ua0\ua0", context))
+      put(row.input, TextCmd(u"\ua0\ua0\ua0\ua0\ua0", context))
       dc.tbl.content.add(row)
       row := TextFlow(self).set_v_align("baseline").set_constraint("eol", &yes)
       dc.tbl.content.add(row)
@@ -4761,7 +4765,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    private traverse_blockquote(e, p, context)
       local tbl, row
-      put_new_row(p, context)
+      put_new_row1(e, p, context)
       tbl := Tbl()
       add_component(p, tbl, context)
       row := TextFlow(self)
@@ -4775,7 +4779,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    private traverse_fieldset(e, p, context)
       local tbl, row, c, fc
-      put_new_row(p, context)
+      put_new_row1(e, p, context)
       tbl := Tbl().set_border(CompoundBorder().
                               set_outer(SunkenBorder().set_line_width(Gui.FINE_WIDTH)).
                               set_inner(EmptyBorder()))
@@ -4885,13 +4889,12 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private traverse(n, p, context)
-      local e, id, title, c
+      local e, title, c
       every e := !n.children do {
          if text(e) then
             traverse_text(e, p, context)
          else if is(e, HtmlElement) then {
-            if id := e.get_attribute(u"ID") then
-               put(p.input, NamedAnchorCmd(id, context))
+            check_id(e, p, context)
             if title := (u"" ~== e.get_attribute(u"TITLE")) then {
                c := copy(context)
                c.title := title
@@ -5198,6 +5201,25 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return \r
    end
 
+   # This is used to forward an in chain event to Imgs and TextFlows
+   # in the point chain.  The reason they don't simply listen
+   # themselves is that they would then process the event in the wrong
+   # order.  Since the bottom components come last (ie the base
+   # TextFlow), when the mouse leaves a link in the top-level and
+   # moves to a link in another TextFlow (above the base one), the
+   # base TextFlow would process the event last, and would clear the
+   # UI message, overwriting the new message written by the upper
+   # level link.  So this traverses the point chain backwards, which
+   # is the correct order for this case.
+   #
+   private handle_in_chain(e)
+      local c
+      every c := back(parent_dialog.point_chain) do {
+         if is(c, Img | TextFlow) then
+            c.handle_in_chain(e)
+      }
+   end
+
    public get_current_text_selection()
       return \.text_selection
    end
@@ -5291,9 +5313,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       local c
       is(parent_dialog.point_chain[1], Img | TextFlow | TblContent | Tbl) | fail
       every c := !parent_dialog.point_chain do {
-         if is(c, TextFlow) & c.wants_lpress(e) then
-            fail
-         if is(c, Img) & c.wants_lpress(e) then
+         if is(c, TextFlow | Img) & c.wants_lpress(e) then
             fail
       }
       return
@@ -5509,7 +5529,118 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       view.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG).
          connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS).
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE).
-         connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
+         connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS).
+         connect(self.handle_in_chain, Event.IN_POINT_CHAIN)
+      return
+   end
+end
+
+#
+# A `BrowserUI` to use with `SimpleBrowser`
+#
+class SimpleBrowserUI(BrowserUI)
+   public const browser
+
+   public msg(s, n) end
+
+   public page_loaded()
+      browser.fire(SimpleBrowser.PAGE_LOADED)
+   end
+
+   public page_fully_loaded()  
+      browser.fire(SimpleBrowser.PAGE_FULLY_LOADED)
+   end
+
+   public update_grey(gs) end
+
+   public link_left_clicked(url)
+      browser.fire(SimpleBrowser.LINK_LEFT_CLICKED, url)
+   end
+
+   public link_middle_clicked(url)
+      browser.fire(SimpleBrowser.LINK_MIDDLE_CLICKED, url)
+   end
+
+   protected copy_link(url)
+      browser.parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner([url]))
+   end
+
+   protected copy_links(urls)
+      browser.parent_dialog.own_selection(Selection.CLIPBOARD, URLSelectionOwner(urls))
+   end
+
+   protected copy_text(s)
+      browser.parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
+   end
+
+   protected populate_link_menu(url, m)
+      m.add(TextMenuItem().
+            set_label("Copy link").
+            connect(create copy_link(url), Event.ACTION))
+   end
+
+   protected on_select_all(e)
+      browser.handle_select_all(e)
+   end
+
+   protected is_external(url)
+      return not(url.scheme == (u"page" | u"img"))
+   end
+
+   public create_link_menu(url)
+      local m
+      m := Menu()
+      populate_link_menu(url, m)
+      return m
+   end
+
+   public create_page_menu()
+      local m, s, l, u
+      m := Menu()
+      if u := \browser.page_url & is_external(u) then {
+         m.add(TextMenuItem().
+               set_label("Copy page").
+               connect(create copy_link(u), Event.ACTION))
+      }
+      if \browser.page_data then
+         m.add(TextMenuItem().
+               set_label("Select all").
+               set_label_right("^A").
+               connect(on_select_all, Event.ACTION))
+      if s := browser.get_current_text_selection() then
+         m.add(TextMenuItem().
+               set_label("Copy text").
+               set_label_right("^C").
+               connect(create copy_text(s), Event.ACTION))
+      if l := browser.get_current_links_selection() then
+         m.add(TextMenuItem().
+               set_label("Copy links").
+               connect(create copy_links(l), Event.ACTION))
+      if *m.children > 0 then
+         return m
+   end
+
+   public create_image_menu(img)
+      local m, url
+      url := if img.img_url.scheme == u"cache" then browser.page_url else img.img_url
+      m := Menu()
+      if is_external(url) then
+         m.add(TextMenuItem().
+               set_label("Copy image").
+               connect(create copy_link(url), Event.ACTION))
+      if \img.over then
+         populate_link_menu(img.over, m)
+      if *m.children > 0 then
+         return m
+   end
+
+   public browse_for_file(s) end
+   public is_visited(url) end
+   public display_search() end
+   public display_externally(res) end
+
+   public new(browser)
+      self.browser := browser
       return
    end
 end
@@ -5528,23 +5659,15 @@ class SimpleBrowser(Browser)
 
    public static const
       LINK_LEFT_CLICKED,
-      LINK_MIDDLE_CLICKED
+      LINK_MIDDLE_CLICKED,
+      PAGE_LOADED,
+      PAGE_FULLY_LOADED
 
    private static init()
       LINK_LEFT_CLICKED := "link_left_clicked"
-      LINK_MIDDLE_CLICKED := "link_middle_clicked"
-   end
-
-   public link_left_clicked(url)
-      Browser.link_left_clicked(url)
-      fire(LINK_LEFT_CLICKED, url)
-      return self
-   end
-
-   public link_middle_clicked(url)
-      Browser.link_middle_clicked(url)
-      fire(LINK_MIDDLE_CLICKED, url)
-      return self
+      LINK_MIDDLE_CLICKED := "link_middle_clicked" 
+      PAGE_LOADED := "page loaded"
+      PAGE_FULLY_LOADED := "page fully loaded"
    end
 
    # Set the page to display as a string representing an HTML
@@ -5568,6 +5691,7 @@ class SimpleBrowser(Browser)
 
    public new()
       Browser.new()
+      set_ui(SimpleBrowserUI(self))
       worker_pool.
          add_scheme_handler("page", page_handler).
          add_scheme_handler("img", img_handler)
