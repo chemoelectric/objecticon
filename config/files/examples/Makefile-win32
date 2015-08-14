@@ -5,7 +5,8 @@ PROGS=browser canvasstate colors cursors directorydialogtest \
 	fonttest geturl grabtest imageview lslinks \
 	memorytracker multi selection sieve sizetest \
 	sliders stock suggest tooltip treetest \
-	ttexplorer fields flowterm bus
+	ttexplorer fields flowterm bus lscookies \
+	showtemplate
 
 all :	$(PROGS)
 

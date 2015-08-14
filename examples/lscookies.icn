@@ -1,0 +1,62 @@
+import http, lang, io, ipl.options, posix, xdg
+
+invocable HttpClient
+
+procedure usage(opt_help)
+   ewrite("Usage: lscookies [OPTIONS] [cookie-file]")
+   ewrite("Show or edit the Object Icon cookies file")
+   ewrite("If invoked with no options, show all the cookies")
+   ewrite(opt_help)
+end
+
+procedure main(a)
+   local t, cookies, bak, opts, mod, k, home, l
+   opts := options(a, [Opt("d", string, "Delete the given key; multiple uses allowed", &yes),
+                       Opt("k", string, "Show just the given key; multiple uses allowed", &yes),
+                       Opt("x",, "Expire out-of-date cookies")],
+                       usage)
+
+   home := FilePath(Xdg.ensure_data_home()) | stop("Couldn't access data dir: ", &why)
+
+   cookies := a[1] | System.getenv("OICOOKIES") | home.child("oicookies").str()
+
+   t := decode_from_file(cookies) | stop(&why)
+
+   if l := \opts["d"] then {
+      every k := !l do {
+         if member(t, k) then {
+            write("Deleted key: ", k)
+            delete(t, k)
+            mod := 1
+         } else
+            write("No such entry: ",k)
+      }
+   }
+   if l := \opts["k"] then {
+      every k := !l do {
+         if member(t, k) then
+            write(image(k), "->", to_string(t[k], 3))
+         else
+            write("No such entry: ",k)
+      }
+   }
+   if \opts["x"] then {
+      t := Cookie.expire_cookies(t)
+      write("Removed expired cookies")
+      mod := 1
+   }
+
+   # No options, so print whole table.
+   if *opts = 0 then {
+      to_stdout(t, 3)
+      write()
+   }
+
+   if \mod then {
+      bak := cookies || ".bak"
+      encode_to_file(bak, t) | stop("Couldn't encode to temp cookie file ", bak, ": ", &why)
+      # Use rename not move to ensure it's atomic
+      Files.rename(bak, cookies) | stop("Couldn't rename cookie file ", bak, ": ", &why)
+      write("Modified file written okay")
+   }
+end
