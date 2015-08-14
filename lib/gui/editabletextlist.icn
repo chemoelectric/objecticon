@@ -1108,24 +1108,12 @@ class EditableTextList(LineBasedScrollArea)
       self.tx +:= dx
    end
 
-   public dont_blink()
-      local c
-      if parent_dialog.is_blocked() then
-         return
-      c := parent_dialog.in_menu_mode() | fail
-      if c === self then
-         fail
-      if c.gen_popup_components() === gen_parents() then
-         fail
-      return
-   end
-
    public cursor_tick()
       local t
       repeat {
          if self.has_focus() & self.is_unshaded() & self.is_unhidden() then {
             t := cursor_on
-            cursor_on := if dont_blink() then
+            cursor_on := if dont_blink(self) then
                0
             else
                (cursor_on + 1) % 3
