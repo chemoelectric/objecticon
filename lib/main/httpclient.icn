@@ -879,9 +879,9 @@ class HttpClient(NetClient)
    # 
    private maybe_close_connection()
       #
-      # Close if told to do so.
+      # Close if told to do so, or if keep_alive_flag is unset
       #
-      if map(response.gen_headers("connection")) == "close" then
+      if /keep_alive_flag | map(response.gen_headers("connection")) == "close" then
          close_connection()
    end
 
@@ -899,9 +899,7 @@ class HttpClient(NetClient)
          request.set_header("accept-encoding", "gzip")
       request.unset_header("cookie")
       request.set_header("cookie", create_cookie_header())
-
-      if \keep_alive_flag then
-         request.set_header("connection", "Keep-Alive")
+      request.set_header("connection", if \keep_alive_flag then "Keep-Alive" else "Close")
 
       f := (\request.range_start | 0) + (\self.read | 0)
       rs := if f > 0 then
