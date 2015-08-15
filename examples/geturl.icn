@@ -258,8 +258,14 @@ procedure process_one(a)
       get_out(url.get_path_last())
       if check_skip() then
          fail
-      if /opts["q"] then
-         write(FileStream.stderr, "Saving URL ", url.str())
+      if /opts["q"] then {   
+         writes(FileStream.stderr, "Saving URL ")
+         if Files.is_flowterm_tty(FileStream.stderr) then       
+            write(FileStream.stderr, 
+                  Files.begin_link(url), url.str(), Files.end_link())
+         else
+            write(FileStream.stderr, url.str())
+      }
    }
 
    hr := HttpRequest().
