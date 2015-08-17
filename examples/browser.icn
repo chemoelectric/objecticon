@@ -133,7 +133,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       update_grey()
    end
 
-   private update_grey()
+   public update_grey()
       page_menu.set_is_shaded(No{ is(tabs.which_one, BrowserTab) })
    end
 
@@ -174,11 +174,15 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       }
    end
 
-   public new_tab(url, referer_url, sel)
+   public new_tab(url, referer_url, sel, adjacent)
       local bt, np
-      # Add to end, unless the DownloadTab is at the end, in which
-      # case add at one from the end.
-      np := if is(tabs.children[-1], DownloadTab) then -1 else 0
+      np := if /adjacent then
+         # Add to end, unless the DownloadTab is at the end, in which
+         # case add at one from the end.
+         if is(tabs.children[-1], DownloadTab) then -1 else 0
+      else
+         # Add after adjacent
+         tabs.get_index(adjacent) + 1
       bt := BrowserTab(self, url, referer_url, tabs.which_one).
          set_is_hidden(&yes)
       tabs.add(bt, np)
@@ -191,26 +195,10 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       return bt
    end
 
-   public close_tab(tab, revert)
-      tabs.
-         remove(tab).
-         set_which_one(revert).
-         do_layout().
-         invalidate()
-      update_grey()
-   end
-
    private on_new_tab(ev)
-      new_tab(settings.home_url,, 1)
+      new_tab(settings.home_url,, &yes)
    end
 
-   private on_clone_tab(ev)
-      local curr, t
-      curr := tabs.which_one
-      t := new_tab(,, 1)
-      t.browser.clone_history(curr.browser)
-   end
-   
    private on_xdg_refresh(ev)
       Xdg.refresh()
       tabs.which_one.msg("XDG database reloaded", 3000)
@@ -408,9 +396,29 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       return \d.result
    end
 
+   private on_tabs_rpress(e)
+      local t, m, pm
+      t := tabs.which_tab(e) | fail
+      m := Menu().
+         add(TextMenuItem().
+             set_label("New").
+             connect(create new_tab(settings.home_url,, &yes, t), Event.ACTION))
+      if is(t, BrowserTab) then
+         m.add(TextMenuItem().
+             set_label("Close").
+             connect(create t.close_tab(), Event.ACTION)).
+         add(TextMenuItem().
+             set_label("Clone").
+             connect(create t.clone_tab(), Event.ACTION))
+      pm := PopupMenu().
+         connect(create tabs.set_which_highlight(), Event.POPUP_CLOSED)
+      tabs.set_which_highlight(t)
+      pm.popup(self, m, e.x, e.y)
+   end
+
    public new(cookies, settings)
       local quit_menu_item, menu_bar, file_menu, new_tab_item, 
-         clone_tab_item, xdg_refresh_item
+         xdg_refresh_item
       Dialog.new()
       self.settings := settings
       self.visited_set := set()
@@ -432,9 +440,6 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
          set_label("New Tab")
-      clone_tab_item := TextMenuItem().
-         connect(on_clone_tab, Event.ACTION).
-         set_label("Clone Tab")
       xdg_refresh_item := TextMenuItem().
          connect(on_xdg_refresh, Event.ACTION).
          set_label("Refresh XDG")
@@ -445,7 +450,6 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
          set_accel("f").
          set_label("File").
          add(new_tab_item).
-         add(clone_tab_item).
          add(xdg_refresh_item).
          add(quit_menu_item)
       page_menu := PageMenu().
@@ -479,7 +483,8 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
          connect(on_tab_changed, Event.SELECTION_CHANGED).
          set_remember_focus(&yes).
          set_draggable_tabs(&yes).
-         set_no_click_focus(&yes)
+         set_accepts_focus(&no).
+         connect(on_tabs_rpress, Event.MOUSE_RIGHT_PRESS)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
       self.set_layout(GridLayout().set_extra("cells"))
@@ -1080,19 +1085,36 @@ class BrowserTab(TabItem, BrowserUI)
       search_pos
 
    private on_close_button(ev)
+      close_tab()
+   end
+
+   public close_tab()
       local t, i
-      # Note that parent.get_index may fail even if \revert_tab, since
-      # revert_tab may have been removed from the TabSet previously.
-      (i := parent.get_index(\revert_tab)) | {
-         i := parent.get_index(self)
-         # If i=1, there will always be a tab to the right of this one (it may be the download tab).
-         if i > 1 then
-            i -:= 1
-         else
-            i +:= 1
+      if parent.which_one === self then {
+         # Note that parent.get_index may fail even if \revert_tab, since
+         # revert_tab may have been removed from the TabSet previously.
+         (i := parent.get_index(\revert_tab)) | {
+            i := parent.get_index(self)
+            # If i=1, there will always be a tab to the right of this one (it may be the download tab).
+            if i > 1 then
+               i -:= 1
+            else
+               i +:= 1
+         }
+         t := parent.children[i] | syserr("Couldn't find other tab")
+         parent.set_which_one(t)
+         parent_dialog.update_grey()
       }
-      t := parent.children[i] | syserr("Couldn't find other tab")
-      parent_dialog.close_tab(self, t)
+      parent.
+         remove(self).
+         do_layout().
+         invalidate()
+   end
+
+   public clone_tab()
+      local t
+      t := parent_dialog.new_tab(,, &yes, self)
+      t.browser.clone_history(browser)
    end
 
    public get_label_width()
@@ -1112,7 +1134,7 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public link_middle_clicked(url)
-      parent_dialog.new_tab(url, browser.page_url)
+      parent_dialog.new_tab(url, browser.page_url,, self)
    end
 
    private copy_link(url)
@@ -1180,7 +1202,7 @@ class BrowserTab(TabItem, BrowserUI)
       local s, url
       s := browser.get_page_info() | fail
       url := browser.get_cache().create_url(, s,, ContentType("text", "html"))
-      parent_dialog.new_tab(url,, 1)
+      parent_dialog.new_tab(url,, &yes)
    end
 
    public display_search()
