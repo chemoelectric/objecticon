@@ -164,7 +164,11 @@ class BorderWhilstEntered(Component)
    # buttons.
    #
    public set_border_whilst_entered(s)
-      self.border_whilst_entered_flag := check_flag(s)
+      s := check_flag(s)
+      if s ~=== border_whilst_entered_flag then {
+         border_whilst_entered_flag := s
+         invalidate()
+      }
       return self
    end
 
