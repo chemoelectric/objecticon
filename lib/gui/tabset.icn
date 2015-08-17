@@ -20,9 +20,10 @@ $define X_PADDING_INC 5
 #
 class TabSet(Component)
    public 
-      which_one,                                
-      tab_h,                               
-      label_h,                               
+      which_one,
+      which_highlight,
+      tab_h,
+      label_h,
       line_break,
       no_click_focus_flag,
       prefer_one_row_flag,
@@ -153,7 +154,8 @@ class TabSet(Component)
                                      ypos, 
                                      c.tab_w, 
                                      self.label_h,
-                                     Yes{ has_focus() & is_unshaded() & c === self.which_one })
+                                     Yes{ has_focus() & is_unshaded() & c === self.which_one },
+                                     Yes{ c === self.which_highlight })
                      }
                   }
                }
@@ -356,6 +358,14 @@ class TabSet(Component)
       return self
    end
 
+   public set_which_highlight(x)
+      if self.which_highlight ~=== x then {
+         self.which_highlight := x
+         invalidate_tab_region()
+      }
+      return self
+   end
+   
    public set_hidden_flags()
       local c
       every c := !self.children do {
@@ -452,12 +462,15 @@ class TabSet(Component)
    end
 
    public drag_event(drag, e)
-      return which_tab(e)
+      local t
+      drag.get_source() === self | fail
+      t := which_tab(e)
+      set_which_highlight(t)
+      return \t
    end
 
    public can_drop(drag, e)
-      if drag.get_source() === self then
-         return which_one ~=== which_tab(e)
+      return which_one ~=== which_tab(e)
    end
 
    public perform_drop(drag, drop, e)
@@ -466,6 +479,10 @@ class TabSet(Component)
       layout()
       invalidate()
       return
+   end
+
+   public drag_reset(e)
+      set_which_highlight()
    end
 
    public in_tab_region(e)
