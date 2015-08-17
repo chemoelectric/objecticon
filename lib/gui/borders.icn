@@ -37,6 +37,14 @@ abstract class ABorder(Insets,Align)
       Gui.style.draw_focus_rectangle(W, x, y, w, h)
    end
 
+   public draw_highlight_rect(W, r)
+      self.draw_highlight(W, r.x, r.y, r.w, r.h)
+   end
+
+   public draw_highlight(W, x, y, w, h)
+      Gui.style.draw_highlight_rectangle(W, x, y, w, h)
+   end
+
    public draw_down_rect(W, r)
       self.draw_down(W, r.x, r.y, r.w, r.h)
    end
