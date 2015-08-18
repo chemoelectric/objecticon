@@ -853,7 +853,7 @@ class DownloadTab(TabItem)
 
    public new()
       TabItem.new()
-      set_label_border(EmptyBorder().set_x_align(Align.L))
+      label_border.set_x_align(Align.L)
       setup()
       theme_toolbar_button(paste_url_button, "edit-paste")
       theme_toolbar_button(destination_button, "go-up")
@@ -1562,7 +1562,7 @@ class BrowserTab(TabItem, BrowserUI)
       local b
       TabItem.new()
       self.revert_tab := revert_tab
-      set_label_border(EmptyBorder().set_x_align(Align.L))
+      label_border.set_x_align(Align.L)
       set_title()
       setup()
       set_remembered_focus(browser)

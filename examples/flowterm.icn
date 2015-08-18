@@ -2068,7 +2068,7 @@ $endif
          set_remembered_focus(output.find_focus())
       }
       synch_paints()
-      set_label_border(EmptyBorder().set_x_align(Align.L))
+      label_border.set_x_align(Align.L)
       columns.
          set_item_paint(AnnotatedIconFilesItemPaint()).
          set_item_border(EmptyBorder().
