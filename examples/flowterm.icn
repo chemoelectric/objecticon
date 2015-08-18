@@ -348,6 +348,19 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
    end
 end
 
+#
+# An EmptyBorder which provides a solid focus rectangle.
+#
+class EmptyBorderSolidFocus(EmptyBorder)
+   public draw_focus(W, x, y, w, h)
+      local W2
+      use {
+         W2 := Gui.style.get_cursor_clone(W),
+         W2.draw_rectangle(x, y, w, h, Gui.FINE_WIDTH)
+      }
+   end
+end
+
 class Columns(LineBasedScrollArea)
    private readable
       data,
@@ -423,13 +436,10 @@ class Columns(LineBasedScrollArea)
             item_border.draw_rect(view.cbwin, r)
          }
          if k === cursor then {
-            if has_focus() & is_unshaded() then { 
-               use {
-                  W := Gui.style.get_cursor_clone(view.cbwin),
-                  W.draw_rectangle(r.x, r.y, r.w, r.h, Gui.FINE_WIDTH)
-               }
-            } else
-               Gui.style.draw_dashed_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
+            if has_focus() & is_unshaded() then
+               item_border.draw_focus_rect(view.cbwin, r)
+            else
+               item_border.draw_dashed_rect(view.cbwin, r)
          }
          if k === over then 
             Gui.style.fill_over_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
@@ -2071,7 +2081,7 @@ $endif
       label_border.set_x_align(Align.L)
       columns.
          set_item_paint(AnnotatedIconFilesItemPaint()).
-         set_item_border(EmptyBorder().
+         set_item_border(EmptyBorderSolidFocus().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                              set_x_align(Align.L)).
          connect(on_columns_lclick, "lclicked").
