@@ -79,6 +79,22 @@ class ItemPaintList(SelectableScrollArea)
       item_border.draw_rect(view.cbwin, r)
    end
 
+   public draw_line_sel_cur(x, y, w, h, sel, cur, hi, ov)
+      if \sel then
+         Gui.style.fill_selection_rectangle(view.cbwin, x, y, w, h)
+      case \cur of {
+         "f": item_border.draw_focus(view.cbwin, x, y, w, h)
+         "d": item_border.draw_dashed(view.cbwin, x, y, w, h)
+      }
+      case \hi of {
+         "t": Gui.style.fill_highlight_rectangle(view.cbwin, x, y, w, scale(2))
+         "b": Gui.style.fill_highlight_rectangle(view.cbwin, x, y + h - scale(2), w, scale(2))
+         "m": item_border.draw_highlight(view.cbwin, x, y, w, h)
+      }
+      if \ov then
+         Gui.style.fill_over_rectangle(view.cbwin, x, y, w, h)
+   end
+
    public new()
       SelectableScrollArea.new()
       self.set_item_border(NullBorder().
