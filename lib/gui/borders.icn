@@ -156,9 +156,15 @@ abstract class LineBorder(ABorder)
    end
 
    public draw_focus(W, x, y, w, h)
-      Gui.style.draw_focus_rectangle(W,
-                                     x + line_width + 1, y + line_width + 1, 
-                                     w - 2 * line_width - 2, h - 2 * line_width - 2)
+      local t
+      t := line_width + Gui.FINE_WIDTH
+      Gui.style.draw_focus_rectangle(W, x + t, y + t, w - 2 * t, h - 2 * t)
+   end
+
+   public draw_highlight(W, x, y, w, h)
+      local t
+      t := line_width + Gui.FINE_WIDTH
+      Gui.style.draw_highlight_rectangle(W, x + t, y + t, w - 2 * t, h - 2 * t)
    end
 
    public get_line_width()
@@ -256,6 +262,10 @@ class CompoundBorder(ABorder)
 
    public draw_focus(W, x, y, w, h)
       outer.draw_focus(W, x, y, w, h)
+   end
+
+   public draw_highlight(W, x, y, w, h)
+      outer.draw_highlight(W, x, y, w, h)
    end
 
    public draw_down(W, x, y, w, h)
