@@ -125,7 +125,7 @@ class TabItem(Component)
 
    public new()
       Component.new()
-      self.label_border := EmptyBorder()
+      self.label_border := EmptyBorder().set_focus_inset(Gui.FINE_WIDTH)
       return
    end
 end
