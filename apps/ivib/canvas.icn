@@ -130,9 +130,7 @@ class BorderOfCanvas(Component)
       use {
          cw := self.cbwin.clone().set_fg("black"),
          {
-            every i := 0 to Canvas.EDGE - 1 do
-               cw.draw_rectangle(self.x + i , self.y + i, self.w - 2 * i, self.h - 2 *i)
-
+            cw.draw_rectangle(x, y, w, h, Canvas.EDGE)
             #
             # Draw the resizing corner in the bottom right hand corner.
             #
