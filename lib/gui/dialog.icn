@@ -1225,9 +1225,8 @@ class Dialog(Component)
       local l, c
       l := []
       every c := Seq{traverse_tab_order()} do {
-         if c === self.focus | (c.accepts_focus(e) & c.is_unhidden() & c.is_unshaded()) then {
+         if c === self.focus | (c.accepts_focus(e) & c.is_unhidden() & c.is_unshaded()) then
             put(l, c)
-         }
       }
       return l
    end
