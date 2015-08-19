@@ -196,6 +196,7 @@ class FlowTermDialog(Dialog)
       d := HTMLMessageDialog().
          set_label("FlowTerm")
       d.browser.
+         set_accepts_focus(&no).
          set_border(NullBorder()).
          set_page(src).
          set_size(scale(550), scale(350)).
