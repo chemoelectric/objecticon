@@ -274,6 +274,10 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
       pm.popup(self, m, e.x, e.y)
    end
 
+   private on_tabs_changed(e)
+      tabs.which_one.tab_active()
+   end
+
    public new()
       local quit_menu_item, menu_bar, file_menu, terminal_menu, columns_menu, 
          new_tab_item, favourite_dirs_item, xdg_refresh_item,
@@ -340,7 +344,8 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
          set_remember_focus(&yes).
          set_draggable_tabs(&yes).
          set_accepts_focus(&no).
-         connect(on_tabs_rpress, Event.MOUSE_RIGHT_PRESS)
+         connect(on_tabs_rpress, Event.MOUSE_RIGHT_PRESS).
+         connect(on_tabs_changed, Event.SELECTION_CHANGED)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
       self.set_layout(GridLayout().set_extra("cells"))
@@ -1306,6 +1311,10 @@ $endif
       return pats
    end
 
+   public tab_active()
+      check_cwd_change()
+   end
+
    private check_cwd_change()
       local s
       s := ucs(System.getcwd(pid)) | fail
@@ -1562,6 +1571,8 @@ $endif
       info_msg("Renamed OK")
       if cwd == FilePath(s).parent().ucs() then
          refresh_cwd()
+      else
+         check_cwd_change()
    end
 
    private on_copy_cwd(e)
