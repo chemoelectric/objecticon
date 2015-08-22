@@ -16,7 +16,7 @@ class PopupEditor(Component, MenuMode)
       comp.parent_dialog.add(self)
       resize()
       old_focus := parent_dialog.focus
-      parent_dialog.set_focus(editor.find_focus())
+      editor.grab_focus()
       parent_dialog.enter_menu_mode(self)
       invalidate()
       return self
@@ -63,6 +63,7 @@ class PopupEditor(Component, MenuMode)
       invalidate()
       parent_dialog.exit_menu_mode(self)
       parent.remove(self)
+      fire(Event.POPUP_CLOSED)
    end
 
    public new(editor)
