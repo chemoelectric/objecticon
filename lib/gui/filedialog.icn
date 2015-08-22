@@ -119,7 +119,7 @@ class FileDialog(Dialog)
 
    public init_dialog()
       if /multiple_files_flag then
-         set_focus(file.find_focus())
+         file.grab_focus()
       win.set_min_size(win.get_width(), win.get_height())
       goto_dir(dir.get_contents())
    end

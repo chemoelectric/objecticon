@@ -669,7 +669,7 @@ class DownloadTab(TabItem)
          fail
       data ?:= tab(upto('\r\n'))
       url_field.set_contents(Text.liberal_ucs(data))
-      parent_dialog.set_focus(url_field.find_focus(e))
+      url_field.grab_focus()
    end
 
    private on_paste_url(ev)
@@ -1464,7 +1464,9 @@ class BrowserTab(TabItem, BrowserUI)
       }
       url_field.set_contents(browser.curr_history_entry.url.liberal_ucs())
       set_title(browser.page_title)
-      parent_dialog.set_focus(browser.find_focus())
+      # If we moved to another tab whilst this tab is loading, this won't
+      # change the focus.
+      browser.grab_focus()
       update_search_state()
    end
 
@@ -1536,7 +1538,7 @@ class BrowserTab(TabItem, BrowserUI)
          fail
       data ?:= tab(upto('\r\n'))
       url_field.set_contents(Text.liberal_ucs(data))
-      parent_dialog.set_focus(url_field.find_focus(e))
+      url_field.grab_focus()
    end
 
    private on_paste_url(ev)

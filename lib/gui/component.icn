@@ -396,11 +396,14 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Grab the focus for this component's preferred focus.
+   # Grab the focus for this component's preferred focus.  Fails if
+   # the focus is not given to the component, returns `self`
+   # otherwise.
+   #
    # @param e the causing event, if any.
    #
    public grab_focus(e)
-      (\self.parent_dialog).set_focus(find_focus(e), e)
+      return (\parent_dialog).set_focus(find_focus(e), e) & self
    end
 
    #
