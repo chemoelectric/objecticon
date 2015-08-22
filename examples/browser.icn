@@ -668,8 +668,7 @@ class DownloadTab(TabItem)
       if /data then
          fail
       data ?:= tab(upto('\r\n'))
-      url_field.set_contents(Text.liberal_ucs(data))
-      url_field.grab_focus()
+      url_field.set_contents(Text.liberal_ucs(data)).grab_focus()
    end
 
    private on_paste_url(ev)
@@ -1537,8 +1536,7 @@ class BrowserTab(TabItem, BrowserUI)
       if /data then
          fail
       data ?:= tab(upto('\r\n'))
-      url_field.set_contents(Text.liberal_ucs(data))
-      url_field.grab_focus()
+      url_field.set_contents(Text.liberal_ucs(data)).grab_focus()
    end
 
    private on_paste_url(ev)
