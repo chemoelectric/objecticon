@@ -134,7 +134,7 @@ class Encode(Stream, HasUnderlyingStream)
       self.tag_count := 0
       return use{
          self.seen := table(),
-         simple_try{begin1(o)},
+         try1{begin1(o)},
          self.seen := &null
       }
    end
@@ -417,7 +417,7 @@ class Decode()
          self.fast_flag := Yes{ =Codec.FAST_FLAG }
          return use {
             self.seen := table(),
-            simple_try{decode()},
+            try1{decode()},
             self.seen := &null
          }
       }

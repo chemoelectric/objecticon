@@ -299,10 +299,10 @@ class RFC2616Parser()
    end
 
    public parse_content_disposition(s)
-      return s ? simple_try{ end_check(parse_content_disposition_impl()) }
+      return s ? try1{ end_check(parse_content_disposition_impl()) }
    end
 
    public parse_content_type(s)
-      return s ? simple_try{ end_check(parse_content_type_impl()) }
+      return s ? try1{ end_check(parse_content_type_impl()) }
    end
 end

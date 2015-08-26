@@ -84,7 +84,7 @@ end
 # exception was thrown, {clear} is called, {&why} is set and the
 # procedure fails.
 #
-procedure simple_try(e)
+procedure try1(e)
    local v
    v := try(e)
    if /thrower then
@@ -93,7 +93,7 @@ procedure simple_try(e)
    clear()
 end
 
-# This is a variation of {simple_try} which wraps the call to {try} in
+# This is a variation of {try1} which wraps the call to {try} in
 # {clean}, thus ensuring that any cleanup expressions in {use}
 # expressions are always evaluated.
 #

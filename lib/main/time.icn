@@ -1133,7 +1133,7 @@ class TimeParser()
    #
    public parse(s, p)
       ss := Scan(s)
-      return p ? simple_try{ parse_impl() }
+      return p ? try1{ parse_impl() }
    end
 
    private parse_impl()

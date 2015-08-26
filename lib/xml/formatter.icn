@@ -44,7 +44,7 @@ abstract class Formatter(Stream, HasUnderlyingStream)
 
    public format(n)
       self.level := -1
-      return simple_try{ format_node(n) }
+      return try1{ format_node(n) }
    end
 
    protected format_node(n)
