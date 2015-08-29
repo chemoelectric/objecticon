@@ -7,6 +7,7 @@ operator || cat(x, y)
    body {
      if (need_ucs(&x) || need_ucs(&y)) {
          tended struct descrip utf8_x, utf8_y, utf8;
+         word utf8_len;
 
          if (!cnv:ucs(x, x))
              runerr(128, x);
@@ -25,13 +26,17 @@ operator || cat(x, y)
          if (StrLen(utf8_y) == 0)
              return x;
 
+         utf8_len = StrLen(utf8_x) + StrLen(utf8_y);
+         if (utf8_len < 0)
+             fatalerr(159, NULL);
+
          /*
           *  Optimization 1:  The strings to be concatenated are already
           *   adjacent in memory; no allocation is required.
           */
          if (StrLoc(utf8_x) + StrLen(utf8_x) == StrLoc(utf8_y)) {
              StrLoc(utf8) = StrLoc(utf8_x);
-             StrLen(utf8) = StrLen(utf8_x) + StrLen(utf8_y);
+             StrLen(utf8) = utf8_len;
          }
          /*
           * Optimization 2: The end of x is at the end of the string space.
@@ -46,21 +51,22 @@ operator || cat(x, y)
               */
              MemProtect(alcstr(StrLoc(utf8_y),StrLen(utf8_y)));
              StrLoc(utf8) = StrLoc(utf8_x);
-             StrLen(utf8) = StrLen(utf8_x) + StrLen(utf8_y);
+             StrLen(utf8) = utf8_len;
          }
          /*
           * Otherwise, allocate space for x and y, and copy them
           *  to the end of the string space.
           */
          else {
-             MemProtect(StrLoc(utf8) = alcstr(NULL, StrLen(utf8_x) + StrLen(utf8_y)));
+             MemProtect(StrLoc(utf8) = alcstr(NULL, utf8_len));
              memcpy(StrLoc(utf8), StrLoc(utf8_x), StrLen(utf8_x));
              memcpy(StrLoc(utf8) + StrLen(utf8_x), StrLoc(utf8_y), StrLen(utf8_y));
-             StrLen(utf8) = StrLen(utf8_x) + StrLen(utf8_y);
+             StrLen(utf8) = utf8_len;
          }
          return ucs(make_ucs_block(&utf8, UcsBlk(x).length + UcsBlk(y).length));
      } else {
          tended struct descrip result;
+         word len;
 
          /* Neither ucs, so both args must be strings */
 
@@ -77,13 +83,17 @@ operator || cat(x, y)
          if (StrLen(y) == 0)
              return x;
 
+         len = StrLen(x) + StrLen(y);
+         if (len < 0)
+             fatalerr(159, NULL);
+
          /*
           *  Optimization 1:  The strings to be concatenated are already
           *   adjacent in memory; no allocation is required.
           */
          if (StrLoc(x) + StrLen(x) == StrLoc(y)) {
              StrLoc(result) = StrLoc(x);
-             StrLen(result) = StrLen(x) + StrLen(y);
+             StrLen(result) = len;
              return result;
          }
 
@@ -103,7 +113,7 @@ operator || cat(x, y)
               *  Set the result and return.
               */
              StrLoc(result) = StrLoc(x);
-             StrLen(result) = StrLen(x) + StrLen(y);
+             StrLen(result) = len;
              return result;
          }
 
@@ -111,14 +121,14 @@ operator || cat(x, y)
           * Otherwise, allocate space for x and y, and copy them
           *  to the end of the string space.
           */
-         MemProtect(StrLoc(result) = alcstr(NULL, StrLen(x) + StrLen(y)));
+         MemProtect(StrLoc(result) = alcstr(NULL, len));
          memcpy(StrLoc(result), StrLoc(x), StrLen(x));
          memcpy(StrLoc(result) + StrLen(x), StrLoc(y), StrLen(y));
 
          /*
           *  Set the length of the result and return.
           */
-         StrLen(result) = StrLen(x) + StrLen(y);
+         StrLen(result) = len;
          return result;
      }
    }

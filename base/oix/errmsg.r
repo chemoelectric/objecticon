@@ -64,11 +64,11 @@ struct errtab errtab[] = {
     {146, "incorrect number of arguments to drawing function"},
     {147, "window attribute cannot be read or written as requested"},
     {148, "invalid position or size"},
-    {149, "string too long"},
     {152, "attempt to read/write on closed data"},
     {153, "invalid pixel format"},
 #endif					/* Graphics */
 
+    {159, "string too long"},
     {169, "insufficient arguments"},
     {170, "string or integer expected"},
     {171, "flag value expected"},
