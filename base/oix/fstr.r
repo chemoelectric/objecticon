@@ -25,6 +25,8 @@ function detab(s,i[n])
               runerr(210, i[j]);
           last = IntVal(i[j]);
       }
+      
+      endlst = &i[n];
 
       if (is:ucs(s)) {
           tended struct descrip utf8;
@@ -38,7 +40,6 @@ function detab(s,i[n])
           if (n == 0)
               interval = 8;
           tablst = i;
-          endlst = &i[n];
           col = 1;
           in_count = out_count = utf8_size = 0;
           in_p = StrLoc(UcsBlk(s).utf8);
@@ -95,7 +96,6 @@ function detab(s,i[n])
           if (n == 0)
               interval = 8;
           tablst = i;
-          endlst = &i[n];
           col = 1;
           in_count = 0;
           in_p = StrLoc(UcsBlk(s).utf8);
@@ -131,21 +131,63 @@ function detab(s,i[n])
           }
           return ucs(make_ucs_block(&utf8, out_count));
       } else {
-          tended char *in, *out, *iend;
+          char *in, *out, *iend, ch;
           tended struct descrip result;
-          char c;
-          int expand;
+          word len;
 
           /*
-           * Make sure all allocations for result will go in one region
+           * Work out the result's length.
            */
-          MemProtect(reserve(Strings, StrLen(s) * 8));
+          len = 0;
+          last = 1;
+          if (n == 0)
+              interval = 8;
+          tablst = i;
+          col = 1;
+          iend = StrLoc(s) + StrLen(s);
+          for (in = StrLoc(s); in < iend; ) {
+              ch = *in++;
+              if (ch == '\t') {
+                  is_expanded = 1;
+                  target = col;
+                  nxttab(&target, &tablst, endlst, &last, &interval);
+                  while (col < target) {
+                      len++;
+                      col++;
+                  }
+              } else {
+                  len++;
+                  switch (ch) {
+                      case '\b':
+                          col--;
+                          tablst = i;  /* reset the list of remaining tab stops */
+                          last = 1;
+                          break;
+                      case '\n':
+                      case '\r':
+                          col = 1;
+                          tablst = i;  /* reset the list of remaining tab stops */
+                          last = 1;
+                          break;
+                      default:
+                          if (isprint((unsigned char)ch) || 
+                              !isascii((unsigned char)ch))  /* Assume extended ascii chars are printable */
+                              col++;
+                  }
+              }
+          }
 
           /*
-           * Start out assuming the result will be the same size as the argument.
+           * If no tabs found, return original
            */
-          MemProtect(StrLoc(result) = alcstr(NULL, StrLen(s)));
-          StrLen(result) = StrLen(s);
+          if (!is_expanded)
+              return s;
+
+          /*
+           * Make a descriptor for the result string.
+           */
+          MemProtect(StrLoc(result) = alcstr(NULL, len));
+          StrLen(result) = len;
 
           /*
            * Copy the string, expanding tabs.
@@ -154,54 +196,39 @@ function detab(s,i[n])
           if (n == 0)
               interval = 8;
           tablst = i;
-          endlst = &i[n];
           col = 1;
           iend = StrLoc(s) + StrLen(s);
-          for (in = StrLoc(s), out = StrLoc(result); in < iend; )
-              switch (c = *out++ = *in++) {
-                  case '\b':
-                      col--;
-                      tablst = i;  /* reset the list of remaining tab stops */
-                      last = 1;
-                      break;
-                  case '\n':
-                  case '\r':
-                      col = 1;
-                      tablst = i;  /* reset the list of remaining tab stops */
-                      last = 1;
-                      break;
-                  case '\t':
-                      is_expanded = 1;
-                      out--;
-                      target = col;
-                      nxttab(&target, &tablst, endlst, &last, &interval);
-                      expand = target - col - 1;
-                      if (expand > 0) {
-                          MemProtect(alcstr(NULL, expand));
-                          StrLen(result) += expand;
-                      }
-                      while (col < target) {
-                          *out++ = ' ';
-                          col++;
-                      }
-                      break;
-                  default:
-                      if (isprint((unsigned char)c) || 
-                          !isascii((unsigned char)c))  /* Assume extended ascii chars are printable */
-                          col++;
+          for (in = StrLoc(s), out = StrLoc(result); in < iend; ) {
+              ch = *in++;
+              if (ch == '\t') {
+                  target = col;
+                  nxttab(&target, &tablst, endlst, &last, &interval);
+                  while (col < target) {
+                      *out++ = ' ';
+                      col++;
+                  }
+              } else {
+                  *out++ = ch;
+                  switch (ch) {
+                      case '\b':
+                          col--;
+                          tablst = i;  /* reset the list of remaining tab stops */
+                          last = 1;
+                          break;
+                      case '\n':
+                      case '\r':
+                          col = 1;
+                          tablst = i;  /* reset the list of remaining tab stops */
+                          last = 1;
+                          break;
+                      default:
+                          if (isprint((unsigned char)ch) || 
+                              !isascii((unsigned char)ch))  /* Assume extended ascii chars are printable */
+                              col++;
+                  }
               }
-
-          /*
-           * Return new string if indeed there were tabs; otherwise return original
-           *  string to conserve memory.
-           */
-          if (is_expanded)
-              return result;
-          else {
-              dealcstr(StrLoc(result));        /* return allocated string to string region */
-              return s;				/* return original string */
           }
-
+          return result;
       }
    }
 end
@@ -229,6 +256,8 @@ function entab(s,i[n])
           last = IntVal(i[j]);
       }
 
+      endlst = &i[n];
+
       if (is:ucs(s)) {
           tended struct descrip utf8;
           word utf8_size, in_count, out_count;
@@ -241,7 +270,6 @@ function entab(s,i[n])
           if (n == 0)
               interval = 8;
           tablst = i;
-          endlst = &i[n];
           col = 1;
           target = 0;
           in_count = out_count = utf8_size = 0;
@@ -332,7 +360,6 @@ function entab(s,i[n])
           if (n == 0)
               interval = 8;
           tablst = i;
-          endlst = &i[n];
           col = 1;
           target = 0;
           in_count = 0;
@@ -358,7 +385,6 @@ function entab(s,i[n])
                           }
                       }
                       while (nt <= target)  {
-                          inserted = 1;
                           /* Add tab */
                           alcstr("\t", 1);
                           col = nt;
@@ -400,15 +426,89 @@ function entab(s,i[n])
           }
           return ucs(make_ucs_block(&utf8, out_count));
       } else {
-          char *in, *out, *iend, c;
+          char *in, *out, *iend, ch;
           tended struct descrip result;
+          word len;
 
           /*
-           * Get memory for result at end of string space.  We may give some back
-           *  if not all needed, or all of it if no tabs can be inserted.
+           * Work out the result's length.
            */
-          MemProtect(StrLoc(result) = alcstr(NULL, StrLen(s)));
-          StrLen(result) = StrLen(s);
+          len = 0;
+          last = 1;
+          if (n == 0)
+              interval = 8;
+          tablst = i;
+          col = 1;
+          target = 0;
+          iend = StrLoc(s) + StrLen(s);
+          for (in = StrLoc(s); in < iend; ) {
+              ch = *in++;
+              if (ch == ' ') {
+                  target = col + 1;
+                  while (in < iend && *in == ' ')
+                      target++, in++;
+                  if (target - col > 1) { /* never tab just 1; already copied space */
+                      nt = col;
+                      nxttab(&nt, &tablst, endlst, &last, &interval);
+                      if (nt == col+1) {
+                          nt1 = nt;
+                          nxttab(&nt1, &tablst, endlst, &last, &interval);
+                          if (nt1 > target) {
+                              len++;
+                              col++;	/* keep space to avoid 1-col tab then spaces */
+                              nt = nt1;
+                          }
+                      }
+                      while (nt <= target)  {
+                          inserted = 1;
+                          /* Add tab */
+                          len++;
+                          col = nt;
+                          nxttab(&nt, &tablst, endlst, &last, &interval);
+                      }
+                      while (col++ < target)
+                          len++;      /* complete gap with spaces */
+                  } else {
+                      /* Add space */
+                      len++;
+                  }
+                  col = target;
+              } else {
+                  len++;
+                  switch (ch) {
+                      case '\b':
+                          col--;
+                          tablst = i;  /* reset the list of remaining tab stops */
+                          last = 1;
+                          break;
+                      case '\n':
+                      case '\r':
+                          col = 1;
+                          tablst = i;  /* reset the list of remaining tab stops */
+                          last = 1;
+                          break;
+                      case '\t':
+                          nxttab(&col, &tablst, endlst, &last, &interval);
+                          break;
+                      default:
+                          if (isprint((unsigned char)ch) || 
+                              !isascii((unsigned char)ch))  /* Assume extended ascii chars are printable */
+                              col++;
+                  }
+              }
+          }
+
+          /*
+           * If no tabs inserted, return original
+           */
+          if (!inserted)
+              return s;
+
+          /*
+           * Make a descriptor for the result string.
+           */
+          MemProtect(StrLoc(result) = alcstr(NULL, len));
+          StrLen(result) = len;
 
           /*
            * Copy the string, looking for runs of spaces.
@@ -416,79 +516,65 @@ function entab(s,i[n])
           last = 1;
           if (n == 0)
               interval = 8;
-
           tablst = i;
-          endlst = &i[n];
           col = 1;
           target = 0;
           iend = StrLoc(s) + StrLen(s);
-
-          for (in = StrLoc(s), out = StrLoc(result); in < iend; )
-              switch (c = *out++ = *in++) {
-                  case '\b':
-                      col--;
-                      tablst = i;  /* reset the list of remaining tab stops */
-                      last = 1;
-                      break;
-                  case '\n':
-                  case '\r':
-                      col = 1;
-                      tablst = i;  /* reset the list of remaining tab stops */
-                      last = 1;
-                      break;
-                  case '\t':
-                      nxttab(&col, &tablst, endlst, &last, &interval);
-                      break;
-                  case ' ':
-                      target = col + 1;
-                      while (in < iend && *in == ' ')
-                          target++, in++;
-                      if (target - col > 1) { /* never tab just 1; already copied space */
-                          nt = col;
-                          nxttab(&nt, &tablst, endlst, &last, &interval);
-                          if (nt == col+1) {
-                              nt1 = nt;
-                              nxttab(&nt1, &tablst, endlst, &last, &interval);
-                              if (nt1 > target) {
-                                  col++;	/* keep space to avoid 1-col tab then spaces */
-                                  nt = nt1;
-                              }
-                              else
-                                  out--;	/* back up to begin tabbing */
+          for (in = StrLoc(s), out = StrLoc(result); in < iend; ) {
+              ch = *in++;
+              if (ch == ' ') {
+                  target = col + 1;
+                  while (in < iend && *in == ' ')
+                      target++, in++;
+                  if (target - col > 1) { /* never tab just 1; already copied space */
+                      nt = col;
+                      nxttab(&nt, &tablst, endlst, &last, &interval);
+                      if (nt == col+1) {
+                          nt1 = nt;
+                          nxttab(&nt1, &tablst, endlst, &last, &interval);
+                          if (nt1 > target) {
+                              *out++ = ' ';
+                              col++;	/* keep space to avoid 1-col tab then spaces */
+                              nt = nt1;
                           }
-                          else
-                              out--;	/* back up to begin tabbing */
-                          while (nt <= target)  {
-                              inserted = 1;
-                              *out++ = '\t';	/* put tabs to tab positions */
-                              col = nt;
-                              nxttab(&nt, &tablst, endlst, &last, &interval);
-                          }
-                          while (col++ < target)
-                              *out++ = ' ';		/* complete gap with spaces */
                       }
-                      col = target;
-                      break;
-                  default:
-                      if (isprint((unsigned char)c) || 
-                          !isascii((unsigned char)c))  /* Assume extended ascii chars are printable */
-                          col++;
+                      while (nt <= target)  {
+                          *out++ = '\t';	/* put tabs to tab positions */
+                          col = nt;
+                          nxttab(&nt, &tablst, endlst, &last, &interval);
+                      }
+                      while (col++ < target)
+                          *out++ = ' ';		/* complete gap with spaces */
+                  } else {
+                      /* Add space */
+                      *out++ = ' ';
+                  }
+                  col = target;
+              } else {
+                  *out++ = ch;
+                  switch (ch) {
+                      case '\b':
+                          col--;
+                          tablst = i;  /* reset the list of remaining tab stops */
+                          last = 1;
+                          break;
+                      case '\n':
+                      case '\r':
+                          col = 1;
+                          tablst = i;  /* reset the list of remaining tab stops */
+                          last = 1;
+                          break;
+                      case '\t':
+                          nxttab(&col, &tablst, endlst, &last, &interval);
+                          break;
+                      default:
+                          if (isprint((unsigned char)ch) || 
+                              !isascii((unsigned char)ch))  /* Assume extended ascii chars are printable */
+                              col++;
+                  }
               }
-
-          /*
-           * Return new string if indeed tabs were inserted; otherwise return
-           *  original string to conserve memory.
-           */
-          if (inserted) {
-              StrLen(result) = DiffPtrs(out,StrLoc(result));
-              dealcstr(out);                           /* give back unused space */
-              return result;				/* return new string */
           }
-          else {
-              dealcstr(StrLoc(result));                /* give back allocated string */
-              return s;				/* return original string */
-          }
-
+          return result;
       }
    }
 end
