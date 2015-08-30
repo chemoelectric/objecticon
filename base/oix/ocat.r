@@ -28,7 +28,7 @@ operator || cat(x, y)
 
          utf8_len = StrLen(utf8_x) + StrLen(utf8_y);
          if (utf8_len < 0)
-             fatalerr(159, NULL);
+             runerr(159);
 
          /*
           *  Optimization 1:  The strings to be concatenated are already
@@ -85,7 +85,7 @@ operator || cat(x, y)
 
          len = StrLen(x) + StrLen(y);
          if (len < 0)
-             fatalerr(159, NULL);
+             runerr(159);
 
          /*
           *  Optimization 1:  The strings to be concatenated are already
