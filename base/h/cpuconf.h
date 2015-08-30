@@ -8,7 +8,6 @@
  *  the number of bits in an int (given by IntBits).  For example,
  *  in MS-DOS an Icon integer is a long, not an int.
  *
- *  MaxStrLen must not be so large as to overlap flags.
  */
 
 /*
