@@ -296,8 +296,6 @@ static int subs_asgn(dptr dest, dptr src)
             *  Start by allocating space for the entire result.
             */
            len = prelen + StrLen(UcsBlk(srcstr).utf8) + postlen;
-           if (len < 0)
-               ReturnErrNum(159, Error);
            MemProtect(StrLoc(utf8_new) = alcstr(NULL, len));
            StrLen(utf8_new) = len;
 
@@ -355,9 +353,6 @@ static int subs_asgn(dptr dest, dptr src)
             *  Start by allocating space for the entire result.
             */
            len = prelen + StrLen(srcstr) + postlen;
-           if (len < 0)
-               ReturnErrNum(159, Error);
-
            MemProtect(StrLoc(rsltstr) = alcstr(NULL, len));
            StrLen(rsltstr) = len;
 
