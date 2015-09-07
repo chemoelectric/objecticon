@@ -821,8 +821,8 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # An alternative more liberal form of parsing.  The numeric fields are taken
    # as successive ints in the input: all else is ignored.  The year, month and
    # day are mandatory, but hours, mins, secs are optional. Finally, an optional
-   # timezone is allowed.  If omitted, the local (non-daylight savings) zone is
-   # used.
+   # timezone is allowed.  If omitted, the local zone is used, normalized for
+   # daylight saving if appropriate.
    #
    public static simple_parse(s)
       local y, d, m, hh, mm, ss, z
@@ -834,9 +834,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
          mm := get_int() | 0
          ss := get_int() | 0
          if tab(upto(TZCHARS)) then
-            z := Timezone.get_known_timezone(tab(many(TZCHARS))) | return error("No timezone")
-         else
-            z := Timezone.LOCAL_STANDARD_TIMEZONE
+            z := Timezone.get_known_timezone(tab(many(TZCHARS))) | return error("Invalid timezone")
       }
       return Time(y, m, d, hh, mm, ss, z)
    end
