@@ -780,10 +780,13 @@ class Columns(LineBasedScrollArea)
    end
 
    public data_changed()
-      # set_over() is necessary even if the caller does a
-      # resynch_pointer, since we store over as an index (which may
-      # change) rather than the underlying object.
+      # over, held and highlight are cleared, since we store these as
+      # indices (which may change) rather than the underlying objects.
+      # cursor is left, however, and so the underlying object may
+      # change.
       set_over()
+      set_held()
+      set_highlight()
       invalidate_columnize()
       invalidate_subject_width()
       invalidate_line_count()
@@ -1929,7 +1932,7 @@ $endif
    end
 
    private resort_cwd(track_cursor)
-      local i, ino, info, vis, high, held
+      local i, ino, info, vis, high, held, over
       \cwd | fail
       if is_live() then {
          if \track_cursor & i := columns.get_row_for_index(columns.get_cursor()) then {
@@ -1943,6 +1946,8 @@ $endif
                high := &yes
             if columns.get_cursor() === columns.get_held() then
                held := &yes
+            if columns.get_cursor() === columns.get_over() then
+               over := &yes
          }
          sort_cwd_list()
          # Search for the old ino in the new data.  If found, set the highlight and if the old
@@ -1950,11 +1955,13 @@ $endif
          if \track_cursor & i := Positions{(!columns.data).stat.ino, \ino} then {
             columns.set_cursor(i)
             if \vis then
-               columns.ensure_line_visible(columns.get_row_for_index(columns.get_cursor()))
+               columns.ensure_line_visible(columns.get_row_for_index(i))
             if \high then
                columns.set_highlight(i)
             if \held then
                columns.set_held(i)
+            if \over then
+               columns.set_over(i)
          } else
             columns.set_cursor()
          # Since the pointer may be over the files list, update the pointer.
