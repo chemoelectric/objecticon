@@ -110,8 +110,11 @@ class ScrollBar(Component, HasOrientation)
    # @param x   The total size
    #
    public set_total_size(x)
-      self.total_size := x
-      self.reconfigure()
+      # See notes as to why this is a good idea.
+      if total_size ~=== x then {
+         total_size := x
+         reconfigure()
+      }
       return self
    end
 
@@ -127,10 +130,12 @@ class ScrollBar(Component, HasOrientation)
    # @param x   The size.
    #
    public set_page_size(x)
-      if x <= 0 then
-         runerr("Invalid page size", x)
-      self.page_size := x
-      self.reconfigure()
+      if page_size ~=== x then {
+         if x <= 0 then
+            runerr("Invalid page size", x)
+         page_size := x
+         reconfigure()
+      }
       return self
    end
 
@@ -155,11 +160,13 @@ class ScrollBar(Component, HasOrientation)
    # @param x   The value.
    #
    public set_value(x)
-      if is_live() then {
-         move_value(x)
-         set_pos_from_value()
-      } else
-         self.value := x
+      if value ~=== x then {
+         if is_live() then {
+            move_value(x)
+            set_pos_from_value()
+         } else
+            value := x
+      }
       return self
    end
 
@@ -180,12 +187,14 @@ class ScrollBar(Component, HasOrientation)
    # @param hi  The upper bound
    #
    public set_range(lo, hi)
-      if lo >= hi then
-         runerr("Invalid range")
-      self.is_range_flag := 1
-      self.lo := lo
-      self.hi := hi
-      self.reconfigure()
+      if self.lo ~=== lo | self.hi ~=== hi then {
+         if lo >= hi then
+            runerr("Invalid range")
+         self.is_range_flag := 1
+         self.lo := lo
+         self.hi := hi
+         reconfigure()
+      }
       return self
    end
 
@@ -222,7 +231,7 @@ class ScrollBar(Component, HasOrientation)
       return self.wheel_factor
    end
 
-   public move_bar_pos(x)
+   private move_bar_pos(x)
       x <:= self.bar_area_pos
       x >:= self.bar_area_pos + self.bar_area_size - self.bar_size
       (self.bar_pos ~=== x) | fail
@@ -234,13 +243,13 @@ class ScrollBar(Component, HasOrientation)
       self.bar_area.invalidate()
    end
 
-   public move_value(x)
+   private move_value(x)
       self.value := x
       self.value <:= self.lo
       self.value >:= self.hi
    end
 
-   public set_pos_from_value()
+   private set_pos_from_value()
       if self.hi ~= self.lo then
          self.move_bar_pos(self.bar_area_pos + integer(((self.value - self.lo) * 
                                                         (self.bar_area_size - self.bar_size)) / (self.hi - self.lo)))
@@ -248,7 +257,7 @@ class ScrollBar(Component, HasOrientation)
          self.move_bar_pos(self.bar_area_pos)
    end
 
-   public set_value_from_pos()
+   private set_value_from_pos()
       if self.bar_area_size ~= self.bar_size then
          move_value(self.lo + ((self.hi - self.lo) * (self.bar_pos - self.bar_area_pos)) / 
                     (self.bar_area_size - self.bar_size))
@@ -300,7 +309,7 @@ class ScrollBar(Component, HasOrientation)
       end_handle(e)
    end
 
-   public repeat_tick()
+   private repeat_tick()
       repeat {
          if Prog.get_runtime_millis() > self.repeat_delay then {
             start_handle()
@@ -388,7 +397,7 @@ class ScrollBar(Component, HasOrientation)
       display_children()
    end
 
-   public reconfigure()
+   private reconfigure()
       # Don't do anything if we haven't been positioned yet.
       is_live() | fail
       check_vals()
@@ -398,7 +407,7 @@ class ScrollBar(Component, HasOrientation)
    end
 
    # Check sensible values and set lo/hi for a non-range.
-   public check_vals()
+   private check_vals()
       if /self.is_range_flag then {
          #
          # Not a range; compute lo, hi
@@ -413,7 +422,7 @@ class ScrollBar(Component, HasOrientation)
       move_value(self.value)
    end
 
-   public calc_bar_size()
+   private calc_bar_size()
       if /self.is_range_flag then {
          #
          # If total <= page then we produce an immovable full size bar
