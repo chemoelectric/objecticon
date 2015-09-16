@@ -118,12 +118,18 @@ class Dialog(Component)
    end
 
    public block()
-      self.is_blocked_flag := 1
+      if /is_blocked_flag then {
+         is_blocked_flag := 1
+         resynch_pointer()
+      }
       return self
    end
 
    public unblock()
-      self.is_blocked_flag := &null
+      if \is_blocked_flag then {
+         is_blocked_flag := &null
+         resynch_pointer()
+      }
       return self
    end
 
