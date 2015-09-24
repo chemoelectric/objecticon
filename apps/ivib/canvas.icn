@@ -681,9 +681,7 @@ class Canvas(Component,SelectiveObjectCodec)
          obj.w_spec := obj.h_spec := &null
 
       # Clear the children, they will be re-added in a new order.
-      #clear(obj.children)
-      while *obj.children > 0 do
-         obj.remove_index(1)
+      obj.remove_all()
 
       every r := !rows.lines do {
          tab := 0
