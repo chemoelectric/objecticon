@@ -113,13 +113,13 @@ class TextButton(Button, BorderWhilstEntered)
 
    public initially()
       \self.paint | runerr("no label specified")
-      Component.initially()
+      Button.initially()
       self.paint.initially(self, self.accel)
       (\self.paint_down).initially(self, self.accel)
    end
 
    public finally()
-      Component.finally()
+      Button.finally()
       paint.finally()
       (\paint_down).finally()
    end
@@ -153,7 +153,7 @@ end
 # A helper class for a component whose border is only shown whilst the
 # mouse cursor is over the component.
 #
-class BorderWhilstEntered(Component)
+abstract class BorderWhilstEntered(Component)
    public 
       border_whilst_entered_flag,
       entered
@@ -164,7 +164,11 @@ class BorderWhilstEntered(Component)
    # buttons.
    #
    public set_border_whilst_entered(s)
-      self.border_whilst_entered_flag := check_flag(s)
+      s := check_flag(s)
+      if s ~=== border_whilst_entered_flag then {
+         border_whilst_entered_flag := s
+         invalidate()
+      }
       return self
    end
 

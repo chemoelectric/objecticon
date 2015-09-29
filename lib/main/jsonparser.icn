@@ -163,7 +163,7 @@ class JSONParser()
 
    public parse(s)
       utf8_flag := Yes{ type(s) == "ucs" }
-      return s ? simple_try{ end_check(parse_impl()) }
+      return s ? try1{ end_check(parse_impl()) }
    end
 
    public new()

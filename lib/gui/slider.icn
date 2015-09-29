@@ -152,15 +152,17 @@ class Slider(Component, HasOrientation)
    # Set the current value
    #
    public set_value(x)
-      if is_live() then {
-         move_value(x)
-         set_pos_from_value()
-      } else 
-         self.value := x
+      if value ~=== x then {
+         if is_live() then {
+            move_value(x)
+            set_pos_from_value()
+         } else 
+            self.value := x
+      }
       return self
    end
 
-   public move_value(x)
+   private move_value(x)
       self.value := x
       self.value <:= self.lo
       self.value >:= self.hi
@@ -174,7 +176,7 @@ class Slider(Component, HasOrientation)
       return self.value
    end
 
-   public set_pos_from_value()
+   private set_pos_from_value()
       if self.hi ~= self.lo then
          move_slider_pos(self.slider_area_pos + integer(((self.value - self.lo) * 
                                                          self.slider_area_size / (self.hi - self.lo))))
@@ -182,7 +184,7 @@ class Slider(Component, HasOrientation)
          move_slider_pos(self.slider_area_pos)
    end
 
-   public set_value_from_pos()
+   private set_value_from_pos()
       if self.slider_area_size ~= 0 then {
          # For discrete vals, an adjustment is made so that, for example
          # the ranges where the cursor set the position might be
@@ -200,7 +202,7 @@ class Slider(Component, HasOrientation)
          move_value(self.lo)
    end
 
-   public move_slider_pos(x)
+   private move_slider_pos(x)
       x <:= self.slider_area_pos
       x >:= self.slider_area_pos + self.slider_area_size
       (self.slider_pos ~=== x) | fail
@@ -220,15 +222,17 @@ class Slider(Component, HasOrientation)
    # @param hi  The upper bound
    #
    public set_range(lo, hi)
-      if lo >= hi then
-         runerr("Invalid range")
-      self.lo := lo
-      self.hi := hi
-      if type(self.hi) == type(self.lo) == "integer" then
-         self.discrete_vals := 1
-      else
-         self.discrete_vals := &null
-      reconfigure()
+      if self.lo ~=== lo | self.hi ~=== hi then {
+         if lo >= hi then
+            runerr("Invalid range")
+         self.lo := lo
+         self.hi := hi
+         if type(self.hi) == type(self.lo) == "integer" then
+            self.discrete_vals := 1
+         else
+            self.discrete_vals := &null
+         reconfigure()
+      }
       return self
    end
 
@@ -312,7 +316,7 @@ class Slider(Component, HasOrientation)
       }
    end
 
-   public repeat_tick()
+   private repeat_tick()
       repeat {
          if Prog.get_runtime_millis() > self.repeat_delay then {
             start_handle()
@@ -373,7 +377,7 @@ class Slider(Component, HasOrientation)
          fire(Event.VALUE_CHANGED, ev)
    end
 
-   public reconfigure()
+   private reconfigure()
       # Don't do anything if we haven't been positioned yet.
       is_live() | fail
       # Ensure value in lo..hi range.

@@ -356,7 +356,7 @@ class MenuBar(Component, MenuSystem)
    end
 
    public handle_exit(e)
-      if /self.which_open & e.code = Mouse.MOVEMENT then
+      if /self.which_open & e.code === Mouse.MOVEMENT then
          #
          # Submenu not open (just highlighted), and a mouse move outside of the
          # bar - this clears the highlight (and leaves menu mode).

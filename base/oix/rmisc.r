@@ -2184,7 +2184,7 @@ static char c_buff[4096];     /* Buff for conversion to static C strings */
 char *buffstr(dptr d)
 {
     if (StrLen(*d) >= sizeof(c_buff))
-        fatalerr(149, d);
+        fatalerr(159, d);
     memcpy(c_buff, StrLoc(*d), StrLen(*d));
     c_buff[StrLen(*d)] = 0;
     return c_buff;
@@ -2202,7 +2202,7 @@ void buffnstr(dptr d, char **s, ...)
     free = sizeof(c_buff);
     while (d) {
         if (StrLen(*d) >= free)
-            fatalerr(149, d);
+            fatalerr(159, d);
         memcpy(t, StrLoc(*d), StrLen(*d));
         *s = t;
         t += StrLen(*d);

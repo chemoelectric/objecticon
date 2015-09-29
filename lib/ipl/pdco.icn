@@ -1205,7 +1205,7 @@ end
 # occurs, {errorclear} is called, {&why} is set and the procedure
 # fails.
 #
-procedure SimpleSafe(e)
+procedure Safe1(e)
    local v
    v := Safe(e)
    if &errortext then {

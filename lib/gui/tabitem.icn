@@ -109,21 +109,23 @@ class TabItem(Component)
       return paint.h + label_border.get_total_height()
    end
 
-   public draw_label(W, x, y, w, h, focus)
+   public draw_label(W, x, y, w, h, focus, highlight)
       local r
       r := Rect(x, y, w, h)
       label_border.draw_rect(W, r)
       paint.draw_rect(W, label_border.float(r, paint))
       if is_shaded() then
          Gui.style.shade_rectangle(W, x, y, w, h)
-      # The focus is drawn after shading, since it relates to the parent tabset.
-      if \focus then
+      # The focus and highlight is drawn after shading, since it relates to the parent tabset. 
+      if \highlight then
+         label_border.draw_highlight_rect(W, r)
+      else if \focus then
          label_border.draw_focus_rect(W, r)
    end
 
    public new()
       Component.new()
-      self.label_border := EmptyBorder()
+      self.label_border := EmptyBorder().set_focus_inset(Gui.FINE_WIDTH)
       return
    end
 end

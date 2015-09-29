@@ -2108,8 +2108,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          if \e.meta then
             ch := u"\e" || ch
          send(ch)
-         quieten_cursor()
-         ui.msg()
+         quieten_cursor_and_clear_msg()
          goto_bottom()
       }
    end
@@ -2152,7 +2151,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       if \application_cursor_mode then i +:= U
       if ke := KEY_TABLE.lookup(e.code, i) then {
          send(ke.str)
-         quieten_cursor()
+         quieten_cursor_and_clear_msg()
          goto_bottom()
          return
       }
@@ -2454,6 +2453,14 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private on_popup_closed()
       set_highlight()
+   end
+
+   private quieten_cursor_and_clear_msg()
+      quieten_cursor()
+      # This is done in order to clear any info message which may
+      # still persist even after quieten cursor state has begun.
+      if *parent_dialog.held = 0 then
+         ui.msg()
    end
 
    private quieten_cursor()

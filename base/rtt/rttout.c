@@ -577,9 +577,9 @@ int indent;
       /*
        * Check dword for the presense of a "variable" flag.
        */
-      prt_str("(((", indent);
+      prt_str("((((", indent);
       c_walk(desc, indent, 0);
-      prt_str(").dword & F_Var))", indent);
+      prt_str(").dword & (F_Var | F_Nqual)) == (F_Var | F_Nqual)))", indent);
       }
    else if (typcd == int_typ) {
       /*

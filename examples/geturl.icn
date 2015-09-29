@@ -215,11 +215,11 @@ procedure main(args)
             ", HTTP error ", *err, ", Failed ", *failed)
       if *err > 0 then {
          write(FileStream.stderr, "HTTP errors on:")
-         every write(FileStream.stderr, !err)
+         every write(FileStream.stderr, pp_url(!err))
       }
       if *failed > 0 then {
          write(FileStream.stderr, "Failed on:")
-         every write(FileStream.stderr, !failed)
+         every write(FileStream.stderr, pp_url(!failed))
       }
    }
 
@@ -245,6 +245,13 @@ procedure pp_out()
       out
 end
 
+procedure pp_url(url)
+   return if Files.is_flowterm_tty(FileStream.stderr) then       
+      Files.begin_link(url) || url.str() || Files.end_link()
+   else
+      url.str()
+end
+
 procedure process_one(a)
    local hr, url, start_t, res, end_t, kbps, s, msg, tmp_file, output_stream, 
       input_stream, content_type, t, k, v, p
@@ -259,7 +266,7 @@ procedure process_one(a)
       if check_skip() then
          fail
       if /opts["q"] then
-         write(FileStream.stderr, "Saving URL ", url.str())
+         write(FileStream.stderr, "Saving URL ", pp_url(url))
    }
 
    hr := HttpRequest().
@@ -384,11 +391,11 @@ procedure process_one(a)
       }
       if /hc.abort_flag then {
          if s := hc.get_http_error() then {
-            put(err, a)
+            put(err, url)
             if /opts["q"] then
                write(FileStream.stderr, "HTTP Error: ", s, " - no data output")
          } else {
-            put(failed, a)
+            put(failed, url)
          }
       }
    }

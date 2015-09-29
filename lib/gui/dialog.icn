@@ -118,12 +118,18 @@ class Dialog(Component)
    end
 
    public block()
-      self.is_blocked_flag := 1
+      if /is_blocked_flag then {
+         is_blocked_flag := 1
+         resynch_pointer()
+      }
       return self
    end
 
    public unblock()
-      self.is_blocked_flag := &null
+      if \is_blocked_flag then {
+         is_blocked_flag := &null
+         resynch_pointer()
+      }
       return self
    end
 
@@ -1225,9 +1231,8 @@ class Dialog(Component)
       local l, c
       l := []
       every c := Seq{traverse_tab_order()} do {
-         if c === self.focus | (c.accepts_focus(e) & c.is_unhidden() & c.is_unshaded()) then {
+         if c === self.focus | (c.accepts_focus(e) & c.is_unhidden() & c.is_unshaded()) then
             put(l, c)
-         }
       }
       return l
    end

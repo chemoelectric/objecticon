@@ -118,7 +118,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
       self.stuff := &null
       return use {
          self.seen := table(),
-         simple_try{traverse(o)},
+         try1{traverse(o)},
          self.seen := &null
       }
    end

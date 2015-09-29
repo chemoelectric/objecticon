@@ -129,6 +129,14 @@ class Style()
       }
    end
 
+   public fill_highlight_rectangle(W, x, y, w, h)
+      local cw
+      return use {
+         cw := get_highlight_clone(W),
+         cw.fill_rectangle(x, y, w, h, Gui.FINE_WIDTH)
+      }
+   end
+
    public draw_shadow_text_cursor(W, x, y, h)
       local cw
       return use {

@@ -14,6 +14,10 @@ package class Lambda()
       suspend save_state(^e, LambdaState(a))
    end
 
+   public call1(a)
+      suspend save_state(^e, LambdaState(a))
+   end
+
    public new(e)
       self.e := e
       return
@@ -42,6 +46,19 @@ end
 #
 procedure lambda(e)
    return Lambda(e).call
+end
+
+#
+# This is just like `lambda`, but the global variable `_a` is assigned
+# to the first argument, and other arguments are discarded.  This
+# makes functions which take a single argument rather more compact.
+# So the example given above in `lambda` would instead be :-
+# ~~~
+#   f := lambda1{ _a + 100 }
+# ~~~
+#
+procedure lambda1(e)
+   return Lambda(e).call1
 end
 
 # Evaluates coexpression {e}, saving the value of {_a} and {_l}.  This

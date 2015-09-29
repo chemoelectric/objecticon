@@ -689,38 +689,38 @@ class RFC822Parser()
    end
 
    public parse_mailbox(s)
-      return s ? simple_try{ end_check(parse_mailbox_impl()) }
+      return s ? try1{ end_check(parse_mailbox_impl()) }
    end
 
    public parse_group(s)
-      return s ? simple_try{ end_check(parse_group_impl()) }
+      return s ? try1{ end_check(parse_group_impl()) }
    end
 
    public parse_address_list(s, can_be_empty)
-      return s ? simple_try{ end_check(parse_address_list_impl(can_be_empty)) }
+      return s ? try1{ end_check(parse_address_list_impl(can_be_empty)) }
    end
 
    public parse_mailbox_list(s, can_be_empty)
-      return s ? simple_try{ end_check(parse_mailbox_list_impl(can_be_empty)) }
+      return s ? try1{ end_check(parse_mailbox_list_impl(can_be_empty)) }
    end
 
    public parse_date_time(s)
-      return s ? simple_try{ end_check(parse_date_time_impl()) }
+      return s ? try1{ end_check(parse_date_time_impl()) }
    end
 
    public parse_field(s, message)
-      return s ? simple_try{ parse_field_impl(message) }
+      return s ? try1{ parse_field_impl(message) }
    end
 
    public parse_content_type(s)
-      return s ? simple_try{ end_check(parse_content_type_impl()) }
+      return s ? try1{ end_check(parse_content_type_impl()) }
    end
 
    public parse_content_disposition(s)
-      return s ? simple_try{ end_check(parse_content_disposition_impl()) }
+      return s ? try1{ end_check(parse_content_disposition_impl()) }
    end
 
    public parse_content_transfer_encoding(s)
-      return s ? simple_try{ end_check(parse_content_transfer_encoding_impl()) }
+      return s ? try1{ end_check(parse_content_transfer_encoding_impl()) }
    end
 end

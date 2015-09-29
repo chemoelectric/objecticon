@@ -49,7 +49,7 @@ class OverlaySet(Component)
       \remember_focus_flag | fail
       f := \which_one.remembered_focus | fail
       if f.is_live() then
-         parent_dialog.set_focus(f.find_focus())
+         f.grab_focus()
    end
 
    #

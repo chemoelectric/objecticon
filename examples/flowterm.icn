@@ -141,39 +141,45 @@ class FlowTermDialog(Dialog)
             \t | return error("Command before tab directory: " || cmd)
             t.do_tab_cmd(cmd) | fail
          } else {
-            # Add t if it's not already added in the TabSet
-            if /(\t).parent then
-               add_tab(t)
+            done_tab_cmds(t)
             t := Terminal(if *s > 0 then s else &null,, tabs.which_one)
          }
       }
-      # Add t if it's not already added in the TabSet
-      if /(\t).parent then
-         add_tab(t)
+      done_tab_cmds(t)
       return self
    end
 
-   private add_tab(t)
+   private done_tab_cmds(t)
+      local a
+      # Add t if it's not already added in the TabSet
+      if /(\t).parent then {
+         a := if \t.adjacent_flag then tabs.which_one
+         add_tab(t, a)
+         if \t.select_flag | /tabs.which_one then
+            tabs.set_which_one(t)
+      }
+   end
+
+   private add_tab(t, adjacent)
+      local i
       t.set_is_hidden(&yes)
-      tabs.add(t, 0)
+      i := tabs.get_index(\adjacent) + 1
+      tabs.add(t, i)
       if is_live() then
          tabs.do_layout().invalidate()
-      if \t.select_flag then
+      return t
+   end
+
+   public new_tab(sel, dir, other, adjacent)
+      local t
+      t := add_tab(Terminal(dir, other, tabs.which_one), adjacent)
+      if \sel then
          tabs.set_which_one(t)
       return t
    end
 
-   public new_tab(sel, dir, other)
-      return add_tab(Terminal(dir, other, tabs.which_one).
-         set_select(sel))
-   end
-
    private on_new_tab(ev)
       new_tab(&yes)
-   end
-
-   private on_clone_tab(ev)
-      new_tab(&yes,, tabs.which_one)
    end
 
    private on_xdg_refresh(ev)
@@ -190,6 +196,7 @@ class FlowTermDialog(Dialog)
       d := HTMLMessageDialog().
          set_label("FlowTerm")
       d.browser.
+         set_accepts_focus(&no).
          set_border(NullBorder()).
          set_page(src).
          set_size(scale(550), scale(350)).
@@ -248,9 +255,32 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
          set_height(scale(850))
    end
 
+   private on_tabs_rpress(e)
+      local t, m, pm
+      t := tabs.which_tab(e) | fail
+      m := Menu().
+         add(TextMenuItem().
+             set_label("New").
+             connect(create new_tab(&yes,,, t), Event.ACTION)).
+         add(TextMenuItem().
+             set_label("Close").
+             connect(create t.close_tab(), Event.ACTION)).
+         add(TextMenuItem().
+             set_label("Clone").
+             connect(create t.clone_tab(), Event.ACTION))
+      pm := PopupMenu().
+         connect(create tabs.set_which_highlight(), Event.POPUP_CLOSED)
+      tabs.set_which_highlight(t)
+      pm.popup(self, m, e.x, e.y)
+   end
+
+   private on_tabs_changed(e)
+      tabs.which_one.tab_active()
+   end
+
    public new()
       local quit_menu_item, menu_bar, file_menu, terminal_menu, columns_menu, 
-         new_tab_item, clone_tab_item, favourite_dirs_item, xdg_refresh_item,
+         new_tab_item, favourite_dirs_item, xdg_refresh_item,
          help_menu, about_item, help_item
       Dialog.new()
       set_resize(&yes)
@@ -258,9 +288,6 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
       new_tab_item := TextMenuItem().
          connect(on_new_tab, Event.ACTION).
          set_label("New Tab")
-      clone_tab_item := TextMenuItem().
-         connect(on_clone_tab, Event.ACTION).
-         set_label("Clone Tab")
       favourite_dirs_item := TextMenuItem().
          connect(on_favourite_dirs, Event.ACTION).
          set_label("Favourite dirs...")
@@ -273,7 +300,6 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
       file_menu := Menu().
          set_label("File").
          add(new_tab_item).
-         add(clone_tab_item).
          add(favourite_dirs_item).
          add(xdg_refresh_item).
          add(quit_menu_item)
@@ -317,12 +343,27 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
          set_constraint("b_inset", 0).
          set_remember_focus(&yes).
          set_draggable_tabs(&yes).
-         set_no_click_focus(&yes)
+         set_accepts_focus(&no).
+         connect(on_tabs_rpress, Event.MOUSE_RIGHT_PRESS).
+         connect(on_tabs_changed, Event.SELECTION_CHANGED)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
       self.set_layout(GridLayout().set_extra("cells"))
       set_label(\opts["t"] | "FlowTerm")
       return
+   end
+end
+
+#
+# An EmptyBorder which provides a solid focus rectangle.
+#
+class EmptyBorderSolidFocus(EmptyBorder)
+   public draw_focus(W, x, y, w, h)
+      local W2
+      use {
+         W2 := Gui.style.get_cursor_clone(W),
+         W2.draw_rectangle(x, y, w, h, Gui.FINE_WIDTH)
+      }
    end
 end
 
@@ -401,13 +442,10 @@ class Columns(LineBasedScrollArea)
             item_border.draw_rect(view.cbwin, r)
          }
          if k === cursor then {
-            if has_focus() & is_unshaded() then { 
-               use {
-                  W := Gui.style.get_cursor_clone(view.cbwin),
-                  W.draw_rectangle(r.x, r.y, r.w, r.h, Gui.FINE_WIDTH)
-               }
-            } else
-               Gui.style.draw_dashed_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
+            if has_focus() & is_unshaded() then
+               item_border.draw_focus_rect(view.cbwin, r)
+            else
+               item_border.draw_dashed_rect(view.cbwin, r)
          }
          if k === over then 
             Gui.style.fill_over_rectangle(view.cbwin, r.x, r.y, r.w, r.h)
@@ -742,10 +780,13 @@ class Columns(LineBasedScrollArea)
    end
 
    public data_changed()
-      # set_over() is necessary even if the caller does a
-      # resynch_pointer, since we store over as an index (which may
-      # change) rather than the underlying object.
+      # over, held and highlight are cleared, since we store these as
+      # indices (which may change) rather than the underlying objects.
+      # cursor is left, however, and so the underlying object may
+      # change.
       set_over()
+      set_held()
+      set_highlight()
       invalidate_columnize()
       invalidate_subject_width()
       invalidate_line_count()
@@ -932,7 +973,9 @@ class FileTrailButtonEx(FileTrailButton)
    private on_rpress(e)
       local m, pm
       m := parent.parent.parent.create_link_menu(button_to_url()) | fail
-      pm := PopupMenu()
+      pm := PopupMenu().
+         connect(create set_border_whilst_entered(&yes), Event.POPUP_CLOSED)
+      set_border_whilst_entered(&no)
       pm.popup(self, m, e.x, e.y)
    end
 
@@ -1014,6 +1057,7 @@ class Terminal(TabItem, VtUI)
       mix_entries_menu_item,
       sort_dirs_menu_item,
       revert_tab,
+      adjacent_flag,
       shell,
       auto_close_flag,
       select_flag,
@@ -1028,6 +1072,11 @@ class Terminal(TabItem, VtUI)
 
    public set_select(f)
       self.select_flag := check_flag(f)
+      return self
+   end
+
+   public set_adjacent(f)
+      self.adjacent_flag := check_flag(f)
       return self
    end
 
@@ -1108,6 +1157,7 @@ class Terminal(TabItem, VtUI)
          "max-list" : on_max_list()
          "max-term" : on_max_terminal()
          "restore" : on_restore()
+         "adjacent" : set_adjacent(&yes)
          "list-focus" : {
             focus_columns_button.toggle_is_checked().invalidate()
             on_focus_columns_button()
@@ -1264,6 +1314,10 @@ $endif
       return pats
    end
 
+   public tab_active()
+      check_cwd_change()
+   end
+
    private check_cwd_change()
       local s
       s := ucs(System.getcwd(pid)) | fail
@@ -1344,7 +1398,7 @@ $endif
       }
       if \auto_close_flag then
          # invoke later since we can't call finally() from within the io_task
-         parent_dialog.invoke_later{on_close_button()}
+         parent_dialog.invoke_later{close_tab()}
       io_task.revert()
    end
 
@@ -1520,6 +1574,8 @@ $endif
       info_msg("Renamed OK")
       if cwd == FilePath(s).parent().ucs() then
          refresh_cwd()
+      else
+         check_cwd_change()
    end
 
    private on_copy_cwd(e)
@@ -1527,7 +1583,7 @@ $endif
    end
 
    private open_in_new_tab(dir)
-      parent_dialog.new_tab(, dir)
+      parent_dialog.new_tab(, dir,, self)
    end
 
    private on_start_log()
@@ -1876,7 +1932,7 @@ $endif
    end
 
    private resort_cwd(track_cursor)
-      local i, ino, info, vis, high, held
+      local i, ino, info, vis, high, held, over
       \cwd | fail
       if is_live() then {
          if \track_cursor & i := columns.get_row_for_index(columns.get_cursor()) then {
@@ -1890,6 +1946,8 @@ $endif
                high := &yes
             if columns.get_cursor() === columns.get_held() then
                held := &yes
+            if columns.get_cursor() === columns.get_over() then
+               over := &yes
          }
          sort_cwd_list()
          # Search for the old ino in the new data.  If found, set the highlight and if the old
@@ -1897,11 +1955,13 @@ $endif
          if \track_cursor & i := Positions{(!columns.data).stat.ino, \ino} then {
             columns.set_cursor(i)
             if \vis then
-               columns.ensure_line_visible(columns.get_row_for_index(columns.get_cursor()))
+               columns.ensure_line_visible(columns.get_row_for_index(i))
             if \high then
                columns.set_highlight(i)
             if \held then
                columns.set_held(i)
+            if \over then
+               columns.set_over(i)
          } else
             columns.set_cursor()
          # Since the pointer may be over the files list, update the pointer.
@@ -2003,7 +2063,7 @@ $endif
    end
 
    public new(dir, other, revert_tab)
-      local start_dir, o
+      local start_dir, o, c
       TabItem.new()
       self.revert_tab := revert_tab
       setup()
@@ -2024,23 +2084,21 @@ $endif
          sorter := other.sorter
          ascending := other.ascending
          annotate_opt := other.annotate_opt
-         set_remembered_focus(if other.parent_dialog.focus === other.columns.find_focus() then
-            columns.find_focus()
-         else
-            output.find_focus())
+         c := if \other.is_hidden_flag then other.remembered_focus else other.parent_dialog.focus
+         set_remembered_focus(if c === other.columns then columns else output)
          log_file := other.log_file
       } else {
          if \opts["hs"] then
             split.reorient()
          sorter := Files.name_cmp
          annotate_opt := SHOW_NAME_ONLY
-         set_remembered_focus(output.find_focus())
+         set_remembered_focus(output)
       }
       synch_paints()
-      set_label_border(EmptyBorder().set_x_align(Align.L))
+      label_border.set_x_align(Align.L)
       columns.
          set_item_paint(AnnotatedIconFilesItemPaint()).
-         set_item_border(EmptyBorder().
+         set_item_border(EmptyBorderSolidFocus().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                              set_x_align(Align.L)).
          connect(on_columns_lclick, "lclicked").
@@ -2168,21 +2226,33 @@ $endif
    end
 
    private on_close_button(ev)
+      close_tab()
+   end
+
+   public clone_tab()
+      parent_dialog.new_tab(&yes,, self, self)
+   end
+
+   public close_tab()
       local t, i
       if *parent.children = 1 then
          parent_dialog.dispose()
       else {
-         (i := parent.get_index(\revert_tab)) | {
-            i := parent.get_index(self)
-            if i > 1 then
-               i -:= 1
-            else
-               i +:= 1
+         if parent.which_one === self then {
+            # We're closing the currently selected tab, so choose a new
+            # one to be the current tab.
+            (i := parent.get_index(\revert_tab)) | {
+               i := parent.get_index(self)
+               if i > 1 then
+                  i -:= 1
+               else
+                  i +:= 1
+            }
+            t := parent.children[i] | syserr("Couldn't find other tab")
+            parent.set_which_one(t)
          }
-         t := parent.children[i] | syserr("Couldn't find other tab")
          parent.
             remove(self).
-            set_which_one(t).
             do_layout().
             invalidate()
       }
@@ -2215,20 +2285,14 @@ $endif
    end
 
    private on_focus_columns_button(ev)
-      local f
+      local f, c
       f := focus_columns_button.get_status()
       columns.set_accepts_focus(f)
-      if is_live() then {
-         if /f then
-            parent_dialog.set_focus(output)
-         else
-            parent_dialog.set_focus(columns)
-      } else {
-         if /f then
-            set_remembered_focus(output)
-         else
-            set_remembered_focus(columns)
-      }
+      c := if /f then output else columns
+      if is_live() then
+         parent_dialog.set_focus(c)
+      else
+         set_remembered_focus(c)
    end
 
    private on_columns_focus(ev)
@@ -2254,7 +2318,7 @@ $endif
          reset_layout().
          do_layout().
          invalidate()
-      parent_dialog.set_focus(output.find_focus())
+      parent_dialog.set_focus(output)
    end
 
    public search_msg(s)

@@ -32,7 +32,7 @@ import
 # delay between the initial repeat event and subsequent repeat
 # events is set in the {Style} object.
 #
-class Button(Toggle,Component)
+abstract class Button(Toggle,Component)
    public 
       is_down,
       parent_button_group,

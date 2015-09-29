@@ -475,13 +475,10 @@ end
 #
 package class FileTrailBorder(LineBorder)
    public draw(W, x, y, w, h)
-      local i, W2
+      local W2
       use {
          W2 := Gui.style.get_dashed_clone(W),
-         {
-            every i := 0 to line_width - 1 do
-               W2.draw_rectangle(x + i, y + i, w - 2 * i, h - 2 * i)
-         }
+         W2.draw_rectangle(x, y, w, h, line_width)
       }
    end
 end
@@ -589,6 +586,7 @@ class FileTrailList(ButtonOnlyList)
       # fire to the owner.
       set_selection_list(l)
       set_selection()
+      b.set_border_whilst_entered(&no)
       ButtonOnlyList.open_popup(ev)
       if i := Positions{(!l).name, \child} then
          popup.
@@ -616,6 +614,7 @@ class FileTrailList(ButtonOnlyList)
                                     set_l_inset(Gui.TEXT_INSET).
                                     set_r_inset(Gui.TEXT_INSET)))
       connect(changed, Event.SELECTION_CHANGED)
+      connect(create b.set_border_whilst_entered(&yes), Event.POPUP_CLOSED)
       return
    end
 end

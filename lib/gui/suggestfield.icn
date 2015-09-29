@@ -239,6 +239,7 @@ abstract class SuggestField(TextField, MenuMode)
       }
       self.tl := &null
       self.parent_dialog.exit_menu_mode(self)
+      fire(Event.POPUP_CLOSED)
    end
 
    public get_nesting_component()

@@ -5595,23 +5595,29 @@ class SimpleBrowserUI(BrowserUI)
    end
 
    public create_page_menu()
-      local m, s, l, u
+      local m, s, l, u, i
       m := Menu()
       if u := \browser.page_url & is_external(u) then {
          m.add(TextMenuItem().
                set_label("Copy page").
                connect(create copy_link(u), Event.ACTION))
       }
-      if \browser.page_data then
-         m.add(TextMenuItem().
+      if \browser.page_data then {
+         i := TextMenuItem().
                set_label("Select all").
-               set_label_right("^A").
-               connect(on_select_all, Event.ACTION))
-      if s := browser.get_current_text_selection() then
-         m.add(TextMenuItem().
+               connect(on_select_all, Event.ACTION)
+         if browser.accepts_focus() then
+            i.set_label_right("^A")
+         m.add(i)
+      }
+      if s := browser.get_current_text_selection() then {
+         i := TextMenuItem().
                set_label("Copy text").
-               set_label_right("^C").
-               connect(create copy_text(s), Event.ACTION))
+               connect(create copy_text(s), Event.ACTION)
+         if browser.accepts_focus() then
+            i.set_label_right("^C")
+         m.add(i)
+      }
       if l := browser.get_current_links_selection() then
          m.add(TextMenuItem().
                set_label("Copy links").

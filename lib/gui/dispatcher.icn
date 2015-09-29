@@ -26,9 +26,8 @@ final abstract class Dispatcher()
       BLOCKED_QUIET
 
    private static init()
-      BLOCKED_ALLOW := Selection.EVENTS ++ 
-         set(Window.INVOKE_LATER, Window.RESIZE, Mouse.MOVEMENT) ++ Mouse.CROSSING
-      BLOCKED_QUIET := set(Mouse.RELEASE)
+      BLOCKED_ALLOW := Selection.EVENTS ++ set(Window.INVOKE_LATER, Window.RESIZE)
+      BLOCKED_QUIET := set(Mouse.RELEASE, Mouse.MOVEMENT) ++ Mouse.CROSSING
       dialogs := set()
       scheduler := Scheduler(Gui.IDLE_SLEEP)
    end

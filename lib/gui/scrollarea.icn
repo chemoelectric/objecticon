@@ -476,12 +476,13 @@ abstract class ScrollArea(Component)
    end
 
    public display()
-      border.draw_rect(self.cbwin, self)
-
+      border.draw_rect(cbwin, self)
       display_children()
-
-      if \default_key_listener & self.has_focus() & self.is_unshaded() then
-         Gui.style.draw_focus_rectangle(self.cbwin, self.x, self.y, self.w, self.h)
+      if \default_key_listener & has_focus() & is_unshaded() then
+         # Allowing the border to draw the focus rect wouldn't look
+         # right here, since the scrollbars abut the border.  So we
+         # draw it manually around the edge.
+         Gui.style.draw_focus_rectangle(cbwin, x, y, w, h)
    end
 
    #
