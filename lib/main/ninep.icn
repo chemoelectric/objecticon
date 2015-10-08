@@ -1027,7 +1027,7 @@ class Session9P()
    public respond(x)
       local t, y
       t := []  # A list of paths temporarily used by respond_impl
-      y := simple_try{respond_impl(x, t)} | RError(x.tag, &why)
+      y := try1{respond_impl(x, t)} | RError(x.tag, &why)
       every dec_ref(!t)
       return y
    end

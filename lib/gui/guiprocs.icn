@@ -160,6 +160,34 @@ procedure scale_even(i)
    return i
 end
 
+#
+# Get a real-valued environment variable.  Fails if the variable isn't
+# defined, returns the real value otherwise.  `min` and `max` provide
+# optional bounds checking.
+#
+procedure env_real(s, min, max)
+   local v
+   v := System.getenv(s) | fail
+   v := real(v) | runerr("Real value expected for " || s, v)
+   if v < \min | v > \max then
+      runerr("Value of " || s || " out of range", v)
+   return v
+end
+
+#
+# Get an integer-valued environment variable.  Fails if the variable isn't
+# defined, returns the integer value otherwise.  `min` and `max` provide
+# optional bounds checking.
+#
+procedure env_int(s, min, max)
+   local v
+   v := System.getenv(s) | fail
+   v := integer(v) | runerr("Integer value expected for " || s, v)
+   if v < \min | v > \max then
+      runerr("Value of " || s || " out of range", v)
+   return v
+end
+
 class Gui()
    public static const
       SCALE_FACTOR,
@@ -188,7 +216,7 @@ class Gui()
       PRINTABLE_N               # Printable on multi lines of text
 
    private static init()
-      SCALE_FACTOR := (1.0 < real(System.getenv("OIGUISCALE"))) | 1.0
+      SCALE_FACTOR := env_real("OISCALE", 1.0) | 1.0
       UNIT := scale(1)
       FINE_WIDTH := UNIT
       CURSOR_WIDTH := 2 * UNIT
@@ -196,9 +224,9 @@ class Gui()
       TEXT_INSET := scale(3)
       X_INSET := scale(6)
       Y_INSET := scale(2)
-      REPEAT_DELAY := 500
-      REPEAT_RATE := 100
-      CURSOR_BLINK := 400
+      REPEAT_DELAY := env_int("OIRPTDELAY", 250) | 500
+      REPEAT_RATE := env_int("OIRPTRATE", 50) | 100
+      CURSOR_BLINK := env_int("OIBLINK", 100) | 400
       TAB_WIDTH := 8
       IDLE_SLEEP := 50
       TOOLBAR_ICON_SIZE := scale(24)
