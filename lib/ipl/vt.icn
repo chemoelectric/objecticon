@@ -257,6 +257,9 @@ class Vt(LineBasedScrollArea, MenuMode)
       C, S, A, K, U, V, CSA,
       CHARSET
 
+   public static const
+      OSC_CHAR
+
    private static init()
       EMPTY_ATTR := Attr()
       C := 1
@@ -270,6 +273,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       setup_key_table()
       CHARSET := table()
       setup_charsets()
+      OSC_CHAR := '\x08-\x0D\x20-\x7E'
    end
 
    private static setup_charsets()
@@ -1459,11 +1463,33 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
-   # Read a string up to ESC-\, according to ecma 8.3.128, 8.3.27,
-   # 8.3.89 and others.  The stuck loop check is non-standard, and
-   # means that \r\n can't be contained in the string; but this
-   # prevents the terminal hanging unexpectedly.
-   private read_string()
+   # Read a string according to ecma 8.3.27, 8.3.89 and others.  The
+   # stuck loop check is non-standard.
+   private read_string1()
+      local t, c
+      t := u""
+      repeat {
+         # Avoid stuck loop; see comment in read_params() above.
+         if any('\r\n', peek_ch()) then
+            break
+         c := get_chs(OSC_CHAR -- '\r\n\e')
+         if c == u"\e" then {
+            # ESC-\ terminates, as does ESC on its own.
+            if peek_ch() == u"\\" then
+               get_ch()
+            break
+         }
+         if any(OSC_CHAR, c) then
+            t ||:= c
+         else
+            break
+      }
+      return t
+   end
+
+   # Read a string according to ecma 8.3.128.  The stuck loop check is
+   # non-standard.
+   private read_string2()
       local t, c
       t := u""
       repeat {
@@ -1484,23 +1510,23 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_privacy_message()
-      read_string()
+      read_string1()
    end
 
    private do_apc()
-      read_string()
+      read_string1()
    end
 
    private do_dcs()
-      read_string()
+      read_string1()
    end
 
    private do_osc()
-      read_string()
+      read_string1()
    end
 
    private do_sos()
-      read_string()
+      read_string2()
    end
 
    private do_application_keypad_mode(f)
