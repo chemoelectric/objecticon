@@ -645,11 +645,11 @@ class Vt(LineBasedScrollArea, MenuMode)
        }
    end
 
-   private get_chs()
+   private get_chs(cs)
       local c
       wait_for_buff()
       buff ? {
-         c := tab(many(Gui.PRINTABLE_1)) | move(1)
+         c := tab(many(cs)) | move(1)
          buff := tab(0)
       }
       return c
@@ -673,7 +673,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private input_handler()
       local c
       repeat {
-         c := get_chs()
+         c := get_chs(Gui.PRINTABLE_1)
          case string(c) of {
             "\r" : do_cr()
             "\n" : do_nl()
@@ -724,9 +724,9 @@ class Vt(LineBasedScrollArea, MenuMode)
       repeat {
          c := peek_ch()
          if any(&digits, c) then {
-            t := get_ch()
+            t := get_chs(&digits)
             while any(&digits, peek_ch()) do
-               t ||:= get_ch()
+               t ||:= get_chs(&digits)
             put(l, integer(t))
          } else if c == u"\"" then {
             get_ch()  # opening "
@@ -738,7 +738,7 @@ class Vt(LineBasedScrollArea, MenuMode)
                # itself will produce a newline.
                if any('\r\n', peek_ch()) then
                   break
-               c := get_ch()
+               c := get_chs(~'\r\n\"')
                if c == u"\"" then
                   break
                t ||:= c
@@ -1459,42 +1459,20 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
-   # Read a string according to ecma 8.3.27, 8.3.89 and others.  The
-   # stuck loop check is non-standard.
-   private read_string1()
+   # Read a string up to ESC-\, according to ecma 8.3.128, 8.3.27,
+   # 8.3.89 and others.  The stuck loop check is non-standard, and
+   # means that \r\n can't be contained in the string; but this
+   # prevents the terminal hanging unexpectedly.
+   private read_string()
       local t, c
       t := u""
       repeat {
          # Avoid stuck loop; see comment in read_params() above.
          if any('\r\n', peek_ch()) then
             break
-         c := get_ch()
+         c := get_chs(~'\r\n\e')
          if c == u"\e" then {
-            # ESC\ terminates, as does ESC on its own.
-            if peek_ch() == u"\\" then
-               get_ch()
-            break
-         }
-         if any('\x08-\x0D\x20-\x7E', c) then
-            t ||:= c
-         else
-            break
-      }
-      return t
-   end
-
-   # Read a string according to ecma 8.3.128.  The stuck loop check is
-   # non-standard.
-   private read_string2()
-      local t, c
-      t := u""
-      repeat {
-         # Avoid stuck loop; see comment in read_params() above.
-         if any('\r\n', peek_ch()) then
-            break
-         c := get_ch()
-         if c == u"\e" then {
-            # Only ESC\ terminates.
+            # Only ESC-\ terminates.
             if peek_ch() == u"\\" then {
                get_ch()
                break
@@ -1506,23 +1484,23 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_privacy_message()
-      read_string1()
+      read_string()
    end
 
    private do_apc()
-      read_string1()
+      read_string()
    end
 
    private do_dcs()
-      read_string1()
+      read_string()
    end
 
    private do_osc()
-      read_string1()
+      read_string()
    end
 
    private do_sos()
-      read_string2()
+      read_string()
    end
 
    private do_application_keypad_mode(f)
