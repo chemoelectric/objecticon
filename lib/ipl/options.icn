@@ -124,7 +124,6 @@ class Opt()
    end
 end
 
-package
 procedure get_help(opts)
    local e, f, ns, h, ph, i, cols, res
    cols := LineEditorStream.get_console_width() | 80
@@ -163,7 +162,6 @@ procedure get_help(opts)
    return res.done()
 end
 
-package
 procedure default_usage(opt_help)
    ewrite("Usage: ", FilePath(&progname).get(-1), " [OPTIONS...]")
    ewrite(opt_help)
