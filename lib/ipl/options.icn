@@ -145,7 +145,7 @@ procedure get_help(opts)
          }
          ns ||:= " " || ph
       }
-      if *ns > 16 then
+      if *ns > 18 then
          res.writes(ns, "\n", repl(" ", 20))
       else
          res.writes(left(ns, 20))
@@ -162,18 +162,12 @@ procedure get_help(opts)
    return res.done()
 end
 
-procedure default_usage(opt_help)
-   ewrite("Usage: ", FilePath(&progname).get(-1), " [OPTIONS...]")
-   ewrite(opt_help)
-end
-
 procedure options(arg, opts, usage, errproc)
-   local f,fList,fileArg,fn,ignore,optname,opttable,p,x,option,k,v,opt,opttype,convert
+   local f,fList,fileArg,fn,ignore,optname,opttable,p,x,option,k,v,opt,opttype,convert,help
    #
    #  Initialize.
    #
    /errproc := stop
-   /usage := default_usage
    option := table()
    fList := []
    opttable := table()
@@ -209,7 +203,12 @@ procedure options(arg, opts, usage, errproc)
    while x := get(arg) do {
       if /x then ignore := &null     # if end of args from file, stop ignoring
       else if x == ("-help" | "--help") & not member(opttable, "help") then {
-         usage(get_help(opts))
+         /usage := "Usage: " || FilePath(&progname).get(-1) || " [OPTIONS...]"
+         help := get_help(opts)
+         if usage := text(usage) then
+            ewrite(usage, "\n", help)
+         else
+            usage(help)
          exit(0)
       } else x ? {
          if ="-" & not pos(0) & /ignore then {
