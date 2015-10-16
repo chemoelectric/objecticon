@@ -2645,7 +2645,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public do_search_prev()
-      local i, j, num, min_x, min_y, last_p, last_q, matching, r, p, q
+      local i, j, num, min_x, min_y, prev_p, prev_q, last_p, last_q, matching, r, p, q
       \search_term | fail
       if \search_increment_flag then {
          min_y := cursor_y
@@ -2655,24 +2655,32 @@ class Vt(LineBasedScrollArea, MenuMode)
       i := 1
       every r := unflowed() do {
          every j := find(search_term, map(line_str(r.l))) do {
-            num +:= 1
             if p := reflow_loc(j, i) &
-               (/last_p | /min_y | (p.y < min_y) | (p.y = min_y & p.x < min_x)) &
                q := reflow_loc(j + *search_term, i)  then
             {
-               matching := num
+               num +:= 1
                last_p := p
                last_q := q
+               if \min_y & ((p.y < min_y) | (p.y = min_y & p.x < min_x)) then {
+                  prev_p := p
+                  prev_q := q
+                  matching := num
+               }
             }
          }
          i +:= 1
       }
-      done_search(last_p, last_q, matching, num)
+      if /prev_p & \last_p then {
+         prev_p := last_p
+         prev_q := last_q
+         matching := num
+      }
+      done_search(prev_p, prev_q, matching, num)
       return self
    end
 
    public do_search_next()
-      local i, j, num, max_x, max_y, first_p, first_q, matching, last_p, last_q, r, p, q
+      local i, j, num, max_x, max_y, first_p, first_q, matching, nxt_p, nxt_q, r, p, q
       \search_term | fail
       if \search_increment_flag then {
          max_y := mark_y
@@ -2682,28 +2690,29 @@ class Vt(LineBasedScrollArea, MenuMode)
       i := 1
       every r := unflowed() do {
          every j := find(search_term, map(line_str(r.l))) do {
-            num +:= 1
             if p := reflow_loc(j, i) &
                q := reflow_loc(j + *search_term, i) then 
             {
-               if /first_p & (/max_y | (p.y > max_y) | (p.y = max_y & p.x > max_x)) then {
+               num +:= 1
+               if /first_p then {
                   first_p := p
                   first_q := q
+               }
+               if /nxt_p & \max_y & ((p.y > max_y) | (p.y = max_y & p.x > max_x)) then {
+                  nxt_p := p
+                  nxt_q := q
                   matching := num
-               } else {
-                  last_p := p
-                  last_q := q
                }
             }
          }
          i +:= 1
       }
-      if /first_p & \last_p then {
-         first_p := last_p
-         first_q := last_q
-         matching := num
+      if /nxt_p & \first_p then {
+         nxt_p := first_p
+         nxt_q := first_q
+         matching := 1
       }
-      done_search(first_p, first_q, matching, num)
+      done_search(nxt_p, nxt_q, matching, num)
       return self
    end
 
