@@ -152,17 +152,29 @@ procedure help_line(ns, h)
    local i
    initial
       cols := LineEditorStream.get_console_width() | 80
-   if *ns > 18 then
-      ewrites(ns, "\n", repl(" ", 20))
-   else
-      ewrites(left(ns, 20))
-   repeat {
-      if i := backto(' ', h, 1, cols - 25) then {
-         ewrites(h[1:i], "\n", repl(" ", 20))
-         h := h[i:0]
-      } else {
-         ewrite(h)
-         break
+   if /h then {
+      repeat {
+         if i := backto(' ', ns, 1, cols - 5) then {
+            ewrite(ns[1:i])
+            ns := ns[i:0]
+         } else {
+            ewrite(ns)
+            break
+         }
+      }
+   } else {
+      if *ns > 18 then
+         ewrites(ns, "\n", repl(" ", 20))
+      else
+         ewrites(left(ns, 20))
+      repeat {
+         if i := backto(' ', h, 1, cols - 25) then {
+            ewrites(h[1:i], "\n", repl(" ", 20))
+            h := h[i:0]
+         } else {
+            ewrite(h)
+            break
+         }
       }
    }
 end
