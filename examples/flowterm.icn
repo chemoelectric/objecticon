@@ -20,7 +20,7 @@ import
    ipl.strings,
    ipl.browser
 
-global opts
+global opts, glob_cmds
 
 $ifdef _PNG
 $load HOURGLASS "rpp.HOURGLASS_24.png"
@@ -1111,11 +1111,13 @@ class Terminal(TabItem, VtUI)
    end
 
    public set_history_size(n)
+      /n := 500
       output.set_history_size(0 <= integer(n)) | return error("integer >= 0 expected")
       return self
    end
 
    public set_list_width(n)
+      /n := scale(300)
       columns.set_width(0 < integer(n)) | return error("integer > 0 expected")
       if is_live() then {
          split.first.set_width().reset_layout()
@@ -1125,6 +1127,7 @@ class Terminal(TabItem, VtUI)
    end
 
    public set_list_height(n)
+      /n := scale(300)
       columns.set_height(0 < integer(n)) | return error("integer > 0 expected")
       if is_live() then {
          split.first.set_height().reset_layout()
@@ -1245,7 +1248,7 @@ class Terminal(TabItem, VtUI)
       every put(env, System.environ())
       env_put(env, "FLOWTERM", "1")
       env_put(env, "TERM", "xterm")
-      sh := \shell | \opts["sh"] | System.getpw(System.getuid()).shell
+      sh := \shell | System.getpw(System.getuid()).shell
       if /sh | *sh = 0 then
          sh := "/bin/sh"
       if /opts["nx"] then {
@@ -2063,38 +2066,11 @@ $endif
    end
 
    public new(dir, other, revert_tab)
-      local start_dir, o, c
+      local start_dir, c, e
       TabItem.new()
       self.revert_tab := revert_tab
       setup()
       setup_search_panel()
-      if \other then {
-         if other.focus_columns_button.is_checked() then {
-            focus_columns_button.set_is_checked(&yes)
-            columns.set_accepts_focus(&yes)
-         }
-         split.first.set_size(other.split.first.w_spec, other.split.first.h_spec)
-         split.second.set_size(other.split.second.w_spec, other.split.second.h_spec)
-         if \other.split.sizer.is_horizontal_flag then
-            split.reorient()
-         if \other.split.first.is_hidden_flag then
-            on_max_terminal()
-         else if \other.split.second.is_hidden_flag then
-            on_max_list()
-         sorter := other.sorter
-         ascending := other.ascending
-         annotate_opt := other.annotate_opt
-         c := if \other.is_hidden_flag then other.remembered_focus else other.parent_dialog.focus
-         set_remembered_focus(if c === other.columns then columns else output)
-         log_file := other.log_file
-      } else {
-         if \opts["hs"] then
-            split.reorient()
-         sorter := Files.name_cmp
-         annotate_opt := SHOW_NAME_ONLY
-         set_remembered_focus(output)
-      }
-      synch_paints()
       label_border.set_x_align(Align.L)
       columns.
          set_item_paint(AnnotatedIconFilesItemPaint()).
@@ -2118,23 +2094,6 @@ $endif
       if \opts["v"] then
          output.set_verbose(&yes)
 
-      if o := \opts["hist"] then
-         set_history_size(o) | stop("Invalid -hist: ", &why)
-      if o := \opts["list-width"] then
-         set_list_width(o) | stop("Invalid -list-width: ", &why)
-      if o := \opts["list-height"] then
-         set_list_height(o) | stop("Invalid -list-height: ", &why)
-      if o := \opts["fg"] then
-         output.set_normal_fg(o) | stop("Invalid -fg: ", &why)
-      if o := \opts["bg"] then
-         output.set_normal_bg(o) | stop("Invalid -bg: ", &why)
-      if o := \opts["rev-fg"] then
-         output.set_reverse_fg(o) | stop("Invalid -rev-fg: ", &why)
-      if o := \opts["rev-bg"] then
-         output.set_reverse_bg(o) | stop("Invalid -rev-bg: ", &why)
-      if o := \opts["font"] then
-         output.set_vt_font(o) | stop("Invalid -font: ", &why)
-
       favourites_list.set_size().set_selection_list(get_favourites_directories())
       sort_dirs_menu_item := CheckBoxMenuItem().
          set_label("Sort dirs").
@@ -2145,11 +2104,7 @@ $endif
       show_hidden_menu_item := CheckBoxMenuItem().
          set_label("Show hidden files").
          connect(on_show_hidden_menu_item, Event.ACTION)
-      if \other then {
-         sort_dirs_menu_item.set_is_checked(other.sort_dirs_menu_item.get_status())
-         mix_entries_menu_item.set_is_checked(other.mix_entries_menu_item.get_status())
-         show_hidden_menu_item.set_is_checked(other.show_hidden_menu_item.get_status())
-      }
+
       filter.set_selection_list([u"*"])
       history_list.set_size().set_selection_list([])
       input := []
@@ -2160,12 +2115,49 @@ $endif
       theme_toolbar_button(home_button, "go-home")
       theme_toolbar_button(refresh_button, "view-refresh")
       theme_toolbar_button(focus_columns_button, "key-enter")
+
       if \other then {
+         if other.focus_columns_button.is_checked() then {
+            focus_columns_button.set_is_checked(&yes)
+            columns.set_accepts_focus(&yes)
+         }
+         split.first.set_size(other.split.first.w_spec, other.split.first.h_spec)
+         split.second.set_size(other.split.second.w_spec, other.split.second.h_spec)
+         columns.set_size(other.columns.w_spec, other.columns.h_spec)
+         if \other.split.sizer.is_horizontal_flag then
+            split.reorient()
+         if \other.split.first.is_hidden_flag then
+            on_max_terminal()
+         else if \other.split.second.is_hidden_flag then
+            on_max_list()
+         sorter := other.sorter
+         ascending := other.ascending
+         annotate_opt := other.annotate_opt
+         c := if \other.is_hidden_flag then other.remembered_focus else other.parent_dialog.focus
+         set_remembered_focus(if c === other.columns then columns else output)
+         log_file := other.log_file
+         output.
+            set_normal_fg(other.output.normal_fg).
+            set_normal_bg(other.output.normal_bg).
+            set_reverse_fg(other.output.reverse_fg).
+            set_reverse_bg(other.output.reverse_bg).
+            set_font(other.output.font_family || "," || other.output.font_size).
+            set_history_size(other.output.history_size) | syserr("Clone output setting failed: " || &why)
+         set_shell(other.shell)
+         sort_dirs_menu_item.set_is_checked(other.sort_dirs_menu_item.get_status())
+         mix_entries_menu_item.set_is_checked(other.mix_entries_menu_item.get_status())
+         show_hidden_menu_item.set_is_checked(other.show_hidden_menu_item.get_status())
          history := clone(other.history)
          history_pos := other.history_pos
          columns_pos_table := clone(other.columns_pos_table)
          set_cwd(other.cwd, &yes)
       } else {
+         set_list_width()
+         set_list_height()
+         set_history_size()
+         sorter := Files.name_cmp
+         annotate_opt := SHOW_NAME_ONLY
+         set_remembered_focus(output)
          history := []
          history_pos := 0
          columns_pos_table := table()
@@ -2173,7 +2165,11 @@ $endif
             start_dir := Files.realpath(\dir) | info_msg("Invalid tab start directory: " || &why)
          /start_dir := ucs(Files.getcwd()) | u"/"
          set_cwd(start_dir)
+         # Apply global default tab options.
+         every e := !glob_cmds do
+            do_tab_cmd(e) | stop(&why)
       }
+      synch_paints()
       update_grey()
       return
    end
@@ -2610,10 +2606,45 @@ $endif
    end
 end
 
-procedure usage(opt_help)
-   ewrite("Usage: flowterm [OPTIONS] [DIRS/TAB-CONFIG]")
-   ewrite(opt_help)
-   ewrite("For more details, visit http://objecticon.sourceforge.net/FlowTerm.html")
+procedure usage(opts)
+   local u
+   ewrite("Usage: flowterm [OPTIONS] [DEFAULT TAB OPTS] [DIRS/TAB OPTS]")
+   options_help(opts)
+   ewrite("Tab options begin with a ':', as follows :-")
+   help_line(":max-list", "Maximize the space for the list, so the terminal is not visible.")
+   help_line(":max-term", "Maximize the space for the terminal, so the files list is not visible.")
+   help_line(":restore", "Return to normal split between file list and terminal.")
+   help_line(":list-focus", "Allow keyboard focus in the file list.")
+   help_line(":reorient, :re-orient", "Toggle the orientation of the file list/terminal split.")
+   help_line(":sort-name", "Sort the file list by name, or if the file list is already sorted by name, toggle the sort order.")
+   help_line(":sort-date", "As `sort-name`, but sort by date.")
+   help_line(":sort-size", "As `sort-name`, but sort by size.")
+   help_line(":show-name-only", "Show only the name in the file list.")
+   help_line(":show-date", "Show name and date in the file list.")
+   help_line(":show-size", "Show name and size in the file list.")
+   help_line(":mix-entries", "Toggle whether or not to mix directories and files together in the list.")
+   help_line(":show-hidden", "Toggle whether or not to show hidden files and directories in the list.")
+   help_line(":sort-dirs", "Toggle whether or not to sort the directory portion of the list in the same way as the files (by default, the directories are always sorted by name).")
+   help_line(":select", "Make this tab the selected tab.")
+   help_line(":adjacent", "Add this tab adjacent to the current tab, rather than at the end of all the tabs.")
+   help_line(":sh=STRING", "Specify the shell to run.")
+   help_line(":run=STRING", "Run the given string in the shell")
+   help_line(":font=FONT", "Set the font, which should be fixed width.")
+   help_line(":fg=COLOUR", "Specify the foreground colour.")
+   help_line(":bg=COLOUR", "Specify the background colour.")
+   help_line(":rev-fg=COLOUR", "Specify the reverse-mode foreground colour.")
+   help_line(":rev-bg=COLOUR", "Specify the reverse-mode background colour.")
+   help_line(":hist=INTEGER", "Specify the history size.")
+   help_line(":list-width=INTEGER", "The width of the list component in pixels.")
+   help_line(":list-height=INTEGER", "The height of the list component in pixels.")
+   help_line(":auto-close", "Automatically close the tab if the forked shell process ends.")
+   help_line(":title=STRING" , "Set the title of the tab.  The default is to show the shell's current directory.")
+   u := URL("http://objecticon.sourceforge.net/FlowTerm.html")
+   ewrites("For more details, visit ")
+   if Files.is_flowterm_tty(FileStream.stderr) then
+      ewrite(Files.begin_link(u), u.str(), Files.end_link())
+   else
+      ewrite(u.str())
 end
 
 procedure main(a)
@@ -2621,19 +2652,9 @@ procedure main(a)
    opts := options(a, [Opt("x",string,"The location of the 'flowterm-extras' directory; by default 'flowterm-extras' in your home directory.  This directory's 'bin' subdirectory is added to the front of the PATH variable"),
                        Opt("nx",,"Don't add any flowterm extras directory to the PATH.  The -x option is ignored"),
                        Opt("v",,"Verbose output"),
-                       Opt("hist",integer,"History scrollback size.  The default is 500"),
-                       Opt("hs",,"Start each tab by default with a horizontal rather than a vertical split"),
-                       Opt("fg",string,"COLOUR#The foreground colour of the terminal"),
-                       Opt("bg",string,"COLOUR#The backround colour of the terminal"),
-                       Opt("rev-fg",string,"COLOUR#The reverse-mode foreground colour of the terminal, by default simply the terminal background"),
-                       Opt("rev-bg",string,"COLOUR#The reverse-mode background colour of the terminal, by default simply the terminal foreground"),
-                       Opt("font",string,"FONT#The terminal font.  This must be a monospace font.  By default, \"fixed\" at the default font size"),
                        Opt("width",integer,"CHARS#The preferred width of the terminal, in characters.  This only applies to the first visible terminal tab."),
                        Opt("height",integer,"LINES#The preferred height of the terminal, in lines.  This only applies to the first visible terminal tab."),
-                       Opt("list-width",integer,"PIXELS#The width of the list component in pixels"),
-                       Opt("list-height",integer,"PIXELS#The height of the list component in pixels"),
-                       Opt("t",string,"The window title, by default \"FlowTerm\""),
-                       Opt("sh",string,"The shell to run in each tab, by default the user's default shell")],
+                       Opt("t",string,"The window title, by default \"FlowTerm\"")],
                        usage)
    ImageCache.
       name_image("rpp.HELP_64", HELP).
@@ -2642,9 +2663,12 @@ procedure main(a)
       name_image("rpp.KEYBOARD_24", KEYBOARD).
       name_image("rpp.EXIT_24", EXIT)
    insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(FLOWTERM_LOGO))
+   glob_cmds := []
+   while a[1,1] == ":" do
+      put(glob_cmds, pop(a)[2:0])
+   if *a = 0 then
+      put(a, "")
    d := FlowTermDialog()
-   if *a = 0 | a[1][1] == ":" then
-      push(a, "")
    d.do_tab_cmd(a) | stop(&why)
    t := \d.tabs.which_one | d.tabs.children[1]
    d.set_focus(t.remembered_focus)
