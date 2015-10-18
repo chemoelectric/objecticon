@@ -1111,13 +1111,11 @@ class Terminal(TabItem, VtUI)
    end
 
    public set_history_size(n)
-      /n := 500
       output.set_history_size(0 <= integer(n)) | return error("integer >= 0 expected")
       return self
    end
 
    public set_list_width(n)
-      /n := scale(300)
       columns.set_width(0 < integer(n)) | return error("integer > 0 expected")
       if is_live() then {
          split.first.set_width().reset_layout()
@@ -1127,7 +1125,6 @@ class Terminal(TabItem, VtUI)
    end
 
    public set_list_height(n)
-      /n := scale(300)
       columns.set_height(0 < integer(n)) | return error("integer > 0 expected")
       if is_live() then {
          split.first.set_height().reset_layout()
@@ -2083,12 +2080,10 @@ $endif
       columns.view.
          connect(on_columns_rpress, Event.MOUSE_RIGHT_PRESS).
          connect(on_columns_move, Event.MOUSE_MOVEMENT)
-
       trail.
          set_height().
          set_constraint("l_inset", scale(10)).
          connect(on_trail, FileTrail.DIR_CHANGED_EVENT)
-
       output.
          set_ui(self)
       if \opts["v"] then
@@ -2152,9 +2147,6 @@ $endif
          columns_pos_table := clone(other.columns_pos_table)
          set_cwd(other.cwd, &yes)
       } else {
-         set_list_width()
-         set_list_height()
-         set_history_size()
          sorter := Files.name_cmp
          annotate_opt := SHOW_NAME_ONLY
          set_remembered_focus(output)
@@ -2608,9 +2600,11 @@ end
 
 procedure usage(opts)
    local u
-   ewrite("Usage: flowterm [OPTIONS] [DEFAULT TAB OPTS] [DIRS/TAB OPTS]")
+   ewrite("Usage: flowterm [OPTIONS] [ALL TAB OPTS] [DIRS/PER TAB OPTS]")
    options_help(opts)
-   ewrite("Tab options begin with a ':', as follows :-")
+   ewrite()
+   help_line("Tab options begin with a ':', as follows :-")
+   ewrite()
    help_line(":max-list", "Maximize the space for the list, so the terminal is not visible.")
    help_line(":max-term", "Maximize the space for the terminal, so the files list is not visible.")
    help_line(":restore", "Return to normal split between file list and terminal.")
@@ -2627,20 +2621,20 @@ procedure usage(opts)
    help_line(":sort-dirs", "Toggle whether or not to sort the directory portion of the list in the same way as the files (by default, the directories are always sorted by name).")
    help_line(":select", "Make this tab the selected tab.")
    help_line(":adjacent", "Add this tab adjacent to the current tab, rather than at the end of all the tabs.")
-   help_line(":sh=STRING", "Specify the shell to run.")
-   help_line(":run=STRING", "Run the given string in the shell")
-   help_line(":font=FONT", "Set the font, which should be fixed width.")
-   help_line(":fg=COLOUR", "Specify the foreground colour.")
-   help_line(":bg=COLOUR", "Specify the background colour.")
-   help_line(":rev-fg=COLOUR", "Specify the reverse-mode foreground colour.")
-   help_line(":rev-bg=COLOUR", "Specify the reverse-mode background colour.")
-   help_line(":hist=INTEGER", "Specify the history size.")
-   help_line(":list-width=INTEGER", "The width of the list component in pixels.")
-   help_line(":list-height=INTEGER", "The height of the list component in pixels.")
+   help_line(":sh=STRING", "Specify the shell to run.  The default is the user's default shell.")
+   help_line(":run=STRING", "Run the given string in the shell.")
+   help_line(":font=FONT", "Set the font, which should be fixed width.  The default is the font 'fixed'.")
+   help_line(":fg=COLOUR", "Specify the foreground colour.  The default is the dialog's foreground colour.")
+   help_line(":bg=COLOUR", "Specify the background colour.  The default is the dialog's foreground colour.")
+   help_line(":rev-fg=COLOUR", "Specify the reverse-mode foreground colour.  The default is the background colour.")
+   help_line(":rev-bg=COLOUR", "Specify the reverse-mode background colour.  The default is the foreground colour.")
+   help_line(":hist=INTEGER", "Specify the history size.  The default is 500.")
+   help_line(":list-width=INTEGER", "The width of the list component in pixels. The default is 300 scaled pixels.")
+   help_line(":list-height=INTEGER", "The height of the list component in pixels. The default is 300 scaled pixels.")
    help_line(":auto-close", "Automatically close the tab if the forked shell process ends.")
    help_line(":title=STRING" , "Set the title of the tab.  The default is to show the shell's current directory.")
    u := URL("http://objecticon.sourceforge.net/FlowTerm.html")
-   ewrites("For more details, visit ")
+   ewrites("\nFor more details, visit ")
    if Files.is_flowterm_tty(FileStream.stderr) then
       ewrite(Files.begin_link(u), u.str(), Files.end_link())
    else
