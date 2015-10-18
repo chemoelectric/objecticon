@@ -124,46 +124,52 @@ class Opt()
    end
 end
 
-procedure get_help(opts)
-   local e, f, ns, h, ph, i, cols, res
-   cols := LineEditorStream.get_console_width() | 80
-   res := RamStream()
-   every e := !opts do {
-      if res.tell() > 1 then
-         res.write()
-      ns := ""
-      every f := !e.names do
-         ns ||:= "-" || f || ", "
-      ns[-2:0] := ""
-      h := \e.help | ""
-      if \e.convert then {
-         h ? {
-            if ph := tab(upto('#')) then
-               h := (move(1), tab(0))
-            else
-               ph := map(Proc.get_name(e.convert), &lcase, &ucase)
-         }
-         ns ||:= " " || ph
+procedure options_help(opts)
+   every option_help(!opts)
+end
+
+procedure option_help(opt)
+   local f, ns, h, ph
+   ns := ""
+   every f := !opt.names do
+      ns ||:= "-" || f || ", "
+   ns[-2:0] := ""
+   h := \opt.help | ""
+   if \opt.convert then {
+      h ? {
+         if ph := tab(upto('#')) then
+            h := (move(1), tab(0))
+         else
+            ph := map(Proc.get_name(opt.convert), &lcase, &ucase)
       }
-      if *ns > 18 then
-         res.writes(ns, "\n", repl(" ", 20))
-      else
-         res.writes(left(ns, 20))
-      repeat {
-         if i := backto(' ', h, 1, cols - 25) then {
-            res.writes(h[1:i], "\n", repl(" ", 20))
-            h := h[i:0]
-         } else {
-            res.writes(h)
-            break
-         }
+      ns ||:= " " || ph
+   }
+   help_line(ns, h)
+end
+
+procedure help_line(ns, h)
+   static cols
+   local i
+   initial
+      cols := LineEditorStream.get_console_width() | 80
+   if *ns > 18 then
+      ewrites(ns, "\n", repl(" ", 20))
+   else
+      ewrites(left(ns, 20))
+   repeat {
+      if i := backto(' ', h, 1, cols - 25) then {
+         ewrites(h[1:i], "\n", repl(" ", 20))
+         h := h[i:0]
+      } else {
+         ewrite(h)
+         break
       }
    }
-   return res.done()
 end
 
 procedure options(arg, opts, usage, errproc)
-   local f,fList,fileArg,fn,ignore,optname,opttable,p,x,option,k,v,opt,opttype,convert,help
+   local f, fList, fileArg, fn, ignore, optname, opttable, p, x, 
+      option, k, v, opt, opttype, convert
    #
    #  Initialize.
    #
@@ -204,11 +210,11 @@ procedure options(arg, opts, usage, errproc)
       if /x then ignore := &null     # if end of args from file, stop ignoring
       else if x == ("-help" | "--help") & not member(opttable, "help") then {
          /usage := "Usage: " || FilePath(&progname).get(-1) || " [OPTIONS...]"
-         help := get_help(opts)
-         if usage := text(usage) then
-            ewrite(usage, "\n", help)
-         else
-            usage(help)
+         if usage := text(usage) then {
+            ewrite(usage)
+            options_help(opts)
+         } else
+            usage(opts)
          exit(0)
       } else x ? {
          if ="-" & not pos(0) & /ignore then {
