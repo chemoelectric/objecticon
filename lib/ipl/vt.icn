@@ -567,14 +567,12 @@ class Vt(LineBasedScrollArea, MenuMode)
       font_family := l[1]
       font_size := l[2]
       char_w := l[3]
-      set_font(font_family || "," || font_size)
       LineBasedScrollArea.initially()
       cursor_ticker.start()
    end
 
    private check_font(s)
       local fam, size, width, W
-      /s := "fixed"
       s ? {
          fam := tab(upto(',') | 0)
          (*fam > 0) | return error("font not in required format")
@@ -592,7 +590,11 @@ class Vt(LineBasedScrollArea, MenuMode)
       return [fam, size, width]
    end
 
+   # A wrapper around `set_font()`, which validates `s` as a valid
+   # font and resets the component if necessary.
+   #
    public set_vt_font(s)
+      s := string(s) | runerr(103, s)
       check_font(s) | fail
       set_font(s)
       if is_live() then {
@@ -2745,6 +2747,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       view.set_pointer("xterm")
       input_handler_coex := create input_handler()
       history_size := 500
+      set_font("fixed")
       vt_width := 80
       vt_height := 25
       reset_term()
