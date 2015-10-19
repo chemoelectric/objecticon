@@ -1110,13 +1110,8 @@ class Terminal(TabItem, VtUI)
       return self
    end
 
-   public set_history_size(n)
-      output.set_history_size(0 <= integer(n)) | return error("integer >= 0 expected")
-      return self
-   end
-
    public set_list_width(n)
-      columns.set_width(0 < integer(n)) | return error("integer > 0 expected")
+      columns.set_width(n)
       if is_live() then {
          split.first.set_width().reset_layout()
          split.do_layout().invalidate()
@@ -1125,7 +1120,7 @@ class Terminal(TabItem, VtUI)
    end
 
    public set_list_height(n)
-      columns.set_height(0 < integer(n)) | return error("integer > 0 expected")
+      columns.set_height(n)
       if is_live() then {
          split.first.set_height().reset_layout()
          split.do_layout().invalidate()
@@ -1144,14 +1139,26 @@ class Terminal(TabItem, VtUI)
             \param | return error("expected parameter to run")
             run_prog(param)
          }
-         "font" : output.set_vt_font(param) | fail
-         "fg": output.set_normal_fg(param) | fail
-         "bg": output.set_normal_bg(param) | fail
-         "rev-fg": output.set_reverse_fg(param) | fail
-         "rev-bg": output.set_reverse_bg(param) | fail
-         "hist": set_history_size(param) | fail
-         "list-width": set_list_width(param) | fail
-         "list-height": set_list_height(param) | fail
+         "font" : {
+            \param | return error("expected parameter to font")
+            output.set_vt_font(param) | return error("invalid parameter to font: " || &why)
+         }
+         "fg": output.set_normal_fg(param) | return error("invalid parameter to fg: " || &why)
+         "bg": output.set_normal_bg(param) | return error("invalid parameter to bg: " || &why)
+         "rev-fg": output.set_reverse_fg(param) | return error("invalid parameter to rev-fg: " || &why)
+         "rev-bg": output.set_reverse_bg(param) | return error("invalid parameter to rev-bg: " || &why)
+         "hist": {
+            param := (0 <= integer(param)) | return error("integer >= 0 expected to hist")
+            output.set_history_size(param)
+         }
+         "list-width": {
+            param := (0 < integer(param)) | return error("integer > 0 expected to list-width")
+            set_list_width(param)
+         }
+         "list-height": {
+            param := (0 < integer(param)) | return error("integer > 0 expected to list-height")
+            set_list_height(param)
+         }
          "auto-close" : set_auto_close(&yes)
          "title" : set_title(param)
          "max-list" : on_max_list()
@@ -2603,7 +2610,7 @@ procedure usage(opts)
    ewrite("Usage: flowterm [OPTIONS] [ALL TAB OPTS] [DIRS/PER TAB OPTS]")
    options_help(opts)
    ewrite()
-   help_line("Tab options begin with a ':', as follows :-")
+   help_line("Tab options begin with a ':', as follows.  If a parameter is omitted, then it is 'null', which is a valid setting for some keys.")
    ewrite()
    help_line(":max-list", "Maximize the space for the list, so the terminal is not visible.")
    help_line(":max-term", "Maximize the space for the terminal, so the files list is not visible.")
@@ -2621,18 +2628,18 @@ procedure usage(opts)
    help_line(":sort-dirs", "Toggle whether or not to sort the directory portion of the list in the same way as the files (by default, the directories are always sorted by name).")
    help_line(":select", "Make this tab the selected tab.")
    help_line(":adjacent", "Add this tab adjacent to the current tab, rather than at the end of all the tabs.")
-   help_line(":sh=STRING", "Specify the shell to run.  The default is the user's default shell.")
+   help_line(":sh=STRING", "Specify the shell to run.  The default is null, meaning use the user's default shell.")
    help_line(":run=STRING", "Run the given string in the shell.")
    help_line(":font=FONT", "Set the font, which should be fixed width.  The default is the font 'fixed'.")
-   help_line(":fg=COLOUR", "Specify the foreground colour.  The default is the dialog's foreground colour.")
-   help_line(":bg=COLOUR", "Specify the background colour.  The default is the dialog's foreground colour.")
-   help_line(":rev-fg=COLOUR", "Specify the reverse-mode foreground colour.  The default is the background colour.")
-   help_line(":rev-bg=COLOUR", "Specify the reverse-mode background colour.  The default is the foreground colour.")
+   help_line(":fg=COLOUR", "Specify the foreground colour.  The default is null, meaning use the dialog's foreground colour.")
+   help_line(":bg=COLOUR", "Specify the background colour.  The default is null, meaning use the dialog's foreground colour.")
+   help_line(":rev-fg=COLOUR", "Specify the reverse-mode foreground colour.  The default is null, meaning use the background colour.")
+   help_line(":rev-bg=COLOUR", "Specify the reverse-mode background colour.  The default is null, meaning use the foreground colour.")
    help_line(":hist=INTEGER", "Specify the history size.  The default is 500.")
    help_line(":list-width=INTEGER", "The width of the list component in pixels. The default is 300 scaled pixels.")
    help_line(":list-height=INTEGER", "The height of the list component in pixels. The default is 300 scaled pixels.")
    help_line(":auto-close", "Automatically close the tab if the forked shell process ends.")
-   help_line(":title=STRING" , "Set the title of the tab.  The default is to show the shell's current directory.")
+   help_line(":title=STRING" , "Set the title of the tab.  The default is null, meaning show the shell's current directory.")
    u := URL("http://objecticon.sourceforge.net/FlowTerm.html")
    ewrites("\nFor more details, visit ")
    if Files.is_flowterm_tty(FileStream.stderr) then
