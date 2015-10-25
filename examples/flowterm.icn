@@ -1044,7 +1044,6 @@ class Terminal(TabItem, VtUI)
       columns_pos_table,
       history,
       history_pos,
-      nav_dir,
       io_task,
       check_cwd_time_task,
       pid, 
@@ -1326,12 +1325,7 @@ $endif
    end
 
    private check_cwd_change()
-      local s
-      s := ucs(System.getcwd(pid)) | fail
-      if s ~== cwd then {
-         set_cwd(s, Yes{ s === nav_dir })
-         nav_dir := &null
-      }
+      set_cwd(cwd ~== ucs(System.getcwd(pid)))
    end
 
    private update_grey()
@@ -1822,9 +1816,8 @@ $endif
       send_tty(s || u"\r")
    end
 
-   public goto_dir(d, nav)
+   public goto_dir(d)
       d := ucs(d) | fail
-      nav_dir := if /nav then &null else d
       run_prog(u"cd " || Format.shell_escape(d))
    end
 
@@ -2002,7 +1995,7 @@ $endif
       set_paint(AbbreviatedTextPaint(\title | FilePath(cwd).get(-1)))
    end
 
-   private set_cwd(s, nav)
+   private set_cwd(s)
       local lh, t, i
       s := ucs(s) | fail
       if \cwd then {
@@ -2030,7 +2023,7 @@ $endif
          parent_dialog.resynch_pointer()
       }
 
-      if /nav then {
+      (cwd === history[history_pos].dir) | {
          every 1 to history_pos - 1 do
             pop(history)
          push(history, default.HistoryEntry(cwd))
@@ -2152,7 +2145,7 @@ $endif
          history := clone(other.history)
          history_pos := other.history_pos
          columns_pos_table := clone(other.columns_pos_table)
-         set_cwd(other.cwd, &yes)
+         set_cwd(other.cwd)
       } else {
          sorter := Files.name_cmp
          annotate_opt := SHOW_NAME_ONLY
@@ -2202,7 +2195,7 @@ $endif
       he := history_list.object_get_selection()
       history_pos := keyof(history, he) | fail
       update_grey()
-      goto_dir(he.dir, &yes)
+      goto_dir(he.dir)
    end
 
    private on_home_button(ev)
@@ -2268,7 +2261,7 @@ $endif
       (history_pos < *history) | fail
       he := history[history_pos +:= 1]
       update_grey()
-      goto_dir(he.dir, &yes)
+      goto_dir(he.dir)
    end
 
    private on_next_button(ev)
@@ -2276,7 +2269,7 @@ $endif
       (history_pos > 1) | fail
       he := history[history_pos -:= 1]
       update_grey()
-      goto_dir(he.dir, &yes)
+      goto_dir(he.dir)
    end
 
    private on_focus_columns_button(ev)
