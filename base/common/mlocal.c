@@ -6,6 +6,7 @@
 
 static char *tryfile(char *dir, char *name, char *extn);
 static char *tryexe(char *dir, char *name);
+static word calc_ucs_index_step1(word utf8_len, word n);
 
 static char path1[MaxPath], path2[MaxPath], path3[MaxPath];
 
@@ -907,12 +908,12 @@ utf8_seq_len_arr[] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
         2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,
         5,5,5,5,6,6,-1,-1};
 
-int calc_ucs_index_step(word n)
+static word calc_ucs_index_step1(word utf8_len, word n)
 {
     static short cache[256];
     short s;
-    if (n <= 1)
-        return n;
+    if (n <= 1 || utf8_len == n)
+        return 0;
     if (n < ElemCount(cache) && cache[n] > 0)
         return cache[n];
     s = (short)(log(n) * 4.5);
@@ -926,6 +927,15 @@ int calc_ucs_index_step(word n)
     if (n < ElemCount(cache))
         cache[n] = s;
     return s;
+}
+
+void calc_ucs_index_step(word utf8_len, word len, word *index_step, word *n_offs)
+{
+    *index_step = calc_ucs_index_step1(utf8_len, len);
+    if (*index_step == 0)
+        *n_offs = 0;
+    else
+        *n_offs = (len - 1) / *index_step;
 }
 
 #if MSWIN32

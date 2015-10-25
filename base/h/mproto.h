@@ -57,7 +57,7 @@ void free_rangeset(struct rangeset *rs);
 int add_range(struct rangeset *cs, int from, int to);
 void print_rangeset(struct rangeset *rs);
 
-int calc_ucs_index_step(word length);
+void calc_ucs_index_step(word utf8_len, word len, word *index_step, word *n_offs);
 
 #if MSWIN32
 int strcasecmp(char *s1, char *s2);
