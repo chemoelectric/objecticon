@@ -912,8 +912,8 @@ static char *get_ucs_off(struct b_ucs *b, word n)
         return p + StrLen(b->utf8);
 
     /*
-     * If the index_step is 0, it means the utf8 string is ascii, so
-     * we can use direct indexing.
+     * If the index_step is 0, it means the utf8 string is ascii (or
+     * the ucs len <= 1), so we can use direct indexing.
      */
     if (b->index_step == 0)
         return p + n;
