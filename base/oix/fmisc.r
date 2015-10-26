@@ -893,11 +893,12 @@ end
  * Lookup a pointer into the utf8 string for the given ucs block at
  * unicode char position n (zero-based).  n may be b->length in which
  * case a pointer just past the end of the utf8 string is returned;
- * otherwise n must be >= 0 and < b->length.  For each ucs block, there
- * are (b->length-1)/b->index_step offset slots.  off[x] gives the
- * offset of unicode char ((x+1) * b->index_step).  For example if 
- * b->index_step = 8, then for a length of 20 there are two offset entries
- * for unicode chars 8 and 16 (zero based).
+ * otherwise n must be >= 0 and < b->length.  For each ucs block (with
+ * non-ascii chars), there are (b->length-1)/b->index_step offset
+ * slots.  off[x] gives the offset of unicode char ((x+1) *
+ * b->index_step).  For example if b->index_step = 8, then for a
+ * length of 20 there are two offset entries for unicode chars 8 and
+ * 16 (zero based).
  */
 static char *get_ucs_off(struct b_ucs *b, word n)
 {
@@ -909,6 +910,13 @@ static char *get_ucs_off(struct b_ucs *b, word n)
      */
     if (n == b->length)
         return p + StrLen(b->utf8);
+
+    /*
+     * If the index_step is 0, it means the utf8 string is ascii, so
+     * we can use direct indexing.
+     */
+    if (b->index_step == 0)
+        return p + n;
 
     /*
      * In the first step range, there is no offset to use.
@@ -981,8 +989,7 @@ struct b_ucs *make_ucs_block(dptr utf8, word length)
 
     if (length == 0)
         return emptystr_ucs;
-    index_step = calc_ucs_index_step(length);
-    n_offs = (length - 1) / index_step;
+    calc_ucs_index_step(StrLen(*utf8), length, &index_step, &n_offs);
     MemProtect(p = alcucs(n_offs));
     p->index_step = index_step;
     p->utf8 = *utf8;
@@ -1030,7 +1037,7 @@ struct b_ucs *make_ucs_substring(struct b_ucs *b, word pos, word len)
 
     p = get_ucs_off(b, first);
     StrLoc(utf8) = p;
-    if (last / b->index_step > first / b->index_step)
+    if (b->index_step == 0 || last / b->index_step > first / b->index_step)
         q = get_ucs_off(b, last + 1);
     else {
         word i = len;
@@ -1070,7 +1077,7 @@ void utf8_substr(struct b_ucs *b, word pos, word len, dptr res)
 
     p = get_ucs_off(b, first);
     StrLoc(*res) = p;
-    if (last / b->index_step > first / b->index_step)
+    if (b->index_step == 0 || last / b->index_step > first / b->index_step)
         q = get_ucs_off(b, last + 1);
     else {
         q = p;

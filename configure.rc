@@ -33,7 +33,7 @@ OILIB=$$OIHOME/lib
 OIPATH=($$OILIB/main $$OILIB/gui $$OILIB/xml $$OILIB/parser $$OILIB/ipl)
 OIINCL=($$OILIB/incl)
 OIFONTINFO=$$OIHOME/fontinfo.txt
-bind -a $$OIBIN /bin 
+bind -b $$OIBIN /bin 
 EOF
 echo creating paths.sh
 cat >paths.sh <<EOF
@@ -44,7 +44,7 @@ export OILIB="$$OIHOME/lib"
 export OIPATH="$$OILIB/main $$OILIB/gui $$OILIB/xml $$OILIB/parser $$OILIB/ipl"
 export OIINCL="$$OILIB/incl"
 export OIFONTINFO="$$OIHOME/fontinfo.txt"
-PATH="$$PATH:$$OIBIN"
+PATH="$$OIBIN:$$PATH"
 export TRACE OIMAXLEVEL
 EOF
 echo creating base/h/version.h

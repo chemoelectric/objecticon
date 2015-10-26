@@ -10,20 +10,6 @@ import xml, ipl.options, io, lang
 
 procedure main(a)
    local p, fmt, t, e, s, d, eh
-   if *a = 0 then {
-      write("Usage: testxml [FILE]... [OPTIONS]")
-      write("Test parse FILE(s)")
-      write("  -u                      Input is utf8")
-      write("  -g                      Show global names")
-      write("  -nc                     Don't preserve comments")
-      write("  -nv                     Don't validate")
-      write("  -fnw                    Format output with no whitespace")
-      write("  -ftt                    Format output with text trim")
-      write("  -far                    Format output as read")
-      write("  -fi INT                 Format output with given indent")
-      write("  -er                     Resolve all URLs to the empty string")
-      exit(0)
-   }
 
    p := XmlParser()
 
@@ -32,7 +18,16 @@ procedure main(a)
 
    fmt := XmlFormatter()
 
-   t := options(a, "-u!-g!-nc!-nv!-fnw!-fi+-ftt!-far!-er!")
+   t := options(a, [Opt("u",,"Input is utf8"),
+                    Opt("g",,"Show global names"),
+                    Opt("nc",,"Don't preserve comments"),
+                    Opt("nv",,"Don't validate"),
+                    Opt("fnw",,"Format output with no whitespace"),
+                    Opt("fi",integer,"Format output with given indent"),
+                    Opt("ftt",,"Format output with text trim"),
+                    Opt("far",,"Format output as read"),
+                    Opt("er",,"Resolve all URLs to the empty string")],
+                    "Usage: testxml [OPTIONS] [FILE...]")
 
    if \t["nv"] then
       p.set_validate(&no)
@@ -78,8 +73,5 @@ procedure main(a)
       } else {
          write("--- Parsing failed: ", &why)
       }
-
    }
 end
-
-

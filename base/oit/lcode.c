@@ -603,7 +603,7 @@ static void lemitcon(struct centry *ce)
         free(pair);
     }
     else if (ce->c_flag & F_UcsLit) {
-        int index_step, n_offs, length, i;
+        word index_step, n_offs, length, i;
         struct strconst *utf8;
         char *p, *e;
 
@@ -620,12 +620,7 @@ static void lemitcon(struct centry *ce)
             ++length;
         }
 
-        if (length == 0)
-            index_step = n_offs = 0;
-        else {
-            index_step = calc_ucs_index_step(length);
-            n_offs = (length - 1) / index_step;
-        }
+        calc_ucs_index_step(utf8->len, length, &index_step, &n_offs);
 
         outwordx(T_Ucs, "T_Ucs");
         outwordx((7 + n_offs) * WordSize, "   Block size");
@@ -635,13 +630,15 @@ static void lemitcon(struct centry *ce)
         outwordx(index_step, "   Index step");
 
         /* This mirrors the loop in fmisc.r (get_ucs_off) */
-        p = utf8->s;
-        i = 0;
-        while (i < length - 1) {
-            p += UTF8_SEQ_LEN(*p);
-            ++i;
-            if (i % index_step == 0) {
-                outwordx(p - utf8->s,   "Off of char %d", i);
+        if (index_step > 0) {
+            p = utf8->s;
+            i = 0;
+            while (i < length - 1) {
+                p += UTF8_SEQ_LEN(*p);
+                ++i;
+                if (i % index_step == 0) {
+                    outwordx(p - utf8->s,   "Off of char %d", i);
+                }
             }
         }
     }

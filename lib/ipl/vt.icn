@@ -257,6 +257,9 @@ class Vt(LineBasedScrollArea, MenuMode)
       C, S, A, K, U, V, CSA,
       CHARSET
 
+   public static const
+      OSC_CHAR
+
    private static init()
       EMPTY_ATTR := Attr()
       C := 1
@@ -270,6 +273,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       setup_key_table()
       CHARSET := table()
       setup_charsets()
+      OSC_CHAR := '\x08-\x0D\x20-\x7E'
    end
 
    private static setup_charsets()
@@ -563,14 +567,12 @@ class Vt(LineBasedScrollArea, MenuMode)
       font_family := l[1]
       font_size := l[2]
       char_w := l[3]
-      set_font(font_family || "," || font_size)
       LineBasedScrollArea.initially()
       cursor_ticker.start()
    end
 
    private check_font(s)
       local fam, size, width, W
-      /s := "fixed"
       s ? {
          fam := tab(upto(',') | 0)
          (*fam > 0) | return error("font not in required format")
@@ -588,7 +590,11 @@ class Vt(LineBasedScrollArea, MenuMode)
       return [fam, size, width]
    end
 
+   # A wrapper around `set_font()`, which validates `s` as a valid
+   # font and resets the component if necessary.
+   #
    public set_vt_font(s)
+      s := string(s) | runerr(103, s)
       check_font(s) | fail
       set_font(s)
       if is_live() then {
@@ -645,11 +651,11 @@ class Vt(LineBasedScrollArea, MenuMode)
        }
    end
 
-   private get_chs()
+   private get_chs(cs)
       local c
       wait_for_buff()
       buff ? {
-         c := tab(many(Gui.PRINTABLE_1)) | move(1)
+         c := tab(many(cs)) | move(1)
          buff := tab(0)
       }
       return c
@@ -673,7 +679,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private input_handler()
       local c
       repeat {
-         c := get_chs()
+         c := get_chs(Gui.PRINTABLE_1)
          case string(c) of {
             "\r" : do_cr()
             "\n" : do_nl()
@@ -724,9 +730,9 @@ class Vt(LineBasedScrollArea, MenuMode)
       repeat {
          c := peek_ch()
          if any(&digits, c) then {
-            t := get_ch()
+            t := get_chs(&digits)
             while any(&digits, peek_ch()) do
-               t ||:= get_ch()
+               t ||:= get_chs(&digits)
             put(l, integer(t))
          } else if c == u"\"" then {
             get_ch()  # opening "
@@ -738,7 +744,7 @@ class Vt(LineBasedScrollArea, MenuMode)
                # itself will produce a newline.
                if any('\r\n', peek_ch()) then
                   break
-               c := get_ch()
+               c := get_chs(~'\r\n\"')
                if c == u"\"" then
                   break
                t ||:= c
@@ -1468,14 +1474,14 @@ class Vt(LineBasedScrollArea, MenuMode)
          # Avoid stuck loop; see comment in read_params() above.
          if any('\r\n', peek_ch()) then
             break
-         c := get_ch()
+         c := get_chs(OSC_CHAR -- '\r\n\e')
          if c == u"\e" then {
-            # ESC\ terminates, as does ESC on its own.
+            # ESC-\ terminates, as does ESC on its own.
             if peek_ch() == u"\\" then
                get_ch()
             break
          }
-         if any('\x08-\x0D\x20-\x7E', c) then
+         if any(OSC_CHAR, c) then
             t ||:= c
          else
             break
@@ -1492,9 +1498,9 @@ class Vt(LineBasedScrollArea, MenuMode)
          # Avoid stuck loop; see comment in read_params() above.
          if any('\r\n', peek_ch()) then
             break
-         c := get_ch()
+         c := get_chs(~'\r\n\e')
          if c == u"\e" then {
-            # Only ESC\ terminates.
+            # Only ESC-\ terminates.
             if peek_ch() == u"\\" then {
                get_ch()
                break
@@ -2022,7 +2028,6 @@ class Vt(LineBasedScrollArea, MenuMode)
                if cursor_y > 1 & i := get_line_info() then {
                   cursor_y := i.first_whole - 1
                   cursor_y <:= 1
-                  #cursor_x := 1
                   ensure_line_visible(cursor_y)
                }
             }
@@ -2030,7 +2035,6 @@ class Vt(LineBasedScrollArea, MenuMode)
                if cursor_y < *contents & i := get_line_info() then {
                   cursor_y := i.last_whole + 1
                   cursor_y >:= *contents
-                  #cursor_x := cols
                   ensure_line_visible(cursor_y)
                }
             }
@@ -2641,70 +2645,60 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public do_search_prev()
-      local i, j, num, min_x, min_y, last_p, last_q, matching, r, p, q
+      local i, j, num, curr, prev, last, matching, r
       \search_term | fail
-      if \search_increment_flag then {
-         min_y := cursor_y
-         min_x := cursor_x
-      }
+      if \search_increment_flag then
+         curr := unflow_loc(cursor_x, \cursor_y)
       num := 0
       i := 1
       every r := unflowed() do {
          every j := find(search_term, map(line_str(r.l))) do {
             num +:= 1
-            if p := reflow_loc(j, i) &
-               (/last_p | /min_y | (p.y < min_y) | (p.y = min_y & p.x < min_x)) &
-               q := reflow_loc(j + *search_term, i)  then
-            {
+            last := Locn(j, i)
+            if \curr & ((i < curr.y) | (i = curr.y & j < curr.x)) then {
+               prev := last
                matching := num
-               last_p := p
-               last_q := q
             }
          }
          i +:= 1
       }
-      done_search(last_p, last_q, matching, num)
+      if /prev := \last then
+         matching := num
+      done_search(prev, matching, num)
       return self
    end
 
    public do_search_next()
-      local i, j, num, max_x, max_y, first_p, first_q, matching, last_p, last_q, r, p, q
+      local i, j, num, curr, first, matching, nxt, r, p
       \search_term | fail
-      if \search_increment_flag then {
-         max_y := mark_y
-         max_x := mark_x
-      }
+      if \search_increment_flag then
+         curr := unflow_loc(cursor_x, \cursor_y)
       num := 0
       i := 1
       every r := unflowed() do {
          every j := find(search_term, map(line_str(r.l))) do {
             num +:= 1
-            if p := reflow_loc(j, i) &
-               q := reflow_loc(j + *search_term, i) then 
-            {
-               if /first_p & (/max_y | (p.y > max_y) | (p.y = max_y & p.x > max_x)) then {
-                  first_p := p
-                  first_q := q
-                  matching := num
-               } else {
-                  last_p := p
-                  last_q := q
-               }
+            p := Locn(j, i)
+            /first := p
+            if /nxt & \curr & ((i > curr.y) | (i = curr.y & j > curr.x)) then {
+               nxt := p
+               matching := num
             }
          }
          i +:= 1
       }
-      if /first_p & \last_p then {
-         first_p := last_p
-         first_q := last_q
-         matching := num
-      }
-      done_search(first_p, first_q, matching, num)
+      if /nxt := \first then
+         matching := 1
+      done_search(nxt, matching, num)
       return self
    end
 
-   private done_search(at_c, at_m, matching, num)
-      if \at_c then {
+   private done_search(pos, matching, num)
+      local at_c, at_m
+      if \pos &
+         at_c := reflow_loc(pos.x, pos.y) &
+         at_m := reflow_loc(pos.x + *search_term, pos.y) then
+      {
          invalidate_region()
          cursor_x := at_c.x
          cursor_y := at_c.y
@@ -2716,7 +2710,11 @@ class Vt(LineBasedScrollArea, MenuMode)
          search_increment_flag := &yes
          invalidate_region()
          ui.search_msg(matching || "/" || num)
-      } else
+      } else if num > 0 then
+         # This should only happen if we got some matches, but
+         # couldn't reflow the selected one.
+         ui.search_msg(num || " matches")
+      else
          ui.search_msg("No results")
    end
 
@@ -2749,6 +2747,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       view.set_pointer("xterm")
       input_handler_coex := create input_handler()
       history_size := 500
+      set_font("fixed")
       vt_width := 80
       vt_height := 25
       reset_term()

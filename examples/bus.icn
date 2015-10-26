@@ -1917,7 +1917,13 @@ procedure main(a)
    &maxlevel := 50000
    ImageCache.name_image("rpp.BUS_LOGO", BUS_LOGO)
    insert(Dialog.ROOT_WATTRIBS, "icon", BUS_LOGO)
-   opts := options(a, "-n! -r:* -s! -j! -l! -L! -d:")
+   opts := options(a, [Opt("n",, "Use night bus data"),
+                       Opt("r",string, "Select route; multiple uses allowed",&yes),
+                       Opt("s",, "Space nodes animation"),
+                       Opt("j",, "Don't join same-named stops"),
+                       Opt("l",, "Force load and save from raw data"),
+                       Opt("L",, "Force load from raw data, but don't save"),
+                       Opt("d",string, "Specify data directory")])
    d := BusView()
    d.show_modal()
 end

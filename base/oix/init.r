@@ -363,23 +363,20 @@ static struct b_ucs *make_static_ucs_block(char *utf8)
     uword blksize;
     char *t;
     struct b_ucs *b;
+    word utf8_len;
     t = utf8;
+    utf8_len = strlen(utf8);
     length = 0;
     while (*t) {
         utf8_iter(&t);
         ++length;
     }
-    if (length == 0)
-        index_step = n_offs = 0;
-    else {
-        index_step = calc_ucs_index_step(length);
-        n_offs = (length - 1) / index_step;
-    }
+    calc_ucs_index_step(utf8_len, length, &index_step, &n_offs);
     blksize = sizeof(struct b_ucs) + ((n_offs - 1) * sizeof(word));
     Protect(b = calloc(blksize, 1), startuperr("Insufficient memory"));
     b->blksize = blksize;
     b->index_step = index_step;
-    CMakeStr(utf8, &b->utf8);
+    MakeStr(utf8, utf8_len, &b->utf8);
     b->length = length;
     b->n_off_indexed = 0;
     return b;

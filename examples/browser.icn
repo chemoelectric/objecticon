@@ -1264,13 +1264,19 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    private on_search_next()
-      search_pos +:= 1
+      if search_pos < *browser.sorted_searched then
+         search_pos +:= 1
+      else
+         search_pos := 1
       browser.goto_searched(search_pos)
       update_search_state()
    end
 
    private on_search_prev()
-      search_pos -:= 1
+      if search_pos > 1 then
+         search_pos -:= 1
+      else
+         search_pos := *browser.sorted_searched
       browser.goto_searched(search_pos)
       update_search_state()
    end
@@ -1280,13 +1286,14 @@ class BrowserTab(TabItem, BrowserUI)
          search_next_button.set_is_shaded(&yes)
          search_prev_button.set_is_shaded(&yes)
          search_label.set_label("No search")
+      } else if *browser.sorted_searched = 0 then {
+         search_next_button.set_is_shaded(&yes)
+         search_prev_button.set_is_shaded(&yes)
+         search_label.set_label("No results")
       } else {
-         search_next_button.set_is_shaded(No{ search_pos < *browser.sorted_searched})
-         search_prev_button.set_is_shaded(No{ search_pos > 1 })
-         search_label.set_label(if *browser.sorted_searched = 0 then
-            "No results"
-         else
-            search_pos || "/" || *browser.sorted_searched)
+         search_next_button.set_is_shaded(&no)
+         search_prev_button.set_is_shaded(&no)
+         search_label.set_label(search_pos || "/" || *browser.sorted_searched)
       }
    end
 

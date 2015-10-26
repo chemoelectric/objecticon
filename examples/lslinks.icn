@@ -10,12 +10,6 @@ import
 
 global opts, hc
 
-procedure usage(opt_help)
-   ewrite("Usage: lslinks [URL]... [OPTIONS]")
-   ewrite("List links in URL(s)")
-   ewrite(opt_help)
-end
-
 procedure main(args)
    local t, cookies
    opts := options(args, [Opt("a",string, "USER:PASS#Specify authorization"),
@@ -29,7 +23,9 @@ procedure main(args)
                           Opt("k",string, "FILE#Load cookies from file"),
                           Opt("text",,"Do text search for tags rather than parse"),
                           Opt("utf8",,"Retrieved data is in utf8 format")],
-                          usage)
+                          "Usage: lslinks [URL]... [OPTIONS]\n_
+                          List links in URL(s)")
+
    hc := HttpClient()
    hc.set_timeout(\opts["t"] * 1000)
    hc.set_retries(\opts["r"])

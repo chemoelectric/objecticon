@@ -50,7 +50,7 @@ set OIBIN=%OIHOME%\bin
 set OILIB=%OIHOME%\lib
 set OIPATH=%OILIB%\main;%OILIB%\gui;%OILIB%\xml;%OILIB%\parser;%OILIB%\ipl
 set OIINCL=%OILIB%\incl
-set PATH=%PATH%;%OIBIN%
+set PATH=%OIBIN%;%PATH%
 EOF
 echo creating paths.sh
 cat >paths.sh <<EOF
@@ -60,7 +60,7 @@ export OIBIN="\$OIHOME\\\\bin"
 export OILIB="\$OIHOME\\\\lib"
 export OIPATH="\$OILIB\\\\main;\$OILIB\\\\gui;\$OILIB\\\\xml;\$OILIB\\\\parser;\$OILIB\\\\ipl"
 export OIINCL="\$OILIB\\\\incl"
-PATH="\$PATH:$x/bin"
+PATH="$x/bin:\$PATH"
 export TRACE
 EOF
 echo creating base/h/version.h

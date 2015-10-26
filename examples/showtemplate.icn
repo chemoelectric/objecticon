@@ -1,19 +1,13 @@
 import ipl.webscraper, xml, lang, io, ipl.options
 
-procedure usage(opt_help)
-   ewrite("Usage: showtemplate [OPTIONS] template-file [src-file]")
-   ewrite("Utility to test an ipl.WebScraper template file")
-   ewrite(opt_help)
-end
-
 procedure main(a)
    local ws, p, s, d, k, v, opts
 
    opts := options(a, [Opt("u",, "Use ucs"),
                        Opt("e",, "Just show encoded template"),
                        Opt("d",, "Turn debug flag on")],
-                       usage)
-
+                       "Usage: showtemplate [OPTIONS] template-file [src-file]\n_
+                        Utility to test an ipl.WebScraper template file")
    if *a = 0 then
       stop("template file argument required")
 

@@ -18,12 +18,6 @@ procedure note(s)
    write("Scanning ", s)
 end
 
-procedure usage(opt_help)
-   ewrite("Usage: oidoc [OPTIONS] [SRC FILES/PACKAGES...]")
-   ewrite("Generate documentation")
-   ewrite(opt_help)
-end
-
 procedure main(a)
    local s, o, symbol_table
 
@@ -33,7 +27,8 @@ procedure main(a)
                        Opt("d",, "Generate scanning event debug output"),
                        Opt("r",, "Restrict output to specified packages"),
                        Opt("ci",, "Assume case-insensitive file system")],
-                       usage)
+                       "Usage: oidoc [OPTIONS] [SRC FILES/PACKAGES...]\n_
+                       Generate documentation")
 
    symbol_table := SymbolTable()
    if \opts["d"] then
