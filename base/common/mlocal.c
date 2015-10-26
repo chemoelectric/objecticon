@@ -912,8 +912,13 @@ static word calc_ucs_index_step1(word utf8_len, word len)
 {
     static short cache[256];
     short s;
-    if (len <= 1 || utf8_len == len)
+    /* String is all ascii, including empty string; return 0 indicating not 
+     * to use index */
+    if (utf8_len == len)
         return 0;
+    /* Single char non-ascii. */
+    if (len == 1)
+        return 1;
     if (len < ElemCount(cache) && cache[len] > 0)
         return cache[len];
     s = (short)(log(len) * 4.5);
