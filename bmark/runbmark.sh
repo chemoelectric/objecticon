@@ -27,7 +27,6 @@ bm()
 }
 
 . ../paths.sh
-PATH="$OIBIN:$PATH"
 
 [ -f custom.sh ] && . custom.sh
 
