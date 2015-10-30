@@ -1359,8 +1359,6 @@ class Canvas(Component,SelectiveObjectCodec)
          new_parent.add(cc)            
       }
       self.do_reset_all_layouts()
-      # Some of the things dragged may have become hidden/unhidden
-      self.hidden_change()
       self.set_modified()
    end
 
