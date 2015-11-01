@@ -150,7 +150,9 @@ class EventTab(TabItem)
             "Event.LOST_FOCUS",
             "Event.DIALOG_DISPOSED",
             "Event.IN_POINT_CHAIN",
-            "Event.POPUP_CLOSED"
+            "Event.POPUP_CLOSED",
+            "Event.INTERRUPTED",
+            "Event.RESUMED"
             ]
       event.set_selection_list(l)
       event.connect(self.on_apply, Event.ACTION)

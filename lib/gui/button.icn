@@ -138,7 +138,7 @@ abstract class Button(Toggle,Component)
       fire(Event.ACTION, e)
    end
 
-   protected events_interrupted()
+   public on_interrupted()
       # Avoid a little glitch which happens when a button is greyed out
       # while held down, leaving it stuck like that, since it never gets the
       # release event.
@@ -214,13 +214,11 @@ abstract class Button(Toggle,Component)
       Component.new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
       self.accepts_focus_flag := 1
-      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
-      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
-      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-      connect(self.handle_key, Event.KEY_PRESS)
+      connect(handle_lpress, Event.MOUSE_LEFT_PRESS)
+      connect(handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      connect(handle_key, Event.KEY_PRESS)
+      connect(on_interrupted, Event.INTERRUPTED)
       return
    end
 end
-
-
-

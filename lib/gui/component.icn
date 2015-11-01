@@ -320,8 +320,8 @@ class Component(Rect,Align,Connectable)
       is_initialized() | fail
       v := if (\parent).is_hidden() | \is_hidden_flag then &yes else &no
       if effective_is_hidden_flag ~===:= v then {
-         if \v then
-            events_interrupted()
+         if is_unshaded() then
+            fire(if /v then Event.RESUMED else Event.INTERRUPTED)
          every (!children).hidden_change()
       }
    end
@@ -350,18 +350,10 @@ class Component(Rect,Align,Connectable)
       is_initialized() | fail
       v := if (\parent).is_shaded() | \is_shaded_flag then &yes else &no
       if effective_is_shaded_flag ~===:= v then {
-         if \v then
-            events_interrupted()
+         if is_unhidden() then
+            fire(if /v then Event.RESUMED else Event.INTERRUPTED)
          every (!children).shaded_change()
       }
-   end
-
-   #
-   # This method is invoked when the component is about to be shaded
-   # or hidden, and will thus not receive subsequent events; it can
-   # adjust its state accordingly.
-   #
-   protected events_interrupted()
    end
 
    #
