@@ -603,14 +603,15 @@ class Component(Rect,Align,Connectable)
 
    #
    # Is the given Point (normally the current event) within this
-   # component?
+   # component?  `e` may be null, in which case we just test whether
+   # this component is in the point chain.
    #
    public in_region(e)
       #
       # Use the point chain if we can
       #
-      if e === parent_dialog.point_chain_source then
-         return keyof(parent_dialog.point_chain, self)
+      if /e | (e === parent_dialog.point_chain_source) then
+         return keyof(\parent_dialog.point_chain, self)
       else
          return get_clip_rect().inside(e.x, e.y)
    end
