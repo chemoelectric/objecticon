@@ -87,7 +87,7 @@ class CheckBoxTableColumn(BaseTableColumn)
 
    public finally()
       BaseTableColumn.finally()
-      get_table_content().disconnect(mouse_down_listener)
+      mouse_down_listener.disconnect()
       unchecked_paint.finally()
       checked_paint.finally()
    end

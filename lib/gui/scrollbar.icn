@@ -203,8 +203,8 @@ class ScrollBar(Component, HasOrientation)
    # Setting to &null disables wheel activity.
    #
    public set_wheel_component(c)
-      (\self.wheel_component).disconnect(wu_listener)
-      (\self.wheel_component).disconnect(wd_listener)
+      (\wu_listener).disconnect()
+      (\wd_listener).disconnect()
       self.wheel_component := c
       if /self.wheel_component then 
          wu_listener := wd_listener := &null
