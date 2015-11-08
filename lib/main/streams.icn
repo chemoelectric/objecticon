@@ -558,11 +558,11 @@ class BufferStream(Stream, HasUnderlyingStream)
 
    public close()
       local f
-      flush() | (f := 1)
+      flush() | (f := &why)
       if \close_underlying_flag then
-         other.close() | (f := 1)
+         other.close() | (/f := &why)
       rbuff := wbuff := &null
-      return /f & self
+      return if /f then self else error(f)
    end
 
    public seek(offset)
@@ -1541,15 +1541,15 @@ class FilterOutputStream(FilterStreamBase)
       local f
       \pid | runerr(219, self)
       close_cout()
-      flush_remaining() | (f := 1)
+      flush_remaining() | (f := &why)
       close_cin()
       close_cerr()
       if \close_underlying_flag then {
-         sink.close() | (f := 1)
-         (err_sink === sink) | err_sink.close() | (f := 1)
+         sink.close() | (/f := &why)
+         (err_sink === sink) | err_sink.close() | (/f := &why)
       }
       do_wait()
-      return /f & self
+      return if /f then self else error(f)
    end
 
    public get_mode()
@@ -1677,15 +1677,15 @@ class FilterInputStream(FilterStreamBase)
       \pid | runerr(219, self)
       close_cout()
       close_cin()
-      flush_cerr() | (f := 1)
+      flush_cerr() | (f := &why)
       close_cerr()
       if \close_underlying_flag then {
-         source.close() | (f := 1)
-         err_sink.close() | (f := 1)
+         source.close() | (/f := &why)
+         err_sink.close() | (/f := &why)
       }
       do_wait()
       self.buff := &null
-      return /f & self
+      return if /f then self else error(f)
    end
 
    public get_mode()
@@ -1796,9 +1796,9 @@ class SequenceStream(Stream, HasUnderlyingStream)
       local e, f
       if \close_underlying_flag then {
          every e := !ac do
-            e.close() | (f := 1)
+            e.close() | (f := &why)
       }
-      return /f & self
+      return if /f then self else error(f)
    end
 
    public new(a[])

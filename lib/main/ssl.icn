@@ -30,10 +30,10 @@ final class SslStream(Stream, HasUnderlyingStream, NoCopy)
 
    public close()
       local f
-      close_impl() | (f := 1)
+      close_impl() | (f := &why)
       if \close_underlying_flag then
-         other.close() | (f := 1)
-      return /f & self
+         other.close() | (/f := &why)
+      return if /f then self else error(f)
    end
 
    private native close_impl()

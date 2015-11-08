@@ -101,14 +101,14 @@ procedure use(e1, e2, e3)
    x := @e1 | fail
    /e3 := create x.close()
    push(\cleanup, e3)
-   /e2 | (v := @e2) | (f := 1)
+   /e2 | (v := @e2) | (f := &why)
    ldel1(\cleanup, e3)
-   @e3 | (f := 1)
-   return /f & v
+   @e3 | (/f := &why)
+   return if /f then v else error(f)
 end
 
 #
-# This is like `seq()`, but generates all results from `e2`.  So
+# This is like `use()`, but generates all results from `e2`.  So
 # unless the sequence is generated to its end, then the cleanup code
 # `e3` will not be run; in that case, the call should be wrapped in
 # `clean()`.
@@ -136,10 +136,10 @@ procedure clean(e)
    local t, v, f
    t := cleanup
    cleanup := []
-   (v := @e) | (f := 1)
-   do_cleanups() | (f := 1)
+   (v := @e) | (f := &why)
+   do_cleanups() | (/f := &why)
    cleanup := t
-   return /f & v
+   return if /f then v else error(f)
 end
 
 # Perform any outstanding cleanups in the {cleanup} list.  Fails if any of the
@@ -148,8 +148,8 @@ end
 package procedure do_cleanups()
    local f, x
    while x := pop(cleanup) do
-      @x | (f := 1)
-   return /f
+      @x | (/f := &why)
+   return /f | error(f)
 end
 
 # Convert an index position based on a length, to an absolute index,
