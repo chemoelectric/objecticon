@@ -130,26 +130,15 @@ end
 # then the procedure fails; otherwise the first result of {e} is
 # returned.
 #
-# See also {exception.clean_try}.
-#
 procedure clean(e)
-   local t, v, f
+   local t, v, f, x
    t := cleanup
    cleanup := []
    (v := @e) | (f := &why)
-   do_cleanups() | (/f := &why)
-   cleanup := t
-   return if /f then v else error(f)
-end
-
-# Perform any outstanding cleanups in the {cleanup} list.  Fails if any of the
-# expressions fail, succeeds otherwise.
-#
-package procedure do_cleanups()
-   local f, x
    while x := pop(cleanup) do
       @x | (/f := &why)
-   return /f | error(f)
+   cleanup := t
+   return if /f then v else error(f)
 end
 
 # Convert an index position based on a length, to an absolute index,
