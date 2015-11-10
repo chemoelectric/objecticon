@@ -62,14 +62,13 @@ end
 # in order to close all outstanding files.  If the `strict` flag is
 # set, then on an error reading a directory, an exception is thrown.
 # In this case the call should also be enclosed with one of the try
-# procedures, or a clean and try combination such as
-# `util.clean_try()`.
+# procedures.
 #
 # @example
-# @   clean_try{{
+# @   clean{try1{{
 # @      every f := dir_recurse(d, &yes) \ 50 do
 # @         write("got ", f)
-# @   }} | write("Problem: ", &why)
+# @   }}} | write("Problem: ", &why)
 #
 procedure dir_recurse(f, strict)
    local v, here, e

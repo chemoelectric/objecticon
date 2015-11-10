@@ -1,6 +1,6 @@
 package exception
 
-import util(clean,State,save_state)
+import util(State,save_state)
 
 package readable global 
    # The co-expression currently ready to handle an exception
@@ -87,26 +87,6 @@ end
 procedure try1(e)
    local v
    v := try(e)
-   if /thrower then
-      return v
-   &why := text(thrown) | ("thrown: " || image(thrown))
-   clear()
-end
-
-# This is a variation of {try1} which wraps the call to {try} in
-# {clean}, thus ensuring that any cleanup expressions in {use}
-# expressions are always evaluated.
-#
-# @example
-# @ # f will still be closed notwithstanding the throw.
-# @ clean_try{
-# @     use {  f := open("something"),
-# @            throw("something else")
-# @     }
-# @ }
-procedure clean_try(e)
-   local v
-   clean{v := try(e)}
    if /thrower then
       return v
    &why := text(thrown) | ("thrown: " || image(thrown))
