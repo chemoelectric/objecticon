@@ -1444,7 +1444,7 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, 
        l[4].flag(FileOpt.NONBLOCK) & 
        l[5].flag(FileOpt.NONBLOCK) &
        pid := System.fork()) | {
-          every (!l).close()
+          save_why{ every (!l).close() }
           fail
        }
       if pid > 0 then {
