@@ -793,10 +793,10 @@ end
 procedure write(a[])
    local e, f, r
    r := a[-1]
-   if is(a[1], Stream) then
-      f := pop(a)
+   f := if is(a[1], Stream) then
+      pop(a)
    else
-      f := FileStream.stdout
+      FileStream.stdout
    every e := \!a | Files.EOL do {
       if is(e, Stream) then {
          f.writes1(Files.EOL) | fail
@@ -813,10 +813,10 @@ end
 procedure writes(a[])
    local e, f, r
    r := a[-1]
-   if is(a[1], Stream) then
-      f := pop(a)
+   f := if is(a[1], Stream) then
+      pop(a)
    else
-      f := FileStream.stdout
+      FileStream.stdout
    every e := \!a do {
       if is(e, Stream) then
          f := e
@@ -1481,52 +1481,47 @@ end
 class FilterOutputStream(FilterStreamBase)
    private 
       sink
-   
+
+   private cp_cin()
+      local t
+      t := cin.in(1048576) | fail
+      if /t then
+         close_cin()
+      else
+         sink.writes1(t) | fail
+      return
+   end
+
+   private cp_cerr()
+      local t
+      t := cerr.in(1048576) | fail
+      if /t then
+         close_cerr()
+      else
+         err_sink.writes1(t) | fail
+      return
+   end
+
    public out(s)
-      local x, t
+      local x
       s := string(s) | runerr(103, s)
       repeat {
          x := do_poll() | fail
          case x of {
-            cin: {
-               t := cin.in(1048576) | fail
-               if /t then
-                  close_cin()
-               else
-                  sink.writes1(t) | fail
-            }
-            cerr: {
-               t := cerr.in(1048576) | fail
-               if /t then
-                  close_cerr()
-               else
-                  err_sink.writes1(t) | fail
-            }
-            cout:
-               return cout.out(s)
+            cin: cp_cin() | fail
+            cerr: cp_cerr() | fail
+            cout: return cout.out(s)
          }
       }
    end
 
    private flush_remaining()
-      local x, t
+      local x
       while \cin | \cerr do {
          x := do_poll() | fail
          case x of {
-            cin: {
-               t := cin.in(1048576) | fail
-               if /t then
-                  close_cin()
-               else
-                  sink.writes1(t) | fail
-            }
-            cerr: {
-               t := cerr.in(1048576) | fail
-               if /t then
-                  close_cerr()
-               else
-                  err_sink.writes1(t) | fail
-            }
+            cin: cp_cin() | fail
+            cerr: cp_cerr() | fail
          }
       }
       return
