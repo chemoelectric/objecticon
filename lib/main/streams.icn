@@ -1503,26 +1503,23 @@ class FilterOutputStream(FilterStreamBase)
    end
 
    public out(s)
-      local x
       s := string(s) | runerr(103, s)
       repeat {
-         x := do_poll() | fail
-         case x of {
-            cin: cp_cin() | fail
-            cerr: cp_cerr() | fail
+         case do_poll() of {
+            cin: cp_cin()
+            cerr: cp_cerr()
             cout: return cout.out(s)
-         }
+         } | fail
       }
    end
 
    private flush_remaining()
-      local x
       while \cin | \cerr do {
-         x := do_poll() | fail
-         case x of {
-            cin: cp_cin() | fail
-            cerr: cp_cerr() | fail
-         }
+         case do_poll() of {
+            cin: cp_cin()
+            cerr: cp_cerr()
+            default: syserr("Unexpected result from do_poll")
+         } | fail
       }
       return
    end
