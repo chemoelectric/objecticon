@@ -789,23 +789,72 @@ class AdmUsers(Users)
    end
 end
 
+# This interface represents the data from which the session responds
+# to incoming messages.  Errors are indicated by the various methods
+# by throwing exceptions.
+#
 abstract class Data9P()
+   # Return the root path.  `aname` is from the `TAttach` message.
    public abstract get_root(aname)
+
+   # Return the parent path of the path `p`.
    public abstract get_parent(p)
+
+   # Return the child of the path `p` with the given name; fail if
+   # there is no such path.
    public abstract get_child(p, name)
+
+   # Generate the children of path `p`.
    public abstract gen_children(p)
+
+   # Remove the child path `p2` from directory given by path `p1`.
    public abstract remove_child(p1, p2)
+
+   # Create and return new child path under the directory given by path `p`.
    public abstract create_child(p, name, uid, perm)
+
+   # Succeed iff the directory given by path `p` is empty.
    public abstract is_empty(p)
+
+   # This is invoked to note that the given path `p` has been modified
+   # by user `uid`.
    public abstract modified(p, uid)
+
+   # Open the given path `p`, and return another (possibly different) path on which
+   # to carry out future operations.
    public abstract open(p, mode)
+
+   # Write the string `s` to the path `p` at position `pos`.
    public abstract write(p, s, pos)
+
+   # Read `count` bytes from path `p` at position `pos`.
    public abstract read(p, pos, count)
+
+   # Close the given path
    public abstract close(p)
+
+   # Return an `Info` record for the given path `p`.
    public abstract get_info(p)
+
+   # Set the given path's settings from the given `Info` record.
    public abstract set_info(p, x)
+
+   # Return a `Qid` record for the given path.
    public abstract get_qid(p)
+
+   # Invoked when the given path is no longer referenced, if the
+   # session's `track_refs` flags is set.  Since this is invoked
+   # outside of the normal message processing code, it must not throw
+   # an exception to indicate an error.
+   #
    public abstract path_unreferenced(p)
+
+   # This method is used to create the asynchronous `Task` state.  By default
+   # it saves `ThrowHandlerState` and `CleanupState`.
+   #
+   public create_task_state()
+      return States(ThrowHandlerState(), CleanupState())
+   end
 end
 
 class TreeData9P(Data9P)
@@ -1241,7 +1290,7 @@ class Session9P()
             writer.notify()
          }
          t.revert()
-      }, States(ThrowHandlerState(), CleanupState()))
+      }, data.create_task_state())
       return t.start()
    end
 
@@ -1304,7 +1353,7 @@ class Session9P()
          writer.notify()
          if \verbose then write("READER EXITING")
          t.revert()
-      }, States(ThrowHandlerState(), CleanupState()))
+      }, data.create_task_state())
       return t.start()
    end
 
@@ -1316,7 +1365,7 @@ class Session9P()
             io(ts)
          }
          t.revert()
-      }, States(ThrowHandlerState(), CleanupState()))
+      }, data.create_task_state())
       return t.start()
    end
 
