@@ -843,9 +843,7 @@ abstract class Data9P()
    public abstract get_qid(p)
 
    # Invoked when the given path is no longer referenced, if the
-   # session's `track_refs` flags is set.  Since this is invoked
-   # outside of the normal message processing code, it must not throw
-   # an exception to indicate an error.
+   # session's `track_refs` flags is set.
    #
    public abstract path_unreferenced(p)
 
@@ -1074,11 +1072,12 @@ class Session9P()
    end
 
    public respond(x)
-      local t, y
+      local t, y, f, e
       t := []  # A list of paths temporarily used by respond_impl
-      clean{ y := try1{respond_impl(x, t)} | RError(x.tag, &why) }
-      every dec_ref(!t)
-      return y
+      clean{ (y := try1{respond_impl(x, t)}) | (f := &why) }
+      every e := !t do
+         clean{ try1{dec_ref(e)} | (/f := &why) }
+      return if /f then y else RError(x.tag, f)
    end
 
    private respond_impl(x, t)
