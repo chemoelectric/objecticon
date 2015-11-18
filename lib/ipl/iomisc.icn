@@ -77,6 +77,6 @@ procedure dir_recurse(f, strict)
    v := @e | fail
    repeat {
       suspend v.file
-      v := coact(, v.revert) | break
+      v := coact(, v.revert) | fail
    }
 end
