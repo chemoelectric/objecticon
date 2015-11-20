@@ -32,9 +32,9 @@ class IntersperseStream(GeneratorStream, HasUnderlyingStream)
       local e, f
       if \close_underlying_flag then {
          every e := !a do
-            e.close() | (f := 1)
+            e.close() | (f := &why)
       }
-      return /f & self
+      return if /f then self else error(f)
    end
 
    public new(a[])

@@ -316,10 +316,14 @@ class Component(Rect,Align,Connectable)
    # Called to re-compute the effective_is_hidden_flags under this tree.
    #
    public hidden_change()
+      local v
       is_initialized() | fail
-      self.effective_is_hidden_flag := 
-         if (\parent).is_hidden() | \self.is_hidden_flag then &yes else &no
-      every (!self.children).hidden_change()
+      v := if (\parent).is_hidden() | \is_hidden_flag then &yes else &no
+      if effective_is_hidden_flag ~===:= v then {
+         if is_unshaded() then
+            fire(if /v then Event.RESUMED else Event.INTERRUPTED)
+         every (!children).hidden_change()
+      }
    end
 
    #
@@ -342,10 +346,14 @@ class Component(Rect,Align,Connectable)
    # Called to re-compute the effective_is_shaded_flags under this tree.
    #
    public shaded_change()
+      local v
       is_initialized() | fail
-      self.effective_is_shaded_flag := 
-         if (\parent).is_shaded() | \self.is_shaded_flag then &yes else &no
-      every (!self.children).shaded_change()
+      v := if (\parent).is_shaded() | \is_shaded_flag then &yes else &no
+      if effective_is_shaded_flag ~===:= v then {
+         if is_unhidden() then
+            fire(if /v then Event.RESUMED else Event.INTERRUPTED)
+         every (!children).shaded_change()
+      }
    end
 
    #
@@ -355,10 +363,8 @@ class Component(Rect,Align,Connectable)
    #
    public set_draw_own_shading(s)
       check_flag(s)
-      if s ~=== self.draw_own_shading_flag then {
-         self.draw_own_shading_flag := s
+      if draw_own_shading_flag ~===:= s then
          self.invalidate()
-      }
       return self
    end
 
@@ -421,8 +427,7 @@ class Component(Rect,Align,Connectable)
    #
    public set_is_shaded(s)
       check_flag(s)
-      if s ~=== self.is_shaded_flag then {
-         self.is_shaded_flag := s
+      if is_shaded_flag ~===:= s then {
          self.shaded_change()
          self.invalidate()
       }
@@ -598,14 +603,15 @@ class Component(Rect,Align,Connectable)
 
    #
    # Is the given Point (normally the current event) within this
-   # component?
+   # component?  `e` may be null, in which case we just test whether
+   # this component is in the point chain.
    #
    public in_region(e)
       #
       # Use the point chain if we can
       #
-      if e === parent_dialog.point_chain_source then
-         return keyof(parent_dialog.point_chain, self)
+      if /e | (e === parent_dialog.point_chain_source) then
+         return keyof(\parent_dialog.point_chain, self)
       else
          return get_clip_rect().inside(e.x, e.y)
    end

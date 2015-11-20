@@ -237,16 +237,16 @@ $endif
    protected close_connection()
       local f
       if \ssl_connection then {
-         ssl_connection.close() | (f := 1)
-         connection.close() | (f := 1)
+         ssl_connection.close() | (f := &why)
+         connection.close() | (f := &why)
          ssl_connection := connection := &null
          fire(CLOSED_EVENT)
       } else if \connection then {
-         connection.close() | (f := 1)
+         connection.close() | (f := &why)
          connection := &null
          fire(CLOSED_EVENT)
       }
-      return /f & self
+      return if /f then self else error(f)
    end
 
    public close()

@@ -63,7 +63,12 @@ abstract class Button(Toggle,Component)
 
    public repeat_tick()
       repeat {
-         if Prog.get_runtime_millis() > self.repeat_delay then
+         # Note that repeat_delay can be null here: if we press and
+         # hold over a greyed-out button, then the button is enabled,
+         # and then we drag, we get the drag events (which start this
+         # ticker), but not the original press, which would set
+         # repeat_delay.
+         if Prog.get_runtime_millis() > \repeat_delay then
             fire(Event.BUTTON_HELD, held_event)
          repeat_ticker.sleep(Gui.REPEAT_RATE)
       }
@@ -115,6 +120,7 @@ abstract class Button(Toggle,Component)
          fire(Event.BUTTON_RELEASE, e)
          on_action(e)
       }
+      repeat_delay := &null
    end
 
    public clear_down()
@@ -132,13 +138,11 @@ abstract class Button(Toggle,Component)
       fire(Event.ACTION, e)
    end
 
-   public set_is_shaded(s)
+   public on_interrupted()
       # Avoid a little glitch which happens when a button is greyed out
       # while held down, leaving it stuck like that, since it never gets the
       # release event.
-      if \s then
-         clear_down()
-      return Component.set_is_shaded(s)
+      clear_down()
    end
    
    #
@@ -210,13 +214,11 @@ abstract class Button(Toggle,Component)
       Component.new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
       self.accepts_focus_flag := 1
-      connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
-      connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
-      connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-      connect(self.handle_key, Event.KEY_PRESS)
+      connect(handle_lpress, Event.MOUSE_LEFT_PRESS)
+      connect(handle_ldrag, Event.MOUSE_LEFT_DRAG)
+      connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      connect(handle_key, Event.KEY_PRESS)
+      connect(on_interrupted, Event.INTERRUPTED)
       return
    end
 end
-
-
-

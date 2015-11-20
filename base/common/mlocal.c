@@ -944,7 +944,7 @@ static word calc_ucs_index_step1(word utf8_len, word len)
         return 1;
     if (len < ElemCount(cache) && cache[len] > 0)
         return cache[len];
-    s = (short)(log(len) * 4.5);
+    s = (short)(log(len) * UcsIndexStepFactor);
     if (s >= len)
         s = len;
     else {

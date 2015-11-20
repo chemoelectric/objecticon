@@ -531,7 +531,7 @@ abstract class ScrollArea(Component)
    #
    public set_use_default_keys(s)
       check_flag(s)
-      disconnect(\default_key_listener)
+      (\default_key_listener).disconnect()
       if /s then {
          set_accepts_focus(&no)
          default_key_listener := &null

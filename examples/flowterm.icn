@@ -823,7 +823,7 @@ class Columns(LineBasedScrollArea)
       view.connect(handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
       view.connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
       view.connect(handle_in_chain, Event.IN_POINT_CHAIN)
-      view.connect(handle_exit, Event.MOUSE_EXIT)
+      every view.connect(handle_exit, Event.MOUSE_EXIT | Event.INTERRUPTED)
       view.connect(handle_move, Event.MOUSE_MOVEMENT)
       connect(handle_key, Event.KEY_PRESS)
       return

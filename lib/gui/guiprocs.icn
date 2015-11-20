@@ -54,7 +54,9 @@ class Event()
       LOST_FOCUS,
       DIALOG_DISPOSED,
       IN_POINT_CHAIN,
-      POPUP_CLOSED
+      POPUP_CLOSED,
+      INTERRUPTED,
+      RESUMED
 
    private static init()
       MOUSE_LEFT_PRESS := Mouse.LEFT_PRESS
@@ -99,6 +101,8 @@ class Event()
       DIALOG_DISPOSED := 500
       IN_POINT_CHAIN :=  501
       POPUP_CLOSED := 502
+      INTERRUPTED := 503
+      RESUMED := 504
    end
 end
 

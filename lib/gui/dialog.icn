@@ -805,11 +805,7 @@ class Dialog(Component)
       local t
       t := crossing
       crossing := elementset(point_chain)
-      # Shaded/hidden components can receive the EXIT event; for
-      # example the Terminal program may open a tab via a clicked
-      # link; it is desirable if the highlight/msg is cleared via an
-      # EXIT message.
-      fire_list_liberal(t -- crossing, Event.MOUSE_EXIT, e)
+      fire_list(t -- crossing, Event.MOUSE_EXIT, e)
       fire_list(crossing -- t, Event.MOUSE_ENTER, e)
       fire_list(point_chain, Event.IN_POINT_CHAIN, e)      
    end
@@ -851,15 +847,6 @@ class Dialog(Component)
       local c
       every c := !l do {
          if \c.cbwin & c.is_unshaded() & c.is_unhidden() then
-            c.fire(t, p)
-      }
-   end
-
-   # Like fire_list, but allow events to be sent to shaded/hidden components.
-   private fire_list_liberal(l, t, p)
-      local c
-      every c := !l do {
-         if \c.cbwin then
             c.fire(t, p)
       }
    end

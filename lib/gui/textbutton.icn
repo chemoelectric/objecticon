@@ -144,8 +144,6 @@ class TextButton(Button, BorderWhilstEntered)
       self.border := CompoundBorder().
                        set_outer(RaisedBorder()).
                        set_inner(EmptyBorder())
-      connect(handle_enter, Event.MOUSE_ENTER)
-      connect(handle_exit, Event.MOUSE_EXIT)
       return
    end
 end
@@ -186,7 +184,7 @@ abstract class BorderWhilstEntered(Component)
 
    public new()
       connect(handle_enter, Event.MOUSE_ENTER)
-      connect(handle_exit, Event.MOUSE_EXIT)
+      every connect(handle_exit, Event.MOUSE_EXIT | Event.INTERRUPTED)
       return
    end
 end

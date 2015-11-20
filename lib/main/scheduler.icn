@@ -32,7 +32,7 @@ class TaskStream(Stream, HasTask, HasUnderlyingStream)
 
    public close()
       if \close_underlying_flag then
-         return other.close()
+         other.close() | fail
       return self
    end
 
@@ -182,9 +182,7 @@ class Task()
       sleep_until := (last_sleep + \n) | &null
       self.interrupt_flag := &null
       scheduler.now_sleep(self)
-      if \interrupt_flag then
-         return error("Interrupted")
-      return self
+      return if \interrupt_flag then error("Interrupted") else self
    end
 
    # Interrupt the task, which may not be currently active.  If the

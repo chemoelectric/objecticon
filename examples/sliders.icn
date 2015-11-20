@@ -65,9 +65,6 @@ class Untitled(Dialog)
       return
    end
 
-   private handle_v2_events(ev, src, type)
-   end
-
    private setup()
       local paint_2, layout_1, paint_1, qb, paint, paint_3
       slider1 := Slider().
@@ -114,7 +111,6 @@ class Untitled(Dialog)
          set_toggles(&no).
          set_paint(paint)
       self.add(qb)
-      self.connect(self.handle_v2_events, &null)
       layout_1 := GridLayout().
          set_extra("cells")
       self.set_layout(layout_1)
