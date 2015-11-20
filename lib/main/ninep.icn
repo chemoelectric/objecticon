@@ -845,7 +845,9 @@ abstract class Data9P()
    # Invoked when the given path is no longer referenced, if the
    # session's `track_refs` flags is set.
    #
-   public abstract path_unreferenced(p)
+   public path_unreferenced(p)
+      return self
+   end
 
    # This method is used to create the asynchronous `Task` state.  By default
    # it saves `ThrowHandlerState` and `CleanupState`.
