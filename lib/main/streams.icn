@@ -2564,7 +2564,7 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
             DISCARD: 
                writer.close()
             FOREGROUND_FLUSH : {
-               flush_out() | (f := 1)
+               flush_out() | (f := &why)
                writer.close()
             }
             BACKGROUND_FLUSH:
@@ -2576,8 +2576,8 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
       if \reader then
          reader.close()
       if \close_underlying_flag then
-         other.close() | (f := 1)
-      return /f & self
+         other.close() | (f := &why)
+      return if /f then self else error(f)
    end
 
    #
