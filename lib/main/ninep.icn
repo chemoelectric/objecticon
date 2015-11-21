@@ -80,6 +80,10 @@ abstract class File9P()
       return self
    end
 
+   public get_file_key()
+      return self
+   end
+
    public path_unreferenced()
       return self
    end
@@ -793,11 +797,19 @@ end
 # to incoming messages.  Errors are indicated by the various methods
 # by throwing exceptions.
 #
+# Paths are arbitrary objects.  Several paths may represent the same
+# underlying actual server file if desired, but usually there is a
+# one-to-one correspondence.  In the former case, `get_file_key()`
+# should be overridden so that files with the exclusive bit set are
+# handled correctly; also care should be taken so that `get_qid()`
+# returns a `Qid` with the same path for the underlying file.
+#
 abstract class Data9P()
    # Return the root path.  `aname` is from the `TAttach` message.
    public abstract get_root(aname)
 
-   # Return the parent path of the path `p`.
+   # Return the parent path of the path `p`, failing if this is a root
+   # path.
    public abstract get_parent(p)
 
    # Return the child of the path `p` with the given name; fail if
@@ -821,7 +833,7 @@ abstract class Data9P()
    public abstract modified(p, uid)
 
    # Open the given path `p`, and return another (possibly different) path on which
-   # to carry out future operations.
+   # to carry out future i/o operations (read, write and close).
    public abstract open(p, mode)
 
    # Write the string `s` to the path `p` at position `pos`.
@@ -841,6 +853,18 @@ abstract class Data9P()
 
    # Return a `Qid` record for the given path.
    public abstract get_qid(p)
+
+   # Return a key for the given path, which will be identical to the
+   # key returned for another path which represents the same file on
+   # the server.  This is used to determine whether a file with the
+   # exclusive mode bit set can be opened.
+   #
+   # By default this simply returns `p`, and only needs to be
+   # overridden if several paths represent the same actual file.
+   #
+   public get_file_key(p)
+      return p
+   end
 
    # Invoked when the given path is no longer referenced, if the
    # session's `track_refs` flags is set.
@@ -921,6 +945,10 @@ class TreeData9P(Data9P)
       return p.get_qid()
    end
 
+   public get_file_key(p)
+      return p.get_file_key()
+   end
+
    public path_unreferenced(p)
       return p.path_unreferenced() & self
    end
@@ -939,8 +967,7 @@ class Session9P()
       fids,        # table mapping fid numbers to Fid() records
       data, 
       users,
-      paths,       # table mapping paths to sets of fid numbers representing those paths.  So
-                   # for each fid number n, n is an element of paths[fids[n].path].
+      open_cnt,    # table counting no. of fids open for i/o by file keys
       ref_cnt,
       track_refs,
       verbose
@@ -953,27 +980,31 @@ class Session9P()
       queue        # Queue of WorkItems for output
 
    private new_fid(n, path, uid, mode)
-      local s
       if member(fids, n) then
          throw("fid already in use:" || n)
       insert(fids, n, Fid(path, uid, mode))
-      (s := member(paths, path)) | insert(paths, path, s := set())
-      insert(s, n)
+      if \mode then
+         open_cnt[data.get_file_key(path)] +:= 1
       inc_ref(path)
    end
 
    private del_fid(n)
-      local x
+      local x, k, i
       x := member(fids, n) | throw("no such fid:" || n)
       delete(fids, n)
-      delete(paths[x.path], n)
-      if *paths[x.path] = 0 then
-         delete(paths, x.path)
+      if \x.omode then {
+         k := data.get_file_key(x.path)
+         i := (open_cnt[k] -:= 1)
+         if i < 0 then
+            syserr("negative open path count in Session9P")
+         if i = 0 then
+            delete(open_cnt, k)
+      }
       dec_ref(x.path)
    end
 
    private is_path_open(path)
-      return \fids[!paths[path]].omode
+      return member(open_cnt, data.get_file_key(path))
    end
 
    private lookup(n, t)
@@ -1005,8 +1036,8 @@ class Session9P()
       write("Fids(",*fids,")")
       every e := !sort(fids) do
          write(e[1], " -> Fid(", path_string(e[2].path), ", ", e[2].uid, ", ", if \e[2].omode then "open" else "closed", ")")
-      write("Paths(",*paths,")")
-      every e := !sort(paths) do {
+      write("Open counts(",*open_cnt,")")
+      every e := !sort(open_cnt) do {
          writes(path_string(e[1]), " -> ")
          every writes(!e[2], " ")
          write()
@@ -1138,7 +1169,7 @@ class Session9P()
             o := lookup(x.fid, t)
             /o.omode | throw("fid already open")
             info := data.get_info(o.path)
-            if iand(info.mode, Mode9.DMEXCL) ~= 0 & is_path_open(o.path) > 0 then
+            if iand(info.mode, Mode9.DMEXCL) ~= 0 & is_path_open(o.path) then
                throw("exclusive use file already open")
             if iand(info.mode, Mode9.DMDIR) ~= 0 &
                iand(x.mode, icom(FileOpt9.ORCLOSE)) ~= FileOpt9.OREAD then
@@ -1393,7 +1424,7 @@ class Session9P()
    public new(d, u)
       /u := DefaultUsers()
       self.fids := table()
-      self.paths := table()
+      self.open_cnt := table(0)
       self.ref_cnt := table(0)
       set_data(d)
       set_users(u)
