@@ -40,7 +40,7 @@ oref.obj: orefiasm.ri
 all:	oix
 
 oix:	$(OBJS)
-	$(LD) /STACK:7680000 /NODEFAULTLIB /INCREMENTAL:NO /NOLOGO \
+	$(LD) /INCREMENTAL:NO /NOLOGO \
 		-subsystem:console $(OBJS) $(LIBS) -out:oix.exe
 	$(INSTALL) oix "$(OIBIN)"
 

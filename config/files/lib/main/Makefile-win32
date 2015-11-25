@@ -15,7 +15,7 @@ $(AUTOSRC): 	mkconsts
 	./mkconsts.exe
 
 mkconsts:	mkconsts.c
-	cl /O1 /Zi    mkconsts.c
+	cl mkconsts.c
 
 $(LIBU): %.u: %.icn
 	oit -snc $(LIBSRC)

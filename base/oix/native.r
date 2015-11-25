@@ -2903,6 +2903,13 @@ function util_Time_get_system_micros()
    }
 end
 
+#if MSWIN32
+/* These have to be defined here, rather than in sys.h, since they
+ * would interfere with 'struct timezone' */
+#define timezone _timezone
+#define tzname _tzname
+#endif
+
 function util_Timezone_get_local_timezones()
    body {
 #if HAVE_STRUCT_TM_TM_GMTOFF && HAVE_STRUCT_TM_TM_ISDST && HAVE_STRUCT_TM_TM_ZONE
@@ -2948,10 +2955,10 @@ function util_Timezone_get_local_timezones()
     create_list(2, &tmp1);
     MakeInt(-timezone, &tmp2);
     list_put(&tmp1, &tmp2);
-     #if HAVE_TZNAME
+    #if HAVE_TZNAME
     cstr2string(tzname[0], &tmp2);
     list_put(&tmp1, &tmp2);
-     #endif
+    #endif
     list_put(&result, &tmp1);
     return result;
 #else
