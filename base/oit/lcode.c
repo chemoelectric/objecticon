@@ -80,7 +80,7 @@ static struct b_bignum * bigradix(char *input, int input_len);
 static word pc = 0;		/* simulated program counter */
 
 
-#define CodeCheck(n) if ((long)codep + (n) > (long)((long)codeb + maxcode)) \
+#define CodeCheck(n) if (DiffPtrsBytes(codep, codeb) + n > maxcode) \
 codeb = (char *) expand_table(codeb, &codep, &maxcode, 1,                   \
                           (n), "code buffer");
 
