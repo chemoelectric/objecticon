@@ -28,6 +28,8 @@ bm()
 
 . ../paths.sh
 
+unset TRACE OIMAXLEVEL
+
 [ -f custom.sh ] && . custom.sh
 
 export BM_VERBOSE BM_OUTPUT

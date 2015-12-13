@@ -2,6 +2,8 @@
 
 . ../paths.sh
 
+unset TRACE OIMAXLEVEL
+
 [ -f custom.sh ] && . ./custom.sh
 
 # if no files specifies, use all
