@@ -6,4 +6,3 @@ export OIPATH="$OILIB/main:$OILIB/gui:$OILIB/xml:$OILIB/parser:$OILIB/ipl"
 export OIINCL="$OILIB/incl"
 export OINATIVE="$OILIB/native"
 PATH="$OIBIN:$PATH"
-export TRACE OIMAXLEVEL

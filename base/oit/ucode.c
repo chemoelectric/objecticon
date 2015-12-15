@@ -559,7 +559,7 @@ int udis(int argc, char **argv)
 static void read_params(struct ucode_op *op)
 {
     int i;
-    long args[3];
+    word args[3];
     for (i = 0; i < 2; ++i) {
         switch (op->param_type[i]) {
             case TYPE_NONE:
@@ -572,7 +572,7 @@ static void read_params(struct ucode_op *op)
                 args[i] = uin_16();
                 break;
             case TYPE_STR:
-                args[i] = (long)uin_str();
+                args[i] = (word)uin_str();
                 break;
             case TYPE_SBIN: {
                 int l;
@@ -585,7 +585,7 @@ static void read_params(struct ucode_op *op)
                         AppChar(ucode_sbuf, '?');
                     ++s1;
                 }
-                args[i] = (long)str_install(&ucode_sbuf);
+                args[i] = (word)str_install(&ucode_sbuf);
                 break;
             }
             case TYPE_LBIN: {
@@ -599,7 +599,7 @@ static void read_params(struct ucode_op *op)
                         AppChar(ucode_sbuf, '?');
                     ++s1;
                 }
-                args[i] = (long)str_install(&ucode_sbuf);
+                args[i] = (word)str_install(&ucode_sbuf);
                 break;
             }
             default:

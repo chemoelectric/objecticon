@@ -244,7 +244,7 @@ extern "C"
 gb_Font *gb_create_Font(HDC hdc, HFONT hfont)
 {
     Font *f = new Font(hdc, hfont);
-    if (draw_debug) dbg("new font hfont=%x -> f=%p\n",(int)hfont,f);
+    if (draw_debug) dbg("new font hfont=%p -> f=%p\n",hfont,f);
     return (gb_Font *)f;
 }
 
