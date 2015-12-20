@@ -1607,14 +1607,14 @@ int setcanvas(wbp w, char *s)
                 XSetWMHints(wd->display, ws->win, &wmhints);
                 XMapWindow(wd->display, ws->win);
             } else
-                XIconifyWindow(wd->display, ws->win, DefaultScreen(wd));
+                XIconifyWindow(wd->display, ws->win, DefaultScreen(wd->display));
             break;
         }
 
         case WithdrawnState: {
             if (ws->state == RootState || ws->state == PopupState)
                 return Failed;
-            XWithdrawWindow(wd->display, ws->win, DefaultScreen(wd));
+            XWithdrawWindow(wd->display, ws->win, DefaultScreen(wd->display));
             break;
         }
 
