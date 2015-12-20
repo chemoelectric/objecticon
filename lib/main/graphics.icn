@@ -868,9 +868,14 @@ final class Window(NoCopy)
    public native query_root_pointer()
 
    #
-   # Return the current display size. as a two-element list.
+   # Return the current display size in pixels, as a two-element list.
    #
    public native get_display_size()
+
+   #
+   # Return the current display size in millimeters, as a two-element list.
+   #
+   public native get_display_size_mm()
 
    #
    # Return the current x, y position as a two-element list, relative to

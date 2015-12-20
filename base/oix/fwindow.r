@@ -745,6 +745,22 @@ function graphics_Window_get_display_size(self)
    }
 end
 
+function graphics_Window_get_display_size_mm(self)
+   body {
+      int width, height;
+      tended struct descrip result;
+      struct descrip t;
+      GetSelfW();
+      AttemptOp(getdisplaysizemm(self_w, &width, &height));
+      create_list(2, &result);
+      MakeInt(width, &t);
+      list_put(&result, &t);
+      MakeInt(height, &t);
+      list_put(&result, &t);
+      return result;
+   }
+end
+
 function graphics_Window_warp_pointer(self, x, y)
    if !cnv:C_integer(x) then
       runerr(101, x)

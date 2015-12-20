@@ -1129,6 +1129,13 @@ int getdisplaysize(wbp w, int *width, int *height)
     return Succeeded;
 }
 
+int getdisplaysizemm(wbp w, int *width, int *height)
+{
+    *width = GetDeviceCaps(dummy_hdc, HORZSIZE);
+    *height = GetDeviceCaps(dummy_hdc, VERTSIZE);
+    return Succeeded;
+}
+
 int querypointer(wbp w, int *x, int *y)
 {
     wsp ws = w->window;
