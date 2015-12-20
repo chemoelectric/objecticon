@@ -294,6 +294,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    int  querypointer    (wbp w, int *x, int *y);
    int  queryrootpointer(wbp w, int *x, int *y);
    int  getdisplaysize  (wbp w, int *width, int *height);
+   int  getdisplaysizemm(wbp w, int *width, int *height);
    int  raisewindow     (wbp w);
    int  focuswindow     (wbp w);
    int  setbg           (wbp w, char *s);

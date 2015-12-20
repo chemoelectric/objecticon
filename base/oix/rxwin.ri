@@ -4,8 +4,6 @@
 
 #define GetDepth(wd) DefaultDepth((wd)->display,DefaultScreen((wd)->display))
 #define GetVisual(wd) DefaultVisual((wd)->display,DefaultScreen((wd)->display))
-#define GetWidth(wd) DisplayWidth((wd)->display,DefaultScreen((wd)->display))
-#define GetHeight(wd) DisplayHeight((wd)->display,DefaultScreen((wd)->display))
 #define GetRoot(wd) DefaultRootWindow((wd)->display)
 
 /*
@@ -1607,14 +1605,14 @@ int setcanvas(wbp w, char *s)
                 XSetWMHints(wd->display, ws->win, &wmhints);
                 XMapWindow(wd->display, ws->win);
             } else
-                XIconifyWindow(wd->display, ws->win, DefaultScreen(wd));
+                XIconifyWindow(wd->display, ws->win, DefaultScreen(wd->display));
             break;
         }
 
         case WithdrawnState: {
             if (ws->state == RootState || ws->state == PopupState)
                 return Failed;
-            XWithdrawWindow(wd->display, ws->win, DefaultScreen(wd));
+            XWithdrawWindow(wd->display, ws->win, DefaultScreen(wd->display));
             break;
         }
 
@@ -1725,8 +1723,17 @@ char *getdisplay(wbp w)
 
 int getdisplaysize(wbp w, int *width, int *height)
 {
-    *width = GetWidth(w->window->display);
-    *height = GetHeight(w->window->display);
+    wdp wd = w->window->display;
+    *width = DisplayWidth(wd->display, DefaultScreen(wd->display));
+    *height = DisplayHeight(wd->display, DefaultScreen(wd->display));
+    return Succeeded;
+}
+
+int getdisplaysizemm(wbp w, int *width, int *height)
+{
+    wdp wd = w->window->display;
+    *width = DisplayWidthMM(wd->display, DefaultScreen(wd->display));
+    *height = DisplayHeightMM(wd->display, DefaultScreen(wd->display));
     return Succeeded;
 }
 

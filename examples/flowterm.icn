@@ -665,7 +665,7 @@ class Columns(LineBasedScrollArea)
       return .\cursor
    end
 
-   public handle_lmpress(e)
+   public handle_lpress(e)
       *parent_dialog.held = 1 | fail
       if \over then {
          if /e.ctrl then {
@@ -675,6 +675,14 @@ class Columns(LineBasedScrollArea)
             set_cursor(over)
             ensure_line_visible(get_row_for_index(over)) 
          }
+      } 
+   end
+
+   public handle_mpress(e)
+      *parent_dialog.held = 1 | fail
+      if \over then {
+         set_highlight(over)
+         held := over
       } 
    end
 
@@ -816,8 +824,8 @@ class Columns(LineBasedScrollArea)
       gutter := scale(8)
       item_paint := TextItemPaint()
       item_border := NullBorder().set_x_align(Align.L)
-      view.connect(handle_lmpress, Event.MOUSE_LEFT_PRESS)
-      view.connect(handle_lmpress, Event.MOUSE_MIDDLE_PRESS)
+      view.connect(handle_lpress, Event.MOUSE_LEFT_PRESS)
+      view.connect(handle_mpress, Event.MOUSE_MIDDLE_PRESS)
       view.connect(handle_lmdrag, Event.MOUSE_LEFT_DRAG)
       view.connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       view.connect(handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)

@@ -2151,6 +2151,12 @@ int getdisplaysize(wbp w, int *width, int *height)
     return Succeeded;
 }
 
+int getdisplaysizemm(wbp w, int *width, int *height)
+{
+    LitWhy("Display size unknown");
+    return Failed;
+}
+
 int getdepth(wbp w, int *res)
 {
     *res = w->window->pix->depth;
