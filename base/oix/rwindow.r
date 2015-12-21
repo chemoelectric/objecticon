@@ -7,6 +7,8 @@ static int colorphrase(char *buf, int *r, int *g, int *b, int *a);
 static double rgbval(double n1, double n2, double hue);
 static struct palentry *palsetup_palette;	/* current palette */
 
+#define Gray(r,g,b) (0.299 * (r) + 0.587 * (g) + 0.114 * (b))
+
 #if Graphics
 
 #if HAVE_LIBJPEG
@@ -227,7 +229,7 @@ static void linearfilter(struct filter *f)
 
 static int grey_band(int nb, int r, int g, int b)
 {
-    return (int)(nb * (0.299 * r + 0.587 * g + 0.114 * b) / 65535.0);
+    return (int)(nb * Gray(r, g, b) / 65535.0);
 }
 
 static void shadefilter(struct filter *f)
@@ -245,6 +247,7 @@ static void shadefilter(struct filter *f)
             k = grey_band(f->p.shade.nband, r, g, b);
             if (k != bk) {
                 v = f->p.shade.c + f->p.shade.m * k;
+                if (v > 65535) v = 65535;
                 imd->format->setpixel(imd, i, j, v, v, v, a);
             }
         }
@@ -2227,7 +2230,7 @@ char *rgbkey(int p, int r0, int g0, int b0)
             s = allchars;
         else
             s = c4list;
-        return s + (int)(0.5 + (0.299 * r + 0.587 * g + 0.114 * b) * (-p - 1));
+        return s + (int)(0.5 + Gray(r, g, b) * (-p - 1));
     }
 
     /*NOTREACHED*/
@@ -2740,7 +2743,7 @@ static void set_G8(struct imgdata *imd, int x, int y, int r, int g, int b, int a
 {
     int n = imd->width * y + x;
     unsigned char *s = imd->data + n;
-    *s++ = (0.299 * r + 0.587 * g + 0.114 * b) / 256;
+    *s++ = Gray(r, g, b) / 256;
 }
 
 static void get_G8(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
@@ -2755,7 +2758,7 @@ static void set_GA16(struct imgdata *imd, int x, int y, int r, int g, int b, int
 {
     int n = imd->width * y + x;
     unsigned char *s = imd->data + 2 * n;
-    *s++ = (0.299 * r + 0.587 * g + 0.114 * b) / 256;
+    *s++ = Gray(r, g, b) / 256;
     *s++ = a / 256;
 }
 static void get_GA16(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
@@ -2771,7 +2774,7 @@ static void set_AG16(struct imgdata *imd, int x, int y, int r, int g, int b, int
     int n = imd->width * y + x;
     unsigned char *s = imd->data + 2 * n;
     *s++ = a / 256;
-    *s++ = (0.299 * r + 0.587 * g + 0.114 * b) / 256;
+    *s++ = Gray(r, g, b) / 256;
 }
 static void get_AG16(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
 {
@@ -2785,7 +2788,7 @@ static void set_G16(struct imgdata *imd, int x, int y, int r, int g, int b, int 
 {
     int gr, n = imd->width * y + x;
     unsigned char *s = imd->data + 2 * n;
-    gr = (int)(0.299 * r + 0.587 * g + 0.114 * b);
+    gr = (int)Gray(r, g, b);
     *s++ =  gr / 256;
     *s++ =  gr % 256;
 }
@@ -2803,7 +2806,7 @@ static void set_GA32(struct imgdata *imd, int x, int y, int r, int g, int b, int
 {
     int gr, n = imd->width * y + x;
     unsigned char *s = imd->data + 4 * n;
-    gr = (int)(0.299 * r + 0.587 * g + 0.114 * b);
+    gr = (int)Gray(r, g, b);
     *s++ =  gr / 256;
     *s++ =  gr % 256;
     *s++ = a / 256;
