@@ -90,10 +90,7 @@ class FileDialog(Dialog)
    end
 
    public static ucs_list(l)
-      local t
-      t := []
-      every put(t, ucs(!l))
-      return t
+      return ipl.pdco.List{ucs(!l)}
    end
 
    public component_setup()
