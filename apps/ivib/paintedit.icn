@@ -292,6 +292,8 @@ class GridPaintEdit(PaintEdit)
       d.show_modal(self)
       fn := d.get_result() | fail
       s := Files.file_to_string(fn) | return alert_error(self, ["Couldn't load from " || fn, &why])
+      if ucs_cb.is_checked() then
+         s := ucs(s) | return alert_error(self, ["Input not in ucs format"])
       input.set_contents_str(s)
    end
 
@@ -304,6 +306,8 @@ class GridPaintEdit(PaintEdit)
       if s := d.get_result() then {
          Ivib.last_icon_dir := d.get_directory()
          s := ".img " || s || "\n"
+         if ucs_cb.is_checked() then
+            s := ucs(s)
          input.insert_string(s, e)
       }
    end
