@@ -8,6 +8,7 @@ static double rgbval(double n1, double n2, double hue);
 static struct palentry *palsetup_palette;	/* current palette */
 
 #define Gray(r,g,b) (0.299 * (r) + 0.587 * (g) + 0.114 * (b))
+#define IntGray(r,g,b) ((int)(Gray(r,g,b) + 0.5))
 
 #if Graphics
 
@@ -229,7 +230,7 @@ static void linearfilter(struct filter *f)
 
 static int grey_band(int nb, int r, int g, int b)
 {
-    return (int)(nb * Gray(r, g, b) / 65535.0);
+    return (int)(nb * Gray(r, g, b) / 65536.0);
 }
 
 static void shadefilter(struct filter *f)
@@ -2743,7 +2744,7 @@ static void set_G8(struct imgdata *imd, int x, int y, int r, int g, int b, int a
 {
     int n = imd->width * y + x;
     unsigned char *s = imd->data + n;
-    *s++ = Gray(r, g, b) / 256;
+    *s++ = IntGray(r, g, b) / 256;
 }
 
 static void get_G8(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
@@ -2758,7 +2759,7 @@ static void set_GA16(struct imgdata *imd, int x, int y, int r, int g, int b, int
 {
     int n = imd->width * y + x;
     unsigned char *s = imd->data + 2 * n;
-    *s++ = Gray(r, g, b) / 256;
+    *s++ = IntGray(r, g, b) / 256;
     *s++ = a / 256;
 }
 static void get_GA16(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
@@ -2774,7 +2775,7 @@ static void set_AG16(struct imgdata *imd, int x, int y, int r, int g, int b, int
     int n = imd->width * y + x;
     unsigned char *s = imd->data + 2 * n;
     *s++ = a / 256;
-    *s++ = Gray(r, g, b) / 256;
+    *s++ = IntGray(r, g, b) / 256;
 }
 static void get_AG16(struct imgdata *imd, int x, int y, int *r, int *g, int *b, int *a)
 {
@@ -2788,7 +2789,7 @@ static void set_G16(struct imgdata *imd, int x, int y, int r, int g, int b, int 
 {
     int gr, n = imd->width * y + x;
     unsigned char *s = imd->data + 2 * n;
-    gr = (int)Gray(r, g, b);
+    gr = IntGray(r, g, b);
     *s++ =  gr / 256;
     *s++ =  gr % 256;
 }
@@ -2806,7 +2807,7 @@ static void set_GA32(struct imgdata *imd, int x, int y, int r, int g, int b, int
 {
     int gr, n = imd->width * y + x;
     unsigned char *s = imd->data + 4 * n;
-    gr = (int)Gray(r, g, b);
+    gr = IntGray(r, g, b);
     *s++ =  gr / 256;
     *s++ =  gr % 256;
     *s++ = a / 256;
