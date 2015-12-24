@@ -1090,22 +1090,6 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     imd->format = &imgdataformat_MSBGRA32;
 }
 
-void drawimgdata0(wbp w, int x, int y, struct imgdata *imd)
-{
-    wsp ws = w->window;
-    int i, j;
-    gb_Draw d;
-    mk_Draw(w, &d);
-    for(j = 0; j < imd->height; j++) {
-        for(i = 0; i < imd->width; i++) {
-            int r, g, b, a;
-            imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
-            gb_setpixel(ws->pix, x + i, y + j, a >> 8, r >> 8, g >> 8, b >> 8);
-        }
-    }
-    gb_pix_to_win(&d, x, y, imd->width, imd->height);
-}
-
 void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     gb_Bitmap *bm;
