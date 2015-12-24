@@ -2607,9 +2607,9 @@ static void set_P9ABGR32(struct imgdata *imd, int x, int y, int r, int g, int b,
 {
     int n = imd->width * y + x;
     unsigned char *s = imd->data + 4 * n;
-    b = (((unsigned)b) * a) / 65535;
-    g = (((unsigned)g) * a) / 65535;
-    r = (((unsigned)r) * a) / 65535;
+    b = Mul16(b, a);
+    g = Mul16(g, a);
+    r = Mul16(r, a);
     *s++ = a / 256;
     *s++ = b / 256;
     *s++ = g / 256;
@@ -2625,9 +2625,9 @@ static void get_P9ABGR32(struct imgdata *imd, int x, int y, int *r, int *g, int 
     *g = 257 * (*s++);
     *r = 257 * (*s++);
     if (*a > 0) {
-        *b = (((unsigned)*b) * 65535) / *a;
-        *g = (((unsigned)*g) * 65535) / *a;
-        *r = (((unsigned)*r) * 65535) / *a;
+        *b = Div16(*b, *a);
+        *g = Div16(*g, *a);
+        *r = Div16(*r, *a);
     }
 }
 
@@ -2635,8 +2635,8 @@ static void set_P9AG16(struct imgdata *imd, int x, int y, int r, int g, int b, i
 {
     int gr, n = imd->width * y + x;
     unsigned char *s = imd->data + 2 * n;
-    gr = 0.299 * r + 0.587 * g + 0.114 * b;
-    gr = (((unsigned)gr) * a) / 65535;
+    gr = Gray(r, g, b);
+    gr = Mul16(gr, a);
     *s++ = a / 256;
     *s++ = gr / 256;
 }
@@ -2648,7 +2648,7 @@ static void get_P9AG16(struct imgdata *imd, int x, int y, int *r, int *g, int *b
     *a = 257 * (*s++);
     gr = 257 * (*s);
     if (*a > 0)
-        *r = *g = *b = (((unsigned)gr) * 65535) / *a;
+        *r = *g = *b = Div16(gr, *a);
     else
         *r = *g = *b = gr;
 }

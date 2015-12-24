@@ -333,6 +333,9 @@ static void clone_wc(cairo_t *cr)
 {
     cairo_matrix_t matrix;
     PangoFontDescription *fontdesc;
+    PangoLayout *layout;
+    PangoContext *pc;
+    double dpi;
     wbp w;
     wsp ws;
     wdp wd;
@@ -373,8 +376,18 @@ static void clone_wc(cairo_t *cr)
     }
 
     fontdesc = pango_fc_font_description_from_pattern(wc->font->fsp->pattern, TRUE);
-    pango_layout_set_font_description(getpangolayout(cr), fontdesc);
+    layout = getpangolayout(cr);
+    pango_layout_set_font_description(layout, fontdesc);
     pango_font_description_free(fontdesc);
+    /* 
+     * Set the resolution (dpi).  Otherwise, fonts won't be converted
+     * from point size to pixels properly (a default 96dpi would be
+     * used).
+     */
+    dpi = (((double) DisplayHeight(wd->display, DefaultScreen(wd->display)) * 25.4) /
+           (double) DisplayHeightMM(wd->display, DefaultScreen(wd->display)));
+    pc = pango_layout_get_context(layout);
+    pango_cairo_context_set_resolution(pc, dpi);
 
     if (wc->clipw >= 0) {
         cairo_rectangle(cr, wc->clipx, wc->clipy, wc->clipw, wc->cliph);
@@ -397,7 +410,6 @@ function cairo_Context_new_impl(sur)
     body {
        cairo_t *cr;
        PangoLayout *layout;
-       wbp w;
        {
        SurfaceStaticParam(sur, surface);
        cr = cairo_create(surface);
@@ -405,19 +417,6 @@ function cairo_Context_new_impl(sur)
        layout = pango_cairo_create_layout(cr);
        cairo_set_user_data(cr, &contextkey, layout, destroylayout);
        clone_wc(cr);
-       w = getwindow(cr);
-       if (w) {
-           /* Set the resolution (dpi) if writing to an X window.  Otherwise, fonts won't be converted
-            * from point size to pixels properly (a default 96dpi would be used).
-            */
-           double dpi;
-           PangoContext *pc;
-           wdp wd = w->window->display;
-           dpi = (((double) DisplayHeight(wd->display, DefaultScreen(wd->display)) * 25.4) /
-                  (double) DisplayHeightMM(wd->display, DefaultScreen(wd->display)));
-           pc = pango_layout_get_context(layout);
-           pango_cairo_context_set_resolution(pc, dpi);
-       }
        }
        return C_integer (word) cr;
     }
