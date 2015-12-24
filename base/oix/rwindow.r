@@ -7,9 +7,6 @@ static int colorphrase(char *buf, int *r, int *g, int *b, int *a);
 static double rgbval(double n1, double n2, double hue);
 static struct palentry *palsetup_palette;	/* current palette */
 
-#define Gray(r,g,b) (0.299 * (r) + 0.587 * (g) + 0.114 * (b))
-#define IntGray(r,g,b) ((int)(Gray(r,g,b) + 0.5))
-
 #if Graphics
 
 #if HAVE_LIBJPEG

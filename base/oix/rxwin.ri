@@ -3727,9 +3727,9 @@ static void set_X11ARGB32(struct imgdata *imd, int x, int y, int r, int g, int b
 {
     int n = imd->width * y + x;
     unsigned char *s = imd->data + 4 * n;
-    b = (((unsigned)b) * a) / 65535;
-    g = (((unsigned)g) * a) / 65535;
-    r = (((unsigned)r) * a) / 65535;
+    b = Mul16(b, a);
+    g = Mul16(g, a);
+    r = Mul16(r, a);
     *s++ = a / 256;
     *s++ = r / 256;
     *s++ = g / 256;
@@ -3744,9 +3744,9 @@ static void get_X11ARGB32(struct imgdata *imd, int x, int y, int *r, int *g, int
     *g = 257 * (*s++);
     *b = 257 * (*s++);
     if (*a > 0) {
-        *b = (((unsigned)*b) * 65535) / *a;
-        *g = (((unsigned)*g) * 65535) / *a;
-        *r = (((unsigned)*r) * 65535) / *a;
+        *b = Div16(*b, *a);
+        *g = Div16(*g, *a);
+        *r = Div16(*r, *a);
     }
 }
 
@@ -3754,9 +3754,9 @@ static void set_X11BGRA32(struct imgdata *imd, int x, int y, int r, int g, int b
 {
     int n = imd->width * y + x;
     unsigned char *s = imd->data + 4 * n;
-    b = (((unsigned)b) * a) / 65535;
-    g = (((unsigned)g) * a) / 65535;
-    r = (((unsigned)r) * a) / 65535;
+    b = Mul16(b, a);
+    g = Mul16(g, a);
+    r = Mul16(r, a);
     *s++ = b / 256;
     *s++ = g / 256;
     *s++ = r / 256;
@@ -3772,9 +3772,9 @@ static void get_X11BGRA32(struct imgdata *imd, int x, int y, int *r, int *g, int
     *r = 257 * (*s++);
     *a = 257 * (*s++);
     if (*a > 0) {
-        *b = (((unsigned)*b) * 65535) / *a;
-        *g = (((unsigned)*g) * 65535) / *a;
-        *r = (((unsigned)*r) * 65535) / *a;
+        *b = Div16(*b, *a);
+        *g = Div16(*g, *a);
+        *r = Div16(*r, *a);
     }
 }
 
