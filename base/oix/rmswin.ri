@@ -81,8 +81,8 @@ static wbp wbndngs;
 
 #define PALCLR(c) (c | 0x2000000L)
 
-static int BORDHEIGHT;
-static int BORDWIDTH;
+static int BORDER_HEIGHT;
+static int BORDER_WIDTH;
 static int CLIENT_XOFF;
 static int CLIENT_YOFF;
 
@@ -256,17 +256,17 @@ static void handle_getminmaxinfo(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     MINMAXINFO *mmi = (MINMAXINFO *)lp;
     if (ws->resizable) {
-        mmi->ptMinTrackSize.x = ws->minwidth + BORDWIDTH;
-        mmi->ptMinTrackSize.y = ws->minheight + BORDHEIGHT;
+        mmi->ptMinTrackSize.x = ws->minwidth + BORDER_WIDTH;
+        mmi->ptMinTrackSize.y = ws->minheight + BORDER_HEIGHT;
         if (ws->maxwidth != INT_MAX)
-            mmi->ptMaxTrackSize.x = ws->maxwidth + BORDWIDTH;
+            mmi->ptMaxTrackSize.x = ws->maxwidth + BORDER_WIDTH;
         if (ws->maxheight != INT_MAX)
-            mmi->ptMaxTrackSize.y = ws->maxheight + BORDHEIGHT;
+            mmi->ptMaxTrackSize.y = ws->maxheight + BORDER_HEIGHT;
     } else {
         mmi->ptMinTrackSize.x = mmi->ptMaxTrackSize.x =
-            ws->width + BORDWIDTH;
+            ws->width + BORDER_WIDTH;
         mmi->ptMinTrackSize.y = mmi->ptMaxTrackSize.y =
-            ws->height + BORDHEIGHT;
+            ws->height + BORDER_HEIGHT;
     }
 }
 
@@ -745,8 +745,8 @@ static void open_screen_win(wsp ws)
                                      WS_OVERLAPPEDWINDOW,
                                      ws->x, 
                                      ws->y,
-                                     ws->width + BORDWIDTH,
-                                     ws->height + BORDHEIGHT,
+                                     ws->width + BORDER_WIDTH,
+                                     ws->height + BORDER_HEIGHT,
                                      parent,
                                      NULL, NULL, NULL);
             apply_windowlabel(ws);
@@ -1327,13 +1327,13 @@ void doconfig(wbp w, int status)
             switch (status & (C_POS|C_SIZE)) {
                 case C_POS|C_SIZE: {
                     SetWindowPos(ws->win, ws->win, ws->x, ws->y,
-                                 ws->width + BORDWIDTH, ws->height + BORDHEIGHT,
+                                 ws->width + BORDER_WIDTH, ws->height + BORDER_HEIGHT,
                                  SWP_NOZORDER|SWP_NOACTIVATE);
                     break;
                 }
                 case C_SIZE: {
                     SetWindowPos(ws->win, ws->win, 0, 0,
-                                 ws->width + BORDWIDTH, ws->height + BORDHEIGHT,
+                                 ws->width + BORDER_WIDTH, ws->height + BORDER_HEIGHT,
                                  SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
                     break;
                 }
@@ -1809,9 +1809,9 @@ static void init_window_system(void)
     RegisterClassEx(&wc);
     r.left = r.top = 0;
     r.right = r.bottom = 100;
-    AdjustWindowRect(&r, (WS_BORDER|WS_CAPTION|WS_SYSMENU), FALSE);
-    BORDWIDTH = r.right - r.left - 100;
-    BORDHEIGHT = r.bottom - r.top - 100;
+    AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW & ~WS_OVERLAPPED, FALSE);
+    BORDER_WIDTH = r.right - r.left - 100;
+    BORDER_HEIGHT = r.bottom - r.top - 100;
     CLIENT_XOFF = -r.left;
     CLIENT_YOFF = -r.top;
     gb_initialize(ffatalerr);
