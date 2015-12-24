@@ -24,7 +24,6 @@ static void freecontext(wcp wc);
 static void freewindow(wsp ws);
 static void resizepixmap(wbp w);
 static struct imgdataformat imgdataformat_MSBGRA32;
-static COLORREF mscolor(int r, int g, int b);
 static struct SharedColor *new_sharedcolor(char *name, int r, int g, int b, int a);
 static struct SharedColor *link_sharedcolor(struct SharedColor *i);
 static void unlink_sharedcolor(struct SharedColor *i);
@@ -915,14 +914,6 @@ int raisewindow(wbp w)
     return Succeeded;
 }
 
-/*
- * convert an Icon linear color into an MS Windows color value
- */
-static COLORREF mscolor(int r, int g, int b)
-{
-    return RGB(r >> 8, g >> 8, b >> 8);
-}
-
 int setlinestyle(wbp w, char *val)
 {
     stringint *e;
@@ -1606,7 +1597,7 @@ static struct SharedColor *new_sharedcolor(char *name, int r, int g, int b, int 
     struct SharedColor *res;
     GAlloc(res, SharedColor);
     res->name = salloc(name);
-    res->color = gb_make_Color(a >> 8, r >> 8, g >> 8, b >> 8);
+    res->color = gb_make_Color(a / 256, r / 256, g / 256, b / 256);
     return res;
 }
 
@@ -1702,7 +1693,7 @@ static gb_Bitmap *imgdata_to_bitmap(struct imgdata *imd)
         for(i = 0; i < imd->width; i++) {
             int r, g, b, a;
             imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
-            gb_setpixel(bm, i, j, a >> 8, r >> 8, g >> 8, b >> 8);
+            gb_setpixel(bm, i, j, a / 256, r / 256, g / 256, b / 256);
         }
     }
     return bm;
@@ -1802,6 +1793,7 @@ static void setup_cursor(char *name, LPCTSTR cid)
 static void init_window_system(void)
 {
     WNDCLASSEX wc;
+    RECT r;
     wc.cbSize =         sizeof(WNDCLASSEX); 
     wc.style =          CS_DBLCLKS;
     wc.lpfnWndProc =    WndProc;
@@ -1815,10 +1807,13 @@ static void init_window_system(void)
     wc.lpszClassName =  "oix";
     wc.hIconSm =        LoadIcon(0, IDI_APPLICATION);
     RegisterClassEx(&wc);
-    BORDWIDTH = FRAMEWIDTH * 2;
-    BORDHEIGHT = TITLEHEIGHT + FRAMEHEIGHT * 2;
-    CLIENT_XOFF = FRAMEWIDTH;
-    CLIENT_YOFF = TITLEHEIGHT + FRAMEHEIGHT;
+    r.left = r.top = 0;
+    r.right = r.bottom = 100;
+    AdjustWindowRect(&r, (WS_BORDER|WS_CAPTION|WS_SYSMENU), FALSE);
+    BORDWIDTH = r.right - r.left - 100;
+    BORDHEIGHT = r.bottom - r.top - 100;
+    CLIENT_XOFF = -r.left;
+    CLIENT_YOFF = -r.top;
     gb_initialize(ffatalerr);
     dummy_hdc = GetDC(0);
     black = new_sharedcolor("black", 0, 0, 0, 0xffff);
