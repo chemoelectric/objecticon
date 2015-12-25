@@ -1807,11 +1807,10 @@ static void init_window_system(void)
     wc.lpszClassName =  "oix";
     wc.hIconSm =        LoadIcon(0, IDI_APPLICATION);
     RegisterClassEx(&wc);
-    r.left = r.top = 0;
-    r.right = r.bottom = 100;
+    r.left = r.top = r.right = r.bottom = 0;
     AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW & ~WS_OVERLAPPED, FALSE);
-    BORDER_WIDTH = r.right - r.left - 100;
-    BORDER_HEIGHT = r.bottom - r.top - 100;
+    BORDER_WIDTH = r.right - r.left;
+    BORDER_HEIGHT = r.bottom - r.top;
     CLIENT_XOFF = -r.left;
     CLIENT_YOFF = -r.top;
     gb_initialize(ffatalerr);
