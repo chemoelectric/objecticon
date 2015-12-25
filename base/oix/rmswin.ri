@@ -50,6 +50,7 @@ static void handle_mouse_down(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_capture_changed(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_size(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
+static void handle_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_getminmaxinfo(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_showwindow(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void capture_mouse(wsp ws);
@@ -210,12 +211,8 @@ wbp wopen(char *display)
     ws = w->window;
     create_list(64, &ws->listp);
     ws->width = ws->height = 1;
-
     w->context = alccontext(w);
-
-    if (ws->x < 0) ws->x = 0;
-    if (ws->y < 0) ws->y = 0;
-
+    ws->x = ws->y = -INT_MAX;
     ws->pix = gb_create_Bitmap(ws->width, ws->height, w->context->bg->color, 0);
     ws->pixwidth = ws->width;
     ws->pixheight = ws->height;
@@ -270,6 +267,18 @@ static void handle_getminmaxinfo(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     }
 }
 
+static void handle_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
+{
+    /* x,y represents the position of the drawable area. Casting to
+       INT16 ensures -ve values are handle correctly */
+    ws->x = (INT16)LOWORD(lp);
+    ws->y = (INT16)HIWORD(lp); 
+    if (ws->state != PopupCanvas) {
+        ws->x -= CLIENT_XOFF;
+        ws->y -= CLIENT_YOFF;
+    }
+}
+
 static void handle_size(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     int neww, newh;
@@ -307,6 +316,8 @@ static void handle_showwindow(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     if (wp == 0)
         ws->state = WithdrawnCanvas;
+    else if (GetWindowLong(ws->win, GWL_STYLE) & WS_CHILD)
+        ws->state = PopupCanvas;
     else
         ws->state = NormalCanvas;
 }
@@ -574,10 +585,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 handle_size(ws, msg, wp, lp);
                 return 0;
             case WM_MOVE:
-                /* x,y represents the position of the drawable area. Casting to
-                   INT16 ensures -ve values are handle correctly */
-                ws->x = (INT16)LOWORD(lp);
-                ws->y = (INT16)HIWORD(lp); 
+                handle_move(ws, msg, wp, lp);
                 return 0;
             case WM_GETMINMAXINFO:
                 handle_getminmaxinfo(ws, msg, wp, lp);
@@ -724,8 +732,8 @@ static void open_screen_win(wsp ws)
                                      "oix", 
                                      NULL,
                                      WS_CHILD,
-                                     ws->x, 
-                                     ws->y,
+                                     ws->x == -INT_MAX ? 0 : ws->x, 
+                                     ws->y == -INT_MAX ? 0 : ws->y,
                                      ws->width,
                                      ws->height,
                                      GetDesktopWindow(),
@@ -743,8 +751,8 @@ static void open_screen_win(wsp ws)
                                      "oix", 
                                      NULL,
                                      WS_OVERLAPPEDWINDOW,
-                                     ws->x, 
-                                     ws->y,
+                                     ws->x == -INT_MAX ? CW_USEDEFAULT : ws->x, 
+                                     ws->y == -INT_MAX ? CW_USEDEFAULT : ws->y,
                                      ws->width + BORDER_WIDTH,
                                      ws->height + BORDER_HEIGHT,
                                      parent,
@@ -1007,6 +1015,12 @@ int setdrawop(wbp w, char *val)
 
 int getpos(wbp w)
 {
+    wsp ws = w->window;
+    RECT r;
+    CheckUnhidden(ws);
+    GetWindowRect(ws->win, &r);
+    ws->x = r.left;
+    ws->y  = r.top;
     return Succeeded;
 }
 
