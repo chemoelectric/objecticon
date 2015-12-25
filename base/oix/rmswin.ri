@@ -58,6 +58,8 @@ static void uncapture_mouse(wsp ws);
 static void track_mouse(wsp ws);
 static void apply_windowlabel(wsp ws);
 static void mk_Draw(wbp w, gb_Draw *d);
+static int get_outer_width(wsp ws);
+static int get_outer_height(wsp ws);
 
 static void dbg(char *fmt, ...);
 
@@ -84,8 +86,6 @@ static wbp wbndngs;
 
 static int BORDER_HEIGHT;
 static int BORDER_WIDTH;
-static int CLIENT_XOFF;
-static int CLIENT_YOFF;
 
 /*
  * draw ops
@@ -273,10 +273,6 @@ static void handle_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
        INT16 ensures -ve values are handle correctly */
     ws->x = (INT16)LOWORD(lp);
     ws->y = (INT16)HIWORD(lp); 
-    if (ws->state != PopupCanvas) {
-        ws->x -= CLIENT_XOFF;
-        ws->y -= CLIENT_YOFF;
-    }
 }
 
 static void handle_size(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
@@ -316,17 +312,15 @@ static void handle_showwindow(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     if (wp == 0)
         ws->state = WithdrawnCanvas;
-    else if (GetWindowLong(ws->win, GWL_STYLE) & WS_CHILD)
-        ws->state = PopupCanvas;
-    else
+    else if (ws->state != PopupCanvas)
         ws->state = NormalCanvas;
 }
 
 static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     DWORD dw;
-    int t, x, y, fl;
-    RECT r;
+    int t, fl;
+    POINT p;
     static struct descrip curr;
     static int inited = 0;
 
@@ -346,11 +340,11 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
         inited = 1;
     }
 
-   /* Mouse location in SCREEN coordinates */
+   /* Mouse location in SCREEN coordinates; convert to client */
     dw = GetMessagePos();
-    GetWindowRect(ws->win, &r);
-    x = (INT16)LOWORD(dw) - (r.left + CLIENT_XOFF);
-    y = (INT16)HIWORD(dw) - (r.top + CLIENT_YOFF);
+    p.x = (INT16)LOWORD(dw);
+    p.y = (INT16)HIWORD(dw);
+    ScreenToClient(ws->win, &p);
 
     t = GetMessageTime();
 
@@ -363,13 +357,13 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
         fl |= MOD_META;
     if (msg == WM_KEYUP || msg == WM_SYSKEYUP)
         fl |= MOD_RELEASE;
-    qevent(ws, &curr, x, y, t, fl);
+    qevent(ws, &curr, p.x, p.y, t, fl);
 }
 
 static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    int t, x, y;
-    RECT r;
+    int t;
+    POINT p;
     int state = 0;
     int fl = 0;
 
@@ -378,11 +372,11 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     if (MK_RBUTTON & wp) state |= 4;
 
     /* Unlike normal mouse events, the co-ordinates are absolute, so
-     * convert to relative.
+     * convert to client co-ordinates.
      */
-    GetWindowRect(ws->win, &r);
-    x = (INT16)LOWORD(lp) - (r.left + CLIENT_XOFF);
-    y = (INT16)HIWORD(lp) - (r.top + CLIENT_YOFF);
+    p.x = (INT16)LOWORD(lp);
+    p.y = (INT16)HIWORD(lp);
+    ScreenToClient(ws->win, &p);
 
     t = GetMessageTime();
 
@@ -398,11 +392,11 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
      * second qmouseevents call.
      */
     if ((INT_PTR)wp > 0)
-        qmouseevents(ws, state|8, x, y, t, fl);
+        qmouseevents(ws, state|8, p.x, p.y, t, fl);
     else
-        qmouseevents(ws, state|16, x, y, t, fl);
+        qmouseevents(ws, state|16, p.x, p.y, t, fl);
     
-    qmouseevents(ws, state, x, y, t, fl);
+    qmouseevents(ws, state, p.x, p.y, t, fl);
 }
 
 static void dbg(char *fmt, ...)
@@ -1016,11 +1010,12 @@ int setdrawop(wbp w, char *val)
 int getpos(wbp w)
 {
     wsp ws = w->window;
-    RECT r;
+    POINT p;
     CheckUnhidden(ws);
-    GetWindowRect(ws->win, &r);
-    ws->x = r.left;
-    ws->y  = r.top;
+    p.x = p.y = 0;
+    ClientToScreen(ws->win, &p);
+    ws->x = p.x;
+    ws->y  = p.y;
     return Succeeded;
 }
 
@@ -1128,37 +1123,21 @@ int getdisplaysizemm(wbp w, int *width, int *height)
 int querypointer(wbp w, int *x, int *y)
 {
     wsp ws = w->window;
-    RECT r;
-    POINT pp;
+    POINT p;
     CheckUnhidden(ws);
-    GetCursorPos(&pp);
-    GetWindowRect(ws->win, &r);
-    switch (ws->state) {
-        case MaximizedCanvas:
-        case NormalCanvas: {
-            pp.x -= r.left + CLIENT_XOFF;
-            pp.y -= r.top + CLIENT_YOFF;
-            break;
-        }
-        case WithdrawnCanvas:
-        case IconicCanvas:
-        case PopupCanvas: {
-            pp.x -= r.left;
-            pp.y -= r.top;
-            break;
-        }
-    }
-    *x = pp.x;
-    *y = pp.y;
+    GetCursorPos(&p);
+    ScreenToClient(ws->win, &p);
+    *x = p.x;
+    *y = p.y;
     return Succeeded;
 }
 
 int queryrootpointer(wbp w, int *x, int *y)
 {
-    POINT pp;
-    GetCursorPos(&pp);
-    *x = pp.x;
-    *y = pp.y;
+    POINT p;
+    GetCursorPos(&p);
+    *x = p.x;
+    *y = p.y;
     return Succeeded;
 }
 
@@ -1332,6 +1311,22 @@ int setpattern(wbp w, struct imgdata *imd)
     return Succeeded;
 }
 
+static int get_outer_width(wsp ws)
+{
+    if (ws->state == PopupCanvas)
+        return ws->width;
+    else
+        return ws->width + BORDER_WIDTH;
+}
+
+static int get_outer_height(wsp ws)
+{
+    if (ws->state == PopupCanvas)
+        return ws->height;
+    else
+        return ws->height + BORDER_HEIGHT;
+}
+
 void doconfig(wbp w, int status)
 {
     wsp ws = w->window;
@@ -1341,13 +1336,13 @@ void doconfig(wbp w, int status)
             switch (status & (C_POS|C_SIZE)) {
                 case C_POS|C_SIZE: {
                     SetWindowPos(ws->win, ws->win, ws->x, ws->y,
-                                 ws->width + BORDER_WIDTH, ws->height + BORDER_HEIGHT,
+                                 get_outer_width(ws), get_outer_height(ws),
                                  SWP_NOZORDER|SWP_NOACTIVATE);
                     break;
                 }
                 case C_SIZE: {
                     SetWindowPos(ws->win, ws->win, 0, 0,
-                                 ws->width + BORDER_WIDTH, ws->height + BORDER_HEIGHT,
+                                 get_outer_width(ws), get_outer_height(ws),
                                  SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
                     break;
                 }
@@ -1825,8 +1820,6 @@ static void init_window_system(void)
     AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW, FALSE);
     BORDER_WIDTH = r.right - r.left;
     BORDER_HEIGHT = r.bottom - r.top;
-    CLIENT_XOFF = -r.left;
-    CLIENT_YOFF = -r.top;
     gb_initialize(ffatalerr);
     dummy_hdc = GetDC(0);
     black = new_sharedcolor("black", 0, 0, 0, 0xffff);
