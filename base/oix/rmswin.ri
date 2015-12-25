@@ -1808,7 +1808,7 @@ static void init_window_system(void)
     wc.hIconSm =        LoadIcon(0, IDI_APPLICATION);
     RegisterClassEx(&wc);
     r.left = r.top = r.right = r.bottom = 0;
-    AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW & ~WS_OVERLAPPED, FALSE);
+    AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW, FALSE);
     BORDER_WIDTH = r.right - r.left;
     BORDER_HEIGHT = r.bottom - r.top;
     CLIENT_XOFF = -r.left;
