@@ -65,7 +65,12 @@ export TRACE
 EOF
 echo creating base/h/version.h
 d=$(date -R)
-v=$(svnversion)-win32
+if test -f tar-version ; then
+    v=$(cat tar-version)
+else
+    v=$(svnversion)
+fi
+v=${v}-win32
 sed -e "s/@CONFIG_DATE@/$d/"  \
     -e "s/@PACKAGE_VERSION@/$v/" \
     <./config/files/base/h/version.h >base/h/version.h

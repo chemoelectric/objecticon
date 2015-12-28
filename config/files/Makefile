@@ -63,6 +63,7 @@ tar :
 	@for f in $$( find config -type f ) ; do \
 		cp --parents $$f $(T) ;\
 	done
+	@svnversion >$(T)/tar-version
 	@cp README configure-win32 configure config.guess config.sub install-sh $(T)
 	@rm -rf $(T)/base/h/auto.h $(T)/base/h/version.h $(T)/base/h/define.h \
 		$(T)/lib/main/posixconsts.icn \
