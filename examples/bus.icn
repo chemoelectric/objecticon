@@ -1137,7 +1137,7 @@ class Map(Panel)
       mw := I.get_width()
       mh := I.get_height()
       every draw_arcs(!stops)
-      I.set_fg("black").set_font("sans," || scale_real(max(8, (scale/5))))
+      I.set_fg("black").set_font("sans," || max(8, (scale/5)))
       if scale > 2 then
          every draw_stop(!vis_stops)
       draw_labels()
