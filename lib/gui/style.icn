@@ -170,7 +170,7 @@ class Style()
       local r
       # Awkward since we're going from scaled pixels to unit pixels
       # (rather than the other way round).
-      r := 200 - integer(d * (6.0 / Gui.SCALE_FACTOR))
+      r := 200 - integer(d * (6.0 / Gui.SCALE))
       r <:= 20
       r >:= 200
       return r

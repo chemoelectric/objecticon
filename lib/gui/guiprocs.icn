@@ -136,14 +136,14 @@ end
 # Scale the given number using the current scale factor.
 #
 procedure scale(i)
-   return integer(Gui.SCALE_FACTOR * i + 0.5)
+   return integer(Gui.SCALE * i + 0.5)
 end
 
 #
 # Scale, but don't round and convert to integer.
 #
 procedure scale_real(r)
-   return Gui.SCALE_FACTOR * r
+   return Gui.SCALE * r
 end
 
 #
@@ -194,7 +194,7 @@ end
 
 class Gui()
    public static const
-      SCALE_FACTOR,
+      SCALE,
       UNIT
 
    public static 
@@ -219,8 +219,30 @@ class Gui()
       PRINTABLE_1,              # Printable on a single line of text
       PRINTABLE_N               # Printable on multi lines of text
 
+
+   #
+   # Try to calculate a default value for SCALE
+   #
+   private static calc_scale1(w)
+      local pix, mm, t
+      pix := w.get_display_size() | fail
+      mm := w.get_display_size_mm() | fail
+      t := (pix[1] + pix[2]) / ((mm[1] + mm[2]) / 25.4) / 96.0
+      # Round to nearest eighth
+      t := integer(t * 8.0 + 0.5) / 8.0
+      return (1.0 < t)
+   end
+
+   private static calc_scale()
+      local w
+      return use {
+         w := Window(),
+         calc_scale1(w)
+      }
+   end
+
    private static init()
-      SCALE_FACTOR := env_real("OISCALE", 1.0) | 1.0
+      SCALE := env_real("OISCALE", 1.0) | calc_scale() | 1.0
       UNIT := scale(1)
       FINE_WIDTH := UNIT
       CURSOR_WIDTH := 2 * UNIT
