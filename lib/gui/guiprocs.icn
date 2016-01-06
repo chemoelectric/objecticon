@@ -228,8 +228,8 @@ class Gui()
       pix := w.get_display_size() | fail
       mm := w.get_display_size_mm() | fail
       t := (pix[1] + pix[2]) / ((mm[1] + mm[2]) / 25.4) / 96.0
-      # Round to nearest eighth
-      t := integer(t * 8.0 + 0.5) / 8.0
+      # Round to nearest 5%
+      t := integer(t * 20.0 + 0.5) / 20.0
       return (1.0 < t)
    end
 
