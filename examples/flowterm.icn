@@ -1160,11 +1160,11 @@ class Terminal(TabItem, VtUI)
          }
          "list-width": {
             param := (0 < integer(param)) | return error("integer > 0 expected to list-width")
-            set_list_width(param)
+            set_list_width(scale(param))
          }
          "list-height": {
             param := (0 < integer(param)) | return error("integer > 0 expected to list-height")
-            set_list_height(param)
+            set_list_height(scale(param))
          }
          "auto-close" : set_auto_close(&yes)
          "title" : set_title(param)
