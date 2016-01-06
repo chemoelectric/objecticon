@@ -594,9 +594,9 @@ class FileDialog(Dialog)
       local cp, np, sp, dp, sz
       sz := Gui.TOOLBAR_ICON_SIZE
       cp := CompoundPaint().set_top(ImagePaint().set_cache(if /ascending then "gui.TINY_ARROW_DOWN" else "gui.TINY_ARROW_UP"))
-      np := ImagePaint().set_cache(ImageCache.get_key_with_resize("gui.FONT_24", sz, sz))
-      sp := ImagePaint().set_cache(ImageCache.get_key_with_resize("gui.FILESIZE_24", sz, sz))
-      dp := ImagePaint().set_cache(ImageCache.get_key_with_resize("gui.CLOCK_24", sz, sz))
+      np := ImagePaint().set_cache(ImageCache.get_scaled_svg_key_alt("gui.FONT_SVG", "gui.FONT_24", sz, sz))
+      sp := ImagePaint().set_cache(ImageCache.get_scaled_svg_key_alt("gui.FILESIZE_SVG", "gui.FILESIZE_24", sz, sz))
+      dp := ImagePaint().set_cache(ImageCache.get_scaled_svg_key_alt("gui.CLOCK_SVG", "gui.CLOCK_24", sz, sz))
       case sorter of {
          Files.name_cmp: {
             name_button.set_paint(cp.set_bottom(np))

@@ -33,6 +33,10 @@ $load FILE "images/gui.FILE_16.gif"
 $load WINDOW_CLOSE "images/gui.WINDOW_CLOSE_16.gif"
 $load WINDOW_ICONIFY "images/gui.WINDOW_ICONIFY_16.gif"
 
+$load CLOCK_SVG "images/gui.CLOCK_SVG.svgz"
+$load FILESIZE_SVG "images/gui.FILESIZE_SVG.svgz"
+$load FONT_SVG "images/gui.FONT_SVG.svgz"
+
 final abstract class ImageCache()
    public static 
       imap,
@@ -60,6 +64,10 @@ final abstract class ImageCache()
       name_image("gui.FILE_16", FILE)
       name_image("gui.WINDOW_CLOSE_16", WINDOW_CLOSE)
       name_image("gui.WINDOW_ICONIFY_16", WINDOW_ICONIFY)
+
+      name_image("gui.CLOCK_SVG", CLOCK_SVG)
+      name_image("gui.FILESIZE_SVG", FILESIZE_SVG)
+      name_image("gui.FONT_SVG", FONT_SVG)
 
       i := scale_odd(13)
       j := scale(2)
@@ -277,5 +285,18 @@ final abstract class ImageCache()
       svg.close()
       insert(imap, key, w)
       return key
+   end
+
+   #
+   # A convenient function to try to get a scaled SVG from the given
+   # data `s`, but if SVG capability is not available then to use the
+   # alternative conventional image `alt_s`, resized in either case to
+   # the given dimensions.
+   #
+   public static get_scaled_svg_key_alt(s, alt_s, width, height)
+      return if \Context.LOADED then 
+         get_scaled_svg_key(s, width, height) 
+      else 
+         get_key_with_resize(alt_s, width, height)
    end
 end
