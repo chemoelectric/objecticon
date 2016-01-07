@@ -3,10 +3,7 @@ package gui
 import xdg
 
 class TextContextMenu(Menu)
-   public static const ICON_SIZE
-
    private static init()
-      ICON_SIZE := scale(16)
       try_xdg("txt.cut", "edit-cut")
       try_xdg("txt.copy", "edit-copy")
       try_xdg("txt.paste", "edit-paste")
@@ -16,7 +13,7 @@ class TextContextMenu(Menu)
    end
 
    private static try_xdg(key, icon)
-      ImageCache.copy_key(key, Xdg.find_icon_and_cache(icon, ICON_SIZE))
+      ImageCache.copy_key(key, Xdg.find_icon_and_cache(icon, Gui.MENU_ICON_SIZE, Xdg.AT_MOST))
    end
 
    public new(parent)
