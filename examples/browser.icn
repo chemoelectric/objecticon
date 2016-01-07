@@ -1014,13 +1014,20 @@ end
 class TabHeaderPaint(Paint)
    public str, icon, icon_win
 
+   public static const
+      ICON_SIZE
+
+   private static init()
+      ICON_SIZE := scale(16)
+   end
+   
    public initially(c)
       local iw
       iw := Window.open_image(\icon)
-      self.h := max(16, c.cbwin.get_font_height())
+      self.h := max(ICON_SIZE, c.cbwin.get_font_height())
       if \iw then {
-         if iw.get_height() > self.h then {
-            icon_win := Window().set_size((iw.get_width() * self.h) / iw.get_height(), self.h)
+         if iw.get_height() ~= ICON_SIZE then {
+            icon_win := Window().set_size((iw.get_width() * ICON_SIZE) / iw.get_height(), ICON_SIZE)
             Zoom(iw, icon_win)
             iw.close()
          } else
@@ -1481,7 +1488,7 @@ class BrowserTab(TabItem, BrowserUI)
       if r := use { 
          f := FilterInputStream(StringStream(data),
                                 "convert", ["-resize", 
-                                            "16x16",
+                                            "x" || TabHeaderPaint.ICON_SIZE,
                                             "ico:-[0]",
                                             "png:-"]),
          f.read_all()
