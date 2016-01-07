@@ -163,13 +163,9 @@ class IconFilesItemPaint(ItemPaint)
    end
 
    private static try_xdg(key, icon, alt)
-      local k, w
-      if k := Xdg.find_icon_and_cache(icon, ICON_SIZE) then {
-         w := ImageCache.get(k)
-         if w.get_width() > ICON_SIZE then
-            k := ImageCache.get_key_with_resize(k, ICON_SIZE, ICON_SIZE)
-      } else
-         k := ImageCache.get_key_with_resize(alt, ICON_SIZE, ICON_SIZE)
+      local k
+      k := Xdg.find_icon_and_cache(icon, ICON_SIZE, Xdg.AT_MOST) |
+         ImageCache.get_key_with_resize(alt, ICON_SIZE, ICON_SIZE)
       ImageCache.copy_key(key, k)
    end
 
@@ -191,12 +187,8 @@ class IconFilesItemPaint(ItemPaint)
 
 $ifdef _PNG
    public get_xdg_for_file(f)
-      local k, w
-      k := Xdg.find_icon_for_file_and_cache(f, ICON_SIZE) | Xdg.find_icon_and_cache("text-x-generic", ICON_SIZE) | fail
-      w := ImageCache.get(k)
-      if w.get_width() > ICON_SIZE then
-         k := ImageCache.get_key_with_resize(k, ICON_SIZE, ICON_SIZE)
-      return k
+      return Xdg.find_icon_for_file_and_cache(f, ICON_SIZE, Xdg.AT_MOST) | 
+             Xdg.find_icon_and_cache("text-x-generic", ICON_SIZE, Xdg.AT_MOST)
    end
 
    public get_icon(data)

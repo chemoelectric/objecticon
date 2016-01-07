@@ -202,6 +202,7 @@ class Gui()
       CURSOR_WIDTH,
       FINE_WIDTH,
       TOOLBAR_ICON_SIZE,
+      MENU_ICON_SIZE,
       TEXT_INSET,
       X_INSET,
       Y_INSET,
@@ -256,6 +257,7 @@ class Gui()
       TAB_WIDTH := 8
       IDLE_SLEEP := 50
       TOOLBAR_ICON_SIZE := scale(24)
+      MENU_ICON_SIZE := scale(16)
       style := Style()
       PRINTABLE_1 := '\x20-\x7e\x80-\U10ffff'
       PRINTABLE_N := '\t\n\x20-\x7e\x80-\U10ffff'
@@ -660,24 +662,19 @@ procedure theme_toolbar_button(b, icon)
    if is(b, IconButton) then
       b.set_paint(get_toolbar_theme_paint(b.paint, icon))
    else if is(b, MenuButton) then
-      b.menu.set_paint_mid(b.menu.paint_mid, get_toolbar_theme_paint(icon))
+      b.menu.set_paint_mid(get_toolbar_theme_paint(b.menu.paint_mid, icon))
    sz := Gui.TOOLBAR_ICON_SIZE + 2 * Gui.BORDER_WIDTH
    b.set_size(sz, sz)
    return b
 end
 
 package procedure get_toolbar_theme_paint(paint, icon)
-   local k, w, sz
+   local k, sz
    sz := Gui.TOOLBAR_ICON_SIZE
-   if k := Xdg.find_icon_and_cache(\icon, sz) then {
-      w := ImageCache.get(k)
-      if w.get_width() > sz then
-         k := ImageCache.get_key_with_resize(k, sz, sz)
-   } else if is(paint, ImagePaint) & k := \paint.image_cache then
-      k := ImageCache.get_key_with_resize(k, sz, sz)
-   else
-      fail
-   return ImagePaint().set_cache(k)
+   if (k := Xdg.find_icon_and_cache(\icon, sz, Xdg.EXACT)) | 
+      (is(paint, ImagePaint) & k := ImageCache.get_key_with_resize(\paint.image_cache, sz, sz))
+   then
+      return ImagePaint().set_cache(k)
 end
 
 record Range(lo, hi)
