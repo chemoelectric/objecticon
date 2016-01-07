@@ -13,7 +13,7 @@ class TextContextMenu(Menu)
    end
 
    private static try_xdg(key, icon)
-      ImageCache.copy_key(key, Xdg.find_icon_and_cache(icon, Gui.MENU_ICON_SIZE, Xdg.AT_MOST))
+      ImageCache.copy_key(key, Xdg.find_icon_and_cache(icon, Gui.MENU_ICON_SIZE, Xdg.EXACT))
    end
 
    public new(parent)

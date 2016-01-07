@@ -774,7 +774,7 @@ class DownloadTab(TabItem)
             every de := get_possible_desktop_entries(d.resp) do {
                m2 := TextMenuItem().
                   set_label(de.name)
-               m2.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, Xdg.AT_MOST)))
+               m2.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, Xdg.EXACT)))
                m2.connect(cocopy{BrowserDialog.launch_prog(de, d.full_path)}, Event.ACTION)
                m1.add(m2)
             }
