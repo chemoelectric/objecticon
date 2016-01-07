@@ -593,22 +593,11 @@ final abstract class Xdg()
       return parse_ini_file(ucs(Files.file_to_string(f)))
    end
 
-   private static dir_set1(f)
-      local s, res
-      res := set()
-      repeat {
-         s := f.read_line() | fail
-         if /s then
-            return res
-         insert(res, s)
-      }
-   end
-
    private static dir_set(dir)
       local f
       return use {
          f := DirStream(dir),
-         dir_set1(f)
+         Set{f.gen()}
       }
    end
 
