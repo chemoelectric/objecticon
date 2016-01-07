@@ -1688,7 +1688,7 @@ $endif
             m1 := TextMenuItem().
                set_label(de.name).
                connect(cocopy{launch_prog(r)}, Event.ACTION)
-            m1.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
+            m1.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, Xdg.AT_MOST)))
             m.add(m1)
          }
       }
