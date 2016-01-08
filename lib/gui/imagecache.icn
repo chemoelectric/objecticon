@@ -5,7 +5,8 @@ import
    util,
    cairo,
    io,
-   ipl.graphics
+   ipl.graphics,
+   ipl.imagedetect
 
 $ifdef _PNG
 $load CLOCK "images/gui.CLOCK_24.png"
@@ -241,12 +242,14 @@ final abstract class ImageCache()
                       width || "x" || height,
                       "-",
                       "png:-"])
-      } else
+      } else {
+         Files.access(s) | fail
          run_convert(,
                      [s,
                       "-resize", 
                       width || "x" || height,
                       "png:-"])
+      }
    end
 
    #
@@ -317,5 +320,28 @@ final abstract class ImageCache()
          get_scaled_svg_key(s, width, height) 
       else 
          get_key_with_resize(alt_s, width, height)
+   end
+
+   #
+   # Useful debug function to print the contents of the cache.
+   #
+   public static show()
+      local k, v, i
+      write("Cache name table\n----------------")
+      every k := key(names) do {
+         v := names[k]
+         writes("\t", k, " -> ", *v, " bytes ")
+         if i := ImageStringInfo(v) then
+            write("image string ", i.width, "x", i.height)
+         else if i := detect(v) then
+            write(i.format, " ", i.width, "x", i.height)
+         else
+            write("data")
+      }
+      write("\nCache image table\n-----------------")
+      every k := key(imap) do {
+         v := imap[k]
+         write("\t", k, " -> Window#", serial(v), " ", v.get_width(), "x", v.get_height())
+      }
    end
 end
