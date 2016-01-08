@@ -60,16 +60,17 @@ tar :
 		-regex ".*\.\(icn\|layout\|gif\|jpg\|png\)" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
-	@for f in $$( find misc -type f -not -regex ".*\.svn.*" ) ; do \
+	@for f in $$( find misc -type f ) ; do \
 		cp --parents $$f $(T) ;\
 	done
 	@for f in $$( find bmark \
 		-regex ".*\.\(icn\|dat\|sh\)" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
-	@for f in $$( find config -type f -not -regex ".*\.svn.*" ) ; do \
+	@for f in $$( find config -type f ) ; do \
 		cp --parents $$f $(T) ;\
 	done
+	@echo $(PACKAGE_VERSION) >$(T)/tar-version
 	@cp README configure-win32 configure configure.rc config.guess config.sub install-sh $(T)
 	@rm -rf $(T)/base/h/auto.h $(T)/base/h/version.h $(T)/base/h/define.h \
 		$(T)/lib/main/posixconsts.icn \

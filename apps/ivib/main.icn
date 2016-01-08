@@ -412,7 +412,7 @@ class Main(Dialog)
       every (undo | undo_button).set_is_shaded(Yes{*undo_list = 0})
       every (redo | redo_button).set_is_shaded(Yes{*redo_list = 0})
 
-      rescale.set_is_shaded(Yes{Gui.SCALE_FACTOR = canvas.edit_scale})
+      rescale.set_is_shaded(Yes{Gui.SCALE = canvas.edit_scale})
 
       save.set_is_shaded(Yes{/canvas.modified | /canvas.filename})
       save_button.set_is_shaded(Yes{/canvas.modified & \canvas.filename})

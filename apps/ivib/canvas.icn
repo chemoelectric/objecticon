@@ -918,7 +918,7 @@ class Canvas(Component,SelectiveObjectCodec)
 
    public rescale()
       local c, k, f
-      f := Gui.SCALE_FACTOR / edit_scale
+      f := Gui.SCALE / edit_scale
 
       every c := Seq{ gen_cos().traverse_tree_postorder() }  do
          c.rescale(f)
@@ -937,7 +937,7 @@ class Canvas(Component,SelectiveObjectCodec)
       set_modified()
       reset_all()
       do_reset_all_layouts()
-      edit_scale := Gui.SCALE_FACTOR
+      edit_scale := Gui.SCALE
       parent_dialog.update_grey()
    end
 
@@ -1988,7 +1988,7 @@ class Canvas(Component,SelectiveObjectCodec)
       self.dialog_struct := CDialog()
       self.dialog_iw := Canvas.DEFAULT_WIDTH
       self.dialog_ih := Canvas.DEFAULT_HEIGHT
-      self.edit_scale := Gui.SCALE_FACTOR
+      self.edit_scale := Gui.SCALE
       set_accepts_focus(&yes)
       connect(self.handle_move, Event.MOUSE_MOVEMENT)
       connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)

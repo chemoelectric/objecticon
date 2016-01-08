@@ -1160,11 +1160,11 @@ class Terminal(TabItem, VtUI)
          }
          "list-width": {
             param := (0 < integer(param)) | return error("integer > 0 expected to list-width")
-            set_list_width(param)
+            set_list_width(scale(param))
          }
          "list-height": {
             param := (0 < integer(param)) | return error("integer > 0 expected to list-height")
-            set_list_height(param)
+            set_list_height(scale(param))
          }
          "auto-close" : set_auto_close(&yes)
          "title" : set_title(param)
@@ -1688,7 +1688,7 @@ $endif
             m1 := TextMenuItem().
                set_label(de.name).
                connect(cocopy{launch_prog(r)}, Event.ACTION)
-            m1.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, 12)))
+            m1.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, &yes)))
             m.add(m1)
          }
       }
@@ -1833,9 +1833,9 @@ $endif
       local cp, np, sp, dp, sz
       sz := Gui.TOOLBAR_ICON_SIZE
       cp := CompoundPaint().set_top(ImagePaint().set_cache(if /ascending then "gui.TINY_ARROW_DOWN" else "gui.TINY_ARROW_UP"))
-      np := ImagePaint().set_cache(ImageCache.get_key_with_resize("gui.FONT_24", sz, sz))
-      sp := ImagePaint().set_cache(ImageCache.get_key_with_resize("gui.FILESIZE_24", sz, sz))
-      dp := ImagePaint().set_cache(ImageCache.get_key_with_resize("gui.CLOCK_24", sz, sz))
+      np := ImagePaint().set_cache(ImageCache.get_scaled_svg_key_alt("gui.FONT_SVG", "gui.FONT_24", sz, sz))
+      sp := ImagePaint().set_cache(ImageCache.get_scaled_svg_key_alt("gui.FILESIZE_SVG", "gui.FILESIZE_24", sz, sz))
+      dp := ImagePaint().set_cache(ImageCache.get_scaled_svg_key_alt("gui.CLOCK_SVG", "gui.CLOCK_24", sz, sz))
       case sorter of {
          Files.name_cmp: {
             name_button.set_paint(cp.set_bottom(np))

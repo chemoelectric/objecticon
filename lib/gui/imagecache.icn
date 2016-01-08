@@ -33,6 +33,10 @@ $load FILE "images/gui.FILE_16.gif"
 $load WINDOW_CLOSE "images/gui.WINDOW_CLOSE_16.gif"
 $load WINDOW_ICONIFY "images/gui.WINDOW_ICONIFY_16.gif"
 
+$load CLOCK_SVG "images/gui.CLOCK_SVG.svgz"
+$load FILESIZE_SVG "images/gui.FILESIZE_SVG.svgz"
+$load FONT_SVG "images/gui.FONT_SVG.svgz"
+
 final abstract class ImageCache()
    public static 
       imap,
@@ -60,6 +64,10 @@ final abstract class ImageCache()
       name_image("gui.FILE_16", FILE)
       name_image("gui.WINDOW_CLOSE_16", WINDOW_CLOSE)
       name_image("gui.WINDOW_ICONIFY_16", WINDOW_ICONIFY)
+
+      name_image("gui.CLOCK_SVG", CLOCK_SVG)
+      name_image("gui.FILESIZE_SVG", FILESIZE_SVG)
+      name_image("gui.FONT_SVG", FONT_SVG)
 
       i := scale_odd(13)
       j := scale(2)
@@ -224,6 +232,23 @@ final abstract class ImageCache()
       return member(imap, get_key_with_resize(s, width, height, win))
    end
 
+   private static try_convert(s, width, height)
+      return if s := member(names, s) then {
+         if is_image_string(s) then
+            fail
+         run_convert(StringStream(s),
+                     ["-resize", 
+                      width || "x" || height,
+                      "-",
+                      "png:-"])
+      } else
+         run_convert(,
+                     [s,
+                      "-resize", 
+                      width || "x" || height,
+                      "png:-"])
+   end
+
    #
    # Like `get_with_resize`, but returns the key rather than the
    # window.  `width` and `height` default to the value of `scale()`
@@ -240,8 +265,10 @@ final abstract class ImageCache()
       key ||:= "#Resized to " || width || "x" || height
       if member(imap, key) then
          return key
-      w2 := Window().set_size(width, height)
-      Zoom(w, w2)
+      (w2 := Window.open_image(try_convert(s, width, height))) | {
+         w2 := Window().set_size(width, height)
+         Zoom(w, w2)
+      }
       insert(imap, key, w2)
       return key
    end
@@ -277,5 +304,18 @@ final abstract class ImageCache()
       svg.close()
       insert(imap, key, w)
       return key
+   end
+
+   #
+   # A convenient function to try to get a scaled SVG from the given
+   # data `s`, but if SVG capability is not available then to use the
+   # alternative conventional image `alt_s`, resized in either case to
+   # the given dimensions.
+   #
+   public static get_scaled_svg_key_alt(s, alt_s, width, height)
+      return if \Context.LOADED then 
+         get_scaled_svg_key(s, width, height) 
+      else 
+         get_key_with_resize(alt_s, width, height)
    end
 end

@@ -24,7 +24,6 @@ static void freecontext(wcp wc);
 static void freewindow(wsp ws);
 static void resizepixmap(wbp w);
 static struct imgdataformat imgdataformat_MSBGRA32;
-static COLORREF mscolor(int r, int g, int b);
 static struct SharedColor *new_sharedcolor(char *name, int r, int g, int b, int a);
 static struct SharedColor *link_sharedcolor(struct SharedColor *i);
 static void unlink_sharedcolor(struct SharedColor *i);
@@ -51,6 +50,7 @@ static void handle_mouse_down(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_capture_changed(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_size(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
+static void handle_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_getminmaxinfo(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void handle_showwindow(wsp ws, UINT msg, WPARAM wp, LPARAM lp);
 static void capture_mouse(wsp ws);
@@ -58,6 +58,8 @@ static void uncapture_mouse(wsp ws);
 static void track_mouse(wsp ws);
 static void apply_windowlabel(wsp ws);
 static void mk_Draw(wbp w, gb_Draw *d);
+static int get_outer_width(wsp ws);
+static int get_outer_height(wsp ws);
 
 static void dbg(char *fmt, ...);
 
@@ -82,10 +84,8 @@ static wbp wbndngs;
 
 #define PALCLR(c) (c | 0x2000000L)
 
-static int BORDHEIGHT;
-static int BORDWIDTH;
-static int CLIENT_XOFF;
-static int CLIENT_YOFF;
+static int BORDER_HEIGHT;
+static int BORDER_WIDTH;
 
 /*
  * draw ops
@@ -211,12 +211,8 @@ wbp wopen(char *display)
     ws = w->window;
     create_list(64, &ws->listp);
     ws->width = ws->height = 1;
-
     w->context = alccontext(w);
-
-    if (ws->x < 0) ws->x = 0;
-    if (ws->y < 0) ws->y = 0;
-
+    ws->x = ws->y = -INT_MAX;
     ws->pix = gb_create_Bitmap(ws->width, ws->height, w->context->bg->color, 0);
     ws->pixwidth = ws->width;
     ws->pixheight = ws->height;
@@ -257,18 +253,26 @@ static void handle_getminmaxinfo(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     MINMAXINFO *mmi = (MINMAXINFO *)lp;
     if (ws->resizable) {
-        mmi->ptMinTrackSize.x = ws->minwidth + BORDWIDTH;
-        mmi->ptMinTrackSize.y = ws->minheight + BORDHEIGHT;
+        mmi->ptMinTrackSize.x = ws->minwidth + BORDER_WIDTH;
+        mmi->ptMinTrackSize.y = ws->minheight + BORDER_HEIGHT;
         if (ws->maxwidth != INT_MAX)
-            mmi->ptMaxTrackSize.x = ws->maxwidth + BORDWIDTH;
+            mmi->ptMaxTrackSize.x = ws->maxwidth + BORDER_WIDTH;
         if (ws->maxheight != INT_MAX)
-            mmi->ptMaxTrackSize.y = ws->maxheight + BORDHEIGHT;
+            mmi->ptMaxTrackSize.y = ws->maxheight + BORDER_HEIGHT;
     } else {
         mmi->ptMinTrackSize.x = mmi->ptMaxTrackSize.x =
-            ws->width + BORDWIDTH;
+            ws->width + BORDER_WIDTH;
         mmi->ptMinTrackSize.y = mmi->ptMaxTrackSize.y =
-            ws->height + BORDHEIGHT;
+            ws->height + BORDER_HEIGHT;
     }
+}
+
+static void handle_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
+{
+    /* x,y represents the position of the drawable area. Casting to
+       INT16 ensures -ve values are handle correctly */
+    ws->x = (INT16)LOWORD(lp);
+    ws->y = (INT16)HIWORD(lp); 
 }
 
 static void handle_size(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
@@ -308,15 +312,15 @@ static void handle_showwindow(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     if (wp == 0)
         ws->state = WithdrawnCanvas;
-    else
+    else if (ws->state != PopupCanvas)
         ws->state = NormalCanvas;
 }
 
 static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     DWORD dw;
-    int t, x, y, fl;
-    RECT r;
+    int t, fl;
+    POINT p;
     static struct descrip curr;
     static int inited = 0;
 
@@ -336,11 +340,11 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
         inited = 1;
     }
 
-   /* Mouse location in SCREEN coordinates */
+   /* Mouse location in SCREEN coordinates; convert to client */
     dw = GetMessagePos();
-    GetWindowRect(ws->win, &r);
-    x = (INT16)LOWORD(dw) - (r.left + CLIENT_XOFF);
-    y = (INT16)HIWORD(dw) - (r.top + CLIENT_YOFF);
+    p.x = (INT16)LOWORD(dw);
+    p.y = (INT16)HIWORD(dw);
+    ScreenToClient(ws->win, &p);
 
     t = GetMessageTime();
 
@@ -353,13 +357,13 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
         fl |= MOD_META;
     if (msg == WM_KEYUP || msg == WM_SYSKEYUP)
         fl |= MOD_RELEASE;
-    qevent(ws, &curr, x, y, t, fl);
+    qevent(ws, &curr, p.x, p.y, t, fl);
 }
 
 static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    int t, x, y;
-    RECT r;
+    int t;
+    POINT p;
     int state = 0;
     int fl = 0;
 
@@ -368,11 +372,11 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     if (MK_RBUTTON & wp) state |= 4;
 
     /* Unlike normal mouse events, the co-ordinates are absolute, so
-     * convert to relative.
+     * convert to client co-ordinates.
      */
-    GetWindowRect(ws->win, &r);
-    x = (INT16)LOWORD(lp) - (r.left + CLIENT_XOFF);
-    y = (INT16)HIWORD(lp) - (r.top + CLIENT_YOFF);
+    p.x = (INT16)LOWORD(lp);
+    p.y = (INT16)HIWORD(lp);
+    ScreenToClient(ws->win, &p);
 
     t = GetMessageTime();
 
@@ -388,11 +392,11 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
      * second qmouseevents call.
      */
     if ((INT_PTR)wp > 0)
-        qmouseevents(ws, state|8, x, y, t, fl);
+        qmouseevents(ws, state|8, p.x, p.y, t, fl);
     else
-        qmouseevents(ws, state|16, x, y, t, fl);
+        qmouseevents(ws, state|16, p.x, p.y, t, fl);
     
-    qmouseevents(ws, state, x, y, t, fl);
+    qmouseevents(ws, state, p.x, p.y, t, fl);
 }
 
 static void dbg(char *fmt, ...)
@@ -575,10 +579,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 handle_size(ws, msg, wp, lp);
                 return 0;
             case WM_MOVE:
-                /* x,y represents the position of the drawable area. Casting to
-                   INT16 ensures -ve values are handle correctly */
-                ws->x = (INT16)LOWORD(lp);
-                ws->y = (INT16)HIWORD(lp); 
+                handle_move(ws, msg, wp, lp);
                 return 0;
             case WM_GETMINMAXINFO:
                 handle_getminmaxinfo(ws, msg, wp, lp);
@@ -725,8 +726,8 @@ static void open_screen_win(wsp ws)
                                      "oix", 
                                      NULL,
                                      WS_CHILD,
-                                     ws->x, 
-                                     ws->y,
+                                     ws->x == -INT_MAX ? 0 : ws->x, 
+                                     ws->y == -INT_MAX ? 0 : ws->y,
                                      ws->width,
                                      ws->height,
                                      GetDesktopWindow(),
@@ -744,10 +745,10 @@ static void open_screen_win(wsp ws)
                                      "oix", 
                                      NULL,
                                      WS_OVERLAPPEDWINDOW,
-                                     ws->x, 
-                                     ws->y,
-                                     ws->width + BORDWIDTH,
-                                     ws->height + BORDHEIGHT,
+                                     ws->x == -INT_MAX ? CW_USEDEFAULT : ws->x, 
+                                     ws->y == -INT_MAX ? CW_USEDEFAULT : ws->y,
+                                     ws->width + BORDER_WIDTH,
+                                     ws->height + BORDER_HEIGHT,
                                      parent,
                                      NULL, NULL, NULL);
             apply_windowlabel(ws);
@@ -915,14 +916,6 @@ int raisewindow(wbp w)
     return Succeeded;
 }
 
-/*
- * convert an Icon linear color into an MS Windows color value
- */
-static COLORREF mscolor(int r, int g, int b)
-{
-    return RGB(r >> 8, g >> 8, b >> 8);
-}
-
 int setlinestyle(wbp w, char *val)
 {
     stringint *e;
@@ -1016,6 +1009,13 @@ int setdrawop(wbp w, char *val)
 
 int getpos(wbp w)
 {
+    wsp ws = w->window;
+    POINT p;
+    CheckUnhidden(ws);
+    p.x = p.y = 0;
+    ClientToScreen(ws->win, &p);
+    ws->x = p.x;
+    ws->y  = p.y;
     return Succeeded;
 }
 
@@ -1090,22 +1090,6 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     imd->format = &imgdataformat_MSBGRA32;
 }
 
-void drawimgdata0(wbp w, int x, int y, struct imgdata *imd)
-{
-    wsp ws = w->window;
-    int i, j;
-    gb_Draw d;
-    mk_Draw(w, &d);
-    for(j = 0; j < imd->height; j++) {
-        for(i = 0; i < imd->width; i++) {
-            int r, g, b, a;
-            imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
-            gb_setpixel(ws->pix, x + i, y + j, a >> 8, r >> 8, g >> 8, b >> 8);
-        }
-    }
-    gb_pix_to_win(&d, x, y, imd->width, imd->height);
-}
-
 void drawimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
     gb_Bitmap *bm;
@@ -1139,37 +1123,21 @@ int getdisplaysizemm(wbp w, int *width, int *height)
 int querypointer(wbp w, int *x, int *y)
 {
     wsp ws = w->window;
-    RECT r;
-    POINT pp;
+    POINT p;
     CheckUnhidden(ws);
-    GetCursorPos(&pp);
-    GetWindowRect(ws->win, &r);
-    switch (ws->state) {
-        case MaximizedCanvas:
-        case NormalCanvas: {
-            pp.x -= r.left + CLIENT_XOFF;
-            pp.y -= r.top + CLIENT_YOFF;
-            break;
-        }
-        case WithdrawnCanvas:
-        case IconicCanvas:
-        case PopupCanvas: {
-            pp.x -= r.left;
-            pp.y -= r.top;
-            break;
-        }
-    }
-    *x = pp.x;
-    *y = pp.y;
+    GetCursorPos(&p);
+    ScreenToClient(ws->win, &p);
+    *x = p.x;
+    *y = p.y;
     return Succeeded;
 }
 
 int queryrootpointer(wbp w, int *x, int *y)
 {
-    POINT pp;
-    GetCursorPos(&pp);
-    *x = pp.x;
-    *y = pp.y;
+    POINT p;
+    GetCursorPos(&p);
+    *x = p.x;
+    *y = p.y;
     return Succeeded;
 }
 
@@ -1343,6 +1311,22 @@ int setpattern(wbp w, struct imgdata *imd)
     return Succeeded;
 }
 
+static int get_outer_width(wsp ws)
+{
+    if (ws->state == PopupCanvas)
+        return ws->width;
+    else
+        return ws->width + BORDER_WIDTH;
+}
+
+static int get_outer_height(wsp ws)
+{
+    if (ws->state == PopupCanvas)
+        return ws->height;
+    else
+        return ws->height + BORDER_HEIGHT;
+}
+
 void doconfig(wbp w, int status)
 {
     wsp ws = w->window;
@@ -1352,13 +1336,13 @@ void doconfig(wbp w, int status)
             switch (status & (C_POS|C_SIZE)) {
                 case C_POS|C_SIZE: {
                     SetWindowPos(ws->win, ws->win, ws->x, ws->y,
-                                 ws->width + BORDWIDTH, ws->height + BORDHEIGHT,
+                                 get_outer_width(ws), get_outer_height(ws),
                                  SWP_NOZORDER|SWP_NOACTIVATE);
                     break;
                 }
                 case C_SIZE: {
                     SetWindowPos(ws->win, ws->win, 0, 0,
-                                 ws->width + BORDWIDTH, ws->height + BORDHEIGHT,
+                                 get_outer_width(ws), get_outer_height(ws),
                                  SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
                     break;
                 }
@@ -1622,7 +1606,7 @@ static struct SharedColor *new_sharedcolor(char *name, int r, int g, int b, int 
     struct SharedColor *res;
     GAlloc(res, SharedColor);
     res->name = salloc(name);
-    res->color = gb_make_Color(a >> 8, r >> 8, g >> 8, b >> 8);
+    res->color = gb_make_Color(a / 256, r / 256, g / 256, b / 256);
     return res;
 }
 
@@ -1718,7 +1702,7 @@ static gb_Bitmap *imgdata_to_bitmap(struct imgdata *imd)
         for(i = 0; i < imd->width; i++) {
             int r, g, b, a;
             imd->format->getpixel(imd, i, j, &r, &g, &b, &a);
-            gb_setpixel(bm, i, j, a >> 8, r >> 8, g >> 8, b >> 8);
+            gb_setpixel(bm, i, j, a / 256, r / 256, g / 256, b / 256);
         }
     }
     return bm;
@@ -1818,6 +1802,7 @@ static void setup_cursor(char *name, LPCTSTR cid)
 static void init_window_system(void)
 {
     WNDCLASSEX wc;
+    RECT r;
     wc.cbSize =         sizeof(WNDCLASSEX); 
     wc.style =          CS_DBLCLKS;
     wc.lpfnWndProc =    WndProc;
@@ -1831,10 +1816,10 @@ static void init_window_system(void)
     wc.lpszClassName =  "oix";
     wc.hIconSm =        LoadIcon(0, IDI_APPLICATION);
     RegisterClassEx(&wc);
-    BORDWIDTH = FRAMEWIDTH * 2;
-    BORDHEIGHT = TITLEHEIGHT + FRAMEHEIGHT * 2;
-    CLIENT_XOFF = FRAMEWIDTH;
-    CLIENT_YOFF = TITLEHEIGHT + FRAMEHEIGHT;
+    r.left = r.top = r.right = r.bottom = 0;
+    AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW, FALSE);
+    BORDER_WIDTH = r.right - r.left;
+    BORDER_HEIGHT = r.bottom - r.top;
     gb_initialize(ffatalerr);
     dummy_hdc = GetDC(0);
     black = new_sharedcolor("black", 0, 0, 0, 0xffff);

@@ -203,7 +203,6 @@ extern struct imgdataformat imgdataformat_X11BGRA32;
  */
 
 #if MSWIN32
-#include "mswin.h"
 
 struct SharedColor {
    gb_Color color;

@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics, lang, util, xdg, ipl.strings, posix
+import graphics, lang, util, io, xdg, ipl.strings, posix
 
 class Event()
    public static const
@@ -136,14 +136,14 @@ end
 # Scale the given number using the current scale factor.
 #
 procedure scale(i)
-   return integer(Gui.SCALE_FACTOR * i + 0.5)
+   return integer(Gui.SCALE * i + 0.5)
 end
 
 #
 # Scale, but don't round and convert to integer.
 #
 procedure scale_real(r)
-   return Gui.SCALE_FACTOR * r
+   return Gui.SCALE * r
 end
 
 #
@@ -194,7 +194,7 @@ end
 
 class Gui()
    public static const
-      SCALE_FACTOR,
+      SCALE,
       UNIT
 
    public static 
@@ -202,6 +202,7 @@ class Gui()
       CURSOR_WIDTH,
       FINE_WIDTH,
       TOOLBAR_ICON_SIZE,
+      MENU_ICON_SIZE,
       TEXT_INSET,
       X_INSET,
       Y_INSET,
@@ -219,8 +220,30 @@ class Gui()
       PRINTABLE_1,              # Printable on a single line of text
       PRINTABLE_N               # Printable on multi lines of text
 
+
+   #
+   # Try to calculate a default value for SCALE
+   #
+   private static calc_scale1(w)
+      local pix, mm, t
+      pix := w.get_display_size() | fail
+      mm := w.get_display_size_mm() | fail
+      t := (pix[1] + pix[2]) / ((mm[1] + mm[2]) / 25.4) / 96.0
+      # Round to nearest 1%
+      t := integer(t * 100.0 + 0.5) / 100.0
+      return (1.0 < t)
+   end
+
+   private static calc_scale()
+      local w
+      return use {
+         w := Window(),
+         calc_scale1(w)
+      }
+   end
+
    private static init()
-      SCALE_FACTOR := env_real("OISCALE", 1.0) | 1.0
+      SCALE := env_real("OISCALE", 1.0) | calc_scale() | 1.0
       UNIT := scale(1)
       FINE_WIDTH := UNIT
       CURSOR_WIDTH := 2 * UNIT
@@ -234,6 +257,7 @@ class Gui()
       TAB_WIDTH := 8
       IDLE_SLEEP := 50
       TOOLBAR_ICON_SIZE := scale(24)
+      MENU_ICON_SIZE := scale(16)
       style := Style()
       PRINTABLE_1 := '\x20-\x7e\x80-\U10ffff'
       PRINTABLE_N := '\t\n\x20-\x7e\x80-\U10ffff'
@@ -638,24 +662,19 @@ procedure theme_toolbar_button(b, icon)
    if is(b, IconButton) then
       b.set_paint(get_toolbar_theme_paint(b.paint, icon))
    else if is(b, MenuButton) then
-      b.menu.set_paint_mid(b.menu.paint_mid, get_toolbar_theme_paint(icon))
+      b.menu.set_paint_mid(get_toolbar_theme_paint(b.menu.paint_mid, icon))
    sz := Gui.TOOLBAR_ICON_SIZE + 2 * Gui.BORDER_WIDTH
    b.set_size(sz, sz)
    return b
 end
 
 package procedure get_toolbar_theme_paint(paint, icon)
-   local k, w, sz
+   local k, sz
    sz := Gui.TOOLBAR_ICON_SIZE
-   if k := Xdg.find_icon_and_cache(\icon, sz) then {
-      w := ImageCache.get(k)
-      if w.get_width() > sz then
-         k := ImageCache.get_key_with_resize(k, sz, sz)
-   } else if is(paint, ImagePaint) & k := \paint.image_cache then
-      k := ImageCache.get_key_with_resize(k, sz, sz)
-   else
-      fail
-   return ImagePaint().set_cache(k)
+   if (k := Xdg.find_icon_and_cache(\icon, sz, &yes)) | 
+      (is(paint, ImagePaint) & k := ImageCache.get_key_with_resize(\paint.image_cache, sz, sz))
+   then
+      return ImagePaint().set_cache(k)
 end
 
 record Range(lo, hi)
@@ -714,4 +733,29 @@ procedure dont_blink(comp)
       fail
    # Otherwise, don't blink.
    return
+end
+
+#
+# Try to run the imagemagick convert program with the given (optional)
+# standard input `Stream` and argument list.
+#
+# On success, the standard output is collected and returned.
+#
+procedure run_convert(stdin, args)
+   local p, r
+   static ok
+   initial {
+      ok := has_feature("PNG images") & 
+         has_feature("UNIX") &
+         Files.find_exe("convert")
+   }
+   if /ok then
+      return error("convert not available")
+   if r := use { 
+      p := FilterInputStream(stdin,
+                             "convert",
+                             args),
+      p.read_all()
+   } & p.succeeded() then
+      return r
 end
