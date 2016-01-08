@@ -232,6 +232,23 @@ final abstract class ImageCache()
       return member(imap, get_key_with_resize(s, width, height, win))
    end
 
+   private static try_convert(s, width, height)
+      return if s := member(names, s) then {
+         if is_image_string(s) then
+            fail
+         run_convert(StringStream(s),
+                     ["-resize", 
+                      width || "x" || height,
+                      "-",
+                      "png:-"])
+      } else
+         run_convert(,
+                     [s,
+                      "-resize", 
+                      width || "x" || height,
+                      "png:-"])
+   end
+
    #
    # Like `get_with_resize`, but returns the key rather than the
    # window.  `width` and `height` default to the value of `scale()`
@@ -248,8 +265,10 @@ final abstract class ImageCache()
       key ||:= "#Resized to " || width || "x" || height
       if member(imap, key) then
          return key
-      w2 := Window().set_size(width, height)
-      Zoom(w, w2)
+      (w2 := Window.open_image(try_convert(s, width, height))) | {
+         w2 := Window().set_size(width, height)
+         Zoom(w, w2)
+      }
       insert(imap, key, w2)
       return key
    end

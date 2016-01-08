@@ -227,21 +227,11 @@ final abstract class Xdg()
       ICON_FALLBACK_CACHED_DIRS,  # A list of CachedDir objects
       DESKTOP_ENTRIES     # A map of mime-types (string) to list of DesktopEntry objects.
 
-   public static const
-      AT_MOST,            # Constants used with `find_icon_and_cache` to optionally
-      AT_LEAST,           # resize an icon.
-      EXACT,
-      CLOSEST
-
    private static readable
       icon_theme,
       scalable_flag
 
    private static init()
-      AT_MOST := "at most"
-      AT_LEAST := "at least"
-      EXACT := "exact"
-      CLOSEST := "closest"
       refresh()
    end
 
@@ -429,86 +419,36 @@ final abstract class Xdg()
          alternative_mime_types1("application/octet-stream", l, seen)
    end
 
-   private static try_convert(f, size)
-      local p, r
-      if r := use { 
-         p := FilterInputStream(,
-                                "convert", [f,
-                                            "-resize", 
-                                            size || "x" || size,
-                                            "png:-"]),
-         p.read_all()
-      } & p.succeeded() then
-         return r
-   end
-
-   private static size_ok(ww, size, opt)
-      return case opt of {
-         AT_MOST: ww <= size
-         AT_LEAST: ww >= size
-         EXACT: ww = size
-         &null | CLOSEST: &null
-         default: runerr("Invalid xdg resize option", opt)
-      }
-   end
-
-   private static cache_icon(f, size, opt)
-      local k, w, d, k2
+   private static cache_icon(f, size, exact)
+      local k, w
       # If it's an SVG file, then simply scale to the desired size and
       # return the key.
-      if endswith(f, ".svg" | ".svgz") then
-         return ImageCache.get_scaled_svg_key(f, size, size)
-      # Otherwise, try and load the image.
-      k := ImageCache.get_key(f) | fail
-      w := ImageCache.get_cached_window(k)
-      # Check the size; if acceptable, return the key of the loaded
-      # image.
-      if size_ok(w.get_width(), size, opt) then
-         return k
-      # Otherwise, create a new key, which we will return.  Then check
-      # if we've got the key already.
-      k2 := k || "#Xdg resized to " || size
-      if ImageCache.get_cached_window(k2) then
-         return k2
-      # No, so try to resize with the convert program.  PNG data is
-      # returned as a string on success.
-      if d := try_convert(f, size) then {
-         # Name the data and try to open it in the cache.
-         ImageCache.name_image(k2, d)
-         if ImageCache.get_key(k2) then
-            return k2
-      }
-      # convert didn't work, so fall back to simple resizing.
-      return ImageCache.copy_key_with_resize(k2, k, size, size) & k2
+      return if endswith(f, ".svg" | ".svgz") then
+         ImageCache.get_scaled_svg_key(f, size, size)
+      else if /exact then
+         ImageCache.get_key(f)
+      else
+         ImageCache.get_key_with_resize(f, size, size)
    end
 
    #
    # This calls `find_icon`, caches the result in `ImageCache`, and
-   # returns the cache key.  The parameter `opt` indicates whether any
-   # found icon should be resized.  The alternatives are :-
+   # returns the cache key.  The parameter `exact` flag indicates
+   # whether the found icon should be resized to exactly `size`.
    #
-   #  * `Xdg.AT_MOST` -  the icon will be resized to `size` if it is
-   #                     greater than `size`.
-   #  * `Xdg.AT_LEAST` - the icon will be resized to `size` if it is
-   #                     less than `size`.
-   #  * `Xdg.EXACT` -    the icon will be resized to `size`.
-   #  * `Xdg.CLOSEST` -  the icon won't be resized, and the size of
-   #                     the icon returned will be the closest to
-   #                     the size requested.  (The default).
-   #
-   public static find_icon_and_cache(icon, size, opt)
-      return cache_icon(find_icon(icon, size), size, opt)
+   public static find_icon_and_cache(icon, size, exact)
+      return cache_icon(find_icon(icon, size), size, exact)
    end
 
    #
    # This calls `find_icon_for_file`, caches the result in
    # `ImageCache`, and returns the cache key.
    #
-   # The `opt` parameter has the same effect as in
+   # The `exact` parameter has the same effect as in
    # `find_icon_and_cache`.
    #
-   public static find_icon_for_file_and_cache(file, size, opt)
-      return cache_icon(find_icon_for_file(file, size), size, opt)
+   public static find_icon_for_file_and_cache(file, size, exact)
+      return cache_icon(find_icon_for_file(file, size), size, exact)
    end
 
    private static read_generic_icons()

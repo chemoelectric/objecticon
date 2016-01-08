@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics, lang, util, xdg, ipl.strings, posix
+import graphics, lang, util, io, xdg, ipl.strings, posix
 
 class Event()
    public static const
@@ -671,7 +671,7 @@ end
 package procedure get_toolbar_theme_paint(paint, icon)
    local k, sz
    sz := Gui.TOOLBAR_ICON_SIZE
-   if (k := Xdg.find_icon_and_cache(\icon, sz, Xdg.EXACT)) | 
+   if (k := Xdg.find_icon_and_cache(\icon, sz, &yes)) | 
       (is(paint, ImagePaint) & k := ImageCache.get_key_with_resize(\paint.image_cache, sz, sz))
    then
       return ImagePaint().set_cache(k)
@@ -733,4 +733,29 @@ procedure dont_blink(comp)
       fail
    # Otherwise, don't blink.
    return
+end
+
+#
+# Try to run the imagemagick convert program with the given (optional)
+# standard input `Stream` and argument list.
+#
+# On success, the standard output is collected and returned.
+#
+procedure run_convert(stdin, args)
+   local p, r
+   static ok
+   initial {
+      ok := has_feature("PNG images") & 
+         has_feature("UNIX") &
+         Files.find_exe("convert")
+   }
+   if /ok then
+      return error("convert not available")
+   if r := use { 
+      p := FilterInputStream(stdin,
+                             "convert",
+                             args),
+      p.read_all()
+   } & p.succeeded() then
+      return r
 end
