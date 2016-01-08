@@ -89,8 +89,8 @@ final abstract class ImageCache()
       name_image("gui.TINY_ARROW_UP", mk_arrow_up(i))
       name_image("gui.TINY_ARROW_DOWN", mk_arrow_down(i))
 
-      i := scale(9)
       j := scale(1)
+      i := (if j % 2 = 0 then scale_even else scale_odd)(9)
       name_image("gui.PLUS", mk_handle(i, j))
       name_image("gui.MINUS", mk_handle(i, j, &yes))
 
