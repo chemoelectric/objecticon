@@ -552,7 +552,8 @@ function graphics_Window_fill_rectangle(self, x0, y0, w0, h0)
       GetSelfW();
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
-      fillrectangle(self_w, x, y, width, height);
+      if (reducerect(self_w, 1, &x, &y, &width, &height))
+          fillrectangle(self_w, x, y, width, height);
       return self;
    }
 end
