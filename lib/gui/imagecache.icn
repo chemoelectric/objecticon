@@ -239,7 +239,7 @@ final abstract class ImageCache()
             fail
          run_convert(StringStream(s),
                      ["-resize", 
-                      width || "x" || height,
+                      width || "x" || height || "!",
                       "-",
                       "png:-"])
       } else {
@@ -247,7 +247,7 @@ final abstract class ImageCache()
          run_convert(,
                      [s,
                       "-resize", 
-                      width || "x" || height,
+                      width || "x" || height || "!",
                       "png:-"])
       }
    end
