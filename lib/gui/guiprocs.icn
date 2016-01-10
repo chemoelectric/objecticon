@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics, lang, util, io, xdg, ipl.strings, posix
+import graphics, lang, util, io, xdg, ipl.strings, posix, ipl.graphics, cairo
 
 class Event()
    public static const
@@ -758,4 +758,26 @@ procedure run_convert(stdin, args)
       p.read_all()
    } & p.succeeded() then
       return r
+end
+
+#
+# Zoom from window `src` to `dest`.  If the cairo library is
+# available, then that is used; otherwise the `Zoom` procedure is
+# used.
+#
+procedure zoom_win(src, dest)
+   local c, p
+   if \Context.LOADED then {
+      use {
+         c := Context(dest), use { p := Pattern.to_pattern(src), {
+            c.set_operator("source").
+             scale(real(dest.get_width()) / src.get_width(), 
+                   real(dest.get_height()) / src.get_height()).
+             set_source(p).
+             paint()
+         }
+      }}
+   } else
+      Zoom(src, dest)
+   return
 end
