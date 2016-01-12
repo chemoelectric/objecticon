@@ -24,34 +24,68 @@ class Dialog(Component)
    public static 
       ROOT_WATTRIBS, 
       DEFAULT_POINTER,
-      DOUBLE_CLICK_DELAY,        # Repeat event delays
-      DRAG_GESTURE_OFFSET,       # Distance before drag begins
-      TOOLTIP_START_DELAY,       # Default tooltip delays
+      # Repeat event delays
+      DOUBLE_CLICK_DELAY,
+      # Distance before drag begins
+      DRAG_GESTURE_OFFSET,
+      # Default tooltip delays
+      TOOLTIP_START_DELAY,
       TOOLTIP_END_DELAY,
       TOOLTIP_CONTINUE_DELAY,
       TOOLTIP_X_OFFSET,
       TOOLTIP_Y_OFFSET,
-      FOCUS_UP,                  # Set of events to move focus
-      FOCUS_DOWN,
+      # Set of events to move focus
+      FOCUS_UP,
+      FOCUS_DOWN
+
+   private static
       pointer_grab_stack,
       keyboard_grab_stack
 
-   public 
-      win,                     # The dialog's window.
+   private readable
+      # The dialog's window.
+      win,
+      # Buffer window for double buffering                 
+      buffer_win,
+      # For a popup dialog, this points to the `Dialog` controlling events
+      # and other delegated things.  For normal dialogs, it is set to self.
+      popup_manager,
+      # The parent dialog, from the perspective of the windowing system.
       owning_dialog,
+      # The child dialogs, from the perspective of the windowing system.
       child_dialogs,
-      focus,                   # Component with current focus            
-      menu_mode,               # Do we have a menu open?
-      buffer_win,              # Buffer window for double buffering                 
-      click_count,             # Variables controlling multiple clicks
-      prev_event,
-      is_blocked_flag,
-      drag_gesture_x,
-      drag_gesture_y,
-      curr_drag,
-      curr_drag_holder,
-      curr_drop,
-      tried_drag,
+      # Remember size on closing
+      remember_size_flag,
+      # Set if this dialog is currently blocked for input.
+      is_blocked_flag
+
+   private
+      # Table of mouse event codes to components held
+      # down for that code.
+      held,
+
+      # Do we have a menu open?  If so, this is the governing
+      # component.
+      menu_mode,
+      menu_mode_stack,
+
+      # Popup dialogs managed by this dialog
+      popups,
+      # Component with current focus
+      focus,
+      # Mouse click count
+      click_count,
+      crossing,
+
+      # Rectangles that need validation
+      invalid_rects,
+
+      # Components containing current event
+      point_chain,
+      # Event used to create point_chain
+      point_chain_source,
+
+      # Various tooltip processing variables
       tooltip_ticker,
       tooltip_last_obj, 
       tooltip_last_tip, 
@@ -60,19 +94,26 @@ class Dialog(Component)
       tooltip_start_time,
       tooltip_end_time,
       tooltip_continue_time,
-      tooltip_component, 
-      point_chain,
-      point_chain_source,
-      invalid_rects,
-      held,
-      crossing,
-      selection_requests,
-      selections,
-      popup_manager,
-      popups,
+      tooltip_component,
+
+      # Start position of a drag gesture
+      drag_gesture_x,
+      drag_gesture_y,
+
+      # Drag and drop state variables.
+      curr_drag,
+      curr_drag_holder,
+      curr_drop,
+      tried_drag,
+
+      # Current pointer set in win.
       curr_pointer,
-      remember_size_flag,
-      menu_mode_stack
+      # Previous event for tracking click counts.
+      prev_event,
+      # Table of selections to `SelectionRequest`s
+      selection_requests,
+      # Table of selections to selection owners.
+      selections
 
    public needs_validate()
       return \invalid_rects
@@ -110,15 +151,43 @@ class Dialog(Component)
       return \self.is_blocked_flag
    end
 
-   public in_menu_mode()
-      return if \popup_manager then
-         \popup_manager.menu_mode
-      else
-         \self.menu_mode
+   public is_popup()
+      if popup_manager ~=== self then
+         return
+   end
+
+   # Return the menu mode component, if menu mode is active.
+   #
+   public get_menu_mode()
+      return \popup_manager.menu_mode
+   end
+
+   # Return the point chain
+   #
+   public get_point_chain()
+      return \popup_manager.point_chain
+   end
+
+   # Return the point chain source, namely the event used to create
+   # the point chain.
+   #
+   public get_point_chain_source()
+      return \popup_manager.point_chain_source
+   end
+
+   # If a drag is active, return the current drag.
+   #
+   public get_curr_drag()
+      return \popup_manager.curr_drag
    end
 
    public block()
       if /is_blocked_flag then {
+         # Check were not doing something that might lock up the desktop.
+         if is_popup() then
+            runerr("cannot block a popup")
+         if get_menu_mode() then
+            runerr("cannot block a dialog whilst in menu mode")
          is_blocked_flag := 1
          resynch_pointer()
       }
@@ -171,7 +240,7 @@ class Dialog(Component)
    # milliseconds, but it may be altered by changing {DOUBLE_CLICK_DELAY}.
    #
    public get_click_count()
-      return self.click_count
+      return \popup_manager.click_count
    end
 
    public compute_absolutes()
@@ -188,7 +257,7 @@ class Dialog(Component)
       # If we have a popup manager, then we are in mouse grab mode;
       # this means that the pointer for the whole screen comes from
       # the popup manager's window, so we must delegate.
-      if \popup_manager then
+      if popup_manager ~=== self then
          popup_manager.change_pointer(s)
       else {
          if curr_pointer ~=== s then
@@ -260,12 +329,6 @@ class Dialog(Component)
       self.effective_is_shaded_flag := self.is_shaded_flag
       Gui.style.polish(self)
       self.held := table()
-      # For a popup window, initialize held so that its keys are consistent with
-      # the current mouse state.  This ensures that DRAG_OVER events are fired
-      # properly in the popup when a drag has started before the popup was
-      # opened (eg in a menu system).
-      if \popup_manager then
-         every insert(held, key(popup_manager.held), [])
       self.crossing := set()
       self.selections := table()
       self.selection_requests := table()
@@ -374,7 +437,7 @@ class Dialog(Component)
    end
 
    public enter_menu_mode(c)
-      if \popup_manager then
+      if popup_manager ~=== self then
          popup_manager.enter_menu_mode(c)
       else {
          while \menu_mode & not(menu_mode.allow_nested(c)) do
@@ -391,7 +454,7 @@ class Dialog(Component)
    end
 
    public exit_menu_mode(c)
-      if \popup_manager then
+      if popup_manager ~=== self then
          popup_manager.exit_menu_mode(c)
       else {
          until c === menu_mode do
@@ -407,32 +470,25 @@ class Dialog(Component)
    end
 
    public add_popup(d)
-      if \popup_manager then
+      if popup_manager ~=== self then
          popup_manager.add_popup(d)
       else {
          \popups | syserr("internal error - not  in menu mode.")
          d.popup_manager := self
-         put(popups, d)
+         push(popups, d)
       }
       return self
    end
 
    public remove_popup(d)
-      if \popup_manager then
+      if popup_manager ~=== self then
          popup_manager.remove_popup(d)
       else {
          \popups | syserr("internal error - not  in menu mode.")
-         d.popup_manager := &null
+         d.popup_manager := d
          ldel(popups, d)
       }
       return self
-   end
-
-   public which_popup(ex, ey)
-      local p
-      every p := back(\popups) | self do
-         if p.inside(ex, ey) then
-            return p
    end
 
    #
@@ -440,14 +496,16 @@ class Dialog(Component)
    # current focus.
    #
    public get_focus()
-      return \self.focus
+      return \popup_manager.focus
    end
 
    #
    # Sets keyboard focus to the given component.
    #
    public set_focus(c, e)
-      if self.focus ~=== c then {
+      if popup_manager ~=== self then
+         popup_manager.set_focus(c, e)
+      else if self.focus ~=== c then {
          (\self.focus).lost_focus(e)
          self.focus := c
          (\self.focus).got_focus(e)
@@ -526,7 +584,8 @@ class Dialog(Component)
       }
       self.point_chain := self.point_chain_source := self.held := 
          self.prev_event := self.invalid_rects := self.crossing := 
-         self.selections := self.selection_requests := &null
+         self.selections := self.selection_requests := 
+         self.click_count := &null
       fire(Event.DIALOG_DISPOSED)
       return self
    end
@@ -536,27 +595,25 @@ class Dialog(Component)
    # has been removed.
    #
    public resynch_pointer() 
-      # Fail if we have a button currently held down.
-      *held = 0 | fail
-      if \popup_manager then
+      if popup_manager ~=== self then
          popup_manager.resynch_pointer() | fail
       else if \point_chain_source then {
+         # Fail if we have a button currently held down.
+         *held = 0 | fail
          create_point_chain(point_chain_source)
-         every (back(\popups) | self).generate_crossing_events(point_chain_source) 
+         generate_crossing_events(point_chain_source) 
          synch_pointer(point_chain_source)
       }
       return self
    end
 
    private create_point_chain(e)
-      local p, flag
+      local p
 
-      # A popup window lets its event manager create its point chain for it.
-      if \popup_manager then
-         return popup_manager.create_point_chain(e)
+      (popup_manager === self) | syserr("popup_manager wrong")
 
-      self.point_chain := []
-      self.point_chain_source := e
+      point_chain := []
+      point_chain_source := e
 
       # A mouse exit always has an empty point chain, since the pointer is outside
       # the window (or over an obscured part).  Note that we shouldn't get exit events
@@ -564,26 +621,22 @@ class Dialog(Component)
       if e.code === Mouse.EXIT then
          fail
 
-      every p := back(\popups) do {
-         p.point_chain := []
-         p.point_chain_source := e
+      every p := !\popups do {
          if p.inside(e.x, e.y) then {
-            if /flag then {
-               p.build_point_chain(p.point_chain, e.x, e.y)
-               flag := 1
-            }
-            put(p.point_chain, p)
+            p.build_point_chain(point_chain, e.x, e.y)
+            put(point_chain, p)
+            break
          }
       }
 
-      if self.is_unhidden() & self.inside(e.x, e.y) then {
-         if /flag then
-            self.build_point_chain(self.point_chain, e.x, e.y)
-         put(self.point_chain, self)
+      if is_unhidden() & inside(e.x, e.y) then {
+         if *point_chain = 0 then
+            build_point_chain(point_chain, e.x, e.y)
+         put(point_chain, self)
       }
    end
 
-   public dispose_selections()
+   private dispose_selections()
       every (!selections).lost_ownership()
       clear(selections)
    end
@@ -640,7 +693,7 @@ class Dialog(Component)
 
    public own_selection(selection, obj)
       local curr
-      if \popup_manager then
+      if popup_manager ~=== self then
          popup_manager.own_selection(selection, obj)
       else {
          if curr := member(selections, selection) then {
@@ -674,6 +727,8 @@ class Dialog(Component)
          Window.CLOSE_BUTTON: process_close_button(l)
          Window.RESIZE: process_resize(l)
          default: {
+            (popup_manager === self) | syserr("shouldn't get a mouse/key event in a popup")
+
             if member(Mouse.DRAG_OR_MOVEMENT, l[1]) then {
                while win.pending()[1] === l[1] do
                   l := self.win.event()
@@ -690,18 +745,14 @@ class Dialog(Component)
                   break
             }
 
-            every (back(\popups) | self).process_event1(e)
+            if /self.curr_drag then 
+               check_dnd(e)
+            if \self.curr_drag then
+               process_dnd(e)
+            else
+               process_normal(e)
          }
       }
-   end
-
-   private process_event1(e)
-      if /self.curr_drag then 
-         check_dnd(e)
-      if \self.curr_drag then
-         process_dnd(e)
-      else
-         process_normal(e)
    end
 
    #
@@ -721,11 +772,11 @@ class Dialog(Component)
          drag_gesture_x := e.x
          drag_gesture_y := e.y
          check_click_count(e)
-         if c := (!self.point_chain).find_focus(e) then
-            self.set_focus(c, e)
+         if c := (!point_chain).find_focus(e) then
+            set_focus(c, e)
       }
       else if \e.meta & /e.release & type(ec) == ("string" | "ucs") then {
-         if c := self.find_accel(ec) then
+         if c := (!\popups | self).find_accel(ec) then
             c.handle_accel(e)
       }
 
@@ -742,7 +793,7 @@ class Dialog(Component)
       # Check for focus keyboard movement, but not in menu mode; this would get muddled up
       # with the menu's cursor movement.
       #
-      if /e.release & /self.menu_mode & /self.popup_manager then {
+      if /e.release & /self.menu_mode then {
          if member(FOCUS_DOWN, ec) & (/self.focus | 
                                       self.focus.is_hidden() |
                                       self.focus.is_shaded() | 
@@ -778,8 +829,12 @@ class Dialog(Component)
    # @param ec The simulated mouse event code
    #
    public hold(c, ec)
-      self.held[ec] := copy(\self.held[ec]) | fail
-      put(self.held[ec], c)
+      if popup_manager ~=== self then
+         popup_manager.hold(c, ec) | fail
+      else {
+         held[ec] := copy(member(held, ec)) | fail
+         put(held[ec], c)
+      }
       return self
    end
 
@@ -789,8 +844,12 @@ class Dialog(Component)
    # @param ec The simulated mouse event code
    #
    public release(c, ec)
-      self.held[ec] := copy(\self.held[ec]) | fail
-      ldel(self.held[ec], c)
+      if popup_manager ~=== self then
+         popup_manager.release(c, ec) | fail
+      else {
+         held[ec] := copy(member(held, ec)) | fail
+         ldel(held[ec], c)
+      }
       return self
    end
 
@@ -798,10 +857,17 @@ class Dialog(Component)
    # Return the number of buttons presently held down.
    #
    public get_held_count()
-      return *held
+      return *popup_manager.held
    end
 
-   public generate_crossing_events(e) 
+   #
+   # Return the list of components held for the given mouse event.
+   #
+   public get_held(e)
+      return member(popup_manager.held, e)
+   end
+
+   private generate_crossing_events(e) 
       local t
       t := crossing
       crossing := elementset(point_chain)
@@ -810,7 +876,7 @@ class Dialog(Component)
       fire_list(point_chain, Event.IN_POINT_CHAIN, e)      
    end
 
-   public generate_events(e)
+   private generate_events(e)
       local ec, t
       ec := e.code
       if integer(ec) < 0 then {
@@ -834,9 +900,9 @@ class Dialog(Component)
                fire_list(t, ec, e)
             }
          }
-      } else if /popup_manager then {
+      } else {
          # Keyboard event
-         fire_list([\self.menu_mode | \self.focus] \ 1,
+         fire_list([\menu_mode | \focus] \ 1,
                    if \e.release then Event.KEY_RELEASE else Event.KEY_PRESS,
                    e)
       }
@@ -856,7 +922,8 @@ class Dialog(Component)
    # 
    private tooltip_init()
       self.tooltip_state := 0
-      if /popup_manager then self.tooltip_ticker.start()
+      if popup_manager === self then
+         tooltip_ticker.start()
    end
 
    #
@@ -949,8 +1016,7 @@ class Dialog(Component)
    private process_tooltip_tick()
       local t
       repeat {
-         if \popup_manager then 
-            syserr("shouldn't have a tooltip ticker in a popup")
+         (popup_manager === self) | syserr("shouldn't have a tooltip ticker in a popup")
 
          if \is_blocked_flag then {
             if tooltip_state = 2 then
@@ -988,10 +1054,6 @@ class Dialog(Component)
    private process_tooltip_event(e)
       local obj, c, tip, t
 
-      # Popup window tooltips are processed by the manager.
-      if \popup_manager then 
-         fail
-
       if \is_blocked_flag | 
             not((e.code === Mouse.MOVEMENT) | (*held = 0 & member(Mouse.CROSSING, e.code))) then {
          if tooltip_state = 2 then
@@ -1007,7 +1069,7 @@ class Dialog(Component)
          tip := tooltip_last_tip
          obj := tooltip_last_obj
       } else {
-         every c := !\ (back(\popups) | self).point_chain do {
+         every c := !point_chain do {
             if tip := c.get_tooltip(e) then {
                obj := c
                break
@@ -1070,12 +1132,12 @@ class Dialog(Component)
    public synch_pointer(e)
       local c, ptr
 
-      if \popup_manager then
+      if popup_manager ~=== self then
          popup_manager.synch_pointer(e)
       else {
          ptr := DEFAULT_POINTER
          if /is_blocked_flag then {
-            every c := !\ (back(\popups) | self).point_chain do {
+            every c := !\point_chain do {
                if c.is_unshaded() & (ptr := c.get_pointer(e)) then
                   break
             }
@@ -1092,10 +1154,10 @@ class Dialog(Component)
       curr_drag_holder := curr_drop := curr_drag := &null
       self.invoke_drag_reset(e)
       generate_crossing_events(e)
-      if /held[-1] then
-         synch_pointer(e)
-      else
+      if member(held, -1) then
          change_pointer(DEFAULT_POINTER)
+      else
+         synch_pointer(e)
    end
 
    #
@@ -1132,10 +1194,10 @@ class Dialog(Component)
          # If we have a prospective drop from can_drop, try to perform it.
          if (\self.curr_drop).get_source().perform_drop(self.curr_drag, self.curr_drop, e) then
             self.curr_drag.get_source().end_drag(self.curr_drag, self.curr_drop, e)
-         delete(self.held, ec + 3)
+         delete(held, ec + 3)
          exit_dnd(e)
       } else if /e.release & (ec === "\e") then {
-         self.held[curr_drag.button] := []            # Replace held entry for current drag button
+         held[curr_drag.button] := []            # Replace held entry for current drag button
          exit_dnd(e)
       } else if member(Mouse.PRESS, ec) then          # Keep held consistent if other mouse
          held[ec] := []                               # buttons are pressed/released during the drag
@@ -1168,15 +1230,15 @@ class Dialog(Component)
          self.tried_drag := &null
    end
 
-   public invoke_can_drag(ev)
+   private invoke_can_drag(ev)
       local c, o, kc
-      kc := key(self.held)   # The only button pressed
-      every c := !self.held[kc] do
+      kc := key(held)   # The only button pressed
+      every c := !held[kc] do
          if c.is_unshaded() & \c.allow_drag_flag & o := c.can_drag(ev) then
             return Drag(c, o, ev, kc)
    end
 
-   public invoke_drag_event(d, ev)
+   private invoke_drag_event(d, ev)
       local c
       every c := !self.point_chain do
          if c.is_unshaded() & \c.allow_drop_flag & c.drag_event(d, ev) then
@@ -1214,7 +1276,7 @@ class Dialog(Component)
       prev_event := e
    end
 
-   public get_focus_list(e)
+   private get_focus_list(e)
       local l, c
       l := []
       every c := Seq{traverse_tab_order()} do {
@@ -1224,7 +1286,7 @@ class Dialog(Component)
       return l
    end
 
-   public find_next_focus(e)
+   private find_next_focus(e)
       local l, i
       l := get_focus_list(e)
       every i := 1 to *l - 1 do {
@@ -1234,7 +1296,7 @@ class Dialog(Component)
       return l[1]
    end
 
-   public find_previous_focus(e)
+   private find_previous_focus(e)
       local l, i
       l := get_focus_list(e)
       every i := 2 to *l do {
@@ -1386,6 +1448,7 @@ class Dialog(Component)
       self.child_dialogs := set()
       self.menu_mode_stack := []
       self.tooltip_ticker := Dispatcher.new_task{self.process_tooltip_tick()}
+      self.popup_manager := self
       return
    end
 end

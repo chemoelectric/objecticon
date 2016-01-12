@@ -1343,7 +1343,7 @@ class TextFlow(Component, HasLastHighlight)
 
    private handle_lpress(e)
       local c, t
-      *parent_dialog.held = 1 | fail
+      parent_dialog.get_held_count() = 1 | fail
       if \over then {
          set_highlight(over)
          held := over
@@ -1357,7 +1357,7 @@ class TextFlow(Component, HasLastHighlight)
    end
 
    private handle_mpress(e)
-      *parent_dialog.held = 1 | fail
+      parent_dialog.get_held_count() = 1 | fail
       if \over then {
          set_highlight(over)
          held := over
@@ -1376,7 +1376,7 @@ class TextFlow(Component, HasLastHighlight)
 
    private handle_rpress(e)
       local pm, pm_menu
-      *parent_dialog.held = 1 | fail
+      parent_dialog.get_held_count() = 1 | fail
       if pm_menu := browser.create_link_menu(\over) then {
          set_highlight(over)
          set_over()
@@ -1392,7 +1392,7 @@ class TextFlow(Component, HasLastHighlight)
 
    package handle_in_chain(e)
       local u, t, a, f
-      *parent_dialog.held = 0 | fail
+      parent_dialog.get_held_count() = 0 | fail
       if e.code === (Key.SHIFT_L | Key.SHIFT_R) then {
          if /e.release then
             f := 1
@@ -1421,7 +1421,7 @@ class TextFlow(Component, HasLastHighlight)
    end
 
    private handle_exit(e)
-      *parent_dialog.held = 0 | fail
+      parent_dialog.get_held_count() = 0 | fail
       set_over()
    end
 

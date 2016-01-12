@@ -76,8 +76,7 @@ class PopupMenu(Component, MenuSystem)
       xa := a[1] | x
       ya := a[2]
       self.comp := comp
-      pd := comp.parent_dialog
-      pd := \pd.popup_manager
+      pd := comp.parent_dialog.popup_manager
       set_all_wattribs(pd.get_effective_wattribs())
       comp.parent_dialog.add(self)
       self.resize()

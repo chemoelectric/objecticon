@@ -495,7 +495,7 @@ abstract class MenuComponent(Rect,Connectable)
       # the parent's menu is a popup; otherwise it may appear below
       # one of the parent popups.
       if pd.contains(self) &
-         not (\ (\parent).temp_win.parent_dialog.popup_manager) then
+         not (\parent).temp_win.parent_dialog.is_popup() then
       {
          temp_win.
             set_pos(self.x + win.get_dx(), 

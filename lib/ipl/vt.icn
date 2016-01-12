@@ -2243,7 +2243,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private handle_mpress(e)
-      *parent_dialog.held = 1 | fail
+      parent_dialog.get_held_count() = 1 | fail
       if \over then {
          set_highlight(over)
          held := over
@@ -2428,7 +2428,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private handle_lpress(e)
-      *parent_dialog.held = 1 | fail
+      parent_dialog.get_held_count() = 1 | fail
       if \over then {
          set_highlight(over)
          held := over
@@ -2439,7 +2439,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private handle_rpress(e)
       local m, pm
-      *parent_dialog.held = 1 | fail
+      parent_dialog.get_held_count() = 1 | fail
       if /over then {
          if m := ui.create_context_menu() & *m.children > 0 then {
             pm := PopupMenu()
@@ -2463,12 +2463,12 @@ class Vt(LineBasedScrollArea, MenuMode)
       quieten_cursor()
       # This is done in order to clear any info message which may
       # still persist even after quieten cursor state has begun.
-      if *parent_dialog.held = 0 then
+      if parent_dialog.get_held_count() = 0 then
          ui.msg()
    end
 
    private quieten_cursor()
-      (/quieten & *parent_dialog.held = 0) | fail
+      (/quieten & parent_dialog.get_held_count() = 0) | fail
       set_over()
       # No need to synch_pointer since we call this method out of the
       # keyboard handler.
@@ -2487,7 +2487,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private handle_in_chain(ev)
       local seg, f
-      (/quieten & *parent_dialog.held = 0) | fail
+      (/quieten & parent_dialog.get_held_count() = 0) | fail
       if ev.code === (Key.SHIFT_L | Key.SHIFT_R) then {
          if /ev.release then
             f := 1
@@ -2502,7 +2502,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private handle_exit(e)
-      *parent_dialog.held = 0 | fail
+      parent_dialog.get_held_count() = 0 | fail
       set_over()
    end
 

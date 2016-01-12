@@ -720,10 +720,10 @@ end
 procedure dont_blink(comp)
    local c
    # If dialog is blocked, or a drag is in progress, don't blink
-   if comp.parent_dialog.is_blocked() | \comp.parent_dialog.curr_drag  then
+   if comp.parent_dialog.is_blocked() | comp.parent_dialog.get_curr_drag()  then
       return
    # If not in menu mode, blink
-   c := comp.parent_dialog.in_menu_mode() | fail
+   c := comp.parent_dialog.get_menu_mode() | fail
    # If this component is the menu mode (eg SuggestField), blink
    if c === comp then
       fail

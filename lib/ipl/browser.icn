@@ -1193,7 +1193,7 @@ class Img(Image, HasLastHighlight)
 
    private handle_rpress(e)
       local pm, pm_menu
-      *parent_dialog.held = 1 | fail
+      parent_dialog.get_held_count() = 1 | fail
       if pm_menu := browser.create_image_menu(self) then {
          set_highlight(over)
          set_over()
@@ -1231,7 +1231,7 @@ class Img(Image, HasLastHighlight)
    end
 
    private handle_exit(e)
-      *parent_dialog.held = 0 | fail
+      parent_dialog.get_held_count() = 0 | fail
       set_over()
    end
 
@@ -1253,7 +1253,7 @@ class Img(Image, HasLastHighlight)
    end
 
    private handle_lmpress(e)
-      *parent_dialog.held = 1 | fail
+      parent_dialog.get_held_count() = 1 | fail
       if \over then {
          set_highlight(over)
          held := over
@@ -1340,7 +1340,7 @@ class Img(Image, HasLastHighlight)
 
    package handle_in_chain(e)
       local u, t, a, f
-      *parent_dialog.held = 0 | fail
+      parent_dialog.get_held_count() = 0 | fail
       if e.code === (Key.SHIFT_L | Key.SHIFT_R) then {
          if /e.release then
             f := 1
@@ -4956,7 +4956,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private handle_lpress(e)
-      *parent_dialog.held = 1 | fail
+      parent_dialog.get_held_count() = 1 | fail
       /mark_x | fail
       running === 0 | fail
       can_lpress(e) | fail
@@ -5185,7 +5185,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    #
    private handle_in_chain(e)
       local c
-      every c := back(parent_dialog.point_chain) do {
+      every c := back(parent_dialog.get_point_chain()) do {
          if is(c, Img | TextFlow) then
             c.handle_in_chain(e)
       }
@@ -5272,8 +5272,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    private can_rpress(e)
       local c
-      is(parent_dialog.point_chain[1], TextFlow | TblContent | Tbl) | fail
-      every c := !parent_dialog.point_chain do {
+      is(parent_dialog.get_point_chain()[1], TextFlow | TblContent | Tbl) | fail
+      every c := !parent_dialog.get_point_chain() do {
          if is(c, TextFlow) & c.wants_rpress(e) then
             fail
       }
@@ -5282,8 +5282,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    private can_lpress(e)
       local c
-      is(parent_dialog.point_chain[1], Img | TextFlow | TblContent | Tbl) | fail
-      every c := !parent_dialog.point_chain do {
+      is(parent_dialog.get_point_chain()[1], Img | TextFlow | TblContent | Tbl) | fail
+      every c := !parent_dialog.get_point_chain() do {
          if is(c, TextFlow | Img) & c.wants_lpress(e) then
             fail
       }
@@ -5292,7 +5292,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    private handle_rpress(e)
       local pm, pm_menu
-      *parent_dialog.held = 1 | fail
+      parent_dialog.get_held_count() = 1 | fail
       can_rpress(e) | fail
       if pm_menu := create_page_menu() then {
          pm := PopupMenu()

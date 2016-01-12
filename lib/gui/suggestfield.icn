@@ -149,7 +149,7 @@ abstract class SuggestField(TextField, MenuMode)
 
       close_textlist()
 
-      if (*data = 0) | (parent_dialog.focus ~=== self) then
+      if (*data = 0) | (parent_dialog.get_focus() ~=== self) then
          return
 
       win := parent_dialog.win

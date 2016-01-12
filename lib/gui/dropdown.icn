@@ -90,7 +90,7 @@ abstract class DropDown(Component, MenuMode)
       } else
          direction
 
-      old_focus := parent_dialog.focus
+      old_focus := parent_dialog.get_focus()
 
       parent_dialog.
          set_focus().
@@ -211,7 +211,7 @@ abstract class DropDown(Component, MenuMode)
       if /ev.release & ev.code === "\e" then
          close_all()
       else
-         (\popup.parent_dialog.focus).fire(type, ev)
+         parent_dialog.get_focus().fire(type, ev)
    end
 
    public do_increment(ev)
@@ -381,7 +381,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       } else
          direction
 
-      old_focus := parent_dialog.focus
+      old_focus := parent_dialog.get_focus()
       self.parent_dialog.enter_menu_mode(self)
 
       popup.
@@ -394,9 +394,6 @@ abstract class SelectionDropDown(SelectionList, DropDown)
 
       if parent_dialog.contains(popup) then {
          popup.invalidate()
-         self.parent_dialog.
-            set_focus(popup).
-            hold(popup.view, ev.code)
       } else {
          # Remove popup from dialog and use add to popup window.
          self.parent_dialog.remove(popup)
@@ -411,13 +408,13 @@ abstract class SelectionDropDown(SelectionList, DropDown)
             copy_wattrib("display", parent_dialog).
             add(popup)
 
-         self.popup.set_pos(0, 0)
-         self.parent_dialog.
-            set_focus().
-            add_popup(d)
-         d.show().set_focus(popup)
-         d.held[ev.code] := [popup.view, popup, d]
+         popup.set_pos(0, 0)
+         parent_dialog.add_popup(d)
+         d.show()
       }
+      parent_dialog.
+         set_focus(popup).
+         hold(popup.view, ev.code)
 
       if \self.selection then {
          self.popup.
