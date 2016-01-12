@@ -15,7 +15,7 @@ class PopupEditor(Component, MenuMode)
       set_z(comp.parent_dialog.get_top_z())
       comp.parent_dialog.add(self)
       resize()
-      old_focus := parent_dialog.focus
+      old_focus := parent_dialog.get_focus()
       editor.grab_focus()
       parent_dialog.enter_menu_mode(self)
       invalidate()
@@ -55,7 +55,7 @@ class PopupEditor(Component, MenuMode)
       if /ev.release & ev.code === "\e" then
          close_all()
       else
-         (\parent_dialog.focus).fire(type, ev)
+         parent_dialog.get_focus().fire(type, ev)
    end
 
    public close_all()

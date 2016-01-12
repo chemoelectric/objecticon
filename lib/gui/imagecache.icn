@@ -5,7 +5,7 @@ import
    util,
    cairo,
    io,
-   ipl.graphics
+   ipl.imagedetect
 
 $ifdef _PNG
 $load CLOCK "images/gui.CLOCK_24.png"
@@ -88,8 +88,8 @@ final abstract class ImageCache()
       name_image("gui.TINY_ARROW_UP", mk_arrow_up(i))
       name_image("gui.TINY_ARROW_DOWN", mk_arrow_down(i))
 
-      i := scale(9)
       j := scale(1)
+      i := (if j % 2 = 0 then scale_even else scale_odd)(9)
       name_image("gui.PLUS", mk_handle(i, j))
       name_image("gui.MINUS", mk_handle(i, j, &yes))
 
@@ -232,23 +232,6 @@ final abstract class ImageCache()
       return member(imap, get_key_with_resize(s, width, height, win))
    end
 
-   private static try_convert(s, width, height)
-      return if s := member(names, s) then {
-         if is_image_string(s) then
-            fail
-         run_convert(StringStream(s),
-                     ["-resize", 
-                      width || "x" || height,
-                      "-",
-                      "png:-"])
-      } else
-         run_convert(,
-                     [s,
-                      "-resize", 
-                      width || "x" || height,
-                      "png:-"])
-   end
-
    #
    # Like `get_with_resize`, but returns the key rather than the
    # window.  `width` and `height` default to the value of `scale()`
@@ -265,10 +248,8 @@ final abstract class ImageCache()
       key ||:= "#Resized to " || width || "x" || height
       if member(imap, key) then
          return key
-      (w2 := Window.open_image(try_convert(s, width, height))) | {
-         w2 := Window().set_size(width, height)
-         Zoom(w, w2)
-      }
+      w2 := Window().set_size(width, height)
+      zoom_win(w, w2)
       insert(imap, key, w2)
       return key
    end
@@ -317,5 +298,28 @@ final abstract class ImageCache()
          get_scaled_svg_key(s, width, height) 
       else 
          get_key_with_resize(alt_s, width, height)
+   end
+
+   #
+   # Useful debug function to print the contents of the cache.
+   #
+   public static show()
+      local k, v, i
+      write("Cache name table\n----------------")
+      every k := key(names) do {
+         v := names[k]
+         writes("\t", k, " -> ", *v, " bytes ")
+         if i := ImageStringInfo(v) then
+            write("image string ", i.width, "x", i.height)
+         else if i := detect(v) then
+            write(i.format, " ", i.width, "x", i.height)
+         else
+            write("data")
+      }
+      write("\nCache image table\n-----------------")
+      every k := key(imap) do {
+         v := imap[k]
+         write("\t", k, " -> Window#", serial(v), " ", v.get_width(), "x", v.get_height())
+      }
    end
 end

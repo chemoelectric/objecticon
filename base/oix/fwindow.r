@@ -133,8 +133,17 @@ function graphics_Window_copy_to(self, x0, y0, w0, h0, dest, x1, y1)
       oy = y;
       if (!reducerect(self_w, 0, &x, &y, &width, &height))
           return self;
+      x2 += (x - ox);
+      y2 += (y - oy);
 
-      AttemptOp(copyarea(self_w, x, y, width, height, w2, x2 + (x - ox), y2 + (y - oy)));
+      ox = x2;
+      oy = y2;
+      if (!reducerect(w2, 1, &x2, &y2, &width, &height))
+          return self;
+      x += (x2 - ox);
+      y += (y2 - oy);
+
+      AttemptOp(copyarea(self_w, x, y, width, height, w2, x2, y2));
 
       return self;
    }
@@ -543,7 +552,8 @@ function graphics_Window_fill_rectangle(self, x0, y0, w0, h0)
       GetSelfW();
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
-      fillrectangle(self_w, x, y, width, height);
+      if (reducerect(self_w, 1, &x, &y, &width, &height))
+          fillrectangle(self_w, x, y, width, height);
       return self;
    }
 end

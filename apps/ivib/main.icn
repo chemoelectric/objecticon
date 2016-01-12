@@ -852,7 +852,7 @@ class Main(Dialog)
       if member(Mouse.PRESS, e.code) then
          info_label.set_label("")
 
-      case /self.menu_mode & /e.release & e.code of {
+      case (not get_menu_mode()) & /e.release & e.code of {
          "\^q" : op_quit()
          "\^o" : op_open_file()
          "\^w" : op_save_as()

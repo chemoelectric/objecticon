@@ -610,8 +610,8 @@ class Component(Rect,Align,Connectable)
       #
       # Use the point chain if we can
       #
-      if /e | (e === parent_dialog.point_chain_source) then
-         return keyof(\parent_dialog.point_chain, self)
+      if /e | (e === parent_dialog.get_point_chain_source()) then
+         return keyof(parent_dialog.get_point_chain(), self)
       else
          return get_clip_rect().inside(e.x, e.y)
    end
@@ -621,7 +621,7 @@ class Component(Rect,Align,Connectable)
    # @param e The mouse press event code - Mouse.LEFT_PRESS, Mouse.RIGHT_PRESS or Mouse.MIDDLE_PRESS
    #
    public is_held(e)
-      return keyof(\parent_dialog.held[e], self)
+      return keyof(parent_dialog.get_held(e), self)
    end
 
    #
@@ -651,7 +651,7 @@ class Component(Rect,Align,Connectable)
    # Succeed if this component has the dialog's focus.
    #
    public has_focus()
-      return (\self.parent_dialog).focus === self
+      return (\self.parent_dialog).get_focus() === self
    end
 
    #

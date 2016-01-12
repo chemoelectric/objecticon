@@ -537,7 +537,7 @@ class Columns(LineBasedScrollArea)
    end
 
    public quieten_cursor()
-      (/quieten & *parent_dialog.held = 0) | fail
+      (/quieten & parent_dialog.get_held_count() = 0) | fail
       set_over()
       # No need to synch_pointer since we call this method out of the
       # vt's keyboard handler.
@@ -555,7 +555,7 @@ class Columns(LineBasedScrollArea)
 
    private handle_in_chain(e)
       local k, f
-      (/quieten & *parent_dialog.held = 0) | fail
+      (/quieten & parent_dialog.get_held_count() = 0) | fail
       if e.code === (Key.SHIFT_L | Key.SHIFT_R) then {
          if /e.release then
             f := 1
@@ -570,7 +570,7 @@ class Columns(LineBasedScrollArea)
    end
 
    private handle_exit(e)
-      *parent_dialog.held = 0 | fail
+      parent_dialog.get_held_count() = 0 | fail
       set_over()
    end
 
@@ -666,7 +666,7 @@ class Columns(LineBasedScrollArea)
    end
 
    public handle_lpress(e)
-      *parent_dialog.held = 1 | fail
+      parent_dialog.get_held_count() = 1 | fail
       if \over then {
          if /e.ctrl then {
             set_highlight(over)
@@ -679,7 +679,7 @@ class Columns(LineBasedScrollArea)
    end
 
    public handle_mpress(e)
-      *parent_dialog.held = 1 | fail
+      parent_dialog.get_held_count() = 1 | fail
       if \over then {
          set_highlight(over)
          held := over
@@ -2136,7 +2136,7 @@ $endif
          sorter := other.sorter
          ascending := other.ascending
          annotate_opt := other.annotate_opt
-         c := if \other.is_hidden_flag then other.remembered_focus else other.parent_dialog.focus
+         c := if \other.is_hidden_flag then other.remembered_focus else other.parent_dialog.get_focus()
          set_remembered_focus(if c === other.columns then columns else output)
          log_file := other.log_file
          output.

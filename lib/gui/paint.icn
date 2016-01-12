@@ -3,7 +3,7 @@ package gui
 import 
    util,
    graphics,
-   ipl.graphics(Zoom,GetShadowClone),
+   ipl.graphics(GetShadowClone),
    ipl.strings(separate_lines)
 
 # A {Paint} represents an arbitrary object which has a size and can be
@@ -642,7 +642,7 @@ class ImagePaint(Paint)
       zoom_h <:= 1
 
       zoom_win := Window().set_size(zoom_w, zoom_h) | runerr("Couldn't open temp window")
-      Zoom(win, zoom_win, 0, 0, img_w, img_h, 0, 0, zoom_w, zoom_h)
+      gui.zoom_win(win, zoom_win)
 
       # Now swap the zoomed window into win.
       close_image()

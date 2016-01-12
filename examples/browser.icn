@@ -17,8 +17,7 @@ $endif
    ipl.browser,
    ipl.strings,
    ipl.lists,
-   ipl.pdco,
-   ipl.graphics
+   ipl.pdco
 
 global opts
 
@@ -1066,7 +1065,7 @@ class TabHeaderPaint(Paint)
       if \iw then {
          if iw.get_height() ~= ICON_SIZE then {
             icon_win := Window().set_size((iw.get_width() * ICON_SIZE) / iw.get_height(), ICON_SIZE)
-            Zoom(iw, icon_win)
+            zoom_win(iw, icon_win)
             iw.close()
          } else
             icon_win := iw
