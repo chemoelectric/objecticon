@@ -436,6 +436,10 @@ class Dialog(Component)
       return self
    end
 
+   #
+   # Enter menu mode, with `c` as the controlling component, which
+   # must implement the `MenuMode` interface.
+   #
    public enter_menu_mode(c)
       if popup_manager ~=== self then
          popup_manager.enter_menu_mode(c)
@@ -453,6 +457,8 @@ class Dialog(Component)
       return self
    end
 
+   # Exit the menu mode formerly begun with `MenuMode` instance `c`.
+   #
    public exit_menu_mode(c)
       if popup_manager ~=== self then
          popup_manager.exit_menu_mode(c)
@@ -1670,10 +1676,31 @@ class WindowControl(Component)
    end
 end
 
+#
+# This class is implemented by all
+#
 abstract class MenuMode()
+   # Succeed if the given `WinEvent` `e` should cause this menu to
+   # close; for example a mouse press outside of a popup menu's
+   # region.
    public abstract should_close(e)
+
+   # Close this menu.  This should close the menu component, and then
+   # call `Dialog.exit_menu_mode`.
    public abstract close_all()
+
+   # Generate the `Component`s which make up the transient visible
+   # parts of the popup (if any).
    public abstract gen_popup_components()
+
+   # Return the `Component` which this popup notionally appears on.
+   # For example, a text field's popup menu would return the text
+   # field.  This is used by some components to determine whether or
+   # not to allow a nested popup.
    public abstract get_nesting_component()
+
+   # Given another `MenuMode` `c`, which wishes to enter menu mode,
+   # succeed if we allow `c` to appear "on top" of this menu mode.
+   # Otherwise, this menu mode is closed before `c` is entered.
    public abstract allow_nested(c)
 end
