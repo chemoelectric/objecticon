@@ -133,7 +133,7 @@ class Style()
       local cw
       return use {
          cw := get_highlight_clone(W),
-         cw.fill_rectangle(x, y, w, h, Gui.FINE_WIDTH)
+         cw.fill_rectangle(x, y, w, h)
       }
    end
 
