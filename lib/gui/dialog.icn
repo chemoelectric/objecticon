@@ -458,13 +458,16 @@ class Dialog(Component)
    end
 
    # Exit the menu mode formerly begun with `MenuMode` instance `c`.
+   # If `c` is `&null`, all menu_modes are exited.
    #
    public exit_menu_mode(c)
       if popup_manager ~=== self then
          popup_manager.exit_menu_mode(c)
       else {
-         until c === menu_mode do
+         until c === menu_mode do {
+            \menu_mode | runerr("inconsistent menu mode passed to exit_menu_mode", c)
             menu_mode.close_all()
+         }
          if c := pull(menu_mode_stack) then
             menu_mode := c
          else {
@@ -479,7 +482,7 @@ class Dialog(Component)
       if popup_manager ~=== self then
          popup_manager.add_popup(d)
       else {
-         \popups | syserr("internal error - not  in menu mode.")
+         \popups | runerr("add_popup, but not  in menu mode.")
          d.popup_manager := self
          push(popups, d)
       }
@@ -490,7 +493,7 @@ class Dialog(Component)
       if popup_manager ~=== self then
          popup_manager.remove_popup(d)
       else {
-         \popups | syserr("internal error - not  in menu mode.")
+         \popups | runerr("remove_popup, but not  in menu mode.")
          d.popup_manager := d
          ldel(popups, d)
       }
