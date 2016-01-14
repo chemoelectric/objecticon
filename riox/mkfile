@@ -15,7 +15,7 @@ all:V:  $O.out
 
 $O.out:  $OFILES
         $LD $OFILES
-        cp $O.out $OIBIN/riox
+        cp $O.out $OI_BIN/riox
 
 clean:V:	
         rm -f $OFILES $O.out

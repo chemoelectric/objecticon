@@ -569,7 +569,7 @@ class SymbolTable(Connectable)
       if \package_db then
          return
       package_db := table()
-      every d := Files.getcwd() | Files.split_paths(System.getenv("OIPATH")) do {
+      every d := Files.getcwd() | Files.split_paths(System.getenv("OI_PATH")) do {
          p := FilePath(d).canonical()
          s := p.str()
          if /package_db[s] then {

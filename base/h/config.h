@@ -11,56 +11,56 @@
    #define TRACE "TRACE"
 #endif
 
-#ifndef OIMAXLEVEL
-   #define OIMAXLEVEL "OIMAXLEVEL"
+#ifndef OI_MAX_LEVEL
+   #define OI_MAX_LEVEL "OI_MAX_LEVEL"
 #endif
 
-#ifndef OISTRSIZE
-   #define OISTRSIZE "OISTRSIZE"
+#ifndef OI_STRING_SIZE
+   #define OI_STRING_SIZE "OI_STRING_SIZE"
 #endif
 
-#ifndef OIBLKSIZE
-   #define OIBLKSIZE "OIBLKSIZE"
+#ifndef OI_BLOCK_SIZE
+   #define OI_BLOCK_SIZE "OI_BLOCK_SIZE"
 #endif
 
-#ifndef OIMEMGROWTH
-   #define OIMEMGROWTH "OIMEMGROWTH"
+#ifndef OI_MEM_GROWTH
+   #define OI_MEM_GROWTH "OI_MEM_GROWTH"
 #endif
 
-#ifndef OIMEMCUSHION
-   #define OIMEMCUSHION "OIMEMCUSHION"
+#ifndef OI_MEM_CUSHION
+   #define OI_MEM_CUSHION "OI_MEM_CUSHION"
 #endif
 
-#ifndef OICORE
-   #define OICORE "OICORE"
+#ifndef OI_CORE
+   #define OI_CORE "OI_CORE"
 #endif
 
-#ifndef OIPATH
-   #define OIPATH "OIPATH"
+#ifndef OI_PATH
+   #define OI_PATH "OI_PATH"
 #endif
 
-#ifndef OIINCL
-   #define OIINCL "OIINCL"
+#ifndef OI_INCL
+   #define OI_INCL "OI_INCL"
 #endif
 
-#ifndef OIFONT
-   #define OIFONT "OIFONT"
+#ifndef OI_FONT
+   #define OI_FONT "OI_FONT"
 #endif
 
-#ifndef OIFONTSIZE
-   #define OIFONTSIZE "OIFONTSIZE"
+#ifndef OI_FONT_SIZE
+   #define OI_FONT_SIZE "OI_FONT_SIZE"
 #endif
 
-#ifndef OILEADING
-   #define OILEADING "OILEADING"
+#ifndef OI_LEADING
+   #define OI_LEADING "OI_LEADING"
 #endif
 
-#ifndef OISTKLIM
-   #define OISTKLIM "OISTKLIM"
+#ifndef OI_STACK_LIMIT
+   #define OI_STACK_LIMIT "OI_STACK_LIMIT"
 #endif
 
-#ifndef OISTKCUSHION
-   #define OISTKCUSHION "OISTKCUSHION"
+#ifndef OI_STACK_CUSHION
+   #define OI_STACK_CUSHION "OI_STACK_CUSHION"
 #endif
 
 #if MSWIN32

@@ -14,7 +14,7 @@ clean:
 
 oidoc:   $COMMONU
         oit -sn -o oidoc oidoc.icn $COMMONU
-	cp oidoc $OIBIN
+	cp oidoc $OI_BIN
 
 %.u:Q: %.icn
        test $stem.u -nt $stem.icn || oit -snc $COMMONSRC $PROGSRC

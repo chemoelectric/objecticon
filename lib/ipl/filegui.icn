@@ -519,7 +519,7 @@ class FileTrailButton(TextButton)
       set_accepts_focus(&no)
       set_draw_own_shading(&yes)
       set_border(CompoundBorder().
-                 set_outer(FileTrailBorder().set_line_width(Gui.FINE_WIDTH)).
+                 set_outer(FileTrailBorder().set_line_width(Gui.DASHED_WIDTH)).
                  set_inner(EmptyBorder().
                            set_l_inset(Gui.TEXT_INSET).
                            set_r_inset(Gui.TEXT_INSET)).
@@ -601,7 +601,7 @@ class FileTrailList(ButtonOnlyList)
       clear_constraints()
       b.set_border_whilst_entered(&yes).
          set_border(CompoundBorder().
-                          set_outer(FileTrailBorder().set_line_width(Gui.FINE_WIDTH)).
+                          set_outer(FileTrailBorder().set_line_width(Gui.DASHED_WIDTH)).
                           set_inner(EmptyBorder().
                                     set_l_inset(Gui.TEXT_INSET).
                                     set_r_inset(Gui.TEXT_INSET)))

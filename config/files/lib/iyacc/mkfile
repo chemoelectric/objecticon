@@ -36,7 +36,7 @@ all:V:		$PROGRAM
 
 $PROGRAM:       $OBJS
 		$LD -o $PROGRAM $OBJS $COBJS $LIBS ../../base/common/plan9.$O
-		cp iyacc $OIBIN
+		cp iyacc $OI_BIN
 
 clean:V:	
                 rm -f $OBJS $PROGRAM

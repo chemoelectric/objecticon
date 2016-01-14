@@ -17,7 +17,7 @@ clean:V:
 
 oit:            $OBJS
 		$LD $LDFLAGS -o oit $OBJS $LIBS
-		cp oit $OIBIN
+		cp oit $OI_BIN
 
 $OBJS:   ../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
 		   ../h/mproto.h ../h/typedefs.h ../h/cstructs.h

@@ -15,6 +15,6 @@
     (add-to-list 'compilation-error-regexp-alist 'oix)))
 (setq compilation-search-path
       (append compilation-search-path
-              (parse-colon-path (getenv "OIPATH"))
+              (parse-colon-path (getenv "OI_PATH"))
               (parse-colon-path (getenv "OLPATH"))))
 (provide 'objecticon-setup)

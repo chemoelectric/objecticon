@@ -105,27 +105,30 @@ class Style()
       }
    end
 
-   public draw_dashed_rectangle(W, x, y, w, h)
+   public draw_dashed_rectangle(W, x, y, w, h, t)
       local cw
+      /t := Gui.DASHED_WIDTH
       return use {
          cw := get_dashed_clone(W),
-         cw.draw_rectangle(x, y, w, h, Gui.FINE_WIDTH)
+         cw.draw_rectangle(x, y, w, h, t)
       }
    end
 
-   public draw_focus_rectangle(W, x, y, w, h)
+   public draw_focus_rectangle(W, x, y, w, h, t)
       local cw
+      /t := Gui.DASHED_WIDTH
       return use {
          cw := get_focus_clone(W),
-         cw.draw_rectangle(x, y, w, h, Gui.FINE_WIDTH)
+         cw.draw_rectangle(x, y, w, h, t)
       }
    end
 
-   public draw_highlight_rectangle(W, x, y, w, h)
+   public draw_highlight_rectangle(W, x, y, w, h, t)
       local cw
+      /t := Gui.DASHED_WIDTH
       return use {
          cw := get_highlight_clone(W),
-         cw.draw_rectangle(x, y, w, h, Gui.FINE_WIDTH)
+         cw.draw_rectangle(x, y, w, h, t)
       }
    end
 
@@ -133,7 +136,7 @@ class Style()
       local cw
       return use {
          cw := get_highlight_clone(W),
-         cw.fill_rectangle(x, y, w, h, Gui.FINE_WIDTH)
+         cw.fill_rectangle(x, y, w, h)
       }
    end
 

@@ -19,4 +19,4 @@ etags :
 
 %: 	%.icn
 	oit -s $<
-	cp $@ "$(OIBIN)"
+	cp $@ "$(OI_BIN)"

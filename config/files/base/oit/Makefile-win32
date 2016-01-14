@@ -22,12 +22,12 @@ clean:
 
 oit:		$(OBJS)
 		$(LD) -subsystem:console $(OBJS) $(LIBS) -out:oit.exe 
-		$(INSTALL) oit "$(OIBIN)"
+		$(INSTALL) oit "$(OI_BIN)"
 
 win32header:	win32header.obj ../common/mlocal.obj ../common/win32.obj
 		$(LD) -subsystem:console win32header.obj ../common/mlocal.obj \
                 ../common/win32.obj $(LIBS) -out:win32header.exe 
-		$(INSTALL) win32header "$(OIBIN)"
+		$(INSTALL) win32header "$(OI_BIN)"
 
 $(OBJS):   ../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
 		   ../h/mproto.h ../h/typedefs.h ../h/cstructs.h

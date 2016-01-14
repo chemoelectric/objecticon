@@ -1,7 +1,7 @@
 .PHONY: all clean test
 
-OIHOME=@CONFIG_DIR@
-OIBIN=$(OIHOME)/bin
+OI_HOME=@CONFIG_DIR@
+OI_BIN=$(OI_HOME)/bin
 
 CC=cl
 LD=link
@@ -13,12 +13,12 @@ RMDIR=rm -rf
 MKDIR=mkdir
 CP=cp
 INSTALL=/usr/bin/install -c
-WOIHOME=@WCONFIG_DIR@
-OILIB=$(WOIHOME)\lib
+WOI_HOME=@WCONFIG_DIR@
+OI_LIB=$(WOI_HOME)\lib
 
-export OIPATH:=$(OILIB)\main;$(OILIB)\gui;$(OILIB)\xml;$(OILIB)\parser;$(OILIB)\ipl
-export OIINCL:=$(OILIB)\incl
-export PATH:=$(OIBIN):$(PATH)
+export OI_PATH:=$(OI_LIB)\main;$(OI_LIB)\gui;$(OI_LIB)\xml;$(OI_LIB)\parser;$(OI_LIB)\ipl
+export OI_INCL:=$(OI_LIB)\incl
+export PATH:=$(OI_BIN):$(PATH)
 
 %.obj: %.c
 	cl $(CFLAGS) /c $<

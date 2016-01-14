@@ -37,7 +37,7 @@ all:	oix
 
 oix:	$(OBJS)
 	$(CC) $(CFLAGS) $(DYNAMIC_EXPORT_LDFLAGS) $(LDFLAGS) -o oix $(OBJS) $(LIBS)
-	$(INSTALL) oix "$(OIBIN)"
+	$(INSTALL) oix "$(OI_BIN)"
 
 %.o: %.r $(HDRS)
 	$(RTT) $<

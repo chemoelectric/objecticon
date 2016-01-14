@@ -1900,7 +1900,7 @@ class Vt(LineBasedScrollArea, MenuMode)
                   W.draw_rectangle(x1, y1 + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
 
                if \a.url === last_highlight then
-                  Gui.style.draw_dashed_rectangle(W, x1, yp, w1, line_height)
+                  Gui.style.draw_dashed_rectangle(W, x1, yp, w1, line_height, Gui.FINE_WIDTH)
                if \a.url === over then
                   Gui.style.fill_over_rectangle(W, x1, yp, w1, line_height)
 

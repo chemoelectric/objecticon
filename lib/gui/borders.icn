@@ -29,28 +29,28 @@ abstract class ABorder(Insets,Align)
       self.draw_rev(W, r.x, r.y, r.w, r.h)
    end
 
-   public draw_focus_rect(W, r)
-      self.draw_focus(W, r.x, r.y, r.w, r.h)
+   public draw_focus_rect(W, r, t)
+      self.draw_focus(W, r.x, r.y, r.w, r.h, t)
    end
 
-   public draw_focus(W, x, y, w, h)
-      Gui.style.draw_focus_rectangle(W, x, y, w, h)
+   public draw_focus(W, x, y, w, h, t)
+      Gui.style.draw_focus_rectangle(W, x, y, w, h, t)
    end
 
-   public draw_dashed_rect(W, r)
-      self.draw_dashed(W, r.x, r.y, r.w, r.h)
+   public draw_dashed_rect(W, r, t)
+      self.draw_dashed(W, r.x, r.y, r.w, r.h, t)
    end
 
-   public draw_dashed(W, x, y, w, h)
-      Gui.style.draw_dashed_rectangle(W, x, y, w, h)
+   public draw_dashed(W, x, y, w, h, t)
+      Gui.style.draw_dashed_rectangle(W, x, y, w, h, t)
    end
 
-   public draw_highlight_rect(W, r)
-      self.draw_highlight(W, r.x, r.y, r.w, r.h)
+   public draw_highlight_rect(W, r, t)
+      self.draw_highlight(W, r.x, r.y, r.w, r.h, t)
    end
 
-   public draw_highlight(W, x, y, w, h)
-      Gui.style.draw_highlight_rectangle(W, x, y, w, h)
+   public draw_highlight(W, x, y, w, h, t)
+      Gui.style.draw_highlight_rectangle(W, x, y, w, h, t)
    end
 
    public draw_down_rect(W, r)
@@ -143,19 +143,22 @@ class EmptyBorder(ABorder)
       return self
    end
 
-   public draw_focus(W, x, y, w, h)
+   public draw_focus(W, x, y, w, h, t)
       Gui.style.draw_focus_rectangle(W, x + focus_inset, y + focus_inset, 
-                                     w - 2 * focus_inset, h - 2 * focus_inset)
+                                     w - 2 * focus_inset, h - 2 * focus_inset,
+                                     t)
    end
 
-   public draw_dashed(W, x, y, w, h)
+   public draw_dashed(W, x, y, w, h, t)
       Gui.style.draw_dashed_rectangle(W, x + focus_inset, y + focus_inset, 
-                                      w - 2 * focus_inset, h - 2 * focus_inset)
+                                      w - 2 * focus_inset, h - 2 * focus_inset,
+                                      t)
    end
 
-   public draw_highlight(W, x, y, w, h)
+   public draw_highlight(W, x, y, w, h, t)
       Gui.style.draw_highlight_rectangle(W, x + focus_inset, y + focus_inset, 
-                                         w - 2 * focus_inset, h - 2 * focus_inset)
+                                         w - 2 * focus_inset, h - 2 * focus_inset,
+                                         t)
    end
 
    public new()
@@ -190,22 +193,22 @@ abstract class LineBorder(ABorder)
       self.l_inset := self.t_inset := self.r_inset := self.b_inset := line_width
    end
 
-   public draw_focus(W, x, y, w, h)
+   public draw_focus(W, x, y, w, h, th)
       local t
       t := line_width + focus_inset
-      Gui.style.draw_focus_rectangle(W, x + t, y + t, w - 2 * t, h - 2 * t)
+      Gui.style.draw_focus_rectangle(W, x + t, y + t, w - 2 * t, h - 2 * t, th)
    end
 
-   public draw_dashed(W, x, y, w, h)
+   public draw_dashed(W, x, y, w, h, th)
       local t
       t := line_width + focus_inset
-      Gui.style.draw_dashed_rectangle(W, x + t, y + t, w - 2 * t, h - 2 * t)
+      Gui.style.draw_dashed_rectangle(W, x + t, y + t, w - 2 * t, h - 2 * t, th)
    end
 
-   public draw_highlight(W, x, y, w, h)
+   public draw_highlight(W, x, y, w, h, th)
       local t
       t := line_width + focus_inset
-      Gui.style.draw_highlight_rectangle(W, x + t, y + t, w - 2 * t, h - 2 * t)
+      Gui.style.draw_highlight_rectangle(W, x + t, y + t, w - 2 * t, h - 2 * t, th)
    end
 
    public get_line_width()
@@ -308,16 +311,16 @@ class CompoundBorder(ABorder)
                      h - outer.t_inset - outer.b_inset)
    end
 
-   public draw_focus(W, x, y, w, h)
-      outer.draw_focus(W, x, y, w, h)
+   public draw_focus(W, x, y, w, h, t)
+      outer.draw_focus(W, x, y, w, h, t)
    end
 
-   public draw_dashed(W, x, y, w, h)
-      outer.draw_dashed(W, x, y, w, h)
+   public draw_dashed(W, x, y, w, h, t)
+      outer.draw_dashed(W, x, y, w, h, t)
    end
 
-   public draw_highlight(W, x, y, w, h)
-      outer.draw_highlight(W, x, y, w, h)
+   public draw_highlight(W, x, y, w, h, t)
+      outer.draw_highlight(W, x, y, w, h, t)
    end
 
    public draw_down(W, x, y, w, h)

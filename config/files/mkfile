@@ -9,7 +9,7 @@ all:V:
 	@{ cd examples ; mk }
 	@{ cd riox ; mk }
         @{ 
-           OIFONT=p9:$font
+           OI_FONT=p9:$font
            if(test -e fontinfo.txt) 
                 ;
            if not

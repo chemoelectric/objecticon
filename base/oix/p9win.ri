@@ -2548,9 +2548,9 @@ static void load_font_info(void)
     struct FontInfo *tail = 0;
     char *fn;
 
-    fn = getenv("OIFONTINFO");
+    fn = getenv("OI_FONTINFO");
     if (!fn)
-        ffatalerr("OIFONTINFO environment variable not set");
+        ffatalerr("OI_FONTINFO environment variable not set");
 
     if ((fd = open(fn, OREAD)) < 0)
         ffatalerr("Can't open font info file: %r");

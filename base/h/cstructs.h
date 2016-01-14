@@ -100,7 +100,7 @@ struct rangeset {
  *  Define symbols for building file names.
  *  1. FILEPREFIX: the characters that terminate a file name prefix
  *  2. FILESEP: the char to insert after a dir name, if any
- *  3. PATHSEP: separator character on $PATH, $OIPATH etc.
+ *  3. PATHSEP: separator character on $PATH, $OI_PATH etc.
  */
 
 #if UNIX

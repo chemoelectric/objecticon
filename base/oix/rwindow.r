@@ -1463,8 +1463,8 @@ int parsefont(char *s, char family[MAXFONTWORD], int *style, double *size)
         else if (sscanf(attr, "%lf%c", &tmpf, &c) == 1) {
             if (attr[0] == '+' || tmpf < 0.0)
                 tmpf += defaultfontsize;        /* relative to default font size */
-            if (tmpf < MIN_FONTSIZE) 
-                tmpf = MIN_FONTSIZE;
+            if (tmpf < MIN_FONT_SIZE) 
+                tmpf = MIN_FONT_SIZE;
             if (*size != -1.0 && *size != tmpf)
                 return 0;			/* if conflicting sizes given */
             *size = tmpf;			/* float value is a size */

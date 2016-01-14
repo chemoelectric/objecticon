@@ -52,6 +52,9 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       EDGES_ONLY,
       MIDDLE_AND_EDGES
 
+   public static
+      INTER_LINE_WIDTH
+
    private static init()
       TOP := "t"
       MIDDLE := "m"
@@ -59,6 +62,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       MIDDLE_ONLY := 1
       EDGES_ONLY := 2
       MIDDLE_AND_EDGES := 3
+      INTER_LINE_WIDTH := env_int("OI_SCROLLAREA_INTER_LINE_WIDTH", 1) | 2 * Gui.FINE_WIDTH
    end
 
    public calculate_line_count()
@@ -882,8 +886,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
          "d": Gui.style.draw_dashed_rectangle(view.cbwin, x, y, w, h)
       }
       case \hi of {
-         "t": Gui.style.fill_highlight_rectangle(view.cbwin, x, y, w, scale(2))
-         "b": Gui.style.fill_highlight_rectangle(view.cbwin, x, y + h - scale(2), w, scale(2))
+         "t": Gui.style.fill_highlight_rectangle(view.cbwin, x, y, w, INTER_LINE_WIDTH)
+         "b": Gui.style.fill_highlight_rectangle(view.cbwin, x, y + h - INTER_LINE_WIDTH, w, INTER_LINE_WIDTH)
          "m": Gui.style.draw_highlight_rectangle(view.cbwin, x, y, w, h)
       }
       if \ov then

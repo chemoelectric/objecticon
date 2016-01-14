@@ -305,11 +305,11 @@ static void load_path_impl(char *dir)
 
 /*
  * Initialise the packages db from the packages.txt files found in the
- * current directory, and the OIPATH (if defined).
+ * current directory, and the OI_PATH (if defined).
  */
 void load_package_db_from_ipath()
 {
-    char *s = getenv(OIPATH);
+    char *s = getenv(OI_PATH);
 
     /* Load anything in the CD.  The empty string passed to canonicalize will
      * return the CD with a trailing separator. */

@@ -25,7 +25,7 @@ clean:
 
 rtt:	$(OBJ)
 	$(LD) -subsystem:console $(OBJ) $(LIBS) -out:rtt.exe 
-	$(INSTALL) rtt "$(OIBIN)"
+	$(INSTALL) rtt "$(OI_BIN)"
 
 rttdb.obj: ../h/version.h
 rttparse.obj : ../h/gsupport.h ../h/config.h ../h/cstructs.h \

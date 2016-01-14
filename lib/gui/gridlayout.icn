@@ -17,8 +17,8 @@ class GridLayout(Layout)
       DEFAULT_INNER_INSET
 
    private static init()
-      DEFAULT_OUTER_INSET := scale(10)
-      DEFAULT_INNER_INSET := scale(5)
+      DEFAULT_OUTER_INSET := env_int("OI_GRIDLAYOUT_DEFAULT_OUTER_INSET", 1) | scale(10)
+      DEFAULT_INNER_INSET := env_int("OI_GRIDLAYOUT_DEFAULT_INNER_INSET", 1) | scale(5)
    end
 
    public reset()

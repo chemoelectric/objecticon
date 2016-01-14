@@ -15,7 +15,7 @@ all:V:   rtt
 
 rtt:	$OBJS
 	$LD -o rtt $OBJS
-	cp rtt $OIBIN
+	cp rtt $OI_BIN
 
 $ROBJS: rtt.h rtt1.h rttproto.h preproc.h pproto.h ltoken.h ../h/mproto.h\
 	        ../h/define.h ../h/config.h ../h/typedefs.h \

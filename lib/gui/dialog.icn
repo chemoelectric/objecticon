@@ -436,6 +436,10 @@ class Dialog(Component)
       return self
    end
 
+   #
+   # Enter menu mode, with `c` as the controlling component, which
+   # must implement the `MenuMode` interface.
+   #
    public enter_menu_mode(c)
       if popup_manager ~=== self then
          popup_manager.enter_menu_mode(c)
@@ -453,12 +457,17 @@ class Dialog(Component)
       return self
    end
 
+   # Exit the menu mode formerly begun with `MenuMode` instance `c`.
+   # If `c` is `&null`, all menu_modes are exited.
+   #
    public exit_menu_mode(c)
       if popup_manager ~=== self then
          popup_manager.exit_menu_mode(c)
       else {
-         until c === menu_mode do
+         until c === menu_mode do {
+            \menu_mode | runerr("inconsistent menu mode passed to exit_menu_mode", c)
             menu_mode.close_all()
+         }
          if c := pull(menu_mode_stack) then
             menu_mode := c
          else {
@@ -473,7 +482,7 @@ class Dialog(Component)
       if popup_manager ~=== self then
          popup_manager.add_popup(d)
       else {
-         \popups | syserr("internal error - not  in menu mode.")
+         \popups | runerr("add_popup, but not  in menu mode.")
          d.popup_manager := self
          push(popups, d)
       }
@@ -484,7 +493,7 @@ class Dialog(Component)
       if popup_manager ~=== self then
          popup_manager.remove_popup(d)
       else {
-         \popups | syserr("internal error - not  in menu mode.")
+         \popups | runerr("remove_popup, but not  in menu mode.")
          d.popup_manager := d
          ldel(popups, d)
       }
@@ -1427,13 +1436,13 @@ class Dialog(Component)
    end
 
    private static init()
-      DOUBLE_CLICK_DELAY := 500
-      TOOLTIP_START_DELAY := 1000
-      TOOLTIP_END_DELAY := 4000
-      TOOLTIP_CONTINUE_DELAY := 1500
-      TOOLTIP_X_OFFSET := scale(5)
-      TOOLTIP_Y_OFFSET := scale(15)
-      DRAG_GESTURE_OFFSET := scale(4)
+      DOUBLE_CLICK_DELAY := env_int("OI_DIALOG_DOUBLE_CLICK_DELAY", 1) | 500
+      TOOLTIP_START_DELAY := env_int("OI_DIALOG_TOOLTIP_START_DELAY", 1) | 1000
+      TOOLTIP_END_DELAY := env_int("OI_DIALOG_TOOLTIP_END_DELAY", 1) | 4000
+      TOOLTIP_CONTINUE_DELAY := env_int("OI_DIALOG_TOOLTIP_CONTINUE_DELAY", 1) | 1500
+      TOOLTIP_X_OFFSET := env_int("OI_DIALOG_TOOLTIP_X_OFFSET", 1) | scale(5)
+      TOOLTIP_Y_OFFSET := env_int("OI_DIALOG_TOOLTIP_Y_OFFSET", 1) | scale(15)
+      DRAG_GESTURE_OFFSET := env_int("OI_DIALOG_DRAG_GESTURE_OFFSET", 1) | scale(4)
       DEFAULT_POINTER := "left ptr"
       FOCUS_UP := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
       FOCUS_DOWN := set("\t", Key.RIGHT, Key.DOWN)
@@ -1674,10 +1683,31 @@ $endif
    end
 end
 
+#
+# This class is implemented by all
+#
 abstract class MenuMode()
+   # Succeed if the given `WinEvent` `e` should cause this menu to
+   # close; for example a mouse press outside of a popup menu's
+   # region.
    public abstract should_close(e)
+
+   # Close this menu.  This should close the menu component, and then
+   # call `Dialog.exit_menu_mode`.
    public abstract close_all()
+
+   # Generate the `Component`s which make up the transient visible
+   # parts of the popup (if any).
    public abstract gen_popup_components()
+
+   # Return the `Component` which this popup notionally appears on.
+   # For example, a text field's popup menu would return the text
+   # field.  This is used by some components to determine whether or
+   # not to allow a nested popup.
    public abstract get_nesting_component()
+
+   # Given another `MenuMode` `c`, which wishes to enter menu mode,
+   # succeed if we allow `c` to appear "on top" of this menu mode.
+   # Otherwise, this menu mode is closed before `c` is entered.
    public abstract allow_nested(c)
 end

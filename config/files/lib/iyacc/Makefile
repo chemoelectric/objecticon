@@ -42,7 +42,7 @@ all:		$(PROGRAM)
 
 $(PROGRAM):     $(OBJS)
 		$(CC) $(CFLAGS) $(LDFLAGS) -o $(PROGRAM) $(OBJS) $(COBJS) $(LIBS)
-		$(INSTALL) iyacc "$(OIBIN)"
+		$(INSTALL) iyacc "$(OI_BIN)"
 
 clean:;		@rm -f $(OBJS) $(PROGRAM)
 		$(MAKE) -C test clean

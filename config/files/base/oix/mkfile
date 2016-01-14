@@ -32,7 +32,7 @@ all:V:   oix
 
 oix:	$XOBJS
 	$LD -o oix $OBJS $LIBS
-	cp oix $OIBIN
+	cp oix $OI_BIN
 
 clean:V:
 	rm -f *.c *.[$OS] [$OS].out oix

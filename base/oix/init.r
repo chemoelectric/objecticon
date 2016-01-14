@@ -1265,18 +1265,18 @@ int main(int argc, char **argv)
      * Examine the environment and make appropriate settings.    [[I?]]
      */
     env_word(TRACE, &k_trace, MinWord, MaxWord);
-    env_word(OIMAXLEVEL, &k_maxlevel, 16, MaxWord);
-    env_uword(OISTRSIZE, &rootstring.size, 1024, MaxUWord);
-    env_uword(OIBLKSIZE, &rootblock.size, 1024, MaxUWord); 
-    env_word(OIMEMCUSHION, &memcushion, 0, 100);   /* max 100 % */
-    env_word(OIMEMGROWTH, &memgrowth, 0, 10000);   /* max 100x growth */
-    env_word(OICORE, &dodump, 0, 2);
+    env_word(OI_MAX_LEVEL, &k_maxlevel, 16, MaxWord);
+    env_uword(OI_STRING_SIZE, &rootstring.size, 1024, MaxUWord);
+    env_uword(OI_BLOCK_SIZE, &rootblock.size, 1024, MaxUWord); 
+    env_word(OI_MEM_CUSHION, &memcushion, 0, 100);   /* max 100 % */
+    env_word(OI_MEM_GROWTH, &memgrowth, 0, 10000);   /* max 100x growth */
+    env_word(OI_CORE, &dodump, 0, 2);
     stacklim = rootblock.size / 2;
-    env_uword(OISTKLIM, &stacklim, 1024, MaxUWord);
-    env_word(OISTKCUSHION, &stackcushion, 0, 10000);
-    env_double(OIFONTSIZE, &defaultfontsize, MIN_FONTSIZE, 1e32);
-    env_double(OILEADING, &defaultleading, 0.0, 1e32);
-    t = getenv(OIFONT);
+    env_uword(OI_STACK_LIMIT, &stacklim, 1024, MaxUWord);
+    env_word(OI_STACK_CUSHION, &stackcushion, 0, 10000);
+    env_double(OI_FONT_SIZE, &defaultfontsize, MIN_FONT_SIZE, 1e32);
+    env_double(OI_LEADING, &defaultleading, 0.0, 1e32);
+    t = getenv(OI_FONT);
     if (t)
         defaultfont = salloc(t);
 

@@ -22,8 +22,8 @@ etags:
 
 oit:		$(OBJS)
 		$(CC) $(CFLAGS) $(LDFLAGS) -o oit $(OBJS) $(LIBS)
-		$(INSTALL) oit "$(OIBIN)"
-		(cd "$(OIBIN)" && $(RM) udis && $(LN_S) oit udis)
+		$(INSTALL) oit "$(OI_BIN)"
+		(cd "$(OI_BIN)" && $(RM) udis && $(LN_S) oit udis)
 
 $(OBJS):   ../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
 		   ../h/mproto.h ../h/typedefs.h ../h/cstructs.h

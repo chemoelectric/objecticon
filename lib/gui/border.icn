@@ -37,8 +37,8 @@ class Border(Component)
       TITLE_OFFSET
 
    private static init()
-      TITLE_SPACING := scale(2)
-      TITLE_OFFSET := scale(6)
+      TITLE_SPACING := env_int("OI_BORDER_TITLE_SPACING", 1) | scale(2)
+      TITLE_OFFSET := env_int("OI_BORDER_TITLE_OFFSET", 1) | scale(6)
    end
 
    #
