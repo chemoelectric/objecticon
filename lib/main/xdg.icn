@@ -420,7 +420,6 @@ final abstract class Xdg()
    end
 
    private static cache_icon(f, size, exact)
-      local k, w
       # If it's an SVG file, then simply scale to the desired size and
       # return the key.
       return if endswith(f, ".svg" | ".svgz") then
@@ -707,7 +706,7 @@ final abstract class Xdg()
 
    private static get_current_icon_theme()
       local f, theme, d
-      every theme := getenv_ne("OITHEME") | "oxygen" | "gnome" do {
+      every theme := getenv_ne("OI_THEME") | "oxygen" | "gnome" do {
          every d := gen_base_dirs() do {
             f := FilePath(d).walk("icons", theme, "index.theme").str()
             if Files.access(f) then

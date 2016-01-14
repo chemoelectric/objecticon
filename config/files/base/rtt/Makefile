@@ -25,7 +25,7 @@ etags:
 
 rtt:	$(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o rtt $(OBJS) $(LIBS)
-	$(INSTALL) rtt "$(OIBIN)"
+	$(INSTALL) rtt "$(OI_BIN)"
 
 $(ROBJS): rtt.h rtt1.h rttproto.h preproc.h pproto.h ltoken.h ../h/mproto.h\
 	        ../h/define.h ../h/config.h ../h/typedefs.h \

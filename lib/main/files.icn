@@ -536,7 +536,7 @@ $endif
    end
 
    #
-   # Search for a native library on the OINATIVE path.
+   # Search for a native library on the OI_NATIVE path.
    #
    public static find_native_lib(f)
       static seen
@@ -545,7 +545,7 @@ $endif
          seen := table()
       if t := member(seen, f) then
          return t
-      if t := find_exe(f || LIB_SUFFIX, "OINATIVE") then {
+      if t := find_exe(f || LIB_SUFFIX, "OI_NATIVE") then {
          insert(seen, f, t)
          return t
       }

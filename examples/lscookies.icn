@@ -1,4 +1,4 @@
-import http, lang, io, ipl.options, posix, xdg
+import http, lang, io, ipl.options, xdg
 
 invocable HttpClient
 
@@ -13,7 +13,7 @@ procedure main(a)
 
    home := FilePath(Xdg.ensure_data_home()) | stop("Couldn't access data dir: ", &why)
 
-   cookies := a[1] | System.getenv("OICOOKIES") | home.child("oicookies").str()
+   cookies := a[1] | home.child("oicookies").str()
 
    t := decode_from_file(cookies) | stop(&why)
 

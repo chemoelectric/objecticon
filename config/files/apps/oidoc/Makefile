@@ -22,4 +22,4 @@ $(COMMONU) $(PROGU): %.u: %.icn
 
 %:      %.u $(COMMONU)
 	oit -o $@ $@.u $(COMMONU)
-	cp $@ "$(OIBIN)"
+	cp $@ "$(OI_BIN)"

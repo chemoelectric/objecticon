@@ -42,7 +42,7 @@ all:	oix
 oix:	$(OBJS)
 	$(LD) /INCREMENTAL:NO /NOLOGO \
 		-subsystem:console $(OBJS) $(LIBS) -out:oix.exe
-	$(INSTALL) oix "$(OIBIN)"
+	$(INSTALL) oix "$(OI_BIN)"
 
 %.obj: %.r $(HDRS)
 	rtt $<

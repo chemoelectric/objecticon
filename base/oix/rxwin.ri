@@ -1087,14 +1087,14 @@ static void wmap(wbp w)
      * Set the class hints that name the program (for reference by the
      * window manager) following conventions given in O'Reilly.
      */
-    if ((s = getenv("OIRESOURCE_NAME"))) {
+    if ((s = getenv("OI_RESOURCE_NAME"))) {
         clhints.res_name = s;
         m1 = 0;
     } else {
         m1 = get_progname();
         clhints.res_name = m1;
     }
-    if ((s = getenv("OIRESOURCE_CLASS"))) {
+    if ((s = getenv("OI_RESOURCE_CLASS"))) {
         clhints.res_class = s;
         m2 = 0;
     } else {

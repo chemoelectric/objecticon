@@ -46,7 +46,7 @@ all:		$(PROGRAM)
 $(PROGRAM):     $(OBJS)
 		@echo -n "Loading $(PROGRAM) ... "
 		$(LD) -subsystem:console $(OBJS) $(COBJS) $(LIBS) -out:iyacc.exe 
-		$(INSTALL) iyacc "$(OIBIN)"
+		$(INSTALL) iyacc "$(OI_BIN)"
 
 clean:;		@rm -f $(OBJS) $(PROGRAM)
 

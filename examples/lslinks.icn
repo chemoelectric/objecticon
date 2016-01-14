@@ -5,7 +5,7 @@ import
    xml(HtmlParser),
    ipl.scan(past),
    ipl.options,
-   posix(System),
+   xdg,
    io
 
 global opts, hc
@@ -30,7 +30,7 @@ procedure main(args)
    hc.set_timeout(\opts["t"] * 1000)
    hc.set_retries(\opts["r"])
    hc.set_user_agent(\opts["agent"])
-   cookies := \opts["k"] | System.getenv("OICOOKIES") | FilePath(Files.get_home()).child(".oicookies").str()
+   cookies := \opts["k"] | FilePath(Xdg.ensure_data_home()).child("oicookies").str() | stop("Couldn't access data dir: ", &why)
    t := decode_from_file(cookies) | table()
    hc.set_cookies(t)
 

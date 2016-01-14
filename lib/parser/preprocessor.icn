@@ -178,7 +178,7 @@ class Preprocessor(Connectable)
                   fname := preproc_qword() & *fname > 0 & preproc_at_end() then 
                {
                   if value := image(Files.file_to_string(Files.path_find(fname, 
-                                                         "OIINCL",
+                                                         "OI_INCL",
                                                           FilePath(preproc_filename).parent().str()))) then 
                   {
                      if \ (old := preproc_sym_table[sym]) ~=== value then {
@@ -203,7 +203,7 @@ class Preprocessor(Connectable)
                   fname := preproc_qword() & *fname > 0 & preproc_at_end() then 
                {
                   if value := "u" || image(Files.file_to_string(Files.path_find(fname, 
-                                                                "OIINCL",
+                                                                "OI_INCL",
                                                                 FilePath(preproc_filename).parent().str()))) then 
                   {
                      if \ (old := preproc_sym_table[sym]) ~=== value then {
@@ -319,7 +319,7 @@ class Preprocessor(Connectable)
                   } else {
                      if new_file := open(new_filename := 
                                          Files.path_find(sym, 
-                                                         "OIINCL",
+                                                         "OI_INCL",
                                                          FilePath(preproc_filename).parent().str()))
                      then {
                         every push(preproc_file_stack,

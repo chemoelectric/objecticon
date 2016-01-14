@@ -26,7 +26,7 @@ struct trapezoid {
 #define TCH1 '~'			/* usual transparent character */
 #define TCH2 0377			/* alternate transparent character */
 
-#define MIN_FONTSIZE 1.0
+#define MIN_FONT_SIZE 1.0
 
 #define MAXCOLORNAME 50
 
