@@ -45,21 +45,21 @@ sed -e "s:@CONFIG_DIR@:$x:"  \
 echo creating paths.bat
 cat >paths.bat <<EOF
 # Object Icon path settings
-set OIHOME=$w
-set OIBIN=%OIHOME%\bin
-set OILIB=%OIHOME%\lib
-set OIPATH=%OILIB%\main;%OILIB%\gui;%OILIB%\xml;%OILIB%\parser;%OILIB%\ipl
-set OIINCL=%OILIB%\incl
-set PATH=%OIBIN%;%PATH%
+set OI_HOME=$w
+set OI_BIN=%OI_HOME%\bin
+set OI_LIB=%OI_HOME%\lib
+set OI_PATH=%OI_LIB%\main;%OI_LIB%\gui;%OI_LIB%\xml;%OI_LIB%\parser;%OI_LIB%\ipl
+set OI_INCL=%OI_LIB%\incl
+set PATH=%OI_BIN%;%PATH%
 EOF
 echo creating paths.sh
 cat >paths.sh <<EOF
 # Object Icon path settings
-export OIHOME="$v"
-export OIBIN="\$OIHOME\\\\bin"
-export OILIB="\$OIHOME\\\\lib"
-export OIPATH="\$OILIB\\\\main;\$OILIB\\\\gui;\$OILIB\\\\xml;\$OILIB\\\\parser;\$OILIB\\\\ipl"
-export OIINCL="\$OILIB\\\\incl"
+export OI_HOME="$v"
+export OI_BIN="\$OI_HOME\\\\bin"
+export OI_LIB="\$OI_HOME\\\\lib"
+export OI_PATH="\$OI_LIB\\\\main;\$OI_LIB\\\\gui;\$OI_LIB\\\\xml;\$OI_LIB\\\\parser;\$OI_LIB\\\\ipl"
+export OI_INCL="\$OI_LIB\\\\incl"
 PATH="$x/bin:\$PATH"
 export TRACE
 EOF
