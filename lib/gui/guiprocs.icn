@@ -147,20 +147,22 @@ procedure scale_real(r)
 end
 
 #
-# Like `scale`, but ensure an odd number results.
+# Like `scale`, but ensure an odd number results.  If `j` is -ve, then
+# the number is moved down one rather than up one, if necessary.
 #
-procedure scale_odd(i)
+procedure scale_odd(i, j)
    i := scale(i)
-   if i % 2 = 0 then i +:= 1
+   if i % 2 = 0 then if \j < 0 then i -:= 1 else i +:= 1
    return i
 end
 
 #
-# Like `scale`, but ensure an even number results.
+# Like `scale`, but ensure an even number results.  `j` has the same
+# effect as for `scale_odd`.
 #
-procedure scale_even(i)
+procedure scale_even(i, j)
    i := scale(i)
-   if i % 2 = 1 then i +:= 1
+   if i % 2 = 1 then if \j < 0 then i -:= 1 else i +:= 1
    return i
 end
 
@@ -201,6 +203,7 @@ class Gui()
       BORDER_WIDTH,
       CURSOR_WIDTH,
       FINE_WIDTH,
+      DASHED_WIDTH,
       TOOLBAR_ICON_SIZE,
       MENU_ICON_SIZE,
       TEXT_INSET,
@@ -243,21 +246,23 @@ class Gui()
    end
 
    private static init()
-      SCALE := env_real("OISCALE", 1.0) | calc_scale() | 1.0
+      SCALE := env_real("OI_SCALE", 1.0) | calc_scale() | 1.0
       UNIT := scale(1)
-      FINE_WIDTH := UNIT
-      CURSOR_WIDTH := 2 * UNIT
-      BORDER_WIDTH := 2 * UNIT
-      TEXT_INSET := scale(3)
-      X_INSET := scale(6)
-      Y_INSET := scale(2)
-      REPEAT_DELAY := env_int("OIRPTDELAY", 250) | 500
-      REPEAT_RATE := env_int("OIRPTRATE", 50) | 100
-      CURSOR_BLINK := env_int("OIBLINK", 100) | 400
-      TAB_WIDTH := 8
+      FINE_WIDTH := env_int("OI_GUI_FINE_WIDTH", 1) | UNIT
+      DASHED_WIDTH := env_int("OI_GUI_DASHED_WIDTH", 1) | FINE_WIDTH
+      CURSOR_WIDTH := env_int("OI_GUI_CURSOR_WIDTH", 2) | scale_even(2)
+      # Has to be even; see BevelledBorder
+      BORDER_WIDTH := env_int("OI_GUI_BORDER_WIDTH", 2) | scale_even(2)
+      TEXT_INSET := env_int("OI_GUI_TEXT_INSET", 1) | scale(3)
+      X_INSET := env_int("OI_GUI_X_INSET", 1) | scale(6)
+      Y_INSET := env_int("OI_GUI_Y_INSET", 1) | scale(2)
+      REPEAT_DELAY := env_int("OI_GUI_REPEAT_DELAY", 250) | 500
+      REPEAT_RATE := env_int("OI_GUI_REPEAT_RATE", 50) | 100
+      CURSOR_BLINK := env_int("OI_GUI_CURSOR_BLINK", 100) | 400
+      TAB_WIDTH := env_int("OI_GUI_TAB_WIDTH", 1) | 8
       IDLE_SLEEP := 50
-      TOOLBAR_ICON_SIZE := scale(24)
-      MENU_ICON_SIZE := scale(16)
+      TOOLBAR_ICON_SIZE := env_int("OI_GUI_TOOLBAR_ICON_SIZE", 1) | scale(24)
+      MENU_ICON_SIZE := env_int("OI_GUI_MENU_ICON_SIZE", 1) | scale(16)
       style := Style()
       PRINTABLE_1 := '\x20-\x7e\x80-\U10ffff'
       PRINTABLE_N := '\t\n\x20-\x7e\x80-\U10ffff'

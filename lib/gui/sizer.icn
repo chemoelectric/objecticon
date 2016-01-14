@@ -31,7 +31,7 @@ class Sizer(Component, HasOrientation)
    public static DEFAULT_SIZE
 
    private static init()
-      DEFAULT_SIZE := scale_odd(7)
+      DEFAULT_SIZE := env_int("OI_SIZER_DEFAULT_SIZE", 1) | scale_odd(7)
    end
 
    #

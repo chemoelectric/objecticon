@@ -84,10 +84,10 @@ class Slider(Component, HasOrientation)
    public static SLIDER_W, SLIDER_H, SLIDER_INNER_H, SLIDER_TICK_H
 
    private static init()
-      SLIDER_W := scale(31)
-      SLIDER_H := scale(19)
-      SLIDER_INNER_H := scale(4)
-      SLIDER_TICK_H := scale(10)
+      SLIDER_W := env_int("OI_SLIDER_SLIDER_W", 1) | scale(31)
+      SLIDER_H := env_int("OI_SLIDER_SLIDER_H", 1) | scale(19)
+      SLIDER_INNER_H := env_int("OI_SLIDER_SLIDER_INNER_H", 1) | scale(4)
+      SLIDER_TICK_H := env_int("OI_SLIDER_SLIDER_TICK_H", 1) | scale(10)
    end
 
    #

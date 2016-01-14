@@ -8,11 +8,11 @@ class Frame(Component)
       drag_x_offset,
       drag_y_offset
 
-   public static const
+   public static
       FRAME_RSW
 
    private static init()
-      FRAME_RSW := scale(12)
+      FRAME_RSW := env_int("OI_FRAME_FRAME_RSW", 1) | scale(12)
    end
 
    public can_drag(e)

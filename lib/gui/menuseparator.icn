@@ -16,7 +16,7 @@ class MenuSeparator(MenuComponent)
    public static HEIGHT
 
    private static init()
-      HEIGHT := scale(4)
+      HEIGHT := env_int("OI_MENUSEPARATOR_HEIGHT", 1) | scale(4)
    end
 
    public get_label_mid_width()
