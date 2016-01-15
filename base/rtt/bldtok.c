@@ -41,7 +41,7 @@ static struct str_buf tknize_sbuf; /* string buffer */
  * List of preprocessing directives and the corresponding token ids.
  */
 static struct rsrvd_wrd pp_rsrvd[] = {
-   PPDirectives
+   {"passthru", PpKeep},
    {"if",      PpIf},
    {"else",    PpElse},
    {"ifdef",   PpIfdef},

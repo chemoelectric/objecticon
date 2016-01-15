@@ -109,11 +109,6 @@
    #define RealBits (ByteBits * SIZEOF_DOUBLE)
 #endif					/* RealBits */
 
-#ifndef SourceSuffix
-   #define SourceSuffix ".icn"
-#endif					/* SourceSuffix */
-
-
 /*
  * Default sizing and such.
  */
@@ -125,6 +120,9 @@
  */
 #define Bell '\a'
 
+#ifndef PPInit
+   #define PPInit ""
+#endif                                 /* PPInit */
 
 #ifndef QSortFncCast
    #define QSortFncCast int (*)(const void *,const void *)
@@ -174,18 +172,6 @@
    #define RttSuffix ".r"
 #endif					/* RttSuffix */
 
-#ifndef PPInit
-   #define PPInit ""
-#endif					/* PPInit */
-
-#ifndef PPDirectives
-   #define PPDirectives {"passthru", PpKeep},
-#endif					/* PPDirectives */
-
-#ifndef ExecSuffix
-   #define ExecSuffix ""
-#endif					/* ExecSuffix */
-
 #ifndef CSuffix
    #define CSuffix ".c"
 #endif					/* CSuffix */
@@ -194,9 +180,9 @@
    #define TmpSuffix ".tmp"
 #endif					/* TmpSuffix */
 
-#ifndef ObjSuffix
-   #define ObjSuffix ".o"
-#endif					/* ObjSuffix */
+#ifndef SourceSuffix
+   #define SourceSuffix ".icn"
+#endif					/* SourceSuffix */
 
 #ifndef USuffix
    #define USuffix ".u"
