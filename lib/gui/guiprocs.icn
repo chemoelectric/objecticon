@@ -194,6 +194,39 @@ procedure env_int(s, min, max)
    return v
 end
 
+#
+# Convenient procedure to combine `env_real` and `scale`.
+#
+procedure env_scale(s, min, max)
+   local v
+   v := scale(env_real(s, min, max)) | fail
+   if v < 1 then
+      runerr("Scaled value of " || s || " out of range", v)
+   return v
+end
+
+#
+# Convenient procedure to combine `env_real` and `scale_even`.
+#
+procedure env_scale_even(s, min, max, j)
+   local v
+   v := scale_even(env_real(s, min, max), j) | fail
+   if v < 1 then
+      runerr("Scaled value of " || s || " out of range", v)
+   return v
+end
+
+#
+# Convenient procedure to combine `env_real` and `scale_odd`.
+#
+procedure env_scale_odd(s, min, max, j)
+   local v
+   v := scale_odd(env_real(s, min, max), j) | fail
+   if v < 1 then
+      runerr("Scaled value of " || s || " out of range", v)
+   return v
+end
+
 class Gui()
    public static const
       SCALE,
@@ -246,23 +279,23 @@ class Gui()
    end
 
    private static init()
-      SCALE := env_real("OI_SCALE", 1.0) | calc_scale() | 1.0
+      SCALE := env_real("OI_GUI_SCALE", 1.0) | calc_scale() | 1.0
       UNIT := scale(1)
-      FINE_WIDTH := env_int("OI_GUI_FINE_WIDTH", 1) | UNIT
-      DASHED_WIDTH := env_int("OI_GUI_DASHED_WIDTH", 1) | FINE_WIDTH
-      CURSOR_WIDTH := env_int("OI_GUI_CURSOR_WIDTH", 2) | scale_even(2)
+      FINE_WIDTH := env_scale("OI_GUI_FINE_WIDTH") | UNIT
+      DASHED_WIDTH := env_scale("OI_GUI_DASHED_WIDTH") | FINE_WIDTH
+      CURSOR_WIDTH := env_scale_even("OI_GUI_CURSOR_WIDTH") | scale_even(2)
       # Has to be even; see BevelledBorder
-      BORDER_WIDTH := env_int("OI_GUI_BORDER_WIDTH", 2) | scale_even(2)
-      TEXT_INSET := env_int("OI_GUI_TEXT_INSET", 1) | scale(3)
-      X_INSET := env_int("OI_GUI_X_INSET", 1) | scale(6)
-      Y_INSET := env_int("OI_GUI_Y_INSET", 1) | scale(2)
+      BORDER_WIDTH := env_scale_even("OI_GUI_BORDER_WIDTH") | scale_even(2)
+      TEXT_INSET := env_scale("OI_GUI_TEXT_INSET") | scale(3)
+      X_INSET := env_scale("OI_GUI_X_INSET") | scale(6)
+      Y_INSET := env_scale("OI_GUI_Y_INSET") | scale(2)
       REPEAT_DELAY := env_int("OI_GUI_REPEAT_DELAY", 250) | 500
       REPEAT_RATE := env_int("OI_GUI_REPEAT_RATE", 50) | 100
       CURSOR_BLINK := env_int("OI_GUI_CURSOR_BLINK", 100) | 400
       TAB_WIDTH := env_int("OI_GUI_TAB_WIDTH", 1) | 8
       IDLE_SLEEP := 50
-      TOOLBAR_ICON_SIZE := env_int("OI_GUI_TOOLBAR_ICON_SIZE", 1) | scale(24)
-      MENU_ICON_SIZE := env_int("OI_GUI_MENU_ICON_SIZE", 1) | scale(16)
+      TOOLBAR_ICON_SIZE := env_scale("OI_GUI_TOOLBAR_ICON_SIZE") | scale(24)
+      MENU_ICON_SIZE := env_scale("OI_GUI_MENU_ICON_SIZE") | scale(16)
       style := Style()
       PRINTABLE_1 := '\x20-\x7e\x80-\U10ffff'
       PRINTABLE_N := '\t\n\x20-\x7e\x80-\U10ffff'

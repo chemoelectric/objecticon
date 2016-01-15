@@ -29,8 +29,8 @@ abstract class BaseTableColumn(TextButton)
    public static CHANGE_SIZE_BORDER, MIN_COLUMN_WIDTH
 
    private static init()
-      CHANGE_SIZE_BORDER := env_int("OI_TABLECOLUMN_CHANGE_SIZE_BORDER", 1) | scale(4)
-      MIN_COLUMN_WIDTH := env_int("OI_TABLECOLUMN_MIN_COLUMN_WIDTH", 1) | scale(20)
+      CHANGE_SIZE_BORDER := env_scale("OI_TABLECOLUMN_CHANGE_SIZE_BORDER") | scale(4)
+      MIN_COLUMN_WIDTH := env_scale("OI_TABLECOLUMN_MIN_COLUMN_WIDTH") | scale(20)
    end
 
    public in_resize_region(e)

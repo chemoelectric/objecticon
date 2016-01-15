@@ -1440,9 +1440,9 @@ class Dialog(Component)
       TOOLTIP_START_DELAY := env_int("OI_DIALOG_TOOLTIP_START_DELAY", 1) | 1000
       TOOLTIP_END_DELAY := env_int("OI_DIALOG_TOOLTIP_END_DELAY", 1) | 4000
       TOOLTIP_CONTINUE_DELAY := env_int("OI_DIALOG_TOOLTIP_CONTINUE_DELAY", 1) | 1500
-      TOOLTIP_X_OFFSET := env_int("OI_DIALOG_TOOLTIP_X_OFFSET", 1) | scale(5)
-      TOOLTIP_Y_OFFSET := env_int("OI_DIALOG_TOOLTIP_Y_OFFSET", 1) | scale(15)
-      DRAG_GESTURE_OFFSET := env_int("OI_DIALOG_DRAG_GESTURE_OFFSET", 1) | scale(4)
+      TOOLTIP_X_OFFSET := env_scale("OI_DIALOG_TOOLTIP_X_OFFSET") | scale(5)
+      TOOLTIP_Y_OFFSET := env_scale("OI_DIALOG_TOOLTIP_Y_OFFSET") | scale(15)
+      DRAG_GESTURE_OFFSET := env_scale("OI_DIALOG_DRAG_GESTURE_OFFSET") | scale(4)
       DEFAULT_POINTER := "left ptr"
       FOCUS_UP := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
       FOCUS_DOWN := set("\t", Key.RIGHT, Key.DOWN)

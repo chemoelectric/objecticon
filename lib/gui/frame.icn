@@ -12,7 +12,7 @@ class Frame(Component)
       FRAME_RSW
 
    private static init()
-      FRAME_RSW := env_int("OI_FRAME_FRAME_RSW", 1) | scale(12)
+      FRAME_RSW := env_scale("OI_FRAME_FRAME_RSW") | scale(12)
    end
 
    public can_drag(e)

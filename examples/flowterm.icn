@@ -376,7 +376,7 @@ class Columns(LineBasedScrollArea)
       FOCUS_DASHED_WIDTH
 
    private static init()
-      FOCUS_DASHED_WIDTH := env_int("OI_FLOWTERM_FOCUS_DASHED_WIDTH", 1) | Gui.DASHED_WIDTH
+      FOCUS_DASHED_WIDTH := env_scale("OI_FLOWTERM_FOCUS_DASHED_WIDTH") | Gui.DASHED_WIDTH
    end
 
    public initially()

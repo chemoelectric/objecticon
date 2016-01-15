@@ -81,13 +81,13 @@ class Slider(Component, HasOrientation)
 
 
    # These values refer to a horizontal slider, the logic is backwards for a vertical one.
-   public static SLIDER_W, SLIDER_H, SLIDER_INNER_H, SLIDER_TICK_H
+   public static AREA_W, AREA_H, INNER_H, TICK_H
 
    private static init()
-      SLIDER_W := env_int("OI_SLIDER_SLIDER_W", 1) | scale(31)
-      SLIDER_H := env_int("OI_SLIDER_SLIDER_H", 1) | scale(19)
-      SLIDER_INNER_H := env_int("OI_SLIDER_SLIDER_INNER_H", 1) | scale(4)
-      SLIDER_TICK_H := env_int("OI_SLIDER_SLIDER_TICK_H", 1) | scale(10)
+      AREA_W := env_scale("OI_SLIDER_AREA_W") | scale(31)
+      AREA_H := env_scale("OI_SLIDER_AREA_H") | scale(19)
+      INNER_H := env_scale("OI_SLIDER_INNER_H") | scale(4)
+      TICK_H := env_scale("OI_SLIDER_TICK_H") | scale(10)
    end
 
    #
@@ -208,9 +208,9 @@ class Slider(Component, HasOrientation)
       (self.slider_pos ~=== x) | fail
       self.slider_pos := x
       if /self.is_horizontal_flag then
-         self.slider_area.slider_y := self.slider_pos - SLIDER_W / 2
+         self.slider_area.slider_y := self.slider_pos - AREA_W / 2
       else
-         self.slider_area.slider_x := self.slider_pos - SLIDER_W / 2
+         self.slider_area.slider_x := self.slider_pos - AREA_W / 2
       self.slider_area.invalidate()
    end
 
@@ -389,11 +389,11 @@ class Slider(Component, HasOrientation)
    public get_default_width()
       local w
       if /self.is_horizontal_flag then {
-         w := SLIDER_H + border.get_total_width()
+         w := AREA_H + border.get_total_width()
          if \self.labels then
             w +:= self.cbwin.text_width(self.hi) + Gui.X_INSET
          if \self.ticks then
-            w +:= SLIDER_TICK_H + Gui.X_INSET
+            w +:= TICK_H + Gui.X_INSET
          return w
       }
    end
@@ -401,11 +401,11 @@ class Slider(Component, HasOrientation)
    public get_default_height()
       local h
       if \self.is_horizontal_flag then {
-         h := SLIDER_H + border.get_total_height()
+         h := AREA_H + border.get_total_height()
          if \self.labels then
             h +:= self.cbwin.get_font_height() + Gui.Y_INSET
          if \self.ticks then
-            h +:= SLIDER_TICK_H + Gui.Y_INSET
+            h +:= TICK_H + Gui.Y_INSET
          return h
       }
    end
@@ -414,43 +414,43 @@ class Slider(Component, HasOrientation)
       self.labels_pos := self.ticks_pos := &null
       if /self.is_horizontal_flag then {
          if \self.labels then
-            labels_pos := self.x + border.get_l_inset() + SLIDER_H + Gui.X_INSET
+            labels_pos := self.x + border.get_l_inset() + AREA_H + Gui.X_INSET
          if \self.ticks then {
-            ticks_pos := self.x + border.get_l_inset() + SLIDER_H + Gui.X_INSET
-            \labels_pos +:= SLIDER_TICK_H + Gui.X_INSET
+            ticks_pos := self.x + border.get_l_inset() + AREA_H + Gui.X_INSET
+            \labels_pos +:= TICK_H + Gui.X_INSET
          }
          slider_area.x := self.x + border.get_l_inset()
          slider_area.y := self.y + border.get_t_inset()
-         slider_area.w := SLIDER_H
+         slider_area.w := AREA_H
          slider_area.h := self.h - border.get_total_height()
-         slider_area.inner_x := slider_area.x + slider_area.w / 2 - SLIDER_INNER_H  / 2
-         slider_area.inner_y := slider_area.y + SLIDER_W / 2
-         slider_area.inner_w := SLIDER_INNER_H
-         slider_area.inner_h := slider_area.h - SLIDER_W
+         slider_area.inner_x := slider_area.x + slider_area.w / 2 - INNER_H  / 2
+         slider_area.inner_y := slider_area.y + AREA_W / 2
+         slider_area.inner_w := INNER_H
+         slider_area.inner_h := slider_area.h - AREA_W
          slider_area.slider_x := slider_area.x
-         slider_area.slider_h := SLIDER_W
-         slider_area.slider_w := SLIDER_H
+         slider_area.slider_h := AREA_W
+         slider_area.slider_w := AREA_H
          slider_area_pos := slider_area.inner_y
          slider_area_size := slider_area.inner_h
       } else {
          if \self.labels then
-            labels_pos := self.y + border.get_t_inset() + SLIDER_H + 
+            labels_pos := self.y + border.get_t_inset() + AREA_H + 
                               Gui.Y_INSET + self.cbwin.get_font_height() / 2
          if \self.ticks then {
-            ticks_pos := self.y + border.get_t_inset() + SLIDER_H + Gui.Y_INSET
-            \labels_pos +:= SLIDER_TICK_H + Gui.Y_INSET
+            ticks_pos := self.y + border.get_t_inset() + AREA_H + Gui.Y_INSET
+            \labels_pos +:= TICK_H + Gui.Y_INSET
          }
          slider_area.x := self.x + border.get_l_inset()
          slider_area.y := self.y + border.get_t_inset()
          slider_area.w := self.w - border.get_total_width()
-         slider_area.h := SLIDER_H
-         slider_area.inner_x := slider_area.x + SLIDER_W  / 2
-         slider_area.inner_y := slider_area.y + slider_area.h / 2 - SLIDER_INNER_H  / 2
-         slider_area.inner_h := SLIDER_INNER_H
-         slider_area.inner_w := slider_area.w - SLIDER_W
+         slider_area.h := AREA_H
+         slider_area.inner_x := slider_area.x + AREA_W  / 2
+         slider_area.inner_y := slider_area.y + slider_area.h / 2 - INNER_H  / 2
+         slider_area.inner_h := INNER_H
+         slider_area.inner_w := slider_area.w - AREA_W
          slider_area.slider_y := slider_area.y
-         slider_area.slider_w := SLIDER_W
-         slider_area.slider_h := SLIDER_H
+         slider_area.slider_w := AREA_W
+         slider_area.slider_h := AREA_H
          slider_area_pos := slider_area.inner_x
          slider_area_size := slider_area.inner_w
       }
@@ -496,14 +496,14 @@ class Slider(Component, HasOrientation)
          i := self.lo
          while i <= self.hi do {
             yp := self.slider_area_pos + integer(((i - self.lo) * (self.slider_area_size) / (self.hi - self.lo)))
-            self.cbwin.fill_rectangle(ticks_pos, yp, SLIDER_TICK_H, 1)
+            self.cbwin.fill_rectangle(ticks_pos, yp, TICK_H, 1)
             i +:= ticks
          }
       } else {
          i := self.lo
          while i <= self.hi do {
             xp := self.slider_area_pos + integer(((i - self.lo) * (self.slider_area_size) / (self.hi - self.lo)))
-            self.cbwin.fill_rectangle(xp, ticks_pos, 1, SLIDER_TICK_H)
+            self.cbwin.fill_rectangle(xp, ticks_pos, 1, TICK_H)
             i +:= ticks
          }
       }

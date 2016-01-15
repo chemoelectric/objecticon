@@ -99,10 +99,10 @@ class ScrollBar(Component, HasOrientation)
    public static DEFAULT_INNER_SIZE, DEFAULT_WHEEL_FACTOR, MIN_BAR_SIZE, RANGE_BAR_SIZE
 
    private static init()
-      DEFAULT_INNER_SIZE := env_int("OI_SCROLLBAR_DEFAULT_INNER_SIZE", 1) | scale(16)
+      DEFAULT_INNER_SIZE := env_scale("OI_SCROLLBAR_DEFAULT_INNER_SIZE") | scale(16)
       DEFAULT_WHEEL_FACTOR := env_int("OI_SCROLLBAR_DEFAULT_WHEEL_FACTOR", 1) | 4
-      MIN_BAR_SIZE := env_int("OI_SCROLLBAR_MIN_BAR_SIZE", 1) | scale(8)
-      RANGE_BAR_SIZE := env_int("OI_SCROLLBAR_RANGE_BAR_SIZE", 1) | scale(24)
+      MIN_BAR_SIZE := env_scale("OI_SCROLLBAR_MIN_BAR_SIZE") | scale(8)
+      RANGE_BAR_SIZE := env_scale("OI_SCROLLBAR_RANGE_BAR_SIZE") | scale(24)
    end
 
    #
