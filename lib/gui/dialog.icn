@@ -624,10 +624,11 @@ class Dialog(Component)
       point_chain := []
       point_chain_source := e
 
-      # A mouse exit always has an empty point chain, since the pointer is outside
-      # the window (or over an obscured part).  Note that we shouldn't get exit events
-      # if we have popups, since we are in grab mode.
-      if e.code === Mouse.EXIT then
+      # A mouse exit always has an empty point chain, since the
+      # pointer is outside the window (or over an obscured part).
+      # Note that we shouldn't get exit events if we have popups,
+      # since we are in grab mode.
+      if (e.code === Mouse.EXIT) | is_hidden() then
          fail
 
       every p := !\popups do {
@@ -638,7 +639,11 @@ class Dialog(Component)
          }
       }
 
-      if is_unhidden() & inside(e.x, e.y) then {
+      # If we have a popup in the point chain, then include the top
+      # dialog in the chain (so it is notionally always under the
+      # popup).  This ensures that the dialog's tooltips and pointer
+      # work consistently.
+      if inside(e.x, e.y) | (*point_chain > 0) then {
          if *point_chain = 0 then
             build_point_chain(point_chain, e.x, e.y)
          put(point_chain, self)
@@ -1140,7 +1145,6 @@ class Dialog(Component)
    #
    public synch_pointer(e)
       local c, ptr
-
       if popup_manager ~=== self then
          popup_manager.synch_pointer(e)
       else {
