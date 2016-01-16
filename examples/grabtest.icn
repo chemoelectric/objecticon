@@ -185,6 +185,17 @@ $ifdef _PLAN9
 $endif
    end
 
+   private on_rpress(ev)
+      local m, pm, mi, i
+      m := Menu()
+      every i := 1 to 7 do {
+         mi := TextMenuItem().set_label("Popup " || i)
+         m.add(mi)
+      }
+      pm := PopupMenu()
+      pm.popup(self, m, ev.x, ev.y)
+   end
+
    private setup()
       local paint_2, paint_14, paint_7, layout_4, paint_11, paint_4, paint_9, paint_13, paint_6, layout_3, paint_10, paint_8, border_1, paint_12, layout_2
       self.set_resize(&yes)
@@ -232,7 +243,7 @@ $endif
          set_border(border_1).
          set_paint(paint_12)
       layout_3 := GridLayout().
-         set_doi(0).
+         set_doi(scale(0)).
          set_extra("cells")
       panel_2 := Panel().
          clear_constraints().
@@ -277,7 +288,7 @@ $endif
          set_toggles(&no).
          set_paint(paint_9)
       layout_4 := GridLayout().
-         set_doi(0).
+         set_doi(scale(0)).
          set_extra("cells")
       panel_3 := Panel().
          clear_constraints().
@@ -289,6 +300,7 @@ $endif
          add(text_button_8)
       self.add(panel_3)
       self.connect(self.dispose, Event.WINDOW_CLOSE_BUTTON)
+      self.connect(self.on_rpress, Event.MOUSE_RIGHT_PRESS)
       layout_2 := GridLayout().
          set_extra("cells")
       self.set_layout(layout_2)
