@@ -227,6 +227,53 @@ procedure env_scale_odd(s, min, max, j)
    return v
 end
 
+#
+# Return a non-empty string from the environment.
+#
+procedure env_string(s)
+   return "" ~== System.getenv(s)
+end
+
+#
+# Return a valid icon colour value from the environment.
+#
+procedure env_color(s)
+   local c
+   c := env_string(s) | fail
+   Window.color_value(c) | runerr("Colour value " || c || " of " || s || " is invalid")
+   return c
+end
+
+#
+# Return a valid icon font string value from the environment.
+#
+procedure env_font(s)
+   local f, w
+   f := env_string(s) | fail
+   use{ w := Window(), w.set_font(f) } | runerr("Font value " || f || " of " || s || " is invalid")
+   return f
+end
+
+#
+# Return a valid icon pattern string value from the environment.
+#
+procedure env_pattern(s)
+   local p, w
+   p := env_string(s) | fail
+   use{ w := Window(), w.set_masked_pattern(p) } | runerr("Pattern value " || p || " of " || s || " is invalid")
+   return p
+end
+
+#
+# Return a valid icon filter string value from the environment.
+#
+procedure env_filter(s)
+   local f, w
+   f := env_string(s) | fail
+   use{ w := Window(), w.filter(,,,, f) } | runerr("Filter value " || f || " of " || s || " is invalid")
+   return f
+end
+
 class Gui()
    public static const
       SCALE,
