@@ -1870,7 +1870,7 @@ class Vt(LineBasedScrollArea, MenuMode)
             every seg := !row.l do {
                a := seg.attr
                ss := seg.s
-               want_fg := if \a.url === highlight then "red" else (\a.fg | default_fg)
+               want_fg := if \a.url === highlight then Style.FOCUS_COLOR else (\a.fg | default_fg)
                want_bg := \a.bg | default_bg
                if \a.inverse then
                   want_fg :=: want_bg

@@ -426,7 +426,7 @@ class Columns(LineBasedScrollArea)
             use {
                W := view.cbwin.clone(),
                {
-                  W.set_fg("red")
+                  W.set_fg(Style.FOCUS_COLOR)
                   item_paint.draw_rect(W, e, item_border.float(r, s))
                   item_border.draw_rect(W, r)
                }
