@@ -1192,7 +1192,7 @@ class EditableTextList(LineBasedScrollArea)
                                           xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
                                           yp + view.cbwin.get_absolute_leading(), 
                                           view.cbwin.get_font_height())
-         } else if \self.is_editable_flag then
+         } else if \self.is_editable_flag & \self.accepts_focus_flag then
             Gui.style.draw_shadow_text_cursor(view.cbwin,
                                               xp + text_width_ex(view.cbwin, s, 1, si, self.tab_width), 
                                               yp + view.cbwin.get_absolute_leading(), 

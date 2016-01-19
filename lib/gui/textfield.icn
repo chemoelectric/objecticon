@@ -771,7 +771,7 @@ class TextField(Component)
          if self.cursor_on ~= 2 then
             Gui.style.draw_text_cursor(self.cbwin,
                                        self.tx - loff + self.cbwin.text_width(s[1:cursor]), y1, fh)
-      } else if \self.is_editable_flag then
+      } else if \self.is_editable_flag & \self.accepts_focus_flag then
          Gui.style.draw_shadow_text_cursor(self.cbwin,
                                            self.tx - loff + self.cbwin.text_width(s[1:cursor]), y1, fh)
 
