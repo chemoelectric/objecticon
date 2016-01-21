@@ -696,7 +696,7 @@ function map(s1,s2,s3)
                   char *t = p3;
                   maptab[i].pos = i;
                   maptab[i].from = utf8_iter(&p2);
-                  utf8_iter(&p3);
+                  p3 += UTF8_SEQ_LEN(*p3);
                   maptab[i].utf8_len = p3 - t;
                   memcpy(maptab[i].utf8, t, p3 - t);
               }

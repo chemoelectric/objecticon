@@ -230,7 +230,7 @@ function find(s1,s2,i,j)
               if (ch == first) {
                   /* First char matches, check remainder. */
                   str1 = StrLoc(UcsBlk(s1).utf8);
-                  utf8_iter(&str1);
+                  str1 += UTF8_SEQ_LEN(*str1);
                   str2 = p;
                   l = s1_len - 1;
                   while (l > 0 && utf8_iter(&str1) == utf8_iter(&str2))
