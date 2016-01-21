@@ -48,6 +48,12 @@ struct trapezoid {
 #define IMGDATA_PALETTE4   24
 #define IMGDATA_PALETTE8   28
 
+#define Mul16(v, a) (((unsigned)(v) * (a)) / 65535)
+#define Div16(v, a) (((unsigned)(v) * 65535) / (a))
+
+#define Gray(r, g, b) (0.299 * (r) + 0.587 * (g) + 0.114 * (b))
+#define IntGray(r, g, b) ((int)(Gray(r, g, b) + 0.5))
+
 struct imgdata;
 
 struct imgdataformat {
@@ -226,12 +232,6 @@ struct wcursor {
    struct SharedCursor *shared_cursor;
 };
 #endif
-
-#define Mul16(v, a) (((unsigned)(v) * (a)) / 65535)
-#define Div16(v, a) (((unsigned)(v) * 65535) / (a))
-
-#define Gray(r, g, b) (0.299 * (r) + 0.587 * (g) + 0.114 * (b))
-#define IntGray(r, g, b) ((int)(Gray(r, g, b) + 0.5))
 
 /*
  * Window Resources
