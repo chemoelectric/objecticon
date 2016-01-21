@@ -216,10 +216,12 @@ struct b_ucs {
     word blksize;		/*   block size */
     word length;                /*   unicode string length */
     struct descrip utf8;	/*   the utf-8 representation */
-    word n_off_indexed;         /*   how many offsets entries have already been calculated */
+    word n_off_l_indexed;       /*   how many offsets entries have already been calculated, starting at the left */
+    word n_off_r_indexed;       /*   how many offsets entries have already been calculated, starting at the right */
+    word offset_bits;           /*   number of bits in an offset; 8, 16, 32 or 64 depending on length of utf8 */
     word index_step;            /*   how many unicode chars between offset entries, zero for ascii-only utf8,
                                  *   since we can then use simple direct indexing. */
-    word off[1];                /*   offsets: ((length-1) / index_step) are allocated (if index_step > 0) */
+    word off[1];                /*   offset data, a packed array of offsets, each entry is offset_bits wide */
 };
 
 /*

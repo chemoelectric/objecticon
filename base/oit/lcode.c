@@ -75,6 +75,7 @@ static struct centry *inst_sdescrip(char *s);
 
 static DIGIT muli1	(DIGIT *u, word k, int c, DIGIT *w, word n);
 static struct b_bignum * bigradix(char *input, int input_len);
+static void set_ucs_slot(word *off, word offset_bits, word i, word n);
 
 
 static word pc = 0;		/* simulated program counter */
@@ -603,7 +604,7 @@ static void lemitcon(struct centry *ce)
         free(pair);
     }
     else if (ce->c_flag & F_UcsLit) {
-        word index_step, n_offs, length, i;
+        word index_step, n_offs, offset_bits, n_off_words, length, i, j, *off;
         struct strconst *utf8;
         char *p, *e;
 
@@ -620,26 +621,31 @@ static void lemitcon(struct centry *ce)
             ++length;
         }
 
-        calc_ucs_index_step(utf8->len, length, &index_step, &n_offs);
+        calc_ucs_index_settings(utf8->len, length, &index_step, &n_offs, &offset_bits, &n_off_words);
 
         outwordx(T_Ucs, "T_Ucs");
-        outwordx((7 + n_offs) * WordSize, "   Block size");
+        outwordx((9 + n_off_words) * WordSize, "   Block size");
         outwordx(length, "   Length");
         outstr(utf8, "   UTF8 string");
-        outwordx(n_offs, "   N indexed");
+        outwordx(n_offs, "   N left indexed");
+        outwordx(n_offs, "   N right indexed");
+        outwordx(offset_bits, "   Offset bits");
         outwordx(index_step, "   Index step");
 
         /* This mirrors the loop in fmisc.r (get_ucs_off) */
         if (index_step > 0) {
+            off = safe_malloc(n_off_words * WordSize);
             p = utf8->s;
-            i = 0;
+            i = j = 0;
             while (i < length - 1) {
                 p += UTF8_SEQ_LEN(*p);
                 ++i;
-                if (i % index_step == 0) {
-                    outwordx(p - utf8->s,   "Off of char %d", i);
-                }
+                if (i % index_step == 0)
+                    set_ucs_slot(off, offset_bits, j++, p - utf8->s);
             }
+            for (i = 0; i < n_off_words; ++i)
+                outwordx(off[i],   "   Offset data %d", i);
+            free(off);
         }
     }
 }
@@ -2372,4 +2378,40 @@ static DIGIT muli1(DIGIT *u, word k, int c, DIGIT *w, word n)
         carry = hi(dig);
     }
     return carry;
+}
+
+static void set_ucs_slot(word *off, word offset_bits, word i, word n)
+{
+    switch (offset_bits) {
+        case 8: {
+            unsigned char *p = (unsigned char *)(off);
+            p[i] = (unsigned char)n;
+            break;
+        }
+        case 16: {
+            unsigned Integer16 *p = (unsigned Integer16 *)(off);
+            p[i] = (unsigned Integer16)n;
+            break;
+        }
+#if WordBits == 32
+        case 32: {
+            off[i] = n;
+            break;
+        }
+#else
+        case 32: {
+            unsigned Integer32 *p = (unsigned Integer32 *)(off);
+            p[i] = (unsigned Integer32)n;
+            break;
+        }
+        case 64: {
+            off[i] = n;
+            break;
+        }
+#endif
+        default: {
+            quit("Invalid offset_bits");
+            break;
+        }
+    }
 }

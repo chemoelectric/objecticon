@@ -786,7 +786,7 @@ function back(underef x -> dx)
                   StrLen(UcsBlk(dx).utf8);
               for (i = UcsBlk(dx).length; i > 0; i--) {
                   tended struct descrip utf8;
-                  utf8_rev_iter(&p);
+                  utf8_rev_iter0(&p);
                   StrLoc(utf8) = p;
                   StrLen(utf8) = UTF8_SEQ_LEN(*p);
                   suspend ucs(make_ucs_block(&utf8, 1));

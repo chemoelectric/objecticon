@@ -9,6 +9,10 @@ static int trcmp3  (struct dpair *dp1,struct dpair *dp2);
 static int trefcmp (dptr d1,dptr d2);
 static int tvalcmp (dptr d1,dptr d2);
 static int nthcmp  (dptr d1,dptr d2);
+static word get_ucs_slot(struct b_ucs *b, word i);
+static void set_ucs_slot(struct b_ucs *b, word i, word n);
+static void ensure_ucs_slot(struct b_ucs *b, word d);
+
 
 
 "char(i) - produce a string consisting of character i."
@@ -889,6 +893,179 @@ function type(x)
    }
 end
 
+#if 0
+static int debug = 0;
+
+static void print_ucs(struct b_ucs *b)
+{
+    word i, n_slots;
+    n_slots = (b->length - 1) / b->index_step;
+    fprintf(stderr, "Length in ucs chars: " WordFmt "\n", b->length);
+    fprintf(stderr, "UTF-8 length: " WordFmt "\n", StrLen(b->utf8));
+    fprintf(stderr, "Index step: " WordFmt "\n", b->index_step);
+    fprintf(stderr, "Index len in offsets: " WordFmt "\n", n_slots);
+    if (n_slots > 0)
+        fprintf(stderr, "Index len in words: " WordFmt "\n", 
+                (b->blksize - sizeof(struct b_ucs)) / sizeof(word) + 1);
+    fprintf(stderr, "Offset bits: " WordFmt "\n", b->offset_bits);
+    fprintf(stderr, "Offset to UTF8 ratio: %.2f%%\n", 
+            (float)(100.0 * n_slots * (b->offset_bits)/8) / StrLen(b->utf8));
+    fprintf(stderr, "N left indexed: " WordFmt "\n", b->n_off_l_indexed);
+    for (i = 0; i < b->n_off_l_indexed; ++i)
+        fprintf(stderr, "\t" WordFmt " -> icon char " WordFmt " -> off " WordFmt "\n", i, 
+                (b->index_step * (i + 1) + 1), get_ucs_slot(b, i));
+    fprintf(stderr, "N right indexed: " WordFmt "\n", b->n_off_r_indexed);
+    if (b->n_off_l_indexed != n_slots || b->n_off_r_indexed != n_slots) {
+        for (i = n_slots - b->n_off_r_indexed; i < n_slots; ++i)
+            fprintf(stderr, "\t" WordFmt " -> icon char " WordFmt " -> off " WordFmt "\n", i, 
+                    (b->index_step * (i + 1) + 1), get_ucs_slot(b, i));
+    }
+}
+#endif
+
+static word get_ucs_slot(struct b_ucs *b, word i)
+{
+    switch (b->offset_bits) {
+        case 8: {
+            unsigned char *p = (unsigned char *)(b->off);
+            return (word)p[i];
+        }
+        case 16: {
+            unsigned Integer16 *p = (unsigned Integer16 *)(b->off);
+            return (word)p[i];
+        }
+#if WordBits == 32
+        case 32: {
+            return b->off[i];
+        }
+#else
+        case 32: {
+            unsigned Integer32 *p = (unsigned Integer32 *)(b->off);
+            return (word)p[i];
+        }
+        case 64: {
+            return b->off[i];
+        }
+#endif
+        default: {
+            syserr("Invalid offset_bits");
+            return 0;
+        }
+    }
+
+}
+
+static void set_ucs_slot(struct b_ucs *b, word i, word n)
+{
+    switch (b->offset_bits) {
+        case 8: {
+            unsigned char *p = (unsigned char *)(b->off);
+            p[i] = (unsigned char)n;
+            break;
+        }
+        case 16: {
+            unsigned Integer16 *p = (unsigned Integer16 *)(b->off);
+            p[i] = (unsigned Integer16)n;
+            break;
+        }
+#if WordBits == 32
+        case 32: {
+            b->off[i] = n;
+            break;
+        }
+#else
+        case 32: {
+            unsigned Integer32 *p = (unsigned Integer32 *)(b->off);
+            p[i] = (unsigned Integer32)n;
+            break;
+        }
+        case 64: {
+            b->off[i] = n;
+            break;
+        }
+#endif
+        default: {
+            syserr("Invalid offset_bits");
+            break;
+        }
+    }
+}
+
+/*
+ * Ensure that the offset slot number d is calculated.
+ */
+static void ensure_ucs_slot(struct b_ucs *b, word d)
+{
+    word i, nd, n_slots;
+    char *p;
+
+    /*
+     * The number of offset slots allocated.
+     */
+    n_slots = (b->length - 1) / b->index_step;
+
+    /*
+     * Check if we've already calculated this offset.
+     */
+    if (d < b->n_off_l_indexed || d >= n_slots - b->n_off_r_indexed)
+        return;
+
+    p = StrLoc(b->utf8);
+
+    /*
+     * nd is the ucs index corresponding to slot d.  Note it is a
+     * multiple of b->index_step, so we will fill it in on the
+     * last iteration of the while loops below, when i == nd.
+     */
+    nd = (d + 1) * b->index_step;
+
+    /*
+     * Decide wheter to expand the left or right index blocks.
+     */
+    if (d - (b->n_off_l_indexed - 1) > (n_slots - b->n_off_r_indexed) - d) {
+        /*
+         * Iterate from the rightmost calculated offset (if any) and
+         * move left, saving all the intermediate offset points.
+         */
+        if (b->n_off_r_indexed > 0) {
+            p += get_ucs_slot(b, n_slots - b->n_off_r_indexed);
+            i = (n_slots - b->n_off_r_indexed + 1) * b->index_step;
+        } else {
+            p += StrLen(b->utf8);
+            i = b->length;
+        }
+        while (i > nd) {
+            utf8_rev_iter0(&p);
+            --i;
+            if (i % b->index_step == 0)
+                set_ucs_slot(b, n_slots - ++b->n_off_r_indexed, p - StrLoc(b->utf8));
+        }
+    } else {
+        /*
+         * Start at the last offset calculated (if any) and move
+         * forward, saving all the intermediate offset points.
+         */
+        if (b->n_off_l_indexed > 0) {
+            p += get_ucs_slot(b, b->n_off_l_indexed - 1);
+            i = b->n_off_l_indexed * b->index_step;
+        } else
+            i = 0;
+        while (i < nd) {
+            p += UTF8_SEQ_LEN(*p);
+            ++i;
+            if (i % b->index_step == 0)
+                set_ucs_slot(b, b->n_off_l_indexed++, p - StrLoc(b->utf8));
+        }
+    }
+
+    /*
+     * Just to keep the fields correct, note if the left and right
+     * extents have joined.
+     */
+    if (b->n_off_l_indexed + b->n_off_r_indexed == n_slots)
+        b->n_off_r_indexed = b->n_off_l_indexed = n_slots;
+}
+
 /*
  * Lookup a pointer into the utf8 string for the given ucs block at
  * unicode char position n (zero-based).  n may be b->length in which
@@ -902,7 +1079,7 @@ end
  */
 static char *get_ucs_off(struct b_ucs *b, word n)
 {
-    word d, i;
+    word d, l, r, n_slots;
     char *p = StrLoc(b->utf8);
 
     /*
@@ -912,6 +1089,12 @@ static char *get_ucs_off(struct b_ucs *b, word n)
         return p + StrLen(b->utf8);
 
     /*
+     * Special case of looking up the first char.
+     */
+    if (n == 0)
+        return p;
+
+    /*
      * If the index_step is 0, it means the utf8 string is ascii, so
      * we can use direct indexing.
      */
@@ -919,60 +1102,60 @@ static char *get_ucs_off(struct b_ucs *b, word n)
         return p + n;
 
     /*
-     * In the first step range, there is no offset to use.
+     * The number of offset slots allocated.
      */
-    if (n < b->index_step) {
-        while (n-- > 0)
-            p += UTF8_SEQ_LEN(*p);
-        return p;
-    }
+    n_slots = (b->length - 1) / b->index_step;
 
     /*
-     * Get the index into off before n
+     * Get the index into off before n.  May be -1, if n is to the
+     * left of the first slot, or there are no slots.
      */
     d = n / b->index_step - 1;
 
     /*
-     * Now b->index_step <= n < b->length.  Hence d >= 0.
-     * Also, n <= b->length-1 and so
-     * d = n/b->index_step - 1 <= (b->length-1)/b->step - 1 < (b->length-1)/b->step,
-     * the number of offset slots allocated.
+     * Calculate l, the distance to the known position to the left of
+     * n; either the offset to the left or the start of the string.
      */
+    if (d >= 0)
+        l = n % b->index_step;
+    else
+        l = n;
 
     /*
-     * Have we indexed this one already?  If so start at the offset and
-     * move forwards.
+     * Similarly calculate r, the distance to the known position to
+     * the right.  Either the next offset along from n, or the end of
+     * the string.
      */
-    if (d < b->n_off_indexed) {
-        word r = n % b->index_step;
-        p += b->off[d];
-        while (r-- > 0)
-            p += UTF8_SEQ_LEN(*p);
-        return p;
-    }
+    if (d + 1 < n_slots)
+        r = b->index_step - l;
+    else
+        r = b->length - n;
 
     /*
-     * Otherwise start at the last offset calculated (if any) and move
-     * forward, saving all the intermediate offset points.
+     * Now decide whether to iterate leftwards or rightwards.
      */
-    if (b->n_off_indexed > 0) {
-        p += b->off[b->n_off_indexed - 1];
-        i = b->n_off_indexed * b->index_step;
-    } else
-        i = 0;
-    /* I: i/b->index_step = b->n_off_indexed */
-    while (i < n) {
-        p += UTF8_SEQ_LEN(*p);
-        ++i;
-        /* After incrementing i, ((i-1)/b->index_step) = b->n_off_indexed
-         * But i <= n < b->length, so 
-         *       ((i-1)/b->index_step) < ((b->length-1)/b->index_step)
-         *  so   b->n_off_indexed < ((b->length-1)/b->index_step), the allocated size.
+    if (l < r) {
+        /*
+         * Go right l positions from the starting point.
          */
-        if (i % b->index_step == 0)
-            b->off[b->n_off_indexed++] = p - StrLoc(b->utf8);
+        if (d >= 0) {
+            ensure_ucs_slot(b, d);
+            p += get_ucs_slot(b, d);
+        }
+        while (l-- > 0)
+            p += UTF8_SEQ_LEN(*p);
+    } else {
+        /*
+         * Go left r positions from the starting point.
+         */
+        if (d + 1 < n_slots) {
+            ensure_ucs_slot(b, d + 1);
+            p += get_ucs_slot(b, d + 1);
+        } else
+            p += StrLen(b->utf8);
+        while (r-- > 0)
+            utf8_rev_iter0(&p);
     }
-
     return p;
 }
 
@@ -985,16 +1168,16 @@ static char *get_ucs_off(struct b_ucs *b, word n)
 struct b_ucs *make_ucs_block(dptr utf8, word length)
 {
     struct b_ucs *p;                   /* Doesn't need to be tended */
-    word index_step, n_offs;
-
+    word index_step, n_offs, offset_bits, n_off_words;
     if (length == 0)
         return emptystr_ucs;
-    calc_ucs_index_step(StrLen(*utf8), length, &index_step, &n_offs);
-    MemProtect(p = alcucs(n_offs));
+    calc_ucs_index_settings(StrLen(*utf8), length, &index_step, &n_offs, &offset_bits, &n_off_words);
+    MemProtect(p = alcucs(n_off_words));
     p->index_step = index_step;
     p->utf8 = *utf8;
     p->length = length;
-    p->n_off_indexed = 0;
+    p->n_off_l_indexed = p->n_off_r_indexed = 0;
+    p->offset_bits = offset_bits;
     return p;
 }
 

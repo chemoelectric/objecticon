@@ -50,6 +50,7 @@ void *safe_malloc(size_t size);
 int utf8_check(char **p, char *end);
 int utf8_iter(char **p);
 int utf8_rev_iter(char **p);
+void utf8_rev_iter0(char **p);
 int utf8_seq(int c, char *s);
 
 struct rangeset *init_rangeset(void);
@@ -57,7 +58,7 @@ void free_rangeset(struct rangeset *rs);
 int add_range(struct rangeset *cs, int from, int to);
 void print_rangeset(struct rangeset *rs);
 
-void calc_ucs_index_step(word utf8_len, word len, word *index_step, word *n_offs);
+void calc_ucs_index_settings(word utf8_len, word len, word *index_step, word *n_offs, word *offset_bits, word *n_off_words);
 
 #if MSWIN32
 int strcasecmp(char *s1, char *s2);

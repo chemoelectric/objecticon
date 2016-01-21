@@ -193,13 +193,8 @@
 #endif				/* UXSuffix */
 
 #ifndef UcsIndexStepFactor
-   #if WordBits == 64
-      #define UcsIndexStepFactor  8.0
-   #endif					/* WordBits == 64 */
-   #if WordBits == 32
-      #define UcsIndexStepFactor  4.5
-   #endif					/* WordBits == 32 */
-#endif /* UcsIndexStepFactor */
+   #define UcsIndexStepFactor  4.5
+#endif
 
 #define IcodeDelim "[executable Icon binary follows]"
 

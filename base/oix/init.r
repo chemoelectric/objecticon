@@ -359,7 +359,7 @@ static struct b_cset *make_static_cset_block(int n_ranges, ...)
 
 static struct b_ucs *make_static_ucs_block(char *utf8)
 {
-    word index_step, n_offs, length;
+    word index_step, n_offs, offset_bits, n_off_words, length;
     uword blksize;
     char *t;
     struct b_ucs *b;
@@ -368,17 +368,18 @@ static struct b_ucs *make_static_ucs_block(char *utf8)
     utf8_len = strlen(utf8);
     length = 0;
     while (*t) {
-        utf8_iter(&t);
+        t += UTF8_SEQ_LEN(*t);
         ++length;
     }
-    calc_ucs_index_step(utf8_len, length, &index_step, &n_offs);
-    blksize = sizeof(struct b_ucs) + ((n_offs - 1) * sizeof(word));
+    calc_ucs_index_settings(utf8_len, length, &index_step, &n_offs, &offset_bits, &n_off_words);
+    blksize = sizeof(struct b_ucs) + ((n_off_words - 1) * sizeof(word));
     Protect(b = calloc(blksize, 1), startuperr("Insufficient memory"));
     b->blksize = blksize;
     b->index_step = index_step;
     MakeStr(utf8, utf8_len, &b->utf8);
     b->length = length;
-    b->n_off_indexed = 0;
+    b->n_off_l_indexed = b->n_off_r_indexed = 0;
+    b->offset_bits = offset_bits;
     return b;
 }
 
