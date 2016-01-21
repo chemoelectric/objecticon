@@ -5,7 +5,7 @@ procedure f(i)
 end
 
 procedure r(x,y)
-   return right(f(x)||"/"||f(y), 25) ||
+   return right(f(x)||"/"||f(y), 32) ||
       right(if y > 0 then Format.numeric_to_string(100*real(x)/y,2) else "-",8)
 end
 
@@ -18,25 +18,25 @@ procedure print_stats(prog)
    t2 := Prog.get_allocation_info(prog)
    t3 := Prog.get_collection_info(prog)
 
-   write("\nRegion                 Usage                      Total    Colls")
-   write("------                 --------------------        ----    -----")
-   write("Stack     ", right(f(s1),15), right(t3.stack_requests,39))
+   write("\nRegion                        Usage                      Total    Colls")
+   write("------                        --------------------        ----    -----")
+   write("Stack     ", right(f(s1),22), right(t3.stack_requests,39))
    i := 1
    every e := !t1.string_regions do {
       write(left("String " || i, 10), r(e.used, e.size))
       i +:= 1
    }
-   write(left("String total", 23), right(f(t2.string_total), 32), right(t3.string_requests, 9))
+   write(left("String total", 30), right(f(t2.string_total), 32), right(t3.string_requests, 9))
 
    i := 1
    every e := !t1.block_regions do {
       write(left("Block " || i, 10), r(e.used, e.size))
       i +:= 1
    }
-   write(left("Block total", 23), right(f(t2.block_total), 32), right(t3.block_requests, 9))
-   write(left("User", 55), right(t3.user_requests, 9))
-   write("                                                   ----    -----")
-   write(right(f(t2.get_total()),55),right(t3.get_total(),9))
+   write(left("Block total", 30), right(f(t2.block_total), 32), right(t3.block_requests, 9))
+   write(left("User", 62), right(t3.user_requests, 9))
+   write("                                                          ----    -----")
+   write(right(f(t2.get_total()),62),right(t3.get_total(),9))
 end
 
 procedure main(args)
@@ -81,14 +81,14 @@ procedure main(args)
    }
    print_stats(prog)
    write("\nSummary")
-   write("Code           Desc                                     N       Total")
-   write("----           ----                                 -----      ------")
+   write("Code           Desc                                     N           Total")
+   write("----           ----                                 -----          ------")
    t := 0
    every e := !sort(proact) do {
       write(left(MonitorCode.get_sym(e[1]),15),left(MonitorCode.get_desc(e[1]),27), 
-            right(f(e[2]), 15), right(f(totals[e[1]]),12))
+            right(f(e[2]), 15), right(f(totals[e[1]]),16))
       t +:= totals[e[1]]
    }
-   write("                                                               ------")
-   write(right(f(t), 69))
+   write("                                                                   ------")
+   write(right(f(t), 73))
 end
