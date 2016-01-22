@@ -702,6 +702,24 @@ function cairo_Context_arc(self, xc, yc, r, a1, a2)
     }
 end
 
+function cairo_Context_arc_negative(self, xc, yc, r, a1, a2)
+    if !cnv:C_double(xc) then
+       runerr(102, xc)
+    if !cnv:C_double(yc) then
+       runerr(102, yc)
+    if !cnv:C_double(r) then
+       runerr(102, r)
+    if !cnv:C_double(a1) then
+       runerr(102, a1)
+    if !cnv:C_double(a2) then
+       runerr(102, a2)
+    body {
+       GetSelfCr();
+       cairo_arc_negative(self_cr, xc, yc, r, a1, a2);
+       return self;
+    }
+end
+
 function cairo_Context_rectangle(self, x, y, width, height)
     if !cnv:C_double(x) then
        runerr(102, x)
@@ -774,6 +792,14 @@ function cairo_Context_new_path(self)
     }
 end
 
+function cairo_Context_new_sub_path(self)
+    body {
+       GetSelfCr();
+       cairo_new_sub_path(self_cr);
+       return self;
+    }
+end
+
 static void device_stroke_extents(cairo_t *cr, double *x1, double *y1, double *x2, double *y2)
 {
     struct point p1, p2, p3, p4;
@@ -834,6 +860,14 @@ function cairo_Context_fill(self)
        device_fill_extents(self_cr, &x1, &y1, &x2, &y2);
        cairo_fill (self_cr);
        pix_to_win(self_cr, x1, y1, x2, y2);
+       return self;
+    }
+end
+
+function cairo_Context_clip_preserve(self)
+    body {
+       GetSelfCr();
+       cairo_clip_preserve(self_cr);
        return self;
     }
 end

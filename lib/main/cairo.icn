@@ -109,6 +109,10 @@ abstract class Pattern(NoCopy)
       Class.load_library(\Context.LOADED)
    end
 
+   public identity_matrix()
+      return set_matrix(Matrix.I)
+   end
+
    private native set_matrix_impl(xx, yx, xy, yy, x0, y0)
    public set_matrix(m)
       return set_matrix_impl(m.xx, m.yx, m.xy, m.yy, m.x0, m.y0)
@@ -375,6 +379,7 @@ final class Context(NoCopy)
    public native set_dash(l[])
    public native set_font(v)
    public native arc(xc, yc, r, a1, a2)
+   public native arc_negative(xc, yc, r, a1, a2)
    public native rectangle(x, y, width, height)
    public native fill()
    public native fill_preserve()
@@ -384,6 +389,7 @@ final class Context(NoCopy)
    public native text_path(s)
    public native close_path()
    public native new_path()
+   public native new_sub_path()
    public native close()
    public native set_operator(op)
 
@@ -445,6 +451,7 @@ final class Context(NoCopy)
    public native rotate(r)
 
    public native clip()
+   public native clip_preserve()
    public native reset_clip()
 
    private native set_source_rgba(r, g, b, a)
