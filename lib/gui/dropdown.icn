@@ -438,6 +438,10 @@ class DropDownLabel(Label)
       case e.code of {
          Key.UP : parent.go_up(e)
          Key.DOWN : parent.go_down(e)
+         Key.HOME : if is(parent, SelectionDropDown) then
+                       parent.go_to(1, e)
+         Key.END : if is(parent, SelectionDropDown) then
+                      parent.go_to(*parent.selection_list, e)
       }
    end
 

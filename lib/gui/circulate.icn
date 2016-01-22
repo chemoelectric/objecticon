@@ -19,6 +19,8 @@ class CirculateLabel(Label)
       case e.code of {
          Key.UP : parent.go_up(e)
          Key.DOWN : parent.go_down(e)
+         Key.HOME : parent.go_to(1, e)
+         Key.END : parent.go_to(*parent.selection_list, e)
       }
    end
 
@@ -125,6 +127,12 @@ class Circulate(SelectionList,Component)
          set_selection(1)
       else
          set_selection(1 + self.selection % *self.selection_list)
+      end_change(e)
+   end
+
+   public go_to(x, e)
+      start_change(e)
+      set_selection(x, e)
       end_change(e)
    end
 
