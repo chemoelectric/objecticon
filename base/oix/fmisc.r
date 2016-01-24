@@ -12,7 +12,7 @@ static int nthcmp  (dptr d1,dptr d2);
 static word get_ucs_slot(struct b_ucs *b, word i);
 static void set_ucs_slot(struct b_ucs *b, word i, word n);
 static void ensure_ucs_slot(struct b_ucs *b, word d);
-
+static word get_ucs_n_slots(struct b_ucs *b);
 
 
 "char(i) - produce a string consisting of character i."
@@ -899,7 +899,7 @@ static int debug = 0;
 static void print_ucs(struct b_ucs *b)
 {
     word i, n_slots;
-    n_slots = (b->length - 1) / b->index_step;
+    n_slots = get_ucs_n_slots(b);
     fprintf(stderr, "Length in ucs chars: " WordFmt "\n", b->length);
     fprintf(stderr, "UTF-8 length: " WordFmt "\n", StrLen(b->utf8));
     fprintf(stderr, "Index step: " WordFmt "\n", b->index_step);
@@ -922,6 +922,11 @@ static void print_ucs(struct b_ucs *b)
     }
 }
 #endif
+
+static word get_ucs_n_slots(struct b_ucs *b)
+{
+    return (b->length - 1) / b->index_step;
+}
 
 static word get_ucs_slot(struct b_ucs *b, word i)
 {
@@ -1002,7 +1007,7 @@ static void ensure_ucs_slot(struct b_ucs *b, word d)
     /*
      * The number of offset slots allocated.
      */
-    n_slots = (b->length - 1) / b->index_step;
+    n_slots = get_ucs_n_slots(b);
 
     /*
      * Check if we've already calculated this offset.
@@ -1104,7 +1109,7 @@ static char *get_ucs_off(struct b_ucs *b, word n)
     /*
      * The number of offset slots allocated.
      */
-    n_slots = (b->length - 1) / b->index_step;
+    n_slots = get_ucs_n_slots(b);
 
     /*
      * Get the index into off before n.  May be -1, if n is to the
