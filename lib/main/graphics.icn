@@ -259,6 +259,8 @@ final class Window(NoCopy)
 
    public static const
       RESIZE,
+      MOVE,
+      STATE,
       CLOSE_BUTTON,
       INVOKE_LATER
 
@@ -266,6 +268,8 @@ final class Window(NoCopy)
       PATTERNS
 
    private static init()
+      STATE :=         -8
+      MOVE :=          -9
       RESIZE :=       -10
       CLOSE_BUTTON := -11
       INVOKE_LATER := -40
@@ -398,16 +402,12 @@ final class Window(NoCopy)
    end
 
    public get_pos()
-      return Point!get_pos_impl()
+      return Point(get_x(), get_y())
    end
-
-   private native get_pos_impl()
 
    public get_geometry()
-      return Rectangle!get_geometry_impl()
+      return Rectangle(get_x(), get_y(), get_width(), get_height())
    end
-
-   private native get_geometry_impl()
 
    # Return the number of references to this window's canvas and
    # context, as a `References` record.

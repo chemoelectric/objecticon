@@ -189,6 +189,8 @@ extern struct imgdataformat imgdataformat_X11BGRA32;
 #define MOUSELEFTUP	(-4)
 #define MOUSEMIDUP	(-5)
 #define MOUSERIGHTUP	(-6)
+#define WINDOWSTATE	(-8)
+#define WINDOWMOVED	(-9)
 #define WINDOWRESIZED	(-10)
 #define WINDOWCLOSED    (-11)
 #define MOUSEMOVED      (-12)

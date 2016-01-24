@@ -740,6 +740,8 @@ class Dialog(Component)
          Window.INVOKE_LATER: process_invoke_later(l)
          Window.CLOSE_BUTTON: process_close_button(l)
          Window.RESIZE: process_resize(l)
+         Window.MOVE: process_move(l)
+         Window.STATE: process_state(l)
          default: {
             (popup_manager === self) | syserr("shouldn't get a mouse/key event in a popup")
 
@@ -1270,6 +1272,14 @@ class Dialog(Component)
       self.buffer_win.set_size(self.win.get_width(), self.win.get_height())
       self.resize()
       self.invalidate()
+      fire(l[1])
+   end
+
+   private process_move(l)
+      fire(l[1])
+   end
+
+   private process_state(l)
       fire(l[1])
    end
 

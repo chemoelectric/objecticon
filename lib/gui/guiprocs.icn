@@ -24,7 +24,9 @@ class Event()
       MOUSE_MOVEMENT,
       MOUSE_WHEEL_UP,
       MOUSE_WHEEL_DOWN,
+      WINDOW_STATE,
       WINDOW_RESIZE,
+      WINDOW_MOVE,
       MOUSE_LEFT_DRAG_OVER,
       MOUSE_MIDDLE_DRAG_OVER,
       MOUSE_RIGHT_DRAG_OVER,
@@ -71,6 +73,8 @@ class Event()
       MOUSE_MOVEMENT := Mouse.MOVEMENT
       MOUSE_WHEEL_UP := Mouse.WHEEL_UP
       MOUSE_WHEEL_DOWN := Mouse.WHEEL_DOWN
+      WINDOW_STATE := Window.STATE
+      WINDOW_MOVE := Window.MOVE
       WINDOW_RESIZE := Window.RESIZE
       WINDOW_CLOSE_BUTTON := Window.CLOSE_BUTTON
       ICON := 1

@@ -1064,27 +1064,6 @@ function graphics_Window_get_font_width(self)
    }
 end
 
-function graphics_Window_get_geometry_impl(self)
-   body {
-       tended struct descrip result;
-       struct descrip t;
-       wsp ws;
-       GetSelfW();
-       AttemptOp(getpos(self_w));
-       ws = self_w->window;
-       create_list(4, &result);
-       MakeInt(ws->x, &t);
-       list_put(&result, &t);
-       MakeInt(ws->y, &t);
-       list_put(&result, &t);
-       MakeInt(ws->width, &t);
-       list_put(&result, &t);
-       MakeInt(ws->height, &t);
-       list_put(&result, &t);
-       return result;
-   }
-end
-
 function graphics_Window_get_height(self)
    body {
        GetSelfW();
@@ -1170,25 +1149,11 @@ function graphics_Window_get_pointer(self)
    }
 end
 
-function graphics_Window_get_pos_impl(self)
-   body {
-       tended struct descrip result;
-       struct descrip t;
-       GetSelfW();
-       AttemptOp(getpos(self_w));
-       create_list(2, &result);
-       MakeInt(self_w->window->x, &t);
-       list_put(&result, &t);
-       MakeInt(self_w->window->y, &t);
-       list_put(&result, &t);
-       return result;
-   }
-end
-
 function graphics_Window_get_x(self)
    body {
        GetSelfW();
-       AttemptOp(getpos(self_w));
+       if (self_w->window->x == -INT_MAX)
+           fail;
        return C_integer self_w->window->x;
    }
 end
@@ -1196,7 +1161,8 @@ end
 function graphics_Window_get_y(self)
    body {
        GetSelfW();
-       AttemptOp(getpos(self_w));
+       if (self_w->window->y == -INT_MAX)
+           fail;
        return C_integer self_w->window->y;
    }
 end
