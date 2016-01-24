@@ -3,6 +3,43 @@ package gui
 import ipl.graphics, util
 
 class Style()
+   public static 
+      TOOLTIP_BG,
+      TOOLTIP_FG,
+      TOOLTIP_FONT,
+      FOCUS_COLOR,
+      FOCUS_PATTERN,
+      DASHED_PATTERN,
+      HIGHLIGHT_COLOR,
+      HIGHLIGHT_PATTERN,
+      CURSOR_COLOR,
+      DOWN_COLOR,
+      SELECTION_COLOR,
+      OVER_COLOR,
+      SHADE_FILTER,
+      TICK_RATE_FACTOR,
+      TICK_RATE_MAX,
+      TICK_RATE_MIN
+
+   private static init()
+      TOOLTIP_BG := env_color("OI_STYLE_TOOLTIP_BG") | "pale yellow"
+      TOOLTIP_FG := env_color("OI_STYLE_TOOLTIP_FG") | "black"
+      TOOLTIP_FONT := env_font("OI_STYLE_TOOLTIP_FONT") | "sans,-2"
+      FOCUS_COLOR := env_color("OI_STYLE_FOCUS_COLOR") | "red"
+      FOCUS_PATTERN := env_pattern("OI_STYLE_FOCUS_PATTERN") | "gray"
+      DASHED_PATTERN := env_pattern("OI_STYLE_DASHED_PATTERN") | "gray"
+      HIGHLIGHT_COLOR := env_color("OI_STYLE_HIGHLIGHT_COLOR") | "blue"
+      HIGHLIGHT_PATTERN := env_pattern("OI_STYLE_HIGHLIGHT_PATTERN") | "gray"
+      CURSOR_COLOR := env_color("OI_STYLE_CURSOR_COLOR") | FOCUS_COLOR
+      DOWN_COLOR := env_color("OI_STYLE_DOWN_COLOR") | "black 20%"
+      SELECTION_COLOR := env_color("OI_STYLE_SELECTION_COLOR") | "blue 30%"
+      OVER_COLOR := env_color("OI_STYLE_OVER_COLOR") | "blue 8%"
+      SHADE_FILTER := env_filter("OI_STYLE_SHADE_FILTER") | "shade,4,5000,40000"
+      TICK_RATE_FACTOR := env_real("OI_STYLE_TICK_RATE_FACTOR", 1.0) | 6.0
+      TICK_RATE_MAX := env_int("OI_STYLE_TICK_RATE_MAX", 10) | 200
+      TICK_RATE_MIN := env_int("OI_STYLE_TICK_RATE_MIN", 5) | 20
+   end
+
    #
    # Draw a raised rectangle.
    #
@@ -26,31 +63,36 @@ class Style()
    end
 
    public get_focus_clone(W)
-      return W.clone().set_fg("red").set_masked_pattern("gray")
+      return W.clone().
+         set_fg(FOCUS_COLOR).
+         set_masked_pattern(FOCUS_PATTERN)
    end
 
    public get_dashed_clone(W)
-      return get_shadow_clone(W).set_masked_pattern("gray")
+      return get_shadow_clone(W).
+         set_masked_pattern(DASHED_PATTERN)
    end
 
    public get_highlight_clone(W)
-      return W.clone().set_fg("blue").set_masked_pattern("gray")
+      return W.clone().
+         set_fg(HIGHLIGHT_COLOR).
+         set_masked_pattern(HIGHLIGHT_PATTERN)
    end
 
    public get_cursor_clone(W)
-      return W.clone().set_fg("red")
+      return W.clone().set_fg(CURSOR_COLOR)
    end
 
    public get_down_clone(W)
-      return W.clone().set_fg("black 20%")
+      return W.clone().set_fg(DOWN_COLOR)
    end
 
    public get_selection_clone(W)
-      return W.clone().set_fg("blue 30%")
+      return W.clone().set_fg(SELECTION_COLOR)
    end
 
    public get_over_clone(W)
-      return W.clone().set_fg("blue 8%")
+      return W.clone().set_fg(OVER_COLOR)
    end
 
    public get_hilite_color(W)
@@ -62,7 +104,7 @@ class Style()
    end
 
    public shade_rectangle(W, x, y, w, h)
-      return W.filter(x, y, w, h, "shade,4,5000,40000")
+      return W.filter(x, y, w, h, SHADE_FILTER)
    end
 
    public fill_down_rectangle(W, x, y, w, h)
@@ -158,12 +200,13 @@ class Style()
 
    public create_tooltip_label()
       return Label().
-         set_bg("pale yellow").
-         set_font("sans,-2").
-         set_fg("black").
+         set_bg(TOOLTIP_BG).
+         set_font(TOOLTIP_FONT).
+         set_fg(TOOLTIP_FG).
          set_border(CompoundBorder().
                       set_outer(PlainBorder().set_line_width(Gui.FINE_WIDTH)).
-                      set_inner(EmptyBorder().set_insets(scale(3), scale(3), scale(2), scale(2))))
+                      set_inner(EmptyBorder().set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 
+                                                         Gui.Y_INSET, Gui.Y_INSET)))
    end
 
    public polish(obj)
@@ -173,9 +216,9 @@ class Style()
       local r
       # Awkward since we're going from scaled pixels to unit pixels
       # (rather than the other way round).
-      r := 200 - integer(d * (6.0 / Gui.SCALE))
-      r <:= 20
-      r >:= 200
+      r := TICK_RATE_MAX - integer(d * (TICK_RATE_FACTOR / Gui.SCALE))
+      r <:= TICK_RATE_MIN
+      r >:= TICK_RATE_MAX
       return r
    end
 end

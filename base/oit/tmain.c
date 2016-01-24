@@ -454,17 +454,17 @@ static void file_comp()
     FILE *finput, *foutput;
     struct header *hdr;
     int n, c;
-    char buf[200], *tmp = intern(makename(0, ofile, ".tmp"));
+    char buf[200], *tmp = intern(makename(0, ofile, TmpSuffix));
   
     hdr = safe_alloc(sizeof(struct header));
     
     /* use fopen() to open the target file then read the header and add "z" to the hdr->config. */
     
     if (!(finput = fopen(ofile, ReadBinary)))
-        quit("Can't open the file to compress: %s",ofile);
+        quit("Can't open the file to compress: %s", ofile);
     
     if (!(foutput = fopen(tmp, WriteBinary)))
-        quit("Can't open the temp compression file: %s",tmp);
+        quit("Can't open the temp compression file: %s", tmp);
 
     n = strlen(IcodeDelim);
     for (;;) {

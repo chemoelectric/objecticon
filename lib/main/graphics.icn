@@ -4,6 +4,12 @@ import
    lang(Class, NoCopy, ObjectClone, Unencodable),
    util(use, error)
 
+record Size(width, height)
+record Point(x, y)
+record Rectangle(x, y, width, height)
+record Color(red, green, blue, alpha)
+record References(canvas, context)
+
 # This object contains pixel data either read from a file, extracted
 # from a Window, or created from scratch.  The data is stored in
 # various underlying formats depending on the source.
@@ -70,9 +76,13 @@ final class Pixels(ObjectClone, Unencodable)
    #
    public native set(x, y, v)
 
-   # Get the given pixel as an 4 element list giving the rgba values.
+   # Get the given pixel as an `Color` record, giving the rgba values.
    #
-   public native get_rgba(x, y)
+   public get_rgba(x, y)
+      return Color!get_rgba_impl(x, y)
+   end
+
+   private native get_rgba_impl(x, y)
 
    # Set the given pixel to the given rgba integer values.
    #
@@ -116,7 +126,7 @@ final class Pixels(ObjectClone, Unencodable)
          suspend get(x_range(), y)
    end
 
-   # Generate all the pixels, as rgba lists.
+   # Generate all the pixels, as `Color` records.
    #
    public gen_rgba()
       local y
@@ -146,12 +156,16 @@ final class Pixels(ObjectClone, Unencodable)
    #
    public native get_palette_size()
 
-   # Get the palette entry at index i, as a 4-element list.  This and
+   # Get the palette entry at index i, as a `Color` record.  This and
    # similar methods fails unless the format is PALETTEx.  The number
    # of palette entries depends on the format; eg PALETTE4 has 2^4=16
    # possible entries, indexed 0..15.
    #
-   public native get_palette_rgba(i)
+   public get_palette_rgba(i)
+      return Color!get_palette_rgba(i)
+   end
+
+   private native get_palette_rgba_impl(i)
 
    # Set the palette entry at index i to the given rgba values.
    #
@@ -245,6 +259,8 @@ final class Window(NoCopy)
 
    public static const
       RESIZE,
+      MOVE,
+      STATE,
       CLOSE_BUTTON,
       INVOKE_LATER
 
@@ -252,6 +268,8 @@ final class Window(NoCopy)
       PATTERNS
 
    private static init()
+      STATE :=         -8
+      MOVE :=          -9
       RESIZE :=       -10
       CLOSE_BUTTON := -11
       INVOKE_LATER := -40
@@ -340,7 +358,6 @@ final class Window(NoCopy)
    public native get_font_ascent()
    public native get_bg()
    public native get_canvas()
-   public native get_clip()
    public native get_depth()
    public native get_font_descent()
    public native get_display()
@@ -351,30 +368,55 @@ final class Window(NoCopy)
    public native get_fg()
    public native get_font()
    public native get_font_width()
-   public native get_geometry()
    public native get_height()
    public native get_input_mask()
    public native get_label()
    public native get_line_style()
    public native get_line_width()
    public native get_max_height()
-   public native get_max_size()
    public native get_max_width()
    public native get_min_height()
-   public native get_min_size()
    public native get_min_width()
    public native get_pointer()
-   public native get_pos()
    public native get_x()
    public native get_y()
    public native can_resize()
-   public native get_size()
    public native get_width()
 
+   public get_clip()
+      return Rectangle!get_clip_impl()
+   end
+
+   private native get_clip_impl()
+
+   public get_size()
+      return Size(get_width(), get_height())
+   end
+
+   public get_max_size()
+      return Size(get_max_width(), get_max_height())
+   end
+
+   public get_min_size()
+      return Size(get_min_width(), get_min_height())
+   end
+
+   public get_pos()
+      return Point(get_x(), get_y())
+   end
+
+   public get_geometry()
+      return Rectangle(get_x(), get_y(), get_width(), get_height())
+   end
+
    # Return the number of references to this window's canvas and
-   # context, as a two-element list.
+   # context, as a `References` record.
    #
-   public native get_references()
+   public get_references()
+      return References!get_references_impl()
+   end
+
+   private native get_references_impl()
 
    #
    # The graphics context attribute bg specifies current background
@@ -676,9 +718,14 @@ final class Window(NoCopy)
    public static native color_value(k)
 
    #
-   # Return the r,g,b,a values of the given color, as a list of 4 integers.
+   # Return the r,g,b,a values of the given color string, as a `Color`
+   # record.
    #
-   public static native parse_color(k)
+   public static parse_color(k)
+      return Color!parse_color_impl(k)
+   end
+
+   private static native parse_color_impl(k)
 
    #
    # draw_arc(x, y, rx, ry, angle1, angle2)
@@ -849,39 +896,62 @@ final class Window(NoCopy)
    public native filter(x, y, width, height, filter)
 
    #
-   # Return a rectangle (as a list of four integers), representing
-   # that part of the given rectangle which would be drawable on the
-   # canvas; ie the intersection of the rectangle, the window and the
-   # clip area if set.  If the result would be an empty area, the
-   # method fails.
+   # Return a `Rectangle` record, representing that part of the given
+   # rectangle which would be drawable on the canvas; ie the
+   # intersection of the rectangle, the window and the clip area if
+   # set.  If the result would be an empty area, the method fails.
    #
-   public native drawable(x, y, width, height)
+   public drawable(x, y, width, height)
+      return Rectangle!drawable_impl(x, y, width, height)
+   end
+
+   private native drawable_impl(x, y, width, height)
 
    #
    # This is the same as `drawable`, but ignores the clip region.
    #
-   public native viewable(x, y, width, height)
+   public viewable(x, y, width, height)
+      return Rectangle!viewable_impl(x, y, width, height)
+   end
+
+   private native viewable_impl(x, y, width, height)
 
    #
-   # Return the current root x, y position as a two-element list.
+   # Return the current root x, y position as a `Point` record.
    #
-   public native query_root_pointer()
+   public query_root_pointer()
+      return Point!query_root_pointer_impl()
+   end
+
+   private native query_root_pointer_impl()
 
    #
-   # Return the current display size in pixels, as a two-element list.
+   # Return the current display size in pixels, as a `Size` record.
    #
-   public native get_display_size()
+   public get_display_size()
+      return Size!get_display_size_impl()
+   end
+
+   private native get_display_size_impl()
 
    #
-   # Return the current display size in millimeters, as a two-element list.
+   # Return the current display size in millimeters, as a `Size` record.
    #
-   public native get_display_size_mm()
+   public get_display_size_mm()
+      return Size!get_display_size_mm_impl()
+   end
+
+   public native get_display_size_mm_impl()
 
    #
-   # Return the current x, y position as a two-element list, relative to
+   # Return the current x, y position as a `Point` record, relative to
    # this window.
    #
-   public native query_pointer()
+   public query_pointer()
+      return Point!query_pointer_impl()
+   end
+
+   private native query_pointer_impl()
 
    #
    # Warp the pointer to the given location, relative to this window.

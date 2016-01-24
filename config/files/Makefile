@@ -42,7 +42,7 @@ tar :
 	@rm -rf $(T)
 	@mkdir -p $(T)
 	@for f in $$( find apps base lib \
-		-regex ".*\.\(icn\|c\|cpp\|r\|ri\|h\|y\|gif\|png\)" ) ; do \
+		-regex ".*\.\(icn\|c\|cpp\|r\|ri\|h\|y\|gif\|png\|svg\|svgz\)" ) ; do \
 		cp --parents $$f $(T) ;\
 	done
 	@for f in $$( find riox \

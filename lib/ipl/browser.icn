@@ -10,7 +10,7 @@ import
    net,
    xml,
    posix,
-   graphics,
+   graphics(Window,Key,Selection),
    xdg,
 $ifndef _PLAN9
    ipl.childwait,
@@ -3565,7 +3565,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          set_border(outermost_border)
       page_favicon_resp := page_favicon_url := page_title := &null
       page_links := []
-      page_alink_color := "red"
+      page_alink_color := Style.FOCUS_COLOR
       page_vlink_color := "#800080"
       page_link_color := "blue"
       page_text_color := "black"

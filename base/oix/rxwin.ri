@@ -55,6 +55,7 @@ static char* property_to_string(wdp wd, Atom target, int number_items, void* dat
 static Atom convert_target(wdp wd, Atom desired_target);
 static void get_atom_descriptor(wsp ws, Atom a, dptr dest);
 static void synch_state(wsp ws);
+static void synch_state1(wsp ws);
 static void synch_net_wm_state(wsp ws, int desired_state);
 static void close_screen_win(wsp ws);
 static void fill2(wbp w, int op, XRenderColor  *color, int x, int y, int width, int height);
@@ -1743,30 +1744,6 @@ int getdepth(wbp w, int *res)
     return Succeeded;
 }
 
-/*
- * getpos() - update the window state's notion of its current position
- */
-int getpos(wbp w)
-{
-    Window garbage1, garbage2;
-    int root_x, root_y, win_x, win_y;
-    unsigned int key_buttons;
-    wsp ws = w->window;
-    wdp wd = ws->display;
-    CheckUnhidden(ws);
-    /*
-     * This call is made because it is guaranteed to generate
-     * a synchronous request of the server, not just ask Xlib
-     * what the window position was last it knew.
-     */
-    if (XQueryPointer(wd->display, ws->win, &garbage1, &garbage2,
-                      &root_x, &root_y, &win_x, &win_y, &key_buttons) == True) {
-        ws->x = root_x - win_x;
-        ws->y = root_y - win_y;
-    }
-    return Succeeded;
-}
-
 char *getfg(wbp w)
 {
     return w->context->fg->name;
@@ -1926,12 +1903,7 @@ static void resizepixmap(wbp w)
 
 static void synch_state(wsp ws)
 {
-    Atom actual_type;
-    int actual_format;
-    unsigned long bytes_after, nitems;
-    unsigned char *prop;
-    unsigned long state;
-    wdp wd = ws->display;
+    int t;
 
     if (ws->win == 0) {
         ws->state = HiddenState;
@@ -1940,6 +1912,21 @@ static void synch_state(wsp ws)
 
     if (ws->state == PopupState || ws->state == RootState)
         return;
+
+    t = ws->state;
+    synch_state1(ws);
+    if (t != ws->state)
+        qeventcode(ws, WINDOWSTATE);
+}
+
+static void synch_state1(wsp ws)
+{
+    Atom actual_type;
+    int actual_format;
+    unsigned long bytes_after, nitems;
+    unsigned char *prop;
+    unsigned long state;
+    wdp wd = ws->display;
 
     if (XGetWindowProperty(wd->display,
                            ws->win,
@@ -2022,25 +2009,34 @@ static void handle_property(wsp ws, XPropertyEvent *event)
  */
 static void handle_config(wsp ws, XConfigureEvent *event)
 {
-    /*
-     * Update X-Icon's information about the window's configuration
-     */
-
-    ws->x = event->x;
-    ws->y = event->y;
+    int new_x, new_y;
 
     /*
-     * If this was not a resize, drop it
+     * If event->above is None, then the x, y fields are relative to
+     * the parent (ie the window border), so use XTranslateCoordinates
+     * to get the location instead.
      */
-    if ((event->width == ws->width) && (event->height == ws->height))
-        return;
+    if (event->above == None) {
+        wdp wd = ws->display;
+        Window junk;
+        XTranslateCoordinates(wd->display, ws->win, GetRoot(wd), 0, 0, &new_x, &new_y, &junk);
+    } else {
+        new_x = event->x;
+        new_y = event->y;
+    }
 
-    ws->width = event->width;
-    ws->height = event->height;
+    if ((new_x != ws->x) || (new_y != ws->y)) {
+        ws->x = new_x;
+        ws->y = new_y;
+        qeventcode(ws, WINDOWMOVED);
+    }
 
-    resizepixmap(findwbp(ws));
-
-    qeventcode(ws, WINDOWRESIZED);
+    if ((event->width != ws->width) || (event->height != ws->height)) {
+        ws->width = event->width;
+        ws->height = event->height;
+        resizepixmap(findwbp(ws));
+        qeventcode(ws, WINDOWRESIZED);
+    }
 }
 
 static int make_mod(unsigned int state)

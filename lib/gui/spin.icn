@@ -162,6 +162,12 @@ abstract class SelectionSpin(SelectionList, Spin)
          self.set_selection(self.selection - 1, e)
    end
 
+   public go_to(x, e)
+      start_change(e)
+      set_selection(x, e)
+      end_change(e)
+   end
+
    public initially()
       \self.selection_list | runerr("no selection list specified")
       Spin.initially()
@@ -199,6 +205,10 @@ class SpinLabel(Label)
       case e.code of {
          Key.UP : parent.go_up(e)
          Key.DOWN : parent.go_down(e)
+         Key.HOME : if is(parent, SelectionSpin) then
+                       parent.go_to(1, e)
+         Key.END : if is(parent, SelectionSpin) then
+                      parent.go_to(*parent.selection_list, e)
       }
    end
 

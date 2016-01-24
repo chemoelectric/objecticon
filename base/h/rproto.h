@@ -288,7 +288,6 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    int  getdepth        (wbp w, int *res);
    char *getlinestyle   (wbp w);
    char *getpointer     (wbp w);
-   int  getpos          (wbp w);
    int  lowerwindow     (wbp w);
    void pollevent       (wbp w);
    int  querypointer    (wbp w, int *x, int *y);

@@ -376,7 +376,7 @@ class Columns(LineBasedScrollArea)
       FOCUS_DASHED_WIDTH
 
    private static init()
-      FOCUS_DASHED_WIDTH := env_int("OI_FLOWTERM_FOCUS_DASHED_WIDTH", 1) | Gui.DASHED_WIDTH
+      FOCUS_DASHED_WIDTH := env_scale("OI_FLOWTERM_FOCUS_DASHED_WIDTH") | Gui.DASHED_WIDTH
    end
 
    public initially()
@@ -426,7 +426,7 @@ class Columns(LineBasedScrollArea)
             use {
                W := view.cbwin.clone(),
                {
-                  W.set_fg("red")
+                  W.set_fg(Style.FOCUS_COLOR)
                   item_paint.draw_rect(W, e, item_border.float(r, s))
                   item_border.draw_rect(W, r)
                }

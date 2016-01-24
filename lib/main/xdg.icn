@@ -2,7 +2,6 @@ package xdg
 
 import 
    io,
-   posix,
    util,
    lang,
    gui,
@@ -239,7 +238,7 @@ final abstract class Xdg()
    # Reload all the settings and reset everything.
    #
    public static refresh()
-      LC_MESSAGES := Locale(getenv_ne("LC_ALL" | "LC_MESSAGES" | "LANG") | "C")
+      LC_MESSAGES := Locale(env_string("LC_ALL" | "LC_MESSAGES" | "LANG") | "C")
       INI_LC_KEYS := []
       every put(INI_LC_KEYS, 
                 LC_MESSAGES.lang || "_" || \LC_MESSAGES.country || "@" || \LC_MESSAGES.modifier |
@@ -272,16 +271,12 @@ final abstract class Xdg()
       return Xdg
    end
 
-   private static getenv_ne(k)
-      return "" ~== System.getenv(k)
-   end
-
    #
    # Ensure XDG_DATA_HOME exists, or try and create it.
    #
    public static ensure_data_home()
       local f, c, s
-      if s := getenv_ne("XDG_DATA_HOME") then
+      if s := env_string("XDG_DATA_HOME") then
          Files.is_directory(s) | return error("File specified by XDG_DATA_HOME is not a directory")
       else {
          f := FilePath(Files.get_home())
@@ -299,7 +294,7 @@ final abstract class Xdg()
    #
    public static ensure_config_home()
       local s
-      if s := getenv_ne("XDG_CONFIG_HOME") then
+      if s := env_string("XDG_CONFIG_HOME") then
          Files.is_directory(s) | return error("File specified by XDG_CONFIG_HOME is not a directory")
       else {
          s := FilePath(Files.get_home()).child(".config").str()
@@ -312,28 +307,28 @@ final abstract class Xdg()
    # Return the XDG_DATA_HOME directory
    #
    public static get_data_home()
-      return getenv_ne("XDG_DATA_HOME") | FilePath(Files.get_home()).walk(".local", "share").str()
+      return env_string("XDG_DATA_HOME") | FilePath(Files.get_home()).walk(".local", "share").str()
    end
 
    #
    # Return the XDG_CONFIG_HOME directory
    #
    public static get_config_home()
-      return getenv_ne("XDG_CONFIG_HOME") | FilePath(Files.get_home()).child(".config").str()
+      return env_string("XDG_CONFIG_HOME") | FilePath(Files.get_home()).child(".config").str()
    end
 
    #
    # Return the XDG_DATA_DIRS path
    #
    public static get_data_dirs()
-      return getenv_ne("XDG_DATA_DIRS") | "/usr/local/share:/usr/share"
+      return env_string("XDG_DATA_DIRS") | "/usr/local/share:/usr/share"
    end
 
    #
    # Return the XDG_CONFIG_DIRS path
    #
    public static get_config_dirs()
-      return getenv_ne("XDG_CONFIG_DIRS") | "/etc/xdg"
+      return env_string("XDG_CONFIG_DIRS") | "/etc/xdg"
    end
 
    #
@@ -706,7 +701,7 @@ final abstract class Xdg()
 
    private static get_current_icon_theme()
       local f, theme, d
-      every theme := getenv_ne("OI_THEME") | "oxygen" | "gnome" do {
+      every theme := env_string("OI_THEME") | "oxygen" | "gnome" do {
          every d := gen_base_dirs() do {
             f := FilePath(d).walk("icons", theme, "index.theme").str()
             if Files.access(f) then

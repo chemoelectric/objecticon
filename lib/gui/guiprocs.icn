@@ -24,7 +24,9 @@ class Event()
       MOUSE_MOVEMENT,
       MOUSE_WHEEL_UP,
       MOUSE_WHEEL_DOWN,
+      WINDOW_STATE,
       WINDOW_RESIZE,
+      WINDOW_MOVE,
       MOUSE_LEFT_DRAG_OVER,
       MOUSE_MIDDLE_DRAG_OVER,
       MOUSE_RIGHT_DRAG_OVER,
@@ -71,6 +73,8 @@ class Event()
       MOUSE_MOVEMENT := Mouse.MOVEMENT
       MOUSE_WHEEL_UP := Mouse.WHEEL_UP
       MOUSE_WHEEL_DOWN := Mouse.WHEEL_DOWN
+      WINDOW_STATE := Window.STATE
+      WINDOW_MOVE := Window.MOVE
       WINDOW_RESIZE := Window.RESIZE
       WINDOW_CLOSE_BUTTON := Window.CLOSE_BUTTON
       ICON := 1
@@ -194,6 +198,86 @@ procedure env_int(s, min, max)
    return v
 end
 
+#
+# Convenient procedure to combine `env_real` and `scale`.
+#
+procedure env_scale(s, min, max)
+   local v
+   v := scale(env_real(s, min, max)) | fail
+   if v < 1 then
+      runerr("Scaled value of " || s || " out of range", v)
+   return v
+end
+
+#
+# Convenient procedure to combine `env_real` and `scale_even`.
+#
+procedure env_scale_even(s, min, max, j)
+   local v
+   v := scale_even(env_real(s, min, max), j) | fail
+   if v < 1 then
+      runerr("Scaled value of " || s || " out of range", v)
+   return v
+end
+
+#
+# Convenient procedure to combine `env_real` and `scale_odd`.
+#
+procedure env_scale_odd(s, min, max, j)
+   local v
+   v := scale_odd(env_real(s, min, max), j) | fail
+   if v < 1 then
+      runerr("Scaled value of " || s || " out of range", v)
+   return v
+end
+
+#
+# Return a non-empty string from the environment.
+#
+procedure env_string(s)
+   return "" ~== System.getenv(s)
+end
+
+#
+# Return a valid icon colour value from the environment.
+#
+procedure env_color(s)
+   local c
+   c := env_string(s) | fail
+   Window.color_value(c) | runerr("Colour value " || c || " of " || s || " is invalid")
+   return c
+end
+
+#
+# Return a valid icon font string value from the environment.
+#
+procedure env_font(s)
+   local f, w
+   f := env_string(s) | fail
+   use{ w := Window(), w.set_font(f) } | runerr("Font value " || f || " of " || s || " is invalid")
+   return f
+end
+
+#
+# Return a valid icon pattern string value from the environment.
+#
+procedure env_pattern(s)
+   local p, w
+   p := env_string(s) | fail
+   use{ w := Window(), w.set_masked_pattern(p) } | runerr("Pattern value " || p || " of " || s || " is invalid")
+   return p
+end
+
+#
+# Return a valid icon filter string value from the environment.
+#
+procedure env_filter(s)
+   local f, w
+   f := env_string(s) | fail
+   use{ w := Window(), w.filter(,,,, f) } | runerr("Filter value " || f || " of " || s || " is invalid")
+   return f
+end
+
 class Gui()
    public static const
       SCALE,
@@ -231,7 +315,7 @@ class Gui()
       local pix, mm, t
       pix := w.get_display_size() | fail
       mm := w.get_display_size_mm() | fail
-      t := (pix[1] + pix[2]) / ((mm[1] + mm[2]) / 25.4) / 96.0
+      t := (pix.width + pix.height) / ((mm.width + mm.height) / 25.4) / 96.0
       # Round to nearest 1%
       t := integer(t * 100.0 + 0.5) / 100.0
       return (1.0 < t)
@@ -246,23 +330,23 @@ class Gui()
    end
 
    private static init()
-      SCALE := env_real("OI_SCALE", 1.0) | calc_scale() | 1.0
+      SCALE := env_real("OI_GUI_SCALE", 1.0) | calc_scale() | 1.0
       UNIT := scale(1)
-      FINE_WIDTH := env_int("OI_GUI_FINE_WIDTH", 1) | UNIT
-      DASHED_WIDTH := env_int("OI_GUI_DASHED_WIDTH", 1) | FINE_WIDTH
-      CURSOR_WIDTH := env_int("OI_GUI_CURSOR_WIDTH", 2) | scale_even(2)
+      FINE_WIDTH := env_scale("OI_GUI_FINE_WIDTH") | UNIT
+      DASHED_WIDTH := env_scale("OI_GUI_DASHED_WIDTH") | FINE_WIDTH
+      CURSOR_WIDTH := env_scale_even("OI_GUI_CURSOR_WIDTH") | scale_even(2)
       # Has to be even; see BevelledBorder
-      BORDER_WIDTH := env_int("OI_GUI_BORDER_WIDTH", 2) | scale_even(2)
-      TEXT_INSET := env_int("OI_GUI_TEXT_INSET", 1) | scale(3)
-      X_INSET := env_int("OI_GUI_X_INSET", 1) | scale(6)
-      Y_INSET := env_int("OI_GUI_Y_INSET", 1) | scale(2)
+      BORDER_WIDTH := env_scale_even("OI_GUI_BORDER_WIDTH") | scale_even(2)
+      TEXT_INSET := env_scale("OI_GUI_TEXT_INSET") | scale(3)
+      X_INSET := env_scale("OI_GUI_X_INSET") | scale(6)
+      Y_INSET := env_scale("OI_GUI_Y_INSET") | scale(2)
       REPEAT_DELAY := env_int("OI_GUI_REPEAT_DELAY", 250) | 500
       REPEAT_RATE := env_int("OI_GUI_REPEAT_RATE", 50) | 100
       CURSOR_BLINK := env_int("OI_GUI_CURSOR_BLINK", 100) | 400
       TAB_WIDTH := env_int("OI_GUI_TAB_WIDTH", 1) | 8
       IDLE_SLEEP := 50
-      TOOLBAR_ICON_SIZE := env_int("OI_GUI_TOOLBAR_ICON_SIZE", 1) | scale(24)
-      MENU_ICON_SIZE := env_int("OI_GUI_MENU_ICON_SIZE", 1) | scale(16)
+      TOOLBAR_ICON_SIZE := env_scale("OI_GUI_TOOLBAR_ICON_SIZE") | scale(24)
+      MENU_ICON_SIZE := env_scale("OI_GUI_MENU_ICON_SIZE") | scale(16)
       style := Style()
       PRINTABLE_1 := '\x20-\x7e\x80-\U10ffff'
       PRINTABLE_N := '\t\n\x20-\x7e\x80-\U10ffff'

@@ -3004,9 +3004,9 @@ static void fold_subsc(struct lnode *n)
             }
             p = l1.u.str.s;
             while (i-- > 1) 
-                utf8_iter(&p);
+                p += UTF8_SEQ_LEN(*p);
             t = p;
-            utf8_iter(&p);
+            p += UTF8_SEQ_LEN(*p);
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
                                      new_constant(F_UcsLit, 
@@ -3124,10 +3124,10 @@ static void fold_sect(struct lnode *n, int op)
             l = j - i;
 
             while (i-- > 1) 
-                utf8_iter(&start);
+                start += UTF8_SEQ_LEN(*start);
             end = start;
             while (l-- > 0)
-                utf8_iter(&end);
+                end += UTF8_SEQ_LEN(*end);
 
             replace_node(n, (struct lnode*)
                          lnode_const(&n->loc,
@@ -3367,7 +3367,7 @@ static int ucs_length(char *utf8, int utf8_len)
     int len = 0;
     char *e = utf8 + utf8_len;
     while (utf8 < e) {
-        utf8_iter(&utf8);
+        utf8 += UTF8_SEQ_LEN(*utf8);
         ++len;
     }
     return len;

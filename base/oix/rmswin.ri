@@ -60,6 +60,7 @@ static void apply_windowlabel(wsp ws);
 static void mk_Draw(wbp w, gb_Draw *d);
 static int get_outer_width(wsp ws);
 static int get_outer_height(wsp ws);
+static void synch_state(wsp ws, int new_state);
 
 static void dbg(char *fmt, ...);
 
@@ -269,10 +270,16 @@ static void handle_getminmaxinfo(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 
 static void handle_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
+    int newx, newy;
     /* x,y represents the position of the drawable area. Casting to
        INT16 ensures -ve values are handle correctly */
-    ws->x = (INT16)LOWORD(lp);
-    ws->y = (INT16)HIWORD(lp); 
+    newx = (INT16)LOWORD(lp);
+    newy = (INT16)HIWORD(lp); 
+    if ((newx != ws->x) || (newy != ws->y)) {
+        ws->x = newx;
+        ws->y = newy;
+        qeventcode(ws, WINDOWMOVED);
+    }
 }
 
 static void handle_size(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
@@ -280,15 +287,15 @@ static void handle_size(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     int neww, newh;
     switch (wp) {
         case SIZE_MINIMIZED: {
-            ws->state = IconicCanvas;
+            synch_state(ws, IconicCanvas);
             return;
         }
         case SIZE_MAXIMIZED: {
-            ws->state = MaximizedCanvas;
+            synch_state(ws, MaximizedCanvas);
             break;
         }
         case SIZE_RESTORED: {
-            ws->state = NormalCanvas;
+            synch_state(ws, NormalCanvas);
             break;
         }
     }
@@ -296,24 +303,28 @@ static void handle_size(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     neww = LOWORD(lp);
     newh = HIWORD(lp);
 
-    /*
-     * if it was not a resize, drop it
-     */
-    if ((ws->width == neww) && (ws->height == newh))
-        return;
-
-    ws->width = neww;
-    ws->height = newh;
-    resizepixmap(findwbp(ws));
-    qeventcode(ws, WINDOWRESIZED);
+    if ((ws->width != neww) || (ws->height != newh)) {
+        ws->width = neww;
+        ws->height = newh;
+        resizepixmap(findwbp(ws));
+        qeventcode(ws, WINDOWRESIZED);
+    }
 }
 
 static void handle_showwindow(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     if (wp == 0)
-        ws->state = WithdrawnCanvas;
+        synch_state(ws, WithdrawnCanvas);
     else if (ws->state != PopupCanvas)
-        ws->state = NormalCanvas;
+        synch_state(ws, NormalCanvas);
+}
+
+static void synch_state(wsp ws, int new_state)
+{
+    if (ws->state != new_state) {
+        ws->state = new_state;
+        qeventcode(ws, WINDOWSTATE);
+    }
 }
 
 static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
@@ -754,6 +765,27 @@ static void open_screen_win(wsp ws)
             apply_windowlabel(ws);
         }
     }
+
+    switch (ws->state) {
+        case WithdrawnCanvas: {
+            ShowWindow(ws->win, SW_HIDE);
+            break;
+        }
+        case IconicCanvas: {
+            ShowWindow(ws->win, SW_MINIMIZE);
+            break;
+        }
+        case MaximizedCanvas: {
+            ShowWindow(ws->win, SW_MAXIMIZE);
+            break;
+        }
+        case NormalCanvas:
+        case PopupCanvas: {
+            ShowWindow(ws->win, SW_SHOWNORMAL);
+            break;
+        }
+    }
+
     GLink4(ws, vwstates, vnext, vprevious);
 }
 
@@ -779,25 +811,6 @@ int setcanvas(wbp w, char *s)
             /* We should now get a WM_PAINT message which will copy
              * the pix to the new window. */
             open_screen_win(ws);
-            switch (e->i) {
-                case WithdrawnCanvas: {
-                    ShowWindow(ws->win, SW_HIDE);
-                    break;
-                }
-                case IconicCanvas: {
-                    ShowWindow(ws->win, SW_MINIMIZE);
-                    break;
-                }
-                case MaximizedCanvas: {
-                    ShowWindow(ws->win, SW_MAXIMIZE);
-                    break;
-                }
-                case NormalCanvas:
-                case PopupCanvas: {
-                    ShowWindow(ws->win, SW_SHOWNORMAL);
-                    break;
-                }
-            }
         }
         return Succeeded;
     }
@@ -1004,18 +1017,6 @@ int setdrawop(wbp w, char *val)
     if (!e)
         return Failed;
     wc->drawop = e;
-    return Succeeded;
-}
-
-int getpos(wbp w)
-{
-    wsp ws = w->window;
-    POINT p;
-    CheckUnhidden(ws);
-    p.x = p.y = 0;
-    ClientToScreen(ws->win, &p);
-    ws->x = p.x;
-    ws->y  = p.y;
     return Succeeded;
 }
 

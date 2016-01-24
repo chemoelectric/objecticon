@@ -52,6 +52,7 @@ static struct wcursor *lookup_wcursor(char *name);
 static struct wcursor *ensure_wcursor(char *name);
 static void synch_pos(wsp ws);
 static void synch_state(wsp ws);
+static void synch_state1(wsp ws);
 static void note_time(char *s);
 static int readimageimpl(char *cmd, int fd, struct imgdata *imd);
 static Image *imgdata_to_Image(struct imgdata *imd);
@@ -419,11 +420,16 @@ static void cons_loop(wsp ws)
  */
 static void synch_pos(wsp ws)
 {
-    int sx, sy;
+    int sx, sy, newx, newy;
     if (read_screeninfo(ws, 0,0, &sx, &sy, 0,0) != Succeeded)
         return;
-    ws->x = ws->win->r.min.x - sx;
-    ws->y = ws->win->r.min.y - sy;
+    newx = ws->win->r.min.x - sx;
+    newy = ws->win->r.min.y - sy;
+    if ((newx != ws->x) || (newy != ws->y)) {
+        ws->x = newx;
+        ws->y = newy;
+        qeventcode(ws, WINDOWMOVED);
+    }
 }
 
 static void resize_pix_win(wbp w)
@@ -2033,13 +2039,6 @@ char *getdisplay(wbp w)
     return w->window->wsys;
 }
 
-int getpos(wbp w)
-{
-    wsp ws = w->window;
-    CheckUnhidden(ws);
-    return Succeeded;
-}
-
 char *getlinestyle(wbp w)
 {
     return w->context->linestyle->s;
@@ -2120,8 +2119,7 @@ char *getcanvas(wbp w)
 
 static void synch_state(wsp ws)
 {
-    char buf[256];
-    int n;
+    int t;
 
     if (!ws->win) {
         ws->state = HiddenCanvas;
@@ -2131,6 +2129,16 @@ static void synch_state(wsp ws)
     if (ws->state == PopupCanvas)
         return;
 
+    t = ws->state;
+    synch_state1(ws);
+    if (t != ws->state)
+        qeventcode(ws, WINDOWSTATE);
+}
+
+static void synch_state1(wsp ws)
+{
+    char buf[256];
+    int n;
     if ((n = pread(ws->wininfo_fd, buf, sizeof(buf) - 1, 0)) <= 0)
         return;
     buf[n] = 0;

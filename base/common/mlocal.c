@@ -6,7 +6,7 @@
 
 static char *tryfile(char *dir, char *name, char *extn);
 static char *tryexe(char *dir, char *name);
-static word calc_ucs_index_step1(word utf8_len, word len);
+static word calc_ucs_index_step(word utf8_len, word len);
 
 static char path1[MaxPath], path2[MaxPath], path3[MaxPath];
 
@@ -867,6 +867,11 @@ int utf8_rev_iter(char **p)
     }
 }
 
+void utf8_rev_iter0(char **p)
+{
+    while (ISCONT(*--(*p)));
+}
+
 int utf8_seq(int c, char *s)
 {
     if (c < 0x80) {
@@ -931,7 +936,7 @@ utf8_seq_len_arr[] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
         2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,
         5,5,5,5,6,6,-1,-1};
 
-static word calc_ucs_index_step1(word utf8_len, word len)
+static word calc_ucs_index_step(word utf8_len, word len)
 {
     static short cache[256];
     short s;
@@ -957,13 +962,33 @@ static word calc_ucs_index_step1(word utf8_len, word len)
     return s;
 }
 
-void calc_ucs_index_step(word utf8_len, word len, word *index_step, word *n_offs)
+void calc_ucs_index_settings(word utf8_len, word len, word *index_step, word *n_offs, word *offset_bits, word *n_off_words)
 {
-    *index_step = calc_ucs_index_step1(utf8_len, len);
+    int opw;
+    *index_step = calc_ucs_index_step(utf8_len, len);
     if (*index_step == 0)
         *n_offs = 0;
     else
         *n_offs = (len - 1) / *index_step;
+
+    if (utf8_len <= 256)
+        *offset_bits =  8;
+    else if (utf8_len <= 65536)
+        *offset_bits = 16;
+#if WordBits == 32
+    else
+        *offset_bits = 32;
+#else
+    else if (utf8_len <= 0x100000000)
+        *offset_bits = 32;
+    else
+        *offset_bits = 64;
+#endif
+    opw = WordBits / *offset_bits;
+    if (*n_offs % opw == 0)
+        *n_off_words = *n_offs / opw;
+    else
+        *n_off_words = 1 + *n_offs / opw;
 }
 
 #if MSWIN32 || PLAN9

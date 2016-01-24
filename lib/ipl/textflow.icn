@@ -3,7 +3,7 @@ package ipl.browser
 import 
    gui,
    util,
-   graphics,
+   graphics(Key),
    ipl.strings
 
 abstract class HasAscent()
@@ -254,11 +254,19 @@ class TextFlow(Component, HasLastHighlight)
       PREFERRED_WIDTH,
       MAX_WIDTH
 
+   public static
+      SEARCHED_CURR_COLOR,
+      SEARCHED_OTHER_COLOR,
+      MARKED_COLOR
+
    private static init()
       WHITESPACE := ' \t\r\n\v\f'
       WHITESPACE_NB := ' \t\r\n\v\f\xA0'
       PREFERRED_WIDTH := 1
       MAX_WIDTH := 2
+      SEARCHED_CURR_COLOR := env_color("OI_TEXTFLOW_SEARCHED_CURR_COLOR") | "red 33%"
+      SEARCHED_OTHER_COLOR := env_color("OI_TEXTFLOW_SEARCHED_OTHER_COLOR") | "purple 33%"
+      MARKED_COLOR := env_color("OI_TEXTFLOW_MARKED_COLOR") | "yellow"
    end
 
    private compute(width)
@@ -483,12 +491,12 @@ class TextFlow(Component, HasLastHighlight)
                   W.set_font(font ~===:= o.attr.font)
                   W.set_fg(fg ~===:= want_fg)
                   if \o.attr.mark then
-                     text_bg(W, "yellow", x1 + o.x, y1 + o.y, o.w, o.h)
+                     text_bg(W, MARKED_COLOR, x1 + o.x, y1 + o.y, o.w, o.h)
                   W.draw_string(x1 + o.x, y1 + o.y + W.get_line_ascent(), o.s)
 
                   every ts := browser.is_searched(o) do {
                      text_bg(W, 
-                             if member(browser.highlighted_searched.memb, ts) then "red 33%" else "purple 33%",
+                             if member(browser.highlighted_searched.memb, ts) then SEARCHED_CURR_COLOR else SEARCHED_OTHER_COLOR,
                              x1 + o.x + ts.w_off,
                              y1 + o.y, 
                              ts.w_sub,

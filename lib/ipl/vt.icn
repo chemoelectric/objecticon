@@ -2,7 +2,7 @@ $encoding UTF-8
 
 package ipl.vt
 
-import gui, io, lang, util, graphics, net, ipl.lists, ipl.pdco, ipl.strings, ipl.graphics
+import gui, io, lang, util, graphics(Window,Key,Selection,Mouse), net, ipl.lists, ipl.pdco, ipl.strings, ipl.graphics
 
 # Current attributes.  Treated as immutable, to alter a copy() is taken first.
 package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic, url, font)
@@ -1870,7 +1870,7 @@ class Vt(LineBasedScrollArea, MenuMode)
             every seg := !row.l do {
                a := seg.attr
                ss := seg.s
-               want_fg := if \a.url === highlight then "red" else (\a.fg | default_fg)
+               want_fg := if \a.url === highlight then Style.FOCUS_COLOR else (\a.fg | default_fg)
                want_bg := \a.bg | default_bg
                if \a.inverse then
                   want_fg :=: want_bg
@@ -2564,7 +2564,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       win := parent_dialog.win
       dim := win.get_display_size()
       # Screen rectangle, in adjusted co-ordinates
-      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim[1], dim[2])
+      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim.width, dim.height)
 
       # Check popup position is in the visible part of the screen.
       parent_dialog.intersect(rs).inside(px, py) | fail

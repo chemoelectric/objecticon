@@ -16,5 +16,5 @@
 (setq compilation-search-path
       (append compilation-search-path
               (parse-colon-path (getenv "OI_PATH"))
-              (parse-colon-path (getenv "OLPATH"))))
+              (parse-colon-path (getenv "OI_INCL"))))
 (provide 'objecticon-setup)

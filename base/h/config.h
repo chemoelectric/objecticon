@@ -113,11 +113,6 @@
    #define RealBits (ByteBits * SIZEOF_DOUBLE)
 #endif					/* RealBits */
 
-#ifndef SourceSuffix
-   #define SourceSuffix ".icn"
-#endif					/* SourceSuffix */
-
-
 /*
  * Default sizing and such.
  */
@@ -129,6 +124,9 @@
  */
 #define Bell '\a'
 
+#ifndef PPInit
+   #define PPInit ""
+#endif                                 /* PPInit */
 
 #ifndef QSortFncCast
    #define QSortFncCast int (*)(const void *,const void *)
@@ -178,18 +176,6 @@
    #define RttSuffix ".r"
 #endif					/* RttSuffix */
 
-#ifndef PPInit
-   #define PPInit ""
-#endif					/* PPInit */
-
-#ifndef PPDirectives
-   #define PPDirectives {"passthru", PpKeep},
-#endif					/* PPDirectives */
-
-#ifndef ExecSuffix
-   #define ExecSuffix ""
-#endif					/* ExecSuffix */
-
 #ifndef CSuffix
    #define CSuffix ".c"
 #endif					/* CSuffix */
@@ -198,9 +184,9 @@
    #define TmpSuffix ".tmp"
 #endif					/* TmpSuffix */
 
-#ifndef ObjSuffix
-   #define ObjSuffix ".o"
-#endif					/* ObjSuffix */
+#ifndef SourceSuffix
+   #define SourceSuffix ".icn"
+#endif					/* SourceSuffix */
 
 #ifndef USuffix
    #define USuffix ".u"
@@ -211,13 +197,8 @@
 #endif				/* UXSuffix */
 
 #ifndef UcsIndexStepFactor
-   #if WordBits == 64
-      #define UcsIndexStepFactor  8.0
-   #endif					/* WordBits == 64 */
-   #if WordBits == 32
-      #define UcsIndexStepFactor  4.5
-   #endif					/* WordBits == 32 */
-#endif /* UcsIndexStepFactor */
+   #define UcsIndexStepFactor  4.5
+#endif
 
 #define IcodeDelim "[executable Icon binary follows]"
 

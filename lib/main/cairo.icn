@@ -109,6 +109,10 @@ abstract class Pattern(NoCopy)
       Class.load_library(\Context.LOADED)
    end
 
+   public identity_matrix()
+      return set_matrix(Matrix.I)
+   end
+
    private native set_matrix_impl(xx, yx, xy, yy, x0, y0)
    public set_matrix(m)
       return set_matrix_impl(m.xx, m.yx, m.xy, m.yy, m.x0, m.y0)
@@ -159,10 +163,10 @@ abstract class Gradient(Pattern)
       local c
       c := Window.parse_color(col) | fail
       return add_color_stop_rgba(offset, 
-                                 c[1] / 65535.0,
-                                 c[2] / 65535.0,
-                                 c[3] / 65535.0,
-                                 c[4] / 65535.0)
+                                 c.red / 65535.0,
+                                 c.green / 65535.0,
+                                 c.blue / 65535.0,
+                                 c.alpha / 65535.0)
    end
 end
 
@@ -219,10 +223,10 @@ final class SolidPattern(Pattern)
       local c
       \Context.LOADED | return error("Cairo not supported")
       c := Window.parse_color(col) | fail
-      ptr := new_impl(c[1] / 65535.0,
-                      c[2] / 65535.0,
-                      c[3] / 65535.0,
-                      c[4] / 65535.0)
+      ptr := new_impl(c.red / 65535.0,
+                      c.green / 65535.0,
+                      c.blue / 65535.0,
+                      c.alpha / 65535.0)
       return
    end
 end
@@ -337,8 +341,16 @@ final class RecordingSurface(Surface)
       Class.load_library(\Context.LOADED)
    end
 
-   public native get_extents()
-   public native ink_extents()
+   public get_extents()
+      return Rectangle!get_extents_impl()
+   end
+
+   public ink_extents()
+      return Rectangle!ink_extents_impl()
+   end
+
+   private native get_extents_impl()
+   private native ink_extents_impl()
 
    private static native new_impl()
 
@@ -375,6 +387,7 @@ final class Context(NoCopy)
    public native set_dash(l[])
    public native set_font(v)
    public native arc(xc, yc, r, a1, a2)
+   public native arc_negative(xc, yc, r, a1, a2)
    public native rectangle(x, y, width, height)
    public native fill()
    public native fill_preserve()
@@ -384,6 +397,7 @@ final class Context(NoCopy)
    public native text_path(s)
    public native close_path()
    public native new_path()
+   public native new_sub_path()
    public native close()
    public native set_operator(op)
 
@@ -428,23 +442,52 @@ final class Context(NoCopy)
       return append_path_impl(from_path_elements(l))
    end
 
-   public native get_current_point()
+   public get_current_point()
+      return Point!get_current_point_impl()
+   end
+
+   private native get_current_point_impl()
 
    public native save()
    public native restore()
 
-   public native get_stroke_extents()
-   public native get_fill_extents()
-   public native get_clip_extents()
-   public native get_path_extents()
-   public native user_to_device(x, y)
-   public native device_to_user(x, y)
+   public get_stroke_extents()
+      return Rectangle!get_stroke_extents_impl()
+   end
+
+   public get_fill_extents()
+      return Rectangle!get_fill_extents_impl()
+   end
+
+   public get_clip_extents()
+      return Rectangle!get_clip_extents_impl()
+   end
+
+   public get_path_extents()
+      return Rectangle!get_path_extents_impl()
+   end
+
+   private native get_stroke_extents_impl()
+   private native get_clip_extents_impl()
+   private native get_fill_extents_impl()
+   private native get_path_extents_impl()
+   private native user_to_device_impl(x, y)
+   private native device_to_user_impl(x, y)
+
+   public user_to_device(x, y)
+      return Point!user_to_device_impl(x, y)
+   end
+
+   public device_to_user(x, y)
+      return Point!device_to_user_impl(x, y)
+   end
 
    public native translate(tx, ty)
    public native scale(sx, sy)
    public native rotate(r)
 
    public native clip()
+   public native clip_preserve()
    public native reset_clip()
 
    private native set_source_rgba(r, g, b, a)
@@ -480,10 +523,10 @@ final class Context(NoCopy)
    public set_fg(col)
       local c
       c := Window.parse_color(col) | fail
-      return set_source_rgba(c[1] / 65535.0,
-                             c[2] / 65535.0,
-                             c[3] / 65535.0,
-                             c[4] / 65535.0)
+      return set_source_rgba(c.red / 65535.0,
+                             c.green / 65535.0,
+                             c.blue / 65535.0,
+                             c.alpha / 65535.0)
    end
 
    public identity_matrix()

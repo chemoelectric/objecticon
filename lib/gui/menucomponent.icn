@@ -459,7 +459,7 @@ abstract class MenuComponent(Rect,Connectable)
 
       dim := win.get_display_size()
       # Screen rectangle, in adjusted co-ordinates
-      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim[1], dim[2])
+      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim.width, dim.height)
       self.x := x
       self.y := y
       self.resize()

@@ -9,7 +9,7 @@
 package gui
 
 import 
-   graphics,
+   graphics(Window,Mouse,Key,Selection),
    lang,
    ipl.sets,
    ipl.lists,
@@ -624,10 +624,11 @@ class Dialog(Component)
       point_chain := []
       point_chain_source := e
 
-      # A mouse exit always has an empty point chain, since the pointer is outside
-      # the window (or over an obscured part).  Note that we shouldn't get exit events
-      # if we have popups, since we are in grab mode.
-      if e.code === Mouse.EXIT then
+      # A mouse exit always has an empty point chain, since the
+      # pointer is outside the window (or over an obscured part).
+      # Note that we shouldn't get exit events if we have popups,
+      # since we are in grab mode.
+      if (e.code === Mouse.EXIT) | is_hidden() then
          fail
 
       every p := !\popups do {
@@ -638,7 +639,11 @@ class Dialog(Component)
          }
       }
 
-      if is_unhidden() & inside(e.x, e.y) then {
+      # If we have a popup in the point chain, then include the top
+      # dialog in the chain (so it is notionally always under the
+      # popup).  This ensures that the dialog's tooltips and pointer
+      # work consistently.
+      if inside(e.x, e.y) | (*point_chain > 0) then {
          if *point_chain = 0 then
             build_point_chain(point_chain, e.x, e.y)
          put(point_chain, self)
@@ -735,6 +740,8 @@ class Dialog(Component)
          Window.INVOKE_LATER: process_invoke_later(l)
          Window.CLOSE_BUTTON: process_close_button(l)
          Window.RESIZE: process_resize(l)
+         Window.MOVE: process_move(l)
+         Window.STATE: process_state(l)
          default: {
             (popup_manager === self) | syserr("shouldn't get a mouse/key event in a popup")
 
@@ -969,7 +976,7 @@ class Dialog(Component)
 
       dim := win.get_display_size()
       # Screen rectangle, in adjusted co-ordinates
-      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim[1], dim[2])
+      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim.width, dim.height)
 
       #
       # Ensure it's in area; adjust and resize again if not.
@@ -1140,7 +1147,6 @@ class Dialog(Component)
    #
    public synch_pointer(e)
       local c, ptr
-
       if popup_manager ~=== self then
          popup_manager.synch_pointer(e)
       else {
@@ -1266,6 +1272,14 @@ class Dialog(Component)
       self.buffer_win.set_size(self.win.get_width(), self.win.get_height())
       self.resize()
       self.invalidate()
+      fire(l[1])
+   end
+
+   private process_move(l)
+      fire(l[1])
+   end
+
+   private process_state(l)
       fire(l[1])
    end
 
@@ -1440,9 +1454,9 @@ class Dialog(Component)
       TOOLTIP_START_DELAY := env_int("OI_DIALOG_TOOLTIP_START_DELAY", 1) | 1000
       TOOLTIP_END_DELAY := env_int("OI_DIALOG_TOOLTIP_END_DELAY", 1) | 4000
       TOOLTIP_CONTINUE_DELAY := env_int("OI_DIALOG_TOOLTIP_CONTINUE_DELAY", 1) | 1500
-      TOOLTIP_X_OFFSET := env_int("OI_DIALOG_TOOLTIP_X_OFFSET", 1) | scale(5)
-      TOOLTIP_Y_OFFSET := env_int("OI_DIALOG_TOOLTIP_Y_OFFSET", 1) | scale(15)
-      DRAG_GESTURE_OFFSET := env_int("OI_DIALOG_DRAG_GESTURE_OFFSET", 1) | scale(4)
+      TOOLTIP_X_OFFSET := env_scale("OI_DIALOG_TOOLTIP_X_OFFSET") | scale(5)
+      TOOLTIP_Y_OFFSET := env_scale("OI_DIALOG_TOOLTIP_Y_OFFSET") | scale(15)
+      DRAG_GESTURE_OFFSET := env_scale("OI_DIALOG_DRAG_GESTURE_OFFSET") | scale(4)
       DEFAULT_POINTER := "left ptr"
       FOCUS_UP := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
       FOCUS_DOWN := set("\t", Key.RIGHT, Key.DOWN)

@@ -68,7 +68,9 @@ void wgetevent(wbp w, dptr res)
                 }
                 return;
             }
+            case WINDOWSTATE:
             case WINDOWRESIZED:
+            case WINDOWMOVED:
             case WINDOWCLOSED: {
                 /* No items follow */
                 return;
