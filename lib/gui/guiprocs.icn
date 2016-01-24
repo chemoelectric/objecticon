@@ -311,7 +311,7 @@ class Gui()
       local pix, mm, t
       pix := w.get_display_size() | fail
       mm := w.get_display_size_mm() | fail
-      t := (pix[1] + pix[2]) / ((mm[1] + mm[2]) / 25.4) / 96.0
+      t := (pix.width + pix.height) / ((mm.width + mm.height) / 25.4) / 96.0
       # Round to nearest 1%
       t := integer(t * 100.0 + 0.5) / 100.0
       return (1.0 < t)

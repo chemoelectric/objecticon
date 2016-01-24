@@ -66,7 +66,7 @@ abstract class DropDown(Component, MenuMode)
       win := parent_dialog.win
       dim := win.get_display_size()
       # Screen rectangle, in adjusted co-ordinates
-      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim[1], dim[2])
+      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim.width, dim.height)
 
       # Space available for popup limited by screen size
       spc_above := self.y - rs.y
@@ -342,7 +342,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       win := parent_dialog.win
       dim := win.get_display_size()
       # Screen rectangle, in adjusted co-ordinates
-      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim[1], dim[2])
+      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim.width, dim.height)
 
       # Space available for popup limited by screen size
       spc_above := self.y - rs.y

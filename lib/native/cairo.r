@@ -962,7 +962,7 @@ function cairo_Context_restore(self)
     }
 end
 
-function cairo_Context_get_stroke_extents(self)
+function cairo_Context_get_stroke_extents_impl(self)
     body {
        tended struct descrip result, tmp;
        double x1, y1, x2, y2;
@@ -973,15 +973,15 @@ function cairo_Context_get_stroke_extents(self)
        list_put(&result, &tmp);
        MakeReal(y1, &tmp);
        list_put(&result, &tmp);
-       MakeReal(x2, &tmp);
+       MakeReal(x2 - x1, &tmp);
        list_put(&result, &tmp);
-       MakeReal(y2, &tmp);
+       MakeReal(y2 - y1, &tmp);
        list_put(&result, &tmp);
        return result;
     }
 end
 
-function cairo_Context_get_fill_extents(self)
+function cairo_Context_get_fill_extents_impl(self)
     body {
        tended struct descrip result, tmp;
        double x1, y1, x2, y2;
@@ -992,15 +992,15 @@ function cairo_Context_get_fill_extents(self)
        list_put(&result, &tmp);
        MakeReal(y1, &tmp);
        list_put(&result, &tmp);
-       MakeReal(x2, &tmp);
+       MakeReal(x2 - x1, &tmp);
        list_put(&result, &tmp);
-       MakeReal(y2, &tmp);
+       MakeReal(y2 - y1, &tmp);
        list_put(&result, &tmp);
        return result;
     }
 end
 
-function cairo_Context_get_clip_extents(self)
+function cairo_Context_get_clip_extents_impl(self)
     body {
        tended struct descrip result, tmp;
        double x1, y1, x2, y2;
@@ -1011,15 +1011,15 @@ function cairo_Context_get_clip_extents(self)
        list_put(&result, &tmp);
        MakeReal(y1, &tmp);
        list_put(&result, &tmp);
-       MakeReal(x2, &tmp);
+       MakeReal(x2 - x1, &tmp);
        list_put(&result, &tmp);
-       MakeReal(y2, &tmp);
+       MakeReal(y2 - y1, &tmp);
        list_put(&result, &tmp);
        return result;
     }
 end
 
-function cairo_Context_get_path_extents(self)
+function cairo_Context_get_path_extents_impl(self)
     body {
        tended struct descrip result, tmp;
        double x1, y1, x2, y2;
@@ -1030,15 +1030,15 @@ function cairo_Context_get_path_extents(self)
        list_put(&result, &tmp);
        MakeReal(y1, &tmp);
        list_put(&result, &tmp);
-       MakeReal(x2, &tmp);
+       MakeReal(x2 - x1, &tmp);
        list_put(&result, &tmp);
-       MakeReal(y2, &tmp);
+       MakeReal(y2 - y1, &tmp);
        list_put(&result, &tmp);
        return result;
     }
 end
 
-function cairo_Context_user_to_device(self, x, y)
+function cairo_Context_user_to_device_impl(self, x, y)
     if !cnv:C_double(x) then
        runerr(102, x)
     if !cnv:C_double(y) then
@@ -1056,7 +1056,7 @@ function cairo_Context_user_to_device(self, x, y)
     }
 end
 
-function cairo_Context_device_to_user(self, x, y)
+function cairo_Context_device_to_user_impl(self, x, y)
     if !cnv:C_double(x) then
        runerr(102, x)
     if !cnv:C_double(y) then
@@ -1320,7 +1320,7 @@ function cairo_Context_get_source_matrix_impl(self)
     }
 end
 
-function cairo_Context_get_current_point(self)
+function cairo_Context_get_current_point_impl(self)
     body {
        tended struct descrip result, tmp;
        double x, y;
@@ -1600,7 +1600,7 @@ function cairo_RecordingSurface_new_impl(x, y, width, height)
     }
 end
 
-function cairo_RecordingSurface_get_extents(self)
+function cairo_RecordingSurface_get_extents_impl(self)
     body {
        tended struct descrip result, tmp;
        cairo_rectangle_t r;
@@ -1619,7 +1619,7 @@ function cairo_RecordingSurface_get_extents(self)
     }
 end
 
-function cairo_RecordingSurface_ink_extents(self)
+function cairo_RecordingSurface_ink_extents_impl(self)
     body {
        tended struct descrip result, tmp;
        double x, y, width, height;

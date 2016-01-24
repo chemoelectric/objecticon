@@ -9,7 +9,7 @@
 package gui
 
 import 
-   graphics,
+   graphics(Window,Mouse,Key,Selection),
    lang,
    ipl.sets,
    ipl.lists,
@@ -974,7 +974,7 @@ class Dialog(Component)
 
       dim := win.get_display_size()
       # Screen rectangle, in adjusted co-ordinates
-      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim[1], dim[2])
+      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim.width, dim.height)
 
       #
       # Ensure it's in area; adjust and resize again if not.

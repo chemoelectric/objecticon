@@ -378,8 +378,8 @@ class CairoDisplay(Component)
       o.text_path ( s)
       ext := o.get_stroke_extents()
 
-      x := 128 - ((ext[3]-ext[1])/2)
-      y := 128 - ((ext[4]-ext[2])/2)
+      x := 128 - ext.width/2
+      y := 128 - ext.height/2
 
       o.new_path()
       o.move_to(x,y)
@@ -409,12 +409,12 @@ class CairoDisplay(Component)
 
       o.set_fg ( "1, 0.2, 0.2, 0.6")
       o.set_line_width ( 6.0)
-      o.arc ( ext[1], ext[4], 10.0, 0, 2*Math.PI)
+      o.arc ( ext.x, ext.y+ext.height, 10.0, 0, 2*Math.PI)
       o.fill ()
-      o.move_to ( ext[1], ext[4])
-      o.line_to ( ext[1], ext[2])
-      o.line_to ( ext[3], ext[2])
-      o.line_to ( ext[3], ext[4])
+      o.move_to ( ext.x, ext.y+ext.height)
+      o.line_to ( ext.x, ext.y)
+      o.line_to ( ext.x+ext.width, ext.y)
+      o.line_to ( ext.x+ext.width, ext.y+ext.height)
       o.stroke ()
       
    end

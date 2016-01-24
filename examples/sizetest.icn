@@ -38,20 +38,20 @@ class Untitled(Dialog)
       local t, s
       repeat {
          t := win.get_geometry()
-         label_1.set_label("Geom:" || t[1] || "," || t[2] || " " || t[3] || "x" || t[4])
+         label_1.set_label("Geom:" || t.x || "," || t.y || " " || t.width || "x" || t.height)
          t := win.get_min_size()
-         label_4.set_label("Min size:" || t[1] || "x" || t[2])
+         label_4.set_label("Min size:" || t.height || "x" || t.height)
          t := win.get_max_size()
-         label_5.set_label("Max size:" || t[1] || "x" || t[2])
+         label_5.set_label("Max size:" || t.width || "x" || t.height)
          label_3.set_label("Dialog size:" || w || "x" || h)
          t := win.query_root_pointer()
-         label_6.set_label("Root mouse:"||t[1]||","||t[2])
+         label_6.set_label("Root mouse:"||t.x||","||t.y)
          t := win.query_pointer()
-         label_7.set_label("Win mouse:"||t[1]||","||t[2])
+         label_7.set_label("Win mouse:"||t.x||","||t.y)
          t := win.get_display_size()
-         s := t[1]||"x"||t[2]
+         s := t.width||"x"||t.height
          if t := win.get_display_size_mm() then
-            s ||:= " ("|| t[1]||"x"||t[2]||" mm)"
+            s ||:= " ("|| t.width||"x"||t.height||" mm)"
          label_8.set_label("Display size:"||s)
          ticker.sleep(250)
       }
