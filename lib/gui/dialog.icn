@@ -317,8 +317,7 @@ class Dialog(Component)
    end
 
    public resize_win(w, h)
-      self.win.set_size(w, h)
-      self.win.pending(Window.RESIZE)      
+      win.set_size(w, h).pending(Window.RESIZE)      
       return self
    end
 
