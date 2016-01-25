@@ -32,6 +32,7 @@ static Image *get_draw_img(wcp wc);
 static void close_pix_win(wsp ws);
 static void resize_pix_win(wbp w);
 static void handle_reshape(wsp ws);
+static void handle_reshape1(wsp ws);
 static void handle_limited(wsp ws);
 static void init_window_system(void);
 static void clip(wbp w);
@@ -448,10 +449,15 @@ static void resize_pix_win(wbp w)
 
 static void handle_limited(wsp ws)
 {
+    synch_pos(ws);
     if (Dx(ws->win->r) != ws->width || Dy(ws->win->r) != ws->height) {
         ws->width = Dx(ws->win->r);
         ws->height = Dy(ws->win->r);
+        resize_pix_win(findwbp(ws));
+        no_clip(ws, 1);
+        copy_to(ws->win, ws->pix);
         qeventcode(ws, WINDOWRESIZED);
+        flushimage(display, 1);
     }
 }
 
@@ -461,30 +467,28 @@ static void handle_reshape(wsp ws)
     sprintf(buff, "%s/winname", ws->mount_dir);
     if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0)
         syserr("Failed to reconnect to window on a resize");
+    handle_reshape1(ws);
+}
+
+static void handle_reshape1(wsp ws)
+{
     synch_state(ws);
-    if (Dx(ws->win->r) == ws->width && Dy(ws->win->r) == ws->height) {
+    synch_pos(ws);
+    if (Dx(ws->win->r) != ws->width || Dy(ws->win->r) != ws->height) {
         /*
-         * If the new size matches the existing canvas size, just copy the
-         * pix win and adjust the pos.  Don't fire an event.
-         */
-        synch_pos(ws);
-        no_clip(ws, 1);
-        copy_to(ws->win, ws->pix);
-    } else {
-        wbp w;
-        /*
-         * Here we accept the resize, resize the pix win, copy it to the visible
-         * win and fire an event.
+         * The new window has a different size, so resize the pix win,
+         * and fire an event.
          */
         ws->width = Dx(ws->win->r);
         ws->height = Dy(ws->win->r);
-        synch_pos(ws);
-        w = findwbp(ws);
-        resize_pix_win(w);
-        /* resize_pix_win has cleared any clip */
-        copy_to(ws->win, ws->pix);
+        resize_pix_win(findwbp(ws));
         qeventcode(ws, WINDOWRESIZED);
     }
+    /*
+     * Copy the pix win to the new window.
+     */
+    no_clip(ws, 1);
+    copy_to(ws->win, ws->pix);
     flushimage(display, 1);
 }
 
@@ -1662,14 +1666,6 @@ static int open_screen_win(wsp ws)
     }
     GLink4(ws, vwstates, vnext, vprevious);
 
-    /* Ensure size matches the opened window; if not resize pix win and queue event */
-    if (Dx(ws->win->r) != ws->width || Dy(ws->win->r) != ws->height) {
-        ws->width =  Dx(ws->win->r);
-        ws->height = Dy(ws->win->r);
-        resize_pix_win(findwbp(ws));
-        qeventcode(ws, WINDOWRESIZED);
-    }
-
     if ((fd = open_winfile(ws, "winid", OREAD)) < 0) {
         whyf("Can't open winid file %r");
         close_screen_win(ws);
@@ -1714,9 +1710,6 @@ static int open_screen_win(wsp ws)
         close_screen_win(ws);
         return Failed;
     }
-
-    synch_pos(ws);
-    synch_state(ws);
 
     if ((ws->cons_fd = open_winfile(ws, "cons", OREAD)) < 0) {
         whyf("Can't open cons file: %r");
@@ -1764,11 +1757,7 @@ static int open_screen_win(wsp ws)
     }
     ws->cons_pid = pid;
 
-    /* Copy the pixmap to the window to initialize its contents */
-    no_clip(ws, 1);
-    copy_to(ws->win, ws->pix);
-    flushimage(display, 1);
-
+    handle_reshape1(ws);
     return Succeeded;
 }
 
