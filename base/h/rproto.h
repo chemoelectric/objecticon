@@ -213,6 +213,9 @@ void trapezoids_extent(struct trapezoid *traps, int ntraps, int *x, int *y, int 
 void triangles_extent(struct triangle *tris, int ntris, int *x, int *y, int *width, int *height);
 void range_extent(double x1, double y1, double x2, double y2, int *x, int *y, int *width, int *height);
 
+int pixels_rectargs(struct imgdata *img, dptr argv, word *px, word *py, word *pw, word *ph);
+int pixels_reducerect(struct imgdata *img, word *x, word *y, word *width, word *height);
+
 struct imgdataformat *parseimgdataformat(char *s);
 void registerimgdataformat(struct imgdataformat *fmt);
 int getlength_1(struct imgdata *imd);
