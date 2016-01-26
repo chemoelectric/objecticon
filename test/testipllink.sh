@@ -38,4 +38,6 @@ else
     exit 1
 fi
 done
+r=$?
 rm -f /tmp/oi_ipl_test /tmp/oi_ipl_test_out
+exit $r
