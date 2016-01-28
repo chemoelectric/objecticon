@@ -813,9 +813,11 @@ final class Window(NoCopy, ObjectOutput)
    public native draw_line(a[])
 
    #
-   # draw_point(x, y)
+   # Fill a single pixel at x, y
    #
-   public native draw_point(x, y)
+   public draw_point(x, y)
+      return fill_rectangle(x, y, 1, 1)
+   end
 
    #
    # draw_polygon(x1,y1,...xN,yN)

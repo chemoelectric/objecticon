@@ -312,7 +312,6 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2);
    void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2);
    void drawlines       (wbp w, struct point *points, int npoints);
-   void drawpoint       (wbp w, int x, int y);
    void drawrectangle   (wbp w, int x, int y, int width, int height, int thick);
    void fillpolygon     (wbp w, struct point *pts, int npts);
    void filltrapezoids  (wbp w, struct trapezoid *traps, int ntraps);

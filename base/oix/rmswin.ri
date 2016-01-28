@@ -1152,11 +1152,6 @@ void drawlines(wbp w, struct point *points, int npoints)
     gb_drawlines(&d, points, npoints, x - adj, y - adj, width + 2 * adj, height + 2 * adj);
 }
 
-void drawpoint(wbp wb, int x, int y)
-{
-    fillrectangle(wb, x, y, 1, 1);
-}
-
 void drawarc(wbp wb, double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
     gb_Draw d;

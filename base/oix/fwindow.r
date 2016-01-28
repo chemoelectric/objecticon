@@ -312,21 +312,6 @@ function graphics_Window_draw_line(self, argv[argc])
    }
 end
 
-function graphics_Window_draw_point(self, x, y)
-   if !cnv:C_integer(x) then
-      runerr(101, x)
-   if !cnv:C_integer(y) then
-      runerr(101, y)
-   body {
-      int dx, dy;
-      GetSelfW();
-      dx = self_w->context->dx;
-      dy = self_w->context->dy;
-      drawpoint(self_w, x + dx, y + dy);
-      return self;
-   }
-end
-
 function graphics_Window_draw_rectangle(self, x0, y0, w0, h0, thick0)
    body {
       word x, y, width, height, thick;
