@@ -777,11 +777,6 @@ void drawlines(wbp w, struct point *points0, int npoints)
     flushimage(display, 1);
 }
 
-void drawpoint(wbp w, int x, int y)
-{
-    fillrectangle(w, x, y, 1, 1);
-}
-
 static void fill1(wbp w, int x, int y, int width, int height)
 {
     wsp ws = w->window;

@@ -23,6 +23,9 @@ etags :
 test :
 	cd test && ./runtest.sh
 
+testipllink :
+	cd test && ./testipllink.sh
+
 bmark :
 	cd bmark && ./runbmark.sh
 

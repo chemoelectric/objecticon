@@ -2723,11 +2723,6 @@ void drawlines(wbp w, struct point *points, int npoints)
     free(lis);
 }
 
-void drawpoint(wbp w, int x, int y)
-{
-    fillrectangle(w, x, y, 1, 1);
-}
-
 static int needmask(wcp wc, int overlap)
 {
     /* ops where influence of source color is 0 (clear, dest, dest in, dest out) */

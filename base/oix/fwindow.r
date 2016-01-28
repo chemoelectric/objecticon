@@ -312,21 +312,6 @@ function graphics_Window_draw_line(self, argv[argc])
    }
 end
 
-function graphics_Window_draw_point(self, x, y)
-   if !cnv:C_integer(x) then
-      runerr(101, x)
-   if !cnv:C_integer(y) then
-      runerr(101, y)
-   body {
-      int dx, dy;
-      GetSelfW();
-      dx = self_w->context->dx;
-      dy = self_w->context->dy;
-      drawpoint(self_w, x + dx, y + dy);
-      return self;
-   }
-end
-
 function graphics_Window_draw_rectangle(self, x0, y0, w0, h0, thick0)
    body {
       word x, y, width, height, thick;
@@ -2294,5 +2279,64 @@ function graphics_Pixels_get_references(self)
    body {
        GetSelfPixels();
        return C_integer self_id->refcount;
+   }
+end
+
+function graphics_Pixels_gen_rgba_impl(self, x0, y0, width0, height0, rec)
+   body {
+      word x, y, width, height;
+      int i, j, r, g, b, a;
+      GetSelfPixels();
+
+      if (pixels_rectargs(self_id, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+      if (!pixels_reducerect(self_id, &x, &y, &width, &height))
+          fail;
+
+      for (j = y; j < y + height; ++j)
+          for (i = x; i < x + width; ++i) {
+              /* Refresh self_id, since the Pixels may have been closed. */
+              self_id = (struct imgdata *)IntVal(ObjectBlk(self).fields[self_id_ic.index]);
+              if (!self_id)
+                  runerr(152, self);
+              self_id->format->getpixel(self_id, i, j, &r, &g, &b, &a);
+              MakeInt(i, &RecordBlk(rec).fields[0]);
+              MakeInt(j, &RecordBlk(rec).fields[1]);
+              MakeInt(r, &RecordBlk(rec).fields[2]);
+              MakeInt(g, &RecordBlk(rec).fields[3]);
+              MakeInt(b, &RecordBlk(rec).fields[4]);
+              MakeInt(a, &RecordBlk(rec).fields[5]);
+              suspend rec;
+          }
+      fail;
+   }
+end
+
+function graphics_Pixels_gen_impl(self, x0, y0, width0, height0, rec)
+   body {
+      word x, y, width, height;
+      tended struct descrip tmp;
+      int i, j, r, g, b, a;
+      GetSelfPixels();
+
+      if (pixels_rectargs(self_id, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+      if (!pixels_reducerect(self_id, &x, &y, &width, &height))
+          fail;
+
+      for (j = y; j < y + height; ++j)
+          for (i = x; i < x + width; ++i) {
+              /* Refresh self_id, since the Pixels may have been closed. */
+              self_id = (struct imgdata *)IntVal(ObjectBlk(self).fields[self_id_ic.index]);
+              if (!self_id)
+                  runerr(152, self);
+              self_id->format->getpixel(self_id, i, j, &r, &g, &b, &a);
+              cstr2string(tocolorstring(r, g, b, a), &tmp);
+              MakeInt(i, &RecordBlk(rec).fields[0]);
+              MakeInt(j, &RecordBlk(rec).fields[1]);
+              RecordBlk(rec).fields[2] = tmp;
+              suspend rec;
+          }
+      fail;
    }
 end

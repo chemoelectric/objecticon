@@ -1,20 +1,22 @@
 package graphics
 
 import 
-   lang(Class, NoCopy, ObjectClone, Unencodable),
+   lang(Class, NoCopy, ObjectClone, ObjectOutput, Unencodable),
    util(use, error)
 
 record Size(width, height)
 record Point(x, y)
 record Rectangle(x, y, width, height)
 record Color(red, green, blue, alpha)
+record XYColor(x, y, red, green, blue, alpha)
+record XYPixel(x, y, pixel)
 record References(canvas, context)
 
 # This object contains pixel data either read from a file, extracted
 # from a Window, or created from scratch.  The data is stored in
 # various underlying formats depending on the source.
 #
-final class Pixels(ObjectClone, Unencodable)
+final class Pixels(ObjectClone, ObjectOutput, Unencodable)
    private
       ptr
 
@@ -64,6 +66,12 @@ final class Pixels(ObjectClone, Unencodable)
    # Get the height of the block
    #
    public native get_height()
+
+   # Get the size, as a `Size` record.
+   #
+   public get_size()
+      return Size(get_width(), get_height())
+   end
 
    # Get the pixel at the given position as an Icon colour string;
    # indices run from 0 to width-1 and 0 to height-1 respectively.
@@ -117,22 +125,31 @@ final class Pixels(ObjectClone, Unencodable)
       suspend 0 to get_height() - 1
    end
 
-   # Generate all the pixels, from left-to-right, and top-to-bottom.
-   # The first pixel is (0,0), then (1,0), (2,0) and so on.
    #
-   public gen()
-      local y
-      every y := y_range() do
-         suspend get(x_range(), y)
+   # Generate all the pixels in the given rectangle, which defaults to
+   # the whole image.  The pixels are generated left to right and from
+   # top to bottom, as `XYColor` records, which give the x, y position
+   # and rgba color values of each pixel.  NB - the same record is
+   # suspended each time.
+   #
+   public gen_rgba(x, y, width, height)
+      suspend gen_rgba_impl(x, y, width, height, XYColor())
    end
 
-   # Generate all the pixels, as `Color` records.
+   private native gen_rgba_impl(x, y, width, height, rec)
+
    #
-   public gen_rgba()
-      local y
-      every y := y_range() do
-         suspend get_rgba(x_range(), y)
+   # Generate all the pixels in the given rectangle, which defaults to
+   # the whole image.  The pixels are generated left to right and from
+   # top to bottom, as `XYPixel` records, which give the x, y position
+   # and color string of each pixel.  NB - the same record is
+   # suspended each time.
+   #
+   public gen(x, y, width, height)
+      suspend gen_impl(x, y, width, height, XYPixel())
    end
+
+   private native gen_impl(x, y, width, height, rec)
 
    # Copy a single pixel from this instance to another.
    #
@@ -236,6 +253,16 @@ final class Pixels(ObjectClone, Unencodable)
    private static native new_open_impl(s)
    private static native new_blank_impl(width, height, format)
 
+   #
+   # Output object
+   #
+   private object_output(oo)
+      local s
+      s := if ptr = 0 then "closed" else
+         get_width() || "x" || get_height() || " " || get_format()
+      oo.object_string(self, s)
+   end
+
    # The constructor for Pixels takes two formats.  With one parameter
    # a new instance is created based on the given image string, which
    # can be raw image data, or a filename.
@@ -253,7 +280,7 @@ final class Pixels(ObjectClone, Unencodable)
    end
 end
 
-final class Window(NoCopy)
+final class Window(NoCopy, ObjectOutput)
    private
       ptr
 
@@ -305,6 +332,16 @@ final class Window(NoCopy)
    public new(display)
       self.ptr := new_impl(display) | fail
       return
+   end
+
+   #
+   # Output object
+   #
+   private object_output(oo)
+      local s
+      s := if ptr = 0 then "closed" else
+         get_width() || "x" || get_height() || " " || get_canvas()
+      oo.object_string(self, s)
    end
 
    #
@@ -776,9 +813,11 @@ final class Window(NoCopy)
    public native draw_line(a[])
 
    #
-   # draw_point(x, y)
+   # Fill a single pixel at x, y
    #
-   public native draw_point(x, y)
+   public draw_point(x, y)
+      return fill_rectangle(x, y, 1, 1)
+   end
 
    #
    # draw_polygon(x1,y1,...xN,yN)

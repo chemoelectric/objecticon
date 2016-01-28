@@ -67,7 +67,8 @@ extern int minus_loc;        /* index in optab of subtraction */
  */
 
 #define isoctal(c) ((c)>='0'&&(c)<='7')	/* macro to test for octal digit */
-#define NextChar   nextchar()		/* macro to get next character */
+#define NextChar   nextchar(0)		/* macro to get next character */
+#define NextLitChar   nextchar(1)		/* macro to get next character in string/cset literal */
 #define PushChar(c) peekc=(c)		/* macro to push back a character */
 
 #define Comment '#'			/* comment beginner */

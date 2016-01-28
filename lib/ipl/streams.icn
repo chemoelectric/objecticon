@@ -1,7 +1,8 @@
 package ipl.streams
 
 import
-   io(GeneratorStream, HasUnderlyingStream)
+   io(GeneratorStream, HasUnderlyingStream),
+   util(error)
 
 #
 # This {Stream} takes a list of other {Stream}s.  Their lines of

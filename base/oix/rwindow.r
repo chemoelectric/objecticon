@@ -1712,6 +1712,90 @@ wcp linkcontext(wcp wc)
     return wc;
 }
 
+void range_extent(double x1, double y1, double x2, double y2, int *x, int *y, int *width, int *height)
+{
+    *x = floor(x1) - 2;
+    *y = floor(y1) - 2;
+    *width = ceil(x2) - floor(x1) + 4;
+    *height = ceil(y2) - floor(y1) + 4;
+}
+
+void triangles_extent(struct triangle *tris, int ntris, int *x, int *y, int *width, int *height)
+{
+    int i;
+    double x1, y1, x2, y2;
+    if (ntris == 0) {
+        *x = *y = *width = *height = 0;
+        return;
+    }
+    x1 = Min(Min(tris[0].p1.x, tris[0].p2.x), tris[0].p3.x);
+    y1 = Min(Min(tris[0].p1.y, tris[0].p2.y), tris[0].p3.y);
+    x2 = Max(Max(tris[0].p1.x, tris[0].p2.x), tris[0].p3.x);
+    y2 = Max(Max(tris[0].p1.y, tris[0].p2.y), tris[0].p3.y);
+    for (i = 1; i < ntris; ++i) {
+        if (tris[i].p1.x < x1) x1 = tris[i].p1.x;
+        if (tris[i].p2.x < x1) x1 = tris[i].p2.x;
+        if (tris[i].p3.x < x1) x1 = tris[i].p3.x;
+        if (tris[i].p1.y < y1) y1 = tris[i].p1.y;
+        if (tris[i].p2.y < y1) y1 = tris[i].p2.y;
+        if (tris[i].p3.y < y1) y1 = tris[i].p3.y;
+
+        if (tris[i].p1.x > x2) x2 = tris[i].p1.x;
+        if (tris[i].p2.x > x2) x2 = tris[i].p2.x;
+        if (tris[i].p3.x > x2) x2 = tris[i].p3.x;
+        if (tris[i].p1.y > y2) y2 = tris[i].p1.y;
+        if (tris[i].p2.y > y2) y2 = tris[i].p2.y;
+        if (tris[i].p3.y > y2) y2 = tris[i].p3.y;
+    }
+    range_extent(x1, y1, x2, y2, x, y, width, height);
+}
+
+void trapezoids_extent(struct trapezoid *traps, int ntraps, int *x, int *y, int *width, int *height)
+{
+    int i;
+    double x1, y1, x2, y2;
+    if (ntraps == 0) {
+        *x = *y = *width = *height = 0;
+        return;
+    }
+    y1 = traps[0].top;
+    y2 = traps[0].bottom;
+    x1 = Min(traps[0].x1, traps[0].x3);
+    x2 = Max(traps[0].x2, traps[0].x4);
+    for (i = 1; i < ntraps; ++i) {
+        if (traps[i].top < y1) y1 = traps[i].top;
+        if (traps[i].bottom > y2) y2 = traps[i].bottom;
+        if (traps[i].x1 < x1) x1 = traps[i].x1;
+        if (traps[i].x3 < x1) x1 = traps[i].x3;
+        if (traps[i].x2 > x2) x2 = traps[i].x2;
+        if (traps[i].x4 > x2) x2 = traps[i].x4;
+    }
+    range_extent(x1, y1, x2, y2, x, y, width, height);
+}
+
+void points_extent(struct point *points, int npoints, int *x, int *y, int *width, int *height)
+{
+    int i;
+    double x1, y1, x2, y2;
+    if (npoints == 0) {
+        *x = *y = *width = *height = 0;
+        return;
+    }
+    x1 = x2 = points[0].x;
+    y1 = y2 = points[0].y;
+    for (i = 1; i < npoints; ++i) {
+        if (points[i].x < x1)
+            x1 = points[i].x;
+        if (points[i].y < y1)
+            y1 = points[i].y;
+        if (points[i].x > x2)
+            x2 = points[i].x;
+        if (points[i].y > y2)
+            y2 = points[i].y;
+    }
+    range_extent(x1, y1, x2, y2, x, y, width, height);
+}
+
 #endif					/* Graphics */
 
 
@@ -2986,86 +3070,54 @@ struct imgdataformat *parseimgdataformat(char *s)
     return 0;
 }
 
-void range_extent(double x1, double y1, double x2, double y2, int *x, int *y, int *width, int *height)
+int pixels_rectargs(struct imgdata *img, dptr argv, word *px, word *py, word *pw, word *ph)
 {
-    *x = floor(x1) - 2;
-    *y = floor(y1) - 2;
-    *width = ceil(x2) - floor(x1) + 4;
-    *height = ceil(y2) - floor(y1) + 4;
+    /*
+     * Get x and y, defaulting to 0.
+     */
+    if (!def:C_integer(argv[0], 0, *px))
+        ReturnErrVal(101, argv[0], Error);
+
+    if (!def:C_integer(argv[1], 0, *py))
+        ReturnErrVal(101, argv[1], Error);
+
+    /*
+     * Get w and h, defaulting to extend to the edge
+     */
+    if (!def:C_integer(argv[2], img->width - *px, *pw))
+        ReturnErrVal(101, argv[2], Error);
+
+    if (!def:C_integer(argv[3], img->height - *py, *ph))
+        ReturnErrVal(101, argv[3], Error);
+
+    /*
+     * Correct negative w/h values.
+     */
+    if (*pw < 0)
+        *pw = 0;
+    if (*ph < 0)
+        *ph = 0;
+
+    return Succeeded;
 }
 
-void triangles_extent(struct triangle *tris, int ntris, int *x, int *y, int *width, int *height)
+int pixels_reducerect(struct imgdata *img, word *x, word *y, word *width, word *height)
 {
-    int i;
-    double x1, y1, x2, y2;
-    if (ntris == 0) {
-        *x = *y = *width = *height = 0;
-        return;
+    if (*x < 0)  { 
+        *width += *x; 
+        *x = 0; 
     }
-    x1 = Min(Min(tris[0].p1.x, tris[0].p2.x), tris[0].p3.x);
-    y1 = Min(Min(tris[0].p1.y, tris[0].p2.y), tris[0].p3.y);
-    x2 = Max(Max(tris[0].p1.x, tris[0].p2.x), tris[0].p3.x);
-    y2 = Max(Max(tris[0].p1.y, tris[0].p2.y), tris[0].p3.y);
-    for (i = 1; i < ntris; ++i) {
-        if (tris[i].p1.x < x1) x1 = tris[i].p1.x;
-        if (tris[i].p2.x < x1) x1 = tris[i].p2.x;
-        if (tris[i].p3.x < x1) x1 = tris[i].p3.x;
-        if (tris[i].p1.y < y1) y1 = tris[i].p1.y;
-        if (tris[i].p2.y < y1) y1 = tris[i].p2.y;
-        if (tris[i].p3.y < y1) y1 = tris[i].p3.y;
+    if (*y < 0)  { 
+        *height += *y; 
+        *y = 0; 
+    }
+    if (*x + *width > img->width)
+        *width = img->width - *x; 
+    if (*y + *height > img->height)
+        *height = img->height - *y; 
 
-        if (tris[i].p1.x > x2) x2 = tris[i].p1.x;
-        if (tris[i].p2.x > x2) x2 = tris[i].p2.x;
-        if (tris[i].p3.x > x2) x2 = tris[i].p3.x;
-        if (tris[i].p1.y > y2) y2 = tris[i].p1.y;
-        if (tris[i].p2.y > y2) y2 = tris[i].p2.y;
-        if (tris[i].p3.y > y2) y2 = tris[i].p3.y;
-    }
-    range_extent(x1, y1, x2, y2, x, y, width, height);
-}
+    if (*width <= 0 || *height <= 0)
+        return 0;
 
-void trapezoids_extent(struct trapezoid *traps, int ntraps, int *x, int *y, int *width, int *height)
-{
-    int i;
-    double x1, y1, x2, y2;
-    if (ntraps == 0) {
-        *x = *y = *width = *height = 0;
-        return;
-    }
-    y1 = traps[0].top;
-    y2 = traps[0].bottom;
-    x1 = Min(traps[0].x1, traps[0].x3);
-    x2 = Max(traps[0].x2, traps[0].x4);
-    for (i = 1; i < ntraps; ++i) {
-        if (traps[i].top < y1) y1 = traps[i].top;
-        if (traps[i].bottom > y2) y2 = traps[i].bottom;
-        if (traps[i].x1 < x1) x1 = traps[i].x1;
-        if (traps[i].x3 < x1) x1 = traps[i].x3;
-        if (traps[i].x2 > x2) x2 = traps[i].x2;
-        if (traps[i].x4 > x2) x2 = traps[i].x4;
-    }
-    range_extent(x1, y1, x2, y2, x, y, width, height);
-}
-
-void points_extent(struct point *points, int npoints, int *x, int *y, int *width, int *height)
-{
-    int i;
-    double x1, y1, x2, y2;
-    if (npoints == 0) {
-        *x = *y = *width = *height = 0;
-        return;
-    }
-    x1 = x2 = points[0].x;
-    y1 = y2 = points[0].y;
-    for (i = 1; i < npoints; ++i) {
-        if (points[i].x < x1)
-            x1 = points[i].x;
-        if (points[i].y < y1)
-            y1 = points[i].y;
-        if (points[i].x > x2)
-            x2 = points[i].x;
-        if (points[i].y > y2)
-            y2 = points[i].y;
-    }
-    range_extent(x1, y1, x2, y2, x, y, width, height);
+    return 1;
 }

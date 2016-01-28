@@ -12,7 +12,7 @@
 #include "ipp.h"
 
 /* Used by auto-generated func in ../common/lextab.h */
-static  int nextchar(void);
+static  int nextchar(int);
 static void lexfatal(char *fmt, ...);
 
 #include "lexdef.h"
@@ -501,15 +501,15 @@ static struct toktab *getstring(int ac, int *cc)
     int c, i, n;
     int len;
     char utf8[MAX_UTF8_SEQ_LEN];
-    c = NextChar;
+    c = NextLitChar;
     while (c != '"' && c != '\n' && c != EOF) {
         /*
          * If a '_' is the last before a new-line, skip over any whitespace.
          */
         if (c == '_') {
-            int t = NextChar;
+            int t = NextLitChar;
             if (t == '\n' || t == '\r') {
-                while ((c = NextChar) != EOF && isspace_ex(c))
+                while ((c = NextLitChar) != EOF && isspace_ex(c))
                     ;
                 continue;
             } else
@@ -517,7 +517,7 @@ static struct toktab *getstring(int ac, int *cc)
         }
 
         if (c == Escape) {
-            c = NextChar;
+            c = NextLitChar;
             if (isoctal(c))
                 AppChar(lex_sbuf, octesc(c));
             else if (c == 'x')
@@ -539,7 +539,7 @@ static struct toktab *getstring(int ac, int *cc)
                     AppChar(lex_sbuf, utf8[i]);
             }
             else if (c == '^') {
-                c = NextChar;
+                c = NextLitChar;
                 if (c < 256) 
                     AppChar(lex_sbuf, ctlesc(c));
                 else
@@ -558,7 +558,7 @@ static struct toktab *getstring(int ac, int *cc)
                 lexfatal("string literal character out of range (codepoint %d)", c);
         }
 
-        c = NextChar;
+        c = NextLitChar;
     }
     if (c == '"')
         *cc = ' ';
@@ -582,15 +582,15 @@ static struct toktab *getucs(int ac, int *cc)
     char utf8[MAX_UTF8_SEQ_LEN];
     char *p;
 
-    c = NextChar;
+    c = NextLitChar;
     while (c != '"' && c != '\n' && c != EOF) {
         /*
          * If a '_' is the last before a new-line, skip over any whitespace.
          */
         if (c == '_') {
-            int t = NextChar;
+            int t = NextLitChar;
             if (t == '\n' || t == '\r') {
-                while ((c = NextChar) != EOF && isspace_ex(c))
+                while ((c = NextLitChar) != EOF && isspace_ex(c))
                     ;
                 continue;
             } else
@@ -598,7 +598,7 @@ static struct toktab *getucs(int ac, int *cc)
         }
 
         if (c == Escape) {
-            c = NextChar;
+            c = NextLitChar;
             if (isoctal(c))
                 AppChar(lex_sbuf, octesc(c));
             else if (c == 'x')
@@ -620,7 +620,7 @@ static struct toktab *getucs(int ac, int *cc)
                     AppChar(lex_sbuf, utf8[i]);
             }
             else if (c == '^') {
-                c = NextChar;
+                c = NextLitChar;
                 AppChar(lex_sbuf, ctlesc(c));
             } else {
                 c = escchar(c);
@@ -641,7 +641,7 @@ static struct toktab *getucs(int ac, int *cc)
                 AppChar(lex_sbuf, c);
         }
 
-        c = NextChar;
+        c = NextLitChar;
     }
     if (c == '"')
         *cc = ' ';
@@ -687,15 +687,15 @@ static struct toktab *getcset(int ac, int *cc)
 
     MemProtect(cs = init_rangeset());
 
-    c = NextChar;
+    c = NextLitChar;
     while (c != '\'' && c != '\n' && c != EOF) {
         /*
          * If a '_' is the last before a new-line, skip over any whitespace.
          */
         if (c == '_') {
-            int t = NextChar;
+            int t = NextLitChar;
             if (t == '\n' || t == '\r') {
-                while ((c = NextChar) != EOF && isspace_ex(c))
+                while ((c = NextLitChar) != EOF && isspace_ex(c))
                     ;
                 continue;
             } else
@@ -704,7 +704,7 @@ static struct toktab *getcset(int ac, int *cc)
 
         esc_flag = (c == Escape);
         if (esc_flag) {
-            c = NextChar;
+            c = NextLitChar;
             if (isoctal(c))
                 c = octesc(c);
             else if (c == 'x')
@@ -719,7 +719,7 @@ static struct toktab *getcset(int ac, int *cc)
                 }
             }
             else if (c == '^') {
-                c = NextChar;
+                c = NextLitChar;
                 c = ctlesc(c);
             } else
                 c = escchar(c);
@@ -743,7 +743,7 @@ static struct toktab *getcset(int ac, int *cc)
                 state = 0;
                 break;
         }
-        c = NextChar;
+        c = NextLitChar;
     }
     if (c == '\'') {
         if (state == 1) {
@@ -807,7 +807,7 @@ static int octesc(int ac)
     i = 1;
     do {
         c = (c << 3) | (nc - '0');
-        nc = NextChar;
+        nc = NextLitChar;
     } while (isoctal(nc) && i++ < 3);
     PushChar(nc);
 
@@ -826,7 +826,7 @@ static int hexesc(int digs)
     c = 0;
     i = 0;
     while (i++ < digs) {
-        nc = NextChar;
+        nc = NextLitChar;
         if (nc >= 'a' && nc <= 'f')
             nc -= 'a' - 10;
         else if (nc >= 'A' && nc <= 'F')
@@ -936,7 +936,7 @@ static int setencoding(int c)
  *  Called from the lexical analyzer; interfaces it to the preprocessor.
  */
 
-static int nextchar()
+static int nextchar(int in_literal)
 {
     int c;
 
@@ -961,7 +961,7 @@ static int nextchar()
                 incol--;
             break;
         default: {
-            if (c > 127) {
+            if (c > 127 && in_literal) {
                 if (encoding == utf8_string)
                     c = read_utf_char(c);
                 else if (encoding == ascii_string)
