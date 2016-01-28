@@ -2282,6 +2282,10 @@ function graphics_Pixels_gen_rgba_impl(self, x0, y0, width0, height0, rec)
 
       for (j = y; j < y + height; ++j)
           for (i = x; i < x + width; ++i) {
+              /* Refresh self_id, since the Pixels may have been closed. */
+              self_id = (struct imgdata *)IntVal(ObjectBlk(self).fields[self_id_ic.index]);
+              if (!self_id)
+                  runerr(152, self);
               self_id->format->getpixel(self_id, i, j, &r, &g, &b, &a);
               MakeInt(i, &RecordBlk(rec).fields[0]);
               MakeInt(j, &RecordBlk(rec).fields[1]);
@@ -2309,6 +2313,10 @@ function graphics_Pixels_gen_impl(self, x0, y0, width0, height0, rec)
 
       for (j = y; j < y + height; ++j)
           for (i = x; i < x + width; ++i) {
+              /* Refresh self_id, since the Pixels may have been closed. */
+              self_id = (struct imgdata *)IntVal(ObjectBlk(self).fields[self_id_ic.index]);
+              if (!self_id)
+                  runerr(152, self);
               self_id->format->getpixel(self_id, i, j, &r, &g, &b, &a);
               cstr2string(tocolorstring(r, g, b, a), &tmp);
               MakeInt(i, &RecordBlk(rec).fields[0]);
