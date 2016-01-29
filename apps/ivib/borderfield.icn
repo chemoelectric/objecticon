@@ -80,7 +80,7 @@ class BorderField(Component)
       Component.new()
       setup()
       self.set_constraint("x_fill", &yes)
-      self.set_constraint("x_weight", "1")
+      self.set_constraint("x_weight", 1.0)
       return
    end
 end

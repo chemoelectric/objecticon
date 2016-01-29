@@ -12,7 +12,7 @@ class CanvasHScrollBarUI(CanvasComponentUI)
       local t
       t := CanvasScrollBar()
       t.set_constraint("x_fill", &yes)
-      t.set_constraint("x_weight", "1")
+      t.set_constraint("x_weight", 1.0)
       t.set_range(0, 100)
       t.set_is_horizontal(&yes)
       t.set_increment_size(1)

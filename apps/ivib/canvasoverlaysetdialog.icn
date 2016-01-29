@@ -160,7 +160,7 @@ class CanvasOverlaySetDialog(CanvasComponentDialog)
       struct.set_contents(c.string_rep())
       p.add(struct)
 
-      q := Panel().set_constraint("x_weight", 0)
+      q := Panel().set_constraint("x_weight", 0.0)
       q.set_layout(GridLayout().set_doi(0))
 
       add_col := TextButton().set_constraint("eol", &yes)
