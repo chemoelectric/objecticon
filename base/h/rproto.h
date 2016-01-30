@@ -255,6 +255,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    int  readimagefile   (char *filename, struct imgdata *imd);
    int  writeimagefile  (char *filename, struct imgdata *imd);
    int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
+   int pointargs_def(wbp w, dptr argv, word *px, word *py);
    int pointargs(wbp w, dptr argv, word *px, word *py);
    int dpointargs(wbp w, dptr argv, double *px, double *py);
    int interpimage(dptr d,  struct imgdata *imd);

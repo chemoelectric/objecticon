@@ -66,6 +66,7 @@ struct errtab errtab[] = {
     {148, "invalid position or size"},
     {152, "attempt to read/write on closed data"},
     {153, "invalid pixel format"},
+    {154, "paletted pixel format expected"},
 #endif					/* Graphics */
 
     {159, "string too long"},

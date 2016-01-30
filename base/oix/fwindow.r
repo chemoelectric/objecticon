@@ -17,6 +17,11 @@ if (!self_id)
     runerr(152, self);
 #enddef
 
+#begdef GetSelfPalettedPixels()
+GetSelfPixels()
+if (self_id->format->palette_size == 0)
+    runerr(154, self);
+#enddef
 
 #if Graphics
 
@@ -126,7 +131,7 @@ function graphics_Window_copy_to(self, x0, y0, w0, h0, dest, x1, y1)
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (pointargs(w2, &x1, &x2, &y2) == Error)
+      if (pointargs_def(w2, &x1, &x2, &y2) == Error)
           runerr(0);
 
       ox = x;
@@ -276,7 +281,7 @@ function graphics_Window_draw_image_impl(self, x0, y0, d)
    body {
       word x, y;
       GetSelfW();
-      if (pointargs(self_w, &x0, &x, &y) == Error)
+      if (pointargs_def(self_w, &x0, &x, &y) == Error)
           runerr(0);
       {
       PixelsStaticParam(d, id);
@@ -2080,14 +2085,8 @@ function graphics_Pixels_get_palette(self, i)
    body {
       struct palentry *e;
       tended struct descrip result;
-      int n;
-      GetSelfPixels();
-      n = self_id->format->palette_size;
-      if (n == 0) {
-          LitWhy("Can only get a palette entry with a PALETTE format");
-          fail;
-      }
-      if (i < 0 || i >= n) {
+      GetSelfPalettedPixels();
+      if (i < 0 || i >= self_id->format->palette_size) {
           LitWhy("Out of range");
           fail;
       }
@@ -2104,14 +2103,8 @@ function graphics_Pixels_get_palette_rgba_impl(self, i)
       struct palentry *e;
       tended struct descrip result;
       struct descrip t;
-      int n;
-      GetSelfPixels();
-      n = self_id->format->palette_size;
-      if (n == 0) {
-          LitWhy("Can only get a palette entry with a PALETTE format");
-          fail;
-      }
-      if (i < 0 || i >= n) {
+      GetSelfPalettedPixels();
+      if (i < 0 || i >= self_id->format->palette_size) {
           LitWhy("Out of range");
           fail;
       }
@@ -2142,14 +2135,8 @@ function graphics_Pixels_set_palette_rgba(self, i, r, g, b, a)
       runerr(101, a)
    body {
       struct palentry *e;
-      int n;
-      GetSelfPixels();
-      n = self_id->format->palette_size;
-      if (n == 0) {
-          LitWhy("Can only set a palette entry with a PALETTE format");
-          fail;
-      }
-      if (i < 0 || i >= n) {
+      GetSelfPalettedPixels();
+      if (i < 0 || i >= self_id->format->palette_size) {
           LitWhy("Out of range");
           fail;
       }
@@ -2169,14 +2156,9 @@ function graphics_Pixels_set_palette(self, i, v)
        runerr(103, v)
    body {
       struct palentry *e;
-      int n, r, g, b, a;
-      GetSelfPixels();
-      n = self_id->format->palette_size;
-      if (n == 0) {
-          LitWhy("Can only set a palette entry with a PALETTE format");
-          fail;
-      }
-      if (i < 0 || i >= n) {
+      int r, g, b, a;
+      GetSelfPalettedPixels();
+      if (i < 0 || i >= self_id->format->palette_size) {
           LitWhy("Out of range");
           fail;
       }
@@ -2200,11 +2182,7 @@ function graphics_Pixels_get_palette_index(self, x, y)
    if !cnv:C_integer(y) then
       runerr(101, y)
    body {
-      GetSelfPixels();
-      if (self_id->format->palette_size == 0) {
-          LitWhy("Can only get a palette index with a PALETTE format");
-          fail;
-      }
+      GetSelfPalettedPixels();
       if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
           LitWhy("Out of range");
           fail;
@@ -2221,18 +2199,9 @@ function graphics_Pixels_set_palette_index(self, x, y, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
-      int n;
-      GetSelfPixels();
-      n = self_id->format->palette_size;
-      if (n == 0) {
-          LitWhy("Can only set a palette index with a PALETTE format");
-          fail;
-      }
-      if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
-          LitWhy("Out of range");
-          fail;
-      }
-      if (i < 0 || i >= n) {
+      GetSelfPalettedPixels();
+      if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height ||
+          i < 0 || i >= self_id->format->palette_size) {
           LitWhy("Out of range");
           fail;
       }
@@ -2322,6 +2291,33 @@ function graphics_Pixels_gen_impl(self, x0, y0, width0, height0, rec)
               MakeInt(i, &RecordBlk(rec).fields[0]);
               MakeInt(j, &RecordBlk(rec).fields[1]);
               RecordBlk(rec).fields[2] = tmp;
+              suspend rec;
+          }
+      fail;
+   }
+end
+
+function graphics_Pixels_gen_palette_index_impl(self, x0, y0, width0, height0, rec)
+   body {
+      word x, y, width, height;
+      int i, j, v;
+      GetSelfPalettedPixels();
+
+      if (pixels_rectargs(self_id, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+      if (!pixels_reducerect(self_id, &x, &y, &width, &height))
+          fail;
+
+      for (j = y; j < y + height; ++j)
+          for (i = x; i < x + width; ++i) {
+              /* Refresh self_id, since the Pixels may have been closed. */
+              self_id = (struct imgdata *)IntVal(ObjectBlk(self).fields[self_id_ic.index]);
+              if (!self_id)
+                  runerr(152, self);
+              v = self_id->format->getpaletteindex(self_id, i, j);
+              MakeInt(i, &RecordBlk(rec).fields[0]);
+              MakeInt(j, &RecordBlk(rec).fields[1]);
+              MakeInt(v, &RecordBlk(rec).fields[2]);
               suspend rec;
           }
       fail;

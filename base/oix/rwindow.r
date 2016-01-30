@@ -1586,6 +1586,25 @@ int pointargs(wbp w, dptr argv, word *px, word *py)
     wcp wc = w->context;
 
     /*
+     * Get x and y
+     */
+    if (!cnv:C_integer(argv[0], *px))
+        ReturnErrVal(101, argv[0], Error);
+
+    if (!cnv:C_integer(argv[1], *py))
+        ReturnErrVal(101, argv[1], Error);
+
+    *px += wc->dx;
+    *py += wc->dy;
+
+    return Succeeded;
+}
+
+int pointargs_def(wbp w, dptr argv, word *px, word *py)
+{
+    wcp wc = w->context;
+
+    /*
      * Get x and y, defaulting to -dx and -dy.
      */
     if (!def:C_integer(argv[0], -wc->dx, *px))

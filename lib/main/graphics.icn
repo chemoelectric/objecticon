@@ -10,6 +10,7 @@ record Rectangle(x, y, width, height)
 record Color(red, green, blue, alpha)
 record XYColor(x, y, red, green, blue, alpha)
 record XYPixel(x, y, pixel)
+record XYIndex(x, y, index)
 record References(canvas, context)
 
 # This object contains pixel data either read from a file, extracted
@@ -174,9 +175,9 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable)
    public native get_palette_size()
 
    # Get the palette entry at index i, as a `Color` record.  This and
-   # similar methods fails unless the format is PALETTEx.  The number
-   # of palette entries depends on the format; eg PALETTE4 has 2^4=16
-   # possible entries, indexed 0..15.
+   # similar methods give a runerr unless the format is PALETTEx.  The
+   # number of palette entries depends on the format; eg PALETTE4 has
+   # 2^4=16 possible entries, indexed 0..15.
    #
    public get_palette_rgba(i)
       return Color!get_palette_rgba(i)
@@ -199,6 +200,18 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable)
    # Get the palette index contained at the given pixel location.
    #
    public native get_palette_index(x, y)
+
+   # Generate all the palette indices in the given rectangle, which
+   # defaults to the whole image.  The pixels are generated left to
+   # right and from top to bottom, as `XYIndex` records, which give
+   # the x, y position and index value of each pixel.  NB - the same
+   # record is suspended each time.
+   #
+   public gen_palette_index(x, y, width, height)
+      suspend gen_palette_index_impl(x, y, width, height, XYIndex())
+   end
+
+   private native gen_palette_index_impl(x, y, width, height)
 
    # Set the palette index contained at the given pixel location.
    #
