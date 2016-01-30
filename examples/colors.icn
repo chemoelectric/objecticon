@@ -68,26 +68,26 @@ class Untitled(Dialog)
 
    private update_rgb()
       local c, hls
-      c := red.get_value()||","||green.get_value()||","||blue.get_value()
+      c := red.get_value() || "," || green.get_value() || "," || blue.get_value()
       colr.set_color(c)
       rgb_label.set_label(c)
       hls := rgb2hls(color2rgb(c))
       hue.set_value(integer(hls.h))
       light.set_value(integer(hls.l * 100))
       saturation.set_value(integer(hls.s * 100))
-      hls_label.set_label(hue.get_value()||":"||light.get_value()||":"||saturation.get_value())
+      hls_label.set_label(hue.get_value() || ":" || light.get_value() || ":" || saturation.get_value())
    end
 
    private update_hls()
       local rgb, l
-      hls_label.set_label(hue.get_value()||":"||light.get_value()||":"||saturation.get_value())
+      hls_label.set_label(hue.get_value() || ":" || light.get_value() || ":" || saturation.get_value())
       rgb := rgb2color(hls2rgb(hls(hue.get_value(), light.get_value()/100.0, saturation.get_value()/100.0)))
       colr.set_color(rgb)
       l := Window.parse_color(rgb)
-      rgb_label.set_label(l[1]||","||l[2]||","||l[3])
-      red.set_value(l[1])
-      green.set_value(l[2])
-      blue.set_value(l[3])
+      rgb_label.set_label(l.red || "," || l.green || "," || l.blue)
+      red.set_value(l.red)
+      green.set_value(l.green)
+      blue.set_value(l.blue)
    end
 
    private on_blue(ev)

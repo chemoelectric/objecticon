@@ -121,9 +121,9 @@ procedure PutPixel(win, x, y, color)
    l := Window.parse_color(color) | fail
 
    # convert three 0..65535 ints to 0..255
-   r := l[1] / 256
-   g := l[2] / 256
-   b := l[3] / 256
+   r := l.red / 256
+   g := l.green / 256
+   b := l.blue / 256
 
    # get dither table index based on coordinates
    i := iand(x, 3) + 4 * iand(y, 3) + 1
