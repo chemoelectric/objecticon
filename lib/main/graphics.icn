@@ -154,7 +154,11 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable)
 
    # Copy a single pixel from this instance to another.
    #
-   public native copy_pixel(x1, y1, other, x2, y2)
+   public native copy_pixel(x1, y1, dest, x2, y2)
+
+   # Copy a rectangular area from this instance to another.
+   #
+   public native copy_to(x1, y1, w, h, dest, x2, y2)
 
    #
    # Encode the image to a file.
@@ -200,18 +204,6 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable)
    # Get the palette index contained at the given pixel location.
    #
    public native get_palette_index(x, y)
-
-   # Generate all the palette indices in the given rectangle, which
-   # defaults to the whole image.  The pixels are generated left to
-   # right and from top to bottom, as `XYIndex` records, which give
-   # the x, y position and index value of each pixel.  NB - the same
-   # record is suspended each time.
-   #
-   public gen_palette_index(x, y, width, height)
-      suspend gen_palette_index_impl(x, y, width, height, XYIndex())
-   end
-
-   private native gen_palette_index_impl(x, y, width, height)
 
    # Set the palette index contained at the given pixel location.
    #

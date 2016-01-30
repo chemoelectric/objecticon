@@ -1913,6 +1913,55 @@ function graphics_Pixels_copy_pixel(self, x1, y1, other, x2, y2)
    }
 end
 
+function graphics_Pixels_copy_to(self, x0, y0, w0, h0, dest, x2, y2)
+   if !def:C_integer(x2, 0) then
+      runerr(101, x2)
+   if !def:C_integer(y2, 0) then
+      runerr(101, y2)
+   body {
+      int i, j, r, g, b, a;
+      word ox, oy, x, y, width, height;
+      struct imgdata *id2;
+
+      GetSelfPixels();
+
+      if (is:null(dest))
+          id2 = self_id;
+      else {
+          PixelsStaticParam(dest, tmp);
+          id2 = tmp;
+      }
+
+      /*
+       * x1, y1, width, and height follow standard conventions.
+       */
+      if (pixels_rectargs(self_id, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+
+      ox = x;
+      oy = y;
+      if (!pixels_reducerect(self_id, &x, &y, &width, &height))
+          return self;
+      x2 += (x - ox);
+      y2 += (y - oy);
+
+      ox = x2;
+      oy = y2;
+      if (!pixels_reducerect(id2, &x2, &y2, &width, &height))
+          return self;
+      x += (x2 - ox);
+      y += (y2 - oy);
+
+      for (j = 0; j < height; ++j)
+          for (i = 0; i < width; ++i) {
+              self_id->format->getpixel(self_id, x + i, y + j, &r, &g, &b, &a);
+              id2->format->setpixel(id2, x2 + i, y2 + j, r, g, b, a);
+          }
+
+      return self;
+   }
+end
+
 function graphics_Pixels_get(self, x, y)
    if !cnv:C_integer(x) then
       runerr(101, x)
@@ -2291,33 +2340,6 @@ function graphics_Pixels_gen_impl(self, x0, y0, width0, height0, rec)
               MakeInt(i, &RecordBlk(rec).fields[0]);
               MakeInt(j, &RecordBlk(rec).fields[1]);
               RecordBlk(rec).fields[2] = tmp;
-              suspend rec;
-          }
-      fail;
-   }
-end
-
-function graphics_Pixels_gen_palette_index_impl(self, x0, y0, width0, height0, rec)
-   body {
-      word x, y, width, height;
-      int i, j, v;
-      GetSelfPalettedPixels();
-
-      if (pixels_rectargs(self_id, &x0, &x, &y, &width, &height) == Error)
-          runerr(0);
-      if (!pixels_reducerect(self_id, &x, &y, &width, &height))
-          fail;
-
-      for (j = y; j < y + height; ++j)
-          for (i = x; i < x + width; ++i) {
-              /* Refresh self_id, since the Pixels may have been closed. */
-              self_id = (struct imgdata *)IntVal(ObjectBlk(self).fields[self_id_ic.index]);
-              if (!self_id)
-                  runerr(152, self);
-              v = self_id->format->getpaletteindex(self_id, i, j);
-              MakeInt(i, &RecordBlk(rec).fields[0]);
-              MakeInt(j, &RecordBlk(rec).fields[1]);
-              MakeInt(v, &RecordBlk(rec).fields[2]);
               suspend rec;
           }
       fail;
