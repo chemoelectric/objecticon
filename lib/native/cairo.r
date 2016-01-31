@@ -176,6 +176,13 @@ static stringint extends[] = {
     {"repeat", CAIRO_EXTEND_REPEAT},
 };
 
+static stringint contents[] = {
+    {0, 3},
+    {"alpha", CAIRO_CONTENT_ALPHA},
+    {"color", CAIRO_CONTENT_COLOR},
+    {"color-alpha", CAIRO_CONTENT_COLOR_ALPHA},
+};
+
 static void pop_word(dptr l, word *res)
 {
     tended struct descrip e;
@@ -284,7 +291,7 @@ function cairo_Context_set_dash(self, offset, args[n])
        double *d;
        int i;
        GetSelfCr();
-       MemProtect(d = malloc(n * sizeof(double)));
+       MemProtect(d = malloc(n * sizeof(double) + 1));   /* +1 to avoid zero alloc */
        for (i = 0; i < n; ++i) {
            if (!cnv:C_double(args[i], d[i])) {
                free(d);
@@ -905,6 +912,39 @@ function cairo_Context_paint(self)
     }
 end
 
+function cairo_Context_paint_with_alpha(self, alpha)
+    if !cnv:C_double(alpha) then
+       runerr(102, alpha)
+    body {
+       double x1, y1, x2, y2;
+       GetSelfCr();
+       device_clip_extents(self_cr, &x1, &y1, &x2, &y2);
+       cairo_paint_with_alpha(self_cr, alpha);
+       pix_to_win(self_cr, x1, y1, x2, y2);
+       return self;
+    }
+end
+
+function cairo_Context_set_miter_limit(self, limit)
+    if !cnv:C_double(limit) then
+       runerr(102, limit)
+    body {
+       GetSelfCr();
+       cairo_set_miter_limit(self_cr, limit);
+       return self;
+    }
+end
+
+function cairo_Context_set_tolerance(self, tolerance)
+    if !cnv:C_double(tolerance) then
+       runerr(102, tolerance)
+    body {
+       GetSelfCr();
+       cairo_set_tolerance(self_cr, tolerance);
+       return self;
+    }
+end
+
 function cairo_Context_mask(self, pat)
     body {
        GetSelfCr();
@@ -1320,6 +1360,46 @@ function cairo_Context_get_source_matrix_impl(self)
     }
 end
 
+function cairo_Context_push_group(self)
+    body {
+       GetSelfCr();
+       cairo_push_group(self_cr);
+       return self;
+    }
+end
+
+function cairo_Context_push_group_with_content(self, val)
+    body {
+       stringint *e;
+       GetSelfCr();
+       e = stringint_lookup(contents, buffstr(&val));
+       if (!e) {
+           LitWhy("Invalid content specification");
+           fail;
+       }
+       cairo_push_group_with_content(self_cr, e->i);
+       return self;
+    }
+end
+
+function cairo_Context_pop_group_to_source(self)
+    body {
+       GetSelfCr();
+       cairo_pop_group_to_source(self_cr);
+       return self;
+    }
+end
+
+function cairo_Context_pop_group_impl(self)
+    body {
+       cairo_pattern_t *pattern;
+       GetSelfCr();
+       pattern = cairo_pop_group(self_cr);
+       CheckPatternStatus(pattern);
+       return C_integer (word) pattern;
+    }
+end
+
 function cairo_Context_get_current_point_impl(self)
     body {
        tended struct descrip result, tmp;
@@ -1494,6 +1574,30 @@ function cairo_WindowSurface_new_impl(win)
        cairo_surface_set_user_data(surface, &winkey, w2, destroywin);
        }
        return C_integer (word) surface;
+    }
+end
+
+function cairo_Surface_set_device_offset(self, x_offset, y_offset)
+    if !cnv:C_double(x_offset) then
+       runerr(102, x_offset)
+    if !cnv:C_double(y_offset) then
+       runerr(102, y_offset)
+    body {
+       GetSelfSurface();
+       cairo_surface_set_device_offset(self_surface, x_offset, y_offset);
+       return self;
+    }
+end
+
+function cairo_Surface_set_device_scale(self, x_scale, y_scale)
+    if !cnv:C_double(x_scale) then
+       runerr(102, x_scale)
+    if !cnv:C_double(y_scale) then
+       runerr(102, y_scale)
+    body {
+       GetSelfSurface();
+       cairo_surface_set_device_scale(self_surface, x_scale, y_scale);
+       return self;
     }
 end
 

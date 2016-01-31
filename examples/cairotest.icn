@@ -31,7 +31,15 @@ class CairoDisplay(Component)
          17: text_example(o)
          18: text_align_center_example(o)
          19: text_extents_example(o)
+         20: group_example(o)
       }
+   end
+
+   private group_example(o)
+      o.push_group()
+      arc_example(o)
+      o.pop_group_to_source()
+      o.paint_with_alpha(0.25)
    end
 
    private arc_example(o)
@@ -445,7 +453,8 @@ class CairoTest(Dialog)
                                    "set line join",
                                    "text",
                                    "text align center",
-                                   "text extents"])
+                                   "text extents",
+                                   "group"])
    end
 
    public end_dialog()

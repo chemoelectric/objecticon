@@ -203,6 +203,13 @@ final class SurfacePattern(Pattern)
       Class.load_library(\Context.LOADED)
    end
 
+   package static create_for_ptr(ptr)
+      local i
+      i := Class.create_instance()
+      i.ptr := ptr
+      return i
+   end
+
    private static native new_impl(sur)
 
    public new(sur)
@@ -237,6 +244,9 @@ abstract class Surface(NoCopy)
    private static init()
       Class.load_library(\Context.LOADED)
    end
+
+   public native set_device_offset(x_offset, y_offset)
+   public native set_device_scale(x_scale, y_scale)
 
    public native close()
 end
@@ -384,14 +394,17 @@ final class Context(NoCopy)
    public native set_line_join(v)
    public native set_line_cap(v)
    public native set_fill_rule(v)
-   public native set_dash(l[])
+   public native set_dash(offset, l[])
    public native set_font(v)
+   public native set_miter_limit(v)
+   public native set_tolerance(v)
    public native arc(xc, yc, r, a1, a2)
    public native arc_negative(xc, yc, r, a1, a2)
    public native rectangle(x, y, width, height)
    public native fill()
    public native fill_preserve()
    public native paint()
+   public native paint_with_alpha(alpha)
    public native mask(pat)
    public native mask_surface(sur, x, y)
    public native text_path(s)
@@ -496,6 +509,15 @@ final class Context(NoCopy)
    public native in_stroke(x, y)
    public native in_fill(x, y)
    public native in_clip(x, y)
+
+   public native push_group()
+   public native push_group_with_content(content)
+   public native pop_group_to_source()
+   public pop_group()
+      return SurfacePattern.create_for_ptr(pop_group_impl())
+   end
+
+   private native pop_group_impl()
 
    public native set_source_extend(v)
    private native set_source_matrix_impl(xx, yx, xy, yy, x0, y0)
