@@ -1,6 +1,6 @@
 package cairo
 
-import lang, graphics, util, io
+import lang, graphics, util, io, ipl.pdco
 
 abstract class PathElement() end
 
@@ -502,6 +502,13 @@ final class Context(NoCopy)
    public native clip()
    public native clip_preserve()
    public native reset_clip()
+
+   public get_clip_rectangles()
+      local l
+      l := get_clip_rectangles_impl() | fail
+      return List{Rectangle!(!l)}
+   end
+   private native get_clip_rectangles_impl()
 
    private native set_source_rgba(r, g, b, a)
    private native set_source_pattern(pat)
