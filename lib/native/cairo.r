@@ -285,21 +285,24 @@ function cairo_Context_set_font(self, val)
 end
 
 function cairo_Context_set_dash(self, offset, args[n])
-    if !cnv:C_double(offset) then
+    if !def:C_double(offset, 0.0) then
        runerr(102, offset)
     body {
-       double *d;
-       int i;
        GetSelfCr();
-       MemProtect(d = malloc(n * sizeof(double) + 1));   /* +1 to avoid zero alloc */
-       for (i = 0; i < n; ++i) {
-           if (!cnv:C_double(args[i], d[i])) {
-               free(d);
-               runerr(102, args[i]);
+       if (n > 0) {
+           double *d;
+           int i;
+           MemProtect(d = malloc(n * sizeof(double)));
+           for (i = 0; i < n; ++i) {
+               if (!cnv:C_double(args[i], d[i])) {
+                   free(d);
+                   runerr(102, args[i]);
+               }
            }
-       }
-       cairo_set_dash(self_cr, d, n, offset);
-       free(d);
+           cairo_set_dash(self_cr, d, n, offset);
+           free(d);
+       } else
+           cairo_set_dash(self_cr, NULL, 0, offset);
        return self;
     }
 end
