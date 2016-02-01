@@ -188,6 +188,17 @@ static stringint contents[] = {
     {"color-alpha", CAIRO_CONTENT_COLOR_ALPHA},
 };
 
+static stringint antialiases[] = {
+    {0, 7},
+    {"best", CAIRO_ANTIALIAS_BEST},
+    {"default", CAIRO_ANTIALIAS_DEFAULT},
+    {"fast", CAIRO_ANTIALIAS_FAST},
+    {"good", CAIRO_ANTIALIAS_GOOD},
+    {"gray", CAIRO_ANTIALIAS_GRAY},
+    {"none", CAIRO_ANTIALIAS_NONE},
+    {"subpixel", CAIRO_ANTIALIAS_SUBPIXEL},
+};
+
 static void pop_word(dptr l, word *res)
 {
     tended struct descrip e;
@@ -513,6 +524,22 @@ function cairo_Context_set_operator(self, val)
            fail;
        }
        cairo_set_operator(self_cr, e->i);
+       return self;
+   }
+end
+
+function cairo_Context_set_antialias(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
+   body {
+       stringint *e;
+       GetSelfCr();
+       e = stringint_lookup(antialiases, buffstr(&val));
+       if (!e) {
+           LitWhy("Invalid antialias");
+           fail;
+       }
+       cairo_set_antialias(self_cr, e->i);
        return self;
    }
 end
@@ -1340,6 +1367,17 @@ function cairo_Context_set_source_extend(self, val)
    }
 end
 
+function cairo_Context_get_source_extend(self)
+   body {
+      char *v;
+      GetSelfCr();
+      v = stringint_int2str(extends, cairo_pattern_get_extend(cairo_get_source(self_cr)));
+      if (!v)
+         syserr("Invalid value of extend");
+      return C_string v;
+   }
+end
+
 function cairo_Context_set_source_matrix_impl(self, xx, yx, xy, yy, x0, y0)
     if !cnv:C_double(xx) then
        runerr(102, xx)
@@ -1426,6 +1464,112 @@ function cairo_Context_get_current_point_impl(self)
     }
 end
 
+function cairo_Context_get_line_width(self)
+   body {
+      GetSelfCr();
+      return C_double cairo_get_line_width(self_cr);
+   }
+end
+
+function cairo_Context_get_line_join(self)
+   body {
+      char *v;
+      GetSelfCr();
+      v = stringint_int2str(linejoins, cairo_get_line_join(self_cr));
+      if (!v)
+        syserr("Invalid value of line join");
+      return C_string v;
+   }
+end
+
+function cairo_Context_get_line_cap(self)
+   body {
+      char *v;
+      GetSelfCr();
+      v = stringint_int2str(linecaps, cairo_get_line_cap(self_cr));
+      if (!v)
+        syserr("Invalid value of line cap");
+      return C_string v;
+   }
+end
+
+function cairo_Context_get_fill_rule(self)
+   body {
+      char *v;
+      GetSelfCr();
+      v = stringint_int2str(fillrules, cairo_get_fill_rule(self_cr));
+      if (!v)
+        syserr("Invalid value of fill rule");
+      return C_string v;
+   }
+end
+
+function cairo_Context_get_miter_limit(self)
+   body {
+      GetSelfCr();
+      return C_double cairo_get_miter_limit(self_cr);
+   }
+end
+
+function cairo_Context_get_tolerance(self)
+   body {
+      GetSelfCr();
+      return C_double cairo_get_tolerance(self_cr);
+   }
+end
+
+function cairo_Context_get_operator(self)
+   body {
+      char *v;
+      GetSelfCr();
+      v = stringint_int2str(drawops, cairo_get_operator(self_cr));
+      if (!v)
+        syserr("Invalid value of operator");
+      return C_string v;
+   }
+end
+
+function cairo_Context_get_antialias(self)
+   body {
+      char *v;
+      GetSelfCr();
+      v = stringint_int2str(antialiases, cairo_get_antialias(self_cr));
+      if (!v)
+        syserr("Invalid value of antialias");
+      return C_string v;
+   }
+end
+
+function cairo_Context_get_dash_offset(self)
+   body {
+      double offset;
+      GetSelfCr();
+      cairo_get_dash(self_cr, NULL, &offset);
+      return C_double offset;
+   }
+end
+
+function cairo_Context_get_dashes(self)
+   body {
+      tended struct descrip result, tmp;
+      double *d;
+      int i, count;
+      GetSelfCr();
+      count = cairo_get_dash_count(self_cr);
+      if (count == 0)
+          fail;
+      MemProtect(d = malloc(count * sizeof(double)));
+      cairo_get_dash(self_cr, d, NULL);
+      create_list(count, &result);
+      for (i = 0; i < count; ++i) {
+           MakeReal(d[i], &tmp);
+           list_put(&result, &tmp);
+       }
+       free(d);
+       return result;
+   }
+end
+         
 function cairo_Pattern_close(self)
     body {
        GetSelfPattern();
@@ -1538,6 +1682,17 @@ function cairo_Pattern_set_extend(self, val)
        }
        cairo_pattern_set_extend(self_pattern, e->i);
        return self;
+   }
+end
+
+function cairo_Pattern_get_extend(self)
+   body {
+      char *v;
+      GetSelfPattern();
+      v = stringint_int2str(extends, cairo_pattern_get_extend(self_pattern));
+      if (!v)
+         syserr("Invalid value of extend");
+      return C_string v;
    }
 end
 

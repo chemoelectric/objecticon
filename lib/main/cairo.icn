@@ -124,6 +124,7 @@ abstract class Pattern(NoCopy)
    end
 
    public native set_extend(v)
+   public native get_extend()
 
    public native close()
 
@@ -413,6 +414,18 @@ final class Context(NoCopy)
    public native new_sub_path()
    public native close()
    public native set_operator(op)
+   public native set_antialias(v)
+
+   public native get_line_width()
+   public native get_line_join()
+   public native get_line_cap()
+   public native get_fill_rule()
+   public native get_miter_limit()
+   public native get_tolerance()
+   public native get_antialias()
+   public native get_operator()
+   public native get_dash_offset()
+   public native get_dashes()
 
    private native get_path_impl(flat)
 
@@ -527,6 +540,7 @@ final class Context(NoCopy)
    private native pop_group_impl()
 
    public native set_source_extend(v)
+   public native get_source_extend()
    private native set_source_matrix_impl(xx, yx, xy, yy, x0, y0)
    private native get_source_matrix_impl()
 
