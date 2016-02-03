@@ -416,11 +416,11 @@ class HttpClient(NetClient)
       local algorithm, md5, qop_options
 
       self.realm := t["realm"]
-      self.nonce := \t["nonce"] | 
+      self.nonce := member(t, "nonce") | 
          return on_http_error("WWW-Authenticate digest header didn't contain a nonce")
-      self.opaque := t["opaque"] 
+      self.opaque := t["opaque"]
 
-      algorithm := \t["algorithm"] | "MD5"
+      algorithm := member(t, "algorithm") | "MD5"
       self.nonce_count := 0
       self.cnonce := "0a4f113b"
       
@@ -438,7 +438,7 @@ class HttpClient(NetClient)
       # Get the available qop values and select a qop.
       #
       qop_options := set()
-      \t["qop"] ? {
+      member(t, "qop") ? {
          while(tab(upto(TOKEN_CHAR))) do 
             insert(qop_options, map(tab(many(TOKEN_CHAR))))
       }
@@ -577,10 +577,7 @@ class HttpClient(NetClient)
             c.value := v
          } else {
             case map(k) of {
-               "expires" : {
-                  if t := Time.parse(v, "EEE, dd-MMM-yyyy hh:mm:ss zzz") then
-                     c.expires := t
-               }
+               "expires" : c.expires := Time.parse(v, "EEE, dd-MMM-yyyy hh:mm:ss zzz")
                "path" : c.path := v
                "domain" : c.domain := v
                "secure" : c.secure := 1
