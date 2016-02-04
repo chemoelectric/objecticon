@@ -6,7 +6,6 @@ record DeviceOffset(x_offset, y_offset)
 record DeviceScale(x_scale, y_scale)
 record Circle(x, y, radius)
 record ColorStop(offset, color)
-record Vector(dx, dy)
 
 # Succeed if the cairo library is available, or fail and set &why if
 # it isn't.

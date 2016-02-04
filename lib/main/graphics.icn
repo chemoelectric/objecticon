@@ -7,6 +7,7 @@ import
 record Size(width, height)
 record Point(x, y)
 record Rectangle(x, y, width, height)
+record Vector(dx, dy)
 record Color(red, green, blue, alpha)
 record XYColor(x, y, red, green, blue, alpha)
 record XYPixel(x, y, pixel)
@@ -423,6 +424,10 @@ final class Window(NoCopy, ObjectOutput)
    public native get_y()
    public native can_resize()
    public native get_width()
+
+   public get_offset()
+      return Vector(get_dx(), get_dy())
+   end
 
    public get_clip()
       return Rectangle!get_clip_impl()
