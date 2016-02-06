@@ -3045,8 +3045,6 @@ function io_RamStream_new_impl(s, wiggle)
        struct ramstream *p;
        if (wiggle < 0)
            Irunerr(205, wiggle);
-       if (wiggle == 0)
-           ++wiggle;  /* To avoid zero-size mallocs/reallocs */
        p = rt_malloc(sizeof(*p));
        p->wiggle = wiggle;
        p->pos = p->size = StrLen(s);

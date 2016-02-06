@@ -604,7 +604,8 @@ static void nxttab(word *col, dptr *tablst, dptr endlst, word *last, word *inter
    }
 
 struct mappair { 
-    int from, pos, utf8_len;
+    word from, pos;
+    int utf8_len;
     char utf8[MAX_UTF8_SEQ_LEN];
 };
 
@@ -669,30 +670,26 @@ function map(s1,s2,s3)
               maps3u = s3;
 
               if (!cnv:ucs(s2,s2)) {
-                  /* In case &errno != 0, note we haven't built maptab */ 
-                  maps2u = nulldesc;
-                  maps3u = nulldesc;
+                  /* In case &handler is set, note we haven't built maptab */ 
+                  maps2u = maps3u = nulldesc;
                   runerr(128,s2);
               }
               if (!cnv:ucs(s3,s3)) {
-                  maps2u = nulldesc;
-                  maps3u = nulldesc;
+                  maps2u = maps3u = nulldesc;
                   runerr(128,s3);
               }
               /*
                * s2 and s3 must be of the same length
                */
-              maptab_len = UcsBlk(s2).length;
-              if (maptab_len != UcsBlk(s3).length) {
-                  maps2u = nulldesc;
-                  maps3u = nulldesc;
+              if (UcsBlk(s2).length != UcsBlk(s3).length) {
+                  maps2u = maps3u = nulldesc;
                   runerr(208);
               }
-
-              maptab = rt_realloc(maptab, 1 + maptab_len * sizeof(struct mappair));  /* + 1 to avoid realloc(..., 0) */
+              maptab_len = UcsBlk(s2).length;
+              maptab = rt_realloc(maptab, maptab_len * sizeof(struct mappair));
               p2 = StrLoc(UcsBlk(s2).utf8);
               p3 = StrLoc(UcsBlk(s3).utf8);
-              for (i = 0; i < UcsBlk(s2).length; ++i) {
+              for (i = 0; i < maptab_len; ++i) {
                   char *t = p3;
                   maptab[i].pos = i;
                   maptab[i].from = utf8_iter(&p2);
@@ -770,22 +767,19 @@ function map(s1,s2,s3)
               maps3 = s3;
 
               if (!cnv:string(s2,s2)) {
-                  /* In case &errno != 0, note we haven't built maptab */ 
-                  maps2 = nulldesc;
-                  maps3 = nulldesc;
+                  /* In case &handler is set, note we haven't built maptab */ 
+                  maps2 = maps3 = nulldesc;
                   runerr(103,s2);
               }
               if (!cnv:string(s3,s3)) {
-                  maps2 = nulldesc;
-                  maps3 = nulldesc;
+                  maps2 = maps3 = nulldesc;
                   runerr(103,s3);
               }
               /*
                * s2 and s3 must be of the same length
                */
               if (StrLen(s2) != StrLen(s3)) {
-                  maps2 = nulldesc;
-                  maps3 = nulldesc;
+                  maps2 = maps3 = nulldesc;
                   runerr(208);
               }
 

@@ -469,7 +469,9 @@ function graphics_Window_fill_trapezoids(self, argv[argc])
       struct trapezoid *traps;
       int dx, dy;
       GetSelfW();
-      CheckArgMultipleOf(6, 1);
+      CheckArgMultipleOf(6, 0);
+      if (argc == 0)
+          return self;
       traps = rt_malloc(sizeof(struct trapezoid) * (argc / 6));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
@@ -503,7 +505,9 @@ function graphics_Window_fill_triangles(self, argv[argc])
       struct triangle *tris;
       int dx, dy;
       GetSelfW();
-      CheckArgMultipleOf(6, 1);
+      CheckArgMultipleOf(6, 0);
+      if (argc == 0)
+          return self;
       tris = rt_malloc(sizeof(struct triangle) * (argc / 6));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
@@ -642,7 +646,7 @@ function graphics_Window_filter(self, x0, y0, w0, h0, spec)
           tended struct b_lelem *le;
           tended struct descrip elem;
           nfilter = ListBlk(spec).size;
-          filter = rt_malloc(1 + nfilter * sizeof(struct filter));  /* + 1 to avoid 0 malloc */
+          filter = rt_malloc(nfilter * sizeof(struct filter));
           for (le = lgfirst(&ListBlk(spec), &state); le;
                le = lgnext(&ListBlk(spec), &state, le)) {
               elem = le->lslots[state.result];

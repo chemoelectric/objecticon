@@ -503,7 +503,7 @@ function posix_System_getgroups()
         errno2why();
         fail;
     }
-    buf = rt_malloc(1 + n * sizeof(gid_t));        /* +1 to avoid zero alloc */
+    buf = rt_malloc(n * sizeof(gid_t));
     n = getgroups(n, buf);
     if (n < 0) {
         errno2why();
