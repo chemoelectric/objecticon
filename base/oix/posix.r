@@ -109,9 +109,9 @@ static char ** list2stringptrs(dptr l)
      * Allocate the required memory for string and pointers, and go through
      * again filling the space.
      */
-    MemProtect(a = malloc((ListBlk(*l).size + 1) * sizeof(char *)));
+    a = rt_malloc((ListBlk(*l).size + 1) * sizeof(char *));
     if (total > 0) {
-        MemProtect(data = malloc(total));
+        data = rt_malloc(total);
         p = data;
     }
     i = 0;
@@ -503,7 +503,7 @@ function posix_System_getgroups()
         errno2why();
         fail;
     }
-    MemProtect(buf = malloc(1 + n * sizeof(gid_t)));   /* +1 to avoid zero alloc */
+    buf = rt_malloc(1 + n * sizeof(gid_t));        /* +1 to avoid zero alloc */
     n = getgroups(n, buf);
     if (n < 0) {
         errno2why();
