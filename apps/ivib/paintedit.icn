@@ -331,7 +331,7 @@ class GridPaintEdit(PaintEdit)
       add_tab_at_front(p)
 
       input := EditableTextList().
-         set_constraint("x_weight", 0).
+         set_constraint("x_weight", 0.0).
          set_size(scale(250),scale(200)).
          set_move_on_rpress(&no).
          set_menu_on_rpress(&no)

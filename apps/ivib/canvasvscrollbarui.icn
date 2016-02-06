@@ -12,7 +12,7 @@ class CanvasVScrollBarUI(CanvasComponentUI)
       local t
       t := CanvasScrollBar()
       t.set_constraint("y_fill", &yes)
-      t.set_constraint("y_weight", "1")
+      t.set_constraint("y_weight", 1.0)
       t.set_range(0, 100)
       t.set_increment_size(1)
       t.set_value(0)

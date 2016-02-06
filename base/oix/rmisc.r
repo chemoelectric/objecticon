@@ -2112,7 +2112,7 @@ void whyf(char *fmt, ...)
 char *salloc(char *s)
 {
     char *s1;
-    MemProtect(s1 = malloc(strlen(s) + 1));
+    s1 = rt_malloc(strlen(s) + 1);
     return strcpy(s1, s);
 }
 
@@ -2248,4 +2248,54 @@ char *datatofile(dptr data)
     }
     close(fd);
     return path;
+}
+
+/*
+ * Convenient wrappers around malloc, etc, that do the appropriate out
+ * of memory error checks.
+ */
+
+
+/*
+ * rt_calloc - allocate and zero m*n bytes
+ */
+void *rt_calloc(size_t m, size_t n)
+{
+    void *a = calloc(m, n);
+    if (!a && (m * n > 0))
+        fatalerr(309, NULL);
+    return a;
+}
+
+/*
+ * rt_zalloc - allocate and zero n bytes
+ */
+void *rt_zalloc(size_t size)
+{
+    void *a = calloc(size, 1);
+    if (!a && size > 0)
+        fatalerr(309, NULL);
+    return a;
+}
+
+/*
+ * rt_malloc - malloc n bytes
+ */
+void *rt_malloc(size_t size)
+{
+    void *a = malloc(size);
+    if (!a && size > 0)
+        fatalerr(309, NULL);
+    return a;
+}
+
+/*
+ * rt_realloc - reallocate ptr to size bytes.
+ */
+void *rt_realloc(void *ptr, size_t size)
+{
+    void *a = realloc(ptr, size);
+    if (!a && size > 0)
+        fatalerr(309, NULL);
+    return a;
 }

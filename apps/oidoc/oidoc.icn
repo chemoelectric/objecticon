@@ -23,6 +23,7 @@ procedure main(a)
 
    opts := options(a, [Opt("html",, "Generate HTML output"),
                        Opt("o",string,"OUTPUT FILE/DIR#Output file or directory"),
+                       Opt("cs",string,"CHARSET#Charset for html output, default UTF-8"),
                        Opt("a",, "Generate documentation for all packages"),
                        Opt("d",, "Generate scanning event debug output"),
                        Opt("r",, "Restrict output to specified packages"),

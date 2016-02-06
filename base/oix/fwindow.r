@@ -17,6 +17,11 @@ if (!self_id)
     runerr(152, self);
 #enddef
 
+#begdef GetSelfPalettedPixels()
+GetSelfPixels()
+if (self_id->format->palette_size == 0)
+    runerr(154, self);
+#enddef
 
 #if Graphics
 
@@ -126,7 +131,7 @@ function graphics_Window_copy_to(self, x0, y0, w0, h0, dest, x1, y1)
       if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (pointargs(w2, &x1, &x2, &y2) == Error)
+      if (pointargs_def(w2, &x1, &x2, &y2) == Error)
           runerr(0);
 
       ox = x;
@@ -221,15 +226,15 @@ function graphics_Window_draw_curve(self, argv[argc])
       GetSelfW();
 
       closed = 0;
-      CheckArgMultipleOf(2);
+      CheckArgMultipleOf(2, 3);
 
       dx = self_w->context->dx;
       dy = self_w->context->dy;
+      n = argc / 2;
 
-      MemProtect(points = malloc(sizeof(struct point) * (n + 2)));
+      points = rt_malloc(sizeof(struct point) * (n + 2));
 
-      if (n > 1) {
-          CnvCDouble(argv[0], x0)
+      CnvCDouble(argv[0], x0)
           CnvCDouble(argv[1], y0)
           CnvCDouble(argv[argc - 2], xN)
           CnvCDouble(argv[argc - 1], yN)
@@ -246,26 +251,21 @@ function graphics_Window_draw_curve(self, argv[argc])
               CnvCDouble(argv[1], t);
               points[0].y = t + self_w->context->dy;
           }
-          for (i = 1; i <= n; i++) {
-              int base = (i-1) * 2;
-              CnvCDouble(argv[base], t);
-              points[i].x = t + dx;
-              CnvCDouble(argv[base + 1], t);
-              points[i].y = t + dy;
-          }
-          if (closed) {                /* duplicate the second point */
-              points[i] = points[2];
-          }
-          else {                       /* duplicate the last point */
-              points[i] = points[i-1];
-          }
-          if (n < 3) {
-              drawlines(self_w, points+1, n);
-          }
-          else {
-              drawcurve(self_w, points, n+2);
-          }
+      for (i = 1; i <= n; i++) {
+          int base = (i-1) * 2;
+          CnvCDouble(argv[base], t);
+          points[i].x = t + dx;
+          CnvCDouble(argv[base + 1], t);
+          points[i].y = t + dy;
       }
+      if (closed) {                /* duplicate the second point */
+          points[i] = points[2];
+      }
+      else {                       /* duplicate the last point */
+          points[i] = points[i-1];
+      }
+      drawcurve(self_w, points, n+2);
+
       free(points);
 
       return self;
@@ -276,7 +276,7 @@ function graphics_Window_draw_image_impl(self, x0, y0, d)
    body {
       word x, y;
       GetSelfW();
-      if (pointargs(self_w, &x0, &x, &y) == Error)
+      if (pointargs_def(self_w, &x0, &x, &y) == Error)
           runerr(0);
       {
       PixelsStaticParam(d, id);
@@ -292,8 +292,8 @@ function graphics_Window_draw_line(self, argv[argc])
       struct point *points;
       int dx, dy;
       GetSelfW();
-      CheckArgMultipleOf(2);
-      MemProtect(points = malloc(sizeof(struct point) * (argc / 2)));
+      CheckArgMultipleOf(2, 2);
+      points = rt_malloc(sizeof(struct point) * (argc / 2));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
       n = 0;
@@ -443,8 +443,8 @@ function graphics_Window_fill_polygon(self, argv[argc])
       struct point *points;
       int dx, dy;
       GetSelfW();
-      CheckArgMultipleOf(2);
-      MemProtect(points = malloc(sizeof(struct point) * (argc / 2)));
+      CheckArgMultipleOf(2, 3);
+      points = rt_malloc(sizeof(struct point) * (argc / 2));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
       n = 0;
@@ -469,8 +469,8 @@ function graphics_Window_fill_trapezoids(self, argv[argc])
       struct trapezoid *traps;
       int dx, dy;
       GetSelfW();
-      CheckArgMultipleOf(6);
-      MemProtect(traps = malloc(sizeof(struct trapezoid) * (argc / 6)));
+      CheckArgMultipleOf(6, 1);
+      traps = rt_malloc(sizeof(struct trapezoid) * (argc / 6));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
       n = 0;
@@ -503,8 +503,8 @@ function graphics_Window_fill_triangles(self, argv[argc])
       struct triangle *tris;
       int dx, dy;
       GetSelfW();
-      CheckArgMultipleOf(6);
-      MemProtect(tris = malloc(sizeof(struct triangle) * (argc / 6)));
+      CheckArgMultipleOf(6, 1);
+      tris = rt_malloc(sizeof(struct triangle) * (argc / 6));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
       n = 0;
@@ -642,7 +642,7 @@ function graphics_Window_filter(self, x0, y0, w0, h0, spec)
           tended struct b_lelem *le;
           tended struct descrip elem;
           nfilter = ListBlk(spec).size;
-          MemProtect(filter = malloc(1 + nfilter * sizeof(struct filter)));  /* + 1 to avoid 0 malloc */
+          filter = rt_malloc(1 + nfilter * sizeof(struct filter));  /* + 1 to avoid 0 malloc */
           for (le = lgfirst(&ListBlk(spec), &state); le;
                le = lgnext(&ListBlk(spec), &state, le)) {
               elem = le->lslots[state.result];
@@ -660,7 +660,7 @@ function graphics_Window_filter(self, x0, y0, w0, h0, spec)
           if (!cnv:string(spec, spec))
               runerr(103, spec);
 
-          MemProtect(filter = malloc(sizeof(struct filter)));
+          filter = rt_malloc(sizeof(struct filter));
           nfilter = 1;
           if (!parsefilter(self_w, buffstr(&spec), &filter[0])) {
               LitWhy("Invalid filter");
@@ -1921,6 +1921,55 @@ function graphics_Pixels_copy_pixel(self, x1, y1, other, x2, y2)
    }
 end
 
+function graphics_Pixels_copy_to(self, x0, y0, w0, h0, dest, x2, y2)
+   if !def:C_integer(x2, 0) then
+      runerr(101, x2)
+   if !def:C_integer(y2, 0) then
+      runerr(101, y2)
+   body {
+      int i, j, r, g, b, a;
+      word ox, oy, x, y, width, height;
+      struct imgdata *id2;
+
+      GetSelfPixels();
+
+      if (is:null(dest))
+          id2 = self_id;
+      else {
+          PixelsStaticParam(dest, tmp);
+          id2 = tmp;
+      }
+
+      /*
+       * x1, y1, width, and height follow standard conventions.
+       */
+      if (pixels_rectargs(self_id, &x0, &x, &y, &width, &height) == Error)
+          runerr(0);
+
+      ox = x;
+      oy = y;
+      if (!pixels_reducerect(self_id, &x, &y, &width, &height))
+          return self;
+      x2 += (x - ox);
+      y2 += (y - oy);
+
+      ox = x2;
+      oy = y2;
+      if (!pixels_reducerect(id2, &x2, &y2, &width, &height))
+          return self;
+      x += (x2 - ox);
+      y += (y2 - oy);
+
+      for (j = 0; j < height; ++j)
+          for (i = 0; i < width; ++i) {
+              self_id->format->getpixel(self_id, x + i, y + j, &r, &g, &b, &a);
+              id2->format->setpixel(id2, x2 + i, y2 + j, r, g, b, a);
+          }
+
+      return self;
+   }
+end
+
 function graphics_Pixels_get(self, x, y)
    if !cnv:C_integer(x) then
       runerr(101, x)
@@ -2093,14 +2142,8 @@ function graphics_Pixels_get_palette(self, i)
    body {
       struct palentry *e;
       tended struct descrip result;
-      int n;
-      GetSelfPixels();
-      n = self_id->format->palette_size;
-      if (n == 0) {
-          LitWhy("Can only get a palette entry with a PALETTE format");
-          fail;
-      }
-      if (i < 0 || i >= n) {
+      GetSelfPalettedPixels();
+      if (i < 0 || i >= self_id->format->palette_size) {
           LitWhy("Out of range");
           fail;
       }
@@ -2117,14 +2160,8 @@ function graphics_Pixels_get_palette_rgba_impl(self, i)
       struct palentry *e;
       tended struct descrip result;
       struct descrip t;
-      int n;
-      GetSelfPixels();
-      n = self_id->format->palette_size;
-      if (n == 0) {
-          LitWhy("Can only get a palette entry with a PALETTE format");
-          fail;
-      }
-      if (i < 0 || i >= n) {
+      GetSelfPalettedPixels();
+      if (i < 0 || i >= self_id->format->palette_size) {
           LitWhy("Out of range");
           fail;
       }
@@ -2155,14 +2192,8 @@ function graphics_Pixels_set_palette_rgba(self, i, r, g, b, a)
       runerr(101, a)
    body {
       struct palentry *e;
-      int n;
-      GetSelfPixels();
-      n = self_id->format->palette_size;
-      if (n == 0) {
-          LitWhy("Can only set a palette entry with a PALETTE format");
-          fail;
-      }
-      if (i < 0 || i >= n) {
+      GetSelfPalettedPixels();
+      if (i < 0 || i >= self_id->format->palette_size) {
           LitWhy("Out of range");
           fail;
       }
@@ -2182,14 +2213,9 @@ function graphics_Pixels_set_palette(self, i, v)
        runerr(103, v)
    body {
       struct palentry *e;
-      int n, r, g, b, a;
-      GetSelfPixels();
-      n = self_id->format->palette_size;
-      if (n == 0) {
-          LitWhy("Can only set a palette entry with a PALETTE format");
-          fail;
-      }
-      if (i < 0 || i >= n) {
+      int r, g, b, a;
+      GetSelfPalettedPixels();
+      if (i < 0 || i >= self_id->format->palette_size) {
           LitWhy("Out of range");
           fail;
       }
@@ -2213,11 +2239,7 @@ function graphics_Pixels_get_palette_index(self, x, y)
    if !cnv:C_integer(y) then
       runerr(101, y)
    body {
-      GetSelfPixels();
-      if (self_id->format->palette_size == 0) {
-          LitWhy("Can only get a palette index with a PALETTE format");
-          fail;
-      }
+      GetSelfPalettedPixels();
       if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
           LitWhy("Out of range");
           fail;
@@ -2234,18 +2256,9 @@ function graphics_Pixels_set_palette_index(self, x, y, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
-      int n;
-      GetSelfPixels();
-      n = self_id->format->palette_size;
-      if (n == 0) {
-          LitWhy("Can only set a palette index with a PALETTE format");
-          fail;
-      }
-      if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height) {
-          LitWhy("Out of range");
-          fail;
-      }
-      if (i < 0 || i >= n) {
+      GetSelfPalettedPixels();
+      if (x < 0 || x >= self_id->width || y < 0 || y >= self_id->height ||
+          i < 0 || i >= self_id->format->palette_size) {
           LitWhy("Out of range");
           fail;
       }

@@ -314,7 +314,7 @@ class CanvasMenuBarDialog(CanvasComponentDialog)
       struct.set_select_mode(Select.MANY)
       p.add(struct)
 
-      q := Panel().set_constraint("x_weight", 0)
+      q := Panel().set_constraint("x_weight", 0.0)
       q.set_layout(GridLayout().set_doi(0).set_extra("borders"))
 
       add_label := TextButton().set_constraint("eol", &yes)

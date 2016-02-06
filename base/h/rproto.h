@@ -268,6 +268,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    int  readimagefile   (char *filename, struct imgdata *imd);
    int  writeimagefile  (char *filename, struct imgdata *imd);
    int rectargs(wbp w, dptr argv, word *px, word *py, word *pw, word *ph);
+   int pointargs_def(wbp w, dptr argv, word *px, word *py);
    int pointargs(wbp w, dptr argv, word *px, word *py);
    int dpointargs(wbp w, dptr argv, double *px, double *py);
    int interpimage(dptr d,  struct imgdata *imd);
@@ -537,6 +538,11 @@ void set_curr_pf(struct p_frame *x);
 void synch_ipc(void);
 int isflag(dptr d);
 char *datatofile(dptr data);
+
+void *rt_calloc(size_t m, size_t n);
+void *rt_zalloc(size_t size);
+void *rt_malloc(size_t size);
+void *rt_realloc(void *ptr, size_t size);
 
 extern void do_op_cat(void);
 extern void do_op_conj(void);

@@ -269,7 +269,7 @@ static struct wcursor *ensure_wcursor(char *name)
         if (!strcmp(name, rv->name))
             return rv;
     }
-    MemProtect(rv = calloc(1, sizeof(struct wcursor)));
+    rv = rt_alloc(sizeof(struct wcursor));
     rv->name = salloc(name);
     rv->next = cursors[i];
     cursors[i] = rv;
@@ -655,7 +655,7 @@ int copyarea(wbp w1, int x, int y, int w, int h, wbp w2, int x2, int y2)
 static wbp alcwbinding()
 {
     wbp w;
-    MemProtect(w = calloc(1, sizeof(struct _wbinding)));
+    w = rt_alloc(sizeof(struct _wbinding));
     GLink(w, wbndngs);
     return w;
 }
@@ -728,7 +728,7 @@ static Point *convert_points(struct point *points0, int npoints)
 {
     Point *points;
     int i;
-    MemProtect(points = malloc(npoints * sizeof(Point)));
+    points = rt_malloc(npoints * sizeof(Point));
     for (i = 0; i < npoints; ++i) {
         points[i].x = points0[i].x;
         points[i].y = points0[i].y;
@@ -1032,7 +1032,7 @@ static Rune *utf8_to_runes(dptr str)
     word i, j, len;
     char *s = StrLoc(UcsBlk(*str).utf8);
     len = UcsBlk(*str).length;
-    MemProtect(r = malloc(len * sizeof(Rune)));
+    r = rt_malloc(len * sizeof(Rune));
     for (i = 0; i < len; ++i) {
         j = chartorune(&r[i], s);
         s += j;
@@ -1183,8 +1183,8 @@ static wfp load_font(char *s)
     if (!f)
         return 0;
 
-    MemProtect(rv = calloc(1, sizeof(struct _wfont)));
-    MemProtect(rv->name = malloc(strlen(s) + 3 + 1));
+    rv = rt_alloc(sizeof(struct _wfont));
+    rv->name = rt_malloc(strlen(s) + 3 + 1);
     sprint(rv->name, "p9:%s", s);
     rv->ascent = f->ascent;               /* font dimensions */
     rv->descent = f->height - f->ascent;
@@ -1239,7 +1239,7 @@ int getpattern(wbp w, struct imgdata *imd)
     imd->width = Dx(im->r);
     imd->height = Dy(im->r);
     len = imd->width * imd->height * 4;
-    MemProtect(data = malloc(len));
+    data = rt_malloc(len);
     unloadimage(im, im->r, data, len);
     imd->format = &imgdataformat_P9ABGR32;
     imd->data = data;
@@ -1255,7 +1255,7 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     /* Allocate a temp win to hold the rectangle we want */
     MemProtect(im = allocimage(display, Rect(0, 0, imd->width, imd->height), RGBA32, 1, DNofill));
     len = imd->width * imd->height * 4;
-    MemProtect(data = malloc(len));
+    data = rt_malloc(len);
     /* Copy from pix to the tmp win */
     gendrawop(im, im->r, ws->pix, Pt(x, y), 0, ZP, S);
     /* Get the pixels from the temp win, and then free it */
@@ -1447,7 +1447,7 @@ int requestselection(wbp w, char *selection, char *target)
             return Failed;
         }
         while ((n_read = read(fd, buff, sizeof buff)) > 0) {
-            MemProtect(snarf = realloc(snarf, snarf_len + n_read));
+            snarf = rt_realloc(snarf, snarf_len + n_read);
             memcpy(snarf + snarf_len, buff, n_read);
             snarf_len += n_read;
         }
@@ -2302,7 +2302,7 @@ static int readimageimpl(char *cmd, int fd, struct imgdata *imd)
     imd->height = Dy(m->r);
     imd->format = format;
     ndata = imd->width * imd->height * m->nchan;
-    MemProtect(imd->data = malloc(ndata));
+    imd->data = rt_malloc(ndata);
     unloadmemimage(m, m->r, imd->data, ndata);
     freememimage(m);
     return Succeeded;
@@ -2398,7 +2398,7 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
     /* Transparency only works for png (not gifs it seems) */
     if (!imd->format->alpha_depth || strcmp(cmd, "topng") != 0) {
         ndata = 3 * imd->width * imd->height;
-        MemProtect(data = malloc(ndata));
+        data = rt_malloc(ndata);
         p = data;
         for (j = 0; j < imd->height; j++) {
             for (i = 0; i < imd->width; i++) {
@@ -2412,7 +2412,7 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
         MemProtect(m = allocmemimage(Rect(0, 0, imd->width, imd->height), RGB24));
     } else {
         ndata = 4 * imd->width * imd->height;
-        MemProtect(data = malloc(ndata));
+        data = rt_malloc(ndata);
         p = data;
         for (j = 0; j < imd->height; j++) {
             for (i = 0; i < imd->width; i++) {
@@ -2564,7 +2564,7 @@ static void load_font_info(void)
                     if (!parsefont(info, family, &flags, &size))
                         ffatalerr("Couldn't parse line %d in font info file %s", line, fn);
                     if (access(buff, R_OK) == 0) {
-                        MemProtect(fi = malloc(sizeof(struct FontInfo)));
+                        fi = rt_malloc(sizeof(struct FontInfo));
                         fi->path = salloc(buff);
                         fi->family = salloc(family);
                         fi->flags = flags;
@@ -2694,10 +2694,10 @@ static void setup_cursor(char *name, struct Cursor *c)
     struct wcursor *rv;
     struct Cursor *c2;
     i = hasher(hashcstr(name), cursors);
-    MemProtect(rv = calloc(1, sizeof(struct wcursor)));
+    rv = rt_alloc(sizeof(struct wcursor));
     rv->name = name;
     if (c) {
-        MemProtect(c2 = malloc(sizeof(struct Cursor)));
+        c2 = rt_malloc(sizeof(struct Cursor));
         memcpy(c2, c, sizeof(struct Cursor));
         rv->shared_cursor = new_sharedcursor(c2);
     } else

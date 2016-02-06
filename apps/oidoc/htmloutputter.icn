@@ -164,7 +164,7 @@ class HtmlOutputter(Outputter)
       fname := output_dir || "/" || get_id(s) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
          doctype(f)
-         write(f, "<html><head><title>", s, "</title></head><body>")
+         write(f, "<html><head><meta charset=\"", get_charset(), "\"><title>", s, "</title></head><body>")
          write(f, "<h1>Package ", s, "</h1><p>")
          write(f, "<h1>Classes</h1><p>")
          every c := get_classes_in(s) do {
@@ -179,13 +179,17 @@ class HtmlOutputter(Outputter)
       }}
    end
 
+   private get_charset()
+      return \opts["cs"] | "UTF-8"
+   end
+
    # Output one class description
    private output_class(c)
       local s, f, fname, supers, o, subs, d, overrides, meths, m, vars, mm, x
       fname := output_dir || "/" || get_id(c) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
          doctype(f)
-         write(f, "<html><head><title>", c.name, "</title></head><body>")
+         write(f, "<html><head><meta charset=\"", get_charset(), "\"><title>", c.name, "</title></head><body>")
          write(f, "<h1>", c.name, "</h1>")
          write(f, "<dl>")
          write(f, "<dt>Type :</dt><dd>", get_top_level_type(c), "</dd>")
@@ -572,7 +576,7 @@ class HtmlOutputter(Outputter)
       fname := output_dir || "/" || get_id(c.scanned_file) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
          doctype(f)
-         write(f, "<html><head><title>", FilePath(filename).get(-1), "</title></head><body><pre>")
+         write(f, "<html><head><meta charset=\"", get_charset(), "\"><title>", FilePath(filename).get(-1), "</title></head><body><pre>")
          # filename may be unavailable if a #line directive gave a path which was inaccessible
          use { g := open(filename) , {
             line_no := 0
@@ -596,7 +600,7 @@ class HtmlOutputter(Outputter)
       fname := output_dir || "/" || get_id(c) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
          doctype(f)
-         write(f, "<html><head><title>", c.name, "</title></head><body>")
+         write(f, "<html><head><meta charset=\"", get_charset(), "\"><title>", c.name, "</title></head><body>")
          write(f, "<h1>", fullname, "</h1>")
          write(f, "<dl>")
          s := c.get_package() | "default"

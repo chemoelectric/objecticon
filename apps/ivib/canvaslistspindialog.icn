@@ -71,7 +71,7 @@ class CanvasListSpinDialog(CanvasComponentDialog)
       selection_list.set_contents(copy(c.selection_list))
       p.add(selection_list)
 
-      q := Panel().set_constraint("x_weight", 0)
+      q := Panel().set_constraint("x_weight", 0.0)
       q.set_layout(GridLayout().set_doi(0).set_extra("borders"))
 
       group := CheckBoxGroup()

@@ -42,7 +42,7 @@ class ColorField(Component)
    public get_value()
       local c
       c := Window.color_value(tf.get_contents()) | fail
-      if \opaque_flag & Window.parse_color(c)[4] ~= 65535 then
+      if \opaque_flag & Window.parse_color(c).alpha ~= 65535 then
          fail
       return c
    end
@@ -52,7 +52,7 @@ class ColorField(Component)
    #
    public set_value(s)
       s := Window.color_value(s) | fail
-      if \opaque_flag & Window.parse_color(s)[4] ~= 65535 then
+      if \opaque_flag & Window.parse_color(s).alpha ~= 65535 then
          fail
       tf.set_contents(s)
       last_val := s
@@ -66,7 +66,7 @@ class ColorField(Component)
    #
    public assign_value(s, ev, coalesce)
       s := Window.color_value(s) | fail
-      if \opaque_flag & Window.parse_color(s)[4] ~= 65535 then
+      if \opaque_flag & Window.parse_color(s).alpha ~= 65535 then
          fail
       tf.assign_contents(s, ev, coalesce)
       return self

@@ -88,9 +88,9 @@ procedure Blend(args[])
          n := integer(a)
       else {
          s := Window.parse_color(a) | fail
-         r2 := s[1]
-         g2 := s[2]
-         b2 := s[3]
+         r2 := s.red
+         g2 := s.green
+         b2 := s.blue
          if /r1 then
             suspend r2 || "," || g2 || "," || b2
          else
@@ -170,12 +170,12 @@ end
 procedure EditRGBA(col, r, g, b, a)
    local l
    l := Window.parse_color(col) | fail
-   l[1] := \r
-   l[2] := \g
-   l[3] := \b
-   l[4] := \a
-   if l[4] = 65535 then
-      return l[1] || "," || l[2] || "," || l[3]
+   l.red := \r
+   l.green := \g
+   l.blue := \b
+   l.alpha := \a
+   if l.alpha = 65535 then
+      return l.red || "," || l.green || "," || l.blue
    else
-      return l[1] || "," || l[2] || "," || l[3] || "," || l[4]
+      return l.red || "," || l.green || "," || l.blue || "," || l.alpha
 end

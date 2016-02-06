@@ -117,7 +117,7 @@ class PaintField(Border)
       cc.set_layout(GridLayout())
       os := OverlaySet()
       cc.add(os)
-      paints := List().set_constraint("x_weight", 0).set_selection_list(["&null","Text","Text(Ucs)","Image","Grid"])
+      paints := List().set_constraint("x_weight", 0.0).set_selection_list(["&null","Text","Text(Ucs)","Image","Grid"])
       paints.connect(self.on_sel_change, Event.SELECTION_CHANGED)
       cc.add(paints)
       edit_paint_button := TextButton().set_label("Edit...")
@@ -143,7 +143,7 @@ class PaintField(Border)
       p.add(img)
       os.add(p)
 
-      grid_label := Label().set_constraint("x_weight", 1).set_constraint("x_fill", &yes).set_label("No format set.")
+      grid_label := Label().set_constraint("x_weight", 1.0).set_constraint("x_fill", &yes).set_label("No format set.")
       os.add(grid_label)
    end
 
@@ -152,7 +152,7 @@ class PaintField(Border)
       setup()
       self.clear_constraints()
       self.set_constraint("x_fill", &yes)
-      self.set_constraint("x_weight", "1")
+      self.set_constraint("x_weight", 1.0)
       return
    end
 end

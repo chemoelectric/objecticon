@@ -246,19 +246,10 @@ if (!cnv:string(din,dout)) runerr(103,din);
 #define CnvTmpString(din,dout)                  \
 if (!cnv:tmp_string(din,dout)) runerr(103,din);
    
-#begdef CheckArgMultiple(mult)
+#begdef CheckArgMultipleOf(mult, min)
    {
-       if ((argc-warg) % (mult)) runerr(146);
-       n = (argc-warg)/mult;
-       if (!n) runerr(146);
-   }
-#enddef				/* CheckArgMultiple */
-
-#begdef CheckArgMultipleOf(mult)
-   {
-       if ((argc) % (mult)) runerr(146);
-       n = (argc)/mult;
-       if (!n) runerr(146);
+       if ((argc) % (mult) || (argc) / (mult) < (min))
+          runerr(146);
    }
 #enddef				/* CheckArgMultiple */
    

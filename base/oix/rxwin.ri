@@ -79,6 +79,7 @@ static void freecontext(wcp wc);
 static void freewindow(wsp ws);
 static void apply_windowlabel(wsp ws);
 static void apply_windowicon(wsp ws);
+static double calc_pt(struct point *p, double cx, double cy, double rx, double ry, double th);
 
 static stringint drawops[] = {
    { 0, 12},
@@ -307,7 +308,7 @@ static struct wcursor *ensure_wcursor(wdp wd, char *name)
         if (!strcmp(name, rv->name))
             return rv;
     }
-    MemProtect(rv = calloc(1, sizeof(struct wcursor)));
+    rv = rt_zalloc(sizeof(struct wcursor));
     rv->name = salloc(name);
     rv->next = wd->cursors[i];
     wd->cursors[i] = rv;
@@ -363,7 +364,7 @@ static void setup_cursor(wdp wd, char *name, int id)
     int i;
     struct wcursor *rv;
     i = hasher(hashcstr(name), wd->cursors);
-    MemProtect(rv = calloc(1, sizeof(struct wcursor)));
+    rv = rt_zalloc(sizeof(struct wcursor));
     rv->name = name;
     rv->shared_cursor = new_sharedcursor(wd, XCreateFontCursor(wd->display, id));
     rv->next = wd->cursors[i];
@@ -529,7 +530,7 @@ static char* property_to_string(wdp wd, Atom target, int number_items, void* dat
             unsigned long *long_array = (unsigned long *)data;
 
             length = 32;
-            MemProtect(result = malloc(length));
+            result = rt_malloc(length);
             *result = 0;
             total_len = 0;
 
@@ -540,7 +541,7 @@ static char* property_to_string(wdp wd, Atom target, int number_items, void* dat
                     curr_len = strlen(atom_name) + 1;    /* +1 for the \n */
                     if (total_len + curr_len + 1 > length) {  /* +1 for the \0 */
                         length = total_len + curr_len + 1;
-                        MemProtect(result = realloc(result, length));
+                        result = rt_realloc(result, length);
                     }
                     sprintf(result + total_len, "%s\n", atom_name);
                     total_len += curr_len;
@@ -552,7 +553,7 @@ static char* property_to_string(wdp wd, Atom target, int number_items, void* dat
         case XA_INTEGER: {
             long *long_array = (long *)data;
             length = number_items * 20 + 1;
-            MemProtect(result = malloc(length));
+            result = rt_malloc(length);
             *result = 0;
             for (i = 0; i < number_items; i++) {
                 if (i > 0)
@@ -564,7 +565,7 @@ static char* property_to_string(wdp wd, Atom target, int number_items, void* dat
         case XA_WINDOW: {
             unsigned long *long_array = (unsigned long *)data;
             length = number_items * 12 + 1;
-            MemProtect(result = malloc(length));
+            result = rt_malloc(length);
             *result = 0;
             for (i = 0; i < number_items; i++) {
                 if (i > 0)
@@ -863,7 +864,7 @@ int setwindowicon(wbp w, struct imgdata *imd)
     free(ws->icondata);
     if (imd) {
         ws->iconlen = 2 + imd->width * imd->height;
-        MemProtect(ws->icondata = malloc(ws->iconlen * sizeof(unsigned long)));
+        ws->icondata = rt_malloc(ws->iconlen * sizeof(unsigned long));
         k = 0;
         ws->icondata[k++] = imd->width;
         ws->icondata[k++] = imd->height;
@@ -894,7 +895,7 @@ int getwindowicon(wbp w, struct imgdata *imd)
     imd->format = &imgdataformat_RGBA32;
     imd->width = *p++;
     imd->height = *p++;
-    MemProtect(imd->data = malloc(imd->format->getlength(imd)));
+    imd->data = rt_malloc(imd->format->getlength(imd));
     for (j = 0; j < imd->height; ++j) {
         for (i = 0; i < imd->width; ++i) {
             int r, g, b, a;
@@ -957,7 +958,7 @@ static char *get_progname()
     while (s > p && s[-1] != '/')
         s--;				/* find tail of prog_name */
     n = p + StrLen(kywd_prog) - s;          /* no. of chars to copy */
-    MemProtect(m = malloc(n + 1));
+    m = rt_malloc(n + 1);
     memcpy(m, s, n);
     m[n] = 0;
     return m;
@@ -2167,47 +2168,55 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
                  make_mod(event->state));
 }
 
-static void semi(struct point *pts, int *npts, int maxpts,
-                 double cx, double cy, double rx, double ry, double a1, double a2,
-                 int xfrom, int xto, int xby, double x0ang, double xnegang, double xposang)
+static double calc_pt(struct point *p, double cx, double cy, double rx, double ry, double th)
 {
-    int x1;
-    double y1, th;
-    if (a1 > x0ang + Pi/2) return;
-    if (a1 + a2 < x0ang - Pi/2) return;
-    x1 = xfrom;
-    for(;;) {
-        if ((xby > 0 && x1 > xto) || (xby < 0 && x1 < xto)) break;
-        y1 = -sqrt(1 - pow(x1/rx, 2)) * ry * xby;
-        if (x1 == 0)
-            th = x0ang;
-        else if (x1 < 0)
-            th = atan(y1/x1) + xnegang;
-        else
-            th = atan(y1/x1) + xposang;
-        if (th > a1+a2) return;
-        if (a1 <= th && *npts < maxpts) {
-            pts[*npts].x = cx + x1;
-            pts[*npts].y = cy + y1;
-            ++*npts;
-        }
-        x1 += xby;
-   }
+    double r;
+    /* Get the polar coordiantes radius relative to center */
+    if (rx == ry)    /* Easy case if a circle */
+        r = rx;
+    else
+        r = (rx * ry) / hypot(rx * sin(th), ry * cos(th));
+    p->x = cx + r * cos(th);
+    p->y = cy + r * sin(th);
+    return r;
 }
 
 void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
+    double th, r, min_r, max_r, min_adj, arc_res;
     struct point *pts;
     int maxpts, npts;
-    maxpts = 4 * (rx + 1) + 4;
-    MemProtect(pts = malloc(maxpts * sizeof(struct point)));
+    
+    min_r = Min(rx, ry);
+    max_r = Max(rx, ry);
+    /* The smaller the radius in pixels, the fewer steps we need. */
+    arc_res = 5.0 / max_r;
+    /* In any case ensure 0.025 <= arc_res <= 0.25 */
+    arc_res = Max(arc_res, 0.025);
+    arc_res = Min(arc_res, 0.25);
+
+    min_adj = arc_res * (min_r / max_r);
+    maxpts = 10 + angle2 / min_adj;
+    pts = rt_malloc(maxpts * sizeof(struct point));
     npts = 0;
-    semi(pts, &npts, maxpts, cx, cy, rx, ry, angle1, angle2,  rx,  -rx, -1, 0.5*Pi, Pi,   0);
-    semi(pts, &npts, maxpts, cx, cy, rx, ry, angle1, angle2, -rx,   rx,  1, 1.5*Pi, Pi,   2*Pi);
-    semi(pts, &npts, maxpts, cx, cy, rx, ry, angle1, angle2,  rx,  -rx, -1, 2.5*Pi, 3*Pi, 2*Pi);
-    semi(pts, &npts, maxpts, cx, cy, rx, ry, angle1, angle2, -rx,   rx,  1, 3.5*Pi, 3*Pi, 4*Pi);
-    if (angle2 == 2 * Pi && npts < maxpts)
-        pts[npts++] = pts[0];  /* Ensure drawlines recognizes a closed arc */
+    th = angle1;
+    while (th < angle1 + angle2 && npts < maxpts) {
+        r = calc_pt(&pts[npts], cx, cy, rx, ry, th);
+        ++npts;
+        /*
+         * Now r <= max_r.  Adjust th based on r; the longer it is
+         * compared to the shorter axis, the more points we generate.
+         */
+        th += arc_res * (min_r / r);
+    }
+    if (npts < maxpts) {
+        if (angle2 == 2 * Pi)
+            pts[npts] = pts[0];  /* Ensure drawlines recognizes a closed arc */
+        else
+            calc_pt(&pts[npts], cx, cy, rx, ry, angle1 + angle2);
+        ++npts;
+    }
+
     drawlines(w, pts, npts);
     free(pts);
 }
@@ -2708,7 +2717,7 @@ void drawlines(wbp w, struct point *points, int npoints)
         return;
     closed = points[npoints - 1].x == points[0].x && points[npoints - 1].y == points[0].y;
 
-    MemProtect(lis = malloc((npoints - 1) * sizeof(struct lineinfo)));
+    lis = rt_malloc((npoints - 1) * sizeof(struct lineinfo));
     pd1 = adjustpoint(wc, points, npoints, 0, closed);
     nlis = 0;
     for (i = 1; i < npoints; ++i) {
@@ -2818,7 +2827,7 @@ void fillpolygon(wbp w, struct point *points, int npoints)
     if (npoints < 3)
         return;
     points_extent(points, npoints, &x, &y, &width, &height);
-    MemProtect(xpoints = malloc(npoints * sizeof(XPointDouble)));
+    xpoints = rt_malloc(npoints * sizeof(XPointDouble));
     clip(w);
     if (needmask(wc, 0)) {
         Picture mask;
@@ -2862,7 +2871,7 @@ void filltrapezoids(wbp w, struct trapezoid *traps, int ntraps)
     int x, y, width, height, i;
 
     trapezoids_extent(traps, ntraps, &x, &y, &width, &height);
-    MemProtect(xtraps = malloc(ntraps * sizeof(XTrapezoid)));
+    xtraps = rt_malloc(ntraps * sizeof(XTrapezoid));
     clip(w);
     if (needmask(wc, 1)) {
         Picture mask;
@@ -2902,7 +2911,7 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     int x, y, width, height, i;
 
     triangles_extent(tris, ntris, &x, &y, &width, &height);
-    MemProtect(xtris = malloc(ntris * sizeof(XTrapezoid)));
+    xtris = rt_malloc(ntris * sizeof(XTrapezoid));
     clip(w);
     if (needmask(wc, 1)) {
         Picture mask;
@@ -3350,7 +3359,7 @@ char *atom_names[NUMATOMS] = {
 wbp alcwbinding(wdp wd)
 {
     wbp w;
-    MemProtect(w = calloc(1, sizeof(struct _wbinding)));
+    w = rt_zalloc(sizeof(struct _wbinding));
     GLink(w, wd->wbndngs);
     return w;
 }
@@ -3395,7 +3404,7 @@ static wdp alcdisplay(char *s)
             return wd;
         }
 
-    MemProtect(wd = calloc(1, sizeof(struct _wdisplay)));
+    wd = rt_zalloc(sizeof(struct _wdisplay));
 
     wd->program = curpstate;
     wd->display = XOpenDisplay((*s=='\0') ? NULL : s);
@@ -3586,14 +3595,14 @@ static wfp newfont(wdp wd, char *s)
     wfp rv;
     XGlyphInfo	extents; 
 
-    MemProtect(rv = calloc(1, sizeof(struct _wfont)));
+    rv = rt_zalloc(sizeof(struct _wfont));
     rv->fsp = XftFontOpenName(wd->display, DefaultScreen(wd->display), s);
     if (!rv->fsp){
         free(rv);
         return 0;
     }
 
-    MemProtect(rv->name = malloc(strlen(s) + 3 + 1));
+    rv->name = rt_malloc(strlen(s) + 3 + 1);
     sprintf(rv->name, "fc:%s", s);
 
     /*

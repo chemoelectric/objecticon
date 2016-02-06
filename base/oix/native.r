@@ -1138,12 +1138,12 @@ struct b_proc *clone_b_proc(struct b_proc *bp)
     struct b_proc *new0;
     switch (bp->type) {
         case P_Proc: {
-            MemProtect(new0 = malloc(sizeof(struct p_proc)));
+            new0 = rt_malloc(sizeof(struct p_proc));
             memcpy(new0, bp, sizeof(struct p_proc));
             break;
         }
         case C_Proc: {
-            MemProtect(new0 = malloc(sizeof(struct c_proc)));
+            new0 = rt_malloc(sizeof(struct c_proc));
             memcpy(new0, bp, sizeof(struct c_proc));
             break;
         }
@@ -1165,7 +1165,7 @@ static struct b_proc *try_load(void *handle, struct b_class *class0,  struct cla
     dptr fname;
 
     fname = class0->program->Fnames[cf->fnum];
-    MemProtect(fq = malloc(StrLen(*class0->name) + StrLen(*fname) + 3));
+    fq = rt_malloc(StrLen(*class0->name) + StrLen(*fname) + 3);
     p = fq;
     *p++ = 'B';
     t = StrLoc(*class0->name);
@@ -1263,7 +1263,7 @@ function lang_Proc_load(filename, funcname)
        /*
         * Load the function.  Diagnose both library and function errors here.
         */
-       MemProtect(tname = malloc(strlen(funcname) + 2));
+       tname = rt_malloc(strlen(funcname) + 2);
        sprintf(tname, "B%s", funcname);
        blk = (struct b_proc *)dlsym(handle, tname);
        if (!blk) {
@@ -2373,7 +2373,7 @@ function io_DescStream_poll(l, timeout)
        nfds = ListBlk(l).size / 2;
 
        if (nfds > 0)
-           MemProtect(ufds = realloc(ufds, nfds * sizeof(struct pollfd)));
+           ufds = rt_realloc(ufds, nfds * sizeof(struct pollfd));
 
        le = lgfirst(&ListBlk(l), &state);
        for (i = 0; i < nfds; ++i) {
@@ -2503,7 +2503,7 @@ function io_DirStream_new_impl(path)
            errno2why();
            fail;
        }
-       MemProtect(d = malloc(sizeof(struct DirData)));
+       d = rt_malloc(sizeof(struct DirData));
        d->fd = fd;
        d->pos = d->n = 0;
        d->st = 0;
@@ -2645,7 +2645,7 @@ function io_DirStream_new_impl(path)
       runerr(103, path)
    body {
        struct DirData *fd;
-       MemProtect(fd = malloc(sizeof(struct DirData)));
+       fd = rt_malloc(sizeof(struct DirData));
        fd->handle = FindFirstFile(path, &fd->fileData);
        if (fd->handle == INVALID_HANDLE_VALUE) {
 	  if (GetLastError() == ERROR_FILE_NOT_FOUND) {
@@ -3513,11 +3513,11 @@ function io_RamStream_new_impl(s, wiggle)
            Irunerr(205, wiggle);
        if (wiggle == 0)
            ++wiggle;  /* To avoid zero-size mallocs/reallocs */
-       MemProtect(p = malloc(sizeof(*p)));
+       p = rt_malloc(sizeof(*p));
        p->wiggle = wiggle;
        p->pos = p->size = StrLen(s);
        p->avail = p->size + p->wiggle;
-       MemProtect(p->data = malloc(p->avail));
+       p->data = rt_malloc(p->avail);
        memcpy(p->data, StrLoc(s), p->size);
        return C_integer((word)p);
    }
@@ -3530,7 +3530,7 @@ function io_RamStream_out(self, s)
        GetSelfRs();
        if (self_rs->pos + StrLen(s) > self_rs->avail) {
            self_rs->avail = 2 * (self_rs->pos + StrLen(s));
-           MemProtect(self_rs->data = realloc(self_rs->data, self_rs->avail));
+           self_rs->data = rt_realloc(self_rs->data, self_rs->avail);
        }
 
        if (self_rs->pos > self_rs->size)
@@ -3577,7 +3577,7 @@ function io_RamStream_truncate(self, len)
        GetSelfRs();
        self_rs->pos = len;
        self_rs->avail = len + self_rs->wiggle;
-       MemProtect(self_rs->data = realloc(self_rs->data, self_rs->avail));
+       self_rs->data = rt_realloc(self_rs->data, self_rs->avail);
        if (self_rs->size < len)
            memset(&self_rs->data[self_rs->size], 0, len - self_rs->size);
        self_rs->size = len;

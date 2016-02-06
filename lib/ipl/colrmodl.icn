@@ -271,9 +271,9 @@ end
 procedure color2rgb(color)
    local t
    t := Window.parse_color(color) | fail
-   return rgb(t[1] / 65535.0,
-              t[2] / 65535.0,
-              t[3] / 65535.0)
+   return rgb(t.red / 65535.0,
+              t.green / 65535.0,
+              t.blue / 65535.0)
 end
 
 procedure rgb2color(rgb)

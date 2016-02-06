@@ -3390,7 +3390,7 @@ static int get_literal(struct lnode *n, struct literal *l)
             return 1;
         }
         if (ce->c_flag == F_CsetLit) {
-            struct range *pair = safe_alloc(ce->length);
+            struct range *pair = safe_zalloc(ce->length);
             int i, npair = ce->length / sizeof(struct range);
             memcpy(pair, ce->data, ce->length);
             l->type = CSET;

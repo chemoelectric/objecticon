@@ -155,7 +155,7 @@ extern struct lvl_entry *dcl_stk; /* stack of declaration contexts */
 #define AbstrNd  15 /* abstract type computation */
 #define IcnTypNd 16 /* name of an Icon type */
 
-#define NewNode(size) safe_alloc((unsigned int)\
+#define NewNode(size) safe_zalloc((unsigned int)\
     (sizeof(struct node) + (size-1) * sizeof(union field)))
 
 union field {

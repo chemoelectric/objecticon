@@ -139,7 +139,7 @@ class CanvasTableDialog(CanvasComponentDialog)
       t3.set_column_width(scale(60))
       struct.add_column(t3)
 
-      q := Panel().set_constraint("x_weight", 0)
+      q := Panel().set_constraint("x_weight", 0.0)
       q.set_layout(GridLayout().set_doi(0))
 
       add_col := TextButton().set_constraint("eol", &yes)

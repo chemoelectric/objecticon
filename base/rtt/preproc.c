@@ -468,9 +468,9 @@ struct macro *m;
           * Allocate an array for both raw and macro-expanded token lists
           *  for the arguments.
           */
-         args = safe_alloc((unsigned int)(sizeof(struct tok_lst *)
+         args = safe_zalloc((unsigned int)(sizeof(struct tok_lst *)
              * nparm));
-         exp_args = safe_alloc((unsigned int)(
+         exp_args = safe_zalloc((unsigned int)(
              sizeof(struct tok_lst *) * nparm));
 
          /*

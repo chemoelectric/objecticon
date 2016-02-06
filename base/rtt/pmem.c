@@ -109,8 +109,8 @@ int bufsize;
    struct char_src *cs;
 
    cs = Alloc(struct char_src);
-   cs->char_buf = safe_alloc((unsigned int)(sizeof(int) * bufsize));
-   cs->line_buf = safe_alloc((unsigned int)(sizeof(int) * bufsize));
+   cs->char_buf = safe_zalloc((unsigned int)(sizeof(int) * bufsize));
+   cs->line_buf = safe_zalloc((unsigned int)(sizeof(int) * bufsize));
    cs->bufsize = bufsize;
    cs->fname = fname;
    cs->f = f;

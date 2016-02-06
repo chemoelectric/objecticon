@@ -81,6 +81,6 @@ struct node *typ;
 char *salloc(char *s)
    {
    register char *s1;
-   s1 = (char *)safe_alloc(strlen(s) + 1);
+   s1 = (char *)safe_zalloc(strlen(s) + 1);
    return strcpy(s1, s);
    }

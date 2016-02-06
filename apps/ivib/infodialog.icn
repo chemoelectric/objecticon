@@ -26,7 +26,7 @@ class InfoDialog(Dialog)
       /alignment := "l"
       set_label(title)
       set_layout(GridLayout())
-      l := Label().set_constraint("eol", &yes).set_constraint("y_weight", 1)
+      l := Label().set_constraint("eol", &yes).set_constraint("y_weight", 1.0)
       s := ".cell x_align=" || alignment || "\n"
       every s ||:= !lines || "\n.br\n"
       l.set_label(s)

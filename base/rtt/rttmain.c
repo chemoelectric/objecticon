@@ -82,8 +82,8 @@ int main(argc, argv)
      *  that are passed along to the preprocessor initialization routine.
      *  Their number is at most the number of arguments to rtt.
      */
-    opt_lst = safe_alloc((unsigned)argc);
-    opt_args = safe_alloc((unsigned)(sizeof (char *)) * argc);
+    opt_lst = safe_zalloc((unsigned)argc);
+    opt_args = safe_zalloc((unsigned)(sizeof (char *)) * argc);
     nopts = 0;
 
     /*
@@ -129,12 +129,12 @@ int main(argc, argv)
     if (!refpath)
         refpath = salloc(relfile(argv[0], "/../../base/h/"));
 
-    in_header = safe_alloc(strlen(refpath) + strlen(GRTTIN_H) + 1);
+    in_header = safe_zalloc(strlen(refpath) + strlen(GRTTIN_H) + 1);
     strcpy(in_header, refpath);
     strcat(in_header, GRTTIN_H);
     normalize(in_header);
 
-    inclname = safe_alloc(strlen(refpath) + strlen(RT_H) + 1);
+    inclname = safe_zalloc(strlen(refpath) + strlen(RT_H) + 1);
     strcpy(inclname, refpath);
     strcat(inclname, RT_H);
     normalize(inclname);

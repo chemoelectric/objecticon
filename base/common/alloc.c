@@ -19,13 +19,13 @@ void *safe_calloc(size_t m, size_t n)
 }
 
 /*
- * safe_alloc - allocate and zero n bytes
+ * safe_zalloc - allocate and zero n bytes
  */
-void *safe_alloc(size_t size)
+void *safe_zalloc(size_t size)
 {
     void *a = calloc(size, 1);
     if (!a && size > 0) {
-        fprintf(stderr, "safe_alloc(%lu): out of memory\n", (unsigned long)size);
+        fprintf(stderr, "safe_zalloc(%lu): out of memory\n", (unsigned long)size);
         exit(EXIT_FAILURE);
     }
     return a;

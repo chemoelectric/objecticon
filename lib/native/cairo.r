@@ -11,11 +11,18 @@
 #passthru #include <librsvg/rsvg.h>
 
 static void pix_to_win(cairo_t *cr, double x1, double y1, double x2, double y2);
+static void doubles2list(dptr result, int n, ...);
+static void matrix2list(dptr result, cairo_matrix_t *m);
+static void rectangle2list(dptr result, cairo_rectangle_t *r);
+static void path2list(dptr result, cairo_path_t *p);
 static void ensure(cairo_t *cr);
 static cairo_operator_t convert_op(int op);
 static void device_stroke_extents(cairo_t *cr, double *x1, double *y1, double *x2, double *y2);
 static void device_fill_extents(cairo_t *cr, double *x1, double *y1, double *x2, double *y2);
 static void device_clip_extents(cairo_t *cr, double *x1, double *y1, double *x2, double *y2);
+static int is_valid_patch(cairo_pattern_t *p, word num);
+static int is_valid_stop(cairo_pattern_t *p, word stop);
+static void mk_errortext(cairo_status_t status);
 
 static cairo_user_data_key_t contextkey;
 static cairo_user_data_key_t winkey;
@@ -128,9 +135,34 @@ if (!self_svg)
     runerr(152, self);
 #enddef
 
-#define CheckSurfaceStatus(obj) do {if (cairo_surface_status(obj) == CAIRO_STATUS_NO_MEMORY) fatalerr(309,NULL);} while(0)
-#define CheckPatternStatus(obj) do {if (cairo_pattern_status(obj) == CAIRO_STATUS_NO_MEMORY) fatalerr(309,NULL);} while(0)
-#define CheckContextStatus(obj) do {if (cairo_status(obj) == CAIRO_STATUS_NO_MEMORY) fatalerr(309,NULL);} while(0)
+#begdef CheckStatus2(status, obj)
+do {
+    if (status == CAIRO_STATUS_NO_MEMORY)
+        fatalerr(309, NULL);
+    if (status != CAIRO_STATUS_SUCCESS) {
+        mk_errortext(status);
+        runerr(-1, obj);
+    }
+} while(0)
+#enddef
+
+#begdef CheckStatus(status)
+do {
+    if (status == CAIRO_STATUS_NO_MEMORY)
+        fatalerr(309, NULL);
+    if (status != CAIRO_STATUS_SUCCESS) {
+        mk_errortext(status);
+        runerr(-1);
+    }
+} while(0)
+#enddef
+
+#define CheckSelfCrStatus() CheckStatus2(cairo_status(self_cr), self)
+#define CheckSelfPatternStatus() CheckStatus2(cairo_pattern_status(self_pattern), self)
+#define CheckSelfSurfaceStatus() CheckStatus2(cairo_surface_status(self_surface), self)
+#define CheckPatternStatus(pattern) CheckStatus(cairo_pattern_status(pattern))
+#define CheckSurfaceStatus(surface) CheckStatus(cairo_surface_status(surface))
+#define CheckContextStatus(context) CheckStatus(cairo_status(context))
 
 static stringint drawops[] = {
    { 0, 12},
@@ -174,6 +206,34 @@ static stringint extends[] = {
     {"pad", CAIRO_EXTEND_PAD},
     {"reflect", CAIRO_EXTEND_REFLECT},
     {"repeat", CAIRO_EXTEND_REPEAT},
+};
+
+static stringint contents[] = {
+    {0, 3},
+    {"alpha", CAIRO_CONTENT_ALPHA},
+    {"color", CAIRO_CONTENT_COLOR},
+    {"color-alpha", CAIRO_CONTENT_COLOR_ALPHA},
+};
+
+static stringint antialiases[] = {
+    {0, 7},
+    {"best", CAIRO_ANTIALIAS_BEST},
+    {"default", CAIRO_ANTIALIAS_DEFAULT},
+    {"fast", CAIRO_ANTIALIAS_FAST},
+    {"good", CAIRO_ANTIALIAS_GOOD},
+    {"gray", CAIRO_ANTIALIAS_GRAY},
+    {"none", CAIRO_ANTIALIAS_NONE},
+    {"subpixel", CAIRO_ANTIALIAS_SUBPIXEL},
+};
+
+static stringint filters[] = {
+    {0, 6},
+    {"best", CAIRO_FILTER_BEST},
+    {"bilinear", CAIRO_FILTER_BILINEAR},
+    {"fast", CAIRO_FILTER_FAST},
+    {"gaussian", CAIRO_FILTER_GAUSSIAN},
+    {"good", CAIRO_FILTER_GOOD},
+    {"nearest", CAIRO_FILTER_NEAREST},
 };
 
 static void pop_word(dptr l, word *res)
@@ -278,21 +338,25 @@ function cairo_Context_set_font(self, val)
 end
 
 function cairo_Context_set_dash(self, offset, args[n])
-    if !cnv:C_double(offset) then
+    if !def:C_double(offset, 0.0) then
        runerr(102, offset)
     body {
-       double *d;
-       int i;
        GetSelfCr();
-       MemProtect(d = malloc(n * sizeof(double)));
-       for (i = 0; i < n; ++i) {
-           if (!cnv:C_double(args[i], d[i])) {
-               free(d);
-               runerr(102, args[i]);
+       if (n > 0) {
+           double *d;
+           int i;
+           MemProtect(d = malloc(n * sizeof(double)));
+           for (i = 0; i < n; ++i) {
+               if (!cnv:C_double(args[i], d[i])) {
+                   free(d);
+                   runerr(102, args[i]);
+               }
            }
-       }
-       cairo_set_dash(self_cr, d, n, offset);
-       free(d);
+           cairo_set_dash(self_cr, d, n, offset);
+           free(d);
+           CheckSelfCrStatus();
+       } else
+           cairo_set_dash(self_cr, NULL, 0, offset);
        return self;
     }
 end
@@ -319,6 +383,7 @@ function cairo_Context_set_source_pattern(self, pat)
        {
        PatternStaticParam(pat, pattern);
        cairo_set_source(self_cr, pattern);
+       CheckSelfCrStatus();
        }
        return self;
     }
@@ -327,78 +392,6 @@ end
 static void destroypic(void *data)
 {
     unlink_sharedpicture((struct SharedPicture *)data);
-}
-
-static void clone_wc(cairo_t *cr)
-{
-    cairo_matrix_t matrix;
-    PangoFontDescription *fontdesc;
-    PangoLayout *layout;
-    PangoContext *pc;
-    double dpi;
-    wbp w;
-    wsp ws;
-    wdp wd;
-    wcp wc;
-
-    w = getwindow(cr);
-    if (!w)
-        return;
-
-    ws = w->window;
-    wd = ws->display;
-    wc = w->context;
-    cairo_set_line_width(cr, wc->linewidth);
-    if (wc->pattern) {
-        cairo_surface_t *surface;
-        cairo_pattern_t *pattern;
-        struct SharedPicture *pic;
-        pic = link_sharedpicture(wc->pattern);
-        surface = cairo_xlib_surface_create_with_xrender_format(wd->display, 
-                                                                pic->pix,
-                                                                DefaultScreenOfDisplay(wd->display),
-                                                                wd->pixfmt,
-                                                                pic->width, pic->height);
-        CheckSurfaceStatus(surface);
-        pattern = cairo_pattern_create_for_surface(surface);
-        CheckPatternStatus(pattern);
-        cairo_pattern_set_user_data(pattern, &pickey, pic, destroypic);
-        cairo_pattern_set_extend(pattern, CAIRO_EXTEND_REPEAT);
-        cairo_set_source(cr, pattern);
-        cairo_surface_destroy(surface);
-        cairo_pattern_destroy(pattern);
-    } else {
-        cairo_set_source_rgba(cr,
-                              wc->fg->color.red / 65535.0,
-                              wc->fg->color.green / 65535.0,
-                              wc->fg->color.blue / 65535.0,
-                              wc->fg->color.alpha / 65535.0);
-    }
-
-    fontdesc = pango_fc_font_description_from_pattern(wc->font->fsp->pattern, TRUE);
-    layout = getpangolayout(cr);
-    pango_layout_set_font_description(layout, fontdesc);
-    pango_font_description_free(fontdesc);
-    /* 
-     * Set the resolution (dpi).  Otherwise, fonts won't be converted
-     * from point size to pixels properly (a default 96dpi would be
-     * used).
-     */
-    dpi = (((double) DisplayHeight(wd->display, DefaultScreen(wd->display)) * 25.4) /
-           (double) DisplayHeightMM(wd->display, DefaultScreen(wd->display)));
-    pc = pango_layout_get_context(layout);
-    pango_cairo_context_set_resolution(pc, dpi);
-
-    if (wc->clipw >= 0) {
-        cairo_rectangle(cr, wc->clipx, wc->clipy, wc->clipw, wc->cliph);
-        cairo_clip(cr);
-        cairo_new_path(cr);
-    }
-    cairo_matrix_init_translate(&matrix, wc->dx, wc->dy);
-    cairo_set_matrix(cr, &matrix);
-    if (wc->linestyle->i == EndDisc)
-        cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
-    cairo_set_operator(cr, convert_op(wc->drawop->i));
 }
 
 static void destroylayout(void *data)
@@ -410,13 +403,83 @@ function cairo_Context_new_impl(sur)
     body {
        cairo_t *cr;
        PangoLayout *layout;
+       wbp w;
        {
        SurfaceStaticParam(sur, surface);
        cr = cairo_create(surface);
        CheckContextStatus(cr);
        layout = pango_cairo_create_layout(cr);
        cairo_set_user_data(cr, &contextkey, layout, destroylayout);
-       clone_wc(cr);
+       w = getwindow(cr);
+       if (w) {
+           cairo_matrix_t matrix;
+           PangoFontDescription *fontdesc;
+           PangoLayout *layout;
+           PangoContext *pc;
+           double dpi;
+           wsp ws;
+           wdp wd;
+           wcp wc;
+
+           /*
+            * Try to clone the window context into the cairo context.
+            */
+
+           ws = w->window;
+           wd = ws->display;
+           wc = w->context;
+           cairo_set_line_width(cr, wc->linewidth);
+           if (wc->pattern) {
+               cairo_surface_t *surface;
+               cairo_pattern_t *pattern;
+               struct SharedPicture *pic;
+               pic = link_sharedpicture(wc->pattern);
+               surface = cairo_xlib_surface_create_with_xrender_format(wd->display, 
+                                                                       pic->pix,
+                                                                       DefaultScreenOfDisplay(wd->display),
+                                                                       wd->pixfmt,
+                                                                       pic->width, pic->height);
+               CheckSurfaceStatus(surface);
+               pattern = cairo_pattern_create_for_surface(surface);
+               CheckPatternStatus(pattern);
+               cairo_pattern_set_user_data(pattern, &pickey, pic, destroypic);
+               cairo_pattern_set_extend(pattern, CAIRO_EXTEND_REPEAT);
+               cairo_set_source(cr, pattern);
+               cairo_surface_destroy(surface);
+               cairo_pattern_destroy(pattern);
+           } else {
+               cairo_set_source_rgba(cr,
+                                     wc->fg->color.red / 65535.0,
+                                     wc->fg->color.green / 65535.0,
+                                     wc->fg->color.blue / 65535.0,
+                                     wc->fg->color.alpha / 65535.0);
+           }
+
+           fontdesc = pango_fc_font_description_from_pattern(wc->font->fsp->pattern, TRUE);
+           layout = getpangolayout(cr);
+           pango_layout_set_font_description(layout, fontdesc);
+           pango_font_description_free(fontdesc);
+           /* 
+            * Set the resolution (dpi).  Otherwise, fonts won't be converted
+            * from point size to pixels properly (a default 96dpi would be
+            * used).
+            */
+           dpi = (((double) DisplayHeight(wd->display, DefaultScreen(wd->display)) * 25.4) /
+                  (double) DisplayHeightMM(wd->display, DefaultScreen(wd->display)));
+           pc = pango_layout_get_context(layout);
+           pango_cairo_context_set_resolution(pc, dpi);
+
+           if (wc->clipw >= 0) {
+               cairo_rectangle(cr, wc->clipx, wc->clipy, wc->clipw, wc->cliph);
+               cairo_clip(cr);
+               cairo_new_path(cr);
+           }
+           cairo_matrix_init_translate(&matrix, wc->dx, wc->dy);
+           cairo_set_matrix(cr, &matrix);
+           if (wc->linestyle->i == EndDisc)
+               cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+           cairo_set_operator(cr, convert_op(wc->drawop->i));
+       }
        }
        return C_integer (word) cr;
     }
@@ -471,29 +534,18 @@ function cairo_Context_set_matrix_impl(self, xx, yx, xy, yy, x0, y0)
        GetSelfCr();
        cairo_matrix_init(&m, xx, yx, xy, yy, x0, y0);
        cairo_set_matrix(self_cr, &m);
+       CheckSelfCrStatus();
        return self;
     }
 end
 
 function cairo_Context_get_matrix_impl(self)
     body {
-       tended struct descrip result, tmp;
+       tended struct descrip result;
        cairo_matrix_t m;        
        GetSelfCr();
        cairo_get_matrix(self_cr, &m);
-       create_list(6, &result);
-       MakeReal(m.xx, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(m.yx, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(m.xy, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(m.yy, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(m.x0, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(m.y0, &tmp);
-       list_put(&result, &tmp);
+       matrix2list(&result, &m);
        return result;
     }
 end
@@ -510,6 +562,22 @@ function cairo_Context_set_operator(self, val)
            fail;
        }
        cairo_set_operator(self_cr, e->i);
+       return self;
+   }
+end
+
+function cairo_Context_set_antialias(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
+   body {
+       stringint *e;
+       GetSelfCr();
+       e = stringint_lookup(antialiases, buffstr(&val));
+       if (!e) {
+           LitWhy("Invalid antialias");
+           fail;
+       }
+       cairo_set_antialias(self_cr, e->i);
        return self;
    }
 end
@@ -564,6 +632,99 @@ function cairo_Context_reset_clip(self)
     }
 end
 
+#passthru #define _DOUBLE double
+static void doubles2list(dptr result, int n, ...)
+{
+    tended struct descrip tmp;
+    va_list argp;
+    int i;
+    va_start(argp, n);
+    create_list(n, result);
+    for (i = 0; i < n; ++i) {
+        double d = va_arg(argp, _DOUBLE);
+        MakeReal(d, &tmp);
+        list_put(result, &tmp);
+    }
+}
+
+static void matrix2list(dptr result, cairo_matrix_t *m)
+{
+    doubles2list(result, 6, m->xx, m->yx, m->xy, m->yy, m->x0, m->y0);
+}
+
+static void rectangle2list(dptr result, cairo_rectangle_t *r)
+{
+    doubles2list(result, 4, r->x, r->y, r->width, r->height);
+}
+
+static void path2list(dptr result, cairo_path_t *path)
+{
+    tended struct descrip tmp;
+    cairo_path_data_t *data;
+    int i, j;
+    create_list(path->num_data, result);
+    for (i = 0; i < path->num_data; i += path->data[i].header.length) {
+        data = &path->data[i];
+        switch (data->header.type) {
+            case CAIRO_PATH_MOVE_TO: {
+                MakeInt(0, &tmp);
+                list_put(result, &tmp);
+                MakeReal(data[1].point.x, &tmp);
+                list_put(result, &tmp);
+                MakeReal(data[1].point.y, &tmp);
+                list_put(result, &tmp);
+                break;
+            }
+            case CAIRO_PATH_LINE_TO: {
+                MakeInt(1, &tmp);
+                list_put(result, &tmp);
+                MakeReal(data[1].point.x, &tmp);
+                list_put(result, &tmp);
+                MakeReal(data[1].point.y, &tmp);
+                list_put(result, &tmp);
+                break;
+            }
+            case CAIRO_PATH_CURVE_TO: {
+                MakeInt(2, &tmp);
+                list_put(result, &tmp);
+                for (j = 1; j <= 3; ++j) {
+                    MakeReal(data[j].point.x, &tmp);
+                    list_put(result, &tmp);
+                    MakeReal(data[j].point.y, &tmp);
+                    list_put(result, &tmp);
+                }
+                break;
+            }
+            case CAIRO_PATH_CLOSE_PATH: {
+                MakeInt(3, &tmp);
+                break;
+            }
+        }
+    }
+}
+
+function cairo_Context_get_clip_rectangles_impl(self)
+    body {
+       tended struct descrip result, tmp;
+       int i;
+       cairo_rectangle_list_t *rl;
+       GetSelfCr();
+       rl = cairo_copy_clip_rectangle_list(self_cr);
+       if (rl->status == CAIRO_STATUS_CLIP_NOT_REPRESENTABLE) {
+           cairo_rectangle_list_destroy(rl);
+           fail;
+       }
+       CheckStatus(rl->status);
+       create_list(rl->num_rectangles, &result);
+       for (i = 0; i < rl->num_rectangles; ++i) {
+           rectangle2list(&tmp, &rl->rectangles[i]);
+           list_put(&result, &tmp);
+       }
+       cairo_rectangle_list_destroy(rl);
+       return result;
+    }
+end
+
 function cairo_Context_move_to(self, x, y)
     if !cnv:C_double(x) then
        runerr(102, x)
@@ -584,6 +745,7 @@ function cairo_Context_rel_move_to(self, dx, dy)
     body {
        GetSelfCr();
        cairo_rel_move_to(self_cr, dx, dy);
+       CheckSelfCrStatus();
        return self;
     }
 end
@@ -608,6 +770,7 @@ function cairo_Context_rel_line_to(self, dx, dy)
     body {
        GetSelfCr();
        cairo_rel_line_to(self_cr, dx, dy);
+       CheckSelfCrStatus();
        return self;
     }
 end
@@ -905,6 +1068,39 @@ function cairo_Context_paint(self)
     }
 end
 
+function cairo_Context_paint_with_alpha(self, alpha)
+    if !cnv:C_double(alpha) then
+       runerr(102, alpha)
+    body {
+       double x1, y1, x2, y2;
+       GetSelfCr();
+       device_clip_extents(self_cr, &x1, &y1, &x2, &y2);
+       cairo_paint_with_alpha(self_cr, alpha);
+       pix_to_win(self_cr, x1, y1, x2, y2);
+       return self;
+    }
+end
+
+function cairo_Context_set_miter_limit(self, limit)
+    if !cnv:C_double(limit) then
+       runerr(102, limit)
+    body {
+       GetSelfCr();
+       cairo_set_miter_limit(self_cr, limit);
+       return self;
+    }
+end
+
+function cairo_Context_set_tolerance(self, tolerance)
+    if !cnv:C_double(tolerance) then
+       runerr(102, tolerance)
+    body {
+       GetSelfCr();
+       cairo_set_tolerance(self_cr, tolerance);
+       return self;
+    }
+end
+
 function cairo_Context_mask(self, pat)
     body {
        GetSelfCr();
@@ -913,6 +1109,7 @@ function cairo_Context_mask(self, pat)
        PatternStaticParam(pat, p);
        device_clip_extents(self_cr, &x1, &y1, &x2, &y2);
        cairo_mask(self_cr, p);
+       CheckSelfCrStatus();
        pix_to_win(self_cr, x1, y1, x2, y2);
        }
        return self;
@@ -931,6 +1128,7 @@ function cairo_Context_mask_surface(self, sur, x, y)
        SurfaceStaticParam(sur, surface);
        device_clip_extents(self_cr, &x1, &y1, &x2, &y2);
        cairo_mask_surface(self_cr, surface, x, y);
+       CheckSelfCrStatus();
        pix_to_win(self_cr, x1, y1, x2, y2);
        }
        return self;
@@ -958,82 +1156,51 @@ function cairo_Context_restore(self)
     body {
        GetSelfCr();
        cairo_restore(self_cr);
+       CheckSelfCrStatus();
        return self;
     }
 end
 
 function cairo_Context_get_stroke_extents_impl(self)
     body {
-       tended struct descrip result, tmp;
+       tended struct descrip result;
        double x1, y1, x2, y2;
        GetSelfCr();
        cairo_stroke_extents(self_cr, &x1, &y1, &x2, &y2);
-       create_list(4, &result);
-       MakeReal(x1, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(y1, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(x2 - x1, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(y2 - y1, &tmp);
-       list_put(&result, &tmp);
+       doubles2list(&result, 4, x1, y1, x2 - x1, y2 - y1);
        return result;
     }
 end
 
 function cairo_Context_get_fill_extents_impl(self)
     body {
-       tended struct descrip result, tmp;
+       tended struct descrip result;
        double x1, y1, x2, y2;
        GetSelfCr();
        cairo_fill_extents(self_cr, &x1, &y1, &x2, &y2);
-       create_list(4, &result);
-       MakeReal(x1, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(y1, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(x2 - x1, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(y2 - y1, &tmp);
-       list_put(&result, &tmp);
+       doubles2list(&result, 4, x1, y1, x2 - x1, y2 - y1);
        return result;
     }
 end
 
 function cairo_Context_get_clip_extents_impl(self)
     body {
-       tended struct descrip result, tmp;
+       tended struct descrip result;
        double x1, y1, x2, y2;
        GetSelfCr();
        cairo_clip_extents(self_cr, &x1, &y1, &x2, &y2);
-       create_list(4, &result);
-       MakeReal(x1, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(y1, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(x2 - x1, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(y2 - y1, &tmp);
-       list_put(&result, &tmp);
+       doubles2list(&result, 4, x1, y1, x2 - x1, y2 - y1);
        return result;
     }
 end
 
 function cairo_Context_get_path_extents_impl(self)
     body {
-       tended struct descrip result, tmp;
+       tended struct descrip result;
        double x1, y1, x2, y2;
        GetSelfCr();
        cairo_path_extents(self_cr, &x1, &y1, &x2, &y2);
-       create_list(4, &result);
-       MakeReal(x1, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(y1, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(x2 - x1, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(y2 - y1, &tmp);
-       list_put(&result, &tmp);
+       doubles2list(&result, 4, x1, y1, x2 - x1, y2 - y1);
        return result;
     }
 end
@@ -1044,14 +1211,10 @@ function cairo_Context_user_to_device_impl(self, x, y)
     if !cnv:C_double(y) then
        runerr(102, y)
     body {
-       tended struct descrip result, tmp;
+       tended struct descrip result;
        GetSelfCr();
        cairo_user_to_device(self_cr, &x, &y);
-       create_list(2, &result);
-       MakeReal(x, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(y, &tmp);
-       list_put(&result, &tmp);
+       doubles2list(&result, 2, x, y);
        return result;
     }
 end
@@ -1062,14 +1225,38 @@ function cairo_Context_device_to_user_impl(self, x, y)
     if !cnv:C_double(y) then
        runerr(102, y)
     body {
-       tended struct descrip result, tmp;
+       tended struct descrip result;
        GetSelfCr();
        cairo_device_to_user(self_cr, &x, &y);
-       create_list(2, &result);
-       MakeReal(x, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(y, &tmp);
-       list_put(&result, &tmp);
+       doubles2list(&result, 2, x, y);
+       return result;
+    }
+end
+
+function cairo_Context_user_to_device_distance_impl(self, dx, dy)
+    if !cnv:C_double(dx) then
+       runerr(102, dx)
+    if !cnv:C_double(dy) then
+       runerr(102, dy)
+    body {
+       tended struct descrip result;
+       GetSelfCr();
+       cairo_user_to_device_distance(self_cr, &dx, &dy);
+       doubles2list(&result, 2, dx, dy);
+       return result;
+    }
+end
+
+function cairo_Context_device_to_user_distance_impl(self, dx, dy)
+    if !cnv:C_double(dx) then
+       runerr(102, dx)
+    if !cnv:C_double(dy) then
+       runerr(102, dy)
+    body {
+       tended struct descrip result;
+       GetSelfCr();
+       cairo_device_to_user_distance(self_cr, &dx, &dy);
+       doubles2list(&result, 2, dx, dy);
        return result;
     }
 end
@@ -1116,58 +1303,27 @@ function cairo_Context_in_clip(self, x, y)
     }
 end
 
-function cairo_Context_get_path_impl(self, flat)
+function cairo_Context_get_path_impl(self)
     body {
-       tended struct descrip result, tmp;
+       tended struct descrip result;
        cairo_path_t *path;
-       cairo_path_data_t *data;
-       int i, j;
        GetSelfCr();
-       if (!isflag(&flat))
-           runerr(171, flat);
-       if (is:null(flat))
-           path = cairo_copy_path(self_cr);
-       else
-           path = cairo_copy_path_flat(self_cr);
-       create_list(path->num_data, &result);
-       for (i = 0; i < path->num_data; i += path->data[i].header.length) {
-           data = &path->data[i];
-           switch (data->header.type) {
-               case CAIRO_PATH_MOVE_TO: {
-                   MakeInt(0, &tmp);
-                   list_put(&result, &tmp);
-                   MakeReal(data[1].point.x, &tmp);
-                   list_put(&result, &tmp);
-                   MakeReal(data[1].point.y, &tmp);
-                   list_put(&result, &tmp);
-                   break;
-               }
-               case CAIRO_PATH_LINE_TO: {
-                   MakeInt(1, &tmp);
-                   list_put(&result, &tmp);
-                   MakeReal(data[1].point.x, &tmp);
-                   list_put(&result, &tmp);
-                   MakeReal(data[1].point.y, &tmp);
-                   list_put(&result, &tmp);
-                   break;
-               }
-               case CAIRO_PATH_CURVE_TO: {
-                   MakeInt(2, &tmp);
-                   list_put(&result, &tmp);
-                   for (j = 1; j <= 3; ++j) {
-                       MakeReal(data[j].point.x, &tmp);
-                       list_put(&result, &tmp);
-                       MakeReal(data[j].point.y, &tmp);
-                       list_put(&result, &tmp);
-                   }
-                   break;
-               }
-               case CAIRO_PATH_CLOSE_PATH: {
-                   MakeInt(3, &tmp);
-                   break;
-               }
-           }
-       }
+       path = cairo_copy_path(self_cr);
+       CheckStatus(path->status);
+       path2list(&result, path);
+       cairo_path_destroy (path);
+       return result;
+    }
+end
+
+function cairo_Context_get_flat_path_impl(self)
+    body {
+       tended struct descrip result;
+       cairo_path_t *path;
+       GetSelfCr();
+       path = cairo_copy_path_flat(self_cr);
+       CheckStatus(path->status);
+       path2list(&result, path);
        cairo_path_destroy (path);
        return result;
     }
@@ -1255,88 +1411,225 @@ function cairo_Context_append_path_impl(self, l)
        path.num_data = n;
        cairo_append_path(self_cr, &path);
        free(d);
+       CheckSelfCrStatus();
        return self;
     }
 end
 
-function cairo_Context_set_source_extend(self, val)
-   if !cnv:string(val) then
-      runerr(103, val)
-   body {
+function cairo_Context_push_group(self, val)
+    body {
        stringint *e;
        GetSelfCr();
-       e = stringint_lookup(extends, buffstr(&val));
-       if (!e) {
-           LitWhy("Invalid extend choice");
-           fail;
+       if (is:null(val)) {
+           cairo_push_group(self_cr);
+       } else {
+         if (!cnv:string(val, val))
+            runerr(103, val);
+         e = stringint_lookup(contents, buffstr(&val));
+         if (!e) {
+             LitWhy("Invalid group content specification");
+             fail;
+         }
+         cairo_push_group_with_content(self_cr, e->i);
        }
-       cairo_pattern_set_extend(cairo_get_source(self_cr), e->i);
-       return self;
-   }
-end
-
-function cairo_Context_set_source_matrix_impl(self, xx, yx, xy, yy, x0, y0)
-    if !cnv:C_double(xx) then
-       runerr(102, xx)
-    if !cnv:C_double(yx) then
-       runerr(102, yx)
-    if !cnv:C_double(xy) then
-       runerr(102, xy)
-    if !cnv:C_double(yy) then
-       runerr(102, yy)
-    if !cnv:C_double(x0) then
-       runerr(102, x0)
-    if !cnv:C_double(y0) then
-       runerr(102, y0)
-    body {
-       cairo_matrix_t m;        
-       GetSelfCr();
-       cairo_matrix_init(&m, xx, yx, xy, yy, x0, y0);
-       cairo_pattern_set_matrix(cairo_get_source(self_cr), &m);
        return self;
     }
 end
 
-function cairo_Context_get_source_matrix_impl(self)
+function cairo_Context_pop_group_to_source(self)
     body {
-       tended struct descrip result, tmp;
-       cairo_matrix_t m;        
        GetSelfCr();
-       cairo_pattern_get_matrix(cairo_get_source(self_cr), &m);
-       create_list(6, &result);
-       MakeReal(m.xx, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(m.yx, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(m.xy, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(m.yy, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(m.x0, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(m.y0, &tmp);
-       list_put(&result, &tmp);
-       return result;
+       cairo_pop_group_to_source(self_cr);
+       CheckSelfCrStatus();
+       return self;
+    }
+end
+
+static void mk_errortext(cairo_status_t status)
+{
+    char buff[256];
+    snprintf(buff, sizeof(buff), "cairo error: %s", cairo_status_to_string(status));
+    cstr2string(buff, &t_errortext);
+}
+
+function cairo_Context_pop_group_impl(self)
+    body {
+       cairo_pattern_t *pattern;
+       GetSelfCr();
+       pattern = cairo_pop_group(self_cr);
+       CheckPatternStatus(pattern);
+       CheckSelfCrStatus();
+       return C_integer (word) pattern;
+    }
+end
+
+function cairo_Context_get_source_impl(self)
+    body {
+       cairo_pattern_t *pattern;
+       GetSelfCr();
+       pattern = cairo_get_source(self_cr);
+       CheckSelfCrStatus();
+       cairo_pattern_reference(pattern);
+       return C_integer (word) pattern;
+    }
+end
+
+function cairo_Context_get_target_impl(self)
+    body {
+       cairo_surface_t *surface;
+       GetSelfCr();
+       surface = cairo_get_target(self_cr);
+       CheckSelfCrStatus();
+       cairo_surface_reference(surface);
+       return C_integer (word) surface;
+    }
+end
+
+function cairo_Context_get_group_target_impl(self)
+    body {
+       cairo_surface_t *surface;
+       GetSelfCr();
+       surface = cairo_get_group_target(self_cr);
+       CheckSelfCrStatus();
+       cairo_surface_reference(surface);
+       return C_integer (word) surface;
     }
 end
 
 function cairo_Context_get_current_point_impl(self)
     body {
-       tended struct descrip result, tmp;
+       tended struct descrip result;
        double x, y;
        GetSelfCr();
        if (!cairo_has_current_point(self_cr))
            fail;
        cairo_get_current_point(self_cr, &x, &y);
-       create_list(2, &result);
-       MakeReal(x, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(y, &tmp);
-       list_put(&result, &tmp);
+       doubles2list(&result, 2, x, y);
        return result;
     }
 end
 
+function cairo_Context_get_line_width(self)
+   body {
+      GetSelfCr();
+      return C_double cairo_get_line_width(self_cr);
+   }
+end
+
+function cairo_Context_get_line_join(self)
+   body {
+      char *v;
+      GetSelfCr();
+      v = stringint_int2str(linejoins, cairo_get_line_join(self_cr));
+      if (!v)
+        syserr("Invalid value of line join");
+      return C_string v;
+   }
+end
+
+function cairo_Context_get_line_cap(self)
+   body {
+      char *v;
+      GetSelfCr();
+      v = stringint_int2str(linecaps, cairo_get_line_cap(self_cr));
+      if (!v)
+        syserr("Invalid value of line cap");
+      return C_string v;
+   }
+end
+
+function cairo_Context_get_fill_rule(self)
+   body {
+      char *v;
+      GetSelfCr();
+      v = stringint_int2str(fillrules, cairo_get_fill_rule(self_cr));
+      if (!v)
+        syserr("Invalid value of fill rule");
+      return C_string v;
+   }
+end
+
+function cairo_Context_get_miter_limit(self)
+   body {
+      GetSelfCr();
+      return C_double cairo_get_miter_limit(self_cr);
+   }
+end
+
+function cairo_Context_get_tolerance(self)
+   body {
+      GetSelfCr();
+      return C_double cairo_get_tolerance(self_cr);
+   }
+end
+
+function cairo_Context_get_operator(self)
+   body {
+      char *v;
+      GetSelfCr();
+      v = stringint_int2str(drawops, cairo_get_operator(self_cr));
+      if (!v)
+        syserr("Invalid value of operator");
+      return C_string v;
+   }
+end
+
+function cairo_Context_get_antialias(self)
+   body {
+      char *v;
+      GetSelfCr();
+      v = stringint_int2str(antialiases, cairo_get_antialias(self_cr));
+      if (!v)
+        syserr("Invalid value of antialias");
+      return C_string v;
+   }
+end
+
+function cairo_Context_get_dash_offset(self)
+   body {
+      double offset;
+      GetSelfCr();
+      cairo_get_dash(self_cr, NULL, &offset);
+      return C_double offset;
+   }
+end
+
+function cairo_Context_get_dashes(self)
+   body {
+      tended struct descrip result, tmp;
+      double *d;
+      int i, count;
+      GetSelfCr();
+      count = cairo_get_dash_count(self_cr);
+      if (count == 0)
+          fail;
+      MemProtect(d = malloc(count * sizeof(double)));
+      cairo_get_dash(self_cr, d, NULL);
+      create_list(count, &result);
+      for (i = 0; i < count; ++i) {
+           MakeReal(d[i], &tmp);
+           list_put(&result, &tmp);
+       }
+       free(d);
+       return result;
+   }
+end
+
+function cairo_Pattern_get_type(ptr)
+    body {
+       cairo_pattern_t *pattern;
+       pattern = (cairo_pattern_t *)IntVal(ptr);
+       switch (cairo_pattern_get_type(pattern)) {
+           case CAIRO_PATTERN_TYPE_SOLID : return C_integer 1;
+           case CAIRO_PATTERN_TYPE_SURFACE : return C_integer 2;
+           case CAIRO_PATTERN_TYPE_LINEAR : return C_integer 3;
+           case CAIRO_PATTERN_TYPE_RADIAL : return C_integer 4;
+           case CAIRO_PATTERN_TYPE_MESH : return C_integer 5;
+           default: { syserr("unexpected pattern type"); fail; }
+       }
+    }
+end
+         
 function cairo_Pattern_close(self)
     body {
        GetSelfPattern();
@@ -1364,6 +1657,39 @@ function cairo_Gradient_add_color_stop_rgba(self, offset, r, g, b, a)
     }
 end
 
+static int is_valid_stop(cairo_pattern_t *p, word num)
+{
+    int count;
+    cairo_pattern_get_color_stop_count(p, &count);
+    return num >= 0 && num < count;
+}
+
+function cairo_Gradient_get_color_stop_count(self)
+    body {
+       int count;
+       GetSelfPattern();
+       cairo_pattern_get_color_stop_count(self_pattern, &count);
+       return C_integer count;
+    }
+end
+
+function cairo_Gradient_get_color_stop_impl(self, index)
+    if !cnv:C_integer(index) then
+       runerr(101, index)
+    body {
+       tended struct descrip result;
+       double offset, r, g, b, a;
+       GetSelfPattern();
+       if (!is_valid_stop(self_pattern, index)) {
+           LitWhy("Stop index out of range");
+           fail;
+       }
+       cairo_pattern_get_color_stop_rgba(self_pattern, index, &offset, &r, &g, &b, &a);
+       doubles2list(&result, 5, offset, r, g, b, a);
+       return result;
+    }
+end
+
 function cairo_LinearGradient_new_impl(x0, y0, x1, y1)
     if !cnv:C_double(x0) then
        runerr(102, x0)
@@ -1378,6 +1704,17 @@ function cairo_LinearGradient_new_impl(x0, y0, x1, y1)
        pattern = cairo_pattern_create_linear(x0, y0, x1, y1);
        CheckPatternStatus(pattern);
        return C_integer (word) pattern;
+    }
+end
+
+function cairo_LinearGradient_get_points_impl(self)
+    body {
+       tended struct descrip result;
+       double x0, y0, x1, y1;
+       GetSelfPattern();
+       cairo_pattern_get_linear_points(self_pattern, &x0, &y0, &x1, &y1);
+       doubles2list(&result, 4, x0, y0, x1, y1);
+       return result;
     }
 end
 
@@ -1402,6 +1739,16 @@ function cairo_RadialGradient_new_impl(cx0, cy0, r0, cx1, cy1, r1)
     }
 end
 
+function cairo_RadialGradient_get_circles_impl(self)
+    body {
+       tended struct descrip result;
+       double x0, y0, r0, x1, y1, r1;
+       GetSelfPattern();
+       cairo_pattern_get_radial_circles(self_pattern, &x0, &y0, &r0, &x1, &y1, &r1);
+       doubles2list(&result, 6, x0, y0, r0, x1, y1, r1);
+       return result;
+    }
+end
 
 function cairo_Pattern_set_matrix_impl(self, xx, yx, xy, yy, x0, y0)
     if !cnv:C_double(xx) then
@@ -1421,29 +1768,18 @@ function cairo_Pattern_set_matrix_impl(self, xx, yx, xy, yy, x0, y0)
        GetSelfPattern();
        cairo_matrix_init(&m, xx, yx, xy, yy, x0, y0);
        cairo_pattern_set_matrix(self_pattern, &m);
+       CheckSelfPatternStatus();
        return self;
     }
 end
 
 function cairo_Pattern_get_matrix_impl(self)
     body {
-       tended struct descrip result, tmp;
+       tended struct descrip result;
        cairo_matrix_t m;        
        GetSelfPattern();
        cairo_pattern_get_matrix(self_pattern, &m);
-       create_list(6, &result);
-       MakeReal(m.xx, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(m.yx, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(m.xy, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(m.yy, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(m.x0, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(m.y0, &tmp);
-       list_put(&result, &tmp);
+       matrix2list(&result, &m);
        return result;
     }
 end
@@ -1461,6 +1797,44 @@ function cairo_Pattern_set_extend(self, val)
        }
        cairo_pattern_set_extend(self_pattern, e->i);
        return self;
+   }
+end
+
+function cairo_Pattern_get_extend(self)
+   body {
+      char *v;
+      GetSelfPattern();
+      v = stringint_int2str(extends, cairo_pattern_get_extend(self_pattern));
+      if (!v)
+         syserr("Invalid value of extend");
+      return C_string v;
+   }
+end
+
+function cairo_Pattern_set_filter(self, val)
+   if !cnv:string(val) then
+      runerr(103, val)
+   body {
+       stringint *e;
+       GetSelfPattern();
+       e = stringint_lookup(filters, buffstr(&val));
+       if (!e) {
+           LitWhy("Invalid filter choice");
+           fail;
+       }
+       cairo_pattern_set_filter(self_pattern, e->i);
+       return self;
+   }
+end
+
+function cairo_Pattern_get_filter(self)
+   body {
+      char *v;
+      GetSelfPattern();
+      v = stringint_int2str(filters, cairo_pattern_get_filter(self_pattern));
+      if (!v)
+         syserr("Invalid value of filter");
+      return C_string v;
    }
 end
 
@@ -1494,6 +1868,89 @@ function cairo_WindowSurface_new_impl(win)
        cairo_surface_set_user_data(surface, &winkey, w2, destroywin);
        }
        return C_integer (word) surface;
+    }
+end
+
+function cairo_WindowSurface_get_width(self)
+    body {
+        GetSelfSurface();
+        return C_integer cairo_xlib_surface_get_width(self_surface);
+    }
+end
+
+function cairo_WindowSurface_get_height(self)
+    body {
+        GetSelfSurface();
+        return C_integer cairo_xlib_surface_get_height(self_surface);
+    }
+end
+
+function cairo_WindowSurface_get_depth(self)
+    body {
+        GetSelfSurface();
+        return C_integer cairo_xlib_surface_get_depth(self_surface);
+    }
+end
+
+function cairo_Surface_get_type(ptr)
+    body {
+       cairo_surface_t *surface;
+       surface = (cairo_surface_t *)IntVal(ptr);
+       switch (cairo_surface_get_type(surface)) {
+           case CAIRO_SURFACE_TYPE_XLIB : return C_integer 1;
+           case CAIRO_SURFACE_TYPE_IMAGE : return C_integer 2;
+           case CAIRO_SURFACE_TYPE_SVG : return C_integer 3;
+           case CAIRO_SURFACE_TYPE_PS : return C_integer 4;
+           case CAIRO_SURFACE_TYPE_PDF : return C_integer 5;
+           case CAIRO_SURFACE_TYPE_RECORDING : return C_integer 6;
+           default: { syserr("unexpected surface type"); fail; }
+       }
+    }
+end
+
+function cairo_Surface_set_device_offset(self, x_offset, y_offset)
+    if !cnv:C_double(x_offset) then
+       runerr(102, x_offset)
+    if !cnv:C_double(y_offset) then
+       runerr(102, y_offset)
+    body {
+       GetSelfSurface();
+       cairo_surface_set_device_offset(self_surface, x_offset, y_offset);
+       return self;
+    }
+end
+
+function cairo_Surface_set_device_scale(self, x_scale, y_scale)
+    if !cnv:C_double(x_scale) then
+       runerr(102, x_scale)
+    if !cnv:C_double(y_scale) then
+       runerr(102, y_scale)
+    body {
+       GetSelfSurface();
+       cairo_surface_set_device_scale(self_surface, x_scale, y_scale);
+       return self;
+    }
+end
+
+function cairo_Surface_get_device_offset_impl(self)
+    body {
+       tended struct descrip result;
+       double x, y;
+       GetSelfSurface();
+       cairo_surface_get_device_offset(self_surface, &x, &y);
+       doubles2list(&result, 2, x, y);
+       return result;
+    }
+end
+
+function cairo_Surface_get_device_scale_impl(self)
+    body {
+       tended struct descrip result;
+       double x, y;
+       GetSelfSurface();
+       cairo_surface_get_device_scale(self_surface, &x, &y);
+       doubles2list(&result, 2, x, y);
+       return result;
     }
 end
 
@@ -1536,6 +1993,19 @@ function cairo_PostScriptSurface_new_impl(filename, width, height)
     }
 end
 
+function cairo_PostScriptSurface_set_size(self, width, height)
+    if !cnv:C_double(width) then
+       runerr(102, width)
+    if !cnv:C_double(height) then
+       runerr(102, height)
+    body {
+       GetSelfSurface();
+       cairo_ps_surface_set_size(self_surface, width, height);
+       CheckSelfSurfaceStatus();
+       return self;
+    }
+end
+
 function cairo_PDFSurface_new_impl(filename, width, height)
    if !cnv:string(filename) then
       runerr(103, filename)
@@ -1551,6 +2021,19 @@ function cairo_PDFSurface_new_impl(filename, width, height)
     }
 end
 
+function cairo_PDFSurface_set_size(self, width, height)
+    if !cnv:C_double(width) then
+       runerr(102, width)
+    if !cnv:C_double(height) then
+       runerr(102, height)
+    body {
+       GetSelfSurface();
+       cairo_pdf_surface_set_size(self_surface, width, height);
+       CheckSelfSurfaceStatus();
+       return self;
+    }
+end
+
 function cairo_SurfacePattern_new_impl(sur)
     body {
        cairo_pattern_t *pattern;
@@ -1558,6 +2041,17 @@ function cairo_SurfacePattern_new_impl(sur)
        pattern = cairo_pattern_create_for_surface(surface);
        CheckPatternStatus(pattern);
        return C_integer (word) pattern;
+    }
+end
+
+function cairo_SurfacePattern_get_surface_impl(self)
+    body {
+       cairo_surface_t *surface;
+       GetSelfPattern();
+       cairo_pattern_get_surface(self_pattern, &surface);
+       CheckSelfPatternStatus();
+       cairo_surface_reference(surface);
+       return C_integer (word) surface;
     }
 end
 
@@ -1575,6 +2069,17 @@ function cairo_SolidPattern_new_impl(r, g, b, a)
        pattern = cairo_pattern_create_rgba(r, g, b, a);
        CheckPatternStatus(pattern);
        return C_integer (word) pattern;
+    }
+end
+
+function cairo_SolidPattern_get_rgba(self)
+    body {
+       tended struct descrip result;
+       double r, g, b, a;
+       GetSelfPattern();
+       cairo_pattern_get_rgba(self_pattern, &r, &g, &b, &a);
+       doubles2list(&result, 4, r, g, b, a);
+       return result;
     }
 end
 
@@ -1605,35 +2110,20 @@ function cairo_RecordingSurface_get_extents_impl(self)
        tended struct descrip result, tmp;
        cairo_rectangle_t r;
        GetSelfSurface();
-       cairo_recording_surface_get_extents(self_surface, &r);
-       create_list(4, &result);
-       MakeReal(r.x, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(r.y, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(r.width, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(r.height, &tmp);
-       list_put(&result, &tmp);
+       if (!cairo_recording_surface_get_extents(self_surface, &r))
+           fail;
+       rectangle2list(&result, &r);
        return result;
     }
 end
 
 function cairo_RecordingSurface_ink_extents_impl(self)
     body {
-       tended struct descrip result, tmp;
+       tended struct descrip result;
        double x, y, width, height;
        GetSelfSurface();
        cairo_recording_surface_ink_extents(self_surface, &x, &y, &width, &height);
-       create_list(4, &result);
-       MakeReal(x, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(y, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(width, &tmp);
-       list_put(&result, &tmp);
-       MakeReal(height, &tmp);
-       list_put(&result, &tmp);
+       doubles2list(&result, 4, x, y, width, height);
        return result;
     }
 end
@@ -1686,6 +2176,203 @@ function cairo_ImageSurface_get_height(self)
     body {
         GetSelfSurface();
         return C_integer cairo_image_surface_get_height(self_surface);
+    }
+end
+
+static int is_valid_patch(cairo_pattern_t *p, word num)
+{
+    unsigned int count;
+    cairo_mesh_pattern_get_patch_count(p, &count);
+    return num >= 0 && num < count;
+}
+
+function cairo_MeshPattern_begin_patch(self)
+    body {
+       GetSelfPattern();
+       cairo_mesh_pattern_begin_patch(self_pattern);
+       CheckSelfPatternStatus();
+       return self;
+    }
+end
+
+function cairo_MeshPattern_end_patch(self)
+    body {
+       GetSelfPattern();
+       cairo_mesh_pattern_end_patch(self_pattern);
+       CheckSelfPatternStatus();
+       return self;
+    }
+end
+
+function cairo_MeshPattern_move_to(self, x, y)
+    if !cnv:C_double(x) then
+       runerr(102, x)
+    if !cnv:C_double(y) then
+       runerr(102, y)
+    body {
+       GetSelfPattern();
+       cairo_mesh_pattern_move_to(self_pattern, x, y);
+       CheckSelfPatternStatus();
+       return self;
+    }
+end
+
+function cairo_MeshPattern_line_to(self, x, y)
+    if !cnv:C_double(x) then
+       runerr(102, x)
+    if !cnv:C_double(y) then
+       runerr(102, y)
+    body {
+       GetSelfPattern();
+       cairo_mesh_pattern_line_to(self_pattern, x, y);
+       CheckSelfPatternStatus();
+       return self;
+    }
+end
+
+function cairo_MeshPattern_curve_to(self, x1, y1, x2, y2, x3, y3)
+    if !cnv:C_double(x1) then
+       runerr(102, x1)
+    if !cnv:C_double(y1) then
+       runerr(102, y1)
+    if !cnv:C_double(x2) then
+       runerr(102, x2)
+    if !cnv:C_double(y2) then
+       runerr(102, y2)
+    if !cnv:C_double(x3) then
+       runerr(102, x3)
+    if !cnv:C_double(y3) then
+       runerr(102, y3)
+    body {
+       GetSelfPattern();
+       cairo_mesh_pattern_curve_to(self_pattern, x1, y1, x2, y2, x3, y3);
+       CheckSelfPatternStatus();
+       return self;
+    }
+end
+
+function cairo_MeshPattern_set_control_point(self, num, x, y)
+    if !cnv:C_integer(num) then
+       runerr(101, num)
+    if !cnv:C_double(x) then
+       runerr(102, x)
+    if !cnv:C_double(y) then
+       runerr(102, y)
+    body {
+       GetSelfPattern();
+       if (num < 0 || num > 3) {
+           LitWhy("Number out of range");
+           fail;
+       }
+       cairo_mesh_pattern_set_control_point(self_pattern, num, x, y);
+       CheckSelfPatternStatus();
+       return self;
+    }
+end
+
+function cairo_MeshPattern_set_corner_color_rgba(self, num, r, g, b, a)
+    if !cnv:C_integer(num) then
+       runerr(101, num)
+    if !cnv:C_double(r) then
+       runerr(102, r)
+    if !cnv:C_double(g) then
+       runerr(102, g)
+    if !cnv:C_double(b) then
+       runerr(102, b)
+    if !def:C_double(a, 1.0) then
+       runerr(102, a)
+    body {
+       GetSelfPattern();
+       if (num < 0 || num > 3) {
+           LitWhy("Number out of range");
+           fail;
+       }
+       cairo_mesh_pattern_set_corner_color_rgba(self_pattern, num, r, g, b, a);
+       CheckSelfPatternStatus();
+       return self;
+    }
+end
+
+function cairo_MeshPattern_get_patch_count(self)
+    body {
+       unsigned int n;
+       GetSelfPattern();
+       cairo_mesh_pattern_get_patch_count(self_pattern, &n);
+       return C_integer n;
+    }
+end
+
+function cairo_MeshPattern_get_path_impl(self, num)
+    if !cnv:C_integer(num) then
+       runerr(101, num)
+    body {
+       tended struct descrip result;
+       cairo_path_t *path;
+       GetSelfPattern();
+       if (!is_valid_patch(self_pattern, num)) {
+           LitWhy("Patch number out of range");
+           fail;
+       }
+       path = cairo_mesh_pattern_get_path(self_pattern, num);
+       CheckStatus(path->status);
+       path2list(&result, path);
+       cairo_path_destroy (path);
+       return result;
+    }
+end
+
+function cairo_MeshPattern_get_control_point_impl(self, patch_num, point_num)
+    if !cnv:C_integer(patch_num) then
+       runerr(101, patch_num)
+    if !cnv:C_integer(point_num) then
+       runerr(101, point_num)
+    body {
+       tended struct descrip result;
+       double x, y;
+       GetSelfPattern();
+       if (!is_valid_patch(self_pattern, patch_num)) {
+           LitWhy("Patch number out of range");
+           fail;
+       }
+       if (point_num < 0 || point_num > 3) {
+           LitWhy("Point number out of range");
+           fail;
+       }
+       cairo_mesh_pattern_get_control_point(self_pattern, patch_num, point_num, &x, &y);
+       doubles2list(&result, 2, x, y);
+       return result;
+    }
+end
+
+function cairo_MeshPattern_get_corner_color_rgba(self, patch_num, corner_num)
+    if !cnv:C_integer(patch_num) then
+       runerr(101, patch_num)
+    if !cnv:C_integer(corner_num) then
+       runerr(101, corner_num)
+    body {
+       tended struct descrip result;
+       double r, g, b, a;
+       GetSelfPattern();
+       if (!is_valid_patch(self_pattern, patch_num)) {
+           LitWhy("Patch number out of range");
+           fail;
+       }
+       if (corner_num < 0 || corner_num > 3) {
+           LitWhy("Corner number out of range");
+           fail;
+       }
+       cairo_mesh_pattern_get_corner_color_rgba(self_pattern, patch_num, corner_num, &r, &g, &b, &a);
+       doubles2list(&result, 4, r, g, b, a);
+       return result;
+    }
+end
+
+function cairo_MeshPattern_new_impl()
+    body {
+       cairo_pattern_t *pattern;
+       pattern = cairo_pattern_create_mesh();
+       CheckPatternStatus(pattern);
+       return C_integer (word) pattern;
     }
 end
 

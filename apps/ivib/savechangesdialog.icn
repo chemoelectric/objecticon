@@ -42,12 +42,12 @@ class SaveChangesDialog(Dialog)
 
       set_layout(GridLayout())
 
-      l := Label().set_constraint("eol", &yes).set_constraint("y_weight", 1).set_constraint("x_align", "c")
+      l := Label().set_constraint("eol", &yes).set_constraint("y_weight", 1.0).set_constraint("x_align", "c")
       l.set_label(".cell\nThe canvas has been modified.\n.br\nDo you wish to save these changes?\n.br")
       add(l)
       add(Line().set_constraint("eol", &yes).set_size(scale(100)).set_constraint("x_fill", &yes))
 
-      p := Panel().set_constraint("y_weight", 0)
+      p := Panel().set_constraint("y_weight", 0.0)
       p.set_layout(GridLayout().set_doi(0))
       yes := TextButton().set_label("Yes").set_accel("y")
       yes.connect(self.on_yes, Event.ACTION)

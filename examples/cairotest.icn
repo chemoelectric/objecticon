@@ -31,7 +31,50 @@ class CairoDisplay(Component)
          17: text_example(o)
          18: text_align_center_example(o)
          19: text_extents_example(o)
+         20: group_example(o)
+         21: mesh_example(o)
       }
+   end
+
+   private mesh_example(o)
+      local m
+      m := MeshPattern()
+
+      # Add a Coons patch
+      m.begin_patch ()
+      m.move_to (0, 0)
+      m.curve_to (30, -30,  60,  30, 100, 0)
+      m.curve_to (60,  30, 130,  60, 100, 100)
+      m.curve_to (60,  70,  30, 130,   0, 100)
+      m.curve_to (30,  70, -30,  30,   0, 0)
+      m.set_corner_color (0, "red")
+      m.set_corner_color (1, "green")
+      m.set_corner_color (2, "blue")
+      m.set_corner_color (3, "yellow")
+      m.end_patch ()
+
+      # Add a Gouraud-shaded triangle
+      m.begin_patch ()
+      m.move_to (100, 100)
+      m.line_to (130, 130)
+      m.line_to (130,  70)
+      m.set_corner_color (0, "red")
+      m.set_corner_color (1, "green")
+      m.set_corner_color (2, "blue")
+      m.end_patch ()
+
+      o.rectangle(10, 10, 200, 200)
+      o.stroke_preserve()
+      o.set_source(m)
+      o.fill()
+      m.close()
+   end
+
+   private group_example(o)
+      o.push_group()
+      arc_example(o)
+      o.pop_group_to_source()
+      o.paint_with_alpha(0.25)
    end
 
    private arc_example(o)
@@ -445,7 +488,9 @@ class CairoTest(Dialog)
                                    "set line join",
                                    "text",
                                    "text align center",
-                                   "text extents"])
+                                   "text extents",
+                                   "group",
+                                   "mesh"])
    end
 
    public end_dialog()

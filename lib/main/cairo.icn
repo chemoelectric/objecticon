@@ -1,9 +1,68 @@
 package cairo
 
-import lang, graphics, util, io
+import lang, graphics, util, io, ipl.pdco
 
-abstract class PathElement() end
+record DeviceOffset(x_offset, y_offset)
+record DeviceScale(x_scale, y_scale)
+record Circle(x, y, radius)
+record ColorStop(offset, color)
 
+# Succeed if the cairo library is available, or fail and set &why if
+# it isn't.
+#
+procedure cairo_available()
+   return \Context.LOADED | error("Cairo not supported")
+end
+
+package procedure to_cairo_color(col)
+   local c
+   c := Window.parse_color(col) | fail
+   every !c /:= 65535.0
+   return c
+end
+
+package procedure to_icon_color(l)
+   local s, i
+   every i := 1 to 4 do
+      l[i] := integer(l[i] * 65535.0)
+   s := l[1] || "," || l[2] || "," || l[3]
+   if l[4] ~= 65535 then
+      s ||:= "," || l[4]
+   return s
+end
+
+# A `PathElement` represents one element of a cairo path.  Note that
+# `PathElement`s don't wrap cairo objects.
+#
+abstract class PathElement()
+   package static to_path_elements(t)
+      local l
+      l := []
+      while put(l, case get(t) of {
+         0 : MoveTo(get(t), get(t))
+         1 : LineTo(get(t), get(t))
+         2 : CurveTo(get(t), get(t), get(t), get(t), get(t), get(t))
+         3 : ClosePath()
+      })
+      return l
+   end
+
+   package static from_path_elements(l)
+      local t, e
+      t := []
+      every e := !l do
+         case classof(e) of {
+            MoveTo: every put(t, 0 | e.x | e.y)
+            LineTo: every put(t, 1 | e.x | e.y)
+            CurveTo: every put(t, 2 | e.x1 | e.y1 | e.x2 | e.y2 | e.x3 | e.y3)
+            ClosePath: put(t, 3)
+         }
+      return t
+   end
+end
+
+# A class to represent a move-to operation.
+#
 class MoveTo(PathElement)
    public const x, y
 
@@ -14,6 +73,8 @@ class MoveTo(PathElement)
    end
 end
 
+# A class to represent a line-to operation.
+#
 class LineTo(PathElement)
    public const x, y
 
@@ -24,6 +85,8 @@ class LineTo(PathElement)
    end
 end
 
+# A class to represent a curve-to operation.
+#
 class CurveTo(PathElement)
    public const x1, y1, x2, y2, x3, y3
 
@@ -38,20 +101,36 @@ class CurveTo(PathElement)
    end
 end
 
-class ClosePath(PathElement) end
+# A class to represent a close-path operation.
+#
+class ClosePath(PathElement)
+end
 
+# This class represents a 2d transformation matrix.  It does not wrap
+# a cairo object.  Instances are immutable, so operations always
+# return a different new instance.
+#
 class Matrix()
+   # The six elements of the matrix.
+   #
    public const xx, yx, xy, yy, x0, y0
+
+   # The identity matrix
+   #
    public static const I
 
    private static init()
       I := Matrix(1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
    end
 
+   # Create a new instance representing a translation.
+   #
    public static from_translation(tx, ty)
       return Matrix(1.0, 0.0, 0.0, 1.0, tx, ty)
    end
 
+   # Create a new instance representing a rotation of `r` radians.
+   #
    public static from_rotation(r)
       local c, s
       c := Math.cos(r)
@@ -59,36 +138,77 @@ class Matrix()
       return Matrix(c, s, -s, c)
    end
 
+   # Return the determinant of the matrix.
+   #
+   public determinant()
+      return xx * yy - yx * xy
+   end
+
+   # Return a new `Matrix` which is the inverse of this one, or fail
+   # if there is no inverse.
+   #
+   public inverse()
+      local d
+      d := determinant()
+      if d = 0.0 then
+         fail
+      return Matrix(yy / d, -yx / d, -xy / d, xx / d, 
+                    (yx * y0 - x0 * yy) / d, (x0 * xy - xx * y0) / d)
+   end
+
+   # Create a new instance representing a scale.
+   #
    public static from_scale(sx, sy)
       return Matrix(sx, 0.0, 0.0, sy, 0.0, 0.0)
    end
 
+   # Return a `Point` record, which is the result of multiplying this
+   # matrix by the point `(x, y)`.
+   #
    public multiply_point(x, y)
-      return [xx * x + xy * y + x0, yx * x + yy * y + y0]
+      return Point(xx * x + xy * y + x0, yx * x + yy * y + y0)
    end
 
+   # Return a `Vector` record, which is the result of multiplying this
+   # matrix by `(dx, dy)`, but ignoring the transformation elements.
+   #
+   public multiply_distance(dx, dy)
+      return Vector(xx * dx + xy * dy, yx * dx + yy * dy)
+   end
+
+   # Return a new instance which is this instance rotated `r` radians.
+   #
    public rotate(r)
       return multiply(from_rotation(r), self)
    end
 
+   # Return a new instance which is this instance translated by `tx`
+   # and `ty`.
+   #
    public translate(tx, ty)  
       return multiply(from_translation(tx, ty), self)
    end
 
+   # Return a new instance which is this instance scaled by `sx`
+   # and `sy`.
+   #
    public scale(sx, sy)
       return multiply(from_scale(sx, sy), self)
    end
 
-   # Return a * b
+   # Return the product of the two given `Matrix` instances.
+   #
    public static multiply(a, b)
       return Matrix(a.xx * b.xx + a.yx * b.xy,
                     a.xx * b.yx + a.yx * b.yy,
                     a.xy * b.xx + a.yy * b.xy,
                     a.xy * b.yx + a.yy * b.yy,
-                    a.x0 * b.xx + a.y0 * b.xy + b.x0,
-                    a.x0 * b.yx + a.y0 * b.yy + b.y0)
+                    a.xx * b.x0 + a.yx * b.y0 + a.x0,
+                    a.xy * b.x0 + a.yy * b.y0 + a.y0)
    end
 
+   # Create a new instance based on the given six elements.
+   #
    public new(xx, yx, xy, yy, x0, y0)
       /x0 := 0.0
       /y0 := 0.0
@@ -102,31 +222,85 @@ class Matrix()
    end
 end
 
+# This class wraps a cairo pattern.  There can be several instances
+# wrapping the same cairo object.  Each one has a reference to the
+# underlying object and must be closed separately.
+#
 abstract class Pattern(NoCopy)
-   protected ptr
+   package ptr
 
    private static init()
       Class.load_library(\Context.LOADED)
    end
 
+   package set_ptr(ptr)
+      self.ptr := ptr
+      return self
+   end
+
+   package static create_for_ptr(ptr)
+      local c
+      c := case get_type(ptr) of {
+         1 : SolidPattern
+         2 : SurfacePattern
+         3 : LinearGradient
+         4 : RadialGradient
+         5 : MeshPattern
+      }
+      return c.create_for_ptr(ptr)
+   end
+
+   private static native get_type(ptr)
+
+   # Set the transformation matrix to the identity matrix.
+   #
    public identity_matrix()
       return set_matrix(Matrix.I)
    end
 
    private native set_matrix_impl(xx, yx, xy, yy, x0, y0)
+
+   # Set the transformation matrix from the given `Matrix` instance.
+   #
    public set_matrix(m)
       return set_matrix_impl(m.xx, m.yx, m.xy, m.yy, m.x0, m.y0)
    end
 
    private native get_matrix_impl()
+
+   # Return the transformation matrix as a `Matrix` instance.
+   #
    public get_matrix()
       return Matrix!get_matrix_impl()
    end
 
+   # Set the extend setting according to the given string; possible
+   # values are "none", "pad", "reflect" and "repeat".
+   #
    public native set_extend(v)
 
+   # Get the extend setting as a string.
+   #
+   public native get_extend()
+
+   # Set the filter according to the given string; possible values are
+   # "best", "bilinear", "fast", "gaussian", "good", and "nearest".
+   #
+   public native set_filter(v)
+
+   # Return the filter value.
+   #
+   public native get_filter()
+
+   # Close this instance, releasing the reference to the underlying
+   # cairo object.
+   #
    public native close()
 
+   # This is a convenient method to create a `Pattern` instance from a
+   # variety of objects.  `v` can be a `Surface`, a `Window`, a
+   # `Pixels`, raw image data, or a filename of an image.
+   #
    public static to_pattern(v)
       local t
       return if is(v, Surface) then
@@ -152,110 +326,374 @@ abstract class Pattern(NoCopy)
    end
 end
 
+# The parent class for `LinearGradient` and `RadialGradient`.
+#
 abstract class Gradient(Pattern)
    private static init()
       Class.load_library(\Context.LOADED)
    end
 
+   package static create_for_ptr(ptr)
+      return Class.create_instance().set_ptr(ptr)
+   end
+
    private native add_color_stop_rgba(offset, r, g, b, a)
 
+   # Adds a translucent color stop to this `Gradient`.  The offset
+   # specifies the location along the gradient's control vector.
+   # `col` is an icon colour string.
+   #
    public add_color_stop(offset, col)
       local c
-      c := Window.parse_color(col) | fail
-      return add_color_stop_rgba(offset, 
-                                 c.red / 65535.0,
-                                 c.green / 65535.0,
-                                 c.blue / 65535.0,
-                                 c.alpha / 65535.0)
+      c := to_cairo_color(col) | fail
+      return add_color_stop_rgba(offset, c.red, c.green, c.blue, c.alpha)
    end
+
+   # Gets the number of color stops specified in this instance.
+   #
+   public native get_color_stop_count()
+
+   # Gets the color stop for stop number `num`, or fail if `num` is
+   # out of range (`0` to `get_color_stop_count()` - `1`).  The
+   # returned value is a `ColorStop` instance giving the offset and
+   # colour in icon string format.
+   #
+   public get_color_stop(num)
+      local l
+      l := get_color_stop_impl(num) | fail
+      return ColorStop(pop(l), to_icon_color(l))
+   end
+
+   private native get_color_stop_impl(num)
 end
 
+# This class wraps a cairo linear gradient pattern.
 final class LinearGradient(Gradient)
    private static init()
       Class.load_library(\Context.LOADED)
    end
 
+   package static create_for_ptr(ptr)
+      return Class.create_instance().set_ptr(ptr)
+   end
+
+   # Gets the gradient endpoints for this gradient, as a list of two
+   # `Point`s.
+   #
+   public get_points()
+      local l
+      l := get_points_impl()
+      return [Point(l[1], l[2]), Point(l[3], l[4])]
+   end
+   private native get_points_impl()
+
    private static native new_impl()
 
+   # Create a new linear gradient along the line defined by `(x0, y0)`
+   # and `(x1, y1)`. Before using the gradient pattern, a number of
+   # color stops should be defined using `add_color_stop()`.
+   #
    public new(x0, y0, x1, y1)
-      \Context.LOADED | return error("Cairo not supported")
+      cairo_available() | fail
       ptr := new_impl(x0, y0, x1, y1)
       return
    end
 end
 
+# This class wraps a cairo radial gradient pattern.
+#
 final class RadialGradient(Gradient)
    private static init()
       Class.load_library(\Context.LOADED)
    end
 
+   package static create_for_ptr(ptr)
+      return Class.create_instance().set_ptr(ptr)
+   end
+
+   # Gets the gradient endpoint circles for this radial gradient, as a
+   # list of two `Circle` records.
+   #
+   public get_circles()
+      local l
+      l := get_circles_impl()
+      return [Circle(l[1], l[2], l[3]), Circle(l[4], l[5], l[6])]
+   end
+   private native get_circles_impl()
+
    private static native new_impl()
 
+   # Creates a new radial gradient between the two circles defined by
+   # `(cx0, cy0, r0)` and `(cx1, cy1, r1)`. Before using the gradient
+   # pattern, a number of color stops should be defined using
+   # `add_color_stop()`.
+   #
    public new(cx0, cy0, r0, cx1, cy1, r1)
-      \Context.LOADED | return error("Cairo not supported")
+      cairo_available() | fail
       ptr := new_impl(cx0, cy0, r0, cx1, cy1, r1)
       return
    end
 end
 
+# This class wraps a cairo surface pattern instance.
+#
 final class SurfacePattern(Pattern)
    private static init()
       Class.load_library(\Context.LOADED)
    end
 
+   package static create_for_ptr(ptr)
+      return Class.create_instance().set_ptr(ptr)
+   end
+
+   # Return the `Surface` used by this pattern; note that a new
+   # wrapper is returned which must be closed separately to that used
+   # when the pattern was created.
+   #
+   public get_surface()
+      return Surface.create_for_ptr(get_surface_impl())
+   end
+
+   private native get_surface_impl()
+      
    private static native new_impl(sur)
 
+   # Create a new instance from the given `Surface`.
+   #
    public new(sur)
-      \Context.LOADED | return error("Cairo not supported")
+      cairo_available() | fail
       ptr := new_impl(sur)
       return
    end
 end
 
+# A `Pattern` using a solid colour.
+#
 final class SolidPattern(Pattern)
    private static init()
       Class.load_library(\Context.LOADED)
    end
 
+   package static create_for_ptr(ptr)
+      return Class.create_instance().set_ptr(ptr)
+   end
+
+   # Return the icon colour string for this instance.
+   #
+   public get_color()
+      return to_icon_color(get_rgba())
+   end
+   
+   private native get_rgba()
+
    private static native new_impl(r, g, b, a)
 
+   # Create a new instance with the given icon colour.  Fails if the
+   # colour is invalid.
+   #
    public new(col)
       local c
-      \Context.LOADED | return error("Cairo not supported")
-      c := Window.parse_color(col) | fail
-      ptr := new_impl(c.red / 65535.0,
-                      c.green / 65535.0,
-                      c.blue / 65535.0,
-                      c.alpha / 65535.0)
+      cairo_available() | fail
+      c := to_cairo_color(col) | fail
+      ptr := new_impl(c.red, c.green, c.blue, c.alpha)
       return
    end
 end
 
+# A `Pattern` which wraps a cairo mesh pattern.
+#
+final class MeshPattern(Pattern)
+   private static init()
+      Class.load_library(\Context.LOADED)
+   end
+
+   package static create_for_ptr(ptr)
+      return Class.create_instance().set_ptr(ptr)
+   end
+
+   # Begin a patch in this mesh pattern.
+   #
+   public native begin_patch()
+
+   # Indicates the end of the current patch in this mesh pattern.
+   #
+   public native end_patch()
+
+   # Define the first point of the current patch in this mesh pattern.
+   #
+   public native move_to(x, y)
+
+   # Adds a line to the current patch from the current point to
+   # position `(x, y)` in pattern-space coordinates.
+   #
+   public native line_to(x, y)
+
+   # Adds a cubic Bézier spline to the current patch from the current
+   # point to position `(x3, y3)` in pattern-space coordinates, using
+   # `(x1, y1)` and `(x2, y2)` as the control points.
+   #
+   public native curve_to(x1, y1, x2, y2, x3, y3)
+
+   # Set an internal control point of the current patch.  Valid values
+   # for `point_num` are from 0 to 3.
+   #
+   public native set_control_point(point_num, x, y)
+
+   # Sets the color of a corner of the current patch in a mesh
+   # pattern.  Valid values for `corner_num` are from 0 to 3 and
+   # identify the corners.  `col` is an icon colour string.
+   #
+   public set_corner_color(corner_num, col)
+      local c
+      c := to_cairo_color(col) | fail
+      return set_corner_color_rgba(corner_num, c.red, c.green, c.blue, c.alpha)
+   end
+
+   private native set_corner_color_rgba(corner_num, r, g, b, a)
+
+   # Gets the number of patches specified in this mesh pattern.
+   #
+   public native get_patch_count()
+
+   # Gets path defining the patch number `patch_num`. A list of
+   # `PathElement` objects is returned.
+   #
+   public get_path(patch_num)
+      return PathElement.to_path_elements(get_path_impl(patch_num))
+   end
+
+   private native get_path_impl(patch_num)
+
+   # Gets the control point `point_num` of patch `patch_num` as a
+   # `Point` record.
+   #
+   public get_control_point(patch_num, point_num)
+      return Point!get_control_point_impl(patch_num, point_num)
+   end
+
+   private native get_control_point_impl(patch_num, point_num)
+
+   # Gets the color information in corner `corner_num` of patch
+   # `patch_num` as an icon colour string.
+   #
+   public get_corner_color(patch_num, corner_num)
+      return to_icon_color(get_corner_color_rgba(patch_num, corner_num))
+   end
+
+   private native get_corner_color_rgba(patch_num, corner_num)
+
+   private static native new_impl()
+
+   public new()
+      cairo_available() | fail
+      ptr := new_impl()
+      return
+   end
+end
+
+# This class wraps a cairo surface.  There can be several instances
+# wrapping the same cairo object.  Each one has a reference to the
+# underlying object and must be closed separately.
+#
 abstract class Surface(NoCopy)
-   protected ptr
+   package ptr
 
    private static init()
       Class.load_library(\Context.LOADED)
    end
 
+   package set_ptr(ptr)
+      self.ptr := ptr
+      return self
+   end
+
+   package static create_for_ptr(ptr)
+      local c
+      c := case get_type(ptr) of {
+         1 : WindowSurface
+         2 : ImageSurface
+         3 : SVGSurface
+         4 : PostScriptSurface
+         5 : PDFSurface
+         6 : RecordingSurface
+      }
+      return c.create_for_ptr(ptr)
+   end
+
+   private static native get_type(ptr)
+
+   # Sets an offset that is added to the device coordinates determined
+   # by the CTM when drawing to this surface.
+   #
+   public native set_device_offset(x_offset, y_offset)
+
+   # Sets a scale that is multiplied to the device coordinates
+   # determined by the CTM when drawing to this surface.
+   #
+   public native set_device_scale(x_scale, y_scale)
+
+   # Return the device offset set by `set_device_offset()`, as a
+   # `DeviceOffset` record.
+   #
+   public get_device_offset()
+      return DeviceOffset!get_device_offset_impl()
+   end
+
+   # Return the device offset set by `set_device_scale()`, as a
+   # `DeviceScale` record.
+   #
+   public get_device_scale()
+      return DeviceScale!get_device_scale_impl()
+   end
+
+   private native get_device_offset_impl()
+   private native get_device_scale_impl()
+
+   # Close this instance, releasing the reference to the underlying
+   # cairo object.
+   #
    public native close()
 end
 
+# A `Surface` which reads and writes to a `Window`.
+#
 final class WindowSurface(Surface)
    private static init()
       Class.load_library(\Context.LOADED)
    end
 
+   package static create_for_ptr(ptr)
+      return Class.create_instance().set_ptr(ptr)
+   end
+
+   # Get the width of the X Drawable underlying this surface in pixels.
+   #
+   public native get_width()
+
+   # Get the height of the X Drawable underlying this surface in pixels.
+   #
+   public native get_height()
+
+   # Get the number of bits used to represent each pixel value.
+   #
+   public native get_depth()
+
    private static native new_impl()
 
+   # Create a new instance from the given `Window`.
+   #
    public new(win)
-      \Context.LOADED | return error("Cairo not supported")
+      cairo_available() | fail
       ptr := new_impl(win)
       return
    end
 end
 
+# A `Surface` which reads and writes from a `Pixels`.
+#
 final class ImageSurface(Surface)
+   # The only supported format, as a `Pixels` format string.
+   #
    public static const FORMAT
 
    private static init()
@@ -267,84 +705,147 @@ final class ImageSurface(Surface)
       }
    end
 
-   # Get the width of the block
+   package static create_for_ptr(ptr)
+      return Class.create_instance().set_ptr(ptr)
+   end
+
+   # Get the width of the image surface in pixels.
    #
    public native get_width()
 
-   # Get the height of the block
+   # Get the height of the image surface in pixels.
    #
    public native get_height()
 
    private static native new_impl(pix)
 
+   # Create a new instance from the given `Pixels` instance, which
+   # must have the format `ImageSurface.FORMAT`.
+   #
    public new(pix)
-      \Context.LOADED | return error("Cairo not supported")
+      cairo_available() | fail
       pix.get_format() == FORMAT | runerr("Invalid format", pix)
       ptr := new_impl(pix)
       return
    end
 end
 
+# Parent class of surfaces based on pages.
+#
 abstract class PagedSurface(Surface)
    private static init()
       Class.load_library(\Context.LOADED)
    end
 
+   # Emits the current page, but doesn't clear it, so that the
+   # contents of the current page will be retained for the next page.
+   #
    public native copy_page()
+
+   # Emits and clears the current page. Use `copy_page() if you don't
+   # want to clear the page.
+   #
    public native show_page()
 end
 
+# This class wraps a cairo svg surface object.
+#
 final class SVGSurface(PagedSurface)
    private static init()
       Class.load_library(\Context.LOADED)
    end
 
+   package static create_for_ptr(ptr)
+      return Class.create_instance().set_ptr(ptr)
+   end
+
    private static native new_impl()
 
+   # Creates a SVG surface of the specified size in points to be
+   # written to filename .
+   #
    public new(filename, width, height)
-      \Context.LOADED | return error("Cairo not supported")
+      cairo_available() | fail
       ptr := new_impl(filename, width, height)
       return
    end
 end
 
+# This class wraps a cairo Postscript surface object.
+#
 final class PostScriptSurface(PagedSurface)
    private static init()
       Class.load_library(\Context.LOADED)
    end
 
+   package static create_for_ptr(ptr)
+      return Class.create_instance().set_ptr(ptr)
+   end
+
+   # Changes the size of a PostScript surface for the current (and
+   # subsequent) pages.
+   #
+   public native set_size(width, height)
+
    private static native new_impl()
 
    public new(filename, width, height)
-      \Context.LOADED | return error("Cairo not supported")
+      cairo_available() | fail
       ptr := new_impl(filename, width, height)
       return
    end
 end
 
+# This class wraps a cairo PDF surface object.
+#
 final class PDFSurface(PagedSurface)
    private static init()
       Class.load_library(\Context.LOADED)
    end
 
+   package static create_for_ptr(ptr)
+      return Class.create_instance().set_ptr(ptr)
+   end
+
+   # Changes the size of a PDF surface for the current (and
+   # subsequent) pages.
+   #
+   public native set_size(width, height)
+
    private static native new_impl()
 
    public new(filename, width, height)
-      \Context.LOADED | return error("Cairo not supported")
+      cairo_available() | fail
       ptr := new_impl(filename, width, height)
       return
    end
 end
 
+# This class wraps a cairo recording surface, which can be used to
+# record all drawing operations at the highest level (that is, the
+# level of paint, mask, stroke, fill and show_text_glyphs). The
+# recording surface can then be "replayed" against any target surface
+# by using it as a source to drawing operations.
+#
 final class RecordingSurface(Surface)
    private static init()
       Class.load_library(\Context.LOADED)
    end
 
+   package static create_for_ptr(ptr)
+      return Class.create_instance().set_ptr(ptr)
+   end
+
+   # Get the extents of the recording-surface, as a `Rectangle`
+   # record.
+   #
    public get_extents()
       return Rectangle!get_extents_impl()
    end
 
+   # Measures the extents of the operations stored within the
+   # recording-surface.  A `Rectangle` record is returned.
+   #
    public ink_extents()
       return Rectangle!ink_extents_impl()
    end
@@ -354,13 +855,18 @@ final class RecordingSurface(Surface)
 
    private static native new_impl()
 
+   # Create a recording surface with the given extents.  The extents
+   # may be omitted, in which case the recording is unbounded.
+   #
    public new(x, y, width, height)
-      \Context.LOADED | return error("Cairo not supported")
+      cairo_available() | fail
       ptr := new_impl(x, y, width, height)
       return
    end
 end
 
+# This class wraps a cairo drawing context.
+#
 final class Context(NoCopy)
    private ptr
 
@@ -372,143 +878,448 @@ final class Context(NoCopy)
          LOADED := t
    end
 
+   # Begin a new sub-path. After this call the current point will be
+   # `(x, y)`.
+   #
    public native move_to(x, y)
-   public native rel_move_to(x, y)
+
+   # Begin a new sub-path. After this call the current point will
+   # offset by `(dx, dy)`.
+   #
+   public native rel_move_to(dx, dy)
+
+   # Adds a line to the path from the current point to position `(x,
+   # y)` in user-space coordinates. After this call the current point
+   # will be `(x, y)`.
+   #
    public native line_to(x, y)
-   public native rel_line_to(x, y)
+
+   # Adds a line to the path from the current point to a point that is
+   # offset from the current point by `(dx, dy)` in user space. After
+   # this call the current point will be offset by `(dx , dy)`.
+   #
+   public native rel_line_to(dx, dy)
+
+   # Adds a cubic Bézier spline to the path from the current point to
+   # position `(x3, y3)` in user-space coordinates, using `(x1, y1)`
+   # and `(x2, y2)` as the control points. After this call the current
+   # point will be `(x3, y3)`.
+   #
    public native curve_to(x1, y1, x2, y2, x3, y3)
-   public native rel_curve_to(x1, y1, x2, y2, x3, y3)
+
+   # Adds a cubic Bézier spline to the path from the current point to
+   # a point offset from the current point by `(dx3, dy3)`, using
+   # points offset by `(dx1, dy1)` and `(dx2, dy2)` as the control
+   # points. After this call the current point will be offset by
+   # `(dx3, dy3)`.
+   #
+   public native rel_curve_to(dx1, dy1, dx2, dy2, dx3, dy3)
+
+   # This function strokes the current path according to the current
+   # line width, line join, line cap, and dash settings. Afterwards,
+   # the current path will be cleared from this `Context`.
+   #
    public native stroke()
+
+   # Like `stroke()`, but preserves the path within the `Context`.
+   #
    public native stroke_preserve()
+
+   # Sets the current line width within this `Context`.
+   #
    public native set_line_width(w)
+   
+   # Set the line join according to the given string; possible values
+   # are "bevel", "miter", and "round".
+   #
    public native set_line_join(v)
+
+   # Set the line join according to the given string; possible values
+   # are "butt", "round", and "square".
+   #
    public native set_line_cap(v)
+
+   # Set the line join according to the given string; possible values
+   # are "even-odd" or "winding".
+   #
    public native set_fill_rule(v)
-   public native set_dash(l[])
-   public native set_font(v)
-   public native arc(xc, yc, r, a1, a2)
-   public native arc_negative(xc, yc, r, a1, a2)
+
+   # Sets the dash pattern to be used by `stroke()`.  The `offset`
+   # specifies an offset into the pattern at which the stroke begins.
+   # A dash pattern is specified by `dashes`, a list of positive
+   # values.  Each value provides the length of alternate "on" and
+   # "off" portions of the stroke.
+   #
+   # To clear the dash setting, call `set_dash()` with no arguments.
+   #
+   public native set_dash(offset, dashes[])
+
+   # Set the font to use for drawing text; the value `f` is an icon
+   # font specification string.
+   #
+   public native set_font(f)
+
+   # Sets the current miter limit within this `Context`.  If the
+   # current line join style is set to "miter" (see
+   # `set_line_join()`), the miter limit is used to determine whether
+   # the lines should be joined with a bevel instead of a miter.
+   #
+   public native set_miter_limit(v)
+
+   # Sets the tolerance used when converting paths into trapezoids.
+   # The default value is 0.1. A larger value will give better
+   # performance, a smaller value, better appearance.
+   #
+   public native set_tolerance(v)
+
+   # Adds a circular arc of the given radius `r` to the current path.
+   # The arc is centered at `(xc, yc)`, begins at `angle1` and
+   # proceeds in the direction of increasing angles to end at
+   # `angle2`.
+   #
+   public native arc(xc, yc, r, angle1, angle2)
+   
+   # Adds a circular arc of the given radius `r` to the current
+   # path. The arc is centered at `(xc, yc)`, begins at `angle1` and
+   # proceeds in the direction of decreasing angles to end at
+   # `angle2`.
+   #
+   public native arc_negative(xc, yc, r, angle1, angle2)
+
+   # Adds a closed sub-path rectangle of the given size to the current
+   # path at position `(x, y)` in user-space coordinates.
+   #
    public native rectangle(x, y, width, height)
+
+   # Fills the current path according to the current fill rule, (each
+   # sub-path is implicitly closed before being filled). After
+   # `fill()`, the current path will be cleared from this `Context`.
+   #
    public native fill()
+
+   # Like `fill()`, but preserves the path in the `Context`.
+   #
    public native fill_preserve()
+
+   # Paints the current source everywhere within the current clip region.
+   #
    public native paint()
-   public native mask(pat)
-   public native mask_surface(sur, x, y)
+
+   # Paints the current source everywhere within the current clip
+   # region using a mask of constant alpha value `alpha`.
+   #
+   public native paint_with_alpha(alpha)
+
+   # Paints the current source using the alpha channel of `Pattern`
+   # `pattern` as a mask. (Opaque areas of `pattern` are painted with
+   # the source, transparent areas are not painted).
+   #
+   public native mask(pattern)
+
+   # Paints the current source using the alpha channel of `Surface`
+   # `surface` as a mask. (Opaque areas of `surface` are painted with
+   # the source, transparent areas are not painted.)  `x` and `y` give
+   # the point at which to place the origin of `surface`.
+   #
+   public native mask_surface(surface, x, y)
+
+   # Add a path representing the given string `s`.
+   #
    public native text_path(s)
+
+   # Adds a line segment to the path from the current point to the
+   # beginning of the current sub-path, (the most recent point passed
+   # to `move_to()`), and closes this sub-path. After this call
+   # the current point will be at the joined endpoint of the sub-path.
+   #
    public native close_path()
+
+   # Clears the current path. After this call there will be no path
+   # and no current point.
    public native new_path()
+
+   # Begin a new sub-path. Note that the existing path is not
+   # affected. After this call there will be no current point.
    public native new_sub_path()
+
+   # Close this instance, releasing the reference to the underlying
+   # cairo object.
+   #
    public native close()
+
+   # Set the drawing operator according to the given string; possible
+   # values are "atop", "clear", "dest", "dest atop", "dest in", "dest
+   # out", "dest over", "in", "out", "over", "source", and "xor"
+   #
    public native set_operator(op)
 
-   private native get_path_impl(flat)
+   # Set the antialias setting according to the given string; possible
+   # values are "best", "default", "fast", "good", "gray", "none", and
+   # "subpixel"
+   #
+   public native set_antialias(v)
 
-   private static to_path_elements(t)
-      local l
-      l := []
-      while put(l, case get(t) of {
-         0 : MoveTo(get(t), get(t))
-         1 : LineTo(get(t), get(t))
-         2 : CurveTo(get(t), get(t), get(t), get(t), get(t), get(t))
-         3 : ClosePath()
-      })
-      return l
-   end
+   # Returns the current line width value exactly as set by `set_line_width()`.
+   #
+   public native get_line_width()
 
-   private static from_path_elements(l)
-      local t, e
-      t := []
-      every e := !l do
-         case classof(e) of {
-            MoveTo: every put(t, 0 | e.x | e.y)
-            LineTo: every put(t, 1 | e.x | e.y)
-            CurveTo: every put(t, 2 | e.x1 | e.y1 | e.x2 | e.y2 | e.x3 | e.y3)
-            ClosePath: put(t, 3)
-         }
-      return t
-   end
+   # Gets the current line join style, as set by `set_line_join()`.
+   #
+   public native get_line_join()
 
+   # Gets the current line cap style, as set by `set_line_cap()`.
+   #
+   public native get_line_cap()
+
+   # Gets the current fill rule, as set by `set_fill_rule()`.
+   #
+   public native get_fill_rule()
+
+   # Gets the current miter limit, as set by `set_miter_limit()`.
+   #
+   public native get_miter_limit()
+
+   # Gets the current tolerance value, as set by `set_tolerance()`.
+   #
+   public native get_tolerance()
+
+   # Gets the current shape antialiasing mode, as set by `set_antialias()`.
+   #
+   public native get_antialias()
+
+   # Gets the current compositing operator, as set by `set_operator()`.
+   #
+   public native get_operator()
+
+   # Get the dash offset, as set by `set_dash()`.
+   #
+   public native get_dash_offset()
+
+   # Return the list of dashes, set by `set_dash()`, or fail if
+   # dashing is not set.
+   #
+   public native get_dashes()
+
+   # Gets a copy of the current path.  A list of `PathElement` objects
+   # is returned.
    public get_path()
-      return to_path_elements(get_path_impl())
+      return PathElement.to_path_elements(get_path_impl())
    end
 
+   # Gets a flattened copy of the current path (ie one with curves
+   # approximated as lines).  A list of `PathElement` objects is
+   # returned.
    public get_flat_path()
-      return to_path_elements(get_path_impl(1))
+      return PathElement.to_path_elements(get_flat_path_impl())
    end
 
-   private native append_path_impl(l)
-
+   # Append the path onto the current path.  The given list `l` should
+   # be a list of `PathElement` objects.
    public append_path(l)
-      return append_path_impl(from_path_elements(l))
+      return append_path_impl(PathElement.from_path_elements(l))
    end
 
+   # Gets the current point of the current path, as a `Point` record,
+   # or fail if there is no defined current point.
    public get_current_point()
       return Point!get_current_point_impl()
    end
 
-   private native get_current_point_impl()
-
+   # Makes a copy of the current state of this `Context` and saves it
+   # on an internal stack of saved states.  When `restore()` is
+   # called, the `Context` will be restored to the saved state.
+   #
    public native save()
+
+   # Restores this instance to the state saved by a preceding call to
+   # `save()` and removes that state from the stack of saved states.
+   #
    public native restore()
 
+   # Returns a `Rectangle` record, which is a bounding box in user
+   # coordinates covering the area that would be affected, (the
+   # "inked" area), by a `stroke()` operation given the current path
+   # and stroke parameters. If the current path is empty, returns an
+   # empty rectangle. Surface dimensions and clipping are not taken
+   # into account.
+   #
    public get_stroke_extents()
       return Rectangle!get_stroke_extents_impl()
    end
 
+   # Returns a `Rectangle` record, which is a bounding box in user
+   # coordinates covering the area that would be affected, (the
+   # "inked" area), by a `fill()` operation given the current path and
+   # fill parameters. If the current path is empty, returns an empty
+   # rectangle. Surface dimensions and clipping are not taken into
+   # account.
+   #
    public get_fill_extents()
       return Rectangle!get_fill_extents_impl()
    end
 
+   # Returns a `Rectangle` record, which is a bounding box in user
+   # coordinates covering the area inside the current clip.
+   #
    public get_clip_extents()
       return Rectangle!get_clip_extents_impl()
    end
 
+   # Returns a `Rectangle` record, which is a bounding box in
+   # user-space coordinates covering the points on the current
+   # path. If the current path is empty, returns an empty
+   # rectangle. Stroke parameters, fill rule, surface dimensions and
+   # clipping are not taken into account.
+   #
    public get_path_extents()
       return Rectangle!get_path_extents_impl()
    end
 
-   private native get_stroke_extents_impl()
-   private native get_clip_extents_impl()
-   private native get_fill_extents_impl()
-   private native get_path_extents_impl()
-   private native user_to_device_impl(x, y)
-   private native device_to_user_impl(x, y)
-
+   # Transform a coordinate from user space to device space by
+   # multiplying the given point by the current transformation matrix
+   # (CTM).  A `Point` record is returned.
+   #
    public user_to_device(x, y)
       return Point!user_to_device_impl(x, y)
    end
 
+   # Transform a coordinate from device space to user space by
+   # multiplying the given point by the inverse of the current
+   # transformation matrix (CTM).  A `Point` record is returned.
+   #
    public device_to_user(x, y)
       return Point!device_to_user_impl(x, y)
    end
 
+   # Transform a distance vector from user space to device space. This
+   # function is similar to `user_to_device()` except that the
+   # translation components of the CTM will be ignored when
+   # transforming `(dx, dy)`.  A `Vector` record is returned.
+   #
+   public user_to_device_distance(dx, dy)
+      return Vector!user_to_device_distance_impl(dx, dy)
+   end
+
+   # Transform a distance vector from device space to user space. This
+   # function is similar to `device_to_user()` except that the
+   # translation components of the inverse CTM will be ignored when
+   # transforming `(dx, dy)`.  A `Vector` record is returned.
+   #
+   public device_to_user_distance(dx, dy)
+      return Vector!device_to_user_distance_impl(dx, dy)
+   end
+
+   # Modifies the current transformation matrix (CTM) by translating
+   # the user-space origin by `(tx, ty)`.
+   #
    public native translate(tx, ty)
+
+   # Modifies the current transformation matrix (CTM) by scaling the X
+   # and Y user-space axes by `sx` and `sy` respectively.
+   #
    public native scale(sx, sy)
+
+   # Modifies the current transformation matrix (CTM) by rotating the
+   # user-space axes by `r` radians.
+   #
    public native rotate(r)
 
+   # Establishes a new clip region by intersecting the current clip
+   # region with the current path as it would be filled by `fill()`
+   # and according to the current fill rule (see `set_fill_rule()`).
+   # After `clip()`, the current path will be cleared from the cairo
+   # context.
+   #
    public native clip()
+
+   # Like `clip()`, but preserves the path.
+   #
    public native clip_preserve()
+
+   # Reset the current clip region to its original, unrestricted state.
+   #
    public native reset_clip()
 
-   private native set_source_rgba(r, g, b, a)
-   private native set_source_pattern(pat)
+   # Gets the current clip region as a list of rectangles in user
+   # coordinates, or fails if the clip region is not so representable.
+   #
+   public get_clip_rectangles()
+      local l
+      l := get_clip_rectangles_impl() | fail
+      return List{Rectangle!(!l)}
+   end
 
+   # Succeeds if and only if the given point is inside the area that
+   # would be affected by a `stroke()` operation given the current
+   # path and stroking parameters. Surface dimensions and clipping are
+   # not taken into account.
+   #
    public native in_stroke(x, y)
+
+   # Succeeds if and only if the given point is inside the area that
+   # would be affected by a `fill()` operation given the current path
+   # and filling parameters. Surface dimensions and clipping are not
+   # taken into account.
+   #
    public native in_fill(x, y)
+
+   # Succeeds if and only if the given point is inside the area that
+   # would be visible through the current clip, i.e. the area that
+   # would be filled by a `paint()` operation.
+   #
    public native in_clip(x, y)
 
-   public native set_source_extend(v)
-   private native set_source_matrix_impl(xx, yx, xy, yy, x0, y0)
-   private native get_source_matrix_impl()
+   # Temporarily redirects drawing to an intermediate surface known as
+   # a group. The redirection lasts until the group is completed by a
+   # call to `pop_group()` or `pop_group_to_source()`. These calls
+   # provide the result of any drawing to the group as a pattern,
+   # (either as an explicit object, or set as the source pattern).
+   #
+   # The `content` parameter is optional, and specifies the group's
+   # content type, as a string; possible values are "alpha", "color",
+   # and "color-alpha".
+   #
+   public native push_group(content)
 
-   public set_source_matrix(m)
-      return set_source_matrix_impl(m.xx, m.yx, m.xy, m.yy, m.x0, m.y0)
+   # Terminates the redirection begun by a call to `push_group()` and
+   # installs the resulting pattern as the source pattern in the given
+   # cairo context.
+   #
+   public native pop_group_to_source()
+
+   # Terminates the redirection begun by a call to `push_group()` and
+   # returns a new `Pattern` instance containing the results of all
+   # drawing operations performed to the group.
+   #
+   public pop_group()
+      return Pattern.create_for_ptr(pop_group_impl())
    end
 
-   public get_source_matrix()
-      return Matrix!get_source_matrix_impl()
+   # Gets the current destination `Surface` for this `Context`. This is
+   # either the original target surface as passed to the constructor,
+   # or the target surface for the current group as started by the
+   # most recent call to `push_group()` or
+   # `push_group_with_content()`.
+   #
+   # A new `Surface` instance is returned in either case, and this
+   # must be closed by the caller.
+   #
+   public get_group_target()
+      return Surface.create_for_ptr(get_group_target_impl())
    end
 
+   # Return the source `Pattern` used by this `Context`; note that a
+   # new wrapper is returned which must be closed separately from any
+   # other instance.
+   #
+   public get_source()
+      return Pattern.create_for_ptr(get_source_impl())
+   end
+
+   # Set the source to use.  `v` can be a `Pattern`.  If it is not,
+   # then `v` is passed to `Pattern.to_pattern()` to create a
+   # temporary pattern, which is then used as the source.
+   #
    public set_source(v)
       local t
       return if is(v, Pattern) then
@@ -520,31 +1331,72 @@ final class Context(NoCopy)
          }
    end
 
-   public set_fg(col)
-      local c
-      c := Window.parse_color(col) | fail
-      return set_source_rgba(c.red / 65535.0,
-                             c.green / 65535.0,
-                             c.blue / 65535.0,
-                             c.alpha / 65535.0)
+   # Return the target `Surface`.  Note that this returns a new
+   # wrapper of the underlying cairo object, and must be closed
+   # separately from any other instance.
+   #
+   public get_target()
+      return Surface.create_for_ptr(get_target_impl())
    end
 
+   # Set the source to a solid pattern with the given colour `col`,
+   # which is an icon colour string.
+   #
+   public set_fg(col)
+      local c
+      c := to_cairo_color(col) | fail
+      return set_source_rgba(c.red, c.green, c.blue, c.alpha)
+   end
+
+   # Set the transformation matrix to the identity matrix.
+   #
    public identity_matrix()
       return set_matrix(Matrix.I)
    end
 
-   private native set_matrix_impl(xx, yx, xy, yy, x0, y0)
+   # Set the transformation matrix from the given `Matrix` instance.
+   #
    public set_matrix(m)
       return set_matrix_impl(m.xx, m.yx, m.xy, m.yy, m.x0, m.y0)
    end
 
-   private native get_matrix_impl()
+   # Return the transformation matrix as a `Matrix` instance.
+   #
    public get_matrix()
       return Matrix!get_matrix_impl()
    end
 
+   private native get_current_point_impl()
+   private native append_path_impl(l)
+   private native get_path_impl()
+   private native get_flat_path_impl()
+   private native get_stroke_extents_impl()
+   private native get_clip_extents_impl()
+   private native get_fill_extents_impl()
+   private native get_path_extents_impl()
+   private native user_to_device_impl(x, y)
+   private native device_to_user_impl(x, y)
+   private native user_to_device_distance_impl(dx, dy)
+   private native device_to_user_distance_impl(dx, dy)
+   private native get_clip_rectangles_impl()
+   private native set_source_rgba(r, g, b, a)
+   private native set_source_pattern(pat)
+   private native pop_group_impl()
+   private native get_source_impl()
+   private native get_group_target_impl()
+   private native get_target_impl()
+   private native set_matrix_impl(xx, yx, xy, yy, x0, y0)
+   private native get_matrix_impl()
    private static native new_impl(sur)
 
+   # Create a new instance using a `Surface` based on `v`, which may
+   # be a `Window`, a `Pixels`, or an already-created `Surface`
+   # instance.
+   #
+   # In the case of a `Window` (or a `WindowSurface`) being used, the
+   # instance is initialized in a way which matches the given
+   # `Window`'s context.
+   #
    public new(v)
       local t
       \LOADED | return error("Cairo not supported")
@@ -595,7 +1447,7 @@ final class SVG(NoCopy)
    private static native new_impl()
 
    public new(data)
-      \Context.LOADED | return error("Cairo not supported")
+      cairo_available() | fail
       ptr := new_impl(data) | fail
       return
    end
