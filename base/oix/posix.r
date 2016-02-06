@@ -435,7 +435,7 @@ static void addpid(Waitmsg *msg)
 {
     Waited *w;
 
-    MemProtect(w = malloc(sizeof(*w)));
+    w = rt_malloc(sizeof(*w));
     w->msg = msg;
     w->next = wd;
     wd = w;

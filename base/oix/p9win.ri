@@ -269,7 +269,7 @@ static struct wcursor *ensure_wcursor(char *name)
         if (!strcmp(name, rv->name))
             return rv;
     }
-    rv = rt_alloc(sizeof(struct wcursor));
+    rv = rt_zalloc(sizeof(struct wcursor));
     rv->name = salloc(name);
     rv->next = cursors[i];
     cursors[i] = rv;
@@ -655,7 +655,7 @@ int copyarea(wbp w1, int x, int y, int w, int h, wbp w2, int x2, int y2)
 static wbp alcwbinding()
 {
     wbp w;
-    w = rt_alloc(sizeof(struct _wbinding));
+    w = rt_zalloc(sizeof(struct _wbinding));
     GLink(w, wbndngs);
     return w;
 }
@@ -1183,7 +1183,7 @@ static wfp load_font(char *s)
     if (!f)
         return 0;
 
-    rv = rt_alloc(sizeof(struct _wfont));
+    rv = rt_zalloc(sizeof(struct _wfont));
     rv->name = rt_malloc(strlen(s) + 3 + 1);
     sprint(rv->name, "p9:%s", s);
     rv->ascent = f->ascent;               /* font dimensions */
@@ -2694,7 +2694,7 @@ static void setup_cursor(char *name, struct Cursor *c)
     struct wcursor *rv;
     struct Cursor *c2;
     i = hasher(hashcstr(name), cursors);
-    rv = rt_alloc(sizeof(struct wcursor));
+    rv = rt_zalloc(sizeof(struct wcursor));
     rv->name = name;
     if (c) {
         c2 = rt_malloc(sizeof(struct Cursor));

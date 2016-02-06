@@ -4285,11 +4285,11 @@ function io_FileWorker_new_impl(buff_size, f)
            fileworker_inited = 1;
        }
 
-       MemProtect(p = calloc(1, sizeof(*p)));
+       p = rt_zalloc(sizeof(*p));
        GLink4(p, fileworkers, next, prev);
 
        p->pid = -1;
-       MemProtect(p->buff = calloc(1, buff_size));
+       p->buff = rt_zalloc(buff_size);
        p->buff_size = buff_size;
        p->fd = fd;
        if (p->fd >= 0)
