@@ -380,7 +380,7 @@ static void execute(char **args)
    for (p = args; *p; p++)
       len += strlen(*p) + 4;
 
-   cp = cmd = safe_alloc(len + 1);
+   cp = cmd = safe_zalloc(len + 1);
 
    cp += sprintf(cmd, "\"%s\" ", ofile);
    for (p = args; *p; p++)
@@ -400,7 +400,7 @@ static void execute(char **args)
 
    for (n = 0; args[n] != NULL; n++)	/* count arguments */
       ;
-   p = argv = safe_alloc((n + 5) * sizeof(char *));
+   p = argv = safe_zalloc((n + 5) * sizeof(char *));
    *p++ = ofile;			/* pass icode file name */
 
    while ((*p++ = *args++) != 0)      /* copy args into argument vector */
@@ -452,7 +452,7 @@ static void file_comp()
     int n, c;
     char buf[200], *tmp = intern(makename(0, ofile, TmpSuffix));
   
-    hdr = safe_alloc(sizeof(struct header));
+    hdr = safe_zalloc(sizeof(struct header));
     
     /* use fopen() to open the target file then read the header and add "z" to the hdr->config. */
     

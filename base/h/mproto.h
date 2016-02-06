@@ -43,7 +43,7 @@ char *relfile	(char *prog, char *mod);
 void normalize(char *path);
 char *canonicalize(char *path);
 void *safe_calloc(size_t m, size_t n);
-void *safe_alloc(size_t size);
+void *safe_zalloc(size_t size);
 void *safe_realloc(void *ptr, size_t size);
 void *safe_malloc(size_t size);
 

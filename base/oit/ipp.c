@@ -202,7 +202,7 @@ static int ppopen(char *fname, int m4)
    if (f == NULL) {
       return 0;
       }
-   fs = safe_alloc(sizeof(infile));
+   fs = safe_zalloc(sizeof(infile));
    fs->prev = curfile;
    fs->fp = f;
    fs->fname = fname;
@@ -223,7 +223,7 @@ static FILE *m4pipe(char *filename)
 #if UNIX
       {
       FILE *f;
-      char *s = safe_alloc(7 + strlen(filename));
+      char *s = safe_zalloc(7 + strlen(filename));
       if (filename == stdin_string)
           sprintf(s, "m4 -s -");
       else
@@ -429,7 +429,7 @@ static char *rline(FILE *fp)
 
    /* if first time, allocate buffer */
    if (!lbuf) {
-      lbuf = safe_alloc(LINE_SIZE_INIT);
+      lbuf = safe_zalloc(LINE_SIZE_INIT);
       llen = LINE_SIZE_INIT;
       }
 
@@ -471,7 +471,7 @@ static void pushdef(cdefn *d)
    d->inuse = 1;
    b = bfree;
    if (b == NULL)
-      b = safe_alloc(sizeof(buffer));
+      b = safe_zalloc(sizeof(buffer));
    else
       bfree = b->prev;
    b->prev = bstack;
@@ -677,7 +677,7 @@ static char *loadfile(char *fname, int *vlen, int ucs)
         return 0;
 
     len = 1024;
-    s = safe_alloc(len);
+    s = safe_zalloc(len);
     if (ucs) {
         *s = 'u';
         *(s + 1) = '\"';
@@ -1158,7 +1158,7 @@ static char *getfnm(char *dst, char *src)
 char *salloc(char *s)
 {
     char *s1;
-    s1 = (char *)safe_alloc(strlen(s) + 1);
+    s1 = (char *)safe_zalloc(strlen(s) + 1);
     return strcpy(s1, s);
 }
 
@@ -1239,7 +1239,7 @@ static void dinsert(char *name, char *val)
         }
         p = &d->next;
     }
-    d = safe_alloc(sizeof(*d));
+    d = safe_zalloc(sizeof(*d));
     d->nlen = nlen;
     d->vlen = vlen;
     d->inuse = 0;
@@ -1278,7 +1278,7 @@ static void dinsert_pre(char *name, char *val, int vlen)
         }
         p = &d->next;
     }
-    d = safe_alloc(sizeof(*d));
+    d = safe_zalloc(sizeof(*d));
     d->nlen = nlen;
     d->vlen = vlen;
     d->inuse = 0;

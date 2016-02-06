@@ -255,7 +255,7 @@ char **opt_args;
    /*
     * Set up the array of standard locations to search for header files.
     */
-   incl_search = safe_alloc((unsigned int)(sizeof(char *)*(n_paths + 1)));
+   incl_search = safe_zalloc((unsigned int)(sizeof(char *)*(n_paths + 1)));
    j = 0;
   
    /*
@@ -264,7 +264,7 @@ char **opt_args;
    for (i = 0; opt_lst[i] != '\0'; ++i)
       if (opt_lst[i] == 'I') {
          s = opt_args[i];
-         s1 = safe_alloc((unsigned int)(strlen(s)+1));
+         s1 = safe_zalloc((unsigned int)(strlen(s)+1));
          strcpy(s1, s);
          
 /*

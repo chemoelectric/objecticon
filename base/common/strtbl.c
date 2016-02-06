@@ -30,7 +30,7 @@ void init_str()
     int h;
 
     if (str_tbl == NULL) {
-        str_tbl = safe_alloc(StrTblSz * sizeof(struct str_entry *));
+        str_tbl = safe_zalloc(StrTblSz * sizeof(struct str_entry *));
         for (h = 0; h < StrTblSz; ++h)
             str_tbl[h] = NULL;
     }
@@ -119,7 +119,7 @@ void new_sbuf(struct str_buf *sbuf)
     }
 
     s1 = sbuf->strtimage;
-    sbf = safe_alloc(sizeof(struct str_buf_frag) + (sbuf->size - 1));
+    sbf = safe_zalloc(sizeof(struct str_buf_frag) + (sbuf->size - 1));
     sbf->next = sbuf->frag_lst;
     sbuf->frag_lst = sbf;
     sbuf->strtimage = sbf->s;

@@ -573,7 +573,7 @@ static void lemitcon(struct centry *ce)
         int npair = ce->length / sizeof(struct range);
         int size = 0;
         /* Need to alloc not cast because string data might not be aligned */
-        struct range *pair = safe_alloc(ce->length);
+        struct range *pair = safe_zalloc(ce->length);
         ce->pc = pc;
         memcpy(pair, ce->data, ce->length);
         for (i = 0; i < CsetSize; i++)

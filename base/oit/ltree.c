@@ -62,7 +62,7 @@ struct lnode_n *lnode_n(int op, struct loc *loc, int x)
     n->op = op;
     n->loc = *loc;
     n->n = x;
-    n->child = safe_alloc(x * sizeof(struct lnode *));
+    n->child = safe_zalloc(x * sizeof(struct lnode *));
     return n;
 }
 
@@ -85,7 +85,7 @@ struct lnode_invoke *lnode_invoke(int op, struct loc *loc, struct lnode *expr, i
     n->n = x;
     n->expr = expr;
     n->expr->parent = (struct lnode *)n;
-    n->child = safe_alloc(x * sizeof(struct lnode *));
+    n->child = safe_zalloc(x * sizeof(struct lnode *));
     return n;
 }
 
@@ -146,8 +146,8 @@ struct lnode_case *lnode_case(int op, struct loc *loc, struct lnode *expr, int x
     n->expr = expr;
     n->expr->parent = (struct lnode *)n;
     n->n = x;
-    n->selector = safe_alloc(x * sizeof(struct lnode *));
-    n->clause = safe_alloc(x * sizeof(struct lnode *));
+    n->selector = safe_zalloc(x * sizeof(struct lnode *));
+    n->clause = safe_zalloc(x * sizeof(struct lnode *));
     return n;
 }
 

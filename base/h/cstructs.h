@@ -68,7 +68,7 @@ struct str_buf {
 /*
  * Allocate an object
  */
-#define Alloc(type)   safe_alloc(sizeof(type))
+#define Alloc(type)   safe_zalloc(sizeof(type))
 
 /*
  * Miscellaneous definitions

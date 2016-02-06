@@ -143,8 +143,8 @@ void init_macro()
     */
    time(&tv);
    tval = ctime(&tv);
-   date_buf = safe_alloc((unsigned int)12);
-   time_buf = safe_alloc((unsigned int)9);
+   date_buf = safe_zalloc((unsigned int)12);
+   time_buf = safe_zalloc((unsigned int)9);
    s = date_buf;
    for (i = 4; i <= 10; ++i)
       *s++ = tval[i];

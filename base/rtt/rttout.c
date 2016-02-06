@@ -1915,7 +1915,7 @@ struct parminfo *new_prmloc()
    if (params == NULL)
       return NULL;
    nparams = params->u.param_info.param_num + 1;
-   parminfo = safe_alloc((unsigned)nparams *
+   parminfo = safe_zalloc((unsigned)nparams *
      sizeof(struct parminfo));
    for (i = 0; i < nparams; ++i) {
       parminfo[i].cur_loc = 0;
