@@ -2042,7 +2042,7 @@ static void * expand_table(void * table,      /* table to be realloc()ed */
     if (tblfree != NULL)
         free_offset = DiffPtrs(*(char **)tblfree,  (char *)table);
 
-    if ((new_tbl = (char *)realloc(table, (unsigned)num_bytes)) == 0)
+    if ((new_tbl = realloc(table, num_bytes)) == 0)
         quit("out of memory for %s", tbl_name);
 
     for (i = *size * unit_size; i < num_bytes; ++i)
