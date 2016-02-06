@@ -226,15 +226,15 @@ function graphics_Window_draw_curve(self, argv[argc])
       GetSelfW();
 
       closed = 0;
-      CheckArgMultipleOf(2);
+      CheckArgMultipleOf(2, 3);
 
       dx = self_w->context->dx;
       dy = self_w->context->dy;
+      n = argc / 2;
 
       MemProtect(points = malloc(sizeof(struct point) * (n + 2)));
 
-      if (n > 1) {
-          CnvCDouble(argv[0], x0)
+      CnvCDouble(argv[0], x0)
           CnvCDouble(argv[1], y0)
           CnvCDouble(argv[argc - 2], xN)
           CnvCDouble(argv[argc - 1], yN)
@@ -251,26 +251,21 @@ function graphics_Window_draw_curve(self, argv[argc])
               CnvCDouble(argv[1], t);
               points[0].y = t + self_w->context->dy;
           }
-          for (i = 1; i <= n; i++) {
-              int base = (i-1) * 2;
-              CnvCDouble(argv[base], t);
-              points[i].x = t + dx;
-              CnvCDouble(argv[base + 1], t);
-              points[i].y = t + dy;
-          }
-          if (closed) {                /* duplicate the second point */
-              points[i] = points[2];
-          }
-          else {                       /* duplicate the last point */
-              points[i] = points[i-1];
-          }
-          if (n < 3) {
-              drawlines(self_w, points+1, n);
-          }
-          else {
-              drawcurve(self_w, points, n+2);
-          }
+      for (i = 1; i <= n; i++) {
+          int base = (i-1) * 2;
+          CnvCDouble(argv[base], t);
+          points[i].x = t + dx;
+          CnvCDouble(argv[base + 1], t);
+          points[i].y = t + dy;
       }
+      if (closed) {                /* duplicate the second point */
+          points[i] = points[2];
+      }
+      else {                       /* duplicate the last point */
+          points[i] = points[i-1];
+      }
+      drawcurve(self_w, points, n+2);
+
       free(points);
 
       return self;
@@ -297,7 +292,7 @@ function graphics_Window_draw_line(self, argv[argc])
       struct point *points;
       int dx, dy;
       GetSelfW();
-      CheckArgMultipleOf(2);
+      CheckArgMultipleOf(2, 2);
       MemProtect(points = malloc(sizeof(struct point) * (argc / 2)));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
@@ -448,7 +443,7 @@ function graphics_Window_fill_polygon(self, argv[argc])
       struct point *points;
       int dx, dy;
       GetSelfW();
-      CheckArgMultipleOf(2);
+      CheckArgMultipleOf(2, 3);
       MemProtect(points = malloc(sizeof(struct point) * (argc / 2)));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
@@ -474,7 +469,7 @@ function graphics_Window_fill_trapezoids(self, argv[argc])
       struct trapezoid *traps;
       int dx, dy;
       GetSelfW();
-      CheckArgMultipleOf(6);
+      CheckArgMultipleOf(6, 1);
       MemProtect(traps = malloc(sizeof(struct trapezoid) * (argc / 6)));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
@@ -508,7 +503,7 @@ function graphics_Window_fill_triangles(self, argv[argc])
       struct triangle *tris;
       int dx, dy;
       GetSelfW();
-      CheckArgMultipleOf(6);
+      CheckArgMultipleOf(6, 1);
       MemProtect(tris = malloc(sizeof(struct triangle) * (argc / 6)));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
