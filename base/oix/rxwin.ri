@@ -79,6 +79,7 @@ static void freecontext(wcp wc);
 static void freewindow(wsp ws);
 static void apply_windowlabel(wsp ws);
 static void apply_windowicon(wsp ws);
+static double calc_pt(struct point *p, double cx, double cy, double rx, double ry, double th);
 
 static stringint drawops[] = {
    { 0, 12},
@@ -2167,47 +2168,55 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
                  make_mod(event->state));
 }
 
-static void semi(struct point *pts, int *npts, int maxpts,
-                 double cx, double cy, double rx, double ry, double a1, double a2,
-                 int xfrom, int xto, int xby, double x0ang, double xnegang, double xposang)
+static double calc_pt(struct point *p, double cx, double cy, double rx, double ry, double th)
 {
-    int x1;
-    double y1, th;
-    if (a1 > x0ang + Pi/2) return;
-    if (a1 + a2 < x0ang - Pi/2) return;
-    x1 = xfrom;
-    for(;;) {
-        if ((xby > 0 && x1 > xto) || (xby < 0 && x1 < xto)) break;
-        y1 = -sqrt(1 - pow(x1/rx, 2)) * ry * xby;
-        if (x1 == 0)
-            th = x0ang;
-        else if (x1 < 0)
-            th = atan(y1/x1) + xnegang;
-        else
-            th = atan(y1/x1) + xposang;
-        if (th > a1+a2) return;
-        if (a1 <= th && *npts < maxpts) {
-            pts[*npts].x = cx + x1;
-            pts[*npts].y = cy + y1;
-            ++*npts;
-        }
-        x1 += xby;
-   }
+    double r;
+    /* Get the polar coordiantes radius relative to center */
+    if (rx == ry)    /* Easy case if a circle */
+        r = rx;
+    else
+        r = (rx * ry) / hypot(rx * sin(th), ry * cos(th));
+    p->x = cx + r * cos(th);
+    p->y = cy + r * sin(th);
+    return r;
 }
 
 void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
+    double th, r, min_r, max_r, min_adj, arc_res;
     struct point *pts;
     int maxpts, npts;
-    maxpts = 4 * (rx + 1) + 4;
+    
+    min_r = Min(rx, ry);
+    max_r = Max(rx, ry);
+    /* The smaller the radius in pixels, the fewer steps we need. */
+    arc_res = 5.0 / max_r;
+    /* In any case ensure 0.025 <= arc_res <= 0.25 */
+    arc_res = Max(arc_res, 0.025);
+    arc_res = Min(arc_res, 0.25);
+
+    min_adj = arc_res * (min_r / max_r);
+    maxpts = 10 + angle2 / min_adj;
     MemProtect(pts = malloc(maxpts * sizeof(struct point)));
     npts = 0;
-    semi(pts, &npts, maxpts, cx, cy, rx, ry, angle1, angle2,  rx,  -rx, -1, 0.5*Pi, Pi,   0);
-    semi(pts, &npts, maxpts, cx, cy, rx, ry, angle1, angle2, -rx,   rx,  1, 1.5*Pi, Pi,   2*Pi);
-    semi(pts, &npts, maxpts, cx, cy, rx, ry, angle1, angle2,  rx,  -rx, -1, 2.5*Pi, 3*Pi, 2*Pi);
-    semi(pts, &npts, maxpts, cx, cy, rx, ry, angle1, angle2, -rx,   rx,  1, 3.5*Pi, 3*Pi, 4*Pi);
-    if (angle2 == 2 * Pi && npts < maxpts)
-        pts[npts++] = pts[0];  /* Ensure drawlines recognizes a closed arc */
+    th = angle1;
+    while (th < angle1 + angle2 && npts < maxpts) {
+        r = calc_pt(&pts[npts], cx, cy, rx, ry, th);
+        ++npts;
+        /*
+         * Now r <= max_r.  Adjust th based on r; the longer it is
+         * compared to the shorter axis, the more points we generate.
+         */
+        th += arc_res * (min_r / r);
+    }
+    if (npts < maxpts) {
+        if (angle2 == 2 * Pi)
+            pts[npts] = pts[0];  /* Ensure drawlines recognizes a closed arc */
+        else
+            calc_pt(&pts[npts], cx, cy, rx, ry, angle1 + angle2);
+        ++npts;
+    }
+
     drawlines(w, pts, npts);
     free(pts);
 }
