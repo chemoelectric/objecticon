@@ -847,8 +847,10 @@ final class Window(NoCopy, ObjectOutput)
 
    private static native parse_color_impl(k)
 
-   # Draw the given arc (centre `x`, `y`, x radius `rx`, y radius
-   # `ry`) between the given angles `angle1` and `angle2`.
+   # Draw the given arc of an ellipse (centre `x`, `y`, major radius
+   # `rx`, minor radius `ry`), starting at `angle1` radians (default
+   # `0`), and going round clockwise `angle2` radians (default
+   # `2*pi`).
    #
    public native draw_arc(x, y, rx, ry, angle1, angle2)
 
@@ -864,6 +866,7 @@ final class Window(NoCopy, ObjectOutput)
    end
 
    # Draw a smooth curve through the given points `(x1,y1,...xN,yN)`.
+   # At least 3 points (6 parameters) must be given.
    #
    public native draw_curve(a[])
 
@@ -886,7 +889,8 @@ final class Window(NoCopy, ObjectOutput)
    #
    public native copy_to(x1, y1, w, h, dest, x2, y2)
 
-   # Draw a line through the points `(x1,y1,...xN,yN)`.
+   # Draw a line through the points `(x1,y1,...xN,yN)`.  At least 2
+   # points (4 parameters) must be given.
    #
    public native draw_line(a[])
 
@@ -925,8 +929,8 @@ final class Window(NoCopy, ObjectOutput)
    #
    public native pending(a[])
 
-   # Fill the given arc (centre `x`, `y`, x radius `rx`, y radius
-   # `ry`) between the given angles `angle1` and `angle2`.
+   # Fill the given arc of an ellipse; the parameters are as for
+   # `draw_arc()`.
    #
    public native fill_arc(x, y, rx, ry, angle1, angle2)
 
@@ -937,12 +941,13 @@ final class Window(NoCopy, ObjectOutput)
       return fill_arc(x, y, r, r, angle1, angle2)
    end
 
-   # Fill a polygon given by the points `(x1, y1, ...xN, yN)`.
+   # Fill a polygon given by the points `(x1, y1, ...xN, yN)`.  At
+   # least 3 points (6 parameters) must be given.
    #
    public native fill_polygon(a[])
 
    # Fill trapezoids given by the values `(top1, topleft1, topright1,
-   # bottom1, bottomleft1, bottomright1, ...)`
+   # bottom1, bottomleft1, bottomright1, ...)`.
    #
    public native fill_trapezoids(a[])
 
