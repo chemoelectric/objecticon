@@ -278,6 +278,16 @@ procedure env_filter(s)
    return f
 end
 
+#
+# Return a valid icon pointer string value from the environment.
+#
+procedure env_pointer(s)
+   local p, w
+   p := env_string(s) | fail
+   use{ w := Window(), w.set_pointer(p) } | runerr("Pointer value " || p || " of " || s || " is invalid")
+   return p
+end
+
 class Gui()
    public static const
       SCALE,
