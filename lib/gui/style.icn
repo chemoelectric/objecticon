@@ -38,6 +38,8 @@ class Style()
       TICK_RATE_FACTOR := env_real("OI_STYLE_TICK_RATE_FACTOR", 1.0) | 6.0
       TICK_RATE_MAX := env_int("OI_STYLE_TICK_RATE_MAX", 10) | 200
       TICK_RATE_MIN := env_int("OI_STYLE_TICK_RATE_MIN", 5) | 20
+      insert(Dialog.ROOT_WATTRIBS, "bg",  env_color("OI_STYLE_ROOT_BG"))
+      insert(Dialog.ROOT_WATTRIBS, "fg",  env_color("OI_STYLE_ROOT_FG"))
    end
 
    #
