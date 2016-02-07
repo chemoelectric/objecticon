@@ -70,8 +70,6 @@ static XPointDouble doublept(double x, double y);
 static XTriangle triangle(double x1, double y1, double x2, double y2, double x3, double y3);
 static XTrapezoid trapezoid(double top, double x1, double x2, double bottom, double x3, double x4);
 static int needmask(wcp wc, int overlap);
-static int make_circle(double cx, double cy, double radius, int max_ntraps, XTrapezoid traps[]);
-static int make_ellipse(double cx, double cy, double rx, double ry, int max_ntraps, XTrapezoid traps[]);
 static void drawlineinfos(wbp w, struct lineinfo *lis, int nlis, int closed);
 static void getlineinfo(wcp wc, XPointDouble *p0, XPointDouble *q0, struct lineinfo *res);
 static wcp clonecontext(wcp wc);
@@ -79,7 +77,8 @@ static void freecontext(wcp wc);
 static void freewindow(wsp ws);
 static void apply_windowlabel(wsp ws);
 static void apply_windowicon(wsp ws);
-static double calc_pt(struct point *p, double cx, double cy, double rx, double ry, double th);
+static double calc_pt(double *x, double *y, double rx, double ry, double th);
+static double calc_progress_factor(double rx, double ry);
 
 static stringint drawops[] = {
    { 0, 12},
@@ -2168,7 +2167,12 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
                  make_mod(event->state));
 }
 
-static double calc_pt(struct point *p, double cx, double cy, double rx, double ry, double th)
+/*
+ * Given an ellipse with major/minor axes rx, ry and centre at origin,
+ * return the polar coordinate radius for the given angle th.  Also
+ * calculate the (x, y) position corresponding to (r, th).
+ */
+static double calc_pt(double *x, double *y, double rx, double ry, double th)
 {
     double r;
     /* Get the polar coordiantes radius relative to center */
@@ -2176,49 +2180,126 @@ static double calc_pt(struct point *p, double cx, double cy, double rx, double r
         r = rx;
     else
         r = (rx * ry) / hypot(rx * sin(th), ry * cos(th));
-    p->x = cx + r * cos(th);
-    p->y = cy + r * sin(th);
+    *x = r * cos(th);
+    *y = r * sin(th);
     return r;
+}
+
+/*
+ * Calculate a factor to use when progressing an angle around an arc,
+ * given an ellipse's major and minor axes.
+ */
+static double calc_progress_factor(double rx, double ry)
+{
+    double min_r, max_r, arc_res;
+
+    min_r = Min(rx, ry);
+    max_r = Max(rx, ry);
+
+    /* The smaller the radius in pixels, the fewer steps we need.  In
+     * any case, limit within a range. */
+    arc_res = 5.0 / max_r;
+    arc_res = Max(arc_res, 0.0125);
+    arc_res = Min(arc_res, 0.25);
+
+    /*
+     * The returned factor is divided by r, the polar radius for the
+     * current angle in the iteration.  The longer r is compared to
+     * the shorter axis, the more points we generate.
+     */
+    return arc_res * min_r;
 }
 
 void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
 {
-    double th, r, min_r, max_r, min_adj, arc_res;
+    double th, r, pf, x, y;
     struct point *pts;
     int maxpts, npts;
-    
-    min_r = Min(rx, ry);
-    max_r = Max(rx, ry);
-    /* The smaller the radius in pixels, the fewer steps we need. */
-    arc_res = 5.0 / max_r;
-    /* In any case ensure 0.025 <= arc_res <= 0.25 */
-    arc_res = Max(arc_res, 0.025);
-    arc_res = Min(arc_res, 0.25);
 
-    min_adj = arc_res * (min_r / max_r);
-    maxpts = 10 + angle2 / min_adj;
+    pf = calc_progress_factor(rx, ry);
+    maxpts = 100;
     pts = rt_malloc(maxpts * sizeof(struct point));
     npts = 0;
     th = angle1;
-    while (th < angle1 + angle2 && npts < maxpts) {
-        r = calc_pt(&pts[npts], cx, cy, rx, ry, th);
-        ++npts;
-        /*
-         * Now r <= max_r.  Adjust th based on r; the longer it is
-         * compared to the shorter axis, the more points we generate.
-         */
-        th += arc_res * (min_r / r);
+    while (th < angle1 + angle2) {
+        r = calc_pt(&x, &y, rx, ry, th);
+        x += cx;
+        y += cy;
+        if (npts == 0 || fabs(pts[npts - 1].x - x) >= 1.0 || fabs(pts[npts - 1].y - y) >= 1.0) {
+            if (npts == maxpts) {
+                maxpts += 100;
+                pts = rt_realloc(pts, maxpts * sizeof(struct point));
+            }
+            pts[npts].x = x;
+            pts[npts].y = y;
+            ++npts;
+        }
+        th += pf / r;
     }
-    if (npts < maxpts) {
-        if (angle2 == 2 * Pi)
-            pts[npts] = pts[0];  /* Ensure drawlines recognizes a closed arc */
-        else
-            calc_pt(&pts[npts], cx, cy, rx, ry, angle1 + angle2);
-        ++npts;
+
+    /* Space for the last point */
+    if (npts == maxpts) {
+        maxpts++;
+        pts = rt_realloc(pts, maxpts * sizeof(struct point));
     }
+
+    if (angle2 == 2 * Pi)
+        pts[npts] = pts[0];  /* Ensure drawlines recognizes a closed arc */
+    else {
+        calc_pt(&x, &y, rx, ry, angle1 + angle2);
+        pts[npts].x = cx + x;
+        pts[npts].y = cy + y;
+    }
+    ++npts;
 
     drawlines(w, pts, npts);
     free(pts);
+}
+
+static XTrapezoid *mk_ellipse(double cx, double cy, double rx, double ry, int *ntraps_ret)
+{
+    double th, r, pf, x, y, x1, y1;
+    XTrapezoid *traps;
+    int maxtraps, ntraps;
+    
+    pf = calc_progress_factor(rx, ry);
+    maxtraps = 100;
+    traps = rt_malloc(maxtraps * sizeof(XTrapezoid));
+    ntraps = 0;
+    th = 0.0;
+    x1 = rx;
+    y1 = 0.0;
+    while (th < Pi / 2.0) {
+        r = calc_pt(&x, &y, rx, ry, th);
+        y = round(y);    /* Round to avoid visible seams between trapezoids. */
+        if (y1 != y) {
+            if (ntraps >= maxtraps - 1) {
+                maxtraps += 100;
+                traps = rt_realloc(traps, maxtraps * sizeof(XTrapezoid));
+            }
+            traps[ntraps++] = trapezoid(cy - y, cx - x, cx + x, cy - y1, cx - x1, cx + x1);
+            traps[ntraps++] = trapezoid(cy + y1, cx - x1, cx + x1, cy + y, cx - x,  cx + x);
+            x1 = x;
+            y1 = y;
+        }
+        th += pf / r;
+    }
+
+    if (ry > y1) {
+        /* Do the point at the top of the ellipse; here th = Pi/2, so
+         * y = ry and x = 0.  The trapezoids, if added, will actually
+         * be triangles.
+         */
+        if (ntraps >= maxtraps - 1) {
+            maxtraps += 2;
+            traps = rt_realloc(traps, maxtraps * sizeof(XTrapezoid));
+        }
+        traps[ntraps++] = trapezoid(cy - ry, cx, cx, cy - y1, cx - x1, cx + x1);
+        traps[ntraps++] = trapezoid(cy + y1, cx - x1, cx + x1, cy + ry, cx,  cx);
+    }
+
+    *ntraps_ret = ntraps;
+    return traps;
 }
 
 void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, double angle2)
@@ -2226,7 +2307,7 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     wsp ws = w->window;
     wdp wd = ws->display;
     wcp wc = w->context;
-    XTrapezoid traps[32];
+    XTrapezoid *traps;
     int ntraps, has_wedge;
 
     has_wedge = (angle1 != 0 || angle2 != 2 * Pi);
@@ -2250,11 +2331,12 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
         w2 = width / 2.0;
         /* printf("cx,cy=%f,%f rx,ry=%f,%f  ->   x,y=%d,%d   width.height=%d,%d   w2,h2=%f,%f\n",cx,cy,rx,ry,x,y,width,height,w2,h2); */
 
-        ntraps = make_ellipse(cx - x, cy - y,    /* centre */
-                              rx, ry,            /* x/y radius */
-                              ElemCount(traps), traps);
+        traps = mk_ellipse(cx - x, cy - y,    /* centre */
+                           rx, ry,            /* x/y radius */
+                           &ntraps);
         mask = getmask(wd, width, height);
         XRenderCompositeTrapezoids(wd->display, PictOpOver, wd->white->brush,  mask, 0, 0, 0, traps, ntraps);
+        free(traps);
         if (has_wedge) {
             XTrapezoid trap;
             Picture wedge1, wedge2;
@@ -2327,15 +2409,16 @@ void fillarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
         XRenderFreePicture(wd->display, mask);
     } else {
         clip(w);
-        ntraps = make_ellipse(cx, cy,
-                              rx, ry,
-                              ElemCount(traps), traps);
+        traps = mk_ellipse(cx, cy,
+                           rx, ry,
+                           &ntraps);
         XRenderCompositeTrapezoids(wd->display, 
                                    wc->drawop->i,
                                    get_draw_picture(wc),
                                    ws->ppic, 
                                    0, 0, 0,
                                    traps, ntraps);
+        free(traps);
         pix_to_win(ws, cx - rx - 2, cy - ry - 2, 2 * rx + 4, 2 * ry + 4);
     }
 }
@@ -2465,42 +2548,6 @@ static void traps(wbp w,
     XRenderCompositeTrapezoids(wd->display, op, src,  dest, 0, 0, 0, &trap, 1);
 }
 
-static int make_ellipse(double cx, double cy, double rx, double ry, int max_ntraps, XTrapezoid traps[])
-{
-    int n=0, k=0, y1, y2, w1, w2;
-    double L, th;
-    max_ntraps /= 2;
-    while(k < max_ntraps) {
-        th = (Pi/2)*k/max_ntraps;
-        L = 1.0 / hypot(cos(th)/ry, sin(th)/rx);
-
-        y1 = (int)(L*cos(th));
-        w1 = sqrt(L*L - y1*y1);
-        do {
-            k++;
-            th = (Pi/2)*k/max_ntraps;
-            L = 1.0/hypot(cos(th)/ry, sin(th)/rx);
-            y2=(int)(L*cos(th));
-        } while(k < max_ntraps && y1==y2);
-        if(y1 == y2)
-            break;
-
-        w2 = sqrt(L*L - y2*y2);
-        traps[n] = trapezoid(round(cy-y1), cx-w1, cx+w1,
-                             round(cy-y2), cx-w2, cx+w2);
-        n++;
-        traps[n] = trapezoid(round(cy+y2), cx-w2, cx+w2,
-                             round(cy+y1), cx-w1, cx+w1);
-        n++;
-    }
-    return n;
-}
-
-static int make_circle(double cx, double cy, double radius, int max_ntraps, XTrapezoid traps[])
-{
-    return make_ellipse(cx, cy, radius, radius, max_ntraps, traps);
-}
-
 static void drawjoin(wbp w, 
                      int op,
                      Picture src,
@@ -2510,13 +2557,15 @@ static void drawjoin(wbp w,
     wsp ws = w->window;
     wdp wd = ws->display;
     wcp wc = w->context;
-    XTrapezoid traps[8];
+    double radius;
+    XTrapezoid *traps;
     int ntraps;
-    ntraps = make_circle(r.x,
-                         r.y,
-                         wc->linewidth / 2.0,
-                         ElemCount(traps), traps);
+    radius = wc->linewidth / 2.0;
+    traps = mk_ellipse(r.x, r.y,
+                       radius, radius,
+                       &ntraps);
     XRenderCompositeTrapezoids(wd->display, op, src,  dest, 0, 0, 0, traps, ntraps);
+    free(traps);
 }
 
 
