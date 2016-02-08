@@ -2258,44 +2258,64 @@ void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
 
 static XTrapezoid *mk_ellipse(double cx, double cy, double rx, double ry, int *ntraps_ret)
 {
-    double th, r, pf, x, y, x1, y1;
+    double th, r, pf, x, y, t1x, b, b1, t, t1, b1x;
     XTrapezoid *traps;
-    int maxtraps, ntraps;
+    int maxtraps, ntraps, last_t, last_b;
     
     pf = calc_progress_factor(rx, ry);
     maxtraps = 100;
     traps = rt_malloc(maxtraps * sizeof(XTrapezoid));
     ntraps = 0;
     th = 0.0;
-    x1 = rx;
-    y1 = 0.0;
+    t1x = b1x = rx;
+    b1 = t1 = round(cy);
+    last_t = last_b = -1;
     while (th < Pi / 2.0) {
         r = calc_pt(&x, &y, rx, ry, th);
-        y = round(y);    /* Round to avoid visible seams between trapezoids. */
-        if (y1 != y) {
-            if (ntraps >= maxtraps - 1) {
+        t = round(cy - y);
+        if (t < t1) {
+            if (ntraps == maxtraps) {
                 maxtraps += 100;
                 traps = rt_realloc(traps, maxtraps * sizeof(XTrapezoid));
             }
-            traps[ntraps++] = trapezoid(cy - y, cx - x, cx + x, cy - y1, cx - x1, cx + x1);
-            traps[ntraps++] = trapezoid(cy + y1, cx - x1, cx + x1, cy + y, cx - x,  cx + x);
-            x1 = x;
-            y1 = y;
+            last_t = ntraps++;
+            traps[last_t] = trapezoid(t, cx - x, cx + x, t1, cx - t1x, cx + t1x);
+            t1 = t;
+            t1x = x;
+        }
+
+        b = round(cy + y);
+        if (b > b1) {
+            if (ntraps == maxtraps) {
+                maxtraps += 100;
+                traps = rt_realloc(traps, maxtraps * sizeof(XTrapezoid));
+            }
+            last_b = ntraps++;
+            traps[last_b] = trapezoid(b1, cx - b1x, cx + b1x, b, cx - x,  cx + x);
+            b1 = b;
+            b1x = x;
         }
         th += pf / r;
     }
 
-    if (ry > y1) {
-        /* Do the point at the top of the ellipse; here th = Pi/2, so
-         * y = ry and x = 0.  The trapezoids, if added, will actually
-         * be triangles.
-         */
-        if (ntraps >= maxtraps - 1) {
-            maxtraps += 2;
-            traps = rt_realloc(traps, maxtraps * sizeof(XTrapezoid));
-        }
-        traps[ntraps++] = trapezoid(cy - ry, cx, cx, cy - y1, cx - x1, cx + x1);
-        traps[ntraps++] = trapezoid(cy + y1, cx - x1, cx + x1, cy + ry, cx,  cx);
+    /* Do the top of the ellipse; here th = Pi/2, so y = ry and x = 0.
+     * The last trapezoid is adjusted so that it is a triangle, with
+     * the top point exactly ry from the centre (rather than a rounded
+     * value).  Then do similarly for the bottom trapezoid.
+     * 
+     * It would be possible to add new trapezoids here rather than
+     * adjusting the last ones, but this seems to look nicer, and is
+     * easier.
+     */
+    if (last_t >= 0) {
+        XTrapezoid *t = &traps[last_t];
+        t->top = t->left.p1.y = t->right.p1.y = XDoubleToFixed(cy - ry);
+        t->left.p1.x = t->right.p1.x = XDoubleToFixed(cx);
+    }
+    if (last_b >= 0) {
+        XTrapezoid *t = &traps[last_b];
+        t->bottom = t->left.p2.y = t->right.p2.y = XDoubleToFixed(cy + ry);
+        t->left.p2.x = t->right.p2.x = XDoubleToFixed(cx);
     }
 
     *ntraps_ret = ntraps;
