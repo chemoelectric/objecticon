@@ -1357,6 +1357,10 @@ void doconfig(wbp w, int status)
     wcp wc = w->context;
     if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
         if (ws->win) {
+            if (status & C_POS) {
+                if (ws->x == -INT_MAX) ws->x = 0;
+                if (ws->y == -INT_MAX) ws->y = 0;
+            }
             switch (status & (C_POS|C_SIZE)) {
                 case C_POS|C_SIZE: {
                     SetWindowPos(ws->win, ws->win, ws->x, ws->y,
