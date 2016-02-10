@@ -1368,6 +1368,10 @@ void doconfig(wbp w, int status)
 
     /* Move/resize of window if open */
     if (ws->win) {
+        if (status & C_POS) {
+            if (ws->x == -INT_MAX) ws->x = 0;
+            if (ws->y == -INT_MAX) ws->y = 0;
+        }
         if ((status & (C_POS | C_SIZE)) == C_POS) {
             /* Only need a 'move' if doing pos without size; if doing
              * both pos can be done in a 'resize' */
