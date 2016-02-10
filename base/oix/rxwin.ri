@@ -966,24 +966,14 @@ static char *get_progname()
 
 static void init_pos(wsp ws)
 {
-    Window garbage1, garbage2;
-    int root_x, root_y, win_x, win_y, new_x, new_y;
-    unsigned int key_buttons;
+    Window junk;
+    int new_x, new_y;
     wdp wd = ws->display;
-    /*
-     * This call is made because it is guaranteed to generate
-     * a synchronous request of the server, not just ask Xlib
-     * what the window position was last it knew.
-     */
-    if (XQueryPointer(wd->display, ws->win, &garbage1, &garbage2,
-                      &root_x, &root_y, &win_x, &win_y, &key_buttons) == True) {
-        new_x = root_x - win_x;
-        new_y = root_y - win_y;
-        if ((new_x != ws->x) || (new_y != ws->y)) {
-            ws->x = new_x;
-            ws->y = new_y;
-            qeventcode(ws, WINDOWMOVED);
-        }
+    XTranslateCoordinates(wd->display, ws->win, GetRoot(wd), 0, 0, &new_x, &new_y, &junk);
+    if ((new_x != ws->x) || (new_y != ws->y)) {
+        ws->x = new_x;
+        ws->y = new_y;
+        qeventcode(ws, WINDOWMOVED);
     }
 }
 
@@ -1232,10 +1222,6 @@ void doconfig(wbp w, int status)
 
     if (ws->win) {
         if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
-            if (status & C_POS) {
-                if (ws->x == -INT_MAX) ws->x = 0;
-                if (ws->y == -INT_MAX) ws->y = 0;
-            }
             if (status != C_POS) {
                 XSizeHints size_hints;
                 size_hints.flags = PMinSize | PMaxSize;

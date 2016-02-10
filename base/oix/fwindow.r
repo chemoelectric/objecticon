@@ -1321,14 +1321,28 @@ function graphics_Window_set_font(self, val)
    }
 end
 
-function graphics_Window_set_geometry(self, x0, y0, w0, h0)
+function graphics_Window_set_geometry(self, x, y, width, height)
+   if !cnv:C_integer(width) then
+      runerr(101, width)
+   if !cnv:C_integer(height) then
+      runerr(101, height)
    body {
-       word x, y, width, height;
+       word i, j;
        GetSelfW();
-      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
-          runerr(0);
-       self_w->window->x = x;
-       self_w->window->y = y;
+       if (is:null(x) && is_hidden(self_w))
+           i = -INT_MAX;
+       else {
+           if (!cnv:C_integer(x, i))
+               runerr(101, x);
+       }
+       if (is:null(y) && is_hidden(self_w))
+           j = -INT_MAX;
+       else {
+           if (!cnv:C_integer(y, j))
+               runerr(101, y);
+       }
+       self_w->window->x = i;
+       self_w->window->y = j;
        self_w->window->width = width;
        self_w->window->height = height;
        SimpleAttr(C_SIZE | C_POS);
@@ -1533,13 +1547,13 @@ function graphics_Window_set_pos(self, x, y)
    body {
        word i, j;
        GetSelfW();
-       if (is:null(x))
+       if (is:null(x) && is_hidden(self_w))
            i = -INT_MAX;
        else {
            if (!cnv:C_integer(x, i))
                runerr(101, x);
        }
-       if (is:null(y))
+       if (is:null(y) && is_hidden(self_w))
            j = -INT_MAX;
        else {
            if (!cnv:C_integer(y, j))
@@ -1556,7 +1570,7 @@ function graphics_Window_set_x(self, x)
    body {
        word i;
        GetSelfW();
-       if (is:null(x))
+       if (is:null(x) && is_hidden(self_w))
            i = -INT_MAX;
        else {
            if (!cnv:C_integer(x, i))
@@ -1572,7 +1586,7 @@ function graphics_Window_set_y(self, y)
    body {
        word i;
        GetSelfW();
-       if (is:null(y))
+       if (is:null(y) && is_hidden(self_w))
            i = -INT_MAX;
        else {
            if (!cnv:C_integer(y, i))
