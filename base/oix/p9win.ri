@@ -52,9 +52,11 @@ static void unlink_sharedcursor(struct SharedCursor *x);
 static struct wcursor *lookup_wcursor(char *name);
 static struct wcursor *ensure_wcursor(char *name);
 static void synch_pos(wsp ws);
+static void synch_size(wsp ws);
 static void synch_state(wsp ws);
 static void synch_state1(wsp ws);
 static void note_time(char *s);
+static void copy_pix_to_win(wsp ws);
 static int readimageimpl(char *cmd, int fd, struct imgdata *imd);
 static Image *imgdata_to_Image(struct imgdata *imd);
 static void fill1(wbp w, int x, int y, int width, int height);
@@ -433,6 +435,16 @@ static void synch_pos(wsp ws)
     }
 }
 
+static void synch_size(wsp ws)
+{
+    if (Dx(ws->win->r) != ws->width || Dy(ws->win->r) != ws->height) {
+        ws->width = Dx(ws->win->r);
+        ws->height = Dy(ws->win->r);
+        resize_pix_win(findwbp(ws));
+        qeventcode(ws, WINDOWRESIZED);
+    }
+}
+
 static void resize_pix_win(wbp w)
 {
     wsp ws = w->window;
@@ -450,15 +462,8 @@ static void resize_pix_win(wbp w)
 static void handle_limited(wsp ws)
 {
     synch_pos(ws);
-    if (Dx(ws->win->r) != ws->width || Dy(ws->win->r) != ws->height) {
-        ws->width = Dx(ws->win->r);
-        ws->height = Dy(ws->win->r);
-        resize_pix_win(findwbp(ws));
-        no_clip(ws, 1);
-        copy_to(ws->win, ws->pix);
-        qeventcode(ws, WINDOWRESIZED);
-        flushimage(display, 1);
-    }
+    synch_size(ws);
+    copy_pix_to_win(ws);
 }
 
 static void handle_reshape(wsp ws)
@@ -470,26 +475,22 @@ static void handle_reshape(wsp ws)
     handle_reshape1(ws);
 }
 
+/*
+ * Copy the pix win to the window.
+ */
+static void copy_pix_to_win(wsp ws)
+{
+    no_clip(ws, 1);
+    copy_to(ws->win, ws->pix);
+    flushimage(display, 1);
+}
+
 static void handle_reshape1(wsp ws)
 {
     synch_state(ws);
     synch_pos(ws);
-    if (Dx(ws->win->r) != ws->width || Dy(ws->win->r) != ws->height) {
-        /*
-         * The new window has a different size, so resize the pix win,
-         * and fire an event.
-         */
-        ws->width = Dx(ws->win->r);
-        ws->height = Dy(ws->win->r);
-        resize_pix_win(findwbp(ws));
-        qeventcode(ws, WINDOWRESIZED);
-    }
-    /*
-     * Copy the pix win to the new window.
-     */
-    no_clip(ws, 1);
-    copy_to(ws->win, ws->pix);
-    flushimage(display, 1);
+    synch_size(ws);
+    copy_pix_to_win(ws);
 }
 
 void pollevent(wbp w)
