@@ -787,6 +787,7 @@ static void close_screen_win(wsp ws)
     XFlush(wd->display);
     ws->win = 0;
     ws->wpic = 0;
+    ws->x = ws->y = -INT_MAX;
     GUnlink4(ws, wd->vwstates, vnext, vprevious);
     synch_state(ws);
 }
@@ -816,7 +817,7 @@ wbp wopen(char *display)
     add_gc_global(&ws->listp);
     ws->cursor = lookup_wcursor(wd, "left ptr");
     ws->state = HiddenState;
-    ws->x = ws->y = -INT_MAX;
+    ws->reqx = ws->reqy = ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
     ws->width = ws->height = ws->pixwidth = ws->pixheight = 1;
@@ -1003,8 +1004,8 @@ static void wmap(wbp w)
         case PopupState: {
             attr.override_redirect = True;
             ws->win = XCreateWindow(wd->display, GetRoot(wd),
-                                    ws->x == -INT_MAX ? 0 : ws->x,
-                                    ws->y == -INT_MAX ? 0 : ws->y, 
+                                    ws->reqx == -INT_MAX ? 0 : ws->reqx,
+                                    ws->reqy == -INT_MAX ? 0 : ws->reqy, 
                                     ws->width, ws->height, 
                                     0,
                                     GetDepth(wd),
@@ -1016,8 +1017,8 @@ static void wmap(wbp w)
         }
         default: {
             ws->win = XCreateWindow(wd->display, GetRoot(wd),
-                                    ws->x == -INT_MAX ? 0 : ws->x,
-                                    ws->y == -INT_MAX ? 0 : ws->y, 
+                                    ws->reqx == -INT_MAX ? 0 : ws->reqx,
+                                    ws->reqy == -INT_MAX ? 0 : ws->reqy, 
                                     ws->width, ws->height, 
                                     0,
                                     GetDepth(wd),
@@ -1057,10 +1058,10 @@ static void wmap(wbp w)
         size_hints.flags = PSize | PMinSize | PMaxSize;
         size_hints.width = ws->width;
         size_hints.height= ws->height;
-        if (ws->x != -INT_MAX && ws->y != -INT_MAX) {
+        if (ws->reqx != -INT_MAX && ws->reqy != -INT_MAX) {
             size_hints.flags |= USPosition;
-            size_hints.x = ws->x;
-            size_hints.y = ws->y;
+            size_hints.x = ws->reqx;
+            size_hints.y = ws->reqy;
         }
         if (ws->resizable) {
             size_hints.min_width = ws->minwidth;
@@ -1240,7 +1241,7 @@ void doconfig(wbp w, int status)
 
             switch (status & (C_POS|C_SIZE)) {
                 case C_POS: {
-                    XMoveWindow(wd->display, ws->win, ws->x, ws->y);
+                    XMoveWindow(wd->display, ws->win, ws->reqx, ws->reqy);
                     break;
                 }
                 case C_SIZE: {
@@ -1248,7 +1249,7 @@ void doconfig(wbp w, int status)
                     break;
                 }
                 case C_POS|C_SIZE: {
-                    XMoveResizeWindow(wd->display, ws->win, ws->x, ws->y, ws->width, ws->height);
+                    XMoveResizeWindow(wd->display, ws->win, ws->reqx, ws->reqy, ws->width, ws->height);
                     break;
                 }
             }

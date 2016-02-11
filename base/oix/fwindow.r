@@ -1341,8 +1341,8 @@ function graphics_Window_set_geometry(self, x, y, width, height)
            if (!cnv:C_integer(y, j))
                runerr(101, y);
        }
-       self_w->window->x = i;
-       self_w->window->y = j;
+       self_w->window->reqx = i;
+       self_w->window->reqy = j;
        self_w->window->width = width;
        self_w->window->height = height;
        SimpleAttr(C_SIZE | C_POS);
@@ -1559,8 +1559,8 @@ function graphics_Window_set_pos(self, x, y)
            if (!cnv:C_integer(y, j))
                runerr(101, y);
        }
-       self_w->window->x = i;
-       self_w->window->y = j;
+       self_w->window->reqx = i;
+       self_w->window->reqy = j;
        SimpleAttr(C_POS);
        return self;
    }
@@ -1576,7 +1576,7 @@ function graphics_Window_set_x(self, x)
            if (!cnv:C_integer(x, i))
                runerr(101, x);
        }
-       self_w->window->x = i;
+       self_w->window->reqx = i;
        SimpleAttr(C_POS);
        return self;
    }
@@ -1592,7 +1592,7 @@ function graphics_Window_set_y(self, y)
            if (!cnv:C_integer(y, i))
                runerr(101, y);
        }
-       self_w->window->y = i;
+       self_w->window->reqy = i;
        SimpleAttr(C_POS);
        return self;
    }

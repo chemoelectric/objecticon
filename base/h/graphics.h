@@ -358,7 +358,8 @@ typedef struct _wcontext {
 typedef struct _wstate {
   int		refcount;		/* reference count */
   int		inputmask;		/* user input mask */
-  int		y, x;		        /* desired upper lefthand corner */
+  int		reqx, reqy;	        /* requested window position */
+  int		x, y;		        /* actual window position */
   int           height;                 /* window height, in pixels */
   int           width;                  /* window width, in pixels */
   int           minheight;              /* minimum window height, in pixels */
