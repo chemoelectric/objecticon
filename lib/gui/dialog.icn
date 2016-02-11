@@ -22,8 +22,14 @@ import
 #
 class Dialog(Component)
    public static 
+      # Table of window attribs applied to all dialogs
       ROOT_WATTRIBS, 
-      DEFAULT_POINTER,
+      # Default top-level mouse pointer
+      POINTER,
+      # Default dnd negative pointer
+      DND_NEGATIVE_POINTER,
+      # Default dnd positive pointer
+      DND_POSITIVE_POINTER,
       # Repeat event delays
       DOUBLE_CLICK_DELAY,
       # Distance before drag begins
@@ -34,8 +40,9 @@ class Dialog(Component)
       TOOLTIP_CONTINUE_DELAY,
       TOOLTIP_X_OFFSET,
       TOOLTIP_Y_OFFSET,
-      # Set of events to move focus
+      # Set of events to move focus up
       FOCUS_UP,
+      # Set of events to move focus down
       FOCUS_DOWN
 
    private static
@@ -251,7 +258,7 @@ class Dialog(Component)
    end
 
    #
-   # Change pointer
+   # Change pointer to `s`, which defaults to `POINTER`.
    #
    public change_pointer(s)
       # If we have a popup manager, then we are in mouse grab mode;
@@ -260,8 +267,8 @@ class Dialog(Component)
       if popup_manager ~=== self then
          popup_manager.change_pointer(s)
       else {
-         if curr_pointer ~=== s then
-            self.win.set_pointer(curr_pointer := s)
+         /s := POINTER
+         (curr_pointer === s) | win.set_pointer(curr_pointer := s)
       }
       return self
    end
@@ -1149,13 +1156,13 @@ class Dialog(Component)
       if popup_manager ~=== self then
          popup_manager.synch_pointer(e)
       else {
-         ptr := DEFAULT_POINTER
          if /is_blocked_flag then {
             every c := !\point_chain do {
                if c.is_unshaded() & (ptr := c.get_pointer(e)) then
                   break
             }
          }
+         # ptr may now be null, in which case it defaults to POINTER
          change_pointer(ptr)
       }
       return self
@@ -1169,7 +1176,7 @@ class Dialog(Component)
       self.invoke_drag_reset(e)
       generate_crossing_events(e)
       if member(held, -1) then
-         change_pointer(DEFAULT_POINTER)
+         change_pointer()
       else
          synch_pointer(e)
    end
@@ -1456,7 +1463,9 @@ class Dialog(Component)
       TOOLTIP_X_OFFSET := env_scale("OI_DIALOG_TOOLTIP_X_OFFSET") | scale(5)
       TOOLTIP_Y_OFFSET := env_scale("OI_DIALOG_TOOLTIP_Y_OFFSET") | scale(15)
       DRAG_GESTURE_OFFSET := env_scale("OI_DIALOG_DRAG_GESTURE_OFFSET") | scale(4)
-      DEFAULT_POINTER := "left ptr"
+      POINTER := env_pointer("OI_DIALOG_POINTER") | "left ptr"
+      DND_NEGATIVE_POINTER := env_pointer("OI_DIALOG_DND_NEGATIVE_POINTER") | "circle"
+      DND_POSITIVE_POINTER := env_pointer("OI_DIALOG_DND_POSITIVE_POINTER") | "hand2"
       FOCUS_UP := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
       FOCUS_DOWN := set("\t", Key.RIGHT, Key.DOWN)
       ROOT_WATTRIBS := table()

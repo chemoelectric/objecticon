@@ -457,7 +457,7 @@ class TabSet(Component)
    end
 
    public define_dnd_pointers(drag)
-      cbwin.copy_pointer("dnd negative", "circle")
+      cbwin.copy_pointer("dnd negative", Dialog.DND_NEGATIVE_POINTER)
       cbwin.copy_pointer("dnd positive", "sb h double arrow")
    end
 

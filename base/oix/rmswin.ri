@@ -61,6 +61,7 @@ static void mk_Draw(wbp w, gb_Draw *d);
 static int get_outer_width(wsp ws);
 static int get_outer_height(wsp ws);
 static void synch_state(wsp ws, int new_state);
+static void init_geom(wsp ws);
 
 static void dbg(char *fmt, ...);
 
@@ -729,6 +730,31 @@ static wsp wsp_for_hwnd(HWND hwnd)
     return 0;
 }
 
+static void init_geom(wsp ws)
+{
+    POINT p;
+    RECT r;
+    int newx, newy, neww, newh;
+    p.x = p.y = 0;
+    ClientToScreen(ws->win, &p);
+    newx = p.x;
+    newy = p.y;
+    if ((newx != ws->x) || (newy != ws->y)) {
+        ws->x = newx;
+        ws->y = newy;
+        qeventcode(ws, WINDOWMOVED);
+    }
+    GetClientRect(ws->win, &r);
+    neww = r.right - r.left;
+    newh = r.bottom - r.top;
+    if ((ws->width != neww) || (ws->height != newh)) {
+        ws->width = neww;
+        ws->height = newh;
+        resizepixmap(findwbp(ws));
+        qeventcode(ws, WINDOWRESIZED);
+    }
+}
+
 static void open_screen_win(wsp ws)
 {
     switch (ws->state) {
@@ -785,6 +811,8 @@ static void open_screen_win(wsp ws)
             break;
         }
     }
+
+    init_geom(ws);
 
     GLink4(ws, vwstates, vnext, vprevious);
 }

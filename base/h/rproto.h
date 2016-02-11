@@ -221,11 +221,6 @@ struct palentry *palsetup(int p);
 char *rgbkey         (int p, int r, int g, int b);
 char *tocolorstring(int r, int g, int b, int a);
 
-void points_extent(struct point *points, int npoints, int *x, int *y, int *width, int *height);
-void trapezoids_extent(struct trapezoid *traps, int ntraps, int *x, int *y, int *width, int *height);
-void triangles_extent(struct triangle *tris, int ntris, int *x, int *y, int *width, int *height);
-void range_extent(double x1, double y1, double x2, double y2, int *x, int *y, int *width, int *height);
-
 int pixels_rectargs(struct imgdata *img, dptr argv, word *px, word *py, word *pw, word *ph);
 int pixels_reducerect(struct imgdata *img, word *x, word *y, word *width, word *height);
 
@@ -354,6 +349,12 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    wbp findwbp(wsp ws);
    void synch_pix_and_win(wsp ws, int x, int y, int w, int h);
 #endif
+
+void points_extent(struct point *points, int npoints, int *x, int *y, int *width, int *height);
+void trapezoids_extent(struct trapezoid *traps, int ntraps, int *x, int *y, int *width, int *height);
+void triangles_extent(struct triangle *tris, int ntris, int *x, int *y, int *width, int *height);
+void range_extent(double x1, double y1, double x2, double y2, int *x, int *y, int *width, int *height);
+int is_hidden(wbp w);
 
 #endif                                  /* Graphics */
 

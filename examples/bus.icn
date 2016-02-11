@@ -1835,7 +1835,6 @@ class BusView(Dialog)
    private setup()
       local panel_2, layout_4, line_1, paint_4, layout_1, layout_3, paint_3, panel_3
       self.set_label("Bus")
-      self.set_pos(100, 100)
       self.set_resize(&yes)
       search_field := MapSearchField().
          set_size(scale(60)).
@@ -1928,63 +1927,4 @@ procedure main(a)
    d.show_modal()
 end
 
-### Ivib-v2 layout ##
-#CCanvas|I20SSuperClass Name|SDialog|SImport Name|Sgui|SButton Groups|L
-#0SCheckbox Groups|L0SGen Indent|I3SGen Main|I1SGen Component Setup|I1S
-#Gen Init Dialog|I1SGen Constructor|I1SDialog Struct|CCDialog|I1SWAttri
-#bs|T3NSpos|L2I100I100Sresize|I1Slabel|SBus|SName|SBusView|SIs Componen
-#t|NSWidth|NSHeight|NSChildren|L4CCanvasPanel|I27SParent Canvas|X1SName
-#|Spanel_3|SClass Name|SPanel|SImport Name|Sgui|SClass Variable|NSX Fix
-#|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align
-#|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|
-#T2NSx_fill|I1Seol|I1STooltip|NSAccel|NSLayout delegate|CCanvasGridLayo
-#ut|I8SDII val|NSDOI val|I0SExtra|Scells|SName|Slayout_4|SClass Name|SG
-#ridLayout|SImport Name|Sgui|SClass Variable|NSParent|X8SBorder opts|NS
-#Event Handlers|L0SParent Component|X1SChildren|L1CCanvasTextField|I30S
-#Parent Canvas|X1SName|Ssearch_field|SClass Name|SMapSearchField|SImpor
-#t Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|I1SX Spec
-#|NSY Spec|NSW Spec|S60|SH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|
-#I0SIs shaded|NSWAttribs|T0NSConstraints|T3NSx_align|Sl|Sx_weight|B1.0|
-#Sx_fill|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Han
-#dlers|L2L2SEvent.ACTION|Son_search_field_action|L2SEvent.CONTENT_CHANG
-#ED|Son_search_field_change|SParent Component|X8SContents|S|SFilter Str
-#ing|S|SIs editable flag|I1SMove on rpress flag|I1CCanvasCustom|I26SPar
-#ent Canvas|X1SName|Scsa|SClass Name|SMap|SImport Name|Sgui|SClass Vari
-#able|I1SX Fix|I1SY Fix|I1SW Fix|I1SH Fix|I1SX Spec|NSY Spec|NSW Spec|S
-#700|SH Spec|S500|SX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NS
-#WAttribs|T0NSConstraints|T9NSb_inset|I0Sr_inset|I0Sx_weight|B1.0|Sx_fi
-#ll|I1Sy_weight|B1.0|Sy_fill|I1Sl_inset|I0St_inset|I0Seol|I1STooltip|NS
-#Accel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L0SParent Compo
-#nent|X1CCanvasLine|I27SParent Canvas|X1SName|Sline_1|SClass Name|SLine
-#|SImport Name|Sgui|SClass Variable|NSX Fix|NSY Fix|NSW Fix|NSH Fix|NSX
-# Spec|NSY Spec|NSW Spec|S100|SH Spec|NSX Align|Sl|SY Align|St|SZ|I0STa
-#b ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T2NSx_fill|I1Seol|I1SToo
-#ltip|NSAccel|NSLayout delegate|NSBorder opts|NSEvent Handlers|L0SParen
-#t Component|X1SIs horizontal flag|I1CCanvasPanel|I27SParent Canvas|X1S
-#Name|Spanel_2|SClass Name|SPanel|SImport Name|Sgui|SClass Variable|NSX
-# Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX A
-#lign|Sl|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstrai
-#nts|T2NSx_weight|B1.0|Sx_fill|I1STooltip|NSAccel|NSLayout delegate|CCa
-#nvasGridLayout|I8SDII val|NSDOI val|I0SExtra|Scells|SName|Slayout_3|SC
-#lass Name|SGridLayout|SImport Name|Sgui|SClass Variable|NSParent|X28SB
-#order opts|NSEvent Handlers|L0SParent Component|X1SChildren|L2CCanvasL
-#abel|I27SParent Canvas|X1SName|Sstop_label|SClass Name|SLabel|SImport 
-#Name|Sgui|SClass Variable|I1SX Fix|NSY Fix|NSW Fix|NSH Fix|NSX Spec|NS
-#Y Spec|NSW Spec|NSH Spec|NSX Align|Sl|SY Align|St|SZ|I0STab ord|I0SIs 
-#shaded|NSWAttribs|T0NSConstraints|T5NSx_align|Sl|Sb_inset|I0Sx_weight|
-#B1.0|Sx_fill|I1Seol|I1STooltip|NSAccel|NSLayout delegate|NSBorder opts
-#|NSEvent Handlers|L0SParent Component|X28SPaint|CCanvasTextPaint|I6SPa
-#rent Canvas|X1SName|Spaint_3|SClass Name|STextPaint|SImport Name|Sgui|
-#SClass Variable|NSStr|S|CCanvasLabel|I27SParent Canvas|X1SName|Sroute_
-#label|SClass Name|SLabel|SImport Name|Sgui|SClass Variable|I1SX Fix|NS
-#Y Fix|NSW Fix|NSH Fix|NSX Spec|NSY Spec|NSW Spec|NSH Spec|NSX Align|Sl
-#|SY Align|St|SZ|I0STab ord|I0SIs shaded|NSWAttribs|T0NSConstraints|T4N
-#Sx_align|Sl|Sx_weight|B1.0|Sx_fill|I1St_inset|I0STooltip|NSAccel|NSLay
-#out delegate|NSBorder opts|NSEvent Handlers|L0SParent Component|X28SPa
-#int|CCanvasTextPaint|I6SParent Canvas|X1SName|Spaint_4|SClass Name|STe
-#xtPaint|SImport Name|Sgui|SClass Variable|NSStr|S|SInitial Focus|X14SE
-#vent Handlers|L2L2SEvent.WINDOW_CLOSE_BUTTON|Son_close_button|L2SEvent
-#.ICON|Son_icon_event|SLayout delegate|CCanvasGridLayout|I8SDII val|NSD
-#OI val|NSExtra|Scells|SName|Slayout_1|SClass Name|SGridLayout|SImport 
-#Name|Sgui|SClass Variable|NSParent|X1SScale Dimensions Flag|I1SEdit Sc
-#ale|B1.0|
+### Ivib-v2 layout: layouts/$.layout

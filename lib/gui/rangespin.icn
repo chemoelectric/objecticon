@@ -25,7 +25,7 @@ class RangeSpin(Spin)
    public initially()
       local f
       f := &digits
-      if type(lo | hi) == "real" then
+      if type(lo | hi | increment_size | last_val) == "real" then
          f ++:= '.'
       if /lo | /hi | (lo < 0) then
          f ++:= '\-'

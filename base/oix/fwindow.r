@@ -469,7 +469,9 @@ function graphics_Window_fill_trapezoids(self, argv[argc])
       struct trapezoid *traps;
       int dx, dy;
       GetSelfW();
-      CheckArgMultipleOf(6, 1);
+      CheckArgMultipleOf(6, 0);
+      if (argc == 0)
+          return self;
       traps = rt_malloc(sizeof(struct trapezoid) * (argc / 6));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
@@ -503,7 +505,9 @@ function graphics_Window_fill_triangles(self, argv[argc])
       struct triangle *tris;
       int dx, dy;
       GetSelfW();
-      CheckArgMultipleOf(6, 1);
+      CheckArgMultipleOf(6, 0);
+      if (argc == 0)
+          return self;
       tris = rt_malloc(sizeof(struct triangle) * (argc / 6));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
@@ -642,7 +646,7 @@ function graphics_Window_filter(self, x0, y0, w0, h0, spec)
           tended struct b_lelem *le;
           tended struct descrip elem;
           nfilter = ListBlk(spec).size;
-          filter = rt_malloc(1 + nfilter * sizeof(struct filter));  /* + 1 to avoid 0 malloc */
+          filter = rt_malloc(nfilter * sizeof(struct filter));
           for (le = lgfirst(&ListBlk(spec), &state); le;
                le = lgnext(&ListBlk(spec), &state, le)) {
               elem = le->lslots[state.result];
@@ -1317,14 +1321,28 @@ function graphics_Window_set_font(self, val)
    }
 end
 
-function graphics_Window_set_geometry(self, x0, y0, w0, h0)
+function graphics_Window_set_geometry(self, x, y, width, height)
+   if !cnv:C_integer(width) then
+      runerr(101, width)
+   if !cnv:C_integer(height) then
+      runerr(101, height)
    body {
-       word x, y, width, height;
+       word i, j;
        GetSelfW();
-      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
-          runerr(0);
-       self_w->window->x = x;
-       self_w->window->y = y;
+       if (is:null(x) && is_hidden(self_w))
+           i = -INT_MAX;
+       else {
+           if (!cnv:C_integer(x, i))
+               runerr(101, x);
+       }
+       if (is:null(y) && is_hidden(self_w))
+           j = -INT_MAX;
+       else {
+           if (!cnv:C_integer(y, j))
+               runerr(101, y);
+       }
+       self_w->window->reqx = i;
+       self_w->window->reqy = j;
        self_w->window->width = width;
        self_w->window->height = height;
        SimpleAttr(C_SIZE | C_POS);
@@ -1529,20 +1547,20 @@ function graphics_Window_set_pos(self, x, y)
    body {
        word i, j;
        GetSelfW();
-       if (is:null(x))
+       if (is:null(x) && is_hidden(self_w))
            i = -INT_MAX;
        else {
            if (!cnv:C_integer(x, i))
                runerr(101, x);
        }
-       if (is:null(y))
+       if (is:null(y) && is_hidden(self_w))
            j = -INT_MAX;
        else {
            if (!cnv:C_integer(y, j))
                runerr(101, y);
        }
-       self_w->window->x = i;
-       self_w->window->y = j;
+       self_w->window->reqx = i;
+       self_w->window->reqy = j;
        SimpleAttr(C_POS);
        return self;
    }
@@ -1552,13 +1570,13 @@ function graphics_Window_set_x(self, x)
    body {
        word i;
        GetSelfW();
-       if (is:null(x))
+       if (is:null(x) && is_hidden(self_w))
            i = -INT_MAX;
        else {
            if (!cnv:C_integer(x, i))
                runerr(101, x);
        }
-       self_w->window->x = i;
+       self_w->window->reqx = i;
        SimpleAttr(C_POS);
        return self;
    }
@@ -1568,13 +1586,13 @@ function graphics_Window_set_y(self, y)
    body {
        word i;
        GetSelfW();
-       if (is:null(y))
+       if (is:null(y) && is_hidden(self_w))
            i = -INT_MAX;
        else {
            if (!cnv:C_integer(y, i))
                runerr(101, y);
        }
-       self_w->window->y = i;
+       self_w->window->reqy = i;
        SimpleAttr(C_POS);
        return self;
    }

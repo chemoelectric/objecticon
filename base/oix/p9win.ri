@@ -324,7 +324,7 @@ wbp wopen(char *display)
         ws->screeninfo_fd = ws->cursor_fd = ws->label_fd = ws->mouse_pid = ws->cons_pid =
         ws->wininfo_fd = ws->wsys_fd = ws->wctl_fd = ws->winid = -1;
     ws->cursor = lookup_wcursor("left ptr");
-    ws->x = ws->y = -INT_MAX;
+    ws->reqx = ws->reqy = ws->x = ws->y = -INT_MAX;
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
     ws->width = ws->height = 1;
@@ -1371,14 +1371,14 @@ void doconfig(wbp w, int status)
         if ((status & (C_POS | C_SIZE)) == C_POS) {
             /* Only need a 'move' if doing pos without size; if doing
              * both pos can be done in a 'resize' */
-            fprint(ws->wctl_fd, "move -minx %d -miny %d", ws->x, ws->y);
+            fprint(ws->wctl_fd, "move -minx %d -miny %d", ws->reqx, ws->reqy);
             status &= ~C_POS;
         }
         if (status & (C_POS | C_SIZE | C_MINSIZE | C_MAXSIZE | C_RESIZE)) {
             char buf[256];
             strcpy(buf, "resize");
             if (status & C_POS)
-                sprintf(buf + strlen(buf), " -minx %d -miny %d", ws->x, ws->y);
+                sprintf(buf + strlen(buf), " -minx %d -miny %d", ws->reqx, ws->reqy);
             if (status & C_SIZE)
                 sprintf(buf + strlen(buf), " -dx %d -dy %d", adjust(ws, ws->width), adjust(ws, ws->height));
             if (status != C_POS) {
@@ -1547,9 +1547,9 @@ static int open_screen_win(wsp ws)
          */
         switch (ws->using_win) {
             case 1: {
-                if (ws->x != -INT_MAX && ws->y != -INT_MAX)
+                if (ws->reqx != -INT_MAX && ws->reqy != -INT_MAX)
                     fprint(ws->wctl_fd, "resize -minx %d -miny %d -dx %d -dy %d -mindx %d -maxdx %d -mindy %d -maxdy %d", 
-                           ws->x, ws->y,
+                           ws->reqx, ws->reqy,
                            adjust(ws, ws->width), 
                            adjust(ws, ws->height),
                            adjust(ws, minw),
@@ -1567,8 +1567,8 @@ static int open_screen_win(wsp ws)
                 break;
             }
             case 2: {
-                if (ws->x != -INT_MAX && ws->y != -INT_MAX)
-                    fprint(ws->wctl_fd, "move -minx %d -miny %d", ws->x, ws->y);
+                if (ws->reqx != -INT_MAX && ws->reqy != -INT_MAX)
+                    fprint(ws->wctl_fd, "move -minx %d -miny %d", ws->reqx, ws->reqy);
                 fprint(ws->wctl_fd, "resize -mindx %d -maxdx %d -mindy %d -maxdy %d", 
                        adjust(ws, minw),
                        adjust(ws, maxw),
@@ -1612,14 +1612,14 @@ static int open_screen_win(wsp ws)
         sprintf(ws->mount_dir, "/n/oix-win.%d.%d", getpid(), ++window_count);
         ws->border_width = (ws->state == PopupCanvas ? 0 : 2 * Borderwidth);
         /* If either x or y unset, let rio place the window */
-        if (ws->x == -INT_MAX || ws->y == -INT_MAX)
+        if (ws->reqx == -INT_MAX || ws->reqy == -INT_MAX)
             sprintf(buff, "new -dx %d -dy %d",
                     adjust(ws, ws->width), 
                     adjust(ws, ws->height));
         else
             sprintf(buff, "new -r %d %d %d %d",
-                    ws->x, ws->y,  ws->x + adjust(ws, ws->width), 
-                    ws->y + adjust(ws, ws->height));
+                    ws->reqx, ws->reqy,  ws->reqx + adjust(ws, ws->width), 
+                    ws->reqy + adjust(ws, ws->height));
         if (ws->state == PopupCanvas)
             strcat(buff, " -noborder -layer 1");
         else if (ws->state == IconicCanvas)
@@ -1833,6 +1833,7 @@ static void close_screen_win(wsp ws)
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->screeninfo_fd = ws->cursor_fd = ws->label_fd = ws->mouse_pid = ws->cons_pid =
         ws->wininfo_fd = ws->wsys_fd = ws->wctl_fd = ws->winid = -1;
+    ws->x = ws->y = -INT_MAX;
     synch_state(ws);
 }
 

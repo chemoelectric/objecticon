@@ -1201,7 +1201,7 @@ class Canvas(Component,SelectiveObjectCodec)
       if \self.held_flag then {
          if ec === "\e" then {
             moving := held_flag := resize_mode := &null
-            parent_dialog.change_pointer(Dialog.DEFAULT_POINTER)
+            parent_dialog.change_pointer()
             self.invalidate()
          }
       } else {
