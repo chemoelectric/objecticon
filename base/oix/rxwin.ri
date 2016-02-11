@@ -79,7 +79,7 @@ static void apply_windowlabel(wsp ws);
 static void apply_windowicon(wsp ws);
 static double calc_pt(double *x, double *y, double rx, double ry, double th);
 static double calc_progress_factor(double rx, double ry);
-static void init_pos(wsp ws);
+static void synch_pos(wsp ws);
 
 static stringint drawops[] = {
    { 0, 12},
@@ -965,7 +965,7 @@ static char *get_progname()
     return m;
 }
 
-static void init_pos(wsp ws)
+static void synch_pos(wsp ws)
 {
     Window junk;
     int new_x, new_y;
@@ -1153,8 +1153,7 @@ static void wmap(wbp w)
 
     XSync(wd->display, False);
 
-    init_pos(ws);
-
+    synch_pos(ws);
 }
 
 static void synch_net_wm_state(wsp ws, int desired_state)
@@ -2020,35 +2019,9 @@ static void handle_property(wsp ws, XPropertyEvent *event)
         synch_state(ws);
 }
 
-/*
- * Resize operations are made as painless as possible, but the
- * user program is informed anyhow.  The integer coordinates are
- * the new size of the window, in pixels.
- */
 static void handle_config(wsp ws, XConfigureEvent *event)
 {
-    int new_x, new_y;
-
-    /*
-     * If event->above is None, then the x, y fields are relative to
-     * the parent (ie the window border), so use XTranslateCoordinates
-     * to get the location instead.
-     */
-    if (event->above == None) {
-        wdp wd = ws->display;
-        Window junk;
-        XTranslateCoordinates(wd->display, ws->win, GetRoot(wd), 0, 0, &new_x, &new_y, &junk);
-    } else {
-        new_x = event->x;
-        new_y = event->y;
-    }
-
-    if ((new_x != ws->x) || (new_y != ws->y)) {
-        ws->x = new_x;
-        ws->y = new_y;
-        qeventcode(ws, WINDOWMOVED);
-    }
-
+    synch_pos(ws);
     if ((event->width != ws->width) || (event->height != ws->height)) {
         ws->width = event->width;
         ws->height = event->height;

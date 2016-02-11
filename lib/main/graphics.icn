@@ -446,7 +446,7 @@ final class Window(NoCopy, ObjectOutput)
    #
    public native get_font_width()
 
-   # Return the height of this window.
+   # Return the height of this window; see `get_size()`.
    #
    public native get_height()
 
@@ -466,19 +466,19 @@ final class Window(NoCopy, ObjectOutput)
    #
    public native get_line_width()
 
-   # Return the maximum allowed height of this window, as set by `set_max_height()`
+   # Return the maximum allowed height of this window, see `get_max_size()`.
    #
    public native get_max_height()
 
-   # Return the maximum allowed width of this window, as set by `set_max_width()`
+   # Return the maximum allowed width of this window, see `get_max_size()`.
    #
    public native get_max_width()
 
-   # Return the minimum allowed height of this window, as set by `set_min_height()` 
+   # Return the minimum allowed height of this window; see `get_min_size()`.
    #
    public native get_min_height()
 
-   # Return the minimum allowed width of this window, as set by `set_min_width()`
+   # Return the minimum allowed width of this window; see `get_min_size()`.
    #
    public native get_min_width()
 
@@ -486,11 +486,11 @@ final class Window(NoCopy, ObjectOutput)
    #
    public native get_pointer()
 
-   # Return the window's x position on the screen, or fail if the value is unset.
+   # Return the window's x position on the screen; see `get_pos()`.
    #
    public native get_x()
 
-   # Return the window's y position on the screen, or fail if the value is unset.
+   # Return the window's y position on the screen; see `get_pos()`.
    #
    public native get_y()
 
@@ -498,7 +498,7 @@ final class Window(NoCopy, ObjectOutput)
    # with `set_resize()`.
    public native can_resize()
 
-   # Return the width of this window.
+   # Return the width of this window; see `get_size()`.
    #
    public native get_width()
 
@@ -529,30 +529,32 @@ final class Window(NoCopy, ObjectOutput)
       return Size(get_width(), get_height())
    end
 
-   # Return the maximum size of the window as a `Size` record; see
-   # `get_max_width()`, and `get_max_height()`.
+   # Return the maximum size of the window as a `Size` record.
    #
    public get_max_size()
       return Size(get_max_width(), get_max_height())
    end
 
-   # Return the minimum size of the window as a `Size` record; see
-   # `get_min_width()`, and `get_min_height()`.
+   # Return the minimum size of the window as a `Size` record.
    #
    public get_min_size()
       return Size(get_min_width(), get_min_height())
    end
 
-   # Return the position of this window as a `Size` record, or fail if
-   # either x or y value is not set; see `get_x()` and `get_y()`.
+   # Return the position of this window as a `Size` record.  If the
+   # window is hidden, or the position is unavailable, this method
+   # fails.
+   #
+   # Note that, for a bordered window, this method always returns the
+   # location of the inner client area.  This is distinct from the
+   # corresponding `set_pos()` method.
    #
    public get_pos()
       return Point(get_x(), get_y())
    end
 
-   # Return the geometry of this window as a `Rectangle` record, or
-   # fail if either x or y value is not set; see `get_x()` and
-   # `get_y()`.
+   # Return the geometry of this window as a `Rectangle` record; see
+   # `get_pos()` and `get_size()`.
    #
    public get_geometry()
       return Rectangle(get_x(), get_y(), get_width(), get_height())
@@ -612,11 +614,12 @@ final class Window(NoCopy, ObjectOutput)
    #
    public native set_font(v)
 
-   # Specifies the position and size of the window.
+   # Specifies the position and size of the window; see `set_pos()`
+   # and `set_size()`.
    #
    public native set_geometry(x, y, width, height)
 
-   # Set the height of the window in pixels.
+   # Set the height of the window in pixels; see `set_size()`.
    #
    public native set_height(height)
 
@@ -783,15 +786,26 @@ final class Window(NoCopy, ObjectOutput)
    #
    public native set_pointer(v)
 
-   # Set the position of the window on the screen.
+   # Set the position of the window on the screen.  If the window is
+   # currently hidden, then either `x` or `y` may be null, meaning
+   # that the underlying window system will place the window at a
+   # default position when it is unhidden.
+   #
+   # For a bordered window, the position normally refers to the
+   # positon of the border rather than the client area.  However, this
+   # is system dependent.
+   #
+   # After a call to `set_pos()` on an unhidden window, the value of
+   # `get_pos()` will normally only be updated after a window system
+   # event.
    #
    public native set_pos(x, y)
 
-   # Set the x position of the window on the screen.
+   # Set the x position of the window on the screen; see `set_pos()`.
    #
    public native set_x(v)
 
-   # Set the y position of the window on the screen.
+   # Set the y position of the window on the screen; see `set_pos()`.
    #
    public native set_y(v)
 
@@ -804,7 +818,7 @@ final class Window(NoCopy, ObjectOutput)
    #
    public native set_size(width, height)
 
-   # Set the width of the window in pixels.
+   # Set the width of the window in pixels; see `set_size()`.
    #
    public native set_width(width)
 

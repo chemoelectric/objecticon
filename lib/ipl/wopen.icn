@@ -48,7 +48,8 @@
 package ipl.graphics
 
 import
-   graphics(Window)
+   graphics(Window),
+   util(Time)
 
 
 procedure QuitEvents()
@@ -70,13 +71,17 @@ procedure WQuit(win)
    fail
 end
 
+# Get the next event from `win`, waiting if necessary. `timeout` gives
+# the max time to wait; if omitted wait forever.
 #
-# Get the next event from {win}, waiting if necessary
-#
-procedure WEvent(win)
-   local e
-   until e := win.event() do
+procedure WEvent(win, timeout)
+   local e, lim
+   lim := \timeout + Time.get_system_millis()
+   until e := win.event() do {
       delay(50)
+      if \lim < Time.get_system_millis() then
+         fail
+   }
    return e
 end
 

@@ -214,7 +214,7 @@ wbp wopen(char *display)
     create_list(64, &ws->listp);
     ws->width = ws->height = 1;
     w->context = alccontext(w);
-    ws->x = ws->y = -INT_MAX;
+    ws->reqx = ws->reqy = ws->x = ws->y = -INT_MAX;
     ws->pix = gb_create_Bitmap(ws->width, ws->height, w->context->bg->color, 0);
     ws->pixwidth = ws->width;
     ws->pixheight = ws->height;
@@ -715,6 +715,7 @@ static void close_screen_win(wsp ws)
     if (ws->win) {
         DestroyWindow(ws->win);
         ws->win = 0;
+        ws->x = ws->y = -INT_MAX;
         ws->state = HiddenCanvas;
         GUnlink4(ws, vwstates, vnext, vprevious);
     }
@@ -763,8 +764,8 @@ static void open_screen_win(wsp ws)
                                      "oix", 
                                      NULL,
                                      WS_CHILD,
-                                     ws->x == -INT_MAX ? 0 : ws->x, 
-                                     ws->y == -INT_MAX ? 0 : ws->y,
+                                     ws->reqx == -INT_MAX ? 0 : ws->reqx, 
+                                     ws->reqy == -INT_MAX ? 0 : ws->reqy,
                                      ws->width,
                                      ws->height,
                                      GetDesktopWindow(),
@@ -782,8 +783,8 @@ static void open_screen_win(wsp ws)
                                      "oix", 
                                      NULL,
                                      WS_OVERLAPPEDWINDOW,
-                                     ws->x == -INT_MAX ? CW_USEDEFAULT : ws->x, 
-                                     ws->y == -INT_MAX ? CW_USEDEFAULT : ws->y,
+                                     ws->reqx == -INT_MAX ? CW_USEDEFAULT : ws->reqx, 
+                                     ws->reqy == -INT_MAX ? CW_USEDEFAULT : ws->reqy,
                                      ws->width + BORDER_WIDTH,
                                      ws->height + BORDER_HEIGHT,
                                      parent,
@@ -1359,7 +1360,7 @@ void doconfig(wbp w, int status)
         if (ws->win) {
             switch (status & (C_POS|C_SIZE)) {
                 case C_POS|C_SIZE: {
-                    SetWindowPos(ws->win, ws->win, ws->x, ws->y,
+                    SetWindowPos(ws->win, ws->win, ws->reqx, ws->reqy,
                                  get_outer_width(ws), get_outer_height(ws),
                                  SWP_NOZORDER|SWP_NOACTIVATE);
                     break;
@@ -1372,8 +1373,8 @@ void doconfig(wbp w, int status)
                 }
                 case C_POS: {
                     SetWindowPos(ws->win, ws->win,
-                                 ws->x,
-                                 ws->y,
+                                 ws->reqx,
+                                 ws->reqy,
                                  0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
                     break;
                 }
