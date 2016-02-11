@@ -429,10 +429,13 @@ class Code()
 
    public scale_and_stringify_wattrib(key, val)
       return case key of {
-         "height"|"width"|"min_width"|"min_height"|"max_width"|"max_height": 
+         "x"|"y"|"height"|"width"|"min_width"|"min_height"|"max_width"|"max_height": 
             scalable_dim(val)
-         "size"|"max_size"|"min_size": 
+         "pos"|"size"|"max_size"|"min_size": 
             scalable_dim(val[1]) || ", " || scalable_dim(val[2])
+         "geometry":
+            scalable_dim(val[1]) || ", " || scalable_dim(val[2]) || ", " || 
+               scalable_dim(val[3]) || ", " || scalable_dim(val[4])
          default: stringify_wattrib(key, val, 1)
       }
    end
