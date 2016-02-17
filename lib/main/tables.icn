@@ -1099,3 +1099,45 @@ class WeakrefTable(Table)
       return
    end
 end
+
+# A convenient equivalent to wrapping a BuiltinTable in an
+# UnmodifiableTable.
+#
+class UnmodifiableBuiltinTable(Table)
+   private const t
+
+   public member(key)
+      return .default.member(t, key)
+   end
+
+   public key()
+      suspend default.key(t)
+   end
+
+   public keyval()
+      suspend .default.keyval(t)
+   end
+
+   public gen()
+      suspend .!t
+   end
+
+   public size()
+      return *t
+   end
+
+   public get_mode()
+      return 0
+   end
+
+   #
+   # Create a new instance.
+   #
+   # @param t the table to wrap
+   #
+   public new(t)
+      self.t := t
+      self.def := t[[]]
+      return
+   end
+end
