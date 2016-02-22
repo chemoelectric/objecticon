@@ -181,7 +181,7 @@ abstract class Outputter()
    private markdown_line(s)
       local t
       s ? {
-         while t := tab(upto('`{*_~')) do {
+         while t := tab(upto('`{*_~<')) do {
             output_fragment(t)
             if ="`" then {
                t := tab(upto('`\'') | 0)
@@ -205,6 +205,10 @@ abstract class Outputter()
                t := tab(find("__") | 0)
                move(2)
                output_ul(t)
+            } else if ="<" & match("http:"|"https:"|"file:"|"ftp:") then {
+               t := tab(find(">") | 0)
+               move(1)
+               output_anchor(t)
             } else {
                t := move(1)
                output_fragment(t)
@@ -320,6 +324,7 @@ abstract class Outputter()
    protected abstract output_bold(s)
    protected abstract output_code(s)
    protected abstract output_ul(s)
+   protected abstract output_anchor(s)
    protected abstract end_line(fl)
    protected abstract begin_pre()
    protected abstract output_pre(s)
