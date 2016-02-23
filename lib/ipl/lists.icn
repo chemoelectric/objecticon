@@ -655,7 +655,7 @@ end
 # list permutations.  NB: the same result list is suspended each time.
 #
 procedure lpermute(L)			
-   suspend lpermute1(L, *L)
+   suspend lpermute1(copy(L), *L)
 end
 
 
