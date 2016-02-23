@@ -301,15 +301,24 @@ procedure lclose(L)
 
 end
 
-# list combinations
-procedure lcomb(L,i)			
-   local j
-
-   if i < 1 then fail
-   suspend if i = 1 then [!L]
-      else [L[j := 1 to *L - i + 1]] ||| lcomb(L[j + 1:0],i - 1)
-
+package procedure lcomb1(L, start, R, k)
+   local i
+   if *R - k > *L - start then
+      fail
+   if k > *R then
+      return R
+   every i := start to *L do {
+      R[k] := L[i]
+      suspend lcomb1(L, i + 1, R, k + 1)
+   }
 end
+
+# Generate all combinations of length `i` from list `L`.  NB: the same results
+# list is suspended each time.
+procedure lcomb(L,i)			
+   suspend lcomb1(L, 1, list(i), 1)
+end
+
 
 # list decollation
 procedure ldecollate(indices, L)	
@@ -626,14 +635,29 @@ procedure lpalin(L, x)
 
 end
 
-# list permutations
-procedure lpermute(L)			
+# Heap's algorithm for permutation generation.
+# See : <https://en.wikipedia.org/wiki/Heap%27s_algorithm>
+#
+package procedure lpermute1(L, n)
    local i
-
-   if *L = 0 then return []
-   suspend [L[i := 1 to *L]] ||| lpermute(L[1:i] ||| L[i+1:0])
-
+   if n <= 1 then
+      return L
+   every i := 1 to n - 1 do {
+      suspend lpermute1(L, n - 1)
+      if i % 2 = 1 then
+         L[i] :=: L[n]
+      else
+         L[1] :=: L[n]
+   }
+   suspend lpermute1(L, n - 1)
 end
+
+# list permutations.  NB: the same result list is suspended each time.
+#
+procedure lpermute(L)			
+   suspend lpermute1(L, *L)
+end
+
 
 # list reflection
 procedure lreflect(L, i)		
