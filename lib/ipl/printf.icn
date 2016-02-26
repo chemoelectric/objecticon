@@ -45,74 +45,132 @@ package ipl.printf
 
 import
    io(writes),
-   util(Format)
+   util(Format),
+   lang(to_string)
 
+# See `printf`
 procedure sprintf(format, args[])
-        return _doprnt(format, args)
+   return doprnt(format, args)
 end
 
+# See `printf`
 procedure fprintf(file, format, args[])
-        writes(file, _doprnt(format, args))
-        return
+   return writes(file, doprnt(format, args))
 end
 
+
+# Provides C-style printf formatting.  The specifier format is
+#
+# |      ~~ %<flags><width>.<precision><char> ~~
+#
+#  <flags> can be :-
+#  *   0 - pad fields with zeroes instead of spaces; this may
+#          not give sensible results with some numerical formats,
+#          eg signed numbers or left adjusted numbers.
+#  *   ' - for formats r, e, use commas to separate thousands
+#  *   - - left adjust fields instead of right adjust
+#  *   S - for formats r, e, replace trailing fractional zeroes
+#          with spaces
+#  *   Z - for formats r, e, means drop trailing fractional
+#          zeroes altogether
+#  *   + - for numeric formats, add a leading + to positive
+#          numbers
+#
+# The optional width specifies the field width.  It may be "*", in
+# which case an argument is consumed to give the width.
+#
+# The optional precision (which may also be a "*") means :-
+# *  for format s,  the maximum string length;
+# *  for integer formats (d, x, X, o, b), the minimum number of
+#    digits; leading zeroes are added if needed.
+# *  for real formats (r, e), the number of digits in the
+#    fractional part.
+#
+# The formats are :-
+# *   %d  decimal number
+# *   %s  string
+# *   %x  hex lower case
+# *   %X  hex upper case
+# *   %o  octal
+# *   %b  binary
+# *   %i  image() result
+# *   %t  to_string() result
+# *   %r  real decimal
+# *   %e  real in exponential format
+#
 procedure printf(format, args[])
-        writes(_doprnt(format, args))
-        return
+   return writes(doprnt(format, args))
 end
 
-package procedure _doprnt(format, args)
-   local out, v, just, width, conv, prec, pad, flag
-
-        out := ""
-        format ? repeat {
-                (out ||:= tab(upto('%'))) | (out ||:= tab(0) & break)
-                v := get(args)
-                move(1)
-                flag := tab(many('0\'\-+SZ')) | ''
-                # Convert flags to those used by Format.numeric_to_string
-                if any(flag, "'") then flag ++:= ','
-                if any(flag, "S") then flag ++:= 's'
-                if any(flag, "Z") then flag ++:= 'z'
-                just := if any(flag, "-") then left else right
-                pad := if any(flag, "0") then "0" else &null
-                width := tab(many(&digits)) | &null
-                prec := if ="." then tab(many(&digits)) else &null
-                conv := move(1) | &null
-
-                ##write("just: ",image(just),", width: ", width, ", prec: ",
-                ## prec, ", conv: ", conv)
-                case string(conv) of {
-                    "d": v := decimal(v,prec,flag)
-                    "s": v := string(v[1:(\prec+1)|0])
-                    "x": v := map(hexstr(v))
-                    "X": v := hexstr(v)
-                    "o": v := octstr(v)
-                    "i": v := image(v)
-                    "r": v := fixnum(v,prec,flag)
-                    "e": v := eformatstr(v, prec,flag)
-                    default: {
-                        push(args, v)
-                        v := conv
-                        }
-                    }
-                if \width & *v < width then {
-                        v := just(v, width, pad)
-                        }
-                out ||:= v
-                }
-
-        return out
+package procedure intparam(args)
+   return if ="*" then
+      integer(get(args))
+   else
+      integer(tab(many(&digits)))
 end
 
-package procedure hexstr(x)
+package procedure one(args)  
+   local v, a, just, width, conv, prec, pad, flag
+   move(1)     # Move over %
+   flag := cset(tab(many('0\'\-+SZ'))) | ''
+   # Convert flags to those used by Format.numeric_to_string
+   if any(flag, "'") then flag ++:= ','
+   if any(flag, "S") then flag ++:= 's'
+   if any(flag, "Z") then flag ++:= 'z'
+   just := if any(flag, "-") then left else right
+   if any(flag, "0") then pad := "0"
+   width := intparam(args)
+   if ="." then prec := intparam(args)
+   conv := move(1) | ""
+
+   #io.write("just: ",image(just),", width: ", width, ", prec: ",
+   # prec, ", conv: ", conv)
+
+   if any('dsxXoitreb', conv) then {
+      a := get(args)
+      case string(conv) of {
+         "d": v := decimal(a, prec, flag)
+         "s": v := str(a, prec)
+         "x": v := map(intstr(a, prec, flag))
+         "X": v := intstr(a, prec, flag)
+         "o": v := intstr(a, prec, flag, 8)
+         "b": v := intstr(a, prec, flag, 2)
+         "i": v := image(a)
+         "t": v := to_string(a)
+         "r": v := fixnum(a, prec, flag)
+         "e": v := eformatstr(a, prec, flag)
+      }
+   } else
+      v := conv
+   if \width & *v < width then
+      v := just(v, width, pad)
+   return v
+end
+
+package procedure doprnt(format, args)
+   local out
+   out := ""
+   format ? repeat {
+      out ||:= tab(upto('%') | 0)
+      if pos(0) then
+         break
+      out ||:= one(args)
+   }
+   return out
+end
+
+package procedure str(x, prec)
+   x := text(x) | return image(x)
+   return x[1:(\prec+1)|0]
+end
+
+package procedure intstr(x, prec, flag, base)
+   local v
    x := integer(x) | return image(x)
-   return Format.int_to_string(x)
-end
-
-package procedure octstr(x)
-   x := integer(x) | return image(x)
-   return Format.int_to_string(x, 8)
+   v := Format.int_to_string(x, base, prec)
+   if any(flag, "+") & x >= 0 then
+      v := "+" || v
+   return v
 end
 
 package procedure fixnum(x, prec, flag)
@@ -123,7 +181,12 @@ end
 
 package procedure decimal(x, prec, flag)
    x := integer(x) | return image(x)
-   return Format.numeric_to_string(x, 0, flag)
+   # Limitation: if we have a precision (padded to min prec digits),
+   # then we can't have commas.
+   return if \prec then
+      intstr(x, prec, flag, 10)
+   else
+      Format.numeric_to_string(x, 0, flag)
 end
 
 
