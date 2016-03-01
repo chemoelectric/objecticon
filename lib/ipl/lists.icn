@@ -190,7 +190,7 @@ import
    ipl.sets(elementset),
    ipl.strings(separate,separate_lines),
    lang(equals,Prog),
-   util(cvpos, cvslice_def, cvpos_item)
+   util(cvpos, cvslice, cvslice_def, cvpos_item)
 
 # create list from lines in file
 procedure file2lst(s)			
@@ -994,9 +994,10 @@ end
 procedure lextract(L, i, j)
    local l, s
    s := cvslice_def(i, j, *L) | fail
-   l := L[s.lo:s.hi]
-   every 1 to s.hi - s.lo do
-      delete(L, s.lo)
+   i := s.lo; j := s.hi
+   l := L[i:j]
+   every 1 to j - i do
+      delete(L, i)
    return l
 end
 
@@ -1006,7 +1007,18 @@ end
 procedure linsert(L, l, i)
    /i := 0
    i := cvpos(i, *L) | fail
-   every insert(L, i, !l) do
-      i +:= 1
+   every insert(L, i, back(l))
+   return L
+end
+
+# Remove the elements `i:j` from `L`, and insert the elements of `l` in their place.
+#
+procedure lsplice(L, l, i, j)
+   local s
+   s := cvslice(i, j, *L) | fail
+   i := s.lo; j := s.hi
+   every 1 to j - i do
+      delete(L, i)
+   linsert(L, \l, i)
    return L
 end
