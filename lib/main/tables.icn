@@ -770,22 +770,7 @@ class EqTable(Table)
    private sz
 
    public insert(key, val)
-      local h, l, e, n
-      h := hash(key)
-      if l := default.member(t, h) then {
-         every e := !l do {
-            if equals(e.key, key) then {
-               e.val := val
-               return self
-            }
-         }
-      }
-      n := Entry(key, val)
-      if \l then
-         put(l, n)
-      else
-         default.insert(t, h, [n])
-      sz +:= 1
+      add(key) := val
       return self
    end
 
@@ -961,23 +946,7 @@ class WeakrefTable(Table)
    private sz, last_purge
 
    public insert(key, val)
-      local h, l, e, n
-      maybe_purge()
-      h := Internal.hash(key)
-      if l := default.member(t, h) then {
-         every e := !l do {
-            if weakrefval(e.key) === key then {
-               e.val := val
-               return self
-            }
-         }
-      }
-      n := Entry(weakref(key), val) | runerr("Type of key cannot be used with weakref")
-      if \l then
-         put(l, n)
-      else
-         default.insert(t, h, [n])
-      sz +:= 1
+      add(key) := val
       return self
    end
 
