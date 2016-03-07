@@ -151,21 +151,18 @@ class FontTestDialog(Dialog)
       paint := TextPaint("Font")
       label_1 := Label().
          clear_constraints().
-         set_constraint("anchor", "w").
          set_constraint("x_align", Align.L).
          set_paint(paint)
       paint_16 := TextPaint(u"")
       font_label := Label().
          set_size(scale(40)).
          clear_constraints().
-         set_constraint("anchor", "w").
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
          set_paint(paint_16)
       paint_1 := TextPaint("Size")
       label_2 := Label().
          clear_constraints().
-         set_constraint("anchor", "w").
          set_constraint("x_align", Align.L).
          set_constraint("x_weight", 0.0).
          set_paint(paint_1)
@@ -173,7 +170,6 @@ class FontTestDialog(Dialog)
       size_label := Label().
          set_size(scale(40)).
          clear_constraints().
-         set_constraint("anchor", "w").
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
