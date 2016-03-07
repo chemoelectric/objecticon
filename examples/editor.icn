@@ -214,7 +214,7 @@ class Editor(Dialog)
       tb := Component().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).
-         set_constraint("x_align", "l").
+         set_constraint("x_align", Align.L).
          set_constraint("x_weight", 1.0).
          set_layout(GridLayout().
                     set_doi(0).
@@ -234,7 +234,7 @@ class Editor(Dialog)
          set_tooltip("Save").
          set_accel("s").
          set_constraint("x_weight", 1.0).
-         set_constraint("x_align", "l").
+         set_constraint("x_align", Align.L).
          set_image(SAVE).
          connect(handle_save, Event.ACTION)
       tb.add(save_button)
@@ -255,7 +255,7 @@ class Editor(Dialog)
                     set_outer(SunkenBorder()).
                     set_inner(EmptyBorder().
                               set_l_inset(3)).
-                              set_x_align("l"))
+                              set_x_align(Align.L))
       self.add(message_label)
 
       update_grey()
