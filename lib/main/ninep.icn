@@ -832,14 +832,16 @@ abstract class Data9P()
    # by user `uid`.
    public abstract modified(p, uid)
 
-   # Open the given path `p`, and return another (possibly different) path on which
-   # to carry out future i/o operations (read, write and close).
+   # Open the given path `p`, and return another (possibly different)
+   # path on which to carry out future i/o operations (read, write and
+   # close).
    public abstract open(p, mode)
 
    # Write the string `s` to the path `p` at position `pos`.
    public abstract write(p, s, pos)
 
-   # Read `count` bytes from path `p` at position `pos`.
+   # Read `count` bytes from path `p` at position `pos`.  Returns
+   # `&null` on end-of-file.
    public abstract read(p, pos, count)
 
    # Close the given path
@@ -1240,6 +1242,7 @@ class Session9P()
                   s ||:= get(o.dir)
             } else {
                s := data.read(o.path, x.offset + 1, x.count)
+               # In case of end-of-file
                /s := ""
             }
             return RRead(x.tag, s)
