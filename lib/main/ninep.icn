@@ -1318,8 +1318,10 @@ class Session9P()
       t := Task(sched, create {
          if member(valid, item) then {
             item.resp := respond(item.req)
-            put(queue, item)
-            writer.notify()
+            if member(valid, item) then {
+               put(queue, item)
+               writer.notify()
+            }
          }
          t.revert()
       }, data.create_task_state())
