@@ -76,7 +76,8 @@ abstract class Stream(HasMode)
 
    #
    # Close the stream.  After being closed, any further calls on the
-   # stream may stop with a runtime error.
+   # stream may stop with a runtime error.  Fails on error, setting
+   # {&why}; returns {self} on success.
    #
    public abstract close()
 
@@ -855,7 +856,7 @@ end
 # This procedure emulates the old Icon builtin {close} function.
 #
 procedure close(f)
-   return f.close() & f
+   return f.close()
 end
 
 #
