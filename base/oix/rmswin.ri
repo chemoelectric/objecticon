@@ -62,6 +62,8 @@ static int get_outer_width(wsp ws);
 static int get_outer_height(wsp ws);
 static void synch_state(wsp ws, int new_state);
 static void init_geom(wsp ws);
+static void synch_pos(wsp ws, int newx, int newy);
+static void synch_size(wsp ws, int neww, int newh);
 
 static void dbg(char *fmt, ...);
 
@@ -269,13 +271,8 @@ static void handle_getminmaxinfo(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     }
 }
 
-static void handle_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
+static void synch_pos(wsp ws, int newx, int newy)
 {
-    int newx, newy;
-    /* x,y represents the position of the drawable area. Casting to
-       INT16 ensures -ve values are handle correctly */
-    newx = (INT16)LOWORD(lp);
-    newy = (INT16)HIWORD(lp); 
     if ((newx != ws->x) || (newy != ws->y)) {
         ws->x = newx;
         ws->y = newy;
@@ -283,9 +280,25 @@ static void handle_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     }
 }
 
+static void synch_size(wsp ws, int neww, int newh)
+{
+    if ((ws->width != neww) || (ws->height != newh)) {
+        ws->width = neww;
+        ws->height = newh;
+        resizepixmap(findwbp(ws));
+        qeventcode(ws, WINDOWRESIZED);
+    }
+}
+
+static void handle_move(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
+{
+    /* x,y represents the position of the drawable area. Casting to
+       INT16 ensures -ve values are handle correctly */
+    synch_pos(ws, (INT16)LOWORD(lp), (INT16)HIWORD(lp));
+}
+
 static void handle_size(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    int neww, newh;
     switch (wp) {
         case SIZE_MINIMIZED: {
             synch_state(ws, IconicCanvas);
@@ -300,16 +313,7 @@ static void handle_size(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
             break;
         }
     }
-
-    neww = LOWORD(lp);
-    newh = HIWORD(lp);
-
-    if ((ws->width != neww) || (ws->height != newh)) {
-        ws->width = neww;
-        ws->height = newh;
-        resizepixmap(findwbp(ws));
-        qeventcode(ws, WINDOWRESIZED);
-    }
+    synch_size(ws, LOWORD(lp), HIWORD(lp));
 }
 
 static void handle_showwindow(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
@@ -735,25 +739,11 @@ static void init_geom(wsp ws)
 {
     POINT p;
     RECT r;
-    int newx, newy, neww, newh;
     p.x = p.y = 0;
     ClientToScreen(ws->win, &p);
-    newx = p.x;
-    newy = p.y;
-    if ((newx != ws->x) || (newy != ws->y)) {
-        ws->x = newx;
-        ws->y = newy;
-        qeventcode(ws, WINDOWMOVED);
-    }
+    synch_pos(ws, p.x, p.y);
     GetClientRect(ws->win, &r);
-    neww = r.right - r.left;
-    newh = r.bottom - r.top;
-    if ((ws->width != neww) || (ws->height != newh)) {
-        ws->width = neww;
-        ws->height = newh;
-        resizepixmap(findwbp(ws));
-        qeventcode(ws, WINDOWRESIZED);
-    }
+    synch_size(ws, r.right - r.left, r.bottom - r.top);
 }
 
 static void open_screen_win(wsp ws)

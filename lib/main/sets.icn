@@ -343,3 +343,40 @@ class BuiltinSet(Set)
       return
    end
 end
+
+# A convenient equivalent to wrapping a BuiltinSet in an
+# UnmodifiableSet.
+#
+class UnmodifiableBuiltinSet(Set)
+   private const s
+
+   public member(x)
+      return default.member(s, x)
+   end
+
+   public sort()
+      return default.sort(s)
+   end
+
+   public gen()
+      suspend !s
+   end
+
+   public size()
+      return *s
+   end
+
+   public get_mode()
+      return 0
+   end
+
+   #
+   # Create a new instance.
+   #
+   # @param s the set to wrap
+   #
+   public new(s)
+      self.s := s
+      return
+   end
+end

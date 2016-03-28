@@ -457,6 +457,10 @@ class HtmlOutputter(Outputter)
       writes(output_file, "<u>", esc(s), "</u>")
    end
 
+   protected output_anchor(s)
+      writes(output_file, "<a href=\"", s, "\">", esc(s), "</a>")
+   end
+
    protected end_line(fl)
       if /fl then
          write(output_file)

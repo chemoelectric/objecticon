@@ -131,7 +131,7 @@ class FileDialog(Dialog)
          msg("Existing file")
    end
 
-   public on_file_content(ev)
+   public on_file_content_changed(ev)
       msg()
       check_existing()
       synch_file()
@@ -318,7 +318,7 @@ class FileDialog(Dialog)
       self.dispose()
    end
 
-   public on_file()
+   public on_file_action()
       #
       # If return pressed in file TextField, same as okay
       #
@@ -364,8 +364,12 @@ class FileDialog(Dialog)
       }
    end
 
-   public on_filter(ev)
-      if member(EditList.NAVIGATE, ev.code) then
+   public on_filter_action(ev)
+      refresh_dir()
+   end
+
+   public on_filter_content_changed(ev)
+      if filter.was_applied(ev) then
          refresh_dir()
    end
 
@@ -841,8 +845,8 @@ class FileDialog(Dialog)
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
          set_tooltip(paint_35).
-         connect(self.on_filter, Event.ACTION).
-         connect(self.on_filter, Event.CONTENT_CHANGED).
+         connect(self.on_filter_action, Event.ACTION).
+         connect(self.on_filter_content_changed, Event.CONTENT_CHANGED).
          set_selection_list([""])
       layout_10 := GridLayout().
          set_doi(scale(0)).
@@ -856,8 +860,8 @@ class FileDialog(Dialog)
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_tooltip(paint_37).
-         connect(self.on_file, Event.ACTION).
-         connect(self.on_file_content, Event.CONTENT_CHANGED).
+         connect(self.on_file_action, Event.ACTION).
+         connect(self.on_file_content_changed, Event.CONTENT_CHANGED).
          set_selection_list([""])
       single_file_overlay_item := OverlayItem().
          set_layout(layout_10).

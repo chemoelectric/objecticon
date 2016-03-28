@@ -2942,7 +2942,7 @@ static void fold_field(struct lnode *n)
     if (!y->global->class)
         return;
 
-    f = lookup_field(y->global->class, x->fname);
+    f = lookup_implemented_field(y->global->class, x->fname);
     if (!f)
         return;
 

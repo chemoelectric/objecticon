@@ -507,3 +507,39 @@ class LinkedList(List)
       return
    end
 end
+
+# A convenient equivalent to wrapping a BuiltinList in an
+# UnmodifiableList.
+#
+class UnmodifiableBuiltinList(List)
+   private const l
+
+   public at(i)
+      return .l[i]
+   end
+
+   public keyof(x)
+      suspend default.keyof(l, x)
+   end
+
+   public gen()
+      suspend .!l
+   end
+
+   public back()
+      suspend .default.back(l)
+   end
+
+   public size()
+      return *l
+   end
+
+   public get_mode()
+      return 0
+   end
+
+   public new(l)
+      self.l := l
+      return
+   end
+end

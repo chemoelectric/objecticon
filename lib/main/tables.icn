@@ -770,22 +770,7 @@ class EqTable(Table)
    private sz
 
    public insert(key, val)
-      local h, l, e, n
-      h := hash(key)
-      if l := default.member(t, h) then {
-         every e := !l do {
-            if equals(e.key, key) then {
-               e.val := val
-               return self
-            }
-         }
-      }
-      n := Entry(key, val)
-      if \l then
-         put(l, n)
-      else
-         default.insert(t, h, [n])
-      sz +:= 1
+      add(key) := val
       return self
    end
 
@@ -961,23 +946,7 @@ class WeakrefTable(Table)
    private sz, last_purge
 
    public insert(key, val)
-      local h, l, e, n
-      maybe_purge()
-      h := Internal.hash(key)
-      if l := default.member(t, h) then {
-         every e := !l do {
-            if weakrefval(e.key) === key then {
-               e.val := val
-               return self
-            }
-         }
-      }
-      n := Entry(weakref(key), val) | runerr("Type of key cannot be used with weakref")
-      if \l then
-         put(l, n)
-      else
-         default.insert(t, h, [n])
-      sz +:= 1
+      add(key) := val
       return self
    end
 
@@ -1096,6 +1065,48 @@ class WeakrefTable(Table)
       self.t := table()
       self.sz := 0
       init_entries(entries)
+      return
+   end
+end
+
+# A convenient equivalent to wrapping a BuiltinTable in an
+# UnmodifiableTable.
+#
+class UnmodifiableBuiltinTable(Table)
+   private const t
+
+   public member(key)
+      return .default.member(t, key)
+   end
+
+   public key()
+      suspend default.key(t)
+   end
+
+   public keyval()
+      suspend .default.keyval(t)
+   end
+
+   public gen()
+      suspend .!t
+   end
+
+   public size()
+      return *t
+   end
+
+   public get_mode()
+      return 0
+   end
+
+   #
+   # Create a new instance.
+   #
+   # @param t the table to wrap
+   #
+   public new(t)
+      self.t := t
+      self.def := t[[]]
       return
    end
 end

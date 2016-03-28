@@ -52,7 +52,7 @@ procedure main(a)
    local opts, prog, imports, links
    opts := options(a, [Opt("i", string, "Import the given package(s).  Several packages may be comma-separated, or several -i options may be given",&yes),
                        Opt("l", string, "Link the given source file.  Several -l options may be given",&yes),
-                       Opt("wglob",, "If given, then assignments to global variables (eg procedures) are allowed"),
+                       Opt("wglob",, "If given, then assignments to global variables are allowed"),
                        Opt("s",, "Read commands from standard input rather than using a line editor"),
                        Opt("g",, "Use a gui interface rather than the console"),
                        Opt("hlim",integer,"Set the history limit for the line editor (default is 500)"),

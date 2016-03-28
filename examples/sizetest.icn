@@ -108,9 +108,7 @@ class Untitled(Dialog)
       label_1 := Label().
          set_size(scale(300)).
          clear_constraints().
-         set_constraint("anchor", "w").
          set_constraint("eol", &yes).
-         set_constraint("fill", "h").
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_paint(paint)
@@ -118,63 +116,48 @@ class Untitled(Dialog)
       paint_1 := TextPaint("Min size:")
       label_4 := Label().
          clear_constraints().
-         set_constraint("anchor", "w").
          set_constraint("eol", &yes).
-         set_constraint("fill", "h").
          set_constraint("x_fill", &yes).
          set_paint(paint_1)
       self.add(label_4)
       paint_2 := TextPaint("Max size:")
       label_5 := Label().
          clear_constraints().
-         set_constraint("anchor", "w").
          set_constraint("eol", &yes).
-         set_constraint("fill", "h").
          set_constraint("x_fill", &yes).
          set_paint(paint_2)
       self.add(label_5)
       paint_3 := TextPaint("Dialog size:")
       label_3 := Label().
          clear_constraints().
-         set_constraint("anchor", "w").
          set_constraint("eol", &yes).
-         set_constraint("fill", "h").
          set_constraint("x_fill", &yes).
          set_paint(paint_3)
       self.add(label_3)
       paint_10 := TextPaint("Root mouse:")
       label_6 := Label().
          clear_constraints().
-         set_constraint("anchor", "w").
          set_constraint("eol", &yes).
-         set_constraint("fill", "h").
          set_constraint("x_fill", &yes).
          set_paint(paint_10)
       self.add(label_6)
       paint_11 := TextPaint("Win mouse:")
       label_7 := Label().
          clear_constraints().
-         set_constraint("anchor", "w").
          set_constraint("eol", &yes).
-         set_constraint("fill", "h").
          set_constraint("x_fill", &yes).
          set_paint(paint_11)
       self.add(label_7)
       paint_12 := TextPaint("Display size:")
       label_8 := Label().
          clear_constraints().
-         set_constraint("anchor", "w").
          set_constraint("eol", &yes).
-         set_constraint("fill", "h").
          set_constraint("x_fill", &yes).
          set_paint(paint_12)
       self.add(label_8)
       text_field_1 := TextField().
          set_size(scale(60)).
          clear_constraints().
-         set_constraint("anchor", "w").
-         set_constraint("fill", "h").
-         set_constraint("weightx", "1").
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
          set_contents("")
@@ -188,9 +171,6 @@ class Untitled(Dialog)
       text_field_3 := TextField().
          set_size(scale(60)).
          clear_constraints().
-         set_constraint("anchor", "w").
-         set_constraint("fill", "h").
-         set_constraint("weightx", "1").
          set_constraint("x_fill", &yes).
          set_contents("")
       paint_5 := TextPaint("Max size")
@@ -203,9 +183,6 @@ class Untitled(Dialog)
       text_field_2 := TextField().
          set_size(scale(60)).
          clear_constraints().
-         set_constraint("anchor", "w").
-         set_constraint("fill", "h").
-         set_constraint("weightx", "1").
          set_constraint("x_fill", &yes).
          set_contents("")
       paint_6 := TextPaint("Set size")
@@ -218,9 +195,6 @@ class Untitled(Dialog)
       text_field_4 := TextField().
          set_size(scale(60)).
          clear_constraints().
-         set_constraint("anchor", "w").
-         set_constraint("fill", "h").
-         set_constraint("weightx", "1").
          set_constraint("x_fill", &yes).
          set_contents("")
       paint_9 := TextPaint("Set pos")

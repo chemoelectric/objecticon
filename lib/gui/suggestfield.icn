@@ -1,6 +1,6 @@
 package gui
 
-import graphics, util
+import graphics, util, lang
 
 # This class is a {TextField} which provides suggested completions in
 # a popup list based on partial input.
@@ -20,7 +20,8 @@ abstract class SuggestField(TextField, MenuMode)
       req_doing,
       last,
       mod,
-      synch_ev
+      synch_ev,
+      list_data
 
    #
    # Set the direction to pop-up in.  Options are {Direction.UP}, {Direction.DOWN} or
@@ -147,11 +148,18 @@ abstract class SuggestField(TextField, MenuMode)
       local max_h, max_w, spc_below, spc_above, spc_right, d, dim, win,
          use_direction, rs
 
+      # If the list is already open with the same data, do nothing.
+      # This avoids the flickering of opening and closing the popup.
+      if equals(data, list_data) then
+         return
+
       close_textlist()
 
+      # If no data, or the focus has moved away, leave closed.
       if (*data = 0) | (parent_dialog.get_focus() ~=== self) then
          return
 
+      list_data := copy(data)
       win := parent_dialog.win
       dim := win.get_display_size()
       # Screen rectangle, in adjusted co-ordinates
@@ -229,16 +237,16 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    private close_textlist()
-      \self.tl | fail
+      \tl | fail
       if tl.parent_dialog === parent_dialog then {
-         self.tl.invalidate()
-         self.parent_dialog.remove(tl)
+         tl.invalidate()
+         parent_dialog.remove(tl)
       } else {
-         self.parent_dialog.remove_popup(self.tl.parent_dialog)
-         self.tl.parent_dialog.dispose()
+         parent_dialog.remove_popup(tl.parent_dialog)
+         tl.parent_dialog.dispose()
       }
-      self.tl := &null
-      self.parent_dialog.exit_menu_mode(self)
+      list_data := tl := &null
+      parent_dialog.exit_menu_mode(self)
       fire(Event.POPUP_CLOSED)
    end
 

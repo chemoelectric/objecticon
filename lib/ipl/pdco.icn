@@ -389,7 +389,7 @@ end
 procedure Decollate(e1, e2)	
    local i, j, x
 
-   i := pdco_param(e2, 1, integer, 101) | fail
+   i := optional_param(e2, 1, integer, 101) | fail
 
    i %:= 2
  
@@ -449,8 +449,7 @@ end
 procedure ExtendSeq(e1, e2)	
    local count
 
-   count := @e2 | fail
-   count := integer(count) | runerr(101, count)
+   count := mandatory_param(e2, integer, 101) | fail
    if count < 1 then fail
 
    repeat {
@@ -813,7 +812,7 @@ end
 procedure Period(e1, e2)		
    local limit, result
 
-   limit := pdco_param(e2, 300, integer, 101) | fail
+   limit := optional_param(e2, 300, integer, 101) | fail
 
    result := []
 
@@ -845,7 +844,7 @@ end
 procedure Pivot(e1, e2)		
    local current, direction, m, new
 
-   m := pdco_param(e2, 100, integer, 101) | fail
+   m := optional_param(e2, 100, integer, 101) | fail
 
    direction := "+"
 
@@ -1014,8 +1013,7 @@ end
 procedure Rotate(e1, e2)		
    local result, i, x
 
-   i := @e2 | fail
-   i := integer(i) | runerr(101, i)
+   i := mandatory_param(e2, integer, 101) | fail
 
    result := []
 
@@ -1037,7 +1035,7 @@ end
 # PDCO to produce multiple of values in sequence
 procedure Selfrepl(e1, e2)	
    local i, j
-   j := pdco_param(e2, 1, integer, 101) | fail
+   j := optional_param(e2, 1, integer, 101) | fail
    while i := @e1 do {
       i := integer(i) | runerr(101, i)
       suspend (1 to i * j) & i
@@ -1116,7 +1114,7 @@ end
 procedure Span(e1, e2)		
    local i, j, m
 
-   m := pdco_param(e2, 100, integer, 101) | fail
+   m := optional_param(e2, 100, integer, 101) | fail
 
    j := @e1 | fail
    while i := residue(@e1, m, 1) do {
@@ -1133,8 +1131,8 @@ end
 procedure Sumlimit(e1, e2, e3) 	
    local sum, min, limit, i
 
-   limit := pdco_param(e2, 2^15, integer, 101) | fail
-   min := pdco_param(e3, 0, integer, 101) | fail
+   limit := optional_param(e2, 2^15, integer, 101) | fail
+   min := optional_param(e3, 0, integer, 101) | fail
    sum := 0
 
    while i := @e1 do {
@@ -1262,8 +1260,7 @@ end
 #
 procedure Each(e1, e[])
    local f, n
-   n := @e1 | fail
-   n := integer(n) | runerr(101, n)
+   n := mandatory_param(e1, integer, 101) | fail
    n := cvpos_item(n, *e) | fail
    every f := !e do {
       if (n -:= 1) = 0 then
@@ -1293,8 +1290,7 @@ end
 #
 procedure TakeWhile(f, e)
    local i
-   f := @f | fail
-   f := callable(f) | runerr("invalid function for TakeWhile{}", f)
+   f := mandatory_param(f, callable, "invalid function for TakeWhile{}") | fail
    while f(i := @e) do
       suspend i
 end
@@ -1306,8 +1302,7 @@ end
 #
 procedure DropWhile(f, e)
    local i
-   f := @f | fail
-   f := callable(f) | runerr("invalid function for DropWhile{}", f)
+   f := mandatory_param(f, callable, "invalid function for DropWhile{}") | fail
    repeat {
       i := @e | fail
       f(i) | break
@@ -1320,8 +1315,7 @@ end
 #
 procedure Filter(f, e)
    local i
-   f := @f | fail
-   f := callable(f) | runerr("invalid function for Filter{}", f)
+   f := mandatory_param(f, callable, "invalid function for Filter{}") | fail
    while i := @e do
       if f(i) then
          suspend i
@@ -1349,9 +1343,21 @@ procedure Zip(ef, el[])
    }
 end
 
+#
+# Succeed (and return &null), if the function `f` succeeds when
+# applied to all the results from co-expression `e`; fail otherwise.
+#
+procedure AllOf(f, e)
+   local i
+   f := mandatory_param(f, callable, "invalid function for AllOf{}") | fail
+   while i := @e do
+      f(i) | fail
+   return
+end
+
 package procedure MinMaxImpl(e, cmp, dir)
    local i, v
-   cmp := pdco_param(cmp, Internal.compare, callable, "invalid function for Min/Max{}") | fail
+   cmp := optional_param(cmp, Internal.compare, callable, "invalid function for Min/Max{}") | fail
    v := @e | fail
    while i := @e do {
       if dir * cmp(i, v) > 0 then
@@ -1381,9 +1387,18 @@ end
 # function fails, then a runerr is signalled with the given error
 # message.
 #
-procedure pdco_param(v, def, cvt, err)
+procedure optional_param(v, def, cvt, err)
    if /v then
       return def
+   v := @v | fail
+   if \cvt then
+      v := cvt(v) | runerr(err, v)
+   return v
+end
+
+# This is like `optional_param`, but doesn't allow a default value.
+#
+procedure mandatory_param(v, cvt, err)
    v := @v | fail
    if \cvt then
       v := cvt(v) | runerr(err, v)
