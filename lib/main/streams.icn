@@ -855,8 +855,7 @@ end
 # This procedure emulates the old Icon builtin {close} function.
 #
 procedure close(f)
-   f.close() | fail
-   return f
+   return f.close() & f
 end
 
 #
