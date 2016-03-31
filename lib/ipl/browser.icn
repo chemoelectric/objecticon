@@ -5043,8 +5043,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          use {
             W := view.cbwin.clone(),
             {
-               W.set_fg("purple").set_masked_pattern("gray")
-               W.draw_rectangle(r.x, r.y, r.w, r.h, Gui.FINE_WIDTH)
+               W.set_fg("purple").
+                  set_masked_pattern("gray").
+                  draw_rectangle(r.x, r.y, r.w, r.h, Gui.FINE_WIDTH)
             }
          }
       }

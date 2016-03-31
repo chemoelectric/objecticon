@@ -294,7 +294,6 @@ class CanvasComponent(CanvasObject)
          cw := W.clone(),
          {
             cw.clip(r.x, r.y, r.w, r.h)
-            cw.set_line_style("solid")
             if self === self.parent_Canvas.selected then
                cw.set_fg("red")
 

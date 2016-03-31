@@ -1151,10 +1151,10 @@ class Canvas(Component,SelectiveObjectCodec)
    public show_moving()
       local cw
       use {
-         cw := item_buff_win.clone().set_fg("red"),
+         cw := item_buff_win.clone(),
          {
-            cw.set_line_style("dashed")
-            cw.draw_rectangle(moving.mx, moving.my, moving.mw, moving.mh, Gui.UNIT)
+            cw.set_fg("red").
+               draw_rectangle(moving.mx, moving.my, moving.mw, moving.mh, Gui.FINE_WIDTH)
          }
       }
    end
