@@ -1154,7 +1154,7 @@ class Canvas(Component,SelectiveObjectCodec)
          cw := item_buff_win.clone().set_fg("red"),
          {
             cw.set_line_style("dashed")
-            cw.draw_rectangle(moving.mx, moving.my, moving.mw, moving.mh)
+            cw.draw_rectangle(moving.mx, moving.my, moving.mw, moving.mh, Gui.UNIT)
          }
       }
    end
