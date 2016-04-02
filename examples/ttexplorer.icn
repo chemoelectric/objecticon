@@ -57,7 +57,7 @@ class TTExplorer(Dialog)
    # Given a Node n, load its children with the sub-directories.
    #
    public load_subtree(n)
-      local s, e, r1, l
+      local s, e, r1, l, t, c
       s := get_full_path(n)
       l := get_directory_list(s)
       n.clear_children()
@@ -66,7 +66,15 @@ class TTExplorer(Dialog)
          r1.set_label(e)
          if e.stat.mode_str[1] == "d" then
             r1.set_always_expandable(&yes)
-         r1.set_contents([Format.numeric_to_string(e.lstat.size, 0, ','), fmt_time(e.lstat.mtime), e.lstat.mode_str])
+         t := []
+         every c := !tt.get_columns() do {
+            case c of {
+               bits_col: put(t, e.lstat.mode_str)
+               date_col: put(t, fmt_time(e.lstat.mtime))
+               size_col: put(t, Format.numeric_to_string(e.lstat.size, 0, ','))
+            }
+         }
+         r1.set_contents(t)
          n.add(r1)
       }
    end
@@ -95,6 +103,7 @@ class TTExplorer(Dialog)
    public component_setup()
       local root_node, w, bw, p, d, c
       self.setup()
+      tt.set_draggable_columns(&yes)
       tree := tt.get_table_content()
       p := scale(2)
       tree.

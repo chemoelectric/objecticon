@@ -92,7 +92,9 @@ abstract class BaseTableColumn(TextButton)
 
    public display()
       TextButton.display()
-      Gui.style.fill_shadow_rectangle(self.cbwin, self.x + self.w - Gui.FINE_WIDTH, self.y, Gui.FINE_WIDTH, self.h)
+      Gui.style.fill_shadow_rectangle(self.cbwin, x + w - Gui.FINE_WIDTH, y, Gui.FINE_WIDTH, h)
+      if self === \parent.which_highlight then
+         border.draw_highlight(cbwin, x, y, w - Gui.FINE_WIDTH, h)
    end
 
    #
