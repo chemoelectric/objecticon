@@ -150,6 +150,11 @@ class TableHeader(Component)
             return c
    end
 
+   public define_dnd_pointers(drag)
+      cbwin.copy_pointer("dnd negative", Dialog.DND_NEGATIVE_POINTER)
+      cbwin.copy_pointer("dnd positive", "sb h double arrow")
+   end
+
    public can_drag(ev)
       local c
       every c := !children do {
