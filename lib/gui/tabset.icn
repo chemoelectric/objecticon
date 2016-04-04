@@ -470,7 +470,7 @@ class TabSet(Component)
    end
 
    public can_drop(drag, e)
-      return which_one ~=== which_tab(e)
+      return which_one ~=== \which_highlight
    end
 
    public perform_drop(drag, drop, e)
