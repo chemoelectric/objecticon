@@ -32,6 +32,8 @@ class Dialog(Component)
       DND_POSITIVE_POINTER,
       # Repeat event delays
       DOUBLE_CLICK_DELAY,
+      # Mouse distance tolerance for double clicks
+      DOUBLE_CLICK_TOLERANCE,
       # Distance before drag begins
       DRAG_GESTURE_OFFSET,
       # Default tooltip delays
@@ -1172,8 +1174,8 @@ class Dialog(Component)
    # Exit dnd mode.
    #
    private exit_dnd(e)
+      (\curr_drag_holder).drag_reset(e)
       curr_drag_holder := curr_drop := curr_drag := &null
-      self.invoke_drag_reset(e)
       generate_crossing_events(e)
       if member(held, -1) then
          change_pointer()
@@ -1185,7 +1187,7 @@ class Dialog(Component)
    # Drag & drop mode processing
    # 
    private process_dnd(e)
-      local o, ec
+      local ec
 
       ec := e.code
       #
@@ -1198,23 +1200,15 @@ class Dialog(Component)
 
       if (ec === Mouse.DRAG) | member(Mouse.WHEEL, ec) then {
          # Try the drag holder's drag_event method first...
-         if not((\self.curr_drag_holder).drag_event(self.curr_drag, e)) then {
+         if not((\curr_drag_holder).drag_event(curr_drag, e)) then {
             # No luck with the drag holder, so try to search for a new drag holder.
-            self.curr_drag_holder := self.invoke_drag_event(self.curr_drag, e) | &null
+            curr_drag_holder := invoke_drag_event(curr_drag, e) | &null
          }
-
-         # If we have a drag holder, see if it can drop here.
-         if o := (\self.curr_drag_holder).can_drop(self.curr_drag, e) then {
-            change_pointer("dnd positive")
-            self.curr_drop := Drag(self.curr_drag_holder, o, e, curr_drag.button)
-         } else {
-            change_pointer("dnd negative")
-            self.curr_drop := &null
-         }
+         update_drop(e)
       } else if ec === curr_drag.button - 3 then {
          # If we have a prospective drop from can_drop, try to perform it.
-         if (\self.curr_drop).get_source().perform_drop(self.curr_drag, self.curr_drop, e) then
-            self.curr_drag.get_source().end_drag(self.curr_drag, self.curr_drop, e)
+         if (\curr_drop).get_source().perform_drop(curr_drag, curr_drop, e) then
+            curr_drag.get_source().end_drag(curr_drag, curr_drop, e)
          delete(held, ec + 3)
          exit_dnd(e)
       } else if /e.release & (ec === "\e") then {
@@ -1224,6 +1218,31 @@ class Dialog(Component)
          held[ec] := []                               # buttons are pressed/released during the drag
       else if member(Mouse.RELEASE, ec) then
          delete(held, ec + 3)
+   end
+
+   #
+   # This method can be invoked to update the current drag in respect
+   # of whether or not there is a current drop.  The mouse pointer is
+   # updated accordingly.  This may be necessary if a component
+   # changes whether a drop is available independent of an drag event
+   # (eg on a scrolling ticker).
+   #
+   # @param e    The event concerned, if any.
+   #
+   public update_drop(e)
+      local o
+      if popup_manager ~=== self then
+         popup_manager.update_drop(e)
+      else {
+         # If we have a drag holder, see if it can drop here.
+         if o := (\curr_drag_holder).can_drop(curr_drag, e) then {
+            change_pointer("dnd positive")
+            curr_drop := Drag(curr_drag_holder, o, e, curr_drag.button)
+         } else {
+            change_pointer("dnd negative")
+            curr_drop := &null
+         }
+      }
    end
 
    #
@@ -1297,8 +1316,10 @@ class Dialog(Component)
    # Maybe increment the click count
    # 
    private check_click_count(e)
-      if e.code = (\prev_event).code & prev_event.x = e.x & prev_event.y = e.y & 
-                                 (e.time - prev_event.time < DOUBLE_CLICK_DELAY) then
+      if e.code = (\prev_event).code & 
+         abs(prev_event.x - e.x) < DOUBLE_CLICK_TOLERANCE &
+         abs(prev_event.y - e.y) < DOUBLE_CLICK_TOLERANCE & 
+         e.time - prev_event.time < DOUBLE_CLICK_DELAY then
          click_count +:= 1
       else
          click_count := 1
@@ -1457,6 +1478,7 @@ class Dialog(Component)
 
    private static init()
       DOUBLE_CLICK_DELAY := env_int("OI_DIALOG_DOUBLE_CLICK_DELAY", 1) | 500
+      DOUBLE_CLICK_TOLERANCE := env_scale("OI_DIALOG_DOUBLE_CLICK_TOLERANCE") | Gui.UNIT
       TOOLTIP_START_DELAY := env_int("OI_DIALOG_TOOLTIP_START_DELAY", 1) | 1000
       TOOLTIP_END_DELAY := env_int("OI_DIALOG_TOOLTIP_END_DELAY", 1) | 4000
       TOOLTIP_CONTINUE_DELAY := env_int("OI_DIALOG_TOOLTIP_CONTINUE_DELAY", 1) | 1500
