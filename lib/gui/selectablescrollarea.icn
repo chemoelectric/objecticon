@@ -722,6 +722,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
                   goto_last(self.highlight)
                   highlight_part := if get_dnd_mode() === MIDDLE_ONLY then MIDDLE else BOTTOM
                }
+               parent_dialog.update_drop()
             } else {
                if \going_up then {
                   self.cursor := i.first_whole - 1
