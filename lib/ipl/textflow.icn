@@ -1401,10 +1401,10 @@ class TextFlow(Component, HasLastHighlight)
    package handle_in_chain(e)
       local u, t, a, f
       parent_dialog.get_held_count() = 0 | fail
-      if e.code === (Key.SHIFT_L | Key.SHIFT_R) then {
+      if e.code === (Key.CONTROL_L | Key.CONTROL_R) then {
          if /e.release then
             f := 1
-      } else f := \e.shift
+      } else f := \e.ctrl
       t := which_text_out(e)
       a := (\t).attr.title
       set_tooltip(a)
