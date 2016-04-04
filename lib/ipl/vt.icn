@@ -203,6 +203,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       last_highlight,             # Link last clicked, shown with a dotted rectangle
       held,                       # Link held by mouse down
       over,                       # Link mouse is over
+      no_drag,                    # Don't allow drag to set the cursor
       got,                        # Raw input, a string.
       part_ch,                    # Partial utf-8 char, a string.
       buff,                       # Input buffer, a ucs string.
@@ -1995,7 +1996,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private handle_ldrag(e)
       if \held then
          handle_mdrag(e)
-      else {
+      else if /no_drag then {
          invalidate_region()
          if cursor_y > 1 & e.y < self.view.y then {
             direction := "up"
@@ -2315,6 +2316,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          }
          held := &null
       } else {
+         no_drag := &null
          scroll_ticker.stop()
          own_primary()
       }
@@ -2388,6 +2390,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          mark_x := m.x
          mark_y := m.y
       }
+      no_drag := &yes
    end
 
    private handle_triple_click()
@@ -2403,13 +2406,13 @@ class Vt(LineBasedScrollArea, MenuMode)
          mark_x := m.x
          mark_y := m.y
       }
+      no_drag := &yes
    end
 
    private handle_lpress1(e)
       invalidate_region()
       reset_search()
-      # This would be \e.shift, but shift is used to disable the link click functionality.
-      if \e.ctrl then {
+      if \e.shift then {
          /self.mark_y := self.cursor_y
          /self.mark_x := self.cursor_x
          set_cursor_from_pos(e)
@@ -2488,10 +2491,10 @@ class Vt(LineBasedScrollArea, MenuMode)
    private handle_in_chain(ev)
       local seg, f
       (/quieten & parent_dialog.get_held_count() = 0) | fail
-      if ev.code === (Key.SHIFT_L | Key.SHIFT_R) then {
+      if ev.code === (Key.CONTROL_L | Key.CONTROL_R) then {
          if /ev.release then
             f := 1
-      } else f := \ev.shift
+      } else f := \ev.ctrl
       if /f & (seg := get_segment_for_pos(ev)) & \seg.attr.url then {
          set_over(seg.attr.url)
          view.set_pointer("hand1")

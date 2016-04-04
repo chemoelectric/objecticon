@@ -550,10 +550,10 @@ class Columns(LineBasedScrollArea)
    private handle_in_chain(e)
       local k, f
       (/quieten & parent_dialog.get_held_count() = 0) | fail
-      if e.code === (Key.SHIFT_L | Key.SHIFT_R) then {
+      if e.code === (Key.CONTROL_L | Key.CONTROL_R) then {
          if /e.release then
             f := 1
-      } else f := \e.shift
+      } else f := \e.ctrl
       if /f & (k := get_element_under_pointer(e)) then {
          set_over(k)
          view.set_pointer("hand1")
@@ -662,7 +662,7 @@ class Columns(LineBasedScrollArea)
    public handle_lpress(e)
       parent_dialog.get_held_count() = 1 | fail
       if \over then {
-         if /e.ctrl then {
+         if /e.shift then {
             set_highlight(over)
             held := over
          } else {
@@ -1456,7 +1456,7 @@ $endif
       local s, es
       if url.scheme == u"file" then {
          if s := ucs(url.get_decoded_path()) then {
-            es := if /ev.ctrl & is_local_host(url) & cwd ~== u"/" then {
+            es := if /ev.shift & is_local_host(url) & cwd ~== u"/" then {
                if cwd == s then
                   u"./"
                else if match(cwd || u"/", s) then
