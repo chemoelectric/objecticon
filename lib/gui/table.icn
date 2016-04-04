@@ -124,7 +124,17 @@ end
 
 class TableHeader(Component)
    public
-      which_highlight
+      which_highlight,
+      going_left,
+      scroll_ticker,
+      scroll_ticker_interval
+
+   public static
+      SCROLL_JUMP
+
+   private static init()
+      SCROLL_JUMP := scale(30)
+   end
 
    #
    # Set the draggable columns behaviour.  If set, the columns can be moved.
@@ -155,6 +165,44 @@ class TableHeader(Component)
       cbwin.copy_pointer("dnd positive", "sb h double arrow")
    end
 
+   public check_ticker(d)
+      scroll_ticker_interval := Gui.style.distance2ticker_rate(d)
+      scroll_ticker.change_sleep(scroll_ticker_interval)
+      # Start it (if it isn't already running)
+      scroll_ticker.start()
+   end
+
+   public get_leftmost_visible_column()
+      local c
+      every c := !children do
+         if intersect(c) then
+            return c
+   end
+
+   public get_rightmost_visible_column()
+      local c
+      every c := back(children) do
+         if intersect(c) then
+            return c
+   end
+
+   public scroll_tick()
+      local tc
+      tc := parent.table_content
+      repeat {
+         if \going_left then {
+            tc.set_area_x(tc.get_area_x() - SCROLL_JUMP)
+            set_which_highlight(get_leftmost_visible_column())
+         } else {
+            tc.set_area_x(tc.get_area_x() + SCROLL_JUMP)
+            set_which_highlight(get_rightmost_visible_column())
+         }
+         parent_dialog.update_drop()
+         synch_with_content()
+         scroll_ticker.sleep(scroll_ticker_interval)
+      }
+   end
+
    public can_drag(ev)
       local c
       every c := !children do {
@@ -166,15 +214,28 @@ class TableHeader(Component)
    end
 
    public drag_event(drag, e)
-      local c
+      local c, rhs
       drag.get_source() === self | fail
+      if \parent.table_content.hsb & \which_highlight then {
+         rhs := min(x + w, children[-1].x + children[-1].w)
+         if e.x < x then {
+            going_left := &yes
+            check_ticker(e.x - x)
+            return
+         } else if e.x >= rhs then {
+            going_left := &no
+            check_ticker(rhs - e.x)
+            return
+         }
+      }
+      scroll_ticker.stop()
       c := which_column(e)
       set_which_highlight(c)
       return \c
    end
 
    public can_drop(drag, e)
-      return drag.content ~=== which_column(e)
+      return drag.content ~=== \which_highlight
    end
 
    public perform_drop(drag, drop, e)
@@ -189,11 +250,14 @@ class TableHeader(Component)
    end
 
    public drag_reset(e)
-      set_which_highlight()
-      # Resynch since the components in the table header may have
-      # moved; we can't do this in perform_drop since the held count
-      # is non-zero then.
-      parent_dialog.resynch_pointer()
+      if \which_highlight then {
+         scroll_ticker.stop()
+         set_which_highlight()
+         # Resynch since the components in the table header may have
+         # moved; we can't do this in perform_drop since the held count
+         # is non-zero then.
+         parent_dialog.resynch_pointer()
+      }
    end
 
    public set_which_highlight(x)
@@ -224,6 +288,12 @@ class TableHeader(Component)
          b.layout()
          i +:= b.w
       }
+   end
+
+   public new()
+      Component.new()
+      scroll_ticker := Dispatcher.new_task{scroll_tick()}
+      return
    end
 end
 

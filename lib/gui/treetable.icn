@@ -192,7 +192,7 @@ class TreeTableHeader(TableHeader)
    end
 
    public can_drop(drag, e)
-      return drag.content ~=== (children[1] ~=== which_column(e))
+      return drag.content ~=== (children[1] ~=== \which_highlight)
    end
 
    public perform_drop(drag, drop, e)
