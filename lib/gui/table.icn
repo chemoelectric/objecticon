@@ -130,10 +130,10 @@ class TableHeader(Component)
       scroll_ticker_interval
 
    public static
-      SCROLL_JUMP
+      SCROLL_INCREMENT
 
    private static init()
-      SCROLL_JUMP := scale(30)
+      SCROLL_INCREMENT := env_scale("OI_TABLEHEADER_SCROLL_INCREMENT") | scale(20)
    end
 
    #
@@ -191,10 +191,10 @@ class TableHeader(Component)
       tc := parent.table_content
       repeat {
          if \going_left then {
-            tc.set_area_x(tc.get_area_x() - SCROLL_JUMP)
+            tc.set_area_x(tc.get_area_x() - SCROLL_INCREMENT)
             set_which_highlight(get_leftmost_visible_column())
          } else {
-            tc.set_area_x(tc.get_area_x() + SCROLL_JUMP)
+            tc.set_area_x(tc.get_area_x() + SCROLL_INCREMENT)
             set_which_highlight(get_rightmost_visible_column())
          }
          parent_dialog.update_drop()
@@ -220,11 +220,11 @@ class TableHeader(Component)
          rhs := min(x + w, children[-1].x + children[-1].w)
          if e.x < x then {
             going_left := &yes
-            check_ticker(e.x - x)
+            check_ticker(x - e.x)
             return
          } else if e.x >= rhs then {
             going_left := &no
-            check_ticker(rhs - e.x)
+            check_ticker(e.x - rhs)
             return
          }
       }

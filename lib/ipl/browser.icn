@@ -2806,7 +2806,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public static const 
       COLORS,
-      SIZES,
+      SIZES
+
+   public static
       SCROLL_INCREMENT
 
    private static const
@@ -2961,7 +2963,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       SIZES := [0.5 * t, 0.75 * t, t, 1.25 * t, 1.5 * t, 1.75 * t, 2.0 * t]
       ImageCache.name_image("rpp.BROKEN_LINK", BROKEN_LINK)
       default_font_clone := Window().set_font("sans")
-      SCROLL_INCREMENT := scale(20)
+      SCROLL_INCREMENT := env_scale("OI_BROWSER_SCROLL_INCREMENT") | scale(20)
    end
 
    public get_map(s)
