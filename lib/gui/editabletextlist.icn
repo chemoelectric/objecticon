@@ -44,6 +44,7 @@ class EditableTextList(LineBasedScrollArea)
       old_mark_y,
       old_has_region,
       old_region,
+      no_drag,                 # Don't allow drag to set the cursor
       view_list,
       view_list_split_width,
       tab_width,
@@ -657,11 +658,13 @@ class EditableTextList(LineBasedScrollArea)
                   self.cursor_x +:= 1
                while any(~'\t ', self.contents[self.cursor_y], self.mark_x - 1) do
                   self.mark_x -:= 1
+               no_drag := &yes
             }
             2 : {
                self.cursor_x := *self.contents[self.cursor_y] + 1
                self.mark_y := self.cursor_y
                self.mark_x := 1
+               no_drag := &yes
             }
          }
       }
@@ -732,6 +735,8 @@ class EditableTextList(LineBasedScrollArea)
 
    public handle_ldrag(e)
       local vi, v
+
+      /no_drag | fail
 
       start_handle(e)
 
@@ -833,6 +838,7 @@ class EditableTextList(LineBasedScrollArea)
       #
       has_region() | clear_mark()
       scroll_ticker.stop()
+      no_drag := &null
       end_handle(e)
    end
 
