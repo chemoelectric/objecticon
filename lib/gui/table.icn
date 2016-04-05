@@ -250,14 +250,12 @@ class TableHeader(Component)
    end
 
    public drag_reset(e)
-      if \which_highlight then {
-         scroll_ticker.stop()
-         set_which_highlight()
-         # Resynch since the components in the table header may have
-         # moved; we can't do this in perform_drop since the held count
-         # is non-zero then.
-         parent_dialog.resynch_pointer()
-      }
+      scroll_ticker.stop()
+      set_which_highlight()
+      # Resynch since the components in the table header may have
+      # moved; we can't do this in perform_drop since the held count
+      # is non-zero then.
+      parent_dialog.resynch_pointer()
    end
 
    public set_which_highlight(x)

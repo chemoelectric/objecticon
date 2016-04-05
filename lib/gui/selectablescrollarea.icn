@@ -992,12 +992,10 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    end
 
    public drag_reset(e)
-      if \self.highlight then {
-         start_handle(e)
-         self.highlight := self.highlight_part := &null
-         scroll_ticker.stop()
-         end_handle(e)
-      }
+      start_handle(e)
+      self.highlight := self.highlight_part := &null
+      scroll_ticker.stop()
+      end_handle(e)
    end
 
    public finally()
