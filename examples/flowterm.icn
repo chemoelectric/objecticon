@@ -2366,6 +2366,10 @@ $endif
          set_constraint("l_inset", 5).
          set_width(scale(75))
       search_panel.add(search_label)
+
+      theme_toolbar_button(search_close_button, "window-close")
+      theme_toolbar_button(search_prev_button, "go-previous")
+      theme_toolbar_button(search_next_button, "go-next")
    end
 
    private setup()
