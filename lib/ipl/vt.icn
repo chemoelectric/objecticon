@@ -2651,7 +2651,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       local i, j, num, curr, prev, last, matching, r
       \search_term | fail
       if \search_increment_flag then
-         curr := unflow_loc(cursor_x, \cursor_y)
+         curr := unflow_loc(mark_x, \mark_y)
       num := 0
       i := 1
       every r := unflowed() do {
@@ -2675,7 +2675,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       local i, j, num, curr, first, matching, nxt, r, p
       \search_term | fail
       if \search_increment_flag then
-         curr := unflow_loc(cursor_x, \cursor_y)
+         curr := unflow_loc(mark_x, \mark_y)
       num := 0
       i := 1
       every r := unflowed() do {
@@ -2699,16 +2699,19 @@ class Vt(LineBasedScrollArea, MenuMode)
    private done_search(pos, matching, num)
       local at_c, at_m
       if \pos &
-         at_c := reflow_loc(pos.x, pos.y) &
-         at_m := reflow_loc(pos.x + *search_term, pos.y) then
+         at_m := reflow_loc(pos.x, pos.y) &
+         at_c := reflow_loc(pos.x + *search_term, pos.y) then
       {
          invalidate_region()
          cursor_x := at_c.x
          cursor_y := at_c.y
          mark_x := at_m.x
          mark_y := at_m.y
-         # Ensure the line is visible with context of at least 3 lines above/below.
-         ensure_region_visible(get_area_line_rect(cursor_y).pad(0, 3 * line_height))
+         # Ensure the search selection is visible with context of at
+         # least 3 lines above/below.
+         ensure_region_visible(get_area_line_rect(cursor_y).
+                                  union(get_area_line_rect(mark_y)).
+                                  pad(0, 3 * line_height))
          own_primary()
          search_increment_flag := &yes
          invalidate_region()
