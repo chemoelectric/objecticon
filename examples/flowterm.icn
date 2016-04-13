@@ -1298,9 +1298,30 @@ class Terminal(TabItem, VtUI)
             check_param(s, param) | fail
             info_msg(param)
          }
+         "tab-right": {
+            check_live(s) | fail
+            on_tab_right()
+         }
+         "tab-left": {
+            check_live(s) | fail
+            on_tab_left()
+         }
+
          default: return error("Invalid command: " || s)
       }
       return self
+   end
+
+   private on_tab_right()
+      local i
+      i := parent.get_index(self) % *parent.children + 1
+      parent.set_which_one(parent.children[i])
+   end
+
+   private on_tab_left()
+      local i
+      i := (parent.get_index(self) + *parent.children - 2) % *parent.children + 1
+      parent.set_which_one(parent.children[i])
    end
 
    private static parse_key(s)
@@ -2952,6 +2973,8 @@ procedure usage(opts)
    help_line(":prev", "Go to the previous directory in the history.")
    help_line(":next", "Go to the next directory in the history.")
    help_line(":info=MSG", "Output MSG to the status bar.")
+   help_line(":tab-left", "Select the next tab to the left.")
+   help_line(":tab-right", "Select the next tab to the right.")
 
    u := URL("http://objecticon.sourceforge.net/FlowTerm.html")
    ewrites("\nFor more details, visit ")
