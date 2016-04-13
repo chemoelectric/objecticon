@@ -43,17 +43,17 @@ package class KeyEntry()
    public const 
       bits,       # The bits which must be set in the mask set
       mask,       # The mask, ie the bits to be considered
-      str         # The code to send
+      val         # The code to send
 
    public matches(i)
       if iand(mask, i) = bits then
          return
    end
 
-   public new(bits, mask, str)
+   public new(bits, mask, val)
       self.bits := bits
       self.mask := mask
-      self.str := str
+      self.val := val
       return
    end
 end
@@ -62,10 +62,51 @@ end
 package class KeyTable()
    private const t
 
-   public add(code, bits, mask, str)
-      local l
-      (l := member(t, code)) | insert(t, code, l := [])
-      put(l, KeyEntry(bits, mask, str))
+   public add1(code, bits, mask, val)
+      return add(code, bits, mask, val) | syserr(&why)
+   end
+
+   public add(code, bits, mask, val)
+      local l, e
+      iand(bits, mask) = bits | return error("invalid bits/mask combination")
+      if l := member(t, code) then {
+         # Given two entries, e and f, assume i matches both e and f.  Clearly i must
+         # be be|bf|z for some other bits z.  Since both match
+         # be = i&me and bf=i&mf. So
+         # be & i & mf = bf & i & me.  Subsitute i:
+         # be & mf & (be|bf|z) = bf & me & (be|bf|z)
+         # be&mf | be&mf&bf | be&mf&z = be&bf&me | bf&me | bf&me&z.  Since me&z=mf&z=0 :
+         # be&mf | be&mf&bf = be&bf&me | bf&me.  ie
+         # be&mf(1|bf) = bf&me(1|be), ie
+         # be&mf = bf&me
+         every e := !l do {
+            if iand(e.bits, mask) = iand(bits, e.mask) then
+               return error("inconsistent key entry")
+         }
+      } else
+         insert(t, code, l := [])
+      put(l, KeyEntry(bits, mask, val))
+      return self
+   end
+
+   # Remove a specific bits/mask entry for code or, with just one
+   # parameter, all the entries for code.
+   #
+   public remove(code, bits, mask)
+      local l, e
+      l := member(t, code) | fail
+      if /bits then
+         delete(t, code)
+      else {
+         every e := !l do {
+            if e.bits = bits & e.mask = mask then {
+               ldel1(l, e)
+               if *l = 0 then
+                  delete(t, code)
+               break
+            }
+         }
+      }
       return self
    end
 
@@ -74,30 +115,6 @@ package class KeyTable()
       every e := !member(t, code) do {
          if e.matches(i) then
             return e
-      }
-   end
-
-   public check_integrity()
-      local l, e, f, code
-      every code := key(t) do {
-         l := member(t, code)
-         every (e := !l) ~=== (f := !l) do {
-            if iand(e.bits, e.mask) ~= e.bits then
-               syserr("KeyTable entry has nonsense bits/mask: ", to_string(e))
-            # Given two entries, assume i matches both e and f.  Clearly i must
-            # be be|bf|z for some other bits z.  Since both match
-            # be = i&me and bf=i&mf. So
-            # be & i & mf = bf & i & me.  Subsitute i:
-            # be & mf & (be|bf|z) = bf & me & (be|bf|z)
-            # be&mf | be&mf&bf | be&mf&z = be&bf&me | bf&me | bf&me&z.  Since me&z=mf&z=0 :
-            # be&mf | be&mf&bf = be&bf&me | bf&me.  ie
-            # be&mf(1|bf) = bf&me(1|be), ie
-            # be&mf = bf&me
-            if iand(e.bits, f.mask) = iand(f.bits, e.mask) then {
-               syserr("KeyTable inconsistent: code=" || image(code) || 
-                      "; e=" || to_string(e) || "; f=" || to_string(f))
-            }
-         }
       }
    end
 
@@ -194,6 +211,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       ui,                         # The VtUI instance providing external functionality.
       contents,                   # List of Rows
       tab_stops,                  # Set of column numbers.
+      custom_keys,                # KeyTable for custom key settings.
       cursor_ticker,
       cursor_on,
       direction,                  # Selection scrolling direction
@@ -255,7 +273,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private static const
       EMPTY_ATTR,
       KEY_TABLE,
-      C, S, A, K, U, V, CSA,
+      C, S, M, M4, M5, K, U, CSM,
       CHARSET
 
    public static const
@@ -265,11 +283,12 @@ class Vt(LineBasedScrollArea, MenuMode)
       EMPTY_ATTR := Attr()
       C := 1
       S := 2
-      A := 4
-      K := 8
-      U := 16
-      V := 32
-      CSA := C + S + A
+      M := 4
+      M4 := 8
+      M5 := 16
+      K := 32
+      U := 64
+       CSM := C + S + M + M4 + M5
       KEY_TABLE := KeyTable()
       setup_key_table()
       CHARSET := table()
@@ -285,6 +304,26 @@ class Vt(LineBasedScrollArea, MenuMode)
       insert(CHARSET, "B", Charset("United States", u"", u""))
    end
 
+   public static string_to_key_mask(s)
+      local i, c
+      i := 0
+      every c := !s do {
+         i := ior(i, case map(string(c)) of {
+            "0" : 0
+            "c" : C
+            "s" : S
+            "m" : M
+            "4" : M4
+            "5" : M5
+            "k" : K
+            "u" : U
+            "*" : CSM
+            default: fail
+         })
+      }
+      return i
+   end
+
    private static setup_key_table()
       add_cursor_key(Key.UP, "A")
       add_cursor_key(Key.DOWN, "B")
@@ -293,9 +332,9 @@ class Vt(LineBasedScrollArea, MenuMode)
       add_cursor_key(Key.HOME, "H")
       add_cursor_key(Key.END, "F")
 
-      KEY_TABLE.add("\b", 0, A, "\d")
-      KEY_TABLE.add("\b", A, A, "\e\d")
-      KEY_TABLE.add("\d", 0, 0, "\e[3~")
+      KEY_TABLE.add1("\b", 0, M, "\d")
+      KEY_TABLE.add1("\b", M, M, "\e\d")
+      KEY_TABLE.add1("\d", 0, 0, "\e[3~")
 
       add_std_key(Key.PGUP, "\e[5~")
       add_std_key(Key.PGDN, "\e[6~")
@@ -313,13 +352,11 @@ class Vt(LineBasedScrollArea, MenuMode)
       add_std_key(Key.F10, "\e[21~")
       add_std_key(Key.F11, "\e[23~")
       add_std_key(Key.F12, "\e[24~")
-
-      KEY_TABLE.check_integrity()
    end
 
    private static add_std_key(k, s)
       local l, r
-      KEY_TABLE.add(k, 0, CSA, s)
+      KEY_TABLE.add1(k, 0, CSM, s)
       if any(&digits, s[3]) then {
          l := s[1:4]
          r := s[4:0]
@@ -327,25 +364,25 @@ class Vt(LineBasedScrollArea, MenuMode)
          l := s[1:3] || "1"
          r := s[3:0]
       }
-      KEY_TABLE.add(k, S, CSA, l || ";2" || r)
-      KEY_TABLE.add(k, A, CSA, l || ";3" || r)
-      KEY_TABLE.add(k, C, CSA, l || ";5" || r)
-      KEY_TABLE.add(k, S+A, CSA, l || ";4" || r)
-      KEY_TABLE.add(k, C+A, CSA, l || ";7" || r)
-      KEY_TABLE.add(k, C+S, CSA, l || ";6" || r)
-      KEY_TABLE.add(k, CSA, CSA, l || ";8" || r)
+      KEY_TABLE.add1(k, S, CSM, l || ";2" || r)
+      KEY_TABLE.add1(k, M, CSM, l || ";3" || r)
+      KEY_TABLE.add1(k, C, CSM, l || ";5" || r)
+      KEY_TABLE.add1(k, S+M, CSM, l || ";4" || r)
+      KEY_TABLE.add1(k, C+M, CSM, l || ";7" || r)
+      KEY_TABLE.add1(k, C+S, CSM, l || ";6" || r)
+      KEY_TABLE.add1(k, CSM, CSM, l || ";8" || r)
    end
 
    private static add_cursor_key(k, c)
-      KEY_TABLE.add(k, 0, CSA+U, "\e[" || c)
-      KEY_TABLE.add(k, U, CSA+U, "\eO" || c)
-      KEY_TABLE.add(k, S, CSA, "\e[1;2" || c)
-      KEY_TABLE.add(k, A, CSA, "\e[1;3" || c)
-      KEY_TABLE.add(k, C, CSA, "\e[1;5" || c)
-      KEY_TABLE.add(k, S+A, CSA, "\e[1;4" || c)
-      KEY_TABLE.add(k, C+A, CSA, "\e[1;7" || c)
-      KEY_TABLE.add(k, C+S, CSA, "\e[1;6" || c)
-      KEY_TABLE.add(k, CSA, CSA, "\e[1;8" || c)
+      KEY_TABLE.add1(k, 0, CSM+U, "\e[" || c)
+      KEY_TABLE.add1(k, U, CSM+U, "\eO" || c)
+      KEY_TABLE.add1(k, S, CSM, "\e[1;2" || c)
+      KEY_TABLE.add1(k, M, CSM, "\e[1;3" || c)
+      KEY_TABLE.add1(k, C, CSM, "\e[1;5" || c)
+      KEY_TABLE.add1(k, S+M, CSM, "\e[1;4" || c)
+      KEY_TABLE.add1(k, C+M, CSM, "\e[1;7" || c)
+      KEY_TABLE.add1(k, C+S, CSM, "\e[1;6" || c)
+      KEY_TABLE.add1(k, CSM, CSM, "\e[1;8" || c)
    end
 
    package on_lost_primary_ownership()
@@ -2094,15 +2131,28 @@ class Vt(LineBasedScrollArea, MenuMode)
       send(Format.shell_escape(text_convert(selection_convert(target_type, data), "ucs")))
    end
 
+   public handle_pgup(e)
+      goto_first(get_line_info().first_whole - max(rows - 3, 1))
+   end
+
+   public handle_pgdn(e)
+      goto_last(get_line_info().last_whole + max(rows - 3, 1))
+   end
+
    public handle_copy(e)
       local s
-      if s := \text_selection then {
+      if s := \text_selection then
          parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
-         # This indicates to handle_special_key() below that we've
-         # handled the key; otherwise it is passed on.  (this is what
-         # konsole does).
-         return
+   end
+
+   # Put a string as though typed by the user.
+   public put_user_string(s)
+      send(s)
+      if is_live() then {
+         quieten_cursor_and_clear_msg()
+         goto_bottom()
       }
+      return self
    end
 
    private handle_default_key(e)
@@ -2112,37 +2162,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          ch := text_convert(ch, "ucs") | fail
          if \e.meta then
             ch := u"\e" || ch
-         send(ch)
-         quieten_cursor_and_clear_msg()
-         goto_bottom()
-      }
-   end
-
-   private handle_special_key(e)
-      case e.code of {
-         # Navigation if shift is pressed
-         Key.PGUP : if \e.shift then {
-            goto_first(get_line_info().first_whole - max(rows - 3, 1))
-            return
-         }
-         Key.PGDN : if \e.shift then {
-            goto_last(get_line_info().last_whole + max(rows - 3, 1))
-            return
-         }
-         Key.HOME | Key.END : if \e.shift then {
-            on_default_key(e)
-            return
-         }
-         Key.F10 :
-            return handle_copy(e)
-         Key.INSERT :  {
-            if \e.ctrl then
-               return handle_copy(e)
-            else if \e.shift then {
-               handle_paste(e)
-               return
-            }
-         }
+         put_user_string(ch)
       }
    end
 
@@ -2151,13 +2171,17 @@ class Vt(LineBasedScrollArea, MenuMode)
       i := 0
       if \e.shift then i +:= S
       if \e.ctrl then i +:= C
-      if \e.meta then i +:= A
+      if \e.meta then i +:= M
+      if \e.meta4 then i +:= M4
+      if \e.meta5 then i +:= M5
       if \application_keypad_mode then i +:= K
       if \application_cursor_mode then i +:= U
+      if ke := custom_keys.lookup(e.code, i) then {
+         ke.val(e)
+         return
+      }
       if ke := KEY_TABLE.lookup(e.code, i) then {
-         send(ke.str)
-         quieten_cursor_and_clear_msg()
-         goto_bottom()
+         put_user_string(ke.val)
          return
       }
    end
@@ -2178,7 +2202,27 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private handle_key(e, src, ty)
-      handle_popup_key(e, src, ty) | handle_special_key(e) | handle_table_key(e) | handle_default_key(e)
+      handle_popup_key(e, src, ty) | handle_table_key(e) | handle_default_key(e)
+   end
+
+   public add_custom_key(code, bits, mask, func)
+      return custom_keys.add(code, bits, mask, func) & self
+   end
+
+   public remove_custom_key(code, bits, mask)
+      return custom_keys.remove(code, bits, mask) & self
+   end
+
+   public reset_custom_keys()
+      custom_keys := KeyTable()
+      custom_keys.
+         add(Key.INSERT, C, CSM, handle_copy).
+         add(Key.INSERT, S, CSM, handle_paste).
+         add(Key.PGUP, S, CSM, handle_pgup).
+         add(Key.PGDN, S, CSM, handle_pgdn).
+         add(Key.HOME, S, CSM, goto_top).
+         add(Key.END, S, CSM, goto_bottom)
+      return self
    end
 
    private invalidate_link(l)
@@ -2731,6 +2775,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    public new()
       LineBasedScrollArea.new()
+      reset_custom_keys()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
       cursor_ticker := Dispatcher.new_task{cursor_tick()}
       cursor_on := -1

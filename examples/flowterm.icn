@@ -25,12 +25,13 @@ global opts, glob_cmds
 $ifdef _PNG
 $load HOURGLASS "rpp.HOURGLASS_24.png"
 $load KEYBOARD "rpp.KEYBOARD_24.png"
-$load HELP "rpp.HELP_64.png"
+# Named HELP1 to avoid a clash with Key.HELP
+$load HELP1 "rpp.HELP_64.png"
 $load ABOUT "rpp.ABOUT_64.png"
 $else
 $load HOURGLASS "rpp.HOURGLASS_24.gif"
 $load KEYBOARD "rpp.KEYBOARD_24.gif"
-$load HELP "rpp.HELP_64.gif"
+$load HELP1 "rpp.HELP_64.gif"
 $load ABOUT "rpp.ABOUT_64.gif"
 $endif
 $load EXIT "rpp.EXIT_24.gif"
@@ -1129,21 +1130,41 @@ class Terminal(TabItem, VtUI)
       return self
    end
 
+   private check_live(s)
+      return is_live() | error(s || " only applies to an already open tab")
+   end
+
+   private check_new(s)
+      return not is_live() | error(s || " only applies to a new tab")
+   end
+
+   private check_param(s, param)
+      return \param | error(s || " expects a parameter")
+   end
+
    public do_tab_cmd(s)
       local param
       s := ucs(s) | return error("Not a ucs string")
       s ? if s := tab(upto('=')) then
          param := (move(1), tab(0))
-      case string(s) of {
-         "sh" : set_shell(param)
+      case map(string(s)) of {
+         "sh" : {
+            check_new(s) | fail
+            set_shell(param)
+         }
          "run" : {
-            \param | return error("expected parameter to run")
+            check_param(s, param) | fail
             run_prog(param)
          }
          "font" : {
-            \param | return error("expected parameter to font")
+            check_param(s, param) | fail
             output.set_vt_font(param) | return error("invalid parameter to font: " || &why)
          }
+         "key" : {
+            check_param(s, param) | fail
+            do_custom_key(param) | fail
+         }
+         "reset-keys" : output.reset_custom_keys()
          "fg": output.set_normal_fg(param) | return error("invalid parameter to fg: " || &why)
          "bg": output.set_normal_bg(param) | return error("invalid parameter to bg: " || &why)
          "rev-fg": output.set_reverse_fg(param) | return error("invalid parameter to rev-fg: " || &why)
@@ -1165,11 +1186,11 @@ class Terminal(TabItem, VtUI)
          "max-list" : on_max_list()
          "max-term" : on_max_terminal()
          "restore" : on_restore()
-         "adjacent" : set_adjacent(&yes)
-         "list-focus" : {
-            focus_columns_button.toggle_is_checked().invalidate()
-            on_focus_columns_button()
+         "adjacent" : {
+            check_new(s) | fail
+            set_adjacent(&yes)
          }
+         "list-focus" : do_toggle_focus_columns_button()
          "reorient" | "re-orient" : on_reorient()
          "sort-name" : on_name_button()
          "sort-date" : on_date_button()
@@ -1177,20 +1198,241 @@ class Terminal(TabItem, VtUI)
          "show-name-only" : on_show_name_only()
          "show-date" : on_show_date()
          "show-size" : on_show_size()
-         "mix-entries" : {
-            mix_entries_menu_item.toggle_is_checked()
-            on_mix_entries_menu_item()
+         "mix-entries" : do_toggle_mix_entries_menu_item()
+         "show-hidden" : do_toggle_show_hidden_menu_item()
+         "sort-dirs" : do_toggle_sort_dirs_menu_item()
+         "select" : {
+            check_new(s) | fail
+            set_select(&yes)
          }
-         "show-hidden" : {
-            show_hidden_menu_item.toggle_is_checked()
-            on_show_hidden_menu_item()
+         "open-search" : open_search_panel()
+         "close-search" : close_search_panel()
+         "start-log" : {
+            check_live(s) | fail
+            on_start_log(, param)
          }
-         "sort-dirs" : {
-            sort_dirs_menu_item.toggle_is_checked()
-            on_sort_dirs_menu_item()
+         "end-log" : {
+            check_live(s) | fail
+            on_end_log()
          }
-         "select" : set_select(&yes)
+         "string": {
+            check_param(s, param) | fail
+            output.put_user_string(param)
+         }
+         "url" : {
+            check_live(s) | fail
+            check_param(s, param) | fail
+            param := URL(param) | return error("invalid url: " || &why)
+            open_link(param)
+         }
+         "copy-cwd": {
+            check_live(s) | fail
+            on_copy_cwd()
+         }
+         "copy": {
+            check_live(s) | fail
+            output.handle_copy()
+         }
+         "paste": {
+            check_live(s) | fail
+            output.handle_paste()
+         }
+         "paste-escaped": {
+            check_live(s) | fail
+            output.handle_paste_escaped()
+         }
+         "pgup": {
+            check_live(s) | fail
+            output.handle_pgup()
+         }
+         "pgdn": {
+            check_live(s) | fail
+            output.handle_pgdn()
+         }
+         "top": {
+            check_live(s) | fail
+            output.goto_top()
+         }
+         "bottom": {
+            check_live(s) | fail
+            output.goto_bottom()
+         }
+         "select-all": {
+            check_live(s) | fail
+            output.handle_select_all()
+         }
+         "close-tab": {
+            check_live(s) | fail
+            close_tab()
+         }
+         "clone-tab": {
+            check_live(s) | fail
+            clone_tab()
+         }
+         "quit": {
+            check_live(s) | fail
+            on_quit()
+         }
+         "home": {
+            check_live(s) | fail
+            on_home_button()
+         }
+         "refresh": {
+            check_live(s) | fail
+            on_refresh_button()
+         }
+         "up": {
+            check_live(s) | fail
+            on_up_button()
+         }
+         "prev": {
+            check_live(s) | fail
+            on_prev_button()
+         }
+         "next": {
+            check_live(s) | fail
+            on_next_button()
+         }
+         "info": {
+            check_live(s) | fail
+            check_param(s, param) | fail
+            info_msg(param)
+         }
          default: return error("Invalid command: " || s)
+      }
+      return self
+   end
+
+   private static parse_key(s)
+      local c
+      s := map(string(s))
+      if s[1] == "x" & c := char(integer("16r" || s[2:0])) then
+         return c
+      if s[1] == "u" & c := uchar(integer("16r" || s[2:0])) then
+         return c
+      return case s of {
+         "shift_tab": Key.SHIFT_TAB
+         "compose": Key.COMPOSE
+         "do": Key.DO
+         "down": Key.DOWN
+         "end": Key.END
+         "f1": Key.F1
+         "f2": Key.F2
+         "f3": Key.F3
+         "f4": Key.F4
+         "f5": Key.F5
+         "f6": Key.F6
+         "f7": Key.F7
+         "f8": Key.F8
+         "f9": Key.F9
+         "f10": Key.F10
+         "f11": Key.F11
+         "f12": Key.F12
+         "f13": Key.F13
+         "f14": Key.F14
+         "f15": Key.F15
+         "f16": Key.F16
+         "f17": Key.F17
+         "f18": Key.F18
+         "f19": Key.F19
+         "f20": Key.F20
+         "f21": Key.F21
+         "f22": Key.F22
+         "f23": Key.F23
+         "f24": Key.F24
+         "find": Key.FIND
+         "help": Key.HELP
+         "home": Key.HOME
+         "insert": Key.INSERT
+         "kp_down": Key.KP_DOWN
+         "kp_left": Key.KP_LEFT
+         "kp_right": Key.KP_RIGHT
+         "kp_up": Key.KP_UP
+         "l1": Key.L1
+         "l2": Key.L2
+         "l3": Key.L3
+         "l4": Key.L4
+         "l5": Key.L5
+         "l6": Key.L6
+         "l7": Key.L7
+         "l8": Key.L8
+         "l9": Key.L9
+         "l10": Key.L10
+         "left": Key.LEFT
+         "pf1": Key.PF1
+         "pf2": Key.PF2
+         "pf3": Key.PF3
+         "pf4": Key.PF4
+         "pause": Key.PAUSE
+         "pgdn": Key.PGDN
+         "pgup": Key.PGUP
+         "prsc": Key.PRSC
+         "r1": Key.R1
+         "r2": Key.R2
+         "r3": Key.R3
+         "r4": Key.R4
+         "r5": Key.R5
+         "r6": Key.R6
+         "r7": Key.R7
+         "r8": Key.R8
+         "r9": Key.R9
+         "r10": Key.R10
+         "r11": Key.R11
+         "r12": Key.R12
+         "r13": Key.R13
+         "r14": Key.R14
+         "r15": Key.R15
+         "right": Key.RIGHT
+         "scroll_lock": Key.SCROLL_LOCK
+         "select": Key.SELECT
+         "up": Key.UP
+         "cursor": Key.CURSOR
+         "cursor_v": Key.CURSOR_V
+         "cursor_h": Key.CURSOR_H
+         "super_l": Key.SUPER_L
+         "super_r": Key.SUPER_R
+         "menu": Key.MENU
+         "navigate": Key.NAVIGATE
+         "shift_l": Key.SHIFT_L
+         "shift_r": Key.SHIFT_R
+         "control_l": Key.CONTROL_L
+         "control_r": Key.CONTROL_R
+         "caps_lock": Key.CAPS_LOCK
+         "shift_lock": Key.SHIFT_LOCK
+         "meta_l": Key.META_L
+         "meta_r": Key.META_R
+         "alt_l": Key.ALT_L
+         "alt_r": Key.ALT_R
+         "hyper_l": Key.HYPER_L
+         "hyper_r": Key.HYPER_R
+      }
+   end
+
+   private on_quit()
+      parent_dialog.dispose()
+   end
+
+   private do_custom_key(param)
+      local code, bits, mask, verb, func
+      param ? {
+         code := parse_key(tab((upto(',') | 0)\1)) | return error("invalid key identifier")
+         if pos(0) then {
+            # Remove all bindings for code.
+            output.remove_custom_key(code)
+         } else {
+            move(1)
+            bits := Vt.string_to_key_mask(tab(upto(',')\1)) | return error("missing or invalid bits number")
+            move(1)
+            mask := Vt.string_to_key_mask(tab((upto(',') | 0)\1)) | return error("invalid mask number")
+            if pos(0) then {
+               output.remove_custom_key(code, bits, mask)
+            } else {
+               move(1)
+               verb := tab(0)
+               func := exprf{ do_tab_cmd(verb) | info_msg(&why) }
+               output.add_custom_key(code, bits, mask, func) | return error("failed to add key function: " || &why)
+            }
+         }
       }
       return self
    end
@@ -1589,24 +1831,29 @@ $endif
       parent_dialog.new_tab(, dir,, self)
    end
 
-   private on_start_log()
-      local d, s, dl, fl
-      d := parent_dialog.file_dialog
-      dl := [cwd]
-      fl := [u"log"]
-      if \parent_dialog.last_log_file then {
-         push(dl, parent_dialog.last_log_file.parent().ucs())
-         push(fl, parent_dialog.last_log_file.get(-1))
-      }
-      if \log_file then {
-         push(dl, log_file.parent().ucs())
-         push(fl, log_file.get(-1))
-      }
-      d.set_directories(dl).
-         set_files(fl).
-         set_existing_file_mode(FileDialog.WARN).
-         show_modal(parent_dialog)
-      parent_dialog.last_log_file := log_file := d.get_result_path() | fail
+   private on_start_log(e, dest)
+      local d, dl, fl, s
+      /log | return info_msg(u"Already logging to " || log_file.ucs())
+      if /dest then {
+         d := parent_dialog.file_dialog
+         dl := [cwd]
+         fl := [u"log"]
+         if \parent_dialog.last_log_file then {
+            push(dl, parent_dialog.last_log_file.parent().ucs())
+            push(fl, parent_dialog.last_log_file.get(-1))
+         }
+         if \log_file then {
+            push(dl, log_file.parent().ucs())
+            push(fl, log_file.get(-1))
+         }
+         d.set_directories(dl).
+            set_files(fl).
+            set_existing_file_mode(FileDialog.WARN).
+            show_modal(parent_dialog)
+         dest := d.get_result_path() | fail
+      } else
+         dest := FilePath(dest).canonical()
+      parent_dialog.last_log_file := log_file := dest
       s := log_file.ucs()
       if log := open(s, "w") then
          info_msg(u"Logging to file " || s)
@@ -1621,6 +1868,7 @@ $endif
    end
 
    private on_end_log()
+      \log | return info_msg("Not logging")
       close_log()
       info_msg(u"Closed log file " || log_file.ucs())
    end
@@ -1750,15 +1998,28 @@ $endif
    end
 
    private on_show_date(e)
-      annotate_opt := SHOW_DATE
-      annotate_cwd_list()
-      columns.data_changed()
+      if annotate_opt = SHOW_DATE then
+         on_show_name_only(e)
+      else {
+         annotate_opt := SHOW_DATE
+         annotate_cwd_list()
+         columns.data_changed()
+      }
    end
 
    private on_show_size(e)
-      annotate_opt := SHOW_SIZE
-      annotate_cwd_list()
-      columns.data_changed()
+      if annotate_opt = SHOW_SIZE then
+         on_show_name_only(e)
+      else {
+         annotate_opt := SHOW_SIZE
+         annotate_cwd_list()
+         columns.data_changed()
+      }
+   end
+
+   private do_toggle_mix_entries_menu_item()
+      mix_entries_menu_item.toggle_is_checked()
+      on_mix_entries_menu_item()
    end
 
    private on_mix_entries_menu_item(e)
@@ -1766,9 +2027,19 @@ $endif
       resort_cwd()
    end
 
+   private do_toggle_sort_dirs_menu_item()
+      sort_dirs_menu_item.toggle_is_checked()
+      on_sort_dirs_menu_item()
+   end
+
    private on_sort_dirs_menu_item(e)
       annotate_cwd_list()
       resort_cwd()
+   end
+
+   private do_toggle_show_hidden_menu_item()
+      show_hidden_menu_item.toggle_is_checked()
+      on_show_hidden_menu_item()
    end
 
    private on_show_hidden_menu_item(e)
@@ -2274,6 +2545,11 @@ $endif
       goto_dir(he.dir)
    end
 
+   private do_toggle_focus_columns_button()
+      focus_columns_button.toggle_is_checked().invalidate()
+      on_focus_columns_button()
+   end
+
    private on_focus_columns_button(ev)
       local f, c
       f := focus_columns_button.get_status()
@@ -2294,21 +2570,29 @@ $endif
    end
 
    private open_search_panel()
+      if split.second.get_index(search_panel) then
+         fail
       split.second.
-         add(search_panel, 0).
-         reset_layout().
-         do_layout().
-         invalidate()
-      parent_dialog.set_focus(search_field)
+         add(search_panel, 0)
+      if is_live() then {
+         split.second.
+            reset_layout().
+            do_layout().
+            invalidate()
+         parent_dialog.set_focus(search_field)
+      }
    end
 
    private close_search_panel()
       split.second.
-         remove(search_panel).
-         reset_layout().
-         do_layout().
-         invalidate()
-      parent_dialog.set_focus(output)
+         remove(search_panel) | fail
+      if is_live() then {
+         split.second.
+            reset_layout().
+            do_layout().
+            invalidate()
+         parent_dialog.set_focus(output)
+      }
    end
 
    public search_msg(s)
@@ -2609,7 +2893,7 @@ procedure usage(opts)
    ewrite("Usage: flowterm [OPTIONS] [ALL TAB OPTS] [DIRS/PER TAB OPTS]")
    options_help(opts)
    ewrite()
-   help_line("Tab options begin with a ':', as follows.  If a parameter is omitted, then it is 'null', which is a valid setting for some keys.")
+   help_line("Tab options/commands begin with a ':', as follows.  If a parameter is omitted, then it is 'null', which is a valid setting for some keys.")
    ewrite()
    help_line(":max-list", "Maximize the space for the list, so the terminal is not visible.")
    help_line(":max-term", "Maximize the space for the terminal, so the files list is not visible.")
@@ -2639,6 +2923,36 @@ procedure usage(opts)
    help_line(":list-height=INTEGER", "The height of the list component in pixels. The default is 300 scaled pixels.")
    help_line(":auto-close", "Automatically close the tab if the forked shell process ends.")
    help_line(":title=STRING" , "Set the title of the tab.  The default is null, meaning show the shell's current directory.")
+   help_line(":key=KEY,BITS,MASK,COMMAND", "Set/clear a custom key setting.  See the full documentation page for details.")
+   help_line(":reset-keys", "Reset custom key settings back to their default state.")
+   help_line(":string=STRING", "Insert a string as though typed by the user.")
+   help_line(":open-search", "Show the search panel.")
+   help_line(":close-search", "Close the search panel.")
+   ewrite()
+   help_line("The following commands only apply to the currently active tab (not new tabs).")
+   ewrite()
+   help_line(":start-log=DEST", "Start logging to file DEST.")
+   help_line(":end-log", "End logging.")
+   help_line(":url=URL", "Activate a URL as though clicked by the user.")
+   help_line(":copy-cwd", "Copy the current directory to the clipboard.")
+   help_line(":copy", "Copy the current selection to the clipboard.")
+   help_line(":paste", "Paste from the clipboard.")
+   help_line(":paste-escaped", "Paste from the clipboard, with shell escaping.")
+   help_line(":pgup", "Go up one page.")
+   help_line(":pgdn", "Go down one page.")
+   help_line(":top", "Go to the top.")
+   help_line(":bottom", "Go to the bottom.")
+   help_line(":select-all", "Select all text.")
+   help_line(":close-tab", "Close the tab.")
+   help_line(":clone-tab", "Clone the tab.")
+   help_line(":quit", "Quit the program.")
+   help_line(":home", "Go to the home directory.")
+   help_line(":refresh", "Refresh the columns list.")
+   help_line(":up", "Go up one directory level.")
+   help_line(":prev", "Go to the previous directory in the history.")
+   help_line(":next", "Go to the next directory in the history.")
+   help_line(":info=MSG", "Output MSG to the status bar.")
+
    u := URL("http://objecticon.sourceforge.net/FlowTerm.html")
    ewrites("\nFor more details, visit ")
    if Files.is_flowterm_tty(FileStream.stderr) then
@@ -2657,7 +2971,7 @@ procedure main(a)
                        Opt("t",string,"The window title, by default \"FlowTerm\"")],
                        usage)
    ImageCache.
-      name_image("rpp.HELP_64", HELP).
+      name_image("rpp.HELP_64", HELP1).
       name_image("rpp.ABOUT_64", ABOUT).
       name_image("rpp.HOURGLASS_24", HOURGLASS).
       name_image("rpp.KEYBOARD_24", KEYBOARD).
