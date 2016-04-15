@@ -1219,6 +1219,11 @@ class Terminal(TabItem, VtUI)
             check_param(s, param) | fail
             output.put_user_string(param)
          }
+         "filter": {
+            check_param(s, param) | fail
+            filter.set_contents(param)
+            resort_cwd(&yes)
+         }
          "url" : {
             check_live(s) | fail
             check_param(s, param) | fail
@@ -1306,7 +1311,6 @@ class Terminal(TabItem, VtUI)
             check_live(s) | fail
             on_tab_left()
          }
-
          default: return error("Invalid command: " || s)
       }
       return self
@@ -2949,6 +2953,7 @@ procedure usage(opts)
    help_line(":string=STRING", "Insert a string as though typed by the user.")
    help_line(":open-search", "Show the search panel.")
    help_line(":close-search", "Close the search panel.")
+   help_line(":filter=PATTERN", "Set the list filter to the given pattern; use * to show all files.")
    ewrite()
    help_line("The following commands only apply to the currently active tab (not new tabs).")
    ewrite()
