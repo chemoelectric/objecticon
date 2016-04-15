@@ -1185,7 +1185,6 @@ class Terminal(TabItem, VtUI)
          "title" : set_title(param)
          "max-list" : on_max_list()
          "max-term" : on_max_terminal()
-         "restore" : on_restore()
          "adjacent" : {
             check_new(s) | fail
             set_adjacent(&yes)
@@ -1195,7 +1194,6 @@ class Terminal(TabItem, VtUI)
          "sort-name" : on_name_button()
          "sort-date" : on_date_button()
          "sort-size" : on_size_button()
-         "show-name-only" : on_show_name_only()
          "show-date" : on_show_date()
          "show-size" : on_show_size()
          "mix-entries" : do_toggle_mix_entries_menu_item()
@@ -1205,8 +1203,7 @@ class Terminal(TabItem, VtUI)
             check_new(s) | fail
             set_select(&yes)
          }
-         "open-search" : open_search_panel()
-         "close-search" : close_search_panel()
+         "search" : toggle_search_panel()
          "start-log" : {
             check_live(s) | fail
             on_start_log(, param)
@@ -1463,11 +1460,17 @@ class Terminal(TabItem, VtUI)
    end
 
    private on_max_terminal()
-      split.hide_first()
+      if /split.first.is_hidden_flag then
+         split.hide_first()
+      else
+         on_restore()
    end
 
    private on_max_list()
-      split.hide_second()
+      if /split.second.is_hidden_flag then
+         split.hide_second()
+      else
+         on_restore()
    end
 
    private on_restore()
@@ -2594,9 +2597,14 @@ $endif
       best_focus := output
    end
 
-   private open_search_panel()
+   private toggle_search_panel()
       if split.second.get_index(search_panel) then
-         fail
+         close_search_panel()
+      else
+         open_search_panel()
+   end
+
+   private open_search_panel()
       split.second.
          add(search_panel, 0)
       if is_live() then {
@@ -2610,7 +2618,7 @@ $endif
 
    private close_search_panel()
       split.second.
-         remove(search_panel) | fail
+         remove(search_panel)
       if is_live() then {
          split.second.
             reset_layout().
@@ -2920,17 +2928,15 @@ procedure usage(opts)
    ewrite()
    help_line("Tab options/commands begin with a ':', as follows.  If a parameter is omitted, then it is 'null', which is a valid setting for some keys.")
    ewrite()
-   help_line(":max-list", "Maximize the space for the list, so the terminal is not visible.")
-   help_line(":max-term", "Maximize the space for the terminal, so the files list is not visible.")
-   help_line(":restore", "Return to normal split between file list and terminal.")
+   help_line(":max-list", "Toggle whether the file list is maximized.")
+   help_line(":max-term", "Toggle whether the terminal is maximized.")
    help_line(":list-focus", "Allow keyboard focus in the file list.")
    help_line(":reorient, :re-orient", "Toggle the orientation of the file list/terminal split.")
    help_line(":sort-name", "Sort the file list by name, or if the file list is already sorted by name, toggle the sort order.")
    help_line(":sort-date", "As `sort-name`, but sort by date.")
    help_line(":sort-size", "As `sort-name`, but sort by size.")
-   help_line(":show-name-only", "Show only the name in the file list.")
-   help_line(":show-date", "Show name and date in the file list.")
-   help_line(":show-size", "Show name and size in the file list.")
+   help_line(":show-date", "Toggle whether to show the date in the file list.")
+   help_line(":show-size", "Toggle whether to show the size in the file list.")
    help_line(":mix-entries", "Toggle whether or not to mix directories and files together in the list.")
    help_line(":show-hidden", "Toggle whether or not to show hidden files and directories in the list.")
    help_line(":sort-dirs", "Toggle whether or not to sort the directory portion of the list in the same way as the files (by default, the directories are always sorted by name).")
@@ -2951,8 +2957,7 @@ procedure usage(opts)
    help_line(":key=KEY,BITS,MASK,COMMAND", "Set/clear a custom key setting.  See the full documentation page for details.")
    help_line(":reset-keys", "Reset custom key settings back to their default state.")
    help_line(":string=STRING", "Insert a string as though typed by the user.")
-   help_line(":open-search", "Show the search panel.")
-   help_line(":close-search", "Close the search panel.")
+   help_line(":search", "Toggle the visibility of the search panel.")
    help_line(":filter=PATTERN", "Set the list filter to the given pattern; use * to show all files.")
    ewrite()
    help_line("The following commands only apply to the currently active tab (not new tabs).")
