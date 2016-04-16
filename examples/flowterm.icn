@@ -1326,7 +1326,7 @@ class Terminal(TabItem, VtUI)
          }
          "start-log" : {
             check_live(s) | fail
-            on_start_log(, param)
+            start_log(param)
          }
          "end-log" : {
             check_live(s) | fail
@@ -1973,7 +1973,11 @@ $endif
       parent_dialog.new_tab(, dir,, self)
    end
 
-   private on_start_log(e, dest)
+   private on_start_log(e)
+      start_log()
+   end
+
+   private start_log(dest)
       local d, dl, fl, s
       /log | return info_msg(u"Already logging to " || log_file.ucs())
       if /dest then {
