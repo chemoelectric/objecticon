@@ -105,22 +105,28 @@ class Split(Component)
    # component takes up all the space in the split.
    #
    public hide_first()
-      first.set_is_hidden(&yes)
-      sizer.set_is_hidden(&yes)
-      second.set_is_hidden(&no)
-      if is_live() then
-         do_layout().invalidate()
+      if /first.is_hidden_flag then {
+         first.set_is_hidden(&yes)
+         sizer.set_is_hidden(&yes)
+         second.set_is_hidden(&no)
+         if is_live() then
+            do_layout().invalidate()
+      }
+      return self
    end
 
    # Hide the second component (and the sizer), so that the first
    # component takes up all the space in the split.
    #
    public hide_second()
-      first.set_is_hidden(&no)
-      sizer.set_is_hidden(&yes)
-      second.set_is_hidden(&yes)
-      if is_live() then
-         do_layout().invalidate()
+      if /second.is_hidden_flag then {
+         first.set_is_hidden(&no)
+         sizer.set_is_hidden(&yes)
+         second.set_is_hidden(&yes)
+         if is_live() then
+            do_layout().invalidate()
+      }
+      return self
    end
 
    # After a call to `hide_first()` or a `hide_second()`, reset the
@@ -128,11 +134,14 @@ class Split(Component)
    # components, and the sizer, are shown.
    #
    public hide_neither()
-      first.set_is_hidden(&no)
-      sizer.set_is_hidden(&no)
-      second.set_is_hidden(&no)
-      if is_live() then
-         do_layout().invalidate()
+      if \sizer.is_hidden_flag then {
+         first.set_is_hidden(&no)
+         sizer.set_is_hidden(&no)
+         second.set_is_hidden(&no)
+         if is_live() then
+            do_layout().invalidate()
+      }
+      return self
    end
 
    public layout()
