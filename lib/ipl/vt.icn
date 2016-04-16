@@ -615,7 +615,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          fam := tab(upto(',') | 0)
          (*fam > 0) | return error("font not in required format")
          size := if ="," then
-            numeric(tab(0)) | return error("font not in required format")
+            real(tab(0)) | return error("font not in required format")
          else
             Window.get_default_font_size()
       }
