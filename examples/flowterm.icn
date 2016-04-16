@@ -1164,6 +1164,11 @@ class Terminal(TabItem, VtUI)
             check_param(s, param) | fail
             output.set_vt_font(param) | return error("invalid parameter to font: " || &why)
          }
+         "font-size" : {
+            check_live(s) | fail
+            check_param(s, param) | fail 
+            do_change_vt_font_size(param) | fail
+         }
          "key" : {
             check_param(s, param) | fail
             do_custom_key(param) | fail
@@ -1430,6 +1435,19 @@ class Terminal(TabItem, VtUI)
          }
          default: return error("Invalid command: " || s)
       }
+      return self
+   end
+
+   private do_change_vt_font_size(s)
+      local n
+      n := (if s[1] == (u"+" | u"-") then
+         output.font_size + real(s)
+      else
+         real(s)) | return error("real number expected to font-size")
+      n <:= 3.0
+      n >:= 40.0
+      (n = output.font_size) |
+         output.set_vt_font(output.font_family || "," || n)
       return self
    end
 
@@ -3083,6 +3101,7 @@ procedure usage(opts)
    ewrite()
    help_line(":start-log=DEST", "Start logging to file DEST.")
    help_line(":end-log", "End logging.")
+   help_line(":font-size=REAL", "Set the font size.  If the parameter starts with + or -, the value is relative to the present size.")
    help_line(":url=URL", "Activate a URL as though clicked by the user.")
    help_line(":copy-cwd", "Copy the current directory to the clipboard.")
    help_line(":copy", "Copy the current selection to the clipboard.")
