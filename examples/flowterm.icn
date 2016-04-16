@@ -1142,6 +1142,10 @@ class Terminal(TabItem, VtUI)
       return \param | error(s || " expects a parameter")
    end
 
+   private check_flag_param(s, param)
+      return flag(\param) | error(s || " expects a flag parameter")
+   end
+
    public do_tab_cmd(s)
       local param
       s := ucs(s) | return error("Not a ucs string")
@@ -1183,27 +1187,143 @@ class Terminal(TabItem, VtUI)
          }
          "auto-close" : set_auto_close(&yes)
          "title" : set_title(param)
-         "max-list" : on_max_list()
-         "max-term" : on_max_terminal()
+         "max-list" : {
+            if /param then {
+               if /split.second.is_hidden_flag then
+                  on_max_list()
+               else
+                  on_restore()
+            } else {
+               param := check_flag_param(s, param) | fail
+               if /param then
+                  on_restore()
+               else
+                  on_max_list()
+            }
+         }
+         "max-term" : {
+            if /param then {
+               if /split.first.is_hidden_flag then
+                  on_max_terminal()
+               else
+                  on_restore()
+            } else {
+               param := check_flag_param(s, param) | fail
+               if /param then
+                  on_restore()
+               else
+                  on_max_terminal()
+            }
+         }
          "adjacent" : {
             check_new(s) | fail
             set_adjacent(&yes)
          }
-         "list-focus" : do_toggle_focus_columns_button()
-         "reorient" | "re-orient" : on_reorient()
-         "sort-name" : on_name_button()
-         "sort-date" : on_date_button()
-         "sort-size" : on_size_button()
-         "show-date" : on_show_date()
-         "show-size" : on_show_size()
-         "mix-entries" : do_toggle_mix_entries_menu_item()
-         "show-hidden" : do_toggle_show_hidden_menu_item()
-         "sort-dirs" : do_toggle_sort_dirs_menu_item()
+         "list-focus" : {
+            if /param then
+               toggle_focus_columns_button()
+            else {
+               param := check_flag_param(s, param) | fail
+               (param === focus_columns_button.get_status()) | toggle_focus_columns_button()
+            }
+         }
+         "reorient" | "re-orient" : {
+            if /param then
+               on_reorient()
+            else {
+               param := check_flag_param(s, param) | fail
+               (param === split.sizer.is_horizontal_flag) | on_reorient()
+            }
+         }
+         "sort-name" : {
+            if /param then
+               on_name_button()
+            else {
+               param := check_flag_param(s, param) | fail
+               do_set_sort(Files.name_cmp, param)
+            }
+         }
+         "sort-date" : {
+            if /param then
+               on_date_button()
+            else {
+               param := check_flag_param(s, param) | fail
+               do_set_sort(Files.date_cmp, param)
+            }
+         }
+         "sort-size" : {
+            if /param then
+               on_size_button()
+            else {
+               param := check_flag_param(s, param) | fail
+               do_set_sort(Files.size_cmp, param)
+            }
+         }
+         "show-name-only" : on_show_name_only()
+         "show-date" : {
+            if /param then {
+               if annotate_opt = SHOW_DATE then
+                  on_show_name_only()
+               else
+                  on_show_date()
+            } else {
+               param := check_flag_param(s, param) | fail
+               if /param then
+                  on_show_name_only()
+               else
+                  on_show_date()
+            }
+         }
+         "show-size" : {
+            if /param then {
+               if annotate_opt = SHOW_SIZE then
+                  on_show_name_only()
+               else
+                  on_show_size()
+            } else {
+               param := check_flag_param(s, param) | fail
+               if /param then
+                  on_show_name_only()
+               else
+                  on_show_size()
+            }
+         }
+         "mix-entries" : {
+            if /param then
+               toggle_mix_entries_menu_item()
+            else {
+               param := check_flag_param(s, param) | fail
+               (param === mix_entries_menu_item.get_status()) | toggle_mix_entries_menu_item()
+            }
+         }
+         "show-hidden" : {
+            if /param then
+               toggle_show_hidden_menu_item()
+            else {
+               param := check_flag_param(s, param) | fail
+               (param === show_hidden_menu_item.get_status()) | toggle_show_hidden_menu_item()
+            }
+         }
+         "sort-dirs" : {
+            if /param then
+               toggle_sort_dirs_menu_item()
+            else {
+               param := check_flag_param(s, param) | fail
+               (param === sort_dirs_menu_item.get_status()) | toggle_sort_dirs_menu_item()
+            }
+         }
          "select" : {
             check_new(s) | fail
             set_select(&yes)
          }
-         "search" : toggle_search_panel()
+         "search" : {
+            if /param then
+               toggle_search_panel()
+            else {
+               param := check_flag_param(s, param) | fail
+               (param === Yes{split.second.get_index(search_panel)}) | toggle_search_panel()
+            }
+         }
          "start-log" : {
             check_live(s) | fail
             on_start_log(, param)
@@ -1460,17 +1580,11 @@ class Terminal(TabItem, VtUI)
    end
 
    private on_max_terminal()
-      if /split.first.is_hidden_flag then
-         split.hide_first()
-      else
-         on_restore()
+      split.hide_first()
    end
 
    private on_max_list()
-      if /split.second.is_hidden_flag then
-         split.hide_second()
-      else
-         on_restore()
+      split.hide_second()
    end
 
    private on_restore()
@@ -2020,32 +2134,24 @@ $endif
    end
 
    private on_show_name_only(e)
-      annotate_opt := SHOW_NAME_ONLY
+      annotate_opt ~=:= SHOW_NAME_ONLY | fail
       annotate_cwd_list()
       columns.data_changed()
    end
 
    private on_show_date(e)
-      if annotate_opt = SHOW_DATE then
-         on_show_name_only(e)
-      else {
-         annotate_opt := SHOW_DATE
-         annotate_cwd_list()
-         columns.data_changed()
-      }
+      annotate_opt ~=:= SHOW_DATE | fail
+      annotate_cwd_list()
+      columns.data_changed()
    end
 
    private on_show_size(e)
-      if annotate_opt = SHOW_SIZE then
-         on_show_name_only(e)
-      else {
-         annotate_opt := SHOW_SIZE
-         annotate_cwd_list()
-         columns.data_changed()
-      }
+      annotate_opt ~=:= SHOW_SIZE | fail
+      annotate_cwd_list()
+      columns.data_changed()
    end
 
-   private do_toggle_mix_entries_menu_item()
+   private toggle_mix_entries_menu_item()
       mix_entries_menu_item.toggle_is_checked()
       on_mix_entries_menu_item()
    end
@@ -2055,7 +2161,7 @@ $endif
       resort_cwd()
    end
 
-   private do_toggle_sort_dirs_menu_item()
+   private toggle_sort_dirs_menu_item()
       sort_dirs_menu_item.toggle_is_checked()
       on_sort_dirs_menu_item()
    end
@@ -2065,7 +2171,7 @@ $endif
       resort_cwd()
    end
 
-   private do_toggle_show_hidden_menu_item()
+   private toggle_show_hidden_menu_item()
       show_hidden_menu_item.toggle_is_checked()
       on_show_hidden_menu_item()
    end
@@ -2147,6 +2253,14 @@ $endif
          }
       }
       resort_cwd()
+   end
+
+   private do_set_sort(sorter, ascending)
+      if self.sorter ~=== sorter | self.ascending ~=== ascending then {
+         self.sorter := sorter
+         self.ascending := ascending
+         synch_paints()
+      }
    end
 
    private on_date_button(ev)
@@ -2573,7 +2687,7 @@ $endif
       goto_dir(he.dir)
    end
 
-   private do_toggle_focus_columns_button()
+   private toggle_focus_columns_button()
       focus_columns_button.toggle_is_checked().invalidate()
       on_focus_columns_button()
    end
@@ -2926,20 +3040,21 @@ procedure usage(opts)
    ewrite("Usage: flowterm [OPTIONS] [ALL TAB OPTS] [DIRS/PER TAB OPTS]")
    options_help(opts)
    ewrite()
-   help_line("Tab options/commands begin with a ':', as follows.  If a parameter is omitted, then it is 'null', which is a valid setting for some keys.")
+   help_line("Tab options/commands begin with a ':', as follows.")
    ewrite()
-   help_line(":max-list", "Toggle whether the file list is maximized.")
-   help_line(":max-term", "Toggle whether the terminal is maximized.")
-   help_line(":list-focus", "Allow keyboard focus in the file list.")
-   help_line(":reorient, :re-orient", "Toggle the orientation of the file list/terminal split.")
-   help_line(":sort-name", "Sort the file list by name, or if the file list is already sorted by name, toggle the sort order.")
-   help_line(":sort-date", "As `sort-name`, but sort by date.")
-   help_line(":sort-size", "As `sort-name`, but sort by size.")
-   help_line(":show-date", "Toggle whether to show the date in the file list.")
-   help_line(":show-size", "Toggle whether to show the size in the file list.")
-   help_line(":mix-entries", "Toggle whether or not to mix directories and files together in the list.")
-   help_line(":show-hidden", "Toggle whether or not to show hidden files and directories in the list.")
-   help_line(":sort-dirs", "Toggle whether or not to sort the directory portion of the list in the same way as the files (by default, the directories are always sorted by name).")
+   help_line(":max-list=FLAG", "Toggle or set whether the file list is maximized.")
+   help_line(":max-term=FLAG", "Toggle or set whether the terminal is maximized.")
+   help_line(":list-focus=FLAG", "Toggle or set whether the file list accepts keyboard focus.")
+   help_line(":reorient=FLAG", "Toggle or set the orientation of the file list/terminal split.  Vertical split corresponds to a yes.")
+   help_line(":sort-name=FLAG", "Sort the file list by name, or if the file list is already sorted by name, toggle the sort order.  With a parameter, set the sort order (ascending is yes).")
+   help_line(":sort-date=FLAG", "As `sort-name`, but sort by date.")
+   help_line(":sort-size=FLAG", "As `sort-name`, but sort by size.")
+   help_line(":show-name-only", "Show only the name in the file list.")
+   help_line(":show-date=FLAG", "Toggle or set whether to show the date in the file list.")
+   help_line(":show-size=FLAG", "Toggle or set whether to show the size in the file list.")
+   help_line(":mix-entries=FLAG", "Toggle or set whether or not to mix directories and files together in the list.")
+   help_line(":show-hidden=FLAG", "Toggle or set whether or not to show hidden files and directories in the list.")
+   help_line(":sort-dirs=FLAG", "Toggle or set whether or not to sort the directory portion of the list in the same way as the files (by default, the directories are always sorted by name).")
    help_line(":select", "Make this tab the selected tab.")
    help_line(":adjacent", "Add this tab adjacent to the current tab, rather than at the end of all the tabs.")
    help_line(":sh=STRING", "Specify the shell to run.  The default is null, meaning use the user's default shell.")
@@ -2957,7 +3072,7 @@ procedure usage(opts)
    help_line(":key=KEY,BITS,MASK,COMMAND", "Set/clear a custom key setting.  See the full documentation page for details.")
    help_line(":reset-keys", "Reset custom key settings back to their default state.")
    help_line(":string=STRING", "Insert a string as though typed by the user.")
-   help_line(":search", "Toggle the visibility of the search panel.")
+   help_line(":search=FLAG", "Toggle or set the visibility of the search panel.")
    help_line(":filter=PATTERN", "Set the list filter to the given pattern; use * to show all files.")
    ewrite()
    help_line("The following commands only apply to the currently active tab (not new tabs).")
