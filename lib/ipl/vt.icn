@@ -632,12 +632,22 @@ class Vt(LineBasedScrollArea, MenuMode)
    # font and resets the component if necessary.
    #
    public set_vt_font(s)
+      local seg
       s := string(s) | runerr(103, s)
       check_font(s) | fail
       set_font(s)
       if is_live() then {
          invalidate_line_height()
          reset()
+         # Update the font entry in all Attr records
+         synch_font()
+         every seg := !((!contents).l) do
+            synch_font(seg.attr)
+         if \saved_buffer then {
+            synch_font(saved_buffer.attr)
+            every seg := !((!saved_buffer.contents).l) do
+               synch_font(seg.attr)
+         }
       }
       return self
    end
@@ -1403,17 +1413,18 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
-   private synch_font()
+   private synch_font(a)
       local s
-      if \ (attr.bold | attr.font) then {
+      /a := attr
+      if \ (a.bold | a.font) then {
          s := font_family
-         if \attr.bold then
+         if \a.bold then
             s ||:= ",bold"
-         if \attr.italic then
+         if \a.italic then
             s ||:= ",italic"
          s ||:= "," || font_size
       }
-      attr.font := s
+      a.font := s
    end
 
    # ESC[{n}m
