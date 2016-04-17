@@ -1341,6 +1341,15 @@ class Terminal(TabItem, VtUI)
             check_param(s, param) | fail
             output.put_user_string(param)
          }
+         "send-vt": {
+            check_live(s) | fail
+            check_param(s, param) | fail
+            send_vt(param)
+         }
+         "send-tty": {
+            check_param(s, param) | fail
+            send_tty(param)
+         }
          "filter": {
             check_param(s, param) | fail
             filter.set_contents(param)
@@ -3077,7 +3086,7 @@ procedure usage(opts)
    help_line(":select", "Make this tab the selected tab.")
    help_line(":adjacent", "Add this tab adjacent to the current tab, rather than at the end of all the tabs.")
    help_line(":sh=STRING", "Specify the shell to run.  The default is null, meaning use the user's default shell.")
-   help_line(":run=STRING", "Run the given string in the shell.")
+   help_line(":run=STRING", "Run the given string in the shell; the same as :send-tty with a carriage return appended.")
    help_line(":font=FONT", "Set the font, which should be fixed width.  The default is the font 'fixed'.")
    help_line(":fg=COLOUR", "Specify the foreground colour.  The default is null, meaning use the dialog's foreground colour.")
    help_line(":bg=COLOUR", "Specify the background colour.  The default is null, meaning use the dialog's foreground colour.")
@@ -3090,9 +3099,10 @@ procedure usage(opts)
    help_line(":title=STRING" , "Set the title of the tab.  The default is null, meaning show the shell's current directory.")
    help_line(":key=KEY,BITS,MASK,COMMAND", "Set/clear a custom key setting.  See the full documentation page for details.")
    help_line(":reset-keys", "Reset custom key settings back to their default state.")
-   help_line(":string=STRING", "Insert a string as though typed by the user.")
+   help_line(":string=STRING", "Insert a string as though typed by the user; like :send-tty, but quietens the cursor and goes to the bottom of the terminal content.")
    help_line(":search=FLAG", "Toggle or set the visibility of the search panel.")
    help_line(":filter=PATTERN", "Set the list filter to the given pattern; use * to show all files.")
+   help_line(":send-tty=STRING", "Send a string directly to the pseudo-terminal.")
    ewrite()
    help_line("The following commands only apply to the currently active tab (not new tabs).")
    ewrite()
@@ -3120,6 +3130,7 @@ procedure usage(opts)
    help_line(":info=MSG", "Output MSG to the status bar.")
    help_line(":tab-left", "Select the next tab to the left.")
    help_line(":tab-right", "Select the next tab to the right.")
+   help_line(":send-vt=STRING", "Send a string directly to the terminal.")
 
    u := URL("http://objecticon.sourceforge.net/FlowTerm.html")
    ewrites("\nFor more details, visit ")
