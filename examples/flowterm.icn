@@ -1440,14 +1440,11 @@ class Terminal(TabItem, VtUI)
 
    private do_change_vt_font_size(s)
       local n
-      n := (if s[1] == (u"+" | u"-") then
-         output.font_size + real(s)
-      else
-         real(s)) | return error("real number expected to font-size")
-      n <:= 3.0
-      n >:= 40.0
-      (n = output.font_size) |
-         output.set_vt_font(output.font_family || "," || n)
+      n := real(s) | return error("real number expected to font-size")
+      if any('+\-', s) then
+         n +:= output.font_size
+      n <:= 1.0
+      output.set_vt_font(output.font_family || "," || n)
       return self
    end
 
