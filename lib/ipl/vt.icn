@@ -4,7 +4,7 @@ package ipl.vt
 
 import gui, io, lang, util, graphics(Window,Key,Selection,Mouse), net, ipl.lists, ipl.pdco, ipl.strings, ipl.graphics
 
-# Current attributes.  Treated as immutable, to alter a copy() is taken first.
+# Current attributes.  Treated as immutable (except the font field), to alter a copy() is taken first.
 package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic, url, font)
 
 package record SavedCursor(cx, cy, attr, charsets, curr_charset)
@@ -610,14 +610,19 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private check_font(s)
-      local fam, size, width, W
+      local fam, size, width, W, t
       s ? {
          fam := tab(upto(',') | 0)
          (*fam > 0) | return error("font not in required format")
-         size := if ="," then
-            real(tab(0)) | return error("font not in required format")
-         else
-            Window.get_default_font_size()
+         if ="," then {
+            t := tab(0)
+            size := real(t) | return error("font not in required format")
+            if any('+\-', t) then
+               size +:= Window.get_default_font_size()
+            size <:= 3.0
+            size >:= 40.0
+         } else
+            size := Window.get_default_font_size()
       }
       s := fam || "," || size
       width := use {
@@ -632,17 +637,18 @@ class Vt(LineBasedScrollArea, MenuMode)
    # font and resets the component if necessary.
    #
    public set_vt_font(s)
-      local seg
+      local seg, l
       s := string(s) | runerr(103, s)
-      check_font(s) | fail
+      l := check_font(s) | fail
       set_font(s)
-      if is_live() then {
+      if is_live() & not(l[1] == font_family & l[2] = font_size) then {
          invalidate_line_height()
          reset()
          # Update the font entry in all Attr records
          synch_font()
          every seg := !((!contents).l) do
             synch_font(seg.attr)
+         synch_font((\saved_cursor).attr)
          if \saved_buffer then {
             synch_font(saved_buffer.attr)
             every seg := !((!saved_buffer.contents).l) do
@@ -883,6 +889,8 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_full_reset()
+      do_restore_cursor()
+      do_use_normal_buffer()
       reset_term()
       do_erase_all()
       move_cursor(1, 1)
@@ -987,10 +995,8 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_reverse_video(f)
-      if reverse_mode ~=== f then {
-         reverse_mode := f
+      if reverse_mode ~===:= f then
          view.reset()
-      }
    end
 
    private set_col_mode(n)
@@ -1077,9 +1083,10 @@ class Vt(LineBasedScrollArea, MenuMode)
    #
    public set_reverse_fg(c)
       /c | Window.parse_color(c) | return error("invalid color")
-      self.reverse_fg := c
-      if is_live() then
-         view.reset()
+      if reverse_fg ~===:= c then {
+         if is_live() then
+            view.reset()
+      }
       return self
    end
 
@@ -1088,9 +1095,10 @@ class Vt(LineBasedScrollArea, MenuMode)
    #
    public set_reverse_bg(c)
       /c | Window.parse_color(c) | return error("invalid color")
-      self.reverse_bg := c
-      if is_live() then
-         view.reset()
+      if reverse_bg ~===:= c then {
+         if is_live() then
+            view.reset()
+      }
       return self
    end
 
@@ -1098,9 +1106,10 @@ class Vt(LineBasedScrollArea, MenuMode)
    #
    public set_normal_fg(c)
       /c | Window.parse_color(c) | return error("invalid color")
-      self.normal_fg := c
-      if is_live() then
-         view.reset()
+      if normal_fg ~===:= c then {
+         if is_live() then
+            view.reset()
+      }
       return self
    end
 
@@ -1109,9 +1118,10 @@ class Vt(LineBasedScrollArea, MenuMode)
    #
    public set_normal_bg(c)
       /c | Window.parse_color(c) | return error("invalid color")
-      self.normal_bg := c
-      if is_live() then
-         view.reset()
+      if normal_bg ~===:= c then {
+         if is_live() then
+            view.reset()
+      }
       return self
    end
 
@@ -1120,12 +1130,13 @@ class Vt(LineBasedScrollArea, MenuMode)
    #
    public set_history_size(n)
       n := (0 <= integer(n)) | runerr(101, n)
-      self.history_size := n
-      trim_history()
-      invalidate_line_count()
-      if is_live() then {
-         check_changed_size()
-         compute_and_invalidate()
+      if history_size ~=:= n then {
+         trim_history()
+         invalidate_line_count()
+         if is_live() then {
+            check_changed_size()
+            compute_and_invalidate()
+         }
       }
       return self
    end
@@ -1589,10 +1600,8 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_hide_cursor(f)
-      if hide_cursor_mode ~=== f then {
-         hide_cursor_mode := f
+      if hide_cursor_mode ~===:= f then
          invalidate_cursor()
-      }
    end
 
    private do_single_shift(n)
