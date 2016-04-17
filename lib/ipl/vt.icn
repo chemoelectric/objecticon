@@ -1400,7 +1400,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       py := view.y - info.offset + (cy_to_index() - info.first) * line_height
       # Ensure cursor is entirely within view
       (view.y <= py & py + line_height - 1 < view.y + view.h) | fail
-      #write(view.y,"-",view.y+view.h," -v-",py, " view.h=",view.h, " line_height=",line_height,"  lines=",rows)
       # Get perfect alignment with between the cursor line and the first line in the popup.
       py -:= Gui.BORDER_WIDTH
       open_popup(px, py, t)
