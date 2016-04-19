@@ -1579,7 +1579,7 @@ class Terminal(TabItem, VtUI)
    end
 
    private do_custom_key(param)
-      local code, bits, mask, verb, func
+      local code, bits, mask, verb
       param ? {
          code := parse_key(tab((upto(',') | 0)\1)) | return error("invalid key identifier")
          if pos(0) then {
@@ -1595,12 +1595,19 @@ class Terminal(TabItem, VtUI)
             } else {
                move(1)
                verb := tab(0)
-               func := exprf{ do_tab_cmd(verb) | info_msg(&why) }
-               output.add_custom_key(code, bits, mask, func) | return error("failed to add key function: " || &why)
+               output.add_custom_key(code, 
+                                     bits, 
+                                     mask, 
+                                     mk_custom_key_func(verb), 
+                                     verb) | return error("failed to add key function: " || &why)
             }
          }
       }
       return self
+   end
+
+   private mk_custom_key_func(verb)
+      return exprf{ do_tab_cmd(verb) | info_msg(&why) }
    end
 
    private on_max_terminal()
@@ -2505,6 +2512,19 @@ $endif
       output.unquieten_cursor()
    end
 
+   private clone_key_table(other)
+      local code, entry
+      every code := other.output.gen_custom_key_codes() do {
+         every entry := other.output.gen_custom_key_entries(code) do {
+            output.add_custom_key(code, 
+                                  entry.bits,
+                                  entry.mask,
+                                  mk_custom_key_func(entry.data),
+                                  entry.data) | syserr("Failed to clone existing key table entry")
+         }
+      }
+   end
+
    public new(dir, other, revert_tab)
       local start_dir, c, e
       TabItem.new()
@@ -2555,6 +2575,7 @@ $endif
       theme_toolbar_button(focus_columns_button, "key-enter")
 
       if \other then {
+         clone_key_table(other)
          if other.focus_columns_button.is_checked() then {
             focus_columns_button.set_is_checked(&yes)
             columns.set_accepts_focus(&yes)

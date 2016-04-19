@@ -43,17 +43,19 @@ package class KeyEntry()
    public const 
       bits,       # The bits which must be set in the mask set
       mask,       # The mask, ie the bits to be considered
-      val         # The code to send
+      val,        # The code to send, or function to call
+      data        # An arbitrary piece of user data
 
    public matches(i)
       if iand(mask, i) = bits then
          return
    end
 
-   public new(bits, mask, val)
+   public new(bits, mask, val, data)
       self.bits := bits
       self.mask := mask
       self.val := val
+      self.data := data
       return
    end
 end
@@ -66,7 +68,17 @@ package class KeyTable()
       return add(code, bits, mask, val) | syserr(&why)
    end
 
-   public add(code, bits, mask, val)
+   public gen_codes()
+      suspend key(t)
+   end
+
+   public gen_entries(code)
+      local l
+      if l := member(t, code) then
+         suspend .!l
+   end
+
+   public add(code, bits, mask, val, data)
       local l, e
       iand(bits, mask) = bits | return error("invalid bits/mask combination")
       if l := member(t, code) then {
@@ -85,7 +97,7 @@ package class KeyTable()
          }
       } else
          insert(t, code, l := [])
-      put(l, KeyEntry(bits, mask, val))
+      put(l, KeyEntry(bits, mask, val, data))
       return self
    end
 
@@ -288,7 +300,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       M5 := 16
       K := 32
       U := 64
-       CSM := C + S + M + M4 + M5
+      CSM := C + S + M + M4 + M5
       KEY_TABLE := KeyTable()
       setup_key_table()
       CHARSET := table()
@@ -2224,8 +2236,16 @@ class Vt(LineBasedScrollArea, MenuMode)
       handle_popup_key(e, src, ty) | handle_table_key(e) | handle_default_key(e)
    end
 
-   public add_custom_key(code, bits, mask, func)
-      return custom_keys.add(code, bits, mask, func) & self
+   public gen_custom_key_codes()
+      suspend custom_keys.gen_codes()
+   end
+
+   public gen_custom_key_entries(code)
+      suspend custom_keys.gen_entries(code)
+   end
+
+   public add_custom_key(code, bits, mask, func, data)
+      return custom_keys.add(code, bits, mask, func, data) & self
    end
 
    public remove_custom_key(code, bits, mask)
@@ -2234,13 +2254,6 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    public reset_custom_keys()
       custom_keys := KeyTable()
-      custom_keys.
-         add(Key.INSERT, C, CSM, handle_copy).
-         add(Key.INSERT, S, CSM, handle_paste).
-         add(Key.PGUP, S, CSM, handle_pgup).
-         add(Key.PGDN, S, CSM, handle_pgdn).
-         add(Key.HOME, S, CSM, goto_top).
-         add(Key.END, S, CSM, goto_bottom)
       return self
    end
 
