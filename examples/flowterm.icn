@@ -2263,6 +2263,11 @@ $endif
       run_prog(u"cd " || Format.shell_escape(d))
    end
 
+   private synch_paints_and_resort()
+      synch_paints()
+      resort_cwd()
+   end
+
    private synch_paints()
       local cp, np, sp, dp, sz
       sz := Gui.TOOLBAR_ICON_SIZE
@@ -2287,14 +2292,13 @@ $endif
             size_button.set_paint(sp)
          }
       }
-      resort_cwd()
    end
 
    private do_set_sort(sorter, ascending)
       if self.sorter ~=== sorter | self.ascending ~=== ascending then {
          self.sorter := sorter
          self.ascending := ascending
-         synch_paints()
+         synch_paints_and_resort()
       }
    end
 
@@ -2303,7 +2307,7 @@ $endif
          ascending := toggle_flag(ascending)
       else
          sorter := Files.date_cmp
-      synch_paints()
+      synch_paints_and_resort()
    end
 
    private on_name_button(ev)
@@ -2311,7 +2315,7 @@ $endif
          ascending := toggle_flag(ascending)
       else
          sorter := Files.name_cmp
-      synch_paints()
+      synch_paints_and_resort()
    end
 
    private on_size_button(ev)
@@ -2319,7 +2323,7 @@ $endif
          ascending := toggle_flag(ascending)
       else
          sorter := Files.size_cmp
-      synch_paints()
+      synch_paints_and_resort()
    end
 
    private static get_ns_mtime(f)
@@ -2610,6 +2614,8 @@ $endif
          history_pos := other.history_pos
          columns_pos_table := clone(other.columns_pos_table)
          set_cwd(other.cwd)
+         if filter.set_contents(u"*" ~== other.filter.get_contents()) then
+            sort_cwd_list()
       } else {
          sorter := Files.name_cmp
          annotate_opt := SHOW_NAME_ONLY
