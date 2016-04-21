@@ -226,7 +226,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       custom_keys,                # KeyTable for custom key settings.
       cursor_ticker,
       cursor_on,
-      direction,                  # Selection scrolling direction
+      going_up,                   # Selection scrolling direction
       scroll_ticker,
       scroll_ticker_interval,
       highlight,                  # Link clicked on (shown red).
@@ -2067,13 +2067,12 @@ class Vt(LineBasedScrollArea, MenuMode)
       else if /no_drag then {
          invalidate_region()
          if cursor_y > 1 & e.y < self.view.y then {
-            direction := "up"
+            going_up := &yes
             check_scroll_ticker(self.view.y - e.y)
          } else if cursor_y < *contents & e.y >= self.view.y + self.view.h then {
-            direction := "down"
+            going_up := &no
             check_scroll_ticker(e.y - (self.view.y + self.view.h))
          } else {
-            direction := &null
             scroll_ticker.stop()
             set_cursor_from_pos(e)
          }
@@ -2092,20 +2091,17 @@ class Vt(LineBasedScrollArea, MenuMode)
       local i
       repeat {
          invalidate_region()
-         case self.direction of {
-            "up" : {
-               if cursor_y > 1 & i := get_line_info() then {
-                  cursor_y := i.first_whole - 1
-                  cursor_y <:= 1
-                  ensure_line_visible(cursor_y)
-               }
+         if \going_up then {
+            if cursor_y > 1 & i := get_line_info() then {
+               cursor_y := i.first_whole - 1
+               cursor_y <:= 1
+               ensure_line_visible(cursor_y)
             }
-            "down" : {
-               if cursor_y < *contents & i := get_line_info() then {
-                  cursor_y := i.last_whole + 1
-                  cursor_y >:= *contents
-                  ensure_line_visible(cursor_y)
-               }
+         } else {
+            if cursor_y < *contents & i := get_line_info() then {
+               cursor_y := i.last_whole + 1
+               cursor_y >:= *contents
+               ensure_line_visible(cursor_y)
             }
          }
          invalidate_region()
@@ -2552,7 +2548,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       # No need to synch_pointer since we call this method out of the
       # keyboard handler.
       view.set_pointer("xterm")
-      quieten := 1
+      quieten := &yes
       ui.quieten_cursor()
    end
 
@@ -2569,7 +2565,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       (/quieten & parent_dialog.get_held_count() = 0) | fail
       if ev.code === (Key.CONTROL_L | Key.CONTROL_R) then {
          if /ev.release then
-            f := 1
+            f := &yes
       } else f := \ev.ctrl
       if /f & (seg := get_segment_for_pos(ev)) & \seg.attr.url then {
          set_over(seg.attr.url)

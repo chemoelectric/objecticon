@@ -282,7 +282,7 @@ class ScrollBar(Component, HasOrientation)
          #
          # Click on bar; set flag and save offset between top of bar and pointer position
          #
-         self.bar_down := 1
+         self.bar_down := &yes
          if /self.is_horizontal_flag then
             self.bar_down_offset := e.y - self.bar_area.bar_y
          else

@@ -332,7 +332,7 @@ class TextField(Component)
 
       # Start ticking if to the left/right, otherwise stop ticking
       if e.x < self.tx then {
-         self.going_left := 1
+         self.going_left := &yes
          check_scroll_ticker(self.tx - e.x)
       } else if e.x >= self.tx + self.tw then {
          self.going_left := &null
@@ -850,19 +850,19 @@ abstract class TextFieldEdit(UndoableEdit)
    public doit()
       save()
       self.redo_impl()
-      parent.changed := 1
+      parent.changed := &yes
    end
 
    public redo()
       restore()
       self.redo_impl()
-      parent.changed := 1
+      parent.changed := &yes
    end
 
    public undo()
       self.undo_impl()
       restore()
-      parent.changed := 1
+      parent.changed := &yes
    end
 
    public abstract redo_impl()

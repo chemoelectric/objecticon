@@ -680,7 +680,7 @@ class Worker()
 
    public cancel()
       if \req then {
-         cancelled := 1
+         cancelled := &yes
          task.interrupt()
          (\sub_worker).cancel()
       }
@@ -880,7 +880,7 @@ class WorkerPool()
    end
 
    public initially()
-      active := 1
+      active := &yes
       every (!workers).initially()
    end
 
@@ -1343,7 +1343,7 @@ class Img(Image, HasLastHighlight)
       parent_dialog.get_held_count() = 0 | fail
       if e.code === (Key.CONTROL_L | Key.CONTROL_R) then {
          if /e.release then
-            f := 1
+            f := &yes
       } else f := \e.ctrl
       t := which_area(e)
       a := (\t).title
@@ -3564,7 +3564,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       parent_dialog.resynch_pointer()
       setup_tabbing()
       page_loaded()
-      done_set_top_data := 1
+      done_set_top_data := &yes
    end
 
    private focus_scroll(e, c)
@@ -3623,7 +3623,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       put_para1(e, p, context)
       c := copy(context)
       c.size := 7 - e.name[-1]
-      c.bold := 1
+      c.bold := &yes
       synch_font(c)
       traverse(e, p, c)
       put_para(p, c)
@@ -3737,7 +3737,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private traverse_b(e, p, context)
       local c
       c := copy(context)
-      c.bold := 1
+      c.bold := &yes
       synch_font(c)
       traverse(e, p, c)
    end
@@ -3745,7 +3745,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private traverse_i(e, p, context)
       local c
       c := copy(context)
-      c.italic := 1
+      c.italic := &yes
       synch_font(c)
       traverse(e, p, c)
    end
@@ -3753,14 +3753,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private traverse_mark(e, p, context)
       local c
       c := copy(context)
-      c.mark := 1
+      c.mark := &yes
       traverse(e, p, c)
    end
 
    private traverse_address(e, p, context)
       local c
       c := copy(context)
-      c.italic := 1
+      c.italic := &yes
       synch_font(c)
       put_new_row1(e, p, c)
       traverse(e, p, c)
@@ -3770,14 +3770,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private traverse_u(e, p, context)
       local c
       c := copy(context)
-      c.underline := 1
+      c.underline := &yes
       traverse(e, p, c)
    end
 
    private traverse_s(e, p, context)
       local c
       c := copy(context)
-      c.strike := 1
+      c.strike := &yes
       traverse(e, p, c)
    end
 
@@ -3937,11 +3937,11 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       if sc := \context.select then {
          label := e.get_trimmed_string_content()
          if e.get_attribute(u"DISABLED") then
-            disabled := 1
+            disabled := &yes
          else {
             v := e.get_attribute(u"VALUE") | label
             if e.get_attribute(u"SELECTED") then
-               selected := 1
+               selected := &yes
          }
          txt := repl(u"    ", sc.optgroup) || label
          put(sc.options, FormOption(txt, label, v, selected, disabled))
@@ -4265,7 +4265,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private traverse_nobr(e, p, context)
       local c
       c := copy(context)
-      c.nowrap := 1
+      c.nowrap := &yes
       traverse(e, p, c)
    end
 
@@ -4327,7 +4327,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       c.family := "mono"
       strip_newlines(e)
       synch_font(c)
-      c.pre := 1
+      c.pre := &yes
       traverse(e, p, c)
       put_para(p, c)
    end
@@ -4642,9 +4642,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
       c := copy(context)
       if e.get_attribute(u"NOWRAP") then
-         c.nowrap := 1
+         c.nowrap := &yes
       if e.name == u"TH" then {
-         c.bold := 1
+         c.bold := &yes
          c.size := min(c.size + 1, 7)
          synch_font(c)
          c.align := convert_halign(e | \ct.tr, u"ALIGN") | \ (\col).align | Align.C
@@ -4810,7 +4810,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private traverse_abbr(e, p, context)
       local c
       c := copy(context)
-      c.underdash := 1
+      c.underdash := &yes
       traverse(e, p, c)
    end
 
@@ -5084,14 +5084,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
                if cursor_y > 0 then {
                   cursor_y := max(0, cursor_y - SCROLL_INCREMENT)
                   set_area_y(cursor_y)
-                  f := 1
+                  f := &yes
                }
             }
             "down": {
                if cursor_y < view.inner.h then {
                   cursor_y := min(view.inner.h, cursor_y + SCROLL_INCREMENT)
                   set_area_y(cursor_y - view.h)
-                  f := 1
+                  f := &yes
                }
             }
          }
@@ -5100,14 +5100,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
                if cursor_x > 0 then {
                   cursor_x := max(0, cursor_x - SCROLL_INCREMENT)
                   set_area_x(cursor_x)
-                  f := 1
+                  f := &yes
                }
             }
             "right": {
                if cursor_x < view.inner.w then {
                   cursor_x := min(view.inner.w, cursor_x + SCROLL_INCREMENT)
                   set_area_x(cursor_x - view.w)
-                  f := 1
+                  f := &yes
                }
             }
          }

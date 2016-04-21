@@ -537,7 +537,7 @@ class Columns(LineBasedScrollArea)
       # No need to synch_pointer since we call this method out of the
       # vt's keyboard handler.
       view.set_pointer()
-      quieten := 1
+      quieten := &yes
    end
 
    public unquieten_cursor()
@@ -553,7 +553,7 @@ class Columns(LineBasedScrollArea)
       (/quieten & parent_dialog.get_held_count() = 0) | fail
       if e.code === (Key.CONTROL_L | Key.CONTROL_R) then {
          if /e.release then
-            f := 1
+            f := &yes
       } else f := \e.ctrl
       if /f & (k := get_element_under_pointer(e)) then {
          set_over(k)
@@ -1922,7 +1922,7 @@ $endif
                return ImmediateRunner(u"cd " || Format.shell_escape(s))
             # Get a DesktopEntry based on the content-type if available, or the filename.
             every de := get_possible_desktop_entries(s) do {
-               fl := 1
+               fl := &yes
                suspend DesktopRunner(de, url, s)
             }
             return if /fl then error(u"No matching desktop entry for this URL")
@@ -1939,7 +1939,7 @@ $endif
          }
          default : {
             every de := get_possible_scheme_handler_desktop_entries(url) do {
-               fl := 1
+               fl := &yes
                suspend DesktopRunner(de, url, url.ucs())
             }
             return if /fl then error(u"No desktop entry for url scheme " || url.scheme)

@@ -281,7 +281,7 @@ class EditableTextList(LineBasedScrollArea)
       every t := separate_lines(s) do {
          if /fl then {
             contents[-1] ||:= t
-            fl := 1
+            fl := &yes
          } else
             put(contents, t)
       }
@@ -537,7 +537,7 @@ class EditableTextList(LineBasedScrollArea)
          if /changed then
             self.constrain_line()
          cursor_on := -1
-         cursor_moved := 1
+         cursor_moved := &yes
       }
 
       # Invalidate on cursor/mark changes
@@ -1495,19 +1495,19 @@ abstract class EditableTextListEdit(UndoableEdit)
    public doit()
       save()
       self.redo_impl()
-      parent.changed := 1
+      parent.changed := &yes
    end
 
    public redo()
       restore()
       self.redo_impl()
-      parent.changed := 1
+      parent.changed := &yes
    end
 
    public undo()
       self.undo_impl()
       restore()
-      parent.changed := 1
+      parent.changed := &yes
    end
 
    public abstract redo_impl()
@@ -1666,7 +1666,7 @@ class EditableTextListDeleteLineEdit(EditableTextListEdit)
       if parent.cursor_y = *parent.contents then {
          parent.contents[parent.cursor_y][1:0] := ""
          parent.update_view_list(parent.cursor_y, 1, 1)
-         self.last := 1
+         self.last := &yes
       } else {
          delete(parent.contents, parent.cursor_y)
          parent.update_view_list(parent.cursor_y, 1, 0)
