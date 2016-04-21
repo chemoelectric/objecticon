@@ -45,6 +45,7 @@ function copy(x)
    tended struct descrip result;
    type_case x of {
       null:
+      yes:
       string:
       ucs:
       cset:
@@ -873,6 +874,7 @@ function type(x)
       type_case x of {
          string:      return C_string "string";
          null:        return C_string "null";
+         yes:         return C_string "yes";
          integer:     return C_string "integer";
          real:        return C_string "real";
          cset:        return C_string "cset";

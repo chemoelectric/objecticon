@@ -812,6 +812,9 @@ class CustomDecode()
          Codec.NULL_CODE :
             return
 
+         Codec.YES_CODE :
+            return &yes
+
          Codec.CLASS_CODE :
             return Class.for_name(line_in())
 
@@ -1000,6 +1003,9 @@ class CustomEncode()
 
          "null" :
             chars_out(Codec.NULL_CODE)
+
+         "yes" :
+            chars_out(Codec.YES_CODE)
 
          "string" : {
             chars_out(Codec.STRING_CODE)

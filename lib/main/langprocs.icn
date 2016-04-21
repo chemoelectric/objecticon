@@ -452,7 +452,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
    public simple(x)
       local e
       static s
-      initial s := set("null", "string", "ucs", "cset", "integer", "class",
+      initial s := set("null", "yes", "string", "ucs", "cset", "integer", "class",
                        "real", "co-expression", "constructor", "procedure")
       if /indent then
          return

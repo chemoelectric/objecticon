@@ -33,6 +33,7 @@ class Codec()
       CONSTRUCTOR_CODE,
       PROCEDURE_CODE,
       NULL_CODE,
+      YES_CODE,
       STRING_CODE,
       CSET_CODE,
       INTEGER_CODE,
@@ -57,6 +58,7 @@ class Codec()
       CONSTRUCTOR_CODE := "K"
       PROCEDURE_CODE := "P"
       NULL_CODE := "N"
+      YES_CODE := "G"
       STRING_CODE := "S"
       CSET_CODE := "A"
       INTEGER_CODE := "I"
@@ -277,6 +279,9 @@ class Encode(Stream, HasUnderlyingStream)
 
          "null" :
             writes1(Codec.NULL_CODE)
+
+         "yes" :
+            writes1(Codec.YES_CODE)
 
          "string" : {
             if \allow_binary_flag & (*o > 100 | upto(~Codec.PRINTABLE, o)) then
@@ -549,6 +554,9 @@ class Decode()
 
          Codec.NULL_CODE :
             return
+
+         Codec.YES_CODE :
+            return &yes
 
          Codec.CLASS_CODE : {
             cname := line_in()

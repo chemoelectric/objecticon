@@ -678,6 +678,13 @@ static struct ir_var *make_knull(void)
     return v;
 }
 
+static struct ir_var *make_kyes(void)
+{
+    struct ir_var *v = IRAlloc(struct ir_var);
+    v->type = KYES;
+    return v;
+}
+
 static int make_tmploc(struct ir_stack *st)
 {
     int i = st->lab++;
@@ -756,8 +763,10 @@ static struct ir_var *get_var(struct lnode *n, struct ir_stack *st)
 {
     switch (n->op) {
         case Uop_Keyword: {
-            if (((struct lnode_keyword *)n)->num == K_NULL)
-                return make_knull();
+            switch (((struct lnode_keyword *)n)->num) {
+                case K_NULL: return make_knull();
+                case K_YES: return make_kyes();
+            }
             break;
         }
         case Uop_Empty:
@@ -868,6 +877,17 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                         target = 0;
                     chunk2(res->start, 
                           ir_move(n, target, make_knull()),
+                          ir_goto(n, res->success));
+                    if (!bounded)
+                        chunk1(res->resume, ir_goto(n, res->failure));
+                    break;
+                }
+
+                case K_YES: {
+                    if (target && target->type == KYES)
+                        target = 0;
+                    chunk2(res->start, 
+                          ir_move(n, target, make_kyes()),
                           ir_goto(n, res->success));
                     if (!bounded)
                         chunk1(res->resume, ir_goto(n, res->failure));
@@ -3065,6 +3085,10 @@ static void print_ir_var(struct ir_var *v)
         }
         case KNULL: {
             fprintf(stderr, "{&null}");
+            break;
+        }
+        case KYES: {
+            fprintf(stderr, "{&yes}");
             break;
         }
         case LOCAL: {

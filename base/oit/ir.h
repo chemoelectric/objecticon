@@ -68,7 +68,7 @@ struct ir_stack {
 };
 
 
-enum ir_vartype { CONST, LOCAL, GLOBAL, TMP, WORD, KNULL };
+enum ir_vartype { CONST, LOCAL, GLOBAL, TMP, WORD, KNULL, KYES };
 
 struct ir_var {
     int type;

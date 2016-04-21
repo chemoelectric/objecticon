@@ -327,7 +327,7 @@ end
 "&yes - the standard flag value for yes."
 keyword yes
    body {
-    return onedesc;
+    return yesdesc;
       }
 end
 

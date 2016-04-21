@@ -336,7 +336,7 @@ class Scheduler()
 
    package interrupt(t)
       if member(sleeping | polling, t) then {
-         t.interrupt_flag := 1
+         t.interrupt_flag := &yes
          set_state(t, ready)
       }
    end

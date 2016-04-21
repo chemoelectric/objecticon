@@ -70,7 +70,7 @@ class TreeNode()
       local n
       every n := Seq{traverse_all_postorder()} do
          if \force | *n.children > 0 then
-            n.is_expanded_flag := 1
+            n.is_expanded_flag := &yes
    end
 
    #

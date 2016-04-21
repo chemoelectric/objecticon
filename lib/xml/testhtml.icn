@@ -10,7 +10,7 @@ import xml, ipl.options, io, lang
 
 procedure main(a)
    local p, fmt, e, s, d, t
-   p := HtmlParser().set_debug_recovery(1)
+   p := HtmlParser().set_debug_recovery(&yes)
 
    t := options(a, "-u!")
    fmt := HtmlFormatter()

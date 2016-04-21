@@ -1498,7 +1498,7 @@ class Component(Rect,Align,Connectable)
       self.z := self.tab_ord := 0
       self.tooltip_start_delay := Dialog.TOOLTIP_START_DELAY
       self.tooltip_end_delay := Dialog.TOOLTIP_END_DELAY
-      self.inherit_wattribs_flag := 1
+      self.inherit_wattribs_flag := &yes
       return
    end
 end

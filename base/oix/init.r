@@ -101,7 +101,8 @@ struct descrip nullptr;                 /* descriptor with null block pointer */
 struct descrip blank; 			/* one-character blank string */
 struct descrip emptystr; 		/* zero-length empty string */
 struct descrip lcase;			/* string of lowercase letters */
-struct descrip nulldesc;           	/* null value */
+struct descrip nulldesc;           	/* &null value */
+struct descrip yesdesc;           	/* &yes value */
 struct descrip onedesc;              	/* integer 1 */
 struct descrip ucase;			/* string of uppercase letters */
 struct descrip zerodesc;              	/* integer 0 */
@@ -1182,6 +1183,9 @@ int main(int argc, char **argv)
     nulldesc.dword = D_Null;
     IntVal(nulldesc) = 0;
 
+    yesdesc.dword = D_Yes;
+    IntVal(nulldesc) = 0;
+
 #if !RealInDesc
     {
         static struct b_real realzero;
@@ -1354,6 +1358,7 @@ static void conv_var()
     switch (*pc++) {
         case Op_Self:
         case Op_Knull:
+        case Op_Kyes:
         case Op_Nil: {
             break;
         }

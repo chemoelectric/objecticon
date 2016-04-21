@@ -46,7 +46,8 @@ extern struct descrip emptystr;	/* empty string */
 
 extern struct descrip nullptr;	/* descriptor with null block pointer */
 extern struct descrip lcase;	/* lowercase string */
-extern struct descrip nulldesc;	/* null value */
+extern struct descrip nulldesc;	/* &null value */
+extern struct descrip yesdesc;	/* &yes value */
 extern struct descrip onedesc;	/* one */
 extern struct descrip ucase;	/* uppercase string */
 extern struct descrip zerodesc;	/* zero */

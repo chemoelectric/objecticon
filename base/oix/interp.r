@@ -286,6 +286,10 @@ void get_deref(dptr dest)
             *dest = nulldesc;
             break;
         }
+        case Op_Kyes: {
+            *dest = yesdesc;
+            break;
+        }
         case Op_Const:
         case Op_Static:
         case Op_GlobalVal:
@@ -332,6 +336,10 @@ void get_variable(dptr dest)
 #endif
         case Op_Knull: {
             *dest = nulldesc;
+            break;
+        }
+        case Op_Kyes: {
+            *dest = yesdesc;
             break;
         }
         case Op_GlobalVal:
@@ -384,6 +392,7 @@ void skip_descrip()
             break;
         }
         case Op_Self:
+        case Op_Kyes:
         case Op_Knull: {
             break;
         }

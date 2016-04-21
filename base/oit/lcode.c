@@ -198,7 +198,11 @@ static void emit_ir_var(struct ir_var *v, char *desc)
             break;
         }
         case KNULL: {
-            outwordx(Op_Knull, "   %s=null", desc);
+            outwordx(Op_Knull, "   %s=&null", desc);
+            break;
+        }
+        case KYES: {
+            outwordx(Op_Kyes, "   %s=&yes", desc);
             break;
         }
         case LOCAL: {

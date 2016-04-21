@@ -197,7 +197,7 @@ class Dialog(Component)
             runerr("cannot block a popup")
          if get_menu_mode() then
             runerr("cannot block a dialog whilst in menu mode")
-         is_blocked_flag := 1
+         is_blocked_flag := &yes
          resynch_pointer()
       }
       return self

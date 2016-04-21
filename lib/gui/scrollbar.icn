@@ -190,7 +190,7 @@ class ScrollBar(Component, HasOrientation)
       if self.lo ~=== lo | self.hi ~=== hi then {
          if lo >= hi then
             runerr("Invalid range")
-         self.is_range_flag := 1
+         self.is_range_flag := &yes
          self.lo := lo
          self.hi := hi
          reconfigure()

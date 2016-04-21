@@ -675,6 +675,12 @@ static int visit_init_assign(struct lnode *n)
             else
                 f->const_flag = OTHER;
             return 0;
+        } else if (k == K_YES) {
+            if (f->const_flag == NOT_SEEN)
+                f->const_flag = SET_YES;
+            else
+                f->const_flag = OTHER;
+            return 0;
         }
     }
     return 1;
@@ -724,6 +730,7 @@ static void compute_class_consts(void)
                     switch (cf->const_flag) {
                         case NOT_SEEN: fprintf(stderr, "NOT_SEEN\n"); break;
                         case SET_NULL: fprintf(stderr, "SET_NULL\n"); break;
+                        case SET_YES: fprintf(stderr, "SET_YES\n"); break;
                         case SET_CONST: fprintf(stderr, "SET_CONST\n"); break;
                         case OTHER: fprintf(stderr, "OTHER\n"); break;
                     }
@@ -2835,16 +2842,6 @@ static void fold_keyword(struct lnode *n)
             break;
         }
 
-        case K_YES: {
-            word w = 1;
-            replace_node(n, (struct lnode*)
-                         lnode_const(&n->loc,
-                                     new_constant(F_IntLit, 
-                                                  intern_n((char *)&w, sizeof(word)), 
-                                                  sizeof(word))));
-            break;
-        }
-
         case K_ASCII:
             replace_cset_keyword(n, k_ascii_rangeset);
             break;
@@ -2931,6 +2928,10 @@ static void fold_field(struct lnode *n)
     switch (f->const_flag) {
         case SET_NULL: {
             replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_NULL));
+            break;
+        }
+        case SET_YES: {
+            replace_node(n, (struct lnode *)lnode_keyword(&n->loc, K_YES));
             break;
         }
         case SET_CONST: {

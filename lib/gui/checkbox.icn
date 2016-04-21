@@ -152,7 +152,7 @@ class CheckBox(Button)
 
    public new()
       Button.new()
-      self.toggles_flag := 1
+      self.toggles_flag := &yes
       self.set_constraint("x_align", Align.L)
       return
    end

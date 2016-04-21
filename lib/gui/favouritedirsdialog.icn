@@ -109,7 +109,7 @@ class FavouriteDirectoriesDialog(Dialog)
          set_item_border(EmptyBorder().
                             set_insets(Gui.TEXT_INSET, 0, 0, 0).
                             set_x_align(Align.L))
-      directory_field.set_directories_only(1)
+      directory_field.set_directories_only(&yes)
       update_grey()
    end
 

@@ -791,16 +791,16 @@ class TextField(Component)
       cursor_on := -1
       undo_manager := UndoManager()
       filter := Gui.PRINTABLE_1
-      self.accepts_focus_flag := 1
+      self.accepts_focus_flag := &yes
       self.set_contents("")
       self.set_border(CompoundBorder().
                           set_outer(SunkenBorder()).
                           set_inner(EmptyBorder().
                                     set_l_inset(Gui.TEXT_INSET).
                                     set_r_inset(Gui.TEXT_INSET)))
-      self.is_editable_flag := 1
-      self.menu_on_rpress_flag := 1
-      self.move_on_rpress_flag := 1
+      self.is_editable_flag := &yes
+      self.menu_on_rpress_flag := &yes
+      self.move_on_rpress_flag := &yes
       self.set_constraint("x_fill", &yes)
       self.set_constraint("x_align", Align.L)
       self.set_constraint("x_weight", 1.0)

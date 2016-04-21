@@ -213,7 +213,7 @@ abstract class Button(Toggle,Component)
    public new()
       Component.new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
-      self.accepts_focus_flag := 1
+      self.accepts_focus_flag := &yes
       connect(handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(handle_ldrag, Event.MOUSE_LEFT_DRAG)
       connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)

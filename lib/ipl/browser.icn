@@ -4938,7 +4938,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public set_worker_pool(worker_pool)
       self.worker_pool := worker_pool
-      self.shared_worker_pool_flag := 1
+      self.shared_worker_pool_flag := &yes
       return self
    end
 

@@ -307,7 +307,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
                   undo_manager.redo()
             }
             "\^d": {
-               ctrl_d_flag := 1
+               ctrl_d_flag := &yes
                if /line_no then
                   tty.write(prompt, subj)
                else {
@@ -350,7 +350,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
                if /line_no then {
                   tty.write(prompt, subj)
                   # Buffer input until got line no request response, which is now out-of-date.
-                  buff_flag := 1
+                  buff_flag := &yes
                } else {
                   # See ^d above
                   pos := *subj + 1

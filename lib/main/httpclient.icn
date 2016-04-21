@@ -237,7 +237,7 @@ class HttpClient(NetClient)
    # Abort the current request.
    #
    public abort()
-      self.abort_flag := 1
+      self.abort_flag := &yes
    end
 
    #
@@ -1110,7 +1110,7 @@ class HttpClient(NetClient)
    end
 
    private fail_dont_retry()
-      dont_retry_flag := 1
+      dont_retry_flag := &yes
    end
 
    private add_some(s)
@@ -1127,7 +1127,7 @@ class HttpClient(NetClient)
       cookies := table()
       authentications := table()
       set_timeout(12000)
-      keep_alive_flag := 1
+      keep_alive_flag := &yes
       retries := 2
       http_version := "1.1"
       user_agent := "httpclient.icn [en] (" || &host || ")"

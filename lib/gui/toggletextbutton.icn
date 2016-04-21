@@ -18,7 +18,7 @@ package gui
 class ToggleTextButton(TextButton)
    public new()
       TextButton.new()
-      self.toggles_flag := 1
+      self.toggles_flag := &yes
       return
    end
 end

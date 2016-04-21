@@ -567,7 +567,7 @@ class Slider(Component, HasOrientation)
       Component.new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
       self.slider_area := SliderArea()
-      self.accepts_focus_flag := 1
+      self.accepts_focus_flag := &yes
       self.increment_size := 1
       self.wheel_factor := 1
       self.set_border(NullBorder())

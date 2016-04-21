@@ -1810,5 +1810,5 @@ procedure main(a)
    # Use rename not move to ensure it's atomic
    Files.rename(bak, cookies_file) | stop("Couldn't rename cookie file ", bak, ": ", &why)
    # Save settings
-   encode_to_file(settings_file, settings,, 1)
+   encode_to_file(settings_file, settings,, &yes)
 end

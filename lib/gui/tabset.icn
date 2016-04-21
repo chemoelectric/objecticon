@@ -798,7 +798,7 @@ class TabSet(Component)
 
    public new()
       Component.new()
-      self.accepts_focus_flag := 1
+      self.accepts_focus_flag := &yes
       self.set_constraint("x_fill", &yes)
       self.set_constraint("y_fill", &yes)
       self.set_constraint("x_weight", 1.0)
