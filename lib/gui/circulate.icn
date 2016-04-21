@@ -151,25 +151,7 @@ class Circulate(SelectionList,Component)
          set_accepts_focus(&no).
          connect(self.on_button_pressed, Event.ACTION)
       add(self.b)
-      self.b.set_image("13,c1,_
-~~~~0000~~~~~_
-~~~000000~~~~_
-~~00~~~~00~~~_
-~00~~~~~~00~~_
-~00~~~~~~00~~_
-~00~~~~~~~~~~_
-~00~~~~~~~~~~_
-~00~~~~~~0~~~_
-~00~~~~~000~~_
-~00~~~~00000~_
-~00~~~0000000_
-~00~~~~~~00~~_
-~00~~~~~~00~~_
-~00~~~~~~00~~_
-~~00~~~~00~~~_
-~~~000000~~~~_
-~~~~0000~~~~~_
-")
+      b.set_paint(ImagePaint().set_cache(ImageCache.get_key_with_resize("gui.CIRCULATE_12")))
       connect(self.go_up, Event.MOUSE_WHEEL_UP)
       connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
       return
