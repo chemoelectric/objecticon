@@ -2343,8 +2343,7 @@ $endif
    private annotate_cwd_list()
       local e, fl, now
       # flag indicates whether to annotate dirs with size/date
-      if mix_entries_menu_item.is_checked() | sort_dirs_menu_item.is_checked() then
-         fl := &yes
+      fl := Yes{ mix_entries_menu_item.is_checked() | sort_dirs_menu_item.is_checked() }
       now := Time.get_system_seconds()
       every e := !cwd_list do {
          if /fl & e.stat.mode_str[1] == "d" then
@@ -2393,15 +2392,11 @@ $endif
             # Set vis to &yes if the last highlight is currently visible; also get the ino of
             # the last highlight.
             info := columns.get_line_info()
-            if info.first_whole <= i <= info.last_whole then
-               vis := &yes
+            vis := Yes{ info.first_whole <= i <= info.last_whole }
             ino := columns.object_get_cursor().stat.ino
-            if columns.get_cursor() === columns.get_highlight() then
-               high := &yes
-            if columns.get_cursor() === columns.get_held() then
-               held := &yes
-            if columns.get_cursor() === columns.get_over() then
-               over := &yes
+            high := Yes{ columns.get_cursor() === columns.get_highlight() }
+            held := Yes{ columns.get_cursor() === columns.get_held() }
+            over := Yes{ columns.get_cursor() === columns.get_over() }
          }
          sort_cwd_list()
          # Search for the old ino in the new data.  If found, set the highlight and if the old
@@ -2462,8 +2457,6 @@ $endif
       trail.set_path(cwd)
       load_cwd_list()
       annotate_cwd_list()
-      # Reset filter to "*"
-      filter.set_selection(1)
       sort_cwd_list()
       synch_favourites_list()
       update_filter_list()
@@ -2613,9 +2606,8 @@ $endif
          history := clone(other.history)
          history_pos := other.history_pos
          columns_pos_table := clone(other.columns_pos_table)
+         filter.set_contents(other.filter.get_contents())
          set_cwd(other.cwd)
-         if filter.set_contents(u"*" ~== other.filter.get_contents()) then
-            sort_cwd_list()
       } else {
          sorter := Files.name_cmp
          annotate_opt := SHOW_NAME_ONLY
@@ -2688,7 +2680,15 @@ $endif
    end
 
    public clone_tab()
-      parent_dialog.new_tab(&yes,, self, self)
+      local t, i
+      t := parent_dialog.new_tab(&yes,, self, self)
+      # Now the new tab is live, copy some column settings.
+      i := Positions{(!t.columns.data).name, 
+                     columns.data[columns.get_cursor()].name}
+      t.columns.
+         set_area_y(columns.get_area_y()).
+         set_area_x(columns.get_area_x()).
+         set_cursor(i)
    end
 
    public close_tab()
