@@ -1477,6 +1477,7 @@ class Dialog(Component)
    end
 
    private static init()
+      ROOT_WATTRIBS := table()
       DOUBLE_CLICK_DELAY := env_int("OI_DIALOG_DOUBLE_CLICK_DELAY", 1) | 500
       DOUBLE_CLICK_TOLERANCE := env_scale("OI_DIALOG_DOUBLE_CLICK_TOLERANCE") | Gui.UNIT
       TOOLTIP_START_DELAY := env_int("OI_DIALOG_TOOLTIP_START_DELAY", 1) | 1000
@@ -1490,7 +1491,6 @@ class Dialog(Component)
       DND_POSITIVE_POINTER := env_pointer("OI_DIALOG_DND_POSITIVE_POINTER") | "hand2"
       FOCUS_UP := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
       FOCUS_DOWN := set("\t", Key.RIGHT, Key.DOWN)
-      ROOT_WATTRIBS := table()
       pointer_grab_stack := []
       keyboard_grab_stack := []
    end
