@@ -31,7 +31,7 @@ package class Tag()
    # Indicate that the tag is a closing tag, ie has a leading "/"
    #
    public set_closed()
-      closed := 1
+      closed := &yes
       return self
    end
 
@@ -39,7 +39,7 @@ package class Tag()
    # Indicate that the tag is an empty tag.
    #
    public set_empty()
-      empty := 1
+      empty := &yes
       return self
    end
 

@@ -156,7 +156,7 @@ class XmlParser(Connectable)
          insert(doc.general_entities, u"amp", EntityDef(u"&#38;"))
          insert(doc.general_entities, u"apos", EntityDef(u"\'"))
          insert(doc.general_entities, u"quot", EntityDef(u"\""))
-         utf8_flag := 1
+         utf8_flag := &yes
       } else {
          insert(doc.general_entities, "lt", EntityDef("&#60;"))
          insert(doc.general_entities, "gt", EntityDef(">"))
@@ -784,7 +784,7 @@ class XmlParser(Connectable)
          # Resolve and parse the external subset 
          r := resolve(current_base, res.external_id)
          start_divert(r.base, to_string(res.external_id))
-         in_ext_subset := 1
+         in_ext_subset := &yes
          r.content ? {
             parse_ext_subset()
             pos(0) | throw("extraneous content")
@@ -926,7 +926,7 @@ class XmlParser(Connectable)
       res := =u"yes" | =u"no" | throw("'yes' or 'no' expected")
 
       if string(res) == "yes" then
-         doc.standalone := 1
+         doc.standalone := &yes
 
       if not(=c) then
          throw(c || " expected")
@@ -969,7 +969,7 @@ class XmlParser(Connectable)
       #
       if xs := string(member(res.attributes, "xml:space" | u"xml:space")) then {
          if xs == "preserve" then
-            res.xml_space_preserve := 1
+            res.xml_space_preserve := &yes
          else if xs ~== "default" then
             throw("xml:space has invalid value")
       } else {
@@ -1141,7 +1141,7 @@ class XmlParser(Connectable)
          return ContentSpec("EMPTY")
       else if tab(dtd_match(u"ANY")) then {
          a := ContentSpec("ANY")
-         a.is_mixed_flag := 1
+         a.is_mixed_flag := &yes
          return a
       }
       else if dtd_match(u"(") then {
@@ -1262,7 +1262,7 @@ class XmlParser(Connectable)
             a :=  ContentSpec("*", a)
       }
 
-      a.is_mixed_flag := 1
+      a.is_mixed_flag := &yes
 
       return a
    end
@@ -2147,7 +2147,7 @@ class XmlParser(Connectable)
             # being produced several times.
             if /dtd_insert_shown_error then 
                invalid("Cannot reference a pe except in the external dtd")
-            dtd_insert_shown_error := 1
+            dtd_insert_shown_error := &yes
             &pos := i
             fail
          }
@@ -2354,9 +2354,9 @@ class XmlParser(Connectable)
    public new()
       Connectable.new()
       resolver := DefaultResolver()
-      do_namespaces_flag := 1
-      validate_flag := 1
-      preserve_comments_flag := 1
+      do_namespaces_flag := &yes
+      validate_flag := &yes
+      preserve_comments_flag := &yes
       return
    end
 end

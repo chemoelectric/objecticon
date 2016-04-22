@@ -147,7 +147,7 @@ class DefaultResolver(Resolver)
    public new()
       public_mapping := table()
       uri_cache := table()
-      cache_uris_flag := 1
+      cache_uris_flag := &yes
       self.http_client := HttpClient()
       return
    end
