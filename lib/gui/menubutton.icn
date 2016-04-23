@@ -56,7 +56,7 @@ class MenuButton(Component, BorderWhilstEntered, MenuSystem)
       if menu.is_shaded() then
          Gui.style.shade_rectangle(self.cbwin,
                                     self.x, self.y, self.w, self.h)
-      if /border_whilst_entered_flag | (is_unshaded() & \entered) then
+      if /border_whilst_entered_flag | \which_open | (is_unshaded() & \entered) then
          border.draw_rect(self.cbwin, self)
    end
 
@@ -65,12 +65,14 @@ class MenuButton(Component, BorderWhilstEntered, MenuSystem)
       self.which_open := self.menu
       self.menu.show(self.x,
                      self.y + self.h,, self.y)
+      invalidate()
    end
 
    public close_menu()
       self.menu.hide()
       self.which_open := &null
       self.parent_dialog.exit_menu_mode(self)
+      invalidate()
    end
 
    public close_all()
