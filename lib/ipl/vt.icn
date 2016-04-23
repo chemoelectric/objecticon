@@ -2029,7 +2029,10 @@ class Vt(LineBasedScrollArea, MenuMode)
    #
    private set_cursor_from_pos(e)
       cursor_y := get_nearest_line_to_pointer(e)
-      cursor_x := col_for_x(e.x)
+      # Adding char_w/2 notionally places the dividing points in the
+      # middle of chars; this is better for selection of regions with
+      # the "xterm" mouse cursor.
+      cursor_x := col_for_x(e.x + char_w / 2)
       cursor_x >:= cols + 1
    end
 
@@ -2065,7 +2068,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       if \held then
          handle_mdrag(e)
       else if /no_drag then {
-         invalidate_region()
          if cursor_y > 1 & e.y < self.view.y then {
             going_up := &yes
             check_scroll_ticker(self.view.y - e.y)
@@ -2073,10 +2075,18 @@ class Vt(LineBasedScrollArea, MenuMode)
             going_up := &no
             check_scroll_ticker(e.y - (self.view.y + self.view.h))
          } else {
+            invalidate_region()
             scroll_ticker.stop()
-            set_cursor_from_pos(e)
+            if e.y < self.view.y then
+               # cursor_y = 1
+               cursor_x := 1
+            else if e.y >= self.view.y + self.view.h then
+               # cursor_y = *contents
+               cursor_x := *contents_str(cursor_y) + 1
+            else
+               set_cursor_from_pos(e)
+            invalidate_region()
          }
-         invalidate_region()
       }
    end
 
@@ -2090,21 +2100,25 @@ class Vt(LineBasedScrollArea, MenuMode)
    private scroll_tick()
       local i
       repeat {
-         invalidate_region()
          if \going_up then {
             if cursor_y > 1 & i := get_line_info() then {
+               invalidate_region()
                cursor_y := i.first_whole - 1
                cursor_y <:= 1
+               cursor_x := 1
                ensure_line_visible(cursor_y)
+               invalidate_region()
             }
          } else {
             if cursor_y < *contents & i := get_line_info() then {
+               invalidate_region()
                cursor_y := i.last_whole + 1
                cursor_y >:= *contents
+               cursor_x := *contents_str(cursor_y) + 1
                ensure_line_visible(cursor_y)
+               invalidate_region()
             }
          }
-         invalidate_region()
          scroll_ticker.sleep(scroll_ticker_interval)
       }
    end
