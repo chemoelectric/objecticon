@@ -132,7 +132,7 @@ procedure read_line(intext)
 
 	# Check to see if line is blank; if so, set blank_flag.
 	if line == "" then
-	    { blank_flag := 1; next }
+	    { blank_flag := &yes; next }
 
 	# Determine current indentation level.
 	detab(line) ? {
