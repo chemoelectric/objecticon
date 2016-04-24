@@ -13,7 +13,7 @@ class CanvasTextFieldUI(CanvasComponentUI)
       t := CanvasTextField()
       t.set_size(scale(60))
       t.set_contents("")
-      t.h_fixed := 1
+      t.h_fixed := &yes
       return t
    end
 

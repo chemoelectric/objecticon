@@ -662,7 +662,7 @@ class CanvasComponent(CanvasObject)
    end
 
    public new()
-      class_variable := 1
+      class_variable := &yes
       self.default_border := self.border
       return
    end

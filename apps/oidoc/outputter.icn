@@ -84,7 +84,7 @@ abstract class Outputter()
       } else {
          # A non-static method will have an implicit self param.
          if is(obj, UMethod) & iand(obj.flags, Class.Static) = 0 then
-            has_self := 1
+            has_self := &yes
          every a := obj.get_locals() do {
             if iand(a.flags, ULocal.Argument) ~= 0 then {
                if \has_self then
@@ -271,22 +271,22 @@ abstract class Outputter()
             if (pre_mark <- tab(many('~'))) & pos(0) then {
                close_bar()
                begin_pre()
-               pre := 1
+               pre := &yes
             } else if ="|" then {
                s := tab(many0(WHITESPACE))
                output_bar(*s)
                markdown_line(tab(0))
-               bar := 1
+               bar := &yes
             } else if ="*" & tab(many(WHITESPACE)) then {
                close_bar()
                close_li()
                if /ul then {
                   close_ol()
                   begin_ul()
-                  ul := 1
+                  ul := &yes
                }
                begin_li()
-               li := 1
+               li := &yes
                markdown_line(tab(0))
             } else if tab(many(&digits)) & ="." & tab(many(WHITESPACE)) then {
                close_bar()
@@ -294,10 +294,10 @@ abstract class Outputter()
                if /ol then {
                   close_ul()
                   begin_ol()
-                  ol := 1
+                  ol := &yes
                }
                begin_li()
-               li := 1
+               li := &yes
                markdown_line(tab(0))
             } else if pos(0) then {
                close_bar()

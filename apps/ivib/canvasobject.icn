@@ -54,7 +54,7 @@ class CanvasObject(SelectiveObjectCodec)
    end
 
    #
-   # Set the class_variable flag; 1 if it is a class variable, &null if not
+   # Set the class_variable flag; &yes if it is a class variable, &null if not
    #
    public set_class_variable(s)
       self.class_variable := check_flag(s)
@@ -62,7 +62,7 @@ class CanvasObject(SelectiveObjectCodec)
    end
 
    #
-   # Get the class_variable flag; 1 if it is a class variable, &null if not
+   # Get the class_variable flag; &yes if it is a class variable, &null if not
    #
    public get_class_variable()
       return self.class_variable

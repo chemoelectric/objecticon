@@ -253,7 +253,7 @@ class Main(Dialog)
             # New file
             #
             info_label.set_label("New file")
-            self.canvas.new_file_flag := 1
+            self.canvas.new_file_flag := &yes
          }
          self.canvas.set_filename(s)
       } else
@@ -312,7 +312,7 @@ class Main(Dialog)
          # The canvas is set as modified - so that the v2 changes can
          # simply be saved.
          #
-         c.modified := 1
+         c.modified := &yes
          d.show_modal(self)
       }
       c.set_parent_dialog(self)
@@ -671,7 +671,7 @@ class Main(Dialog)
          self.info_label.set_label("Wrote " || self.canvas.filename)
          #
          # Set modified flag of all in undo/redo buffer
-         every (!self.undo_list | !self.redo_list).modified := 1
+         every (!self.undo_list | !self.redo_list).modified := &yes
       } else {
          c := self.canvas.gen_code()
          c.output_code(self.canvas.filename) | fail
@@ -679,7 +679,7 @@ class Main(Dialog)
          self.info_label.set_label("Wrote " || self.canvas.filename)
          #
          # Set modified flag of all in undo/redo buffer
-         every (!self.undo_list | !self.redo_list).modified := 1
+         every (!self.undo_list | !self.redo_list).modified := &yes
          #
          # Clear new flag of all in undo/redo buffer
          every (!self.undo_list | !self.redo_list).new_file_flag := &null

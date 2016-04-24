@@ -305,12 +305,16 @@ procedure gen(p, a[])			#: test a simple procedure or generator
    return
 end
 
+procedure cnv(x)
+   return string(x) | image(x)
+end
+
 procedure lst(p, a[])			#: test a procedure that returns a list
    local L
 
    L := (p ! a) | ["[FAILED]"]
    writes(left(pimg(p), LSIZE - 1))
-   every writes(" ", (!L \ GENLIMIT) | "\n")
+   every writes(" ", cnv(!L \ GENLIMIT) | "\n")
    return
 end
 
@@ -319,7 +323,7 @@ procedure stt(p, a[])			#: test a procedure that returns a set
 
    L := sort(p ! a) | ["[FAILED]"]
    writes(left(pimg(p), LSIZE - 1), " {")
-   every writes(" ", (!L \ GENLIMIT) | "}\n")
+   every writes(" ", cnv(!L \ GENLIMIT) | "}\n")
    return
 end
 
@@ -329,7 +333,7 @@ procedure tbl(p, a[])			#: test a procedure that returns a table
    writes(left(pimg(p) | "", LSIZE - 1))
    if T := (p ! a) then {
       L := sort(T, 3)
-      while writes(" ", get(L), ":", get(L))
+      while writes(" ", cnv(get(L)), ":", cnv(get(L)))
       write()
       }
    else
