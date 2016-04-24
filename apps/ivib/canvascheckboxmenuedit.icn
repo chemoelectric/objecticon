@@ -42,28 +42,20 @@ class CanvasCheckBoxMenuEdit(MenuComponentEdit)
       # a different one.
       #
       if (\c.parent_check_box_group).which_one === c then
-         c.parent_check_box_group.which_one := &null                 
+         c.parent_check_box_group.set_which_one()
 
-      if in_checkbox_group.is_checked() then {
+      if in_checkbox_group.is_checked() then
          #
          # Put in cbg.
          #
          c.set_parent_check_box_group(c.parent_component.parent_Canvas.checkbox_groups[group_list.get_selection()])
-         if initially_checked.is_checked() then {
-            #      
-            # Turn off current one on, if any; turn self on.
-            #
-            (\c.parent_check_box_group.which_one).is_checked_flag := &null
-            c.parent_check_box_group.which_one := c
-         }
-      } else
+      else
          c.set_parent_check_box_group()
 
       #
       # Set checked flag
       #
-      c.is_checked_flag := initially_checked.get_status()
-
+      c.set_is_checked(initially_checked.get_status())
       c.set_paint_mid(paint_field.get_contents())
       c.set_paint_right(paint_field_r.get_contents())
    end
