@@ -1398,7 +1398,7 @@ class Preferences(Dialog)
       c.named_image_path := path_tab.get_contents()
       c.undo_size := integer(self.undo_size.get_contents())
       c.plugin_directory := plugin_dir_field.get_contents()
-      okay_result := 1
+      okay_result := &yes
       self.dispose()
    end
 

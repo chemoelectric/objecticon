@@ -71,7 +71,7 @@ class MenuComponentEdit(Dialog)
    public on_okay()
       self.validate_input() | fail
       self.set_vals()
-      self.okay_result := 1
+      self.okay_result := &yes
       self.dispose()
    end
 
