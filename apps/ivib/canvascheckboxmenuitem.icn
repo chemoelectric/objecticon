@@ -16,7 +16,7 @@ import gui, lang
 class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
    public set_parent_check_box_group(x)
       #
-      # Set the images to the standard ones, unless custom images already set.
+      # Set the images to the standard ones
       #  
       if \x then
          self.set_box_paint(ImagePaint().set_cache("gui.DIAMOND_UP"), ImagePaint().set_cache("gui.DIAMOND_DOWN"))
@@ -51,6 +51,7 @@ class CanvasCheckBoxMenuItem(CanvasTextMenuItem,CheckBoxMenuItem)
       local c
       c := CanvasCheckBoxMenuItem()
       CanvasMenuComponent.dup_fields(c)
+      c.is_checked_flag := self.is_checked_flag
       # Don't copy the left image, it's not a CanvasObject, just a Paint.
       c.set_paint_mid(self.paint_mid.dup())
       c.set_paint_right((\self.paint_right).dup())

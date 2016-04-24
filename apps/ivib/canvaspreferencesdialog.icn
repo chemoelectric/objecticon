@@ -115,7 +115,7 @@ class CanvasPreferencesDialog(Dialog)
       c.scale_dimensions_flag := scale_dimensions_cb.get_status()
       c.edit_scale := real(edit_scale_tf.get_contents())
 
-      self.okay_result := 1
+      self.okay_result := &yes
       self.dispose()
    end
 

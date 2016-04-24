@@ -30,7 +30,7 @@ class AttList()
    public add_attribute_def(name, def) 
       insert(attribute_defs, name, def)
       if \def.def_type == "ID" then
-         has_id := 1
+         has_id := &yes
       return self
    end
 

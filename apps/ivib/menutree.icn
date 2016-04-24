@@ -17,23 +17,25 @@ class MenuTree(SelectableScrollArea)
    end
 
    public draw_line_data(xp, yp, lh, i)
-      local dashed, s, lp, y0
+      local dashed, s, lp, y0, thick, thick2
 
       y0 := yp + self.line_height / 2
+      thick := Gui.FINE_WIDTH
+      thick2 := thick / 2
       s := contents[i]
 
       dashed := view.cbwin.clone()
       dashed.set_textured_pattern("gray")
       lp := xp
       every 1 to s.depth do {
-         dashed.fill_rectangle(lp + SPACING / 2, yp, 1, self.line_height)
+         dashed.fill_rectangle(lp + SPACING / 2 - thick2, yp, thick, self.line_height)
          lp +:= SPACING
       }
       if \s.owner then {
          if contents[i + 1].depth > s.depth then
-            dashed.fill_rectangle(lp + SPACING / 2, y0, 1, self.line_height / 2)
+            dashed.fill_rectangle(lp + SPACING / 2 - thick2, y0, thick, self.line_height / 2)
 
-         dashed.fill_rectangle(lp - SPACING / 2, y0, SPACING /2 + SPACING, 1)
+         dashed.fill_rectangle(lp - SPACING / 2, y0 - thick2, SPACING /2 + SPACING, thick)
          lp +:= SPACING
          view.cbwin.draw_string(lp, yp + view.cbwin.get_line_ascent(), s.owner.get_string_label())
       }

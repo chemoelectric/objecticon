@@ -545,7 +545,7 @@ class TableLayout(Layout)
            i.ph := i.obj.get_preferred_height(i.ph_calc_w)
            i.ph <:= \i.fix_h
            i.ascent := i.obj.get_ascent(i.ph_calc_w)
-           adj := 1
+           adj := &yes
         }
      }
      if \adj | /i then {

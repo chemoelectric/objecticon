@@ -8,17 +8,21 @@
 
 import lang, util, gui, ipl.numbers
 
-
-#
-# Constants defining resizing corner sizes.
-$define RSW 12
-$define RST 3
-
 ############################################################################
 #
 # Parent class for all components.
 #
 class CanvasComponent(CanvasObject)
+   #
+   # Constants defining resizing corner sizes.
+   public static const
+      RSW, RST
+
+   private static init()
+      RSW := scale(12)
+      RST := scale(3)
+   end      
+
    public 
       x_fixed,                 # Flags - is position/size fixed
       y_fixed,                 #
@@ -289,9 +293,7 @@ class CanvasComponent(CanvasObject)
       use {
          cw := W.clone(),
          {
-            cw.set_line_style("dashed")
             cw.clip(r.x, r.y, r.w, r.h)
-            cw.set_line_style("solid")
             if self === self.parent_Canvas.selected then
                cw.set_fg("red")
 
@@ -310,7 +312,7 @@ class CanvasComponent(CanvasObject)
             if *self.parent_Canvas.selections > 1 then {
                cw.set_fg("blue")
                cw.unclip()
-               cw.fill_circle(self.x + self.w, self.y, 8)
+               cw.fill_circle(self.x + self.w, self.y, scale(8))
                cw.set_fg("white")
                cw.set_font("serif,10")
                center_string(cw, self.x + self.w, self.y, 
@@ -660,7 +662,7 @@ class CanvasComponent(CanvasObject)
    end
 
    public new()
-      class_variable := 1
+      class_variable := &yes
       self.default_border := self.border
       return
    end

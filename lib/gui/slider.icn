@@ -8,7 +8,7 @@
 
 package gui
 
-import lang, graphics
+import lang, graphics, util
 
 #
 # Component representing the slider area
@@ -227,10 +227,7 @@ class Slider(Component, HasOrientation)
             runerr("Invalid range")
          self.lo := lo
          self.hi := hi
-         if type(self.hi) == type(self.lo) == "integer" then
-            self.discrete_vals := 1
-         else
-            self.discrete_vals := &null
+         discrete_vals := Yes{ type(self.hi) == type(self.lo) == "integer" }
          reconfigure()
       }
       return self
@@ -243,7 +240,7 @@ class Slider(Component, HasOrientation)
          #
          # Click on slider; set flag and save offset between top of slider and pointer position
          #
-         self.slider_down := 1
+         self.slider_down := &yes
          if /self.is_horizontal_flag then
             self.slider_down_offset := e.y - self.slider_pos
          else
@@ -269,7 +266,7 @@ class Slider(Component, HasOrientation)
          #
          # Released; clear flag
          #
-         self.slider_down := &null
+         self.slider_down := &no
          if \self.snaps then {
             self.value +:= self.snaps / 2
             set_value(self.value - (self.value % snaps))
@@ -567,7 +564,7 @@ class Slider(Component, HasOrientation)
       Component.new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
       self.slider_area := SliderArea()
-      self.accepts_focus_flag := 1
+      self.accepts_focus_flag := &yes
       self.increment_size := 1
       self.wheel_factor := 1
       self.set_border(NullBorder())

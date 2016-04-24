@@ -406,7 +406,7 @@ class UReader()
              UcodeOp.Invocable: {
                 s := uin_str() | fail
                 if s == "0" then
-                   uf.set_strinv(1)
+                   uf.set_strinv(&yes)
                 else
                    uf.add_invocable(s)
              }

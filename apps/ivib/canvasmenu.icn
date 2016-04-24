@@ -25,7 +25,7 @@ class CanvasMenu(CanvasTextMenuItem,Menu)
          not(is(self.paint_right, CanvasImagePaint) &
              paint_right.image_cache === "gui.ARROW_RIGHT") then {
          self.paint_right.gen_code(c)
-         r := 1
+         r := &yes
       }
       every (!self.children).gen_code(c)
       CanvasMenuComponent.gen_code(c)

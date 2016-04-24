@@ -286,7 +286,7 @@ class TextFlow(Component, HasLastHighlight)
       named_anchors := table()
       row := []
       deferred := []
-      at_new_para := 1
+      at_new_para := &yes
       row_width := row_y := row_bottom := row_x := max_word_w := max_ll :=
          baseline_off := row_abs_middle_height := row_abs_top_height :=
          row_abs_bottom_height := row_ascent := row_descent := row_blob := 0
@@ -312,7 +312,7 @@ class TextFlow(Component, HasLastHighlight)
          def_width +:= border.get_total_width()
          max_width := max_ll + border.get_total_width()
 
-         calculated := 1
+         calculated := &yes
       }
    end
 
@@ -384,7 +384,7 @@ class TextFlow(Component, HasLastHighlight)
             ParaCmd: {
                if /at_new_para then {
                   new_row(W.get_line_height() / 2)
-                  at_new_para := 1
+                  at_new_para := &yes
                }
             }
 
@@ -1401,10 +1401,10 @@ class TextFlow(Component, HasLastHighlight)
    package handle_in_chain(e)
       local u, t, a, f
       parent_dialog.get_held_count() = 0 | fail
-      if e.code === (Key.SHIFT_L | Key.SHIFT_R) then {
+      if e.code === (Key.CONTROL_L | Key.CONTROL_R) then {
          if /e.release then
-            f := 1
-      } else f := \e.shift
+            f := &yes
+      } else f := \e.ctrl
       t := which_text_out(e)
       a := (\t).attr.title
       set_tooltip(a)

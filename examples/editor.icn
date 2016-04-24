@@ -300,11 +300,11 @@ class SaveChangesDialog(Dialog)
 
       p := Panel().set_constraint("y_weight", 0)
       p.set_layout(GridLayout().set_doi(0))
-      yes := TextButton().set_label("Yes").set_accel(&yes)
+      yes := TextButton().set_label("Yes").set_accel("y")
       yes.connect(self.on_yes, Event.ACTION)
       p.add(yes)
 
-      no := TextButton().set_label("No").set_accel(&no)
+      no := TextButton().set_label("No").set_accel("n")
       no.connect(self.on_no, Event.ACTION)
       p.add(no)
 

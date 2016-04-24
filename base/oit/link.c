@@ -64,6 +64,8 @@ void ilink(struct file_param *link_files, int *fatals, int *warnings)
         if (!ucodefile)
             quit("cannot open %s",inname);
         readglob(lf);
+        if (ferror(ucodefile) != 0)
+            quit("failed to read from ucode file %s", inname);
         fclose(ucodefile);
     }
 

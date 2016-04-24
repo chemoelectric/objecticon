@@ -5,7 +5,11 @@ import gui, ipl.filegui, ipl.sort, io, util, graphics
 #
 class Explorer(Dialog)
    public tree, 
-      tbl
+      tbl,
+      bits_col,
+      date_col,
+      file_col,
+      size_col
 
    #
    # Given a TreeNode n, get the full file path it represents by traversing
@@ -90,7 +94,7 @@ class Explorer(Dialog)
    # sub-directories.
    #
    public load_table(n)
-      local s, l, t, el
+      local s, l, t, el, cl, c
 
       s := get_full_path(n)
 
@@ -99,7 +103,17 @@ class Explorer(Dialog)
 
       l := []
       every el := !t do {
-         put(l, [el, Format.numeric_to_string(el.lstat.size, 0, ','), fmt_time(el.lstat.mtime), el.lstat.mode_str])
+         cl := []
+         every c := !tbl.get_columns() do {
+            case c of {
+               file_col: put(cl, el)
+               bits_col: put(cl, el.lstat.mode_str)
+               date_col: put(cl, fmt_time(el.lstat.mtime))
+               size_col: put(cl, Format.numeric_to_string(el.lstat.size, 0, ','))
+
+            }
+         }
+         put(l, cl)
       }
 
       tbl.set_contents(l)
@@ -162,15 +176,16 @@ class Explorer(Dialog)
          tbl := Table().
             set_size(scale(470),scale(420)).
             set_select_mode("none").
-            add_column(ItemPaintTableColumn().
+            set_draggable_columns(&yes).
+            add_column(file_col := ItemPaintTableColumn().
                           set_label("File").
                           set_item_paint(IconFilesItemPaint()).
                           set_item_border(EmptyBorder().             # Set a border to align with the button text
                                              set_insets(Gui.TEXT_INSET,0,0,0).
                                              set_x_align(Align.L))).
-            add_column(TableColumn().set_label("Size").set_column_width(bw + w.text_width("000,000,000,000")).set_column_align("r")).
-            add_column(TableColumn().set_label("Date").set_column_width(bw + w.text_width("  MMM 00 00:00"))).
-            add_column(TableColumn().set_label("Bits").set_column_width(bw + w.text_width("drwxrwxrwx  ")))
+            add_column(size_col := TableColumn().set_label("Size").set_column_width(bw + w.text_width("000,000,000,000")).set_column_align("r")).
+            add_column(date_col := TableColumn().set_label("Date").set_column_width(bw + w.text_width("  MMM 00 00:00"))).
+            add_column(bits_col := TableColumn().set_label("Bits").set_column_width(bw + w.text_width("drwxrwxrwx  ")))
       }
 
       split := Split().set_left(tree).set_right(tbl).set_min(scale(50), scale(50))

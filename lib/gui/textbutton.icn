@@ -31,7 +31,7 @@ class TextButton(Button, BorderWhilstEntered)
 
       p.draw_rect(self.cbwin, border.float(self, p))
 
-      if /border_whilst_entered_flag | (is_unshaded() & \entered) then {
+      if /border_whilst_entered_flag | \is_down | (is_unshaded() & \entered) then {
          if \self.is_down then {
             border.draw_down_rect(self.cbwin, self)
             border.draw_rev_rect(self.cbwin, self)

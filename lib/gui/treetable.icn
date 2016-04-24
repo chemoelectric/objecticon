@@ -8,7 +8,7 @@
 
 package gui
 
-import util
+import util, ipl.lists
 
 #
 # A node in a {TreeTable}.  It provides the column data
@@ -180,6 +180,33 @@ class TreeTableContent(BaseTreeTableContent,Tree)
    end
 end
 
+class TreeTableHeader(TableHeader)
+   public can_drag(ev)
+      local c
+      every c := children[2 to *children] do {
+         if \c.is_down then {
+            c.clear_down()
+            return c
+         }
+      }
+   end
+
+   public can_drop(drag, e)
+      return drag.content ~=== (children[1] ~=== \which_highlight)
+   end
+
+   public perform_drop(drag, drop, e)
+      local i, j
+      i := drag.content.get_column_index()
+      j := drop.content.get_column_index()
+      every lmove(\ (!parent.table_content.contents).contents, i - 1, j - 1)
+      reposition_index(i, j)
+      layout()
+      parent.invalidate()
+      return
+   end
+end
+
 #
 # A {TreeTable} is a {Table} where the first column is
 # a Tree.  The data for the component is provided as
@@ -188,6 +215,10 @@ end
 # See the example program ttexplorer.icn for one in use.
 #
 class TreeTable(Table)
+   public create_table_header()
+      return TreeTableHeader()
+   end
+
    public create_table_content()
       return TreeTableContent()
    end
@@ -217,6 +248,10 @@ end
 # A {TreeTable} which uses an {ItemPaint} to paint its tree column.
 #
 class ItemPaintTreeTable(Table)
+   public create_table_header()
+      return TreeTableHeader()
+   end
+
    public create_table_content()
       return ItemPaintTreeTableContent()
    end

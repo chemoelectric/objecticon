@@ -198,7 +198,11 @@ static void emit_ir_var(struct ir_var *v, char *desc)
             break;
         }
         case KNULL: {
-            outwordx(Op_Knull, "   %s=null", desc);
+            outwordx(Op_Knull, "   %s=&null", desc);
+            break;
+        }
+        case KYES: {
+            outwordx(Op_Kyes, "   %s=&yes", desc);
             break;
         }
         case LOCAL: {
@@ -372,6 +376,10 @@ void generate_code()
     if (Dflag) {
         fclose(dbgfile);
     }
+
+    fflush(outfile);
+    if (ferror(outfile) != 0)
+        quit("unable to write to icode file");
 
     fclose(outfile);
 }
@@ -2285,6 +2293,8 @@ static void writescript()
    }
    fputs("\n" IcodeDelim "\n", outfile);
    scriptsize += strlen("\n" IcodeDelim "\n");
+   if (ferror(f) != 0)
+       quit("unable to read win32header executable");
    fclose(f);
 #elif PLAN9
     char script[2048];

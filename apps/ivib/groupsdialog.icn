@@ -30,7 +30,7 @@ class GroupsDialog(Dialog)
    end
 
    public on_okay()
-      self.okay_result := 1
+      self.okay_result := &yes
       self.dispose()
    end
 
@@ -179,7 +179,7 @@ class GroupEdit(Dialog)
    public on_okay()
       code_tab.validate_input() | fail
       code_tab.set_vals()
-      self.okay_result := 1
+      self.okay_result := &yes
       self.dispose()
    end
 

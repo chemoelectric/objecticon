@@ -45,7 +45,7 @@ abstract class Toggle()
    end
 
    #
-   # Return the status of the object; {1} if the object is checked,
+   # Return the status of the object; {&yes} if the object is checked,
    # {&null} otherwise.
    #
    public get_status()
@@ -84,8 +84,8 @@ abstract class Toggle()
 
    #
    # Ensure any parent CBG is consistent with our checked status.
-   # @p
-   public synch_cbg()
+   #
+   private synch_cbg()
       if \self.parent_check_box_group then { 
          if \self.is_checked_flag & self.parent_check_box_group.which_one ~=== self then {
             (\self.parent_check_box_group.which_one).set_is_checked(&no)

@@ -395,6 +395,9 @@ int ppch()
          fs = curfile;
          curfile = fs->prev;
 
+         if (ferror(fs->fp) != 0)
+            quit("failed to read from source file %s", fs->fname);
+
 #if UNIX
          if (fs->m4flag) {			/* if m4 preprocessing */
             if (pclose(fs->fp) != 0)		/* close pipe */
@@ -698,6 +701,10 @@ static char *loadfile(char *fname, int *vlen, int ucs)
     }
     s[i++] = '\"';
     s[i] = 0;
+
+    if (ferror(f) != 0)
+        quit("failed to read $load file %s", fname);
+
     fclose(f);
     *vlen = i;
     return s;

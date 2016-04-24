@@ -45,7 +45,7 @@ class BorderOfCanvas(Component)
          #
          # The cursor is over the canvas's resize corner.
          #
-         self.is_resizing := 1
+         self.is_resizing := &yes
 
          #
          # Set offsets.
@@ -448,7 +448,7 @@ class Canvas(Component,SelectiveObjectCodec)
       every e := !self.selections do {
          e.x_spec := "50%"
          e.x_align := "c"
-         e.x_fixed := 1
+         e.x_fixed := &yes
          e.resize()
       }
 
@@ -468,7 +468,7 @@ class Canvas(Component,SelectiveObjectCodec)
       every e := !self.selections do {
          e.y_spec := "50%"
          e.y_align := "c"
-         e.y_fixed := 1
+         e.y_fixed := &yes
          e.resize()
       }
 
@@ -960,7 +960,7 @@ class Canvas(Component,SelectiveObjectCodec)
    #
    public set_modified()
       if /self.modified then {
-         self.modified := 1
+         self.modified := &yes
          self.parent_dialog.update_grey()
          self.parent_dialog.set_filename_label()
       }
@@ -1151,10 +1151,10 @@ class Canvas(Component,SelectiveObjectCodec)
    public show_moving()
       local cw
       use {
-         cw := item_buff_win.clone().set_fg("red"),
+         cw := item_buff_win.clone(),
          {
-            cw.set_line_style("dashed")
-            cw.draw_rectangle(moving.mx, moving.my, moving.mw, moving.mh)
+            cw.set_fg("red").
+               draw_rectangle(moving.mx, moving.my, moving.mw, moving.mh, Gui.FINE_WIDTH)
          }
       }
    end
@@ -1253,7 +1253,7 @@ class Canvas(Component,SelectiveObjectCodec)
             orig_h_spec ~=== h_new then {
          if /self.arrow_flag then {
             push_undo()
-            self.arrow_flag := 1
+            self.arrow_flag := &yes
          }
          self.relocate()
       }
@@ -1453,7 +1453,7 @@ class Canvas(Component,SelectiveObjectCodec)
          #
          # Reset flags.
          #
-         self.held_flag := 1
+         self.held_flag := &yes
 
          #
          # Determine which corner the cursor is over; resize_mode null implies
@@ -1640,7 +1640,7 @@ class Canvas(Component,SelectiveObjectCodec)
       local e
       push_undo()
       every e := !self.selections do
-         e.y_fixed := e.x_fixed := e.h_fixed := e.w_fixed := 1
+         e.y_fixed := e.x_fixed := e.h_fixed := e.w_fixed := &yes
       self.set_modified()
    end
 
@@ -1976,7 +1976,7 @@ class Canvas(Component,SelectiveObjectCodec)
    public new()
       Component.new()
       self.parent_Canvas := self
-      gen_main := gen_component_setup := gen_constructor := gen_init_dialog := 1
+      gen_main := gen_component_setup := gen_constructor := gen_init_dialog := &yes
       self.gen_indent := 3
       self.name := "Untitled"
       self.superclass_name := "Dialog"

@@ -4,7 +4,7 @@ package ipl.vt
 
 import gui, io, lang, util, graphics(Window,Key,Selection,Mouse), net, ipl.lists, ipl.pdco, ipl.strings, ipl.graphics
 
-# Current attributes.  Treated as immutable, to alter a copy() is taken first.
+# Current attributes.  Treated as immutable (except the font field), to alter a copy() is taken first.
 package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic, url, font)
 
 package record SavedCursor(cx, cy, attr, charsets, curr_charset)
@@ -43,17 +43,19 @@ package class KeyEntry()
    public const 
       bits,       # The bits which must be set in the mask set
       mask,       # The mask, ie the bits to be considered
-      str         # The code to send
+      val,        # The code to send, or function to call
+      data        # An arbitrary piece of user data
 
    public matches(i)
       if iand(mask, i) = bits then
          return
    end
 
-   public new(bits, mask, str)
+   public new(bits, mask, val, data)
       self.bits := bits
       self.mask := mask
-      self.str := str
+      self.val := val
+      self.data := data
       return
    end
 end
@@ -62,10 +64,61 @@ end
 package class KeyTable()
    private const t
 
-   public add(code, bits, mask, str)
+   public add1(code, bits, mask, val)
+      return add(code, bits, mask, val) | syserr(&why)
+   end
+
+   public gen_codes()
+      suspend key(t)
+   end
+
+   public gen_entries(code)
       local l
-      (l := member(t, code)) | insert(t, code, l := [])
-      put(l, KeyEntry(bits, mask, str))
+      if l := member(t, code) then
+         suspend .!l
+   end
+
+   public add(code, bits, mask, val, data)
+      local l, e
+      iand(bits, mask) = bits | return error("invalid bits/mask combination")
+      if l := member(t, code) then {
+         # Given two entries, e and f, assume i matches both e and f.  Clearly i must
+         # be be|bf|z for some other bits z.  Since both match
+         # be = i&me and bf=i&mf. So
+         # be & i & mf = bf & i & me.  Subsitute i:
+         # be & mf & (be|bf|z) = bf & me & (be|bf|z)
+         # be&mf | be&mf&bf | be&mf&z = be&bf&me | bf&me | bf&me&z.  Since me&z=mf&z=0 :
+         # be&mf | be&mf&bf = be&bf&me | bf&me.  ie
+         # be&mf(1|bf) = bf&me(1|be), ie
+         # be&mf = bf&me
+         every e := !l do {
+            if iand(e.bits, mask) = iand(bits, e.mask) then
+               return error("inconsistent key entry")
+         }
+      } else
+         insert(t, code, l := [])
+      put(l, KeyEntry(bits, mask, val, data))
+      return self
+   end
+
+   # Remove a specific bits/mask entry for code or, with just one
+   # parameter, all the entries for code.
+   #
+   public remove(code, bits, mask)
+      local l, e
+      l := member(t, code) | fail
+      if /bits then
+         delete(t, code)
+      else {
+         every e := !l do {
+            if e.bits = bits & e.mask = mask then {
+               ldel1(l, e)
+               if *l = 0 then
+                  delete(t, code)
+               break
+            }
+         }
+      }
       return self
    end
 
@@ -74,30 +127,6 @@ package class KeyTable()
       every e := !member(t, code) do {
          if e.matches(i) then
             return e
-      }
-   end
-
-   public check_integrity()
-      local l, e, f, code
-      every code := key(t) do {
-         l := member(t, code)
-         every (e := !l) ~=== (f := !l) do {
-            if iand(e.bits, e.mask) ~= e.bits then
-               syserr("KeyTable entry has nonsense bits/mask: ", to_string(e))
-            # Given two entries, assume i matches both e and f.  Clearly i must
-            # be be|bf|z for some other bits z.  Since both match
-            # be = i&me and bf=i&mf. So
-            # be & i & mf = bf & i & me.  Subsitute i:
-            # be & mf & (be|bf|z) = bf & me & (be|bf|z)
-            # be&mf | be&mf&bf | be&mf&z = be&bf&me | bf&me | bf&me&z.  Since me&z=mf&z=0 :
-            # be&mf | be&mf&bf = be&bf&me | bf&me.  ie
-            # be&mf(1|bf) = bf&me(1|be), ie
-            # be&mf = bf&me
-            if iand(e.bits, f.mask) = iand(f.bits, e.mask) then {
-               syserr("KeyTable inconsistent: code=" || image(code) || 
-                      "; e=" || to_string(e) || "; f=" || to_string(f))
-            }
-         }
       }
    end
 
@@ -194,15 +223,17 @@ class Vt(LineBasedScrollArea, MenuMode)
       ui,                         # The VtUI instance providing external functionality.
       contents,                   # List of Rows
       tab_stops,                  # Set of column numbers.
+      custom_keys,                # KeyTable for custom key settings.
       cursor_ticker,
       cursor_on,
-      direction,                  # Selection scrolling direction
+      going_up,                   # Selection scrolling direction
       scroll_ticker,
       scroll_ticker_interval,
       highlight,                  # Link clicked on (shown red).
       last_highlight,             # Link last clicked, shown with a dotted rectangle
       held,                       # Link held by mouse down
       over,                       # Link mouse is over
+      no_drag,                    # Don't allow drag to set the cursor
       got,                        # Raw input, a string.
       part_ch,                    # Partial utf-8 char, a string.
       buff,                       # Input buffer, a ucs string.
@@ -254,7 +285,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private static const
       EMPTY_ATTR,
       KEY_TABLE,
-      C, S, A, K, U, V, CSA,
+      C, S, M, M4, M5, K, U, CSM,
       CHARSET
 
    public static const
@@ -264,11 +295,12 @@ class Vt(LineBasedScrollArea, MenuMode)
       EMPTY_ATTR := Attr()
       C := 1
       S := 2
-      A := 4
-      K := 8
-      U := 16
-      V := 32
-      CSA := C + S + A
+      M := 4
+      M4 := 8
+      M5 := 16
+      K := 32
+      U := 64
+      CSM := C + S + M + M4 + M5
       KEY_TABLE := KeyTable()
       setup_key_table()
       CHARSET := table()
@@ -284,6 +316,26 @@ class Vt(LineBasedScrollArea, MenuMode)
       insert(CHARSET, "B", Charset("United States", u"", u""))
    end
 
+   public static string_to_key_mask(s)
+      local i, c
+      i := 0
+      every c := !s do {
+         i := ior(i, case map(string(c)) of {
+            "0" : 0
+            "c" : C
+            "s" : S
+            "m" : M
+            "4" : M4
+            "5" : M5
+            "k" : K
+            "u" : U
+            "*" : CSM
+            default: fail
+         })
+      }
+      return i
+   end
+
    private static setup_key_table()
       add_cursor_key(Key.UP, "A")
       add_cursor_key(Key.DOWN, "B")
@@ -292,9 +344,9 @@ class Vt(LineBasedScrollArea, MenuMode)
       add_cursor_key(Key.HOME, "H")
       add_cursor_key(Key.END, "F")
 
-      KEY_TABLE.add("\b", 0, A, "\d")
-      KEY_TABLE.add("\b", A, A, "\e\d")
-      KEY_TABLE.add("\d", 0, 0, "\e[3~")
+      KEY_TABLE.add1("\b", 0, M, "\d")
+      KEY_TABLE.add1("\b", M, M, "\e\d")
+      KEY_TABLE.add1("\d", 0, 0, "\e[3~")
 
       add_std_key(Key.PGUP, "\e[5~")
       add_std_key(Key.PGDN, "\e[6~")
@@ -312,13 +364,11 @@ class Vt(LineBasedScrollArea, MenuMode)
       add_std_key(Key.F10, "\e[21~")
       add_std_key(Key.F11, "\e[23~")
       add_std_key(Key.F12, "\e[24~")
-
-      KEY_TABLE.check_integrity()
    end
 
    private static add_std_key(k, s)
       local l, r
-      KEY_TABLE.add(k, 0, CSA, s)
+      KEY_TABLE.add1(k, 0, CSM, s)
       if any(&digits, s[3]) then {
          l := s[1:4]
          r := s[4:0]
@@ -326,25 +376,25 @@ class Vt(LineBasedScrollArea, MenuMode)
          l := s[1:3] || "1"
          r := s[3:0]
       }
-      KEY_TABLE.add(k, S, CSA, l || ";2" || r)
-      KEY_TABLE.add(k, A, CSA, l || ";3" || r)
-      KEY_TABLE.add(k, C, CSA, l || ";5" || r)
-      KEY_TABLE.add(k, S+A, CSA, l || ";4" || r)
-      KEY_TABLE.add(k, C+A, CSA, l || ";7" || r)
-      KEY_TABLE.add(k, C+S, CSA, l || ";6" || r)
-      KEY_TABLE.add(k, CSA, CSA, l || ";8" || r)
+      KEY_TABLE.add1(k, S, CSM, l || ";2" || r)
+      KEY_TABLE.add1(k, M, CSM, l || ";3" || r)
+      KEY_TABLE.add1(k, C, CSM, l || ";5" || r)
+      KEY_TABLE.add1(k, S+M, CSM, l || ";4" || r)
+      KEY_TABLE.add1(k, C+M, CSM, l || ";7" || r)
+      KEY_TABLE.add1(k, C+S, CSM, l || ";6" || r)
+      KEY_TABLE.add1(k, CSM, CSM, l || ";8" || r)
    end
 
    private static add_cursor_key(k, c)
-      KEY_TABLE.add(k, 0, CSA+U, "\e[" || c)
-      KEY_TABLE.add(k, U, CSA+U, "\eO" || c)
-      KEY_TABLE.add(k, S, CSA, "\e[1;2" || c)
-      KEY_TABLE.add(k, A, CSA, "\e[1;3" || c)
-      KEY_TABLE.add(k, C, CSA, "\e[1;5" || c)
-      KEY_TABLE.add(k, S+A, CSA, "\e[1;4" || c)
-      KEY_TABLE.add(k, C+A, CSA, "\e[1;7" || c)
-      KEY_TABLE.add(k, C+S, CSA, "\e[1;6" || c)
-      KEY_TABLE.add(k, CSA, CSA, "\e[1;8" || c)
+      KEY_TABLE.add1(k, 0, CSM+U, "\e[" || c)
+      KEY_TABLE.add1(k, U, CSM+U, "\eO" || c)
+      KEY_TABLE.add1(k, S, CSM, "\e[1;2" || c)
+      KEY_TABLE.add1(k, M, CSM, "\e[1;3" || c)
+      KEY_TABLE.add1(k, C, CSM, "\e[1;5" || c)
+      KEY_TABLE.add1(k, S+M, CSM, "\e[1;4" || c)
+      KEY_TABLE.add1(k, C+M, CSM, "\e[1;7" || c)
+      KEY_TABLE.add1(k, C+S, CSM, "\e[1;6" || c)
+      KEY_TABLE.add1(k, CSM, CSM, "\e[1;8" || c)
    end
 
    package on_lost_primary_ownership()
@@ -572,14 +622,19 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private check_font(s)
-      local fam, size, width, W
+      local fam, size, width, W, t
       s ? {
          fam := tab(upto(',') | 0)
          (*fam > 0) | return error("font not in required format")
-         size := if ="," then
-            numeric(tab(0)) | return error("font not in required format")
-         else
-            Window.get_default_font_size()
+         if ="," then {
+            t := tab(0)
+            size := real(t) | return error("font not in required format")
+            if any('+\-', t) then
+               size +:= Window.get_default_font_size()
+            size <:= 3.0
+            size >:= 40.0
+         } else
+            size := Window.get_default_font_size()
       }
       s := fam || "," || size
       width := use {
@@ -594,12 +649,23 @@ class Vt(LineBasedScrollArea, MenuMode)
    # font and resets the component if necessary.
    #
    public set_vt_font(s)
+      local seg, l
       s := string(s) | runerr(103, s)
-      check_font(s) | fail
+      l := check_font(s) | fail
       set_font(s)
-      if is_live() then {
+      if is_live() & not(l[1] == font_family & l[2] = font_size) then {
          invalidate_line_height()
          reset()
+         # Update the font entry in all Attr records
+         synch_font()
+         every seg := !((!contents).l) do
+            synch_font(seg.attr)
+         synch_font((\saved_cursor).attr)
+         if \saved_buffer then {
+            synch_font(saved_buffer.attr)
+            every seg := !((!saved_buffer.contents).l) do
+               synch_font(seg.attr)
+         }
       }
       return self
    end
@@ -835,6 +901,8 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_full_reset()
+      do_restore_cursor()
+      do_use_normal_buffer()
       reset_term()
       do_erase_all()
       move_cursor(1, 1)
@@ -939,10 +1007,8 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_reverse_video(f)
-      if reverse_mode ~=== f then {
-         reverse_mode := f
+      if reverse_mode ~===:= f then
          view.reset()
-      }
    end
 
    private set_col_mode(n)
@@ -1029,9 +1095,10 @@ class Vt(LineBasedScrollArea, MenuMode)
    #
    public set_reverse_fg(c)
       /c | Window.parse_color(c) | return error("invalid color")
-      self.reverse_fg := c
-      if is_live() then
-         view.reset()
+      if reverse_fg ~===:= c then {
+         if is_live() then
+            view.reset()
+      }
       return self
    end
 
@@ -1040,9 +1107,10 @@ class Vt(LineBasedScrollArea, MenuMode)
    #
    public set_reverse_bg(c)
       /c | Window.parse_color(c) | return error("invalid color")
-      self.reverse_bg := c
-      if is_live() then
-         view.reset()
+      if reverse_bg ~===:= c then {
+         if is_live() then
+            view.reset()
+      }
       return self
    end
 
@@ -1050,9 +1118,10 @@ class Vt(LineBasedScrollArea, MenuMode)
    #
    public set_normal_fg(c)
       /c | Window.parse_color(c) | return error("invalid color")
-      self.normal_fg := c
-      if is_live() then
-         view.reset()
+      if normal_fg ~===:= c then {
+         if is_live() then
+            view.reset()
+      }
       return self
    end
 
@@ -1061,9 +1130,10 @@ class Vt(LineBasedScrollArea, MenuMode)
    #
    public set_normal_bg(c)
       /c | Window.parse_color(c) | return error("invalid color")
-      self.normal_bg := c
-      if is_live() then
-         view.reset()
+      if normal_bg ~===:= c then {
+         if is_live() then
+            view.reset()
+      }
       return self
    end
 
@@ -1072,12 +1142,13 @@ class Vt(LineBasedScrollArea, MenuMode)
    #
    public set_history_size(n)
       n := (0 <= integer(n)) | runerr(101, n)
-      self.history_size := n
-      trim_history()
-      invalidate_line_count()
-      if is_live() then {
-         check_changed_size()
-         compute_and_invalidate()
+      if history_size ~=:= n then {
+         trim_history()
+         invalidate_line_count()
+         if is_live() then {
+            check_changed_size()
+            compute_and_invalidate()
+         }
       }
       return self
    end
@@ -1341,7 +1412,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       py := view.y - info.offset + (cy_to_index() - info.first) * line_height
       # Ensure cursor is entirely within view
       (view.y <= py & py + line_height - 1 < view.y + view.h) | fail
-      #write(view.y,"-",view.y+view.h," -v-",py, " view.h=",view.h, " line_height=",line_height,"  lines=",rows)
       # Get perfect alignment with between the cursor line and the first line in the popup.
       py -:= Gui.BORDER_WIDTH
       open_popup(px, py, t)
@@ -1365,17 +1435,18 @@ class Vt(LineBasedScrollArea, MenuMode)
       }
    end
 
-   private synch_font()
+   private synch_font(a)
       local s
-      if \ (attr.bold | attr.font) then {
+      /a := attr
+      if \ (a.bold | a.font) then {
          s := font_family
-         if \attr.bold then
+         if \a.bold then
             s ||:= ",bold"
-         if \attr.italic then
+         if \a.italic then
             s ||:= ",italic"
          s ||:= "," || font_size
       }
-      attr.font := s
+      a.font := s
    end
 
    # ESC[{n}m
@@ -1540,10 +1611,8 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_hide_cursor(f)
-      if hide_cursor_mode ~=== f then {
-         hide_cursor_mode := f
+      if hide_cursor_mode ~===:= f then
          invalidate_cursor()
-      }
    end
 
    private do_single_shift(n)
@@ -1960,7 +2029,10 @@ class Vt(LineBasedScrollArea, MenuMode)
    #
    private set_cursor_from_pos(e)
       cursor_y := get_nearest_line_to_pointer(e)
-      cursor_x := col_for_x(e.x)
+      # Adding char_w/2 notionally places the dividing points in the
+      # middle of chars; this is better for selection of regions with
+      # the "xterm" mouse cursor.
+      cursor_x := col_for_x(e.x + char_w / 2)
       cursor_x >:= cols + 1
    end
 
@@ -1995,20 +2067,26 @@ class Vt(LineBasedScrollArea, MenuMode)
    private handle_ldrag(e)
       if \held then
          handle_mdrag(e)
-      else {
-         invalidate_region()
+      else if /no_drag then {
          if cursor_y > 1 & e.y < self.view.y then {
-            direction := "up"
+            going_up := &yes
             check_scroll_ticker(self.view.y - e.y)
          } else if cursor_y < *contents & e.y >= self.view.y + self.view.h then {
-            direction := "down"
+            going_up := &no
             check_scroll_ticker(e.y - (self.view.y + self.view.h))
          } else {
-            direction := &null
+            invalidate_region()
             scroll_ticker.stop()
-            set_cursor_from_pos(e)
+            if e.y < self.view.y then
+               # cursor_y = 1
+               cursor_x := 1
+            else if e.y >= self.view.y + self.view.h then
+               # cursor_y = *contents
+               cursor_x := *contents_str(cursor_y) + 1
+            else
+               set_cursor_from_pos(e)
+            invalidate_region()
          }
-         invalidate_region()
       }
    end
 
@@ -2022,24 +2100,25 @@ class Vt(LineBasedScrollArea, MenuMode)
    private scroll_tick()
       local i
       repeat {
-         invalidate_region()
-         case self.direction of {
-            "up" : {
-               if cursor_y > 1 & i := get_line_info() then {
-                  cursor_y := i.first_whole - 1
-                  cursor_y <:= 1
-                  ensure_line_visible(cursor_y)
-               }
+         if \going_up then {
+            if cursor_y > 1 & i := get_line_info() then {
+               invalidate_region()
+               cursor_y := i.first_whole - 1
+               cursor_y <:= 1
+               cursor_x := 1
+               ensure_line_visible(cursor_y)
+               invalidate_region()
             }
-            "down" : {
-               if cursor_y < *contents & i := get_line_info() then {
-                  cursor_y := i.last_whole + 1
-                  cursor_y >:= *contents
-                  ensure_line_visible(cursor_y)
-               }
+         } else {
+            if cursor_y < *contents & i := get_line_info() then {
+               invalidate_region()
+               cursor_y := i.last_whole + 1
+               cursor_y >:= *contents
+               cursor_x := *contents_str(cursor_y) + 1
+               ensure_line_visible(cursor_y)
+               invalidate_region()
             }
          }
-         invalidate_region()
          scroll_ticker.sleep(scroll_ticker_interval)
       }
    end
@@ -2093,15 +2172,28 @@ class Vt(LineBasedScrollArea, MenuMode)
       send(Format.shell_escape(text_convert(selection_convert(target_type, data), "ucs")))
    end
 
+   public handle_pgup(e)
+      goto_first(get_line_info().first_whole - max(rows - 3, 1))
+   end
+
+   public handle_pgdn(e)
+      goto_last(get_line_info().last_whole + max(rows - 3, 1))
+   end
+
    public handle_copy(e)
       local s
-      if s := \text_selection then {
+      if s := \text_selection then
          parent_dialog.own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
-         # This indicates to handle_special_key() below that we've
-         # handled the key; otherwise it is passed on.  (this is what
-         # konsole does).
-         return
+   end
+
+   # Put a string as though typed by the user.
+   public put_user_string(s)
+      send(s)
+      if is_live() then {
+         quieten_cursor_and_clear_msg()
+         goto_bottom()
       }
+      return self
    end
 
    private handle_default_key(e)
@@ -2111,37 +2203,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          ch := text_convert(ch, "ucs") | fail
          if \e.meta then
             ch := u"\e" || ch
-         send(ch)
-         quieten_cursor_and_clear_msg()
-         goto_bottom()
-      }
-   end
-
-   private handle_special_key(e)
-      case e.code of {
-         # Navigation if shift is pressed
-         Key.PGUP : if \e.shift then {
-            goto_first(get_line_info().first_whole - max(rows - 3, 1))
-            return
-         }
-         Key.PGDN : if \e.shift then {
-            goto_last(get_line_info().last_whole + max(rows - 3, 1))
-            return
-         }
-         Key.HOME | Key.END : if \e.shift then {
-            on_default_key(e)
-            return
-         }
-         Key.F10 :
-            return handle_copy(e)
-         Key.INSERT :  {
-            if \e.ctrl then
-               return handle_copy(e)
-            else if \e.shift then {
-               handle_paste(e)
-               return
-            }
-         }
+         put_user_string(ch)
       }
    end
 
@@ -2150,13 +2212,17 @@ class Vt(LineBasedScrollArea, MenuMode)
       i := 0
       if \e.shift then i +:= S
       if \e.ctrl then i +:= C
-      if \e.meta then i +:= A
+      if \e.meta then i +:= M
+      if \e.meta4 then i +:= M4
+      if \e.meta5 then i +:= M5
       if \application_keypad_mode then i +:= K
       if \application_cursor_mode then i +:= U
+      if ke := custom_keys.lookup(e.code, i) then {
+         ke.val(e)
+         return
+      }
       if ke := KEY_TABLE.lookup(e.code, i) then {
-         send(ke.str)
-         quieten_cursor_and_clear_msg()
-         goto_bottom()
+         put_user_string(ke.val)
          return
       }
    end
@@ -2177,7 +2243,28 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private handle_key(e, src, ty)
-      handle_popup_key(e, src, ty) | handle_special_key(e) | handle_table_key(e) | handle_default_key(e)
+      handle_popup_key(e, src, ty) | handle_table_key(e) | handle_default_key(e)
+   end
+
+   public gen_custom_key_codes()
+      suspend custom_keys.gen_codes()
+   end
+
+   public gen_custom_key_entries(code)
+      suspend custom_keys.gen_entries(code)
+   end
+
+   public add_custom_key(code, bits, mask, func, data)
+      return custom_keys.add(code, bits, mask, func, data) & self
+   end
+
+   public remove_custom_key(code, bits, mask)
+      return custom_keys.remove(code, bits, mask) & self
+   end
+
+   public reset_custom_keys()
+      custom_keys := KeyTable()
+      return self
    end
 
    private invalidate_link(l)
@@ -2315,6 +2402,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          }
          held := &null
       } else {
+         no_drag := &null
          scroll_ticker.stop()
          own_primary()
       }
@@ -2388,6 +2476,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          mark_x := m.x
          mark_y := m.y
       }
+      no_drag := &yes
    end
 
    private handle_triple_click()
@@ -2403,13 +2492,13 @@ class Vt(LineBasedScrollArea, MenuMode)
          mark_x := m.x
          mark_y := m.y
       }
+      no_drag := &yes
    end
 
    private handle_lpress1(e)
       invalidate_region()
       reset_search()
-      # This would be \e.shift, but shift is used to disable the link click functionality.
-      if \e.ctrl then {
+      if \e.shift then {
          /self.mark_y := self.cursor_y
          /self.mark_x := self.cursor_x
          set_cursor_from_pos(e)
@@ -2473,7 +2562,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       # No need to synch_pointer since we call this method out of the
       # keyboard handler.
       view.set_pointer("xterm")
-      quieten := 1
+      quieten := &yes
       ui.quieten_cursor()
    end
 
@@ -2488,10 +2577,10 @@ class Vt(LineBasedScrollArea, MenuMode)
    private handle_in_chain(ev)
       local seg, f
       (/quieten & parent_dialog.get_held_count() = 0) | fail
-      if ev.code === (Key.SHIFT_L | Key.SHIFT_R) then {
+      if ev.code === (Key.CONTROL_L | Key.CONTROL_R) then {
          if /ev.release then
-            f := 1
-      } else f := \ev.shift
+            f := &yes
+      } else f := \ev.ctrl
       if /f & (seg := get_segment_for_pos(ev)) & \seg.attr.url then {
          set_over(seg.attr.url)
          view.set_pointer("hand1")
@@ -2648,7 +2737,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       local i, j, num, curr, prev, last, matching, r
       \search_term | fail
       if \search_increment_flag then
-         curr := unflow_loc(cursor_x, \cursor_y)
+         curr := unflow_loc(mark_x, \mark_y)
       num := 0
       i := 1
       every r := unflowed() do {
@@ -2672,7 +2761,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       local i, j, num, curr, first, matching, nxt, r, p
       \search_term | fail
       if \search_increment_flag then
-         curr := unflow_loc(cursor_x, \cursor_y)
+         curr := unflow_loc(mark_x, \mark_y)
       num := 0
       i := 1
       every r := unflowed() do {
@@ -2696,16 +2785,19 @@ class Vt(LineBasedScrollArea, MenuMode)
    private done_search(pos, matching, num)
       local at_c, at_m
       if \pos &
-         at_c := reflow_loc(pos.x, pos.y) &
-         at_m := reflow_loc(pos.x + *search_term, pos.y) then
+         at_m := reflow_loc(pos.x, pos.y) &
+         at_c := reflow_loc(pos.x + *search_term, pos.y) then
       {
          invalidate_region()
          cursor_x := at_c.x
          cursor_y := at_c.y
          mark_x := at_m.x
          mark_y := at_m.y
-         # Ensure the line is visible with context of at least 3 lines above/below.
-         ensure_region_visible(get_area_line_rect(cursor_y).pad(0, 3 * line_height))
+         # Ensure the search selection is visible with context of at
+         # least 3 lines above/below.
+         ensure_region_visible(get_area_line_rect(cursor_y).
+                                  union(get_area_line_rect(mark_y)).
+                                  pad(0, 3 * line_height))
          own_primary()
          search_increment_flag := &yes
          invalidate_region()
@@ -2725,6 +2817,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    public new()
       LineBasedScrollArea.new()
+      reset_custom_keys()
       scroll_ticker := Dispatcher.new_task{scroll_tick()}
       cursor_ticker := Dispatcher.new_task{cursor_tick()}
       cursor_on := -1

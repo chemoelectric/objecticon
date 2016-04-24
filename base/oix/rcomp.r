@@ -84,6 +84,9 @@ int anycmp(dptr dp1, dptr dp2)
       null:
          return Equal;
 
+      yes:
+         return Equal;
+
       proc:
          return proccmp(&ProcBlk(*dp1), &ProcBlk(*dp2));
 
@@ -141,22 +144,23 @@ int order(dptr dp)
 {
    type_case *dp of {
      null:        return 0;
-     integer:     return 1;
-     real:        return 2;
-     string:      return 3;
-     cset:        return 4;
-     constructor: return 5;
-     coexpr:      return 6;
-     proc:        return 7;
-     list:        return 8;
-     set:         return 9;
-     table:       return 10;
-     record:      return 11;
-     ucs:         return 12;
-     class:       return 13;
-     object:      return 14;
-     methp:       return 15;
-     weakref:     return 16;
+     yes:         return 1;
+     integer:     return 2;
+     real:        return 3;
+     string:      return 4;
+     cset:        return 5;
+     constructor: return 6;
+     coexpr:      return 7;
+     proc:        return 8;
+     list:        return 9;
+     set:         return 10;
+     table:       return 11;
+     record:      return 12;
+     ucs:         return 13;
+     class:       return 14;
+     object:      return 15;
+     methp:       return 16;
+     weakref:     return 17;
      default: {
 	 syserr("order: unknown datatype.");
 	 /*NOTREACHED*/

@@ -12,11 +12,13 @@ $load CLOCK "images/gui.CLOCK_24.png"
 $load CLOSE "images/gui.CLOSE_24.png"
 $load FONT "images/gui.FONT_24.png"
 $load FILESIZE "images/gui.FILESIZE_24.png"
+$load CIRCULATE "images/gui.CIRCULATE_12.png"
 $else
 $load CLOCK "images/gui.CLOCK_24.gif"
 $load CLOSE "images/gui.CLOSE_24.gif"
 $load FONT "images/gui.FONT_24.gif"
 $load FILESIZE "images/gui.FILESIZE_24.gif"
+$load CIRCULATE "images/gui.CIRCULATE_12.gif"
 $endif
 $load HOME "images/gui.HOME_24.gif"
 $load NEW_FOLDER "images/gui.NEW_FOLDER_24.gif"
@@ -64,6 +66,7 @@ final abstract class ImageCache()
       name_image("gui.FILE_16", FILE)
       name_image("gui.WINDOW_CLOSE_16", WINDOW_CLOSE)
       name_image("gui.WINDOW_ICONIFY_16", WINDOW_ICONIFY)
+      name_image("gui.CIRCULATE_12", CIRCULATE)
 
       name_image("gui.CLOCK_SVG", CLOCK_SVG)
       name_image("gui.FILESIZE_SVG", FILESIZE_SVG)

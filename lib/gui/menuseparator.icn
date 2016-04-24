@@ -48,7 +48,7 @@ class MenuSeparator(MenuComponent)
 
    public new()
       MenuComponent.new()
-      self.is_decorative_flag := 1
+      self.is_decorative_flag := &yes
       return
    end
 end

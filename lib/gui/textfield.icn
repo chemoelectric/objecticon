@@ -51,6 +51,7 @@ class TextField(Component)
       old_cursor,
       old_mark,
       old_region,
+      no_drag,                 # Don't allow drag to set the cursor
       changed,
       loff,
       primary_selection_owner,
@@ -254,10 +255,12 @@ class TextField(Component)
                   self.cursor +:= 1
                while any(~' ', self.contents, self.mark - 1) do
                   self.mark -:= 1
+               no_drag := &yes
             }
             2 : {
                self.cursor := *self.contents + 1
                self.mark := 1
+               no_drag := &yes
             }
          }
       }
@@ -322,12 +325,14 @@ class TextField(Component)
    public handle_ldrag(e)
       local p
 
+      /no_drag | fail
+
       start_handle(e)
       p := self.cursor
 
       # Start ticking if to the left/right, otherwise stop ticking
       if e.x < self.tx then {
-         self.going_left := 1
+         self.going_left := &yes
          check_scroll_ticker(self.tx - e.x)
       } else if e.x >= self.tx + self.tw then {
          self.going_left := &null
@@ -390,6 +395,7 @@ class TextField(Component)
       # For consistency with editabletextlist we clear_mark if no region.
       has_region() | clear_mark()
       scroll_ticker.stop()
+      no_drag := &null
       end_handle(e)
    end
 
@@ -785,16 +791,16 @@ class TextField(Component)
       cursor_on := -1
       undo_manager := UndoManager()
       filter := Gui.PRINTABLE_1
-      self.accepts_focus_flag := 1
+      self.accepts_focus_flag := &yes
       self.set_contents("")
       self.set_border(CompoundBorder().
                           set_outer(SunkenBorder()).
                           set_inner(EmptyBorder().
                                     set_l_inset(Gui.TEXT_INSET).
                                     set_r_inset(Gui.TEXT_INSET)))
-      self.is_editable_flag := 1
-      self.menu_on_rpress_flag := 1
-      self.move_on_rpress_flag := 1
+      self.is_editable_flag := &yes
+      self.menu_on_rpress_flag := &yes
+      self.move_on_rpress_flag := &yes
       self.set_constraint("x_fill", &yes)
       self.set_constraint("x_align", Align.L)
       self.set_constraint("x_weight", 1.0)
@@ -844,19 +850,19 @@ abstract class TextFieldEdit(UndoableEdit)
    public doit()
       save()
       self.redo_impl()
-      parent.changed := 1
+      parent.changed := &yes
    end
 
    public redo()
       restore()
       self.redo_impl()
-      parent.changed := 1
+      parent.changed := &yes
    end
 
    public undo()
       self.undo_impl()
       restore()
-      parent.changed := 1
+      parent.changed := &yes
    end
 
    public abstract redo_impl()

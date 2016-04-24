@@ -12,7 +12,7 @@
 #
 class CanvasTextButtonDialog(CanvasButtonDialog)
    public setup()
-      has_label_down := 1
+      has_label_down := &yes
       CanvasButtonDialog.setup()
    end
 end

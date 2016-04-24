@@ -545,6 +545,9 @@ void outimage(FILE *f, dptr dp, int noimage)
       null:
          fprintf(f, "&null");
 
+      yes:
+         fprintf(f, "&yes");
+
       integer:
 
          if (Type(*dp) == T_Lrgint)
@@ -1168,6 +1171,10 @@ void getimage(dptr dp1, dptr dp2)
 
       null: {
            LitStr("&null", dp2);
+         }
+
+      yes: {
+           LitStr("&yes", dp2);
          }
 
      class: {
@@ -2218,7 +2225,7 @@ void buffnstr(dptr d, char **s, ...)
 
 int isflag(dptr d)
 {
-    return is:null(*d) || (d->dword == D_Integer && IntVal(*d) == 1);
+    return is:null(*d) || is:yes(*d);
 }
 
 /*

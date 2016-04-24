@@ -10,7 +10,7 @@ class CairoDisplay(Component)
    end
 
    private cairo_display(o)
-      o.translate(x, y)
+      o.translate(x, y).scale(Gui.SCALE, Gui.SCALE)
       case parent_dialog.selector.get_selection() of {
          1: arc_example(o)
          2: arc_negative_example(o)
@@ -391,7 +391,8 @@ class CairoDisplay(Component)
    end
 
    private text_example(o)
-      o.set_font("sans,bold,90")
+      # We have to "unscale" the font height, since o is already scaled.
+      o.set_font("sans,bold,"||90/Gui.SCALE)
       o.move_to ( 10.0, 35.0)
       o.text_path ( "Hello")
       o.fill()
@@ -416,7 +417,7 @@ class CairoDisplay(Component)
 
       s := "Cairo"
 
-      o.set_font("sans,52")
+      o.set_font("sans," || 52/Gui.SCALE)
 
       o.text_path ( s)
       ext := o.get_stroke_extents()
@@ -443,7 +444,7 @@ class CairoDisplay(Component)
 
    private text_extents_example(o)
       local ext
-      o.set_font("sans,100")
+      o.set_font("sans," || 100/Gui.SCALE)
 
       o.move_to (25, 50)
       o.text_path ( "cairo")
@@ -511,9 +512,8 @@ class CairoTest(Dialog)
    private setup()
       local layout_1, paint_1, panel_1, layout_3, border_content_1, border_1, layout_2, text_button_1
       self.set_resize(&yes)
-      self.set_size(scale(414), scale(330))
       cairo_display := CairoDisplay().
-         set_size(scale(277), scale(207)).
+         set_size(scale(275), scale(275)).
          clear_constraints().
          set_constraint("b_inset", scale(0)).
          set_constraint("l_inset", scale(0)).
@@ -530,7 +530,6 @@ class CairoTest(Dialog)
          set_layout(layout_3).
          add(cairo_display)
       border_1 := Border().
-         set_size(scale(100), scale(100)).
          clear_constraints().
          set_constraint("eol", &yes).
          set_constraint("x_fill", &yes).

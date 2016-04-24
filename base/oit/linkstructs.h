@@ -85,7 +85,7 @@ struct lclass_super {
     struct lclass_super *next;
 };
 
-enum const_val_flag { NOT_SEEN = 0, SET_NULL, SET_CONST, OTHER };
+enum const_val_flag { NOT_SEEN = 0, SET_NULL, SET_CONST, SET_YES, OTHER };
 
 struct lclass_field {
     char *name;

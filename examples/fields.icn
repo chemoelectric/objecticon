@@ -26,7 +26,7 @@ class Untitled(Dialog)
       timezone_field.set_size()
       color_field.set_size()
       file_field.set_placeholder("File")
-      dir_field.set_placeholder("Dir").set_directories_only(1)
+      dir_field.set_placeholder("Dir").set_directories_only(&yes)
    end
 
    private setup()

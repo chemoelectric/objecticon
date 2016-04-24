@@ -531,7 +531,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       if n < 36525 then {                   # 1/1/2000 - 31/12/2099 - 25 blocks of 1461 days
          year +:= 4 * (n / 1461)
          n %:= 1461
-         flag := 1
+         flag := &yes
       } else if n < 37985 then {            # 1/1/2100 - 31/12/2103 - 1 block of 1460 days
          year +:= 100
          n -:= 36525
@@ -539,7 +539,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
          n -:= 37985
          year +:= 104 + 4 * (n / 1461)
          n %:= 1461
-         flag := 1
+         flag := &yes
       } else if n < 74509 then {            # 1/1/2200 - 31/12/2203 - 1 block of 1460 days
          year +:= 200
          n -:= 73049
@@ -547,7 +547,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
          n -:= 74509
          year +:= 204 + 4 * (n / 1461)
          n %:= 1461
-         flag := 1
+         flag := &yes
       } else if n < 111033 then {           # 1/1/2300 - 31/12/2303 - 1 block of 1460 days
          year +:= 300
          n -:= 109573
@@ -555,7 +555,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
          n -:= 111033
          year +:= 304 + 4 * (n / 1461)
          n %:= 1461
-         flag := 1
+         flag := &yes
       }
 
       if /flag then {       # 4 years of 365 days each

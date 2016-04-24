@@ -56,7 +56,7 @@ class SmtpClient(NetClient)
 
       if /sent_helo then {
          send_command("EHLO " || hostname, 250) | fail
-         sent_helo := 1
+         sent_helo := &yes
       } else
          send_command("RSET", 250)
 

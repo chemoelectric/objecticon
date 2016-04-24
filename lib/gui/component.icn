@@ -1331,14 +1331,6 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Drag and drop helper to invoke drag_reset
-   #
-   public invoke_drag_reset(e)
-      every (!self.children).invoke_drag_reset(e)
-      drag_reset(e)
-   end
-
-   #
    # Invoked on a drag gesture; if the  component wishes to start a drag and drop session,
    # it should succeed and return the drag content, otherwise it should fail.  The drag
    # content is subsequently stored in the `content` of the current `Drag` object.
@@ -1382,8 +1374,11 @@ class Component(Rect,Align,Connectable)
    # returned is put into the content field of a Drag object, which is passed to
    # {perform_drop()} on a drop event.
    #
+   # It may also be invoked independently of any particular event, for example if the
+   # state potentially changes via a ticker.  In this case the passed event is null.
+   #
    # @param drag the current Drag object.
-   # @param e the drag event
+   # @param e the drag event; may be `&null`.
    #
    public can_drop(drag, e)
    end
@@ -1397,8 +1392,8 @@ class Component(Rect,Align,Connectable)
    #
    # NB - this method will only be invoked if the allow_drop flag is non-null.
    #
-   # @param d the current Drag object representing the drag
-   # @param d the current Drag object representing the drop.
+   # @param drag the current Drag object representing the drag
+   # @param drop the current Drag object representing the drop.
    # @param e the drop event
    #
    public perform_drop(drag, drop, e)
@@ -1406,15 +1401,15 @@ class Component(Rect,Align,Connectable)
 
    #
    # Invoked on the component that started the drag, after a successful drop
-   # @param d the current Drag object representing the drag
-   # @param d the current Drag object representing the drop.
+   # @param drag the current Drag object representing the drag
+   # @param drop the current Drag object representing the drop.
    # @param e the drop event
    #
    public end_drag(drag, drop, e)
    end
 
    #
-   # Invoked at the end of drag and drop (on all components) to clear any drag state
+   # Invoked at the end of drag and drop (on the drag holder) to clear any drag state
    # @param e the last event
    #
    public drag_reset(e)
@@ -1503,7 +1498,7 @@ class Component(Rect,Align,Connectable)
       self.z := self.tab_ord := 0
       self.tooltip_start_delay := Dialog.TOOLTIP_START_DELAY
       self.tooltip_end_delay := Dialog.TOOLTIP_END_DELAY
-      self.inherit_wattribs_flag := 1
+      self.inherit_wattribs_flag := &yes
       return
    end
 end

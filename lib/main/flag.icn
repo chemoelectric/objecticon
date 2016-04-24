@@ -5,14 +5,12 @@ package util
 #
 procedure flag(s)
    # Flag values just return themselves
-   if s === (&yes | &no) then
-      return s
-
-   s := map(string(s)) | fail
-   if s == ("y" | "&yes" | "yes" | "t" | "true" | "on" | "1") then
-      return &yes
-   if s == ("n" | "&no" | "no" | "f" | "false" | "off" | "0") then
-      return &no
+   return if s === (&yes | &no) then
+      s
+   else case  map(string(s)) of {
+      "y" | "&yes" | "yes" | "t" | "true" | "on" | "1" : &yes
+      "n" | "&no" | "no" | "f" | "false" | "off" | "0" : &no
+   }
 end
 
 #

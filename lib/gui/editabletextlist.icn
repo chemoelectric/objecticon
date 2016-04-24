@@ -44,6 +44,7 @@ class EditableTextList(LineBasedScrollArea)
       old_mark_y,
       old_has_region,
       old_region,
+      no_drag,                 # Don't allow drag to set the cursor
       view_list,
       view_list_split_width,
       tab_width,
@@ -280,7 +281,7 @@ class EditableTextList(LineBasedScrollArea)
       every t := separate_lines(s) do {
          if /fl then {
             contents[-1] ||:= t
-            fl := 1
+            fl := &yes
          } else
             put(contents, t)
       }
@@ -536,7 +537,7 @@ class EditableTextList(LineBasedScrollArea)
          if /changed then
             self.constrain_line()
          cursor_on := -1
-         cursor_moved := 1
+         cursor_moved := &yes
       }
 
       # Invalidate on cursor/mark changes
@@ -657,11 +658,13 @@ class EditableTextList(LineBasedScrollArea)
                   self.cursor_x +:= 1
                while any(~'\t ', self.contents[self.cursor_y], self.mark_x - 1) do
                   self.mark_x -:= 1
+               no_drag := &yes
             }
             2 : {
                self.cursor_x := *self.contents[self.cursor_y] + 1
                self.mark_y := self.cursor_y
                self.mark_x := 1
+               no_drag := &yes
             }
          }
       }
@@ -732,6 +735,8 @@ class EditableTextList(LineBasedScrollArea)
 
    public handle_ldrag(e)
       local vi, v
+
+      /no_drag | fail
 
       start_handle(e)
 
@@ -833,6 +838,7 @@ class EditableTextList(LineBasedScrollArea)
       #
       has_region() | clear_mark()
       scroll_ticker.stop()
+      no_drag := &null
       end_handle(e)
    end
 
@@ -1407,9 +1413,9 @@ class EditableTextList(LineBasedScrollArea)
       set_contents([])
       set_wrap_mode("off")
       self.cursor_x := self.cursor_y := 1
-      self.is_editable_flag := 1
-      self.menu_on_rpress_flag := 1
-      self.move_on_rpress_flag := 1
+      self.is_editable_flag := &yes
+      self.menu_on_rpress_flag := &yes
+      self.move_on_rpress_flag := &yes
       self.primary_selection_owner := EditableTextListPrimarySelectionOwner(self)
       view.connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
       view.connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
@@ -1489,19 +1495,19 @@ abstract class EditableTextListEdit(UndoableEdit)
    public doit()
       save()
       self.redo_impl()
-      parent.changed := 1
+      parent.changed := &yes
    end
 
    public redo()
       restore()
       self.redo_impl()
-      parent.changed := 1
+      parent.changed := &yes
    end
 
    public undo()
       self.undo_impl()
       restore()
-      parent.changed := 1
+      parent.changed := &yes
    end
 
    public abstract redo_impl()
@@ -1660,7 +1666,7 @@ class EditableTextListDeleteLineEdit(EditableTextListEdit)
       if parent.cursor_y = *parent.contents then {
          parent.contents[parent.cursor_y][1:0] := ""
          parent.update_view_list(parent.cursor_y, 1, 1)
-         self.last := 1
+         self.last := &yes
       } else {
          delete(parent.contents, parent.cursor_y)
          parent.update_view_list(parent.cursor_y, 1, 0)

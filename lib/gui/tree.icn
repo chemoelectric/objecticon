@@ -121,7 +121,7 @@ abstract class BaseTree(SelectableScrollArea)
       if /r then
          set_contents([])
       else {
-         root_node.is_expanded_flag := 1
+         root_node.is_expanded_flag := &yes
          invalidate_node_images()
          set_contents(flatten())
          set_selections([])
@@ -340,7 +340,7 @@ abstract class BaseTree(SelectableScrollArea)
       set_default_icon_paint(ImagePaint().set_cache("tree.CLOSED_FOLDER"), 
                              ImagePaint().set_cache("tree.OPEN_FOLDER"),
                              ImagePaint().set_cache("tree.FILE"))
-      show_root_flag := show_root_handles_flag := 1
+      show_root_flag := show_root_handles_flag := &yes
       return
    end
 end

@@ -83,7 +83,7 @@ $endif
       # The message format is <len><nl><encoded-data>; knowing the
       # length in advance lets us potentially get all the encoded data
       # in one low-level socket read, which is much faster.
-      s := encode(obj, 1) | fail
+      s := encode(obj, &yes) | fail
       return sock.writes(*s, "\n", s)
    end
 

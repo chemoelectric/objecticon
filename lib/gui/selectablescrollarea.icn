@@ -515,7 +515,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       if self.cursor ~=== self.old_cursor then {
          invalidate_line(\self.old_cursor, i)
          invalidate_line(\self.cursor, i)
-         cursor_moved := 1
+         cursor_moved := &yes
       }
       if self.highlight ~=== self.old_highlight then {
          invalidate_line(\self.highlight, i)
@@ -529,7 +529,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       }
       if not lang.equals(self.old_selections, self.selections) then {
          every invalidate_line(!(old_selections -- selections) | !(selections -- old_selections), i)
-         selection_changed := 1
+         selection_changed := &yes
       }
 
       # Fire events
@@ -609,7 +609,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       start_handle(e)
       self.prev_cursor := self.cursor
       self.cursor := l
-      self.on_a_line := 1
+      self.on_a_line := &yes
       ensure_line_visible(self.cursor)
       end_handle(e)
    end
@@ -680,12 +680,12 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       # DropDown's list so that we don't scroll immediately the button is
       # pressed.
       #
-      /self.on_a_line := get_line_under_pointer(e)
+      /self.on_a_line := if get_line_under_pointer(e) then &yes
       \self.on_a_line | fail
 
       start_handle(e)
       if e.y < self.view.y then {
-         self.going_up := 1
+         self.going_up := &yes
          check_ticker(self.view.y - e.y)
       } else if e.y >= self.view.y + self.view.h then {
          self.going_up := &null
@@ -722,6 +722,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
                   goto_last(self.highlight)
                   highlight_part := if get_dnd_mode() === MIDDLE_ONLY then MIDDLE else BOTTOM
                }
+               parent_dialog.update_drop()
             } else {
                if \going_up then {
                   self.cursor := i.first_whole - 1
@@ -951,9 +952,9 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
             # Above the view, start going up if we have a vsb and a highlight.
             #
             if \vsb & \highlight then {
-               self.going_up := 1
+               self.going_up := &yes
                check_ticker(self.view.y - e.y)
-               hold := 1
+               hold := &yes
             }
          } else if e.y >= self.view.y + self.view.h then {
             # Below the view, start going down if we have a vsb and a highlight.
@@ -961,7 +962,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
             if \vsb & \highlight then {
                self.going_up := &null
                check_ticker(e.y - (self.view.y + self.view.h))
-               hold := 1
+               hold := &yes
             }
          } else {
             # In the view
@@ -970,7 +971,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
                ensure_line_visible(self.highlight)
             } else
                self.highlight := self.highlight_part := &null
-            hold := 1
+            hold := &yes
             scroll_ticker.stop()
          }
       } else {
@@ -991,12 +992,10 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    end
 
    public drag_reset(e)
-      if \self.highlight then {
-         start_handle(e)
-         self.highlight := self.highlight_part := &null
-         scroll_ticker.stop()
-         end_handle(e)
-      }
+      start_handle(e)
+      self.highlight := self.highlight_part := &null
+      scroll_ticker.stop()
+      end_handle(e)
    end
 
    public finally()

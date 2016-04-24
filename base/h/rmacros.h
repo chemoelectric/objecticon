@@ -347,7 +347,8 @@
 #define T_Object        26      /* object */
 #define T_Kywdhandler   27      /* keyword &handler */
 #define T_Weakref       28      /* weak reference */
-#define MaxType		28	/* maximum type number */
+#define T_Yes           29      /* keyword &yes */
+#define MaxType		29	/* maximum type number */
 
 /*
  * Convenient macros for access to a block from a descriptor
@@ -421,6 +422,7 @@
 #define D_Ucs   	(T_Ucs      | D_Typecode | F_Ptr)
 #define D_Kywdhandler	(T_Kywdhandler | D_Typecode | F_Var)
 #define D_Weakref 	(T_Weakref  | D_Typecode | F_Ptr)
+#define D_Yes		(T_Yes      | D_Typecode)
 
 #define D_StructVar	(F_Var | F_Nqual | F_Ptr)
 #define D_NamedVar     	(F_Var | F_Nqual)

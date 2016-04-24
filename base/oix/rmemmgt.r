@@ -78,6 +78,7 @@ int bsizes[] = {
      0,                       /* T_Object (26), object */
      -1,                      /* T_Kywdhandler (27), error handler keyword variable */
      sizeof(struct b_weakref),/* T_Weakref (28), weak reference block */
+    -1,                       /* T_Yes (29), not block */
     };
 
 /*
@@ -118,6 +119,7 @@ int firstd[] = {
      5*WordSize,              /* T_Object (26), object */
      -1,                      /* T_Kywdhandler (27), error handler keyword variable */
      0,                       /* T_Weakref (28), weak reference block */
+    -1,                       /* T_Yes (29), not block */
     };
 
 /*
@@ -158,6 +160,7 @@ int firstp[] = {
      0,                       /* T_Object (26), object, just a pointer to the class, which is static */
      -1,                      /* T_Kywdhandler (27), error handler keyword variable */
      0,                       /* T_Weakref (28), weak reference block */
+    -1,                       /* T_Yes (29), not block */
     };
 
 /*
@@ -194,6 +197,7 @@ int ptrno[] = {
     -1,                       /* T_Object (26), object */
     -1,                       /* T_Kywdhandler (27), error handler keyword variable */
     -1,                       /* T_Weakref (28), weak reference block */
+    -1,                       /* T_Yes (29), not block */
     };
 
 /*
@@ -230,6 +234,7 @@ int descno[] = {
      0,                       /* T_Object (26), object */
     -1,                       /* T_Kywdhandler (27), error handler keyword variable */
     -1,                       /* T_Weakref (28), weak reference block */
+    -1,                       /* T_Yes (29), not block */
 };
 
 /*
@@ -269,6 +274,7 @@ char *blkname[] = {
    "object",                            /* T_Object (26) */
    "&handler",                          /* T_Kywdhandler (27), error handler keyword variable */
    "weak reference",                    /* T_Weakref (28), weak reference block */
+   "illegal object",                    /* T_Yes (29), not block */
    };
 
 /*

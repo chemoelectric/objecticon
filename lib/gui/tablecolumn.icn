@@ -40,8 +40,8 @@ abstract class BaseTableColumn(TextButton)
 
    public handle_lpress(e)
       if in_resize_region(e) then {
-         self.is_resizing := 1
-         self.parent.parent.no_more_sizing := 1
+         self.is_resizing := &yes
+         self.parent.parent.no_more_sizing := &yes
          self.drag_offset := e.x - (self.x + self.w)
       } else
          TextButton.handle_lpress(e)
@@ -61,7 +61,7 @@ abstract class BaseTableColumn(TextButton)
 
    public handle_lrelease(e)
       if \self.is_resizing then {
-         self.is_resizing := &null
+         self.is_resizing := &no
       } else
          TextButton.handle_lrelease(e)
    end
@@ -92,7 +92,9 @@ abstract class BaseTableColumn(TextButton)
 
    public display()
       TextButton.display()
-      Gui.style.fill_shadow_rectangle(self.cbwin, self.x + self.w - Gui.FINE_WIDTH, self.y, Gui.FINE_WIDTH, self.h)
+      Gui.style.fill_shadow_rectangle(self.cbwin, x + w - Gui.FINE_WIDTH, y, Gui.FINE_WIDTH, h)
+      if self === \parent.which_highlight then
+         border.draw_highlight(cbwin, x, y, w - Gui.FINE_WIDTH, h)
    end
 
    #

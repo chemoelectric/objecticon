@@ -79,7 +79,7 @@ class RFC1522()
                runerr("Unknown content word encoding", encoding)
          }
          res ||:= "?="
-         adj := 1
+         adj := &yes
       }
       return res
    end
@@ -135,7 +135,7 @@ class RFC1522()
             t := ucs(t) | return error("Encoded word data not proper utf-8")
          res ||:= t
          ="?="  | return error("Encoded word did not end with ?=")
-         adj := 1
+         adj := &yes
       }
       return res
    end

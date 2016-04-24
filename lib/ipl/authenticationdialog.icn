@@ -32,6 +32,7 @@ class AuthenticationDialog(Dialog)
    end
 
    private on_cancel_button(ev)
+      result := &null
       dispose()
    end
 

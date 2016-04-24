@@ -83,7 +83,8 @@ class GridLayout(Layout)
                cw.draw_rectangle(g.a_col_x[i.x],
                                  g.a_row_y[i.y],
                                  Grid.slice(i.x, i.w, g.a_col_w),
-                                 Grid.slice(i.y, i.h, g.a_row_h))
+                                 Grid.slice(i.y, i.h, g.a_row_h),
+                                 Gui.FINE_WIDTH)
             }
          }
       }

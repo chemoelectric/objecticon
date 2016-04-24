@@ -432,6 +432,9 @@ static void bundle_iconx()
     while ((c = fgetc(f)) != EOF)
         fputc(c, f2);
 
+    if (ferror(f) != 0)
+        quit("failed to read oix binary %s", oixloc);
+
     fclose(f);
     if (!(f = fopen(tmp, ReadBinary))) 
         quit("tried to read %s to append to exe, but couldn't",tmp);
@@ -439,7 +442,14 @@ static void bundle_iconx()
     while ((c = fgetc(f)) != EOF)
         fputc(c, f2);
 
+    if (ferror(f) != 0)
+        quit("failed to read from temp file %s", tmp);
+
     fclose(f);
+
+    fflush(f2);
+    if (ferror(f2) != 0)
+        quit("failed to write to output file %s", ofile);
 
     fclose(f2);
     setexe(ofile);
@@ -488,6 +498,10 @@ static void file_comp()
     
     /* close the new file */
   
+    fflush(foutput);
+    if (ferror(foutput) != 0)
+        quit("Compression failed to write to tmp output file %s", tmp);
+
     fclose(foutput);
     
     /* use gzopen() to open the new file */
@@ -500,11 +514,11 @@ static void file_comp()
      * the new file
      */
     
-    while((c = fgetc(finput)) != EOF) {
+    while((c = fgetc(finput)) != EOF)
         gzputc(f, c);
-        if (ferror(finput))
-            quit("Compression - Error occurs while reading!");
-    }
+
+    if (ferror(finput))
+        quit("Compression - Error occurs while reading file %s", ofile);
    
     /* close both files */
     fclose(finput);

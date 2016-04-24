@@ -233,6 +233,9 @@ static void trans1(char *filename)
         if (!ucodefile)
             quit("cannot create %s", outname);
         output_code();
+        fflush(ucodefile);
+        if (ferror(ucodefile) != 0)
+            quit("failed to write to ucode file %s", outname);
         fclose(ucodefile);
         if (tfatals)
             /*
