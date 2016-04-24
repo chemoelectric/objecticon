@@ -141,6 +141,10 @@ int load_package_dir(struct package_dir *dir)
                 quit("%s corrupt - duplicate file entry", fn);
         }
     }
+
+    if (ferror(f) != 0)
+        quit("failed to read package file %s", fn);
+
     fclose(f);
     dir->modflag = 0;
     return 1;
@@ -163,6 +167,7 @@ static void save_package_dir(struct package_dir *dir)
             fprintf(f, "%s\n", pf->name);
     }
     dir->modflag = 0;
+    fflush(f);
     if (ferror(f) != 0)
         quit("failed to write to package file %s", fn);
     fclose(f);

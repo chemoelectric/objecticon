@@ -377,6 +377,10 @@ void generate_code()
         fclose(dbgfile);
     }
 
+    fflush(outfile);
+    if (ferror(outfile) != 0)
+        quit("unable to write to icode file");
+
     fclose(outfile);
 }
 
@@ -2289,6 +2293,8 @@ static void writescript()
    }
    fputs("\n" IcodeDelim "\n", outfile);
    scriptsize += strlen("\n" IcodeDelim "\n");
+   if (ferror(f) != 0)
+       quit("unable to read win32header executable");
    fclose(f);
 #endif
 }

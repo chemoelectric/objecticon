@@ -533,6 +533,8 @@ void loadtrees()
             quit("cannot open .u for %s", inname);
         fseek(ucodefile, lf->declend_offset, SEEK_SET);
         loadtree();
+        if (ferror(ucodefile) != 0)
+            quit("failed to read from ucode file %s", inname);
         fclose(ucodefile);
     }
 }
