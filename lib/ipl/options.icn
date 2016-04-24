@@ -115,7 +115,7 @@ class Opt()
       else
          [s]
       self.convert := convert
-      self.multi := multi
+      self.multi := check_flag(multi)
       self.help := help
       self.def := def
       /err := Proc.get_name(\convert)
@@ -232,12 +232,12 @@ procedure options(arg, opts, usage, errproc)
          if ="-" & not pos(0) & /ignore then {
             if ="-" then {
                if pos(0) then
-                  ignore := 1   # ignore following args if --
+                  ignore := &yes   # ignore following args if --
                else {
                   optname := tab(upto('=') | 0)
                   if opt := member(opttable, string(optname)) then {
                      if /opt.convert then
-                        v := 1
+                        v := &yes
                      else if pos(0) & (*arg = 0 | /arg[1] | any('-', arg[1])) & \opt.def then
                         v := opt.def
                      else {
@@ -261,7 +261,7 @@ procedure options(arg, opts, usage, errproc)
                tab(0) ? until pos(0) do {
                   if opt := member(opttable, string(optname := ((pos(1),tab(0)) | move(1)))) then {
                      if /opt.convert then
-                        v := 1
+                        v := &yes
                      else if pos(0) & (*arg = 0 | /arg[1] | any('-', arg[1])) & \opt.def then
                         v := opt.def
                      else {
