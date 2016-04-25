@@ -1110,3 +1110,31 @@ char *maketemp(char *fn)
 #endif
     return path3;
 }
+
+/*
+ * Return a static buffer based on the system error string.
+ */
+char *get_system_error()
+{
+#if PLAN9
+    static char res[ERRMAX];
+    rerrstr(res, sizeof(res));
+    return res;
+#else
+    char *msg = 0;
+    static char res[256];
+
+    #if HAVE_STRERROR
+       msg = strerror(errno);
+    #elif HAVE_SYS_NERR && HAVE_SYS_ERRLIST
+       if (errno > 0 && errno <= sys_nerr)
+           msg = (char *)sys_errlist[errno];
+    #endif
+    if (!msg)
+        msg = "Unknown system error";
+
+    snprintf(res, sizeof(res), "%s (errno=%d)", msg, errno);
+
+    return res;
+#endif
+}

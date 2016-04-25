@@ -2061,33 +2061,7 @@ stringint *stringint_lookup(stringint *sip, char *s)
  */
 void errno2why()
 {
-#if PLAN9
-    static char buff[ERRMAX];
-    rerrstr(buff, sizeof(buff));
-    why(buff);
-#else
-    char *msg = 0;
-    char buff[32];
-    int len;
-
-    #if HAVE_STRERROR
-       msg = strerror(errno);
-    #elif HAVE_SYS_NERR && HAVE_SYS_ERRLIST
-       if (errno > 0 && errno <= sys_nerr)
-           msg = (char *)sys_errlist[errno];
-    #endif
-
-    if (!msg)
-        msg = "Unknown system error";
-    sprintf(buff, " (errno=%d)", errno);
-
-    len = strlen(buff) + strlen(msg);
-
-    MemProtect(StrLoc(kywd_why) = reserve(Strings, len));
-    StrLen(kywd_why) = len;
-    alcstr(msg, strlen(msg));
-    alcstr(buff, strlen(buff));
-#endif
+    why(get_system_error());
 }
 
 /*

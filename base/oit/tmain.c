@@ -412,7 +412,7 @@ static void execute(char **args)
 
    *p = NULL;
    execv(ofile, argv);
-   quit("could not execute %s", ofile);
+   equit("could not execute %s", ofile);
 #endif
 }
 
@@ -424,32 +424,32 @@ static void bundle_iconx()
     rename(ofile, tmp);
 
     if (!(f = fopen(oixloc, ReadBinary)))
-        quit("Tried to open oix to build .exe, but couldn't");
+        equit("Tried to open oix to build .exe, but couldn't");
 
     if (!(f2 = fopen(ofile, WriteBinary)))
-        quit("Couldn't reopen output file %s", ofile);
+        equit("Couldn't reopen output file %s", ofile);
 
     while ((c = fgetc(f)) != EOF)
         fputc(c, f2);
 
     if (ferror(f) != 0)
-        quit("failed to read oix binary %s", oixloc);
+        equit("failed to read oix binary %s", oixloc);
 
     fclose(f);
     if (!(f = fopen(tmp, ReadBinary))) 
-        quit("tried to read %s to append to exe, but couldn't",tmp);
+        equit("tried to read %s to append to exe, but couldn't",tmp);
 
     while ((c = fgetc(f)) != EOF)
         fputc(c, f2);
 
     if (ferror(f) != 0)
-        quit("failed to read from temp file %s", tmp);
+        equit("failed to read from temp file %s", tmp);
 
     fclose(f);
 
     fflush(f2);
     if (ferror(f2) != 0)
-        quit("failed to write to output file %s", ofile);
+        equit("failed to write to output file %s", ofile);
 
     fclose(f2);
     setexe(ofile);
@@ -471,22 +471,22 @@ static void file_comp()
     /* use fopen() to open the target file then read the header and add "z" to the hdr->config. */
     
     if (!(finput = fopen(ofile, ReadBinary)))
-        quit("Can't open the file to compress: %s", ofile);
+        equit("Can't open the file to compress: %s", ofile);
     
     if (!(foutput = fopen(tmp, WriteBinary)))
-        quit("Can't open the temp compression file: %s", tmp);
+        equit("Can't open the temp compression file: %s", tmp);
 
     n = strlen(IcodeDelim);
     for (;;) {
         if (fgets(buf, sizeof(buf) - 1, finput) == NULL)
-            quit("Compression - Reading Error: Check if the file is executable Icon");
+            equit("Compression - Reading Error: Check if the file is executable Icon");
         fputs(buf, foutput);
         if (strncmp(buf, IcodeDelim, n) == 0)
             break;
     }
 
     if (fread((char *)hdr, sizeof(char), sizeof(*hdr), finput) != sizeof(*hdr))
-        quit("gz compressor can't read the header, compression");
+        equit("gz compressor can't read the header, compression");
     
     /* Turn on the Z flag */
     strcat((char *)hdr->config,"Z");
@@ -494,20 +494,20 @@ static void file_comp()
     /* write the modified header into a new file */
     
     if (fwrite((char *)hdr, sizeof(char), sizeof(*hdr), foutput) != sizeof(*hdr))
-        quit("failed to write header to temp compression file");
+        equit("failed to write header to temp compression file");
     
     /* close the new file */
   
     fflush(foutput);
     if (ferror(foutput) != 0)
-        quit("Compression failed to write to tmp output file %s", tmp);
+        equit("Compression failed to write to tmp output file %s", tmp);
 
     fclose(foutput);
     
     /* use gzopen() to open the new file */
     
     if (!(f = gzopen(tmp, AppendBinary)))
-        quit("Compression Error: can not open output file %s", tmp);
+        equit("Compression Error: can not open output file %s", tmp);
     
     /*
      * read the rest of the target file and write the compressed data into
@@ -518,18 +518,18 @@ static void file_comp()
         gzputc(f, c);
 
     if (ferror(finput))
-        quit("Compression - Error occurs while reading file %s", ofile);
+        equit("Compression - Error occurs while reading file %s", ofile);
    
     /* close both files */
     fclose(finput);
     gzclose(f);
     
     if (unlink(ofile))
-        quit("can't remove old %s, compressed version left in %s",
+        equit("can't remove old %s, compressed version left in %s",
               ofile, tmp);
 
     if (rename(tmp, ofile))
-        quit("can't rename compressed %s back to %s", tmp, ofile);
+        equit("can't rename compressed %s back to %s", tmp, ofile);
 
     setexe(ofile);
 }
@@ -591,7 +591,7 @@ static void long_usage()
 }
 
 /*
- * quitf - immediate exit with message format and argument
+ * quit - immediate exit with message format and argument
  */
 void quit(char *fmt, ...)
 {
@@ -600,6 +600,24 @@ void quit(char *fmt, ...)
     fprintf(stderr,"%s: ",progname);
     vfprintf(stderr, fmt, argp);
     fprintf(stderr,"\n");
+    fflush(stderr);
+    va_end(argp);
+    remove_intermediate_files();
+    if (ofile)
+        remove(ofile);			/* remove bad icode file */
+    exit(EXIT_FAILURE);
+}
+
+/*
+ * Like quit(), but print out system error string too.
+ */
+void equit(char *fmt, ...)
+{
+    va_list argp;
+    va_start(argp, fmt);
+    fprintf(stderr,"%s: ",progname);
+    vfprintf(stderr, fmt, argp);
+    fprintf(stderr,": %s\n", get_system_error());
     fflush(stderr);
     va_end(argp);
     remove_intermediate_files();
@@ -691,7 +709,7 @@ static int ldbg(int argc, char **argv)
     }
 
     if (!ppinit(argv[1],0))
-        quit("cannot open %s", argv[1]);
+        equit("cannot open %s", argv[1]);
 
     while (1) {
         yylex();

@@ -50,6 +50,7 @@ extern char *iso_8859_1_string;
 int main(int argc, char **argv);
 void report(char *fmt, ...);
 void quit(char *fmt, ...);
+void equit(char *fmt, ...);
 char *abbreviate(char *path);
 void begin_link(FILE *f, char *fname, int line);
 void end_link(FILE *f);

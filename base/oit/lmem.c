@@ -113,7 +113,7 @@ void paramlink(char *name)
     char *file = pathfind(0, 0, name, USuffix);
 
     if (!file)
-        quit("cannot open %s", name);
+        equit("cannot open %s", name);
 
     ensure_lfile(intern(canonicalize(file)));
 }

@@ -319,7 +319,7 @@ void generate_code()
      */
     outfile = fopen(ofile, WriteBinary);
     if (outfile == NULL)
-        quit("cannot create %s",ofile);
+        equit("cannot create %s",ofile);
 
     /*
      * Write the bootstrap header to the output file.
@@ -333,7 +333,7 @@ void generate_code()
         putc(0, outfile);
     fflush(outfile);
     if (ferror(outfile) != 0)
-        quit("unable to write to icode file");
+        equit("unable to write to icode file");
 
     nstatics = 0;
     strconst_offset = 0;
@@ -379,7 +379,7 @@ void generate_code()
 
     fflush(outfile);
     if (ferror(outfile) != 0)
-        quit("unable to write to icode file");
+        equit("unable to write to icode file");
 
     fclose(outfile);
 }
@@ -1792,7 +1792,7 @@ static void gentables()
                 fprintf(dbgfile, "   %s\n", t);
             }
             if (fwrite(sp->s, 1, sp->len, outfile) != sp->len)
-                quit("cannot write icode file");
+                equit("cannot write icode file");
             pc += sp->len;
         }
     }
@@ -1831,7 +1831,7 @@ static void gentables()
     fseek(outfile, scriptsize, 0);
 
     if (fwrite((char *)&hdr, 1, sizeof(hdr), outfile) != sizeof(hdr))
-        quit("cannot write icode file");
+        equit("cannot write icode file");
 
     if (verbose > 1) {
         word tsize = sizeof(hdr) + hdr.icodesize;
@@ -2008,7 +2008,7 @@ static void flushcode()
     if (codep > codeb) {
         size_t n = DiffPtrs(codep,codeb);
         if (fwrite(codeb, 1, n, outfile) != n)
-            quit("cannot write icode file");
+            equit("cannot write icode file");
     }
     codep = codeb;
 }
@@ -2277,7 +2277,7 @@ static void writescript()
     scriptsize = strlen(script);
     /* write header */
     if (fwrite(script, scriptsize, 1, outfile) != 1)
-        quit("cannot write header to icode file");
+        equit("cannot write header to icode file");
 #elif MSWIN32
    char *hdr = findexe("win32header");
    FILE *f;
@@ -2285,7 +2285,7 @@ static void writescript()
    if (!hdr)
       quit("Couldn't find win32header header file on PATH");
    if (!(f = fopen(hdr, ReadBinary)))
-      quit("Tried to open win32header to build .exe, but couldn't");
+      equit("Tried to open win32header to build .exe, but couldn't");
    scriptsize = 0;
    while ((c = fgetc(f)) != EOF) {
       fputc(c, outfile);
@@ -2294,7 +2294,7 @@ static void writescript()
    fputs("\n" IcodeDelim "\n", outfile);
    scriptsize += strlen("\n" IcodeDelim "\n");
    if (ferror(f) != 0)
-       quit("unable to read win32header executable");
+       equit("unable to read win32header executable");
    fclose(f);
 #elif PLAN9
     char script[2048];

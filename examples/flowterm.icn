@@ -2358,21 +2358,24 @@ $endif
    end
 
    private sort_cwd_list()
-      local dirs, files, e, s, pats
+      local dirs, files, e, s, t, pats, show_hidden, mix_entries
       pats := get_pats()
       dirs := []
       files := []
+      show_hidden := show_hidden_menu_item.get_status()
+      mix_entries := mix_entries_menu_item.get_status()
       every e := !cwd_list do {
          s := e.name
-         if (/pats | (!pats).match(s) = *s + 1)\1 &
-            (show_hidden_menu_item.is_checked() | not(Files.is_hidden(s))) then {
-            if e.stat.mode_str[1] == "d" then
+         t := e.stat.mode_str[1]
+         if ((/mix_entries & t == "d") | (!pats).match(s) = *s + 1)\1 &
+            (\show_hidden | not(Files.is_hidden(s))) then {
+            if t == "d" then
                Files.is_relative_dir(s) | put(dirs, e)
             else
                put(files, e)
          }
       }
-      if mix_entries_menu_item.is_checked() then
+      if \mix_entries then
          while put(files, get(dirs))
       else {
          if sort_dirs_menu_item.is_checked() then

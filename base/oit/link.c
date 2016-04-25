@@ -62,10 +62,10 @@ void ilink(struct file_param *link_files, int *fatals, int *warnings)
         inname = lf->name;
         ucodefile = fopen(inname, ReadBinary);
         if (!ucodefile)
-            quit("cannot open %s",inname);
+            equit("cannot open %s",inname);
         readglob(lf);
         if (ferror(ucodefile) != 0)
-            quit("failed to read from ucode file %s", inname);
+            equit("failed to read from ucode file %s", inname);
         fclose(ucodefile);
     }
 
@@ -82,7 +82,7 @@ void ilink(struct file_param *link_files, int *fatals, int *warnings)
         dbgname = intern(makename(0, ofile, UXSuffix));
         dbgfile = fopen(dbgname, WriteText);
         if (dbgfile == NULL)
-            quit("cannot create %s", dbgname);
+            equit("cannot create %s", dbgname);
     }
 
     /* Phase 1a - resolve invocables, superclass identifiers */
