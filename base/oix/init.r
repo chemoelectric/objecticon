@@ -236,7 +236,7 @@ static FILE *readhdr_strict(char *name, struct header *hdr)
 
     ifile = fopen(name, ReadBinary);
     if (ifile == NULL)
-        ffatalerr("Can't open interpreter file %s", name);
+        ffatalerr("Can't open interpreter file %s: %s", name, get_system_error());
 
     for (;;) {
         if (fgets(buf, sizeof(buf) - 1, ifile) == NULL)
