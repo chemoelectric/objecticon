@@ -20,12 +20,51 @@ struct finfo_lst {
 
 static struct finfo_lst *file_lst = NULL;
 
+
+void err(char *fmt, ...)
+{
+    va_list argp;
+    va_start(argp, fmt);
+    fprintf(stderr,"%s: ",progname);
+    vfprintf(stderr, fmt, argp);
+    fprintf(stderr,"\n");
+    fflush(stderr);
+    va_end(argp);
+    rm_files();
+    exit(EXIT_FAILURE);
+}
+
+void err_loc(char *file, int line, char *fmt, ...)
+{
+    va_list argp;
+    va_start(argp, fmt);
+    fprintf(stderr, "%s: File %s; Line %d: ", progname, file, line);
+    vfprintf(stderr, fmt, argp);
+    fprintf(stderr,"\n");
+    fflush(stderr);
+    va_end(argp);
+    rm_files();
+    exit(EXIT_FAILURE);
+}
+
+void err_tok(struct token *t, char *fmt, ...)
+{
+    va_list argp;
+    va_start(argp, fmt);
+    fprintf(stderr, "%s: File %s; Line %d: ", progname, t->fname, t->line);
+    vfprintf(stderr, fmt, argp);
+    fprintf(stderr,"\n");
+    fflush(stderr);
+    va_end(argp);
+    rm_files();
+    exit(EXIT_FAILURE);
+}
+
+
 /*
  * errt1 - error message in one string, location indicated by a token.
  */
-void errt1(t, s)
-struct token *t;
-char *s;
+void errt1(struct token *t, char *s)
    {
    errfl1(t->fname, t->line, s);
    }
@@ -33,36 +72,23 @@ char *s;
 /*
  * errfl1 - error message in one string, location given by file and line.
  */
-void errfl1(f, l, s)
-char *f;
-int l;
-char *s;
+void errfl1(char *f, int l, char *s)
    {
-   fflush(stdout);
-   fprintf(stderr, "%s: File %s; Line %d: %s\n", progname, f, l, s);
-   rm_files();
-   exit(EXIT_FAILURE);
+       err_loc(f, l, "%s", s);
    }
 
 /*
  * err1 - error message in one string, no location given
  */
-void err1(s)
-char *s;
+void err1(char *s)
    {
-   fflush(stdout);
-   fprintf(stderr, "%s: %s\n", progname, s);
-   rm_files();
-   exit(EXIT_FAILURE);
+       err("%s", s);
    }
 
 /*
  * errt2 - error message in two strings, location indicated by a token.
  */
-void errt2(t, s1, s2)
-struct token *t;
-char *s1;
-char *s2;
+void errt2(struct token *t, char *s1, char *s2)
    {
    errfl2(t->fname, t->line, s1, s2);
    }
@@ -70,39 +96,23 @@ char *s2;
 /*
  * errfl2 - error message in two strings, location given by file and line.
  */
-void errfl2(f, l, s1, s2)
-char *f;
-int l;
-char *s1;
-char *s2;
+void errfl2(char *f, int l, char *s1, char *s2)
    {
-   fflush(stdout);
-   fprintf(stderr, "%s: File %s; Line %d: %s%s\n", progname, f, l, s1, s2);
-   rm_files();
-   exit(EXIT_FAILURE);
+       err_loc(f, l, "%s%s", s1, s2);
    }
 
 /*
  * err2 - error message in two strings, no location given
  */
-void err2(s1, s2)
-char *s1;
-char *s2;
+void err2(char *s1, char *s2)
    {
-   fflush(stdout);
-   fprintf(stderr, "%s: %s%s\n", progname, s1, s2);
-   rm_files();
-   exit(EXIT_FAILURE);
+       err("%s%s", s1, s2);
    }
 
 /*
  * errt3 - error message in three strings, location indicated by a token.
  */
-void errt3(t, s1, s2, s3)
-struct token *t;
-char *s1;
-char *s2;
-char *s3;
+void errt3(struct token *t, char *s1, char *s2, char *s3)
    {
    errfl3(t->fname, t->line, s1, s2, s3);
    }
@@ -110,18 +120,9 @@ char *s3;
 /*
  * errfl3 - error message in three strings, location given by file and line.
  */
-void errfl3(f, l, s1, s2, s3)
-char *f;
-int l;
-char *s1;
-char *s2;
-char *s3;
+void errfl3(char *f, int l, char *s1, char *s2, char *s3)
    {
-   fflush(stdout);
-   fprintf(stderr, "%s: File %s; Line %d: %s%s%s\n", progname, f, l,
-       s1, s2, s3);
-   rm_files();
-   exit(EXIT_FAILURE);
+       err_loc(f, l, "%s%s%s", s1, s2, s3);
    }
 
 /*
