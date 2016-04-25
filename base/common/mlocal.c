@@ -122,7 +122,7 @@ static char *tryexe(char *dir, char *name)
 }
 
 /*
- * tryfile(dir, name, extn) -- check to see if file is readable.
+ * tryfile(dir, name, extn) -- check to see if file is present.
  *
  *  The file name is constructed in from dir + name + extn.  tryfile
  *  returns a pointer to a static string if successful or NULL if not.
@@ -130,7 +130,7 @@ static char *tryexe(char *dir, char *name)
 static char *tryfile(char *dir, char *name, char *extn)
 {
     char *s = makename(dir, name, extn);
-    if (!access(s, R_OK))
+    if (!access(s, F_OK))
         return s;
     else
         return 0;
