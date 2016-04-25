@@ -209,7 +209,7 @@ static void trans1(char *filename)
     }
 
     if (!ppinit(filename, m4pre))
-        quit("cannot open %s",filename);
+        equit("cannot open %s",filename);
 
     if (pponly) {
         ppecho();
@@ -231,11 +231,11 @@ static void trans1(char *filename)
 
         ucodefile = fopen(outname, WriteBinary);
         if (!ucodefile)
-            quit("cannot create %s", outname);
+            equit("cannot create %s", outname);
         output_code();
         fflush(ucodefile);
         if (ferror(ucodefile) != 0)
-            quit("failed to write to ucode file %s", outname);
+            equit("failed to write to ucode file %s", outname);
         fclose(ucodefile);
         if (tfatals)
             /*

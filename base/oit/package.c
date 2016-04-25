@@ -143,7 +143,7 @@ int load_package_dir(struct package_dir *dir)
     }
 
     if (ferror(f) != 0)
-        quit("failed to read package file %s", fn);
+        equit("failed to read package file %s", fn);
 
     fclose(f);
     dir->modflag = 0;
@@ -160,7 +160,7 @@ static void save_package_dir(struct package_dir *dir)
     struct package *pk;
     struct package_file *pf;
     if (!f)
-        quit("Unable to open package file %s", fn);
+        equit("Unable to open package file %s", fn);
     for (pk = dir->packages; pk; pk = pk->next) {
         fprintf(f, ">package\n%s\n", pk->name);
         for (pf = pk->files; pf; pf = pf->next)
@@ -169,7 +169,7 @@ static void save_package_dir(struct package_dir *dir)
     dir->modflag = 0;
     fflush(f);
     if (ferror(f) != 0)
-        quit("failed to write to package file %s", fn);
+        equit("failed to write to package file %s", fn);
     fclose(f);
 }
 

@@ -396,12 +396,12 @@ int ppch()
          curfile = fs->prev;
 
          if (ferror(fs->fp) != 0)
-            quit("failed to read from source file %s", fs->fname);
+            equit("failed to read from source file %s", fs->fname);
 
 #if UNIX
          if (fs->m4flag) {			/* if m4 preprocessing */
             if (pclose(fs->fp) != 0)		/* close pipe */
-               quit("m4 terminated abnormally");
+               equit("m4 terminated abnormally");
             }
          else
 #endif					/* UNIX */
@@ -703,7 +703,7 @@ static char *loadfile(char *fname, int *vlen, int ucs)
     s[i] = 0;
 
     if (ferror(f) != 0)
-        quit("failed to read $load file %s", fname);
+        equit("failed to read $load file %s", fname);
 
     fclose(f);
     *vlen = i;
