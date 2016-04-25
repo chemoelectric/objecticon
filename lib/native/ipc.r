@@ -872,8 +872,7 @@ static void remove_resource(int id, int type) {
 }
 
 static void aborted(char *s) {
-    ffatalerr("ipc.r: %s; program will abort\n"
-              "errnum=%d (%s)\n", s, errno, strerror(errno));
+    ffatalerr("ipc.r: %s; program will abort: %s\n", s, get_system_error());
 }
 
 static void cleanup() {
