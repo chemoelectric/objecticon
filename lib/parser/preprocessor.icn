@@ -105,7 +105,7 @@ class Preprocessor(Connectable)
       nest_level := 0
       encoding := "ASCII"
       if not(file := open(fname)) then {
-         err("cannot open " || image(fname))
+         err("cannot open " || image(fname) || ": " || &why)
          fail
       }
       return
@@ -133,7 +133,7 @@ class Preprocessor(Connectable)
    # either a blank line or a #line directive.
    #
    private scan_directive()
-      local sym,value,new_file,new_filename,new_line,new_encoding,old,preproc_command,old_if_state,fname
+      local sym,value,new_file,new_filename,new_line,new_encoding,old,preproc_command,old_if_state,fname,t
       scan_space()
       preproc_command := scan_word()
       if \if_state then {
@@ -176,22 +176,23 @@ class Preprocessor(Connectable)
                   scan_opt_space() &
                   fname := scan_qword() & *fname > 0 & at_end() then 
                {
-                  if value := image(Files.file_to_string(Files.path_find(fname, 
-                                                         "OI_INCL",
-                                                          FilePath(filename).parent().str()))) then 
+                  if t := Files.path_find(fname, 
+                                          "OI_INCL",
+                                          FilePath(filename).parent().str()) then
                   {
-                     if \ (old := sym_table[sym]) ~=== value then {
-                        err("redefinition of " || sym || " = " ||
-                                      old)
-                     } else {
-                        sym_table[sym] := value
-                     }
-                  } else {
-                     err("cannot open " || image(fname))
-                  }
-               } else {
+                     if value := image(Files.file_to_string(t)) then {
+                        if \ (old := sym_table[sym]) ~=== value then {
+                           err("redefinition of " || sym || " = " ||
+                               old)
+                        } else {
+                           sym_table[sym] := value
+                        }
+                     } else
+                        err("cannot load " || image(t) || ": " || &why)
+                  } else
+                     err("cannot find " || image(fname) || " on path")
+               } else
                   err()
-               }
                return ""
             }
          }
@@ -201,22 +202,23 @@ class Preprocessor(Connectable)
                   scan_opt_space() &
                   fname := scan_qword() & *fname > 0 & at_end() then 
                {
-                  if value := "u" || image(Files.file_to_string(Files.path_find(fname, 
-                                                                "OI_INCL",
-                                                                FilePath(filename).parent().str()))) then 
+                  if t := Files.path_find(fname, 
+                                          "OI_INCL",
+                                          FilePath(filename).parent().str()) then
                   {
-                     if \ (old := sym_table[sym]) ~=== value then {
-                        err("redefinition of " || sym || " = " ||
-                                      old)
-                     } else {
-                        sym_table[sym] := value
-                     }
-                  } else {
-                     err("cannot open " || image(fname))
-                  }
-               } else {
+                     if value := "u" || image(Files.file_to_string(t)) then {
+                        if \ (old := sym_table[sym]) ~=== value then {
+                           err("redefinition of " || sym || " = " ||
+                               old)
+                        } else {
+                           sym_table[sym] := value
+                        }
+                     } else
+                        err("cannot load " || image(t) || ": " || &why)
+                  } else
+                     err("cannot find " || image(fname) || " on path")
+               } else
                   err()
-               }
                return ""
             }
          }
@@ -316,25 +318,26 @@ class Preprocessor(Connectable)
                   if member(include_set,sym) then {
                      err("circular reference to " || image(sym))
                   } else {
-                     if new_file := open(new_filename := 
-                                         Files.path_find(sym, 
-                                                         "OI_INCL",
-                                                         FilePath(filename).parent().str()))
-                     then {
-                        every push(file_stack,
-                                   encoding|file|filename|
-                                   include_name|line|
-                                   nest_level)
-                        filename := new_filename
-                        include_name := sym
-                        file := new_file
-                        line := 0
-                        encoding := "ASCII"
-                        nest_level := *if_stack
-                        insert(include_set,sym)
-                     } else {
-                        err("cannot open " || image(sym))
-                     }
+                     if new_filename := Files.path_find(sym, 
+                                                        "OI_INCL",
+                                                        FilePath(filename).parent().str()) then
+                     {
+                        if new_file := open(new_filename) then {
+                           every push(file_stack,
+                                      encoding|file|filename|
+                                      include_name|line|
+                                      nest_level)
+                           filename := new_filename
+                           include_name := sym
+                           file := new_file
+                           line := 0
+                           encoding := "ASCII"
+                           nest_level := *if_stack
+                           insert(include_set,sym)
+                        } else
+                           err("cannot open " || image(new_filename) || ": " || &why)
+                     } else
+                        err("cannot find " || image(sym) || " on path")
                   }
                } else {
                   err()
@@ -352,8 +355,8 @@ class Preprocessor(Connectable)
                at_end() then 
             {
                filename := Files.path_find(\new_filename, 
-                                                   &null,
-                                                   FilePath(filename).parent().str()) | \new_filename
+                                           &null,
+                                           FilePath(filename).parent().str()) | \new_filename
                encoding := \new_encoding
                line := new_line - 1
             } else {
