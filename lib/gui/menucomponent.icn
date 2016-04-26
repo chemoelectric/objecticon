@@ -29,6 +29,7 @@ abstract class MenuComponent(Rect,Connectable)
       label_h,                                
       is_sub_menu_flag,                                
       is_decorative_flag,                                
+      keep_open_on_shift_flag,
       component_link,
       parent_component,                               
       is_shaded_flag,                                
@@ -352,10 +353,22 @@ abstract class MenuComponent(Rect,Connectable)
    end
 
    #
+   # If this flag is set, then the menu system is not closed when this
+   # item is selected via mouse or return key, if the shift key is
+   # down.
+   #
+   public set_keep_open_on_shift(s)
+      self.keep_open_on_shift_flag := check_flag(s)
+      return self
+   end
+
+   #
    # Called when the menu component is selected
    #
    public succeed(ev)
-      close_all()
+      if /keep_open_on_shift_flag | /ev | 
+         /ev.shift | not(member(Mouse.RELEASE, ev.code) | ev.code === "\r") then
+         close_all()
       fire(Event.ACTION, ev)
    end
 
