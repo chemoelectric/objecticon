@@ -1058,6 +1058,7 @@ class Terminal(TabItem, VtUI)
       show_hidden_menu_item,
       mix_entries_menu_item,
       sort_dirs_menu_item,
+      filter_dirs_menu_item,
       revert_tab,
       adjacent_flag,
       shell,
@@ -1315,6 +1316,14 @@ class Terminal(TabItem, VtUI)
             else {
                param := check_flag_param(s, param) | fail
                (param === sort_dirs_menu_item.get_status()) | toggle_sort_dirs_menu_item()
+            }
+         }
+         "filter-dirs" : {
+            if /param then
+               toggle_filter_dirs_menu_item()
+            else {
+               param := check_flag_param(s, param) | fail
+               (param === filter_dirs_menu_item.get_status()) | toggle_filter_dirs_menu_item()
             }
          }
          "select" : {
@@ -2206,6 +2215,15 @@ $endif
       resort_cwd()
    end
 
+   private toggle_filter_dirs_menu_item()
+      filter_dirs_menu_item.toggle_is_checked()
+      on_filter_dirs_menu_item()
+   end
+
+   private on_filter_dirs_menu_item(e)
+      resort_cwd(&yes)
+   end
+
    private toggle_show_hidden_menu_item()
       show_hidden_menu_item.toggle_is_checked()
       on_show_hidden_menu_item()
@@ -2231,10 +2249,11 @@ $endif
             set_label("Show size").
             connect(on_show_size, Event.ACTION))
       m.add(MenuSeparator())
+      m.add(mix_entries_menu_item)
       m.add(show_hidden_menu_item)
       if mix_entries_menu_item.is_unchecked() then
          m.add(sort_dirs_menu_item)
-      m.add(mix_entries_menu_item)
+      m.add(filter_dirs_menu_item)
       m.add(MenuSeparator())
       m.add(TextMenuItem().
             set_label("Reorient").
@@ -2358,16 +2377,16 @@ $endif
    end
 
    private sort_cwd_list()
-      local dirs, files, e, s, t, pats, show_hidden, mix_entries
+      local dirs, files, e, s, t, pats, show_hidden, filter_dirs
       pats := get_pats()
       dirs := []
       files := []
       show_hidden := show_hidden_menu_item.get_status()
-      mix_entries := mix_entries_menu_item.get_status()
+      filter_dirs := filter_dirs_menu_item.get_status()
       every e := !cwd_list do {
          s := e.name
          t := e.stat.mode_str[1]
-         if ((/mix_entries & t == "d") | (!pats).match(s) = *s + 1)\1 &
+         if ((/filter_dirs & t == "d") | (!pats).match(s) = *s + 1)\1 &
             (\show_hidden | not(Files.is_hidden(s))) then {
             if t == "d" then
                Files.is_relative_dir(s) | put(dirs, e)
@@ -2375,7 +2394,7 @@ $endif
                put(files, e)
          }
       }
-      if \mix_entries then
+      if mix_entries_menu_item.is_checked() then
          while put(files, get(dirs))
       else {
          if sort_dirs_menu_item.is_checked() then
@@ -2562,6 +2581,9 @@ $endif
       show_hidden_menu_item := CheckBoxMenuItem().
          set_label("Show hidden files").
          connect(on_show_hidden_menu_item, Event.ACTION)
+      filter_dirs_menu_item := CheckBoxMenuItem().
+         set_label("Filter dirs").
+         connect(on_filter_dirs_menu_item, Event.ACTION)
 
       filter.set_selection_list([u"*"])
       history_list.set_size().set_selection_list([])
@@ -2604,6 +2626,7 @@ $endif
             set_history_size(other.output.history_size) | syserr("Clone output setting failed: " || &why)
          set_shell(other.shell)
          sort_dirs_menu_item.set_is_checked(other.sort_dirs_menu_item.get_status())
+         filter_dirs_menu_item.set_is_checked(other.filter_dirs_menu_item.get_status())
          mix_entries_menu_item.set_is_checked(other.mix_entries_menu_item.get_status())
          show_hidden_menu_item.set_is_checked(other.show_hidden_menu_item.get_status())
          history := clone(other.history)
@@ -3113,6 +3136,7 @@ procedure usage(opts)
    help_line(":mix-entries=FLAG", "Toggle or set whether or not to mix directories and files together in the list.")
    help_line(":show-hidden=FLAG", "Toggle or set whether or not to show hidden files and directories in the list.")
    help_line(":sort-dirs=FLAG", "Toggle or set whether or not to sort the directory portion of the list in the same way as the files (by default, the directories are always sorted by name).")
+   help_line(":filter-dirs=FLAG", "Toggle or set whether or not to filter directories using the filter setting (by default, the directories are not filtered).")
    help_line(":select", "Make this tab the selected tab.")
    help_line(":adjacent", "Add this tab adjacent to the current tab, rather than at the end of all the tabs.")
    help_line(":sh=STRING", "Specify the shell to run.  The default is null, meaning use the user's default shell.")
