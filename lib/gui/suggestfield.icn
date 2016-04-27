@@ -89,12 +89,12 @@ abstract class SuggestField(TextField, MenuMode)
       local l
       repeat {
          until mod === 1 do {
-            req_held := 1
+            req_held := &yes
             req.sleep()
             req_held := &null
          }
          mod := &null
-         req_doing := 1
+         req_doing := &yes
          l := do_request() | &null
          req_doing := &null
          # If finally() has been called, close any request resources,
