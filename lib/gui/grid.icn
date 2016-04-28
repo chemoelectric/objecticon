@@ -51,6 +51,7 @@ end
 
 class Grid()
    public static const 
+      CONSTRAINT_SET,
       EXTRA_CELLS,
       EXTRA_BORDERS,
       EXTRA_IGNORE
@@ -464,6 +465,12 @@ class Grid()
       EXTRA_CELLS := "cells"
       EXTRA_BORDERS := "borders"
       EXTRA_IGNORE := "ignore"
+      CONSTRAINT_SET := set("x_tab", "y_tab", "eol", "x", "y", "w", "h", "l_inset", "r_inset", "t_inset", "b_inset", 
+                            "x_fill", "y_fill", "x_align", "y_align", "x_weight", "y_weight")
+   end
+
+   public static is_constraint(s)
+      return member(CONSTRAINT_SET, s)
    end
 
    public new()
