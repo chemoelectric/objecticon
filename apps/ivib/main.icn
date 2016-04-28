@@ -587,9 +587,9 @@ class Main(Dialog)
       d.show_modal(self)
       if \d.get_okay_result() then {
          self.push_onto_undo(t)
-         # Firstly, create a new buffer window based on the (possibly) new window attribs,
-         # and apply the new window to all of the children.
-         canvas.reset_windows()
+         # Update the canvas by resetting and re-laying out everything.
+         canvas.reset()
+         canvas.do_reset_all_layouts()
          canvas.set_modified()
       } else
          self.undo_to(t)
