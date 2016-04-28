@@ -310,15 +310,21 @@ class Gui()
       REPEAT_RATE,
       CURSOR_BLINK,
       IDLE_SLEEP,
-      TAB_WIDTH,                 # Default tab char width
+      # Default tab char width
+      TAB_WIDTH,
       style
 
    public static const 
-      CONSTRAINT_SET,
+      # A set of all window attribs.
       WATTRIB_SET,
-      CONTEXT_WATTRIB_SET,      # attribs that affect the graphical drawing context
-      PRINTABLE_1,              # Printable on a single line of text
-      PRINTABLE_N               # Printable on multi lines of text
+      # A set of attribs that affect the graphical drawing context
+      CONTEXT_WATTRIB_SET,
+      # A Component that always has empty effective wattribs.
+      EMPTY_WATTRIB_ANCESTOR,
+      # Printable on a single line of text
+      PRINTABLE_1,
+      # Printable on multi lines of text
+      PRINTABLE_N
 
 
    #
@@ -363,8 +369,6 @@ class Gui()
       style := Style()
       PRINTABLE_1 := '\x20-\x7e\x80-\U10ffff'
       PRINTABLE_N := '\t\n\x20-\x7e\x80-\U10ffff'
-      CONSTRAINT_SET := set("x_tab", "y_tab", "eol", "x", "y", "w", "h", "l_inset", "r_inset", "t_inset", "b_inset", 
-                            "x_fill", "y_fill", "x_align", "y_align", "x_weight", "y_weight")
       WATTRIB_SET := set("label", "x", "pos", "y", "resize", "size", "height", 
                          "width", "w", "h", "image", "canvas", "pointer", 
                          "display", "fg", "bg", "draw_op", "icon", "leading",
@@ -373,14 +377,24 @@ class Gui()
                          "dx", "dy", "input_mask", "min_width", "min_height", "min_size", "max_width", 
                          "max_height", "max_size")
       CONTEXT_WATTRIB_SET := set("fg", "bg", "draw_op", "font", "leading", "line_width", "line_style", "pattern")
-   end
-
-   public static is_constraint(s)
-      return member(CONSTRAINT_SET, s)
+      EMPTY_WATTRIB_ANCESTOR := EmptyWattribAncestor() 
    end
 
    public static is_window_attrib(s)
       return member(WATTRIB_SET, s)
+   end
+
+   public static is_context_attrib(s)
+      return member(CONTEXT_WATTRIB_SET, s)
+   end
+end
+
+#
+# A `Component` for providing empty effective wattribs.
+#
+package class EmptyWattribAncestor(Component)
+   public get_effective_wattribs()
+      return table()
    end
 end
 

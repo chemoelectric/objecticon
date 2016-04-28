@@ -498,8 +498,7 @@ abstract class MenuComponent(Rect,Connectable)
       temp_win := create_proxy().
          set_size(self.w, self.h).
          # Copy attribs of the parent component
-         set_all_wattribs(self.parent_component.get_effective_wattribs()).
-         set_inherit_wattribs(&no)
+         set_wattrib_ancestor(parent_component)
       every (!children).prepare_parent_proxy()
 
       pd.enter_menu_mode(temp_win)

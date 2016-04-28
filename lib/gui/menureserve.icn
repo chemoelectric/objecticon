@@ -14,8 +14,7 @@ class MenuReserve(MenuComponent)
       MenuComponent.initially()
       \comp | runerr("no component set")
       # Make comp inherit the parent component's attribs.
-      comp.set_all_wattribs(parent_component.get_effective_wattribs()).
-         set_inherit_wattribs(&no)
+      comp.set_wattrib_ancestor(parent_component)
       # Temporarily add comp to the parent dialog in order to
       # calculate the required size.
       parent_component.parent_dialog.add(comp)

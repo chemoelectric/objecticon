@@ -332,24 +332,24 @@ class Dialog(Component)
 
    public initially()
       local t
-      self.parent_dialog := self
-      self.effective_is_hidden_flag := self.is_hidden_flag
-      self.effective_is_shaded_flag := self.is_shaded_flag
+      parent_dialog := self
+      effective_is_hidden_flag := is_hidden_flag
+      effective_is_shaded_flag := is_shaded_flag
       Gui.style.polish(self)
-      self.held := table()
-      self.crossing := set()
-      self.selections := table()
-      self.selection_requests := table()
-      self.effective_wattribs := table()
-      every t := key(self.wattribs) do {
-         if member(Gui.CONTEXT_WATTRIB_SET, t) then
-            insert(self.effective_wattribs, t, self.wattribs[t])
+      held := table()
+      crossing := set()
+      selections := table()
+      selection_requests := table()
+      effective_wattribs := table()
+      every t := key(wattribs) do {
+         if Gui.is_context_attrib(t) then
+            insert(effective_wattribs, t, wattribs[t])
       }
-      self.compute_z_order()
-      self.compute_tab_order()
-      self.cbwin := clone_win_with(self.buffer_win,
-                                   self.effective_wattribs)
-      every (!self.children).initially()
+      compute_z_order()
+      compute_tab_order()
+      cbwin := clone_win_with(buffer_win,
+                              effective_wattribs)
+      every (!children).initially()
    end
 
    public open_buffer_win()

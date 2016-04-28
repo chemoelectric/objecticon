@@ -181,8 +181,7 @@ abstract class SuggestField(TextField, MenuMode)
       max_h >:= \self.max_height
 
       self.tl := create_popup().
-         set_all_wattribs(self.get_effective_wattribs()).
-         set_inherit_wattribs(&no).
+         set_wattrib_ancestor(self).
          connect(self.on_textlist_selection, Event.SELECTION_CHANGED).
          set_contents(data).
          set_accepts_focus(&no).

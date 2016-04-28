@@ -72,12 +72,11 @@ class PopupMenu(Component, MenuSystem)
    # @param ya The alternate y position to show; defaults to {&null}).
    #
    public popup(comp, menu, x, y, a[])
-      local xa, ya, pd
+      local xa, ya
       xa := a[1] | x
       ya := a[2]
       self.comp := comp
-      pd := comp.parent_dialog.popup_manager
-      set_all_wattribs(pd.get_effective_wattribs())
+      set_wattrib_ancestor(comp.parent_dialog.popup_manager)
       comp.parent_dialog.add(self)
       self.resize()
       self.parent_dialog.enter_menu_mode(self)
@@ -92,7 +91,6 @@ class PopupMenu(Component, MenuSystem)
       Component.new()
       self.x_spec := self.y_spec := self.w_spec := self.h_spec := 0
       set_is_hidden(&yes)
-      set_inherit_wattribs(&no)
       return
    end
 end

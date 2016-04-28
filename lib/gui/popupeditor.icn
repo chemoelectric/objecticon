@@ -11,7 +11,7 @@ class PopupEditor(Component, MenuMode)
    public popup(comp, ev)
       self.comp := comp
       # Copy attribs of the parent component
-      set_all_wattribs(comp.get_effective_wattribs())
+      set_wattrib_ancestor(comp)
       set_z(comp.parent_dialog.get_top_z())
       comp.parent_dialog.add(self)
       resize()
@@ -71,7 +71,6 @@ class PopupEditor(Component, MenuMode)
       self.editor := editor
       editor.connect(close_all, Event.ACTION)
       self.add(editor)
-      set_inherit_wattribs(&no)
       every connect(self.forward_key, Event.KEY_PRESS | Event.KEY_RELEASE)
       return
    end
