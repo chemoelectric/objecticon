@@ -57,6 +57,8 @@
 
 package ipl.tables
 
+import datastruct
+
 # table union
 procedure tblunion(T1, T2)			
    local T3, x
@@ -189,17 +191,22 @@ procedure valset(tbl)
 
 end
 
-# Generate key-value pairs as a sequence of 2-element lists.  NB - for each
-# invocation, the same list is returned every time, with the values replaced.
+#
+# Generate key-value pairs as a sequence of `Entry` records.  NB -
+# for each invocation, the same record is returned every time, with
+# the values replaced.
 #
 procedure entries(t)
-   local l, e
-   l := []
-   every e := keyval(t) do {
-      put(l, e)
-      if *l = 2 then {
-         suspend l
-         clear(l)
+   local e, x, f
+   e := Entry()
+   every x := keyval(t) do {
+      if /f then {
+         e.key := x
+         f := &yes
+      } else {
+         e.val := x
+         suspend e
+         f := &null
       }
    }
 end
@@ -214,14 +221,16 @@ end
 
 # Return an (unsorted) list of pairs of key-values.
 procedure entrylist(t)
-   local l, e, r
+   local e, x, r, f
    r := []
-   l := []
-   every e := keyval(t) do {
-      put(l, e)
-      if *l = 2 then {
-         put(r, l)
-         l := []
+   every x := keyval(t) do {
+      if /f then {
+         e := Entry(x)
+         f := &yes
+      } else {
+         e.val := x
+         put(r, e)
+         f := &null
       }
    }
    return r

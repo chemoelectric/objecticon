@@ -579,7 +579,7 @@ procedure clone(o, seen)
          res := table(clone(o[[]], seen))
          insert(seen, o, res)
          every e := entries(o) do
-            insert(res, clone(e[1], seen), clone(e[2], seen))
+            insert(res, clone(e.key, seen), clone(e.val, seen))
          return res
       }
 
