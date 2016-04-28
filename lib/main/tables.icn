@@ -193,7 +193,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
       every x := keyval() do {
          if /f then {
             e.key := x
-            f := 1
+            f := &yes
          } else {
             e.val := x
             suspend e
@@ -219,7 +219,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
       every x := keyval() do {
          if /f then {
             e := Entry(x)
-            f := 1
+            f := &yes
          } else {
             e.val := x
             put(r, e)
