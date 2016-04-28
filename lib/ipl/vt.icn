@@ -2670,8 +2670,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          set_item_border(EmptyBorder().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                              set_x_align(Align.L)).
-         set_all_wattribs(view.get_effective_wattribs()).
-         set_inherit_wattribs(&no).
+         set_wattrib_ancestor(view).
          connect(on_popup_selection, Event.SELECTION_CHANGED).
          set_select_mode(Select.ONE).
          set_accepts_focus(&no).
