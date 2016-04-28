@@ -2203,6 +2203,7 @@ $endif
    private on_mix_entries_menu_item(e)
       annotate_cwd_list()
       resort_cwd()
+      sort_dirs_menu_item.set_is_shaded(mix_entries_menu_item.get_status())
    end
 
    private toggle_sort_dirs_menu_item()
@@ -2251,8 +2252,7 @@ $endif
       m.add(MenuSeparator())
       m.add(mix_entries_menu_item)
       m.add(show_hidden_menu_item)
-      if mix_entries_menu_item.is_unchecked() then
-         m.add(sort_dirs_menu_item)
+      m.add(sort_dirs_menu_item)
       m.add(filter_dirs_menu_item)
       m.add(MenuSeparator())
       m.add(TextMenuItem().
@@ -2574,15 +2574,19 @@ $endif
       favourites_list.set_size().set_selection_list(get_favourites_directories())
       sort_dirs_menu_item := CheckBoxMenuItem().
          set_label("Sort dirs").
+         set_keep_open_on_shift(&yes).
          connect(on_sort_dirs_menu_item, Event.ACTION)
       mix_entries_menu_item := CheckBoxMenuItem().
          set_label("Mix files & dirs").
+         set_keep_open_on_shift(&yes).
          connect(on_mix_entries_menu_item, Event.ACTION)
       show_hidden_menu_item := CheckBoxMenuItem().
          set_label("Show hidden files").
+         set_keep_open_on_shift(&yes).
          connect(on_show_hidden_menu_item, Event.ACTION)
       filter_dirs_menu_item := CheckBoxMenuItem().
          set_label("Filter dirs").
+         set_keep_open_on_shift(&yes).
          connect(on_filter_dirs_menu_item, Event.ACTION)
 
       filter.set_selection_list([u"*"])
@@ -2625,7 +2629,8 @@ $endif
             set_font(other.output.font_family || "," || other.output.font_size).
             set_history_size(other.output.history_size) | syserr("Clone output setting failed: " || &why)
          set_shell(other.shell)
-         sort_dirs_menu_item.set_is_checked(other.sort_dirs_menu_item.get_status())
+         sort_dirs_menu_item.set_is_checked(other.sort_dirs_menu_item.get_status()).
+            set_is_shaded(other.sort_dirs_menu_item.is_shaded_flag)
          filter_dirs_menu_item.set_is_checked(other.filter_dirs_menu_item.get_status())
          mix_entries_menu_item.set_is_checked(other.mix_entries_menu_item.get_status())
          show_hidden_menu_item.set_is_checked(other.show_hidden_menu_item.get_status())
