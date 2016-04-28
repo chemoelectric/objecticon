@@ -280,21 +280,21 @@ class Component(Rect,Align,Connectable)
    # within a tabbed pane not presently visible.
    #
    public is_hidden()
-      return \self.effective_is_hidden_flag
+      return \effective_is_hidden_flag
    end
 
    #
    # Succeed if the component is not hidden.
    #
    public is_unhidden()
-      return /self.effective_is_hidden_flag
+      return /effective_is_hidden_flag
    end
 
    #
    # Swap the hidden status of the component.
    #
    public toggle_is_hidden()
-      return set_is_hidden(toggle_flag(self.is_hidden_flag))
+      return set_is_hidden(toggle_flag(is_hidden_flag))
    end
 
    #
@@ -302,13 +302,13 @@ class Component(Rect,Align,Connectable)
    #
    public set_is_hidden(s)
       check_flag(s)
-      if s ~=== self.is_hidden_flag then {
+      if s ~=== is_hidden_flag then {
          # NB - try invalidate before and after, since invalidating a hidden
          # component is a no-op.
-         self.invalidate()
-         self.is_hidden_flag := s
-         self.hidden_change()
-         self.invalidate()
+         invalidate()
+         is_hidden_flag := s
+         hidden_change()
+         invalidate()
       }
       return self
    end
@@ -319,7 +319,7 @@ class Component(Rect,Align,Connectable)
    public hidden_change()
       local v
       is_initialized() | fail
-      v := if (\parent).is_hidden() | \is_hidden_flag then &yes else &no
+      v := Yes{ (\parent).is_hidden() | \is_hidden_flag }
       if effective_is_hidden_flag ~===:= v then {
          if is_unshaded() then
             fire(if /v then Event.RESUMED else Event.INTERRUPTED)
@@ -333,14 +333,14 @@ class Component(Rect,Align,Connectable)
    # differently, and will not generate events.
    #
    public is_shaded()
-      return \self.effective_is_shaded_flag
+      return \effective_is_shaded_flag
    end
 
    #
    # Succeed if the component is not shaded.
    #
    public is_unshaded()
-      return /self.effective_is_shaded_flag
+      return /effective_is_shaded_flag
    end
 
    #
@@ -349,7 +349,7 @@ class Component(Rect,Align,Connectable)
    public shaded_change()
       local v
       is_initialized() | fail
-      v := if (\parent).is_shaded() | \is_shaded_flag then &yes else &no
+      v := Yes{ (\parent).is_shaded() | \is_shaded_flag }
       if effective_is_shaded_flag ~===:= v then {
          if is_unhidden() then
             fire(if /v then Event.RESUMED else Event.INTERRUPTED)
@@ -365,7 +365,7 @@ class Component(Rect,Align,Connectable)
    public set_draw_own_shading(s)
       check_flag(s)
       if draw_own_shading_flag ~===:= s then
-         self.invalidate()
+         invalidate()
       return self
    end
 
@@ -417,9 +417,9 @@ class Component(Rect,Align,Connectable)
    # Swap the shaded status of the component.
    #
    public toggle_is_shaded()
-      self.is_shaded_flag := toggle_flag(self.is_shaded_flag)
-      self.shaded_change()
-      self.invalidate()
+      is_shaded_flag := toggle_flag(is_shaded_flag)
+      shaded_change()
+      invalidate()
       return self
    end
 
@@ -429,8 +429,8 @@ class Component(Rect,Align,Connectable)
    public set_is_shaded(s)
       check_flag(s)
       if is_shaded_flag ~===:= s then {
-         self.shaded_change()
-         self.invalidate()
+         shaded_change()
+         invalidate()
       }
       return self
    end
