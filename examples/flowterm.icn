@@ -1062,6 +1062,8 @@ class Terminal(TabItem, VtUI)
       revert_tab,
       adjacent_flag,
       shell,
+      shell_args,
+      shell_vars,
       auto_close_flag,
       select_flag,
       title
@@ -1090,6 +1092,17 @@ class Terminal(TabItem, VtUI)
 
    public set_shell(s)
       self.shell := s
+      return self
+   end
+
+   public add_shell_arg(s)
+      put(shell_args, s)
+      return self
+   end
+
+   public add_shell_var(s)
+      find(u"=", s) | return error("missing = in variable setting")
+      put(shell_vars, s)
       return self
    end
 
@@ -1156,6 +1169,14 @@ class Terminal(TabItem, VtUI)
          "sh" : {
             check_new(s) | fail
             set_shell(param)
+         }
+         "sh-arg" : {
+            check_new(s) | fail
+            add_shell_arg(param)
+         }
+         "sh-var" : {
+            check_new(s) | fail
+            add_shell_var(param) | fail
          }
          "run" : {
             check_param(s, param) | fail
@@ -1675,6 +1696,7 @@ class Terminal(TabItem, VtUI)
       local env, sh, xd, fp, s, sh2, t
       env := []
       every put(env, System.environ())
+      every put(env, !shell_vars)
       env_put(env, "FLOWTERM", "1")
       env_put(env, "TERM", "xterm")
       sh := \shell | System.getpw(System.getuid()).shell
@@ -1723,7 +1745,7 @@ $endif
          tty.dup2(FileStream.stdin) | stop(&why)
          tty.dup2(FileStream.stderr) | stop(&why)
          Files.chdir(cwd)
-         System.exec(sh, [], env) | stop(&why)
+         System.exec(sh, shell_args, env) | stop(&why)
          syserr("Not reached")
       }
    end
@@ -2629,6 +2651,8 @@ $endif
             set_font(other.output.font_family || "," || other.output.font_size).
             set_history_size(other.output.history_size) | syserr("Clone output setting failed: " || &why)
          set_shell(other.shell)
+         shell_args := copy(other.shell_args)
+         shell_vars := copy(other.shell_vars)
          sort_dirs_menu_item.set_is_checked(other.sort_dirs_menu_item.get_status()).
             set_is_shaded(other.sort_dirs_menu_item.is_shaded_flag)
          filter_dirs_menu_item.set_is_checked(other.filter_dirs_menu_item.get_status())
@@ -2643,6 +2667,8 @@ $endif
          sorter := Files.name_cmp
          annotate_opt := SHOW_NAME_ONLY
          set_remembered_focus(output)
+         shell_args := []
+         shell_vars := []
          history := []
          history_pos := 0
          columns_pos_table := table()
@@ -3145,6 +3171,8 @@ procedure usage(opts)
    help_line(":select", "Make this tab the selected tab.")
    help_line(":adjacent", "Add this tab adjacent to the current tab, rather than at the end of all the tabs.")
    help_line(":sh=STRING", "Specify the shell to run.  The default is null, meaning use the user's default shell.")
+   help_line(":sh-arg=STRING", "Specify an argument to pass to the shell; may be given several times to give multiple arguments.")
+   help_line(":sh-var=NAME=STRING", "Specify an environment variable setting to pass to the shell; may be given several times to give multiple variables.")
    help_line(":run=STRING", "Run the given string in the shell; the same as :send-tty with a carriage return appended.")
    help_line(":font=FONT", "Set the font, which should be fixed width.  The default is the font 'fixed'.")
    help_line(":fg=COLOUR", "Specify the foreground colour.  The default is null, meaning use the dialog's foreground colour.")
