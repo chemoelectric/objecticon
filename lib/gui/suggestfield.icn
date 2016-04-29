@@ -213,11 +213,12 @@ abstract class SuggestField(TextField, MenuMode)
                     y - tl.h_spec).
          resize()
 
-      if parent_dialog.contains(tl) then {
+      if Gui.style.allow_internal_popups() &
+         parent_dialog.contains(tl) then {
          tl.invalidate()
       } else {
          # Remove tl from dialog and use add to popup window.
-         self.parent_dialog.remove(tl)
+         parent_dialog.remove(tl)
          d := PureDialog().
             set_canvas("popup").
             set_width(tl.w).
@@ -229,8 +230,8 @@ abstract class SuggestField(TextField, MenuMode)
             copy_wattrib("display", parent_dialog).
             add(tl)
 
-         self.tl.set_pos(0, 0)
-         self.parent_dialog.add_popup(d)
+         tl.set_pos(0, 0)
+         parent_dialog.add_popup(d)
          d.show()
       }
    end

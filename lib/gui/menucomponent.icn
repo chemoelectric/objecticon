@@ -506,7 +506,8 @@ abstract class MenuComponent(Rect,Connectable)
       # Note the test that we must use a popup for the menu if
       # the parent's menu is a popup; otherwise it may appear below
       # one of the parent popups.
-      if pd.contains(self) &
+      if Gui.style.allow_internal_popups() & 
+         pd.contains(self) &
          not (\parent).temp_win.parent_dialog.is_popup() then
       {
          temp_win.

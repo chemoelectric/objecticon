@@ -242,6 +242,16 @@ procedure env_string(s)
 end
 
 #
+# Return a valid flag value from the environment.
+#
+procedure env_flag(s)
+   local v
+   v := env_string(s) | fail
+   v := flag(v) | runerr("Flag value expected for " || s, v)
+   return v
+end
+
+#
 # Return a valid icon colour value from the environment.
 #
 procedure env_color(s)

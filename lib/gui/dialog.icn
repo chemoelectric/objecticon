@@ -1002,7 +1002,8 @@ class Dialog(Component)
 
       # Note that if we have popups, we use a popup for a tooltip, so that it won't appear
       # below the other popup window.
-      if contains(tooltip_component) & (/popups | *popups = 0) then {
+      if Gui.style.allow_internal_popups() &
+         contains(tooltip_component) & (/popups | *popups = 0) then {
          self.tooltip_component.invalidate()
       } else {
          self.remove(self.tooltip_component)
