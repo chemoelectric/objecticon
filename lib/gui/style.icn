@@ -40,6 +40,8 @@ class Style()
       TICK_RATE_MIN := env_int("OI_STYLE_TICK_RATE_MIN", 5) | 20
       insert(Dialog.ROOT_WATTRIBS, "bg",  env_color("OI_STYLE_ROOT_BG"))
       insert(Dialog.ROOT_WATTRIBS, "fg",  env_color("OI_STYLE_ROOT_FG"))
+      insert(Dialog.ROOT_WATTRIBS, "font",  env_font("OI_STYLE_ROOT_FONT"))
+      insert(Dialog.ROOT_WATTRIBS, "leading",  env_real("OI_STYLE_ROOT_LEADING", 0.0))
    end
 
    #
