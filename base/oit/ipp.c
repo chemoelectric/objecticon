@@ -729,10 +729,12 @@ static char *load(char *s)
    if (*wskip(s) != '\0')
       return "$load: too many arguments";
    fullpath = pathfind(intern(getdir(curfile->fname)), lpath, fname, 0);
-   if (fullpath && (val = loadfile(fullpath, &vlen, 0)))
+   if (!fullpath)
+       pfatal("cannot find on path: %s", fname);
+   else if ((val = loadfile(fullpath, &vlen, 0)))
        dinsert_pre(name, val, vlen);		/* install in table */
    else
-       pfatal("cannot open: %s", fname);
+       pfatal("cannot open: %s: %s", fullpath, get_system_error());
    return NULL;
    }
 
@@ -755,10 +757,12 @@ static char *uload(char *s)
    if (*wskip(s) != '\0')
       return "$uload: too many arguments";
    fullpath = pathfind(intern(getdir(curfile->fname)), lpath, fname, 0);
-   if (fullpath && (val = loadfile(fullpath, &vlen, 1)))
+   if (!fullpath)
+       pfatal("cannot find on path: %s", fname);
+   else if ((val = loadfile(fullpath, &vlen, 1)))
        dinsert_pre(name, val, vlen);		/* install in table */
    else
-       pfatal("cannot open: %s", fname);
+       pfatal("cannot open: %s: %s", fullpath, get_system_error());
    return NULL;
    }
 
@@ -792,8 +796,10 @@ static char *include(char *s)
    if (*wskip(s) != '\0')
       return "$include: too many arguments";
    fullpath = pathfind(intern(getdir(curfile->fname)), lpath, fname, 0);
-   if (!fullpath || !ppopen(fullpath, 0))
-      pfatal("cannot open: %s", fname);
+   if (!fullpath)
+      pfatal("cannot find on path: %s", fname);
+   else if (!ppopen(fullpath, 0))
+      pfatal("cannot open: %s: %s", fullpath, get_system_error());
    return NULL;
    }
 

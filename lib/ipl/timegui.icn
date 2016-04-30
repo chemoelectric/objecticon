@@ -260,7 +260,7 @@ class WeekField(DropDown)
    end
 
    public create_popup()
-      return Calendar(last_val).set_week_mode(1).connect(got_date, Event.VALUE_CHANGED)
+      return Calendar(last_val).set_week_mode(&yes).connect(got_date, Event.VALUE_CHANGED)
    end
 
    public create_view()

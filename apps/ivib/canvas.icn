@@ -98,17 +98,6 @@ class BorderOfCanvas(Component)
          # Clear flag.
          #
          is_resizing := &null
-
-         #
-         # Resize, reset all objects, and redisplay canvas.
-         #
-         self.resize()
-         canvas.reset_all()
-
-         # 
-         # Redisplay after erasing any rubbish outside the new area
-         #
-         self.parent.invalidate()
       }
    end
 
@@ -201,7 +190,6 @@ class Canvas(Component,SelectiveObjectCodec)
       event_handlers,          # List of event, handler pairs
       scale_dimensions_flag,   # Apply scale() to dimensions on output
       edit_scale,              # The scale the canvas was edited at
-      item_buff_win,
       dialog_iw,               # Initial size to set dialog; may be null if
       dialog_ih,               # default is to be used.
       dialog_w,                # Actual size of dialog
@@ -264,13 +252,6 @@ class Canvas(Component,SelectiveObjectCodec)
    #
    public get_event_handlers()
       return event_handlers
-   end
-
-   public get_effective_wattribs()
-      local t
-      t := copy(dialog_struct.wattribs)
-      default.delete(t, "canvas")
-      return t
    end
 
    public imagex(s)
@@ -935,7 +916,7 @@ class Canvas(Component,SelectiveObjectCodec)
       dialog_ih := round(\dialog_ih * f)
       synch_size()
       set_modified()
-      reset_all()
+      reset()
       do_reset_all_layouts()
       edit_scale := Gui.SCALE
       parent_dialog.update_grey()
@@ -1094,64 +1075,20 @@ class Canvas(Component,SelectiveObjectCodec)
    end
 
    public initially()
-      local wa
-      # The size will be set up in resize()...
-      wa := copy(self.dialog_struct.wattribs)
-      default.delete(wa, "canvas")
-      item_buff_win := open_win_with(wa)
+      local k
+      # Copy the attribs from the dialog struct (the wattrib ancestor is set to
+      # Gui.EMPTY_WATTRIB_ANCESTOR in the constructor below).
+      clear_wattribs()
+      every k := key(dialog_struct.wattribs) do
+         if Gui.is_context_attrib(k) then
+            set_wattrib(k, dialog_struct.wattribs[k])
       Component.initially()
-   end
-
-   public finally()
-      Component.finally()
-      item_buff_win.close()
-   end
-
-   #
-   # Called on resize - resize temporary window.
-   #
-   public layout()
-      item_buff_win.set_size(self.parent_dialog.w,
-                             self.parent_dialog.h)
-      Component.layout()
-   end
-
-   public reset_all()
-      every (!self.children).reset()
-   end
-
-   #
-   # Reset the item window attributes.
-   #  
-   public reset_windows()
-      local t, wa
-      # Create a new buffer window, keeping a reference to the outgoing one.
-      t := item_buff_win
-      wa := copy(self.dialog_struct.wattribs)
-      default.delete(wa, "canvas")
-      wa["size"] := [self.parent_dialog.w, self.parent_dialog.h]
-      item_buff_win := open_win_with(wa)  | stop("Couldn't open item_buff_win")
-
-      # Switch all components to the new window
-      reset_all()
-
-      # Close the old window
-      t.close()
-
-      # Now resize everything, as fonts etc may now be different.
-      do_reset_all_layouts()
-   end
-
-   # The children don't draw into a Clone of self.cbwin, but rather a different buffer.  This
-   # is needed to prevent drawing by the children outside of the border.
-   public get_cbwin()
-      return self.item_buff_win
    end
 
    public show_moving()
       local cw
       use {
-         cw := item_buff_win.clone(),
+         cw := cbwin.clone(),
          {
             cw.set_fg("red").
                draw_rectangle(moving.mx, moving.my, moving.mw, moving.mh, Gui.FINE_WIDTH)
@@ -1163,22 +1100,15 @@ class Canvas(Component,SelectiveObjectCodec)
    # Display the canvas.
    #
    public display()
-      item_buff_win.erase_area(self.x, self.y, self.w, self.h) 
-
       #
       # Draw and highlight the items.
       #
       display_children()
 
-      every (!selections).do_highlight(item_buff_win)
+      every (!selections).do_highlight(cbwin)
 
       if \moving then
          show_moving()
-
-      item_buff_win.copy_to(self.x, self.y, 
-                            self.w, self.h, 
-                            self.cbwin, 
-                            self.x, self.y)
 
       (\layout_delegate).display()
    end
@@ -1975,6 +1905,7 @@ class Canvas(Component,SelectiveObjectCodec)
 
    public new()
       Component.new()
+      set_wattrib_ancestor(Gui.EMPTY_WATTRIB_ANCESTOR)
       self.parent_Canvas := self
       gen_main := gen_component_setup := gen_constructor := gen_init_dialog := &yes
       self.gen_indent := 3
@@ -1999,8 +1930,3 @@ class Canvas(Component,SelectiveObjectCodec)
       return
    end
 end
-
-
-
-
-

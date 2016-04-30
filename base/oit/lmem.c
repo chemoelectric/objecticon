@@ -110,12 +110,7 @@ static void ensure_lfile(char *ifile)
  */
 void paramlink(char *name)
 {
-    char *file = pathfind(0, 0, name, USuffix);
-
-    if (!file)
-        equit("cannot open %s", name);
-
-    ensure_lfile(intern(canonicalize(file)));
+    ensure_lfile(intern(canonicalize(name)));
 }
 
 void alsoimport(char *package, struct lfile *lf, struct loc *pos)

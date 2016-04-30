@@ -236,7 +236,7 @@ void trans(src_file)
          */
         def_fnd = 0;
         if ((out_file = fopen(cname, "w")) == NULL)
-            err2("cannot open output file ", cname);
+            err("cannot open output file %s: %s", cname, get_system_error());
         else
             addrmlst(cname, out_file);
 
@@ -247,10 +247,10 @@ void trans(src_file)
         fprintf(out_file, "\n");
 
         if (rmlst_empty_p() == 0) {
-            if (fclose(out_file) != 0)
-                err2("cannot close ", cname);
-            else	/* can't close it again if we remove it to due an error */
-                markrmlst(out_file);
+            if (ferror(out_file) != 0)
+                err("problem writing file %s: %s", cname, get_system_error());
+            fclose(out_file);
+            markrmlst(out_file);
         }
     }
 }

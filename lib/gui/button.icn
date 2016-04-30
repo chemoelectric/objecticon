@@ -86,7 +86,7 @@ abstract class Button(Toggle,Component)
    public handle_lpress(e)
       local b
       if /self.is_down then {
-         self.is_down := 1
+         self.is_down := &yes
          start_held(e)
          self.repeat_delay := Prog.get_runtime_millis() + Gui.REPEAT_DELAY
          every b := !(\self.parent_button_group).buttons do {
@@ -106,7 +106,7 @@ abstract class Button(Toggle,Component)
       #
       if self.in_region(e) then {
          if /self.is_down then {
-            self.is_down := 1
+            self.is_down := &yes
             start_held(e)
             invalidate()
          }
@@ -153,7 +153,7 @@ abstract class Button(Toggle,Component)
    public visualize_action(e)
       local t
       if /self.is_down then {
-         self.is_down := 1
+         self.is_down := &yes
          self.invalidate()
          t := Dispatcher.new_task{{
             t.sleep(50)

@@ -216,7 +216,7 @@ class GridPaint(Paint)
 
       /win | syserr("initially called out of sequence")
       parent := c
-      attribs := copy(c.get_effective_wattribs())
+      attribs := copy(c.get_effective_wattribs()) | runerr("couldn't get effective wattribs in GridPaint", c)
       attribs["size"] := [1, 1]
       attribs["canvas"] := "hidden"
       win := open_win_with(attribs) | runerr("Couldn't open window")

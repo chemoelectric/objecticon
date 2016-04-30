@@ -74,8 +74,7 @@ abstract class DropDown(Component, MenuMode)
       spc_right := rs.x + rs.w - self.x
 
       self.popup := create_popup().
-         set_all_wattribs(self.get_effective_wattribs()).
-         set_inherit_wattribs(&no).
+         set_wattrib_ancestor(self).
          set_z(self.parent_dialog.get_top_z())
       self.parent_dialog.add(popup)
       pref_w := popup.get_preferred_width()
@@ -105,7 +104,7 @@ abstract class DropDown(Component, MenuMode)
          set_size(pref_w, pref_h).
          resize()
 
-      if parent_dialog.contains(popup) then {
+      if Gui.style.allow_internal_popups() & parent_dialog.contains(popup) then {
          popup.invalidate()
       } else {
          # Remove popup from dialog and add to popup window.
@@ -360,8 +359,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       max_h >:= \self.max_height
 
       self.popup := create_popup().
-         set_all_wattribs(self.get_effective_wattribs()).
-         set_inherit_wattribs(&no).
+         set_wattrib_ancestor(self).
          connect(self.on_textlist_selection, Event.SELECTION_CHANGED).
          set_contents(self.selection_list).
          set_draggable_cursor(&yes).
@@ -392,11 +390,11 @@ abstract class SelectionDropDown(SelectionList, DropDown)
                     y - popup.h_spec).
          resize()
 
-      if parent_dialog.contains(popup) then {
+      if Gui.style.allow_internal_popups() & parent_dialog.contains(popup) then {
          popup.invalidate()
       } else {
          # Remove popup from dialog and use add to popup window.
-         self.parent_dialog.remove(popup)
+         parent_dialog.remove(popup)
          d := PureDialog().
             set_canvas("popup").
             set_width(popup.w).

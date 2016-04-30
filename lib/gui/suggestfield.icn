@@ -89,12 +89,12 @@ abstract class SuggestField(TextField, MenuMode)
       local l
       repeat {
          until mod === 1 do {
-            req_held := 1
+            req_held := &yes
             req.sleep()
             req_held := &null
          }
          mod := &null
-         req_doing := 1
+         req_doing := &yes
          l := do_request() | &null
          req_doing := &null
          # If finally() has been called, close any request resources,
@@ -181,8 +181,7 @@ abstract class SuggestField(TextField, MenuMode)
       max_h >:= \self.max_height
 
       self.tl := create_popup().
-         set_all_wattribs(self.get_effective_wattribs()).
-         set_inherit_wattribs(&no).
+         set_wattrib_ancestor(self).
          connect(self.on_textlist_selection, Event.SELECTION_CHANGED).
          set_contents(data).
          set_accepts_focus(&no).
@@ -214,11 +213,12 @@ abstract class SuggestField(TextField, MenuMode)
                     y - tl.h_spec).
          resize()
 
-      if parent_dialog.contains(tl) then {
+      if Gui.style.allow_internal_popups() &
+         parent_dialog.contains(tl) then {
          tl.invalidate()
       } else {
          # Remove tl from dialog and use add to popup window.
-         self.parent_dialog.remove(tl)
+         parent_dialog.remove(tl)
          d := PureDialog().
             set_canvas("popup").
             set_width(tl.w).
@@ -230,8 +230,8 @@ abstract class SuggestField(TextField, MenuMode)
             copy_wattrib("display", parent_dialog).
             add(tl)
 
-         self.tl.set_pos(0, 0)
-         self.parent_dialog.add_popup(d)
+         tl.set_pos(0, 0)
+         parent_dialog.add_popup(d)
          d.show()
       }
    end

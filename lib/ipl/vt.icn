@@ -2670,8 +2670,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          set_item_border(EmptyBorder().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                              set_x_align(Align.L)).
-         set_all_wattribs(view.get_effective_wattribs()).
-         set_inherit_wattribs(&no).
+         set_wattrib_ancestor(view).
          connect(on_popup_selection, Event.SELECTION_CHANGED).
          set_select_mode(Select.ONE).
          set_accepts_focus(&no).
@@ -2696,7 +2695,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
       self.parent_dialog.enter_menu_mode(self)
 
-      if parent_dialog.contains(popup) then {
+      if Gui.style.allow_internal_popups() & parent_dialog.contains(popup) then {
          popup.invalidate()
       } else {
          # Remove popup from dialog and add to popup window.
@@ -2712,9 +2711,8 @@ class Vt(LineBasedScrollArea, MenuMode)
             copy_wattrib("display", parent_dialog).
             add(popup)
 
-         self.popup.set_pos(0, 0)
-         self.parent_dialog.
-            add_popup(d)
+         popup.set_pos(0, 0)
+         parent_dialog.add_popup(d)
          d.show()
       }
    end

@@ -82,7 +82,7 @@ char *fname;
       file_src("<stdin>", stdin);
    else {
       if ((f = fopen(fname, "r")) == NULL) 
-         err2("cannot open ", fname);
+          err("cannot open %s: %s", fname, get_system_error());
       file_src(fname, f);
       }
    }
@@ -162,7 +162,7 @@ int system;
       }
 
    if (f == NULL)
-      errt2(trigger, "cannot open include file ", fname);
+       err_tok(trigger, "cannot open include file %s: %s", fname, get_system_error());
    file_src(path, f);
    }
 
