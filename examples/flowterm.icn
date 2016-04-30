@@ -2775,12 +2775,20 @@ $endif
 
    private on_filter_action(ev)
       resort_cwd(&yes)
-      parent_dialog.set_focus(best_focus)
+      set_best_focus()
    end
 
    private on_filter_content_changed(ev)
       if filter.was_applied(ev) then
          on_filter_action()
+   end
+
+   private on_filter_popup_closed(ev)
+      set_best_focus()
+   end
+
+   private set_best_focus()
+      parent_dialog.set_focus(best_focus)
    end
 
    private on_prev_button(ev)
@@ -3011,6 +3019,7 @@ $endif
          set_tooltip(paint_23).
          connect(self.on_filter_action, Event.ACTION).
          connect(self.on_filter_content_changed, Event.CONTENT_CHANGED).
+         connect(self.on_filter_popup_closed, Event.POPUP_CLOSED).
          set_selection_list([""])
       paint_28 := ImagePaint().
          set_cache("gui.FONT_24")
