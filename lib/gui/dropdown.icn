@@ -104,7 +104,7 @@ abstract class DropDown(Component, MenuMode)
          set_size(pref_w, pref_h).
          resize()
 
-      if Gui.style.allow_internal_popups() & parent_dialog.contains(popup) then {
+      if Gui.allow_internal_popups() & parent_dialog.contains(popup) then {
          popup.invalidate()
       } else {
          # Remove popup from dialog and add to popup window.
@@ -390,7 +390,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
                     y - popup.h_spec).
          resize()
 
-      if Gui.style.allow_internal_popups() & parent_dialog.contains(popup) then {
+      if Gui.allow_internal_popups() & parent_dialog.contains(popup) then {
          popup.invalidate()
       } else {
          # Remove popup from dialog and use add to popup window.

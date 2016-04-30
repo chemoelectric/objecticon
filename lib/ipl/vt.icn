@@ -2695,7 +2695,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
       self.parent_dialog.enter_menu_mode(self)
 
-      if Gui.style.allow_internal_popups() & parent_dialog.contains(popup) then {
+      if Gui.allow_internal_popups() & parent_dialog.contains(popup) then {
          popup.invalidate()
       } else {
          # Remove popup from dialog and add to popup window.

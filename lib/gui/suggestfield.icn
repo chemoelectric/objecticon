@@ -213,7 +213,7 @@ abstract class SuggestField(TextField, MenuMode)
                     y - tl.h_spec).
          resize()
 
-      if Gui.style.allow_internal_popups() &
+      if Gui.allow_internal_popups() &
          parent_dialog.contains(tl) then {
          tl.invalidate()
       } else {

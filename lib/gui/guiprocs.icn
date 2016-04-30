@@ -322,6 +322,7 @@ class Gui()
       IDLE_SLEEP,
       # Default tab char width
       TAB_WIDTH,
+      ALLOW_INTERNAL_POPUPS,
       style
 
    public static const 
@@ -376,6 +377,7 @@ class Gui()
       IDLE_SLEEP := 50
       TOOLBAR_ICON_SIZE := env_scale("OI_GUI_TOOLBAR_ICON_SIZE") | scale(24)
       MENU_ICON_SIZE := env_scale("OI_GUI_MENU_ICON_SIZE") | scale(16)
+      ALLOW_INTERNAL_POPUPS := env_flag("OI_GUI_ALLOW_INTERNAL_POPUPS") | &yes
       style := Style()
       PRINTABLE_1 := '\x20-\x7e\x80-\U10ffff'
       PRINTABLE_N := '\t\n\x20-\x7e\x80-\U10ffff'
@@ -388,6 +390,10 @@ class Gui()
                          "max_height", "max_size")
       CONTEXT_WATTRIB_SET := set("fg", "bg", "draw_op", "font", "leading", "line_width", "line_style", "pattern")
       EMPTY_WATTRIB_ANCESTOR := EmptyWattribAncestor() 
+   end
+
+   public static allow_internal_popups()
+      return \ALLOW_INTERNAL_POPUPS
    end
 
    public static is_window_attrib(s)
