@@ -214,6 +214,7 @@ class Untitled(Dialog)
       if \ev.meta4 then s ||:= " meta4"
       if \ev.meta5 then s ||:= " meta5"
       if \ev.release then s ||:= " rel"
+      s ||:= if is_entered() then " entered" else " exited"
       return s
    end
 

@@ -89,6 +89,9 @@ class Dialog(Component)
       # Rectangles that need validation
       invalid_rects,
 
+      # Flag tracking whether mouse has entered the dialog window.
+      entered,
+
       # Components containing current event
       point_chain,
       # Event used to create point_chain
@@ -188,6 +191,12 @@ class Dialog(Component)
    #
    public get_curr_drag()
       return \popup_manager.curr_drag
+   end
+
+   # Succeed iff the sequence of events indicates the mouse is over the
+   # dialog.
+   public is_entered()
+      return \popup_manager.entered
    end
 
    public block()
@@ -602,7 +611,7 @@ class Dialog(Component)
       self.point_chain := self.point_chain_source := self.held := 
          self.prev_event := self.invalid_rects := self.crossing := 
          self.selections := self.selection_requests := 
-         self.click_count := &null
+         self.click_count := self.entered := &null
       fire(Event.DIALOG_DISPOSED)
       return self
    end
@@ -631,12 +640,11 @@ class Dialog(Component)
 
       point_chain := []
       point_chain_source := e
-
-      # A mouse exit always has an empty point chain, since the
-      # pointer is outside the window (or over an obscured part).
-      # Note that we shouldn't get exit events if we have popups,
-      # since we are in grab mode.
-      if (e.code === Mouse.EXIT) | is_hidden() then
+      
+      # If we're not "entered" then we have an empty point chain,
+      # since the pointer is outside the window (or over an obscured
+      # part).
+      if /entered | is_hidden() then
          fail
 
       every p := !\popups do {
@@ -738,9 +746,29 @@ class Dialog(Component)
       return self
    end
 
+   private check_entered(e)
+      # Theoretically, we should only need Mouse.ENTER in the first
+      # list here; the others are backups in case the window system
+      # doesn't send the ENTER message.
+      #
+      # Note that we shouldn't get exit events if we have popups,
+      # since we are in grab mode, although that isn't the case in
+      # win32.
+      #
+      case e.code of {
+         Mouse.MOVEMENT |
+            Mouse.LEFT_PRESS |
+            Mouse.MIDDLE_PRESS |
+            Mouse.RIGHT_PRESS |
+            Mouse.ENTER :
+            entered := &yes
+         Mouse.EXIT :
+            entered := &no
+      }
+   end
+
    public process_event(l)
       local e
-
       case l[1] of {
          Selection.REQUEST: process_selection_request(l)
          Selection.CLEAR: process_selection_clear(l)
@@ -759,6 +787,7 @@ class Dialog(Component)
             }
 
             e := WinEvent!l
+            check_entered(e)
             create_point_chain(e)
 
             while \menu_mode do {
