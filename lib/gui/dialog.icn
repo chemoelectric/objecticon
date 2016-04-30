@@ -121,7 +121,7 @@ class Dialog(Component)
       # Current pointer set in win.
       curr_pointer,
       # Previous event for tracking click counts.
-      prev_event,
+      click_event,
       # Table of selections to `SelectionRequest`s
       selection_requests,
       # Table of selections to selection owners.
@@ -609,7 +609,7 @@ class Dialog(Component)
          self.owning_dialog := &null
       }
       self.point_chain := self.point_chain_source := self.held := 
-         self.prev_event := self.invalid_rects := self.crossing := 
+         self.click_event := self.invalid_rects := self.crossing := 
          self.selections := self.selection_requests := 
          self.click_count := self.entered := &null
       fire(Event.DIALOG_DISPOSED)
@@ -788,6 +788,7 @@ class Dialog(Component)
 
             e := WinEvent!l
             check_entered(e)
+            check_click_count(e)
             create_point_chain(e)
 
             while \menu_mode do {
@@ -824,7 +825,6 @@ class Dialog(Component)
          # Note the position of the start of a potential drag
          drag_gesture_x := e.x
          drag_gesture_y := e.y
-         check_click_count(e)
          if c := (!point_chain).find_focus(e) then
             set_focus(c, e)
       }
@@ -1343,17 +1343,20 @@ class Dialog(Component)
    end
 
    #
-   # Maybe increment the click count
+   # Maybe increment or clear the click count
    # 
    private check_click_count(e)
-      if e.code = (\prev_event).code & 
-         abs(prev_event.x - e.x) < DOUBLE_CLICK_TOLERANCE &
-         abs(prev_event.y - e.y) < DOUBLE_CLICK_TOLERANCE & 
-         e.time - prev_event.time < DOUBLE_CLICK_DELAY then
-         click_count +:= 1
-      else
-         click_count := 1
-      prev_event := e
+      if member(Mouse.PRESS, e.code) then {
+         if e.code = (\click_event).code & 
+            abs(click_event.x - e.x) < DOUBLE_CLICK_TOLERANCE &
+            abs(click_event.y - e.y) < DOUBLE_CLICK_TOLERANCE & 
+            e.time - click_event.time < DOUBLE_CLICK_DELAY then
+            click_count +:= 1
+         else
+            click_count := 1
+         click_event := e
+      } else if *held = 0 then
+         click_count := click_event := &null
    end
 
    private get_focus_list(e)
