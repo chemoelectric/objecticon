@@ -215,6 +215,7 @@ class Untitled(Dialog)
       if \ev.meta5 then s ||:= " meta5"
       if \ev.release then s ||:= " rel"
       s ||:= if is_entered() then " entered" else " exited"
+      s ||:= " cc=" || get_click_count()
       return s
    end
 
