@@ -1248,6 +1248,8 @@ class Dialog(Component)
          held[ec] := []                               # buttons are pressed/released during the drag
       else if member(Mouse.RELEASE, ec) then
          delete(held, ec + 3)
+
+      fire(Event.ICON, e)
    end
 
    #
@@ -1355,7 +1357,7 @@ class Dialog(Component)
          else
             click_count := 1
          click_event := e
-      } else if *held = 0 then
+      } else if e.code ~=== Mouse.MOVEMENT & *held = 0 then
          click_count := click_event := &null
    end
 
