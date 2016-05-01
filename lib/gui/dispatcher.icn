@@ -101,12 +101,20 @@ final abstract class Dispatcher()
          l := d.win.pending()
          if *l > 0 then {
             /bag := []
-            if /d.is_blocked_flag | member(BLOCKED_ALLOW, l[1]) then
+            if /d.is_blocked_flag then
                put(bag, d)
             else {
-               # Discard and maybe beep in the window.
-               member(BLOCKED_QUIET, l[1]) | d.win.alert()
-               d.win.event()
+               # Consume all blocked events, or until a BLOCKED_ALLOW
+               # event is encountered.
+               while *l > 0 do {
+                  if member(BLOCKED_ALLOW, l[1]) then {
+                     put(bag, d)
+                     break
+                  }
+                  # Discard and maybe beep in the window.
+                  member(BLOCKED_QUIET, l[1]) | d.win.alert()
+                  d.win.event()
+               }
             }
          }
       }
