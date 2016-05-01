@@ -47,7 +47,7 @@ class Dialog(Component)
       # Set of events to move focus down
       FOCUS_DOWN
 
-   private static
+   private static const
       pointer_grab_stack,
       keyboard_grab_stack
 
@@ -780,12 +780,6 @@ class Dialog(Component)
          Window.STATE: process_state(l)
          default: {
             (popup_manager === self) | syserr("shouldn't get a mouse/key event in a popup")
-
-            if member(Mouse.DRAG_OR_MOVEMENT, l[1]) then {
-               while win.pending()[1] === l[1] do
-                  l := self.win.event()
-            }
-
             e := WinEvent!l
             check_entered(e)
             check_click_count(e)
@@ -829,8 +823,12 @@ class Dialog(Component)
             set_focus(c, e)
       }
       else if \e.meta & /e.release & type(ec) == ("string" | "ucs") then {
-         if c := (!\popups | self).find_accel(ec) then
+         if c := (!\popups | self).find_accel(ec) then {
             c.handle_accel(e)
+            # The handler may have called dispose()
+            if /win then
+               fail
+         }
       }
 
       generate_crossing_events(e) 
@@ -839,7 +837,7 @@ class Dialog(Component)
       #
       # If a handler closed us, do no more.
       #
-      if /self.win then
+      if /win then
          fail
 
       #
@@ -1321,8 +1319,6 @@ class Dialog(Component)
    # Process a resize 
    # 
    private process_resize(l)
-      while win.pending()[1] === l[1] do
-         l := self.win.event()
       #
       # Resize buffer canvas
       #
@@ -1708,8 +1704,7 @@ end
 #
 # @example
 # @  # dispose on alt-x
-# @  add(a := Accelerator("accel=x"))
-# @  a.connect(dispose, Event.ACTION)
+# @  add(Accelerator().set_accel("x").connect(dispose, Event.ACTION))
 #
 class Accelerator(Component)
    public handle_accel(e)

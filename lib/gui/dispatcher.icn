@@ -23,11 +23,14 @@ final abstract class Dispatcher()
 
    private static const
       BLOCKED_ALLOW,
-      BLOCKED_QUIET
+      BLOCKED_QUIET,
+      REPEATING
 
    private static init()
-      BLOCKED_ALLOW := Selection.EVENTS ++ set(Window.INVOKE_LATER, Window.RESIZE)
+      BLOCKED_ALLOW := Selection.EVENTS ++ set(Window.INVOKE_LATER, 
+                                               Window.RESIZE, Window.STATE, Window.MOVE)
       BLOCKED_QUIET := set(Mouse.RELEASE, Mouse.MOVEMENT) ++ Mouse.CROSSING
+      REPEATING := Mouse.DRAG_OR_MOVEMENT ++ set(Window.RESIZE)
       dialogs := set()
       scheduler := Scheduler(Gui.IDLE_SLEEP)
    end
@@ -119,7 +122,13 @@ final abstract class Dispatcher()
          }
       }
       if d := ?\bag then {
-         d.process_event(d.win.event())
+         l := d.win.event()
+         # Discard unwanted repeating events.
+         if member(REPEATING, l[1]) then {
+            while d.win.pending()[1] === l[1] do
+               l := d.win.event()
+         }
+         d.process_event(l)
          return
       }
    end
