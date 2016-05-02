@@ -410,9 +410,11 @@ abstract class SelectionDropDown(SelectionList, DropDown)
          parent_dialog.add_popup(d)
          d.show()
       }
-      parent_dialog.
-         set_focus(popup).
-         hold(popup.view, ev.code)
+      parent_dialog.set_focus(popup)
+      # ev may be other than a mouse press if the popup is being
+      # opened programatically.  Note that if ev.code is not a mouse
+      # press them hold() just fails.
+      parent_dialog.hold(popup.view, (\ev).code)
 
       if \self.selection then {
          self.popup.
