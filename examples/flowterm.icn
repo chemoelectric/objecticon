@@ -378,7 +378,12 @@ class Columns(LineBasedScrollArea)
       FOCUS_DASHED_WIDTH
 
    private static init()
-      FOCUS_DASHED_WIDTH := env_scale("OI_FLOWTERM_FOCUS_DASHED_WIDTH") | Gui.DASHED_WIDTH
+      local v
+      if v := scale(\opts["lfw"]) then {
+         if v < 1 then
+            stop("Invalid -lfw: scaled value >= 1 required")
+      }
+      FOCUS_DASHED_WIDTH := \v | Gui.DASHED_WIDTH
    end
 
    public initially()
@@ -3280,6 +3285,7 @@ procedure main(a)
    opts := options(a, [Opt("x",string,"The location of the 'flowterm-extras' directory; by default 'flowterm-extras' in your home directory.  This directory's 'bin' subdirectory is added to the front of the PATH variable"),
                        Opt("nx",,"Don't add any flowterm extras directory to the PATH.  The -x option is ignored"),
                        Opt("v",,"Verbose output"),
+                       Opt("lfw",real,"REAL#Use the given width in unscaled pixels for the focus rectangle in the file list."),
                        Opt("width",integer,"CHARS#The preferred width of the terminal, in characters.  This only applies to the first visible terminal tab."),
                        Opt("height",integer,"LINES#The preferred height of the terminal, in lines.  This only applies to the first visible terminal tab."),
                        Opt("t",string,"The window title, by default \"FlowTerm\"")],
