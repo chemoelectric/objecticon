@@ -2483,7 +2483,7 @@ class Form()
       mp := Multipart()
       every c := !items do {
          if k := \c.form_name then {
-            every v := c.get_form_value(ev, src, 1) do {
+            every v := c.get_form_value(ev, src, &yes) do {
                m2 := Message()
                if is(c, FormBrowse) then {
                   fn := c.get_filename()
@@ -3959,7 +3959,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       local sc, label
       sc := \context.select | fail
       label := e.get_attribute(u"LABEL") | u""
-      put(sc.options, FormOption(repl(u"    ", sc.optgroup) || u"--- " || label || u" ---", label,,,, 1))
+      put(sc.options, FormOption(repl(u"    ", sc.optgroup) || u"--- " || label || u" ---", label,,,, &yes))
       sc.optgroup +:= 1
       traverse(e, p, context)
       sc.optgroup -:= 1
