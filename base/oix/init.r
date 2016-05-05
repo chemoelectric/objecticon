@@ -1228,8 +1228,11 @@ int main(int argc, char **argv)
     rootpstate.blockregion = &rootblock;
 
     pmem = physicalmemorysize();
-    rootstring.size = Max(pmem/200, MinDefStrSpace);
-    rootblock.size  = Max(pmem/100, MinDefAbrSize);
+    if (pmem == 0)  /* If unknown, assume 2GB */
+        pmem = (ulonglong)2 * 1024 * 1024 * 1024;
+
+    rootstring.size = Min(Max(pmem / 256, MinDefStrSpace), MaxDefStrSpace);
+    rootblock.size  = Min(Max(WordSize * (pmem / 1024), MinDefAbrSize), MaxDefAbrSize);
 
     /*
      * Catch floating-point traps
