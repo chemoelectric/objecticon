@@ -112,12 +112,20 @@
  */
 
 #ifndef MinDefStrSpace
-   #define MinDefStrSpace 500000	/* minimum default size of the string space in bytes */
-#endif					/* (default size may be larger if memory is ample) */
+   #define MinDefStrSpace (512 * 1024)       /* minimum default size of the string space in bytes */
+#endif                                  /* (default size may be larger if memory is ample) */
 
 #ifndef MinDefAbrSize
-   #define MinDefAbrSize (125000 * WordSize) /* minimum default size of the block region in bytes */
-#endif					/* (default size may be larger if memory is ample) */
+   #define MinDefAbrSize (128 * 1024 * WordSize) /* minimum default size of the block region in bytes */
+#endif                                  /* (default size may be larger if memory is ample) */
+
+#ifndef MaxDefStrSpace
+   #define MaxDefStrSpace (20 * 1024 * 1024)           /* maximum default size of the string space in bytes */
+#endif
+
+#ifndef MaxDefAbrSize
+   #define MaxDefAbrSize (5 * 1024 * 1024  * WordSize)       /* maximum default size of the block region in bytes */
+#endif
 
 #ifndef RegionCushion
    #define RegionCushion 10		/* % memory cushion to avoid thrashing*/

@@ -570,6 +570,9 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             case WM_CAPTURECHANGED:
                 handle_capture_changed(ws, msg, wp, lp);
                 return 0;
+            case WM_LBUTTONDBLCLK: 
+            case WM_RBUTTONDBLCLK: 
+            case WM_MBUTTONDBLCLK: 
             case WM_LBUTTONDOWN: 
             case WM_RBUTTONDOWN:
             case WM_MBUTTONDOWN:

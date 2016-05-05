@@ -123,6 +123,7 @@ class FlowTermDialog(Dialog)
    private readable
       favourite_dirs,
       tabs,
+      menu_bar,
       file_dialog
 
    public
@@ -205,8 +206,12 @@ class FlowTermDialog(Dialog)
       d.show_modal(self)
    end
 
+   private html_img_size()
+      return "width=" || scale(64) ||  " height=" || scale(64)
+   end
+
    private on_about(ev)
-      show_html("<html><h1><img src=img:rpp.ABOUT_64 width=64 height=64 align=absmiddle/>&nbsp;About FlowTerm</h1>_
+      show_html("<html><h1><img src=img:rpp.ABOUT_64 " || html_img_size() || " align=absmiddle/>&nbsp;About FlowTerm</h1>_
 <h2>Author</h2>Robert Parlett_
 <h2>Contact</h2><a href=mailto:r.parlett@gmail.com</a>r.parlett@gmail.com</a>_
 <h2>Version</h2>" || &version ||
@@ -214,7 +219,7 @@ class FlowTermDialog(Dialog)
    end
 
    private on_help(ev)
-      show_html("<html><h1><img src=img:rpp.HELP_64 width=64 height=64 align=absmiddle/>&nbsp;FlowTerm Help</h1>_
+      show_html("<html><h1><img src=img:rpp.HELP_64 " || html_img_size() || " align=absmiddle/>&nbsp;FlowTerm Help</h1>_
 FlowTerm is a terminal emulator which uses web-like hyperlinks, as well as some elements of a file explorer._
 <p>_
 It requires an additional set of programs, <i>FlowTerm extras</i>, in order to be fully functional._
@@ -280,7 +285,7 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
    end
 
    public new()
-      local quit_menu_item, menu_bar, file_menu, terminal_menu, columns_menu, 
+      local quit_menu_item, file_menu, terminal_menu, columns_menu, 
          new_tab_item, favourite_dirs_item, xdg_refresh_item,
          help_menu, about_item, help_item
       Dialog.new()
@@ -377,7 +382,12 @@ class Columns(LineBasedScrollArea)
       FOCUS_DASHED_WIDTH
 
    private static init()
-      FOCUS_DASHED_WIDTH := env_scale("OI_FLOWTERM_FOCUS_DASHED_WIDTH") | Gui.DASHED_WIDTH
+      local v
+      if v := scale(\opts["lfw"]) then {
+         if v < 1 then
+            stop("Invalid -lfw: scaled value >= 1 required")
+      }
+      FOCUS_DASHED_WIDTH := \v | Gui.DASHED_WIDTH
    end
 
    public initially()
@@ -1251,7 +1261,11 @@ class Terminal(TabItem, VtUI)
                toggle_focus_columns_button()
             else {
                param := check_flag_param(s, param) | fail
-               (param === focus_columns_button.get_status()) | toggle_focus_columns_button()
+               # We call on_focus_columns_button() even if the state
+               # is already set to param so that the focus is sure to
+               # be set to the list (if on) or the terminal (if off).
+               focus_columns_button.set_is_checked(param)
+               on_focus_columns_button()
             }
          }
          "reorient" | "re-orient" : {
@@ -1459,6 +1473,27 @@ class Terminal(TabItem, VtUI)
             check_live(s) | fail
             on_next_button()
          }
+         "open-history": {
+            check_live(s) | fail
+            history_list.on_button_press()
+         }
+         "open-filter": {
+            check_live(s) | fail
+            filter.on_button_press()
+         }
+         "focus-filter": {
+            on_focus_filter()
+         }
+         "open-favourites": {
+            check_live(s) | fail
+            favourites_list.on_button_press()
+         }
+         "open-menu": {
+            check_live(s) | fail
+            /param := 1
+            param := parent_dialog.menu_bar.menus[integer(param)] | return error("valid menu index expected for open-menu")
+            parent_dialog.menu_bar.set_which_open(param)
+         }
          "info": {
             check_live(s) | fail
             check_param(s, param) | fail
@@ -1628,7 +1663,7 @@ class Terminal(TabItem, VtUI)
                output.add_custom_key(code, 
                                      bits, 
                                      mask, 
-                                     mk_custom_key_func(verb), 
+                                     custom_key_func, 
                                      verb) | return error("failed to add key function: " || &why)
             }
          }
@@ -1636,8 +1671,8 @@ class Terminal(TabItem, VtUI)
       return self
    end
 
-   private mk_custom_key_func(verb)
-      return exprf{ do_tab_cmd(verb) | info_msg(&why) }
+   private custom_key_func(verb)
+      do_tab_cmd(verb) | info_msg(&why)
    end
 
    private on_max_terminal()
@@ -1818,7 +1853,7 @@ $endif
          if DescStream.poll_out_test(x[1]) then {
             s := get(input) | syserr("Poll out, but input buffer empty")
             n := tty.out(s) | {
-               err_msg("IO problem on tty: " || &why)
+               err_msg("IO problem on tty output: " || &why)
                break
             }
             if n < *s then
@@ -1827,7 +1862,15 @@ $endif
                write("Out: ", image(s))
          } else if DescStream.poll_in_test(x[1]) then {
             s := tty.in(1048576) | {
-               err_msg("IO problem on tty: " || &why)
+$ifdef _LINUX
+               # See notes for explanation
+               if x[1] = Poll.IN & errno() = Errno.EAGAIN then {
+                  if \opts["v"] then
+                     write("Got Poll.IN and EAGAIN reading tty: continuing")
+                  next
+               }
+$endif
+               err_msg("IO problem on tty input: " || &why)
                break
             }
             if /s then {
@@ -2560,7 +2603,7 @@ $endif
             output.add_custom_key(code, 
                                   entry.bits,
                                   entry.mask,
-                                  mk_custom_key_func(entry.data),
+                                  custom_key_func,
                                   entry.data) | syserr("Failed to clone existing key table entry")
          }
       }
@@ -2775,12 +2818,20 @@ $endif
 
    private on_filter_action(ev)
       resort_cwd(&yes)
-      parent_dialog.set_focus(best_focus)
+      set_best_focus()
    end
 
    private on_filter_content_changed(ev)
       if filter.was_applied(ev) then
          on_filter_action()
+   end
+
+   private on_filter_popup_closed(ev)
+      set_best_focus()
+   end
+
+   private set_best_focus()
+      parent_dialog.set_focus(best_focus)
    end
 
    private on_prev_button(ev)
@@ -2799,8 +2850,17 @@ $endif
       goto_dir(he.dir)
    end
 
+   private on_focus_filter()
+      local c
+      c := filter.find_focus()
+      if is_live() then
+         parent_dialog.set_focus(c)
+      else
+         set_remembered_focus(c)
+   end
+
    private toggle_focus_columns_button()
-      focus_columns_button.toggle_is_checked().invalidate()
+      focus_columns_button.toggle_is_checked()
       on_focus_columns_button()
    end
 
@@ -2924,7 +2984,6 @@ $endif
          set_align(Align.L, Align.C).
          clear_constraints().
          set_tooltip(paint_9).
-         set_accel("c").
          connect(self.on_close_button, Event.ACTION).
          set_no_click_focus(&yes).
          set_toggles(&no).
@@ -2992,7 +3051,7 @@ $endif
          connect(self.on_history_list, Event.SELECTION_CHANGED)
       paint_45 := ImagePaint().
          set_cache("rpp.KEYBOARD_24")
-      paint_42 := TextPaint("Columns focus")
+      paint_42 := TextPaint("List focus")
       focus_columns_button := IconButton().
          set_align(Align.L, Align.C).
          clear_constraints().
@@ -3011,6 +3070,7 @@ $endif
          set_tooltip(paint_23).
          connect(self.on_filter_action, Event.ACTION).
          connect(self.on_filter_content_changed, Event.CONTENT_CHANGED).
+         connect(self.on_filter_popup_closed, Event.POPUP_CLOSED).
          set_selection_list([""])
       paint_28 := ImagePaint().
          set_cache("gui.FONT_24")
@@ -3189,6 +3249,7 @@ procedure usage(opts)
    help_line(":string=STRING", "Insert a string as though typed by the user; like :send-tty, but quietens the cursor and goes to the bottom of the terminal content.")
    help_line(":search=FLAG", "Toggle or set the visibility of the search panel.")
    help_line(":filter=PATTERN", "Set the list filter to the given pattern; use * to show all files.")
+   help_line(":focus-filter", "Give the filter field the keyboard focus.")
    help_line(":send-tty=STRING", "Send a string directly to the pseudo-terminal.")
    ewrite()
    help_line("The following commands only apply to the currently active tab (not new tabs).")
@@ -3214,6 +3275,10 @@ procedure usage(opts)
    help_line(":up", "Go up one directory level.")
    help_line(":prev", "Go to the previous directory in the history.")
    help_line(":next", "Go to the next directory in the history.")
+   help_line(":open-history", "Open the history list.")
+   help_line(":open-filter", "Open the filter list.")
+   help_line(":open-favourites", "Open the favourites list.")
+   help_line(":open-menu=N", "Open top-level menu, starting at index N (default 1).")
    help_line(":info=MSG", "Output MSG to the status bar.")
    help_line(":tab-left", "Select the next tab to the left.")
    help_line(":tab-right", "Select the next tab to the right.")
@@ -3232,6 +3297,7 @@ procedure main(a)
    opts := options(a, [Opt("x",string,"The location of the 'flowterm-extras' directory; by default 'flowterm-extras' in your home directory.  This directory's 'bin' subdirectory is added to the front of the PATH variable"),
                        Opt("nx",,"Don't add any flowterm extras directory to the PATH.  The -x option is ignored"),
                        Opt("v",,"Verbose output"),
+                       Opt("lfw",real,"REAL#Use the given width in unscaled pixels for the focus rectangle in the file list."),
                        Opt("width",integer,"CHARS#The preferred width of the terminal, in characters.  This only applies to the first visible terminal tab."),
                        Opt("height",integer,"LINES#The preferred height of the terminal, in lines.  This only applies to the first visible terminal tab."),
                        Opt("t",string,"The window title, by default \"FlowTerm\"")],

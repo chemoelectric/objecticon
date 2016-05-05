@@ -47,7 +47,7 @@ class Dialog(Component)
       # Set of events to move focus down
       FOCUS_DOWN
 
-   private static
+   private static const
       pointer_grab_stack,
       keyboard_grab_stack
 
@@ -121,7 +121,7 @@ class Dialog(Component)
       # Current pointer set in win.
       curr_pointer,
       # Previous event for tracking click counts.
-      prev_event,
+      click_event,
       # Table of selections to `SelectionRequest`s
       selection_requests,
       # Table of selections to selection owners.
@@ -609,7 +609,7 @@ class Dialog(Component)
          self.owning_dialog := &null
       }
       self.point_chain := self.point_chain_source := self.held := 
-         self.prev_event := self.invalid_rects := self.crossing := 
+         self.click_event := self.invalid_rects := self.crossing := 
          self.selections := self.selection_requests := 
          self.click_count := self.entered := &null
       fire(Event.DIALOG_DISPOSED)
@@ -780,14 +780,9 @@ class Dialog(Component)
          Window.STATE: process_state(l)
          default: {
             (popup_manager === self) | syserr("shouldn't get a mouse/key event in a popup")
-
-            if member(Mouse.DRAG_OR_MOVEMENT, l[1]) then {
-               while win.pending()[1] === l[1] do
-                  l := self.win.event()
-            }
-
             e := WinEvent!l
             check_entered(e)
+            check_click_count(e)
             create_point_chain(e)
 
             while \menu_mode do {
@@ -824,13 +819,16 @@ class Dialog(Component)
          # Note the position of the start of a potential drag
          drag_gesture_x := e.x
          drag_gesture_y := e.y
-         check_click_count(e)
          if c := (!point_chain).find_focus(e) then
             set_focus(c, e)
       }
       else if \e.meta & /e.release & type(ec) == ("string" | "ucs") then {
-         if c := (!\popups | self).find_accel(ec) then
+         if c := (!\popups | self).find_accel(ec) then {
             c.handle_accel(e)
+            # The handler may have called dispose()
+            if /win then
+               fail
+         }
       }
 
       generate_crossing_events(e) 
@@ -839,7 +837,7 @@ class Dialog(Component)
       #
       # If a handler closed us, do no more.
       #
-      if /self.win then
+      if /win then
          fail
 
       #
@@ -1031,7 +1029,7 @@ class Dialog(Component)
 
       # Note that if we have popups, we use a popup for a tooltip, so that it won't appear
       # below the other popup window.
-      if Gui.style.allow_internal_popups() &
+      if Gui.allow_internal_popups() &
          contains(tooltip_component) & (/popups | *popups = 0) then {
          self.tooltip_component.invalidate()
       } else {
@@ -1248,6 +1246,8 @@ class Dialog(Component)
          held[ec] := []                               # buttons are pressed/released during the drag
       else if member(Mouse.RELEASE, ec) then
          delete(held, ec + 3)
+
+      fire(Event.ICON, e)
    end
 
    #
@@ -1319,8 +1319,6 @@ class Dialog(Component)
    # Process a resize 
    # 
    private process_resize(l)
-      while win.pending()[1] === l[1] do
-         l := self.win.event()
       #
       # Resize buffer canvas
       #
@@ -1343,17 +1341,20 @@ class Dialog(Component)
    end
 
    #
-   # Maybe increment the click count
+   # Maybe increment or clear the click count
    # 
    private check_click_count(e)
-      if e.code = (\prev_event).code & 
-         abs(prev_event.x - e.x) < DOUBLE_CLICK_TOLERANCE &
-         abs(prev_event.y - e.y) < DOUBLE_CLICK_TOLERANCE & 
-         e.time - prev_event.time < DOUBLE_CLICK_DELAY then
-         click_count +:= 1
-      else
-         click_count := 1
-      prev_event := e
+      if member(Mouse.PRESS, e.code) then {
+         if e.code = (\click_event).code & 
+            abs(click_event.x - e.x) < DOUBLE_CLICK_TOLERANCE &
+            abs(click_event.y - e.y) < DOUBLE_CLICK_TOLERANCE & 
+            e.time - click_event.time < DOUBLE_CLICK_DELAY then
+            click_count +:= 1
+         else
+            click_count := 1
+         click_event := e
+      } else if e.code ~=== Mouse.MOVEMENT & *held = 0 then
+         click_count := click_event := &null
    end
 
    private get_focus_list(e)
@@ -1508,6 +1509,10 @@ class Dialog(Component)
 
    private static init()
       ROOT_WATTRIBS := table()
+      insert(ROOT_WATTRIBS, "bg",  env_color("OI_DIALOG_ROOT_BG"))
+      insert(ROOT_WATTRIBS, "fg",  env_color("OI_DIALOG_ROOT_FG"))
+      insert(ROOT_WATTRIBS, "font",  env_font("OI_DIALOG_ROOT_FONT"))
+      insert(ROOT_WATTRIBS, "leading",  env_real("OI_DIALOG_ROOT_LEADING", 0.0))
       DOUBLE_CLICK_DELAY := env_int("OI_DIALOG_DOUBLE_CLICK_DELAY", 1) | 500
       DOUBLE_CLICK_TOLERANCE := env_scale("OI_DIALOG_DOUBLE_CLICK_TOLERANCE") | Gui.UNIT
       TOOLTIP_START_DELAY := env_int("OI_DIALOG_TOOLTIP_START_DELAY", 1) | 1000
@@ -1699,8 +1704,7 @@ end
 #
 # @example
 # @  # dispose on alt-x
-# @  add(a := Accelerator("accel=x"))
-# @  a.connect(dispose, Event.ACTION)
+# @  add(Accelerator().set_accel("x").connect(dispose, Event.ACTION))
 #
 class Accelerator(Component)
    public handle_accel(e)
