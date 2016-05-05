@@ -2218,7 +2218,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       if \application_keypad_mode then i +:= K
       if \application_cursor_mode then i +:= U
       if ke := custom_keys.lookup(e.code, i) then {
-         ke.val(e)
+         ke.val(ke.data, e)
          return
       }
       if ke := KEY_TABLE.lookup(e.code, i) then {

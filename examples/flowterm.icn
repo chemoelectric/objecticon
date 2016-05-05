@@ -1663,7 +1663,7 @@ class Terminal(TabItem, VtUI)
                output.add_custom_key(code, 
                                      bits, 
                                      mask, 
-                                     mk_custom_key_func(verb), 
+                                     custom_key_func, 
                                      verb) | return error("failed to add key function: " || &why)
             }
          }
@@ -1671,8 +1671,8 @@ class Terminal(TabItem, VtUI)
       return self
    end
 
-   private mk_custom_key_func(verb)
-      return exprf{ do_tab_cmd(verb) | info_msg(&why) }
+   private custom_key_func(verb)
+      do_tab_cmd(verb) | info_msg(&why)
    end
 
    private on_max_terminal()
@@ -2603,7 +2603,7 @@ $endif
             output.add_custom_key(code, 
                                   entry.bits,
                                   entry.mask,
-                                  mk_custom_key_func(entry.data),
+                                  custom_key_func,
                                   entry.data) | syserr("Failed to clone existing key table entry")
          }
       }
