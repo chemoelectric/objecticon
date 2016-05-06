@@ -1184,7 +1184,7 @@ int main(int argc, char **argv)
     IntVal(nulldesc) = 0;
 
     yesdesc.dword = D_Yes;
-    IntVal(nulldesc) = 0;
+    IntVal(yesdesc) = 0;
 
 #if !RealInDesc
     {
