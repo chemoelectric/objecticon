@@ -1854,7 +1854,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
     LitWhy("Bad socket address format (unknown family)");
     return 0;
 #else
-    LitWhy("Unsuppoted");
+    LitWhy("Unsupported");
     return 0;
 #endif
 }
