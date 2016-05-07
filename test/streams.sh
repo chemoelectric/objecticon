@@ -9,8 +9,4 @@ oit -s streams.icn
 ./streams >streams.out 2>&1
 rm -rf testdir
 set -e
-if [ -e /env/sysname ] ; then
-   cmp streams.out streams.std.p9
-else
-   cmp streams.out streams.std
-fi
+cmp streams.out streams.std

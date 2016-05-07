@@ -1675,12 +1675,7 @@ function io_FileStream_pipe_impl()
    }
 end
 
-#if PLAN9
-UnsupportedFunc(io_SocketStream_new_impl)
-UnsupportedFunc(io_SocketStream_socketpair_impl)
-UnsupportedFunc(io_SocketStream_dns_query_4)
-UnsupportedFunc(io_SocketStream_dns_query_6)
-#else
+#if UNIX
 function io_SocketStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
@@ -1750,7 +1745,7 @@ function io_SocketStream_out(self, s)
         */
 #if HAVE_MSG_NOSIGNAL
        rc = send(self_fd, StrLoc(s), StrLen(s), MSG_NOSIGNAL);
-#elif UNIX
+#else
        {
        struct sigaction saved, tmp;
        tmp.sa_handler = SIG_IGN;
@@ -1758,8 +1753,6 @@ function io_SocketStream_out(self, s)
        rc = send(self_fd, StrLoc(s), StrLen(s), 0);
        sigaction(SIGPIPE, &saved, NULL);
        }
-#else
-       rc = send(self_fd, StrLoc(s), StrLen(s), 0);
 #endif
        if (rc < 0) {
            errno2why();
@@ -1772,11 +1765,7 @@ end
 function io_SocketStream_close(self)
    body {
        GetSelfFd();
-#if MSWIN32
-       if (closesocket(self_fd) < 0) {
-#else
        if (close(self_fd) < 0) {
-#endif
            errno2why();
            *self_fd_dptr = minusonedesc;
            fail;
@@ -1804,7 +1793,6 @@ function io_SocketStream_socketpair_impl(typ)
       runerr(101, typ)
 
    body {
-#if UNIX
        int fds[2];
        struct descrip t;
        tended struct descrip result;
@@ -1823,13 +1811,9 @@ function io_SocketStream_socketpair_impl(typ)
       list_put(&result, &t);
 
       return result;
-#else
-       Unsupported;
-#endif
    }
 end
 
-#if UNIX
 static void getaddrinfo_error2why(int error)
 {
     if (error == EAI_SYSTEM)
@@ -1837,11 +1821,9 @@ static void getaddrinfo_error2why(int error)
     else
         whyf("Name lookup failure: %s", gai_strerror(error));
 }
-#endif
 
 static struct sockaddr *parse_sockaddr(char *s, int *len)
 {
-#if UNIX
     if (strncmp(s, "unix:", 5) == 0) {
         static struct sockaddr_un us;
         char *t = s + 5;
@@ -1943,17 +1925,12 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
 
     LitWhy("Bad socket address format (unknown family)");
     return 0;
-#else
-    LitWhy("Unsuppoted");
-    return 0;
-#endif
 }
 
 function io_SocketStream_dns_query_4(host)
    if !cnv:C_string(host) then
       runerr(103, host)
    body {
-#if UNIX
       struct addrinfo hints;
       struct addrinfo *res, *t;
       tended struct descrip tmp, result;
@@ -1980,9 +1957,6 @@ function io_SocketStream_dns_query_4(host)
       }
       freeaddrinfo(res);
       return result;
-#else
-      Unsupported;
-#endif
    }
 end
 
@@ -1990,7 +1964,6 @@ function io_SocketStream_dns_query_6(host)
    if !cnv:C_string(host) then
       runerr(103, host)
    body {
-#if UNIX
       struct addrinfo hints;
       struct addrinfo *res, *t;
       tended struct descrip tmp, result;
@@ -2017,9 +1990,6 @@ function io_SocketStream_dns_query_6(host)
       }
       freeaddrinfo(res);
       return result;
-#else
-      Unsupported;
-#endif
    }
 end
 
@@ -2064,9 +2034,7 @@ function io_SocketStream_bind(self, addr)
        /* This prevents a TIME_WAIT expiring connection blocking a server listening on
         * the same port */
        optval = 1;
-#if UNIX
        setsockopt(self_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
-#endif
        if (bind(self_fd, sa, len) < 0) {
            errno2why();
            fail;
@@ -2121,8 +2089,12 @@ function io_SocketStream_accept_impl(self)
        return C_integer sockfd;
    }
 end
-
-#endif  /* PLAN9 */
+#else
+UnsupportedFunc(io_SocketStream_new_impl)
+UnsupportedFunc(io_SocketStream_socketpair_impl)
+UnsupportedFunc(io_SocketStream_dns_query_4)
+UnsupportedFunc(io_SocketStream_dns_query_6)
+#endif   /* UNIX */
 
 /*
  * These two are macros since they call runerr (so does FdStaticParam).
