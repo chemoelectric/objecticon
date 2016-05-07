@@ -109,10 +109,21 @@ $else
    write("Can all: no")
 $endif
 
+$ifdef _UNIX
    write("Socket")
    f := SocketStream() | stop(&why)
    do_mode(f)
    f.close()
+$else
+   write("Socket")
+   write("Mode: 3")
+   write("Can read: yes")
+   write("Can write: yes")
+   write("Can readwrite: yes")
+   write("Can seek: no")
+   write("Can truncate: no")
+   write("Can all: no")
+$endif
 
    write("Ram stream")
    f := RamStream("abc")
