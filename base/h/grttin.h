@@ -147,19 +147,12 @@ end
  * dummy typedefs for things defined in #include files
  */
 typedef int clock_t, time_t, fd_set, va_list, off_t, mode_t,
-    ino_t, blkcnt_t, dev_t;
-
-typedef int DIR;
-
-typedef int size_t;
-typedef long time_t;
+    ino_t, blkcnt_t, dev_t, size_t, jmp_buf,
+    DIR, uid_t, gid_t, pid_t, stringint, socklen_t;
 
 #if HAVE_LIBZ
 typedef int gzFile;
 #endif					/* HAVE_LIBZ */
-
-
-typedef int jmp_buf;
 
 #if PLAN9
 typedef int uint, vlong, ulong, uvlong, uchar, Rune, Dir, Image, Memimage, Point, Rectangle, Display, Req, Srv, Waitmsg, QLock, Rendez, Screen;
@@ -172,16 +165,6 @@ typedef int j_common_ptr, JSAMPARRAY, JSAMPROW;
 #if HAVE_LIBPNG
 typedef int png_structp, png_infop, png_bytep, png_byte, png_colorp, png_color, png_color_16, png_color_16p;
 #endif
-
-typedef int SOCKET;
-typedef int u_short;
-typedef int fd_set;
-
-struct timeval {
-   long    tv_sec;
-   long    tv_usec;
-};
-typedef int time_t, DIR, uid_t, gid_t, pid_t, stringint, socklen_t;
 
 /*
  * graphics
@@ -208,7 +191,7 @@ typedef int time_t, DIR, uid_t, gid_t, pid_t, stringint, socklen_t;
 #endif					/* Graphics */
 
 #if MSWIN32
-   typedef int clock_t, jmp_buf, MINMAXINFO, OSVERSIONINFO, BOOL_CALLBACK;
+   typedef int MINMAXINFO, OSVERSIONINFO, BOOL_CALLBACK;
    typedef int LRESULT_CALLBACK, MSG, BYTE, WORD, DWORD;
    typedef int HINSTANCE, HGLOBAL, HPEN, HBRUSH, HRGN;
    typedef int LPSTR, HBITMAP, WNDCLASS, PAINTSTRUCT, POINT, RECT;
@@ -223,7 +206,7 @@ typedef int time_t, DIR, uid_t, gid_t, pid_t, stringint, socklen_t;
    typedef int BLENDFUNCTION, WCHAR, WSADATA, WORD, HANDLE, MEMORYSTATUS;
    typedef int PVOID, PFIBER_START_ROUTINE, WIN32_FIND_DATA;
    typedef int INT8, INT16, INT32, INT64, UINT8, UINT16, UINT32, UINT64;
-   typedef int SIZE_T, INT_PTR;
+   typedef int SOCKET, SIZE_T, INT_PTR;
    typedef int gb_Bitmap, gb_Draw, gb_Color, gb_Font;
 #endif				/* MSWIN32 */
 
