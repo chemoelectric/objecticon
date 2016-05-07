@@ -1676,8 +1676,10 @@ function io_FileStream_pipe_impl()
 end
 
 #if PLAN9
-UnsupportedFunc(io_SocketStream_socket_impl)
-    UnsupportedFunc(io_SocketStream_socketpair_impl)
+UnsupportedFunc(io_SocketStream_new_impl)
+UnsupportedFunc(io_SocketStream_socketpair_impl)
+UnsupportedFunc(io_SocketStream_dns_query_4)
+UnsupportedFunc(io_SocketStream_dns_query_6)
 #else
 function io_SocketStream_in(self, i)
    if !cnv:C_integer(i) then

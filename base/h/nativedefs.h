@@ -217,8 +217,10 @@ NativeDef(io.RamStream,str,io_RamStream_str)
 NativeDef(io.RamStream,tell,io_RamStream_tell)
 NativeDef(io.RamStream,truncate,io_RamStream_truncate)
 #if PLAN9
-NativeDef(io.SocketStream,socket_impl,io_SocketStream_socket_impl)
+NativeDef(io.SocketStream,new_impl,io_SocketStream_new_impl)
 NativeDef(io.SocketStream,socketpair_impl,io_SocketStream_socketpair_impl)
+NativeDef(io.SocketStream,dns_query_4,io_SocketStream_dns_query_4)
+NativeDef(io.SocketStream,dns_query_6,io_SocketStream_dns_query_6)
 #else
 NativeDef(io.SocketStream,accept_impl,io_SocketStream_accept_impl)
 NativeDef(io.SocketStream,bind,io_SocketStream_bind)
