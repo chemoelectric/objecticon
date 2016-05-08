@@ -776,6 +776,12 @@ final abstract class Internal()
    # It is distinct from the {lang.hash()} procedure.
    #
    public static native hash(x)
+
+   #
+   # Return the collating order number for {x}, which is a small integer
+   # dependent on the type.
+   #
+   public static native order(x)
 end
 
 #
