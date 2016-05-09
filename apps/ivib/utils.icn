@@ -164,15 +164,15 @@ end
 
 procedure normalize_constraint(key, val)
    case key of {
-      "x_tab"|"y_tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
+      Grid.X_TAB | Grid.Y_TAB | Grid.X | Grid.Y | Grid.W | Grid.H | Grid.L_INSET | Grid.R_INSET | Grid.T_INSET | Grid.B_INSET:
          return integer(val)
-      "x_align":
+      Grid.X_ALIGN:
          return (string(val) == (Align.L | Align.R | Align.C))
-      "y_align":
+      Grid.Y_ALIGN:
          return (string(val) == (Align.T | Align.B | Align.C))
-      "eol"|"x_fill"|"y_fill":
+      Grid.EOL | Grid.X_FILL | Grid.Y_FILL:
          return flag(val)
-      "x_weight"|"y_weight":
+      Grid.X_WEIGHT | Grid.Y_WEIGHT:
          return real(val)
       default:
          return best_text(val)
@@ -199,15 +199,38 @@ procedure select_str(val)
    }
 end
 
+procedure constraint_str(val)
+   return case val of {
+      Grid.X_TAB : "Grid.X_TAB"
+      Grid.Y_TAB : "Grid.Y_TAB"
+      Grid.EOL : "Grid.EOL"
+      Grid.X : "Grid.X"
+      Grid.Y : "Grid.Y"
+      Grid.W : "Grid.W"
+      Grid.H : "Grid.H"
+      Grid.L_INSET : "Grid.L_INSET"
+      Grid.R_INSET : "Grid.R_INSET"
+      Grid.T_INSET : "Grid.T_INSET"
+      Grid.B_INSET : "Grid.B_INSET"
+      Grid.X_FILL : "Grid.X_FILL"
+      Grid.Y_FILL : "Grid.Y_FILL"
+      Grid.X_ALIGN : "Grid.X_ALIGN"
+      Grid.Y_ALIGN : "Grid.Y_ALIGN"
+      Grid.X_WEIGHT : "Grid.X_WEIGHT"
+      Grid.Y_WEIGHT : "Grid.Y_WEIGHT"
+      default: image(val)
+   }
+end
+
 procedure stringify_constraint(key, val, quote, c)
    case key of {
-      "x_tab"|"y_tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
+      Grid.X_TAB | Grid.Y_TAB | Grid.X | Grid.Y | Grid.W | Grid.H | Grid.L_INSET | Grid.R_INSET | Grid.T_INSET | Grid.B_INSET:
          return string(val)
-      "x_align"|"y_align":
+      Grid.X_ALIGN | Grid.Y_ALIGN:
          return if /quote then val else if /c then align_str(val) else c.align_str(val)
-      "eol"|"x_fill"|"y_fill":
+      Grid.EOL | Grid.X_FILL | Grid.Y_FILL:
          return if \val then "&yes" else "&no"
-      "x_weight"|"y_weight":
+      Grid.X_WEIGHT | Grid.Y_WEIGHT:
          return string(val)
       default:
          return if /quote then text(val) else image(text(val))

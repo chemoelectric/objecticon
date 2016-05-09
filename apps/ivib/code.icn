@@ -102,28 +102,7 @@ class Code()
    end
 
    public constraint_line(key, val)
-      local kn
-      kn := case key of {
-         Grid.X_TAB : "Grid.X_TAB"
-         Grid.Y_TAB : "Grid.Y_TAB"
-         Grid.EOL : "Grid.EOL"
-         Grid.X : "Grid.X"
-         Grid.Y : "Grid.Y"
-         Grid.W : "Grid.W"
-         Grid.H : "Grid.H"
-         Grid.L_INSET : "Grid.L_INSET"
-         Grid.R_INSET : "Grid.R_INSET"
-         Grid.T_INSET : "Grid.T_INSET"
-         Grid.B_INSET : "Grid.B_INSET"
-         Grid.X_FILL : "Grid.X_FILL"
-         Grid.Y_FILL : "Grid.Y_FILL"
-         Grid.X_ALIGN : "Grid.X_ALIGN"
-         Grid.Y_ALIGN : "Grid.Y_ALIGN"
-         Grid.X_WEIGHT : "Grid.X_WEIGHT"
-         Grid.Y_WEIGHT : "Grid.Y_WEIGHT"
-         default: image(key)
-      }
-      chain("set_constraint(" || kn || ", " || scale_and_stringify_constraint(key, val) || ")")
+      chain("set_constraint(" || constraint_str(key) || ", " || scale_and_stringify_constraint(key, val) || ")")
    end
 
    public scalable_dim(dim)
