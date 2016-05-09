@@ -33,7 +33,12 @@ class MapTab(TabItem)
       value.set_contents(ucs(contents[-1][2]))
       update_grey()
       attrib_tf.grab_focus()
-      attrib_tf.handle_select_all()
+      if is(attrib_tf, TextField) then
+         attrib_tf.handle_select_all()
+      else {
+         attrib_tf.set_selection_only()
+         attrib_tf.view.handle_select_all()
+      }
    end
 
    public on_tbl()
@@ -94,7 +99,7 @@ class MapTab(TabItem)
       return
    end
 
-   public new()
+   public new(attribs)
       local c1, c2, p
       TabItem.new()
 
@@ -117,7 +122,10 @@ class MapTab(TabItem)
 
       p := Panel().set_constraint("eol", &yes).set_constraint("y_weight", 0.0)
       p.set_layout(GridLayout().set_doi(0))
-      attrib_tf := TextField().set_constraint("x_weight", 0.0)
+      if /attribs then
+         attrib_tf := TextField().set_constraint("x_weight", 0.0)
+      else
+         attrib_tf := EditList().set_selection_list(sort(attribs)).set_constraint("x_weight", 0.0).set_selection()
       attrib_tf.set_size(scale(95))
       attrib_tf.connect(self.on_apply, Event.ACTION)
       p.add(attrib_tf)
