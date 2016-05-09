@@ -36,7 +36,7 @@ end
 
 procedure stringify_wattrib(key, val, quote)
    return if type(val) == "list" then list2str(val, ", ") 
-      else if key == "resize" then if \val then "&yes" else "&no"
+      else if key == WAttrib.RESIZE then if \val then "&yes" else "&no"
       else if type(val) == ("integer" | "real") then string(val)
       else if /quote then text(val) else image(text(val))
 end
@@ -133,23 +133,23 @@ end
 
 procedure normalize_wattrib(key, val)
    case key of {
-      "pos"|"size"|"min_size"|"max_size":
+      WAttrib.POS | WAttrib.SIZE | WAttrib.MIN_SIZE | WAttrib.MAX_SIZE:
          return try_list(val, 2)
-      "geometry":
+      WAttrib.GEOMETRY:
          return try_list(val, 4)
-      "resize": 
+      WAttrib.RESIZE: 
          return flag(val)
 
-      "x"|"y"|"height"|"width"|"w"|"h"|
-         "dx"|"dy"|"min_width"|
-         "min_height"|"max_width"|"max_height":
+      WAttrib.X | WAttrib.Y | WAttrib.HEIGHT | WAttrib.WIDTH | 
+         WAttrib.DX | WAttrib.DY | WAttrib.MIN_WIDTH | 
+         WAttrib.MIN_HEIGHT | WAttrib.MAX_WIDTH | WAttrib.MAX_HEIGHT:
          return integer(val)
 
-      "leading" | "line_width":
+      WAttrib.LEADING  |  WAttrib.LINE_WIDTH:
          return real(val)
 
-      "fg"|"bg"|"draw_op"|"icon"|"font"|"label"|
-         "line_style"|"input_mask": 
+      WAttrib.FG | WAttrib.BG | WAttrib.DRAW_OP | WAttrib.ICON | WAttrib.FONT | WAttrib.LABEL | 
+         WAttrib.LINE_STYLE | WAttrib.INPUT_MASK: 
          return best_text(val)
    }
 end

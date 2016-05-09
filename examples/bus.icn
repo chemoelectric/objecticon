@@ -1915,7 +1915,7 @@ procedure main(a)
    local d
    &maxlevel := 50000
    ImageCache.name_image("rpp.BUS_LOGO", BUS_LOGO)
-   insert(Dialog.ROOT_WATTRIBS, "icon", BUS_LOGO)
+   insert(Dialog.ROOT_WATTRIBS, WAttrib.ICON, BUS_LOGO)
    opts := options(a, [Opt("n",, "Use night bus data"),
                        Opt("r",string, "Select route; multiple uses allowed",&yes),
                        Opt("s",, "Space nodes animation"),

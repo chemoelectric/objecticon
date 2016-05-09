@@ -102,7 +102,28 @@ class Code()
    end
 
    public constraint_line(key, val)
-      chain("set_constraint(" || image(key) || ", " || scale_and_stringify_constraint(key, val) || ")")
+      local kn
+      kn := case key of {
+         Grid.X_TAB : "Grid.X_TAB"
+         Grid.Y_TAB : "Grid.Y_TAB"
+         Grid.EOL : "Grid.EOL"
+         Grid.X : "Grid.X"
+         Grid.Y : "Grid.Y"
+         Grid.W : "Grid.W"
+         Grid.H : "Grid.H"
+         Grid.L_INSET : "Grid.L_INSET"
+         Grid.R_INSET : "Grid.R_INSET"
+         Grid.T_INSET : "Grid.T_INSET"
+         Grid.B_INSET : "Grid.B_INSET"
+         Grid.X_FILL : "Grid.X_FILL"
+         Grid.Y_FILL : "Grid.Y_FILL"
+         Grid.X_ALIGN : "Grid.X_ALIGN"
+         Grid.Y_ALIGN : "Grid.Y_ALIGN"
+         Grid.X_WEIGHT : "Grid.X_WEIGHT"
+         Grid.Y_WEIGHT : "Grid.Y_WEIGHT"
+         default: image(key)
+      }
+      chain("set_constraint(" || kn || ", " || scale_and_stringify_constraint(key, val) || ")")
    end
 
    public scalable_dim(dim)
@@ -429,11 +450,11 @@ class Code()
 
    public scale_and_stringify_wattrib(key, val)
       return case key of {
-         "x"|"y"|"height"|"width"|"min_width"|"min_height"|"max_width"|"max_height": 
+         WAttrib.X | WAttrib.Y | WAttrib.HEIGHT | WAttrib.WIDTH | WAttrib.MIN_WIDTH | WAttrib.MIN_HEIGHT | WAttrib.MAX_WIDTH | WAttrib.MAX_HEIGHT: 
             scalable_dim(val)
-         "pos"|"size"|"max_size"|"min_size": 
+         WAttrib.POS | WAttrib.SIZE | WAttrib.MAX_SIZE | WAttrib.MIN_SIZE: 
             scalable_dim(val[1]) || ", " || scalable_dim(val[2])
-         "geometry":
+         WAttrib.GEOMETRY:
             scalable_dim(val[1]) || ", " || scalable_dim(val[2]) || ", " || 
                scalable_dim(val[3]) || ", " || scalable_dim(val[4])
          default: stringify_wattrib(key, val, 1)

@@ -227,7 +227,7 @@ abstract class SuggestField(TextField, MenuMode)
             set_dy(-tl.y).
             set_x(win.get_x() + win.get_dx() + tl.x).
             set_y(win.get_y() + win.get_dy() + tl.y).
-            copy_wattrib("display", parent_dialog).
+            copy_wattrib(WAttrib.DISPLAY, parent_dialog).
             add(tl)
 
          tl.set_pos(0, 0)

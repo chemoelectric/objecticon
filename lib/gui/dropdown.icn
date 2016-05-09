@@ -117,7 +117,7 @@ abstract class DropDown(Component, MenuMode)
             set_dy(-popup.y).
             set_x(win.get_x() + win.get_dx() + popup.x).
             set_y(win.get_y() + win.get_dy() + popup.y).
-            copy_wattrib("display", parent_dialog).
+            copy_wattrib(WAttrib.DISPLAY, parent_dialog).
             add(popup)
 
          popup.set_pos(0, 0)
@@ -403,7 +403,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
             set_dy(-popup.y).
             set_x(win.get_x() + win.get_dx() + popup.x).
             set_y(win.get_y() + win.get_dy() + popup.y).
-            copy_wattrib("display", parent_dialog).
+            copy_wattrib(WAttrib.DISPLAY, parent_dialog).
             add(popup)
 
          popup.set_pos(0, 0)

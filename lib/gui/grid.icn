@@ -54,7 +54,24 @@ class Grid()
       CONSTRAINT_SET,
       EXTRA_CELLS,
       EXTRA_BORDERS,
-      EXTRA_IGNORE
+      EXTRA_IGNORE,
+      X_TAB,
+      Y_TAB,
+      EOL,
+      X,
+      Y,
+      W,
+      H,
+      L_INSET,
+      R_INSET,
+      T_INSET,
+      B_INSET,
+      X_FILL,
+      Y_FILL,
+      X_ALIGN,
+      Y_ALIGN,
+      X_WEIGHT,
+      Y_WEIGHT
 
    public 
       gw,           # Grid width, height in cells
@@ -128,15 +145,15 @@ class Grid()
       local ci
       ci := CellInfo()
       ci.s := @id_seq
-      self.add_x +:= validate_int(t, "x_tab")
-      if self.add_y +:= validate_int(t, "y_tab") then
+      self.add_x +:= validate_int(t, X_TAB)
+      if self.add_y +:= validate_int(t, Y_TAB) then
          add_row_h := 0
-      ci.x := validate_int(t, "x", add_x)
-      ci.y := validate_int(t, "y", add_y)
-      ci.w := validate_int(t, "w", 1)
-      ci.h := validate_int(t, "h", 1)
+      ci.x := validate_int(t, X, add_x)
+      ci.y := validate_int(t, Y, add_y)
+      ci.w := validate_int(t, W, 1)
+      ci.h := validate_int(t, H, 1)
       add_row_h <:= ci.h
-      if /validate_flag(t, "eol") then {
+      if /validate_flag(t, EOL) then {
          add_x := ci.x + ci.w
          add_y := ci.y
       } else {
@@ -144,16 +161,16 @@ class Grid()
          add_y +:= add_row_h
          add_row_h := 0
       }
-      ci.l_inset := validate_int(t, "l_inset")
-      ci.t_inset := validate_int(t, "t_inset")
-      ci.r_inset := validate_int(t, "r_inset")
-      ci.b_inset := validate_int(t, "b_inset")
-      ci.x_fill := validate_flag(t, "x_fill")
-      ci.y_fill := validate_flag(t, "y_fill")
-      ci.x_align := validate_x_align(t, "x_align")
-      ci.y_align := validate_y_align(t, "y_align")
-      ci.x_weight := validate_real(t, "x_weight", 0)
-      ci.y_weight := validate_real(t, "y_weight", 0)
+      ci.l_inset := validate_int(t, L_INSET)
+      ci.t_inset := validate_int(t, T_INSET)
+      ci.r_inset := validate_int(t, R_INSET)
+      ci.b_inset := validate_int(t, B_INSET)
+      ci.x_fill := validate_flag(t, X_FILL)
+      ci.y_fill := validate_flag(t, Y_FILL)
+      ci.x_align := validate_x_align(t, X_ALIGN)
+      ci.y_align := validate_y_align(t, Y_ALIGN)
+      ci.x_weight := validate_real(t, X_WEIGHT, 0)
+      ci.y_weight := validate_real(t, Y_WEIGHT, 0)
 
       put(info, ci)
 
@@ -465,8 +482,25 @@ class Grid()
       EXTRA_CELLS := "cells"
       EXTRA_BORDERS := "borders"
       EXTRA_IGNORE := "ignore"
-      CONSTRAINT_SET := set("x_tab", "y_tab", "eol", "x", "y", "w", "h", "l_inset", "r_inset", "t_inset", "b_inset", 
-                            "x_fill", "y_fill", "x_align", "y_align", "x_weight", "y_weight")
+      X_TAB := "x_tab"
+      Y_TAB := "y_tab"
+      EOL := "eol"
+      X := "x"
+      Y := "y"
+      W := "w"
+      H := "h"
+      L_INSET := "l_inset"
+      R_INSET := "r_inset"
+      T_INSET := "t_inset"
+      B_INSET := "b_inset" 
+      X_FILL := "x_fill"
+      Y_FILL := "y_fill"
+      X_ALIGN := "x_align"
+      Y_ALIGN := "y_align"
+      X_WEIGHT := "x_weight"
+      Y_WEIGHT := "y_weight"
+      CONSTRAINT_SET := set(X_TAB, Y_TAB, EOL, X, Y, W, H, L_INSET, R_INSET, T_INSET, B_INSET, 
+                            X_FILL, Y_FILL, X_ALIGN, Y_ALIGN, X_WEIGHT, Y_WEIGHT)
    end
 
    public static is_constraint(s)

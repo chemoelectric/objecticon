@@ -1527,7 +1527,7 @@ class BrowserTab(TabItem, BrowserUI)
       if paint.label_will_fit(cbwin, tab_w - label_border.get_total_width()) then
          fail
       /title_tt := split_string(paint.str, 
-                                Gui.style.create_tooltip_label().get_wattrib("font"),
+                                Style.TOOLTIP_FONT,
                                 scale(500))
       return title_tt
    end
@@ -1791,7 +1791,7 @@ procedure main(a)
       name_image("rpp.CLEAR_24", CLEAR).
       name_image("rpp.INCREASE_FONT_24", INCREASE_FONT).
       name_image("rpp.DECREASE_FONT_24", DECREASE_FONT)
-   insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(BROWSER_LOGO))
+   insert(Dialog.ROOT_WATTRIBS, WAttrib.ICON, Pixels(BROWSER_LOGO))
    d := BrowserDialog(cookies, settings)
    if *a = 0 then
       d.new_tab(settings.home_url)

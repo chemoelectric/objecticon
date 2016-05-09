@@ -23,7 +23,7 @@ class ColorField(Component)
 
    public on_textfield(ev, src, type)
       if last_val := get_value() then {
-         tf.remove_wattrib("fg").reset()
+         tf.remove_wattrib(WAttrib.FG).reset()
          cr.set_color(last_val)
       } else {
          tf.set_fg("red").reset()
@@ -58,7 +58,7 @@ class ColorField(Component)
       last_val := s
       cr.set_color(last_val)
       if is_live() then
-         tf.remove_wattrib("fg").reset()
+         tf.remove_wattrib(WAttrib.FG).reset()
       return self
    end
 

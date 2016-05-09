@@ -522,7 +522,7 @@ abstract class MenuComponent(Rect,Connectable)
             set_canvas("popup").
             set_width(self.w).
             set_height(self.h).
-            copy_wattrib("display", parent_component.parent_dialog).
+            copy_wattrib(WAttrib.DISPLAY, parent_component.parent_dialog).
             add(self.temp_win).
             set_dx(-self.x).
             set_dy(-self.y).

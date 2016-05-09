@@ -1453,42 +1453,42 @@ class Component(Rect,Align,Connectable)
    end
 
    public set_bg(v)
-      set_wattrib("bg", v)
+      set_wattrib(WAttrib.BG, v)
       return self
    end
 
    public set_fg(v)
-      set_wattrib("fg", v)
+      set_wattrib(WAttrib.FG, v)
       return self
    end
 
    public set_draw_op(v)
-      set_wattrib("draw_op", v)
+      set_wattrib(WAttrib.DRAW_OP, v)
       return self
    end
 
    public set_font(v)
-      set_wattrib("font", v)
+      set_wattrib(WAttrib.FONT, v)
       return self
    end
 
    public set_leading(v)
-      set_wattrib("leading", v)
+      set_wattrib(WAttrib.LEADING, v)
       return self
    end
 
    public set_line_width(v)
-      set_wattrib("line_width", v)
+      set_wattrib(WAttrib.LINE_WIDTH, v)
       return self
    end
 
    public set_line_style(v)
-      set_wattrib("line_style", v)
+      set_wattrib(WAttrib.LINE_STYLE, v)
       return self
    end
 
    public set_pattern(v)
-      set_wattrib("pattern", v)
+      set_wattrib(WAttrib.PATTERN, v)
       return self
    end
 

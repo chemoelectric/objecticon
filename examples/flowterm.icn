@@ -3308,7 +3308,7 @@ procedure main(a)
       name_image("rpp.HOURGLASS_24", HOURGLASS).
       name_image("rpp.KEYBOARD_24", KEYBOARD).
       name_image("rpp.EXIT_24", EXIT)
-   insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(FLOWTERM_LOGO))
+   insert(Dialog.ROOT_WATTRIBS, WAttrib.ICON, Pixels(FLOWTERM_LOGO))
    glob_cmds := []
    while a[1,1] == ":" do
       put(glob_cmds, pop(a)[2:0])

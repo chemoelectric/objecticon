@@ -257,7 +257,7 @@ class CanvasComponentDialog(Dialog)
          pos_tab.add(z_field)
       }
 
-      self.attrib_tab := MapTab().set_label("WAttribs").set_table(stringify_wattribs(c.wattribs))
+      self.attrib_tab := MapTab(Gui.CONTEXT_WATTRIB_SET).set_label("WAttribs").set_table(stringify_wattribs(c.wattribs))
       add_tab(self.attrib_tab)
 
       code_tab := CodeTab(c)
@@ -324,7 +324,7 @@ class CanvasComponentDialog(Dialog)
       add_tab(event_tab)
 
       if c.allows_positioning() then {
-         constraint_tab := MapTab().set_label("Constraints").set_table(stringify_constraints(c.constraints))
+         constraint_tab := MapTab(Grid.CONSTRAINT_SET).set_label("Constraints").set_table(stringify_constraints(c.constraints))
          add_tab(constraint_tab)
       }
 
