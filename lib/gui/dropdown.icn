@@ -110,7 +110,7 @@ abstract class DropDown(Component, MenuMode)
          # Remove popup from dialog and add to popup window.
          parent_dialog.remove(popup)
          d := PureDialog().
-            set_canvas("popup").
+            set_canvas(Canvas.POPUP).
             set_width(popup.w).
             set_height(popup.h).
             set_dx(-popup.x).
@@ -396,7 +396,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
          # Remove popup from dialog and use add to popup window.
          parent_dialog.remove(popup)
          d := PureDialog().
-            set_canvas("popup").
+            set_canvas(Canvas.POPUP).
             set_width(popup.w).
             set_height(popup.h).
             set_dx(-popup.x).

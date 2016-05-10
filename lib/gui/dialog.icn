@@ -9,7 +9,7 @@
 package gui
 
 import 
-   graphics(Window,Mouse,Key,Selection),
+   graphics(Window,Mouse,Key,Selection,Canvas),
    lang,
    ipl.sets,
    ipl.lists,
@@ -1034,7 +1034,7 @@ class Dialog(Component)
       } else {
          self.remove(self.tooltip_component)
          d := PureDialog().
-            set_canvas("popup").
+            set_canvas(Canvas.POPUP).
             set_width( self.tooltip_component.w).
             set_height(self.tooltip_component.h).
             set_dx(-self.tooltip_component.x).

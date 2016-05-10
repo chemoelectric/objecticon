@@ -152,6 +152,13 @@ class GroffOutputter(Outputter)
             every markdown(vals[1])
          }
 
+         "see" : {
+            write(output_file, ".P")
+            write(output_file, "See also :")
+            write(output_file, ".P")
+            every markdown(vals[1])
+         }
+
          "example" : {
             write(output_file, ".P")
             write(output_file, "Example :")

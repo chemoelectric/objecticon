@@ -430,6 +430,13 @@ class HtmlOutputter(Outputter)
                every write(f, esc(l[2 to *l]))
             write(f, "</pre></dd>")
          }
+
+         "see" : {
+            write(f, "<dt>See also :</dt>")
+            write(f, "<dd>")
+            html(f, vals[1], c)
+            write(f, "</dd>")
+         }
       }
    end
 

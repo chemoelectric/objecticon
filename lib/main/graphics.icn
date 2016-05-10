@@ -306,22 +306,22 @@ final class Window(NoCopy, ObjectOutput)
       CLOSE_BUTTON := -11
       INVOKE_LATER := -40
       PATTERNS := table(,
-                        "black", Pixels(8, 8, Pixels.PALETTE1).set_data("\xff\xff\xff\xff\xff\xff\xff\xff\x00"),
-                        "verydark", Pixels(8, 8, Pixels.PALETTE1).set_data("\xfe\xff\xef\xff\xfe\xff\xef\xff\x00"),
-                        "darkgray", Pixels(8, 8, Pixels.PALETTE1).set_data("w\xddw\xddw\xddw\xdd\x00"),
-                        "gray", Pixels(8, 8, Pixels.PALETTE1).set_data("U\xaaU\xaaU\xaaU\xaa\x00"),
-                        "lightgray", Pixels(8, 8, Pixels.PALETTE1).set_data("\x11D\x11D\x11D\x11D\x00"),
-                        "verylight", Pixels(8, 8, Pixels.PALETTE1).set_data("\x01\x00\x10\x00\x01\x00\x10\x00\x00"),
-                        "white", Pixels(8, 8, Pixels.PALETTE1).set_data("\x00\x00\x00\x00\x00\x00\x00\x00\x00"),
-                        "vertical", Pixels(8, 8, Pixels.PALETTE1).set_data("\x10\x10\x10\x10\x10\x10\x10\x10\x00"),
-                        "diagonal", Pixels(8, 8, Pixels.PALETTE1).set_data("\x80@ \x10\b\x04\x02\x01\x00"),
-                        "horizontal", Pixels(8, 8, Pixels.PALETTE1).set_data("\x00\x00\x00\xff\x00\x00\x00\x00\x00"),
-                        "grid", Pixels(8, 8, Pixels.PALETTE1).set_data("\x10\x10\x10\xff\x10\x10\x10\x10\x00"),
-                        "trellis", Pixels(8, 8, Pixels.PALETTE1).set_data("\x82D(\x10(D\x82\x01\x00"),
-                        "checkers", Pixels(8, 8, Pixels.PALETTE1).set_data("\x0f\x0f\x0f\x0f\xf0\xf0\xf0\xf0\x00"),
-                        "grains", Pixels(8, 8, Pixels.PALETTE1).set_data("\e\x18\x81\xb16\x06`c\x00"),
-                        "scales", Pixels(8, 8, Pixels.PALETTE1).set_data("\x02\x02\x05\xf8  P\x8f\x00"),
-                        "waves", Pixels(8, 8, Pixels.PALETTE1).set_data("\x03\x84H0\x03\x84H0\x00"))
+                        Pattern.BLACK, Pixels(8, 8, Pixels.PALETTE1).set_data("\xff\xff\xff\xff\xff\xff\xff\xff\x00"),
+                        Pattern.VERY_DARK, Pixels(8, 8, Pixels.PALETTE1).set_data("\xfe\xff\xef\xff\xfe\xff\xef\xff\x00"),
+                        Pattern.DARK_GRAY, Pixels(8, 8, Pixels.PALETTE1).set_data("w\xddw\xddw\xddw\xdd\x00"),
+                        Pattern.GRAY, Pixels(8, 8, Pixels.PALETTE1).set_data("U\xaaU\xaaU\xaaU\xaa\x00"),
+                        Pattern.LIGHT_GRAY, Pixels(8, 8, Pixels.PALETTE1).set_data("\x11D\x11D\x11D\x11D\x00"),
+                        Pattern.VERY_LIGHT, Pixels(8, 8, Pixels.PALETTE1).set_data("\x01\x00\x10\x00\x01\x00\x10\x00\x00"),
+                        Pattern.WHITE, Pixels(8, 8, Pixels.PALETTE1).set_data("\x00\x00\x00\x00\x00\x00\x00\x00\x00"),
+                        Pattern.VERTICAL, Pixels(8, 8, Pixels.PALETTE1).set_data("\x10\x10\x10\x10\x10\x10\x10\x10\x00"),
+                        Pattern.DIAGONAL, Pixels(8, 8, Pixels.PALETTE1).set_data("\x80@ \x10\b\x04\x02\x01\x00"),
+                        Pattern.HORIZONTAL, Pixels(8, 8, Pixels.PALETTE1).set_data("\x00\x00\x00\xff\x00\x00\x00\x00\x00"),
+                        Pattern.GRID, Pixels(8, 8, Pixels.PALETTE1).set_data("\x10\x10\x10\xff\x10\x10\x10\x10\x00"),
+                        Pattern.TRELLIS, Pixels(8, 8, Pixels.PALETTE1).set_data("\x82D(\x10(D\x82\x01\x00"),
+                        Pattern.CHECKERS, Pixels(8, 8, Pixels.PALETTE1).set_data("\x0f\x0f\x0f\x0f\xf0\xf0\xf0\xf0\x00"),
+                        Pattern.GRAINS, Pixels(8, 8, Pixels.PALETTE1).set_data("\e\x18\x81\xb16\x06`c\x00"),
+                        Pattern.SCALES, Pixels(8, 8, Pixels.PALETTE1).set_data("\x02\x02\x05\xf8  P\x8f\x00"),
+                        Pattern.WAVES, Pixels(8, 8, Pixels.PALETTE1).set_data("\x03\x84H0\x03\x84H0\x00"))
    end
 
    private static create_for_ptr(ptr)
@@ -576,7 +576,8 @@ final class Window(NoCopy, ObjectOutput)
    # The canvas attribute canvas specifies the window visibility.
    # Possible values are system dependent, but include "hidden",
    # "normal", and "popup".  The X11 implementation also provides
-   # "iconic", "fullscreen", "maximized", "root", "withdrawn"
+   # "iconic", "fullscreen", "maximized", "root", "withdrawn".  (See
+   # `Canvas` for symbolic constants).
    #
    public native set_canvas(v)
 
@@ -585,7 +586,7 @@ final class Window(NoCopy, ObjectOutput)
    # window.  Possible values are system dependent, but include "over"
    # and "source".  The X11 implementation also allows "atop",
    # "clear", "dest", "dest atop", "dest in", "dest out", "dest over",
-   # "in", "out", and "xor".
+   # "in", "out", and "xor".  (See `DrawOp` for symbolic constants).
    #
    public native set_draw_op(v)
 
@@ -678,8 +679,9 @@ final class Window(NoCopy, ObjectOutput)
    public native set_label(v)
 
    # Set the line style, which specifies the form of drawn lines.
-   # Possible values may include: "enddisc", "endsquare", and "solid"
-   # although this is system dependent.
+   # Possible values may include: "end disc", "end square", and "solid"
+   # although this is system dependent.  (See `LineStyle` for symbolic
+   # constants).
    #
    public native set_line_style(v)
 
@@ -719,7 +721,7 @@ final class Window(NoCopy, ObjectOutput)
 
    # A helpful method to set the pattern to something equivalent to
    # the old Icon pattern of the same name using a textured fill
-   # style.
+   # style.  (See `Pattern` for symbolic constant pattern names).
    #
    public set_textured_pattern(s)
       local p
@@ -731,7 +733,7 @@ final class Window(NoCopy, ObjectOutput)
 
    # A helpful method to set the pattern to something equivalent to
    # the old Icon pattern of the same name using a masked fill
-   # style.
+   # style.  (See `Pattern` for symbolic constant pattern names).
    #
    public set_masked_pattern(s)
       local p
@@ -1559,5 +1561,127 @@ $endif
       CURSOR := set(UP, DOWN, LEFT, RIGHT)
       CURSOR_V := set(UP, DOWN)
       CURSOR_H := set(LEFT, RIGHT)
+   end
+end
+
+#
+# This class provides symbolic names for the drawing operations
+# supported by `Window.set_draw_op()`.
+#
+class DrawOp()
+   public static const
+      ATOP,
+      CLEAR,
+      DEST,
+      DEST_ATOP,
+      DEST_IN,
+      DEST_OUT,
+      DEST_OVER,
+      IN,
+      OUT,
+      OVER,
+      SOURCE,
+      XOR
+
+   private static init()
+      ATOP := "atop"
+      CLEAR := "clear"
+      DEST := "dest"
+      DEST_ATOP := "dest atop"
+      DEST_IN := "dest in"
+      DEST_OUT := "dest out"
+      DEST_OVER := "dest over"
+      IN := "in"
+      OUT := "out"
+      OVER := "over"
+      SOURCE := "source"
+      XOR := "xor"
+   end
+end
+
+#
+# This class provides symbolic names for the line styles supported by
+# `Window.set_line_style()`.
+#
+class LineStyle()
+   public static const
+      END_DISC,
+      END_SQUARE,
+      SOLID
+
+   private static init()
+      END_DISC := "end disc"
+      END_SQUARE := "end square"
+      SOLID := "solid"
+   end
+end
+
+#
+# This class provides symbolic names for the canvas types supported by
+# `Window.set_canvas()`.
+#
+class Canvas()
+   public static const
+      FULLSCREEN,
+      HIDDEN,
+      ICONIC,
+      MAXIMIZED,
+      NORMAL,
+      POPUP,
+      ROOT,
+      WITHDRAWN
+
+   private static init()
+      FULLSCREEN := "fullscreen"
+      HIDDEN := "hidden"
+      ICONIC := "iconic"
+      MAXIMIZED := "maximized"
+      NORMAL := "normal"
+      POPUP := "popup"
+      ROOT := "root"
+      WITHDRAWN := "withdrawn"
+   end
+end
+
+#
+# This class provides symbolic names for the pattern names supported
+# by `Window.set_textured_pattern()` and  `Window.set_masked_pattern()`.
+#
+class Pattern()
+   public static const
+      BLACK,
+      VERY_DARK,
+      DARK_GRAY,
+      GRAY,
+      LIGHT_GRAY,
+      VERY_LIGHT,
+      WHITE,
+      VERTICAL,
+      DIAGONAL,
+      HORIZONTAL,
+      GRID,
+      TRELLIS,
+      CHECKERS,
+      GRAINS,
+      SCALES,
+      WAVES
+
+   private static init()
+      BLACK := "black"
+      VERY_DARK := "verydark"
+      DARK_GRAY := "darkgray"
+      GRAY := "gray"
+      LIGHT_GRAY := "lightgray"
+      VERY_LIGHT := "verylight"
+      WHITE := "white"
+      VERTICAL := "vertical"
+      DIAGONAL := "diagonal"
+      HORIZONTAL := "horizontal"
+      GRID := "grid"
+      TRELLIS := "trellis"
+      CHECKERS := "checkers"
+      GRAINS := "grains"
+      SCALES := "scales"
+      WAVES := "waves"
    end
 end

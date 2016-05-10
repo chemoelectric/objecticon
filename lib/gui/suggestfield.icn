@@ -220,7 +220,7 @@ abstract class SuggestField(TextField, MenuMode)
          # Remove tl from dialog and use add to popup window.
          parent_dialog.remove(tl)
          d := PureDialog().
-            set_canvas("popup").
+            set_canvas(Canvas.POPUP).
             set_width(tl.w).
             set_height(tl.h).
             set_dx(-tl.x).

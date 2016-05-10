@@ -1,6 +1,7 @@
 package cairo
 
-import lang, graphics, util, io, ipl.pdco
+import graphics(Window,Point,Vector,Pixels,Rectangle), 
+   lang, util, io, ipl.pdco(List)
 
 record DeviceOffset(x_offset, y_offset)
 record DeviceScale(x_scale, y_scale)
@@ -275,7 +276,8 @@ abstract class Pattern(NoCopy)
    end
 
    # Set the extend setting according to the given string; possible
-   # values are "none", "pad", "reflect" and "repeat".
+   # values are "none", "pad", "reflect" and "repeat".  (See `Extend`
+   # for symbolic constants).
    #
    public native set_extend(v)
 
@@ -285,6 +287,7 @@ abstract class Pattern(NoCopy)
 
    # Set the filter according to the given string; possible values are
    # "best", "bilinear", "fast", "gaussian", "good", and "nearest".
+   # (See `Filter` for symbolic constants).
    #
    public native set_filter(v)
 
@@ -930,17 +933,20 @@ final class Context(NoCopy)
    public native set_line_width(w)
    
    # Set the line join according to the given string; possible values
-   # are "bevel", "miter", and "round".
+   # are "bevel", "miter", and "round".  (See `LineJoin` for symbolic
+   # constants).
    #
    public native set_line_join(v)
 
    # Set the line join according to the given string; possible values
-   # are "butt", "round", and "square".
+   # are "butt", "round", and "square".  (See `LineCap` for symbolic
+   # constants).
    #
    public native set_line_cap(v)
 
    # Set the line join according to the given string; possible values
-   # are "even-odd" or "winding".
+   # are "even-odd" or "winding".  (See `FillRule` for symbolic
+   # constants).
    #
    public native set_fill_rule(v)
 
@@ -1049,13 +1055,14 @@ final class Context(NoCopy)
 
    # Set the drawing operator according to the given string; possible
    # values are "atop", "clear", "dest", "dest atop", "dest in", "dest
-   # out", "dest over", "in", "out", "over", "source", and "xor"
+   # out", "dest over", "in", "out", "over", "source", and "xor".
+   # (See `DrawOp` for symbolic constants).
    #
    public native set_operator(op)
 
    # Set the antialias setting according to the given string; possible
    # values are "best", "default", "fast", "good", "gray", "none", and
-   # "subpixel"
+   # "subpixel". (See `Antialias` for symbolic constants).
    #
    public native set_antialias(v)
 
@@ -1277,7 +1284,7 @@ final class Context(NoCopy)
    #
    # The `content` parameter is optional, and specifies the group's
    # content type, as a string; possible values are "alpha", "color",
-   # and "color-alpha".
+   # and "color-alpha".  (See `Content` for symbolic constants).
    #
    public native push_group(content)
 
@@ -1450,5 +1457,165 @@ final class SVG(NoCopy)
       cairo_available() | fail
       ptr := new_impl(data) | fail
       return
+   end
+end
+
+# This class provides symbolic names for the drawing operations
+# supported by `Context.set_operator()`.
+#
+class DrawOp()
+   public static const
+      ATOP,
+      CLEAR,
+      DEST,
+      DEST_ATOP,
+      DEST_IN,
+      DEST_OUT,
+      DEST_OVER,
+      IN,
+      OUT,
+      OVER,
+      SOURCE,
+      XOR
+
+   private static init()
+      ATOP := "atop"
+      CLEAR := "clear"
+      DEST := "dest"
+      DEST_ATOP := "dest atop"
+      DEST_IN := "dest in"
+      DEST_OUT := "dest out"
+      DEST_OVER := "dest over"
+      IN := "in"
+      OUT := "out"
+      OVER := "over"
+      SOURCE := "source"
+      XOR := "xor"
+   end
+end
+
+# This class provides symbolic names for the line joins supported by
+# `Context.set_line_join()`.
+#
+class LineJoin()
+   public static const
+      BEVEL,
+      MITER,
+      ROUND
+
+   private static init()
+      BEVEL := "bevel"
+      MITER := "miter"
+      ROUND := "round"
+   end
+end
+
+# This class provides symbolic names for the line caps supported by
+# `Context.set_line_cap()`.
+#
+class LineCap()
+   public static const
+      BUTT,
+      ROUND,
+      SQUARE
+
+   private static init()
+      BUTT := "butt"
+      ROUND := "round"
+      SQUARE := "square"
+   end
+end
+
+# This class provides symbolic names for the fill rules supported by
+# `Context.set_fill_rule()`.
+#
+class FillRule()
+   public static const
+      EVEN_ODD,
+      WINDING
+
+   private static init()
+      EVEN_ODD := "even-odd"
+      WINDING := "winding"
+   end
+end
+
+# This class provides symbolic names for the settings supported by
+# `Pattern.set_extend()`.
+#
+class Extend()
+   public static const
+      NONE,
+      PAD,
+      REFLECT,
+      REPEAT
+
+   private static init()
+      NONE := "none"
+      PAD := "pad"
+      REFLECT := "reflect"
+      REPEAT := "repeat"
+   end
+end
+
+# This class provides symbolic names for the content settings
+# supported by `Context.push_group()`.
+#
+class Content()
+   public static const
+      ALPHA,
+      COLOR,
+      COLOR_ALPHA
+
+   private static init()
+      ALPHA := "alpha"
+      COLOR := "color"
+      COLOR_ALPHA := "color-alpha"
+   end
+end
+
+# This class provides symbolic names for the settings supported by
+# `Context.set_antialias()`.
+#
+class Antialias()
+   public static const
+      BEST,
+      DEFAULT,
+      FAST,
+      GOOD,
+      GRAY,
+      NONE,
+      SUBPIXEL
+
+   private static init()
+      BEST := "best"
+      DEFAULT := "default"
+      FAST := "fast"
+      GOOD := "good"
+      GRAY := "gray"
+      NONE := "none"
+      SUBPIXEL := "subpixel"
+   end
+end
+
+# This class provides symbolic names for the settings supported by
+# `Pattern.set_filter()`.
+#
+class Filter()
+   public static const
+      BEST,
+      BILINEAR,
+      FAST,
+      GAUSSIAN,
+      GOOD,
+      NEAREST
+
+   private static init()
+      BEST := "best"
+      BILINEAR := "bilinear"
+      FAST := "fast"
+      GAUSSIAN := "gaussian"
+      GOOD := "good"
+      NEAREST := "nearest"
    end
 end

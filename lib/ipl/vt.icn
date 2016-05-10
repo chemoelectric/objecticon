@@ -2,7 +2,8 @@ $encoding UTF-8
 
 package ipl.vt
 
-import gui, io, lang, util, graphics(Window,Key,Selection,Mouse), net, ipl.lists, ipl.pdco, ipl.strings, ipl.graphics
+import gui, io, lang, util, graphics(Window,Key,Selection,Mouse,Canvas), 
+   net, ipl.lists, ipl.pdco, ipl.strings, ipl.graphics
 
 # Current attributes.  Treated as immutable (except the font field), to alter a copy() is taken first.
 package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic, url, font)
@@ -2701,7 +2702,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          # Remove popup from dialog and add to popup window.
          self.parent_dialog.remove(popup)
          d := PureDialog().
-            set_canvas("popup").
+            set_canvas(Canvas.POPUP).
             set_width(popup.w_spec).
             set_height(popup.h_spec).
             set_dx(-popup.x).
