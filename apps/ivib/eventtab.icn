@@ -30,7 +30,7 @@ class EventTab(TabItem)
       # Add a new value to the attributes table.
       #
       put(contents, ["Event.ACTION", "on_" || name_field.get_contents()])
-      tbl.set_contents(contents)
+      tbl.contents_changed()
       tbl.table_content.goto_first(*contents)
       tbl.set_selections([*contents])
       tbl.set_cursor(*contents)
@@ -70,7 +70,7 @@ class EventTab(TabItem)
       #
       i := tbl.get_selections()[1]
       contents[i] := [event.get_contents(), handler.get_contents()]
-      tbl.set_contents(contents)
+      tbl.contents_changed()
       tbl.clear_selections()
       update_grey()
    end
