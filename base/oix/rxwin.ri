@@ -98,10 +98,9 @@ static stringint drawops[] = {
 };
 
 static stringint linestyles[] = {
-    {0, 3},
-    {"end disc",     EndDisc},
-    {"end square",   EndSquare},
-    {"solid",        EndSquare},
+    {0, 2},
+    {"disc",     EndDisc},
+    {"square",   EndSquare},
 };
 
 static stringint canvastypes[] = {
@@ -836,7 +835,7 @@ wbp wopen(char *display)
     wc->clipx = wc->clipy = 0;
     wc->clipw = wc->cliph = -1;
     wc->linewidth = 1;
-    wc->linestyle = stringint_lookup(linestyles, "end square");
+    wc->linestyle = stringint_lookup(linestyles, "square");
 
     w->context = wc;
 

@@ -679,9 +679,8 @@ final class Window(NoCopy, ObjectOutput)
    public native set_label(v)
 
    # Set the line style, which specifies the form of drawn lines.
-   # Possible values may include: "end disc", "end square", and "solid"
-   # although this is system dependent.  (See `LineStyle` for symbolic
-   # constants).
+   # Possible values may include: "disc", and "square", although this
+   # is system dependent.  (See `LineStyle` for symbolic constants).
    #
    public native set_line_style(v)
 
@@ -1605,14 +1604,12 @@ end
 #
 class LineStyle()
    public static const
-      END_DISC,
-      END_SQUARE,
-      SOLID
+      DISC,
+      SQUARE
 
    private static init()
-      END_DISC := "end disc"
-      END_SQUARE := "end square"
-      SOLID := "solid"
+      DISC := "disc"
+      SQUARE := "square"
    end
 end
 
