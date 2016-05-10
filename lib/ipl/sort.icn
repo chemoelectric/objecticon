@@ -176,33 +176,46 @@ procedure sortt(T, i)
 
 end
 
-# A caseless string comparator function with consistent ordering
-# amongst items which compare caselessly equal, so that for example
-# abc, aBc, ABC are always sorted in the same order.
-#
-# This function would not make much sense for use with a SortTable,
-# since it would result in duplicate entries which are caselessly
-# equal; rather the simpler `cl_text_cmp` should be used.
-#
-procedure consistent_cl_cmp(x, y)
-   local i, x1, y1
-   x1 := string(x) | runerr(103, x)
-   y1 := string(y) | runerr(103, y)
-   i := Text.cl_compare(x1, y1)
-   if i = 0 then {
-      i := Internal.compare(x1, y1)
-      # If still tied, sort by type (ucs/string)
-      if i = 0 then
-         i := Internal.compare(x, y)
-   }
-   return i
-end
-
 # This is a comparison function that just reverses the order of the
 # `Internal.compare` function.
 #
 procedure rev_internal_cmp(a, b)
    return Internal.compare(b, a)
+end
+
+# Implementation class for `combine_cmp`.
+package class CombineCmp()
+   private f, g
+
+   public call(a, b)
+      local i
+      i := f(a, b)
+      if i = 0 then
+         i := g(a, b)
+      return i
+   end
+
+   public new(f, g)
+      self.f := f
+      self.g := g
+      return
+   end
+end
+
+#
+# Return a compare function which combines two other compare functions
+# in such a way that the second, `g`, is only called if the first,
+# `f`, produces a tie for a particular pair (ie returns 0).
+#
+# @example
+# @ l := ["ABC",u"Abc",u"def",u"DEF",u"ABC","def",u"DEf","ABc"]
+# @ mergesort(l, combine_cmp(cl_text_cmp, type_cmp))
+# @ # gives ["ABC","ABc",u"Abc",u"ABC","def",u"def",u"DEF",u"DEf"]
+# @ mergesort(l, combine_cmp(type_cmp, cl_text_cmp))
+# @ # gives ["ABC","ABc","def",u"Abc",u"ABC",u"def",u"DEF",u"DEf"]
+# @
+procedure combine_cmp(f, g)
+   return CombineCmp(f, g).call
 end
 
 # Implementation class for `index_cmp`.
@@ -251,6 +264,14 @@ package class FieldCmp()
 end
 
 #
+# A compare function that compares solely by type, using the same
+# ordering as the internal sorting functions.
+#
+procedure type_cmp(a, b)
+   return Internal.compare(Internal.order(a), Internal.order(b))
+end
+
+#
 # Return a compare function which applies the comparator function `f` to the
 # field named `q` in each item.  `f` defaults to `Internal.compare`.
 #
@@ -290,6 +311,24 @@ procedure cl_text_cmp(x, y)
    x := string(x) | runerr(103, x)
    y := string(y) | runerr(103, y)
    return Text.cl_compare(x, y)
+end
+
+# A caseless string comparator function with consistent ordering
+# amongst items which compare caselessly equal, so that for example
+# abc, aBc, ABC are always sorted in the same order.
+#
+# This function would not make much sense for use with a SortTable,
+# since it would result in duplicate entries which are caselessly
+# equal; rather the simpler `cl_text_cmp` should be used.
+#
+procedure consistent_cl_text_cmp(x, y)
+   local i
+   x := string(x) | runerr(103, x)
+   y := string(y) | runerr(103, y)
+   i := Text.cl_compare(x, y)
+   if i = 0 then
+      i := Internal.compare(x, y)
+   return i
 end
 
 #

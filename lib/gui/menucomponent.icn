@@ -519,10 +519,10 @@ abstract class MenuComponent(Rect,Connectable)
       } else {
          temp_win.set_pos(0, 0)
          d := PureDialog().
-            set_canvas("popup").
+            set_canvas(Canvas.POPUP).
             set_width(self.w).
             set_height(self.h).
-            copy_wattrib("display", parent_component.parent_dialog).
+            copy_wattrib(WAttrib.DISPLAY, parent_component.parent_dialog).
             add(self.temp_win).
             set_dx(-self.x).
             set_dy(-self.y).

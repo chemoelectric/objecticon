@@ -9,7 +9,7 @@
 package gui
 
 import 
-   graphics(Window,Mouse,Key,Selection),
+   graphics(Window,Mouse,Key,Selection,Canvas),
    lang,
    ipl.sets,
    ipl.lists,
@@ -362,7 +362,7 @@ class Dialog(Component)
    end
 
    public open_buffer_win()
-      local t
+      local t, k
       # Note that the window attribs are applied in initially() above.
       # This may be called several times (eg via reset()), so we must
       # start with the most basic attributes here since we may start
@@ -370,9 +370,8 @@ class Dialog(Component)
       # We wouldn't then want "bg=blue" to still be stuck in the root
       # buffer window's context.
       t := table()
-      t["display"] := get_wattrib("display")
-      t["dx"] := get_wattrib("dx")
-      t["dy"] :=  get_wattrib("dy")
+      every k := WAttrib.DISPLAY | WAttrib.DX | WAttrib.DY do
+         t[k] := get_wattrib(k)
       self.buffer_win := open_win_with(t) | runerr("couldn't open buffer window: " || &why)
    end
 
@@ -382,28 +381,28 @@ class Dialog(Component)
    # 
    private ensure_size(t)
       local tw
-      if member(t, "size" | "geometry") | (member(t, "width") & member(t, "height")) then
+      if member(t, WAttrib.SIZE | WAttrib.GEOMETRY) | (member(t, WAttrib.WIDTH) & member(t, WAttrib.HEIGHT)) then
          fail
 
-      if tw := member(t, "width") then 
+      if tw := member(t, WAttrib.WIDTH) then 
          # Got width, need height
-         t["height"] := get_preferred_height(tw)
-      else if member(t, "height") then
+         t[WAttrib.HEIGHT] := get_preferred_height(tw)
+      else if member(t, WAttrib.HEIGHT) then
          # Got height, need width
-         t["width"] :=  get_preferred_width()
+         t[WAttrib.WIDTH] :=  get_preferred_width()
       else
          # Need both
-         t["size"] := [tw := get_preferred_width(), get_preferred_height(tw)]
+         t[WAttrib.SIZE] := [tw := get_preferred_width(), get_preferred_height(tw)]
    end
 
    public open_visible_win()
       local t, pw
       t := copy(self.wattribs)
       ensure_size(t)
-      t["input_mask"] := "mk"
+      t[WAttrib.INPUT_MASK] := "mk"
       if pw := (\owning_dialog).win then
-         t["transient_for"] := pw
-      /t["canvas"] := "normal"
+         t[WAttrib.TRANSIENT_FOR] := pw
+      /t[WAttrib.CANVAS] := "normal"
       self.win := open_win_with(t) | runerr("Couldn't open window: " || &why)
       # Make the buffer the same size as the visible win.
       self.buffer_win.set_size(self.win.get_width(), self.win.get_height())
@@ -1035,14 +1034,14 @@ class Dialog(Component)
       } else {
          self.remove(self.tooltip_component)
          d := PureDialog().
-            set_canvas("popup").
+            set_canvas(Canvas.POPUP).
             set_width( self.tooltip_component.w).
             set_height(self.tooltip_component.h).
             set_dx(-self.tooltip_component.x).
             set_dy(-self.tooltip_component.y).
             set_x(win.get_x() + win.get_dx() + self.tooltip_component.x).
             set_y(win.get_y() + win.get_dy() + self.tooltip_component.y).
-            copy_wattrib("display", self).
+            copy_wattrib(WAttrib.DISPLAY, self).
             add(self.tooltip_component)
          self.tooltip_component.set_pos(0, 0)
          d.show()
@@ -1403,116 +1402,116 @@ class Dialog(Component)
    end
 
    public set_label(v)
-      set_wattrib("label", v)
+      set_wattrib(WAttrib.LABEL, v)
       return self
    end
 
    public set_canvas(v)
-      set_wattrib("canvas", v)
+      set_wattrib(WAttrib.CANVAS, v)
       return self
    end
 
    public set_x(v)
-      set_wattrib("x", v)
+      set_wattrib(WAttrib.X, v)
       return self
    end
 
    public set_pos(v1, v2)
-      set_wattrib("pos", [v1, v2])
+      set_wattrib(WAttrib.POS, [v1, v2])
       return self
    end
 
    public set_y(v)
-      set_wattrib("y", v)
+      set_wattrib(WAttrib.Y, v)
       return self
    end
 
    public set_resize(v)
-      set_wattrib("resize", v)
+      set_wattrib(WAttrib.RESIZE, v)
       return self
    end
 
    public set_size(v1, v2)
-      set_wattrib("size", [v1, v2])
+      set_wattrib(WAttrib.SIZE, [v1, v2])
       return self
    end
 
    public set_height(v)
-      set_wattrib("height", v)
+      set_wattrib(WAttrib.HEIGHT, v)
       return self
    end
 
    public set_width(v)
-      set_wattrib("width", v)
+      set_wattrib(WAttrib.WIDTH, v)
       return self
    end
 
    public set_display(v)
-      set_wattrib("display", v)
+      set_wattrib(WAttrib.DISPLAY, v)
       return self
    end
 
    public set_icon(v)
-      set_wattrib("icon", v)
+      set_wattrib(WAttrib.ICON, v)
       return self
    end
 
    public set_geometry(v1, v2, v3, v4)
-      set_wattrib("geometry", [v1, v2, v3, v4])
+      set_wattrib(WAttrib.GEOMETRY, [v1, v2, v3, v4])
       return self
    end
 
    public set_dx(v)
-      set_wattrib("dx", v)
+      set_wattrib(WAttrib.DX, v)
       return self
    end
 
    public set_dy(v)
-      set_wattrib("dy", v)
+      set_wattrib(WAttrib.DY, v)
       return self
    end
 
    public set_input_mask(v)
-      set_wattrib("input_mask", v)
+      set_wattrib(WAttrib.INPUT_MASK, v)
       return self
    end
 
    public set_min_width(v)
-      set_wattrib("min_width", v)
+      set_wattrib(WAttrib.MIN_WIDTH, v)
       return self
    end
 
    public set_min_height(v)
-      set_wattrib("min_height", v)
+      set_wattrib(WAttrib.MIN_HEIGHT, v)
       return self
    end
 
    public set_min_size(v1, v2)
-      set_wattrib("min_size", [v1, v2])
+      set_wattrib(WAttrib.MIN_SIZE, [v1, v2])
       return self
    end
 
    public set_max_width(v)
-      set_wattrib("max_width", v)
+      set_wattrib(WAttrib.MAX_WIDTH, v)
       return self
    end
 
    public set_max_height(v)
-      set_wattrib("max_height", v)
+      set_wattrib(WAttrib.MAX_HEIGHT, v)
       return self
    end
 
    public set_max_size(v1, v2)
-      set_wattrib("max_size", [v1, v2])
+      set_wattrib(WAttrib.MAX_SIZE, [v1, v2])
       return self
    end
 
    private static init()
       ROOT_WATTRIBS := table()
-      insert(ROOT_WATTRIBS, "bg",  env_color("OI_DIALOG_ROOT_BG"))
-      insert(ROOT_WATTRIBS, "fg",  env_color("OI_DIALOG_ROOT_FG"))
-      insert(ROOT_WATTRIBS, "font",  env_font("OI_DIALOG_ROOT_FONT"))
-      insert(ROOT_WATTRIBS, "leading",  env_real("OI_DIALOG_ROOT_LEADING", 0.0))
+      insert(ROOT_WATTRIBS, WAttrib.BG,  env_color("OI_DIALOG_ROOT_BG"))
+      insert(ROOT_WATTRIBS, WAttrib.FG,  env_color("OI_DIALOG_ROOT_FG"))
+      insert(ROOT_WATTRIBS, WAttrib.FONT,  env_font("OI_DIALOG_ROOT_FONT"))
+      insert(ROOT_WATTRIBS, WAttrib.LEADING,  env_real("OI_DIALOG_ROOT_LEADING", 0.0))
       DOUBLE_CLICK_DELAY := env_int("OI_DIALOG_DOUBLE_CLICK_DELAY", 1) | 500
       DOUBLE_CLICK_TOLERANCE := env_scale("OI_DIALOG_DOUBLE_CLICK_TOLERANCE") | Gui.UNIT
       TOOLTIP_START_DELAY := env_int("OI_DIALOG_TOOLTIP_START_DELAY", 1) | 1000

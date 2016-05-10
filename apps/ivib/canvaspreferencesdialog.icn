@@ -240,7 +240,7 @@ class CanvasPreferencesDialog(Dialog)
       if \c.scale_dimensions_flag then
          scale_dimensions_cb.set_is_checked(&yes)
 
-      self.attrib_tab := MapTab().set_label("WAttribs").set_table(stringify_wattribs(c.dialog_struct.wattribs))
+      self.attrib_tab := MapTab(Gui.WATTRIB_SET).set_label("WAttribs").set_table(stringify_wattribs(c.dialog_struct.wattribs))
       add_tab(self.attrib_tab)
 
       methods_tab := TabItem()

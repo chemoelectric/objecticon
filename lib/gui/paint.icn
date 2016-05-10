@@ -217,8 +217,8 @@ class GridPaint(Paint)
       /win | syserr("initially called out of sequence")
       parent := c
       attribs := copy(c.get_effective_wattribs()) | runerr("couldn't get effective wattribs in GridPaint", c)
-      attribs["size"] := [1, 1]
-      attribs["canvas"] := "hidden"
+      attribs[WAttrib.SIZE] := [1, 1]
+      attribs[WAttrib.CANVAS] := "hidden"
       win := open_win_with(attribs) | runerr("Couldn't open window")
       g := Grid().set_extra(Grid.EXTRA_IGNORE)
       pass := 1
@@ -323,15 +323,16 @@ class GridPaint(Paint)
                else
                   val := ""
                t[key] := case key of {
-                  "x_tab"|"y_tab"|"x"|"y"|"w"|"h"|"l_inset"|"r_inset"|"t_inset"|"b_inset":
+                  Grid.X_TAB | Grid.Y_TAB | Grid.X | Grid.Y | Grid.W | Grid.H | 
+                     Grid.L_INSET | Grid.R_INSET | Grid.T_INSET | Grid.B_INSET:
                      integer(val)
-                  "x_align":
+                  Grid.X_ALIGN:
                      val == (Align.L | Align.R | Align.C)
-                  "y_align":
+                  Grid.Y_ALIGN:
                      val == (Align.T | Align.B | Align.C)
-                  "eol"|"x_fill"|"y_fill":
+                  Grid.EOL | Grid.X_FILL | Grid.Y_FILL:
                      if *val = 0 then &yes else flag(val)
-                  "x_weight"|"y_weight":
+                  Grid.X_WEIGHT | Grid.Y_WEIGHT:
                      real(val)
                }
             }

@@ -67,7 +67,7 @@ class DateField(DropDown)
       s := x.format(format)
       view.set_contents(s)
       if is_live() then
-         view.remove_wattrib("fg").reset()
+         view.remove_wattrib(WAttrib.FG).reset()
       last_val := clone(x)
       return self
    end
@@ -83,7 +83,7 @@ class DateField(DropDown)
 
    public on_textfield(ev, src, type)
       if last_val := get_value() then
-         view.remove_wattrib("fg").reset()
+         view.remove_wattrib(WAttrib.FG).reset()
       else
          view.set_fg("red").reset()
       # Fire the event with self as source.
@@ -144,7 +144,7 @@ class TimeField(Spin)
       s := x.format(format)
       view.set_contents(s)
       if is_live() then
-         view.remove_wattrib("fg").reset()
+         view.remove_wattrib(WAttrib.FG).reset()
       last_val := clone(x)
       return self
    end
@@ -160,7 +160,7 @@ class TimeField(Spin)
 
    public on_textfield(ev, src, type)
       if last_val := get_value() then
-         view.remove_wattrib("fg").reset()
+         view.remove_wattrib(WAttrib.FG).reset()
       else
          view.set_fg("red").reset()
       # Fire the event with self as source.
@@ -215,14 +215,14 @@ class TimezoneField(EditList)
       s := x.get_id()
       set_contents(s)
       if is_live() then
-         view.remove_wattrib("fg").reset()
+         view.remove_wattrib(WAttrib.FG).reset()
       last_val := x
       return self
    end
 
    public on_textfield(ev, src, type)
       if last_val := get_value() then
-         view.remove_wattrib("fg").reset()
+         view.remove_wattrib(WAttrib.FG).reset()
       else
          view.set_fg("red").reset()
       EditList.on_textfield(ev, src, type)
@@ -303,7 +303,7 @@ class WeekField(DropDown)
       s := x.format(format)
       view.set_contents(s)
       if is_live() then
-         view.remove_wattrib("fg").reset()
+         view.remove_wattrib(WAttrib.FG).reset()
       last_val := clone(x)
       return self
    end
@@ -319,7 +319,7 @@ class WeekField(DropDown)
 
    public on_textfield(ev, src, type)
       if last_val := get_value() then
-         view.remove_wattrib("fg").reset()
+         view.remove_wattrib(WAttrib.FG).reset()
       else
          view.set_fg("red").reset()
       # Fire the event with self as source.

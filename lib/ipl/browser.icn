@@ -5431,7 +5431,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
                }
             }
          }
-         if s := c.get_wattrib("font") then
+         if s := c.get_wattrib(WAttrib.FONT) then
             c.set_font(scale_font(s, f))
       }
       # We could just call reset() here, but that would mean we

@@ -110,14 +110,14 @@ abstract class DropDown(Component, MenuMode)
          # Remove popup from dialog and add to popup window.
          parent_dialog.remove(popup)
          d := PureDialog().
-            set_canvas("popup").
+            set_canvas(Canvas.POPUP).
             set_width(popup.w).
             set_height(popup.h).
             set_dx(-popup.x).
             set_dy(-popup.y).
             set_x(win.get_x() + win.get_dx() + popup.x).
             set_y(win.get_y() + win.get_dy() + popup.y).
-            copy_wattrib("display", parent_dialog).
+            copy_wattrib(WAttrib.DISPLAY, parent_dialog).
             add(popup)
 
          popup.set_pos(0, 0)
@@ -396,14 +396,14 @@ abstract class SelectionDropDown(SelectionList, DropDown)
          # Remove popup from dialog and use add to popup window.
          parent_dialog.remove(popup)
          d := PureDialog().
-            set_canvas("popup").
+            set_canvas(Canvas.POPUP).
             set_width(popup.w).
             set_height(popup.h).
             set_dx(-popup.x).
             set_dy(-popup.y).
             set_x(win.get_x() + win.get_dx() + popup.x).
             set_y(win.get_y() + win.get_dy() + popup.y).
-            copy_wattrib("display", parent_dialog).
+            copy_wattrib(WAttrib.DISPLAY, parent_dialog).
             add(popup)
 
          popup.set_pos(0, 0)

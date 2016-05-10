@@ -175,7 +175,7 @@ $endif
    # functions.  Sorts by case-insensitive name.
    #
    public static name_cmp(d1, d2)
-      return consistent_cl_cmp(d1.name, d2.name)
+      return consistent_cl_text_cmp(d1.name, d2.name)
    end
 
    #

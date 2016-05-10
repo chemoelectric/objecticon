@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, gui, io, util, graphics, ipl.pdco, xdg, ipl.filegui
+import lang, gui, io, util, graphics(Selection,Mouse), ipl.pdco, xdg, ipl.filegui
 
 $include "version.icn"
 
@@ -30,9 +30,9 @@ class Ivib()
       V1_MARKER := "### Ivib layout ###"
       V2_MARKER := "### Ivib-v2 layout ##"
       V2i_MARKER := "### Ivib-v2 layout: "
-      insert(Dialog.ROOT_WATTRIBS, "bg", "pale gray")
-      insert(Dialog.ROOT_WATTRIBS, "resize", &yes)
-      insert(Dialog.ROOT_WATTRIBS, "icon", ImageCache.get_named_image("ivib.logo"))
+      insert(Dialog.ROOT_WATTRIBS, WAttrib.BG, "pale gray")
+      insert(Dialog.ROOT_WATTRIBS, WAttrib.RESIZE, &yes)
+      insert(Dialog.ROOT_WATTRIBS, WAttrib.ICON, ImageCache.get_named_image("ivib.logo"))
       IVIB_COMPONENT_TARGET := "IVIB_COMPONENT"
       last_icon_dir := last_layout_dir := last_icn_dir := Files.getcwd()
    end

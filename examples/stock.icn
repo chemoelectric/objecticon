@@ -254,7 +254,7 @@ end
 procedure main(a)
    local d
    opts := options(a, "-c!")
-   insert(Dialog.ROOT_WATTRIBS, "icon", Pixels(STOCK_LOGO))
+   insert(Dialog.ROOT_WATTRIBS, WAttrib.ICON, Pixels(STOCK_LOGO))
    d := StockDialog(a)
    d.show_modal()
 end

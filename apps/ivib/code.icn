@@ -102,7 +102,7 @@ class Code()
    end
 
    public constraint_line(key, val)
-      chain("set_constraint(" || image(key) || ", " || scale_and_stringify_constraint(key, val) || ")")
+      chain("set_constraint(" || constraint_str(key) || ", " || scale_and_stringify_constraint(key, val) || ")")
    end
 
    public scalable_dim(dim)
@@ -429,11 +429,11 @@ class Code()
 
    public scale_and_stringify_wattrib(key, val)
       return case key of {
-         "x"|"y"|"height"|"width"|"min_width"|"min_height"|"max_width"|"max_height": 
+         WAttrib.X | WAttrib.Y | WAttrib.HEIGHT | WAttrib.WIDTH | WAttrib.MIN_WIDTH | WAttrib.MIN_HEIGHT | WAttrib.MAX_WIDTH | WAttrib.MAX_HEIGHT: 
             scalable_dim(val)
-         "pos"|"size"|"max_size"|"min_size": 
+         WAttrib.POS | WAttrib.SIZE | WAttrib.MAX_SIZE | WAttrib.MIN_SIZE: 
             scalable_dim(val[1]) || ", " || scalable_dim(val[2])
-         "geometry":
+         WAttrib.GEOMETRY:
             scalable_dim(val[1]) || ", " || scalable_dim(val[2]) || ", " || 
                scalable_dim(val[3]) || ", " || scalable_dim(val[4])
          default: stringify_wattrib(key, val, 1)

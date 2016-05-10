@@ -2,7 +2,8 @@ $encoding UTF-8
 
 package ipl.vt
 
-import gui, io, lang, util, graphics(Window,Key,Selection,Mouse), net, ipl.lists, ipl.pdco, ipl.strings, ipl.graphics
+import gui, io, lang, util, graphics(Window,Key,Selection,Mouse,Canvas), 
+   net, ipl.lists, ipl.pdco, ipl.strings, ipl.graphics
 
 # Current attributes.  Treated as immutable (except the font field), to alter a copy() is taken first.
 package record Attr(fg, bg, underline, inverse, invisible, crossed, bold, italic, url, font)
@@ -612,7 +613,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    public initially()
       local s, l
-      s := get_wattrib("font")
+      s := get_wattrib(WAttrib.FONT)
       l := check_font(s) | runerr(&why, self)
       font_family := l[1]
       font_size := l[2]
@@ -1923,7 +1924,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       W := view.cbwin.clone()
       bg := default_bg := W.get_bg()
       fg := default_fg := W.get_fg()
-      font := default_font := get_wattrib("font")
+      font := default_font := get_wattrib(WAttrib.FONT)
 
       #
       # Write the lines
@@ -2701,14 +2702,14 @@ class Vt(LineBasedScrollArea, MenuMode)
          # Remove popup from dialog and add to popup window.
          self.parent_dialog.remove(popup)
          d := PureDialog().
-            set_canvas("popup").
+            set_canvas(Canvas.POPUP).
             set_width(popup.w_spec).
             set_height(popup.h_spec).
             set_dx(-popup.x).
             set_dy(-popup.y).
             set_x(win.get_x() + win.get_dx() + popup.x).
             set_y(win.get_y() + win.get_dy() + popup.y).
-            copy_wattrib("display", parent_dialog).
+            copy_wattrib(WAttrib.DISPLAY, parent_dialog).
             add(popup)
 
          popup.set_pos(0, 0)

@@ -6,7 +6,7 @@
 # Author: Robert Parlett (parlett@dial.pipex.com)
 #
 
-import lang, gui, io, graphics, util, 
+import lang, gui, io, graphics(Selection,Key), util, 
    ipl.pdco, ipl.numbers
 
 class BorderOfCanvas(Component)
@@ -858,16 +858,16 @@ class Canvas(Component,SelectiveObjectCodec)
       # Dialog attribs.
       #
       m := copy(dialog_struct.wattribs)
-      every default.delete(m, "height" | "width" | "size")
+      every default.delete(m, WAttrib.HEIGHT | WAttrib.WIDTH | WAttrib.SIZE)
       if /is_component & 
          \ (dialog_iw | dialog_ih) then 
       {
          if /dialog_iw then
-            insert(m, "height", dialog_ih)
+            insert(m, WAttrib.HEIGHT, dialog_ih)
          else if /dialog_ih then
-            insert(m, "width", dialog_iw)
+            insert(m, WAttrib.WIDTH, dialog_iw)
          else
-            insert(m, "size", [dialog_iw, dialog_ih])
+            insert(m, WAttrib.SIZE, [dialog_iw, dialog_ih])
       }
       every a := !sort(m) do
          c.line("self.set_" || a[1] || "(" || c.scale_and_stringify_wattrib(a[1], a[2]) || ")")
@@ -904,11 +904,11 @@ class Canvas(Component,SelectiveObjectCodec)
       every c := Seq{ gen_cos().traverse_tree_postorder() }  do
          c.rescale(f)
 
-      every k := "height"|"width"|"min_width"|"min_height"|"max_width"|"max_height" do {
+      every k := WAttrib.HEIGHT | WAttrib.WIDTH | WAttrib.MIN_WIDTH | WAttrib.MIN_HEIGHT | WAttrib.MAX_WIDTH | WAttrib.MAX_HEIGHT do {
          if c := dialog_struct.get_wattrib(k) then
             dialog_struct.set_wattrib(k, round(c * f))
       }
-      every k := "size"|"max_size"|"min_size" do {
+      every k := WAttrib.SIZE | WAttrib.MAX_SIZE | WAttrib.MIN_SIZE do {
          if c := dialog_struct.get_wattrib(k) then
             dialog_struct.set_wattrib(k, [round(c[1] * f), round(c[2] * f)])
       }

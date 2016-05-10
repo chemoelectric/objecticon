@@ -3937,6 +3937,12 @@ function lang_Internal_hash(x)
    }
 end
 
+function lang_Internal_order(x)
+   body {
+      return C_integer order(&x);
+   }
+end
+
 function lang_Coexpression_traceback(ce, act_chain)
    body {
        tended struct b_coexpr *b;

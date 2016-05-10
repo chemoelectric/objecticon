@@ -62,7 +62,7 @@ class RangeSpin(Spin)
       x >:= \self.hi
       view.set_contents(x)
       if is_live() then
-         view.remove_wattrib("fg").reset()
+         view.remove_wattrib(WAttrib.FG).reset()
       last_val := x
       return self
    end
@@ -87,7 +87,7 @@ class RangeSpin(Spin)
 
    public on_textfield(ev, src, type)
       if last_val := get_value() then
-         view.remove_wattrib("fg").reset()
+         view.remove_wattrib(WAttrib.FG).reset()
       else
          view.set_fg("red").reset()
       # Fire the event with self as source.
