@@ -104,10 +104,9 @@ stringint drawops[] = {
  * line types
  */
 stringint linestyles[] = {
-    {0, 3},
-    {"end disc",     EndDisc},
-    {"end square",   EndSquare},
-    {"solid",        EndSquare},
+    {0, 2},
+    {"disc",     EndDisc},
+    {"square",   EndSquare},
 };
 
 #define NormalCanvas 1
@@ -1244,7 +1243,7 @@ static wcp alccontext(wbp w)
     wc->fg = link_sharedcolor(black);
     wc->bg = link_sharedcolor(white);
     wc->drawop = stringint_lookup(drawops, "over");
-    wc->linestyle = stringint_lookup(linestyles, "solid");
+    wc->linestyle = stringint_lookup(linestyles, "square");
     wc->linewidth = 1.0;
     wc->font = default_font;
     wc->leading = defaultleading;
