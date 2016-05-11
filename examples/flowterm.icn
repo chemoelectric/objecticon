@@ -144,7 +144,7 @@ class FlowTermDialog(Dialog)
             t.do_tab_cmd(cmd) | fail
          } else {
             done_tab_cmds(t)
-            t := Terminal(if *s > 0 then s else &null,, tabs.which_one)
+            t := Terminal(if *s > 0 then s else &null,, tabs.which_one) | fail
          }
       }
       done_tab_cmds(t)
@@ -169,12 +169,15 @@ class FlowTermDialog(Dialog)
       tabs.add(t, i)
       if is_live() then
          tabs.do_layout().invalidate()
-      return t
    end
 
    public new_tab(sel, dir, other, adjacent)
       local t
-      t := add_tab(Terminal(dir, other, tabs.which_one), adjacent)
+      t := Terminal(dir, other, tabs.which_one) | {
+         tabs.which_one.info_msg(&why)
+         fail
+      }
+      add_tab(t, adjacent)
       if \sel then
          tabs.set_which_one(t)
       return t
@@ -2719,9 +2722,9 @@ $endif
             start_dir := Files.realpath(dir) | info_msg("Invalid tab start directory: " || &why)
          /start_dir := ucs(Files.getcwd()) | u"/"
          set_cwd(start_dir)
-         # Apply global default tab options.
+         # Apply global default tab options; should only fail on first time through.
          every e := !glob_cmds do
-            do_tab_cmd(e) | stop(&why)
+            do_tab_cmd(e) | fail
       }
       synch_paints()
       update_grey()
@@ -2781,7 +2784,7 @@ $endif
 
    public clone_tab()
       local t, i
-      t := parent_dialog.new_tab(&yes,, self, self)
+      t := parent_dialog.new_tab(&yes,, self, self) | fail
       # Now the new tab is live, copy some column settings.
       i := Positions{(!t.columns.data).name, 
                      columns.data[columns.get_cursor()].name}
