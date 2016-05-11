@@ -317,10 +317,6 @@ end
 # amongst items which compare caselessly equal, so that for example
 # abc, aBc, ABC are always sorted in the same order.
 #
-# This function would not make much sense for use with a SortTable,
-# since it would result in duplicate entries which are caselessly
-# equal; rather the simpler `cl_text_cmp` should be used.
-#
 procedure consistent_cl_text_cmp(x, y)
    local i
    x := string(x) | runerr(103, x)
