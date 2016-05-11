@@ -296,8 +296,21 @@ procedure num_cmp(x, y)
       0
 end
 
-# A text comparison function; unlike `Internal.compare`, ucs and
-# string are sorted together.
+# A caseless string comparator function with consistent ordering
+# amongst items which compare caselessly equal, so that for example
+# abc, aBc, ABC are always sorted in the same order.
+#
+procedure consistent_cl_cmp(x, y)
+   local i
+   i := Text.cl_compare(x, y)
+   if i = 0 then
+      i := Internal.compare(x, y)
+   return i
+end
+
+# A text comparison function; like `Internal.compare`, but the
+# parameters are converted to string, and so ucs and string are sorted
+# together.
 #
 procedure text_cmp(x, y)
    x := string(x) | runerr(103, x)
@@ -305,7 +318,9 @@ procedure text_cmp(x, y)
    return Internal.compare(x, y)
 end
 
-# A caseless version of `text_cmp`.
+# A text comparison function; like `Text.cl_compare`, but the
+# parameters are converted to string, and so ucs and string are sorted
+# together.
 #
 procedure cl_text_cmp(x, y)
    x := string(x) | runerr(103, x)
@@ -313,18 +328,13 @@ procedure cl_text_cmp(x, y)
    return Text.cl_compare(x, y)
 end
 
-# A caseless string comparator function with consistent ordering
-# amongst items which compare caselessly equal, so that for example
-# abc, aBc, ABC are always sorted in the same order.
+# Like `consistent_cl_cmp`, but the parameters are converted to
+# string, and so ucs and string are sorted together.
 #
 procedure consistent_cl_text_cmp(x, y)
-   local i
    x := string(x) | runerr(103, x)
    y := string(y) | runerr(103, y)
-   i := Text.cl_compare(x, y)
-   if i = 0 then
-      i := Internal.compare(x, y)
-   return i
+   return consistent_cl_cmp(x, y)
 end
 
 #
