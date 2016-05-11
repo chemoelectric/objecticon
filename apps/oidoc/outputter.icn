@@ -1,8 +1,10 @@
 import
-   lang(Class),
+   lang(Class, Text),
    parser(ClassSymbol, DeferredMethod, Tree, ULocal,
           UMethod, ProcedureSymbol, RecordSymbol, GlobalSymbol),
    ipl.scan(many0),
+   ipl.sort(qsort, consistent_cl_text_cmp),
+   datastruct(SortTable),
    util(Yes)
 
 abstract class Outputter()
@@ -22,16 +24,16 @@ abstract class Outputter()
       ID_CHAR := &ucase ++ &lcase ++ '_0987654321'
    end
 
-   protected static name_sort(x)
-      return map(x.name)
+   protected static name_sort(a, b)
+      return Text.cl_compare(a.name, b.name)
    end
 
    protected get_packages()
       local ps, e
-      ps := set()
+      ps := SortTable(, consistent_cl_text_cmp)
       every e := symbol_table.gen_symbols() do
-         insert(ps, get_package(e))
-      suspend !sort(ps)
+         ps.insert(get_package(e))
+      suspend ps.key()
    end
 
    protected get_package(e)
@@ -47,15 +49,16 @@ abstract class Outputter()
    end
 
    protected get_symbols_in(p)
-      local t, e
+      local l, e
       if p == "default" then
          p := &null
-      t := table()
+      l := []
       every e := symbol_table.gen_symbols() do {
          if (\e.scanned_file).pack === p then
-            t[e.name] := e
+            put(l, e)
       }
-      suspend (!sort(t))[2]
+      qsort(l, name_sort)
+      suspend !l
    end
 
    protected get_classes_in(p)

@@ -142,14 +142,16 @@ class HtmlOutputter(Outputter)
          write(all, "<html><body>")
          write(all, "<h1>All packages</h1><p>")
          write(all, "<h1>Classes</h1><p>")
-         every c := !isort(all_classes, name_sort) do {
+         qsort(all_classes, name_sort)
+         every c := !all_classes do {
             if should_print_symbol(c) then
                write(all, "<a href=\"", 
                      get_id(c) || ".html\" target=\"displayFrame\">", 
                      c.name, "</a><br>")
          }
          write(all, "<p><h1>Other Symbols</h1><p>")
-         every c := !isort(all_others, name_sort) do {
+         qsort(all_others, name_sort)
+         every c := !all_others do {
             if should_print_symbol(c) then
                write(all, 
                      "<a href=\"", get_id(c) || ".html\" target=\"displayFrame\">", 
@@ -238,8 +240,8 @@ class HtmlOutputter(Outputter)
             else
                put(meths, x)
          }
-         meths := isort(meths, name_sort)
-         vars := isort(vars, name_sort)
+         qsort(meths, name_sort)
+         qsort(vars, name_sort)
 
          if *meths > 0 then {
             tbl_start(f, "Methods defined in this class")
@@ -303,20 +305,17 @@ class HtmlOutputter(Outputter)
    end
 
    private do_inherited(f, c, overrides)
-      local l, m, d, x, tm, tv
+      local l, m, d, x, tm, tv, u
       l := []
       every push(l, c ~=== c.get_implemented_classes())
 
       tm := table()
       tv := table()
       every x := c.get_implemented_fields() do {
-         if is(x, ClassVariable) then {
-            /tv[x.defining_class] := []
-            put(tv[x.defining_class], x)
-         } else {
-            /tm[x.defining_class] := []
-            put(tm[x.defining_class], x)
-         }
+         if is(x, ClassVariable) then
+            put(member(tv, x.defining_class), x) | insert(tv, x.defining_class, [x])
+         else
+            put(member(tm, x.defining_class), x) | insert(tm, x.defining_class, [x])
       }
 
       every d := !l do {
@@ -326,16 +325,18 @@ class HtmlOutputter(Outputter)
                overrides[x.name] := d
          }
 
-         if *\tm[d] > 0 then {
+         if u := member(tm, d) & *u > 0 then {
             tbl_start(f, "Methods inherited from " || d.get_fq_name())
-            every m := !isort(tm[d], name_sort) do {
+            qsort(u, name_sort)
+            every m := !u do {
                write(f,"<a href=\"" || get_id(d) || ".html#" || m.name || "\">" || m.name || "()</a>")
             }
             tbl_end(f)
          }
-         if *\tv[d] > 0 then {
+         if u := member(tv, d) & *u > 0 then {
             tbl_start(f, "Variables inherited from " || d.get_fq_name())
-            every m := !isort(tv[d], name_sort) do {
+            qsort(u, name_sort)
+            every m := !u do {
                write(f,"<a href=\"" || get_id(d) || ".html#" || m.name || "\">" || m.name || "</a>")
             }
             tbl_end(f)
