@@ -305,7 +305,7 @@ int lexcmp(dptr dp1, dptr dp2)
  * Caseless string comparison
  */
 
-int cl_lexcmp(dptr dp1, dptr dp2)
+int caseless_lexcmp(dptr dp1, dptr dp2)
 {
    char *s1, *s2;
    word l1, l2;
@@ -346,6 +346,19 @@ int cl_lexcmp(dptr dp1, dptr dp2)
    if (l1 == l2)
       return Equal;
    return (l1 > l2) ? Greater : Less;
+}
+
+/*
+ * Caseless comparison, but caselessly equal strings are still
+ * distinguished based on the case sensitive ordering.
+ */
+int consistent_lexcmp(dptr dp1, dptr dp2)
+{
+    int i;
+    i = caseless_lexcmp(dp1, dp2);
+    if (i == Equal)
+        i = lexcmp(dp1, dp2);
+    return i;
 }
 
 /*

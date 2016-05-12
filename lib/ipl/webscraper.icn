@@ -117,7 +117,7 @@ class WebScraper()
          i := 0
          every s := text(!n.children) do {
             i +:= 1
-            s ? if tab(cl_match(u"$scrapeid=")) then {
+            s ? if tab(caseless_match(u"$scrapeid=")) then {
                s := tab(upto('$')) | return error("Unclosed scrapeid")
                do_insert(s, n, anchors, i) | fail
             }
@@ -147,7 +147,7 @@ class WebScraper()
       res := table()
       every n := Seq{d.traverse_nodes_preorder()} do {
          every s := text(!n.children) do {
-            s ? if tab(cl_match(u"$anchorid=")) then {
+            s ? if tab(caseless_match(u"$anchorid=")) then {
                id := tab(upto('$')) | return error("Unclosed anchor id")
                move(1)
                str := tab(0)

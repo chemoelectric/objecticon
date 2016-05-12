@@ -209,9 +209,9 @@ end
 #
 # @example
 # @ l := ["ABC",u"Abc",u"def",u"DEF",u"ABC","def",u"DEf","ABc"]
-# @ mergesort(l, combine_cmp(cl_text_cmp, type_cmp))
+# @ mergesort(l, combine_cmp(caseless_text_cmp, type_cmp))
 # @ # gives ["ABC","ABc",u"Abc",u"ABC","def",u"def",u"DEF",u"DEf"]
-# @ mergesort(l, combine_cmp(type_cmp, cl_text_cmp))
+# @ mergesort(l, combine_cmp(type_cmp, caseless_text_cmp))
 # @ # gives ["ABC","ABc","def",u"Abc",u"ABC",u"def",u"DEF",u"DEf"]
 # @
 procedure combine_cmp(f, g)
@@ -296,18 +296,6 @@ procedure num_cmp(x, y)
       0
 end
 
-# A caseless string comparator function with consistent ordering
-# amongst items which compare caselessly equal, so that for example
-# abc, aBc, ABC are always sorted in the same order.
-#
-procedure consistent_cl_cmp(x, y)
-   local i
-   i := Text.cl_compare(x, y)
-   if i = 0 then
-      i := Internal.compare(x, y)
-   return i
-end
-
 # A text comparison function; like `Internal.compare`, but the
 # parameters are converted to string, and so ucs and string are sorted
 # together.
@@ -318,23 +306,23 @@ procedure text_cmp(x, y)
    return Internal.compare(x, y)
 end
 
-# A text comparison function; like `Text.cl_compare`, but the
+# A text comparison function; like `Text.caseless_compare`, but the
 # parameters are converted to string, and so ucs and string are sorted
 # together.
 #
-procedure cl_text_cmp(x, y)
+procedure caseless_text_cmp(x, y)
    x := string(x) | runerr(103, x)
    y := string(y) | runerr(103, y)
-   return Text.cl_compare(x, y)
+   return Text.caseless_compare(x, y)
 end
 
-# Like `consistent_cl_cmp`, but the parameters are converted to
+# Like `Text.consistent_compare`, but the parameters are converted to
 # string, and so ucs and string are sorted together.
 #
-procedure consistent_cl_text_cmp(x, y)
+procedure consistent_text_cmp(x, y)
    x := string(x) | runerr(103, x)
    y := string(y) | runerr(103, y)
-   return consistent_cl_cmp(x, y)
+   return Text.consistent_compare(x, y)
 end
 
 #

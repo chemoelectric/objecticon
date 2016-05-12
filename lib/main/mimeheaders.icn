@@ -115,7 +115,7 @@ class MimeHeaders()
    end
 
    public new()
-      headers := SortTable(, Text.cl_compare)
+      headers := SortTable(, Text.caseless_compare)
       return
    end
 end

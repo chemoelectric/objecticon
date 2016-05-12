@@ -23,7 +23,14 @@ final abstract class Text()
    # Internal.compare (so no conversions are done), but uses caseless
    # text comparison.
    #
-   public static native cl_compare(s1, s2)
+   public static native caseless_compare(s1, s2)
+
+   # A caseless string comparator function with consistent ordering
+   # amongst items which compare caselessly equal, so that for example
+   # abc, aBc, ABC are always sorted in the same order.  No
+   # conversions are done, so different types are never mixed.
+   #
+   public static native consistent_compare(s1, s2)
 
    # Succeed if all the chars in x are in cset y.
    #

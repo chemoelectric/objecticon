@@ -3,7 +3,7 @@ import
    parser(ClassSymbol, DeferredMethod, Tree, ULocal,
           UMethod, ProcedureSymbol, RecordSymbol, GlobalSymbol),
    ipl.scan(many0),
-   ipl.sort(qsort, consistent_cl_cmp),
+   ipl.sort(qsort),
    datastruct(SortTable),
    util(Yes)
 
@@ -25,12 +25,12 @@ abstract class Outputter()
    end
 
    protected static name_sort(a, b)
-      return Text.cl_compare(a.name, b.name)
+      return Text.consistent_compare(a.name, b.name)
    end
 
    protected get_packages()
       local ps, e
-      ps := SortTable(, consistent_cl_cmp)
+      ps := SortTable(, Text.consistent_compare)
       every e := symbol_table.gen_symbols() do
          ps.insert(get_package(e))
       suspend ps.key()

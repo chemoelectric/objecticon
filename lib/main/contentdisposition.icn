@@ -157,7 +157,7 @@ class ContentDisposition()
 
    public new(type)
       self.type := type
-      self.parameters := SortTable(, Text.cl_compare)
+      self.parameters := SortTable(, Text.caseless_compare)
       return
    end
 end

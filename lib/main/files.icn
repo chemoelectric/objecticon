@@ -6,8 +6,7 @@ import
    net,
    posix,
    ipl.random,
-   ipl.scan,
-   ipl.sort
+   ipl.scan
 
 #
 # This class has several static methods which provide
@@ -108,7 +107,7 @@ $endif
    # functions.  Sorts by case-insensitive name.
    #
    public static name_cmp(d1, d2)
-      return consistent_cl_cmp(d1.name, d2.name)
+      return Text.consistent_compare(d1.name, d2.name)
    end
 
    #

@@ -784,12 +784,12 @@ procedure rev(e)
    suspend tab(!r)
 end
 
+# Expand the given cset so that all letters appear in the result both
+# in lowercase and uppercase, eg caseless_cset('Cat123') ->
+# 'catCAT123'.  The result can then be used, for example to do a
+# caseless upto search.
 #
-# Expand the given cset so that all letters appear in the result both in lowercase
-# and uppercase, eg csetcl('Cat123') -> 'catCAT123'.  The result can then be used,
-# for example to do a caseless upto search.
-#
-procedure cl_cset(c)
+procedure caseless_cset(c)
    local ls
    c := cset(c) | runerr(104, c)
    ls := map(string(c ** &letters))
@@ -832,7 +832,7 @@ end
 #
 # Caseless version of match()
 #
-procedure cl_match(s1, s2, i, j)
+procedure caseless_match(s1, s2, i, j)
    local a
    a := begin_analysis(s2, i, j) | fail
    s2 := a.s; i := a.i; j := a.j
@@ -844,7 +844,7 @@ end
 #
 # Caseless version of find()
 #
-procedure cl_find(s1, s2, i, j)
+procedure caseless_find(s1, s2, i, j)
    local c, t, a
    a := begin_analysis(s2, i, j) | fail
    s2 := a.s; i := a.i; j := a.j
@@ -857,7 +857,7 @@ procedure cl_find(s1, s2, i, j)
    s1 := map(s1)
    # Cset of first char in upper and lower case; eg if searching for
    # "cat", c = 'cC'.
-   c := cl_cset(s1[1])
+   c := caseless_cset(s1[1])
    every t := upto(c, s2, i, j) do {
       if t > j - *s1 then
          break
