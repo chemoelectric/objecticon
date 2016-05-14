@@ -752,7 +752,7 @@ class Columns(LineBasedScrollArea)
       ensure_line_visible(get_row_for_index(cursor))
       set_highlight(cursor)
       t := Dispatcher.new_task{{
-         t.sleep(50)
+         t.sleep(Gui.VISUALIZE_DELAY)
          set_highlight()
          fire("lclicked", e)
          t.revert()
