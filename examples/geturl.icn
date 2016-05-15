@@ -13,13 +13,13 @@ class Monitor()
       local t
       t := 0
       every t +:= *!a
-      push(a, repl("\b", \prev_len))
+      push(a, repl("\b \b", \prev_len))
       FileStream.stderr.writes!a
       prev_len := t
    end
 
    private write(a[])
-      push(a, repl("\b", \prev_len))
+      push(a, repl("\b \b", \prev_len))
       FileStream.stderr.write!a
       prev_len := &null
    end
@@ -60,11 +60,11 @@ class Monitor()
    end
 
    public failed(ev)
-      write("Failed: ", &why, repl(" ", 20))
+      write("Failed: ", &why)
    end
 
    public retrying(ev)
-      write("Retrying: ", &why, repl(" ", 20))
+      write("Retrying: ", &why)
    end
 
    public connecting(ev, src, type)
