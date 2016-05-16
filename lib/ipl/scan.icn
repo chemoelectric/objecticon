@@ -773,6 +773,14 @@ procedure at(i)
       suspend move(0)
 end
 
+# Match to position i.  This is like builtin tab, but the position
+# must be equal to, or to the right of, `&pos`.
+#
+procedure tab_to(i)
+   if match("",, i) >= &pos then
+      suspend tab(i)
+end
+
 # Reverse the sequence of matches produced by {e}.  NB - if {e} is an
 # infinite sequence this will consume memory indefinitely.
 #
