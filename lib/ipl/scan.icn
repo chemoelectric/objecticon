@@ -74,6 +74,7 @@ $encoding UTF-8
 package ipl.scan
 
 import
+   ipl.pdco(optional_param),
    io(write, writes),
    util(save_state, State)
 
@@ -703,12 +704,8 @@ end
 # defaults to zero, max to infinity.
 #
 procedure range(e, min, max)
-   min := @\min
-   max := @\max
-   /min := 0
-   min := integer(min) | runerr(101, min)
-   if \max then
-      max := integer(max) | runerr(101, max)
+   min := optional_param(min, 0, integer, 101) | fail
+   max := optional_param(max, &null, integer, 101) | fail
    suspend range_impl(e, 0, min, max)
 end
 
