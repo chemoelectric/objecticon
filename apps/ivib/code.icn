@@ -102,7 +102,11 @@ class Code()
    end
 
    public constraint_line(key, val)
-      chain("set_constraint(" || constraint_str(key) || ", " || scale_and_stringify_constraint(key, val) || ")")
+      local t
+      t := constraint_str(key)
+      chain("set_constraint(" || t || ", " || scale_and_stringify_constraint(key, val) || ")")
+      if match("Grid.", t) then
+         add_import("gui", "Grid")
    end
 
    public scalable_dim(dim)
