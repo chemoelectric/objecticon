@@ -208,20 +208,20 @@ AC_DEFUN([AX_CHECK_COMPUTED_GOTO],
    fi
 ])
 
-AC_DEFUN(AC_CHECK_GLOBAL,
+AC_DEFUN(AC_CHECK_GLOBALS,
 [for ac_global in $1
 do
    ac_tr_global=HAVE_`echo $ac_global | tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
    AC_MSG_CHECKING([for global variable ${ac_global}])
    AC_CACHE_VAL(ac_cv_global_$ac_global,
    [
-    AC_TRY_LINK(dnl
+    AC_TRY_LINK(
     [/* no includes */],
-    [ extern long int $ac_global;  exit((int)$ac_global)],
+    [ extern long int $ac_global;  return (int)$ac_global; ],
     eval "ac_cv_global_${ac_global}=yes",
     eval "ac_cv_global_${ac_global}=no"
     )
-dnl   ]
+   ]
    )
   if eval "test \"`echo '$ac_cv_global_'$ac_global`\" = yes"; then
     AC_MSG_RESULT(yes)

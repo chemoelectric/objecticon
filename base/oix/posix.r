@@ -129,9 +129,9 @@ static char ** list2stringptrs(dptr l)
      * Allocate the required memory for string and pointers, and go through
      * again filling the space.
      */
-    a = rt_malloc((ListBlk(*l).size + 1) * sizeof(char *));
+    a = safe_malloc((ListBlk(*l).size + 1) * sizeof(char *));
     if (total > 0) {
-        data = rt_malloc(total);
+        data = safe_malloc(total);
         p = data;
     }
     i = 0;
@@ -435,7 +435,7 @@ static void addpid(Waitmsg *msg)
 {
     Waited *w;
 
-    w = rt_malloc(sizeof(*w));
+    w = safe_malloc(sizeof(*w));
     w->msg = msg;
     w->next = wd;
     wd = w;
@@ -640,7 +640,7 @@ function posix_System_getgroups()
         errno2why();
         fail;
     }
-    buf = rt_malloc(n * sizeof(gid_t));
+    buf = safe_malloc(n * sizeof(gid_t));
     n = getgroups(n, buf);
     if (n < 0) {
         errno2why();

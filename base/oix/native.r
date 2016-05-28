@@ -1138,12 +1138,12 @@ struct b_proc *clone_b_proc(struct b_proc *bp)
     struct b_proc *new0;
     switch (bp->type) {
         case P_Proc: {
-            new0 = rt_malloc(sizeof(struct p_proc));
+            new0 = safe_malloc(sizeof(struct p_proc));
             memcpy(new0, bp, sizeof(struct p_proc));
             break;
         }
         case C_Proc: {
-            new0 = rt_malloc(sizeof(struct c_proc));
+            new0 = safe_malloc(sizeof(struct c_proc));
             memcpy(new0, bp, sizeof(struct c_proc));
             break;
         }
@@ -1165,7 +1165,7 @@ static struct b_proc *try_load(void *handle, struct b_class *class0,  struct cla
     dptr fname;
 
     fname = class0->program->Fnames[cf->fnum];
-    fq = rt_malloc(StrLen(*class0->name) + StrLen(*fname) + 3);
+    fq = safe_malloc(StrLen(*class0->name) + StrLen(*fname) + 3);
     p = fq;
     *p++ = 'B';
     t = StrLoc(*class0->name);
@@ -1263,7 +1263,7 @@ function lang_Proc_load(filename, funcname)
        /*
         * Load the function.  Diagnose both library and function errors here.
         */
-       tname = rt_malloc(strlen(funcname) + 2);
+       tname = safe_malloc(strlen(funcname) + 2);
        sprintf(tname, "B%s", funcname);
        blk = (struct b_proc *)dlsym(handle, tname);
        if (!blk) {
@@ -1348,15 +1348,15 @@ function io_WindowsFileSystem_getdcwd(d)
       runerr(103, d)
    body {
       tended struct descrip result;
-      char *p;
+      WCHAR *p;
       int dir;
       if (StrLen(d) != 1)
 	 fail;
       dir = toupper((unsigned char)*StrLoc(d)) - 'A' + 1;
-      p = _getdcwd(dir, 0, 32);
+      p = _wgetdcwd(dir, NULL, 32);
       if (!p)
 	 fail;
-      cstr2string(p, &result);
+      wchars_to_utf8_string(p, &result);
       free(p);
       return result;
    }
@@ -1435,7 +1435,7 @@ function io_FileStream_new_impl(path, flags, mode)
        if (!convert_to_mode_t(&mode, &c_mode))
            runerr(0);
 #if MSWIN32
-       fd = open(path, flags | O_BINARY, c_mode);
+       fd = open_utf8(path, flags | O_BINARY, c_mode);
 #else
        fd = open(path, flags, c_mode);
 #endif
@@ -2347,7 +2347,7 @@ function io_DescStream_poll(l, timeout)
        nfds = ListBlk(l).size / 2;
 
        if (nfds > 0)
-           ufds = rt_realloc(ufds, nfds * sizeof(struct pollfd));
+           ufds = safe_realloc(ufds, nfds * sizeof(struct pollfd));
 
        le = lgfirst(&ListBlk(l), &state);
        for (i = 0; i < nfds; ++i) {
@@ -2477,7 +2477,7 @@ function io_DirStream_new_impl(path)
            errno2why();
            fail;
        }
-       d = rt_malloc(sizeof(struct DirData));
+       d = safe_malloc(sizeof(struct DirData));
        d->fd = fd;
        d->pos = d->n = 0;
        d->st = 0;
@@ -2597,7 +2597,7 @@ end
 enum DirDataStatus { EMPTY, FIRST, MORE };
 
 struct DirData {
-   WIN32_FIND_DATA fileData;
+   WIN32_FIND_DATAW fileData;
    int status;
    HANDLE handle;
 };
@@ -2619,8 +2619,11 @@ function io_DirStream_new_impl(path)
       runerr(103, path)
    body {
        struct DirData *fd;
-       fd = rt_malloc(sizeof(struct DirData));
-       fd->handle = FindFirstFile(path, &fd->fileData);
+       WCHAR *pathw;
+       pathw = utf8_to_wchar(path);
+       fd = safe_malloc(sizeof(struct DirData));
+       fd->handle = FindFirstFileW(pathw, &fd->fileData);
+       free(pathw);
        if (fd->handle == INVALID_HANDLE_VALUE) {
 	  if (GetLastError() == ERROR_FILE_NOT_FOUND) {
 	     fd->status = EMPTY;
@@ -2642,13 +2645,13 @@ function io_DirStream_read_line_impl(self)
        if (self_dir->status == EMPTY)
            return nulldesc;
        if (self_dir->status == FIRST) {
-	  cstr2string(self_dir->fileData.cFileName, &result);
+          wchars_to_utf8_string(self_dir->fileData.cFileName, &result);
 	  self_dir->status = MORE;
 	  return result;
        }
-       if (!FindNextFile(self_dir->handle, &self_dir->fileData))
+       if (!FindNextFileW(self_dir->handle, &self_dir->fileData))
            return nulldesc;
-       cstr2string(self_dir->fileData.cFileName, &result);
+       wchars_to_utf8_string(self_dir->fileData.cFileName, &result);
        return result;
    }
 end
@@ -2676,7 +2679,11 @@ function io_Files_rename(s1, s2)
       runerr(103,s2)
 
    body {
+#if MSWIN32
+       if (rename_utf8(s1, s2) < 0) {
+#else
        if (rename(s1, s2) < 0) {
+#endif
            errno2why();
            fail;
        }
@@ -2812,7 +2819,11 @@ function io_Files_mkdir(s, mode)
    if !cnv:C_string(s) then
       runerr(103, s)
    body {
+#if MSWIN32
+      if (mkdir_utf8(s) < 0) {
+#else
       if (mkdir(s) < 0) {
+#endif
 	 errno2why();
 	 fail;
       }
@@ -2825,7 +2836,11 @@ function io_Files_remove(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
+#if MSWIN32
+      if (remove_utf8(s) < 0) {
+#else
       if (remove(s) < 0) {
+#endif
           errno2why();
           fail;
       }
@@ -2837,7 +2852,11 @@ function io_Files_rmdir(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
+#if MSWIN32
+      if (rmdir_utf8(s) < 0) {
+#else
       if (rmdir(s) < 0) {
+#endif
           errno2why();
           fail;
       }
@@ -2875,7 +2894,11 @@ function io_Files_truncate(s, len)
       off_t c_len;
       if (!convert_to_off_t(&len, &c_len))
           runerr(0);
+#if MSWIN32
+      fd = open_utf8(s, O_WRONLY, 0);
+#else
       fd = open(s, O_WRONLY, 0);
+#endif
       if (fd < 0) {
            errno2why();
            fail;
@@ -3071,7 +3094,11 @@ function io_Files_stat_impl(s)
       free(st);
 #else
       struct stat st;
+#if MSWIN32
+      if (stat_utf8(s, &st) < 0) {
+#else
       if (stat(s, &st) < 0) {
+#endif
           errno2why();
           fail;
       }
@@ -3096,7 +3123,11 @@ function io_Files_lstat_impl(s)
       free(st);
 #else
       struct stat st;
+#if MSWIN32
+      if (stat_utf8(s, &st) < 0) {
+#else
       if (lstat(s, &st) < 0) {
+#endif
           errno2why();
           fail;
       }
@@ -3238,7 +3269,11 @@ function io_Files_access(s, mode)
    if !def:C_integer(mode, F_OK) then
       runerr(101, mode)
    body {
+#if MSWIN32
+      if (access_utf8(s, mode) < 0) {
+#else
       if (access(s, mode) < 0) {
+#endif
           errno2why();
           fail;
       }
@@ -3485,11 +3520,11 @@ function io_RamStream_new_impl(s, wiggle)
        struct ramstream *p;
        if (wiggle < 0)
            Irunerr(205, wiggle);
-       p = rt_malloc(sizeof(*p));
+       p = safe_malloc(sizeof(*p));
        p->wiggle = wiggle;
        p->pos = p->size = StrLen(s);
        p->avail = p->size + p->wiggle;
-       p->data = rt_malloc(p->avail);
+       p->data = safe_malloc(p->avail);
        memcpy(p->data, StrLoc(s), p->size);
        return C_integer((word)p);
    }
@@ -3502,7 +3537,7 @@ function io_RamStream_out(self, s)
        GetSelfRs();
        if (self_rs->pos + StrLen(s) > self_rs->avail) {
            self_rs->avail = 2 * (self_rs->pos + StrLen(s));
-           self_rs->data = rt_realloc(self_rs->data, self_rs->avail);
+           self_rs->data = safe_realloc(self_rs->data, self_rs->avail);
        }
 
        if (self_rs->pos > self_rs->size)
@@ -3549,7 +3584,7 @@ function io_RamStream_truncate(self, len)
        GetSelfRs();
        self_rs->pos = len;
        self_rs->avail = len + self_rs->wiggle;
-       self_rs->data = rt_realloc(self_rs->data, self_rs->avail);
+       self_rs->data = safe_realloc(self_rs->data, self_rs->avail);
        if (self_rs->size < len)
            memset(&self_rs->data[self_rs->size], 0, len - self_rs->size);
        self_rs->size = len;
@@ -4263,11 +4298,11 @@ function io_FileWorker_new_impl(buff_size, f)
            fileworker_inited = 1;
        }
 
-       p = rt_zalloc(sizeof(*p));
+       p = safe_zalloc(sizeof(*p));
        GLink4(p, fileworkers, next, prev);
 
        p->pid = -1;
-       p->buff = rt_zalloc(buff_size);
+       p->buff = safe_zalloc(buff_size);
        p->buff_size = buff_size;
        p->fd = fd;
        if (p->fd >= 0)

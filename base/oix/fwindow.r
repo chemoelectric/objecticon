@@ -232,7 +232,7 @@ function graphics_Window_draw_curve(self, argv[argc])
       dy = self_w->context->dy;
       n = argc / 2;
 
-      points = rt_malloc(sizeof(struct point) * (n + 2));
+      points = safe_malloc(sizeof(struct point) * (n + 2));
 
       CnvCDouble(argv[0], x0)
           CnvCDouble(argv[1], y0)
@@ -293,7 +293,7 @@ function graphics_Window_draw_line(self, argv[argc])
       int dx, dy;
       GetSelfW();
       CheckArgMultipleOf(2, 2);
-      points = rt_malloc(sizeof(struct point) * (argc / 2));
+      points = safe_malloc(sizeof(struct point) * (argc / 2));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
       n = 0;
@@ -444,7 +444,7 @@ function graphics_Window_fill_polygon(self, argv[argc])
       int dx, dy;
       GetSelfW();
       CheckArgMultipleOf(2, 3);
-      points = rt_malloc(sizeof(struct point) * (argc / 2));
+      points = safe_malloc(sizeof(struct point) * (argc / 2));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
       n = 0;
@@ -472,7 +472,7 @@ function graphics_Window_fill_trapezoids(self, argv[argc])
       CheckArgMultipleOf(6, 0);
       if (argc == 0)
           return self;
-      traps = rt_malloc(sizeof(struct trapezoid) * (argc / 6));
+      traps = safe_malloc(sizeof(struct trapezoid) * (argc / 6));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
       n = 0;
@@ -508,7 +508,7 @@ function graphics_Window_fill_triangles(self, argv[argc])
       CheckArgMultipleOf(6, 0);
       if (argc == 0)
           return self;
-      tris = rt_malloc(sizeof(struct triangle) * (argc / 6));
+      tris = safe_malloc(sizeof(struct triangle) * (argc / 6));
       dx = self_w->context->dx;
       dy = self_w->context->dy;
       n = 0;
@@ -646,7 +646,7 @@ function graphics_Window_filter(self, x0, y0, w0, h0, spec)
           tended struct b_lelem *le;
           tended struct descrip elem;
           nfilter = ListBlk(spec).size;
-          filter = rt_malloc(nfilter * sizeof(struct filter));
+          filter = safe_malloc(nfilter * sizeof(struct filter));
           for (le = lgfirst(&ListBlk(spec), &state); le;
                le = lgnext(&ListBlk(spec), &state, le)) {
               elem = le->lslots[state.result];
@@ -664,7 +664,7 @@ function graphics_Window_filter(self, x0, y0, w0, h0, spec)
           if (!cnv:string(spec, spec))
               runerr(103, spec);
 
-          filter = rt_malloc(sizeof(struct filter));
+          filter = safe_malloc(sizeof(struct filter));
           nfilter = 1;
           if (!parsefilter(self_w, buffstr(&spec), &filter[0])) {
               LitWhy("Invalid filter");

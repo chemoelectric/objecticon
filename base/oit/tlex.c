@@ -685,7 +685,7 @@ static struct toktab *getcset(int ac, int *cc)
     int esc_flag;
     char *p;
 
-    MemProtect(cs = init_rangeset());
+    cs = init_rangeset();
 
     c = NextLitChar;
     while (c != '\'' && c != '\n' && c != EOF) {
@@ -734,12 +734,12 @@ static struct toktab *getcset(int ac, int *cc)
                 if (!esc_flag && c == '-')
                     ++state;
                 else {
-                    MemProtect(add_range(cs, prev, prev));
+                    add_range(cs, prev, prev);
                     prev = c;
                 }
                 break;
             case 2:
-                MemProtect(add_range(cs, prev, c));
+                add_range(cs, prev, c);
                 state = 0;
                 break;
         }
@@ -747,7 +747,7 @@ static struct toktab *getcset(int ac, int *cc)
     }
     if (c == '\'') {
         if (state == 1) {
-            MemProtect(add_range(cs, prev, prev));
+            add_range(cs, prev, prev);
         } else if (state == 2)
             lexfatal("incomplete cset range");
         *cc = ' ';

@@ -467,7 +467,7 @@ procedure test_langprocs()
    a := Five()
    clone_check(a)
 
-   cl := SortTable(, Text.cl_compare)
+   cl := SortTable(, Text.caseless_compare)
    a := Two(22)
    cl.insert(1, a)
    cl.insert(2, a)
@@ -476,7 +476,7 @@ procedure test_langprocs()
    a := Six()
    clone_check(a)
 
-   cl := SortTable(, Text.cl_compare)
+   cl := SortTable(, Text.caseless_compare)
    cl.insert(10, [])
    clone_check(cl)
 

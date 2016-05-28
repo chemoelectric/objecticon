@@ -143,13 +143,11 @@
       #define vsnprintf(a,b,c,d) vsprintf(a,c,d)
    #endif
    #define ftruncate _chsize
-   #define lstat stat
    #define alloca _alloca
    #define strdup _strdup
    #define unlink _unlink
    #define snprintf _snprintf
    typedef int mode_t;
-   typedef int socklen_t;
    #define O_ACCMODE 3
    #include <sys/timeb.h>
    #include <sys/locking.h>
@@ -227,24 +225,9 @@
 #endif
 
 #if HAVE_LIBDL
-#if MSWIN32
-   void *dlopen(char *, int); /* LoadLibrary */
-   void *dlsym(void *, char *sym); /* GetProcAddress */
-   int dlclose(void *); /* FreeLibrary */
-#else					/* MSWIN32 */
-   #include <dlfcn.h>
-#endif					/* MSWIN32 */
+#include <dlfcn.h>
 #endif					/* HAVE_LIBDL */
 
-
 #if HAVE_LIBZ
-			
-#  ifdef STDC
-#    define OF(args)  args
-#  else
-#    define OF(args)  ()
-#  endif
-
 #include <zlib.h>
-
 #endif					/* HAVE_LIBZ */

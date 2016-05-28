@@ -74,6 +74,7 @@ $encoding UTF-8
 package ipl.scan
 
 import
+   ipl.pdco(optional_param),
    io(write, writes),
    util(save_state, State)
 
@@ -703,12 +704,8 @@ end
 # defaults to zero, max to infinity.
 #
 procedure range(e, min, max)
-   min := @\min
-   max := @\max
-   /min := 0
-   min := integer(min) | runerr(101, min)
-   if \max then
-      max := integer(max) | runerr(101, max)
+   min := optional_param(min, 0, integer, 101) | fail
+   max := optional_param(max, &null, integer, 101) | fail
    suspend range_impl(e, 0, min, max)
 end
 
@@ -773,6 +770,14 @@ procedure at(i)
       suspend move(0)
 end
 
+# Match to position i.  This is like builtin tab, but the position
+# must be equal to, or to the right of, `&pos`.
+#
+procedure tab_to(i)
+   if match("",, i) >= &pos then
+      suspend tab(i)
+end
+
 # Reverse the sequence of matches produced by {e}.  NB - if {e} is an
 # infinite sequence this will consume memory indefinitely.
 #
@@ -784,12 +789,12 @@ procedure rev(e)
    suspend tab(!r)
 end
 
+# Expand the given cset so that all letters appear in the result both
+# in lowercase and uppercase, eg caseless_cset('Cat123') ->
+# 'catCAT123'.  The result can then be used, for example to do a
+# caseless upto search.
 #
-# Expand the given cset so that all letters appear in the result both in lowercase
-# and uppercase, eg csetcl('Cat123') -> 'catCAT123'.  The result can then be used,
-# for example to do a caseless upto search.
-#
-procedure cl_cset(c)
+procedure caseless_cset(c)
    local ls
    c := cset(c) | runerr(104, c)
    ls := map(string(c ** &letters))
@@ -832,7 +837,7 @@ end
 #
 # Caseless version of match()
 #
-procedure cl_match(s1, s2, i, j)
+procedure caseless_match(s1, s2, i, j)
    local a
    a := begin_analysis(s2, i, j) | fail
    s2 := a.s; i := a.i; j := a.j
@@ -844,7 +849,7 @@ end
 #
 # Caseless version of find()
 #
-procedure cl_find(s1, s2, i, j)
+procedure caseless_find(s1, s2, i, j)
    local c, t, a
    a := begin_analysis(s2, i, j) | fail
    s2 := a.s; i := a.i; j := a.j
@@ -857,7 +862,7 @@ procedure cl_find(s1, s2, i, j)
    s1 := map(s1)
    # Cset of first char in upper and lower case; eg if searching for
    # "cat", c = 'cC'.
-   c := cl_cset(s1[1])
+   c := caseless_cset(s1[1])
    every t := upto(c, s2, i, j) do {
       if t > j - *s1 then
          break

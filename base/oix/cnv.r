@@ -217,11 +217,11 @@ int f(dptr s, dptr d)
        char *s1;
        struct rangeset *rs;
        word l = UcsBlk(*s).length;
-       MemProtect(rs = init_rangeset());
+       rs = init_rangeset();
        s1 = StrLoc(UcsBlk(*s).utf8);
        while (l-- > 0) {
            int i = utf8_iter(&s1);
-           MemProtect(add_range(rs, i, i));
+           add_range(rs, i, i);
        }
        d->dword = D_Cset;
        BlkLoc(*d) = (union block *)rangeset_to_block(rs);
@@ -234,12 +234,12 @@ int f(dptr s, dptr d)
        word l;
        char *s1;        /* does not need to be tended */
        struct rangeset *rs;
-       MemProtect(rs = init_rangeset());
+       rs = init_rangeset();
        s1 = StrLoc(str);
        l = StrLen(str);
        while(l--) {
            int i = *s1++ & 0xff;
-           MemProtect(add_range(rs, i, i));
+           add_range(rs, i, i);
        }
        d->dword = D_Cset;
        BlkLoc(*d) = (union block *)rangeset_to_block(rs);

@@ -171,7 +171,7 @@ static void dump_all(void)
 static wbp alcwbinding(void)
 {
     wbp w;
-    w = rt_zalloc(sizeof(struct _wbinding));
+    w = safe_zalloc(sizeof(struct _wbinding));
     GLink(w, wbndngs);
     return w;
 }
@@ -912,7 +912,7 @@ static wfp load_font(char *s)
     if (!f)
         return 0;
 
-    rv = rt_zalloc(sizeof(struct _wfont));
+    rv = safe_zalloc(sizeof(struct _wfont));
     rv->name = salloc(s);
     gb_get_metrics(dummy_hdc, f, &rv->ascent, &rv->descent, &rv->maxwidth);
     /*dbg("ascent=%d descent=%d maxwidth=%d\n", rv->ascent,rv->descent,rv->maxwidth);*/
@@ -1104,7 +1104,7 @@ void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
     wsp ws = w->window;
     int i, j;
     gb_Color *p;
-    imd->data = rt_malloc(imd->width * imd->height * sizeof(gb_Color));
+    imd->data = safe_malloc(imd->width * imd->height * sizeof(gb_Color));
     p = (gb_Color *)imd->data;
     for(i = y; i < y + imd->height; i++)
         for(j = x; j < x + imd->width; j++)
@@ -1425,7 +1425,7 @@ WCHAR *ucs_to_wchars(dptr str, int nullterm)
 {
     WCHAR *mbs;
     /* +1 for null terminator */
-    mbs = rt_malloc((UcsBlk(*str).length + 1) * sizeof(WCHAR));
+    mbs = safe_malloc((UcsBlk(*str).length + 1) * sizeof(WCHAR));
     ucs_to_wchars1(mbs, str, nullterm);
     return mbs;
 }
@@ -1446,7 +1446,7 @@ WCHAR *string_to_wchars(dptr str, int nullterm)
 {
     WCHAR *mbs;
     /* +1 for null terminator */
-    mbs = rt_malloc((StrLen(*str) + 1) * sizeof(WCHAR));
+    mbs = safe_malloc((StrLen(*str) + 1) * sizeof(WCHAR));
     string_to_wchars1(mbs, str, nullterm);
     return mbs;
 }
@@ -1469,13 +1469,11 @@ void wchars_to_ucs(WCHAR *src, dptr res)
         ++p;
     }
 
-    /*dbg("We got %d unicode chars -> %d utf8 len\n", (int)wlen, (int)slen);*/
     MemProtect(ts = alcstr(0, slen));
     p = src;
     q = ts;
     while (*p) {
         int n = utf8_seq(*p, q);
-        /*dbg("wrote char %d as %d bytes\n", (int)(*p), n);*/
         q += n;
         ++p;
     }
@@ -1484,6 +1482,34 @@ void wchars_to_ucs(WCHAR *src, dptr res)
     bp = make_ucs_block(&utf8, wlen);
     res->dword = D_Ucs;
     BlkLoc(*res) = (union block *)bp;
+}
+
+void wchars_to_utf8_string(WCHAR *src, dptr res)
+{
+    tended char *ts;
+    word wlen, slen;
+    WCHAR *p;
+    char *q;
+
+    wlen = 0;
+    slen = 0;
+    p = src;
+    while (*p) {
+        slen += utf8_seq(*p, 0);
+        ++wlen;
+        ++p;
+    }
+
+    MemProtect(ts = alcstr(0, slen));
+    p = src;
+    q = ts;
+    while (*p) {
+        int n = utf8_seq(*p, q);
+        q += n;
+        ++p;
+    }
+
+    MakeStr(ts, slen, res);
 }
 
 int textwidth(wbp w, dptr str)
@@ -1686,7 +1712,7 @@ static struct wcursor *ensure_wcursor(char *name)
         if (!strcmp(name, rv->name))
             return rv;
     }
-    rv = rt_zalloc(sizeof(struct wcursor));
+    rv = safe_zalloc(sizeof(struct wcursor));
     rv->name = salloc(name);
     rv->next = cursors[i];
     cursors[i] = rv;
@@ -1702,7 +1728,7 @@ static void bitmap_to_imgdata(gb_Bitmap *bm, struct imgdata *imd)
     imd->format = &imgdataformat_MSBGRA32;
     imd->width = width;
     imd->height = height;
-    imd->data = rt_malloc(imd->width * imd->height * sizeof(gb_Color));
+    imd->data = safe_malloc(imd->width * imd->height * sizeof(gb_Color));
     p = (gb_Color *)imd->data;
     for(j = 0; j < imd->height; j++) {
         for(i = 0; i < imd->width; i++)
@@ -1806,7 +1832,7 @@ static void setup_cursor(char *name, LPCTSTR cid)
     int i;
     struct wcursor *rv;
     i = hasher(hashcstr(name), cursors);
-    rv = rt_zalloc(sizeof(struct wcursor));
+    rv = safe_zalloc(sizeof(struct wcursor));
     rv->name = name;
     if (cid)
         rv->shared_cursor = new_sharedcursor(LoadCursor(NULL, cid));

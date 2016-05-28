@@ -686,7 +686,7 @@ function map(s1,s2,s3)
                   runerr(208);
               }
               maptab_len = UcsBlk(s2).length;
-              maptab = rt_realloc(maptab, maptab_len * sizeof(struct mappair));
+              maptab = safe_realloc(maptab, maptab_len * sizeof(struct mappair));
               p2 = StrLoc(UcsBlk(s2).utf8);
               p3 = StrLoc(UcsBlk(s3).utf8);
               for (i = 0; i < maptab_len; ++i) {

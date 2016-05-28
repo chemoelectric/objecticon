@@ -50,8 +50,8 @@ class GroffOutputter(Outputter)
             else
                put(meths, x)
          }
-         meths := isort(meths, name_sort)
-         vars := isort(vars, name_sort)
+         qsort(meths, name_sort)
+         qsort(vars, name_sort)
 
          every m := !meths do {
             write(output_file, ".FUNC_START \"", get_access_string(m.obj), " ", m.name, "(", get_param_string(m.obj) ,")\"")

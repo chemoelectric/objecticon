@@ -144,11 +144,11 @@ abstract class Button(Toggle,Component)
       # release event.
       clear_down()
    end
-   
+
    #
-   # Visualize the given (keyboard) event, by making the button go down
-   # for a short time (50ms), before making it go up again, and then
-   # calling {on_action}
+   # Visualize the given (keyboard) event, by making the button go
+   # down for a short time (`Gui.VISUALIZE_DELAY` ms), before making
+   # it go up again, and then calling `on_action`
    #
    public visualize_action(e)
       local t
@@ -156,7 +156,7 @@ abstract class Button(Toggle,Component)
          self.is_down := &yes
          self.invalidate()
          t := Dispatcher.new_task{{
-            t.sleep(50)
+            t.sleep(Gui.VISUALIZE_DELAY)
             clear_down()
             on_action(e)
             t.revert()

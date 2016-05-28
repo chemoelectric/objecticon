@@ -56,7 +56,7 @@ int utf8_seq(int c, char *s);
 
 struct rangeset *init_rangeset(void);
 void free_rangeset(struct rangeset *rs);
-int add_range(struct rangeset *cs, int from, int to);
+void add_range(struct rangeset *cs, int from, int to);
 void print_rangeset(struct rangeset *rs);
 
 void calc_ucs_index_settings(word utf8_len, word len, word *index_step, word *n_offs, word *offset_bits, word *n_off_words);
@@ -65,6 +65,20 @@ void calc_ucs_index_settings(word utf8_len, word len, word *index_step, word *n_
 int strcasecmp(char *s1, char *s2);
 int strncasecmp(char *s1, char *s2, int n);
 int mkstemp(char *path);
+#endif
+
+#if MSWIN32
+WCHAR *utf8_to_wchar(char *s);
+char *wchar_to_utf8(WCHAR *s);
+int stat_utf8(char *path, struct stat *st);
+int open_utf8(char *path, int oflag, int pmode);
+int rename_utf8(char *path1, char *path2);
+int mkdir_utf8(char *path);
+int remove_utf8(char *path);
+int rmdir_utf8(char *path);
+int access_utf8(char *path, int mode);
+int chdir_utf8(char *path);
+char *getcwd_utf8(char *buff, int maxlen);
 #endif
 
 #if PLAN9

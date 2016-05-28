@@ -257,11 +257,8 @@ int equiv(dptr dp1, dptr dp2)
    return result;
    }
 
-/*
- * lexcmp - lexically compare two strings.
- */
-
-int lexcmp(dptr dp1, dptr dp2)
+#begdef LexCmp(func_name, char_cmp)
+int func_name(dptr dp1, dptr dp2)
 {
    char *s1, *s2;
    word l1, l2;
@@ -288,8 +285,7 @@ int lexcmp(dptr dp1, dptr dp2)
            unsigned char c1, c2;
            c1 = *s1++;
            c2 = *s2++;
-           if (c1 != c2)
-               return (c1 > c2) ? Greater : Less;
+           char_cmp(c1, c2);
        }
    }
 
@@ -300,52 +296,42 @@ int lexcmp(dptr dp1, dptr dp2)
       return Equal;
    return (l1 > l2) ? Greater : Less;
 }
+#enddef
+
+/*
+ * lexcmp - lexically compare two strings.
+ */
+#begdef SimpleCharCmp(c1, c2)
+    if (c1 != c2)
+       return (c1 > c2) ? Greater : Less;
+#enddef
+LexCmp(lexcmp, SimpleCharCmp)
 
 /*
  * Caseless string comparison
  */
+#begdef CaselessCharCmp(c1, c2)
+    /* Don't use tolower since that is locale dependent. */
+    if (c1 >= 'A' && c1 <= 'Z') c1 += 'a' - 'A';
+    if (c2 >= 'A' && c2 <= 'Z') c2 += 'a' - 'A';
+    if (c1 != c2)
+       return (c1 > c2) ? Greater : Less;
+#enddef
+LexCmp(caseless_lexcmp, CaselessCharCmp)
 
-int cl_lexcmp(dptr dp1, dptr dp2)
+/*
+ * Caseless comparison, but caselessly equal strings are still
+ * distinguished based on the case sensitive ordering.  This can't be
+ * done on a char-by-char basis as for caseless_lexcmp, since we want
+ * "AbCX" < "ABCy", but "AB" < "Ab".
+ */
+int consistent_lexcmp(dptr dp1, dptr dp2)
 {
-   char *s1, *s2;
-   word l1, l2;
-
-   /*
-    * Get length and starting address of both strings.
-    */
-   l1 = StrLen(*dp1);
-   s1 = StrLoc(*dp1);
-   l2 = StrLen(*dp2);
-   s2 = StrLoc(*dp2);
-
-   if (s1 != s2) {
-       /*
-        * Set minlen to length of the shorter string.
-        */
-       word minlen = Min(l1, l2);
-
-       /*
-        * Compare as many bytes as are in the smaller string.  If an
-        *  inequality is found, compare the differing bytes.
-        */
-       while (minlen--) {
-           unsigned char c1, c2;
-           c1 = *s1++;
-           c2 = *s2++;
-           /* Don't use tolower since that is locale dependent. */
-           if (c1 >= 'A' && c1 <= 'Z') c1 += 'a' - 'A';
-           if (c2 >= 'A' && c2 <= 'Z') c2 += 'a' - 'A';
-           if (c1 != c2)
-               return (c1 > c2) ? Greater : Less;
-       }
-   }
-
-   /*
-    * The strings compared equal for the length of the shorter.
-    */
-   if (l1 == l2)
-      return Equal;
-   return (l1 > l2) ? Greater : Less;
+    int i;
+    i = caseless_lexcmp(dp1, dp2);
+    if (i == Equal)
+        i = lexcmp(dp1, dp2);
+    return i;
 }
 
 /*

@@ -742,26 +742,26 @@ static void compute_class_consts(void)
 
 static void init_rangesets(void)
 {
-    MemProtect(k_ascii_rangeset = init_rangeset());
+    k_ascii_rangeset = init_rangeset();
     add_range(k_ascii_rangeset, 0, 127);
 
-    MemProtect(k_cset_rangeset = init_rangeset());
+    k_cset_rangeset = init_rangeset();
     add_range(k_cset_rangeset, 0, 255);
 
-    MemProtect(k_lcase_rangeset = init_rangeset());
+    k_lcase_rangeset = init_rangeset();
     add_range(k_lcase_rangeset, 'a', 'z');
 
-    MemProtect(k_letters_rangeset = init_rangeset());
+    k_letters_rangeset = init_rangeset();
     add_range(k_letters_rangeset, 'A', 'Z');
     add_range(k_letters_rangeset, 'a', 'z');
 
-    MemProtect(k_ucase_rangeset = init_rangeset());
+    k_ucase_rangeset = init_rangeset();
     add_range(k_ucase_rangeset, 'A', 'Z');
 
-    MemProtect(k_uset_rangeset = init_rangeset());
+    k_uset_rangeset = init_rangeset();
     add_range(k_uset_rangeset, 0, MAX_CODE_POINT);
                 
-    MemProtect(k_digits_rangeset = init_rangeset());
+    k_digits_rangeset = init_rangeset();
     add_range(k_digits_rangeset, '0', '9');
 }
 
@@ -1106,10 +1106,10 @@ static int cnv_cset(struct literal *s)
             struct rangeset *rs;
             p = s->u.str.s;
             e = p + s->u.str.len;
-            MemProtect(rs = init_rangeset());
+            rs = init_rangeset();
             while (p < e) {
                 int i = utf8_iter(&p);
-                MemProtect(add_range(rs, i, i));
+                add_range(rs, i, i);
             }
             s->type = CSET;
             s->u.rs = rs;
@@ -1121,12 +1121,12 @@ static int cnv_cset(struct literal *s)
             struct rangeset *rs;
             if (!cnv_string(s))
                 return 0;
-            MemProtect(rs = init_rangeset());
+            rs = init_rangeset();
             p = s->u.str.s;
             i = s->u.str.len;
             while (i--) {
                 int j = *p++ & 0xff;
-                MemProtect(add_range(rs, j, j));
+                add_range(rs, j, j);
             }
             s->type = CSET;
             s->u.rs = rs;
@@ -1160,8 +1160,8 @@ static struct rangeset *rangeset_diff(struct rangeset *x, struct rangeset *y)
     struct rangeset *rs, *y_comp;
     word i_x, i_y, prev = 0;
 
-    MemProtect(y_comp = init_rangeset());
-    MemProtect(rs = init_rangeset());
+    y_comp = init_rangeset();
+    rs = init_rangeset();
     /*
      * Calculate ~y
      */
@@ -1169,11 +1169,11 @@ static struct rangeset *rangeset_diff(struct rangeset *x, struct rangeset *y)
         word from = y->range[i_y].from;
         word to = y->range[i_y].to;
         if (from > prev)
-            MemProtect(add_range(y_comp, prev, from - 1));
+            add_range(y_comp, prev, from - 1);
         prev = to + 1;
     }
     if (prev <= MAX_CODE_POINT)
-        MemProtect(add_range(y_comp, prev, MAX_CODE_POINT));
+        add_range(y_comp, prev, MAX_CODE_POINT);
 
     /*
      * Calculate x ** ~y
@@ -1186,11 +1186,11 @@ static struct rangeset *rangeset_diff(struct rangeset *x, struct rangeset *y)
         word from_y = y_comp->range[i_y].from;
         word to_y = y_comp->range[i_y].to;
         if (to_x < to_y) {
-            MemProtect(add_range(rs, Max(from_x, from_y), to_x));
+            add_range(rs, Max(from_x, from_y), to_x);
             ++i_x;
         }
         else {
-            MemProtect(add_range(rs, Max(from_x, from_y), to_y));
+            add_range(rs, Max(from_x, from_y), to_y);
             ++i_y;
         }
     }
@@ -1202,12 +1202,12 @@ static struct rangeset *rangeset_union(struct rangeset *x, struct rangeset *y)
 {
     struct rangeset *rs;
     int i;
-    MemProtect(rs = init_rangeset());
+    rs = init_rangeset();
     for (i = 0; i < x->n_ranges; ++i) 
-        MemProtect(add_range(rs, x->range[i].from, x->range[i].to));
+        add_range(rs, x->range[i].from, x->range[i].to);
           
     for (i = 0; i < y->n_ranges; ++i) 
-        MemProtect(add_range(rs, y->range[i].from, y->range[i].to));
+        add_range(rs, y->range[i].from, y->range[i].to);
 
     return rs;
 }
@@ -1216,7 +1216,7 @@ static struct rangeset *rangeset_inter(struct rangeset *x, struct rangeset *y)
 {
     struct rangeset *rs;
     word i_x, i_y;
-    MemProtect(rs = init_rangeset());
+    rs = init_rangeset();
     i_x = i_y = 0;
     while (i_x < x->n_ranges &&
            i_y < y->n_ranges) {
@@ -1225,11 +1225,11 @@ static struct rangeset *rangeset_inter(struct rangeset *x, struct rangeset *y)
         word from_y = y->range[i_y].from;
         word to_y = y->range[i_y].to;
         if (to_x < to_y) {
-            MemProtect(add_range(rs, Max(from_x, from_y), to_x));
+            add_range(rs, Max(from_x, from_y), to_x);
             ++i_x;
         }
         else {
-            MemProtect(add_range(rs, Max(from_x, from_y), to_y));
+            add_range(rs, Max(from_x, from_y), to_y);
             ++i_y;
         }
     }
@@ -1240,16 +1240,16 @@ static struct rangeset *rangeset_compl(struct rangeset *x)
 {
     struct rangeset *rs;
     word i, prev = 0;
-    MemProtect(rs = init_rangeset());
+    rs = init_rangeset();
     for (i = 0; i < x->n_ranges; ++i) {
         word from = x->range[i].from;
         word to = x->range[i].to;
         if (from > prev)
-            MemProtect(add_range(rs, prev, from - 1));
+            add_range(rs, prev, from - 1);
         prev = to + 1;
     }
     if (prev <= MAX_CODE_POINT)
-        MemProtect(add_range(rs, prev, MAX_CODE_POINT));
+        add_range(rs, prev, MAX_CODE_POINT);
     return rs;
 }
 
@@ -3395,9 +3395,9 @@ static int get_literal(struct lnode *n, struct literal *l)
             int i, npair = ce->length / sizeof(struct range);
             memcpy(pair, ce->data, ce->length);
             l->type = CSET;
-            MemProtect(l->u.rs = init_rangeset());
+            l->u.rs = init_rangeset();
             for (i = 0; i < npair; ++i)
-                MemProtect(add_range(l->u.rs, pair[i].from, pair[i].to));
+                add_range(l->u.rs, pair[i].from, pair[i].to);
             free(pair);
             return 1;
         }

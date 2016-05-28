@@ -6,8 +6,7 @@ import
    net,
    posix,
    ipl.random,
-   ipl.scan,
-   ipl.sort
+   ipl.scan
 
 #
 # This class has several static methods which provide
@@ -175,7 +174,7 @@ $endif
    # functions.  Sorts by case-insensitive name.
    #
    public static name_cmp(d1, d2)
-      return consistent_cl_text_cmp(d1.name, d2.name)
+      return Text.consistent_compare(d1.name, d2.name)
    end
 
    #
@@ -693,7 +692,7 @@ abstract class FileSystem()
    public abstract get_path_list(s)
    public abstract filepath_str(fp)
    public abstract filepath_is_absolute(fp)
-   public abstract filepath_canonical(fp)
+   public abstract filepath_tidy(fp)
    public abstract filepath_absolute(fp)
    public abstract get_home()
    public abstract get_temp()
@@ -866,7 +865,7 @@ class FilePath(ObjectOutput)
    # path and removing any redundant path elements.
    #
    public canonical()
-      return Files.FS.filepath_canonical(absolute())
+      return Files.FS.filepath_tidy(absolute())
    end
 
    #
@@ -1066,7 +1065,7 @@ class UnixFileSystem(FileSystem)
       return fp.l[1] == "/"
    end
 
-   public filepath_canonical(fp)
+   public filepath_tidy(fp)
       local e, r
       r := []
       every e := !fp.l do {
@@ -1074,7 +1073,7 @@ class UnixFileSystem(FileSystem)
             next
          else if e == ".." then {
             # /.. -> /
-            if r[-1] ~== "/" then
+            if *r > 1 then
                pull(r)
          } else
             put(r, e)
@@ -1176,7 +1175,7 @@ class WindowsFileSystem(FileSystem)
       return fp.l[1] == "\\\\" | fp.l[1][2:0] == ":\\"
    end
 
-   public filepath_canonical(fp)
+   public filepath_tidy(fp)
       local e, r
       r := []
       every e := !fp.l do {

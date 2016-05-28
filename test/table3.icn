@@ -40,13 +40,13 @@ procedure test_cl()
    local t1, t2, s, l
    write(">>>test_cl()")
    l := ["Abc","DEf","GHI","Jkl"]
-   t1 := SortTable(0, Text.cl_compare)
+   t1 := SortTable(0, Text.caseless_compare)
    every s := !l | map(!l) | map(!l,&lcase,&ucase) do
       t1.add(s) +:= 1
    every s := !l do {
       print{"get("||imagex(s)||")", t1.get(s)}
    }
-   t2 := SortTable(0, Text.cl_compare)
+   t2 := SortTable(0, Text.caseless_compare)
    every t2.insert(!l, 3)
    yes_no{"equals(t1,t2)", equals(t1,t2)}
    yes_no{"t1.size() = t2.size()", t1.size()=t2.size()}
@@ -65,7 +65,7 @@ procedure test_eq()
    local t1, e, l
    write(">>>test_eq()")
    l := [ [], 0, &null, 100, table(100), [1,2,3], table(0,1,2,3,4), 
-         [ [1,2], [3,4] ], set(1,2,3), SortTable("abc", Text.cl_compare,"dog",100,"cat",200)]
+         [ [1,2], [3,4] ], set(1,2,3), SortTable("abc", Text.caseless_compare,"dog",100,"cat",200)]
    t1 := EqTable(0)
    every e := !l | !clone(l) do {
       t1.add(e) +:= 1

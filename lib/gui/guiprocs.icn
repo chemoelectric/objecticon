@@ -392,6 +392,7 @@ class Gui()
       TEXT_INSET,
       X_INSET,
       Y_INSET,
+      VISUALIZE_DELAY,
       REPEAT_DELAY,            
       REPEAT_RATE,
       CURSOR_BLINK,
@@ -446,6 +447,7 @@ class Gui()
       TEXT_INSET := env_scale("OI_GUI_TEXT_INSET") | scale(3)
       X_INSET := env_scale("OI_GUI_X_INSET") | scale(6)
       Y_INSET := env_scale("OI_GUI_Y_INSET") | scale(2)
+      VISUALIZE_DELAY := env_int("OI_GUI_VISUALIZE_DELAY", 10) | 50
       REPEAT_DELAY := env_int("OI_GUI_REPEAT_DELAY", 250) | 500
       REPEAT_RATE := env_int("OI_GUI_REPEAT_RATE", 50) | 100
       CURSOR_BLINK := env_int("OI_GUI_CURSOR_BLINK", 100) | 400

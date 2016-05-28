@@ -104,12 +104,10 @@ fi
 
 AC_FUNC_ALLOCA()
 AC_CHECK_FUNCS(gethostent getrlimit setrlimit strerror vfork poll uname truncate)
-AC_CHECK_GLOBAL(sys_nerr)
-AC_CHECK_GLOBAL(sys_errlist)
+AC_CHECK_GLOBALS(sys_nerr sys_errlist _etext)
 AX_VAR_TIMEZONE_EXTERNALS()
 AC_STRUCT_TIMEZONE()
 AX_STRUCT_TIMEZONE_GMTOFF()
-AC_CHECK_GLOBAL(_etext)
 AC_CYGWIN()
 AC_SUBST([CYGWIN])
 AC_CHECK_SIZEOF(short)

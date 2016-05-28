@@ -82,7 +82,7 @@ class ContentType()
    public new(type, subtype)
       self.type := type
       self.subtype := subtype
-      self.parameters := SortTable(, Text.cl_compare)
+      self.parameters := SortTable(, Text.caseless_compare)
       return
    end
 end

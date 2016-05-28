@@ -1381,16 +1381,22 @@ procedure Min(e, cmp)
 end
 
 # Helper function to convert an optional parameter specified in a pdco
-# invocation.  `v` is the parameter (a coexpression or &null).  `def`
-# is a default value if `v` is &null.  If the coexpression fails to
-# produce a result, the procedure fails.  If the optional conversion
-# function fails, then a runerr is signalled with the given error
-# message.
+# invocation.  `v` is the parameter (the value itself or a
+# coexpression giving the value, or &null).  `def` is a default value
+# if `v` is &null.  If v is a coexpression and it fails to produce a
+# result, the procedure fails.  If the optional conversion function
+# fails, then a runerr is signalled with the given error message.
 #
 procedure optional_param(v, def, cvt, err)
    if /v then
       return def
-   v := @v | fail
+   if type(v) == "co-expression" then {
+      v := @v | fail
+      # This allows omitted parameters to take the default, eg the second
+      # param in f{x,,y}.
+      if /v then
+         return def
+   }
    if \cvt then
       v := cvt(v) | runerr(err, v)
    return v
@@ -1399,7 +1405,8 @@ end
 # This is like `optional_param`, but doesn't allow a default value.
 #
 procedure mandatory_param(v, cvt, err)
-   v := @v | fail
+   if type(v) == "co-expression" then
+      v := @v | fail
    if \cvt then
       v := cvt(v) | runerr(err, v)
    return v

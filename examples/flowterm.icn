@@ -144,7 +144,7 @@ class FlowTermDialog(Dialog)
             t.do_tab_cmd(cmd) | fail
          } else {
             done_tab_cmds(t)
-            t := Terminal(if *s > 0 then s else &null,, tabs.which_one)
+            t := Terminal(if *s > 0 then s else &null,, tabs.which_one) | fail
          }
       }
       done_tab_cmds(t)
@@ -169,12 +169,15 @@ class FlowTermDialog(Dialog)
       tabs.add(t, i)
       if is_live() then
          tabs.do_layout().invalidate()
-      return t
    end
 
    public new_tab(sel, dir, other, adjacent)
       local t
-      t := add_tab(Terminal(dir, other, tabs.which_one), adjacent)
+      t := Terminal(dir, other, tabs.which_one) | {
+         tabs.which_one.info_msg(&why)
+         fail
+      }
+      add_tab(t, adjacent)
       if \sel then
          tabs.set_which_one(t)
       return t
@@ -749,7 +752,7 @@ class Columns(LineBasedScrollArea)
       ensure_line_visible(get_row_for_index(cursor))
       set_highlight(cursor)
       t := Dispatcher.new_task{{
-         t.sleep(50)
+         t.sleep(Gui.VISUALIZE_DELAY)
          set_highlight()
          fire("lclicked", e)
          t.revert()
@@ -1016,7 +1019,6 @@ end
 
 class Terminal(TabItem, VtUI)
    public static const
-      MAX_HISTORY_SIZE,
       SHOW_NAME_ONLY,
       SHOW_DATE,
       SHOW_SIZE
@@ -1076,10 +1078,10 @@ class Terminal(TabItem, VtUI)
       shell_vars,
       auto_close_flag,
       select_flag,
-      title
+      title,
+      max_history_size
 
    private static init()
-      MAX_HISTORY_SIZE := 100
       SHOW_NAME_ONLY := 1
       SHOW_DATE := 2
       SHOW_SIZE := 3
@@ -1208,10 +1210,10 @@ class Terminal(TabItem, VtUI)
          "reset-keys" : output.reset_custom_keys()
          "fg": output.set_normal_fg(param) | return error("invalid parameter to fg: " || &why)
          "bg": output.set_normal_bg(param) | return error("invalid parameter to bg: " || &why)
-         "rev-fg": output.set_reverse_fg(param) | return error("invalid parameter to rev-fg: " || &why)
-         "rev-bg": output.set_reverse_bg(param) | return error("invalid parameter to rev-bg: " || &why)
-         "hist": {
-            param := (0 <= integer(param)) | return error("integer >= 0 expected to hist")
+         "reverse-fg": output.set_reverse_fg(param) | return error("invalid parameter to reverse-fg: " || &why)
+         "reverse-bg": output.set_reverse_bg(param) | return error("invalid parameter to reverse-bg: " || &why)
+         "scroll": {
+            param := (0 <= integer(param)) | return error("integer >= 0 expected to scroll")
             output.set_history_size(param)
          }
          "list-width": {
@@ -1364,6 +1366,10 @@ class Terminal(TabItem, VtUI)
          "select" : {
             check_new(s) | fail
             set_select(&yes)
+         }
+         "history": {
+            param := (0 < integer(param)) | return error("integer > 0 expected to history")
+            max_history_size := param
          }
          "search" : {
             if /param then
@@ -2562,7 +2568,7 @@ $endif
             pop(history)
          push(history, default.HistoryEntry(cwd))
          history_pos := 1
-         while *history > MAX_HISTORY_SIZE do
+         while *history > max_history_size do
             pull(history)
          update_grey()
       }
@@ -2703,6 +2709,7 @@ $endif
          show_hidden_menu_item.set_is_checked(other.show_hidden_menu_item.get_status())
          history := clone(other.history)
          history_pos := other.history_pos
+         max_history_size := other.max_history_size
          columns_pos_table := clone(other.columns_pos_table)
          filter.set_contents(other.filter.get_contents())
          set_cwd(other.cwd)
@@ -2714,14 +2721,15 @@ $endif
          shell_vars := []
          history := []
          history_pos := 0
+         max_history_size := 100
          columns_pos_table := table()
          if \dir then
-            start_dir := Files.realpath(\dir) | info_msg("Invalid tab start directory: " || &why)
+            start_dir := Files.realpath(dir) | info_msg("Invalid tab start directory: " || &why)
          /start_dir := ucs(Files.getcwd()) | u"/"
          set_cwd(start_dir)
-         # Apply global default tab options.
+         # Apply global default tab options; should only fail on first time through.
          every e := !glob_cmds do
-            do_tab_cmd(e) | stop(&why)
+            do_tab_cmd(e) | fail
       }
       synch_paints()
       update_grey()
@@ -2781,7 +2789,7 @@ $endif
 
    public clone_tab()
       local t, i
-      t := parent_dialog.new_tab(&yes,, self, self)
+      t := parent_dialog.new_tab(&yes,, self, self) | fail
       # Now the new tab is live, copy some column settings.
       i := Positions{(!t.columns.data).name, 
                      columns.data[columns.get_cursor()].name}
@@ -3229,6 +3237,7 @@ procedure usage(opts)
    help_line(":sort-dirs=FLAG", "Toggle or set whether or not to sort the directory portion of the list in the same way as the files (by default, the directories are always sorted by name).")
    help_line(":filter-dirs=FLAG", "Toggle or set whether or not to filter directories using the filter setting (by default, the directories are not filtered).")
    help_line(":select", "Make this tab the selected tab.")
+   help_line(":history=INTEGER", "Specify the directory history size.  The default is 100.")
    help_line(":adjacent", "Add this tab adjacent to the current tab, rather than at the end of all the tabs.")
    help_line(":sh=STRING", "Specify the shell to run.  The default is null, meaning use the user's default shell.")
    help_line(":sh-arg=STRING", "Specify an argument to pass to the shell; may be given several times to give multiple arguments.")
@@ -3237,9 +3246,9 @@ procedure usage(opts)
    help_line(":font=FONT", "Set the font, which should be fixed width.  The default is the font 'fixed'.")
    help_line(":fg=COLOUR", "Specify the foreground colour.  The default is null, meaning use the dialog's foreground colour.")
    help_line(":bg=COLOUR", "Specify the background colour.  The default is null, meaning use the dialog's foreground colour.")
-   help_line(":rev-fg=COLOUR", "Specify the reverse-mode foreground colour.  The default is null, meaning use the background colour.")
-   help_line(":rev-bg=COLOUR", "Specify the reverse-mode background colour.  The default is null, meaning use the foreground colour.")
-   help_line(":hist=INTEGER", "Specify the history size.  The default is 500.")
+   help_line(":reverse-fg=COLOUR", "Specify the reverse-mode foreground colour.  The default is null, meaning use the background colour.")
+   help_line(":reverse-bg=COLOUR", "Specify the reverse-mode background colour.  The default is null, meaning use the foreground colour.")
+   help_line(":scroll=INTEGER", "Specify the scroll history size.  The default is 500.")
    help_line(":list-width=INTEGER", "The width of the list component in pixels. The default is 300 scaled pixels.")
    help_line(":list-height=INTEGER", "The height of the list component in pixels. The default is 300 scaled pixels.")
    help_line(":auto-close", "Automatically close the tab if the forked shell process ends.")

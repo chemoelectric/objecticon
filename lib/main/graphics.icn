@@ -678,9 +678,9 @@ final class Window(NoCopy, ObjectOutput)
    #
    public native set_label(v)
 
-   # Set the line style, which specifies the form of drawn lines.
-   # Possible values may include: "disc", and "square", although this
-   # is system dependent.  (See `LineStyle` for symbolic constants).
+   # Set the line style, which specifies how `draw_line()` draws the
+   # ends of a line.  Possible values are "disc", and "square".  (See
+   # `LineStyle` for symbolic constants).
    #
    public native set_line_style(v)
 
