@@ -247,7 +247,7 @@ static void mk_Draw(wbp w, gb_Draw *d)
 
 static void apply_windowlabel(wsp ws)
 {
-    WCHAR *mbs = ucs_to_wchars(&ws->windowlabel, 1);
+    WCHAR *mbs = ucs_to_wchar(&ws->windowlabel, 1);
     SetWindowTextW(ws->win, mbs);
     free(mbs);
 }
@@ -666,7 +666,7 @@ int requestselection(wbp w, char *selection, char *target)
         hg = GetClipboardData(CF_UNICODETEXT);
         if (hg) {
             phg = (char *)GlobalLock(hg);
-            wchars_to_ucs((WCHAR *)phg, &res);
+            wchar_to_ucs((WCHAR *)phg, &res);
             GlobalUnlock(hg);
         }
         CloseClipboard();
@@ -709,7 +709,7 @@ int sendselectionresponse(wbp w, word requestor, char *property,
     nbytes = (UcsBlk(*data).length + 1) * sizeof(WCHAR);
     MemProtect(hg = GlobalAlloc(GMEM_DDESHARE, nbytes));
     phg = (char *)GlobalLock(hg);
-    ucs_to_wchars1((WCHAR *)phg, data, 1);
+    ucs_to_wchar1((WCHAR *)phg, data, 1);
     GlobalUnlock(hg);
     SetClipboardData(CF_UNICODETEXT, hg);
     CloseClipboard();
@@ -1407,7 +1407,7 @@ static void resizepixmap(wbp w)
     ws->pix = np;
 }
 
-void ucs_to_wchars1(WCHAR *buff, dptr str, int nullterm)
+void ucs_to_wchar1(WCHAR *buff, dptr str, int nullterm)
 {
     word len, i;
     char *p;
@@ -1421,16 +1421,16 @@ void ucs_to_wchars1(WCHAR *buff, dptr str, int nullterm)
         buff[len] = 0;
 }
 
-WCHAR *ucs_to_wchars(dptr str, int nullterm)
+WCHAR *ucs_to_wchar(dptr str, int nullterm)
 {
     WCHAR *mbs;
     /* +1 for null terminator */
     mbs = safe_malloc((UcsBlk(*str).length + 1) * sizeof(WCHAR));
-    ucs_to_wchars1(mbs, str, nullterm);
+    ucs_to_wchar1(mbs, str, nullterm);
     return mbs;
 }
 
-void string_to_wchars1(WCHAR *buff, dptr str, int nullterm)
+void string_to_wchar1(WCHAR *buff, dptr str, int nullterm)
 {
     word len, i;
     char *p;
@@ -1442,16 +1442,16 @@ void string_to_wchars1(WCHAR *buff, dptr str, int nullterm)
         buff[len] = 0;
 }
 
-WCHAR *string_to_wchars(dptr str, int nullterm)
+WCHAR *string_to_wchar(dptr str, int nullterm)
 {
     WCHAR *mbs;
     /* +1 for null terminator */
     mbs = safe_malloc((StrLen(*str) + 1) * sizeof(WCHAR));
-    string_to_wchars1(mbs, str, nullterm);
+    string_to_wchar1(mbs, str, nullterm);
     return mbs;
 }
 
-void wchars_to_ucs(WCHAR *src, dptr res)
+void wchar_to_ucs(WCHAR *src, dptr res)
 {
     tended char *ts;
     tended struct b_ucs *bp;
@@ -1484,7 +1484,7 @@ void wchars_to_ucs(WCHAR *src, dptr res)
     BlkLoc(*res) = (union block *)bp;
 }
 
-void wchars_to_utf8_string(WCHAR *src, dptr res)
+void wchar_to_utf8_string(WCHAR *src, dptr res)
 {
     tended char *ts;
     word wlen, slen;
@@ -1520,10 +1520,10 @@ int textwidth(wbp w, dptr str)
     gb_Draw d;
     mk_Draw(w, &d);
     if (is:string(*str)) {
-        mbs = string_to_wchars(str, 0);
+        mbs = string_to_wchar(str, 0);
         len = StrLen(*str);
     } else {
-        mbs = ucs_to_wchars(str, 0);
+        mbs = ucs_to_wchar(str, 0);
         len = UcsBlk(*str).length;
     }
     f = gb_textwidth(&d, mbs, len);
@@ -1539,10 +1539,10 @@ void drawstring(wbp w, int x, int y, dptr str)
     gb_Draw d;
     mk_Draw(w, &d);
     if (is:string(*str)) {
-        mbs = string_to_wchars(str, 0);
+        mbs = string_to_wchar(str, 0);
         len = StrLen(*str);
     } else {
-        mbs = ucs_to_wchars(str, 0);
+        mbs = ucs_to_wchar(str, 0);
         len = UcsBlk(*str).length;
     }
     gb_drawstring(&d, x, y, mbs, len);

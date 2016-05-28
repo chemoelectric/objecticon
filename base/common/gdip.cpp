@@ -426,7 +426,6 @@ char *wchar_to_utf8(WCHAR *s)
                             NULL,
                             NULL);
     u = new char[n];
-
     WideCharToMultiByte(CP_UTF8,
                         0,
                         s,

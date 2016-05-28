@@ -1330,7 +1330,7 @@ function io_WindowsFileSystem_getdcwd(d)
       p = _wgetdcwd(dir, NULL, 32);
       if (!p)
 	 fail;
-      wchars_to_utf8_string(p, &result);
+      wchar_to_utf8_string(p, &result);
       free(p);
       return result;
    }
@@ -2398,13 +2398,13 @@ function io_DirStream_read_line_impl(self)
        if (self_dir->status == EMPTY)
            return nulldesc;
        if (self_dir->status == FIRST) {
-          wchars_to_utf8_string(self_dir->fileData.cFileName, &result);
+          wchar_to_utf8_string(self_dir->fileData.cFileName, &result);
 	  self_dir->status = MORE;
 	  return result;
        }
        if (!FindNextFileW(self_dir->handle, &self_dir->fileData))
            return nulldesc;
-       wchars_to_utf8_string(self_dir->fileData.cFileName, &result);
+       wchar_to_utf8_string(self_dir->fileData.cFileName, &result);
        return result;
    }
 end
