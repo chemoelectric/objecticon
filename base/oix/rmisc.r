@@ -2093,7 +2093,7 @@ void whyf(char *fmt, ...)
 char *salloc(char *s)
 {
     char *s1;
-    s1 = rt_malloc(strlen(s) + 1);
+    s1 = safe_malloc(strlen(s) + 1);
     return strcpy(s1, s);
 }
 
@@ -2238,9 +2238,9 @@ char *datatofile(dptr data)
 
 
 /*
- * rt_calloc - allocate and zero m*n bytes
+ * safe_calloc - allocate and zero m*n bytes
  */
-void *rt_calloc(size_t m, size_t n)
+void *safe_calloc(size_t m, size_t n)
 {
     void *a = calloc(m, n);
     if (!a && (m * n > 0))
@@ -2249,9 +2249,9 @@ void *rt_calloc(size_t m, size_t n)
 }
 
 /*
- * rt_zalloc - allocate and zero n bytes
+ * safe_zalloc - allocate and zero n bytes
  */
-void *rt_zalloc(size_t size)
+void *safe_zalloc(size_t size)
 {
     void *a = calloc(size, 1);
     if (!a && size > 0)
@@ -2260,9 +2260,9 @@ void *rt_zalloc(size_t size)
 }
 
 /*
- * rt_malloc - malloc n bytes
+ * safe_malloc - malloc n bytes
  */
-void *rt_malloc(size_t size)
+void *safe_malloc(size_t size)
 {
     void *a = malloc(size);
     if (!a && size > 0)
@@ -2271,36 +2271,12 @@ void *rt_malloc(size_t size)
 }
 
 /*
- * rt_realloc - reallocate ptr to size bytes.
+ * safe_realloc - reallocate ptr to size bytes.
  */
-void *rt_realloc(void *ptr, size_t size)
+void *safe_realloc(void *ptr, size_t size)
 {
     void *a = realloc(ptr, size);
     if (!a && size > 0)
         fatalerr(309, NULL);
     return a;
-}
-
-/*
- * These are referenced in mlocal.c; oit and rtt use alternative versions in alloc.c.
- */
-
-void *safe_calloc(size_t m, size_t n)
-{
-    return rt_calloc(m, n);
-}
-
-void *safe_zalloc(size_t size)
-{
-    return rt_zalloc(size);
-}
-
-void *safe_malloc(size_t size)
-{
-    return rt_malloc(size);
-}
-
-void *safe_realloc(void *ptr, size_t size)
-{
-    return rt_realloc(ptr, size);
 }

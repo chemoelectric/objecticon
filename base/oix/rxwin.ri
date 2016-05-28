@@ -307,7 +307,7 @@ static struct wcursor *ensure_wcursor(wdp wd, char *name)
         if (!strcmp(name, rv->name))
             return rv;
     }
-    rv = rt_zalloc(sizeof(struct wcursor));
+    rv = safe_zalloc(sizeof(struct wcursor));
     rv->name = salloc(name);
     rv->next = wd->cursors[i];
     wd->cursors[i] = rv;
@@ -363,7 +363,7 @@ static void setup_cursor(wdp wd, char *name, int id)
     int i;
     struct wcursor *rv;
     i = hasher(hashcstr(name), wd->cursors);
-    rv = rt_zalloc(sizeof(struct wcursor));
+    rv = safe_zalloc(sizeof(struct wcursor));
     rv->name = name;
     rv->shared_cursor = new_sharedcursor(wd, XCreateFontCursor(wd->display, id));
     rv->next = wd->cursors[i];
@@ -529,7 +529,7 @@ static char* property_to_string(wdp wd, Atom target, int number_items, void* dat
             unsigned long *long_array = (unsigned long *)data;
 
             length = 32;
-            result = rt_malloc(length);
+            result = safe_malloc(length);
             *result = 0;
             total_len = 0;
 
@@ -540,7 +540,7 @@ static char* property_to_string(wdp wd, Atom target, int number_items, void* dat
                     curr_len = strlen(atom_name) + 1;    /* +1 for the \n */
                     if (total_len + curr_len + 1 > length) {  /* +1 for the \0 */
                         length = total_len + curr_len + 1;
-                        result = rt_realloc(result, length);
+                        result = safe_realloc(result, length);
                     }
                     sprintf(result + total_len, "%s\n", atom_name);
                     total_len += curr_len;
@@ -552,7 +552,7 @@ static char* property_to_string(wdp wd, Atom target, int number_items, void* dat
         case XA_INTEGER: {
             long *long_array = (long *)data;
             length = number_items * 20 + 1;
-            result = rt_malloc(length);
+            result = safe_malloc(length);
             *result = 0;
             for (i = 0; i < number_items; i++) {
                 if (i > 0)
@@ -564,7 +564,7 @@ static char* property_to_string(wdp wd, Atom target, int number_items, void* dat
         case XA_WINDOW: {
             unsigned long *long_array = (unsigned long *)data;
             length = number_items * 12 + 1;
-            result = rt_malloc(length);
+            result = safe_malloc(length);
             *result = 0;
             for (i = 0; i < number_items; i++) {
                 if (i > 0)
@@ -864,7 +864,7 @@ int setwindowicon(wbp w, struct imgdata *imd)
     free(ws->icondata);
     if (imd) {
         ws->iconlen = 2 + imd->width * imd->height;
-        ws->icondata = rt_malloc(ws->iconlen * sizeof(unsigned long));
+        ws->icondata = safe_malloc(ws->iconlen * sizeof(unsigned long));
         k = 0;
         ws->icondata[k++] = imd->width;
         ws->icondata[k++] = imd->height;
@@ -895,7 +895,7 @@ int getwindowicon(wbp w, struct imgdata *imd)
     imd->format = &imgdataformat_RGBA32;
     imd->width = *p++;
     imd->height = *p++;
-    imd->data = rt_malloc(imd->format->getlength(imd));
+    imd->data = safe_malloc(imd->format->getlength(imd));
     for (j = 0; j < imd->height; ++j) {
         for (i = 0; i < imd->width; ++i) {
             int r, g, b, a;
@@ -958,7 +958,7 @@ static char *get_progname()
     while (s > p && s[-1] != '/')
         s--;				/* find tail of prog_name */
     n = p + StrLen(kywd_prog) - s;          /* no. of chars to copy */
-    m = rt_malloc(n + 1);
+    m = safe_malloc(n + 1);
     memcpy(m, s, n);
     m[n] = 0;
     return m;
@@ -2206,7 +2206,7 @@ void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
 
     pf = calc_progress_factor(rx, ry);
     maxpts = 100;
-    pts = rt_malloc(maxpts * sizeof(struct point));
+    pts = safe_malloc(maxpts * sizeof(struct point));
     npts = 0;
     th = angle1;
     while (th < angle1 + angle2) {
@@ -2216,7 +2216,7 @@ void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
         if (npts == 0 || fabs(pts[npts - 1].x - x) >= 1.0 || fabs(pts[npts - 1].y - y) >= 1.0) {
             if (npts == maxpts) {
                 maxpts += 100;
-                pts = rt_realloc(pts, maxpts * sizeof(struct point));
+                pts = safe_realloc(pts, maxpts * sizeof(struct point));
             }
             pts[npts].x = x;
             pts[npts].y = y;
@@ -2228,7 +2228,7 @@ void drawarc(wbp w, double cx, double cy, double rx, double ry, double angle1, d
     /* Space for the last point */
     if (npts == maxpts) {
         maxpts++;
-        pts = rt_realloc(pts, maxpts * sizeof(struct point));
+        pts = safe_realloc(pts, maxpts * sizeof(struct point));
     }
 
     if (angle2 == 2 * Pi)
@@ -2252,7 +2252,7 @@ static XTrapezoid *mk_ellipse(double cx, double cy, double rx, double ry, int *n
     
     pf = calc_progress_factor(rx, ry);
     maxtraps = 100;
-    traps = rt_malloc(maxtraps * sizeof(XTrapezoid));
+    traps = safe_malloc(maxtraps * sizeof(XTrapezoid));
     ntraps = 0;
     th = 0.0;
     t1x = b1x = rx;
@@ -2264,7 +2264,7 @@ static XTrapezoid *mk_ellipse(double cx, double cy, double rx, double ry, int *n
         if (t < t1) {
             if (ntraps == maxtraps) {
                 maxtraps += 100;
-                traps = rt_realloc(traps, maxtraps * sizeof(XTrapezoid));
+                traps = safe_realloc(traps, maxtraps * sizeof(XTrapezoid));
             }
             last_t = ntraps++;
             traps[last_t] = trapezoid(t, cx - x, cx + x, t1, cx - t1x, cx + t1x);
@@ -2276,7 +2276,7 @@ static XTrapezoid *mk_ellipse(double cx, double cy, double rx, double ry, int *n
         if (b > b1) {
             if (ntraps == maxtraps) {
                 maxtraps += 100;
-                traps = rt_realloc(traps, maxtraps * sizeof(XTrapezoid));
+                traps = safe_realloc(traps, maxtraps * sizeof(XTrapezoid));
             }
             last_b = ntraps++;
             traps[last_b] = trapezoid(b1, cx - b1x, cx + b1x, b, cx - x,  cx + x);
@@ -2840,7 +2840,7 @@ void drawlines(wbp w, struct point *points, int npoints)
         return;
     closed = points[npoints - 1].x == points[0].x && points[npoints - 1].y == points[0].y;
 
-    lis = rt_malloc((npoints - 1) * sizeof(struct lineinfo));
+    lis = safe_malloc((npoints - 1) * sizeof(struct lineinfo));
     pd1 = adjustpoint(wc, points, npoints, 0, closed);
     nlis = 0;
     for (i = 1; i < npoints; ++i) {
@@ -2950,7 +2950,7 @@ void fillpolygon(wbp w, struct point *points, int npoints)
     if (npoints < 3)
         return;
     points_extent(points, npoints, &x, &y, &width, &height);
-    xpoints = rt_malloc(npoints * sizeof(XPointDouble));
+    xpoints = safe_malloc(npoints * sizeof(XPointDouble));
     clip(w);
     if (needmask(wc, 0)) {
         Picture mask;
@@ -2994,7 +2994,7 @@ void filltrapezoids(wbp w, struct trapezoid *traps, int ntraps)
     int x, y, width, height, i;
 
     trapezoids_extent(traps, ntraps, &x, &y, &width, &height);
-    xtraps = rt_malloc(ntraps * sizeof(XTrapezoid));
+    xtraps = safe_malloc(ntraps * sizeof(XTrapezoid));
     clip(w);
     if (needmask(wc, 1)) {
         Picture mask;
@@ -3034,7 +3034,7 @@ void filltriangles(wbp w, struct triangle *tris, int ntris)
     int x, y, width, height, i;
 
     triangles_extent(tris, ntris, &x, &y, &width, &height);
-    xtris = rt_malloc(ntris * sizeof(XTrapezoid));
+    xtris = safe_malloc(ntris * sizeof(XTrapezoid));
     clip(w);
     if (needmask(wc, 1)) {
         Picture mask;
@@ -3482,7 +3482,7 @@ char *atom_names[NUMATOMS] = {
 wbp alcwbinding(wdp wd)
 {
     wbp w;
-    w = rt_zalloc(sizeof(struct _wbinding));
+    w = safe_zalloc(sizeof(struct _wbinding));
     GLink(w, wd->wbndngs);
     return w;
 }
@@ -3527,7 +3527,7 @@ static wdp alcdisplay(char *s)
             return wd;
         }
 
-    wd = rt_zalloc(sizeof(struct _wdisplay));
+    wd = safe_zalloc(sizeof(struct _wdisplay));
 
     wd->program = curpstate;
     wd->display = XOpenDisplay((*s=='\0') ? NULL : s);
@@ -3718,14 +3718,14 @@ static wfp newfont(wdp wd, char *s)
     wfp rv;
     XGlyphInfo	extents; 
 
-    rv = rt_zalloc(sizeof(struct _wfont));
+    rv = safe_zalloc(sizeof(struct _wfont));
     rv->fsp = XftFontOpenName(wd->display, DefaultScreen(wd->display), s);
     if (!rv->fsp){
         free(rv);
         return 0;
     }
 
-    rv->name = rt_malloc(strlen(s) + 3 + 1);
+    rv->name = safe_malloc(strlen(s) + 3 + 1);
     sprintf(rv->name, "fc:%s", s);
 
     /*

@@ -528,10 +528,10 @@ void synch_ipc(void);
 int isflag(dptr d);
 char *datatofile(dptr data);
 
-void *rt_calloc(size_t m, size_t n);
-void *rt_zalloc(size_t size);
-void *rt_malloc(size_t size);
-void *rt_realloc(void *ptr, size_t size);
+void *safe_calloc(size_t m, size_t n);
+void *safe_zalloc(size_t size);
+void *safe_malloc(size_t size);
+void *safe_realloc(void *ptr, size_t size);
 
 extern void do_op_cat(void);
 extern void do_op_conj(void);

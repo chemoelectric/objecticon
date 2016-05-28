@@ -591,7 +591,7 @@ static int gfread()
     gf_suffix = NULL;
     gf_string = NULL;
 
-    gf_paltbl = rt_calloc(256, sizeof(struct palentry));
+    gf_paltbl = safe_calloc(256, sizeof(struct palentry));
 
     if (!gfheader())			/* read file header */
         return 0;
@@ -758,9 +758,9 @@ static int gfsetup()
     word len;
 
     len = gf_width * gf_height;
-    gf_string = rt_malloc(len);
-    gf_prefix = rt_malloc(GifTableSize * sizeof(short));
-    gf_suffix = rt_malloc(GifTableSize * sizeof(short));
+    gf_string = safe_malloc(len);
+    gf_prefix = safe_malloc(GifTableSize * sizeof(short));
+    gf_suffix = safe_malloc(GifTableSize * sizeof(short));
     for (i = 0; i < GifTableSize; i++) {
         gf_prefix[i] = GifEmpty;
         gf_suffix[i] = i;
@@ -994,7 +994,7 @@ static int readjpegfile(char *filename, struct imgdata *imd)
     jpeg_start_decompress(&cinfo);
     row_stride = cinfo.output_width * cinfo.output_components; /* actual width of the image */
 
-    data = rt_malloc(row_stride * cinfo.output_height);
+    data = safe_malloc(row_stride * cinfo.output_height);
 	
     while (cinfo.output_scanline < cinfo.image_height) {
         JSAMPROW row_pointer[1];
@@ -1057,7 +1057,7 @@ int writejpegfile(char *filename, struct imgdata *imd)
 
     quality = 95;
     
-    data = rt_malloc(imd->width * imd->height * 3);
+    data = safe_malloc(imd->width * imd->height * 3);
     p = data;
     for (j = 0; j < imd->height; j++) {
         for (i = 0; i < imd->width; i++) {
@@ -1193,7 +1193,7 @@ static int readpngfile(char *filename, struct imgdata *imd)
         png_bytep trans;
         int i, num_palette, num_trans;
         format = &imgdataformat_PALETTE8;
-        imd->paltbl = rt_calloc(format->palette_size, sizeof(struct palentry));
+        imd->paltbl = safe_calloc(format->palette_size, sizeof(struct palentry));
         if (png_get_PLTE(png_ptr, info_ptr, &palette, &num_palette)) {
             num_palette = Min(num_palette, format->palette_size);
             for (i = 0; i < num_palette; ++i) {
@@ -1236,8 +1236,8 @@ static int readpngfile(char *filename, struct imgdata *imd)
     width = png_get_image_width(png_ptr, info_ptr);
     height = png_get_image_height(png_ptr, info_ptr);
 
-    row_pointers = rt_malloc(sizeof(png_bytep) * height);
-    data = rt_malloc(png_get_rowbytes(png_ptr, info_ptr) * height);
+    row_pointers = safe_malloc(sizeof(png_bytep) * height);
+    data = safe_malloc(png_get_rowbytes(png_ptr, info_ptr) * height);
     p = (png_bytep)data;
     for (i = 0; i < height; ++i) {
         row_pointers[i] = p;
@@ -1302,8 +1302,8 @@ static int writepngfile(char *filename, struct imgdata *imd)
         png_set_PLTE(png_ptr, info_ptr, color, imd->format->palette_size);
         png_set_tRNS(png_ptr, info_ptr, trans, imd->format->palette_size, 0);
         png_write_info(png_ptr, info_ptr);
-        row_pointers = rt_malloc(sizeof(png_bytep) * imd->height);
-        data = rt_malloc(imd->width * imd->height);
+        row_pointers = safe_malloc(sizeof(png_bytep) * imd->height);
+        data = safe_malloc(imd->width * imd->height);
         p = (png_bytep)data;
         for (i = 0; i < imd->height; ++i) {
             row_pointers[i] = p;
@@ -1320,8 +1320,8 @@ static int writepngfile(char *filename, struct imgdata *imd)
                      PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
         png_write_info(png_ptr, info_ptr);
 
-        row_pointers = rt_malloc(sizeof(png_bytep) * imd->height);
-        data = rt_malloc(imd->width * imd->height * 8);
+        row_pointers = safe_malloc(sizeof(png_bytep) * imd->height);
+        data = safe_malloc(imd->width * imd->height * 8);
         p = (png_bytep)data;
         for (i = 0; i < imd->height; ++i) {
             row_pointers[i] = p;
@@ -1348,8 +1348,8 @@ static int writepngfile(char *filename, struct imgdata *imd)
                      PNG_COMPRESSION_TYPE_BASE, PNG_FILTER_TYPE_BASE);
         png_write_info(png_ptr, info_ptr);
 
-        row_pointers = rt_malloc(sizeof(png_bytep) * imd->height);
-        data = rt_malloc(imd->width * imd->height * 6);
+        row_pointers = safe_malloc(sizeof(png_bytep) * imd->height);
+        data = safe_malloc(imd->width * imd->height * 6);
         p = (png_bytep)data;
         for (i = 0; i < imd->height; ++i) {
             row_pointers[i] = p;
@@ -1655,7 +1655,7 @@ void drawcurve(wbp w, struct point *p, int n)
     if (n < 5)
         return;
     nalc = 64;
-    thepoints = rt_malloc(nalc * sizeof(struct point));
+    thepoints = safe_malloc(nalc * sizeof(struct point));
     thepoints[0] = p[1];
     n2 = 1;
 
@@ -1702,7 +1702,7 @@ void drawcurve(wbp w, struct point *p, int n)
             d2y = d2y + d3y;
             if (n2 >= nalc) {
                 nalc += 256;
-                thepoints = rt_realloc(thepoints, nalc * sizeof(struct point));
+                thepoints = safe_realloc(thepoints, nalc * sizeof(struct point));
             }
             thepoints[n2].x = x;
             thepoints[n2].y = y;
@@ -2223,7 +2223,7 @@ struct palentry *palsetup(int p)
     if (palnumber == p)
         return palsetup_palette;
     if (palsetup_palette == NULL)
-        palsetup_palette = rt_malloc(256 * sizeof(struct palentry));
+        palsetup_palette = safe_malloc(256 * sizeof(struct palentry));
 
     memset(palsetup_palette, 0, 256 * sizeof(struct palentry));
     palnumber = p;
@@ -2615,8 +2615,8 @@ struct imgdata *initimgdata(int width, int height, struct imgdataformat *fmt)
     imd->format = fmt;
     n = fmt->palette_size;
     if (n > 0)
-        imd->paltbl = rt_malloc(n * sizeof(struct palentry));
-    imd->data = rt_malloc(fmt->getlength(imd));
+        imd->paltbl = safe_malloc(n * sizeof(struct palentry));
+    imd->data = safe_malloc(fmt->getlength(imd));
     return imd;
 }
 

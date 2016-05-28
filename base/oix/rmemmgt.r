@@ -333,7 +333,7 @@ void add_gc_global(dptr d)
 {
     int i = ptrhasher(d, og_hash);
     struct other_global *og;
-    og = rt_malloc(sizeof(struct other_global));
+    og = safe_malloc(sizeof(struct other_global));
     og->dp = d;
     og->next = og_hash[i];
     og_hash[i] = og;
