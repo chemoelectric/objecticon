@@ -1424,8 +1424,11 @@ void ucs_to_wchar1(WCHAR *buff, dptr str, int nullterm)
 WCHAR *ucs_to_wchar(dptr str, int nullterm)
 {
     WCHAR *mbs;
-    /* +1 for null terminator */
-    mbs = safe_malloc((UcsBlk(*str).length + 1) * sizeof(WCHAR));
+    size_t alc;
+    alc = UcsBlk(*str).length;
+    if (nullterm)
+        ++alc;
+    mbs = safe_malloc(alc * sizeof(WCHAR));
     ucs_to_wchar1(mbs, str, nullterm);
     return mbs;
 }
@@ -1445,8 +1448,11 @@ void string_to_wchar1(WCHAR *buff, dptr str, int nullterm)
 WCHAR *string_to_wchar(dptr str, int nullterm)
 {
     WCHAR *mbs;
-    /* +1 for null terminator */
-    mbs = safe_malloc((StrLen(*str) + 1) * sizeof(WCHAR));
+    size_t alc;
+    alc = StrLen(*str);
+    if (nullterm)
+        ++alc;
+    mbs = safe_malloc(alc * sizeof(WCHAR));
     string_to_wchar1(mbs, str, nullterm);
     return mbs;
 }
