@@ -24,8 +24,8 @@ oit:		$(OBJS)
 		$(LD) -subsystem:console $(OBJS) $(LIBS) -out:oit.exe 
 		$(INSTALL) oit "$(OI_BIN)"
 
-win32header:	win32header.obj ../common/mlocal.obj ../common/win32.obj
-		$(LD) -subsystem:console win32header.obj ../common/mlocal.obj \
+win32header:	win32header.obj ../common/mlocal.obj ../common/alloc.obj ../common/win32.obj
+		$(LD) -subsystem:console win32header.obj ../common/mlocal.obj ../common/alloc.obj \
                 ../common/win32.obj $(LIBS) -out:win32header.exe 
 		$(INSTALL) win32header "$(OI_BIN)"
 

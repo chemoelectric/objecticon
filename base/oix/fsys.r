@@ -21,7 +21,11 @@ function io_Files_chdir(s)
       runerr(103, s)
 
    body {
+#if MSWIN32
+       if (chdir_utf8(s) < 0) {
+#else
        if (chdir(s) < 0) {
+#endif
            errno2why();
            fail;
        }
@@ -37,7 +41,11 @@ function io_Files_getcwd()
        buff_size = 32;
        for (;;) {
            MemProtect(buff = alcstr(0, buff_size));
+#if MSWIN32
+           if (getcwd_utf8(buff, buff_size)) {
+#else
            if (getcwd(buff, buff_size)) {
+#endif
                int len = strlen(buff);
                /* Success - free surplus and return */
                dealcstr(buff + len);

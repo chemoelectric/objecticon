@@ -351,6 +351,7 @@ int is_hidden(wbp w);
 LRESULT_CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 void ucs_to_wchars1(WCHAR *buff, dptr str, int nullterm);
 WCHAR *ucs_to_wchars(dptr str, int nullterm);
+void wchars_to_utf8_string(WCHAR *src, dptr res);
 void wchars_to_ucs(WCHAR *src, dptr res);
 void string_to_wchars1(WCHAR *buff, dptr str, int nullterm);
 WCHAR *string_to_wchars(dptr str, int nullterm);

@@ -1322,15 +1322,15 @@ function io_WindowsFileSystem_getdcwd(d)
       runerr(103, d)
    body {
       tended struct descrip result;
-      char *p;
+      WCHAR *p;
       int dir;
       if (StrLen(d) != 1)
 	 fail;
       dir = toupper((unsigned char)*StrLoc(d)) - 'A' + 1;
-      p = _getdcwd(dir, 0, 32);
+      p = _wgetdcwd(dir, NULL, 32);
       if (!p)
 	 fail;
-      cstr2string(p, &result);
+      wchars_to_utf8_string(p, &result);
       free(p);
       return result;
    }
@@ -1371,7 +1371,7 @@ function io_FileStream_new_impl(path, flags, mode)
        if (!convert_to_mode_t(&mode, &c_mode))
            runerr(0);
 #if MSWIN32
-       fd = open(path, flags | O_BINARY, c_mode);
+       fd = open_utf8(path, flags | O_BINARY, c_mode);
 #else
        fd = open(path, flags, c_mode);
 #endif
@@ -2350,7 +2350,7 @@ end
 enum DirDataStatus { EMPTY, FIRST, MORE };
 
 struct DirData {
-   WIN32_FIND_DATA fileData;
+   WIN32_FIND_DATAW fileData;
    int status;
    HANDLE handle;
 };
@@ -2372,8 +2372,11 @@ function io_DirStream_new_impl(path)
       runerr(103, path)
    body {
        struct DirData *fd;
+       WCHAR *pathw;
+       pathw = utf8_to_wchar(path);
        fd = safe_malloc(sizeof(struct DirData));
-       fd->handle = FindFirstFile(path, &fd->fileData);
+       fd->handle = FindFirstFileW(pathw, &fd->fileData);
+       free(pathw);
        if (fd->handle == INVALID_HANDLE_VALUE) {
 	  if (GetLastError() == ERROR_FILE_NOT_FOUND) {
 	     fd->status = EMPTY;
@@ -2395,13 +2398,13 @@ function io_DirStream_read_line_impl(self)
        if (self_dir->status == EMPTY)
            return nulldesc;
        if (self_dir->status == FIRST) {
-	  cstr2string(self_dir->fileData.cFileName, &result);
+          wchars_to_utf8_string(self_dir->fileData.cFileName, &result);
 	  self_dir->status = MORE;
 	  return result;
        }
-       if (!FindNextFile(self_dir->handle, &self_dir->fileData))
+       if (!FindNextFileW(self_dir->handle, &self_dir->fileData))
            return nulldesc;
-       cstr2string(self_dir->fileData.cFileName, &result);
+       wchars_to_utf8_string(self_dir->fileData.cFileName, &result);
        return result;
    }
 end
@@ -2429,7 +2432,11 @@ function io_Files_rename(s1, s2)
       runerr(103,s2)
 
    body {
+#if MSWIN32
+       if (rename_utf8(s1, s2) < 0) {
+#else
        if (rename(s1, s2) < 0) {
+#endif
            errno2why();
            fail;
        }
@@ -2548,7 +2555,11 @@ function io_Files_mkdir(s, mode)
    if !cnv:C_string(s) then
       runerr(103, s)
    body {
+#if MSWIN32
+      if (mkdir_utf8(s) < 0) {
+#else
       if (mkdir(s) < 0) {
+#endif
 	 errno2why();
 	 fail;
       }
@@ -2561,7 +2572,11 @@ function io_Files_remove(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
+#if MSWIN32
+      if (remove_utf8(s) < 0) {
+#else
       if (remove(s) < 0) {
+#endif
           errno2why();
           fail;
       }
@@ -2573,7 +2588,11 @@ function io_Files_rmdir(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
+#if MSWIN32
+      if (rmdir_utf8(s) < 0) {
+#else
       if (rmdir(s) < 0) {
+#endif
           errno2why();
           fail;
       }
@@ -2601,7 +2620,11 @@ function io_Files_truncate(s, len)
       off_t c_len;
       if (!convert_to_off_t(&len, &c_len))
           runerr(0);
+#if MSWIN32
+      fd = open_utf8(s, O_WRONLY, 0);
+#else
       fd = open(s, O_WRONLY, 0);
+#endif
       if (fd < 0) {
            errno2why();
            fail;
@@ -2721,7 +2744,11 @@ function io_Files_stat_impl(s)
    body {
       tended struct descrip result;
       struct stat st;
+#if MSWIN32
+      if (stat_utf8(s, &st) < 0) {
+#else
       if (stat(s, &st) < 0) {
+#endif
           errno2why();
           fail;
       }
@@ -2736,7 +2763,11 @@ function io_Files_lstat_impl(s)
    body {
       tended struct descrip result;
       struct stat st;
+#if MSWIN32
+      if (stat_utf8(s, &st) < 0) {
+#else
       if (lstat(s, &st) < 0) {
+#endif
           errno2why();
           fail;
       }
@@ -2829,7 +2860,11 @@ function io_Files_access(s, mode)
    if !def:C_integer(mode, F_OK) then
       runerr(101, mode)
    body {
+#if MSWIN32
+      if (access_utf8(s, mode) < 0) {
+#else
       if (access(s, mode) < 0) {
+#endif
           errno2why();
           fail;
       }

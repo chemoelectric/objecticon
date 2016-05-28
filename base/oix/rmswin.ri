@@ -1469,13 +1469,11 @@ void wchars_to_ucs(WCHAR *src, dptr res)
         ++p;
     }
 
-    /*dbg("We got %d unicode chars -> %d utf8 len\n", (int)wlen, (int)slen);*/
     MemProtect(ts = alcstr(0, slen));
     p = src;
     q = ts;
     while (*p) {
         int n = utf8_seq(*p, q);
-        /*dbg("wrote char %d as %d bytes\n", (int)(*p), n);*/
         q += n;
         ++p;
     }
@@ -1484,6 +1482,34 @@ void wchars_to_ucs(WCHAR *src, dptr res)
     bp = make_ucs_block(&utf8, wlen);
     res->dword = D_Ucs;
     BlkLoc(*res) = (union block *)bp;
+}
+
+void wchars_to_utf8_string(WCHAR *src, dptr res)
+{
+    tended char *ts;
+    word wlen, slen;
+    WCHAR *p;
+    char *q;
+
+    wlen = 0;
+    slen = 0;
+    p = src;
+    while (*p) {
+        slen += utf8_seq(*p, 0);
+        ++wlen;
+        ++p;
+    }
+
+    MemProtect(ts = alcstr(0, slen));
+    p = src;
+    q = ts;
+    while (*p) {
+        int n = utf8_seq(*p, q);
+        q += n;
+        ++p;
+    }
+
+    MakeStr(ts, slen, res);
 }
 
 int textwidth(wbp w, dptr str)
