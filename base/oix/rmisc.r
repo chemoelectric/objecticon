@@ -2280,3 +2280,27 @@ void *rt_realloc(void *ptr, size_t size)
         fatalerr(309, NULL);
     return a;
 }
+
+/*
+ * These are referenced in mlocal.c; oit and rtt use alternative versions in alloc.c.
+ */
+
+void *safe_calloc(size_t m, size_t n)
+{
+    return rt_calloc(m, n);
+}
+
+void *safe_zalloc(size_t size)
+{
+    return rt_zalloc(size);
+}
+
+void *safe_malloc(size_t size)
+{
+    return rt_malloc(size);
+}
+
+void *safe_realloc(void *ptr, size_t size)
+{
+    return rt_realloc(ptr, size);
+}

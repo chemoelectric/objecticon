@@ -1533,7 +1533,7 @@ function lang_Text_create_cset(x[n])
      word from, to;
      int i;
 
-     MemProtect(rs = init_rangeset());
+     rs = init_rangeset();
      i = 0;
      while (i < n) {
          if (is:list(x[i])) {
@@ -1562,13 +1562,13 @@ function lang_Text_create_cset(x[n])
                      if (from == -1)
                          from = to;
                      else {
-                         MemProtect(add_range(rs, from, to));
+                         add_range(rs, from, to);
                          from = -1;
                      }
                  }
              }
              if (from != -1)
-                 MemProtect(add_range(rs, from, from));
+                 add_range(rs, from, from);
              ++i;
          } else {
              if (!cnv:C_integer(x[i], from)) {
@@ -1591,10 +1591,10 @@ function lang_Text_create_cset(x[n])
                      free_rangeset(rs);
                      fail;
                  }
-                 MemProtect(add_range(rs, from, to));
+                 add_range(rs, from, to);
                  ++i;
              } else
-                 MemProtect(add_range(rs, from, from));
+                 add_range(rs, from, from);
          }
      }
      b = rangeset_to_block(rs);
@@ -1638,7 +1638,7 @@ function lang_Text_slice(c, i, j)
           fail;
        len = j - i;
 
-       MemProtect(rs = init_rangeset());
+       rs = init_rangeset();
        if (len > 0) {
            int a, pos, from, to, l0;
            a = cset_range_of_pos(&CsetBlk(c), i);    /* First range of interest */
@@ -1648,10 +1648,10 @@ function lang_Text_slice(c, i, j)
                to = CsetBlk(c).range[a].to;
                l0 = to - from - pos + 1;
                if (l0 <= len) {
-                   MemProtect(add_range(rs, from + pos, to));
+                   add_range(rs, from + pos, to);
                    len -= l0;
                } else {
-                   MemProtect(add_range(rs, from + pos, len + from + pos - 1));
+                   add_range(rs, from + pos, len + from + pos - 1);
                    len = 0;
                }
                pos = 0;

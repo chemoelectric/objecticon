@@ -19,7 +19,7 @@ OBJS	      = closure.o \
 		verbose.o \
 		warshall.o
 
-COBJS         = ../../base/common/mlocal.o
+COBJS         = ../../base/common/mlocal.o ../../base/common/alloc.o
 
 PRINT	      = pr -f -l88
 
