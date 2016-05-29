@@ -391,7 +391,10 @@ class FileSubWorker(SubWorker)
    end
 
    public get_data(worker)
-      local f, g, e, l, t, path, rs, now, tf, gcache, ucache, ts
+      local f, g, e, l, t, path, rs, now, tf, gcache, ucache
+$ifndef _MS_WIN32
+      local ts
+$endif
       f := worker.req.url.get_decoded_path()
       if Files.is_directory(f) then {
          l := qsort(Files.ucs_list(f), Files.name_cmp) | fail
@@ -423,10 +426,15 @@ $endif
             }
          }
       } else {
+$ifdef _MS_WIN32
+         # Can't poll a file under win32.
+         return Files.file_to_string(f)
+$else
          return use {
             ts := TaskStream(FileStream(f), worker.task),
             read_all(ts)
          }
+$endif
       }
    end
 
