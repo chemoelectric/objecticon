@@ -1193,10 +1193,11 @@ class SocketStream(DescStream)
    public native in(n)
 
    #
-   # Connect a socket previously created with {Socket} to the given
-   # address.  The address is a string in the form "unix:<filename>"
-   # for an {AF_UNIX} address, or "inet:<host>:<port>" for an
-   # {AF_INET} address.  The host can be "INADDR_ANY" if desired.
+   # Connect a socket to the given address.  The address is a string
+   # in the form "unix:<filename>" for an {AF_UNIX} address,
+   # "inet:<host>:<port>" for an {AF_INET} address, or
+   # "inet6:<host>:<port>" for an {AF_INET6} address.  The host can be
+   # "INADDR_ANY" if desired.
    #
    public native connect(addr)
 
@@ -2846,3 +2847,101 @@ class PttyStream(FileStream)
       return setup(l[1], READ_WRITE)
    end
 end
+
+$ifdef _MS_WIN32
+
+#
+# Win32 Winsock socket stream.
+#
+class WinsockStream(Stream, NoCopy)
+   private
+      socket
+
+   private static create_for_socket(socket)
+      local o
+      o := Class.create_instance()
+      o.socket := socket
+      return o
+   end
+
+   #
+   # Create a socket with the given domain and type.
+   #
+   # @param domain from {ProtocolFormat}.  The default is
+   # @    {ProtocolFormat.INET} 
+   # @param typ the type from {SocketType}.  The default is
+   # @    {SocketType.STREAM}.
+   #
+   public new(domain, typ)
+      self.socket := new_impl(domain, typ) | fail
+      return
+   end
+
+   public native in(n)
+
+   public native out(s)
+
+   #
+   # Connect a socket to the given address.  The address is a string
+   # in the form "inet:<host>:<port>" for an {AF_INET} address, or
+   # "inet6:<host>:<port>" for an {AF_INET6} address.  The host can be
+   # "INADDR_ANY" if desired.
+   #
+   public native connect(addr)
+
+   public get_mode()
+      return READ_WRITE
+   end
+
+   #
+   # Bind a socket to the given address, which is in the same form as
+   # for {connect}.
+   #
+   public native bind(addr)
+
+   #
+   # Listen for connections with the given backlog.
+   #
+   public native listen(backlog)
+
+   #
+   # Returns the address of the peer connected to the socket.
+   #
+   public native get_peer()
+
+   #
+   # Accept a new connection, returning a new {WinsockStream}.
+   #
+   public accept()
+      return create_for_socket(accept_impl())
+   end
+
+   #
+   # Perform a shutdown on the socket.
+   # @param how one of the constants in {Shut}
+   #
+   public native shutdown(how)
+
+   #
+   # Set whether or not the socket is in blocking mode.
+   #
+   public native set_blocking_mode(flag)
+
+   #
+   # Return a list of ipv4 numerical addresses for the given host.
+   #
+   public static native dns_query_4(host)
+
+   #
+   # Return a list of ipv6 numerical addresses for the given host.
+   #
+   public static native dns_query_6(host)
+
+   private native accept_impl()
+
+   public native close()
+
+   private static native new_impl(domain, typ)
+end
+
+$endif

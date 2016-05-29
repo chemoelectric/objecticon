@@ -1155,7 +1155,7 @@ int main(int argc, char **argv)
 
 #if MSWIN32
     WSADATA cData;
-    WSAStartup(MAKEWORD(2, 0), &cData);
+    WSAStartup(MAKEWORD(2, 2), &cData);
 #endif
 
 #if PLAN9

@@ -24,6 +24,26 @@ procedure error(s)
    &why := s
 end
 
+#
+# Extract an error code number from {&why}.
+#
+# If {&why} was set by a native method which failed due to an error
+# which has a corresponding error code number (usually the value of
+# errno), then it may set {&why} to a string in a format which
+# includes that number.  This procedure parses the string and extracts
+# the value.
+#
+procedure errno()
+   local i
+   &why ? { 
+      if tab(upto('=')) &
+         move(1) &
+         i := integer(tab(many(&digits))) &
+         any(')') then
+         return i
+   }
+end
+
 # This class just provides a simple constructor which initializes the
 # instance fields in the order they were defined in the class, from
 # the given parameters.  In other words, rather like a record
