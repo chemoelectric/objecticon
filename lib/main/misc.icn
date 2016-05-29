@@ -1,6 +1,7 @@
 package util
 
 import lang(Class, Prog),
+   ipl.scan(past),
    ipl.lists(ldel1)
 
 
@@ -22,6 +23,14 @@ end
 #
 procedure error(s)
    &why := s
+end
+
+#
+# Extract an error code number from {&why}.
+#
+procedure get_error_code(key)
+   &why ? if tab(past("(" || key || "=")) then
+      return integer(tab(many(&digits)))
 end
 
 # This class just provides a simple constructor which initializes the
