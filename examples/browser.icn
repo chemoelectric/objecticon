@@ -1807,6 +1807,9 @@ procedure main(a)
    bak := cookies_file || ".bak"
    encode_to_file(bak, Cookie.expire_cookies(cookies)) | 
       stop("Couldn't encode to temp cookie file ", bak, ": ", &why)
+$ifdef _MS_WIN32
+   Files.remove(cookies_file)
+$endif
    # Use rename not move to ensure it's atomic
    Files.rename(bak, cookies_file) | stop("Couldn't rename cookie file ", bak, ": ", &why)
    # Save settings
