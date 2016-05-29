@@ -107,7 +107,7 @@ $ifdef _MS_WIN32
       }
 
       connection.connect(addr) | {
-         if get_error_code("lasterror") = WSAError.EWOULDBLOCK then {
+         if errno() = WSAError.EWOULDBLOCK then {
             r := do_poll(Poll.OUT) | {
                close_connection()
                return error("Couldn't connect to " || msg_addr || ": " || &why)
