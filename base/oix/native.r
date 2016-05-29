@@ -2168,6 +2168,7 @@ function io_DescStream_select(rl, wl, el, timeout)
     }
 end
 
+#if !MSWIN32
 function io_DescStream_poll(l, timeout)
    if !is:list(l) then
       runerr(108,l)
@@ -2225,6 +2226,7 @@ function io_DescStream_poll(l, timeout)
 #endif  /* HAVE_POLL */
    }
 end
+#endif  /* MSWIN32 */
 
 function io_DescStream_flag(self, on, off)
     if !def:C_integer(on, 0) then
@@ -3697,4 +3699,477 @@ function io_PttyStream_set_size(self, cols, rows)
        return self;
     }
 end
+#endif
+
+
+#if MSWIN32
+struct sdescrip socketf = {6, "socket"};
+struct sdescrip wsclassname = {16, "io.WinsockStream"};
+
+#begdef GetSelfSocket()
+SOCKET self_socket;
+dptr self_socket_dptr;
+static struct inline_field_cache self_socket_ic;
+self_socket_dptr = c_get_instance_data(&self, (dptr)&socketf, &self_socket_ic);
+if (!self_socket_dptr)
+    syserr("Missing socket field");
+self_socket = (SOCKET)IntVal(*self_socket_dptr);
+if ((word)self_socket == -1)
+    runerr(219, self);
+#enddef
+
+#begdef SocketStaticParam(p, m)
+SOCKET m;
+dptr m##_dptr;
+static struct inline_field_cache m##_ic;
+static struct inline_global_cache m##_igc;
+if (!c_is(&p, (dptr)&wsclassname, &m##_igc)) {
+   CMakeStr("io.WinsockStream expected", &t_errortext);
+   runerr(-1, p);
+}
+m##_dptr = c_get_instance_data(&p, (dptr)&socketf, &m##_ic);
+if (!m##_dptr)
+    syserr("Missing socket field");
+(m) = (SOCKET)IntVal(*m##_dptr);
+if ((word)m == -1)
+    runerr(219, p);
+#enddef
+
+static void wsaerror2why()
+{
+    int n, l;
+    LPSTR res = NULL;
+    DWORD rc;
+    n = WSAGetLastError();
+    rc = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                       0, n, 0, (LPSTR)&res, 0, 0);
+    if (rc != 0) {
+        /* Get rid of any trailing \r\n */
+        l = strlen(res);
+        if (l >= 2 && res[l - 2] == '\r' && res[l - 1] == '\n')
+            res[l - 2] = '\0';
+        whyf("Winsock error: %s (lasterror=%d)", res, n);
+        LocalFree(res);
+    } else {
+        whyf("Winsock error: (lasterror=%d)", n);
+    }
+}
+
+function io_WinsockStream_in(self, i)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   body {
+       int nread;
+       tended struct descrip s;
+       GetSelfSocket();
+
+       if (i <= 0)
+           Irunerr(205, i);
+       /*
+        * For now, assume we can read the full number of bytes.
+        */
+       MemProtect(StrLoc(s) = alcstr(NULL, i));
+
+       nread = recv(self_socket, StrLoc(s), i, 0);
+       if (nread <= 0) {
+           /* Reset the memory just allocated */
+           dealcstr(StrLoc(s));
+
+           if (nread < 0) {
+               wsaerror2why();
+               fail;
+           } else  /* nread == 0 */
+               return nulldesc;
+       }
+
+       StrLen(s) = nread;
+
+       /*
+        * We may not have used the entire amount of storage we reserved.
+        */
+       dealcstr(StrLoc(s) + nread);
+
+       return s;
+   }
+end
+
+function io_WinsockStream_new_impl(domain, typ)
+   if !def:C_integer(domain, PF_INET) then
+      runerr(101, domain)
+
+   if !def:C_integer(typ, SOCK_STREAM) then
+      runerr(101, typ)
+
+   body {
+       SOCKET sock;
+       sock = socket(domain, typ, 0);
+       if (sock == INVALID_SOCKET) {
+           wsaerror2why();
+           fail;
+       }
+       return C_integer sock;
+   }
+end
+
+function io_WinsockStream_out(self, s)
+   if !cnv:string(s) then
+      runerr(103, s)
+   body {
+       int rc;
+       GetSelfSocket();
+       rc = send(self_socket, StrLoc(s), StrLen(s), 0);
+       if (rc == SOCKET_ERROR) {
+           wsaerror2why();
+           fail;
+       }
+       return C_integer rc;
+   }
+end
+
+function io_WinsockStream_close(self)
+   body {
+       GetSelfSocket();
+       if (closesocket(self_socket) == SOCKET_ERROR) {
+           wsaerror2why();
+           *self_socket_dptr = minusonedesc;
+           fail;
+       }
+       *self_socket_dptr = minusonedesc;
+       return self;
+   }
+end
+
+function io_WinsockStream_shutdown(self, how)
+   if !cnv:C_integer(how) then
+      runerr(101, how)
+   body {
+       GetSelfSocket();
+       if (shutdown(self_socket, how) == SOCKET_ERROR) {
+           wsaerror2why();
+           fail;
+       }
+       return self;
+   }
+end
+
+function io_WinsockStream_set_blocking_mode(self, flag)
+   body {
+       unsigned long mode;
+       GetSelfSocket();
+       if (!isflag(&flag))
+          runerr(171, flag);
+       mode = is:null(flag) ? 1 : 0;
+       if (ioctlsocket(self_socket, FIONBIO, &mode) == SOCKET_ERROR) {
+           wsaerror2why();
+           fail;
+       }
+       return self;
+   }
+end
+
+static struct sockaddr *parse_sockaddr(char *s, int *len)
+{
+    if (strncmp(s, "inet:", 5) == 0) {
+        static struct sockaddr_in iss;
+        struct addrinfo hints;
+        struct addrinfo *res;
+        int error;
+        char *t = s + 5, buf[128], *host, *port;
+        if (strlen(t) >= sizeof(buf)) {
+            LitWhy("Name too long");
+            return 0;
+        }
+        strcpy(buf, t);
+        port = strchr(buf, ':');
+        if (!port) {
+            LitWhy("Bad socket address format (missing :)");
+            return 0;
+        }
+        *port++ = 0;
+
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+        if (strcmp(buf, "INADDR_ANY") == 0) {
+            hints.ai_flags = AI_PASSIVE;
+            host = 0;
+        } else
+            host = buf;
+        error = getaddrinfo(host, port, &hints, &res);
+        if (error != 0) {
+            wsaerror2why();
+            return 0;
+        }
+        memcpy(&iss, res->ai_addr, res->ai_addrlen);
+        freeaddrinfo(res);
+        *len = sizeof(iss);
+        return (struct sockaddr *)&iss;
+    }
+    if (strncmp(s, "inet6:", 6) == 0) {
+        static struct sockaddr_in6 iss;
+        struct addrinfo hints;
+        struct addrinfo *res;
+        int error;
+        char *t = s + 6, buf[128], *host, *port;
+        if (strlen(t) >= sizeof(buf)) {
+            LitWhy("Name too long");
+            return 0;
+        }
+        strcpy(buf, t);
+        if (buf[0] == '[') {
+            t = strchr(buf, ']');
+            if (!t) {
+                LitWhy("Bad socket address format (missing ])");
+                return 0;
+            }
+            host = buf + 1;
+            *t++ = 0;
+            if (*t != ':') {
+                LitWhy("Bad socket address format (missing :)");
+                return 0;
+            }
+            port = t + 1;
+        } else {
+            host = buf;
+            port = strchr(buf, ':');
+            if (!port) {
+                LitWhy("Bad socket address format (missing :)");
+                return 0;
+            }
+            *port++ = 0;
+        }
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = AF_INET6;
+        hints.ai_socktype = SOCK_STREAM;
+        if (strcmp(host, "INADDR_ANY") == 0) {
+            hints.ai_flags = AI_PASSIVE;
+            host = 0;
+        }
+        error = getaddrinfo(host, port, &hints, &res);
+        if (error != 0) {
+            wsaerror2why();
+            return 0;
+        }
+        memcpy(&iss, res->ai_addr, res->ai_addrlen);
+        freeaddrinfo(res);
+        *len = sizeof(iss);
+        return (struct sockaddr *)&iss;
+    }
+
+    LitWhy("Bad socket address format (unknown family)");
+    return 0;
+}
+
+function io_WinsockStream_dns_query_4(host)
+   if !cnv:C_string(host) then
+      runerr(103, host)
+   body {
+      struct addrinfo hints;
+      struct addrinfo *res, *t;
+      tended struct descrip tmp, result;
+      int error, n;
+      memset(&hints, 0, sizeof(hints));
+      hints.ai_family = AF_INET;
+      hints.ai_socktype = SOCK_STREAM;
+      error = getaddrinfo(host, NULL, &hints, &res);
+      if (error != 0) {
+          wsaerror2why();
+          fail;
+      }
+      n = 0;
+      for (t = res; t; t = t->ai_next)
+          ++n;
+
+      create_list(n, &result);
+      for (t = res; t; t = t->ai_next) {
+          char buf[INET_ADDRSTRLEN];
+          struct sockaddr_in *p = (struct sockaddr_in *)t->ai_addr;
+          inet_ntop(AF_INET, &p->sin_addr, buf, sizeof(buf));
+          cstr2string(buf, &tmp);
+          list_put(&result, &tmp);
+      }
+      freeaddrinfo(res);
+      return result;
+   }
+end
+
+function io_WinsockStream_dns_query_6(host)
+   if !cnv:C_string(host) then
+      runerr(103, host)
+   body {
+      struct addrinfo hints;
+      struct addrinfo *res, *t;
+      tended struct descrip tmp, result;
+      int error, n;
+      memset(&hints, 0, sizeof(hints));
+      hints.ai_family = AF_INET6;
+      hints.ai_socktype = SOCK_STREAM;
+      error = getaddrinfo(host, NULL, &hints, &res);
+      if (error != 0) {
+          wsaerror2why();
+          fail;
+      }
+      n = 0;
+      for (t = res; t; t = t->ai_next)
+          ++n;
+
+      create_list(n, &result);
+      for (t = res; t; t = t->ai_next) {
+          char buf[INET6_ADDRSTRLEN];
+          struct sockaddr_in6 *p = (struct sockaddr_in6 *)t->ai_addr;
+          inet_ntop(AF_INET6, &p->sin6_addr, buf, sizeof(buf));
+          cstr2string(buf, &tmp);
+          list_put(&result, &tmp);
+      }
+      freeaddrinfo(res);
+      return result;
+   }
+end
+
+function io_WinsockStream_connect(self, addr)
+   if !cnv:C_string(addr) then
+      runerr(103, addr)
+   body {
+       struct sockaddr *sa;
+       int len;
+       GetSelfSocket();
+
+       sa = parse_sockaddr(addr, &len);
+       if (!sa) {
+           /* &why already set by parse_sockaddr */
+           fail;
+       }
+
+       if (connect(self_socket, sa, len) == SOCKET_ERROR) {
+           wsaerror2why();
+           fail;
+       }
+
+       return self;
+   }
+end
+
+function io_WinsockStream_bind(self, addr)
+   if !cnv:C_string(addr) then
+      runerr(103, addr)
+   body {
+       struct sockaddr *sa;
+       int len;
+       GetSelfSocket();
+
+       sa = parse_sockaddr(addr, &len);
+       if (!sa) {
+           /* &why already set by parse_sockaddr */
+           fail;
+       }
+
+       if (bind(self_socket, sa, len) == SOCKET_ERROR) {
+           wsaerror2why();
+           fail;
+       }
+
+       return self;
+   }
+end
+
+function io_WinsockStream_listen(self, backlog)
+   if !cnv:C_integer(backlog) then
+      runerr(101, backlog)
+
+   body {
+       GetSelfSocket();
+       if (listen(self_socket, backlog) == SOCKET_ERROR) {
+           wsaerror2why();
+           fail;
+       }
+       return self;
+   }
+end
+
+function io_WinsockStream_get_peer(self)
+   body {
+       tended struct descrip result;
+       struct sockaddr_in iss;
+       socklen_t iss_len;
+       char buf[128];
+       GetSelfSocket();
+       iss_len = sizeof(iss);
+       if (getpeername(self_socket, (struct sockaddr *)&iss, &iss_len) == SOCKET_ERROR) {
+           wsaerror2why();
+           fail;
+       }
+       snprintf(buf, sizeof(buf), "%s:%u", inet_ntoa(iss.sin_addr), (unsigned)ntohs(iss.sin_port));
+       cstr2string(buf, &result);
+       return result;
+   }
+end
+
+function io_WinsockStream_accept_impl(self)
+   body {
+       SOCKET sock;
+       GetSelfSocket();
+
+       if ((sock = accept(self_socket, 0, 0)) == INVALID_SOCKET) {
+           wsaerror2why();
+           fail;
+       }
+
+       return C_integer sock;
+   }
+end
+
+function io_DescStream_poll(l, timeout)
+   if !is:list(l) then
+      runerr(108,l)
+   if !def:C_integer(timeout, -1) then
+      runerr(101, timeout)
+   body {
+       static struct pollfd *ufds = 0;
+       unsigned int nfds;
+       int i, rc;
+       struct lgstate state;
+       tended struct b_lelem *le;
+       tended struct descrip result;
+
+       if (ListBlk(l).size % 2 != 0)
+           runerr(130);
+
+       nfds = ListBlk(l).size / 2;
+
+       if (nfds > 0)
+           ufds = safe_realloc(ufds, nfds * sizeof(struct pollfd));
+
+       le = lgfirst(&ListBlk(l), &state);
+       for (i = 0; i < nfds; ++i) {
+           word events;
+           SocketStaticParam(le->lslots[state.result], fd);
+           le = lgnext(&ListBlk(l), &state, le);
+           if (!cnv:C_integer(le->lslots[state.result], events))
+               runerr(101, le->lslots[state.result]);
+           ufds[i].fd = fd;
+           ufds[i].events = (short)events;
+           le = lgnext(&ListBlk(l), &state, le);
+       }
+
+       rc = WSAPoll(ufds, nfds, timeout);
+       if (rc == SOCKET_ERROR) {
+           wsaerror2why();
+           fail;
+       }
+
+       /* A rc of zero means timeout, and returns &null */
+       if (rc == 0)
+           return nulldesc;
+
+       create_list(nfds, &result);
+       for (i = 0; i < nfds; ++i) {
+           struct descrip tmp;
+           MakeInt(ufds[i].revents, &tmp);
+           list_put(&result, &tmp);
+       }
+
+       return result;
+   }
+end
+
 #endif

@@ -4,12 +4,19 @@
 
 package net
 
+$ifdef _MS_WIN32
+import 
+   util, 
+   io,
+   ipl.scan
+$else
 import 
    util, 
    io,
    ssl,
    posix,
    ipl.scan
+$endif
 
 #
 # Common base class for a client class which holds a connection to a
@@ -68,6 +75,61 @@ class NetClient(Connectable, HasTask)
       return choose_poll([connection, for], timeout)
    end
 
+$ifdef _MS_WIN32
+   private dns_query()
+      return WinsockStream.dns_query_4(server)
+   end
+
+   #
+   # Open the connection.
+   #
+   protected open_connection()
+      local r, domain, addr, msg_addr, ip
+
+      close_connection()
+      fire(CONNECTING_EVENT)
+      if \ssl_flag then
+         return error("SSL not supported")
+      ip := dns_query()[1] | fail
+      if upto('.', ip) then {
+         domain := ProtocolFormat.INET
+         addr := "inet:" || ip || ":" || port
+      } else {
+         domain := ProtocolFormat.INET6
+         addr := "inet6:[" || ip || "]:" || port
+      }
+      msg_addr := server || " (" || addr || ")"
+
+      connection := WinsockStream(domain)
+      connection.set_blocking_mode(&no) | {
+         close_connection()
+         return error("Couldn't put socket in non-blocking mode: " || &why)
+      }
+
+      connection.connect(addr) | {
+         if get_error_code("lasterror") = WSAError.EWOULDBLOCK then {
+            r := do_poll(Poll.OUT) | {
+               close_connection()
+               return error("Couldn't connect to " || msg_addr || ": " || &why)
+            }
+            if /r then {
+               close_connection()
+               return error("Couldn't connect to " || msg_addr || ": timeout")
+            }
+            DescStream.poll_out_test(r[1]) | {
+               close_connection()
+               return error("Couldn't connect to " || msg_addr || ": socket error")
+            }
+         } else {
+            close_connection()
+            return error("Couldn't connect to " || msg_addr || ": " || &why)
+         }
+      }
+      sbuff := ""
+      fire(CONNECTED_EVENT)
+      return self
+   end
+$else
    private dns_query_impl()
       return SocketStream.dns_query_4(server)
    end
@@ -172,6 +234,8 @@ class NetClient(Connectable, HasTask)
       fire(CONNECTED_EVENT)
       return self
    end
+
+$endif
 
    # After an error to an ssl function, check if it is because the
    # ssl layer needs to read/write from the underlying connection.
