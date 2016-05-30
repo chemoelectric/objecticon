@@ -3738,18 +3738,21 @@ if ((word)m == -1)
 static void wsaerror2why()
 {
     int n, l;
-    LPSTR res = NULL;
+    LPWSTR t = NULL;
+    char *res;
     DWORD rc;
     n = WSAGetLastError();
-    rc = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                       0, n, 0, (LPSTR)&res, 0, 0);
+    rc = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                       0, n, 0, (LPWSTR)&t, 0, 0);
     if (rc != 0) {
+        res = wchar_to_utf8(t);
+        LocalFree(t);
         /* Get rid of any trailing \r\n */
         l = strlen(res);
         if (l >= 2 && res[l - 2] == '\r' && res[l - 1] == '\n')
             res[l - 2] = '\0';
         whyf("Winsock error: %s (lasterror=%d)", res, n);
-        LocalFree(res);
+        free(res);
     } else {
         whyf("Winsock error: (lasterror=%d)", n);
     }
@@ -4171,5 +4174,116 @@ function io_DescStream_poll(l, timeout)
        return result;
    }
 end
+
+void ucs_to_wchar1(WCHAR *buff, dptr str, int nullterm)
+{
+    word len, i;
+    char *p;
+    len = UcsBlk(*str).length;
+    p = StrLoc(UcsBlk(*str).utf8);
+    for (i = 0; i < len; ++i) {
+        int ch = utf8_iter(&p);
+        buff[i] = (WCHAR)(ch < 0x10000 ? ch : 0xfffd);
+    }
+    if (nullterm)
+        buff[len] = 0;
+}
+
+WCHAR *ucs_to_wchar(dptr str, int nullterm)
+{
+    WCHAR *mbs;
+    size_t alc;
+    alc = UcsBlk(*str).length;
+    if (nullterm)
+        ++alc;
+    mbs = safe_malloc(alc * sizeof(WCHAR));
+    ucs_to_wchar1(mbs, str, nullterm);
+    return mbs;
+}
+
+void string_to_wchar1(WCHAR *buff, dptr str, int nullterm)
+{
+    word len, i;
+    char *p;
+    len = StrLen(*str);
+    p = StrLoc(*str);
+    for (i = 0; i < len; ++i)
+        buff[i] = (WCHAR)*p++;
+    if (nullterm)
+        buff[len] = 0;
+}
+
+WCHAR *string_to_wchar(dptr str, int nullterm)
+{
+    WCHAR *mbs;
+    size_t alc;
+    alc = StrLen(*str);
+    if (nullterm)
+        ++alc;
+    mbs = safe_malloc(alc * sizeof(WCHAR));
+    string_to_wchar1(mbs, str, nullterm);
+    return mbs;
+}
+
+void wchar_to_ucs(WCHAR *src, dptr res)
+{
+    tended char *ts;
+    tended struct b_ucs *bp;
+    tended struct descrip utf8;
+    word wlen, slen;
+    WCHAR *p;
+    char *q;
+
+    wlen = 0;
+    slen = 0;
+    p = src;
+    while (*p) {
+        slen += utf8_seq(*p, 0);
+        ++wlen;
+        ++p;
+    }
+
+    MemProtect(ts = alcstr(0, slen));
+    p = src;
+    q = ts;
+    while (*p) {
+        int n = utf8_seq(*p, q);
+        q += n;
+        ++p;
+    }
+
+    MakeStr(ts, slen, &utf8);
+    bp = make_ucs_block(&utf8, wlen);
+    res->dword = D_Ucs;
+    BlkLoc(*res) = (union block *)bp;
+}
+
+void wchar_to_utf8_string(WCHAR *src, dptr res)
+{
+    tended char *ts;
+    word wlen, slen;
+    WCHAR *p;
+    char *q;
+
+    wlen = 0;
+    slen = 0;
+    p = src;
+    while (*p) {
+        slen += utf8_seq(*p, 0);
+        ++wlen;
+        ++p;
+    }
+
+    MemProtect(ts = alcstr(0, slen));
+    p = src;
+    q = ts;
+    while (*p) {
+        int n = utf8_seq(*p, q);
+        q += n;
+        ++p;
+    }
+
+    MakeStr(ts, slen, res);
+}
 
 #endif
