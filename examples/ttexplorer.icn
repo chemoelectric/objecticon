@@ -48,9 +48,9 @@ class TTExplorer(Dialog)
       local now
       now := Time.get_system_seconds()
       return if now - t > 180 * 86400 then
-         Time(t + Time.SYSTEM_BASE_OFFSET).format("  MMM dd  yyyy")
+         Time(t + Time.SYSTEM_BASE_OFFSET).format("  NNN dd  yyyy")
       else
-         Time(t + Time.SYSTEM_BASE_OFFSET).format("  MMM dd HH:mm")
+         Time(t + Time.SYSTEM_BASE_OFFSET).format("  NNN dd HH:mm")
    end
 
    #

@@ -210,7 +210,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       every e := !settings.visited do {
          n := Browser.limit_text(\e.title, scale(200)) | ""
          s ||:= "<tr><td nowrap>" || Browser.to_content(n) || "</td><td align=right>" || e.times || "&nbsp;</td><td>" || 
-                e.last_time.format("MMM'&nbsp;'dd'&nbsp;'HH:mm") || "</td>" || Browser.mk_anchor_cell(e.url) || "</tr>"
+                e.last_time.format("NNN'&nbsp;'dd'&nbsp;'HH:mm") || "</td>" || Browser.mk_anchor_cell(e.url) || "</tr>"
       }
       s ||:= "</table></html>"
       return s

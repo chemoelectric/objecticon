@@ -12,6 +12,7 @@ import
    lang,
    io(write), 
    ipl.scan(Scan), 
+   ipl.lists(str2list),
    exception
 
 #
@@ -63,6 +64,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       MONTHS,
       BASE_YEAR,
       WEEK_DAYS,
+      AM_PM,
       TZCHARS,
       SYSTEM_BASE_OFFSET,
       DEFAULT_FORMAT,
@@ -71,13 +73,30 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       CUM_MDAYS,
       LEAP_CUM_MDAYS
 
+   public static
+      LOCAL_MONTHS,
+      LOCAL_WEEK_DAYS,
+      LOCAL_AM_PM
+
    private static init()
       DEFAULT_FORMAT := "yyyy/MM/dd HH:mm:ss zzz"
       MONTHS := ["January", "February", "March", "April", "May",
-                       "June", "July", "August", "September", "October",
-                       "November", "December"]
-      WEEK_DAYS := ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
-                          "Saturday", "Sunday"]
+                 "June", "July", "August", "September", "October",
+                 "November", "December",
+                 "Jan", "Feb", "Mar", "Apr", "May",
+                 "Jun", "Jul", "Aug", "Sep", "Oct",
+                 "Nov", "Dec"]
+      WEEK_DAYS := ["Sunday", "Monday", "Tuesday", "Wednesday",
+                    "Thursday", "Friday", "Saturday",
+                    "Sun", "Mon", "Tue", "Wed", "Thu", 
+                    "Fri", "Sat"]
+      AM_PM := ["AM", "PM"]
+      LOCAL_MONTHS := str2list(ucs(env_string("OI_TIME_LOCAL_MONTHS"))) | MONTHS
+      *LOCAL_MONTHS = 24 | runerr("Wrong size list for OI_TIME_LOCAL_MONTHS")
+      LOCAL_WEEK_DAYS := str2list(ucs(env_string("OI_TIME_LOCAL_WEEK_DAYS"))) | WEEK_DAYS
+      *LOCAL_WEEK_DAYS = 14 | runerr("Wrong size list for OI_TIME_LOCAL_WEEK_DAYS")
+      LOCAL_AM_PM := str2list(ucs(env_string("OI_TIME_LOCAL_AM_PM"))) | AM_PM
+      *LOCAL_AM_PM = 2 | runerr("Wrong size list for OI_TIME_LOCAL_AM_PM")
       MDAYS := [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
       LEAP_MDAYS := [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
       CUM_MDAYS := [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365]
@@ -100,48 +119,52 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    private static format_int(n, w)
       local s
       s := string(n)
-      if *s < w then
-         return right(s, w, "0")
+      return if *s < w then
+         right(s, w, "0")
       else
-         return s
+         s
    end
 
    #
    # Format a weekday (Mon, Tue etc) given a width.
    # 
-   private format_weekday(w)
-      local s
-      s := WEEK_DAYS[self.wday]
-      if w < 4 then
-         return s[1:4]
+   private format_weekday(w, l)
+      return if w < 4 then
+         l[self.wday + 7]
       else
-         return s
+         l[self.wday]
    end
 
    #
    # Format a month (Jan, Feb etc) given a width
    # 
-   private format_month(w)
-      local s
-
-      if w < 3 then
-         return format_int(self.month, w)
-
-      s := MONTHS[self.month]
-      if w = 3 then
-         return s[1:4]
+   private format_month(w, l)
+      return if w < 3 then
+         format_int(self.month, w)
+      else if w = 3 then
+         l[self.month + 12]
       else
-         return s
+         l[self.month]
+   end
+
+   #
+   # Format AM/PM
+   #
+   private format_am_pm(l)
+      return if self.hour < 12 then
+         l[1]
+      else
+         l[2]
    end
 
    #
    # Format a year given the width
    # 
    private format_year(w)
-      if w == 2 then
-         return format_int(self.year % 100, w)
+      return if w == 2 then
+         format_int(self.year % 100, w)
       else
-         return format_int(self.year, w)
+         format_int(self.year, w)
    end
 
    #
@@ -150,10 +173,10 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    private format_week_year(w)
       local i
       i := get_week()[2]
-      if w == 2 then
-         return format_int(i % 100, w)
+      return if w == 2 then
+         format_int(i % 100, w)
       else
-         return format_int(i, w)
+         format_int(i, w)
    end
 
    #
@@ -191,6 +214,8 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # 
    # E - The weekday.  A width < 4 gives the first three chars (eg Mon), otherwise
    # the full day is given (eg Monday)
+   #
+   # F - Like E, but using the local weekday names.
    # 
    # y - The year.  If the width is 2, the year will be the least
    # significant 2 digits (eg "99"), otherwise it is the full year
@@ -208,6 +233,8 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # numeric value is used, padded to the width.  If the width is 3, then
    # the abbreviated month is used (eg "Jul"); otherwise the full month is
    # used (eg "July").
+   #
+   # N - Like M, but using the local month names.
    # 
    # w - The week (see `get_week()`).
    # 
@@ -218,6 +245,10 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # a - am or pm.  The width is ignored.
    # 
    # A - AM or PM  The width is ignored.
+   #
+   # b - Like a, but using the local am/pm names.
+   #
+   # B - Like B, but using the local am/pm names.
    # 
    # z - the timezone id (eg UTC or +0400).  The width is ignored.
    # Z - the timezone offset.   The width is ignored.
@@ -244,14 +275,16 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
       res := p[1:1]   # Empty string same type as p
       p ? {
          until pos(0) do {
-            if any('EyvYdHMwhmsaAzZT') then {
+            if any('EFyvYdHMNwhmsaAbBzZT') then {
                ch := p[&pos]
                w := *tab(many(ch))
                res ||:= case string(ch) of {
-                  "E": format_weekday(w)
+                  "E": format_weekday(w, WEEK_DAYS)
+                  "F": format_weekday(w, LOCAL_WEEK_DAYS)
                   "y": format_year(w)
                   "v": format_week_year(w)
-                  "M": format_month(w)
+                  "M": format_month(w, MONTHS)
+                  "N": format_month(w, LOCAL_MONTHS)
                   "w": format_week(w)
                   "d": format_int(self.mday, w)
                   "h": {
@@ -266,18 +299,10 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
                   "z": zone.get_id()
                   "Z": zone.format_offset()
                   "T": format_rfc3339_timezone(w)
-                  "a": {
-                     if self.hour < 12 then
-                        "am"
-                     else
-                        "pm"
-                  }
-                  "a": {
-                     if self.hour < 12 then
-                        "AM"
-                     else
-                        "PM"
-                  }
+                  "a": map(format_am_pm(AM_PM))
+                  "A": format_am_pm(AM_PM)
+                  "b": map(format_am_pm(LOCAL_AM_PM))
+                  "B": format_am_pm(LOCAL_AM_PM)
                }
             } else if any('\'') then 
                res ||:= match_literal()
@@ -976,18 +1001,6 @@ class TimeParser()
    private
       ss
 
-   #
-   # Convert a month string to an month number, eg "feb"->2
-   #
-   private static month_to_num(s)
-      local i
-      s := map(s)
-      every i := 1 to *Time.MONTHS do {
-         if match(s, map(Time.MONTHS[i])) then
-            return i
-      }
-   end
-
    # 
    # Get the next parsed int
    #
@@ -1039,30 +1052,45 @@ class TimeParser()
    # 
    # Get the next parsed am/pm
    #
-   private parse_ampm()
-      local s
-      s := map(ss.move(2)) | throw("am/pm expected")
-      s == ("am" | "pm") | throw("am/pm expected")
-      return s
+   private parse_am_pm(hh, l)
+      local s, i
+      every i := 1 to 2 do {
+         s := map(l[i])
+         if s == map(ss.move(*s)) then {
+            if i = 2 & (0 < \hh < 12) then 
+               hh +:= 12
+            return hh
+         }
+      }
+      throw("am/pm expected")
    end
 
    # 
    # Get the next parsed month
    # 
-   private parse_month(w)
-      local s
+   private parse_month(w, l)
+      local i, m
       if w < 3 then
          return parse_int(w, 1, 12)
-      s := ss.tab(ss.many(&ucase ++ &lcase)) | throw("Month expected")
-      return month_to_num(s) | throw("Invalid month")
+      every i := 1 to 24 do {
+         m := map(l[i])
+         if m == map(ss.move(*m)) then
+            return if i > 12 then i - 12 else i
+      }
+      throw("Month expected")
    end
 
    # 
    # Get the next parsed weekday
    # 
-   private parse_weekday()
-      ss.tab(ss.many(&ucase ++ &lcase)) | throw("Weekday expected")
-      return
+   private parse_weekday(l)
+      local i, w
+      every i := 1 to 14 do {
+         w := map(l[i])
+         if w == map(ss.move(*w)) then
+            return
+      }
+      throw("Weekday expected")
    end
 
    # 
@@ -1099,9 +1127,11 @@ class TimeParser()
    # 
    # The possible pattern chars are :-
    # 
-   # E - The weekday (eg Mon) - this is just a sequence of upper and lower
-   # case chars and is otherwise ignored.
+   # E - The weekday (eg Mon) - Match a full or abbreviated week-
+   #     day name, ignoring case.
    # 
+   # F - Like E, but using the local weekday names.
+   #
    # y - The year.  If the width is 4, then the year must be
    # explicitly 4 digits.  Otherwise, if the year is less than 70 it
    # is taken to be 20xx; if it is less than 100 it is taken to be
@@ -1114,7 +1144,10 @@ class TimeParser()
    # h - The hour in the day in the 12 hour clock format 
    # 
    # M - The month of the year.  If the width is less than 3 then the
-   # numeric value is expected, otherwise the textual value is expected.
+   #     numeric value is expected, otherwise a match of either full
+   #     or abbreviated month name is expected, ignoring case.
+   #
+   # N - Like M, but using the local month names.
    # 
    # m - The minute in the hour
    # 
@@ -1123,6 +1156,8 @@ class TimeParser()
    # a/A - am or pm.  Case is ignored.  If pm, then the hour is
    # adjusted accordingly in the result.
    # 
+   # b/B - Like a/A, but using the local am/pm names.
+   #
    # z - The timezone (eg UTC or +0400).
    #
    # T - The timezone in RFC3339 format (eg Z or +04:00).
@@ -1135,15 +1170,17 @@ class TimeParser()
    end
 
    private parse_impl()
-      local y, d, m, hh, mm, sec, z, ampm, lit, ch, w
+      local y, d, m, hh, mm, sec, z, lit, ch, w
       until pos(0) do {
-         if any('EydHMhmsaAzxT') then {
+         if any('EFydHMNhmsaAbBzxT') then {
             ch := &subject[&pos]
             w := *tab(many(ch))
             case string(ch) of {
-               "E": parse_weekday()
+               "E": parse_weekday(Time.WEEK_DAYS)
+               "F": parse_weekday(Time.LOCAL_WEEK_DAYS)
                "y": y := parse_year(w)
-               "M": m := parse_month(w)
+               "M": m := parse_month(w, Time.MONTHS)
+               "N": m := parse_month(w, Time.LOCAL_MONTHS)
                "d": d := parse_int(w, 1, 31)
                "H": hh := parse_int(w, 0, 23)
                "h": hh := parse_int(w, 0, 12)
@@ -1151,11 +1188,8 @@ class TimeParser()
                "s": sec := parse_int(w, 0, 59)
                "z": z := parse_timezone()
                "T": z := parse_rfc3339_timezone()
-               "A"|"a": {
-                  ampm := parse_ampm()
-                  if ampm == "pm" & (0 < \hh < 12) then 
-                     hh +:= 12
-               }
+               "A"|"a": hh := parse_am_pm(hh, Time.AM_PM)
+               "B"|"b": hh := parse_am_pm(hh, Time.LOCAL_AM_PM)
                "x": ss.pos(0) | throw("Extraneous content")
             }
          } else if any('\'') then {

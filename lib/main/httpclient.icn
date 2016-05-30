@@ -577,7 +577,7 @@ class HttpClient(NetClient)
             c.value := v
          } else {
             case map(k) of {
-               "expires" : c.expires := Time.parse(v, "EEE, dd-MMM-yyyy hh:mm:ss zzz")
+               "expires" : c.expires := Time.parse(v, "E, dd-MMM-yyyy hh:mm:ss zzz")
                "path" : c.path := v
                "domain" : c.domain := v
                "secure" : c.secure := 1

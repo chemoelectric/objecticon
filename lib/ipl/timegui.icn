@@ -344,7 +344,7 @@ end
 class MonthField(List)
    public new()
       List.new()
-      set_selection_list(Time.MONTHS)
+      set_selection_list(Time.LOCAL_MONTHS[1:13])
       return
    end
 end
@@ -469,10 +469,10 @@ class Calendar(Component)
                set_border(EmptyBorder()).
                set_label("Week"))
 
-      every s := Time.WEEK_DAYS[2 to 8] do
+      every s := Time.LOCAL_WEEK_DAYS[(9 to 14) | 8] do
          p.add(Label().
                set_border(EmptyBorder()).
-               set_label(s[1:4]))
+               set_label(s))
       p.children[-1].set_constraint("eol", &yes)
       p.add(Line().set_constraint("eol", &yes).set_constraint("w", if \week_mode_flag then 8 else 7).set_constraint("x_fill", &yes).set_width(100))
       bg := ButtonGroup()
