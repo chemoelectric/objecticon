@@ -1073,6 +1073,14 @@ char *maketemp(char *fn)
  */
 char *get_system_error()
 {
+#if MSWIN32
+    char *msg;
+    static char res[256];
+    msg = wchar_to_utf8(_wcserror(errno));
+    snprintf(res, sizeof(res), "%s (errno=%d)", msg, errno);
+    free(msg);
+    return res;
+#else
     char *msg = 0;
     static char res[256];
 
@@ -1088,4 +1096,5 @@ char *get_system_error()
     snprintf(res, sizeof(res), "%s (errno=%d)", msg, errno);
 
     return res;
+#endif
 }
