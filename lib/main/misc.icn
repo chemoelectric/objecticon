@@ -1,7 +1,8 @@
 package util
 
 import lang(Class, Prog),
-   ipl.lists(ldel1)
+   ipl.lists(ldel1),
+   posix(System)
 
 
 #
@@ -440,4 +441,49 @@ procedure save_state(e, state)
    suspend 1(|@e, { state.swap() ; &null} ) do
       state.swap()
    state.finish()
+end
+
+#
+# Return a non-empty string from the environment.
+#
+procedure env_string(s)
+   return "" ~== System.getenv(s)
+end
+
+#
+# Return a valid flag value from the environment.
+#
+procedure env_flag(s)
+   local v
+   v := env_string(s) | fail
+   v := flag(v) | runerr("Flag value expected for " || s, v)
+   return v
+end
+
+#
+# Get a real-valued environment variable.  Fails if the variable isn't
+# defined, returns the real value otherwise.  `min` and `max` provide
+# optional bounds checking.
+#
+procedure env_real(s, min, max)
+   local v
+   v := System.getenv(s) | fail
+   v := real(v) | runerr("Real value expected for " || s, v)
+   if v < \min | v > \max then
+      runerr("Value of " || s || " out of range", v)
+   return v
+end
+
+#
+# Get an integer-valued environment variable.  Fails if the variable isn't
+# defined, returns the integer value otherwise.  `min` and `max` provide
+# optional bounds checking.
+#
+procedure env_int(s, min, max)
+   local v
+   v := System.getenv(s) | fail
+   v := integer(v) | runerr("Integer value expected for " || s, v)
+   if v < \min | v > \max then
+      runerr("Value of " || s || " out of range", v)
+   return v
 end

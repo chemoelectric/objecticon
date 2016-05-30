@@ -9,7 +9,7 @@
 package gui
 
 import graphics(Mouse,Window,Pixels,Selection),
-   lang, util, io, xdg, ipl.strings, posix, ipl.graphics, cairo
+   lang, util, io, xdg, ipl.strings, ipl.graphics, cairo
 
 class Event()
    public static const
@@ -247,34 +247,6 @@ procedure scale_even(i, j)
 end
 
 #
-# Get a real-valued environment variable.  Fails if the variable isn't
-# defined, returns the real value otherwise.  `min` and `max` provide
-# optional bounds checking.
-#
-procedure env_real(s, min, max)
-   local v
-   v := System.getenv(s) | fail
-   v := real(v) | runerr("Real value expected for " || s, v)
-   if v < \min | v > \max then
-      runerr("Value of " || s || " out of range", v)
-   return v
-end
-
-#
-# Get an integer-valued environment variable.  Fails if the variable isn't
-# defined, returns the integer value otherwise.  `min` and `max` provide
-# optional bounds checking.
-#
-procedure env_int(s, min, max)
-   local v
-   v := System.getenv(s) | fail
-   v := integer(v) | runerr("Integer value expected for " || s, v)
-   if v < \min | v > \max then
-      runerr("Value of " || s || " out of range", v)
-   return v
-end
-
-#
 # Convenient procedure to combine `env_real` and `scale`.  The result
 # is checked to ensure it is positive.
 #
@@ -307,23 +279,6 @@ procedure env_scale_odd(s, min, max, j)
    v := scale_odd(env_real(s, min, max), j) | fail
    if v < 1 then
       runerr("Scaled value of " || s || " out of range", v)
-   return v
-end
-
-#
-# Return a non-empty string from the environment.
-#
-procedure env_string(s)
-   return "" ~== System.getenv(s)
-end
-
-#
-# Return a valid flag value from the environment.
-#
-procedure env_flag(s)
-   local v
-   v := env_string(s) | fail
-   v := flag(v) | runerr("Flag value expected for " || s, v)
    return v
 end
 
