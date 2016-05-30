@@ -1100,6 +1100,13 @@ char *get_system_error()
     static char res[ERRMAX];
     rerrstr(res, sizeof(res));
     return res;
+#elif MSWIN32
+    char *msg;
+    static char res[256];
+    msg = wchar_to_utf8(_wcserror(errno));
+    snprintf(res, sizeof(res), "%s (errno=%d)", msg, errno);
+    free(msg);
+    return res;
 #else
     char *msg = 0;
     static char res[256];
