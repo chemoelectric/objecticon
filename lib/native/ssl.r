@@ -165,7 +165,7 @@ function ssl_SslStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
-       int nread;
+       word nread;
        tended struct descrip s;
        GetSelfSsl();
 
@@ -204,7 +204,7 @@ function ssl_SslStream_out(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
-       int rc;
+       word rc;
        GetSelfSsl();
        rc = SSL_write(self_ssl->ssl, StrLoc(s), StrLen(s));
        if (rc < 0 || (rc == 0 && SSL_get_error(self_ssl->ssl, rc) != SSL_ERROR_ZERO_RETURN)) {

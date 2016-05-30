@@ -1387,7 +1387,7 @@ function io_FileStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
-       int nread;
+       word nread;
        tended struct descrip s;
        GetSelfFd();
 
@@ -1425,7 +1425,7 @@ function io_FileStream_out(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
-       int rc;
+       word rc;
        GetSelfFd();
        if ((rc = write(self_fd, StrLoc(s), StrLen(s))) < 0) {
            errno2why();
@@ -1596,7 +1596,7 @@ function io_SocketStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
-       int nread;
+       word nread;
        tended struct descrip s;
        GetSelfFd();
 
@@ -1652,7 +1652,7 @@ function io_SocketStream_out(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
-       int rc;
+       word rc;
        GetSelfFd();
        /* 
         * If possible use MSG_NOSIGNAL so that we get the EPIPE error
@@ -3762,7 +3762,7 @@ function io_WinsockStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
    body {
-       int nread;
+       word nread;
        tended struct descrip s;
        GetSelfSocket();
 
@@ -3818,7 +3818,7 @@ function io_WinsockStream_out(self, s)
    if !cnv:string(s) then
       runerr(103, s)
    body {
-       int rc;
+       word rc;
        GetSelfSocket();
        rc = send(self_socket, StrLoc(s), StrLen(s), 0);
        if (rc == SOCKET_ERROR) {
