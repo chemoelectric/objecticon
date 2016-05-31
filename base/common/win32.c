@@ -151,3 +151,35 @@ char *getcwd_utf8(char *buff, int maxlen)
     free(u);
     return buff;
 }
+
+char *getenv_utf8(char *var)
+{
+    WCHAR *wvar, *wres;
+    char *res;
+    static char *buff = 0;
+    wvar = utf8_to_wchar(var);
+    wres = _wgetenv(wvar);
+    free(wvar);
+    if (!wres)
+        return NULL;
+    res = wchar_to_utf8(wres);
+    buff = safe_realloc(buff, strlen(res) + 1);
+    strcpy(buff, res);
+    free(res);
+    return buff;
+}
+
+int setenv_utf8(char *var, char *value)
+{
+    WCHAR *wvar, *wvalue;
+    wvar = utf8_to_wchar(var);
+    BOOL res;
+    if (value)
+        wvalue = utf8_to_wchar(value);
+    else
+        wvalue = NULL;
+    res = SetEnvironmentVariableW(wvar, wvalue);
+    free(wvar);
+    free(wvalue);
+    return res ? 0 : -1;
+}

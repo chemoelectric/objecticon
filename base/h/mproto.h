@@ -76,6 +76,8 @@ int rmdir_utf8(char *path);
 int access_utf8(char *path, int mode);
 int chdir_utf8(char *path);
 char *getcwd_utf8(char *buff, int maxlen);
+char *getenv_utf8(char *var);
+int setenv_utf8(char *var, char *value);
 #endif
 
 char *double2cstr(double n);

@@ -275,7 +275,11 @@ function posix_System_setenv(name, value)
    if !cnv:C_string(value) then
       runerr(103, value)
    body {
+#if MSWIN32
+      if (setenv_utf8(name, value) < 0) {
+#else
       if (setenv(name, value, 1) < 0) {
+#endif
          errno2why();
          fail;
       }
@@ -290,7 +294,11 @@ function posix_System_getenv(s)
       runerr(103,s)
    body {
       char *p;
+#if MSWIN32
+      if ((p = getenv_utf8(s)) != NULL) {    /* get environment variable */
+#else
       if ((p = getenv(s)) != NULL) {    /* get environment variable */
+#endif
           tended struct descrip result;
           cstr2string(p, &result);
           return result;
