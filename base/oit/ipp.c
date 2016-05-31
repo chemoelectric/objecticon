@@ -1164,17 +1164,6 @@ static char *getfnm(char *dst, char *src)
    return lim + 1;
    }
 
-/*
- * salloc - allocate and initialize string
- */
-
-char *salloc(char *s)
-{
-    char *s1;
-    s1 = (char *)safe_zalloc(strlen(s) + 1);
-    return strcpy(s1, s);
-}
-
 static void freecdefn(cdefn *d)
 {
     free(d->name);

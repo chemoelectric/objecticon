@@ -469,7 +469,6 @@ dptr c_get_instance_data(dptr x, dptr fname, struct inline_field_cache *ic);
 int c_is(dptr x, dptr cname, struct inline_global_cache *ic);
 void why(char *s);
 void whyf(char *fmt, ...);
-char *salloc(char *s);
 int class_is(struct b_class *class1, struct b_class *class2);
 struct b_cset *rangeset_to_block(struct rangeset *rs);
 struct b_ucs *make_ucs_block(dptr utf8, word length);

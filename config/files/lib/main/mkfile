@@ -15,7 +15,7 @@ $AUTOSRC: 	mkconsts
 	./mkconsts
 
 mkconsts:       mkconsts.$O
-		$LD $LDFLAGS -o mkconsts mkconsts.$O ../../base/common/plan9.$O
+		$LD $LDFLAGS -o mkconsts mkconsts.$O ../../base/common/plan9.$O ../../base/common/alloc.$O
 
 %.u:Q: %.icn
        test $stem.u -nt $stem.icn || oit -snc $LIBSRC

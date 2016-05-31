@@ -2086,17 +2086,6 @@ void whyf(char *fmt, ...)
     cstr2string(buff, &kywd_why);
 }
 
-/*
- * salloc - allocate and initialize string
- */
-
-char *salloc(char *s)
-{
-    char *s1;
-    s1 = safe_malloc(strlen(s) + 1);
-    return strcpy(s1, s);
-}
-
 static int pdptr_cmp(dptr p1, dptr *p2)
 {
     return lexcmp(p1, *p2);

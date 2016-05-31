@@ -287,16 +287,6 @@ char *allocate(unsigned n)
     return (p);
 }
 
-/*
- * salloc - allocate and initialize string
- */
-static char *salloc(char *s)
-{
-    char *s1;
-    s1 = (char *)MALLOC(strlen(s) + 1);
-    return strcpy(s1, s);
-}
-
 void create_file_names(void)
 {
     int len;
