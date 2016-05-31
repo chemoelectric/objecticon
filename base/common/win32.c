@@ -163,15 +163,22 @@ char *getcwd_utf8(char *buff, int maxlen)
 
 char *getenv_utf8(char *var)
 {
-    WCHAR *wvar, *wres;
+    DWORD n;
+    WCHAR *wvar, *wbuff;
     char *res;
     static char *buff = 0;
     wvar = utf8_to_wchar(var);
-    wres = _wgetenv(wvar);
-    free(wvar);
-    if (!wres)
+    n = GetEnvironmentVariableW(wvar, NULL, 0);
+    if (n == 0) {
+        free(wvar);
         return NULL;
-    res = wchar_to_utf8(wres);
+    }
+    ++n;
+    wbuff = safe_zalloc(n * sizeof(WCHAR));
+    GetEnvironmentVariableW(wvar, wbuff, n);
+    free(wvar);
+    res = wchar_to_utf8(wbuff);
+    free(wbuff);
     buff = safe_realloc(buff, strlen(res) + 1);
     strcpy(buff, res);
     free(res);
