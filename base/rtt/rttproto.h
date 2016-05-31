@@ -67,4 +67,3 @@ void           var_args  (struct token *ident);
 void           yyerror   (char *s);
 int               yylex     (void);
 int               yyparse   (void);
-char    *salloc(char *s);

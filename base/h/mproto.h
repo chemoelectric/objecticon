@@ -48,6 +48,8 @@ void *safe_zalloc(size_t size);
 void *safe_realloc(void *ptr, size_t size);
 void *safe_malloc(size_t size);
 
+char *salloc(char *s);
+
 int utf8_check(char **p, char *end);
 int utf8_iter(char **p);
 int utf8_rev_iter(char **p);

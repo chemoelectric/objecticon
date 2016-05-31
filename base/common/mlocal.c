@@ -1098,3 +1098,14 @@ char *get_system_error()
     return res;
 #endif
 }
+
+/*
+ * salloc - allocate and initialize string
+ */
+char *salloc(char *s)
+{
+    char *s1;
+    s1 = safe_malloc(strlen(s) + 1);
+    return strcpy(s1, s);
+}
+
