@@ -68,6 +68,7 @@ int mkstemp(char *path);
 #endif
 
 #if MSWIN32
+int gettimeofday(struct timeval *tv, struct timezone *tz);
 WCHAR *utf8_to_wchar(char *s);
 char *wchar_to_utf8(WCHAR *s);
 int stat_utf8(char *path, struct stat *st);
@@ -79,6 +80,8 @@ int rmdir_utf8(char *path);
 int access_utf8(char *path, int mode);
 int chdir_utf8(char *path);
 char *getcwd_utf8(char *buff, int maxlen);
+char *getenv_utf8(char *var);
+int setenv_utf8(char *var, char *value);
 #endif
 
 #if PLAN9

@@ -14,9 +14,15 @@ final abstract class Format()
    public static const
       SIG_DIGITS
 
+   public static
+      DECIMAL_POINT,
+      THOUSANDS_SEPARATOR
+
    private static init()
       # Max number of significant digits output by numeric_to_string
       SIG_DIGITS := 14
+      DECIMAL_POINT := env_string("OI_FORMAT_DECIMAL_POINT") | "."
+      THOUSANDS_SEPARATOR := env_string("OI_FORMAT_THOUSANDS_SEPARATOR") | ","
    end
       
    #
@@ -106,10 +112,10 @@ final abstract class Format()
       }
 
       if any(f, ",") then
-         every s[*s - p - 3 to 1 by -3] ||:= ","
+         every s[*s - p - 3 to 1 by -3] ||:= THOUSANDS_SEPARATOR
 
       if p > 0 then {
-         s[-p - 1] ||:= "."
+         s[-p - 1] ||:= DECIMAL_POINT
          if any(f, "s"| "z") then {
             "0" ~== s[i := *s to *s - p + 1 by -1]         
             s[i + 1 : 0] := if any(f, "s") then

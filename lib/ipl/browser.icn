@@ -418,15 +418,15 @@ $endif
                every e := !l do {
                   t := e.lstat
                   tf := if now - t.mtime > 180 * 86400 then
-                     Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;&nbsp;'yyyy")
+                     Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("NNN'&nbsp;'dd'&nbsp;&nbsp;'yyyy")
                   else
-                     Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("MMM'&nbsp;'dd'&nbsp;'HH:mm")
+                     Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("NNN'&nbsp;'dd'&nbsp;'HH:mm")
                   g := path.child(e.name).canonical().str()
 $ifdef _MS_WIN32
                   g := map(g, "\\", "/")
 $endif
                   rs.out("<tr><td>" || t.mode_str || "&nbsp;</td><td>" || uname(t.uid, ucache) || "&nbsp;</td><td>" || grname(t.gid, gcache) ||
-                         "&nbsp;</td><td align=right>" || Format.numeric_to_string(t.size, 0, ',') || "&nbsp;</td><td>" || tf || "&nbsp;</td>" ||
+                         "&nbsp;</td><td align=right>" || Format.numeric_to_string(t.size, 0, ',') || "&nbsp;</td><td>" || string(tf) || "&nbsp;</td>" ||
                          "<td nowrap><a href=\"file://" || URL.percent_encode(g, URL.UNRESERVED ++ '/') || "\">" || 
                                  Browser.to_content(e.name) || "</a></td></tr>\n")
                }

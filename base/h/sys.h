@@ -139,8 +139,6 @@
    #define F_OK 0
    #define R_OK 0
    #define X_OK 0
-   #define setenv(a,b,c) SetEnvironmentVariable(a,b)
-   #define unsetenv(a) SetEnvironmentVariable(a,"")
    #ifndef vsnprintf
       #define vsnprintf(a,b,c,d) vsprintf(a,c,d)
    #endif

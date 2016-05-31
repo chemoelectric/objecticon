@@ -11,17 +11,6 @@
  * other) copyright notices are kept intact.
  */
 
-#if MSWIN32
-int gettimeofday(struct timeval *tv, struct timezone *tz)
-{
-    struct _timeb wtp;
-    _ftime( &wtp );
-    tv->tv_sec = wtp.time;
-    tv->tv_usec = wtp.millitm * 1000;
-    return 0;
-}
-#endif
-
 
 "kill() - send a signal to a process."
 
@@ -85,6 +74,27 @@ end
 
 #endif
 
+#if MSWIN32
+extern WCHAR **_wenviron;
+
+function posix_System_environ()
+  body {
+    WCHAR **p = _wenviron;
+    while (*p) {
+        tended struct descrip result;
+        wchar_to_utf8_string(*p, &result);
+        suspend result;
+        ++p;
+    }
+    fail;
+  }
+end
+
+#define getenv getenv_utf8
+#define setenv(k, v, o) setenv_utf8(k, v)
+#define unsetenv(a) setenv_utf8(a, NULL)
+
+#else
 extern char **environ;
 
 function posix_System_environ()
@@ -99,6 +109,7 @@ function posix_System_environ()
     fail;
   }
 end
+#endif
 
 static char ** list2stringptrs(dptr l)
 {
@@ -334,18 +345,17 @@ function posix_System_getenv(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
+      tended struct descrip result;
       char *p;
-      if ((p = getenv(s)) != NULL) {    /* get environment variable */
-          tended struct descrip result;
-          cstr2string(p, &result);
+      p = getenv(s);
+      /* fail if not in environment */
+      if (!p)
+          fail;
+      cstr2string(p, &result);
 #if PLAN9
-          free(p);
+      free(p);
 #endif
-          return result;
-      }
-      else                              /* fail if not in environment */
-         fail;
-
+      return result;
    }
 end
 
