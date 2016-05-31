@@ -44,7 +44,6 @@
    #define F_OK 0
    #define R_OK 0
    #define X_OK 0
-   #define unsetenv(a) setenv_utf8(a, NULL)
    #ifndef vsnprintf
       #define vsnprintf(a,b,c,d) vsprintf(a,c,d)
    #endif

@@ -65,6 +65,7 @@ void calc_ucs_index_settings(word utf8_len, word len, word *index_step, word *n_
 int strcasecmp(char *s1, char *s2);
 int strncasecmp(char *s1, char *s2, int n);
 int mkstemp(char *path);
+int gettimeofday(struct timeval *tv, struct timezone *tz);
 WCHAR *utf8_to_wchar(char *s);
 char *wchar_to_utf8(WCHAR *s);
 int stat_utf8(char *path, struct stat *st);

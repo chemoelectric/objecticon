@@ -5,6 +5,15 @@ int mkstemp(char *path)
     return _open(_mktemp(path), _O_CREAT | _O_TRUNC | _O_WRONLY |_O_BINARY, _S_IREAD | _S_IWRITE);
 }
 
+int gettimeofday(struct timeval *tv, struct timezone *tz)
+{
+    struct _timeb wtp;
+    _ftime( &wtp );
+    tv->tv_sec = wtp.time;
+    tv->tv_usec = wtp.millitm * 1000;
+    return 0;
+}
+
 WCHAR *utf8_to_wchar(char *s)
 {
     WCHAR *mbs;

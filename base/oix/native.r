@@ -2421,6 +2421,13 @@ function io_DirStream_close(self)
    }
 end
 
+
+#define rename rename_utf8
+#define mkdir mkdir_utf8
+#define remove remove_utf8
+#define rmdir rmdir_utf8
+#define access access_utf8
+
 #endif
 
 
@@ -2434,11 +2441,7 @@ function io_Files_rename(s1, s2)
       runerr(103,s2)
 
    body {
-#if MSWIN32
-       if (rename_utf8(s1, s2) < 0) {
-#else
        if (rename(s1, s2) < 0) {
-#endif
            errno2why();
            fail;
        }
@@ -2557,11 +2560,7 @@ function io_Files_mkdir(s, mode)
    if !cnv:C_string(s) then
       runerr(103, s)
    body {
-#if MSWIN32
-      if (mkdir_utf8(s) < 0) {
-#else
       if (mkdir(s) < 0) {
-#endif
 	 errno2why();
 	 fail;
       }
@@ -2574,11 +2573,7 @@ function io_Files_remove(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
-#if MSWIN32
-      if (remove_utf8(s) < 0) {
-#else
       if (remove(s) < 0) {
-#endif
           errno2why();
           fail;
       }
@@ -2590,11 +2585,7 @@ function io_Files_rmdir(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
-#if MSWIN32
-      if (rmdir_utf8(s) < 0) {
-#else
       if (rmdir(s) < 0) {
-#endif
           errno2why();
           fail;
       }
@@ -2862,11 +2853,7 @@ function io_Files_access(s, mode)
    if !def:C_integer(mode, F_OK) then
       runerr(101, mode)
    body {
-#if MSWIN32
-      if (access_utf8(s, mode) < 0) {
-#else
       if (access(s, mode) < 0) {
-#endif
           errno2why();
           fail;
       }
