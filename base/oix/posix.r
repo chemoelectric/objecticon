@@ -352,9 +352,6 @@ function posix_System_getenv(s)
       if (!p)
           fail;
       cstr2string(p, &result);
-#if PLAN9
-      free(p);
-#endif
       return result;
    }
 end

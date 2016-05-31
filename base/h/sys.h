@@ -25,7 +25,7 @@
    typedef vlong off_t;
    #define vsnprint vsnprint
    #define vsnprintf vsnprint
-
+   #define getenv tidy_getenv
    #define readimage oi_readimage
    #define fillarc oi_fillarc
    #define EXIT_FAILURE 1

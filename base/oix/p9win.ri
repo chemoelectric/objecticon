@@ -331,7 +331,7 @@ wbp wopen(char *display)
     ws->width = ws->height = 1;
     ws->state = HiddenCanvas;
     w->window = ws;
-    ws->wsys = wsysstr;
+    ws->wsys = salloc(wsysstr);
     create_list(64, &ws->listp);
 
     GAlloc(wc, _wcontext);
