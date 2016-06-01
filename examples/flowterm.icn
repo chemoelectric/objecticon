@@ -1735,8 +1735,7 @@ class Terminal(TabItem, VtUI)
 
    private setup_shell()
       local env, sh, xd, fp, s, sh2, t
-      env := []
-      every put(env, System.environ())
+      env := System.environ()
       every put(env, !shell_vars)
       env_put(env, "FLOWTERM", "1")
       env_put(env, "TERM", "xterm")
