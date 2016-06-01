@@ -59,14 +59,15 @@ end
 function posix_System_environ()
   body {
     tended struct descrip tmp, result;
-    WCHAR *p = GetEnvironmentStringsW();
+    WCHAR *p, *env = GetEnvironmentStringsW();
     create_list(0, &result);
+    p = env;
     while (*p) {
         wchar_to_utf8_string(p, &tmp);
         list_put(&result, &tmp);
         p += wcslen(p) + 1;
     }
-    FreeEnvironmentStringsW(p);
+    FreeEnvironmentStringsW(env);
     return result;
   }
 end
