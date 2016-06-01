@@ -435,7 +435,7 @@ static void passwd2list(struct passwd *pw, dptr result)
 static void group2list(struct group *gr, dptr result)
 {
    tended struct descrip tmp, mem;
-   int i, n;
+   int i;
    create_list(4, result);
    cstr2string(gr->gr_name, &tmp);
    list_put(result, &tmp);
@@ -443,14 +443,13 @@ static void group2list(struct group *gr, dptr result)
    list_put(result, &tmp);
    convert_from_gid_t(gr->gr_gid, &tmp);
    list_put(result, &tmp);
-   n = 0;
-   while (gr->gr_mem[n])
-       ++n;
-   create_list(n, &mem);
+   create_list(0, &mem);
    list_put(result, &mem);
-   for (i = 0; i < n; ++i) {
+   i = 0;
+   while (gr->gr_mem[i]) {
        cstr2string(gr->gr_mem[i], &tmp);
        list_put(&mem, &tmp);
+       ++i;
    }
 }
 #endif

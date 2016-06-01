@@ -719,19 +719,13 @@ function lang_Prog_get_region_info_impl(c)
        struct progstate *prog;
        struct region *rp;
        tended struct descrip l, tmp, result;
-       int n;
 
        if (!(prog = get_program_for(&c)))
           runerr(0);
 
        create_list(2, &result);
 
-       n = 0;
-       for (rp = prog->stringregion; rp; rp = rp->next)
-           ++n;
-       for (rp = prog->stringregion->prev; rp; rp = rp->prev)
-           ++n;
-       create_list(2 * n, &l);
+       create_list(0, &l);
        list_put(&result, &l);
        for (rp = prog->stringregion; rp; rp = rp->next) {
            convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
@@ -746,12 +740,7 @@ function lang_Prog_get_region_info_impl(c)
            list_put(&l, &tmp);
        }
 
-       n = 0;
-       for (rp = prog->blockregion; rp; rp = rp->next)
-           ++n;
-       for (rp = prog->blockregion->prev; rp; rp = rp->prev)
-           ++n;
-       create_list(2 * n, &l);
+       create_list(0, &l);
        list_put(&result, &l);
        for (rp = prog->blockregion; rp; rp = rp->next) {
            convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
@@ -1850,7 +1839,7 @@ function io_SocketStream_dns_query_4(host)
       struct addrinfo hints;
       struct addrinfo *res, *t;
       tended struct descrip tmp, result;
-      int error, n;
+      int error;
       memset(&hints, 0, sizeof(hints));
       hints.ai_family = AF_INET;
       hints.ai_socktype = SOCK_STREAM;
@@ -1859,11 +1848,7 @@ function io_SocketStream_dns_query_4(host)
           getaddrinfo_error2why(error);
           fail;
       }
-      n = 0;
-      for (t = res; t; t = t->ai_next)
-          ++n;
-
-      create_list(n, &result);
+      create_list(0, &result);
       for (t = res; t; t = t->ai_next) {
           char buf[INET_ADDRSTRLEN];
           struct sockaddr_in *p = (struct sockaddr_in *)t->ai_addr;
@@ -1883,7 +1868,7 @@ function io_SocketStream_dns_query_6(host)
       struct addrinfo hints;
       struct addrinfo *res, *t;
       tended struct descrip tmp, result;
-      int error, n;
+      int error;
       memset(&hints, 0, sizeof(hints));
       hints.ai_family = AF_INET6;
       hints.ai_socktype = SOCK_STREAM;
@@ -1892,11 +1877,7 @@ function io_SocketStream_dns_query_6(host)
           getaddrinfo_error2why(error);
           fail;
       }
-      n = 0;
-      for (t = res; t; t = t->ai_next)
-          ++n;
-
-      create_list(n, &result);
+      create_list(0, &result);
       for (t = res; t; t = t->ai_next) {
           char buf[INET6_ADDRSTRLEN];
           struct sockaddr_in6 *p = (struct sockaddr_in6 *)t->ai_addr;
@@ -3957,7 +3938,7 @@ function io_WinsockStream_dns_query_4(host)
       struct addrinfo hints;
       struct addrinfo *res, *t;
       tended struct descrip tmp, result;
-      int error, n;
+      int error;
       memset(&hints, 0, sizeof(hints));
       hints.ai_family = AF_INET;
       hints.ai_socktype = SOCK_STREAM;
@@ -3966,11 +3947,7 @@ function io_WinsockStream_dns_query_4(host)
           wsaerror2why();
           fail;
       }
-      n = 0;
-      for (t = res; t; t = t->ai_next)
-          ++n;
-
-      create_list(n, &result);
+      create_list(0, &result);
       for (t = res; t; t = t->ai_next) {
           char buf[INET_ADDRSTRLEN];
           struct sockaddr_in *p = (struct sockaddr_in *)t->ai_addr;
@@ -3990,7 +3967,7 @@ function io_WinsockStream_dns_query_6(host)
       struct addrinfo hints;
       struct addrinfo *res, *t;
       tended struct descrip tmp, result;
-      int error, n;
+      int error;
       memset(&hints, 0, sizeof(hints));
       hints.ai_family = AF_INET6;
       hints.ai_socktype = SOCK_STREAM;
@@ -3999,11 +3976,7 @@ function io_WinsockStream_dns_query_6(host)
           wsaerror2why();
           fail;
       }
-      n = 0;
-      for (t = res; t; t = t->ai_next)
-          ++n;
-
-      create_list(n, &result);
+      create_list(0, &result);
       for (t = res; t; t = t->ai_next) {
           char buf[INET6_ADDRSTRLEN];
           struct sockaddr_in6 *p = (struct sockaddr_in6 *)t->ai_addr;
