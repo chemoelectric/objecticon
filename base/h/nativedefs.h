@@ -375,7 +375,9 @@ NativeDef(util.Time,get_system_seconds,util_Time_get_system_seconds)
 NativeDef(util.Time,get_system_millis,util_Time_get_system_millis)
 NativeDef(util.Time,get_system_micros,util_Time_get_system_micros)
 NativeDef(posix.System,execve,posix_System_execve)
+#if !PLAN9
 NativeDef(posix.System,environ,posix_System_environ)
+#endif
 NativeDef(posix.System,fork,posix_System_fork)
 NativeDef(posix.System,kill,posix_System_kill)
 NativeDef(posix.System,wait_impl,posix_System_wait_impl)

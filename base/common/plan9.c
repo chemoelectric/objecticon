@@ -76,11 +76,6 @@ void exit(int status)
     exits(buff);
 }
 
-int setenv(const char *name, const char *value, int overwrite)
-{
-    return putenv(name, value);
-}
-
 int unsetenv(const char *name)
 {
     char buf[128];
@@ -326,7 +321,7 @@ rd_long(char **f, long *p)
 
 /* Adapted from libc/9sys/getenv.c, so that the result needn't be freed. */
 char*
-tidy_getenv(char *name)
+oi_getenv(char *name)
 {
     int r, f;
     long s;

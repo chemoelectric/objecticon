@@ -25,7 +25,7 @@
    typedef vlong off_t;
    #define vsnprint vsnprint
    #define vsnprintf vsnprint
-   #define getenv tidy_getenv
+   #define getenv oi_getenv
    #define readimage oi_readimage
    #define fillarc oi_fillarc
    #define EXIT_FAILURE 1
@@ -85,7 +85,6 @@
    int mkdir(const char *path, mode_t mode);
    int rmdir(const char *path);
    int gethostname(char *name, size_t len);
-   int setenv(const char *name, const char *value, int overwrite);
    int unsetenv(const char *name);
    off_t lseek(int fd, off_t offset, int whence);
    int dup2(int oldfd, int newfd);

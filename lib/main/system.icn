@@ -36,35 +36,50 @@ final abstract class System()
    #
    public static native execve(f, args, env)
 
-   # spawn a new identical process.
+   # Spawn a new identical process.
    public static native fork()
 
-   # send a signal to a process.
+   # Send a signal to a process.
    public static native kill(pid, signal)
 
-   # wait for process to terminate or stop.
+   # Wait for process to terminate or stop.
    public static wait(pid, options)
       return ExitInfo!wait_impl(pid, options)
    end
 
-   # returns the process ID of the calling process.
+   # Return the process ID of the calling process.
    public static native getpid()
 
-   # returns the process ID of the parent of the calling process.
+   # Return the process ID of the parent of the calling process.
    public static native getppid()
 
    private static native wait_impl()
 
-   # generate the environment values as key=pair strings
+   # Return a list of the environment values as key=value strings
+$ifdef _PLAN9
+   public static environ()
+      local l, e, r
+      l := Files.list("/env") | fail
+      pop(l)
+      pop(l)
+      r := []
+      every e := (!l).name do
+         # Allow getenv to fail, since another process might have
+         # deleted the variable.
+         put(r, e || "=" || getenv(e))
+      return r
+   end
+$else
    public static native environ()
+$endif
 
-   # return contents of environment variable s.
+   # Return contents of environment variable s.
    public static native getenv(s)
    
-   # set an environment variable.
+   # Set an environment variable.
    public static native setenv(name, value)
 
-   # unset an environment variable.
+   # Unset an environment variable.
    public static native unsetenv(name)
 
    # Get name and information about current kernel.  A UtsName object is returned, with
@@ -75,19 +90,19 @@ final abstract class System()
 
    private static native uname_impl()
 
-   # Returns the real user ID of the calling process.
+   # Return the real user ID of the calling process.
    public static native getuid()
 
-   # Returns the effective user ID of the calling process.
+   # Return the effective user ID of the calling process.
    public static native geteuid()
 
-   # Returns the real group ID of the calling process.
+   # Return the real group ID of the calling process.
    public static native getgid()
 
-   # Returns the effective group ID of the calling process.
+   # Return the effective group ID of the calling process.
    public static native getegid()
 
-   # Returns the supplementary group IDs of the calling process
+   # Return the supplementary group IDs of the calling process
    public static native getgroups()
 
    private static native getpw_impl(v)
@@ -105,17 +120,17 @@ final abstract class System()
       return Group!getgr_impl(v)
    end
 
-   # Sets the effective user ID of the calling process.
+   # Set the effective user ID of the calling process.
    public static native setuid(uid)
 
-   # Sets the effective group ID of the calling process.
+   # Set the effective group ID of the calling process.
    public static native setgid(gid)
 
    # Creates a session and sets the process group ID, returning the
    # new process group ID of the calling process.
    public static native setsid()
 
-   # Returns the session ID of the process with the given process ID
+   # Return the session ID of the process with the given process ID
    public static native getsid(id)
 
    # Set process group ID for job control

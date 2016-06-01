@@ -88,7 +88,7 @@ int setenv_utf8(char *var, char *value);
 
 #if PLAN9
 void readtzinfo(struct tzinfo *tz);
-char* tidy_getenv(char *name);
+char* oi_getenv(char *name);
 #endif
 
 char *double2cstr(double n);

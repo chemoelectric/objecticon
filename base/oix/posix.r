@@ -75,18 +75,19 @@ end
 #endif
 
 #if MSWIN32
-extern WCHAR **_wenviron;
 
 function posix_System_environ()
   body {
-    WCHAR **p = _wenviron;
+    tended struct descrip tmp, result;
+    WCHAR *p = GetEnvironmentStringsW();
+    create_list(0, &result);
     while (*p) {
-        tended struct descrip result;
-        wchar_to_utf8_string(*p, &result);
-        suspend result;
-        ++p;
+        wchar_to_utf8_string(p, &tmp);
+        list_put(&result, &tmp);
+        p += wcslen(p) + 1;
     }
-    fail;
+    FreeEnvironmentStringsW(p);
+    return result;
   }
 end
 
@@ -94,21 +95,28 @@ end
 #define setenv(k, v, o) setenv_utf8(k, v)
 #define unsetenv(a) setenv_utf8(a, NULL)
 
+#elif PLAN9
+extern char **environ;
+
+#define setenv(k, v, o) putenv(k, v)
+
 #else
 extern char **environ;
 
 function posix_System_environ()
   body {
+    tended struct descrip tmp, result;
     char **p = environ;
+    create_list(0, &result);
     while (*p) {
-        tended struct descrip result;
-        cstr2string(*p, &result);
-        suspend result;
+        cstr2string(*p, &tmp);
+        list_put(&result, &tmp);
         ++p;
     }
-    fail;
+    return result;
   }
 end
+
 #endif
 
 static char ** list2stringptrs(dptr l)
