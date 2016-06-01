@@ -78,13 +78,11 @@ void exit(int status)
 
 int unsetenv(const char *name)
 {
-    char buf[128];
-    snprint(buf, sizeof(buf), "/env/%s", name);
-    if (strcmp(buf + 5, name) != 0) {
-        werrstr("name too long");
-        return -1;
-    }
-    remove(buf);
+    char *ename;
+    ename = safe_malloc(strlen(name) + 6);
+    sprint(ename, "/env/%s", name);
+    remove(ename);
+    free(ename);
     return 0;
 }
 
@@ -323,30 +321,34 @@ rd_long(char **f, long *p)
 char*
 oi_getenv(char *name)
 {
-    int r, f;
-    long s;
+    int f;
+    long r, n;
     static char *ans = 0;
-    char *p, *ep, ename[100];
-
-    if(strchr(name, '/') != nil)
-        return nil;
-    snprint(ename, sizeof ename, "/env/%s", name);
-    if(strcmp(ename+5, name) != 0)
-        return nil;
+    char *p, *ep, *ename;
+    ename = safe_malloc(strlen(name) + 6);
+    sprint(ename, "/env/%s", name);
     f = open(ename, OREAD);
-    if(f < 0)
+    free(ename);
+    if (f < 0)
         return 0;
-    s = seek(f, 0, 2);
-    ans = safe_realloc(ans, s + 1);
-    seek(f, 0, 0);
-    r = read(f, ans, s);
-    if(r >= 0) {
-        ep = ans + s - 1;
-        for(p = ans; p < ep; p++)
-            if(*p == '\0')
-                *p = ' ';
-        ans[s] = '\0';
+    n = seek(f, 0, 2);
+    if (n < 0) {
+        close(f);
+        return 0;
     }
+    ans = safe_realloc(ans, n + 1);
+    seek(f, 0, 0);
+    r = readn(f, ans, n);
+    if (r != n) {
+        close(f);
+        return 0;
+    }
+    /* Replace the \0 separators used by rc list variables. */
+    ep = ans + n - 1;
+    for(p = ans; p < ep; p++)
+        if(*p == '\0')
+            *p = ' ';
+    ans[n] = '\0';
     close(f);
     return ans;
 }
