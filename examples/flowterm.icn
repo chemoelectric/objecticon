@@ -892,6 +892,8 @@ class DirList(ButtonOnlyList)
    end
 end
 
+record ShellVar(key, value)
+
 # Store objects rather than just strings in the history list to avoid
 # confusion when the dir changes whilst the history list is open.
 # With just strings we wouldn't be able to match up the selected
@@ -1108,13 +1110,20 @@ class Terminal(TabItem, VtUI)
    end
 
    public add_shell_arg(s)
-      put(shell_args, s)
+      put(shell_args, string(s))
       return self
    end
 
    public add_shell_var(s)
-      find(u"=", s) | return error("missing = in variable setting")
-      put(shell_vars, s)
+      local k, v
+      string(s) ? {
+         if k := tab(find("=")) then {
+            move(1)
+            v := tab(0)
+         } else
+            k := tab(0)
+      }
+      put(shell_vars, ShellVar(k, v))
       return self
    end
 
@@ -1188,7 +1197,7 @@ class Terminal(TabItem, VtUI)
          }
          "sh-var" : {
             check_new(s) | fail
-            add_shell_var(param) | fail
+            add_shell_var(param)
          }
          "run" : {
             check_param(s, param) | fail
@@ -1726,17 +1735,22 @@ class Terminal(TabItem, VtUI)
       key ||:= "="
       every i := 1 to *env do {
          if match(key, env[i]) then {
-            env[i] := key || val
+            if /val then
+               delete(env, i)
+            else
+               env[i] := key || val
             return
          }
       }
-      put(env, key || val)
+      if \val then
+         put(env, key || val)
    end
 
    private setup_shell()
-      local env, sh, xd, fp, s, sh2, t
+      local env, sh, xd, fp, s, sh2, t, v
       env := System.environ()
-      every put(env, !shell_vars)
+      every v := !shell_vars do
+         env_put(env, v.key, v.value)
       env_put(env, "FLOWTERM", "1")
       env_put(env, "TERM", "xterm")
       sh := \shell | System.getpw(System.getuid()).shell
@@ -3240,7 +3254,7 @@ procedure usage(opts)
    help_line(":adjacent", "Add this tab adjacent to the current tab, rather than at the end of all the tabs.")
    help_line(":sh=STRING", "Specify the shell to run.  The default is null, meaning use the user's default shell.")
    help_line(":sh-arg=STRING", "Specify an argument to pass to the shell; may be given several times to give multiple arguments.")
-   help_line(":sh-var=NAME=STRING", "Specify an environment variable setting to pass to the shell; may be given several times to give multiple variables.")
+   help_line(":sh-var=NAME=STRING", "Specify an environment variable setting to pass to the shell; may be given several times to give multiple variables.  If just NAME is given (with no =), then NAME is deleted from the environment.")
    help_line(":run=STRING", "Run the given string in the shell; the same as :send-tty with a carriage return appended.")
    help_line(":font=FONT", "Set the font, which should be fixed width.  The default is the font 'fixed'.")
    help_line(":fg=COLOUR", "Specify the foreground colour.  The default is null, meaning use the dialog's foreground colour.")

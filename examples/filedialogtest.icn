@@ -7,7 +7,7 @@ procedure main(a)
       set_label("A File Dialog").
       set_filters(["*","*.icn","*.c","*.txt"]).
       set_files(["one.icn", "two.icn","three.icn"]).
-      set_directories(["/tmp","/home"])
+      set_directories([Files.get_temp(), Files.get_home()])
 
    if \opts["we"] then
       d.set_existing_file_mode(FileDialog.WARN)

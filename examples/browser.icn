@@ -54,7 +54,7 @@ class Settings2()
       max_concurrent_downloads := 3
       visited := []
       visited_size := 100
-      destination_dir := "/tmp"
+      destination_dir := Files.get_temp()
       font_factor := 1.0
       return
    end

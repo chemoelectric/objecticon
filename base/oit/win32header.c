@@ -3,7 +3,7 @@
 int main(void)
 {
     char *oixloc;
-    STARTUPINFOA siStartupInfo; 
+    STARTUPINFOW siStartupInfo; 
     PROCESS_INFORMATION piProcessInfo; 
     memset(&siStartupInfo, 0, sizeof(siStartupInfo)); 
     memset(&piProcessInfo, 0, sizeof(piProcessInfo)); 
@@ -16,7 +16,8 @@ int main(void)
             exit(1);
         }
     }
-   if (!CreateProcess(oixloc, GetCommandLine(), NULL, NULL, TRUE, 0, NULL, NULL, 
+
+    if (!CreateProcessW(utf8_to_wchar(oixloc), GetCommandLineW(), NULL, NULL, TRUE, 0, NULL, NULL, 
 		      &siStartupInfo, &piProcessInfo)) {
       fprintf(stderr, "CreateProcess failed GetLastError=%d\n", GetLastError());
       exit(1);

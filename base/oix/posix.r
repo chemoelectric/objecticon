@@ -79,26 +79,21 @@ end
 function posix_System_environ()
   body {
     tended struct descrip tmp, result;
-    WCHAR *p = GetEnvironmentStringsW();
+    WCHAR *p, *env = GetEnvironmentStringsW();
     create_list(0, &result);
+    p = env;
     while (*p) {
         wchar_to_utf8_string(p, &tmp);
         list_put(&result, &tmp);
         p += wcslen(p) + 1;
     }
-    FreeEnvironmentStringsW(p);
+    FreeEnvironmentStringsW(env);
     return result;
   }
 end
 
-#define getenv getenv_utf8
-#define setenv(k, v, o) setenv_utf8(k, v)
-#define unsetenv(a) setenv_utf8(a, NULL)
-
 #elif PLAN9
 extern char **environ;
-
-#define setenv(k, v, o) putenv(k, v)
 
 #else
 extern char **environ;
@@ -574,7 +569,7 @@ static void passwd2list(struct passwd *pw, dptr result)
 static void group2list(struct group *gr, dptr result)
 {
    tended struct descrip tmp, mem;
-   int i, n;
+   int i;
    create_list(4, result);
    cstr2string(gr->gr_name, &tmp);
    list_put(result, &tmp);
@@ -582,14 +577,13 @@ static void group2list(struct group *gr, dptr result)
    list_put(result, &tmp);
    convert_from_gid_t(gr->gr_gid, &tmp);
    list_put(result, &tmp);
-   n = 0;
-   while (gr->gr_mem[n])
-       ++n;
-   create_list(n, &mem);
+   create_list(0, &mem);
    list_put(result, &mem);
-   for (i = 0; i < n; ++i) {
+   i = 0;
+   while (gr->gr_mem[i]) {
        cstr2string(gr->gr_mem[i], &tmp);
        list_put(&mem, &tmp);
+       ++i;
    }
 }
 #endif

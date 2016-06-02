@@ -24,7 +24,8 @@ clean:
 	rm -f *.obj rtt typespec
 
 rtt:	$(OBJ)
-	$(LD) -subsystem:console $(OBJ) $(LIBS) -out:rtt.exe 
+	$(LD) $(LDFLAGS) /ENTRY:wmainCRTStartup /SUBSYSTEM:CONSOLE \
+           $(OBJ) $(LIBS) /OUT:rtt.exe 
 	$(INSTALL) rtt "$(OI_BIN)"
 
 rttdb.obj: ../h/version.h

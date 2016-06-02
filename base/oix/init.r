@@ -1141,20 +1141,6 @@ void resolve(struct progstate *p)
         fnptr->fname = p->Constants + (uword)fnptr->fname;
 }
 
-#if MSWIN32
-int wmain(int argc, WCHAR *wargv[])
-{
-    WSADATA cData;
-    char **argv;
-    int i;
-    WSAStartup(MAKEWORD(2, 2), &cData);
-    argv = malloc(argc * sizeof(char *));
-    for (i = 0; i < argc; ++i)
-        argv[i] = wchar_to_utf8(wargv[i]);
-    return main(argc, argv);
-}
-#endif
-
 int main(int argc, char **argv)
 {
     int i;
@@ -1166,6 +1152,11 @@ int main(int argc, char **argv)
     char *t, *name;
     ulonglong pmem;
     double d;
+
+#if MSWIN32
+    WSADATA cData;
+    WSAStartup(MAKEWORD(2, 2), &cData);
+#endif
 
 #if PLAN9
     /* Turn off floating point exceptions */

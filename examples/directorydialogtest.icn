@@ -5,7 +5,7 @@ procedure main(a)
    opts := options(a, "-we! -re! -de! -l! -k!")
    d :=  DirectoryDialog().
       set_label("A Dir Dialog").
-      set_directories(["/tmp","/home"])
+      set_directories([Files.get_temp(), Files.get_home()])
    if \opts["we"] then
       d.set_existing_file_mode(FileDialog.WARN)
 

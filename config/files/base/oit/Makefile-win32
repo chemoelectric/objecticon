@@ -21,12 +21,14 @@ clean:
 		rm -f *.obj tgram.g y.tab.c y.tab.h y.output oit win32header mkkwd fixgram mktoktab
 
 oit:		$(OBJS)
-		$(LD) -subsystem:console $(OBJS) $(LIBS) -out:oit.exe 
+		$(LD) $(LDFLAGS) /STACK:16000000 /ENTRY:wmainCRTStartup /SUBSYSTEM:CONSOLE \
+                      $(OBJS) $(LIBS) /OUT:oit.exe 
 		$(INSTALL) oit "$(OI_BIN)"
 
 win32header:	win32header.obj ../common/mlocal.obj ../common/alloc.obj ../common/win32.obj
-		$(LD) -subsystem:console win32header.obj ../common/mlocal.obj ../common/alloc.obj \
-                ../common/win32.obj $(LIBS) -out:win32header.exe 
+		$(LD) /ENTRY:mainCRTStartup /SUBSYSTEM:CONSOLE \
+                   win32header.obj ../common/mlocal.obj ../common/alloc.obj \
+                   ../common/win32.obj $(LIBS) /OUT:win32header.exe 
 		$(INSTALL) win32header "$(OI_BIN)"
 
 $(OBJS):   ../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \

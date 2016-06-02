@@ -84,6 +84,7 @@ int chdir_utf8(char *path);
 char *getcwd_utf8(char *buff, int maxlen);
 char *getenv_utf8(char *var);
 int setenv_utf8(char *var, char *value);
+FILE *fopen_utf8(char *path, char *mode);
 #endif
 
 #if PLAN9

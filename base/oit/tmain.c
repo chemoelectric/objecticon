@@ -371,7 +371,7 @@ static void execute(char **args)
 #if MSWIN32
    int n, len;
    char *cmd, **p, *cp;
-   STARTUPINFOA siStartupInfo; 
+   STARTUPINFOW siStartupInfo; 
    PROCESS_INFORMATION piProcessInfo; 
 
    memset(&siStartupInfo, 0, sizeof(siStartupInfo)); 
@@ -388,9 +388,9 @@ static void execute(char **args)
    for (p = args; *p; p++)
       cp += sprintf(cp, "\"%s\" ", *p);
 
-   /*printf("cmd=%s\n",cmd);fflush(stdout);*/
-   if (!CreateProcess(oixloc, cmd, NULL, NULL, FALSE, 0, NULL, NULL, 
-		      &siStartupInfo, &piProcessInfo)) {
+   if (!CreateProcessW(utf8_to_wchar(oixloc), utf8_to_wchar(cmd), 
+                       NULL, NULL, FALSE, 0, NULL, NULL, 
+                       &siStartupInfo, &piProcessInfo)) {
       quit("CreateProcess failed GetLastError=%d\n",GetLastError());
    }
    WaitForSingleObject(piProcessInfo.hProcess, INFINITE);

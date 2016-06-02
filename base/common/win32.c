@@ -199,3 +199,26 @@ int setenv_utf8(char *var, char *value)
     free(wvalue);
     return res ? 0 : -1;
 }
+
+FILE *fopen_utf8(char *path, char *mode)
+{
+    WCHAR *wpath, *wmode;
+    FILE *res;
+    wpath = utf8_to_wchar(path);
+    wmode = utf8_to_wchar(mode);
+    res = _wfopen(wpath, wmode);
+    free(wpath);
+    free(wmode);
+    return res;
+}
+
+int wmain(int argc, WCHAR *wargv[])
+{
+    char **argv;
+    int i;
+    argv = safe_malloc((argc + 1) * sizeof(char *));
+    for (i = 0; i < argc; ++i)
+        argv[i] = wchar_to_utf8(wargv[i]);
+    argv[argc] = 0;
+    return main(argc, argv);
+}
