@@ -44,7 +44,8 @@ SRCS	      = closure.c \
 all:		$(PROGRAM)
 
 $(PROGRAM):     $(OBJS)
-		$(LD) $(LDFLAGS) /SUBSYSTEM:CONSOLE $(OBJS) $(COBJS) $(LIBS) /OUT:iyacc.exe 
+		$(LD) $(LDFLAGS) /ENTRY:wmainCRTStartup /SUBSYSTEM:CONSOLE \
+                   $(OBJS) $(COBJS) $(LIBS) /OUT:iyacc.exe 
 		$(INSTALL) iyacc "$(OI_BIN)"
 
 clean:;		@rm -f $(OBJS) $(PROGRAM)

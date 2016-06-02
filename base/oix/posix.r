@@ -72,10 +72,6 @@ function posix_System_environ()
   }
 end
 
-#define getenv getenv_utf8
-#define setenv(k, v, o) setenv_utf8(k, v)
-#define unsetenv(a) setenv_utf8(a, NULL)
-
 #else
 extern char **environ;
 

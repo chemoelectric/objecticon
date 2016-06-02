@@ -6,6 +6,8 @@ AUTOSRC=posixconsts.icn ioconsts.icn evmonconsts.icn ucodeconsts.icn
 LIBU=$(LIBSRC:.icn=.u)
 AUTOU=$(AUTOSRC:.icn=.u)
 
+LIBS=		ws2_32.lib
+
 all: mkconsts $(LIBU) $(AUTOU)
 
 clean:
@@ -14,8 +16,10 @@ clean:
 $(AUTOSRC): 	mkconsts
 	./mkconsts.exe
 
-mkconsts:	mkconsts.c
-	cl mkconsts.c
+mkconsts:	mkconsts.obj
+	$(LD) /ENTRY:mainCRTStartup /SUBSYSTEM:CONSOLE mkconsts.obj \
+	../../base/common/mlocal.obj ../../base/common/alloc.obj ../../base/common/win32.obj \
+	$(LIBS) /OUT:mkconsts.exe 
 
 $(LIBU): %.u: %.icn
 	oit -snc $(LIBSRC)

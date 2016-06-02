@@ -1360,7 +1360,7 @@ function io_FileStream_new_impl(path, flags, mode)
        if (!convert_to_mode_t(&mode, &c_mode))
            runerr(0);
 #if MSWIN32
-       fd = open_utf8(path, flags | O_BINARY, c_mode);
+       fd = open(path, flags | O_BINARY, c_mode);
 #else
        fd = open(path, flags, c_mode);
 #endif
@@ -2402,13 +2402,6 @@ function io_DirStream_close(self)
    }
 end
 
-
-#define rename rename_utf8
-#define mkdir mkdir_utf8
-#define remove remove_utf8
-#define rmdir rmdir_utf8
-#define access access_utf8
-
 #endif
 
 
@@ -2594,11 +2587,7 @@ function io_Files_truncate(s, len)
       off_t c_len;
       if (!convert_to_off_t(&len, &c_len))
           runerr(0);
-#if MSWIN32
-      fd = open_utf8(s, O_WRONLY, 0);
-#else
       fd = open(s, O_WRONLY, 0);
-#endif
       if (fd < 0) {
            errno2why();
            fail;
@@ -2718,11 +2707,7 @@ function io_Files_stat_impl(s)
    body {
       tended struct descrip result;
       struct stat st;
-#if MSWIN32
-      if (stat_utf8(s, &st) < 0) {
-#else
       if (stat(s, &st) < 0) {
-#endif
           errno2why();
           fail;
       }
@@ -2737,11 +2722,7 @@ function io_Files_lstat_impl(s)
    body {
       tended struct descrip result;
       struct stat st;
-#if MSWIN32
-      if (stat_utf8(s, &st) < 0) {
-#else
       if (lstat(s, &st) < 0) {
-#endif
           errno2why();
           fail;
       }

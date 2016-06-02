@@ -60,6 +60,19 @@
    #include <io.h>
    #include <time.h>
    #include "gdip.h"
+
+   #define rename(x, y) rename_utf8(x, y)
+   #define mkdir(x) mkdir_utf8(x)
+   #define remove(x) remove_utf8(x)
+   #define rmdir(x) rmdir_utf8(x)
+   #define access(x, y) access_utf8(x, y)
+   #define stat(x, y) stat_utf8(x, y)
+   #define open(x, y, z) open_utf8(x, y, z)
+   #define lstat(x, y) stat_utf8(x, y)
+   #define getenv(x) getenv_utf8(x)
+   #define setenv(k, v, o) setenv_utf8(k, v)
+   #define unsetenv(a) setenv_utf8(a, NULL)
+   #define fopen(x, y) fopen_utf8(x, y)
 #endif					/* MSWIN32 */
 
 
