@@ -17,7 +17,7 @@ $(AUTOSRC): 	mkconsts
 	./mkconsts.exe
 
 mkconsts:	mkconsts.obj
-	$(LD) /ENTRY:mainCRTStartup /SUBSYSTEM:CONSOLE mkconsts.obj \
+	$(LD) /INCREMENTAL:NO /ENTRY:mainCRTStartup /SUBSYSTEM:CONSOLE mkconsts.obj \
 	../../base/common/mlocal.obj ../../base/common/alloc.obj ../../base/common/win32.obj \
 	$(LIBS) /OUT:mkconsts.exe 
 
