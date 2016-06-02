@@ -5,9 +5,9 @@ OI_BIN=$(OI_HOME)/bin
 
 CC=cl
 LD=link
-# /Ox for maximum optimzation, /Zi for debugging...
-CFLAGS=/O1 /Zi
-
+# /Od disables optimzation, /ZI for debugging
+CFLAGS=/Od /Zi
+LDFLAGS=/DEBUG:FULL
 RM=rm -f
 RMDIR=rm -rf
 MKDIR=mkdir
