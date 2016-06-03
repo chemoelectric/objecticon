@@ -1365,7 +1365,7 @@ void interp()
             case Op_Halt: {
                 showcurrstack();
                 fprintf(stderr, "Halt instruction reached\n");
-                exit(1);
+                exit(EXIT_FAILURE);
                 break; /* Not reached */
             }
 

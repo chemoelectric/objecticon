@@ -699,7 +699,7 @@ static int ldbg(int argc, char **argv)
 {
     if (argc < 2) {
         fprintf(stderr, "Usage: ldbg srcfile\n");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     if (!ppinit(argv[1],0))

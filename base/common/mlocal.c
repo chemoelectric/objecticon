@@ -266,19 +266,19 @@ char *canonicalize(char *path)
     if (isabsolute(path)) {
         if (strlen(path) + 1 > sizeof(path1)) {
             fprintf(stderr, "path too long to canonicalize: %s", path);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         strcpy(path1, path);
     } else {
         int l;
         if (!getcwd(path1, sizeof(path1))) {
             fprintf(stderr, "getcwd return 0 - current working dir too long.");
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         l = strlen(path1);
         if (l + 1 + strlen(path) + 1 > sizeof(path1)) {
             fprintf(stderr, "path too long to canonicalize: %s", path);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         if (!strchr(FILEPREFIX, path1[l - 1]))
             path1[l++] = FILESEP;

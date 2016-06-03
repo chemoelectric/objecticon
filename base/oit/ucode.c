@@ -525,13 +525,13 @@ int udis(int argc, char **argv)
     struct ucode_op *op;
     if (argc < 2) {
         fprintf(stderr, "Usage: udis ufile\n");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     inname = intern(argv[1]);
     ucodefile = fopen(inname, ReadBinary);
     if (!ucodefile) {
         fprintf(stderr, "Couldn't open %s\n", inname);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     while ((op = uin_op())) {
         int i, n, spos = ftell(ucodefile) - 1;
