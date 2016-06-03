@@ -96,11 +96,11 @@ class FileDialog(Dialog)
       local res, seen, e, k
       res := []
       seen := set()
-      every e := ucs(!l) do {
-         k := FilePath(e).standard_case().str()
+      every e := FilePath(ucs(!l)) do {
+         k := e.standard_case().str()
          member(seen, k) | {
             insert(seen, k)
-            put(res, e)
+            put(res, e.ucs())
          }
       }
       return res
@@ -440,7 +440,9 @@ class FileDialog(Dialog)
       t := copy(init_dirs)
       every put(t,
                 Files.getcwd() | 
-                FavouriteDirectoriesDialog.gen_directories())
+                FavouriteDirectoriesDialog.gen_directories() |
+                Files.get_temp() |
+                Files.get_roots())
       return unique_ucs_list(t)
    end
 

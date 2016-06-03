@@ -2590,7 +2590,8 @@ $endif
 
    public get_favourites_directories()
       local t
-      t := ipl.pdco.List{Files.getcwd() | FavouriteDirectoriesDialog.gen_directories()}
+      t := ipl.pdco.List{Files.getcwd() | FavouriteDirectoriesDialog.gen_directories() | 
+                            Files.get_temp() | Files.get_roots()}
       return FileDialog.unique_ucs_list(t)
    end
 

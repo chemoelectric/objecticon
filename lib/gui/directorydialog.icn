@@ -356,7 +356,8 @@ $endif
       t := copy(init_dirs)
       every put(t,
                 Files.getcwd() | 
-                FavouriteDirectoriesDialog.gen_directories())
+                FavouriteDirectoriesDialog.gen_directories() |
+                Files.get_temp())
       return FileDialog.unique_ucs_list(t)
    end
 
