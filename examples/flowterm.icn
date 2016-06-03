@@ -11,7 +11,6 @@ import
    ipl.sort,
    ipl.pdco,
    ipl.wildcard,
-   ipl.lists,
    ipl.functional,
    ipl.filegui,
    ipl.childwait,
@@ -2591,11 +2590,8 @@ $endif
 
    public get_favourites_directories()
       local t
-      t := []
-      every put(t,
-                Files.getcwd() | 
-                FavouriteDirectoriesDialog.gen_directories())
-      return lunique(FileDialog.ucs_list(t))
+      t := ipl.pdco.List{Files.getcwd() | FavouriteDirectoriesDialog.gen_directories()}
+      return FileDialog.unique_ucs_list(t)
    end
 
    public refresh_favourite_dirs()

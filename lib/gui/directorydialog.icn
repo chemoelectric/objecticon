@@ -2,7 +2,6 @@ package gui
 
 import 
    ipl.sort,
-   ipl.lists,
    ipl.filegui,
    io
 
@@ -358,7 +357,7 @@ $endif
       every put(t,
                 Files.getcwd() | 
                 FavouriteDirectoriesDialog.gen_directories())
-      return lunique(FileDialog.ucs_list(t))
+      return FileDialog.unique_ucs_list(t)
    end
 
    public on_favourite_dirs_menu_item(ev)

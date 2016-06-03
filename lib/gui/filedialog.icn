@@ -3,7 +3,6 @@ package gui
 import 
    ipl.wildcard,
    ipl.sort,
-   ipl.lists,
    ipl.filegui,
    ipl.pdco,
    ipl.functional,
@@ -91,6 +90,20 @@ class FileDialog(Dialog)
 
    public static ucs_list(l)
       return ipl.pdco.List{ucs(!l)}
+   end
+
+   public static unique_ucs_list(l)
+      local res, seen, e, k
+      res := []
+      seen := set()
+      every e := ucs(!l) do {
+         k := FilePath(e).standard_case().str()
+         member(seen, k) | {
+            insert(seen, k)
+            put(res, e)
+         }
+      }
+      return res
    end
 
    public component_setup()
@@ -428,7 +441,7 @@ class FileDialog(Dialog)
       every put(t,
                 Files.getcwd() | 
                 FavouriteDirectoriesDialog.gen_directories())
-      return lunique(ucs_list(t))
+      return unique_ucs_list(t)
    end
 
    public on_favourite_dirs_menu_item(ev)
