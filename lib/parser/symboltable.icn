@@ -561,7 +561,7 @@ class SymbolTable(Connectable)
    end
 
    public scan_file(f)
-      return scan(FilePath(f).canonical().str())
+      return scan(FilePath(f).canonical().standard_case().str())
    end
 
    private ensure_package_db()
@@ -570,7 +570,7 @@ class SymbolTable(Connectable)
          return
       package_db := table()
       every d := Files.getcwd() | Files.split_paths(System.getenv("OI_PATH")) do {
-         p := FilePath(d).canonical()
+         p := FilePath(d).canonical().standard_case()
          s := p.str()
          if /package_db[s] then {
             if f := open(p.child("packages.txt").str(), "r") then {
@@ -656,7 +656,7 @@ class SymbolTable(Connectable)
    end
 
    public get_scanned_file(f)
-      return member(scanned_files, get_stem(FilePath(f).canonical().str()))
+      return member(scanned_files, get_stem(FilePath(f).canonical().standard_case().str()))
    end
 
    private static check_package_access(sf, sym)

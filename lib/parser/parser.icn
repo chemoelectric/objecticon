@@ -10,7 +10,7 @@ class ErrorDetail()
       local l
       l := FilePath(name).get(-1)
       return if Files.access(name, Access.R_OK) then {
-         if FilePath(l).canonical().str() == name then
+         if FilePath(l).canonical().standard_case().str() == name then
             l
          else
             name

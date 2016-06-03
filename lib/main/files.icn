@@ -602,6 +602,7 @@ abstract class FileSystem()
    public abstract filepath_is_absolute(fp)
    public abstract filepath_tidy(fp)
    public abstract filepath_absolute(fp)
+   public abstract filepath_standard_case(fp)
    public abstract get_home()
    public abstract get_temp()
    public abstract is_hidden(s)
@@ -777,6 +778,14 @@ class FilePath(ObjectOutput)
    end
 
    #
+   # Return a path with the elements put into a standard case.  For
+   # case-sensitive file systems, this does nothing and returns self.
+   #
+   public standard_case()
+      return Files.FS.filepath_standard_case(self)
+   end
+
+   #
    # Return another {FilePath} with the same elements, but as ucs
    # strings.  Fails if any part cannot be converted to ucs.
    #
@@ -919,6 +928,10 @@ class UnixFileSystem(FileSystem)
       return FilePath(Files.getcwd()).append(fp)
    end
 
+   public filepath_standard_case(fp)
+      return fp
+   end
+
    public get_home()
       return System.getenv("HOME")
    end
@@ -1001,8 +1014,15 @@ class WindowsFileSystem(FileSystem)
             if *r > 1 then
                pull(r)
          } else
-            put(r, map(e))
+            put(r, e)
       }
+      return FilePath.from_list(r)
+   end
+
+   public filepath_standard_case(fp)
+      local r
+      r := []
+      every put(r, map(!fp.l))
       return FilePath.from_list(r)
    end
 
