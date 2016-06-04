@@ -264,7 +264,6 @@ end
 #
 class FileSuggestField(SuggestField)
    public
-      cwd,
       matches,
       prefix,
       dir_list,
@@ -280,11 +279,6 @@ class FileSuggestField(SuggestField)
 
    public set_show_hidden_files(s)
       self.show_hidden_files_flag := check_flag(s)
-      return self
-   end
-
-   public set_cwd(d)
-      self.cwd := d
       return self
    end
 
@@ -328,11 +322,9 @@ class FileSuggestField(SuggestField)
    #
    private calc_matches()
       local path, s, t
-      path := FilePath(contents)
-      if not path.is_absolute() then
-         path := FilePath(cwd).append(path)
+      path := FilePath(contents).absolute()
       matches := []
-      if *contents = 0 | contents[-1] == Files.PATH_SEPARATOR then {
+      if *contents = 0 | any(Files.PATH_SPECIALS, contents[-1]) then {
          do_dir_list(path.str()) | fail
          every t := !dir_list do {
             if match_entry(t) then
@@ -456,7 +448,6 @@ class FileSuggestField(SuggestField)
    public new()
       SuggestField.new()
       self.set_contents(u"")
-      cwd := Files.getcwd()
       set_direction(Direction.DOWN)
       return
    end
