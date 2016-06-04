@@ -1325,6 +1325,29 @@ function io_WindowsFileSystem_getdcwd(d)
    }
 end
 
+void win32error2why()
+{
+    int n, l;
+    LPWSTR t = NULL;
+    char *res;
+    DWORD rc;
+    n = GetLastError();
+    rc = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                       0, n, 0, (LPWSTR)&t, 0, 0);
+    if (rc != 0) {
+        res = wchar_to_utf8(t);
+        LocalFree(t);
+        /* Get rid of any trailing \r\n */
+        l = strlen(res);
+        if (l >= 2 && res[l - 2] == '\r' && res[l - 1] == '\n')
+            res[l - 2] = '\0';
+        whyf("%s (lasterror=%d)", res, n);
+        free(res);
+    } else {
+        whyf("Windows error: (lasterror=%d)", n);
+    }
+}
+
 #endif
 
 struct sdescrip fdf = {2, "fd"};
@@ -2365,7 +2388,7 @@ function io_DirStream_new_impl(path)
 	     fd->status = EMPTY;
 	     return C_integer((word)fd);
 	  }
-	  LitWhy("Couldn't open directory");
+          win32error2why();
 	  free(fd);
 	  fail;
        }
@@ -3684,29 +3707,6 @@ if ((word)m == -1)
     runerr(219, p);
 #enddef
 
-static void wsaerror2why()
-{
-    int n, l;
-    LPWSTR t = NULL;
-    char *res;
-    DWORD rc;
-    n = WSAGetLastError();
-    rc = FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                       0, n, 0, (LPWSTR)&t, 0, 0);
-    if (rc != 0) {
-        res = wchar_to_utf8(t);
-        LocalFree(t);
-        /* Get rid of any trailing \r\n */
-        l = strlen(res);
-        if (l >= 2 && res[l - 2] == '\r' && res[l - 1] == '\n')
-            res[l - 2] = '\0';
-        whyf("Winsock error: %s (lasterror=%d)", res, n);
-        free(res);
-    } else {
-        whyf("Winsock error: (lasterror=%d)", n);
-    }
-}
-
 function io_WinsockStream_in(self, i)
    if !cnv:C_integer(i) then
       runerr(101, i)
@@ -3728,7 +3728,7 @@ function io_WinsockStream_in(self, i)
            dealcstr(StrLoc(s));
 
            if (nread < 0) {
-               wsaerror2why();
+               win32error2why();
                fail;
            } else  /* nread == 0 */
                return nulldesc;
@@ -3756,7 +3756,7 @@ function io_WinsockStream_new_impl(domain, typ)
        SOCKET sock;
        sock = socket(domain, typ, 0);
        if (sock == INVALID_SOCKET) {
-           wsaerror2why();
+           win32error2why();
            fail;
        }
        return C_integer sock;
@@ -3771,7 +3771,7 @@ function io_WinsockStream_out(self, s)
        GetSelfSocket();
        rc = send(self_socket, StrLoc(s), StrLen(s), 0);
        if (rc == SOCKET_ERROR) {
-           wsaerror2why();
+           win32error2why();
            fail;
        }
        return C_integer rc;
@@ -3782,7 +3782,7 @@ function io_WinsockStream_close(self)
    body {
        GetSelfSocket();
        if (closesocket(self_socket) == SOCKET_ERROR) {
-           wsaerror2why();
+           win32error2why();
            *self_socket_dptr = minusonedesc;
            fail;
        }
@@ -3797,7 +3797,7 @@ function io_WinsockStream_shutdown(self, how)
    body {
        GetSelfSocket();
        if (shutdown(self_socket, how) == SOCKET_ERROR) {
-           wsaerror2why();
+           win32error2why();
            fail;
        }
        return self;
@@ -3812,7 +3812,7 @@ function io_WinsockStream_set_blocking_mode(self, flag)
           runerr(171, flag);
        mode = is:null(flag) ? 1 : 0;
        if (ioctlsocket(self_socket, FIONBIO, &mode) == SOCKET_ERROR) {
-           wsaerror2why();
+           win32error2why();
            fail;
        }
        return self;
@@ -3849,7 +3849,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
             host = buf;
         error = getaddrinfo(host, port, &hints, &res);
         if (error != 0) {
-            wsaerror2why();
+            win32error2why();
             return 0;
         }
         memcpy(&iss, res->ai_addr, res->ai_addrlen);
@@ -3899,7 +3899,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
         }
         error = getaddrinfo(host, port, &hints, &res);
         if (error != 0) {
-            wsaerror2why();
+            win32error2why();
             return 0;
         }
         memcpy(&iss, res->ai_addr, res->ai_addrlen);
@@ -3925,7 +3925,7 @@ function io_WinsockStream_dns_query_4(host)
       hints.ai_socktype = SOCK_STREAM;
       error = getaddrinfo(host, NULL, &hints, &res);
       if (error != 0) {
-          wsaerror2why();
+          win32error2why();
           fail;
       }
       create_list(0, &result);
@@ -3954,7 +3954,7 @@ function io_WinsockStream_dns_query_6(host)
       hints.ai_socktype = SOCK_STREAM;
       error = getaddrinfo(host, NULL, &hints, &res);
       if (error != 0) {
-          wsaerror2why();
+          win32error2why();
           fail;
       }
       create_list(0, &result);
@@ -3985,7 +3985,7 @@ function io_WinsockStream_connect(self, addr)
        }
 
        if (connect(self_socket, sa, len) == SOCKET_ERROR) {
-           wsaerror2why();
+           win32error2why();
            fail;
        }
 
@@ -4008,7 +4008,7 @@ function io_WinsockStream_bind(self, addr)
        }
 
        if (bind(self_socket, sa, len) == SOCKET_ERROR) {
-           wsaerror2why();
+           win32error2why();
            fail;
        }
 
@@ -4023,7 +4023,7 @@ function io_WinsockStream_listen(self, backlog)
    body {
        GetSelfSocket();
        if (listen(self_socket, backlog) == SOCKET_ERROR) {
-           wsaerror2why();
+           win32error2why();
            fail;
        }
        return self;
@@ -4039,7 +4039,7 @@ function io_WinsockStream_get_peer(self)
        GetSelfSocket();
        iss_len = sizeof(iss);
        if (getpeername(self_socket, (struct sockaddr *)&iss, &iss_len) == SOCKET_ERROR) {
-           wsaerror2why();
+           win32error2why();
            fail;
        }
        snprintf(buf, sizeof(buf), "%s:%u", inet_ntoa(iss.sin_addr), (unsigned)ntohs(iss.sin_port));
@@ -4054,7 +4054,7 @@ function io_WinsockStream_accept_impl(self)
        GetSelfSocket();
 
        if ((sock = accept(self_socket, 0, 0)) == INVALID_SOCKET) {
-           wsaerror2why();
+           win32error2why();
            fail;
        }
 
@@ -4097,7 +4097,7 @@ function io_DescStream_poll(l, timeout)
 
        rc = WSAPoll(ufds, nfds, timeout);
        if (rc == SOCKET_ERROR) {
-           wsaerror2why();
+           win32error2why();
            fail;
        }
 

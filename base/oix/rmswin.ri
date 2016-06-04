@@ -660,7 +660,7 @@ int requestselection(wbp w, char *selection, char *target)
         HANDLE hg;
         char *phg;
         if (!OpenClipboard(NULL)) {
-            LitWhy("Failed to open windows clipboard");
+            win32error2why();
             return Failed;
         }
         hg = GetClipboardData(CF_UNICODETEXT);
@@ -701,7 +701,7 @@ int sendselectionresponse(wbp w, word requestor, char *property,
         ReturnErrVal(128, *data, Error);
 
     if (!OpenClipboard(NULL)) {
-        LitWhy("Failed to open windows clipboard");
+        win32error2why();
         return Failed;
     }
 
