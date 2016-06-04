@@ -92,6 +92,10 @@ class FileDialog(Dialog)
       return ipl.pdco.List{ucs(!l)}
    end
 
+   # Helper method to take a list of files and filter non-ucs files,
+   # and duplicates.  Duplicate and trailing slashes are also cleaned
+   # up (through use of `FilePath`).
+   #
    public static unique_ucs_list(l)
       local res, seen, e, k
       res := []
@@ -438,11 +442,7 @@ class FileDialog(Dialog)
    public get_favourites_directories()
       local t
       t := copy(init_dirs)
-      every put(t,
-                Files.getcwd() | 
-                FavouriteDirectoriesDialog.gen_directories() |
-                Files.get_temp() |
-                Files.get_roots())
+      every put(t, FavouriteDirectoriesDialog.gen_directories_plus())
       return unique_ucs_list(t)
    end
 

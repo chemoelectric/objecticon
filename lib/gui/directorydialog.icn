@@ -354,10 +354,7 @@ $endif
    public get_favourites_directories()
       local t
       t := copy(init_dirs)
-      every put(t,
-                Files.getcwd() | 
-                FavouriteDirectoriesDialog.gen_directories() |
-                Files.get_temp())
+      every put(t, FavouriteDirectoriesDialog.gen_directories_plus())
       return FileDialog.unique_ucs_list(t)
    end
 

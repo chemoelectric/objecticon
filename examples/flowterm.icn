@@ -2589,10 +2589,7 @@ $endif
    end
 
    public get_favourites_directories()
-      local t
-      t := ipl.pdco.List{Files.getcwd() | FavouriteDirectoriesDialog.gen_directories() | 
-                            Files.get_temp() | Files.get_roots()}
-      return FileDialog.unique_ucs_list(t)
+      return FileDialog.unique_ucs_list(ipl.pdco.List{FavouriteDirectoriesDialog.gen_directories_plus()})
    end
 
    public refresh_favourite_dirs()
