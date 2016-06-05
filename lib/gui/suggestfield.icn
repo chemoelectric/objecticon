@@ -189,7 +189,7 @@ abstract class SuggestField(TextField, MenuMode)
          set_motion_cursor(&yes).
          set_always_show_focus_cursor(&yes).
          set_select_mode(Select.ONE).
-         set_selection_on_key_moves(toggle_flag(/select_using_enter_flag)).
+         set_selection_on_key_moves(toggle_flag(select_using_enter_flag)).
          set_z(self.parent_dialog.get_top_z())
       self.parent_dialog.add(tl)
       self.tl.set_ideal_size(self.w, max_w,
