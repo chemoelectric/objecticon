@@ -338,6 +338,9 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       local max_h, max_w, spc_below, spc_above, spc_right, d, dim, win,
          use_direction, rs
 
+      if *selection_list = 0 then
+         fail
+
       win := parent_dialog.win
       dim := win.get_display_size()
       # Screen rectangle, in adjusted co-ordinates
