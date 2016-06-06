@@ -264,6 +264,7 @@ end
 #
 class FileSuggestField(SuggestField)
    public
+      cwd,
       matches,
       prefix,
       dir_list,
@@ -279,6 +280,15 @@ class FileSuggestField(SuggestField)
 
    public set_show_hidden_files(s)
       self.show_hidden_files_flag := check_flag(s)
+      return self
+   end
+
+   # Set the "cwd" from which relative paths are resolved.  Must be an
+   # absolute `FilePath`, or `&null`, in which case the true cwd is
+   # used.
+   #
+   public set_cwd(d)
+      self.cwd := d
       return self
    end
 
@@ -322,7 +332,7 @@ class FileSuggestField(SuggestField)
    #
    private calc_matches()
       local path, s, t
-      path := FilePath(contents).absolute()
+      path := FilePath(contents).absolute(cwd)
       matches := []
       if *contents = 0 | any(Files.PATH_SPECIALS, contents[-1]) then {
          do_dir_list(path.str()) | fail
