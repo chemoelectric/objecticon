@@ -381,17 +381,7 @@ class FileSuggestField(SuggestField)
    # we have ["mark", "mary", "marion"], we get "mar".
    #
    private get_longest_prefix()
-      local i, s, t, e
-      i := 1
-      t := u""
-      repeat {
-         s := matches[1].name[1+:i] | break
-         every e := !matches do
-            e.name[1+:i] == s | break break
-         t := s
-         i +:= 1
-      }
-      return t
+      return coprefix(ipl.pdco.List{(!matches).name}) | u""
    end
 
    public handle_tab(e)
