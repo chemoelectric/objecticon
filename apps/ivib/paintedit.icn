@@ -114,7 +114,9 @@ class ImagePaintEdit(PaintEdit)
 
    public on_file_browse()
       local fd, s, l, p
-      fd := FileDialog().set_existing_file_mode(FileDialog.REQUIRE)
+      fd := FileDialog().
+         set_image_preview(&yes).
+         set_existing_file_mode(FileDialog.REQUIRE)
       l := []
       s := img_field.get_contents()
       if is_image_file(s) then {
@@ -299,7 +301,9 @@ class GridPaintEdit(PaintEdit)
 
    public on_insert_image_file(e)
       local d, s
-      d := FileDialog().set_existing_file_mode(FileDialog.REQUIRE)
+      d := FileDialog().
+         set_image_preview(&yes).
+         set_existing_file_mode(FileDialog.REQUIRE)
       d.set_directory(Ivib.last_icon_dir)
       d.set_filters(["*.gif;*.png;*.jpg","*"])
       d.show_modal(self)

@@ -7,7 +7,9 @@ import
    ipl.pdco,
    ipl.functional,
    util,
-   io
+   io,
+   graphics,
+   ipl.strings
 
 class FileDialogPos()
    public const
@@ -18,6 +20,103 @@ class FileDialogPos()
       self.cursor_name := cursor_name
       self.area_y := area_y
       return
+   end
+end
+
+class FileEditListField(SuggestField)
+   public
+      matches
+
+   public keeps(e)
+      return
+   end
+
+   public on_change(ev)
+      # Don't start a suggestion on navigation of the list.
+      parent.was_applied(ev) | SuggestField.on_change(ev)
+   end
+
+   private calc_matches()
+      local t
+      matches := []
+      \parent_dialog.file_suggestions_flag | fail
+      every t := !parent_dialog.flist.contents do {
+         if match(contents, t.name) then
+            put(matches, t)
+      }
+   end
+
+   public convert_element(o)
+      return text(o.name)
+   end
+
+   public create_popup()
+      return ItemPaintList().
+         set_item_paint(IconFilesItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                            set_x_align(Align.L))
+   end
+
+   protected do_request()
+      # Don't popup if an existing file warning is in place.
+      if \parent_dialog.warned then
+         return []
+      calc_matches()
+      # No point in a list which is a copy of what we already have
+      if *matches = 1 & endswith(contents, matches[1].name) then
+         return []
+      return matches
+   end
+
+   #
+   # Get the longest common initial name from the matches list.  Eg if
+   # we have ["mark", "mary", "marion"], we get "mar".
+   #
+   private get_longest_prefix()
+      return coprefix(ipl.pdco.List{(!matches).name}) | u""
+   end
+
+   public handle_tab(e)
+      local t
+      parent_dialog.warned := &no
+      if \tl then {
+         t := get_longest_prefix()
+         if *contents < *t then
+            assign_contents(t, e)
+      } else {
+         # As above, calculate the string we could insert.
+         calc_matches()
+         t := get_longest_prefix()
+         if *contents < *t then
+            assign_contents(t, e)
+         else
+            on_change(e)
+      }
+   end
+
+   public handle_key(e)
+      if /tl then case e.code of {
+         Key.UP : parent.go_up(e)
+         Key.DOWN : parent.go_down(e)
+      }
+      if e.code == "\t" then
+         handle_tab(e)
+      else
+         SuggestField.handle_key(e)
+   end
+
+   public new()
+      SuggestField.new()
+      set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(0))
+      set_select_using_enter(&yes)
+      return
+   end
+end
+
+class FileEditList(EditList)
+   public create_view()
+      return FileEditListField()
    end
 end
 
@@ -42,6 +141,7 @@ class FileDialog(Dialog)
       prev_button,
       next_button,
       up_button, 
+      centre_panel,
       dir, 
       dlist, 
       flist, 
@@ -63,10 +163,15 @@ class FileDialog(Dialog)
       message_label, 
       existing_file_mode,
       multiple_files_flag,
+      file_suggestions_flag,
       single_file_overlay_item,
       multiple_files_overlay_item,
       file_overlay,
-      file_label
+      file_label,
+      img,
+      img_label,
+      img_preview,
+      warned
 
    public static const
       WARN, IGNORE, REQUIRE, DISALLOW
@@ -85,6 +190,11 @@ class FileDialog(Dialog)
 
    public set_multiple_files(s)
       self.multiple_files_flag := check_flag(s)
+      return self
+   end
+
+   public set_file_suggestions(s)
+      self.file_suggestions_flag := check_flag(s)
       return self
    end
 
@@ -141,11 +251,27 @@ class FileDialog(Dialog)
    public check_existing()
       local f
       /multiple_files_flag | fail
-      f := get_current_selection().str() | fail
-      if Files.is_directory(f) then
-         msg("Directory")
-      else if existing_file_mode === (WARN | DISALLOW) & Files.access(f) then
-         msg("Existing file")
+      f := get_current_selection().str()
+      warned := &null
+      if \f then {
+         if Files.is_directory(f) then
+            msg("Directory")
+         else if existing_file_mode === (WARN | DISALLOW) & Files.access(f) then {
+            warned := &yes
+            msg("Existing file")
+         }
+      }
+      if \img then {
+         if endswith(map(\f), ".gif" | ".jpg" | ".jpeg" | ".png") then
+            img.set_image(f)
+         else
+            img.set_image()
+         if \img.win then
+            img_label.set_label(".cell\nHeight: " || img.win.get_height() || "\n.br\n" ||
+                                "Width: " || img.win.get_width() || "\n.br\n")
+         else
+            img_label.set_label("")
+      }
    end
 
    public on_file_content_changed(ev)
@@ -576,6 +702,40 @@ class FileDialog(Dialog)
       return [dir_list, file_list]
    end
 
+   public set_image_preview(s)
+      local p
+      check_flag(s)
+      if is_initialized() then
+         fail
+      if /s then {
+         if \img then {
+            centre_panel.remove(img_preview)
+            img := img_label := img_preview := &null
+         }
+      } else {
+         if /img then {
+            img := Image().
+               set_constraint(Grid.EOL, &yes).
+               set_border(NullBorder())
+            img_label := Label().
+               set_label("").
+               set_constraint(Grid.X_FILL, &yes).
+               set_height(scale(100)).
+               set_border(NullBorder())
+            p := Panel().
+               set_layout(GridLayout()).
+               add(img).
+               add(img_label)
+            img_preview := Border().
+               set_content(p).
+               set_constraint(Grid.X_WEIGHT, 0.0).
+               set_width(scale(140))
+            centre_panel.add(img_preview)
+         }
+      }
+      return self
+   end
+
    public new()
       Dialog.new()
       self.setup()
@@ -603,6 +763,7 @@ class FileDialog(Dialog)
       sorter := Files.name_cmp
       synch_paints()
       existing_file_mode := IGNORE
+      file_suggestions_flag := &yes
       history := []
       history_pos := 0
       update_grey()
@@ -663,10 +824,9 @@ class FileDialog(Dialog)
    end
 
    private setup()
-      local paint_2, layout_7, paint_14, paint_45, layout_11, layout_4, paint_11, paint_37, paint_42, refresh_menu_item, panel_4, paint_29, split_content_1, split_content_2, paint_9, split_1, paint_31, paint_3, layout_8, paint_15, paint_46, paint_12, paint_43, new_dir_menu_item, paint_35, panel_2, paint_27, paint_32, favourite_dirs_menu_item, layout_9, paint_47, paint_1, layout_6, paint_13, paint_44, layout_10, layout_3, paint_10, paint_36, paint, panel_3, paint_28, paint_30, paint_48
+      local paint_2, layout_7, paint_14, paint_45, layout_11, layout_4, paint_11, paint_37, paint_42, refresh_menu_item, panel_4, paint_29, split_content_1, split_content_2, paint_9, split_1, paint_31, paint_3, layout_8, paint_15, paint_46, layout_12, paint_12, paint_43, new_dir_menu_item, paint_35, panel_2, paint_27, paint_32, favourite_dirs_menu_item, layout_9, paint_47, paint_1, layout_6, paint_13, paint_44, layout_10, layout_3, paint_10, paint_36, paint, panel_3, paint_28, paint_30, paint_48
       self.set_label("Select file")
       self.set_resize(&yes)
-      self.set_size(scale(700), scale(500))
       paint_45 := ImagePaint().
          set_cache("gui.CONFIGURE_24")
       paint_42 := TextPaint("New directory...")
@@ -778,9 +938,9 @@ class FileDialog(Dialog)
          set_size(scale(150)).
          set_align(Align.L, Align.C).
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_tooltip(paint_36).
          connect(self.on_dir_action, Event.ACTION).
          connect(self.on_dir_content_changed, Event.CONTENT_CHANGED).
@@ -791,9 +951,9 @@ class FileDialog(Dialog)
          set_extra("cells")
       panel_4 := Panel().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_layout(layout_6).
          add(tools_menu_button).
          add(home_button).
@@ -808,11 +968,11 @@ class FileDialog(Dialog)
       dlist := ItemPaintList().
          set_size(scale(210), scale(200)).
          clear_constraints().
-         set_constraint("r_inset", scale(0)).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.R_INSET, scale(0)).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          connect(self.on_dlist, Event.SELECTION_CHANGED).
          set_select_mode(Select.ONE).
          set_contents([])
@@ -824,13 +984,13 @@ class FileDialog(Dialog)
          set_layout(layout_8).
          add(dlist)
       flist := ItemPaintList().
-         set_size(scale(270), scale(200)).
+         set_size(scale(465), scale(365)).
          clear_constraints().
-         set_constraint("l_inset", scale(0)).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.L_INSET, scale(0)).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          connect(self.on_flist, Event.SELECTION_CHANGED).
          set_select_mode(Select.ONE).
          set_contents([])
@@ -843,22 +1003,33 @@ class FileDialog(Dialog)
          add(flist)
       split_1 := Split().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          set_left(split_content_1).
          set_right(split_content_2).
          set_min(scale(100), scale(100))
-      self.add(split_1)
+      layout_12 := GridLayout().
+         set_doi(scale(0)).
+         set_extra("cells")
+      centre_panel := Panel().
+         clear_constraints().
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
+         set_layout(layout_12).
+         add(split_1)
+      self.add(centre_panel)
       paint_35 := TextPaint("Filter")
       filter := EditList().
          set_size(scale(150)).
          set_align(Align.L, Align.B).
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
          set_tooltip(paint_35).
          connect(self.on_filter_action, Event.ACTION).
          connect(self.on_filter_content_changed, Event.CONTENT_CHANGED).
@@ -867,13 +1038,13 @@ class FileDialog(Dialog)
          set_doi(scale(0)).
          set_extra("cells")
       paint_37 := TextPaint("File")
-      file := EditList().
+      file := FileEditList().
          set_size(scale(150)).
          set_align(Align.L, Align.B).
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_tooltip(paint_37).
          connect(self.on_file_action, Event.ACTION).
          connect(self.on_file_content_changed, Event.CONTENT_CHANGED).
@@ -887,20 +1058,20 @@ class FileDialog(Dialog)
       paint_48 := TextPaint("Label")
       file_label := Label().
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_paint(paint_48)
       multiple_files_overlay_item := OverlayItem().
          set_layout(layout_11).
          add(file_label)
       file_overlay := OverlaySet().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          add(single_file_overlay_item).
          add(multiple_files_overlay_item).
          set_which_one(single_file_overlay_item)
@@ -909,9 +1080,9 @@ class FileDialog(Dialog)
          set_extra("cells")
       panel_2 := Panel().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_layout(layout_3).
          add(filter).
          add(file_overlay)
@@ -936,17 +1107,17 @@ class FileDialog(Dialog)
          set_align(Align.L, Align.B).
          set_fg("red").
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_paint(paint_11)
       layout_4 := GridLayout().
          set_doi(scale(0)).
          set_extra("cells")
       panel_3 := Panel().
          clear_constraints().
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_layout(layout_4).
          add(okay_button).
          add(cancel_button).

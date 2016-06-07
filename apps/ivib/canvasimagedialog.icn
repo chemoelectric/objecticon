@@ -32,7 +32,9 @@ class CanvasImageDialog(CanvasComponentDialog)
 
    public on_file_browse()
       local fd, s, l, p
-      fd := FileDialog().set_existing_file_mode(FileDialog.REQUIRE)
+      fd := FileDialog().
+         set_image_preview(&yes).
+         set_existing_file_mode(FileDialog.REQUIRE)
       l := []
       s := string(img_field.get_contents())
       if is_image_file(s) then {
