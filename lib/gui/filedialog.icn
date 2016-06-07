@@ -170,7 +170,6 @@ class FileDialog(Dialog)
       file_label,
       img,
       img_label,
-      img_preview,
       warned
 
    public static const
@@ -707,7 +706,7 @@ class FileDialog(Dialog)
    # called before the dialog is shown.
    #
    public add_image_preview()
-      local p
+      local p, split, other, q
       if is_initialized() then
          fail
       if /img then {
@@ -723,12 +722,18 @@ class FileDialog(Dialog)
             set_layout(GridLayout()).
             add(img).
             add(img_label)
-         img_preview := Border().
+         q := Border().
             set_content(p).
-            set_constraint(Grid.X_WEIGHT, 0.0).
-            set_width(scale(140)).
+            set_width(scale(175)).
             set_border(SunkenBorder())
-         centre_panel.add(img_preview)
+         other := centre_panel.children[1]
+         centre_panel.remove_index(1)
+         split := Split().
+            set_left(other).
+            set_right(q).
+            set_weight(1.0).
+            set_min(scale(250), scale(130))
+         centre_panel.add(split)
       }
       return self
    end
@@ -738,11 +743,13 @@ class FileDialog(Dialog)
    # called before the dialog is shown.
    #
    public remove_image_preview()
+      local split
       if is_initialized() then
          fail
       if \img then {
-         centre_panel.remove(img_preview)
-         img := img_label := img_preview := &null
+         split := centre_panel.children[1]
+         centre_panel.remove_index(1).add(split.first)
+         img := img_label := &null
       }
       return self
    end
