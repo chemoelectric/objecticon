@@ -702,36 +702,47 @@ class FileDialog(Dialog)
       return [dir_list, file_list]
    end
 
-   public set_image_preview(s)
+   #
+   # Add an image preview tab to the dialog.  This should only be
+   # called before the dialog is shown.
+   #
+   public add_image_preview()
       local p
-      check_flag(s)
       if is_initialized() then
          fail
-      if /s then {
-         if \img then {
-            centre_panel.remove(img_preview)
-            img := img_label := img_preview := &null
-         }
-      } else {
-         if /img then {
-            img := Image().
-               set_constraint(Grid.EOL, &yes).
-               set_border(NullBorder())
-            img_label := Label().
-               set_label("").
-               set_constraint(Grid.X_FILL, &yes).
-               set_height(scale(100)).
-               set_border(NullBorder())
-            p := Panel().
-               set_layout(GridLayout()).
-               add(img).
-               add(img_label)
-            img_preview := Border().
-               set_content(p).
-               set_constraint(Grid.X_WEIGHT, 0.0).
-               set_width(scale(140))
-            centre_panel.add(img_preview)
-         }
+      if /img then {
+         img := Image().
+            set_constraint(Grid.EOL, &yes).
+            set_border(NullBorder())
+         img_label := Label().
+            set_label("").
+            set_constraint(Grid.X_FILL, &yes).
+            set_height(scale(100)).
+            set_border(NullBorder())
+         p := Panel().
+            set_layout(GridLayout()).
+            add(img).
+            add(img_label)
+         img_preview := Border().
+            set_content(p).
+            set_constraint(Grid.X_WEIGHT, 0.0).
+            set_width(scale(140)).
+            set_border(SunkenBorder())
+         centre_panel.add(img_preview)
+      }
+      return self
+   end
+
+   #
+   # Remove the image preview tab to the dialog.  This should only be
+   # called before the dialog is shown.
+   #
+   public remove_image_preview()
+      if is_initialized() then
+         fail
+      if \img then {
+         centre_panel.remove(img_preview)
+         img := img_label := img_preview := &null
       }
       return self
    end

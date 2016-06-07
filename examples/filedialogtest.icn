@@ -36,7 +36,7 @@ procedure main(a)
       d.set_multiple_files(&yes)
 
    if \opts["ip"] then
-      d.set_image_preview(&yes)
+      d.add_image_preview()
 
    d.set_path(a[1])
    repeat{
