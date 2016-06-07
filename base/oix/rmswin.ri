@@ -334,7 +334,8 @@ static void synch_state(wsp ws, int new_state)
 static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
     DWORD dw;
-    int t, fl;
+    LONG t;
+    int fl;
     POINT p;
     static struct descrip curr;
     static int inited = 0;
@@ -377,7 +378,7 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 
 static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    int t;
+    LONG t;
     POINT p;
     int state = 0;
     int fl = 0;
@@ -472,7 +473,7 @@ static void track_mouse(wsp ws)
 
 static void handle_mouse_leave(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    int t;
+    LONG t;
     struct descrip d;
     if (mouse_debug) dbg("handle_mouse_leave()\n");
     t = GetMessageTime();
@@ -483,7 +484,8 @@ static void handle_mouse_leave(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 
 static void handle_mouse_enter(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    int t, x, y;
+    LONG t;
+    int x, y;
     struct descrip d;
     if (mouse_debug) dbg("handle_mouse_enter()\n");
     x = (INT16)LOWORD(lp);
@@ -522,7 +524,7 @@ static void handle_mouse_down(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 
 static void handle_mouse(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    int t;
+    LONG t;
     int x, y;
     int state = 0;
     int fl = 0;
