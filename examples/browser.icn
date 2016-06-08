@@ -1003,9 +1003,13 @@ class URLEditList(IndependentEditList)
          set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
    end
 
-   public create_popup()
+   protected open_popup(ev)
       set_selection_list(copy(parent.browser.history))
       set_selection(parent.browser.history_pos)
+      IndependentEditList.open_popup(ev)
+   end
+
+   public create_popup()
       return URLList()
    end
 end

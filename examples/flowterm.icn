@@ -934,11 +934,16 @@ class HistoryList(ButtonOnlyList)
       close_popup()
    end
 
-   public create_popup()
-      local t, l
+   protected open_popup(ev)
+      local t
       t := parent.parent
       set_selection_list(copy(t.history))
       set_selection(t.history_pos)
+      ButtonOnlyList.open_popup(ev)
+   end
+
+   public create_popup()
+      local l
       l := ItemPaintList().
          set_item_paint(HistoryEntryItemPaint()).
          set_item_border(EmptyBorder().
