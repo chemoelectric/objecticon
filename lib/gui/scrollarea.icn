@@ -257,7 +257,7 @@ abstract class ScrollArea(Component)
          need_hsb := 0
       else {
          max_tw := predict_view_width(max_w)
-         min_tw := predict_view_width(max_w, 1)
+         min_tw := predict_view_width(max_w, &yes)
          if min_tw >= pw then
             need_hsb := 0
          else if max_tw >= pw then
@@ -270,7 +270,7 @@ abstract class ScrollArea(Component)
          need_vsb := 0
       else {
          max_th := predict_view_height(max_h)
-         min_th := predict_view_height(max_h, 1)
+         min_th := predict_view_height(max_h, &yes)
          if min_th >= ph then
             need_vsb := 0
          else if max_th >= ph then
@@ -285,21 +285,21 @@ abstract class ScrollArea(Component)
       # pvw(x) > pvw(x,1)
 
       if (need_vsb < 2) & (need_hsb < 2) then {
-         # sw <= pvw(max_w,1)
-         # w_spec = ptw(sw) <= ptw(pvw(max_w,1)) < ptw(pvw(max_w,1),1) = max_w
+         # pw <= pvw(max_w)  (since need_hsb=0 or 1)
+         # w_spec = ptw(pw) <= ptw(pvw(max_w)) = max_w
          w_spec := predict_total_width(pw)
          h_spec := predict_total_height(ph)
       } else if (need_hsb + need_vsb > 2) then {
          w_spec := max_w
          h_spec := max_h
       } else if (need_hsb = 0) & (need_vsb = 2) then {
-         # sw <= pvw(max_w,1) (since need_hsb=0)
-         # w_spec = ptw(sw,1) <= ptw(pvw(max_w,1),1) = max_w
-         w_spec := predict_total_width(pw, 1)
+         # pw <= pvw(max_w,1) (since need_hsb=0)
+         # w_spec = ptw(pw,1) <= ptw(pvw(max_w,1),1) = max_w
+         w_spec := predict_total_width(pw, &yes)
          h_spec := max_h
       } else if (need_hsb = 2) & (need_vsb = 0) then {
          w_spec := max_w
-         h_spec := predict_total_height(ph, 1)
+         h_spec := predict_total_height(ph, &yes)
       }
 
       w_spec <:= \min_w

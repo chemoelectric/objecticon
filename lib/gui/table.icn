@@ -523,7 +523,7 @@ class Table(Component)
       table_content.invalidate_subject_width()
 
       # The width to give the auto size columns.
-      av := table_content.predict_view_width(self.w - border.get_total_width(), 1) - sw
+      av := table_content.predict_view_width(self.w - border.get_total_width(), &yes) - sw
       dw := av / *l
       dw <:= TableColumn.MIN_COLUMN_WIDTH
 
