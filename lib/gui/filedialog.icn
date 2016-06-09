@@ -108,13 +108,29 @@ class FileEditListField(SuggestField)
 
    public new()
       SuggestField.new()
-      set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(0))
+      set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
       set_select_using_enter(&yes)
       return
    end
 end
 
 class FileEditList(EditList)
+   public layout()
+      # Hide the button if the init_files list was empty.
+      if *selection_list = 0 then {
+         view.x := x + border.get_l_inset()
+         view.y := y + border.get_t_inset()
+         view.w := w - border.get_total_width()
+         view.h := h - border.get_total_height()
+         b.x := x
+         b.y := y
+         b.w := b.h := 0
+         b.layout()
+         view.layout()
+      } else
+         EditList.layout()
+   end
+
    public create_view()
       return FileEditListField()
    end
