@@ -355,6 +355,8 @@ class Gui()
       # Default tab char width
       TAB_WIDTH,
       ALLOW_INTERNAL_POPUPS,
+      # Gives extra preference to the downward direction in list popups.
+      POPUP_LIST_DIRECTION_FACTOR,
       style
 
    public static const 
@@ -411,17 +413,19 @@ class Gui()
       TOOLBAR_ICON_SIZE := env_scale("OI_GUI_TOOLBAR_ICON_SIZE") | scale(24)
       MENU_ICON_SIZE := env_scale("OI_GUI_MENU_ICON_SIZE") | scale(16)
       ALLOW_INTERNAL_POPUPS := env_flag("OI_GUI_ALLOW_INTERNAL_POPUPS") | &yes
+      POPUP_LIST_DIRECTION_FACTOR := env_real("OI_GUI_POPUP_LIST_DIRECTION_FACTOR") | 2.0
       style := Style()
       PRINTABLE_1 := '\x20-\x7e\x80-\U10ffff'
       PRINTABLE_N := '\t\n\x20-\x7e\x80-\U10ffff'
-      WATTRIB_SET := set(WAttrib.LABEL, WAttrib.X, WAttrib.POS, WAttrib.Y, WAttrib.RESIZE, WAttrib.SIZE, WAttrib.HEIGHT, 
-                         WAttrib.WIDTH, WAttrib.IMAGE, WAttrib.CANVAS, WAttrib.POINTER, 
+      WATTRIB_SET := set(WAttrib.LABEL, WAttrib.X, WAttrib.POS, WAttrib.Y, WAttrib.RESIZE, WAttrib.SIZE,
+                         WAttrib.HEIGHT, WAttrib.WIDTH, WAttrib.IMAGE, WAttrib.CANVAS, WAttrib.POINTER, 
                          WAttrib.DISPLAY, WAttrib.FG, WAttrib.BG, WAttrib.DRAW_OP, WAttrib.ICON, WAttrib.LEADING,
                          WAttrib.FONT, WAttrib.LINE_WIDTH, WAttrib.GEOMETRY, WAttrib.TRANSIENT_FOR,
-                         WAttrib.LINE_STYLE, WAttrib.PATTERN, WAttrib.CLIP, WAttrib.UNCLIP,
-                         WAttrib.DX, WAttrib.DY, WAttrib.INPUT_MASK, WAttrib.MIN_WIDTH, WAttrib.MIN_HEIGHT, WAttrib.MIN_SIZE, WAttrib.MAX_WIDTH, 
-                         WAttrib.MAX_HEIGHT, WAttrib.MAX_SIZE)
-      CONTEXT_WATTRIB_SET := set(WAttrib.FG, WAttrib.BG, WAttrib.DRAW_OP, WAttrib.FONT, WAttrib.LEADING, WAttrib.LINE_WIDTH, WAttrib.LINE_STYLE, WAttrib.PATTERN)
+                         WAttrib.LINE_STYLE, WAttrib.PATTERN, WAttrib.CLIP, WAttrib.UNCLIP, WAttrib.DX,
+                         WAttrib.DY, WAttrib.INPUT_MASK, WAttrib.MIN_WIDTH, WAttrib.MIN_HEIGHT,
+                         WAttrib.MIN_SIZE, WAttrib.MAX_WIDTH, WAttrib.MAX_HEIGHT, WAttrib.MAX_SIZE)
+      CONTEXT_WATTRIB_SET := set(WAttrib.FG, WAttrib.BG, WAttrib.DRAW_OP, WAttrib.FONT, WAttrib.LEADING,
+                                 WAttrib.LINE_WIDTH, WAttrib.LINE_STYLE, WAttrib.PATTERN)
       EMPTY_WATTRIB_ANCESTOR := EmptyWAttribAncestor() 
    end
 
