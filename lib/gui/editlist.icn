@@ -108,7 +108,7 @@ class EditList(SelectionDropDown)
    end
 
    public new()
-      DropDown.new()
+      SelectionDropDown.new()
       every view.connect(self.on_textfield, Event.CONTENT_CHANGED | Event.ACTION)
       return
    end
