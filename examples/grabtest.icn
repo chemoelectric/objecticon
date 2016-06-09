@@ -267,6 +267,8 @@ class Untitled(Dialog)
          win.grab_pointer()
       else
          win.ungrab_pointer()
+      # Don't show modal dialog while grabbed
+      text_button_7.toggle_is_shaded()
    end
 
    private on_text_button_5(ev)
