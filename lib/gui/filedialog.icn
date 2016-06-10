@@ -23,12 +23,16 @@ class FileDialogPos()
    end
 end
 
-class FileEditListField(SuggestField)
-   public
-      matches
-
+abstract class EditListField(FileSuggestField)
    public keeps(e)
       return
+   end
+
+   public on_key(e)
+      if /tl then case e.code of {
+         Key.UP : parent.go_up(e)
+         Key.DOWN : parent.go_down(e)
+      }
    end
 
    public on_change(ev)
@@ -36,81 +40,37 @@ class FileEditListField(SuggestField)
       parent.was_applied(ev) | SuggestField.on_change(ev)
    end
 
-   private calc_matches()
-      local t
-      matches := []
-      \parent_dialog.file_suggestions_flag | fail
-      every t := !parent_dialog.flist.contents do {
-         if match(contents, t.name) then
-            put(matches, t)
-      }
-   end
-
-   public convert_element(o)
-      return text(o.name)
-   end
-
-   public create_popup()
-      return ItemPaintList().
-         set_item_paint(IconFilesItemPaint()).
-         set_item_border(EmptyBorder().
-                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
-                            set_x_align(Align.L))
-   end
-
-   protected do_request()
-      # Don't popup if an existing file warning is in place.
-      if \parent_dialog.warned then
-         return []
-      calc_matches()
-      # No point in a list which is a copy of what we already have
-      if *matches = 1 & endswith(contents, matches[1].name) then
-         return []
-      return matches
-   end
-
-   #
-   # Get the longest common initial name from the matches list.  Eg if
-   # we have ["mark", "mary", "marion"], we get "mar".
-   #
-   private get_longest_prefix()
-      return coprefix(ipl.pdco.List{(!matches).name}) | u""
-   end
-
-   public handle_tab(e)
-      local t
-      parent_dialog.warned := &no
-      if \tl then {
-         t := get_longest_prefix()
-         if *contents < *t then
-            assign_contents(t, e)
-      } else {
-         # As above, calculate the string we could insert.
-         calc_matches()
-         t := get_longest_prefix()
-         if *contents < *t then
-            assign_contents(t, e)
-         else
-            on_change(e)
-      }
-   end
-
-   public handle_key(e)
-      if /tl then case e.code of {
-         Key.UP : parent.go_up(e)
-         Key.DOWN : parent.go_down(e)
-      }
-      if e.code == "\t" then
-         handle_tab(e)
-      else
-         SuggestField.handle_key(e)
-   end
-
    public new()
-      SuggestField.new()
+      FileSuggestField.new()
+      connect(self.on_key, Event.KEY_PRESS)
       set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
       set_select_using_enter(&yes)
       return
+   end
+end
+
+class DirEditListField(EditListField)
+   public new()
+      EditListField.new()
+      set_directories_only(&yes)
+      return
+   end
+end
+
+class FileEditListField(EditListField)
+   protected do_request()
+      # Don't popup if an existing file warning is in place.
+      # Returning [] rather than failing causes the popup to close,
+      # rather than stay open.
+      if \parent_dialog.warned then
+         return []
+      return FileSuggestField.do_request()
+   end
+end
+
+class DirEditList(EditList)
+   public create_view()
+      return DirEditListField()
    end
 end
 
@@ -136,6 +96,23 @@ class FileEditList(EditList)
    end
 end
 
+class DirList(ButtonOnlyList)
+   public create_button()
+      local b
+      b := IconButton().set_paint(ImagePaint().set_cache("gui.FAVOURITES_24"))
+      theme_toolbar_button(b, "emblem-favorite")
+      return b
+   end
+
+   public create_popup()
+      return ItemPaintList().
+         set_item_paint(StringDirItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                            set_x_align(Align.L))
+   end
+end
+
 #
 #
 # File dialog class.  This class provides a standard file dialog.
@@ -156,9 +133,11 @@ class FileDialog(Dialog)
       home_button, 
       prev_button,
       next_button,
+      favourites_list,
+      trail,
       up_button, 
       centre_panel,
-      dir, 
+      #dir, 
       dlist, 
       flist, 
       ascending,
@@ -179,7 +158,6 @@ class FileDialog(Dialog)
       message_label, 
       existing_file_mode,
       multiple_files_flag,
-      file_suggestions_flag,
       single_file_overlay_item,
       multiple_files_overlay_item,
       file_overlay,
@@ -205,11 +183,6 @@ class FileDialog(Dialog)
 
    public set_multiple_files(s)
       self.multiple_files_flag := check_flag(s)
-      return self
-   end
-
-   public set_file_suggestions(s)
-      self.file_suggestions_flag := check_flag(s)
       return self
    end
 
@@ -242,7 +215,7 @@ class FileDialog(Dialog)
       /init_dirs := []
       /init_files := []
       /init_filters := [u"*"]
-      dir.set_selection_list(get_favourites_directories()).set_selection(1)
+      favourites_list.set_selection_list(get_favourites_directories())
       filter.set_selection_list(ucs_list(init_filters)).set_selection(1)
       if /multiple_files_flag then {
          file.set_selection_list(ucs_list(init_files)).set_selection(1)
@@ -260,7 +233,7 @@ class FileDialog(Dialog)
       if /multiple_files_flag then
          file.grab_focus()
       win.set_min_size(win.get_width(), win.get_height())
-      goto_dir(dir.get_contents())
+      goto_dir(favourites_list.selection_list[1])
    end
 
    public check_existing()
@@ -426,7 +399,7 @@ class FileDialog(Dialog)
          fail
       f := FilePath(s)
       if not f.is_absolute() then
-         f := FilePath(dir.get_contents()).append(f)
+         f := loaded_dir_path.append(f)
       return f.canonical()
    end
 
@@ -469,18 +442,21 @@ class FileDialog(Dialog)
    end
 
    public get_dir_path()
-      return FilePath(dir.get_contents()).canonical()
+      return loaded_dir_path
    end
 
    public on_cancel_button()
       self.dispose()
    end
 
-   public on_file_action()
-      #
-      # If return pressed in file TextField, same as okay
-      #
-      on_okay_button()
+   public on_file_action(ev)
+      local f
+      if file.view.was_applied(ev) then
+         fail
+      if Files.is_directory(f := get_current_selection().str()) then {
+         file.set_contents(u"")
+         goto_dir(f)
+      }
    end
 
    public on_dlist()
@@ -501,7 +477,6 @@ class FileDialog(Dialog)
       # Clicked in file list; set TextField
       #
       msg()
-      dir.set_contents(loaded_dir_path.liberal_ucs())
       if /multiple_files_flag then
          file.set_contents(flist.object_get_selections()[1].name)
       else
@@ -509,26 +484,18 @@ class FileDialog(Dialog)
       check_existing()
    end
 
-   public on_dir_action(ev)
-      goto_dir(dir.get_contents())
-   end
-
-   public on_dir_content_changed(ev)
-      if dir.was_applied(ev) then
-         goto_dir(dir.get_contents())
-      else {
-         msg()
-         check_existing()
-      }
+   public update_filter()
+      refresh_dir()
+      file.view.set_filter(filter.get_contents())
    end
 
    public on_filter_action(ev)
-      refresh_dir()
+      update_filter()
    end
 
    public on_filter_content_changed(ev)
       if filter.was_applied(ev) then
-         refresh_dir()
+         update_filter()
    end
 
    public on_show_hidden_menu_item(ev)
@@ -592,7 +559,12 @@ class FileDialog(Dialog)
       d := FavouriteDirectoriesDialog()
       d.show_modal(self)
       \d.okay | fail
-      dir.set_selection_only().synch_set_selection_list(get_favourites_directories())
+      favourites_list.set_selection_list(get_favourites_directories())
+      synch_favourites_list()
+   end
+
+   private synch_favourites_list()
+      favourites_list.object_set_selection(loaded_dir_path.ucs()) | favourites_list.set_selection()
    end
 
    public get_pats()
@@ -611,7 +583,6 @@ class FileDialog(Dialog)
    end
 
    public refresh_dir(load)
-      dir.set_contents(loaded_dir_path.liberal_ucs())
       save_pos()
       msg()
       if \load then
@@ -638,9 +609,11 @@ class FileDialog(Dialog)
 
    public goto_dir(d, nav)
       save_pos()
-      dir.set_contents(FilePath(d).canonical().liberal_ucs())
+      loaded_dir_path := FilePath(d).canonical()
+      trail.set_path(loaded_dir_path.liberal_ucs())
+      synch_favourites_list()
       msg()
-      loaded_dir_path := get_dir_path()
+      file.view.set_cwd(loaded_dir_path)
       load_dir_list()
       annotate_dir_list()
       set_lists(sort_dir_list())
@@ -648,7 +621,7 @@ class FileDialog(Dialog)
       if /nav then {
          every 1 to history_pos - 1 do
             pop(history)
-         push(history, dir.get_contents())
+         push(history, loaded_dir_path.ucs())
          history_pos := 1
          update_grey()
       }
@@ -770,6 +743,10 @@ class FileDialog(Dialog)
       return self
    end
 
+   private on_trail(ev)
+      goto_dir(ev)
+   end
+
    public new()
       Dialog.new()
       self.setup()
@@ -780,6 +757,12 @@ class FileDialog(Dialog)
       theme_toolbar_button(home_button, "go-home")
       theme_toolbar_button(up_button, "go-up")
       theme_toolbar_button(tools_menu_button, "applications-system")
+
+      trail.
+         set_height().
+         set_constraint("l_inset", scale(10)).
+         connect(on_trail, FileTrail.DIR_CHANGED_EVENT)
+      favourites_list.set_size()
 
       dlist.
          set_draggable_cursor(&yes).
@@ -797,7 +780,6 @@ class FileDialog(Dialog)
       sorter := Files.name_cmp
       synch_paints()
       existing_file_mode := IGNORE
-      file_suggestions_flag := &yes
       history := []
       history_pos := 0
       update_grey()
@@ -857,8 +839,12 @@ class FileDialog(Dialog)
       refresh_dir()
    end
 
+   private on_favourites_list(ev)
+      goto_dir(favourites_list.object_get_selection())
+   end
+
    private setup()
-      local paint_2, layout_7, paint_14, paint_45, layout_11, layout_4, paint_11, paint_37, paint_42, refresh_menu_item, panel_4, paint_29, split_content_1, split_content_2, paint_9, split_1, paint_31, paint_3, layout_8, paint_15, paint_46, layout_12, paint_12, paint_43, new_dir_menu_item, paint_35, panel_2, paint_27, paint_32, favourite_dirs_menu_item, layout_9, paint_47, paint_1, layout_6, paint_13, paint_44, layout_10, layout_3, paint_10, paint_36, paint, panel_3, paint_28, paint_30, paint_48
+      local paint_2, layout_7, paint_14, paint_45, layout_11, layout_4, paint_11, paint_37, paint_42, refresh_menu_item, panel_4, paint_29, split_content_1, split_content_2, paint_9, split_1, paint_31, paint_49, paint_3, layout_8, paint_15, paint_46, layout_12, paint_12, paint_43, new_dir_menu_item, paint_35, panel_2, paint_27, paint_32, favourite_dirs_menu_item, layout_9, paint_47, paint_1, layout_6, paint_13, paint_44, layout_10, layout_3, paint_10, paint, panel_3, paint_28, paint_30, paint_48
       self.set_label("Select file")
       self.set_resize(&yes)
       paint_45 := ImagePaint().
@@ -967,18 +953,20 @@ class FileDialog(Dialog)
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_32)
-      paint_36 := TextPaint("Directory")
-      dir := EditList().
-         set_size(scale(150)).
-         set_align(Align.L, Align.C).
+      paint_49 := TextPaint("Favourite directories")
+      favourites_list := DirList().
+         set_size(scale(37), scale(30)).
+         clear_constraints().
+         set_tooltip(paint_49).
+         connect(self.on_favourites_list, Event.SELECTION_CHANGED)
+      trail := FileTrail().
+         set_size(scale(200), scale(20)).
          clear_constraints().
          set_constraint(Grid.X_ALIGN, Align.L).
          set_constraint(Grid.X_FILL, &yes).
          set_constraint(Grid.X_WEIGHT, 1.0).
-         set_tooltip(paint_36).
-         connect(self.on_dir_action, Event.ACTION).
-         connect(self.on_dir_content_changed, Event.CONTENT_CHANGED).
-         set_selection_list([""])
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0)
       layout_6 := GridLayout().
          set_doi(scale(0)).
          set_dii(scale(2)).
@@ -997,7 +985,8 @@ class FileDialog(Dialog)
          add(name_button).
          add(date_button).
          add(size_button).
-         add(dir)
+         add(favourites_list).
+         add(trail)
       self.add(panel_4)
       dlist := ItemPaintList().
          set_size(scale(210), scale(200)).

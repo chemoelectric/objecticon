@@ -15,10 +15,10 @@ procedure main(a)
    d :=  FileDialog().
       set_label("A File Dialog").
       set_filters(["*", "*.icn", "*.c", "*.txt"]).
-      set_directories([Files.get_temp(), Files.get_home()])
+      set_directories([Files.get_temp(), "/non/existent/path"])
 
    if /opts["nf"] then
-      d.set_files(["one.icn", "two.icn", "three.icn"])
+      d.set_files(["one.icn", "two.icn", "three.icn", "/tmp/four.icn", "/tmp/five.icn"])
 
    if \opts["ns"] then
       d.set_file_suggestions(&no)
