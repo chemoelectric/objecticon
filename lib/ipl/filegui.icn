@@ -330,7 +330,7 @@ class FileSuggestField(SuggestField)
    # contents.  A new contents can then be calculated by simply
    # appending the prefix to the name of a member of the matches list.
    #
-   private calc_matches()
+   protected calc_matches()
       local path, s, t
       path := FilePath(contents).absolute(cwd)
       matches := []
@@ -530,7 +530,9 @@ class FileTrailList(ButtonOnlyList)
       child     # The optional child to the right, for setting the selection in the popup
 
    public create_button()
-      return TextButton().set_label(Files.PATH_SEPARATOR)
+      local l
+      l := if p.size() = 1 then p.str() else Files.PATH_SEPARATOR
+      return TextButton().set_label(l)
    end
 
    public create_popup()
@@ -584,9 +586,9 @@ class FileTrailList(ButtonOnlyList)
    end
 
    public new(p, child)
-      ButtonOnlyList.new()
       self.p := p
       self.child := child
+      ButtonOnlyList.new()
       set_accepts_focus(&no)
       set_selection_list([])
       clear_constraints()
@@ -722,6 +724,7 @@ class FileTrail(Component)
          layout()
          invalidate()
       }
+      return self
    end
 
    public new()
