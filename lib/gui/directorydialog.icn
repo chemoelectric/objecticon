@@ -427,8 +427,8 @@ $endif
          set_extra("cells")
       panel_4 := Panel().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_align", Align.L).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_ALIGN, Align.L).
          set_layout(layout_6).
          add(tools_menu_button).
          add(home_button).
@@ -437,25 +437,25 @@ $endif
       tree := ItemPaintTree().
          set_size(scale(390), scale(272)).
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          connect(self.on_tree_expansion, Event.TREE_NODE_EXPANSION).
          connect(self.on_tree_selection, Event.SELECTION_CHANGED).
          set_select_mode(Select.ONE).
          set_show_root(&no)
       self.add(tree)
       paint_35 := TextPaint("Directory")
-      dir := EditList().
+      dir := DirEditList().
          set_size(scale(150)).
          set_align(Align.L, Align.B).
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_tooltip(paint_35).
          connect(self.on_dir_action, Event.ACTION).
          connect(self.on_dir_content_changed, Event.CONTENT_CHANGED).
@@ -481,17 +481,17 @@ $endif
          set_align(Align.L, Align.B).
          set_fg("red").
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_paint(paint_11)
       layout_4 := GridLayout().
          set_doi(scale(0)).
          set_extra("cells")
       panel_3 := Panel().
          clear_constraints().
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_layout(layout_4).
          add(okay_button).
          add(cancel_button).
