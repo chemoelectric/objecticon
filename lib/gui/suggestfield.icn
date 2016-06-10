@@ -20,7 +20,7 @@ abstract class SuggestField(TextField, MenuMode)
       req_doing,
       last,
       mod,
-      synch_ev,
+      applied_event,
       list_data
 
    #
@@ -77,8 +77,9 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public synch_contents(ev)
-      synch_ev := ev
-      assign_contents(convert_element(tl.object_get_selections()[1]), ev, &yes)
+      local s
+      s := convert_element(tl.object_get_selections()[1]) | contents[1:1]
+      assign_contents(s, applied_event := ev, &yes)
    end
 
    public convert_element(o)
@@ -132,7 +133,7 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public on_change(ev)
-      if synch_ev === ev then
+      if applied_event === ev then
          mod := 2
       else if *contents = 0 & not(ev.code === (Key.DOWN | "\t")) then
          keep_closed()
@@ -190,8 +191,11 @@ abstract class SuggestField(TextField, MenuMode)
          set_motion_cursor(&yes).
          set_always_show_focus_cursor(&yes).
          set_select_mode(Select.ONE).
-         set_selection_on_key_moves(toggle_flag(select_using_enter_flag)).
          set_z(self.parent_dialog.get_top_z())
+
+      if \select_using_enter_flag then
+         tl.set_cursor().set_selection_on_key_moves(&no)
+
       self.parent_dialog.add(tl)
       self.tl.set_ideal_size(self.w, max_w,
                              scale(5), max_h)
@@ -303,11 +307,14 @@ abstract class SuggestField(TextField, MenuMode)
       return member(Key.CURSOR, e.code)
    end
 
+   public was_applied(ev)
+      return ev === applied_event
+   end
+
    public handle_return(e)
       if \select_using_enter_flag & \tl then
          tl.fire(Event.KEY_PRESS, e)
-      else
-         TextField.handle_return(e)
+      TextField.handle_return(e)
       keep_closed()
    end
 
@@ -328,7 +335,9 @@ abstract class SuggestField(TextField, MenuMode)
 
    public handle_key_down(e)
       if \tl then {
-         if /select_using_enter_flag & *tl.get_selections() = 0 & tl.get_cursor() = 1 then {
+         if \select_using_enter_flag & not tl.get_cursor() then
+            tl.set_cursor(1)
+         else if /select_using_enter_flag & *tl.get_selections() = 0 & tl.get_cursor() = 1 then {
             tl.set_selections([1])
             synch_contents(e)
          } else
