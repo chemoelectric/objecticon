@@ -95,7 +95,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    public contents_changed()
       constrain_selections()
-      constrain_cursor()
+      constrain_cursor(&yes)
       invalidate_subject_width()
       invalidate_line_height()
       invalidate_line_count()
@@ -106,13 +106,13 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    # Keep the cursor within the bounds of the contents.
    # 
-   private constrain_cursor()
-      if *self.contents = 0 then
-         self.cursor := &null
-      else {
-         /self.cursor := 1
-         self.cursor <:= 1
-         self.cursor >:= *self.contents
+   private constrain_cursor(fl)
+      if *contents = 0 then
+         cursor := &null
+      else if \fl | \cursor then {
+         /cursor := 1
+         cursor <:= 1
+         cursor >:= *contents
       }
    end
 
@@ -632,7 +632,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    end
 
    public handle_move(e)
-     \self.motion_cursor_flag | fail
+      \self.motion_cursor_flag | fail
       start_handle(e)
       self.cursor := get_nearest_line_to_pointer(e)
       ensure_line_visible(self.cursor)
