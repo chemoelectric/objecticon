@@ -1038,7 +1038,11 @@ package class WindowsFileSystem(FileSystem)
             FilePath.from_list([other.l[1]] ||| fp.l[2:0])
       }
       if fp.l[1][2:0] == ":" then {
-         s := getdcwd(fp.l[1][1]) | fp.l[1] || "\\"
+         if s := getdcwd(fp.l[1][1]) then
+            # Maintain the case of the original drive letter
+            s[1] := fp.l[1][1]
+         else
+            s := fp.l[1] || "\\"
          return FilePath(s).append(FilePath.from_list(fp.l[2:0]))
       }
       return other.append(fp)
