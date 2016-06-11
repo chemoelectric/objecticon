@@ -69,6 +69,14 @@ class FileEditListField(EditListField)
 end
 
 class DirEditList(EditList)
+   public create_popup()
+      return ItemPaintList().
+         set_item_paint(StringDirItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                            set_x_align(Align.L))
+   end
+
    public create_view()
       return DirEditListField()
    end
