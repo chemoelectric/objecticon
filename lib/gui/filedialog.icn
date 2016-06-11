@@ -407,7 +407,7 @@ class FileDialog(Dialog)
          fail
       f := FilePath(s)
       if not f.is_absolute() then
-         f := loaded_dir_path.append(f)
+         f := f.absolute(loaded_dir_path)
       return f.canonical()
    end
 
