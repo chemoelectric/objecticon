@@ -318,11 +318,10 @@ class FileSuggestField(SuggestField)
    end
 
    private do_dir_list(s)
-      if dir_list_name === s then
-         return dir_list
-      dir_list := qsort(Files.ucs_list(s, ListEntryWithIcon), Files.name_cmp) | fail
-      dir_list_name := s
-      return dir_list
+      if dir_list_name ~=== s then {
+         dir_list := qsort(Files.ucs_list(s, ListEntryWithIcon), Files.name_cmp) | []
+         dir_list_name := s
+      }
    end
 
    #
@@ -330,19 +329,19 @@ class FileSuggestField(SuggestField)
    # contents.  A new contents can then be calculated by simply
    # appending the prefix to the name of a member of the matches list.
    #
-   protected calc_matches()
+   private calc_matches()
       local path, s, t
       path := FilePath(contents).absolute(cwd)
       matches := []
       if *contents = 0 | any(Files.PATH_SPECIALS, contents[-1]) then {
-         do_dir_list(path.str()) | fail
+         do_dir_list(path.str())
          every t := !dir_list do {
             if match_entry(t) then
                put(matches, t)
          }
          prefix := contents
       } else {
-         do_dir_list(path.parent().str()) | fail
+         do_dir_list(path.parent().str())
          s := path.get(-1)
          every t := !dir_list do {
             if match_entry(t) & match(s, t.name) then
@@ -350,11 +349,10 @@ class FileSuggestField(SuggestField)
          }
          prefix := contents[1:-*s]
       }
-      return
    end
 
    protected do_request()
-      calc_matches() | fail
+      calc_matches()
       # No point in a list which is a copy of what we already have
       if *matches = 1 & endswith(contents, matches[1].name) then
          return []
@@ -413,7 +411,7 @@ class FileSuggestField(SuggestField)
          }
       } else {
          # As above, calculate the string we could insert.
-         calc_matches() | fail
+         calc_matches()
          t := prefix || if /directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
             matches[1].name || Files.PATH_SEPARATOR
          else
