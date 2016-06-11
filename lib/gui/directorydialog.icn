@@ -202,7 +202,7 @@ class DirectoryDialog(Dialog)
 
    public goto_dir(d)
       local n, s, p, err, i
-      p := FilePath(d).canonical()
+      p := FilePath(d).canonical().ucs_path() | fail
       n := tree.get_root_node()
       every s := p.gen() do {
          n := find_child(n, s) | break
@@ -214,7 +214,8 @@ class DirectoryDialog(Dialog)
       }
 
       tree.tree_structure_changed()
-      i := tree.find_line(n)
+      # This may fail if (on Win32) we input a network path (which isn't in the tree).
+      i := tree.find_line(n) | fail
       tree.
          set_selections([i]).
          set_cursor(i).
