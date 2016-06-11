@@ -1316,6 +1316,9 @@ function io_WindowsFileSystem_getdcwd(d)
       if (StrLen(d) != 1)
 	 fail;
       dir = toupper((unsigned char)*StrLoc(d)) - 'A' + 1;
+      /* Check the drive number is valid - otherwise a crash ensues! */
+      if (!(GetLogicalDrives() & (1 << (dir - 1))))
+          fail;
       p = _wgetdcwd(dir, NULL, 32);
       if (!p)
 	 fail;
