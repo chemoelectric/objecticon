@@ -1,6 +1,7 @@
 package gui
 
 import 
+   ipl.pdco,
    ipl.sort,
    ipl.filegui,
    io
@@ -58,6 +59,13 @@ class DirectoryDialog(Dialog)
          root_node.add(TreeNode().set_label(ListEntryWithIcon(ucs(d), Files.lstat(d), Files.stat(d))).set_always_expandable(&yes))
       tree.set_root_node(root_node)
       res := &null
+      # Initialize selected_path and the suggestfield cwd; these will
+      # normally be set by goto_dir() in init_dialog below, so these
+      # are fallback values if the cwd is not ucs, or (on win32) we
+      # start with a network path.
+      tree.set_selections([1])
+      selected_path := get_full_path(tree.object_get_selections()[1])
+      dir.view.set_cwd(selected_path)
    end
 
    public init_dialog()
@@ -111,7 +119,9 @@ class DirectoryDialog(Dialog)
 
    #
    # Given a TreeNode n, return a {FilePath} path it represents by traversing
-   # up the tree structure to the root and converting to a {FilePath}.
+   # up the tree structure to the root and converting to a {FilePath}.  Each
+   # element in the path is a ucs string, so the ucs() method on the path will
+   # always succeed.
    #
    public get_full_path(n)
       local l
@@ -143,7 +153,8 @@ class DirectoryDialog(Dialog)
 
    public on_tree_selection(ev)
       selected_path := get_full_path(tree.object_get_selections()[1])
-      dir.set_contents(selected_path.liberal_ucs())
+      dir.set_contents(selected_path.ucs())
+      dir.view.set_cwd(selected_path)
       check_existing()
    end
 
@@ -202,7 +213,7 @@ class DirectoryDialog(Dialog)
 
    public goto_dir(d)
       local n, s, p, err, i
-      p := FilePath(d).canonical().ucs_path() | fail
+      p := FilePath(d).absolute(selected_path).canonical().ucs_path() | fail
       n := tree.get_root_node()
       every s := p.gen() do {
          n := find_child(n, s) | break
@@ -222,13 +233,15 @@ class DirectoryDialog(Dialog)
          center_line(i)
 
       selected_path := get_full_path(n)
-      dir.set_contents(p.liberal_ucs())
+      dir.set_contents(p.ucs())
+      dir.view.set_cwd(selected_path)
       if \err then
          msg(err)
       else if Files.is_directory(p.str()) then
          check_existing()
       else
-         msg("Not a dir: " || p.liberal_ucs())
+         msg("Not a dir: " || p.ucs())
+      return self
    end
 
    public find_child(n, s)
@@ -316,9 +329,8 @@ $endif
    end
 
    public on_new_dir_menu_item(ev)
-      local d, s
-      s := selected_path.ucs() | return msg("Path not UTF-8")
-      d := NewDirectoryDialog(s).
+      local d
+      d := NewDirectoryDialog(selected_path.ucs()).
          show_modal(self)
       goto_dir(\d.result)
    end
@@ -353,8 +365,8 @@ $endif
 
    public get_favourites_directories()
       local t
-      t := copy(init_dirs)
-      every put(t, FavouriteDirectoriesDialog.gen_directories_plus())
+      t := ipl.pdco.List{ FilePath(!init_dirs).canonical().str() |
+                          FavouriteDirectoriesDialog.gen_directories_plus() }
       return FileDialog.unique_ucs_list(t)
    end
 

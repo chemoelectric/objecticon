@@ -405,9 +405,7 @@ class FileDialog(Dialog)
       s := file.get_contents()
       if *s = 0 then
          fail
-      f := FilePath(s)
-      if not f.is_absolute() then
-         f := f.absolute(loaded_dir_path)
+      f := FilePath(s).absolute(loaded_dir_path)
       return f.canonical()
    end
 
@@ -557,8 +555,8 @@ class FileDialog(Dialog)
 
    public get_favourites_directories()
       local t
-      t := copy(init_dirs)
-      every put(t, FavouriteDirectoriesDialog.gen_directories_plus())
+      t := ipl.pdco.List{ FilePath(!init_dirs).canonical().str() |
+                          FavouriteDirectoriesDialog.gen_directories_plus() }
       return unique_ucs_list(t)
    end
 
@@ -616,9 +614,9 @@ class FileDialog(Dialog)
    end
 
    public goto_dir(d, nav)
+      loaded_dir_path := FilePath(d).canonical().ucs_path() | fail
       save_pos()
-      loaded_dir_path := FilePath(d).canonical()
-      trail.set_path(loaded_dir_path.liberal_ucs())
+      trail.set_path(loaded_dir_path.ucs())
       synch_favourites_list()
       msg()
       file.view.set_cwd(loaded_dir_path)
@@ -633,6 +631,7 @@ class FileDialog(Dialog)
          history_pos := 1
          update_grey()
       }
+      return self
    end
 
    public set_lists(l)
