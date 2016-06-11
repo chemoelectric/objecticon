@@ -67,6 +67,8 @@ static void synch_size(wsp ws, int neww, int newh);
 
 static void dbg(char *fmt, ...);
 
+static wsp grabwin;
+
 static int mouse_debug = 0;
 
 static struct SharedColor *black, *white;
@@ -383,6 +385,14 @@ static void handle_mouse_wheel(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     int state = 0;
     int fl = 0;
 
+    if (mouse_debug) dbg("handle_mouse_wheel() grabwin=%p\n", grabwin);
+
+    /* Wheel events aren't redirected to the captured window, so if a grab is
+     * in progress they have to be redirected manually. 
+     */
+    if (grabwin)
+        ws = grabwin;
+
     if (MK_LBUTTON & wp) state |= 1;
     if (MK_MBUTTON & wp) state |= 2;
     if (MK_RBUTTON & wp) state |= 4;
@@ -425,28 +435,28 @@ static void dbg(char *fmt, ...)
 
 static void capture_mouse(wsp ws)
 {
-    if (mouse_debug) dbg("capture_mouse() grabbingmouse=%d\n", ws->grabbingmouse);
-    if (ws->grabbingmouse == 0) {
-        ws->savedgrab = SetCapture(ws->win);
-        if (mouse_debug) dbg("SetCapture, saved grab=%x ourselves=%x\n",ws->savedgrab, ws->win);
+    if (mouse_debug) dbg("capture_mouse() capturecount=%d\n", ws->capturecount);
+    if (ws->capturecount == 0) {
+        ws->savedcapture = SetCapture(ws->win);
+        if (mouse_debug) dbg("SetCapture, savedcapture=%x ourselves=%x\n", ws->savedcapture, ws->win);
     }
-    ++ws->grabbingmouse;
-    if (mouse_debug) dbg("now grabbingmouse=%d\n", ws->grabbingmouse);
+    ++ws->capturecount;
+    if (mouse_debug) dbg("now capturecount=%d\n", ws->capturecount);
 }
 
 static void uncapture_mouse(wsp ws)
 {
-    if (mouse_debug) dbg("uncapture_mouse() grabbingmouse=%d\n", ws->grabbingmouse);
-    if (ws->grabbingmouse > 0) {
-        --ws->grabbingmouse;
-        if (ws->grabbingmouse == 0) {
-            if (mouse_debug) dbg("SetCapture to %x\n",ws->savedgrab);
+    if (mouse_debug) dbg("uncapture_mouse() capturecount=%d\n", ws->capturecount);
+    if (ws->capturecount > 0) {
+        --ws->capturecount;
+        if (ws->capturecount == 0) {
+            if (mouse_debug) dbg("SetCapture to %x\n", ws->savedcapture);
             /* This will in fact now call handle_capture_changed() */
-            SetCapture(ws->savedgrab);
-            ws->savedgrab = 0;
+            SetCapture(ws->savedcapture);
+            ws->savedcapture = 0;
         }
     }
-    if (mouse_debug) dbg("now grabbingmouse=%d\n", ws->grabbingmouse);
+    if (mouse_debug) dbg("now capturecount=%d\n", ws->capturecount);
 }
 
 /*
@@ -456,9 +466,9 @@ static void uncapture_mouse(wsp ws)
  */
 static void handle_capture_changed(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
 {
-    if (mouse_debug) dbg("handle_capture_changed(), resetting grabbingmouse to 0\n");
-    ws->savedgrab = 0;
-    ws->grabbingmouse = 0;
+    if (mouse_debug) dbg("handle_capture_changed(), resetting capturecount to 0\n");
+    ws->savedcapture = 0;
+    ws->capturecount = 0;
 }
 
 static void track_mouse(wsp ws)
@@ -1293,6 +1303,8 @@ static void freewindow(wsp ws)
         del_gc_global(&ws->windowlabel);
         if (ws->transientfor)
             freewindow(ws->transientfor);
+        if (ws == grabwin)
+            grabwin = 0;
         free(ws);
     }
 }
@@ -1384,6 +1396,7 @@ int grabpointer(wbp w)
     wsp ws = w->window;
     CheckUnhidden(ws);
     capture_mouse(ws);
+    grabwin = ws;
     return Succeeded;
 }
 
@@ -1392,6 +1405,7 @@ int ungrabpointer(wbp w)
     wsp ws = w->window;
     CheckUnhidden(ws);
     uncapture_mouse(ws);
+    grabwin = 0;
     return Succeeded;
 }
 
