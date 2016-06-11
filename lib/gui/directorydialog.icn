@@ -152,7 +152,7 @@ class DirectoryDialog(Dialog)
    end
 
    public on_dir_content_changed(ev)
-      if dir.was_applied(ev) then
+      if dir.was_applied(ev) | dir.view.was_applied(ev) then
          goto_dir(dir.get_contents())
       else
          check_existing()
