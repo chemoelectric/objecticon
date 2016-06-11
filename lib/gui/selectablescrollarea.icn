@@ -400,6 +400,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
             if t1[1] = l[i] then
                pop(t1)
          }
+         # Note that i is not null, since *l > 0
          while insert(t2, pop(t1) - i)
          self.selections := t2
 
