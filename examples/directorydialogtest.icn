@@ -2,7 +2,11 @@ import gui,io,ipl.options,lang
 
 procedure main(a)
    local d,opts
-   opts := options(a, "-we! -re! -de! -l! -k!")
+   opts := options(a, [Opt("we",, "Warn on existing file"),
+                       Opt("re",, "Require existing file"),
+                       Opt("de",, "Disallow existing file"),
+                       Opt("l",, "Loop repeatedly, re-showing the dialog"),
+                       Opt("k",, "Keep directory between uses")])
    d :=  DirectoryDialog().
       set_label("A Dir Dialog").
       set_directories([Files.get_temp(), Files.get_home()])
