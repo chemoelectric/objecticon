@@ -30,7 +30,8 @@ class DirectoryDialog(Dialog)
       message_label, 
       tree,
       dir,
-      existing_file_mode
+      existing_file_mode,
+      warned
 
    public static const
       WARN, IGNORE, REQUIRE, DISALLOW
@@ -59,13 +60,6 @@ class DirectoryDialog(Dialog)
          root_node.add(TreeNode().set_label(ListEntryWithIcon(ucs(d), Files.lstat(d), Files.stat(d))).set_always_expandable(&yes))
       tree.set_root_node(root_node)
       res := &null
-      # Initialize selected_path and the suggestfield cwd; these will
-      # normally be set by goto_dir() in init_dialog below, so these
-      # are fallback values if the cwd is not ucs, or (on win32) we
-      # start with a network path.
-      tree.set_selections([1])
-      selected_path := get_full_path(tree.object_get_selections()[1])
-      dir.view.set_cwd(selected_path)
    end
 
    public init_dialog()
@@ -152,7 +146,7 @@ class DirectoryDialog(Dialog)
    end
 
    public on_tree_selection(ev)
-      selected_path := get_full_path(tree.object_get_selections()[1])
+      selected_path := get_full_path(tree.object_get_selections()[1]) | fail
       dir.set_contents(selected_path.ucs())
       dir.view.set_cwd(selected_path)
       check_existing()
@@ -208,13 +202,13 @@ class DirectoryDialog(Dialog)
    end
 
    public get_dir_path()
-      return FilePath(dir.get_contents()).canonical()
+      return FilePath(dir.get_contents()).absolute(selected_path).canonical()
    end
 
    public goto_dir(d)
-      local n, s, p, err, i
+      local n, s, p, err, i, root
       p := FilePath(d).absolute(selected_path).canonical().ucs_path() | fail
-      n := tree.get_root_node()
+      n := root := tree.get_root_node()
       every s := p.gen() do {
          n := find_child(n, s) | break
          load_subtree(n) | {
@@ -223,10 +217,14 @@ class DirectoryDialog(Dialog)
          }
          n.set_expanded(&yes)
       }
+      # n may still be at the root if (on Win32) we input a network
+      # path (which isn't in the tree).
+      if n === root then
+         n := root.children[1]
+      else
+         tree.tree_structure_changed()
 
-      tree.tree_structure_changed()
-      # This may fail if (on Win32) we input a network path (which isn't in the tree).
-      i := tree.find_line(n) | fail
+      i := tree.find_line(n)
       tree.
          set_selections([i]).
          set_cursor(i).
@@ -260,12 +258,15 @@ $endif
    public check_existing()
       local f
       msg()
+      warned := &null
       f := get_dir_path().str()
       if Files.access(f) then {
          if not Files.is_directory(f) then
             msg("Not a directory")
-         else if existing_file_mode === (WARN | DISALLOW) then
+         else if existing_file_mode === (WARN | DISALLOW) then {
+            warned := &yes
             msg("Existing directory")
+         }
       }
    end
 
@@ -447,7 +448,7 @@ $endif
          add(up_button)
       self.add(panel_4)
       tree := ItemPaintTree().
-         set_size(scale(390), scale(272)).
+         set_size(scale(520), scale(360)).
          clear_constraints().
          set_constraint(Grid.EOL, &yes).
          set_constraint(Grid.X_FILL, &yes).

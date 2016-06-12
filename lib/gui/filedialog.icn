@@ -23,7 +23,7 @@ class FileDialogPos()
    end
 end
 
-abstract class EditListField(FileSuggestField)
+class EditListField(FileSuggestField)
    public keeps(e)
       return
    end
@@ -40,24 +40,6 @@ abstract class EditListField(FileSuggestField)
       parent.was_applied(ev) | SuggestField.on_change(ev)
    end
 
-   public new()
-      FileSuggestField.new()
-      connect(self.on_key, Event.KEY_PRESS)
-      set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
-      set_select_using_enter(&yes)
-      return
-   end
-end
-
-class DirEditListField(EditListField)
-   public new()
-      EditListField.new()
-      set_directories_only(&yes)
-      return
-   end
-end
-
-class FileEditListField(EditListField)
    protected do_request()
       # Don't popup if an existing file warning is in place.
       # Returning [] rather than failing causes the popup to close,
@@ -65,6 +47,14 @@ class FileEditListField(EditListField)
       if \parent_dialog.warned then
          return []
       return FileSuggestField.do_request()
+   end
+
+   public new()
+      FileSuggestField.new()
+      connect(self.on_key, Event.KEY_PRESS)
+      set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
+      set_select_using_enter(&yes)
+      return
    end
 end
 
@@ -78,7 +68,8 @@ class DirEditList(EditList)
    end
 
    public create_view()
-      return DirEditListField()
+      return EditListField().
+         set_directories_only(&yes)
    end
 end
 
@@ -100,7 +91,7 @@ class FileEditList(EditList)
    end
 
    public create_view()
-      return FileEditListField()
+      return EditListField()
    end
 end
 
@@ -401,12 +392,11 @@ class FileDialog(Dialog)
    # do not call in multiple file selection mode.
    #
    public get_current_selection()
-      local s, f
+      local s
       s := file.get_contents()
       if *s = 0 then
          fail
-      f := FilePath(s).absolute(loaded_dir_path)
-      return f.canonical()
+      return FilePath(s).absolute(loaded_dir_path).canonical()
    end
 
    public on_okay_button()
@@ -614,7 +604,7 @@ class FileDialog(Dialog)
    end
 
    public goto_dir(d, nav)
-      loaded_dir_path := FilePath(d).canonical().ucs_path() | fail
+      loaded_dir_path := FilePath(d).absolute(loaded_dir_path).canonical().ucs_path() | fail
       save_pos()
       trail.set_path(loaded_dir_path.ucs())
       synch_favourites_list()
