@@ -11,7 +11,6 @@ import
    ipl.sort,
    ipl.pdco,
    ipl.wildcard,
-   ipl.lists,
    ipl.functional,
    ipl.filegui,
    ipl.childwait,
@@ -850,14 +849,7 @@ procedure mk_file_URL(s)
    return URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/'))
 end
 
-class DirList(ButtonOnlyList)
-   public create_button()
-      local b
-      b := IconButton().set_paint(ImagePaint().set_cache("gui.FAVOURITES_24"))
-      theme_toolbar_button(b, "emblem-favorite")
-      return b
-   end
-
+class DirListEx(DirList)
    private cursor_to_url()
       return mk_file_URL(popup.object_get_cursor())
    end
@@ -880,11 +872,7 @@ class DirList(ButtonOnlyList)
 
    public create_popup()
       local l
-      l := ItemPaintList().
-         set_item_paint(StringDirItemPaint()).
-         set_item_border(EmptyBorder().
-                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
-                            set_x_align(Align.L))
+      l := DirList.create_popup()
       l.view.
          connect(on_rpress, Event.MOUSE_RIGHT_PRESS).
          connect(on_mrelease, Event.MOUSE_MIDDLE_RELEASE)
@@ -935,11 +923,16 @@ class HistoryList(ButtonOnlyList)
       close_popup()
    end
 
-   public create_popup()
-      local t, l
+   protected open_popup(ev)
+      local t
       t := parent.parent
       set_selection_list(copy(t.history))
       set_selection(t.history_pos)
+      ButtonOnlyList.open_popup(ev)
+   end
+
+   public create_popup()
+      local l
       l := ItemPaintList().
          set_item_paint(HistoryEntryItemPaint()).
          set_item_border(EmptyBorder().
@@ -2123,8 +2116,8 @@ $endif
          dest := d.get_result_path() | fail
       } else
          dest := FilePath(dest).canonical()
+      s := dest.ucs() | return info_msg(u"Log file not utf8")
       parent_dialog.last_log_file := log_file := dest
-      s := log_file.ucs()
       if log := open(s, "w") then
          info_msg(u"Logging to file " || s)
       else
@@ -2590,12 +2583,7 @@ $endif
    end
 
    public get_favourites_directories()
-      local t
-      t := []
-      every put(t,
-                Files.getcwd() | 
-                FavouriteDirectoriesDialog.gen_directories())
-      return lunique(FileDialog.ucs_list(t))
+      return FileDialog.unique_ucs_list(ipl.pdco.List{FavouriteDirectoriesDialog.gen_directories_plus()})
    end
 
    public refresh_favourite_dirs()
@@ -2736,8 +2724,12 @@ $endif
          history_pos := 0
          max_history_size := 100
          columns_pos_table := table()
-         if \dir then
-            start_dir := Files.realpath(dir) | info_msg("Invalid tab start directory: " || &why)
+         if \dir then {
+            if dir := Files.realpath(dir) then
+               start_dir := ucs(dir) | info_msg("Start directory not utf8")
+            else
+               info_msg("Invalid tab start directory: " || &why)
+         }
          /start_dir := ucs(Files.getcwd()) | u"/"
          set_cwd(start_dir)
          # Apply global default tab options; should only fail on first time through.
@@ -3086,8 +3078,8 @@ $endif
          set_size(scale(150)).
          set_align(Align.L, Align.B).
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
          set_tooltip(paint_23).
          connect(self.on_filter_action, Event.ACTION).
          connect(self.on_filter_content_changed, Event.CONTENT_CHANGED).
@@ -3127,7 +3119,7 @@ $endif
          set_toggles(&no).
          set_paint(paint_32)
       paint_37 := TextPaint("Favourite directories")
-      favourites_list := DirList().
+      favourites_list := DirListEx().
          set_size(scale(37), scale(30)).
          clear_constraints().
          set_tooltip(paint_37).
@@ -3135,19 +3127,19 @@ $endif
       trail := FileTrailEx().
          set_size(scale(200), scale(20)).
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0)
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0)
       layout_6 := GridLayout().
          set_doi(scale(0)).
          set_dii(scale(2)).
          set_extra("cells")
       panel_4 := Panel().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_layout(layout_6).
          add(close_button).
          add(home_button).
@@ -3167,10 +3159,10 @@ $endif
       columns := Columns().
          set_size(scale(300), scale(300)).
          clear_constraints().
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          connect(self.on_columns_focus, Event.GOT_FOCUS)
       layout_5 := GridLayout().
          set_doi(scale(0)).
@@ -3182,11 +3174,11 @@ $endif
       output := Vt().
          set_size(scale(100), scale(100)).
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          connect(self.on_vt_focus, Event.GOT_FOCUS)
       layout_4 := GridLayout().
          set_doi(scale(0)).
@@ -3197,11 +3189,11 @@ $endif
          add(output)
       split := Split().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          set_left(split_content_3).
          set_right(split_content_4)
       self.add(split)
@@ -3214,11 +3206,11 @@ $endif
       message_label := MessageLabel().
          set_fg("red").
          clear_constraints().
-         set_constraint("b_inset", scale(0)).
-         set_constraint("l_inset", scale(0)).
-         set_constraint("r_inset", scale(0)).
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
+         set_constraint(Grid.B_INSET, scale(0)).
+         set_constraint(Grid.L_INSET, scale(0)).
+         set_constraint(Grid.R_INSET, scale(0)).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
          set_border(border_1).
          set_paint(paint_40)
       self.add(message_label)

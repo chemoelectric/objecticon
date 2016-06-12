@@ -113,7 +113,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
    end
 
    public get_term_width()
-      return (text.predict_view_width(text.w, 1) - 2 * Gui.TEXT_INSET) / text.cbwin.text_width("m")
+      return (text.predict_view_width(text.w, &yes) - 2 * Gui.TEXT_INSET) / text.cbwin.text_width("m")
    end
 
    public new()

@@ -1358,8 +1358,8 @@ final class DirStream(LineBasedInputStream, NoCopy)
       LineBasedInputStream.new()
 $ifdef _MS_WIN32
       if *path = 0 then
-         path := "*"
-      else if any('\\/:', path[-1]) then
+         return error("Empty path")
+      if any('\\/:', path[-1]) then
          path ||:= "*"
       else if not upto('*?', path) then
          path ||:= "\\*"

@@ -40,7 +40,7 @@ oref.obj: orefiasm.ri
 all:	oix
 
 oix:	$(OBJS)
-	$(LD) $(LDFLAGS) /INCREMENTAL:NO /NOLOGO /ENTRY:wmainCRTStartup \
+	$(LD) $(LDFLAGS) /STACK:16000000 /INCREMENTAL:NO /ENTRY:wmainCRTStartup \
 		/SUBSYSTEM:CONSOLE $(OBJS) $(LIBS) /OUT:oix.exe
 	$(INSTALL) oix "$(OI_BIN)"
 

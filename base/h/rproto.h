@@ -368,6 +368,7 @@ void wchar_to_utf8_string(WCHAR *src, dptr res);
 void wchar_to_ucs(WCHAR *src, dptr res);
 void string_to_wchar1(WCHAR *buff, dptr str, int nullterm);
 WCHAR *string_to_wchar(dptr str, int nullterm);
+void win32error2why(void);
 #endif
 
 /*

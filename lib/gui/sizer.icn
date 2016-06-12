@@ -35,8 +35,10 @@ class Sizer(Component, HasOrientation)
    end
 
    #
-   # Set the minimum and maximum values for the {Sizer}.  Whether these are
-   # x or y values depends on the orientation of the {Sizer}.
+   # Set the minimum and maximum values for the {Sizer}.  Whether
+   # these are x or y values depends on the orientation of the
+   # {Sizer}.  The range is always reset on each mouse press, so this
+   # must be set on each `SIZER_PRESS` event.
    #
    public set_range(lo, hi)
       self.lo := lo
@@ -118,7 +120,8 @@ class Sizer(Component, HasOrientation)
          e.y - self.y
       else
          e.x - self.x
-
+      # We reset the range since it may no longer be valid (see notes).
+      set_range()
       start_pos := set_curr_pos(e)
       if \self.show_inter_flag then {
          self.temp_win := SliderDragComponent().

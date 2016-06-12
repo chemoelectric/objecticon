@@ -1,7 +1,7 @@
 package gui
 
 import
-   io, ipl.filegui, xdg, lang, util
+   io, ipl.filegui, xdg, lang, util, ipl.pdco()
 
 class FavouriteDirectoriesTableContent(TableContent)
    public perform_drop(drag, drop)
@@ -68,12 +68,8 @@ class FavouriteDirectoriesDialog(Dialog)
    end
 
    public static get_pair_list()
-      local l
-      if l := decode_from_file(get_favourites_file()) then
-         return l
-      l := []
-      every put(l, [&null, ucs(Files.get_home() | Files.get_temp() | Files.get_roots())])
-      return l
+      return decode_from_file(get_favourites_file()) | 
+         ipl.pdco.List{[&null, ucs(Files.get_home() | Files.get_temp() | Files.get_roots())]}
    end
 
    public static gen_directories()
@@ -83,6 +79,13 @@ class FavouriteDirectoriesDialog(Dialog)
          if /e[1] | (e[1] == app) then
             suspend e[2]
       }
+   end
+
+   #
+   # Generate the directories, plus some other useful ones, in a sensible order.
+   #
+   public static gen_directories_plus()
+      suspend Files.getcwd() | gen_directories() | Files.get_home() | Files.get_temp() | Files.get_roots()
    end
 
    public msg(s)

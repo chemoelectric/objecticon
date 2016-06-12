@@ -47,10 +47,6 @@ class Dialog(Component)
       # Set of events to move focus down
       FOCUS_DOWN
 
-   private static const
-      pointer_grab_stack,
-      keyboard_grab_stack
-
    private readable
       # The dialog's window.
       win,
@@ -199,24 +195,19 @@ class Dialog(Component)
       return \popup_manager.entered
    end
 
-   public block()
-      if /is_blocked_flag then {
+   # Set whether the dialog is blocked to mouse/keyboard events.
+   #
+   public set_is_blocked(s)
+      check_flag(s)
+      if \s then {
          # Check were not doing something that might lock up the desktop.
          if is_popup() then
             runerr("cannot block a popup")
          if get_menu_mode() then
             runerr("cannot block a dialog whilst in menu mode")
-         is_blocked_flag := &yes
-         resynch_pointer()
       }
-      return self
-   end
-
-   public unblock()
-      if \is_blocked_flag then {
-         is_blocked_flag := &null
+      if is_blocked_flag ~===:= s then
          resynch_pointer()
-      }
       return self
    end
 
@@ -297,9 +288,9 @@ class Dialog(Component)
    public show_modal(d, l)
       /l := Dispatcher.list_unblocked()
       self.show(d)
-      every (!l).block()
+      every (!l).set_is_blocked(&yes)
       Dispatcher.message_loop(self)
-      every (!l).unblock()
+      every (!l).set_is_blocked(&no)
       return self
    end
 
@@ -426,32 +417,6 @@ class Dialog(Component)
       return \self.buffer_win
    end
 
-   public grab_pointer()
-      win.grab_pointer()
-      put(pointer_grab_stack, self)
-      return self
-   end
-
-   public ungrab_pointer() 
-      pull(pointer_grab_stack)
-      if not(pointer_grab_stack[-1] === self) then
-         win.ungrab_pointer()
-      return self
-   end
-
-   public grab_keyboard()
-      win.grab_keyboard()
-      put(keyboard_grab_stack, self)
-      return self
-   end
-
-   public ungrab_keyboard() 
-      pull(keyboard_grab_stack)
-      if not(keyboard_grab_stack[-1] === self) then
-         win.ungrab_keyboard()
-      return self
-   end
-
    #
    # Enter menu mode, with `c` as the controlling component, which
    # must implement the `MenuMode` interface.
@@ -466,7 +431,7 @@ class Dialog(Component)
             put(menu_mode_stack, menu_mode)
          else {
             popups := []
-            grab_pointer()
+            win.grab_pointer()
          }
          self.menu_mode := c
       }
@@ -487,7 +452,7 @@ class Dialog(Component)
          if c := pull(menu_mode_stack) then
             menu_mode := c
          else {
-            ungrab_pointer()
+            win.ungrab_pointer()
             menu_mode := popups := &null
          }
       }
@@ -1525,8 +1490,6 @@ class Dialog(Component)
       DND_POSITIVE_POINTER := env_pointer("OI_DIALOG_DND_POSITIVE_POINTER") | "hand2"
       FOCUS_UP := set(Key.SHIFT_TAB, Key.LEFT, Key.UP)
       FOCUS_DOWN := set("\t", Key.RIGHT, Key.DOWN)
-      pointer_grab_stack := []
-      keyboard_grab_stack := []
    end
 
    public new()

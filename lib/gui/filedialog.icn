@@ -3,12 +3,13 @@ package gui
 import 
    ipl.wildcard,
    ipl.sort,
-   ipl.lists,
    ipl.filegui,
    ipl.pdco,
    ipl.functional,
    util,
-   io
+   io,
+   graphics,
+   ipl.strings
 
 class FileDialogPos()
    public const
@@ -19,6 +20,95 @@ class FileDialogPos()
       self.cursor_name := cursor_name
       self.area_y := area_y
       return
+   end
+end
+
+class EditListField(FileSuggestField)
+   public keeps(e)
+      return
+   end
+
+   public on_key(e)
+      if /tl then case e.code of {
+         Key.UP : parent.go_up(e)
+         Key.DOWN : parent.go_down(e)
+      }
+   end
+
+   public on_change(ev)
+      # Don't start a suggestion on navigation of the list.
+      parent.was_applied(ev) | SuggestField.on_change(ev)
+   end
+
+   protected do_request()
+      # Don't popup if an existing file warning is in place.
+      # Returning [] rather than failing causes the popup to close,
+      # rather than stay open.
+      if \parent_dialog.warned then
+         return []
+      return FileSuggestField.do_request()
+   end
+
+   public new()
+      FileSuggestField.new()
+      connect(self.on_key, Event.KEY_PRESS)
+      set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
+      set_select_using_enter(&yes)
+      return
+   end
+end
+
+class DirEditList(EditList)
+   public create_popup()
+      return ItemPaintList().
+         set_item_paint(StringDirItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                            set_x_align(Align.L))
+   end
+
+   public create_view()
+      return EditListField().
+         set_directories_only(&yes)
+   end
+end
+
+class FileEditList(EditList)
+   public layout()
+      # Hide the button if the init_files list was empty.
+      if *selection_list = 0 then {
+         view.x := x + border.get_l_inset()
+         view.y := y + border.get_t_inset()
+         view.w := w - border.get_total_width()
+         view.h := h - border.get_total_height()
+         b.x := x
+         b.y := y
+         b.w := b.h := 0
+         b.layout()
+         view.layout()
+      } else
+         EditList.layout()
+   end
+
+   public create_view()
+      return EditListField()
+   end
+end
+
+class DirList(ButtonOnlyList)
+   public create_button()
+      local b
+      b := IconButton().set_paint(ImagePaint().set_cache("gui.FAVOURITES_24"))
+      theme_toolbar_button(b, "emblem-favorite")
+      return b
+   end
+
+   public create_popup()
+      return ItemPaintList().
+         set_item_paint(StringDirItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                            set_x_align(Align.L))
    end
 end
 
@@ -42,8 +132,11 @@ class FileDialog(Dialog)
       home_button, 
       prev_button,
       next_button,
+      favourites_list,
+      trail,
       up_button, 
-      dir, 
+      centre_panel,
+      #dir, 
       dlist, 
       flist, 
       ascending,
@@ -67,7 +160,10 @@ class FileDialog(Dialog)
       single_file_overlay_item,
       multiple_files_overlay_item,
       file_overlay,
-      file_label
+      file_label,
+      img,
+      img_label,
+      warned
 
    public static const
       WARN, IGNORE, REQUIRE, DISALLOW
@@ -93,6 +189,24 @@ class FileDialog(Dialog)
       return ipl.pdco.List{ucs(!l)}
    end
 
+   # Helper method to take a list of files and filter non-ucs files,
+   # and duplicates.  Duplicate and trailing slashes are also cleaned
+   # up (through use of `FilePath`).
+   #
+   public static unique_ucs_list(l)
+      local res, seen, e, k
+      res := []
+      seen := set()
+      every e := FilePath(ucs(!l)) do {
+         k := e.standard_case().str()
+         member(seen, k) | {
+            insert(seen, k)
+            put(res, e.ucs())
+         }
+      }
+      return res
+   end
+
    public component_setup()
       #
       # Defaults and extra dirs.
@@ -100,7 +214,7 @@ class FileDialog(Dialog)
       /init_dirs := []
       /init_files := []
       /init_filters := [u"*"]
-      dir.set_selection_list(get_favourites_directories()).set_selection(1)
+      favourites_list.set_selection_list(get_favourites_directories())
       filter.set_selection_list(ucs_list(init_filters)).set_selection(1)
       if /multiple_files_flag then {
          file.set_selection_list(ucs_list(init_files)).set_selection(1)
@@ -118,17 +232,33 @@ class FileDialog(Dialog)
       if /multiple_files_flag then
          file.grab_focus()
       win.set_min_size(win.get_width(), win.get_height())
-      goto_dir(dir.get_contents())
+      goto_dir(favourites_list.selection_list[1])
    end
 
    public check_existing()
       local f
       /multiple_files_flag | fail
-      f := get_current_selection().str() | fail
-      if Files.is_directory(f) then
-         msg("Directory")
-      else if existing_file_mode === (WARN | DISALLOW) & Files.access(f) then
-         msg("Existing file")
+      f := get_current_selection().str()
+      warned := &null
+      if \f then {
+         if Files.is_directory(f) then
+            msg("Directory")
+         else if existing_file_mode === (WARN | DISALLOW) & Files.access(f) then {
+            warned := &yes
+            msg("Existing file")
+         }
+      }
+      if \img then {
+         if endswith(map(\f), ".gif" | ".jpg" | ".jpeg" | ".png") then
+            img.set_image(f)
+         else
+            img.set_image()
+         if \img.win then
+            img_label.set_label(".cell\nHeight: " || img.win.get_height() || "\n.br\n" ||
+                                "Width: " || img.win.get_width() || "\n.br\n")
+         else
+            img_label.set_label("")
+      }
    end
 
    public on_file_content_changed(ev)
@@ -262,14 +392,11 @@ class FileDialog(Dialog)
    # do not call in multiple file selection mode.
    #
    public get_current_selection()
-      local s, f
+      local s
       s := file.get_contents()
       if *s = 0 then
          fail
-      f := FilePath(s)
-      if not f.is_absolute() then
-         f := FilePath(dir.get_contents()).append(f)
-      return f.canonical()
+      return FilePath(s).absolute(loaded_dir_path).canonical()
    end
 
    public on_okay_button()
@@ -311,18 +438,21 @@ class FileDialog(Dialog)
    end
 
    public get_dir_path()
-      return FilePath(dir.get_contents()).canonical()
+      return loaded_dir_path
    end
 
    public on_cancel_button()
       self.dispose()
    end
 
-   public on_file_action()
-      #
-      # If return pressed in file TextField, same as okay
-      #
-      on_okay_button()
+   public on_file_action(ev)
+      local f
+      if file.view.was_applied(ev) then
+         fail
+      if Files.is_directory(f := get_current_selection().str()) then {
+         file.set_contents(u"")
+         goto_dir(f)
+      }
    end
 
    public on_dlist()
@@ -343,7 +473,6 @@ class FileDialog(Dialog)
       # Clicked in file list; set TextField
       #
       msg()
-      dir.set_contents(loaded_dir_path.liberal_ucs())
       if /multiple_files_flag then
          file.set_contents(flist.object_get_selections()[1].name)
       else
@@ -351,26 +480,18 @@ class FileDialog(Dialog)
       check_existing()
    end
 
-   public on_dir_action(ev)
-      goto_dir(dir.get_contents())
-   end
-
-   public on_dir_content_changed(ev)
-      if dir.was_applied(ev) then
-         goto_dir(dir.get_contents())
-      else {
-         msg()
-         check_existing()
-      }
+   public update_filter()
+      refresh_dir()
+      file.view.set_filter(filter.get_contents())
    end
 
    public on_filter_action(ev)
-      refresh_dir()
+      update_filter()
    end
 
    public on_filter_content_changed(ev)
       if filter.was_applied(ev) then
-         refresh_dir()
+         update_filter()
    end
 
    public on_show_hidden_menu_item(ev)
@@ -424,11 +545,9 @@ class FileDialog(Dialog)
 
    public get_favourites_directories()
       local t
-      t := copy(init_dirs)
-      every put(t,
-                Files.getcwd() | 
-                FavouriteDirectoriesDialog.gen_directories())
-      return lunique(ucs_list(t))
+      t := ipl.pdco.List{ FilePath(!init_dirs).canonical().str() |
+                          FavouriteDirectoriesDialog.gen_directories_plus() }
+      return unique_ucs_list(t)
    end
 
    public on_favourite_dirs_menu_item(ev)
@@ -436,7 +555,12 @@ class FileDialog(Dialog)
       d := FavouriteDirectoriesDialog()
       d.show_modal(self)
       \d.okay | fail
-      dir.set_selection_only().synch_set_selection_list(get_favourites_directories())
+      favourites_list.set_selection_list(get_favourites_directories())
+      synch_favourites_list()
+   end
+
+   private synch_favourites_list()
+      favourites_list.object_set_selection(loaded_dir_path.ucs()) | favourites_list.set_selection()
    end
 
    public get_pats()
@@ -455,7 +579,6 @@ class FileDialog(Dialog)
    end
 
    public refresh_dir(load)
-      dir.set_contents(loaded_dir_path.liberal_ucs())
       save_pos()
       msg()
       if \load then
@@ -481,10 +604,12 @@ class FileDialog(Dialog)
    end
 
    public goto_dir(d, nav)
+      loaded_dir_path := FilePath(d).absolute(loaded_dir_path).canonical().ucs_path() | fail
       save_pos()
-      dir.set_contents(FilePath(d).canonical().liberal_ucs())
+      trail.set_path(loaded_dir_path.ucs())
+      synch_favourites_list()
       msg()
-      loaded_dir_path := get_dir_path()
+      file.view.set_cwd(loaded_dir_path)
       load_dir_list()
       annotate_dir_list()
       set_lists(sort_dir_list())
@@ -492,10 +617,11 @@ class FileDialog(Dialog)
       if /nav then {
          every 1 to history_pos - 1 do
             pop(history)
-         push(history, dir.get_contents())
+         push(history, loaded_dir_path.ucs())
          history_pos := 1
          update_grey()
       }
+      return self
    end
 
    public set_lists(l)
@@ -561,6 +687,63 @@ class FileDialog(Dialog)
       return [dir_list, file_list]
    end
 
+   #
+   # Add an image preview tab to the dialog.  This should only be
+   # called before the dialog is shown.
+   #
+   public add_image_preview()
+      local p, split, other, q
+      if is_initialized() then
+         fail
+      if /img then {
+         img := Image().
+            set_constraint(Grid.EOL, &yes).
+            set_border(NullBorder())
+         img_label := Label().
+            set_label("").
+            set_constraint(Grid.X_FILL, &yes).
+            set_height(scale(100)).
+            set_border(NullBorder())
+         p := Panel().
+            set_layout(GridLayout()).
+            add(img).
+            add(img_label)
+         q := Border().
+            set_content(p).
+            set_width(scale(175)).
+            set_border(SunkenBorder())
+         other := centre_panel.children[1]
+         centre_panel.remove_index(1)
+         split := Split().
+            set_left(other).
+            set_right(q).
+            set_weight(1.0).
+            set_min(scale(250), scale(130))
+         centre_panel.add(split)
+      }
+      return self
+   end
+
+   #
+   # Remove the image preview tab to the dialog.  This should only be
+   # called before the dialog is shown.
+   #
+   public remove_image_preview()
+      local split
+      if is_initialized() then
+         fail
+      if \img then {
+         split := centre_panel.children[1]
+         centre_panel.remove_index(1).add(split.first)
+         img := img_label := &null
+      }
+      return self
+   end
+
+   private on_trail(ev)
+      goto_dir(ev)
+   end
+
    public new()
       Dialog.new()
       self.setup()
@@ -571,6 +754,12 @@ class FileDialog(Dialog)
       theme_toolbar_button(home_button, "go-home")
       theme_toolbar_button(up_button, "go-up")
       theme_toolbar_button(tools_menu_button, "applications-system")
+
+      trail.
+         set_height().
+         set_constraint("l_inset", scale(10)).
+         connect(on_trail, FileTrail.DIR_CHANGED_EVENT)
+      favourites_list.set_size()
 
       dlist.
          set_draggable_cursor(&yes).
@@ -647,11 +836,14 @@ class FileDialog(Dialog)
       refresh_dir()
    end
 
+   private on_favourites_list(ev)
+      goto_dir(favourites_list.object_get_selection())
+   end
+
    private setup()
-      local paint_2, layout_7, paint_14, paint_45, layout_11, layout_4, paint_11, paint_37, paint_42, refresh_menu_item, panel_4, paint_29, split_content_1, split_content_2, paint_9, split_1, paint_31, paint_3, layout_8, paint_15, paint_46, paint_12, paint_43, new_dir_menu_item, paint_35, panel_2, paint_27, paint_32, favourite_dirs_menu_item, layout_9, paint_47, paint_1, layout_6, paint_13, paint_44, layout_10, layout_3, paint_10, paint_36, paint, panel_3, paint_28, paint_30, paint_48
+      local paint_2, layout_7, paint_14, paint_45, layout_11, layout_4, paint_11, paint_37, paint_42, refresh_menu_item, panel_4, paint_29, split_content_1, split_content_2, paint_9, split_1, paint_31, paint_49, paint_3, layout_8, paint_15, paint_46, layout_12, paint_12, paint_43, new_dir_menu_item, paint_35, panel_2, paint_27, paint_32, favourite_dirs_menu_item, layout_9, paint_47, paint_1, layout_6, paint_13, paint_44, layout_10, layout_3, paint_10, paint, panel_3, paint_28, paint_30, paint_48
       self.set_label("Select file")
       self.set_resize(&yes)
-      self.set_size(scale(700), scale(500))
       paint_45 := ImagePaint().
          set_cache("gui.CONFIGURE_24")
       paint_42 := TextPaint("New directory...")
@@ -758,27 +950,29 @@ class FileDialog(Dialog)
          set_no_click_focus(&yes).
          set_toggles(&no).
          set_paint(paint_32)
-      paint_36 := TextPaint("Directory")
-      dir := EditList().
-         set_size(scale(150)).
-         set_align(Align.L, Align.C).
+      paint_49 := TextPaint("Favourite directories")
+      favourites_list := DirList().
+         set_size(scale(37), scale(30)).
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_tooltip(paint_36).
-         connect(self.on_dir_action, Event.ACTION).
-         connect(self.on_dir_content_changed, Event.CONTENT_CHANGED).
-         set_selection_list([""])
+         set_tooltip(paint_49).
+         connect(self.on_favourites_list, Event.SELECTION_CHANGED)
+      trail := FileTrail().
+         set_size(scale(200), scale(20)).
+         clear_constraints().
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0)
       layout_6 := GridLayout().
          set_doi(scale(0)).
          set_dii(scale(2)).
          set_extra("cells")
       panel_4 := Panel().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_layout(layout_6).
          add(tools_menu_button).
          add(home_button).
@@ -788,16 +982,17 @@ class FileDialog(Dialog)
          add(name_button).
          add(date_button).
          add(size_button).
-         add(dir)
+         add(favourites_list).
+         add(trail)
       self.add(panel_4)
       dlist := ItemPaintList().
          set_size(scale(210), scale(200)).
          clear_constraints().
-         set_constraint("r_inset", scale(0)).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.R_INSET, scale(0)).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          connect(self.on_dlist, Event.SELECTION_CHANGED).
          set_select_mode(Select.ONE).
          set_contents([])
@@ -809,13 +1004,13 @@ class FileDialog(Dialog)
          set_layout(layout_8).
          add(dlist)
       flist := ItemPaintList().
-         set_size(scale(270), scale(200)).
+         set_size(scale(465), scale(365)).
          clear_constraints().
-         set_constraint("l_inset", scale(0)).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.L_INSET, scale(0)).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          connect(self.on_flist, Event.SELECTION_CHANGED).
          set_select_mode(Select.ONE).
          set_contents([])
@@ -828,22 +1023,33 @@ class FileDialog(Dialog)
          add(flist)
       split_1 := Split().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          set_left(split_content_1).
          set_right(split_content_2).
          set_min(scale(100), scale(100))
-      self.add(split_1)
+      layout_12 := GridLayout().
+         set_doi(scale(0)).
+         set_extra("cells")
+      centre_panel := Panel().
+         clear_constraints().
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
+         set_layout(layout_12).
+         add(split_1)
+      self.add(centre_panel)
       paint_35 := TextPaint("Filter")
       filter := EditList().
          set_size(scale(150)).
          set_align(Align.L, Align.B).
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
          set_tooltip(paint_35).
          connect(self.on_filter_action, Event.ACTION).
          connect(self.on_filter_content_changed, Event.CONTENT_CHANGED).
@@ -852,13 +1058,13 @@ class FileDialog(Dialog)
          set_doi(scale(0)).
          set_extra("cells")
       paint_37 := TextPaint("File")
-      file := EditList().
+      file := FileEditList().
          set_size(scale(150)).
          set_align(Align.L, Align.B).
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_tooltip(paint_37).
          connect(self.on_file_action, Event.ACTION).
          connect(self.on_file_content_changed, Event.CONTENT_CHANGED).
@@ -872,20 +1078,20 @@ class FileDialog(Dialog)
       paint_48 := TextPaint("Label")
       file_label := Label().
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_paint(paint_48)
       multiple_files_overlay_item := OverlayItem().
          set_layout(layout_11).
          add(file_label)
       file_overlay := OverlaySet().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          add(single_file_overlay_item).
          add(multiple_files_overlay_item).
          set_which_one(single_file_overlay_item)
@@ -894,9 +1100,9 @@ class FileDialog(Dialog)
          set_extra("cells")
       panel_2 := Panel().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_layout(layout_3).
          add(filter).
          add(file_overlay)
@@ -921,17 +1127,17 @@ class FileDialog(Dialog)
          set_align(Align.L, Align.B).
          set_fg("red").
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_paint(paint_11)
       layout_4 := GridLayout().
          set_doi(scale(0)).
          set_extra("cells")
       panel_3 := Panel().
          clear_constraints().
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_layout(layout_4).
          add(okay_button).
          add(cancel_button).

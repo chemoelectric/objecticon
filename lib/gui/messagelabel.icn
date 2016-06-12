@@ -1,5 +1,7 @@
 package gui
 
+import graphics(Selection), lang(Class)
+
 #
 # Useful class for displaying a status/error message
 #
@@ -51,9 +53,29 @@ class MessageLabel(Label)
       }
    end
 
+   private on_copy()
+      parent_dialog.own_selection(Selection.CLIPBOARD,
+                                  StaticTextSelectionOwner(\message))
+   end
+
+   private on_rpress(ev)
+      local pm, m
+      \message | fail
+      # Ensure the copy icon is in the cache.
+      Class.ensure_initialized(TextContextMenu)
+      m := Menu()
+      m.add(TextMenuItem().
+               set_label("Copy").
+               set_paint_left(ImagePaint().set_cache("txt.copy")).
+               connect(on_copy, Event.ACTION))
+      pm := PopupMenu()
+      pm.popup(self, m, ev.x, ev.y)
+   end
+
    public new()
       Label.new()
       set_label("")
+      connect(on_rpress, Event.MOUSE_RIGHT_PRESS)
       return
    end
 end

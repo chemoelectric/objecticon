@@ -444,9 +444,9 @@ typedef struct _wstate {
   struct wcursor *cursor;               /* current cursor */
   struct _wstate *transientfor;
   HCURSOR	savedcursor;
-  HWND          savedgrab;
+  HWND          savedcapture;
   int           trackingmouse;          /* Set if TrackMouseEvent in use */
-  int           grabbingmouse;          /* Set if SetCapture in use */
+  int           capturecount;           /* Set if SetCapture in use */
 #endif
 } wstate, *wsp;
 

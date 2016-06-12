@@ -338,6 +338,9 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       local max_h, max_w, spc_below, spc_above, spc_right, d, dim, win,
          use_direction, rs
 
+      if *selection_list = 0 then
+         fail
+
       win := parent_dialog.win
       dim := win.get_display_size()
       # Screen rectangle, in adjusted co-ordinates
@@ -351,7 +354,8 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       max_h := case self.direction of {
          Direction.UP: spc_above
          Direction.DOWN: spc_below
-         Direction.BEST: max(spc_above, spc_below)
+         Direction.BEST: 
+            if Gui.POPUP_LIST_DIRECTION_FACTOR * spc_below > spc_above then spc_below else spc_above
          default: runerr("Unknown direction", self.direction)
       }
       max_w := spc_right

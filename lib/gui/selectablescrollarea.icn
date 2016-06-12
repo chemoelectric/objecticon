@@ -95,7 +95,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    public contents_changed()
       constrain_selections()
-      constrain_cursor()
+      constrain_cursor(&yes)
       invalidate_subject_width()
       invalidate_line_height()
       invalidate_line_count()
@@ -106,13 +106,13 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    # Keep the cursor within the bounds of the contents.
    # 
-   private constrain_cursor()
-      if *self.contents = 0 then
-         self.cursor := &null
-      else {
-         /self.cursor := 1
-         self.cursor <:= 1
-         self.cursor >:= *self.contents
+   private constrain_cursor(fl)
+      if *contents = 0 then
+         cursor := &null
+      else if \fl | \cursor then {
+         /cursor := 1
+         cursor <:= 1
+         cursor >:= *contents
       }
    end
 
@@ -390,25 +390,27 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    public delete_lines(l)
       local i, t1, t2
+      if *l > 0 then {
+         t1 := sort(self.selections)
+         t2 := set()
+         every i := 1 to *l do {
+            delete(self.contents, l[i] - i + 1)
+            while t1[1] < l[i] do
+               insert(t2, pop(t1) - i + 1)
+            if t1[1] = l[i] then
+               pop(t1)
+         }
+         # Note that i is not null, since *l > 0
+         while insert(t2, pop(t1) - i)
+         self.selections := t2
 
-      t1 := sort(self.selections)
-      t2 := set()
-      every i := 1 to *l do {
-         delete(self.contents, l[i] - i + 1)
-         while t1[1] < l[i] do
-            insert(t2, pop(t1)-i+1)
-         if t1[1] = l[i] then
-            pop(t1)
+         constrain_cursor()
+
+         invalidate_subject_width()
+         invalidate_line_height()
+         invalidate_line_count()
+         compute_and_invalidate()
       }
-      while insert(t2, pop(t1)-i)
-      self.selections := t2
-
-      constrain_cursor()
-
-      invalidate_subject_width()
-      invalidate_line_height()
-      invalidate_line_count()
-      compute_and_invalidate()
       return self
    end
 
@@ -420,11 +422,13 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    public set_lines(l, n)
       local i
-      every i := 1 to *l do
-         self.contents[i + n - 1] := l[i]
-      invalidate_subject_width()
-      invalidate_line_height()
-      compute_and_invalidate()
+      if *l > 0 then {
+         every i := 1 to *l do
+            self.contents[i + n - 1] := l[i]
+         invalidate_subject_width()
+         invalidate_line_height()
+         compute_and_invalidate()
+      }
       return self
    end
 
@@ -435,21 +439,23 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    public insert_lines(l, n)
       local i, e, t
-      every i := 1 to *l do
-         insert(self.contents, i + n - 1, l[i])
+      if *l > 0 then {
+         every i := 1 to *l do
+            insert(self.contents, i + n - 1, l[i])
 
-      t := set()
-      every e := !self.selections do {
-         if e >= n then
-            e +:= *l
-         insert(t, e)
+         t := set()
+         every e := !self.selections do {
+            if e >= n then
+               e +:= *l
+            insert(t, e)
+         }
+         self.selections := t
+
+         invalidate_subject_width()
+         invalidate_line_height()
+         invalidate_line_count()
+         compute_and_invalidate()
       }
-      self.selections := t
-
-      invalidate_subject_width()
-      invalidate_line_height()
-      invalidate_line_count()
-      compute_and_invalidate()
       return self
    end
 
@@ -461,30 +467,32 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    public move_lines(l, n)
       local t, s, e, n1, i, tc
 
-      # Save the moving lines into a list
-      t := []
-      every put(t, self.contents[!l])
+      if *l > 0 then {
+         # Save the moving lines into a list
+         t := []
+         every put(t, self.contents[!l])
 
-      # Get the place to insert after we've deleted l.
-      n1 := n
-      every e := !l do
-         if e < n then
-            n1 -:= 1
+         # Get the place to insert after we've deleted l.
+         n1 := n
+         every e := !l do
+            if e < n then
+               n1 -:= 1
 
-      # Get the selections we need to add after re-insertion.
-      s := set()
-      every i := 1 to *l do {
-         if member(self.selections, l[i]) then
-            insert(s, n1 + i - 1)
+         # Get the selections we need to add after re-insertion.
+         s := set()
+         every i := 1 to *l do {
+            if member(self.selections, l[i]) then
+               insert(s, n1 + i - 1)
+         }
+
+         # Delete, re-insert and adjust selections.  Save and restore cursor
+         # since delete_lines constrains it in the temporarily shortened list.
+         tc := self.cursor
+         delete_lines(l)
+         insert_lines(t, n1)
+         self.selections ++:= s
+         set_cursor(tc)
       }
-
-      # Delete, re-insert and adjust selections.  Save and restore cursor
-      # since delete_lines constrains it in the temporarily shortened list.
-      tc := self.cursor
-      delete_lines(l)
-      insert_lines(t, n1)
-      self.selections ++:= s
-      set_cursor(tc)
       return self
    end
 
@@ -632,7 +640,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    end
 
    public handle_move(e)
-     \self.motion_cursor_flag | fail
+      \self.motion_cursor_flag | fail
       start_handle(e)
       self.cursor := get_nearest_line_to_pointer(e)
       ensure_line_visible(self.cursor)

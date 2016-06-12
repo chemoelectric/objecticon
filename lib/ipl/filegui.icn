@@ -283,6 +283,10 @@ class FileSuggestField(SuggestField)
       return self
    end
 
+   # Set the "cwd" from which relative paths are resolved.  Must be an
+   # absolute `FilePath`, or `&null`, in which case the true cwd is
+   # used.
+   #
    public set_cwd(d)
       self.cwd := d
       return self
@@ -314,11 +318,10 @@ class FileSuggestField(SuggestField)
    end
 
    private do_dir_list(s)
-      if dir_list_name === s then
-         return dir_list
-      dir_list := qsort(Files.ucs_list(s, ListEntryWithIcon), Files.name_cmp) | fail
-      dir_list_name := s
-      return dir_list
+      if dir_list_name ~=== s then {
+         dir_list := qsort(Files.ucs_list(s, ListEntryWithIcon), Files.name_cmp) | []
+         dir_list_name := s
+      }
    end
 
    #
@@ -328,19 +331,17 @@ class FileSuggestField(SuggestField)
    #
    private calc_matches()
       local path, s, t
-      path := FilePath(contents)
-      if not path.is_absolute() then
-         path := FilePath(cwd).append(path)
+      path := FilePath(contents).absolute(cwd)
       matches := []
-      if *contents = 0 | contents[-1] == Files.PATH_SEPARATOR then {
-         do_dir_list(path.str()) | fail
+      if *contents = 0 | any(Files.PATH_SPECIALS, contents[-1]) then {
+         do_dir_list(path.str())
          every t := !dir_list do {
             if match_entry(t) then
                put(matches, t)
          }
          prefix := contents
       } else {
-         do_dir_list(path.parent().str()) | fail
+         do_dir_list(path.parent().str())
          s := path.get(-1)
          every t := !dir_list do {
             if match_entry(t) & match(s, t.name) then
@@ -348,11 +349,10 @@ class FileSuggestField(SuggestField)
          }
          prefix := contents[1:-*s]
       }
-      return
    end
 
    protected do_request()
-      calc_matches() | fail
+      calc_matches()
       # No point in a list which is a copy of what we already have
       if *matches = 1 & endswith(contents, matches[1].name) then
          return []
@@ -379,17 +379,7 @@ class FileSuggestField(SuggestField)
    # we have ["mark", "mary", "marion"], we get "mar".
    #
    private get_longest_prefix()
-      local i, s, t, e
-      i := 1
-      t := u""
-      repeat {
-         s := matches[1].name[1+:i] | break
-         every e := !matches do
-            e.name[1+:i] == s | break break
-         t := s
-         i +:= 1
-      }
-      return t
+      return coprefix(ipl.pdco.List{(!matches).name}) | u""
    end
 
    public handle_tab(e)
@@ -421,7 +411,7 @@ class FileSuggestField(SuggestField)
          }
       } else {
          # As above, calculate the string we could insert.
-         calc_matches() | fail
+         calc_matches()
          t := prefix || if /directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
             matches[1].name || Files.PATH_SEPARATOR
          else
@@ -456,7 +446,6 @@ class FileSuggestField(SuggestField)
    public new()
       SuggestField.new()
       self.set_contents(u"")
-      cwd := Files.getcwd()
       set_direction(Direction.DOWN)
       return
    end
@@ -539,7 +528,9 @@ class FileTrailList(ButtonOnlyList)
       child     # The optional child to the right, for setting the selection in the popup
 
    public create_button()
-      return TextButton().set_label(Files.PATH_SEPARATOR)
+      local l
+      l := if p.size() = 1 then p.str() else Files.PATH_SEPARATOR
+      return TextButton().set_label(l)
    end
 
    public create_popup()
@@ -593,9 +584,9 @@ class FileTrailList(ButtonOnlyList)
    end
 
    public new(p, child)
-      ButtonOnlyList.new()
       self.p := p
       self.child := child
+      ButtonOnlyList.new()
       set_accepts_focus(&no)
       set_selection_list([])
       clear_constraints()
@@ -708,10 +699,9 @@ class FileTrail(Component)
    #
    public set_path(p)
       local f, i, g
-      p := ucs(p) | runerr(128, p)
-      remove_all()
       # Ensure all elements are ucs.
       f := FilePath(p).canonical().ucs_path() | fail
+      remove_all()
       path_str := f.ucs()
       every i := 2 to f.size() do {
          g := f.slice(1, i)
@@ -731,6 +721,7 @@ class FileTrail(Component)
          layout()
          invalidate()
       }
+      return self
    end
 
    public new()

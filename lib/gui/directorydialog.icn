@@ -1,8 +1,8 @@
 package gui
 
 import 
+   ipl.pdco,
    ipl.sort,
-   ipl.lists,
    ipl.filegui,
    io
 
@@ -30,7 +30,8 @@ class DirectoryDialog(Dialog)
       message_label, 
       tree,
       dir,
-      existing_file_mode
+      existing_file_mode,
+      warned
 
    public static const
       WARN, IGNORE, REQUIRE, DISALLOW
@@ -112,7 +113,9 @@ class DirectoryDialog(Dialog)
 
    #
    # Given a TreeNode n, return a {FilePath} path it represents by traversing
-   # up the tree structure to the root and converting to a {FilePath}.
+   # up the tree structure to the root and converting to a {FilePath}.  Each
+   # element in the path is a ucs string, so the ucs() method on the path will
+   # always succeed.
    #
    public get_full_path(n)
       local l
@@ -143,8 +146,9 @@ class DirectoryDialog(Dialog)
    end
 
    public on_tree_selection(ev)
-      selected_path := get_full_path(tree.object_get_selections()[1])
-      dir.set_contents(selected_path.liberal_ucs())
+      selected_path := get_full_path(tree.object_get_selections()[1]) | fail
+      dir.set_contents(selected_path.ucs())
+      dir.view.set_cwd(selected_path)
       check_existing()
    end
 
@@ -153,12 +157,11 @@ class DirectoryDialog(Dialog)
    end
 
    public on_dir_content_changed(ev)
-      if dir.was_applied(ev) then
+      if dir.was_applied(ev) | dir.view.was_applied(ev) then
          goto_dir(dir.get_contents())
       else
          check_existing()
    end
-
 
    #
    # Get the result, (will fail if cancel was pressed).
@@ -199,13 +202,13 @@ class DirectoryDialog(Dialog)
    end
 
    public get_dir_path()
-      return FilePath(dir.get_contents()).canonical()
+      return FilePath(dir.get_contents()).absolute(selected_path).canonical()
    end
 
    public goto_dir(d)
-      local n, s, p, err, i
-      p := FilePath(d).canonical()
-      n := tree.get_root_node()
+      local n, s, p, err, i, root
+      p := FilePath(d).absolute(selected_path).canonical().ucs_path() | fail
+      n := root := tree.get_root_node()
       every s := p.gen() do {
          n := find_child(n, s) | break
          load_subtree(n) | {
@@ -214,8 +217,13 @@ class DirectoryDialog(Dialog)
          }
          n.set_expanded(&yes)
       }
+      # n may still be at the root if (on Win32) we input a network
+      # path (which isn't in the tree).
+      if n === root then
+         n := root.children[1]
+      else
+         tree.tree_structure_changed()
 
-      tree.tree_structure_changed()
       i := tree.find_line(n)
       tree.
          set_selections([i]).
@@ -223,13 +231,15 @@ class DirectoryDialog(Dialog)
          center_line(i)
 
       selected_path := get_full_path(n)
-      dir.set_contents(p.liberal_ucs())
+      dir.set_contents(p.ucs())
+      dir.view.set_cwd(selected_path)
       if \err then
          msg(err)
       else if Files.is_directory(p.str()) then
          check_existing()
       else
-         msg("Not a dir: " || p.liberal_ucs())
+         msg("Not a dir: " || p.ucs())
+      return self
    end
 
    public find_child(n, s)
@@ -248,12 +258,15 @@ $endif
    public check_existing()
       local f
       msg()
+      warned := &null
       f := get_dir_path().str()
       if Files.access(f) then {
          if not Files.is_directory(f) then
             msg("Not a directory")
-         else if existing_file_mode === (WARN | DISALLOW) then
+         else if existing_file_mode === (WARN | DISALLOW) then {
+            warned := &yes
             msg("Existing directory")
+         }
       }
    end
 
@@ -317,9 +330,8 @@ $endif
    end
 
    public on_new_dir_menu_item(ev)
-      local d, s
-      s := selected_path.ucs() | return msg("Path not UTF-8")
-      d := NewDirectoryDialog(s).
+      local d
+      d := NewDirectoryDialog(selected_path.ucs()).
          show_modal(self)
       goto_dir(\d.result)
    end
@@ -354,11 +366,9 @@ $endif
 
    public get_favourites_directories()
       local t
-      t := copy(init_dirs)
-      every put(t,
-                Files.getcwd() | 
-                FavouriteDirectoriesDialog.gen_directories())
-      return lunique(FileDialog.ucs_list(t))
+      t := ipl.pdco.List{ FilePath(!init_dirs).canonical().str() |
+                          FavouriteDirectoriesDialog.gen_directories_plus() }
+      return FileDialog.unique_ucs_list(t)
    end
 
    public on_favourite_dirs_menu_item(ev)
@@ -430,35 +440,35 @@ $endif
          set_extra("cells")
       panel_4 := Panel().
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_align", Align.L).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_ALIGN, Align.L).
          set_layout(layout_6).
          add(tools_menu_button).
          add(home_button).
          add(up_button)
       self.add(panel_4)
       tree := ItemPaintTree().
-         set_size(scale(390), scale(272)).
+         set_size(scale(520), scale(360)).
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0).
          connect(self.on_tree_expansion, Event.TREE_NODE_EXPANSION).
          connect(self.on_tree_selection, Event.SELECTION_CHANGED).
          set_select_mode(Select.ONE).
          set_show_root(&no)
       self.add(tree)
       paint_35 := TextPaint("Directory")
-      dir := EditList().
+      dir := DirEditList().
          set_size(scale(150)).
          set_align(Align.L, Align.B).
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_tooltip(paint_35).
          connect(self.on_dir_action, Event.ACTION).
          connect(self.on_dir_content_changed, Event.CONTENT_CHANGED).
@@ -484,17 +494,17 @@ $endif
          set_align(Align.L, Align.B).
          set_fg("red").
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_paint(paint_11)
       layout_4 := GridLayout().
          set_doi(scale(0)).
          set_extra("cells")
       panel_3 := Panel().
          clear_constraints().
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          set_layout(layout_4).
          add(okay_button).
          add(cancel_button).

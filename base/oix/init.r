@@ -17,7 +17,6 @@ static void initprogstate(struct progstate *p);
 static void initregion(struct region *r);
 static void handle_prog_exit(void);
 static void relocate_code(struct progstate *ps, word *c);
-static void startuperr(char *fmt, ...);
 static void conv_addr(void);
 static void conv_var(void);
 static struct b_cset *make_static_cset_block(int n_ranges, ...);
@@ -210,7 +209,7 @@ int fnc_tbl_sz = ElemCount(fnc_tbl);
 int keyword_tbl_sz = ElemCount(keyword_tbl);
 
 
-struct progstate *curpstate;
+struct progstate *curpstate = &rootpstate;
 struct progstate rootpstate;
 
 /*
@@ -339,7 +338,7 @@ static struct b_cset *make_static_cset_block(int n_ranges, ...)
     va_list ap;
     va_start(ap, n_ranges);
     blksize = sizeof(struct b_cset) + ((n_ranges - 1) * sizeof(struct b_cset_range));
-    Protect(b = calloc(blksize, 1), startuperr("Insufficient memory"));
+    b = safe_zalloc(blksize);
     b->blksize = blksize;
     b->n_ranges = n_ranges;
     b->size = 0;
@@ -374,7 +373,7 @@ static struct b_ucs *make_static_ucs_block(char *utf8)
     }
     calc_ucs_index_settings(utf8_len, length, &index_step, &n_offs, &offset_bits, &n_off_words);
     blksize = sizeof(struct b_ucs) + ((n_off_words - 1) * sizeof(word));
-    Protect(b = calloc(blksize, 1), startuperr("Insufficient memory"));
+    b = safe_zalloc(blksize);
     b->blksize = blksize;
     b->index_step = index_step;
     MakeStr(utf8, utf8_len, &b->utf8);
@@ -459,23 +458,6 @@ void env_double(char *name, double *variable, double min, double max)
 void fpetrap(int n)
 {
     fatalerr(204, NULL);
-}
-
-/*
- * error - print error message; used only in startup code.
- */
-static void startuperr(char *fmt, ...)
-{
-    va_list ap;
-    va_start(ap, fmt);
-    fprintf(stderr, "error in startup code\n");
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr,"\n");
-    fflush(stderr);
-    va_end(ap);
-    if (dodump > 1)
-        abort();
-    c_exit(EXIT_FAILURE);
 }
 
 
@@ -1175,7 +1157,7 @@ int main(int argc, char **argv)
     }
 
     if (argc < 2) 
-        startuperr("no icode file specified");
+        ffatalerr("no icode file specified");
 
     name = argv[1];
 
@@ -1234,9 +1216,8 @@ int main(int argc, char **argv)
     BlkLoc(csetdesc) = (union block *)k_cset;
 
     /*
-     * Initialize root pstate.  After this, we can use ffatalerr() rather than startuperr()
+     * Initialize root pstate.
      */
-    curpstate = &rootpstate;
     progs = &rootpstate;
     initprogstate(&rootpstate);
 

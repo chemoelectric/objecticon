@@ -237,8 +237,8 @@ $endif
    gen(comb, "abcde", 3)
    gen(compress,
       "Mississippi bookkeeper unsuccessfully lobbies heedless committee")
-   every gen(coprefix, !SL, !SL)
-   every gen(cosuffix, !SL, !SL)
+   every gen(coprefix, [!SL, !SL])
+   every gen(cosuffix, [!SL, !SL])
    gen(csort,    "sphinx of black quartz judge my vow")
    gen(decollate,"saturday in the park")
    gen(deletec,  "deinstitutionalization", 'aeiou')

@@ -688,22 +688,19 @@ end
 # This class provides implementations of some of the methods in
 # {Files} and {FilePath}.  It is not used directly by clients.
 #
-abstract class FileSystem()
+package abstract class FileSystem()
    public abstract get_path_list(s)
    public abstract filepath_str(fp)
    public abstract filepath_is_absolute(fp)
-   public abstract filepath_tidy(fp)
-   public abstract filepath_absolute(fp)
+   public abstract filepath_canonical(fp)
+   public abstract filepath_absolute(fp, other)
+   public abstract filepath_standard_case(fp)
    public abstract get_home()
    public abstract get_temp()
    public abstract is_hidden(s)
    public abstract is_relative_dir(s)
    public abstract get_roots()
    public abstract split_paths(s)
-
-   package new()
-      return
-   end
 end
 
 #
@@ -821,14 +818,21 @@ class FilePath(ObjectOutput)
    end
 
    #
-   # Return a path which represents the absolute path of this
-   # path.
+   # Return a path which represents the absolute path of this path.
+   # `other` is an optional `FilePath` being the directory with which
+   # to calculate the absolute path; by default it is the current
+   # working directory.
    #
-   public absolute()
+   public absolute(other)
       return if is_absolute() then
          self
-      else
-         Files.FS.filepath_absolute(self)
+      else {
+         other := if /other then 
+            FilePath(Files.getcwd())
+         else
+            other.absolute()
+         Files.FS.filepath_absolute(self, other)
+      }
    end
 
    #
@@ -865,7 +869,15 @@ class FilePath(ObjectOutput)
    # path and removing any redundant path elements.
    #
    public canonical()
-      return Files.FS.filepath_tidy(absolute())
+      return Files.FS.filepath_canonical(absolute())
+   end
+
+   #
+   # Return a path with the elements put into a standard case.  For
+   # case-sensitive file systems, this does nothing and returns self.
+   #
+   public standard_case()
+      return Files.FS.filepath_standard_case(self)
    end
 
    #
@@ -1034,7 +1046,7 @@ class Stat()
 end
 $endif
 
-class UnixFileSystem(FileSystem)
+package class UnixFileSystem(FileSystem)
    public get_path_list(s)
       local l, t
       l := []
@@ -1065,7 +1077,7 @@ class UnixFileSystem(FileSystem)
       return fp.l[1] == "/"
    end
 
-   public filepath_tidy(fp)
+   public filepath_canonical(fp)
       local e, r
       r := []
       every e := !fp.l do {
@@ -1081,8 +1093,12 @@ class UnixFileSystem(FileSystem)
       return FilePath.from_list(r)
    end
 
-   public filepath_absolute(fp)
-      return FilePath(Files.getcwd()).append(fp)
+   public filepath_absolute(fp, other)
+      return other.append(fp)
+   end
+
+   public filepath_standard_case(fp)
+      return fp
    end
 
    public get_home()
@@ -1117,7 +1133,7 @@ class UnixFileSystem(FileSystem)
    end
 end
 
-class Plan9FileSystem(UnixFileSystem)
+package class Plan9FileSystem(UnixFileSystem)
    public get_home()
       return System.getenv("home")
    end
@@ -1136,7 +1152,7 @@ class Plan9FileSystem(UnixFileSystem)
    end
 end
 
-class WindowsFileSystem(FileSystem)
+package class WindowsFileSystem(FileSystem)
    public get_path_list(s)
       local l, t
       l := []
@@ -1175,7 +1191,7 @@ class WindowsFileSystem(FileSystem)
       return fp.l[1] == "\\\\" | fp.l[1][2:0] == ":\\"
    end
 
-   public filepath_tidy(fp)
+   public filepath_canonical(fp)
       local e, r
       r := []
       every e := !fp.l do {
@@ -1186,20 +1202,35 @@ class WindowsFileSystem(FileSystem)
             if *r > 1 then
                pull(r)
          } else
-            put(r, map(e))
+            put(r, e)
       }
       return FilePath.from_list(r)
    end
 
-   public filepath_absolute(fp)
+   public filepath_standard_case(fp)
+      local r
+      r := []
+      every put(r, map(!fp.l))
+      return FilePath.from_list(r)
+   end
+
+   public filepath_absolute(fp, other)
       local s
-      if fp.l[1] == "\\" then
-         return FilePath.from_list([Files.getcwd()[1:4]] ||| fp.l[2:0])
+      if fp.l[1] == "\\" then {
+         return if other.l[1] == "\\\\" & *other.l > 1 then
+            FilePath.from_list(other.l[1:3] ||| fp.l[2:0])
+         else
+            FilePath.from_list([other.l[1]] ||| fp.l[2:0])
+      }
       if fp.l[1][2:0] == ":" then {
-         s := getdcwd(fp.l[1][1]) | fp.l[1] || "\\"
+         if s := getdcwd(fp.l[1][1]) then
+            # Maintain the case of the original drive letter
+            s[1] := fp.l[1][1]
+         else
+            s := fp.l[1] || "\\"
          return FilePath(s).append(FilePath.from_list(fp.l[2:0]))
       }
-      return FilePath(Files.getcwd()).append(fp)
+      return other.append(fp)
    end
 
    private static native getdcwd(d)

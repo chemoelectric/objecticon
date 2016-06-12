@@ -26,22 +26,25 @@ procedure error(s)
 end
 
 #
-# Extract an error code number from {&why}.
+# Extract an error code number from `&why`.
 #
-# If {&why} was set by a native method which failed due to an error
+# If `&why` was set by a native method which failed due to an error
 # which has a corresponding error code number (usually the value of
-# errno), then it may set {&why} to a string in a format which
+# errno), then it may set `&why` to a string in a format which
 # includes that number.  This procedure parses the string and extracts
-# the value.
+# the value.  `k` is optional and matches the name of the error
+# variable; if omitted then any variable matches.
 #
-procedure errno()
+procedure errno(k)
    local i
    &why ? { 
-      if tab(upto('=')) &
+      every tab(upto('(')) &
          move(1) &
+         (if /k then tab(many(&letters ++ &digits ++ '_')) else =k) &
+         ="=" &
          i := integer(tab(many(&digits))) &
-         any(')') then
-         return i
+         any(')') do
+         suspend i
    }
 end
 

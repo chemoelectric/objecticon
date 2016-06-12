@@ -188,8 +188,8 @@ char *getenv_utf8(char *var)
 int setenv_utf8(char *var, char *value)
 {
     WCHAR *wvar, *wvalue;
-    wvar = utf8_to_wchar(var);
     BOOL res;
+    wvar = utf8_to_wchar(var);
     if (value)
         wvalue = utf8_to_wchar(value);
     else

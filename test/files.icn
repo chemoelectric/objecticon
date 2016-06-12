@@ -29,7 +29,7 @@ $ifdef _MS_WIN32
       drv := Files.getcwd()[1:3]
    }
    p1 := drv || map(p,"/","\\")
-   s := FilePath(p1).canonical().str()
+   s := FilePath(p1).canonical().standard_case().str()
    clean := map(clean,"/","\\")
    if not(clean[2] == ":") then
       clean := drv || clean
