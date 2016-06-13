@@ -3,7 +3,6 @@ package ipl.filegui
 import
    ipl.sort,
    ipl.strings,
-   ipl.wildcard,
    ipl.pdco,
    gui,
    io,
@@ -283,23 +282,27 @@ class FileSuggestField(SuggestField)
       return self
    end
 
-   # Set the "cwd" from which relative paths are resolved.  Must be an
-   # absolute `FilePath`, or `&null`, in which case the true cwd is
-   # used.
+   # Set the "cwd" from which relative paths are resolved.  May be
+   # `&null`, in which case the true cwd is used.
    #
    public set_cwd(d)
-      self.cwd := d
+      self.cwd := FilePath(\d).absolute() | &null
       return self
    end
 
-   public set_filter(f)
-      local pat
-      pats := []
-      f ? repeat {
-         pat := tab(upto(';') | 0)
-         put(pats, Wildcard(pat))
-         move(1) | break
-      }
+   # Return an absolute `FilePath` (based on `cwd`) representing the
+   # current contents.
+   #
+   public get_path()
+      return FilePath(contents).absolute(cwd)
+   end
+
+   # Set a list of `ipl.wildcard.Wildcard` instances to use as
+   # patterns to filter the files displayed; may be `&null`, in
+   # which case no filtering is done.
+   #
+   public set_patterns(l)
+      pats := l
       return self
    end
 
@@ -317,7 +320,9 @@ class FileSuggestField(SuggestField)
       }
    end
 
-   private do_dir_list(s)
+   private do_dir_list(p)
+      local s
+      s := p.canonical().str()
       if dir_list_name ~=== s then {
          dir_list := qsort(Files.ucs_list(s, ListEntryWithIcon), Files.name_cmp) | []
          dir_list_name := s
@@ -331,17 +336,20 @@ class FileSuggestField(SuggestField)
    #
    private calc_matches()
       local path, s, t
-      path := FilePath(contents).absolute(cwd)
+      # Note that we don't take canonical() here; that is done in
+      # do_dir_list() above, since we use path.parent() below.
+      # (Consider cwd=/tmp and we input "."; path is then /tmp/.)
+      path := get_path()
       matches := []
       if *contents = 0 | any(Files.PATH_SPECIALS, contents[-1]) then {
-         do_dir_list(path.str())
+         do_dir_list(path)
          every t := !dir_list do {
             if match_entry(t) then
                put(matches, t)
          }
          prefix := contents
       } else {
-         do_dir_list(path.parent().str())
+         do_dir_list(path.parent())
          s := path.get(-1)
          every t := !dir_list do {
             if match_entry(t) & match(s, t.name) then
