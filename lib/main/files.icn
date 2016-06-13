@@ -671,7 +671,7 @@ class FilePath(ObjectOutput)
    public slice(i, j)
       /i := 1
       /j := 0
-      return from_list(l[i:j])
+      return from_list_impl(l[i:j])
    end
 
    #
@@ -681,9 +681,9 @@ class FilePath(ObjectOutput)
    #
    public append(other)
       return if is(other, FilePath) then
-         from_list(l ||| other.l)
+         from_list_impl(l ||| other.l)
       else
-         from_list(l ||| other)
+         from_list_impl(l ||| other)
    end
 
    #
@@ -691,7 +691,7 @@ class FilePath(ObjectOutput)
    # appending the elements of this path to that list.
    #
    public walk(a[])
-      return from_list(l ||| a)
+      return from_list_impl(l ||| a)
    end
 
    #
@@ -699,7 +699,7 @@ class FilePath(ObjectOutput)
    # element.  Fails if the path has no elements.
    #
    public parent()
-      return from_list(l[1:-1])
+      return from_list_impl(l[1:-1])
    end
 
    private object_output(oo)
@@ -711,7 +711,7 @@ class FilePath(ObjectOutput)
    # element {s}.
    #
    public child(s)
-      return from_list(l ||| [s])
+      return from_list_impl(l ||| [s])
    end
 
    #
@@ -722,7 +722,7 @@ class FilePath(ObjectOutput)
       local t
       t := copy(l)
       t[-1] := s | fail
-      return from_list(t)
+      return from_list_impl(t)
    end
 
    #
@@ -797,13 +797,17 @@ class FilePath(ObjectOutput)
       t := []
       every s := !l do
          put(t, default.ucs(s)) | fail
-      return from_list(t)
+      return from_list_impl(t)
    end
 
    #
    # Create a new {FilePath} from the given list of path elements.
    #
    public static from_list(l)
+      return from_list_impl(copy(l))
+   end
+
+   package static from_list_impl(l)
       local i
       i := Class.create_instance()
       i.l := l
@@ -924,7 +928,7 @@ package class UnixFileSystem(FileSystem)
          } else
             put(r, e)
       }
-      return FilePath.from_list(r)
+      return FilePath.from_list_impl(r)
    end
 
    public filepath_absolute(fp, other)
@@ -1019,23 +1023,23 @@ package class WindowsFileSystem(FileSystem)
          } else
             put(r, e)
       }
-      return FilePath.from_list(r)
+      return FilePath.from_list_impl(r)
    end
 
    public filepath_standard_case(fp)
       local r
       r := []
       every put(r, map(!fp.l))
-      return FilePath.from_list(r)
+      return FilePath.from_list_impl(r)
    end
 
    public filepath_absolute(fp, other)
       local s
       if fp.l[1] == "\\" then {
          return if other.l[1] == "\\\\" & *other.l > 1 then
-            FilePath.from_list(other.l[1:3] ||| fp.l[2:0])
+            FilePath.from_list_impl(other.l[1:3] ||| fp.l[2:0])
          else
-            FilePath.from_list([other.l[1]] ||| fp.l[2:0])
+            FilePath.from_list_impl([other.l[1]] ||| fp.l[2:0])
       }
       if fp.l[1][2:0] == ":" then {
          if s := getdcwd(fp.l[1][1]) then
@@ -1043,7 +1047,7 @@ package class WindowsFileSystem(FileSystem)
             s[1] := fp.l[1][1]
          else
             s := fp.l[1] || "\\"
-         return FilePath(s).append(FilePath.from_list(fp.l[2:0]))
+         return FilePath(s).append(FilePath.from_list_impl(fp.l[2:0]))
       }
       return other.append(fp)
    end
