@@ -163,7 +163,8 @@ class FileDialog(Dialog)
       file_label,
       img,
       img_label,
-      warned
+      warned,
+      pats
 
    public static const
       WARN, IGNORE, REQUIRE, DISALLOW
@@ -216,6 +217,7 @@ class FileDialog(Dialog)
       /init_filters := [u"*"]
       favourites_list.set_selection_list(get_favourites_directories())
       filter.set_selection_list(ucs_list(init_filters)).set_selection(1)
+      synch_pats()
       if /multiple_files_flag then {
          file.set_selection_list(ucs_list(init_files)).set_selection(1)
          flist.set_select_mode(Select.ONE)
@@ -240,13 +242,9 @@ class FileDialog(Dialog)
       /multiple_files_flag | fail
       f := get_current_selection().str()
       warned := &null
-      if \f then {
-         if Files.is_directory(f) then
-            msg("Directory")
-         else if existing_file_mode === (WARN | DISALLOW) & Files.access(f) then {
-            warned := &yes
-            msg("Existing file")
-         }
+      if \f & existing_file_mode === (WARN | DISALLOW) & not Files.is_directory(f) & Files.access(f) then {
+         warned := &yes
+         msg("Existing file")
       }
       if \img then {
          if endswith(map(\f), ".gif" | ".jpg" | ".jpeg" | ".png") then
@@ -480,23 +478,40 @@ class FileDialog(Dialog)
       check_existing()
    end
 
-   public update_filter()
+   public on_filter_action(ev)
       refresh_dir()
-      file.view.set_filter(filter.get_contents())
    end
 
-   public on_filter_action(ev)
-      update_filter()
+   protected synch_pats()
+      local pat
+      pats := []
+      filter.get_contents() ? repeat {
+         pat := tab(upto(';') | 0)
+         put(pats, Wildcard(pat))
+         move(1) | break
+      }
+      file.view.set_patterns(pats)
    end
 
    public on_filter_content_changed(ev)
+      synch_pats()
       if filter.was_applied(ev) then
-         update_filter()
+         refresh_dir()
+   end
+
+   public set_show_hidden_files(s)
+      show_hidden_menu_item.set_is_checked(s)
+      on_show_hidden_menu_item()
+      return self
    end
 
    public on_show_hidden_menu_item(ev)
-      pos_table := table()
-      refresh_dir()
+      if is_live() then {
+         pos_table := table()
+         refresh_dir() 
+      }
+      trail.set_show_hidden_files(show_hidden_menu_item.get_status())
+      file.view.set_show_hidden_files(show_hidden_menu_item.get_status())
    end
 
    public on_up_button(ev)
@@ -563,17 +578,6 @@ class FileDialog(Dialog)
       favourites_list.object_set_selection(loaded_dir_path.ucs()) | favourites_list.set_selection()
    end
 
-   public get_pats()
-      local pat, pats
-      pats := []
-      filter.get_contents() ? repeat {
-         pat := tab(upto(';') | 0)
-         put(pats, Wildcard(pat))
-         move(1) | break
-      }
-      return pats
-   end
-
    public msg(s)
       message_label.set(s)
    end
@@ -604,12 +608,16 @@ class FileDialog(Dialog)
    end
 
    public goto_dir(d, nav)
-      loaded_dir_path := FilePath(d).absolute(loaded_dir_path).canonical().ucs_path() | fail
+      local t
+      # Use a temporary variable here so that we save_pos() before
+      # setting loaded_dir_path.
+      t := FilePath(d).absolute(loaded_dir_path).canonical().ucs_path() | fail
       save_pos()
+      loaded_dir_path := t
       trail.set_path(loaded_dir_path.ucs())
       synch_favourites_list()
       msg()
-      file.view.set_cwd(loaded_dir_path)
+      file.view.set_cwd(loaded_dir_path.ucs())
       load_dir_list()
       annotate_dir_list()
       set_lists(sort_dir_list())
@@ -669,8 +677,7 @@ class FileDialog(Dialog)
    end
 
    public sort_dir_list()
-      local e, dir_list, file_list, pats, n
-      pats := get_pats()
+      local e, dir_list, file_list, n
       dir_list := []
       file_list := []
       every e := !loaded_dir_list do {
@@ -762,14 +769,12 @@ class FileDialog(Dialog)
       favourites_list.set_size()
 
       dlist.
-         set_draggable_cursor(&yes).
          set_selection_on_key_moves(&no).
          set_item_paint(IconFilesItemPaint()).
          set_item_border(EmptyBorder().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
                              set_x_align(Align.L))
       flist.
-         set_draggable_cursor(&yes).
          set_item_paint(AnnotatedIconFilesItemPaint()).
          set_item_border(EmptyBorder().
                              set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
