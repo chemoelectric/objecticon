@@ -391,31 +391,41 @@ class FileSuggestField(SuggestField)
    end
 
    public handle_tab(e)
-      local t
+      local t, o
       if \tl then {
-         # Calculate the string we could insert.  If not
-         # directories-only, and we have a single directory, append
-         # a /.  So for example
-         # "/ho" + tab -> "/home/" rather than "/home"
-         t := prefix || if /directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
-            matches[1].name || Files.PATH_SEPARATOR
-         else
-            get_longest_prefix()
-
-         # If the calculated string is longer than what we have,
-         # insert it.  Otherwise, if we have selected from the list
-         # then trigger a change to refresh the list.  If in
-         # directories only mode, append a "/"; this will show the
-         # next dir.  So for example "/ho", press tab, choose "/home",
-         # press tab again to set to "/home/" and show its contents.
-
-         if *contents < *t then
-            assign_contents(t, e)
-         else if *tl.get_selections() = 1 then {
-            if /directories_only_flag then
-               on_change(e)
+         if \select_using_enter_flag & o := tl.object_get_cursor() then {
+            # Tab has been pressed with the cursor in the list.
+            # Insert the name (with a trailing / for a directory)
+            t := prefix || if o.stat.mode_str[1] == "d" then
+               text(o.name) || Files.PATH_SEPARATOR
             else
-               assign_contents(contents || Files.PATH_SEPARATOR, e)
+               text(o.name)
+            assign_contents(t, e)
+         } else {
+            # Calculate the string we could insert.  If not
+            # directories-only, and we have a single directory, append
+            # a /.  So for example
+            # "/ho" + tab -> "/home/" rather than "/home"
+            t := prefix || if /directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
+               matches[1].name || Files.PATH_SEPARATOR
+            else
+               get_longest_prefix()
+
+            # If the calculated string is longer than what we have,
+            # insert it.  Otherwise, if we have selected from the list
+            # then trigger a change to refresh the list.  If in
+            # directories only mode, append a "/"; this will show the
+            # next dir.  So for example "/ho", press tab, choose "/home",
+            # press tab again to set to "/home/" and show its contents.
+
+            if *contents < *t then
+               assign_contents(t, e)
+            else if *tl.get_selections() = 1 then {
+               if /directories_only_flag then
+                  on_change(e)
+               else
+                  assign_contents(contents || Files.PATH_SEPARATOR, e)
+            }
          }
       } else {
          # As above, calculate the string we could insert.
