@@ -1183,7 +1183,7 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    private download_to_file(url, referer)
-      local d, f, d1, f1, full_path
+      local d, f, d1, f1
       d := parent_dialog.file_dialog
       d1 := FilePath(parent_dialog.last_download_dir)
       f1 := url.get_decoded_path_last()
@@ -1191,8 +1191,7 @@ class BrowserTab(TabItem, BrowserUI)
          "browser.out"
       else
          Text.liberal_ucs(f1)
-      full_path := d1.child(f1).canonical().str()
-      d.set_path(full_path).set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
+      d.set_path(d1.child(f1)).set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
       f := d.get_result() | fail
       parent_dialog.last_download_dir := d.get_directory()
       parent_dialog.downloads.download(url, referer, f)

@@ -671,7 +671,7 @@ class FilePath(ObjectOutput)
    public slice(i, j)
       /i := 1
       /j := 0
-      return from_list_impl(l[i:j])
+      return from_list(l[i:j])
    end
 
    #
@@ -681,9 +681,9 @@ class FilePath(ObjectOutput)
    #
    public append(other)
       return if is(other, FilePath) then
-         from_list_impl(l ||| other.l)
+         from_list(l ||| other.l)
       else
-         from_list_impl(l ||| other)
+         from_list(l ||| other)
    end
 
    #
@@ -691,7 +691,7 @@ class FilePath(ObjectOutput)
    # appending the elements of this path to that list.
    #
    public walk(a[])
-      return from_list_impl(l ||| a)
+      return from_list(l ||| a)
    end
 
    #
@@ -699,7 +699,7 @@ class FilePath(ObjectOutput)
    # element.  Fails if the path has no elements.
    #
    public parent()
-      return from_list_impl(l[1:-1])
+      return from_list(l[1:-1])
    end
 
    private object_output(oo)
@@ -711,7 +711,7 @@ class FilePath(ObjectOutput)
    # element {s}.
    #
    public child(s)
-      return from_list_impl(l ||| [s])
+      return from_list(l ||| [s])
    end
 
    #
@@ -722,7 +722,7 @@ class FilePath(ObjectOutput)
       local t
       t := copy(l)
       t[-1] := s | fail
-      return from_list_impl(t)
+      return from_list(t)
    end
 
    #
@@ -797,28 +797,34 @@ class FilePath(ObjectOutput)
       t := []
       every s := !l do
          put(t, default.ucs(s)) | fail
-      return from_list_impl(t)
+      return from_list(t)
    end
 
    #
-   # Create a new {FilePath} from the given list of path elements.
+   # Create a new instance from a list of elements, without taking a
+   # copy.
    #
-   public static from_list(l)
-      return from_list_impl(copy(l))
-   end
-
-   package static from_list_impl(l)
+   package static from_list(l)
       local i
       i := Class.create_instance()
       i.l := l
       return i
    end
 
+   # Create a new instance from `x`, which may be another `FilePath`,
+   # in which case an equivalent new instance is returned, a list of
+   # strings representing the elements of the new instance, or a
+   # string/ucs to parse.
    #
-   # Create a new instance from the path represented by the given string.
-   #
-   public new(s)
-      self.l := Files.FS.get_path_list(s) | fail
+   public new(x)
+      l := if x := text(x) then
+         Files.FS.get_path_list(x)
+      else if is(x, FilePath) then
+         x.l
+      else if type(x) == "list" then
+         copy(x)
+      else
+         runerr("text, list or FilePath expected", x)
       return
    end
 end
@@ -928,7 +934,7 @@ package class UnixFileSystem(FileSystem)
          } else
             put(r, e)
       }
-      return FilePath.from_list_impl(r)
+      return FilePath.from_list(r)
    end
 
    public filepath_absolute(fp, other)
@@ -1023,23 +1029,23 @@ package class WindowsFileSystem(FileSystem)
          } else
             put(r, e)
       }
-      return FilePath.from_list_impl(r)
+      return FilePath.from_list(r)
    end
 
    public filepath_standard_case(fp)
       local r
       r := []
       every put(r, map(!fp.l))
-      return FilePath.from_list_impl(r)
+      return FilePath.from_list(r)
    end
 
    public filepath_absolute(fp, other)
       local s
       if fp.l[1] == "\\" then {
          return if other.l[1] == "\\\\" & *other.l > 1 then
-            FilePath.from_list_impl(other.l[1:3] ||| fp.l[2:0])
+            FilePath.from_list(other.l[1:3] ||| fp.l[2:0])
          else
-            FilePath.from_list_impl([other.l[1]] ||| fp.l[2:0])
+            FilePath.from_list([other.l[1]] ||| fp.l[2:0])
       }
       if fp.l[1][2:0] == ":" then {
          if s := getdcwd(fp.l[1][1]) then
@@ -1047,7 +1053,7 @@ package class WindowsFileSystem(FileSystem)
             s[1] := fp.l[1][1]
          else
             s := fp.l[1] || "\\"
-         return FilePath(s).append(FilePath.from_list_impl(fp.l[2:0]))
+         return FilePath(s).append(FilePath.from_list(fp.l[2:0]))
       }
       return other.append(fp)
    end

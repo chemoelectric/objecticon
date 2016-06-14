@@ -126,7 +126,7 @@ class DirectoryDialog(Dialog)
          if n === tree.get_root_node() then
             break
       }
-      return FilePath.from_list(l)
+      return FilePath(l)
    end
 
    public on_tree_expansion()
@@ -150,7 +150,7 @@ class DirectoryDialog(Dialog)
       # do nothing and leave selected_path as is.
       selected_path := get_full_path(tree.object_get_selections()[1]) | fail
       dir.set_contents(selected_path.ucs())
-      dir.view.set_cwd(selected_path.ucs())
+      dir.view.set_cwd(selected_path)
       check_existing()
    end
 
@@ -234,7 +234,7 @@ class DirectoryDialog(Dialog)
 
       selected_path := get_full_path(n)
       dir.set_contents(p.ucs())
-      dir.view.set_cwd(selected_path.ucs())
+      dir.view.set_cwd(selected_path)
       if \err then
          msg(err)
       else if Files.is_directory(p.str()) then

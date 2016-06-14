@@ -614,10 +614,10 @@ class FileDialog(Dialog)
       t := FilePath(d).absolute(loaded_dir_path).canonical().ucs_path() | fail
       save_pos()
       loaded_dir_path := t
-      trail.set_path(loaded_dir_path.ucs())
+      trail.set_path(loaded_dir_path)
       synch_favourites_list()
       msg()
-      file.view.set_cwd(loaded_dir_path.ucs())
+      file.view.set_cwd(loaded_dir_path)
       load_dir_list()
       annotate_dir_list()
       set_lists(sort_dir_list())
