@@ -1006,18 +1006,29 @@ class Map(Panel)
    end
 
    private space_nodes(coex)
-      local st, q, itno
+      local st, q, itno, best, best_itno
       q := set()
       note_time()
       every insert(q, !stops)
-      itno := 0
+      best_itno := itno := 0
+      best := *q
       while st := ?q do {
          delete(q, st)
          space_nodes_iter(q, st)
-         writes(*q,"              \r")
          itno +:= 1
+         if best >:= *q then
+            best_itno := itno
+
+         writes(*q, "  ", best,"(",itno-best_itno,")","              \r")
+            
          if \coex & (itno % 100 = 0) then 
             suspend
+         if itno - best_itno > 2000 then {
+            write("\ngiving up")
+            if \opts["g"] then
+               every write((!q).name)
+            break
+         }
       }
       note_time("space_nodes()")
    end
@@ -1595,7 +1606,10 @@ class Map(Panel)
          if \skip then
             next
 
-         st := member(stop_codes, stop_code) | stop("No such stop: ", stop_code)
+         st := member(stop_codes, stop_code) | {
+            ewrite("No such stop: ", stop_code)
+            next
+         }
          put(rt.stops, st)
          insert(st.routes, rt)
          if \p_st then {
@@ -1919,6 +1933,7 @@ procedure main(a)
    opts := options(a, [Opt("n",, "Use night bus data"),
                        Opt("r",string, "Select route; multiple uses allowed",&yes),
                        Opt("s",, "Space nodes animation"),
+                       Opt("g",, "On giving up spacing, dump remaining stops"),
                        Opt("j",, "Don't join same-named stops"),
                        Opt("l",, "Force load and save from raw data"),
                        Opt("L",, "Force load from raw data, but don't save"),
