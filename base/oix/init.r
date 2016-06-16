@@ -120,7 +120,6 @@ struct b_cset *rparcs;    /* ')' */
  * Descriptors used by event monitoring.
  */
 struct descrip csetdesc;
-struct descrip eventdesc;
 struct descrip rzerodesc;
 
 struct b_cset *k_ascii;	        /* value of &ascii */

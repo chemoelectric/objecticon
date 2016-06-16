@@ -131,14 +131,16 @@ end
 /*
  * Macro with construction of event descriptor.
  */
-
-#begdef Desc_EVValD(bp, code, type)
-#if code
+#begdef Desc_EVValD(bp, event, type)
+#if event
    do {
-   if (!curpstate->monitor) break;
-   eventdesc.dword = type;
-   eventdesc.vword.bptr = (union block *)(bp);
-   EVValD(&eventdesc, code);
+      struct descrip eventdesc;
+      if (!curpstate->monitor) break;
+      if (curpstate->eventmask->size == 0) break;
+      if (!Testb((word)event, curpstate->eventmask->bits)) break;
+      eventdesc.dword = type;
+      eventdesc.vword.bptr = (union block *)(bp);
+      add_to_prog_event_queue(&eventdesc, event);
    } while (0)
 #endif
 #enddef					/* Desc_EVValD */
