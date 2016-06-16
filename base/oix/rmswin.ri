@@ -628,10 +628,7 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 void pollevent(wbp w)
 {
     MSG m;
-    /* some while PeekMessage loops here, maybe one per window ? */
-    while (PeekMessage(&m, NULL, 0, 0, PM_NOREMOVE)) {
-        if (GetMessage(&m, NULL, 0, 0) <= 0)
-            return;
+    while (PeekMessage(&m, NULL, 0, 0, PM_REMOVE)) {
         TranslateMessage(&m);
         DispatchMessage(&m);
     }
