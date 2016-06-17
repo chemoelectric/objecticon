@@ -363,23 +363,6 @@ void collect(int region)
    struct other_global *og;
    int i;
 
-#if HAVE_GETRLIMIT && HAVE_SETRLIMIT
-   {
-       struct rlimit rl;
-
-       getrlimit(RLIMIT_STACK , &rl);
-       /*
-        * Grow the C stack, proportional to the block region. Seems crazy large,
-        * but garbage collection uses stack proportional heap size.  May want to
-        * move this whole #if block so it is only performed when the heap grows.
-        */
-       if (rl.rlim_cur < curblock->size) {
-           rl.rlim_cur = curblock->size;
-           setrlimit(RLIMIT_STACK , &rl);
-       }
-   }
-#endif
-
    EVVal((word)region,E_Collect);
 
    switch (region) {
