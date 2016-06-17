@@ -1512,7 +1512,7 @@ void add_to_prog_event_queue(dptr value, int event)
     /* Do nothing if no-one is monitoring this program */
     if (!curpstate->monitor)
         return;
-    MemProtect(e = malloc(sizeof(struct prog_event)));
+    e = safe_malloc(sizeof(struct prog_event));
     if (curpstate->event_queue_tail) {
         curpstate->event_queue_tail->next = e;
         curpstate->event_queue_tail = e;

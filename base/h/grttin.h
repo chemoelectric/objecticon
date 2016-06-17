@@ -241,7 +241,7 @@ if (!cnv:tmp_string(din,dout)) runerr(103,din);
  */
 #begdef GAlloc(var,type)
    do {
-      MemProtect(var = calloc(1, sizeof(struct type)));
+      var = safe_zalloc(sizeof(struct type));
       var->refcount = 1;
    } while(0)
 #enddef				/* GAlloc */

@@ -79,7 +79,7 @@ void traceback(struct b_coexpr *ce, int with_xtrace, int act_chain)
     fprintf(stderr, "Traceback:\n");
     while (ce && !in_act_chain(head, ce)) {
         struct p_frame *pf;
-        MemProtect(ae = malloc(sizeof(struct act_chain)));
+        ae = safe_malloc(sizeof(struct act_chain));
         ae->coex = ce;
         ae->frames = 0;
         ae->next = head;
@@ -87,7 +87,7 @@ void traceback(struct b_coexpr *ce, int with_xtrace, int act_chain)
         head = ae;
         for (pf = ce->curr_pf; pf; pf = pf->caller) {
             if (pf->proc->program) {
-                MemProtect(fe = malloc(sizeof(struct frame_chain)));
+                fe = safe_malloc(sizeof(struct frame_chain));
                 fe->frame = pf;
                 fe->next = ae->frames;
                 ae->frames = fe;

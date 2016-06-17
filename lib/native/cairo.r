@@ -345,7 +345,7 @@ function cairo_Context_set_dash(self, offset, args[n])
        if (n > 0) {
            double *d;
            int i;
-           MemProtect(d = malloc(n * sizeof(double)));
+           d = safe_malloc(n * sizeof(double));
            for (i = 0; i < n; ++i) {
                if (!cnv:C_double(args[i], d[i])) {
                    free(d);
@@ -1333,7 +1333,7 @@ static void need_path_data(cairo_path_data_t **d, int *na, int n)
 {
     if (n >= *na) {
         *na = n + 32;
-        MemProtect(*d = realloc(*d, *na * sizeof(cairo_path_data_t)));
+        *d = safe_realloc(*d, *na * sizeof(cairo_path_data_t));
     }
 }
 
@@ -1603,7 +1603,7 @@ function cairo_Context_get_dashes(self)
       count = cairo_get_dash_count(self_cr);
       if (count == 0)
           fail;
-      MemProtect(d = malloc(count * sizeof(double)));
+      d = safe_malloc(count * sizeof(double));
       cairo_get_dash(self_cr, d, NULL);
       create_list(count, &result);
       for (i = 0; i < count; ++i) {

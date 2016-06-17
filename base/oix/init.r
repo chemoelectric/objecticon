@@ -744,7 +744,7 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
        if (stringsize <= 0) {
            pstate->stringregion = curpstate->stringregion;
        } else {
-           MemProtect(pstate->stringregion = malloc(sizeof(struct region)));
+           pstate->stringregion = safe_malloc(sizeof(struct region));
            pstate->stringregion->size = stringsize;
            /*
             * the local program region list starts out with this region only
@@ -765,7 +765,7 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
        if (blocksize <= 0) {
            pstate->blockregion = curpstate->blockregion;
        } else {
-           MemProtect(pstate->blockregion  = malloc(sizeof(struct region)));
+           pstate->blockregion = safe_malloc(sizeof(struct region));
            pstate->blockregion->size = blocksize;
            /*
             * the local program region list starts out with this region only

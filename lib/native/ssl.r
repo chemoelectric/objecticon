@@ -63,7 +63,7 @@ function ssl_SslStream_new_impl(other, host)
        meth = (SSL_METHOD *)SSLv23_client_method();
        ctx = SSL_CTX_new(meth);
 
-       MemProtect(p = malloc(sizeof(*p)));
+       p = safe_malloc(sizeof(*p));
        p->ctx = ctx;
        p->host = salloc(host);
 

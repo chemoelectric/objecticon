@@ -164,7 +164,7 @@ function mysql_MySql_esc(self, str)
       tended struct descrip result;
       unsigned long to_len;
       GetSelfMySql();
-      MemProtect(to = malloc(2 * StrLen(str) + 1));
+      to = safe_malloc(2 * StrLen(str) + 1);
       to_len = mysql_real_escape_string(self_mysql, to, StrLoc(str), StrLen(str));
       bytes2string(to, to_len, &result);
       free(to);
