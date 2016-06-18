@@ -574,6 +574,7 @@ static void initprogstate(struct progstate *p)
 {
     p->monitor = 0;
     p->eventmask= emptycs;
+    p->timer_interval = 1000;
     p->event_queue_head = p->event_queue_tail = 0;
     p->Kywd_handler = nulldesc;
     p->Kywd_pos = onedesc;
@@ -746,6 +747,7 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
        } else {
            pstate->stringregion = safe_malloc(sizeof(struct region));
            pstate->stringregion->size = stringsize;
+           pstate->stringregion->compacted = 0;
            /*
             * the local program region list starts out with this region only
             */
@@ -767,6 +769,7 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
        } else {
            pstate->blockregion = safe_malloc(sizeof(struct region));
            pstate->blockregion->size = blocksize;
+           pstate->blockregion->compacted = 0;
            /*
             * the local program region list starts out with this region only
             */

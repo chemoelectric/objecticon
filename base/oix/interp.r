@@ -22,6 +22,7 @@ static void do_tcasechoose(void);
 static void do_tcasechoosex(void);
 static void pop_from_prog_event_queue(struct progstate *prog, dptr res);
 static void fatalerr_139(void);
+static void check_timer(void);
 
 
 #include "interpiasm.ri"
@@ -920,12 +921,35 @@ static void do_tcasechoosex(void)
     ipc = (word *)ipc[2 * off];
 }
 
+static void check_timer(void)
+{
+    static int check_count;
+    if (Testb((word)E_Timer, curpstate->eventmask->bits)) {
+        struct timeval tp;
+        if (++check_count < 100)
+            return;
+        check_count = 0;
+        if (gettimeofday(&tp, 0) == 0) {
+            word diff;
+            diff = 1000 * (tp.tv_sec - curpstate->last_tick.tv_sec) +
+                (tp.tv_usec - curpstate->last_tick.tv_usec) / 1000;
+            if (diff >= curpstate->timer_interval) {
+                add_to_prog_event_queue(&nulldesc, E_Timer);
+                curpstate->last_tick = tp;
+            }
+        }
+    }
+}
+
 void interp()
 {
     for (;;) {
-        if (curpstate->event_queue_head) {
-            /* Switch to parent program */
-            set_curpstate(curpstate->monitor);
+        if (curpstate->monitor) {
+            check_timer();
+            if (curpstate->event_queue_head) {
+                /* Switch to parent program */
+                set_curpstate(curpstate->monitor);
+            }
         }
 
         curr_pf->curr_inst = ipc;

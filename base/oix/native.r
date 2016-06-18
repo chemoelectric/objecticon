@@ -176,7 +176,7 @@ function lang_Prog_get_event_mask(ce)
    }
 end
 
-function lang_Prog_set_event_mask(cs, ce)
+function lang_Prog_set_event_mask_impl(cs, ce)
    if !cnv:cset(cs) then 
       runerr(104,cs)
    body {
@@ -184,10 +184,30 @@ function lang_Prog_set_event_mask(cs, ce)
        if (!(prog = get_program_for(&ce)))
           runerr(0);
        set_event_mask(prog, &CsetBlk(cs));
-       return cs;
+       return nulldesc;
    }
 end
 
+function lang_Prog_set_timer_interval_impl(i, ce)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   body {
+       struct progstate *prog;
+       if (!(prog = get_program_for(&ce)))
+          runerr(0);
+       prog->timer_interval = i;
+       return nulldesc;
+   }
+end
+
+function lang_Prog_get_timer_interval(ce)
+   body {
+       struct progstate *prog;
+       if (!(prog = get_program_for(&ce)))
+          runerr(0);
+       return C_integer prog->timer_interval;
+   }
+end
 
 function errorclear(ce)
    body {
@@ -727,31 +747,24 @@ function lang_Prog_get_region_info_impl(c)
 
        create_list(0, &l);
        list_put(&result, &l);
-       for (rp = prog->stringregion; rp; rp = rp->next) {
+       for (rp = prog->stringregion; rp->prev; rp = rp->prev);
+       for (; rp; rp = rp->next) {
            convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
            list_put(&l, &tmp);
            convert_from_uword(DiffPtrs(rp->end,rp->base), &tmp);
            list_put(&l, &tmp);
-       }
-       for (rp = prog->stringregion->prev; rp; rp = rp->prev) {
-           convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
-           list_put(&l, &tmp);
-           convert_from_uword(DiffPtrs(rp->end,rp->base), &tmp);
+           MakeInt(rp->compacted, &tmp);
            list_put(&l, &tmp);
        }
-
        create_list(0, &l);
        list_put(&result, &l);
-       for (rp = prog->blockregion; rp; rp = rp->next) {
+       for (rp = prog->blockregion; rp->prev; rp = rp->prev);
+       for (; rp; rp = rp->next) {
            convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
            list_put(&l, &tmp);
            convert_from_uword(DiffPtrs(rp->end,rp->base), &tmp);
            list_put(&l, &tmp);
-       }
-       for (rp = prog->blockregion->prev; rp; rp = rp->prev) {
-           convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
-           list_put(&l, &tmp);
-           convert_from_uword(DiffPtrs(rp->end,rp->base), &tmp);
+           MakeInt(rp->compacted, &tmp);
            list_put(&l, &tmp);
        }
 

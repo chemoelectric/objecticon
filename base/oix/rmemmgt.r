@@ -861,6 +861,8 @@ static void scollect()
     dptr *qptr;
     char *cend;
 
+    ++curstring->compacted;
+
     if (qual.free == qual.list) {
         /*
          * There are no accessible strings.  Thus, there are none to
@@ -984,6 +986,8 @@ static void compact()
 {
     uword size;
     char *source = blkbase, *dest;
+
+    ++curblock->compacted;
 
     /*
      * Start dest at source.

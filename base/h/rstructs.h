@@ -343,6 +343,7 @@ struct inline_global_cache {
  */
 struct region {
     uword size;				/* allocated region size in bytes */
+    int compacted;                      /* count of how many times compacted */
     char *base;				/* start of region */
     char *end;				/* end of region */
     char *free;				/* free pointer */
@@ -392,6 +393,8 @@ struct progstate {
     struct progstate *monitor;
     struct b_cset *eventmask;
     struct prog_event *event_queue_head, *event_queue_tail;
+    struct timeval last_tick;
+    word timer_interval;
 
     /*
      * trapped variable keywords' values

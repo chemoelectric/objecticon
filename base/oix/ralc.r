@@ -802,6 +802,7 @@ static struct region *newregion(uword nbytes, uword stdsize)
    rp = malloc(sizeof(struct region));
    if (rp) {
       rp->size = stdsize;
+      rp->compacted = 0;
       if (rp->size < nbytes)
          rp->size = Max(nbytes+stdsize, nbytes);
       do {
