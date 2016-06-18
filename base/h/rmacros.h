@@ -581,11 +581,6 @@
 #define strtotal  (curpstate->stringtotal)
 #define blktotal  (curpstate->blocktotal)
       
-#define coll_user (curpstate->colluser)
-#define coll_stack (curpstate->collstack)
-#define coll_str  (curpstate->collstr)
-#define coll_blk  (curpstate->collblk)
-      
 #define k_errornumber (curpstate->K_errornumber)
 #define k_errortext   (curpstate->K_errortext)
 #define k_errorvalue  (curpstate->K_errorvalue)

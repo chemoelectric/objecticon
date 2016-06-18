@@ -17,7 +17,7 @@ extern struct c_proc *keyblks[];  /* maps keyword number to corresponding functi
 extern word dodump;		/* termination dump */
 extern int set_up;
 extern int collecting;          /* non-zero whilst a GC is taking place */
-extern int collection_count;    /* global collection count of all collections */
+extern int collected;           /* global collection count of all collections */
 extern uword stacklim;          /* limit of stack use which may trigger a GC */
 extern word stackcushion;       /* % factor to apply to total stack usage to avoid GC thrashing */
 

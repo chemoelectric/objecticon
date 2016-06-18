@@ -33,7 +33,7 @@ static struct {
 } qual;
 
 int collecting;                        /* flag indicating whether collection in progress */
-int collection_count;                  /* global collection count of all collections */
+int collected;                         /* global collection count of all collections */
 
 static struct b_weakref *weakrefs;     /* head of list of weakrefs encountered during mark phase */
 
@@ -367,16 +367,16 @@ void collect(int region)
 
    switch (region) {
       case User:
-         curpstate->colluser++;
+         curpstate->collected_user++;
          break;
       case Strings:
-         curpstate->collstr++;
+         curpstate->collected_string++;
          break;
       case Blocks:  
-         curpstate->collblk++;
+         curpstate->collected_block++;
          break;
       case Stack:  
-         curpstate->collstack++;
+         curpstate->collected_stack++;
          break;
        default:
          syserr("invalid argument to collect");
@@ -384,7 +384,7 @@ void collect(int region)
    }
 
    collecting = 1;
-   ++collection_count;
+   ++collected;
 
    /*
     * Reset qualifier list.
@@ -791,9 +791,9 @@ static void sweep_stack(struct frame *f)
                 struct frame_vars *l = pf->fvars;
                 for (i = 0; i < pf->proc->ntmp; ++i)
                     PostDescrip(pf->tmp[i]);
-                if (l && l->seen != collection_count) {
+                if (l && l->seen != collected) {
                     dptr d;
-                    l->seen = collection_count;
+                    l->seen = collected;
                     for (d = l->desc; d < l->desc_end; ++d)
                         PostDescrip(*d);
                 }

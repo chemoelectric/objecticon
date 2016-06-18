@@ -595,8 +595,8 @@ static void initprogstate(struct progstate *p)
     p->T_errortext = emptystr;
     gettimeofday(&p->start_time, 0);
 
-    p->stringtotal = p->blocktotal = p->stackcurr = p->colluser = 
-        p->collstack = p->collstr = p->collblk = 0;
+    p->stringtotal = p->blocktotal = p->stackcurr = p->collected_user = 
+        p->collected_stack = p->collected_string = p->collected_block = 0;
 
     p->Cplist = cplist_0;
     p->Cpset = cpset_0;

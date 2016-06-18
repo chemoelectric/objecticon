@@ -444,10 +444,10 @@ struct progstate {
     uword stackcurr;			/* current stack allocation in use (frame
                                          * and local structs) */
 
-    word colluser;			/* number of user triggered collections */
-    word collstr;			/* number of string collect requests */
-    word collblk;			/* number of block collect requests */
-    word collstack;			/* number of stack collect requests */
+    word collected_user;		/* number of user triggered collections */
+    word collected_string;		/* number of string collect requests */
+    word collected_block;		/* number of block collect requests */
+    word collected_stack;		/* number of stack collect requests */
     struct region *stringregion;
     struct region *blockregion;
 

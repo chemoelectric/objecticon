@@ -699,13 +699,13 @@ function lang_Prog_get_collection_info_impl(c)
           runerr(0);
 
        create_list(4, &result);
-       MakeInt(prog->colluser, &tmp);
+       MakeInt(prog->collected_user, &tmp);
        list_put(&result, &tmp);
-       MakeInt(prog->collstack, &tmp);
+       MakeInt(prog->collected_stack, &tmp);
        list_put(&result, &tmp);
-       MakeInt(prog->collstr, &tmp);
+       MakeInt(prog->collected_string, &tmp);
        list_put(&result, &tmp);
-       MakeInt(prog->collblk, &tmp);
+       MakeInt(prog->collected_block, &tmp);
        list_put(&result, &tmp);
        return result;
    }
@@ -713,7 +713,7 @@ end
 
 function lang_Prog_get_global_collection_count()
    body {
-       return C_integer collection_count;
+       return C_integer collected;
    }
 end
 
