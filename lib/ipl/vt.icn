@@ -2231,7 +2231,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private handle_popup_key(e, src, ty)
       \popup | fail
       if member(Key.NAVIGATE ++ set("\r"), e.code) then {
-         (\popup).fire(ty, e)
+         popup.fire(ty, e)
          return
       } else if e.code === "\e" then {
          close_all()
