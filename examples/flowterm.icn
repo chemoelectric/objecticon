@@ -3304,6 +3304,7 @@ procedure usage(opts)
       ewrite(Files.begin_link(u), u.str(), Files.end_link())
    else
       ewrite(u.str())
+   exit(0)
 end
 
 procedure main(a)

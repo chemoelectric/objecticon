@@ -105,9 +105,30 @@ package ipl.options
 import
    io, lang, util, ipl.scan
 
+record OptFormat(names, help)
+
 class Opt()
    public const
       names, convert, multi, help, def, err
+
+   public format()
+      local f, ns, h, ph
+      ns := ""
+      every f := !names do
+         ns ||:= "-" || f || ", "
+      ns[-2:0] := ""
+      h := \help | ""
+      if \convert then {
+         h ? {
+            if ph := tab(upto('#')) then
+               h := (move(1), tab(0))
+            else
+               ph := map(Proc.get_name(convert), &lcase, &ucase)
+         }
+         ns ||:= " " || ph
+      }
+      return OptFormat(ns, h)
+   end
 
    public new(s, convert, help, multi, def, err)
       names := if type(s) == "list" then
@@ -125,26 +146,11 @@ class Opt()
 end
 
 procedure options_help(opts)
-   every option_help(!opts)
-end
-
-procedure option_help(opt)
-   local f, ns, h, ph
-   ns := ""
-   every f := !opt.names do
-      ns ||:= "-" || f || ", "
-   ns[-2:0] := ""
-   h := \opt.help | ""
-   if \opt.convert then {
-      h ? {
-         if ph := tab(upto('#')) then
-            h := (move(1), tab(0))
-         else
-            ph := map(Proc.get_name(opt.convert), &lcase, &ucase)
-      }
-      ns ||:= " " || ph
+   local o, t
+   every o := !opts do {
+      t := o.format()
+      help_line(t.names, t.help)
    }
-   help_line(ns, h)
 end
 
 procedure help_line(ns, h)
@@ -225,9 +231,11 @@ procedure options(arg, opts, usage, errproc)
          if usage := text(usage) then {
             ewrite(usage)
             options_help(opts)
-         } else
+            exit(0)
+         } else {
             usage(opts)
-         exit(0)
+            fail
+         }
       } else x ? {
          if ="-" & not pos(0) & /ignore then {
             if ="-" then {
