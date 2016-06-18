@@ -110,7 +110,7 @@ end
       struct descrip value_desc;
       if (!curpstate->monitor) break;
       if (curpstate->eventmask->size == 0) break;
-      if (!Testb((word)event, curpstate->eventmask->bits)) break;
+      if (!Testb(event, curpstate->eventmask->bits)) break;
       MakeInt(value, &value_desc);
       add_to_prog_event_queue(&value_desc, event);
    } while (0)
@@ -122,7 +122,7 @@ end
    do {
       if (!curpstate->monitor) break;
       if (curpstate->eventmask->size == 0) break;
-      if (!Testb((word)event, curpstate->eventmask->bits)) break;
+      if (!Testb(event, curpstate->eventmask->bits)) break;
       add_to_prog_event_queue(dp, event);
    } while (0)
 #endif
@@ -137,7 +137,7 @@ end
       struct descrip eventdesc;
       if (!curpstate->monitor) break;
       if (curpstate->eventmask->size == 0) break;
-      if (!Testb((word)event, curpstate->eventmask->bits)) break;
+      if (!Testb(event, curpstate->eventmask->bits)) break;
       eventdesc.dword = type;
       eventdesc.vword.bptr = (union block *)(bp);
       add_to_prog_event_queue(&eventdesc, event);

@@ -924,7 +924,7 @@ static void do_tcasechoosex(void)
 static void check_timer(void)
 {
     static int check_count;
-    if (Testb((word)E_Timer, curpstate->eventmask->bits)) {
+    if (Testb(E_Timer, curpstate->eventmask->bits)) {
         struct timeval tp;
         if (++check_count < 100)
             return;
