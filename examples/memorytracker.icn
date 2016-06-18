@@ -45,7 +45,7 @@ procedure main(args)
    a := []
    while args[1][1] == "-" do
       put(a, pop(args))
-   opts := options(a, "-u!")
+   opts := options(a, [Opt("u",,"Show block/string deallocations separately.")])
    u_flag := opts["u"]
 
    prog := Prog.load(Files.find_exe(args[1]),args[2:0]) | stop(&why)
