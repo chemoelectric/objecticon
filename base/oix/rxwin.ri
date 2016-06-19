@@ -80,6 +80,7 @@ static void apply_windowicon(wsp ws);
 static double calc_pt(double *x, double *y, double rx, double ry, double th);
 static double calc_progress_factor(double rx, double ry);
 static void synch_pos(wsp ws);
+static int limit_strlen(word n);
 
 static stringint drawops[] = {
    { 0, 12},
@@ -3368,6 +3369,14 @@ int walert(wbp w, int volume)
     XFlush(wd->display);
     return Succeeded;
 }
+/* Xft can't handle very long strings, and drawing very long ones can
+ * cause an X error.  So the length of strings is limited when
+ * calculating length or drawing. 
+ */
+static int limit_strlen(word n)
+{
+    return Min(n, 1500);
+}
 
 int textwidth(wbp w, dptr str)
 {
@@ -3376,13 +3385,13 @@ int textwidth(wbp w, dptr str)
         XftTextExtents8(w->window->display->display,
                         w->context->font->fsp,
                         (FcChar8 *)StrLoc(*str),
-                        StrLen(*str),
+                        limit_strlen(StrLen(*str)),
                         &extents);
     else
         XftTextExtentsUtf8(w->window->display->display,
                            w->context->font->fsp,
                            (FcChar8 *)StrLoc(UcsBlk(*str).utf8),
-                           StrLen(UcsBlk(*str).utf8),
+                           limit_strlen(StrLen(UcsBlk(*str).utf8)),
                            &extents);
     
     /* xOff is a short; on long strings it wraps round at 32k, so
@@ -3426,7 +3435,7 @@ void drawstring(wbp w, int x, int y, dptr str)
                        x,
                        y,
                        (FcChar8 *)StrLoc(*str),
-                       StrLen(*str));
+                       limit_strlen(StrLen(*str)));
     else
         XftDrawStringUtf8(ws->pxft,
                           &color,
@@ -3434,7 +3443,7 @@ void drawstring(wbp w, int x, int y, dptr str)
                           x,
                           y,
                           (FcChar8 *)StrLoc(UcsBlk(*str).utf8),
-                          StrLen(UcsBlk(*str).utf8));
+                          limit_strlen(StrLen(UcsBlk(*str).utf8)));
     clip(w);
     pix_to_win(ws, 
                x, y - wc->font->ascent, 
