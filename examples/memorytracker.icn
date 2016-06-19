@@ -10,7 +10,7 @@ procedure r(x,y)
 end
 
 procedure print_stats(prog)
-   local t1, t2, t3, t1s, t1b, e, i, s1
+   local t1, t2, t3, t1s, t1b, e, i, s1, s
    s1 := Prog.get_stack_used(prog)
    t1 := Prog.get_region_info(prog)
    t1s := t1.get_string_total()
@@ -23,14 +23,20 @@ procedure print_stats(prog)
    write("Stack     ", right(f(s1),22), right(t3.stack_requests,39))
    i := 1
    every e := !t1.string_regions do {
-      write(left("String " || i, 10), r(e.used, e.size))
+      s := "String " || i
+      if \e.current then
+         s ||:= " *"
+      write(left(s, 10), r(e.used, e.size))
       i +:= 1
    }
    write(left("String total", 30), right(f(t2.string_total), 32), right(t3.string_requests, 9))
 
    i := 1
    every e := !t1.block_regions do {
-      write(left("Block " || i, 10), r(e.used, e.size))
+      s := "Block " || i
+      if \e.current then
+         s ||:= " *"
+      write(left(s, 10), r(e.used, e.size))
       i +:= 1
    }
    write(left("Block total", 30), right(f(t2.block_total), 32), right(t3.block_requests, 9))
@@ -40,7 +46,7 @@ procedure print_stats(prog)
 end
 
 procedure main(args)
-   local opts, proact, e, mask, prog, t1, t2, totals, t, prev_code, u_flag, a
+   local opts, proact, e, mask, prog, totals, t, prev_code, u_flag, a
 
    a := []
    while args[1][1] == "-" do
@@ -52,11 +58,12 @@ procedure main(args)
 
    proact := table(0)
    totals := table(0)
-   t1 := Prog.get_runtime_millis()
-   mask := MonitorCodeSet.AllocMask
-   Prog.set_event_mask(mask,prog)
+   mask := MonitorCodeSet.AllocMask ++ MonitorCode.Timer
+   Prog.set_event_mask(mask, prog).set_timer_interval(2000, prog)
    while e := Prog.get_event(prog) do {
-      if \u_flag then {
+      if e.code == MonitorCode.Timer then {
+         print_stats(prog)
+      } else if \u_flag then {
          proact[e.code] +:= 1
          totals[e.code] +:= integer(e.value)
       } else case e.code of {
@@ -72,11 +79,6 @@ procedure main(args)
             totals[e.code] +:= integer(e.value)
             prev_code := e.code
          }
-      }
-      t2 := Prog.get_runtime_millis()
-      if t2-t1 > 2000 then {
-         print_stats(prog)
-         t1 := t2
       }
    }
    print_stats(prog)
