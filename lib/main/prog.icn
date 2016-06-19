@@ -236,9 +236,9 @@ final abstract class Prog()
       local t, l, m
       t := get_region_info_impl(P)
       l := []
-      while put(l, Region(pop(t[1]), pop(t[1]), pop(t[1])))
+      while put(l, Region(pop(t[1]), pop(t[1]), pop(t[1]), pop(t[1])))
       m := []
-      while put(m, Region(pop(t[2]), pop(t[2]), pop(t[2])))
+      while put(m, Region(pop(t[2]), pop(t[2]), pop(t[2]), pop(t[2])))
       return RegionInfo(l, m)
    end
 
@@ -448,7 +448,9 @@ class Region()
       # The size of the space
       size,
       # The number of times compacted
-      compacted
+      compacted,
+      # Flag indicating whether this region is current
+      current
 
    #
    # Add up the elements in a list of {Region}s.
@@ -468,10 +470,11 @@ class Region()
       return size - used
    end
 
-   package new(used, size, compacted)
+   package new(used, size, compacted, current)
       self.used := used
       self.size := size
       self.compacted := compacted
+      self.current := current
       return
    end
 end

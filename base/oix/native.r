@@ -755,6 +755,7 @@ function lang_Prog_get_region_info_impl(c)
            list_put(&l, &tmp);
            MakeInt(rp->compacted, &tmp);
            list_put(&l, &tmp);
+           list_put(&l, rp == prog->stringregion ? &yesdesc : &nulldesc);
        }
        create_list(0, &l);
        list_put(&result, &l);
@@ -766,6 +767,7 @@ function lang_Prog_get_region_info_impl(c)
            list_put(&l, &tmp);
            MakeInt(rp->compacted, &tmp);
            list_put(&l, &tmp);
+           list_put(&l, rp == prog->blockregion ? &yesdesc : &nulldesc);
        }
 
        return result;
