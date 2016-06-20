@@ -152,6 +152,11 @@
 #define E_Error		'\105'		/* Run-time error */
 
 
+/*
+ * Location events
+ */
+#define E_Line		'\353'		/* Line number changed */
+#define E_File		'\355'		/* Source file changed */
 
 
 
@@ -182,7 +187,7 @@
 270 271 272 273 274 275 276 277
 
 341 342 343 344 345 346
-351 352 353 355
+351 352
 364 365 366 370
 371 372 373 374 375 376 377
 

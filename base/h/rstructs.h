@@ -430,8 +430,9 @@ struct progstate {
     char *Strcons, *Estrcons;
     struct ipc_fname *Filenms, *Efilenms;
     struct ipc_line *Ilines, *Elines;
-    struct ipc_line * Current_line_ptr;
-    struct ipc_fname * Current_fname_ptr;
+    struct ipc_line *Current_line_ptr;
+    struct ipc_fname *Current_fname_ptr;
+    dptr Current_fname;
     dptr MainProc;
 
     word Kywd_time_elsewhere;		/* &time spent in other programs */
