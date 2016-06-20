@@ -190,8 +190,6 @@ void err_msg(int n, dptr v)
     }
     k_errorcoexpr = k_current;
 
-    EVVal((word)k_errornumber,E_Error);
-
     if (set_up) {
         if (is:null(kywd_handler)) {
             struct ipc_line *pline;
@@ -244,6 +242,26 @@ void err_msg(int n, dptr v)
         putstr(stderr, &k_errortext);
         fputc('\n', stderr);
     }
+
+    if (curpstate->monitor &&
+        Testb(E_Error, curpstate->eventmask->bits)) {
+        if (have_errval) {
+            fprintf(stderr, "offending value: ");
+            outimage(stderr, &k_errorvalue, 0);
+            putc('\n', stderr);
+        }
+        traceback(k_current, 1, 1);
+        add_to_prog_event_queue(&nulldesc, E_Error);
+        curpstate->exited = 1;
+        push_fatalerr_139_frame();
+        return;
+    }
+
+    /* Upto this point, this func will have done no allocations, or
+     * will have returned.  This means, with the help of the following
+     * call, we should avoid repeatedly calling this function if
+     * memory runs out. 
+     */
 
     checkfatalrecurse();
 

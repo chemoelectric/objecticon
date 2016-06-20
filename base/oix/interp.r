@@ -822,6 +822,14 @@ void activate_handler(void)
     tail_invoke_frame((struct frame *)pf);
 }
 
+void push_fatalerr_139_frame(void)
+{
+    struct p_frame *pf;
+    MemProtect(pf = alc_p_frame(&Bcall_fatalerr_139, 0));
+    push_frame((struct frame *)pf);
+    tail_invoke_frame((struct frame *)pf);
+}
+
 static void do_limit()
 {
     dptr limit;
@@ -1494,15 +1502,13 @@ static void get_child_prog_result()
 
     prog = CoexprBlk(*ce).main_of;
     prog->monitor = 0;
-    if (prog->exited) {
+    if (prog->event_queue_head)
+        pop_from_prog_event_queue(prog, res);
+    else  if (prog->exited)
        ipc = failure_label;
-       return;
-    }
-    /* Could happen if two programs tried to monitor one another */
-    if (!prog->event_queue_head)
+    else
+        /* Could happen if two programs tried to monitor one another */
         fatalerr(636, NULL);
-
-    pop_from_prog_event_queue(prog, res);
 }
 
 function lang_Prog_get_event_impl(c, res)

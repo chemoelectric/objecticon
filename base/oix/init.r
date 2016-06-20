@@ -541,6 +541,7 @@ void checkfatalrecurse(void)
 void fatalerr(int n, dptr v)
 {
     kywd_handler = nulldesc;
+    curpstate->monitor = 0;
     err_msg(n, v);
 }
 
@@ -556,6 +557,7 @@ void ffatalerr(char *fmt, ...)
     vsnprintf(buff, sizeof(buff), fmt, ap);
     CMakeStr(buff, &t_errortext);
     kywd_handler = nulldesc;
+    curpstate->monitor = 0;
     err_msg(-1, 0);
 }
 

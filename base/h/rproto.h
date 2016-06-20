@@ -100,6 +100,7 @@ int             doimage         (int c,int q);
 int             equiv           (dptr dp1,dptr dp2);
 void            err_msg         (int n, dptr v);
 void            activate_handler(void);
+void            push_fatalerr_139_frame(void);
 void            fatalerr        (int n,dptr v);
 void            ffatalerr       (char *fmt, ...);
 void            checkfatalrecurse(void);
