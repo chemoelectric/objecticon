@@ -30,7 +30,6 @@ dptr xarg1, xarg2, xarg3;   /* Operator args */
 
 struct ipc_line *frame_ipc_line(struct p_frame *pf)
 {
-    synch_ipc();
     while (pf && !pf->proc->program)
         pf = pf->caller;
     if (!pf)
@@ -40,7 +39,6 @@ struct ipc_line *frame_ipc_line(struct p_frame *pf)
 
 struct ipc_fname *frame_ipc_fname(struct p_frame *pf)
 {
-    synch_ipc();
     while (pf && !pf->proc->program)
         pf = pf->caller;
     if (!pf)
