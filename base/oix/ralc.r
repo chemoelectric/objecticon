@@ -786,8 +786,8 @@ static struct region *newregion(uword nbytes, uword stdsize)
    uword minSize = MinAbrSize;
    struct region *rp;
 
-   if ((uword)nbytes > minSize)
-      minSize = (uword)nbytes;
+   if (nbytes > minSize)
+      minSize = nbytes;
 
    rp = malloc(sizeof(struct region));
    if (rp) {
