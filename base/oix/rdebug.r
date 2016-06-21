@@ -927,6 +927,7 @@ void print_vword(FILE *f, dptr d) {
                 break;
             }
 
+            case D_Yes :
             case D_Null : {
                 fputs("0", f); 
                 break;
@@ -1028,6 +1029,7 @@ void print_dword(FILE *f, dptr d) {
             case D_Kywdstr : fputs("D_Kywdstr", f); break;
             case D_Kywdany : fputs("D_Kywdany", f); break;
             case D_Null : fputs("D_Null", f); break;
+            case D_Yes : fputs("D_Yes", f); break;
             case D_Integer : fputs("D_Integer", f); break;
             case D_Lrgint : fputs("D_Lrgint", f); break;
             case D_Real : fputs("D_Real", f); break;
