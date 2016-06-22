@@ -494,13 +494,13 @@ static void kywdout(FILE *f, dptr dp, int noimage)
 
 /*
  * outimage - print image of *dp on file f.  If noimage is nonzero,
- *  fields of records will not be imaged.
- * dp should point to a tended desc, since this function can do an allocation (see bigprint).
+ * fields of records will not be imaged.  This function should not
+ * perform any allocations.
  */
 
 void outimage(FILE *f, dptr dp, int noimage)
    {
-   word i, j, k;
+   word i, j;
    char *s;
    char *csn;
    tended struct descrip tdp;
@@ -532,7 +532,7 @@ void outimage(FILE *f, dptr dp, int noimage)
          j = Min(i, StringLimit);
          fprintf(f, "u\"");
          while (j-- > 0) {
-             int n;
+             int k, n;
              k = utf8_iter(&s);
              n = ucs_charstr(k, cbuf);
              putn(f, cbuf, n);
@@ -679,19 +679,17 @@ void outimage(FILE *f, dptr dp, int noimage)
              putstr(f, ObjectBlk(*dp).class->name);
              fprintf(f, "#" UWordFmt "", ObjectBlk(*dp).id);
              j = ObjectBlk(*dp).class->n_instance_fields;
-             if (j <= 0)
-                 fprintf(f, "()");
-             else if (noimage > 0)
+             if (noimage > 0)
                  fprintf(f, "(" WordFmt ")", j);
              else {
                  putc('(', f);
-                 i = 0;
-                 for (;;) {
+                 for (i = 0; i < j; ++i) {
+                     dptr name = ObjectBlk(*dp).class->program->Fnames[ObjectBlk(*dp).class->fields[i]->fnum];
+                     if (i > 0)
+                         putc(',', f);
+                     fprintf(f, "%.*s=", (int)StrLen(*name), StrLoc(*name));
                      tdp = ObjectBlk(*dp).fields[i];
                      outimage(f, &tdp, noimage + 1);
-                     if (++i >= j)
-                         break;
-                     putc(',', f);
                  }
                  putc(')', f);
              }
@@ -719,20 +717,18 @@ void outimage(FILE *f, dptr dp, int noimage)
          putstr(f, RecordBlk(*dp).constructor->name);
          fprintf(f, "#" UWordFmt "", RecordBlk(*dp).id);
          j = RecordBlk(*dp).constructor->n_fields;
-         if (j <= 0)
-            fprintf(f, "()");
-         else if (noimage > 0)
+         if (noimage > 0)
             fprintf(f, "(" WordFmt ")", j);
          else {
             putc('(', f);
-            i = 0;
-            for (;;) {
+            for (i = 0; i < j; ++i) {
+               dptr name = RecordBlk(*dp).constructor->program->Fnames[RecordBlk(*dp).constructor->fnums[i]];
+               if (i > 0)
+                   putc(',', f);
+               fprintf(f, "%.*s=", (int)StrLen(*name), StrLoc(*name));
                tdp = RecordBlk(*dp).fields[i];
                outimage(f, &tdp, noimage + 1);
-               if (++i >= j)
-                  break;
-               putc(',', f);
-               }
+            }
             putc(')', f);
             }
          }
@@ -759,6 +755,12 @@ void outimage(FILE *f, dptr dp, int noimage)
             fprintf(f, "[" WordFmt "+:" WordFmt "]", TvsubsBlk(*dp).sspos, TvsubsBlk(*dp).sslen);
 
          if (!noimage) {
+             /*
+              * This shouldn't do an allocation, since the variable sv
+              * shouldn't be another tvsubs (see make_tvsubs in
+              * oref.r), and only dereferencing a tvsubs does an
+              * allocation.
+              */
              deref(&sv, &tdp);
              if (is:ucs(tdp)) {
                  struct descrip utf8_subs;
@@ -773,7 +775,7 @@ void outimage(FILE *f, dptr dp, int noimage)
                  j = Min(i, StringLimit);
                  fprintf(f, " = u\"");
                  while (j-- > 0) {
-                     int n;
+                     int k, n;
                      k = utf8_iter(&s);
                      n = ucs_charstr(k, cbuf);
                      putn(f, cbuf, n);

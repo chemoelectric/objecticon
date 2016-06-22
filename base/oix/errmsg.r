@@ -243,13 +243,14 @@ void err_msg(int n, dptr v)
         fputc('\n', stderr);
     }
 
+    if (have_errval) {
+        fprintf(stderr, "offending value: ");
+        outimage(stderr, &k_errorvalue, 0);
+        putc('\n', stderr);
+    }
+
     if (curpstate->monitor &&
         Testb(E_Error, curpstate->eventmask->bits)) {
-        if (have_errval) {
-            fprintf(stderr, "offending value: ");
-            outimage(stderr, &k_errorvalue, 0);
-            putc('\n', stderr);
-        }
         traceback(k_current, 1, 1);
         add_to_prog_event_queue(&nulldesc, E_Error);
         curpstate->exited = 1;
@@ -257,19 +258,12 @@ void err_msg(int n, dptr v)
         return;
     }
 
-    /* Upto this point, this func will have done no allocations, or
-     * will have returned.  This means, with the help of the following
-     * call, we should avoid repeatedly calling this function if
-     * memory runs out. 
+    /* traceback() does a malloc, so checkfatalrecurse() is used to
+     * avoid repeatedly looping (until a stack overflow) if we run out
+     * of memory.
      */
 
     checkfatalrecurse();
-
-    if (have_errval) {
-        fprintf(stderr, "offending value: ");
-        outimage(stderr, &k_errorvalue, 0);
-        putc('\n', stderr);
-    }
 
     if (!set_up) {		/* skip if start-up problem */
         if (dodump > 1)
