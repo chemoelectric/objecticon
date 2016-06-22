@@ -55,6 +55,16 @@ union word_b_bignum {
     struct b_bignum blk;
 };
 
+/* temporary structure for bigprint.  Note that n decimal digits needs
+ * about n * log(10)/log(2) = n * 3.32 binary digits, so rounding up
+ * gives BigPrintDigits.
+ */
+#define BigPrintDigits (1 + ((MaxDigits + 1) * 4) / DigitBits)
+union bigprint_b_bignum {
+    char t[sizeof(struct b_bignum) + sizeof(DIGIT) * (BigPrintDigits - 1)];
+    struct b_bignum blk;
+};
+
 #if ((-1) >> 1) < 0
 #define signed_hi(d) ((word)(d) >> DigitBits)
 #else
@@ -371,11 +381,13 @@ void bigtos(dptr da, dptr dx)
 
 /*
  *  bignum -> file 
+ * 
+ *  This function does no allocation of any kind.
  */
 
 void bigprint(FILE *f, dptr da)
 {
-    struct b_bignum *temp;
+    union bigprint_b_bignum tdigits;
     word alen = LEN(&BignumBlk(*da));
     word slen, dlen;
     tended struct b_bignum *blk = &BignumBlk(*da);
@@ -389,15 +401,15 @@ void bigprint(FILE *f, dptr da)
         return;
     }
 
-    /* not worth passing this one back */
-    MemProtect(temp = alcbignum(alen));
+    tdigits.blk.msd = tdigits.blk.sign = 0;
+    tdigits.blk.lsd = alen - 1;
     bdcopy(DIG(blk,0),
-           DIG(temp,0),
+           DIG(&tdigits.blk,0),
            alen);
     if (blk->sign)
         putc('-', f);
     decout(f,
-           DIG(temp,0),
+           DIG(&tdigits.blk,0),
            alen);
 }
 
