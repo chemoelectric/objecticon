@@ -376,6 +376,15 @@ struct ipc_line {
     word line;		/* line number */
 };
 
+/*
+ * Structure for holding an additional descriptor which is then
+ * traversed during garbage collection.
+ */
+struct other_global {
+    dptr dp;
+    struct other_global *next;
+};
+
 struct prog_event {
     struct descrip eventcode;
     struct descrip eventval;
