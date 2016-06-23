@@ -7,7 +7,7 @@ static void stat2list(struct stat *st, dptr res);
  * descriptor then obviously the block is returned; if an object then
  * the object's class is returned.
  */
-static struct b_class *get_class_for(dptr x)
+struct b_class *get_class_for(dptr x)
 {
     type_case *x of {
       class: 
@@ -21,7 +21,7 @@ static struct b_class *get_class_for(dptr x)
     }
 }
 
-static struct b_constructor *get_constructor_for(dptr x)
+struct b_constructor *get_constructor_for(dptr x)
 {
     type_case *x of {
       constructor: 
@@ -35,7 +35,7 @@ static struct b_constructor *get_constructor_for(dptr x)
     }
 }
 
-static struct b_proc *get_proc_for(dptr x)
+struct b_proc *get_proc_for(dptr x)
 {
     type_case *x of {
       proc: 
@@ -49,7 +49,7 @@ static struct b_proc *get_proc_for(dptr x)
     }
 }
 
-static struct progstate *get_program_for(dptr x)
+struct progstate *get_program_for(dptr x)
 {
     type_case *x of {
         null:
@@ -65,7 +65,7 @@ static struct progstate *get_program_for(dptr x)
     }
 }
 
-static struct b_coexpr *get_coexpr_for(dptr x)
+struct b_coexpr *get_coexpr_for(dptr x)
 {
     type_case *x of {
         null:

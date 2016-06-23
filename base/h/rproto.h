@@ -473,6 +473,12 @@ int cset_range_of_pos(struct b_cset *b, word pos);
 int need_ucs(dptr s);
 long millisec(void);
 
+struct b_class *get_class_for(dptr x);
+struct b_constructor *get_constructor_for(dptr x);
+struct b_proc *get_proc_for(dptr x);
+struct progstate *get_program_for(dptr x);
+struct b_coexpr *get_coexpr_for(dptr x);
+
 /* Debug func. */
 void show_regions(void);
 
