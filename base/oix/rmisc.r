@@ -1122,7 +1122,7 @@ void abbr_fname(dptr s, dptr d)
 
 void getimage(dptr dp1, dptr dp2)
 {
-   word len, i, j;
+   word len, i;
    tended char *s;
    char sbuf[64];
    char cbuf[CHAR_CVT_LEN];
@@ -1151,6 +1151,7 @@ void getimage(dptr dp1, dptr dp2)
          i = UcsBlk(*dp1).length;
          len = 3;  /* u"" */
          while (i-- > 0) {
+             int j;
              j = utf8_iter(&s);
              len += ucs_charstr(j, 0);
          }
@@ -1162,7 +1163,7 @@ void getimage(dptr dp1, dptr dp2)
          s = StrLoc(UcsBlk(*dp1).utf8);
          i = UcsBlk(*dp1).length;
          while (i-- > 0) {
-             int n;
+             int j, n;
              j = utf8_iter(&s);
              n = ucs_charstr(j, cbuf);
              alcstr(cbuf, n);
@@ -1226,7 +1227,7 @@ void getimage(dptr dp1, dptr dp2)
          }
 
       cset: {
-         int from, to;
+         int j, from, to;
          char *csn;
          /*
 	  * Check for the value of a predefined cset; use keyword name if found.
