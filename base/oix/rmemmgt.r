@@ -8,6 +8,7 @@
  */
 static void qual_clear   (void);
 static void postqual     (dptr dp);
+static void qual_dispose (void);
 static void markptr      (union block **ptr);
 static void sweep_tended (void);
 static void reclaim      (void);
@@ -22,6 +23,7 @@ static void free_stack   (struct b_coexpr *c);
 static union block **stk_get(void);
 static void stk_add(union block **ptr);
 static void stk_clear(void);
+static void stk_dispose(void);
 static void stk_markptrs(void);
 static void do_weakrefs(void);
 
@@ -302,15 +304,7 @@ uword segsize[] = {
    else if (Pointer(d))\
       stk_add(&BlkLoc(d));
 
-
-#define OGHASH_SIZE 32
-
-struct other_global {
-    dptr dp;
-    struct other_global *next;
-};
-
-static struct other_global *og_hash[OGHASH_SIZE];
+struct other_global *og_hash[OGHASH_SIZE];
 
 #if 0
 static void dump_gc_global()
@@ -432,6 +426,10 @@ void collect(int region)
    for (br = curblock->Gprev; br; br = br->Gprev)
        unmark_region(br);
 
+   /* Free memory used by the pointer stack and the qualifier list. */
+   stk_dispose();
+   qual_dispose();
+
    collecting = 0;
 
    EVValD(&nulldesc, E_EndCollect);
@@ -531,6 +529,13 @@ static void qual_clear()
    qual.free = qual.list;
 }
 
+static void qual_dispose()
+{
+    free(qual.list);
+    qual.list = qual.elist = qual.free = 0;
+    qual.listsize = 0;
+}
+
 /*
  * postqual - mark a string qualifier.  Strings outside the string space
  *  are ignored.
@@ -597,6 +602,14 @@ static void stk_markptrs()
 {
     while (stk.top != stk.buf)
         markptr(stk_get());
+}
+
+/* Free the memory used by the stack */
+static void stk_dispose()
+{
+    free(stk.buf);
+    stk.buf = stk.ebuf = stk.top = 0;
+    stk.bufsize = 0;
 }
 
 static void do_weakrefs()
