@@ -57,7 +57,7 @@ struct str_buf {
  */
 #define hasher(x,obj)   (((uword)x)%ElemCount(obj))
 /* If x is a pointer */
-#define ptrhasher(x,obj)   ((((uword)x)/4)%ElemCount(obj))
+#define ptrhasher(x,obj)   ((((uword)x)>>5 ^ ((uword)x))%ElemCount(obj))
 
 /*
  * Clear an object
