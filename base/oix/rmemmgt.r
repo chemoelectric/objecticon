@@ -16,7 +16,7 @@ static void scollect     (void);
 static int  qlcmp        (dptr  *q1,dptr  *q2);
 static void adjust       (void);
 static void compact      (void);
-static void markprogram  (struct progstate *pstate);
+static void mark_program (struct progstate *pstate);
 static void sweep_stack  (struct frame *f);
 static void unmark_region(struct region *br);
 static void free_stack   (struct b_coexpr *c);
@@ -26,6 +26,7 @@ static void stk_clear(void);
 static void stk_dispose(void);
 static void stk_markptrs(void);
 static void do_weakrefs(void);
+static void mark_others();
 
 
 /* string qualifier list */
@@ -346,6 +347,15 @@ void del_gc_global(dptr d)
     free(og);
 }
 
+static void mark_others()
+{
+   struct other_global *og;
+   int i;
+   for (i = 0; i < ElemCount(og_hash); ++i)
+       for (og = og_hash[i]; og; og = og->next)
+           PostDescrip(*og->dp);
+}
+
 /*
  * collect - do a garbage collection of currently active regions.
  */
@@ -354,8 +364,6 @@ void collect(int region)
 {
    struct progstate *prog;
    struct region *br;
-   struct other_global *og;
-   int i;
 
    EVVal((word)region,E_Collect);
 
@@ -393,7 +401,7 @@ void collect(int region)
    weakrefs = 0;
 
    for (prog = progs; prog; prog = prog->next)
-       markprogram(prog);
+       mark_program(prog);
 
    stk_add((union block **)&k_current);
 
@@ -402,11 +410,8 @@ void collect(int region)
     */
    sweep_tended();
 
-
    /* Mark any other global descriptors which have been noted. */
-   for (i = 0; i < ElemCount(og_hash); ++i)
-       for (og = og_hash[i]; og; og = og->next)
-           PostDescrip(*og->dp);
+   mark_others();
 
    /* Process all block ptrs */
    stk_markptrs();
@@ -466,10 +471,10 @@ static void unmark_region(struct region *br)
 
 
 /*
- * markprogram - traverse pointers out of a program state structure
+ * mark_program - traverse pointers out of a program state structure
  */
 
-static void markprogram(struct progstate *pstate)
+static void mark_program(struct progstate *pstate)
 {
     struct descrip *dp;
     struct prog_event *pe;
