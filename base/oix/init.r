@@ -338,6 +338,7 @@ static struct b_cset *make_static_cset_block(int n_ranges, ...)
     va_start(ap, n_ranges);
     blksize = sizeof(struct b_cset) + ((n_ranges - 1) * sizeof(struct b_cset_range));
     b = safe_zalloc(blksize);
+    b->title = T_Cset;
     b->blksize = blksize;
     b->n_ranges = n_ranges;
     b->size = 0;
@@ -373,6 +374,7 @@ static struct b_ucs *make_static_ucs_block(char *utf8)
     calc_ucs_index_settings(utf8_len, length, &index_step, &n_offs, &offset_bits, &n_off_words);
     blksize = sizeof(struct b_ucs) + ((n_off_words - 1) * sizeof(word));
     b = safe_zalloc(blksize);
+    b->title = T_Ucs;
     b->blksize = blksize;
     b->index_step = index_step;
     MakeStr(utf8, utf8_len, &b->utf8);
