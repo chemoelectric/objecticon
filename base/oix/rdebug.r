@@ -1056,6 +1056,48 @@ void print_dword(FILE *f, dptr d) {
     }
 }
 
+/*
+ * Given a block, return an appropriate descriptor.
+ */
+struct descrip block_to_descriptor(union block *ptr)
+{
+    word d, t = BlkType(ptr);
+    struct descrip desc;
+    switch (t) {
+        case T_Lrgint: d = D_Lrgint; break;
+#if !RealInDesc
+        case T_Real: d = D_Real; break; 
+#endif
+        case T_Cset: d = D_Cset; break;
+        case T_Constructor: d = D_Constructor; break;
+        case T_Proc: d = D_Proc; break;
+        case T_Record: d = D_Record; break;
+        case T_List: d = D_List; break;
+        case T_Lelem: d = D_Lelem; break;
+        case T_Set: d = D_Set; break;
+        case T_Selem: d = D_Selem; break;
+        case T_Table: d = D_Table; break;
+        case T_Telem: d = D_Telem; break;
+        case T_Tvtbl: d = D_Tvtbl; break;
+        case T_Slots: d = D_Slots; break;
+        case T_Tvsubs: d = D_Tvsubs; break;
+        case T_Methp: d = D_Methp; break;
+        case T_Coexpr: d = D_Coexpr; break;
+        case T_Ucs: d = D_Ucs; break;
+        case T_Class: d = D_Class; break;
+        case T_Object: d = D_Object; break;
+        case T_Weakref: d = D_Weakref; break;
+        default: {
+            syserr("Unknown block type");
+            /* Not reached */
+            d = 0;
+        }
+    }
+    desc.dword = d;
+    desc.vword.bptr = ptr;
+    return desc;
+}
+
 void showcurrstack()
 {
     if (!k_current) {
