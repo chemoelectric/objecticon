@@ -954,18 +954,17 @@ void outimage(FILE *f, dptr dp, int noimage)
 
 static void listimage(FILE *f, dptr dp, int noimage)
    {
-   word i, j;
+   word i, j, size, count;
    tended struct b_lelem *bp;
    tended struct b_list *lp;
    tended struct descrip tdp;
-   word size, count;
 
    lp = &ListBlk(*dp);
 
    bp = (struct b_lelem *) lp->listhead;
    size = lp->size;
 
-   if (noimage > 0 && size > 0) {
+   if (noimage > 0) {
       /*
        * Just give indication of size if the list isn't empty.
        */
