@@ -72,7 +72,7 @@ static void setdump(dptr d)
             for (j = 0; j < segsize[i]; ++j) {
                 struct b_selem *elem = (struct b_selem *)slot->hslots[j];
                 fprintf(stderr, "\t\tbucket chain %d at %p\n", j, elem);
-                while (elem && BlkType(elem) != T_Set) {
+                while (BlkType(elem) == T_Selem) {
                     fprintf(stderr, "\t\t\tselem %p hash=" UWordFmt " clink=%p mem=", elem, elem->hashnum, elem->clink);
                     print_desc(stderr, &elem->setmem);
                     fprintf(stderr, "\n");
@@ -98,7 +98,7 @@ static void tabledump(dptr d)
             for (j = 0; j < segsize[i]; ++j) {
                 union block *elem = slot->hslots[j];
                 fprintf(stderr, "\t\tbucket chain %d at %p\n", j, elem);
-                while (elem && BlkType(elem) != T_Table) {
+                while (BlkType(elem) == T_Telem) {
                     struct b_telem *telem = (struct b_telem *)elem;
                     fprintf(stderr, "\t\t\telem %p hash=" UWordFmt "  clink=%p mem=", telem, telem->hashnum, telem->clink);
                     print_desc(stderr, &telem->tref);
