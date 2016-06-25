@@ -12,8 +12,7 @@ static void cphash(dptr dp1, dptr dp2, word n, int tcode);
 void addmem(struct b_set *ps,struct b_selem *pe,union block **pl)
    {
    ps->size++;
-   if (*pl != NULL )
-      pe->clink = *pl;
+   pe->clink = *pl;
    *pl = (union block *) pe;
    }
 
@@ -137,7 +136,7 @@ static void cphash(dptr dp1, dptr dp2, word n, int tcode)
    dst->set.size = src->set.size;	/* actual set size */
    dst->set.mask = src->set.mask;	/* hash mask */
    for (i = 0; i < HSegs && src->set.hdir[i] != NULL; i++)
-      memcpy((char *)dst->set.hdir[i], (char *)src->set.hdir[i],
+      memcpy(dst->set.hdir[i], src->set.hdir[i],
          src->set.hdir[i]->blksize);
    /*
     * Work down the chain of element blocks in each bucket
@@ -147,26 +146,27 @@ static void cphash(dptr dp1, dptr dp2, word n, int tcode)
       for (slotnum = segsize[i] - 1; slotnum >= 0; slotnum--)  {
 	 prev = NULL;
          for (ep = (struct b_selem *)seg->hslots[slotnum];
-	      ep != NULL && BlkType(ep) != T_Table;
+	      BlkType(ep) != T_Table && BlkType(ep) != T_Set;
 	      ep = (struct b_selem *)ep->clink) {
 	    if (tcode == T_Set) {
                MemProtect(se = alcselem());
-               se->setmem = ep->setmem;
-               se->hashnum = ep->hashnum;
-               se->clink = ep->clink;
+	       *se = *ep; /* copy set entry */
 	       }
 	    else {
 	       MemProtect(se = (struct b_selem *)alctelem());
 	       *(struct b_telem *)se = *(struct b_telem *)ep; /* copy table entry */
-	       if (BlkType(se->clink) == T_Table)
-		  se->clink = dst;
 	       }
+	    se->clink = dst;   /* will be set next time round the loop (unless it's the last item) */
 	    if (prev == NULL)
 		seg->hslots[slotnum] = (union block *)se;
 	    else
 		prev->clink = (union block *)se;
 	    prev = se;
             }
+         /* If the element list was empty, we need to correct the structure pointer to 
+            point to the new structure rather than the old one. */
+         if (prev == NULL)
+             seg->hslots[slotnum] = (union block *)dst;
          }
    dp2->dword = tcode | D_Typecode | F_Ptr;
    BlkLoc(*dp2) = dst;
@@ -203,13 +203,11 @@ union block *hmake(int tcode, word nslots, word nelem)
       + nelem * elemsize))) return NULL;
    Protect(blk = alchash(tcode), return NULL);
    for (; seg >= 0; seg--) {
+      word j;
       Protect(segp = alcsegment(segsize[seg]), return NULL);
       blk->set.hdir[seg] = segp;
-      if (tcode == T_Table) {
-	 int j;
-	 for (j = 0; j < segsize[seg]; j++)
-	    segp->hslots[j] = blk;
-         }
+      for (j = 0; j < segsize[seg]; j++)
+          segp->hslots[j] = blk;
       }
    blk->set.mask = nslots - 1;
    return blk;
@@ -255,7 +253,7 @@ union block *hgfirst(union block *bp, struct hgstate *s)
    s->tmask = bp->table.mask;
    for (i = 0; i < HSegs; i++)
       s->sghash[i] = s->sgmask[i] = 0;
-   return hgnext(bp, s, (union block *)0);	/* get and return first value */
+   return hgnext(bp, s, NULL);	/* get and return first value */
    }
 
 /*
@@ -285,7 +283,7 @@ union block *hgnext(union block *bp, struct hgstate *s, union block *ep)
     *  by doing nothing now.
     */
    if (bp->table.mask != s->tmask &&
-	  (ep->selem.clink == NULL || BlkType(ep->telem.clink) == T_Table ||
+	  (BlkType(ep->selem.clink) == T_Set || BlkType(ep->telem.clink) == T_Table ||
 	  ep->telem.clink->telem.hashnum != ep->telem.hashnum)) {
       /*
        * Yes, they did split.  Make a note of the current state.
@@ -308,7 +306,7 @@ union block *hgnext(union block *bp, struct hgstate *s, union block *ep)
        *  element, because it may have moved to a new segment.
        */
       ep = bp->table.hdir[s->segnum]->hslots[s->slotnum];
-      while (ep != NULL && BlkType(ep) != T_Table &&
+      while (BlkType(ep) != T_Set && BlkType(ep) != T_Table &&
 	     ep->telem.hashnum <= hn)
          ep = ep->telem.clink;
       }
@@ -319,14 +317,14 @@ union block *hgnext(union block *bp, struct hgstate *s, union block *ep)
        *  that have identical hash numbers.  Find the next element in
        *  the current hash chain.
        */
-      if (ep != NULL && BlkType(ep) != T_Table)	/* NULL on very first call */
+      if (ep != NULL && BlkType(ep) != T_Set && BlkType(ep) != T_Table)	/* NULL on very first call */
          ep = ep->telem.clink;		/* next element in chain, if any */
    }
 
    /*
     * If we don't yet have an element, search successive slots.
     */
-   while (ep == NULL || BlkType(ep) == T_Table) {
+   while (ep == NULL || BlkType(ep) == T_Set || BlkType(ep) == T_Table) {
       /*
        * Move to the next slot and pick the first entry.
        */
@@ -352,7 +350,7 @@ union block *hgnext(union block *bp, struct hgstate *s, union block *ep)
              * This chain was split from its parent while the parent was
              *  being processed.  Skip past elements already processed.
              */
-            while (ep != NULL && BlkType(ep) != T_Table &&
+            while (ep != NULL && BlkType(ep) != T_Set && BlkType(ep) != T_Table &&
 		   ep->telem.hashnum <= s->sghash[i])
                ep = ep->telem.clink;
             }
@@ -362,7 +360,7 @@ union block *hgnext(union block *bp, struct hgstate *s, union block *ep)
    /*
     * Return the element.
     */
-   if (ep && BlkType(ep) == T_Table) ep = NULL;
+   if (ep && (BlkType(ep) == T_Set || BlkType(ep) == T_Table)) ep = NULL;
    return ep;
    }
 
@@ -373,7 +371,7 @@ union block *hgnext(union block *bp, struct hgstate *s, union block *ep)
 void hgrow(union block *bp)
    {
    union block **tp0, **tp1, *ep;
-   word newslots, slotnum, segnum;
+   word j, newslots, slotnum, segnum;
    tended struct b_set *ps;
    struct b_slots *seg, *newseg;
    union block **curslot;
@@ -383,10 +381,7 @@ void hgrow(union block *bp)
       return;				/* can't split further */
    newslots = ps->mask + 1;
    Protect(newseg = alcsegment(newslots), return);
-   if (BlkType(bp) == T_Table) {
-      int j;
-      for(j=0; j<newslots; j++) newseg->hslots[j] = bp;
-      }
+   for(j=0; j<newslots; j++) newseg->hslots[j] = bp;
 
    curslot = newseg->hslots;
    for (segnum = 0; (seg = ps->hdir[segnum]) != NULL; segnum++)
@@ -394,7 +389,7 @@ void hgrow(union block *bp)
          tp0 = &seg->hslots[slotnum];	/* ptr to tail of old slot */
          tp1 = curslot++;		/* ptr to tail of new slot */
          for (ep = *tp0;
-	      ep != NULL && BlkType(ep) != T_Table;
+	      BlkType(ep) != T_Set && BlkType(ep) != T_Table;
 	      ep = ep->selem.clink) {
             if ((ep->selem.hashnum & newslots) == 0) {
                *tp0 = ep;		/* element does not move */
@@ -405,10 +400,7 @@ void hgrow(union block *bp)
                tp1 = &ep->selem.clink;
                }
             }
-         if ( BlkType(bp) == T_Table ) 
-	    *tp0 = *tp1 = bp;
-         else
-            *tp0 = *tp1 = NULL;
+	 *tp0 = *tp1 = bp;
          }
    ps->hdir[segnum] = newseg;
    ps->mask = (ps->mask << 1) | 1;
@@ -442,8 +434,8 @@ void hshrink(union block *bp)
             tp = &seg->hslots[slotnum];		/* tail pointer */
             ep0 = seg->hslots[slotnum];		/* lower slot entry pointer */
             ep1 = *uppslot++;			/* upper slot entry pointer */
-            while (ep0 != NULL && BlkType(ep0) != T_Table &&
-		   ep1 != NULL && BlkType(ep1) != T_Table)
+            while (BlkType(ep0) != T_Set && BlkType(ep0) != T_Table &&
+		   BlkType(ep1) != T_Set && BlkType(ep1) != T_Table)
                if (ep0->selem.hashnum < ep1->selem.hashnum) {
                   *tp = ep0;
                   tp = &ep0->selem.clink;
@@ -454,12 +446,12 @@ void hshrink(union block *bp)
                   tp = &ep1->selem.clink;
                   ep1 = ep1->selem.clink;
                   }
-            while (ep0 != NULL && BlkType(ep0) != T_Table) {
+            while (BlkType(ep0) != T_Set && BlkType(ep0) != T_Table) {
                *tp = ep0;
                tp = &ep0->selem.clink;
                ep0 = ep0->selem.clink;
                }
-            while (ep1 != NULL && BlkType(ep1) != T_Table) {
+            while (BlkType(ep1) != T_Set && BlkType(ep1) != T_Table) {
                *tp = ep1;
                tp = &ep1->selem.clink;
                ep1 = ep1->selem.clink;
@@ -487,7 +479,10 @@ union block **memb(union block *pb, dptr x, uword hn, int *res)
     * Look for x in the hash chain.
     */
    *res = 0;
-   while ((pe = (struct b_selem *)*lp) != NULL && BlkType(pe) != T_Table) {
+   while (1) {
+      pe = (struct b_selem *)*lp;
+      if (BlkType(pe) == T_Table || BlkType(pe) == T_Set)
+          break;
       eh = pe->hashnum;
       if (eh > hn)			/* too far - it isn't there */
          return lp;

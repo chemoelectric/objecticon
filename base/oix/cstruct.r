@@ -32,7 +32,7 @@ static void listdump(dptr d, int all)
          b = b->lelem.listnext) {
         struct b_lelem *e = (struct b_lelem *)b;
         fprintf(stderr, "\telement block at %p nslots=" WordFmt " first=" WordFmt " used=" WordFmt " prev=%p next=%p\n",
-                e, e->nslots, (e->first, e->nused, e->listprev, e->listnext);
+                e, e->nslots, e->first, e->nused, e->listprev, e->listnext);
         if (all) {
             for (i = 0; i < e->nslots; i++) {
                 j = i - e->first;
@@ -62,17 +62,18 @@ static void listdump(dptr d, int all)
 static void setdump(dptr d)
 {
     struct b_set *x = &SetBlk(*d);
-    int i, j;
+    int i;
     fprintf(stderr, "set at %p size=" WordFmt " mask=" XWordFmt "\n", x, x->size, x->mask);
     for (i = 0; i < HSegs; ++i) {
         struct b_slots *slot = x->hdir[i];
-        fprintf(stderr, "\tslot %d at %p segsize=%d\n", i, slot, segsize[i]);
+        fprintf(stderr, "\tslot %d at %p segsize=" UWordFmt "\n", i, slot, segsize[i]);
         if (slot) {
+            word j;
             for (j = 0; j < segsize[i]; ++j) {
                 struct b_selem *elem = (struct b_selem *)slot->hslots[j];
                 fprintf(stderr, "\t\tbucket chain %d at %p\n", j, elem);
-                while (elem) {
-                    fprintf(stderr, "\t\t\telem %p hash=" UWordFmt " mem=", elem, elem->hashnum);
+                while (elem && BlkType(elem) != T_Set) {
+                    fprintf(stderr, "\t\t\tselem %p hash=" UWordFmt " clink=%p mem=", elem, elem->hashnum, elem->clink);
                     print_desc(stderr, &elem->setmem);
                     fprintf(stderr, "\n");
                     elem = (struct b_selem *)elem->clink;
@@ -87,18 +88,19 @@ static void setdump(dptr d)
 static void tabledump(dptr d)
 {
     struct b_table *x = &TableBlk(*d);
-    int i, j;
+    int i;
     fprintf(stderr, "table at %p size=" WordFmt " mask=" XWordFmt "\n", x, x->size, x->mask);
     for (i = 0; i < HSegs; ++i) {
         struct b_slots *slot = x->hdir[i];
-        fprintf(stderr, "\tslot %d at %p segsize=%d\n", i, slot, segsize[i]);
+        fprintf(stderr, "\tslot %d at %p segsize=" UWordFmt "\n", i, slot, segsize[i]);
         if (slot) {
+            word j;
             for (j = 0; j < segsize[i]; ++j) {
                 union block *elem = slot->hslots[j];
                 fprintf(stderr, "\t\tbucket chain %d at %p\n", j, elem);
                 while (elem && BlkType(elem) != T_Table) {
                     struct b_telem *telem = (struct b_telem *)elem;
-                    fprintf(stderr, "\t\t\telem %p hash=" UWordFmt " mem=", telem, telem->hashnum);
+                    fprintf(stderr, "\t\t\telem %p hash=" UWordFmt "  clink=%p mem=", telem, telem->hashnum, telem->clink);
                     print_desc(stderr, &telem->tref);
                     fprintf(stderr, "->");
                     print_desc(stderr, &telem->tval);
@@ -620,12 +622,13 @@ void list_clear(dptr l)
 void set_clear(dptr s)
 {
     struct b_set *x = &SetBlk(*s);
-    int i, j;
+    int i;
     for (i = 0; i < HSegs; ++i) {
         struct b_slots *slot = x->hdir[i];
         if (slot) {
+            word j;
             for (j = 0; j < segsize[i]; ++j)
-                slot->hslots[j] = 0;
+                slot->hslots[j] = (union block *)x;
         }
     }
     x->size = 0;
@@ -634,10 +637,11 @@ void set_clear(dptr s)
 void table_clear(dptr t)
 {
     struct b_table *x = &TableBlk(*t);
-    int i, j;
+    int i;
     for (i = 0; i < HSegs; ++i) {
         struct b_slots *slot = x->hdir[i];
         if (slot) {
+            word j;
             for (j = 0; j < segsize[i]; ++j)
                 slot->hslots[j] = (union block *)x;
         }

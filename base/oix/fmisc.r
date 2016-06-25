@@ -483,7 +483,7 @@ function sort(t, i)
                d1 = lp->listhead->lelem.lslots;
                for (j=0; j < HSegs && (seg = bp->hdir[j]) != NULL; j++)
                   for (k = segsize[j] - 1; k >= 0; k--)
-                     for (ep= seg->hslots[k]; ep != NULL; ep= ep->telem.clink)
+                     for (ep= seg->hslots[k]; BlkType(ep) == T_Selem; ep= ep->telem.clink)
                         *d1++ = ep->selem.setmem;
                qsort(lp->listhead->lelem.lslots,size,
                      sizeof(struct descrip),(QSortFncCast)anycmp);
@@ -782,7 +782,7 @@ function sortf(t, i)
              d1 = lp->listhead->lelem.lslots;
              for (j = 0; j < HSegs && (seg = bp->hdir[j]) != NULL; j++)
                  for (k = segsize[j] - 1; k >= 0; k--)
-                     for (ep = seg->hslots[k]; ep != NULL; ep= ep->telem.clink)
+                     for (ep = seg->hslots[k]; BlkType(ep) == T_Selem; ep= ep->telem.clink)
                          *d1++ = ep->selem.setmem;
              sort_field = i;
              qsort(lp->listhead->lelem.lslots,size,
