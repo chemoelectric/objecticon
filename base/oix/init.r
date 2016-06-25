@@ -6,7 +6,6 @@
 #include "../h/header.h"
 #include "../h/opdefs.h"
 #include "../h/opnames.h"
-#include "../h/modflags.h"
 
 static FILE *readhdr_strict(char *name, struct header *hdr);
 static FILE *readhdr_liberal(char *name, struct header *hdr);

@@ -3,7 +3,6 @@
  */
 
 #include "../h/opdefs.h"
-#include "../h/modflags.h"
 
 static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args, dptr self);
 static void simple_access(void);

@@ -2,7 +2,6 @@
  * File: rmisc.r
  */
 
-#include "../h/modflags.h"
 #include "../h/opdefs.h"
 
 /*

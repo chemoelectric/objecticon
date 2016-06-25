@@ -1,5 +1,3 @@
-#include "../h/modflags.h"
-
 static void stat2list(struct stat *st, dptr res);
 
 /*
