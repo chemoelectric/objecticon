@@ -80,8 +80,8 @@ operator ! bang(underef x -> dx)
              * x is a table.  Chain down the element list in each bucket
              * and suspend a variable pointing to each element in turn.
              */
-	    for (ep = hgfirst(BlkLoc(dx), &state); ep != 0;
-	       ep = hgnext(BlkLoc(dx), &state, ep)) {
+	    for (ep = hgfirst(BlkLoc(dx), &state); ep;
+                 ep = hgnext(BlkLoc(dx), &state, ep)) {
                   EVValD(&ep->telem.tval, E_Tval);
                   suspend struct_var(&ep->telem.tval, ep);
                   }
@@ -94,8 +94,8 @@ operator ! bang(underef x -> dx)
              *  This is similar to the method for tables except that a
              *  value is returned instead of a variable.
              */
-	    for (ep = hgfirst(BlkLoc(dx), &state); ep != 0;
-	       ep = hgnext(BlkLoc(dx), &state, ep)) {
+	    for (ep = hgfirst(BlkLoc(dx), &state); ep;
+                 ep = hgnext(BlkLoc(dx), &state, ep)) {
                   EVValD(&ep->selem.setmem, E_Sval);
                   suspend ep->selem.setmem;
                   }
