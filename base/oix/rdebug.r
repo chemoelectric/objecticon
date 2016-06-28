@@ -1057,7 +1057,9 @@ void print_dword(FILE *f, dptr d) {
 }
 
 /*
- * Given a block, return an appropriate descriptor.
+ * Given a block, return an appropriate descriptor.  Note that
+ * structure sub-blocks for lists, tables and sets are converted to
+ * descriptors of their parent structures.
  */
 struct descrip block_to_descriptor(union block *ptr)
 {
@@ -1072,14 +1074,26 @@ struct descrip block_to_descriptor(union block *ptr)
         case T_Constructor: d = D_Constructor; break;
         case T_Proc: d = D_Proc; break;
         case T_Record: d = D_Record; break;
+        case T_Lelem: {
+            while (BlkType(ptr) == T_Lelem)
+                ptr = ptr->lelem.listnext;
+            /* fall through */
+        }
         case T_List: d = D_List; break;
-        case T_Lelem: d = D_Lelem; break;
+        case T_Selem: {
+            while (BlkType(ptr) == T_Selem)
+                ptr = ptr->telem.clink;
+            /* fall through */
+        }
         case T_Set: d = D_Set; break;
-        case T_Selem: d = D_Selem; break;
+        case T_Telem: {
+            while (BlkType(ptr) == T_Telem)
+                ptr = ptr->telem.clink;
+            /* fall through */
+        }
         case T_Table: d = D_Table; break;
-        case T_Telem: d = D_Telem; break;
         case T_Tvtbl: d = D_Tvtbl; break;
-        case T_Slots: d = D_Slots; break;
+        case T_Slots: return block_to_descriptor(ptr->slots.hslots[0]);
         case T_Tvsubs: d = D_Tvsubs; break;
         case T_Methp: d = D_Methp; break;
         case T_Coexpr: d = D_Coexpr; break;
