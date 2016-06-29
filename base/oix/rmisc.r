@@ -953,61 +953,44 @@ void outimage(FILE *f, dptr dp, int noimage)
  */
 
 static void listimage(FILE *f, dptr dp, int noimage)
-   {
-   word i, j, size, count;
-   tended struct b_lelem *bp;
+{
+   word size;
    tended struct b_list *lp;
    tended struct descrip tdp;
+   tended struct b_lelem *le;
+   struct lgstate state;
 
    lp = &ListBlk(*dp);
 
-   bp = (struct b_lelem *) lp->listhead;
    size = lp->size;
 
    if (noimage > 0) {
       /*
-       * Just give indication of size if the list isn't empty.
+       * Just give indication of the size of the list.
        */
       fprintf(f, "list#" UWordFmt "(" WordFmt ")", lp->id, size);
-      return;
-      }
+   } else {
+       /*
+        * Print [e1,...,en] on f.  If more than ListLimit elements are in the
+        *  list, produce the first ListLimit/2 elements, an ellipsis, and the
+        *  last ListLimit elements.
+        */
 
-   /*
-    * Print [e1,...,en] on f.  If more than ListLimit elements are in the
-    *  list, produce the first ListLimit/2 elements, an ellipsis, and the
-    *  last ListLimit elements.
-    */
+       fprintf(f, "list#" UWordFmt " = [", lp->id);
 
-   fprintf(f, "list#" UWordFmt " = [", lp->id);
+       for (le = lgfirst(lp, &state); le; le = lgnext(lp, &state, le)) {
+           if (state.listindex <= ListLimit/2 || state.listindex > size - ListLimit/2) {
+               if (state.listindex > 1)
+                   putc(',', f);
+               tdp = le->lslots[state.result];
+               outimage(f, &tdp, noimage+1);
+           } else if (state.listindex == ListLimit/2 + 1)
+               fprintf(f, ",...");
+       }
 
-   count = 1;
-   i = 0;
-   if (size > 0) {
-      for (;;) {
-         if (++i > bp->nused) {
-            i = 1;
-            bp = (struct b_lelem *) bp->listnext;
-            }
-         if (count <= ListLimit/2 || count > size - ListLimit/2) {
-            j = bp->first + i - 1;
-            if (j >= bp->nslots)
-               j -= bp->nslots;
-            tdp = bp->lslots[j];
-            outimage(f, &tdp, noimage+1);
-            if (count >= size)
-               break;
-            putc(',', f);
-            }
-         else if (count == ListLimit/2 + 1)
-            fprintf(f, "...,");
-         count++;
-         }
-      }
-
-   putc(']', f);
-
+       putc(']', f);
    }
-
+}
 
 
 /*
