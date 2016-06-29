@@ -1016,7 +1016,10 @@ class Terminal(TabItem, VtUI)
    public static const
       SHOW_NAME_ONLY,
       SHOW_DATE,
-      SHOW_SIZE
+      SHOW_SIZE,
+      DEFAULT_HISTORY_SIZE,
+      DEFAULT_LIST_WIDTH,
+      DEFAULT_LIST_HEIGHT
 
    private
       prev_button,
@@ -1074,12 +1077,15 @@ class Terminal(TabItem, VtUI)
       auto_close_flag,
       select_flag,
       title,
-      max_history_size
+      history_size
 
    private static init()
       SHOW_NAME_ONLY := 1
       SHOW_DATE := 2
-      SHOW_SIZE := 3
+      SHOW_SIZE := 3 
+      DEFAULT_HISTORY_SIZE := 100
+      DEFAULT_LIST_WIDTH := 300
+      DEFAULT_LIST_HEIGHT := 300
    end
 
    public set_select(f)
@@ -1215,14 +1221,17 @@ class Terminal(TabItem, VtUI)
          "reverse-fg": output.set_reverse_fg(param) | return error("invalid parameter to reverse-fg: " || &why)
          "reverse-bg": output.set_reverse_bg(param) | return error("invalid parameter to reverse-bg: " || &why)
          "scroll": {
+            /param := Vt.DEFAULT_HISTORY_SIZE
             param := (0 <= integer(param)) | return error("integer >= 0 expected to scroll")
             output.set_history_size(param)
          }
          "list-width": {
+            /param := DEFAULT_LIST_WIDTH
             param := (0 < integer(param)) | return error("integer > 0 expected to list-width")
             set_list_width(scale(param))
          }
          "list-height": {
+            /param := DEFAULT_LIST_HEIGHT
             param := (0 < integer(param)) | return error("integer > 0 expected to list-height")
             set_list_height(scale(param))
          }
@@ -1370,8 +1379,9 @@ class Terminal(TabItem, VtUI)
             set_select(&yes)
          }
          "history": {
+            /param := DEFAULT_HISTORY_SIZE
             param := (0 < integer(param)) | return error("integer > 0 expected to history")
-            max_history_size := param
+            history_size := param
          }
          "search" : {
             if /param then
@@ -2574,7 +2584,7 @@ $endif
             pop(history)
          push(history, default.HistoryEntry(cwd))
          history_pos := 1
-         while *history > max_history_size do
+         while *history > history_size do
             pull(history)
          update_grey()
       }
@@ -2710,11 +2720,12 @@ $endif
          show_hidden_menu_item.set_is_checked(other.show_hidden_menu_item.get_status())
          history := clone(other.history)
          history_pos := other.history_pos
-         max_history_size := other.max_history_size
+         history_size := other.history_size
          columns_pos_table := clone(other.columns_pos_table)
          filter.set_contents(other.filter.get_contents())
          set_cwd(other.cwd)
       } else {
+         columns.set_size(scale(DEFAULT_LIST_WIDTH), scale(DEFAULT_LIST_HEIGHT))
          sorter := Files.name_cmp
          annotate_opt := SHOW_NAME_ONLY
          set_remembered_focus(output)
@@ -2722,7 +2733,7 @@ $endif
          shell_vars := []
          history := []
          history_pos := 0
-         max_history_size := 100
+         history_size := DEFAULT_HISTORY_SIZE
          columns_pos_table := table()
          if \dir then {
             if dir := Files.realpath(dir) then

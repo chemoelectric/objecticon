@@ -289,6 +289,12 @@ class Vt(LineBasedScrollArea, MenuMode)
       C, S, M, M4, M5, K, U, CSM,
       CHARSET
 
+   public static
+      DEFAULT_HISTORY_SIZE,
+      DEFAULT_VT_WIDTH,
+      DEFAULT_VT_HEIGHT,
+      DEFAULT_FONT
+
    public static const
       OSC_CHAR
 
@@ -307,6 +313,10 @@ class Vt(LineBasedScrollArea, MenuMode)
       CHARSET := table()
       setup_charsets()
       OSC_CHAR := '\x08-\x0D\x20-\x7E'
+      DEFAULT_HISTORY_SIZE := env_int("OI_VT_DEFAULT_HISTORY_SIZE", 0) | 500
+      DEFAULT_VT_WIDTH := env_int("OI_VT_DEFAULT_VT_WIDTH", 20) | 80
+      DEFAULT_VT_HEIGHT := env_int("OI_VT_DEFAULT_VT_HEIGHT", 5) | 25
+      DEFAULT_FONT := env_font("OI_VT_DEFAULT_FONT") | "fixed"
    end
 
    private static setup_charsets()
@@ -2838,10 +2848,10 @@ class Vt(LineBasedScrollArea, MenuMode)
       connect(handle_key, Event.KEY_PRESS)
       view.set_pointer("xterm")
       input_handler_coex := create input_handler()
-      history_size := 500
-      set_font("fixed")
-      vt_width := 80
-      vt_height := 25
+      history_size := DEFAULT_HISTORY_SIZE
+      set_font(DEFAULT_FONT)
+      vt_width := DEFAULT_VT_WIDTH
+      vt_height := DEFAULT_VT_HEIGHT
       reset_term()
       return
    end

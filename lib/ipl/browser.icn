@@ -2775,7 +2775,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private readable
       history,
       history_pos,
-      max_history_size,
+      history_size,
       curr_history_entry,   # History entry currently being viewed.  Note this may not be history[history_pos]
                             # if we've just done a navigation to a slowly loading page.  It may even be &null
                             # on a new browser or one with a cloned history.
@@ -2817,7 +2817,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       SIZES
 
    public static
-      SCROLL_INCREMENT
+      SCROLL_INCREMENT,
+      DEFAULT_HISTORY_SIZE
 
    private static const
       default_font_clone
@@ -2972,6 +2973,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       ImageCache.name_image("rpp.BROKEN_LINK", BROKEN_LINK)
       default_font_clone := Window().set_font("sans")
       SCROLL_INCREMENT := env_scale("OI_BROWSER_SCROLL_INCREMENT") | scale(20)
+      DEFAULT_HISTORY_SIZE := env_int("OI_BROWSER_DEFAULT_HISTORY_SIZE", 0) | 100
    end
 
    public get_map(s)
@@ -3502,7 +3504,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          # Fields are set below
          push(history, HistoryEntry())
          history_pos := 1
-         while *history > max_history_size do
+         while *history > history_size do
             pull(history)
       }
       curr_history_entry := history[history_pos]
@@ -5455,8 +5457,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    #
    # Set the maximum size of the history, default 100
    #
-   public set_max_history_size(n)
-      self.max_history_size := n
+   public set_history_size(n)
+      self.history_size := n
       return self
    end
 
@@ -5504,7 +5506,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       connect(additional_keys, Event.KEY_PRESS)
       history := []
       history_pos := 0
-      max_history_size := 100
+      history_size := DEFAULT_HISTORY_SIZE
       running := 0
       banded := table()
       searched := table()
