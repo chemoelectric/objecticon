@@ -56,7 +56,9 @@ long millisec()
 
 long millisec()
 {
-    return times(0);
+    long t[4];
+    times(t);
+    return t[0] + t[1];
 }
 
 
