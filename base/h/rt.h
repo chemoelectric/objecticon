@@ -19,5 +19,6 @@
 #include "../h/graphics.h"
 #include "../h/rexterns.h"
 #include "../h/rproto.h"
+#include "../h/modflags.h"
 
 #endif					/* RT_DOT_H */

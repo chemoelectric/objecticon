@@ -24,7 +24,7 @@ class Explorer(Dialog)
          if n === tree.get_root_node() then
             break
       }
-      return FilePath.from_list(l).str()
+      return FilePath(l).str()
    end
 
    #

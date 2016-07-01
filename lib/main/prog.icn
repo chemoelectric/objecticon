@@ -156,7 +156,26 @@ final abstract class Prog()
    #
    # Set the given program's event mask
    #
-   public static native set_event_mask(cs, P)
+   public static set_event_mask(cs, P)
+      return set_event_mask_impl(cs, P) & Prog
+   end
+
+   private static native set_event_mask_impl(cs, P)
+
+   #
+   # Set the given program's timer interval, for use with the E_Timer
+   # event.
+   #
+   public static set_timer_interval(i, P)
+      return set_timer_interval_impl(i, P) & Prog
+   end
+
+   private static native set_timer_interval_impl(i, P)
+
+   #
+   # Get the timer interval for program P.
+   #
+   public static native get_timer_interval(P)
 
    #
    # Get the next event from program P.
@@ -217,9 +236,9 @@ final abstract class Prog()
       local t, l, m
       t := get_region_info_impl(P)
       l := []
-      while put(l, Region(pop(t[1]), pop(t[1])))
+      while put(l, Region(pop(t[1]), pop(t[1]), pop(t[1]), pop(t[1])))
       m := []
-      while put(m, Region(pop(t[2]), pop(t[2])))
+      while put(m, Region(pop(t[2]), pop(t[2]), pop(t[2]), pop(t[2])))
       return RegionInfo(l, m)
    end
 
@@ -427,7 +446,11 @@ class Region()
       # The amount used
       used,
       # The size of the space
-      size 
+      size,
+      # The number of times compacted
+      compacted,
+      # Flag indicating whether this region is current
+      current
 
    #
    # Add up the elements in a list of {Region}s.
@@ -447,9 +470,11 @@ class Region()
       return size - used
    end
 
-   package new(used, size)
+   package new(used, size, compacted, current)
       self.used := used
       self.size := size
+      self.compacted := compacted
+      self.current := current
       return
    end
 end

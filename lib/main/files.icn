@@ -893,20 +893,30 @@ class FilePath(ObjectOutput)
    end
 
    #
-   # Create a new {FilePath} from the given list of path elements.
+   # Create a new instance from a list of elements, without taking a
+   # copy.
    #
-   public static from_list(l)
+   package static from_list(l)
       local i
       i := Class.create_instance()
       i.l := l
       return i
    end
 
+   # Create a new instance from `x`, which may be another `FilePath`,
+   # in which case an equivalent new instance is returned, a list of
+   # strings representing the elements of the new instance, or a
+   # string/ucs to parse.
    #
-   # Create a new instance from the path represented by the given string.
-   #
-   public new(s)
-      self.l := Files.FS.get_path_list(s) | fail
+   public new(x)
+      l := if x := text(x) then
+         Files.FS.get_path_list(x)
+      else if is(x, FilePath) then
+         x.l
+      else if type(x) == "list" then
+         copy(x)
+      else
+         runerr("text, list or FilePath expected", x)
       return
    end
 end

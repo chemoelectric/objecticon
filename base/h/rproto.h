@@ -106,6 +106,7 @@ int             doimage         (int c,int q);
 int             equiv           (dptr dp1,dptr dp2);
 void            err_msg         (int n, dptr v);
 void            activate_handler(void);
+void            push_fatalerr_139_frame(void);
 void            fatalerr        (int n,dptr v);
 void            ffatalerr       (char *fmt, ...);
 void            checkfatalrecurse(void);
@@ -484,6 +485,13 @@ struct b_ucs *make_ucs_substring(struct b_ucs *b, word pos, word len);
 int cset_range_of_pos(struct b_cset *b, word pos);
 int need_ucs(dptr s);
 long millisec(void);
+struct descrip block_to_descriptor(union block *ptr);
+
+struct b_class *get_class_for(dptr x);
+struct b_constructor *get_constructor_for(dptr x);
+struct b_proc *get_proc_for(dptr x);
+struct progstate *get_program_for(dptr x);
+struct b_coexpr *get_coexpr_for(dptr x);
 
 /* Debug func. */
 void show_regions(void);

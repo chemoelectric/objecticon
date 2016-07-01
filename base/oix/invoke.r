@@ -3,7 +3,6 @@
  */
 
 #include "../h/opdefs.h"
-#include "../h/modflags.h"
 
 static struct frame *push_frame_for_proc(struct b_proc *bp, int argc, dptr args, dptr self);
 static void simple_access(void);
@@ -1184,6 +1183,7 @@ static void create_raw_instance()
     /* lhs is never null */
     lhs->dword = D_Object;
     BlkLoc(*lhs) = (union block *)obj;
+    EVValD(lhs, E_Objectcreate);
 }
 
 function lang_Class_create_raw_instance_of(c)
@@ -1217,6 +1217,7 @@ function lang_Class_create_raw_instance()
        MemProtect(BlkLoc(result) = (union block*)alcobject(cl));
        result.dword = D_Object;
        ObjectBlk(result).init_state = Initializing;
+       EVValD(&result, E_Objectcreate);
        return result;
     }
 end
@@ -1246,6 +1247,7 @@ function lang_Class_create_instance()
        MemProtect(BlkLoc(result) = (union block*)alcobject(cl));
        result.dword = D_Object;
        ObjectBlk(result).init_state = Initialized;
+       EVValD(&result, E_Objectcreate);
        return result;
     }
 end

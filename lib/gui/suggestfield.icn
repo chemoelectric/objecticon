@@ -79,7 +79,7 @@ abstract class SuggestField(TextField, MenuMode)
    public synch_contents(ev)
       local s
       s := convert_element(tl.object_get_selections()[1]) | contents[1:1]
-      assign_contents(s, applied_event := ev, &yes)
+      assign_contents(s, applied_event := ev, toggle_flag(select_using_enter_flag))
    end
 
    public convert_element(o)

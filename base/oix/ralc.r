@@ -150,25 +150,15 @@ struct progstate *alcprog(word icodesize)
    /*
     * Allocate the two parts.
     */
-   prog = malloc(sizeof(struct progstate));
-   if (prog == NULL) {
-       collect(Blocks);
-       prog = malloc(sizeof(struct progstate));
-       if (prog == NULL)
-           return 0;
-   }
+   prog = calloc(sizeof(struct progstate), 1);
+   if (!prog)
+       return 0;
    icode = malloc(icodesize);
-   if (icode == NULL) {
-       collect(Blocks);
-       icode = malloc(icodesize);
-       if (icode == NULL) {
-           free(prog);
-           return 0;
-       }
+   if (!icode) {
+       free(prog);
+       return 0;
    }
-   memset(prog, 0, sizeof(struct progstate));
    prog->Code = icode;
-
    return prog;
 }
 
@@ -796,12 +786,13 @@ static struct region *newregion(uword nbytes, uword stdsize)
    uword minSize = MinAbrSize;
    struct region *rp;
 
-   if ((uword)nbytes > minSize)
-      minSize = (uword)nbytes;
+   if (nbytes > minSize)
+      minSize = nbytes;
 
    rp = malloc(sizeof(struct region));
    if (rp) {
       rp->size = stdsize;
+      rp->compacted = 0;
       if (rp->size < nbytes)
          rp->size = Max(nbytes+stdsize, nbytes);
       do {

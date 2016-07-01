@@ -2,7 +2,6 @@
  * File: rmisc.r
  */
 
-#include "../h/modflags.h"
 #include "../h/opdefs.h"
 
 /*
@@ -494,13 +493,13 @@ static void kywdout(FILE *f, dptr dp, int noimage)
 
 /*
  * outimage - print image of *dp on file f.  If noimage is nonzero,
- *  fields of records will not be imaged.
- * dp should point to a tended desc, since this function can do an allocation (see bigprint).
+ * fields of records will not be imaged.  This function should not
+ * perform any allocations.
  */
 
 void outimage(FILE *f, dptr dp, int noimage)
    {
-   word i, j, k;
+   word i, j;
    char *s;
    char *csn;
    tended struct descrip tdp;
@@ -532,7 +531,7 @@ void outimage(FILE *f, dptr dp, int noimage)
          j = Min(i, StringLimit);
          fprintf(f, "u\"");
          while (j-- > 0) {
-             int n;
+             int k, n;
              k = utf8_iter(&s);
              n = ucs_charstr(k, cbuf);
              putn(f, cbuf, n);
@@ -679,19 +678,17 @@ void outimage(FILE *f, dptr dp, int noimage)
              putstr(f, ObjectBlk(*dp).class->name);
              fprintf(f, "#" UWordFmt "", ObjectBlk(*dp).id);
              j = ObjectBlk(*dp).class->n_instance_fields;
-             if (j <= 0)
-                 fprintf(f, "()");
-             else if (noimage > 0)
+             if (noimage > 0)
                  fprintf(f, "(" WordFmt ")", j);
              else {
                  putc('(', f);
-                 i = 0;
-                 for (;;) {
+                 for (i = 0; i < j; ++i) {
+                     dptr name = ObjectBlk(*dp).class->program->Fnames[ObjectBlk(*dp).class->fields[i]->fnum];
+                     if (i > 0)
+                         putc(',', f);
+                     fprintf(f, "%.*s=", (int)StrLen(*name), StrLoc(*name));
                      tdp = ObjectBlk(*dp).fields[i];
                      outimage(f, &tdp, noimage + 1);
-                     if (++i >= j)
-                         break;
-                     putc(',', f);
                  }
                  putc(')', f);
              }
@@ -719,20 +716,18 @@ void outimage(FILE *f, dptr dp, int noimage)
          putstr(f, RecordBlk(*dp).constructor->name);
          fprintf(f, "#" UWordFmt "", RecordBlk(*dp).id);
          j = RecordBlk(*dp).constructor->n_fields;
-         if (j <= 0)
-            fprintf(f, "()");
-         else if (noimage > 0)
+         if (noimage > 0)
             fprintf(f, "(" WordFmt ")", j);
          else {
             putc('(', f);
-            i = 0;
-            for (;;) {
+            for (i = 0; i < j; ++i) {
+               dptr name = RecordBlk(*dp).constructor->program->Fnames[RecordBlk(*dp).constructor->fnums[i]];
+               if (i > 0)
+                   putc(',', f);
+               fprintf(f, "%.*s=", (int)StrLen(*name), StrLoc(*name));
                tdp = RecordBlk(*dp).fields[i];
                outimage(f, &tdp, noimage + 1);
-               if (++i >= j)
-                  break;
-               putc(',', f);
-               }
+            }
             putc(')', f);
             }
          }
@@ -759,6 +754,12 @@ void outimage(FILE *f, dptr dp, int noimage)
             fprintf(f, "[" WordFmt "+:" WordFmt "]", TvsubsBlk(*dp).sspos, TvsubsBlk(*dp).sslen);
 
          if (!noimage) {
+             /*
+              * This shouldn't do an allocation, since the variable sv
+              * shouldn't be another tvsubs (see make_tvsubs in
+              * oref.r), and only dereferencing a tvsubs does an
+              * allocation.
+              */
              deref(&sv, &tdp);
              if (is:ucs(tdp)) {
                  struct descrip utf8_subs;
@@ -773,7 +774,7 @@ void outimage(FILE *f, dptr dp, int noimage)
                  j = Min(i, StringLimit);
                  fprintf(f, " = u\"");
                  while (j-- > 0) {
-                     int n;
+                     int k, n;
                      k = utf8_iter(&s);
                      n = ucs_charstr(k, cbuf);
                      putn(f, cbuf, n);
@@ -952,62 +953,44 @@ void outimage(FILE *f, dptr dp, int noimage)
  */
 
 static void listimage(FILE *f, dptr dp, int noimage)
-   {
-   word i, j;
-   tended struct b_lelem *bp;
+{
+   word size;
    tended struct b_list *lp;
    tended struct descrip tdp;
-   word size, count;
+   tended struct b_lelem *le;
+   struct lgstate state;
 
    lp = &ListBlk(*dp);
 
-   bp = (struct b_lelem *) lp->listhead;
    size = lp->size;
 
-   if (noimage > 0 && size > 0) {
+   if (noimage > 0) {
       /*
-       * Just give indication of size if the list isn't empty.
+       * Just give indication of the size of the list.
        */
       fprintf(f, "list#" UWordFmt "(" WordFmt ")", lp->id, size);
-      return;
-      }
+   } else {
+       /*
+        * Print [e1,...,en] on f.  If more than ListLimit elements are in the
+        *  list, produce the first ListLimit/2 elements, an ellipsis, and the
+        *  last ListLimit elements.
+        */
 
-   /*
-    * Print [e1,...,en] on f.  If more than ListLimit elements are in the
-    *  list, produce the first ListLimit/2 elements, an ellipsis, and the
-    *  last ListLimit elements.
-    */
+       fprintf(f, "list#" UWordFmt " = [", lp->id);
 
-   fprintf(f, "list#" UWordFmt " = [", lp->id);
+       for (le = lgfirst(lp, &state); le; le = lgnext(lp, &state, le)) {
+           if (state.listindex <= ListLimit/2 || state.listindex > size - ListLimit/2) {
+               if (state.listindex > 1)
+                   putc(',', f);
+               tdp = le->lslots[state.result];
+               outimage(f, &tdp, noimage+1);
+           } else if (state.listindex == ListLimit/2 + 1)
+               fprintf(f, ",...");
+       }
 
-   count = 1;
-   i = 0;
-   if (size > 0) {
-      for (;;) {
-         if (++i > bp->nused) {
-            i = 1;
-            bp = (struct b_lelem *) bp->listnext;
-            }
-         if (count <= ListLimit/2 || count > size - ListLimit/2) {
-            j = bp->first + i - 1;
-            if (j >= bp->nslots)
-               j -= bp->nslots;
-            tdp = bp->lslots[j];
-            outimage(f, &tdp, noimage+1);
-            if (count >= size)
-               break;
-            putc(',', f);
-            }
-         else if (count == ListLimit/2 + 1)
-            fprintf(f, "...,");
-         count++;
-         }
-      }
-
-   putc(']', f);
-
+       putc(']', f);
    }
-
+}
 
 
 /*
@@ -1120,7 +1103,7 @@ void abbr_fname(dptr s, dptr d)
 
 void getimage(dptr dp1, dptr dp2)
 {
-   word len, i, j;
+   word len, i;
    tended char *s;
    char sbuf[64];
    char cbuf[CHAR_CVT_LEN];
@@ -1149,6 +1132,7 @@ void getimage(dptr dp1, dptr dp2)
          i = UcsBlk(*dp1).length;
          len = 3;  /* u"" */
          while (i-- > 0) {
+             int j;
              j = utf8_iter(&s);
              len += ucs_charstr(j, 0);
          }
@@ -1160,7 +1144,7 @@ void getimage(dptr dp1, dptr dp2)
          s = StrLoc(UcsBlk(*dp1).utf8);
          i = UcsBlk(*dp1).length;
          while (i-- > 0) {
-             int n;
+             int j, n;
              j = utf8_iter(&s);
              n = ucs_charstr(j, cbuf);
              alcstr(cbuf, n);
@@ -1224,7 +1208,7 @@ void getimage(dptr dp1, dptr dp2)
          }
 
       cset: {
-         int from, to;
+         int j, from, to;
          char *csn;
          /*
 	  * Check for the value of a predefined cset; use keyword name if found.

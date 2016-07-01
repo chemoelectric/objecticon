@@ -263,13 +263,22 @@ end
     putstr(stderr, &k_errortext);
     fputc('\n', stderr);
 
-    checkfatalrecurse();
     if (have_errval) {
         fprintf(stderr, "offending value: ");
         outimage(stderr, &k_errorvalue, 0);
         putc('\n', stderr);
     }
 
+    if (curpstate->monitor &&
+        Testb(E_Error, curpstate->eventmask->bits)) {
+        traceback(k_current, 1, 1);
+        add_to_prog_event_queue(&nulldesc, E_Error);
+        curpstate->exited = 1;
+        push_fatalerr_139_frame();
+        return;
+    }
+
+    checkfatalrecurse();
     traceback(k_current, 1, 1);
 
     if (dodump > 1)
@@ -294,6 +303,7 @@ end
 function fatalerr(i, x[n])
    body {
       kywd_handler = nulldesc;
+      curpstate->monitor = 0;
       ERRFUNC();
    }
 end
@@ -473,7 +483,7 @@ function sort(t, i)
                d1 = lp->listhead->lelem.lslots;
                for (j=0; j < HSegs && (seg = bp->hdir[j]) != NULL; j++)
                   for (k = segsize[j] - 1; k >= 0; k--)
-                     for (ep= seg->hslots[k]; ep != NULL; ep= ep->telem.clink)
+                     for (ep= seg->hslots[k]; BlkType(ep) == T_Selem; ep= ep->telem.clink)
                         *d1++ = ep->selem.setmem;
                qsort(lp->listhead->lelem.lslots,size,
                      sizeof(struct descrip),(QSortFncCast)anycmp);
@@ -772,7 +782,7 @@ function sortf(t, i)
              d1 = lp->listhead->lelem.lslots;
              for (j = 0; j < HSegs && (seg = bp->hdir[j]) != NULL; j++)
                  for (k = segsize[j] - 1; k >= 0; k--)
-                     for (ep = seg->hslots[k]; ep != NULL; ep= ep->telem.clink)
+                     for (ep = seg->hslots[k]; BlkType(ep) == T_Selem; ep= ep->telem.clink)
                          *d1++ = ep->selem.setmem;
              sort_field = i;
              qsort(lp->listhead->lelem.lslots,size,

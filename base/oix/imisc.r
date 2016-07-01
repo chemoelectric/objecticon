@@ -1,6 +1,3 @@
-#include "../h/modflags.h"
-
-
 struct p_frame *get_current_user_frame()
 {
     struct p_frame *pf = curr_pf;

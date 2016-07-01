@@ -190,8 +190,6 @@ void err_msg(int n, dptr v)
     }
     k_errorcoexpr = k_current;
 
-    EVVal((word)k_errornumber,E_Error);
-
     if (set_up) {
         if (is:null(kywd_handler)) {
             struct ipc_line *pline;
@@ -245,13 +243,27 @@ void err_msg(int n, dptr v)
         fputc('\n', stderr);
     }
 
-    checkfatalrecurse();
-
     if (have_errval) {
         fprintf(stderr, "offending value: ");
         outimage(stderr, &k_errorvalue, 0);
         putc('\n', stderr);
     }
+
+    if (curpstate->monitor &&
+        Testb(E_Error, curpstate->eventmask->bits)) {
+        traceback(k_current, 1, 1);
+        add_to_prog_event_queue(&nulldesc, E_Error);
+        curpstate->exited = 1;
+        push_fatalerr_139_frame();
+        return;
+    }
+
+    /* traceback() does a malloc, so checkfatalrecurse() is used to
+     * avoid repeatedly looping (until a stack overflow) if we run out
+     * of memory.
+     */
+
+    checkfatalrecurse();
 
     if (!set_up) {		/* skip if start-up problem */
         if (dodump > 1)

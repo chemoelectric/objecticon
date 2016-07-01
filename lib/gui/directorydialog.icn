@@ -126,7 +126,7 @@ class DirectoryDialog(Dialog)
          if n === tree.get_root_node() then
             break
       }
-      return FilePath.from_list(l)
+      return FilePath(l)
    end
 
    public on_tree_expansion()
@@ -146,6 +146,8 @@ class DirectoryDialog(Dialog)
    end
 
    public on_tree_selection(ev)
+      # This may fail if the user clears the selection; in this case
+      # do nothing and leave selected_path as is.
       selected_path := get_full_path(tree.object_get_selections()[1]) | fail
       dir.set_contents(selected_path.ucs())
       dir.view.set_cwd(selected_path)
@@ -238,7 +240,7 @@ class DirectoryDialog(Dialog)
       else if Files.is_directory(p.str()) then
          check_existing()
       else
-         msg("Not a dir: " || p.ucs())
+         msg("Not a directory: " || p.ucs())
       return self
    end
 
@@ -260,13 +262,9 @@ $endif
       msg()
       warned := &null
       f := get_dir_path().str()
-      if Files.access(f) then {
-         if not Files.is_directory(f) then
-            msg("Not a directory")
-         else if existing_file_mode === (WARN | DISALLOW) then {
-            warned := &yes
-            msg("Existing directory")
-         }
+      if existing_file_mode === (WARN | DISALLOW) & Files.is_directory(f) & Files.access(f) then {
+         warned := &yes
+         msg("Existing directory")
       }
    end
 
@@ -300,10 +298,16 @@ $endif
       self.dispose()
    end
 
+   public set_show_hidden_files(s)
+      show_hidden_menu_item.set_is_checked(s)
+      on_show_hidden_menu_item()
+      return self
+   end
+
    public on_show_hidden_menu_item(ev)
-      local n
-      n := tree.object_get_selections()[1] | fail
-      goto_dir(get_full_path(n).str())
+      dir.view.set_show_hidden_files(show_hidden_menu_item.get_status())
+      if is_live() then
+         on_refresh_menu_item(ev)
    end
 
    public on_up_button(ev)

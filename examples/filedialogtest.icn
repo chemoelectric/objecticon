@@ -6,6 +6,7 @@ procedure main(a)
                        Opt("re",, "Require existing file"),
                        Opt("de",, "Disallow existing file"),
                        Opt("l",, "Loop repeatedly, re-showing the dialog"),
+                       Opt("h",, "Initially show hidden files"),
                        Opt("k",, "Keep directory between uses"),
                        Opt("m",, "Multiple file mode"),
                        Opt("nf",, "Empty files list"),
@@ -19,6 +20,9 @@ procedure main(a)
 
    if /opts["nf"] then
       d.set_files(["one.icn", "two.icn", "three.icn", "/tmp/four.icn", "/tmp/five.icn"])
+
+   if \opts["h"] then
+      d.set_show_hidden_files(&yes)
 
    if \opts["ns"] then
       d.set_file_suggestions(&no)

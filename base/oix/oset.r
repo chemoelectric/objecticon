@@ -65,7 +65,7 @@ operator -- diff(x,y)
          for (i = 0; i < HSegs && (seg = srcp->set.hdir[i]) != NULL; i++)
             for (slotnum = segsize[i] - 1; slotnum >= 0; slotnum--) {
                ep = (struct b_selem *)seg->hslots[slotnum];
-               while (ep != NULL) {
+               while (BlkType(ep) == T_Selem) {
                   memb(tstp, &ep->setmem, ep->hashnum, &res);
                   if (!res) {
                      hook = memb(dstp, &ep->setmem, ep->hashnum, &res);
@@ -176,7 +176,7 @@ operator ** inter(x,y)
          for (i = 0; i < HSegs && (seg = srcp->set.hdir[i]) != NULL; i++)
             for (slotnum = segsize[i] - 1; slotnum >= 0; slotnum--) {
                ep = (struct b_selem *)seg->hslots[slotnum];
-               while (ep != NULL) {
+               while (BlkType(ep) == T_Selem) {
                   memb(tstp, &ep->setmem, ep->hashnum, &res);
                   if (res) {
                      hook = memb(dstp, &ep->setmem, ep->hashnum, &res);
@@ -273,7 +273,7 @@ operator ++ union(x,y)
          for (i = 0; i < HSegs && (seg = SetBlk(y).hdir[i]) != NULL; i++)
             for (slotnum = segsize[i] - 1; slotnum >= 0; slotnum--) {
                ep = (struct b_selem *)seg->hslots[slotnum];
-               while (ep != NULL) {
+               while (BlkType(ep) == T_Selem) {
                   hook = memb(dstp, &ep->setmem, ep->hashnum, &res);
                   if (!res) {
 		     np->setmem = ep->setmem;

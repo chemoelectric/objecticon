@@ -400,8 +400,11 @@ class Scheduler()
       coex === &current | syserr("scheduler co-expression not &current")
       coex := sc
       curr_task := st
-    end
+   end
 
+   #
+   # Perhaps do some work; succeed if some was done, fail if not.
+   #
    public work()
       local t, r, curr_time, poll_l, x
       repeat {
@@ -468,5 +471,13 @@ class Scheduler()
 
          fail
       }
+   end
+
+   #
+   # Convenient method to call work(), and if no work is done, to
+   # sleep for the poll timeout period.
+   #
+   public work_or_sleep()
+      work() | delay(poll_timeout)
    end
 end

@@ -58,3 +58,8 @@ static word activate_handler_impl_code[] = {
    (word)fatalerr_139,
 };
 #passthru CustomProc(activate_handler_impl,activate_handler_impl_code,0,0,0,0,0,0,0,"activate_handler_impl")
+static word call_fatalerr_139_code[] = {
+   Op_Custom,
+   (word)fatalerr_139,
+};
+#passthru CustomProc(call_fatalerr_139,call_fatalerr_139_code,0,0,0,0,0,0,0,"call_fatalerr_139")

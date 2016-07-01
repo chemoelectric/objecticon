@@ -111,6 +111,7 @@ procedure usage(opts)
    ewrite("Retrieve URL(s)")
    options_help(opts)
    ewrite("URL may contain range expansions eg {1-2+8-11}")
+   exit(0)
 end
 
 procedure main(args)

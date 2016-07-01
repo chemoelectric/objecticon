@@ -30,7 +30,6 @@ dptr xarg1, xarg2, xarg3;   /* Operator args */
 
 struct ipc_line *frame_ipc_line(struct p_frame *pf)
 {
-    synch_ipc();
     while (pf && !pf->proc->program)
         pf = pf->caller;
     if (!pf)
@@ -40,7 +39,6 @@ struct ipc_line *frame_ipc_line(struct p_frame *pf)
 
 struct ipc_fname *frame_ipc_fname(struct p_frame *pf)
 {
-    synch_ipc();
     while (pf && !pf->proc->program)
         pf = pf->caller;
     if (!pf)
@@ -79,7 +77,7 @@ void traceback(struct b_coexpr *ce, int with_xtrace, int act_chain)
     fprintf(stderr, "Traceback:\n");
     while (ce && !in_act_chain(head, ce)) {
         struct p_frame *pf;
-        MemProtect(ae = malloc(sizeof(struct act_chain)));
+        ae = safe_malloc(sizeof(struct act_chain));
         ae->coex = ce;
         ae->frames = 0;
         ae->next = head;
@@ -87,7 +85,7 @@ void traceback(struct b_coexpr *ce, int with_xtrace, int act_chain)
         head = ae;
         for (pf = ce->curr_pf; pf; pf = pf->caller) {
             if (pf->proc->program) {
-                MemProtect(fe = malloc(sizeof(struct frame_chain)));
+                fe = safe_malloc(sizeof(struct frame_chain));
                 fe->frame = pf;
                 fe->next = ae->frames;
                 ae->frames = fe;
@@ -929,6 +927,7 @@ void print_vword(FILE *f, dptr d) {
                 break;
             }
 
+            case D_Yes :
             case D_Null : {
                 fputs("0", f); 
                 break;
@@ -1030,6 +1029,7 @@ void print_dword(FILE *f, dptr d) {
             case D_Kywdstr : fputs("D_Kywdstr", f); break;
             case D_Kywdany : fputs("D_Kywdany", f); break;
             case D_Null : fputs("D_Null", f); break;
+            case D_Yes : fputs("D_Yes", f); break;
             case D_Integer : fputs("D_Integer", f); break;
             case D_Lrgint : fputs("D_Lrgint", f); break;
             case D_Real : fputs("D_Real", f); break;
@@ -1054,6 +1054,62 @@ void print_dword(FILE *f, dptr d) {
             default : fputs("?", f);
         }
     }
+}
+
+/*
+ * Given a block, return an appropriate descriptor.  Note that
+ * structure sub-blocks for lists, tables and sets are converted to
+ * descriptors of their parent structures.
+ */
+struct descrip block_to_descriptor(union block *ptr)
+{
+    word d, t = BlkType(ptr);
+    struct descrip desc;
+    switch (t) {
+        case T_Lrgint: d = D_Lrgint; break;
+#if !RealInDesc
+        case T_Real: d = D_Real; break; 
+#endif
+        case T_Cset: d = D_Cset; break;
+        case T_Constructor: d = D_Constructor; break;
+        case T_Proc: d = D_Proc; break;
+        case T_Record: d = D_Record; break;
+        case T_Lelem: {
+            while (BlkType(ptr) == T_Lelem)
+                ptr = ptr->lelem.listnext;
+            /* fall through */
+        }
+        case T_List: d = D_List; break;
+        case T_Selem: {
+            while (BlkType(ptr) == T_Selem)
+                ptr = ptr->telem.clink;
+            /* fall through */
+        }
+        case T_Set: d = D_Set; break;
+        case T_Telem: {
+            while (BlkType(ptr) == T_Telem)
+                ptr = ptr->telem.clink;
+            /* fall through */
+        }
+        case T_Table: d = D_Table; break;
+        case T_Tvtbl: d = D_Tvtbl; break;
+        case T_Slots: return block_to_descriptor(ptr->slots.hslots[0]);
+        case T_Tvsubs: d = D_Tvsubs; break;
+        case T_Methp: d = D_Methp; break;
+        case T_Coexpr: d = D_Coexpr; break;
+        case T_Ucs: d = D_Ucs; break;
+        case T_Class: d = D_Class; break;
+        case T_Object: d = D_Object; break;
+        case T_Weakref: d = D_Weakref; break;
+        default: {
+            syserr("Unknown block type");
+            /* Not reached */
+            d = 0;
+        }
+    }
+    desc.dword = d;
+    desc.vword.bptr = ptr;
+    return desc;
 }
 
 void showcurrstack()

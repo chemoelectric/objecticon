@@ -6,7 +6,6 @@
 #include "../h/header.h"
 #include "../h/opdefs.h"
 #include "../h/opnames.h"
-#include "../h/modflags.h"
 
 static FILE *readhdr_strict(char *name, struct header *hdr);
 static FILE *readhdr_liberal(char *name, struct header *hdr);
@@ -120,7 +119,6 @@ struct b_cset *rparcs;    /* ')' */
  * Descriptors used by event monitoring.
  */
 struct descrip csetdesc;
-struct descrip eventdesc;
 struct descrip rzerodesc;
 
 struct b_cset *k_ascii;	        /* value of &ascii */
@@ -177,6 +175,7 @@ char *allchars =
  */
 
 int set_up = 0;				/* set-up switch */
+long starttime;                         /* used with millisec() for calculating &time */
 char *currend = NULL;			/* current end of memory region */
 word memcushion = RegionCushion;	/* memory region cushion factor */
 word memgrowth = RegionGrowth;		/* memory region growth factor */
@@ -339,6 +338,7 @@ static struct b_cset *make_static_cset_block(int n_ranges, ...)
     va_start(ap, n_ranges);
     blksize = sizeof(struct b_cset) + ((n_ranges - 1) * sizeof(struct b_cset_range));
     b = safe_zalloc(blksize);
+    b->title = T_Cset;
     b->blksize = blksize;
     b->n_ranges = n_ranges;
     b->size = 0;
@@ -374,6 +374,7 @@ static struct b_ucs *make_static_ucs_block(char *utf8)
     calc_ucs_index_settings(utf8_len, length, &index_step, &n_offs, &offset_bits, &n_off_words);
     blksize = sizeof(struct b_ucs) + ((n_off_words - 1) * sizeof(word));
     b = safe_zalloc(blksize);
+    b->title = T_Ucs;
     b->blksize = blksize;
     b->index_step = index_step;
     MakeStr(utf8, utf8_len, &b->utf8);
@@ -555,6 +556,7 @@ void checkfatalrecurse(void)
 void fatalerr(int n, dptr v)
 {
     kywd_handler = nulldesc;
+    curpstate->monitor = 0;
     err_msg(n, v);
 }
 
@@ -570,6 +572,7 @@ void ffatalerr(char *fmt, ...)
     vsnprintf(buff, sizeof(buff), fmt, ap);
     CMakeStr(buff, &t_errortext);
     kywd_handler = nulldesc;
+    curpstate->monitor = 0;
     err_msg(-1, 0);
 }
 
@@ -588,6 +591,7 @@ static void initprogstate(struct progstate *p)
 {
     p->monitor = 0;
     p->eventmask= emptycs;
+    p->timer_interval = 1000;
     p->event_queue_head = p->event_queue_tail = 0;
     p->Kywd_handler = nulldesc;
     p->Kywd_pos = onedesc;
@@ -608,8 +612,8 @@ static void initprogstate(struct progstate *p)
     p->T_errortext = emptystr;
     gettimeofday(&p->start_time, 0);
 
-    p->stringtotal = p->blocktotal = p->stackcurr = p->colluser = 
-        p->collstack = p->collstr = p->collblk = 0;
+    p->stringtotal = p->blocktotal = p->stackcurr = p->collected_user = 
+        p->collected_stack = p->collected_string = p->collected_block = 0;
 
     p->Cplist = cplist_0;
     p->Cpset = cpset_0;
@@ -751,15 +755,14 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
        pstate->next = progs;
        progs = pstate;
 
-       pstate->Kywd_time_elsewhere = millisec();
-       pstate->Kywd_time_out = 0;
        pstate->K_current = pstate->K_main = coex;
 
        if (stringsize <= 0) {
            pstate->stringregion = curpstate->stringregion;
        } else {
-           MemProtect(pstate->stringregion = malloc(sizeof(struct region)));
+           pstate->stringregion = safe_malloc(sizeof(struct region));
            pstate->stringregion->size = stringsize;
+           pstate->stringregion->compacted = 0;
            /*
             * the local program region list starts out with this region only
             */
@@ -779,8 +782,9 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
        if (blocksize <= 0) {
            pstate->blockregion = curpstate->blockregion;
        } else {
-           MemProtect(pstate->blockregion  = malloc(sizeof(struct region)));
+           pstate->blockregion = safe_malloc(sizeof(struct region));
            pstate->blockregion->size = blocksize;
+           pstate->blockregion->compacted = 0;
            /*
             * the local program region list starts out with this region only
             */
@@ -1221,8 +1225,6 @@ int main(int argc, char **argv)
     progs = &rootpstate;
     initprogstate(&rootpstate);
 
-    rootpstate.Kywd_time_elsewhere = 0;
-    rootpstate.Kywd_time_out = 0;
     rootpstate.stringregion = &rootstring;
     rootpstate.blockregion = &rootblock;
 
@@ -1307,7 +1309,7 @@ int main(int argc, char **argv)
     /*
      * Start timing execution.
      */
-    millisec();
+    starttime = millisec();
 
     /*
      * Check whether resolve() found the main procedure.  If not, exit.

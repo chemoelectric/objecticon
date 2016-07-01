@@ -1,5 +1,3 @@
-#include "../h/modflags.h"
-
 #if PLAN9
 static void stat2list(struct Dir *st, dptr res);
 #else
@@ -11,7 +9,7 @@ static void stat2list(struct stat *st, dptr res);
  * descriptor then obviously the block is returned; if an object then
  * the object's class is returned.
  */
-static struct b_class *get_class_for(dptr x)
+struct b_class *get_class_for(dptr x)
 {
     type_case *x of {
       class: 
@@ -28,7 +26,7 @@ static struct b_class *get_class_for(dptr x)
 #endif
 }
 
-static struct b_constructor *get_constructor_for(dptr x)
+struct b_constructor *get_constructor_for(dptr x)
 {
     type_case *x of {
       constructor: 
@@ -45,7 +43,7 @@ static struct b_constructor *get_constructor_for(dptr x)
 #endif
 }
 
-static struct b_proc *get_proc_for(dptr x)
+struct b_proc *get_proc_for(dptr x)
 {
     type_case *x of {
       proc: 
@@ -62,7 +60,7 @@ static struct b_proc *get_proc_for(dptr x)
 #endif
 }
 
-static struct progstate *get_program_for(dptr x)
+struct progstate *get_program_for(dptr x)
 {
     type_case *x of {
         null:
@@ -81,7 +79,7 @@ static struct progstate *get_program_for(dptr x)
 #endif
 }
 
-static struct b_coexpr *get_coexpr_for(dptr x)
+struct b_coexpr *get_coexpr_for(dptr x)
 {
     type_case *x of {
         null:
@@ -202,7 +200,7 @@ function lang_Prog_get_event_mask(ce)
    }
 end
 
-function lang_Prog_set_event_mask(cs, ce)
+function lang_Prog_set_event_mask_impl(cs, ce)
    if !cnv:cset(cs) then 
       runerr(104,cs)
    body {
@@ -210,10 +208,30 @@ function lang_Prog_set_event_mask(cs, ce)
        if (!(prog = get_program_for(&ce)))
           runerr(0);
        set_event_mask(prog, &CsetBlk(cs));
-       return cs;
+       return nulldesc;
    }
 end
 
+function lang_Prog_set_timer_interval_impl(i, ce)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   body {
+       struct progstate *prog;
+       if (!(prog = get_program_for(&ce)))
+          runerr(0);
+       prog->timer_interval = i;
+       return nulldesc;
+   }
+end
+
+function lang_Prog_get_timer_interval(ce)
+   body {
+       struct progstate *prog;
+       if (!(prog = get_program_for(&ce)))
+          runerr(0);
+       return C_integer prog->timer_interval;
+   }
+end
 
 function errorclear(ce)
    body {
@@ -308,15 +326,6 @@ function lang_Prog_eval_keyword(s,c)
                    }
                    if (strncmp(t,"main",4) == 0) {
                        return coexpr(p->K_main);
-                   }
-                   if (strncmp(t,"time",4) == 0) {
-                       /*
-                        * &time in this program = total time - time spent in other programs
-                        */
-                       if (p != curpstate)
-                           return C_integer p->Kywd_time_out - p->Kywd_time_elsewhere;
-                       else
-                           return C_integer millisec() - p->Kywd_time_elsewhere;
                    }
                    break;
                }
@@ -705,13 +714,13 @@ function lang_Prog_get_collection_info_impl(c)
           runerr(0);
 
        create_list(4, &result);
-       MakeInt(prog->colluser, &tmp);
+       MakeInt(prog->collected_user, &tmp);
        list_put(&result, &tmp);
-       MakeInt(prog->collstack, &tmp);
+       MakeInt(prog->collected_stack, &tmp);
        list_put(&result, &tmp);
-       MakeInt(prog->collstr, &tmp);
+       MakeInt(prog->collected_string, &tmp);
        list_put(&result, &tmp);
-       MakeInt(prog->collblk, &tmp);
+       MakeInt(prog->collected_block, &tmp);
        list_put(&result, &tmp);
        return result;
    }
@@ -719,7 +728,7 @@ end
 
 function lang_Prog_get_global_collection_count()
    body {
-       return C_integer collection_count;
+       return C_integer collected;
    }
 end
 
@@ -753,32 +762,27 @@ function lang_Prog_get_region_info_impl(c)
 
        create_list(0, &l);
        list_put(&result, &l);
-       for (rp = prog->stringregion; rp; rp = rp->next) {
+       for (rp = prog->stringregion; rp->prev; rp = rp->prev);
+       for (; rp; rp = rp->next) {
            convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
            list_put(&l, &tmp);
            convert_from_uword(DiffPtrs(rp->end,rp->base), &tmp);
            list_put(&l, &tmp);
-       }
-       for (rp = prog->stringregion->prev; rp; rp = rp->prev) {
-           convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
+           MakeInt(rp->compacted, &tmp);
            list_put(&l, &tmp);
-           convert_from_uword(DiffPtrs(rp->end,rp->base), &tmp);
-           list_put(&l, &tmp);
+           list_put(&l, rp == prog->stringregion ? &yesdesc : &nulldesc);
        }
-
        create_list(0, &l);
        list_put(&result, &l);
-       for (rp = prog->blockregion; rp; rp = rp->next) {
+       for (rp = prog->blockregion; rp->prev; rp = rp->prev);
+       for (; rp; rp = rp->next) {
            convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
            list_put(&l, &tmp);
            convert_from_uword(DiffPtrs(rp->end,rp->base), &tmp);
            list_put(&l, &tmp);
-       }
-       for (rp = prog->blockregion->prev; rp; rp = rp->prev) {
-           convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
+           MakeInt(rp->compacted, &tmp);
            list_put(&l, &tmp);
-           convert_from_uword(DiffPtrs(rp->end,rp->base), &tmp);
-           list_put(&l, &tmp);
+           list_put(&l, rp == prog->blockregion ? &yesdesc : &nulldesc);
        }
 
        return result;

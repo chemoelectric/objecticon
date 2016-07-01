@@ -294,10 +294,7 @@ end
 "&time - the elapsed execution time in milliseconds."
 keyword time
    body {
-      /*
-       * &time in this program = total time - time spent in other programs
-       */
-      return C_integer millisec() - curpstate->Kywd_time_elsewhere;
+      return C_integer millisec() - starttime;
       }
 end
 

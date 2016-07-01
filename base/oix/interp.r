@@ -22,6 +22,8 @@ static void do_tcasechoose(void);
 static void do_tcasechoosex(void);
 static void pop_from_prog_event_queue(struct progstate *prog, dptr res);
 static void fatalerr_139(void);
+static void check_timer(void);
+static void check_location(void);
 
 
 #include "interpiasm.ri"
@@ -821,6 +823,14 @@ void activate_handler(void)
     tail_invoke_frame((struct frame *)pf);
 }
 
+void push_fatalerr_139_frame(void)
+{
+    struct p_frame *pf;
+    MemProtect(pf = alc_p_frame(&Bcall_fatalerr_139, 0));
+    push_frame((struct frame *)pf);
+    tail_invoke_frame((struct frame *)pf);
+}
+
 static void do_limit()
 {
     dptr limit;
@@ -920,17 +930,89 @@ static void do_tcasechoosex(void)
     ipc = (word *)ipc[2 * off];
 }
 
+static void check_timer(void)
+{
+    static int check_count;
+    if (Testb(E_Timer, curpstate->eventmask->bits)) {
+        struct timeval tp;
+        if (++check_count < 100)
+            return;
+        check_count = 0;
+        if (gettimeofday(&tp, 0) == 0) {
+            word diff;
+            diff = 1000 * (tp.tv_sec - curpstate->last_tick.tv_sec) +
+                (tp.tv_usec - curpstate->last_tick.tv_usec) / 1000;
+            if (diff >= curpstate->timer_interval) {
+                add_to_prog_event_queue(&nulldesc, E_Timer);
+                curpstate->last_tick = tp;
+            }
+        }
+    }
+}
+
+static void check_location(void)
+{
+    if (InRange(curpstate->Code, ipc, curpstate->Ecode)) {
+        uword ipc_offset;
+        ipc_offset = DiffPtrsBytes(ipc, curpstate->Code);
+
+        if (Testb(E_File, curpstate->eventmask->bits) &&
+            (!curpstate->Current_fname_ptr ||
+             ipc_offset < curpstate->Current_fname_ptr->ipc ||
+             (curpstate->Current_fname_ptr + 1 < curpstate->Efilenms &&
+              ipc_offset >= (curpstate->Current_fname_ptr + 1)->ipc)))
+        {
+            /* 
+             * We remember not only the last ipc_fname, but also the
+             * string it pointed to, since the ipc_fname can change to
+             * another one with an identical string.
+             */
+            curpstate->Current_fname_ptr = find_ipc_fname(ipc, curpstate);
+            if (curpstate->Current_fname_ptr &&
+                curpstate->Current_fname_ptr->fname != curpstate->Current_fname)
+            {
+                curpstate->Current_fname = curpstate->Current_fname_ptr->fname;
+                add_to_prog_event_queue(curpstate->Current_fname, E_File);
+            }
+        }
+
+        if (Testb(E_Line, curpstate->eventmask->bits) &&
+            (!curpstate->Current_line_ptr ||
+                ipc_offset < curpstate->Current_line_ptr->ipc ||
+             (curpstate->Current_line_ptr + 1 < curpstate->Elines &&
+              ipc_offset >= (curpstate->Current_line_ptr + 1)->ipc)))
+        {
+            curpstate->Current_line_ptr = find_ipc_line(ipc, curpstate);
+            if (curpstate->Current_line_ptr) {
+                struct descrip v;
+                MakeInt(curpstate->Current_line_ptr->line, &v);
+                add_to_prog_event_queue(&v, E_Line);
+            }
+        }
+    }
+}
+
 void interp()
 {
     for (;;) {
-        if (curpstate->event_queue_head) {
-            /* Switch to parent program */
-            set_curpstate(curpstate->monitor);
+        /*
+         * Set curr_inst before doing the monitor checks; this works
+         * better with traceback, &line etc when used in conjunction
+         * with Pcall, Line, File events and so on (in particular, a
+         * new p_frame that's just been pushed, curr_inst would be 0).
+         */
+        curr_pf->curr_inst = ipc;
+
+        if (curpstate->monitor) {
+            check_timer();
+            check_location();
+            if (curpstate->event_queue_head) {
+                /* Switch to parent program */
+                set_curpstate(curpstate->monitor);
+            }
         }
 
-        curr_pf->curr_inst = ipc;
         curr_op = GetWord;
-        /*printf("ipc=%p(%d) curr_op=%d (%s)\n", ipc,get_offset(ipc),(int)curr_op, op_names[curr_op]);fflush(stdout);*/
         switch (curr_op) {
             case Op_Goto: {
                 word *w = GetAddr;
@@ -1470,15 +1552,13 @@ static void get_child_prog_result()
 
     prog = CoexprBlk(*ce).main_of;
     prog->monitor = 0;
-    if (prog->exited) {
+    if (prog->event_queue_head)
+        pop_from_prog_event_queue(prog, res);
+    else  if (prog->exited)
        ipc = failure_label;
-       return;
-    }
-    /* Could happen if two programs tried to monitor one another */
-    if (!prog->event_queue_head)
+    else
+        /* Could happen if two programs tried to monitor one another */
         fatalerr(636, NULL);
-
-    pop_from_prog_event_queue(prog, res);
 }
 
 function lang_Prog_get_event_impl(c, res)
@@ -1512,7 +1592,7 @@ void add_to_prog_event_queue(dptr value, int event)
     /* Do nothing if no-one is monitoring this program */
     if (!curpstate->monitor)
         return;
-    MemProtect(e = malloc(sizeof(struct prog_event)));
+    e = safe_malloc(sizeof(struct prog_event));
     if (curpstate->event_queue_tail) {
         curpstate->event_queue_tail->next = e;
         curpstate->event_queue_tail = e;

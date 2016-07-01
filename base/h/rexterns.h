@@ -16,8 +16,9 @@ extern struct c_proc *opblks[];  /* maps opcode to corresponding operator blocks
 extern struct c_proc *keyblks[];  /* maps keyword number to corresponding function blocks */
 extern word dodump;		/* termination dump */
 extern int set_up;
+extern long starttime;          /* used with millisec() for calculating &time */
 extern int collecting;          /* non-zero whilst a GC is taking place */
-extern int collection_count;    /* global collection count of all collections */
+extern int collected;           /* global collection count of all collections */
 extern uword stacklim;          /* limit of stack use which may trigger a GC */
 extern word stackcushion;       /* % factor to apply to total stack usage to avoid GC thrashing */
 
@@ -34,6 +35,9 @@ extern char *currend;		/* current end of memory region */
 extern int bsizes[];		/* sizes of blocks */
 extern int firstd[];		/* offset (words) of first descrip. */
 extern uword segsize[];		/* size of hash bucket segment */
+
+#define OGHASH_SIZE 32
+extern struct other_global *og_hash[OGHASH_SIZE];
 
 extern struct progstate *progs; /* list of progstates */
 extern struct b_cset *emptycs;   /* '' */
@@ -68,7 +72,6 @@ extern double defaultleading;   /* default leading */
 extern struct tend_desc *tend;  /* chain of tended descriptors */
 
 extern struct descrip csetdesc;		/* cset descriptor */
-extern struct descrip eventdesc;	/* event descriptor */
 extern struct descrip rzerodesc;	/* real 0.0 descriptor */
 
 extern struct sdescrip fdf;             /* string "fd" */

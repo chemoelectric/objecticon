@@ -51,6 +51,9 @@ final abstract class Dispatcher()
       return Dispatcher
    end
 
+   #
+   # Try to do some work, succeeding if something was done, failing if it wasn't.
+   #
    public static work()
       return do_event() | do_validate() | do_scheduler()
    end
@@ -62,10 +65,10 @@ final abstract class Dispatcher()
    public static message_loop(r)
       if /r then {
          while *dialogs > 0 do
-            work() | delay(Gui.IDLE_SLEEP)
+            work_or_sleep()
       } else {
          while \r.win do
-            work() | delay(Gui.IDLE_SLEEP)
+            work_or_sleep()
       }
    end
 
@@ -93,9 +96,16 @@ final abstract class Dispatcher()
    # when there are no dialogs open, {Task}s continue to be activated.
    #
    public static message_loop_forever()
-      repeat {
-         work() | delay(Gui.IDLE_SLEEP)
-      }
+      repeat
+         work_or_sleep()
+   end
+
+   #
+   # Convenient method to call work(), and if no work is done, to
+   # sleep for the idle period.
+   #
+   public static work_or_sleep()
+      work() | delay(Gui.IDLE_SLEEP)
    end
 
    public static do_event()

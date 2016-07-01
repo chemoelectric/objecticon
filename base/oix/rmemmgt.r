@@ -8,6 +8,7 @@
  */
 static void qual_clear   (void);
 static void postqual     (dptr dp);
+static void qual_dispose (void);
 static void markptr      (union block **ptr);
 static void sweep_tended (void);
 static void reclaim      (void);
@@ -15,15 +16,17 @@ static void scollect     (void);
 static int  qlcmp        (dptr  *q1,dptr  *q2);
 static void adjust       (void);
 static void compact      (void);
-static void markprogram  (struct progstate *pstate);
+static void mark_program (struct progstate *pstate);
 static void sweep_stack  (struct frame *f);
 static void unmark_region(struct region *br);
 static void free_stack   (struct b_coexpr *c);
 static union block **stk_get(void);
 static void stk_add(union block **ptr);
 static void stk_clear(void);
+static void stk_dispose(void);
 static void stk_markptrs(void);
 static void do_weakrefs(void);
+static void mark_others(void);
 
 
 /* string qualifier list */
@@ -33,7 +36,7 @@ static struct {
 } qual;
 
 int collecting;                        /* flag indicating whether collection in progress */
-int collection_count;                  /* global collection count of all collections */
+int collected;                         /* global collection count of all collections */
 
 static struct b_weakref *weakrefs;     /* head of list of weakrefs encountered during mark phase */
 
@@ -302,15 +305,7 @@ uword segsize[] = {
    else if (Pointer(d))\
       stk_add(&BlkLoc(d));
 
-
-#define OGHASH_SIZE 32
-
-struct other_global {
-    dptr dp;
-    struct other_global *next;
-};
-
-static struct other_global *og_hash[OGHASH_SIZE];
+struct other_global *og_hash[OGHASH_SIZE];
 
 #if 0
 static void dump_gc_global()
@@ -352,6 +347,15 @@ void del_gc_global(dptr d)
     free(og);
 }
 
+static void mark_others()
+{
+   struct other_global *og;
+   int i;
+   for (i = 0; i < ElemCount(og_hash); ++i)
+       for (og = og_hash[i]; og; og = og->next)
+           PostDescrip(*og->dp);
+}
+
 /*
  * collect - do a garbage collection of currently active regions.
  */
@@ -360,40 +364,21 @@ void collect(int region)
 {
    struct progstate *prog;
    struct region *br;
-   struct other_global *og;
-   int i;
-
-#if HAVE_GETRLIMIT && HAVE_SETRLIMIT
-   {
-       struct rlimit rl;
-
-       getrlimit(RLIMIT_STACK , &rl);
-       /*
-        * Grow the C stack, proportional to the block region. Seems crazy large,
-        * but garbage collection uses stack proportional heap size.  May want to
-        * move this whole #if block so it is only performed when the heap grows.
-        */
-       if (rl.rlim_cur < curblock->size) {
-           rl.rlim_cur = curblock->size;
-           setrlimit(RLIMIT_STACK , &rl);
-       }
-   }
-#endif
 
    EVVal((word)region,E_Collect);
 
    switch (region) {
       case User:
-         curpstate->colluser++;
+         curpstate->collected_user++;
          break;
       case Strings:
-         curpstate->collstr++;
+         curpstate->collected_string++;
          break;
       case Blocks:  
-         curpstate->collblk++;
+         curpstate->collected_block++;
          break;
       case Stack:  
-         curpstate->collstack++;
+         curpstate->collected_stack++;
          break;
        default:
          syserr("invalid argument to collect");
@@ -401,7 +386,7 @@ void collect(int region)
    }
 
    collecting = 1;
-   ++collection_count;
+   ++collected;
 
    /*
     * Reset qualifier list.
@@ -416,7 +401,7 @@ void collect(int region)
    weakrefs = 0;
 
    for (prog = progs; prog; prog = prog->next)
-       markprogram(prog);
+       mark_program(prog);
 
    stk_add((union block **)&k_current);
 
@@ -425,11 +410,8 @@ void collect(int region)
     */
    sweep_tended();
 
-
    /* Mark any other global descriptors which have been noted. */
-   for (i = 0; i < ElemCount(og_hash); ++i)
-       for (og = og_hash[i]; og; og = og->next)
-           PostDescrip(*og->dp);
+   mark_others();
 
    /* Process all block ptrs */
    stk_markptrs();
@@ -448,6 +430,10 @@ void collect(int region)
        unmark_region(br);
    for (br = curblock->Gprev; br; br = br->Gprev)
        unmark_region(br);
+
+   /* Free memory used by the pointer stack and the qualifier list. */
+   stk_dispose();
+   qual_dispose();
 
    collecting = 0;
 
@@ -485,10 +471,10 @@ static void unmark_region(struct region *br)
 
 
 /*
- * markprogram - traverse pointers out of a program state structure
+ * mark_program - traverse pointers out of a program state structure
  */
 
-static void markprogram(struct progstate *pstate)
+static void mark_program(struct progstate *pstate)
 {
     struct descrip *dp;
     struct prog_event *pe;
@@ -546,6 +532,13 @@ static void qual_clear()
     }
 
    qual.free = qual.list;
+}
+
+static void qual_dispose()
+{
+    free(qual.list);
+    qual.list = qual.elist = qual.free = 0;
+    qual.listsize = 0;
 }
 
 /*
@@ -614,6 +607,14 @@ static void stk_markptrs()
 {
     while (stk.top != stk.buf)
         markptr(stk_get());
+}
+
+/* Free the memory used by the stack */
+static void stk_dispose()
+{
+    free(stk.buf);
+    stk.buf = stk.ebuf = stk.top = 0;
+    stk.bufsize = 0;
 }
 
 static void do_weakrefs()
@@ -808,9 +809,9 @@ static void sweep_stack(struct frame *f)
                 struct frame_vars *l = pf->fvars;
                 for (i = 0; i < pf->proc->ntmp; ++i)
                     PostDescrip(pf->tmp[i]);
-                if (l && l->seen != collection_count) {
+                if (l && l->seen != collected) {
                     dptr d;
-                    l->seen = collection_count;
+                    l->seen = collected;
                     for (d = l->desc; d < l->desc_end; ++d)
                         PostDescrip(*d);
                 }
@@ -877,6 +878,8 @@ static void scollect()
     char *source, *dest;
     dptr *qptr;
     char *cend;
+
+    ++curstring->compacted;
 
     if (qual.free == qual.list) {
         /*
@@ -1001,6 +1004,8 @@ static void compact()
 {
     uword size;
     char *source = blkbase, *dest;
+
+    ++curblock->compacted;
 
     /*
      * Start dest at source.

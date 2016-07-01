@@ -343,6 +343,7 @@ struct inline_global_cache {
  */
 struct region {
     uword size;				/* allocated region size in bytes */
+    int compacted;                      /* count of how many times compacted */
     char *base;				/* start of region */
     char *end;				/* end of region */
     char *free;				/* free pointer */
@@ -375,6 +376,15 @@ struct ipc_line {
     word line;		/* line number */
 };
 
+/*
+ * Structure for holding an additional descriptor which is then
+ * traversed during garbage collection.
+ */
+struct other_global {
+    dptr dp;
+    struct other_global *next;
+};
+
 struct prog_event {
     struct descrip eventcode;
     struct descrip eventval;
@@ -392,6 +402,8 @@ struct progstate {
     struct progstate *monitor;
     struct b_cset *eventmask;
     struct prog_event *event_queue_head, *event_queue_tail;
+    struct timeval last_tick;
+    word timer_interval;
 
     /*
      * trapped variable keywords' values
@@ -427,12 +439,11 @@ struct progstate {
     char *Strcons, *Estrcons;
     struct ipc_fname *Filenms, *Efilenms;
     struct ipc_line *Ilines, *Elines;
-    struct ipc_line * Current_line_ptr;
-    struct ipc_fname * Current_fname_ptr;
+    struct ipc_line *Current_line_ptr;
+    struct ipc_fname *Current_fname_ptr;
+    dptr Current_fname;
     dptr MainProc;
 
-    word Kywd_time_elsewhere;		/* &time spent in other programs */
-    word Kywd_time_out;			/* &time at last program switch out */
     struct timeval start_time;          /* time program started */
 
     ulonglong stringtotal;		/* cumulative total allocation */
@@ -441,10 +452,10 @@ struct progstate {
     uword stackcurr;			/* current stack allocation in use (frame
                                          * and local structs) */
 
-    word colluser;			/* number of user triggered collections */
-    word collstr;			/* number of string collect requests */
-    word collblk;			/* number of block collect requests */
-    word collstack;			/* number of stack collect requests */
+    word collected_user;		/* number of user triggered collections */
+    word collected_string;		/* number of string collect requests */
+    word collected_block;		/* number of block collect requests */
+    word collected_stack;		/* number of stack collect requests */
     struct region *stringregion;
     struct region *blockregion;
 
