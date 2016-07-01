@@ -26,7 +26,7 @@ static void stk_clear(void);
 static void stk_dispose(void);
 static void stk_markptrs(void);
 static void do_weakrefs(void);
-static void mark_others();
+static void mark_others(void);
 
 
 /* string qualifier list */
