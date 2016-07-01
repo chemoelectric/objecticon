@@ -444,8 +444,6 @@ struct progstate {
     dptr Current_fname;
     dptr MainProc;
 
-    word Kywd_time_elsewhere;		/* &time spent in other programs */
-    word Kywd_time_out;			/* &time at last program switch out */
     struct timeval start_time;          /* time program started */
 
     ulonglong stringtotal;		/* cumulative total allocation */

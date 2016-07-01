@@ -301,15 +301,6 @@ function lang_Prog_eval_keyword(s,c)
                    if (strncmp(t,"main",4) == 0) {
                        return coexpr(p->K_main);
                    }
-                   if (strncmp(t,"time",4) == 0) {
-                       /*
-                        * &time in this program = total time - time spent in other programs
-                        */
-                       if (p != curpstate)
-                           return C_integer p->Kywd_time_out - p->Kywd_time_elsewhere;
-                       else
-                           return C_integer millisec() - p->Kywd_time_elsewhere;
-                   }
                    break;
                }
                case 6 : {

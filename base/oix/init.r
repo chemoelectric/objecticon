@@ -175,6 +175,7 @@ char *allchars =
  */
 
 int set_up = 0;				/* set-up switch */
+long starttime;                         /* used with millisec() for calculating &time */
 char *currend = NULL;			/* current end of memory region */
 word memcushion = RegionCushion;	/* memory region cushion factor */
 word memgrowth = RegionGrowth;		/* memory region growth factor */
@@ -741,8 +742,6 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
        pstate->next = progs;
        progs = pstate;
 
-       pstate->Kywd_time_elsewhere = millisec();
-       pstate->Kywd_time_out = 0;
        pstate->K_current = pstate->K_main = coex;
 
        if (stringsize <= 0) {
@@ -1208,8 +1207,6 @@ int main(int argc, char **argv)
     progs = &rootpstate;
     initprogstate(&rootpstate);
 
-    rootpstate.Kywd_time_elsewhere = 0;
-    rootpstate.Kywd_time_out = 0;
     rootpstate.stringregion = &rootstring;
     rootpstate.blockregion = &rootblock;
 
@@ -1294,7 +1291,7 @@ int main(int argc, char **argv)
     /*
      * Start timing execution.
      */
-    millisec();
+    starttime = millisec();
 
     /*
      * Check whether resolve() found the main procedure.  If not, exit.

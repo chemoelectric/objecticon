@@ -16,6 +16,7 @@ extern struct c_proc *opblks[];  /* maps opcode to corresponding operator blocks
 extern struct c_proc *keyblks[];  /* maps keyword number to corresponding function blocks */
 extern word dodump;		/* termination dump */
 extern int set_up;
+extern long starttime;          /* used with millisec() for calculating &time */
 extern int collecting;          /* non-zero whilst a GC is taking place */
 extern int collected;           /* global collection count of all collections */
 extern uword stacklim;          /* limit of stack use which may trigger a GC */
