@@ -125,10 +125,11 @@ word            mod3            (word a,word b);
 word            mul             (word a,word b);
 word            neg             (word a);
 void            outimage        (FILE *f,dptr dp,int noimage);
+void            outimage1       (FILE *f, dptr dp, int noimage, word stringlimit, word listlimit);
 ulonglong       physicalmemorysize(void);
 word            prescan         (dptr d);
 int             putstr          (FILE *f,dptr d);
-int             putn            (FILE *f, char *s, int n);
+int             putn            (FILE *f, char *s, size_t n);
 int             radix           (int sign, register int r, register char *s,
                                    register char *end_s, union numeric *result);
 char            *reserve_0      (int region, uword nbytes);
