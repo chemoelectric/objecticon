@@ -14,7 +14,7 @@ int putstr(FILE *f, dptr d)
 /*
  * Put n chars from s to file f.
  */
-int putn(FILE *f, char *s, int n)
+int putn(FILE *f, char *s, size_t n)
 {
     if (fwrite(s, 1, n, f) != n)
         return Failed;
