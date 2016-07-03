@@ -1121,6 +1121,27 @@ void abbr_fname(dptr s, dptr d)
 }
 
 /*
+ * Print the current location in the given frame in the standard
+ * format.
+ */
+void print_location(FILE *f, struct p_frame *pf)
+{
+    struct ipc_line *pline;
+    struct ipc_fname *pfile;
+    pline = frame_ipc_line(pf);
+    pfile = frame_ipc_fname(pf);
+    if (pline && pfile) {
+        struct descrip t;
+        abbr_fname(pfile->fname, &t);
+        begin_link(f, pfile->fname, pline->line);
+        fprintf(f, "File %.*s; Line %d", (int)StrLen(t), StrLoc(t), (int)pline->line);
+        end_link(f);
+        fputc('\n', f);
+    } else
+        fprintf(stderr, "File ?; Line ?\n");
+}
+
+/*
  * getimage(dp1,dp2) - return string image of object dp1 in dp2.  Both
  * pointers must point to tended descriptors.
  */

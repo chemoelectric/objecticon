@@ -192,36 +192,14 @@ void err_msg(int n, dptr v)
 
     if (set_up) {
         if (is:null(kywd_handler)) {
-            struct ipc_line *pline;
-            struct ipc_fname *pfile;
             if (k_errornumber == -1) {
                 fprintf(stderr, "\nRun-time error: ");
                 putstr(stderr, &k_errortext);
                 fputc('\n', stderr);
-                pline = frame_ipc_line(curr_pf);
-                pfile = frame_ipc_fname(curr_pf);
-                if (pline && pfile) {
-                    struct descrip t;
-                    abbr_fname(pfile->fname, &t);
-                    begin_link(stderr, pfile->fname, pline->line);
-                    fprintf(stderr, "File %.*s; Line %d", (int)StrLen(t), StrLoc(t), (int)pline->line);
-                    end_link(stderr);
-                    fputc('\n', stderr);
-                } else
-                    fprintf(stderr, "File ?; Line ?\n");
+                print_location(stderr, curr_pf);
             } else {
                 fprintf(stderr, "\nRun-time error %d\n", k_errornumber);
-                pline = frame_ipc_line(curr_pf);
-                pfile = frame_ipc_fname(curr_pf);
-                if (pline && pfile) {
-                    struct descrip t;
-                    abbr_fname(pfile->fname, &t);
-                    begin_link(stderr, pfile->fname, pline->line);
-                    fprintf(stderr, "File %.*s; Line %d", (int)StrLen(t), StrLoc(t), (int)pline->line);
-                    end_link(stderr);
-                    fputc('\n', stderr);
-                } else
-                    fprintf(stderr, "File ?; Line ?\n");
+                print_location(stderr, curr_pf);
                 putstr(stderr, &k_errortext);
                 fputc('\n', stderr);
             }

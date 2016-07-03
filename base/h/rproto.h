@@ -402,6 +402,7 @@ void    envset          (void);
 int     eq              (dptr dp1,dptr dp2);
 int     getname        (dptr dp1, dptr dp2);
 void    getimage        (dptr dp1, dptr dp2);
+void    print_location  (FILE *f, struct p_frame *pf);
 
 void    hgrow           (union block *bp);
 void    hshrink         (union block *bp);

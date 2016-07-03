@@ -258,28 +258,22 @@ static void showline(struct p_frame *pf)
     pline = frame_ipc_line(pf);
     pfile = frame_ipc_fname(pf);
 
-    if (pline) {
-        if (pfile) {
-            struct descrip t;
-            char *p;
-            int i;
-            begin_link(stderr, pfile->fname, pline->line);
-            abbr_fname(pfile->fname, &t);
-            i = StrLen(t);
-            p = StrLoc(t);
-            while (i > 13) {
-                p++;
-                i--;
-            }
-            fprintf(stderr, "%-13.*s: %4d  ",i,p, (int)pline->line);
-            end_link(stderr);
-        } else {
-            fprintf(stderr, "%-13s: %4d  ","?", (int)pline->line);
+    if (pline && pfile) {
+        struct descrip t;
+        char *p;
+        int i;
+        begin_link(stderr, pfile->fname, pline->line);
+        abbr_fname(pfile->fname, &t);
+        i = StrLen(t);
+        p = StrLoc(t);
+        while (i > 13) {
+            p++;
+            i--;
         }
-
+        fprintf(stderr, "%-13.*s: %4d  ", i, p, (int)pline->line);
+        end_link(stderr);
     } else
         fprintf(stderr, "             :       ");
-    
 }
 
     
