@@ -543,19 +543,34 @@ struct b_lelem *get_lelem_for_index(struct b_list *lb, word index, word *pos)
     return le;
 }
 
-
-struct b_lelem *lgfirst(struct b_list *lb, struct lgstate *state)
+/*
+ * Initialize an lgstate structure so that it references element i
+ * (one-based) of the given list; returns 0 if i is out of range.
+ */
+struct b_lelem *lginit(struct b_list *lb, word i, struct lgstate *state)
 {
     struct b_lelem *le;
     word pos;
-    le = get_lelem_for_index(lb, 1, &pos);
+    le = get_lelem_for_index(lb, i, &pos);
     if (!le)
         return 0;
-    state->listindex = 1;
+    state->listindex = i;
     state->changecount = lb->changecount;
-    state->blockpos = 0;
-    state->result = le->first;
+    state->blockpos = pos;
+    state->result = le->first + pos;
+    if (state->result >= le->nslots)
+        state->result -= le->nslots;
     return le;
+}
+
+struct b_lelem *lgfirst(struct b_list *lb, struct lgstate *state)
+{
+    return lginit(lb, 1, state);
+}
+
+struct b_lelem *lglast(struct b_list *lb, struct lgstate *state)
+{
+    return lginit(lb, lb->size, state);
 }
 
 struct b_lelem *lgnext(struct b_list *lb, struct lgstate *state, struct b_lelem *le)
@@ -591,33 +606,8 @@ struct b_lelem *lgnext(struct b_list *lb, struct lgstate *state, struct b_lelem 
          * List structure changed - refresh the state values based on
          * the current list index.
          */
-        word pos;
-        le = get_lelem_for_index(lb, state->listindex, &pos);
-        if (!le)
-            return 0;
-        state->changecount = lb->changecount;
-        state->blockpos = pos;
-        state->result = le->first + pos;
-        if (state->result >= le->nslots)
-            state->result -= le->nslots;
-        return le;
+        return lginit(lb, state->listindex, state);
     }
-}
-
-struct b_lelem *lglast(struct b_list *lb, struct lgstate *state)
-{
-    struct b_lelem *le;
-    word pos;
-    le = get_lelem_for_index(lb, lb->size, &pos);
-    if (!le)
-        return 0;
-    state->listindex = lb->size;
-    state->changecount = lb->changecount;
-    state->blockpos = le->nused - 1;
-    state->result = le->first + state->blockpos;
-    if (state->result >= le->nslots)
-        state->result -= le->nslots;
-    return le;
 }
 
 struct b_lelem *lgprev(struct b_list *lb, struct lgstate *state, struct b_lelem *le)
@@ -653,20 +643,11 @@ struct b_lelem *lgprev(struct b_list *lb, struct lgstate *state, struct b_lelem 
     } else {
         /*
          * List structure changed - refresh the state values based on
-         * the current list index.
+         * the current list index, and if the list shrunk, keep our
+         * index in range
          */
-        word pos;
-        /* If the list shrunk, keep our index in range */
         if (state->listindex > lb->size)
             state->listindex = lb->size;
-        le = get_lelem_for_index(lb, state->listindex, &pos);
-        if (!le)
-            return 0;
-        state->changecount = lb->changecount;
-        state->blockpos = pos;
-        state->result = le->first + pos;
-        if (state->result >= le->nslots)
-            state->result -= le->nslots;
-        return le;
+        return lginit(lb, state->listindex, state);
     }
 }

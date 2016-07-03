@@ -980,25 +980,36 @@ static void listimage(FILE *f, dptr dp, int noimage, word stringlimit, word list
        */
       fprintf(f, "list#" UWordFmt "(" WordFmt ")", lp->id, size);
    } else {
-       word l, r;
+       word l;
 
        /*
-        * Print [e1,...,en] on f.  If more than listlimit elements are in the
-        *  list, produce the first listlimit/2 elements, an ellipsis, and the
-        *  last listlimit elements.
+        * Print [e1,...,en] on f.  If more than listlimit elements are
+        *  in the list, produce the first (listlimit/2 + listlimit %
+        *  2) elements, an ellipsis, and the last listlimit/2
+        *  elements.
         */
 
        fprintf(f, "list#" UWordFmt " = [", lp->id);
-       l = listlimit / 2 + listlimit % 2;
-       r = size - listlimit / 2 + 1;
+       if (size > listlimit)
+           l = listlimit / 2 + listlimit % 2;
+       else
+           l = size;
        for (le = lgfirst(lp, &state); le; le = lgnext(lp, &state, le)) {
-           if (state.listindex <= l || state.listindex >= r) {
-               if (state.listindex > 1)
-                   putc(',', f);
+           if (state.listindex > l)
+               break;
+           if (state.listindex > 1)
+               putc(',', f);
+           tdp = le->lslots[state.result];
+           outimage1(f, &tdp, noimage+1, stringlimit, listlimit);
+       }
+       if (size > listlimit) {
+           /* Output the last listlimit/2 elements */
+           fprintf(f, ",...");
+           for (le = lginit(lp, size - listlimit / 2 + 1, &state); le; le = lgnext(lp, &state, le)) {
+               putc(',', f);
                tdp = le->lslots[state.result];
                outimage1(f, &tdp, noimage+1, stringlimit, listlimit);
-           } else if (state.listindex == l + 1)
-               fprintf(f, ",...");
+           }
        }
 
        putc(']', f);
