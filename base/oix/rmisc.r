@@ -910,13 +910,11 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
      named_var: {
          struct progstate *prog;
          struct p_frame *uf;
-         struct p_proc *proc0;                 /* address of procedure block */
          dptr vp;
          if (!noimage)
              fprintf(f, "(variable ");
          vp = VarLoc(*dp);
          uf = get_current_user_frame();
-         proc0 = uf->proc;
          if ((prog = find_global(vp))) {
              putstr(f, prog->Gnames[vp - prog->Globals]); 		/* global */
          }
@@ -935,7 +933,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
              putstr(f, prog->Snames[vp - prog->Statics]); 		/* static in procedure */
          }
          else if (InRange(uf->fvars->desc, vp, uf->fvars->desc_end)) {
-             putstr(f, proc0->lnames[vp - uf->fvars->desc]);          /* argument/local */
+             putstr(f, uf->proc->lnames[vp - uf->fvars->desc]);          /* argument/local */
          }
          else
              fprintf(f, "(temp)");
@@ -1708,10 +1706,8 @@ int getname(dptr dp1, dptr dp2)
              * temporary stack variables as occurs for string scanning).
              */
             struct p_frame *uf;
-            struct p_proc *proc0;                 /* address of procedure block */
             dptr vp;
             uf = get_current_user_frame();
-            proc0 = uf->proc;
             vp = VarLoc(*dp1);		 /* get address of variable */
             if ((prog = find_global(vp))) {
                 *dp2 = *prog->Gnames[vp - prog->Globals]; 		/* global */
@@ -1735,7 +1731,7 @@ int getname(dptr dp1, dptr dp2)
                 *dp2 = *prog->Snames[vp - prog->Statics]; 		/* static in procedure */
             }
             else if (InRange(uf->fvars->desc, vp, uf->fvars->desc_end)) {
-                *dp2 = *proc0->lnames[vp - uf->fvars->desc];          /* argument/local */
+                *dp2 = *uf->proc->lnames[vp - uf->fvars->desc];          /* argument/local */
             }
             else {
                 LitStr("(temp)", dp2);
