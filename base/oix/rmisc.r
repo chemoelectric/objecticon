@@ -696,7 +696,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                      dptr name = ObjectBlk(*dp).class->program->Fnames[ObjectBlk(*dp).class->fields[i]->fnum];
                      if (i > 0)
                          putc(',', f);
-                     fprintf(f, "%.*s=", (int)StrLen(*name), StrLoc(*name));
+                     fprintf(f, "%.*s=", StrF(*name));
                      tdp = ObjectBlk(*dp).fields[i];
                      outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
                  }
@@ -734,7 +734,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                dptr name = RecordBlk(*dp).constructor->program->Fnames[RecordBlk(*dp).constructor->fnums[i]];
                if (i > 0)
                    putc(',', f);
-               fprintf(f, "%.*s=", (int)StrLen(*name), StrLoc(*name));
+               fprintf(f, "%.*s=", StrF(*name));
                tdp = RecordBlk(*dp).fields[i];
                outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
             }
@@ -882,7 +882,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                  tdp.dword = D_Object;
                  BlkLoc(tdp) = BlkLoc(*dp);
                  outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
-                 fprintf(f," . %.*s", (int)StrLen(*fname), StrLoc(*fname));
+                 fprintf(f," . %.*s", StrF(*fname));
                  break;
              }
              case T_Record: { 		/* record */
@@ -893,7 +893,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                  tdp.dword = D_Record;
                  BlkLoc(tdp) = BlkLoc(*dp);
                  outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
-                 fprintf(f," . %.*s", (int)StrLen(*fname), StrLoc(*fname));
+                 fprintf(f," . %.*s", StrF(*fname));
                  break;
              }
              default: {		/* none of the above */
@@ -925,9 +925,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
              struct class_field *cf = find_class_field_for_dptr(vp, prog);
              struct b_class *c = cf->defining_class;
              dptr fname = c->program->Fnames[cf->fnum];
-             fprintf(f, "class %.*s . %.*s", 
-                     (int)StrLen(*c->name), StrLoc(*c->name),
-                     (int)StrLen(*fname), StrLoc(*fname));
+             fprintf(f, "class %.*s . %.*s", StrF(*c->name), StrF(*fname));
          }
          else if ((prog = find_procedure_static(vp))) {
              putstr(f, prog->Snames[vp - prog->Statics]); 		/* static in procedure */
@@ -1132,7 +1130,7 @@ void print_location(FILE *f, struct p_frame *pf)
         struct descrip t;
         abbr_fname(pfile->fname, &t);
         begin_link(f, pfile->fname, pline->line);
-        fprintf(f, "File %.*s; Line %d", (int)StrLen(t), StrLoc(t), (int)pline->line);
+        fprintf(f, "File %.*s; Line %d", StrF(t), (int)pline->line);
         end_link(f);
         fputc('\n', f);
     } else

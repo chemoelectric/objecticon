@@ -167,7 +167,7 @@ static void trace_at(struct p_frame *pf)
         abbr_fname(pfile->fname, &t);
         fputs("   at ", stderr);
         begin_link(stderr, pfile->fname, pline->line);
-        fprintf(stderr, "line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
+        fprintf(stderr, "line %d in %.*s", (int)pline->line, StrF(t));
         end_link(stderr);
     } else
         fprintf(stderr, "   at ?");
@@ -199,7 +199,7 @@ static void trace_frame(struct p_frame *pf)
         abbr_fname(pfile->fname, &t);
         fputs(" from ", stderr);
         begin_link(stderr, pfile->fname, pline->line);
-        fprintf(stderr, "line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
+        fprintf(stderr, "line %d in %.*s", (int)pline->line, StrF(t));
         end_link(stderr);
     }
     putc('\n', stderr);
@@ -617,7 +617,7 @@ static void xtrace()
         abbr_fname(pfile->fname, &t);
         fputs(" from ", stderr);
         begin_link(stderr, pfile->fname, pline->line);
-        fprintf(stderr, "line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
+        fprintf(stderr, "line %d in %.*s", (int)pline->line, StrF(t));
         end_link(stderr);
     } else
         fprintf(stderr, " from ?");
@@ -1183,7 +1183,7 @@ void showstack(FILE *f, struct b_coexpr *c)
                     dp = pf->fvars->desc;
                     for (j = 0; j < pf->proc->nparam; ++j) {
                         if (np) {
-                            fprintf(f, "\t   fvars.desc[%d] (arg %.*s)=", i, (int)StrLen(**np), StrLoc(**np)); 
+                            fprintf(f, "\t   fvars.desc[%d] (arg %.*s)=", i, StrF(**np)); 
                             ++np;
                         } else
                             fprintf(f, "\t   fvars.desc[%d] (arg %d)=", i, j);
@@ -1192,7 +1192,7 @@ void showstack(FILE *f, struct b_coexpr *c)
                     }
                     for (j = 0; j < pf->proc->ndynam; ++j) {
                         if (np) {
-                            fprintf(f, "\t   fvars.desc[%d] (local %.*s)=", i, (int)StrLen(**np), StrLoc(**np)); 
+                            fprintf(f, "\t   fvars.desc[%d] (local %.*s)=", i, StrF(**np)); 
                             ++np;
                         } else
                             fprintf(f, "\t   fvars.desc[%d] (local %d)=", i, j);

@@ -129,6 +129,11 @@
 
 #define InRange(p1,p2,p3) ((uword)(p2) >= (uword)(p1) && (uword)(p2) < (uword)(p3))
 
+/*
+ * This macro can be used with printf's "%.*s" format to output string descriptors.
+ */
+#define StrF(d) (int)StrLen(d), StrLoc(d)
+
 #if RealInDesc
    #define DGetReal(d, r)    r = (d).vword.realval
    #define DSetReal(r, d)    (d).vword.realval = r

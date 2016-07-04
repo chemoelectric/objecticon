@@ -482,7 +482,7 @@ void syserr(char *fmt, ...)
             abbr_fname(pfile->fname, &t);
             fputs(" at ", stderr);
             begin_link(stderr, pfile->fname, pline->line);
-            fprintf(stderr, "line %d in %.*s", (int)pline->line, (int)StrLen(t), StrLoc(t));
+            fprintf(stderr, "line %d in %.*s", (int)pline->line, StrF(t));
             end_link(stderr);
         } else
             fprintf(stderr, " at line ? in ?");
