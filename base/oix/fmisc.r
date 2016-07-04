@@ -313,9 +313,7 @@ function syserr(msg)
       runerr(103, msg)
 
    body {
-      fprintf(stderr, "\nIcon-level internal error: ");
-      putstr(stderr, &msg);
-      fputc('\n', stderr);
+      fprintf(stderr, "\nIcon-level internal error: %.*s\n", StrF(msg));
       print_location(stderr, curr_pf);
 
       checkfatalrecurse();

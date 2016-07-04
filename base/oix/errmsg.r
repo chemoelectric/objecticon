@@ -193,9 +193,7 @@ void err_msg(int n, dptr v)
     if (set_up) {
         if (is:null(kywd_handler)) {
             if (k_errornumber == -1) {
-                fprintf(stderr, "\nRun-time error: ");
-                putstr(stderr, &k_errortext);
-                fputc('\n', stderr);
+                fprintf(stderr, "\nRun-time error: %.*s\n", StrF(k_errortext));
                 print_location(stderr, curr_pf);
             } else {
                 fprintf(stderr, "\nRun-time error %d\n", k_errornumber);

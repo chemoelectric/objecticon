@@ -614,14 +614,12 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
 
      class: {
            /* produce "class " + the class name */
-         fprintf(f, "class ");
-         putstr(f, ClassBlk(*dp).name);
+         fprintf(f, "class %.*s", StrF(*ClassBlk(*dp).name));
          }
 
      constructor: {
            /* produce "constructor " + the type name */
-         fprintf(f, "constructor ");
-         putstr(f, ConstructorBlk(*dp).name);
+         fprintf(f, "constructor %.*s", StrF(*ConstructorBlk(*dp).name));
          }
 
       proc: {
@@ -630,10 +628,9 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
              /*
               * Produce "method classname.fieldname"
               */
-             fprintf(f, "method ");
-             putstr(f, field->defining_class->name);
-             fprintf(f, ".");
-             putstr(f, field->defining_class->program->Fnames[field->fnum]);
+             fprintf(f, "method %.*s.%.*s", 
+                     StrF(*field->defining_class->name), 
+                     StrF(*field->defining_class->program->Fnames[field->fnum]));
          } else if (&ProcBlk(*dp) == (struct b_proc *)&Bdeferred_method_stub)
              fprintf(f, "deferred method");
          else {
@@ -684,9 +681,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
               *  number of fields in the record.  If noimage is zero, print
               *  the image of each field instead of the number of fields.
               */
-             fprintf(f, "object ");
-             putstr(f, ObjectBlk(*dp).class->name);
-             fprintf(f, "#" UWordFmt "", ObjectBlk(*dp).id);
+             fprintf(f, "object %.*s#" UWordFmt, StrF(*ObjectBlk(*dp).class->name), ObjectBlk(*dp).id);
              j = ObjectBlk(*dp).class->n_instance_fields;
              if (noimage > 0)
                  fprintf(f, "(" WordFmt ")", j);
@@ -722,9 +717,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
           *  number of fields in the record.  If noimage is zero, print
           *  the image of each field instead of the number of fields.
           */
-         fprintf(f, "record ");
-         putstr(f, RecordBlk(*dp).constructor->name);
-         fprintf(f, "#" UWordFmt "", RecordBlk(*dp).id);
+         fprintf(f, "record %.*s#" UWordFmt, StrF(*RecordBlk(*dp).constructor->name), RecordBlk(*dp).id);
          j = RecordBlk(*dp).constructor->n_fields;
          if (noimage > 0)
             fprintf(f, "(" WordFmt ")", j);
@@ -1085,7 +1078,7 @@ void begin_link(FILE *f, dptr fname, word line)
         s++;
     }
     if (line)
-        fprintf(f, "?line=%d", (int)line);
+        fprintf(f, "?line=" WordFmt, line);
     fputs("\"L", f);
 }
 
@@ -1130,7 +1123,7 @@ void print_location(FILE *f, struct p_frame *pf)
         struct descrip t;
         abbr_fname(pfile->fname, &t);
         begin_link(f, pfile->fname, pline->line);
-        fprintf(f, "File %.*s; Line %d", StrF(t), (int)pline->line);
+        fprintf(f, "File %.*s; Line " WordFmt, StrF(t), pline->line);
         end_link(f);
         fputc('\n', f);
     } else

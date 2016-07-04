@@ -167,7 +167,7 @@ static void trace_at(struct p_frame *pf)
         abbr_fname(pfile->fname, &t);
         fputs("   at ", stderr);
         begin_link(stderr, pfile->fname, pline->line);
-        fprintf(stderr, "line %d in %.*s", (int)pline->line, StrF(t));
+        fprintf(stderr, "line " WordFmt " in %.*s", pline->line, StrF(t));
         end_link(stderr);
     } else
         fprintf(stderr, "   at ?");
@@ -199,7 +199,7 @@ static void trace_frame(struct p_frame *pf)
         abbr_fname(pfile->fname, &t);
         fputs(" from ", stderr);
         begin_link(stderr, pfile->fname, pline->line);
-        fprintf(stderr, "line %d in %.*s", (int)pline->line, StrF(t));
+        fprintf(stderr, "line " WordFmt " in %.*s", pline->line, StrF(t));
         end_link(stderr);
     }
     putc('\n', stderr);
@@ -270,7 +270,7 @@ static void showline(struct p_frame *pf)
             p++;
             i--;
         }
-        fprintf(stderr, "%-13.*s: %4d  ", i, p, (int)pline->line);
+        fprintf(stderr, "%-13.*s: %4" WordFmtCh "  ", i, p, pline->line);
         end_link(stderr);
     } else
         fprintf(stderr, "             :       ");
@@ -531,11 +531,9 @@ static void xtrace()
         case Op_Asgn: 
         case Op_Swap: 
             if (xarg1 && xarg2) {
-                fprintf(stderr, "   {");
+                fputs("   {", stderr);
                 outimage(stderr, xarg1, 0);
-                putc(' ', stderr);
-                putstr(stderr, opblks[curr_op]->name);
-                putc(' ', stderr);
+                fprintf(stderr, " %.*s ", StrF(*opblks[curr_op]->name));
                 outimage(stderr, xarg2, 0);
                 putc('}', stderr);
             }
@@ -551,9 +549,7 @@ static void xtrace()
         case Op_Nonnull:
         case Op_Random: 
             if (xarg1) {
-                fprintf(stderr, "   {");
-                putstr(stderr, opblks[curr_op]->name);
-                putc(' ', stderr);
+                fprintf(stderr, "   {%.*s ", StrF(*opblks[curr_op]->name));
                 outimage(stderr, xarg1, 0);
                 putc('}', stderr);
             }
@@ -617,7 +613,7 @@ static void xtrace()
         abbr_fname(pfile->fname, &t);
         fputs(" from ", stderr);
         begin_link(stderr, pfile->fname, pline->line);
-        fprintf(stderr, "line %d in %.*s", (int)pline->line, StrF(t));
+        fprintf(stderr, "line " WordFmt " in %.*s", pline->line, StrF(t));
         end_link(stderr);
     } else
         fprintf(stderr, " from ?");
@@ -801,9 +797,7 @@ void xdisp(struct b_coexpr *ce, int count, FILE *f)
         np = bp->lnames;
         dp = pf->fvars->desc;
         for (n = bp->nparam; n > 0; n--) {
-            fprintf(f, "   ");
-            putstr(f, *np);
-            fprintf(f, " = ");
+            fprintf(f, "   %.*s = ", StrF(**np));
             outimage(f, dp++, 0);
             putc('\n', f);
             np++;
@@ -813,9 +807,7 @@ void xdisp(struct b_coexpr *ce, int count, FILE *f)
          * Print locals; they follow the arguments in the frame_vars block
          */
         for (n = bp->ndynam; n > 0; n--) {
-            fprintf(f, "   ");
-            putstr(f, *np);
-            fprintf(f, " = ");
+            fprintf(f, "   %.*s = ", StrF(**np));
             outimage(f, dp++, 0);
             putc('\n', f);
             np++;
@@ -826,9 +818,7 @@ void xdisp(struct b_coexpr *ce, int count, FILE *f)
          */
         dp = bp->fstatic;
         for (n = bp->nstatic; n > 0; n--) {
-            fprintf(f, "   ");
-            putstr(f, *np);
-            fprintf(f, " = ");
+            fprintf(f, "   %.*s = ", StrF(**np));
             outimage(f, dp++, 0);
             putc('\n', f);
             np++;
@@ -843,9 +833,7 @@ void xdisp(struct b_coexpr *ce, int count, FILE *f)
      */
     fprintf(f, "\nglobal identifiers:\n");
     for (n = 0; n < p->NGlobals; n++) {
-        fprintf(f, "   ");
-        putstr(f, p->Gnames[n]);
-        fprintf(f, " = ");
+        fprintf(f, "   %.*s = ", StrF(*p->Gnames[n]));
         outimage(f, &p->Globals[n], 0);
         putc('\n', f);
     }
@@ -854,11 +842,11 @@ void xdisp(struct b_coexpr *ce, int count, FILE *f)
 
 static void procname(FILE *f, struct b_proc *p)
 {
-    if (p->field) {
-        putstr(f, p->field->defining_class->name);
-        putc('.', f);
-        putstr(f, p->field->defining_class->program->Fnames[p->field->fnum]);
-    } else
+    if (p->field)
+        fprintf(f, "%.*s.%.*s",
+                StrF(*p->field->defining_class->name), 
+                StrF(*p->field->defining_class->program->Fnames[p->field->fnum]));
+    else
         putstr(f, p->name);
 }
 
