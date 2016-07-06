@@ -2076,6 +2076,19 @@ function io_DescStream_dup2_impl(self, other)
    }
 end
 
+function io_DescStream_dup_impl(self)
+   body {
+       int new_fd;
+       GetSelfFd();
+       new_fd = dup(self_fd);
+       if (new_fd < 0) {
+           errno2why();
+           fail;
+       }
+       return C_integer new_fd;
+   }
+end
+
 function io_DescStream_stat_impl(self)
    body {
        tended struct descrip result;
