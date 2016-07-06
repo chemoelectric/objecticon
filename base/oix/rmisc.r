@@ -8,8 +8,9 @@
  * Prototypes.
  */
 
-static void	listimage(FILE *f, dptr dp, int noimage);
-static char *	csname		(dptr dp);
+static void listimage(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit);
+static void kywdout(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit);
+static char *csname(dptr dp);
 
 static char *proc_kinds[] = { "procedure",
                               "function",
@@ -477,17 +478,14 @@ static int cset_do_range(int from, int to)
     return 1;
 }
 
-#define StringLimit	16		/* limit on length of imaged string */
-#define ListLimit	 6		/* limit on list items in image */
-
-static void kywdout(FILE *f, dptr dp, int noimage)
+static void kywdout(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
 {
    tended struct descrip tdp;
    getname(dp, &tdp);
    putstr(f, &tdp);
    if (!noimage) {
        fprintf(f, " = ");
-       outimage(f, VarLoc(*dp), noimage);
+       outimage1(f, VarLoc(*dp), noimage, stringlimit, listlimit);
    }
 }
 
@@ -498,6 +496,15 @@ static void kywdout(FILE *f, dptr dp, int noimage)
  */
 
 void outimage(FILE *f, dptr dp, int noimage)
+{
+    outimage1(f, dp, noimage, 32, 6);
+}
+
+/*
+ * Like outimage(), but allows the maximum length of strings and lists
+ * to be specified.  limits <= 0 mean print in full.
+ */
+void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
    {
    word i, j;
    char *s;
@@ -505,22 +512,25 @@ void outimage(FILE *f, dptr dp, int noimage)
    tended struct descrip tdp;
    char cbuf[CHAR_CVT_LEN];
 
+   if (stringlimit <= 0) stringlimit = MaxWord;
+   if (listlimit <= 0) listlimit = MaxWord;
+
    type_case *dp of {
       string: {
          /*
-          * *dp is a string qualifier.  Print StringLimit characters of it
+          * *dp is a string qualifier.  Print stringlimit characters of it
           *  and denote the presence of additional characters
           *  by terminating the string with "...".
           */
          i = StrLen(*dp);
          s = StrLoc(*dp);
-         j = Min(i, StringLimit);
+         j = Min(i, stringlimit);
          putc('"', f);
          while (j-- > 0) {
              int n = str_charstr(*s++ & 0xff, cbuf);
              putn(f, cbuf, n);
          }
-         if (i > StringLimit)
+         if (i > stringlimit)
              fprintf(f, "...");
          putc('"', f);
          }
@@ -528,7 +538,7 @@ void outimage(FILE *f, dptr dp, int noimage)
       ucs: {
          i = UcsBlk(*dp).length;
          s = StrLoc(UcsBlk(*dp).utf8);
-         j = Min(i, StringLimit);
+         j = Min(i, stringlimit);
          fprintf(f, "u\"");
          while (j-- > 0) {
              int k, n;
@@ -536,7 +546,7 @@ void outimage(FILE *f, dptr dp, int noimage)
              n = ucs_charstr(k, cbuf);
              putn(f, cbuf, n);
          }
-         if (i > StringLimit)
+         if (i > stringlimit)
              fprintf(f, "...");
          putc('"', f);
          }
@@ -569,7 +579,7 @@ void outimage(FILE *f, dptr dp, int noimage)
 	    return;
 	    }
          putc('\'', f);
-         j = StringLimit;
+         j = stringlimit;
          for (i = 0; i < CsetBlk(*dp).n_ranges; ++i) {
              int from, to, n;
              from = CsetBlk(*dp).range[i].from;
@@ -604,14 +614,12 @@ void outimage(FILE *f, dptr dp, int noimage)
 
      class: {
            /* produce "class " + the class name */
-         fprintf(f, "class ");
-         putstr(f, ClassBlk(*dp).name);
+         fprintf(f, "class %.*s", StrF(*ClassBlk(*dp).name));
          }
 
      constructor: {
            /* produce "constructor " + the type name */
-         fprintf(f, "constructor ");
-         putstr(f, ConstructorBlk(*dp).name);
+         fprintf(f, "constructor %.*s", StrF(*ConstructorBlk(*dp).name));
          }
 
       proc: {
@@ -620,10 +628,9 @@ void outimage(FILE *f, dptr dp, int noimage)
              /*
               * Produce "method classname.fieldname"
               */
-             fprintf(f, "method ");
-             putstr(f, field->defining_class->name);
-             fprintf(f, ".");
-             putstr(f, field->defining_class->program->Fnames[field->fnum]);
+             fprintf(f, "method %.*s.%.*s", 
+                     StrF(*field->defining_class->name), 
+                     StrF(*field->defining_class->program->Fnames[field->fnum]));
          } else if (&ProcBlk(*dp) == (struct b_proc *)&Bdeferred_method_stub)
              fprintf(f, "deferred method");
          else {
@@ -639,7 +646,7 @@ void outimage(FILE *f, dptr dp, int noimage)
          /*
           * listimage does the work for lists.
           */
-          listimage(f, dp, noimage);
+          listimage(f, dp, noimage, stringlimit, listlimit);
          }
 
       table: {
@@ -660,11 +667,11 @@ void outimage(FILE *f, dptr dp, int noimage)
              fprintf(f, "methp#" UWordFmt "(", MethpBlk(*dp).id);
              tdp.dword = D_Object;
              BlkLoc(tdp) = (union block*)MethpBlk(*dp).object;
-             outimage(f, &tdp, noimage);
+             outimage1(f, &tdp, noimage, stringlimit, listlimit);
              fprintf(f, ",");
              tdp.dword = D_Proc;
              BlkLoc(tdp) = (union block*)MethpBlk(*dp).proc;
-             outimage(f, &tdp, noimage);
+             outimage1(f, &tdp, noimage, stringlimit, listlimit);
              fprintf(f, ")");
      }
 
@@ -674,9 +681,7 @@ void outimage(FILE *f, dptr dp, int noimage)
               *  number of fields in the record.  If noimage is zero, print
               *  the image of each field instead of the number of fields.
               */
-             fprintf(f, "object ");
-             putstr(f, ObjectBlk(*dp).class->name);
-             fprintf(f, "#" UWordFmt "", ObjectBlk(*dp).id);
+             fprintf(f, "object %.*s#" UWordFmt, StrF(*ObjectBlk(*dp).class->name), ObjectBlk(*dp).id);
              j = ObjectBlk(*dp).class->n_instance_fields;
              if (noimage > 0)
                  fprintf(f, "(" WordFmt ")", j);
@@ -686,9 +691,9 @@ void outimage(FILE *f, dptr dp, int noimage)
                      dptr name = ObjectBlk(*dp).class->program->Fnames[ObjectBlk(*dp).class->fields[i]->fnum];
                      if (i > 0)
                          putc(',', f);
-                     fprintf(f, "%.*s=", (int)StrLen(*name), StrLoc(*name));
+                     fprintf(f, "%.*s=", StrF(*name));
                      tdp = ObjectBlk(*dp).fields[i];
-                     outimage(f, &tdp, noimage + 1);
+                     outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
                  }
                  putc(')', f);
              }
@@ -701,7 +706,7 @@ void outimage(FILE *f, dptr dp, int noimage)
                  fprintf(f, "()");
              else {
                  putc('(', f);
-                 outimage(f, &tdp, noimage);
+                 outimage1(f, &tdp, noimage, stringlimit, listlimit);
                  putc(')', f);
              }
      }
@@ -712,9 +717,7 @@ void outimage(FILE *f, dptr dp, int noimage)
           *  number of fields in the record.  If noimage is zero, print
           *  the image of each field instead of the number of fields.
           */
-         fprintf(f, "record ");
-         putstr(f, RecordBlk(*dp).constructor->name);
-         fprintf(f, "#" UWordFmt "", RecordBlk(*dp).id);
+         fprintf(f, "record %.*s#" UWordFmt, StrF(*RecordBlk(*dp).constructor->name), RecordBlk(*dp).id);
          j = RecordBlk(*dp).constructor->n_fields;
          if (noimage > 0)
             fprintf(f, "(" WordFmt ")", j);
@@ -724,9 +727,9 @@ void outimage(FILE *f, dptr dp, int noimage)
                dptr name = RecordBlk(*dp).constructor->program->Fnames[RecordBlk(*dp).constructor->fnums[i]];
                if (i > 0)
                    putc(',', f);
-               fprintf(f, "%.*s=", (int)StrLen(*name), StrLoc(*name));
+               fprintf(f, "%.*s=", StrF(*name));
                tdp = RecordBlk(*dp).fields[i];
-               outimage(f, &tdp, noimage + 1);
+               outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
             }
             putc(')', f);
             }
@@ -746,7 +749,7 @@ void outimage(FILE *f, dptr dp, int noimage)
           *  (j) is one, just produce "v[i] = value".
           */
          sv = TvsubsBlk(*dp).ssvar;
-         outimage(f, &sv, noimage+1);
+         outimage1(f, &sv, noimage+1, stringlimit, listlimit);
 
          if (TvsubsBlk(*dp).sslen == 1)
             fprintf(f, "[" WordFmt "]", TvsubsBlk(*dp).sspos);
@@ -771,7 +774,7 @@ void outimage(FILE *f, dptr dp, int noimage)
                              &utf8_subs);
                  i = TvsubsBlk(*dp).sslen;
                  s = StrLoc(utf8_subs);
-                 j = Min(i, StringLimit);
+                 j = Min(i, stringlimit);
                  fprintf(f, " = u\"");
                  while (j-- > 0) {
                      int k, n;
@@ -779,7 +782,7 @@ void outimage(FILE *f, dptr dp, int noimage)
                      n = ucs_charstr(k, cbuf);
                      putn(f, cbuf, n);
                  }
-                 if (i > StringLimit)
+                 if (i > stringlimit)
                      fprintf(f, "...");
                  fprintf(f, "\"");
                                          
@@ -791,7 +794,7 @@ void outimage(FILE *f, dptr dp, int noimage)
                  StrLen(q) = TvsubsBlk(*dp).sslen;
                  StrLoc(q) = StrLoc(tdp) + TvsubsBlk(*dp).sspos - 1;
                  fprintf(f, " = ");
-                 outimage(f, &q, noimage);
+                 outimage1(f, &q, noimage, stringlimit, listlimit);
              }
            }
 
@@ -804,31 +807,31 @@ void outimage(FILE *f, dptr dp, int noimage)
           */
          tdp.dword = D_Table;
 	 BlkLoc(tdp) = TvtblBlk(*dp).clink;
-	 outimage(f, &tdp, noimage);
+	 outimage1(f, &tdp, noimage, stringlimit, listlimit);
          putc('[', f);
          tdp = TvtblBlk(*dp).tref;
-         outimage(f, &tdp, noimage);
+         outimage1(f, &tdp, noimage, stringlimit, listlimit);
          putc(']', f);
          }
 
       kywdint: {
-         kywdout(f, dp, noimage);
+         kywdout(f, dp, noimage, stringlimit, listlimit);
       }
 
       kywdhandler: {
-         kywdout(f, dp, noimage);
+         kywdout(f, dp, noimage, stringlimit, listlimit);
       }
 
       kywdstr: {
-         kywdout(f, dp, noimage);
+         kywdout(f, dp, noimage, stringlimit, listlimit);
       }
 
       kywdpos: {
-         kywdout(f, dp, noimage);
+         kywdout(f, dp, noimage, stringlimit, listlimit);
       }
 
       kywdsubj: {
-         kywdout(f, dp, noimage);
+         kywdout(f, dp, noimage, stringlimit, listlimit);
       }
 
      struct_var: {
@@ -841,11 +844,11 @@ void outimage(FILE *f, dptr dp, int noimage)
                      bp = bp->telem.clink;
                  tdp.dword = D_Table;
                  BlkLoc(tdp) = bp;
-                 outimage(f, &tdp, noimage + 1);
+                 outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
                  /* Print the element key */
                  putc('[', f);
                  tdp = TvtblBlk(*dp).tref;
-                 outimage(f, &tdp, noimage);
+                 outimage1(f, &tdp, noimage, stringlimit, listlimit);
                  putc(']', f);
                  break;
              }
@@ -860,7 +863,7 @@ void outimage(FILE *f, dptr dp, int noimage)
                  }
                  tdp.dword = D_List;
                  BlkLoc(tdp) = bp->lelem.listprev;
-                 outimage(f, &tdp, noimage + 1);
+                 outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
                  fprintf(f,"[" WordFmt "]", i);
                  break;
              }
@@ -871,8 +874,8 @@ void outimage(FILE *f, dptr dp, int noimage)
                  fname =  c->program->Fnames[c->fields[i]->fnum];
                  tdp.dword = D_Object;
                  BlkLoc(tdp) = BlkLoc(*dp);
-                 outimage(f, &tdp, noimage + 1);
-                 fprintf(f," . %.*s", (int)StrLen(*fname), StrLoc(*fname));
+                 outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
+                 fprintf(f," . %.*s", StrF(*fname));
                  break;
              }
              case T_Record: { 		/* record */
@@ -882,8 +885,8 @@ void outimage(FILE *f, dptr dp, int noimage)
                  fname = c->program->Fnames[c->fnums[i]];
                  tdp.dword = D_Record;
                  BlkLoc(tdp) = BlkLoc(*dp);
-                 outimage(f, &tdp, noimage + 1);
-                 fprintf(f," . %.*s", (int)StrLen(*fname), StrLoc(*fname));
+                 outimage1(f, &tdp, noimage + 1, stringlimit, listlimit);
+                 fprintf(f," . %.*s", StrF(*fname));
                  break;
              }
              default: {		/* none of the above */
@@ -893,20 +896,18 @@ void outimage(FILE *f, dptr dp, int noimage)
          if (!noimage) {
              fprintf(f, " = ");
              tdp = *OffsetVarLoc(*dp);
-             outimage(f, &tdp, noimage);
+             outimage1(f, &tdp, noimage, stringlimit, listlimit);
          }
       }
 
      named_var: {
          struct progstate *prog;
          struct p_frame *uf;
-         struct p_proc *proc0;                 /* address of procedure block */
          dptr vp;
          if (!noimage)
              fprintf(f, "(variable ");
          vp = VarLoc(*dp);
          uf = get_current_user_frame();
-         proc0 = uf->proc;
          if ((prog = find_global(vp))) {
              putstr(f, prog->Gnames[vp - prog->Globals]); 		/* global */
          }
@@ -917,15 +918,13 @@ void outimage(FILE *f, dptr dp, int noimage)
              struct class_field *cf = find_class_field_for_dptr(vp, prog);
              struct b_class *c = cf->defining_class;
              dptr fname = c->program->Fnames[cf->fnum];
-             fprintf(f, "class %.*s . %.*s", 
-                     (int)StrLen(*c->name), StrLoc(*c->name),
-                     (int)StrLen(*fname), StrLoc(*fname));
+             fprintf(f, "class %.*s . %.*s", StrF(*c->name), StrF(*fname));
          }
          else if ((prog = find_procedure_static(vp))) {
              putstr(f, prog->Snames[vp - prog->Statics]); 		/* static in procedure */
          }
          else if (InRange(uf->fvars->desc, vp, uf->fvars->desc_end)) {
-             putstr(f, proc0->lnames[vp - uf->fvars->desc]);          /* argument/local */
+             putstr(f, uf->proc->lnames[vp - uf->fvars->desc]);          /* argument/local */
          }
          else
              fprintf(f, "(temp)");
@@ -933,7 +932,7 @@ void outimage(FILE *f, dptr dp, int noimage)
          if (!noimage) {
              fprintf(f, " = ");
              tdp = *VarLoc(*dp);
-             outimage(f, &tdp, noimage);
+             outimage1(f, &tdp, noimage, stringlimit, listlimit);
              putc(')', f);
          }
      }
@@ -952,7 +951,7 @@ void outimage(FILE *f, dptr dp, int noimage)
  * listimage - print an image of a list.
  */
 
-static void listimage(FILE *f, dptr dp, int noimage)
+static void listimage(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
 {
    word size;
    tended struct b_list *lp;
@@ -970,22 +969,36 @@ static void listimage(FILE *f, dptr dp, int noimage)
        */
       fprintf(f, "list#" UWordFmt "(" WordFmt ")", lp->id, size);
    } else {
+       word l;
+
        /*
-        * Print [e1,...,en] on f.  If more than ListLimit elements are in the
-        *  list, produce the first ListLimit/2 elements, an ellipsis, and the
-        *  last ListLimit elements.
+        * Print [e1,...,en] on f.  If more than listlimit elements are
+        *  in the list, produce the first (listlimit/2 + listlimit %
+        *  2) elements, an ellipsis, and the last listlimit/2
+        *  elements.
         */
 
        fprintf(f, "list#" UWordFmt " = [", lp->id);
-
+       if (size > listlimit)
+           l = listlimit / 2 + listlimit % 2;
+       else
+           l = size;
        for (le = lgfirst(lp, &state); le; le = lgnext(lp, &state, le)) {
-           if (state.listindex <= ListLimit/2 || state.listindex > size - ListLimit/2) {
-               if (state.listindex > 1)
-                   putc(',', f);
+           if (state.listindex > l)
+               break;
+           if (state.listindex > 1)
+               putc(',', f);
+           tdp = le->lslots[state.result];
+           outimage1(f, &tdp, noimage+1, stringlimit, listlimit);
+       }
+       if (size > listlimit) {
+           /* Output the last listlimit/2 elements */
+           fprintf(f, ",...");
+           for (le = lginit(lp, size - listlimit / 2 + 1, &state); le; le = lgnext(lp, &state, le)) {
+               putc(',', f);
                tdp = le->lslots[state.result];
-               outimage(f, &tdp, noimage+1);
-           } else if (state.listindex == ListLimit/2 + 1)
-               fprintf(f, ",...");
+               outimage1(f, &tdp, noimage+1, stringlimit, listlimit);
+           }
        }
 
        putc(']', f);
@@ -1065,7 +1078,7 @@ void begin_link(FILE *f, dptr fname, word line)
         s++;
     }
     if (line)
-        fprintf(f, "?line=%d", (int)line);
+        fprintf(f, "?line=" WordFmt, line);
     fputs("\"L", f);
 }
 
@@ -1094,6 +1107,27 @@ void abbr_fname(dptr s, dptr d)
         }
     }
     *d = *s;
+}
+
+/*
+ * Print the current location in the given frame in the standard
+ * format.
+ */
+void print_location(FILE *f, struct p_frame *pf)
+{
+    struct ipc_line *pline;
+    struct ipc_fname *pfile;
+    pline = frame_ipc_line(pf);
+    pfile = frame_ipc_fname(pf);
+    if (pline && pfile) {
+        struct descrip t;
+        abbr_fname(pfile->fname, &t);
+        begin_link(f, pfile->fname, pline->line);
+        fprintf(f, "File %.*s; Line " WordFmt, StrF(t), pline->line);
+        end_link(f);
+        fputc('\n', f);
+    } else
+        fprintf(stderr, "File ?; Line ?\n");
 }
 
 /*
@@ -1663,10 +1697,8 @@ int getname(dptr dp1, dptr dp2)
              * temporary stack variables as occurs for string scanning).
              */
             struct p_frame *uf;
-            struct p_proc *proc0;                 /* address of procedure block */
             dptr vp;
             uf = get_current_user_frame();
-            proc0 = uf->proc;
             vp = VarLoc(*dp1);		 /* get address of variable */
             if ((prog = find_global(vp))) {
                 *dp2 = *prog->Gnames[vp - prog->Globals]; 		/* global */
@@ -1690,7 +1722,7 @@ int getname(dptr dp1, dptr dp2)
                 *dp2 = *prog->Snames[vp - prog->Statics]; 		/* static in procedure */
             }
             else if (InRange(uf->fvars->desc, vp, uf->fvars->desc_end)) {
-                *dp2 = *proc0->lnames[vp - uf->fvars->desc];          /* argument/local */
+                *dp2 = *uf->proc->lnames[vp - uf->fvars->desc];          /* argument/local */
             }
             else {
                 LitStr("(temp)", dp2);

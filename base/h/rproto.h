@@ -131,10 +131,11 @@ word            mod3            (word a,word b);
 word            mul             (word a,word b);
 word            neg             (word a);
 void            outimage        (FILE *f,dptr dp,int noimage);
+void            outimage1       (FILE *f, dptr dp, int noimage, word stringlimit, word listlimit);
 ulonglong       physicalmemorysize(void);
 word            prescan         (dptr d);
 int             putstr          (FILE *f,dptr d);
-int             putn            (FILE *f, char *s, int n);
+int             putn            (FILE *f, char *s, size_t n);
 int             radix           (int sign, register int r, register char *s,
                                    register char *end_s, union numeric *result);
 char            *reserve_0      (int region, uword nbytes);
@@ -414,6 +415,7 @@ void    envset          (void);
 int     eq              (dptr dp1,dptr dp2);
 int     getname        (dptr dp1, dptr dp2);
 void    getimage        (dptr dp1, dptr dp2);
+void    print_location  (FILE *f, struct p_frame *pf);
 
 void    hgrow           (union block *bp);
 void    hshrink         (union block *bp);
@@ -447,6 +449,7 @@ void xdisp(struct b_coexpr *ce, int count, FILE *f);
 
 void create_list(uword nslots, dptr d);
 struct b_lelem *get_lelem_for_index(struct b_list *bp, word i, word *pos);
+struct b_lelem *lginit(struct b_list *lb, word i, struct lgstate *state);
 struct b_lelem *lgfirst(struct b_list *lb, struct lgstate *state);
 struct b_lelem *lgnext(struct b_list *lb, struct lgstate *state, struct b_lelem *le);
 struct b_lelem *lglast(struct b_list *lb, struct lgstate *state);

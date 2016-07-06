@@ -749,6 +749,8 @@ $endif
 
    private native dup2_impl()
 
+   protected native dup_impl()
+
    #
    # Return a {Stat} object with info about this file.
    #
@@ -936,6 +938,15 @@ class FileStream(DescStream)
    end
 
 $ifdef _PLAN9
+   #
+   # Return a new instance which has a duplicated file descriptor
+   # (using the dup() system call), and the same mode as this
+   # instance.
+   #
+   public dup()
+      return create_for_fd(dup_impl(), mode)
+   end
+
    #
    # Open a new {FileStream} using the underlying system open
    # function.
@@ -1148,6 +1159,15 @@ end
 class SocketStream(DescStream)
    private static create_for_fd(fd, mode)
       return Class.create_instance().setup(fd, mode)
+   end
+
+   #
+   # Return a new instance which has a duplicated file descriptor
+   # (using the dup() system call), and the same mode as this
+   # instance.
+   #
+   public dup()
+      return create_for_fd(dup_impl(), mode)
    end
 
    #

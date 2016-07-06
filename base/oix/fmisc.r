@@ -313,27 +313,8 @@ function syserr(msg)
       runerr(103, msg)
 
    body {
-      char *s = StrLoc(msg);
-      int i = StrLen(msg);
-      struct ipc_line *pline;
-      struct ipc_fname *pfile;
-
-      pline = frame_ipc_line(curr_pf);
-      pfile = frame_ipc_fname(curr_pf);
-
-      fprintf(stderr, "\nIcon-level internal error: ");
-      while (i-- > 0)
-          fputc(*s++, stderr);
-      fputc('\n', stderr);
-      if (pline && pfile) {
-          struct descrip t;
-          abbr_fname(pfile->fname, &t);
-          begin_link(stderr, pfile->fname, pline->line);
-          fprintf(stderr, "File %.*s; Line %d", (int)StrLen(t), StrLoc(t), (int)pline->line);
-          end_link(stderr);
-          fputc('\n', stderr);
-      } else
-          fprintf(stderr, "File ?; Line ?\n");
+      fprintf(stderr, "\nIcon-level internal error: %.*s\n", StrF(msg));
+      print_location(stderr, curr_pf);
 
       checkfatalrecurse();
       traceback(k_current, 1, 1);
