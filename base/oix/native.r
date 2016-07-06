@@ -740,7 +740,7 @@ function lang_Prog_get_region_info_impl(c)
        for (; rp; rp = rp->next) {
            convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
            list_put(&l, &tmp);
-           convert_from_uword(DiffPtrs(rp->end,rp->base), &tmp);
+           convert_from_uword(rp->size, &tmp);
            list_put(&l, &tmp);
            MakeInt(rp->compacted, &tmp);
            list_put(&l, &tmp);
@@ -752,7 +752,7 @@ function lang_Prog_get_region_info_impl(c)
        for (; rp; rp = rp->next) {
            convert_from_uword(DiffPtrs(rp->free,rp->base), &tmp);
            list_put(&l, &tmp);
-           convert_from_uword(DiffPtrs(rp->end,rp->base), &tmp);
+           convert_from_uword(rp->size, &tmp);
            list_put(&l, &tmp);
            MakeInt(rp->compacted, &tmp);
            list_put(&l, &tmp);
