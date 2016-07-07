@@ -1,0 +1,349 @@
+import io, lang, ipl.options, gui, ipl.termdialog, ipl.strings, ipl.pdco
+
+global prog, output, stopped, sched, break_proc, break_line, break_file, 
+   curr_file, tmp_out, tmp_out_name, cmd_out
+
+class MemDebug()
+   public static native list(obj)
+   public static native refs(obj)
+   public static native dump()
+   public static native globals()
+   public static native nglobals()
+   public static native statics(name)
+   public static native prog(name)
+   public static native progs()
+   public static native regions()
+   public static native set_program(prog)
+   public static native set_output(f)
+   public static native set_param(key, val)
+
+   private static init() 
+      Class.load_library(Files.find_native_lib("objecticonmemdebug")) | stop("Native library not available") 
+   end
+end
+
+procedure do_stop()
+   if /stopped then {
+      stopped := &yes
+      sched.set_poll_timeout(Gui.IDLE_SLEEP)
+      output.write("Stopped")
+   }
+end
+
+procedure do_start()
+   if \stopped then {
+      stopped := &no
+      sched.set_poll_timeout(0)
+      output.write("Started")
+   }
+end
+
+procedure do_regions()
+   MemDebug.regions()
+end
+
+procedure errmsg(s)
+   output.write(s)
+end
+
+procedure do_list(a)
+   if *a ~= 1 then
+      return errmsg("usage: list object")
+   MemDebug.list(a[1]) | return errmsg(&why)
+end
+
+procedure do_refs(a)
+   if *a ~= 1 then
+      return errmsg("usage: refs object")
+   MemDebug.refs(a[1]) | return errmsg(&why)
+end
+
+procedure do_dump(a)
+   MemDebug.dump() | return errmsg(&why)
+end
+
+procedure do_statics(a)
+   if *a ~= 1 then
+      return errmsg("usage: statics name")
+   MemDebug.statics(a[1]) | return errmsg(&why)
+end
+
+procedure do_globals()
+   MemDebug.globals() | return errmsg(&why)
+end
+
+procedure do_nglobals()
+   MemDebug.nglobals() | return errmsg(&why)
+end
+
+procedure do_prog(a)
+   if *a ~= 1 then
+      return errmsg("usage: prog name")
+   MemDebug.prog(a[1]) | return errmsg(&why)
+end
+
+procedure do_progs()
+   MemDebug.progs()
+end
+
+procedure do_cls()
+   output.writes("\e[2J\e[H")
+end
+
+procedure do_set(a)
+   if *a ~= 2 then
+      return errmsg("usage: set key val")
+   MemDebug.set_param(a[1], a[2]) | return errmsg(&why)
+end
+
+procedure do_breakproc(a)
+   if *a = 0 then
+      break_proc := &null
+   else
+      break_proc := a[1]
+   synch_mask()
+   output.write(if /break_proc then "break proc cleared" else "break proc now " || break_proc)
+end
+
+procedure do_breakpoint(a)
+   if *a = 0 then
+      break_line := break_file := &null
+   else {
+      break_line := integer(a[2]) | return errmsg("usage: breakpoint [file line]")
+      break_file := string(a[1])
+   }
+   synch_mask()
+   output.write(if /break_file then "breakpoint cleared" else "break now " || break_file || " at " || break_line)
+end
+
+procedure do_exit()
+   write("Exiting.")
+   cleanup()
+   exit(0)
+end
+
+procedure do_test(a)
+   local o
+   o := options(a, [Opt("l",, "Long option"),
+                    Opt("n",integer, "Numeric option")], opthelp, errmsg) | fail
+   output.write("a=", to_string(a))
+   output.write("o=", to_string(o))
+end
+
+procedure opthelp(opts)
+   local o, t
+   every o := !opts do {
+      t := o.format()
+      output.write(left(t.names, 20), t.help)
+   }
+end
+
+procedure do_line(s)
+   local a, redir, mode, pipe, p
+   s ? {
+      if s := tab(upto('|')) then {
+         if is(output, TermDialog) then {
+            output.write("Pipe output not allowed in graphic mode")
+            fail
+         }
+         pipe := (move(1), tab(0))
+      }
+   }
+
+   a := ipl.pdco.List{words(s)}
+   if *a = 0 then
+      return
+
+   if a[-1][1] == ">" then {
+      if \pipe then {
+         output.write("Invalid redirection")
+         fail
+      }
+      redir := pull(a)
+      redir[1] := ""
+      if redir[1] == ">" then {
+         redir[1] := ""
+         mode := ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT)
+      } else
+         mode := ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)
+      cmd_out := FileStream(redir, mode) | {
+         output.write("Couldn't open ", redir, ": ", &why)
+         fail
+      }
+   } else if /pipe & is(output, DescStream) then
+      cmd_out := output
+   else {
+      tmp_out.truncate(0)
+      cmd_out := tmp_out
+   }
+
+   MemDebug.set_output(cmd_out)
+
+   case string(pop(a)) of {
+      "stop":  do_stop()
+      "start":  do_start()
+      "exit": do_exit()
+      "regions":  do_regions()
+      "test":  do_test(a)
+      "list":  do_list(a)
+      "refs":  do_refs(a)
+      "dump":  do_dump(a)
+      "globals":  do_globals()
+      "nglobals":  do_nglobals()
+      "prog":  do_prog(a)
+      "progs":  do_progs()
+      "statics":  do_statics(a)
+      "breakproc" :  do_breakproc(a)
+      "breakpoint" :  do_breakpoint(a)
+      "set" :  do_set(a)
+      "cls" :  do_cls()
+      default: {
+         output.write("Unknown command: ", s)
+      }
+   }
+
+   if \redir then
+      cmd_out.close()
+   else if cmd_out === tmp_out then {
+      tmp_out.seek(1)
+      if \pipe then {
+         p := ProgOutputStream("/bin/sh", ["-c", pipe]) | {
+            output.write("Couldn't open pipe ", pipe, ": ", &why)
+            fail
+         }
+         # This will ignore any SIGPIPE signals (and just fail).
+         tmp_out.copy_to(p)
+         p.close()
+      } else
+         tmp_out.copy_to(output)
+   }
+end
+
+procedure monitor(task)
+   local s, ed
+   ed := LineEditorStream().set_task(task).set_prompt("? ")
+   repeat {
+      s := ed.read_line()
+      if /s then
+         break
+      do_line(s)
+   }
+   write("Reverting")
+   ed.close()
+   task.revert()
+   monitor_exit()
+end
+
+procedure monitor_exit()
+   do_start()
+   Prog.set_event_mask('', prog)
+end
+
+procedure next_event()
+   local e
+   e := Prog.get_event(prog) | {
+      output.write("Monitored program exited.")
+      do_stop()
+      fail
+   }
+   case e.code of {
+      MonitorCode.File : {
+         curr_file := e.value
+      }
+      MonitorCode.Line : {
+         if e.value = \break_line & curr_file == \break_file then {
+            output.write("Breakpoint hit")
+            do_stop()
+         }
+      }
+      MonitorCode.Pcall : {
+         if Proc.get_name(e.value) == \break_proc then {
+            output.write("Procedure break hit")
+            do_stop()
+         }
+      }
+   }
+
+   return
+end
+
+procedure synch_mask()
+   local c
+   c := MonitorCode.Timer ++ MonitorCode.Error
+   if \break_line then
+      c ++:= MonitorCode.File ++ MonitorCode.Line
+   if \break_proc then
+      c ++:= MonitorCode.Pcall
+   Prog.set_event_mask(c, prog)
+end
+
+procedure cleanup()
+   tmp_out.close()
+   Files.remove(tmp_out_name)
+end
+
+procedure main(args)
+   local a, v_flag, opts, task, d
+
+   Class.ensure_initialized(MemDebug)
+
+   a := []
+   while args[1][1] == "-" do
+      put(a, pop(args))
+   opts := options(a, [Opt("m",, "Set breakproc in main()"),
+                       Opt("g",, "Use a gui interface rather than the console"),
+                       Opt("v",,"Verbose mode.")])
+   v_flag := opts["v"]
+
+   prog := Prog.load(Files.find_exe(args[1]), args[2:0]) | stop(&why)
+   MemDebug.set_program(prog)
+   Prog.set_timer_interval(100, prog)
+   if \opts["m"] then
+      break_proc := "main"
+
+   synch_mask()
+
+   tmp_out_name := Files.make_temp_filename("monitor", ".txt") | stop(&why)
+   tmp_out := FileStream(tmp_out_name, ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
+
+   if \opts["g"] then {
+      d := TermDialog().
+         connect(create {
+            d.write("? ", d.line)
+            do_line(d.line)
+         }, Event.ACTION).
+         connect(monitor_exit,
+                 Event.DIALOG_DISPOSED)
+      output := d
+      sched := Dispatcher.scheduler
+      sched.set_poll_timeout(0)
+      d.show()
+      repeat {
+         if /stopped then {
+            next_event() | break
+            Dispatcher.service()
+         } else {
+            Dispatcher.work_or_sleep()
+         }
+      }
+      Dispatcher.message_loop()
+   } else {
+      sched := Scheduler()
+      task := Task(sched, create monitor(task))
+      task.start()
+      output := FileStream.stdout
+      repeat {
+         if /stopped then {
+            next_event() | break
+            sched.work()
+         } else
+            sched.work_or_sleep()
+      }
+      until task.is_dormant() do
+         sched.work_or_sleep()
+   }
+
+   cleanup()
+
+   write("ciao")
+end
