@@ -391,6 +391,7 @@ class TabSet(Component)
    public end_handle(e)
       if old_which_one ~=== which_one then
          fire(Event.SELECTION_CHANGED, e)     
+      old_which_one := &null
    end
 
    public handle_lpress(e)
