@@ -24,41 +24,41 @@ class MemDebug()
 end
 
 procedure do_help()
-   cmd_out.write("stop           - stop the monitored program")
-   cmd_out.write("start          - restart the monitored program")
-   cmd_out.write("exit           - exit immediately")
-   cmd_out.write("regions        - display memory regions")
-   cmd_out.write("list x         - list instances of type x, or show the structure of")
-   cmd_out.write("                 a particular instance x.  For example, list SomeType")
-   cmd_out.write("                 lists all instances of SomeType, whilst list SomeType#22")
-   cmd_out.write("                 shows the elements of a particular instance")
-   cmd_out.write("refs x         - show what points to the given instance, eg refs")
-   cmd_out.write("                 list#21 would show what references that list.")
-   cmd_out.write("dump           - show all globals, statics and structures of the")
-   cmd_out.write("                 current program.")
-   cmd_out.write("globals        - show the global variables of the current program.")
-   cmd_out.write("nglobals       - show the named globals of the current program..")
-   cmd_out.write("prog x         - set the current program, initially set to the")
-   cmd_out.write("                 monitored program.  x should be an &main co-expression.")
-   cmd_out.write("progs          - list all programs and show the current program.")
-   cmd_out.write("statics x      - list the static variables in the given object x,")
-   cmd_out.write("                 which should be a class, procedure or method name.")
-   cmd_out.write("breakproc x    - stop in procedure x in the monitored program.")
-   cmd_out.write("breakpoint x y - stop at line y in file x in the monitored program.")
-   cmd_out.write("slim [i]       - show or set the displayed string limit; 0 means no limit.")
-   cmd_out.write("addrs [i]      - show or set the display of addresses in the regions")
-   cmd_out.write("                    i=0 (no addresses),")
-   cmd_out.write("                    i=1 (addresses for items with no serial number),")
-   cmd_out.write("                    i=2 (show all addresses)")
-   cmd_out.write("cls            - clear the screen.")
-   cmd_out.write("help           - show help.")
+   cmd_out.write("stop              - stop the monitored program")
+   cmd_out.write("start             - restart the monitored program")
+   cmd_out.write("exit              - exit immediately")
+   cmd_out.write("regions           - display memory regions")
+   cmd_out.write("list x            - list instances of type x, or show the structure of")
+   cmd_out.write("                    a particular instance x.  For example, list SomeType")
+   cmd_out.write("                    lists all instances of SomeType, whilst list SomeType#22")
+   cmd_out.write("                    shows the elements of a particular instance")
+   cmd_out.write("refs x            - show what points to the given instance, eg refs")
+   cmd_out.write("                    list#21 would show what references that list.")
+   cmd_out.write("dump              - show all globals, statics and structures of the")
+   cmd_out.write("                    current program.")
+   cmd_out.write("globals           - show the global variables of the current program.")
+   cmd_out.write("nglobals          - show the named globals of the current program..")
+   cmd_out.write("prog x            - set the current program, initially set to the")
+   cmd_out.write("                    monitored program.  x should be an &main co-expression.")
+   cmd_out.write("progs             - list all programs and show the current program.")
+   cmd_out.write("statics x         - list the static variables in the given object x,")
+   cmd_out.write("                    which should be a class, procedure or method name.")
+   cmd_out.write("breakproc [x]     - set or clear breakpoint to stop in procedure x.")
+   cmd_out.write("breakpoint [x y]  - set or clear breakpoint at file x, line y.")
+   cmd_out.write("slim [i]          - show or set the displayed string limit; 0 means no limit.")
+   cmd_out.write("addrs [i]         - show or set the display of addresses in the regions")
+   cmd_out.write("                       i=0 (no addresses),")
+   cmd_out.write("                       i=1 (addresses for items with no serial number),")
+   cmd_out.write("                       i=2 (show all addresses)")
+   cmd_out.write("cls               - clear the screen.")
+   cmd_out.write("help              - show help.")
 end
 
 procedure do_stop()
    if /stopped then {
       stopped := &yes
       sched.set_poll_timeout(Gui.IDLE_SLEEP)
-      cmd_out.write("Stopped")
+      output.write("Stopped")
    }
 end
 
@@ -66,7 +66,7 @@ procedure do_start()
    if \stopped then {
       stopped := &no
       sched.set_poll_timeout(0)
-      cmd_out.write("Started")
+      output.write("Started")
    }
 end
 
@@ -79,24 +79,21 @@ procedure errmsg(s)
 end
 
 procedure do_list(a)
-   if *a ~= 1 then
-      return errmsg("usage: list object")
+   (*a = 1) | return errmsg("usage: list object")
    MemDebug.list(a[1]) | return errmsg(&why)
 end
 
 procedure do_refs(a)
-   if *a ~= 1 then
-      return errmsg("usage: refs object")
+   (*a = 1) | return errmsg("usage: refs object")
    MemDebug.refs(a[1]) | return errmsg(&why)
 end
 
-procedure do_dump(a)
+procedure do_dump()
    MemDebug.dump() | return errmsg(&why)
 end
 
 procedure do_statics(a)
-   if *a ~= 1 then
-      return errmsg("usage: statics name")
+   (*a = 1) | return errmsg("usage: statics name")
    MemDebug.statics(a[1]) | return errmsg(&why)
 end
 
@@ -109,8 +106,7 @@ procedure do_nglobals()
 end
 
 procedure do_prog(a)
-   if *a ~= 1 then
-      return errmsg("usage: prog name")
+   (*a = 1) | return errmsg("usage: prog name")
    MemDebug.prog(a[1]) | return errmsg(&why)
 end
 
@@ -127,34 +123,40 @@ end
 
 procedure do_slim(a)
    local i
-   if *a > 1 | (*a = 1 & not( i := 0 <= integer(a[1]) )) then
+   if *a = 0 | (*a = 1 & i := 0 <= integer(a[1])) then
+      MemDebug.slim(i)
+   else
       return errmsg("usage: slim [length]")
-   MemDebug.slim(i)
 end
 
 procedure do_addrs(a)
    local i
-   if *a > 1 | (*a = 1 & not( i := integer(a[1]) & 0 <= i <= 2 )) then
+   if *a = 0 | (*a = 1 & i := integer(a[1]) & 0 <= i <= 2) then
+      MemDebug.addrs(i)
+   else
       return errmsg("usage: addrs [n] with n=0, 1 or 2")
-   MemDebug.addrs(i)
 end
 
 procedure do_breakproc(a)
    if *a = 0 then
       break_proc := &null
-   else
+   else if *a = 1 then
       break_proc := a[1]
+   else
+      return errmsg("usage: breakproc [procedure/method name]")
    synch_mask()
    cmd_out.write(if /break_proc then "break proc cleared" else "break proc now " || break_proc)
 end
 
 procedure do_breakpoint(a)
+   local i
    if *a = 0 then
       break_line := break_file := &null
-   else {
-      break_line := integer(a[2]) | return errmsg("usage: breakpoint [file line]")
-      break_file := string(a[1])
-   }
+   else if *a = 2 & i := integer(a[2]) then {
+      break_line := i
+      break_file := a[1]
+   } else
+      return errmsg("usage: breakpoint [file line]")
    synch_mask()
    cmd_out.write(if /break_file then "breakpoint cleared" else "break now " || break_file || " at " || break_line)
 end
@@ -167,6 +169,9 @@ end
 
 procedure do_line(s)
    local a, redir, mode, pipe, p
+
+   s := string(s)
+
    s ? {
       if s := tab(upto('|')) then {
          if is(output, TermDialog) then {
@@ -213,7 +218,7 @@ procedure do_line(s)
       "regions":  do_regions()
       "list":  do_list(a)
       "refs":  do_refs(a)
-      "dump":  do_dump(a)
+      "dump":  do_dump()
       "globals":  do_globals()
       "nglobals":  do_nglobals()
       "prog":  do_prog(a)
@@ -235,16 +240,17 @@ procedure do_line(s)
    else if cmd_out === tmp_out then {
       tmp_out.seek(1)
       if \pipe then {
-         p := ProgOutputStream("/bin/sh", ["-c", pipe]) | {
+         if p := ProgOutputStream("/bin/sh", ["-c", pipe]) then {
+            # This will ignore any SIGPIPE signals (and just fail).
+            tmp_out.copy_to(p)
+            p.close()
+         } else
             output.write("Couldn't open pipe ", pipe, ": ", &why)
-            fail
-         }
-         # This will ignore any SIGPIPE signals (and just fail).
-         tmp_out.copy_to(p)
-         p.close()
       } else
          tmp_out.copy_to(output)
    }
+
+   cmd_out := &null
 end
 
 procedure monitor(task)
