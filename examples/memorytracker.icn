@@ -45,13 +45,23 @@ procedure print_stats(prog)
    write(right(f(t2.get_total()),62),right(t3.get_total(),9))
 end
 
+procedure usage(opts)
+   ewrite("Usage: memorytracker [OPTIONS] program [program options/arguments]")
+   ewrite("Show program allocations")
+   options_help(opts)
+   exit(0)
+end
+
 procedure main(args)
    local opts, proact, e, mask, prog, totals, t, prev_code, u_flag, a
 
    a := []
    while args[1][1] == "-" do
       put(a, pop(args))
-   opts := options(a, [Opt("u",,"Show block/string deallocations separately.")])
+   opts := options(a, [Opt("u",,"Show block/string deallocations separately.")], usage)
+   if *args = 0 then
+      stop("Program and optional arguments expected.")
+
    u_flag := opts["u"]
 
    prog := Prog.load(Files.find_exe(args[1]),args[2:0]) | stop(&why)
