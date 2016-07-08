@@ -13,20 +13,52 @@ class MemDebug()
    public static native prog(name)
    public static native progs()
    public static native regions()
+   public static native slim(val)
+   public static native addrs(val)
    public static native set_program(prog)
    public static native set_output(f)
-   public static native set_param(key, val)
 
    private static init() 
       Class.load_library(Files.find_native_lib("objecticonmemdebug")) | stop("Native library not available") 
    end
 end
 
+procedure do_help()
+   cmd_out.write("stop           - stop the monitored program")
+   cmd_out.write("start          - restart the monitored program")
+   cmd_out.write("exit           - exit immediately")
+   cmd_out.write("regions        - display memory regions")
+   cmd_out.write("list x         - list instances of type x, or show the structure of")
+   cmd_out.write("                 a particular instance x.  For example, list SomeType")
+   cmd_out.write("                 lists all instances of SomeType, whilst list SomeType#22")
+   cmd_out.write("                 shows the elements of a particular instance")
+   cmd_out.write("refs x         - show what points to the given instance, eg refs")
+   cmd_out.write("                 list#21 would show what references that list.")
+   cmd_out.write("dump           - show all globals, statics and structures of the")
+   cmd_out.write("                 current program.")
+   cmd_out.write("globals        - show the global variables of the current program.")
+   cmd_out.write("nglobals       - show the named globals of the current program..")
+   cmd_out.write("prog x         - set the current program, initially set to the")
+   cmd_out.write("                 monitored program.  x should be an &main co-expression.")
+   cmd_out.write("progs          - list all programs and show the current program.")
+   cmd_out.write("statics x      - list the static variables in the given object x,")
+   cmd_out.write("                 which should be a class, procedure or method name.")
+   cmd_out.write("breakproc x    - stop in procedure x in the monitored program.")
+   cmd_out.write("breakpoint x y - stop at line y in file x in the monitored program.")
+   cmd_out.write("slim [i]       - show or set the displayed string limit; 0 means no limit.")
+   cmd_out.write("addrs [i]      - show or set the display of addresses in the regions")
+   cmd_out.write("                    i=0 (no addresses),")
+   cmd_out.write("                    i=1 (addresses for items with no serial number),")
+   cmd_out.write("                    i=2 (show all addresses)")
+   cmd_out.write("cls            - clear the screen.")
+   cmd_out.write("help           - show help.")
+end
+
 procedure do_stop()
    if /stopped then {
       stopped := &yes
       sched.set_poll_timeout(Gui.IDLE_SLEEP)
-      output.write("Stopped")
+      cmd_out.write("Stopped")
    }
 end
 
@@ -34,7 +66,7 @@ procedure do_start()
    if \stopped then {
       stopped := &no
       sched.set_poll_timeout(0)
-      output.write("Started")
+      cmd_out.write("Started")
    }
 end
 
@@ -87,13 +119,24 @@ procedure do_progs()
 end
 
 procedure do_cls()
-   output.writes("\e[2J\e[H")
+   if is(output, DescStream) then
+      output.writes("\e[2J\e[H")
+   else
+      output.clear_text()
 end
 
-procedure do_set(a)
-   if *a ~= 2 then
-      return errmsg("usage: set key val")
-   MemDebug.set_param(a[1], a[2]) | return errmsg(&why)
+procedure do_slim(a)
+   local i
+   if *a > 1 | (*a = 1 & not( i := 0 <= integer(a[1]) )) then
+      return errmsg("usage: slim [length]")
+   MemDebug.slim(i)
+end
+
+procedure do_addrs(a)
+   local i
+   if *a > 1 | (*a = 1 & not( i := integer(a[1]) & 0 <= i <= 2 )) then
+      return errmsg("usage: addrs [n] with n=0, 1 or 2")
+   MemDebug.addrs(i)
 end
 
 procedure do_breakproc(a)
@@ -102,7 +145,7 @@ procedure do_breakproc(a)
    else
       break_proc := a[1]
    synch_mask()
-   output.write(if /break_proc then "break proc cleared" else "break proc now " || break_proc)
+   cmd_out.write(if /break_proc then "break proc cleared" else "break proc now " || break_proc)
 end
 
 procedure do_breakpoint(a)
@@ -113,29 +156,13 @@ procedure do_breakpoint(a)
       break_file := string(a[1])
    }
    synch_mask()
-   output.write(if /break_file then "breakpoint cleared" else "break now " || break_file || " at " || break_line)
+   cmd_out.write(if /break_file then "breakpoint cleared" else "break now " || break_file || " at " || break_line)
 end
 
 procedure do_exit()
    write("Exiting.")
    cleanup()
    exit(0)
-end
-
-procedure do_test(a)
-   local o
-   o := options(a, [Opt("l",, "Long option"),
-                    Opt("n",integer, "Numeric option")], opthelp, errmsg) | fail
-   output.write("a=", to_string(a))
-   output.write("o=", to_string(o))
-end
-
-procedure opthelp(opts)
-   local o, t
-   every o := !opts do {
-      t := o.format()
-      output.write(left(t.names, 20), t.help)
-   }
 end
 
 procedure do_line(s)
@@ -184,7 +211,6 @@ procedure do_line(s)
       "start":  do_start()
       "exit": do_exit()
       "regions":  do_regions()
-      "test":  do_test(a)
       "list":  do_list(a)
       "refs":  do_refs(a)
       "dump":  do_dump(a)
@@ -195,8 +221,10 @@ procedure do_line(s)
       "statics":  do_statics(a)
       "breakproc" :  do_breakproc(a)
       "breakpoint" :  do_breakpoint(a)
-      "set" :  do_set(a)
+      "slim" :  do_slim(a)
+      "addrs" :  do_addrs(a)
       "cls" :  do_cls()
+      "help": do_help()
       default: {
          output.write("Unknown command: ", s)
       }
@@ -282,6 +310,13 @@ procedure cleanup()
    Files.remove(tmp_out_name)
 end
 
+procedure usage(opts)
+   ewrite("Usage: memdebug [OPTIONS] program [program options/arguments]")
+   ewrite("Examine program memory")
+   options_help(opts)
+   exit(0)
+end
+
 procedure main(args)
    local a, v_flag, opts, task, d
 
@@ -292,7 +327,10 @@ procedure main(args)
       put(a, pop(args))
    opts := options(a, [Opt("m",, "Set breakproc in main()"),
                        Opt("g",, "Use a gui interface rather than the console"),
-                       Opt("v",,"Verbose mode.")])
+                       Opt("v",,"Verbose mode.")], usage)
+   if *args = 0 then
+      stop("Program and optional arguments expected.")
+
    v_flag := opts["v"]
 
    prog := Prog.load(Files.find_exe(args[1]), args[2:0]) | stop(&why)

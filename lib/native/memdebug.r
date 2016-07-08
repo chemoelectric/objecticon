@@ -1653,19 +1653,21 @@ static void output_named_global(dptr glob)
 
 }
 
+static void output_global(int i)
+{
+    fprintf(out, "%.*s=", StrF(*prog->Gnames[i]));
+    outimagex(&prog->Globals[i]);
+    fputc('\n', out);
+}
+
 static void output_all_statics()
 {
     int i;
     for (i = 0; i < prog->NGlobals; ++i) {
-        dptr val = &prog->Globals[i];
-        if (prog->Gflags[i] & G_Const) {
-            output_named_global(val);
-        } else {
-            dptr name = prog->Gnames[i];
-            fprintf(out, "%.*s=", StrF(*name));
-            outimagex(val);
-            fputc('\n', out);
-        }
+        if (prog->Gflags[i] & G_Const)
+            output_named_global(&prog->Globals[i]);
+        else
+            output_global(i);
     }
 }
 
@@ -1772,15 +1774,9 @@ end
 function MemDebug_globals()
     body {
        int i;
-       dptr name;
        for (i = 0; i < prog->NGlobals; ++i) {
-           dptr val = &prog->Globals[i];
-           if (!prog->Gflags[i] & G_Const) {
-               name = prog->Gnames[i];
-               fprintf(out, "%.*s=", StrF(*name));
-               outimagex(val);
-               fputc('\n', out);
-           }
+           if (!prog->Gflags[i] & G_Const)
+               output_global(i);
        }
        output_keywords();
        return nulldesc;
@@ -1875,7 +1871,10 @@ function MemDebug_progs()
     body {
        struct progstate *p;
        for (p = progs; p; p = p->next) {
-           fprintf(out, "Program %p\n", p);
+           fprintf(out, "Program %p", p);
+           if (p == prog)
+               fputs(" (current)", out);
+           fputc('\n', out);
            fprintf(out, "\t&main=");
            outblock((union block *)p->K_main);
            fputc('\n', out);
@@ -1937,22 +1936,28 @@ function MemDebug_set_output(f)
     }
 end
 
-function MemDebug_set_param(key, val)
-    if !cnv:C_string(key) then
-      runerr(103, key)
-    if !cnv:C_string(val) then
-      runerr(103, val)
+function MemDebug_slim(val)
     body {
-        if (strcmp(key, "slim") == 0) {
-            slim = atoi(val);
-            fprintf(out, "slim is now " WordFmt "\n", slim);
-        } else if (strcmp(key, "addrs") == 0) {
-            addrs = atoi(val);
-            fprintf(out, "addrs is now %d\n", addrs);
-        } else {
-            LitWhy("Invalid key");
-            fail;
-        }
+       if (!is:null(val)) {
+           word i;
+           if (!cnv:C_integer(val, i))
+               runerr(101, val);
+           slim = i;
+       }
+       fprintf(out, "slim is now " WordFmt "\n", slim);
+       return nulldesc;
+    }
+end
+
+function MemDebug_addrs(val)
+    body {
+       if (!is:null(val)) {
+           word i;
+           if (!cnv:C_integer(val, i))
+               runerr(101, val);
+           addrs = i;
+       }
+       fprintf(out, "addrs is now %d\n", addrs);
        return nulldesc;
     }
 end
@@ -2004,13 +2009,4 @@ function MemDebug_regions()
 
        return nulldesc;
     }
-end
-
-function MemDebug_test(underef x -> dx)
-    body {
-       out = stderr;
-       outimagex(&x);
-       fputc('\n', stderr);
-       return nulldesc;
-   }
 end
