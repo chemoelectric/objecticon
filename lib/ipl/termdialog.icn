@@ -24,7 +24,7 @@ class TermEditableTextList(EditableTextList)
              connect(on_word_wrap, Event.ACTION)).
          add(TextMenuItem().
                set_label("Clear").
-               connect(create set_contents([u""]), Event.ACTION)).
+               connect(create parent_dialog.clear_text(), Event.ACTION)).
          add(TextMenuItem().
              set_label("Quit").
              set_label_right("^Q").
@@ -48,6 +48,11 @@ class TermDialog(Dialog, LineBasedOutputStream)
       line
 
    public close()
+      return self
+   end
+
+   public clear_text()
+      text.set_contents([u""])
       return self
    end
 
