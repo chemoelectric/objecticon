@@ -27,6 +27,7 @@ static struct progstate *prog;
 static struct descrip found;
 static struct query query;
 static int mode;
+static int all_flag;
 static int verbose = 0;
 static int finished = 0;
 static word slim = 64;
@@ -134,6 +135,7 @@ static void proc_statics(char *indent, struct p_proc *pp);
 static void traverse_proc(struct b_proc *proc);
 static void print_stk_element(struct stk_element *e);
 static void traverse_element(struct stk_element e);
+static int is_prog_region(struct region *rp);
 
 
 /* Get from stack, assumes it's not empty */
@@ -613,8 +615,17 @@ static void outimagey(dptr d, struct frame *frame)
                 }
                 if (addrs > 1)
                     addrout(BlkLoc(*d));
-            } else 
+            } else {
                 progout(ObjectBlk(*d).class->program);
+                if (addrs > 0) {
+                    if (is_flowterm_tty(out)) {
+                        link = 1;
+                        fprintf(out, "\x1b[!\"text:%p\"L", BlkLoc(*d));
+                    }
+                    addrout(BlkLoc(*d));
+                }
+            }
+
             outimage1(out, d, 1, slim, llim);
             if (link)
                 fputs("\x1b[!L", out);
@@ -627,8 +638,16 @@ static void outimagey(dptr d, struct frame *frame)
                 }
                 if (addrs > 1)
                     addrout(BlkLoc(*d));
-            } else
+            } else {
                 progout(RecordBlk(*d).constructor->program);
+                if (addrs > 0) {
+                    if (is_flowterm_tty(out)) {
+                        link = 1;
+                        fprintf(out, "\x1b[!\"text:%p\"L", BlkLoc(*d));
+                    }
+                    addrout(BlkLoc(*d));
+                }
+            }
             outimage1(out, d, 1, slim, llim);
             if (link)
                 fputs("\x1b[!L", out);
@@ -1201,44 +1220,40 @@ static void traverse_stack(struct b_coexpr *cp)
     }
 }
 
-static int query_match(struct stk_element *e)
+static int query_match(dptr dp)
 {
-    struct descrip d;
-
-    d = e->dest;
-
-    if (Qual(d)) {
+    if (Qual(*dp)) {
         if (query.type == AddrQuery)
-            return (void *)StrLoc(d) == query.u.by_addr.addr;
+            return (void *)StrLoc(*dp) == query.u.by_addr.addr;
         else
             return 0;
     }
 
     if (query.type == AddrQuery)
-        return (void *)BlkLoc(d) == query.u.by_addr.addr;
+        return (void *)BlkLoc(*dp) == query.u.by_addr.addr;
 
-    if (BlkType(BlkLoc(d)) != query.u.by_title.title)
+    if (BlkType(BlkLoc(*dp)) != query.u.by_title.title)
         return 0;
 
-    if (is:object(d)) {
-        if ((union block *)ObjectBlk(d).class != query.u.by_title.class)
+    if (is:object(*dp)) {
+        if ((union block *)ObjectBlk(*dp).class != query.u.by_title.class)
             return 0;
-    } else if (is:record(d)) {
-        if ((union block *)RecordBlk(d).constructor != query.u.by_title.class)
+    } else if (is:record(*dp)) {
+        if ((union block *)RecordBlk(*dp).constructor != query.u.by_title.class)
             return 0;
     }
     
     if (query.u.by_title.id != 0) {
         uword id;
-        type_case d of {
-          list:     id = ListBlk(d).id;
-          set:      id = SetBlk(d).id;
-          table:    id = TableBlk(d).id;
-          record:   id = RecordBlk(d).id;
-          object:   id = ObjectBlk(d).id;
-          coexpr:   id = CoexprBlk(d).id;
-          methp:    id = MethpBlk(d).id;
-          weakref:  id = WeakrefBlk(d).id;
+        type_case *dp of {
+          list:     id = ListBlk(*dp).id;
+          set:      id = SetBlk(*dp).id;
+          table:    id = TableBlk(*dp).id;
+          record:   id = RecordBlk(*dp).id;
+          object:   id = ObjectBlk(*dp).id;
+          coexpr:   id = CoexprBlk(*dp).id;
+          methp:    id = MethpBlk(*dp).id;
+          weakref:  id = WeakrefBlk(*dp).id;
           default: return 0;   /* should never happen */
         }
         if (id != query.u.by_title.id)
@@ -1247,29 +1262,31 @@ static int query_match(struct stk_element *e)
     return 1;
 }
 
-static void do_dump(struct stk_element *e, struct region *rp)
+static int is_prog_region(struct region *rp)
 {
     struct region *rq;
-    if (Qual(e->dest)) {
-        for (rq = prog->stringregion; rq->prev; rq = rq->prev);
-        for (; rq; rq = rq->next) {
-            if (rp == rq)
-                break;
-        }
-    } else {
-        for (rq = prog->blockregion; rq->prev; rq = rq->prev);
-        for (; rq; rq = rq->next) {
-            if (rp == rq)
-                break;
-        }
+    for (rq = prog->stringregion; rq->prev; rq = rq->prev);
+    for (; rq; rq = rq->next) {
+        if (rp == rq)
+            return 1;
     }
-    if (rp == rq)
+    for (rq = prog->blockregion; rq->prev; rq = rq->prev);
+    for (; rq; rq = rq->next) {
+        if (rp == rq)
+            return 1;
+    }
+    return 0;
+}
+
+static void do_dump(struct stk_element *e, struct region *rp)
+{
+    if (is_prog_region(rp))
         display(&e->dest);
 }
 
-static void do_find(struct stk_element *e)
+static void do_find(struct stk_element *e, struct region *rp)
 {
-    if (!query_match(e))
+    if (!query_match(&e->dest))
         return;
     found = e->dest;
     finished = 1;
@@ -1403,13 +1420,18 @@ static void display(dptr dp)
     }
 }
 
-static void do_list(struct stk_element *e)
+static void do_list(struct stk_element *e, struct region *rp)
 {
-    if (!query_match(e))
+    if (!query_match(&e->dest))
         return;
     if (query.type == TitleQuery && query.u.by_title.id == 0) {
-        outimagex(&e->dest);
-        fputc('\n', out);
+        if (is_prog_region(rp)) {
+            outimagex(&e->dest);
+            fputc('\n', out);
+        } else if (all_flag) {
+            outimagex(&e->dest);
+            fprintf(out, " in foreign region %p\n", rp);
+        }
     } else {
         finished = 1;
         display(&e->dest);
@@ -1418,7 +1440,7 @@ static void do_list(struct stk_element *e)
 
 static void do_refs(struct stk_element *e)
 {
-    if (!query_match(e))
+    if (!query_match(&e->dest))
         return;
     print_stk_element(e);
     fputc('\n', out);
@@ -1470,8 +1492,8 @@ static void traverse_element(struct stk_element e)
     mark(addr);
 
     switch (mode) {
-        case ListMode: do_list(&e); break;
-        case FindMode: do_find(&e); break;
+        case ListMode: do_list(&e, rp); break;
+        case FindMode: do_find(&e, rp); break;
         case DumpMode: do_dump(&e, rp); break;
     }
 
@@ -1598,13 +1620,16 @@ static int parsequery(char *buf, struct query *ret)
     return 1;
 }
 
-function MemDebug_list(s)
+function MemDebug_list(s, flag)
    if !cnv:string(s) then
       runerr(103, s)
     body {
+       if (!isflag(&flag))
+          runerr(171, flag);
        if (!parsequery(buffstr(&s), &query))
            fail;
        verbose = 0;
+       all_flag = is:yes(flag);
        traverse(ListMode);
        return nulldesc;
     }
@@ -1887,25 +1912,24 @@ function MemDebug_prog(s)
    if !cnv:string(s) then
       runerr(103, s)
     body {
+       struct progstate *p;
        if (!parsequery(buffstr(&s), &query))
            fail;
        if (query.type == TitleQuery && (query.u.by_title.title != T_Coexpr || query.u.by_title.id == 0)) {
            LitWhy("prog needs an unique co-expression as parameter.");
            fail;
        }
-       verbose = 0;
-       traverse(FindMode);
-       if (!is:coexpr(found)) {
-           LitWhy("co-expression not found.");
-           fail;
+       for (p = progs; p; p = p->next) {
+           struct descrip km = block_to_descriptor((union block *)p->K_main);
+           if (query_match(&km))
+               break;
        }
-       if (!CoexprBlk(found).main_of) {
+       if (!p) {
            LitWhy("co-expression is not &main of a program.");
            fail;
        }
-       prog = CoexprBlk(found).main_of;
+       prog = p;
        fprintf(out, "prog set to %p\n", prog);
-       found = nulldesc;
 
        return nulldesc;
     }

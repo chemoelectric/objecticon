@@ -28,10 +28,11 @@ procedure do_help()
    cmd_out.write("start             - restart the monitored program")
    cmd_out.write("exit              - exit immediately")
    cmd_out.write("regions           - display memory regions")
-   cmd_out.write("list x            - list instances of type x, or show the structure of")
+   cmd_out.write("list [-a] x       - list instances of type x, or show the structure of")
    cmd_out.write("                    a particular instance x.  For example, list SomeType")
    cmd_out.write("                    lists all instances of SomeType, whilst list SomeType#22")
-   cmd_out.write("                    shows the elements of a particular instance")
+   cmd_out.write("                    shows the elements of a particular instance.  -a means")
+   cmd_out.write("                    include regions outside the current program's regions.")
    cmd_out.write("refs x            - show what points to the given instance, eg refs")
    cmd_out.write("                    list#21 would show what references that list.")
    cmd_out.write("dump              - show all globals, statics and structures of the")
@@ -78,9 +79,19 @@ procedure errmsg(s)
    output.write(s)
 end
 
+procedure opthelp(opts)
+   local o, t
+   every o := !opts do {
+      t := o.format()
+      output.write(left(t.names, 20), t.help)
+   }
+end
+
 procedure do_list(a)
-   (*a = 1) | return errmsg("usage: list object")
-   MemDebug.list(a[1]) | return errmsg(&why)
+   local o
+   o := options(a, [Opt("a",, "All regions")], opthelp, errmsg) | fail
+   (*a = 1) | return errmsg("usage: list [-a] object")
+   MemDebug.list(a[1], o["a"]) | return errmsg(&why)
 end
 
 procedure do_refs(a)
