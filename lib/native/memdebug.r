@@ -1284,7 +1284,7 @@ static void do_dump(struct stk_element *e, struct region *rp)
         display(&e->dest);
 }
 
-static void do_find(struct stk_element *e, struct region *rp)
+static void do_find(struct stk_element *e)
 {
     if (!query_match(&e->dest))
         return;
@@ -1493,7 +1493,7 @@ static void traverse_element(struct stk_element e)
 
     switch (mode) {
         case ListMode: do_list(&e, rp); break;
-        case FindMode: do_find(&e, rp); break;
+        case FindMode: do_find(&e); break;
         case DumpMode: do_dump(&e, rp); break;
     }
 
@@ -2009,6 +2009,7 @@ static void print_region(char *type, struct region *rp)
     fputc('\n', out);
     fprintf(out, "\tSize=%'" UWordFmtCh "\n", rp->size);
     fprintf(out, "\tUsage=%'" UWordFmtCh " (%.2f%%)\n", used, (100.0 * (double)used) / rp->size);
+    fprintf(out, "\tAddresses=%p - %p\n", rp->base, rp->free);
     fprintf(out, "\tCompacted=%d\n", rp->compacted);
 }
 
