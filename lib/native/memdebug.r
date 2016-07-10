@@ -1826,6 +1826,8 @@ function MemDebug_statics(s)
         dptr glob;
         glob = lookup_named_global(&s, 1, prog);
         if (glob) {
+            outimagex(glob);
+            fputc('\n', out);
             type_case *glob of {
               proc: {
                     if (ProcBlk(*glob).type == P_Proc)
@@ -1841,7 +1843,7 @@ function MemDebug_statics(s)
                         if (field->defining_class == class0) {
                             if ((field->flags & (M_Method | M_Static)) == M_Static) {
                                 dptr name = class0->program->Fnames[field->fnum];
-                                fprintf(out, "%.*s=", StrF(*name));
+                                fprintf(out, "\t%.*s=", StrF(*name));
                                 outimagex(field->field_descriptor);
                                 fputc('\n', out);
                             }
@@ -1885,6 +1887,8 @@ function MemDebug_statics(s)
                 LitWhy("Field not a method");
                 fail;
             }
+            outimagex(field->field_descriptor);
+            fputc('\n', out);
             if (ProcBlk(*field->field_descriptor).type == P_Proc)
                 proc_statics("\t", (struct p_proc *)&ProcBlk(*field->field_descriptor));
         }
