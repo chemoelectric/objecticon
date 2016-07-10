@@ -1,7 +1,7 @@
 import io, lang, ipl.options, gui, ipl.termdialog, ipl.strings, ipl.pdco
 
 global prog, output, stopped, sched, break_proc, break_line, break_file, 
-   curr_file, tmp_out, tmp_out_name, cmd_out
+   curr_file, tmp_out, tmp_out_name, cmd_out, exited
 
 class MemDebug()
    public static native list(obj)
@@ -64,7 +64,9 @@ procedure do_stop()
 end
 
 procedure do_start()
-   if \stopped then {
+   if \exited then
+      output.write("Can't restart exited program")
+   else if \stopped then {
       stopped := &no
       sched.set_poll_timeout(0)
       output.write("Started")
@@ -275,13 +277,15 @@ procedure monitor(task)
    }
    write("Reverting")
    ed.close()
-   task.revert()
    monitor_exit()
+   task.revert()
 end
 
 procedure monitor_exit()
-   do_start()
-   Prog.set_event_mask('', prog)
+   if /exited then {
+      do_start()
+      Prog.set_event_mask('', prog)
+   }
 end
 
 procedure next_event()
@@ -289,6 +293,7 @@ procedure next_event()
    e := Prog.get_event(prog) | {
       output.write("Monitored program exited.")
       do_stop()
+      exited := &yes
       fail
    }
    case e.code of {
