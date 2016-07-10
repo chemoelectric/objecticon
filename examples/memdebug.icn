@@ -368,6 +368,7 @@ procedure main(args)
 
    if \opts["g"] then {
       d := TermDialog().
+         set_label("memdebug").
          connect(create {
             d.write("? ", d.line)
             do_line(d.line)
