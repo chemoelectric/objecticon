@@ -757,7 +757,7 @@ static void outimagey(dptr d, struct frame *frame)
             if ((other = find_global(vp))) {
                 if (other != prog)
                     progout(other);
-                putstr(out, other->Gnames[vp - other->Globals]); 		/* global */
+                fprintf(out, "global %.*s", StrF(*other->Gnames[vp - other->Globals]));       /* global */
             } else if ((other = find_class_static(vp))) {
                 /*
                  * Class static field
@@ -771,14 +771,14 @@ static void outimagey(dptr d, struct frame *frame)
             } else if ((other = find_procedure_static(vp))) {
                 if (other != prog)
                     progout(other);
-                putstr(out, other->Snames[vp - other->Statics]); 		/* static in procedure */
+                fprintf(out, "static %.*s", StrF(*other->Snames[vp - other->Statics]));         /* static in procedure */
             } else {
                 while (frame) {
                     if (frame->type == P_Frame) {
                         struct p_frame *pf = (struct p_frame *)frame;
                         if (pf->proc->program &&
                             InRange(pf->fvars->desc, vp, pf->fvars->desc_end)) {
-                            putstr(out, pf->proc->lnames[vp - pf->fvars->desc]);          /* argument/local */
+                            fprintf(out, "local %.*s", StrF(*pf->proc->lnames[vp - pf->fvars->desc]));   /* argument/local */
                             break;
                         }
                     }
