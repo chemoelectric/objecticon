@@ -1964,28 +1964,20 @@ function MemDebug_set_output(f)
     }
 end
 
-function MemDebug_slim(val)
+function MemDebug_set_slim(val)
+   if !cnv:C_integer(val) then
+       runerr(101, val)
     body {
-       if (!is:null(val)) {
-           word i;
-           if (!cnv:C_integer(val, i))
-               runerr(101, val);
-           slim = i;
-       }
-       fprintf(out, "slim is now " WordFmt "\n", slim);
+       slim = val;
        return nulldesc;
     }
 end
 
-function MemDebug_addrs(val)
+function MemDebug_set_addrs(val)
+   if !cnv:C_integer(val) then
+       runerr(101, val)
     body {
-       if (!is:null(val)) {
-           word i;
-           if (!cnv:C_integer(val, i))
-               runerr(101, val);
-           addrs = i;
-       }
-       fprintf(out, "addrs is now %d\n", addrs);
+       addrs = val;
        return nulldesc;
     }
 end
