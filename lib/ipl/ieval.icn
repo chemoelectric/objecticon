@@ -536,15 +536,9 @@ class Ieval(MinimalObjectOutput)
       s := ""
       prompt := "> "
       repeat {
-         if \hist_line then {
-            write(prompt, hist_line)
-            t := hist_line
-            hist_line := &null
-         } else {
-            writes(prompt)
-            t := input.read_line() | stop("Failed to read file: ", &why)
-            if /t then break
-         }
+         writes(prompt)
+         t := input.read_line() | stop("Failed to read file: ", &why)
+         if /t then break
          s ||:= t
          if s[-1] == "\\" then {
             s[-1] := ""
