@@ -42,7 +42,7 @@ procedure wreflect(win1, dir)
    height := win1.get_height()
    width := win1.get_width()
 
-   win2 := Window().set_size(width, height) |
+   win2 := Window(win1.get_display()).set_size(width, height) |
       syserr("*** cannot window for reflection")
 
    case dir of {
@@ -82,7 +82,7 @@ procedure wrotate(win1, dir)
 
    case integer(dir) of {
       90:  {
-         win2 := Window().set_size(height, width) | syserr("*** cannot open target window")
+         win2 := Window(win1.get_display()).set_size(height, width) | syserr("*** cannot open target window")
          px1 := win1.get_pixels()
          px2 := Pixels(height, width)
          every p := px1.gen_rgba() do
@@ -92,7 +92,7 @@ procedure wrotate(win1, dir)
          px2.close()
          }
       -90:  {
-         win2 := Window().set_size(height, width) | syserr("*** cannot open target window")
+         win2 := Window(win1.get_display()).set_size(height, width) | syserr("*** cannot open target window")
          px1 := win1.get_pixels()
          px2 := Pixels(height, width)
          every p := px1.gen_rgba() do
@@ -102,7 +102,7 @@ procedure wrotate(win1, dir)
          px2.close()
          }
       180:  {
-         win2 := Window().set_size(width, height) | syserr("*** cannot open target window")
+         win2 := Window(win1.get_display()).set_size(width, height) | syserr("*** cannot open target window")
          px1 := win1.get_pixels()
          px2 := Pixels(width, height)
          every p := px1.gen_rgba() do
@@ -130,14 +130,14 @@ procedure wcatenate(win1, win2, dir)
 
    case dir of {
       "h":  {
-         win3 := Window().set_size(width1 + width2, max(height1, height2)) |
+         win3 := Window(win1.get_display()).set_size(width1 + width2, max(height1, height2)) |
                syserr("*** cannot open window for concatenation")
          win1.copy_to(,,,, win3)
          win2.copy_to(0, 0, width2, height2, 
                       win3, width1, 0)
          }
       "v":  {
-         win3 := Window().set_size(max(width1, width2), height1 + height2) |
+         win3 := Window(win1.get_display()).set_size(max(width1, width2), height1 + height2) |
                syserr("*** cannot open window for concatenation")
          win1.copy_to(,,,, win3)
          win2.copy_to(0, 0, width2, height2, 
