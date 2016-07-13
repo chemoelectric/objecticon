@@ -93,13 +93,24 @@ class TermDialog(Dialog, LineBasedOutputStream)
       return .history_start_no
    end
 
-   private move_hist(n)
+   private goto_hist(n)
       local subj
       subj := input.get_contents()
-      (subj == ucs(history[hpos])) | (hmod[hpos] := subj)
-      hpos +:= n
-      subj := \hmod[hpos] | ucs(history[hpos]) | u"?? bad utf8 in history"
+      if subj == history[hpos] then
+         delete(hmod, hpos)
+      else
+         insert(hmod, hpos, subj)
+      hpos := n
+      subj := get_mod_hist(hpos)
       input.set_contents(subj)
+   end
+
+   private get_mod_hist(n)
+      return \hmod[n] | history[n]
+   end
+
+   private move_hist(n)
+      goto_hist(hpos + n)
    end
 
    private limit_history()
@@ -126,6 +137,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
    public new()
       Dialog.new()
       LineBasedOutputStream.new()
+      hmod := table()
       history := []
       history_start_no := 1
       log_limit := 600
@@ -135,7 +147,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
 
    private reset_term()
       hpos := *history + 1
-      hmod := table()
+      clear(hmod)
       input.set_contents(u"")
    end
 
@@ -161,11 +173,28 @@ class TermDialog(Dialog, LineBasedOutputStream)
       input.assign_contents(get_history_item(integer(input.get_contents())), ev)
    end
 
+   private handle_history_search(dir)
+      local i, s, c
+      c := input.cursor
+      s := input.get_contents()[1:c]
+      every i := if dir > 0 then (hpos + 1 to *history) | (1 to hpos - 1)
+                            else (hpos - 1 to 1 by -1) | (*history to hpos + 1 by -1) do {
+         if match(s, get_mod_hist(i)) then {
+            goto_hist(i)
+            input.set_cursor(c)
+            return
+         }
+      }
+   end
+
    private on_input_key(ev)
       case ev.code of {
          Key.UP : handle_key_up(ev)
          Key.DOWN : handle_key_down(ev)
          "\^p": handle_history_recall(ev)
+         "\^r": handle_history_search(-1)
+         "\^t": handle_history_search(1)
+         "\^b": reset_term()
       }
    end
 
