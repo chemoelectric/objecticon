@@ -63,6 +63,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
    end
 
    private goto_hist(n)
+      (1 <= n <= *history + 1) | fail
       if subj == history[hpos] then
          delete(hmod, hpos)
       else
@@ -262,7 +263,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
    end
 
    private read_line_impl2()
-      local ch, uch, p, n, ed, un, cmd, s
+      local ch, uch, p, n, ed, un, cmd
       reset_term()
       buff_flag := line_no := nlines := &null
       dim := get_console_size() | fail
@@ -303,8 +304,8 @@ class LineEditorStream(LineBasedInputStream, HasTask)
             } else if \buff_flag then
                buff ||:= cmd
             else case cmd of {
-               ti["key_up"]: if hpos > 1 then move_hist(-1)
-               ti["key_down"]: if hpos <= *history then move_hist(1)
+               ti["key_up"]: move_hist(-1)
+               ti["key_down"]: move_hist(1)
                ti["key_right"]: pos := (*subj + 1 >= pos + 1)
                ti["key_left"]: pos := (1 <= pos - 1)
                ti["key_home"]: pos := 1
@@ -355,13 +356,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
                   undo_manager.add_edit(ed)
                }
             }
-            "\^p": {
-               if s := get_history_item(integer(subj)) then {
-                  ed := LineEditorAssignEdit(self, s)
-                  ed.doit()
-                  undo_manager.add_edit(ed)
-               }
-            }
+            "\^p": goto_hist(integer(subj) - history_start_no + 1)
             "\^r": hist_search(-1)
             "\^t": hist_search(1)
             "\d": {
@@ -562,33 +557,6 @@ class LineEditorDeleteToEndOfLineEdit(LineEditorEdit)
 
    public new(parent)
       LineEditorEdit.new(parent)
-      return
-   end
-end
-
-class LineEditorAssignEdit(LineEditorEdit)
-   public s, pre
-
-   public add_edit(other)
-      if is(other, LineEditorAssignEdit) then {
-         self.s := other.s
-         return
-      }
-   end
-
-   protected redo_impl()
-      pre := parent.subj
-      parent.subj := s
-      parent.pos := *s + 1
-   end
-
-   protected undo_impl()
-      parent.subj := pre
-   end
-
-   public new(parent, s)
-      LineEditorEdit.new(parent)
-      self.s := s
       return
    end
 end

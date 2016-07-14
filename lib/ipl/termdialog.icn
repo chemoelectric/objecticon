@@ -95,6 +95,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
 
    private goto_hist(n)
       local subj
+      (1 <= n <= *history + 1) | fail
       subj := input.get_contents()
       if subj == history[hpos] then
          delete(hmod, hpos)
@@ -161,16 +162,16 @@ class TermDialog(Dialog, LineBasedOutputStream)
       fire(Event.ACTION, ev)
    end
    
-   private handle_key_up(e)
-      if hpos > 1 then move_hist(-1)
+   private handle_key_up()
+      move_hist(-1)
    end
 
-   private handle_key_down(e)
-      if hpos <= *history then move_hist(1)
+   private handle_key_down()
+      move_hist(1)
    end
 
-   private handle_history_recall(ev)
-      input.assign_contents(get_history_item(integer(input.get_contents())), ev)
+   private handle_history_recall()
+      goto_hist(integer(input.get_contents()) - history_start_no + 1)
    end
 
    private handle_history_search(dir)
@@ -189,9 +190,9 @@ class TermDialog(Dialog, LineBasedOutputStream)
 
    private on_input_key(ev)
       case ev.code of {
-         Key.UP : handle_key_up(ev)
-         Key.DOWN : handle_key_down(ev)
-         "\^p": handle_history_recall(ev)
+         Key.UP : handle_key_up()
+         Key.DOWN : handle_key_down()
+         "\^p": handle_history_recall()
          "\^r": handle_history_search(-1)
          "\^t": handle_history_search(1)
          "\^b": reset_term()
