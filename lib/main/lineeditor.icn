@@ -423,15 +423,16 @@ class LineEditorStream(LineBasedInputStream, HasTask)
    public new()
       LineBasedInputStream.new()
       tty := FileStream.stdin
-      if run_stty() then
+      if run_stty() then {
          isatty := &yes
+         ti := read_terminfo() | fail
+      }
       undo_manager := UndoManager()
       hmod := table()
       history := []
       history_start_no := 1
       prompt := ""
       buff := ""
-      ti := read_terminfo() | fail
       return
    end
 end
