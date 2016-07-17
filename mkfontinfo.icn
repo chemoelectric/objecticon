@@ -9,7 +9,7 @@ end
 procedure get_family(w, s)
    if find("smiley"|"shinonome/k", s) then
       fail
-   if find("passwd", s) then
+   if find("/passwd", s) then
       return "passwd"
    if find("/lucm/", s) then
       return "lucm"
@@ -18,19 +18,19 @@ procedure get_family(w, s)
       return if is_mono(w) then "typewriter" else "latin1CW"
    if find("lucida/", s) then
       return "sans"
-   if find("fixed", s) then
+   if find("fixed/", s) then
       return "fixed"
-   if find("pelm", s) then
+   if find("pelm/", s) then
       return "mono"
-   if find("courier", s) then
+   if find("courier/", s) then
       return "typewriter"
-   if find("lucidasans", s) then
+   if find("lucidasans/", s) then
       return if is_mono(w) then "mono" else "sans"
-   if find("times"|"palatino"|"cuni", s) then
+   if find("cuni/", s) then
       return "serif"
    s ? {
       ="/lib/font/bit/"
-      return tab(upto('/'))
+      return map(tab(upto('/')))
    }
 end
 
@@ -38,7 +38,7 @@ procedure get_slant(s)
    if find("fixed/unicode.7x13O"|"fixed/unicode.8x13O"|"fixed/unicode.6x13O", s) then
       return "oblique"
 
-   if find("shinonome", s) then {
+   if find("shinonome/", s) then {
       if find("i.", s) then
          return "italic"
       return "roman"
@@ -50,7 +50,7 @@ procedure get_slant(s)
 end
 
 procedure get_weight(s)
-   if find("shinonome", s) then {
+   if find("shinonome/", s) then {
       if find("bi."|"b.", s) then
          return "bold"
       return "medium"
@@ -66,11 +66,7 @@ procedure get_width(s)
 end
 
 procedure get_serif(s, fam)
-   case fam of {
-      "mono"|"sans": return "sans"
-      "typewriter"|"serif": return "serif"
-   }
-   if find("times", s) then
+   if fam == ("times"|"palatino"|"symbola"|"typewriter"|"serif") then
       return "serif"
    return "sans"
 end
