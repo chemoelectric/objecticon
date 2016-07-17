@@ -26,7 +26,7 @@ procedure get_family(w, s)
       return "typewriter"
    if find("lucidasans", s) then
       return if is_mono(w) then "mono" else "sans"
-   if find("times"|"palatino", s) then
+   if find("times"|"palatino"|"cuni", s) then
       return "serif"
    s ? {
       ="/lib/font/bit/"
