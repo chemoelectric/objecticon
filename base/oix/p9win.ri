@@ -73,6 +73,8 @@ static wbp findwbp(wsp ws);
 static wcp clonecontext(wcp src);
 static void freewindow(wsp ws);
 static void freecontext(wcp wc);
+static int simplify_font_flag(int flags, int src, int dest);
+static int simplify_font_flags(int flags);
 
 static struct imgdataformat imgdataformat_P9ABGR32;
 static struct imgdataformat imgdataformat_P9AG16;
@@ -2510,6 +2512,29 @@ static struct FontInfo *best_font(struct FontInfo *f1, struct FontInfo *f2, int 
     return f1;
 }
 
+static int simplify_font_flag(int flags, int src, int dest)
+{
+    if (flags & src)
+        flags = (flags & ~src) | dest;
+    return flags;
+}
+
+static int simplify_font_flags(int flags)
+{
+    /* Turn oblique into italic */
+    flags = simplify_font_flag(flags, FONTFLAG_OBLIQUE, FONTFLAG_ITALIC);
+
+    /* Turn thin and light to medium; demibold to bold */
+    flags = simplify_font_flag(flags, FONTFLAG_THIN | FONTFLAG_LIGHT, FONTFLAG_MEDIUM);
+    flags = simplify_font_flag(flags, FONTFLAG_DEMIBOLD, FONTFLAG_BOLD);
+
+    /* Turn all widths to normal */
+    flags = simplify_font_flag(flags, 
+                               FONTFLAG_CONDENSED | FONTFLAG_NARROW | FONTFLAG_WIDE | FONTFLAG_EXTENDED,
+                               FONTFLAG_NORMAL);
+    return flags;
+}
+
 static struct FontInfo *match_font(char *s)
 {
     int flags, h;
@@ -2520,6 +2545,7 @@ static struct FontInfo *match_font(char *s)
     if (!parsefont(s, family, &flags, &size))
         return 0;
 
+    flags = simplify_font_flags(flags);
     h = hasher(hashcstr(family), font_info);
     for (curr = font_info[h]; curr; curr = curr->next) {
         if (acceptable_font(curr, family, flags, size)) {
@@ -2569,7 +2595,7 @@ static void load_font_info(void)
                         fi = safe_malloc(sizeof(struct FontInfo));
                         fi->path = salloc(buff);
                         fi->family = salloc(family);
-                        fi->flags = flags;
+                        fi->flags = simplify_font_flags(flags);
                         fi->size = size;
                         h = hasher(hashcstr(fi->family), font_info);
                         fi->next = font_info[h];
