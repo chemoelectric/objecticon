@@ -168,17 +168,18 @@ extern struct imgdataformat imgdataformat_X11BGRA32;
 #define FONTFLAG_OBLIQUE        0x00000040
 
 #define FONTATT_WEIGHT          0x08000000
-#define FONTFLAG_LIGHT          0x00000100
-#define FONTFLAG_MEDIUM         0x00000200
-#define FONTFLAG_DEMI           0x00000400
-#define FONTFLAG_BOLD           0x00000800
+#define FONTFLAG_THIN           0x00000100
+#define FONTFLAG_LIGHT          0x00000200
+#define FONTFLAG_MEDIUM         0x00000400
+#define FONTFLAG_DEMIBOLD       0x00000800
+#define FONTFLAG_BOLD           0x00001000
 
 #define FONTATT_WIDTH           0x10000000
-#define FONTFLAG_CONDENSED      0x00001000
-#define FONTFLAG_NARROW         0x00002000
-#define FONTFLAG_NORMAL         0x00004000
-#define FONTFLAG_WIDE           0x00008000
-#define FONTFLAG_EXTENDED       0x00010000
+#define FONTFLAG_CONDENSED      0x00002000
+#define FONTFLAG_NARROW         0x00004000
+#define FONTFLAG_NORMAL         0x00008000
+#define FONTFLAG_WIDE           0x00010000
+#define FONTFLAG_EXTENDED       0x00020000
 
 /*
  * Here are the events we support (in addition to keyboard characters)

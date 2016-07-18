@@ -271,7 +271,7 @@ class FontTestDialog(Dialog)
          set_constraint(Grid.X_WEIGHT, 1.0).
          set_tooltip(paint_7).
          connect(self.synch_font, Event.SELECTION_CHANGED).
-         set_selection_list(["-", "medium", "demibold", "bold", "light"])
+         set_selection_list(["-", "thin", "light", "medium", "demibold", "bold"])
       paint_8 := TextPaint("slant")
       slant_list := List().
          clear_constraints().
