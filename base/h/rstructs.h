@@ -452,14 +452,15 @@ struct progstate {
     uword stackcurr;			/* current stack allocation in use (frame
                                          * and local structs) */
 
-    word collected_user;		/* number of user triggered collections */
-    word collected_string;		/* number of string collect requests */
-    word collected_block;		/* number of block collect requests */
-    word collected_stack;		/* number of stack collect requests */
+    int collected_user;                 /* number of user triggered collections */
+    int collected_string;               /* number of string collect requests */
+    int collected_block;                /* number of block collect requests */
+    int collected_stack;                /* number of stack collect requests */
+
     struct region *stringregion;
     struct region *blockregion;
 
-    word exited;                        /* set to 1 when the main procedure exits */
+    int exited;                         /* set to 1 when the main procedure exits */
 
     int K_errornumber;
     struct descrip K_errortext;

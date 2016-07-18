@@ -1389,8 +1389,7 @@ stringint fontwords[] = {
     { 0,                17 },           /* number of entries */
     { "bold",           FONTATT_WEIGHT  | FONTFLAG_BOLD },
     { "condensed",      FONTATT_WIDTH   | FONTFLAG_CONDENSED },
-    { "demi",           FONTATT_WEIGHT  | FONTFLAG_DEMI },
-    { "demibold",       FONTATT_WEIGHT  | FONTFLAG_DEMI | FONTFLAG_BOLD },
+    { "demibold",       FONTATT_WEIGHT  | FONTFLAG_DEMIBOLD },
     { "extended",       FONTATT_WIDTH   | FONTFLAG_EXTENDED },
     { "italic",         FONTATT_SLANT   | FONTFLAG_ITALIC },
     { "light",          FONTATT_WEIGHT  | FONTFLAG_LIGHT },
@@ -1403,6 +1402,7 @@ stringint fontwords[] = {
     { "roman",          FONTATT_SLANT   | FONTFLAG_ROMAN },
     { "sans",           FONTATT_SERIF   | FONTFLAG_SANS },
     { "serif",          FONTATT_SERIF   | FONTFLAG_SERIF },
+    { "thin",           FONTATT_WEIGHT  | FONTFLAG_THIN },
     { "wide",           FONTATT_WIDTH   | FONTFLAG_WIDE },
 };
 

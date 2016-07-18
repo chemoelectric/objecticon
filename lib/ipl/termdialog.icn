@@ -24,7 +24,7 @@ class TermEditableTextList(EditableTextList)
              connect(on_word_wrap, Event.ACTION)).
          add(TextMenuItem().
                set_label("Clear").
-               connect(create set_contents([u""]), Event.ACTION)).
+               connect(create parent_dialog.clear_text(), Event.ACTION)).
          add(TextMenuItem().
              set_label("Quit").
              set_label_right("^Q").
@@ -51,6 +51,11 @@ class TermDialog(Dialog, LineBasedOutputStream)
       return self
    end
 
+   public clear_text()
+      text.set_contents([u""])
+      return self
+   end
+
    protected write_line_impl(s)
       text.log([ucs(s)], log_limit)
       return
@@ -64,6 +69,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
    public set_history_limit(n)
       self.history_limit := n
       limit_history()
+      reset_term()
       return self
    end
 
@@ -71,6 +77,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
       self.history := l
       self.history_start_no := 1
       limit_history()
+      reset_term()
       return self
    end
 
@@ -86,13 +93,25 @@ class TermDialog(Dialog, LineBasedOutputStream)
       return .history_start_no
    end
 
-   private move_hist(n)
+   private goto_hist(n)
       local subj
+      (1 <= n <= *history + 1) | fail
       subj := input.get_contents()
-      (subj == ucs(history[hpos])) | (hmod[hpos] := subj)
-      hpos +:= n
-      subj := \hmod[hpos] | ucs(history[hpos]) | u"?? bad utf8 in history"
+      if subj == history[hpos] then
+         delete(hmod, hpos)
+      else
+         insert(hmod, hpos, subj)
+      hpos := n
+      subj := get_mod_hist(hpos)
       input.set_contents(subj)
+   end
+
+   private get_mod_hist(n)
+      return \hmod[n] | history[n]
+   end
+
+   private move_hist(n)
+      goto_hist(hpos + n)
    end
 
    private limit_history()
@@ -119,6 +138,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
    public new()
       Dialog.new()
       LineBasedOutputStream.new()
+      hmod := table()
       history := []
       history_start_no := 1
       log_limit := 600
@@ -128,7 +148,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
 
    private reset_term()
       hpos := *history + 1
-      hmod := table()
+      clear(hmod)
       input.set_contents(u"")
    end
 
@@ -142,23 +162,40 @@ class TermDialog(Dialog, LineBasedOutputStream)
       fire(Event.ACTION, ev)
    end
    
-   private handle_key_up(e)
-      if hpos > 1 then move_hist(-1)
+   private handle_key_up()
+      move_hist(-1)
    end
 
-   private handle_key_down(e)
-      if hpos <= *history then move_hist(1)
+   private handle_key_down()
+      move_hist(1)
    end
 
-   private handle_history_recall(ev)
-      input.assign_contents(get_history_item(integer(input.get_contents())), ev)
+   private handle_history_recall()
+      goto_hist(integer(input.get_contents()) - history_start_no + 1)
+   end
+
+   private handle_history_search(dir)
+      local i, s, c
+      c := input.cursor
+      s := input.get_contents()[1:c]
+      every i := if dir > 0 then (hpos + 1 to *history) | (1 to hpos - 1)
+                            else (hpos - 1 to 1 by -1) | (*history to hpos + 1 by -1) do {
+         if match(s, get_mod_hist(i)) then {
+            goto_hist(i)
+            input.set_cursor(c)
+            return
+         }
+      }
    end
 
    private on_input_key(ev)
       case ev.code of {
-         Key.UP : handle_key_up(ev)
-         Key.DOWN : handle_key_down(ev)
-         "\^p": handle_history_recall(ev)
+         Key.UP : handle_key_up()
+         Key.DOWN : handle_key_down()
+         "\^p": handle_history_recall()
+         "\^r": handle_history_search(-1)
+         "\^t": handle_history_search(1)
+         "\^b": reset_term()
       }
    end
 

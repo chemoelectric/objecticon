@@ -3652,14 +3652,16 @@ char *tofcpatternstr(char *s)
 
     FcPatternAddDouble(p, FC_SIZE, size);
 
-    if (flags & FONTFLAG_MEDIUM)
+    if (flags & FONTFLAG_THIN)
+        FcPatternAddInteger(p, FC_WEIGHT, FC_WEIGHT_THIN);
+    else if (flags & FONTFLAG_LIGHT)
+        FcPatternAddInteger(p, FC_WEIGHT, FC_WEIGHT_LIGHT);
+    else if (flags & FONTFLAG_MEDIUM)
         FcPatternAddInteger(p, FC_WEIGHT, FC_WEIGHT_MEDIUM);
-    else if ((flags & FONTFLAG_DEMI) && (flags & FONTFLAG_BOLD))
+    else if (flags & FONTFLAG_DEMIBOLD)
         FcPatternAddInteger(p, FC_WEIGHT, FC_WEIGHT_DEMIBOLD);
     else if (flags & FONTFLAG_BOLD)
         FcPatternAddInteger(p, FC_WEIGHT, FC_WEIGHT_BOLD);
-    else if (flags & FONTFLAG_LIGHT)
-        FcPatternAddInteger(p, FC_WEIGHT, FC_WEIGHT_LIGHT);
 
     if (flags & FONTFLAG_ITALIC)
         FcPatternAddInteger(p, FC_SLANT, FC_SLANT_ITALIC);
@@ -3672,6 +3674,17 @@ char *tofcpatternstr(char *s)
         FcPatternAddInteger(p, FC_SPACING, FC_PROPORTIONAL);
     if (flags & FONTFLAG_MONO)
         FcPatternAddInteger(p, FC_SPACING, FC_MONO);
+
+    if (flags & FONTFLAG_CONDENSED)
+        FcPatternAddInteger(p, FC_WIDTH, FC_WIDTH_CONDENSED);
+    else if (flags & FONTFLAG_NARROW)
+        FcPatternAddInteger(p, FC_WIDTH, FC_WIDTH_SEMICONDENSED);
+    else if (flags & FONTFLAG_NORMAL)
+        FcPatternAddInteger(p, FC_WIDTH, FC_WIDTH_NORMAL);
+    else if (flags & FONTFLAG_WIDE)
+        FcPatternAddInteger(p, FC_WIDTH, FC_WIDTH_SEMIEXPANDED);
+    else if (flags & FONTFLAG_EXTENDED)
+        FcPatternAddInteger(p, FC_WIDTH, FC_WIDTH_EXPANDED);
 
     t = (char *)FcNameUnparse(p);
     strncpy(res, t, sizeof(res) - 1);

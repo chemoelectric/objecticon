@@ -169,8 +169,8 @@ class Grid()
       ci.y_fill := validate_flag(t, Y_FILL)
       ci.x_align := validate_x_align(t, X_ALIGN)
       ci.y_align := validate_y_align(t, Y_ALIGN)
-      ci.x_weight := validate_real(t, X_WEIGHT, 0)
-      ci.y_weight := validate_real(t, Y_WEIGHT, 0)
+      ci.x_weight := validate_real(t, X_WEIGHT, 0.0)
+      ci.y_weight := validate_real(t, Y_WEIGHT, 0.0)
 
       put(info, ci)
 
@@ -257,7 +257,7 @@ class Grid()
       col_weights := list(gw, 0.0)
       every i := !info_by_cell_width do {
          need := i.x_weight - slice(i.x, i.w, col_weights)
-         if need > 0 then
+         if need > 0.0 then
             dist_equally(i.x, i.w, need, col_weights)
       }
    end
@@ -277,7 +277,7 @@ class Grid()
       row_weights := list(gh, 0.0)
       every i := !info_by_cell_height do {
          need := i.y_weight - slice(i.y, i.h, row_weights)
-         if need > 0 then
+         if need > 0.0 then
             dist_equally(i.y, i.h, need, row_weights)
       }
    end

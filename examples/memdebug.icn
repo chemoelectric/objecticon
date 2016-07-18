@@ -1,0 +1,540 @@
+import io, lang, util, ipl.options, gui, ipl.termdialog, 
+   ipl.strings, ipl.lists, ipl.pdco, xdg
+
+global prog, input, output, stopped, sched, break_proc, break_line, break_file, 
+   curr_file, tmp_out, tmp_out_name, cmd_out, exited, opts, hlim, llim,
+   history, hfile, slim, addrs, hist_line
+
+class MemDebug()
+   public static native list(obj)
+   public static native refs(obj)
+   public static native dump()
+   public static native globals()
+   public static native nglobals()
+   public static native statics(name)
+   public static native prog(name)
+   public static native progs()
+   public static native regions()
+   public static native set_program(prog)
+   public static native set_output(f)
+   public static native set_slim(val)
+   public static native set_addrs(val)
+
+   private static init() 
+      Class.load_library(Files.find_native_lib("objecticonmemdebug")) | stop("Native library not available") 
+   end
+end
+
+procedure do_help()
+   cmd_out.write("stop              - stop the monitored program")
+   cmd_out.write("start             - restart the monitored program")
+   cmd_out.write("exit              - exit immediately")
+   cmd_out.write("regions           - display memory regions")
+   cmd_out.write("list [-a] x       - list instances of type x, or show the structure of")
+   cmd_out.write("                    a particular instance x.  For example, list SomeType")
+   cmd_out.write("                    lists all instances of SomeType, whilst list SomeType#22")
+   cmd_out.write("                    shows the elements of a particular instance.  -a means")
+   cmd_out.write("                    include regions outside the current program's regions.")
+   cmd_out.write("refs x            - show what points to the given instance, eg refs")
+   cmd_out.write("                    list#21 would show what references that list.")
+   cmd_out.write("dump              - show all globals, statics and structures of the")
+   cmd_out.write("                    current program.")
+   cmd_out.write("globals           - show the global variables of the current program.")
+   cmd_out.write("nglobals          - show the named globals of the current program..")
+   cmd_out.write("prog x            - set the current program, initially set to the")
+   cmd_out.write("                    monitored program.  x should be an &main co-expression.")
+   cmd_out.write("progs             - list all programs and show the current program.")
+   cmd_out.write("statics x         - list the static variables in the given object x,")
+   cmd_out.write("                    which should be a class, procedure or method name.")
+   cmd_out.write("breakproc [x]     - set or clear breakpoint to stop in procedure x.")
+   cmd_out.write("breakpoint [x y]  - set or clear breakpoint at file x, line y.")
+   cmd_out.write("hlim [i]          - show or set the command history limit.")
+   cmd_out.write("hist              - display the history.")
+   cmd_out.write("cmd n             - perform command n in the history.")
+   cmd_out.write("llim [i]          - show or set the history log limit in the gui.")
+   cmd_out.write("slim [i]          - show or set the displayed string limit; 0 means no limit.")
+   cmd_out.write("addrs [i]         - show or set the display of addresses in the regions")
+   cmd_out.write("                       i=0 (no addresses),")
+   cmd_out.write("                       i=1 (addresses for items with no serial number),")
+   cmd_out.write("                       i=2 (show all addresses)")
+   cmd_out.write("cls               - clear the screen.")
+   cmd_out.write("echo a...         - echo arguments.")
+   cmd_out.write("help              - show help.")
+end
+
+procedure do_stop()
+   if /stopped then {
+      stopped := &yes
+      sched.set_poll_timeout(Gui.IDLE_SLEEP)
+      output.write("Stopped")
+   }
+end
+
+procedure do_start()
+   if \exited then
+      output.write("Can't restart exited program")
+   else if \stopped then {
+      stopped := &no
+      sched.set_poll_timeout(0)
+      output.write("Started")
+   }
+end
+
+procedure do_regions()
+   MemDebug.regions()
+end
+
+procedure errmsg(s)
+   output.write(s)
+end
+
+procedure opthelp(opts)
+   local o, t
+   every o := !opts do {
+      t := o.format()
+      output.write(left(t.names, 20), t.help)
+   }
+end
+
+procedure do_list(a)
+   local o
+   o := options(a, [Opt("a",, "All regions")], opthelp, errmsg) | fail
+   (*a = 1) | return errmsg("usage: list [-a] object")
+   MemDebug.list(a[1], o["a"]) | return errmsg(&why)
+end
+
+procedure do_refs(a)
+   (*a = 1) | return errmsg("usage: refs object")
+   MemDebug.refs(a[1]) | return errmsg(&why)
+end
+
+procedure do_dump()
+   MemDebug.dump() | return errmsg(&why)
+end
+
+procedure do_statics(a)
+   (*a = 1) | return errmsg("usage: statics name")
+   MemDebug.statics(a[1]) | return errmsg(&why)
+end
+
+procedure do_globals()
+   MemDebug.globals() | return errmsg(&why)
+end
+
+procedure do_nglobals()
+   MemDebug.nglobals() | return errmsg(&why)
+end
+
+procedure do_prog(a)
+   (*a = 1) | return errmsg("usage: prog name")
+   MemDebug.prog(a[1]) | return errmsg(&why)
+end
+
+procedure do_progs()
+   MemDebug.progs()
+end
+
+procedure do_cls()
+   if is(output, DescStream) then
+      output.writes("\e[2J\e[H")
+   else
+      output.clear_text()
+end
+
+procedure do_slim(a)
+   if *a = 0 | (*a = 1 & slim := 0 <= integer(a[1])) then {
+      if *a = 1 then
+         MemDebug.set_slim(slim)
+      cmd_out.write("slim is now ", slim)
+   } else
+      return errmsg("usage: slim [length]")
+end
+
+procedure do_hlim(a)
+   if *a = 0 | (*a = 1 & hlim := 10 < integer(a[1])) then {
+      if *a = 1 & is(input, TermDialog | LineEditorStream) then
+         input.set_history_limit(hlim)
+      cmd_out.write("hlim is now ", hlim)
+   } else
+      return errmsg("usage: hlim [length (> 10)]")
+end
+
+procedure do_llim(a)
+   if *a = 0 | (*a = 1 & llim := 10 < integer(a[1])) then {
+      if *a = 1 & is(input, TermDialog) then
+         input.set_log_limit(llim)
+      cmd_out.write("llim is now ", llim)
+   } else
+      return errmsg("usage: llim [length (> 10)]")
+end
+
+procedure do_hist()
+   local i, e
+   is(input, TermDialog | LineEditorStream) | fail
+   i := input.get_history_start_no()
+   every e := !input.get_history() do {
+      cmd_out.write(right(i, 4), "  ", e)
+      i +:= 1
+   }
+end
+
+procedure do_addrs(a)
+   local i
+   if *a = 0 | (*a = 1 & i := integer(a[1]) & 0 <= i <= 2) then {
+      if *a = 1 then
+         MemDebug.set_addrs(addrs := i)
+      cmd_out.write("addrs is now ", addrs)
+   } else
+      return errmsg("usage: addrs [n] with n=0, 1 or 2")
+end
+
+procedure do_breakproc(a)
+   if *a = 0 then
+      break_proc := &null
+   else if *a = 1 then
+      break_proc := a[1]
+   else
+      return errmsg("usage: breakproc [procedure/method name]")
+   synch_mask()
+   cmd_out.write(if /break_proc then "break proc cleared" else "break proc now " || break_proc)
+end
+
+procedure do_breakpoint(a)
+   local i
+   if *a = 0 then
+      break_line := break_file := &null
+   else if *a = 2 & i := integer(a[2]) then {
+      break_line := i
+      break_file := a[1]
+   } else
+      return errmsg("usage: breakpoint [file line]")
+   synch_mask()
+   cmd_out.write(if /break_file then "breakpoint cleared" else "break now " || break_file || " at " || break_line)
+end
+
+procedure do_exit()
+   write("Exiting.")
+   cleanup()
+   exit(0)
+end
+
+procedure do_echo(a)
+   cmd_out.write(list2str(a, " "))
+end
+
+procedure do_cmd(a)
+   local n
+   if *a = 1 & n := integer(a[1]) then {
+      if is(input, TermDialog | LineEditorStream) then
+         hist_line := input.get_history_item(n)
+   } else
+      return errmsg("usage: cmd n")
+end
+
+procedure do_line(s)
+   local a, redir, mode, pipe, p
+
+   s := string(s)
+
+   s ? {
+      if s := tab(upto('|')) then {
+         if is(output, TermDialog) then {
+            output.write("Pipe output not allowed in graphic mode")
+            fail
+         }
+         pipe := (move(1), tab(0))
+      }
+   }
+
+   a := ipl.pdco.List{words(s)}
+   if *a = 0 | a[1,1] == "#" then
+      fail
+
+   if a[-1][1] == ">" then {
+      if \pipe then {
+         output.write("Invalid redirection")
+         fail
+      }
+      redir := pull(a)
+      redir[1] := ""
+      if redir[1] == ">" then {
+         redir[1] := ""
+         mode := ior(FileOpt.WRONLY, FileOpt.APPEND, FileOpt.CREAT)
+      } else
+         mode := ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)
+      cmd_out := FileStream(redir, mode) | {
+         output.write("Couldn't open ", redir, ": ", &why)
+         fail
+      }
+   } else if /pipe & is(output, DescStream) then
+      cmd_out := output
+   else {
+      tmp_out.truncate(0)
+      cmd_out := tmp_out
+   }
+
+   MemDebug.set_output(cmd_out)
+
+   case string(pop(a)) of {
+      "stop":  do_stop()
+      "start":  do_start()
+      "exit": do_exit()
+      "regions":  do_regions()
+      "list":  do_list(a)
+      "refs":  do_refs(a)
+      "dump":  do_dump()
+      "globals":  do_globals()
+      "nglobals":  do_nglobals()
+      "prog":  do_prog(a)
+      "progs":  do_progs()
+      "statics":  do_statics(a)
+      "breakproc" :  do_breakproc(a)
+      "breakpoint" :  do_breakpoint(a)
+      "hlim" :  do_hlim(a)
+      "llim" :  do_llim(a)
+      "hist" :  do_hist(a)
+      "slim" :  do_slim(a)
+      "addrs" :  do_addrs(a)
+      "cls" :  do_cls()
+      "cmd" : do_cmd(a)
+      "echo" :  do_echo(a)
+      "help": do_help()
+      default: {
+         output.write("Unknown command: ", s)
+      }
+   }
+
+   if \redir then
+      cmd_out.close()
+   else if cmd_out === tmp_out then {
+      tmp_out.seek(1)
+      if \pipe then {
+         if p := ProgOutputStream("/bin/sh", ["-c", pipe]) then {
+            # This will ignore any SIGPIPE signals (and just fail).
+            tmp_out.copy_to(p)
+            p.close()
+         } else
+            output.write("Couldn't open pipe ", pipe, ": ", &why)
+      } else
+         tmp_out.copy_to(output)
+   }
+
+   cmd_out := &null
+end
+
+procedure monitor_exit()
+   if /exited then {
+      do_start()
+      Prog.set_event_mask('', prog)
+   }
+end
+
+procedure gui_line()
+   local s
+   repeat {
+      if s := \hist_line then
+         hist_line := &null
+      else
+         s := input.line
+      output.write("? ", s)
+      do_line(s)
+      if /hist_line then
+         break
+   }
+end
+
+procedure do_gui()
+   local d
+   d := TermDialog().
+      set_label("memdebug").
+      set_log_limit(llim).
+      set_history_limit(hlim).
+      set_history(history).
+      connect(gui_line, Event.ACTION).
+      connect(monitor_exit, Event.DIALOG_DISPOSED)
+   input := output := d
+   sched := Dispatcher.scheduler
+   sched.set_poll_timeout(0)
+   d.show()
+   prelim()
+   repeat {
+      if /stopped then {
+         next_event() | break
+         Dispatcher.service()
+      } else
+         Dispatcher.work_or_sleep()
+   }
+   Dispatcher.message_loop()
+end
+
+procedure terminal_task(task)
+   local s
+   repeat {
+      if s := \hist_line then {
+         output.write("? ", s)
+         hist_line := &null
+      } else {
+         if is(input, TaskStream) then
+            output.out("? ")
+         s := input.read_line()
+         if /s then
+            break
+      }
+      do_line(s)
+   }
+   write("Reverting")
+   input.close()
+   monitor_exit()
+   task.revert()
+end
+
+procedure do_terminal()
+   local task
+   sched := Scheduler()
+   task := Task(sched, create terminal_task(task))
+   input := if /opts["s"] then
+      LineEditorStream().
+         set_history_limit(hlim).
+         set_history(history).
+         set_task(task).
+         set_prompt("? ")
+   else
+      TaskStream(FileStream.stdin, task)
+   output := FileStream.stdout
+   task.start()
+   prelim()
+   repeat {
+      if /stopped then {
+         next_event() | break
+         sched.work()
+      } else
+         sched.work_or_sleep()
+   }
+   until task.is_dormant() do
+      sched.work_or_sleep()
+end
+
+procedure do_file(fn)
+   local f
+   use {
+      f := open(fn) | errmsg("Couldn't open " || fn || ": " || &why),
+      every do_line(f.gen())
+   }
+end
+
+procedure prelim()
+   local fn
+   if \opts["m"] then
+      do_stop()
+
+   fn := FilePath(Xdg.ensure_config_home()).child("memdebug").str() | stop("Couldn't access config dir: ", &why)
+   if Files.access(fn) then
+      do_file(fn)
+
+   every fn := !\opts["f"] do
+      do_file(fn)
+end
+
+procedure next_event()
+   local e
+   e := Prog.get_event(prog) | {
+      output.write("Monitored program exited.")
+      do_stop()
+      exited := &yes
+      fail
+   }
+   case e.code of {
+      MonitorCode.File : {
+         curr_file := e.value
+      }
+      MonitorCode.Line : {
+         if e.value = \break_line & curr_file == \break_file then {
+            output.write("Breakpoint hit")
+            do_stop()
+         }
+      }
+      MonitorCode.Pcall : {
+         if Proc.get_name(e.value) == \break_proc then {
+            output.write("Procedure break hit")
+            do_stop()
+         }
+      }
+   }
+
+   return
+end
+
+procedure synch_mask()
+   local c
+   c := MonitorCode.Timer ++ MonitorCode.Error
+   if \break_line then
+      c ++:= MonitorCode.File ++ MonitorCode.Line
+   if \break_proc then
+      c ++:= MonitorCode.Pcall
+   Prog.set_event_mask(c, prog)
+end
+
+procedure cleanup()
+   tmp_out.close()
+   Files.remove(tmp_out_name)
+   if is(input, TermDialog | LineEditorStream) then
+      encode_to_file(hfile, input.get_history()) | ewrite("History not saved: ", &why)
+end
+
+procedure usage(opts)
+   ewrite("Usage: memdebug [OPTIONS] program [program options/arguments]")
+   ewrite("Examine program memory")
+   options_help(opts)
+   exit(0)
+end
+
+procedure main(args)
+   local a
+
+   Class.ensure_initialized(MemDebug)
+
+   a := []
+   while args[1][1] == "-" do {
+      put(a, pop(args))
+      if a[-1] == ("-hlim" | "-llim" | "-slim" | "-addrs" | "-f") then
+         put(a, pop(args))
+   }
+   opts := options(a, [Opt("m",, "Loaded program is initially stopped"),
+                       Opt("g",, "Use a gui interface rather than the console"),
+                       Opt("s",, "Read commands from standard input rather than using a line editor"),
+                       Opt("f",string,"Perform commands from file at startup", &yes),
+                       Opt("hlim",integer,"Set the history limit for the line editor (default is 500)"),
+                       Opt("llim",integer,"Set the gui interface's log area line limit (default is 600)"),
+                       Opt("slim",integer,"Set the string display limit (default is 64)"), 
+                       Opt("addrs",integer,"Set the address display mode (default is 1)")], usage)
+   if *args = 0 then
+      stop("Program and optional arguments expected.")
+
+   hlim := (10 < \opts["hlim"]) | 500
+   llim := (10 < \opts["llim"]) | 600
+   slim := (0 <= \opts["slim"]) | 64
+   addrs := (0 <= \opts["addrs"] <= 2) | 1
+
+   prog := Prog.load(Files.find_exe(args[1]), args[2:0]) | stop(&why)
+   MemDebug.set_program(prog)
+   MemDebug.set_slim(slim)
+   MemDebug.set_addrs(addrs)
+   Prog.set_timer_interval(100, prog)
+
+   synch_mask()
+
+   tmp_out_name := Files.make_temp_filename("monitor", ".txt") | stop(&why)
+   tmp_out := FileStream(tmp_out_name, ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
+
+   hfile := FilePath(Xdg.ensure_data_home()).child("memdebug").str() | stop("Couldn't access data dir: ", &why)
+   history := decode_from_file(hfile) | []
+
+   if \opts["g"] then
+      do_gui()
+   else
+      do_terminal()
+
+   cleanup()
+
+   write("ciao")
+end

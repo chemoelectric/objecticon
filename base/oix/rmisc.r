@@ -1127,7 +1127,7 @@ void print_location(FILE *f, struct p_frame *pf)
         end_link(f);
         fputc('\n', f);
     } else
-        fprintf(stderr, "File ?; Line ?\n");
+        fprintf(f, "File ?; Line ?\n");
 }
 
 /*

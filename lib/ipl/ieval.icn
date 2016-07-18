@@ -260,19 +260,19 @@ class Ieval(MinimalObjectOutput)
    end
 
    private set_elim(n)
-      elim := (10 < n)
+      elim := (10 < \n)
       return elim
    end
 
    private set_hlim(n)
-      hlim := (10 < n)
+      hlim := (10 < \n)
       if is(input, TermDialog | LineEditorStream) then
          input.set_history_limit(hlim)
       return hlim
    end
 
    private set_llim(n)
-      llim := (10 < n)
+      llim := (10 < \n)
       if is(input, TermDialog) then
          input.set_log_limit(llim)
       return llim
@@ -536,15 +536,9 @@ class Ieval(MinimalObjectOutput)
       s := ""
       prompt := "> "
       repeat {
-         if \hist_line then {
-            write(prompt, hist_line)
-            t := hist_line
-            hist_line := &null
-         } else {
-            writes(prompt)
-            t := input.read_line() | stop("Failed to read file: ", &why)
-            if /t then break
-         }
+         writes(prompt)
+         t := input.read_line() | stop("Failed to read file: ", &why)
+         if /t then break
          s ||:= t
          if s[-1] == "\\" then {
             s[-1] := ""

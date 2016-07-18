@@ -528,7 +528,7 @@ class CanvasComponent(CanvasObject)
 
          csm := Menu().set_label("Position")
          cm.add(csm)
-         if /flag(c["eol"]) then
+         if /c["eol"] then
             csm.add(SetConstraintItem(self, "eol", &yes))
          else
             csm.add(RemoveConstraintItem(self, "eol"))
@@ -562,52 +562,60 @@ class CanvasComponent(CanvasObject)
 
          csm := Menu().set_label("X layout")
          cm.add(csm)
-         if /flag(c["x_fill"]) then
+         if /c["x_fill"] then
             csm.add(SetConstraintItem(self, "x_fill", &yes))
          else
             csm.add(RemoveConstraintItem(self, "x_fill"))
          case c["x_align"] of {
             Align.L : {
-               csm.add(SetConstraintItem(self, "x_align", Align.C))
                csm.add(SetConstraintItem(self, "x_align", Align.R))
             } 
             Align.R : {
                csm.add(SetConstraintItem(self, "x_align", Align.L))
-               csm.add(SetConstraintItem(self, "x_align", Align.C))
             }
             default : {
                csm.add(SetConstraintItem(self, "x_align", Align.L))
                csm.add(SetConstraintItem(self, "x_align", Align.R))
             }
          }            
-         csm.add(SetConstraintItem(self, "x_weight", if real(c["x_weight"]) = 1.0 then 0.0 else 1.0))
+         if member(c, "x_align") then
+            csm.add(RemoveConstraintItem(self, "x_align"))
+
+         (real(c["x_weight"]) = 1.0) | 
+            csm.add(SetConstraintItem(self, "x_weight", 1.0))
+         if member(c, "x_weight") then
+            csm.add(RemoveConstraintItem(self, "x_weight"))
 
          csm := Menu().set_label("Y layout")
          cm.add(csm)
-         if /flag(c["y_fill"]) then
+         if /c["y_fill"] then
             csm.add(SetConstraintItem(self, "y_fill", &yes))
          else
             csm.add(RemoveConstraintItem(self, "y_fill"))
          case c["y_align"] of {
             Align.T : {
-               csm.add(SetConstraintItem(self, "y_align", Align.C))
                csm.add(SetConstraintItem(self, "y_align", Align.B))
             } 
             Align.B : {
                csm.add(SetConstraintItem(self, "y_align", Align.T))
-               csm.add(SetConstraintItem(self, "y_align", Align.C))
             }
             default : {
                csm.add(SetConstraintItem(self, "y_align", Align.T))
                csm.add(SetConstraintItem(self, "y_align", Align.B))
             }
          }
-         csm.add(SetConstraintItem(self, "y_weight", if real(c["y_weight"]) = 1.0 then 0.0 else 1.0))
+         if member(c, "y_align") then
+            csm.add(RemoveConstraintItem(self, "y_align"))
+         
+         (real(c["y_weight"]) = 1.0) | 
+            csm.add(SetConstraintItem(self, "y_weight", 1.0))
+         if member(c, "y_weight") then
+            csm.add(RemoveConstraintItem(self, "y_weight"))
 
          csm := Menu().set_label("Insets")
          cm.add(csm)
          every key := "l_inset"|"r_inset"|"t_inset"|"b_inset" do {
-            if i := integer(c[key]) then
+            if member(c, key) then
                csm.add(RemoveConstraintItem(self, key))
             else
                csm.add(SetConstraintItem(self, key, 0))

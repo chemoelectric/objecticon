@@ -3,7 +3,7 @@ include ../../Makedefs
 ifeq (@HAVE_DYNAMIC_LINKING@, no)
   TARGET=
 else
-  TARGET=objecticonipclib.so
+  TARGET=objecticonipclib.so objecticonmemdebug.so
   ifneq (@MYSQL_VERSION@,)
     TARGET:=$(TARGET) objecticonmysqllib.so
   endif
@@ -48,6 +48,14 @@ ssl.o : ssl.r
 	$(RTT) -h gssl.h ssl.r
 	$(CC) @OPENSSL_CPPFLAGS@ $(CPPFLAGS) $(CFLAGS) $(DYNAMIC_LIB_CFLAGS) -c ssl.c -o ssl.o
 	$(RM) ssl.c
+
+objecticonmemdebug.so : memdebug.o
+	$(CC) $(DYNAMIC_LIB_LDFLAGS) -o objecticonmemdebug.so memdebug.o
+
+memdebug.o : memdebug.r
+	$(RTT) memdebug.r
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(DYNAMIC_LIB_CFLAGS) -c memdebug.c -o memdebug.o
+	$(RM) memdebug.c
 
 clean :
 	rm -f *.u *.o *.so *.a mysql.c ipc.c cairo.c ssl.c

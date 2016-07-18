@@ -711,19 +711,23 @@ class Vt(LineBasedScrollArea, MenuMode)
             coact()
          # Add any partial utf-8 char saved from last time
          got := part_ch || got
-         # Find the last utf-8 char in got; may be part of a char
-         i := *got
-         while i > 1 & 127 < ord(got[i]) < 192 do
-            i -:= 1
-         # Now got[i:0] gives us the last utf-8 char or part of it.
-         # Split got into got and part_ch, depending on whether the
-         # last utf-8 sequence is partial or not.
-         if is_partial_utf8(got[i:0]) then {
-            part_ch := got[i:0]
-            got := got[1:i]
-         } else
-            part_ch := ""
-         buff := Text.liberal_ucs(got)
+         part_ch := ""
+         # Try the simple, usual case first
+         buff := ucs(got) | {
+            # Find the last utf-8 char in got; may be part of a char
+            i := *got
+            while i > 1 & 127 < ord(got[i]) < 192 do
+               i -:= 1
+            # Now got[i:0] gives us the last utf-8 char or part of it.
+            # Split got into got and part_ch, depending on whether the
+            # last utf-8 sequence is partial or not.
+            if is_partial_utf8(got[i:0]) then {
+               part_ch := got[i:0]
+               got := got[1:i]
+            }
+            # Assign to buff
+            Text.liberal_ucs(got)
+         }
          got := ""
        }
    end

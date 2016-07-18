@@ -48,6 +48,13 @@ procedure compile(prog, tf, links)
    return lang.Prog.load(tf)
 end
 
+procedure usage(opts)
+   ewrite("Usage: ieval [OPTIONS] [INPUT-FILES...]")
+   ewrite("Interactively evaluate expressions")
+   options_help(opts)
+   exit(0)
+end
+
 procedure main(a)
    local opts, prog, imports, links
    opts := options(a, [Opt("i", string, "Import the given package(s).  Several packages may be comma-separated, or several -i options may be given",&yes),
@@ -57,7 +64,7 @@ procedure main(a)
                        Opt("g",, "Use a gui interface rather than the console"),
                        Opt("hlim",integer,"Set the history limit for the line editor (default is 500)"),
                        Opt("elim",integer,"Set the expression limit for evaluation (default is 35)"),
-                       Opt("llim",integer,"Set the gui interface's log area line limit (default is 600)")])
+                       Opt("llim",integer,"Set the gui interface's log area line limit (default is 600)")], usage)
    imports := set()
    every insert(imports, !str2list(!\opts["i"]))
    links := \opts["l"] | []
