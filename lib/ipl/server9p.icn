@@ -2,25 +2,60 @@ package ipl.plan9
 
 import plan9, io, posix, ipl.options, util
 
+package procedure usage_impl(s, opts)
+   ewrite("Usage: ", FilePath(&progname).get(-1), s)
+   if /opts then
+      exit(1)
+   else {
+      options_help(opts)
+      exit(0)
+   }
+end
+
+procedure usage_1(opts)
+   usage_impl(" [OPTIONS] [mountpt]", opts)
+end
+
+procedure usage_2(opts)
+   usage_impl(" [OPTIONS] [mountpt attach]", opts)
+end
+
+procedure get_optl()
+   return [Opt("v",, "Verbose mode"),
+           Opt("s",string, "FILE#Don't mount, instead post the pipe in /srv/FILE"),
+           Opt("a",, "Use the MAFTER flag when mounting"),
+           Opt("b",, "Use the MBEFORE flag when mounting"),
+           Opt("c",, "Use the MCREATE flag when mounting"),
+           Opt("C",, "Use the MCACHE flag when mounting")]
+end
+
 procedure server_main_1(a, sess, run)
-   local opts
-   opts := options(a, "-v! -s! -a! -b! -c! -C!")
-   if *a = 0 then
-      stop("usage: ", FilePath(&progname).get(-1), " [opts] mountpt/srvpt")
-   server_main(a[1], "", opts, sess, run)
+   local optl, opts, mountpt
+   optl := get_optl()
+   opts := options(a, optl, usage_1)
+   if /opts["s"] then {
+      if *a = 0 then
+         usage_1()
+      mountpt := a[1]
+   }
+   server_main(mountpt, "", opts, sess, run)
 end
 
 procedure server_main_2(a, sess, run)
-   local opts, attach
-   opts := options(a, "-v! -s! -a! -b! -c! -C!")
-   if (*a = 0) | (/opts["s"] & (*a < 2)) then
-      stop("usage: ", FilePath(&progname).get(-1), " [opts] mountpt attach/srvpt")
-   attach := a[2] | ""
-   server_main(a[1], attach, opts, sess, run)
+   local optl, opts, mountpt, attach
+   optl := get_optl()
+   opts := options(a, optl, usage_2)
+   if /opts["s"] then {
+      if *a < 2 then
+         usage_2()
+      mountpt := a[1]
+      attach := a[2]
+   }
+   server_main(mountpt, attach, opts, sess, run)
 end
 
-procedure server_main(where, attach, opts, sess, run)
-   local p, pid, pname, fl
+procedure server_main(mountpt, attach, opts, sess, run)
+   local p, pid, pname, fl, s
    pname := FilePath(&progname).get(-1)
    /run := sess.io
    p := FileStream.pipe() | stop(&why)
@@ -39,9 +74,9 @@ procedure server_main(where, attach, opts, sess, run)
    } else {
       sess := &null
       p[2].close()
-      if \opts["s"] then {
-         Files.string_to_file("/srv/" || where, p[1].get_fd()) | stop(&why)
-         ewrite(pname, ": serving on /srv/", where)
+      if s := \opts["s"] then {
+         Files.string_to_file("/srv/" || s, p[1].get_fd()) | stop(&why)
+         ewrite(pname, ": serving on /srv/", s)
       } else {
          fl := if \opts["a"] then
             MountOpt.MAFTER
@@ -53,8 +88,8 @@ procedure server_main(where, attach, opts, sess, run)
             fl := ior(fl, MountOpt.MCREATE)
          if \opts["C"] then
             fl := ior(fl, MountOpt.MCACHE)
-         Files.mount(p[1], &null, where, fl, attach) | stop(&why)
-         ewrite(pname, ": mounted on ", where)
+         Files.mount(p[1], &null, mountpt, fl, attach) | stop(&why)
+         ewrite(pname, ": mounted on ", mountpt)
       }
       p[1].close()
    }
