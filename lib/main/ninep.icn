@@ -326,6 +326,163 @@ class Regular9PImpl(Regular9P)
    end
 end
 
+# A file in which writes append to the end of the content, whilst
+# reads consume from the start.  In both read and write, position is
+# ignored.
+#
+class FifoFile9P(Regular9P)
+   private readable
+      data
+
+   public open(mode)
+      if iand(self.perm, Mode9.DMAPPEND) = 0 &
+         iand(mode, FileOpt9.OTRUNC) ~= 0 then
+         data := ""
+      return self
+   end
+
+   public set_length(len)
+      if len > *data then
+         data ||:= repl("\0", len - *data)
+      else
+         data := data[1+:len]
+      return self
+   end
+
+   public write(s, pos)
+      data ||:= s
+      return *s
+   end
+
+   public read(pos, count)
+      local s
+      data ? {
+         s := move(count) | tab(0)
+         data := tab(0)
+      }
+      return s
+   end
+
+   public get_length()
+      return *data
+   end
+
+   public set_data(s)
+      s := string(s) | runerr(103, s)
+      data := s
+      return self
+   end
+
+   public new()
+      Regular9P.new()
+      data := ""
+      return
+   end
+end
+
+# A file in which the content is split into a queue of messages.
+# Writes append to the end, whilst reads consume from the start.
+# Reads never consume more than one messge in the queue.
+#
+class QueueFile9P(Regular9P)
+   private
+      q
+   private readable
+      len
+
+   public open(mode)
+      if iand(self.perm, Mode9.DMAPPEND) = 0 &
+         iand(mode, FileOpt9.OTRUNC) ~= 0 then
+         clear()
+      return self
+   end
+
+   public write(s, pos)
+      add(s)
+      return *s
+   end
+
+   public read(pos, count)
+      local s
+      if *q = 0 then
+         return
+      s := pop(q)
+      if *s > count then {
+         s ? {
+            s := move(count)
+            push(q, tab(0))
+         }
+      }
+      len -:= *s
+      return s
+   end
+
+   public set_length(n)
+      local s
+      if n <= 0 then
+         clear()
+      else if n > len then
+         add(repl("\0", n - len))
+      else {
+         while len - *q[-1] >= n do {
+            s := pull(q)
+            len -:= *s
+         }
+         if len > n then {
+            # 0 < len-n  < *q[-1]
+            q[-1][0 -: len - n] := ""
+            len := n
+         }
+      }
+      return self
+   end
+
+   public get_length()
+      return .len
+   end
+
+   public clear()
+      q := []
+      len := 0
+      return self
+   end
+
+   public get_queue_length()
+      return *q
+   end
+
+   public get_content()
+      local s
+      s := ""
+      every s ||:= !q
+      return s
+   end
+
+   public add(s)
+      s := string(s) | runerr(103, s)
+      if *s > 0 then {
+         len +:= *s
+         put(q, s)
+      }
+      return self
+   end
+
+   public remove()
+      local s
+      if *q > 0 then {
+         s := pop(q)
+         len -:= *s
+         return s
+      }
+   end
+
+   public new()
+      Regular9P.new()
+      clear()
+      return
+   end
+end
+
 class Comms9P()
    public static const
       Tversion,
