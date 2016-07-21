@@ -106,7 +106,7 @@ procedure async_sched_loop(sess, sched, f)
          sess.async_io(sched, nb)
          # Main loop
          until sched.empty() do
-            sched.work() | delay(50)
+            sched.work_or_sleep()
       }
    }
 end
