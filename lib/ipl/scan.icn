@@ -76,7 +76,7 @@ package ipl.scan
 import
    ipl.pdco(optional_param),
    io(write, writes),
-   util(save_state, State)
+   util(save_state, PosState)
 
 # bal() with escapes
 procedure slashbal(c1, c2, c3, s, i, j)	
@@ -560,35 +560,17 @@ procedure max_many(c, max, s, i, j)
    return many(c, a.s, a.i, min(a.j, a.i + max))
 end
 
-# Like `util.save_vars{..., &subject|&pos}`.
+# Like `util.save_state(e, ScanState())`.
 #
 procedure save_scan(e)
    "" ? suspend |@e
-end
-
-# A `State` which saves &pos, and doesn't set its initial value.
-#
-package class PosExcursionState(State)
-   private kp
-
-   public begin()
-      kp := &pos
-   end
-
-   public swap()
-      &pos :=: kp
-   end
-
-   public finish()
-      &pos := kp
-   end
 end
 
 #
 # Evaluate e, restoring &pos with each suspended result.
 #
 procedure excursion(e)
-   suspend save_state(e, PosExcursionState())
+   suspend save_state(e, PosState(&pos))
 end
 
 #
