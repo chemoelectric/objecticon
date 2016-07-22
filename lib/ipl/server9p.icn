@@ -31,7 +31,7 @@ end
 
 global opts
 
-procedure server_main_1(a, sess, run, optl)
+procedure server_main_1(a, sess, sched, optl)
    local mountpt
    /optl := get_optl()
    opts := options(a, optl, usage_1)
@@ -40,10 +40,10 @@ procedure server_main_1(a, sess, run, optl)
          usage_1()
       mountpt := a[1]
    }
-   server_main(mountpt, "", opts, sess, run)
+   server_main(mountpt, "", sess, sched)
 end
 
-procedure server_main_2(a, sess, run, optl)
+procedure server_main_2(a, sess, sched, optl)
    local mountpt, attach
    /optl := get_optl()
    opts := options(a, optl, usage_2)
@@ -53,20 +53,22 @@ procedure server_main_2(a, sess, run, optl)
       mountpt := a[1]
       attach := a[2]
    }
-   server_main(mountpt, attach, opts, sess, run)
+   server_main(mountpt, attach, sess, sched)
 end
 
-procedure server_main(mountpt, attach, opts, sess, run)
+procedure server_main(mountpt, attach, sess, sched)
    local p, pid, pname, fl, s
    pname := FilePath(&progname).get(-1)
-   /run := sess.io
    p := FileStream.pipe() | stop(&why)
    pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFFDG, ForkOpt.RFNAMEG, ForkOpt.RFNOTEG)) | stop(&why)
    if pid = 0 then {
       p[1].close()
       if \opts["v"] then 
          sess.set_verbose(&yes)
-      run(p[2])
+      if /sched then
+         sess.io(p[2])
+      else
+         async_sched_loop(sess, sched, p[2])
       p[2].close()
       if \opts["v"] then {
          sess.dump()
