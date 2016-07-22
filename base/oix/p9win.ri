@@ -1542,10 +1542,10 @@ static int open_screen_win(wsp ws)
                 ws->state = NormalCanvas;
         }
 
-        /* OIUSEWIN=1 -> set size and pos of enclosing window 
-         *          2 -> just set pos of enclosing window 
-         *          3 -> just size
-         *          4 -> set neither size or pos
+        /* OI_USE_WIN=1 -> set size and pos of enclosing window 
+         *            2 -> just set pos of enclosing window 
+         *            3 -> just size
+         *            4 -> set neither size or pos
          * max/min window sizes are set in any case.
          */
         switch (ws->using_win) {
@@ -2200,8 +2200,8 @@ static void init_window_system(void)
 {
     int win_nameg = 1;
 
-    env_int("OIUSEWIN", &use_win, 0, 4);
-    env_int("OIWINNAMEG", &win_nameg, 0, 1);
+    env_int("OI_USE_WIN", &use_win, 0, 4);
+    env_int("OI_WIN_NAMEG", &win_nameg, 0, 1);
 
     load_font_info();
     setup_cursors();
