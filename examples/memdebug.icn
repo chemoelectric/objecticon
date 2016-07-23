@@ -419,7 +419,7 @@ procedure do_terminal()
       } else
          sched.work_or_sleep()
    }
-   until task.is_dormant() do
+   until sched.empty() do
       sched.work_or_sleep()
 end
 
