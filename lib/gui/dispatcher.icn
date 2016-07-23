@@ -83,11 +83,11 @@ final abstract class Dispatcher()
    #
    public static service(r)
       if /r then {
-         while *dialogs > 0 do
-            work() | break
+         while *dialogs > 0 &
+            work()
       } else {
-         while \r.win do
-            work() | break
+         while \r.win &
+            work()
       }
    end
 
