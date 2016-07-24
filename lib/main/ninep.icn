@@ -2,39 +2,41 @@ package plan9
 
 import io, lang, util, exception, ipl.strings, ipl.pdco
 
-record RAttach(tag, qid)
-record RAuth(tag, aqid)
-record RClunk(tag)
-record RCreate(tag, qid, iounit)
-record RError(tag, ename)
-record RFlush(tag)
-record ROpen(tag, qid, iounit)
-record RRead(tag, data)
-record RRemove(tag)
-record RStat(tag, stat)
-record RVersion(tag, msize, version)
-record RWalk(tag, wqid)
-record RWrite(tag, count)
-record RWstat(tag)
-record TAttach(tag, fid, afid, uname, aname)
-record TAuth(tag, afid, uname, aname)
-record TClunk(tag, fid)
-record TCreate(tag, fid, name, perm, mode)
-record TFlush(tag, oldtag)
-record TOpen(tag, fid, mode)
-record TRead(tag, fid, offset, count)
-record TRemove(tag, fid)
-record TStat(tag, fid)
-record TVersion(tag, msize, version)
-record TWalk(tag, fid, newfid, wname)
-record TWrite(tag, fid, offset, data)
-record TWstat(tag, fid, stat)
-
-record Tinvalid()
+package record RAttach(tag, qid)
+package record RAuth(tag, aqid)
+package record RClunk(tag)
+package record RCreate(tag, qid, iounit)
+package record RError(tag, ename)
+package record RFlush(tag)
+package record ROpen(tag, qid, iounit)
+package record RRead(tag, data)
+package record RRemove(tag)
+package record RStat(tag, stat)
+package record RVersion(tag, msize, version)
+package record RWalk(tag, wqid)
+package record RWrite(tag, count)
+package record RWstat(tag)
+package record TAttach(tag, fid, afid, uname, aname)
+package record TAuth(tag, afid, uname, aname)
+package record TClunk(tag, fid)
+package record TCreate(tag, fid, name, perm, mode)
+package record TFlush(tag, oldtag)
+package record TOpen(tag, fid, mode)
+package record TRead(tag, fid, offset, count)
+package record TRemove(tag, fid)
+package record TStat(tag, fid)
+package record TVersion(tag, msize, version)
+package record TWalk(tag, fid, newfid, wname)
+package record TWrite(tag, fid, offset, data)
+package record TWstat(tag, fid, stat)
+package record Tinvalid()
 
 record Info(mode, atime, mtime, length, name, uid, gid, muid)
 record Qid(type, version, path)
 
+# This class represents a single entry in a file hierarchy, which
+# can be constructed and served to 9P clients.
+#
 abstract class File9P()
    private readable
       parent,
@@ -98,6 +100,13 @@ abstract class File9P()
       return Info(perm, atime, mtime, get_length(), name, uid, gid, muid)
    end
 
+   # Set the file's settings from the given `Info` record.
+   #
+   # Note that the file's mode, mtime and gid are protected by the
+   # fixed flag, since, unlike the other two editable settings (name
+   # and length), they can't be protected by file permissions (see the
+   # comments relating to TWstat in Session9P below).
+   #
    public set_info(x)
       if \fixed & (\x.mode | \x.mtime | \x.gid) then throw("permission denied")
       set_perm(\x.mode)
@@ -115,6 +124,7 @@ abstract class File9P()
    # so that they don't appear in the directory's contents.
    #
    public set_parent(x)
+      \name | runerr("Child name not set", self)
       self.parent := x
       return self
    end
@@ -127,10 +137,17 @@ abstract class File9P()
       return self
    end
 
+   # Shorthand for `set_perm(x, &yes)`
+   #
    public set_fixed_perm(x)
       return set_perm(x, &yes)
    end
 
+   # Set the permissions mode to `x`, and the fixed flag to `y`.  If
+   # this latter flag is set, then the permissions mode, modification
+   # time and group id are all protected from modification regardless
+   # of the normal permission rules.
+   #
    public set_perm(x, y)
       iand(perm, Mode9.DMDIR) = iand(x, Mode9.DMDIR) | throw("Cannot change directory bit")
       self.perm := x
@@ -182,6 +199,8 @@ abstract class File9P()
    end
 end
 
+# A `File9P` which is a directory, rather than a regular file.
+#
 abstract class Dir9P(File9P)
    public abstract add_child(x)
    public abstract remove_child(x)
@@ -192,12 +211,14 @@ abstract class Dir9P(File9P)
    public abstract is_empty()
 end
 
+# An implementation of `Dir9P` which keeps its children in a simple table.
+#
 class Dir9PImpl(Dir9P)
    private
       ent
 
    public add_child(x)
-      \x.name | runerr("Child name not set")
+      \x.name | runerr("Child name not set", x)
       if member(ent, x.name) then
          throw("Can't add child named " || x.name || " - already exists")
       insert(ent, x.name, x)
@@ -267,11 +288,15 @@ class Dir9PImpl(Dir9P)
    end
 end
 
+# A `File9P` which is a regular file, rather than a directory.
+#
 abstract class Regular9P(File9P)
    public defer write(s, pos)
    public defer read(pos, count)
 end
 
+# An implementation of `Regular9P` which keeps its file content in a string.
+#
 class Regular9PImpl(Regular9P)
    private readable
       data
@@ -326,9 +351,9 @@ class Regular9PImpl(Regular9P)
    end
 end
 
-# A file in which writes append to the end of the content, whilst
-# reads consume from the start.  In both read and write, position is
-# ignored.
+# An implementation of `Regular9P` in which writes append to the end
+# of the content, whilst reads consume from the start.  In both read
+# and write, position is ignored.
 #
 class FifoFile9P(Regular9P)
    private readable
@@ -380,9 +405,10 @@ class FifoFile9P(Regular9P)
    end
 end
 
-# A file in which the content is split into a queue of messages.
-# Writes append to the end, whilst reads consume from the start.
-# Reads never consume more than one messge in the queue.
+# An implementation of `Regular9P` in which the content is split into
+# a queue of messages.  Writes append to the end, whilst reads consume
+# from the start.  Reads never consume more than one messge in the
+# queue.
 #
 class QueueFile9P(Regular9P)
    private
@@ -483,7 +509,7 @@ class QueueFile9P(Regular9P)
    end
 end
 
-class Comms9P()
+package class Comms9P()
    public static const
       Tversion,
       Tauth,
@@ -875,11 +901,14 @@ class Comms9P()
          }
 
          default:
-            runerr("Bad type to encode")
+            syserr("Bad type to encode")
       }
    end
 end
 
+# An interface represeting a database of users.  This is used to
+# determine permitted file operations.
+#
 abstract class Users()
    public abstract is_member(group, user)
    public abstract is_leader(group, user)
@@ -897,7 +926,7 @@ class DefaultUsers(Users)
    end
 end
 
-record Group(name, leader, members)
+package record Group(name, leader, members)
 
 # Users database read from /adm/users file.
 #
@@ -1040,14 +1069,11 @@ abstract class Data9P()
    end
 end
 
-class TreeData9P(Data9P)
-   private readable
-      root
-
-   public get_root(aname)
-      return root
-   end
-
+# An implementation of `Data9P` which uses `File9P` instances to
+# implement each method, except get_root, which must be implemented in
+# subclasses to provide the root of the tree for each mount.
+#
+abstract class FileData9P(Data9P)
    public get_parent(p)
       return p.get_parent()
    end
@@ -1111,16 +1137,33 @@ class TreeData9P(Data9P)
    public path_unreferenced(p)
       return p.path_unreferenced() & self
    end
+end
+
+# A `FileData9P` which always operates on a single file tree.  Each
+# mount will therefore see the same tree, and the attach parameter is
+# ignored.
+#
+class TreeData9P(FileData9P)
+   private readable
+      root
+
+   public get_root(aname)
+      return root
+   end
 
    public new(root)
+      if /root.name then
+         root.set_name("/")
       self.root := root
       return
    end
 end
 
-record Fid(path, uid, omode, dir)
-record WorkItem(req, resp, worker)
+package record Fid(path, uid, omode, dir)
+package record WorkItem(req, resp, worker)
 
+# The main server class, which manages a 9P server session.
+#
 class Session9P()
    private
       fids,        # table mapping fid numbers to Fid() records
@@ -1583,6 +1626,10 @@ class Session9P()
       return self
    end
 
+   # Create a new instance.  `d` should be an instance of `Data9P` and
+   # optionally `u` should be an instance of `Users`; by default an
+   # instance of `DefaultUsers` is used.
+   #
    public new(d, u)
       /u := DefaultUsers()
       self.fids := table()
