@@ -124,7 +124,6 @@ abstract class File9P()
    # so that they don't appear in the directory's contents.
    #
    public set_parent(x)
-      \name | runerr("Child name not set", self)
       self.parent := x
       return self
    end
@@ -195,11 +194,10 @@ abstract class File9P()
       return Qid(ishift(perm, -24), qversion, qpath)
    end
 
-   # Create a new instance, optionally specifying the filename.  If it
-   # is not set, it must be set later with `set_name()`.
+   # Create a new instance with the given filename.
    #
    public new(name)
-      set_name(\name)
+      set_name(name)
       self.qversion := 0
       self.qpath := (qpath_seq +:= 1)
       self.mtime := self.atime := Time.get_system_seconds()
@@ -228,7 +226,6 @@ class Dir9PImpl(Dir9P)
       ent
 
    public add_child(x)
-      \x.name | runerr("Child name not set", x)
       if member(ent, x.name) then
          rthrow("Can't add child named " || x.name || " - already exists", x)
       insert(ent, x.name, x)
@@ -264,8 +261,7 @@ class Dir9PImpl(Dir9P)
    end
 
    protected new_dir_child(name, uid, perm)
-      return Dir9PImpl().
-         set_name(name).
+      return Dir9PImpl(name).
          set_uid(uid).
          set_muid(uid).
          set_gid(self.gid).
@@ -273,8 +269,7 @@ class Dir9PImpl(Dir9P)
    end
 
    protected new_regular_child(name, uid, perm)
-      return Regular9PImpl().
-         set_name(name).
+      return Regular9PImpl(name).
          set_uid(uid).
          set_muid(uid).
          set_gid(self.gid).
@@ -294,6 +289,16 @@ class Dir9PImpl(Dir9P)
    public new(n)
       Dir9P.new(n)
       ent := table()
+      return
+   end
+end
+
+#
+# This is just a `Dir9PImpl` named "/"
+#
+class Root9P(Dir9PImpl)
+   public new()
+      Dir9PImpl.new("/")
       return
    end
 end
@@ -1162,8 +1167,6 @@ class TreeData9P(FileData9P)
    end
 
    public new(root)
-      if /root.name then
-         root.set_name("/")
       self.root := root
       return
    end
