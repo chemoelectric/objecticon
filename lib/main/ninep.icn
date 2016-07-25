@@ -189,7 +189,11 @@ abstract class File9P()
       return Qid(ishift(perm, -24), qversion, qpath)
    end
 
-   public new()
+   # Create a new instance, optionally specifying the filename.  If it
+   # is not set, it must be set later with `set_name()`.
+   #
+   public new(name)
+      set_name(\name)
       self.qversion := 0
       self.qpath := (qpath_seq +:= 1)
       self.mtime := self.atime := Time.get_system_seconds()
@@ -281,8 +285,8 @@ class Dir9PImpl(Dir9P)
       return n
    end
 
-   public new()
-      Dir9P.new()
+   public new(n)
+      Dir9P.new(n)
       ent := table()
       return
    end
@@ -344,8 +348,8 @@ class Regular9PImpl(Regular9P)
       return self
    end
 
-   public new()
-      Regular9P.new()
+   public new(n)
+      Regular9P.new(n)
       data := ""
       return
    end
@@ -398,8 +402,8 @@ class FifoFile9P(Regular9P)
       return self
    end
 
-   public new()
-      Regular9P.new()
+   public new(n)
+      Regular9P.new(n)
       data := ""
       return
    end
@@ -502,8 +506,8 @@ class QueueFile9P(Regular9P)
       }
    end
 
-   public new()
-      Regular9P.new()
+   public new(n)
+      Regular9P.new(n)
       clear()
       return
    end
