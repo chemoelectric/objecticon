@@ -148,8 +148,14 @@ abstract class File9P()
    # time and group id are all protected from modification regardless
    # of the normal permission rules.
    #
+   # For a directory, there is no need to specify DMDIR, as this is
+   # or'ed to `x` automatically.
+   #
    public set_perm(x, y)
-      iand(perm, Mode9.DMDIR) = iand(x, Mode9.DMDIR) | throw("Cannot change directory bit")
+      if is(self,Dir9P) then 
+         x := ior(x, Mode9.DMDIR)
+      else
+         iand(x, Mode9.DMDIR) = 0 | rthrow("Cannot set DMDIR in a regular file", self)
       self.perm := x
       self.fixed := y
       return self
@@ -224,7 +230,7 @@ class Dir9PImpl(Dir9P)
    public add_child(x)
       \x.name | runerr("Child name not set", x)
       if member(ent, x.name) then
-         throw("Can't add child named " || x.name || " - already exists")
+         rthrow("Can't add child named " || x.name || " - already exists", x)
       insert(ent, x.name, x)
       x.set_parent(self)
       return self
@@ -250,7 +256,7 @@ class Dir9PImpl(Dir9P)
    package rename_child(x, s)
       if ent[x.name] === x & x.name ~== s then {
          if member(ent, s) then
-            throw("Can't change name to " || s || " - already exists")
+            rthrow("Can't change name to " || s || " - already exists", self)
          delete(ent, x.name)
          insert(ent, s, x)
       }
