@@ -462,7 +462,7 @@ gb_Font *gb_find_Font(char *family, int flags, double size)
     }
 
     INT style = 0;
-    if (flags & FONTFLAG_BOLD)
+    if (flags & (FONTFLAG_BOLD | FONTFLAG_DEMIBOLD))
         style |= FontStyleBold;
     if (flags & (FONTFLAG_ITALIC | FONTFLAG_OBLIQUE))
         style |= FontStyleItalic;

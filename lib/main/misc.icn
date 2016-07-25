@@ -81,7 +81,7 @@ procedure save_vars(e, vars)
 end
 
 #
-# A common case, having the same effect as `save_vars{..., &why}`.
+# A common case, having the same effect as `save_state(e, WhyState())`.
 #
 procedure save_why(e)
    suspend save_state(e, WhyState())
@@ -300,28 +300,63 @@ class VarState(State)
    end
 end
 
-# A `State` which saves &subject and &pos
+# A `State` which saves &subject and &pos.  Initial values of &subject
+# and &pos may optionally be specified.
 #
 class ScanState(State)
-   private ks, kp
+   private is, ip, s, p
 
    public begin()
-      ks := &subject
-      kp := &pos
-      &subject := ""
+      s := &subject
+      p := &pos
+      &subject := is
+      &pos := ip
    end
 
    public swap()
       local t
       t := &pos
-      &subject :=: ks
-      &pos := kp
-      kp := t
+      &subject :=: s
+      &pos := p
+      p := t
    end
 
    public finish()
-      &subject := ks
-      &pos := kp
+      &subject := s
+      &pos := p
+   end
+
+   public new(is, ip)
+      /is := ""
+      /ip := 1
+      self.is := is
+      self.ip := ip
+      return
+   end
+end
+
+# A `State` which saves &pos.  An initial value may be specified.
+#
+class PosState(State)
+   private i, p
+
+   public begin()
+      p := &pos
+      &pos := i
+   end
+
+   public swap()
+      &pos :=: p
+   end
+
+   public finish()
+      &pos := p
+   end
+
+   public new(i)
+      /i := 1
+      self.i := i
+      return
    end
 end
 
@@ -347,11 +382,11 @@ end
 # A `State` to save `&why`.
 #
 class WhyState(State)
-   private w
+   private w, i
 
    public begin()
       w := &why
-      &why := ""
+      &why := i
    end
 
    public swap()
@@ -360,6 +395,12 @@ class WhyState(State)
 
    public finish()
       &why := w
+   end
+
+   public new(i)
+      /i := ""
+      self.i := i
+      return
    end
 end
 

@@ -51,6 +51,18 @@ procedure throw(x)
    runerr("throw(): code co-expression reactivated unexpectedly")
 end
 
+# A convenient procedure to invoke `runerr` if there is no
+# `throw_handler`, or `throw` otherwise.  This is useful if a
+# procedure may legitimately be called both within and without the
+# context of a `try`.
+#
+procedure rthrow(a[])
+   if /throw_handler then
+      runerr!a
+   else
+      throw!a
+end
+
 #
 # Re-throw an exception, by invoking {throw_handler} without changing
 # {thrown} or {thrower}.

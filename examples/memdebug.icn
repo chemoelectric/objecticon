@@ -48,15 +48,16 @@ procedure do_help()
    cmd_out.write("                    which should be a class, procedure or method name.")
    cmd_out.write("breakproc [x]     - set or clear breakpoint to stop in procedure x.")
    cmd_out.write("breakpoint [x y]  - set or clear breakpoint at file x, line y.")
-   cmd_out.write("hlim [i]          - show or set the command history limit.")
+   cmd_out.write("hlim i            - set the command history limit.")
    cmd_out.write("hist              - display the history.")
    cmd_out.write("cmd n             - perform command n in the history.")
-   cmd_out.write("llim [i]          - show or set the history log limit in the gui.")
-   cmd_out.write("slim [i]          - show or set the displayed string limit; 0 means no limit.")
-   cmd_out.write("addrs [i]         - show or set the display of addresses in the regions")
+   cmd_out.write("llim i            - set the history log limit in the gui.")
+   cmd_out.write("slim i            - set the displayed string limit; 0 means no limit.")
+   cmd_out.write("addrs i           - set the display of addresses in the regions")
    cmd_out.write("                       i=0 (no addresses),")
    cmd_out.write("                       i=1 (addresses for items with no serial number),")
    cmd_out.write("                       i=2 (show all addresses)")
+   cmd_out.write("settings          - show the values of the various settings.")
    cmd_out.write("cls               - clear the screen.")
    cmd_out.write("echo a...         - echo arguments.")
    cmd_out.write("help              - show help.")
@@ -142,30 +143,29 @@ procedure do_cls()
 end
 
 procedure do_slim(a)
-   if *a = 0 | (*a = 1 & slim := 0 <= integer(a[1])) then {
-      if *a = 1 then
-         MemDebug.set_slim(slim)
+   if *a = 1 & slim := 0 <= integer(a[1]) then {
+      MemDebug.set_slim(slim)
       cmd_out.write("slim is now ", slim)
    } else
-      return errmsg("usage: slim [length]")
+      return errmsg("usage: slim length")
 end
 
 procedure do_hlim(a)
-   if *a = 0 | (*a = 1 & hlim := 10 < integer(a[1])) then {
-      if *a = 1 & is(input, TermDialog | LineEditorStream) then
+   if *a = 1 & hlim := 10 < integer(a[1]) then {
+      if is(input, TermDialog | LineEditorStream) then
          input.set_history_limit(hlim)
       cmd_out.write("hlim is now ", hlim)
    } else
-      return errmsg("usage: hlim [length (> 10)]")
+      return errmsg("usage: hlim length (> 10)")
 end
 
 procedure do_llim(a)
-   if *a = 0 | (*a = 1 & llim := 10 < integer(a[1])) then {
-      if *a = 1 & is(input, TermDialog) then
+   if *a = 1 & llim := 10 < integer(a[1]) then {
+      if is(input, TermDialog) then
          input.set_log_limit(llim)
       cmd_out.write("llim is now ", llim)
    } else
-      return errmsg("usage: llim [length (> 10)]")
+      return errmsg("usage: llim length (> 10)")
 end
 
 procedure do_hist()
@@ -180,12 +180,11 @@ end
 
 procedure do_addrs(a)
    local i
-   if *a = 0 | (*a = 1 & i := integer(a[1]) & 0 <= i <= 2) then {
-      if *a = 1 then
-         MemDebug.set_addrs(addrs := i)
+   if *a = 1 & i := integer(a[1]) & 0 <= i <= 2 then {
+      MemDebug.set_addrs(addrs := i)
       cmd_out.write("addrs is now ", addrs)
    } else
-      return errmsg("usage: addrs [n] with n=0, 1 or 2")
+      return errmsg("usage: addrs n with n=0, 1 or 2")
 end
 
 procedure do_breakproc(a)
@@ -209,7 +208,7 @@ procedure do_breakpoint(a)
    } else
       return errmsg("usage: breakpoint [file line]")
    synch_mask()
-   cmd_out.write(if /break_file then "breakpoint cleared" else "break now " || break_file || " at " || break_line)
+   cmd_out.write(if /break_file then "break point cleared" else "break now " || break_file || " at " || break_line)
 end
 
 procedure do_exit()
@@ -229,6 +228,15 @@ procedure do_cmd(a)
          hist_line := input.get_history_item(n)
    } else
       return errmsg("usage: cmd n")
+end
+
+procedure do_settings()
+   cmd_out.write("slim is ", slim)
+   cmd_out.write("hlim is ", hlim)
+   cmd_out.write("llim is ", llim)
+   cmd_out.write("addrs is ", addrs)
+   cmd_out.write(if /break_proc then "break proc not set" else "break proc " || break_proc)
+   cmd_out.write(if /break_file then "break point not set" else "break point " || break_file || " at " || break_line)
 end
 
 procedure do_line(s)
@@ -290,6 +298,7 @@ procedure do_line(s)
       "statics":  do_statics(a)
       "breakproc" :  do_breakproc(a)
       "breakpoint" :  do_breakpoint(a)
+      "settings": do_settings()
       "hlim" :  do_hlim(a)
       "llim" :  do_llim(a)
       "hist" :  do_hist(a)
@@ -406,11 +415,11 @@ procedure do_terminal()
    repeat {
       if /stopped then {
          next_event() | break
-         sched.work()
+         while sched.work()
       } else
          sched.work_or_sleep()
    }
-   until task.is_dormant() do
+   until sched.empty() do
       sched.work_or_sleep()
 end
 
