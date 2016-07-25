@@ -1097,6 +1097,11 @@ class BrowserTab(TabItem, BrowserUI)
       close_tab()
    end
 
+   public finally()
+      TabItem.finally()
+      revert_tab := &null
+   end
+
    public close_tab()
       local t, i
       if parent.which_one === self then {

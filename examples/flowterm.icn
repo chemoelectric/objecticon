@@ -2769,7 +2769,7 @@ $endif
       tty.close()
       close_log()
       ChildWait.add_pid(pid, on_shell_exit)
-      check_cwd_time_task := io_task := tty := pid := &null
+      revert_tab := check_cwd_time_task := io_task := tty := pid := &null
    end
 
    private on_favourites_list(ev)
