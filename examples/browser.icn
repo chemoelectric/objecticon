@@ -124,6 +124,11 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
          write("Child application exited: ", to_string(r))
    end
 
+   public goto_tab(t)
+      tabs.set_which_one(t)
+      update_grey()
+   end
+
    private on_quit(ev)
       dispose()
    end
@@ -187,10 +192,8 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       tabs.add(bt, np)
       if is_live() then
          tabs.do_layout().invalidate()
-      if \sel then {
-         tabs.set_which_one(bt)
-         update_grey()
-      }
+      if \sel then
+         goto_tab(bt)
       return bt
    end
 
@@ -1116,8 +1119,7 @@ class BrowserTab(TabItem, BrowserUI)
                i +:= 1
          }
          t := parent.children[i] | syserr("Couldn't find other tab")
-         parent.set_which_one(t)
-         parent_dialog.update_grey()
+         parent_dialog.goto_tab(t)
       }
       parent.
          remove(self).
