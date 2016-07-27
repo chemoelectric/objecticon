@@ -1483,7 +1483,7 @@ class Dialog(Component)
       TOOLTIP_END_DELAY := env_int("OI_DIALOG_TOOLTIP_END_DELAY", 1) | 4000
       TOOLTIP_CONTINUE_DELAY := env_int("OI_DIALOG_TOOLTIP_CONTINUE_DELAY", 1) | 1500
       TOOLTIP_X_OFFSET := env_scale("OI_DIALOG_TOOLTIP_X_OFFSET") | scale(5)
-      TOOLTIP_Y_OFFSET := env_scale("OI_DIALOG_TOOLTIP_Y_OFFSET") | scale(15)
+      TOOLTIP_Y_OFFSET := env_scale("OI_DIALOG_TOOLTIP_Y_OFFSET") | scale(25)
       DRAG_GESTURE_OFFSET := env_scale("OI_DIALOG_DRAG_GESTURE_OFFSET") | scale(4)
       POINTER := env_pointer("OI_DIALOG_POINTER") | "left ptr"
       DND_NEGATIVE_POINTER := env_pointer("OI_DIALOG_DND_NEGATIVE_POINTER") | "circle"
