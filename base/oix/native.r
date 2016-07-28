@@ -4063,7 +4063,7 @@ function io_Files_mount(f, af, old, flag, aname)
       runerr(103, old)
    if !cnv:C_integer(flag) then
       runerr(101, flag)
-   if !cnv:C_string(aname) then
+   if !def:C_string(aname, "") then
       runerr(103, aname)
 
    body {
