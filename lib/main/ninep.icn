@@ -34,8 +34,11 @@ package record Tinvalid()
 record Info(mode, atime, mtime, length, name, uid, gid, muid)
 record Qid(type, version, path)
 
-# This class represents a single entry in a file hierarchy, which
-# can be constructed and served to 9P clients.
+# This class represents a single entry in a file hierarchy, which can
+# be constructed and served to 9P clients.  This class just deals with
+# the metadata, such as permissions, user ids and so on.  The detail
+# of how data is stored (be it file or directory data), is left to the
+# subclasses.
 #
 abstract class File9P()
    private readable
@@ -207,7 +210,9 @@ abstract class File9P()
    end
 end
 
-# A `File9P` which is a directory, rather than a regular file.
+# A `File9P` which is a directory, rather than a regular file.  The
+# details of how directory information is stored is left to
+# subclasses.
 #
 abstract class Dir9P(File9P)
    public abstract add_child(x)
@@ -221,7 +226,7 @@ end
 
 # An implementation of `Dir9P` which keeps its children in a simple table.
 #
-class Dir9PImpl(Dir9P)
+class TableDir9P(Dir9P)
    private
       ent
 
@@ -261,7 +266,7 @@ class Dir9PImpl(Dir9P)
    end
 
    protected new_dir_child(name, uid, perm)
-      return Dir9PImpl(name).
+      return TableDir9P(name).
          set_uid(uid).
          set_muid(uid).
          set_gid(self.gid).
@@ -269,7 +274,7 @@ class Dir9PImpl(Dir9P)
    end
 
    protected new_regular_child(name, uid, perm)
-      return Regular9PImpl(name).
+      return StringFile9P(name).
          set_uid(uid).
          set_muid(uid).
          set_gid(self.gid).
@@ -294,16 +299,18 @@ class Dir9PImpl(Dir9P)
 end
 
 #
-# This is just a `Dir9PImpl` named "/"
+# This is just a `TableDir9P` named "/"
 #
-class Root9P(Dir9PImpl)
+class Root9P(TableDir9P)
    public new()
-      Dir9PImpl.new("/")
+      TableDir9P.new("/")
       return
    end
 end
 
-# A `File9P` which is a regular file, rather than a directory.
+# A `File9P` which is a regular file, rather than a directory.  The
+# detail of how the file's data is represented is left to subclasses,
+# who should implement the `read` and `write` methods as appropriate.
 #
 abstract class Regular9P(File9P)
    public defer write(s, pos)
@@ -312,7 +319,7 @@ end
 
 # An implementation of `Regular9P` which keeps its file content in a string.
 #
-class Regular9PImpl(Regular9P)
+class StringFile9P(Regular9P)
    private readable
       data
 
@@ -413,6 +420,12 @@ class FifoFile9P(Regular9P)
       return self
    end
 
+   public add(s)
+      s := string(s) | runerr(103, s)
+      write(s)
+      return self
+   end
+
    public new(n)
       Regular9P.new(n)
       data := ""
@@ -422,8 +435,8 @@ end
 
 # An implementation of `Regular9P` in which the content is split into
 # a queue of messages.  Writes append to the end, whilst reads consume
-# from the start.  Reads never consume more than one messge in the
-# queue.
+# from the start.  Reads never consume more than one message in the
+# queue.  In both read and write, position is ignored.
 #
 class QueueFile9P(Regular9P)
    private
@@ -1319,7 +1332,7 @@ class Session9P()
       return p
    end
 
-   public respond(x)
+   private respond(x)
       local t, y, f, e
       t := []  # A list of paths temporarily used by respond_impl
       clean{ (y := try1{respond_impl(x, t)}) | (f := &why) }
@@ -1517,6 +1530,9 @@ class Session9P()
       }
    end
 
+   # This method loops, reading and writing 9P messages using file `f`
+   # until end-of-file or error on `f`.  Messages are processed sequentially.
+   #
    public io(f)
       local x, y
       while x := Comms9P.get(f) do {
@@ -1569,6 +1585,11 @@ class Session9P()
       return t.start()
    end
 
+   # This method returns immediately after starting a new
+   # `Task` in `Scheduler` `sched`).  This `Task` will process each
+   # incoming message in its own `Task`, so that each message can be
+   # processed asynchronously.
+   #
    public async_io(sched, f)
       local x, e, t, ts, item
       t := Task(sched, create {
@@ -1607,6 +1628,11 @@ class Session9P()
       return t.start()
    end
 
+   # This method returns immediately after starting a new `Task` in
+   # `Scheduler` `sched`, which calls `io()` on `f` (after wrapping it
+   # in a `TaskStream`).  Thus messages are processed sequentially one
+   # after another, but in a background task.
+   #
    public io_task(sched, f)
       local t, ts
       t := Task(sched, create {
