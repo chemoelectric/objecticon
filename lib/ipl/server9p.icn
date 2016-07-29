@@ -1,6 +1,6 @@
 package ipl.server9p
 
-import io, posix, ipl.options, util
+import io, posix, ipl.options, util, gui
 
 package procedure usage_impl(s, opts)
    ewrite("Usage: ", get_progname(), s)
@@ -50,7 +50,7 @@ end
 procedure server_main_0(a, sess, sched, optl)
    /optl := get_optl()
    opts := options(a, optl, usage_0)
-   server_main("", sess, sched)
+   server_main(, sess, sched)
 end
 
 procedure server_main_1(a, sess, sched, optl)
@@ -120,5 +120,60 @@ procedure async_sched_loop(sess, sched, f)
          until sched.empty() do
             sched.work_or_sleep()
       }
+   }
+end
+
+procedure gui_main(attach, sess, async_flag, body)
+   local p, pid, pname, nb, fn, fl, s, mp
+   pname := get_progname()
+   p := FileStream.pipe() | stop(&why)
+   pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFFDG)) | stop(&why)
+   if pid = 0 then {
+      # child
+      p[1].close()
+      if \opts["v"] then 
+         sess.set_verbose(&yes)
+      use {
+         nb := NonBlockStream(p[2]),
+         {
+            if /async_flag then
+               sess.io_task(Dispatcher.scheduler, nb)
+            else
+               sess.async_io(Dispatcher.scheduler, nb)
+            @body
+         }
+      }
+      if \opts["v"] then {
+         sess.dump()
+         system("cat /proc/" || System.getpid() || "/fd")
+      }
+   } else {
+      # parent
+      p[2].close()
+      if s := \opts["s"] then {
+         fn := "/srv/" || s
+         Files.string_to_file(fn, p[1].get_fd()) | stop(&why)
+         ewrite(pname, ": serving on /srv/", s)
+         System.wait(pid)
+         Files.remove(fn)
+      } else {
+         mp := \opts["m"] | get_mountpt()
+         fl := if \opts["a"] then
+            MountOpt.MAFTER
+         else if \opts["b"] then
+            MountOpt.MBEFORE
+         else
+            MountOpt.MREPL
+         if \opts["c"] then
+            fl := ior(fl, MountOpt.MCREATE)
+         if \opts["C"] then
+            fl := ior(fl, MountOpt.MCACHE)
+         Files.mount(p[1], &null, mp, fl, attach) | stop(&why)
+         ewrite(pname, ": mounted on ", mp)
+         System.wait(pid)
+         Files.unmount(&null, mp)
+      }
+      p[1].close()
+      ewrite(pname, ": exit")
    }
 end
