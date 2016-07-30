@@ -666,7 +666,7 @@ class Canvas(Component,SelectiveObjectCodec)
 
       every r := !rows.lines do {
          tab := 0
-         (\last).set_constraint("eol", 1)
+         (\last).set_constraint("eol", &yes)
          every c := !cols.lines do {
             i := r.elements ** c.elements
             if *i = 0 then
