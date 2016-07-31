@@ -1381,7 +1381,7 @@ searchhist(Window *w, int dir)
 static void
 gotohist(Window *w, int pos)
 {
-    int q0, nb;
+    int nb;
     Rune *rs;
 
     if (pos < 0 || pos > w->hsize)
