@@ -34,6 +34,15 @@ static	Image	*holdcol;
 static	Image	*lightholdcol;
 static	Image	*paleholdcol;
 
+static void addhist(Window *w, int from, int to);
+static void rmhist(Window *w);
+static void gotohist(Window *w, int pos);
+static void searchhist(Window *w, int dir);
+static void resethist(Window *w);
+static void locatehist(Window *w);
+
+#define HistEntry(w,pos) ((w)->hist[((w)->hfirst + (pos)) % (w)->hlimit])
+
 Window*
 wmk(Image *i, MousectlEx *mc, Channel *ck, Channel *cctl, int hidden, int scrolling, int transientfor, int noborder,
     int layer, int mindx, int maxdx, int mindy, int maxdy)
@@ -96,6 +105,11 @@ wmk(Image *i, MousectlEx *mc, Channel *ck, Channel *cctl, int hidden, int scroll
         w->maxdx = maxdx;
         w->mindy = mindy;
         w->maxdy = maxdy;
+        w->hlimit = 128;
+        w->hist = emalloc(w->hlimit * sizeof(Rune *));
+        w->hsentlen = w->hpos = w->hsize = w->hfirst = w->hlast = 0;
+        w->hsent = w->hedit = 0;
+        w->hstartno = 1;
 	w->dir = estrdup(startdir);
 	w->label = estrdup("<unnamed>");
         if (noborder) {
@@ -224,7 +238,7 @@ winctl(void *arg)
 {
 	Rune *rp, *bp, *tp, *up, *kbdr;
 	uint qh;
-	int nr, nb, c, wid, i, npart, initial;
+	int nr, nb, c, wid, i, npart, initial, qh0;
 	char *s, *t, part[3];
 	Window *w;
 	Mousestate *mp, m;
@@ -400,6 +414,7 @@ winctl(void *arg)
 			recv(crm.c1, &pair);
 			t = pair.s;
 			nb = pair.ns;
+                        qh0 = w->qh;
 			i = npart;
 			npart = 0;
 			if(i)
@@ -426,6 +441,8 @@ winctl(void *arg)
 				memmove(part, t+nb, npart);
 				i = nb;
 			}
+                        if (!w->rawing)
+                            addhist(w, qh0, w->qh);
 			pair.s = t;
 			pair.ns = i;
 			send(crm.c2, &pair);
@@ -624,30 +641,24 @@ wkeyctl(Window *w, Rune r)
 	/* navigation keys work only when mouse is not open */
 	if(!w->mouseopen)
 		switch(r){
-		case Kdown:
-			n = w->maxlines/3;
-			goto case_Down;
 		case riox_Kscrollonedown:
 			n = mousescrollsize(w->maxlines);
 			if(n <= 0)
 				n = 1;
 			goto case_Down;
 		case Kpgdown:
-			n = 2*w->maxlines/3;
+			n = w->maxlines/2;
 		case_Down:
 			q0 = w->org+frcharofpt(w, Pt(w->Frame.r.min.x, w->Frame.r.min.y+n*w->font->height));
 			wsetorigin(w, q0, TRUE);
 			return;
-		case Kup:
-			n = w->maxlines/3;
-			goto case_Up;
 		case riox_Kscrolloneup:
 			n = mousescrollsize(w->maxlines);
 			if(n <= 0)
 				n = 1;
 			goto case_Up;
 		case Kpgup:
-			n = 2*w->maxlines/3;
+			n = w->maxlines/2;
 		case_Up:
 			q0 = wbacknl(w, w->org, n);
 			wsetorigin(w, q0, TRUE);
@@ -705,9 +716,37 @@ wkeyctl(Window *w, Rune r)
 		wcut(w);
 	}
 	switch(r){
+        case Kup:
+                if (!w->holding)
+                   gotohist(w, w->hpos - 1);
+                return;
+        case Kdown:
+                if (!w->holding)
+                    gotohist(w, w->hpos + 1);
+                return;
+        case 16:   /* ^P */
+                if (!w->holding)
+                    locatehist(w);
+                return;
+        case 18:   /* ^R */
+                if (!w->holding)
+                    searchhist(w, -1);
+                return;
+        case 20:   /* ^T */
+                if (!w->holding)
+                    searchhist(w, 1);
+                return;
+        case 25:   /* ^Y */
+                if (w->q0 < w->nr) {
+                    wdelete(w, w->q0, w->q0 + 1);
+                    wshow(w, w->q0);
+                }
+                return;
 	case 0x7F:		/* send interrupt */
-		w->qh = w->nr;
-		wshow(w, w->qh);
+                w->qh = w->nr;
+                wsetselect(w, w->nr, w->nr);
+                wshow(w, w->nr);
+                resethist(w);
 		notefd = emalloc(sizeof(int));
 		*notefd = w->notefd;
 		proccreate(interruptproc, notefd, 4096);
@@ -740,7 +779,16 @@ wkeyctl(Window *w, Rune r)
 			wsetselect(w, q0, q0);
 		}
 		return;
+        case '\n' :
+               /* If the cursor is in the edited region, (qh..nr), or
+                * just to its left, move it to the end so the edited
+                * line is not split
+                */ 
+               if (w->q0 >= w->qh && w->q0 < w->nr)
+                   wsetselect(w, w->nr, w->nr);
+               break;
 	}
+
 	/* otherwise ordinary character; just insert */
 	q0 = w->q0;
 	q0 = winsert(w, &r, 1, q0);
@@ -1259,10 +1307,178 @@ wctlmesg(Window *w, int m)
 		free(w->r);
 		free(w->dir);
 		free(w->label);
+                while (w->hsize > 0)
+                    rmhist(w);
+                free(w->hist);
+                free(w->hedit);
+                free(w->hsent);
 		free(w);
 		break;
 	}
 	return m;
+}
+
+/*
+ * Go to a history entry based on the number in the current line edit.
+ */
+static void
+locatehist(Window *w)
+{
+    int num, i;
+    Rune r;
+
+    if (w->qh == w->nr)
+        return;
+
+    num = 0;
+    for (i = w->qh; i < w->nr; ++i) {
+        Rune r = w->r[i];
+        if (r < '0' || r > '9')
+            return;
+        num = 10 * num + (r - '0');
+    }
+    gotohist(w, num - w->hstartno);
+}
+
+#define HistCheck if (runestrncmp(HistEntry(w,i), rs, rl) == 0) { \
+                     gotohist(w, i); \
+                     wsetselect(w, w->qh + rl, w->qh + rl); \
+                     return; \
+                  }
+
+/*
+ * Search for a given history entry.
+ */
+static void
+searchhist(Window *w, int dir)
+{
+    Rune *rs;
+    int rl, i;
+
+    /* Get the string to search for and its length. */
+    rs = &w->r[w->qh];
+    rl = w->q0 - w->qh;
+    if (rl < 0)
+        return;
+
+    /* Do a circular search backward of forward. */
+    if (dir < 0) {
+        for (i = w->hpos - 1; i >= 0; i--)
+            HistCheck;
+        for (i = w->hsize - 1; i >= w->hpos + 1; i--)
+            HistCheck;
+    } else {
+        for (i = w->hpos + 1; i < w->hsize; i++)
+            HistCheck;
+        for (i = 0; i <= w->hpos - 1; i++)
+            HistCheck;
+    }
+}
+
+/*
+ * Goto the given history number.
+ */
+static void
+gotohist(Window *w, int pos)
+{
+    int q0, nb;
+    Rune *rs;
+
+    if (pos < 0 || pos > w->hsize)
+        return;
+
+    /* If we're moving off the current edit line, save it into hedit. */
+    if (w->hpos == w->hsize) {
+        int len = w->nr - w->qh;
+        w->hedit = erealloc(w->hedit, (1 + len) * sizeof(Rune));
+        memcpy(w->hedit, &w->r[w->qh], len * sizeof(Rune));
+        w->hedit[len] = 0;
+    }
+
+    /* Go to the end and delete the line, ^U-style */
+    wsetselect(w, w->nr, w->nr);
+    if (w->qh != w->nr) {
+        nb = wbswidth(w, 0x15);  // 0x15 = ^U
+        if (nb > 0) {
+            wdelete(w, w->nr - nb, w->nr);
+            wsetselect(w, w->nr, w->nr);
+        }
+    }
+
+    /* The string to insert is either hedit if we're one beyond the
+     *  history, or the relevant entry.
+     */
+    if (pos == w->hsize)
+        rs = w->hedit;
+    else
+        rs = HistEntry(w, pos);
+
+    /* Insert it. */
+    winsert(w, rs, runestrlen(rs), w->nr);
+    wsetselect(w, w->nr, w->nr);
+    wshow(w, w->nr);
+
+    /* Note the new position */
+    w->hpos = pos;
+}
+
+/* Add the characters in from..to, which are about to be sent to the
+ * reader of cons; if they end with a newline or ^d, create a new
+ * history entry, otherwise buffer them for next time.
+ */
+static void
+addhist(Window *w, int from, int to)
+{
+    Rune *rs;
+    int i, b;
+    /* Add the new chars to the hsent buffer */
+    w->hsent = erealloc(w->hsent, (w->hsentlen + to - from) * sizeof(Rune));
+    for (i = from; i < to; ++i)
+        w->hsent[w->hsentlen++] = w->r[i];
+
+    /* If hsent now ends with a newline or ^d char, then empty hsent
+     * and add a new entry to the history.
+     */
+    if (w->hsentlen > 0 && (w->hsent[w->hsentlen - 1] == '\n' || w->hsent[w->hsentlen - 1] == 4)) {
+        /* Don't add an empty string to the history. */
+        if (w->hsentlen > 1) {
+            rs = emalloc(sizeof(Rune) * w->hsentlen);
+            memcpy(rs, w->hsent, (w->hsentlen - 1) * sizeof(Rune));
+            rs[w->hsentlen - 1] = 0;
+            /* If history full, make room for one entry. */
+            if (w->hsize == w->hlimit)
+                rmhist(w);
+            w->hist[w->hlast] = rs;
+            w->hlast = (w->hlast + 1) % w->hlimit;
+            w->hsize++;
+        }
+        resethist(w);
+        w->hsentlen = 0;
+    }
+}
+
+/*
+ * Remove the oldest history entry.
+ */
+static void
+rmhist(Window *w)
+{
+    if (w->hsize == 0)
+        return;
+    free(w->hist[w->hfirst]);
+    w->hfirst = (w->hfirst + 1) % w->hlimit;
+    w->hstartno++;
+    w->hsize--;
+}
+
+/*
+ * Reset the history position to be the current edit line, ie just one
+ * beyond the history size.
+ */
+static void
+resethist(Window *w)
+{
+    w->hpos = w->hsize;
 }
 
 void
@@ -2018,4 +2234,26 @@ char*
 wcontents(Window *w, int *ip)
 {
 	return runetobyte(w->r, w->nr, ip);
+}
+
+char*
+whist(Window *w, int *ip)
+{
+    int ulen, i, max;
+    char *res, *p;
+
+    ulen = 0;
+    for (i = 0; i < w->hsize; ++i) {
+        Rune *rs = HistEntry(w, i);
+        ulen += runestrlen(rs);
+    }
+    max = ulen * UTFmax + 8 * w->hsize;
+    res = p = emalloc(max);
+
+    for (i = 0; i < w->hsize; ++i) {
+        Rune *rs = HistEntry(w, i);
+        p += sprint(p, "%4d  %S\n", i + w->hstartno, rs);
+    }
+    *ip = p - res;
+    return res;
 }

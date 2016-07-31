@@ -15,6 +15,7 @@ enum
 	Qscreeninfo,
 	Qsnarf,
 	Qtext,
+	Qhist,
 	Qwctl,
 	Qwindow,
 	Qwininfo,
@@ -35,6 +36,7 @@ enum
 #define INT_MIN               0x80000000
 #define VISIBLE_PART          50
 #define INVALID_LAYER         0xcafebabe
+
 typedef	struct	Consreadmesg Consreadmesg;
 typedef	struct	Conswritemesg Conswritemesg;
 typedef	struct	Stringpair Stringpair;
@@ -147,10 +149,10 @@ struct Window
 	Rune			*r;
 	uint			nraw;
 	Rune			*raw;
-	uint			org;
-	uint			q0;
-	uint			q1;
-	uint			qh;
+	uint			org;     /* first visible char in window */
+	uint			q0;      /* cursor or start of selection */
+	uint			q1;      /* end of selection */
+	uint			qh;      /* start of line to be sent to reader of cons file */
 	int			id;
 	char			name[64];
 	uint			namecount;
@@ -171,6 +173,16 @@ struct Window
         Window          *transientfor;
         Window          *transientforroot;
         Window          *rememberedfocus;           /* id of window to get focus on unhide */
+        Rune            **hist;                /* history lines array */
+        int             hfirst;                /* index of first history entry */
+        int             hlast;                 /* index of last entry */
+        int             hstartno;              /* number of first entry, giving sequence for hist file and recall with ^p */
+        int             hsize;                 /* current number of entries */
+        int             hlimit;                /* maximum allowed entries */
+        int             hpos;                  /* navigation position, may be one past end, indicating current edit line */
+        Rune            *hedit;                /* saved current edit line, restored when hpos goes one past end */
+        Rune            *hsent;                /* buffer to store partially read lines */
+        int             hsentlen;              /* len of hsent. */
         int             mindx;
         int             maxdx;
         int             mindy;
@@ -199,6 +211,7 @@ Window*	wpointto(Point);
 int		wtop(Window*);
 int		wbottom(Window*);
 char*	wcontents(Window*, int*);
+char*   whist(Window *w, int *ip);
 int		wbswidth(Window*, Rune);
 int		wclickmatch(Window*, int, int, int, uint*);
 int		wclose(Window*);

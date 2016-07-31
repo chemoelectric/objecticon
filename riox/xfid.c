@@ -722,6 +722,10 @@ xfidread(Xfid *x)
 		t = wcontents(w, &n);
 		goto Text;
 
+	case Qhist:
+		t = whist(w, &n);
+		goto Text;
+
 	Text:
 		if(off > n){
 			off = n;
