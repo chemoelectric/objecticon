@@ -79,11 +79,11 @@ procedure Collections__()
    local collections
    collections := Prog.get_collection_info()
    write("collections")
-   write("total ", right(collections.get_total(), 8))
-   write("user  ", right(collections.user_requests, 8))
-   write("stack ", right(collections.stack_requests, 8))
-   write("string", right(collections.string_requests, 8))
-   write("block ", right(collections.block_requests, 8))
+   write("total ", right(collections.get_total(), 12))
+   write("user  ", right(collections.user_requests, 12))
+   write("stack ", right(collections.stack_requests, 12))
+   write("string", right(collections.string_requests, 12))
+   write("block ", right(collections.block_requests, 12))
    return
 end
 
@@ -93,8 +93,8 @@ procedure Regions__()
    local regions
    regions := Prog.get_region_info()
    write("regions")
-   write("string", right(regions.get_string_total().size,8))
-   write("block ", right(regions.get_block_total().size,8))
+   write("string", right(regions.get_string_total().size,12))
+   write("block ", right(regions.get_block_total().size,12))
    return
 end
 
@@ -104,8 +104,8 @@ procedure Storage__()
    local storage
    storage := Prog.get_region_info()
    write("storage")
-   write("string", right(storage.get_string_total().used,8))
-   write("block ", right(storage.get_block_total().used,8))
+   write("string", right(storage.get_string_total().used,12))
+   write("block ", right(storage.get_block_total().used,12))
    return
 end
 
@@ -122,7 +122,7 @@ procedure Collections__()
    every put(collections,&collections)
    write("collections")
    every i := 1 to *labels do
-      write(labels[i],right(collections[i],8))
+      write(labels[i],right(collections[i],12))
    return
 end
 
@@ -138,7 +138,7 @@ procedure Regions__()
    every put(regions,&regions)
    write("regions")
    every i := 1 to *labels do
-      write(labels[i],right(regions[i],8))
+      write(labels[i],right(regions[i],12))
    return
 end
 
@@ -154,7 +154,7 @@ procedure Storage__()
    every put(storage,&storage)
    write("storage")
    every i := 1 to *labels do
-      write(labels[i],right(storage[i],8))
+      write(labels[i],right(storage[i],12))
    return
 end
 
