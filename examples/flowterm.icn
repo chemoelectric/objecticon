@@ -132,6 +132,11 @@ class FlowTermDialog(Dialog)
       dispose()
    end
 
+   public goto_tab(t)
+      tabs.set_which_one(t)
+      on_tabs_changed()
+   end
+
    public do_tab_cmd(l)
       local s, t, cmd
       # l is a list of strings (not ucs).
@@ -157,7 +162,7 @@ class FlowTermDialog(Dialog)
          a := if \t.adjacent_flag then tabs.which_one
          add_tab(t, a)
          if \t.select_flag | /tabs.which_one then
-            tabs.set_which_one(t)
+            goto_tab(t)
       }
    end
 
@@ -178,7 +183,7 @@ class FlowTermDialog(Dialog)
       }
       add_tab(t, adjacent)
       if \sel then
-         tabs.set_which_one(t)
+         goto_tab(t)
       return t
    end
 
@@ -1543,13 +1548,13 @@ class Terminal(TabItem, VtUI)
    private on_tab_right()
       local i
       i := parent.get_index(self) % *parent.children + 1
-      parent.set_which_one(parent.children[i])
+      parent_dialog.goto_tab(parent.children[i])
    end
 
    private on_tab_left()
       local i
       i := (parent.get_index(self) + *parent.children - 2) % *parent.children + 1
-      parent.set_which_one(parent.children[i])
+      parent_dialog.goto_tab(parent.children[i])
    end
 
    private static parse_key(s)
@@ -1826,7 +1831,10 @@ $endif
    end
 
    public tab_active()
-      check_cwd_change()
+      # The tab has been selected; check for a cwd change in case the
+      # cd has been renamed or deleted in another tab.
+      if is_live() then
+         check_cwd_change()
    end
 
    private check_cwd_change()
@@ -2769,7 +2777,7 @@ $endif
       tty.close()
       close_log()
       ChildWait.add_pid(pid, on_shell_exit)
-      check_cwd_time_task := io_task := tty := pid := &null
+      revert_tab := check_cwd_time_task := io_task := tty := pid := &null
    end
 
    private on_favourites_list(ev)
@@ -2831,7 +2839,7 @@ $endif
                   i +:= 1
             }
             t := parent.children[i] | syserr("Couldn't find other tab")
-            parent.set_which_one(t)
+            parent_dialog.goto_tab(t)
          }
          parent.
             remove(self).

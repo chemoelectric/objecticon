@@ -1,5 +1,4 @@
 #!/bin/sh
-set -e
 
 bm()
 {
@@ -28,7 +27,7 @@ bm()
 
 . ../paths.sh
 
-unset TRACE OIMAXLEVEL
+unset TRACE OI_MAX_LEVEL
 
 [ -f custom.sh ] && . custom.sh
 
@@ -46,6 +45,8 @@ shift $((OPTIND-1))
 if [ $# -eq 0 ] ; then
     set tgrlink geddump deal ipxref queens rsg concord cochain case operators
 fi
+
+set -e
 
 while [ $# -gt 0 ] ; do
     case $1 in

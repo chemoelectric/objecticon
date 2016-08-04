@@ -157,6 +157,11 @@ $else
    end
 $endif
 
+   public goto_tab(t)
+      tabs.set_which_one(t)
+      update_grey()
+   end
+
    private on_quit(ev)
       dispose()
    end
@@ -220,10 +225,8 @@ $endif
       tabs.add(bt, np)
       if is_live() then
          tabs.do_layout().invalidate()
-      if \sel then {
-         tabs.set_which_one(bt)
-         update_grey()
-      }
+      if \sel then
+         goto_tab(bt)
       return bt
    end
 
@@ -1135,6 +1138,11 @@ class BrowserTab(TabItem, BrowserUI)
       close_tab()
    end
 
+   public finally()
+      TabItem.finally()
+      revert_tab := &null
+   end
+
    public close_tab()
       local t, i
       if parent.which_one === self then {
@@ -1149,8 +1157,7 @@ class BrowserTab(TabItem, BrowserUI)
                i +:= 1
          }
          t := parent.children[i] | syserr("Couldn't find other tab")
-         parent.set_which_one(t)
-         parent_dialog.update_grey()
+         parent_dialog.goto_tab(t)
       }
       parent.
          remove(self).

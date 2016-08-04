@@ -96,12 +96,12 @@ class LineEditorStream(LineBasedInputStream, HasTask)
       }
    end
 
-   private dbg(a[])
+   private static dbg(a[])
       static f
       initial
          f := FileStream("/tmp/lineeditor_dbg.txt", ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT))
       (\f).write!a
-      return self
+      return
    end
 
    public static get_console_size()
