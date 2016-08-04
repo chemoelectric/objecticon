@@ -24,10 +24,16 @@ procedure get_family(w, s)
       return "mono"
    if find("courier/", s) then
       return "typewriter"
+   if find("terminus/", s) then
+      return "typewriter"
    if find("lucidasans/", s) then
       return if is_mono(w) then "mono" else "sans"
    if find("cuni/", s) then
       return "serif"
+   if find("dejavu" || (""|"bd"|"bi"|"it") || "/", s) then
+      return "serif"
+   if find("dejavusans" || (""|"bd"|"bi"|"it") || "/", s) then
+      return "sans"
    s ? {
       ="/lib/font/bit/"
       return map(tab(upto('/')))
@@ -46,6 +52,10 @@ procedure get_slant(s)
 
    if find("I"|"italic"|"latin1i", s) then
       return "italic"
+
+   if find(("dejavu" | "dejavusans") || ("bi"|"it") || "/", s) then
+      return "italic"
+
    return "roman"
 end
 
@@ -58,6 +68,10 @@ procedure get_weight(s)
 
    if find("B"|"bold"|"latin1b", s) then
       return "bold"
+
+   if find(("dejavu" | "dejavusans") || ("bd"|"bi") || "/", s) then
+      return "bold"
+
    return "medium"
 end
 
@@ -82,7 +96,7 @@ procedure get_spacing(w, s, fam)
 end
 
 procedure get_size(w, s, fam)
-   local bw, bh, fh, i, j, l, font_size, pix, v
+   local bw, bh, fh, i, j, l, font_size, pix, v, white
    if fam == "naga10" then   # Has no "M"
       bw := 10
    else {
@@ -93,18 +107,29 @@ procedure get_size(w, s, fam)
    bh := w.get_font_ascent()
    fh := w.get_font_height()
    w.set_size(bw, fh)
+   # On plan9, setting the size can change the white background colour minutely
+   use {
+      l := w.get_pixels(,,1,1),
+      white := l.get(0,0)
+   }
    every w.draw_string(0, bh, !&letters)
-   l := w.get_pixels()
-   font_size := 0
-   every j := 0 to fh - 1 do {
-      pix := &null
-      every i := 0 to bw - 1 do {
-         v := l.get(i, j) | stop("Expected pixel")
-         if v ~== "65535,65535,65535" then
-            pix := 1
+   use {
+      l := w.get_pixels(),
+      {
+         font_size := 0
+         every j := 0 to fh - 1 do {
+            pix := &null
+            every i := 0 to bw - 1 do {
+               v := l.get(i, j) | stop("Expected pixel")
+               if v ~== white then {
+                  pix := &yes
+                  break
+               }
+            }
+            if \pix then
+               font_size +:= 1
+         }
       }
-      if \pix then
-         font_size +:= 1
    }
    return Format.numeric_to_string(max(1.0, font_size * 72.0 / 96.0), 1)
 end
