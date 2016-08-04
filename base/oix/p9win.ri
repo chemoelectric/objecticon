@@ -1251,19 +1251,12 @@ int getpattern(wbp w, struct imgdata *imd)
 
 void captureimgdata(wbp w, int x, int y, struct imgdata *imd)
 {
-    Image *im;
     int len;
     uchar *data;
     wsp ws = w->window;
-    /* Allocate a temp win to hold the rectangle we want */
-    MemProtect(im = allocimage(display, Rect(0, 0, imd->width, imd->height), RGBA32, 1, DNofill));
     len = imd->width * imd->height * 4;
     data = safe_malloc(len);
-    /* Copy from pix to the tmp win */
-    gendrawop(im, im->r, ws->pix, Pt(x, y), 0, ZP, S);
-    /* Get the pixels from the temp win, and then free it */
-    unloadimage(im, im->r, data, len);
-    freeimage(im);
+    unloadimage(ws->pix, MkRect(x, y, imd->width, imd->height), data, len);
     imd->format = &imgdataformat_P9ABGR32;
     imd->data = data;
 }
