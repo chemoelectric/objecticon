@@ -2038,9 +2038,16 @@ wshow(Window *w, uint q0)
 	int qe;
 	int nl;
 	uint q;
+        int t;
 
 	qe = w->org+w->nchars;
-	if(w->org<=q0 && (q0<qe || (q0==qe && qe==w->nr)))
+        /* This calculation stops the cursor disappearing below the
+         * window when a newline is the last char and at the bottom of
+         * the window. */
+        t = w->nlines;
+        if (w->nr > 0 && w->r[w->nr - 1] == '\n')
+            ++t;
+	if(w->org<=q0 && (q0<qe || (q0==qe && qe==w->nr && t <= w->maxlines)))
 		wscrdraw(w);
 	else{
 		nl = 4*w->maxlines/5;
