@@ -2,7 +2,7 @@ package ipl.server9p
 
 import io, posix, ipl.options, util, gui
 
-package procedure usage_impl(s, opts)
+procedure usage_impl(s, opts)
    ewrite("Usage: ", get_progname(), s)
    if /opts then
       exit(1)
