@@ -119,6 +119,14 @@ class TextField(Component)
       return self.contents
    end
 
+   #
+   # Set the undo manager used by this instance.
+   #
+   public set_undo_manager(u)
+      undo_manager := u
+      return self
+   end
+
    public get_default_height()
       return self.cbwin.get_line_height() + border.get_total_height()
    end
@@ -163,7 +171,7 @@ class TextField(Component)
    #
    # @param x   The new contents
    # @param e   The event causing the change
-   # @param coalesce Allow this operation to be coalseced with others 
+   # @param coalesce Allow this operation to be coalesced with others 
    # @          by the undo manager.
    #
    public assign_contents(x, e, coalesce)
