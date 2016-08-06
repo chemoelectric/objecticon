@@ -1,7 +1,7 @@
 package ipl.termdialog
 
 import
-   gui, io, graphics, util
+   gui, io, graphics, util, undo
 
 class TermTextField(TextField)
    public keeps(e)
@@ -32,6 +32,8 @@ class TermEditableTextList(EditableTextList)
       return m.tidy()
    end
 end
+
+package record Save(text, undo)
 
 class TermDialog(Dialog, LineBasedOutputStream)
    private
@@ -93,20 +95,24 @@ class TermDialog(Dialog, LineBasedOutputStream)
    end
 
    private goto_hist(n)
-      local subj
+      local d
       (1 <= n <= *history + 1) | fail
-      subj := input.get_contents()
-      if subj == history[hpos] then
-         delete(hmod, hpos)
-      else
-         insert(hmod, hpos, subj)
+      if input.undo_manager.get_last() then {
+         insert(hmod, hpos, Save(input.get_contents(), input.undo_manager))
+         # Set a new instance since set_contents will clear the manager
+         input.set_undo_manager(UndoManager())
+      }
       hpos := n
-      subj := get_mod_hist(hpos)
-      input.set_contents(subj)
+      if d := member(hmod, hpos) then {
+         input.
+            set_contents(d.text).
+            set_undo_manager(d.undo)
+      } else
+         input.set_contents(history[hpos] | u"")
    end
 
    private get_mod_hist(n)
-      return member(hmod, n) | history[n]
+      return member(hmod, n).text | history[n]
    end
 
    private move_hist(n)
