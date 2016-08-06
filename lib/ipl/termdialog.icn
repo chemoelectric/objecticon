@@ -195,7 +195,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
          "\^p": handle_history_recall()
          "\^r": handle_history_search(-1)
          "\^t": handle_history_search(1)
-         "\^b": reset_term()
+         "\^g": reset_term()
       }
    end
 

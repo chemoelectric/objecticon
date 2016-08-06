@@ -348,7 +348,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
             }
             "\^a": pos := 1
             "\^e": pos := *subj + 1
-            "\^b": reset_term()
+            "\^g": reset_term()
             "\^k": {
                if pos < *subj + 1 then {
                   ed := LineEditorDeleteToEndOfLineEdit(self)
