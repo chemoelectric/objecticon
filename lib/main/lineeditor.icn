@@ -75,7 +75,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
    end
 
    private get_mod_hist(n)
-      return \hmod[n] | history[n]
+      return member(hmod, n) | history[n]
    end
 
    private move_hist(n)

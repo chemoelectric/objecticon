@@ -31,7 +31,6 @@ class TermEditableTextList(EditableTextList)
              connect(create parent_dialog.dispose(), Event.ACTION))
       return m.tidy()
    end
-
 end
 
 class TermDialog(Dialog, LineBasedOutputStream)
@@ -107,7 +106,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
    end
 
    private get_mod_hist(n)
-      return \hmod[n] | history[n]
+      return member(hmod, n) | history[n]
    end
 
    private move_hist(n)
