@@ -1340,11 +1340,15 @@ locatehist(Window *w)
     gotohist(w, num - w->hstartno);
 }
 
-#define HistCheck if (runestrncmp(HistEntry(w,i), rs, rl) == 0) { \
-                     gotohist(w, i); \
-                     wsetselect(w, w->qh + rl, w->qh + rl); \
-                     return; \
-                  }
+#define HistCheck { \
+        Rune *h = HistEntry(w,i); \
+        if (runestrncmp(h, rs, rl) == 0 &&                 \
+               (runestrlen(h) != tl || runestrncmp(h, rs, tl) != 0)) { \
+            gotohist(w, i);                                             \
+            wsetselect(w, w->qh + rl, w->qh + rl);                      \
+            return;                                                     \
+        } \
+    }
 
 /*
  * Search for a given history entry.
@@ -1353,13 +1357,19 @@ static void
 searchhist(Window *w, int dir)
 {
     Rune *rs;
-    int rl, i;
+    int rl, tl, i;
 
     /* Get the string to search for and its length. */
     rs = &w->r[w->qh];
     rl = w->q0 - w->qh;
     if (rl < 0)
         return;
+
+    /* Get the length of the current input line; we will skip lines that
+     * match this whole line to avoid pressing ^r and getting the same
+     * result repeatedly.
+     */
+    tl = w->nr - w->qh;
 
     /* Do a circular search backward of forward. */
     if (dir < 0) {
