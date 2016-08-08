@@ -180,12 +180,13 @@ class TermDialog(Dialog, LineBasedOutputStream)
    end
 
    private handle_history_search(dir)
-      local i, s, c
+      local i, s, c, curr
       c := input.cursor
-      s := input.get_contents()[1:c]
+      curr := input.get_contents()
+      s := curr[1:c]
       every i := if dir > 0 then (hpos + 1 to *history) | (1 to hpos - 1)
                             else (hpos - 1 to 1 by -1) | (*history to hpos + 1 by -1) do {
-         if match(s, get_mod_hist(i)) then {
+         if match(s, curr ~== get_mod_hist(i)) then {
             goto_hist(i)
             input.set_cursor(c)
             return

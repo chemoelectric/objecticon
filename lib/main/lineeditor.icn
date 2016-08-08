@@ -94,7 +94,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
       s := subj[1:c]
       every i := if dir > 0 then (hpos + 1 to *history) | (1 to hpos - 1)
                             else (hpos - 1 to 1 by -1) | (*history to hpos + 1 by -1) do {
-         if match(s, get_mod_hist(i)) then {
+         if match(s, subj ~== get_mod_hist(i)) then {
             goto_hist(i)
             pos := c
             return
