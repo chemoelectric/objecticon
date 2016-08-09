@@ -166,6 +166,7 @@ xfidattach(Xfid *x)
         noborder = layer = 0;
         mindx = mindy = 1;
         maxdx = maxdy = INT_MAX;
+        scrollit = scrolling;
         transientfor = -1;
 
 	if(x->aname[0] == 'N'){	/* N 100,100, 200, 200 - old syntax */
@@ -193,7 +194,7 @@ xfidattach(Xfid *x)
                         if (!noborder) border(i, r, Selborder, display->black, ZP);
 			if(pid == 0)
 				pid = -1;	/* make sure we don't pop a shell! - UGH */
-			w = new(i, hideit, scrolling, transientfor, noborder, 
+			w = new(i, hideit, scrollit, transientfor, noborder, 
                                 layer, mindx, maxdx, mindy, maxdy,
                                 pid, nil, nil, nil);
 			flushimage(display, 1);
