@@ -43,7 +43,8 @@ function posix_System_fork(flag)
       runerr(101, flag)
    body {
       int pid;
-      
+      if (flag & RFMEM)
+          Irunerr(205, flag);
       if ((pid = rfork(flag)) < 0) {
 	 errno2why();
 	 fail;
