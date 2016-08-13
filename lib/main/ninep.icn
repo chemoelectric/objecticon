@@ -323,13 +323,6 @@ class StringFile9P(Regular9P)
    private readable
       data
 
-   public open(mode)
-      if iand(self.perm, Mode9.DMAPPEND) = 0 &
-         iand(mode, FileOpt9.OTRUNC) ~= 0 then
-         data := ""
-      return self
-   end
-
    public set_length(len)
       if len > *data then
          data ||:= repl("\0", len - *data)
@@ -380,13 +373,6 @@ end
 class FifoFile9P(Regular9P)
    private readable
       data
-
-   public open(mode)
-      if iand(self.perm, Mode9.DMAPPEND) = 0 &
-         iand(mode, FileOpt9.OTRUNC) ~= 0 then
-         data := ""
-      return self
-   end
 
    public set_length(len)
       if len > *data then
@@ -443,13 +429,6 @@ class QueueFile9P(Regular9P)
       q
    private readable
       len
-
-   public open(mode)
-      if iand(self.perm, Mode9.DMAPPEND) = 0 &
-         iand(mode, FileOpt9.OTRUNC) ~= 0 then
-         clear()
-      return self
-   end
 
    public write(s, pos)
       add(s)
@@ -1419,6 +1398,11 @@ class Session9P()
             p := tmp(data.open(o.path, x.mode), t)
             del_fid(x.fid)
             new_fid(x.fid, p, o.uid, x.mode)
+            # OTRUNC means the file is to be truncated, unless the file is append-only
+            if iand(info.mode, Mode9.DMAPPEND) = 0 & iand(x.mode, FileOpt9.OTRUNC) ~= 0 then {
+               data.set_info(p, Info(,,, 0))
+               data.modified(p, o.uid)
+            }
             return ROpen(x.tag, Comms9P.encode_qid(data.get_qid(p)), 0)
          }
          TWalk: {
