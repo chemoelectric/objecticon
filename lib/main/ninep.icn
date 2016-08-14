@@ -1585,6 +1585,8 @@ class Session9P()
             ts := TaskStream(f, t).set_close_underlying(&no),
             while x := Comms9P.get(ts) do {
                if \verbose then write("GOT:", to_string(x))
+               if is(x, Tinvalid) then
+                  next
                item := WorkItem(x)
                if is(x, TFlush) then {
                   item.resp := respond(x)
