@@ -1544,6 +1544,15 @@ class Session9P()
       return t.start()
    end
 
+   private clear_valid()
+      local e
+      while e := ?valid do {
+         if \verbose then write("CLEARING:", to_string(e.req))
+         delete(valid, e)
+         (\e.worker).interrupt()
+      }
+   end
+
    private async_writer(sched, f)
       local ts, item, t
       t := Task(sched, create {
@@ -1563,6 +1572,10 @@ class Session9P()
                }
             }
          }
+         # There shouldn't be any remaining outstanding requests (they
+         # should have been flushed), but just in case, interrupt any
+         # that are there.
+         clear_valid()
          if \verbose then write("WRITER EXITING")
          t.revert()
       }, CleanupState())
