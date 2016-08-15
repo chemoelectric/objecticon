@@ -110,6 +110,14 @@ class EditableTextList(LineBasedScrollArea)
       return self.contents
    end
 
+   #
+   # Set the undo manager used by this instance.
+   #
+   public set_undo_manager(u)
+      undo_manager := u
+      return self
+   end
+
    public initially()
       LineBasedScrollArea.initially()
       cursor_ticker.start()

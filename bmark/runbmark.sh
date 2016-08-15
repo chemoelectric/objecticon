@@ -38,6 +38,7 @@ while getopts "voq" options; do
         v) BM_VERBOSE=1 ;;
         o) BM_OUTPUT=1 ;;
         q) unset BM_ICONT BM_ICONC BM_JCONT ;;
+        \?) exit 1;;
     esac
 done
 shift $((OPTIND-1))
@@ -45,8 +46,6 @@ shift $((OPTIND-1))
 if [ $# -eq 0 ] ; then
     set tgrlink geddump deal ipxref queens rsg concord cochain case operators
 fi
-
-set -e
 
 while [ $# -gt 0 ] ; do
     case $1 in

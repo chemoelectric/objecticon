@@ -1082,7 +1082,8 @@ class Terminal(TabItem, VtUI)
       auto_close_flag,
       select_flag,
       title,
-      history_size
+      history_size,
+      added_favourites
 
    private static init()
       SHOW_NAME_ONLY := 1
@@ -1242,6 +1243,11 @@ class Terminal(TabItem, VtUI)
          }
          "auto-close" : set_auto_close(&yes)
          "title" : set_title(param)
+         "fav-dir" : {
+            check_param(s, param) | fail
+            push(added_favourites, FilePath(param).canonical().ucs())
+            refresh_favourite_dirs()
+         }
          "max-list" : {
             if /param then {
                if /split.second.is_hidden_flag then
@@ -2601,11 +2607,15 @@ $endif
    end
 
    public get_favourites_directories()
-      return FileDialog.unique_ucs_list(ipl.pdco.List{FavouriteDirectoriesDialog.gen_directories_plus()})
+      return FileDialog.unique_ucs_list(added_favourites ||| ipl.pdco.List{FavouriteDirectoriesDialog.gen_directories_plus()})
+   end
+
+   public apply_favourite_dirs()
+      favourites_list.set_selection_list(get_favourites_directories())
    end
 
    public refresh_favourite_dirs()
-      favourites_list.set_selection_list(get_favourites_directories())
+      apply_favourite_dirs()
       synch_favourites_list()
    end
 
@@ -2661,7 +2671,7 @@ $endif
       if \opts["v"] then
          output.set_verbose(&yes)
 
-      favourites_list.set_size().set_selection_list(get_favourites_directories())
+      favourites_list.set_size()
       sort_dirs_menu_item := CheckBoxMenuItem().
          set_label("Sort dirs").
          set_keep_open_on_shift(&yes).
@@ -2731,6 +2741,8 @@ $endif
          history_size := other.history_size
          columns_pos_table := clone(other.columns_pos_table)
          filter.set_contents(other.filter.get_contents())
+         added_favourites := clone(other.added_favourites)
+         apply_favourite_dirs()
          set_cwd(other.cwd)
       } else {
          columns.set_size(scale(DEFAULT_LIST_WIDTH), scale(DEFAULT_LIST_HEIGHT))
@@ -2750,6 +2762,8 @@ $endif
                info_msg("Invalid tab start directory: " || &why)
          }
          /start_dir := ucs(Files.getcwd()) | u"/"
+         added_favourites := [start_dir]
+         apply_favourite_dirs()
          set_cwd(start_dir)
          # Apply global default tab options; should only fail on first time through.
          every e := !glob_cmds do
@@ -2762,7 +2776,7 @@ $endif
 
    public initially()
       TabItem.initially()
-      setup_shell() | stop(&why)
+      setup_shell() | fatalerr("Failed to setup shell: " || &why)
       io_task := Dispatcher.new_task{service_tty()}
       io_task.start()
       check_cwd_time_task := Dispatcher.new_task{check_cwd_time()}
@@ -3284,6 +3298,7 @@ procedure usage(opts)
    help_line(":filter=PATTERN", "Set the list filter to the given pattern; use * to show all files.")
    help_line(":focus-filter", "Give the filter field the keyboard focus.")
    help_line(":send-tty=STRING", "Send a string directly to the pseudo-terminal.")
+   help_line(":fav-dir=DIR", "Add a directory to the favourites list.")
    ewrite()
    help_line("The following commands only apply to the currently active tab (not new tabs).")
    ewrite()

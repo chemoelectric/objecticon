@@ -1,7 +1,7 @@
 package ipl.termdialog
 
 import
-   gui, io, graphics, util
+   gui, io, graphics, util, undo
 
 class TermTextField(TextField)
    public keeps(e)
@@ -31,8 +31,9 @@ class TermEditableTextList(EditableTextList)
              connect(create parent_dialog.dispose(), Event.ACTION))
       return m.tidy()
    end
-
 end
+
+package record Save(text, undo)
 
 class TermDialog(Dialog, LineBasedOutputStream)
    private
@@ -94,20 +95,24 @@ class TermDialog(Dialog, LineBasedOutputStream)
    end
 
    private goto_hist(n)
-      local subj
+      local d
       (1 <= n <= *history + 1) | fail
-      subj := input.get_contents()
-      if subj == history[hpos] then
-         delete(hmod, hpos)
-      else
-         insert(hmod, hpos, subj)
+      if input.undo_manager.get_last() then {
+         insert(hmod, hpos, Save(input.get_contents(), input.undo_manager))
+         # Set a new instance since set_contents will clear the manager
+         input.set_undo_manager(UndoManager())
+      }
       hpos := n
-      subj := get_mod_hist(hpos)
-      input.set_contents(subj)
+      if d := member(hmod, hpos) then {
+         input.
+            set_contents(d.text).
+            set_undo_manager(d.undo)
+      } else
+         input.set_contents(history[hpos] | u"")
    end
 
    private get_mod_hist(n)
-      return \hmod[n] | history[n]
+      return member(hmod, n).text | history[n]
    end
 
    private move_hist(n)
@@ -175,12 +180,13 @@ class TermDialog(Dialog, LineBasedOutputStream)
    end
 
    private handle_history_search(dir)
-      local i, s, c
+      local i, s, c, curr
       c := input.cursor
-      s := input.get_contents()[1:c]
+      curr := input.get_contents()
+      s := curr[1:c]
       every i := if dir > 0 then (hpos + 1 to *history) | (1 to hpos - 1)
                             else (hpos - 1 to 1 by -1) | (*history to hpos + 1 by -1) do {
-         if match(s, get_mod_hist(i)) then {
+         if match(s, curr ~== get_mod_hist(i)) then {
             goto_hist(i)
             input.set_cursor(c)
             return
@@ -195,7 +201,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
          "\^p": handle_history_recall()
          "\^r": handle_history_search(-1)
          "\^t": handle_history_search(1)
-         "\^b": reset_term()
+         "\^g": reset_term()
       }
    end
 

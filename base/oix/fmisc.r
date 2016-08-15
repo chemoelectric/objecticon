@@ -89,29 +89,16 @@ function copy(x)
          }
 
       record: {
+            tended struct b_record *new_rec;
             /*
-             * Note, these pointers don't need to be tended, because they are
-             *  not used until after allocation is complete.
+             * Allocate space for the new record and copy the old one
+             * into it.
              */
-            struct b_record *new_rec;
-            tended struct b_record *old_rec;
-            dptr d1, d2;
-            int i;
-
-            /*
-             * Allocate space for the new record and copy the old
-             *	one into it.
-             */
-            old_rec = &RecordBlk(x);
-            i = old_rec->constructor->n_fields;
-
-            /* #%#% param changed ? */
-            MemProtect(new_rec = alcrecd(old_rec->constructor));
-            d1 = new_rec->fields;
-            d2 = old_rec->fields;
-            while (i--)
-               *d1++ = *d2++;
-	    Desc_EVValD(new_rec, E_Rcreate, D_Record);
+            MemProtect(new_rec = alcrecd(RecordBlk(x).constructor));
+            memcpy(new_rec->fields, 
+                   RecordBlk(x).fields, 
+                   RecordBlk(x).constructor->n_fields * sizeof(struct descrip));
+            Desc_EVValD(new_rec, E_Rcreate, D_Record);
             return record(new_rec);
          }
 

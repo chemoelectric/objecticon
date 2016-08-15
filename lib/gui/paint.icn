@@ -100,7 +100,7 @@ class PixelsPaint(Paint)
    public src, pix
 
    public initially()
-      /pix | syserr("initially called out of sequence")
+      /pix | runerr("initially called out of sequence")
       pix := src.shared_copy()
       self.w := pix.get_width()
       self.h := pix.get_height()
@@ -214,7 +214,7 @@ class GridPaint(Paint)
    public initially(c, accel)
       local attribs
 
-      /win | syserr("initially called out of sequence")
+      /win | runerr("initially called out of sequence")
       parent := c
       attribs := copy(c.get_effective_wattribs()) | runerr("couldn't get effective wattribs in GridPaint", c)
       attribs[WAttrib.SIZE] := [1, 1]
@@ -572,7 +572,7 @@ class ImagePaint(Paint)
    end
 
    public initially(c)
-      /win | syserr("initially called out of sequence")
+      /win | runerr("initially called out of sequence")
       load_image(c)
       zoom_image()
       if \win then {

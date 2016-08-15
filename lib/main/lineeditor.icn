@@ -2,6 +2,8 @@ package io
 
 import undo, util, lang, ipl.strings, ipl.io(get_null)
 
+package record Save(text, undo)
+
 class LineEditorStream(LineBasedInputStream, HasTask)
    package
       subj,
@@ -63,19 +65,23 @@ class LineEditorStream(LineBasedInputStream, HasTask)
    end
 
    private goto_hist(n)
+      local d
       (1 <= n <= *history + 1) | fail
-      if subj == history[hpos] then
-         delete(hmod, hpos)
-      else
-         insert(hmod, hpos, subj)
+      if undo_manager.get_last() then
+         insert(hmod, hpos, Save(subj, undo_manager))
       hpos := n
-      subj := get_mod_hist(hpos)
+      if d := member(hmod, hpos) then {
+         subj := d.text
+         undo_manager := d.undo
+      } else {
+         subj := history[hpos] | u""
+         undo_manager := UndoManager()
+      }
       pos := *subj + 1
-      undo_manager.clear()
    end
 
    private get_mod_hist(n)
-      return \hmod[n] | history[n]
+      return member(hmod, n).text | history[n]
    end
 
    private move_hist(n)
@@ -88,7 +94,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
       s := subj[1:c]
       every i := if dir > 0 then (hpos + 1 to *history) | (1 to hpos - 1)
                             else (hpos - 1 to 1 by -1) | (*history to hpos + 1 by -1) do {
-         if match(s, get_mod_hist(i)) then {
+         if match(s, subj ~== get_mod_hist(i)) then {
             goto_hist(i)
             pos := c
             return
@@ -348,7 +354,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
             }
             "\^a": pos := 1
             "\^e": pos := *subj + 1
-            "\^b": reset_term()
+            "\^g": reset_term()
             "\^k": {
                if pos < *subj + 1 then {
                   ed := LineEditorDeleteToEndOfLineEdit(self)
