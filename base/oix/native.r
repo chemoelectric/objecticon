@@ -4303,8 +4303,15 @@ function io_FileWorker_new_impl(buff_size, f)
        p->buff = safe_zalloc(buff_size);
        p->buff_size = buff_size;
        p->fd = fd;
-       if (p->fd >= 0)
+       if (p->fd >= 0) {
            p->fd = dup(p->fd, -1);
+           if (p->fd < 0) {
+               whyf("dup failed: %r");
+               cleanup_fileworker(p);
+               fail;
+           }
+       }
+
        p->rz.l = &p->l;
        p->status = FW_COMPLETE;
        switch (pid = rfork(RFPROC|RFMEM)) {

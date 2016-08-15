@@ -2667,11 +2667,11 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
       self.mode := mode
       if can(READ) then {
          self.rbuff := ""
-         self.reader := FileWorker(rbuff_size, other)
+         self.reader := FileWorker(rbuff_size, other) | fatalerr("Couldn't create reader FileWorker: " || &why)
          reader.op_read()
       }
       if can(WRITE) then
-         self.writer := FileWorker(wbuff_size, other)
+         self.writer := FileWorker(wbuff_size, other) | fatalerr("Couldn't create writer FileWorker: " || &why)
       self.other := other
       self.close_underlying_flag := &yes
       self.write_on_close := FOREGROUND_FLUSH
@@ -2724,7 +2724,7 @@ class FileWorker(Pollable, NoCopy)
    #       called to initialize a file.
    #
    public new(buff_size, other)
-      ptr := new_impl(buff_size, other)
+      ptr := new_impl(buff_size, other) | fail
       return
    end
 end

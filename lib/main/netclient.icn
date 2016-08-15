@@ -93,11 +93,7 @@ $ifdef _PLAN9
       addr := "tcp!" || server || "!" || port
       connection := NetStream.dial_first(addr, timeout, task) | return error("Couldn't connect to " || addr || ": " || &why)
       connection := NonBlockStream(connection,, 1048576, 1048576).
-         set_write_on_close(NonBlockStream.DISCARD) | 
-      {
-         close_connection()
-         return error("Couldn't create NonBlockStream: " || &why)
-      }
+         set_write_on_close(NonBlockStream.DISCARD)
       sbuff := ""
       fire(CONNECTED_EVENT)
       return self
