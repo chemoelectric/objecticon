@@ -2776,7 +2776,7 @@ $endif
 
    public initially()
       TabItem.initially()
-      setup_shell() | stop(&why)
+      setup_shell() | fatalerr("Failed to setup shell: " || &why)
       io_task := Dispatcher.new_task{service_tty()}
       io_task.start()
       check_cwd_time_task := Dispatcher.new_task{check_cwd_time()}

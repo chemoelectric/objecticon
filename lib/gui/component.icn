@@ -850,7 +850,7 @@ class Component(Rect,Align,Connectable)
    #
    public initially()
       local t, a
-      /cbwin | syserr("initially called out of sequence")
+      /cbwin | runerr("initially called out of sequence")
       \parent | runerr("incorrect ancestry (parent null)")
       parent_dialog := parent.get_parent_dialog()
       effective_is_hidden_flag := Yes{ parent.is_hidden() | \is_hidden_flag }
@@ -896,7 +896,7 @@ class Component(Rect,Align,Connectable)
    # window is closed.
    #
    public finally()
-      \cbwin | syserr("finally called out of sequence")
+      \cbwin | runerr("finally called out of sequence")
       reset_layout()
       (\border).finally()
       cbwin.close()
