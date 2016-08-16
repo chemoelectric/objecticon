@@ -2397,15 +2397,14 @@ class NetStream(FileStream)
       else {
          fd := use {
             cw := FileWorker(),
+            if cw.op_open(dir.child("listen").str(), FileOpt9.ORDWR) &
+                # The poll may fail if the task is interrupted.
+                r := (if /task then DescStream else task).poll([cw, Poll.IN], timeout) then
             {
-               cw.op_open(dir.child("listen").str(), FileOpt9.ORDWR)
-               # The poll may fail if the task is interrupted.
-               if r := (if /task then DescStream else task).poll([cw, Poll.IN], timeout) then {
-                  if /r then
-                     error("Timeout")
-                  else
-                     (cw.await(), cw.dup_fd()) | error("Couldn't open listen file: " || &why)
-               }
+               if /r then
+                  error("Timeout")
+               else
+                  (cw.await(), cw.dup_fd()) | error("Couldn't open listen file: " || &why)
             }
          } | fail
          cf := CtrlStream(fd)
