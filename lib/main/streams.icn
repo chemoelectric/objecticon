@@ -661,7 +661,7 @@ $ifdef _PLAN9
          every i := 1 to *l by 2 do {
             f := l[i]
             ev := l[i + 1]
-            is(f, Pollable) | runerr(205, f)
+            is(f, Pollable) | runerr("io.Pollable expected", f)
             res := f.get_poll(ev)
             put(r, res)
             if res ~= 0 then
