@@ -4277,7 +4277,7 @@ if (!self_fileworker)
     runerr(219, self);
 #enddef
 
-function io_FileWorker_new_impl(buff_size, f)
+function io_FileWorker_new_impl(f, buff_size)
    if !def:C_integer(buff_size, 1024) then
       runerr(101, buff_size)
    body {

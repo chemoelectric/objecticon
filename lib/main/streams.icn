@@ -937,7 +937,6 @@ class FileStream(DescStream)
       return Class.create_instance().setup(fd, mode)
    end
 
-$ifdef _PLAN9
    #
    # Return a new instance which has a duplicated file descriptor
    # (using the dup() system call), and the same mode as this
@@ -947,6 +946,7 @@ $ifdef _PLAN9
       return create_for_fd(dup_impl(), mode)
    end
 
+$ifdef _PLAN9
    #
    # Open a new {FileStream} using the underlying system open
    # function.
@@ -1124,6 +1124,15 @@ $else
    end
 
    private static native new_impl(path, flags, perm)
+
+   #
+   # Create a pair of {FileStream}s using the pipe system call.
+   #
+   public static pipe()
+      local t
+      t := pipe_impl() | fail
+      return [create_for_fd(t[1], READ), create_for_fd(t[2], WRITE)]
+   end
 $endif
 
    private static init()
@@ -2667,11 +2676,11 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
       self.mode := mode
       if can(READ) then {
          self.rbuff := ""
-         self.reader := FileWorker(rbuff_size, other) | fatalerr("Couldn't create reader FileWorker: " || &why)
+         self.reader := FileWorker(other, rbuff_size) | fatalerr("Couldn't create reader FileWorker: " || &why)
          reader.op_read()
       }
       if can(WRITE) then
-         self.writer := FileWorker(wbuff_size, other) | fatalerr("Couldn't create writer FileWorker: " || &why)
+         self.writer := FileWorker(other, wbuff_size) | fatalerr("Couldn't create writer FileWorker: " || &why)
       self.other := other
       self.close_underlying_flag := &yes
       self.write_on_close := FOREGROUND_FLUSH
@@ -2696,7 +2705,7 @@ class FileWorker(Pollable, NoCopy)
       return res
    end
 
-   private static native new_impl(buff_size, other)
+   private static native new_impl(other, buff_size)
 
    public native op_read(n)
    public native op_write(s)
@@ -2718,13 +2727,13 @@ class FileWorker(Pollable, NoCopy)
    end
 
    # Create a new instance.
-   # @param buff_size the i/o buffer size for reads and writes; defaults to 1024
    # @param other an optional {DescStream}, whose file descriptor is dup'ed, and then
    #       used for subsequent operations.  If not given, then {op_open} or {op_create} must be
    #       called to initialize a file.
+   # @param buff_size the i/o buffer size for reads and writes; defaults to 1024
    #
-   public new(buff_size, other)
-      ptr := new_impl(buff_size, other) | fail
+   public new(other, buff_size)
+      ptr := new_impl(other, buff_size) | fail
       return
    end
 end
