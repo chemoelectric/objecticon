@@ -4340,6 +4340,20 @@ end
    return self;
 #enddef
 
+#begdef CheckFileOpen()
+   if (self_fileworker->fd < 0) {
+       CMakeStr("worker file not open", &t_errortext);
+       runerr(-1);
+   }
+#enddef
+
+#begdef CheckFileClosed()
+   if (self_fileworker->fd >= 0) {
+       CMakeStr("worker file already open", &t_errortext);
+       runerr(-1);
+   }
+#enddef
+
 function io_FileWorker_op_read(self, n)
    body {
       word i;
@@ -4357,6 +4371,7 @@ function io_FileWorker_op_read(self, n)
           }
       }
       wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
+      CheckFileOpen()
       self_fileworker->read_size = i;
       StartFileWorkerCmd(FW_READ);
    }
@@ -4372,6 +4387,7 @@ function io_FileWorker_op_write(self, s)
           fail;
       }
       wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
+      CheckFileOpen()
       self_fileworker->write_size = StrLen(s);
       memcpy(self_fileworker->buff, StrLoc(s), StrLen(s));
       StartFileWorkerCmd(FW_WRITE);
@@ -4388,6 +4404,7 @@ function io_FileWorker_op_write_all(self, s)
           fail;
       }
       wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
+      CheckFileOpen()
       self_fileworker->write_size = StrLen(s);
       memcpy(self_fileworker->buff, StrLoc(s), StrLen(s));
       StartFileWorkerCmd(FW_WRITE_ALL);
@@ -4406,6 +4423,7 @@ function io_FileWorker_op_open(self, path, mode)
           fail;
       }
       wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
+      CheckFileClosed()
       memcpy(self_fileworker->buff, StrLoc(path), StrLen(path));
       self_fileworker->buff[StrLen(path)] = 0;
       self_fileworker->mode = mode;
@@ -4432,6 +4450,7 @@ function io_FileWorker_op_create(self, path, mode, perm)
           fail;
       }
       wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
+      CheckFileClosed()
       memcpy(self_fileworker->buff, StrLoc(path), StrLen(path));
       self_fileworker->buff[StrLen(path)] = 0;
       self_fileworker->mode = mode;
@@ -4444,6 +4463,7 @@ function io_FileWorker_op_close(self)
    body {
       GetSelfFileWorker();
       wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
+      CheckFileOpen()
       StartFileWorkerCmd(FW_CLOSE);
    }
 end
