@@ -510,21 +510,30 @@ end
 class LineEditorDeleteLeftEdit(LineEditorEdit)
    private ch
 
+   public add_edit(other)
+      if is(other, LineEditorDeleteLeftEdit) &
+         (pos = other.pos + *ch) then
+      {
+         ch := other.ch || ch
+         return
+      }
+   end
+
    protected redo_impl()
-      ch := parent.subj[parent.pos - 1]
-      parent.subj[parent.pos - 1] := ""
-      parent.pos -:= 1
+      parent.subj[parent.pos -: *ch] := ""
+      parent.pos -:= *ch
    end
 
    protected undo_impl()
-      if self.pos - 1 > *parent.subj then
+      if pos - *ch > *parent.subj then
          parent.subj ||:= ch
       else
-         parent.subj[self.pos - 1] := ch || parent.subj[self.pos - 1]
+         parent.subj[pos - *ch] := ch || parent.subj[pos - *ch]
    end
 
    public new(parent)
       LineEditorEdit.new(parent)
+      ch := parent.subj[parent.pos - 1]
       return
    end
 end
@@ -532,20 +541,29 @@ end
 class LineEditorDeleteRightEdit(LineEditorEdit)
    private ch
 
+   public add_edit(other)
+      if is(other, LineEditorDeleteRightEdit) &
+         (pos = other.pos) then 
+      {
+         ch ||:= other.ch
+         return
+      }
+   end
+
    protected redo_impl()
-      ch := parent.subj[parent.pos]
-      parent.subj[parent.pos] := ""
+      parent.subj[parent.pos +: *ch] := ""
    end
 
    protected undo_impl()
-      if self.pos > *parent.subj then
+      if pos > *parent.subj then
          parent.subj ||:= ch
       else
-         parent.subj[self.pos] := ch || parent.subj[self.pos]
+         parent.subj[pos] := ch || parent.subj[pos]
    end
 
    public new(parent)
       LineEditorEdit.new(parent)
+      ch := parent.subj[parent.pos]
       return
    end
 end
@@ -560,10 +578,5 @@ class LineEditorDeleteToEndOfLineEdit(LineEditorEdit)
 
    protected undo_impl()
       parent.subj[self.pos:0] := del
-   end
-
-   public new(parent)
-      LineEditorEdit.new(parent)
-      return
    end
 end

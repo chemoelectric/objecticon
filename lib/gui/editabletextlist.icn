@@ -1573,7 +1573,6 @@ class EditableTextListDefaultEdit(EditableTextListEdit)
    end
 end
 
-
 class EditableTextListReturnEdit(EditableTextListEdit)
    public redo_impl()
       local s
@@ -1595,16 +1594,25 @@ end
 class EditableTextListDeleteRightEdit(EditableTextListEdit)
    public ch
 
+   public add_edit(other)
+      if is(other, EditableTextListDeleteRightEdit) &
+         \ch & \other.ch &
+         (cursor_y = other.cursor_y) &
+         (cursor_x = other.cursor_x) then {
+            ch ||:= other.ch
+            return
+      }
+   end
+
    public redo_impl()
-      if parent.cursor_x = *parent.contents[parent.cursor_y] + 1 then {
+      if /ch then {
          # We know cursor_y < *contents from the handle method above.
          parent.contents[parent.cursor_y] ||:= parent.contents[parent.cursor_y + 1]
          delete(parent.contents, parent.cursor_y + 1)
          parent.update_view_list(parent.cursor_y, 2, 1)
       } else {
          # Cursor not at end of line
-         ch := parent.contents[parent.cursor_y][parent.cursor_x]
-         parent.contents[parent.cursor_y][parent.cursor_x] := ""
+         parent.contents[parent.cursor_y][parent.cursor_x +: *ch] := ""
          parent.update_view_list(parent.cursor_y, 1, 1)
       }
       parent.clear_mark()
@@ -1613,37 +1621,51 @@ class EditableTextListDeleteRightEdit(EditableTextListEdit)
    public undo_impl()
       local t
       if /ch then {
-         t := parent.contents[self.cursor_y][self.cursor_x:0]
-         parent.contents[self.cursor_y][self.cursor_x:0] := ""
-         insert(parent.contents, self.cursor_y + 1, t)
-         parent.update_view_list(self.cursor_y, 1, 2)
+         t := parent.contents[cursor_y][cursor_x:0]
+         parent.contents[cursor_y][cursor_x:0] := ""
+         insert(parent.contents, cursor_y + 1, t)
+         parent.update_view_list(cursor_y, 1, 2)
       } else {
-         if self.cursor_x >  *parent.contents[self.cursor_y] then
-            parent.contents[self.cursor_y] ||:= ch
+         if cursor_x >  *parent.contents[cursor_y] then
+            parent.contents[cursor_y] ||:= ch
          else
-            parent.contents[self.cursor_y][self.cursor_x] := ch || parent.contents[self.cursor_y][self.cursor_x]
-         parent.update_view_list(self.cursor_y, 1, 1)
+            parent.contents[cursor_y][cursor_x] := ch || parent.contents[cursor_y][cursor_x]
+         parent.update_view_list(cursor_y, 1, 1)
       }
    end
-end
 
+   public new(parent)
+      EditableTextListEdit.new(parent)
+      if parent.cursor_x < *parent.contents[parent.cursor_y] + 1 then
+         ch := parent.contents[parent.cursor_y][parent.cursor_x]
+      return
+   end
+end
 
 class EditableTextListDeleteLeftEdit(EditableTextListEdit)
    public ch, cut
 
+   public add_edit(other)
+      if is(other, EditableTextListDeleteLeftEdit) &
+         \ch & \other.ch &
+         (cursor_y = other.cursor_y) &
+         (cursor_x = other.cursor_x + *ch) then {
+            ch := other.ch || ch
+            return
+      }
+   end
+
    public redo_impl()
-      if parent.cursor_x = 1 then {
-         # We know parent.cursor_y > 1 from the handle method
-         cut := parent.cursor_x := *parent.contents[parent.cursor_y - 1] + 1
+      if /ch then {
+         parent.cursor_x := cut
          parent.contents[parent.cursor_y - 1] ||:= parent.contents[parent.cursor_y]
          delete(parent.contents, parent.cursor_y)
          parent.update_view_list(parent.cursor_y - 1, 2, 1)
          parent.cursor_y -:= 1
       } else {
          # parent.cursor_x > 1
-         ch := parent.contents[parent.cursor_y][parent.cursor_x - 1]
-         parent.contents[parent.cursor_y][parent.cursor_x - 1] := ""
-         parent.cursor_x -:= 1
+         parent.contents[parent.cursor_y][parent.cursor_x -: *ch] := ""
+         parent.cursor_x -:= *ch
          parent.update_view_list(parent.cursor_y, 1, 1)
       }
       parent.clear_mark()
@@ -1652,17 +1674,27 @@ class EditableTextListDeleteLeftEdit(EditableTextListEdit)
    public undo_impl()
       local t
       if /ch then {
-         t :=  parent.contents[self.cursor_y - 1][cut:0]
-         parent.contents[self.cursor_y - 1][cut:0] := ""
-         insert(parent.contents, self.cursor_y, t)
-         parent.update_view_list(self.cursor_y - 1, 1, 2)
+         t :=  parent.contents[cursor_y - 1][cut:0]
+         parent.contents[cursor_y - 1][cut:0] := ""
+         insert(parent.contents, cursor_y, t)
+         parent.update_view_list(cursor_y - 1, 1, 2)
       } else {
-         if self.cursor_x - 1 > *parent.contents[self.cursor_y] then
-            parent.contents[self.cursor_y] ||:= ch
+         if cursor_x - *ch > *parent.contents[cursor_y] then
+            parent.contents[cursor_y] ||:= ch
          else 
-            parent.contents[self.cursor_y][self.cursor_x - 1] := ch || parent.contents[self.cursor_y][self.cursor_x - 1]
-         parent.update_view_list(self.cursor_y, 1, 1)
+            parent.contents[cursor_y][cursor_x - *ch] := ch || parent.contents[cursor_y][cursor_x - *ch]
+         parent.update_view_list(cursor_y, 1, 1)
       }
+   end
+
+   public new(parent)
+      EditableTextListEdit.new(parent)
+      if parent.cursor_x = 1 then
+         # We know parent.cursor_y > 1 from the handle method
+         cut := *parent.contents[parent.cursor_y - 1] + 1
+      else
+         ch := parent.contents[parent.cursor_y][parent.cursor_x - 1]
+      return
    end
 end
 

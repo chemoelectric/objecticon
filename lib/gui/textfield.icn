@@ -895,35 +895,63 @@ end
 class TextFieldDeleteRightEdit(TextFieldEdit)
    public ch
 
+   public add_edit(other)
+      if is(other, TextFieldDeleteRightEdit) &
+         (cursor = other.cursor) then 
+      {
+         ch ||:= other.ch
+         return
+      }
+   end
+
    public redo_impl()
-      ch := parent.contents[parent.cursor]
-      parent.contents[parent.cursor] := ""
+      parent.contents[parent.cursor +: *ch] := ""
       parent.clear_mark()
    end
 
    public undo_impl()
-      if self.cursor > *parent.contents then
+      if cursor > *parent.contents then
          parent.contents ||:= ch
       else
-         parent.contents[self.cursor] := ch || parent.contents[self.cursor]
+         parent.contents[cursor] := ch || parent.contents[cursor]
+   end
+
+   public new(parent)
+      TextFieldEdit.new(parent)
+      ch := parent.contents[parent.cursor]
+      return
    end
 end
 
 class TextFieldDeleteLeftEdit(TextFieldEdit)
    public ch
 
+   public add_edit(other)
+      if is(other, TextFieldDeleteLeftEdit) &
+         (cursor = other.cursor + *ch) then
+      {
+         ch := other.ch || ch
+         return
+      }
+   end
+
    public redo_impl()
-      ch := parent.contents[parent.cursor - 1]
-      parent.contents[parent.cursor - 1] := ""
-      parent.cursor -:= 1
+      parent.contents[parent.cursor -: *ch] := ""
+      parent.cursor -:= *ch
       parent.clear_mark()
    end
 
    public undo_impl()
-      if self.cursor - 1 > *parent.contents then
+      if cursor - *ch > *parent.contents then
          parent.contents ||:= ch
       else
-         parent.contents[self.cursor - 1] := ch || parent.contents[self.cursor - 1]
+         parent.contents[cursor - *ch] := ch || parent.contents[cursor - *ch]
+   end
+
+   public new(parent)
+      TextFieldEdit.new(parent)
+      ch := parent.contents[parent.cursor - 1]
+      return
    end
 end
 
