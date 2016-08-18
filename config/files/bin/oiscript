@@ -1,11 +1,11 @@
 #!/bin/sh
-if [ -z "$OIXCACHE" ] ; then
-    OIXCACHE=/tmp/oixcache
+if [ -z "$OIX_CACHE" ] ; then
+    OIX_CACHE=/tmp/oixcache
 fi
-mkdir -p -m 777 $OIXCACHE
-HASH=$OIXCACHE/`md5sum "$1" | cut -c1-32`
+mkdir -p -m 777 $OIX_CACHE
+HASH=$OIX_CACHE/`md5sum "$1" | cut -c1-32`
 if [ ! -x $HASH ] ; then
-    SRC=$OIXCACHE/src-$$.icn
+    SRC=$OIX_CACHE/src-$$.icn
     cp "$1" $SRC
     if ! oit -s -o $HASH $SRC ; then
         rm -f $SRC
