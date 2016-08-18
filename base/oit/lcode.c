@@ -2267,9 +2267,9 @@ static void writescript()
     snprintf(script, sizeof(script),
              "%s\n%s%s%s\n\n%s\n%s\n%s%s%s\n\n%s",
              "#!/bin/sh",
-             "OIXBIN=\"", oixloc, "\"",
+             "OIX_BIN=\"", oixloc, "\"",
              "[ -n \"$OIX\" ] && exec \"$OIX\" \"$0\" \"$@\"",
-             "[ -x \"$OIXBIN\" ] && exec \"$OIXBIN\" \"$0\" \"$@\"",
+             "[ -x \"$OIX_BIN\" ] && exec \"$OIX_BIN\" \"$0\" \"$@\"",
              "exec ",
              "oix",
              " \"$0\" \"$@\"",
@@ -2298,13 +2298,16 @@ static void writescript()
    fclose(f);
 #elif PLAN9
     char script[2048];
-    sprintf(script, "#!/bin/rc\n"
-		"exec oix $0 $*\n"
-                IcodeDelim "\n");
+    sprintf(script,
+            "#!/bin/rc\n"
+            "if(~ $#OIX 0) OIX=oix\n"
+            "exec $OIX $0 $*\n"
+            "exit 'oix not found'\n"
+            IcodeDelim "\n");
     scriptsize = strlen(script);
     /* write header */
     if (fwrite(script, scriptsize, 1, outfile) != 1)
-        quit("cannot write header to icode file");
+        equit("cannot write header to icode file");
 #endif
 }
 
