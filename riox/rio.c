@@ -653,20 +653,22 @@ resized(void)
 	flushimage(display, 1);
 }
 
+#define MAX_WIN_MENU 100
+
 void
 button3menu(void)
 {
         int i, j, n = 0;
         int mnew = -2, exit = -2;
-        char *menustr[100];
-        Window *menuwin[100];
+        char *menustr[MAX_WIN_MENU];
+        Window *menuwin[MAX_WIN_MENU];
         Menu menu = { menustr };
 
         menustr[mnew = n++] = estrdup("New");
 	if(hasexit)
             menustr[exit = n++] = estrdup("Exit");
 
-	for(j=0; j<nwindow; j++) {
+	for(j = 0; j < nwindow && n < MAX_WIN_MENU - 1; j++) {
             Window *w = window[j];
             if (!w->noborder && !w->transientfor) {
                 menuwin[n] = w;
