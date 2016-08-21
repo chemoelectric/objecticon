@@ -1421,7 +1421,7 @@ void cset_to_string(struct b_cset *b, word pos, word len, dptr res)
 {
     int i;
     word j, from, to, out_len;
-    static char c[256];
+    char c[256];
 
     if (len == 0) {
         *res = emptystr;

@@ -82,7 +82,7 @@
 #endif					/* HSlots */
 
 #if ((1 << LogHSlots) != HSlots)
-   Deliberate Syntax Error -- HSlots and LogHSlots are inconsistent
+   #error HSlots and LogHSlots are inconsistent
 #endif					/* HSlots / LogHSlots consistency */
 
 #ifndef HSegs

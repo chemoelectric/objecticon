@@ -253,7 +253,10 @@ void ensure_file_in_package(char *file, char *ipackage)
     struct package *pk;
     struct package_file *pf;
 
-    idir = intern(canonicalize(fps->dir));
+    /* Intern the bits */
+    iname = intern(fps->name);
+    idir = intern(fps->dir);
+    idir = intern(canonicalize(idir));
     pd = lookup_package_dir(idir);
     if (!pd) {
         /*
@@ -274,8 +277,6 @@ void ensure_file_in_package(char *file, char *ipackage)
             quit("Unexpected failure to add new package");
     }
 
-    /* Intern the filename */
-    iname = intern(fps->name);
     pf = lookup_package_file(pk, iname);
     if (!pf) {
         /* Create a new one */

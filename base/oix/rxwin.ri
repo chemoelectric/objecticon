@@ -3598,7 +3598,7 @@ static wdp alcdisplay(char *s)
 
 /*
  * Convert a given font spec, which may or may not be in icon font spec format,
- * into fontconfig (used by Xft) style format.  The result is never null.
+ * into fontconfig (used by Xft) style format.
  * 
  * To avoid ambiguity, a spec can start with "fc:" to indicate it's in fontconfig
  * format; otherwise parsefont is called to decide the format.

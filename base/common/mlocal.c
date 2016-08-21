@@ -8,7 +8,15 @@ static char *tryfile(char *dir, char *name, char *extn);
 static char *tryexe(char *dir, char *name);
 static word calc_ucs_index_step(word utf8_len, word len);
 
-static char path1[MaxPath], path2[MaxPath], path3[MaxPath];
+/*
+ * The result buffer is shared by several functions besides file
+ * handling functions, so make sure MaxPath is big enough.
+ */
+#if MaxPath < 128
+   #error MaxPath too small
+#endif
+
+static char result[MaxPath];
 
 /*
  *  relfile(prog, mod) -- find related file.
@@ -38,7 +46,7 @@ char *relfile(char *prog, char *mod)
  *  findexe(prog) -- find absolute executable, searching $PATH (using
  *  POSIX 1003.2 rules) for executable name.
  * 
- *  A pointer to makename's static buffer is returned, or NULL if
+ *  A pointer to a static buffer is returned, or NULL if
  *  not found.
  */
 char *findexe(char *name) 
@@ -65,10 +73,12 @@ char *findexe(char *name)
 #endif
 
     for (;;) {
+        char tmp[MaxPath];
         char *e = pathelem(&path);
         if (!e)
             break;
-        if ((p = tryexe(e, name)))        /* look for file */
+        strcpy(tmp, e);
+        if ((p = tryexe(tmp, name)))        /* look for file */
             return p;
     }
 
@@ -270,28 +280,28 @@ static char *tryfile(char *dir, char *name, char *extn)
 char *canonicalize(char *path)
 {
     if (isabsolute(path)) {
-        if (strlen(path) + 1 > sizeof(path1)) {
+        if (strlen(path) + 1 > sizeof(result)) {
             fprintf(stderr, "path too long to canonicalize: %s", path);
             exit(EXIT_FAILURE);
         }
-        strcpy(path1, path);
+        strcpy(result, path);
     } else {
         int l;
-        if (!getcwd(path1, sizeof(path1))) {
+        if (!getcwd(result, sizeof(result))) {
             fprintf(stderr, "getcwd return 0 - current working dir too long.");
             exit(EXIT_FAILURE);
         }
-        l = strlen(path1);
-        if (l + 1 + strlen(path) + 1 > sizeof(path1)) {
+        l = strlen(result);
+        if (l + 1 + strlen(path) + 1 > sizeof(result)) {
             fprintf(stderr, "path too long to canonicalize: %s", path);
             exit(EXIT_FAILURE);
         }
-        if (!strchr(FILEPREFIX, path1[l - 1]))
-            path1[l++] = FILESEP;
-        strcpy(&path1[l], path);
+        if (!strchr(FILEPREFIX, result[l - 1]))
+            result[l++] = FILESEP;
+        strcpy(&result[l], path);
     }
-    normalize(path1);
-    return path1;
+    normalize(result);
+    return result;
 }
 
 
@@ -302,8 +312,7 @@ char *canonicalize(char *path)
  *  directory.  Details vary by platform, but the general idea is
  *  that the file must be a readable simple text file.
  *
- *  A pointer to makename's static buffer is returned, or NULL if
- *  not found.
+ *  A pointer to a static buffer is returned, or NULL if not found.
  *
  *  cd is the current directory; may be NULL, meaning the "real" cd
  *  path is the IPATH or LPATH value, or NULL if unset.
@@ -313,6 +322,7 @@ char *canonicalize(char *path)
 char *pathfind(char *cd, char *path, char *name, char *extn)
 {
     char *p, *name_dir;
+    char tmp[MaxPath];
 
     /* Don't search the path if we have an absolute file */
     if (isabsolute(name))
@@ -322,11 +332,10 @@ char *pathfind(char *cd, char *path, char *name, char *extn)
      * the cd */
     name_dir = getdir(name);
     if (*name_dir) {
-        char buf[MaxPath];
         if (!cd)
             return tryfile(0, name, extn);
-        snprintf(buf, sizeof(buf), "%s%s", cd, name_dir);
-        return tryfile(buf, name, extn);
+        snprintf(tmp, sizeof(tmp), "%s%s", cd, name_dir);
+        return tryfile(tmp, name, extn);
     }
 
     /* Neither absolute nor relative.  Try current directory first */
@@ -340,7 +349,8 @@ char *pathfind(char *cd, char *path, char *name, char *extn)
         char *e = pathelem(&path);
         if (!e)
             break;
-        if ((p = tryfile(e, name, extn)))        /* look for file */
+        strcpy(tmp, e);
+        if ((p = tryfile(tmp, name, extn)))        /* look for file */
             return p;
     }
 
@@ -374,19 +384,19 @@ char *pathelem(char **ps)
         s = ".";
         n = 1;
     }
-    if (n + 2 > sizeof(path1)) {
+    if (n + 2 > sizeof(result)) {
         *ps = 0;
         return 0;
     }
-    memcpy(path1, s, n);
-    if (!strchr(FILEPREFIX, path1[n - 1]))
-        path1[n++] = FILESEP;
-    path1[n] = 0;
+    memcpy(result, s, n);
+    if (!strchr(FILEPREFIX, result[n - 1]))
+        result[n++] = FILESEP;
+    result[n] = 0;
     if (*e)
         *ps = e + 1;
     else 
         *ps = 0;
-    return path1;
+    return result;
 }
 
 /*
@@ -464,11 +474,11 @@ struct fileparts *fparse(char *s)
         }
     }
 
-    fp.dir = path2;
+    fp.dir = result;
     n = q - s;
     strncpy(fp.dir,s,n);
     fp.dir[n] = '\0';
-    fp.name = path2 + n + 1;
+    fp.name = result + n + 1;
     n = fp.ext - q;
     strncpy(fp.name,q,n);
     fp.name[n] = '\0';
@@ -481,13 +491,15 @@ struct fileparts *fparse(char *s)
  */
 char *makename(char *d, char *name, char *e)
 {
+    char tmp[MaxPath];
     struct fileparts *fp = fparse(name);
     if (d)
         fp->dir = d;
     if (e)
         fp->ext = e;
-    snprintf(path3, sizeof(path3), "%s%s%s", fp->dir, fp->name, fp->ext);
-    return path3;
+    snprintf(tmp, sizeof(tmp), "%s%s%s", fp->dir, fp->name, fp->ext);
+    strcpy(result, tmp);
+    return result;
 }
 
 struct rangeset *init_rangeset()
@@ -996,14 +1008,12 @@ int strncasecmp(char *s1, char *s2, int n)
 }
 #endif
 
-static char sbuf[Precision+32];
-
 /*
  * Convert a double to a C string.  A pointer into a static buffer is returned.
  */
 char *double2cstr(double n)
 {
-    char *p, *s = sbuf;
+    char *p, *s = result;
     if (n == 0.0)                        /* ensure -0.0 (which == 0.0), prints as "0.0" */
         strcpy(s, "0.0");
     else {
@@ -1037,8 +1047,8 @@ char *double2cstr(double n)
  */
 char *word2cstr(word n)
 {
-    sprintf(sbuf, WordFmt, n);
-    return sbuf;
+    sprintf(result, WordFmt, n);
+    return result;
 }
 
 /*
@@ -1066,10 +1076,9 @@ char *get_hostname()
         return 0;
     return utsn.nodename;
 #else
-    static char buff[256];
-    if (gethostname(buff, sizeof(buff)) < 0)
+    if (gethostname(result, sizeof(result)) < 0)
         return 0;
-    return buff;
+    return result;
 #endif
 }
 
@@ -1080,15 +1089,15 @@ char *get_hostname()
 char *maketemp(char *fn)
 {
 #if MSWIN32
-    GetTempPath(sizeof(path3) - 16, path3);
-    strcat(path3, fn);
+    GetTempPath(sizeof(result) - 16, result);
+    strcat(result, fn);
 #else
     char *tmp = getenv("TEMP");
     if (tmp == 0)
         tmp = "/tmp";
-    snprintf(path3, sizeof(path3), "%s%c%s", tmp, FILESEP, fn);
+    snprintf(result, sizeof(result), "%s%c%s", tmp, FILESEP, fn);
 #endif
-    return path3;
+    return result;
 }
 
 /*
@@ -1097,19 +1106,19 @@ char *maketemp(char *fn)
 char *get_system_error()
 {
 #if PLAN9
-    static char res[ERRMAX];
-    rerrstr(res, sizeof(res));
-    return res;
+#if MaxPath < ERRMAX
+   #error MaxPath too small
+#endif
+    rerrstr(result, sizeof(result));
+    return result;
 #elif MSWIN32
     char *msg;
-    static char res[256];
     msg = wchar_to_utf8(_wcserror(errno));
-    snprintf(res, sizeof(res), "%s (errno=%d)", msg, errno);
+    snprintf(result, sizeof(result), "%s (errno=%d)", msg, errno);
     free(msg);
-    return res;
+    return result;
 #else
     char *msg = 0;
-    static char res[256];
 
     #if HAVE_STRERROR
        msg = strerror(errno);
@@ -1120,9 +1129,9 @@ char *get_system_error()
     if (!msg)
         msg = "Unknown system error";
 
-    snprintf(res, sizeof(res), "%s (errno=%d)", msg, errno);
+    snprintf(result, sizeof(result), "%s (errno=%d)", msg, errno);
 
-    return res;
+    return result;
 #endif
 }
 
@@ -1135,4 +1144,3 @@ char *salloc(char *s)
     s1 = safe_malloc(strlen(s) + 1);
     return strcpy(s1, s);
 }
-

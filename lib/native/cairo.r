@@ -323,6 +323,10 @@ function cairo_Context_set_font(self, val)
            FcPattern *pat, *mat;
            FcResult result;
            char *ps = tofcpatternstr(buffstr(&val));
+           if (!ps) {
+               LitWhy("Invalid or unavailable font");
+               fail;
+           }
            pat = FcNameParse((FcChar8 *)ps);
            FcConfigSubstitute(NULL, pat, FcMatchPattern);
            FcDefaultSubstitute(pat);
