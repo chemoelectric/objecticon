@@ -49,7 +49,7 @@ FILE *f;
    /*
     * Convert back slashes to slashes for internal consistency.
     */
-   fname = (char *)strdup(fname);
+   fname = salloc(fname);
    for (s = fname; *s != '\0'; ++s)
       if (*s == '\\')
          *s = '/';
@@ -225,7 +225,7 @@ char **opt_args;
    if (incl_var == NULL)
       syspath = "";
    else {
-      syspath = (char *)strdup(incl_var);
+      syspath = salloc(incl_var);
       if (*incl_var != '\0')
          ++n_paths;
       while (*incl_var != '\0')
