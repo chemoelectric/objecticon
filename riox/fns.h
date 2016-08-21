@@ -45,6 +45,7 @@ void	timerinit(void);
 int	goodrect(Rectangle);
 int     readmouseex(MousectlEx *mc);
 void    sendmouseevent(Window *w, uchar type);
+char *get_wdir(Window *w);
 
 #define	runemalloc(n)		malloc((n)*sizeof(Rune))
 #define	runerealloc(a, n)	realloc(a, (n)*sizeof(Rune))

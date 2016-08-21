@@ -9,6 +9,7 @@ enum
 	Qwinname,
 	Qkbdin,
 	Qlabel,
+        Qpid,
 	Qmouse,
 	Qnew,
 	Qscreen,
@@ -199,7 +200,6 @@ struct Window
         uchar           hidden;
 	char			*label;
 	int			pid;
-	char			*dir;
 };
 
 int		winborder(Window*, Point);

@@ -516,31 +516,6 @@ xfidwrite(Xfid *x)
 		snarfversion++;
 		break;
 
-	case Qwdir:
-		if(cnt == 0)
-			break;
-		if(x->data[cnt-1] == '\n'){
-			if(cnt == 1)
-				break;
-			x->data[cnt-1] = '\0';
-		}
-		/* assume data comes in a single write */
-		/*
-		  * Problem: programs like dossrv, ftp produce illegal UTF;
-		  * we must cope by converting it first.
-		  */
-		snprint(buf, sizeof buf, "%.*s", cnt, x->data);
-		if(buf[0] == '/'){
-			free(w->dir);
-			w->dir = estrdup(buf);
-		}else{
-			p = emalloc(strlen(w->dir) + 1 + strlen(buf) + 1);
-			sprint(p, "%s/%s", w->dir, buf);
-			free(w->dir);
-			w->dir = cleanname(p);
-		}
-		break;
-
 	case Qkbdin:
 		keyboardsend(x->data, cnt);
 		break;
@@ -741,12 +716,17 @@ xfidread(Xfid *x)
 		break;
 
 	case Qwdir:
-		t = estrdup(w->dir);
+                t = estrdup(get_wdir(w));
 		n = strlen(t);
 		goto Text;
 
 	case Qwinid:
 		n = sprint(buf, "%11d ", w->id);
+		t = estrdup(buf);
+		goto Text;
+
+	case Qpid:
+		n = sprint(buf, "%11d ", w->pid);
 		t = estrdup(buf);
 		goto Text;
 

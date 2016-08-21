@@ -1324,8 +1324,6 @@ new(Image *i, int hideit, int scrollit, int transientfor, int noborder,
 	}
 	wsetpid(w, pid, 1);
 	wsetname(w);
-	if(dir)
-		w->dir = estrdup(dir);
 	chanfree(cpid);
 	return w;
 }

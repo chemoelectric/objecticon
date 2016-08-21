@@ -110,7 +110,6 @@ wmk(Image *i, MousectlEx *mc, Channel *ck, Channel *cctl, int hidden, int scroll
         w->hsentlen = w->hpos = w->hsize = w->hfirst = w->hlast = 0;
         w->hsent = w->hedit = 0;
         w->hstartno = 1;
-	w->dir = estrdup(startdir);
 	w->label = estrdup("<unnamed>");
         if (noborder) {
             draw(w->i, w->i->r, cols[BACK], nil, w->entire.min);
@@ -597,10 +596,11 @@ namecomplete(Window *w)
 		dir = malloc(UTFmax*npath+1);
 		sprint(dir, "%.*S", npath, path);
 	}else{
-		if(strcmp(w->dir, "") == 0)
+                char *wdir = get_wdir(w);
+		if(strcmp(wdir, "") == 0)
 			root = ".";
 		else
-			root = w->dir;
+			root = wdir;
 		dir = malloc(strlen(root)+1+UTFmax*npath+1);
 		sprint(dir, "%s/%.*S", root, npath, path);
 	}
@@ -912,7 +912,7 @@ wplumb(Window *w)
 	m = emalloc(sizeof(Plumbmsg));
 	m->src = estrdup("rio");
 	m->dst = nil;
-	m->wdir = estrdup(w->dir);
+	m->wdir = estrdup(get_wdir(w));
 	m->type = estrdup("text");
 	p0 = w->q0;
 	p1 = w->q1;
@@ -938,6 +938,30 @@ wplumb(Window *w)
 		riosetcursor(c, 1);
 	}
 	plumbfree(m);
+}
+
+char *
+get_wdir(Window *w)
+{
+    static char buff[512];
+    char pf[64];
+    int f, n, i;
+    buff[0] = 0;
+    if (w->pid < 0)
+        return startdir;
+    snprint(pf, sizeof(pf), "/proc/%d/fd", w->pid);
+    f = open(pf, OREAD);
+    if (f < 0)
+        return startdir;
+    n = read(f, buff, sizeof(buff));
+    close(f);
+    for (i = 0; i < n; ++i) {
+        if (buff[i] == '\n') {
+            buff[i] = 0;
+            return buff;
+        }
+    }
+    return startdir;
 }
 
 int
@@ -1305,7 +1329,6 @@ wctlmesg(Window *w, int m)
 		chanfree(w->wctlread);
 		free(w->raw);
 		free(w->r);
-		free(w->dir);
 		free(w->label);
                 while (w->hsize > 0)
                     rmhist(w);
