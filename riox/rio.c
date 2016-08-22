@@ -1322,7 +1322,8 @@ new(Image *i, int hideit, int scrollit, int transientfor, int noborder,
 		chanfree(cpid);
 		return nil;
 	}
-	wsetpid(w, pid, 1);
+        if (pid > 0)
+            wsetpid(w, pid, 1);
 	wsetname(w);
 	chanfree(cpid);
 	return w;

@@ -111,6 +111,7 @@ wmk(Image *i, MousectlEx *mc, Channel *ck, Channel *cctl, int hidden, int scroll
         w->hsent = w->hedit = 0;
         w->hstartno = 1;
 	w->label = estrdup("<unnamed>");
+        w->pid = 0;
         if (noborder) {
             draw(w->i, w->i->r, cols[BACK], nil, w->entire.min);
         } else {
@@ -947,7 +948,7 @@ get_wdir(Window *w)
     char pf[64];
     int f, n, i;
     buff[0] = 0;
-    if (w->pid < 0)
+    if (w->pid == 0)
         return startdir;
     snprint(pf, sizeof(pf), "/proc/%d/fd", w->pid);
     f = open(pf, OREAD);
