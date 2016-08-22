@@ -571,6 +571,7 @@ showcandidates(Window *w, Completion *c)
 	q0 += winsert(w, rp, runestrlen(rp), qline) - qline;
 	free(rp);
 	wsetselect(w, q0+nr, q0+nr);
+        wshow(w, w->q0);
 }
 
 Rune*
