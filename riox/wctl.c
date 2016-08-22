@@ -519,7 +519,7 @@ writewctl(Xfid *x, char *err)
                 wrefresh(w, w->i->r);
 		return 1;
         case Set: {
-		if(pid > 0)
+		if(pid >= 0)
 			wsetpid(w, pid);
                 if(layer != INVALID_LAYER) {
                     if (!wsetlayer(w, layer)) {
