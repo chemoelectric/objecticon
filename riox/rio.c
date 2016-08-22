@@ -1322,8 +1322,13 @@ new(Image *i, int hideit, int scrollit, int transientfor, int noborder,
 		chanfree(cpid);
 		return nil;
 	}
-        if (pid > 0)
-            wsetpid(w, pid, 1);
+        if (pid > 0) {
+            char buf[128];
+            wsetpid(w, pid);
+            sprint(buf, "rc %d", pid);
+            free(w->label);
+            w->label = estrdup(buf);
+        }
 	wsetname(w);
 	chanfree(cpid);
 	return w;

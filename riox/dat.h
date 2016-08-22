@@ -245,7 +245,7 @@ void		wsendctlmesg(Window*, int);
 void		wsetcursor(Window*, int);
 void		wsetname(Window*);
 void		wsetorigin(Window*, uint, int);
-void		wsetpid(Window*, int, int);
+void		wsetpid(Window*, int);
 void		wsetselect(Window*, uint, uint);
 void		wshow(Window*, uint);
 void		wsnarf(Window*);

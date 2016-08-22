@@ -520,7 +520,7 @@ writewctl(Xfid *x, char *err)
 		return 1;
         case Set: {
 		if(pid > 0)
-			wsetpid(w, pid, 0);
+			wsetpid(w, pid);
                 if(layer != INVALID_LAYER) {
                     if (!wsetlayer(w, layer)) {
                         strcpy(err, "cannot set window layer");
