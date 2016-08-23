@@ -28,6 +28,8 @@ class EditableTextList(LineBasedScrollArea)
       is_editable_flag,        # Are we editable?
       menu_on_rpress_flag,     # Show context menu on mouse right press event?
       move_on_rpress_flag,     # Move on mouse right press event?
+      constrain_cursor_on_scroll_flag,
+      need_constrain_line,     # Indicate next end_handle to always constrain_line
       cursor_x,                #                
       cursor_y,                #                
       mark_x,                  #
@@ -377,6 +379,15 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    #
+   # Configure whether the cursor is kept within the view when the
+   # scrollbar (or wheel) is used; by default no.
+   #
+   public set_constrain_cursor_on_scroll(s)
+      self.constrain_cursor_on_scroll_flag := check_flag(s)
+      return self
+   end
+
+   #
    # Move the text area displayed so that the cursor is on the screen.
    #
    public constrain_line()
@@ -481,10 +492,13 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public on_vsb(ev)
-      start_handle(ev)
-      self.constrain_cursor()
-      self.refresh()
-      end_handle(ev)
+      if \constrain_cursor_on_scroll_flag then {
+         start_handle(ev)
+         constrain_cursor()
+         end_handle(ev)
+      } else
+         need_constrain_line := &yes
+      refresh()
       #
       # Simulate a drag event if appropriate in order to keep the
       # cursor in synch.
@@ -494,10 +508,13 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public on_hsb(ev)
-      start_handle(ev)
-      self.constrain_cursor()
-      self.refresh()
-      end_handle(ev)
+      if \constrain_cursor_on_scroll_flag then {
+         start_handle(ev)
+         constrain_cursor()
+         end_handle(ev)
+      } else
+         need_constrain_line := &yes
+      refresh()
    end
 
    public start_handle(e)
@@ -543,9 +560,12 @@ class EditableTextList(LineBasedScrollArea)
 
       if (cursor_x ~= old_cursor_x) | (cursor_y ~= old_cursor_y) then {
          if /changed then
-            self.constrain_line()
+            constrain_line()
          cursor_on := -1
          cursor_moved := &yes
+      } else if \need_constrain_line then {
+         constrain_line()
+         need_constrain_line := &no
       }
 
       # Invalidate on cursor/mark changes
