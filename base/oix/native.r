@@ -4102,22 +4102,6 @@ function io_Files_unmount(name, old)
    }
 end
 
-function io_DescStream_length(self)
-   body {
-       tended struct descrip result;
-       struct Dir *st;
-       GetSelfFd();
-       if (!(st = dirfstat(self_fd))) {
-           errno2why();
-           fail;
-       }
-       convert_from_vlong(st->length, &result);
-       free(st);
-       return result;
-   }
-end
-
-
 enum fileworker_status { FW_RUNNING, FW_COMPLETE };
 enum fileworker_cmd { FW_READ, FW_WRITE, FW_OPEN, FW_CREATE, FW_CLOSE, FW_WRITE_ALL };
 

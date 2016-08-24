@@ -163,9 +163,6 @@ NativeDef(io.DescStream,dflag,io_DescStream_dflag)
 NativeDef(io.DescStream,poll,io_DescStream_poll)
 NativeDef(io.DescStream,select,io_DescStream_select)
 NativeDef(io.DescStream,stat_impl,io_DescStream_stat_impl)
-#if PLAN9
-NativeDef(io.DescStream,length,io_DescStream_length)
-#endif
 NativeDef(io.DescStream,dup2_impl,io_DescStream_dup2_impl)
 NativeDef(io.DescStream,dup_impl,io_DescStream_dup_impl)
 NativeDef(io.DescStream,wstat,io_DescStream_wstat)

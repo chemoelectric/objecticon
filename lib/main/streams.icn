@@ -774,11 +774,6 @@ $ifdef _PLAN9
    # @param name the file name
    #
    public native wstat(mode, uid, gid, atime, mtime, length, name)
-
-   #
-   # Return the length of the file
-   #
-   public native length()
 $else
    #
    # Write selected attributes about a file.  If any of the parameters
