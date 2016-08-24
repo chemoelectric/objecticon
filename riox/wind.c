@@ -1004,11 +1004,31 @@ wmousectl(Window *w)
 			wscroll(w, but);
 		goto Return;
 	}
-	if(but == 1)
+        if(but == 1)
 		wselection(w);
+	else if(but == 2)
+                wmpress(w);
 	/* else all is handled by main process */
    Return:
 	wclose(w);
+}
+
+void
+wmpress(Window *w)
+{
+    int n;
+    Rune *t;
+    if(w->q1 == w->q0)
+        return;
+    n = w->q1-w->q0;
+    // Copy to a temporary buffer since winsert may realloc w->r.
+    t = runemalloc(n);
+    runemove(t, w->r+w->q0, n);
+    winsert(w, t, n, w->nr);
+    winsert(w, L" ", 1, w->nr) + 1;
+    free(t);
+    wsetselect(w, w->nr, w->nr);
+    wshow(w, w->q0);
 }
 
 void

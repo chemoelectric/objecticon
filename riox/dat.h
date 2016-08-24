@@ -251,6 +251,7 @@ void		wshow(Window*, uint);
 void		wsnarf(Window*);
 void 		wscrsleep(Window*, uint);
 void		wsetcols(Window*);
+void            wmpress(Window *w);
 
 struct Dirtab
 {
