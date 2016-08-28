@@ -98,6 +98,9 @@ wmk(Image *i, MousectlEx *mc, Channel *ck, Channel *cctl, int hidden, int scroll
         while (x->transientfor)
             x = x->transientfor;
         w->transientforroot = x;
+        /* This ensures a new hidden window gets focus when unhidden (see wuhinde). */
+        if (hidden && !w->transientfor)
+            w->rememberedfocus = w;
         w->noborder = noborder;
         w->layer = (layer == INVALID_LAYER ? 0 : layer);
         w->focusclickflag = 0;
