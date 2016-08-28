@@ -725,11 +725,6 @@ xfidread(Xfid *x)
 		t = estrdup(buf);
 		goto Text;
 
-	case Qpid:
-		n = sprint(buf, "%11d ", w->pid);
-		t = estrdup(buf);
-		goto Text;
-
 	case Qscreeninfo:
                 n = sprint(buf, "%11d %11d %11d %11d %11d %11d ", 
                            mousectl->xy.x, mousectl->xy.y, 

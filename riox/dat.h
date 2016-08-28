@@ -9,7 +9,6 @@ enum
 	Qwinname,
 	Qkbdin,
 	Qlabel,
-        Qpid,
 	Qmouse,
 	Qnew,
 	Qscreen,

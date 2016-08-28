@@ -489,6 +489,8 @@ wstatestring(Window *w, char *dest, int destsize)
         sprint(buff + strlen(buff), "maxdx:%d ", w->maxdx);
     if (w->maxdy != INT_MAX)
         sprint(buff + strlen(buff), "maxdy:%d ", w->maxdy);
+    if (w->pid != 0)
+        sprint(buff + strlen(buff), "pid:%d ", w->pid);
     return snprint(dest, destsize, "%11d %11d %11d %11d%s",
                    w->i->r.min.x - screen->r.min.x, 
                    w->i->r.min.y - screen->r.min.y, 
