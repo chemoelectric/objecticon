@@ -1138,6 +1138,21 @@ Const(SEEK_END)
 
     end_class();
 
+#if UNIX
+    start_class("EAIError", "EAI_", 0, 0);
+    Const(EAI_BADFLAGS)
+    Const(EAI_NONAME)
+    Const(EAI_AGAIN)
+    Const(EAI_FAIL)
+    Const(EAI_FAMILY)
+    Const(EAI_SOCKTYPE)
+    Const(EAI_SERVICE)
+    Const(EAI_MEMORY)
+    Const(EAI_SYSTEM)
+    Const(EAI_OVERFLOW)
+    end_class();
+#endif
+
 #if MSWIN32
     start_class("WSAError", "WSA", 0, 0);
     Const(WSABASEERR)
