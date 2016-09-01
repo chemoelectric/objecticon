@@ -39,35 +39,9 @@ void	initcmd(void*);
 
 char		*fontname;
 int		mainpid;
+int             classic = 0;
 
 static int hasexit;
-
-enum
-{
-	Cut,
-	Paste,
-	Snarf,
-	Plumb,
-	Send,
-	Scroll,
-};
-
-
-char		*menu2str[] = {
- [Cut]		"cut",
- [Paste]		"paste",
- [Snarf]		"copy",
- [Plumb]		"plumb",
- [Send]		"send",
- [Scroll]		"scroll",
-			nil
-};
-
-Menu menu2 =
-{
-	menu2str
-};
-
 
 char *rcargv[] = { "rc", "-i", nil };
 char *kbdargv[] = { "rc", "-c", nil, nil };
@@ -102,6 +76,9 @@ threadmain(int argc, char *argv[])
 	ARGBEGIN{
 	case 'x':
                 hasexit = 1;
+                break;
+	case 'c':
+                classic = 1;
                 break;
 	case 'f':
 		fontname = ARGF();
@@ -375,7 +352,7 @@ cornercursor(Window *w, Point p, int force)
 {
 	if(w!=nil && winborder(w, p)) {
                 int t = whichcorner(w, p);
-                if (t % 2 == 0) {
+                if (classic || t % 2 == 0) {
                     if (resizable(w))
                         riosetcursor(corners[whichcorner(w, p)], force);
                     else
@@ -467,16 +444,23 @@ static void enterexit(Window *now, Window *evwin)
     eein = now;
 }
 
-static void doreshape(Window *w)
+static void doresize(Window *w)
 {
-    int band;
+    Image *i;
+    i = bandsize(w);
+    if(i != nil){
+        wreshaped(w, i);
+        cornercursor(w, mouse->xy, 1);
+        ensure_transient_stacking();
+        reconcile_stacking();
+    }
+}
+
+static void domove(Window *w)
+{
     Rectangle r;
     Image *i;
-    band = whichcorner(w, mouse->xy) % 2 == 0;
-    if(band)
-        i = bandsize(w);
-    else
-        i = drag(w, &r);
+    i = drag(w, &r);
     if(i != nil){
         wreshaped(w, i);
         cornercursor(w, mouse->xy, 1);
@@ -536,7 +520,7 @@ static void domouse(void)
             /* Top and give focus if appropriate.  The last &&
              * indicates not to give focus on the right-click context
              * menu (button3wmenu) */
-            if ((press & 7) && overw && !grabpointer && !(overb && ((press & 5) == 4)))
+            if ((press & 7) && overw && !grabpointer && !(overb && !classic && ((press & 5) == 4)))
                 pressed(overw);
             held = over;
             if (held)
@@ -544,15 +528,35 @@ static void domouse(void)
 
             if (overb) {
                 if (press & 1) {
-                    doreshape(overb);
+                    if (classic || whichcorner(overb, mouse->xy) % 2 == 0)
+                        doresize(overb);
+                    else
+                        domove(overb);
                 } else if (press & 4) {
-                    riosetcursor(nil, 0);
-                    button3wmenu(overb);
+                    if (classic)
+                        domove(overb);
+                    else {
+                        riosetcursor(nil, 0);
+                        button3wmenu(overb);
+                    }
                 }
-            } else if (!over && (press & 4))
-                button3menu();
-            else if((press & 4) && over && !over->mouseopen && !ptinrect(mouse->xy, over->scrollr)) {
-                button3txtmenu(over);
+            } else if (!over && (press & 4)) {
+                if (classic)
+                    classic_button3menu();
+                else
+                    button3menu();
+            } else if((press & 6) && over && !over->mouseopen && !ptinrect(mouse->xy, over->scrollr)) {
+                if (press & 4) {
+                    if (classic)
+                        classic_button3menu();
+                    else
+                        button3txtmenu(over);
+                } else {  /* press & 2 */
+                    if (classic)
+                        button3txtmenu(over);
+                    else
+                        wmpress(over);
+                }
                 held = 0;
             }
         }
@@ -700,6 +704,87 @@ button3menu(void)
 }
 
 void
+classic_button3menu(void)
+{
+    int i, j, n = 0;
+    int mnew = -2, resize = -2, move = -2, delete = -2,hide = -2, exit = -2;
+    char *menustr[MAX_WIN_MENU];
+    Window *w, *menuwin[MAX_WIN_MENU];
+    Menu menu = { menustr };
+    menustr[mnew = n++] = estrdup("New");
+    menustr[resize = n++] = estrdup("Resize");
+    menustr[move = n++] = estrdup("Move");
+    menustr[delete = n++] = estrdup("Delete");
+    menustr[hide = n++] = estrdup("Hide");
+    if(hasexit)
+        menustr[exit = n++] = estrdup("Exit");
+    for(j = 0; j < nwindow && n < MAX_WIN_MENU - 1; j++) {
+        Window *w = window[j];
+        if (!w->noborder && !w->transientfor && w->hidden) {
+            menuwin[n] = w;
+            menustr[n] = emalloc(strlen(w->label) + 5);
+            sprint(menustr[n], "%s", w->label);
+            ++n;
+        }
+    }
+    menustr[n] = 0;
+
+    sweeping = 1;
+    i = menuhit(3, mousectl, &menu, wscreen);
+    if (i == mnew)
+        new(sweep(nil), FALSE, scrolling, -1, 0, 
+            0, 1, INT_MAX, 1, INT_MAX,
+            0, nil, "/bin/rc", nil);
+    else if (i == resize) {
+	w = pointto(TRUE);
+        if (w && !w->noborder) {
+            Image *j = sweep(nil);
+            if (j) {
+                Rectangle r = j->r;
+                if (wlimitrect(w, &r)) {
+                    freeimage(j);
+                    j = allocwindow(wscreen, r, Refbackup, DWhite);
+                }
+                if (j) {
+                    wreshaped(w, j);
+                    wcurrent(w);
+                    cornercursor(w, mouse->xy, 1);
+                    ensure_transient_stacking();
+                    reconcile_stacking();
+                }
+            }
+        }
+    } else if (i == move) {
+	w = pointto(FALSE);
+        if (w && !w->noborder) {
+            Rectangle r;
+            Image *j = drag(w, &r);
+            if (j) {
+                wreshaped(w, j);
+                wcurrent(w);
+                cornercursor(w, mouse->xy, 1);
+                ensure_transient_stacking();
+                reconcile_stacking();
+            }
+        }
+    } else if (i == delete) {
+	w = pointto(TRUE);
+	if (w)
+            wsendctlmesg(w, Deleted);
+    } else if (i == hide) {
+	w = pointto(TRUE);
+	if (w)
+            whide(w);
+    } else if (i == exit)
+        send(exitchan, nil);
+    else if (i > 0)
+        wselect(menuwin[i]);
+    sweeping = 0;
+    for (i = 0; i < n; ++i)
+        free(menustr[i]);
+}
+
+void
 button3wmenu(Window *w)
 {
 	int i = 0;
@@ -736,17 +821,41 @@ button3wmenu(Window *w)
             wsendctlmesg(w, Deleted);
 }
 
+enum
+{
+	Cut,
+	Paste,
+	Snarf,
+	Plumb,
+	Send,
+	Scroll,
+};
+
 void
 button3txtmenu(Window *w)
 {
+        char *menu2str[] = {
+          [Cut]           "cut",
+          [Paste]         "paste",
+          [Snarf]         "copy",
+          [Plumb]         "plumb",
+          [Send]          "send",
+          [Scroll]        "scroll",
+          nil
+        };
+ 
+        Menu menu2 = { menu2str };
+
 	if(w->deleted)
 		return;
 	incref(w);
+        if(classic)
+                menu2str[Snarf] = "snarf";
 	if(w->scrolling)
 		menu2str[Scroll] = "noscroll";
 	else
 		menu2str[Scroll] = "scroll";
-	switch(menuhit(3, mousectl, &menu2, wscreen)){
+	switch(menuhit(classic ? 2:3, mousectl, &menu2, wscreen)){
 	case Cut:
 		wsnarf(w);
 		wcut(w);
@@ -1101,6 +1210,7 @@ bandsize(Window *w)
         if (!resizable(w))
             return nil;
 	p = mouse->xy;
+        cornercursor(w, p, 1);
 	but = mouse->buttons;
 	which = whichcorner(w, p);
 	p = cornerpt(w->screenr, p, which);

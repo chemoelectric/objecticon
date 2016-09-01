@@ -34,18 +34,20 @@ void	*erealloc(void*, uint);
 void *emalloc(uint);
 char *estrdup(char*);
 void	button3menu(void);
+void    classic_button3menu(void);
 void	button3txtmenu(Window*);
 void	button3wmenu(Window*);
 void	cvttorunes(char*, int, Rune*, int*, int*, int*);
 /* was (byte*,int)	runetobyte(Rune*, int); */
-char* runetobyte(Rune*, int, int*);
+char*   runetobyte(Rune*, int, int*);
 void	putsnarf(void);
 void	getsnarf(void);
 void	timerinit(void);
 int	goodrect(Rectangle);
 int     readmouseex(MousectlEx *mc);
 void    sendmouseevent(Window *w, uchar type);
-char *get_wdir(Window *w);
+char *  get_wdir(Window *w);
+Window* pointto(int wait);
 
 #define	runemalloc(n)		malloc((n)*sizeof(Rune))
 #define	runerealloc(a, n)	realloc(a, (n)*sizeof(Rune))

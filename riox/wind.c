@@ -1011,8 +1011,6 @@ wmousectl(Window *w)
 	}
         if(but == 1)
 		wselection(w);
-	else if(but == 2)
-                wmpress(w);
 	/* else all is handled by main process */
    Return:
 	wclose(w);
