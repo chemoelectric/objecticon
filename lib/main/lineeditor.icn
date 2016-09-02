@@ -474,7 +474,7 @@ abstract class LineEditorEdit(UndoableEdit)
       parent.pos := self.pos
    end
 
-   protected new(parent)
+   public new(parent)
       self.parent := parent
       return
    end

@@ -426,8 +426,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # Encode just stores the seconds and zone information.
    #
    private object_encode(c)
-      c.encode(self.seconds)
-      c.encode(self.zone)
+      every c.encode(seconds | zone)
    end
 
    private object_decode(c)

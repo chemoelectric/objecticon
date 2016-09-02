@@ -96,7 +96,7 @@ end
 #
 # Like `encode`, but encodes directly to a file (rather than a string).
 #
-procedure encode_to_file(fn, o,fast, bin)
+procedure encode_to_file(fn, o, fast, bin)
    local f
    return use {
       f := FileStream(fn, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)),
