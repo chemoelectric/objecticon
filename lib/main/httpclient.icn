@@ -329,7 +329,7 @@ class HttpClient(NetClient)
       #
       auth := auth_scheme := &null
       l := response.get_first_header("Location") | return on_http_error("No Location in a redirect response")
-      if match("http://" | "https://", l) then {
+      if match("http://" | "https://", map(l)) then {
          u := URL(l) | return on_http_error("Invalid Location in a redirect response: " || l)
          request.set_url(u)
       } else
