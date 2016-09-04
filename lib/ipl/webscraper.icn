@@ -110,10 +110,9 @@ class WebScraper()
    # @param data the template, either string or ucs.
    #
    public new(data)
-      local p, d, n, s, i, anchors, ak, sk
+      local d, n, s, i, anchors, ak, sk
 
-      p := HtmlParser()
-      d := p.parse(data) | return error("Couldn't parse")
+      d := HtmlParser().parse(data)
 
       ak := same_type(u"ANCHORID", data)
       sk := same_type(u"SCRAPEID", data)
