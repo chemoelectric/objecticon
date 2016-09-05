@@ -129,7 +129,7 @@ class SmtpClient(NetClient)
 
    # Output all the headers with the key only, as separate header lines
    private send_headers_list(l, m, key)
-      every put(l, key || ": " || !m.get_headers(key))
+      every put(l, key || ": " || m.gen_headers(key))
    end
 
    # Output all the headers for the key catenated together
