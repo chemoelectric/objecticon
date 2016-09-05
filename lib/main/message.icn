@@ -52,6 +52,8 @@ class Message(MimeHeaders)
    public set_decoded_content(s)
       local h
 
+      s := string(s) | runerr(103, s)
+
       #
       # Get the handler
       #
