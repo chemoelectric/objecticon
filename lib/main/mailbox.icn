@@ -74,7 +74,7 @@ class Mailbox(Address)
       return RFC822Parser().parse_mailbox(s)
    end   
 
-   public generate_mailboxes()
+   public gen_mailboxes()
       return self
    end
 

@@ -718,6 +718,6 @@ end
 procedure get_all_mailboxes(l)
    local res
    res := []
-   every put(res, (!l).generate_mailboxes())
+   every put(res, (!l).gen_mailboxes())
    return res
 end
