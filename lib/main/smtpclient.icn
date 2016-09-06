@@ -39,8 +39,10 @@ class SmtpClient(NetClient)
          close_connection()
          fail
       }
-      if not(s[1:4] == "220") then
-         return error_and_close_connection("Failed to get initial 220:" || s)
+      if not(s[1:4] == "220") then {
+         close_connection()
+         return error("Failed to get initial 220: " || s)
+      }
       return self
    end
 
