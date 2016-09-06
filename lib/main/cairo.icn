@@ -1406,7 +1406,7 @@ final class Context(NoCopy)
    #
    public new(v)
       local t
-      \LOADED | return error("Cairo not supported")
+      cairo_available() | fail
       ptr := if is(v, Window) then
          use {
             t := WindowSurface(v),
