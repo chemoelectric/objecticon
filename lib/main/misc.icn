@@ -1,6 +1,6 @@
 package util
 
-import lang(Class, Prog),
+import lang(Class),
    ipl.lists(ldel1),
    posix(System)
 
@@ -67,17 +67,19 @@ class SimpleConstructor()
 end
 
 # Invoke co-expression {e}, generating its results, in such a way that
-# changes to {vars} made by {e} will not be seen by the caller, and
+# changes to {var} made by {e} will not be seen by the caller, and
 # vice versa.
 #
-# @param vars a coexpression generating one or more variables.
+# @param var a coexpression generating a global variable.
+# @param i an optional coexpression giving the initial value of var
+# @      within e
 #
 # @example
-# @ # Cleanup some io stuff, without affecting global vars g1 and g2.
-# @ save_vars{ io_cleanup(), g1 | g2 }
+# @ # Cleanup some io stuff, without affecting global vars g.
+# @ save_var{ io_cleanup(), g }
 #
-procedure save_vars(e, vars)
-   suspend save_state(e, VarState(vars))
+procedure save_var(e, var, i)
+   suspend save_state(e, VarState(var, i))
 end
 
 #
@@ -250,52 +252,34 @@ abstract class State()
    public abstract finish()
 end
 
-# A `State` instance which saves several global variables, specified as
-# a co-expression generating those variables.
+# A `State` instance which saves an arbitrary global variable, specified as
+# a co-expression generating that variable.
 #
 class VarState(State)
-   private vars, state
-
-   # Return an appropriate initial value for a global named `s`;
-   # normally &null, except for certain keyword variables.
-   #
-   private static init_val(s)
-      return case s of {
-         "&subject" | "&why" | "&progname": ""
-         "&pos": 1
-         "&trace" | "&random" | "&dump": 0
-         "&maxlevel": 500
-         default: &null
-      }
-   end
+   private var, save, i
 
    public begin()
-      local f
-      state := []
-      every put(state, !vars)
-      f := create init_val(Prog.get_variable_name(!vars))
-      every !vars := @f
+      save := !var
+      !var := @i
    end
 
    public swap()
-      if *state = 1 then
-         # Simple case
-         !vars :=: state[1]
-      else {
-         # Complex case.  Done in two stages (as opposed to swapping with
-         # existing elements of state), so that it works okay with &subject
-         # and &pos (swapping to &subject would change &pos).
-         every put(state, !vars)
-         every !vars := pop(state)
-      }
+      !var :=: save
    end
 
    public finish()
-      every !vars := pop(state)
+      !var := save
    end
 
-   public new(e)
-      vars := e
+   # This constructor takes two co-expressions; the first should
+   # generate the variable to be saved, and the second should
+   # optionally give the initial value in the expression being
+   # evaluated; by default it is set to `&null`.
+   #
+   public new(var, i)
+      self.var := var
+      /i := create &null
+      self.i := i
       return
    end
 end
