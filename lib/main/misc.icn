@@ -70,8 +70,9 @@ end
 # changes to {var} made by {e} will not be seen by the caller, and
 # vice versa.
 #
-# @param var a coexpression generating a global variable.
-# @param i an optional coexpression giving the initial value of var
+# @param e a co-expression to evaluate
+# @param var a co-expression generating a global variable.
+# @param i an optional initial value for the global variable
 # @      within e
 #
 # @example
@@ -252,33 +253,29 @@ abstract class State()
    public abstract finish()
 end
 
-# A `State` instance which saves an arbitrary global variable, specified as
-# a co-expression generating that variable.
+#
+# A `State` instance which saves an arbitrary global variable,
+# specified as a co-expression generating that variable.  An initial
+# value may also be specified.
 #
 class VarState(State)
-   private var, save, i
+   private var, t, i
 
    public begin()
-      save := !var
-      !var := @i
+      t := !var
+      !var := i
    end
 
    public swap()
-      !var :=: save
+      !var :=: t
    end
 
    public finish()
-      !var := save
+      !var := t
    end
 
-   # This constructor takes two co-expressions; the first should
-   # generate the variable to be saved, and the second should
-   # optionally give the initial value in the expression being
-   # evaluated; by default it is set to `&null`.
-   #
    public new(var, i)
       self.var := var
-      /i := create &null
       self.i := i
       return
    end
