@@ -211,10 +211,8 @@ class PopClient(NetClient)
    private read_response()
       local s
 
-      s := expect_line() | {
-         close_connection()
-         fail
-      }
+      s := expect_line() | fail
+
       s ? {
          if ="+OK" then {
             =" "
@@ -223,11 +221,11 @@ class PopClient(NetClient)
 
          if ="-ERR" then {
             =" "
-            return error_and_close_connection("Got an error: " || tab(0))
+            return error("POP error: " || tab(0))
          }
       }
 
-      return error_and_close_connection("Got an unrecognized response: " || s)
+      return error("POP unrecognized response: " || s)
    end
 
    public new()

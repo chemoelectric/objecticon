@@ -28,7 +28,7 @@ final class Shm(NoCopy)
    # encodable, and set {&why} appropriately.
    #
    public set_value(o)
-      return set_value_impl(encode(o, 1))
+      return set_value_impl(encode(o, &yes))
    end
 
    private native set_value_impl(s)
@@ -82,7 +82,7 @@ final class Shm(NoCopy)
    #
    public static create_public(key, o)
       \Ipc.LOADED | return error("Shm ipc not supported")
-      return Shm(create_public_impl(key, encode(o, 1)))
+      return Shm(create_public_impl(key, encode(o, &yes)))
    end
 
    #
@@ -90,6 +90,6 @@ final class Shm(NoCopy)
    #
    public static create_private(o)
       \Ipc.LOADED | return error("Shm ipc not supported")
-      return Shm(create_private_impl(encode(o, 1)))
+      return Shm(create_private_impl(encode(o, &yes)))
    end
 end

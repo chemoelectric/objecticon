@@ -6,9 +6,11 @@ package ipl.webscraper
 
 import xml, util, ipl.scan, io, ipl.pdco, lang
 
-package record Anchor(str, path)
+package record AnchorString(str, path)
+package record AnchorTag(name, attrs, path)
 
-package record AnchorCmd(str)
+package record AnchorStringCmd(str)
+package record AnchorTagCmd(name, attrs)
 package record UpCmd(n)
 package record RootCmd()
 package record TagCmd(n, name)
@@ -65,6 +67,14 @@ package record StringCmd(n)
 # contain the "Past participle" text in the same place, the scrape
 # will still successfully retrieve the desired element.
 #
+# An anchor can also refer to an element, rather than text :-
+# ~
+#   <div anchorid="a2" class="definition-block def-text">
+# ~
+# Now a reference to this anchor will cause a search for the first
+# element with the same tag name and attributes in the target
+# document.
+#
 # A `WebScraper' instance is created by passing the text data
 # containing the template document.  This can either be loaded from a
 # file, or included using a `$load` directive, if it is not too
@@ -100,18 +110,19 @@ class WebScraper()
    # @param data the template, either string or ucs.
    #
    public new(data)
-      local p, d, n, s, i, anchors, k
+      local d, n, s, i, anchors, ak, sk
 
-      p := HtmlParser()
-      d := p.parse(data) | return error("Couldn't parse")
+      d := HtmlParser().parse(data)
 
-      anchors := create_anchors(d) | fail
+      ak := same_type(u"ANCHORID", data)
+      sk := same_type(u"SCRAPEID", data)
+
+      anchors := create_anchors(d, ak, sk) | fail
 
       paths := table()
-      k := same_type(u"scrapeId", data)
 
       every n := Seq{d.traverse_nodes_preorder()} do {
-         if is(n, Element) & s := n.get_attribute(k) then {
+         if is(n, Element) & s := n.get_attribute(sk) then {
             do_insert(s, n, anchors) | fail
          }
          i := 0
@@ -141,17 +152,23 @@ class WebScraper()
       return self
    end
 
-   private static create_anchors(d)
-      local n, s, id, str, res
+   private static create_anchors(d, ak, sk)
+      local n, s, id, str, res, t
 
       res := table()
       every n := Seq{d.traverse_nodes_preorder()} do {
+         if is(n, Element) & id := n.get_attribute(ak) then {
+            t := copy(n.attributes)
+            # Delete any special template attributes
+            every delete(t, ak | sk)
+            insert(res, id, AnchorTag(n.name, t, path_to_root(n)))
+         }
          every s := text(!n.children) do {
             s ? if tab(caseless_match(u"$anchorid=")) then {
                id := tab(upto('$')) | return error("Unclosed anchor id")
                move(1)
                str := tab(0)
-               insert(res, id, Anchor(str, path_to_root(n)))
+               insert(res, id, AnchorString(str, path_to_root(n)))
             }
          }
       }
@@ -172,8 +189,12 @@ class WebScraper()
             pop(p2)
          }
 
-         put(res, AnchorCmd(anchor.str))
-         put(res, UpCmd(*p2))
+         if is(anchor, AnchorString) then
+            put(res, AnchorStringCmd(anchor.str))
+         else
+            put(res, AnchorTagCmd(anchor.name, anchor.attrs))
+
+         put(res, UpCmd(0 < *p2))
       } else {
          put(res, RootCmd())
          pop(p1)
@@ -210,6 +231,14 @@ class WebScraper()
       }
    end
 
+   private find_anchor_tag(d, name, attrs)
+      local n
+      every n := d.get_root_element().search_tree(name) do {
+         if equals(attrs, n.attributes) then
+            return n
+      }
+   end
+
    #
    # Lookup the given scrape id in the given `HtmlDocument`.  Either
    # an `HTMLElement` or text is returned, depending on whether the
@@ -222,7 +251,11 @@ class WebScraper()
    public lookup(d, id)
       local l, n, e
 
-      l := \paths[id] | return error("Unknown id:" || id)
+      # The string type of the template and subject must match for AnchorTagCmd to work
+      # properly (equals on two attribute tables).
+      type(d.get_root_element().name) == type(key(paths)\1) | runerr("WebScraper string type mismatch between template and subject")
+
+      l := member(paths, id) | return error("Unknown id:" || id)
 
       every e := !l do {
          if \debug_flag then
@@ -232,9 +265,13 @@ class WebScraper()
             RootCmd : {
                n := d.get_root_element()
             }
-            AnchorCmd : {
+            AnchorStringCmd : {
                n := d.find_string(e.str) | return error("While looking up " || 
-                                                        id || ": Couldn't find anchor string:" || e.str)
+                                                        id || ": Couldn't find anchor string: " || e.str)
+            }
+            AnchorTagCmd : {
+               n := find_anchor_tag(d, e.name, e.attrs) | return error("While looking up " || 
+                                                                       id || ": Couldn't find anchor tag: " || e.name || " and " || *e.attrs || " attrs")
             }
             UpCmd : {
                every 1 to e.n do {
@@ -245,7 +282,7 @@ class WebScraper()
             }
             TagCmd : {
                n := n.get_nth_element(e.n, e.name) | return error("While looking up " || 
-                                                                  id || ": Element " || e.name || " not found, n=" || e.n || ".")
+                                                                  id || ": Tag " || e.name || " not found, n=" || e.n || ".")
             }
             StringCmd : {
                n := n.get_nth_string(e.n) | return error("While looking up " || 

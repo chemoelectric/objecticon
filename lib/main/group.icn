@@ -53,7 +53,7 @@ class Group(Address)
       return RFC822Parser().parse_group(s)
    end   
 
-   public generate_mailboxes()
+   public gen_mailboxes()
       suspend !mailboxes
    end
 

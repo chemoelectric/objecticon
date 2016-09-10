@@ -43,10 +43,16 @@ class Multipart()
       return self
    end
 
+   #
+   # Return the list of parts
+   #
    public get_parts()
       return parts
    end
 
+   #
+   # Add a `Message` to the list of parts.
+   #
    public add_part(m)
       put(parts, m)
       return self

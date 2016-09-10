@@ -60,14 +60,6 @@ class NetClient(Connectable, HasTask)
       ssl_connection,
       sbuff
 
-   # 
-   # Fail and set the error code, and close the connection.
-   #
-   protected error_and_close_connection(a)
-      error(a)
-      close_connection()
-   end
-
    # Set the timeout in ms to use.  If {&null}, then no timeout will
    # be used.
    #

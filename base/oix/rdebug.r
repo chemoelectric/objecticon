@@ -215,21 +215,19 @@ static void cotrace_line(struct b_coexpr *from)
 
 void trace_coact(struct b_coexpr *from, struct b_coexpr *to, dptr val)
 {
-    uword to_id = to->id;  /* Save since outimage may collect */
     cotrace_line(from);
     fprintf(stderr,"; co-expression#" UWordFmt " : ", from->id);
     outimage(stderr, val, 0);
-    fprintf(stderr, " @ co-expression#" UWordFmt "\n", to_id);
+    fprintf(stderr, " @ co-expression#" UWordFmt "\n", to->id);
     fflush(stderr);
 }
 
 void trace_coret(struct b_coexpr *from, struct b_coexpr *to, dptr val)
 {
-    uword to_id = to->id;  /* Save since outimage may collect */
     cotrace_line(from);
     fprintf(stderr,"; co-expression#" UWordFmt " returned ", from->id);
     outimage(stderr, val, 0);
-    fprintf(stderr, " to co-expression#" UWordFmt "\n", to_id);
+    fprintf(stderr, " to co-expression#" UWordFmt "\n", to->id);
     fflush(stderr);
 }
 

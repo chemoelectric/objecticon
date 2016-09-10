@@ -764,7 +764,8 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
               * allocation.
               */
              deref(&sv, &tdp);
-             if (is:ucs(tdp)) {
+             type_case tdp of {
+               ucs: {
                  struct descrip utf8_subs;
                  if (TvsubsBlk(*dp).sspos + TvsubsBlk(*dp).sslen - 1 > UcsBlk(tdp).length)
                      return;
@@ -785,9 +786,8 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                  if (i > stringlimit)
                      fprintf(f, "...");
                  fprintf(f, "\"");
-                                         
              }
-             else if (Qual(tdp)) {
+             string: {
                  tended struct descrip q;
                  if (TvsubsBlk(*dp).sspos + TvsubsBlk(*dp).sslen - 1 > StrLen(tdp))
                      return;
@@ -797,8 +797,8 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
                  outimage1(f, &q, noimage, stringlimit, listlimit);
              }
            }
-
-        }
+         }
+      }
 
       tvtbl: {
          /*
