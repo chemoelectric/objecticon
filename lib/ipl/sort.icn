@@ -60,7 +60,7 @@
 
 package ipl.sort
 
-import lang(Class,Prog,Internal,Text), util(cvslice_def)
+import lang(Class,Prog,Internal), util(cvslice_def)
 
 procedure isort(x,keyproc,y)
    local items,item,key,result
@@ -209,10 +209,9 @@ end
 #
 # @example
 # @ l := ["ABC",u"Abc",u"def",u"DEF",u"ABC","def",u"DEf","ABc"]
-# @ mergesort(l, combine_cmp(caseless_text_cmp, type_cmp))
-# @ # gives ["ABC","ABc",u"Abc",u"ABC","def",u"def",u"DEF",u"DEf"]
-# @ mergesort(l, combine_cmp(type_cmp, caseless_text_cmp))
-# @ # gives ["ABC","ABc","def",u"Abc",u"ABC",u"def",u"DEF",u"DEf"]
+# @ mergesort(l, combine_cmp(convert_cmp(string,Text.caseless_compare),
+# @                          type_cmp))
+# @ gives ["ABC","ABc",u"Abc",u"ABC","def",u"def",u"DEF",u"DEf"]
 # @
 procedure combine_cmp(f, g)
    return CombineCmp(f, g).call
@@ -264,14 +263,6 @@ package class FieldCmp()
 end
 
 #
-# A compare function that compares solely by type, using the same
-# ordering as the internal sorting functions.
-#
-procedure type_cmp(a, b)
-   return Internal.compare(Internal.order(a), Internal.order(b))
-end
-
-#
 # Return a compare function which applies the comparator function `f` to the
 # field named `q` in each item.  `f` defaults to `Internal.compare`.
 #
@@ -282,6 +273,14 @@ end
 #
 procedure field_cmp(q, f)
    return FieldCmp(q, f).call
+end
+
+#
+# A compare function that compares solely by type, using the same
+# ordering as the internal sorting functions.
+#
+procedure type_cmp(a, b)
+   return Internal.compare(Internal.order(a), Internal.order(b))
 end
 
 # A numeric comparison function; unlike `Internal.compare`, reals and
@@ -296,33 +295,41 @@ procedure num_cmp(x, y)
       0
 end
 
-# A text comparison function; like `Internal.compare`, but the
-# parameters are converted to string, and so ucs and string are sorted
-# together.
-#
-procedure text_cmp(x, y)
-   x := string(x) | runerr(103, x)
-   y := string(y) | runerr(103, y)
-   return Internal.compare(x, y)
+# Implementation class for `convert_cmp`.
+package class ConvertCmp()
+   private f, cnv
+
+   public call(a, b)
+      a := cnv(a)
+      b := cnv(b)
+      return f(a, b)
+   end
+
+   public new(cnv, f)
+      self.cnv := cnv
+      /f := Internal.compare
+      self.f := f
+      return
+   end
 end
 
-# A text comparison function; like `Text.caseless_compare`, but the
-# parameters are converted to string, and so ucs and string are sorted
-# together.
 #
-procedure caseless_text_cmp(x, y)
-   x := string(x) | runerr(103, x)
-   y := string(y) | runerr(103, y)
-   return Text.caseless_compare(x, y)
-end
-
-# Like `Text.consistent_compare`, but the parameters are converted to
-# string, and so ucs and string are sorted together.
+# Return a compare function which first applies the conversion
+# function `cnv` to the two arguments given to it, and then returns
+# the result of applying the compare function `f`, which defaults to
+# `Internal.compare`.
 #
-procedure consistent_text_cmp(x, y)
-   x := string(x) | runerr(103, x)
-   y := string(y) | runerr(103, y)
-   return Text.consistent_compare(x, y)
+# @example
+# @    l := ["abc","def", u"abc", u"xyz"]
+# @    qsort(l, convert_cmp(string))
+# @    gives [u"abc","abc","def",u"xyz"]
+# @
+# @    l := [2,1,1.5,4.0,1.2,4]
+# @    qsort(l, convert_cmp(real))
+# @    gives [1,1.2,1.5,2,4,4.0]
+#
+procedure convert_cmp(cnv, f)
+   return ConvertCmp(cnv, f).call
 end
 
 #
