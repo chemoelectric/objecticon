@@ -77,7 +77,7 @@ end
 #
 # Clear the exception global variables {thrower} and {thrown}.
 #
-procedure clear()
+procedure eclear()
    thrower := thrown := &null
 end
 
@@ -93,7 +93,7 @@ end
 # A useful wrapper around {try}.  {try} is called with {e} to get its
 # first result.  If no exception is thrown, then the result produced
 # by {e} is returned.  If {e} fails, {&null} is returned.  If an
-# exception was thrown, {clear} is called, {&why} is set and the
+# exception was thrown, {eclear} is called, {&why} is set and the
 # procedure fails.
 #
 procedure try1(e)
@@ -102,5 +102,5 @@ procedure try1(e)
    if /thrower then
       return v
    &why := text(thrown) | ("thrown: " || image(thrown))
-   clear()
+   eclear()
 end

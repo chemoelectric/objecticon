@@ -785,8 +785,17 @@ $endif
                      Xdg.gen_desktop_entries(Xdg.alternative_mime_types(Xdg.get_mime_type_for_file(\res.fname)))}
    end
 
+   private create_open_with_menu_item(de, path)
+      local m
+      m := TextMenuItem().
+         set_label(de.name).
+         connect(create BrowserDialog.launch_prog(de, path), Event.ACTION)
+      m.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, &yes)))
+      return m
+   end
+
    private on_table_rpress(ev)
-      local popup, menu, l, d, m1, m2, de
+      local popup, menu, l, d, m, de
 
       msg()
 
@@ -810,16 +819,11 @@ $endif
             menu.add(TextMenuItem().
                set_label("Copy escaped result").
                connect(create on_copy_escaped_result(d), Event.ACTION))
-            m1 := Menu().set_label("Open with")
-            every de := get_possible_desktop_entries(d.resp) do {
-               m2 := TextMenuItem().
-                  set_label(de.name)
-               m2.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, &yes)))
-               m2.connect(cocopy{BrowserDialog.launch_prog(de, d.full_path)}, Event.ACTION)
-               m1.add(m2)
-            }
-            if *m1.children > 0 then 
-               menu.add(m1)
+            m := Menu().set_label("Open with")
+            every de := get_possible_desktop_entries(d.resp) do
+               m.add(create_open_with_menu_item(de, d.full_path))
+            if *m.children > 0 then 
+               menu.add(m)
          }
          if l[1][-1].status == "Failed" then
             menu.add(TextMenuItem().

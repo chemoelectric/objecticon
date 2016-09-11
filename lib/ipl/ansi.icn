@@ -69,7 +69,7 @@ package ipl.ansi
 import
    io(stop, writes),
    ipl.iolib(getname, getval, igoto, iputs),
-   ipl.iscreen(clear, emphasize, normal, boldface, underline, blink)
+   ipl.iscreen(cls, emphasize, normal, boldface, underline, blink)
 
 procedure _isANSI()
     static isANSI
@@ -148,7 +148,7 @@ procedure ED(i)
 	case i of {
 	    0:  iputs(getval("cd")) | stop("ED:  no cd capability")
 	    1:  stop("ED:  termcap doesn't specify capability")
-	    2:  clear()
+	    2:  cls()
 	    default:  stop("ED:  unknown clear code, ",i)
 	}
     }
