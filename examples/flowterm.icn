@@ -2208,18 +2208,22 @@ $endif
       return m
    end
 
+   private create_open_with_menu_item(r)
+      local m, de
+      de := r.desktop_entry
+      m := TextMenuItem().
+         set_label(de.name).
+         connect(create launch_prog(r), Event.ACTION)
+      m.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, &yes)))
+      return m
+   end
+
    private create_open_with_menu(url)
-      local m, m1, r, de
+      local m, r
       m := Menu().set_label("Open with")
       every r := get_runners(url) do {
-         if is(r, DesktopRunner) then {
-            de := r.desktop_entry
-            m1 := TextMenuItem().
-               set_label(de.name).
-               connect(cocopy{launch_prog(r)}, Event.ACTION)
-            m1.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, &yes)))
-            m.add(m1)
-         }
+         if is(r, DesktopRunner) then
+            m.add(create_open_with_menu_item(r))
       }
       if *m.children > 0 then
          return m
