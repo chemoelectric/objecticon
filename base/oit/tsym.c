@@ -99,10 +99,11 @@ struct tgentry *next_global(char *name, int flag, struct node *n)
     if (x)
         tfatal_at(n, "global redeclaration: %s previously declared at line %d", name, Line(x->pos));
 
-    if (!package_name &&
-        bsearch(name, builtin_table, ElemCount(builtin_table), 
+    if (bsearch(name, builtin_table, ElemCount(builtin_table), 
                 sizeof(char *), (BSearchFncCast)builtin_table_cmp)) 
-        tfatal_at(n, "global symbol uses name of builtin function");
+        tfatal_at(n, package_name ? 
+                          "package symbol uses name of builtin function" :
+                          "global symbol uses name of builtin function");
 
     x = FAlloc(struct tgentry);
     x->g_blink = ghash[i];

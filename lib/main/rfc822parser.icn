@@ -312,7 +312,7 @@ class RFC822Parser()
       #
       x := &pos
       try { parse_addr_spec(mb) } | {
-         exception.clear()
+         eclear()
          tab(x)
          if any('\"' ++ ATOM_CHAR) then
             mb.set_phrase(parse_phrase())
@@ -355,7 +355,7 @@ class RFC822Parser()
       x := &pos
       if try { a := parse_mailbox_impl() } then
          return a
-      exception.clear()
+      eclear()
       tab(x)
 
       return parse_group_impl()
