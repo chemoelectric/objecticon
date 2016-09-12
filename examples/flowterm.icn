@@ -1963,12 +1963,11 @@ $endif
 
    private do_clone(l)
       local t, cmd
-      t := Terminal(, self)
+      t := Terminal(, self, self)
       every cmd := !l do {
-         # Allow : syntax if desired
-         if cmd[1] == ":" then
-            cmd := cmd[2:0]
-         t.do_tab_cmd(cmd) | fail
+         # We will get an empty string with just a "clone:" URL.
+         if *cmd > 0 then 
+            t.do_tab_cmd(cmd) | fail
       }
       parent_dialog.done_tab_cmds(t)
       finish_clone(t)
