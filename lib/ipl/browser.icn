@@ -4682,7 +4682,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private traverse_li(e, p, context)
-      local lc, row, val, type
+      local lc, row, val, type, c
       lc := \context.list | fail
       row := TextFlow(self).set_v_align("baseline")
       type := e.get_attribute(u"TYPE") | lc.type
@@ -4696,7 +4696,10 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
                "I": roman(val)
             }
          }
-         put(row.input, TextCmd(val || u".\ua0\ua0\ua0", context))
+         # Integers are right aligned, others left aligned.
+         c := copy(context)
+         c.align := if default.type(val) == "integer" then Align.R else Align.L
+         put(row.input, TextCmd(val || u".\ua0\ua0\ua0", c))
          lc.index +:= 1
       } else {
          /type := "disc"
