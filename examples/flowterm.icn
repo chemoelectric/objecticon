@@ -1540,6 +1540,14 @@ class Terminal(TabItem, VtUI)
             check_live(s) | fail
             on_tab_left()
          }
+         "move-tab-right": {
+            check_live(s) | fail
+            on_move_tab_right()
+         }
+         "move-tab-left": {
+            check_live(s) | fail
+            on_move_tab_left()
+         }
          default: return error("Invalid command: " || s)
       }
       return self
@@ -1555,16 +1563,34 @@ class Terminal(TabItem, VtUI)
       return self
    end
 
+   private next_index_right()
+      return parent.get_index(self) % *parent.children + 1
+   end
+
+   private next_index_left()
+      return (parent.get_index(self) + *parent.children - 2) % *parent.children + 1
+   end
+
    private on_tab_right()
-      local i
-      i := parent.get_index(self) % *parent.children + 1
-      parent_dialog.goto_tab(parent.children[i])
+      parent_dialog.goto_tab(parent.children[next_index_right()])
    end
 
    private on_tab_left()
-      local i
-      i := (parent.get_index(self) + *parent.children - 2) % *parent.children + 1
-      parent_dialog.goto_tab(parent.children[i])
+      parent_dialog.goto_tab(parent.children[next_index_left()])
+   end
+
+   private on_move_tab_right()
+      parent.reposition(self, next_index_right()).
+         invalidate_line_break().
+         do_layout().
+         invalidate()
+   end
+
+   private on_move_tab_left()
+      parent.reposition(self, next_index_left()).
+         invalidate_line_break().
+         do_layout().
+         invalidate()
    end
 
    private static parse_key(s)
@@ -3362,6 +3388,8 @@ procedure usage(opts)
    help_line(":info=MSG", "Output MSG to the status bar.")
    help_line(":tab-left", "Select the next tab to the left.")
    help_line(":tab-right", "Select the next tab to the right.")
+   help_line(":move-tab-left", "Move the current tab to the left.")
+   help_line(":move-tab-right", "Move the current tab to the right.")
    help_line(":send-vt=STRING", "Send a string directly to the terminal.")
 
    u := URL("http://objecticon.sourceforge.net/FlowTerm.html")
