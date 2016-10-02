@@ -476,10 +476,15 @@ class TabSet(Component)
 
    public perform_drop(drag, drop, e)
       reposition(which_one, get_index(drop.content))
-      line_break := &null
+      invalidate_line_break()
       layout()
       invalidate()
       return
+   end
+
+   public invalidate_line_break()
+      line_break := &null
+      return self
    end
 
    public drag_reset(e)

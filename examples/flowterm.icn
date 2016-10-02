@@ -155,7 +155,7 @@ class FlowTermDialog(Dialog)
       return self
    end
 
-   private done_tab_cmds(t)
+   public done_tab_cmds(t)
       local a
       # Add t if it's not already added in the TabSet
       if /(\t).parent then {
@@ -274,7 +274,7 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
       m := Menu().
          add(TextMenuItem().
              set_label("New").
-             connect(create new_tab(&yes,,, t), Event.ACTION)).
+             connect(create t.new_tab(), Event.ACTION)).
          add(TextMenuItem().
              set_label("Close").
              connect(create t.close_tab(), Event.ACTION)).
@@ -1478,6 +1478,10 @@ class Terminal(TabItem, VtUI)
             check_live(s) | fail
             clone_tab()
          }
+         "new-tab": {
+            check_live(s) | fail
+            new_tab()
+         }
          "quit": {
             check_live(s) | fail
             on_quit()
@@ -1536,6 +1540,14 @@ class Terminal(TabItem, VtUI)
             check_live(s) | fail
             on_tab_left()
          }
+         "move-tab-right": {
+            check_live(s) | fail
+            on_move_tab_right()
+         }
+         "move-tab-left": {
+            check_live(s) | fail
+            on_move_tab_left()
+         }
          default: return error("Invalid command: " || s)
       }
       return self
@@ -1551,16 +1563,34 @@ class Terminal(TabItem, VtUI)
       return self
    end
 
+   private next_index_right()
+      return parent.get_index(self) % *parent.children + 1
+   end
+
+   private next_index_left()
+      return (parent.get_index(self) + *parent.children - 2) % *parent.children + 1
+   end
+
    private on_tab_right()
-      local i
-      i := parent.get_index(self) % *parent.children + 1
-      parent_dialog.goto_tab(parent.children[i])
+      parent_dialog.goto_tab(parent.children[next_index_right()])
    end
 
    private on_tab_left()
-      local i
-      i := (parent.get_index(self) + *parent.children - 2) % *parent.children + 1
-      parent_dialog.goto_tab(parent.children[i])
+      parent_dialog.goto_tab(parent.children[next_index_left()])
+   end
+
+   private on_move_tab_right()
+      parent.reposition(self, next_index_right()).
+         invalidate_line_break().
+         do_layout().
+         invalidate()
+   end
+
+   private on_move_tab_left()
+      parent.reposition(self, next_index_left()).
+         invalidate_line_break().
+         do_layout().
+         invalidate()
    end
 
    private static parse_key(s)
@@ -1957,12 +1987,28 @@ $endif
          write("Child application exited: ",to_string(r))
    end
 
+   private do_clone(l)
+      local t, cmd
+      t := Terminal(, self, self)
+      every cmd := !l do {
+         # We will get an empty string with just a "clone:" URL.
+         if *cmd > 0 then 
+            t.do_tab_cmd(cmd) | fail
+      }
+      parent_dialog.done_tab_cmds(t)
+      finish_clone(t)
+   end
+
    public open_link(url)
       local r
       case string(url.scheme) of {
          "text": send_tty(ucs(url.get_decoded_path()))
          "tab": {
             parent_dialog.do_tab_cmd(ipl.pdco.List{ URL.percent_decode(separate(url.get_path(), ';')) }) |
+               info_msg(&why)
+         }
+         "clone": {
+            do_clone(ipl.pdco.List{ URL.percent_decode(separate(url.get_path(), ';')) }) |
                info_msg(&why)
          }
          default: {
@@ -2829,9 +2875,8 @@ $endif
       close_tab()
    end
 
-   public clone_tab()
-      local t, i
-      t := parent_dialog.new_tab(&yes,, self, self) | fail
+   private finish_clone(t)
+      local i
       # Now the new tab is live, copy some column settings.
       i := Positions{(!t.columns.data).name, 
                      columns.data[columns.get_cursor()].name}
@@ -2839,6 +2884,14 @@ $endif
          set_area_y(columns.get_area_y()).
          set_area_x(columns.get_area_x()).
          set_cursor(i)
+   end
+
+   public clone_tab()
+      finish_clone(parent_dialog.new_tab(&yes,, self, self))
+   end
+
+   public new_tab()
+      parent_dialog.new_tab(&yes,,, self)
    end
 
    public close_tab()
@@ -3321,6 +3374,7 @@ procedure usage(opts)
    help_line(":select-all", "Select all text.")
    help_line(":close-tab", "Close the tab.")
    help_line(":clone-tab", "Clone the tab.")
+   help_line(":new-tab", "Open a new tab.")
    help_line(":quit", "Quit the program.")
    help_line(":home", "Go to the home directory.")
    help_line(":refresh", "Refresh the columns list.")
@@ -3334,6 +3388,8 @@ procedure usage(opts)
    help_line(":info=MSG", "Output MSG to the status bar.")
    help_line(":tab-left", "Select the next tab to the left.")
    help_line(":tab-right", "Select the next tab to the right.")
+   help_line(":move-tab-left", "Move the current tab to the left.")
+   help_line(":move-tab-right", "Move the current tab to the right.")
    help_line(":send-vt=STRING", "Send a string directly to the terminal.")
 
    u := URL("http://objecticon.sourceforge.net/FlowTerm.html")

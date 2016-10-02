@@ -19,7 +19,6 @@ package ipl.archives
 import
    io(BufferStream, FileStream, FilterInputStream,
       GeneratorStream, StringStream),
-   ipl.strings(endswith),
    util(error, use)
 
 # iszip(zname) succeeds if the named file appears to be a ZIP format
@@ -132,15 +131,6 @@ procedure rarfile(rname, fname)
    return FilterInputStream(, "unrar", ["p", "-ierr", rname, fname])
 end
 
-procedure tartype(s)
-   s := map(s)
-   if endswith(s, ".tar.gz" | ".tgz") then
-      return "z"
-   if endswith(s, ".tar.bz2") then
-      return "j"
-   return ""
-end
-
 #
 # {Stream} for reading the entries in a tar archive, one per line of the stream.
 #
@@ -150,7 +140,7 @@ class TarDirStream(ArchiveListerStream)
    end
 
    public new(tname)
-      return ArchiveListerStream.new("tar", ["tf" || tartype(tname), tname])
+      return ArchiveListerStream.new("tar", ["tf", tname])
    end
 end
 
@@ -159,7 +149,7 @@ end
 # and fname are valid.
 #
 procedure tarfile(tname, fname)		
-   return FilterInputStream(, "tar", ["xOf" || tartype(tname), tname, fname])
+   return FilterInputStream(, "tar", ["xOf", tname, fname])
 end
 
 # Perform gzip on a string, returning the gzipped string.
