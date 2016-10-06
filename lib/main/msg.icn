@@ -8,7 +8,7 @@
 
 package ipc
 
-import lang, util
+import lang
 
 #
 # This class provides an inter process messaging facility.  The implementation requires
@@ -98,7 +98,7 @@ final class Msg(NoCopy)
    # if no such queue exists.
    #
    public static open_public(key)
-      \Ipc.LOADED | return error("Msg ipc not supported")
+      ipc_available() | fail
       return Msg(open_public_impl(key))
    end
 
@@ -106,7 +106,7 @@ final class Msg(NoCopy)
    # Create a new public queue with the given key
    #
    public static create_public(key)
-      \Ipc.LOADED | return error("Msg ipc not supported")
+      ipc_available() | fail
       return Msg(create_public_impl(key))
    end
 
@@ -114,7 +114,7 @@ final class Msg(NoCopy)
    # Create a new private queue
    #
    public static create_private()
-      \Ipc.LOADED | return error("Msg ipc not supported")
+      ipc_available() | fail
       return Msg(create_private_impl())
    end
 end
