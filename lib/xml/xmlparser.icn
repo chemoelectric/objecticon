@@ -458,18 +458,13 @@ class XmlParser(Connectable)
       res ? {
          tab(many(' '))
          res := ""
-         repeat {
-            res ||:= tab(upto(' '))
-            if any(' ') then {
-               tab(many(' '))
-               # No trailing spaces.
-               if not(pos(0)) then
-                  res ||:= " "
-            } else {
-               res ||:= tab(0)
-               break
-            }
+         while res ||:= tab(upto(' ')) do {
+            tab(many(' '))
+            # No trailing spaces.
+            if not(pos(0)) then
+               res ||:= " "
          }
+         res ||:= tab(0)
       }
 
       return res
@@ -479,12 +474,11 @@ class XmlParser(Connectable)
       local res, ref, c2, o
       res := ""
       s ? {
-         repeat {
-            res ||:= tab(upto('&' ++ SPACE))
+         while res ||:= tab(upto('&' ++ SPACE)) do {
             if any(SPACE) then {
                res ||:= " "
                move(1)
-            } else if any('&') then {
+            } else {   # an '&'
                # Char refs aren't recursively treated; entity refs are.
                if match(u"&#") then
                   res ||:= parse_char_ref(1)
@@ -515,11 +509,9 @@ class XmlParser(Connectable)
                   #
                   res ||:= normalize_attvalue1(o.str, c2)
                }
-            } else {
-               res ||:= tab(0)
-               break
             }
          }
+         res ||:= tab(0)
       }
       return res
    end
@@ -532,15 +524,14 @@ class XmlParser(Connectable)
    private normalize_eol(s)
       local res
       res := ""
-      s ? repeat {
-         res ||:= tab(upto('\r'))
-         if any('\r') then {
+      s ? {
+         while res ||:= tab(upto('\r')) do {
             move(1)
             if any('\n') then
                move(1)
             res ||:= "\n"
-         } else
-            return res || tab(0)
+         }
+         return res || tab(0)
       }
    end
 
