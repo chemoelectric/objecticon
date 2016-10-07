@@ -187,10 +187,10 @@ class RFC822Parser()
    #
    private parse_word() 
       next_token()
-      if any('\"') then
-         return parse_quoted_string()
+      return if any('\"') then
+         parse_quoted_string()
       else
-         return parse_atom()
+         parse_atom()
    end
 
    #
@@ -221,10 +221,10 @@ class RFC822Parser()
    #
    private parse_sub_domain()
       next_token()
-      if any('[') then
-         return parse_domain_literal()
+      return if any('[') then
+         parse_domain_literal()
       else
-         return parse_atom()
+         parse_atom()
    end
 
    #
@@ -559,10 +559,10 @@ class RFC822Parser()
    #  value := token / quoted-string
    #
    private parse_value()
-      if any('\"') then
-         return parse_and_convert_quoted_string()
+      return if any('\"') then
+         parse_and_convert_quoted_string()
       else
-         return parse_token_1521()
+         parse_token_1521()
    end
 
    #

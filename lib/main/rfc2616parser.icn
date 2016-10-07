@@ -109,10 +109,10 @@ class RFC2616Parser()
    #  value          = token | quoted-string
    #
    private parse_value()
-      if any('\"') then
-         return parse_and_convert_quoted_string()
+      return if any('\"') then
+         parse_and_convert_quoted_string()
       else
-         return parse_atom()
+         parse_atom()
    end
    
    #
