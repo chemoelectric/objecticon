@@ -271,7 +271,7 @@ class GridPaint(Paint)
                }
                if cmd == "cell" then {
                   do_cell(args)
-                  got_cell := 1
+                  got_cell := &yes
                } else if \got_cell then case string(cmd) of {
                   "br" : do_brk(args)
                   "img" : do_img(args)
