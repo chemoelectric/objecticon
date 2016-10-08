@@ -732,28 +732,34 @@ procedure transpose(s1, s2, s3)
 
 end
 
-# generate words from string
+# Generate words formed of adjacent characters in `wc`
+#
+# @param s the subject string
+# @param wc cset of word characters
+#
+procedure words_in(s, wc)
+   s ? while tab(upto(wc)) do
+      suspend tab(many(wc)) \ 1
+end
+
+# Generate words from string separated by chars in `sep`.
+#
+# @param s the subject string
+# @param sep cset of the separator chars, default ' \t\r\n\v\f'
+#
 procedure words(s, sep)
-   local t
-   /sep := ' \t\r\n\v\f'
-   s ? repeat {
-      tab(many(sep))
-      if t := tab(upto(sep)) then
-         suspend t
-      else if pos(0) then
-         fail
-      else
-         return tab(0)
-   }
+   sep := ~\sep | ~' \t\r\n\v\f'
+   suspend words_in(s, sep)
 end
 
 # Succeed if s1 ends with the string s2
+#
 procedure endswith(s1, s2)
    return s1[-*s2:0] == s2
 end
 
 #
-# Separate a string into parts separated by (single) chars in {sep}.
+# Separate a string into parts separated by (single) chars in `sep`.
 #
 # @param s the string to convert
 # @param sep cset of the separator chars, default ','
@@ -761,12 +767,12 @@ end
 procedure separate(s, sep)
    local t
    /sep := ','
-   s ? repeat {
-      if t := tab(upto(sep)) then {
+   s ? {
+      while t := tab(upto(sep)) do {
          suspend t
          move(1)
-      } else
-         return tab(0)
+      }
+      return tab(0)
    }
 end
 
@@ -777,13 +783,13 @@ end
 #
 procedure separate_lines(s)
    local t
-   s ? repeat {
-      if t := tab(upto('\n')) then {
+   s ? {
+      while t := tab(upto('\n')) do {
          if t[-1] == "\r" then
             t[-1] := ""
          suspend t
          move(1)
-      } else
-         return tab(0)
+      }
+      return tab(0)
    }
 end
