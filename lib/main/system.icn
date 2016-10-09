@@ -17,7 +17,7 @@ final abstract class System()
    # @   System.exec("ls", ["-l", "/home"])
    #
    public static exec(cmd, args, env)
-      cmd := Files.find_exe(cmd) | return error("Not found on PATH:" || cmd)
+      cmd := Files.find_exe(cmd) | return error("Not found on PATH: " || cmd)
       /args := []
       push(args, cmd)
       return execve(cmd, args, env)
