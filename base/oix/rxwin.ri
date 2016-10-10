@@ -3139,7 +3139,7 @@ static Pixmap imgdata_to_Pixmap1(wdp wd, struct imgdata *imd)
     Pixmap pix;
     GC gc;
     MemProtect(xi = XCreateImage(wd->display, 
-                                 GetVisual(wd), 
+                                 NULL,
                                  32,            /* depth */
                                  ZPixmap, 
                                  0, 
@@ -3521,7 +3521,6 @@ wbp findwbp(wsp ws)
 static wdp alcdisplay(char *s)
 {
     wdp wd;
-    Visual *vis;
     int major_version, minor_version;
 
     if (s == NULL) s = getenv("DISPLAY");
@@ -3548,10 +3547,9 @@ static wdp alcdisplay(char *s)
         return NULL;
     }
 
-    vis = GetVisual(wd);
     wd->format = ImageByteOrder(wd->display) == LSBFirst ? &imgdataformat_X11BGRA32 : &imgdataformat_X11ARGB32;
     wd->maskfmt = XRenderFindStandardFormat(wd->display, PictStandardA8);
-    wd->winfmt = XRenderFindVisualFormat(wd->display, vis);
+    wd->winfmt = XRenderFindVisualFormat(wd->display, GetVisual(wd));
     wd->defaultfont = loadfont(wd, defaultfont);
     if (wd->defaultfont == NULL) {
         LitWhy("Couldn't load default font");
