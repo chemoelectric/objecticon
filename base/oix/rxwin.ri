@@ -173,11 +173,8 @@ static void dump_ximage(XImage *xi)
     printf("\tred_mask=%lx\n", xi->red_mask);       /* bits in z arrangement */
     printf("\tgreen_mask=%lx\n", xi->green_mask);
     printf("\tblue_mask=%lx\n", xi->blue_mask);
-
-    for (i=0;i<32;++i)
-        printf("%d ", (int)imd->data[i]);
     printf("\n");
-    printf("\nPixel dump of region %d,%d size %d,%d\n",x,y,xi->width,xi->height);
+    printf("\nPixel dump of region size %d,%d\n",xi->width,xi->height);
     
     for (j=0; j < xi->height; ++j) {
         unsigned long c0=-1;
@@ -3142,7 +3139,7 @@ static Pixmap imgdata_to_Pixmap1(wdp wd, struct imgdata *imd)
     Pixmap pix;
     GC gc;
     MemProtect(xi = XCreateImage(wd->display, 
-                                 GetVisual(wd), 
+                                 NULL,
                                  32,            /* depth */
                                  ZPixmap, 
                                  0, 
@@ -3524,22 +3521,19 @@ wbp findwbp(wsp ws)
 static wdp alcdisplay(char *s)
 {
     wdp wd;
-    Visual *vis;
-    XVisualInfo xvi, *xvi_ret;
-    int nitems_return;
     int major_version, minor_version;
 
     if (s == NULL) s = getenv("DISPLAY");
     if (s == NULL) s = "";
     for(wd = wdsplys; wd; wd = wd->next)
-        if (wd->program == curpstate && !strcmp(wd->name,s)) {
+        if (wd->program == curpstate && !strcmp(wd->name, s)) {
             return wd;
         }
 
     wd = safe_zalloc(sizeof(struct _wdisplay));
 
     wd->program = curpstate;
-    wd->display = XOpenDisplay((*s=='\0') ? NULL : s);
+    wd->display = XOpenDisplay(*s ? s : NULL);
     if (wd->display == NULL) {
         LitWhy("Couldn't connect to display");
         free(wd);
@@ -3553,31 +3547,9 @@ static wdp alcdisplay(char *s)
         return NULL;
     }
 
-    vis = GetVisual(wd);
-    /*
-     * Get info about the default visual, check it's suitable and
-     * extract the rgb shift masks.
-     */
-    xvi.visualid = XVisualIDFromVisual(vis);
-    xvi_ret = XGetVisualInfo(wd->display, VisualIDMask, &xvi, &nitems_return);
-    if (nitems_return != 1) {
-        LitWhy("Couldn't get default visual's info");
-        XCloseDisplay(wd->display);
-        free(wd);
-        return NULL;
-    }
     wd->format = ImageByteOrder(wd->display) == LSBFirst ? &imgdataformat_X11BGRA32 : &imgdataformat_X11ARGB32;
     wd->maskfmt = XRenderFindStandardFormat(wd->display, PictStandardA8);
-    if (xvi_ret->class == TrueColor && xvi_ret->depth == 24 && xvi_ret->bits_per_rgb == 8) {
-        wd->winfmt = XRenderFindStandardFormat(wd->display, PictStandardRGB24);
-    } else {
-        LitWhy("Unsupported display type");
-        XCloseDisplay(wd->display);
-        free(wd);
-        return NULL;
-    }
-    XFree(xvi_ret);
-
+    wd->winfmt = XRenderFindVisualFormat(wd->display, GetVisual(wd));
     wd->defaultfont = loadfont(wd, defaultfont);
     if (wd->defaultfont == NULL) {
         LitWhy("Couldn't load default font");

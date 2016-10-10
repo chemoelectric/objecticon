@@ -4903,6 +4903,18 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       }
    end
 
+   # Convert a "title" attribute into a grid paint string if it
+   # contains CR or NL chars; this allows multi-line tooltips.
+   private static title_grid(s)
+      local t
+      if upto('\r\n', s) then {
+         t := u".cell\n.x_ialign l\n"
+         every t ||:= separate_lines(s) || u"\n.br\n"
+         return t
+      } else
+         return s
+   end
+
    private traverse(n, p, context)
       local e, title, c
       every e := !n.children do {
@@ -4912,7 +4924,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
             check_id(e, p, context)
             if title := (u"" ~== e.get_attribute(u"TITLE")) then {
                c := copy(context)
-               c.title := title
+               c.title := title_grid(title)
             } else
                c := context
             case string(e.name) of {

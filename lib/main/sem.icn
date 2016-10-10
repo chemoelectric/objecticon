@@ -8,7 +8,7 @@
 
 package ipc
 
-import lang, util
+import lang
 
 #
 # This class provides a semaphore facility.  The implementation requires
@@ -116,7 +116,7 @@ final class Sem(NoCopy)
    # if no such semaphore exists.
    #
    public static open_public(key)
-      \Ipc.LOADED | return error("Sem ipc not supported")
+      ipc_available() | fail
       return Sem(open_public_impl(key))
    end
 
@@ -124,7 +124,7 @@ final class Sem(NoCopy)
    # Create a new public semaphore with the given key and initial value
    #
    public static create_public(key, val)
-      \Ipc.LOADED | return error("Sem ipc not supported")
+      ipc_available() | fail
       /val := 1
       return Sem(create_public_impl(key, val))
    end
@@ -133,7 +133,7 @@ final class Sem(NoCopy)
    # Create a new private semaphore with the given initial value
    #
    public static create_private(val)
-      \Ipc.LOADED | return error("Sem ipc not supported")
+      ipc_available() | fail
       /val := 1
       return Sem(create_private_impl(val))
    end
