@@ -173,11 +173,8 @@ static void dump_ximage(XImage *xi)
     printf("\tred_mask=%lx\n", xi->red_mask);       /* bits in z arrangement */
     printf("\tgreen_mask=%lx\n", xi->green_mask);
     printf("\tblue_mask=%lx\n", xi->blue_mask);
-
-    for (i=0;i<32;++i)
-        printf("%d ", (int)imd->data[i]);
     printf("\n");
-    printf("\nPixel dump of region %d,%d size %d,%d\n",x,y,xi->width,xi->height);
+    printf("\nPixel dump of region size %d,%d\n",xi->width,xi->height);
     
     for (j=0; j < xi->height; ++j) {
         unsigned long c0=-1;
