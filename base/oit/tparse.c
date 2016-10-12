@@ -17,7 +17,7 @@
 
 #define YYPURE 0
 
-#line 192 "tgram.g"
+#line 195 "tgram.g"
 /*
  * These commented directives are passed through the first application
  * of cpp, then turned into real includes in tgram.g by fixgram.icn.
@@ -2389,759 +2389,759 @@ yyreduce:
     switch (yyn)
     {
 case 1:
-#line 224 "tgram.g"
+#line 227 "tgram.g"
 	{;}
 break;
 case 11:
-#line 240 "tgram.g"
+#line 243 "tgram.g"
 	{globalflag = 0;}
 break;
 case 12:
-#line 241 "tgram.g"
+#line 244 "tgram.g"
 	{globalflag = F_Package;;}
 break;
 case 13:
-#line 243 "tgram.g"
+#line 246 "tgram.g"
 	{;}
 break;
 case 14:
-#line 244 "tgram.g"
+#line 247 "tgram.g"
 	{globalflag |= F_Readable;;}
 break;
 case 22:
-#line 255 "tgram.g"
+#line 258 "tgram.g"
 	{yyval = tree4(N_Dottedid,yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 23:
-#line 257 "tgram.g"
+#line 260 "tgram.g"
 	{yyval = tree4(N_Dottedid,yystack.l_mark[-1],IdNode(default_string),yystack.l_mark[0]);}
 break;
 case 25:
-#line 260 "tgram.g"
+#line 263 "tgram.g"
 	{set_package(dottedid2string(yystack.l_mark[0]), yystack.l_mark[0]);;}
 break;
 case 26:
-#line 262 "tgram.g"
-	{;}
-break;
-case 28:
 #line 265 "tgram.g"
 	{;}
 break;
+case 28:
+#line 268 "tgram.g"
+	{;}
+break;
 case 29:
-#line 267 "tgram.g"
+#line 270 "tgram.g"
 	{add_invocable(dottedid2string(yystack.l_mark[0]),1,yystack.l_mark[0]);}
 break;
 case 30:
-#line 268 "tgram.g"
+#line 271 "tgram.g"
 	{add_invocable(Str0(yystack.l_mark[0]),2,yystack.l_mark[0]);}
 break;
 case 34:
-#line 275 "tgram.g"
+#line 278 "tgram.g"
 	{next_import(dottedid2string(yystack.l_mark[0]),0,yystack.l_mark[0]);; }
 break;
 case 35:
-#line 276 "tgram.g"
+#line 279 "tgram.g"
 	{next_import(dottedid2string(yystack.l_mark[0]),1,yystack.l_mark[0]);idflag = F_Importsym;}
 break;
 case 37:
-#line 278 "tgram.g"
+#line 281 "tgram.g"
 	{modflag = 0;}
 break;
 case 38:
-#line 278 "tgram.g"
+#line 281 "tgram.g"
 	{next_class(Str0(yystack.l_mark[0]), yystack.l_mark[0]);;}
 break;
 case 42:
-#line 283 "tgram.g"
+#line 286 "tgram.g"
 	{next_super(dottedid2string(yystack.l_mark[0]),yystack.l_mark[0]);; }
 break;
 case 43:
-#line 284 "tgram.g"
+#line 287 "tgram.g"
 	{next_super(dottedid2string(yystack.l_mark[0]),yystack.l_mark[0]);; }
 break;
 case 45:
-#line 287 "tgram.g"
+#line 290 "tgram.g"
 	{modflag = 0; idflag = F_Class;}
 break;
 case 47:
-#line 289 "tgram.g"
+#line 292 "tgram.g"
 	{check_flags(modflag, yystack.l_mark[0]); }
 break;
 case 50:
-#line 293 "tgram.g"
-	{next_method(Str0(yystack.l_mark[0]), yystack.l_mark[0]); idflag = F_Argument;}
-break;
-case 51:
-#line 294 "tgram.g"
-	{curr_func->code = tree6(N_Proc,yystack.l_mark[-9],yystack.l_mark[-9],yystack.l_mark[-3],yystack.l_mark[-1],yystack.l_mark[0]); }
-break;
-case 52:
 #line 296 "tgram.g"
 	{next_method(Str0(yystack.l_mark[0]), yystack.l_mark[0]); idflag = F_Argument;}
 break;
+case 51:
+#line 297 "tgram.g"
+	{curr_func->code = tree6(N_Proc,yystack.l_mark[-9],yystack.l_mark[-9],yystack.l_mark[-3],yystack.l_mark[-1],yystack.l_mark[0]); }
+break;
+case 52:
+#line 299 "tgram.g"
+	{next_method(Str0(yystack.l_mark[0]), yystack.l_mark[0]); idflag = F_Argument;}
+break;
 case 54:
-#line 298 "tgram.g"
+#line 301 "tgram.g"
 	{modflag |= M_Defer; }
 break;
 case 55:
-#line 299 "tgram.g"
+#line 302 "tgram.g"
 	{modflag |= M_Abstract;}
 break;
 case 56:
-#line 300 "tgram.g"
+#line 303 "tgram.g"
 	{modflag |= M_Native;}
 break;
 case 60:
-#line 306 "tgram.g"
+#line 309 "tgram.g"
 	{modflag |= M_Final;}
 break;
 case 61:
-#line 307 "tgram.g"
+#line 310 "tgram.g"
 	{modflag |= M_Abstract;}
 break;
 case 64:
-#line 312 "tgram.g"
+#line 315 "tgram.g"
 	{modflag |= M_Private;}
 break;
 case 65:
-#line 313 "tgram.g"
+#line 316 "tgram.g"
 	{modflag |= M_Public;}
 break;
 case 66:
-#line 314 "tgram.g"
+#line 317 "tgram.g"
 	{modflag |= M_Protected;}
 break;
 case 67:
-#line 315 "tgram.g"
+#line 318 "tgram.g"
 	{modflag |= M_Package;}
 break;
 case 68:
-#line 316 "tgram.g"
+#line 319 "tgram.g"
 	{modflag |= M_Static;}
 break;
 case 69:
-#line 317 "tgram.g"
+#line 320 "tgram.g"
 	{modflag |= M_Const;}
 break;
 case 70:
-#line 318 "tgram.g"
+#line 321 "tgram.g"
 	{modflag |= M_Readable;}
 break;
 case 71:
-#line 319 "tgram.g"
+#line 322 "tgram.g"
 	{modflag |= M_Final;}
 break;
 case 72:
-#line 321 "tgram.g"
+#line 324 "tgram.g"
 	{check_globalflag(yystack.l_mark[0]) ; idflag = F_Global;}
 break;
 case 73:
-#line 321 "tgram.g"
+#line 324 "tgram.g"
 	{;}
 break;
 case 74:
-#line 323 "tgram.g"
+#line 326 "tgram.g"
 	{next_record(Str0(yystack.l_mark[0]), yystack.l_mark[0]); idflag = F_Argument;}
 break;
 case 75:
-#line 323 "tgram.g"
+#line 326 "tgram.g"
 	{
   yyval = yystack.l_mark[-4];
   }
 break;
 case 78:
-#line 330 "tgram.g"
+#line 333 "tgram.g"
 	{next_procedure(Str0(yystack.l_mark[0]), yystack.l_mark[0]); idflag = F_Argument;}
 break;
 case 79:
-#line 330 "tgram.g"
+#line 333 "tgram.g"
 	{
                 curr_func->code = tree6(N_Proc,yystack.l_mark[-9],yystack.l_mark[-9],yystack.l_mark[-3],yystack.l_mark[-1],yystack.l_mark[0]);
   }
 break;
 case 80:
-#line 334 "tgram.g"
+#line 337 "tgram.g"
 	{;}
 break;
 case 81:
-#line 335 "tgram.g"
+#line 338 "tgram.g"
 	{;}
 break;
 case 82:
-#line 336 "tgram.g"
+#line 339 "tgram.g"
 	{curr_func->llast->l_flag |= F_Vararg;}
 break;
 case 83:
-#line 339 "tgram.g"
+#line 342 "tgram.g"
 	{install(Str0(yystack.l_mark[0]),yystack.l_mark[0]);}
 break;
 case 84:
-#line 340 "tgram.g"
+#line 343 "tgram.g"
 	{install(Str0(yystack.l_mark[0]),yystack.l_mark[0]);}
 break;
 case 85:
-#line 342 "tgram.g"
+#line 345 "tgram.g"
 	{;}
 break;
 case 86:
-#line 343 "tgram.g"
+#line 346 "tgram.g"
 	{;}
 break;
 case 87:
-#line 345 "tgram.g"
+#line 348 "tgram.g"
 	{idflag = F_Dynamic;}
 break;
 case 88:
-#line 346 "tgram.g"
+#line 349 "tgram.g"
 	{idflag = F_Static;}
 break;
 case 89:
-#line 348 "tgram.g"
-	{yyval = tree1(N_Empty);}
-break;
-case 90:
-#line 349 "tgram.g"
-	{yyval = yystack.l_mark[0];}
-break;
-case 91:
 #line 351 "tgram.g"
 	{yyval = tree1(N_Empty);}
 break;
-case 94:
-#line 355 "tgram.g"
-	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
+case 90:
+#line 352 "tgram.g"
+	{yyval = yystack.l_mark[0];}
 break;
-case 96:
+case 91:
+#line 354 "tgram.g"
+	{yyval = tree1(N_Empty);}
+break;
+case 94:
 #line 358 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 98:
+case 96:
 #line 361 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 99:
-#line 362 "tgram.g"
-	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
-break;
-case 100:
-#line 363 "tgram.g"
-	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
-break;
-case 101:
+case 98:
 #line 364 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 102:
+case 99:
 #line 365 "tgram.g"
-	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
+	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 103:
+case 100:
 #line 366 "tgram.g"
-	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
+	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 104:
+case 101:
 #line 367 "tgram.g"
-	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
+	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 105:
+case 102:
 #line 368 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 106:
+case 103:
 #line 369 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 107:
+case 104:
 #line 370 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 108:
+case 105:
 #line 371 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 109:
+case 106:
 #line 372 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 110:
+case 107:
 #line 373 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 111:
+case 108:
 #line 374 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 112:
+case 109:
 #line 375 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 113:
+case 110:
 #line 376 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 114:
+case 111:
 #line 377 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 115:
+case 112:
 #line 378 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 116:
+case 113:
 #line 379 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 117:
+case 114:
 #line 380 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 118:
+case 115:
 #line 381 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 119:
+case 116:
 #line 382 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 120:
+case 117:
 #line 383 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 121:
+case 118:
 #line 384 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 122:
+case 119:
 #line 385 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 123:
+case 120:
 #line 386 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 124:
+case 121:
 #line 387 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 125:
+case 122:
 #line 388 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 126:
+case 123:
 #line 389 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 127:
+case 124:
 #line 390 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 128:
+case 125:
 #line 391 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 129:
+case 126:
 #line 392 "tgram.g"
 	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 131:
+case 127:
+#line 393 "tgram.g"
+	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
+break;
+case 128:
+#line 394 "tgram.g"
+	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
+break;
+case 129:
 #line 395 "tgram.g"
+	{yyval = tree5(N_Augop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
+break;
+case 131:
+#line 398 "tgram.g"
 	{yyval = tree4(N_To,yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 132:
-#line 396 "tgram.g"
+#line 399 "tgram.g"
 	{yyval = tree5(N_ToBy,yystack.l_mark[-3],yystack.l_mark[-4],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 134:
-#line 399 "tgram.g"
+#line 402 "tgram.g"
 	{yyval = tree4(N_Alt,yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 136:
-#line 402 "tgram.g"
-	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
-break;
-case 137:
-#line 403 "tgram.g"
-	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
-break;
-case 138:
-#line 404 "tgram.g"
-	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
-break;
-case 139:
 #line 405 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 140:
+case 137:
 #line 406 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 141:
+case 138:
 #line 407 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 142:
+case 139:
 #line 408 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 143:
+case 140:
 #line 409 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 144:
+case 141:
 #line 410 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 145:
+case 142:
 #line 411 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 146:
+case 143:
 #line 412 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 147:
+case 144:
 #line 413 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 148:
+case 145:
 #line 414 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 149:
+case 146:
 #line 415 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 151:
+case 147:
+#line 416 "tgram.g"
+	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
+break;
+case 148:
+#line 417 "tgram.g"
+	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
+break;
+case 149:
 #line 418 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 152:
-#line 419 "tgram.g"
+case 151:
+#line 421 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 154:
+case 152:
 #line 422 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 155:
-#line 423 "tgram.g"
-	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
-break;
-case 156:
-#line 424 "tgram.g"
-	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
-break;
-case 157:
+case 154:
 #line 425 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 159:
+case 155:
+#line 426 "tgram.g"
+	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
+break;
+case 156:
+#line 427 "tgram.g"
+	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
+break;
+case 157:
 #line 428 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 160:
-#line 429 "tgram.g"
-	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
-break;
-case 161:
-#line 430 "tgram.g"
-	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
-break;
-case 162:
+case 159:
 #line 431 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 164:
+case 160:
+#line 432 "tgram.g"
+	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
+break;
+case 161:
+#line 433 "tgram.g"
+	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
+break;
+case 162:
 #line 434 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
-case 166:
+case 164:
 #line 437 "tgram.g"
+	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
+break;
+case 166:
+#line 440 "tgram.g"
 	{yyval = tree4(N_Limit,yystack.l_mark[-2],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 167:
-#line 438 "tgram.g"
+#line 441 "tgram.g"
 	{yyval = tree5(N_Binop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 168:
-#line 439 "tgram.g"
+#line 442 "tgram.g"
 	{yyval = tree4(N_Apply,yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 170:
-#line 442 "tgram.g"
-	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
-break;
-case 171:
-#line 443 "tgram.g"
-	{yyval = tree3(N_Not,yystack.l_mark[0],yystack.l_mark[0]);}
-break;
-case 172:
-#line 444 "tgram.g"
-	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
-break;
-case 173:
 #line 445 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 174:
+case 171:
 #line 446 "tgram.g"
-	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
+	{yyval = tree3(N_Not,yystack.l_mark[0],yystack.l_mark[0]);}
 break;
-case 175:
+case 172:
 #line 447 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 176:
+case 173:
 #line 448 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 177:
+case 174:
 #line 449 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 178:
+case 175:
 #line 450 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 179:
+case 176:
 #line 451 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 180:
+case 177:
 #line 452 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 181:
+case 178:
 #line 453 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 182:
+case 179:
 #line 454 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 183:
+case 180:
 #line 455 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 184:
+case 181:
 #line 456 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 185:
+case 182:
 #line 457 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 186:
+case 183:
 #line 458 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 187:
+case 184:
 #line 459 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 188:
+case 185:
 #line 460 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 189:
+case 186:
 #line 461 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 190:
+case 187:
 #line 462 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 191:
+case 188:
 #line 463 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 192:
+case 189:
 #line 464 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
-case 193:
+case 190:
 #line 465 "tgram.g"
 	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
+case 191:
+#line 466 "tgram.g"
+	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
+break;
+case 192:
+#line 467 "tgram.g"
+	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
+break;
+case 193:
+#line 468 "tgram.g"
+	{yyval = tree4(N_Unop,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
+break;
 case 201:
-#line 474 "tgram.g"
+#line 477 "tgram.g"
 	{yyval = convert_dottedidentexpr(yystack.l_mark[0]);}
 break;
 case 204:
-#line 477 "tgram.g"
+#line 480 "tgram.g"
 	{yyval = tree3(N_Create,yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
 case 205:
-#line 478 "tgram.g"
+#line 481 "tgram.g"
 	{yyval = tree2(N_Next,yystack.l_mark[0]);}
 break;
 case 206:
-#line 479 "tgram.g"
+#line 482 "tgram.g"
 	{yyval = tree2(N_Break,yystack.l_mark[0]);}
 break;
 case 207:
-#line 480 "tgram.g"
+#line 483 "tgram.g"
 	{yyval = tree3(N_Breakexpr,yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
 case 208:
-#line 481 "tgram.g"
+#line 484 "tgram.g"
 	{if ((yystack.l_mark[-1])->n_type == N_Elist) yyval = tree3(N_Mutual,yystack.l_mark[-2],yystack.l_mark[-1]); else yyval = yystack.l_mark[-1];}
 break;
 case 209:
-#line 482 "tgram.g"
+#line 485 "tgram.g"
 	{if ((yystack.l_mark[-1])->n_type == N_Slist) {Line(yystack.l_mark[-1]) = Line(yystack.l_mark[-2]); File(yystack.l_mark[-1]) = File(yystack.l_mark[-2]); } yyval = yystack.l_mark[-1];}
 break;
 case 210:
-#line 483 "tgram.g"
+#line 486 "tgram.g"
 	{yyval = tree3(N_List,yystack.l_mark[-2],yystack.l_mark[-1]);}
 break;
 case 211:
-#line 484 "tgram.g"
+#line 487 "tgram.g"
 	{yyval = tree4(N_Subsc,yystack.l_mark[-2],yystack.l_mark[-3],yystack.l_mark[-1]);}
 break;
 case 212:
-#line 485 "tgram.g"
+#line 488 "tgram.g"
 	{yyval = tree4(N_CoInvoke,yystack.l_mark[-2],yystack.l_mark[-3],yystack.l_mark[-1]);}
 break;
 case 213:
-#line 486 "tgram.g"
+#line 489 "tgram.g"
 	{yyval = tree4(N_Invoke,yystack.l_mark[-2],yystack.l_mark[-3],yystack.l_mark[-1]);}
 break;
 case 214:
-#line 487 "tgram.g"
+#line 490 "tgram.g"
 	{yyval = tree4(N_Field,yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 215:
-#line 488 "tgram.g"
+#line 491 "tgram.g"
 	{yyval = int_leaf(N_Key,yystack.l_mark[-1],K_FAIL);}
 break;
 case 216:
-#line 489 "tgram.g"
+#line 492 "tgram.g"
 	{int kn = klookup(Str0(yystack.l_mark[0])); if (kn == 0) tfatal("invalid keyword: %s",Str0(yystack.l_mark[0])); yyval = int_leaf(N_Key,yystack.l_mark[-1],kn);;}
 break;
 case 217:
-#line 491 "tgram.g"
+#line 494 "tgram.g"
 	{yyval = tree4(N_While,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
 case 218:
-#line 492 "tgram.g"
+#line 495 "tgram.g"
 	{yyval = tree5(N_Whiledo,yystack.l_mark[-3],yystack.l_mark[-3],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 219:
-#line 494 "tgram.g"
+#line 497 "tgram.g"
 	{yyval = tree4(N_Until,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
 case 220:
-#line 495 "tgram.g"
+#line 498 "tgram.g"
 	{yyval = tree5(N_Untildo,yystack.l_mark[-3],yystack.l_mark[-3],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 221:
-#line 497 "tgram.g"
+#line 500 "tgram.g"
 	{yyval = tree4(N_Every,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
 case 222:
-#line 498 "tgram.g"
+#line 501 "tgram.g"
 	{yyval = tree5(N_Everydo,yystack.l_mark[-3],yystack.l_mark[-3],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 223:
-#line 500 "tgram.g"
+#line 503 "tgram.g"
 	{yyval = tree4(N_Repeat,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
 case 224:
-#line 502 "tgram.g"
+#line 505 "tgram.g"
 	{yyval = tree2(N_Fail,yystack.l_mark[0]);}
 break;
 case 225:
-#line 503 "tgram.g"
+#line 506 "tgram.g"
 	{yyval = tree3(N_Return,yystack.l_mark[0],yystack.l_mark[0]);}
 break;
 case 226:
-#line 504 "tgram.g"
+#line 507 "tgram.g"
 	{yyval = tree4(N_Returnexpr,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
 case 227:
-#line 505 "tgram.g"
+#line 508 "tgram.g"
 	{yyval = tree3(N_Suspend,yystack.l_mark[0],yystack.l_mark[0]);}
 break;
 case 228:
-#line 506 "tgram.g"
+#line 509 "tgram.g"
 	{yyval = tree4(N_Suspendexpr,yystack.l_mark[-1],yystack.l_mark[-1],yystack.l_mark[0]);}
 break;
 case 229:
-#line 507 "tgram.g"
+#line 510 "tgram.g"
 	{yyval = tree5(N_Suspenddo,yystack.l_mark[-3],yystack.l_mark[-3],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 230:
-#line 509 "tgram.g"
+#line 512 "tgram.g"
 	{yyval = tree4(N_If,yystack.l_mark[-3],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 231:
-#line 510 "tgram.g"
+#line 513 "tgram.g"
 	{yyval = tree5(N_Ifelse,yystack.l_mark[-5],yystack.l_mark[-4],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 232:
-#line 512 "tgram.g"
+#line 515 "tgram.g"
 	{yyval = tree4(N_Case,yystack.l_mark[-5],yystack.l_mark[-4],yystack.l_mark[-1]);}
 break;
 case 234:
-#line 515 "tgram.g"
+#line 518 "tgram.g"
 	{yyval = tree4(N_Clist,yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 235:
-#line 517 "tgram.g"
+#line 520 "tgram.g"
 	{yyval = tree4(N_Cdef,yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 236:
-#line 518 "tgram.g"
+#line 521 "tgram.g"
 	{yyval = tree4(N_Ccls,yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 237:
-#line 520 "tgram.g"
+#line 523 "tgram.g"
 	{;}
 break;
 case 238:
-#line 521 "tgram.g"
+#line 524 "tgram.g"
 	{yyval = tree4(N_Elist,yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 case 239:
-#line 523 "tgram.g"
+#line 526 "tgram.g"
 	{if (yystack.l_mark[0]->n_type == N_Int) Val0(yystack.l_mark[0]) = putlit(Str0(yystack.l_mark[0]),F_IntLit,(int)Val1(yystack.l_mark[0])); else Val0(yystack.l_mark[0]) = putlit(Str0(yystack.l_mark[0]),F_LrgintLit,(int)Val1(yystack.l_mark[0]));}
 break;
 case 240:
-#line 524 "tgram.g"
+#line 527 "tgram.g"
 	{Val0(yystack.l_mark[0]) = putlit(Str0(yystack.l_mark[0]),F_RealLit,(int)Val1(yystack.l_mark[0]));}
 break;
 case 241:
-#line 525 "tgram.g"
+#line 528 "tgram.g"
 	{Val0(yystack.l_mark[0]) = putlit(Str0(yystack.l_mark[0]),F_StrLit,(int)Val1(yystack.l_mark[0]));}
 break;
 case 242:
-#line 526 "tgram.g"
+#line 529 "tgram.g"
 	{Val0(yystack.l_mark[0]) = putlit(Str0(yystack.l_mark[0]),F_CsetLit,(int)Val1(yystack.l_mark[0]));}
 break;
 case 243:
-#line 527 "tgram.g"
+#line 530 "tgram.g"
 	{Val0(yystack.l_mark[0]) = putlit(Str0(yystack.l_mark[0]),F_UcsLit,(int)Val1(yystack.l_mark[0]));}
 break;
 case 244:
-#line 529 "tgram.g"
+#line 532 "tgram.g"
 	{yyval = tree6(N_Sect,yystack.l_mark[-2],yystack.l_mark[-2],yystack.l_mark[-5],yystack.l_mark[-3],yystack.l_mark[-1]);}
 break;
 case 245:
-#line 531 "tgram.g"
+#line 534 "tgram.g"
 	{yyval = yystack.l_mark[0];}
 break;
 case 246:
-#line 532 "tgram.g"
+#line 535 "tgram.g"
 	{yyval = yystack.l_mark[0];}
 break;
 case 247:
-#line 533 "tgram.g"
+#line 536 "tgram.g"
 	{yyval = yystack.l_mark[0];}
 break;
 case 249:
-#line 536 "tgram.g"
+#line 539 "tgram.g"
 	{yyval = tree4(N_Slist,yystack.l_mark[-1],yystack.l_mark[-2],yystack.l_mark[0]);}
 break;
 #line 3148 "y.tab.c"
