@@ -1149,7 +1149,9 @@ Const(SEEK_END)
     Const(EAI_SERVICE)
     Const(EAI_MEMORY)
     Const(EAI_SYSTEM)
+#ifdef EAI_OVERFLOW
     Const(EAI_OVERFLOW)
+#endif
     end_class();
 #endif
 
