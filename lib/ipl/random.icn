@@ -60,6 +60,7 @@
 package ipl.random
 
 import
+   util(Time),
    ipl.factors(nxtprime)
 
 global random
@@ -100,7 +101,8 @@ procedure randomize()
    ncalls +:= 1
 
    &random := map("sSmMhH", "Hh:Mm:Ss", &clock) +
-      map("YyXxMmDd", "YyXx/Mm/Dd", &date) + &time + 1009 * ncalls
+      map("YyXxMmDd", "YyXx/Mm/Dd", &date) + 
+      Time.get_system_millis() % 1000 + &time + 1009 * ncalls
 
    return
 
@@ -179,3 +181,14 @@ end
 #   every !x :=: ?x
 #   return x
 #end
+
+# Choose k numbers from the range 1..n in ascending order
+procedure choose(k, n)
+   local i
+   every i := 1 to n do {
+      if ?0 < real(k) / (n - i + 1) then {
+         suspend i
+         k -:= 1
+      }
+   }
+end

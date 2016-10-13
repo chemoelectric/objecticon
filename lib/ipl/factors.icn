@@ -72,7 +72,6 @@
 package ipl.factors
 
 import
-   io(stop),
    ipl.io(dopen),
    ipl.numbers(round),
    ipl.sets(elementset),
@@ -272,9 +271,9 @@ end
 procedure primel()			
    local pfile
 
-   pfile := dopen("primes.lst") | stop("*** cannot open primes.lst")
+   pfile := dopen("primes.lst") | runerr("*** cannot open primes.lst")
 
-   suspend !pfile
+   suspend pfile.gen()
 
 end
 
