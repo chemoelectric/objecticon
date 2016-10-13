@@ -365,7 +365,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
             "\^p": goto_hist(integer(subj) - history_start_no + 1)
             "\^r": hist_search(-1)
             "\^t": hist_search(1)
-            "\d": {
+            "\b" | "\d": {
                if pos > 1 then {
                   ed := LineEditorDeleteLeftEdit(self)
                   ed.doit()
