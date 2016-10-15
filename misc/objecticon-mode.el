@@ -357,7 +357,7 @@ Return the amount the indentation changed by."
 
 (defconst objecticon-field-starters "\\(public\\|private\\|package\\|protected\\|readable\\|const\\|final\\s-public\\|final\\s-private\\|final\\s-package\\|final\\s-protected\\|final\\s-readable\\|final\\s-static\\|final\\s-const\\|static\\s-public\\|static\\s-private\\|static\\s-package\\|static\\s-protected\\|static\\s-readable\\|static\\s-const\\)")
 
-(defconst objecticon-class-starters "\\(class\\|final\\s-class\\|abstract\\s-class\\|final\\s-abstract\\s-class\\|abstract\\s-final\\s-class\\)")
+(defconst objecticon-class-starters "\\(\\(final\\s-\\|abstract\\s-\\|package\\s-\\)*class\\)")
 
 (defun calculate-objecticon-indent (&optional parse-start)
   "Return appropriate indentation for current line as Object Icon code.
@@ -553,11 +553,17 @@ Returns nil if line starts inside a string, t if in a comment."
   "Go to the start of the enclosing procedure; return t if at top level."
   (interactive "_p")
   (cond
-      ((re-search-backward (concat "^\\s-*procedure\\s-\\|"
+      ((re-search-backward (concat "^\\s-*\\(package\\s-\\)?procedure\\s-\\|"
                                    "^\\s-+" objecticon-field-starters "\\s-\\|"
-                                   "^" objecticon-class-starters "\\s-\\|^\\s-*end\\s-*$") (point-min) 'move)
+                                   "^" objecticon-class-starters "\\s-\\|"
+                                   "^\\s-*end\\s-*$") (point-min) 'move)
        (skip-chars-forward " \t")
        (cond
+         ((looking-at objecticon-class-starters)
+          (setq objecticon-extra-indent objecticon-class-indent-level)
+          (setq objecticon-end-indent-level 0)
+          (setq objecticon-toplevel t))
+
          ((looking-at (concat objecticon-field-starters ".*\\s-\\(defer\\|native\\|abstract\\)\\s-"))
           (setq objecticon-extra-indent (current-column))
           (setq objecticon-end-indent-level 0)
@@ -570,11 +576,6 @@ Returns nil if line starts inside a string, t if in a comment."
 
          ((looking-at (concat objecticon-field-starters "\\s-"))
           (setq objecticon-extra-indent (current-column))
-          (setq objecticon-end-indent-level 0)
-          (setq objecticon-toplevel t))
-
-         ((looking-at objecticon-class-starters)
-          (setq objecticon-extra-indent objecticon-class-indent-level)
           (setq objecticon-end-indent-level 0)
           (setq objecticon-toplevel t))
 
