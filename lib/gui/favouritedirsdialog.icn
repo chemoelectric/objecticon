@@ -191,7 +191,7 @@ class FavouriteDirectoriesDialog(Dialog)
 
    private on_directory_field(ev)
       # Only act on a return if there is no suggestion list showing.
-      if /directory_field.tl then
+      if /directory_field.popup then
          on_apply_button(ev)
    end
 

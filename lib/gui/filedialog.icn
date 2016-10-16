@@ -29,7 +29,7 @@ class EditListField(FileSuggestField)
    end
 
    public on_key(e)
-      if /tl then case e.code of {
+      if /popup then case e.code of {
          Key.UP : parent.go_up(e)
          Key.DOWN : parent.go_down(e)
       }

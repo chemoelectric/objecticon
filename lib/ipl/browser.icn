@@ -1720,7 +1720,7 @@ class FormTextField(SuggestField, FormEntry, HasAscent)
    end
 
    public handle_return(e)
-      if \tl then
+      if \popup then
          keep_closed()
       else
          TextField.handle_return(e)

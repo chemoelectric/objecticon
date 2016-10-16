@@ -392,8 +392,8 @@ class FileSuggestField(SuggestField)
 
    public handle_tab(e)
       local t, o
-      if \tl then {
-         if \select_using_enter_flag & o := tl.object_get_cursor() then {
+      if \popup then {
+         if \select_using_enter_flag & o := popup.object_get_cursor() then {
             # Tab has been pressed with the cursor in the list.
             # Insert the name (with a trailing / for a directory)
             t := prefix || if o.stat.mode_str[1] == "d" then
@@ -420,7 +420,7 @@ class FileSuggestField(SuggestField)
 
             if *contents < *t then
                assign_contents(t, e)
-            else if *tl.get_selections() = 1 then {
+            else if *popup.get_selections() = 1 then {
                if /directories_only_flag then
                   on_change(e)
                else

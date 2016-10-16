@@ -274,7 +274,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
       max_height,
       max_width
 
-   public on_textlist_selection(ev)
+   public on_popup_selection(ev)
       local tmp
       #
       # Selection in list - close textlist, amend label.
@@ -364,7 +364,7 @@ abstract class SelectionDropDown(SelectionList, DropDown)
 
       self.popup := create_popup().
          set_wattrib_ancestor(self).
-         connect(self.on_textlist_selection, Event.SELECTION_CHANGED).
+         connect(on_popup_selection, Event.SELECTION_CHANGED).
          set_contents(self.selection_list).
          set_draggable_cursor(&yes).
          set_motion_cursor(&yes).
