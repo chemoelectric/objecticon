@@ -355,6 +355,7 @@ end
 procedure do_gui()
    local d
    d := TermDialog().
+      set_complete_function(complete).
       set_label("memdebug").
       set_log_limit(llim).
       set_history_limit(hlim).
@@ -374,6 +375,21 @@ procedure do_gui()
          Dispatcher.work_or_sleep()
    }
    Dispatcher.message_loop()
+end
+
+procedure complete(subj, pos)
+   local l, e, s
+   l := []
+   s := subj[1:pos]
+   every e := u"addrs" | u"breakpoint" | u"breakproc" | u"cls" | u"cmd" | u"dump" |
+      u"echo" | u"exit" | u"globals" | u"help" | u"hist" | u"hlim" | u"list" |
+      u"llim" | u"nglobals" | u"prog" | u"progs" | u"refs" | u"regions" |
+      u"settings" | u"slim" | u"start" | u"statics" | u"stop" do
+   {
+      e ? if =s then
+         put(l, CompleteElement(e, tab(0) || u" "))
+   }
+   return l
 end
 
 procedure terminal_task(task)
@@ -403,6 +419,7 @@ procedure do_terminal()
    task := Task(sched, create terminal_task(task))
    input := if /opts["s"] then
       LineEditorStream().
+         set_complete_function(complete).
          set_history_limit(hlim).
          set_history(history).
          set_task(task).
