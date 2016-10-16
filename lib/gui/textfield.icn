@@ -1044,7 +1044,7 @@ class TextFieldAssignEdit(TextFieldEdit)
    public s, pre, coalesce
 
    public add_edit(other)
-      if \coalesce & is(other, gui.TextFieldAssignEdit) then {
+      if \coalesce & is(other, gui.TextFieldAssignEdit) & \other.coalesce then {
          self.s := other.s
          return
       }
