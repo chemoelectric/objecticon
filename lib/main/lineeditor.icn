@@ -290,6 +290,17 @@ class LineEditorStream(LineBasedInputStream, HasTask)
       undo_manager.clear()
    end
 
+   public insert_string(s)
+      local ed
+      s := text(s) | runerr(129, s)
+      if *s > 0 then {
+         ed := LineEditorInsertEdit(self, s)
+         ed.doit()
+         undo_manager.add_edit(ed)
+      }
+      return self
+   end
+
    public assign_contents(x, pos, coalesce)
       local ed
       /x := ""
@@ -305,20 +316,34 @@ class LineEditorStream(LineBasedInputStream, HasTask)
       return self
    end
 
+   private get_insertion(l)
+      local e, t
+      t := []
+      every e := !l do {
+         (subj[1:pos] == e.str[1:pos] &
+          subj[pos:0] == e.str[e.pos:0]) | fail
+         put(t, e.str[pos:e.pos])
+      }
+      return coprefix(t)
+   end
+
    private do_complete()
-      local l, e, fl, cmd, i
+      local l, e, fl, cmd, s
       Files.is_flowterm_tty(tty) | fail
       l := (\complete_function)(subj, pos) | fail
       if *l = 1 then
          assign_contents(l[1].str, l[1].pos)
       else if *l > 0 then {
+         if s := get_insertion(l) then {
+            insert_string(s)
+            if \line_no then 
+               show()
+         }
          tty.writes("\e[!")
          every e := !l do {
             if \fl then
                tty.writes(";")
-            # Allow e.pos to be &null
-            i := \e.pos | *e.str + 1
-            cmd := "\e[\"" || URL.percent_encode(e.str, URL.UNRESERVED) || "\";\"" || i || "\"Q"
+            cmd := "\e[\"" || URL.percent_encode(e.str, URL.UNRESERVED) || "\";\"" || e.pos || "\"Q"
             tty.writes("\"", 
                        URL.percent_encode(e.label, URL.UNRESERVED), "\";\"", 
                        URL.percent_encode(cmd, URL.UNRESERVED), "\"")
@@ -682,6 +707,25 @@ class LineEditorAssignEdit(LineEditorEdit)
       self.s := s
       self.p := p
       self.coalesce := coalesce
+      return
+   end
+end
+
+class LineEditorInsertEdit(LineEditorEdit)
+   private s
+
+   protected redo_impl()
+      parent.subj := parent.subj[1:parent.pos] || s || parent.subj[parent.pos:0]
+      parent.pos +:= *s
+   end
+
+   protected undo_impl()
+      parent.subj[self.pos +: *s] := ""
+   end
+
+   public new(parent, e)
+      LineEditorEdit.new(parent)
+      s := e
       return
    end
 end

@@ -318,10 +318,11 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public keeps(e)
-      if \popup_on_tab_flag then
-         return
-      else
-         return member(Key.CURSOR, e.code)
+      return member(if \popup_on_tab_flag then 
+                         Key.CURSOR_H ++ set("\t")
+                    else
+                         Key.CURSOR, 
+                    e.code)
    end
 
    public was_applied(ev)
@@ -365,7 +366,7 @@ abstract class SuggestField(TextField, MenuMode)
                synch_contents(e)
             }
          }
-      } else if *contents = 0 then
+      } else if *contents = 0 & /popup_on_tab_flag then
          on_change(e)
    end
 
@@ -383,15 +384,29 @@ abstract class SuggestField(TextField, MenuMode)
          TextField.handle_key_end(e)
    end
 
+   # This method may be overridden to return a string to insert before
+   # the popup is opened.  `l` is the list of completions returned by
+   # `do_request`.
+   #
+   public get_insertion(l)
+   end
+
    public handle_tab(ev)
       local l, s
-      \popup_on_tab_flag | fail
-      l := do_request() | fail
-      if *l = 1 then {
-         s := convert_element(l[1]) | contents[1:1]
-         assign_contents(s,, applied_event := ev, toggle_flag(select_using_enter_flag))
-      } else if *l > 0 then
-         open_popup(l)
+      if \popup_on_tab_flag then {
+         l := do_request() | fail
+         if *l = 1 then {
+            s := convert_element(l[1]) | contents[1:1]
+            assign_contents(s,, applied_event := ev, toggle_flag(select_using_enter_flag))
+         } else if *l > 0 then {
+            if s := get_insertion(l) then
+               insert_string(s, ev)
+            open_popup(l)
+         }
+      } else if \popup then {
+         if s := get_insertion(list_data) then
+            insert_string(s, ev)
+      }
    end
 
    public handle_key(e)
