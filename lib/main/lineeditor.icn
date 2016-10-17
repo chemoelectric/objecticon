@@ -1,6 +1,6 @@
 package io
 
-import undo, util, lang, ipl.strings, ipl.io(get_null)
+import undo, util, lang, net, ipl.strings, ipl.io(get_null)
 
 package record Save(text, undo)
 
@@ -9,6 +9,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
       subj,
       pos
    private
+      complete_function,
       history_limit,
       history,
       history_start_no,
@@ -26,12 +27,16 @@ class LineEditorStream(LineBasedInputStream, HasTask)
       buff_flag,
       buff
 
+   # Set the limit in lines for the command history.
+   #
    public set_history_limit(n)
       self.history_limit := n
       limit_history()
       return self
    end
 
+   # Set the history list.
+   #
    public set_history(l)
       self.history := l
       self.history_start_no := 1
@@ -39,19 +44,36 @@ class LineEditorStream(LineBasedInputStream, HasTask)
       return self
    end
 
+   # Set a function to generate completions when the tab key is
+   # pressed.  The function is given subject and cursor position, and
+   # should return a list of `gui.CompleteElement` instances.
+   #
+   public set_complete_function(f)
+      self.complete_function := f
+      return self
+   end
+
+   # Set the prompt to display.
+   #
    public set_prompt(s)
       self.prompt := s
       return self
    end
 
+   # Return the history list.
+   #
    public get_history()
       return .history
    end
 
+   # Return the given history number line.
+   #
    public get_history_item(n)
       return .history[0 < n - history_start_no + 1]
    end
 
+   # Get the history number of the first entry in the history.
+   #
    public get_history_start_no()
       return .history_start_no
    end
@@ -268,8 +290,46 @@ class LineEditorStream(LineBasedInputStream, HasTask)
       undo_manager.clear()
    end
 
+   public assign_contents(x, pos, coalesce)
+      local ed
+      /x := ""
+      x := text(x) | runerr(129, x)
+      /pos := *x + 1
+      if subj == x then {
+         self.pos := pos
+      } else {
+         ed := LineEditorAssignEdit(self, x, pos, coalesce)
+         ed.doit()
+         undo_manager.add_edit(ed)
+      }
+      return self
+   end
+
+   private do_complete()
+      local l, e, fl, cmd, i
+      Files.is_flowterm_tty(tty) | fail
+      l := (\complete_function)(subj, pos) | fail
+      if *l = 1 then
+         assign_contents(l[1].str, l[1].pos)
+      else if *l > 0 then {
+         tty.writes("\e[!")
+         every e := !l do {
+            if \fl then
+               tty.writes(";")
+            # Allow e.pos to be &null
+            i := \e.pos | *e.str + 1
+            cmd := "\e[\"" || URL.percent_encode(e.str, URL.UNRESERVED) || "\";\"" || i || "\"Q"
+            tty.writes("\"", 
+                       URL.percent_encode(e.label, URL.UNRESERVED), "\";\"", 
+                       URL.percent_encode(cmd, URL.UNRESERVED), "\"")
+            fl := &yes
+         }
+         tty.writes("P")
+      }
+   end
+
    private read_line_impl2()
-      local ch, uch, p, n, ed, un, cmd
+      local ch, uch, p, n, ed, un, cmd, s
       reset_term()
       buff_flag := line_no := nlines := &null
       dim := get_console_size() | fail
@@ -293,12 +353,24 @@ class LineEditorStream(LineBasedInputStream, HasTask)
             else if ch == "[" then {
                repeat {
                   cmd ||:= (ch := read1()) | fail
-                  n := integer(ch) | break
-                  repeat {
-                     cmd ||:= (ch := read1()) | fail
-                     n := 10 * n + integer(ch) | break
+                  if any('"', ch) then {
+                     s := ""
+                     repeat {
+                        cmd ||:= (ch := read1()) | fail 
+                        if any('"', ch) then
+                           break
+                        s ||:= ch
+                     }
+                     cmd ||:= (ch := read1()) | fail 
+                     put(p, URL.percent_decode(s))
+                  } else {
+                     n := integer(ch) | break
+                     repeat {
+                        cmd ||:= (ch := read1()) | fail
+                        n := 10 * n + integer(ch) | break
+                     }
+                     put(p, n)
                   }
-                  put(p, n)
                   ch == ";" | break
                }
             }
@@ -309,6 +381,8 @@ class LineEditorStream(LineBasedInputStream, HasTask)
                   return got()
             } else if \buff_flag then
                buff ||:= cmd
+            else if cmd[2] == "[" & cmd[-1] == "Q" then
+               assign_contents(ucs(p[1]), integer(p[2]))
             else case cmd of {
                ti["key_up"]: move_hist(-1)
                ti["key_down"]: move_hist(1)
@@ -372,6 +446,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
                   undo_manager.add_edit(ed)
                }
             }
+            "\t": do_complete()
             "\n": {
                if /line_no then {
                   tty.write(prompt, subj)
@@ -578,5 +653,35 @@ class LineEditorDeleteToEndOfLineEdit(LineEditorEdit)
 
    protected undo_impl()
       parent.subj[self.pos:0] := del
+   end
+end
+
+class LineEditorAssignEdit(LineEditorEdit)
+   private s, p, pre, coalesce
+
+   public add_edit(other)
+      if \coalesce & is(other, LineEditorAssignEdit) & \other.coalesce then {
+         self.s := other.s
+         self.p := other.p
+         return
+      }
+   end
+
+   public redo_impl()
+      pre := parent.subj
+      parent.subj := s
+      parent.pos := p
+   end
+
+   public undo_impl()
+      parent.subj := pre
+   end
+
+   public new(parent, s, p, coalesce)
+      LineEditorEdit.new(parent)
+      self.s := s
+      self.p := p
+      self.coalesce := coalesce
+      return
    end
 end
