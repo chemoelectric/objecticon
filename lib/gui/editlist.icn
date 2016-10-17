@@ -86,7 +86,7 @@ class EditList(SelectionDropDown)
       if /ev then
          self.view.set_contents(s)
       else
-         self.view.assign_contents(s, applied_event := ev, &yes)
+         self.view.assign_contents(s,, applied_event := ev, &yes)
    end
 
    public on_textfield(ev, src, type)

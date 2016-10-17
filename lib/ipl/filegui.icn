@@ -400,7 +400,7 @@ class FileSuggestField(SuggestField)
                text(o.name) || Files.PATH_SEPARATOR
             else
                text(o.name)
-            assign_contents(t, e)
+            assign_contents(t,, e)
          } else {
             # Calculate the string we could insert.  If not
             # directories-only, and we have a single directory, append
@@ -419,12 +419,12 @@ class FileSuggestField(SuggestField)
             # press tab again to set to "/home/" and show its contents.
 
             if *contents < *t then
-               assign_contents(t, e)
+               assign_contents(t,, e)
             else if *popup.get_selections() = 1 then {
                if /directories_only_flag then
                   on_change(e)
                else
-                  assign_contents(contents || Files.PATH_SEPARATOR, e)
+                  assign_contents(contents || Files.PATH_SEPARATOR,, e)
             }
          }
       } else {
@@ -442,9 +442,9 @@ class FileSuggestField(SuggestField)
          # show its contents.  Eg "/home" + tab -> set to "/home/" and
          # list contents.
          if *contents < *t then
-            assign_contents(t, e)
+            assign_contents(t,, e)
          else if *contents = *t & \directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
-            assign_contents(t || Files.PATH_SEPARATOR, e)
+            assign_contents(t || Files.PATH_SEPARATOR,, e)
          else
             on_change(e)
       }
@@ -452,13 +452,6 @@ class FileSuggestField(SuggestField)
 
    public keeps(e)
       return
-   end
-
-   public handle_key(e)
-      if e.code == "\t" then
-         handle_tab(e)
-      else
-         SuggestField.handle_key(e)
    end
 
    public new()

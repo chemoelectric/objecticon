@@ -75,9 +75,7 @@ class DateField(DropDown)
    # Set the value from the given `Time` instance, firing events
    #
    public assign_value(x, ev, coalesce)
-      local s
-      s := x.format(format)
-      view.assign_contents(s, ev, coalesce)
+      view.assign_contents(x.format(format),, ev, coalesce)
       return self
    end
 
@@ -152,9 +150,7 @@ class TimeField(Spin)
    # Set the value from the given `Time` instance, firing events.
    #
    public assign_value(x, ev, coalesce)
-      local s
-      s := x.format(format)
-      view.assign_contents(s, ev, coalesce)
+      view.assign_contents(x.format(format),, ev, coalesce)
       return self
    end
 
@@ -311,9 +307,7 @@ class WeekField(DropDown)
    # Set the value from the given `Time` instance, firing events.
    #
    public assign_value(x, ev, coalesce)
-      local s
-      s := x.format(format)
-      view.assign_contents(s, ev, coalesce)
+      view.assign_contents(x.format(format),, ev, coalesce)
       return self
    end
 
