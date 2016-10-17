@@ -1,11 +1,12 @@
 package gui
 
-import graphics
+import util
 
 # This record type gives, for each displayed suggestion, the label to
-# display in the popup and the string to insert into the field.
+# display in the popup and the string to set in the field on
+# selection, and the cursor position to go to.
 #
-record CompleteElement(label, str)
+record CompleteElement(label, str, pos)
 
 # An `ItemPaint` class for displaying `CompleteElement`s with strings
 # in their label fields.
@@ -31,25 +32,9 @@ end
 # This class is a {TextField} which provides suggested insertion text when
 # tab is pressed.
 #
-abstract class CompleteField(TextField, MenuMode)
-   public 
-      popup,
-      direction,
-      max_height,
-      max_width
-
-   protected
-      applied_event
-
-   #
-   # Set the direction to pop-up in.  Options are {Direction.UP}, {Direction.DOWN} or
-   # {Direction.BEST} (the default).
-   #
-   public set_direction(s)
-      self.direction := s
-      return self
-   end
-
+# `do_request` should return a list of `CompleteElement` records.
+#
+abstract class CompleteField(SuggestField)
    public create_popup()
       return ItemPaintList().
          set_item_paint(CompleteElementItemPaint()).
@@ -58,203 +43,21 @@ abstract class CompleteField(TextField, MenuMode)
                              set_x_align(Align.L))
    end
 
-   #
-   # Set the maximum height of the dropdown list; by default it is as large as is necessary
-   # and can be accommodated on the screen.
-   #
-   public set_max_height(n)
-      self.max_height := n
-      return self
-   end
-
-   #
-   # Set the maximum width of the dropdown list; by default it is as wide as is necessary
-   # and can be accommodated on the screen.
-   #
-   public set_max_width(n)
-      self.max_width := n
-      return self
-   end
-
-   public on_popup_selection(e)
-      local s
-      if s := convert_element(popup.object_get_selections()[1]) then
-         insert_string(s, applied_event := e)
-      close_popup()
-   end
-
    public convert_element(o)
       return text(o.str)
    end
 
-   public handle_tab(e)
-      local l
-      /popup | fail
-      l := do_request() | fail
-      if *l = 1 then
-         insert_string(convert_element(l[1]), e)
-      else if *l > 0 then
-         open_popup(l)
-   end
-
-   # This method is implemented to provide the list of suggestions,
-   # based on the current contents of the textfield and the cursor
-   # position.  The result should normally be a list of
-   # `CompleteElement` records; if another type of element is returned
-   # then the `convert_element` method must be overridden to extract
-   # the string to insert, and the `create_popup` method must be
-   # overridden to set an appropriate `ItemPaint` in the popup.
-   #
-   protected abstract do_request()
-
-   private open_popup(data)
-      local max_h, max_w, spc_below, spc_above, spc_right, d, dim, win,
-         use_direction, rs
-
-      close_popup()
-
-      win := parent_dialog.win
-      dim := win.get_display_size()
-      # Screen rectangle, in adjusted co-ordinates
-      rs := Rect(-win.get_x() - win.get_dx(), -win.get_y() - win.get_dy(), dim.width, dim.height)
-
-      # Space available for popup limited by screen size
-      spc_above := self.y - rs.y
-      spc_below := rs.y + rs.h - self.y - self.h
-      spc_right := rs.x + rs.w - self.x
-
-      max_h := case self.direction of {
-         Direction.UP: spc_above
-         Direction.DOWN: spc_below
-         Direction.BEST: 
-            if Gui.POPUP_LIST_DIRECTION_FACTOR * spc_below > spc_above then spc_below else spc_above
-         default: runerr("Unknown direction", self.direction)
-      }
-      max_w := spc_right
-      max_w >:= \self.max_width
-      max_h >:= \self.max_height
-
-      self.popup := create_popup().
-         set_wattrib_ancestor(self).
-         connect(on_popup_selection, Event.SELECTION_CHANGED).
-         set_contents(data).
-         set_accepts_focus(&no).
-         set_draggable_cursor(&yes).
-         set_motion_cursor(&yes).
-         set_always_show_focus_cursor(&yes).
-         set_selection_on_key_moves(&no).
-         set_select_mode(Select.ONE).
-         set_z(self.parent_dialog.get_top_z())
-
-      self.parent_dialog.add(popup)
-      self.popup.set_ideal_size(self.w, max_w,
-                             scale(5), max_h)
-
-      use_direction := if direction == Direction.BEST then {
-         if spc_below >= (popup.h_spec | spc_above) then
-            Direction.DOWN
-         else
-            Direction.UP
-      } else
-         direction
-
-      self.parent_dialog.enter_menu_mode(self)
-
-      popup.
-         set_pos(win.get_dx() + x,
-                 win.get_dy() + if use_direction == Direction.DOWN then 
-                    y + h
-                  else
-                    y - popup.h_spec).
-         resize()
-
-      if Gui.allow_internal_popups() &
-         parent_dialog.contains(popup) then {
-         popup.invalidate()
-      } else {
-         # Remove popup from dialog and use add to popup window.
-         parent_dialog.remove(popup)
-         d := PureDialog().
-            set_canvas(Canvas.POPUP).
-            set_width(popup.w).
-            set_height(popup.h).
-            set_dx(-popup.x).
-            set_dy(-popup.y).
-            set_x(win.get_x() + win.get_dx() + popup.x).
-            set_y(win.get_y() + win.get_dy() + popup.y).
-            copy_wattrib(WAttrib.DISPLAY, parent_dialog).
-            add(popup)
-
-         popup.set_pos(0, 0)
-         parent_dialog.add_popup(d)
-         d.show()
-      }
-   end
-
-   private close_popup()
-      \popup | fail
-      if popup.parent_dialog === parent_dialog then {
-         popup.invalidate()
-         parent_dialog.remove(popup)
-      } else {
-         parent_dialog.remove_popup(popup.parent_dialog)
-         popup.parent_dialog.dispose()
-      }
-      popup := &null
-      parent_dialog.exit_menu_mode(self)
-      fire(Event.POPUP_CLOSED)
-   end
-
-   public get_nesting_component()
-      return self
-   end
-
-   public gen_popup_components()
-      return popup
-   end
-
-   public allow_nested(c)
-   end
-
-   public close_all()
-      close_popup()
-   end
-
-   public should_close(e)
-      if member(Mouse.PRESS, e.code) & not(popup.in_region(e)) then 
-         return
-   end
-
-   public finally()
-      close_popup()
-      TextField.finally()
-   end
-
-   public keeps(e)
-      return
-   end
-
-   public was_applied(ev)
-      return ev === applied_event
-   end
-
-   public handle_key(e)
-      if \popup & member(Key.NAVIGATE ++ set("\r"), e.code) then
-         popup.fire(Event.KEY_PRESS, e)
-      else if e.code === "\e" then
-         close_all()
-      else if e.code === "\t" then
-         handle_tab(e)
-      else {
-         if type(e.code) == ("string" | "ucs") then
-            close_all()
-         TextField.handle_key(e)
-      }
+   public synch_contents(ev)
+      local s, e
+      e := popup.object_get_selections()[1] | fail
+      s := convert_element(e) | contents[1:1]
+      assign_contents(s, e.pos, applied_event := ev, toggle_flag(select_using_enter_flag))
    end
 
    public new()
-      TextField.new()
-      self.direction := Direction.BEST
+      SuggestField.new()
+      set_select_using_enter(&yes)
+      set_popup_on_tab(&yes)
       return
    end
 end
