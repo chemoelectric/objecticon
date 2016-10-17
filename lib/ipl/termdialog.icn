@@ -4,6 +4,10 @@ import
    gui, io, graphics, util, undo
 
 class TermTextField(CompleteField)
+   public keeps(e)
+      return
+   end
+
    protected do_request()
       return (\parent.complete_function)(contents, cursor)
    end
