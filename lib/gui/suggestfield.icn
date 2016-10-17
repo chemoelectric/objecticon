@@ -12,6 +12,7 @@ abstract class SuggestField(TextField, MenuMode)
       max_height,
       max_width,
       select_using_enter_flag,
+      popup_on_tab_flag,
       forward_home_end_flag     # Forward home/end key to list?
 
    protected
@@ -37,6 +38,14 @@ abstract class SuggestField(TextField, MenuMode)
    #
    public set_forward_home_end(s)
       self.forward_home_end_flag := check_flag(s)
+      return self
+   end
+
+   #
+   # Only popup when the tab key is pressed.
+   #
+   public set_popup_on_tab(s)
+      self.popup_on_tab_flag := check_flag(s)
       return self
    end
 
@@ -79,7 +88,7 @@ abstract class SuggestField(TextField, MenuMode)
    public synch_contents(ev)
       local s
       s := convert_element(popup.object_get_selections()[1]) | contents[1:1]
-      assign_contents(s, applied_event := ev, toggle_flag(select_using_enter_flag))
+      assign_contents(s,, applied_event := ev, toggle_flag(select_using_enter_flag))
    end
 
    public convert_element(o)
@@ -133,7 +142,9 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public on_change(ev)
-      if applied_event === ev then
+      if \popup_on_tab_flag then
+         close_all()
+      else if applied_event === ev then
          mod := 2
       else if *contents = 0 & not(ev.code === (Key.DOWN | "\t")) then
          keep_closed()
@@ -186,13 +197,15 @@ abstract class SuggestField(TextField, MenuMode)
          set_wattrib_ancestor(self).
          connect(on_popup_selection, Event.SELECTION_CHANGED).
          set_contents(data).
-         set_cursor().
          set_accepts_focus(&no).
          set_draggable_cursor(&yes).
          set_motion_cursor(&yes).
          set_always_show_focus_cursor(&yes).
          set_select_mode(Select.ONE).
          set_z(self.parent_dialog.get_top_z())
+
+      if /popup_on_tab_flag then
+         popup.set_cursor()
 
       if \select_using_enter_flag then
          popup.set_selection_on_key_moves(&no)
@@ -305,7 +318,10 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public keeps(e)
-      return member(Key.CURSOR, e.code)
+      if \popup_on_tab_flag then
+         return
+      else
+         return member(Key.CURSOR, e.code)
    end
 
    public was_applied(ev)
@@ -313,9 +329,13 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public handle_return(e)
-      if \select_using_enter_flag & \popup then
+      if \popup_on_tab_flag & \popup then
          popup.fire(Event.KEY_PRESS, e)
-      TextField.handle_return(e)
+      else {
+         if \select_using_enter_flag & \popup then
+            popup.fire(Event.KEY_PRESS, e)
+         TextField.handle_return(e)
+      }
       keep_closed()
    end
 
@@ -363,8 +383,20 @@ abstract class SuggestField(TextField, MenuMode)
          TextField.handle_key_end(e)
    end
 
+   public handle_tab(ev)
+      local l, s
+      \popup_on_tab_flag | fail
+      l := do_request() | fail
+      if *l = 1 then {
+         s := convert_element(l[1]) | contents[1:1]
+         assign_contents(s,, applied_event := ev, toggle_flag(select_using_enter_flag))
+      } else if *l > 0 then
+         open_popup(l)
+   end
+
    public handle_key(e)
       case e.code of {
+         "\t" : handle_tab(e)
          "\e" : close_all()
          Key.UP : handle_key_up(e)
          Key.DOWN : handle_key_down(e)
