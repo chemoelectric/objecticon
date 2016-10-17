@@ -387,7 +387,7 @@ procedure complete(subj, pos)
       u"settings" | u"slim" | u"start" | u"statics" | u"stop" do
    {
       e ? if =s then
-         put(l, CompleteElement(e, tab(0) || u" "))
+         put(l, CompleteElement(e, e || u" "))
    }
    return l
 end
