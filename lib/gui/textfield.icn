@@ -615,22 +615,20 @@ class TextField(Component)
       local ce, ed
 
       \self.is_editable_flag | fail
-      s := text_convert(s, type(self.contents)) | fail
+      s := apply_filter(text_convert(s, type(self.contents))) | fail
 
       start_handle(e)
-      if s := apply_filter(s) then {
-         ce := CompoundEdit()
-         if has_region() then {
-            ed := TextFieldDeleteRegionEdit(self)
-            ed.doit()
-            ce.add_edit(ed)
-         }
-         ed := TextFieldPasteEdit(self, s)
+      ce := CompoundEdit()
+      if has_region() then {
+         ed := TextFieldDeleteRegionEdit(self)
          ed.doit()
          ce.add_edit(ed)
-         ce.close()
-         undo_manager.add_edit(ce)
       }
+      ed := TextFieldPasteEdit(self, s)
+      ed.doit()
+      ce.add_edit(ed)
+      ce.close()
+      undo_manager.add_edit(ce)
       end_handle(e)
       return self
    end

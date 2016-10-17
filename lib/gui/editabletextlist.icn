@@ -471,22 +471,20 @@ class EditableTextList(LineBasedScrollArea)
       local ce, ed
 
       \self.is_editable_flag | fail
-      s := text_convert(s, type(self.contents[1])) | fail
+      s := apply_filter(text_convert(s, type(self.contents[1]))) | fail
 
       start_handle(e)
-      if s := apply_filter(s) then {
-         ce := CompoundEdit()
-         if has_region() then {
-            ed := EditableTextListDeleteRegionEdit(self)
-            ed.doit()
-            ce.add_edit(ed)
-         }
-         ed := EditableTextListPasteEdit(self, s)
+      ce := CompoundEdit()
+      if has_region() then {
+         ed := EditableTextListDeleteRegionEdit(self)
          ed.doit()
          ce.add_edit(ed)
-         ce.close()
-         undo_manager.add_edit(ce)
       }
+      ed := EditableTextListPasteEdit(self, s)
+      ed.doit()
+      ce.add_edit(ed)
+      ce.close()
+      undo_manager.add_edit(ce)
       end_handle(e)
       return self
    end
