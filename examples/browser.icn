@@ -15,7 +15,8 @@ import
    ipl.browser,
    ipl.strings,
    ipl.lists,
-   ipl.pdco
+   ipl.pdco,
+   ipl.io
 
 global opts
 
@@ -97,7 +98,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       last_file_dir
 
    public static launch_prog(de, file)
-      local pid, nul, cmd
+      local pid, cmd
       pid := System.fork() | fail
       if pid > 0 then {
          # Parent
@@ -111,10 +112,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       if \opts["v"] then 
          write("Command: ", image(cmd))
       System.setpgid()
-      if nul := FileStream("/dev/null", FileOpt.RDWR) then {
-         every nul.dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
-         nul.close()
-      }
+      every get_null().dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
       System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
    end
@@ -1433,7 +1431,7 @@ class BrowserTab(TabItem, BrowserUI)
       mt := (\res.content_type).to_rfc1521()
       de := Xdg.gen_desktop_entries(\mt) | Xdg.gen_desktop_entries_for_file(\res.fname) | fail
       if \opts["v"] then 
-         write("Desktop entry: ", to_string(de, 3, 1))
+         write("Desktop entry: ", to_string(de, 3, &yes))
       file := make_display_file(res)
       if \opts["v"] then 
          write("Display file: ", image(file))

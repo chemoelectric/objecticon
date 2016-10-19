@@ -17,7 +17,8 @@ import
    ipl.vt,
    ipl.columnize,
    ipl.strings,
-   ipl.browser
+   ipl.browser,
+   ipl.io
 
 global opts, glob_cmds
 
@@ -1961,8 +1962,8 @@ $endif
    end
 
    public static launch_prog(runner)
-      local pid, nul, cmd
-      if \opts["v"] then write("Launch runner: ", to_string(runner, 3, 1))
+      local pid, cmd
+      if \opts["v"] then write("Launch runner: ", to_string(runner, 3, &yes))
       pid := System.fork() | fail
       if pid > 0 then {
          # Parent
@@ -1974,10 +1975,7 @@ $endif
       # Get the command to run.
       cmd := runner.get_command()
       System.setpgid()
-      if nul := FileStream("/dev/null", FileOpt.RDWR) then {
-         every nul.dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
-         nul.close()
-      }
+      every get_null().dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
       System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
    end
@@ -2057,7 +2055,7 @@ $endif
    end
 
    private static get_possible_desktop_entries(s)
-      suspend Unique{Xdg.gen_desktop_entries(Xdg.alternative_mime_types(Xdg.get_mime_type_for_file(FilePath(s).get(-1))))}
+      suspend Xdg.gen_desktop_entries_for_file(FilePath(s).get(-1))
    end
 
    private static get_possible_scheme_handler_desktop_entries(url)
