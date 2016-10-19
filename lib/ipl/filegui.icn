@@ -391,7 +391,7 @@ class FileSuggestField(SuggestField)
    end
 
    public handle_tab(e)
-      local t, o
+      local t, o, l
       if \popup then {
          if \select_using_enter_flag & o := popup.object_get_cursor() then {
             # Tab has been pressed with the cursor in the list.
@@ -429,7 +429,7 @@ class FileSuggestField(SuggestField)
          }
       } else {
          # As above, calculate the string we could insert.
-         calc_matches()
+         l := do_request()
          t := prefix || if /directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
             matches[1].name || Files.PATH_SEPARATOR
          else
@@ -446,12 +446,8 @@ class FileSuggestField(SuggestField)
          else if *contents = *t & \directories_only_flag & *matches = 1 & matches[1].stat.mode_str[1] == "d" then
             assign_contents(t || Files.PATH_SEPARATOR,, e)
          else
-            on_change(e)
+            open_popup(l)
       }
-   end
-
-   public keeps(e)
-      return
    end
 
    public new()
