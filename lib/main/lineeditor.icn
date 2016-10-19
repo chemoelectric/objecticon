@@ -324,7 +324,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
           subj[pos:0] == e.str[e.pos:0]) | fail
          put(t, e.str[pos:e.pos])
       }
-      return coprefix(t)
+      return "" ~== coprefix(t)
    end
 
    private do_complete()
