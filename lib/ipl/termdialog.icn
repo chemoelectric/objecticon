@@ -1,11 +1,22 @@
 package ipl.termdialog
 
 import
-   gui, io, graphics, util, undo
+   gui, io, graphics, util, undo, ipl.vt, xdg, 
+   ipl.childwait, ipl.io, posix
 
 class TermTextField(CompleteField)
-   public keeps(e)
-      return
+   public handle_key_page_up(e)
+      if /popup then
+         parent_dialog.text.handle_pgup(e)
+      else
+         CompleteField.handle_key_page_up(e)
+   end
+
+   public handle_key_page_down(e)
+      if /popup then
+         parent_dialog.text.handle_pgdn(e)
+      else
+         CompleteField.handle_key_page_down(e)
    end
 
    protected do_request()
@@ -13,45 +24,94 @@ class TermTextField(CompleteField)
    end
 end
 
-class TermEditableTextList(EditableTextList)
-   private on_word_wrap(ev, src)
-      set_wrap_mode(if src.is_checked() then "width" else "off")
-   end
-
-   public create_context_menu(e)
-      local m
-      m := TextContextMenu(self)
-      m.add(MenuSeparator()).
-         add(CheckBoxMenuItem().
-             set_label("Word wrap").
-             set_is_checked(Yes{ wrap_mode === "width" }).
-             connect(on_word_wrap, Event.ACTION)).
-         add(TextMenuItem().
-               set_label("Clear").
-               connect(create parent_dialog.clear_text(), Event.ACTION)).
-         add(TextMenuItem().
-             set_label("Quit").
-             set_label_right("^Q").
-             connect(create parent_dialog.dispose(), Event.ACTION))
-      return m.tidy()
-   end
-end
-
 package record Save(text, undo)
 
-class TermDialog(Dialog, LineBasedOutputStream)
-   private
+class TermDialog(Dialog, LineBasedOutputStream, VtUI)
+   private readable
       input,
-      log_limit,
       history_limit,
       history,
       history_start_no,
       hpos,
       hmod,
-      text
-   private readable
+      text,
+      need_crnl,
       complete_function,
       line
+
+   public static launch_prog(de, file, line)
+      local pid, cmd
+      pid := System.fork() | fail
+      if pid > 0 then {
+         # Parent
+         ChildWait.add_pid(pid)
+         return
+      }
+      # Set the working directory for the child process
+      Files.chdir(\de.path | Files.get_home())
+      # Get the command to run.
+      cmd := de.subst_file(Format.shell_escape(file), line)
+      System.setpgid()
+      every get_null().dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
+      System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
+      syserr("Not reached")
+   end
+
+   public link_left_clicked(url)
+      local file, line, de
+      case string(url.scheme) of {
+         "text": input.insert_string(ucs(url.get_decoded_path()))
+         "file": {
+            file := ucs(url.get_decoded_path()) | fail
+            line := integer(url.extract_cgi_parameters()["line"][1])
+            if de := Xdg.gen_desktop_entries_for_file(FilePath(file).get(-1)) then
+               launch_prog(de, file, line)
+         }
+      }
+   end
+
+   public link_middle_clicked(url)
+   end
+
+   public create_link_menu(url)
+   end
+
+   public create_context_menu()
+      local m
+      m := Menu()
+      if text.get_current_text_selection() then {
+         m.add(TextMenuItem().
+               set_label("Copy").
+               connect(text.handle_copy, Event.ACTION))
+      }
+      m. add(TextMenuItem().
+             set_label("Select all").
+             connect(text.handle_select_all, Event.ACTION)).
+         add(MenuSeparator()).
+         add(TextMenuItem().
+             set_label("Clear").
+             connect(create clear_text(), Event.ACTION)).
+         add(TextMenuItem().
+             set_label("Quit").
+             set_label_right("^Q").
+             connect(create dispose(), Event.ACTION))
+      return m.tidy()
+   end
+
+   public quieten_cursor()
+   end
+
+   public send_tty(s)
+   end
+
+   public vt_size_changed(cols, rows)
+   end
+
+   public msg(s, n)
+   end
+
+   public search_msg(s)
+   end
 
    public close()
       return self
@@ -60,19 +120,30 @@ class TermDialog(Dialog, LineBasedOutputStream)
    # Clear the log area.
    #
    public clear_text()
-      text.set_contents([u""])
+      local t
+      t := text.history_size
+      text.
+         set_history_size(0).
+         set_history_size(t).
+         input("\e[2J\e[H")
+      need_crnl := &no
       return self
    end
 
    protected write_line_impl(s)
-      text.log([ucs(s)], log_limit)
+      if \need_crnl then
+         text.input("\r\n")
+      text.
+         input(s).
+         goto_bottom()
+      need_crnl := &yes
       return
    end
 
    # Set the limit in lines for the text area log.
    #
    public set_log_limit(n)
-      self.log_limit := n
+      text.set_history_size(n)
       return self
    end
 
@@ -167,6 +238,7 @@ class TermDialog(Dialog, LineBasedOutputStream)
    end
 
    public init_dialog()
+      text.input("\e[?25l")
    end
 
    public get_term_width()
@@ -179,8 +251,11 @@ class TermDialog(Dialog, LineBasedOutputStream)
       hmod := table()
       history := []
       history_start_no := 1
-      log_limit := 600
       self.setup()
+      text.
+         set_ui(self).
+         set_accepts_focus(&no).
+         set_history_size(600)
       return
    end
 
@@ -258,24 +333,21 @@ class TermDialog(Dialog, LineBasedOutputStream)
       local layout_1
       self.set_resize(&yes)
       self.set_size(scale(735), scale(510))
-      text := TermEditableTextList().
+      text := Vt().
          set_size(scale(465), scale(256)).
-         set_font("fixed").
          clear_constraints().
-         set_constraint("eol", &yes).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
-         set_constraint("y_fill", &yes).
-         set_constraint("y_weight", 1.0).
-         set_contents([u""]).
-         set_is_editable(&no)
+         set_constraint(Grid.EOL, &yes).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
+         set_constraint(Grid.Y_FILL, &yes).
+         set_constraint(Grid.Y_WEIGHT, 1.0)
       self.add(text)
       input := TermTextField().
          set_size(scale(458)).
          clear_constraints().
-         set_constraint("x_align", Align.L).
-         set_constraint("x_fill", &yes).
-         set_constraint("x_weight", 1.0).
+         set_constraint(Grid.X_ALIGN, Align.L).
+         set_constraint(Grid.X_FILL, &yes).
+         set_constraint(Grid.X_WEIGHT, 1.0).
          connect(self.on_input, Event.ACTION).
          connect(self.on_input_key, Event.KEY_PRESS).
          set_contents(u"")
