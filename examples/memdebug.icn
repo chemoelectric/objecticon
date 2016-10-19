@@ -363,6 +363,10 @@ procedure do_gui()
       set_history(history).
       connect(gui_line, Event.ACTION).
       connect(monitor_exit, Event.DIALOG_DISPOSED)
+
+   if \opts["a"] then
+      d.set_popup_on_tab(&no)
+
    input := output := d
    sched := Dispatcher.scheduler
    sched.set_poll_timeout(0)
@@ -528,6 +532,7 @@ procedure main(args)
    }
    opts := options(a, [Opt("m",, "Loaded program is initially stopped"),
                        Opt("g",, "Use a gui interface rather than the console"),
+                       Opt("a",, "In gui mode, actively show completions, rather than on the tab key"),
                        Opt("s",, "Read commands from standard input rather than using a line editor"),
                        Opt("f",string,"Perform commands from file at startup", &yes),
                        Opt("hlim",integer,"Set the history limit for the line editor (default is 500)"),
@@ -538,7 +543,7 @@ procedure main(args)
       stop("Program and optional arguments expected.")
 
    hlim := (10 < \opts["hlim"]) | 500
-   llim := (10 < \opts["llim"]) | 600
+   llim := (0 <= \opts["llim"]) | 600
    slim := (0 <= \opts["slim"]) | 64
    addrs := (0 <= \opts["addrs"] <= 2) | 1
 

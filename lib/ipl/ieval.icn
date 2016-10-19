@@ -414,7 +414,7 @@ class Ieval(MinimalObjectOutput)
          set_env(ee).
          set_imports(imports)
       hlim := (10 < \opts["hlim"]) | 500
-      llim := (10 < \opts["llim"]) | 600
+      llim := (0 <= \opts["llim"]) | 600
       elim := (10 < \opts["elim"]) | 35
       return
    end
