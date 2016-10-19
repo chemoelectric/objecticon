@@ -5,20 +5,6 @@ import
    ipl.childwait, ipl.io, posix
 
 class TermTextField(CompleteField)
-   public handle_key_page_up(e)
-      if /popup then
-         parent_dialog.text.handle_pgup(e)
-      else
-         CompleteField.handle_key_page_up(e)
-   end
-
-   public handle_key_page_down(e)
-      if /popup then
-         parent_dialog.text.handle_pgdn(e)
-      else
-         CompleteField.handle_key_page_down(e)
-   end
-
    protected do_request()
       return (\parent.complete_function)(contents, cursor)
    end
@@ -279,14 +265,24 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       fire(Event.ACTION, ev)
    end
    
-   private handle_key_up()
+   private handle_key_up(e)
       if /input.popup then
          move_hist(-1)
    end
 
-   private handle_key_down()
+   private handle_key_down(e)
       if /input.popup then
          move_hist(1)
+   end
+
+   private handle_key_page_up(e)
+      if /input.popup then
+         text.handle_pgup(e)
+   end
+
+   private handle_key_page_down(e)
+      if /input.popup then
+         text.handle_pgdn(e)
    end
 
    private handle_history_recall()
@@ -312,8 +308,10 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
 
    private on_input_key(ev)
       case ev.code of {
-         Key.UP : handle_key_up()
-         Key.DOWN : handle_key_down()
+         Key.UP : handle_key_up(ev)
+         Key.DOWN : handle_key_down(ev)
+         Key.PGUP : handle_key_page_up(ev)
+         Key.PGDN : handle_key_page_down(ev)
          "\^p": handle_history_recall()
          "\^r": handle_history_search(-1)
          "\^t": handle_history_search(1)
