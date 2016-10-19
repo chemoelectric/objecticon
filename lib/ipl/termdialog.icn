@@ -104,6 +104,11 @@ class TermDialog(Dialog, LineBasedOutputStream)
       return self
    end
 
+   public set_popup_on_tab(s)
+      input.set_popup_on_tab(check_flag(s))
+      return self
+   end
+
    # Return the history list.
    #
    public get_history()
@@ -180,12 +185,15 @@ class TermDialog(Dialog, LineBasedOutputStream)
    end
 
    private reset_term()
+      input.keep_closed()
       hpos := *history + 1
       clear(hmod)
       input.set_contents(u"")
    end
 
    private on_input(ev)
+      if input.was_applied(ev) then
+         fail
       line := input.get_contents()
       if *line > 0 then {
          put(history, line)
@@ -196,19 +204,23 @@ class TermDialog(Dialog, LineBasedOutputStream)
    end
    
    private handle_key_up()
-      move_hist(-1)
+      if /input.popup then
+         move_hist(-1)
    end
 
    private handle_key_down()
-      move_hist(1)
+      if /input.popup then
+         move_hist(1)
    end
 
    private handle_history_recall()
+      input.keep_closed()
       goto_hist(integer(input.get_contents()) - history_start_no + 1)
    end
 
    private handle_history_search(dir)
       local i, s, c, curr
+      input.keep_closed()
       c := input.cursor
       curr := input.get_contents()
       s := curr[1:c]
