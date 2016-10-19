@@ -2,6 +2,18 @@ package gui
 
 import graphics, util, lang
 
+class Conversion()
+   public const
+      str, pos
+
+   public new(str, pos)
+      self.str := str
+      /pos := *str + 1
+      self.pos := pos
+      return
+   end
+end
+
 # This class is a {TextField} which provides suggested completions in
 # a popup list based on partial input.
 #
@@ -86,9 +98,7 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public synch_contents(ev)
-      local s
-      s := convert_element(popup.object_get_selections()[1]) | contents[1:1]
-      assign_contents(s,, applied_event := ev, toggle_flag(select_using_enter_flag))
+      apply_value(popup.object_get_selections()[1], ev, &yes)
    end
 
    public convert_element(o)
@@ -156,7 +166,7 @@ abstract class SuggestField(TextField, MenuMode)
       }
    end
 
-   private open_popup(data)
+   protected open_popup(data)
       local max_h, max_w, spc_below, spc_above, spc_right, d, dim, win,
          use_direction, rs
 
@@ -255,7 +265,7 @@ abstract class SuggestField(TextField, MenuMode)
       }
    end
 
-   private close_popup()
+   protected close_popup()
       \popup | fail
       if popup.parent_dialog === parent_dialog then {
          popup.invalidate()
@@ -318,11 +328,7 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public keeps(e)
-      return member(if \popup_on_tab_flag then 
-                         Key.CURSOR_H ++ set("\t")
-                    else
-                         Key.CURSOR, 
-                    e.code)
+      return
    end
 
    public was_applied(ev)
@@ -330,29 +336,22 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public handle_return(e)
-      if \popup_on_tab_flag & \popup then
-         popup.fire(Event.KEY_PRESS, e)
-      else {
-         if \select_using_enter_flag & \popup then
-            popup.fire(Event.KEY_PRESS, e)
-         TextField.handle_return(e)
-      }
+      if \select_using_enter_flag then
+         (\popup).fire(Event.KEY_PRESS, e)
+      TextField.handle_return(e)
       keep_closed()
    end
 
    public handle_key_up(e)
-      if \popup then
-         popup.fire(Event.KEY_PRESS, e)
+      (\popup).fire(Event.KEY_PRESS, e)
    end
 
    public handle_key_page_up(e)
-      if \popup then
-         popup.fire(Event.KEY_PRESS, e)
+      (\popup).fire(Event.KEY_PRESS, e)
    end
 
    public handle_key_page_down(e)
-      if \popup then
-         popup.fire(Event.KEY_PRESS, e)
+      (\popup).fire(Event.KEY_PRESS, e)
    end
 
    public handle_key_down(e)
@@ -384,29 +383,42 @@ abstract class SuggestField(TextField, MenuMode)
          TextField.handle_key_end(e)
    end
 
-   # This method may be overridden to return a string to insert before
-   # the popup is opened.  `l` is the list of completions returned by
-   # `do_request`.
+   # This method may be overridden to return a non-empty string to
+   # insert before the popup is opened.  `l` is the list of
+   # completions returned by `do_request`.
    #
    public get_insertion(l)
    end
 
    public handle_tab(ev)
-      local l, s
-      if \popup_on_tab_flag then {
-         l := do_request() | fail
-         if *l = 1 then {
-            s := convert_element(l[1]) | contents[1:1]
-            assign_contents(s,, applied_event := ev, toggle_flag(select_using_enter_flag))
-         } else if *l > 0 then {
-            if s := get_insertion(l) then
+      local l, o, s
+      if \popup then {
+         if \select_using_enter_flag & o := popup.object_get_cursor() then
+            apply_value(o, ev)
+         else {
+            if s := get_insertion(list_data) then
                insert_string(s, ev)
-            open_popup(l)
          }
-      } else if \popup then {
-         if s := get_insertion(list_data) then
+      } else {
+         l := do_request() | fail
+         if s := get_insertion(l) then
             insert_string(s, ev)
+         else
+            open_popup(l)
       }
+   end
+
+   public apply_value(v, ev, apply)
+      local p
+      v := convert_element(v) | contents[1:1]
+      if is(v, Conversion) then {
+         p := v.pos
+         v := v.str
+      }
+      if /apply then
+         assign_contents(v, p, ev)
+      else
+         assign_contents(v, p, applied_event := ev, toggle_flag(select_using_enter_flag))
    end
 
    public handle_key(e)
