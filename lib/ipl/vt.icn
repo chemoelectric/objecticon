@@ -2550,12 +2550,13 @@ class Vt(LineBasedScrollArea, MenuMode)
             pm.popup(self, m, e.x, e.y)
          }
       } else {
-         m := ui.create_link_menu(over)
-         set_highlight(over)
-         set_over()
-         pm := PopupMenu()
-         pm.connect(on_popup_closed, Event.POPUP_CLOSED)
-         pm.popup(self, m, e.x, e.y)
+         if m := ui.create_link_menu(over) & *m.children > 0 then {
+            set_highlight(over)
+            set_over()
+            pm := PopupMenu()
+            pm.connect(on_popup_closed, Event.POPUP_CLOSED)
+            pm.popup(self, m, e.x, e.y)
+         }
       }
    end
 
