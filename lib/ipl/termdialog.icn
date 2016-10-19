@@ -131,6 +131,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
    end
 
    protected write_line_impl(s)
+      is_live() | return error("TermDialog not live")
       if \need_crnl then
          text.input("\r\n")
       text.
