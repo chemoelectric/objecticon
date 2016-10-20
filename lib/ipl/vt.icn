@@ -2545,12 +2545,12 @@ class Vt(LineBasedScrollArea, MenuMode)
       local m, pm
       parent_dialog.get_held_count() = 1 | fail
       if /over then {
-         if m := ui.create_context_menu() & *m.children > 0 then {
+         if m := ui.create_context_menu() then {
             pm := PopupMenu()
             pm.popup(self, m, e.x, e.y)
          }
       } else {
-         if m := ui.create_link_menu(over) & *m.children > 0 then {
+         if m := ui.create_link_menu(over) then {
             set_highlight(over)
             set_over()
             pm := PopupMenu()
