@@ -57,14 +57,17 @@ abstract class CompleteField(SuggestField)
    end
 
    public get_insertion(l)
-      local e, t
+      local e, t, s
+      if *l = 1 then
+         return l[1]
       t := []
       every e := !l do {
          (contents[1:cursor] == e.str[1:cursor] &
           contents[cursor:0] == e.str[e.pos:0]) | fail
          put(t, e.str[cursor:e.pos])
       }
-      return "" ~== coprefix(t)
+      if s := ("" ~== coprefix(t)) then
+         return Conversion(contents[1:cursor] || s || contents[cursor:0], cursor + *s)
    end
 
    public new()

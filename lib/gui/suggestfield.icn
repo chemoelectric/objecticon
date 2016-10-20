@@ -391,19 +391,21 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public handle_tab(ev)
-      local l, o, s
+      local l, o
       if \popup then {
          if \select_using_enter_flag & o := popup.object_get_cursor() then
             apply_value(o, ev)
          else {
-            if s := get_insertion(list_data) then
-               insert_string(s, ev)
+            if o := get_insertion(list_data) then
+               apply_value(o, ev)
          }
       } else {
          l := do_request() | fail
-         if s := get_insertion(l) then
-            insert_string(s, ev)
-         else
+         if o := get_insertion(l) then {
+            apply_value(o, ev)
+            if *l > 1 then
+               open_popup(l)
+         } else
             open_popup(l)
       }
    end

@@ -1,6 +1,6 @@
 package io
 
-import undo, util, lang, net, ipl.strings, ipl.io(get_null)
+import undo, util, lang, net, ipl.strings, ipl.io(get_null), gui(Conversion)
 
 package record Save(text, undo)
 
@@ -316,26 +316,29 @@ class LineEditorStream(LineBasedInputStream, HasTask)
       return self
    end
 
-   private get_insertion(l)
-      local e, t
+   public get_insertion(l)
+      local e, t, s
+      if *l = 1 then
+         return l[1]
       t := []
       every e := !l do {
          (subj[1:pos] == e.str[1:pos] &
           subj[pos:0] == e.str[e.pos:0]) | fail
          put(t, e.str[pos:e.pos])
       }
-      return "" ~== coprefix(t)
+      if s := ("" ~== coprefix(t)) then
+         return Conversion(subj[1:pos] || s || subj[pos:0], pos + *s)
    end
 
    private do_complete()
-      local l, e, fl, cmd, s
+      local l, e, fl, cmd, v
       Files.is_flowterm_tty(tty) | fail
       l := (\complete_function)(subj, pos) | fail
       if *l = 1 then
          assign_contents(l[1].str, l[1].pos)
       else if *l > 0 then {
-         if s := get_insertion(l) then {
-            insert_string(s)
+         if v := get_insertion(l) then {
+            assign_contents(v.str, v.pos)
             if \line_no then 
                show()
          }
