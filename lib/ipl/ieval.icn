@@ -576,6 +576,17 @@ class Ieval(MinimalObjectOutput)
       }
    end
 
+   private globals1(p, subj, pos)
+      local i, e
+      every i := 1 to lang.Prog.get_n_globals() do {
+         if lang.Prog.get_global(i) then {
+            e := lang.Prog.get_global_name(i)
+            e ? if =!imports & ="." & (not upto('.')) & match(p) then
+               suspend CompleteElement(e, subj[1:pos - *p] || e || subj[pos:0], pos - *p + *e)
+         }
+      }
+   end
+
    private complete_ident(p, subj, pos)
       local h, t, i, l, c
       l := []
@@ -591,6 +602,7 @@ class Ieval(MinimalObjectOutput)
             if i := match(p, c) then
                put(l, simple_insert(c, c[1 + *p:0], subj, pos))
          }
+         every put(l, globals1(p, subj, pos))
       }
       return l
    end
