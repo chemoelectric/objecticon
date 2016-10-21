@@ -24,6 +24,10 @@ class FileDialogPos()
 end
 
 class EditListField(FileSuggestField)
+   public keeps(e)
+      return
+   end
+
    public on_key(e)
       if /popup then case e.code of {
          Key.UP : parent.go_up(e)
