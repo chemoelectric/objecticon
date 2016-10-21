@@ -26,6 +26,11 @@ abstract class GSuggestField(SuggestField)
       return self
    end
 
+   public handle_tab(ev)
+      # We can't do foreground requests on tab, so just trigger a background request.
+      on_change(ev)
+   end
+
    public new()
       SuggestField.new()
       set_contents(u"")
