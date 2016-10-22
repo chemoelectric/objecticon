@@ -1,0 +1,79 @@
+package gui
+
+import ipl.strings
+
+# This type gives, for each displayed suggestion, the label to display
+# in the popup and the string to set in the field on selection, and
+# the cursor position to go to.
+#
+class CompleteElement(Conversion)
+   public const
+      label
+
+   public new(label, str, pos)
+      self.label := label
+      Conversion.new(str, pos)
+      return
+   end
+end
+
+# An `ItemPaint` class for displaying `CompleteElement`s with strings
+# in their label fields.
+#
+class CompleteElementItemPaint(ItemPaint)
+   public get_width(W, data)
+      return W.text_width(data.label)
+   end
+
+   public get_constant_height(W)
+      return W.get_line_height()
+   end
+
+   public get_size(W, data)
+      return gui.Size(W.text_width(data.label), W.get_line_height())
+   end
+
+   public draw(W, data, x, y)
+      W.draw_string(x, y + W.get_line_ascent(), data.label)
+   end
+end
+
+# This class is a {TextField} which provides suggested insertion text when
+# tab is pressed.
+#
+# `do_request` should return a list of `CompleteElement` records.
+#
+abstract class CompleteField(SuggestField)
+   public create_popup()
+      return ItemPaintList().
+         set_item_paint(CompleteElementItemPaint()).
+         set_item_border(EmptyBorder().
+                             set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                             set_x_align(Align.L))
+   end
+
+   public convert_element(o)
+      return o
+   end
+
+   public get_insertion(l)
+      local e, t, s
+      if *l = 1 then
+         return l[1]
+      t := []
+      every e := !l do {
+         (contents[1:cursor] == e.str[1:cursor] &
+          contents[cursor:0] == e.str[e.pos:0]) | fail
+         put(t, e.str[cursor:e.pos])
+      }
+      if s := ("" ~== coprefix(t)) then
+         return Conversion(contents[1:cursor] || s || contents[cursor:0], cursor + *s)
+   end
+
+   public new()
+      SuggestField.new()
+      set_select_using_enter(&yes)
+      set_popup_on_tab(&yes)
+      return
+   end
+end

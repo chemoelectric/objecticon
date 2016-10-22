@@ -170,20 +170,22 @@ class TextField(Component)
    # change, and firing events on the change.
    #
    # @param x   The new contents
+   # @param pos The new cursor position, default *x + 1
    # @param e   The event causing the change
    # @param coalesce Allow this operation to be coalesced with others 
    # @          by the undo manager.
    #
-   public assign_contents(x, e, coalesce)
+   public assign_contents(x, pos, e, coalesce)
       local ed
       /x := ""
       x := text(x) | runerr(129, x)
+      /pos := *x + 1
       start_handle(e)
       if self.contents == x then {
          clear_mark()
-         cursor := *contents + 1
+         cursor := pos
       } else {
-         ed := TextFieldAssignEdit(self, x, coalesce)
+         ed := TextFieldAssignEdit(self, x, pos, coalesce)
          ed.doit()
          undo_manager.add_edit(ed)
       }
@@ -276,13 +278,16 @@ class TextField(Component)
    end
 
    public create_context_menu(e)
-      return TextContextMenu(self)
+      local m
+      m := TextContextMenu(self)
+      if *m.children > 0 then
+         return m
    end
 
    public handle_rpress(e)
       local m, pm
       if \menu_on_rpress_flag then {
-         if m := create_context_menu(e) & *m.children > 0 then {
+         if m := create_context_menu(e) then {
             pm := PopupMenu()
             pm.popup(self, m, e.x, e.y)
          }
@@ -613,22 +618,20 @@ class TextField(Component)
       local ce, ed
 
       \self.is_editable_flag | fail
-      s := text_convert(s, type(self.contents)) | fail
+      s := apply_filter(text_convert(s, type(self.contents))) | fail
 
       start_handle(e)
-      if s := apply_filter(s) then {
-         ce := CompoundEdit()
-         if has_region() then {
-            ed := TextFieldDeleteRegionEdit(self)
-            ed.doit()
-            ce.add_edit(ed)
-         }
-         ed := TextFieldPasteEdit(self, s)
+      ce := CompoundEdit()
+      if has_region() then {
+         ed := TextFieldDeleteRegionEdit(self)
          ed.doit()
          ce.add_edit(ed)
-         ce.close()
-         undo_manager.add_edit(ce)
       }
+      ed := TextFieldPasteEdit(self, s)
+      ed.doit()
+      ce.add_edit(ed)
+      ce.close()
+      undo_manager.add_edit(ce)
       end_handle(e)
       return self
    end
@@ -1041,11 +1044,12 @@ class TextFieldDeleteLineEdit(TextFieldEdit)
 end
 
 class TextFieldAssignEdit(TextFieldEdit)
-   public s, pre, coalesce
+   public s, pos, pre, coalesce
 
    public add_edit(other)
-      if \coalesce & is(other, gui.TextFieldAssignEdit) then {
+      if \coalesce & is(other, gui.TextFieldAssignEdit) & \other.coalesce then {
          self.s := other.s
+         self.pos := other.pos
          return
       }
    end
@@ -1053,7 +1057,7 @@ class TextFieldAssignEdit(TextFieldEdit)
    public redo_impl()
       pre := parent.contents
       parent.contents := s
-      parent.cursor := *s + 1
+      parent.cursor := pos
       parent.clear_mark()
    end
 
@@ -1061,9 +1065,10 @@ class TextFieldAssignEdit(TextFieldEdit)
       parent.contents := pre
    end
 
-   public new(parent, s, coalesce)
+   public new(parent, s, pos, coalesce)
       TextFieldEdit.new(parent)
       self.s := s
+      self.pos := pos
       self.coalesce := coalesce
       return
    end

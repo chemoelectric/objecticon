@@ -2,16 +2,29 @@ package gui
 
 import graphics, util, lang
 
+class Conversion()
+   public const
+      str, pos
+
+   public new(str, pos)
+      self.str := str
+      /pos := *str + 1
+      self.pos := pos
+      return
+   end
+end
+
 # This class is a {TextField} which provides suggested completions in
 # a popup list based on partial input.
 #
 abstract class SuggestField(TextField, MenuMode)
    public 
-      tl,
+      popup,
       direction,
       max_height,
       max_width,
       select_using_enter_flag,
+      popup_on_tab_flag,
       forward_home_end_flag     # Forward home/end key to list?
 
    protected
@@ -37,6 +50,14 @@ abstract class SuggestField(TextField, MenuMode)
    #
    public set_forward_home_end(s)
       self.forward_home_end_flag := check_flag(s)
+      return self
+   end
+
+   #
+   # Only popup when the tab key is pressed.
+   #
+   public set_popup_on_tab(s)
+      self.popup_on_tab_flag := check_flag(s)
       return self
    end
 
@@ -71,15 +92,13 @@ abstract class SuggestField(TextField, MenuMode)
       return self
    end
 
-   public on_textlist_selection(e)
+   public on_popup_selection(e)
       synch_contents(e)
-      member(Key.NAVIGATE, e.code) | close_textlist()
+      member(Key.NAVIGATE, e.code) | close_popup()
    end
 
    public synch_contents(ev)
-      local s
-      s := convert_element(tl.object_get_selections()[1]) | contents[1:1]
-      assign_contents(s, applied_event := ev, toggle_flag(select_using_enter_flag))
+      apply_value(popup.object_get_selections()[1], ev, &yes)
    end
 
    public convert_element(o)
@@ -109,7 +128,7 @@ abstract class SuggestField(TextField, MenuMode)
             # mod = 1, or go to sleep if mod = 2
             if \mod then
                next
-            open_textlist(l)
+            open_popup(l)
          }
       }
    end
@@ -133,9 +152,12 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public on_change(ev)
-      if applied_event === ev then
+      if \popup_on_tab_flag then {
+         if \select_using_enter_flag | not member(Key.NAVIGATE, ev.code) then
+            close_all()
+      } else if applied_event === ev then
          mod := 2
-      else if *contents = 0 & not(ev.code === (Key.DOWN | "\t")) then
+      else if *contents = 0 & ev.code ~=== "\t" then
          keep_closed()
       else {
          mod := 1
@@ -145,7 +167,7 @@ abstract class SuggestField(TextField, MenuMode)
       }
    end
 
-   private open_textlist(data)
+   protected open_popup(data)
       local max_h, max_w, spc_below, spc_above, spc_right, d, dim, win,
          use_direction, rs
 
@@ -154,7 +176,7 @@ abstract class SuggestField(TextField, MenuMode)
       if equals(data, list_data) then
          return
 
-      close_textlist()
+      close_popup()
 
       # If no data, or the focus has moved away, leave closed.
       if (*data = 0) | (parent_dialog.get_focus() ~=== self) then
@@ -182,11 +204,10 @@ abstract class SuggestField(TextField, MenuMode)
       max_w >:= \self.max_width
       max_h >:= \self.max_height
 
-      self.tl := create_popup().
+      self.popup := create_popup().
          set_wattrib_ancestor(self).
-         connect(self.on_textlist_selection, Event.SELECTION_CHANGED).
+         connect(on_popup_selection, Event.SELECTION_CHANGED).
          set_contents(data).
-         set_cursor().
          set_accepts_focus(&no).
          set_draggable_cursor(&yes).
          set_motion_cursor(&yes).
@@ -194,15 +215,18 @@ abstract class SuggestField(TextField, MenuMode)
          set_select_mode(Select.ONE).
          set_z(self.parent_dialog.get_top_z())
 
-      if \select_using_enter_flag then
-         tl.set_selection_on_key_moves(&no)
+      if /popup_on_tab_flag | /select_using_enter_flag then
+         popup.set_cursor()
 
-      self.parent_dialog.add(tl)
-      self.tl.set_ideal_size(self.w, max_w,
+      if \select_using_enter_flag then
+         popup.set_selection_on_key_moves(&no)
+
+      self.parent_dialog.add(popup)
+      self.popup.set_ideal_size(self.w, max_w,
                              scale(5), max_h)
 
       use_direction := if direction == Direction.BEST then {
-         if spc_below >= (tl.h_spec | spc_above) then
+         if spc_below >= (popup.h_spec | spc_above) then
             Direction.DOWN
          else
             Direction.UP
@@ -211,47 +235,47 @@ abstract class SuggestField(TextField, MenuMode)
 
       self.parent_dialog.enter_menu_mode(self)
 
-      tl.
+      popup.
          set_pos(win.get_dx() + x,
                  win.get_dy() + if use_direction == Direction.DOWN then 
                     y + h
                   else
-                    y - tl.h_spec).
+                    y - popup.h_spec).
          resize()
 
       if Gui.allow_internal_popups() &
-         parent_dialog.contains(tl) then {
-         tl.invalidate()
+         parent_dialog.contains(popup) then {
+         popup.invalidate()
       } else {
-         # Remove tl from dialog and use add to popup window.
-         parent_dialog.remove(tl)
+         # Remove popup from dialog and use add to popup window.
+         parent_dialog.remove(popup)
          d := PureDialog().
             set_canvas(Canvas.POPUP).
-            set_width(tl.w).
-            set_height(tl.h).
-            set_dx(-tl.x).
-            set_dy(-tl.y).
-            set_x(win.get_x() + win.get_dx() + tl.x).
-            set_y(win.get_y() + win.get_dy() + tl.y).
+            set_width(popup.w).
+            set_height(popup.h).
+            set_dx(-popup.x).
+            set_dy(-popup.y).
+            set_x(win.get_x() + win.get_dx() + popup.x).
+            set_y(win.get_y() + win.get_dy() + popup.y).
             copy_wattrib(WAttrib.DISPLAY, parent_dialog).
-            add(tl)
+            add(popup)
 
-         tl.set_pos(0, 0)
+         popup.set_pos(0, 0)
          parent_dialog.add_popup(d)
          d.show()
       }
    end
 
-   private close_textlist()
-      \tl | fail
-      if tl.parent_dialog === parent_dialog then {
-         tl.invalidate()
-         parent_dialog.remove(tl)
+   protected close_popup()
+      \popup | fail
+      if popup.parent_dialog === parent_dialog then {
+         popup.invalidate()
+         parent_dialog.remove(popup)
       } else {
-         parent_dialog.remove_popup(tl.parent_dialog)
-         tl.parent_dialog.dispose()
+         parent_dialog.remove_popup(popup.parent_dialog)
+         popup.parent_dialog.dispose()
       }
-      list_data := tl := &null
+      list_data := popup := &null
       parent_dialog.exit_menu_mode(self)
       fire(Event.POPUP_CLOSED)
    end
@@ -261,7 +285,7 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public gen_popup_components()
-      return tl
+      return popup
    end
 
    public allow_nested(c)
@@ -272,7 +296,7 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public should_close(e)
-      if member(Mouse.PRESS, e.code) & not(tl.in_region(e)) then 
+      if member(Mouse.PRESS, e.code) & not(popup.in_region(e)) then 
          return
    end
 
@@ -281,7 +305,7 @@ abstract class SuggestField(TextField, MenuMode)
    # modification).
    #
    public keep_closed()
-      close_textlist()
+      close_popup()
       if \req_doing then
          abort_request()
       mod := &null
@@ -300,12 +324,12 @@ abstract class SuggestField(TextField, MenuMode)
          close_request()
          req.stop()
       }
-      close_textlist()
+      close_popup()
       TextField.finally()
    end
 
    public keeps(e)
-      return member(Key.CURSOR, e.code)
+      return e.code === "\t" | member(Key.CURSOR_H, e.code)
    end
 
    public was_applied(ev)
@@ -313,58 +337,95 @@ abstract class SuggestField(TextField, MenuMode)
    end
 
    public handle_return(e)
-      if \select_using_enter_flag & \tl then
-         tl.fire(Event.KEY_PRESS, e)
+      if \select_using_enter_flag then
+         (\popup).fire(Event.KEY_PRESS, e)
       TextField.handle_return(e)
       keep_closed()
    end
 
    public handle_key_up(e)
-      if \tl then
-         tl.fire(Event.KEY_PRESS, e)
+      (\popup).fire(Event.KEY_PRESS, e)
    end
 
    public handle_key_page_up(e)
-      if \tl then
-         tl.fire(Event.KEY_PRESS, e)
+      (\popup).fire(Event.KEY_PRESS, e)
    end
 
    public handle_key_page_down(e)
-      if \tl then
-         tl.fire(Event.KEY_PRESS, e)
+      (\popup).fire(Event.KEY_PRESS, e)
    end
 
    public handle_key_down(e)
-      if \tl then {
-         if tl.get_cursor() then
-            tl.fire(Event.KEY_PRESS, e)
+      if \popup then {
+         if popup.get_cursor() then
+            popup.fire(Event.KEY_PRESS, e)
          else {
-            tl.set_cursor(1)
+            popup.set_cursor(1)
             if /select_using_enter_flag then {
-               tl.set_selections([1])
+               popup.set_selections([1])
                synch_contents(e)
             }
          }
-      } else if *contents = 0 then
-         on_change(e)
+      }
    end
 
    public handle_key_home(e)
-      if \tl & \forward_home_end_flag then
-         tl.fire(Event.KEY_PRESS, e)
+      if \popup & \forward_home_end_flag then
+         popup.fire(Event.KEY_PRESS, e)
       else
          TextField.handle_key_home(e)
    end
 
    public handle_key_end(e)
-      if \tl & \forward_home_end_flag then
-         tl.fire(Event.KEY_PRESS, e)
+      if \popup & \forward_home_end_flag then
+         popup.fire(Event.KEY_PRESS, e)
       else
          TextField.handle_key_end(e)
    end
 
+   # This method may be overridden to return a non-empty string to
+   # insert before the popup is opened.  `l` is the list of
+   # completions returned by `do_request`.
+   #
+   public get_insertion(l)
+   end
+
+   public handle_tab(ev)
+      local l, o
+      if \popup then {
+         if \select_using_enter_flag & o := popup.object_get_cursor() then
+            apply_value(o, ev)
+         else {
+            if o := get_insertion(list_data) then
+               apply_value(o, ev)
+         }
+      } else {
+         l := do_request() | fail
+         if o := get_insertion(l) then {
+            apply_value(o, ev)
+            if *l > 1 then
+               open_popup(l)
+         } else
+            open_popup(l)
+      }
+   end
+
+   public apply_value(v, ev, apply)
+      local p
+      v := convert_element(v) | contents[1:1]
+      if is(v, Conversion) then {
+         p := v.pos
+         v := v.str
+      }
+      if /apply then
+         assign_contents(v, p, ev)
+      else
+         assign_contents(v, p, applied_event := ev, toggle_flag(select_using_enter_flag))
+   end
+
    public handle_key(e)
       case e.code of {
+         "\t" : handle_tab(e)
          "\e" : close_all()
          Key.UP : handle_key_up(e)
          Key.DOWN : handle_key_down(e)

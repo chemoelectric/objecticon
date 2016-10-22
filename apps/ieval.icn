@@ -62,6 +62,7 @@ procedure main(a)
                        Opt("wglob",, "If given, then assignments to global variables are allowed"),
                        Opt("s",, "Read commands from standard input rather than using a line editor"),
                        Opt("g",, "Use a gui interface rather than the console"),
+                       Opt("a",, "In gui mode, actively show completions, rather than on the tab key"),
                        Opt("hlim",integer,"Set the history limit for the line editor (default is 500)"),
                        Opt("elim",integer,"Set the expression limit for evaluation (default is 35)"),
                        Opt("llim",integer,"Set the gui interface's log area line limit (default is 600)")], usage)

@@ -4,7 +4,8 @@
 
 package ipl.ieval
 
-import io, gui, lang, xdg, ipl.columnize, parser, eval, util, ipl.pdco, ipl.sort, ipl.termdialog, ipl.lists
+import io, gui, lang, xdg, ipl.columnize, parser, eval, util, 
+   ipl.pdco, ipl.sort, ipl.termdialog, ipl.lists, ipl.scan, net
 
 $load IEVAL_LOGO "rpp.IEVAL_LOGO.png"
 
@@ -17,7 +18,7 @@ class Ieval(MinimalObjectOutput)
    private 
       input, output, error, vars, ev, quiet_flag, par, consts,
       oos, trace_flag, parse_flag, last_runerr, ee, hist_line, hlim,
-      elim, llim, imports, files, opts, history
+      elim, llim, imports, files, opts, history, is_flowterm
 
    private static map1(x)
       return map(x[1])
@@ -54,6 +55,27 @@ class Ieval(MinimalObjectOutput)
          write("out         The OutputStream of the terminal.")
    end
 
+   private columnize_gen_ft(l, screen_width, gutter, rowwise)
+      local cr, s, i, j, k, w
+      /gutter := 2
+      cr := columnize(ipl.pdco.List{*!l}, screen_width, gutter, rowwise)
+      every i := 1 to cr.rows do {
+         s := ""
+         every j := 1 to cr.cols do {
+            w := cr.width[j]
+            if j < cr.cols then
+               w +:= gutter
+            k := if /rowwise then 
+               i + cr.rows * (j - 1)
+            else
+               (i -1) * cr.cols + j
+            s ||:= text_link(l[k])
+            s ||:= repl(" ", 0 < w - *l[k])
+         }
+         suspend s
+      }
+   end
+
    private list_syms()
       local s, e, w, i
       w := if is(output, TermDialog) then
@@ -68,7 +90,7 @@ class Ieval(MinimalObjectOutput)
                insert(s, e)
          }
       }
-      every output.write(columnize_gen(isort(s, map), w))
+      every output.write(columnize_gen_ft(isort(s, map), w))
    end
 
    private list_prog_syms(prog)
@@ -82,7 +104,7 @@ class Ieval(MinimalObjectOutput)
          if lang.Prog.get_global(i, prog) then
             insert(s, lang.Prog.get_global_name(i, prog))
       }
-      every output.write(columnize_gen(isort(s, map), w))
+      every output.write(columnize_gen_ft(isort(s, map), w))
    end
 
    private show_parse(x, level)
@@ -139,15 +161,30 @@ class Ieval(MinimalObjectOutput)
    end
 
    private implements_string(c)
-      return comma_string{lang.Class.get_name(lang.Class.get_implemented_classes(c))}
+      return comma_string{text_link(lang.Class.get_name(lang.Class.get_implemented_classes(c)))}
    end
 
    private fields_string(c)
       return comma_string{Constructor.get_field_names(c)}
    end
 
+   private text_link(s)
+      return if /is_flowterm then s else 
+         "\e[!\"text:" || URL.percent_encode(s, URL.UNRESERVED) || "\"L" || s || "\e[!L" 
+   end
+
    private locn_string(l)
-      return "at line " || l.line || " in " || l.file
+      return if /is_flowterm then
+         "line " || l.line || " in " || l.file
+      else
+         Files.begin_link(l.file, l.line) || "line " || l.line || " in " || l.file || Files.end_link()
+   end
+
+   private abbr_locn_string(l)
+      return if /is_flowterm then
+         "line " || l.line || " in " || FilePath(l.file).get(-1)
+      else
+         Files.begin_link(l.file, l.line) || "line " || l.line || " in " || FilePath(l.file).get(-1) || Files.end_link()
    end
 
    private kind_string(f)
@@ -176,8 +213,9 @@ class Ieval(MinimalObjectOutput)
       return s
    end
 
-   private print_table(t)
+   private print_table(t, links)
       local w, widths, col, row
+      /links := set()
       widths := []
       every col := 1 to *t[1] - 1 do {
          w := 0
@@ -185,9 +223,12 @@ class Ieval(MinimalObjectOutput)
          put(widths, w)
       }
       every row := !t do {
-         every col := 1 to *t[1] - 1 do
-            output.writes(left(row[col], 4 + widths[col]))
-         output.write(row[-1])
+         every col := 1 to *t[1] do {
+            output.writes(if member(links, col) then text_link(row[col]) else row[col])
+            if col < *t[1] then
+               output.writes(repl(" ", 4 + widths[col] - *row[col]))
+         }
+         output.write()
       }
    end
 
@@ -201,7 +242,7 @@ class Ieval(MinimalObjectOutput)
             if *s > 0 then
                output.writes(s, " ")
             output.write("class ", lang.Class.get_name(c), "(", supers_string(c), ")")
-            output.write("   ", locn_string(lang.Class.get_location(c))) 
+            output.write("   at ", locn_string(lang.Class.get_location(c))) 
             output.write("   implements ", implements_string(c))
             t := []
             every f := lang.Class.get_field_names(c) do
@@ -209,11 +250,11 @@ class Ieval(MinimalObjectOutput)
                        lang.Class.get_name(lang.Class.get_field_defining_class(c, f)), 
                        right(lang.Class.get_field_index(c, f), *lang.Class.get_n_fields(c)),
                        flags_string(lang.Class.get_field_flags(c, f))])
-            print_table(isort(t, map1))
+            print_table(isort(t, map1), set(1))
          }
          "procedure"|"methp": {
             output.write(kind_string(Proc.get_kind(c)), " ", Proc.get_name(c), "(", args_string(c), ")")
-            output.write("   ", locn_string(Proc.get_location(c))) 
+            output.write("   at ", locn_string(Proc.get_location(c))) 
             output.write("   method of ", lang.Class.get_name(Proc.get_defining_class(c)))
             t := []
             every f := Proc.get_local_names(c) do
@@ -224,7 +265,7 @@ class Ieval(MinimalObjectOutput)
          "record"|"constructor": {
             output.write("constructor ",
                          Constructor.get_name(c), "(", fields_string(c), ")")
-            output.write("   ", locn_string(Constructor.get_location(c))) 
+            output.write("   at ", locn_string(Constructor.get_location(c))) 
          }
          "co-expression": {
             if Coexpression.is_main(c) then
@@ -272,7 +313,7 @@ class Ieval(MinimalObjectOutput)
    end
 
    private set_llim(n)
-      llim := (10 < \n)
+      llim := (0 <= \n)
       if is(input, TermDialog) then
          input.set_log_limit(llim)
       return llim
@@ -302,10 +343,6 @@ class Ieval(MinimalObjectOutput)
       @e
       lang.Prog.eval_keyword("&handler", p) := e
       return p
-   end
-
-   private is_flowterm()
-      return is(output, FileStream) & Files.is_flowterm_tty(output)
    end
 
    private traceback()
@@ -344,29 +381,16 @@ class Ieval(MinimalObjectOutput)
             every fe := back(ae.info) do {
                if depth <= LIMIT then {
                   output.writes("   ", fe.proc, "(", list2str(fe.args), ")")
-                  if \fe2 then {
-                     if is_flowterm() then
-                        output.write(" from ", 
-                                     Files.begin_link(fe2.file, fe2.line),
-                                     "line ", fe2.line, " in ", FilePath(fe2.file).get(-1),
-                                     Files.end_link())
-                     else
-                        output.write(" from line ", fe2.line, " in ", FilePath(fe2.file).get(-1))
-                   } else
+                  if \fe2 then
+                     output.write(" from ", abbr_locn_string(fe2))
+                   else
                      output.write()
                }
                depth -:= 1
                fe2 := fe
             }
-            if \fe2 then {
-               if is_flowterm() then
-                  output.write("   at ",
-                               Files.begin_link(fe2.file, fe2.line),
-                               "line ", fe2.line, " in ", FilePath(fe2.file).get(-1),
-                               Files.end_link())
-               else
-                  output.write("   at line ", fe2.line, " in ", FilePath(fe2.file).get(-1))
-            }
+            if \fe2 then
+               output.write("   at ", abbr_locn_string(fe2))
          }
       }
    end
@@ -390,13 +414,14 @@ class Ieval(MinimalObjectOutput)
          set_env(ee).
          set_imports(imports)
       hlim := (10 < \opts["hlim"]) | 500
-      llim := (10 < \opts["llim"]) | 600
+      llim := (0 <= \opts["llim"]) | 600
       elim := (10 < \opts["elim"]) | 35
       return
    end
 
    public run()
       local hfile
+      is_flowterm := Yes{ \opts["g"] | Files.is_flowterm_tty(FileStream.stdin) }
       if \opts["s"] then
          do_stdin()
       else {
@@ -493,15 +518,125 @@ class Ieval(MinimalObjectOutput)
          error.write("Couldn't parse: ", &why)
    end
 
+   private static complete_keyword(p, subj, pos)
+      local l, e
+      l := []
+      every e := Proc.get_name(lang.Prog.get_keywords()) do {
+         if match(p, e[2:0]) then
+            put(l, simple_insert(e, e[2 + *p:0], subj, pos))
+      }
+      return l
+   end
+
+   private static simple_insert(e, ins, subj, pos)
+      return CompleteElement(e, subj[1:pos] || ins || subj[pos:0], pos + *ins)
+   end
+
+   private lookup_global(p)
+      return Safe1{ ee.get(string(p), ev) }
+   end
+
+   private gen_package_global_names(p)
+      local i, e
+      member(imports, string(p)) | fail
+      every i := 1 to lang.Prog.get_n_globals() do {
+         if lang.Prog.get_global(i) then {
+            e := lang.Prog.get_global_name(i)
+            e ? if =p & ="." & (not upto('.')) then
+               suspend e
+         }
+      }
+   end
+
+   private candidates1(p)
+      local e
+      suspend !imports || "." | key(consts | vars)
+      every e := lang.Prog.get_global_names() do
+         upto('.', e) | suspend e
+   end
+
+   private candidates2(h, t)
+      local v, f
+      suspend !imports || "." | gen_package_global_names(h)
+      if v := lookup_global(h) then {
+         case type(v) of {
+            "class": {
+               every f := lang.Class.get_class_field_names(v) do
+                  if iand(lang.Class.get_field_flags(v, f), lang.Class.Static) ~= 0 then
+                     suspend h || "." || f
+            }
+            "object": {  
+               every f := lang.Class.get_field_names(v) do
+                  if iand(lang.Class.get_field_flags(v, f), lang.Class.Static) = 0 then
+                     suspend h || "." || f
+            }
+            "record": 
+               suspend h || "." || lang.Constructor.get_field_names(v)
+         }
+      }
+   end
+
+   private globals1(p, subj, pos)
+      local i, e
+      every i := 1 to lang.Prog.get_n_globals() do {
+         if lang.Prog.get_global(i) then {
+            e := lang.Prog.get_global_name(i)
+            e ? if =!imports & ="." & (not upto('.')) & match(p) then
+               suspend CompleteElement(e, subj[1:pos - *p] || e || subj[pos:0], pos - *p + *e)
+         }
+      }
+   end
+
+   private complete_ident(p, subj, pos)
+      local h, t, i, l, c
+      l := []
+      if i := backto('.', p) then {
+         h := p[1: i - 1]
+         t := p[i:0]
+         every c := candidates2(h, t) do {
+            if i := match(p, c) then
+               put(l, simple_insert(c, c[1 + *p:0], subj, pos))
+         }
+      } else {
+         every c := candidates1(p) do {
+            if i := match(p, c) then
+               put(l, simple_insert(c, c[1 + *p:0], subj, pos))
+         }
+         every put(l, globals1(p, subj, pos))
+      }
+      return l
+   end
+
+   private complete(subj, pos)
+      local p, l
+      subj ? {
+         tab(pos)
+         l := if p := tab(rev_many0(&letters,,, 1)) & rev_any('&',,, 1) then
+            complete_keyword(p, subj, pos)
+         else if p := tab(rev_many(&letters ++ &digits ++ '_.',,, 1)) & any(&letters ++ '_', p[1]) then
+            complete_ident(p, subj, pos)
+         else
+            []
+      }
+      if *l = 1 & l[1].str == subj then
+         pop(l)
+      return l
+   end
+
    private do_gui()
       local s, t, prompt
 
       input := IevalTermDialog().
+         set_complete_function(complete).
          set_label("ieval").
          set_icon(IEVAL_LOGO).
          set_history_limit(hlim).
          set_log_limit(llim).
          set_history(history)
+
+      if \opts["a"] then
+         input.set_popup_on_tab(&no)
+
       error := output := input
       prelim()
       s := ""
@@ -557,6 +692,7 @@ class Ieval(MinimalObjectOutput)
       output := FileStream.stdout
       error := FileStream.stderr
       input := LineEditorStream().
+         set_complete_function(complete).
          set_history_limit(hlim).
          set_history(history) | stop("Failed to create LineEditorStream: ", &why)
       prelim()

@@ -471,22 +471,20 @@ class EditableTextList(LineBasedScrollArea)
       local ce, ed
 
       \self.is_editable_flag | fail
-      s := text_convert(s, type(self.contents[1])) | fail
+      s := apply_filter(text_convert(s, type(self.contents[1]))) | fail
 
       start_handle(e)
-      if s := apply_filter(s) then {
-         ce := CompoundEdit()
-         if has_region() then {
-            ed := EditableTextListDeleteRegionEdit(self)
-            ed.doit()
-            ce.add_edit(ed)
-         }
-         ed := EditableTextListPasteEdit(self, s)
+      ce := CompoundEdit()
+      if has_region() then {
+         ed := EditableTextListDeleteRegionEdit(self)
          ed.doit()
          ce.add_edit(ed)
-         ce.close()
-         undo_manager.add_edit(ce)
       }
+      ed := EditableTextListPasteEdit(self, s)
+      ed.doit()
+      ce.add_edit(ed)
+      ce.close()
+      undo_manager.add_edit(ce)
       end_handle(e)
       return self
    end
@@ -700,13 +698,16 @@ class EditableTextList(LineBasedScrollArea)
    end
 
    public create_context_menu(e)
-      return TextContextMenu(self)
+      local m
+      m := TextContextMenu(self)
+      if *m.children > 0 then
+         return m
    end
 
    public handle_rpress(e)
       local m, pm
       if \menu_on_rpress_flag then {
-         if m := create_context_menu(e) & *m.children > 0 then {
+         if m := create_context_menu(e) then {
             pm := PopupMenu()
             pm.popup(self, m, e.x, e.y)
          }

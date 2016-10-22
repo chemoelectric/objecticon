@@ -73,7 +73,7 @@ class RangeSpin(Spin)
    public assign_value(x, ev, coalesce)
       x <:= \self.lo
       x >:= \self.hi
-      view.assign_contents(x, ev, coalesce)
+      view.assign_contents(x,, ev, coalesce)
       return self
    end
 

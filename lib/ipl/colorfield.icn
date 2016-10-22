@@ -68,7 +68,7 @@ class ColorField(Component)
       s := Window.color_value(s) | fail
       if \opaque_flag & Window.parse_color(s).alpha ~= 65535 then
          fail
-      tf.assign_contents(s, ev, coalesce)
+      tf.assign_contents(s,, ev, coalesce)
       return self
    end
 

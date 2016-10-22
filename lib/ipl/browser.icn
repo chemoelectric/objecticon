@@ -1658,7 +1658,7 @@ class FormBrowse(Component, FormEntry, HasAscent)
    end
 
    private on_browse(ev)
-      tf.assign_contents(ucs(browser.browse_for_file(tf.get_contents())), ev)
+      tf.assign_contents(ucs(browser.browse_for_file(tf.get_contents())),, ev)
    end
 
    public new(browser, tf_size)
@@ -1749,7 +1749,7 @@ class FormTextField(SuggestField, FormEntry, HasAscent)
    end
 
    public handle_return(e)
-      if \tl then
+      if \popup then
          keep_closed()
       else
          TextField.handle_return(e)

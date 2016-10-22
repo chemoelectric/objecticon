@@ -34,6 +34,7 @@ static word slim = 64;
 static word llim = 6;
 static int addrs = 1;
 static FILE *out;
+static int flowterm = 0;
 
 enum { Global=1, ClassStatic, ProcStatic, ObjectMember, SetMember, 
        RecordMember, TableDefault, TableKey, TableValue, ListElement, 
@@ -516,7 +517,7 @@ static void kywdout(dptr d)
 static void structout(char *name, uword id, dptr d)
 {
     int link = 0;
-    if (is_flowterm_tty(out)) {
+    if (flowterm) {
         link = 1;
         fprintf(out, "\x1b[!\"text:%s%%23" UWordFmt "\"L", name, id);
     }
@@ -532,7 +533,7 @@ static void litblockout(dptr d)
 {
     int link = 0;
     if (addrs > 0 && which_block_region(BlkLoc(*d))) {
-        if (is_flowterm_tty(out)) {
+        if (flowterm) {
             link = 1;
             fprintf(out, "\x1b[!\"text:%p\"L", BlkLoc(*d));
         }
@@ -568,7 +569,7 @@ static void outimagey(dptr d, struct frame *frame)
     type_case *d of {
       string: {
             if (addrs > 0 && which_string_region(StrLoc(*d))) {
-                if (is_flowterm_tty(out)) {
+                if (flowterm) {
                     link = 1;
                     fprintf(out, "\x1b[!\"text:%p\"L", StrLoc(*d));
                 }
@@ -609,7 +610,7 @@ static void outimagey(dptr d, struct frame *frame)
         }
       object: {
             if (ObjectBlk(*d).class->program == prog) {
-                if (is_flowterm_tty(out)) {
+                if (flowterm) {
                     link = 1;
                     fprintf(out, "\x1b[!\"text:%.*s%%23" UWordFmt "\"L", StrF(*ObjectBlk(*d).class->name), ObjectBlk(*d).id);
                 }
@@ -618,7 +619,7 @@ static void outimagey(dptr d, struct frame *frame)
             } else {
                 progout(ObjectBlk(*d).class->program);
                 if (addrs > 0) {
-                    if (is_flowterm_tty(out)) {
+                    if (flowterm) {
                         link = 1;
                         fprintf(out, "\x1b[!\"text:%p\"L", BlkLoc(*d));
                     }
@@ -632,7 +633,7 @@ static void outimagey(dptr d, struct frame *frame)
         }
       record: {
             if (RecordBlk(*d).constructor->program == prog) {
-                if (is_flowterm_tty(out)) {
+                if (flowterm) {
                     link = 1;
                     fprintf(out, "\x1b[!\"text:%.*s%%23" UWordFmt "\"L", StrF(*RecordBlk(*d).constructor->name), RecordBlk(*d).id);
                 }
@@ -641,7 +642,7 @@ static void outimagey(dptr d, struct frame *frame)
             } else {
                 progout(RecordBlk(*d).constructor->program);
                 if (addrs > 0) {
-                    if (is_flowterm_tty(out)) {
+                    if (flowterm) {
                         link = 1;
                         fprintf(out, "\x1b[!\"text:%p\"L", BlkLoc(*d));
                     }
@@ -654,7 +655,7 @@ static void outimagey(dptr d, struct frame *frame)
         }
       class: {
             if (ClassBlk(*d).program == prog) {
-                if (is_flowterm_tty(out)) {
+                if (flowterm) {
                     link = 1;
                     fprintf(out, "\x1b[!\"text:%.*s\"L", StrF(*ClassBlk(*d).name));
                 }
@@ -666,7 +667,7 @@ static void outimagey(dptr d, struct frame *frame)
         }
       constructor: {
             if (ConstructorBlk(*d).program == prog) {
-                if (is_flowterm_tty(out)) {
+                if (flowterm) {
                     link = 1;
                     fprintf(out, "\x1b[!\"text:%.*s\"L", StrF(*ConstructorBlk(*d).name));
                 }
@@ -680,7 +681,7 @@ static void outimagey(dptr d, struct frame *frame)
             if (ProcBlk(*d).type == P_Proc) {
                 struct p_proc *pp = (struct p_proc *)&ProcBlk(*d);
                 if (pp->program == prog) {
-                    if (is_flowterm_tty(out)) {
+                    if (flowterm) {
                         struct class_field *field = ProcBlk(*d).field;
                         link = 1;
                         fputs("\x1b[!\"text:", out);
@@ -699,7 +700,7 @@ static void outimagey(dptr d, struct frame *frame)
                 fputs("\x1b[!L", out);
         }
       methp: {
-            if (is_flowterm_tty(out)) {
+            if (flowterm) {
                 link = 1;
                 fprintf(out, "\x1b[!\"text:methp%%23" UWordFmt "\"L", MethpBlk(*d).id);
             }
@@ -715,7 +716,7 @@ static void outimagey(dptr d, struct frame *frame)
             fputs(")", out);
         }
       weakref: {
-            if (is_flowterm_tty(out)) {
+            if (flowterm) {
                 link = 1;
                 fprintf(out, "\x1b[!\"text:weakref%%23" UWordFmt "\"L", WeakrefBlk(*d).id);
             }
@@ -1978,6 +1979,15 @@ function MemDebug_set_addrs(val)
        runerr(101, val)
     body {
        addrs = val;
+       return nulldesc;
+    }
+end
+
+function MemDebug_set_flowterm(flag)
+    body {
+       if (!isflag(&flag))
+          runerr(171, flag);
+       flowterm = !is:null(flag);
        return nulldesc;
     }
 end
