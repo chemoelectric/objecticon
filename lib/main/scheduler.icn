@@ -17,17 +17,23 @@ class TaskStream(Stream, HasTask, HasUnderlyingStream)
    public in(n)
       local r
       r := task.poll([other, Poll.IN], timeout) | fail
-      if /r then return error("Timeout")
-      DescStream.poll_in_test(r[1]) | return error("poll() indicated an i/o error")
-      return other.in(n)
+      return if /r then 
+         error("Timeout")
+      else if DescStream.poll_in_test(r[1]) then
+         other.in(n)
+      else
+         error("poll() indicated an i/o error")
    end
 
    public out(s)
       local r
       r := task.poll([other, Poll.OUT], timeout) | fail
-      if /r then return error("Timeout")
-      DescStream.poll_out_test(r[1]) | return error("poll() indicated an i/o error")
-      return other.out(s)
+      return if /r then
+         error("Timeout")
+      else if DescStream.poll_out_test(r[1]) then
+         other.out(s)
+      else
+         error("poll() indicated an i/o error")
    end
 
    public close()
