@@ -186,12 +186,28 @@ class GroffOutputter(Outputter)
       writes(output_file, "\\f[HR]", esc(s), "\\fR")
    end
 
-   protected output_bold(s)
-      writes(output_file, "\\fB", esc(s), "\\fP")
+   protected begin_bold()
+      writes(output_file, "\\fB")
    end
 
-   protected output_ul(s)
-      writes(output_file, "\\fI", esc(s), "\\fP")
+   protected end_bold()
+      writes(output_file, "\\fR")
+   end
+
+   protected begin_underline()
+      writes(output_file, "\\fB")
+   end
+
+   protected end_underline()
+      writes(output_file, "\\fR")
+   end
+
+   protected begin_italic()
+      writes(output_file, "\\fI")
+   end
+
+   protected end_italic()
+      writes(output_file, "\\fR")
    end
 
    protected output_anchor(s)
