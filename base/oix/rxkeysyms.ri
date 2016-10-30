@@ -600,13 +600,6 @@ static int convert_KeySym_to_code_point(KeySym k)
         case 0x8AE: return 0x23A0;	/*  botrightparens */
         case 0x8AF: return 0x23A8;	/*  leftmiddlecurlybrace */
         case 0x8B0: return 0x23AC;	/*  rightmiddlecurlybrace */
-        case 0x8B1: return 0x0;	/*  topleftsummation */
-        case 0x8B2: return 0x0;	/*  botleftsummation */
-        case 0x8B3: return 0x0;	/*  topvertsummationconnector */
-        case 0x8B4: return 0x0;	/*  botvertsummationconnector */
-        case 0x8B5: return 0x0;	/*  toprightsummation */
-        case 0x8B6: return 0x0;	/*  botrightsummation */
-        case 0x8B7: return 0x0;	/*  rightmiddlesummation */
         case 0x8BC: return 0x2264;	/*  lessthanequal */
         case 0x8BD: return 0x2260;	/*  notequal */
         case 0x8BE: return 0x2265;	/*  greaterthanequal */
@@ -633,7 +626,6 @@ static int convert_KeySym_to_code_point(KeySym k)
         case 0x8FC: return 0x2191;	/*  uparrow */
         case 0x8FD: return 0x2192;	/*  rightarrow */
         case 0x8FE: return 0x2193;	/*  downarrow */
-        case 0x9DF: return 0x0;	/*  blank */
         case 0x9E0: return 0x25C6;	/*  soliddiamond */
         case 0x9E1: return 0x2592;	/*  checkerboard */
         case 0x9E2: return 0x2409;	/*  ht */
@@ -683,14 +675,12 @@ static int convert_KeySym_to_code_point(KeySym k)
         case 0xABC: return 0x27E8;	/*  leftanglebracket */
         case 0xABD: return 0x2E;	/*  decimalpoint */
         case 0xABE: return 0x27E9;	/*  rightanglebracket */
-        case 0xABF: return 0x0;	/*  marker */
         case 0xAC3: return 0x215B;	/*  oneeighth */
         case 0xAC4: return 0x215C;	/*  threeeighths */
         case 0xAC5: return 0x215D;	/*  fiveeighths */
         case 0xAC6: return 0x215E;	/*  seveneighths */
         case 0xAC9: return 0x2122;	/*  trademark */
         case 0xACA: return 0x2613;	/*  signaturemark */
-        case 0xACB: return 0x0;	/*  trademarkincircle */
         case 0xACC: return 0x25C1;	/*  leftopentriangle */
         case 0xACD: return 0x25B7;	/*  rightopentriangle */
         case 0xACE: return 0x25CB;	/*  emopencircle */
@@ -703,7 +693,6 @@ static int convert_KeySym_to_code_point(KeySym k)
         case 0xAD6: return 0x2032;	/*  minutes */
         case 0xAD7: return 0x2033;	/*  seconds */
         case 0xAD9: return 0x271D;	/*  latincross */
-        case 0xADA: return 0x0;	/*  hexagram */
         case 0xADB: return 0x25AC;	/*  filledrectbullet */
         case 0xADC: return 0x25C0;	/*  filledlefttribullet */
         case 0xADD: return 0x25B6;	/*  filledrighttribullet */
@@ -739,7 +728,6 @@ static int convert_KeySym_to_code_point(KeySym k)
         case 0xAFC: return 0x2038;	/*  caret */
         case 0xAFD: return 0x201A;	/*  singlelowquotemark */
         case 0xAFE: return 0x201E;	/*  doublelowquotemark */
-        case 0xAFF: return 0x0;	/*  cursor */
         case 0xBC2: return 0x22A5;	/*  downtack */
         case 0xBC4: return 0x230A;	/*  downstile */
         case 0xBCA: return 0x2218;	/*  jot */
@@ -835,7 +823,6 @@ static int convert_KeySym_to_code_point(KeySym k)
         case 0xDD8: return 0xE38;	/*  Thai_sarau     */
         case 0xDD9: return 0xE39;	/*  Thai_sarauu    */
         case 0xDDA: return 0xE3A;	/*  Thai_phinthu */
-        case 0xDDE: return 0x0;	/*  Thai_maihanakat_maitho */
         case 0xDDF: return 0xE3F;	/*  Thai_baht */
         case 0xDE0: return 0xE40;	/*  Thai_sarae     */
         case 0xDE1: return 0xE41;	/*  Thai_saraae */
@@ -968,72 +955,6 @@ static int convert_KeySym_to_code_point(KeySym k)
         case 0x20AA: return 0x20AA;	/*  NewSheqelSign                                 */
         case 0x20AB: return 0x20AB;	/*  DongSign                                      */
         case 0x20AC: return 0x20AC;	/*  EuroSign                                      */
-        case 0xFD01: return 0x0;	/*  3270_Duplicate */
-        case 0xFD02: return 0x0;	/*  3270_FieldMark */
-        case 0xFD03: return 0x0;	/*  3270_Right2 */
-        case 0xFD04: return 0x0;	/*  3270_Left2 */
-        case 0xFD05: return 0x0;	/*  3270_BackTab */
-        case 0xFD06: return 0x0;	/*  3270_EraseEOF */
-        case 0xFD07: return 0x0;	/*  3270_EraseInput */
-        case 0xFD08: return 0x0;	/*  3270_Reset */
-        case 0xFD09: return 0x0;	/*  3270_Quit */
-        case 0xFD0A: return 0x0;	/*  3270_PA1 */
-        case 0xFD0B: return 0x0;	/*  3270_PA2 */
-        case 0xFD0C: return 0x0;	/*  3270_PA3 */
-        case 0xFD0D: return 0x0;	/*  3270_Test */
-        case 0xFD0E: return 0x0;	/*  3270_Attn */
-        case 0xFD0F: return 0x0;	/*  3270_CursorBlink */
-        case 0xFD10: return 0x0;	/*  3270_AltCursor */
-        case 0xFD11: return 0x0;	/*  3270_KeyClick */
-        case 0xFD12: return 0x0;	/*  3270_Jump */
-        case 0xFD13: return 0x0;	/*  3270_Ident */
-        case 0xFD14: return 0x0;	/*  3270_Rule */
-        case 0xFD15: return 0x0;	/*  3270_Copy */
-        case 0xFD16: return 0x0;	/*  3270_Play */
-        case 0xFD17: return 0x0;	/*  3270_Setup */
-        case 0xFD18: return 0x0;	/*  3270_Record */
-        case 0xFD19: return 0x0;	/*  3270_ChangeScreen */
-        case 0xFD1A: return 0x0;	/*  3270_DeleteWord */
-        case 0xFD1B: return 0x0;	/*  3270_ExSelect */
-        case 0xFD1C: return 0x0;	/*  3270_CursorSelect */
-        case 0xFD1D: return 0x0;	/*  3270_PrintScreen */
-        case 0xFD1E: return 0x0;	/*  3270_Enter */
-        case 0xFE01: return 0x0;	/*  ISO_Lock */
-        case 0xFE02: return 0x0;	/*  ISO_Level2_Latch */
-        case 0xFE03: return 0x0;	/*  ISO_Level3_Shift */
-        case 0xFE04: return 0x0;	/*  ISO_Level3_Latch */
-        case 0xFE05: return 0x0;	/*  ISO_Level3_Lock */
-        case 0xFE06: return 0x0;	/*  ISO_Group_Latch */
-        case 0xFE07: return 0x0;	/*  ISO_Group_Lock */
-        case 0xFE08: return 0x0;	/*  ISO_Next_Group */
-        case 0xFE09: return 0x0;	/*  ISO_Next_Group_Lock */
-        case 0xFE0A: return 0x0;	/*  ISO_Prev_Group */
-        case 0xFE0B: return 0x0;	/*  ISO_Prev_Group_Lock */
-        case 0xFE0C: return 0x0;	/*  ISO_First_Group */
-        case 0xFE0D: return 0x0;	/*  ISO_First_Group_Lock */
-        case 0xFE0E: return 0x0;	/*  ISO_Last_Group */
-        case 0xFE0F: return 0x0;	/*  ISO_Last_Group_Lock */
-        case 0xFE20: return 0x0;	/*  ISO_Left_Tab */
-        case 0xFE21: return 0x0;	/*  ISO_Move_Line_Up */
-        case 0xFE22: return 0x0;	/*  ISO_Move_Line_Down */
-        case 0xFE23: return 0x0;	/*  ISO_Partial_Line_Up */
-        case 0xFE24: return 0x0;	/*  ISO_Partial_Line_Down */
-        case 0xFE25: return 0x0;	/*  ISO_Partial_Space_Left */
-        case 0xFE26: return 0x0;	/*  ISO_Partial_Space_Right */
-        case 0xFE27: return 0x0;	/*  ISO_Set_Margin_Left */
-        case 0xFE28: return 0x0;	/*  ISO_Set_Margin_Right */
-        case 0xFE29: return 0x0;	/*  ISO_Release_Margin_Left */
-        case 0xFE2A: return 0x0;	/*  ISO_Release_Margin_Right */
-        case 0xFE2B: return 0x0;	/*  ISO_Release_Both_Margins */
-        case 0xFE2C: return 0x0;	/*  ISO_Fast_Cursor_Left */
-        case 0xFE2D: return 0x0;	/*  ISO_Fast_Cursor_Right */
-        case 0xFE2E: return 0x0;	/*  ISO_Fast_Cursor_Up */
-        case 0xFE2F: return 0x0;	/*  ISO_Fast_Cursor_Down */
-        case 0xFE30: return 0x0;	/*  ISO_Continuous_Underline */
-        case 0xFE31: return 0x0;	/*  ISO_Discontinuous_Underline */
-        case 0xFE32: return 0x0;	/*  ISO_Emphasize */
-        case 0xFE33: return 0x0;	/*  ISO_Center_Object */
-        case 0xFE34: return 0x0;	/*  ISO_Enter */
         case 0xFE50: return 0x300;	/*  dead_grave */
         case 0xFE51: return 0x301;	/*  dead_acute */
         case 0xFE52: return 0x302;	/*  dead_circumflex */
@@ -1050,133 +971,15 @@ static int convert_KeySym_to_code_point(KeySym k)
         case 0xFE5D: return 0x345;	/*  dead_iota */
         case 0xFE5E: return 0x3099;	/*  dead_voiced_sound */
         case 0xFE5F: return 0x309A;	/*  dead_semivoiced_sound */
-        case 0xFE70: return 0x0;	/*  AccessX_Enable */
-        case 0xFE71: return 0x0;	/*  AccessX_Feedback_Enable */
-        case 0xFE72: return 0x0;	/*  RepeatKeys_Enable */
-        case 0xFE73: return 0x0;	/*  SlowKeys_Enable */
-        case 0xFE74: return 0x0;	/*  BounceKeys_Enable */
-        case 0xFE75: return 0x0;	/*  StickyKeys_Enable */
-        case 0xFE76: return 0x0;	/*  MouseKeys_Enable */
-        case 0xFE77: return 0x0;	/*  MouseKeys_Accel_Enable */
-        case 0xFE78: return 0x0;	/*  Overlay1_Enable */
-        case 0xFE79: return 0x0;	/*  Overlay2_Enable */
-        case 0xFE7A: return 0x0;	/*  AudibleBell_Enable */
-        case 0xFED0: return 0x0;	/*  First_Virtual_Screen */
-        case 0xFED1: return 0x0;	/*  Prev_Virtual_Screen */
-        case 0xFED2: return 0x0;	/*  Next_Virtual_Screen */
-        case 0xFED4: return 0x0;	/*  Last_Virtual_Screen */
-        case 0xFED5: return 0x0;	/*  Terminate_Server */
-        case 0xFEE0: return 0x0;	/*  Pointer_Left */
-        case 0xFEE1: return 0x0;	/*  Pointer_Right */
-        case 0xFEE2: return 0x0;	/*  Pointer_Up */
-        case 0xFEE3: return 0x0;	/*  Pointer_Down */
-        case 0xFEE4: return 0x0;	/*  Pointer_UpLeft */
-        case 0xFEE5: return 0x0;	/*  Pointer_UpRight */
-        case 0xFEE6: return 0x0;	/*  Pointer_DownLeft */
-        case 0xFEE7: return 0x0;	/*  Pointer_DownRight */
-        case 0xFEE8: return 0x0;	/*  Pointer_Button_Dflt */
-        case 0xFEE9: return 0x0;	/*  Pointer_Button1 */
-        case 0xFEEA: return 0x0;	/*  Pointer_Button2 */
-        case 0xFEEB: return 0x0;	/*  Pointer_Button3 */
-        case 0xFEEC: return 0x0;	/*  Pointer_Button4 */
-        case 0xFEED: return 0x0;	/*  Pointer_Button5 */
-        case 0xFEEE: return 0x0;	/*  Pointer_DblClick_Dflt */
-        case 0xFEEF: return 0x0;	/*  Pointer_DblClick1 */
-        case 0xFEF0: return 0x0;	/*  Pointer_DblClick2 */
-        case 0xFEF1: return 0x0;	/*  Pointer_DblClick3 */
-        case 0xFEF2: return 0x0;	/*  Pointer_DblClick4 */
-        case 0xFEF3: return 0x0;	/*  Pointer_DblClick5 */
-        case 0xFEF4: return 0x0;	/*  Pointer_Drag_Dflt */
-        case 0xFEF5: return 0x0;	/*  Pointer_Drag1 */
-        case 0xFEF6: return 0x0;	/*  Pointer_Drag2 */
-        case 0xFEF7: return 0x0;	/*  Pointer_Drag3 */
-        case 0xFEF8: return 0x0;	/*  Pointer_Drag4 */
-        case 0xFEF9: return 0x0;	/*  Pointer_EnableKeys */
-        case 0xFEFA: return 0x0;	/*  Pointer_Accelerate */
-        case 0xFEFB: return 0x0;	/*  Pointer_DfltBtnNext */
-        case 0xFEFC: return 0x0;	/*  Pointer_DfltBtnPrev */
-        case 0xFEFD: return 0x0;	/*  Pointer_Drag5 */
         case 0xFF08: return 0x8;	/*  BackSpace	 back space, back char  */
         case 0xFF09: return 0x9;	/*  Tab */
         case 0xFF0A: return 0xA;	/*  Linefeed	 Linefeed, LF  */
         case 0xFF0B: return 0xB;	/*  Clear */
         case 0xFF0D: return 0xD;	/*  Return	 Return, enter  */
-        case 0xFF13: return 0x13;	/*  Pause	 Pause, hold  */
-        case 0xFF14: return 0x14;	/*  Scroll_Lock */
-        case 0xFF15: return 0x15;	/*  Sys_Req */
         case 0xFF1B: return 0x1B;	/*  Escape */
-        case 0xFF20: return 0x0;	/*  Multi_key */
-        case 0xFF21: return 0x0;	/*  Kanji */
-        case 0xFF22: return 0x0;	/*  Muhenkan */
-        case 0xFF23: return 0x0;	/*  Henkan_Mode */
-        case 0xFF24: return 0x0;	/*  Romaji */
-        case 0xFF25: return 0x0;	/*  Hiragana */
-        case 0xFF26: return 0x0;	/*  Katakana */
-        case 0xFF27: return 0x0;	/*  Hiragana_Katakana */
-        case 0xFF28: return 0x0;	/*  Zenkaku */
-        case 0xFF29: return 0x0;	/*  Hankaku */
-        case 0xFF2A: return 0x0;	/*  Zenkaku_Hankaku */
-        case 0xFF2B: return 0x0;	/*  Touroku */
-        case 0xFF2C: return 0x0;	/*  Massyo */
-        case 0xFF2D: return 0x0;	/*  Kana_Lock */
-        case 0xFF2E: return 0x0;	/*  Kana_Shift */
-        case 0xFF2F: return 0x0;	/*  Eisu_Shift */
-        case 0xFF30: return 0x0;	/*  Eisu_toggle */
-        case 0xFF31: return 0x0;	/*  Hangul */
-        case 0xFF32: return 0x0;	/*  Hangul_Start */
-        case 0xFF33: return 0x0;	/*  Hangul_End */
-        case 0xFF34: return 0x0;	/*  Hangul_Hanja */
-        case 0xFF35: return 0x0;	/*  Hangul_Jamo */
-        case 0xFF36: return 0x0;	/*  Hangul_Romaja */
-        case 0xFF37: return 0x0;	/*  Codeinput */
-        case 0xFF38: return 0x0;	/*  Hangul_Jeonja */
-        case 0xFF39: return 0x0;	/*  Hangul_Banja */
-        case 0xFF3A: return 0x0;	/*  Hangul_PreHanja */
-        case 0xFF3B: return 0x0;	/*  Hangul_PostHanja */
-        case 0xFF3C: return 0x0;	/*  SingleCandidate */
-        case 0xFF3D: return 0x0;	/*  MultipleCandidate */
-        case 0xFF3E: return 0x0;	/*  PreviousCandidate */
-        case 0xFF3F: return 0x0;	/*  Hangul_Special */
-        case 0xFF50: return 0x0;	/*  Home */
-        case 0xFF51: return 0x0;	/*  Left */
-        case 0xFF52: return 0x0;	/*  Up */
-        case 0xFF53: return 0x0;	/*  Right */
-        case 0xFF54: return 0x0;	/*  Down */
-        case 0xFF55: return 0x0;	/*  Prior */
-        case 0xFF56: return 0x0;	/*  Next */
-        case 0xFF57: return 0x0;	/*  End */
-        case 0xFF58: return 0x0;	/*  Begin */
-        case 0xFF60: return 0x0;	/*  Select */
-        case 0xFF61: return 0x0;	/*  Print */
-        case 0xFF62: return 0x0;	/*  Execute */
-        case 0xFF63: return 0x0;	/*  Insert */
-        case 0xFF65: return 0x0;	/*  Undo */
-        case 0xFF66: return 0x0;	/*  Redo */
-        case 0xFF67: return 0x0;	/*  Menu */
-        case 0xFF68: return 0x0;	/*  Find */
-        case 0xFF69: return 0x0;	/*  Cancel */
-        case 0xFF6A: return 0x0;	/*  Help */
-        case 0xFF6B: return 0x0;	/*  Break */
-        case 0xFF7E: return 0x0;	/*  Mode_switch */
-        case 0xFF7F: return 0x0;	/*  Num_Lock */
         case 0xFF80: return 0x20;	/*  KP_Space	 space  */
         case 0xFF89: return 0x9;	/*  KP_Tab */
         case 0xFF8D: return 0xD;	/*  KP_Enter	 enter  */
-        case 0xFF91: return 0x0;	/*  KP_F1 */
-        case 0xFF92: return 0x0;	/*  KP_F2 */
-        case 0xFF93: return 0x0;	/*  KP_F3 */
-        case 0xFF94: return 0x0;	/*  KP_F4 */
-        case 0xFF95: return 0x0;	/*  KP_Home */
-        case 0xFF96: return 0x0;	/*  KP_Left */
-        case 0xFF97: return 0x0;	/*  KP_Up */
-        case 0xFF98: return 0x0;	/*  KP_Right */
-        case 0xFF99: return 0x0;	/*  KP_Down */
-        case 0xFF9A: return 0x0;	/*  KP_Prior */
-        case 0xFF9B: return 0x0;	/*  KP_Next */
-        case 0xFF9C: return 0x0;	/*  KP_End */
-        case 0xFF9D: return 0x0;	/*  KP_Begin */
-        case 0xFF9E: return 0x0;	/*  KP_Insert */
-        case 0xFF9F: return 0x0;	/*  KP_Delete */
         case 0xFFAA: return 0x2A;	/*  KP_Multiply */
         case 0xFFAB: return 0x2B;	/*  KP_Add */
         case 0xFFAC: return 0x2C;	/*  KP_Separator	 separator, often comma  */
@@ -1194,59 +997,8 @@ static int convert_KeySym_to_code_point(KeySym k)
         case 0xFFB8: return 0x38;	/*  KP_8 */
         case 0xFFB9: return 0x39;	/*  KP_9 */
         case 0xFFBD: return 0x3D;	/*  KP_Equal	 equals  */
-        case 0xFFBE: return 0x0;	/*  F1 */
-        case 0xFFBF: return 0x0;	/*  F2 */
-        case 0xFFC0: return 0x0;	/*  F3 */
-        case 0xFFC1: return 0x0;	/*  F4 */
-        case 0xFFC2: return 0x0;	/*  F5 */
-        case 0xFFC3: return 0x0;	/*  F6 */
-        case 0xFFC4: return 0x0;	/*  F7 */
-        case 0xFFC5: return 0x0;	/*  F8 */
-        case 0xFFC6: return 0x0;	/*  F9 */
-        case 0xFFC7: return 0x0;	/*  F10 */
-        case 0xFFC8: return 0x0;	/*  F11 */
-        case 0xFFC9: return 0x0;	/*  F12 */
-        case 0xFFCA: return 0x0;	/*  F13 */
-        case 0xFFCB: return 0x0;	/*  F14 */
-        case 0xFFCC: return 0x0;	/*  F15 */
-        case 0xFFCD: return 0x0;	/*  F16 */
-        case 0xFFCE: return 0x0;	/*  F17 */
-        case 0xFFCF: return 0x0;	/*  F18 */
-        case 0xFFD0: return 0x0;	/*  F19 */
-        case 0xFFD1: return 0x0;	/*  F20 */
-        case 0xFFD2: return 0x0;	/*  F21 */
-        case 0xFFD3: return 0x0;	/*  F22 */
-        case 0xFFD4: return 0x0;	/*  F23 */
-        case 0xFFD5: return 0x0;	/*  F24 */
-        case 0xFFD6: return 0x0;	/*  F25 */
-        case 0xFFD7: return 0x0;	/*  F26 */
-        case 0xFFD8: return 0x0;	/*  F27 */
-        case 0xFFD9: return 0x0;	/*  F28 */
-        case 0xFFDA: return 0x0;	/*  F29 */
-        case 0xFFDB: return 0x0;	/*  F30 */
-        case 0xFFDC: return 0x0;	/*  F31 */
-        case 0xFFDD: return 0x0;	/*  F32 */
-        case 0xFFDE: return 0x0;	/*  F33 */
-        case 0xFFDF: return 0x0;	/*  F34 */
-        case 0xFFE0: return 0x0;	/*  F35 */
-        case 0xFFE1: return 0x0;	/*  Shift_L */
-        case 0xFFE2: return 0x0;	/*  Shift_R */
-        case 0xFFE3: return 0x0;	/*  Control_L */
-        case 0xFFE4: return 0x0;	/*  Control_R */
-        case 0xFFE5: return 0x0;	/*  Caps_Lock */
-        case 0xFFE6: return 0x0;	/*  Shift_Lock */
-        case 0xFFE7: return 0x0;	/*  Meta_L */
-        case 0xFFE8: return 0x0;	/*  Meta_R */
-        case 0xFFE9: return 0x0;	/*  Alt_L */
-        case 0xFFEA: return 0x0;	/*  Alt_R */
-        case 0xFFEB: return 0x0;	/*  Super_L */
-        case 0xFFEC: return 0x0;	/*  Super_R */
-        case 0xFFED: return 0x0;	/*  Hyper_L */
-        case 0xFFEE: return 0x0;	/*  Hyper_R */
-        case 0xFFFF: return 0x0;	/*  Delete */
         case 0x6AD: return 0x491;	/*  Ukrainian_ghe_with_upturn */
         case 0x6BD: return 0x490;	/*  Ukrainian_GHE_WITH_UPTURN */
-        case 0x14A1: return 0x0;	/*  Armenian_eternity */
         case 0x14A2: return 0x587;	/*  Armenian_ligature_ew */
         case 0x14A3: return 0x589;	/*  Armenian_verjaket */
         case 0x14A4: return 0x29;	/*  Armenian_parenright */
@@ -1476,22 +1228,13 @@ static int convert_KeySym_to_code_point(KeySym k)
         case 0x69D: return 0x4E3;	/*  Cyrillic_i_macron */
         case 0x69E: return 0x4E9;	/*  Cyrillic_o_bar */
         case 0x69F: return 0x4EF;	/*  Cyrillic_u_macron */
-        case 0x16A2: return 0x0;	/*  Ccedillaabovedot */
         case 0x16A3: return 0x1E8A;	/*  Xabovedot */
-        case 0x16A5: return 0x0;	/*  Qabovedot */
         case 0x16A6: return 0x12C;	/*  Ibreve */
-        case 0x16A7: return 0x0;	/*  IE */
-        case 0x16A8: return 0x0;	/*  UO */
         case 0x16A9: return 0x1B5;	/*  Zstroke */
         case 0x16AA: return 0x1E6;	/*  Gcaron */
         case 0x16AF: return 0x19F;	/*  Obarred */
-        case 0x16B2: return 0x0;	/*  ccedillaabovedot */
         case 0x16B3: return 0x1E8B;	/*  xabovedot */
-        case 0x16B4: return 0x0;	/*  Ocaron */
-        case 0x16B5: return 0x0;	/*  qabovedot */
         case 0x16B6: return 0x12D;	/*  ibreve */
-        case 0x16B7: return 0x0;	/*  ie */
-        case 0x16B8: return 0x0;	/*  uo */
         case 0x16B9: return 0x1B6;	/*  zstroke */
         case 0x16BA: return 0x1E7;	/*  gcaron */
         case 0x16BD: return 0x1D2;	/*  ocaron */
@@ -1499,11 +1242,7 @@ static int convert_KeySym_to_code_point(KeySym k)
         case 0x16C6: return 0x18F;	/*  SCHWA */
         case 0x16F6: return 0x259;	/*  schwa */
         case 0x16D1: return 0x1E36;	/*  Lbelowdot */
-        case 0x16D2: return 0x0;	/*  Lstrokebelowdot */
-        case 0x16D3: return 0x0;	/*  Gtilde */
         case 0x16E1: return 0x1E37;	/*  lbelowdot */
-        case 0x16E2: return 0x0;	/*  lstrokebelowdot */
-        case 0x16E3: return 0x0;	/*  gtilde */
         case 0x1EA0: return 0x1EA0;	/*  Abelowdot */
         case 0x1EA1: return 0x1EA1;	/*  abelowdot */
         case 0x1EA2: return 0x1EA2;	/*  Ahook */
