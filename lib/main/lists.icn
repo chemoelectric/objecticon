@@ -132,6 +132,14 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
+   # Succeed iff the size is zero.
+   #
+   public empty()
+      if size() = 0 then
+         return
+   end
+
+   #
    # Custom equals mirrors the {equals()} behaviour for builtin lists.
    #
    private object_equals(other, seen)
@@ -326,7 +334,7 @@ class LinkedList(List)
    private nhead
 
    public insert(i, x)
-      local n, t
+      local n
       if i = 0 then {
          if /nhead then
             nhead := LinkedListNode(, x)
@@ -342,13 +350,8 @@ class LinkedList(List)
          if i = 1 then
             nhead := LinkedListNode(nhead, x)
          else {
-            n := nhead
-            while \n & i > 2 do {
-               n := n.nxt
-               i -:= 1
-            }
-            t := LinkedListNode((\n).nxt, x) | fail
-            n.nxt := t
+            n := node_at(i - 1) | fail
+            n.nxt := LinkedListNode(n.nxt, x)
          }
       }
       return self
@@ -361,32 +364,19 @@ class LinkedList(List)
       if i = 1 then
          nhead := (\nhead).nxt | fail
       else {
-         n := nhead
-         while \n & i > 2 do {
-            n := n.nxt
-            i -:= 1
-         }
-         n.nxt := (\ (\n).nxt).nxt | fail
+         n := node_at(i - 1) | fail
+         n.nxt := (\n.nxt).nxt | fail
       }
       return self
    end
 
    public at(i)
-      local n
-      if i <= 0 then
-         i := cvpos_item(i, size()) | fail
-      n := nhead
-      while \n & i > 1 do {
-         n := n.nxt
-         i -:= 1
-      }
-      return (\n).val
+      return node_at(i).val
    end
 
    public get()
       local v
-      \nhead | fail
-      v := nhead.val
+      v := (\nhead).val | fail
       nhead := nhead.nxt
       return v
    end
@@ -467,6 +457,14 @@ class LinkedList(List)
    end
 
    #
+   # Set the head of the list (ie its first value), or fail if this
+   # list is empty.
+   #
+   public set_head(x)
+      return ((\nhead).val := x) & self
+   end
+
+   #
    # Return the tail of the list, or fail if the list is empty.
    #
    public tail()
@@ -474,19 +472,59 @@ class LinkedList(List)
    end
 
    #
-   # Make the last element of this list point to the head of the other list.
+   # Set the tail of the list to share the elements of the list
+   # `other`, or fail if this list is empty.
    #
-   public join(other)
-      local n
-      if /nhead then
-         nhead := other.nhead
-      else {
-         n := nhead
-         while \n.nxt do
-            n := n.nxt
-         n.nxt := other.nhead
-      }
+   public set_tail(other)
+      return ((\nhead).nxt := other.nhead) & self
+   end
+
+   #
+   # Set the tail of the list to the empty list (leaving just one
+   # element), or fail if this list is empty.
+   #
+   public clear_tail()
+      return ((\nhead).nxt := &null) & self
+   end
+
+   #
+   # Set this list to share the same elements as `other`.
+   #
+   public set_list(other)
+      nhead := other.nhead
       return self
+   end
+
+   #
+   # Return a new list which shares the elements of this list from
+   # (and including) element `i`.
+   #
+   public from(i)
+      return from_node(node_at(i))
+   end
+
+   #
+   # Succeed iff this list shares the same elements as list `other`.
+   #
+   public same(other)
+      if nhead === other.nhead then
+         return
+   end
+
+   #
+   # Return the node containing element `i`, or fail if `i` is out of
+   # range.
+   #
+   private node_at(i)
+      local n
+      if i <= 0 then
+         i := cvpos_item(i, size()) | fail
+      n := nhead
+      while \n & i > 1 do {
+         n := n.nxt
+         i -:= 1
+      }
+      return \n
    end
 
    #
