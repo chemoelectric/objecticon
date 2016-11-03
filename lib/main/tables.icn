@@ -173,6 +173,14 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
       
    #
+   # Succeed iff the size is zero.
+   #
+   public empty()
+      if size() = 0 then
+         return
+   end
+
+   #
    # Clear the table of all elements. Always succeeds and returns
    # {self}.  Only implemented with DELETE capability.
    #

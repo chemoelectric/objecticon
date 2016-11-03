@@ -5,7 +5,7 @@ import
    ipl.scan(many0),
    ipl.sort(qsort),
    datastruct(SortTable),
-   util(Yes)
+   util(Yes, toggle_flag)
 
 abstract class Outputter()
    public static const
@@ -17,7 +17,7 @@ abstract class Outputter()
       opts
 
    private
-      ul, ol, li, pre, bar
+      ul, ol, li, pre, bar, bold, underline, italic
 
    private static init()
       WHITESPACE := ' \t'
@@ -184,7 +184,7 @@ abstract class Outputter()
    private markdown_line(s)
       local t
       s ? {
-         while t := tab(upto('`{*_~<')) do {
+         while t := tab(upto('/`{*_~<')) do {
             output_fragment(t)
             if ="`" then {
                t := tab(upto('`\'') | 0)
@@ -201,13 +201,23 @@ abstract class Outputter()
                move(2)
                output_code(t)
             } else if ="**" then {
-               t := tab(find("**") | 0)
-               move(2)
-               output_bold(t)
+               if /bold then
+                  begin_bold()
+               else
+                  end_bold()
+               bold := toggle_flag(bold)
+            } else if not any(':/',, &pos - 1) & ="//" then {    # Try to avoid clashes with urls... http:// or file:///
+               if /italic then
+                  begin_italic()
+               else
+                  end_italic()
+               italic := toggle_flag(italic)
             } else if ="__" then {
-               t := tab(find("__") | 0)
-               move(2)
-               output_ul(t)
+               if /underline then
+                  begin_underline()
+               else
+                  end_underline()
+               underline := toggle_flag(underline)
             } else if ="<" & match("http:"|"https:"|"file:"|"ftp:") then {
                t := tab(find(">") | 0)
                move(1)
@@ -220,6 +230,7 @@ abstract class Outputter()
          t := tab(0)
          output_fragment(t)
       }
+      # Two or more spaces at the end of a line indicate a line break.
       end_line(Yes{s[-2:0] == "  "})
       return self
    end
@@ -256,6 +267,21 @@ abstract class Outputter()
       if \bar then {
          end_bar()
          bar := &null
+      }
+   end
+
+   private close_fonts()
+      if \bold then {
+         end_bold()
+         bold := &null
+      }
+      if \underline then {
+         end_underline()
+         underline := &null
+      }
+      if \italic then {
+         end_italic()
+         italic := &null
       }
    end
 
@@ -319,14 +345,13 @@ abstract class Outputter()
       close_li()
       close_ul()
       close_ol()
+      close_fonts()
       return self
    end
 
    protected abstract output_fragment(s)
    protected abstract output_link(s)
-   protected abstract output_bold(s)
    protected abstract output_code(s)
-   protected abstract output_ul(s)
    protected abstract output_anchor(s)
    protected abstract end_line(fl)
    protected abstract begin_pre()
@@ -341,6 +366,12 @@ abstract class Outputter()
    protected abstract begin_li()
    protected abstract end_li()
    protected abstract new_para()
+   protected abstract begin_bold()
+   protected abstract end_bold()
+   protected abstract begin_underline()
+   protected abstract end_underline()
+   protected abstract begin_italic()
+   protected abstract end_italic()
 
    public new(opts, symbol_table)
       self.opts := opts

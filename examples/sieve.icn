@@ -24,7 +24,7 @@ class Sieve(Dialog)
       #
       # If the ticker is running, retime it.
       #
-      ticker.change_sleep(interval.get_value())
+      ticker.change_time(interval.get_value())
    end
 
    #

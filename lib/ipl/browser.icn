@@ -3483,8 +3483,18 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       }
    end
 
+   private static get_meta_charset(doc)
+      local meta, cs, ct
+      every meta := doc.get_root_element().search_tree(u"META") do
+         if (map(meta.get_attribute(u"HTTP-EQUIV")) == u"content-type" &
+                 ct := ContentType.parse_rfc2616(string(meta.get_attribute(u"CONTENT"))) & 
+                 cs := ct.get_parameter("charset")) |
+             (cs := string(meta.get_attribute(u"CHARSET"))) then 
+            return cs
+   end
+
    private set_top_data(res)
-      local doc, s, row, c, cu, id, cs, s2, ct, meta
+      local doc, s, row, c, cu, id, cs, s2
       if \res.err & /res.data then {
          s := "<html><title>Error</title>" || 
             "<h1>Error:</h1>Getting " || mk_anchor(res.url) || "<br><br>" || res.err || "</html>"
@@ -3560,10 +3570,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          s2 := Text.liberal_ucs(s)
          doc := HtmlParser().parse(s2)
          # Check for meta tag content attribute
-         if meta := doc.get_root_element().search_tree(u"META") \ 1 &
-            ct := ContentType.parse_rfc2616(string(meta.get_attribute(u"CONTENT"))) &
-            cs := ct.get_parameter("charset") then 
-         {
+         if cs := get_meta_charset(doc) then {
             page_charset := cs || " (from META tag)"
             if s2 := convert_not_utf8(cs, s) then {
                # Our assumption of ucs was wrong, so re-parse.
@@ -5109,7 +5116,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    package check_scroll_ticker(d)
       scroll_ticker_interval := Gui.style.distance2ticker_rate(d)
-      scroll_ticker.change_sleep(scroll_ticker_interval)
+      scroll_ticker.change_time(scroll_ticker_interval)
       # Start it (if it isn't already running)
       scroll_ticker.start()
    end

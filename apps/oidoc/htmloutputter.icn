@@ -90,7 +90,7 @@ class HtmlOutputter(Outputter)
          write(index, "<noframes>")
          write(index, "<h2>")
          write(index, "Frame Alert</h2>")
-         write(index, "<p>")
+         write(index, "<p/>")
          write(index, "This document is designed to be viewed using the frames feature.")
          write(index, "If you see this message, you are using a non-frame-capable web client.")
          write(index, "</html>")
@@ -114,8 +114,8 @@ class HtmlOutputter(Outputter)
       use {nav := open(fname, "w") | stop("Couldn't open ", fname), {
          doctype(nav)
          write(nav, "<html><body>")
-         write(nav, "<h1>Packages</h1><p>")
-         write(nav, "<a href=\"all.html\" target=\"listFrame\">All</a><p>")
+         write(nav, "<h1>Packages</h1><p/>")
+         write(nav, "<a href=\"all.html\" target=\"listFrame\">All</a><p/>")
          every s := get_packages() do {
             if should_print_package(s) then
                write(nav, "<a href=\"", get_id(s) || ".html" || "\" target=\"listFrame\">", s, "</a><br>")
@@ -129,7 +129,7 @@ class HtmlOutputter(Outputter)
          doctype(begin)
          write(begin, "<html><body>")
          write(begin, "<h1>Object Icon generated documentation</h1>")
-         write(begin, "This is the automatically generated documentation for the following packages.<p>")
+         write(begin, "This is the automatically generated documentation for the following packages.<p/>")
          every s := get_packages() do
             if should_print_package(s) then
                write(begin, "<a href=\"", get_id(s) || ".html" || "\" target=\"listFrame\">", s, "</a><br>")
@@ -140,8 +140,8 @@ class HtmlOutputter(Outputter)
       use {all := open(fname, "w") | stop("Couldn't open ", fname), {
          doctype(all)
          write(all, "<html><body>")
-         write(all, "<h1>All packages</h1><p>")
-         write(all, "<h1>Classes</h1><p>")
+         write(all, "<h1>All packages</h1><p/>")
+         write(all, "<h1>Classes</h1><p/>")
          qsort(all_classes, name_sort)
          every c := !all_classes do {
             if should_print_symbol(c) then
@@ -149,7 +149,7 @@ class HtmlOutputter(Outputter)
                      get_id(c) || ".html\" target=\"displayFrame\">", 
                      c.name, "</a><br>")
          }
-         write(all, "<p><h1>Other Symbols</h1><p>")
+         write(all, "<p/><h1>Other Symbols</h1><p/>")
          qsort(all_others, name_sort)
          every c := !all_others do {
             if should_print_symbol(c) then
@@ -167,13 +167,13 @@ class HtmlOutputter(Outputter)
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
          doctype(f)
          write(f, "<html><head><meta charset=\"", get_charset(), "\"><title>", s, "</title></head><body>")
-         write(f, "<h1>Package ", s, "</h1><p>")
-         write(f, "<h1>Classes</h1><p>")
+         write(f, "<h1>Package ", s, "</h1><p/>")
+         write(f, "<h1>Classes</h1><p/>")
          every c := get_classes_in(s) do {
             output_class(c)
             write(f, "<a href=\"", get_id(c) || ".html\" target=\"displayFrame\">", c.name, "</a><br>")
          }
-         write(f, "<p><h1>Other Symbols</h1><p>")
+         write(f, "<p/><h1>Other Symbols</h1><p/>")
          every c := get_others_in(s) do {
             output_other(c)
             write(f, "<a href=\"", get_id(c) || ".html\" target=\"displayFrame\">", c.name, "</a><br>")
@@ -220,12 +220,12 @@ class HtmlOutputter(Outputter)
 
          s := c.get_package() | "default"
          write(f, "<dt>Package :</dt><dd><a href=\"", get_id(s) || ".html" || "\" target=\"listFrame\">", s, "</a></dd>")
-         write(f, "</dl><p>")
+         write(f, "</dl><p/>")
 
          if is(c.obj, Tree) then {
             output_a_file(c)
             comment_and_fields(f, c)
-            write(f, "<p>")
+            write(f, "<p/>")
          }
 
          pretty_heading(f, "Class summary")
@@ -259,14 +259,14 @@ class HtmlOutputter(Outputter)
             tbl_end(f)
          }
 
-         write(f, "<p>")
+         write(f, "<p/>")
 
          if *meths > 0 then {
             pretty_heading(f, "Method detail")
             every m := !meths do {
                write(f, "<a name=\"", m.name, "\"/>")
                write(f, "<h3>", m.name, "(", get_param_string(m.obj) ,")</h3>")
-               write(f, get_access_string(m.obj), "<p>")
+               write(f, get_access_string(m.obj), "<p/>")
                write(f, "<dl>")
                if member(overrides, m.name) then {
                   o := overrides[m.name]
@@ -289,7 +289,7 @@ class HtmlOutputter(Outputter)
             every m := !vars do {
                write(f, "<a name=\"", m.name, "\"/>")
                write(f, "<h3>", m.name, "</h3>")
-               write(f, get_access_string(m.decl_obj), "<p>")
+               write(f, get_access_string(m.decl_obj), "<p/>")
                write(f, "<dl>")
                if is(m.obj, Tree) then {
                   write(f, "<dd>")
@@ -457,16 +457,32 @@ class HtmlOutputter(Outputter)
       writes(output_file, "<code>", esc(s), "</code>")
    end
 
-   protected output_bold(s)
-      writes(output_file, "<b>", esc(s), "</b>")
-   end
-
-   protected output_ul(s)
-      writes(output_file, "<u>", esc(s), "</u>")
-   end
-
    protected output_anchor(s)
       writes(output_file, "<a href=\"", s, "\">", esc(s), "</a>")
+   end
+
+   protected begin_bold()
+      writes(output_file, "<b>")
+   end
+
+   protected end_bold()
+      writes(output_file, "</b>")
+   end
+
+   protected begin_underline()
+      writes(output_file, "<u>")
+   end
+
+   protected end_underline()
+      writes(output_file, "</u>")
+   end
+
+   protected begin_italic()
+      writes(output_file, "<i>")
+   end
+
+   protected end_italic()
+      writes(output_file, "</i>")
    end
 
    protected end_line(fl)
@@ -497,7 +513,7 @@ class HtmlOutputter(Outputter)
    end
 
    protected begin_ul()
-      write(output_file, "<p><ul>")
+      write(output_file, "<p/><ul>")
    end
 
    protected end_ul()
@@ -505,7 +521,7 @@ class HtmlOutputter(Outputter)
    end
 
    protected begin_ol()
-      write(output_file, "<p><ol>")
+      write(output_file, "<p/><ol>")
    end
 
    protected end_ol()
@@ -521,7 +537,7 @@ class HtmlOutputter(Outputter)
    end
 
    protected new_para()
-      write(output_file, "<p>")
+      write(output_file, "<p/>")
    end
 
    private output_file, output_sym
@@ -618,11 +634,11 @@ class HtmlOutputter(Outputter)
          s := c.get_package() | "default"
          write(f, "<dt>Package :</dt><dd><a href=\"", get_id(s) || ".html" || "\" target=\"listFrame\">", s, "</a></dd>")
          write(f, "<dt>Type :</dt><dd>", get_top_level_type(c), "</dd>")
-         write(f, "</dl><p>")
+         write(f, "</dl><p/>")
          if is(c.obj, Tree) then {
             output_a_file(c)
             comment_and_fields(f, c)
-            write(f, "<p>")
+            write(f, "<p/>")
          }
          if is(c, RecordSymbol) then {
             write(f, "<dt>Fields :</dt><dl>")

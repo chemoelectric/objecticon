@@ -15,25 +15,27 @@ import lang, io, ipl.pdco
 # attributes and methods to deal with XML namespaces.
 #
 # For example, given the document
-#
+# ~~
 #   <?xml version="1.0" ?>
 #   <top xmlns:nsid="http://an.url.com">
 #     <nsid:inner nsid:attr="val"/>
 #   </top>
+# ~~
 #
-# If n is the XmlElement representing the <top> element, then its
-# global name is GlobalName("top") (ie the same as its local name).  The inner
-# XmlElement however, has a global name of 
-#
+# If n is the `XmlElement` representing the ~~<top>~~ element, then its
+# global name is ~~GlobalName("top")~~ (ie the same as its local name).  The inner
+# `XmlElement` however, has a global name of 
+# ~~
 #    GlobalName("inner", "http://an.url.com"),
-#
+# ~~
 # and a single attribute with key 
-#
+# ~~
 #    GlobalName("attr", "http://an.url.com").
+# ~~
 #
 # The original parsed name and attribute table are still available
-# via the methods in the superclass Element.  For example, get_name()
-# for the inner XmlElement returns "nsid:inner".   
+# via the methods in the superclass `Element`.  For example, `get_name()`
+# for the inner `XmlElement` returns "nsid:inner".   
 #
 class XmlElement(Element)
    public 

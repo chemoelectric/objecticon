@@ -1412,7 +1412,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_popup(l)
-      local t, e, px, py, info
+      local t, e
       # Validate params; must be ucs encoded list, even number, and no empty ones.
       l := decode_list(l) | fail
       if (*l % 2 ~= 0) | /!l then
@@ -1420,16 +1420,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       t := []
       e := create !l
       while put(t, PopupElement(@e, @e))
-      (*t > 0) | fail
-      info := get_line_info() | fail
-      px := view.x + Gui.TEXT_INSET + (cx - 1) * char_w + Gui.TEXT_INSET
-      info := get_line_info() | fail
-      py := view.y - info.offset + (cy_to_index() - info.first) * line_height
-      # Ensure cursor is entirely within view
-      (view.y <= py & py + line_height - 1 < view.y + view.h) | fail
-      # Get perfect alignment with between the cursor line and the first line in the popup.
-      py -:= Gui.BORDER_WIDTH
-      open_popup(px, py, t)
+      open_popup(t)
    end
 
    private do_set_link(l)
@@ -2107,7 +2098,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    private check_scroll_ticker(d)
       scroll_ticker_interval := Gui.style.distance2ticker_rate(d)
-      scroll_ticker.change_sleep(scroll_ticker_interval)
+      scroll_ticker.change_time(scroll_ticker_interval)
       # Start it (if it isn't already running)
       scroll_ticker.start()
    end
@@ -2660,11 +2651,19 @@ class Vt(LineBasedScrollArea, MenuMode)
       send_tr_nl(pe.str)
    end
 
-   private open_popup(px, py, l)
+   private open_popup(l)
       local spc_below, spc_right, d, dim, win,
-         rs, max_h, max_w
+         rs, max_h, max_w, info, px, py
 
       close_popup()
+      (*l > 0) | fail
+      px := view.x + Gui.TEXT_INSET + (cx - 1) * char_w + Gui.TEXT_INSET
+      info := get_line_info() | fail
+      py := view.y - info.offset + (cy_to_index() - info.first) * line_height
+      # Ensure cursor is entirely within view
+      (view.y <= py & py + line_height - 1 < view.y + view.h) | fail
+      # Get perfect alignment between the cursor line and the first line in the popup.
+      py -:= Gui.BORDER_WIDTH
 
       win := parent_dialog.win
       dim := win.get_display_size()

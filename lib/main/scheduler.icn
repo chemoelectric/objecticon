@@ -17,17 +17,23 @@ class TaskStream(Stream, HasTask, HasUnderlyingStream)
    public in(n)
       local r
       r := task.poll([other, Poll.IN], timeout) | fail
-      if /r then return error("Timeout")
-      DescStream.poll_in_test(r[1]) | return error("poll() indicated an i/o error")
-      return other.in(n)
+      return if /r then 
+         error("Timeout")
+      else if DescStream.poll_in_test(r[1]) then
+         other.in(n)
+      else
+         error("poll() indicated an i/o error")
    end
 
    public out(s)
       local r
       r := task.poll([other, Poll.OUT], timeout) | fail
-      if /r then return error("Timeout")
-      DescStream.poll_out_test(r[1]) | return error("poll() indicated an i/o error")
-      return other.out(s)
+      return if /r then
+         error("Timeout")
+      else if DescStream.poll_out_test(r[1]) then
+         other.out(s)
+      else
+         error("poll() indicated an i/o error")
    end
 
    public close()
@@ -72,9 +78,8 @@ class Task()
    public const
       scheduler
    private readable
-      sleep_until,
-      last_sleep,
-      poll_until,
+      time_from,
+      time_until,
       poll_req
    private const
       xstate
@@ -83,18 +88,32 @@ class Task()
       state,
       poll_err,
       poll_res,
-      interrupt_flag
+      interrupt_flag,
+      notify_flag
 
-   # If a task is currently sleeping, then this alters the time it
-   # will sleep for, behaving as though the original call to {sleep}
-   # had given {n} as its parameter.
+   # If a task is currently sleeping or polling, then this alters the
+   # time it will sleep for, behaving as though the original call to
+   # {sleep} or {poll} had given {n} as its time parameter.
    #
    # @param n The time to wait for.  If {&null}, wait forever.
    #
-   public change_sleep(n)
-      \coex | runerr("change_sleep called on a currently active task")
-      if is_sleeping() then
-         sleep_until := (last_sleep + \n) | &null
+   public change_time(n)
+      \coex | runerr("change_time called on a currently active task")
+      if is_sleeping() | is_polling() then
+         time_until := (time_from + \n) | &null
+      return self
+   end
+
+   # This is like `change_time()`, but the time is set to `n`
+   # milliseconds from now, rather than from the time of the original
+   # call.
+   #
+   # @param n The time to wait for.  If {&null}, wait forever.
+   #
+   public change_time_from_now(n)
+      \coex | runerr("change_time_from_now called on a currently active task")
+      if is_sleeping() | is_polling() then
+         time_until := (Prog.get_runtime_millis() + \n) | &null
       return self
    end
 
@@ -146,6 +165,13 @@ class Task()
    # there is no advantage in using this method, and {DescStream.poll}
    # is preferable.
    #
+   # If the task is interrupted whilst polling this method fails with
+   # `&why` set appropriately.  The `interrupt_flag` is also set.
+   #
+   # If the task is notified whilst polling, this method returns
+   # `&null`, ie it behaves as though a timeout occurred.  The
+   # `notify_flag` is also set.
+   #
    # @param l A list of alternating {DescStream}, flag (from {Poll})
    # @        pairs.
    # @param timeout The optional timeout
@@ -153,9 +179,11 @@ class Task()
    public poll(l, timeout)
       self === scheduler.curr_task | runerr("poll called on task which is not current")
       self.coex := &current
-      self.poll_until := (Prog.get_runtime_millis() + \timeout) | &null
+      time_from := Prog.get_runtime_millis()
+      time_until := (time_from + \timeout) | &null
       self.poll_req := l
-      self.interrupt_flag := &null
+      self.poll_err := self.poll_res :=
+         self.notify_flag := self.interrupt_flag := &null
       scheduler.now_poll(self)
       return if \interrupt_flag then
          error("Interrupted")
@@ -166,21 +194,27 @@ class Task()
    end
 
    # Suspend this task, which must be the currently scheduled task,
-   # for {n} milliseconds.  If the task is notified whilst it is
-   # sleeping, then it is woken up.  If the task is interrupted, then
-   # it is also woken, but this method then fails, setting {&why}.
-   # Otherwise, this method succeeds and returns {self}.
+   # for `n` milliseconds; `&null` means indefinitely.
    #
-   # @param n The time to wait for.  If {&null}, wait forever (or until
+   # This task is woken and the method returns after one of three
+   # things happens :-
+   #
+   # 1. After `n` milliseconds passes; the method succeeds.
+   # 2. After it is notified; the method succeeds and the
+   #    `notify_flag` is set.
+   # 3. After it is interrupted; the method fails with `&why`
+   #    set appropriately.  The `interrupt_flag` is also set.
+   #
+   # @param n The time to wait for.  If `&null`, wait forever (or until
    # @        interrupted or notified).
-   # @return {self} when the task awakes; fails on interrupt
+   # @return `self` when the task awakes; fails on interrupt
    #
    public sleep(n)
       self === scheduler.curr_task | runerr("sleep called on task which is not current")
       self.coex := &current
-      last_sleep := Prog.get_runtime_millis()
-      sleep_until := (last_sleep + \n) | &null
-      self.interrupt_flag := &null
+      time_from := Prog.get_runtime_millis()
+      time_until := (time_from + \n) | &null
+      self.notify_flag := self.interrupt_flag := &null
       scheduler.now_sleep(self)
       return if \interrupt_flag then error("Interrupted") else self
    end
@@ -196,8 +230,9 @@ class Task()
       return self
    end
 
-   # If the task is sleeping, then place it immediately back into the
-   # ready state.  The task must not be currently active.
+   # If the task is sleeping or polling, then place it immediately
+   # back into the ready state.  The task must not be currently
+   # active.
    #
    public notify()
       \coex | runerr("notify called on a currently active task")
@@ -342,8 +377,10 @@ class Scheduler()
    end
 
    package notify(t)
-      if member(sleeping, t) then
+      if member(sleeping | polling, t) then {
+         t.notify_flag := &yes
          set_state(t, ready)
+      }
    end
 
    package now_sleep(t)
@@ -416,7 +453,7 @@ class Scheduler()
          if *sleeping > 0 then {
             curr_time := Prog.get_runtime_millis()
             every t := !sleeping do {
-               if curr_time >= \t.sleep_until then
+               if curr_time >= \t.time_until then
                   set_state(t, ready)
             }
             if *ready > 0 then
@@ -432,10 +469,8 @@ class Scheduler()
                if /r then {
                   # Process timeout for each task.
                   every t := !polling do {
-                     if curr_time > \t.poll_until then {
+                     if curr_time >= \t.time_until then
                         set_state(t, ready)
-                        t.poll_err := t.poll_res := &null
-                     }
                   }
                } else {
                   every t := !polling do {
@@ -447,11 +482,8 @@ class Scheduler()
                      if !x ~= 0 then {
                         set_state(t, ready)
                         t.poll_res := x
-                        t.poll_err := &null
-                     } else if curr_time > \t.poll_until then {
+                     } else if curr_time >= \t.time_until then
                         set_state(t, ready)
-                        t.poll_err := t.poll_res := &null
-                     }
                   }
                }
             } else {
@@ -459,7 +491,6 @@ class Scheduler()
                every t := !polling do {
                   set_state(t, ready)
                   t.poll_err := &why
-                  t.poll_res := &null
                }
             }
             # If we have a poll_timeout, the poll counts as work; otherwise it does not
