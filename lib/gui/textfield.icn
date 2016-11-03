@@ -359,7 +359,7 @@ class TextField(Component)
 
    public check_scroll_ticker(d)
       scroll_ticker_interval := Gui.style.distance2ticker_rate(d)
-      scroll_ticker.change_sleep(scroll_ticker_interval)
+      scroll_ticker.change_time(scroll_ticker_interval)
       # Start it (if it isn't already running)
       scroll_ticker.start()
    end
