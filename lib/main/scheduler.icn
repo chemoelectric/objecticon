@@ -163,7 +163,7 @@ class Task()
    public poll(l, timeout)
       self === scheduler.curr_task | runerr("poll called on task which is not current")
       self.coex := &current
-      self.poll_until := (Prog.get_runtime_millis() + \timeout) | &null
+      self.poll_until := (\timeout + Prog.get_runtime_millis()) | &null
       self.poll_req := l
       self.interrupt_flag := &null
       scheduler.now_poll(self)
@@ -450,7 +450,7 @@ class Scheduler()
                if /r then {
                   # Process timeout for each task.
                   every t := !polling do {
-                     if curr_time > \t.poll_until then {
+                     if curr_time >= \t.poll_until then {
                         set_state(t, ready)
                         t.poll_err := t.poll_res := &null
                      }
@@ -466,7 +466,7 @@ class Scheduler()
                         set_state(t, ready)
                         t.poll_res := x
                         t.poll_err := &null
-                     } else if curr_time > \t.poll_until then {
+                     } else if curr_time >= \t.poll_until then {
                         set_state(t, ready)
                         t.poll_err := t.poll_res := &null
                      }
