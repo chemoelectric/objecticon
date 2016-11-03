@@ -1,5 +1,7 @@
 package ipl.tasks
 
+import ipl.lists(ldel1)
+
 # A semaphore implementation using {Task}s.
 #
 class Semaphore()
@@ -9,26 +11,27 @@ class Semaphore()
    # Perform a wait on the semaphore.
    # @param t the current {Task} which may be put to sleep
    # @param timeout the optional timeout
-   # @return {&null}, but fails on timeout/interrupt to {t}
+   # @fail on timeout/interrupt to {t}
    public wait(t, timeout)
-      local i
-      if (n -:= 1) < 0 then {
+      if n > 0 then
+         n -:= 1
+      else {
          put(wl, t)
          t.sleep(timeout)
-         if i := keyof(wl, t) then {
+         if ldel1(wl, t) then
             # Interrupted/timeout
-            delete(wl, i)
-            n +:= 1
             fail
-         }
       }
       return self
    end
 
    # Perform a signal on the semaphore.
    public signal()
-      n +:= 1
-      get(wl).notify()
+      local t
+      if t := get(wl) then
+         t.notify()
+      else
+         n +:= 1
       return self
    end
 
