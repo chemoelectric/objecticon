@@ -89,7 +89,8 @@ class Task()
       state,
       poll_err,
       poll_res,
-      interrupt_flag
+      interrupt_flag,
+      notify_flag
 
    # If a task is currently sleeping, then this alters the time it
    # will sleep for, behaving as though the original call to {sleep}
@@ -152,6 +153,9 @@ class Task()
    # there is no advantage in using this method, and {DescStream.poll}
    # is preferable.
    #
+   # If the task is interrupted whilst polling this method fails with
+   # `&why` set appropriately.  The `interrupt_flag` is also set.
+   #
    # @param l A list of alternating {DescStream}, flag (from {Poll})
    # @        pairs.
    # @param timeout The optional timeout
@@ -172,21 +176,27 @@ class Task()
    end
 
    # Suspend this task, which must be the currently scheduled task,
-   # for {n} milliseconds.  If the task is notified whilst it is
-   # sleeping, then it is woken up.  If the task is interrupted, then
-   # it is also woken, but this method then fails, setting {&why}.
-   # Otherwise, this method succeeds and returns {self}.
+   # for `n` milliseconds; `&null` means indefinitely.
    #
-   # @param n The time to wait for.  If {&null}, wait forever (or until
+   # This task is woken and the method returns after one of three
+   # things happens :-
+   #
+   # 1. After `n` milliseconds passes; the method succeeds.
+   # 2. After it is notified; the method succeeds and the
+   #    `notify_flag` is set.
+   # 3. After it is interrupted; the method fails with `&why`
+   #    set appropriately.  The `interrupt_flag` is also set.
+   #
+   # @param n The time to wait for.  If `&null`, wait forever (or until
    # @        interrupted or notified).
-   # @return {self} when the task awakes; fails on interrupt
+   # @return `self` when the task awakes; fails on interrupt
    #
    public sleep(n)
       self === scheduler.curr_task | runerr("sleep called on task which is not current")
       self.coex := &current
       last_sleep := Prog.get_runtime_millis()
       sleep_until := (last_sleep + \n) | &null
-      self.interrupt_flag := &null
+      self.notify_flag := self.interrupt_flag := &null
       scheduler.now_sleep(self)
       return if \interrupt_flag then error("Interrupted") else self
    end
@@ -348,8 +358,10 @@ class Scheduler()
    end
 
    package notify(t)
-      if member(sleeping, t) then
+      if member(sleeping, t) then {
+         t.notify_flag := &yes
          set_state(t, ready)
+      }
    end
 
    package now_sleep(t)
