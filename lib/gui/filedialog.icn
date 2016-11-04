@@ -966,9 +966,7 @@ class FileDialog(Dialog)
          clear_constraints().
          set_constraint(Grid.X_ALIGN, Align.L).
          set_constraint(Grid.X_FILL, &yes).
-         set_constraint(Grid.X_WEIGHT, 1.0).
-         set_constraint(Grid.Y_FILL, &yes).
-         set_constraint(Grid.Y_WEIGHT, 1.0)
+         set_constraint(Grid.X_WEIGHT, 1.0)
       layout_6 := GridLayout().
          set_doi(scale(0)).
          set_dii(scale(2)).
