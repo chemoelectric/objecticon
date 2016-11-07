@@ -627,6 +627,20 @@ class Pattern()
    end
 
 
+   #
+   #  Like `match()` above, but only succeed if the entire string
+   #  `s[i1:i2]` matches the pattern.
+   #
+   public match_all(s,i1,i2) 
+      local a
+      check_plist()
+      a := begin_analysis(s,i1,i2) | fail
+      s := a.s; i1 := a.i; i2 := a.j
+      Re_ParenGroups := []
+      return s[i1:i2] ? (Re_match1(plist,1), pos(0), i1 - 1 + &pos)
+   end
+
+
    # s1,s2,...,sN
    private Re_match1(tokList,i) 
       #
