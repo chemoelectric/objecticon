@@ -2535,7 +2535,7 @@ $endif
       every e := !cwd_list do {
          s := e.name
          t := e.stat.mode_str[1]
-         if ((/filter_dirs & t == "d") | (!pats).match(s) = *s + 1)\1 &
+         if ((/filter_dirs & t == "d") | (!pats).match_all(s))\1 &
             (\show_hidden | not(Files.is_hidden(s))) then {
             if t == "d" then
                Files.is_relative_dir(s) | put(dirs, e)
