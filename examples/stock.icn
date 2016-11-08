@@ -84,7 +84,8 @@ class StockDialog(Dialog)
       symbol_field,
       ticker,
       httpc,
-      message_label
+      message_label,
+      mod
 
    private do_change()
       stocks.reset_all_layouts()
@@ -107,6 +108,10 @@ class StockDialog(Dialog)
       every stockp.add(s.gen())
       if is_live() then {
          do_change()
+         mod := &yes
+         # If the ticker is sleeping, wake it up.
+         if ticker.is_sleeping() then
+            ticker.notify()
       }
    end
 
@@ -161,12 +166,15 @@ class StockDialog(Dialog)
 
    private data_tick()
       repeat {
+         mod := &null
          if get_data() then
             msg()
          else
             msg(&why)
          do_change()
-         ticker.sleep(10000)
+         # Don't sleep if the list has been added to
+         if /mod then
+            ticker.sleep(10000)
       }
    end
 
@@ -198,8 +206,6 @@ class StockDialog(Dialog)
    private on_symbol_field(ev)
       add_sym(symbol_field.get_contents())
       symbol_field.set_contents("")
-      # If the ticker is sleeping, wake it up.
-      ticker.notify()
    end
 
    private setup()

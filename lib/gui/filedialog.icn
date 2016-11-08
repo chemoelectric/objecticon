@@ -685,7 +685,7 @@ class FileDialog(Dialog)
          if show_hidden_menu_item.is_checked() | not(Files.is_hidden(n)) then {
             if e.stat.mode_str[1] == "d" then
                Files.is_relative_dir(n) | put(dir_list, e)
-            else if (!pats).match(n) = *n + 1 then
+            else if (!pats).match_all(n) then
                put(file_list, e)
          }
       }
@@ -966,9 +966,7 @@ class FileDialog(Dialog)
          clear_constraints().
          set_constraint(Grid.X_ALIGN, Align.L).
          set_constraint(Grid.X_FILL, &yes).
-         set_constraint(Grid.X_WEIGHT, 1.0).
-         set_constraint(Grid.Y_FILL, &yes).
-         set_constraint(Grid.Y_WEIGHT, 1.0)
+         set_constraint(Grid.X_WEIGHT, 1.0)
       layout_6 := GridLayout().
          set_doi(scale(0)).
          set_dii(scale(2)).

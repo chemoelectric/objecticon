@@ -67,6 +67,18 @@ class Wildcard()
 
 
    #
+   #  Like `match()` above, but only succeed if the entire string
+   #  `s[i1:i2]` matches the pattern.
+   #
+   public match_all(s,i1,i2) 
+      local a
+      a := begin_analysis(s,i1,i2) | fail
+      s := a.s; i1 := a.i; i2 := a.j
+      return s[i1:i2] ? (wild_match1(copy(plist)) & pos(0) & i1 + &pos - 1)
+   end
+
+
+   #
    #  Produce the sequence of positions in s where strings begin that match
    #  the pattern, but fails if there is no such position.  Similar
    #  to find().

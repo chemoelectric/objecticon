@@ -950,7 +950,7 @@ package class Globs()
             return v
       }
       every v := !other do {
-         if v.pattern.match(f | fm) then
+         if v.pattern.match_all(f | fm) then
             return v
       }
    end

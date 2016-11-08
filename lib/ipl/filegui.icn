@@ -737,6 +737,8 @@ class FileTrail(Component)
       set_constraint("x_fill", &yes)
       set_constraint("x_align", Align.L)
       set_constraint("x_weight", 1.0)
+      # Set a path so that the component sizes correctly.
+      set_path(FilePath(Files.get_roots()))
       return
    end
 end
