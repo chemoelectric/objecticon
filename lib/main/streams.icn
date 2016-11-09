@@ -1482,8 +1482,10 @@ class ProgInputStream(FileStream, HasBgProc)
       local l
       l := pipe() | fail
       pid := System.fork() | {
-         l[1].close()
-         l[2].close()
+         save_why{{
+            l[1].close()
+            l[2].close()
+         }}
          fail
       }
       if pid > 0 then {
@@ -1540,8 +1542,10 @@ class ProgOutputStream(FileStream, HasBgProc)
       local l
       l := pipe(, FileOpt9.OCEXEC) | fail
       pid := System.fork() | {
-         l[1].close()
-         l[2].close()
+         save_why{{
+            l[1].close()
+            l[2].close()
+         }}
          fail
       }
       if pid > 0 then {
@@ -1643,7 +1647,7 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, 
       (l |||:= FileStream.pipe(, FileOpt9.OCEXEC) &
        l |||:= FileStream.pipe() &
        pid := System.fork()) | {
-          every (!l).close()
+          save_why{ every (!l).close() }
           fail
        }
       if pid > 0 then {
@@ -1702,8 +1706,10 @@ class ProgInputStream(SocketStream, HasBgProc)
       local l
       l := one_way_socketpair() | fail
       (pid := System.fork()) | {
-         l[1].close()
-         l[2].close()
+         save_why{{
+            l[1].close()
+            l[2].close()
+         }}
          fail
       }
       if pid > 0 then {
@@ -1762,8 +1768,10 @@ class ProgOutputStream(SocketStream, HasBgProc)
       l := one_way_socketpair() | fail
       (l[2].dflag(DescOpt.CLOEXEC) &
        pid := System.fork()) | {
-          l[1].close()
-          l[2].close()
+          save_why{{
+             l[1].close()
+             l[2].close()
+          }}
           fail
        }
       if pid > 0 then {
@@ -2857,7 +2865,7 @@ class PttyStream(FileStream)
       local f
       f := FileStream(slave_name, FileOpt.RDWR) | fail
       prepare_slave(f) | {
-         f.close()
+         save_why{ f.close() }
          fail
       }
       return f
