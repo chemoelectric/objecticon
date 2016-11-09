@@ -1294,8 +1294,10 @@ class ProgInputStream(SocketStream, HasBgProc)
       local l
       l := one_way_socketpair() | fail
       (pid := System.fork()) | {
-         l[1].close()
-         l[2].close()
+         save_why{{
+            l[1].close()
+            l[2].close()
+         }}
          fail
       }
       if pid > 0 then {
@@ -1354,8 +1356,10 @@ class ProgOutputStream(SocketStream, HasBgProc)
       l := one_way_socketpair() | fail
       (l[2].dflag(DescOpt.CLOEXEC) &
        pid := System.fork()) | {
-          l[1].close()
-          l[2].close()
+          save_why{{
+             l[1].close()
+             l[2].close()
+          }}
           fail
        }
       if pid > 0 then {
@@ -1904,7 +1908,7 @@ class PttyStream(FileStream)
       local f
       f := FileStream(slave_name, FileOpt.RDWR) | fail
       prepare_slave(f) | {
-         f.close()
+         save_why{ f.close() }
          fail
       }
       return f
