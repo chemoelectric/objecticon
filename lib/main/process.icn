@@ -29,9 +29,11 @@ class Process(HasTask, HasBgProc)
 $ifdef _PLAN9
       l := FileStream.pipe(FileOpt9.OCEXEC, FileOpt9.OCEXEC) | fail
       pid := System.fork() | {
-          l[1].close()
-          l[2].close()
-          fail
+         save_why{{
+            l[1].close()
+            l[2].close()
+         }}
+         fail
       }
       if pid > 0 then {
          # Parent
@@ -54,9 +56,11 @@ $else
       (l[1].dflag(DescOpt.CLOEXEC) &
        l[2].dflag(DescOpt.CLOEXEC) &
        pid := System.fork()) | {
-          l[1].close()
-          l[2].close()
-          fail
+         save_why{{
+            l[1].close()
+            l[2].close()
+         }}
+         fail
        }
       if pid > 0 then {
          # Parent
