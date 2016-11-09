@@ -30,9 +30,11 @@ class Process(HasTask, HasBgProc)
       (l[1].dflag(DescOpt.CLOEXEC) &
        l[2].dflag(DescOpt.CLOEXEC) &
        pid := System.fork()) | {
-          l[1].close()
-          l[2].close()
-          fail
+         save_why{{
+            l[1].close()
+            l[2].close()
+         }}
+         fail
        }
       if pid > 0 then {
          # Parent

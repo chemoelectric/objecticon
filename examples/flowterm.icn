@@ -1822,14 +1822,14 @@ class Terminal(TabItem, VtUI)
 $ifdef _DARWIN
       # Darwin doesn't seem to allow NONBLOCK flag on a tty
       (pid := System.fork()) | {
-         tty.close()
+         save_why{ tty.close() }
          fail
       }
 $else
       (tty.flag(FileOpt.NONBLOCK) &
        pid := System.fork()) | {
-         tty.close()
-         fail
+          save_why{ tty.close() }
+          fail
       }
 $endif
       if pid > 0 then {
