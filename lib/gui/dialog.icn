@@ -325,8 +325,12 @@ class Dialog(Component)
       return self
    end
 
+   # Resize the dialog to the given dimensions.  No events are
+   # generated (unless the window system limits the size).
+   #
    public resize_win(w, h)
-      win.set_size(w, h).pending(Window.RESIZE)      
+      win.set_size(w, h)
+      resize_win_impl()
       return self
    end
 
@@ -1279,16 +1283,20 @@ class Dialog(Component)
             return c
    end
 
+   private resize_win_impl()
+      #
+      # Resize buffer canvas
+      #
+      buffer_win.set_size(win.get_width(), win.get_height())
+      resize()
+      invalidate()
+   end
+
    #
    # Process a resize 
    # 
    private process_resize(l)
-      #
-      # Resize buffer canvas
-      #
-      self.buffer_win.set_size(self.win.get_width(), self.win.get_height())
-      self.resize()
-      self.invalidate()
+      resize_win_impl()
       fire(l[1])
    end
 
