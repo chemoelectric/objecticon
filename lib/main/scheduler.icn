@@ -18,7 +18,7 @@ class TaskStream(Stream, HasTask, HasUnderlyingStream)
       local r
       r := task.poll([other, Poll.IN], timeout) | fail
       return if /r then 
-         error("Timeout")
+         error(if /task.notify_flag then "Timeout" else "Notified")
       else if DescStream.poll_in_test(r[1]) then
          other.in(n)
       else
@@ -29,7 +29,7 @@ class TaskStream(Stream, HasTask, HasUnderlyingStream)
       local r
       r := task.poll([other, Poll.OUT], timeout) | fail
       return if /r then
-         error("Timeout")
+         error(if /task.notify_flag then "Timeout" else "Notified")
       else if DescStream.poll_out_test(r[1]) then
          other.out(s)
       else
