@@ -1536,7 +1536,7 @@ class Session9P()
             item.resp := respond(item.req)
             if member(valid, item) then {
                put(queue, item)
-               writer.notify()
+               wakeup_writer()
             }
          }
          t.revert()
@@ -1567,7 +1567,8 @@ class Session9P()
                item := get(queue) | break
                if member(valid, item) then {
                   if \verbose then write("SEND:", to_string(item.resp))
-                  ts.writes1(Comms9P.encode(item.resp))
+                  ts.writes1(Comms9P.encode(item.resp)) |
+                     if \verbose then write("ERROR ON SEND:", to_string(item.resp), ": ", &why)
                   delete(valid, item)
                }
             }
@@ -1580,6 +1581,12 @@ class Session9P()
          t.revert()
       }, CleanupState())
       return t.start()
+   end
+
+   private wakeup_writer()
+      # Note that the writer task polls as well a sleeps.
+      if writer.is_sleeping() then
+         writer.notify()
    end
 
    # This method returns immediately after starting a new
@@ -1612,7 +1619,7 @@ class Session9P()
                   }
                   insert(valid, item)
                   put(queue, item)
-                  writer.notify()
+                  wakeup_writer()
                } else {
                   insert(valid, item)
                   item.worker := async_worker(item, sched)
@@ -1620,7 +1627,7 @@ class Session9P()
             }
          }
          done_flag := 1
-         writer.notify()
+         wakeup_writer()
          if \verbose then write("READER EXITING")
          t.revert()
       }, data.create_task_state())
