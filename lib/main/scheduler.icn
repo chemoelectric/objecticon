@@ -18,7 +18,7 @@ class TaskStream(Stream, HasTask, HasUnderlyingStream)
       local r
       r := task.poll([other, Poll.IN], timeout) | fail
       return if /r then 
-         error("Timeout")
+         error(if /task.notify_flag then "Timeout" else "Notified")
       else if DescStream.poll_in_test(r[1]) then
          other.in(n)
       else
@@ -29,7 +29,7 @@ class TaskStream(Stream, HasTask, HasUnderlyingStream)
       local r
       r := task.poll([other, Poll.OUT], timeout) | fail
       return if /r then
-         error("Timeout")
+         error(if /task.notify_flag then "Timeout" else "Notified")
       else if DescStream.poll_out_test(r[1]) then
          other.out(s)
       else
@@ -88,7 +88,7 @@ class Task()
       state,
       poll_err,
       poll_res,
-      interrupt_flag,
+      interrupt_why,
       notify_flag
 
    # If a task is currently sleeping or polling, then this alters the
@@ -166,7 +166,8 @@ class Task()
    # is preferable.
    #
    # If the task is interrupted whilst polling this method fails with
-   # `&why` set appropriately.  The `interrupt_flag` is also set.
+   # `&why` set to the value of `interrupt_why`, which will be
+   # non-null.
    #
    # If the task is notified whilst polling, this method returns
    # `&null`, ie it behaves as though a timeout occurred.  The
@@ -178,15 +179,14 @@ class Task()
    #
    public poll(l, timeout)
       self === scheduler.curr_task | runerr("poll called on task which is not current")
-      self.coex := &current
+      coex := &current
       time_from := Prog.get_runtime_millis()
       time_until := (time_from + \timeout) | &null
-      self.poll_req := l
-      self.poll_err := self.poll_res :=
-         self.notify_flag := self.interrupt_flag := &null
+      poll_req := l
+      poll_err := poll_res := notify_flag := interrupt_why := &null
       scheduler.now_poll(self)
-      return if \interrupt_flag then
-         error("Interrupted")
+      return if \interrupt_why then
+         error(interrupt_why)
       else if \poll_err then
          error(poll_err)
       else
@@ -203,7 +203,8 @@ class Task()
    # 2. After it is notified; the method succeeds and the
    #    `notify_flag` is set.
    # 3. After it is interrupted; the method fails with `&why`
-   #    set appropriately.  The `interrupt_flag` is also set.
+   #    set to the value of `interrupt_why`, which will be
+   #    non-null.
    #
    # @param n The time to wait for.  If `&null`, wait forever (or until
    # @        interrupted or notified).
@@ -211,22 +212,23 @@ class Task()
    #
    public sleep(n)
       self === scheduler.curr_task | runerr("sleep called on task which is not current")
-      self.coex := &current
+      coex := &current
       time_from := Prog.get_runtime_millis()
       time_until := (time_from + \n) | &null
-      self.notify_flag := self.interrupt_flag := &null
+      notify_flag := interrupt_why := &null
       scheduler.now_sleep(self)
-      return if \interrupt_flag then error("Interrupted") else self
+      return if \interrupt_why then error(interrupt_why) else self
    end
 
    # Interrupt the task, which may not be currently active.  If the
    # task is currently sleeping or polling, then it is placed back in
-   # the ready state.  This causes the original {poll} or {sleep} call
-   # to fail, setting {&why}.
+   # the ready state.  This causes the original `poll` or `sleep` call
+   # to fail, setting `&why` to the value given in the optional
+   # parameter `why` (the default `&why` is "Interrupted").
    #
-   public interrupt()
+   public interrupt(why)
       \coex | runerr("interrupt called on a currently active task")
-      scheduler.interrupt(self)
+      scheduler.interrupt(self, why)
       return self
    end
 
@@ -369,9 +371,9 @@ class Scheduler()
       insert(t.state, t)
    end
 
-   package interrupt(t)
+   package interrupt(t, why)
       if member(sleeping | polling, t) then {
-         t.interrupt_flag := &yes
+         t.interrupt_why := \why | "Interrupted"
          set_state(t, ready)
       }
    end

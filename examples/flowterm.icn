@@ -1908,7 +1908,7 @@ $endif
          # ICRNL bit in the termios c_iflag structure (see rltty.c).
          i := if *input > 0 & \some_in then Poll.IN + Poll.OUT else Poll.IN
          x := io_task.poll([tty, i]) | {
-            if /io_task.interrupt_flag then {
+            if /io_task.interrupt_why then {
                err_msg("IO problem polling tty: " || &why)
                break
             } else {
