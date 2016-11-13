@@ -1411,6 +1411,11 @@ class BrowserTab(TabItem, BrowserUI)
 
    private make_display_file(res)
       local t
+      # A local file URL can be displayed directly
+      if res.url.scheme == u"file" &
+         res.url.host  == ("localhost" | &host) &
+         t := ucs(res.url.get_decoded_path()) then
+         return t
       if /res.fname then
          t := Files.make_temp_filename("oibrowser")
       else {

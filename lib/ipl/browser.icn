@@ -395,6 +395,10 @@ class FileSubWorker(SubWorker)
 $ifndef _MS_WIN32
       local ts
 $endif
+
+      worker.req.url.host == ("localhost" | &host) |
+         return error("Can't access a file: URL from another host")
+      
       f := worker.req.url.get_decoded_path()
       if Files.is_directory(f) then {
          l := qsort(Files.ucs_list(f), Files.name_cmp) | fail
