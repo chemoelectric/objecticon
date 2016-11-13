@@ -1411,6 +1411,10 @@ class Session9P()
             p := o.path
             qids := []
             every e := !x.wname do {
+               # End on non-directory
+               info := data.get_info(p)
+               if iand(info.mode, Mode9.DMDIR) = 0 then
+                  break
                if e == ".." then
                   p := tmp(data.get_parent(p), t)   # Note parent of root is root
                else 
