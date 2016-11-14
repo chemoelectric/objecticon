@@ -214,12 +214,8 @@ class FlowTermDialog(Dialog)
       d.show_modal(self)
    end
 
-   private html_img_size()
-      return "width=" || scale(64) ||  " height=" || scale(64)
-   end
-
    private on_about(ev)
-      show_html("<html><h1><img src=img:rpp.ABOUT_64 " || html_img_size() || " align=absmiddle/>&nbsp;About FlowTerm</h1>_
+      show_html("<html><h1><img src=img:rpp.ABOUT_64 align=absmiddle/>&nbsp;About FlowTerm</h1>_
 <h2>Author</h2>Robert Parlett_
 <h2>Contact</h2><a href=mailto:r.parlett@gmail.com</a>r.parlett@gmail.com</a>_
 <h2>Version</h2>" || &version ||
@@ -227,7 +223,7 @@ class FlowTermDialog(Dialog)
    end
 
    private on_help(ev)
-      show_html("<html><h1><img src=img:rpp.HELP_64 " || html_img_size() || " align=absmiddle/>&nbsp;FlowTerm Help</h1>_
+      show_html("<html><h1><img src=img:rpp.HELP_64 align=absmiddle/>&nbsp;FlowTerm Help</h1>_
 FlowTerm is a terminal emulator which uses web-like hyperlinks, as well as some elements of a file explorer._
 <p>_
 It requires an additional set of programs, <i>FlowTerm extras</i>, in order to be fully functional._
@@ -2025,7 +2021,7 @@ $endif
       local s, es
       if url.scheme == u"file" then {
          if s := ucs(url.get_decoded_path()) then {
-            es := if /ev.shift & is_local_host(url) & cwd ~== u"/" then {
+            es := if /ev.shift & url.is_local_file() & cwd ~== u"/" then {
                if cwd == s then
                   u"./"
                else if match(cwd || u"/", s) then
@@ -2035,7 +2031,7 @@ $endif
             } else
                s
             es := Format.shell_escape(es)
-            if is_local_host(url) & Files.is_directory(s) then {
+            if url.is_local_file() & Files.is_directory(s) then {
                if es[-1] ~== u"/" then
                   es ||:= u"/"
             }
@@ -2062,15 +2058,11 @@ $endif
       suspend Xdg.gen_desktop_entries("x-scheme-handler/" || string(url.scheme))
    end
 
-   private static is_local_host(url)
-      return url.host == ("localhost" | &host)
-   end
-
    private get_runners(url)
       local s, cd, de, fl
       case string(url.scheme) of {
          "file" : {
-            is_local_host(url) | return error(u"Can't run a file on another host (" || url.host || u")")
+            url.is_local_file() | return error(u"Can't run a file on another host (" || url.host || u")")
             s := ucs(url.get_decoded_path()) | return error(u"URL decoded path not utf8")
             if Files.is_directory(s) then
                return ImmediateRunner(u"cd " || Format.shell_escape(s))
@@ -2291,7 +2283,7 @@ $endif
             set_label("Insert command").
             connect(create send_tty(r.get_command()), Event.ACTION))
       if url.scheme == u"file" then {
-         if is_local_host(url) & \udp then {
+         if url.is_local_file() & \udp then {
             if Files.is_directory(udp) then {
                m.add(TextMenuItem().
                      set_label("Open in new tab").
@@ -2641,7 +2633,7 @@ $endif
          parent_dialog.resynch_pointer()
       }
 
-      (cwd === history[history_pos].dir) | {
+      (cwd == history[history_pos].dir) | {
          every 1 to history_pos - 1 do
             pop(history)
          push(history, default.HistoryEntry(cwd))
