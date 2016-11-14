@@ -64,6 +64,8 @@ class DirectoryDialog(Dialog)
 
    public init_dialog()
       res := &null
+      # Clear any cached directory list in the suggest field
+      dir.view.refresh()
       dir.grab_focus()
       win.set_min_size(win.get_width(), win.get_height())
       # Do this here as we need the tree to be setup so that we
