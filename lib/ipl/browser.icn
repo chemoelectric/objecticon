@@ -1195,8 +1195,9 @@ class Img(Image, HasLastHighlight)
                else 
                   set_height(ih + border.get_total_height())
             }
-            # If neither set, ensure a scaled image with the true ratio.
-            if /w_spec & /h_spec then
+            # If neither set (/w_spec should imply /h_spec), ensure a
+            # scaled image with the true ratio.
+            if /w_spec then
                set_width(scale(win.get_width()) + border.get_total_width())
 
             img_name := res.fname
@@ -1656,7 +1657,7 @@ class FormImgX(FormEntry)
 
    public get_form_value(ev, src)
       if src === img then
-         return ev.x - img.x
+         return round((ev.x - img.x) / Gui.SCALE)
    end
 
    public new(img)
@@ -1671,7 +1672,7 @@ class FormImgY(FormEntry)
 
    public get_form_value(ev, src)
       if src === img then
-         return ev.y - img.y
+         return round((ev.y - img.y) / Gui.SCALE)
    end
 
    public new(img)
