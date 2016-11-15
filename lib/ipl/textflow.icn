@@ -3,6 +3,7 @@ package ipl.browser
 import 
    gui,
    util,
+   net,
    graphics(Key),
    ipl.strings
 
@@ -1470,7 +1471,7 @@ class TextFlow(Component, HasLastHighlight)
             if u := \o.attr.url then {
                n -:= 1
                if n = 0 then {
-                  (url.str() == u.str()) | fail
+                  URL.equiv(url, u) | fail
                   last_highlight := u
                   return self
                }
