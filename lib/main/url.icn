@@ -248,6 +248,15 @@ class URL(ObjectOutput)
       return Text.liberal_ucs(str())
    end
 
+   #
+   # Succeed iff this URL represents a local file.
+   #
+   public is_local_file()
+      if scheme == "file" &
+         host == ("localhost" | &host) then
+         return
+   end
+
    # Extract the cgi parameters from the {file} field.  Fails if there
    # is no query in the file part.
    # @return   A table, representing the keys and values of the fields.
@@ -514,5 +523,13 @@ class URL(ObjectOutput)
             break
       }
       return s
+   end
+
+   #
+   # Succeed iff two URLs represent the same URL, based on their
+   # `str()` values.
+   #
+   public static equiv(x, y)
+      return x.str() == y.str()
    end
 end

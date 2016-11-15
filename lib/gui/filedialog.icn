@@ -231,6 +231,8 @@ class FileDialog(Dialog)
    end
 
    public init_dialog()
+      # Clear any cached directory list in the suggest field
+      file.view.refresh()
       if /multiple_files_flag then
          file.grab_focus()
       win.set_min_size(win.get_width(), win.get_height())
@@ -608,7 +610,7 @@ class FileDialog(Dialog)
    end
 
    public goto_dir(d, nav)
-      local t
+      local t, ds
       # Use a temporary variable here so that we save_pos() before
       # setting loaded_dir_path.
       t := FilePath(d).absolute(loaded_dir_path).canonical().ucs_path() | fail
@@ -623,11 +625,14 @@ class FileDialog(Dialog)
       set_lists(sort_dir_list())
       restore_pos()
       if /nav then {
-         every 1 to history_pos - 1 do
-            pop(history)
-         push(history, loaded_dir_path.ucs())
-         history_pos := 1
-         update_grey()
+         ds := loaded_dir_path.ucs()
+         (ds == history[history_pos]) | {
+            every 1 to history_pos - 1 do
+               pop(history)
+            push(history, ds)
+            history_pos := 1
+            update_grey()
+         }
       }
       return self
    end

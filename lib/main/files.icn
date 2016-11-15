@@ -893,6 +893,14 @@ class FilePath(ObjectOutput)
    end
 
    #
+   # Succeed iff two FilePaths represent the same path, based on their
+   # `str()` values.
+   #
+   public static equiv(x, y)
+      return x.str() == y.str()
+   end
+
+   #
    # Create a new instance from a list of elements, without taking a
    # copy.
    #

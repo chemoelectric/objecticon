@@ -99,10 +99,22 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       last_download_dir,
       last_file_dir
 
+   public static create_open_with_menu_item(de, path)
+      local m
+      m := TextMenuItem().
+         set_label(de.name).
+         connect(create launch_prog(de, path), Event.ACTION)
+      m.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, &yes)))
+      return m
+   end
+
 $ifdef _PLAN9
    public static launch_prog(de, file)
       local pid, cmd
-
+      if \opts["v"] then {
+         write("Desktop entry: ", to_string(de, 3, &yes))
+         write("File: ", image(file))
+      }
       pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
                              ForkOpt.RFNOTEG, ForkOpt.RFREND, ForkOpt.RFNOWAIT)) | fail
       if pid > 0 then {
@@ -128,6 +140,10 @@ $ifdef _PLAN9
 $else
    public static launch_prog(de, file)
       local pid, cmd, s
+      if \opts["v"] then {
+         write("Desktop entry: ", to_string(de, 3, &yes))
+         write("File: ", image(file))
+      }
       pid := System.fork() | fail
       if pid > 0 then {
          # Parent
@@ -180,16 +196,15 @@ $endif
    end
 
    public update_visited(url, title)
-      local e, i, s
+      local e, i
       if url.scheme == (u"cache" | u"config") then
          fail
-      s := url.str()
       every i := 1 to *settings.visited do {
          e := settings.visited[i]
          # Don't use equals here since the ucs/string interaction may
          # give wrong results; eg on a redirection we get a URL
          # composed of string elements.
-         if s == e.url.str() then {
+         if URL.equiv(url, e.url) then {
             e.last_time := Time()
             e.title := title
             e.times +:= 1
@@ -236,7 +251,7 @@ $endif
 
    private list_visited()
       local s, e, n
-      s := "<html><title>Visited</title>" || Browser.get_table_tag() || ""
+      s := "<html><title>Visited</title>" || Browser.TABLE_TAG || ""
       s ||:= "<tr><th align=left>Title</th><th align=right>Times&nbsp;</th><th>Last visit</th><th align=left>URL</th></tr>"
       every e := !settings.visited do {
          n := Browser.limit_text(\e.title, scale(200)) | ""
@@ -780,15 +795,6 @@ $endif
                      Xdg.gen_desktop_entries(Xdg.alternative_mime_types(Xdg.get_mime_type_for_file(\res.fname)))}
    end
 
-   private create_open_with_menu_item(de, path)
-      local m
-      m := TextMenuItem().
-         set_label(de.name).
-         connect(create BrowserDialog.launch_prog(de, path), Event.ACTION)
-      m.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, &yes)))
-      return m
-   end
-
    private on_table_rpress(ev)
       local popup, menu, l, d, m, de
 
@@ -816,7 +822,7 @@ $endif
                connect(create on_copy_escaped_result(d), Event.ACTION))
             m := Menu().set_label("Open with")
             every de := get_possible_desktop_entries(d.resp) do
-               m.add(create_open_with_menu_item(de, d.full_path))
+               m.add(BrowserDialog.create_open_with_menu_item(de, d.full_path))
             if *m.children > 0 then 
                menu.add(m)
          }
@@ -1131,10 +1137,17 @@ class BrowserTab(TabItem, BrowserUI)
       search_close_button,
       search_next_button,
       search_prev_button, 
-      search_pos
+      search_pos,
+      start_url,
+      start_referer_url
 
    private on_close_button(ev)
       close_tab()
+   end
+
+   public initially()
+      TabItem.initially()
+      browser.goto(\start_url, start_referer_url)
    end
 
    public finally()
@@ -1372,18 +1385,35 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    private populate_link_menu(url, m)
+      local f, de, m1
       m.add(TextMenuItem().
             set_label("Copy link").
             connect(create copy_link(url), Event.ACTION))
-      m.add(TextMenuItem().
-            set_label("Download").
-            connect(create download(url, browser.page_url), Event.ACTION))
-      m.add(TextMenuItem().
-            set_label("Download to file...").
-            connect(create download_to_file(url, browser.page_url), Event.ACTION))
-      m.add(TextMenuItem().
-            set_label("Download to dir...").
-            connect(create download_to_dir(url, browser.page_url), Event.ACTION))
+      m1 := Menu().set_label("Open with")
+      if url.scheme == u"file" then {
+         if url.is_local_file() &
+            f := ucs(url.get_decoded_path()) &
+            Files.access(f) &
+            not Files.is_directory(f) 
+         then {
+            every de := Xdg.gen_desktop_entries_for_file(f) do
+               m1.add(BrowserDialog.create_open_with_menu_item(de, f))
+         }
+      } else {
+         every de := Xdg.gen_desktop_entries("x-scheme-handler/" || string(url.scheme)) do
+            m1.add(BrowserDialog.create_open_with_menu_item(de, url.ucs()))
+         m.add(TextMenuItem().
+               set_label("Download").
+               connect(create download(url, browser.page_url), Event.ACTION))
+         m.add(TextMenuItem().
+               set_label("Download to file...").
+               connect(create download_to_file(url, browser.page_url), Event.ACTION))
+         m.add(TextMenuItem().
+               set_label("Download to dir...").
+               connect(create download_to_dir(url, browser.page_url), Event.ACTION))
+      }
+      if *m1.children > 0 then 
+         m.add(m1)
    end
 
    public create_link_menu(url)
@@ -1400,12 +1430,12 @@ class BrowserTab(TabItem, BrowserUI)
       m.add(TextMenuItem().
             set_label("Copy image").
             connect(create copy_link(url), Event.ACTION))
-      if \img.over then
-         populate_link_menu(img.over, m)
       if \img.img_data then
          m.add(TextMenuItem().
                set_label("Save image...").
                connect(create do_save(img.img_name, img.img_data), Event.ACTION))
+      if \img.over then
+         populate_link_menu(img.over, m)
       if \img.err then
          m.add(TextMenuItem().
                set_label("Show error...").
@@ -1446,6 +1476,12 @@ class BrowserTab(TabItem, BrowserUI)
 
    private make_display_file(res)
       local t
+      # A local file URL can be displayed directly (this should never
+      # happen in fact, since goto_externally will have displayed any
+      # valid file).
+      if res.url.is_local_file() &
+         t := ucs(res.url.get_decoded_path()) then
+         return t
       if /res.fname then
          t := Files.make_temp_filename("oibrowser")
       else {
@@ -1465,14 +1501,26 @@ class BrowserTab(TabItem, BrowserUI)
       local de, mt, file
       mt := (\res.content_type).to_rfc1521()
       de := Xdg.gen_desktop_entries(\mt) | Xdg.gen_desktop_entries_for_file(\res.fname) | fail
-      if \opts["v"] then 
-         write("Desktop entry: ", to_string(de, 3, &yes))
       file := make_display_file(res)
-      if \opts["v"] then 
-         write("Display file: ", image(file))
       BrowserDialog.launch_prog(de, file)
       parent_dialog.update_visited(res.url)
       return
+   end
+
+   public goto_externally(url)
+      local f, de
+      if url.is_local_file() &
+         f := ucs(url.get_decoded_path()) &
+         Files.access(f) &
+         not Files.is_directory(f) &
+         not (string(map(Files.get_extension(f))) ==
+              ("htm" | "html" | "jpg" | "jpeg" | "png" | "gif")) &
+         de := Xdg.gen_desktop_entries_for_file(f) then
+      {
+         BrowserDialog.launch_prog(de, f)
+         parent_dialog.update_visited(url)
+         return
+      }
    end
 
    public browse_for_file(s)
@@ -1518,7 +1566,7 @@ class BrowserTab(TabItem, BrowserUI)
          # If we were redirected from the original url, save that too
          # in the visited list.
          ru := browser.page_resp.req.url
-         if ru ~=== browser.page_url then
+         URL.equiv(ru, browser.page_url) |
             parent_dialog.update_visited(ru, browser.page_title)
       }
       url_field.set_contents(browser.curr_history_entry.url.liberal_ucs())
@@ -1541,7 +1589,7 @@ class BrowserTab(TabItem, BrowserUI)
       local data, ct
       /fres.err | fail
       data := fres.data
-      if endswith(map(fres.fname), ".ico") | 
+      if (map(Files.get_extension(fres.fname)) == "ico") | 
          (ct := \fres.content_type &
           ct.type == "image" &
           ct.subtype == "x-icon") then
@@ -1641,7 +1689,8 @@ class BrowserTab(TabItem, BrowserUI)
          set_worker_pool(browser_dialog.pool).
          set_outermost_border(EmptyBorder().set_insets(b, b, b, b)).
          set_font_factor(browser_dialog.settings.font_factor)
-      browser.goto(\url, referer_url)
+      start_url := url
+      start_referer_url := referer_url
       return
    end
 

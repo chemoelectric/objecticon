@@ -288,9 +288,9 @@ class Cache()
 
    public get_status()
       local s1, s2, ce, n, sz, exp, ct, total
-      s1 := Browser.get_table_tag() ||
+      s1 := Browser.TABLE_TAG ||
          "<tr><th align=left>Filename</th><th align=right>Size&nbsp;</th><th>Expiry</th><th align=left>Content&nbsp;type</th><th align=left>URL</th></tr>"
-      s2 := Browser.get_table_tag() ||
+      s2 := Browser.TABLE_TAG ||
          "<tr><th align=left>Dest</th><th>Expiry</th><th align=left>URL</th></tr>"
       total := 0
       every ce := !t do {
@@ -404,6 +404,10 @@ class FileSubWorker(SubWorker)
 $ifndef _MS_WIN32
       local ts
 $endif
+
+      worker.req.url.host == ("localhost" | &host) |
+         return error("Can't access a file: URL from another host")
+      
       f := worker.req.url.get_decoded_path()
       if Files.is_directory(f) then {
          l := qsort(Files.ucs_list(f), Files.name_cmp) | fail
@@ -413,7 +417,7 @@ $endif
          return use {
             rs := RamStream(),
             {
-               rs.out("<html><title>Directory " || f || "</title>" || Browser.get_table_tag())
+               rs.out("<html><title>Directory " || f || "</title>" || Browser.TABLE_TAG)
                path := FilePath(f)
                every e := !l do {
                   t := e.lstat
@@ -644,7 +648,6 @@ class HttpSubWorker(SubWorker)
                      hres := httpc.get_response() &
                      sc := hres.get_status_code() then 
                   {
-                     #write("**** code=",sc," status=",image(hres.get_status()),"   helper.ce=",image(helper.cache_entry))
                      if ce := helper.get_cache_entry() & 
                         sc = (304 | 999) then 
                      {
@@ -1061,7 +1064,7 @@ class WorkerPool()
       local s, w, st, t, l, r, k, c
       s := "<html><title>Worker pool status</title>"
 
-      s ||:= "<h1>Workers</h1>" || Browser.get_table_tag() || "<tr><th align=left>Serial</th><th align=left>Status</th><th align=left>URL</th></tr>"
+      s ||:= "<h1>Workers</h1>" || Browser.TABLE_TAG || "<tr><th align=left>Serial</th><th align=left>Status</th><th align=left>URL</th></tr>"
       every w := !workers do {
          t := w.task
          st := if t.is_current() then "current"
@@ -1080,7 +1083,7 @@ class WorkerPool()
       s ||:= "</table>"
 
       if *queue > 0 then {
-         s ||:= "<h1>Queue</h1>" || Browser.get_table_tag() || "<tr><th align=left>Client</th><th align=left>Kind</th><th align=left>URL</th></tr>"
+         s ||:= "<h1>Queue</h1>" || Browser.TABLE_TAG || "<tr><th align=left>Client</th><th align=left>Kind</th><th align=left>URL</th></tr>"
          every r := !!queue do {
             k := case r.kind of {
                Worker.NORMAL: "NORMAL"
@@ -1221,6 +1224,11 @@ class Img(Image, HasLastHighlight)
                else 
                   set_height(ih + border.get_total_height())
             }
+            # If neither set (/w_spec should imply /h_spec), ensure a
+            # scaled image with the true ratio.
+            if /w_spec then
+               set_width(scale(win.get_width()) + border.get_total_width())
+
             img_name := res.fname
             img_data := res.data
             set_fill_dimensions(2)
@@ -1339,7 +1347,7 @@ class Img(Image, HasLastHighlight)
          if u := \a.url then {
             n -:= 1
             if n = 0 then {
-               (url.str() == u.str()) | fail
+               URL.equiv(url, u) | fail
                last_highlight := u
                return self
             }
@@ -1678,7 +1686,7 @@ class FormImgX(FormEntry)
 
    public get_form_value(ev, src)
       if src === img then
-         return ev.x - img.x
+         return round((ev.x - img.x) / Gui.SCALE)
    end
 
    public new(img)
@@ -1693,7 +1701,7 @@ class FormImgY(FormEntry)
 
    public get_form_value(ev, src)
       if src === img then
-         return ev.y - img.y
+         return round((ev.y - img.y) / Gui.SCALE)
    end
 
    public new(img)
@@ -2763,6 +2771,7 @@ abstract class BrowserUI()
    public abstract is_visited(url)
    public abstract display_search()
    public abstract display_externally(res)
+   public abstract goto_externally(url)
 end
 
 package class BrowserPrimarySelectionOwner(TextSelectionOwner)
@@ -2847,7 +2856,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public static
       SCROLL_INCREMENT,
-      DEFAULT_HISTORY_SIZE
+      DEFAULT_HISTORY_SIZE,
+      TABLE_TAG
 
    private static const
       default_font_clone
@@ -3003,6 +3013,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       default_font_clone := Window().set_font("sans")
       SCROLL_INCREMENT := env_scale("OI_BROWSER_SCROLL_INCREMENT") | scale(20)
       DEFAULT_HISTORY_SIZE := env_int("OI_BROWSER_DEFAULT_HISTORY_SIZE", 0) | 100
+      TABLE_TAG := "<table cellspacing=4>"
    end
 
    public get_map(s)
@@ -3312,6 +3323,10 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return (\ui).display_externally(res)
    end
 
+   public goto_externally(url)
+      return (\ui).goto_externally(url)
+   end
+
    public cancel()
       worker_pool.cancel_all(self)
       return self
@@ -3537,7 +3552,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       page_resp := res
       page_url := res.url
       clear_searched()
-      if res.req.kind = Worker.NORMAL then {
+      if res.req.kind = Worker.NORMAL &
+         not URL.equiv(history[history_pos].url, page_url) then
+      {
          every 1 to history_pos - 1 do
             pop(history)
          # Fields are set below
@@ -3552,7 +3569,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       # redirect instead of error).
       curr_history_entry.url := page_url
       curr_history_entry.referer := res.req.referer
-      curr_history_entry.form_data := if page_url === res.req.url then res.req.form_data else &null
+      curr_history_entry.form_data := if URL.equiv(page_url, res.req.url) then res.req.form_data else &null
       do_update_grey()
 
       maps := table()
@@ -3898,9 +3915,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       # TextFlow).
       if \context.nowrap | \context.pre then
          q.remove_constraint("pct_w")
-      border := (0 < integer(e.get_attribute(u"BORDER"))) | 0
-      hspace := (0 < integer(e.get_attribute(u"HSPACE"))) | 0
-      vspace := (0 < integer(e.get_attribute(u"VSPACE"))) | 0
+      border := scale(0 < integer(e.get_attribute(u"BORDER"))) | 0
+      hspace := scale(0 < integer(e.get_attribute(u"HSPACE"))) | 0
+      vspace := scale(0 < integer(e.get_attribute(u"VSPACE"))) | 0
       if (hspace | vspace) > 0 then {
          if border > 0 then
             q.set_border(CompoundBorder().
@@ -4446,7 +4463,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private do_width_param(e, c, def_w)
       local width
       return if width := (e.get_attribute(u"WIDTH") | \def_w) then {
-         if width := (0 <= integer(width)) then
+         if width := scale(0 <= integer(width)) then
             c.set_constraint("fix_w", width)
          else if width[-1] == "%" & width := (0 <= integer(width[1:-1])) then
             c.set_constraint("pct_w", width)
@@ -4455,24 +4472,22 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    private do_height_param(e, c)
       local height
-      return if height := e.get_attribute(u"HEIGHT") then {
-         if height := (0 <= integer(height)) then
-            c.set_constraint("fix_h", height)
-      }
+      if height := scale(0 <= integer(e.get_attribute(u"HEIGHT"))) then
+         return c.set_constraint("fix_h", height)
    end
 
    private traverse_table(e, p, context)
       local ct, tbl, border, hspace, vspace, cellpadding, cellspacing, cell_border, align, c, i, t
 
       tbl := Tbl()
-      border := (0 < integer(e.get_attribute(u"BORDER"))) | 0
+      border := scale(0 < integer(e.get_attribute(u"BORDER"))) | 0
       # hspace, vspace are non-standard, but firefox has them.
-      hspace := (0 < integer(e.get_attribute(u"HSPACE"))) | 0
-      vspace := (0 < integer(e.get_attribute(u"VSPACE"))) | 0
-      cellpadding := (0 < integer(e.get_attribute(u"CELLPADDING"))) | 0
-      cellspacing := (0 <= integer(e.get_attribute(u"CELLSPACING"))) | scale(2)
+      hspace := scale(0 < integer(e.get_attribute(u"HSPACE"))) | 0
+      vspace := scale(0 < integer(e.get_attribute(u"VSPACE"))) | 0
+      cellpadding := scale(0 < integer(e.get_attribute(u"CELLPADDING"))) | 0
+      cellspacing := scale(0 <= integer(e.get_attribute(u"CELLSPACING")) | 2)
 
-      tbl.content.layout_delegate.set_doi(cellspacing).set_dii(cellspacing/2)
+      tbl.content.layout_delegate.set_doi(cellspacing).set_dii(cellspacing / 2)
       tbl.set_bg(convert_color(e, u"BGCOLOR"))
 
       cell_border := if border > 0 & not(e.get_attribute(u"RULES")) then
@@ -4849,7 +4864,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       local mc, coords
       mc := \context.map | fail
       coords := []
-      every put(coords, integer(separate(e.get_attribute(u"COORDS"), ',; ')))
+      every put(coords, scale(integer(separate(e.get_attribute(u"COORDS"), ',; '))))
       mc.map.add_area(MapArea(map(string(e.get_attribute(u"SHAPE"))), 
                               coords,
                               mk_link(e.get_attribute(u"HREF")),
@@ -5014,7 +5029,8 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       # Anything other than a navigate puts us back at the page we're viewing.
       if kind ~= Worker.NAVIGATE then
          reset_history_pos()
-      enqueue(Req(self, url, referer, set_top_data, kind, form_data))
+      goto_externally(url) |
+         enqueue(Req(self, url, referer, set_top_data, kind, form_data))
       return self
    end
 
@@ -5397,7 +5413,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       }
 
       if *forms > 0 then {
-         s ||:= "<h1>Forms</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=left>Method<th align=left>URL</tr>"
+         s ||:= "<h1>Forms</h1>" || TABLE_TAG || "<tr><th align=left>Name<th align=left>Method<th align=left>URL</tr>"
          every f := !forms do {
             if l := \f.url then {
                n := \f.id | "-"
@@ -5409,7 +5425,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       }
 
       if *imgs > 0 then {
-         s ||:= "<h1>Images</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=right>Size&nbsp;<th align=left>URL</tr>"
+         s ||:= "<h1>Images</h1>" || TABLE_TAG || "<tr><th align=left>Name<th align=right>Size&nbsp;<th align=left>URL</tr>"
          every c := !imgs do {
             l := c.img_url
             n := limit_text(\c.img_name, scale(200)) | "-"
@@ -5420,7 +5436,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       }
 
       if *page_links > 0 then {
-         s ||:= "<h1>Links</h1>" || get_table_tag() || "<tr><th align=left>Name<th align=left>URL</tr>"
+         s ||:= "<h1>Links</h1>" || TABLE_TAG || "<tr><th align=left>Name<th align=left>URL</tr>"
          every l := !page_links do {
             n := limit_text(t[l], scale(200))
             s ||:= "<tr><td nowrap>" || to_content(n) || mk_anchor_cell(l) || "</tr>" 
@@ -5429,10 +5445,6 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       }
       s ||:= "</html>"
       return s
-   end
-
-   public static get_table_tag()
-      return "<table cellspacing=" || scale(4) || ">"
    end
 
    public get_cache()
@@ -5681,6 +5693,7 @@ class SimpleBrowserUI(BrowserUI)
    public is_visited(url) end
    public display_search() end
    public display_externally(res) end
+   public goto_externally(url) end
 
    public new(browser)
       self.browser := browser

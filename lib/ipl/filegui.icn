@@ -306,6 +306,13 @@ class FileSuggestField(SuggestField)
       return self
    end
 
+   # Clear any cached values of the directory list.
+   #
+   public refresh()
+      dir_list := dir_list_name := &null
+      return self
+   end
+
    private match_entry(e)
       local n
       n := e.name
