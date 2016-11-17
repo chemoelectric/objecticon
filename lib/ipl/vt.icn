@@ -1444,7 +1444,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private synch_font(a)
       local s
       /a := attr
-      if \ (a.bold | a.font) then {
+      if \ (a.bold | a.italic) then {
          s := font_family
          if \a.bold then
             s ||:= ",bold"
@@ -1919,7 +1919,8 @@ class Vt(LineBasedScrollArea, MenuMode)
 
    public draw()
       local n, ss, row, seg, x1, W, W2, fg, bg, w1, want_fg, want_bg, want_font,
-         default_bg, default_fg, default_font, a, r, font, y1, cr, info, xp, yp, i
+         default_bg, default_fg, default_font, a, r, font, y1, cr, info, xp, yp, i,
+         cursor_i, leading
 
       cr := view.get_cbwin_clip()
       info := get_line_info(cr) | fail
@@ -1930,6 +1931,9 @@ class Vt(LineBasedScrollArea, MenuMode)
       bg := default_bg := W.get_bg()
       fg := default_fg := W.get_fg()
       font := default_font := get_wattrib(WAttrib.FONT)
+      leading := W.get_absolute_leading()
+      if /hide_cursor_mode then
+         cursor_i := cy_to_index()
 
       #
       # Write the lines
@@ -1941,7 +1945,7 @@ class Vt(LineBasedScrollArea, MenuMode)
             row := contents[i]
 
             x1 := xp
-            y1 := yp + view.cbwin.get_absolute_leading()
+            y1 := yp + leading
             every seg := !row.l do {
                a := seg.attr
                ss := seg.s
@@ -1960,19 +1964,19 @@ class Vt(LineBasedScrollArea, MenuMode)
                   W.erase_area(x1, yp, w1, line_height)
 
                if /a.invisible then
-                  W.draw_string(x1, yp + W.get_line_ascent(), ss)
+                  W.draw_string(x1, y1 + W.get_font_ascent(), ss)
 
                if \a.underline then
-                  W.draw_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+                  W.fill_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
                else if \a.url ~=== last_highlight then
                   use { 
                      W2 := W.clone(),
                      W2.set_fg(EditRGBA(want_fg,,,, 16000)).      # 25% alpha of the current fg.
-                        draw_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+                        fill_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
                   }
 
                if \a.crossed then
-                  W.draw_rectangle(x1, y1 + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
+                  W.fill_rectangle(x1, y1 + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
 
                if \a.url === last_highlight then
                   Gui.style.draw_dashed_rectangle(W, x1, yp, w1, line_height, Gui.FINE_WIDTH)
@@ -2007,18 +2011,18 @@ class Vt(LineBasedScrollArea, MenuMode)
                             range1(1, n + 1, 1, cursor_x)
                       })
             then
-               Gui.style.fill_selection_rectangle(view.cbwin, xp + (r.lo - 1) * char_w, yp,  
+               Gui.style.fill_selection_rectangle(W, xp + (r.lo - 1) * char_w, yp,  
                                                   (r.hi - r.lo) * char_w, line_height)
 
-            if /hide_cursor_mode & i = cy_to_index() then {
+            if i = \cursor_i then {
                if has_focus() & is_unshaded() then {
                   if cursor_on ~= 2 then
-                     Gui.style.draw_text_cursor(view.cbwin,
+                     Gui.style.draw_text_cursor(W,
                                                 xp + (cx - 1) * char_w,
                                                 y1, 
                                                 view.cbwin.get_font_height())
                } else 
-                  Gui.style.draw_shadow_text_cursor(view.cbwin,
+                  Gui.style.draw_shadow_text_cursor(W,
                                                     xp + (cx - 1) * char_w,
                                                     y1, 
                                                     view.cbwin.get_font_height())
