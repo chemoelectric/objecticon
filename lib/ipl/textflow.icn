@@ -506,7 +506,7 @@ class TextFlow(Component, HasLastHighlight)
 
                   if ts := browser.is_banded(o) then
                      # NB - the rectangle used should be the same as that returned by ts.get_bounds()
-                     Gui.style.fill_selection_rectangle(cbwin, 
+                     Gui.style.fill_selection_rectangle(W,
                                                         x1 + o.x + ts.w_off,
                                                         y1 + o.y, 
                                                         ts.w_sub,
