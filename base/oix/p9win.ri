@@ -2557,9 +2557,9 @@ static struct FontInfo *match_font(char *s)
 
 static void load_font_info(void)
 {
-    int h, line, flags;
-    char *info, *fn, *l, family[MAXFONTWORD];
-    Biobuf *fd;
+    int h, line, flags, n;
+    char *info, *fn, l[512], family[MAXFONTWORD];
+    FILE *fd;
     double size;
     struct FontInfo *fi;
 
@@ -2567,13 +2567,19 @@ static void load_font_info(void)
     if (!fn)
         ffatalerr("OI_FONTINFO environment variable not set");
 
-    fd = Bopen(fn, OREAD);
+    fd = fopen(fn, ReadText);
     if (!fd)
         ffatalerr("Can't open font info file: %r");
 
     line = 0;
-    while ((l = Brdstr(fd, '\n', 1))) {
+    while ((fgets(l, sizeof(l), fd))) {
         ++line;
+        n = strlen(l);
+        if (n > 0) {
+            if (l[n - 1] != '\n')
+                ffatalerr("Line too long at line %d in font info file %s", line, fn);
+            l[n - 1] = 0;
+        }
         /* Ignore blank lines and commented lines */
         if (l[0] && l[0] != '#') {
             info = strchr(l, '=');
@@ -2593,9 +2599,11 @@ static void load_font_info(void)
                 font_info[h] = fi;
             }
         }
-        free(l);
     }
-    Bterm(fd);
+    if (ferror(fd) != 0)
+        ffatalerr("Error reading font info file %s", fn);
+
+    fclose(fd);
 }
 
 static void set_P9ABGR32(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
