@@ -9,6 +9,10 @@
 #if PLAN9
    #include <u.h>
    #include <libc.h>
+   /* Avoid clash with size operator's struct */
+   #define Bsize Bsize2
+   #include <bio.h>
+   #undef Bsize
    #include <draw.h>
    #include <memdraw.h>
    #include <cursor.h>

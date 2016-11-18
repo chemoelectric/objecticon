@@ -157,7 +157,7 @@ typedef int gzFile;
 #endif					/* HAVE_LIBZ */
 
 #if PLAN9
-typedef int uint, vlong, ulong, uvlong, uchar, Rune, Dir, Image, Memimage, Point, Rectangle, Display, Req, Srv, Waitmsg, QLock, Rendez, Screen;
+typedef int uint, vlong, ulong, uvlong, uchar, Rune, Dir, Image, Memimage, Point, Rectangle, Display, Req, Srv, Waitmsg, QLock, Rendez, Screen, Biobuf;
 #endif
 
 #if HAVE_LIBJPEG
