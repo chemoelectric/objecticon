@@ -3577,7 +3577,7 @@ static wdp alcdisplay(char *s)
  */
 char *tofcpatternstr(char *s)
 {
-    static char res[256];
+    static char *res = 0;
     int flags;
     double size;
     char *t, family[MAXFONTWORD];
@@ -3659,7 +3659,8 @@ char *tofcpatternstr(char *s)
         FcPatternAddInteger(p, FC_WIDTH, FC_WIDTH_EXPANDED);
 
     t = (char *)FcNameUnparse(p);
-    strncpy(res, t, sizeof(res) - 1);
+    res = safe_realloc(res, strlen(t) + 1);
+    strcpy(res, t);
     free(t);
     FcPatternDestroy(p);
 
