@@ -2557,60 +2557,45 @@ static struct FontInfo *match_font(char *s)
 
 static void load_font_info(void)
 {
-    int h, fd, i, flag = 0, line = 1;
-    char ch, buff[512], *info = 0;
-    char *fn;
+    int h, line, flags;
+    char *info, *fn, *l, family[MAXFONTWORD];
+    Biobuf *fd;
+    double size;
+    struct FontInfo *fi;
 
     fn = getenv("OI_FONTINFO");
     if (!fn)
         ffatalerr("OI_FONTINFO environment variable not set");
 
-    if ((fd = open(fn, OREAD)) < 0)
+    fd = Bopen(fn, OREAD);
+    if (!fd)
         ffatalerr("Can't open font info file: %r");
 
-    i = 0;
-    while (read(fd, &ch, 1) > 0) {
-        if (i >= sizeof(buff))
-            ffatalerr("Line %d too long in font info file %s", line, fn);
-
-        if (flag) {
-            if (ch == '\n') {
-                buff[i] = 0;
-                /* Ignore blank lines and commented lines */
-                if (buff[0] == 0 || buff[0] != '#') {
-                    char family[MAXFONTWORD];
-                    int flags;
-                    double size;
-                    struct FontInfo *fi;
-                    if (!parsefont(info, family, &flags, &size))
-                        ffatalerr("Couldn't parse line %d in font info file %s", line, fn);
-                    if (access(buff, R_OK) == 0) {
-                        fi = safe_malloc(sizeof(struct FontInfo));
-                        fi->path = salloc(buff);
-                        fi->family = salloc(family);
-                        fi->flags = simplify_font_flags(flags);
-                        fi->size = size;
-                        h = hasher(hashcstr(fi->family), font_info);
-                        fi->next = font_info[h];
-                        font_info[h] = fi;
-                    }
-                }
-                ++line;
-                i = 0;
-                info = 0;
-                flag = 0;
-            } else
-                buff[i++] = ch;
-        } else {
-            if (ch == '=') {
-                buff[i++] = 0;
-                flag = 1;
-                info = buff + i;
-            } else
-                buff[i++] = ch;
+    line = 0;
+    while ((l = Brdstr(fd, '\n', 1))) {
+        ++line;
+        /* Ignore blank lines and commented lines */
+        if (l[0] && l[0] != '#') {
+            info = strchr(l, '=');
+            if (!info)
+                ffatalerr("Missing = at line %d in font info file %s", line, fn);
+            *info++ = 0;
+            if (!parsefont(info, family, &flags, &size))
+                ffatalerr("Couldn't parse line %d in font info file %s", line, fn);
+            if (access(l, R_OK) == 0) {
+                fi = safe_malloc(sizeof(struct FontInfo));
+                fi->path = salloc(l);
+                fi->family = salloc(family);
+                fi->flags = simplify_font_flags(flags);
+                fi->size = size;
+                h = hasher(hashcstr(fi->family), font_info);
+                fi->next = font_info[h];
+                font_info[h] = fi;
+            }
         }
+        free(l);
     }
-    close(fd);
+    Bterm(fd);
 }
 
 static void set_P9ABGR32(struct imgdata *imd, int x, int y, int r, int g, int b, int a)
