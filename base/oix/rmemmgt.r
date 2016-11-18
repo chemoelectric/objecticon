@@ -1076,7 +1076,7 @@ ulonglong physicalmemorysize()
     ulonglong i = 0;
     if (f) {
         char buf[80], *p;
-        while (fgets(buf, 80, f)) {
+        while (fgets(buf, sizeof(buf), f)) {
             if (!strncmp(TAG, buf, strlen(TAG))) {
                 p = buf+strlen(TAG);
                 while (isspace((unsigned char)*p)) p++;

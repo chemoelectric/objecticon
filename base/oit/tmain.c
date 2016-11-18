@@ -476,7 +476,7 @@ static void file_comp()
 
     n = strlen(IcodeDelim);
     for (;;) {
-        if (fgets(buf, sizeof(buf) - 1, finput) == NULL)
+        if (fgets(buf, sizeof(buf), finput) == NULL)
             equit("Compression - Reading Error: Check if the file is executable Icon");
         fputs(buf, foutput);
         if (strncmp(buf, IcodeDelim, n) == 0)
