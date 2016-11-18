@@ -175,7 +175,7 @@ static int open_winfile(wsp ws, char *s, int mode)
 {
     char buff[128];
     int fd;
-    sprintf(buff, "%s/%s", ws->mount_dir, s);
+    snprintf(buff, sizeof(buff), "%s/%s", ws->mount_dir, s);
     fd = open(buff, mode|OCEXEC);
     return fd;
 }
@@ -471,7 +471,7 @@ static void handle_limited(wsp ws)
 static void handle_reshape(wsp ws)
 {
     char buff[128];
-    sprintf(buff, "%s/winname", ws->mount_dir);
+    snprintf(buff, sizeof(buff), "%s/winname", ws->mount_dir);
     if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0)
         syserr("Failed to reconnect to window on a resize");
     handle_reshape1(ws);
@@ -1510,7 +1510,7 @@ static int open_screen_win(wsp ws)
 
     ws->using_win = use_win;
     if (ws->using_win) {
-        strcpy(ws->mount_dir, display->windir);
+        snprintf(ws->mount_dir, sizeof(ws->mount_dir), "%s", display->windir);
 
         if ((ws->wctl_fd = open_winfile(ws, "wctl", OWRITE)) < 0) {
             whyf("Can't open wctl file: %r");
@@ -1649,7 +1649,7 @@ static int open_screen_win(wsp ws)
         return Failed;
     }
 
-    sprintf(buff, "%s/winname", ws->mount_dir);
+    snprintf(buff, sizeof(buff), "%s/winname", ws->mount_dir);
     if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0) {
         whyf("gengetwindow failed: %r");
         close_screen_win(ws);
@@ -1713,7 +1713,7 @@ static int open_screen_win(wsp ws)
         close_screen_win(ws);
         return Failed;
     }
-    write(ws->consctl_fd, "rawon", 5);
+    fprint(ws->consctl_fd, "rawon");
 
     if ((ws->cursor_fd = open_winfile(ws, "cursor", OWRITE)) < 0) {
         whyf("Can't open cursor file: %r");
@@ -2204,7 +2204,14 @@ static void init_window_system(void)
         rfork(RFNAMEG);
     }
 
-    if ((display = initdisplay(0, 0, draw_error)) == nil)
+    /*
+     * So far as I can see the second param (win) isn't actually used
+     * in the calls we make.  However, it is saved as the field
+     * display->windir, which we use above when we open with
+     * OI_USE_WIN; it means windows so opened in twin console
+     * windows take over the right window.
+     */
+    if ((display = initdisplay(0, getenv("wdir"), draw_error)) == nil)
         ffatalerr("Couldn't initialize display: %r");
 
     black = new_sharedcolor("black", 0x000000ff);
