@@ -237,7 +237,7 @@ static FILE *readhdr_strict(char *name, struct header *hdr)
         ffatalerr("Can't open interpreter file %s: %s", name, get_system_error());
 
     for (;;) {
-        if (fgets(buf, sizeof(buf) - 1, ifile) == NULL)
+        if (fgets(buf, sizeof(buf), ifile) == NULL)
             ffatalerr("Can't find header marker in interpreter file %s", name);
         if (strncmp(buf, IcodeDelim, n) == 0)
             break;
@@ -273,7 +273,7 @@ static FILE *readhdr_liberal(char *name, struct header *hdr)
     }
 
     for (;;) {
-        if (fgets(buf, sizeof(buf) - 1, ifile) == NULL) {
+        if (fgets(buf, sizeof(buf), ifile) == NULL) {
             whyf("Can't find header marker in interpreter file %s", name);
             fclose(ifile);
             return NULL;
