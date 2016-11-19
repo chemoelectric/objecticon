@@ -1164,9 +1164,7 @@ static struct b_proc *try_load(void *handle, struct b_class *class0,  struct cla
     t = StrLoc(*class0->name);
     for (i = 0; i < StrLen(*class0->name); ++i)
         *p++ = (t[i] == '.') ? '_' : t[i];
-    *p++ = '_';
-    strncpy(p, StrLoc(*fname), StrLen(*fname));
-    p[StrLen(*fname)] = 0;
+    sprintf(p, "_%.*s", StrF(*fname));
 
     blk = (struct b_proc *)dlsym(handle, fq);
     if (!blk) {

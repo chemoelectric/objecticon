@@ -359,13 +359,13 @@ static int charstr(int c, char *b)
          */
         switch (c) {
             case '"':
-                if (b) strncpy(b, "\\\"", 2);
+                if (b) memcpy(b, "\\\"", 2);
                 return 2;
             case '\'':
-                if (b) strncpy(b, "\\'", 2);
+                if (b) memcpy(b, "\\'", 2);
                 return 2;
             case '\\':
-                if (b) strncpy(b, "\\\\", 2);
+                if (b) memcpy(b, "\\\\", 2);
                 return 2;
             default:
                 if (b) *b = c;
@@ -381,34 +381,34 @@ static int charstr(int c, char *b)
          */
         switch (c) {
             case '\b':			/* backspace */
-                if (b) strncpy(b, "\\b", 2);
+                if (b) memcpy(b, "\\b", 2);
                 return 2;
 
             case '\177':			/* delete */
-                if (b) strncpy(b, "\\d", 2);
+                if (b) memcpy(b, "\\d", 2);
                 return 2;
             case '\33':			/* escape */
-                if (b) strncpy(b, "\\e", 2);
+                if (b) memcpy(b, "\\e", 2);
                 return 2;
             case '\f':			/* form feed */
-                if (b) strncpy(b, "\\f", 2);
+                if (b) memcpy(b, "\\f", 2);
                 return 2;
             case '\n':			/* new line */
-                if (b) strncpy(b, "\\n", 2);
+                if (b) memcpy(b, "\\n", 2);
                 return 2;
             case '\r':     		/* carriage return b */
-                if (b) strncpy(b, "\\r", 2);
+                if (b) memcpy(b, "\\r", 2);
                 return 2;
             case '\t':			/* horizontal tab */
-                if (b) strncpy(b, "\\t", 2);
+                if (b) memcpy(b, "\\t", 2);
                 return 2;
             case '\13':			/* vertical tab */
-                if (b) strncpy(b, "\\v", 2);
+                if (b) memcpy(b, "\\v", 2);
                 return 2;
             default: {				/* hex escape sequence */
                 if (b) {
                     sprintf(cbuf, "\\x%02x", c);
-                    strncpy(b, cbuf, 4);
+                    memcpy(b, cbuf, 4);
                 }
                 return 4;
             }
@@ -417,14 +417,14 @@ static int charstr(int c, char *b)
     if (c < 65536) {
         if (b) {
             sprintf(cbuf, "\\u%04x", c);
-            strncpy(b, cbuf, 6);
+            memcpy(b, cbuf, 6);
         }
         return 6;
     }
 
     if (b) {
         sprintf(cbuf, "\\U%06x", c);
-        strncpy(b, cbuf, 8);
+        memcpy(b, cbuf, 8);
     }
     return 8;
 }
@@ -436,7 +436,7 @@ static int cset_charstr(int c, char *b)
         return 1;
     }
     if (c == '-') {
-        if (b) strncpy(b, "\\-", 2);
+        if (b) memcpy(b, "\\-", 2);
         return 2;
     }
     return charstr(c, b);
@@ -461,7 +461,7 @@ static int ucs_charstr(int c, char *b)
     if (c > 127 && c < 256) {
         if (b) {
             sprintf(cbuf, "\\u%04x", c);
-            strncpy(b, cbuf, 6);
+            memcpy(b, cbuf, 6);
         }
         return 6;
     }

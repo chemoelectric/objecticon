@@ -618,10 +618,10 @@ static int charstr(int c, char *b)
          */
         switch (c) {
             case '"':
-                strncpy(b, "\\\"", 2);
+                memcpy(b, "\\\"", 2);
                 return 2;
             case '\\':
-                strncpy(b, "\\\\", 2);
+                memcpy(b, "\\\\", 2);
                 return 2;
             default:
                 *b = c;
@@ -636,33 +636,33 @@ static int charstr(int c, char *b)
      */
     switch (c) {
         case '\b':			/* backspace */
-            strncpy(b, "\\b", 2);
+            memcpy(b, "\\b", 2);
             return 2;
 
         case '\177':			/* delete */
-            strncpy(b, "\\d", 2);
+            memcpy(b, "\\d", 2);
             return 2;
         case '\33':			/* escape */
-            strncpy(b, "\\e", 2);
+            memcpy(b, "\\e", 2);
             return 2;
         case '\f':			/* form feed */
-            strncpy(b, "\\f", 2);
+            memcpy(b, "\\f", 2);
             return 2;
         case '\n':			/* new line */
-            strncpy(b, "\\n", 2);
+            memcpy(b, "\\n", 2);
             return 2;
         case '\r':     		/* carriage return b */
-            strncpy(b, "\\r", 2);
+            memcpy(b, "\\r", 2);
             return 2;
         case '\t':			/* horizontal tab */
-            strncpy(b, "\\t", 2);
+            memcpy(b, "\\t", 2);
             return 2;
         case '\13':			/* vertical tab */
-            strncpy(b, "\\v", 2);
+            memcpy(b, "\\v", 2);
             return 2;
         default: {				/* hex escape sequence */
             sprintf(cbuf, "\\x%02x", c);
-            strncpy(b, cbuf, 4);
+            memcpy(b, cbuf, 4);
             return 4;
         }
     }

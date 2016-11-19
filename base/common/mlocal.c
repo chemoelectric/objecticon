@@ -474,14 +474,18 @@ struct fileparts *fparse(char *s)
         }
     }
 
-    fp.dir = result;
-    n = q - s;
-    strncpy(fp.dir,s,n);
-    fp.dir[n] = '\0';
-    fp.name = result + n + 1;
-    n = fp.ext - q;
-    strncpy(fp.name,q,n);
-    fp.name[n] = '\0';
+    if (fp.ext - s + 2 > sizeof(result))
+        fp.dir = fp.name = fp.ext = "";
+    else {
+        fp.dir = result;
+        n = q - s;
+        memcpy(fp.dir, s, n);
+        fp.dir[n] = '\0';
+        fp.name = result + n + 1;
+        n = fp.ext - q;
+        memcpy(fp.name, q, n);
+        fp.name[n] = '\0';
+    }
 
     return &fp;
 }
