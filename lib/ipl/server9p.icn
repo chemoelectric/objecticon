@@ -87,9 +87,9 @@ procedure server_main(attach, sess, sched)
    } else {
       sess := &null
       p[2].close()
-      if s := \opts["s"] then {
-         Files.string_to_file("/srv/" || s, p[1].get_fd()) | stop(&why)
-         ewrite(pname, ": serving on /srv/", s)
+      if s := "/srv/" || \opts["s"] then {
+         Files.string_to_file(s, p[1].get_fd()) | stop(&why)
+         ewrite(pname, ": serving on ", s)
       } else {
          mp := \opts["m"] | get_mountpt()
          fl := if \opts["a"] then
@@ -124,7 +124,7 @@ procedure async_sched_loop(sess, sched, f)
 end
 
 procedure gui_main(attach, sess, async_flag, body)
-   local p, pid, pname, nb, fn, fl, s, mp
+   local p, pid, pname, nb, fl, s, mp
    pname := get_progname()
    p := FileStream.pipe() | stop(&why)
    pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFFDG)) | stop(&why)
@@ -150,12 +150,11 @@ procedure gui_main(attach, sess, async_flag, body)
    } else {
       # parent
       p[2].close()
-      if s := \opts["s"] then {
-         fn := "/srv/" || s
-         Files.string_to_file(fn, p[1].get_fd()) | stop(&why)
-         ewrite(pname, ": serving on /srv/", s)
+      if s := "/srv/" || \opts["s"] then {
+         Files.string_to_file(s, p[1].get_fd()) | stop(&why)
+         ewrite(pname, ": serving on ", s)
          System.wait(pid)
-         Files.remove(fn)
+         Files.remove(s)
       } else {
          mp := \opts["m"] | get_mountpt()
          fl := if \opts["a"] then
