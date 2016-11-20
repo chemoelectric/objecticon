@@ -30,10 +30,7 @@ class Process(HasTask, HasBgProc)
       (l[1].dflag(DescOpt.CLOEXEC) &
        l[2].dflag(DescOpt.CLOEXEC) &
        pid := System.fork()) | {
-         save_why{{
-            l[1].close()
-            l[2].close()
-         }}
+         save_why{ lclose(l) }
          fail
        }
       if pid > 0 then {

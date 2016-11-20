@@ -862,6 +862,16 @@ procedure close(f)
 end
 
 #
+# Useful procedure to close a list of {Stream}s.
+#
+procedure lclose(l)
+   local e, f
+   every e := !l do
+      e.close() | (f := &why)
+   return /f | error(f)
+end
+
+#
 # This class represents a stream based on a local file.
 #
 class FileStream(DescStream)
@@ -1294,10 +1304,7 @@ class ProgInputStream(SocketStream, HasBgProc)
       local l
       l := one_way_socketpair() | fail
       (pid := System.fork()) | {
-         save_why{{
-            l[1].close()
-            l[2].close()
-         }}
+         save_why{ lclose(l) }
          fail
       }
       if pid > 0 then {
@@ -1315,8 +1322,7 @@ class ProgInputStream(SocketStream, HasBgProc)
                stderr.dup2(FileStream.stderr) | stop(&why)
          }
          l[2].dup2(FileStream.stdout) | stop(&why)
-         l[1].close()
-         l[2].close()
+         lclose(l)
          System.exec(cmd, args, env) | stop(&why)
          syserr("Not reached")
       }
@@ -1356,10 +1362,7 @@ class ProgOutputStream(SocketStream, HasBgProc)
       l := one_way_socketpair() | fail
       (l[2].dflag(DescOpt.CLOEXEC) &
        pid := System.fork()) | {
-          save_why{{
-             l[1].close()
-             l[2].close()
-          }}
+          save_why{ lclose(l) }
           fail
        }
       if pid > 0 then {
@@ -1373,8 +1376,7 @@ class ProgOutputStream(SocketStream, HasBgProc)
          if \stderr then
             stderr.dup2(FileStream.stderr) | stop(&why)
          l[1].dup2(FileStream.stdin) | stop(&why)
-         l[1].close()
-         l[2].close()
+         lclose(l)
          System.exec(cmd, args, env) | stop(&why)
          syserr("Not reached")
       }
@@ -1469,7 +1471,7 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, 
        l[4].flag(FileOpt.NONBLOCK) & 
        l[5].flag(FileOpt.NONBLOCK) &
        pid := System.fork()) | {
-          save_why{ every (!l).close() }
+          save_why{ lclose(l) }
           fail
        }
       if pid > 0 then {
@@ -1486,7 +1488,7 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, 
          l[2].dup2(FileStream.stdout) | stop(&why)
          l[3].dup2(FileStream.stdin) | stop(&why)
          l[6].dup2(FileStream.stderr) | stop(&why)
-         every (!l).close()
+         lclose(l)
          System.exec(cmd, args, env) | stop(&why)
          syserr("Not reached")
       }
@@ -1810,12 +1812,9 @@ class SequenceStream(Stream, HasUnderlyingStream)
    end
 
    public close()
-      local e, f
-      if \close_underlying_flag then {
-         every e := !ac do
-            e.close() | (f := &why)
-      }
-      return if /f then self else error(f)
+      if \close_underlying_flag then
+         lclose(ac) | fail
+      return self
    end
 
    public new(a[])
