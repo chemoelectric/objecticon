@@ -1839,6 +1839,7 @@ $endif
          tty.dup2(FileStream.stdout) | stop(&why)
          tty.dup2(FileStream.stdin) | stop(&why)
          tty.dup2(FileStream.stderr) | stop(&why)
+         tty.close()
          Files.chdir(cwd)
          System.exec(sh, shell_args, env) | stop(&why)
          syserr("Not reached")
@@ -1922,7 +1923,7 @@ $endif
             if n < *s then
                push(input, s[n + 1:0])
             if \opts["v"] then
-               write("Out: ", image(s))
+               write("Out: ", image(s[1:n + 1]))
          } else if DescStream.poll_in_test(x[1]) then {
             s := tty.in(1048576) | {
 $ifdef _LINUX
