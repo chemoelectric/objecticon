@@ -18,7 +18,6 @@ static void load_font_info(void);
 static void setup_cursors(void);
 static wfp alcfont(wbp w, char **s);
 static void mouse_loop(wsp ws);
-static Rune *utf8_to_runes(dptr str);
 static void cons_loop(wsp ws);
 static wfp load_font(char *s);
 static void synch_cursor(wsp ws);
@@ -1014,12 +1013,12 @@ static void no_clip(wsp ws, int and_win)
 
 void drawstring(wbp w, int x, int y, dptr str)
 {
-    Rune *r;
     wsp ws = w->window;
     wcp wc = w->context;
     Point p = Pt(x, y - wc->font->ascent);
     clip(w);
     if (is:string(*str)) {
+        Rune *r;
         /*
          * stringnop & co. expect utf-8 format strings (with n as the
          * number of codepoints, not the length of the utf-8 string).
@@ -1047,16 +1046,14 @@ void drawstring(wbp w, int x, int y, dptr str)
                        wc->font->ascent + wc->font->descent);
         }
     } else {
-        r = utf8_to_runes(str);
-        runestringnop(ws->pix, p,
-                      get_draw_img(wc), p,
-                      wc->font->font, r, UcsBlk(*str).length, wc->drawop->i);
+        stringnop(ws->pix, p,
+                  get_draw_img(wc), p,
+                  wc->font->font, StrLoc(UcsBlk(*str).utf8), UcsBlk(*str).length, wc->drawop->i);
         pix_to_win(ws, 
                    p.x, 
                    p.y, 
-                   runestringnwidth(wc->font->font, r, UcsBlk(*str).length) + wc->font->font->width,   /* Add 1xwidth for italics */
+                   stringnwidth(wc->font->font, StrLoc(UcsBlk(*str).utf8), UcsBlk(*str).length) + wc->font->font->width,   /* Add 1xwidth for italics */
                    wc->font->ascent + wc->font->descent);
-        free(r);
     }
     flushimage(display, 1);
 }
@@ -1080,20 +1077,6 @@ static Rune *iso8859_to_runes(dptr str)
     r = safe_malloc(len * sizeof(Rune));
     for (i = 0; i < len; ++i)
         r[i] = (unsigned char)s[i];
-    return r;
-}
-
-static Rune *utf8_to_runes(dptr str)
-{
-    Rune *r;
-    word i, j, len;
-    char *s = StrLoc(UcsBlk(*str).utf8);
-    len = UcsBlk(*str).length;
-    r = safe_malloc(len * sizeof(Rune));
-    for (i = 0; i < len; ++i) {
-        j = chartorune(&r[i], s);
-        s += j;
-    }
     return r;
 }
 
@@ -1400,22 +1383,17 @@ int focuswindow(wbp w)
 
 int textwidth(wbp w, dptr str)
 {
-    int width;
-    Rune *r;
     wcp wc = w->context;
     if (is:string(*str)) {
+        Rune *r;
         if ((r = iso8859_to_runes(str))) {
-            width = runestringnwidth(wc->font->font, r,  StrLen(*str));
+            int width = runestringnwidth(wc->font->font, r,  StrLen(*str));
             free(r);
             return width;
         } else
             return stringnwidth(wc->font->font, StrLoc(*str), StrLen(*str));
-    } else {
-        r = utf8_to_runes(str);
-        width = runestringnwidth(wc->font->font, r, UcsBlk(*str).length);
-        free(r);
-        return width;
-    }
+    } else
+        return stringnwidth(wc->font->font, StrLoc(UcsBlk(*str).utf8), UcsBlk(*str).length);
 }
 
 void doconfig(wbp w, int status)
