@@ -75,6 +75,7 @@ static void freewindow(wsp ws);
 static void freecontext(wcp wc);
 static int simplify_font_flag(int flags, int src, int dest);
 static int simplify_font_flags(int flags);
+static Rune *iso8859_to_runes(dptr str);
 
 static struct imgdataformat imgdataformat_P9ABGR32;
 static struct imgdataformat imgdataformat_P9AG16;
@@ -1001,21 +1002,40 @@ static void no_clip(wsp ws, int and_win)
 
 void drawstring(wbp w, int x, int y, dptr str)
 {
+    Rune *r;
     wsp ws = w->window;
     wcp wc = w->context;
     Point p = Pt(x, y - wc->font->ascent);
     clip(w);
     if (is:string(*str)) {
-        stringnop(ws->pix, p,
-                  get_draw_img(wc), p,
-                  wc->font->font, StrLoc(*str), StrLen(*str), wc->drawop->i);
-        pix_to_win(ws, 
-                   p.x, 
-                   p.y, 
-                   stringnwidth(wc->font->font, StrLoc(*str), StrLen(*str)) + wc->font->font->width,   /* Add 1xwidth for italics */
-                   wc->font->ascent + wc->font->descent);
+        /*
+         * stringnop & co. expect utf-8 format strings (with n as the
+         * number of codepoints, not the length of the utf-8 string).
+         * Therefore convert any non-ascii strings into Rune strings
+         * and use the runestring functions.
+         */
+        if ((r = iso8859_to_runes(str))) {
+            runestringnop(ws->pix, p,
+                          get_draw_img(wc), p,
+                          wc->font->font, r, StrLen(*str), wc->drawop->i);
+            pix_to_win(ws, 
+                       p.x, 
+                       p.y, 
+                       runestringnwidth(wc->font->font, r, StrLen(*str)) + wc->font->font->width,   /* Add 1xwidth for italics */
+                       wc->font->ascent + wc->font->descent);
+            free(r);
+        } else {
+            stringnop(ws->pix, p,
+                      get_draw_img(wc), p,
+                      wc->font->font, StrLoc(*str), StrLen(*str), wc->drawop->i);
+            pix_to_win(ws, 
+                       p.x, 
+                       p.y, 
+                       stringnwidth(wc->font->font, StrLoc(*str), StrLen(*str)) + wc->font->font->width,   /* Add 1xwidth for italics */
+                       wc->font->ascent + wc->font->descent);
+        }
     } else {
-        Rune *r = utf8_to_runes(str);
+        r = utf8_to_runes(str);
         runestringnop(ws->pix, p,
                       get_draw_img(wc), p,
                       wc->font->font, r, UcsBlk(*str).length, wc->drawop->i);
@@ -1027,6 +1047,28 @@ void drawstring(wbp w, int x, int y, dptr str)
         free(r);
     }
     flushimage(display, 1);
+}
+
+static Rune *iso8859_to_runes(dptr str)
+{
+    word i, len;
+    char *s;
+    Rune *r;
+    s = StrLoc(*str);
+    len = StrLen(*str);
+
+    /* Search for non-ascii chars; if none found, return null. */
+    i = 0;
+    while (i < len && (unsigned char)s[i] <= 127)
+        ++i;
+    if (i == len)
+        return 0;
+
+    /* Convert to Rune array. */
+    r = safe_malloc(len * sizeof(Rune));
+    for (i = 0; i < len; ++i)
+        r[i] = (unsigned char)s[i];
+    return r;
 }
 
 static Rune *utf8_to_runes(dptr str)
@@ -1346,12 +1388,18 @@ int focuswindow(wbp w)
 
 int textwidth(wbp w, dptr str)
 {
+    int width;
+    Rune *r;
     wcp wc = w->context;
-    if (is:string(*str))
-        return stringnwidth(wc->font->font, StrLoc(*str), StrLen(*str));
-    else {
-        int width;
-        Rune *r = utf8_to_runes(str);
+    if (is:string(*str)) {
+        if ((r = iso8859_to_runes(str))) {
+            width = runestringnwidth(wc->font->font, r,  StrLen(*str));
+            free(r);
+            return width;
+        } else
+            return stringnwidth(wc->font->font, StrLoc(*str), StrLen(*str));
+    } else {
+        r = utf8_to_runes(str);
         width = runestringnwidth(wc->font->font, r, UcsBlk(*str).length);
         free(r);
         return width;
