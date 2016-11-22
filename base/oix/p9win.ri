@@ -393,7 +393,7 @@ static ulong get_timestamp(void)
 static void mouse_loop(wsp ws)
 {
     char buf[49];
-    while (read(ws->mouse_fd, buf, sizeof(buf)) > 0) {
+    while (read(ws->mouse_fd, buf, sizeof(buf)) == 49) {
         /* Update timestamp */
         snprintf(&buf[37], 12, "%11lu ", get_timestamp());
         if (write(ws->event_pipe[1], buf, 49) != 49)
@@ -407,10 +407,22 @@ static void cons_loop(wsp ws)
 {
     Rune r;
     char buf[49], in[10];
+    int nc;
     buf[0] = 'k';
-    while (read(ws->cons_fd, in, sizeof(in)) > 0) {
+    /*
+     * Read just the first char of the codepoint to get the utf-8
+     * length.  This lets us read exactly one codepoint at a time, and
+     * thus avoid having to do any buffering.
+     */
+    while (read(ws->cons_fd, in, 1) == 1) {
+        nc = UTF8_SEQ_LEN(in[0]) - 1;
+        if (nc > 0) {
+            if (read(ws->cons_fd, in + 1, nc) != nc)
+                break;
+        }
         /* Set mouse x,y */
-        pread(ws->screeninfo_fd, &buf[1], 24, 0);
+        if (pread(ws->screeninfo_fd, &buf[1], 24, 0) != 24)
+            break;
         /* Set arg and timestamp */
         chartorune(&r, in);
         snprintf(&buf[25], 24, "%11d %11lu ", (int)r, get_timestamp());
@@ -2075,9 +2087,9 @@ char *getlinestyle(wbp w)
 
 static int read_screeninfo(wsp ws, int *mx, int *my, int *sx, int *sy, int *sw, int *sh)
 {
-    char buff[80];
+    char buff[72];
     int n;
-    n = pread(ws->screeninfo_fd, buff, 72, 0);
+    n = pread(ws->screeninfo_fd, buff, sizeof(buff), 0);
     if (n != 72)
         return Failed;
     if (mx)
