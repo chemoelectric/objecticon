@@ -1475,11 +1475,6 @@ function io_FileStream_truncate(self, len)
        if (!convert_to_off_t(&len, &c_len))
            runerr(0);
 
-       if (lseek(self_fd, c_len, SEEK_SET) < 0) {
-           errno2why();
-           fail;
-       }
-
        if (ftruncate(self_fd, c_len) < 0) {
            errno2why();
            fail;
@@ -3115,7 +3110,6 @@ function io_RamStream_truncate(self, len)
       runerr(101, len)
    body {
        GetSelfRs();
-       self_rs->pos = len;
        self_rs->avail = len + self_rs->wiggle;
        self_rs->data = safe_realloc(self_rs->data, self_rs->avail);
        if (self_rs->size < len)
