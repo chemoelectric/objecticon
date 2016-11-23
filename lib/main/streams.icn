@@ -74,8 +74,8 @@ abstract class Stream(HasMode)
    public defer tell()
 
    #
-   # Truncate this stream to the given length, and set the position to the
-   # new end of the stream (ie, len + 1).
+   # Truncate this stream to the given length.  The file position
+   # remains unchanged.
    #
    public defer truncate(len)
 
@@ -312,7 +312,6 @@ class StringStream(Stream)
          subj ||:= repl("\0", len - *subj)
       else
          subj := subj[1:len + 1]
-      pos := *subj + 1
       return self
    end
 

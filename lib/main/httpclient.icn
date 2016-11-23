@@ -289,8 +289,8 @@ class HttpClient(NetClient)
       if /request.output_stream then
          request.method == "HEAD" | runerr("No output stream set")
       else {
-         request.output_stream.can(Stream.WRITE + Stream.TRUNCATE) | 
-                        runerr("Output stream not writable and truncatable", request.output_stream)
+         request.output_stream.can(Stream.WRITE + Stream.TRUNCATE + Stream.SEEK) | 
+                        runerr("Output stream not writable, seekable and truncatable", request.output_stream)
          self.request.set_output_stream(request.output_stream)
       }
       if /request.input_stream then {
@@ -1007,7 +1007,7 @@ class HttpClient(NetClient)
       #
       if not(\self.read & response.get_status_code() = 206) then {
          close_inflater()
-         request.output_stream.truncate(0) | return fail_dont_retry()
+         request.output_stream.truncate(0).seek(1) | return fail_dont_retry()
          open_inflater() | return fail_dont_retry()
          self.length := integer(response.get_first_header("content-length")) | &null
          self.read := 0

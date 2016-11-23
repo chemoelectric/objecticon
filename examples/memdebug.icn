@@ -278,7 +278,7 @@ procedure do_line(s)
    } else if /pipe & is(output, DescStream) then
       cmd_out := output
    else {
-      tmp_out.truncate(0)
+      tmp_out.truncate(0).seek(1)
       cmd_out := tmp_out
    }
 
