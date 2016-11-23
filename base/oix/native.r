@@ -4167,7 +4167,7 @@ void string_to_wchar1(WCHAR *buff, dptr str, int nullterm)
     len = StrLen(*str);
     p = StrLoc(*str);
     for (i = 0; i < len; ++i)
-        buff[i] = (WCHAR)*p++;
+        buff[i] = (unsigned char)*p++;
     if (nullterm)
         buff[len] = 0;
 }
