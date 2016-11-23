@@ -48,8 +48,14 @@ PATH="$$OI_BIN:$$PATH"
 EOF
 echo creating base/h/version.h
 x=`{date}
+# Plan9 specific version modifiers, to be changed if the branch version changes
+# independently of the trunk.
+uv=1
+iv=1
 sed -e 's/@CONFIG_DATE@/'^$"x^'/'  \
     -e 's/@PACKAGE_VERSION@/plan9/' \
+    -e '/^#define UVersion/ s/$/ ".'^$uv^'"/' \
+    -e '/^#define IVersion/ s/$/ ".'^$iv^'"/' \
     <./config/files/base/h/version.h >base/h/version.h
 echo creating base/h/auto.h
 cat >base/h/auto.h <<EOF
