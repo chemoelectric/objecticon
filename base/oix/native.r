@@ -1433,6 +1433,69 @@ function io_FileStream_create_impl(path, flags, mode)
        return C_integer fd;
    }
 end
+
+function io_FileStream_pread(self, i, offset)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   if !cnv:integer(offset) then
+      runerr(101, offset)
+   body {
+       word nread;
+       vlong c_offset;
+       tended struct descrip s;
+       GetSelfFd();
+
+       if (i <= 0)
+           Irunerr(205, i);
+
+       if (!convert_to_vlong(&offset, &c_offset))
+           runerr(0);
+
+       /*
+        * For now, assume we can read the full number of bytes.
+        */
+       MemProtect(StrLoc(s) = alcstr(NULL, i));
+
+       nread = pread(self_fd, StrLoc(s), i, c_offset);
+       if (nread <= 0) {
+           /* Reset the memory just allocated */
+           dealcstr(StrLoc(s));
+
+           if (nread < 0) {
+               errno2why();
+               fail;
+           } else   /* nread == 0 */
+               return nulldesc;
+       }
+
+       StrLen(s) = nread;
+       /*
+        * We may not have used the entire amount of storage we reserved.
+        */
+       dealcstr(StrLoc(s) + nread);
+
+       return s;
+   }
+end
+
+function io_FileStream_pwrite(self, s, offset)
+   if !cnv:string(s) then
+      runerr(103, s)
+   if !cnv:integer(offset) then
+      runerr(101, offset)
+   body {
+       word rc;
+       vlong c_offset;
+       GetSelfFd();
+       if (!convert_to_vlong(&offset, &c_offset))
+           runerr(0);
+       if ((rc = pwrite(self_fd, StrLoc(s), StrLen(s), c_offset)) < 0) {
+           errno2why();
+           fail;
+       }
+       return C_integer rc;
+   }
+end
 #else
 function io_FileStream_new_impl(path, flags, mode)
    if !cnv:C_string(path) then

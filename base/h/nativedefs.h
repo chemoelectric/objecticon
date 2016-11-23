@@ -174,6 +174,8 @@ NativeDef(io.FileStream,in,io_FileStream_in)
 #if PLAN9
 NativeDef(io.FileStream,create_impl,io_FileStream_create_impl)
 NativeDef(io.FileStream,open_impl,io_FileStream_open_impl)
+NativeDef(io.FileStream,pread,io_FileStream_pread)
+NativeDef(io.FileStream,pwrite,io_FileStream_pwrite)
 #else
 NativeDef(io.FileStream,new_impl,io_FileStream_new_impl)
 #endif

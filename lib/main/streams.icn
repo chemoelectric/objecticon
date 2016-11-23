@@ -1083,6 +1083,19 @@ $ifdef _PLAN9
    private static native open_impl(path, flags)
    private static native create_impl(path, flags, perm)
 
+   # This method provides an interface to the Plan 9 pread function.
+   #
+   # @param n the maximum number of chars to read; n must be > 0.
+   # @param offset the zero-based offset to seek to before reading.
+   #
+   public native pread(n, offset)
+
+   # This method provides an interface to the Plan 9 pwrite function.
+   #
+   # @param s the string to write
+   # @param offset the zero-based offset to seek to before writing.
+   #
+   public native pwrite(s, offset)
 $else
    #
    # Open a new {FileStream} using the underlying system open
