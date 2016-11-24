@@ -64,6 +64,15 @@ enum
 	FALSE		= 0,
 };
 
+enum
+{
+        NoEsc = 0,
+        GotEsc,
+        GotBracket,
+        GotNum,
+        GotCmd0,
+};
+
 #define	QID(w,q)	((w<<8)|(q))
 #define	WIN(q)	((((ulong)(q).path)>>8) & 0xFFFFFF)
 #define	FILE(q)	(((ulong)(q).path) & 0xFF)
@@ -147,6 +156,11 @@ struct Window
 	uint			nr;			/* number of runes in window */
 	uint			maxr;		/* number of runes allocated in r */
 	Rune			*r;
+        Attr                    *attr;   /* Attr array, same size as r, with corresponding elements. */
+        Attr                    currattr;   /* Attr configured by escape sequences in the input stream */
+        int                     escstate;   /* Escape sequence state variable */
+        int                     escparam;     /* Escape sequence integer parameter */
+        Rune                    esccmd[2];
 	uint			nraw;
 	Rune			*raw;
 	uint			org;     /* first visible char in window */
@@ -216,7 +230,7 @@ int		wclickmatch(Window*, int, int, int, uint*);
 int		wclose(Window*);
 int		wctlmesg(Window*, int);
 uint		wbacknl(Window*, uint, uint);
-uint		winsert(Window*, Rune*, int, uint);
+uint		winsert(Window*, Rune*, Attr, int, uint);
 void		waddraw(Window*, Rune*, int);
 int             wstatestring(Window *w, char *dest, int destsize);
 void		wborder(Window*, int);

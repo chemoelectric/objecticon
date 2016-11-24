@@ -5,7 +5,7 @@
 #include <cursor.h>
 #include <mouse.h>
 #include <keyboard.h>
-#include <frame.h>
+#include "frame.h"
 #include <fcall.h>
 #include <plumb.h>
 #include "dat.h"
@@ -69,7 +69,6 @@ threadmain(int argc, char *argv[])
 	char buf[256];
 	Image *i;
 	Rectangle r;
-
 	initstr = nil;
 	kbdin = nil;
 	maxtab = 0;
@@ -125,12 +124,13 @@ threadmain(int argc, char *argv[])
 	putenv("font", fontname);
 
 	snarffd = open("/dev/snarf", OREAD|OCEXEC);
-
 	if(geninitdraw(nil, derror, nil, "rio", nil, Refnone) < 0){
 		fprint(2, "rio: can't open display: %r\n");
 		exits("display open");
 	}
 	iconinit();
+        fontinit();
+        colorinit();
 	view = screen;
 	viewr = view->r;
 	mousectl = initmouse(nil, screen);
@@ -886,9 +886,9 @@ button3txtmenu(Window *w)
 			if(snarf[nsnarf-1]!='\n' && snarf[nsnarf-1]!='\004')
 				waddraw(w, L"\n", 1);
 		}else{
-			winsert(w, snarf, nsnarf, w->nr);
+                        winsert(w, snarf, 0, nsnarf, w->nr);
 			if(snarf[nsnarf-1]!='\n' && snarf[nsnarf-1]!='\004')
-				winsert(w, L"\n", 1, w->nr);
+                               winsert(w, L"\n", 0, 1, w->nr);
 		}
 		wsetselect(w, w->nr, w->nr);
 		wshow(w, w->nr);

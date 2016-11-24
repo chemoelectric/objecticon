@@ -5,7 +5,7 @@
 #include <cursor.h>
 #include <mouse.h>
 #include <keyboard.h>
-#include <frame.h>
+#include "frame.h"
 #include <fcall.h>
 #include <plumb.h>
 #include <complete.h>
@@ -25,6 +25,7 @@ int		topped, order;
 static	int		id;
 
 static	Image	*cols[NCOL];
+static	Font	*fonts[NFONT];
 static	Image	*grey;
 static	Image	*darkgrey;
 static	Cursor	*lastcursor;
@@ -40,8 +41,61 @@ static void gotohist(Window *w, int pos);
 static void searchhist(Window *w, int dir);
 static void resethist(Window *w);
 static void locatehist(Window *w);
+static void cons_write(Window *r, Rune *r, int nr);
+static void cons_write1(Window *w, Rune *r, int nr);
+static void dump_content(Window *w);
+static void fontinit1(char *envname, char *def, int num);
 
 #define HistEntry(w,pos) ((w)->hist[((w)->hfirst + (pos)) % (w)->hlimit])
+
+static void
+fontinit1(char *envname, char *def, int num)
+{
+    char *s;
+    if ((s = getenv(envname)) == nil || strlen(s) == 0)
+        s = def;
+    if ((fonts[num] = openfont(display, s)) == nil) {
+        fprint(2, "rio: can't open font %s: %r\n", s);
+        exits("font open");
+    }
+}
+
+void
+fontinit(void)
+{
+    fonts[REGULAR_FONT] = font;
+    fontinit1("fontb", "/lib/font/bit/fixed/unicode.8x13B.font", BOLD_FONT);
+    fontinit1("fonti", "/lib/font/bit/fixed/unicode.8x13O.font", ITALIC_FONT);
+    fontinit1("fontbi", "/lib/font/bit/fixed/unicode.8x13O.font", BOLD_ITALIC_FONT);
+}
+
+void
+colorinit(void)
+{
+    /* greys are multiples of 0x11111100+0xFF, 14* being palest */
+    grey = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0xEEEEEEFF);
+    darkgrey = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0x666666FF);
+    cols[BACK] = display->white;
+    cols[HIGH] = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0xCCCCCCFF);
+    cols[BORD] = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0x999999FF);
+    cols[TEXT] = display->black;
+    cols[HTEXT] = display->black;
+
+    cols[ATTR_BLACK] = display->black;
+    cols[ATTR_RED] = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0xAA0000FF);
+    cols[ATTR_GREEN] = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0x00AA00FF);
+    cols[ATTR_YELLOW] = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0xAAAA00FF);
+    cols[ATTR_BLUE] = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0x0000FFFF);
+    cols[ATTR_MAGENTA] = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0x7F00FFFF);
+    cols[ATTR_CYAN] = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0x00AAAAFF);
+    cols[ATTR_WHITE] = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0xD5D5D5FF);
+
+    titlecol = allocimage(display, Rect(0,0,1,1), CMAP8, 1, DGreygreen);
+    lighttitlecol = allocimage(display, Rect(0,0,1,1), CMAP8, 1, DPalegreygreen);
+    holdcol = allocimage(display, Rect(0,0,1,1), CMAP8, 1, DMedblue);
+    lightholdcol = allocimage(display, Rect(0,0,1,1), CMAP8, 1, DGreyblue);
+    paleholdcol = allocimage(display, Rect(0,0,1,1), CMAP8, 1, DPalegreyblue);
+}
 
 Window*
 wmk(Image *i, MousectlEx *mc, Channel *ck, Channel *cctl, int hidden, int scrolling, int transientfor, int noborder,
@@ -50,21 +104,6 @@ wmk(Image *i, MousectlEx *mc, Channel *ck, Channel *cctl, int hidden, int scroll
         Window *w, *x;
 	Rectangle r;
 
-	if(cols[0] == nil){
-		/* greys are multiples of 0x11111100+0xFF, 14* being palest */
-		grey = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0xEEEEEEFF);
-		darkgrey = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0x666666FF);
-		cols[BACK] = display->white;
-		cols[HIGH] = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0xCCCCCCFF);
-		cols[BORD] = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0x999999FF);
-		cols[TEXT] = display->black;
-		cols[HTEXT] = display->black;
-		titlecol = allocimage(display, Rect(0,0,1,1), CMAP8, 1, DGreygreen);
-		lighttitlecol = allocimage(display, Rect(0,0,1,1), CMAP8, 1, DPalegreygreen);
-		holdcol = allocimage(display, Rect(0,0,1,1), CMAP8, 1, DMedblue);
-		lightholdcol = allocimage(display, Rect(0,0,1,1), CMAP8, 1, DGreyblue);
-		paleholdcol = allocimage(display, Rect(0,0,1,1), CMAP8, 1, DPalegreyblue);
-	}
 	w = emalloc(sizeof(Window));
 	w->screenr = i->r;
 	r = insetrect(i->r, Selborder+1);
@@ -81,7 +120,7 @@ wmk(Image *i, MousectlEx *mc, Channel *ck, Channel *cctl, int hidden, int scroll
 	w->scrollr.max.x = r.min.x+Scrollwid;
 	w->lastsr = ZR;
 	r.min.x += Scrollwid+Scrollgap;
-	frinit(w, r, font, i, cols);
+	frinit(w, r, fonts, i, cols);
 	w->maxtab = maxtab*stringwidth(font, "0");
 	w->order = ++order;
         w->topped = ++topped;
@@ -168,7 +207,7 @@ wresize(Window *w, Image *i)
 	w->lastsr = ZR;
 	r.min.x += Scrollwid+Scrollgap;
         frclear(w, FALSE);
-        frinit(w, r, w->font, w->i, cols);
+        frinit(w, r, w->fonts, w->i, cols);
         wsetcols(w);
         w->maxtab = maxtab*stringwidth(w->font, "0");
         r = insetrect(w->i->r, Selborder);
@@ -406,11 +445,7 @@ winctl(void *arg)
 					rp[nr] = 0;
 					break;
 				}
-			w->qh = winsert(w, rp, nr, w->qh)+nr;
-			if(w->scrolling || w->mouseopen)
-				wshow(w, w->qh);
-			wsetselect(w, w->q0, w->q1);
-			wscrdraw(w);
+                        cons_write(w, rp, nr);
 			free(rp);
 			break;
 		case WCread:
@@ -573,7 +608,7 @@ showcandidates(Window *w, Completion *c)
 	nr = runestrlen(rp);
 
 	q0 = w->q0;
-	q0 += winsert(w, rp, runestrlen(rp), qline) - qline;
+	q0 += winsert(w, rp, 0, runestrlen(rp), qline) - qline;
 	free(rp);
 	wsetselect(w, q0+nr, q0+nr);
         wshow(w, w->q0);
@@ -765,7 +800,7 @@ wkeyctl(Window *w, Rune r)
 			return;
 		nr = runestrlen(rp);
 		q0 = w->q0;
-		q0 = winsert(w, rp, nr, q0);
+		q0 = winsert(w, rp, 0, nr, q0);
 		wshow(w, q0+nr);
 		free(rp);
 		return;
@@ -798,7 +833,7 @@ wkeyctl(Window *w, Rune r)
 
 	/* otherwise ordinary character; just insert */
 	q0 = w->q0;
-	q0 = winsert(w, &r, 1, q0);
+	q0 = winsert(w, &r, 0, 1, q0);
 	wshow(w, q0+1);
 }
 
@@ -898,7 +933,7 @@ wpaste(Window *w)
 		waddraw(w, snarf, nsnarf);
 		wsetselect(w, q0, q0);
 	}else{
-		q0 = winsert(w, snarf, nsnarf, w->q0);
+                q0 = winsert(w, snarf, 0, nsnarf, w->q0);
 		wsetselect(w, q0, q0+nsnarf);
 	}
 }
@@ -1027,8 +1062,8 @@ wmpress(Window *w)
     // Copy to a temporary buffer since winsert may realloc w->r.
     t = runemalloc(n);
     runemove(t, w->r+w->q0, n);
-    winsert(w, t, n, w->nr);
-    winsert(w, L" ", 1, w->nr) + 1;
+    winsert(w, t, 0, n, w->nr);
+    winsert(w, L" ", 0, 1, w->nr) + 1;
     free(t);
     wsetselect(w, w->nr, w->nr);
     wshow(w, w->q0);
@@ -1043,6 +1078,7 @@ wdelete(Window *w, uint q0, uint q1)
 	if(n == 0)
 		return;
 	runemove(w->r+q0, w->r+q1, w->nr-q1);
+	attrmove(w->attr+q0, w->attr+q1, w->nr-q1);
 	w->nr -= n;
 	if(q0 < w->q0)
 		w->q0 -= min(n, w->q0-q0);
@@ -1472,7 +1508,7 @@ gotohist(Window *w, int pos)
         rs = HistEntry(w, pos);
 
     /* Insert it. */
-    winsert(w, rs, runestrlen(rs), w->nr);
+    winsert(w, rs, 0, runestrlen(rs), w->nr);
     wsetselect(w, w->nr, w->nr);
     wshow(w, w->nr);
 
@@ -2138,10 +2174,7 @@ wsetorigin(Window *w, uint org, int exact)
 		fixup = 1;	/* frdelete can leave end of last line in wrong selection mode; it doesn't know what follows */
 	}else if(a<0 && -a<w->nchars){
 		n = w->org - org;
-		r = runemalloc(n);
-		runemove(r, w->r+org, n);
-		frinsert(w, r, r+n, 0);
-		free(r);
+		frinsert(w, w->r+org, w->attr+org, n, 0);
 	}else
 		frdelete(w, 0, w->nchars);
 	w->org = org;
@@ -2202,10 +2235,10 @@ wsetselect(Window *w, uint q0, uint q1)
 }
 
 uint
-winsert(Window *w, Rune *r, int n, uint q0)
+winsert(Window *w, Rune *r, Attr a, int n, uint q0)
 {
-	uint m;
-
+        uint m, i;
+        
 	if(n == 0)
 		return q0;
 	if(w->nr+n>HiWater && q0>=w->org && q0>=w->qh){
@@ -2222,6 +2255,7 @@ winsert(Window *w, Rune *r, int n, uint q0)
 			w->q1 = 0;
 		w->nr -= m;
 		runemove(w->r, w->r+m, w->nr);
+		attrmove(w->attr, w->attr+m, w->nr);
 		q0 -= m;
 	}
 	if(w->nr+n > w->maxr){
@@ -2236,11 +2270,16 @@ winsert(Window *w, Rune *r, int n, uint q0)
 			m = max(HiWater+MinWater, w->nr+n);
 		if(m > w->maxr){
 			w->r = runerealloc(w->r, m);
+			w->attr = attrrealloc(w->attr, m);
 			w->maxr = m;
 		}
 	}
 	runemove(w->r+q0+n, w->r+q0, w->nr-q0);
 	runemove(w->r+q0, r, n);
+	attrmove(w->attr+q0+n, w->attr+q0, w->nr-q0);
+        for (i = 0; i < n; ++i)
+            w->attr[q0 + i] = a;
+
 	w->nr += n;
 	/* if output touches, advance selection, not qh; works best for keyboard and output */
 	if(q0 <= w->q1)
@@ -2252,26 +2291,27 @@ winsert(Window *w, Rune *r, int n, uint q0)
 	if(q0 < w->org)
 		w->org += n;
 	else if(q0 <= w->org+w->nchars)
-		frinsert(w, r, r+n, q0-w->org);
+                frinsert(w, w->r+q0, w->attr+q0, n, q0-w->org);
 	return q0;
 }
 
 void
 wfill(Window *w)
 {
-	Rune *rp;
 	int i, n, m, nl;
+        Rune *rp;
+        Attr *ap;
 
 	if(w->lastlinefull)
 		return;
-	rp = malloc(messagesize);
 	do{
 		n = w->nr-(w->org+w->nchars);
 		if(n == 0)
 			break;
 		if(n > 2000)	/* educated guess at reasonable amount */
 			n = 2000;
-		runemove(rp, w->r+(w->org+w->nchars), n);
+		rp = w->r+(w->org+w->nchars);
+		ap = w->attr+(w->org+w->nchars);
 		/*
 		 * it's expensive to frinsert more than we need, so
 		 * count newlines.
@@ -2285,9 +2325,8 @@ wfill(Window *w)
 					break;
 			}
 		}
-		frinsert(w, rp, rp+i, w->nchars);
+		frinsert(w, rp, ap, i, w->nchars);
 	}while(w->lastlinefull == FALSE);
-	free(rp);
 }
 
 char*
@@ -2316,4 +2355,132 @@ whist(Window *w, int *ip)
     }
     *ip = p - res;
     return res;
+}
+
+static void
+dump_content(Window *w)
+{
+    Rune c;
+    Attr a = 0;
+    int i;
+    print("nr=%d:",w->nr);
+    for (i = 0; i < w->nr; ++i) {
+        if (w->attr[i] != a) {
+            a = w->attr[i];
+            frprintattr(a);
+        }
+        print("%C",w->r[i]);
+    }
+    print(":\n");
+}
+
+static
+void cons_write1(Window *w, Rune *r, int nr)
+{
+    if (nr == 0)
+        return;
+    w->qh = winsert(w, r, w->currattr, nr, w->qh)+nr;
+    if(w->scrolling || w->mouseopen)
+        wshow(w, w->qh);
+    wsetselect(w, w->q0, w->q1);
+    wscrdraw(w);
+}
+
+static
+void do_escape(Window *w)
+{
+    //print("ESC[%d%.2S\n", w->escparam, w->esccmd);
+    if (w->esccmd[0] == 'm') {
+        switch (w->escparam) {
+            case 0: w->currattr = 0; break;
+            case 1: w->currattr |= AttrBold; break;
+            case 3: w->currattr |= AttrItalic; break;
+            case 4: w->currattr |= AttrUnderline; break;
+            case 7: w->currattr |= AttrInverse; break;
+            case 8: w->currattr |= AttrInvisible; break;
+            case 9: w->currattr |= AttrCrossed; break;
+            case 22: w->currattr &= ~AttrBold; break;
+            case 23: w->currattr &= ~AttrItalic; break;
+            case 24: w->currattr &= ~AttrUnderline; break;
+            case 27: w->currattr &= ~AttrInverse; break;
+            case 28: w->currattr &= ~AttrInvisible; break;
+            case 29: w->currattr &= ~AttrCrossed; break;
+            case 30: w->currattr = (w->currattr & ~AttrFg) | AttrBlackFg; break;
+            case 31: w->currattr = (w->currattr & ~AttrFg) | AttrRedFg; break;
+            case 32: w->currattr = (w->currattr & ~AttrFg) | AttrGreenFg; break;
+            case 33: w->currattr = (w->currattr & ~AttrFg) | AttrYellowFg; break;
+            case 34: w->currattr = (w->currattr & ~AttrFg) | AttrBlueFg; break;
+            case 35: w->currattr = (w->currattr & ~AttrFg) | AttrMagentaFg; break;
+            case 36: w->currattr = (w->currattr & ~AttrFg) | AttrCyanFg; break;
+            case 37: w->currattr = (w->currattr & ~AttrFg) | AttrWhiteFg; break;
+            case 39: w->currattr = (w->currattr & ~AttrFg); break;
+            case 40: w->currattr = (w->currattr & ~AttrBg) | AttrBlackBg; break;
+            case 41: w->currattr = (w->currattr & ~AttrBg) | AttrRedBg; break;
+            case 42: w->currattr = (w->currattr & ~AttrBg) | AttrGreenBg; break;
+            case 43: w->currattr = (w->currattr & ~AttrBg) | AttrYellowBg; break;
+            case 44: w->currattr = (w->currattr & ~AttrBg) | AttrBlueBg; break;
+            case 45: w->currattr = (w->currattr & ~AttrBg) | AttrMagentaBg; break;
+            case 46: w->currattr = (w->currattr & ~AttrBg) | AttrCyanBg; break;
+            case 47: w->currattr = (w->currattr & ~AttrBg) | AttrWhiteBg; break;
+            case 49: w->currattr = (w->currattr & ~AttrBg); break;
+        }
+    }
+}
+
+static
+void cons_write(Window *w, Rune *r, int nr)
+{
+    Rune *rend;
+    rend = r + nr;
+    int i;
+
+    while (r < rend) {
+        switch (w->escstate) {
+            case NoEsc : {
+                Rune *t = r;
+                while (r < rend && *r != 27)
+                    ++r;
+                cons_write1(w, t, r - t);
+                if (r < rend) {
+                    w->escstate = GotEsc;
+                    ++r;
+                }
+                break;
+            }
+            case GotEsc: {
+                if (*r == '[') {
+                    w->escstate = GotBracket;
+                    w->escparam = 0;
+                    ++r;
+                } else
+                    w->escstate = NoEsc;
+                break;
+            }
+            case GotBracket: {
+                if (isdigitrune(*r)) {
+                    w->escparam = 10 * w->escparam + (*r - '0');
+                    ++r;
+                } else
+                    w->escstate = GotNum;
+                break;
+            }
+            case GotNum: {
+                w->esccmd[0] = *r++;
+                if (runestrchr(L"!>?", w->esccmd[0]))
+                    w->escstate = GotCmd0;
+                else {
+                    w->esccmd[1] = 0;
+                    do_escape(w);
+                    w->escstate = NoEsc;
+                }
+                break;
+            }
+            case GotCmd0: {
+                w->esccmd[1] = *r++;
+                do_escape(w);
+                w->escstate = NoEsc;
+                break;
+            }
+        }
+    }
 }
