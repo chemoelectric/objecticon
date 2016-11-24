@@ -42,6 +42,7 @@ class FontTestDialog(Dialog)
       }
       oifont_label.set_label(Window.get_default_font())
       oifontsize_label.set_label(Window.get_default_font_size())
+      font_label.set_menu_on_rpress(&yes)
 
       range_list.set_selection_list(["32-127 (ascii)",
                                      "128-255 (latin)",
