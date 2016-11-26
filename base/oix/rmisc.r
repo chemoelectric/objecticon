@@ -2094,7 +2094,7 @@ void why(char *s)
  */
 void whyf(char *fmt, ...)
 {
-    char buff[256];
+    char buff[512];
     va_list ap;
     va_start(ap, fmt);
     vsnprintf(buff, sizeof(buff), fmt, ap);
