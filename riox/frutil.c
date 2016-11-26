@@ -17,7 +17,7 @@ _frcanfit(Frame *f, Point pt, Frbox *b)
 	if(left >= b->wid)
 		return b->nrune;
 	for(nr=0, rp = b->rptr; *rp; rp++,nr++){
-		left -= runestringnwidth(frboxfont(f,b), rp, 1);
+		left -= runestringnwidth(_frboxfont(f,b), rp, 1);
 		if(left < 0)
 			return nr;
 	}
@@ -103,6 +103,24 @@ _frclean(Frame *f, Point pt, int n0, int n1)	/* look for mergeable boxes */
 	f->lastlinefull = 0;
 	if(pt.y >= f->r.max.y)
 		f->lastlinefull = 1;
+}
+
+void *
+_frmalloc(Frame *f, unsigned n)
+{
+    void *a = malloc(n);
+    if (!a && n > 0)
+        drawerror(f->display, "out of memory");
+    return a;
+}
+
+void *
+_frrealloc(Frame *f, void *p, unsigned n)
+{
+    p = realloc(p, n);
+    if (!p && n > 0)
+        drawerror(f->display, "out of memory");
+    return p;
 }
 
 void frprintattr(Attr a)

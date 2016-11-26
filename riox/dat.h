@@ -160,7 +160,7 @@ struct Window
         Attr                    currattr;   /* Attr configured by escape sequences in the input stream */
         int                     escstate;   /* Escape sequence state variable */
         int                     escparam;     /* Escape sequence integer parameter */
-        Rune                    esccmd[2];
+        Rune                    esccmd[2];    /* Escape sequence CSI command letters */
 	uint			nraw;
 	Rune			*raw;
 	uint			org;     /* first visible char in window */

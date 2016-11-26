@@ -11,7 +11,7 @@ static Rectangle MkRect(int x, int y, int w, int h)
 }
 
 Font *
-frboxfont(Frame *f, Frbox *b)
+_frboxfont(Frame *f, Frbox *b)
 {
     if (((b->attr & (AttrBold | AttrItalic)) == (AttrBold | AttrItalic)))
         return f->fonts[BOLD_ITALIC_FONT];
@@ -60,7 +60,7 @@ void drawfrbox(Frame *f, Frbox *b, Point pt, int off, int n, Image *text, Image 
         bg = t;
     }
 
-    font = frboxfont(f, b);
+    font = _frboxfont(f, b);
 
     if (!(b->attr & AttrInvisible))
         runestringnbg(f->b, pt, 
@@ -175,7 +175,7 @@ frdrawsel0(Frame *f, Point pt, ulong p0, ulong p1, Image *back, Image *text)
 		if(b->nrune<0 || nr==b->nrune)
 			w = b->wid;
 		else
-                        w = runestringnwidth(frboxfont(f, b), rptr, nr);
+                        w = runestringnwidth(_frboxfont(f, b), rptr, nr);
 		x = pt.x+w;
 		if(x > f->r.max.x)
 			x = f->r.max.x;

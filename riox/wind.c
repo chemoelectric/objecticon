@@ -2481,6 +2481,10 @@ void cons_write(Window *w, Rune *r, int nr)
                 w->escstate = NoEsc;
                 break;
             }
+            default: {
+                error("Invalid w->escstate");
+                break;
+            }
         }
     }
 }

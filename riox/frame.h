@@ -118,9 +118,9 @@ Point   frdrawsel0(Frame*, Point, ulong, ulong, Image*, Image*);
 void	frinit(Frame*, Rectangle, Font**, Image*, Image**);
 void	frsetrects(Frame*, Rectangle, Image*);
 void	frclear(Frame*, int);
+void    frprintattr(Attr a);
+void    frdump(Frame *f);
 
-Rune *  _frallocrunestr(Frame *f, unsigned n);
-void	_frinsure(Frame*, int, unsigned);
 Point	_frdraw(Frame*, Point);
 void	_frgrowbox(Frame*, int);
 void	_frfreebox(Frame*, int, int);
@@ -144,8 +144,9 @@ int	_frstrlen(Frame*, int);
 void	frtick(Frame*, Point, int);
 void	frinittick(Frame*);
 void	frredraw(Frame*);
-void    frprintattr(Attr a);
-void    frdump(Frame *f);
-Font    *frboxfont(Frame *f, Frbox *b);
+Font    *_frboxfont(Frame *f, Frbox *b);
+void    *_frmalloc(Frame *f, unsigned n);
+void    *_frrealloc(Frame *f, void *p, unsigned n);
+
 
 #define	NRUNE(b)	((b)->nrune<0? 1 : (b)->nrune)

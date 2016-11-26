@@ -60,13 +60,13 @@ bxscan(Frame *f, Rune *sp, Attr *ap, uint nchar, Point *ppt)
 				nr++;
 			}
 			b = &frame.box[nb];
-                        rp = _frallocrunestr(f, nr + 1);
+                        rp = _frmalloc(f, (nr + 1) * sizeof(Rune));
                         memcpy(rp, sp - nr, nr * sizeof(Rune));
                         rp[nr] = 0;
                         b->rptr = rp;
                         b->attr = a0;
 			b->nrune = nr;
-			b->wid = runestringwidth(frboxfont(&frame,b), b->rptr);
+			b->wid = runestringwidth(_frboxfont(&frame,b), b->rptr);
 			frame.nchars += nr;
 		}
 	}
@@ -192,7 +192,7 @@ frinsert(Frame *f, Rune *sp, Attr *ap, uint nchar, ulong p0)
 			}
 		}
 		if(npts == nalloc){
-			pts = realloc(pts, (npts+DELTA)*sizeof(pts[0]));
+			pts = _frrealloc(f, pts, (npts+DELTA)*sizeof(pts[0]));
 			nalloc += DELTA;
 			b = &f->box[n0];
 		}

@@ -63,9 +63,7 @@ void
 _frgrowbox(Frame *f, int delta)
 {
 	f->nalloc += delta;
-	f->box = realloc(f->box, f->nalloc*sizeof(Frbox));
-	if(f->box == 0)
-		drawerror(f->display, "_frgrowbox");
+	f->box = _frrealloc(f, f->box, f->nalloc*sizeof(Frbox));
 }
 
 static
@@ -79,7 +77,7 @@ dupbox(Frame *f, int bn)
 	_fraddbox(f, bn, 1);
 	if(f->box[bn].nrune >= 0){
                 assert(f->box[bn].nrune == runestrlen(f->box[bn].rptr));
-                r = _frallocrunestr(f, f->box[bn].nrune + 1);
+                r = _frmalloc(f, (f->box[bn].nrune + 1) * sizeof(Rune));
                 runestrcpy(r, f->box[bn].rptr);
                 f->box[bn+1].rptr = r;
                 f->box[bn+1].attr = f->box[bn].attr;
@@ -111,7 +109,7 @@ truncatebox(Frame *f, Frbox *b, int n)	/* drop last n chars; no allocation done 
 		drawerror(f->display, "truncatebox");
 	b->nrune -= n;
         b->rptr[b->nrune] = 0;
-	b->wid = runestringwidth(frboxfont(f, b), b->rptr);
+	b->wid = runestringwidth(_frboxfont(f, b), b->rptr);
 }
 
 static
@@ -123,7 +121,7 @@ chopbox(Frame *f, Frbox *b, int n)	/* drop first n chars; no allocation done */
         assert(b->nrune == runestrlen(b->rptr));
         memmove(b->rptr, b->rptr + n, sizeof(Rune) * (b->nrune - n + 1));
 	b->nrune -= n;
-	b->wid = runestringwidth(frboxfont(f, b), b->rptr);
+	b->wid = runestringwidth(_frboxfont(f, b), b->rptr);
 }
 
 void
@@ -138,10 +136,9 @@ void
 _frmergebox(Frame *f, int bn)		/* merge bn and bn+1 */
 {
 	Frbox *b;
-        //print("merging %d and %d\n",bn,bn+1);
 	b = &f->box[bn];
         assert(b[0].attr == b[1].attr);
-	_frinsure(f, bn, b[0].nrune + b[1].nrune);
+        b[0].rptr = _frrealloc(f, b[0].rptr, (b[0].nrune + b[1].nrune + 1) * sizeof(Rune));
         memcpy(b[0].rptr + b[0].nrune, b[1].rptr, (b[1].nrune + 1) * sizeof(Rune));
 	b[0].wid += b[1].wid;
 	b[0].nrune += b[1].nrune;
