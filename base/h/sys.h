@@ -23,7 +23,9 @@
    typedef unsigned long mode_t;
    typedef unsigned long clock_t;
    typedef vlong off_t;
-   #define vsnprint vsnprint
+   /* snprintf and vsnprintf have a buffer overrun bug, and must never
+    * be used. */
+   #define snprintf snprint
    #define vsnprintf vsnprint
    #define setenv(k, v, o) putenv(k, v)
    #define getenv(k) oi_getenv(k)
