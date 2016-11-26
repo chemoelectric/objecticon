@@ -43,10 +43,6 @@
    #define R_OK 0
    #define X_OK 0
    #define ftruncate _chsize
-   #define alloca _alloca
-   #define strdup _strdup
-   #define unlink _unlink
-   #define snprintf _snprintf
    typedef int mode_t;
    #define O_ACCMODE 3
    #include <sys/timeb.h>
