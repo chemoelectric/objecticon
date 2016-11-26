@@ -32,6 +32,7 @@ all:V:   oix
 
 oix:	$XOBJS
 	$LD -o oix $OBJS $LIBS
+        rm -f $OI_BIN/oix
 	cp oix $OI_BIN
 
 clean:V:
