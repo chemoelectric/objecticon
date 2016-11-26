@@ -392,6 +392,7 @@ static ulong get_timestamp(void)
 static void mouse_loop(wsp ws)
 {
     char buf[49];
+    procsetname("mouse %d", ws->winid);
     while (read(ws->mouse_fd, buf, sizeof(buf)) == 49) {
         /* Update timestamp */
         snprintf(&buf[37], 12, "%11lu ", get_timestamp());
@@ -407,6 +408,7 @@ static void cons_loop(wsp ws)
     Rune r;
     char buf[49], in[10];
     int nc;
+    procsetname("cons %d", ws->winid);
     buf[0] = 'k';
     /*
      * Read just the first char of the codepoint to get the utf-8

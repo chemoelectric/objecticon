@@ -4214,6 +4214,7 @@ static long write_all(int fd, void *buf, long nbytes)
 
 static void fileworker_loop(struct fileworker *w)
 {
+    procsetname("fileworker");
     for(;;) {
         wait_for_fileworker_status(w, FW_RUNNING);
         switch (w->cmd) {

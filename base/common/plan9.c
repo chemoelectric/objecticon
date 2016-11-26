@@ -352,3 +352,21 @@ oi_getenv(char *name)
     close(f);
     return ans;
 }
+
+void
+procsetname(char *fmt, ...)
+{
+    int fd;
+    char buf[128];
+    va_list arg;
+
+    snprint(buf, sizeof buf, "#p/%d/args", getpid());
+    if((fd = open(buf, OWRITE)) < 0)
+        return;
+
+    va_start(arg, fmt);
+    vsnprint(buf, sizeof(buf), fmt, arg);
+    va_end(arg);
+    write(fd, buf, strlen(buf));
+    close(fd);
+}

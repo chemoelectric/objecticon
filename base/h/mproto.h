@@ -90,6 +90,7 @@ FILE *fopen_utf8(char *path, char *mode);
 #if PLAN9
 void readtzinfo(struct tzinfo *tz);
 char* oi_getenv(char *name);
+void procsetname(char *fmt, ...);
 #endif
 
 char *double2cstr(double n);
