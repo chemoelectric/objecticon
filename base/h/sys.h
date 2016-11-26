@@ -132,27 +132,16 @@
    #include <direct.h>
    #define LRESULT_CALLBACK LRESULT CALLBACK
    #define BOOL_CALLBACK BOOL CALLBACK
-   #include <mmsystem.h>
-   #include <process.h>
    #define Type(d) (int)((d).dword & TypeMask)
    #undef lst1
    #undef lst2
    #define F_OK 0
    #define R_OK 0
    #define X_OK 0
-   #ifndef vsnprintf
-      #define vsnprintf(a,b,c,d) vsprintf(a,c,d)
-   #endif
    #define ftruncate _chsize
-   #define alloca _alloca
-   #define strdup _strdup
-   #define unlink _unlink
-   #define snprintf _snprintf
    typedef int mode_t;
    #define O_ACCMODE 3
    #include <sys/timeb.h>
-   #include <sys/locking.h>
-   #include <sys/utime.h>
    #include <io.h>
    #include <time.h>
    #include "gdip.h"
