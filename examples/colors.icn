@@ -37,22 +37,10 @@ class Untitled(Dialog)
       colr,
       panel_2
 
-   private copy_rgb_label()
-      own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(rgb_label.paint.str))
-   end
-
-   private on_rgb_label(ev)
-      local pm, pm_menu
-      pm_menu := Menu()
-      pm_menu.add(TextMenuItem().set_label("Copy").connect(copy_rgb_label, Event.ACTION))
-      pm := PopupMenu()
-      pm.popup(self, pm_menu, ev.x, ev.y)
-   end
-
    public component_setup()
       self.setup()
+      rgb_label.set_menu_on_rpress(&yes)
       update_rgb()
-      rgb_label.connect(on_rgb_label, Event.MOUSE_RIGHT_PRESS)
    end
 
    public end_dialog()

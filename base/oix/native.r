@@ -3632,6 +3632,10 @@ function io_RamStream_truncate(self, len)
       runerr(101, len)
    body {
        GetSelfRs();
+       if (len < 0) {
+           LitWhy("Negative truncate length");
+           fail;
+       }
        self_rs->avail = len + self_rs->wiggle;
        self_rs->data = safe_realloc(self_rs->data, self_rs->avail);
        if (self_rs->size < len)
