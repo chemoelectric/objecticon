@@ -64,7 +64,7 @@ usage(void)
 void
 threadmain(int argc, char *argv[])
 {
-        char *initstr, *kbdin, *s, *saved_wsys, *saved_wctl;
+        char *initstr, *kbdin, *s;
 	static void *arg[1];
 	char buf[256];
 	Image *i;
@@ -100,6 +100,10 @@ threadmain(int argc, char *argv[])
 		scrolling = TRUE;
 		break;
 	}ARGEND
+
+        /* Protect environment vars (font, wsys, wctl) with -x */
+        if (hasexit)
+            rfork(RFENVG);
 
 	mainpid = getpid();
 	if(getwd(buf, sizeof buf) == nil)
@@ -155,8 +159,7 @@ threadmain(int argc, char *argv[])
 	threadcreate(mousethread, nil, STACK);
 	threadcreate(winclosethread, nil, STACK);
 	threadcreate(deletethread, nil, STACK);
-        saved_wsys = getenv("wsys");
-        saved_wctl = getenv("wctl");
+
 	filsys = filsysinit(xfidinit());
 
 	if(filsys == nil)
@@ -181,10 +184,6 @@ threadmain(int argc, char *argv[])
 		recv(exitchan, nil);
 	}
 	killprocs();
-        if (saved_wsys)
-            putenv("wsys", saved_wsys);
-        if (saved_wctl)
-            putenv("wctl", saved_wctl);
 	threadexitsall(nil);
 }
 
