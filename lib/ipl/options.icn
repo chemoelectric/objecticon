@@ -295,7 +295,7 @@ procedure options(arg, opts, usage, errproc)
          #
          else if ="@" & not pos(0) & /ignore then {
             f := open(fn := tab(0)) |
-               return errproc("Can't open " || fn)
+               return errproc("Can't open " || fn || ": " || &why)
             fileArg := []
             while put(fileArg,read(f))
             f.close()
