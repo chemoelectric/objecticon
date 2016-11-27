@@ -42,7 +42,6 @@ static void searchhist(Window *w, int dir);
 static void resethist(Window *w);
 static void locatehist(Window *w);
 static void cons_write(Window *r, Rune *r, int nr);
-static void cons_write1(Window *w, Rune *r, int nr);
 static void dump_content(Window *w);
 static void fontinit1(char *envname, char *def, int num);
 
@@ -281,7 +280,7 @@ winctl(void *arg)
 	Rune *rp, *bp, *tp, *up, *kbdr;
 	uint qh;
 	int nr, nb, c, wid, i, npart, initial, qh0;
-	char *s, *t, part[3];
+	char *t, part[3];
 	Window *w;
 	Mousestate *mp, m;
 	enum { WKey, WMouse, WMouseread, WCtl, WCwrite, WCread, WWread, NWALT };
@@ -1345,8 +1344,6 @@ wsendctlmesg(Window *w, int type)
 int
 wctlmesg(Window *w, int m)
 {
-	char buf[64];
-
 	switch(m){
 	default:
 		error("unknown control message");
@@ -1409,7 +1406,6 @@ static void
 locatehist(Window *w)
 {
     int num, i;
-    Rune r;
 
     if (w->qh == w->nr)
         return;
@@ -1524,7 +1520,7 @@ static void
 addhist(Window *w, int from, int to)
 {
     Rune *rs;
-    int i, b;
+    int i;
     /* Add the new chars to the hsent buffer */
     w->hsent = erealloc(w->hsent, (w->hsentlen + to - from) * sizeof(Rune));
     for (i = from; i < to; ++i)
@@ -1871,9 +1867,8 @@ int wtop(Window *w)
 int
 wbottom(Window *w)
 {
-    Image **below;
     Window **sortwin;
-    int i, nbelow;
+    int i;
 
     w->order = - ++order;
     ensure_transient_stacking_rev();
@@ -2153,7 +2148,6 @@ void
 wsetorigin(Window *w, uint org, int exact)
 {
 	int i, a, fixup;
-	Rune *r;
 	uint n;
 
 	if(org>0 && !exact){
@@ -2360,7 +2354,6 @@ whist(Window *w, int *ip)
 static void
 dump_content(Window *w)
 {
-    Rune c;
     Attr a = 0;
     int i;
     print("nr=%d:",w->nr);
@@ -2375,21 +2368,8 @@ dump_content(Window *w)
 }
 
 static
-void cons_write1(Window *w, Rune *r, int nr)
-{
-    if (nr == 0)
-        return;
-    w->qh = winsert(w, r, w->currattr, nr, w->qh)+nr;
-    if(w->scrolling || w->mouseopen)
-        wshow(w, w->qh);
-    wsetselect(w, w->q0, w->q1);
-    wscrdraw(w);
-}
-
-static
 void do_escape(Window *w)
 {
-    //print("ESC[%d%.2S\n", w->escparam, w->esccmd);
     if (w->esccmd[0] == 'm') {
         switch (w->escparam) {
             case 0: w->currattr = 0; break;
@@ -2432,7 +2412,7 @@ void cons_write(Window *w, Rune *r, int nr)
 {
     Rune *rend;
     rend = r + nr;
-    int i;
+    int i, inserted = 0;
 
     while (r < rend) {
         switch (w->escstate) {
@@ -2440,7 +2420,11 @@ void cons_write(Window *w, Rune *r, int nr)
                 Rune *t = r;
                 while (r < rend && *r != 27)
                     ++r;
-                cons_write1(w, t, r - t);
+                i = r - t;
+                if (i > 0) {
+                    w->qh = winsert(w, t, w->currattr, i, w->qh) + i;
+                    inserted = 1;
+                }
                 if (r < rend) {
                     w->escstate = GotEsc;
                     ++r;
@@ -2486,5 +2470,11 @@ void cons_write(Window *w, Rune *r, int nr)
                 break;
             }
         }
+    }
+    if (inserted) {
+        if(w->scrolling || w->mouseopen)
+            wshow(w, w->qh);
+        wsetselect(w, w->q0, w->q1);
+        wscrdraw(w);
     }
 }
