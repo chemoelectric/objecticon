@@ -2055,7 +2055,7 @@ static void handle_crossing(wsp ws, XCrossingEvent *event)
     struct descrip d;
     MakeInt(event->type == EnterNotify ? MOUSEENTERED:MOUSEEXITED, &d);
     qevent(ws, &d, event->x, event->y,
-           (uword)event->time, 
+           (word)event->time, 
            make_mod(event->state));
 }
 
@@ -2080,7 +2080,7 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
         for (j = 0; j < i; j++) {
             StrLoc(d) = &allchars[s[j] & 0xFF];
             qevent(ws, &d, event->x, event->y,
-                   (uword)event->time, fl);
+                   (word)event->time, fl);
         }
         return;
     }
@@ -2097,7 +2097,7 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
             BlkLoc(d) = (union block *)make_one_char_ucs_block(i);
         }
         qevent(ws, &d, event->x, event->y,
-               (uword)event->time, fl);
+               (word)event->time, fl);
         return;
     }
 
@@ -2106,7 +2106,7 @@ static void handle_keypress(wsp ws, XKeyEvent *event)
      */
     MakeInt(k, &d);
     qevent(ws, &d, event->x, event->y,
-           (uword)event->time, fl);
+           (word)event->time, fl);
 }
 
 #include "rxkeysyms.ri"
@@ -2149,7 +2149,7 @@ static void handle_mouse(wsp ws, XButtonEvent *event)
     }
     qmouseevents(ws, state, 
                  event->x, event->y, 
-                 (uword)event->time, 
+                 (word)event->time, 
                  make_mod(event->state));
 }
 

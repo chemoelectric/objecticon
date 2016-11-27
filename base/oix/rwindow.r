@@ -107,7 +107,7 @@ void qevent(wsp ws,             /* canvas */
             dptr e,             /* event code (descriptor pointer) */
             int x,              /* x and y values */
             int y,      
-            uword t,            /* ms clock value */
+            word t,             /* ms clock value */
             int mod)            /* modifier flags */
 {
     dptr q = &(ws->listp);	/* a window's event queue (Icon list value) */
@@ -145,7 +145,7 @@ void qmouseevents(wsp ws,             /* canvas */
                   int state,          /* state of mouse buttons */
                   int x,              /* x and y values */
                   int y,      
-                  uword t,            /* ms clock value */
+                  word t,             /* ms clock value */
                   int mod)            /* modifier key flags */
 {
     struct descrip d;
