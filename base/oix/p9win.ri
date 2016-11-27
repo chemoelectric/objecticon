@@ -807,7 +807,6 @@ static void fill1(wbp w, int x, int y, int width, int height)
 static void fill2(wbp w, int op, Image *color, int x, int y, int width, int height)
 {
     wsp ws = w->window;
-    wcp wc = w->context;
     gendrawop(ws->pix, 
               MkRect(x, y, width, height),
               color, Pt(x, y), 
@@ -837,7 +836,6 @@ static void line2(wbp w, int x1, int y1, int x2, int y2)
 void drawrectangle(wbp w, int x, int y, int width, int height, int thick)
 {
     wsp ws = w->window;
-    wcp wc = w->context;
     if (width <= 2 * thick || height <= 2 * thick)
         fillrectangle(w, x, y, width, height);
     else {
@@ -863,7 +861,7 @@ void fillpolygon(wbp w, struct point *points0, int npoints)
 {
     wsp ws = w->window;
     wcp wc = w->context;
-    int x, y, width, height, i;
+    int x, y, width, height;
     Point *points;
     if (npoints < 3)
         return;
@@ -1084,7 +1082,6 @@ static Rune *iso8859_to_runes(dptr str)
 
 void erasearea(wbp w, int x, int y, int width, int height)
 {
-    wsp ws = w->window;
     wcp wc = w->context;
     clip(w);
     fill2(w, S, wc->bg->i, x, y, width, height);
@@ -1178,7 +1175,6 @@ static Image *get_draw_img(wcp wc)
 
 void fillrectangle(wbp w, int x, int y, int width, int height)
 {
-    wsp ws = w->window;
     wcp wc = w->context;
     clip(w);
     fill2(w, wc->drawop->i, get_draw_img(wc), x, y, width, height);

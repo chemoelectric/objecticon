@@ -8,10 +8,8 @@
 Point
 _frptofcharptb(Frame *f, ulong p, Point pt, int bn)
 {
-	uchar *s;
 	Frbox *b;
-	int w, l;
-	Rune r;
+	int l;
 
 	for(b = &f->box[bn]; bn<f->nbox; bn++,b++){
 		_frcklinewrap(f, &pt, b);

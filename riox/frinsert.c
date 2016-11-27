@@ -107,7 +107,7 @@ frdump(Frame *f)
         print("\t\twid=%ld nrune=%ld\n", b->wid, b->nrune);
         if (b->nrune >= 0) {
             print("\t\tattr=");frprintattr(b->attr); 
-            print("\n\t\trptr='%S'(%d)\n", b->rptr, runestrlen(b->rptr));
+            print("\n\t\trptr='%S'(%ld)\n", b->rptr, runestrlen(b->rptr));
         } else
             print("\t\tbc=%d minwid=%d\n", (int)b->bc, (int)b->minwid);
     }
@@ -117,7 +117,6 @@ frdump(Frame *f)
 static void
 dump_content(Rune *sp, Attr *ap, uint nchar)
 {
-    Rune c;
     Attr a = 0;
     int i;
     print("nr=%d:",nchar);

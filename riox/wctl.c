@@ -230,7 +230,7 @@ parsewctl(char **argp, Rectangle r, Rectangle *rp, int *pidp, int *idp, int *hid
           int *mindxp, int *maxdxp, int *mindyp, int *maxdyp,
           char **cdp, char *s, char *err)
 {
-    int cmd, param, xy, sign, got_layer = 0;
+    int cmd, param, xy, sign;
     char *t;
 
     *pidp = 0;
@@ -474,7 +474,6 @@ writewctl(Xfid *x, char *err)
 	Image *i;
 	char *arg, *dir;
 	Rectangle rect;
-        int fl;
 	Window *w;
 
 	w = x->f->w;

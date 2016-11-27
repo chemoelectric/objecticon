@@ -8,9 +8,6 @@ static rd_long(char **f, long *p);
 
 int gettimeofday(struct timeval *tv, struct timezone *tz)
 {
-
-    int f;
-    uchar b[8];
     vlong t;
 
     t = nsec();
@@ -158,10 +155,9 @@ int execve(const char *path, char *const argv[], char *const envp[])
 
 int rename(const char *from, const char *to)
 {
-    int n, i;
+    int n;
     char *f, *t;
     struct Dir *d, nd;
-    long mode;
 
     if(access(to, 0) >= 0){
         if(remove(to) < 0){
@@ -184,7 +180,6 @@ int rename(const char *from, const char *to)
     n = 0;
     if(f-from==t-to && strncmp(from, to, f-from)==0){
         /* from and to are in same directory (we miss some cases) */
-        i = strlen(t);
         nulldir(&nd);
         nd.name = t;
         if(dirwstat(from, &nd) < 0){
@@ -192,7 +187,7 @@ int rename(const char *from, const char *to)
         }
     }else{
         /* different directories: have to copy */
-        int ffd, tfd;
+        int ffd = -1, tfd = -1;
         char buf[8192];
 
         if((ffd = open(from, 0)) < 0 ||

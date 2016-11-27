@@ -2980,9 +2980,7 @@ end
 static void stat2list(struct Dir *st, dptr result)
 {
    tended struct descrip tmp;
-   char mode[13], *user, *group;
-   struct passwd *pw;
-   struct group *gr;
+   char mode[13];
 
    create_list(14, result);
    convert_from_uint(st->dev, &tmp);
