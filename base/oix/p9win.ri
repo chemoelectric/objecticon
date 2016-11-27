@@ -395,7 +395,7 @@ static void mouse_loop(wsp ws)
     procsetname("mouse %d", ws->winid);
     while (read(ws->mouse_fd, buf, sizeof(buf)) == 49) {
         /* Update timestamp */
-        snprint(&buf[37], 12, "%11lu ", get_timestamp());
+        snprint(&buf[37], 12, "%11lud ", get_timestamp());
         if (write(ws->event_pipe[1], buf, 49) != 49)
             break;
         ++ws->mouse_events;
@@ -426,7 +426,7 @@ static void cons_loop(wsp ws)
             break;
         /* Set arg and timestamp */
         chartorune(&r, in);
-        snprint(&buf[25], 24, "%11d %11lu ", (int)r, get_timestamp());
+        snprint(&buf[25], 24, "%11d %11lud ", (int)r, get_timestamp());
         if (write(ws->event_pipe[1], buf, 49) != 49)
             break;
         ++ws->cons_events;
@@ -515,7 +515,7 @@ void pollevent(wbp w)
     int n, mx, my, arg;
     char buf[49];
     tended struct descrip d;
-    uword time;
+    word time;
 
     /* Check if pipe open */
     if (!ws->win || ws->event_pipe[0] < 0)
