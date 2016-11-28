@@ -155,62 +155,64 @@ int execve(const char *path, char *const argv[], char *const envp[])
 
 int rename(const char *from, const char *to)
 {
-    int n;
+    ulong mode;
     char *f, *t;
     struct Dir *d, nd;
 
-    if(access(to, 0) >= 0){
-        if(remove(to) < 0){
+    if ((d = dirstat(from)) == 0)
+        return -1;
+    mode = d->mode;
+    free(d);
+
+    if ((d = dirstat(to)) != 0) {
+        if (d->mode & DMDIR) {
+            free(d);
+            werrstr("rename: target '%s' is a directory", to);
             return -1;
         }
-    }
-    if((d = dirstat(to)) != 0){
         free(d);
-        werrstr("rename: can't get rid of '%s'", to);
-        return -1;
+        if (remove(to) < 0)
+            return -1;
     }
-    if((d = dirstat(from)) == 0){
-        werrstr("rename: can't stat source: %r");
-        return -1;
-    }
+
     f = strrchr(from, '/');
     t = strrchr(to, '/');
-    f = f? f+1 : from;
-    t = t? t+1 : to;
-    n = 0;
-    if(f-from==t-to && strncmp(from, to, f-from)==0){
+    f = f ? f+1 : from;
+    t = t ? t+1 : to;
+    if (f - from == t - to && strncmp(from, to, f - from) == 0) {
         /* from and to are in same directory (we miss some cases) */
         nulldir(&nd);
         nd.name = t;
-        if(dirwstat(from, &nd) < 0){
-            n = -1;
-        }
-    }else{
+        if (dirwstat(from, &nd) < 0)
+            return -1;
+    } else {
         /* different directories: have to copy */
-        int ffd = -1, tfd = -1;
+        int ffd, tfd, n;
         char buf[8192];
 
-        if((ffd = open(from, 0)) < 0 ||
-           (tfd = create(to, 1, d->mode)) < 0){
-            close(ffd);
+        if (mode & DMDIR) {
+            werrstr("rename: can't move a directory to another directory");
+            return -1;
+        }
+
+        ffd = tfd = -1;
+        n = 0;
+        if ((ffd = open(from, OREAD)) < 0 ||
+           (tfd = create(to, OWRITE, mode)) < 0) {
             n = -1;
         }
-        while(n>=0 && (n = read(ffd, buf, sizeof buf)) > 0)
-            if(write(tfd, buf, n) != n){
+        while (n >= 0 && (n = read(ffd, buf, sizeof buf)) > 0) {
+            if (write(tfd, buf, n) != n)
                 n = -1;
-            }
-        close(ffd);
-        close(tfd);
-        if(n>0)
-            n = 0;
-        if(n == 0) {
-            if(remove(from) < 0){
-                n = -1;
-            }
         }
+        if (ffd >= 0) close(ffd);
+        if (tfd >= 0) close(tfd);
+        if (n < 0)
+            return -1;
+        if (remove(from) < 0)
+            return -1;
     }
-    free(d);
-    return n;
+    return 0;
 }
 
 int unlink(const char *path)
