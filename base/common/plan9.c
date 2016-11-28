@@ -166,11 +166,11 @@ int rename(const char *from, const char *to)
     }
     if((d = dirstat(to)) != 0){
         free(d);
-        werrstr("rename: can't get rid of dest");
+        werrstr("rename: can't get rid of '%s'", to);
         return -1;
     }
     if((d = dirstat(from)) == 0){
-        werrstr("rename: can't stat src");
+        werrstr("rename: can't stat source: %r");
         return -1;
     }
     f = strrchr(from, '/');
@@ -195,7 +195,7 @@ int rename(const char *from, const char *to)
             close(ffd);
             n = -1;
         }
-        while(n>=0 && (n = read(ffd, buf, 8192)) > 0)
+        while(n>=0 && (n = read(ffd, buf, sizeof buf)) > 0)
             if(write(tfd, buf, n) != n){
                 n = -1;
             }
@@ -205,7 +205,7 @@ int rename(const char *from, const char *to)
             n = 0;
         if(n == 0) {
             if(remove(from) < 0){
-                return -1;
+                n = -1;
             }
         }
     }
