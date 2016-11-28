@@ -62,12 +62,23 @@ void drawfrbox(Frame *f, Frbox *b, Point pt, int off, int n, Image *text, Image 
 
     font = _frboxfont(f, b);
 
-    if (!(b->attr & AttrInvisible))
-        runestringnbg(f->b, pt, 
-                      fg, ZP,
-                      font,
-                      r, n,
-                      bg, ZP);
+    if (!(b->attr & AttrInvisible)) {
+        /*
+         * There is a runestringnbg function to do these two steps in
+         * one, but it gives raggedy edges for proportional fonts; so
+         * this technique looks a bit nicer.
+         */
+        if (bg != back)
+            gendrawop(f->b,
+                      MkRect(pt.x, pt.y, runestringnwidth(font, r, n), font->height),
+                      bg, ZP,
+                      0, ZP,
+                      SoverD);
+        runestringn(f->b, pt, 
+                    fg, ZP,
+                    font,
+                    r, n);
+    }
 
     if (b->attr & AttrUnderline)
         gendrawop(f->b,
