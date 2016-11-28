@@ -1360,6 +1360,9 @@ class Session9P()
          TCreate: {
             o := lookup(x.fid, t)
             /o.omode | throw("fid already open")
+            # See notes for more details.
+            if iand(x.perm, Mode9.DMDIR) ~= 0 & x.mode ~= FileOpt9.OREAD then
+               throw("invalid mode for creating a directory")
             info := data.get_info(o.path)
             iand(info.mode, Mode9.DMDIR) ~= 0 | throw("attempt to create in a regular file")
             has_perm(info, o.uid, Comms9P.AWRITE) | throw("permission denied")
@@ -1376,11 +1379,11 @@ class Session9P()
             o := lookup(x.fid, t)
             /o.omode | throw("fid already open")
             info := data.get_info(o.path)
+            # Same as for TCreate above.
+            if iand(info.mode, Mode9.DMDIR) ~= 0 & x.mode ~= FileOpt9.OREAD then
+               throw("invalid mode for opening a directory")
             if iand(info.mode, Mode9.DMEXCL) ~= 0 & is_path_open(o.path) then
                throw("exclusive use file already open")
-            if iand(info.mode, Mode9.DMDIR) ~= 0 &
-               iand(x.mode, icom(FileOpt9.ORCLOSE)) ~= FileOpt9.OREAD then
-                  throw("invalid mode for opening a directory")
             i := case iand(x.mode, 3) of {
                FileOpt9.OREAD : Comms9P.AREAD
                FileOpt9.OWRITE : Comms9P.AWRITE
