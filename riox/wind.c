@@ -51,7 +51,7 @@ static void
 fontinit1(char *envname, char *def, int num)
 {
     char *s;
-    if ((s = getenv(envname)) == nil || strlen(s) == 0)
+    if ((s = getenv(envname)) == nil)
         s = def;
     if ((fonts[num] = openfont(display, s)) == nil) {
         fprint(2, "rio: can't open font %s: %r\n", s);
