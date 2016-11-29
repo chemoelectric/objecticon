@@ -1496,6 +1496,35 @@ function io_FileStream_pwrite(self, s, offset)
        return C_integer rc;
    }
 end
+
+function io_FileStream_fd2path(self)
+   body {
+       int buff_size, n, len;
+       char *buff;
+       GetSelfFd();
+       buff_size = 32;
+       for (;;) {
+           MemProtect(buff = alcstr(0, buff_size));
+           n = fd2path(self_fd, buff, buff_size);
+           if (n != 0) {
+               /* Failed; free buff and fail */
+               dealcstr(buff);
+               errno2why();
+               fail;
+           }
+           len = strlen(buff);
+           if (len <= buff_size - 6) {
+               /* Success - free surplus and return */
+               dealcstr(buff + len);
+               return string(len, buff);
+           }
+           /* Didn't fit - so deallocate buff, increase buff_size and
+            * repeat */
+           dealcstr(buff);
+           buff_size *= 2;
+       }
+   }
+end
 #else
 function io_FileStream_new_impl(path, flags, mode)
    if !cnv:C_string(path) then

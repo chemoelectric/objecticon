@@ -52,44 +52,7 @@ function io_Files_chdir(s)
    }
 end
 
-#if PLAN9
-function io_Files_getcwd()
-   body {
-       int buff_size, fd, n, len;
-       char *buff;
-
-       fd = open(".", OREAD);
-       if (fd < 0) {
-           errno2why();
-           fail;
-       }
-
-       buff_size = 32;
-       for (;;) {
-           MemProtect(buff = alcstr(0, buff_size));
-           n = fd2path(fd, buff, buff_size);
-           if (n != 0) {
-               /* Failed; free buff and fail */
-               dealcstr(buff);
-               errno2why();
-               close(fd);
-               fail;
-           }
-           len = strlen(buff);
-           if (len <= buff_size - 6) {
-               /* Success - free surplus and return */
-               close(fd);
-               dealcstr(buff + len);
-               return string(len, buff);
-           }
-           /* Didn't fit - so deallocate buff, increase buff_size and
-            * repeat */
-           dealcstr(buff);
-           buff_size *= 2;
-       }
-   }
-end
-#else
+#if !PLAN9
 function io_Files_getcwd()
    body {
        int buff_size;

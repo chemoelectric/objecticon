@@ -176,6 +176,7 @@ NativeDef(io.FileStream,create_impl,io_FileStream_create_impl)
 NativeDef(io.FileStream,open_impl,io_FileStream_open_impl)
 NativeDef(io.FileStream,pread,io_FileStream_pread)
 NativeDef(io.FileStream,pwrite,io_FileStream_pwrite)
+NativeDef(io.FileStream,fd2path,io_FileStream_fd2path)
 #else
 NativeDef(io.FileStream,new_impl,io_FileStream_new_impl)
 #endif
@@ -199,7 +200,9 @@ NativeDef(io.Files,lstat_impl,io_Files_lstat_impl)
 NativeDef(io.Files,mkdir,io_Files_mkdir)
 NativeDef(io.Files,rmdir,io_Files_rmdir)
 NativeDef(io.Files,chdir,io_Files_chdir)
+#if !PLAN9
 NativeDef(io.Files,getcwd,io_Files_getcwd)
+#endif
 NativeDef(io.Files,readlink,io_Files_readlink)
 NativeDef(io.Files,realpath,io_Files_realpath)
 NativeDef(io.Files,remove,io_Files_remove)

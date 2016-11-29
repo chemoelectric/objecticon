@@ -383,10 +383,23 @@ $endif
    #
    public static native chdir(s)
 
+$ifdef _PLAN9
+   #
+   # Get current working directory
+   #
+   public static getcwd()
+      local f
+      return use {
+         f := FileStream.open9(".", FileOpt9.OREAD, Stream.READ),
+         f.fd2path()
+      }
+   end
+$else
    #
    # Get current working directory
    #
    public static native getcwd()
+$endif
 
    #
    # Remove a regular file

@@ -1099,6 +1099,11 @@ $ifdef _PLAN9
    # @param offset the zero-based offset to seek to before writing.
    #
    public native pwrite(s, offset)
+
+   # Returns the result of the Plan 9 fd2path function applied to this
+   # file.
+   #
+   public native fd2path()
 $else
    #
    # Open a new {FileStream} using the underlying system open
