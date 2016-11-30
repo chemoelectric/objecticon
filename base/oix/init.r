@@ -553,14 +553,16 @@ void fatalerr(int n, dptr v)
  */
 void ffatalerr(char *fmt, ...)
 {
-    static char buff[128];
+    char buff[512];
     va_list ap;
     va_start(ap, fmt);
     vsnprintf(buff, sizeof(buff), fmt, ap);
+    va_end(ap);
     CMakeStr(buff, &t_errortext);
     kywd_handler = nulldesc;
     curpstate->monitor = 0;
     err_msg(-1, 0);
+    /* Not reached */
 }
 
 /*
