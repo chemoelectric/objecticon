@@ -4229,13 +4229,16 @@ static long write_all(int fd, void *buf, long nbytes)
 {
     long n = nbytes;
     char *p = buf;
-    while (n > 0) {
+    /* Use a do-while since zero length writes are meaningful in Plan
+     * 9 pipes (the receiver will get an eof). 
+     */
+    do {
         long r = write(fd, p, n);
         if (r < 0)
             return r;
         n -= r;
         p += r;
-    }
+    } while (n > 0);
     return nbytes;
 }
 
