@@ -1502,7 +1502,7 @@ function io_FileStream_fd2path(self)
        int buff_size, n, len;
        char *buff;
        GetSelfFd();
-       buff_size = 32;
+       buff_size = 128;
        for (;;) {
            MemProtect(buff = alcstr(0, buff_size));
            n = fd2path(self_fd, buff, buff_size);
