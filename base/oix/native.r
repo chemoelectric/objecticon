@@ -4185,7 +4185,7 @@ function io_Files_unmount(name, old)
 end
 
 enum fileworker_status { FW_RUNNING, FW_COMPLETE };
-enum fileworker_cmd { FW_READ, FW_WRITE, FW_OPEN, FW_CREATE, FW_CLOSE, FW_WRITE_ALL };
+enum fileworker_cmd { FW_READ, FW_WRITE, FW_PREAD, FW_PWRITE, FW_OPEN, FW_CREATE, FW_CLOSE, FW_WRITE_ALL };
 
 struct fileworker {
     int pid;
@@ -4197,6 +4197,7 @@ struct fileworker {
     int cmd;
     int fd, mode;
     ulong perm;
+    vlong offset;
     long result;
     char errstr[ERRMAX];
     int close_when_complete;
@@ -4256,6 +4257,18 @@ static void fileworker_loop(struct fileworker *w)
             }
             case FW_WRITE: {
                 w->result = write(w->fd, w->buff, w->write_size);
+                if (w->result < 0)
+                    errstr(w->errstr, sizeof(w->errstr));
+                break;
+            }
+            case FW_PREAD: {
+                w->result = pread(w->fd, w->buff, w->read_size, w->offset);
+                if (w->result < 0)
+                    errstr(w->errstr, sizeof(w->errstr));
+                break;
+            }
+            case FW_PWRITE: {
+                w->result = pwrite(w->fd, w->buff, w->write_size, w->offset);
                 if (w->result < 0)
                     errstr(w->errstr, sizeof(w->errstr));
                 break;
@@ -4478,6 +4491,58 @@ function io_FileWorker_op_write_all(self, s)
       self_fileworker->write_size = StrLen(s);
       memcpy(self_fileworker->buff, StrLoc(s), StrLen(s));
       StartFileWorkerCmd(FW_WRITE_ALL);
+   }
+end
+
+function io_FileWorker_op_pread(self, n, offset)
+   if !cnv:integer(offset) then
+      runerr(101, offset)
+   body {
+      word i;
+      vlong c_offset;
+      GetSelfFileWorker();
+      if (!convert_to_vlong(&offset, &c_offset))
+          runerr(0);
+      if (is:null(n))
+          i = self_fileworker->buff_size;
+      else {
+          if (!cnv:C_integer(n, i))
+              runerr(101, n);
+          if (i <= 0)
+              Irunerr(205, i);
+          if (i > self_fileworker->buff_size) {
+              LitWhy("Request size too long for buffer");
+              fail;
+          }
+      }
+      wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
+      CheckFileOpen()
+      self_fileworker->read_size = i;
+      self_fileworker->offset = c_offset;
+      StartFileWorkerCmd(FW_PREAD);
+   }
+end
+
+function io_FileWorker_op_pwrite(self, s, offset)
+   if !cnv:string(s) then
+      runerr(103, s)
+   if !cnv:integer(offset) then
+      runerr(101, offset)
+   body {
+      vlong c_offset;
+      GetSelfFileWorker();
+      if (!convert_to_vlong(&offset, &c_offset))
+          runerr(0);
+      if (StrLen(s) > self_fileworker->buff_size) {
+          LitWhy("String too long for buffer");
+          fail;
+      }
+      wait_for_fileworker_status(self_fileworker, FW_COMPLETE);
+      CheckFileOpen()
+      self_fileworker->write_size = StrLen(s);
+      memcpy(self_fileworker->buff, StrLoc(s), StrLen(s));
+      self_fileworker->offset = c_offset;
+      StartFileWorkerCmd(FW_PWRITE);
    }
 end
 
