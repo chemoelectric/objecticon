@@ -1,3 +1,5 @@
+#include <bio.h>
+
 enum
 {
 	Qdir,			/* /dev for this window */
@@ -21,6 +23,7 @@ enum
 	Qwininfo,
 	Qwsys,		/* directory of window directories */
 	Qwsysdir,		/* window directory, child of wsys */
+        Qlogctl,
 
 	QMAX,
 };
@@ -211,6 +214,7 @@ struct Window
 	uchar		deleted;
 	uchar		mouseopen;
         uchar           hidden;
+        Biobuf          *log;
 	char			*label;
 	int			pid;
 };

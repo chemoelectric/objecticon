@@ -378,6 +378,8 @@ xfidwrite(Xfid *x)
 	x->data[cnt] = 0;
 	switch(qid){
 	case Qcons:
+                if (w->log)
+                    Bwrite(w->log, x->data, x->count);
 		nr = x->f->nrpart;
 		if(nr > 0){
 			memmove(x->data+nr, x->data, cnt);	/* there's room: see malloc in filsysproc */
@@ -460,6 +462,36 @@ xfidwrite(Xfid *x)
 				wsendctlmesg(w, Rawoff);
 			break;
 		}
+		filsysrespond(x->fs, x, &fc, "unknown control message");
+		return;
+
+        case Qlogctl:
+		if(strncmp(x->data, "open ", 5)==0){
+                        Biobuf *b;
+                        if (w->log) {
+                            filsysrespond(x->fs, x, &fc, "already logging");
+                            return;
+                        }
+                        /* Ignore any trailing newline in the filename. */
+                        if (x->data[cnt - 1] == '\n')
+                            x->data[cnt - 1] = 0;
+                        b = Bopen(x->data + 5, OWRITE|OTRUNC);
+                        if (!b) {
+                            filsysrespond(x->fs, x, &fc, "unable to open log file");
+                            return;
+                        }
+                        w->log = b;
+                        break;
+                }
+		if(strncmp(x->data, "close", 5)==0){
+                        if (!w->log) {
+                            filsysrespond(x->fs, x, &fc, "not logging");
+                            return;
+                        }
+                        Bterm(w->log);
+                        w->log = nil;
+                        break;
+                }
 		filsysrespond(x->fs, x, &fc, "unknown control message");
 		return;
 
@@ -625,6 +657,8 @@ xfidread(Xfid *x)
 		recv(c2, &pair);
 		fc.data = pair.s;
 		fc.count = pair.ns;
+                if (w->log)
+                    Bwrite(w->log, fc.data, fc.count);
 		filsysrespond(x->fs, x, &fc, nil);
 		free(t);
 		qunlock(&x->active);

@@ -1393,6 +1393,8 @@ wctlmesg(Window *w, int m)
                 free(w->hist);
                 free(w->hedit);
                 free(w->hsent);
+                if (w->log)
+                    Bterm(w->log);
 		free(w);
 		break;
 	}
