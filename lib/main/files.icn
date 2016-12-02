@@ -1169,6 +1169,10 @@ package class Plan9FileSystem(UnixFileSystem)
       return System.getenv("home")
    end
 
+   public get_temp()
+      return "/tmp"
+   end
+
    public split_paths(s)
       local t
       s ? repeat {
