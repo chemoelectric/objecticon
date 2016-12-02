@@ -1252,7 +1252,7 @@ int main(int argc, char **argv)
     env_double(OI_FONT_SIZE, &defaultfontsize, MIN_FONT_SIZE, 1e32);
     env_double(OI_LEADING, &defaultleading, 0.0, 1e32);
     t = getenv(OI_FONT);
-    if (t)
+    if (t && *t)
         defaultfont = salloc(t);
 
     Protect(rootpstate.Code = malloc(hdr.icodesize), fatalerr(315, NULL));
