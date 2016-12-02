@@ -492,7 +492,7 @@ end
 #
 procedure env_real(s, min, max)
    local v
-   v := System.getenv(s) | fail
+   v := env_string(s) | fail
    v := real(v) | runerr("Real value expected for " || s, v)
    if v < \min | v > \max then
       runerr("Value of " || s || " out of range", v)
@@ -506,7 +506,7 @@ end
 #
 procedure env_int(s, min, max)
    local v
-   v := System.getenv(s) | fail
+   v := env_string(s) | fail
    v := integer(v) | runerr("Integer value expected for " || s, v)
    if v < \min | v > \max then
       runerr("Value of " || s || " out of range", v)
