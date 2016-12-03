@@ -1095,6 +1095,8 @@ char *maketemp(char *fn)
 #if MSWIN32
     GetTempPath(sizeof(result) - 16, result);
     strcat(result, fn);
+#elif PLAN9
+    snprint(result, sizeof(result), "/tmp/%s", fn);
 #else
     char *tmp = getenv("TEMP");
     if (tmp == 0)
