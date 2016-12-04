@@ -1900,7 +1900,7 @@ static void outstr(struct strconst *sp, char *fmt, ...)
         fprintf(dbgfile, PadWordFmt ":   " PadWordFmt "    # ", pc, sp->len);
         vfprintf(dbgfile, fmt, ap);
         fprintf(dbgfile, "\n" PadWordFmt ": S+" PadWordFmt "    #    \"%s\"\n", 
-                         pc + WordSize, sp->offset, sp->s);
+                         pc + (int)WordSize, sp->offset, sp->s);
         va_end(ap);
     }
 
