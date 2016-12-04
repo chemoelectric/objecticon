@@ -424,7 +424,7 @@ typedef struct _wstate {
   Image         *pix;
   char          mount_dir[128];
   int           event_pipe[2];
-  int           mouse_events, cons_events, events_read;
+  unsigned long mouse_events, cons_events, events_read;
   char          *wsys;
   int           wsys_fd, wctl_fd, mouse_fd, cons_fd, consctl_fd, 
                 wininfo_fd, screeninfo_fd, cursor_fd, label_fd;
