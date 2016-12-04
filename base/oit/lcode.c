@@ -1029,7 +1029,8 @@ static void lemitcode()
 static void lemitproc()
 {
     char *p;
-    int size, ap;
+    int size;
+    word ap;
     struct lentry *le;
     struct centry *ce;
 
@@ -1202,9 +1203,9 @@ static void genclass(struct lclass *cl)
     struct field_sort_item *sortf;
     struct lclass **ic_sort;
     char *name;
-    int i, ap, n_fields;
+    int i, n_fields;
     struct centry *ce;
-    word p;
+    word ap, p;
 
     if (cl->pc != pc)
         quit("I got my sums wrong(a): %d != %d", pc, cl->pc);
@@ -1317,8 +1318,9 @@ static void genclasses(void)
 {
     struct lclass *cl;
     struct lclass_field *cf;
-    int x, n_classes = 0, n_fields = 0;
+    int n_classes = 0, n_fields = 0;
     struct centry *ce;
+    word x;
 
     align();
     hdr.ClassStatics = pc;
@@ -1498,7 +1500,8 @@ static void gentables()
 
     for (rec = lrecords; rec; rec = rec->next) {
         struct field_sort_item *sortf;
-        int ap, size;
+        word ap;
+        int size;
         s = rec->global->name;
         rec->pc = pc;
         ce = inst_sdescrip(s);

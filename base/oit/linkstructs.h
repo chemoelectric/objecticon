@@ -47,7 +47,7 @@ struct lbuiltin {
 };
 
 struct lrecord {
-    int pc;
+    word pc;
     int nfields;
     struct lfield *fields, *last_field;
     struct gentry *global;      /* Pointer back to global table entry */
@@ -66,7 +66,7 @@ struct centry {                 /* constant table entry */
     char *data;                 /*   raw data read from ufile */
     int length;                 /*   length of raw data */
     int ref;                    /*   referenced flag */
-    int pc;                     /* Address of block for lrgint, cset, ucs, real */
+    word pc;                    /* Address of block for lrgint, cset, ucs, real */
     word desc_no;               /* Index in constant descriptor table for non-integer types */
     struct centry *next,        /* Next in lfunctions's linked list */
                   *b_next,      /* Next in hash bucket, used by code generation */
@@ -91,8 +91,8 @@ struct lclass_field {
     char *name;
     struct loc pos;                      /* Source line number */
     word flag;
-    int dpc;                             /* Address of descriptor, if a static or method */
-    int ipc;                             /* Address of info block */
+    word dpc;                            /* Address of descriptor, if a static or method */
+    word ipc;                            /* Address of info block */
     struct fentry *ftab_entry;           /* Field table entry (gives field number) */
     int const_flag;                      /* Optimisation - constant flag */
     struct centry *const_val;            /* Optimisation - constant value */
@@ -108,7 +108,7 @@ struct lclass {
     struct gentry *global;      /* Pointer back to global table entry */
     struct lclass *next;        /* Link in the list of all lclass objects */
     int seen;                   /* Flag for computing superclass set */
-    int pc;                     /* Location of definition in icode */
+    word pc;                    /* Location of definition in icode */
     int size;                   /* Computed size of block in icode */
     struct lclass_ref *resolved_supers, *last_resolved_super;
     struct lclass_ref *implemented_classes, *last_implemented_class;
@@ -138,7 +138,7 @@ struct lclass_field_ref {
 };
 
 struct lfunction {
-    int pc;
+    word pc;
     int ndynamic;         /* Count of dynamics */
     int narguments;       /* Count of arguments */
     int vararg;           /* Flag set to 1 for vararg function */
