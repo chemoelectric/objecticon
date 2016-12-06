@@ -45,6 +45,10 @@ AC_DEFUN([OI_ADD_INCLUDE_DIR],[
 
 AC_SUBST([CONFIG_DIR])
 CONFIG_DIR=$(pwd -P)
+# This ensures that, if needed, AC_PROG_INSTALL will set install-sh to
+# an absolute path rather than being "./install-sh", so it is found in
+# sub-directories.
+AC_CONFIG_AUX_DIR($CONFIG_DIR)
 
 AC_SUBST([CONFIG_DATE])
 CONFIG_DATE=$(date)
