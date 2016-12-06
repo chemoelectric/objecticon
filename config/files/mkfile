@@ -8,16 +8,16 @@ all:V:
 	@{ cd apps ; mk }
 	@{ cd examples ; mk }
 	@{ cd riox ; mk }
-        @{ 
-           OI_FONT=p9:$font
-           if(test -e fontinfo.txt) 
-                ;
-           if not
-                if(oit -s ./mkfontinfo.icn -x >fontinfo.txt)
-                     ;
-                if not
-                     rm -f fontinfo.txt
-         }
+	@{ 
+		OI_FONT=p9:$font
+		if(test -e fontinfo.txt) 
+			;
+		if not
+			if(oit -s ./mkfontinfo.icn -x >fontinfo.txt)
+				;
+			if not
+				rm -f fontinfo.txt
+	}
 
 clean:V:
 	@{ cd base ; mk clean }
@@ -27,10 +27,10 @@ clean:V:
 	@{ cd riox ; mk clean }
 
 test:V:
-        @{ cd test ; ./runtest.sh }
+	@{ cd test ; ./runtest.sh }
 
 bmark:V:
-        @{ cd bmark ; ./runbmark.sh }
+	@{ cd bmark ; ./runbmark.sh }
 
 libref:V:
 	rm -rf libref

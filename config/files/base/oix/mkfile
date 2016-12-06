@@ -31,8 +31,8 @@ oref.$O: orefiasm.ri
 all:V:   oix
 
 oix:	$XOBJS
-	$LD -o oix $OBJS $LIBS
-        rm -f $OI_BIN/oix
+	$LD -o oix $OBJS
+	rm -f $OI_BIN/oix
 	cp oix $OI_BIN
 
 clean:V:

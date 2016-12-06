@@ -57,7 +57,7 @@ all:V: ivib
 	@{ cd plugins ; mk all }
 
 ivib:   $COMMONU
-        oit -sn -o ivib ivib.icn $COMMONU
+	oit -sn -o ivib ivib.icn $COMMONU
 	cp ivib $OI_BIN
 
 clean:
@@ -65,4 +65,4 @@ clean:
 	@{ cd plugins ; mk clean }
 
 %.u:Q: %.icn
-       test $stem.u -nt $stem.icn || oit -snc $COMMONSRC $PROGSRC
+	test $stem.u -nt $stem.icn || oit -snc $COMMONSRC $PROGSRC

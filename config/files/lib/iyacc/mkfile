@@ -35,11 +35,11 @@ SRCS	      = closure.c \
 all:V:		$PROGRAM
 
 $PROGRAM:       $OBJS
-		$LD -o $PROGRAM $OBJS $COBJS $LIBS ../../base/common/plan9.$O
+		$LD -o $PROGRAM $OBJS $COBJS ../../base/common/plan9.$O
 		cp iyacc $OI_BIN
 
 clean:V:	
-                rm -f $OBJS $PROGRAM
+		rm -f $OBJS $PROGRAM
 
 closure.$O: defs.h
 error.$O: defs.h

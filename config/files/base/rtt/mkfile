@@ -29,5 +29,5 @@ clean:V:
 	rm -f *.[$OS] [$OS].out rttparse_mod.c rtt
 
 rttparse_mod.c: rttparse.c
-              sed -e 's/^#include <stdlib.h>.*$//'  \
-              -e 's/^#include <string.h>.*$//' rttparse.c >rttparse_mod.c
+	sed -e 's/^#include <stdlib.h>.*$//'  \
+		-e 's/^#include <string.h>.*$//' rttparse.c >rttparse_mod.c

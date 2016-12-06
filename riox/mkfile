@@ -22,9 +22,9 @@ OFILES=\
 all:V:  $O.out
 
 $O.out:  $OFILES
-        $LD -o riox $OFILES
-        rm -f $OI_BIN/riox
-        cp riox $OI_BIN
+	$LD -o riox $OFILES
+	rm -f $OI_BIN/riox
+	cp riox $OI_BIN
 
 clean:V:	
-        rm -f $OFILES riox
+	rm -f $OFILES riox

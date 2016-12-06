@@ -10,5 +10,5 @@ clean:
 	rm -f $PROGS *.u packages.txt
 
 %: %.icn
-        OI_PATH=($OI_PATH $OI_HOME/apps/ivib)
+	OI_PATH=($OI_PATH $OI_HOME/apps/ivib)
 	oit -so $stem $stem.icn

@@ -13,10 +13,10 @@ OBJS=		$OITOBJS $COBJS
 all:V:		oit
 
 clean:V:
-        	rm -f *.[$OS] [$OS].out tparse_mod.c oit
+		rm -f *.[$OS] [$OS].out tparse_mod.c oit
 
 oit:            $OBJS
-		$LD $LDFLAGS -o oit $OBJS $LIBS
+		$LD -o oit $OBJS
 		cp oit $OI_BIN
 
 $OBJS:   ../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
@@ -45,5 +45,5 @@ lmem.$O:
 lsym.$O:		
 
 tparse_mod.c: tparse.c
-              sed -e 's/^#include <stdlib.h>.*$//'  \
-              -e 's/^#include <string.h>.*$//' tparse.c >tparse_mod.c
+	sed -e 's/^#include <stdlib.h>.*$//'  \
+		-e 's/^#include <string.h>.*$//' tparse.c >tparse_mod.c

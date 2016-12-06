@@ -13,8 +13,8 @@ clean:
 	rm -f $PROGS *.u packages.txt
 
 oidoc:   $COMMONU
-        oit -sn -o oidoc oidoc.icn $COMMONU
+	oit -sn -o oidoc oidoc.icn $COMMONU
 	cp oidoc $OI_BIN
 
 %.u:Q: %.icn
-       test $stem.u -nt $stem.icn || oit -snc $COMMONSRC $PROGSRC
+	test $stem.u -nt $stem.icn || oit -snc $COMMONSRC $PROGSRC
