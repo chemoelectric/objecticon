@@ -662,7 +662,7 @@ void
 button3menu(void)
 {
         int i, j, n = 0;
-        int mnew = -2, exit = -2;
+        int mnew, exit = -2;
         char *menustr[MAX_WIN_MENU];
         Window *menuwin[MAX_WIN_MENU];
         Menu menu = { menustr };
@@ -706,7 +706,7 @@ void
 classic_button3menu(void)
 {
     int i, j, n = 0;
-    int mnew = -2, resize = -2, move = -2, delete = -2,hide = -2, exit = -2;
+    int mnew, resize, move, delete, hide, exit = -2;
     char *menustr[MAX_WIN_MENU];
     Window *w, *menuwin[MAX_WIN_MENU];
     Menu menu = { menustr };
@@ -787,7 +787,7 @@ void
 button3wmenu(Window *w)
 {
 	int i = 0;
-        int hide = -2, close = -2, keepabove = -2, keepbelow = -2, keepnormal = -2, delete = -2;
+        int hide = -2, close, keepabove = -2, keepbelow = -2, keepnormal = -2, delete = -2;
         char *menustr[6];
         Menu menu = { menustr };
 
