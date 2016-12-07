@@ -1,10 +1,6 @@
 import
    gui, graphics
 
-$ifdef _PLAN9
-import io
-$endif
-
 class DragLabel(Label)
    public can_drag(ev)
       return "Hello"
@@ -273,16 +269,10 @@ class Untitled(Dialog)
 
    private on_text_button_5(ev)
       text_button_6.set_is_checked(&no)
-$ifdef _PLAN9
-      Files.string_to_file(win.get_dir() || "/wctl", "keepabove")
-$endif
    end
 
    private on_text_button_6(ev)
       text_button_5.set_is_checked(&no)
-$ifdef _PLAN9
-      Files.string_to_file(win.get_dir() || "/wctl", "keepbelow")
-$endif
    end
 
    private on_rpress(ev)
