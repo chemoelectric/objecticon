@@ -1062,7 +1062,7 @@ wmpress(Window *w)
     t = runemalloc(n);
     runemove(t, w->r+w->q0, n);
     winsert(w, t, 0, n, w->nr);
-    winsert(w, L" ", 0, 1, w->nr) + 1;
+    winsert(w, L" ", 0, 1, w->nr);
     free(t);
     wsetselect(w, w->nr, w->nr);
     wshow(w, w->q0);
