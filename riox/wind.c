@@ -43,17 +43,17 @@ static void resethist(Window *w);
 static void locatehist(Window *w);
 static void cons_write(Window *r, Rune *r, int nr);
 static void dump_content(Window *w);
-static void fontinit1(char *envname, char *def, int num);
+static void fontinit1(char *envname, int num, int def);
 
 #define HistEntry(w,pos) ((w)->hist[((w)->hfirst + (pos)) % (w)->hlimit])
 
 static void
-fontinit1(char *envname, char *def, int num)
+fontinit1(char *envname, int num, int def)
 {
     char *s;
     if ((s = getenv(envname)) == nil)
-        s = def;
-    if ((fonts[num] = openfont(display, s)) == nil) {
+        fonts[num] = fonts[def];
+    else if ((fonts[num] = openfont(display, s)) == nil) {
         fprint(2, "rio: can't open font %s: %r\n", s);
         exits("font open");
     }
@@ -63,9 +63,9 @@ void
 fontinit(void)
 {
     fonts[REGULAR_FONT] = font;
-    fontinit1("fontb", "/lib/font/bit/fixed/unicode.8x13B.font", BOLD_FONT);
-    fontinit1("fonti", "/lib/font/bit/fixed/unicode.8x13O.font", ITALIC_FONT);
-    fontinit1("fontbi", "/lib/font/bit/fixed/unicode.8x13O.font", BOLD_ITALIC_FONT);
+    fontinit1("fontb", BOLD_FONT, REGULAR_FONT);
+    fontinit1("fonti", ITALIC_FONT, BOLD_FONT);
+    fontinit1("fontbi", BOLD_ITALIC_FONT, ITALIC_FONT);
 }
 
 void
