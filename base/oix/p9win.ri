@@ -35,6 +35,7 @@ static void handle_reshape(wsp ws);
 static void handle_reshape1(wsp ws);
 static void handle_limited(wsp ws);
 static void init_window_system(void);
+static int call_gengetwindow(wsp ws);
 static void clip(wbp w);
 static void no_clip(wsp ws, int and_win);
 static Rectangle InnerRect(Image *i, int x, int y, int w, int h);
@@ -173,10 +174,11 @@ static void dump_all(void)
 
 static int open_winfile(wsp ws, char *s, int mode)
 {
-    char buff[128];
+    char *buff;
     int fd;
-    snprint(buff, sizeof(buff), "%s/%s", ws->mount_dir, s);
+    MemProtect(buff = smprint("%s/%s", ws->mount_dir, s));
     fd = open(buff, mode|OCEXEC);
+    free(buff);
     return fd;
 }
 
@@ -482,12 +484,20 @@ static void handle_limited(wsp ws)
     copy_pix_to_win(ws);
 }
 
+static int call_gengetwindow(wsp ws)
+{
+    char *buff;
+    int res;
+    MemProtect(buff = smprint("%s/winname", ws->mount_dir));
+    res = gengetwindow(display, buff, &ws->win, &ws->screen, Refnone);
+    free(buff);
+    return res;
+}
+
 static void handle_reshape(wsp ws)
 {
-    char buff[128];
-    snprint(buff, sizeof(buff), "%s/winname", ws->mount_dir);
-    if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0)
-        syserr("Failed to reconnect to window on a resize");
+    if (call_gengetwindow(ws) < 0)
+        syserr("Failed to reconnect to window on a resize: %r");
     handle_reshape1(ws);
 }
 
@@ -1222,8 +1232,7 @@ static wfp load_font(char *s)
         return 0;
 
     rv = safe_zalloc(sizeof(struct _wfont));
-    rv->name = safe_malloc(strlen(s) + 3 + 1);
-    sprint(rv->name, "p9:%s", s);
+    MemProtect(rv->name = smprint("p9:%s", s));
     rv->ascent = f->ascent;               /* font dimensions */
     rv->descent = f->height - f->ascent;
     rv->maxwidth = f->width;               /* max width of one char */
@@ -1546,7 +1555,7 @@ static int open_screen_win(wsp ws)
 
     ws->using_win = use_win;
     if (ws->using_win) {
-        snprint(ws->mount_dir, sizeof(ws->mount_dir), "%s", display->windir);
+        ws->mount_dir = salloc(display->windir);
 
         if ((ws->wctl_fd = open_winfile(ws, "wctl", OWRITE)) < 0) {
             whyf("Can't open wctl file: %r");
@@ -1641,7 +1650,7 @@ static int open_screen_win(wsp ws)
             close_screen_win(ws);
             return Failed;
         }
-        sprint(ws->mount_dir, "/n/oix-win.%d.%d", getpid(), ++window_count);
+        MemProtect(ws->mount_dir = smprint("/n/oix-win.%d.%d", getpid(), ++window_count));
         ws->border_width = (ws->state == PopupCanvas ? 0 : 2 * Borderwidth);
         /* If either x or y unset, let rio place the window */
         if (ws->reqx == -INT_MAX || ws->reqy == -INT_MAX)
@@ -1685,8 +1694,7 @@ static int open_screen_win(wsp ws)
         return Failed;
     }
 
-    snprint(buff, sizeof(buff), "%s/winname", ws->mount_dir);
-    if (gengetwindow(display, buff, &ws->win, &ws->screen, Refnone) < 0) {
+    if (call_gengetwindow(ws) < 0) {
         whyf("gengetwindow failed: %r");
         close_screen_win(ws);
         return Failed;
@@ -1806,7 +1814,7 @@ static void close_screen_win(wsp ws)
         /* Clear any size limits */
         if (ws->wctl_fd >= 0)
             fprint(ws->wctl_fd, "resize -mindx 1 -maxdx %d -mindy 1 -maxdy %d", INT_MAX, INT_MAX);
-    } else
+    } else if (ws->mount_dir)
         unmount(0, ws->mount_dir);
 
     if (ws->mouse_pid >= 0)
@@ -1861,7 +1869,8 @@ static void close_screen_win(wsp ws)
         close(ws->wctl_fd);
 
     ws->using_win = 0;
-    ws->mount_dir[0] = 0;
+    free(ws->mount_dir);
+    ws->mount_dir = 0;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->screeninfo_fd = ws->cursor_fd = ws->label_fd = ws->mouse_pid = ws->cons_pid =
         ws->wininfo_fd = ws->wsys_fd = ws->wctl_fd = ws->winid = -1;
