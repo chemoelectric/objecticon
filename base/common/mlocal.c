@@ -976,21 +976,28 @@ void calc_ucs_index_settings(word utf8_len, word len, word *index_step, word *n_
 #if MSWIN32
 int strcasecmp(char *s1, char *s2)
 {
-    while (*s1 && tolower((unsigned char)*s1) == tolower((unsigned char)*s2)) {
+    int j;
+    while (1) {
+        j = tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
+        if (j) 
+            return j;
+        if (*s1 == '\0') 
+            break;
         s1++; s2++;
     }
-    return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
+    return 0;
 }
 
 int strncasecmp(char *s1, char *s2, int n)
 {
-    int i, j;
-    for(i = 0; i < n; i++) {
-        j = tolower((unsigned char)s1[i]) - tolower((unsigned char)s2[i]);
+    int j;
+    while (n--) {
+        j = tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
         if (j) 
             return j;
-        if (s1[i] == '\0') 
-            return 0; /* terminate if both at end-of-string */
+        if (*s1 == '\0') 
+            break;
+        s1++; s2++;
     }
     return 0;
 }
