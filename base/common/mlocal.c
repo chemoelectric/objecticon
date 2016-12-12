@@ -976,9 +976,7 @@ void calc_ucs_index_settings(word utf8_len, word len, word *index_step, word *n_
 #if MSWIN32
 int strcasecmp(char *s1, char *s2)
 {
-    while (*s1 && *s2) {
-        if (tolower((unsigned char)*s1) != tolower((unsigned char)*s2))
-            return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
+    while (*s1 && tolower((unsigned char)*s1) == tolower((unsigned char)*s2)) {
         s1++; s2++;
     }
     return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
