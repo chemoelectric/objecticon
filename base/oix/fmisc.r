@@ -1005,7 +1005,7 @@ static void ensure_ucs_slot(struct b_ucs *b, word d)
     nd = (d + 1) * b->index_step;
 
     /*
-     * Decide wheter to expand the left or right index blocks.
+     * Decide whether to expand the left or right index blocks.
      */
     if (d - (b->n_off_l_indexed - 1) > (n_slots - b->n_off_r_indexed) - d) {
         /*

@@ -6,7 +6,8 @@
 
 static char *tryfile(char *dir, char *name, char *extn);
 static char *tryexe(char *dir, char *name);
-static word calc_ucs_index_step(word utf8_len, word len);
+static word calc_ucs_offset_words(word n_offs, int offset_bits);
+static word calc_ucs_index_step(word utf8_len, word len, int offset_bits);
 
 /*
  * The result buffer is shared by several functions besides file
@@ -932,10 +933,20 @@ utf8_seq_len_arr[] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
         2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,
         5,5,5,5,6,6,-1,-1};
 
-static word calc_ucs_index_step(word utf8_len, word len)
+static word calc_ucs_offset_words(word n_offs, int offset_bits)
 {
-    static short cache[256];
-    short s;
+    int opw;
+    opw = WordBits / offset_bits;
+    if (n_offs % opw == 0)
+        return n_offs / opw;
+    else
+        return 1 + n_offs / opw;
+}
+
+static word calc_ucs_index_step(word utf8_len, word len, int offset_bits)
+{
+    static unsigned char cache[257];
+    word s, k;
     /* String is all ascii, including empty string; return 0 indicating not 
      * to use index */
     if (utf8_len == len)
@@ -943,30 +954,25 @@ static word calc_ucs_index_step(word utf8_len, word len)
     /* Single char non-ascii. */
     if (len == 1)
         return 1;
-    if (len < ElemCount(cache) && cache[len] > 0)
+    if (offset_bits == 8 && len < ElemCount(cache) && cache[len] > 0)
         return cache[len];
-    s = (short)(log(len) * UcsIndexStepFactor);
+    s = (word)(log(len) * UcsIndexStepFactor);
     if (s >= len)
         s = len;
     else {
-        /* Make s as small as possible without altering the number of offsets */
-        while ((len - 1) / s == (len - 1) / (s - 1))
+        /* Make s as small as possible without altering the number of
+         * words used by the index */
+        k = calc_ucs_offset_words((len - 1) / s, offset_bits);
+        while (s > 1 && calc_ucs_offset_words((len - 1) / (s - 1), offset_bits) == k)
             --s;
     }
-    if (len < ElemCount(cache))
-        cache[len] = s;
+    if (offset_bits == 8 && len < ElemCount(cache))
+        cache[len] = (unsigned char)s;
     return s;
 }
 
 void calc_ucs_index_settings(word utf8_len, word len, word *index_step, word *n_offs, word *offset_bits, word *n_off_words)
 {
-    int opw;
-    *index_step = calc_ucs_index_step(utf8_len, len);
-    if (*index_step == 0)
-        *n_offs = 0;
-    else
-        *n_offs = (len - 1) / *index_step;
-
     if (utf8_len <= 256)
         *offset_bits =  8;
     else if (utf8_len <= 65536)
@@ -980,11 +986,14 @@ void calc_ucs_index_settings(word utf8_len, word len, word *index_step, word *n_
     else
         *offset_bits = 64;
 #endif
-    opw = WordBits / *offset_bits;
-    if (*n_offs % opw == 0)
-        *n_off_words = *n_offs / opw;
+
+    *index_step = calc_ucs_index_step(utf8_len, len, *offset_bits);
+    if (*index_step == 0)
+        *n_offs = 0;
     else
-        *n_off_words = 1 + *n_offs / opw;
+        *n_offs = (len - 1) / *index_step;
+
+    *n_off_words = calc_ucs_offset_words(*n_offs, *offset_bits);
 }
 
 #if MSWIN32 || PLAN9
