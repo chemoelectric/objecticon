@@ -522,7 +522,6 @@ struct progstate {
 
 struct b_coexpr {		/* co-expression block */
     word title;			/*   T_Coexpr */
-    word size;			/*   number of results produced */
     uword id;			/*   identification number */
     dptr tvalloc;		/*   where to place transmitted value */
     struct b_coexpr *activator; /*   this coexpression's activator */

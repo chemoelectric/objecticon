@@ -762,7 +762,7 @@ void xdisp(struct b_coexpr *ce, int count, FILE *f)
     struct p_frame *pf, *upf;
     struct progstate *p;
 
-    fprintf(f,"co-expression#" UWordFmt "(" WordFmt ")\n\n", ce->id, ce->size);
+    fprintf(f,"co-expression#" UWordFmt "\n\n", ce->id);
     pf = ce->curr_pf;
 
     /* The user pf will be null on a termination dump */

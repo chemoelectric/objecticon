@@ -487,7 +487,6 @@ static void do_create()
     MemProtect(coex->base_pf = alc_p_frame(curr_pf->proc, curr_pf->fvars));
     coex->main_of = 0;
     coex->tvalloc = 0;
-    coex->size = 0;
     coex->level = 1;
     coex->failure_label = coex->start_label = coex->base_pf->ipc = start_label;
     coex->curr_pf = coex->base_pf;
@@ -563,9 +562,6 @@ static void do_coret()
 
     /* Any transmitted value is discarded */
     k_current->tvalloc = 0;
-
-    /* Increment the results counter */
-    ++k_current->size;
 
     /* Switch to the target and set the transmitted value */
     switch_to(k_current->activator);

@@ -1,4 +1,4 @@
-cxtrace.icn  :    6  | braid(co-expression#2(0),co-expression#3(0))
+cxtrace.icn  :    6  | braid(co-expression#2,co-expression#3)
 cxtrace.icn  :   16  | | braid; co-expression#1 : &null @ co-expression#2
 cxtrace.icn  :    6  | main; co-expression#2 returned 11 to co-expression#1
 cxtrace.icn  :   16  | braid suspended 11
@@ -26,10 +26,10 @@ cxtrace.icn  :    6  | main; co-expression#2 failed to co-expression#1
 cxtrace.icn  :   19  | | braid; co-expression#1 : &null @ co-expression#3
 cxtrace.icn  :    6  | main; co-expression#3 failed to co-expression#1
 cxtrace.icn  :   21  | braid failed
-cxtrace.icn  :    7  | dbraid(co-expression#4(0),co-expression#5(0))
-cxtrace.icn  :   25  | | db2(co-expression#4(0),co-expression#5(0))
-cxtrace.icn  :   29  | | | db3(co-expression#4(0),co-expression#5(0))
-cxtrace.icn  :   33  | | | | braid(co-expression#4(0),co-expression#5(0))
+cxtrace.icn  :    7  | dbraid(co-expression#4,co-expression#5)
+cxtrace.icn  :   25  | | db2(co-expression#4,co-expression#5)
+cxtrace.icn  :   29  | | | db3(co-expression#4,co-expression#5)
+cxtrace.icn  :   33  | | | | braid(co-expression#4,co-expression#5)
 cxtrace.icn  :   16  | | | | | braid; co-expression#1 : &null @ co-expression#4
 cxtrace.icn  :    7  | main; co-expression#4 returned 31 to co-expression#1
 cxtrace.icn  :   16  | | | | braid suspended 31
@@ -93,16 +93,16 @@ cxtrace.icn  :   26  | dbraid failed
 cxtrace.icn  :    8  | dcreate(51)
 cxtrace.icn  :   38  | | dc2(51)
 cxtrace.icn  :   42  | | | dc3(51)
-cxtrace.icn  :   46  | | | dc3 returned co-expression#6(0)
-cxtrace.icn  :   42  | | dc2 returned co-expression#6(0)
-cxtrace.icn  :   38  | dcreate returned co-expression#6(0)
+cxtrace.icn  :   46  | | | dc3 returned co-expression#6
+cxtrace.icn  :   42  | | dc2 returned co-expression#6
+cxtrace.icn  :   38  | dcreate returned co-expression#6
 cxtrace.icn  :    8  | dcreate(61)
 cxtrace.icn  :   38  | | dc2(61)
 cxtrace.icn  :   42  | | | dc3(61)
-cxtrace.icn  :   46  | | | dc3 returned co-expression#7(0)
-cxtrace.icn  :   42  | | dc2 returned co-expression#7(0)
-cxtrace.icn  :   38  | dcreate returned co-expression#7(0)
-cxtrace.icn  :    8  | braid(co-expression#6(0),co-expression#7(0))
+cxtrace.icn  :   46  | | | dc3 returned co-expression#7
+cxtrace.icn  :   42  | | dc2 returned co-expression#7
+cxtrace.icn  :   38  | dcreate returned co-expression#7
+cxtrace.icn  :    8  | braid(co-expression#6,co-expression#7)
 cxtrace.icn  :   16  | | braid; co-expression#1 : &null @ co-expression#6
 cxtrace.icn  :   46  | dc3; co-expression#6 returned 51 to co-expression#1
 cxtrace.icn  :   16  | braid suspended 51
@@ -134,7 +134,7 @@ cxtrace.icn  :   46  | dc3; co-expression#6 failed to co-expression#1
 cxtrace.icn  :   19  | | braid; co-expression#1 : &null @ co-expression#7
 cxtrace.icn  :   46  | dc3; co-expression#7 failed to co-expression#1
 cxtrace.icn  :   21  | braid failed
-cxtrace.icn  :    9  | braid(co-expression#8(0),co-expression#9(0))
+cxtrace.icn  :    9  | braid(co-expression#8,co-expression#9)
 cxtrace.icn  :   16  | | braid; co-expression#1 : &null @ co-expression#8
 cxtrace.icn  :    9  | dsusp(71)
 cxtrace.icn  :   51  | | ds2(71)
@@ -217,7 +217,7 @@ cxtrace.icn  :   21  | braid failed
 cxtrace.icn  :   10  | dloop()
 cxtrace.icn  :   65  | | dl2()
 cxtrace.icn  :   69  | | | dl3()
-cxtrace.icn  :   73  | | | | braid(co-expression#10(0),co-expression#11(0))
+cxtrace.icn  :   73  | | | | braid(co-expression#10,co-expression#11)
 cxtrace.icn  :   16  | | | | | braid; co-expression#1 : &null @ co-expression#10
 cxtrace.icn  :   73  | dl3; co-expression#10 returned 91 to co-expression#1
 cxtrace.icn  :   16  | | | | braid suspended 91
