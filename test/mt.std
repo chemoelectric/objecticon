@@ -102,7 +102,7 @@ Test test28
 ascii: &ascii
 clock: string
 cset: &cset
-current: co-expression#*(1)
+current: co-expression#*
 date: string
 dateline: string
 digits: &digits
@@ -120,12 +120,12 @@ lcase: &lcase
 letters: &letters
 level: 1
 line: 26
-main: co-expression#*(0)
+main: co-expression#*
 null: &null
 pos: 1
 progname: string
 random: 0
-source: co-expression#*(1)
+source: co-expression#*
 subject: ""
 time: integer
 trace: 0
@@ -164,14 +164,14 @@ Test test32
 &why: "why oh why"
 &file: string
 &line: 214
-&main: co-expression#*(0)
+&main: co-expression#*
 &time: integer
 &trace: 0
 &handler: &null
 &random: 0
-&source: co-expression#*(1)
+&source: co-expression#*
 &subject: ""
-&current: co-expression#*(1)
+&current: co-expression#*
 &progname: string
 &errortext: Failed
 &errorvalue: Failed
@@ -181,13 +181,13 @@ c: &pos: 1
 c: &why: "why oh why"
 c: &file: string
 c: &line: 91
-c: &main: co-expression#*(0)
+c: &main: co-expression#*
 c: &trace: 0
 c: &handler: &null
 c: &random: 0
-c: &source: co-expression#*(1)
+c: &source: co-expression#*
 c: &subject: ""
-c: &current: co-expression#*(1)
+c: &current: co-expression#*
 c: &progname: string
 c: &errortext: Failed
 c: &errorvalue: Failed
@@ -197,13 +197,13 @@ e: &pos: 1
 e: &why: "why oh why"
 e: &file: string
 e: &line: 229
-e: &main: co-expression#*(0)
+e: &main: co-expression#*
 e: &trace: 0
 e: &handler: &null
 e: &random: 0
-e: &source: co-expression#*(1)
+e: &source: co-expression#*
 e: &subject: ""
-e: &current: co-expression#*(1)
+e: &current: co-expression#*
 e: &progname: string
 e: &errortext: Failed
 e: &errorvalue: Failed

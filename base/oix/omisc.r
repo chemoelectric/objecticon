@@ -20,7 +20,6 @@ operator ^ refresh(x)
        MemProtect(coex->base_pf = alc_p_frame(CoexprBlk(x).base_pf->proc, CoexprBlk(x).base_pf->fvars));
        coex->main_of = 0;
        coex->tvalloc = 0;
-       coex->size = 0;
        coex->level = 1;
        coex->failure_label = coex->start_label = coex->base_pf->ipc = CoexprBlk(x).start_label;
        coex->curr_pf = coex->base_pf;
@@ -46,7 +45,6 @@ function cocopy(x)
        MemProtect(coex->base_pf = alc_p_frame(CoexprBlk(x).base_pf->proc, 0));
        coex->main_of = 0;
        coex->tvalloc = 0;
-       coex->size = 0;
        coex->level = 1;
        coex->failure_label = coex->start_label = coex->base_pf->ipc = CoexprBlk(x).start_label;
        coex->curr_pf = coex->base_pf;
@@ -76,7 +74,6 @@ operator * size(x)
       set:    return C_integer SetBlk(x).size;
       cset:   return C_integer CsetBlk(x).size;
       record: return C_integer RecordBlk(x).constructor->n_fields;
-      coexpr: return C_integer CoexprBlk(x).size;
       default: {
          /*
           * Try to convert it to a string.

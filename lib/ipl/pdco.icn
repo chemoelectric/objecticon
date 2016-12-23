@@ -385,17 +385,18 @@ procedure Decimation(e)
       }
 
 end
-# PDCO to decollate sequence
-procedure Decollate(e1, e2)	
-   local i, j, x
 
-   i := optional_param(e2, 1, integer, 101) | fail
+# PDCO to decollate sequence
+procedure Decollate(e, i)	
+   local j, x
+
+   i := optional_param(i, 1, integer, 101) | fail
 
    i %:= 2
  
    j := 0
 
-   while x := @e1 do {
+   while x := @e do {
       j +:= 1
       if j % 2 = i then suspend x
       }
@@ -416,11 +417,11 @@ procedure Delta(e)
 end
 
 # PDCO to elevate sequence
-procedure Elevate(e1, e2, e3)	
-   local n, m, shafts, i, j, k
+procedure Elevate(e1, m, n)	
+   local shafts, i, j, k
 
-   m := @e2 | fail
-   n := @e3 | fail
+   m := mandatory_param(m, integer, 101) | fail
+   n := mandatory_param(n, integer, 101) | fail
 
    shafts := list(m)
 
@@ -446,19 +447,21 @@ procedure Every(e1, e2)
 end
 
 # PDCO to extend sequence
-procedure ExtendSeq(e1, e2)	
-   local count
+procedure ExtendSeq(e, count)	
+   local fl
 
-   count := mandatory_param(e2, integer, 101) | fail
+   count := mandatory_param(count, integer, 101) | fail
    if count < 1 then fail
 
    repeat {
-      suspend |@e1 do {
+      suspend |@e do {
          count -:= 1
          if count = 0 then fail
+         fl := &yes
          }
-      if *e1 = 0 then fail
-      e1 := ^e1
+      if /fl then fail
+      e := ^e
+      fl := &no
       }
 
 end
@@ -506,16 +509,16 @@ procedure Fifo(L[])
 end
 
 # PDCO for friendly sequences
-procedure Friendly(e1, e2, e3)	
-   local mod, state, value
+procedure Friendly(mod, state, e)	
+   local value
 
-   mod := @e1 | fail
-   state := @e2
-   if /state then state := ?mod
+   mod := mandatory_param(mod, integer, 101) | fail
+   state := optional_param(state, &null, integer, 101) | fail
+   /state := ?mod
 
    repeat {
       suspend state
-      value := @e3 | fail
+      value := @e | fail
       if value % 2 = 0 then state +:= 1
       else state -:= 1
       state := residue(state, mod, 1)
@@ -809,14 +812,14 @@ procedure PatternPalin(e)
 end
 
 # PDCO for periodic part of sequence
-procedure Period(e1, e2)		
-   local limit, result
+procedure Period(e, limit)		
+   local result
 
-   limit := optional_param(e2, 300, integer, 101) | fail
+   limit := optional_param(limit, 300, integer, 101) | fail
 
    result := []
 
-   every put(result, |@e1) \ limit
+   every put(result, |@e) \ limit
 
    result := repeater(result)
 
@@ -841,19 +844,19 @@ procedure Permute(e1, e2)
 end
 
 # PDCO to generate pivot points
-procedure Pivot(e1, e2)		
-   local current, direction, m, new
+procedure Pivot(e, m)		
+   local current, direction, new
 
-   m := optional_param(e2, 100, integer, 101) | fail
+   m := optional_param(m, 100, integer, 101) | fail
 
    direction := "+"
 
-   current := @e1 % m | fail
+   current := @e % m | fail
 
    suspend current
 
    repeat {
-      new := @e1 % m | break
+      new := @e % m | break
       if new = current then next
       case direction of {
          "+":  {
@@ -886,15 +889,15 @@ procedure Pivot(e1, e2)
 
 end
 
-# positions in e of i
-procedure Positions(e1, e2)	
-   local v, count, x
+# positions in e of v
+procedure Positions(e, v)	
+   local count, x
 
-   v := @e2 | fail
+   v := mandatory_param(v) | fail
 
    count := 0
 
-   while x := @e1 do {
+   while x := @e do {
       count +:= 1
       if x === v then suspend count
       }
@@ -924,24 +927,26 @@ end
 
 # PDCO to model repeated alternation
 procedure Repalt(e)	
+   local fl
    repeat {
-      suspend |@e
-      if *e == 0 then fail
+      suspend |@e do
+         fl := &yes
+      if /fl then fail
       e := ^e
+      fl := &no
       }
 
 end
 
 # PDCO to reduce sequence using binary operation
-procedure Reduce(e1, e2, e3)	
-   local op, x
+procedure Reduce(op, x, e)	
 
-   op := @e1 | fail
+   op := mandatory_param(op) | fail
    op := callable(op, 2) | runerr("invalid operation for Reduce{}", op)
 
-   x := @e2 | fail
+   x := mandatory_param(x) | fail
 
-   while x := op(x, @e3)
+   while x := op(x, @e)
 
    return x
 
@@ -1010,10 +1015,10 @@ procedure Reverse(e)
 end
 
 # PDCO to rotate sequence
-procedure Rotate(e1, e2)		
-   local result, i, x
+procedure Rotate(e1, i)		
+   local result, x
 
-   i := mandatory_param(e2, integer, 101) | fail
+   i := mandatory_param(i, integer, 101) | fail
 
    result := []
 
@@ -1033,10 +1038,10 @@ procedure Rotate(e1, e2)
 end
 
 # PDCO to produce multiple of values in sequence
-procedure Selfrepl(e1, e2)	
-   local i, j
-   j := optional_param(e2, 1, integer, 101) | fail
-   while i := @e1 do {
+procedure Selfrepl(e, j)	
+   local i
+   j := optional_param(j, 1, integer, 101) | fail
+   while i := @e do {
       i := integer(i) | runerr(101, i)
       suspend (1 to i * j) & i
       }
@@ -1111,13 +1116,13 @@ procedure Smod(e1, e2)
 end
 
 # fill in gaps in integer sequences
-procedure Span(e1, e2)		
-   local i, j, m
+procedure Span(e, m)		
+   local i, j
 
-   m := optional_param(e2, 100, integer, 101) | fail
+   m := optional_param(m, 100, integer, 101) | fail
 
-   j := @e1 | fail
-   while i := residue(@e1, m, 1) do {
+   j := @e | fail
+   while i := residue(@e, m, 1) do {
       if i > j then suspend j to i - 1
       else if i < j then suspend j to i + 1 by -1
       j := i
@@ -1128,14 +1133,14 @@ procedure Span(e1, e2)
 end
 
 # PDCO to sum sequence to a limit
-procedure Sumlimit(e1, e2, e3) 	
-   local sum, min, limit, i
+procedure Sumlimit(e, limit, min) 	
+   local sum, i
 
-   limit := optional_param(e2, 2^15, integer, 101) | fail
-   min := optional_param(e3, 0, integer, 101) | fail
+   limit := optional_param(limit, 2^15, integer, 101) | fail
+   min := optional_param(min, 0, integer, 101) | fail
    sum := 0
 
-   while i := @e1 do {
+   while i := @e do {
       if i < min then next
       if (sum + i) > limit then fail
       sum +:= i
@@ -1258,9 +1263,9 @@ end
 
 # Evaluate each element of e, suspending all the results of the nth element.
 #
-procedure Each(e1, e[])
-   local f, n
-   n := mandatory_param(e1, integer, 101) | fail
+procedure Each(n, e[])
+   local f
+   n := mandatory_param(n, integer, 101) | fail
    n := cvpos_item(n, *e) | fail
    every f := !e do {
       if (n -:= 1) = 0 then
@@ -1268,6 +1273,18 @@ procedure Each(e1, e[])
       else
          @f
    }
+end
+
+# Generate the results of e between the elements i to j inclusive.
+#
+procedure Subseq(e, i, j)
+   i := optional_param(i, 1, integer, 101) | fail
+   j := optional_param(j, &null, integer, 101) | fail
+   if i > \j then
+      i :=: j
+   every 2 to i do
+      @e | fail
+   suspend if /j then |@e else |@e \ (j - i + 1)
 end
 
 #

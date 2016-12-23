@@ -736,8 +736,7 @@ void outimage1(FILE *f, dptr dp, int noimage, word stringlimit, word listlimit)
          }
 
       coexpr: {
-         fprintf(f, "co-expression#" UWordFmt "(" WordFmt ")",
-                 CoexprBlk(*dp).id, CoexprBlk(*dp).size);
+         fprintf(f, "co-expression#" UWordFmt, CoexprBlk(*dp).id);
          }
 
       tvsubs: {
@@ -1451,12 +1450,11 @@ void getimage(dptr dp1, dptr dp2)
       coexpr: {
          /*
           * Produce:
-          *  "co-expression#m (n)"
-          *  where m is the number of the co-expressions and n is the
-          *  number of results that have been produced.
+          *  "co-expression#m"
+          *  where m is the number of the co-expression
           */
 
-         sprintf(sbuf, "co-expression#" UWordFmt "(" WordFmt ")", CoexprBlk(*dp1).id, CoexprBlk(*dp1).size);
+         sprintf(sbuf, "co-expression#" UWordFmt, CoexprBlk(*dp1).id);
          len = strlen(sbuf);
          MemProtect(StrLoc(*dp2) = alcstr(sbuf, len));
          StrLen(*dp2) = len;

@@ -103,14 +103,14 @@ void end_class(void)
 void add_ientry(char *name, word val)
 {
     char buff[32];
-    sprintf(buff, "%ld", (long)val);
+    sprintf(buff, WordFmt, val);
     add_entry(name, strdup(buff), 0);
 }
 
 void add_uientry(char *name, uword val)
 {
     char buff[32];
-    sprintf(buff, "%lu", (unsigned long)val);
+    sprintf(buff, UWordFmt, val);
     add_entry(name, strdup(buff), 0);
 }
 
@@ -1279,6 +1279,7 @@ Const(SEEK_END)
     start_class("Limit", 0, 0, 0);
     Const(MaxWord)
     Const(MinWord)
+    UConst(MaxUWord)
     end_class();
 
     start_file("evmonconsts.icn", "lang");

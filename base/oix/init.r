@@ -838,7 +838,6 @@ function lang_Prog_load(loadstring, arglist, blocksize, stringsize)
        coex->failure_label = 0;
        coex->tvalloc = 0;
        coex->level = 0;
-       coex->size = 0;
 
        if (main_bp->nparam) {
            if (is:null(arglist))
@@ -1293,7 +1292,6 @@ int main(int argc, char **argv)
 
     Protect(k_current = alccoexp(), fatalerr(303, NULL));
     rootpstate.K_current = rootpstate.K_main = k_current;
-    k_current->size = 1;			/* pretend main() does an activation */
     k_current->level = 0;
     k_current->main_of = &rootpstate;
     k_current->activator = k_current;
