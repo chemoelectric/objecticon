@@ -1275,18 +1275,16 @@ procedure Each(n, e[])
    }
 end
 
-# Generate the elements of e between the ranges i to j inclusive.
+# Generate the results of e between the elements i to j inclusive.
 #
 procedure Subseq(e, i, j)
-   local v, count
    i := optional_param(i, 1, integer, 101) | fail
    j := optional_param(j, &null, integer, 101) | fail
-   count := 0
-   while v := @e do {
-      count +:= 1
-      if i <= count & (/j | count <= j) then
-         suspend v
-   }
+   if i > \j then
+      i :=: j
+   every 2 to i do
+      @e | fail
+   suspend if /j then |@e else |@e \ (j - i + 1)
 end
 
 #
