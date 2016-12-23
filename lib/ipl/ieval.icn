@@ -9,7 +9,8 @@ import io, gui, lang, xdg, ipl.columnize, parser, eval, util,
 
 $load IEVAL_LOGO "rpp.IEVAL_LOGO.png"
 
-record Activation(coex, info)
+package record Activation(coex, info)
+package record NamePair(long, short)
 
 class IevalTermDialog(TermDialog, MinimalObjectOutput)
 end
@@ -522,14 +523,14 @@ class Ieval(MinimalObjectOutput)
       local l, e
       l := []
       every e := Proc.get_name(lang.Prog.get_keywords()) do {
-         if match(p, e[2:0]) then
-            put(l, simple_insert(e, e[2 + *p:0], subj, pos))
+         if match(p, e) then
+            put(l, simple_insert(e, p, subj, pos))
       }
       return l
    end
 
-   private static simple_insert(e, ins, subj, pos)
-      return CompleteElement(e, subj[1:pos] || ins || subj[pos:0], pos + *ins)
+   private static simple_insert(e, p, subj, pos)
+      return CompleteElement(e, subj[1:pos - *p] || e || subj[pos:0], pos - *p + *e)
    end
 
    private lookup_global(p)
@@ -548,14 +549,7 @@ class Ieval(MinimalObjectOutput)
       }
    end
 
-   private candidates1(p)
-      local e
-      suspend !imports || "." | key(consts | vars)
-      every e := lang.Prog.get_global_names() do
-         upto('.', e) | suspend e
-   end
-
-   private candidates2(h, t)
+   private dot_candidates(h, t)
       local v, f
       suspend !imports || "." | gen_package_global_names(h)
       if v := lookup_global(h) then {
@@ -576,34 +570,51 @@ class Ieval(MinimalObjectOutput)
       }
    end
 
-   private globals1(p, subj, pos)
-      local i, e
+   private complete_ident_dot(p, h, t, subj, pos)
+      local c
+      every c := dot_candidates(h, t) do
+         if match(p, c) then
+            suspend simple_insert(c, p, subj, pos)
+   end
+
+   private complete_ident_no_dot(p, subj, pos)
+      local i, e, l, t, v
+
+      l := []
+      every e := !imports || "." do
+         if match(p, e) then
+            put(l, NamePair(e, e))
+      every e := key(consts | vars) do
+         if match(p, e) & not lang.Prog.get_global_name(e) then
+            put(l, NamePair("default." || e, e))
+      every e := lang.Prog.get_global_names() do
+         if not upto('.', e) & match(p, e) then
+            put(l, NamePair("default." || e, e))
       every i := 1 to lang.Prog.get_n_globals() do {
          if lang.Prog.get_global(i) then {
             e := lang.Prog.get_global_name(i)
             e ? if =!imports & ="." & (not upto('.')) & match(p) then
-               suspend CompleteElement(e, subj[1:pos - *p] || e || subj[pos:0], pos - *p + *e)
+               put(l, NamePair(e, tab(0)))
          }
+      }
+
+      # Note any ambiguities
+      t := table(0)
+      every t[(!l).short] +:= 1
+
+      every e := !l do {
+         v := if t[e.short] > 1 then e.long else e.short
+         suspend simple_insert(v, p, subj, pos)
       }
    end
 
    private complete_ident(p, subj, pos)
-      local h, t, i, l, c
+      local l, i
       l := []
-      if i := backto('.', p) then {
-         h := p[1: i - 1]
-         t := p[i:0]
-         every c := candidates2(h, t) do {
-            if i := match(p, c) then
-               put(l, simple_insert(c, c[1 + *p:0], subj, pos))
-         }
-      } else {
-         every c := candidates1(p) do {
-            if i := match(p, c) then
-               put(l, simple_insert(c, c[1 + *p:0], subj, pos))
-         }
-         every put(l, globals1(p, subj, pos))
-      }
+      if i := backto('.', p) then
+         every put(l, complete_ident_dot(p, p[1: i - 1], p[i:0], subj, pos))
+      else
+         every put(l, complete_ident_no_dot(p, subj, pos))
       return l
    end
 
@@ -612,7 +623,7 @@ class Ieval(MinimalObjectOutput)
       subj ? {
          tab(pos)
          l := if p := tab(rev_many0(&letters,,, 1)) & rev_any('&',,, 1) then
-            complete_keyword(p, subj, pos)
+            complete_keyword(u"&" || p, subj, pos)
          else if p := tab(rev_many(&letters ++ &digits ++ '_.',,, 1)) & any(&letters ++ '_', p[1]) then
             complete_ident(p, subj, pos)
          else
