@@ -78,33 +78,25 @@ class Ieval(MinimalObjectOutput)
    end
 
    private list_syms()
-      local s, e, w, i
+      local s, e, w
       w := if is(output, TermDialog) then
          output.get_term_width()
       else
          LineEditorStream.get_console_width()
       s := set()
-      every i := 1 to lang.Prog.get_n_globals() do {
-         if lang.Prog.get_global(i) then {
-            e := lang.Prog.get_global_name(i)
-            if e ? ((not upto('.')) | (=!imports & ="." & (not upto('.')))) then
-               insert(s, e)
-         }
-      }
+      every e := get_accessible_global_names() do
+         if e ? ((not upto('.')) | (=!imports & ="." & (not upto('.')))) then
+            insert(s, e)
       every output.write(columnize_gen_ft(isort(s, map), w))
    end
 
    private list_prog_syms(prog)
-      local s, w, i
+      local s, w
       w := if is(output, TermDialog) then
          output.get_term_width()
       else
          LineEditorStream.get_console_width()
-      s := set()
-      every i := 1 to lang.Prog.get_n_globals(prog) do {
-         if lang.Prog.get_global(i, prog) then
-            insert(s, lang.Prog.get_global_name(i, prog))
-      }
+      s := Set{ get_accessible_global_names(prog) }
       every output.write(columnize_gen_ft(isort(s, map), w))
    end
 
@@ -537,15 +529,24 @@ class Ieval(MinimalObjectOutput)
       return Safe1{ ee.get(string(p), ev) }
    end
 
+   private static get_accessible_global_names(P)
+      local i
+      every i := 1 to lang.Prog.get_n_globals(P) do {
+         if lang.Prog.get_global(i, P) then
+            suspend lang.Prog.get_global_name(i, P)
+      }
+   end
+
    private gen_package_global_names(p)
-      local i, e
-      member(imports, string(p)) | fail
-      every i := 1 to lang.Prog.get_n_globals() do {
-         if lang.Prog.get_global(i) then {
-            e := lang.Prog.get_global_name(i)
+      local e
+      if p == u"default" then {
+         every e := get_accessible_global_names() do
+            upto('.', e) | suspend "default." || e
+         suspend "default." || key(consts | vars)
+      } else if member(imports, string(p)) then {
+         every e := get_accessible_global_names() do
             e ? if =p & ="." & (not upto('.')) then
                suspend e
-         }
       }
    end
 
@@ -578,10 +579,10 @@ class Ieval(MinimalObjectOutput)
    end
 
    private complete_ident_no_dot(p, subj, pos)
-      local i, e, l, t, v
+      local e, l, t, v
 
       l := []
-      every e := !imports || "." do
+      every e := !imports || "." | "default." do
          if match(p, e) then
             put(l, NamePair(e, e))
       every e := key(consts | vars) do
@@ -590,13 +591,9 @@ class Ieval(MinimalObjectOutput)
       every e := lang.Prog.get_global_names() do
          if not upto('.', e) & match(p, e) then
             put(l, NamePair("default." || e, e))
-      every i := 1 to lang.Prog.get_n_globals() do {
-         if lang.Prog.get_global(i) then {
-            e := lang.Prog.get_global_name(i)
-            e ? if =!imports & ="." & (not upto('.')) & match(p) then
-               put(l, NamePair(e, tab(0)))
-         }
-      }
+      every e := get_accessible_global_names() do
+         e ? if =!imports & ="." & (not upto('.')) & match(p) then
+            put(l, NamePair(e, tab(0)))
 
       # Note any ambiguities
       t := table(0)

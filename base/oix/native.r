@@ -1535,7 +1535,7 @@ function io_FileStream_new_impl(path, flags, mode)
    if !def:integer(mode, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) then
       runerr(101, mode)
 #else
-   if !def:integer(mode, 0664) then
+   if !def:integer(mode, _S_IREAD | _S_IWRITE) then
       runerr(101, mode)
 #endif
    body {
