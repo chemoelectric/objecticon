@@ -14,7 +14,7 @@ static word calc_ucs_index_step(word utf8_len, word len, int offset_bits);
  * handling functions, so make sure MaxPath is big enough.
  */
 #if MaxPath < 128
-   #error MaxPath too small
+   #error "MaxPath too small"
 #endif
 
 static char result[MaxPath];
