@@ -1378,9 +1378,11 @@ function io_FileStream_new_impl(path, flags, mode)
 #if UNIX
    if !def:integer(mode, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) then
       runerr(101, mode)
-#else
+#elif MSWIN32
    if !def:integer(mode, _S_IREAD | _S_IWRITE) then
       runerr(101, mode)
+#else
+   #error "Need a default value for mode"
 #endif
    body {
        int fd;
