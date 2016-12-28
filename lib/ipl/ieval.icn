@@ -45,6 +45,7 @@ class Ieval(MinimalObjectOutput)
          write("!quiet      Don't force evaluation of all of the values in the expression, and don't output any expression value.").
          write("dir(x)      With no parameter, show all global variables.  With a parameter, show information about it.").
          write("!hist       Show the command line history.").
+         write("!cls        Clear the screen.").
          write("old(s)      Search history for commands containing string s.").
          write("cmd(n)      Run command number n again.").
          write("hlim(n)     Set the history limit to n.").
@@ -275,6 +276,13 @@ class Ieval(MinimalObjectOutput)
       }
    end
 
+   private cls()
+      if is(output, DescStream) then
+         output.writes("\e[2J\e[H")
+      else
+         output.clear_text()
+   end
+
    private hist(s)
       local i, e
       /s := u""
@@ -439,6 +447,7 @@ class Ieval(MinimalObjectOutput)
       consts["wglob"] := create wglob()
       consts["dir"] := dir
       consts["hist"] := create hist()
+      consts["cls"] := create cls()
       consts["old"] := hist
       consts["elim"] := set_elim
       consts["hlim"] := set_hlim
