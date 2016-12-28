@@ -114,8 +114,8 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       t := text.history_size
       text.
          set_history_size(0).
-         set_history_size(t).
-         input("\e[2J\e[H")
+         input("\e[2J\e[H").
+         set_history_size(t)
       need_crnl := &no
       return self
    end
