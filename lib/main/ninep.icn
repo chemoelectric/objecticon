@@ -270,7 +270,7 @@ class TableDir9P(Dir9P)
          set_uid(uid).
          set_muid(uid).
          set_gid(self.gid).
-         set_perm(iand(perm, ior(icom(8r777), iand(self.perm, 8r777))))
+         set_perm(perm)
    end
 
    protected new_regular_child(name, uid, perm)
@@ -278,7 +278,7 @@ class TableDir9P(Dir9P)
          set_uid(uid).
          set_muid(uid).
          set_gid(self.gid).
-         set_perm(iand(perm, ior(icom(8r666), iand(self.perm, 8r666))))
+         set_perm(perm)
    end
 
    public create_child(name, uid, perm)
@@ -1321,7 +1321,7 @@ class Session9P()
    end
 
    private respond_impl(x, t)
-      local o, qids, e, s, i, p, info, n
+      local o, qids, e, s, i, p, info, n, perm
       case classof(x) of {
          TVersion:
             return RVersion(65535, 8216, "9P2000")
@@ -1368,7 +1368,11 @@ class Session9P()
             has_perm(info, o.uid, Comms9P.AWRITE) | throw("permission denied")
             if tmp(data.get_child(o.path, x.name), t) then
                throw("create with name which already exists")
-            p := tmp(data.create_child(o.path, x.name, o.uid, x.perm), t)
+            perm := if iand(x.perm, Mode9.DMDIR) = 0 then
+               iand(x.perm, ior(icom(8r666), iand(info.mode, 8r666)))
+            else
+               iand(x.perm, ior(icom(8r777), iand(info.mode, 8r777)))
+            p := tmp(data.create_child(o.path, x.name, o.uid, perm), t)
             p := tmp(data.open(p, x.mode), t)
             data.modified(o.path, o.uid)
             del_fid(x.fid)
