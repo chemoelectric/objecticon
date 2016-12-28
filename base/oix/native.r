@@ -1418,7 +1418,7 @@ function io_FileStream_create_impl(path, flags, mode)
       runerr(103, path)
    if !cnv:C_integer(flags) then
       runerr(101, flags)
-   if !def:integer(mode, 0664, mode) then
+   if !def:integer(mode, 0666, mode) then
       runerr(101, mode)
    body {
        int fd;
@@ -1534,9 +1534,11 @@ function io_FileStream_new_impl(path, flags, mode)
 #if UNIX
    if !def:integer(mode, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) then
       runerr(101, mode)
-#else
+#elif MSWIN32
    if !def:integer(mode, _S_IREAD | _S_IWRITE) then
       runerr(101, mode)
+#else
+   #error "Need a default value for mode"
 #endif
    body {
        int fd;
