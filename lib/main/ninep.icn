@@ -77,7 +77,7 @@ abstract class File9P()
       return self
    end
 
-   public open(mode, uid)
+   public open(mode)
       return self
    end
 
@@ -1028,7 +1028,7 @@ abstract class Data9P()
    # Open the given path `p`, and return another (possibly different)
    # path on which to carry out future i/o operations (read, write and
    # close).
-   public abstract open(p, mode, uid)
+   public abstract open(p, mode)
 
    # Write the string `s` to the path `p` at position `pos`.
    public abstract write(p, s, pos)
@@ -1109,8 +1109,8 @@ abstract class FileData9P(Data9P)
       return p.modified(uid) & self
    end
 
-   public open(p, mode, uid)
-      return p.open(mode, uid)
+   public open(p, mode)
+      return p.open(mode)
    end
 
    public write(p, s, pos)
@@ -1373,7 +1373,7 @@ class Session9P()
             else
                iand(x.perm, ior(icom(8r777), iand(info.mode, 8r777)))
             p := tmp(data.create_child(o.path, x.name, o.uid, perm), t)
-            p := tmp(data.open(p, x.mode, o.uid), t)
+            p := tmp(data.open(p, x.mode), t)
             data.modified(o.path, o.uid)
             del_fid(x.fid)
             new_fid(x.fid, p, o.uid, x.mode)
@@ -1402,7 +1402,7 @@ class Session9P()
                p := tmp(data.get_parent(o.path), t)
                has_perm(data.get_info(p), o.uid, Comms9P.AWRITE) | throw("permission denied")
             }
-            p := tmp(data.open(o.path, x.mode, o.uid), t)
+            p := tmp(data.open(o.path, x.mode), t)
             del_fid(x.fid)
             new_fid(x.fid, p, o.uid, x.mode)
             # OTRUNC means the file is to be truncated, unless the file is append-only
