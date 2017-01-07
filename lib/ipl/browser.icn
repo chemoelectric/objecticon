@@ -642,7 +642,7 @@ class HttpSubWorker(SubWorker)
                         # the cached data.
                         update_cache_with_entry(worker.pool, hres, ce)
                         Resp(req,, adjust_fragment(req.url, ce.url), ce.data, ce.fname, ce.content_type)
-                     } else if 400 <= sc <= 599 &
+                     } else if (sc = 300) | (400 <= sc <= 599) &
                         data := s.str() &
                         *data > 0 then
                      {
