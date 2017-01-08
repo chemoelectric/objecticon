@@ -1460,11 +1460,16 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public display_externally(res)
-      local de, mt, file
-      mt := (\res.content_type).to_rfc1521()
-      de := Xdg.gen_desktop_entries(\mt) | Xdg.gen_desktop_entries_for_file(\res.fname) | fail
-      file := make_display_file(res)
-      BrowserDialog.launch_prog(de, file)
+      local de, mt, file, cd
+      if cd := \res.content_disposition & map(cd.get_type()) == "attachment" then {
+         file := cd.get_filename() | res.fname
+         do_save(file, res.data)
+      } else {
+         mt := (\res.content_type).to_rfc1521()
+         de := Xdg.gen_desktop_entries(\mt) | Xdg.gen_desktop_entries_for_file(\res.fname) | fail
+         file := make_display_file(res)
+         BrowserDialog.launch_prog(de, file)
+      }
       parent_dialog.update_visited(res.url)
       return
    end

@@ -34,7 +34,7 @@ class Req()
 
    public new(client, url, referer, callback, kind, form_data, on_status)
       self.client := client
-      self.url := url 
+      self.url := url
       self.referer := referer
       self.callback := callback
       self.kind := kind
@@ -46,15 +46,16 @@ end
 
 class Resp()
    public const
-      req, err, url, data, fname, content_type, data_file
+      req, err, url, data, fname, content_type, content_disposition, data_file
 
-   public new(req, err, url, data, fname, content_type, data_file)
+   public new(req, err, url, data, fname, content_type, content_disposition, data_file)
       self.req := req
       self.err := err
       self.url := url
       self.data := data
       self.fname := fname
       self.content_type := content_type
+      self.content_disposition := content_disposition
       self.data_file := data_file
       return
    end
@@ -62,12 +63,13 @@ end
 
 class StaticData()
    public const
-      data, fname, content_type
+      data, fname, content_type, content_disposition
 
-   public new(data, fname, content_type)
+   public new(data, fname, content_type, content_disposition)
       self.data := data
       self.fname := fname
       self.content_type := content_type
+      self.content_disposition := content_disposition
       return
    end
 end
@@ -123,11 +125,12 @@ class CacheData(CacheEntry, StaticData)
          return
    end
 
-   public new(url, expiry, data, fname, content_type, last_modified, etag)
+   public new(url, expiry, data, fname, content_type, content_disposition, last_modified, etag)
       self.url := url
       self.data := data
       self.fname := fname
       self.content_type := content_type
+      self.content_disposition := content_disposition
       self.expiry := expiry
       self.last_modified := last_modified
       self.etag := etag
@@ -245,8 +248,8 @@ class Cache()
       return self
    end
 
-   public add_data(url, expiry, data, fname, content_type, last_modified, etag)
-      insert(t, url.str(), CacheData(url, expiry, data, fname, content_type, last_modified, etag))
+   public add_data(url, expiry, data, fname, content_type, content_disposition, last_modified, etag)
+      insert(t, url.str(), CacheData(url, expiry, data, fname, content_type, content_disposition, last_modified, etag))
       return self
    end
 
@@ -255,11 +258,11 @@ class Cache()
       return self
    end
 
-   public create_url(expiry, data, fname, content_type)
+   public create_url(expiry, data, fname, content_type, content_disposition)
       local url
       /expiry := Time.get_system_seconds() + 60
       url := URL(u"cache:" || (id +:= 1))
-      add_data(url, expiry, data, fname, content_type)
+      add_data(url, expiry, data, fname, content_type, content_disposition)
       return url
    end
 
@@ -539,15 +542,15 @@ class HttpSubWorker(SubWorker)
          update_aliases(pool, hres, ce.url)
    end
 
-   private static update_cache_with_data(pool, hres, data, fname, ct)
+   private static update_cache_with_data(pool, hres, data, fname, ct, cd)
       local ctrl
       ctrl := get_control(hres) | fail
-      pool.cache.add_data(hres.url, ctrl.expiry, data, fname, ct, ctrl.last_modified, ctrl.etag)
+      pool.cache.add_data(hres.url, ctrl.expiry, data, fname, ct, cd, ctrl.last_modified, ctrl.etag)
       update_aliases(pool, hres.get_previous_response(), hres.url)
    end
 
    public get_data(worker)
-      local req, s, data, hreq, hres, fname, ct, ce, sc, req_url_no_frag, helper
+      local req, s, data, hreq, hres, fname, ct, cd, ce, sc, req_url_no_frag, helper
       httpc := worker.httpc
       req := worker.req
       # The request URL without the fragment
@@ -557,7 +560,7 @@ class HttpSubWorker(SubWorker)
          ce := worker.pool.cache.get(req_url_no_frag)
 
       return if (\ce).hasnt_expired() then {
-         Resp(req,, adjust_fragment(req.url, ce.url), ce.data, ce.fname, ce.content_type)
+         Resp(req,, adjust_fragment(req.url, ce.url), ce.data, ce.fname, ce.content_type, ce.content_disposition)
       } else {
          helper := HttpRequestHelperImpl(worker, ce)
          hreq := HttpRequest().
@@ -585,7 +588,8 @@ class HttpSubWorker(SubWorker)
                   if hres := httpc.retrieve(hreq) then {
                      fname := hres.get_filename()
                      ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
-                     Resp(req,, adjust_fragment(req.url, hres.url),, fname, ct, tmp_file)
+                     cd := ContentDisposition.parse_rfc2616(hres.get_first_header("Content-Disposition"))
+                     Resp(req,, adjust_fragment(req.url, hres.url),, fname, ct, cd, tmp_file)
                   } else {
                      rm_tmp()
                      if httpc.get_http_error() & 
@@ -597,7 +601,7 @@ class HttpSubWorker(SubWorker)
                         # Redirect or 304 not modified with a cache entry, so return
                         # the cached data.
                         update_cache_with_entry(worker.pool, hres, ce)
-                        Resp(req,, adjust_fragment(req.url, ce.url), ce.data, ce.fname, ce.content_type)
+                        Resp(req,, adjust_fragment(req.url, ce.url), ce.data, ce.fname, ce.content_type, ce.content_disposition)
                      } else
                         Resp(req, &why, req.url)
                   }
@@ -626,10 +630,11 @@ class HttpSubWorker(SubWorker)
                   data := s.str()
                   fname := hres.get_filename()
                   ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
+                  cd := ContentDisposition.parse_rfc2616(hres.get_first_header("Content-Disposition"))
                   # Check whether to cache any data, including redirections.  POST requests are never cached.
                   if hreq.method == "GET" then
-                     update_cache_with_data(worker.pool, hres, data, fname, ct)
-                  Resp(req,, adjust_fragment(req.url, hres.url), data, fname, ct)
+                     update_cache_with_data(worker.pool, hres, data, fname, ct, cd)
+                  Resp(req,, adjust_fragment(req.url, hres.url), data, fname, ct, cd)
                } else {
                   if httpc.get_http_error() & 
                      hres := httpc.get_response() &
@@ -641,7 +646,7 @@ class HttpSubWorker(SubWorker)
                         # Redirect or 304 not modified with a cache entry, so return
                         # the cached data.
                         update_cache_with_entry(worker.pool, hres, ce)
-                        Resp(req,, adjust_fragment(req.url, ce.url), ce.data, ce.fname, ce.content_type)
+                        Resp(req,, adjust_fragment(req.url, ce.url), ce.data, ce.fname, ce.content_type, ce.content_disposition)
                      } else if (sc = 300) | (400 <= sc <= 599) &
                         data := s.str() &
                         *data > 0 then
@@ -650,7 +655,8 @@ class HttpSubWorker(SubWorker)
                         # message, so it can be displayed
                         fname := hres.get_filename()
                         ct := ContentType.parse_rfc2616(hres.get_first_header("Content-Type"))
-                        Resp(req, &why, adjust_fragment(req.url, hres.url), data, fname, ct)
+                        cd := ContentDisposition.parse_rfc2616(hres.get_first_header("Content-Disposition"))
+                        Resp(req, &why, adjust_fragment(req.url, hres.url), data, fname, ct, cd)
                      } else
                         Resp(req, &why, req.url)
                   } else
@@ -801,7 +807,7 @@ class Worker()
             } else if is(x, Resp) then
                req.callback(x)
             else if is(x, StaticData) then
-               req.callback(Resp(req,, req.url, x.data, x.fname, x.content_type))
+               req.callback(Resp(req,, req.url, x.data, x.fname, x.content_type, x.content_disposition))
             else if s := string(x) then
                req.callback(Resp(req,, req.url, s, req.url.get_decoded_path_last()))
             else if \x then
