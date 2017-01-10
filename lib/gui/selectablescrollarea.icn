@@ -778,6 +778,10 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       end_handle(e)
    end
 
+   public handle_interrupted()
+      scroll_ticker.stop()
+   end
+
    public handle_key_escape(e)
       start_handle(e)
       self.selections := set()
@@ -1020,14 +1024,16 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       self.contents := []
       self.selections := set()
       self.selection_on_key_moves_flag := &yes
-      view.connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS)
-      view.connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS)
-      view.connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG)
-      view.connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-      view.connect(self.handle_move, Event.MOUSE_MOVEMENT)
-      view.connect(self.handle_in_chain, Event.IN_POINT_CHAIN)
-      view.connect(self.handle_exit, Event.MOUSE_EXIT)
-      connect(self.handle_key, Event.KEY_PRESS)
+      view.
+         connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS).
+         connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS).
+         connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG).
+         connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE).
+         connect(self.handle_move, Event.MOUSE_MOVEMENT).
+         connect(self.handle_in_chain, Event.IN_POINT_CHAIN).
+         connect(self.handle_exit, Event.MOUSE_EXIT)
+      connect(handle_key, Event.KEY_PRESS)
+      connect(handle_interrupted, Event.INTERRUPTED)
       return
    end
 end

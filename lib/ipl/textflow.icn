@@ -1434,6 +1434,13 @@ class TextFlow(Component, HasLastHighlight)
       set_over()
    end
 
+   private handle_interrupted(e)
+      set_highlight()
+      set_over()
+      set_pointer()
+      held := &null
+   end
+
    private set_over(u)
       if u ~=== over then {
          invalidate_url(\over)
@@ -1514,7 +1521,8 @@ class TextFlow(Component, HasLastHighlight)
       connect(handle_mpress, Event.MOUSE_MIDDLE_PRESS)
       connect(handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-      every connect(handle_exit, Event.MOUSE_EXIT | Event.INTERRUPTED)
+      connect(handle_exit, Event.MOUSE_EXIT)
+      connect(handle_interrupted, Event.INTERRUPTED)
       connect(handle_rpress, Event.MOUSE_RIGHT_PRESS)
       connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
       return

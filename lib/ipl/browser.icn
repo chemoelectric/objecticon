@@ -10,7 +10,7 @@ import
    net,
    xml,
    posix,
-   graphics(Window,Key,Selection),
+   graphics(Window,Key,Selection,Mouse),
    xdg,
    ipl.childwait,
    ipl.lists,
@@ -1257,6 +1257,12 @@ class Img(Image, HasLastHighlight)
       set_over()
    end
 
+   private handle_interrupted(e)
+      set_highlight()
+      set_over()
+      held := &null
+   end
+
    package gen_areas()
       # Non-null bg_area implies we have some areas (ie, links) (see constructor below).
       if \bg_area then
@@ -1418,7 +1424,8 @@ class Img(Image, HasLastHighlight)
          connect(handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
          connect(handle_lmpress, Event.MOUSE_MIDDLE_PRESS)
          connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
-         every connect(handle_exit, Event.MOUSE_EXIT | Event.INTERRUPTED)
+         connect(handle_exit, Event.MOUSE_EXIT)
+         connect(handle_interrupted, Event.INTERRUPTED)
          bg_area := MapArea(,, context.url, context.title)
          set_tooltip_follows_mouse(&yes)
       }
@@ -2749,6 +2756,7 @@ abstract class BrowserUI()
    public abstract display_search()
    public abstract display_externally(res)
    public abstract goto_externally(url)
+   public abstract save_attachment(file, res)
 end
 
 package class BrowserPrimarySelectionOwner(TextSelectionOwner)
@@ -3118,6 +3126,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
 
    public get_authentication(httpc, dom, realm)
       local d
+      parent_dialog.exit_menu_mode()
       d := AuthenticationDialog(dom, realm)
       d.show_modal(parent_dialog)
       return \d.result
@@ -3304,6 +3313,10 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       return (\ui).goto_externally(url)
    end
 
+   public save_attachment(file, res)
+      return (\ui).save_attachment(file, res)
+   end
+
    public cancel()
       worker_pool.cancel_all(self)
       return self
@@ -3486,13 +3499,17 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private set_top_data(res)
-      local doc, s, row, c, cu, id, cs, s2
+      local doc, s, row, c, cu, id, cs, s2, cd, file
       if \res.err & /res.data then {
          s := "<html><title>Error</title>" || 
             "<h1>Error:</h1>Getting " || mk_anchor(res.url) || "<br><br>" || res.err || "</html>"
          page_data := &null
       } else {
-         if is_html(res.content_type, res.data) then
+         if cd := \res.content_disposition & map(cd.get_type()) == "attachment" then {
+            file := cd.get_filename() | res.fname
+            save_attachment(file, res)
+            return
+         } else if is_html(res.content_type, res.data) then
             s := res.data
          else if is_text(res.content_type, res.data) then
             s := "<html><title>" || to_content(res.fname) || "</title>" || 
@@ -5317,6 +5334,11 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          parent_dialog.own_selection(Selection.PRIMARY, primary_selection_owner)
    end
 
+   private handle_interrupted()
+      if view.is_held(Mouse.LEFT_PRESS) then
+         handle_lrelease()
+   end
+
    public handle_select_all(e)
       /mark_x | fail
       running === 0 | fail
@@ -5557,6 +5579,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE).
          connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS).
          connect(self.handle_in_chain, Event.IN_POINT_CHAIN)
+      connect(handle_interrupted, Event.INTERRUPTED)
       return
    end
 end
@@ -5671,6 +5694,7 @@ class SimpleBrowserUI(BrowserUI)
    public display_search() end
    public display_externally(res) end
    public goto_externally(url) end
+   public save_attachment(file, res) end
 
    public new(browser)
       self.browser := browser

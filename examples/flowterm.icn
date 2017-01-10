@@ -583,6 +583,13 @@ class Columns(LineBasedScrollArea)
       set_over()
    end
 
+   private handle_interrupted(e)
+      set_highlight()
+      set_over()
+      view.set_pointer()
+      held := &null
+   end
+
    public set_over(n)
       if n ~=== over then {
          invalidate_line(get_row_for_index(\over))
@@ -833,15 +840,17 @@ class Columns(LineBasedScrollArea)
       gutter := scale(8)
       item_paint := TextItemPaint()
       item_border := NullBorder().set_x_align(Align.L)
-      view.connect(handle_lpress, Event.MOUSE_LEFT_PRESS)
-      view.connect(handle_mpress, Event.MOUSE_MIDDLE_PRESS)
-      view.connect(handle_lmdrag, Event.MOUSE_LEFT_DRAG)
-      view.connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-      view.connect(handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
-      view.connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
-      view.connect(handle_in_chain, Event.IN_POINT_CHAIN)
-      every view.connect(handle_exit, Event.MOUSE_EXIT | Event.INTERRUPTED)
-      view.connect(handle_move, Event.MOUSE_MOVEMENT)
+      view.
+         connect(handle_lpress, Event.MOUSE_LEFT_PRESS).
+         connect(handle_mpress, Event.MOUSE_MIDDLE_PRESS).
+         connect(handle_lmdrag, Event.MOUSE_LEFT_DRAG).
+         connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE).
+         connect(handle_lmdrag, Event.MOUSE_MIDDLE_DRAG).
+         connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE).
+         connect(handle_in_chain, Event.IN_POINT_CHAIN).
+         connect(handle_exit, Event.MOUSE_EXIT).
+         connect(handle_move, Event.MOUSE_MOVEMENT)
+      connect(handle_interrupted, Event.INTERRUPTED)
       connect(handle_key, Event.KEY_PRESS)
       return
    end

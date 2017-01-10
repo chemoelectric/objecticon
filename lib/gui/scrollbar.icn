@@ -8,7 +8,7 @@
 
 package gui
 
-import lang, util
+import lang, graphics, util
 
 #
 # Component representing the bar area
@@ -392,6 +392,11 @@ class ScrollBar(Component, HasOrientation)
       end_handle(e)
    end
 
+   public handle_interrupted()
+      if bar_area.is_held(Mouse.LEFT_PRESS) then
+         handle_lrelease()
+   end
+
    public display()
       border.draw_rect(self.cbwin, self)
       display_children()
@@ -599,6 +604,7 @@ class ScrollBar(Component, HasOrientation)
          connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS).
          connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG).
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      connect(handle_interrupted, Event.INTERRUPTED)
       add(self.bar_area)
       self.wheel_factor := DEFAULT_WHEEL_FACTOR
       set_wheel_component(self)
