@@ -321,8 +321,7 @@ class Component(Rect,Align,Connectable)
       is_initialized() | fail
       v := Yes{ (\parent).is_hidden() | \is_hidden_flag }
       if effective_is_hidden_flag ~===:= v then {
-         if is_unshaded() then
-            fire(if /v then Event.RESUMED else Event.INTERRUPTED)
+         fire(if /v then Event.RESUMED else Event.INTERRUPTED)
          every (!children).hidden_change()
       }
    end
@@ -351,8 +350,7 @@ class Component(Rect,Align,Connectable)
       is_initialized() | fail
       v := Yes{ (\parent).is_shaded() | \is_shaded_flag }
       if effective_is_shaded_flag ~===:= v then {
-         if is_unhidden() then
-            fire(if /v then Event.RESUMED else Event.INTERRUPTED)
+         fire(if /v then Event.RESUMED else Event.INTERRUPTED)
          every (!children).shaded_change()
       }
    end
