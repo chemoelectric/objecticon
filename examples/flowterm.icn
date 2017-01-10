@@ -550,7 +550,6 @@ class Columns(LineBasedScrollArea)
       set_over()
       # No need to synch_pointer since we call this method out of the
       # vt's keyboard handler.
-      view.set_pointer()
       quieten := &yes
    end
 
@@ -569,13 +568,10 @@ class Columns(LineBasedScrollArea)
          if /e.release then
             f := &yes
       } else f := \e.ctrl
-      if /f & (k := get_element_under_pointer(e)) then {
+      if /f & (k := get_element_under_pointer(e)) then
          set_over(k)
-         view.set_pointer("hand1")
-      } else {
+      else
          set_over()
-         view.set_pointer()
-      }
    end
 
    private handle_exit(e)
@@ -586,7 +582,6 @@ class Columns(LineBasedScrollArea)
    private handle_interrupted(e)
       set_highlight()
       set_over()
-      view.set_pointer()
       held := &null
    end
 
@@ -595,6 +590,7 @@ class Columns(LineBasedScrollArea)
          invalidate_line(get_row_for_index(\over))
          over := n
          invalidate_line(get_row_for_index(\over))
+         view.set_pointer(if /over then &null else "hand1")
          fire("over-changed")
       }
       return self
