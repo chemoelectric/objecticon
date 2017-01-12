@@ -856,6 +856,21 @@ procedure mk_file_URL(s)
    return URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/'))
 end
 
+class FilterEditList(EditList)
+   protected open_popup(ev)
+      local t
+      t := parent.parent
+      set_selection_only()
+      synch_set_selection_list(t.get_filter_list())
+      EditList.open_popup(ev)
+   end
+
+   public create_view()
+      return TextField().
+         set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
+   end
+end
+
 class DirListEx(DirList)
    private cursor_to_url()
       return mk_file_URL(popup.object_get_cursor())
@@ -2588,7 +2603,7 @@ $endif
          sort_cwd_list()
    end
 
-   private update_filter_list()
+   public get_filter_list()
       local e, l, ex
       ex := table(0)
       every e := !cwd_list do {
@@ -2599,14 +2614,13 @@ $endif
       l := [u"*"]
       every e := back(sort(ex, 2)) do
          put(l, u"*." || e[1])
-      filter.set_selection_only().synch_set_selection_list(l)
+      return l
    end
 
    private refresh_cwd()
       load_cwd_list()
       annotate_cwd_list()
       resort_cwd(&yes)
-      update_filter_list()
    end
 
    private update_title()
@@ -2628,7 +2642,6 @@ $endif
       annotate_cwd_list()
       sort_cwd_list()
       synch_favourites_list()
-      update_filter_list()
 
       if is_live() then {
          if t := member(columns_pos_table, FilePath(cwd).canonical().str()) then {
@@ -3160,7 +3173,7 @@ $endif
          set_toggles(&yes).
          set_paint(paint_45)
       paint_23 := TextPaint("Filter")
-      filter := EditList().
+      filter := FilterEditList().
          set_size(scale(150)).
          set_align(Align.L, Align.B).
          clear_constraints().
