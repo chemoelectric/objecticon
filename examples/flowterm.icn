@@ -238,11 +238,7 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
    end
 
    private on_favourite_dirs(ev)
-      local d
-      d := FavouriteDirectoriesDialog()
-      d.show_modal(self)
-      \d.okay | fail
-      every (!tabs.children).refresh_favourite_dirs()
+      FavouriteDirectoriesDialog().show_modal(self)
    end
 
    public component_setup()
@@ -871,7 +867,14 @@ class FilterEditList(EditList)
    end
 end
 
-class DirListEx(DirList)
+class FavouritesList(ButtonOnlyList)
+   public create_button()
+      local b
+      b := IconButton().set_paint(ImagePaint().set_cache("gui.FAVOURITES_24"))
+      theme_toolbar_button(b, "emblem-favorite")
+      return b
+   end
+
    private cursor_to_url()
       return mk_file_URL(popup.object_get_cursor())
    end
@@ -892,9 +895,21 @@ class DirListEx(DirList)
       close_popup()
    end
 
+   protected open_popup(ev)
+      local t
+      t := parent.parent
+      set_selection_list(t.get_favourites_directories())
+      object_set_selection(t.cwd) | set_selection()
+      ButtonOnlyList.open_popup(ev)
+   end
+
    public create_popup()
       local l
-      l := DirList.create_popup()
+      l := ItemPaintList().
+         set_item_paint(StringDirItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                            set_x_align(Align.L))
       l.view.
          connect(on_rpress, Event.MOUSE_RIGHT_PRESS).
          connect(on_mrelease, Event.MOUSE_MIDDLE_RELEASE)
@@ -1263,7 +1278,6 @@ class Terminal(TabItem, VtUI)
          "fav-dir" : {
             check_param(s, param) | fail
             push(added_favourites, FilePath(param).canonical().ucs())
-            refresh_favourite_dirs()
          }
          "max-list" : {
             if /param then {
@@ -2641,7 +2655,6 @@ $endif
       load_cwd_list()
       annotate_cwd_list()
       sort_cwd_list()
-      synch_favourites_list()
 
       if is_live() then {
          if t := member(columns_pos_table, FilePath(cwd).canonical().str()) then {
@@ -2667,19 +2680,6 @@ $endif
 
    public get_favourites_directories()
       return FileDialog.unique_ucs_list(added_favourites ||| ipl.pdco.List{FavouriteDirectoriesDialog.gen_directories_plus()})
-   end
-
-   public apply_favourite_dirs()
-      favourites_list.set_selection_list(get_favourites_directories())
-   end
-
-   public refresh_favourite_dirs()
-      apply_favourite_dirs()
-      synch_favourites_list()
-   end
-
-   private synch_favourites_list()
-      favourites_list.object_set_selection(cwd) | favourites_list.set_selection()
    end
 
    private on_trail(ev)
@@ -2730,7 +2730,6 @@ $endif
       if \opts["v"] then
          output.set_verbose(&yes)
 
-      favourites_list.set_size()
       sort_dirs_menu_item := CheckBoxMenuItem().
          set_label("Sort dirs").
          set_keep_open_on_shift(&yes).
@@ -2748,6 +2747,7 @@ $endif
          set_keep_open_on_shift(&yes).
          connect(on_filter_dirs_menu_item, Event.ACTION)
 
+      favourites_list.set_size().set_selection_list([])
       filter.set_selection_list([u"*"])
       history_list.set_size().set_selection_list([])
       input := []
@@ -2801,7 +2801,6 @@ $endif
          columns_pos_table := clone(other.columns_pos_table)
          filter.set_contents(other.filter.get_contents())
          added_favourites := clone(other.added_favourites)
-         apply_favourite_dirs()
          set_cwd(other.cwd)
       } else {
          columns.set_size(scale(DEFAULT_LIST_WIDTH), scale(DEFAULT_LIST_HEIGHT))
@@ -2822,7 +2821,6 @@ $endif
          }
          /start_dir := ucs(Files.getcwd()) | u"/"
          added_favourites := [start_dir]
-         apply_favourite_dirs()
          set_cwd(start_dir)
          # Apply global default tab options; should only fail on first time through.
          every e := !glob_cmds do
@@ -3218,7 +3216,7 @@ $endif
          set_toggles(&no).
          set_paint(paint_32)
       paint_37 := TextPaint("Favourite directories")
-      favourites_list := DirListEx().
+      favourites_list := FavouritesList().
          set_size(scale(37), scale(30)).
          clear_constraints().
          set_tooltip(paint_37).

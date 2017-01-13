@@ -3,7 +3,7 @@ package gui
 import
    io, ipl.filegui, xdg, lang, util, ipl.pdco()
 
-class FavouriteDirectoriesTableContent(TableContent)
+package class FavouriteDirectoriesTableContent(TableContent)
    public perform_drop(drag, drop)
       local l
       # Calculate insertion index
@@ -14,13 +14,13 @@ class FavouriteDirectoriesTableContent(TableContent)
    end
 end
 
-class FavouriteDirectoriesTable(Table)
+package class FavouriteDirectoriesTable(Table)
    public create_table_content()
       return FavouriteDirectoriesTableContent()
    end
 end
 
-class ApplicationItemPaint(ItemPaint)
+package class ApplicationItemPaint(ItemPaint)
    private convert(data)
       return \data | "All"
    end

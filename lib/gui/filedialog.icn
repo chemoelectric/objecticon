@@ -8,7 +8,6 @@ import
    ipl.functional,
    util,
    io,
-   graphics,
    ipl.strings
 
 class FileDialogPos()
@@ -23,18 +22,7 @@ class FileDialogPos()
    end
 end
 
-class EditListField(FileSuggestField)
-   public keeps(e)
-      return
-   end
-
-   public on_key(e)
-      if /popup then case e.code of {
-         Key.UP : parent.go_up(e)
-         Key.DOWN : parent.go_down(e)
-      }
-   end
-
+package class EditListField(FileSuggestField)
    public on_change(ev)
       # Don't start a suggestion on navigation of the list.
       parent.was_applied(ev) | SuggestField.on_change(ev)
@@ -51,29 +39,13 @@ class EditListField(FileSuggestField)
 
    public new()
       FileSuggestField.new()
-      connect(self.on_key, Event.KEY_PRESS)
       set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
       set_select_using_enter(&yes)
       return
    end
 end
 
-class DirEditList(EditList)
-   public create_popup()
-      return ItemPaintList().
-         set_item_paint(StringDirItemPaint()).
-         set_item_border(EmptyBorder().
-                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
-                            set_x_align(Align.L))
-   end
-
-   public create_view()
-      return EditListField().
-         set_directories_only(&yes)
-   end
-end
-
-class FileEditList(EditList)
+package class FileEditList(EditList)
    public layout()
       # Hide the button if the init_files list was empty.
       if *selection_list = 0 then {
@@ -95,12 +67,18 @@ class FileEditList(EditList)
    end
 end
 
-class DirList(ButtonOnlyList)
+package class FavouritesList(ButtonOnlyList)
    public create_button()
       local b
       b := IconButton().set_paint(ImagePaint().set_cache("gui.FAVOURITES_24"))
       theme_toolbar_button(b, "emblem-favorite")
       return b
+   end
+
+   protected open_popup(ev)
+      set_selection_list(parent_dialog.get_favourites_directories())
+      object_set_selection(parent_dialog.loaded_dir_path.ucs()) | set_selection()
+      ButtonOnlyList.open_popup(ev)
    end
 
    public create_popup()
@@ -215,7 +193,6 @@ class FileDialog(Dialog)
       /init_dirs := []
       /init_files := []
       /init_filters := [u"*"]
-      favourites_list.set_selection_list(get_favourites_directories())
       filter.set_selection_list(ucs_list(init_filters)).set_selection(1)
       synch_pats()
       if /multiple_files_flag then {
@@ -236,7 +213,7 @@ class FileDialog(Dialog)
       if /multiple_files_flag then
          file.grab_focus()
       win.set_min_size(win.get_width(), win.get_height())
-      goto_dir(favourites_list.selection_list[1])
+      goto_dir(gen_favourites_directories())
    end
 
    public check_existing()
@@ -561,23 +538,15 @@ class FileDialog(Dialog)
    end
 
    public get_favourites_directories()
-      local t
-      t := ipl.pdco.List{ FilePath(!init_dirs).canonical().str() |
-                          FavouriteDirectoriesDialog.gen_directories_plus() }
-      return unique_ucs_list(t)
+      return unique_ucs_list(ipl.pdco.List{ gen_favourites_directories() } )
+   end
+
+   public gen_favourites_directories()
+      suspend FilePath(!init_dirs).canonical().ucs() | FavouriteDirectoriesDialog.gen_directories_plus()
    end
 
    public on_favourite_dirs_menu_item(ev)
-      local d
-      d := FavouriteDirectoriesDialog()
-      d.show_modal(self)
-      \d.okay | fail
-      favourites_list.set_selection_list(get_favourites_directories())
-      synch_favourites_list()
-   end
-
-   private synch_favourites_list()
-      favourites_list.object_set_selection(loaded_dir_path.ucs()) | favourites_list.set_selection()
+      FavouriteDirectoriesDialog().show_modal(self)
    end
 
    public msg(s)
@@ -617,7 +586,6 @@ class FileDialog(Dialog)
       save_pos()
       loaded_dir_path := t
       trail.set_path(loaded_dir_path)
-      synch_favourites_list()
       msg()
       file.view.set_cwd(loaded_dir_path)
       load_dir_list()
@@ -771,7 +739,7 @@ class FileDialog(Dialog)
          set_height().
          set_constraint("l_inset", scale(10)).
          connect(on_trail, FileTrail.DIR_CHANGED_EVENT)
-      favourites_list.set_size()
+      favourites_list.set_size().set_selection_list([])
 
       dlist.
          set_selection_on_key_moves(&no).
@@ -961,7 +929,7 @@ class FileDialog(Dialog)
          set_toggles(&no).
          set_paint(paint_32)
       paint_49 := TextPaint("Favourite directories")
-      favourites_list := DirList().
+      favourites_list := FavouritesList().
          set_size(scale(37), scale(30)).
          clear_constraints().
          set_tooltip(paint_49).
