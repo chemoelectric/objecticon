@@ -739,7 +739,7 @@ class FilePath(ObjectOutput)
             FilePath(Files.getcwd())
          else
             other.absolute()
-         Files.FS.filepath_absolute(self, other)
+         Files.FS.filepath_absolute(self, \other)
       }
    end
 
