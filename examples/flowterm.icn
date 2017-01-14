@@ -2647,7 +2647,7 @@ $endif
       if \cwd then {
          lh := columns.data[columns.get_cursor()].name
          insert(columns_pos_table, 
-                FilePath(cwd).canonical().str(), 
+                cwd,
                 FileDialogPos(lh, columns.get_area_y()))
       }
       cwd := s
@@ -2657,7 +2657,7 @@ $endif
       sort_cwd_list()
 
       if is_live() then {
-         if t := member(columns_pos_table, FilePath(cwd).canonical().str()) then {
+         if t := member(columns_pos_table, cwd) then {
             i := Positions{(!columns.data).name, \t.cursor_name}
             columns.set_area_y(t.area_y).set_area_x(0).set_cursor(i)
          } else
@@ -2873,7 +2873,7 @@ $endif
 
    private on_up_button(ev)
       local t
-      t := FilePath(cwd).canonical()
+      t := FilePath(cwd)
       if t.size() > 1 then
          goto_dir(t.parent().str())
    end
