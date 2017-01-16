@@ -273,11 +273,19 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
              connect(create t.close_tab(), Event.ACTION)).
          add(TextMenuItem().
              set_label("Clone").
-             connect(create t.clone_tab(), Event.ACTION))
+             connect(create t.clone_tab(), Event.ACTION)).
+         add(MenuSeparator()).
+         move_all(tabs.which_one.create_link_menu(mk_file_URL(t.cwd)))
       pm := PopupMenu().
          connect(create tabs.set_which_highlight(), Event.POPUP_CLOSED)
       tabs.set_which_highlight(t)
       pm.popup(self, m, e.x, e.y)
+   end
+
+   private on_tabs_mpress(e)
+      local t
+      t := tabs.which_tab(e) | fail
+      tabs.which_one.insert_link(mk_file_URL(t.cwd), e)
    end
 
    private on_tabs_changed(e)
@@ -351,6 +359,7 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
          set_draggable_tabs(&yes).
          set_accepts_focus(&no).
          connect(on_tabs_rpress, Event.MOUSE_RIGHT_PRESS).
+         connect(on_tabs_mpress, Event.MOUSE_MIDDLE_PRESS).
          connect(on_tabs_changed, Event.SELECTION_CHANGED)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
@@ -2171,10 +2180,12 @@ $endif
       d.show_modal(parent_dialog)
       s := \d.result | fail
       info_msg("Renamed OK")
+      # This just avoids a slight delay in refreshing the columns (see
+      # check_cwd_time).
       if cwd == FilePath(s).parent().ucs() then
          refresh_cwd()
-      else
-         check_cwd_change()
+      # Check for a changed cwd name in all tabs.
+      every (!parent.children).check_cwd_change()
    end
 
    private on_copy_cwd(e)
@@ -2248,9 +2259,6 @@ $endif
       m.add(TextMenuItem().
             set_label("Select all").
             connect(output.handle_select_all, Event.ACTION))
-      m.add(TextMenuItem().
-            set_label("Copy cwd").
-            connect(on_copy_cwd, Event.ACTION))
       m.add(MenuSeparator())
       m.add(TextMenuItem().
             set_label("Reorient").
