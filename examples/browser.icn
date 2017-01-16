@@ -1497,6 +1497,12 @@ class BrowserTab(TabItem, BrowserUI)
       return t
    end
 
+   public save_attachment(file, res)
+      parent_dialog.exit_menu_mode()
+      do_save(file, res.data)
+      parent_dialog.update_visited(res.url)
+   end
+
    public display_externally(res)
       local de, mt, file
       mt := (\res.content_type).to_rfc1521()

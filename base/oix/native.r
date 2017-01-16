@@ -1532,7 +1532,7 @@ function io_FileStream_new_impl(path, flags, mode)
    if !cnv:C_integer(flags) then
       runerr(101, flags)
 #if UNIX
-   if !def:integer(mode, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH) then
+   if !def:integer(mode, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH) then
       runerr(101, mode)
 #elif MSWIN32
    if !def:integer(mode, _S_IREAD | _S_IWRITE) then

@@ -182,9 +182,14 @@ abstract class BorderWhilstEntered(Component)
          invalidate()
    end
 
+   public handle_interrupted(e)
+      handle_exit(e)
+   end
+
    public new()
       connect(handle_enter, Event.MOUSE_ENTER)
-      every connect(handle_exit, Event.MOUSE_EXIT | Event.INTERRUPTED)
+      connect(handle_exit, Event.MOUSE_EXIT)
+      connect(handle_interrupted, Event.INTERRUPTED)
       return
    end
 end

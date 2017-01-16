@@ -782,7 +782,7 @@ class RenameDialog(NameDialog)
       NameDialog.new(p.get(-1))
       set_label("Rename file")
       # Start with text selected.
-      name_field.set_mark(1).set_size(scale(300))
+      name_field.set_mark(1).set_size(scale(350))
       return
    end
 end
@@ -817,7 +817,7 @@ class NewDirectoryDialog(NameDialog)
       p := FilePath(s)
       NameDialog.new()
       set_label("New directory")
-      name_field.set_size(scale(300))
+      name_field.set_size(scale(350))
       return
    end
 end

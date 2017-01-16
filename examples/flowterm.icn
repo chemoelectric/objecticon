@@ -215,7 +215,7 @@ class FlowTermDialog(Dialog)
    end
 
    private on_about(ev)
-      show_html("<html><h1><img src=img:rpp.ABOUT_64 align=absmiddle/>&nbsp;About FlowTerm</h1>_
+      show_html("<html><h1><img src=img:rpp.ABOUT_64 width=64 height=64 align=absmiddle/>&nbsp;About FlowTerm</h1>_
 <h2>Author</h2>Robert Parlett_
 <h2>Contact</h2><a href=mailto:r.parlett@gmail.com</a>r.parlett@gmail.com</a>_
 <h2>Version</h2>" || &version ||
@@ -223,7 +223,7 @@ class FlowTermDialog(Dialog)
    end
 
    private on_help(ev)
-      show_html("<html><h1><img src=img:rpp.HELP_64 align=absmiddle/>&nbsp;FlowTerm Help</h1>_
+      show_html("<html><h1><img src=img:rpp.HELP_64 width=64 height=64 align=absmiddle/>&nbsp;FlowTerm Help</h1>_
 FlowTerm is a terminal emulator which uses web-like hyperlinks, as well as some elements of a file explorer._
 <p>_
 It requires an additional set of programs, <i>FlowTerm extras</i>, in order to be fully functional._
@@ -238,11 +238,7 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
    end
 
    private on_favourite_dirs(ev)
-      local d
-      d := FavouriteDirectoriesDialog()
-      d.show_modal(self)
-      \d.okay | fail
-      every (!tabs.children).refresh_favourite_dirs()
+      FavouriteDirectoriesDialog().show_modal(self)
    end
 
    public component_setup()
@@ -277,11 +273,19 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
              connect(create t.close_tab(), Event.ACTION)).
          add(TextMenuItem().
              set_label("Clone").
-             connect(create t.clone_tab(), Event.ACTION))
+             connect(create t.clone_tab(), Event.ACTION)).
+         add(MenuSeparator()).
+         move_all(tabs.which_one.create_link_menu(mk_file_URL(t.cwd)))
       pm := PopupMenu().
          connect(create tabs.set_which_highlight(), Event.POPUP_CLOSED)
       tabs.set_which_highlight(t)
       pm.popup(self, m, e.x, e.y)
+   end
+
+   private on_tabs_mpress(e)
+      local t
+      t := tabs.which_tab(e) | fail
+      tabs.which_one.insert_link(mk_file_URL(t.cwd), e)
    end
 
    private on_tabs_changed(e)
@@ -355,6 +359,7 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
          set_draggable_tabs(&yes).
          set_accepts_focus(&no).
          connect(on_tabs_rpress, Event.MOUSE_RIGHT_PRESS).
+         connect(on_tabs_mpress, Event.MOUSE_MIDDLE_PRESS).
          connect(on_tabs_changed, Event.SELECTION_CHANGED)
       self.add(tabs)
       self.connect(self.on_quit, Event.WINDOW_CLOSE_BUTTON)
@@ -550,7 +555,6 @@ class Columns(LineBasedScrollArea)
       set_over()
       # No need to synch_pointer since we call this method out of the
       # vt's keyboard handler.
-      view.set_pointer()
       quieten := &yes
    end
 
@@ -569,13 +573,10 @@ class Columns(LineBasedScrollArea)
          if /e.release then
             f := &yes
       } else f := \e.ctrl
-      if /f & (k := get_element_under_pointer(e)) then {
+      if /f & (k := get_element_under_pointer(e)) then
          set_over(k)
-         view.set_pointer("hand1")
-      } else {
+      else
          set_over()
-         view.set_pointer()
-      }
    end
 
    private handle_exit(e)
@@ -583,11 +584,18 @@ class Columns(LineBasedScrollArea)
       set_over()
    end
 
+   private handle_interrupted(e)
+      set_highlight()
+      set_over()
+      held := &null
+   end
+
    public set_over(n)
       if n ~=== over then {
          invalidate_line(get_row_for_index(\over))
          over := n
          invalidate_line(get_row_for_index(\over))
+         view.set_pointer(if /over then &null else "hand1")
          fire("over-changed")
       }
       return self
@@ -833,15 +841,17 @@ class Columns(LineBasedScrollArea)
       gutter := scale(8)
       item_paint := TextItemPaint()
       item_border := NullBorder().set_x_align(Align.L)
-      view.connect(handle_lpress, Event.MOUSE_LEFT_PRESS)
-      view.connect(handle_mpress, Event.MOUSE_MIDDLE_PRESS)
-      view.connect(handle_lmdrag, Event.MOUSE_LEFT_DRAG)
-      view.connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-      view.connect(handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
-      view.connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
-      view.connect(handle_in_chain, Event.IN_POINT_CHAIN)
-      every view.connect(handle_exit, Event.MOUSE_EXIT | Event.INTERRUPTED)
-      view.connect(handle_move, Event.MOUSE_MOVEMENT)
+      view.
+         connect(handle_lpress, Event.MOUSE_LEFT_PRESS).
+         connect(handle_mpress, Event.MOUSE_MIDDLE_PRESS).
+         connect(handle_lmdrag, Event.MOUSE_LEFT_DRAG).
+         connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE).
+         connect(handle_lmdrag, Event.MOUSE_MIDDLE_DRAG).
+         connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE).
+         connect(handle_in_chain, Event.IN_POINT_CHAIN).
+         connect(handle_exit, Event.MOUSE_EXIT).
+         connect(handle_move, Event.MOUSE_MOVEMENT)
+      connect(handle_interrupted, Event.INTERRUPTED)
       connect(handle_key, Event.KEY_PRESS)
       return
    end
@@ -851,7 +861,29 @@ procedure mk_file_URL(s)
    return URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/'))
 end
 
-class DirListEx(DirList)
+class FilterEditList(EditList)
+   protected open_popup(ev)
+      local t
+      t := parent.parent
+      set_selection_only()
+      synch_set_selection_list(t.get_filter_list())
+      EditList.open_popup(ev)
+   end
+
+   public create_view()
+      return TextField().
+         set_border(EmptyBorder().set_l_inset(Gui.TEXT_INSET).set_r_inset(Gui.TEXT_INSET))
+   end
+end
+
+class FavouritesList(ButtonOnlyList)
+   public create_button()
+      local b
+      b := IconButton().set_paint(ImagePaint().set_cache("gui.FAVOURITES_24"))
+      theme_toolbar_button(b, "emblem-favorite")
+      return b
+   end
+
    private cursor_to_url()
       return mk_file_URL(popup.object_get_cursor())
    end
@@ -872,9 +904,21 @@ class DirListEx(DirList)
       close_popup()
    end
 
+   protected open_popup(ev)
+      local t
+      t := parent.parent
+      set_selection_list(t.get_favourites_directories())
+      object_set_selection(t.cwd) | set_selection()
+      ButtonOnlyList.open_popup(ev)
+   end
+
    public create_popup()
       local l
-      l := DirList.create_popup()
+      l := ItemPaintList().
+         set_item_paint(StringDirItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                            set_x_align(Align.L))
       l.view.
          connect(on_rpress, Event.MOUSE_RIGHT_PRESS).
          connect(on_mrelease, Event.MOUSE_MIDDLE_RELEASE)
@@ -1243,7 +1287,6 @@ class Terminal(TabItem, VtUI)
          "fav-dir" : {
             check_param(s, param) | fail
             push(added_favourites, FilePath(param).canonical().ucs())
-            refresh_favourite_dirs()
          }
          "max-list" : {
             if /param then {
@@ -1635,6 +1678,11 @@ class Terminal(TabItem, VtUI)
          "kp_left": Key.KP_LEFT
          "kp_right": Key.KP_RIGHT
          "kp_up": Key.KP_UP
+         "kp_home": Key.KP_HOME
+         "kp_prior": Key.KP_PRIOR
+         "kp_begin": Key.KP_BEGIN
+         "kp_end": Key.KP_END
+         "kp_next": Key.KP_NEXT
          "l1": Key.L1
          "l2": Key.L2
          "l3": Key.L3
@@ -1671,6 +1719,7 @@ class Terminal(TabItem, VtUI)
          "r15": Key.R15
          "right": Key.RIGHT
          "scroll_lock": Key.SCROLL_LOCK
+         "num_lock": Key.NUM_LOCK
          "select": Key.SELECT
          "up": Key.UP
          "cursor": Key.CURSOR
@@ -2137,10 +2186,12 @@ $endif
       d.show_modal(parent_dialog)
       s := \d.result | fail
       info_msg("Renamed OK")
+      # This just avoids a slight delay in refreshing the columns (see
+      # check_cwd_time).
       if cwd == FilePath(s).parent().ucs() then
          refresh_cwd()
-      else
-         check_cwd_change()
+      # Check for a changed cwd name in all tabs.
+      every (!parent.children).check_cwd_change()
    end
 
    private on_copy_cwd(e)
@@ -2214,9 +2265,6 @@ $endif
       m.add(TextMenuItem().
             set_label("Select all").
             connect(output.handle_select_all, Event.ACTION))
-      m.add(TextMenuItem().
-            set_label("Copy cwd").
-            connect(on_copy_cwd, Event.ACTION))
       m.add(MenuSeparator())
       m.add(TextMenuItem().
             set_label("Reorient").
@@ -2583,7 +2631,7 @@ $endif
          sort_cwd_list()
    end
 
-   private update_filter_list()
+   public get_filter_list()
       local e, l, ex
       ex := table(0)
       every e := !cwd_list do {
@@ -2594,14 +2642,13 @@ $endif
       l := [u"*"]
       every e := back(sort(ex, 2)) do
          put(l, u"*." || e[1])
-      filter.set_selection_only().synch_set_selection_list(l)
+      return l
    end
 
    private refresh_cwd()
       load_cwd_list()
       annotate_cwd_list()
       resort_cwd(&yes)
-      update_filter_list()
    end
 
    private update_title()
@@ -2614,7 +2661,7 @@ $endif
       if \cwd then {
          lh := columns.data[columns.get_cursor()].name
          insert(columns_pos_table, 
-                FilePath(cwd).canonical().str(), 
+                cwd,
                 FileDialogPos(lh, columns.get_area_y()))
       }
       cwd := s
@@ -2622,11 +2669,9 @@ $endif
       load_cwd_list()
       annotate_cwd_list()
       sort_cwd_list()
-      synch_favourites_list()
-      update_filter_list()
 
       if is_live() then {
-         if t := member(columns_pos_table, FilePath(cwd).canonical().str()) then {
+         if t := member(columns_pos_table, cwd) then {
             i := Positions{(!columns.data).name, \t.cursor_name}
             columns.set_area_y(t.area_y).set_area_x(0).set_cursor(i)
          } else
@@ -2649,19 +2694,6 @@ $endif
 
    public get_favourites_directories()
       return FileDialog.unique_ucs_list(added_favourites ||| ipl.pdco.List{FavouriteDirectoriesDialog.gen_directories_plus()})
-   end
-
-   public apply_favourite_dirs()
-      favourites_list.set_selection_list(get_favourites_directories())
-   end
-
-   public refresh_favourite_dirs()
-      apply_favourite_dirs()
-      synch_favourites_list()
-   end
-
-   private synch_favourites_list()
-      favourites_list.object_set_selection(cwd) | favourites_list.set_selection()
    end
 
    private on_trail(ev)
@@ -2712,7 +2744,6 @@ $endif
       if \opts["v"] then
          output.set_verbose(&yes)
 
-      favourites_list.set_size()
       sort_dirs_menu_item := CheckBoxMenuItem().
          set_label("Sort dirs").
          set_keep_open_on_shift(&yes).
@@ -2730,6 +2761,7 @@ $endif
          set_keep_open_on_shift(&yes).
          connect(on_filter_dirs_menu_item, Event.ACTION)
 
+      favourites_list.set_size().set_selection_list([])
       filter.set_selection_list([u"*"])
       history_list.set_size().set_selection_list([])
       input := []
@@ -2783,7 +2815,6 @@ $endif
          columns_pos_table := clone(other.columns_pos_table)
          filter.set_contents(other.filter.get_contents())
          added_favourites := clone(other.added_favourites)
-         apply_favourite_dirs()
          set_cwd(other.cwd)
       } else {
          columns.set_size(scale(DEFAULT_LIST_WIDTH), scale(DEFAULT_LIST_HEIGHT))
@@ -2804,7 +2835,6 @@ $endif
          }
          /start_dir := ucs(Files.getcwd()) | u"/"
          added_favourites := [start_dir]
-         apply_favourite_dirs()
          set_cwd(start_dir)
          # Apply global default tab options; should only fail on first time through.
          every e := !glob_cmds do
@@ -2857,7 +2887,7 @@ $endif
 
    private on_up_button(ev)
       local t
-      t := FilePath(cwd).canonical()
+      t := FilePath(cwd)
       if t.size() > 1 then
          goto_dir(t.parent().str())
    end
@@ -3155,7 +3185,7 @@ $endif
          set_toggles(&yes).
          set_paint(paint_45)
       paint_23 := TextPaint("Filter")
-      filter := EditList().
+      filter := FilterEditList().
          set_size(scale(150)).
          set_align(Align.L, Align.B).
          clear_constraints().
@@ -3200,7 +3230,7 @@ $endif
          set_toggles(&no).
          set_paint(paint_32)
       paint_37 := TextPaint("Favourite directories")
-      favourites_list := DirListEx().
+      favourites_list := FavouritesList().
          set_size(scale(37), scale(30)).
          clear_constraints().
          set_tooltip(paint_37).

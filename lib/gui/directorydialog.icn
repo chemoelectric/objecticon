@@ -6,6 +6,27 @@ import
    ipl.filegui,
    io
 
+package class DirEditList(EditList)
+   protected open_popup(ev)
+      set_selection_only()
+      synch_set_selection_list(parent_dialog.get_favourites_directories())
+      EditList.open_popup(ev)
+   end
+
+   public create_popup()
+      return ItemPaintList().
+         set_item_paint(StringDirItemPaint()).
+         set_item_border(EmptyBorder().
+                            set_insets(Gui.TEXT_INSET, Gui.TEXT_INSET, 0, 0).
+                            set_x_align(Align.L))
+   end
+
+   public create_view()
+      return EditListField().
+         set_directories_only(&yes)
+   end
+end
+
 #
 #
 # Directory dialog class.  This class provides a standard directory selection dialog.
@@ -54,7 +75,6 @@ class DirectoryDialog(Dialog)
       # Defaults and extra dirs.
       #
       /init_dirs := []
-      dir.set_selection_list(get_favourites_directories()).set_selection(1)
       root_node := TreeNode()
       every d := Files.get_roots() do
          root_node.add(TreeNode().set_label(ListEntryWithIcon(ucs(d), Files.lstat(d), Files.stat(d))).set_always_expandable(&yes))
@@ -70,7 +90,7 @@ class DirectoryDialog(Dialog)
       win.set_min_size(win.get_width(), win.get_height())
       # Do this here as we need the tree to be setup so that we
       # can scroll to the selected dir.
-      goto_dir(dir.get_contents())
+      goto_dir(gen_favourites_directories())
    end
 
    #
@@ -371,18 +391,15 @@ $endif
    end
 
    public get_favourites_directories()
-      local t
-      t := ipl.pdco.List{ FilePath(!init_dirs).canonical().str() |
-                          FavouriteDirectoriesDialog.gen_directories_plus() }
-      return FileDialog.unique_ucs_list(t)
+      return FileDialog.unique_ucs_list(ipl.pdco.List{ gen_favourites_directories() } )
+   end
+
+   public gen_favourites_directories()
+      suspend FilePath(!init_dirs).canonical().ucs() | FavouriteDirectoriesDialog.gen_directories_plus()
    end
 
    public on_favourite_dirs_menu_item(ev)
-      local d
-      d := FavouriteDirectoriesDialog()
-      d.show_modal(self)
-      \d.okay | fail
-      dir.set_selection_only().synch_set_selection_list(get_favourites_directories())
+      FavouriteDirectoriesDialog().show_modal(self)
    end
 
    private setup()

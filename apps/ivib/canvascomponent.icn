@@ -271,12 +271,25 @@ class CanvasComponent(CanvasObject)
       fail
    end
 
+   public static rescale_spec(s, f)
+      local pct, sgn, off
+      s ? {
+         if pct := tab(upto('%')) then {
+            move(1) 
+            sgn := tab(any('+\-')) | fail
+            off := round(integer(tab(0)) * f) | fail
+            return pct || "%" || sgn || off
+         } else
+            return round(integer(s) * f)
+      }
+   end
+
    public rescale(f)
       local c, k
-      self.x_spec := round(\self.x_spec * f)
-      self.y_spec := round(\self.y_spec * f)
-      self.w_spec := round(\self.w_spec * f)
-      self.h_spec := round(\self.h_spec * f)
+      self.x_spec := rescale_spec(\self.x_spec, f)
+      self.y_spec := rescale_spec(\self.y_spec, f)
+      self.w_spec := rescale_spec(\self.w_spec, f)
+      self.h_spec := rescale_spec(\self.h_spec, f)
       every k := "l_inset"|"r_inset"|"t_inset"|"b_inset" do {
          if c := self.get_constraint(k) then
             self.set_constraint(k, round(c * f))

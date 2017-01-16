@@ -1409,13 +1409,10 @@ class TextFlow(Component, HasLastHighlight)
       t := which_text_out(e)
       a := (\t).attr.title
       set_tooltip(a)
-      if /f & (u := \ (\t).attr.url) then {
+      if /f & (u := \ (\t).attr.url) then
          set_over(u)
-         set_pointer("hand1")
-      } else {
+      else
          set_over()
-         set_pointer()
-      }
    end
 
    private handle_lmdrag(e)
@@ -1434,15 +1431,24 @@ class TextFlow(Component, HasLastHighlight)
       set_over()
    end
 
+   private handle_interrupted(e)
+      set_highlight()
+      set_over()
+      held := &null
+   end
+
    private set_over(u)
       if u ~=== over then {
          invalidate_url(\over)
          over := u
          invalidate_url(\over)
-         if /over then
+         if /over then {
             browser.msg()
-         else
+            set_pointer()
+         } else {
             browser.msg(over.str())
+            set_pointer("hand1")
+         }
       }
       return self
    end
@@ -1514,7 +1520,8 @@ class TextFlow(Component, HasLastHighlight)
       connect(handle_mpress, Event.MOUSE_MIDDLE_PRESS)
       connect(handle_lpress, Event.MOUSE_LEFT_PRESS)
       connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-      every connect(handle_exit, Event.MOUSE_EXIT | Event.INTERRUPTED)
+      connect(handle_exit, Event.MOUSE_EXIT)
+      connect(handle_interrupted, Event.INTERRUPTED)
       connect(handle_rpress, Event.MOUSE_RIGHT_PRESS)
       connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
       return

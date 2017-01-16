@@ -2328,10 +2328,13 @@ class Vt(LineBasedScrollArea, MenuMode)
          invalidate_link(\over)
          over := u
          invalidate_link(\over)
-         if /over then
+         if /over then {
             ui.msg()
-         else
+            view.set_pointer("xterm")
+         } else {
             ui.msg(u.ucs())
+            view.set_pointer("hand1")
+         }
       }
    end
 
@@ -2572,7 +2575,6 @@ class Vt(LineBasedScrollArea, MenuMode)
       set_over()
       # No need to synch_pointer since we call this method out of the
       # keyboard handler.
-      view.set_pointer("xterm")
       quieten := &yes
       ui.quieten_cursor()
    end
@@ -2592,18 +2594,23 @@ class Vt(LineBasedScrollArea, MenuMode)
          if /ev.release then
             f := &yes
       } else f := \ev.ctrl
-      if /f & (seg := get_segment_for_pos(ev)) & \seg.attr.url then {
+      if /f & (seg := get_segment_for_pos(ev)) & \seg.attr.url then
          set_over(seg.attr.url)
-         view.set_pointer("hand1")
-      } else {
+      else
          set_over()
-         view.set_pointer("xterm")
-      }
    end
 
    private handle_exit(e)
       parent_dialog.get_held_count() = 0 | fail
       set_over()
+   end
+
+   private handle_interrupted(e)
+      set_highlight()
+      set_over()
+      held := &null
+      if view.is_held(Mouse.LEFT_PRESS) then
+         handle_lrelease()
    end
 
    #
@@ -2843,18 +2850,20 @@ class Vt(LineBasedScrollArea, MenuMode)
       buff := u""
       part_ch := got := ""
       set_accepts_focus(&yes)
-      view.connect(handle_in_chain, Event.IN_POINT_CHAIN)
-      view.connect(handle_move, Event.MOUSE_MOVEMENT)
-      view.connect(handle_mdrag, Event.MOUSE_MIDDLE_DRAG)
-      view.connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE)
-      every view.connect(handle_exit, Event.MOUSE_EXIT | Event.INTERRUPTED)
-      view.connect(handle_lpress, Event.MOUSE_LEFT_PRESS)
-      view.connect(handle_rpress, Event.MOUSE_RIGHT_PRESS)
-      view.connect(handle_mpress, Event.MOUSE_MIDDLE_PRESS)
-      view.connect(handle_ldrag, Event.MOUSE_LEFT_DRAG)
-      view.connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      view.
+         set_pointer("xterm").
+         connect(handle_in_chain, Event.IN_POINT_CHAIN).
+         connect(handle_move, Event.MOUSE_MOVEMENT).
+         connect(handle_mdrag, Event.MOUSE_MIDDLE_DRAG).
+         connect(handle_mrelease, Event.MOUSE_MIDDLE_RELEASE).
+         connect(handle_exit, Event.MOUSE_EXIT).
+         connect(handle_lpress, Event.MOUSE_LEFT_PRESS).
+         connect(handle_rpress, Event.MOUSE_RIGHT_PRESS).
+         connect(handle_mpress, Event.MOUSE_MIDDLE_PRESS).
+         connect(handle_ldrag, Event.MOUSE_LEFT_DRAG).
+         connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
       connect(handle_key, Event.KEY_PRESS)
-      view.set_pointer("xterm")
+      connect(handle_interrupted, Event.INTERRUPTED)
       input_handler_coex := create input_handler()
       history_size := DEFAULT_HISTORY_SIZE
       set_font(DEFAULT_FONT)

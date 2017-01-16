@@ -13,6 +13,9 @@ import gui
 # Extends Dialog to enable saving of some fields.
 #
 class CDialog(Dialog,SelectiveObjectCodec)
+   public get_held(e)
+   end
+
    private pre_decode()
       new()
    end

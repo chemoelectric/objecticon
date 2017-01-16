@@ -1325,6 +1325,11 @@ class Key()
       KP_LEFT,
       KP_RIGHT,
       KP_UP,
+      KP_HOME,
+      KP_PRIOR,
+      KP_BEGIN,
+      KP_END,
+      KP_NEXT,
       L1,
       L2,
       L3,
@@ -1376,6 +1381,7 @@ class Key()
       CONTROL_R,
       CAPS_LOCK,
       SHIFT_LOCK,
+      NUM_LOCK,
       META_L,
       META_R,
       ALT_L,
@@ -1419,6 +1425,10 @@ $ifdef _X_WINDOW_SYSTEM
       F18 :=                 65487
       F19 :=                 65488
       F20 :=                 65489
+      F21 :=                 65490
+      F22 :=                 65491
+      F23 :=                 65492
+      F24 :=                 65493
       FIND :=                65384
       HELP :=                65386
       HOME :=                65360
@@ -1427,6 +1437,11 @@ $ifdef _X_WINDOW_SYSTEM
       KP_LEFT :=             65430
       KP_RIGHT :=            65432
       KP_UP :=               65431
+      KP_HOME :=             65429
+      KP_PRIOR :=            65434
+      KP_BEGIN :=            65437
+      KP_END :=              65436
+      KP_NEXT :=             65435
       L1 :=                  65480  # clash with f11
       L2 :=                  65481  # clash with f12
       L3 :=                  65482
@@ -1480,6 +1495,7 @@ $ifdef _X_WINDOW_SYSTEM
       ALT_R :=               65514
       HYPER_L :=             65517
       HYPER_R :=             65518
+      NUM_LOCK :=            65407
 
 $elsifdef _MS_WIN32
       DOWN :=               40
@@ -1522,7 +1538,7 @@ $elsifdef _MS_WIN32
       UP :=                 38
       SHIFT_TAB :=          0
       COMPOSE :=            0
-      DO :=                 0
+      DO :=                 93
       FIND :=               0
       KP_DOWN :=            0
       KP_LEFT :=            0
@@ -1557,9 +1573,27 @@ $elsifdef _MS_WIN32
       R13 :=                0
       R14 :=                0
       R15 :=                0
-      SUPER_L :=            0
-      SUPER_R :=            0
-      MENU :=               0
+      HYPER_L :=            0
+      HYPER_R :=            0
+      KP_BEGIN :=           0
+      KP_END :=             0
+      KP_HOME :=            0
+      KP_NEXT :=            0
+      KP_PRIOR :=           0
+      META_L :=             0
+      META_R :=             0
+      SHIFT_LOCK :=         0
+      CAPS_LOCK :=          20
+      SHIFT_L :=            16
+      SHIFT_R :=            16
+      SUPER_L :=            91
+      SUPER_R :=            92
+      MENU :=               93
+      CONTROL_L :=          17
+      CONTROL_R :=          17
+      ALT_L :=              18
+      ALT_R :=              0
+      NUM_LOCK :=           144
 $elsifdef _PLAN9
       DOWN :=               63488
       END :=                61464
@@ -1639,6 +1673,24 @@ $elsifdef _PLAN9
       SUPER_L :=            0
       SUPER_R :=            0
       MENU :=               0
+      ALT_L :=              0
+      ALT_R :=              0
+      CAPS_LOCK :=          0
+      CONTROL_L :=          0
+      CONTROL_R :=          0
+      HYPER_L :=            0
+      HYPER_R :=            0
+      KP_BEGIN :=           0
+      KP_END :=             0
+      KP_HOME :=            0
+      KP_NEXT :=            0
+      KP_PRIOR :=           0
+      META_L :=             0
+      META_R :=             0
+      NUM_LOCK :=           0
+      SHIFT_L :=            0
+      SHIFT_LOCK :=         0
+      SHIFT_R :=            0
 $endif
 
       NAVIGATE := set(UP, DOWN, LEFT, RIGHT, PGUP, PGDN, HOME, END)

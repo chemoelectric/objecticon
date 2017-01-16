@@ -198,6 +198,7 @@ class Dialog(Component)
    # Set whether the dialog is blocked to mouse/keyboard events.
    #
    public set_is_blocked(s)
+      local c, e
       check_flag(s)
       if \s then {
          # Check were not doing something that might lock up the desktop.
@@ -206,8 +207,18 @@ class Dialog(Component)
          if get_menu_mode() then
             runerr("cannot block a dialog whilst in menu mode")
       }
-      if is_blocked_flag ~===:= s then
-         resynch_pointer()
+      if is_blocked_flag ~===:= s then {
+         e := if /s then Event.RESUMED else Event.INTERRUPTED
+         every c := Seq{traverse_postorder()} do
+            c.fire(e)
+         if \s then {
+            point_chain := point_chain_source := &null
+            clear(crossing)
+            clear(held)
+            exit_dnd()
+            change_pointer()
+         }
+      }
       return self
    end
 
@@ -561,9 +572,11 @@ class Dialog(Component)
 
    public dispose()
       \win | runerr("dispose() called on closed Dialog", self)
-      (\self.menu_mode).close_all()
-      if \curr_drag then
-         exit_dnd()
+      # If menu_mode is set, then we are the popup manager and a menu is active,
+      # so close all menus.
+      if \menu_mode then
+         exit_menu_mode()
+      exit_dnd()
       self.end_dialog()
       every (!child_dialogs).dispose()
       self.dispose_selections()
@@ -777,9 +790,6 @@ class Dialog(Component)
    private process_normal(e)
       local c, ec, old_n_held
 
-      if /self.win | /self.point_chain then
-         fail
-
       ec := e.code
 
       old_n_held := *held
@@ -793,8 +803,8 @@ class Dialog(Component)
       else if \e.meta & /e.release & type(ec) == ("string" | "ucs") then {
          if c := (!\popups | self).find_accel(ec) then {
             c.handle_accel(e)
-            # The handler may have called dispose()
-            if /win then
+            # The handler may have called dispose() or blocked the dialog.
+            if /point_chain then
                fail
          }
       }
@@ -803,9 +813,9 @@ class Dialog(Component)
       generate_events(e)
 
       #
-      # If a handler closed us, do no more.
+      # If a handler closed or blocked this dialog, do no more.
       #
-      if /win then
+      if /point_chain then
          fail
 
       #
@@ -1154,11 +1164,9 @@ class Dialog(Component)
       if popup_manager ~=== self then
          popup_manager.synch_pointer(e)
       else {
-         if /is_blocked_flag then {
-            every c := !\point_chain do {
-               if c.is_unshaded() & (ptr := c.get_pointer(e)) then
-                  break
-            }
+         every c := !\point_chain do {
+            if c.is_unshaded() & (ptr := c.get_pointer(e)) then
+               break
          }
          # ptr may now be null, in which case it defaults to POINTER
          change_pointer(ptr)
@@ -1170,13 +1178,16 @@ class Dialog(Component)
    # Exit dnd mode.
    #
    private exit_dnd(e)
+      \curr_drag | fail
       (\curr_drag_holder).drag_reset(e)
       curr_drag_holder := curr_drop := curr_drag := &null
-      generate_crossing_events(e)
-      if member(held, -1) then
-         change_pointer()
-      else
-         synch_pointer(e)
+      if \e then {
+         generate_crossing_events(e)
+         if member(held, -1) then
+            change_pointer()
+         else
+            synch_pointer(e)
+      }
    end
 
    #
@@ -1732,7 +1743,8 @@ $endif
 end
 
 #
-# This class is implemented by all
+# This class is implemented by all components which popup a menu or
+# similar object.
 #
 abstract class MenuMode()
    # Succeed if the given `WinEvent` `e` should cause this menu to

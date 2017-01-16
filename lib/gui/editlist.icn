@@ -43,7 +43,7 @@ class EditList(SelectionDropDown)
    #
    # Set the contents of the text to the given string; the
    # selection is set to any matching item in the list, or
-   # &null if there is no match.
+   # left unchanged if there is no match.
    #
    public set_contents(x)
       self.view.set_contents(x)

@@ -276,6 +276,11 @@ class Slider(Component, HasOrientation)
       end_handle(e)
    end
 
+   public handle_interrupted()
+      if slider_area.is_held(Mouse.LEFT_PRESS) then
+         handle_lrelease()
+   end
+
    public handle_key_home(e)
       start_handle(e)
       move_value(self.lo)
@@ -563,19 +568,20 @@ class Slider(Component, HasOrientation)
    public new()
       Component.new()
       repeat_ticker := Dispatcher.new_task{repeat_tick()}
-      self.slider_area := SliderArea()
-      self.accepts_focus_flag := &yes
-      self.increment_size := 1
-      self.wheel_factor := 1
-      self.set_border(NullBorder())
-      add(self.slider_area)
-      self.slider_area.
-         connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS).
-         connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG).
-         connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE)
-      connect(self.handle_wheel_up, Event.MOUSE_WHEEL_UP)
-      connect(self.handle_wheel_down, Event.MOUSE_WHEEL_DOWN)
-      connect(self.handle_key, Event.KEY_PRESS)
+      slider_area := SliderArea()
+      accepts_focus_flag := &yes
+      increment_size := 1
+      wheel_factor := 1
+      set_border(NullBorder())
+      add(slider_area)
+      slider_area.
+         connect(handle_lpress, Event.MOUSE_LEFT_PRESS).
+         connect(handle_ldrag, Event.MOUSE_LEFT_DRAG).
+         connect(handle_lrelease, Event.MOUSE_LEFT_RELEASE)
+      connect(handle_wheel_up, Event.MOUSE_WHEEL_UP)
+      connect(handle_wheel_down, Event.MOUSE_WHEEL_DOWN)
+      connect(handle_key, Event.KEY_PRESS)
+      connect(handle_interrupted, Event.INTERRUPTED)
       return
    end
 end
