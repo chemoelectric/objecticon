@@ -172,15 +172,15 @@ class FileDialog(Dialog)
    # and duplicates.  Duplicate and trailing slashes are also cleaned
    # up (through use of `FilePath`).
    #
-   public static unique_ucs_list(l)
-      local res, seen, e, k
+   public static unique_ucs_list(e)
+      local res, seen, f, k
       res := []
       seen := set()
-      every e := FilePath(ucs(!l)) do {
-         k := e.standard_case().str()
+      every f := FilePath(ucs(|@e)) do {
+         k := f.standard_case().str()
          member(seen, k) | {
             insert(seen, k)
-            put(res, e.ucs())
+            put(res, f.ucs())
          }
       }
       return res
@@ -313,7 +313,7 @@ class FileDialog(Dialog)
    end
 
    #
-   # Set the initial directory.  It should be in canonical form.
+   # Set the initial directory.
    #
    public set_directory(s)
       self.init_dirs := [s]
@@ -322,7 +322,7 @@ class FileDialog(Dialog)
 
    #
    # Set the initial directories as a list; the first is the one
-   # initially shown.  Each entry should be in canonical form.
+   # initially shown.
    #
    public set_directories(l)
       self.init_dirs := l
@@ -538,7 +538,7 @@ class FileDialog(Dialog)
    end
 
    public get_favourites_directories()
-      return unique_ucs_list(ipl.pdco.List{ gen_favourites_directories() } )
+      return unique_ucs_list{ gen_favourites_directories() }
    end
 
    public gen_favourites_directories()

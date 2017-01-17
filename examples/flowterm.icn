@@ -2693,7 +2693,7 @@ $endif
    end
 
    public get_favourites_directories()
-      return FileDialog.unique_ucs_list(added_favourites ||| ipl.pdco.List{FavouriteDirectoriesDialog.gen_directories_plus()})
+      return FileDialog.unique_ucs_list{ !added_favourites | FavouriteDirectoriesDialog.gen_directories_plus() }
    end
 
    private on_trail(ev)
