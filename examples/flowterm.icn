@@ -2329,8 +2329,8 @@ $endif
             connect(create copy_url(url), Event.ACTION))
       if r := get_runners(url) then
          m.add(TextMenuItem().
-            set_label("Insert command").
-            connect(create send_tty(r.get_command()), Event.ACTION))
+            set_label("Copy command").
+            connect(create copy_text(r.get_command()), Event.ACTION))
       if url.scheme == u"file" then {
          if url.is_local_file() & \udp then {
             if Files.is_directory(udp) then {
