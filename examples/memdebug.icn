@@ -513,8 +513,8 @@ procedure cleanup()
 end
 
 procedure usage(opts)
-   ewrite("Usage: memdebug [OPTIONS] program [program options/arguments]")
-   ewrite("Examine program memory")
+   write("Usage: memdebug [OPTIONS] program [program options/arguments]")
+   write("Examine program memory")
    options_help(opts)
    exit(0)
 end

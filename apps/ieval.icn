@@ -49,8 +49,8 @@ procedure compile(prog, tf, links)
 end
 
 procedure usage(opts)
-   ewrite("Usage: ieval [OPTIONS] [INPUT-FILES...]")
-   ewrite("Interactively evaluate expressions")
+   write("Usage: ieval [OPTIONS] [INPUT-FILES...]")
+   write("Interactively evaluate expressions")
    options_help(opts)
    exit(0)
 end

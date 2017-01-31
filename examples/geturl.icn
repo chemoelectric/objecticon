@@ -107,10 +107,10 @@ class HttpRequestHelperImpl(HttpRequestHelper)
 end
 
 procedure usage(opts)
-   ewrite("Usage: geturl [OPTIONS] [URL]...")
-   ewrite("Retrieve URL(s)")
+   write("Usage: geturl [OPTIONS] [URL]...")
+   write("Retrieve URL(s)")
    options_help(opts)
-   ewrite("URL may contain range expansions eg {1-2+8-11}")
+   write("URL may contain range expansions eg {1-2+8-11}")
    exit(0)
 end
 
