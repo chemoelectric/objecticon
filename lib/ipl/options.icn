@@ -161,24 +161,24 @@ procedure help_line(ns, h)
    if /h then {
       repeat {
          if i := backto(' ', ns, 1, cols - 5) then {
-            ewrite(ns[1:i])
+            write(ns[1:i])
             ns := ns[i:0]
          } else {
-            ewrite(ns)
+            write(ns)
             break
          }
       }
    } else {
       if *ns > 18 then
-         ewrites(ns, "\n", repl(" ", 20))
+         writes(ns, "\n", repl(" ", 20))
       else
-         ewrites(left(ns, 20))
+         writes(left(ns, 20))
       repeat {
          if i := backto(' ', h, 1, cols - 25) then {
-            ewrites(h[1:i], "\n", repl(" ", 20))
+            writes(h[1:i], "\n", repl(" ", 20))
             h := h[i:0]
          } else {
-            ewrite(h)
+            write(h)
             break
          }
       }
@@ -229,7 +229,7 @@ procedure options(arg, opts, usage, errproc)
       else if x == ("-help" | "--help") & not member(opttable, "help") then {
          /usage := "Usage: " || FilePath(&progname).get(-1) || " [OPTIONS...]"
          if usage := text(usage) then {
-            ewrite(usage)
+            write(usage)
             options_help(opts)
             exit(0)
          } else {

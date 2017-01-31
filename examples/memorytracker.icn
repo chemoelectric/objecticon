@@ -46,8 +46,8 @@ procedure print_stats(prog)
 end
 
 procedure usage(opts)
-   ewrite("Usage: memorytracker [OPTIONS] program [program options/arguments]")
-   ewrite("Show program allocations")
+   write("Usage: memorytracker [OPTIONS] program [program options/arguments]")
+   write("Show program allocations")
    options_help(opts)
    exit(0)
 end

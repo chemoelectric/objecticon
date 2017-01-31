@@ -2329,8 +2329,8 @@ $endif
             connect(create copy_url(url), Event.ACTION))
       if r := get_runners(url) then
          m.add(TextMenuItem().
-            set_label("Insert command").
-            connect(create send_tty(r.get_command()), Event.ACTION))
+            set_label("Copy command").
+            connect(create copy_text(r.get_command()), Event.ACTION))
       if url.scheme == u"file" then {
          if url.is_local_file() & \udp then {
             if Files.is_directory(udp) then {
@@ -2693,7 +2693,7 @@ $endif
    end
 
    public get_favourites_directories()
-      return FileDialog.unique_ucs_list(added_favourites ||| ipl.pdco.List{FavouriteDirectoriesDialog.gen_directories_plus()})
+      return FileDialog.unique_ucs_list{ !added_favourites | FavouriteDirectoriesDialog.gen_directories_plus() }
    end
 
    private on_trail(ev)
@@ -3333,11 +3333,11 @@ end
 
 procedure usage(opts)
    local u
-   ewrite("Usage: flowterm [OPTIONS] [ALL TAB OPTS] [DIRS/PER TAB OPTS]")
+   write("Usage: flowterm [OPTIONS] [ALL TAB OPTS] [DIRS/PER TAB OPTS]")
    options_help(opts)
-   ewrite()
+   write()
    help_line("Tab options/commands begin with a ':', as follows.")
-   ewrite()
+   write()
    help_line(":max-list=FLAG", "Toggle or set whether the file list is maximized.")
    help_line(":max-term=FLAG", "Toggle or set whether the terminal is maximized.")
    help_line(":list-focus=FLAG", "Toggle or set whether the file list accepts keyboard focus.")
@@ -3377,9 +3377,9 @@ procedure usage(opts)
    help_line(":focus-filter", "Give the filter field the keyboard focus.")
    help_line(":send-tty=STRING", "Send a string directly to the pseudo-terminal.")
    help_line(":fav-dir=DIR", "Add a directory to the favourites list.")
-   ewrite()
+   write()
    help_line("The following commands only apply to the currently active tab (not new tabs).")
-   ewrite()
+   write()
    help_line(":start-log=DEST", "Start logging to file DEST.")
    help_line(":end-log", "End logging.")
    help_line(":font-size=REAL", "Set the font size.  If the parameter starts with + or -, the value is relative to the present size.")
@@ -3414,11 +3414,11 @@ procedure usage(opts)
    help_line(":send-vt=STRING", "Send a string directly to the terminal.")
 
    u := URL("http://objecticon.sourceforge.net/FlowTerm.html")
-   ewrites("\nFor more details, visit ")
+   writes("\nFor more details, visit ")
    if Files.is_flowterm_tty(FileStream.stderr) then
-      ewrite(Files.begin_link(u), u.str(), Files.end_link())
+      write(Files.begin_link(u), u.str(), Files.end_link())
    else
-      ewrite(u.str())
+      write(u.str())
    exit(0)
 end
 
