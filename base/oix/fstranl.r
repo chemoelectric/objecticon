@@ -170,8 +170,6 @@ function find(s1,s2,i,j)
        * when the remaining portion s2[i:j] is too short to contain s1.
        */
       if (is:string(s2)) {
-          char first, ch;
-
           if (!cnv:string(s1,s1))
               runerr(103,s1);
 
@@ -183,6 +181,8 @@ function find(s1,s2,i,j)
                   cnv_i++;
               }
           } else {
+              char first, ch;
+
               first = *StrLoc(s1);
               term = cnv_j - s1_len;
               p = StrLoc(s2) + cnv_i - 1;
@@ -197,9 +197,6 @@ function find(s1,s2,i,j)
               }
           }
       } else {
-          int first, ch;
-          tended char *rest;
-
           if (!cnv:ucs(s1,s1))
               runerr(128,s1);
 
@@ -211,6 +208,8 @@ function find(s1,s2,i,j)
                   cnv_i++;
               }
           } else {
+              int first, ch;
+              tended char *rest;
 
               /* Get first char of s1 in "first", and leave the remainder
                * of s1 after that char in "rest".

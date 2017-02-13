@@ -3645,9 +3645,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private setup_tabbing()
       local c
       every c := Seq{(!self.form_tab_children).traverse_tab_order()} do {
-         # Note that we the c may be hidden (since the browser tab may
-         # be not be the current one), so the test is not the same as
-         # say in find_focus().
+         # Note that c may be hidden (since the browser tab may be not
+         # be the current one), so the test is not the same as say in
+         # find_focus().
          if c.accepts_focus() & c.is_unshaded() then
             c.connect(focus_scroll, Event.GOT_FOCUS)
       }
