@@ -1283,6 +1283,17 @@ char *ucs_utf8_ptr(struct b_ucs *b, word pos)
     return get_ucs_off(b, pos);
 }
 
+/*
+ * Return true iff the first n codepoints of the two utf8 strings are
+ * equal.
+ */
+int utf8_eq(char *s1, char *s2, word n)
+{
+    while (n > 0 && utf8_iter(&s1) == utf8_iter(&s2))
+        --n;
+    return n == 0;
+}
+
 struct b_cset *rangeset_to_block(struct rangeset *rs)
 {
     struct b_cset *blk;
