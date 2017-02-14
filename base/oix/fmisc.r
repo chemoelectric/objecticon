@@ -1294,6 +1294,9 @@ int utf8_eq(char *s1, char *s2, word n)
     return n == 0;
 }
 
+/*
+ * Convert a rangeset to a newly allocated b_cset block.
+ */
 struct b_cset *rangeset_to_block(struct rangeset *rs)
 {
     struct b_cset *blk;
@@ -1428,6 +1431,10 @@ struct b_ucs *cset_to_ucs_block(struct b_cset *b0, word pos, word len)
     return make_ucs_block(&utf8, len);
 }
 
+/*
+ * Convert part of a cset block to a newly allocated string, storing
+ * the result in res.
+ */
 void cset_to_string(struct b_cset *b, word pos, word len, dptr res)
 {
     int i;
@@ -1474,7 +1481,6 @@ function uchar(i)
       return ucs(make_one_char_ucs_block(i));
    }
 end
-
 
 function lang_Text_utf8_seq(i)
 
@@ -1604,7 +1610,6 @@ function lang_Text_get_ord_range(c)
        fail;
    }
 end
-
 
 function lang_Text_slice(c, i, j)
    if !cnv:cset(c) then
