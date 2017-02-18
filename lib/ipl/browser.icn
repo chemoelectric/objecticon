@@ -3175,15 +3175,19 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    end
 
    private page_fully_loaded()
-      local xp, yp, f
+      local xp, yp, f, k
       reset_all_layouts()
       layout()
       invalidate()
+      k := page_resp.req.kind
       # Goto named anchor and maybe set focus unless user has started to scroll page
       if get_area_y() = get_area_x() = 0 then {
-         if yp := \curr_history_entry.area_y | (lookup_named_anchor(page_url.get_fragment()) - view.y) then {
+         # The test for Worker.NORMAL ensures that when we click on a
+         # link to a page from within the page itself we reload and go
+         # back to the top of the page.
+         if yp := (k ~= Worker.NORMAL & \curr_history_entry.area_y) | (lookup_named_anchor(page_url.get_fragment()) - view.y) then {
             set_area_y(yp)
-            if xp := \curr_history_entry.area_x then
+            if xp := (k ~= Worker.NORMAL & \curr_history_entry.area_x) then
                set_area_x(xp)
          }
          # If the user has placed the focus in a component in the new
@@ -3194,7 +3198,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          # focus methods fail and no change to the focus is made.
          if view === (f := parent_dialog.get_focus()).gen_parents() then
             focus_scroll(, f)
-         else if page_resp.req.kind = Worker.NAVIGATE then
+         else if k = Worker.NAVIGATE then
             parent_dialog.set_focus(get_nth_focusable(\curr_history_entry.focus_index))
          else {
             if f := (!forms).get_autofocus() then
@@ -3670,9 +3674,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private setup_tabbing()
       local c
       every c := Seq{(!self.form_tab_children).traverse_tab_order()} do {
-         # Note that we the c may be hidden (since the browser tab may
-         # be not be the current one), so the test is not the same as
-         # say in find_focus().
+         # Note that c may be hidden (since the browser tab may be not
+         # be the current one), so the test is not the same as say in
+         # find_focus().
          if c.accepts_focus() & c.is_unshaded() then
             c.connect(focus_scroll, Event.GOT_FOCUS)
       }

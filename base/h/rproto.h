@@ -475,6 +475,7 @@ int c_is(dptr x, dptr cname, struct inline_global_cache *ic);
 void why(char *s);
 void whyf(char *fmt, ...);
 int class_is(struct b_class *class1, struct b_class *class2);
+int utf8_eq(char *s1, char *s2, word n);
 struct b_cset *rangeset_to_block(struct rangeset *rs);
 struct b_ucs *make_ucs_block(dptr utf8, word length);
 struct b_ucs *make_one_char_ucs_block(int i);

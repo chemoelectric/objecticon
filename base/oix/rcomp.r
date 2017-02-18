@@ -177,7 +177,6 @@ int equiv(dptr dp1, dptr dp2)
    {
    int result;
    word i;
-   char *s1, *s2;
    double rres1, rres2;
 
    result = 0;
@@ -193,19 +192,9 @@ int equiv(dptr dp1, dptr dp2)
        *  If both are strings of equal length, compare their characters.
        */
 
-      if ((i = StrLen(*dp1)) == StrLen(*dp2)) {
+      if ((i = StrLen(*dp1)) == StrLen(*dp2))
+         result = memcmp(StrLoc(*dp1), StrLoc(*dp2), i) == 0;
 
-
-	 s1 = StrLoc(*dp1);
-	 s2 = StrLoc(*dp2);
-	 result = 1;
-	 while (i--)
-	   if (*s1++ != *s2++) {
-	      result = 0;
-	      break;
-	      }
-
-	 }
       }
    else if (dp1->dword == dp2->dword)
       switch (Type(*dp1)) {
