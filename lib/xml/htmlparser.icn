@@ -518,7 +518,7 @@ class HtmlParser()
    #
    # Parse an entity character, eg "&#xff;", returning the integer char number.
    #
-   private parse_entity()
+   private static parse_entity()
       local i
       =u"&"
       i := (if any('#') then {
