@@ -44,42 +44,47 @@ procedure do_one(a)
    
    url := URL(a) | stop("Invalid url:" || a)
 
-   sb := RamStream()
-   hr := HttpRequest().set_output_stream(sb)
-   if \opts["a"] then {
-      opts["a"] ? {
-         u := tab(upto(':')) | stop("Bad -a option")
-         move(1)
-         p := tab(0)
+   if url.scheme == "file" then {
+      src := Files.file_to_string(url.path) | stop("Couldn't read file: ", &why)
+   } else {
+      sb := RamStream()
+      hr := HttpRequest().set_output_stream(sb)
+      if \opts["a"] then {
+         opts["a"] ? {
+            u := tab(upto(':')) | stop("Bad -a option")
+            move(1)
+            p := tab(0)
+         }
+         hr.set_username(u)
+         hr.set_password(p)
       }
-      hr.set_username(u)
-      hr.set_password(p)
+
+      hr.set_referer(\opts["e"])
+      hr.set_url(url)
+      res := hc.retrieve(hr) | stop("Couldn't get: ", &why)
+
+      src := sb.done()
+      url := res.url
    }
-
-   hr.set_referer(\opts["e"])
-   hr.set_url(url)
-   res := hc.retrieve(hr) | stop("Couldn't get: reason ", &why)
-
-   src := sb.done()
 
    # Optionally save page source
    if \opts["tee"] then
       Files.string_to_file(opts["tee"], src) | stop("Couldn't dump file to ", opts["tee"])
 
    if \opts["utf8"] then
-      src := ucs(src) | stop("Couldn't convert utf8: ", &why)
+      src := ucs(src) | stop("Couldn't convert utf8")
 
    parser := HtmlParser()
    doc := parser.parse(src) | stop("couldnt parse page")
    if \opts["i"] then
-      do_search(res.url, src, doc, "IMG", "SRC", "")
+      do_search(url, src, doc, "IMG", "SRC", "")
    else if \opts["b"] then {
-      do_search(res.url, src, doc, "IMG", "SRC", "IMG:")
-      do_search(res.url, src, doc, "A", "HREF", "A:")
-      do_search(res.url, src, doc, "AREA", "HREF", "A:")
+      do_search(url, src, doc, "IMG", "SRC", "IMG:")
+      do_search(url, src, doc, "A", "HREF", "A:")
+      do_search(url, src, doc, "AREA", "HREF", "A:")
    } else {
-      do_search(res.url, src, doc, "A", "HREF", "")
-      do_search(res.url, src, doc, "AREA", "HREF", "")
+      do_search(url, src, doc, "A", "HREF", "")
+      do_search(url, src, doc, "AREA", "HREF", "")
    }
 end
 
@@ -98,25 +103,29 @@ procedure do_search(url, src, doc, tag, attr, pfx)
       base := URL(n.get_attribute("HREF"))
    }
 
+   if \opts["utf8"] then {
+      tag := ucs(tag)
+      attr := ucs(attr)
+   }
+      
    if \opts["text"] then {
       map(src) ? {
          while tab(past("<" || map(tag) || " ")) do {
             if tab(past(map(attr) || "=\"")) then {
                if s := tab(upto("\"")) then {
                   s := remove_entities(s)
-                  if match("http://" | "https://", s) then
+                  if match("file://" | "http://" | "https://", s) then
                      print(pfx, URL(s))
                   else
                      print(pfx, base.get_relative(s))
                }
             }
          }
-
       }
    } else {
       every n := doc.get_root_element().search_tree(tag) do {
          if s := n.get_attribute(attr) then {
-            if match("http://" | "https://", s) then
+            if match("file://" | "http://" | "https://", map(s)) then
                print(pfx, URL(s))
             else
                print(pfx, base.get_relative(s))
@@ -125,35 +134,41 @@ procedure do_search(url, src, doc, tag, attr, pfx)
    }
 end
 
-procedure remove_entities(s)
-   local res, i
+procedure parse_entity()
+   local i
+   =u"&"
+   i := (if any('#') then {
+      move(1)
+      if any('x') then {
+         move(1)
+         integer("16r" || tab(many('0-9a-fA-F')))
+      } else
+         integer(tab(many(&digits)))
+   } else
+   member(HtmlParser.ENTITIES, string(tab(many(&ucase ++ &lcase))))) | fail
+   =u";" | fail
+   return i
+end
 
+#
+# Remove the entity characters from a string.
+#
+procedure remove_entities(s)
+   local res, i, j
    res := ""
-   s ? {
-      repeat {
-         res ||:= tab(upto('&') | 0)
-         if pos(0) then
-            break
-         ="&"
-         if ="#" then {
-            if i := (256 > integer(tab(many(&digits)))) then {
-               if \opts["utf8"] then
-                  res ||:= uchar(i)
-               else
-                  res ||:= char(i)
-               =";"
-            } else
-               res ||:= "&#"
-         } else {
-            if i := \HtmlParser.ENTITIES[string(tab(many(&ucase ++ &lcase)))] then {
-               if \opts["utf8"] then
-                  res ||:= uchar(i)
-               else
-                  res ||:= char(i)
-               =";"
-            } else
-               res ||:= "&"
-         }
+   s ? repeat {
+      res ||:= tab(upto('&') | 0)
+      if pos(0) then
+         break
+      i := &pos
+      res ||:= if j := parse_entity() then {
+         if \opts["utf8"] then
+            uchar(j | 63)
+         else
+            char(j | 63)
+      } else {
+         &pos := i
+         move(1)
       }
    }
    return res
