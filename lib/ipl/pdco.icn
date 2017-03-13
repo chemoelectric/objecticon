@@ -726,6 +726,26 @@ procedure Table(e)
    return t
 end
 
+#
+# Build a string from the results of the co-expression `e`.
+#
+procedure String(e)
+   local s
+   s := ""
+   while s ||:= @e
+   return s
+end
+
+#
+# Build a ucs string from the results of the co-expression `e`.
+#
+procedure Ucs(e)
+   local s
+   s := u""
+   while s ||:= @e
+   return s
+end
+
 # lower trimming
 procedure LowerTrim(e)	
    local i
