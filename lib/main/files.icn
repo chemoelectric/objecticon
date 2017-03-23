@@ -171,7 +171,7 @@ $endif
 
    #
    # A useful function to help sort the result of the various list
-   # functions.  Sorts by case-insensitive name.
+   # functions.  Sorts by ascending case-insensitive name.
    #
    public static name_cmp(d1, d2)
       return Text.consistent_compare(d1.name, d2.name)
@@ -179,20 +179,31 @@ $endif
 
    #
    # A useful function to help sort the result of the various list
-   # functions.  Sorts by size in bytes.
+   # functions.  Sorts by size in bytes, biggest first, with name
+   # resolving ties.
    #
    public static size_cmp(d1, d2)
-      return d1.lstat.size - d2.lstat.size
+      local t
+      t := d2.lstat.size - d1.lstat.size
+      if t = 0 then
+         t := name_cmp(d1, d2)
+      return t
    end
 
    #
    # A useful function to help sort the result of the various list
-   # functions.  Sorts by modification time.
+   # functions.  Sorts by modification time, newest first, with name
+   # resolving ties.
    #
    public static date_cmp(d1, d2)
       local t
-      t := d1.lstat.mtime - d2.lstat.mtime
-      return if t = 0 then d1.lstat.mtime_ns - d2.lstat.mtime_ns else t
+      t := d2.lstat.mtime - d1.lstat.mtime
+      if t = 0 then {
+         t := d2.lstat.mtime_ns - d1.lstat.mtime_ns
+         if t = 0 then
+            t := name_cmp(d1, d2)
+      }
+      return t
    end
 
    #

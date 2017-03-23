@@ -132,6 +132,15 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
+   # Return an icon list of the elements in the range i:j
+   #
+   public slice(i, j)
+      local s
+      s := cvslice(i, j, size()) | fail
+      return ipl.pdco.List{at(s.lo to s.hi - 1)}
+   end
+
+   #
    # Succeed iff the size is zero.
    #
    public empty()
@@ -273,6 +282,10 @@ class BuiltinList(List)
 
    public back()
       suspend default.back(l)
+   end
+
+   public slice(i, j)
+      return l[i:j]
    end
 
    public size()
@@ -429,6 +442,12 @@ class LinkedList(List)
       suspend default.back(l).val
    end
 
+   public slice(i, j)
+      local s
+      s := cvslice(i, j, size()) | fail
+      return ipl.pdco.List{from(s.lo).gen() \ (s.hi - s.lo)}
+   end
+
    public size()
       local i, n
       i := 0
@@ -566,6 +585,10 @@ class UnmodifiableBuiltinList(List)
 
    public back()
       suspend .default.back(l)
+   end
+
+   public slice(i, j)
+      return l[i:j]
    end
 
    public size()
