@@ -107,7 +107,13 @@ $endif
    # functions.  Sorts by ascending case-insensitive name.
    #
    public static name_cmp(d1, d2)
-      return Text.consistent_compare(d1.name, d2.name)
+      local t
+      t := Text.consistent_compare(d1.name, d2.name)
+      # Ensure a stable sort for file systems which allow duplicate
+      # names.
+      if t = 0 then
+         t := serial(d1) - serial(d2)
+      return t
    end
 
    #
