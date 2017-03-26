@@ -2100,7 +2100,7 @@ wclickmatch(Window *w, int cl, int cr, int dir, uint *q)
 uint
 wbacknl(Window *w, uint p, uint n)
 {
-	int i, j;
+	int i;
 
 	/* look for start of this line if n==0 */
 	if(n==0 && p>0 && w->r[p-1]!='\n')
@@ -2110,8 +2110,7 @@ wbacknl(Window *w, uint p, uint n)
 		--p;	/* it's at a newline now; back over it */
 		if(p == 0)
 			break;
-		/* at 128 chars, call it a line anyway */
-		for(j=128; --j>0 && p>0; p--)
+		for(; p>0; p--)
 			if(w->r[p-1]=='\n')
 				break;
 	}
