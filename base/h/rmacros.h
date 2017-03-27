@@ -633,12 +633,6 @@
 #define general_access (curpstate->GeneralAccess)
 #define general_invokef (curpstate->GeneralInvokef)
 
-#if MSWIN32
-#ifndef S_ISDIR
-#define S_ISDIR(mod) ((mod) & _S_IFDIR)
-#endif					/* no S_ISDIR */
-#endif					/* MSWIN32 */
-
 #define GetWord (*ipc++)
 #define GetAddr ((word *)GetWord)
 #if RealInDesc
