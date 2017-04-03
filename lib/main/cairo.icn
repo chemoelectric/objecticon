@@ -1,6 +1,6 @@
 package cairo
 
-import graphics(Window,Point,Vector,Pixels,Rectangle), 
+import graphics(Window,Point,Vector,Pixels,Rectangle,Size), 
    lang, util, io, ipl.pdco(List)
 
 record DeviceOffset(x_offset, y_offset)
@@ -1033,6 +1033,18 @@ final class Context(NoCopy)
    #
    public native text_path(s)
 
+   # Return the logical extent of the given text were it to be
+   # rendered, as a `Size` record, in real user space units.
+   #
+   public text_size(s)
+      return Size!text_size_impl(s)
+   end
+
+   # Return the Pango baseline value for this context, as a real
+   # number of user space units.
+   #
+   public native get_baseline()
+
    # Adds a line segment to the path from the current point to the
    # beginning of the current sub-path, (the most recent point passed
    # to `move_to()`), and closes this sub-path. After this call
@@ -1394,6 +1406,7 @@ final class Context(NoCopy)
    private native get_target_impl()
    private native set_matrix_impl(xx, yx, xy, yy, x0, y0)
    private native get_matrix_impl()
+   private native text_size_impl(s)
    private static native new_impl(sur)
 
    # Create a new instance using a `Surface` based on `v`, which may
