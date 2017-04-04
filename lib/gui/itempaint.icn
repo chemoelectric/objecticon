@@ -149,9 +149,19 @@ abstract class WithCloneItemPaint(ItemPaint)
    protected abstract make_clone(W)
 
    protected get_clone(W, ignore_clip)
-      (W === wt & (\ignore_clip | equals(ct, W.get_clip()))) | {
+      local cc, f
+      if W === wt then {
+         if /ignore_clip then {
+            cc := W.get_clip()
+            equals(ct, cc) | (f := &yes)
+         }
+      } else {
+         cc := W.get_clip()
+         f := &yes
+      }
+      if \f then {
          wt := W
-         ct := W.get_clip()
+         ct := cc
          (\cw).close()
          cw := make_clone(W)
       }
