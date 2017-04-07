@@ -793,6 +793,36 @@ function cairo_Context_text_path(self, s)
     }
 end
 
+function cairo_Context_text_size_impl(self, s)
+   if !cnv:ucs(s) then
+      runerr(128, s)
+    body {
+       tended struct descrip result;
+       PangoLayout *layout;
+       int width, height;
+       GetSelfCr();
+       layout = getpangolayout(self_cr);
+       /* This shouldn't be necessary, but seems to slightly affect the outcome */
+       pango_cairo_update_layout(self_cr, layout);
+       pango_layout_set_text(layout, StrLoc(UcsBlk(s).utf8), StrLen(UcsBlk(s).utf8));
+       pango_layout_get_size(layout, &width, &height);
+       doubles2list(&result, 2, pango_units_to_double(width), pango_units_to_double(height));
+       return result;
+    }
+end
+
+function cairo_Context_get_baseline(self)
+   body {
+      PangoLayout *layout;
+      GetSelfCr();
+      layout = getpangolayout(self_cr);
+      /* This shouldn't be necessary, but ensures consistency */
+      pango_cairo_update_layout(self_cr, layout);
+      pango_layout_set_text(layout, NULL, 0);
+      return C_double pango_units_to_double(pango_layout_get_baseline(layout));
+   }
+end
+
 function cairo_Context_set_line_width(self, w)
     if !cnv:C_double(w) then
        runerr(102, w)

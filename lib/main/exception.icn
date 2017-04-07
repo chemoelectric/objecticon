@@ -25,10 +25,6 @@ class ThrowHandlerState(State)
       throw_handler :=: th
    end
 
-   public finish()
-      throw_handler := th
-   end
-
    public new(i)
       self.i := i
       return

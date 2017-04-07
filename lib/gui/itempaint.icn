@@ -149,9 +149,19 @@ abstract class WithCloneItemPaint(ItemPaint)
    protected abstract make_clone(W)
 
    protected get_clone(W, ignore_clip)
-      (W === wt & (\ignore_clip | equals(ct, W.get_clip()))) | {
+      local cc, f
+      if W === wt then {
+         if /ignore_clip then {
+            cc := W.get_clip()
+            equals(ct, cc) | (f := &yes)
+         }
+      } else {
+         cc := W.get_clip()
+         f := &yes
+      }
+      if \f then {
          wt := W
-         ct := W.get_clip()
+         ct := cc
          (\cw).close()
          cw := make_clone(W)
       }
@@ -169,15 +179,15 @@ end
 #
 abstract class AttributedTextItemPaint(WithCloneItemPaint)
    public get_width(W, data)
-      return get_clone(W, 1).text_width(detab(data))
+      return get_clone(W, &yes).text_width(detab(data))
    end
 
    public get_constant_height(W)
-      return get_clone(W, 1).get_line_height()
+      return get_clone(W, &yes).get_line_height()
    end
 
    public get_size(W, data)
-      W := get_clone(W, 1)
+      W := get_clone(W, &yes)
       return Size(W.text_width(detab(data)), W.get_line_height())
    end
 

@@ -124,7 +124,6 @@
    #include <winsock2.h>
    #include <ws2tcpip.h>
    #include <windows.h>
-   #undef Type
    #undef MOD_SHIFT
    #include <sys/types.h>
    #include <sys/stat.h>
@@ -132,7 +131,7 @@
    #include <direct.h>
    #define LRESULT_CALLBACK LRESULT CALLBACK
    #define BOOL_CALLBACK BOOL CALLBACK
-   #define Type(d) (int)((d).dword & TypeMask)
+   #define S_ISDIR(mod) ((mod) & _S_IFDIR)
    #undef lst1
    #undef lst2
    #define F_OK 0
