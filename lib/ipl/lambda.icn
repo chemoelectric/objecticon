@@ -99,11 +99,6 @@ class LambdaState(State)
       _l :=: tl
    end
 
-   public finish()
-      _a := ta
-      _l := tl
-   end
-
    public new(i)
       self.i := i
       return
