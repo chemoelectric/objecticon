@@ -352,13 +352,17 @@ $endif
       every l := separate_lines(s) do l ? {
          if weight := integer(tab(upto(':'))) & 
             move(1) &
-            type := string(tab(upto(':'))) &
+            type := map(string(tab(upto(':')))) &
             move(1) &
             pattern := tab(0) then 
          {
             g.add(pattern, weight, type)
          }
       }
+   end
+
+   private static mime_type_param(mt)
+      return map(string(mt)) | runerr(103, mt)
    end
 
    #
@@ -372,14 +376,14 @@ $endif
    # Generate the generic icons defined for the given mime type.
    #
    public static gen_generic_icons(mt)
-      suspend .!member(GENERIC_ICONS, map(mt))
+      suspend .!member(GENERIC_ICONS, mime_type_param(mt))
    end
 
    #
    # Generate the icons defined for the given mime type.
    #
    public static gen_icons(mt)
-      suspend .!member(ICONS, map(mt))
+      suspend .!member(ICONS, mime_type_param(mt))
    end
 
    #
@@ -388,7 +392,8 @@ $endif
    # and then the generic icons.
    #
    public static gen_all_icons(mt)
-      suspend map(mt, "/" || &ucase, "-" || &lcase) | .!member(ICONS | GENERIC_ICONS, map(mt))
+      mt := mime_type_param(mt)
+      suspend map(mt, "/", "-") | .!member(ICONS | GENERIC_ICONS, mt)
    end
 
    #
@@ -398,6 +403,7 @@ $endif
    #
    public static alternative_mime_types(mt)
       local l
+      mt := mime_type_param(mt)
       if not(l := member(MIME_ALTERNATIVES, mt)) then {
          l := []
          alternative_mime_types1(mt, l, set())
@@ -407,18 +413,17 @@ $endif
    end
 
    private static alternative_mime_types1(mt, l, seen)
-      local sub, mmt
-      mmt := map(mt)
-      if member(seen, mmt) then
+      local sub
+      if member(seen, mt) then
          fail
       put(l, mt)
-      insert(seen, mmt)
-      every alternative_mime_types1(!member(MIME_ALIASES, mmt), l, seen)
-      if sub := member(MIME_SUBCLASSES, mmt) then
+      insert(seen, mt)
+      every alternative_mime_types1(!member(MIME_ALIASES, mt), l, seen)
+      if sub := member(MIME_SUBCLASSES, mt) then
          every alternative_mime_types1(!sub, l, seen)
-      else if match("text/", mmt) then
+      else if match("text/", mt) then
          alternative_mime_types1("text/plain", l, seen)
-      else if not match("inode/", mmt) then
+      else if not match("inode/", mt) then
          alternative_mime_types1("application/octet-stream", l, seen)
    end
 
@@ -497,7 +502,7 @@ $endif
             every l := separate_lines(s) do l ? {
                if k := map(tab(upto(' '))) &
                   move(1) &
-                  v := tab(0) then
+                  v := map(tab(0)) then
                {
                   put(member(t, k), v) | insert(t, k, [v])
                }
@@ -515,7 +520,7 @@ $endif
             every l := separate_lines(s) do l ? {
                if k := map(tab(upto(' '))) &
                   move(1) &
-                  v := tab(0) then
+                  v := map(tab(0)) then
                {
                   put(member(t, k), v) | insert(t, k, [v])
                }
@@ -823,14 +828,15 @@ $endif
    end
 
    private static process_mimeapps_list(mm, t, u)
-      local a, mime_type, l, d
+      local a, k, mime_type, l, d
       every a := member(mm, u"Added Associations" | u"Default Applications") do {
          # Each entry gives a mime type and list of desktop files, so
          # we look each one up in t.  The resulting list prepends to any
          # desktop entries there already.
-         every mime_type := key(a) do {
-            if l := member(u, string(mime_type)) then {
-               every d := Reverse{ member(t, separate(member(a, mime_type), ';')) } do {
+         every k := key(a) do {
+            mime_type := map(string(k))
+            if l := member(u, mime_type) then {
+               every d := Reverse{ member(t, separate(member(a, k), ';')) } do {
                   # Keep the list unique, by deleting the element (if present)
                   # we're about to push on the front.
                   delete(l, keyof(l, d))
@@ -838,18 +844,19 @@ $endif
                }
             } else {
                insert(u, 
-                      string(mime_type),
-                      ipl.pdco.List{ member(t, separate(member(a, mime_type), ';')) })
+                      mime_type,
+                      ipl.pdco.List{ member(t, separate(member(a, k), ';')) })
             }
          }
       }
       if a := member(mm, u"Removed Associations") then {
          # Each entry gives a mime type and list of desktop files to
          # remove from the corresponding list in u.
-         every mime_type := key(a) do {
-            if l := member(u, string(mime_type)) then {
+         every k := key(a) do {
+            mime_type := map(string(k))
+            if l := member(u, mime_type) then {
                # Lookup the DesktopEntry (in t) and then delete it from l.
-               every d := member(t, separate(member(a, mime_type), ';')) do
+               every d := member(t, separate(member(a, k), ';')) do
                   delete(l, keyof(l, d))
             }
          }
@@ -909,7 +916,7 @@ $endif
    # Given a mime type (string), generate the corresponding `DesktopEntry` objects, in preference order.
    #
    public static gen_desktop_entries(mt)
-      suspend .!member(DESKTOP_ENTRIES, map(mt))
+      suspend .!member(DESKTOP_ENTRIES, mime_type_param(mt))
    end
 end
 
@@ -941,6 +948,7 @@ package class Globs()
 
    public lookup(f)
       local i, v, fm
+      text(f) | runerr(129, f)
       f := ucs(f) | fail
       fm := map(f)
       if v := member(literal, f | fm) then
