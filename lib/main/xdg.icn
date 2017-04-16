@@ -352,7 +352,7 @@ $endif
       every l := separate_lines(s) do l ? {
          if weight := integer(tab(upto(':'))) & 
             move(1) &
-            type := map(string(tab(upto(':')))) &
+            type := string(tab(upto(':'))) &
             move(1) &
             pattern := tab(0) then 
          {
@@ -403,7 +403,7 @@ $endif
    #
    public static alternative_mime_types(mt)
       local l
-      mt := mime_type_param(mt)
+      mt := string(mt) | runerr(103, mt)
       if not(l := member(MIME_ALTERNATIVES, mt)) then {
          l := []
          alternative_mime_types1(mt, l, set())
@@ -413,17 +413,18 @@ $endif
    end
 
    private static alternative_mime_types1(mt, l, seen)
-      local sub
-      if member(seen, mt) then
+      local sub, mmt
+      mmt := map(mt)
+      if member(seen, mmt) then
          fail
       put(l, mt)
-      insert(seen, mt)
-      every alternative_mime_types1(!member(MIME_ALIASES, mt), l, seen)
-      if sub := member(MIME_SUBCLASSES, mt) then
+      insert(seen, mmt)
+      every alternative_mime_types1(!member(MIME_ALIASES, mmt), l, seen)
+      if sub := member(MIME_SUBCLASSES, mmt) then
          every alternative_mime_types1(!sub, l, seen)
-      else if match("text/", mt) then
+      else if match("text/", mmt) then
          alternative_mime_types1("text/plain", l, seen)
-      else if not match("inode/", mt) then
+      else if not match("inode/", mmt) then
          alternative_mime_types1("application/octet-stream", l, seen)
    end
 
@@ -502,7 +503,7 @@ $endif
             every l := separate_lines(s) do l ? {
                if k := map(tab(upto(' '))) &
                   move(1) &
-                  v := map(tab(0)) then
+                  v := tab(0) then
                {
                   put(member(t, k), v) | insert(t, k, [v])
                }
@@ -520,7 +521,7 @@ $endif
             every l := separate_lines(s) do l ? {
                if k := map(tab(upto(' '))) &
                   move(1) &
-                  v := map(tab(0)) then
+                  v := tab(0) then
                {
                   put(member(t, k), v) | insert(t, k, [v])
                }
@@ -972,7 +973,7 @@ package class Globs()
       if p == u"__NOGLOBS__" then {
          every t := literal | simple | other do {
             every k := key(t) do {
-               if t[k].mime_type == mime_type then
+               if Text.caseless_compare(t[k].mime_type, mime_type) = 0 then
                   delete(t, k)
             }
          }
