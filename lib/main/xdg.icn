@@ -361,6 +361,10 @@ $endif
       }
    end
 
+   private static mime_type_param(mt)
+      return map(string(mt)) | runerr(103, mt)
+   end
+
    #
    # Given a filename, return the corresponding mime type.
    #
@@ -372,14 +376,14 @@ $endif
    # Generate the generic icons defined for the given mime type.
    #
    public static gen_generic_icons(mt)
-      suspend .!member(GENERIC_ICONS, map(mt))
+      suspend .!member(GENERIC_ICONS, mime_type_param(mt))
    end
 
    #
    # Generate the icons defined for the given mime type.
    #
    public static gen_icons(mt)
-      suspend .!member(ICONS, map(mt))
+      suspend .!member(ICONS, mime_type_param(mt))
    end
 
    #
@@ -388,7 +392,8 @@ $endif
    # and then the generic icons.
    #
    public static gen_all_icons(mt)
-      suspend map(mt, "/" || &ucase, "-" || &lcase) | .!member(ICONS | GENERIC_ICONS, map(mt))
+      mt := mime_type_param(mt)
+      suspend map(mt, "/", "-") | .!member(ICONS | GENERIC_ICONS, mt)
    end
 
    #
@@ -398,6 +403,7 @@ $endif
    #
    public static alternative_mime_types(mt)
       local l
+      mt := string(mt) | runerr(103, mt)
       if not(l := member(MIME_ALTERNATIVES, mt)) then {
          l := []
          alternative_mime_types1(mt, l, set())
@@ -823,14 +829,15 @@ $endif
    end
 
    private static process_mimeapps_list(mm, t, u)
-      local a, mime_type, l, d
+      local a, k, mime_type, l, d
       every a := member(mm, u"Added Associations" | u"Default Applications") do {
          # Each entry gives a mime type and list of desktop files, so
          # we look each one up in t.  The resulting list prepends to any
          # desktop entries there already.
-         every mime_type := key(a) do {
-            if l := member(u, string(mime_type)) then {
-               every d := Reverse{ member(t, separate(member(a, mime_type), ';')) } do {
+         every k := key(a) do {
+            mime_type := map(string(k))
+            if l := member(u, mime_type) then {
+               every d := Reverse{ member(t, separate(member(a, k), ';')) } do {
                   # Keep the list unique, by deleting the element (if present)
                   # we're about to push on the front.
                   delete(l, keyof(l, d))
@@ -838,18 +845,19 @@ $endif
                }
             } else {
                insert(u, 
-                      string(mime_type),
-                      ipl.pdco.List{ member(t, separate(member(a, mime_type), ';')) })
+                      mime_type,
+                      ipl.pdco.List{ member(t, separate(member(a, k), ';')) })
             }
          }
       }
       if a := member(mm, u"Removed Associations") then {
          # Each entry gives a mime type and list of desktop files to
          # remove from the corresponding list in u.
-         every mime_type := key(a) do {
-            if l := member(u, string(mime_type)) then {
+         every k := key(a) do {
+            mime_type := map(string(k))
+            if l := member(u, mime_type) then {
                # Lookup the DesktopEntry (in t) and then delete it from l.
-               every d := member(t, separate(member(a, mime_type), ';')) do
+               every d := member(t, separate(member(a, k), ';')) do
                   delete(l, keyof(l, d))
             }
          }
@@ -909,7 +917,7 @@ $endif
    # Given a mime type (string), generate the corresponding `DesktopEntry` objects, in preference order.
    #
    public static gen_desktop_entries(mt)
-      suspend .!member(DESKTOP_ENTRIES, map(mt))
+      suspend .!member(DESKTOP_ENTRIES, mime_type_param(mt))
    end
 end
 
@@ -941,6 +949,7 @@ package class Globs()
 
    public lookup(f)
       local i, v, fm
+      text(f) | runerr(129, f)
       f := ucs(f) | fail
       fm := map(f)
       if v := member(literal, f | fm) then
@@ -964,7 +973,7 @@ package class Globs()
       if p == u"__NOGLOBS__" then {
          every t := literal | simple | other do {
             every k := key(t) do {
-               if t[k].mime_type == mime_type then
+               if Text.caseless_compare(t[k].mime_type, mime_type) = 0 then
                   delete(t, k)
             }
          }
