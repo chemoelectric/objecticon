@@ -860,7 +860,7 @@ class Component(Rect,Align,Connectable)
       every t := key(wattribs) do {
          Gui.is_context_attrib(t) |
             runerr("Invalid (non-graphics context) attribute for component", t)
-         insert(effective_wattribs, t, wattribs[t])
+         insert(effective_wattribs, t, member(wattribs, t))
       }
       compute_z_order()
       compute_tab_order()
