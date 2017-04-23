@@ -70,7 +70,7 @@ procedure isort(x,keyproc,y)
    items := table()
    every item := !x do {
       key := keyproc(item,y)
-      (/items[key] := [item]) | put(items[key],item)
+      put(member(items, key), item) | insert(items, key, [item])
       }
    items := sort(items,3)
    result := []

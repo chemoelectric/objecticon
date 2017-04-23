@@ -104,7 +104,7 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       m := TextMenuItem().
          set_label(de.name).
          connect(create launch_prog(de, path), Event.ACTION)
-      m.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, &yes)))
+      m.set_paint_left(ImagePaint().set_cache(IconTheme.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, &yes)))
       return m
    end
 
@@ -245,7 +245,8 @@ $endif
    end
 
    private on_xdg_refresh(ev)
-      Xdg.refresh()
+      IconTheme.refresh()
+      Mime.refresh()
       tabs.which_one.msg("XDG database reloaded", 3000)
    end
 
@@ -791,8 +792,8 @@ $endif
    private static get_possible_desktop_entries(res)
       local mt
       mt := (\res.content_type).to_rfc1521()
-      suspend Unique{Xdg.gen_desktop_entries(\mt) | 
-                     Xdg.gen_desktop_entries(Xdg.alternative_mime_types(Xdg.get_mime_type_for_file(\res.fname)))}
+      suspend Unique{Mime.gen_desktop_entries(\mt) | 
+                     Mime.gen_desktop_entries(Mime.alternative_mime_types(Mime.get_mime_type_for_file(\res.fname)))}
    end
 
    private on_table_rpress(ev)
@@ -1396,11 +1397,11 @@ class BrowserTab(TabItem, BrowserUI)
             Files.access(f) &
             not Files.is_directory(f) 
          then {
-            every de := Xdg.gen_desktop_entries_for_file(f) do
+            every de := Mime.gen_desktop_entries_for_file(f) do
                m1.add(BrowserDialog.create_open_with_menu_item(de, f))
          }
       } else {
-         every de := Xdg.gen_desktop_entries("x-scheme-handler/" || string(url.scheme)) do
+         every de := Mime.gen_desktop_entries("x-scheme-handler/" || string(url.scheme)) do
             m1.add(BrowserDialog.create_open_with_menu_item(de, url.ucs()))
          m.add(TextMenuItem().
                set_label("Download").
@@ -1506,7 +1507,7 @@ class BrowserTab(TabItem, BrowserUI)
    public display_externally(res)
       local de, mt, file
       mt := (\res.content_type).to_rfc1521()
-      de := Xdg.gen_desktop_entries(\mt) | Xdg.gen_desktop_entries_for_file(\res.fname) | fail
+      de := Mime.gen_desktop_entries(\mt) | Mime.gen_desktop_entries_for_file(\res.fname) | fail
       file := make_display_file(res)
       BrowserDialog.launch_prog(de, file)
       parent_dialog.update_visited(res.url)
@@ -1521,7 +1522,7 @@ class BrowserTab(TabItem, BrowserUI)
          not Files.is_directory(f) &
          not (string(map(Files.get_extension(f))) ==
               ("htm" | "html" | "jpg" | "jpeg" | "png" | "gif")) &
-         de := Xdg.gen_desktop_entries_for_file(f) then
+         de := Mime.gen_desktop_entries_for_file(f) then
       {
          BrowserDialog.launch_prog(de, f)
          parent_dialog.update_visited(url)
@@ -1881,7 +1882,7 @@ procedure main(a)
                        Opt("agent",string, "Set user agent field"),
                        Opt("v",,"Verbose output")
                        ])
-   home := FilePath(Xdg.ensure_data_home()) | stop("Couldn't access data dir: ", &why)
+   home := FilePath(BaseDir.ensure_data_home()) | stop("Couldn't access data dir: ", &why)
    settings_file := home.child("oibrowser").str()
    cookies_file := \opts["k"] | home.child("oicookies").str()
    cookies := decode_from_file(cookies_file) | table()

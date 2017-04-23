@@ -1031,7 +1031,7 @@ class Main(Dialog)
          order_sub_menu, f, ce, plugin, pp, fn, i, fp, ext, k
 
       Dialog.new()
-      config_file_name := FilePath(Xdg.ensure_data_home()).child("ivib").str() | stop("Couldn't access data dir: ", &why)
+      config_file_name := FilePath(BaseDir.ensure_data_home()).child("ivib").str() | stop("Couldn't access data dir: ", &why)
       set_layout(GridLayout().set_doi(0).set_dii(0))
       connect(self.dialog_event, Event.ICON)
       self.clipboard_selection_owner := IvibClipboardSelectionOwner(self)

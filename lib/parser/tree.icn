@@ -587,7 +587,7 @@ class ImportSpec(SimpleIdList)
    end
 end
 
-class Util()
+final abstract class Util()
    public static dottedid2string(n)
       local s
       s := ""

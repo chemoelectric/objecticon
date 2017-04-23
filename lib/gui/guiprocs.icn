@@ -838,7 +838,7 @@ end
 package procedure get_toolbar_theme_paint(paint, icon)
    local k, sz
    sz := Gui.TOOLBAR_ICON_SIZE
-   if (k := Xdg.find_icon_and_cache(\icon, sz, &yes)) | 
+   if (k := IconTheme.find_icon_and_cache(\icon, sz, &yes)) | 
       (is(paint, ImagePaint) & k := ImageCache.get_key_with_resize(\paint.image_cache, sz, sz))
    then
       return ImagePaint().set_cache(k)

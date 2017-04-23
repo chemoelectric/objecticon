@@ -2545,7 +2545,7 @@ class Form()
                m2 := Message()
                if is(c, FormBrowse) then {
                   fn := c.get_filename()
-                  mt := Xdg.get_mime_type_for_file(fn) | "application/octet-stream"
+                  mt := Mime.get_mime_type_for_file(fn) | "application/octet-stream"
                   m2.set_header("Content-Disposition", 
                                 "form-data; name=" || escape_1521_value(k) || 
                                 "; filename=" || escape_1521_value(fn))

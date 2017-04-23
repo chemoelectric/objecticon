@@ -47,7 +47,7 @@ package class Tag()
    # Set an attribute for this tag.
    #
    public set_attribute(key, value)
-      attributes[map(key, &lcase, &ucase)] := value
+      insert(attributes, map(key, &lcase, &ucase), value)
       return self
    end
 
