@@ -54,7 +54,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
          "file": {
             file := ucs(url.get_decoded_path()) | fail
             line := integer(url.extract_cgi_parameters()["line"][1])
-            if de := Xdg.gen_desktop_entries_for_file(FilePath(file).get(-1)) then
+            if de := Mime.gen_desktop_entries_for_file(FilePath(file).get(-1)) then
                launch_prog(de, file, line)
          }
       }

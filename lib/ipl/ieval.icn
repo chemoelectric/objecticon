@@ -426,7 +426,7 @@ class Ieval(MinimalObjectOutput)
       if \opts["s"] then
          do_stdin()
       else {
-         hfile := FilePath(Xdg.ensure_data_home()).child("ieval").str() | stop("Couldn't access data dir: ", &why)
+         hfile := FilePath(BaseDir.ensure_data_home()).child("ieval").str() | stop("Couldn't access data dir: ", &why)
          history := decode_from_file(hfile) | []
          if \opts["g"] then
             do_gui()
@@ -459,7 +459,7 @@ class Ieval(MinimalObjectOutput)
       consts["oos"] := oos := ObjectOutputStream(output).set_indent(3)
       consts["out"] := output
 
-      f := FilePath(Xdg.ensure_config_home()).child("ieval").str() | stop("Couldn't access config dir: ", &why)
+      f := FilePath(BaseDir.ensure_config_home()).child("ieval").str() | stop("Couldn't access config dir: ", &why)
       if Files.access(f) then
          push(files, f)
       every f := !files do {

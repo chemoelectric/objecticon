@@ -163,7 +163,7 @@ class IconFilesItemPaint(ItemPaint)
 
    private static try_xdg(key, icon, alt)
       local k
-      k := Xdg.find_icon_and_cache(icon, ICON_SIZE, &yes) |
+      k := IconTheme.find_icon_and_cache(icon, ICON_SIZE, &yes) |
          ImageCache.get_key_with_resize(alt, ICON_SIZE, ICON_SIZE)
       ImageCache.copy_key(key, k)
    end
@@ -186,8 +186,8 @@ class IconFilesItemPaint(ItemPaint)
 
 $ifdef _PNG
    public get_xdg_for_file(f)
-      return Xdg.find_icon_for_file_and_cache(f, ICON_SIZE, &yes) | 
-             Xdg.find_icon_and_cache("text-x-generic", ICON_SIZE, &yes)
+      return Mime.find_icon_for_file_and_cache(f, ICON_SIZE, &yes) | 
+             IconTheme.find_icon_and_cache("text-x-generic", ICON_SIZE, &yes)
    end
 
    public get_icon(data)

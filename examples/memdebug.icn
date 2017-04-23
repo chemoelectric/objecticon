@@ -458,7 +458,7 @@ procedure prelim()
    if \opts["m"] then
       do_stop()
 
-   fn := FilePath(Xdg.ensure_config_home()).child("memdebug").str() | stop("Couldn't access config dir: ", &why)
+   fn := FilePath(BaseDir.ensure_config_home()).child("memdebug").str() | stop("Couldn't access config dir: ", &why)
    if Files.access(fn) then
       do_file(fn)
 
@@ -559,7 +559,7 @@ procedure main(args)
    tmp_out_name := Files.make_temp_filename("monitor", ".txt") | stop(&why)
    tmp_out := FileStream(tmp_out_name, ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
 
-   hfile := FilePath(Xdg.ensure_data_home()).child("memdebug").str() | stop("Couldn't access data dir: ", &why)
+   hfile := FilePath(BaseDir.ensure_data_home()).child("memdebug").str() | stop("Couldn't access data dir: ", &why)
    history := decode_from_file(hfile) | []
 
    if \opts["g"] then

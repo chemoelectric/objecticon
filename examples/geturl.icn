@@ -175,7 +175,7 @@ procedure main(args)
    if \opts["while"] then
       hc.set_retry_while_data(&yes)
 
-   cookies := \opts["k"] | FilePath(Xdg.ensure_data_home()).child("oicookies").str() | stop("Couldn't access data dir: ", &why)
+   cookies := \opts["k"] | FilePath(BaseDir.ensure_data_home()).child("oicookies").str() | stop("Couldn't access data dir: ", &why)
    t := decode_from_file(cookies) | table()
    hc.set_cookies(t)
 

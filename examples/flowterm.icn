@@ -193,7 +193,8 @@ class FlowTermDialog(Dialog)
    end
 
    private on_xdg_refresh(ev)
-      Xdg.refresh()
+      IconTheme.refresh()
+      Mime.refresh()
       tabs.which_one.info_msg("XDG database reloaded")
    end
 
@@ -2101,11 +2102,11 @@ $endif
    end
 
    private static get_possible_desktop_entries(s)
-      suspend Xdg.gen_desktop_entries_for_file(FilePath(s).get(-1))
+      suspend Mime.gen_desktop_entries_for_file(FilePath(s).get(-1))
    end
 
    private static get_possible_scheme_handler_desktop_entries(url)
-      suspend Xdg.gen_desktop_entries("x-scheme-handler/" || string(url.scheme))
+      suspend Mime.gen_desktop_entries("x-scheme-handler/" || string(url.scheme))
    end
 
    private get_runners(url)
@@ -2299,7 +2300,7 @@ $endif
       m := TextMenuItem().
          set_label(de.name).
          connect(create launch_prog(r), Event.ACTION)
-      m.set_paint_left(ImagePaint().set_cache(Xdg.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, &yes)))
+      m.set_paint_left(ImagePaint().set_cache(IconTheme.find_icon_and_cache(\de.icon, Gui.MENU_ICON_SIZE, &yes)))
       return m
    end
 

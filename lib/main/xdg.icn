@@ -60,7 +60,7 @@ end
 #   Type=Threshold
 #
 # This is represented by a ThemeDirectory.  Then, each element from
-# gen_base_dirs() is appended to the theme name to give an actual
+# gen_data_dirs() is appended to the theme name to give an actual
 # directory :-
 #
 #   "/home/rparlett/.local/share/16x16/intl"
@@ -206,71 +206,9 @@ class DesktopEntry()
 end
 
 #
-# This class contains many static methods for looking up XDG data.
+# This class contains static methods relating to the base directory specification.
 #
-final abstract class Xdg()
-   private static
-      LC_MESSAGES,        # A Locale object giving the LC_MESSAGES locale info
-      INI_LC_KEYS,        # A list of strings used to choose locale-based keys in
-                          # ini files
-      ICON_THEMES,        # A map of theme names (string) to ThemeIndex objects.
-      GLOBS,              # A Globs instance for file pattern matching.
-      ICONS,              # A map of mime-type (string) to list of icon names (strings)
-      GENERIC_ICONS,      #   - ditto -
-      MIME_SUBCLASSES,    # A map of mime-type (string) to lists of mime-types (strings)
-      MIME_ALIASES,       #   - ditto -
-      MIME_ALTERNATIVES,  # A cache of alternative_mime_types() results,
-                          #   mapping mime-type (string) to lists of mime-types (strings)
-      FIND_ICON_CACHE,    # A cache of find_icon() results, mapping string key to icon
-                          #   name (string)
-      ICON_FALLBACK_CACHED_DIRS,  # A list of CachedDir objects
-      DESKTOP_ENTRIES     # A map of mime-types (string) to list of DesktopEntry objects.
-
-   private static readable
-      icon_theme,
-      scalable_flag
-
-   private static init()
-      refresh()
-   end
-
-   #
-   # Reload all the settings and reset everything.
-   #
-   public static refresh()
-      LC_MESSAGES := Locale(env_string("LC_ALL" | "LC_MESSAGES" | "LANG") | "C")
-      INI_LC_KEYS := []
-      every put(INI_LC_KEYS, 
-                LC_MESSAGES.lang || "_" || \LC_MESSAGES.country || "@" || \LC_MESSAGES.modifier |
-                LC_MESSAGES.lang || "_" || \LC_MESSAGES.country |
-                LC_MESSAGES.lang || "@" || \LC_MESSAGES.modifier |
-                LC_MESSAGES.lang |
-                &null)
-      ICON_THEMES := table()
-      MIME_ALTERNATIVES := table()
-      GLOBS := read_globs()
-      ICONS := read_icons()
-      GENERIC_ICONS := read_generic_icons()
-      MIME_ALIASES := read_mime_aliases()
-      MIME_SUBCLASSES := read_mime_subclasses()
-      FIND_ICON_CACHE := table()
-      icon_theme := get_current_icon_theme()
-      ICON_FALLBACK_CACHED_DIRS := setup_icon_fallback_cached_dirs()
-      scalable_flag := &yes
-      DESKTOP_ENTRIES := read_desktop_entries()
-   end
-
-   #
-   # Set the icon theme; fails if the theme is invalid.
-   #
-   public static set_icon_theme(s)
-      s := string(s) | runerr(103, s)
-      get_theme_index(s) | fail
-      icon_theme := s
-      clear(FIND_ICON_CACHE)
-      return Xdg
-   end
-
+final abstract class BaseDir()
    #
    # Ensure XDG_DATA_HOME exists, or try and create it.
    #
@@ -343,8 +281,353 @@ $endif
    # Generate the base directories, being `get_data_home()` followed
    # by the elements of `get_data_dirs()`
    #
-   public static gen_base_dirs()
+   public static gen_data_dirs()
       suspend get_data_home() | Files.split_paths(get_data_dirs())
+   end
+end
+
+#
+# Some static helper methods.
+#
+package final abstract class Util()
+   private static const
+      LC_MESSAGES,        # A Locale object giving the LC_MESSAGES locale info
+      INI_LC_KEYS         # A list of strings used to choose locale-based keys in
+                          # ini files
+
+   private static init()
+      LC_MESSAGES := Locale(env_string("LC_ALL" | "LC_MESSAGES" | "LANG") | "C")
+      INI_LC_KEYS := []
+      every put(INI_LC_KEYS, 
+                LC_MESSAGES.lang || "_" || \LC_MESSAGES.country || "@" || \LC_MESSAGES.modifier |
+                LC_MESSAGES.lang || "_" || \LC_MESSAGES.country |
+                LC_MESSAGES.lang || "@" || \LC_MESSAGES.modifier |
+                LC_MESSAGES.lang |
+                &null)
+   end
+
+   private static unescape(s)
+      local t, ch
+      t := u""
+      s ? repeat {
+         t ||:= tab(upto('\\') | 0)
+         ch := (move(1), move(1)) | break
+         t ||:= case ch of {
+            u"s": u" "
+            u"t": u"\t"
+            u"n": u"\n"
+            u"r": u"\r"
+            default: ch
+         }
+      }
+      return t
+   end
+
+   # Note that this is more liberal than the desktop entry spec
+   # indicates, since we want to parse the mimeapps.list file, which
+   # has keys with chars outside &letters ++ &digits ++ '-'
+   #
+   private static parse_key_val(group)
+      local key, val, enc, t
+      key := trim(tab(upto('[='))) | fail
+      if =u"[" then {
+         enc := string(tab(upto(']'))) | fail
+         move(1)
+         tab(many(' '))
+      }
+      =u"=" | fail
+      tab(many(' '))
+      val := unescape(tab(0))
+      (t := member(group, key)) | insert(group, key, t := table())
+      insert(t, enc, val)
+   end
+
+   private static resolve_lc(group)
+      local key, sel, t
+      every key := default.key(group) do {
+         t := member(group, key)
+         if sel := member(t, !INI_LC_KEYS) then
+            insert(group, key, sel)
+         else
+            # No matching locale (or fallback without locale), so
+            # delete the key entirely.
+            delete(group, key)
+      }
+   end
+
+   private static parse_ini_file(s)
+      local group, groups, gn
+      groups := table()
+      every separate_lines(s) ? {
+         if pos(0) | match(u"#") then
+            next
+         if =u"[" & gn := tab(upto(']')) then {
+            group := table()
+            insert(groups, gn, group)
+         } else
+            parse_key_val(\group)
+      }
+      every resolve_lc(!groups)
+      return groups
+   end
+
+   public static load_ini_file(f)
+      return parse_ini_file(ucs(Files.file_to_string(f)))
+   end
+
+   public static cache_icon(f, size, exact)
+      # If it's an SVG file, then simply scale to the desired size and
+      # return the key.
+      return if endswith(f, ".svg" | ".svgz") then
+         ImageCache.get_scaled_svg_key(f, size, size)
+      else if /exact then
+         ImageCache.get_key(f)
+      else
+         ImageCache.get_key_with_resize(f, size, size)
+   end
+end
+
+#
+# This class contains static methods for looking up XDG icon theme data.
+#
+final abstract class IconTheme()
+   private static
+      THEMES,             # A map of theme names (string) to ThemeIndex objects.
+      FIND_ICON_CACHE,    # A cache of find_icon() results, mapping string key to icon
+                          #   name (string)
+      ICON_FALLBACK_CACHED_DIRS  # A list of CachedDir objects
+
+   private static readable
+      theme,
+      scalable_flag
+
+   private static init()
+      refresh()
+   end
+
+   #
+   # Reload all the settings and reset everything.
+   #
+   public static refresh()
+      THEMES := table()
+      FIND_ICON_CACHE := table()
+      theme := get_current_theme()
+      ICON_FALLBACK_CACHED_DIRS := setup_icon_fallback_cached_dirs()
+      scalable_flag := &yes
+   end
+
+   #
+   # Set the icon theme; fails if the theme is invalid.
+   #
+   public static set_theme(s)
+      s := string(s) | runerr(103, s)
+      get_theme_index(s) | fail
+      theme := s
+      clear(FIND_ICON_CACHE)
+      return IconTheme
+   end
+
+   private static dir_set1(f)
+      local s, res
+      res := set()
+      repeat {
+         s := f.read_line() | fail
+         if /s then
+            return res
+         insert(res, s)
+      }
+   end
+
+   private static dir_set(dir)
+      local f
+      return use {
+         f := DirStream(dir),
+         dir_set1(f)
+      }
+   end
+
+   private static gen_theme_directories(tm)
+      suspend separate(member(member(tm, u"Icon Theme"), u"Directories"))
+   end
+
+   private static gen_theme_parents(tm)
+      suspend string(separate(member(member(tm, u"Icon Theme"), u"Inherits")))
+   end
+
+   # Build a ThemeIndex object given the name and the ini table.
+   private static build_theme_index(theme, tm)
+      local d, subdir, f, dirs, ds, m, cd,
+         type, size, minsize, maxsize, threshold
+      dirs := []
+      every subdir := gen_theme_directories(tm) do {
+         if m := member(tm, subdir) &
+            size := integer(member(m, u"Size")) then 
+         {
+            type := string(member(m, u"Type")) | "Threshold"
+            threshold := integer(member(m, u"Threshold")) | 2
+            minsize := integer(member(m, u"MinSize")) | size
+            maxsize := integer(member(m, u"MaxSize")) | size
+            cd := []
+            every d := BaseDir.gen_data_dirs() do {
+               f := FilePath(d).walk("icons", theme).append(FilePath(subdir))
+               if ds := dir_set(f.str()) & *ds > 2 then
+                  put(cd, CachedDir(f, ds))
+            }
+            if *cd > 0 then
+               put(dirs, ThemeDirectory(type, size, minsize, maxsize, threshold, cd))
+         }
+      }
+      return ThemeIndex(dirs, ipl.pdco.List{gen_theme_parents(tm)})
+   end
+
+   private static setup_icon_fallback_cached_dirs()
+      local d, p, r, ds
+      r := []
+      every d := BaseDir.gen_data_dirs() do {
+         p := FilePath(d).child("icons")
+         if ds := dir_set(p.str()) & *ds > 2 then
+            put(r, CachedDir(p, ds))
+      }
+      return r
+   end
+
+   private static get_theme_index1(name)
+      local d, m
+      every d := BaseDir.gen_data_dirs() do {
+         if m := build_theme_index(name, Util.load_ini_file(FilePath(d).walk("icons", name, "index.theme").str())) then
+            return m
+      }
+   end
+
+   private static get_theme_index(name)
+      local m
+      if not(m := member(THEMES, name)) then {
+         m := get_theme_index1(name)
+         insert(THEMES, name, m)
+      }
+      return \m
+   end
+
+   #
+   # Find an icon given the icon name (string) and integer size.
+   #
+   public static find_icon(icon, size)
+      local k, v
+      icon := string(icon) | runerr(103, icon)
+      k := icon || "/" || size
+      if not(v := member(FIND_ICON_CACHE, k)) then {
+         v := find_icon_helper(icon, size, theme, set()) | lookup_fallback_icon(icon)
+         insert(FIND_ICON_CACHE, k, v)
+      }
+      return \v
+   end
+
+   #
+   # This calls `find_icon`, caches the result in `ImageCache`, and
+   # returns the cache key.  The parameter `exact` flag indicates
+   # whether the found icon should be resized to exactly `size`.
+   #
+   public static find_icon_and_cache(icon, size, exact)
+      return Util.cache_icon(find_icon(icon, size), size, exact)
+   end
+
+   private static get_current_theme()
+      local f, theme, d
+      every theme := env_string("OI_THEME") | "oxygen" | "gnome" do {
+         every d := BaseDir.gen_data_dirs() do {
+            f := FilePath(d).walk("icons", theme, "index.theme").str()
+            if Files.access(f) then
+               return theme
+         }
+      }
+      return "hicolor"
+   end
+
+   private static find_icon_helper(icon, size, theme, tried)
+      local theme_index
+      if member(tried, theme) then
+         fail
+      insert(tried, theme)
+      theme_index := get_theme_index(theme) | fail
+
+      # Try this theme, failing that try recursively with the theme's parents.
+      return lookup_icon(theme_index, icon, size) | 
+         find_icon_helper(icon, size, !theme_index.parents, tried)
+   end
+
+   private static lookup_fallback_icon(icon)
+      return has_icon(!ICON_FALLBACK_CACHED_DIRS, icon)
+   end
+
+   private static has_icon(cached_dir, icon)
+      local ex, f
+      if f := cached_dir.access(icon || ".png") then
+         return f
+      if \scalable_flag then {
+         every ex := ".svg" | ".svgz" do {
+            if f := cached_dir.access(icon || ex) then {
+               # Try to load cairo; if fail then don't look for svg files again.
+               if /Context.LOADED then {
+                  scalable_flag := &null
+                  fail
+               }
+               return f
+            }
+         }
+      }
+   end
+
+   private static lookup_icon(theme_index, icon, size)
+      local subdir, f, minimal_size, closest_filename, ms
+      every subdir := !theme_index.directories do {
+         if subdir.matches_size(size, scalable_flag) then {
+            # Search in all the CachedDirs in the subdir
+            if f := has_icon(!subdir.cached_dirs, icon) then
+               return f
+         }
+      }
+      minimal_size := lang.Limit.MaxWord
+      every subdir := !theme_index.directories do {
+         if (ms := subdir.directory_size_distance(size, scalable_flag)) < minimal_size then {
+            if f := has_icon(!subdir.cached_dirs, icon) then {
+               closest_filename := f
+               minimal_size := ms
+            }
+         }
+      }
+      return \closest_filename
+   end
+end
+
+#
+# This class contains static methods for looking up XDG mime data.
+#
+final abstract class Mime()
+   private static
+      GLOBS,              # A Globs instance for file pattern matching.
+      ICONS,              # A map of mime-type (string) to list of icon names (strings)
+      GENERIC_ICONS,      #   - ditto -
+      MIME_SUBCLASSES,    # A map of mime-type (string) to lists of mime-types (strings)
+      MIME_ALIASES,       #   - ditto -
+      MIME_ALTERNATIVES,  # A cache of alternative_mime_types() results,
+                          #   mapping mime-type (string) to lists of mime-types (strings)
+      DESKTOP_ENTRIES     # A map of mime-types (string) to list of DesktopEntry objects.
+
+   private static init()
+      refresh()
+   end
+
+   #
+   # Reload all the settings and reset everything.
+   #
+   public static refresh()
+      MIME_ALTERNATIVES := table()
+      GLOBS := read_globs()
+      ICONS := read_icons()
+      GENERIC_ICONS := read_generic_icons()
+      MIME_ALIASES := read_mime_aliases()
+      MIME_SUBCLASSES := read_mime_subclasses()
+      DESKTOP_ENTRIES := read_desktop_entries()
    end
 
    private static parse_glob_file(g, s)
@@ -428,26 +711,6 @@ $endif
          alternative_mime_types1("application/octet-stream", l, seen)
    end
 
-   private static cache_icon(f, size, exact)
-      # If it's an SVG file, then simply scale to the desired size and
-      # return the key.
-      return if endswith(f, ".svg" | ".svgz") then
-         ImageCache.get_scaled_svg_key(f, size, size)
-      else if /exact then
-         ImageCache.get_key(f)
-      else
-         ImageCache.get_key_with_resize(f, size, size)
-   end
-
-   #
-   # This calls `find_icon`, caches the result in `ImageCache`, and
-   # returns the cache key.  The parameter `exact` flag indicates
-   # whether the found icon should be resized to exactly `size`.
-   #
-   public static find_icon_and_cache(icon, size, exact)
-      return cache_icon(find_icon(icon, size), size, exact)
-   end
-
    #
    # This calls `find_icon_for_file`, caches the result in
    # `ImageCache`, and returns the cache key.
@@ -456,13 +719,13 @@ $endif
    # `find_icon_and_cache`.
    #
    public static find_icon_for_file_and_cache(file, size, exact)
-      return cache_icon(find_icon_for_file(file, size), size, exact)
+      return Util.cache_icon(find_icon_for_file(file, size), size, exact)
    end
 
    private static read_generic_icons()
       local d, t, s, k, v, l
       t := table()
-      every d := gen_base_dirs() do {
+      every d := BaseDir.gen_data_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "generic-icons").str()) then {
             every l := separate_lines(s) do l ? {
                if k := map(tab(upto(':'))) &
@@ -480,7 +743,7 @@ $endif
    private static read_icons()
       local d, t, s, k, v, l
       t := table()
-      every d := gen_base_dirs() do {
+      every d := BaseDir.gen_data_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "icons").str()) then {
             every l := separate_lines(s) do l ? {
                if k := map(tab(upto(':'))) &
@@ -498,7 +761,7 @@ $endif
    private static read_mime_aliases()
       local d, t, s, k, v, l
       t := table()
-      every d := gen_base_dirs() do {
+      every d := BaseDir.gen_data_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "aliases").str()) then {
             every l := separate_lines(s) do l ? {
                if k := map(tab(upto(' '))) &
@@ -516,7 +779,7 @@ $endif
    private static read_mime_subclasses()
       local d, t, s, k, v, l
       t := table()
-      every d := gen_base_dirs() do {
+      every d := BaseDir.gen_data_dirs() do {
          if s := Files.file_to_string(FilePath(d).walk("mime", "subclasses").str()) then {
             every l := separate_lines(s) do l ? {
                if k := map(tab(upto(' '))) &
@@ -534,250 +797,19 @@ $endif
    private static read_globs()
       local d, g, s
       g := Globs()
-      every d := Reverse{ gen_base_dirs() } do {
+      every d := Reverse{ BaseDir.gen_data_dirs() } do {
          if s := ucs(Files.file_to_string(FilePath(d).walk("mime", "globs2").str())) then
             parse_glob_file(g, s)
       }
       return g
    end
 
-   private static unescape(s)
-      local t, ch
-      t := u""
-      s ? repeat {
-         t ||:= tab(upto('\\') | 0)
-         ch := (move(1), move(1)) | break
-         t ||:= case ch of {
-            u"s": u" "
-            u"t": u"\t"
-            u"n": u"\n"
-            u"r": u"\r"
-            default: ch
-         }
-      }
-      return t
-   end
-
-   # Note that this is more liberal than the desktop entry spec
-   # indicates, since we want to parse the mimeapps.list file, which
-   # has keys with chars outside &letters ++ &digits ++ '-'
-   #
-   private static parse_key_val(group)
-      local key, val, enc, t
-      key := trim(tab(upto('[='))) | fail
-      if =u"[" then {
-         enc := string(tab(upto(']'))) | fail
-         move(1)
-         tab(many(' '))
-      }
-      =u"=" | fail
-      tab(many(' '))
-      val := unescape(tab(0))
-      (t := member(group, key)) | insert(group, key, t := table())
-      insert(t, enc, val)
-   end
-
-   private static resolve_lc(group)
-      local key, sel, t
-      every key := default.key(group) do {
-         t := member(group, key)
-         if sel := member(t, !INI_LC_KEYS) then
-            insert(group, key, sel)
-         else
-            # No matching locale (or fallback without locale), so
-            # delete the key entirely.
-            delete(group, key)
-      }
-   end
-
-   private static parse_ini_file(s)
-      local group, groups, gn
-      groups := table()
-      every separate_lines(s) ? {
-         if pos(0) | match(u"#") then
-            next
-         if =u"[" & gn := tab(upto(']')) then {
-            group := table()
-            insert(groups, gn, group)
-         } else
-            parse_key_val(\group)
-      }
-      every resolve_lc(!groups)
-      return groups
-   end
-
-   private static load_ini_file(f)
-      return parse_ini_file(ucs(Files.file_to_string(f)))
-   end
-
-   private static dir_set1(f)
-      local s, res
-      res := set()
-      repeat {
-         s := f.read_line() | fail
-         if /s then
-            return res
-         insert(res, s)
-      }
-   end
-
-   private static dir_set(dir)
-      local f
-      return use {
-         f := DirStream(dir),
-         dir_set1(f)
-      }
-   end
-
-   private static gen_theme_directories(tm)
-      suspend separate(member(member(tm, u"Icon Theme"), u"Directories"))
-   end
-
-   private static gen_theme_parents(tm)
-      suspend string(separate(member(member(tm, u"Icon Theme"), u"Inherits")))
-   end
-
-   # Build a ThemeIndex object given the name and the ini table.
-   private static build_theme_index(theme, tm)
-      local d, subdir, f, dirs, ds, m, cd,
-         type, size, minsize, maxsize, threshold
-      dirs := []
-      every subdir := gen_theme_directories(tm) do {
-         if m := member(tm, subdir) &
-            size := integer(member(m, u"Size")) then 
-         {
-            type := string(member(m, u"Type")) | "Threshold"
-            threshold := integer(member(m, u"Threshold")) | 2
-            minsize := integer(member(m, u"MinSize")) | size
-            maxsize := integer(member(m, u"MaxSize")) | size
-            cd := []
-            every d := gen_base_dirs() do {
-               f := FilePath(d).walk("icons", theme).append(FilePath(subdir))
-               if ds := dir_set(f.str()) & *ds > 2 then
-                  put(cd, CachedDir(f, ds))
-            }
-            if *cd > 0 then
-               put(dirs, ThemeDirectory(type, size, minsize, maxsize, threshold, cd))
-         }
-      }
-      return ThemeIndex(dirs, ipl.pdco.List{gen_theme_parents(tm)})
-   end
-
-   private static setup_icon_fallback_cached_dirs()
-      local d, p, r, ds
-      r := []
-      every d := gen_base_dirs() do {
-         p := FilePath(d).child("icons")
-         if ds := dir_set(p.str()) & *ds > 2 then
-            put(r, CachedDir(p, ds))
-      }
-      return r
-   end
-
-   private static get_theme_index1(name)
-      local d, m
-      every d := gen_base_dirs() do {
-         if m := build_theme_index(name, load_ini_file(FilePath(d).walk("icons", name, "index.theme").str())) then
-            return m
-      }
-   end
-
-   private static get_theme_index(name)
-      local m
-      if not(m := member(ICON_THEMES, name)) then {
-         m := get_theme_index1(name)
-         insert(ICON_THEMES, name, m)
-      }
-      return \m
-   end
-
-   #
-   # Find an icon given the icon name (string) and integer size.
-   #
-   public static find_icon(icon, size)
-      local k, v
-      icon := string(icon) | runerr(103, icon)
-      k := icon || "/" || size
-      if not(v := member(FIND_ICON_CACHE, k)) then {
-         v := find_icon_helper(icon, size, icon_theme, set()) | lookup_fallback_icon(icon)
-         insert(FIND_ICON_CACHE, k, v)
-      }
-      return \v
-   end
-
    #
    # Find an icon given a filename (string) and integer size.
    #
    public static find_icon_for_file(file, size)
-      return find_icon(gen_all_icons(alternative_mime_types(get_mime_type_for_file(file))),
-                       size)
-   end
-
-   private static get_current_icon_theme()
-      local f, theme, d
-      every theme := env_string("OI_THEME") | "oxygen" | "gnome" do {
-         every d := gen_base_dirs() do {
-            f := FilePath(d).walk("icons", theme, "index.theme").str()
-            if Files.access(f) then
-               return theme
-         }
-      }
-      return "hicolor"
-   end
-
-   private static find_icon_helper(icon, size, theme, tried)
-      local theme_index
-      if member(tried, theme) then
-         fail
-      insert(tried, theme)
-      theme_index := get_theme_index(theme) | fail
-
-      # Try this theme, failing that try recursively with the theme's parents.
-      return lookup_icon(theme_index, icon, size) | 
-         find_icon_helper(icon, size, !theme_index.parents, tried)
-   end
-
-   private static lookup_fallback_icon(icon)
-      return has_icon(!ICON_FALLBACK_CACHED_DIRS, icon)
-   end
-
-   private static has_icon(cached_dir, icon)
-      local ex, f
-      if f := cached_dir.access(icon || ".png") then
-         return f
-      if \scalable_flag then {
-         every ex := ".svg" | ".svgz" do {
-            if f := cached_dir.access(icon || ex) then {
-               # Try to load cairo; if fail then don't look for svg files again.
-               if /Context.LOADED then {
-                  scalable_flag := &null
-                  fail
-               }
-               return f
-            }
-         }
-      }
-   end
-
-   private static lookup_icon(theme_index, icon, size)
-      local subdir, f, minimal_size, closest_filename, ms
-      every subdir := !theme_index.directories do {
-         if subdir.matches_size(size, scalable_flag) then {
-            # Search in all the CachedDirs in the subdir
-            if f := has_icon(!subdir.cached_dirs, icon) then
-               return f
-         }
-      }
-      minimal_size := lang.Limit.MaxWord
-      every subdir := !theme_index.directories do {
-         if (ms := subdir.directory_size_distance(size, scalable_flag)) < minimal_size then {
-            if f := has_icon(!subdir.cached_dirs, icon) then {
-               closest_filename := f
-               minimal_size := ms
-            }
-         }
-      }
-      return \closest_filename
+      return IconTheme.find_icon(gen_all_icons(alternative_mime_types(get_mime_type_for_file(file))),
+                                 size)
    end
 
    private static build_desktop_entry(dm, src)
@@ -816,7 +848,7 @@ $endif
                key := prefix || e.name
                if (not member(t, key)) & 
                   src := p.child(e.name).str() &
-                  dm := load_ini_file(src) &
+                  dm := Util.load_ini_file(src) &
                   de := build_desktop_entry(dm, src) then 
                {
                   insert(t, key, de)
@@ -889,16 +921,16 @@ $endif
       local d, t, u, f, mm
       t := table()    # maps desktop entry names (ucs, eg u"kate.desktop") to DesktopEntry object
       u := table()    # mime-type (string) to list of DesktopEntry
-      every d := gen_base_dirs() do
+      every d := BaseDir.gen_data_dirs() do
          scan_application_dir(FilePath(d).child("applications"), u"", t, u)
 
       # Sort each list of DesktopEntry by the initial preference field.
       every sort_by_preference(!u)
 
       # Process customisations from the mimeapps.lists files.
-      every d := Reverse{ gen_base_dirs() } do {
+      every d := Reverse{ BaseDir.gen_data_dirs() } do {
          f := FilePath(d).walk("applications", "mimeapps.list").str()
-         if mm := load_ini_file(f) then
+         if mm := Util.load_ini_file(f) then
             process_mimeapps_list(mm, t, u)
       }
 

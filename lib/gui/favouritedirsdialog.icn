@@ -64,7 +64,7 @@ class FavouriteDirectoriesDialog(Dialog)
       okay
 
    public static get_favourites_file()
-      return FilePath(Xdg.ensure_data_home()).child("oifavouritedirs").str()
+      return FilePath(BaseDir.ensure_data_home()).child("oifavouritedirs").str()
    end
 
    public static get_pair_list()
