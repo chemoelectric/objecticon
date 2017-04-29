@@ -2044,10 +2044,14 @@ $endif
       finish_clone(t)
    end
 
+   private static get_ucs_decoded_path(url)
+      return ucs(url.get_decoded_path()) | return error(u"URL decoded path not utf8")
+   end
+
    public open_link(url)
       local r
       case string(url.scheme) of {
-         "text": send_tty(ucs(url.get_decoded_path()))
+         "text": send_tty(get_ucs_decoded_path(url)) | info_msg(&why)
          "tab": {
             parent_dialog.do_tab_cmd(ipl.pdco.List{ URL.percent_decode(separate(url.get_path(), ';')) }) |
                info_msg(&why)
@@ -2069,27 +2073,38 @@ $endif
    end
 
    public insert_link(url, ev)
-      local s, es
-      if url.scheme == u"file" then {
-         if s := ucs(url.get_decoded_path()) then {
-            es := if /ev.shift & url.is_local_file() & cwd ~== u"/" then {
-               if cwd == s then
-                  u"./"
-               else if match(cwd || u"/", s) then
-                  u"./" || s[*cwd + 2:0]
-               else
+      local s, es, r
+      case string(url.scheme) of {
+         "file": {
+            if s := get_ucs_decoded_path(url) then {
+               es := if /ev.shift & url.is_local_file() & cwd ~== u"/" then {
+                  if cwd == s then
+                     u"./"
+                  else if match(cwd || u"/", s) then
+                     u"./" || s[*cwd + 2:0]
+                  else
+                     s
+               } else
                   s
+               es := Format.shell_escape(es)
+               if url.is_local_file() & Files.is_directory(s) then {
+                  if es[-1] ~== u"/" then
+                     es ||:= u"/"
+               }
+               send_tty(es || u" ")
             } else
-               s
-            es := Format.shell_escape(es)
-            if url.is_local_file() & Files.is_directory(s) then {
-               if es[-1] ~== u"/" then
-                  es ||:= u"/"
-            }
-            send_tty(es || u" ")
+               info_msg(&why)
          }
-      } else
-         send_tty(url.ucs() || u" ")
+         "text": send_tty(get_ucs_decoded_path(url) || u" ") | info_msg(&why)
+         "run" | "launch": {
+            if r := get_runners(url) then
+               send_tty(r.get_command() || u" ")
+            else
+               info_msg(&why)
+         }
+         default:
+            send_tty(url.ucs() || u" ")
+      }
    end
 
    public err_msg(s)
@@ -2114,7 +2129,7 @@ $endif
       case string(url.scheme) of {
          "file" : {
             url.is_local_file() | return error(u"Can't run a file on another host (" || url.host || u")")
-            s := ucs(url.get_decoded_path()) | return error(u"URL decoded path not utf8")
+            s := get_ucs_decoded_path(url) | fail
             if Files.is_directory(s) then
                return ImmediateRunner(u"cd " || Format.shell_escape(s))
             # Get a DesktopEntry based on the content-type if available, or the filename.
@@ -2125,11 +2140,11 @@ $endif
             return if /fl then error(u"No matching desktop entry for this URL")
          }
          "run" : {
-            s := ucs(url.get_decoded_path()) | return error(u"URL decoded path not utf8")
+            s := get_ucs_decoded_path(url) | fail
             return ImmediateRunner(s)
          }
          "launch" : {
-            s := ucs(url.get_decoded_path()) | return error(u"URL decoded path not utf8")
+            s := get_ucs_decoded_path(url) | fail
             if cd := member(url.extract_cgi_parameters(), "wd")[1] then
                cd := ucs(cd) | return error(u"CD decoded path not utf8")
             return LaunchRunner(s, cd)
@@ -2318,8 +2333,8 @@ $endif
    public create_link_menu(url)
       local m, r, udp
       m := Menu()
-      if udp := ucs(url.get_decoded_path()) &
-         url.scheme == (u"file" | u"text" | u"run") then 
+      if udp := get_ucs_decoded_path(url) &
+         url.scheme == (u"file" | u"text") then 
       {
          m.add(TextMenuItem().
                set_label("Copy").

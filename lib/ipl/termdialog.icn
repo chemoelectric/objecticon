@@ -61,6 +61,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
    end
 
    public link_middle_clicked(url)
+      input.insert_string(ucs(url.get_decoded_path()) || u" ")
    end
 
    public create_link_menu(url)
