@@ -14,90 +14,10 @@
 #
 ############################################################################
 #
-#	options(arg, optstring,errproc) removes command options from the
-#	argument list of an Icon main procedure, returning a table of
-#	option values.
+#	options(arg, optstring,usage,errproc) removes command options
+#	from the argument list of an Icon main procedure, returning a
+#	table of option values.
 #
-############################################################################
-#  
-#     options(arg,optstring,errproc) -- Get command line options.
-#
-#     This procedure separates and interprets command options included in 
-#  the main program argument list.  Option names and values are removed
-#  from the argument list and returned in a table.
-#
-#     On the command line, options are introduced by a "-" character.  An
-#  option name is either a single printable character, as in "-n" or "-?",
-#  or a string of letters, numbers, and underscores, as in "-geometry".
-#  Valueless single-character options may appear in combination, for
-#  example as "-qtv".
-#
-#     Some options require values.  Generally, the option name is one
-#  argument and the value appears as the next argument, for example
-#  "-F file.txt".   However, with a single-character argument name
-#  (as in that example), the value may be concatenated: "-Ffile.txt"
-#  is accepted as equivalent.
-#  
-#     Options may be freely interspersed with non-option arguments.
-#  An argument of "-" is treated as a non-option.  The special argument
-#  "--" terminates option processing.  Non-option arguments are returned
-#  in the original argument list for interpretation by the caller.
-#
-#     An argument of the form @filename (a "@" immediately followed
-#  by a file name) causes options() to replace that argument with
-#  arguments retrieved from the file "filename".  Each line of the file
-#  is taken as a separate argument, exactly as it appears in the file.
-#  Arguments beginning with - are processed as options, and those
-#  starting with @ are processed as nested argument files.  An argument
-#  of "--" causes all remaining arguments IN THAT FILE ONLY to be
-#  treated as non-options (including @filename arguments).
-#
-#     The parameters of options(arg,optstring,errproc) are:
-#  
-#       arg         the argument list as passed to the main procedure.
-#
-#       optstring   a string specifying the allowable options.  This is
-#		    a concatenation, with optional spaces between, of
-#		    one or more option specs of the form
-#			-name%
-#		    where
-#			-	introduces the option
-#			name	is either a string of alphanumerics
-#				(any of a-z, A-Z, 0-9, and _)
-#				or any single printable character
-#			%	is one of the following flag characters:
-#				!	No value is required or allowed
-#			 	:	A string value is required
-#				+	An integer value is required
-#				.	A real value is required
-#
-#		    The leading "-" may be omitted for a single-character
-#		    option.  The "!" flag may be omitted except when
-#		    needed to terminate a multi-character name.
-#		    Thus, the following optstrings are equivalent:
-#			"-n+ -t -v -q -F: -geometry: -silent"
-#			"n+tvqF:-geometry:-silent"
-#			"-silent!n+tvqF:-geometry:"
-#
-#	errproc	    a procedure which will be called if an error is
-#		    is detected in the command line options.  The
-#		    procedure is called with one argument:  a string
-#		    describing the error that occurred.  After errproc()
-#		    is called, options() immediately returns the outcome
-#		    of errproc(), without processing further arguments.
-#		    Already processed arguments will have been removed
-#		    from "arg".  If "errproc" is omitted, stop() is
-#		    called if an error is detected.
-#  
-#     A table is returned containing the options that were specified.
-#  The keys are the specified option names.  The assigned values are the
-#  data values following the options converted to the specified type.
-#  A value of 1 is stored for options that accept no values.
-#  The table's default value is &null.
-#
-#     Upon return, the option arguments are removed from arg, leaving
-#  only the non-option arguments.
-#  
 ############################################################################
 
 package ipl.options
@@ -105,12 +25,14 @@ package ipl.options
 import
    io, lang, util, ipl.scan
 
+# The result of the `Opt.format` method.
 record OptFormat(names, help)
 
 class Opt()
    public const
       names, convert, multi, help, def, err
 
+   # A utility function to help format an option string.
    public format()
       local f, ns, h, ph
       ns := ""
@@ -130,6 +52,17 @@ class Opt()
       return OptFormat(ns, h)
    end
 
+   # Create a new Opt instance.
+   # @param s the name of the option; may be a list of several synonymous names 
+   # @param convert the conversion function to apply (eg `integer`,
+   # @       `real`, `string`, etc) to the option value; if omitted then the
+   # @        option takes no value.
+   # @param help   a descriptive help string
+   # @param multi  a flag value, set if multiple uses of the option are allowed.
+   # @param def  a default value if a flag requiring a value doesn't specify one.
+   # @param err  a string describing the type of parameter (for error output);
+   # @           by default the name of the `convert` procedure.
+   #
    public new(s, convert, help, multi, def, err)
       names := if type(s) == "list" then
          s
@@ -145,6 +78,10 @@ class Opt()
    end
 end
 
+# Output help for a list of `Opt`s.  This procedure may be useful if a
+# custom "usage" procedure is provided to `options`.
+#
+# @param opts  a list of `Opt`s
 procedure options_help(opts)
    local o, t
    every o := !opts do {
@@ -153,6 +90,11 @@ procedure options_help(opts)
    }
 end
 
+# Output a formatted two column help line; this is also useful if a
+# custom "usage" procedure is provided.
+#
+# @param ns the left hand (option) column
+# @param h the descriptive help string.
 procedure help_line(ns, h)
    static cols
    local i
@@ -185,6 +127,97 @@ procedure help_line(ns, h)
    }
 end
 
+#
+#     This procedure separates and interprets command options included in 
+#  the main program argument list.  Option names and values are removed
+#  from the argument list and returned in a table.
+#
+#     On the command line, options are introduced by a `-` character.  An
+#  option name is either a single printable character, as in `-n` or `-?`,
+#  or a string of letters, numbers, and underscores, as in `-geometry`.
+#  Valueless single-character options may appear in combination, for
+#  example as `-qtv`.
+#
+#     Some options require values.  Generally, the option name is one
+#  argument and the value appears as the next argument, for example
+#  `-F file.txt`.   However, with a single-character argument name
+#  (as in that example), the value may be concatenated: `-Ffile.txt`
+#  is accepted as equivalent.
+#  
+#     Options may be freely interspersed with non-option arguments.
+#  An argument of `-` is treated as a non-option.  The special argument
+#  `--` terminates option processing.  Non-option arguments are returned
+#  in the original argument list for interpretation by the caller.
+#
+#     An argument of the form `@filename` (a `@` immediately followed
+#  by a file name) causes options() to replace that argument with
+#  arguments retrieved from the file `filename`.  Each line of the file
+#  is taken as a separate argument, exactly as it appears in the file.
+#  Arguments beginning with - are processed as options, and those
+#  starting with `@` are processed as nested argument files.  An argument
+#  of `--` causes all remaining arguments IN THAT FILE ONLY to be
+#  treated as non-options (including `@filename` arguments).
+#
+#     The parameters of `options` are:
+#  
+#       `arg` -     the argument list as passed to the main procedure.
+#
+#       `optstring` - a string specifying the allowable options.  This is
+#                   a concatenation, with optional spaces between, of
+#                   one or more option specs of the form `-name%`, where
+#                    *   `-`     introduces the option
+#                    *   `name`  is either a string of alphanumerics
+#                               (any of `a-z`, `A-Z`, `0-9`, and `_`)
+#                               or any single printable character
+#                    *   `%`     is one of the following flag characters:  
+#                               `!`       No value is required or allowed  
+#                               `:`       A string value is required  
+#                               `+`       An integer value is required  
+#                               `.`       A real value is required
+#
+#                   If the string is followed by a `*` character, then
+#                   the option may be specified multiple times.
+#
+#                   The leading `-` may be omitted for a single-character
+#                   option.  The `!` flag may be omitted except when
+#                   needed to terminate a multi-character name.
+#                   Thus, the following optstrings are equivalent:
+#                   ~~~
+#                       -n+ -t -v -q -F: -geometry: -silent
+#                       n+tvqF:-geometry:-silent
+#                       -silent!n+tvqF:-geometry:
+#                   ~~~
+#
+#       `usage` -   a procedure which will be called, with the list of
+#                   `Opt` objects (see below), if the special `-help`
+#                   option is given; by default the options are listed
+#                   and `exit(0)` called.  A string may be given,
+#                   which is printed before the options.
+#
+#       `errproc` -  a procedure which will be called if an error is
+#                   is detected in the command line options.  The
+#                   procedure is called with one argument:  a string
+#                   describing the error that occurred.  After `errproc()`
+#                   is called, `options()` immediately returns the outcome
+#                   of `errproc()`, without processing further arguments.
+#                   Already processed arguments will have been removed
+#                   from `arg`.  If `errproc` is omitted, stop() is
+#                   called if an error is detected.
+#  
+#     Instead of an option string, a list of `Opt` objects may be given
+#  instead.  This allows a descriptive help string to be given for
+#  each option.
+#
+#     A table is returned containing the options that were specified.
+#  The keys are the specified option names.  The assigned values are the
+#  data values following the options converted to the specified type.  For
+#  an option allowing multiple usages, a the assigned value is a list.
+#  A value of `&yes` is stored for options that accept no values.
+#  The table's default value is `&null`.
+#
+#     Upon return, the option arguments are removed from arg, leaving
+#  only the non-option arguments.
+#
 procedure options(arg, opts, usage, errproc)
    local f, fList, fileArg, fn, ignore, optname, opttable, p, x, 
       option, k, v, opt, opttype, convert
