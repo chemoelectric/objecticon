@@ -537,20 +537,22 @@ end
 
 # PDCO for generalized conjunction
 procedure Gconj(L[])	
+   local v, j
 
-   suspend Gconj_(L,1)
+   j := 1
 
-end
-
-procedure Gconj_(L,i,v)
-
-   local e
-   if e := L[i] then {
-      suspend v:= |@e & Gconj_(L,i + 1,v)
-      L[i] := ^e
+   repeat {
+      if v := @L[j] then {
+         if j = *L then
+            suspend v
+         else
+            j +:= 1
+      } else {
+         if j = 1 then fail
+         L[j] := ^L[j]
+         j -:= 1
       }
-   else suspend v
-
+   }
 end
 
 # histogram
