@@ -139,13 +139,11 @@ end
 #  can use it to find the "*" and other special characters because it
 #  will ignore "escaped" characters.
 #
-############################################################################
-
 #
-# slashupto:  cset x string x integer x integer -> integers
-#             (c, s, i, j) -> Is (a generator)
-#    where Is are the integer positions in s[i:j] before characters
-#    in c that is not preceded by a backslash escape
+# `slashupto`:  cset `x` string `x` integer `x` integer -> integers  
+#             `(c, s, i, j)` -> `I`s (a generator)
+#    where `I`s are the integer positions in `s[i:j]` before characters
+#    in `c` that is not preceded by a backslash escape
 #
 # upto() with escapes
 procedure slashupto(c, s, i, j)		
@@ -176,20 +174,22 @@ end
 
 ############################################################################
 #
-#     The procedure snapshot(title,len) writes a snapshot of the state
-#  of string scanning, showing the value of &subject and &pos, an
+#     The procedure `snapshot(title,len)` writes a snapshot of the state
+#  of string scanning, showing the value of `&subject` and `&pos`, an
 #  optional title, and (again optionally) wrapping the display
-#  for len widht.
+#  for `len` width.
 #
 #  For example,
-#
+#  ~~
 #     "((a+b)-delta)/(c*d))" ? {
 #	 tab(bal('+\-/*'))
 #	 snapshot("example")
 #	 }
+#  ~~
 #
 #  produces
 #
+#  ~~
 #	---example---------------------------
 #	|				    |
 #	|				    |
@@ -197,16 +197,20 @@ end
 #	|			   |	    |
 #	|			    	    |
 #	-------------------------------------
+#  ~~
 #
-#     Note that the bar showing the &pos is positioned under the &posth
-#  character (actual positions are between characters).  If &pos is
-#  at the end of &subject, the bar is positioned under the quotation
+#     Note that the bar showing the `&pos` is positioned under the `&pos`th
+#  character (actual positions are between characters).  If `&pos` is
+#  at the end of `&subject`, the bar is positioned under the quotation
 #  mark delimiting the subject. For example,
 #
+#  ~~
 #     "abcdefgh" ? (tab(0) & snapshot())
+#  ~~
 #
 #  produces
 #
+#  ~~
 #	-------------------------
 #	|			|
 #	|			|
@@ -214,13 +218,17 @@ end
 #	|		      | |
 #	|			|
 #	-------------------------
+#  ~~
 #
 #     Escape sequences are handled properly. For example,
 #
+#  ~~
 #     "abc\tdef\nghi" ? (tab(upto('\n')) & snapshot())
+#  ~~
 #
 #  produces
 #
+#  ~~
 #	------------------------------
 #	|			     |
 #	|			     |
@@ -228,13 +236,17 @@ end
 #	|		      |      |
 #	|			     |
 #	------------------------------
+#  ~~
 #
 #  The title argument places a title into the top bar, as in
 #
+#  ~~
 #	"abc\tdef\nghi" ? (tab(upto('\n')) & snapshot("upto('\n')")
+#  ~~
 #
 #  which produces
 #
+#  ~~
 #      --upto('\n')-------------------
 #      |                             |
 #      |                             |
@@ -242,13 +254,10 @@ end
 #      |                     |       |
 #      |                             |
 #      -------------------------------
+#  ~~
 #
 #  The len argument rewraps the display for a screen of len width.
 #
-############################################################################
-
-
-# snapshot of string scanning
 procedure snapshot(title,len)		
 
    local bar1, bar2, bar3, is, is0, prefix, titlel, placement, POS
@@ -300,38 +309,39 @@ end
 #
 #  David A. Gamey:
 #
+#  ~~
 #     balq( c1, c2, c3, c4, c5, s, i1, i2 ) : i3
+#  ~~
 #
-#        generates the sequence of integer positions in s preceding a 
-#        character of c1 in s[i1:i2] that is (a) balanced with respect to
-#        characters in c2 and c3 and (b) not "quoted" by characters in c4 
-#        with "escape" sequences as defined in c5, but 
+#        generates the sequence of integer positions in `s` preceding a 
+#        character of `c1` in `s[i1:i2]` that is (a) balanced with respect to
+#        characters in `c2` and `c3` and (b) not "quoted" by characters in `c4` 
+#        with "escape" sequences as defined in `c5`, but 
 #        fails if there is no such position.
 #
-#        defaults:   same as for bal,
-#                    c4  the single and double quote characters ' and "
-#                    c5  the backwards slash \
-#        errors:     same as for bal,
-#                    c4 & c5 not csets
+#        defaults:   same as for `bal`,  
+#                    `c4`  the single and double quote characters ' and "  
+#                    `c5`  the backwards slash \  
+#        errors:     same as for bal,  
+#                    `c4` & `c5` not csets
 #
+#  ~~
 #     balqc( c1, c2, c3, c4, c5, s1, s2, s3, i1, i2 ) : i3
+#  ~~
 #
-#        like balq with the addition that balanced characters within 
-#        "comments", as delimited by the strings s1 and s2, are also 
-#        excluded from balancing.  In addition, if s1 is given and s2 
-#        is null then the comment terminates at the end of string.
+#        like `balq` with the addition that balanced characters within 
+#        "comments", as delimited by the strings `s1` and `s2`, are also 
+#        excluded from balancing.  In addition, if `s1` is given and `s2` 
+#        is `&null` then the comment terminates at the end of string.
 #
-#        defaults:   same as for balq,
-#                    s3 is the subject string
-#                    s1 "/*" 
-#                    s2 "*/" if s1 defaults, null otherwise
-#        errors:     same as for balq,
-#                    s1 is not a string
-#                    s2 is not a string (if s1 defaults or is specified) 
+#        defaults:   same as for `balq`,  
+#                    `s3` is the subject string  
+#                    `s1` "/*"  
+#                    `s2` "*/" if s1 defaults, null otherwise  
+#        errors:     same as for `balq`,  
+#                    `s1` is not a string  
+#                    `s2` is not a string (if s1 defaults or is specified)   
 #
-#############################################################################
-
-# bal() with quote escaping.
 procedure balq(				
                cstop, copen, cclose, cquote, cescape, s, i1, i2)
 
@@ -383,7 +393,7 @@ procedure balq(
 
 end
 
-# balq() with comment escaping
+# `balq()` with comment escaping
 procedure balqc(			
                 cstop, copen, cclose, cquote, cescape, scm, ecm, s, i1, i2)
 
@@ -477,16 +487,15 @@ end
 #                 It could be used to find things in text that have varying
 #                 representations, for example: "i.e.", "e.g.", "P.O.", etc.
 #
+#  ~~
 #  limatch(l,i)
+#  ~~
 #  
-#        l  list of strings to be found
-#        i  cset containing characters to be ignored between each string
+#        `l`  list of strings to be found  
+#        `i`  cset containing characters to be ignored between each string
 #
 #        returns the last cursor position scanned to, or fails
 #
-#############################################################################
-
-# matching items in list
 procedure limatch(l,i)			
 
    local s, f, p
@@ -510,7 +519,7 @@ procedure ahead(i, j)
 end
 
 #
-# Like many, but succeeds with the position i if zero matching chars. Many needs
+# Like `many`, but succeeds with the position `i` if zero matching chars. Many needs
 # one or more to succeed.
 #
 procedure many0(c, s, i, j)
@@ -520,7 +529,7 @@ procedure many0(c, s, i, j)
 end
 
 #
-# Like any, but succeeds with the position i if there is no matching char.
+# Like `any`, but succeeds with the position `i` if there is no matching char.
 #
 procedure any0(c, s, i, j)
    local a
@@ -529,7 +538,7 @@ procedure any0(c, s, i, j)
 end
 
 #
-# Like match, but succeeds with the position i if there is no matching string.
+# Like `match`, but succeeds with the position `i` if there is no matching string.
 #
 procedure match0(s1, s2, i, j)
    local a
@@ -538,7 +547,7 @@ procedure match0(s1, s2, i, j)
 end
 
 #
-# Search for a string using find and suspend the position after the string,
+# Search for a string using `find` and suspend the position after the string,
 # if found.
 #
 procedure past(s1, s2, i, j)
@@ -552,7 +561,7 @@ procedure past(s1, s2, i, j)
 end
 
 #
-# Like many, but limit number of characters matched to {max}.
+# Like `many`, but limit number of characters matched to `max`.
 #
 procedure max_many(c, max, s, i, j)
    local a
@@ -567,7 +576,7 @@ procedure save_scan(e)
 end
 
 #
-# Evaluate e, restoring &pos with each suspended result.
+# Evaluate `e`, restoring `&pos` with each suspended result.
 #
 procedure excursion(e)
    suspend save_state(e, PosState(&pos))
@@ -663,27 +672,27 @@ end
 # Matching functions.
 #
 
-# Match zero or more of expression e, suspending in longest first
+# Match zero or more of expression `e`, suspending in longest first
 # order (the empty string will be the last result generated).
 #
 procedure star(e)
    suspend (|@e || star(^e)) | move(0)
 end
 
-# Match one or more of expression e, in longest first order.
+# Match one or more of expression `e`, in longest first order.
 #
 procedure plus(e)
    suspend |@e || star(^e)
 end
 
-# Match one or zero instances of e.
+# Match one or zero instances of `e`.
 #
 procedure query(e)
    suspend |@e | move(0)
 end
 
-# Match e between min and max times, in longest first order.  min
-# defaults to zero, max to infinity.
+# Match `e` between `min` and `max` times, in longest first order.  `min`
+# defaults to zero, `max` to infinity.
 #
 procedure range(e, min, max)
    min := optional_param(min, 0, integer, 101) | fail
@@ -696,36 +705,36 @@ package procedure range_impl(e, i, min, max)
       suspend (|@e || range_impl(^e, i + 1, min, max)) | (if i >= min then move(0))
 end
 
-# Match zero or more chars in cset c, in longest first order.
+# Match zero or more chars in cset `c`, in longest first order.
 # Equivalent to `star{ch(c)}`.
 #
 procedure star_ch(c)
    suspend tab(many0(c) to &pos by -1)
 end
 
-# Match one or more chars in cset c, in longest first order.
+# Match one or more chars in cset `c`, in longest first order.
 # Equivalent to `plus{ch(c)}`.
 #
 procedure plus_ch(c)
    suspend tab(many(c) to &pos + 1 by -1)
 end
 
-# Match one or zero chars in cset c, in longest first order.
+# Match one or zero chars in cset `c`, in longest first order.
 # Equivalent to `query{ch(c)}`.
 #
 procedure query_ch(c)
    suspend tab(any0(c) to &pos by -1)
 end
 
-# Match exactly one char in cset c; if c omitted then match any one char.
+# Match exactly one char in cset `c`; if c omitted then match any one char.
 #
 procedure ch(c)
    suspend if /c then move(1) else tab(any(c))
 end
 
-# Match the string {s} exactly once.  Note this is equivalent to {=s},
+# Match the string `s` exactly once.  Note this is equivalent to `=s`,
 # but is preferable since it returns a substring of the string being
-# scanned, rather than {s}.  This will make any string catenation of
+# scanned, rather than `s`.  This will make any string catenation of
 # the result with adjacent matching expressions more efficient.
 #
 procedure str(s)
@@ -745,14 +754,14 @@ procedure arb()
    suspend tab(&pos to *&subject + 1)
 end
 
-# If at position i produce empty string.
+# If at position `i` produce empty string.
 #
 procedure at(i)			
    if pos(i) then
       suspend move(0)
 end
 
-# Match to position i.  This is like builtin tab, but the position
+# Match to position `i`.  This is like builtin tab, but the position
 # must be equal to, or to the right of, `&pos`.
 #
 procedure tab_to(i)
@@ -760,7 +769,7 @@ procedure tab_to(i)
       suspend tab(i)
 end
 
-# Reverse the sequence of matches produced by {e}.  NB - if {e} is an
+# Reverse the sequence of matches produced by `e`.  NB - if `e` is an
 # infinite sequence this will consume memory indefinitely.
 #
 procedure rev(e)
@@ -772,9 +781,11 @@ procedure rev(e)
 end
 
 # Expand the given cset so that all letters appear in the result both
-# in lowercase and uppercase, eg caseless_cset('Cat123') ->
-# 'catCAT123'.  The result can then be used, for example to do a
-# caseless upto search.
+# in lowercase and uppercase, eg
+# ~
+#   caseless_cset('Cat123') -> 'catCAT123'
+# ~
+# The result can then be used, for example to do a caseless upto search.
 #
 procedure caseless_cset(c)
    local ls
@@ -789,7 +800,7 @@ package record StringAnalysis(s, i, j)
 # This procedure can be used to normalize the three parameters
 # commonly given to string analysis functions (like upto, find etc).
 # The result is a `StringAnalysis` record with the normalized values
-# of s, i and j, or failure if i and/or j are out of bounds.
+# of `s`, `i` and `j`, or failure if `i` and/or `j` are out of bounds.
 #
 procedure begin_analysis(s, i, j)
    if /s := &subject then
@@ -805,7 +816,7 @@ procedure begin_analysis(s, i, j)
 end
 
 #
-# Convert and return s1 so that it has the same type as s2, which is
+# Convert and return `s1` so that it has the same type as `s2`, which is
 # assumed to be string or ucs, giving a runerr if conversion is not
 # possible.
 #
@@ -817,7 +828,7 @@ procedure same_type(s1, s2)
 end
 
 #
-# Caseless version of match()
+# Caseless version of `match()`
 #
 procedure caseless_match(s1, s2, i, j)
    local a
@@ -829,7 +840,7 @@ procedure caseless_match(s1, s2, i, j)
 end
 
 #
-# Caseless version of find()
+# Caseless version of `find()`
 #
 procedure caseless_find(s1, s2, i, j)
    local c, t, a
@@ -859,13 +870,21 @@ end
 # suspended.
 #
 # For example - 
+# ~
 #    backto('aeiou', "quick brown fox") -> {15,10,4,3} 
+# ~
+# Note that
+# ~
+#    backto(c, s, i, j) - 1
+# ~
+# should give the same sequence of results as
+# ~
+#    upto(c, s, i, j)
+# ~
+# but in reverse order, so upto applied to the above example
+# gives `{2,3,9,14}`.
 #
-# Note that backto(c, s, i, j) - 1 should give the same sequence of
-# results as upto(c, s, i, j), but in reverse order, so upto applied
-# to the above example gives {2,3,9,14}.
-#
-# Defaults: as for upto
+# Defaults: as for `upto`
 #
 procedure backto(c, s, i, j)
    local a
@@ -879,14 +898,17 @@ procedure backto(c, s, i, j)
    }
 end
 
-# This behaves like many, but searches backward from the end of the
+# This behaves like `many`, but searches backward from the end of the
 # string.  The position just to the left of the last char which is in
-# c is returned, but fails if there is no such character.
+# `c` is returned, but fails if there is no such character.
 #
 # Note that the parameters still take the standard scanning form, so
-# to search backwards from &pos to the beginning of the string during
-# a scan, use rev_many(c,,, 1) - otherwise it will search from the end
-# of &subject towards &pos.
+# to search backwards from `&pos` to the beginning of the string during
+# a scan, use
+# ~
+# rev_many(c,,, 1)
+# ~
+# otherwise it will search from the end of `&subject` towards `&pos`.
 #
 procedure rev_many(c, s, i, j)
    local a
@@ -898,7 +920,7 @@ procedure rev_many(c, s, i, j)
    return a.j ~= j
 end
 
-# This is like rev_many, but is the corresponding function for any.
+# This is like `rev_many`, but is the corresponding function for any.
 #
 procedure rev_any(c, s, i, j)
    local a
@@ -910,7 +932,7 @@ procedure rev_any(c, s, i, j)
 end
 
 #
-# Like rev_many, but succeeds with the position j if zero matching chars. rev_many needs
+# Like `rev_many`, but succeeds with the position `j` if zero matching chars. `rev_many` needs
 # one or more to succeed.
 #
 procedure rev_many0(c, s, i, j)
@@ -920,7 +942,7 @@ procedure rev_many0(c, s, i, j)
 end
 
 #
-# Like rev_any, but succeeds with the position j if there is no matching char.
+# Like `rev_any`, but succeeds with the position `j` if there is no matching char.
 #
 procedure rev_any0(c, s, i, j)
    local a
@@ -932,7 +954,9 @@ end
 # position just after the match is generated.
 #
 # The sequence generated should be equivalent to
+# ~~
 #      find(s1, s2, i, j) + *s1
+# ~~
 # but in reverse order.
 #
 procedure rev_find(s1, s2, i, j)
@@ -955,10 +979,10 @@ procedure rev_find(s1, s2, i, j)
 end
 
 #
-# This is a function to extract part of &subject relative to &pos.
-# First &pos is added to `off`, then the substring of length `len` is
+# This is a function to extract part of `&subject` relative to `&pos`.
+# First `&pos` is added to `off`, then the substring of length `len` is
 # taken from that position.  Either parameter may be -ve; no change is
-# made to &subject or &pos.
+# made to `&subject` or `&pos`.
 #
 procedure pos_off(off, len)
    /len := 1
