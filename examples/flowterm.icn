@@ -436,6 +436,15 @@ class Columns(LineBasedScrollArea)
       return self
    end
 
+   public get_tooltip(e)
+      local t, s
+      if t := object_get_over() then {
+         s := item_paint.get_size(view.cbwin, t)
+         if s.w + item_border.get_total_width() > view.w + get_area_x() then
+            return t.annotation
+      }
+   end
+
    public draw_line(xp, yp, lh, i)
       local e, j, r, s, k, W
       every j := 1 to *col_w do {
@@ -672,7 +681,11 @@ class Columns(LineBasedScrollArea)
    end
 
    public object_get_cursor()
-      return data[.\cursor]
+      return data[\cursor]
+   end
+
+   public object_get_over()
+      return data[\over]
    end
 
    public object_set_cursor(o)
@@ -2161,7 +2174,7 @@ $endif
 
    private on_columns_lclick()
       local item
-      item := columns.data[columns.get_cursor()] | fail
+      item := columns.object_get_cursor() | fail
       open_link(item_to_url(item))
    end
 
@@ -2171,19 +2184,18 @@ $endif
 
    private on_columns_mclick(ev)
       local item
-      item := columns.data[columns.get_cursor()]
+      item := columns.object_get_cursor() | fail
       insert_link(item_to_url(item), ev)
    end
 
    private on_columns_over_changed(ev)
-      local s, url
-      if /columns.over then
-         msg()
-      else {
-         s := FilePath(cwd).child(columns.data[columns.over].name).ucs() | fail
+      local s, url, item
+      if item := columns.object_get_over() then {
+         s := FilePath(cwd).child(item.name).ucs() | fail
          url := mk_file_URL(s)
          msg(url.ucs())
-      }
+      } else
+         msg()
    end
 
    private copy_text(s)
@@ -2675,7 +2687,7 @@ $endif
       local lh, t, i
       s := ucs(s) | fail
       if \cwd then {
-         lh := columns.data[columns.get_cursor()].name
+         lh := columns.object_get_cursor().name
          insert(columns_pos_table, 
                 cwd,
                 FileDialogPos(lh, columns.get_area_y()))
@@ -2916,7 +2928,7 @@ $endif
       local i
       # Now the new tab is live, copy some column settings.
       i := Positions{(!t.columns.data).name, 
-                     columns.data[columns.get_cursor()].name}
+                     columns.object_get_cursor().name}
       t.columns.
          set_area_y(columns.get_area_y()).
          set_area_x(columns.get_area_x()).

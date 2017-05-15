@@ -45,6 +45,17 @@ package class EditListField(FileSuggestField)
    end
 end
 
+package class FileListWithTooltip(ItemPaintList)
+   public get_tooltip(e)
+      local t, s
+      if t := contents[get_line_under_pointer(e)] then {
+         s := item_paint.get_size(view.cbwin, t)
+         if s.w + item_border.get_total_width() > view.w + get_area_x() then
+            return item_paint.get_string(t)
+      }
+   end
+end
+
 package class FileEditList(EditList)
    public layout()
       # Hide the button if the init_files list was empty.
@@ -961,7 +972,7 @@ class FileDialog(Dialog)
          add(favourites_list).
          add(trail)
       self.add(panel_4)
-      dlist := ItemPaintList().
+      dlist := FileListWithTooltip().
          set_size(scale(210), scale(200)).
          clear_constraints().
          set_constraint(Grid.R_INSET, scale(0)).
@@ -979,7 +990,7 @@ class FileDialog(Dialog)
          clear_constraints().
          set_layout(layout_8).
          add(dlist)
-      flist := ItemPaintList().
+      flist := FileListWithTooltip().
          set_size(scale(465), scale(365)).
          clear_constraints().
          set_constraint(Grid.L_INSET, scale(0)).
