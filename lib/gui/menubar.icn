@@ -443,7 +443,6 @@ class MenuBar(Component, MenuSystem)
    public new()
       Component.new()
       self.set_border(RaisedBorder())
-      set_tooltip_follows_mouse(&yes)
       self.menus := []
       every connect(handle_press, Event.MOUSE_LEFT_PRESS | Event.MOUSE_MIDDLE_PRESS | Event.MOUSE_RIGHT_PRESS)
       every connect(handle_release, Event.MOUSE_LEFT_RELEASE_OVER | Event.MOUSE_MIDDLE_RELEASE_OVER | Event.MOUSE_RIGHT_RELEASE_OVER)

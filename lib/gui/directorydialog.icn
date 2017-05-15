@@ -26,6 +26,17 @@ package class DirEditList(EditList)
    end
 end
 
+package class FileTreeWithTooltip(ItemPaintTree)
+   public get_tooltip(e)
+      local n, s
+      if n := contents[get_line_under_pointer(e)] then {
+         s := item_paint.get_size(view.cbwin, n.label)
+         if n.depth * col_w + s.w + item_border.get_total_width() > view.w + get_area_x() then
+            return n.label.name
+      }
+   end
+end
+
 #
 #
 # Directory dialog class.  This class provides a standard directory selection dialog.
@@ -469,7 +480,7 @@ $endif
          add(home_button).
          add(up_button)
       self.add(panel_4)
-      tree := ItemPaintTree().
+      tree := FileTreeWithTooltip().
          set_size(scale(520), scale(360)).
          clear_constraints().
          set_constraint(Grid.EOL, &yes).

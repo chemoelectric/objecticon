@@ -85,7 +85,6 @@ class Component(Rect,Align,Connectable)
       tooltip,         
       tooltip_start_delay,
       tooltip_end_delay,
-      tooltip_follows_mouse_flag,
       #
       # Reference to enclosing {Component} object.
       #
@@ -185,16 +184,6 @@ class Component(Rect,Align,Connectable)
    #
    public get_tooltip_end_delay()
       return \self.tooltip_end_delay
-   end
-
-   #
-   # This indicates whether the tooltip follows the mouse around within
-   # a component, when the tooltip changes - applicable for example in a Tree
-   # which has a tip for each node.  By default off.
-   #
-   public set_tooltip_follows_mouse(s)
-      self.tooltip_follows_mouse_flag := check_flag(s)
-      return self
    end
 
    #
