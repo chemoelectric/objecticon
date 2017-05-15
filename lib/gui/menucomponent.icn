@@ -603,7 +603,6 @@ class SubMenuProxyComponent(Component, MenuMode)
    public new(m)
       Component.new()
       self.menu := m
-      set_tooltip_follows_mouse(&yes)
       return
    end
 end

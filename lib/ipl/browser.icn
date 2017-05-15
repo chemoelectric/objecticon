@@ -1427,7 +1427,6 @@ class Img(Image, HasLastHighlight)
          connect(handle_exit, Event.MOUSE_EXIT)
          connect(handle_interrupted, Event.INTERRUPTED)
          bg_area := MapArea(,, context.url, context.title)
-         set_tooltip_follows_mouse(&yes)
       }
       connect(handle_rpress, Event.MOUSE_RIGHT_PRESS)
       set_border(NullBorder())

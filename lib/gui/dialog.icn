@@ -1117,7 +1117,8 @@ class Dialog(Component)
             }
          }
          1 : {
-            if obj ~=== self.tooltip_last_obj then {
+            if (obj ~=== self.tooltip_last_obj) | 
+               (tip ~=== self.tooltip_last_tip) then {
                if /obj then
                   self.tooltip_state := 0
                else
@@ -1135,10 +1136,7 @@ class Dialog(Component)
                   self.tooltip_end_time := (t + \obj.get_tooltip_end_delay()) | &null
                }
             } else if tip ~=== self.tooltip_last_tip then {
-               if /obj.tooltip_follows_mouse_flag then
-                  show_tooltip(obj, tip)
-               else
-                  show_tooltip(obj, tip, e)
+               show_tooltip(obj, tip, e)
                self.tooltip_end_time := (t + \obj.get_tooltip_end_delay()) | &null
             }
          }

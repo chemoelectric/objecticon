@@ -1514,7 +1514,6 @@ class TextFlow(Component, HasLastHighlight)
       v_align := Align.T
       set_constraint("x_fill", &yes)
       set_constraint("y_fill", &yes)
-      set_tooltip_follows_mouse(&yes)
       connect(handle_lmdrag, Event.MOUSE_LEFT_DRAG)
       connect(handle_lmdrag, Event.MOUSE_MIDDLE_DRAG)
       connect(handle_mpress, Event.MOUSE_MIDDLE_PRESS)
