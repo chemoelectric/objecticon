@@ -23,7 +23,7 @@
 package ipl.options
 
 import
-   io, lang, util, ipl.scan
+   io, lang, util, ipl.scan, ipl.pdco
 
 # The result of the `Opt.format` method.
 record OptFormat(names, help)
@@ -60,6 +60,7 @@ class Opt()
    # @param help   a descriptive help string
    # @param multi  a flag value, set if multiple uses of the option are allowed.
    # @param def  a default value if a flag requiring a value doesn't specify one.
+   # @           Note that it is still subject to the `convert` function.
    # @param err  a string describing the type of parameter (for error output);
    # @           by default the name of the `convert` procedure.
    #
@@ -132,17 +133,27 @@ end
 #  the main program argument list.  Option names and values are removed
 #  from the argument list and returned in a table.
 #
-#     On the command line, options are introduced by a `-` character.  An
-#  option name is either a single printable character, as in `-n` or `-?`,
-#  or a string of letters, numbers, and underscores, as in `-geometry`.
-#  Valueless single-character options may appear in combination, for
-#  example as `-qtv`.
+#     On the command line, options are introduced by a `-` character.
+#  An option name is either a single printable character, as in `-n`
+#  or `-?`, or a string of letters, numbers, and underscores, as in
+#  `-geometry`.  Single-character options may appear in combination,
+#  for example as `-qtv`.  If an option string is ambiguous, in that
+#  it may either be interpreted as a single multi-character option, or
+#  as several single-character options, then the former always has
+#  precedence.
 #
 #     Some options require values.  Generally, the option name is one
 #  argument and the value appears as the next argument, for example
-#  `-F file.txt`.   However, with a single-character argument name
-#  (as in that example), the value may be concatenated: `-Ffile.txt`
-#  is accepted as equivalent.
+#  `-F file.txt`.  However, with a single-character argument name (as
+#  in that example), the value may be concatenated: `-Ffile.txt` is
+#  accepted as equivalent.  In a combination of single character
+#  options, the last option may take a parameter: `-qFfile.txt` or
+#  `-qF file.txt`.
+#
+#     Options may be specified using an alternative format, starting
+#  with `--`.  In this case, no combination of single character
+#  options is recognised, and a parameter may follow an `=` sign, eg
+#  `--width=100`.
 #  
 #     Options may be freely interspersed with non-option arguments.
 #  An argument of `-` is treated as a non-option.  The special argument
@@ -208,6 +219,27 @@ end
 #  instead.  This allows a descriptive help string to be given for
 #  each option.
 #
+#     Using an `Opt` also allows other conversion procedures to be
+#  specified.  For example, a yes/no option might be specified as:
+#  ~~~
+#     import util(flag)
+#
+#      ...
+#
+#         Opt("f", flag, "Overwrite any existing files")
+#  ~~~
+#  This would allow `-f yes`, `--f=no`, etc.
+#
+#     `Opt` also allows a default parameter value to be specified.  In this case,
+#  the option will never obtain a parameter from the next argument, but only
+#  from within the option's own argument string.  For example:
+#  ~~~
+#         Opt("w", integer, "Width",, 200)
+#  ~~~
+#  In this case `-w30` or `--w=30` would give the result `"w"->30`,
+#  whilst `-w` alone, or `-w anything` would give the result
+#  `"w"->200`.
+#
 #     A table is returned containing the options that were specified.
 #  The keys are the specified option names.  The assigned values are the
 #  data values following the options converted to the specified type.  For
@@ -219,8 +251,8 @@ end
 #  only the non-option arguments.
 #
 procedure options(arg, opts, usage, errproc)
-   local f, fList, fileArg, fn, ignore, optname, opttable, p, x, 
-      option, k, v, opt, opttype, convert
+   local f, fList, fileArg, fn, ignore, optname, opttable, x,
+      option, k, v, p, opt, opttype, convert
    #
    #  Initialize.
    #
@@ -276,49 +308,49 @@ procedure options(arg, opts, usage, errproc)
                   ignore := &yes   # ignore following args if --
                else {
                   optname := tab(upto('=') | 0)
-                  if opt := member(opttable, string(optname)) then {
-                     if /opt.convert then
-                        v := &yes
-                     else if pos(0) & (*arg = 0 | /arg[1] | any('-', arg[1])) & \opt.def then
-                        v := opt.def
-                     else {
-                        if ="=" then
-                           p := tab(0)
-                        else
-                           p := get(arg) | return errproc("No parameter following --" || optname)
-                        v := opt.convert(p) | return errproc("--" || optname || " needs " || 
-                                                             opt.err  || " parameter")
-                     }
-                     k := opt.names[1]
-                     if /opt.multi then
-                        option[k] := v
-                     else {
-                        /option[k] := []
-                        put(option[k], v)
-                     }
-                  } else return errproc("Unrecognized option: --" || optname)
+                  opt := member(opttable, string(optname)) |
+                     return errproc("Unrecognized option: --" || optname)
+
+                  if /opt.convert then
+                     v := &yes
+                  else {
+                     p := if ="=" then
+                        tab(0)
+                     else if \arg[1] & /opt.def then
+                        get(arg)
+                     else
+                        \opt.def | return errproc("No parameter following -" || optname)
+                     v := opt.convert(p) | return errproc("-" || optname || " needs " ||  opt.err || " parameter")
+                  }
+
+                  k := opt.names[1]
+                  if /opt.multi then
+                     insert(option, k, v)
+                  else
+                     put(member(option, k), v) | insert(option, k, [v]) 
                }
             } else {
                tab(0) ? until pos(0) do {
-                  if opt := member(opttable, string(optname := ((pos(1),tab(0)) | move(1)))) then {
-                     if /opt.convert then
-                        v := &yes
-                     else if pos(0) & (*arg = 0 | /arg[1] | any('-', arg[1])) & \opt.def then
-                        v := opt.def
-                     else {
-                        p := "" ~== tab(0) | get(arg) |
-                           return errproc("No parameter following -" || optname)
-                        v := opt.convert(p) | return errproc("-" || optname || " needs " || 
-                                                             opt.err || " parameter")
-                     }
-                     k := opt.names[1]
-                     if /opt.multi then
-                        option[k] := v
-                     else {
-                        /option[k] := []
-                        put(option[k], v)
-                     }
-                  } else return errproc("Unrecognized option: -" || optname)
+                  opt := member(opttable, string(optname := ((pos(1),tab(0)) | move(1)))) | 
+                     return errproc("Unrecognized option: -" || optname)
+
+                  if /opt.convert then
+                     v := &yes
+                  else {
+                     p := if not pos(0) then
+                        tab(0)
+                     else if \arg[1] & /opt.def then
+                        get(arg)
+                     else
+                        \opt.def | return errproc("No parameter following -" || optname)
+                     v := opt.convert(p) | return errproc("-" || optname || " needs " ||  opt.err || " parameter")
+                  }
+                  
+                  k := opt.names[1]
+                  if /opt.multi then
+                     insert(option, k, v)
+                  else
+                     put(member(option, k), v) | insert(option, k, [v]) 
                }
             }
          }
@@ -327,17 +359,15 @@ procedure options(arg, opts, usage, errproc)
          #  words from lines of a text file.
          #
          else if ="@" & not pos(0) & /ignore then {
-            f := open(fn := tab(0)) |
+            fn := tab(0)
+            fileArg := use { f := open(fn), List{ f.gen() } } |
                return errproc("Can't open " || fn || ": " || &why)
-            fileArg := []
-            while put(fileArg,read(f))
-            f.close()
-            push(arg)   # push null to signal end of args from file
-            while push(arg,pull(fileArg))
+            # push null to signal end of args from file, followed by each line.
+            every push(arg, &null | back(fileArg))
          }
          else put(fList,x)
       }
    }
-   while push(arg,pull(fList))
+   every push(arg, back(fList))
    return option
 end
