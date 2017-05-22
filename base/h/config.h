@@ -55,6 +55,10 @@
    #define OI_LEADING "OI_LEADING"
 #endif
 
+#ifndef OI_IP_VER
+   #define OI_IP_VER "OI_IP_VER"
+#endif
+
 #ifndef OI_STACK_LIMIT
    #define OI_STACK_LIMIT "OI_STACK_LIMIT"
 #endif

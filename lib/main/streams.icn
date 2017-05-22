@@ -1080,14 +1080,25 @@ class SocketStream(DescStream)
    public native shutdown(how)
 
    #
-   # Return a list of ipv4 numerical addresses for the given host.
+   # Return a list of IP numerical addresses for the given host.
+   # 
+   # The second parameter, `ver`, an integer, specifies the IP
+   # versions which the result list can contain.  Possible values
+   # are :-
    #
-   public static native dns_query_4(host)
-
+   # * 4 - return only v4 addresses
+   # * 6 - return only v6 addresses
+   # * 46 - return either v4 or v6 addresses, with v4 coming first
+   # * 64 - return either v4 or v6 addresses, with v6 coming first
+   # * 0 - return either v4 or v6 addresses, in the order returned by
+   #       the underlying system call.
    #
-   # Return a list of ipv6 numerical addresses for the given host.
+   # If `ver` is omitted, the value given by the environment variable
+   # `OI_IP_VER` is used; if that is unset then `4` is used.
    #
-   public static native dns_query_6(host)
+   # @param host  the host name (a string)
+   # @param ver the IP version(s) to try
+   public static native dns_query(host, ver)
 
    private native accept_impl()
 
@@ -2004,14 +2015,25 @@ class WinsockStream(Stream, NoCopy)
    public native set_blocking_mode(flag)
 
    #
-   # Return a list of ipv4 numerical addresses for the given host.
+   # Return a list of IP numerical addresses for the given host.
+   # 
+   # The second parameter, `ver`, an integer, specifies the IP
+   # versions which the result list can contain.  Possible values
+   # are :-
    #
-   public static native dns_query_4(host)
-
+   # * 4 - return only v4 addresses
+   # * 6 - return only v6 addresses
+   # * 46 - return either v4 or v6 addresses, with v4 coming first
+   # * 64 - return either v4 or v6 addresses, with v6 coming first
+   # * 0 - return either v4 or v6 addresses, in the order returned by
+   #       the underlying system call.
    #
-   # Return a list of ipv6 numerical addresses for the given host.
+   # If `ver` is omitted, the value given by the environment variable
+   # `OI_IP_VER` is used; if that is unset then `4` is used.
    #
-   public static native dns_query_6(host)
+   # @param host  the host name (a string)
+   # @param ver the IP version(s) to try
+   public static native dns_query(host, ver)
 
    private native accept_impl()
 

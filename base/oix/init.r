@@ -182,6 +182,7 @@ word memgrowth = RegionGrowth;		/* memory region growth factor */
 double defaultfontsize = 12.0;
 char *defaultfont = "fixed";
 double defaultleading = 0.075;
+word defaultipver = 4;                  /* default ip version for dns lookup */
 
 word dodump = 1;			/* if zero never core dump;
                                          * if 1 core dump on C-level internal error (call to syserr)
@@ -1250,6 +1251,7 @@ int main(int argc, char **argv)
     env_word(OI_STACK_CUSHION, &stackcushion, 0, 10000);
     env_double(OI_FONT_SIZE, &defaultfontsize, MIN_FONT_SIZE, 1e32);
     env_double(OI_LEADING, &defaultleading, 0.0, 1e32);
+    env_word(OI_IP_VER, &defaultipver, 0, 64);
     t = getenv(OI_FONT);
     if (t && *t)
         defaultfont = salloc(t);
