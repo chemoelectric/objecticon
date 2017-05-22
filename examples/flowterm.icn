@@ -2790,7 +2790,7 @@ $endif
          connect(on_filter_dirs_menu_item, Event.ACTION)
 
       favourites_list.set_size().set_selection_list([])
-      filter.set_selection_list([u"*"])
+      filter.set_selection_list([u"*"]).set_use_wheel(&no)
       history_list.set_size().set_selection_list([])
       input := []
       theme_toolbar_button(close_button, "window-close")
