@@ -1168,6 +1168,14 @@ class Vt(LineBasedScrollArea, MenuMode)
       return self
    end
 
+   #
+   # Return the history size, but ignoring the value used by the
+   # alternate buffer, if we are in that mode.
+   #
+   public get_actual_history_size()
+      return .(\saved_buffer).history_size | .history_size
+   end
+
    private do_send_primary_device_attrs(n)
       case n of {
          0 : send("\e[?1;2;75c")
