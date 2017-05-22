@@ -2087,6 +2087,100 @@ function io_SocketStream_dns_query_6(host)
    }
 end
 
+static void add_addrinfo4(struct addrinfo *t, dptr result)
+{
+    tended struct descrip tmp;
+    char buf[INET_ADDRSTRLEN];
+    struct sockaddr_in *p = (struct sockaddr_in *)t->ai_addr;
+    inet_ntop(AF_INET, &p->sin_addr, buf, sizeof(buf));
+    cstr2string(buf, &tmp);
+    list_put(result, &tmp);
+}
+
+static void add_addrinfo6(struct addrinfo *t, dptr result)
+{
+    tended struct descrip tmp;
+    char buf[INET6_ADDRSTRLEN];
+    struct sockaddr_in6 *p = (struct sockaddr_in6 *)t->ai_addr;
+    inet_ntop(AF_INET6, &p->sin6_addr, buf, sizeof(buf));
+    cstr2string(buf, &tmp);
+    list_put(result, &tmp);
+}
+
+function io_SocketStream_dns_query(host, ver)
+   if !cnv:C_string(host) then
+      runerr(103, host)
+   if !def:C_integer(ver, defaultipver) then
+      runerr(101, ver)
+   body {
+      struct addrinfo hints;
+      struct addrinfo *res, *t;
+      tended struct descrip result;
+      int error;
+      memset(&hints, 0, sizeof(hints));
+      switch (ver) {
+          case 4:  hints.ai_family = AF_INET; break;
+          case 6:  hints.ai_family = AF_INET6; break;
+          case 46:
+          case 64:
+          case 0:  hints.ai_family = AF_UNSPEC; break;
+          default: Irunerr(205, ver);
+      }
+      hints.ai_socktype = SOCK_STREAM;
+      error = getaddrinfo(host, NULL, &hints, &res);
+      if (error != 0) {
+          getaddrinfo_error2why(error);
+          fail;
+      }
+      create_list(0, &result);
+      switch (ver) {
+          case 4: {
+              for (t = res; t; t = t->ai_next)
+                  add_addrinfo4(t, &result);
+              break;
+          }
+          case 6: {
+              for (t = res; t; t = t->ai_next)
+                  add_addrinfo6(t, &result);
+              break;
+          }
+          case 46: {
+              for (t = res; t; t = t->ai_next)
+                  if (t->ai_family == AF_INET)
+                      add_addrinfo4(t, &result);
+              for (t = res; t; t = t->ai_next)
+                  if (t->ai_family == AF_INET6)
+                      add_addrinfo6(t, &result);
+              break;
+          }
+          case 64: {
+              for (t = res; t; t = t->ai_next)
+                  if (t->ai_family == AF_INET6)
+                      add_addrinfo6(t, &result);
+              for (t = res; t; t = t->ai_next)
+                  if (t->ai_family == AF_INET)
+                      add_addrinfo4(t, &result);
+              break;
+          }
+          case 0: {
+              for (t = res; t; t = t->ai_next) {
+                  if (t->ai_family == AF_INET6)
+                      add_addrinfo6(t, &result);
+                  else if (t->ai_family == AF_INET)
+                      add_addrinfo4(t, &result);
+              }
+              break;
+          }
+      }
+      freeaddrinfo(res);
+      if (ListBlk(result).size == 0) {
+           LitWhy("No AF_INET or AF_INET6 records returned");
+           fail;
+      }
+      return result;
+   }
+end
+
 function io_SocketStream_connect(self, addr)
    if !cnv:C_string(addr) then
       runerr(103, addr)
@@ -2186,8 +2280,7 @@ end
 #else
 UnsupportedFunc(io_SocketStream_new_impl)
 UnsupportedFunc(io_SocketStream_socketpair_impl)
-UnsupportedFunc(io_SocketStream_dns_query_4)
-UnsupportedFunc(io_SocketStream_dns_query_6)
+UnsupportedFunc(io_SocketStream_dns_query)
 #endif   /* UNIX */
 
 /*
@@ -5053,45 +5146,45 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
     return 0;
 }
 
-function io_WinsockStream_dns_query_4(host)
-   if !cnv:C_string(host) then
-      runerr(103, host)
-   body {
-      struct addrinfo hints;
-      struct addrinfo *res, *t;
-      tended struct descrip tmp, result;
-      int error;
-      memset(&hints, 0, sizeof(hints));
-      hints.ai_family = AF_INET;
-      hints.ai_socktype = SOCK_STREAM;
-      error = getaddrinfo(host, NULL, &hints, &res);
-      if (error != 0) {
-          win32error2why();
-          fail;
-      }
-      create_list(0, &result);
-      for (t = res; t; t = t->ai_next) {
-          char buf[INET_ADDRSTRLEN];
-          struct sockaddr_in *p = (struct sockaddr_in *)t->ai_addr;
-          inet_ntop(AF_INET, &p->sin_addr, buf, sizeof(buf));
-          cstr2string(buf, &tmp);
-          list_put(&result, &tmp);
-      }
-      freeaddrinfo(res);
-      return result;
-   }
-end
+static void add_addrinfo4(struct addrinfo *t, dptr result)
+{
+    tended struct descrip tmp;
+    char buf[INET_ADDRSTRLEN];
+    struct sockaddr_in *p = (struct sockaddr_in *)t->ai_addr;
+    inet_ntop(AF_INET, &p->sin_addr, buf, sizeof(buf));
+    cstr2string(buf, &tmp);
+    list_put(result, &tmp);
+}
 
-function io_WinsockStream_dns_query_6(host)
+static void add_addrinfo6(struct addrinfo *t, dptr result)
+{
+    tended struct descrip tmp;
+    char buf[INET6_ADDRSTRLEN];
+    struct sockaddr_in6 *p = (struct sockaddr_in6 *)t->ai_addr;
+    inet_ntop(AF_INET6, &p->sin6_addr, buf, sizeof(buf));
+    cstr2string(buf, &tmp);
+    list_put(result, &tmp);
+}
+
+function io_WinsockStream_dns_query(host, ver)
    if !cnv:C_string(host) then
       runerr(103, host)
+   if !def:C_integer(ver, defaultipver) then
+      runerr(101, ver)
    body {
       struct addrinfo hints;
       struct addrinfo *res, *t;
-      tended struct descrip tmp, result;
+      tended struct descrip result;
       int error;
       memset(&hints, 0, sizeof(hints));
-      hints.ai_family = AF_INET6;
+      switch (ver) {
+          case 4:  hints.ai_family = AF_INET; break;
+          case 6:  hints.ai_family = AF_INET6; break;
+          case 46:
+          case 64:
+          case 0:  hints.ai_family = AF_UNSPEC; break;
+          default: Irunerr(205, ver);
+      }
       hints.ai_socktype = SOCK_STREAM;
       error = getaddrinfo(host, NULL, &hints, &res);
       if (error != 0) {
@@ -5099,14 +5192,50 @@ function io_WinsockStream_dns_query_6(host)
           fail;
       }
       create_list(0, &result);
-      for (t = res; t; t = t->ai_next) {
-          char buf[INET6_ADDRSTRLEN];
-          struct sockaddr_in6 *p = (struct sockaddr_in6 *)t->ai_addr;
-          inet_ntop(AF_INET6, &p->sin6_addr, buf, sizeof(buf));
-          cstr2string(buf, &tmp);
-          list_put(&result, &tmp);
+      switch (ver) {
+          case 4: {
+              for (t = res; t; t = t->ai_next)
+                  add_addrinfo4(t, &result);
+              break;
+          }
+          case 6: {
+              for (t = res; t; t = t->ai_next)
+                  add_addrinfo6(t, &result);
+              break;
+          }
+          case 46: {
+              for (t = res; t; t = t->ai_next)
+                  if (t->ai_family == AF_INET)
+                      add_addrinfo4(t, &result);
+              for (t = res; t; t = t->ai_next)
+                  if (t->ai_family == AF_INET6)
+                      add_addrinfo6(t, &result);
+              break;
+          }
+          case 64: {
+              for (t = res; t; t = t->ai_next)
+                  if (t->ai_family == AF_INET6)
+                      add_addrinfo6(t, &result);
+              for (t = res; t; t = t->ai_next)
+                  if (t->ai_family == AF_INET)
+                      add_addrinfo4(t, &result);
+              break;
+          }
+          case 0: {
+              for (t = res; t; t = t->ai_next) {
+                  if (t->ai_family == AF_INET6)
+                      add_addrinfo6(t, &result);
+                  else if (t->ai_family == AF_INET)
+                      add_addrinfo4(t, &result);
+              }
+              break;
+          }
       }
       freeaddrinfo(res);
+      if (ListBlk(result).size == 0) {
+           LitWhy("No AF_INET or AF_INET6 records returned");
+           fail;
+      }
       return result;
    }
 end

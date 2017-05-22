@@ -90,6 +90,7 @@ class DirectoryDialog(Dialog)
          root_node.add(TreeNode().set_label(ListEntryWithIcon(ucs(d), Files.lstat(d), Files.stat(d))).set_always_expandable(&yes))
       tree.set_root_node(root_node)
       res := &null
+      dir.set_use_wheel(&no)
    end
 
    public init_dialog()

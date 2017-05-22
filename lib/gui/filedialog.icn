@@ -207,7 +207,10 @@ class FileDialog(Dialog)
       filter.set_selection_list(ucs_list(init_filters)).set_selection(1)
       synch_pats()
       if /multiple_files_flag then {
-         file.set_selection_list(ucs_list(init_files)).set_selection(1)
+         file.
+            set_selection_list(ucs_list(init_files)).
+            set_selection(1).
+            set_use_wheel(&no)
          flist.set_select_mode(Select.ONE)
          file_overlay.set_which_one(single_file_overlay_item)
       } else {
@@ -219,10 +222,20 @@ class FileDialog(Dialog)
    end
 
    public init_dialog()
+      local s, i, x
       # Clear any cached directory list in the suggest field
       file.view.refresh()
-      if /multiple_files_flag then
+      if /multiple_files_flag then {
          file.grab_focus()
+         s := file.get_contents()
+         if *s > 0 then {
+            i := if x := Files.get_extension(s) then
+               *s - *x
+            else
+               *s + 1
+            file.view.move_cursor(1).move_cursor(i, &yes)
+         }
+      }
       win.set_min_size(win.get_width(), win.get_height())
       goto_dir(gen_favourites_directories())
    end

@@ -8,7 +8,7 @@
 
 package gui
 
-import graphics
+import graphics, util
 
 abstract class DropDown(Component, MenuMode)
    public
@@ -16,7 +16,8 @@ abstract class DropDown(Component, MenuMode)
       view,
       popup,
       direction,
-      old_focus
+      old_focus,
+      wheel_listeners
 
    #
    # Create the view component
@@ -245,6 +246,23 @@ abstract class DropDown(Component, MenuMode)
       end_change(e)
    end
 
+   #
+   # Configure whether or not to move the selection with the mouse
+   # wheel; default is yes.  Disabling the wheel is useful for
+   # dropdown lists that create the list contents dynamically, by
+   # overriding `open_popup`.
+   #
+   public set_use_wheel(s)
+      check_flag(s)
+      every (!\wheel_listeners).disconnect()
+      wheel_listeners := if /s then
+         &null
+      else
+         [connect(go_up, Event.MOUSE_WHEEL_UP).last_listener,
+          connect(go_down, Event.MOUSE_WHEEL_DOWN).last_listener]
+      return self
+   end
+
    public new()
       Component.new()
       self.set_border(SunkenBorder())
@@ -259,8 +277,7 @@ abstract class DropDown(Component, MenuMode)
       self.set_constraint("x_fill", &yes)
       self.set_constraint("x_align", Align.L)
       self.set_constraint("x_weight", 1.0)
-      connect(self.go_up, Event.MOUSE_WHEEL_UP)
-      connect(self.go_down, Event.MOUSE_WHEEL_DOWN)
+      set_use_wheel(&yes)
       every connect(self.forward_key, Event.KEY_PRESS | Event.KEY_RELEASE)
       return
    end

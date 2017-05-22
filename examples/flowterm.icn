@@ -2790,7 +2790,7 @@ $endif
          connect(on_filter_dirs_menu_item, Event.ACTION)
 
       favourites_list.set_size().set_selection_list([])
-      filter.set_selection_list([u"*"])
+      filter.set_selection_list([u"*"]).set_use_wheel(&no)
       history_list.set_size().set_selection_list([])
       input := []
       theme_toolbar_button(close_button, "window-close")
@@ -2828,7 +2828,7 @@ $endif
             set_reverse_fg(other.output.reverse_fg).
             set_reverse_bg(other.output.reverse_bg).
             set_font(other.output.font_family || "," || other.output.font_size).
-            set_history_size(other.output.history_size) | syserr("Clone output setting failed: " || &why)
+            set_history_size(other.output.get_actual_history_size()) | syserr("Clone output setting failed: " || &why)
          set_shell(other.shell)
          shell_args := copy(other.shell_args)
          shell_vars := copy(other.shell_vars)
@@ -3443,7 +3443,7 @@ procedure usage(opts)
 
    u := URL("http://objecticon.sourceforge.net/FlowTerm.html")
    writes("\nFor more details, visit ")
-   if Files.is_flowterm_tty(FileStream.stderr) then
+   if Files.is_flowterm_tty(FileStream.stdout) then
       write(Files.begin_link(u), u.str(), Files.end_link())
    else
       write(u.str())

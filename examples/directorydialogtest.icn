@@ -5,12 +5,15 @@ procedure main(a)
    opts := options(a, [Opt("we",, "Warn on existing file"),
                        Opt("re",, "Require existing file"),
                        Opt("de",, "Disallow existing file"),
+                       Opt("nd",, "Empty dirs list"),
                        Opt("l",, "Loop repeatedly, re-showing the dialog"),
                        Opt("h",, "Initially show hidden files"),
                        Opt("k",, "Keep directory between uses")])
    d :=  DirectoryDialog().
-      set_label("A Dir Dialog").
-      set_directories([Files.get_temp(), Files.get_home()])
+      set_label("A Dir Dialog")
+
+   if /opts["nd"] then
+      d.set_directories([Files.get_temp(), Files.get_home()])
 
    if \opts["h"] then
       d.set_show_hidden_files(&yes)

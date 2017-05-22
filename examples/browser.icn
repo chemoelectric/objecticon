@@ -1550,7 +1550,8 @@ class BrowserTab(TabItem, BrowserUI)
    private do_save(name, data)
       local s, d
       d := parent_dialog.file_dialog
-      d.set_file(Text.liberal_ucs(map(\name, "/\0", "--")))
+      if *\name > 0 then
+         d.set_file(Text.liberal_ucs(map(name, "/\0", "--")))
       d.set_directory(parent_dialog.last_file_dir).set_existing_file_mode(FileDialog.WARN).show_modal(parent_dialog)
       parent_dialog.last_file_dir := d.get_directory()
       if s := d.get_result() then {
@@ -1804,6 +1805,7 @@ class BrowserTab(TabItem, BrowserUI)
          set_constraint("x_align", Align.L).
          set_constraint("x_fill", &yes).
          set_constraint("x_weight", 1.0).
+         set_use_wheel(&no).
          connect(self.on_url_field, Event.ACTION).
          connect(self.on_url_field_selection, Event.SELECTION_CHANGED)
       self.add(url_field)

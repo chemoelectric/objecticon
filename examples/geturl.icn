@@ -4,7 +4,7 @@
 
 import util, http, net, lang, ipl.options, io, xdg
 
-global total, ok, err, failed, hc, opts, stdin, skipped, out
+global total, ok, err, failed, hc, opts, skipped, out
 
 class Monitor()
    private last_progress, prev_len
@@ -135,6 +135,7 @@ procedure main(args)
                           Opt("n",string, "FILE#Append to the given partial file"),
                           Opt("head",, "Do an HTTP HEAD"),
                           Opt("nsslv",, "Don't verify SSL certificates"),
+                          Opt("npro",, "Don't output progress information"),
                           Opt("c",, "Output to stdout (implies -q)"),
                           Opt("put",,"With -i, do a PUT instead of a POST"),
                           Opt("skip",, "Skip over any existing files"),
@@ -158,10 +159,10 @@ procedure main(args)
       hc.set_ssl_verify(&no)
 
    if \opts["c"] then
-      opts["q"] := 1
+      opts["q"] := &yes
 
    if \opts["head"] then 
-      opts["l"] := 1
+      opts["l"] := &yes
 
    if \opts["nz"] then
       hc.set_gzip(&no)
@@ -191,7 +192,7 @@ procedure main(args)
          hc.connect(l.connecting, NetClient.CONNECTING_EVENT)
          hc.connect(l.other, NetClient.CONNECTED_EVENT)
          hc.connect(l.other, NetClient.CLOSED_EVENT)
-      } else {
+      } else if /opts["npro"] then {
          hc.connect(l.progress, HttpClient.PROGRESS_EVENT)
          hc.connect(l.complete, HttpClient.COMPLETE_EVENT)
       }
@@ -203,25 +204,20 @@ procedure main(args)
       f := open(opts["f"]) | stop("Couldn't open ", opts["f"], ": ", &why)
       every process_one(expand_arg(|read(f)))
       close(f)
-   } else if *args = 0 then {
-      stdin := 1
+   } else if *args = 0 then
       every process_one(expand_arg(|read()))
-   } else
+   else
       every process_one(expand_arg(!args))
 
    hc.close()
 
    if /opts["q"] then {
-      write(FileStream.stderr, "Summary: Total ", total, ", Okay ", ok, ", Skipped ", skipped, 
+      ewrite("Summary: Total ", total, ", Okay ", ok, ", Skipped ", skipped, 
             ", HTTP error ", *err, ", Failed ", *failed)
-      if *err > 0 then {
-         write(FileStream.stderr, "HTTP errors on:")
-         every write(FileStream.stderr, pp_url(!err))
-      }
-      if *failed > 0 then {
-         write(FileStream.stderr, "Failed on:")
-         every write(FileStream.stderr, pp_url(!failed))
-      }
+      if *err > 0 then
+         every ewrite("HTTP errors on:" | pp_url(!err))
+      if *failed > 0 then
+         every ewrite("Failed on:" | pp_url(!failed))
    }
 
    # Save cookies
@@ -270,7 +266,7 @@ procedure process_one(a)
       if check_skip() then
          fail
       if /opts["q"] then
-         write(FileStream.stderr, "Saving URL ", pp_url(url))
+         ewrite("Saving URL ", pp_url(url))
    }
 
    hr := HttpRequest().
@@ -385,7 +381,7 @@ procedure process_one(a)
             }
 
             if /opts["q"] then
-               write(FileStream.stderr, msg)
+               ewrite(msg)
          }
       }
       ok +:= 1
@@ -400,7 +396,7 @@ procedure process_one(a)
          if s := hc.get_http_error() then {
             put(err, url)
             if /opts["q"] then
-               write(FileStream.stderr, "HTTP Error: ", s, " - no data output")
+               ewrite("HTTP Error: ", s, " - no data output")
          } else {
             put(failed, url)
          }
@@ -438,7 +434,7 @@ procedure check_skip()
    \opts["skip"] | fail
    Files.access(out) | fail
    if /opts["q"] then
-      write(FileStream.stderr, "Skipping existing file ", pp_out())
+      ewrite("Skipping existing file ", pp_out())
    skipped +:= 1
    return
 end

@@ -564,8 +564,8 @@ $endif
    #
    public static get_extension(f)
       local i                                                     
-      if i := backto('.', f) then
-         return "" ~== f[i:0]
+      if 2 < (i := backto('.', f)\1) <= *f then
+         return f[i:0]
    end
 
    #
