@@ -1045,8 +1045,8 @@ class SocketStream(DescStream)
    # Connect a socket to the given address.  The address is a string
    # in the form "unix:<filename>" for an {AF_UNIX} address,
    # "inet:<host>:<port>" for an {AF_INET} address, or
-   # "inet6:<host>:<port>" for an {AF_INET6} address.  The host can be
-   # "INADDR_ANY" if desired.
+   # "inet6:<host>:<port>" for an {AF_INET6} address.  The "wildcard"
+   # host can be specified by using the host string "*".
    #
    public native connect(addr)
 
@@ -1971,8 +1971,8 @@ class WinsockStream(Stream, NoCopy)
    #
    # Connect a socket to the given address.  The address is a string
    # in the form "inet:<host>:<port>" for an {AF_INET} address, or
-   # "inet6:<host>:<port>" for an {AF_INET6} address.  The host can be
-   # "INADDR_ANY" if desired.
+   # "inet6:<host>:<port>" for an {AF_INET6} address.  The "wildcard"
+   # host can be specified by using the host string "*".
    #
    public native connect(addr)
 

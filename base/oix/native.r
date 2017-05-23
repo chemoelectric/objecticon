@@ -1787,7 +1787,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_STREAM;
-        if (strcmp(buf, "INADDR_ANY") == 0) {
+        if (strcmp(buf, "*") == 0) {
             hints.ai_flags = AI_PASSIVE;
             host = 0;
         } else
@@ -1838,7 +1838,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_INET6;
         hints.ai_socktype = SOCK_STREAM;
-        if (strcmp(host, "INADDR_ANY") == 0) {
+        if (strcmp(host, "*") == 0) {
             hints.ai_flags = AI_PASSIVE;
             host = 0;
         }
@@ -3895,7 +3895,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_STREAM;
-        if (strcmp(buf, "INADDR_ANY") == 0) {
+        if (strcmp(buf, "*") == 0) {
             hints.ai_flags = AI_PASSIVE;
             host = 0;
         } else
@@ -3946,7 +3946,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_INET6;
         hints.ai_socktype = SOCK_STREAM;
-        if (strcmp(host, "INADDR_ANY") == 0) {
+        if (strcmp(host, "*") == 0) {
             hints.ai_flags = AI_PASSIVE;
             host = 0;
         }
