@@ -655,6 +655,7 @@ function map(s1,s2,s3)
 
       if (is:ucs(s1)) {
           tended struct descrip utf8;
+          static struct staticstr buf = {16 * sizeof(struct mappair)};
           static struct mappair *maptab = 0;
           static word maptab_len = 0;
           char *p1, *p2, *p3;
@@ -686,7 +687,9 @@ function map(s1,s2,s3)
                   runerr(208);
               }
               maptab_len = UcsBlk(s2).length;
-              maptab = safe_realloc(maptab, maptab_len * sizeof(struct mappair));
+              ssreserve(&buf, maptab_len * sizeof(struct mappair));
+              maptab = (struct mappair *)buf.s;
+
               p2 = StrLoc(UcsBlk(s2).utf8);
               p3 = StrLoc(UcsBlk(s3).utf8);
               for (i = 0; i < maptab_len; ++i) {

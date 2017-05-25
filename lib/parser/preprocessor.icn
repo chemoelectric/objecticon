@@ -475,7 +475,14 @@ class Preprocessor(Connectable)
    #
    private read_line()
       local result
-      until result := read(file) do {
+      repeat {
+         if result := file.read_line() then {
+            if \result then
+               break
+            # else EOF, fall through
+         } else
+            err("error reading: " || &why)
+         
          if *if_stack ~= nest_level then {
             err("$if(s) without $endif(s): " ||
                           *if_stack - nest_level)

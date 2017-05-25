@@ -649,6 +649,7 @@ static void doubles2list(dptr result, int n, ...)
         MakeReal(d, &tmp);
         list_put(result, &tmp);
     }
+    va_end(argp);
 }
 
 static void matrix2list(dptr result, cairo_matrix_t *m)

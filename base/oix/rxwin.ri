@@ -53,7 +53,7 @@ static void no_clip(wsp ws, int and_win);
 static int make_mod(unsigned int state);
 static char* property_to_string(wdp wd, Atom target, int number_items, void* data);
 static Atom convert_target(wdp wd, Atom desired_target);
-static void get_atom_descriptor(wsp ws, Atom a, dptr dest);
+static void get_atom_descriptor(wdp wd, Atom a, dptr dest);
 static void synch_state(wsp ws);
 static void synch_state1(wsp ws);
 static void synch_net_wm_state(wsp ws, int desired_state);
@@ -81,6 +81,7 @@ static double calc_pt(double *x, double *y, double rx, double ry, double th);
 static double calc_progress_factor(double rx, double ry);
 static void synch_pos(wsp ws);
 static int limit_strlen(word n);
+static char *get_atom_name(wdp wd, Atom a);
 
 static stringint drawops[] = {
    { 0, 12},
@@ -458,36 +459,30 @@ do {
 } while(0)
 #enddef
 
-static char *atom_fmt(wsp ws,Atom a) 
+/*
+ * A convenient wrapper around XGetAtomName, which returns a pointer
+ * to a static string.
+ */
+static char *get_atom_name(wdp wd, Atom a)
 {
-    static int n = 0;
-    static char buff[8][96];
-    char *s, *r;
-    r = buff[n];
+    static struct staticstr buf = {32};
+    char *t;
+    /* XGetAtomName raises an error on None. */
     if (a == None)
-        return "None(0)";
-
-    s = XGetAtomName(ws->display->display, a);
-    if (s) {
-        sprintf(r, "%.64s(%ld)", s, (long)a);
-        XFree(s);
-    } else {
-        sprintf(r, "?unknown atom(%ld)", (long)a);
-    }
-
-    n = (n + 1) % 8;
-    return r;
+        return "(None)";
+    MemProtect(t = XGetAtomName(wd->display, a));
+    sscpy(&buf, t);
+    XFree(t);
+    return buf.s;
 }
 
 /*
- * Get the string name of the given Atom into dest.  The string is
- * allocated in the string region.
+ * Get the string name of the given Atom into the descriptor pointed
+ * to by dest, which should be tended.
  */
-static void get_atom_descriptor(wsp ws, Atom a, dptr dest)
+static void get_atom_descriptor(wdp wd, Atom a, dptr dest)
 {
-    char *s = XGetAtomName(ws->display->display, a);
-    cstr2string(s, dest);
-    XFree(s);
+    cstr2string(get_atom_name(wd, a), dest);
 }
 
 static Atom convert_target(wdp wd, Atom desired_target)
@@ -532,18 +527,15 @@ static char* property_to_string(wdp wd, Atom target, int number_items, void* dat
             total_len = 0;
 
             /* Convert to atom names. */
-            for (i = 0; i < number_items; i++) {
-                char *atom_name = XGetAtomName(wd->display, long_array[i] );
-                if (atom_name) {
-                    curr_len = strlen(atom_name) + 1;    /* +1 for the \n */
-                    if (total_len + curr_len + 1 > length) {  /* +1 for the \0 */
-                        length = total_len + curr_len + 1;
-                        result = safe_realloc(result, length);
-                    }
-                    sprintf(result + total_len, "%s\n", atom_name);
-                    total_len += curr_len;
-                    XFree(atom_name);
+            for (i = 0; i < number_items; i++) { 
+                char *atom_name = get_atom_name(wd, long_array[i]);
+                curr_len = strlen(atom_name) + 1;    /* +1 for the \n */
+                if (total_len + curr_len + 1 > length) {  /* +1 for the \0 */
+                    length = total_len + curr_len + 1;
+                    result = safe_realloc(result, length);
                 }
+                sprintf(result + total_len, "%s\n", atom_name);
+                total_len += curr_len;
             }
             break;
         }
@@ -602,25 +594,24 @@ void pollevent(wbp w)
         switch (event.type) {
             case SelectionRequest: {
                 tended struct descrip tmp;
-                if (selection_debug)
-                    printf("SelectionRequest event:\n\towner=%lx requestor=%lx "
-                           "property=%s target=%s selection=%s\n",
+                if (selection_debug) {
+                    printf("SelectionRequest event:\n\towner=%lx requestor=%lx property=%s",
                            (long)event.xselectionrequest.owner,
                            (long)event.xselectionrequest.requestor,
-                           atom_fmt(ws, event.xselectionrequest.property),
-                           atom_fmt(ws, event.xselectionrequest.target),
-                           atom_fmt(ws, event.xselectionrequest.selection)
-                        );
+                           get_atom_name(wd, event.xselectionrequest.property));
+                    printf(" target=%s", get_atom_name(wd, event.xselectionrequest.target));
+                    printf(" selection=%s\n", get_atom_name(wd, event.xselectionrequest.selection));
+                }
 
                 MakeInt(SELECTIONREQUEST, &tmp);
                 list_put(&ws->listp, &tmp);
                 MakeInt((word)event.xselectionrequest.requestor, &tmp);
                 list_put(&ws->listp, &tmp);
-                get_atom_descriptor(ws, event.xselectionrequest.property, &tmp);
+                get_atom_descriptor(wd, event.xselectionrequest.property, &tmp);
                 list_put(&ws->listp, &tmp);
-                get_atom_descriptor(ws, event.xselectionrequest.selection, &tmp);
+                get_atom_descriptor(wd, event.xselectionrequest.selection, &tmp);
                 list_put(&ws->listp, &tmp);
-                get_atom_descriptor(ws, event.xselectionrequest.target, &tmp);
+                get_atom_descriptor(wd, event.xselectionrequest.target, &tmp);
                 list_put(&ws->listp, &tmp);
                 MakeInt(event.xselectionrequest.time, &tmp);
                 list_put(&ws->listp, &tmp);
@@ -632,10 +623,10 @@ void pollevent(wbp w)
                 if (selection_debug)
                     printf("SelectionClear event win=%lx selection=%s\n",
                            (long)event.xselectionclear.window,
-                           atom_fmt(ws, event.xselectionclear.selection));
+                           get_atom_name(wd, event.xselectionclear.selection));
                 MakeInt(SELECTIONCLEAR, &tmp);
                 list_put(&ws->listp, &tmp);
-                get_atom_descriptor(ws, event.xselectionclear.selection, &tmp);
+                get_atom_descriptor(wd, event.xselectionclear.selection, &tmp);
                 list_put(&ws->listp, &tmp);
                 break;
             }
@@ -650,18 +641,18 @@ void pollevent(wbp w)
                 int status;
                 char *conv_str;
 
-                if (selection_debug)
-                    printf("SelectionNotify: requestor=%lx selection=%s target=%s property=%s\n",
-                           (long)event.xselection.requestor,
-                           atom_fmt(ws, event.xselection.selection),
-                           atom_fmt(ws, event.xselection.target),
-                           atom_fmt(ws, event.xselection.property));
+                if (selection_debug) {
+                    printf("SelectionNotify: requestor=%lx selection=%s",
+                           (long)event.xselection.requestor, get_atom_name(wd, event.xselection.selection));
+                    printf(" target=%s", get_atom_name(wd, event.xselection.target));
+                    printf(" property=%s\n", get_atom_name(wd, event.xselection.property));
+                }
 
                 MakeInt(SELECTIONRESPONSE, &tmp);
                 list_put(&ws->listp, &tmp);
-                get_atom_descriptor(ws, event.xselection.selection, &tmp);
+                get_atom_descriptor(wd, event.xselection.selection, &tmp);
                 list_put(&ws->listp, &tmp);
-                get_atom_descriptor(ws, event.xselection.target, &tmp);
+                get_atom_descriptor(wd, event.xselection.target, &tmp);
                 list_put(&ws->listp, &tmp);
 
                 if (event.xselection.property == None) {
@@ -671,7 +662,7 @@ void pollevent(wbp w)
                     break;
                 }
 
-                status = XGetWindowProperty(ws->display->display,
+                status = XGetWindowProperty(wd->display,
                                             ws->win,
                                             event.xselection.property,
                                             0,
@@ -710,9 +701,9 @@ void pollevent(wbp w)
                 bytes_read = nitems * (actual_format/8);
                 if (selection_debug)
                     printf("Got %lu items x %d bits -> %ld bytes actual_type=%s\n",
-                           nitems, actual_format, (long)bytes_read, atom_fmt(ws, actual_type));
+                           nitems, actual_format, (long)bytes_read, get_atom_name(wd, actual_type));
 
-                conv_str = property_to_string(ws->display,
+                conv_str = property_to_string(wd,
                                               actual_type,
                                               nitems,
                                               prop);
@@ -766,7 +757,7 @@ void pollevent(wbp w)
                 /*
                  * only client message we handle at present are destroy requests
                  */
-                if (event.xclient.data.l[0] == ATOM(ws->display, WM_DELETE_WINDOW))
+                if (event.xclient.data.l[0] == ATOM(wd, WM_DELETE_WINDOW))
                     qeventcode(ws, WINDOWCLOSED);
                 break;
             }
@@ -1373,15 +1364,12 @@ int ownselection(wbp w, char *selname)
     /* Check for no change in selection */
     if (curr == ws->win) {
         if (selection_debug)
-            printf("Ownership of selection %s retained by %lx\n", 
-                   atom_fmt(ws, selection),
-                   (long)ws->win);
+            printf("Ownership of selection %s retained by %lx\n",
+                   get_atom_name(wd, selection), (long)ws->win);
     } else {
         if (selection_debug)
-            printf("Owner of selection %s set from %lx -> %lx\n", 
-                   atom_fmt(ws, selection),
-                   (long)curr,
-                   (long)ws->win);
+            printf("Owner of selection %s set from %lx -> %lx\n",
+                   get_atom_name(wd, selection), (long)curr, (long)ws->win);
 
         /*
          * X doesn't send a SelectionClear event to us when the selection
@@ -1397,7 +1385,7 @@ int ownselection(wbp w, char *selname)
                         printf("Enqueueing artificial SELECTIONCLEAR to current owner %lx\n", (long)curr);
                     MakeInt(SELECTIONCLEAR, &tmp);
                     list_put(&x->listp, &tmp);
-                    get_atom_descriptor(x, selection, &tmp);
+                    get_atom_descriptor(wd, selection, &tmp);
                     list_put(&x->listp, &tmp);
                     break;
                 }
@@ -1426,12 +1414,12 @@ int requestselection(wbp w, char *selname, char *targetname)
      * perfect, but is better than nothing.
      */
     property = wd->atoms[ATOM__OBJECTICON_PROP0 + (ws->propcount++) % 8];
-    if (selection_debug)
-        printf("getselectioncontent: calling XConvertSelection selection=%s target=%s property=%s requestor=%lx\n",
-               atom_fmt(ws, selection),
-               atom_fmt(ws, target),
-               atom_fmt(ws, property),
-               (long)ws->win);
+    if (selection_debug) {
+        printf("getselectioncontent: calling XConvertSelection selection=%s", get_atom_name(wd, selection));
+        printf(" target=%s", get_atom_name(wd, target));
+        printf(" property=%s", get_atom_name(wd, property));
+        printf(" requestor=%lx\n", (long)ws->win);
+    }
 
     XConvertSelection(wd->display,
                       selection, 
@@ -3577,7 +3565,7 @@ static wdp alcdisplay(char *s)
  */
 char *tofcpatternstr(char *s)
 {
-    static char *res = 0;
+    static struct staticstr buf = {64};
     int flags;
     double size;
     char *t, family[MAXFONTWORD];
@@ -3659,12 +3647,11 @@ char *tofcpatternstr(char *s)
         FcPatternAddInteger(p, FC_WIDTH, FC_WIDTH_EXPANDED);
 
     t = (char *)FcNameUnparse(p);
-    res = safe_realloc(res, strlen(t) + 1);
-    strcpy(res, t);
+    sscpy(&buf, t);
     free(t);
     FcPatternDestroy(p);
 
-    return res;
+    return buf.s;
 }
 
 /*

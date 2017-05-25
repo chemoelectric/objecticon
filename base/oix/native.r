@@ -1959,7 +1959,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_STREAM;
-        if (strcmp(buf, "INADDR_ANY") == 0) {
+        if (strcmp(buf, "*") == 0) {
             hints.ai_flags = AI_PASSIVE;
             host = 0;
         } else
@@ -2010,7 +2010,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_INET6;
         hints.ai_socktype = SOCK_STREAM;
-        if (strcmp(host, "INADDR_ANY") == 0) {
+        if (strcmp(host, "*") == 0) {
             hints.ai_flags = AI_PASSIVE;
             host = 0;
         }
@@ -2028,64 +2028,6 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
     LitWhy("Bad socket address format (unknown family)");
     return 0;
 }
-
-function io_SocketStream_dns_query_4(host)
-   if !cnv:C_string(host) then
-      runerr(103, host)
-   body {
-      struct addrinfo hints;
-      struct addrinfo *res, *t;
-      tended struct descrip tmp, result;
-      int error;
-      memset(&hints, 0, sizeof(hints));
-      hints.ai_family = AF_INET;
-      hints.ai_socktype = SOCK_STREAM;
-      error = getaddrinfo(host, NULL, &hints, &res);
-      if (error != 0) {
-          getaddrinfo_error2why(error);
-          fail;
-      }
-      create_list(0, &result);
-      for (t = res; t; t = t->ai_next) {
-          char buf[INET_ADDRSTRLEN];
-          struct sockaddr_in *p = (struct sockaddr_in *)t->ai_addr;
-          inet_ntop(AF_INET, &p->sin_addr, buf, sizeof(buf));
-          cstr2string(buf, &tmp);
-          list_put(&result, &tmp);
-      }
-      freeaddrinfo(res);
-      return result;
-   }
-end
-
-function io_SocketStream_dns_query_6(host)
-   if !cnv:C_string(host) then
-      runerr(103, host)
-   body {
-      struct addrinfo hints;
-      struct addrinfo *res, *t;
-      tended struct descrip tmp, result;
-      int error;
-      memset(&hints, 0, sizeof(hints));
-      hints.ai_family = AF_INET6;
-      hints.ai_socktype = SOCK_STREAM;
-      error = getaddrinfo(host, NULL, &hints, &res);
-      if (error != 0) {
-          getaddrinfo_error2why(error);
-          fail;
-      }
-      create_list(0, &result);
-      for (t = res; t; t = t->ai_next) {
-          char buf[INET6_ADDRSTRLEN];
-          struct sockaddr_in6 *p = (struct sockaddr_in6 *)t->ai_addr;
-          inet_ntop(AF_INET6, &p->sin6_addr, buf, sizeof(buf));
-          cstr2string(buf, &tmp);
-          list_put(&result, &tmp);
-      }
-      freeaddrinfo(res);
-      return result;
-   }
-end
 
 static void add_addrinfo4(struct addrinfo *t, dptr result)
 {
@@ -2539,7 +2481,8 @@ function io_DescStream_poll(l, timeout)
       runerr(101, timeout)
    body {
 #if HAVE_POLL
-       static struct pollfd *ufds = 0;
+       static struct staticstr buf = {16 * sizeof(struct pollfd)};
+       struct pollfd *ufds = 0;
        unsigned int nfds;
        int i, rc;
        struct lgstate state;
@@ -2551,8 +2494,10 @@ function io_DescStream_poll(l, timeout)
 
        nfds = ListBlk(l).size / 2;
 
-       if (nfds > 0)
-           ufds = safe_realloc(ufds, nfds * sizeof(struct pollfd));
+       if (nfds > 0) {
+           ssreserve(&buf, nfds * sizeof(struct pollfd));
+           ufds = (struct pollfd *)buf.s;
+       }
 
        le = lgfirst(&ListBlk(l), &state);
        for (i = 0; i < nfds; ++i) {
@@ -5076,7 +5021,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_STREAM;
-        if (strcmp(buf, "INADDR_ANY") == 0) {
+        if (strcmp(buf, "*") == 0) {
             hints.ai_flags = AI_PASSIVE;
             host = 0;
         } else
@@ -5127,7 +5072,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_INET6;
         hints.ai_socktype = SOCK_STREAM;
-        if (strcmp(host, "INADDR_ANY") == 0) {
+        if (strcmp(host, "*") == 0) {
             hints.ai_flags = AI_PASSIVE;
             host = 0;
         }
@@ -5338,7 +5283,8 @@ function io_DescStream_poll(l, timeout)
    if !def:C_integer(timeout, -1) then
       runerr(101, timeout)
    body {
-       static struct pollfd *ufds = 0;
+       static struct staticstr buf = {16 * sizeof(struct pollfd)};
+       struct pollfd *ufds = 0;
        unsigned int nfds;
        int i, rc;
        struct lgstate state;
@@ -5350,8 +5296,10 @@ function io_DescStream_poll(l, timeout)
 
        nfds = ListBlk(l).size / 2;
 
-       if (nfds > 0)
-           ufds = safe_realloc(ufds, nfds * sizeof(struct pollfd));
+       if (nfds > 0) {
+           ssreserve(&buf, nfds * sizeof(struct pollfd));
+           ufds = (struct pollfd *)buf.s;
+       }
 
        le = lgfirst(&ListBlk(l), &state);
        for (i = 0; i < nfds; ++i) {

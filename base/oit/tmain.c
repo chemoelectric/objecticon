@@ -173,7 +173,7 @@ int main(int argc, char **argv)
     oixloc = findexe("oix");
     if (!oixloc)
         quit("Couldn't find oix on PATH");
-    oixloc = intern(canonicalize(intern(oixloc)));
+    oixloc = intern(canonicalize(oixloc));
 
     if (argc == 1)
         long_usage();

@@ -13,6 +13,15 @@ struct fileparts {			/* struct of file name parts */
    };
 
 /*
+ * A structure for holding a static string buffer.
+ */
+struct staticstr {
+    size_t smin;                        /* don't shrink below this size */
+    size_t curr;                        /* the current allocated size */
+    char *s;                            /* the buffer */
+};
+
+/*
  * str_buf references a string buffer. Strings are built a character
  *  at a time. When a buffer "fragment" is filled, another is allocated
  *  and the the current string copied to it.
@@ -49,6 +58,13 @@ struct str_buf {
  */
 #define ElemCount(a)  (sizeof(a)/sizeof(a[0]))
 #define ElemSize(a)   (sizeof(a[0]))
+
+/*
+ * Absolute value, maximum, and minimum.
+ */
+#define Abs(x)          (((x)<0)?(-(x)):(x))
+#define Max(x,y)        ((x)>(y)?(x):(y))
+#define Min(x,y)        ((x)<(y)?(x):(y))
 
 /*
  * Hash functions for symbol tables.  Cast to uword so that the result

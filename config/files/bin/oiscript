@@ -5,13 +5,9 @@ fi
 mkdir -p -m 777 $OIX_CACHE
 HASH=$OIX_CACHE/`md5sum "$1" | cut -c1-32`
 if [ ! -x $HASH ] ; then
-    SRC=$OIX_CACHE/src-$$.icn
-    cp "$1" $SRC
-    if ! oit -s -o $HASH $SRC ; then
-        rm -f $SRC
+    if ! oit -s -o $HASH "$1" ; then
         exit 1
     fi
-    rm -f $SRC
     chmod 555 $HASH
 fi
 shift

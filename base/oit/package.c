@@ -255,8 +255,7 @@ void ensure_file_in_package(char *file, char *ipackage)
 
     /* Intern the bits */
     iname = intern(fps->name);
-    idir = intern(fps->dir);
-    idir = intern(canonicalize(idir));
+    idir = intern(canonicalize(fps->dir));
     pd = lookup_package_dir(idir);
     if (!pd) {
         /*
