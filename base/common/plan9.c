@@ -320,8 +320,8 @@ oi_getenv(char *name)
 {
     int f;
     long r, n;
-    static char *ans = 0;
     char *p, *ep, *ename;
+    static struct staticstr buf = {128};
     ename = safe_malloc(strlen(name) + 6);
     sprint(ename, "/env/%s", name);
     f = open(ename, OREAD);
@@ -333,21 +333,21 @@ oi_getenv(char *name)
         close(f);
         return 0;
     }
-    ans = safe_realloc(ans, n + 1);
+    ssreserve(&buf, n + 1);
     seek(f, 0, 0);
-    r = readn(f, ans, n);
+    r = readn(f, buf.s, n);
     if (r != n) {
         close(f);
         return 0;
     }
     /* Replace the \0 separators used by rc list variables. */
-    ep = ans + n - 1;
-    for(p = ans; p < ep; p++)
+    ep = buf.s + n - 1;
+    for(p = buf.s; p < ep; p++)
         if(*p == '\0')
             *p = ' ';
-    ans[n] = '\0';
+    buf.s[n] = '\0';
     close(f);
-    return ans;
+    return buf.s;
 }
 
 void
