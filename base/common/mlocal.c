@@ -1071,8 +1071,10 @@ char *maketemp(char *fn)
 {
     static struct staticstr buf = {128};
 #if MSWIN32
-    GetTempPath(sizeof(result) - 16, result);
-    strcat(result, fn);
+    char tmp[MaxPath];
+    GetTempPath(sizeof(tmp), tmp);
+    ssreserve(&buf, strlen(tmp) + strlen(fn) + 1);
+    sprintf(buf.s, "%s%s", tmp, fn);
 #else
     char *tmp = getenv("TEMP");
     if (tmp == 0)
@@ -1092,9 +1094,9 @@ char *get_system_error()
 #if MSWIN32
     char *msg;
     msg = wchar_to_utf8(_wcserror(errno));
-    snprintf(result, sizeof(result), "%s (errno=%d)", msg, errno);
+    ssreserve(&buf, strlen(msg) + 32);
+    sprintf(buf.s, "%s (errno=%d)", msg, errno);
     free(msg);
-    return result;
 #else
     char *msg = 0;
 
@@ -1181,7 +1183,7 @@ void ssdbg(struct staticstr *ss)
 {
     fprintf(stderr, "ss=%p smin=%ld curr=%ld", ss, (long)ss->smin, (long)ss->curr);
     if (ss->s)
-        fprintf(stderr, " s=%p('%s',%ld)\n", ss->s, ss->s, strlen(ss->s));
+        fprintf(stderr, " s=%p('%s',%ld)\n", ss->s, ss->s, (long)strlen(ss->s));
     else
         fprintf(stderr, " s=nil\n");
 }
