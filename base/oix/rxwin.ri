@@ -465,16 +465,15 @@ do {
  */
 static char *get_atom_name(wdp wd, Atom a)
 {
-    static char *buff = 0;
+    static struct staticstr buf = {32};
     char *t;
     /* XGetAtomName raises an error on None. */
     if (a == None)
         return "(None)";
     MemProtect(t = XGetAtomName(wd->display, a));
-    buff = safe_realloc(buff, strlen(t) + 1);
-    strcpy(buff, t);
+    sscpy(&buf, t);
     XFree(t);
-    return buff;
+    return buf.s;
 }
 
 /*
@@ -3566,7 +3565,7 @@ static wdp alcdisplay(char *s)
  */
 char *tofcpatternstr(char *s)
 {
-    static char *res = 0;
+    static struct staticstr buf = {64};
     int flags;
     double size;
     char *t, family[MAXFONTWORD];
@@ -3648,12 +3647,11 @@ char *tofcpatternstr(char *s)
         FcPatternAddInteger(p, FC_WIDTH, FC_WIDTH_EXPANDED);
 
     t = (char *)FcNameUnparse(p);
-    res = safe_realloc(res, strlen(t) + 1);
-    strcpy(res, t);
+    sscpy(&buf, t);
     free(t);
     FcPatternDestroy(p);
 
-    return res;
+    return buf.s;
 }
 
 /*

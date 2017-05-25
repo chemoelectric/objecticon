@@ -10,16 +10,6 @@ static word calc_ucs_offset_words(word n_offs, int offset_bits);
 static word calc_ucs_index_step(word utf8_len, word len, int offset_bits);
 
 /*
- * The result buffer is shared by several functions besides file
- * handling functions, so make sure MaxPath is big enough.
- */
-#if MaxPath < 128
-   #error "MaxPath too small"
-#endif
-
-static char result[MaxPath];
-
-/*
  *  relfile(prog, mod) -- find related file.
  *
  *  Given that prog is the argv[0] by which this program was executed,
@@ -33,14 +23,16 @@ static char result[MaxPath];
  */
 char *relfile(char *prog, char *mod) 
 {
+    static struct staticstr buf = {128};
     char *t = findexe(prog);
     if (!t) {
         fprintf(stderr, "cannot find location of %s\n", prog);
         exit(EXIT_FAILURE);
     }
-    strcat(t, mod);                     /* append adjustment */
-    normalize(t);                       /* normalize result */
-    return t;
+    ssreserve(&buf, strlen(t) + strlen(mod) + 1);
+    sprintf(buf.s, "%s%s", t, mod);     /* append adjustment */
+    normalize(buf.s);                       /* normalize result */
+    return buf.s;
 }
 
 /*
@@ -70,12 +62,10 @@ char *findexe(char *name)
         path = "";
 
     for (;;) {
-        char tmp[MaxPath];
         char *e = pathelem(&path);
         if (!e)
             break;
-        strcpy(tmp, e);
-        if ((p = tryexe(tmp, name)))        /* look for file */
+        if ((p = tryexe(e, name)))        /* look for file */
             return p;
     }
 
@@ -274,29 +264,25 @@ static char *tryfile(char *dir, char *name, char *extn)
  */
 char *canonicalize(char *path)
 {
-    if (isabsolute(path)) {
-        if (strlen(path) + 1 > sizeof(result)) {
-            fprintf(stderr, "path too long to canonicalize: %s", path);
-            exit(EXIT_FAILURE);
-        }
-        strcpy(result, path);
-    } else {
+    static struct staticstr buf = {128};
+    if (isabsolute(path))
+        sscpy(&buf, path);
+    else {
+        char cwd[MaxPath];
         int l;
-        if (!getcwd(result, sizeof(result))) {
+        if (!getcwd(cwd, sizeof(cwd))) {
             fprintf(stderr, "getcwd return 0 - current working dir too long.");
             exit(EXIT_FAILURE);
         }
-        l = strlen(result);
-        if (l + 1 + strlen(path) + 1 > sizeof(result)) {
-            fprintf(stderr, "path too long to canonicalize: %s", path);
-            exit(EXIT_FAILURE);
-        }
-        if (!strchr(FILEPREFIX, result[l - 1]))
-            result[l++] = FILESEP;
-        strcpy(&result[l], path);
+        l = strlen(cwd);
+        ssreserve(&buf, l + 1 + strlen(path) + 1);
+        strcpy(buf.s, cwd);
+        if (!strchr(FILEPREFIX, buf.s[l - 1]))
+            buf.s[l++] = FILESEP;
+        strcpy(&buf.s[l], path);
     }
-    normalize(result);
-    return result;
+    normalize(buf.s);
+    return buf.s;
 }
 
 
@@ -317,7 +303,6 @@ char *canonicalize(char *path)
 char *pathfind(char *cd, char *path, char *name, char *extn)
 {
     char *p, *name_dir;
-    char tmp[MaxPath];
 
     /* Don't search the path if we have an absolute file */
     if (isabsolute(name))
@@ -327,6 +312,7 @@ char *pathfind(char *cd, char *path, char *name, char *extn)
      * the cd */
     name_dir = getdir(name);
     if (*name_dir) {
+        char tmp[MaxPath];
         if (!cd)
             return tryfile(0, name, extn);
         snprintf(tmp, sizeof(tmp), "%s%s", cd, name_dir);
@@ -344,8 +330,7 @@ char *pathfind(char *cd, char *path, char *name, char *extn)
         char *e = pathelem(&path);
         if (!e)
             break;
-        strcpy(tmp, e);
-        if ((p = tryfile(tmp, name, extn)))        /* look for file */
+        if ((p = tryfile(e, name, extn)))        /* look for file */
             return p;
     }
 
@@ -364,6 +349,7 @@ char *pathfind(char *cd, char *path, char *name, char *extn)
  */
 char *pathelem(char **ps)
 {
+    static struct staticstr buf = {128};
     char *s = *ps, *e;
     int n;
 
@@ -379,19 +365,17 @@ char *pathelem(char **ps)
         s = ".";
         n = 1;
     }
-    if (n + 2 > sizeof(result)) {
-        *ps = 0;
-        return 0;
-    }
-    memcpy(result, s, n);
-    if (!strchr(FILEPREFIX, result[n - 1]))
-        result[n++] = FILESEP;
-    result[n] = 0;
+
+    ssreserve(&buf, n + 2);
+    memcpy(buf.s, s, n);
+    if (!strchr(FILEPREFIX, buf.s[n - 1]))
+        buf.s[n++] = FILESEP;
+    buf.s[n] = 0;
     if (*e)
         *ps = e + 1;
     else 
         *ps = 0;
-    return result;
+    return buf.s;
 }
 
 /*
@@ -437,6 +421,7 @@ char *getdir(char *s)
  */
 struct fileparts *fparse(char *s)
 {
+    static struct staticstr buf = {128};
     static struct fileparts fp;
     int n;
     char *p, *q;
@@ -451,19 +436,15 @@ struct fileparts *fparse(char *s)
             break;
         }
     }
-
-    if (fp.ext - s + 2 > sizeof(result))
-        fp.dir = fp.name = fp.ext = "";
-    else {
-        fp.dir = result;
-        n = q - s;
-        memcpy(fp.dir, s, n);
-        fp.dir[n] = '\0';
-        fp.name = result + n + 1;
-        n = fp.ext - q;
-        memcpy(fp.name, q, n);
-        fp.name[n] = '\0';
-    }
+    ssreserve(&buf, fp.ext - s + 2);
+    fp.dir = buf.s;
+    n = q - s;
+    memcpy(fp.dir, s, n);
+    fp.dir[n] = '\0';
+    fp.name = buf.s + n + 1;
+    n = fp.ext - q;
+    memcpy(fp.name, q, n);
+    fp.name[n] = '\0';
 
     return &fp;
 }
@@ -473,15 +454,15 @@ struct fileparts *fparse(char *s)
  */
 char *makename(char *d, char *name, char *e)
 {
-    char tmp[MaxPath];
+    static struct staticstr buf = {128};
     struct fileparts *fp = fparse(name);
     if (d)
         fp->dir = d;
     if (e)
         fp->ext = e;
-    snprintf(tmp, sizeof(tmp), "%s%s%s", fp->dir, fp->name, fp->ext);
-    strcpy(result, tmp);
-    return result;
+    ssreserve(&buf, strlen(fp->dir) + strlen(fp->name) + strlen(fp->ext) + 1);
+    sprintf(buf.s, "%s%s%s", fp->dir, fp->name, fp->ext);
+    return buf.s;
 }
 
 struct rangeset *init_rangeset()
@@ -1008,32 +989,33 @@ int strncasecmp(char *s1, char *s2, int n)
  */
 char *double2cstr(double n)
 {
+    static char result[64];
     char *p, *s = result;
     if (n == 0.0)                        /* ensure -0.0 (which == 0.0), prints as "0.0" */
-        strcpy(s, "0.0");
-    else {
-        s++; 				/* leave room for leading zero */
-        sprintf(s, "%.*g", Precision, n);
+        return "0.0";
 
-        /*
-         * Now clean up possible messes.
-         */
-        while (*s == ' ')			/* delete leading blanks */
-            s++;
-        if (*s == '.') {			/* prefix 0 to initial period */
-            s--;
-            *s = '0';
-        }
-        else if (!strchr(s, '.') && !strchr(s, 'e') && !strchr(s, 'E'))
-            strcat(s, ".0");		/* if no decimal point or exp. */
-        if (s[strlen(s) - 1] == '.')		/* if decimal point is at end ... */
-            strcat(s, "0");
+    s++; 				/* leave room for leading zero */
+    sprintf(s, "%.*g", Precision, n);
 
-        /* Convert e+0dd -> e+dd */
-        if ((p = strchr(s, 'e')) && p[2] == '0' && 
-            isdigit((unsigned char)p[3]) && isdigit((unsigned char)p[4]))
-            strcpy(p + 2, p + 3);
+    /*
+     * Now clean up possible messes.
+     */
+    while (*s == ' ')			/* delete leading blanks */
+        s++;
+    if (*s == '.') {			/* prefix 0 to initial period */
+        s--;
+        *s = '0';
     }
+    else if (!strchr(s, '.') && !strchr(s, 'e') && !strchr(s, 'E'))
+        strcat(s, ".0");		/* if no decimal point or exp. */
+    if (s[strlen(s) - 1] == '.')		/* if decimal point is at end ... */
+        strcat(s, "0");
+
+    /* Convert e+0dd -> e+dd */
+    if ((p = strchr(s, 'e')) && p[2] == '0' && 
+        isdigit((unsigned char)p[3]) && isdigit((unsigned char)p[4]))
+        strcpy(p + 2, p + 3);
+
     return s;
 }
 
@@ -1042,6 +1024,7 @@ char *double2cstr(double n)
  */
 char *word2cstr(word n)
 {
+    static char result[32];
     sprintf(result, WordFmt, n);
     return result;
 }
@@ -1065,16 +1048,19 @@ unsigned int hashcstr(char *s)
  */
 char *get_hostname()
 {
+    static struct staticstr buf = {64};
 #if HAVE_UNAME
-    static struct utsname utsn;
+    struct utsname utsn;
     if (uname(&utsn) < 0)
         return 0;
-    return utsn.nodename;
+    sscpy(&buf, utsn.nodename);
 #else
+    char result[256];
     if (gethostname(result, sizeof(result)) < 0)
         return 0;
-    return result;
+    sscpy(&buf, result);
 #endif
+    return buf.s;
 }
 
 /*
@@ -1083,6 +1069,7 @@ char *get_hostname()
  */
 char *maketemp(char *fn)
 {
+    static struct staticstr buf = {128};
 #if MSWIN32
     GetTempPath(sizeof(result) - 16, result);
     strcat(result, fn);
@@ -1090,9 +1077,10 @@ char *maketemp(char *fn)
     char *tmp = getenv("TEMP");
     if (tmp == 0)
         tmp = "/tmp";
-    snprintf(result, sizeof(result), "%s%c%s", tmp, FILESEP, fn);
+    ssreserve(&buf, strlen(tmp) + 1 + strlen(fn) + 1);
+    sprintf(buf.s, "%s%c%s", tmp, FILESEP, fn);
 #endif
-    return result;
+    return buf.s;
 }
 
 /*
@@ -1100,6 +1088,7 @@ char *maketemp(char *fn)
  */
 char *get_system_error()
 {
+    static struct staticstr buf = {128};
 #if MSWIN32
     char *msg;
     msg = wchar_to_utf8(_wcserror(errno));
@@ -1118,10 +1107,10 @@ char *get_system_error()
     if (!msg)
         msg = "Unknown system error";
 
-    snprintf(result, sizeof(result), "%s (errno=%d)", msg, errno);
-
-    return result;
+    ssreserve(&buf, strlen(msg) + 32);
+    sprintf(buf.s, "%s (errno=%d)", msg, errno);
 #endif
+    return buf.s;
 }
 
 /*
@@ -1132,4 +1121,67 @@ char *salloc(char *s)
     char *s1;
     s1 = safe_malloc(strlen(s) + 1);
     return strcpy(s1, s);
+}
+
+/*
+ * Ensure n bytes are allocated in the given buffer.  The old value of
+ * the buffer (if any) is lost.
+ */
+void ssreserve(struct staticstr *ss, size_t n)
+{
+    if (n > ss->curr) {
+        ss->curr = n;
+        free(ss->s);
+        ss->s = safe_malloc(n);
+        *ss->s = 0;
+    } else if (n < ss->curr) {
+        if (ss->curr > ss->smin) {
+            ss->curr = Max(n, ss->smin);
+            ss->s = safe_realloc(ss->s, ss->curr);
+            *ss->s = 0;
+        }
+    }
+}
+
+/*
+ * Ensure n bytes are allocated in the given buffer.  The old value of
+ * the buffer remains.
+ */
+void ssexpand(struct staticstr *ss, size_t n)
+{
+    if (n > ss->curr) {
+        ss->curr = n;
+        ss->s = safe_realloc(ss->s, ss->curr);
+    }
+}
+
+/*
+ * Copy the given string into the buffer.
+ */
+char *sscpy(struct staticstr *ss, char *val)
+{
+    ssreserve(ss, strlen(val) + 1);
+    return strcpy(ss->s, val);
+}
+
+/*
+ * Append the given string to the buffer, which must already contain a
+ * valid string.
+ */
+char *sscat(struct staticstr *ss, char *val)
+{
+    ssexpand(ss, strlen(ss->s) + strlen(val) + 1);
+    return strcat(ss->s, val);
+}
+
+/*
+ * Show the state of the buffer.
+ */
+void ssdbg(struct staticstr *ss)
+{
+    fprintf(stderr, "ss=%p smin=%ld curr=%ld", ss, (long)ss->smin, (long)ss->curr);
+    if (ss->s)
+        fprintf(stderr, " s=%p('%s',%ld)\n", ss->s, ss->s, strlen(ss->s));
+    else
+        fprintf(stderr, " s=nil\n");
 }

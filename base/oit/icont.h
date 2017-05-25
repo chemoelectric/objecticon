@@ -40,8 +40,5 @@
 #define F_Readable   010000000  /* global has (package) readable scope */
 
 #define MemProtect(notnull) do {if (!(notnull)) quit("Out of memory");} while(0)
-#define Abs(x) (((x) < 0) ? (-(x)) : (x))
-#define Max(x,y)        ((x)>(y)?(x):(y))
-#define Min(x,y)        ((x)<(y)?(x):(y))
 
 #endif

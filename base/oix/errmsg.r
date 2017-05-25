@@ -69,7 +69,6 @@ struct errtab errtab[] = {
     {154, "paletted pixel format expected"},
 #endif					/* Graphics */
 
-    {159, "string too long"},
     {169, "insufficient arguments"},
     {170, "string or integer expected"},
     {171, "flag value expected"},

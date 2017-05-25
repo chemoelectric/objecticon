@@ -2162,40 +2162,51 @@ dptr lookup_named_global(dptr name, int incl, struct progstate *prog)
     return prog->Globals + i;
 }
 
-
-static char c_buff[4096];     /* Buff for conversion to static C strings */
-
 char *buffstr(dptr d)
 {
-    if (StrLen(*d) >= sizeof(c_buff))
-        fatalerr(159, d);
-    memcpy(c_buff, StrLoc(*d), StrLen(*d));
-    c_buff[StrLen(*d)] = 0;
-    return c_buff;
+    static struct staticstr buf = {128};
+    ssreserve(&buf, StrLen(*d) + 1);
+    memcpy(buf.s, StrLoc(*d), StrLen(*d));
+    buf.s[StrLen(*d)] = 0;
+    return buf.s;
 }
 
 #passthru #define _DPTR dptr
 #passthru #define _CHARPP char **
 void buffnstr(dptr d, char **s, ...)
 {
-    int free;
-    char *t;
+    static struct staticstr buf = {128};
+    word need;
+    char **s1, *t;
     va_list ap;
+    dptr d1;
+
     va_start(ap, s);
-    t = c_buff;
-    free = sizeof(c_buff);
-    while (d) {
-        if (StrLen(*d) >= free)
-            fatalerr(159, d);
-        memcpy(t, StrLoc(*d), StrLen(*d));
-        *s = t;
-        t += StrLen(*d);
-        *t++ = 0;
-        free -= StrLen(*d) + 1;
-        d = va_arg(ap, _DPTR);
-        if (!d)
+    need = 0;
+    d1 = d;
+    while (d1) {
+        need += StrLen(*d1) + 1;
+        d1 = va_arg(ap, _DPTR);
+        if (!d1)
             break;
-        s = va_arg(ap, _CHARPP);
+        va_arg(ap, _CHARPP);
+    }
+    va_end(ap);
+
+    ssreserve(&buf, need);
+    va_start(ap, s);
+    d1 = d;
+    s1 = s;
+    t = buf.s;
+    while (d1) {
+        memcpy(t, StrLoc(*d1), StrLen(*d1));
+        *s1 = t;
+        t += StrLen(*d1);
+        *t++ = 0;
+        d1 = va_arg(ap, _DPTR);
+        if (!d1)
+            break;
+        s1 = va_arg(ap, _CHARPP);
     }
     va_end(ap);
 }

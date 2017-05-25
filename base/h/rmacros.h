@@ -153,13 +153,6 @@
 #endif
 
 /*
- * Absolute value, maximum, and minimum.
- */
-#define Abs(x) (((x) < 0) ? (-(x)) : (x))
-#define Max(x,y)        ((x)>(y)?(x):(y))
-#define Min(x,y)        ((x)<(y)?(x):(y))
-
-/*
  * Compare double to zero with given tolerance factor.
  */
 #define NearZero(x, zs) (fabs(x) < pow(10.0, -(zs + 1)))
