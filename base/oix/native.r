@@ -2230,7 +2230,8 @@ function io_DescStream_poll(l, timeout)
       runerr(101, timeout)
    body {
 #if HAVE_POLL
-       static struct pollfd *ufds = 0;
+       static struct staticstr buf = {16 * sizeof(struct pollfd)};
+       struct pollfd *ufds = 0;
        unsigned int nfds;
        int i, rc;
        struct lgstate state;
@@ -2242,8 +2243,10 @@ function io_DescStream_poll(l, timeout)
 
        nfds = ListBlk(l).size / 2;
 
-       if (nfds > 0)
-           ufds = safe_realloc(ufds, nfds * sizeof(struct pollfd));
+       if (nfds > 0) {
+           ssreserve(&buf, nfds * sizeof(struct pollfd));
+           ufds = (struct pollfd *)buf.s;
+       }
 
        le = lgfirst(&ListBlk(l), &state);
        for (i = 0; i < nfds; ++i) {
@@ -4157,7 +4160,8 @@ function io_DescStream_poll(l, timeout)
    if !def:C_integer(timeout, -1) then
       runerr(101, timeout)
    body {
-       static struct pollfd *ufds = 0;
+       static struct staticstr buf = {16 * sizeof(struct pollfd)};
+       struct pollfd *ufds = 0;
        unsigned int nfds;
        int i, rc;
        struct lgstate state;
@@ -4169,8 +4173,10 @@ function io_DescStream_poll(l, timeout)
 
        nfds = ListBlk(l).size / 2;
 
-       if (nfds > 0)
-           ufds = safe_realloc(ufds, nfds * sizeof(struct pollfd));
+       if (nfds > 0) {
+           ssreserve(&buf, nfds * sizeof(struct pollfd));
+           ufds = (struct pollfd *)buf.s;
+       }
 
        le = lgfirst(&ListBlk(l), &state);
        for (i = 0; i < nfds; ++i) {
