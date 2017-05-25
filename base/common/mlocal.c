@@ -1077,10 +1077,13 @@ char *maketemp(char *fn)
 {
     static struct staticstr buf = {128};
 #if MSWIN32
-    char tmp[MaxPath];
-    GetTempPath(sizeof(tmp), tmp);
+    WCHAR path[MaxPath];
+    char *tmp;
+    GetTempPathW(ElemCount(path), path);
+    tmp = wchar_to_utf8(path);
     ssreserve(&buf, strlen(tmp) + strlen(fn) + 1);
     sprintf(buf.s, "%s%s", tmp, fn);
+    free(tmp);
 #else
     char *tmp = getenv("TEMP");
     if (tmp == 0)
