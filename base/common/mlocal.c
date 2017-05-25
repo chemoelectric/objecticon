@@ -40,7 +40,8 @@ char *relfile(char *prog, char *mod)
  *  POSIX 1003.2 rules) for executable name.
  * 
  *  A pointer to a static buffer is returned, or NULL if
- *  not found.
+ *  not found.  NB: this buffer is the same as that returned
+ *  by pathfind and makename.
  */
 char *findexe(char *name) 
 {
@@ -294,7 +295,9 @@ char *canonicalize(char *path)
  *  that the file must be a readable simple text file.
  *
  *  A pointer to a static buffer is returned, or NULL if not found.
- *
+ *  NB: this buffer is the same as that returned by findexe and
+ *  makename.
+ * 
  *  cd is the current directory; may be NULL, meaning the "real" cd
  *  path is the IPATH or LPATH value, or NULL if unset.
  *  name is the file name.
@@ -450,7 +453,10 @@ struct fileparts *fparse(char *s)
 }
 
 /*
- * makename - make a file name, optionally substituting a new dir and/or ext
+ * makename - make a file name, optionally substituting a new dir and/or ext.
+ * 
+ *  A pointer to a static buffer is returned.  NB: this buffer is the
+ *  same as that returned by pathfind and findexe.
  */
 char *makename(char *d, char *name, char *e)
 {
@@ -1135,14 +1141,14 @@ void ssreserve(struct staticstr *ss, size_t n)
         ss->curr = n;
         free(ss->s);
         ss->s = safe_malloc(n);
-        *ss->s = 0;
     } else if (n < ss->curr) {
         if (ss->curr > ss->smin) {
             ss->curr = Max(n, ss->smin);
             ss->s = safe_realloc(ss->s, ss->curr);
-            *ss->s = 0;
         }
     }
+    if (ss->s)
+        *ss->s = 0;
 }
 
 /*
