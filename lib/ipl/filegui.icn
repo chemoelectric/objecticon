@@ -776,14 +776,12 @@ class RenameDialog(NameDialog)
    end
 
    public init_dialog()
-      local i, s, x
+      local s, x
       s := name_field.get_contents()
       # Start with text selected, but not the extension.
-      i := if not Files.is_directory(p.str()) & x := Files.get_extension(s) then
-         *s - *x
-      else
-         *s + 1
-      name_field.move_cursor(1).move_cursor(i, &yes)
+      name_field.move_cursor(1).move_cursor(*s + 1, &yes)
+      if not Files.is_directory(p.str()) & x := Files.get_extension(s) then
+         name_field.move_cursor(*s - *x, &yes)
    end
 
    # The constructor requires a ucs string, being the file to be renamed.
