@@ -1296,7 +1296,11 @@ class Terminal(TabItem, VtUI)
             param := (0 <= integer(param)) | return error("integer >= 0 expected to list-height")
             set_list_height(scale(param))
          }
-         "auto-close" : set_auto_close(&yes)
+         "auto-close" : {
+            /param := &yes
+            param := check_flag_param(s, param) | fail
+            set_auto_close(param)
+         }
          "title" : set_title(param)
          "fav-dir" : {
             check_param(s, param) | fail
@@ -1332,7 +1336,9 @@ class Terminal(TabItem, VtUI)
          }
          "adjacent" : {
             check_new(s) | fail
-            set_adjacent(&yes)
+            /param := &yes
+            param := check_flag_param(s, param) | fail
+            set_adjacent(param)
          }
          "list-focus" : {
             if /param then
@@ -1441,7 +1447,9 @@ class Terminal(TabItem, VtUI)
          }
          "select" : {
             check_new(s) | fail
-            set_select(&yes)
+            /param := &yes
+            param := check_flag_param(s, param) | fail
+            set_select(param)
          }
          "history": {
             /param := DEFAULT_HISTORY_SIZE
@@ -1478,7 +1486,7 @@ class Terminal(TabItem, VtUI)
             send_tty(param)
          }
          "filter": {
-            check_param(s, param) | fail
+            /param := u"*"
             filter.set_contents(param)
             resort_cwd(&yes)
          }
@@ -2055,6 +2063,7 @@ $endif
       }
       parent_dialog.done_tab_cmds(t)
       finish_clone(t)
+      return
    end
 
    private static get_ucs_decoded_path(url)
@@ -2819,6 +2828,7 @@ $endif
          sorter := other.sorter
          ascending := other.ascending
          annotate_opt := other.annotate_opt
+         auto_close_flag := other.auto_close_flag
          c := if \other.is_hidden_flag then other.remembered_focus else other.parent_dialog.get_focus()
          set_remembered_focus(if c === other.columns then columns else output)
          log_file := other.log_file
@@ -3380,9 +3390,9 @@ procedure usage(opts)
    help_line(":show-hidden=FLAG", "Toggle or set whether or not to show hidden files and directories in the list.")
    help_line(":sort-dirs=FLAG", "Toggle or set whether or not to sort the directory portion of the list in the same way as the files (by default, the directories are always sorted by name).")
    help_line(":filter-dirs=FLAG", "Toggle or set whether or not to filter directories using the filter setting (by default, the directories are not filtered).")
-   help_line(":select", "Make this tab the selected tab.")
+   help_line(":select=FLAG", "Set whether to make this tab the selected tab.  The default is \"yes\".")
    help_line(":history=INTEGER", "Specify the directory history size.  The default is 100.")
-   help_line(":adjacent", "Add this tab adjacent to the current tab, rather than at the end of all the tabs.")
+   help_line(":adjacent=FLAG", "Set whether to add this tab adjacent to the current tab, rather than at the end of all the tabs.  The default is \"yes\".")
    help_line(":sh=STRING", "Specify the shell to run.  The default is null, meaning use the user's default shell.")
    help_line(":sh-arg=STRING", "Specify an argument to pass to the shell; may be given several times to give multiple arguments.")
    help_line(":sh-var=NAME=STRING", "Specify an environment variable setting to pass to the shell; may be given several times to give multiple variables.  If just NAME is given (with no =), then NAME is deleted from the environment.")
@@ -3395,13 +3405,13 @@ procedure usage(opts)
    help_line(":scroll=INTEGER", "Specify the scroll history size.  The default is 500.")
    help_line(":list-width=INTEGER", "The width of the list component in pixels. The default is 300 scaled pixels.")
    help_line(":list-height=INTEGER", "The height of the list component in pixels. The default is 300 scaled pixels.")
-   help_line(":auto-close", "Automatically close the tab if the forked shell process ends.")
+   help_line(":auto-close=FLAG", "Set whether to automatically close the tab if the forked shell process ends.  The default is \"yes\".")
    help_line(":title=STRING" , "Set the title of the tab.  The default is null, meaning show the shell's current directory.")
    help_line(":key=KEY,BITS,MASK,COMMAND", "Set/clear a custom key setting.  See the full documentation page for details.")
    help_line(":reset-keys", "Reset custom key settings back to their default state.")
    help_line(":string=STRING", "Insert a string as though typed by the user; like :send-tty, but quietens the cursor and goes to the bottom of the terminal content.")
    help_line(":search=FLAG", "Toggle or set the visibility of the search panel.")
-   help_line(":filter=PATTERN", "Set the list filter to the given pattern; use * to show all files.")
+   help_line(":filter=PATTERN", "Set the list filter to the given pattern.  The default is \"*\", meaning show all files.")
    help_line(":focus-filter", "Give the filter field the keyboard focus.")
    help_line(":send-tty=STRING", "Send a string directly to the pseudo-terminal.")
    help_line(":fav-dir=DIR", "Add a directory to the favourites list.")
