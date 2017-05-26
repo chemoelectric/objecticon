@@ -2063,7 +2063,7 @@ $endif
       }
       parent_dialog.done_tab_cmds(t)
       finish_clone(t)
-      return
+      return self
    end
 
    private static get_ucs_decoded_path(url)
