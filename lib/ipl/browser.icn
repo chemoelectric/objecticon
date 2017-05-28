@@ -223,6 +223,7 @@ class Cache()
          if is(ce, CacheData) then
             total -:= *ce.data
       }
+      return self
    end
 
    public get(url)
