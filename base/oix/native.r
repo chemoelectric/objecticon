@@ -1749,7 +1749,7 @@ static void getaddrinfo_error2why(int error)
     if (error == EAI_SYSTEM)
         errno2why();
     else
-        whyf("Name lookup failure: %s (gai errno=%d)", gai_strerror(error), error);
+        whyf("%s (gai errno=%d)", gai_strerror(error), error);
 }
 
 static struct sockaddr *parse_sockaddr(char *s, int *len)
