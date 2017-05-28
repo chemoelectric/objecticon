@@ -584,6 +584,7 @@ class Download()
       case type of {
          HttpClient.RETRYING_EVENT:  s ||:= ": " || &why
          NetClient.CONNECTING_EVENT: s ||:= " to " || src.server || ":" || src.port
+         NetClient.CONNECTED_EVENT: s ||:= " to " || ev
       }
       log(s)
    end

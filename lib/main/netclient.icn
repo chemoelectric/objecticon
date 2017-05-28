@@ -77,17 +77,19 @@ $ifdef _PLAN9
    # Open the connection.
    #
    protected open_connection()
-      local addr
+      local addr, cs
       close_connection()
       fire(CONNECTING_EVENT)
       if \ssl_flag then
          return error("SSL not supported")
       addr := "tcp!" || server || "!" || port
-      connection := NetStream.dial_first(addr, timeout, task) | return error("Couldn't connect to " || addr || ": " || &why)
+      cs := NetStream.cs_query(addr, task)[1] | return error("Couldn't translate address: " || &why)
+      connection := NetStream.connect(cs, timeout, task) | 
+         return error("Couldn't connect to " || addr || " (" || cs || "): " || &why)
       connection := NonBlockStream(connection,, 1048576, 1048576).
          set_write_on_close(NonBlockStream.DISCARD)
       sbuff := ""
-      fire(CONNECTED_EVENT)
+      fire(CONNECTED_EVENT, cs)
       return self
    end
 $elsifdef _MS_WIN32
@@ -105,7 +107,7 @@ $elsifdef _MS_WIN32
       fire(CONNECTING_EVENT)
       if \ssl_flag then
          return error("SSL not supported")
-      ip := dns_query()[1] | fail
+      ip := dns_query()[1] | return error("Couldn't translate address: " || &why)
       if upto('.', ip) then {
          domain := ProtocolFormat.INET
          addr := "inet:" || ip || ":" || port
@@ -117,14 +119,14 @@ $elsifdef _MS_WIN32
 
       connection := WinsockStream(domain)
       connection.set_blocking_mode(&no) | {
-         close_connection()
+         save_why{ close_connection() }
          return error("Couldn't put socket in non-blocking mode: " || &why)
       }
 
       connection.connect(addr) | {
          if errno() = WSAError.EWOULDBLOCK then {
             r := do_poll(Poll.OUT) | {
-               close_connection()
+               save_why{ close_connection() }
                return error("Couldn't connect to " || msg_addr || ": " || &why)
             }
             if /r then {
@@ -136,12 +138,12 @@ $elsifdef _MS_WIN32
                return error("Couldn't connect to " || msg_addr || ": socket error")
             }
          } else {
-            close_connection()
+            save_why{ close_connection() }
             return error("Couldn't connect to " || msg_addr || ": " || &why)
          }
       }
       sbuff := ""
-      fire(CONNECTED_EVENT)
+      fire(CONNECTED_EVENT, addr)
       return self
    end
 $else
@@ -186,7 +188,7 @@ $else
       fire(CONNECTING_EVENT)
 
       if \server then {
-         ip := dns_query()[1] | fail
+         ip := dns_query()[1] | return error("Couldn't translate address: " || &why)
          if upto('.', ip) then {
             domain := ProtocolFormat.INET
             addr := "inet:" || ip || ":" || port
@@ -203,14 +205,14 @@ $else
 
       connection := SocketStream(domain)
       connection.flag(FileOpt.NONBLOCK) | {
-         close_connection()
+         save_why{ close_connection() }
          return error("Couldn't put socket in non-blocking mode: " || &why)
       }
 
       connection.connect(addr) | {
          if errno() = Errno.EINPROGRESS then {
             r := do_poll(Poll.OUT) | {
-               close_connection()
+               save_why{ close_connection() }
                return error("Couldn't connect to " || msg_addr || ": " || &why)
             }
             if /r then {
@@ -222,31 +224,31 @@ $else
                return error("Couldn't connect to " || msg_addr || ": socket error")
             }
          } else {
-            close_connection()
+            save_why{ close_connection() }
             return error("Couldn't connect to " || msg_addr || ": " || &why)
          }
       }
       if \ssl_flag then {
          ssl_connection := SslStream(connection, server) | {
-            close_connection()
+            save_why{ close_connection() }
             return error("Couldn't create SslStream: " || &why)
          }
          until ssl_connection.connect() do {
             ssl_maybe_poll() | {
-               close_connection()
+               save_why{ close_connection() }
                return error("Couldn't perform SSL connection: " || &why)
             }
          }
          if \ssl_verify_flag then {
             ssl_connection.verify() | {
-               close_connection()
+               save_why{ close_connection() }
                return error("Couldn't verify SSL connection: " || &why)
             }
          }
       }
 
       sbuff := ""
-      fire(CONNECTED_EVENT)
+      fire(CONNECTED_EVENT, addr)
       return self
    end
 $endif
@@ -335,14 +337,14 @@ $endif
             if i := ssl_connection.out(s) then
                s := s[i+1 : 0]
             else
-               ssl_maybe_poll() | fail
+               ssl_maybe_poll() | return error("Send SSL out() failed: " || &why)
          }
       } else {
          while *s > 0 do {
             r := do_poll(Poll.OUT) | return error("Send poll failed: " || &why)
             if /r then return error("Send failed (timeout)")
             DescStream.poll_out_test(r[1]) | return error("Send failed (socket error)")
-            i := connection.out(s) | fail
+            i := connection.out(s) | return error("Send out() failed: " || &why)
             s := s[i+1 : 0]
          }
       }
@@ -358,13 +360,13 @@ $endif
          repeat {
             if s := ssl_connection.in(len) then
                return s
-            ssl_maybe_poll() | fail
+            ssl_maybe_poll() | return error("Receive SSL in() failed: " || &why)
          }
       } else {
          r := do_poll(Poll.IN) | return error("Receive poll failed: " || &why)
          if /r then return error("Receive failed (timeout)")
          DescStream.poll_in_test(r[1]) | return error("Receive failed (socket error)")
-         return connection.in(len)
+         return connection.in(len) | error("Receive in() failed: " || &why)
       }
    end
 

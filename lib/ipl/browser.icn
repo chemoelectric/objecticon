@@ -745,6 +745,14 @@ class Worker()
       dwrite("Sent: data - 0x", Format.int_to_string(*ev, 16), " bytes")
    end
 
+   private connecting(ev, src)
+      dwrite("Connecting to ", src.server, ":", src.port)
+   end
+
+   private connected(ev)
+      dwrite("Connected to ", ev)
+   end
+
    private failed(ev)
       dwrite("Failed ", &why, repl(" ", 20))
    end
@@ -785,8 +793,8 @@ class Worker()
             connect(read_string, NetClient.READ_STRING_EVENT).
             connect(writing_line, NetClient.WRITING_LINE_EVENT).
             connect(writing_string, NetClient.WRITING_STRING_EVENT).
-            connect(other, NetClient.CONNECTING_EVENT).
-            connect(other, NetClient.CONNECTED_EVENT).
+            connect(connecting, NetClient.CONNECTING_EVENT).
+            connect(connected, NetClient.CONNECTED_EVENT).
             connect(other, NetClient.CLOSED_EVENT).
             connect(other, HttpClient.COMPLETE_EVENT)
       }
