@@ -68,7 +68,11 @@ class Monitor()
    end
 
    public connecting(ev, src, type)
-      write("Connecting to " || src.server || ":" || src.port)
+      write("Connecting to ", src.server, ":", src.port)
+   end
+
+   public connected(ev)
+      write("Connected to ", ev)
    end
 
    public other(ev, src, type)
@@ -190,7 +194,7 @@ procedure main(args)
          hc.connect(l.writing_line, NetClient.WRITING_LINE_EVENT)
          hc.connect(l.writing_string, NetClient.WRITING_STRING_EVENT)
          hc.connect(l.connecting, NetClient.CONNECTING_EVENT)
-         hc.connect(l.other, NetClient.CONNECTED_EVENT)
+         hc.connect(l.connected, NetClient.CONNECTED_EVENT)
          hc.connect(l.other, NetClient.CLOSED_EVENT)
       } else if /opts["npro"] then {
          hc.connect(l.progress, HttpClient.PROGRESS_EVENT)
