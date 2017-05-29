@@ -8,13 +8,17 @@ $ifdef _MS_WIN32
 import 
    util, 
    io,
+   lang,
+   ipl.pdco,
    ipl.scan
 $else
 import 
    util, 
    io,
+   lang,
    ssl,
    posix,
+   ipl.pdco,
    ipl.scan
 $endif
 
@@ -30,8 +34,12 @@ class NetClient(Connectable, HasTask)
       WRITING_STRING_EVENT,
       WRITING_LINE_EVENT,
       READ_LINE_EVENT,
-      READ_STRING_EVENT
-   
+      READ_STRING_EVENT,
+      # The timeout (in ms) for IP addresses noted to avoid; by default one minute.
+      AVOID_TIMEOUT,
+      # A table of addresses (string) to expiry time.
+      avoid
+
    private static init()
       CONNECTING_EVENT := "Connecting"
       CONNECTED_EVENT := "Connected"
@@ -40,6 +48,8 @@ class NetClient(Connectable, HasTask)
       WRITING_LINE_EVENT := "Writing line"
       READ_LINE_EVENT := "Read line"
       READ_STRING_EVENT := "Read string"
+      AVOID_TIMEOUT := env_int("OI_NETCLIENT_AVOID_TIMEOUT", 0) | 60*1000
+      avoid := table()
    end
 
    private readable
@@ -54,6 +64,35 @@ class NetClient(Connectable, HasTask)
       connection,
       ssl_connection,
       sbuff
+
+   # Note an address to avoid for the next `AVOID_TIMEOUT`
+   # milliseconds.
+   #
+   public static avoid_addr(addr)
+      insert(avoid, addr, Prog.get_runtime_millis() + AVOID_TIMEOUT)
+      return NetClient
+   end
+
+   # Given a list of addresses, choose the first which we are not
+   # currently avoiding, or the best alternative otherwise.
+   #
+   public static choose_addr(l)
+      local e, t, now, best
+      # Purge expired entries from avoid
+      now := Prog.get_runtime_millis()
+      every e := key(avoid) do {
+         if now >= avoid[e] then
+            delete(avoid, e)
+      }
+      every e := !l do {
+         # If not avoiding this element, return it.
+         t := member(avoid, e) | return e
+         # Otherwise note the one with the earliest expiry.
+         if /best | t < avoid[best] then
+            best := e
+      }
+      return best
+   end
 
    # Set the timeout in ms to use.  If {&null}, then no timeout will
    # be used.
@@ -72,24 +111,32 @@ $ifdef _MS_WIN32
       return WinsockStream.dns_query(server)
    end
 
+   private ip_to_addr(ip)
+      return if upto('.', ip) then 
+         "inet:" || ip || ":" || port
+      else
+         "inet6:[" || ip || "]:" || port
+   end
+
    #
    # Open the connection.
    #
    protected open_connection()
-      local r, domain, addr, msg_addr, ip
+      local r, domain, addr, msg_addr, l
 
       close_connection()
       fire(CONNECTING_EVENT)
       if \ssl_flag then
          return error("SSL not supported")
-      ip := dns_query()[1] | return error("Couldn't translate address: " || &why)
-      if upto('.', ip) then {
-         domain := ProtocolFormat.INET
-         addr := "inet:" || ip || ":" || port
-      } else {
-         domain := ProtocolFormat.INET6
-         addr := "inet6:[" || ip || "]:" || port
-      }
+      if \path then
+         return error("UNIX domain not supported")
+      l := dns_query() | return error("Couldn't translate address: " || &why)
+      l := List{ ip_to_addr(!l) }
+      addr := choose_addr(l)
+      domain := if match("inet:", addr) then
+         ProtocolFormat.INET
+      else
+         ProtocolFormat.INET6
       msg_addr := server || " (" || addr || ")"
 
       connection := WinsockStream(domain)
@@ -102,18 +149,22 @@ $ifdef _MS_WIN32
          if errno() = WSAError.EWOULDBLOCK then {
             r := do_poll(Poll.OUT) | {
                save_why{ close_connection() }
+               avoid_addr(addr)
                return error("Couldn't connect to " || msg_addr || ": " || &why)
             }
             if /r then {
                close_connection()
+               avoid_addr(addr)
                return error("Couldn't connect to " || msg_addr || ": timeout")
             }
             DescStream.poll_out_test(r[1]) | {
                close_connection()
+               avoid_addr(addr)
                return error("Couldn't connect to " || msg_addr || ": socket error")
             }
          } else {
             save_why{ close_connection() }
+            avoid_addr(addr)
             return error("Couldn't connect to " || msg_addr || ": " || &why)
          }
       }
@@ -153,24 +204,30 @@ $else
          p.stop()
    end
 
+   private ip_to_addr(ip)
+      return if upto('.', ip) then 
+         "inet:" || ip || ":" || port
+      else
+         "inet6:[" || ip || "]:" || port
+   end
+
    #
    # Open the connection.
    #
    protected open_connection()
-      local r, domain, addr, msg_addr, ip
+      local r, domain, addr, msg_addr, l
 
       close_connection()
       fire(CONNECTING_EVENT)
 
       if \server then {
-         ip := dns_query()[1] | return error("Couldn't translate address: " || &why)
-         if upto('.', ip) then {
-            domain := ProtocolFormat.INET
-            addr := "inet:" || ip || ":" || port
-         } else {
-            domain := ProtocolFormat.INET6
-            addr := "inet6:[" || ip || "]:" || port
-         }
+         l := dns_query() | return error("Couldn't translate address: " || &why)
+         l := List{ ip_to_addr(!l) }
+         addr := choose_addr(l)
+         domain := if match("inet:", addr) then
+            ProtocolFormat.INET
+         else
+            ProtocolFormat.INET6
          msg_addr := server || " (" || addr || ")"
       } else if \path then {
          domain := ProtocolFormat.UNIX
@@ -188,18 +245,22 @@ $else
          if errno() = Errno.EINPROGRESS then {
             r := do_poll(Poll.OUT) | {
                save_why{ close_connection() }
+               avoid_addr(addr)
                return error("Couldn't connect to " || msg_addr || ": " || &why)
             }
             if /r then {
                close_connection()
+               avoid_addr(addr)
                return error("Couldn't connect to " || msg_addr || ": timeout")
             }
             DescStream.poll_out_test(r[1]) | {
                close_connection()
+               avoid_addr(addr)
                return error("Couldn't connect to " || msg_addr || ": socket error")
             }
          } else {
             save_why{ close_connection() }
+            avoid_addr(addr)
             return error("Couldn't connect to " || msg_addr || ": " || &why)
          }
       }
