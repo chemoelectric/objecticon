@@ -8,11 +8,11 @@ class Frame(Component)
       drag_x_offset,
       drag_y_offset
 
-   public static
-      FRAME_RSW
+   public static const
+      RSW
 
    private static init()
-      FRAME_RSW := env_scale("OI_FRAME_FRAME_RSW") | scale(12)
+      RSW := env_scale("OI_FRAME_RSW") | scale(12)
    end
 
    public can_drag(e)
@@ -35,10 +35,10 @@ class Frame(Component)
 
    public in_resize_corner(e)
       return in_region(e) & 
-         (((self.x + self.w - FRAME_RSW <= e.x < self.x + self.w) & 
+         (((self.x + self.w - RSW <= e.x < self.x + self.w) & 
           (self.y + self.h - border.get_b_inset() <= e.y < self.y + self.h)) | 
           ((self.x + self.w - border.get_r_inset() <= e.x < self.x + self.w) & 
-           (self.y + self.h - FRAME_RSW <= e.y < self.y + self.h)))
+           (self.y + self.h - RSW <= e.y < self.y + self.h)))
    end
 
    public display()

@@ -28,8 +28,13 @@ abstract class ScrollArea(Component)
       use_wheel_flag,
       default_key_listener
 
-   public static
-      SCROLLAREA_SCROLLBAR_SIZE
+   public static const
+      SCROLLBAR_SIZE
+
+   private static init()
+      SCROLLBAR_SIZE := env_scale("OI_SCROLLAREA_SCROLLBAR_SIZE") | 
+         ScrollBar.DEFAULT_INNER_SIZE + 2 * Gui.BORDER_WIDTH
+   end
 
    #
    # The x offset into the object we are viewing
@@ -168,20 +173,11 @@ abstract class ScrollArea(Component)
       return self.horizontal_increment
    end
 
-   #
-   # Return the default dimension for any {ScrollBar}(s) used in
-   # a {ScrollArea}.
-   #
-   public static predict_scrollbar_size()
-      /SCROLLAREA_SCROLLBAR_SIZE := ScrollBar.DEFAULT_INNER_SIZE + 2 * Gui.BORDER_WIDTH
-      return SCROLLAREA_SCROLLBAR_SIZE
-   end
-
    public predict_view_width(w, sb)
       local w1
       w1 := w - border.get_total_width()
       if \sb then
-         w1 -:= predict_scrollbar_size()
+         w1 -:= SCROLLBAR_SIZE
       return w1
    end
 
@@ -189,7 +185,7 @@ abstract class ScrollArea(Component)
       local w1
       w1 := vw + border.get_total_width()
       if \sb then
-         w1 +:= predict_scrollbar_size()
+         w1 +:= SCROLLBAR_SIZE
       return w1
    end
 
@@ -197,7 +193,7 @@ abstract class ScrollArea(Component)
       local h1
       h1 := h - border.get_total_height()
       if \sb then
-         h1 -:= predict_scrollbar_size()
+         h1 -:= SCROLLBAR_SIZE
       return h1
    end
 
@@ -205,7 +201,7 @@ abstract class ScrollArea(Component)
       local h1
       h1 := vh + border.get_total_height()
       if \sb then
-         h1 +:= predict_scrollbar_size()
+         h1 +:= SCROLLBAR_SIZE
       return h1
    end
 
@@ -314,7 +310,7 @@ abstract class ScrollArea(Component)
       local max_th, max_tw, min_th, min_tw, need_vsb, need_hsb, 
          new_vsb, new_hsb, i, sb_size
 
-      sb_size := predict_scrollbar_size()
+      sb_size := SCROLLBAR_SIZE
 
       #
       # Position and size of scrolling region

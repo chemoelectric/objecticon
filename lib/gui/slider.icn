@@ -81,7 +81,8 @@ class Slider(Component, HasOrientation)
 
 
    # These values refer to a horizontal slider, the logic is backwards for a vertical one.
-   public static AREA_W, AREA_H, INNER_H, TICK_H
+   public static const
+      AREA_W, AREA_H, INNER_H, TICK_H
 
    private static init()
       AREA_W := env_scale("OI_SLIDER_AREA_W") | scale(31)

@@ -215,6 +215,11 @@ $endif
       }
       push(settings.visited, VisitedEntry(url, title))
       insert(visited_set, url.str())
+      trim_visited()
+   end
+
+   private trim_visited()
+      local e
       while *settings.visited > settings.visited_size do {
          e := pull(settings.visited)
          delete(visited_set, e.url.str())
@@ -355,7 +360,8 @@ $endif
       settings.pool_size := pn
       settings.max_concurrent_downloads := mcd
       settings.font_factor := ff
-      pool.cache.set_size(settings.cache_size_mb * 1024*1024)
+      pool.cache.set_size(settings.cache_size_mb * 1024*1024).tidy()
+      trim_visited()
       return config_main("<p><font size=+1 color=green>Settings saved OK; pool size only takes effect on restart, font factor on new tab.</font><p>")
    end
 
