@@ -28,7 +28,7 @@ abstract class DropDown(Component, MenuMode)
 
    public create_button()
       return IconButton().
-         set_width(ScrollArea.predict_scrollbar_size()).
+         set_width(ScrollArea.SCROLLBAR_SIZE).
          set_paint(ImagePaint().set_cache("gui.ARROW_DOWN"))
    end
 

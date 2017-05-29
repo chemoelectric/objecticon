@@ -11,7 +11,7 @@ package gui
 import graphics(Mouse,Window,Pixels,Selection),
    lang, util, io, xdg, ipl.strings, ipl.graphics, cairo
 
-class Event()
+final abstract class Event()
    public static const
       MOUSE_LEFT_PRESS,
       MOUSE_MIDDLE_PRESS,
@@ -111,7 +111,7 @@ class Event()
    end
 end
 
-class Select()
+final abstract class Select()
    public static const 
       NONE,
       ONE,
@@ -124,7 +124,7 @@ class Select()
    end
 end
 
-class Direction()
+final abstract class Direction()
    public static const
       UP,
       DOWN,
@@ -137,7 +137,7 @@ class Direction()
    end
 end
 
-class WAttrib()
+final abstract class WAttrib()
    public static const
       BG,
       CANVAS,
@@ -332,12 +332,10 @@ procedure env_pointer(s)
    return p
 end
 
-class Gui()
+final abstract class Gui()
    public static const
       SCALE,
-      UNIT
-
-   public static 
+      UNIT,
       BORDER_WIDTH,
       CURSOR_WIDTH,
       FINE_WIDTH,
@@ -357,9 +355,6 @@ class Gui()
       ALLOW_INTERNAL_POPUPS,
       # Gives extra preference to the downward direction in list popups.
       POPUP_LIST_DIRECTION_FACTOR,
-      style
-
-   public static const 
       # A set of all window attribs.
       WATTRIB_SET,
       # A set of attribs that affect the graphical drawing context
@@ -371,6 +366,8 @@ class Gui()
       # Printable on multi lines of text
       PRINTABLE_N
 
+   public static
+      style
 
    #
    # Try to calculate a default value for SCALE

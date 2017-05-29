@@ -111,14 +111,14 @@ abstract class Spin(Component)
       Component.new()
       self.set_border(SunkenBorder())
       self.up := IconButton().
-         set_width(ScrollArea.predict_scrollbar_size()).  # Consistent with DropDown
+         set_width(ScrollArea.SCROLLBAR_SIZE).  # Consistent with DropDown
          connect(self.on_up, Event.BUTTON_PRESS).
          connect(self.on_up, Event.BUTTON_HELD).
          set_paint(ImagePaint().set_cache("gui.TINY_ARROW_UP")).
          set_accepts_focus(&no)
       self.add(up)
       self.down := IconButton().
-         set_width(ScrollArea.predict_scrollbar_size()).
+         set_width(ScrollArea.SCROLLBAR_SIZE).
          connect(self.on_down, Event.BUTTON_PRESS).
          connect(self.on_down, Event.BUTTON_HELD).
          set_paint(ImagePaint().set_cache("gui.TINY_ARROW_DOWN")).

@@ -13,7 +13,7 @@ package gui
 # It has no methods which the user need invoke.
 #
 class MenuSeparator(MenuComponent)
-   public static HEIGHT
+   public static const HEIGHT
 
    private static init()
       HEIGHT := env_scale("OI_MENUSEPARATOR_HEIGHT") | scale(4)
