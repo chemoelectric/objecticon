@@ -357,10 +357,10 @@ abstract class ScrollArea(Component)
          # Two scroll bars.
          #
          if /self.vsb := ScrollBar() then
-            new_vsb := 1
+            new_vsb := &yes
          if /self.hsb := ScrollBar() then {
             self.hsb.set_is_horizontal(&yes)
-            new_hsb := 1
+            new_hsb := &yes
          }
 
          view.w := min_tw
@@ -380,7 +380,7 @@ abstract class ScrollArea(Component)
          # One vertical scroll bar.
          #
          if /self.vsb := ScrollBar() then
-            new_vsb := 1
+            new_vsb := &yes
          remove_hsb()
 
          view.w := min_tw
@@ -396,7 +396,7 @@ abstract class ScrollArea(Component)
          #
          if /self.hsb := ScrollBar() then {
             self.hsb.set_is_horizontal(&yes)
-            new_hsb := 1
+            new_hsb := &yes
          }
          remove_vsb()
 
