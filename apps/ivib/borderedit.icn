@@ -225,7 +225,7 @@ class BorderEdit(Dialog)
       if \use_empty_cb then
          c.has_empty := use_empty_cb.get_status()
 
-      if (/use_empty_cb | use_empty_cb.is_checked()) & not is(c, CanvasNullBorder) then {
+      if (/use_empty_cb | use_empty_cb.is_checked())\1 & not is(c, CanvasNullBorder) then {
          c.empty_l_inset := if set_l_inset_cb.is_checked() then 
             integer(l_inset_field.get_contents())
          else 
