@@ -175,10 +175,15 @@ end
 #
 class NullBorder(ABorder)
    public initially()
-      self.l_inset := self.t_inset := self.r_inset := self.b_inset := 0
    end
 
    public draw(W, x, y, w, h)
+   end
+
+   public new()
+      ABorder.new()
+      l_inset := t_inset := r_inset := b_inset := 0
+      return
    end
 end
 
@@ -190,7 +195,7 @@ abstract class LineBorder(ABorder)
    public line_width, focus_inset
 
    public initially()
-      self.l_inset := self.t_inset := self.r_inset := self.b_inset := line_width
+      l_inset := t_inset := r_inset := b_inset := line_width
    end
 
    public draw_focus(W, x, y, w, h, th)
