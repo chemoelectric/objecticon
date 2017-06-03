@@ -17,169 +17,6 @@
 #	Contributor:  Richard L. Goerwitz
 #
 ############################################################################
-#
-#	file2lst(s)	create list from lines in file
-#
-#	imag2lst(s)	convert limage() output to list
-#
-#	lclose(L)	close open palindrome
-#
-#	lcomb(L,i)	list combinations
-#
-#	lcompact(L)	compact list, mapping out missing values
-#
-#	ldecollate(I, L)
-#			list decollation
-#       ldel(L, x)
-#                       list deletion of a all instances of x
-#
-#	ldelelements(L, spec)
-#			list deletion of specified indices
-#
-#	ldupl(L, i)	list term duplication
-#
-#	lequiv(L1, L2)	list equivalence
-#
-#	levate(L, m, n)	list elevation
-#
-#	lextend(L, i)	list extension
-#
-#	lfliph(L)	list horizontal flip (reversal)
-#
-#	lflipv(L)	list vertical flip
-#
-#	limage(L)	unadorned list image
-#
-#	lcollate(L1, L2, ...)
-#			list collation; like linterl() except stops on
-#			short list
-#
-#	lconstant(L)	succeeds and returns element if all are the same
-#
-#	linterl(L1, L2)	list interleaving
-#
-#	llayer(L1, L2, ...)
-#			layer and interleave L1, L2, ... 
-#
-#	llpad(L, i, x)	list padding at left
-#
-#	lltrim(L, S)	list left trimming
-#
-#	lmap(L1,L2,L3)	list mapping
-#
-#	lpalin(L, x)	list palindrome
-#
-#	lpermute(L)	list permutations
-#
-#	lreflect(L, i)  returns L concatenated with its reversal to produce
-#			palindrome; the values of i determine "end
-#			conditions" for the reversal:
-#
-#				0	omit first and last elements; default
-#				1	omit first element
-#				2	omit last element
-#				3	don't omit element
-#
-#	lremvals(L, x1, x2, ...)
-#			remove values from list
-#
-#	lrepl(L, i)	list replication
-#
-#	lresidue(L, m, i)
-#			list residue
-#
-#	lreverse(L)	list reverse
-#
-#	lrotate(L, i)	list rotation
-#
-#	lrpad(L, i, x)	list right padding
-#
-#	lrundown(L1, L2, L3)
-#			list run down
-#
-#	lrunup(L1, L2, L3)
-#			list run up
-#
-#	lrtrim(L, S)	list right trimming
-#
-#	lshift(L, i)	shift list terms
-#
-#	lswap(L)	list element swap
-#
-#	lunique(L)	keep only unique list elements
-#
-#	lmaxlen(L, p)	returns the size of the largest value in L.
-#			If p is given, it is applied to each string as
-#			as a "length" procedure.  The default for p is
-#			Prog.get_operator("*", 1).
-#
-#	lminlen(L, p)	returns the size of the smallest value in L.
-#			If p is given, it is applied to each string as
-#			as a "length" procedure.  The default for p is
-#			Prog.get_operator("*", 1).
-#
-#	sortkeys(L)	returns list of keys from L, where L is the
-#			result of sorting a table with option 3 or 4.
-#
-#	sortvalues(L)	return list of values from L, where L is the
-#			result of sorting a table with option 3 or 4.
-#
-#	splitstring(s, i)	creates list with i-character lines from s.  The
-#			default for i is 1.
-#
-#       str2list(s, sep)  string to list; elements separated by single chars in
-#                       cset sep.
-#
-#       list2str(l, sep) list to string; separator string sep.
-#
-############################################################################
-#
-#		About List Mapping
-#
-#  The procedure lmap(L1,L2,L3) maps elements of L1 according to L2
-#  and L3.  This procedure is the analog for lists of the built-in
-#  string-mapping function map(s1,s2,s3). Elements in L1 that are
-#  the same as elements in L2 are mapped into the corresponding ele-
-#  ments of L3. For example, given the lists
-#  
-#     L1 := [1,2,3,4]
-#     L2 := [4,3,2,1]
-#     L3 := ["a","b","c","d"]
-#  
-#  then
-#  
-#     lmap(L1,L2,L3)
-#  
-#  produces a new list
-#  
-#     ["d","c","b","a"]
-#  
-#     Lists that are mapped can have any kinds of elements. The
-#  operation
-#  
-#     x === y
-#  
-#  is used to determine if elements x and y are equivalent.
-#  
-#     All cases in lmap are handled as they are in map, except that
-#  no defaults are provided for omitted arguments. As with map, lmap
-#  can be used for transposition as well as substitution.
-#  
-#  Warning:
-#
-#     If lmap is called with the same lists L2 and L3 as in
-#  the immediately preceding call, the same mapping is performed,
-#  even if the values in L2 and L3 have been changed. This improves
-#  performance, but it may cause unexpected effects.
-#  
-#     This ``caching'' of the mapping table based on L2 and L3
-#  can be easily removed to avoid this potential problem.
-#  
-############################################################################
-#
-#  Links:  equiv, indices, numbers
-#
-############################################################################
 
 package ipl.lists
 
@@ -192,7 +29,7 @@ import
    lang(equals,Prog),
    util(cvpos, cvslice, cvslice_def, cvpos_item)
 
-# create list from lines in file
+# Create list from lines in file
 procedure file2lst(s)			
    local input, result, x
 
@@ -211,7 +48,7 @@ procedure file2lst(s)
 
 end
 
-# convert limage() output to list
+# Convert `limage()` output to list
 procedure imag2lst(seqimage)		
    local seq, term
 
@@ -245,7 +82,7 @@ procedure lblock(L1, L2)
 
 end
 
-# interleave lists with layering
+# Layer and interleave `args[1], args[2], ...`
 procedure llayer(args[])		
    local offsets, offset, seq, arg, lists, k
 
@@ -275,7 +112,7 @@ procedure llayer(args[])
 
 end
 
-# compact sequence
+# Compact list, mapping out missing values
 procedure lcompact(seq)			
    local unique, target
 
@@ -289,7 +126,7 @@ procedure lcompact(seq)
 
 end
 
-# close open palindrome
+# Close open palindrome
 procedure lclose(L)			
 
    if equals(L, lreverse(L)) then return L
@@ -320,7 +157,7 @@ procedure lcomb(L,i)
 end
 
 
-# list decollation
+# List decollation
 procedure ldecollate(indices, L)	
    local result, i, x
 
@@ -339,7 +176,7 @@ procedure ldecollate(indices, L)
 
 end
 
-# delete all instances of x from the list l.
+# Delete all instances of `x` from the list `l`.
 procedure ldel(l, x)
    local i
    i := 1
@@ -352,13 +189,14 @@ procedure ldel(l, x)
    return l
 end
 
-# delete just the first occurence of x from list l.
-# returns l if x was found in l, fails otherwise.
+# Delete just the first occurence of `x` from list `l`.
+# Returns `l` if `x` was found in `l`, fails otherwise.
+#
 procedure ldel1(l, x)
    return delete(l, keyof(l, x))
 end
 
-# delete specified list elements; returns a new list
+# Delete specified list elements; returns a new list
 procedure ldelelements(L, spec)		
    local i, tmp
 
@@ -371,7 +209,7 @@ procedure ldelelements(L, spec)
 
 end
 
-# list term duplication
+# List term duplication
 procedure ldupl(L1, L2)			
    local L3, i, j
 
@@ -388,7 +226,7 @@ procedure ldupl(L1, L2)
 
 end
 
-# compare lists for equivalence
+# Compare lists for equivalence
 procedure lequiv(x,y)			
    local i
 
@@ -402,7 +240,7 @@ procedure lequiv(x,y)
 
 end
 
-# elevate values
+# Elevate values
 procedure levate(seq, m, n)		
    local shafts, reseq, i, j, k
 
@@ -426,7 +264,7 @@ procedure levate(seq, m, n)
 
 end
 	
-# list extension
+# List extension
 procedure lextend(L, i)			
    local result
 
@@ -443,14 +281,14 @@ procedure lextend(L, i)
  
 end
 
-# list horizontal flip (reversal)
+# List horizontal flip (reversal)
 procedure lfliph(L)			
 
    return lreverse(L)
 
 end
 
-# list vertical flip
+# List vertical flip
 procedure lflipv(L)			
    local L1, m, i
 
@@ -465,7 +303,7 @@ procedure lflipv(L)
 
 end
 
-# list image
+# Unadorned list image
 procedure limage(L)			
    local result
 
@@ -479,7 +317,7 @@ procedure limage(L)
 
 end
 
-# generalized list collation
+# Generalized list collation;; like `linterl()` except stops on short list.
 procedure lcollate(args[])		
    local seq, arg, lists, k
 
@@ -500,24 +338,15 @@ procedure lcollate(args[])
 
 end
 
-# test list for all terms equal
+# Succeeds and returns element if all elements are the same
 procedure lconstant(L)			
 
-   if *elementset(L) = 1 then return L[1]
+   if *elementset(L) = 1 then return .L[1]
    else fail
 
 end
 
-# generate indices for items matching x
-procedure lindex(lst, x)
-   local i
-
-   every i := 1 to *lst do
-      if lst[i] === x then suspend i
-
-end
-
-# list interleaving
+# List interleaving
 procedure linterl(L1, L2)		
    local L3, i
 
@@ -533,7 +362,7 @@ procedure linterl(L1, L2)
 
 end
 
-# list padding at left
+# List padding at left
 procedure llpad(L, i, x)		
 
    L := copy(L)
@@ -544,7 +373,7 @@ procedure llpad(L, i, x)
 
 end
 
-# list run up
+# List run up
 procedure lrunup(L1, L2, L3)		
    local L4
 
@@ -558,7 +387,7 @@ procedure lrunup(L1, L2, L3)
 
 end
 
-# list run up
+# List run down
 procedure lrundown(L1, L2, L3)		
    local L4
 
@@ -573,7 +402,7 @@ procedure lrundown(L1, L2, L3)
 end
 
 
-# list left trimming
+# List left trimming
 procedure lltrim(L, S)			
 
    L := copy(L)
@@ -585,7 +414,47 @@ procedure lltrim(L, S)
 
 end
 
-# list mapping
+#  __About List Mapping__
+#
+#  The procedure `lmap(L1,L2,L3)` maps elements of `L1` according to
+#  `L2` and `L3`.  This procedure is the analog for lists of the
+#  built-in string-mapping function `map(s1,s2,s3)`. Elements in `L1`
+#  that are the same as elements in `L2` are mapped into the
+#  corresponding elements of `L3`. For example, given the lists
+#  ~
+#     L1 := [1,2,3,4]
+#     L2 := [4,3,2,1]
+#     L3 := ["a","b","c","d"]
+#  ~
+#  then
+#  ~
+#     lmap(L1,L2,L3)
+#  ~
+#  produces a new list
+#  ~
+#     ["d","c","b","a"]
+#  ~
+#     Lists that are mapped can have any kinds of elements. The
+#  operation
+#  ~
+#     x === y
+#  ~
+#  is used to determine if elements `x` and `y` are equivalent.
+#  
+#     All cases in `lmap` are handled as they are in `map`, except
+#  that no defaults are provided for omitted arguments. As with `map`,
+#  `lmap` can be used for transposition as well as substitution.
+#  
+#  **Warning:**
+#
+#     If `lmap` is called with the same lists `L2` and `L3` as in the
+#  immediately preceding call, the same mapping is performed, even if
+#  the values in `L2` and `L3` have been changed. This improves
+#  performance, but it may cause unexpected effects.
+#  
+#     This "caching" of the mapping table based on `L2` and `L3`
+#  can be easily removed to avoid this potential problem.
+#
 procedure lmap(L1,L2,L3)		
    static lmem2, lmem3, lmaptbl, tdefault
    local i, a
@@ -610,7 +479,7 @@ procedure lmap(L1,L2,L3)
 
 end
 
-# list residue
+# List residue
 procedure lresidue(L, m, i)		
    local result
 
@@ -624,7 +493,7 @@ procedure lresidue(L, m, i)
 
 end
 
-# list palindrome
+# List palindrome
 procedure lpalin(L, x)			
 
    L |||:= lreverse(L)
@@ -652,14 +521,21 @@ package procedure lpermute1(L, n)
    suspend lpermute1(L, n - 1)
 end
 
-# list permutations.  NB: the same result list is suspended each time.
+# List permutations.  NB: the same result list is suspended each time.
 #
 procedure lpermute(L)			
    suspend lpermute1(copy(L), *L)
 end
 
 
-# list reflection
+# List reflection.  Returns `L` concatenated with its reversal to
+# produce palindrome; the values of `i` determine "end conditions" for
+# the reversal:
+#  *  0       omit first and last elements; default
+#  *  1       omit first element
+#  *  2       omit last element
+#  *  3       don't omit element
+#
 procedure lreflect(L, i)		
    local L1
 
@@ -680,7 +556,7 @@ procedure lreflect(L, i)
 
 end
 
-# remove values from list
+# Remove values from list
 procedure lremvals(L, x[])		
    local result, y
 
@@ -694,7 +570,7 @@ procedure lremvals(L, x[])
 
 end
 
-# list replication
+# List replication
 procedure lrepl(L, i)			
    local j, k
 
@@ -712,14 +588,16 @@ procedure lrepl(L, i)
 
 end
 
-# list reverse, returning a new list.  If pos1 and pos2 are given, then
-# only the sublist pos1:pos2 is reversed
+# List reverse, returning a new list.  If `pos1` and `pos2` are given,
+# then only the sublist `pos1:pos2` is reversed.
+#
 procedure lreverse(L, pos1, pos2)			
    return lreverse_mod(copy(L), pos1, pos2)
 end
 
-# list reverse, modifying L.  If pos1 and pos2 are given, then only
-# the sublist pos1:pos2 is reversed
+# List reverse, modifying `L`.  If `pos1` and `pos2` are given, then
+# only the sublist `pos1:pos2` is reversed.
+#
 procedure lreverse_mod(L, pos1, pos2)
    local s, i, j
    s := cvslice_def(pos1, pos2, *L) | fail
@@ -733,7 +611,7 @@ procedure lreverse_mod(L, pos1, pos2)
    return L
 end
 
-# list rotation
+# List rotation
 procedure lrotate(L, i)			
 
    /i := 1
@@ -751,7 +629,7 @@ procedure lrotate(L, i)
 
 end
 
-# list right padding
+# List right padding
 procedure lrpad(L, i, x)		
 
    L := copy(L)
@@ -762,7 +640,7 @@ procedure lrpad(L, i, x)
 
 end
 
-# list right trimming
+# List right trimming
 procedure lrtrim(L, S)			
 
    L := copy(L)
@@ -774,7 +652,7 @@ procedure lrtrim(L, S)
 
 end
 
-# shift list terms
+# Shift list terms
 procedure lshift(L, i)			
 
    L := copy(L)
@@ -785,7 +663,7 @@ procedure lshift(L, i)
 
 end
 
-# list element swap
+# List element swap
 procedure lswap(L)			
    local i
 
@@ -798,7 +676,7 @@ procedure lswap(L)
 
 end
 
-# keep only unique list elements
+# Keep only unique list elements
 procedure lunique(L)			
    local result, culls, x
 
@@ -815,7 +693,12 @@ procedure lunique(L)
 
 end
 
-# size of largest list entry
+# Returns the size of the largest value in `L`.  If `p` is given, it
+# is applied to each string as as a "length" procedure.  The default
+# for `p` is :-
+# ~
+#      Prog.get_operator("*", 1)
+# ~
 procedure lmaxlen(L, p)			
    local i
 
@@ -829,7 +712,12 @@ procedure lmaxlen(L, p)
 
 end
 
-# size of smallest list entry
+# Returns the size of the smallest value in `L`.  If `p` is given, it
+# is applied to each string as a "length" procedure.  The default for
+# `p` is
+# ~
+#      Prog.get_operator("*", 1)
+# ~
 procedure lminlen(L, p)			
    local i
 
@@ -843,7 +731,9 @@ procedure lminlen(L, p)
 
 end
 
-# extract keys from sorted list
+# Extract keys from sorted list, returning list of keys from `L`,
+# where `L` is the result of sorting a table with option 3 or 4.
+#
 procedure sortkeys(L)			
    local result
 
@@ -855,7 +745,9 @@ procedure sortkeys(L)
 
 end
 
-# extract values from sorted list
+# Extract values from sorted list, returning list of values from `L`,
+# where `L` is the result of sorting a table with option 3 or 4.
+#
 procedure sortvalues(L)			
    local result
 
@@ -867,7 +759,9 @@ procedure sortvalues(L)
 
 end
 
-# list from string
+# Creates list with `i`-character lines from `s`.  The default for `i`
+# is 1.
+#
 procedure splitstring(s, i)			
    local L
 
@@ -954,7 +848,7 @@ procedure cat_lines(l, f)
 end
 
 #
-# Put all the parameters on the given list
+# Put all the parameters on the given list.
 #
 procedure put_n(l, a[])
    every put(l, !a)
@@ -962,7 +856,7 @@ procedure put_n(l, a[])
 end
 
 #
-# Push all the parameters on the given list
+# Push all the parameters on the given list.
 #
 procedure push_n(l, a[])
    every push(l, !a)
@@ -970,7 +864,7 @@ procedure push_n(l, a[])
 end
 
 #
-# Move the element at position i to position j
+# Move the element in `L` at position `i` to position `j`.
 #
 procedure lmove(L, i, j)
    i := cvpos_item(i, *L) | fail
@@ -1002,7 +896,7 @@ procedure lextract(L, i, j)
 end
 
 #
-# Insert the elements of l into L, starting at i.  l is left unchanged.
+# Insert the elements of `l` into `L`, starting at `i`.  `l` is left unchanged.
 #
 procedure linsert(L, l, i)
    /i := 0
