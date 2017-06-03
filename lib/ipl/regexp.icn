@@ -13,6 +13,31 @@
 #   This file is in the public domain.
 #
 ############################################################################
+
+package ipl.regexp
+
+import
+   ipl.scan(caseless_cset, caseless_match, caseless_find, begin_analysis),
+   lang(Prog),
+   util(check_flag)
+
+package record Pos(n)
+package record Move(n)
+package record Alt(pat1,pat2)
+package record Arb()
+package record OneOrMore(tok)
+package record ArbNo(tok)
+package record TabAny(cset)
+package record MatchReg(pat,n)
+package record WordBoundary()
+package record NonWordBoundary()
+package record NToMTimes(tok,n,m)
+package record NOrMoreTimes(tok,n)
+package record NTimes(tok,n)
+package record ZeroOrOneTimes(tok)
+package record TabMatch(str)
+package record MatchParenGroup(n)
+
 #
 #  This is a kit of procedures to deal with UNIX-like regular expression
 #  patterns.
@@ -281,32 +306,6 @@
 #       (2)     To evaluate the "exactly N times" and "N to M times"
 #               control operations (Re_NTimes()).
 #
-############################################################################
-
-package ipl.regexp
-
-import
-   ipl.scan(caseless_cset, caseless_match, caseless_find, begin_analysis),
-   lang(Prog),
-   util(check_flag)
-
-package record Pos(n)
-package record Move(n)
-package record Alt(pat1,pat2)
-package record Arb()
-package record OneOrMore(tok)
-package record ArbNo(tok)
-package record TabAny(cset)
-package record MatchReg(pat,n)
-package record WordBoundary()
-package record NonWordBoundary()
-package record NToMTimes(tok,n,m)
-package record NOrMoreTimes(tok,n)
-package record NTimes(tok,n)
-package record ZeroOrOneTimes(tok)
-package record TabMatch(str)
-package record MatchParenGroup(n)
-
 class Pattern()
    private plist
 

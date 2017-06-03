@@ -13,6 +13,12 @@
 #   This file is in the public domain.
 #
 ############################################################################
+
+package ipl.wildcard
+
+import
+   ipl.scan(begin_analysis)
+
 #
 #  This is a kit of procedures to deal with UNIX-like filename wild-card
 #  patterns containing *, ?, and [...].  The meanings are as of the
@@ -44,11 +50,6 @@
 #  Default values of s, i1, and i2 are the same as for Icon's built-in
 #  string scanning procedures such as match().
 #
-package ipl.wildcard
-
-import
-   ipl.scan(begin_analysis)
-
 class Wildcard()
    private plist
 
