@@ -469,16 +469,21 @@ procedure sort_seq(el, cmp)
 
    /cmp := Internal.compare
 
+   # Create the initial list of Items, excluding those expressions
+   # that fail to produce a result.  The first element of the list
+   # will always give us the next result.
    l := []
    every e := !el do
       put(l, Item(@e, e))
 
-   cmp_item := field_cmp("last", cmp)
+   # Sort on the 1st field of Item (last).
+   cmp_item := index_cmp(1, cmp)
    qsort(l, cmp_item)
+
    while i := pop(l) do {
       suspend i.last
       if i.last := @i.e then
+         # Re-insert Item i into the list, keeping it in sorted order.
          insert(l, bsearch(l, i, cmp_item,,, &yes), i)
    }
 end
-
