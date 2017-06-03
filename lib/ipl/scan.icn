@@ -18,33 +18,6 @@
 #
 ############################################################################
 #
-#  This module contains procedures related to string scanning:
-#
-#	balq(c1, c2, c3, c4, c5, s, i1, i2)
-#		like bal() with quoting from characters in c5.
-#
-#       balqc(c1, c2, c3, c4, c5, s1, s2, s3, i1, i2)
-#		like balq() with the addition that balanced characters within 
-#       	"comments", as delimited by the strings s1 and s2, are also 
-#        	excluded from balancing.  In addition, if s1 is given and s2 
-#
-#       limatch(L, c)
-#		matches items in list L delimited by characters in c
-#
-#	slashbal(c1, c2, c3, s, i, j)
-#		like bal() with escape processing
-#
-#	slashupto(c, s, i, j)
-#		like upto() with escape processing
-#
-#	snapshot(title, len)
-#		snapshot of string scanning with optional title and
-#		maximum length.
-#
-#  More extensive documentation proceeds each procedure.
-#
-############################################################################
-#
 #  Richard L. Goerwitz:
 #
 #  I am often frustrated at bal()'s inability to deal elegantly with
@@ -78,7 +51,7 @@ import
    io(write, writes),
    util(save_state, PosState)
 
-# bal() with escapes
+# `bal()` with escape processing
 procedure slashbal(c1, c2, c3, s, i, j)	
 
     local twocs, allcs, a, POS, chr, chr2, count
@@ -120,7 +93,7 @@ end
 #
 #  Richard L. Goerwitz:
 #
-#  Slshupto works just like upto, except that it ignores backslash
+#  Slashupto works just like upto, except that it ignores backslash
 #  escaped characters.  I can't even begin to express how often I've
 #  run into problems applying Icon's string scanning facilities to
 #  to input that uses backslash escaping.  Normally, I tokenize first,
@@ -142,6 +115,7 @@ end
 #
 # `slashupto`:  cset `x` string `x` integer `x` integer -> integers  
 #             `(c, s, i, j)` -> `I`s (a generator)
+#
 #    where `I`s are the integer positions in `s[i:j]` before characters
 #    in `c` that is not preceded by a backslash escape
 #
@@ -393,7 +367,13 @@ procedure balq(
 
 end
 
-# `balq()` with comment escaping
+# ~ 
+#   balqc(c1, c2, c3, c4, c5, s1, s2, s3, i1, i2)
+# ~
+# like `balq()` with the addition that balanced characters within
+# "comments", as delimited by the strings `s1` and `s2`, are also
+# excluded from balancing.  In addition, if `s1` is given and `s2`
+#
 procedure balqc(			
                 cstop, copen, cclose, cquote, cescape, scm, ecm, s, i1, i2)
 
