@@ -1387,7 +1387,26 @@ class Key()
       ALT_L,
       ALT_R,
       HYPER_L,
-      HYPER_R
+      HYPER_R,
+      BROWSER_BACK,
+      BROWSER_FORWARD,
+      BROWSER_STOP,
+      BROWSER_REFRESH,
+      BROWSER_SEARCH,
+      BROWSER_FAVORITES,
+      BROWSER_HOME,
+      LAUNCH_MAIL,
+      VOLUME_MUTE,
+      VOLUME_DOWN,
+      VOLUME_UP,
+      MEDIA_PLAY_PAUSE,
+      MEDIA_STOP,
+      MEDIA_PREV_TRACK,
+      MEDIA_NEXT_TRACK,
+      LAUNCH_MEDIA_SELECT,
+      LAUNCH_APP1,
+      LAUNCH_APP2,
+      SLEEP
 
    private static init()
       MOD_SHIFT :=    1
@@ -1496,6 +1515,25 @@ $ifdef _X_WINDOW_SYSTEM
       HYPER_L :=             65517
       HYPER_R :=             65518
       NUM_LOCK :=            65407
+      BROWSER_BACK :=        269025062
+      BROWSER_FORWARD :=     269025063
+      BROWSER_STOP :=        65385
+      BROWSER_REFRESH :=     269025139
+      BROWSER_SEARCH :=      269025051
+      BROWSER_FAVORITES :=   269025072
+      BROWSER_HOME :=        269025048
+      LAUNCH_MAIL :=         269025049
+      VOLUME_MUTE :=         269025042
+      VOLUME_DOWN :=         269025041
+      VOLUME_UP :=           269025043
+      MEDIA_PLAY_PAUSE :=    269025044
+      MEDIA_STOP :=          269025045
+      MEDIA_PREV_TRACK :=    269025046
+      MEDIA_NEXT_TRACK :=    269025047
+      LAUNCH_MEDIA_SELECT := 269025153
+      LAUNCH_APP1 :=         269025117
+      LAUNCH_APP2 :=         269025053
+      SLEEP :=               269025071
 
 $elsifdef _MS_WIN32
       DOWN :=               40
@@ -1594,6 +1632,25 @@ $elsifdef _MS_WIN32
       ALT_L :=              18
       ALT_R :=              0
       NUM_LOCK :=           144
+      BROWSER_BACK :=       166
+      BROWSER_FORWARD :=    167
+      BROWSER_STOP :=       169
+      BROWSER_REFRESH :=    168
+      BROWSER_SEARCH :=     170
+      BROWSER_FAVORITES :=  171
+      BROWSER_HOME :=       172
+      LAUNCH_MAIL :=        180
+      VOLUME_MUTE :=        173
+      VOLUME_DOWN :=        174
+      VOLUME_UP :=          175
+      MEDIA_PLAY_PAUSE :=   179
+      MEDIA_STOP :=         178
+      MEDIA_PREV_TRACK :=   177
+      MEDIA_NEXT_TRACK :=   176
+      LAUNCH_MEDIA_SELECT := 181
+      LAUNCH_APP1 :=        182
+      LAUNCH_APP2 :=        183
+      SLEEP :=               95
 $elsifdef _PLAN9
       DOWN :=               63488
       END :=                61464
@@ -1691,6 +1748,25 @@ $elsifdef _PLAN9
       SHIFT_L :=            0
       SHIFT_LOCK :=         0
       SHIFT_R :=            0
+      BROWSER_BACK :=       0
+      BROWSER_FORWARD :=    0
+      BROWSER_STOP :=       0
+      BROWSER_REFRESH :=    0
+      BROWSER_SEARCH :=     0
+      BROWSER_FAVORITES :=  0
+      BROWSER_HOME :=       0
+      LAUNCH_MAIL :=        0
+      VOLUME_MUTE :=        0
+      VOLUME_DOWN :=        0
+      VOLUME_UP :=          0
+      MEDIA_PLAY_PAUSE :=   0
+      MEDIA_STOP :=         0
+      MEDIA_PREV_TRACK :=   0
+      MEDIA_NEXT_TRACK :=   0
+      LAUNCH_MEDIA_SELECT := 0
+      LAUNCH_APP1 :=        0
+      LAUNCH_APP2 :=        0
+      SLEEP :=              0
 $endif
 
       NAVIGATE := set(UP, DOWN, LEFT, RIGHT, PGUP, PGDN, HOME, END)

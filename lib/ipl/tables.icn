@@ -18,30 +18,6 @@
 #
 ############################################################################
 #
-# 	keylist(T)	  produces list of keys in table T.
-#
-#	kvallist(T)	  produces values in T ordered by sorted order
-#			  of keys.
-#
-#	tbleq(T1, T2)	  tests equivalences of tables T1 amd T2.
-#  
-#	tblunion(T1, T2)  approximates T1 ++ T2.
-#
-#	tblinter(T1, T2)  approximates T1 ** T2.
-#
-#	tbldiff(T1, T2)	  approximates T1 -- T2.
-#
-#	tblinvrt(T)	  produces a table whose keys are T's values and
-#			  whose values are T's keys.
-#
-#	tbldflt(T)	  produces the default value for T.
-#
-#	twt(T)		  produces a two-way table based on T.
-#
-#	vallist(T)	  produces list of values in table T.
-#
-############################################################################
-#
 #  For the operations on tables that mimic set operations, the
 #  correspondences are only approximate and do not have the mathematical
 #  properties of the corresponding operations on  sets.  For example, table
@@ -59,7 +35,7 @@ package ipl.tables
 
 import datastruct
 
-# table union
+# Table union, approximates `T1 ++ T2`.
 procedure tblunion(T1, T2)			
    local T3, x
 
@@ -72,7 +48,7 @@ procedure tblunion(T1, T2)
 
 end
 
-# table intersection
+# Table intersection, approximates `T1 ** T2`.
 procedure tblinter(T1, T2)			
    local T3, x
 
@@ -85,7 +61,7 @@ procedure tblinter(T1, T2)
 
 end
 
-# table difference
+# Table difference, approximates `T1 -- T2`.
 procedure tbldiff(T1, T2)			
    local T3, x
 
@@ -98,7 +74,9 @@ procedure tbldiff(T1, T2)
 
 end
 
-# table inversion
+# Table inversion; produces a table whose keys are `T`'s values and
+# whose values are `T`'s keys.
+#
 procedure tblinvrt(T)				
    local T1, x
 
@@ -111,7 +89,7 @@ procedure tblinvrt(T)
 
 end
 
-# table default
+# Produces the default value for `T`.
 procedure tbldflt(T)				
    static probe
 
@@ -121,7 +99,7 @@ procedure tbldflt(T)
 
 end
 
-# two-way table
+# Produces a two-way table based on `T`.
 procedure twt(T)				
    local T1, x
 
@@ -134,7 +112,7 @@ procedure twt(T)
 
 end
 
-# list of keys in table
+# Produces list of keys in table `T`.
 procedure keylist(tbl)			
    local lst
 
@@ -144,6 +122,7 @@ procedure keylist(tbl)
 
 end
 
+# Produces values in `T` ordered by sorted order of keys.
 procedure kvallist(T)
    local result
 
@@ -155,7 +134,7 @@ procedure kvallist(T)
 
 end
 
-# table equivalence
+# Tests equivalences of tables `T1` and `T2`.
 procedure tbleq(tbl1, tbl2)		
    local x
    static prod
@@ -171,7 +150,7 @@ procedure tbleq(tbl1, tbl2)
 
 end
 
-# list of table values
+# Produces list of values in table `T`.
 procedure vallist(tbl)		
    local list1
 
@@ -181,7 +160,7 @@ procedure vallist(tbl)
 
 end
 
-# set of table values
+# Produces set of values in table `T`.
 procedure valset(tbl)		
    local set1
 

@@ -1,5 +1,5 @@
 import
-   gui, graphics
+   gui, graphics, lang
 
 $ifdef _PLAN9
 import io
@@ -37,174 +37,32 @@ class Untitled(Dialog)
       text_button_10,
       text_button_11
 
+   private static
+      keymousetab,
+      eventtab
+
+   private static init()
+      local n, v
+      keymousetab := table()
+      every n := Class.get_field_names(Key) do
+         if not match("MOD_", n) & v := Class.getq(Key, n) & type(v) == "integer" then
+            insert(keymousetab, v, "Key." || n)
+      every n := Class.get_field_names(Mouse) do
+         if v := Class.getq(Mouse, n) & type(v) == "integer" then
+            insert(keymousetab, v, "Mouse." || n)
+      eventtab := table()
+      every n := Class.get_field_names(Event) do
+         insert(eventtab, Class.getq(Event, n), n)
+   end
+
    private code_to_str(n)
       if type(n) == ("string" | "ucs") then
          return image(n)
-      return case n of {
-         Mouse.LEFT_PRESS: "Mouse.LEFT_PRESS"
-         Mouse.MIDDLE_PRESS: "Mouse.MIDDLE_PRESS"
-         Mouse.RIGHT_PRESS: "Mouse.RIGHT_PRESS"
-         Mouse.LEFT_RELEASE: "Mouse.LEFT_RELEASE"
-         Mouse.MIDDLE_RELEASE: "Mouse.MIDDLE_RELEASE"
-         Mouse.RIGHT_RELEASE: "Mouse.RIGHT_RELEASE"
-         Mouse.DRAG: "Mouse.DRAG"
-         Mouse.MOVEMENT: "Mouse.MOVEMENT"
-         Mouse.WHEEL_UP: "Mouse.WHEEL_UP"
-         Mouse.WHEEL_DOWN: "Mouse.WHEEL_DOWN"
-         Mouse.ENTER: "Mouse.ENTER"
-         Mouse.EXIT: "Mouse.EXIT"
-         Key.SHIFT_TAB: "Key.SHIFT_TAB"
-         Key.COMPOSE: "Key.COMPOSE"
-         Key.DO: "Key.DO"
-         Key.DOWN: "Key.DOWN"
-         Key.END: "Key.END"
-         Key.F1: "Key.F1"
-         Key.F2: "Key.F2"
-         Key.F3: "Key.F3"
-         Key.F4: "Key.F4"
-         Key.F5: "Key.F5"
-         Key.F6: "Key.F6"
-         Key.F7: "Key.F7"
-         Key.F8: "Key.F8"
-         Key.F9: "Key.F9"
-         Key.F10: "Key.F10"
-         Key.F11: "Key.F11"
-         Key.F12: "Key.F12"
-         Key.F13: "Key.F13"
-         Key.F14: "Key.F14"
-         Key.F15: "Key.F15"
-         Key.F16: "Key.F16"
-         Key.F17: "Key.F17"
-         Key.F18: "Key.F18"
-         Key.F19: "Key.F19"
-         Key.F20: "Key.F20"
-         Key.F21: "Key.F21"
-         Key.F22: "Key.F22"
-         Key.F23: "Key.F23"
-         Key.F24: "Key.F24"
-         Key.FIND: "Key.FIND"
-         Key.HELP: "Key.HELP"
-         Key.HOME: "Key.HOME"
-         Key.INSERT: "Key.INSERT"
-         Key.KP_DOWN: "Key.KP_DOWN"
-         Key.KP_LEFT: "Key.KP_LEFT"
-         Key.KP_RIGHT: "Key.KP_RIGHT"
-         Key.KP_UP: "Key.KP_UP"
-         Key.KP_HOME: "Key.KP_HOME"
-         Key.KP_PRIOR: "Key.KP_PRIOR"
-         Key.KP_BEGIN: "Key.KP_BEGIN"
-         Key.KP_END: "Key.KP_END"
-         Key.KP_NEXT: "Key.KP_NEXT"
-         Key.L1: "Key.L1"
-         Key.L2: "Key.L2"
-         Key.L3: "Key.L3"
-         Key.L4: "Key.L4"
-         Key.L5: "Key.L5"
-         Key.L6: "Key.L6"
-         Key.L7: "Key.L7"
-         Key.L8: "Key.L8"
-         Key.L9: "Key.L9"
-         Key.L10: "Key.L10"
-         Key.LEFT: "Key.LEFT"
-         Key.PF1: "Key.PF1"
-         Key.PF2: "Key.PF2"
-         Key.PF3: "Key.PF3"
-         Key.PF4: "Key.PF4"
-         Key.PAUSE: "Key.PAUSE"
-         Key.PGDN: "Key.PGDN"
-         Key.PGUP: "Key.PGUP"
-         Key.PRSC: "Key.PRSC"
-         Key.R1: "Key.R1"
-         Key.R2: "Key.R2"
-         Key.R3: "Key.R3"
-         Key.R4: "Key.R4"
-         Key.R5: "Key.R5"
-         Key.R6: "Key.R6"
-         Key.R7: "Key.R7"
-         Key.R8: "Key.R8"
-         Key.R9: "Key.R9"
-         Key.R10: "Key.R10"
-         Key.R11: "Key.R11"
-         Key.R12: "Key.R12"
-         Key.R13: "Key.R13"
-         Key.R14: "Key.R14"
-         Key.R15: "Key.R15"
-         Key.RIGHT: "Key.RIGHT"
-         Key.SCROLL_LOCK: "Key.SCROLL_LOCK"
-         Key.SELECT: "Key.SELECT"
-         Key.UP: "Key.UP"
-         Key.CURSOR: "Key.CURSOR"
-         Key.CURSOR_V: "Key.CURSOR_V"
-         Key.CURSOR_H: "Key.CURSOR_H"
-         Key.SUPER_L: "Key.SUPER_L"
-         Key.SUPER_R: "Key.SUPER_R"
-         Key.MENU: "Key.MENU"
-         Key.NAVIGATE: "Key.NAVIGATE"
-         Key.SHIFT_L: "Key.SHIFT_L"
-         Key.SHIFT_R: "Key.SHIFT_R"
-         Key.CONTROL_L: "Key.CONTROL_L"
-         Key.CONTROL_R: "Key.CONTROL_R"
-         Key.CAPS_LOCK: "Key.CAPS_LOCK"
-         Key.SHIFT_LOCK: "Key.SHIFT_LOCK"
-         Key.NUM_LOCK: "Key.NUM_LOCK"
-         Key.META_L: "Key.META_L"
-         Key.META_R: "Key.META_R"
-         Key.ALT_L: "Key.ALT_L"
-         Key.ALT_R: "Key.ALT_R"
-         Key.HYPER_L: "Key.HYPER_L"
-         Key.HYPER_R: "Key.HYPER_R"
-         default: "?"||image(n)
-      }
+      return member(keymousetab, n) | "?"||image(n)
    end
 
    private type_to_str(n)
-      return case n of {
-         Event.MOUSE_LEFT_PRESS: "MOUSE_LEFT_PRESS"
-         Event.MOUSE_MIDDLE_PRESS: "MOUSE_MIDDLE_PRESS"
-         Event.MOUSE_RIGHT_PRESS: "MOUSE_RIGHT_PRESS"
-         Event.MOUSE_LEFT_RELEASE: "MOUSE_LEFT_RELEASE"
-         Event.MOUSE_MIDDLE_RELEASE: "MOUSE_MIDDLE_RELEASE"
-         Event.MOUSE_RIGHT_RELEASE: "MOUSE_RIGHT_RELEASE"
-         Event.MOUSE_LEFT_DRAG: "MOUSE_LEFT_DRAG"
-         Event.MOUSE_MIDDLE_DRAG: "MOUSE_MIDDLE_DRAG"
-         Event.MOUSE_RIGHT_DRAG: "MOUSE_RIGHT_DRAG"
-         Event.MOUSE_MOVEMENT: "MOUSE_MOVEMENT"
-         Event.MOUSE_WHEEL_UP: "MOUSE_WHEEL_UP"
-         Event.MOUSE_WHEEL_DOWN: "MOUSE_WHEEL_DOWN"
-         Event.MOUSE_LEFT_DRAG_OVER: "MOUSE_LEFT_DRAG_OVER"
-         Event.MOUSE_MIDDLE_DRAG_OVER: "MOUSE_MIDDLE_DRAG_OVER"
-         Event.MOUSE_RIGHT_DRAG_OVER: "MOUSE_RIGHT_DRAG_OVER"
-         Event.MOUSE_LEFT_RELEASE_OVER: "MOUSE_LEFT_RELEASE_OVER"
-         Event.MOUSE_MIDDLE_RELEASE_OVER: "MOUSE_MIDDLE_RELEASE_OVER"
-         Event.MOUSE_RIGHT_RELEASE_OVER: "MOUSE_RIGHT_RELEASE_OVER"
-         Event.WINDOW_RESIZE: "WINDOW_RESIZE"
-         Event.WINDOW_CLOSE_BUTTON: "WINDOW_CLOSE_BUTTON"
-         Event.ICON: "ICON"
-         Event.BUTTON_RELEASE: "BUTTON_RELEASE"
-         Event.BUTTON_PRESS: "BUTTON_PRESS"
-         Event.BUTTON_HELD: "BUTTON_HELD"
-         Event.SELECTION_CHANGED: "SELECTION_CHANGED"
-         Event.CONTENT_CHANGED: "CONTENT_CHANGED"
-         Event.CURSOR_MOVED: "CURSOR_MOVED"
-         Event.VALUE_CHANGED: "VALUE_CHANGED"
-         Event.ACTION: "ACTION"
-         Event.TREE_NODE_EXPANSION: "TREE_NODE_EXPANSION"
-         Event.SIZER_PRESS: "SIZER_PRESS"
-         Event.SIZER_DRAG: "SIZER_DRAG"
-         Event.SIZER_RELEASE: "SIZER_RELEASE"
-         Event.MOUSE_ENTER: "MOUSE_ENTER"
-         Event.MOUSE_EXIT: "MOUSE_EXIT"
-         Event.KEY_PRESS: "KEY_PRESS"
-         Event.KEY_RELEASE: "KEY_RELEASE"
-         Event.GOT_FOCUS: "GOT_FOCUS"
-         Event.LOST_FOCUS: "LOST_FOCUS"
-         Event.DIALOG_DISPOSED: "DIALOG_DISPOSED"
-         Event.IN_POINT_CHAIN: "IN_POINT_CHAIN"
-         Event.POPUP_CLOSED: "POPUP_CLOSED"
-         Event.INTERRUPTED: "INTERRUPTED"
-         Event.RESUMED: "RESUMED"
-         default: "?"||image(n)
-      }
+      return member(eventtab, n) | "?"||image(n)
    end
 
    private ev_to_str(ev)

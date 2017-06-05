@@ -1657,113 +1657,11 @@ class Terminal(TabItem, VtUI)
 
    private static parse_key(s)
       local c
-      s := map(string(s))
-      if s[1] == "x" & c := char(integer("16r" || s[2:0])) then
-         return c
-      if s[1] == "u" & c := uchar(integer("16r" || s[2:0])) then
-         return c
-      return case s of {
-         "shift_tab": Key.SHIFT_TAB
-         "compose": Key.COMPOSE
-         "do": Key.DO
-         "down": Key.DOWN
-         "end": Key.END
-         "f1": Key.F1
-         "f2": Key.F2
-         "f3": Key.F3
-         "f4": Key.F4
-         "f5": Key.F5
-         "f6": Key.F6
-         "f7": Key.F7
-         "f8": Key.F8
-         "f9": Key.F9
-         "f10": Key.F10
-         "f11": Key.F11
-         "f12": Key.F12
-         "f13": Key.F13
-         "f14": Key.F14
-         "f15": Key.F15
-         "f16": Key.F16
-         "f17": Key.F17
-         "f18": Key.F18
-         "f19": Key.F19
-         "f20": Key.F20
-         "f21": Key.F21
-         "f22": Key.F22
-         "f23": Key.F23
-         "f24": Key.F24
-         "find": Key.FIND
-         "help": Key.HELP
-         "home": Key.HOME
-         "insert": Key.INSERT
-         "kp_down": Key.KP_DOWN
-         "kp_left": Key.KP_LEFT
-         "kp_right": Key.KP_RIGHT
-         "kp_up": Key.KP_UP
-         "kp_home": Key.KP_HOME
-         "kp_prior": Key.KP_PRIOR
-         "kp_begin": Key.KP_BEGIN
-         "kp_end": Key.KP_END
-         "kp_next": Key.KP_NEXT
-         "l1": Key.L1
-         "l2": Key.L2
-         "l3": Key.L3
-         "l4": Key.L4
-         "l5": Key.L5
-         "l6": Key.L6
-         "l7": Key.L7
-         "l8": Key.L8
-         "l9": Key.L9
-         "l10": Key.L10
-         "left": Key.LEFT
-         "pf1": Key.PF1
-         "pf2": Key.PF2
-         "pf3": Key.PF3
-         "pf4": Key.PF4
-         "pause": Key.PAUSE
-         "pgdn": Key.PGDN
-         "pgup": Key.PGUP
-         "prsc": Key.PRSC
-         "r1": Key.R1
-         "r2": Key.R2
-         "r3": Key.R3
-         "r4": Key.R4
-         "r5": Key.R5
-         "r6": Key.R6
-         "r7": Key.R7
-         "r8": Key.R8
-         "r9": Key.R9
-         "r10": Key.R10
-         "r11": Key.R11
-         "r12": Key.R12
-         "r13": Key.R13
-         "r14": Key.R14
-         "r15": Key.R15
-         "right": Key.RIGHT
-         "scroll_lock": Key.SCROLL_LOCK
-         "num_lock": Key.NUM_LOCK
-         "select": Key.SELECT
-         "up": Key.UP
-         "cursor": Key.CURSOR
-         "cursor_v": Key.CURSOR_V
-         "cursor_h": Key.CURSOR_H
-         "super_l": Key.SUPER_L
-         "super_r": Key.SUPER_R
-         "menu": Key.MENU
-         "navigate": Key.NAVIGATE
-         "shift_l": Key.SHIFT_L
-         "shift_r": Key.SHIFT_R
-         "control_l": Key.CONTROL_L
-         "control_r": Key.CONTROL_R
-         "caps_lock": Key.CAPS_LOCK
-         "shift_lock": Key.SHIFT_LOCK
-         "meta_l": Key.META_L
-         "meta_r": Key.META_R
-         "alt_l": Key.ALT_L
-         "alt_r": Key.ALT_R
-         "hyper_l": Key.HYPER_L
-         "hyper_r": Key.HYPER_R
-      }
+      s := string(s)
+      return (s[1] == "x" & char(integer("16r" || s[2:0]))) |
+             (s[1] == "u" & uchar(integer("16r" || s[2:0]))) |
+             (s := map(s, &lcase, &ucase) & not match("MOD_", s) &
+                       c := Class.getq(Key, s) & type(c) == "integer" & c)
    end
 
    private on_quit()

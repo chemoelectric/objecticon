@@ -13,168 +13,12 @@
 #   This file is in the public domain.
 #
 ############################################################################
-#  
-#  These procedures perform operations on strings.
-#
-#	cat(s1, s2, ...)   concatenates an  arbitrary number of strings.
-#  
-#	charcnt(s, c)	   returns the number of instances of characters in
-#			   c in s.
-#
-#	collate(s1, s2)    collates the characters of s1 and s2.  For example,
-#
-#                              collate("abc", "def")
-#
-#                          produces "adbecf".
-#
-#	comb(s, i)	   generates the combinations of characters from s
-#			   taken i at a time.
-#
-#       compress(s, c)     compresses consecutive occurrences of charac-
-#                          ters in c that occur in s; c defaults to &cset.
-#
-#	coprefix(L)
-#			   produces the common prefix of list of strings L:
-#			   the longest initial substring shared by all,
-#			   which may be the empty string.
-#
-#	cosuffix(L)
-#			   produces the common suffix list of strings L:
-#			   the longest trailing substring shared by all,
-#			   which may be the empty string.
-#
-#	csort(s)           produces the characters of s in lexical order.
-#  
-#	decollate(s, i)    produces a string consisting of every other
-#                          character of s. If i is odd, the odd-numbered
-#                          characters are selected, while if i is even,
-#                          the even-numbered characters are selected.
-#			   The default value of i is 1.
-#
-#	deletec(s, c)	   deletes occurrences of characters in c from s.
-#
-#	deletep(s, L)	   deletes all characters at positions specified in
-#			   L.
-#
-#	deletes(s1, s2)    deletes occurrences of s2 in s1.
-#
-#	diffcnt(s)	   returns count of the number of different
-#			   characters in s.
-#
-#	extend(s, n)	   replicates s to length n.
-#
-#	fchars(s)	   returns characters of s in order of decreasing
-#			   frequency
-#
-#	interleave(s1, s2) interleaves characters s2 extended to the length
-#			   of s1 with s1.
-#
-#	ispal(s)	   succeeds and returns s if s is a palindrome
-#
-#	maxlen(L, p)	   returns the length of the longest string in L.
-#			   If p is given, it is applied to each string as
-#			   as a "length" procedure.  The default for p is
-#			   Prog.get_operator("*", 1).
-#
-#	meander(s, n)      produces a "meandering" string that contains all
-#                          n-tuples of characters of s.
-#
-#	multicoll(L)	   returns the collation of the strings in L.
-#
-#	ochars(s)          produces the unique characters of s in the order
-#			   that they first appear in s.
-#
-#	odd_even(s)	   inserts values in a numerical string so that
-#			   adjacent digits follow an odd-even pattern.
-#
-#	palins(s, n)       generates all the n-character palindromes from the
-#			   characters in s.
-#
-#	permutes(s)         generates all the permutations of the string s.
-#
-#	pretrim(s, c)	   trims characters from beginning of s.
-#
-#	reflect(s1, i, s2)
-#			   returns s1 concatenated s2 and the reversal of s1
-#			   to produce a palindroid; the values of i
-#			   determine "end conditions" for the reversal:
-#
-#				0	pattern palindrome; the default
-#				1	pattern palindrome with center duplicated
-#				2	true palindrome with center not duplicated
-#				3	true palindrome with center duplicated
-#
-#			   s2 defaults to the empty string, in which case the
-#			   result is a full palindrome
-#
-#       replace(s1, s2, s3)
-#			   replaces all occurrences of s2 in s1 by s3; fails
-#			   if s2 is null.
-#
-#	replacem(s, ...)   performs multiple replacements in the style of
-#			   of replace(), where multiple argument pairs
-#			   may be given, as in
-#
-#				replacem(s, "a", "bc", "d", "cd")
-#
-#			   which replaced all "a"s by "bc"s and all
-#			   "d"s by "cd"s.  Replacements are performed
-#			   one after another, not in parallel.
-#
-#	replc(s, L)	   replicates each character of c by the amount
-#			   given by the values in L.
-#  
-#       rotate(s, i)       rotates s i characters to the left (negative i
-#                          produces rotation to the right); the default
-#                          value of i is 1.
-#
-#	schars(s)          produces the unique characters of s in lexical
-#			   order.
-#
-#	scramble(s)	   scrambles (shuffles) the characters of s randomly.
-#
-#	selectp(s, L)	   selects characters of s that are at positions
-#			   given in L.
-#
-#	slugs(s, n, c)	   generates column-sized chunks (length <= n)
-#			   of string s broken at spans of cset c.
-#
-#			   Defaults:	n	80
-#					c	' \t\r\n\v\f'
-#
-#			   Example:  every write(">  ", slugs(msg, 50))
-#
-#	starseq(s) 	   sequence consisting of the closure of s
-#		  	   starting with the empty string and continuing
-#			   in lexical order as given in s
-#
-#	strcnt(s1, s2)	   produces a count of the number of non-overlapping
-#			   times s1 occurs in s2; fails is s1 is null
-#
-#	substrings(s, i, j)
-#			   generates all the substrings of s with lengths
-#			   from i to j, inclusive; i defaults to 1, j
-#			   to *s
-#
-#	transpose(s1, s2, s3)
-#			   transposes s1 according to label s2 and
-#			   transposition s3.
-#  
-#	words(s, c)	   generates the "words" from the string s that
-#			   are separated by characters from the cset
-#			   c, which defaults to ' \t\r\n\v\f'.
-#
-############################################################################
-#
-#  Links:  lists
-#
-############################################################################
 
 package ipl.strings
 
 import lang(Prog)
 
-# concatenate strings
+# Concatenates an arbitrary number of strings.
 procedure cat(args[])			
    local result
 
@@ -186,7 +30,7 @@ procedure cat(args[])
 
 end
 
-# character count
+# Returns the number of instances of characters in `c` in `s`.
 procedure charcnt(s, c)			
    local count
 
@@ -201,7 +45,12 @@ procedure charcnt(s, c)
 
 end
 
-# string collation
+# Collates the characters of `s1` and `s2`.  For example,
+# ~
+#    collate("abc", "def")
+# ~
+# produces `"adbecf"`.
+#
 procedure collate(s1, s2)		
    local length, ltemp, rtemp
    static llabels, rlabels, clabels, blabels, half
@@ -230,7 +79,7 @@ procedure collate(s1, s2)
 
 end
 
-# character combinations
+# Generates the combinations of characters from `s` taken `i` at a time.
 procedure comb(s, i)			
    local j
 
@@ -240,7 +89,8 @@ procedure comb(s, i)
 
 end
 
-# character compression
+# Compresses consecutive occurrences of characters in `c` that occur
+# in `s`; `c` defaults to `&cset`.
 procedure compress(s, c)		
    local result, s1
 
@@ -257,7 +107,9 @@ procedure compress(s, c)
       }
 end
 
-# find common prefix of strings
+# Produces the common prefix of list of strings `L`: the longest
+# initial substring shared by all, which may be the empty string.
+#
 procedure coprefix(L)
    local i, s, e
    every i := seq() do {
@@ -268,7 +120,9 @@ procedure coprefix(L)
    return L[1][1:i]
 end
 
-# find common suffix of strings
+# Produces the common suffix list of strings `L`: the longest trailing
+# substring shared by all, which may be the empty string.
+#
 procedure cosuffix(L)
    local i, s, e
    every i := seq(-1, -1) do {
@@ -279,7 +133,7 @@ procedure cosuffix(L)
    return L[1][i + 1:0]
 end
 
-# lexically ordered characters
+# Produces the characters of `s` in lexical order.
 procedure csort(s)			
    local c, s1
 
@@ -293,9 +147,11 @@ procedure csort(s)
 
 end
 
-#  decollate s according to even or odd i
+# Produces a string consisting of every other character of `s`. If `i`
+# is odd, the odd-numbered characters are selected, while if `i` is
+# even, the even-numbered characters are selected.  The default value
+# of `i` is 1.
 #
-# string decollation
 procedure decollate(s, i)		
    local ssize
    static dsize, image, object
@@ -318,7 +174,7 @@ procedure decollate(s, i)
 
 end
 
-# delete characters
+# Deletes occurrences of characters in `c` from `s`.
 procedure deletec(s, c)			
    local result
 
@@ -332,6 +188,7 @@ procedure deletec(s, c)
 
 end
 
+# Deletes all characters of `s` at positions specified in `L`.
 procedure deletep(s, L)
 
    L := sort(L)
@@ -342,7 +199,8 @@ procedure deletep(s, L)
 
 end
 
-# delete string
+# Deletes occurrences of `s2` in `s1`.
+#
 procedure deletes(s1, s2)		
    local result, i
 
@@ -357,14 +215,14 @@ procedure deletes(s1, s2)
          
 end
 
-# number of different characters
+# Returns count of the number of different characters in `s`.
 procedure diffcnt(s)			
 
    return *cset(s)
 
 end
 
-# extend string
+# Replicates `s` to length `n`.
 procedure extend(s, n)			
    local i
 
@@ -377,7 +235,7 @@ procedure extend(s, n)
 
 end
 
-# characters in order of frequency
+# Returns characters of `s` in order of decreasing frequency
 procedure fchars(s)			
    local counts, clist, bins, blist, result
 
@@ -397,21 +255,26 @@ procedure fchars(s)
 
 end
 
-# interleave strings
+# Interleaves characters `s2` extended to the length of `s1` with `s1`.
 procedure interleave(s1, s2)		
 
    return collate(s1, extend(s2, *s1)) | fail
 
 end
 
-# test for palindrome
+# Succeeds and returns `s` if it is a palindrome.
 procedure ispal(s)			
 
    if s == reverse(s) then return s else fail
 
 end
 
-# maximum string length
+# Returns the length of the longest string in `L`.  If `p` is given,
+# it is applied to each string as as a "length" procedure.  The
+# default for `p` is :-
+# ~
+#      Prog.get_operator("*", 1)
+# ~
 procedure maxlen(L, p)			
    local i
 
@@ -427,7 +290,8 @@ procedure maxlen(L, p)
 
 end
 
-# meandering strings
+# Produces a "meandering" string that contains all n-tuples of
+# characters of `s`.
 procedure meander(alpha, n)		
    local result, trial, t, i, c
 
@@ -452,7 +316,7 @@ procedure meander(alpha, n)
 
 end
 
-# collate strings in list
+# Returns the collation of the strings in `L`.
 procedure multicoll(L)			
    local result, i, j
 
@@ -466,7 +330,9 @@ procedure multicoll(L)
 
 end
 
-# first appearance unique characters
+# Produces the unique characters of `s` in the order that they first
+# appear in `s`.
+#
 procedure ochars(w)			
    local out, c
 
@@ -480,7 +346,9 @@ procedure ochars(w)
 
 end
 
-# odd-even numerical string
+# Inserts values in a numerical string so that adjacent digits follow
+# an odd-even pattern.
+#
 procedure odd_even(s)			
    local result, i, j
 
@@ -496,7 +364,8 @@ procedure odd_even(s)
 
 end
 
-# palindromes
+# Generates all the `n`-character palindromes from the characters in `s`.
+#
 procedure palins(s, n)			
    local c, lpart, mpart, rpart, h, p
 
@@ -529,7 +398,7 @@ procedure palins(s, n)
     
 end
 
-# string permutations
+# Generates all the permutations of the string `s`.
 procedure permutes(s)			
    local i
 
@@ -538,7 +407,7 @@ procedure permutes(s)
 
 end
 
-# pre-trim string
+# Trims characters from beginning of `s`.
 procedure pretrim(s, c)			
 
    /c := ' '
@@ -550,7 +419,17 @@ procedure pretrim(s, c)
 
 end
 
-# string reflection
+# Returns `s1` concatenated with `s2` and the reversal of `s1` to
+# produce a palindroid; the values of `i` determine "end conditions"
+# for the reversal:
+#   *  0       pattern palindrome; the default
+#   *  1       pattern palindrome with center duplicated
+#   *  2       true palindrome with center not duplicated
+#   *  3       true palindrome with center duplicated
+#
+#  `s2` defaults to the empty string, in which case the result is a
+#  full palindrome.
+#
 procedure reflect(s1, i, s2)			
 
    /i :=0
@@ -567,7 +446,8 @@ procedure reflect(s1, i, s2)
 
 end
 
-# string replacement
+# Replaces all occurrences of `s2` in `s1` by `s3`; fails if `s2` is
+# null.
 procedure replace(s1, s2, s3)		
    local result, i
 
@@ -585,7 +465,14 @@ procedure replace(s1, s2, s3)
 
 end
 
-# multiple string replacement
+# Performs multiple replacements in the style of of `replace()`, where
+# multiple argument pairs may be given, as in
+# ~
+#     replacem(s, "a", "bc", "d", "cd")
+# ~
+# which replaced all "a"s by "bc"s and all "d"s by "cd"s.
+# Replacements are performed one after another, not in parallel.
+#
 procedure replacem(s, pairs[])		
 
    while s := replace(s, get(pairs), get(pairs))
@@ -593,7 +480,10 @@ procedure replacem(s, pairs[])
    return s
 
 end
-# replicate characters
+
+# Replicates each character of c by the amount given by the values in
+# `L`.
+#
 procedure replc(s, L)			
    local result
 
@@ -605,7 +495,9 @@ procedure replc(s, L)
 
 end
 
-# string rotation
+# Rotates `s` `i` characters to the left (negative `i` produces
+# rotation to the right); the default value of `i` is 1.
+#
 procedure rotate(s, i)			
 
    if s == "" then return s
@@ -618,14 +510,14 @@ procedure rotate(s, i)
 
 end
 
-# lexical unique characters
+# Produces the unique characters of `s` in lexical order.
 procedure schars(s)			
 
    return string(cset(s))
 
 end
 
-# scramble string
+# Scrambles (shuffles) the characters of `s` randomly.
 procedure scramble(s)			
    local i
 
@@ -638,7 +530,7 @@ procedure scramble(s)
 
 end
 
-# select characters
+# Selects characters of `s` that are at positions given in `L`.
 procedure selectp(s, L)			
    local result
 
@@ -650,7 +542,16 @@ procedure selectp(s, L)
 
 end
 
-# generate s in chunks of size <= n
+# Generates column-sized chunks (length <= `n`) of string `s` broken
+# at spans of cset `c`.
+#
+# Defaults:   `n`    80  
+#             `c`    `' \t\r\n\v\f'`
+#
+# Example:
+# ~
+#     every write(">  ", slugs(msg, 50))
+# ~
 procedure slugs(s, n, c)  		
    local i, t
 
@@ -677,7 +578,9 @@ procedure slugs(s, n, c)
    fail
 end
 
-# closure sequence
+# Sequence consisting of the closure of `s` starting with the empty
+# string and continuing in lexical order as given in `s`
+#
 procedure starseq(s)		
 
    /s := ""
@@ -686,7 +589,9 @@ procedure starseq(s)
 
 end
 
-# substring count
+# Produces a count of the number of non-overlapping times `s1` occurs
+# in `s2`; fails is `s1` is null.
+#
 procedure strcnt(s1, s2)		
    local j, i
 
@@ -705,7 +610,9 @@ procedure strcnt(s1, s2)
 
 end
 
-# generate substrings
+# Generates all the substrings of `s` with lengths from `i` to `j`,
+# inclusive; `i` defaults to 1, `j` to `*s`.
+#
 procedure substrings(s, i, j)		
 
    /i := 1
@@ -718,7 +625,7 @@ procedure substrings(s, i, j)
 
 end
 
-# transpose characters
+# Transposes `s1` according to label `s2` and transposition `s3`.
 procedure transpose(s1, s2, s3)		
    local n, result
 
@@ -742,7 +649,7 @@ procedure words_in(s, wc)
       suspend tab(many(wc)) \ 1
 end
 
-# Generate words from string separated by chars in `sep`.
+# Generate "words" from string `s` separated by chars in `sep`.
 #
 # @param s the subject string
 # @param sep cset of the separator chars, default ' \t\r\n\v\f'
@@ -752,14 +659,14 @@ procedure words(s, sep)
    suspend words_in(s, sep)
 end
 
-# Succeed if s1 ends with the string s2
+# Succeed if `s1` ends with the string `s2`
 #
 procedure endswith(s1, s2)
    return s1[-*s2:0] == s2
 end
 
 #
-# Separate a string into parts separated by (single) chars in `sep`.
+# Separate a string `s` into parts separated by (single) chars in `sep`.
 #
 # @param s the string to convert
 # @param sep cset of the separator chars, default ','

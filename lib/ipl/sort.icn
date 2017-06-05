@@ -13,33 +13,16 @@
 #   This file is in the public domain.
 #
 ############################################################################
-#
-#	isort(x, p)
-#		customized sort in which procedure p is used for
-#		comparison.
-#
-#	sortff(L, fields[])
-#		like sortf(), except takes an unlimited number of field
-#		arguments.
-#
-#	sortgen(T, m)
-#		generates sorted output in a manner specified by m:
-#
-#			"k+"	sort by key in ascending order
-#			"k-"	sort by key in descending order
-#			"v+"	sort by value in ascending order
-#			"v-"	sort by value in descending order
-#
-#	sortt(T, i)
-#		like sort(T, i) but produces a list of two-element records
-#		instead of a list of two-element lists.
-#
-############################################################################
+
+package ipl.sort
+
+import lang(Class,Prog,Internal), util(cvslice_def), datastruct(Entry)
+
 #
 #  Customizable sort procedure for inclusion in Icon programs.
-#
+#  ~
 #       isort(x,keyproc,y)
-#
+#  ~
 #  Argument x can be any Icon data type that is divisible into elements
 #  by the unary element generation (!) operator.  The result is a list
 #  of the objects in sorted order.
@@ -56,12 +39,6 @@
 #  item to produce a key.  Keyproc will be called once for each element
 #  of structure x.
 #
-############################################################################
-
-package ipl.sort
-
-import lang(Class,Prog,Internal), util(cvslice_def)
-
 procedure isort(x,keyproc,y)
    local items,item,key,result
    if y := integer(keyproc) then
@@ -78,18 +55,16 @@ procedure isort(x,keyproc,y)
    return result
 end
 
-#
+# ~
 # sortff:  structure [x integer [x integer...]] -> structure
 #          (L, fields...) -> new_L
+# ~
+# Sort on multiple fields, where L is any subscriptable structure, and
+# fields are any number of integer subscripts in any desired order.
+# Returns a copy of structure L with its elements sorted on fields[1],
+# and, for those elements having an identical fields[1], sub- sorted
+# on field[2], etc.
 #
-#     Where L is any subscriptable structure, and fields are any
-#     number of integer subscripts in any desired order.  Returns
-#     a copy of structure L with its elements sorted on fields[1],
-#     and, for those elements having an identical fields[1], sub-
-#     sorted on field[2], etc.
-#
-
-# sort on multiple fields
 procedure sortff(L, fields[])		
     *L <= 1 & { return copy(L) }
     return sortff_1(L, fields, 1, [])
@@ -144,7 +119,14 @@ package procedure sortff_1(L, fields, k, uniqueObject)
 
 end
 
-# generate by different sorting orders
+#
+# sortgen(T, m)
+# generates sorted output in a manner specified by m:
+#
+#			"k+"	sort by key in ascending order
+#			"k-"	sort by key in descending order
+#			"v+"	sort by value in ascending order
+#			"v-"	sort by value in descending order
 procedure sortgen(T, m)		
    local L
 
@@ -160,9 +142,11 @@ procedure sortgen(T, m)
 
 end
 
-record element(key, value)
 
-# sort to produce list of records
+# Like sort(T, i) but produces a list of two-element records instead
+# of a list of two-element lists.  The elements returned are `Entry`
+# records.
+#
 procedure sortt(T, i)		
    local result, k
 
@@ -170,7 +154,7 @@ procedure sortt(T, i)
 
    result := []
 
-   every put(result, element(k := key(T), T[k]))
+   every put(result, Entry(k := key(T), T[k]))
 
    return sortf(result, i)
 
@@ -207,12 +191,16 @@ end
 # in such a way that the second, `g`, is only called if the first,
 # `f`, produces a tie for a particular pair (ie returns 0).
 #
-# @example
-# @ l := ["ABC",u"Abc",u"def",u"DEF",u"ABC","def",u"DEf","ABc"]
-# @ mergesort(l, combine_cmp(convert_cmp(string,Text.caseless_compare),
-# @                          type_cmp))
-# @ gives ["ABC","ABc",u"Abc",u"ABC","def",u"def",u"DEF",u"DEf"]
-# @
+# For example :-
+# ~
+#    l := ["ABC",u"Abc",u"def",u"DEF",u"ABC","def",u"DEf","ABc"]
+#    mergesort(l, combine_cmp(convert_cmp(string,Text.caseless_compare),
+#                             type_cmp))
+# ~
+# gives
+# ~
+#    ["ABC","ABc",u"Abc",u"ABC","def",u"def",u"DEF",u"DEf"]
+# ~
 procedure combine_cmp(f, g)
    return CombineCmp(f, g).call
 end
@@ -237,11 +225,12 @@ end
 # Return a compare function which applies the comparator function `f` to the
 # `i`th field of each item.  `f` defaults to `Internal.compare`.
 #
-# @example
-# @    l := [ [1,54,2], [4,56,23], [4325,1,23], [123,4576,23]]
-# @    # sort by the middle element of each item
-# @    qsort(l, index_cmp(2))
-#
+# For example :-
+# ~
+#     l := [ [1,54,2], [4,56,23], [4325,1,23], [123,4576,23]]
+#     # sort by the middle element of each item
+#     qsort(l, index_cmp(2))
+# ~
 procedure index_cmp(i, f)
    return IndexCmp(i, f).call
 end
@@ -266,11 +255,12 @@ end
 # Return a compare function which applies the comparator function `f` to the
 # field named `q` in each item.  `f` defaults to `Internal.compare`.
 #
-# @example
-# @    l := [Point(1,2),Point(34,4),Point(3,56),Point(23,55)]
-# @    # sort by the x element of each item
-# @    qsort(l, field_cmp("x"))
-#
+# For example :-
+# ~
+#     l := [Point(1,2),Point(34,4),Point(3,56),Point(23,55)]
+#     # sort by the x element of each item
+#     qsort(l, field_cmp("x"))
+# ~
 procedure field_cmp(q, f)
    return FieldCmp(q, f).call
 end
@@ -319,15 +309,24 @@ end
 # the result of applying the compare function `f`, which defaults to
 # `Internal.compare`.
 #
-# @example
-# @    l := ["abc","def", u"abc", u"xyz"]
-# @    qsort(l, convert_cmp(string))
-# @    gives [u"abc","abc","def",u"xyz"]
-# @
-# @    l := [2,1,1.5,4.0,1.2,4]
-# @    qsort(l, convert_cmp(real))
-# @    gives [1,1.2,1.5,2,4,4.0]
-#
+# For example :-
+# ~
+#     l := ["abc", "def",  u"abc",  u"xyz"]
+#     qsort(l, convert_cmp(string))
+# ~
+# leaves l as
+# ~
+#     [u"abc", "abc", "def", u"xyz"]
+# ~
+# whilst
+# ~
+#     l := [2, 1, 1.5, 4.0, 1.2, 4]
+#     qsort(l, convert_cmp(real))
+# ~
+# leaves l as
+# ~
+#     [1, 1.2, 1.5, 2, 4, 4.0]
+# ~
 procedure convert_cmp(cnv, f)
    return ConvertCmp(cnv, f).call
 end
@@ -377,13 +376,20 @@ end
 # A binary search algorithm.  If pos1 and pos2 are given, then only
 # the sublist l[pos1:pos2] is searched.
 #
+# If the `iflag` parameter is set, and the value is not found, then a
+# valid insert position is returned which, when inserting val, would
+# keep the list in order.  If `iflag` is not set, then the procedure
+# simply fails.
+#
 # @param l the list to search
 # @param val the value to search for
 # @param cmp a comparator function, default `Internal.compare`
 # @param pos1 the first slice index, default 1
 # @param pos2 the second slice index, default 0
+# @param iflag a flag requesting an insert position if val is not
+# @      found.
 #
-procedure bsearch(l, val, cmp, pos1, pos2)
+procedure bsearch(l, val, cmp, pos1, pos2, iflag)
    local s, m, c, first, last
    s := cvslice_def(pos1, pos2, *l) | fail
    /cmp := Internal.compare
@@ -399,6 +405,8 @@ procedure bsearch(l, val, cmp, pos1, pos2)
       else # c < 0
          last := m - 1
    }
+   if \iflag then
+      return first
 end
 
 # A merge sort implementation.  Unlike `qsort`, this returns a sorted
@@ -421,10 +429,10 @@ end
 package procedure mergesort1(l, cmp, first, last)
    local l1, l2, l3, m, v1
    if last <= first then
-      return l[first:last+1]
+      return l[first:last + 1]
    m := (first + last) / 2
    l1 := mergesort1(l, cmp, first, m)
-   l2 := mergesort1(l, cmp, m+1, last)
+   l2 := mergesort1(l, cmp, m + 1, last)
    l3 := []
    every v1 := !l1 do {
       while cmp(v1, l2[1]) > 0 do
@@ -433,4 +441,49 @@ package procedure mergesort1(l, cmp, first, last)
    }
    every put(l3, !l2)
    return l3
+end
+
+package record Item(last, e)
+
+# This procedure takes a list of co-expressions and a comparator
+# function, and generates the results of the co-expressions in order,
+# according to the comparator.  Each co-expression must generate its
+# results in the order indicated by the comparator.
+#
+# For example :-
+# ~
+#  sort_seq( [ create 5 to 20 by 5,
+#              create 11 | 200,
+#              create 11 | 99 ] )
+# ~
+# generates :-
+# ~
+#          5  10  11  11  15  20  99  200
+# ~
+#
+# @param el the list of co-expressions
+# @param cmp a comparator function, default `Internal.compare`
+#
+procedure sort_seq(el, cmp)
+   local l, cmp_item, e, i
+
+   /cmp := Internal.compare
+
+   # Create the initial list of Items, excluding those expressions
+   # that fail to produce a result.  The first element of the list
+   # will always give us the next result.
+   l := []
+   every e := !el do
+      put(l, Item(@e, e))
+
+   # Sort on the 1st field of Item (last).
+   cmp_item := index_cmp(1, cmp)
+   qsort(l, cmp_item)
+
+   while i := pop(l) do {
+      suspend i.last
+      if i.last := @i.e then
+         # Re-insert Item i into the list, keeping it in sorted order.
+         insert(l, bsearch(l, i, cmp_item,,, &yes), i)
+   }
 end
