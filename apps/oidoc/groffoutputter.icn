@@ -79,6 +79,8 @@ class GroffOutputter(Outputter)
          fullname := c.name
          if is(c, ProcedureSymbol) then
             fullname ||:= "(" || get_param_string(c.obj) || ")"
+         if is(c, RecordSymbol) then
+            fullname ||:= "(" || get_record_field_string(c.obj) || ")"
          s := "(none)"
          t := c.get_package() | "default"
          t := "\\f[HR]" || t || "\\f[R]"
@@ -92,13 +94,6 @@ class GroffOutputter(Outputter)
             every el := !sort(com.fields) do
                groff_fields(el[1], el[2])
          }
-         if is(c, RecordSymbol) then {
-            write(output_file, ".P")
-            write(output_file, "Fields :")
-            write(output_file, ".LS_SET c")
-            every write(output_file, ".LS_ITEM \\f[HR]", get_record_fields(c.obj), "\\fR")
-            write(output_file, ".LS_END")
-         }
          write(output_file, ".FUNC_END")
       }
 
@@ -111,6 +106,22 @@ class GroffOutputter(Outputter)
          "param" : {
             write(output_file, ".P")
             write(output_file, "Parameters :")
+            write(output_file, ".LS_SET c")
+            every l := !vals do {
+               l[1] ? {
+                  tab(many(WHITESPACE))
+                  name := tab(many(ID_CHAR))
+                  l[1] := tab(0)
+               }
+               write(output_file, ".LS_ITEM \\f[HR]", name, "\\fR")
+               markdown(l)
+            }
+            write(output_file, ".LS_END")
+         }
+
+         "field" : {
+            write(output_file, ".P")
+            write(output_file, "Fields :")
             write(output_file, ".LS_SET c")
             every l := !vals do {
                l[1] ? {

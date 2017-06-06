@@ -397,6 +397,20 @@ class HtmlOutputter(Outputter)
             }
          }
 
+         "field" : {
+            write(f, "<dt>Fields :</dt>")
+            every l := !vals do {
+               l[1] ? {
+                  tab(many(WHITESPACE))
+                  name := tab(many(ID_CHAR))
+                  l[1] := tab(0)
+               }
+               writes(f, "<dd><code>", name, "</code> - ")
+               html(f, l, c)
+               write(f, "</dd>")
+            }
+         }
+
          "return" : {
             write(f, "<dt>Returns :</dt>")
             write(f, "<dd>")
@@ -556,6 +570,12 @@ class HtmlOutputter(Outputter)
          if name == sym.obj.get_args().gen().str() then
             fail
       }
+      # Similarly, for a record, fail if the name matches one of the fields.
+      if is(sym, RecordSymbol) then {
+         if name == sym.obj.get_ids().gen().str() then
+            fail
+      }
+
       if is(sym, ClassField) &
          i := sym.defining_class.get_implemented_field(name) then
             return i
@@ -624,6 +644,8 @@ class HtmlOutputter(Outputter)
       fullname := c.name
       if is(c, ProcedureSymbol) then
          fullname ||:= "(" || get_param_string(c.obj) || ")"
+      else if is(c, RecordSymbol) then
+         fullname ||:= "(" || get_record_field_string(c.obj) || ")"
       
       fname := output_dir || "/" || get_id(c) || ".html"
       use {f := open(fname, "w") | stop("couldn't open " || fname), {
@@ -639,11 +661,6 @@ class HtmlOutputter(Outputter)
             output_a_file(c)
             comment_and_fields(f, c)
             write(f, "<p/>")
-         }
-         if is(c, RecordSymbol) then {
-            write(f, "<dt>Fields :</dt><dl>")
-            every write(f, "<dd>", get_record_fields(c.obj), "</dd>")
-            write(f, "</dl>")
          }
          write(f, "</body></html>")
       }}

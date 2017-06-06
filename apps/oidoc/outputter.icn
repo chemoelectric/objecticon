@@ -110,6 +110,14 @@ abstract class Outputter()
          obj.get_fields()
    end
 
+   protected get_record_field_string(obj)
+      local s
+      s := ""
+      every s ||:= get_record_fields(obj) || ", "
+      s[-2:0] := ""
+      return s
+   end
+
    protected get_class_prefix(c)
       local s
       s := ""
