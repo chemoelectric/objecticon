@@ -21,7 +21,7 @@ class Comment()
    end
 
    public new(sym)
-      local s, l, key, val
+      local s, l, key, val, m
       comment := []
       fields := table()
       keys := []
@@ -33,14 +33,16 @@ class Comment()
                if (tab(many(' \t')), ="@") then {
                   if key := tab(many(&lcase)) then {
                      val := [tab(0)]
-                     if /fields[key] := [] then
+                     (m := member(fields, key)) | {
                         put(keys, key)
-                     put(fields[key], val)
-                  } else if \key then {
+                        insert(fields, key, m := [])
+                     }
+                     put(m, val)
+                  } else if \val then {
                      #
                      # Continuation - add to end of last field.
                      #
-                     put(fields[key][-1], tab(0))
+                     put(val, tab(0))
                   } else
                      put(comment, l)
                } else
