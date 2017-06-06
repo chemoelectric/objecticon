@@ -42,17 +42,18 @@ end
 # This component is a slider between two set values, with optional tick marks
 # and labels.
 #
-# @example
-# @ s := Slider()
-# @ s.set_pos("85%", "25%")      
-# @ s.set_size(, "40%") # Width defaults for a vertical slider
-# @ s.set_range(0,5)
-# @ s.set_value(2)
-# @ s.set_ticks(1)
-# @ s.set_labels(1)
-# @ s.set_snaps(1)
-# @ self.add(s)
-#
+# Example :-
+# ~
+#   s := Slider()
+#   s.set_pos("85%", "25%")      
+#   s.set_size(, "40%") # Width defaults for a vertical slider
+#   s.set_range(0,5)
+#   s.set_value(2)
+#   s.set_ticks(1)
+#   s.set_labels(1)
+#   s.set_snaps(1)
+#   self.add(s)
+# ~
 class Slider(Component, HasOrientation)
    public 
       value,                   

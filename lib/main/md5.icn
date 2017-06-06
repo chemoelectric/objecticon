@@ -25,12 +25,12 @@ $define BIT32 16rffffffff
 
 #
 # An MD5 message digest implementation.  Example use :
-# @example
-# @ m := MD5()
-# @ m.update("here is some input")
-# @ m.update("here is some more")
-# @ s := m.finally()
-#
+# ~
+#   m := MD5()
+#   m.update("here is some input")
+#   m.update("here is some more")
+#   s := m.finally()
+# ~
 # This will leave s containing a 16 char string, being the
 # digest.   
 #

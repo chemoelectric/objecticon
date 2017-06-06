@@ -700,14 +700,15 @@ abstract class DescStream(Stream, NoCopy)
    # the mode of the target to this instances's mode (since they both
    # now point to the same file), and returns {&null}.
    #
+   # For example :-
+   # ~
+   #   f := FileStream("/tmp/xyz", 
+   #       ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
+   #   f.dup2(FileStream.stdout) | stop(&why)
+   #   f.close()
+   #   write("hello world")  # writes to /tmp/xyz
+   # ~
    # @param other - a {DescStream}
-   # @example
-   # @ f := FileStream("/tmp/xyz", 
-   # @     ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
-   # @ f.dup2(FileStream.stdout) | stop(&why)
-   # @ f.close()
-   # @ write("hello world")  # writes to /tmp/xyz
-   #
    public dup2(other)
       dup2_impl(other) | fail
       other.mode := self.mode
@@ -1307,13 +1308,15 @@ class ProgInputStream(SocketStream, HasBgProc)
    # input and standard error of the command; by default the command
    # inherits these from the parent.  If the stderr param is the string
    # "pipe", then stderr is sent to the pipe along with stdout.
-   # @example
-   # @   g := FileStream("/tmp/data",FileOpt.RDONLY) | stop(&why)
-   # @   f := ProgInputStream("wc", ["-l"],,g) | stop(&why)
-   # @   g.close()
-   # @   while write(f.read())   # writes the number of lines in /tmp/data
-   # @   f.close()
    #
+   # For example :-
+   # ~
+   #     g := FileStream("/tmp/data",FileOpt.RDONLY) | stop(&why)
+   #     f := ProgInputStream("wc", ["-l"],,g) | stop(&why)
+   #     g.close()
+   #     while write(f.read())   # writes the number of lines in /tmp/data
+   #     f.close()
+   # ~
    public new(cmd, args, env, stdin, stderr)
       local l
       l := one_way_socketpair() | fail
@@ -1363,14 +1366,16 @@ class ProgOutputStream(SocketStream, HasBgProc)
    # {posix.System.exec}; the last two optionally give the standard
    # output and standard error of the command; by default the command
    # inherits these from the parent.
-   # @example
-   # @    g := FileStream("/tmp/result",ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
-   # @    f := ProgOutputStream("wc", ["-l"],,g) | stop(&why)
-   # @    g.close()
-   # @    f.write("data")
-   # @    f.close()
-   # @    # Now /tmp/result contains "1" (ie, the output of wc -l applied to the data written to f)
    #
+   # For example :-
+   # ~
+   #      g := FileStream("/tmp/result",ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
+   #      f := ProgOutputStream("wc", ["-l"],,g) | stop(&why)
+   #      g.close()
+   #      f.write("data")
+   #      f.close()
+   #      # Now /tmp/result contains "1" (ie, the output of wc -l applied to the data written to f)
+   # ~
    public new(cmd, args, env, stdout, stderr)
       local l
       l := one_way_socketpair() | fail
@@ -1513,12 +1518,13 @@ end
 # This stream filters output written to it through a background
 # process and outputs the results to an arbitrary sink {Stream}.
 #
-# @example
-# @ # Encode s, putting the result in a RamStream
-# @ r := RamStream()
-# @ g := FilterOutputStream(r, "gzip", ["-c"])
-# @ g.write(s)
-#
+# For example :-
+# ~
+#   # Encode s, putting the result in a RamStream
+#   r := RamStream()
+#   g := FilterOutputStream(r, "gzip", ["-c"])
+#   g.write(s)
+# ~
 class FilterOutputStream(FilterStreamBase)
    private 
       sink
@@ -1613,11 +1619,12 @@ end
 # through a background process.  The output from that process can then
 # be read as this {Stream}'s output.
 #
-# @example
-# @ g := FilterInputStream(StringStream(s), "gzip", ["-c"])
-# @ # Reading from g will give the compressed value of the string s.
-# @ res := g.read_all()
-#
+# For example :-
+# ~
+#   g := FilterInputStream(StringStream(s), "gzip", ["-c"])
+#   # Reading from g will give the compressed value of the string s.
+#   res := g.read_all()
+# ~
 class FilterInputStream(FilterStreamBase)
    private 
       source,
@@ -1875,10 +1882,11 @@ end
 # is made for signalling errors (failure of the co-expression
 # indicates end-of-file).
 #
-# @example
-# @   # A stream with 10 lines
-# @   e := ExprStream{1 to 10}
-#
+# For example :-
+# ~
+#     # A stream with 10 lines
+#     e := ExprStream{1 to 10}
+# ~
 class ExprStream(LineBasedInputStream, NoCopy)
    private
       coex

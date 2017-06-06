@@ -17,14 +17,15 @@ package gui
 # A Event.SELECTION_CHANGED is generated whenever an item is selected from the
 # list.
 #
-# @example
-# @ l := List()
-# @ l.set_selection_list(["Red", "Green", "Yellow", "Blue", "Orange"])
-# @ l.set_size(120)
-# @ l.set_pos(100, 100)
-# @ l.set_selection(2)  # Green will be the first selection
-# @ self.add(l)
-#
+# Example :-
+# ~
+#   l := List()
+#   l.set_selection_list(["Red", "Green", "Yellow", "Blue", "Orange"])
+#   l.set_size(120)
+#   l.set_pos(100, 100)
+#   l.set_selection(2)  # Green will be the first selection
+#   self.add(l)
+# ~
 class List(SelectionDropDown)
    public 
       old_selection,

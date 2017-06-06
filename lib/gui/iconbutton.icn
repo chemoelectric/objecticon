@@ -14,19 +14,20 @@ package gui
 # different default border, suitable for displaying an icon
 # image.
 #
-# @example
-# @ Create a button with a diamond image and a border
-# @ b := IconButton()
-# @ b.set_image("11,c1,_
-# @ ~~~~~0~~~~~_
-# @ ~~~~000~~~~_
-# @ ~~0000000~~_
-# @ ~000000000~_
-# @ ~~0000000~~_
-# @ ~~~~000~~~~_
-# @ ~~~~~0~~~~~_
-# @")
-#
+# Example :-
+# ~
+#   # Create a button with a diamond image and a border
+#   b := IconButton()
+#   b.set_image("11,c1,_
+#   ~~~~~0~~~~~_
+#   ~~~~000~~~~_
+#   ~~0000000~~_
+#   ~000000000~_
+#   ~~0000000~~_
+#   ~~~~000~~~~_
+#   ~~~~~0~~~~~_
+#   ")
+# ~
 class IconButton(TextButton)
    public new()
       TextButton.new()

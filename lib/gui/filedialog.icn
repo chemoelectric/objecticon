@@ -105,11 +105,12 @@ end
 #
 # File dialog class.  This class provides a standard file dialog.
 #
-# @example
-# @ d := FileDialog()
-# @ d.show_modal()
-# @ write(d.get_result() | "cancelled")
-#
+# Example :-
+# ~
+#   d := FileDialog()
+#   d.show_modal()
+#   write(d.get_result() | "cancelled")
+# ~
 class FileDialog(Dialog)
    public
       show_hidden_menu_item,

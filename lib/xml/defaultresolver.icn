@@ -34,9 +34,11 @@ class DefaultResolver(Resolver)
    # will then be loaded when the public id is encountered, rather than the
    # given system id.  The alternative may be a simple filename if desired.
    #
-   # @example 
-   # @  set_public_mapping("-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN", 
-   # @                     "/tmp/web-app_2_3.dtd")
+   # Example :-
+   # ~
+   #    set_public_mapping("-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN", 
+   #                       "/tmp/web-app_2_3.dtd")
+   # ~
    # @param pub_id the public id
    # @param uri the alternative uri
    #

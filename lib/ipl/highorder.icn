@@ -47,10 +47,11 @@ end
 #    "A": add the remaining arguments.
 #    "-": skip the next argument.
 #
-# @example
-# @   f := partial(write, "vvvAV", "a", "b", "c", "p", "q", "r")
-# @   f("x","y","z")   # writes abcxyzpqr
-#
+# Example :-
+# ~
+#     f := partial(write, "vvvAV", "a", "b", "c", "p", "q", "r")
+#     f("x","y","z")   # writes abcxyzpqr
+# ~
 procedure partial(f, spec, l[])
    return Partial(f, spec, l).call
 end
@@ -222,10 +223,11 @@ end
 # field from it, and then applies the remaining arguments to the
 # resulting method.
 #
-# @example
-# @ f := methodf("abc")
-# @ f(obj, 1, 2, 3)   # invokes obj.abc(1, 2, 3)
-#
+# Example :-
+# ~
+#   f := methodf("abc")
+#   f(obj, 1, 2, 3)   # invokes obj.abc(1, 2, 3)
+# ~
 procedure methodf(field)
    return Methodf(field).call
 end

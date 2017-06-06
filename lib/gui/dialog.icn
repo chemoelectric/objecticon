@@ -1681,10 +1681,11 @@ end
 # This is a helpful component which has zero size, but reacts to accelerator keys
 # by firing an action event.
 #
-# @example
-# @  # dispose on alt-x
-# @  add(Accelerator().set_accel("x").connect(dispose, Event.ACTION))
-#
+# Example :-
+# ~
+#    # dispose on alt-x
+#    add(Accelerator().set_accel("x").connect(dispose, Event.ACTION))
+# ~
 class Accelerator(Component)
    public handle_accel(e)
       fire(Event.ACTION, e)

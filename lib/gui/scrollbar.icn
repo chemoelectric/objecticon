@@ -37,16 +37,17 @@ end
 # (being the amount added/subtracted when the top/bottom
 # button is pressed).  The value will then range from zero to
 # (total_size - page_size) inclusive.  An initial value must
-# be set with the {set_value()} method.
-# @example
-# @ vb := ScrollBar()
-# @ vb.set_pos("85%", "25%")      
-# @ vb.set_size(20, "40%")
-# @ vb.set_total_size(130)
-# @ vb.set_page_size(30)
-# @ vb.set_increment_size(1)
-# @ vb.set_value(0)
-# @ self.add(vb)
+# be set with the {set_value()} method.  For example :-
+# ~
+#   vb := ScrollBar()
+#   vb.set_pos("85%", "25%")      
+#   vb.set_size(20, "40%")
+#   vb.set_total_size(130)
+#   vb.set_page_size(30)
+#   vb.set_increment_size(1)
+#   vb.set_value(0)
+#   self.add(vb)
+# ~
 #
 # Alternatively, a scroll bar can be used as a slider which
 # ranges over a given range of values.  In this case, the
@@ -56,16 +57,18 @@ end
 #
 # Real numbers as opposed to integers can be used for the
 # range settings if desired.
-# @example
-# @ vb := ScrollBar()
-# @ vb.set_pos("85%", "25%")      
-# @ vb.set_size(20, "40%")
-# @ vb.set_range(2, 25)
-# @ vb.set_value(10)
-# @ vb.set_increment_size(1)
-# @ self.add(vb)
 #
-# A Event.VALUE_CHANGED, which is fired whenever the value changes.
+# For example :-
+# ~
+#   vb := ScrollBar()
+#   vb.set_pos("85%", "25%")      
+#   vb.set_size(20, "40%")
+#   vb.set_range(2, 25)
+#   vb.set_value(10)
+#   vb.set_increment_size(1)
+#   self.add(vb)
+# ~
+# An `Event.VALUE_CHANGED` event is fired whenever the value changes.
 #
 class ScrollBar(Component, HasOrientation)
    public 

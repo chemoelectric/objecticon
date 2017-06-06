@@ -54,11 +54,12 @@ end
 # constructor.  The fields in the subclass must of course be
 # accessible to this class's constructor.
 #
-# @example
-# @  class Abc(SimpleConstructor) public const a, b, c end
-# @  ...
-# @  x := Abc(1,2,3)  # Sets a,b,c to 1,2,3 respectively
-#  
+# Example :-
+# ~
+#    class Abc(SimpleConstructor) public const a, b, c end
+#    ...
+#    x := Abc(1,2,3)  # Sets a,b,c to 1,2,3 respectively
+# ~
 class SimpleConstructor()
    public new(a[])
       every Class.get(self, 1 to Class.get_n_instance_fields(self)) := pop(a)
@@ -75,10 +76,11 @@ end
 # @param i an optional initial value for the global variable
 # @      within e
 #
-# @example
-# @ # Cleanup some io stuff, without affecting global vars g.
-# @ save_var{ io_cleanup(), g }
-#
+# Example :-
+# ~
+#   # Cleanup some io stuff, without affecting global vars g.
+#   save_var{ io_cleanup(), g }
+# ~
 procedure save_var(e, var, i)
    suspend save_state(e, VarState(var, i))
 end
@@ -120,9 +122,11 @@ package global cleanup
 #
 # {e3} is optional and defaults to calling {close} on the resource.
 #
-# @example
-# @   s := use { f := open("some.txt"),
-# @              do_something_with(f) }
+# Example :-
+# ~
+#     s := use { f := open("some.txt"),
+#                do_something_with(f) }
+# ~
 procedure use(e1, e2, e3)
    local x, v, f
    x := @e1 | fail

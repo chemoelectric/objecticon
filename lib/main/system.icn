@@ -8,13 +8,14 @@ final abstract class System()
    # This provides a slightly easier to use interface to {execve}.
    # The first argument is searched on the PATH and if found pushed
    # onto the arg list (making the arg0 of the target program).  Then
-   # {execve} is called.
+   # {execve} is called.  For example :-
+   # ~
+   #    System.exec("ls", ["-l", "/home"])
+   # ~
    # @param cmd the name of the command
    # @param args the arg list, excluding the command name.  Defaults to []
    # @param env the env list, defaults to the current environment
    # @           if omitted
-   # @example
-   # @   System.exec("ls", ["-l", "/home"])
    #
    public static exec(cmd, args, env)
       cmd := Files.find_exe(cmd) | return error("Not found on PATH: " || cmd)
@@ -29,11 +30,11 @@ final abstract class System()
    # one parameter, and the third optional parameter is also a list of
    # strings, which provide the environment variables - if omitted then
    # the current program's environment is passed (obtained via the 
-   # environ variable).
-   # @example 
-   # @        System.execve("/bin/ls", ["/bin/ls", "-l", "/home"],
-   # @                                 ["ABC=DEF", "NUM=123"])
-   #
+   # environ variable).  For example :-
+   # ~
+   #          System.execve("/bin/ls", ["/bin/ls", "-l", "/home"],
+   #                                   ["ABC=DEF", "NUM=123"])
+   # ~
    public static native execve(f, args, env)
 
    # Spawn a new identical process.

@@ -67,12 +67,13 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    # variable for the new entry is returned, otherwise a value is
    # returned.
    #
-   # @example
-   # @  # Word counting
-   # @  t := SortTable(0)
-   # @  every w := words() do
-   # @     t.add(w) +:= 1
-   #
+   # Example :-
+   # ~
+   #    # Word counting
+   #    t := SortTable(0)
+   #    every w := words() do
+   #       t.add(w) +:= 1
+   # ~
    public add(key)
       return member(key) | (insert(key, def) & member(key))
    end

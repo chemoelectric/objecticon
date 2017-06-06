@@ -65,18 +65,19 @@ end
 # can be necessary if a lambda calls another lambda which exits via an
 # exception or a runtime error.
 #
-# @example
-# @   f := lambda{
-# @      throw("Something bad")
-# @   }
-# @
-# @   g := lambda{{
-# @      write("a[1]=",_a[1])
-# @      save_lambda{try{ f(102) }}
-# @      # Without save_lambda, _a[1] would now still be 102 (ie the arg given to f)
-# @      write("a[1]=",_a[1])
-# @   }}
+# Example :-
+# ~
+#     f := lambda{
+#        throw("Something bad")
+#     }
 #
+#     g := lambda{{
+#        write("a[1]=",_a[1])
+#        save_lambda{try{ f(102) }}
+#        # Without save_lambda, _a[1] would now still be 102 (ie the arg given to f)
+#        write("a[1]=",_a[1])
+#     }}
+# ~
 procedure save_lambda(e)
    suspend save_state(e, LambdaState())
 end

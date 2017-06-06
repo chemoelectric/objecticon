@@ -16,11 +16,12 @@ import util, ipl.lists
 # the TreeTable's columns were named A, B, C, then a
 # {TreeTableNode} might be created as follows :-
 #
-# @example
-# @ n := TreeTableNode().
-# @         set_label("Col A label").
-# @         set_contents(["Col B data", "Col C data"])
-#
+# Example :-
+# ~
+#   n := TreeTableNode().
+#           set_label("Col A label").
+#           set_contents(["Col B data", "Col C data"])
+# ~
 class TreeTableNode(TreeNode)
    public contents
 

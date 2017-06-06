@@ -19,19 +19,20 @@ import undo, util, graphics
 # The horizontal size must be set by the {set_size()} method:
 # there is no default (the vertical size will default, however).
 #
-# An Event.ACTION is generated when return is pressed,
-# a Event.CONTENT_CHANGED whenever the contents are changed,
-# a Event.CURSOR_MOVED when the cursor moves, and a
-# Event.SELECTION_CHANGED whenver the selection changes.
+# An `Event.ACTION` is generated when return is pressed,
+# `Event.CONTENT_CHANGED` whenever the contents are changed,
+# `Event.CURSOR_MOVED` when the cursor moves, and
+# `Event.SELECTION_CHANGED` whenver the selection changes.
 #
-# @example
-# @ t := TextField()
-# @ t.set_pos(50, 250)
-# @ # Vertical size will default
-# @ t.set_size(100)
-# @ t.set_contents("Initial string")
-# @ self.add(t)
-#
+# Example :-
+# ~
+#   t := TextField()
+#   t.set_pos(50, 250)
+#   # Vertical size will default
+#   t.set_size(100)
+#   t.set_contents("Initial string")
+#   self.add(t)
+# ~
 class TextField(Component)
    public 
       filter,                  # Cset for filtering characters
@@ -77,12 +78,12 @@ class TextField(Component)
    end
 
    #
-   # Set a filter on the characters allowed to be input to the text field.
+   # Set a filter on the characters allowed to be input to the text field.  For example :-
+   # ~
+   #   # Permit only hexadecimal characters as input
+   #   set_filter('0987654321abcdefABCDEF')
+   # ~
    # @param c  The cset of permissible characters.
-   # @example
-   # @ # Permit only hexadecimal characters as input
-   # @ set_filter('0987654321abcdefABCDEF')
-   #
    public set_filter(c)
       self.filter := c ** Gui.PRINTABLE_1
       return self

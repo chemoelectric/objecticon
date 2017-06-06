@@ -17,13 +17,15 @@ package gui
 # 
 # NB - A Button must be added to the {ButtonGroup} and the
 # {Dialog} too.
-# @example
-# @ bg := ButtonGroup()
-# @ b := TextButton()
-# @ b.set_label("Okay")
-# @ self.add(b)
-# @ bg.add(b)
 #
+# Example :-
+# ~
+#   bg := ButtonGroup()
+#   b := TextButton()
+#   b.set_label("Okay")
+#   self.add(b)
+#   bg.add(b)
+# ~
 class ButtonGroup()
    public 
       buttons

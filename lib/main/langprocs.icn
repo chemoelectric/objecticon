@@ -82,10 +82,12 @@ end
 # This class can be used to output a human-readable image of an
 # arbitrary icon object.
 #
-# @example
-# @  oo := ObjectOutputStream(FileStream.stdout)
-# @  oo.show(my_object)
-# @  oo.show(another_object)
+# Example :-
+# ~
+#    oo := ObjectOutputStream(FileStream.stdout)
+#    oo.show(my_object)
+#    oo.show(another_object)
+# ~
 #
 # Note that most of the public methods in this class are intended for
 # use by other classes which implement custom output (by having an

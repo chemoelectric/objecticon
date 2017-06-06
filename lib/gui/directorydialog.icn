@@ -41,11 +41,12 @@ end
 #
 # Directory dialog class.  This class provides a standard directory selection dialog.
 #
-# @example
-# @ d := DirectoryDialog()
-# @ d.show_modal()
-# @ write(d.get_result() | "cancelled")
-#
+# Example :-
+# ~
+#   d := DirectoryDialog()
+#   d.show_modal()
+#   write(d.get_result() | "cancelled")
+# ~
 class DirectoryDialog(Dialog)
    public
       show_hidden_menu_item,

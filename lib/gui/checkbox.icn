@@ -18,12 +18,14 @@ package gui
 # The size will also default if not specified.  The methods
 # used to control the images, label and check the status are
 # inherited from the superclasses {Button} and {Toggle}.
-# @example
-# @ c := CheckBox()
-# @ c.set_pos(200, 100)
-# @ c.set_label("Checkbox")
-# @ self.add(c)
 #
+# Example :-
+# ~
+#   c := CheckBox()
+#   c.set_pos(200, 100)
+#   c.set_label("Checkbox")
+#   self.add(c)
+# ~
 class CheckBox(Button)
    public
       unchecked_paint,

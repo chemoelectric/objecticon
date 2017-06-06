@@ -20,15 +20,17 @@ package record TemplateElement(ident, fnum)
 # identifier used to identify the field; the second element is the
 # name of the field.
 #
-# @example
-# @   # This will save the three fields {increment_size}, {value} and 
-# @   # {is_range_flag}.
-# @   private get_template()
-# @      suspend
-# @          ["Increment Size", "increment_size"] |
-# @          ["Value", "value"] |
-# @          ["Is Range Flag", "is_range_flag"]
-# @   end
+# Example :-
+# ~
+#     # This will save the three fields increment_size, value and 
+#     # is_range_flag.
+#     private get_template()
+#        suspend
+#            ["Increment Size", "increment_size"] |
+#            ["Value", "value"] |
+#            ["Is Range Flag", "is_range_flag"]
+#     end
+# ~
 #
 # The programmer may change the name of the field afterwards; for
 # example {value} may be re-named {initial_value}, and the data would

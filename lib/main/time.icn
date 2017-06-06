@@ -257,14 +257,14 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # included using single quotes.  Two single quotes maps to
    # an actual single quote.
    # 
-   # @example
-   # @
-   # @ yyyy MM dd HH mm ss -> 1999 12 17 23 30 01
-   # @ yyyy MM dd HH 'o''clock' mm ss -> 1999 12 17 23 o'clock 30 01
-   # @ yyyy/M/d HH:mm:ss zzz -> 1999/2/7 23:30:01 PST
-   # @ E MMM dd HH:mm:ss zzz yyyy -> Mon Feb 07 23:30:01 PST 1999
-   # @ yy MM dd HH mm ss -> 99 12 17 23 30 01
-   # 
+   # Example :-
+   # ~
+   #   yyyy MM dd HH mm ss -> 1999 12 17 23 30 01
+   #   yyyy MM dd HH 'o''clock' mm ss -> 1999 12 17 23 o'clock 30 01
+   #   yyyy/M/d HH:mm:ss zzz -> 1999/2/7 23:30:01 PST
+   #   E MMM dd HH:mm:ss zzz yyyy -> Mon Feb 07 23:30:01 PST 1999
+   #   yy MM dd HH mm ss -> 99 12 17 23 30 01
+   # ~
    public format(p)
       local res, ch, w
       
@@ -891,11 +891,12 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # Set the timezone to an appropriate local timezone, depending on
    # the other fields.  If it is changed, then the seconds are recomputed.
    #
-   # @example
-   # @    t := Time(2003,6,3)     # midnight, 3 June 2003 BST
-   # @    t.set_month(2)          # midnight, 3 Feb 2003 BST
-   # @    t.normalize_zone()      # midnight, 3 Feb 2003 GMT
-   #
+   # Example :-
+   # ~
+   #      t := Time(2003,6,3)     # midnight, 3 June 2003 BST
+   #      t.set_month(2)          # midnight, 3 Feb 2003 BST
+   #      t.normalize_zone()      # midnight, 3 Feb 2003 GMT
+   # ~
    public normalize_zone()
       if self.zone ~===:= Timezone.get_timezone_at(get_unix_seconds()) then
          compute_seconds()

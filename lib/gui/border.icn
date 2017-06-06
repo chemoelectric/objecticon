@@ -14,16 +14,15 @@ package gui
 # would normally be a Label object, but it could also be a
 # CheckBox or an Icon, or whatever is desired.
 #
-# @example
-# @ b := Border()
-# @
-# @ # Add a Label as the title
-# @
-# @ l := Label()
-# @ l.set_label("Title String")
-# @ b.set_title(l)
-# @ self.add(b)
-#
+# Example :-
+# ~
+#   b := Border()
+#   # Add a Label as the title
+#   l := Label()
+#   l.set_label("Title String")
+#   b.set_title(l)
+#   self.add(b)
+# ~
 class Border(Component)
    public 
       internal_align, 
