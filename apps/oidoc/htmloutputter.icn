@@ -380,78 +380,40 @@ class HtmlOutputter(Outputter)
             " </a>")
    end
 
+   private dt_list(title, f, c, vals)
+      local l
+      write(f, "<dt>", title, " :</dt>")
+      every l := !vals do {
+         write(f, "<dd>")
+         html(f, l, c)
+         write(f, "</dd>")
+      }
+   end
+
+   private dt_vlist(title, f, c, vals)
+      local l, name
+      write(f, "<dt>", title, " :</dt>")
+      every l := !vals do {
+         l[1] ? {
+            tab(many(WHITESPACE))
+            name := tab(many(ID_CHAR))
+            l[1] := tab(0)
+         }
+         writes(f, "<dd><code>", name, "</code> - ")
+         html(f, l, c)
+         write(f, "</dd>")
+      }
+   end
+   
    private html_fields(f, c, key, vals)
-      local name, l
       case key of {
-         "param" : {
-            write(f, "<dt>Parameters :</dt>")
-            every l := !vals do {
-               l[1] ? {
-                  tab(many(WHITESPACE))
-                  name := tab(many(ID_CHAR))
-                  l[1] := tab(0)
-               }
-               writes(f, "<dd><code>", name, "</code> - ")
-               html(f, l, c)
-               write(f, "</dd>")
-            }
-         }
-
-         "field" : {
-            write(f, "<dt>Fields :</dt>")
-            every l := !vals do {
-               l[1] ? {
-                  tab(many(WHITESPACE))
-                  name := tab(many(ID_CHAR))
-                  l[1] := tab(0)
-               }
-               writes(f, "<dd><code>", name, "</code> - ")
-               html(f, l, c)
-               write(f, "</dd>")
-            }
-         }
-
-         "return" : {
-            write(f, "<dt>Returns :</dt>")
-            write(f, "<dd>")
-            html(f, vals[1], c)
-            write(f, "</dd>")
-         }
-
-         "generate" : {
-            write(f, "<dt>Generates :</dt>")
-            write(f, "<dd>")
-            html(f, vals[1], c)
-            write(f, "</dd>")
-         }
-
-         "fail" : {
-            write(f, "<dt>Fails :</dt>")
-            write(f, "<dd>")
-            html(f, vals[1], c)
-            write(f, "</dd>")
-         }
-
-         "runerr" : {
-            write(f, "<dt>Runtime error :</dt>")
-            write(f, "<dd>")
-            html(f, vals[1], c)
-            write(f, "</dd>")
-         }
-
-         "example" : {
-            write(f, "<dt>Example :</dt><dd><pre>")
-            every l := !vals do
-               every write(f, esc(l[2 to *l]))
-            write(f, "</pre></dd>")
-         }
-
-         "see" : {
-            write(f, "<dt>See also :</dt>")
-            write(f, "<dd>")
-            html(f, vals[1], c)
-            write(f, "</dd>")
-         }
+         "param" : dt_vlist("Parameters", f, c, vals)
+         "field" : dt_vlist("Fields", f, c, vals)
+         "return" : dt_list("Returns", f, c, vals)
+         "generate" : dt_list("Generates", f, c, vals)
+         "fail" : dt_list("Fails", f, c, vals)
+         "runerr" : dt_list("Runtime error", f, c, vals)
+         "see" : dt_list("See also", f, c, vals)
       }
    end
 

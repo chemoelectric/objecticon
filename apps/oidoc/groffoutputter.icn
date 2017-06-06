@@ -40,6 +40,8 @@ class GroffOutputter(Outputter)
          if is(c.obj, Tree) then {
             com := Comment(c)
             markdown(com.comment)
+            every el := !sort(com.fields) do
+               groff_fields(el[1], el[2])
          }
 
          meths := []
@@ -100,84 +102,42 @@ class GroffOutputter(Outputter)
       (\output_file).close()
    end
 
-   private groff_fields(key, vals)
+   private field_list(title, vals)
+      local l
+      write(output_file, ".P")
+      write(output_file, title, " :")
+      every l := !vals do {
+         write(output_file, ".P")
+         markdown(l)
+      }
+   end
+
+   private field_vlist(title, vals)
       local l, name
+      write(output_file, ".P")
+      write(output_file, title, " :")
+      write(output_file, ".LS_SET c")
+      every l := !vals do {
+         l[1] ? {
+            tab(many(WHITESPACE))
+            name := tab(many(ID_CHAR))
+            l[1] := tab(0)
+         }
+         write(output_file, ".LS_ITEM \\f[HR]", name, "\\fR")
+         markdown(l)
+      }
+      write(output_file, ".LS_END")
+   end
+
+   private groff_fields(key, vals)
       case key of {
-         "param" : {
-            write(output_file, ".P")
-            write(output_file, "Parameters :")
-            write(output_file, ".LS_SET c")
-            every l := !vals do {
-               l[1] ? {
-                  tab(many(WHITESPACE))
-                  name := tab(many(ID_CHAR))
-                  l[1] := tab(0)
-               }
-               write(output_file, ".LS_ITEM \\f[HR]", name, "\\fR")
-               markdown(l)
-            }
-            write(output_file, ".LS_END")
-         }
-
-         "field" : {
-            write(output_file, ".P")
-            write(output_file, "Fields :")
-            write(output_file, ".LS_SET c")
-            every l := !vals do {
-               l[1] ? {
-                  tab(many(WHITESPACE))
-                  name := tab(many(ID_CHAR))
-                  l[1] := tab(0)
-               }
-               write(output_file, ".LS_ITEM \\f[HR]", name, "\\fR")
-               markdown(l)
-            }
-            write(output_file, ".LS_END")
-         }
-
-         "return" : {
-            write(output_file, ".P")
-            write(output_file, "Returns :")
-            write(output_file, ".P")
-            every markdown(vals[1])
-         }
-
-         "generate" : {
-            write(output_file, ".P")
-            write(output_file, "Generates :")
-            write(output_file, ".P")
-            every markdown(vals[1])
-         }
-
-         "fail" : {
-            write(output_file, ".P")
-            write(output_file, "Fails :")
-            write(output_file, ".P")
-            every markdown(vals[1])
-         }
-
-         "runerr" : {
-            write(output_file, ".P")
-            write(output_file, "Runtime error :")
-            write(output_file, ".P")
-            every markdown(vals[1])
-         }
-
-         "see" : {
-            write(output_file, ".P")
-            write(output_file, "See also :")
-            write(output_file, ".P")
-            every markdown(vals[1])
-         }
-
-         "example" : {
-            write(output_file, ".P")
-            write(output_file, "Example :")
-            write(output_file, ".ID\n.ft HR")
-            every l := !vals do
-               every write(output_file, l[2 to *l])
-            write(output_file, ".ft R\n.DE")
-         }
+         "param" : field_vlist("Parameters", vals)
+         "field" : field_vlist("Fields", vals)
+         "return" : field_list("Returns", vals)
+         "generate" : field_list("Generates", vals)
+         "fail" : field_list("Fails", vals)
+         "runerr" : field_list("Runtime error", vals)
+         "see" : field_list("See also", vals)
       }
    end
 
