@@ -120,8 +120,8 @@ abstract class File9P()
       return self
    end
 
-   # Note that normally {set_parent} should not be called; rather
-   # {add_child} in the parent directory should be used.  This method
+   # Note that normally `set_parent` should not be called; rather
+   # `add_child` in the parent directory should be used.  This method
    # is public in order to allow files to point upwards to a
    # directory, but for the directory to not link downwards to them,
    # so that they don't appear in the directory's contents.

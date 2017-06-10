@@ -501,21 +501,23 @@ $ifdef _PLAN9
    # :  `gid` - the group id
    # :  `atime` - the access time (an integer)
    # :  `mtime` - the modification time (an integer)
-   # @param length the file length
-   # @param name the file name
+   # :Parameters :
+   # :  `length` - the file length
+   # :  `name` - the file name
    #
    public static native wstat(s, mode, uid, gid, atime, mtime, length, name)
 $else
    #
    # Write selected attributes about a file.  If any of the parameters
-   # are {&null}, they are left unchanged.
+   # are `&null`, they are left unchanged.
    #
-   # @param s the file
-   # @param mode the mode (an integer)
-   # @param uid the owner name
-   # @param gid the group name
-   # @param atime the access time (an integer)
-   # @param mtime the modification time (an integer)
+   # :Parameters :
+   # :  `s` - the file
+   # :  `mode` - the mode (an integer)
+   # :  `uid` - the owner name
+   # :  `gid` - the group name
+   # :  `atime` - the access time (an integer)
+   # :  `mtime` - the modification time (an integer)
    #
    public static native wstat(s, mode, uid, gid, atime, mtime)
 $endif

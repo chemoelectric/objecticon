@@ -785,20 +785,22 @@ $ifdef _PLAN9
    # :  `mode` - the mode (an integer)
    # :  `uid` - the owner id
    # :  `gid` - the group id
-   # @param atime the access time (an integer)
-   # @param mtime the modification time (an integer)
-   # @param length the file length
-   # @param name the file name
+   # :Parameters :
+   # :  `atime` - the access time (an integer)
+   # :  `mtime` - the modification time (an integer)
+   # :  `length` - the file length
+   # :  `name` - the file name
    #
    public native wstat(mode, uid, gid, atime, mtime, length, name)
 $else
    #
    # Write selected attributes about a file.  If any of the parameters
-   # are {&null}, they are left unchanged.
+   # are `&null`, they are left unchanged.
    #
-   # @param mode the mode (an integer)
-   # @param uid the owner name
-   # @param gid the group name
+   # :Parameters :
+   # :  `mode` - the mode (an integer)
+   # :  `uid` - the owner name
+   # :  `gid` - the group name
    #
    public native wstat(mode, uid, gid)
 $endif
@@ -1070,10 +1072,11 @@ $ifdef _PLAN9
    end
 
    #
-   # Create a pair of {FileStream}s using the pipe system call.
-   # @param m1 additional flags from {FileOpt9}, in addition to ORDWR to apply
-   # @      to the first end of the pipe
-   # @param m2 the same for the other end of the pipe.
+   # Create a pair of `FileStream`s using the pipe system call.
+   # :Parameters :
+   # :  `m1` - additional flags from `FileOpt9`, in addition to ORDWR to apply
+   #        to the first end of the pipe
+   # :  `m2` - the same for the other end of the pipe.
    #
    public static pipe(m1, m2)
       local t, p1, p2, dir
@@ -1104,15 +1107,17 @@ $ifdef _PLAN9
 
    # This method provides an interface to the Plan 9 pread function.
    #
-   # @param n the maximum number of chars to read; n must be > 0.
-   # @param offset the zero-based offset to seek to before reading.
+   # :Parameters :
+   # :  `n` - the maximum number of chars to read; n must be > 0.
+   # :  `offset` - the zero-based offset to seek to before reading.
    #
    public native pread(n, offset)
 
    # This method provides an interface to the Plan 9 pwrite function.
    #
-   # @param s the string to write
-   # @param offset the zero-based offset to seek to before writing.
+   # :Parameters :
+   # :  `s` - the string to write
+   # :  `offset` - the zero-based offset to seek to before writing.
    #
    public native pwrite(s, offset)
 
@@ -1122,15 +1127,16 @@ $ifdef _PLAN9
    public native fd2path()
 $else
    #
-   # Open a new {FileStream} using the underlying system open
+   # Open a new `FileStream` using the underlying system open
    # function.
-   # @param name the file name
-   # @param flags the flags, selected from {FileOpt}
-   # @param perm the create permissions to use if a file is
-   # @      created, selected from {Mode}.
-   # @param mode the resulting {Stream}'s mode; if omitted
-   # @      this is deduced from {flags} parameter and the
-   # @      type of file being opened.
+   # :Parameters :
+   # :  `name` - the file name
+   # :  `flags` - the flags, selected from `FileOpt`
+   # :  `perm` - the create permissions to use if a file is
+   #        created, selected from `Mode`.
+   # :  `mode` - the resulting `Stream`'s mode; if omitted
+   #        this is deduced from `flags` parameter and the
+   #        type of file being opened.
    #
    public new(name, flags, perm, mode)
       if \mode then
@@ -1528,19 +1534,21 @@ class ProgInputStream(FileStream, HasBgProc)
       return self
    end
 
-   # Open a new readable {Stream} based on the given command.  The
+   # Open a new readable `Stream` based on the given command.  The
    # first three parameters are the same as for the method
-   # {posix.System.exec};  the last two optionally give the standard
+   # `posix.System.exec`;  the last two optionally give the standard
    # input and standard error of the command; by default the command
    # inherits these from the parent.  If the stderr param is the string
    # "pipe", then stderr is sent to the pipe along with stdout.
-   # @example
-   # @   g := FileStream.open("/tmp/data",FileOpt.RDONLY) | stop(&why)
-   # @   f := ProgInputStream("wc", ["-l"],,g) | stop(&why)
-   # @   g.close()
-   # @   while write(f.read())   # writes the number of lines in /tmp/data
-   # @   f.close()
    #
+   # For example :-
+   # ~
+   #     g := FileStream("/tmp/data",FileOpt.RDONLY) | stop(&why)
+   #     f := ProgInputStream("wc", ["-l"],,g) | stop(&why)
+   #     g.close()
+   #     while write(f.read())   # writes the number of lines in /tmp/data
+   #     f.close()
+   # ~
    public new(cmd, args, env, stdin, stderr)
       local l
       l := pipe() | fail
@@ -1584,19 +1592,21 @@ class ProgOutputStream(FileStream, HasBgProc)
       return self
    end
 
-   # Open a new writeable {Stream} based on the given command. The
+   # Open a new writeable `Stream` based on the given command. The
    # first three parameters are the same as for the method
-   # {posix.System.exec}; the last two optionally give the standard
+   # `posix.System.exec`; the last two optionally give the standard
    # output and standard error of the command; by default the command
    # inherits these from the parent.
-   # @example
-   # @    g := FileStream.open("/tmp/result",ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
-   # @    f := ProgOutputStream("wc", ["-l"],,g) | stop(&why)
-   # @    g.close()
-   # @    f.write("data")
-   # @    f.close()
-   # @    # Now /tmp/result contains "1" (ie, the output of wc -l applied to the data written to f)
    #
+   # For example :-
+   # ~
+   #      g := FileStream("/tmp/result",ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
+   #      f := ProgOutputStream("wc", ["-l"],,g) | stop(&why)
+   #      g.close()
+   #      f.write("data")
+   #      f.close()
+   #      # Now /tmp/result contains "1" (ie, the output of wc -l applied to the data written to f)
+   # ~
    public new(cmd, args, env, stdout, stderr)
       local l
       l := pipe(, FileOpt9.OCEXEC) | fail
@@ -1634,8 +1644,8 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, 
 
    # Convenient function to check that the command exited
    # successfully.  If it did, this function returns, otherwise it
-   # fails and sets {&why} appropriately, based on the exit code and
-   # stderr output.  The error sink must be set to a {StringStream} to
+   # fails and sets `&why` appropriately, based on the exit code and
+   # stderr output.  The error sink must be set to a `StringStream` to
    # use this function.
    #
    public succeeded()
@@ -2304,9 +2314,10 @@ class NetStream(FileStream)
    end
 
    # Query the connection server (/net/cs)
-   # @param the address to query
-   # @param the optional task to use to poll the server, allowing other work to take place
-   # @      during the query.
+   # :Parameters :
+   # :  `addr` - the address to query
+   # :  `task` - an optional task to use to poll the server, allowing other work to take place
+   #        during the query.
    #
    public static cs_query(addr, task)
       local f
@@ -2317,10 +2328,11 @@ class NetStream(FileStream)
    end
 
    # Write to the control file.
-   # @param msg the message to write
-   # @param timeout an optional timeout
-   # @param the optional task to use to poll the server, allowing other work to take place
-   # @      whilst waiting for a response (eg on a connect).
+   # :Parameters :
+   # :  `msg` - the message to write
+   # :  `timeout` - an optional timeout
+   # :  `task` - an optional task to use to poll the server, allowing other work to take place
+   #        whilst waiting for a response (eg on a connect).
    #
    public write_ctrl(msg, timeout, task)
       local nb, r
@@ -2365,10 +2377,11 @@ class NetStream(FileStream)
 
    # Connect to the given address, which should be in the form returned by cs_query, eg
    # "/net/tcp/clone 173.194.78.103!80".
-   # @param s the entry from cs_query
-   # @param timeout an optional timeout
-   # @param the optional task to use to poll the server, allowing other work to take place
-   # @      whilst waiting.
+   # :Parameters :
+   # :  `s` - the entry from cs_query
+   # :  `timeout` - an optional timeout
+   # :  `task` - an optional task to use to poll the server, allowing other work to take place
+   #        whilst waiting.
    #
    public static connect(s, timeout, task)
       local clone_file, dest, res
@@ -2393,10 +2406,11 @@ class NetStream(FileStream)
 
    # Dial the given address.
    #
-   # @param addr the address, eg "tcp!www.google.com!80"
-   # @param timeout an optional timeout
-   # @param the optional task to use to poll the server, allowing other work to take place
-   # @      whilst waiting.
+   # :Parameters :
+   # :  `addr` - the address, eg "tcp!www.google.com!80"
+   # :  `timeout` - an optional timeout
+   # :  `task` - an optional task to use to poll the server, allowing other work to take place
+   #        whilst waiting.
    #
    public static dial(addr, timeout, task)
       local l
@@ -2404,7 +2418,7 @@ class NetStream(FileStream)
       return connect(!l, timeout, task)
    end
 
-   # Dial the given address.  As per {dial}, but just use the first
+   # Dial the given address.  As per `dial`, but just use the first
    # result from cs_query, then give up.
    #
    public static dial_first(addr, timeout, task)
@@ -2413,7 +2427,7 @@ class NetStream(FileStream)
       return connect(l[1], timeout, task)
    end
 
-   # Create a new {NetStream}, by opening the given clone file, which
+   # Create a new `NetStream`, by opening the given clone file, which
    # becomes the control file of the new instance.
    #
    public static clone(fn)
@@ -2424,7 +2438,7 @@ class NetStream(FileStream)
       return NetStream(cf, FilePath(fn).sibling(name))
    end
 
-   # Return a new {NetStream} which can be used to listen on the given address.
+   # Return a new `NetStream` which can be used to listen on the given address.
    #
    public static announce(addr)
       local l, res, clone_file, arg
@@ -2444,10 +2458,11 @@ class NetStream(FileStream)
       return res
    end
 
-   # After an {announce}, listen for an incoming connection.
-   # @param timeout an optional timeout
-   # @param the optional task to use with poll(), allowing other work to take place
-   # @      whilst waiting.
+   # After an `announce`, listen for an incoming connection.
+   # :Parameters :
+   # :  `timeout` - an optional timeout
+   # :  `task` - an optional task to use with poll(), allowing other work to take place
+   #        whilst waiting.
    #
    public listen(timeout, task)
       local cf, name, cw, r, fd
@@ -2495,7 +2510,7 @@ class NetStream(FileStream)
       return .dir
    end
 
-   # Return the control file, which will be a {FileStream}.
+   # Return the control file, which will be a `FileStream`.
    #
    public get_ctrl()
       return .ctrl
@@ -2521,9 +2536,9 @@ abstract class Pollable()
 end
 
 # This stream provides non-blocking i/o by using background processes.
-# The methods {get_in_status} and {get_out_status} indicate what the
-# background processes are doing, and whether the {in} and {out}
-# methods may block.  Instances can be used with {DescStream.poll}.
+# The methods `get_in_status` and `get_out_status` indicate what the
+# background processes are doing, and whether the `in` and `out`
+# methods may block.  Instances can be used with `DescStream.poll`.
 #
 class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
    public static const
@@ -2611,10 +2626,10 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
       return n
    end
 
-   # This behaves just like the {out} method, except that it does not
+   # This behaves just like the `out` method, except that it does not
    # trigger a new write in the writer process.  So after it has been
    # called, the write status will not be WRITING, and so the next
-   # call to {out} will not block.
+   # call to `out` will not block.
    #
    public flush_out()
       \writer | return error("stream not open for writing")
@@ -2623,17 +2638,17 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
    end
 
    # This setting configures what happens to data remaining in the
-   # write buffer when {close()} is invoked.  There are three possible
+   # write buffer when `close()` is invoked.  There are three possible
    # settings :-
    #
-   # DISCARD - the data is discarded, and {close()} does not block.
+   # DISCARD - the data is discarded, and `close()` does not block.
    #
-   # FOREGROUND_FLUSH - the data is flushed, and {close()} blocks
+   # FOREGROUND_FLUSH - the data is flushed, and `close()` blocks
    # whilst this is done.  This is the default setting.
    #
    # BACKGROUND_FLUSH - the data is flushed in the background (by
    # leaving the writer process running until the data is written),
-   # and {close()} does not block.  The writer process will continue,
+   # and `close()` does not block.  The writer process will continue,
    # if necessary, even after the program exits.
    #
    public set_write_on_close(x)
@@ -2722,11 +2737,13 @@ class NonBlockStream(Stream, Pollable, HasUnderlyingStream, NoCopy)
 
    #
    # Create a new instance
-   # @param other - the {DescStream} to wrap
-   # @param mode - either {READ} and/or {WRITE}.  Using only one of the two
+   # :Parameters :
+   # :  `other` - the `DescStream` to wrap
+   # :  `mode` - either `READ` and/or `WRITE`.  Using only one of the two
    #               possible modes allows the creation of only one subprocess.
-   # @param rbuff_size - the read buffer size; default 1KB
-   # @param wbuff_size - the write buffer size; default 1KB
+   # :Parameters :
+   # :  `rbuff_size` - the read buffer size; default 1KB
+   # :  `wbuff_size` - the write buffer size; default 1KB
    #
    public new(other, mode, rbuff_size, wbuff_size)
       /mode := other.get_mode()
@@ -2787,10 +2804,11 @@ class FileWorker(Pollable, NoCopy)
    end
 
    # Create a new instance.
-   # @param other an optional {DescStream}, whose file descriptor is dup'ed, and then
-   #       used for subsequent operations.  If not given, then {op_open} or {op_create} must be
+   # :Parameters :
+   # :  `other` - an optional `DescStream`, whose file descriptor is dup'ed, and then
+   #       used for subsequent operations.  If not given, then `op_open` or `op_create` must be
    #       called to initialize a file.
-   # @param buff_size the i/o buffer size for reads and writes; defaults to 1024
+   # :  `buff_size` - the i/o buffer size for reads and writes; defaults to 1024
    #
    public new(other, buff_size)
       ptr := new_impl(other, buff_size) | fail
