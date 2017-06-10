@@ -1,4 +1,4 @@
-import io, lang, util, ipl.options, ipl.lists
+import io, lang, util, net, ipl.options, ipl.lists
 
 procedure create_prog(imps, links)
    local tf, prog
@@ -49,9 +49,16 @@ procedure compile(prog, tf, links)
 end
 
 procedure usage(opts)
-   write("Usage: ieval [OPTIONS] [INPUT-FILES...]")
-   write("Interactively evaluate expressions")
+   local u
+   write("Usage: ieval [OPTIONS] [INPUT-FILES...]\n_
+          Interactively evaluate expressions")
    options_help(opts)
+   u := URL("http://objecticon.sourceforge.net/Ieval.html")
+   writes("\nFor more details, visit ")
+   if Files.is_flowterm_tty(FileStream.stdout) then
+      write(Files.begin_link(u), u.str(), Files.end_link())
+   else
+      write(u.str())
    exit(0)
 end
 
@@ -65,7 +72,8 @@ procedure main(a)
                        Opt("a",, "In gui mode, actively show completions, rather than on the tab key"),
                        Opt("hlim",integer,"Set the history limit for the line editor (default is 500)"),
                        Opt("elim",integer,"Set the expression limit for evaluation (default is 35)"),
-                       Opt("llim",integer,"Set the gui interface's log area line limit (default is 600)")], usage)
+                       Opt("llim",integer,"Set the gui interface's log area line limit (default is 600)")],
+                       usage)
    imports := set()
    every insert(imports, !str2list(!\opts["i"]))
    links := \opts["l"] | []
