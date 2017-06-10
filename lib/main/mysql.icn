@@ -245,7 +245,8 @@ final class MySql(NoCopy)
    #
    # Invoke mysql_list_dbs() for the current connection.
    #
-   # @return an {MySqlRes} instance
+   # :Returns :
+   # :  an `MySqlRes` instance
    #
    public list_dbs(wild)
       return MySqlRes(list_dbs_impl(wild))
@@ -256,7 +257,8 @@ final class MySql(NoCopy)
    #
    # Invoke mysql_list_fields() for the current connection.
    #
-   # @return an {MySqlRes} instance
+   # :Returns :
+   # :  an `MySqlRes` instance
    #
    public list_fields(table, wild)
       return MySqlRes(list_fields_impl(table, wild))
@@ -267,7 +269,8 @@ final class MySql(NoCopy)
    #
    # Invoke mysql_list_processes() for the current connection.
    #
-   # @return an {MySqlRes} instance
+   # :Returns :
+   # :  an `MySqlRes` instance
    #
    public list_processes()
       return MySqlRes(list_processes_impl())
@@ -278,7 +281,8 @@ final class MySql(NoCopy)
    #
    # Invoke mysql_list_tables() for the current connection.
    #
-   # @return an {MySqlRes} instance
+   # :Returns :
+   # :  an `MySqlRes` instance
    #
    public list_tables(wild)
       return MySqlRes(list_tables_impl(wild))
@@ -324,7 +328,7 @@ final class MySql(NoCopy)
    end
 
    #
-   # Convenience method to convert a {Time} instance to a string
+   # Convenience method to convert a `Time` instance to a string
    # for inclusion in an SQL statement as a DATETIME or TIMESTAMP.
    #
    public esc_datetime(d)
@@ -335,7 +339,7 @@ final class MySql(NoCopy)
    end
 
    #
-   # Convenience method to convert a {Time} instance to a string
+   # Convenience method to convert a `Time` instance to a string
    # for inclusion in an SQL statement as a DATE.
    #
    public esc_date(d)
@@ -346,7 +350,7 @@ final class MySql(NoCopy)
    end
 
    #
-   # Convenience method to convert a {Time} instance to a string
+   # Convenience method to convert a `Time` instance to a string
    # for inclusion in an SQL statement as a TIME.
    #
    public esc_time(d)
@@ -364,7 +368,8 @@ final class MySql(NoCopy)
    #
    # Invoke mysql_store_result() for the current connection.
    #
-   # @return an {MySqlRes} instance
+   # :Returns :
+   # :  an `MySqlRes` instance
    #
    public store_result()
       return MySqlRes(store_result_impl())
@@ -380,7 +385,8 @@ final class MySql(NoCopy)
    #
    # Invoke mysql_use_result() for the current connection.
    #
-   # @return an {MySqlRes} instance
+   # :Returns :
+   # :  an `MySqlRes` instance
    #
    public use_result()
       return MySqlRes(use_result_impl())
@@ -405,7 +411,8 @@ final class MySql(NoCopy)
 
    #
    # Turn autocommit on or off
-   # @param f a flag, either &yes (for on) or &no (for off)
+   # :Parameters :
+   # :  `f` - a flag, either &yes (for on) or &no (for off)
    # 
    public native set_autocommit(f)
 

@@ -24,14 +24,14 @@ import
 #
 # The "seconds" viewpoint is always in UTC, whilst the "broken down"
 # viewpoint is always relative to a timezone, represented as a
-# {Timezone} object.
+# `Timezone` object.
 #
 # The wday and yday fields are calculated when any of the "broken
 # down" fields or the seconds are changed.
 #
-# The constructor accepts various parameters; see the {new()} method
-# for details.  Alternatively, the static methods {Time.parse} and
-# {Time.simple_parse} can be used to create new instances from
+# The constructor accepts various parameters; see the `new()` method
+# for details.  Alternatively, the static methods `Time.parse` and
+# `Time.simple_parse` can be used to create new instances from
 # formatted strings.
 #
 class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
@@ -257,14 +257,14 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # included using single quotes.  Two single quotes maps to
    # an actual single quote.
    # 
-   # @example
-   # @
-   # @ yyyy MM dd HH mm ss -> 1999 12 17 23 30 01
-   # @ yyyy MM dd HH 'o''clock' mm ss -> 1999 12 17 23 o'clock 30 01
-   # @ yyyy/M/d HH:mm:ss zzz -> 1999/2/7 23:30:01 PST
-   # @ E MMM dd HH:mm:ss zzz yyyy -> Mon Feb 07 23:30:01 PST 1999
-   # @ yy MM dd HH mm ss -> 99 12 17 23 30 01
-   # 
+   # Example :-
+   # ~
+   #   yyyy MM dd HH mm ss -> 1999 12 17 23 30 01
+   #   yyyy MM dd HH 'o''clock' mm ss -> 1999 12 17 23 o'clock 30 01
+   #   yyyy/M/d HH:mm:ss zzz -> 1999/2/7 23:30:01 PST
+   #   E MMM dd HH:mm:ss zzz yyyy -> Mon Feb 07 23:30:01 PST 1999
+   #   yy MM dd HH mm ss -> 99 12 17 23 30 01
+   # ~
    public format(p)
       local res, ch, w
       
@@ -381,7 +381,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
 
    #
    # Create a Time instance using the given format string; see
-   # {TimeParser.parse} for more details.
+   # `TimeParser.parse` for more details.
    #
    public static parse(s, p)
       local t
@@ -413,7 +413,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    end
 
    #
-   # The hash code, to be consistent with {equals()} above, returns the
+   # The hash code, to be consistent with `equals()` above, returns the
    # secons past the base date.
    #
    private object_hash()
@@ -600,10 +600,11 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    #
    # Set seconds and zone field; re-compute broken down fields
    #
-   # @param n     the seconds past the base point
-   # @param zone  the zone, as a {Timezone} object, or &null, in which case
-   # @            the local system timezone corresponding to the seconds
-   # @            is used.
+   # :Parameters :
+   # :  `n` - the seconds past the base point
+   # :  `zone` - the zone, as a `Timezone` object, or &null, in which case
+   #              the local system timezone corresponding to the seconds
+   #              is used.
    #
    public set_seconds(n, zone)
       self.seconds := n
@@ -697,8 +698,9 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
 
    #
    # Set the time zone offset; recompute seconds past the base date.  To keep the
-   # seconds constant and recompute the broken-down fields, use {set_seconds}.
-   # @param z a {Timezone} object.
+   # seconds constant and recompute the broken-down fields, use `set_seconds`.
+   # :Parameters :
+   # :  `z` - a `Timezone` object.
    #
    public set_zone(z)
       self.zone := z
@@ -863,10 +865,11 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
 
    #
    # Set to a time based on the number of seconds past the Unix base epoch.
-   # @param t     the number of seconds
-   # @param zone  the zone, as a {Timezone} object, or &null, in which case
-   # @            the local system timezone corresponding to the seconds
-   # @            is used.
+   # :Parameters :
+   # :  `t` - the number of seconds
+   # :  `zone` - the zone, as a `Timezone` object, or &null, in which case
+   #              the local system timezone corresponding to the seconds
+   #              is used.
    #
    public set_unix_seconds(t, zone)
       return set_seconds(SYSTEM_BASE_OFFSET + t, zone)
@@ -891,11 +894,12 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # Set the timezone to an appropriate local timezone, depending on
    # the other fields.  If it is changed, then the seconds are recomputed.
    #
-   # @example
-   # @    t := Time(2003,6,3)     # midnight, 3 June 2003 BST
-   # @    t.set_month(2)          # midnight, 3 Feb 2003 BST
-   # @    t.normalize_zone()      # midnight, 3 Feb 2003 GMT
-   #
+   # Example :-
+   # ~
+   #      t := Time(2003,6,3)     # midnight, 3 June 2003 BST
+   #      t.set_month(2)          # midnight, 3 Feb 2003 BST
+   #      t.normalize_zone()      # midnight, 3 Feb 2003 GMT
+   # ~
    public normalize_zone()
       if self.zone ~===:= Timezone.get_timezone_at(get_unix_seconds()) then
          compute_seconds()
@@ -954,7 +958,7 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    public static native get_system_micros()
 
    #
-   # The constructor to {Time()} does different things depending on
+   # The constructor to `Time()` does different things depending on
    # the number of arguments provided.  
    #
    # With no arguments, the instance is set to the current time.
@@ -963,10 +967,10 @@ class Time(ObjectOutput, ObjectHash, ObjectEquals, ObjectCodec)
    # base date in the default zone.
    #
    # With two arguments, the first is the number of seconds past the
-   # base date and the second is a {Timezone}.
+   # base date and the second is a `Timezone`.
    #
    # With three or more arguments, they are used as parameters to
-   # {set_fields} in order to initialize the object.
+   # `set_fields` in order to initialize the object.
    #
    public new(a[])
       if *a = 0 then
@@ -992,7 +996,7 @@ procedure note_time(s)
 end
 
 #
-# This class is used to create {Time} objects from format strings.
+# This class is used to create `Time` objects from format strings.
 #
 class TimeParser()
    private

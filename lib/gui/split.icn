@@ -6,8 +6,8 @@ package gui
 import util
 
 #
-# This {Component} contains two children whose sizes can be adjusted with
-# a {Sizer} component between them.
+# This `Component` contains two children whose sizes can be adjusted with
+# a `Sizer` component between them.
 #
 class Split(Component)
    public 
@@ -21,7 +21,7 @@ class Split(Component)
       start_size_second
 
    #
-   # Set the left {Component}, and lay out horizontally.
+   # Set the left `Component`, and lay out horizontally.
    #
    public set_left(c)
       remove(\self.first)
@@ -32,7 +32,7 @@ class Split(Component)
    end
 
    #
-   # Set the top {Component}, and lay out vertically.
+   # Set the top `Component`, and lay out vertically.
    #
    public set_top(c)
       remove(\self.first)
@@ -43,7 +43,7 @@ class Split(Component)
    end
 
    #
-   # Set the right {Component}.
+   # Set the right `Component`.
    #
    public set_right(c)
       remove(\self.second)
@@ -53,7 +53,7 @@ class Split(Component)
    end
 
    #
-   # Set the bottom {Component}.
+   # Set the bottom `Component`.
    #
    public set_bottom(c)
       remove(\self.second)
@@ -225,8 +225,8 @@ class Split(Component)
 
    #
    # If this flag is set then whilst the sizer moves, an intermediate bar is
-   # shown and the {Component}s are not laid out, until the mouse is released.
-   # This is helpful if the inner {Component}s are expensive to lay out.
+   # shown and the `Component`s are not laid out, until the mouse is released.
+   # This is helpful if the inner `Component`s are expensive to lay out.
    #
    public set_show_inter(s)
       sizer.set_show_inter(s)

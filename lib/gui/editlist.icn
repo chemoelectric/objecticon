@@ -24,8 +24,9 @@ class EditList(SelectionDropDown)
       applied_event
 
    #
-   # Set the text field's filter (see {TextField} for details).
-   # @param c  The filter
+   # Set the text field's filter (see `TextField` for details).
+   # :Parameters :
+   # :  `c` - The filter
    #
    public set_filter(c)
       self.view.set_filter(c)
@@ -55,7 +56,8 @@ class EditList(SelectionDropDown)
    # the selection in the list with the view, rather than the other
    # way around (as `set_selection_list` does).
    #
-   # @param  The list of items
+   # :Parameters :
+   # :  `The` - list of items
    #
    public synch_set_selection_list(x)
       self.selection_list := x

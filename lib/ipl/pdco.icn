@@ -302,7 +302,7 @@ procedure Extract(L[])
 
 end
 
-# Reversal of {Lifo} evaluation
+# Reversal of `Lifo` evaluation
 procedure Fifo(L[])	
    local L1, j
 
@@ -460,7 +460,7 @@ end
 # Generate the results from the several expressions in the same
 # left-to-right order as in normal icon evaluation.
 # 
-# For example Lifo{1 to 3, !"ab"} generates [1,"a"], [1,"b"], [2,
+# For example `Lifo{1 to 3, !"ab"}` generates [1,"a"], [1,"b"], [2,
 # "a"] etc.
 #
 # Note that the same list instance is suspended each time, and should
@@ -537,7 +537,7 @@ procedure Set(e)
 end
 
 
-# Construct a table from a result sequence.  The expression {e} should
+# Construct a table from a result sequence.  The expression `e` should
 # produce 2-element lists representing key-value pairs to add to the
 # table.
 #
@@ -1063,17 +1063,17 @@ end
 #
 # Evaluate the given expression, suspending its results, whilst
 # ignoring any non-fatal runtime errors.  After failure,
-# {&errortext} can be tested to see whether or not failure was
+# `&errortext` can be tested to see whether or not failure was
 # caused by a runtime error.
 #
 procedure Safe(e)
    suspend save_state(e, HandlerState(&current))
 end
 
-# A useful wrapper around {Safe}.  {Safe} is called with {e} to get
+# A useful wrapper around `Safe`.  `Safe` is called with `e` to get
 # its first result.  If no runerr occurs, then the result produced by
-# {e} is returned.  If {e} fails, {&null} is returned.  If a runerr
-# occurs, {errorclear} is called, {&why} is set and the procedure
+# `e` is returned.  If `e` fails, `&null` is returned.  If a runerr
+# occurs, `errorclear` is called, `&why` is set and the procedure
 # fails.
 #
 procedure Safe1(e)

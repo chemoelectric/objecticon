@@ -257,7 +257,7 @@ class Message(MimeHeaders)
 
    #
    # Turn the given parameter into a delim-separated list of addresses.  The
-   # param is either an {Address} or a list of {Address}es.
+   # param is either an `Address` or a list of `Address`es.
    # 
    private catenate_addresses(a, delim)
       local s, e
@@ -281,9 +281,11 @@ class Message(MimeHeaders)
    end
 
    #
-   # Get the "Date" header as a {Time} object.
-   # @fail if the "Date" header is absent or cannot be parsed.
-   # @return a {Time} instance
+   # Get the "Date" header as a `Time` object.
+   # :Fails :
+   # :  if the "Date" header is absent or cannot be parsed.
+   # :Returns :
+   # :  a `Time` instance
    #
    public get_date()
       local s
@@ -292,18 +294,21 @@ class Message(MimeHeaders)
    end
 
    #
-   # Set the "Date" header from the given {Time} object.
-   # @param t the {Time} from which to set the date field.
+   # Set the "Date" header from the given `Time` object.
+   # :Parameters :
+   # :  `t` - the `Time` from which to set the date field.
    #
    public set_date(t)
       return set_header("Date", t.to_rfc822())
    end
 
    #
-   # Get the "To" header(s) as a list of {Address} instances.
-   # @return a list of {Address} instances
-   # @fail if the "To" header is absent or cannot be parsed as a 
-   # @     list of {Address}es
+   # Get the "To" header(s) as a list of `Address` instances.
+   # :Returns :
+   # :  a list of `Address` instances
+   # :Fails :
+   # :  if the "To" header is absent or cannot be parsed as a 
+   #       list of `Address`es
    #
    public get_to()
       local s
@@ -313,9 +318,10 @@ class Message(MimeHeaders)
 
    #
    # Set the "To" header from the given parameter, which may be either
-   # a single {Address}, or a list of several {Address}es.  To add further "To"
-   # headers, use {add_to}.
-   # @param a an {Address} or a list of {Address}es.
+   # a single `Address`, or a list of several `Address`es.  To add further "To"
+   # headers, use `add_to`.
+   # :Parameters :
+   # :  `a` - an `Address` or a list of `Address`es.
    #
    public set_to(a)
       return set_header("To", catenate_addresses(a))
@@ -323,18 +329,21 @@ class Message(MimeHeaders)
 
    #
    # Add a "To" header from the given parameter, which may be either
-   # a single {Address}, or a list of several {Address}es.
-   # @param a an {Address} or a list of {Address}es.
+   # a single `Address`, or a list of several `Address`es.
+   # :Parameters :
+   # :  `a` - an `Address` or a list of `Address`es.
    #
    public add_to(a)
       return add_header("To", catenate_addresses(a))
    end
 
    #
-   # Get the "Reply-To" header(s) as a list of {Address} instances.
-   # @return a list of {Address} instances
-   # @fail if the "Reply-To" header is absent or cannot be parsed as a 
-   # @     list of {Address}es
+   # Get the "Reply-To" header(s) as a list of `Address` instances.
+   # :Returns :
+   # :  a list of `Address` instances
+   # :Fails :
+   # :  if the "Reply-To" header is absent or cannot be parsed as a 
+   #       list of `Address`es
    #
    public get_reply_to()
       local s
@@ -344,9 +353,10 @@ class Message(MimeHeaders)
 
    #
    # Set the "Reply-To" header from the given parameter, which may be either
-   # a single {Address}, or a list of several {Address}es.  To add further "Reply-To"
-   # headers, use {add_reply_to}.
-   # @param a an {Address} or a list of {Address}es.
+   # a single `Address`, or a list of several `Address`es.  To add further "Reply-To"
+   # headers, use `add_reply_to`.
+   # :Parameters :
+   # :  `a` - an `Address` or a list of `Address`es.
    #
    public set_reply_to(a)
       return set_header("Reply-To", catenate_addresses(a))
@@ -354,18 +364,21 @@ class Message(MimeHeaders)
 
    #
    # Add a "Reply-To" header from the given parameter, which may be either
-   # a single {Address}, or a list of several {Address}es.
-   # @param a an {Address} or a list of {Address}es.
+   # a single `Address`, or a list of several `Address`es.
+   # :Parameters :
+   # :  `a` - an `Address` or a list of `Address`es.
    #
    public add_reply_to(a)
       return add_header("Reply-To", catenate_addresses(a))
    end
 
    #
-   # Get the "Resent-To" header(s) as a list of {Address} instances.
-   # @return a list of {Address} instances
-   # @fail if the "Resent-To" header is absent or cannot be parsed as a 
-   # @     list of {Address}es
+   # Get the "Resent-To" header(s) as a list of `Address` instances.
+   # :Returns :
+   # :  a list of `Address` instances
+   # :Fails :
+   # :  if the "Resent-To" header is absent or cannot be parsed as a 
+   #       list of `Address`es
    #
    public get_resent_to()
       local s
@@ -375,9 +388,10 @@ class Message(MimeHeaders)
 
    #
    # Set the "Resent-To" header from the given parameter, which may be either
-   # a single {Address}, or a list of several {Address}es.  To add further "Resent-To"
-   # headers, use {add_resent_to}.
-   # @param a an {Address} or a list of {Address}es.
+   # a single `Address`, or a list of several `Address`es.  To add further "Resent-To"
+   # headers, use `add_resent_to`.
+   # :Parameters :
+   # :  `a` - an `Address` or a list of `Address`es.
    #
    public set_resent_to(a)
       return set_header("Resent-To", catenate_addresses(a))
@@ -385,18 +399,21 @@ class Message(MimeHeaders)
 
    #
    # Add a "Resent-To" header from the given parameter, which may be either
-   # a single {Address}, or a list of several {Address}es.
-   # @param a an {Address} or a list of {Address}es.
+   # a single `Address`, or a list of several `Address`es.
+   # :Parameters :
+   # :  `a` - an `Address` or a list of `Address`es.
    #
    public add_resent_to(a)
       return add_header("Resent-To", catenate_addresses(a))
    end
 
    #
-   # Get the "cc" header(s) as a list of {Address} instances.
-   # @return a list of {Address} instances
-   # @fail if the "bcc" header is absent or cannot be parsed as a 
-   # @     list of {Address}es
+   # Get the "cc" header(s) as a list of `Address` instances.
+   # :Returns :
+   # :  a list of `Address` instances
+   # :Fails :
+   # :  if the "bcc" header is absent or cannot be parsed as a 
+   #       list of `Address`es
    #
    public get_cc()
       local s
@@ -406,9 +423,10 @@ class Message(MimeHeaders)
 
    #
    # Set the "cc" header from the given parameter, which may be either
-   # a single {Address}, or a list of several {Address}es.  To add further "cc"
-   # headers, use {add_cc}.
-   # @param a an {Address} or a list of {Address}es.
+   # a single `Address`, or a list of several `Address`es.  To add further "cc"
+   # headers, use `add_cc`.
+   # :Parameters :
+   # :  `a` - an `Address` or a list of `Address`es.
    #
    public set_cc(a)
       return set_header("cc", catenate_addresses(a))
@@ -416,18 +434,21 @@ class Message(MimeHeaders)
 
    #
    # Add a "cc" header from the given parameter, which may be either
-   # a single {Address}, or a list of several {Address}es.
-   # @param a an {Address} or a list of {Address}es.
+   # a single `Address`, or a list of several `Address`es.
+   # :Parameters :
+   # :  `a` - an `Address` or a list of `Address`es.
    #
    public add_cc(a)
       return add_header("cc", catenate_addresses(a))
    end
 
    #
-   # Get the "Resent-cc" header(s) as a list of {Address} instances.
-   # @return a list of {Address} instances
-   # @fail if the "Resent-cc" header is absent or cannot be parsed as a 
-   # @     list of {Address}es
+   # Get the "Resent-cc" header(s) as a list of `Address` instances.
+   # :Returns :
+   # :  a list of `Address` instances
+   # :Fails :
+   # :  if the "Resent-cc" header is absent or cannot be parsed as a 
+   #       list of `Address`es
    #
    public get_resent_cc()
       local s
@@ -437,9 +458,10 @@ class Message(MimeHeaders)
 
    #
    # Set the "Resent-cc" header from the given parameter, which may be either
-   # a single {Address}, or a list of several {Address}es.  To add further "Resent-cc"
-   # headers, use {add_resent_cc}.
-   # @param a an {Address} or a list of {Address}es.
+   # a single `Address`, or a list of several `Address`es.  To add further "Resent-cc"
+   # headers, use `add_resent_cc`.
+   # :Parameters :
+   # :  `a` - an `Address` or a list of `Address`es.
    #
    public set_resent_cc(a)
       return set_header("Resent-cc", catenate_addresses(a))
@@ -447,18 +469,21 @@ class Message(MimeHeaders)
 
    #
    # Add a "Resent-cc" header from the given parameter, which may be either
-   # a single {Address}, or a list of several {Address}es.
-   # @param a an {Address} or a list of {Address}es.
+   # a single `Address`, or a list of several `Address`es.
+   # :Parameters :
+   # :  `a` - an `Address` or a list of `Address`es.
    #
    public add_resent_cc(a)
       return add_header("Resent-cc", catenate_addresses(a))
    end
 
    #
-   # Get the "bcc" header(s) as a list of {Address} instances.
-   # @return a list of {Address} instances
-   # @fail if the "bcc" header is absent or cannot be parsed as a 
-   # @     list of {Address}es
+   # Get the "bcc" header(s) as a list of `Address` instances.
+   # :Returns :
+   # :  a list of `Address` instances
+   # :Fails :
+   # :  if the "bcc" header is absent or cannot be parsed as a 
+   #       list of `Address`es
    #
    public get_bcc()
       local s
@@ -468,9 +493,10 @@ class Message(MimeHeaders)
 
    #
    # Set the "bcc" header from the given parameter, which may be either
-   # a single {Address}, or a list of several {Address}es.  To add further "bcc"
-   # headers, use {add_bcc}.
-   # @param a an {Address} or a list of {Address}es.
+   # a single `Address`, or a list of several `Address`es.  To add further "bcc"
+   # headers, use `add_bcc`.
+   # :Parameters :
+   # :  `a` - an `Address` or a list of `Address`es.
    #
    public set_bcc(a)
       return set_header("bcc", catenate_addresses(a))
@@ -478,18 +504,21 @@ class Message(MimeHeaders)
 
    #
    # Add a "bcc" header from the given parameter, which may be either
-   # a single {Address}, or a list of several {Address}es.
-   # @param a an {Address} or a list of {Address}es.
+   # a single `Address`, or a list of several `Address`es.
+   # :Parameters :
+   # :  `a` - an `Address` or a list of `Address`es.
    #
    public add_bcc(a)
       return add_header("bcc", catenate_addresses(a))
    end
 
    #
-   # Get the "Resent-bcc" header(s) as a list of {Address} instances.
-   # @return a list of {Address} instances
-   # @fail if the "Reset-bcc" header is absent or cannot be parsed as a 
-   # @     list of {Address}es
+   # Get the "Resent-bcc" header(s) as a list of `Address` instances.
+   # :Returns :
+   # :  a list of `Address` instances
+   # :Fails :
+   # :  if the "Reset-bcc" header is absent or cannot be parsed as a 
+   #       list of `Address`es
    #
    public get_resent_bcc()
       local s
@@ -499,9 +528,10 @@ class Message(MimeHeaders)
 
    #
    # Set the "Resent-bcc" header from the given parameter, which may be either
-   # a single {Address}, or a list of several {Address}es.  To add further "Resent-bcc"
-   # headers, use {add_resent_bcc}.
-   # @param a an {Address} or a list of {Address}es.
+   # a single `Address`, or a list of several `Address`es.  To add further "Resent-bcc"
+   # headers, use `add_resent_bcc`.
+   # :Parameters :
+   # :  `a` - an `Address` or a list of `Address`es.
    #
    public set_resent_bcc(a)
       return set_header("Resent-bcc", catenate_addresses(a))
@@ -509,18 +539,21 @@ class Message(MimeHeaders)
 
    #
    # Add a "Resent-bcc" header from the given parameter, which may be either
-   # a single {Address}, or a list of several {Address}es.
-   # @param a an {Address} or a list of {Address}es.
+   # a single `Address`, or a list of several `Address`es.
+   # :Parameters :
+   # :  `a` - an `Address` or a list of `Address`es.
    #
    public add_resent_bcc(a)
       return add_header("Resent-bcc", catenate_addresses(a))
    end
 
    #
-   # Get the "From" header(s) as a list of {Mailbox} instances.
-   # @return a list of {Mailbox} instances
-   # @fail if the "From" header is absent or cannot be parsed as a 
-   # @     list of {Mailbox}es
+   # Get the "From" header(s) as a list of `Mailbox` instances.
+   # :Returns :
+   # :  a list of `Mailbox` instances
+   # :Fails :
+   # :  if the "From" header is absent or cannot be parsed as a 
+   #       list of `Mailbox`es
    #
    public get_from()
       local s
@@ -530,9 +563,10 @@ class Message(MimeHeaders)
 
    #
    # Set the "From" header from the given parameter, which may be either
-   # a single {Mailbox}, or a list of several {Mailbox}es.  To add further "From"
-   # headers, use {add_from}.
-   # @param a an {Mailbox} or a list of {Mailbox}es.
+   # a single `Mailbox`, or a list of several `Mailbox`es.  To add further "From"
+   # headers, use `add_from`.
+   # :Parameters :
+   # :  `a` - an `Mailbox` or a list of `Mailbox`es.
    #
    public set_from(m)
       return set_header("From", catenate_addresses(m))
@@ -540,18 +574,21 @@ class Message(MimeHeaders)
 
    #
    # Add a "From" header from the given parameter, which may be either
-   # a single {Mailbox}, or a list of several {Mailbox}es.
-   # @param a an {Mailbox} or a list of {Mailbox}es.
+   # a single `Mailbox`, or a list of several `Mailbox`es.
+   # :Parameters :
+   # :  `a` - an `Mailbox` or a list of `Mailbox`es.
    #
    public add_from(m)
       return add_header("From", catenate_addresses(m))
    end
 
    #
-   # Get the "Sender" header as a {Mailbox} instance.
-   # @return a {Mailbox}
-   # @fail if the "Sender" header is absent or cannot be parsed as a 
-   # @     {Mailbox}
+   # Get the "Sender" header as a `Mailbox` instance.
+   # :Returns :
+   # :  a `Mailbox`
+   # :Fails :
+   # :  if the "Sender" header is absent or cannot be parsed as a 
+   #       `Mailbox`
    #
    public get_sender()
       local s
@@ -560,8 +597,9 @@ class Message(MimeHeaders)
    end
 
    #
-   # Set the "Sender" header from the given {Mailbox} instance.
-   # @param m a {Mailbox}
+   # Set the "Sender" header from the given `Mailbox` instance.
+   # :Parameters :
+   # :  `m` - a `Mailbox`
    #
    public set_sender(m)
       return set_header("Sender", m.to_rfc822())
@@ -569,8 +607,9 @@ class Message(MimeHeaders)
 
    #
    # Add a "Resent-From" header from the given parameter, which may be either
-   # a single {Mailbox}, or a list of several {Mailbox}es.
-   # @param a an {Mailbox} or a list of {Mailbox}es.
+   # a single `Mailbox`, or a list of several `Mailbox`es.
+   # :Parameters :
+   # :  `a` - an `Mailbox` or a list of `Mailbox`es.
    #
    public get_resent_from()
       local s
@@ -580,9 +619,10 @@ class Message(MimeHeaders)
 
    #
    # Set the "Resent-From" header from the given parameter, which may be either
-   # a single {Mailbox}, or a list of several {Mailbox}es.  To add further "Resent-From"
-   # headers, use {add_resent_from}.
-   # @param a an {Mailbox} or a list of {Mailbox}es.
+   # a single `Mailbox`, or a list of several `Mailbox`es.  To add further "Resent-From"
+   # headers, use `add_resent_from`.
+   # :Parameters :
+   # :  `a` - an `Mailbox` or a list of `Mailbox`es.
    #
    public set_resent_from(m)
       return set_header("Resent-From", catenate_addresses(m))
@@ -590,18 +630,21 @@ class Message(MimeHeaders)
 
    #
    # Add a "Resent-From" header from the given parameter, which may be either
-   # a single {Mailbox}, or a list of several {Mailbox}es.
-   # @param a an {Mailbox} or a list of {Mailbox}es.
+   # a single `Mailbox`, or a list of several `Mailbox`es.
+   # :Parameters :
+   # :  `a` - an `Mailbox` or a list of `Mailbox`es.
    #
    public add_resent_from(m)
       return add_header("Resent-From", catenate_addresses(m))
    end
 
    #
-   # Get the "Resent-Sender" header as a {Mailbox} instance.
-   # @return a {Mailbox}
-   # @fail if the "Resent-Sender" header is absent or cannot be parsed as a 
-   # @     {Mailbox}
+   # Get the "Resent-Sender" header as a `Mailbox` instance.
+   # :Returns :
+   # :  a `Mailbox`
+   # :Fails :
+   # :  if the "Resent-Sender" header is absent or cannot be parsed as a 
+   #       `Mailbox`
    #
    public get_resent_sender()
       local s
@@ -610,16 +653,18 @@ class Message(MimeHeaders)
    end
 
    #
-   # Set the "Resent-Sender" header from the given {Mailbox} instance.
-   # @param m a {Mailbox}
+   # Set the "Resent-Sender" header from the given `Mailbox` instance.
+   # :Parameters :
+   # :  `m` - a `Mailbox`
    #
    public set_resent_sender(m)
       return set_header("Resent-Sender", m.to_rfc822())
    end
 
    #
-   # Get the "Resent-Date" header as a {Time} instance.
-   # @return a {Time}
+   # Get the "Resent-Date" header as a `Time` instance.
+   # :Returns :
+   # :  a `Time`
    #
    public get_resent_date()
       local s
@@ -628,17 +673,20 @@ class Message(MimeHeaders)
    end
 
    #
-   # Set the "Resent-Date" header from the given {Time} instance.
-   # @param t a {Time}
+   # Set the "Resent-Date" header from the given `Time` instance.
+   # :Parameters :
+   # :  `t` - a `Time`
    #
    public set_resent_date(t)
       return set_header("Resent-Date", t.to_rfc822())
    end
 
    #
-   # Get the "Content-Type" header as a {ContentType} intance.
-   # @return a {ContentType}
-   # @fail if the "Content-Type" header is absent or cannot be parsed.
+   # Get the "Content-Type" header as a `ContentType` intance.
+   # :Returns :
+   # :  a `ContentType`
+   # :Fails :
+   # :  if the "Content-Type" header is absent or cannot be parsed.
    #
    public get_content_type()
       local s
@@ -647,17 +695,20 @@ class Message(MimeHeaders)
    end
 
    #
-   # Set the "ContentType" header from a {ContentType} instance.
-   # @param ct a {ContentType}
+   # Set the "ContentType" header from a `ContentType` instance.
+   # :Parameters :
+   # :  `ct` - a `ContentType`
    #
    public set_content_type(ct)
       return set_header("Content-Type", ct.to_rfc1521())
    end
 
    #
-   # Get the "Content-Disposition" header as a {ContentDisposition} intance.
-   # @return a {ContentDisposition}
-   # @fail if the "Content-Disposition" header is absent or cannot be parsed.
+   # Get the "Content-Disposition" header as a `ContentDisposition` intance.
+   # :Returns :
+   # :  a `ContentDisposition`
+   # :Fails :
+   # :  if the "Content-Disposition" header is absent or cannot be parsed.
    #
    public get_content_disposition()
       local s
@@ -666,8 +717,9 @@ class Message(MimeHeaders)
    end
 
    #
-   # Set the "ContentDisposition" header from a {ContentDisposition} instance.
-   # @param cd a {ContentDisposition}
+   # Set the "ContentDisposition" header from a `ContentDisposition` instance.
+   # :Parameters :
+   # :  `cd` - a `ContentDisposition`
    #
    public set_content_disposition(cd)
       return set_header("Content-Disposition", cd.to_rfc1521())
@@ -676,7 +728,8 @@ class Message(MimeHeaders)
    #
    # Get the "Content-Transfer-Encoding" field, as a string, or fail if it is
    # absent or an invalid value.
-   # @return a string
+   # :Returns :
+   # :  a string
    #
    public get_content_transfer_encoding()
       local s
@@ -693,7 +746,8 @@ class Message(MimeHeaders)
 
    #
    # Set the subject to the given string.
-   # @param s a string
+   # :Parameters :
+   # :  `s` - a string
    #
    public set_subject(s)
       return set_header("Subject", s)

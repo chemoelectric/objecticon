@@ -26,7 +26,8 @@ final class MySqlRes(NoCopy)
    #
    # Invoke mysql_fetch_field() for the current connection.
    #
-   # @return an {MySqlField} instance
+   # :Returns :
+   # :  an `MySqlField` instance
    #
    public fetch_field()
       return MySqlField!fetch_field_impl()
@@ -37,7 +38,8 @@ final class MySqlRes(NoCopy)
    #
    # Invoke mysql_fetch_field_direct() for the current connection.
    #
-   # @return an {MySqlField} instance
+   # :Returns :
+   # :  an `MySqlField` instance
    #
    public fetch_field_direct(fieldnr)
       return MySqlField!fetch_field_direct_impl(fieldnr)
@@ -48,7 +50,8 @@ final class MySqlRes(NoCopy)
    #
    # Invoke mysql_fetch_fields() for the current connection.
    #
-   # @return a list of {MySqlField} instances
+   # :Returns :
+   # :  a list of `MySqlField` instances
    #
    public fetch_fields()
       local l, res
@@ -106,10 +109,10 @@ final class MySqlRes(NoCopy)
    public native get_num_rows()
 
    #
-   # This uses {fetch_row()} and {fetch_fields()} together to provide a rather more
-   # intelligent version of {fetch_row()}.   The column types are examined and the
+   # This uses `fetch_row()` and `fetch_fields()` together to provide a rather more
+   # intelligent version of `fetch_row()`.   The column types are examined and the
    # strings are converted to appropriate Icon objects: integer for the integer types,
-   # real for the floating point types, {Time} for the date/time types, and string for
+   # real for the floating point types, `Time` for the date/time types, and string for
    # the char/blob types.
    #
    public get_row()

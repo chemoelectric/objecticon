@@ -2184,9 +2184,11 @@ class XmlParser(Connectable)
 
    #
    # Do namespace processing for a single element.
-   # @param resolve_table a table of mappings from namespace prefixes
+   # :Parameters :
+   # :  `resolve_table` - a table of mappings from namespace prefixes
    #        to URI's to use for the conversion.
-   # @param el the element to process
+   # :Parameters :
+   # :  `el` - the element to process
    #
    private do_namespace_processing_element(resolve_table, el)
       local k, sub

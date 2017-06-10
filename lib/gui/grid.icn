@@ -471,7 +471,8 @@ class Grid()
    #
    # Configure where to allocate any extra space.
    #
-   # @param s one of {EXTRA_CELLS}, {EXTRA_BORDERS}, {EXTRA_IGNORE}
+   # :Parameters :
+   # :  `s` - one of `EXTRA_CELLS`, `EXTRA_BORDERS`, `EXTRA_IGNORE`
    #
    public set_extra(s)
       self.extra := s

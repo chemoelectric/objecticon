@@ -72,13 +72,15 @@ end
 # an exception, then the call to `dir_recurse` should also be enclosed
 # with one of the try procedures.
 #
-# @see `dir_recurse_throw()`
-# @example
-# @   clean{try1{{
-# @      every f := dir_recurse(d, dir_recurse_throw) \ 50 do
-# @         write("got ", f)
-# @   }}} | write("Problem: ", &why)
-#
+# Example :-
+# ~
+#     clean{try1{{
+#        every f := dir_recurse(d, dir_recurse_throw) \ 50 do
+#           write("got ", f)
+#     }}} | write("Problem: ", &why)
+# ~
+# :See also :
+# :  `dir_recurse_throw()`
 procedure dir_recurse(f, on_err)
    local v, here, e
    here := &current

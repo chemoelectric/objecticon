@@ -33,7 +33,7 @@ procedure iszip(fname)
 end
 
 #
-# {Stream} for reading the entries in an archive, one per line of the stream.
+# `Stream` for reading the entries in an archive, one per line of the stream.
 #
 abstract class ArchiveListerStream(GeneratorStream)
    private
@@ -59,8 +59,8 @@ abstract class ArchiveListerStream(GeneratorStream)
    end
 
    # Generates the lines of the stream.  End-of-file is signalled by
-   # returning {&null} and errors are signalled by failing and setting
-   # {&why}.
+   # returning `&null` and errors are signalled by failing and setting
+   # `&why`.
    #
    protected abstract line_gen()
 
@@ -71,7 +71,7 @@ abstract class ArchiveListerStream(GeneratorStream)
 end
 
 #
-# {Stream} for reading the entries in a zip archive, one per line of the stream.
+# `Stream` for reading the entries in a zip archive, one per line of the stream.
 #
 class ZipDirStream(ArchiveListerStream)
    protected line_gen()
@@ -101,7 +101,7 @@ procedure zipfile(zname, fname)
 end
 
 #
-# {Stream} for reading the entries in a rar archive, one per line of the stream.
+# `Stream` for reading the entries in a rar archive, one per line of the stream.
 #
 class RarDirStream(ArchiveListerStream)
    protected line_gen()
@@ -132,7 +132,7 @@ procedure rarfile(rname, fname)
 end
 
 #
-# {Stream} for reading the entries in a tar archive, one per line of the stream.
+# `Stream` for reading the entries in a tar archive, one per line of the stream.
 #
 class TarDirStream(ArchiveListerStream)
    protected line_gen()

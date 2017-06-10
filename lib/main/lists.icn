@@ -29,14 +29,14 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
 
    #
    # Insert a new element `x` at position `i`.  Fails if `i` is
-   # invalid; otherwise succeeds and returns {self}.  Only implemented
+   # invalid; otherwise succeeds and returns `self`.  Only implemented
    # with INSERT capability.
    #
    public defer insert(i, x)
    
    #
    # Delete element at position `i` from the list.  Fails if `i` is
-   # invalid; otherwise succeeds and returns {self}.  Only implemented
+   # invalid; otherwise succeeds and returns `self`.  Only implemented
    # with DELETE capability.
    #
    public defer delete(i)
@@ -110,7 +110,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
 
    #
    # Clear the list of all elements. Always succeeds and returns
-   # {self}.  Only implemented with DELETE capability.
+   # `self`.  Only implemented with DELETE capability.
    #
    public clear()
       while delete(1)
@@ -149,7 +149,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
-   # Custom equals mirrors the {equals()} behaviour for builtin lists.
+   # Custom equals mirrors the `equals()` behaviour for builtin lists.
    #
    private object_equals(other, seen)
       local i
@@ -160,7 +160,7 @@ abstract class List(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
-   # Custom hash mirrors the {hash()} behaviour for builtin lists.
+   # Custom hash mirrors the `hash()` behaviour for builtin lists.
    #
    private object_hash(depth)
       local n, i

@@ -15,22 +15,25 @@ package gui
 # "down".  This is the common behaviour for buttons in a bar
 # along the top of an application.
 # 
-# NB - A Button must be added to the {ButtonGroup} and the
-# {Dialog} too.
-# @example
-# @ bg := ButtonGroup()
-# @ b := TextButton()
-# @ b.set_label("Okay")
-# @ self.add(b)
-# @ bg.add(b)
+# NB - A Button must be added to the `ButtonGroup` and the
+# `Dialog` too.
 #
+# Example :-
+# ~
+#   bg := ButtonGroup()
+#   b := TextButton()
+#   b.set_label("Okay")
+#   self.add(b)
+#   bg.add(b)
+# ~
 class ButtonGroup()
    public 
       buttons
 
    #
-   # Add the given {Button} to the {ButtonGroup}.
-   # @param c   The {Button} to add
+   # Add the given `Button` to the `ButtonGroup`.
+   # :Parameters :
+   # :  `c` - The `Button` to add
    #
    public add(c)
       insert(self.buttons, c)
@@ -39,8 +42,9 @@ class ButtonGroup()
    end
 
    #
-   # Remove the given {Button} from the {ButtonGroup}.
-   # @param c   The {Button} to remove
+   # Remove the given `Button` from the `ButtonGroup`.
+   # :Parameters :
+   # :  `c` - The `Button` to remove
    #
    public remove(c)
       delete(self.buttons, c)

@@ -103,7 +103,7 @@ final abstract class ImageCache()
    end
 
    # Associate arbitrary image data (eg gif file data), with a name.
-   # The name can then be passed to {get} or {load} to retrieve a
+   # The name can then be passed to `get` or `load` to retrieve a
    # window with the corresponding image.   It is a runtime error
    # if the key already exists in the table.
    #
@@ -124,7 +124,7 @@ final abstract class ImageCache()
    end
 
    #
-   # Return the data previously set with {name_image}.  Fails if the
+   # Return the data previously set with `name_image`.  Fails if the
    # name is unknown.
    #
    public static get_named_image(name)
@@ -163,7 +163,7 @@ final abstract class ImageCache()
    #
    # Load an image, using the cache if possible.  The parameter `s`
    # should be either a file name, or the name of an image set by
-   # {name_image()}.  On a successful load, the image is stored in the
+   # `name_image()`.  On a successful load, the image is stored in the
    # cache for future use, and thus should not be closed after use.
    #
    public static get(s, win)
@@ -202,9 +202,9 @@ final abstract class ImageCache()
    end
 
    #
-   # Load an image without using the cache.  The parameter {s} should
+   # Load an image without using the cache.  The parameter `s` should
    # be either a file name, or the name of an image set by
-   # {name_image()}.  It may also be raw image data (unlike `get`).
+   # `name_image()`.  It may also be raw image data (unlike `get`).
    # The returned image should be closed after use.
    #
    public static load(s, win)

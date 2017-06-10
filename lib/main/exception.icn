@@ -32,8 +32,8 @@ class ThrowHandlerState(State)
 end
 
 #
-# "throw" an exception, setting {thrown} to {x} and {thrower} to
-# {&current}, before invoking the {throw_handler} co-expression.
+# "throw" an exception, setting `thrown` to `x` and `thrower` to
+# `&current`, before invoking the `throw_handler` co-expression.
 #
 procedure throw(x)
    if /throw_handler then {
@@ -60,8 +60,8 @@ procedure rthrow(a[])
 end
 
 #
-# Re-throw an exception, by invoking {throw_handler} without changing
-# {thrown} or {thrower}.
+# Re-throw an exception, by invoking `throw_handler` without changing
+# `thrown` or `thrower`.
 #
 procedure rethrow()
    \throw_handler | runerr("rethrow(): no handler set")
@@ -71,25 +71,25 @@ procedure rethrow()
 end
 
 #
-# Clear the exception global variables {thrower} and {thrown}.
+# Clear the exception global variables `thrower` and `thrown`.
 #
 procedure eclear()
    thrower := thrown := &null
 end
 
 #
-# Generate the results of {e}, whilst "catching" any exceptions
+# Generate the results of `e`, whilst "catching" any exceptions
 # thrown.  On an exception, failure occurs, and the caller can check
-# for an exception by testing the values of {thrown} and/or {thrower}.
+# for an exception by testing the values of `thrown` and/or `thrower`.
 #
 procedure try(e)
    suspend save_state(e, ThrowHandlerState(&current))
 end
 
-# A useful wrapper around {try}.  {try} is called with {e} to get its
+# A useful wrapper around `try`.  `try` is called with `e` to get its
 # first result.  If no exception is thrown, then the result produced
-# by {e} is returned.  If {e} fails, {&null} is returned.  If an
-# exception was thrown, {eclear} is called, {&why} is set and the
+# by `e` is returned.  If `e` fails, `&null` is returned.  If an
+# exception was thrown, `eclear` is called, `&why` is set and the
 # procedure fails.
 #
 procedure try1(e)

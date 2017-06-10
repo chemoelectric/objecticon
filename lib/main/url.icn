@@ -257,9 +257,10 @@ class URL(ObjectOutput)
          return
    end
 
-   # Extract the cgi parameters from the {file} field.  Fails if there
+   # Extract the cgi parameters from the `file` field.  Fails if there
    # is no query in the file part.
-   # @return   A table, representing the keys and values of the fields.
+   # :Returns :
+   # :  A table, representing the keys and values of the fields.
    #
    public extract_cgi_parameters()
       return make_cgi_table(\query)
@@ -268,7 +269,8 @@ class URL(ObjectOutput)
    # Return a new URL with the query part set using
    # the table of CGI parameters.  The old query portion (if any) is
    # discarded.
-   # @param cgi   The table of keys/values.
+   # :Parameters :
+   # :  `cgi` - The table of keys/values.
    #
    public with_cgi_parameters(cgi)
       return from_parts(scheme, userinfo, host, port, path, make_cgi_string(cgi), fragment)
@@ -277,7 +279,8 @@ class URL(ObjectOutput)
    #
    # Amend the query field given a table of CGI parameters.  The old query
    # portion (if any) is discarded.
-   # @param cgi   The table of keys/values.
+   # :Parameters :
+   # :  `cgi` - The table of keys/values.
    #
    public set_cgi_parameters(cgi)
       self.query := make_cgi_string(cgi)
@@ -285,7 +288,7 @@ class URL(ObjectOutput)
    end
 
    #
-   # Create a URL by parsing the given string.  Returns a new {URL} if okay,
+   # Create a URL by parsing the given string.  Returns a new `URL` if okay,
    # or sets &why on failure.
    #
    public new(s)
@@ -443,7 +446,8 @@ class URL(ObjectOutput)
    #
    # Make a cgi param table from the given string.  Note that the keys and entries are
    # always strings (never ucs).
-   # @return   A table, representing the keys and values of the fields.
+   # :Returns :
+   # :  A table, representing the keys and values of the fields.
    #
    public static make_cgi_table(s)
       local cgi, key, val

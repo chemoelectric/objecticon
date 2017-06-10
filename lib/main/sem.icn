@@ -15,7 +15,7 @@ import lang
 # the accompanying C library uniipclib.so to be on the library path.
 #
 # Instances of this class should not be created directly, but rather using the static
-# methods {open_public}, {create_public} and {create_private}
+# methods `open_public`, `create_public` and `create_private`
 #
 final class Sem(NoCopy)
    private 
@@ -32,21 +32,21 @@ final class Sem(NoCopy)
    public native get_value()
 
    #
-   # Perform the wait operation, defined as {semop(-1)}
+   # Perform the wait operation, defined as `semop(-1)`
    #
    public wait()
       semop(-1)
    end
 
    #
-   # Attempt a wait, defined as {semop_nowait(-1)}
+   # Attempt a wait, defined as `semop_nowait(-1)`
    #
    public attempt()
       return semop_nowait(-1)
    end
 
    #
-   # Perform the signal operation, defined as {semop(1)}
+   # Perform the signal operation, defined as `semop(1)`
    #
    public signal()
       semop(1)
@@ -62,16 +62,17 @@ final class Sem(NoCopy)
 
    # 
    # Peform a semop with the IPC_NOWAIT flag set.  This is the same as
-   # {semop()}, but instead of suspending the call will fail.
+   # `semop()`, but instead of suspending the call will fail.
    #
    public native semop_nowait(n)
 
    # 
-   # Repeatedly peform {semop_nowait()}, sleeping for a short period between each try
-   # until t milliseconds or {semop_nowait()} succeeds.  Fails on a timeout; otherwise
+   # Repeatedly peform `semop_nowait()`, sleeping for a short period between each try
+   # until t milliseconds or `semop_nowait()` succeeds.  Fails on a timeout; otherwise
    # succeeds.
-   # @param n the parameter to semop_nowait
-   # @param t the timeout in milliseconds
+   # :Parameters :
+   # :  `n` - the parameter to semop_nowait
+   # :  `t` - the timeout in milliseconds
    #
    public semop_poll(n, t)
       local c

@@ -6,32 +6,35 @@ import
    ipl.graphics(GetShadowClone),
    ipl.strings(separate_lines)
 
-# A {Paint} represents an arbitrary object which has a size and can be
+# A `Paint` represents an arbitrary object which has a size and can be
 # drawn.
 #
 abstract class Paint(Size)
    #
    # Initialize the instance.  This should set the size of the instance.
-   # @param c The owning {Component}
-   # @param accel The keyboard accelerator to be drawn
+   # :Parameters :
+   # :  `c` - The owning `Component`
+   # :  `accel` - The keyboard accelerator to be drawn
    public abstract initially(c, accel)
 
    # Draw the instance
-   # @param W The window to draw into
-   # @param x The x position
-   # @param y The y position
-   # @param w The available output width
-   # @param h The available output height
+   # :Parameters :
+   # :  `W` - The window to draw into
+   # :  `x` - The x position
+   # :  `y` - The y position
+   # :  `w` - The available output width
+   # :  `h` - The available output height
    public abstract draw(W, x, y, w, h)
 
    # Cleanup any resources used by this instance.
    public finally()
    end
 
-   # Convenient method to draw at a given point with size limit; just calls {draw}.
-   # @param W The window to draw into
-   # @param p The {Rect}, giving the point to draw at, and the
-   # @        height/width limitation.
+   # Convenient method to draw at a given point with size limit; just calls `draw`.
+   # :Parameters :
+   # :  `W` - The window to draw into
+   # :  `p` - The `Rect`, giving the point to draw at, and the
+   #          height/width limitation.
    public draw_rect(W, r)
       self.draw(W, r.x, r.y, r.w, r.h)
    end
@@ -46,7 +49,7 @@ procedure paint_for_string(s)
       return TextPaint(s)
 end
 
-# A simple {Paint} instance which draws a string.
+# A simple `Paint` instance which draws a string.
 #
 class TextPaint(Paint)
    public str, accel
@@ -62,14 +65,15 @@ class TextPaint(Paint)
    end
 
    # Create a new instance.
-   # @param s The string to draw
+   # :Parameters :
+   # :  `s` - The string to draw
    public new(s)
       self.str := s
       return
    end
 end
 
-# A simple {Paint} instance which draws a string.  If the string is
+# A simple `Paint` instance which draws a string.  If the string is
 # limited when output, then a truncated string ending in "..." is
 # output.
 #
@@ -87,14 +91,15 @@ class AbbreviatedTextPaint(Paint)
    end
 
    # Create a new instance.
-   # @param s The string to draw
+   # :Parameters :
+   # :  `s` - The string to draw
    public new(s)
       self.str := s
       return
    end
 end
 
-# A simple {Paint} instance which draws a {Pixels} instance.
+# A simple `Paint` instance which draws a `Pixels` instance.
 #
 class PixelsPaint(Paint)
    public src, pix
@@ -116,14 +121,15 @@ class PixelsPaint(Paint)
    end
 
    # Create a new instance.
-   # @param src The `Pixels` to draw
+   # :Parameters :
+   # :  `src` - The `Pixels` to draw
    public new(src)
       self.src := src
       return
    end
 end
 
-# A simple {Paint} instance which has zero size and draws nothing.
+# A simple `Paint` instance which has zero size and draws nothing.
 #
 class NullPaint(Paint)
    public initially()
@@ -134,7 +140,7 @@ class NullPaint(Paint)
    end
 end
 
-# A simple {Paint} instance which has the given size and draws nothing.
+# A simple `Paint` instance which has the given size and draws nothing.
 #
 class EmptyPaint(Paint)
    public initially()
@@ -151,8 +157,8 @@ class EmptyPaint(Paint)
 end
 
 #
-# A {Paint} instance which paints one instance on top of another.  The
-# width/height is taken as the maximum of the two inner {Paint}s.
+# A `Paint` instance which paints one instance on top of another.  The
+# width/height is taken as the maximum of the two inner `Paint`s.
 #
 class CompoundPaint(Paint)
    public
@@ -186,7 +192,7 @@ class CompoundPaint(Paint)
    end
 end
 
-# A {Paint} instance which draws its output using a {Grid}.  The input is a format
+# A `Paint` instance which draws its output using a `Grid`.  The input is a format
 # string specifying the grid and its contents.
 #
 class GridPaint(Paint)
@@ -480,14 +486,15 @@ class GridPaint(Paint)
    end
 
    # Create a new instance.
-   # @param s The format string
+   # :Parameters :
+   # :  `s` - The format string
    public new(s)
       self.fmt := s
       return
    end
 end
 
-# A {Paint} instance which draws an image, which can come from a
+# A `Paint` instance which draws an image, which can come from a
 # number of sources.  The image can also be scaled.
 #
 class ImagePaint(Paint)
@@ -501,7 +508,7 @@ class ImagePaint(Paint)
       max_h
 
    #
-   # Set an image to use; the parameter is passed to {ImageCache.get}
+   # Set an image to use; the parameter is passed to `ImageCache.get`
    # to load the image.
    #
    public set_cache(x)
@@ -510,7 +517,7 @@ class ImagePaint(Paint)
    end
 
    #
-   # Set an image to use; the parameter is passed to {ImageCache.load}
+   # Set an image to use; the parameter is passed to `ImageCache.load`
    # to load the image.
    #
    public set_image(x)

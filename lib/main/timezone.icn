@@ -62,7 +62,7 @@ class Timezone()
    private static native get_local_timezones()
    private static native get_gmt_offset_at(n)
 
-   # Return the local system Timezone in force at the given time {n},
+   # Return the local system Timezone in force at the given time `n`,
    # which is the number of seconds past the Unix epoch.
    public static get_timezone_at(n)
       local o

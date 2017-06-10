@@ -17,7 +17,7 @@ class GroffOutputter(Outputter)
       output_file
 
    public output()
-      local c, l, s, t, u, m, el, com, meths, vars, x, fullname
+      local c, l, s, t, u, m, meths, vars, x, fullname
 
       if s := \opts["o"] then
          output_file := open(s, "w") | stop("couldn't open output file ", s, ": ", &why)
@@ -37,10 +37,8 @@ class GroffOutputter(Outputter)
          u := c.scanned_file.filename
          u := "\\f[HR]" || u || "\\f[R]"
          write(output_file, ".HEAD \"", get_top_level_type(c), " ", c.name, "\" \"", s, "\"", " \"", t, "\"", " \"", u, "\"")
-         if is(c.obj, Tree) then {
-            com := Comment(c)
-            markdown(com.comment)
-         }
+         if is(c.obj, Tree) then
+            markdown(c)
 
          meths := []
          vars := []
@@ -55,22 +53,14 @@ class GroffOutputter(Outputter)
 
          every m := !meths do {
             write(output_file, ".FUNC_START \"", get_access_string(m.obj), " ", m.name, "(", get_param_string(m.obj) ,")\"")
-            if is(m.obj, Tree) then {
-               com := Comment(m)
-               markdown(com.comment)
-               every el := !sort(com.fields) do
-                  groff_fields(el[1], el[2])
-            }
+            if is(m.obj, Tree) then
+               markdown(m)
             write(output_file, ".FUNC_END")
          }
          every m := !vars do {
             write(output_file, ".FUNC_START \"", get_access_string(m.decl_obj), " ", m.name, "\"")
-            if is(m.obj, Tree) then {
-               com := Comment(m)
-               markdown(com.comment)
-               every el := !sort(com.fields) do
-                  groff_fields(el[1], el[2])
-            }
+            if is(m.obj, Tree) then
+               markdown(m)
             write(output_file, ".FUNC_END")
          }
       }
@@ -79,6 +69,8 @@ class GroffOutputter(Outputter)
          fullname := c.name
          if is(c, ProcedureSymbol) then
             fullname ||:= "(" || get_param_string(c.obj) || ")"
+         if is(c, RecordSymbol) then
+            fullname ||:= "(" || get_record_field_string(c.obj) || ")"
          s := "(none)"
          t := c.get_package() | "default"
          t := "\\f[HR]" || t || "\\f[R]"
@@ -86,88 +78,12 @@ class GroffOutputter(Outputter)
          u := "\\f[HR]" || u || "\\f[R]"
          write(output_file, ".HEAD \"", get_top_level_type(c), " ", c.name, "\" \"", s, "\"", " \"", t, "\"", " \"", u, "\"")
          write(output_file, ".FUNC_START \"", fullname ,"\"")
-         if is(c.obj, Tree) then {
-            com := Comment(c)
-            markdown(com.comment)
-            every el := !sort(com.fields) do
-               groff_fields(el[1], el[2])
-         }
-         if is(c, RecordSymbol) then {
-            write(output_file, ".P")
-            write(output_file, "Fields :")
-            write(output_file, ".LS_SET c")
-            every write(output_file, ".LS_ITEM \\f[HR]", get_record_fields(c.obj), "\\fR")
-            write(output_file, ".LS_END")
-         }
+         if is(c.obj, Tree) then
+            markdown(c)
          write(output_file, ".FUNC_END")
       }
 
       (\output_file).close()
-   end
-
-   private groff_fields(key, vals)
-      local l, name
-      case key of {
-         "param" : {
-            write(output_file, ".P")
-            write(output_file, "Parameters :")
-            write(output_file, ".LS_SET c")
-            every l := !vals do {
-               l[1] ? {
-                  tab(many(WHITESPACE))
-                  name := tab(many(ID_CHAR))
-                  l[1] := tab(0)
-               }
-               write(output_file, ".LS_ITEM \\f[HR]", name, "\\fR")
-               markdown(l)
-            }
-            write(output_file, ".LS_END")
-         }
-
-         "return" : {
-            write(output_file, ".P")
-            write(output_file, "Returns :")
-            write(output_file, ".P")
-            every markdown(vals[1])
-         }
-
-         "generate" : {
-            write(output_file, ".P")
-            write(output_file, "Generates :")
-            write(output_file, ".P")
-            every markdown(vals[1])
-         }
-
-         "fail" : {
-            write(output_file, ".P")
-            write(output_file, "Fails :")
-            write(output_file, ".P")
-            every markdown(vals[1])
-         }
-
-         "runerr" : {
-            write(output_file, ".P")
-            write(output_file, "Runtime error :")
-            write(output_file, ".P")
-            every markdown(vals[1])
-         }
-
-         "see" : {
-            write(output_file, ".P")
-            write(output_file, "See also :")
-            write(output_file, ".P")
-            every markdown(vals[1])
-         }
-
-         "example" : {
-            write(output_file, ".P")
-            write(output_file, "Example :")
-            write(output_file, ".ID\n.ft HR")
-            every l := !vals do
-               every write(output_file, l[2 to *l])
-            write(output_file, ".ft R\n.DE")
-         }
-      }
    end
 
    private esc(s)
@@ -179,11 +95,15 @@ class GroffOutputter(Outputter)
    end
 
    protected output_link(s)
-      writes(output_file, "\\f[HR]", esc(s), "\\fR")
+      writes(output_file, esc(s))
    end
 
-   protected output_code(s)
-      writes(output_file, "\\f[HR]", esc(s), "\\fR")
+   protected begin_code()
+      writes(output_file, "\\f[HR]")
+   end
+
+   protected end_code()
+      writes(output_file, "\\fR")
    end
 
    protected begin_bold()
@@ -233,14 +153,6 @@ class GroffOutputter(Outputter)
       write(output_file, ".ft P\n.fi")
    end
 
-   protected output_bar(n)
-      write(output_file, ".br\n", repl("\xa0", n))
-   end
-
-   protected end_bar()
-      write(output_file, ".br")
-   end
-
    protected begin_ul()
       write(output_file, ".LS_SET b")
    end
@@ -249,8 +161,8 @@ class GroffOutputter(Outputter)
       write(output_file, ".LS_END")
    end
 
-   protected begin_ol()
-      write(output_file, ".LS_SET 1")
+   protected begin_ol(type)
+      write(output_file, ".LS_SET ", if type == "1" then "1" else "(a)")
    end
 
    protected end_ol()
@@ -262,6 +174,28 @@ class GroffOutputter(Outputter)
    end
 
    protected end_li()
+   end
+
+   protected begin_dt()
+      write(output_file, ".P")
+   end
+
+   protected end_dt()
+   end
+
+   protected begin_dl()
+      write(output_file, ".LS_SET c")
+   end
+
+   protected end_dl()
+      write(output_file, ".LS_END")
+   end
+
+   protected begin_dd()
+      write(output_file, ".LS_ITEM")
+   end
+
+   protected end_dd()
    end
 
    protected new_para()

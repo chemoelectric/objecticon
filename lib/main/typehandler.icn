@@ -16,25 +16,28 @@ abstract class TypeHandler()
    end
 
    #
-   # Succeed if this object can handle the given {ContentType}
+   # Succeed if this object can handle the given `ContentType`
    #
-   # @param ct the {ContentType}
+   # :Parameters :
+   # :  `ct` - the `ContentType`
    #
    public abstract can_handle(ct)
 
    #
    # Convert the given data to an object
    #
-   # @param m the {Message}
-   # @param data the string sourcedata
+   # :Parameters :
+   # :  `m` - the `Message`
+   # :  `data` - the string sourcedata
    #
    public abstract convert_to_object(m, data)
 
    #
    # Create string data from the given object
    #
-   # @param m the {Message}
-   # @param obj the object to convert
+   # :Parameters :
+   # :  `m` - the `Message`
+   # :  `obj` - the object to convert
    #
    public abstract convert_from_object(m, obj)
 end

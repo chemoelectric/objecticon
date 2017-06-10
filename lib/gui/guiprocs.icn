@@ -630,7 +630,7 @@ procedure text_guess_convert(s, target)
 end
 
 #
-# Given a result from a selection request ({target_type} and {data}), produce
+# Given a result from a selection request (`target_type` and `data`), produce
 # a corresponding string or a ucs as appropriate.
 #
 procedure selection_convert(target_type, data)
@@ -782,10 +782,11 @@ end
 
 #
 # This is a Dialog whose only purpose is to retrieve a given selection.
-# @example
-# @ d := GetSelection(Selection.CLIPBOARD).show_modal()
-# @ ... the clipboard is now stored in d.result (which may be null).
-#
+# For example :-
+# ~
+#   d := GetSelection(Selection.CLIPBOARD).show_modal()
+#   ... the clipboard is now stored in d.result (which may be null).
+# ~
 class GetSelection(Dialog)
    private readable
       result

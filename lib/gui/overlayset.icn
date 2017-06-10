@@ -11,7 +11,7 @@ package gui
 import util
 
 #
-# This class provides a container which contains several {OverlayItems}, only one
+# This class provides a container which contains several `OverlayItems`, only one
 # of which is visible at a time.
 #
 class OverlaySet(Component)
@@ -55,7 +55,8 @@ class OverlaySet(Component)
    #
    # Set which OverlayItem is currently displayed.  The default is
    # the first which was added.
-   # @param dont_restore_flag if set, then the item's remembered focus will not be
+   # :Parameters :
+   # :  `dont_restore_flag` - if set, then the item's remembered focus will not be
    #         restored (only relevant if remember_focus is on).
    #
    public set_which_one(x, dont_restore_flag)

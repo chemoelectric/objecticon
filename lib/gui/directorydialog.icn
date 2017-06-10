@@ -41,11 +41,12 @@ end
 #
 # Directory dialog class.  This class provides a standard directory selection dialog.
 #
-# @example
-# @ d := DirectoryDialog()
-# @ d.show_modal()
-# @ write(d.get_result() | "cancelled")
-#
+# Example :-
+# ~
+#   d := DirectoryDialog()
+#   d.show_modal()
+#   write(d.get_result() | "cancelled")
+# ~
 class DirectoryDialog(Dialog)
    public
       show_hidden_menu_item,
@@ -145,8 +146,8 @@ class DirectoryDialog(Dialog)
    end
 
    #
-   # Given a TreeNode n, return a {FilePath} path it represents by traversing
-   # up the tree structure to the root and converting to a {FilePath}.  Each
+   # Given a TreeNode n, return a `FilePath` path it represents by traversing
+   # up the tree structure to the root and converting to a `FilePath`.  Each
    # element in the path is a ucs string, so the ucs() method on the path will
    # always succeed.
    #

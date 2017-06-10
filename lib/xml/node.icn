@@ -37,9 +37,11 @@ class Node()
    # Add a child at the given pos.  If pos is not specified, the
    # child is appended to the end.
    #
-   # @param obj - either a string/ucs or a Node subclass
-   # @param pos - the pos to insert
-   # @fail      If pos is out of range
+   # :Parameters :
+   # :  `obj` - either a string/ucs or a Node subclass
+   # :  `pos` - the pos to insert
+   # :Fails :
+   # :  If pos is out of range
    #
    public add(obj, pos)
       /pos := 0
@@ -53,12 +55,14 @@ class Node()
    # Add a string at the given pos.  If pos is not specified, the
    # child is appended to the end.
    #
-   # This differs from the above {add()} method in that adjacent
+   # This differs from the above `add()` method in that adjacent
    # strings will be compacted together to form one longer string.
    #
-   # @param s - a string/ucs
-   # @param pos - the pos to insert
-   # @fail      If pos is out of range
+   # :Parameters :
+   # :  `s` - a string/ucs
+   # :  `pos` - the pos to insert
+   # :Fails :
+   # :  If pos is out of range
    #
    public add_string(s, pos)
       /pos := 0
@@ -72,7 +76,7 @@ class Node()
    end
 
    #
-   # Traverse all the nodes in this {Node} with a preorder traversal.
+   # Traverse all the nodes in this `Node` with a preorder traversal.
    #
    public traverse_nodes_preorder()
       local e
@@ -82,7 +86,7 @@ class Node()
    end
 
    #
-   # Traverse all the nodes in this {Node} with a preorder traversal.
+   # Traverse all the nodes in this `Node` with a preorder traversal.
    #
    public traverse_nodes_postorder()
       local e
@@ -114,7 +118,7 @@ class Node()
    end
 
    #
-   # Just like {get_children_no_whitespace()}, but this trims any string children
+   # Just like `get_children_no_whitespace()`, but this trims any string children
    # left in the list.
    #
    public get_trimmed_children()

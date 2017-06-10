@@ -31,10 +31,11 @@ class HtmlElement(Element)
    end
 
    #
-   # Search for all the {Element}s with the given tag name, recursively
+   # Search for all the `Element`s with the given tag name, recursively
    # traversing the entire tree based at this node.
    #
-   # @param s the case-insensitive name of the sub-elements.
+   # :Parameters :
+   # :  `s` - the case-insensitive name of the sub-elements.
    #
    public search_tree(s)
       s := map(\s, &lcase, &ucase)
@@ -45,7 +46,8 @@ class HtmlElement(Element)
    # Generate the elements under this element, with the given name.  If name
    # is omitted, generate all the elements.
    #
-   # @param s the case-insensitive name of the sub-elements.
+   # :Parameters :
+   # :  `s` - the case-insensitive name of the sub-elements.
    #
    public search_children(s)
       s := map(\s, &lcase, &ucase)

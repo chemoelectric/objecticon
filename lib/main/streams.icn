@@ -42,29 +42,33 @@ abstract class Stream(HasMode)
 
    #
    # Return at least one, and up to n characters from the stream.  On
-   # end-of-file, return {&null}.  On error, fail and set {&why}.
+   # end-of-file, return `&null`.  On error, fail and set `&why`.
    #
-   # @param n the maximum number of chars to read; n must be > 0.
+   # :Parameters :
+   # :  `n` - the maximum number of chars to read; n must be > 0.
    #
    public defer in(n)
 
    #
    # Output the given string to the stream.  The number of characters
    # output is returned, which will always be greater than zero
-   # (unless s is empty), but may be less than {*s}.  Fails on an
-   # error, setting {&why}.
+   # (unless s is empty), but may be less than `*s`.  Fails on an
+   # error, setting `&why`.
    #
-   # @param s the string to write
+   # :Parameters :
+   # :  `s` - the string to write
    #
    public defer out(s)
 
    #
    # Seek to the given offset.  Icon-style offsets are used, so 1 is
    # the beginning of the stream, and 0 the end.  Not all types of stream
-   # support {seek} - see {get_mode}.
+   # support `seek` - see `get_mode`.
    #
-   # @param offset the position to seek to
-   # @return the new position.
+   # :Parameters :
+   # :  `offset` - the position to seek to
+   # :Returns :
+   # :  the new position.
    #
    public defer seek(offset)
 
@@ -82,7 +86,7 @@ abstract class Stream(HasMode)
    #
    # Close the stream.  After being closed, any further calls on the
    # stream may stop with a runtime error.  Fails on error, setting
-   # {&why}; returns {self} on success.
+   # `&why`; returns `self` on success.
    #
    public abstract close()
 
@@ -91,7 +95,7 @@ abstract class Stream(HasMode)
    # or end-of-file.  In the former case, the "\n" and also any "\r"
    # immediately before it is stripped from the result.
    #
-   # Returns {&null} on end-of-file
+   # Returns `&null` on end-of-file
    #
    public read_line()
       local s, c
@@ -114,11 +118,11 @@ abstract class Stream(HasMode)
    end
 
    #
-   # Read {n} chars from the stream.  This method will try and return
-   # exactly {n} characters, and will only return less because of
+   # Read `n` chars from the stream.  This method will try and return
+   # exactly `n` characters, and will only return less because of
    # reaching the end-of-file.
    #
-   # Returns {&null} on end-of-file
+   # Returns `&null` on end-of-file
    #
    public read_exactly(n)
       local s, t
@@ -146,9 +150,9 @@ abstract class Stream(HasMode)
    end
 
    #
-   # This method is the same as {read_line}, except that on end of
-   # file it fails, setting {&why} to "End of file", rather than
-   # returning {&null}.
+   # This method is the same as `read_line`, except that on end of
+   # file it fails, setting `&why` to "End of file", rather than
+   # returning `&null`.
    #
    public read()
       local s
@@ -157,9 +161,9 @@ abstract class Stream(HasMode)
    end
 
    #
-   # This method is the same as {read_exactly}, except that on end of
-   # file it fails, setting {&why} to "End of file", rather than
-   # returning {&null}.
+   # This method is the same as `read_exactly`, except that on end of
+   # file it fails, setting `&why` to "End of file", rather than
+   # returning `&null`.
    #
    public reads(n)
       local s
@@ -168,7 +172,7 @@ abstract class Stream(HasMode)
    end
 
    #
-   # Output the string {s}, by calling {out} several times until it is
+   # Output the string `s`, by calling `out` several times until it is
    # fully output.
    #
    public writes1(s)
@@ -194,7 +198,7 @@ abstract class Stream(HasMode)
    end
 
    #
-   # This behaves just like {writes}, except that a newline is
+   # This behaves just like `writes`, except that a newline is
    # appended after all the parameters are output.
    #
    public write(a[])
@@ -221,7 +225,7 @@ abstract class Stream(HasMode)
 
    #
    # Read from this stream until end-of-file, copying the result to the
-   # given stream {f}.
+   # given stream `f`.
    #
    public copy_to(f)
       local s
@@ -235,14 +239,14 @@ abstract class Stream(HasMode)
 end
 
 #
-# This class simply adds the close_underlying_flag to a {Stream}.
+# This class simply adds the close_underlying_flag to a `Stream`.
 #
 abstract class HasUnderlyingStream()
    protected
       close_underlying_flag
 
    #
-   # If set, the stream will close any underlying {Stream}s when it is closed.
+   # If set, the stream will close any underlying `Stream`s when it is closed.
    #
    public set_close_underlying(s)
       self.close_underlying_flag := check_flag(s)
@@ -254,7 +258,7 @@ end
 # This is a stream based on an Icon string.  An initial string can be
 # provided to the constructor.  Reading from the stream will be quite
 # efficient, but writing will be relatively slow, particularly if the
-# string is long.  For a much faster alternative, see {RamStream}.
+# string is long.  For a much faster alternative, see `RamStream`.
 #
 class StringStream(Stream)
    private 
@@ -324,10 +328,11 @@ class StringStream(Stream)
    end
 
    #
-   # Create a new {StringStream}, with initial value of {subj}.
+   # Create a new `StringStream`, with initial value of `subj`.
    #
-   # @param subj the initial value of the stream; defaults to empty 
-   # @      string.
+   # :Parameters :
+   # :  `subj` - the initial value of the stream; defaults to empty 
+   #        string.
    #
    public new(subj)
       /subj := ""
@@ -557,7 +562,7 @@ class BufferStream(Stream, HasUnderlyingStream)
    end
 
    #
-   # Calls {unbuff} and {flush}
+   # Calls `unbuff` and `flush`
    #
    public synch()
       unbuff() | fail
@@ -626,30 +631,32 @@ abstract class DescStream(Stream, NoCopy)
 
    #
    # Performs a select on the given lists of streams, each of which
-   # must be a {DescStream}.  The lists are changed by the method,
+   # must be a `DescStream`.  The lists are changed by the method,
    # and the modified lists indicate which streams are ready to read,
    # write or have an error.
    # 
-   # On an error this method fails and sets {&why}.  On a timeout it
+   # On an error this method fails and sets `&why`.  On a timeout it
    # returns 0, with all lists empty.
    #
-   # @param rl the read list of streams
-   # @param wl the write list of streams
-   # @param el the error list of streams
-   # @param timeout the timeout; if omitted waits indefinitely
-   # @return the number of items in the three lists, always >= 0.
+   # :Parameters :
+   # :  `rl` - the read list of streams
+   # :  `wl` - the write list of streams
+   # :  `el` - the error list of streams
+   # :  `timeout` - the timeout; if omitted waits indefinitely
+   # :Returns :
+   # :  the number of items in the three lists, always >= 0.
    #
    public static native select(rl, wl, el, timeout)
 
    #
    # Performs a poll on one or more streams, each of which must be a
-   # {DescStream}.  The parameter {l} is a list of pairs.  Each pair
-   # is a {Stream} followed by flags, which should be selected from
-   # those constants in the {Poll} class.  The last argument is the
+   # `DescStream`.  The parameter `l` is a list of pairs.  Each pair
+   # is a `Stream` followed by flags, which should be selected from
+   # those constants in the `Poll` class.  The last argument is the
    # optional timeout. The result is a list of the flags corresponding
-   # to each {Stream} provided.  This method fails on error, setting
-   # {&why} accordingly.  On a timeout, it succeeds and returns
-   # {&null}.
+   # to each `Stream` provided.  This method fails on error, setting
+   # `&why` accordingly.  On a timeout, it succeeds and returns
+   # `&null`.
    #
 $ifdef _PLAN9
    public static poll(l, timeout)
@@ -685,8 +692,8 @@ $else
 $endif
 
    #
-   # Utility to check whether the result of a {poll} for {Poll.IN} indicates
-   # a call to {in}.
+   # Utility to check whether the result of a `poll` for `Poll.IN` indicates
+   # a call to `in`.
    #
    public static poll_in_test(v)
       local x
@@ -698,8 +705,8 @@ $endif
    end
 
    #
-   # Utility to check whether the result of a {poll} for {Poll.OUT} indicates
-   # a call to {out}.
+   # Utility to check whether the result of a `poll` for `Poll.OUT` indicates
+   # a call to `out`.
    #
    public static poll_out_test(v)
       # Ignore IN
@@ -711,39 +718,45 @@ $endif
    #
    # Turn the specified flags on or off, and return the new set of
    # flags.  The flags should be selected from the constants in
-   # {FileOpt}.
-   # @param on the flags to turn on
-   # @param off the flags to turn off
-   # @return the new flags
+   # `FileOpt`.
+   # :Parameters :
+   # :  `on` - the flags to turn on
+   # :  `off` - the flags to turn off
+   # :Returns :
+   # :  the new flags
    #
    public native flag(on, off)
 
    #
    # Turn the specified descriptor flags on or off, and return the new
    # set of flags.  The flags should be selected from the constants in
-   # {DescOpt}.
-   # @param on the flags to turn on
-   # @param off the flags to turn off
-   # @return the new flags
+   # `DescOpt`.
+   # :Parameters :
+   # :  `on` - the flags to turn on
+   # :  `off` - the flags to turn off
+   # :Returns :
+   # :  the new flags
    #
    public native dflag(on, off)
 
    #
    # Invokes the system function dup2(oldfd, newfd), with oldfd set to
-   # this instance's {fd}, and newfd set to the given parameter's {fd}.
+   # this instance's `fd`, and newfd set to the given parameter's `fd`.
    #
-   # On error this method fails and sets {&why}.  On success, it sets
+   # On error this method fails and sets `&why`.  On success, it sets
    # the mode of the target to this instances's mode (since they both
-   # now point to the same file), and returns {&null}.
+   # now point to the same file), and returns `&null`.
    #
-   # @param other - a {DescStream}
-   # @example
-   # @ f := FileStream("/tmp/xyz", 
-   # @     ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
-   # @ f.dup2(FileStream.stdout) | stop(&why)
-   # @ f.close()
-   # @ write("hello world")  # writes to /tmp/xyz
-   #
+   # For example :-
+   # ~
+   #   f := FileStream("/tmp/xyz", 
+   #       ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
+   #   f.dup2(FileStream.stdout) | stop(&why)
+   #   f.close()
+   #   write("hello world")  # writes to /tmp/xyz
+   # ~
+   # :Parameters :
+   # :  `other` - a `DescStream`
    public dup2(other)
       dup2_impl(other) | fail
       other.mode := self.mode
@@ -755,7 +768,7 @@ $endif
    protected native dup_impl()
 
    #
-   # Return a {Stat} object with info about this file.
+   # Return a `Stat` object with info about this file.
    #
    public stat()
       return Stat!stat_impl()
@@ -766,11 +779,12 @@ $endif
 $ifdef _PLAN9
    #
    # Write selected attributes about a file.  If any of the parameters
-   # are {&null}, they are left unchanged.
+   # are `&null`, they are left unchanged.
    #
-   # @param mode the mode (an integer)
-   # @param uid the owner id
-   # @param gid the group id
+   # :Parameters :
+   # :  `mode` - the mode (an integer)
+   # :  `uid` - the owner id
+   # :  `gid` - the group id
    # @param atime the access time (an integer)
    # @param mtime the modification time (an integer)
    # @param length the file length
@@ -800,18 +814,19 @@ end
 
 #
 # This procedure emulates the old Icon builtin function of the same
-# name.  It always returns a {BufferStream} or fails and sets {&why}.
+# name.  It always returns a `BufferStream` or fails and sets `&why`.
 # 
-# @param name The file name
-# @param mode The mode; possible values are :-
-# @    "r" - {FileStream} with {FileOpt.RDONLY}
-# @    "w" - {FileStream} with {FileOpt.WRONLY}, {FileOpt.TRUNC}, {FileOpt.CREAT}
-# @    "b"|"rw"|"r+" - {FileStream} with {FileOpt.RDWR}
-# @    "crw"|"w+" - {FileStream} with {FileOpt.RDWR}, {FileOpt.TRUNC}, {FileOpt.CREAT}
-# @    "a" - {FileStream} with {FileOpt.WRONLY}, {FileOpt.APPEND}, {FileOpt.CREAT}
-# @    "a+" - {FileStream} with {FileOpt.RDWR}, {FileOpt.APPEND}, {FileOpt.CREAT}
-# @    "p"|"pr" - {ProgInputStream}, using shell interpreter
-# @    "pw" - {ProgOutputStream}, using shell interpreter
+# :Parameters :
+# :  `name` - The file name
+# :  `mode` - The mode; possible values are :-
+#    :  "r" - `FileStream` with `FileOpt.RDONLY`
+#    :  "w" - `FileStream` with `FileOpt.WRONLY`, `FileOpt.TRUNC`, `FileOpt.CREAT`
+#    :  "b"|"rw"|"r+" - `FileStream` with `FileOpt.RDWR`
+#    :  "crw"|"w+" - `FileStream` with `FileOpt.RDWR`, `FileOpt.TRUNC`, `FileOpt.CREAT`
+#    :  "a" - `FileStream` with `FileOpt.WRONLY`, `FileOpt.APPEND`, `FileOpt.CREAT`
+#    :  "a+" - `FileStream` with `FileOpt.RDWR`, `FileOpt.APPEND`, `FileOpt.CREAT`
+#    :  "p"|"pr" - `ProgInputStream`, using shell interpreter
+#    :  "pw" - `ProgOutputStream`, using shell interpreter
 #
 procedure open(name, mode)
    return BufferStream(case mode of {
@@ -835,21 +850,21 @@ $endif
 end
 
 #
-# Convenient method to call {write} with standard error as output.
+# Convenient method to call `write` with standard error as output.
 #
 procedure ewrite(a[])
    return write!push(a, FileStream.stderr)
 end
 
 #
-# Convenient method to call {writes} with standard error as output.
+# Convenient method to call `writes` with standard error as output.
 #
 procedure ewrites(a[])
    return writes!push(a, FileStream.stderr)
 end
 
 #
-# This procedure emulates the old Icon builtin {write} function.
+# This procedure emulates the old Icon builtin `write` function.
 #
 procedure write(a[])
    local e, f, r
@@ -869,7 +884,7 @@ procedure write(a[])
 end
 
 #
-# This procedure emulates the old Icon builtin {writes} function.
+# This procedure emulates the old Icon builtin `writes` function.
 #
 procedure writes(a[])
    local e, f, r
@@ -888,7 +903,7 @@ procedure writes(a[])
 end
 
 #
-# This procedure emulates the old Icon builtin {stop} function.
+# This procedure emulates the old Icon builtin `stop` function.
 #
 procedure stop(a[])
    write!push(a, FileStream.stderr)
@@ -896,7 +911,7 @@ procedure stop(a[])
 end
 
 #
-# This procedure emulates the old Icon builtin {read} function.
+# This procedure emulates the old Icon builtin `read` function.
 #
 procedure read(f)
    /f := FileStream.stdin
@@ -904,7 +919,7 @@ procedure read(f)
 end
 
 #
-# This procedure emulates the old Icon builtin {reads} function.
+# This procedure emulates the old Icon builtin `reads` function.
 #
 procedure reads(f, n)
    /f := FileStream.stdin
@@ -913,14 +928,14 @@ procedure reads(f, n)
 end
 
 #
-# This procedure emulates the old Icon builtin {close} function.
+# This procedure emulates the old Icon builtin `close` function.
 #
 procedure close(f)
    return f.close()
 end
 
 #
-# Useful procedure to close a list of {Stream}s.
+# Useful procedure to close a list of `Stream`s.
 #
 procedure lclose(l)
    local e, f
@@ -934,11 +949,11 @@ end
 #
 class FileStream(DescStream)
    public static const
-      # A {FileStream} representing standard input
+      # A `FileStream` representing standard input
       stdin, 
-      # A {FileStream} representing standard output
+      # A `FileStream` representing standard output
       stdout,
-      # A {FileStream} representing standard error
+      # A `FileStream` representing standard error
       stderr
 
    private static create_for_fd(fd, mode)
@@ -956,16 +971,17 @@ class FileStream(DescStream)
 
 $ifdef _PLAN9
    #
-   # Open a new {FileStream} using the underlying system open
+   # Open a new `FileStream` using the underlying system open
    # function.
-   # @param name the file name
-   # @param flags the flags, selected from {FileOpt}, if perm
-   # @      and mode are omitted, defaults to {FileOpt.RDONLY}
-   # @param perm the create permissions to use if a file is
-   # @      created, selected from {Mode}.
-   # @param mode the resulting {Stream}'s mode; if omitted
-   # @      this is deduced from {flags} parameter and the
-   # @      type of file being opened.
+   # :Parameters :
+   # :  `name` - the file name
+   # :  `flags` - the flags, selected from `FileOpt`, if perm
+   #        and mode are omitted, defaults to `FileOpt.RDONLY`
+   # :  `perm` - the create permissions to use if a file is
+   #        created, selected from `Mode`.
+   # :  `mode` - the resulting `Stream`'s mode; if omitted
+   #        this is deduced from `flags` parameter and the
+   #        type of file being opened.
    #
    public new(name, flags, perm, mode)
       local C, flags2
@@ -1152,7 +1168,7 @@ $else
    private static native new_impl(path, flags, perm)
 
    #
-   # Create a pair of {FileStream}s using the pipe system call.
+   # Create a pair of `FileStream`s using the pipe system call.
    #
    public static pipe()
       local t
@@ -1208,10 +1224,11 @@ class SocketStream(DescStream)
    #
    # Create a socket with the given domain and type.
    #
-   # @param domain from {ProtocolFormat}.  The default is
-   # @    {ProtocolFormat.INET} 
-   # @param typ the type from {SocketType}.  The default is
-   # @    {SocketType.STREAM}.
+   # :Parameters :
+   # :  `domain` - from `ProtocolFormat`.  The default is
+   #      `ProtocolFormat.INET` 
+   # :  `typ` - the type from `SocketType`.  The default is
+   #      `SocketType.STREAM`.
    #
    public new(domain, typ)
       return setup(new_impl(domain, typ), READ_WRITE)
@@ -1220,8 +1237,9 @@ class SocketStream(DescStream)
    #
    # Create a pair of sockets of the given type
    #
-   # @param typ the type from {SocketType}.  The default is
-   # {SocketType.STREAM}.
+   # :Parameters :
+   # :  `typ` - the type from `SocketType`.  The default is
+   #   `SocketType.STREAM`.
    #
    public static socketpair(typ)
       local t
@@ -1233,8 +1251,9 @@ class SocketStream(DescStream)
    # Create a pair of sockets of the given type, but communication is limited to
    # one direction.  The first socket is the reader, and the second the writer.
    #
-   # @param typ the type from {SocketType}.  The default is
-   # {SocketType.STREAM}.
+   # :Parameters :
+   # :  `typ` - the type from `SocketType`.  The default is
+   #   `SocketType.STREAM`.
    #
    public static one_way_socketpair(typ)
       local t, l
@@ -1249,16 +1268,16 @@ class SocketStream(DescStream)
 
    #
    # Connect a socket to the given address.  The address is a string
-   # in the form "unix:<filename>" for an {AF_UNIX} address,
-   # "inet:<host>:<port>" for an {AF_INET} address, or
-   # "inet6:<host>:<port>" for an {AF_INET6} address.  The "wildcard"
+   # in the form "unix:<filename>" for an `AF_UNIX` address,
+   # "inet:<host>:<port>" for an `AF_INET` address, or
+   # "inet6:<host>:<port>" for an `AF_INET6` address.  The "wildcard"
    # host can be specified by using the host string "*".
    #
    public native connect(addr)
 
    #
    # Bind a socket to the given address, which is in the same form as
-   # for {connect}.
+   # for `connect`.
    #
    public native bind(addr)
 
@@ -1273,7 +1292,7 @@ class SocketStream(DescStream)
    public native get_peer()
 
    #
-   # Accept a new connection, returning a new {SocketStream}.
+   # Accept a new connection, returning a new `SocketStream`.
    #
    public accept()
       return create_for_fd(accept_impl(), READ_WRITE)
@@ -1281,7 +1300,8 @@ class SocketStream(DescStream)
 
    #
    # Perform a shutdown on the socket.
-   # @param how one of the constants in {Shut}
+   # :Parameters :
+   # :  `how` - one of the constants in `Shut`
    #
    public native shutdown(how)
 
@@ -1302,8 +1322,9 @@ class SocketStream(DescStream)
    # If `ver` is omitted, the value given by the environment variable
    # `OI_IP_VER` is used; if that is unset then `4` is used.
    #
-   # @param host  the host name (a string)
-   # @param ver the IP version(s) to try
+   # :Parameters :
+   # :  `host` - the host name (a string)
+   # :  `ver` - the IP version(s) to try
    public static native dns_query(host, ver)
 
    private native accept_impl()
@@ -1357,7 +1378,7 @@ abstract class LineBasedInputStream(Stream)
 
    #
    # Implemented to read a single line.  The EOL should not be
-   # included.  Fails on error and returns {&null} on end-of-file
+   # included.  Fails on error and returns `&null` on end-of-file
    #
    protected abstract read_line_impl()
 
@@ -1393,7 +1414,7 @@ abstract class LineBasedOutputStream(Stream)
 
    #
    # Implemented to output a single line.  The EOL is not included in
-   # {s}.
+   # `s`.
    #
    protected abstract write_line_impl(s)
    
@@ -1443,7 +1464,7 @@ abstract class HasBgProc()
       exit_info
 
    #
-   # Wait for the child to exit, setting {exit_info}.
+   # Wait for the child to exit, setting `exit_info`.
    #
    protected do_wait()
       \pid | runerr("do_wait() called out of sequence", self)
@@ -1454,7 +1475,7 @@ abstract class HasBgProc()
    end
 
    #
-   # Return {ExitInfo} of the child process
+   # Return `ExitInfo` of the child process
    #
    public get_exit_info()
       return .\exit_info
@@ -1468,7 +1489,7 @@ abstract class HasBgProc()
    end
 end
 
-# Convenient superclass of classes which have an optional {Task} to
+# Convenient superclass of classes which have an optional `Task` to
 # use for polling.
 #
 abstract class HasTask()
@@ -1476,7 +1497,7 @@ abstract class HasTask()
       task
 
    #
-   # Set a {Task} to use when polling
+   # Set a `Task` to use when polling
    #
    public set_task(t)
       self.task := t
@@ -1484,7 +1505,7 @@ abstract class HasTask()
    end
 
    #
-   # Poll, either using the task's poll, or {DescStream.poll} if task
+   # Poll, either using the task's poll, or `DescStream.poll` if task
    # is unset.
    #
    protected choose_poll(l, timeout)
@@ -1723,19 +1744,21 @@ class ProgInputStream(SocketStream, HasBgProc)
       return self
    end
 
-   # Open a new readable {Stream} based on the given command.  The
+   # Open a new readable `Stream` based on the given command.  The
    # first three parameters are the same as for the method
-   # {posix.System.exec};  the last two optionally give the standard
+   # `posix.System.exec`;  the last two optionally give the standard
    # input and standard error of the command; by default the command
    # inherits these from the parent.  If the stderr param is the string
    # "pipe", then stderr is sent to the pipe along with stdout.
-   # @example
-   # @   g := FileStream("/tmp/data",FileOpt.RDONLY) | stop(&why)
-   # @   f := ProgInputStream("wc", ["-l"],,g) | stop(&why)
-   # @   g.close()
-   # @   while write(f.read())   # writes the number of lines in /tmp/data
-   # @   f.close()
    #
+   # For example :-
+   # ~
+   #     g := FileStream("/tmp/data",FileOpt.RDONLY) | stop(&why)
+   #     f := ProgInputStream("wc", ["-l"],,g) | stop(&why)
+   #     g.close()
+   #     while write(f.read())   # writes the number of lines in /tmp/data
+   #     f.close()
+   # ~
    public new(cmd, args, env, stdin, stderr)
       local l
       l := one_way_socketpair() | fail
@@ -1780,19 +1803,21 @@ class ProgOutputStream(SocketStream, HasBgProc)
       return self
    end
 
-   # Open a new writeable {Stream} based on the given command. The
+   # Open a new writeable `Stream` based on the given command. The
    # first three parameters are the same as for the method
-   # {posix.System.exec}; the last two optionally give the standard
+   # `posix.System.exec`; the last two optionally give the standard
    # output and standard error of the command; by default the command
    # inherits these from the parent.
-   # @example
-   # @    g := FileStream("/tmp/result",ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
-   # @    f := ProgOutputStream("wc", ["-l"],,g) | stop(&why)
-   # @    g.close()
-   # @    f.write("data")
-   # @    f.close()
-   # @    # Now /tmp/result contains "1" (ie, the output of wc -l applied to the data written to f)
    #
+   # For example :-
+   # ~
+   #      g := FileStream("/tmp/result",ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
+   #      f := ProgOutputStream("wc", ["-l"],,g) | stop(&why)
+   #      g.close()
+   #      f.write("data")
+   #      f.close()
+   #      # Now /tmp/result contains "1" (ie, the output of wc -l applied to the data written to f)
+   # ~
    public new(cmd, args, env, stdout, stderr)
       local l
       l := one_way_socketpair() | fail
@@ -1832,8 +1857,8 @@ package abstract class FilterStreamBase(Stream, HasBgProc, HasUnderlyingStream, 
 
    # Convenient function to check that the command exited
    # successfully.  If it did, this function returns, otherwise it
-   # fails and sets {&why} appropriately, based on the exit code and
-   # stderr output.  The error sink must be set to a {StringStream} to
+   # fails and sets `&why` appropriately, based on the exit code and
+   # stderr output.  The error sink must be set to a `StringStream` to
    # use this function.
    #
    public succeeded()
@@ -1935,14 +1960,15 @@ $endif
 
 #
 # This stream filters output written to it through a background
-# process and outputs the results to an arbitrary sink {Stream}.
+# process and outputs the results to an arbitrary sink `Stream`.
 #
-# @example
-# @ # Encode s, putting the result in a RamStream
-# @ r := RamStream()
-# @ g := FilterOutputStream(r, "gzip", ["-c"])
-# @ g.write(s)
-#
+# For example :-
+# ~
+#   # Encode s, putting the result in a RamStream
+#   r := RamStream()
+#   g := FilterOutputStream(r, "gzip", ["-c"])
+#   g.write(s)
+# ~
 class FilterOutputStream(FilterStreamBase)
    private 
       sink
@@ -1990,9 +2016,9 @@ class FilterOutputStream(FilterStreamBase)
    end
 
    # Close the stream.  This waits for the child process to terminate,
-   # flushing any remaining output to {sink}.  NB: {sink} and
-   # {err_sink} are not closed unless the {set_close_underlying} has
-   # been set to {&yes}.
+   # flushing any remaining output to `sink`.  NB: `sink` and
+   # `err_sink` are not closed unless the `set_close_underlying` has
+   # been set to `&yes`.
    #
    public close()
       local f
@@ -2016,14 +2042,15 @@ class FilterOutputStream(FilterStreamBase)
    #
    # Create a new instance.
    #
-   # @param sink the {Stream} to which data is output from the command.
-   # @      Defaults to a {NullStream}.
-   # @param cmd the name of the command                                    
-   # @param args the arg list                                              
-   # @param env the env list                                               
-   # @param err_sink optional stream to send standard error to.  If omitted,
-   # @      defaults to a {StringStream}, which can then be used together
-   # @      with {succeeded()} to check the command's exit status.
+   # :Parameters :
+   # :  `sink` - the `Stream` to which data is output from the command.
+   #        Defaults to a `NullStream`.
+   # :  `cmd` - the name of the command                                    
+   # :  `args` - the arg list                                              
+   # :  `env` - the env list                                               
+   # :  `err_sink` - optional stream to send standard error to.  If omitted,
+   #        defaults to a `StringStream`, which can then be used together
+   #        with `succeeded()` to check the command's exit status.
    public new(sink, cmd, args, env, err_sink)
       /sink := NullStream()
       self.sink := sink
@@ -2033,15 +2060,16 @@ class FilterOutputStream(FilterStreamBase)
 end
 
 #
-# This stream filters data taken from an arbitrary source {Stream}
+# This stream filters data taken from an arbitrary source `Stream`
 # through a background process.  The output from that process can then
-# be read as this {Stream}'s output.
+# be read as this `Stream`'s output.
 #
-# @example
-# @ g := FilterInputStream(StringStream(s), "gzip", ["-c"])
-# @ # Reading from g will give the compressed value of the string s.
-# @ res := g.read_all()
-#
+# For example :-
+# ~
+#   g := FilterInputStream(StringStream(s), "gzip", ["-c"])
+#   # Reading from g will give the compressed value of the string s.
+#   res := g.read_all()
+# ~
 class FilterInputStream(FilterStreamBase)
    private 
       source,
@@ -2098,7 +2126,7 @@ class FilterInputStream(FilterStreamBase)
    #
    # Exchange the handling of the command's stdout and stderr, so that
    # stdout goes to the stderr sink and stderr is read by calling
-   # {in()}
+   # `in()`
    #
    public swap_outputs()
       cin :=: cerr
@@ -2126,8 +2154,8 @@ class FilterInputStream(FilterStreamBase)
 
    #
    # Close the stream.  This waits for the child process to terminate.
-   # NB: {source} and {err_sink} are not closed unless the
-   # {set_close_underlying} has been set to {&yes}.
+   # NB: `source` and `err_sink` are not closed unless the
+   # `set_close_underlying` has been set to `&yes`.
    #
    public close()
       local f
@@ -2152,14 +2180,15 @@ class FilterInputStream(FilterStreamBase)
    #
    # Create a new instance.
    #
-   # @param source the {Stream} from which data is given to the command.
-   # @      Defaults to a {NullStream}.
-   # @param cmd the name of the command                                    
-   # @param args the arg list                                              
-   # @param env the env list                                               
-   # @param err_sink optional stream to send standard error to.  If omitted,
-   # @      defaults to a {StringStream}, which can then be used together
-   # @      with {succeeded()} to check the command's exit status.
+   # :Parameters :
+   # :  `source` - the `Stream` from which data is given to the command.
+   #        Defaults to a `NullStream`.
+   # :  `cmd` - the name of the command                                    
+   # :  `args` - the arg list                                              
+   # :  `env` - the env list                                               
+   # :  `err_sink` - optional stream to send standard error to.  If omitted,
+   #        defaults to a `StringStream`, which can then be used together
+   #        with `succeeded()` to check the command's exit status.
    public new(source, cmd, args, env, err_sink)
       /source := NullStream()
       self.source := source
@@ -2170,7 +2199,7 @@ class FilterInputStream(FilterStreamBase)
 end
 
 #
-# This class provides a {Stream} which stores its data in memory.  It
+# This class provides a `Stream` which stores its data in memory.  It
 # can be used to efficiently concatenate together many strings, or as
 # a convenient temporary stream.
 #
@@ -2189,7 +2218,7 @@ final class RamStream(Stream, NoCopy)
    public native truncate(len)
 
    #
-   # Return the current content of the {RamStream} as a string.
+   # Return the current content of the `RamStream` as a string.
    #
    public native str()
 
@@ -2212,12 +2241,13 @@ final class RamStream(Stream, NoCopy)
    end
 
    #
-   # Create a new {RamStream}, with initial value of {s}.
+   # Create a new `RamStream`, with initial value of `s`.
    #
-   # @param s the initial value of the stream; defaults to empty 
-   # @      string.
-   # @param wiggle the extra space to reserve for growth of the buffer,
-   # @      default is 512 bytes.
+   # :Parameters :
+   # :  `s` - the initial value of the stream; defaults to empty 
+   #        string.
+   # :  `wiggle` - the extra space to reserve for growth of the buffer,
+   #        default is 512 bytes.
    #
    public new(s, wiggle)
       ptr := new_impl(s, wiggle)
@@ -2807,10 +2837,10 @@ class SequenceStream(Stream, HasUnderlyingStream)
    end
 end
 
-# A {Stream} which takes its data from a co-expression.  Each result
+# A `Stream` which takes its data from a co-expression.  Each result
 # provides one line of output.  End-of-file is signalled by the
-# co-expression generating {&null} and errors are signalled by it
-# failing and setting {&why}.
+# co-expression generating `&null` and errors are signalled by it
+# failing and setting `&why`.
 #
 class GeneratorStream(LineBasedInputStream, NoCopy)
    private
@@ -2839,15 +2869,16 @@ class GeneratorStream(LineBasedInputStream, NoCopy)
    end
 end
 
-# A {Stream} which takes its data from a co-expression.  Each result
-# provides one line of output.  Unlike {GeneratorStream}, no provision
+# A `Stream` which takes its data from a co-expression.  Each result
+# provides one line of output.  Unlike `GeneratorStream`, no provision
 # is made for signalling errors (failure of the co-expression
 # indicates end-of-file).
 #
-# @example
-# @   # A stream with 10 lines
-# @   e := ExprStream{1 to 10}
-#
+# For example :-
+# ~
+#     # A stream with 10 lines
+#     e := ExprStream{1 to 10}
+# ~
 class ExprStream(LineBasedInputStream, NoCopy)
    private
       coex
@@ -2869,7 +2900,7 @@ class ExprStream(LineBasedInputStream, NoCopy)
    end
 end
 
-# A {FileStream} which wraps a unix pseudo-terminal file.  This can be
+# A `FileStream` which wraps a unix pseudo-terminal file.  This can be
 # used to communicate with a child process, such as a shell.
 #
 class PttyStream(FileStream)
@@ -2923,10 +2954,11 @@ class WinsockStream(Stream, NoCopy)
    #
    # Create a socket with the given domain and type.
    #
-   # @param domain from {ProtocolFormat}.  The default is
-   # @    {ProtocolFormat.INET} 
-   # @param typ the type from {SocketType}.  The default is
-   # @    {SocketType.STREAM}.
+   # :Parameters :
+   # :  `domain` - from `ProtocolFormat`.  The default is
+   #      `ProtocolFormat.INET` 
+   # :  `typ` - the type from `SocketType`.  The default is
+   #      `SocketType.STREAM`.
    #
    public new(domain, typ)
       self.socket := new_impl(domain, typ) | fail
@@ -2939,8 +2971,8 @@ class WinsockStream(Stream, NoCopy)
 
    #
    # Connect a socket to the given address.  The address is a string
-   # in the form "inet:<host>:<port>" for an {AF_INET} address, or
-   # "inet6:<host>:<port>" for an {AF_INET6} address.  The "wildcard"
+   # in the form "inet:<host>:<port>" for an `AF_INET` address, or
+   # "inet6:<host>:<port>" for an `AF_INET6` address.  The "wildcard"
    # host can be specified by using the host string "*".
    #
    public native connect(addr)
@@ -2951,7 +2983,7 @@ class WinsockStream(Stream, NoCopy)
 
    #
    # Bind a socket to the given address, which is in the same form as
-   # for {connect}.
+   # for `connect`.
    #
    public native bind(addr)
 
@@ -2966,7 +2998,7 @@ class WinsockStream(Stream, NoCopy)
    public native get_peer()
 
    #
-   # Accept a new connection, returning a new {WinsockStream}.
+   # Accept a new connection, returning a new `WinsockStream`.
    #
    public accept()
       return create_for_socket(accept_impl())
@@ -2974,7 +3006,8 @@ class WinsockStream(Stream, NoCopy)
 
    #
    # Perform a shutdown on the socket.
-   # @param how one of the constants in {Shut}
+   # :Parameters :
+   # :  `how` - one of the constants in `Shut`
    #
    public native shutdown(how)
 
@@ -3000,8 +3033,9 @@ class WinsockStream(Stream, NoCopy)
    # If `ver` is omitted, the value given by the environment variable
    # `OI_IP_VER` is used; if that is unset then `4` is used.
    #
-   # @param host  the host name (a string)
-   # @param ver the IP version(s) to try
+   # :Parameters :
+   # :  `host` - the host name (a string)
+   # :  `ver` - the IP version(s) to try
    public static native dns_query(host, ver)
 
    private native accept_impl()

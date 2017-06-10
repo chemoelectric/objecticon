@@ -92,7 +92,8 @@ class TextDisplay(LineBasedScrollArea)
 
    #
    # Set the data to be displayed.
-   # @param x  The list of data.
+   # :Parameters :
+   # :  `x` - The list of data.
    #
    public set_contents(x)
       self.contents := x
@@ -108,7 +109,7 @@ class TextDisplay(LineBasedScrollArea)
 
    #
    # Call this method if the contents list, previously
-   # set with {set_contents()}, has changed.
+   # set with `set_contents()`, has changed.
    #
    public contents_changed()
       clear_split_list()
@@ -201,8 +202,9 @@ class TextDisplay(LineBasedScrollArea)
 
    #
    # Append lines of text and go to the bottom of the content.
-   # @param l a list of lines to append
-   # @param max optional maximum length of resulting contents
+   # :Parameters :
+   # :  `l` - a list of lines to append
+   # :  `max` - optional maximum length of resulting contents
    #
    public log(l, max)
       local n
@@ -254,7 +256,7 @@ class TextDisplay(LineBasedScrollArea)
    end
 
    #
-   # Return the contents of the {ScrollArea}
+   # Return the contents of the `ScrollArea`
    #
    public get_contents()
       return self.contents

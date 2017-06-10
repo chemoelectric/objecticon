@@ -1,4 +1,4 @@
-import io, lang, util, ipl.options, gui, ipl.termdialog, 
+import io, lang, util, net, ipl.options, gui, ipl.termdialog, 
    ipl.strings, ipl.lists, ipl.pdco, xdg
 
 global prog, input, output, stopped, sched, break_proc, break_line, break_file, 
@@ -513,9 +513,16 @@ procedure cleanup()
 end
 
 procedure usage(opts)
-   write("Usage: memdebug [OPTIONS] program [program options/arguments]")
-   write("Examine program memory")
+   local u
+   write("Usage: memdebug [OPTIONS] program [program options/arguments]\n_
+          Examine program memory")
    options_help(opts)
+   u := URL("http://objecticon.sourceforge.net/Memdebug.html")
+   writes("\nFor more details, visit ")
+   if Files.is_flowterm_tty(FileStream.stdout) then
+      write(Files.begin_link(u), u.str(), Files.end_link())
+   else
+      write(u.str())
    exit(0)
 end
 
@@ -538,7 +545,8 @@ procedure main(args)
                        Opt("hlim",integer,"Set the history limit for the line editor (default is 500)"),
                        Opt("llim",integer,"Set the gui interface's log area line limit (default is 600)"),
                        Opt("slim",integer,"Set the string display limit (default is 64)"), 
-                       Opt("addrs",integer,"Set the address display mode (default is 1)")], usage)
+                       Opt("addrs",integer,"Set the address display mode (default is 1)")],
+                       usage)
    if *args = 0 then
       stop("Program and optional arguments expected.")
 

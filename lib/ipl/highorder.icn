@@ -8,7 +8,7 @@ import
    datastruct(EqTable)
 
 #
-# Implementation class for {partial}
+# Implementation class for `partial`
 #
 package class Partial()
    private
@@ -47,16 +47,17 @@ end
 #    "A": add the remaining arguments.
 #    "-": skip the next argument.
 #
-# @example
-# @   f := partial(write, "vvvAV", "a", "b", "c", "p", "q", "r")
-# @   f("x","y","z")   # writes abcxyzpqr
-#
+# Example :-
+# ~
+#     f := partial(write, "vvvAV", "a", "b", "c", "p", "q", "r")
+#     f("x","y","z")   # writes abcxyzpqr
+# ~
 procedure partial(f, spec, l[])
    return Partial(f, spec, l).call
 end
 
 #
-# Implementation class for {lpartial}
+# Implementation class for `lpartial`
 #
 package class LPartial()
    private
@@ -81,7 +82,7 @@ procedure lpartial(f, l[])
 end
 
 #
-# Implementation class for {rpartial}
+# Implementation class for `rpartial`
 #
 package class RPartial()
    private
@@ -106,7 +107,7 @@ procedure rpartial(f, l[])
 end
 
 #
-# Implementation class for {compose}
+# Implementation class for `compose`
 #
 package class Compose()
    private
@@ -131,7 +132,7 @@ procedure compose(f, g)
 end
 
 #
-# Implementation class for {lpartial2}
+# Implementation class for `lpartial2`
 #
 package class LPartial2()
    private
@@ -150,7 +151,7 @@ end
 
 # Partial application of the first parameter to the two-parameter
 # function f.  The result is the same as using the more general
-# function {lpartial}, but avoids the creation of temporary lists on
+# function `lpartial`, but avoids the creation of temporary lists on
 # each invocation of the resulting function.
 #
 procedure lpartial2(f, x)
@@ -168,7 +169,7 @@ procedure lpb(x, s)
 end
 
 #
-# Implementation class for {rpartial2}
+# Implementation class for `rpartial2`
 #
 package class RPartial2()
    private
@@ -187,7 +188,7 @@ end
 
 # Partial application of the second parameter to the two-parameter
 # function f.  The result is the same as using the more general
-# function {rpartial}, but avoids the creation of temporary lists on
+# function `rpartial`, but avoids the creation of temporary lists on
 # each invocation of the resulting function.
 #
 procedure rpartial2(f, x)
@@ -203,7 +204,7 @@ procedure rpb(s, x)
 end
 
 #
-# Implementation class for {methodf}
+# Implementation class for `methodf`
 #
 package class Methodf()
    private field
@@ -222,16 +223,17 @@ end
 # field from it, and then applies the remaining arguments to the
 # resulting method.
 #
-# @example
-# @ f := methodf("abc")
-# @ f(obj, 1, 2, 3)   # invokes obj.abc(1, 2, 3)
-#
+# Example :-
+# ~
+#   f := methodf("abc")
+#   f(obj, 1, 2, 3)   # invokes obj.abc(1, 2, 3)
+# ~
 procedure methodf(field)
    return Methodf(field).call
 end
 
 #
-# Implementation class for {coexf}
+# Implementation class for `coexf`
 #
 package class Coexf()
    private e
@@ -247,7 +249,7 @@ package class Coexf()
 end
 
 #
-# Given a co-expression {e}, this returns a function which produces @e
+# Given a co-expression `e`, this returns a function which produces @e
 # on each evaluation.  Arguments to the function are discarded.
 #
 procedure coexf(e)
@@ -255,7 +257,7 @@ procedure coexf(e)
 end
 
 #
-# Implementation class for {exprf}
+# Implementation class for `exprf`
 #
 package class Exprf()
    private e
@@ -271,7 +273,7 @@ package class Exprf()
 end
 
 #
-# Given a co-expression {e}, this returns a function which generates !e
+# Given a co-expression `e`, this returns a function which generates !e
 # on each evaluation.  Arguments to the function are discarded.
 #
 procedure exprf(e)

@@ -3,9 +3,9 @@ package ipl.types
 import lang
 
 #
-# A version of {type()} more akin to conventional icon's {type()}.
+# A version of `type()` more akin to conventional icon's `type()`.
 # For records and objects returns the name of the constructor or
-# class; for all other types returns the result of {type()}
+# class; for all other types returns the result of `type()`
 #
 procedure itype(x)
    local s
@@ -18,7 +18,7 @@ end
 
 #
 # For records and objects returns the constructor or class; for all
-# other types returns the result of {type()}
+# other types returns the result of `type()`
 #
 procedure typeof(x)
    local s

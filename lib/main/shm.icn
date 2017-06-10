@@ -15,7 +15,7 @@ import lang
 # the accompanying C library objecticonipclib.so to be on the library path.
 #
 # Instances of this class should not be created directly, but rather using the static
-# methods {open_public}, {create_public} and {create_private}
+# methods `open_public`, `create_public` and `create_private`
 #
 final class Shm(NoCopy)
    private 
@@ -23,9 +23,9 @@ final class Shm(NoCopy)
 
    #
    # Set the value to the given object.  The object may be an arbitrary
-   # Icon structure, and will be encoded into a string by the {encode()}
+   # Icon structure, and will be encoded into a string by the `encode()`
    # procedure.  This method will fail if the given object is not
-   # encodable, and set {&why} appropriately.
+   # encodable, and set `&why` appropriately.
    #
    public set_value(o)
       return set_value_impl(encode(o, &yes))

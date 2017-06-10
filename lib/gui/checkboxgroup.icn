@@ -13,13 +13,13 @@ import util
 #
 # This class is simply a container for several objects
 # which then act together as ``radio buttons''.  The objects
-# should be subclasses of {Toggle}, but are normally checkboxes.
+# should be subclasses of `Toggle`, but are normally checkboxes.
 #
-# An {Event.SELECTION_CHANGED} is fired when  the user changes the
+# An `Event.SELECTION_CHANGED` is fired when  the user changes the
 # selection (but not when the selection is changed programatically).
 #
-# NB - the objects in the group must be added to both the {CheckBoxGroup}
-# and the dialog box too; a {CheckBoxGroup} is not a {Component}.
+# NB - the objects in the group must be added to both the `CheckBoxGroup`
+# and the dialog box too; a `CheckBoxGroup` is not a `Component`.
 #
 class CheckBoxGroup(Connectable)
    public 
@@ -45,7 +45,8 @@ class CheckBoxGroup(Connectable)
 
    #
    # Add the object to the CheckBoxGroup.
-   # @param c   The object to add, which must be a subclass of {Toggle}.
+   # :Parameters :
+   # :  `c` - The object to add, which must be a subclass of `Toggle`.
    #
    public add(c)
       insert(self.checkboxes, c)
@@ -55,7 +56,8 @@ class CheckBoxGroup(Connectable)
 
    #
    # Remove the object from the CheckBoxGroup.
-   # @param c   The object to remove
+   # :Parameters :
+   # :  `c` - The object to remove
    #
    public remove(c)
       if c === which_one then
@@ -67,7 +69,8 @@ class CheckBoxGroup(Connectable)
 
    #
    # Set which CheckBox is checked, or &null to indicate none checked.
-   # @param x   The object which is checked or &null.
+   # :Parameters :
+   # :  `x` - The object which is checked or &null.
    #
    public set_which_one(x)
       if /x then

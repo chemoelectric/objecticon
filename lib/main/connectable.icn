@@ -15,7 +15,8 @@ class Listener()
    # Remove this `Listener` from the object it's listening to; fails and does
    # nothing if the `Listener` is already disconnected.
    #
-   # @return self
+   # :Returns :
+   # :  self
    #
    public disconnect()
       \obj | fail
@@ -45,9 +46,11 @@ class Connectable()
    #
    # Fire an event to listeners of the given type.
    #
-   # @param type The particular event type to fire.
-   # @param param The arbitrary parameter to pass to listeners
-   # @return self
+   # :Parameters :
+   # :  `type` - The particular event type to fire.
+   # :  `param` - The arbitrary parameter to pass to listeners
+   # :Returns :
+   # :  self
    #
    public fire(type, param)
       local e
@@ -61,10 +64,12 @@ class Connectable()
    # Create and connect a `Listener` to this object.  To get the actual `Listener`
    # instance added, use the variable `last_listener`.
    #
-   # @param proc The procedure or other invocable to call on an event.
-   # @param type The particular event to listen for; `&null` means all events
-   # @param pos The position in the listener list for the type, default 0.
-   # @return self
+   # :Parameters :
+   # :  `proc` - The procedure or other invocable to call on an event.
+   # :  `type` - The particular event to listen for; `&null` means all events
+   # :  `pos` - The position in the listener list for the type, default 0.
+   # :Returns :
+   # :  self
    #
    public connect(proc, type, pos)
       local l
@@ -80,7 +85,8 @@ class Connectable()
    #
    # This is like `connect`, but the listener is automatically disconnected
    # after it is fired `n` times.  `n` defaults to 1.
-   # @return self
+   # :Returns :
+   # :  self
    #
    public connect_n(proc, type, pos, n)
       local x

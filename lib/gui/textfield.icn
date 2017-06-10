@@ -14,24 +14,25 @@ import undo, util, graphics
 # A class for a single input line of text.  The text can
 # scroll within the area specified.  By default, a border
 # surrounds the text area; this can be turned off by using
-# {toggle_draw_border()}.
+# `toggle_draw_border()`.
 #
-# The horizontal size must be set by the {set_size()} method:
+# The horizontal size must be set by the `set_size()` method:
 # there is no default (the vertical size will default, however).
 #
-# An Event.ACTION is generated when return is pressed,
-# a Event.CONTENT_CHANGED whenever the contents are changed,
-# a Event.CURSOR_MOVED when the cursor moves, and a
-# Event.SELECTION_CHANGED whenver the selection changes.
+# An `Event.ACTION` is generated when return is pressed,
+# `Event.CONTENT_CHANGED` whenever the contents are changed,
+# `Event.CURSOR_MOVED` when the cursor moves, and
+# `Event.SELECTION_CHANGED` whenver the selection changes.
 #
-# @example
-# @ t := TextField()
-# @ t.set_pos(50, 250)
-# @ # Vertical size will default
-# @ t.set_size(100)
-# @ t.set_contents("Initial string")
-# @ self.add(t)
-#
+# Example :-
+# ~
+#   t := TextField()
+#   t.set_pos(50, 250)
+#   # Vertical size will default
+#   t.set_size(100)
+#   t.set_contents("Initial string")
+#   self.add(t)
+# ~
 class TextField(Component)
    public 
       filter,                  # Cset for filtering characters
@@ -77,12 +78,13 @@ class TextField(Component)
    end
 
    #
-   # Set a filter on the characters allowed to be input to the text field.
-   # @param c  The cset of permissible characters.
-   # @example
-   # @ # Permit only hexadecimal characters as input
-   # @ set_filter('0987654321abcdefABCDEF')
-   #
+   # Set a filter on the characters allowed to be input to the text field.  For example :-
+   # ~
+   #   # Permit only hexadecimal characters as input
+   #   set_filter('0987654321abcdefABCDEF')
+   # ~
+   # :Parameters :
+   # :  `c` - The cset of permissible characters.
    public set_filter(c)
       self.filter := c ** Gui.PRINTABLE_1
       return self
@@ -149,7 +151,8 @@ class TextField(Component)
    #
    # Set the contents of the field.  If not invoked then
    # the initial content is the empty string.
-   # @param x   The contents
+   # :Parameters :
+   # :  `x` - The contents
    #
    public set_contents(x)
       /x := ""
@@ -169,11 +172,12 @@ class TextField(Component)
    # Set the contents of the field, allowing the user to undo the
    # change, and firing events on the change.
    #
-   # @param x   The new contents
-   # @param pos The new cursor position, default *x + 1
-   # @param e   The event causing the change
-   # @param coalesce Allow this operation to be coalesced with others 
-   # @          by the undo manager.
+   # :Parameters :
+   # :  `x` - The new contents
+   # :  `pos` - The new cursor position, default *x + 1
+   # :  `e` - The event causing the change
+   # :  `coalesce` - Allow this operation to be coalesced with others 
+   #            by the undo manager.
    #
    public assign_contents(x, pos, e, coalesce)
       local ed

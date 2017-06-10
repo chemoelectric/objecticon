@@ -13,7 +13,7 @@ import util, lang, io, graphics
 $define X_PADDING_INC 5
 
 #
-# This class holds the several {TabItem}s, and represents a tabbed pane.
+# This class holds the several `TabItem`s, and represents a tabbed pane.
 #
 # A Event.SELECTION_CHANGED is fired whenever the tab is changed via
 # user interaction.
@@ -338,8 +338,9 @@ class TabSet(Component)
 
    #
    # Set which tab is currently on display.
-   # @param x  The {TabItem} to be displayed.
-   # @param dont_restore_flag if set, then the tab's remembered focus will not be
+   # :Parameters :
+   # :  `x` - The `TabItem` to be displayed.
+   # :  `dont_restore_flag` - if set, then the tab's remembered focus will not be
    #         restored (only relevant if remember_focus is on).
    #
    public set_which_one(x, dont_restore_flag)
@@ -531,7 +532,7 @@ class TabSet(Component)
 
    #
    # Find the TabItem with the given accelerator.
-   # @p
+   #
    public find_key(k)
       local m
       every m := !self.children do {
@@ -544,7 +545,6 @@ class TabSet(Component)
    # Break the set of tabs up into lines, given the padding within each tab.
    # Returns a list each element of which is a list of those tabs on one line.
    #
-   # @p
    public how_many_lines(pad, width)
       local t, l, cl, c, lw
 

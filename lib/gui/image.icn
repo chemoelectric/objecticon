@@ -25,7 +25,7 @@ class Image(Component)
       fill_dimensions
 
    #
-   # Set an image to use; the parameter is passed to {ImageCache.load}
+   # Set an image to use; the parameter is passed to `ImageCache.load`
    # to load the image.
    #
    public set_image(x)
@@ -41,7 +41,7 @@ class Image(Component)
    end
 
    #
-   # Set an image to use; the parameter is passed to {ImageCache.get}
+   # Set an image to use; the parameter is passed to `ImageCache.get`
    # to load the image.
    #
    public set_cache(x)
@@ -99,7 +99,7 @@ class Image(Component)
    end
 
    # This controls how the image will be expanded if its size is less
-   # than that specified by {set_size()}.  If 0, then the image will
+   # than that specified by `set_size()`.  If 0, then the image will
    # not be expanded; if 1 then the image will not be distorted, but
    # will be expanded to fill one of the dimensions depending on its
    # shape.  If 2, then the image will be distorted and expanded to

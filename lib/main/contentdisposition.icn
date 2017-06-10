@@ -32,15 +32,17 @@ class ContentDisposition()
    #
    # Get the parameter for the given key.
    #
-   # @param key the key
+   # :Parameters :
+   # :  `key` - the key
    public get_parameter(key)
       return parameters.member(key)
    end
 
    #
    # Set the parameter to the given value
-   # @param key the key
-   # @param value the value
+   # :Parameters :
+   # :  `key` - the key
+   # :  `value` - the value
    public set_parameter(key, value)
       parameters.insert(key, value)
       return self
@@ -66,9 +68,11 @@ class ContentDisposition()
    end
 
    #
-   # Get the "creation-date" parameter as a {Time} object.
-   # @fail if the parameter is absent or cannot be parsed.
-   # @return a {Time} instance
+   # Get the "creation-date" parameter as a `Time` object.
+   # :Fails :
+   # :  if the parameter is absent or cannot be parsed.
+   # :Returns :
+   # :  a `Time` instance
    #
    public get_creation_date()
       local s
@@ -77,17 +81,20 @@ class ContentDisposition()
    end
 
    #
-   # Set the "creation-date" parameter from the given {Time} object.
-   # @param t the {Time} from which to set the date field.
+   # Set the "creation-date" parameter from the given `Time` object.
+   # :Parameters :
+   # :  `t` - the `Time` from which to set the date field.
    #
    public set_creation_date(t)
       return set_parameter("creation-date", t.to_rfc822())
    end
 
    #
-   # Get the "modification-date" parameter as a {Time} object.
-   # @fail if the parameter is absent or cannot be parsed.
-   # @return a {Time} instance
+   # Get the "modification-date" parameter as a `Time` object.
+   # :Fails :
+   # :  if the parameter is absent or cannot be parsed.
+   # :Returns :
+   # :  a `Time` instance
    #
    public get_modification_date()
       local s
@@ -96,17 +103,20 @@ class ContentDisposition()
    end
 
    #
-   # Set the "modification-date" parameter from the given {Time} object.
-   # @param t the {Time} from which to set the date field.
+   # Set the "modification-date" parameter from the given `Time` object.
+   # :Parameters :
+   # :  `t` - the `Time` from which to set the date field.
    #
    public set_modification_date(t)
       return set_parameter("modification-date", t.to_rfc822())
    end
 
    #
-   # Get the "read-date" parameter as a {Time} object.
-   # @fail if the parameter is absent or cannot be parsed.
-   # @return a {Time} instance
+   # Get the "read-date" parameter as a `Time` object.
+   # :Fails :
+   # :  if the parameter is absent or cannot be parsed.
+   # :Returns :
+   # :  a `Time` instance
    #
    public get_read_date()
       local s
@@ -115,8 +125,9 @@ class ContentDisposition()
    end
 
    #
-   # Set the "read-date" parameter from the given {Time} object.
-   # @param t the {Time} from which to set the date field.
+   # Set the "read-date" parameter from the given `Time` object.
+   # :Parameters :
+   # :  `t` - the `Time` from which to set the date field.
    #
    public set_read_date(t)
       return set_parameter("read-date", t.to_rfc822())

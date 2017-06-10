@@ -11,16 +11,17 @@ package gui
 import util, ipl.lists
 
 #
-# A node in a {TreeTable}.  It provides the column data
+# A node in a `TreeTable`.  It provides the column data
 # for the extra (non-tree) columns.  For example if
 # the TreeTable's columns were named A, B, C, then a
-# {TreeTableNode} might be created as follows :-
+# `TreeTableNode` might be created as follows :-
 #
-# @example
-# @ n := TreeTableNode().
-# @         set_label("Col A label").
-# @         set_contents(["Col B data", "Col C data"])
-#
+# Example :-
+# ~
+#   n := TreeTableNode().
+#           set_label("Col A label").
+#           set_contents(["Col B data", "Col C data"])
+# ~
 class TreeTableNode(TreeNode)
    public contents
 
@@ -34,8 +35,8 @@ class TreeTableNode(TreeNode)
 end
 
 #
-# This abstract class provides the table content for a {TreeTable}.
-# It extends {BaseTree}, and uses that class's methods for event
+# This abstract class provides the table content for a `TreeTable`.
+# It extends `BaseTree`, and uses that class's methods for event
 # handling and drawing of the first column.
 #
 abstract class BaseTreeTableContent(BaseTree)
@@ -208,9 +209,9 @@ class TreeTableHeader(TableHeader)
 end
 
 #
-# A {TreeTable} is a {Table} where the first column is
+# A `TreeTable` is a `Table` where the first column is
 # a Tree.  The data for the component is provided as
-# a tree of {TreeTableNode}s.
+# a tree of `TreeTableNode`s.
 #
 # See the example program ttexplorer.icn for one in use.
 #
@@ -245,7 +246,7 @@ class ItemPaintTreeTableContent(BaseTreeTableContent,ItemPaintTree)
 end
 
 #
-# A {TreeTable} which uses an {ItemPaint} to paint its tree column.
+# A `TreeTable` which uses an `ItemPaint` to paint its tree column.
 #
 class ItemPaintTreeTable(Table)
    public create_table_header()

@@ -100,7 +100,7 @@ class NetClient(Connectable, HasTask)
       return best
    end
 
-   # Set the timeout in ms to use.  If {&null}, then no timeout will
+   # Set the timeout in ms to use.  If `&null`, then no timeout will
    # be used.
    #
    public set_timeout(timeout)
@@ -466,7 +466,7 @@ $endif
    end
 
    #
-   # Read a single line from the connection, and return it.  Returns {&null} on eof.
+   # Read a single line from the connection, and return it.  Returns `&null` on eof.
    #
    protected read_line()
       local line, s
@@ -497,8 +497,8 @@ $endif
    end
 
    #
-   # This method is the same as {read_line}, except that on end of
-   # file it fails, setting {&why}, rather than returning {&null}.
+   # This method is the same as `read_line`, except that on end of
+   # file it fails, setting `&why`, rather than returning `&null`.
    #
    protected expect_line()
       local s
@@ -507,7 +507,7 @@ $endif
    end
 
    #
-   # Read up to len bytes on the connection, returning {&null} on eof.
+   # Read up to len bytes on the connection, returning `&null` on eof.
    #
    protected read_str(len)
       local t
@@ -528,8 +528,8 @@ $endif
       return t
    end
 
-   # This method is the same as {read_str}, except that on end of file
-   # it fails, setting {&why}, rather than returning {&null}.
+   # This method is the same as `read_str`, except that on end of file
+   # it fails, setting `&why`, rather than returning `&null`.
    #
    protected expect_str(len)
       local s

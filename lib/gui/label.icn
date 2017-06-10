@@ -22,7 +22,8 @@ class Label(Component)
 
    #
    # Set the label.
-   # @param x   The label.
+   # :Parameters :
+   # :  `x` - The label.
    #
    public set_label(x)
       set_paint(paint_for_string(x))
@@ -31,7 +32,8 @@ class Label(Component)
 
    #
    # Set an image for the label
-   # @param x  The image to be displayed
+   # :Parameters :
+   # :  `x` - The image to be displayed
    #
    public set_image(x)
       set_paint(ImagePaint().set_image(x))

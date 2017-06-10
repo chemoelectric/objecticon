@@ -314,7 +314,7 @@ class Table(Component)
    end
 
    #
-   # Return the nth {TableColumn}.
+   # Return the nth `TableColumn`.
    #
    public get_column(n)
       return table_header.children[n]
@@ -335,8 +335,9 @@ class Table(Component)
 
    #
    # Move to the given position.  Either parameter may be omitted.
-   # @param line   The line to move to
-   # @param horiz  The left offset to move to
+   # :Parameters :
+   # :  `line` - The line to move to
+   # :  `horiz` - The left offset to move to
    #
    public goto_pos(line, horiz)
       self.table_content.goto_pos(line, horiz)
@@ -353,7 +354,8 @@ class Table(Component)
    # Set the contents of the table.  The parameter should be a
    # two dimensional list.  Each element of the list should
    # correspond to one line of the table.
-   # @param x   The contents
+   # :Parameters :
+   # :  `x` - The contents
    #
    public set_contents(x)
       self.table_content.set_contents(x)
@@ -362,7 +364,7 @@ class Table(Component)
 
    #
    # Call this method if the contents list, previously
-   # set with {set_contents()}, has changed.
+   # set with `set_contents()`, has changed.
    #
    public contents_changed()
       self.table_content.contents_changed()
@@ -396,7 +398,8 @@ class Table(Component)
 
    #
    # Return a list of lines selected
-   # @return A list of lines currently selected
+   # :Returns :
+   # :  A list of lines currently selected
    #
    public get_selections()
       return self.table_content.get_selections()
@@ -405,7 +408,8 @@ class Table(Component)
    #
    # Set the current selections to the list l, which is a list of
    # line numbers.
-   # @param l   The list of item numbers.
+   # :Parameters :
+   # :  `l` - The list of item numbers.
    #
    public set_selections(l)
       self.table_content.set_selections(l)
@@ -415,7 +419,6 @@ class Table(Component)
    #
    # Set the cursor
    #
-   # @p
    public set_cursor(line)
       self.table_content.set_cursor(line)
       return self
@@ -424,7 +427,6 @@ class Table(Component)
    #
    # Return item currently under the clicked cursor
    #
-   # @p
    public get_cursor()
       return self.table_content.get_cursor()
    end
@@ -432,7 +434,6 @@ class Table(Component)
    #
    # Return line currently under the clicked cursor
    #
-   # @p
    public line_get_cursor()
       return self.table_content.object_get_cursor()
    end
@@ -467,9 +468,10 @@ class Table(Component)
 
    #
    # Add the given TableColumn to the Table.
-   # @param c  The column to add.
-   # @param i   The index to add at; if omitted then the new column
-   # @          is appended to the end.
+   # :Parameters :
+   # :  `c` - The column to add.
+   # :  `i` - The index to add at; if omitted then the new column
+   #            is appended to the end.
    #
    public add_column(c, i)
       table_header.add(c, i)
@@ -485,7 +487,8 @@ class Table(Component)
 
    #
    # Configure the table selection mode.
-   # @param m a constant from {Select}
+   # :Parameters :
+   # :  `m` - a constant from `Select`
    public set_select_mode(m)
       self.table_content.set_select_mode(m)
       return self
@@ -503,7 +506,7 @@ class Table(Component)
 
    #
    # Compute the w_spec of the columns, including those whose width is unset.
-   # @p
+   #
    public size_columns()
       local col, l, sw, dw, av
 

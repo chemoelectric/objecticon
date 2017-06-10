@@ -17,20 +17,20 @@ import
 # This is the parent class of the button classes, including
 # checkboxes.
 #
-# A {Button} produces a {Event.BUTTON_PRESS} when the button is
-# depressed, and code {Event.BUTTON_RELEASE} when it is released,
-# as well as an {Event.ACTION}.
+# A `Button` produces a `Event.BUTTON_PRESS` when the button is
+# depressed, and code `Event.BUTTON_RELEASE` when it is released,
+# as well as an `Event.ACTION`.
 # 
 # By default, when a button holds the keyboard focus a dashed
 # line appears just within the button.  Then, when return is
-# pressed an {Event.ACTION} is generated.  The method
-# {Dialog.set_initial_focus()} can be used to have the button
+# pressed an `Event.ACTION` is generated.  The method
+# `Dialog.set_initial_focus()` can be used to have the button
 # have the focus when the dialog is first displayed.
 #
-# Buttons also repeatedly produce a {Event.BUTTON_HELD} whilst they
+# Buttons also repeatedly produce a `Event.BUTTON_HELD` whilst they
 # are held down, rather like a repeating keyboard press.  The
 # delay between the initial repeat event and subsequent repeat
-# events is set in the {Style} object.
+# events is set in the `Style` object.
 #
 abstract class Button(Toggle,Component)
    public 

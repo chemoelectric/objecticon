@@ -95,21 +95,22 @@ final abstract class Class()
    end
 
    # Return the source location of the class
-   # @return a {Location} instance
+   # :Returns :
+   # :  a `Location` instance
    #
    public static get_location(c)
       return Prog.get_global_location(get_name(c), get_program(c))
    end
 
-   # Generate the superclasses of the class {c}
+   # Generate the superclasses of the class `c`
    #
    public static native get_supers(c)
 
-   # Generate the implemented classes of the class {c}
+   # Generate the implemented classes of the class `c`
    #
    public static native get_implemented_classes(c)
 
-   # Succeed iff the class {c} implements the class {target}.  This is
+   # Succeed iff the class `c` implements the class `target`.  This is
    # similar to the builtin is() function, but takes a class as its
    # first argument, whereas is() takes an object (or fails).
    #
@@ -128,73 +129,85 @@ final abstract class Class()
       return is(obj, cl)
    end
 
-   # Generate the field names of the class {c}.  The instance fields
+   # Generate the field names of the class `c`.  The instance fields
    # come first, followed by the class fields.
    #
    public static get_field_names(c)
       suspend get_field_name(c, 1 to get_n_fields(c))
    end
 
-   # Return the number of fields in the class {c}.
+   # Return the number of fields in the class `c`.
    #
    public static get_n_fields(c)
       return get_n_instance_fields(c) + get_n_class_fields(c)
    end
 
-   # Return the flags for the class {c}, which can include
-   # {Abstract} or {Final}.
+   # Return the flags for the class `c`, which can include
+   # `Abstract` or `Final`.
    #
    public static native get_class_flags(c)
 
-   # Generate the field names of the class fields of class {c}.
+   # Generate the field names of the class fields of class `c`.
    #
    public static get_class_field_names(c)
       suspend get_field_name(c, get_n_instance_fields(c) + 1 to get_n_fields(c))
    end
 
-   # Return the number of class fields of class {c}.
+   # Return the number of class fields of class `c`.
    #
    public static native get_n_class_fields(c)
 
-   # Generate the field names of the instance fields of class {c}.
+   # Generate the field names of the instance fields of class `c`.
    #
    public static get_instance_field_names(c)
       suspend get_field_name(c, 1 to get_n_instance_fields(c))
    end
 
-   # Return the number of instance fields of class {c}.
+   # Return the number of instance fields of class `c`.
    #
    public static native get_n_instance_fields(c)
 
-   # Return the flags of the given field in class{c}.
-   # @param c the class
-   # @param field either a field name or number
-   # @return an integer, being the OR of all the flags
-   # @fail if the field is unknown
+   # Return the flags of the given field in class`c`.
+   # :Parameters :
+   # :  `c` - the class
+   # :  `field` - either a field name or number
+   # :Returns :
+   # :  an integer, being the OR of all the flags
+   # :Fails :
+   # :  if the field is unknown
    #
    public static native get_field_flags(c, field)
 
-   # Return the field index number of the given field in class{c}.
-   # @param c the class
-   # @param field either a field name or number
-   # @return an integer, being the index
-   # @fail if the field is unknown
+   # Return the field index number of the given field in class`c`.
+   # :Parameters :
+   # :  `c` - the class
+   # :  `field` - either a field name or number
+   # :Returns :
+   # :  an integer, being the index
+   # :Fails :
+   # :  if the field is unknown
    #
    public static native get_field_index(c, field)
 
-   # Return the field name of the given field in class{c}.
-   # @param c the class
-   # @param field either a field name or number
-   # @return the field name
-   # @fail if the field is unknown
+   # Return the field name of the given field in class`c`.
+   # :Parameters :
+   # :  `c` - the class
+   # :  `field` - either a field name or number
+   # :Returns :
+   # :  the field name
+   # :Fails :
+   # :  if the field is unknown
    #
    public static native get_field_name(c, field)
 
-   # Return the source location of the given field in class{c}.
-   # @param c the class
-   # @param field either a field name or number
-   # @return a {Location} instance
-   # @fail if the field is unknown
+   # Return the source location of the given field in class`c`.
+   # :Parameters :
+   # :  `c` - the class
+   # :  `field` - either a field name or number
+   # :Returns :
+   # :  a `Location` instance
+   # :Fails :
+   # :  if the field is unknown
    #
    public static get_field_location(c, field)
       return Location!get_field_location_impl(c, field)
@@ -203,86 +216,109 @@ final abstract class Class()
    private static native get_field_location_impl(c, field)
 
    # Return the class in which the given field is defined.
-   # @param c the class
-   # @param field either a field name or number
-   # @return the defining class of the field
-   # @fail if the field is unknown
+   # :Parameters :
+   # :  `c` - the class
+   # :  `field` - either a field name or number
+   # :Returns :
+   # :  the defining class of the field
+   # :Fails :
+   # :  if the field is unknown
    #
    public static native get_field_defining_class(c, field)
 
    # Return the object part of a method pointer.
-   # @param mp a methp structure
-   # @return an object
+   # :Parameters :
+   # :  `mp` - a methp structure
+   # :Returns :
+   # :  an object
    #
    private static native get_methp_object(mp)
 
    # Return the procedure part of a method pointer.
-   # @param mp a methp structure
-   # @return a procedure object (which will be an instance method)
+   # :Parameters :
+   # :  `mp` - a methp structure
+   # :Returns :
+   # :  a procedure object (which will be an instance method)
    #
    private static native get_methp_proc(mp)
 
    # Set the component parts of a methp.
-   # @param mp a methp structure
-   # @param obj the object part
-   # @param proc the proc part
-   # @return the methp
+   # :Parameters :
+   # :  `mp` - a methp structure
+   # :  `obj` - the object part
+   # :  `proc` - the proc part
+   # :Returns :
+   # :  the methp
    #
    private static native set_methp(mp, obj, proc)
 
-   # Get the value of the field in {x}, behaving in exactly the same way
+   # Get the value of the field in `x`, behaving in exactly the same way
    # as though the "." operation had been invoked with equivalent values.
    #
-   # @param x either a record, class or object
-   # @param field either a field name or number
-   # @return the field value
-   # @runerr if the field is unknown or access is not permitted
+   # :Parameters :
+   # :  `x` - either a record, class or object
+   # :  `field` - either a field name or number
+   # :Returns :
+   # :  the field value
+   # :Runtime error :
+   # :  if the field is unknown or access is not permitted
    #
    public static native get(x, field)
 
-   # This behaves in exactly the same way as {get} above, but fails
+   # This behaves in exactly the same way as `get` above, but fails
    # rather than stops with a runtime error, if the field is unknown
-   # or access is denied.  On failure, {&why} is set to an appropriate
+   # or access is denied.  On failure, `&why` is set to an appropriate
    # message.
    #
-   # @param x either a record, class or object
-   # @param field either a field name or number
-   # @return the field value
-   # @fail if the field is unknown or access is not permitted
+   # :Parameters :
+   # :  `x` - either a record, class or object
+   # :  `field` - either a field name or number
+   # :Returns :
+   # :  the field value
+   # :Fails :
+   # :  if the field is unknown or access is not permitted
    #
    public static native getf(x, field)
 
-   # This behaves in exactly the same way as {getf} above, but
-   # doesn't set {&why} on failure.
+   # This behaves in exactly the same way as `getf` above, but
+   # doesn't set `&why` on failure.
    #
-   # @param x either a record, class or object
-   # @param field either a field name or number
-   # @return the field value
-   # @fail if the field is unknown or access is not permitted
+   # :Parameters :
+   # :  `x` - either a record, class or object
+   # :  `field` - either a field name or number
+   # :Returns :
+   # :  the field value
+   # :Fails :
+   # :  if the field is unknown or access is not permitted
    #
    public static native getq(x, field)
 
    # This method tries to resolve all the unresolved deferred methods
-   # declared in the class from which is called, from the dll {lib}.
+   # declared in the class from which is called, from the dll `lib`.
    # Methods are matched to functions in the dll using the same scheme
    # for native methods in the main runtime interpreter, namely by
    # using the form "<class>_<method>", with all dots in <class>
    # replaced by underscores.  Any methods not found are simply
    # ignored.  If the library cannot be found, the call fails and sets
-   # {&why} to the message reported by dlerror.
+   # `&why` to the message reported by dlerror.
    # 
-   # @param lib the name of the dll
-   # @fail if the library cannot be found.
+   # :Parameters :
+   # :  `lib` - the name of the dll
+   # :Fails :
+   # :  if the library cannot be found.
    #
    public static native load_library(lib)   
 
    # Lookup a class by name
    # 
-   # @param s a class name
-   # @param ce a coexpression, representing a loaded program, defaults
-   # @ to the main program
-   # @return a class
-   # @fail if the class is unknown
+   # :Parameters :
+   # :  `s` - a class name
+   # :  `ce` - a coexpression, representing a loaded program, defaults
+   #   to the main program
+   # :Returns :
+   # :  a class
+   # :Fails :
+   # :  if the class is unknown
    #
    public static for_name(s, ce)
       local t

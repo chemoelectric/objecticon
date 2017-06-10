@@ -4,12 +4,13 @@ import
    lang(Prog)
 
 #
-# Try to convert {x} to something which can be invoked.  This follows
+# Try to convert `x` to something which can be invoked.  This follows
 # the logic used in converting an expression for invocation (see the
 # function general_call in invoke.r).
 #
-# @param x the thing to convert
-# @param n the optional number of args for an operator
+# :Parameters :
+# :  `x` - the thing to convert
+# :  `n` - the optional number of args for an operator
 #
 procedure callable(x, n)
    if type(x) == ("procedure" | "class" | "constructor" | "methp") then

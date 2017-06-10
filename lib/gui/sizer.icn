@@ -13,7 +13,7 @@ import util
 #
 # This class provides a component which can be dragged across the
 # window, allowing panes within the window to be resized.  A Event.SIZER_RELEASE is
-# generated when the {Sizer} has been dragged and released.  The new position
+# generated when the `Sizer` has been dragged and released.  The new position
 # may then be obtained and the dialog adjusted accordingly.
 #
 class Sizer(Component, HasOrientation)
@@ -35,9 +35,9 @@ class Sizer(Component, HasOrientation)
    end
 
    #
-   # Set the minimum and maximum values for the {Sizer}.  Whether
+   # Set the minimum and maximum values for the `Sizer`.  Whether
    # these are x or y values depends on the orientation of the
-   # {Sizer}.  The range is always reset on each mouse press, so this
+   # `Sizer`.  The range is always reset on each mouse press, so this
    # must be set on each `SIZER_PRESS` event.
    #
    public set_range(lo, hi)
@@ -47,15 +47,15 @@ class Sizer(Component, HasOrientation)
    end
 
    #
-   # Return the current position of the {Sizer}.  This may be invoked to determine
-   # where the {Sizer} has been dragged to after it has generated an event.
+   # Return the current position of the `Sizer`.  This may be invoked to determine
+   # where the `Sizer` has been dragged to after it has generated an event.
    #
    public get_curr_pos()
       return curr_pos
    end
 
    #
-   # Get the size of the move during the current move of the {Sizer}.
+   # Get the size of the move during the current move of the `Sizer`.
    #
    public get_delta()
       return curr_pos - start_pos

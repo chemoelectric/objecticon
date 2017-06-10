@@ -53,16 +53,17 @@ class Opt()
    end
 
    # Create a new Opt instance.
-   # @param s the name of the option; may be a list of several synonymous names 
-   # @param convert the conversion function to apply (eg `integer`,
-   # @       `real`, `string`, etc) to the option value; if omitted then the
-   # @        option takes no value.
-   # @param help   a descriptive help string
-   # @param multi  a flag value, set if multiple uses of the option are allowed.
-   # @param def  a default value if a flag requiring a value doesn't specify one.
-   # @           Note that it is still subject to the `convert` function.
-   # @param err  a string describing the type of parameter (for error output);
-   # @           by default the name of the `convert` procedure.
+   # :Parameters :
+   # :  `s` - the name of the option; may be a list of several synonymous names 
+   # :  `convert` - the conversion function to apply (eg `integer`,
+   #         `real`, `string`, etc) to the option value; if omitted then the
+   #          option takes no value.
+   # :  `help` - a descriptive help string
+   # :  `multi` - a flag value, set if multiple uses of the option are allowed.
+   # :  `def` - a default value if a flag requiring a value doesn't specify one.
+   #             Note that it is still subject to the `convert` function.
+   # :  `err` - a string describing the type of parameter (for error output);
+   #             by default the name of the `convert` procedure.
    #
    public new(s, convert, help, multi, def, err)
       names := if type(s) == "list" then
@@ -82,7 +83,8 @@ end
 # Output help for a list of `Opt`s.  This procedure may be useful if a
 # custom "usage" procedure is provided to `options`.
 #
-# @param opts  a list of `Opt`s
+# :Parameters :
+# :  `opts` - a list of `Opt`s
 procedure options_help(opts)
    local o, t
    every o := !opts do {
@@ -94,8 +96,9 @@ end
 # Output a formatted two column help line; this is also useful if a
 # custom "usage" procedure is provided.
 #
-# @param ns the left hand (option) column
-# @param h the descriptive help string.
+# :Parameters :
+# :  `ns` - the left hand (option) column
+# :  `h` - the descriptive help string.
 procedure help_line(ns, h)
    static cols
    local i

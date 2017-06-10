@@ -11,7 +11,7 @@ package gui
 import util, ipl.pdco, ipl.lists
 
 #
-# This class represents a node in a {Tree} object.
+# This class represents a node in a `Tree` object.
 #
 class TreeNode()
    public 
@@ -25,8 +25,8 @@ class TreeNode()
       parent
 
    #
-   # Traverse all the {TreeNode}s in this subtree, including this
-   # {TreeNode}, in preorder ordering.
+   # Traverse all the `TreeNode`s in this subtree, including this
+   # `TreeNode`, in preorder ordering.
    #
    public traverse_all_preorder()
       coact(self)
@@ -34,8 +34,8 @@ class TreeNode()
    end
 
    #
-   # Traverse all the {TreeNode}s in this subtree, including this
-   # {TreeNode}, in postorder ordering.
+   # Traverse all the `TreeNode`s in this subtree, including this
+   # `TreeNode`, in postorder ordering.
    #
    public traverse_all_postorder()
       every (!children).traverse_all_postorder()
@@ -43,8 +43,8 @@ class TreeNode()
    end
 
    #
-   # Traverse all the open {TreeNode}s in this subtree, including this
-   # {TreeNode}, in preorder ordering.
+   # Traverse all the open `TreeNode`s in this subtree, including this
+   # `TreeNode`, in preorder ordering.
    #
    public traverse_open_preorder()
       coact(self)
@@ -53,8 +53,8 @@ class TreeNode()
    end
 
    #
-   # Traverse all open {TreeNode}s in this subtree, including this
-   # {TreeNode}, in postorder ordering.
+   # Traverse all open `TreeNode`s in this subtree, including this
+   # `TreeNode`, in postorder ordering.
    #
    public traverse_open_postorder()
       if \self.is_expanded_flag then
@@ -63,7 +63,7 @@ class TreeNode()
    end
 
    #
-   # Expand all the {TreeNode}s below this node.  Nodes with no children
+   # Expand all the `TreeNode`s below this node.  Nodes with no children
    # are not expanded unless the force flag is set to 1.
    #
    public expand(force)
@@ -100,13 +100,13 @@ class TreeNode()
       return self.label
    end
 
-   # Set the icons for this node, as three {Paint} instances.  The
-   # first is displayed if the {TreeNode} is open and has children,
-   # the second is displayed if the {TreeNode} is closed and has
+   # Set the icons for this node, as three `Paint` instances.  The
+   # first is displayed if the `TreeNode` is open and has children,
+   # the second is displayed if the `TreeNode` is closed and has
    # children, and the third is displayed if the node has no children.
    #
    # Note that these instances are neither initialized or finalized by
-   # this class (nor by {Tree}) - that must be done externally by the
+   # this class (nor by `Tree`) - that must be done externally by the
    # owner.  (This does mean many nodes can share the same instance
    # however).
    #
@@ -116,11 +116,13 @@ class TreeNode()
    end
 
    #
-   # Add the given {TreeNode} to this {TreeNode}'s list of children.
-   # @param  The {TreeNode} to add.
-   # @param i   The index to add at; if omitted then the new node
-   # @          is appended to the end.
-   # @fail      If i is out of range
+   # Add the given `TreeNode` to this `TreeNode`'s list of children.
+   # :Parameters :
+   # :  `n` - The `TreeNode` to add.
+   # :  `i` - The index to add at; if omitted then the new node
+   #            is appended to the end.
+   # :Fails :
+   # :  If i is out of range
    #
    public add(n, i)
       /i := 0
@@ -137,17 +139,20 @@ class TreeNode()
    end
 
    #
-   # Delete the given {TreeNode} from the children.
-   # @fail      If n is not a child of this instance.
+   # Delete the given `TreeNode` from the children.
+   # :Fails :
+   # :  If n is not a child of this instance.
    #
    public remove(n)
       return remove_index(get_index(n))
    end
 
    #
-   # Remove the {TreeNode} at the given index from the list of children.
-   # @param i    The index
-   # @fail      If i is out of range
+   # Remove the `TreeNode` at the given index from the list of children.
+   # :Parameters :
+   # :  `i` - The index
+   # :Fails :
+   # :  If i is out of range
    #
    public remove_index(i)
       local c
@@ -165,21 +170,25 @@ class TreeNode()
    end
 
    #
-   # Move the {TreeNode} to the given index position.
-   # @param c   The {TreeNode} to move.
-   # @param j   The new position.
-   # @fail      If c is not a child of this instance, 
-   # @           or j is out of range.
+   # Move the `TreeNode` to the given index position.
+   # :Parameters :
+   # :  `c` - The `TreeNode` to move.
+   # :  `j` - The new position.
+   # :Fails :
+   # :  If c is not a child of this instance, 
+   #             or j is out of range.
    #
    public reposition(c, j)
       return reposition_index(get_index(c), j)
    end
 
    #
-   # Move the {TreeNode} at position {i} to {j}.
-   # @param i   The old position.
-   # @param j   The new position.
-   # @fail      If either index is out of range.
+   # Move the `TreeNode` at position `i` to `j`.
+   # :Parameters :
+   # :  `i` - The old position.
+   # :  `j` - The new position.
+   # :Fails :
+   # :  If either index is out of range.
    #
    public reposition_index(i, j)
       lmove(children, i, j) | fail
@@ -188,9 +197,11 @@ class TreeNode()
 
    # Remove the children in the range `i:j`, returning the
    # removed children in a list.
-   # @param i   The start slice index, default 1
-   # @param j   The end slice index, default 0
-   # @fail      If the range is invalid.
+   # :Parameters :
+   # :  `i` - The start slice index, default 1
+   # :  `j` - The end slice index, default 0
+   # :Fails :
+   # :  If the range is invalid.
    #
    #
    public remove_list(i, j)
@@ -202,9 +213,11 @@ class TreeNode()
 
    # Add all the `TreeNode`s contained in list `l` at index `i`.
    #
-   # @param l    The list to add
-   # @param i    The index
-   # @fail      If i is out of range
+   # :Parameters :
+   # :  `l` - The list to add
+   # :  `i` - The index
+   # :Fails :
+   # :  If i is out of range
    #
    public add_list(l, i)
       linsert(children, l, i) | fail
@@ -215,10 +228,12 @@ class TreeNode()
    # Move all the children of `TreeNode` `other`, to this
    # `TreeNode`, adding them at index `i`.  `other` will be left empty.
    #
-   # @param other The source {TreeNode}.
-   # @param i     The index to add at; if omitted then the new components
-   # @            are appended to the end.
-   # @fail        If i is out of range
+   # :Parameters :
+   # :  `other` - The source `TreeNode`.
+   # :  `i` - The index to add at; if omitted then the new components
+   #              are appended to the end.
+   # :Fails :
+   # :  If i is out of range
    #
    public move_all(other, i)
       return add_list(other.remove_list(), i)
@@ -239,7 +254,7 @@ class TreeNode()
    end
 
    #
-   # This configures the {TreeNode} so that it is always treated as though it has children
+   # This configures the `TreeNode` so that it is always treated as though it has children
    # for display purposes, event though it may in fact have no children.
    #
    public set_always_expandable(s)
@@ -257,7 +272,7 @@ class TreeNode()
    end
       
    #
-   # Toggle the opened status of the {TreeNode}. Note that this will not update the GUI, to do that
+   # Toggle the opened status of the `TreeNode`. Note that this will not update the GUI, to do that
    # call tree.tree_structure_changed() on the tree in which the node resides.
    #
    public toggle_expanded()

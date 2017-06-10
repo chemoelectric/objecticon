@@ -92,7 +92,7 @@ class Parser(Connectable)
    end
 
    #
-   # Parse {s}, as an expression (actually, a compound expression).
+   # Parse `s`, as an expression (actually, a compound expression).
    #
    public parse_expression(s, encoding)
       s := "procedure main() ; " || s || " end"

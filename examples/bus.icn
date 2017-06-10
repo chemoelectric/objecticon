@@ -2,7 +2,7 @@ $encoding UTF-8
 $load BUS_LOGO "rpp.BUS_LOGO.png"
 
 import gui, graphics(Window,Mouse), io, ipl.options, lang, util, 
-   ipl.graphics, ipl.sort, ipl.sets, ipl.strings, ipl.tables
+   net, ipl.graphics, ipl.sort, ipl.sets, ipl.strings, ipl.tables
 
 global opts
 
@@ -1925,6 +1925,20 @@ class BusView(Dialog)
    end
 end
 
+procedure usage(opts)
+   local u
+   write("Usage: bus [OPTIONS...]\n_
+          Interactive London bus map")
+   options_help(opts)
+   u := URL("http://objecticon.sourceforge.net/Bus.html")
+   writes("\nFor more details, visit ")
+   if Files.is_flowterm_tty(FileStream.stdout) then
+      write(Files.begin_link(u), u.str(), Files.end_link())
+   else
+      write(u.str())
+   exit(0)
+end
+
 procedure main(a)
    local d
    &maxlevel := 50000
@@ -1937,7 +1951,8 @@ procedure main(a)
                        Opt("j",, "Don't join same-named stops"),
                        Opt("l",, "Force load and save from raw data"),
                        Opt("L",, "Force load from raw data, but don't save"),
-                       Opt("d",string, "Specify data directory")])
+                       Opt("d",string, "Specify data directory")],
+                       usage)
    d := BusView()
    d.show_modal()
 end

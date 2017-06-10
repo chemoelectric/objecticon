@@ -8,7 +8,8 @@ abstract class SelectionList()
 
    #
    # Set the list selection items to the list x.
-   # @param x  The list of items
+   # :Parameters :
+   # :  `x` - The list of items
    #
    public set_selection_list(x)
       self.selection_list := x
@@ -20,7 +21,8 @@ abstract class SelectionList()
 
    #
    # Set the selected item.
-   # @param x   An index into the list of selectable items.
+   # :Parameters :
+   # :  `x` - An index into the list of selectable items.
    #
    public set_selection(x, ev)
       self.selection := x
@@ -31,7 +33,7 @@ abstract class SelectionList()
 
    #
    # Keep the selection within the bounds of the contents.
-   # @p
+   #
    public constrain_selection()
       if *self.selection_list = 0 then
          self.selection := &null
@@ -73,7 +75,8 @@ abstract class SelectionList()
    # Set the selection list, and constrain the selection, but do not
    # synchronize by calling `apply_selection`.
    #
-   # @param x The list of items
+   # :Parameters :
+   # :  `x` - The list of items
    #
    public set_selection_list_only(x)
       self.selection_list := x
@@ -85,7 +88,8 @@ abstract class SelectionList()
    # Set the selected item, and constrain that selection, but do not
    # synchronize by calling `apply_selection`.
    #
-   # @param x   An index into the list of selectable items.
+   # :Parameters :
+   # :  `x` - An index into the list of selectable items.
    #
    public set_selection_only(x)
       self.selection := x

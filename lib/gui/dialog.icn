@@ -256,8 +256,8 @@ class Dialog(Component)
    #
    # Returns the number of mouse clicks that have occurred
    # consecutively, with each click in the sequence being less
-   # than {DOUBLE_CLICK_DELAY} milliseconds apart.  That variable is by default 500
-   # milliseconds, but it may be altered by changing {DOUBLE_CLICK_DELAY}.
+   # than `DOUBLE_CLICK_DELAY` milliseconds apart.  That variable is by default 500
+   # milliseconds, but it may be altered by changing `DOUBLE_CLICK_DELAY`.
    #
    public get_click_count()
       return \popup_manager.click_count
@@ -292,9 +292,10 @@ class Dialog(Component)
    # closed, although the actual dialogs to block is configurable.
    # This method doesn't return until the dialog is closed.
    #
-   # @param d   The parent dialog.
-   # @param l   A list of other dialogs to block; defaults to all
-   # @          currently unblocked dialogs.
+   # :Parameters :
+   # :  `d` - The parent dialog.
+   # :  `l` - A list of other dialogs to block; defaults to all
+   #            currently unblocked dialogs.
    #
    public show_modal(d, l)
       /l := Dispatcher.list_unblocked()
@@ -306,11 +307,12 @@ class Dialog(Component)
    end
 
    #
-   # Called from a {Task}, this method calls {show}, and then
+   # Called from a `Task`, this method calls `show`, and then
    # waits until the dialog is closed before returning.
    #
-   # @param task The current task
-   # @param d   This optional parameter specifies the parent dialog.
+   # :Parameters :
+   # :  `task` - The current task
+   # :  `d` - This optional parameter specifies the parent dialog.
    #
    public show_and_wait(task, d)
       connect_n(create task.notify(), Event.DIALOG_DISPOSED)
@@ -534,7 +536,7 @@ class Dialog(Component)
    #
    # This empty method may be overridden to add components to the
    # dialog.  Alternatively, components may be added in the
-   # dialog's {initially} method.
+   # dialog's `initially` method.
    #
    public component_setup()
    end
@@ -549,8 +551,9 @@ class Dialog(Component)
    #
    # Opens the dialog and returns immediately.
    #
-   # @param d   This optional parameter specifies the parent dialog.
-   # @ When a parent dialog is closed, its child dialogs are automatically closed.
+   # :Parameters :
+   # :  `d` - This optional parameter specifies the parent dialog.
+   #   When a parent dialog is closed, its child dialogs are automatically closed.
    #
    public show(d)
       /win | runerr("show() called on open Dialog", self)
@@ -854,8 +857,9 @@ class Dialog(Component)
 
    #
    # Artificially "hold" a component down.
-   # @param c The component
-   # @param ec The simulated mouse event code
+   # :Parameters :
+   # :  `c` - The component
+   # :  `ec` - The simulated mouse event code
    #
    public hold(c, ec)
       if popup_manager ~=== self then
@@ -869,8 +873,9 @@ class Dialog(Component)
 
    #
    # Artificially "release" a component which is held.
-   # @param c  The component
-   # @param ec The simulated mouse event code
+   # :Parameters :
+   # :  `c` - The component
+   # :  `ec` - The simulated mouse event code
    #
    public release(c, ec)
       if popup_manager ~=== self then
@@ -1234,7 +1239,8 @@ class Dialog(Component)
    # changes whether a drop is available independent of an drag event
    # (eg on a scrolling ticker).
    #
-   # @param e    The event concerned, if any.
+   # :Parameters :
+   # :  `e` - The event concerned, if any.
    #
    public update_drop(e)
       local o
@@ -1377,7 +1383,8 @@ class Dialog(Component)
    # handler method, but that action has to take place after the current
    # event has completed processing.
    #
-   # @param coex    The co-expression to activate
+   # :Parameters :
+   # :  `coex` - The co-expression to activate
    #
    public invoke_later(coex)
       self.win.pending(Window.INVOKE_LATER, coex)
@@ -1521,8 +1528,8 @@ class Dialog(Component)
 end
 
 #
-# This is just a {Dialog} which doesn't have its set of window attribs
-# initialized to {Dialog.ROOT_WATTRIBS}; rather it starts with an
+# This is just a `Dialog` which doesn't have its set of window attribs
+# initialized to `Dialog.ROOT_WATTRIBS`; rather it starts with an
 # empty set of attribs.
 #
 class PureDialog(Dialog)
@@ -1681,10 +1688,11 @@ end
 # This is a helpful component which has zero size, but reacts to accelerator keys
 # by firing an action event.
 #
-# @example
-# @  # dispose on alt-x
-# @  add(Accelerator().set_accel("x").connect(dispose, Event.ACTION))
-#
+# Example :-
+# ~
+#    # dispose on alt-x
+#    add(Accelerator().set_accel("x").connect(dispose, Event.ACTION))
+# ~
 class Accelerator(Component)
    public handle_accel(e)
       fire(Event.ACTION, e)

@@ -16,14 +16,16 @@ class RFC1522()
    # Convert the given string using rfc1522 encoding, ie to one potentially
    # including "encoded words".
    #
-   # @param s the source string, either string or ucs
-   # @param alphabet the cset of characters which don't need to be encoded,
-   #        by default {&ascii}, minus {'=?'} if {s} contains {"=?"}, so we
+   # :Parameters :
+   # :  `s` - the source string, either string or ucs
+   # :  `alphabet` - the cset of characters which don't need to be encoded,
+   #        by default `&ascii`, minus `'=?'` if `s` contains `"=?"`, so we
    #        don't pass through things that look like encoded words but aren't.
-   # @param delimeter the cset of word delimeters, by default {' \t'}.
-   # @param charset the charset to use, default is utf-8 for a ucs string
-   # @      and iso-8859-1 for a string.
-   # @param encoding either "b" (the default) or "q"
+   # :Parameters :
+   # :  `delimeter` - the cset of word delimeters, by default `' \t'`.
+   # :  `charset` - the charset to use, default is utf-8 for a ucs string
+   #        and iso-8859-1 for a string.
+   # :  `encoding` - either "b" (the default) or "q"
    #
    public static encode(s, alphabet, delimeter, charset, encoding)
       local t, pre, res, i, j, k, na, adj
@@ -85,10 +87,11 @@ class RFC1522()
    end
 
    #
-   # This does the reverse of {encode}.  Any encoded words are expanded and
+   # This does the reverse of `encode`.  Any encoded words are expanded and
    # the result is returned.  The result may be a ucs string if any encoded word
    # had utf-8 encoding; otherwise the result is a normal string.
-   # @param s the source string.
+   # :Parameters :
+   # :  `s` - the source string.
    #
    public static decode(s)
       local charset, encoding, data, res, t, adj

@@ -13,7 +13,7 @@ import util
 #
 # This class encapsulates a check box in a menu.
 #
-# Several {CheckBoxMenuItem}s may be added to a {CheckBoxGroup}
+# Several `CheckBoxMenuItem`s may be added to a `CheckBoxGroup`
 # structure to give "radio buttons" within menus.
 #
 class CheckBoxMenuItem(Toggle,TextMenuItem)
@@ -25,7 +25,7 @@ class CheckBoxMenuItem(Toggle,TextMenuItem)
    #
    # Set the up and down images to x and y respectively.  The
    # default is boxes, unless the component is added to a
-   # {CheckBoxGroup} in which case the default is diamonds.
+   # `CheckBoxGroup` in which case the default is diamonds.
    #
    public set_box_paint(x, y)
       self.unchecked_paint := x

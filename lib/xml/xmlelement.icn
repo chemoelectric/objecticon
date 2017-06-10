@@ -47,9 +47,10 @@ class XmlElement(Element)
 
    #
    # Set the global (namespace-aware) name.  The global
-   # name should be a {GlobalName} instance.
+   # name should be a `GlobalName` instance.
    #
-   # @param s a {GlobalName} instance representing the global name.
+   # :Parameters :
+   # :  `s` - a `GlobalName` instance representing the global name.
    #
    public set_global_name(s)
       global_name := s
@@ -84,9 +85,10 @@ class XmlElement(Element)
    end
 
    #
-   # Get the global name, which will be a {GlobalName} instance.
+   # Get the global name, which will be a `GlobalName` instance.
    #
-   # @return a {GlobalName} instance representing the global name.
+   # :Returns :
+   # :  a `GlobalName` instance representing the global name.
    #
    public get_global_name()
       return global_name
@@ -94,7 +96,7 @@ class XmlElement(Element)
 
    #
    # Return the global name attributes map for this tag.  This will
-   # be a table of {GlobalName} instances to values.
+   # be a table of `GlobalName` instances to values.
    #
    public get_attributes_global_name()
       return attributes_global_name
@@ -102,9 +104,10 @@ class XmlElement(Element)
 
    #
    # Return the attribute for this tag, or fail if none found, based on
-   # the given {GlobalName}.
+   # the given `GlobalName`.
    #
-   # @param gn the {GlobalName} instance representing the global name
+   # :Parameters :
+   # :  `gn` - the `GlobalName` instance representing the global name
    #
    public get_attribute_global_name(gn)
       local e
@@ -119,10 +122,11 @@ class XmlElement(Element)
    end
 
    #
-   # Search for all the {Element}s with the given tag name, recursively
+   # Search for all the `Element`s with the given tag name, recursively
    # traversing the entire tree based at this node.
    #
-   # @param s a {GlobalName}, being the name of the sub-elements
+   # :Parameters :
+   # :  `s` - a `GlobalName`, being the name of the sub-elements
    #
    public search_tree_global_name(s)
       local n
@@ -135,7 +139,8 @@ class XmlElement(Element)
    # Generate the elements under this element, with the given name.  If name
    # is omitted, generate all the elements.
    #
-   # @param s a {GlobalName}, being the name of the sub-elements
+   # :Parameters :
+   # :  `s` - a `GlobalName`, being the name of the sub-elements
    #
    public search_children_global_name(s)
       local n

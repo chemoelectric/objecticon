@@ -37,35 +37,38 @@ end
 # (being the amount added/subtracted when the top/bottom
 # button is pressed).  The value will then range from zero to
 # (total_size - page_size) inclusive.  An initial value must
-# be set with the {set_value()} method.
-# @example
-# @ vb := ScrollBar()
-# @ vb.set_pos("85%", "25%")      
-# @ vb.set_size(20, "40%")
-# @ vb.set_total_size(130)
-# @ vb.set_page_size(30)
-# @ vb.set_increment_size(1)
-# @ vb.set_value(0)
-# @ self.add(vb)
+# be set with the `set_value()` method.  For example :-
+# ~
+#   vb := ScrollBar()
+#   vb.set_pos("85%", "25%")      
+#   vb.set_size(20, "40%")
+#   vb.set_total_size(130)
+#   vb.set_page_size(30)
+#   vb.set_increment_size(1)
+#   vb.set_value(0)
+#   self.add(vb)
+# ~
 #
 # Alternatively, a scroll bar can be used as a slider which
 # ranges over a given range of values.  In this case, the
-# range is set with {set_range()}.  It is still necessary to set
+# range is set with `set_range()`.  It is still necessary to set
 # the increment size and the initial value, as above, but
 # page_size and total_size should not be set.
 #
 # Real numbers as opposed to integers can be used for the
 # range settings if desired.
-# @example
-# @ vb := ScrollBar()
-# @ vb.set_pos("85%", "25%")      
-# @ vb.set_size(20, "40%")
-# @ vb.set_range(2, 25)
-# @ vb.set_value(10)
-# @ vb.set_increment_size(1)
-# @ self.add(vb)
 #
-# A Event.VALUE_CHANGED, which is fired whenever the value changes.
+# For example :-
+# ~
+#   vb := ScrollBar()
+#   vb.set_pos("85%", "25%")      
+#   vb.set_size(20, "40%")
+#   vb.set_range(2, 25)
+#   vb.set_value(10)
+#   vb.set_increment_size(1)
+#   self.add(vb)
+# ~
+# An `Event.VALUE_CHANGED` event is fired whenever the value changes.
 #
 class ScrollBar(Component, HasOrientation)
    public 
@@ -109,7 +112,8 @@ class ScrollBar(Component, HasOrientation)
 
    #
    # Set the total size which the scroll bar area represents.
-   # @param x   The total size
+   # :Parameters :
+   # :  `x` - The total size
    #
    public set_total_size(x)
       # See notes as to why this is a good idea.
@@ -129,7 +133,8 @@ class ScrollBar(Component, HasOrientation)
 
    #
    # Set the size which the bar in the scroll bar area represents.
-   # @param x   The size.
+   # :Parameters :
+   # :  `x` - The size.
    #
    public set_page_size(x)
       if page_size ~=== x then {
@@ -150,7 +155,8 @@ class ScrollBar(Component, HasOrientation)
 
    #
    # Get the value.
-   # @return The value
+   # :Returns :
+   # :  The value
    #
    public get_value()
       return self.value
@@ -159,7 +165,8 @@ class ScrollBar(Component, HasOrientation)
    #
    # Set the value representing the top of the bar in the scroll
    # bar.  The value is forced into range if it is not in range already.
-   # @param x   The value.
+   # :Parameters :
+   # :  `x` - The value.
    #
    public set_value(x)
       if value ~=== x then {
@@ -175,7 +182,8 @@ class ScrollBar(Component, HasOrientation)
    #
    # Set the amount to increase the value by when one of the
    # buttons is pressed.
-   # @param x   The increment size.
+   # :Parameters :
+   # :  `x` - The increment size.
    #
    public set_increment_size(x)
       self.increment_size := x
@@ -185,8 +193,9 @@ class ScrollBar(Component, HasOrientation)
    #
    # Set the range of the scroll bar.  The values may
    # be integer or real.
-   # @param lo  The lower bound
-   # @param hi  The upper bound
+   # :Parameters :
+   # :  `lo` - The lower bound
+   # :  `hi` - The upper bound
    #
    public set_range(lo, hi)
       if self.lo ~=== lo | self.hi ~=== hi then {
@@ -219,7 +228,7 @@ class ScrollBar(Component, HasOrientation)
 
    #
    # Set the wheel factor, being the number of increments to
-   # move on a wheel press; by default is {DEFAULT_WHEEL_FACTOR}
+   # move on a wheel press; by default is `DEFAULT_WHEEL_FACTOR`
    #
    public set_wheel_factor(n)
       self.wheel_factor := n

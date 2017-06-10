@@ -62,10 +62,10 @@ abstract class ABorder(Insets,Align)
    end
 
    #
-   # Take a {Rect}, giving the bordered size, and a {Size}, giving an
+   # Take a `Rect`, giving the bordered size, and a `Size`, giving an
    # object within it, and "float" it within the area in accordance
    # with the x and y alignment, but limiting the result to the
-   # {Rect}.  A {Rect} is returned.
+   # `Rect`.  A `Rect` is returned.
    #
    public float(r, s)
       return get_inner_rect(r).float(s, self)
