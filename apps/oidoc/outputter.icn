@@ -205,13 +205,14 @@ abstract class Outputter()
    end
 
    private get_comment_list(sym)
-      local comment, s, l
+      local comment, l
       comment := []
       get_comment_str(sym) ? {
-         while s := tab(upto('#')) do {
+         while tab(upto('#')) do {
             move(1)
             l := tab(upto('\n\r') | 0)
-            put(comment, l)
+            # Omit pre-processor generated comments, (in the form #line ...)
+            match("line ", l) | put(comment, l)
          }
       }
       #
