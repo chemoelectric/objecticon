@@ -641,8 +641,9 @@ end
 
 # Generate words formed of adjacent characters in `wc`
 #
-# @param s the subject string
-# @param wc cset of word characters
+# :Parameters :
+# :  `s` - the subject string
+# :  `wc` - cset of word characters
 #
 procedure words_in(s, wc)
    s ? while tab(upto(wc)) do
@@ -651,8 +652,9 @@ end
 
 # Generate "words" from string `s` separated by chars in `sep`.
 #
-# @param s the subject string
-# @param sep cset of the separator chars, default ' \t\r\n\v\f'
+# :Parameters :
+# :  `s` - the subject string
+# :  `sep` - cset of the separator chars, default ' \t\r\n\v\f'
 #
 procedure words(s, sep)
    sep := ~\sep | ~' \t\r\n\v\f'
@@ -668,8 +670,9 @@ end
 #
 # Separate a string `s` into parts separated by (single) chars in `sep`.
 #
-# @param s the string to convert
-# @param sep cset of the separator chars, default ','
+# :Parameters :
+# :  `s` - the string to convert
+# :  `sep` - cset of the separator chars, default ','
 #
 procedure separate(s, sep)
    local t
@@ -686,7 +689,8 @@ end
 #
 # Separate a string into parts separated by end-of-line characters.
 #
-# @param s the string to convert
+# :Parameters :
+# :  `s` - the string to convert
 #
 procedure separate_lines(s)
    local t

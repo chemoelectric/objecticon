@@ -21,7 +21,7 @@ import
 class Component(Rect,Align,Connectable)
    public 
       #
-      # x position as specified by {set_pos()}, eg "50%"
+      # x position as specified by `set_pos()`, eg "50%"
       #                        
       x_spec,
       #
@@ -46,7 +46,7 @@ class Component(Rect,Align,Connectable)
       #
       tab_ord,
       #
-      # The {Dialog} class instance of which this {Component} is a part.
+      # The `Dialog` class instance of which this `Component` is a part.
       #
       parent_dialog,
       #
@@ -55,29 +55,29 @@ class Component(Rect,Align,Connectable)
       wattribs,
       effective_wattribs,
       #
-      # Flags indicating whether the {Component} currently is shaded;
-      # {&null} means it isn't.
+      # Flags indicating whether the `Component` currently is shaded;
+      # `&null` means it isn't.
       is_shaded_flag, 
       effective_is_shaded_flag,
       #
-      # Flag to indicate that the {Component} will take care of drawing
+      # Flag to indicate that the `Component` will take care of drawing
       # its own shaded representation.  By default off, meaning this
       # class will shade the component.
       #
       draw_own_shading_flag,
       #
-      # Flags indicating whether the {Component} currently is hidden;
-      # {&null} means it isn't.
+      # Flags indicating whether the `Component` currently is hidden;
+      # `&null` means it isn't.
       is_hidden_flag,
       effective_is_hidden_flag,
       #
       # A cloned window created by combining a buffer window with
-      # the {Component}'s attributes.  The component draws itself
+      # the `Component`'s attributes.  The component draws itself
       # into this window.
       cbwin,
       #
-      # Flag indicating whether the {Component} accepts keyboard focus
-      # by way of the tab key being pressed;  {&null} means it doesn't.
+      # Flag indicating whether the `Component` accepts keyboard focus
+      # by way of the tab key being pressed;  `&null` means it doesn't.
       accepts_focus_flag,
       #
       # Tooltip config
@@ -86,7 +86,7 @@ class Component(Rect,Align,Connectable)
       tooltip_start_delay,
       tooltip_end_delay,
       #
-      # Reference to enclosing {Component} object.
+      # Reference to enclosing `Component` object.
       #
       parent,
       #
@@ -140,7 +140,7 @@ class Component(Rect,Align,Connectable)
       border
 
    #
-   # Set the tooltip.  This object is passed to {create_tooltip_component} when a
+   # Set the tooltip.  This object is passed to `create_tooltip_component` when a
    # tooltip is to be created.
    #
    public set_tooltip(x)
@@ -187,9 +187,9 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Create a tooltip Component.  By default delegates this to the {Style} object,
-   # to create a standard {Label}.  The content is then set from the tip, which
-   # can be a string or a {Paint} instance.
+   # Create a tooltip Component.  By default delegates this to the `Style` object,
+   # to create a standard `Label`.  The content is then set from the tip, which
+   # can be a string or a `Paint` instance.
    #
    public create_tooltip_component(tip)
       local c, s
@@ -234,7 +234,7 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Return the clip rectangle of {cbwin} as a {Rect}.  Fails if there
+   # Return the clip rectangle of `cbwin` as a `Rect`.  Fails if there
    # is no clip.
    #
    public get_cbwin_clip()
@@ -345,7 +345,7 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Flag to indicate that the {Component} will take care of drawing
+   # Flag to indicate that the `Component` will take care of drawing
    # its own shaded representation.  By default off, meaning this
    # class will shade the component.
    #
@@ -394,7 +394,8 @@ class Component(Rect,Align,Connectable)
    # the focus is not given to the component, returns `self`
    # otherwise.
    #
-   # @param e the causing event, if any.
+   # :Parameters :
+   # :  `e` - the causing event, if any.
    #
    public grab_focus(e)
       return (\parent_dialog).set_focus(find_focus(e), e) & self
@@ -606,7 +607,8 @@ class Component(Rect,Align,Connectable)
 
    #
    # Succeed if this component is held with the given button press.
-   # @param e The mouse press event code - Mouse.LEFT_PRESS, Mouse.RIGHT_PRESS or Mouse.MIDDLE_PRESS
+   # :Parameters :
+   # :  `e` - The mouse press event code - Mouse.LEFT_PRESS, Mouse.RIGHT_PRESS or Mouse.MIDDLE_PRESS
    #
    public is_held(e)
       return keyof(parent_dialog.get_held(e), self)
@@ -614,7 +616,8 @@ class Component(Rect,Align,Connectable)
 
    #
    # Method called when the component gets the keyboard focus; may be extended.
-   # @param e the event causing the change of focus, if any
+   # :Parameters :
+   # :  `e` - the event causing the change of focus, if any
    #
    public got_focus(e)
       focus_changed(e)
@@ -644,7 +647,8 @@ class Component(Rect,Align,Connectable)
 
    #
    # Method called when the component loses the keyboard focus; may be extended.
-   # @param e the event causing the change of focus, if any
+   # :Parameters :
+   # :  `e` - the event causing the change of focus, if any
    #
    public lost_focus(e)
       focus_changed(e)
@@ -654,7 +658,8 @@ class Component(Rect,Align,Connectable)
    #
    # This is invoked when the focus is got/lost; by default it just
    # calls invalidate.
-   # @param e the event causing the change of focus, if any
+   # :Parameters :
+   # :  `e` - the event causing the change of focus, if any
    #
    public focus_changed(e)
       invalidate()
@@ -669,8 +674,9 @@ class Component(Rect,Align,Connectable)
    #   c.set_pos(100, "25%")
    #   c.set_pos("50%-20", "25%+100")
    # ~
-   # @param x_spec   The x specification.
-   # @param y_spec   The y specification.
+   # :Parameters :
+   # :  `x_spec` - The x specification.
+   # :  `y_spec` - The y specification.
    #
    public set_pos(x_spec, y_spec)
       self.x_spec := x_spec
@@ -680,7 +686,8 @@ class Component(Rect,Align,Connectable)
 
    #
    # Set the x specification
-   # @param x_spec   The x specification.
+   # :Parameters :
+   # :  `x_spec` - The x specification.
    #
    public set_x(x_spec)
       self.x_spec := x_spec
@@ -689,7 +696,8 @@ class Component(Rect,Align,Connectable)
 
    #
    # Set the y specification
-   # @param y_spec   The y specification.
+   # :Parameters :
+   # :  `y_spec` - The y specification.
    #
    public set_y(y_spec)
       self.y_spec := y_spec
@@ -698,7 +706,8 @@ class Component(Rect,Align,Connectable)
 
    #
    # Set the z value.
-   # @param z   The z value.
+   # :Parameters :
+   # :  `z` - The z value.
    #
    public set_z(z)
       self.z := z
@@ -707,7 +716,7 @@ class Component(Rect,Align,Connectable)
 
    #
    # Set the size of the component.  The parameters are in the
-   # same format as for {set_pos()}
+   # same format as for `set_pos()`
    # above.  Some components will
    # set sensible default sizes, but for others the size must be
    # set explicitly.
@@ -720,7 +729,8 @@ class Component(Rect,Align,Connectable)
 
    #
    # Set the width specification
-   # @param w_spec   The width specification.
+   # :Parameters :
+   # :  `w_spec` - The width specification.
    #
    public set_width(w_spec)
       self.w_spec := w_spec
@@ -729,7 +739,8 @@ class Component(Rect,Align,Connectable)
 
    #
    # Set the height specification
-   # @param h_spec   The height specification.
+   # :Parameters :
+   # :  `h_spec` - The height specification.
    #
    public set_height(h_spec)
       self.h_spec := h_spec
@@ -742,8 +753,9 @@ class Component(Rect,Align,Connectable)
    # `Align.B`, for top centre and bottom alignment.  The default
    # alignment is `Align.L`, `Align.T`.
    #
-   # @param x_align   The x alignment
-   # @param y_align   The y alignment
+   # :Parameters :
+   # :  `x_align` - The x alignment
+   # :  `y_align` - The y alignment
    #
    public set_align(x_align, y_align)
       self.x_align := x_align
@@ -753,7 +765,8 @@ class Component(Rect,Align,Connectable)
 
    #
    # Set the x alignment
-   # @param x_align   The x alignment
+   # :Parameters :
+   # :  `x_align` - The x alignment
    #
    public set_x_align(x_align)
       self.x_align := x_align
@@ -762,7 +775,8 @@ class Component(Rect,Align,Connectable)
 
    #
    # Set the y alignment
-   # @param y_align   The y alignment
+   # :Parameters :
+   # :  `y_align` - The y alignment
    #
    public set_y_align(y_align)
       self.y_align := y_align
@@ -771,8 +785,9 @@ class Component(Rect,Align,Connectable)
 
    #
    # Set the position and size of the component.
-   # @see set_pos
-   # @see set_size
+   # :See also :
+   # :  set_pos
+   # :  set_size
    #
    public set_geometry(x_spec, y_spec, w_spec, h_spec)
       self.x_spec := x_spec
@@ -873,7 +888,8 @@ class Component(Rect,Align,Connectable)
    #
    # Sets the owning Dialog of the component.
    #
-   # @param c   The parent dialog.
+   # :Parameters :
+   # :  `c` - The parent dialog.
    #
    public set_parent_dialog(c)
       self.parent_dialog := c
@@ -897,8 +913,9 @@ class Component(Rect,Align,Connectable)
    #
    #
    # Parse a position specification into an absolute value.
-   # @param total   The total value
-   # @param s  The size specifier 
+   # :Parameters :
+   # :  `total` - The total value
+   # :  `s` - The size specifier 
    #
    public static parse_pos(total, s)
       local pct, off
@@ -988,7 +1005,7 @@ class Component(Rect,Align,Connectable)
 
    #
    # Compute the absolute positions and sizes from the
-   # specifications given by {set_pos()} and {set_size()}.
+   # specifications given by `set_pos()` and `set_size()`.
    #
    public compute_absolutes()
       local wspec, hspec
@@ -1107,8 +1124,8 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Invalidate the {Component}'s rectangle on the screen, optionally
-   # intersected with {r}.
+   # Invalidate the `Component`'s rectangle on the screen, optionally
+   # intersected with `r`.
    #
    public invalidate(r)
       if self.is_live() & self.is_unhidden() then
@@ -1163,12 +1180,14 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Add the {Component} to the list of children.
+   # Add the `Component` to the list of children.
    #
-   # @param c   The {Component} to add.
-   # @param i   The index to add at; if omitted then the new component
-   # @          is appended to the end.
-   # @fail      If i is out of range
+   # :Parameters :
+   # :  `c` - The `Component` to add.
+   # :  `i` - The index to add at; if omitted then the new component
+   #            is appended to the end.
+   # :Fails :
+   # :  If i is out of range
    #
    public add(c, i)
       /i := 0
@@ -1190,18 +1209,22 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Remove the {Component} from the list of children.
-   # @param c   The {Component} to remove.
-   # @fail      If c is not a child of this instance.
+   # Remove the `Component` from the list of children.
+   # :Parameters :
+   # :  `c` - The `Component` to remove.
+   # :Fails :
+   # :  If c is not a child of this instance.
    #
    public remove(c)
       return remove_index(get_index(c))
    end
 
    #
-   # Remove the {Component} at the given index from the list of children.
-   # @param i    The index
-   # @fail      If i is out of range
+   # Remove the `Component` at the given index from the list of children.
+   # :Parameters :
+   # :  `i` - The index
+   # :Fails :
+   # :  If i is out of range
    #
    public remove_index(i)
       local c
@@ -1224,21 +1247,25 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Move the {Component} to the given index position.
-   # @param c   The {Component} to move.
-   # @param j   The new position.
-   # @fail      If c is not a child of this instance, 
-   # @           or j is out of range.
+   # Move the `Component` to the given index position.
+   # :Parameters :
+   # :  `c` - The `Component` to move.
+   # :  `j` - The new position.
+   # :Fails :
+   # :  If c is not a child of this instance, 
+   #             or j is out of range.
    #
    public reposition(c, j)
       return reposition_index(get_index(c), j)
    end
 
    #
-   # Move the {Component} at position {i} to {j}.
-   # @param i   The old position.
-   # @param j   The new position.
-   # @fail      If either index is out of range.
+   # Move the `Component` at position `i` to `j`.
+   # :Parameters :
+   # :  `i` - The old position.
+   # :  `j` - The new position.
+   # :Fails :
+   # :  If either index is out of range.
    #
    public reposition_index(i, j)
       lmove(children, i, j) | fail
@@ -1250,8 +1277,8 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Succeed iff the component has been initialized with {initially()}, but
-   # not yet cleaned up with {finally()}.
+   # Succeed iff the component has been initialized with `initially()`, but
+   # not yet cleaned up with `finally()`.
    #
    public is_initialized()
       return \self.parent_dialog
@@ -1259,9 +1286,11 @@ class Component(Rect,Align,Connectable)
 
    # Remove the children in the range `i:j`, returning the
    # removed children in a list.
-   # @param i   The start slice index, default 1
-   # @param j   The end slice index, default 0
-   # @fail      If the range is invalid.
+   # :Parameters :
+   # :  `i` - The start slice index, default 1
+   # :  `j` - The end slice index, default 0
+   # :Fails :
+   # :  If the range is invalid.
    #
    #
    public remove_list(i, j)
@@ -1278,9 +1307,11 @@ class Component(Rect,Align,Connectable)
 
    # Add all the `Component`s contained in list `l` at index `i`.
    #
-   # @param l    The list to add
-   # @param i    The index
-   # @fail      If i is out of range
+   # :Parameters :
+   # :  `l` - The list to add
+   # :  `i` - The index
+   # :Fails :
+   # :  If i is out of range
    #
    public add_list(l, i)
       linsert(children, l, i) | fail
@@ -1296,10 +1327,12 @@ class Component(Rect,Align,Connectable)
    # Move all the children of `other`, to this `Component`, adding
    # them at index `i`.  `other` will be left empty.
    #
-   # @param other The source {Component}.
-   # @param i     The index to add at; if omitted then the new components
-   # @            are appended to the end.
-   # @fail        If i is out of range
+   # :Parameters :
+   # :  `other` - The source `Component`.
+   # :  `i` - The index to add at; if omitted then the new components
+   #              are appended to the end.
+   # :Fails :
+   # :  If i is out of range
    #
    public move_all(other, i)
       return add_list(other.remove_list(), i)
@@ -1314,8 +1347,9 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Get the list of {Component}s in this {Container}.
-   # @return   The list of {Component}s
+   # Get the list of `Component`s in this `Container`.
+   # :Returns :
+   # :  The list of `Component`s
    #
    public get_children()
       return self.children
@@ -1328,7 +1362,8 @@ class Component(Rect,Align,Connectable)
    #
    # NB - this method will only be invoked if the allow_drag flag is non-null.
    #
-   # @param e the event, an instance of WindowEvent
+   # :Parameters :
+   # :  `e` - the event, an instance of WindowEvent
    #
    public can_drag(e)
    end
@@ -1351,8 +1386,9 @@ class Component(Rect,Align,Connectable)
    #
    # NB - this method will only be invoked if the allow_drop flag is non-null.
    #
-   # @param drag the current Drag object.
-   # @param e the drag event
+   # :Parameters :
+   # :  `drag` - the current Drag object.
+   # :  `e` - the drag event
    #
    public drag_event(drag, e)
    end
@@ -1363,13 +1399,14 @@ class Component(Rect,Align,Connectable)
    # a drop.  The mouse cursor is updated accordingly.   The component remains the "drag
    # holder" regardless of whether this method succeeds or fails.  On success, the data
    # returned is put into the content field of a Drag object, which is passed to
-   # {perform_drop()} on a drop event.
+   # `perform_drop()` on a drop event.
    #
    # It may also be invoked independently of any particular event, for example if the
    # state potentially changes via a ticker.  In this case the passed event is null.
    #
-   # @param drag the current Drag object.
-   # @param e the drag event; may be `&null`.
+   # :Parameters :
+   # :  `drag` - the current Drag object.
+   # :  `e` - the drag event; may be `&null`.
    #
    public can_drop(drag, e)
    end
@@ -1383,25 +1420,28 @@ class Component(Rect,Align,Connectable)
    #
    # NB - this method will only be invoked if the allow_drop flag is non-null.
    #
-   # @param drag the current Drag object representing the drag
-   # @param drop the current Drag object representing the drop.
-   # @param e the drop event
+   # :Parameters :
+   # :  `drag` - the current Drag object representing the drag
+   # :  `drop` - the current Drag object representing the drop.
+   # :  `e` - the drop event
    #
    public perform_drop(drag, drop, e)
    end
 
    #
    # Invoked on the component that started the drag, after a successful drop
-   # @param drag the current Drag object representing the drag
-   # @param drop the current Drag object representing the drop.
-   # @param e the drop event
+   # :Parameters :
+   # :  `drag` - the current Drag object representing the drag
+   # :  `drop` - the current Drag object representing the drop.
+   # :  `e` - the drop event
    #
    public end_drag(drag, drop, e)
    end
 
    #
    # Invoked at the end of drag and drop (on the drag holder) to clear any drag state
-   # @param e the last event
+   # :Parameters :
+   # :  `e` - the last event
    #
    public drag_reset(e)
    end

@@ -68,12 +68,12 @@ abstract class LineBasedScrollArea(DrawScrollArea)
    end
 
    #
-   # Get line info for the rectangle {r}, which defaults to the view.
-   # If given, {r} must be within the view.  The result gives the
-   # first and last lines in {r} and the first and last wholly visible
-   # lines in {r}.  For the latter, if there are no such lines then
+   # Get line info for the rectangle `r`, which defaults to the view.
+   # If given, `r` must be within the view.  The result gives the
+   # first and last lines in `r` and the first and last wholly visible
+   # lines in `r`.  For the latter, if there are no such lines then
    # the first and last lines are returned.  Fails if there are no
-   # data lines in {r}.
+   # data lines in `r`.
    #
    public get_line_info(r)
       local s, h, a, n, e, t, res, lc
@@ -222,7 +222,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
       return self
    end
 
-   # Return a {Rect} (in dialog-based coordinates) indicating the area
+   # Return a `Rect` (in dialog-based coordinates) indicating the area
    # occupied by the line; note this may be outside of the view area.
    #
    public get_line_rect(line)
@@ -232,7 +232,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
                   get_height_for_line(line))
    end
 
-   # Return a {Rect} (in area-based coordinates) indicating the area
+   # Return a `Rect` (in area-based coordinates) indicating the area
    # occupied by the line.
    #
    public get_area_line_rect(line)
@@ -246,7 +246,7 @@ abstract class LineBasedScrollArea(DrawScrollArea)
    # Convert the current y pointer offset to a line number.  The result is <=0 if the
    # pointer is above all lines, >get_line_count() if below.  The view window is not
    # taken into account, so the result may not actually be visible.
-   # @p
+   #
    public pointer_to_line(e)
       local s, h, a, r, i
       a := e.y - get_subject_y()
@@ -323,10 +323,11 @@ abstract class LineBasedScrollArea(DrawScrollArea)
    #
    # This method is overridden by the subclass to draw the given 
    # line at the given position, into the buffer window cbwin.
-   # @param xp  The x position it should be drawn at
-   # @param yp  The y position it should be drawn at
-   # @param lh  The line height allowed for this line
-   # @param i   The line number to draw
+   # :Parameters :
+   # :  `xp` - The x position it should be drawn at
+   # :  `yp` - The y position it should be drawn at
+   # :  `lh` - The line height allowed for this line
+   # :  `i` - The line number to draw
    #
    public abstract draw_line(xp, yp, lh, i)
 

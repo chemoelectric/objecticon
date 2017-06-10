@@ -29,10 +29,11 @@ class CheckBoxTableColumn(BaseTableColumn)
    end
 
    #
-   # Set the up/down icons to the given (distinct) {Paint} instances.
+   # Set the up/down icons to the given (distinct) `Paint` instances.
    # The two images must have the same dimensions.
-   # @param x   The up image
-   # @param y   The down image
+   # :Parameters :
+   # :  `x` - The up image
+   # :  `y` - The down image
    #
    public set_box_paint(x, y)
       if is_initialized() then {

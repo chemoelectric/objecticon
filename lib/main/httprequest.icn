@@ -7,7 +7,7 @@ package http
 import util, net, io
 
 #
-# Encapsulate one request to {HttpClient}.
+# Encapsulate one request to `HttpClient`.
 #
 class HttpRequest(MimeHeaders)
    private readable 
@@ -79,8 +79,8 @@ class HttpRequest(MimeHeaders)
    end
 
    #
-   # Set the request method type.  The default is {GET}, unless post data is set, in which
-   # case the default is {POST}.
+   # Set the request method type.  The default is `GET`, unless post data is set, in which
+   # case the default is `POST`.
    #
    public set_method(method)
       self.method := method

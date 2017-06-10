@@ -15,7 +15,7 @@ import lang
 # the accompanying C library objecticonipclib.so to be on the library path.
 #
 # Instances of this class should not be created directly, but rather using the static
-# methods {open_public}, {create_public} and {create_private}
+# methods `open_public`, `create_public` and `create_private`
 #
 final class Msg(NoCopy)
    private 
@@ -23,7 +23,7 @@ final class Msg(NoCopy)
 
    #
    # Send the given object.  The object may be an arbitrary Icon structure, and will be
-   # encoded into a string by the {encode()} procedure.
+   # encoded into a string by the `encode()` procedure.
    #
    public send(o)
       return send_impl(encode(o, &yes))
@@ -53,7 +53,8 @@ final class Msg(NoCopy)
    #
    # Poll the queue for an object for t milliseconds.  If an object is
    # not received within that time, fail, otherwise return it.
-   # @param t the timeout
+   # :Parameters :
+   # :  `t` - the timeout
    #
    public poll(t)
       local c, o

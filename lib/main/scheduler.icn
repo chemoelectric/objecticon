@@ -2,11 +2,11 @@ package io
 
 import lang, util
 
-# This stream wraps another stream (normally a {SocketStream}).  The
-# {in} and {out} methods are invoked from the co-expression of the
-# owning {Task}.  Those methods activate the {Task}'s {Scheduler}'s
+# This stream wraps another stream (normally a `SocketStream`).  The
+# `in` and `out` methods are invoked from the co-expression of the
+# owning `Task`.  Those methods activate the `Task`'s `Scheduler`'s
 # co-expression.  The stream's co-expression is re-activated only when
-# the {Scheduler} determines the stream is ready for i/o.
+# the `Scheduler` determines the stream is ready for i/o.
 #
 class TaskStream(Stream, HasTask, HasUnderlyingStream)
    private readable
@@ -93,9 +93,10 @@ class Task()
 
    # If a task is currently sleeping or polling, then this alters the
    # time it will sleep for, behaving as though the original call to
-   # {sleep} or {poll} had given {n} as its time parameter.
+   # `sleep` or `poll` had given `n` as its time parameter.
    #
-   # @param n The time to wait for.  If {&null}, wait forever.
+   # :Parameters :
+   # :  `n` - The time to wait for.  If `&null`, wait forever.
    #
    public change_time(n)
       \coex | runerr("change_time called on a currently active task")
@@ -108,7 +109,8 @@ class Task()
    # milliseconds from now, rather than from the time of the original
    # call.
    #
-   # @param n The time to wait for.  If {&null}, wait forever.
+   # :Parameters :
+   # :  `n` - The time to wait for.  If `&null`, wait forever.
    #
    public change_time_from_now(n)
       \coex | runerr("change_time_from_now called on a currently active task")
@@ -125,9 +127,9 @@ class Task()
 
    # Succeed iff the task is the current task.  Note that a task may
    # be active, but not the current task, since a task may itself
-   # invoke {Scheduler.work} in order to activate another task, in a
+   # invoke `Scheduler.work` in order to activate another task, in a
    # nested fashion.  This may happen for example when a task shows a
-   # modal dialog, and hence calls {Scheduler.work} via the dispatcher
+   # modal dialog, and hence calls `Scheduler.work` via the dispatcher
    # event loop.
    #
    public is_current()
@@ -151,18 +153,18 @@ class Task()
 
    # Succeed iff the task is dormant, meaning it is not active, and is
    # not sleeping, polling or ready, meaning it won't be scheduled by
-   # the scheduler, at least until {start} is called on it.
+   # the scheduler, at least until `start` is called on it.
    public is_dormant()
       return scheduler.is_dormant(self)
    end
 
    # Suspend this task, which must be the currently scheduled task, in
-   # order to carry out a {DescStream.poll}.  The parameters and
-   # result are in the same form as for {DescStream.poll}.  The
-   # difference between this and {DescStream.poll} is that the
+   # order to carry out a `DescStream.poll`.  The parameters and
+   # result are in the same form as for `DescStream.poll`.  The
+   # difference between this and `DescStream.poll` is that the
    # scheduler will suspend this task whilst the poll is taking place,
-   # whereas {DescStream.poll} will block.  If {timeout} is zero, then
-   # there is no advantage in using this method, and {DescStream.poll}
+   # whereas `DescStream.poll` will block.  If `timeout` is zero, then
+   # there is no advantage in using this method, and `DescStream.poll`
    # is preferable.
    #
    # If the task is interrupted whilst polling this method fails with
@@ -173,9 +175,10 @@ class Task()
    # `&null`, ie it behaves as though a timeout occurred.  The
    # `notify_flag` is also set.
    #
-   # @param l A list of alternating {DescStream}, flag (from {Poll})
-   # @        pairs.
-   # @param timeout The optional timeout
+   # :Parameters :
+   # :  `l` - A list of alternating `DescStream`, flag (from `Poll`)
+   #          pairs.
+   # :  `timeout` - The optional timeout
    #
    public poll(l, timeout)
       self === scheduler.curr_task | runerr("poll called on task which is not current")
@@ -206,9 +209,11 @@ class Task()
    #    set to the value of `interrupt_why`, which will be
    #    non-null.
    #
-   # @param n The time to wait for.  If `&null`, wait forever (or until
-   # @        interrupted or notified).
-   # @return `self` when the task awakes; fails on interrupt
+   # :Parameters :
+   # :  `n` - The time to wait for.  If `&null`, wait forever (or until
+   #          interrupted or notified).
+   # :Returns :
+   # :  `self` when the task awakes; fails on interrupt
    #
    public sleep(n)
       self === scheduler.curr_task | runerr("sleep called on task which is not current")
@@ -254,9 +259,9 @@ class Task()
 
    # Suspend this task, which must be the currently scheduled task,
    # but do not resume it.  Control reverts to the scheduler.  The
-   # task may be subsequently restarted with {start}.  Note that to
+   # task may be subsequently restarted with `start`.  Note that to
    # end a task, it is not simply sufficient to fall off the end of
-   # the task's co-expression, {revert} must be used.
+   # the task's co-expression, `revert` must be used.
    #
    public revert()
       self === scheduler.curr_task | runerr("revert called on task which is not current")
@@ -278,7 +283,7 @@ class Task()
    # Stop the task, which may not be currently active.  This prevents
    # the scheduler from activating it.  Its present state is
    # remembered, and it may be started again in that state using
-   # {start}.
+   # `start`.
    #
    public stop()
       \coex | runerr("stop called on a currently active task")
@@ -286,7 +291,7 @@ class Task()
       return self
    end
 
-   # This is called once just before the {Task} is activated for the
+   # This is called once just before the `Task` is activated for the
    # first time.  It invokes `begin()` on the xstate member (if set).
    #
    package xstate_begin()
@@ -301,13 +306,14 @@ class Task()
    end
 
    #
-   # Create a new {Task}.
+   # Create a new `Task`.
    #
-   # @param scheduler The {Scheduler} to use to activate the task.
-   # @param coex The co-expression body of the task.
-   # @param xstate An optional instance of `State` which is used
-   # @      to save and restore external state when switching to and
-   # @      from this Task.
+   # :Parameters :
+   # :  `scheduler` - The `Scheduler` to use to activate the task.
+   # :  `coex` - The co-expression body of the task.
+   # :  `xstate` - An optional instance of `State` which is used
+   #        to save and restore external state when switching to and
+   #        from this Task.
    #
    public new(scheduler, coex, xstate)
       self.coex := coex

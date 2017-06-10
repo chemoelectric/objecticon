@@ -336,10 +336,11 @@ end
 # in-place, and returned.  If pos1 and pos2 are given, then only
 # the sublist l[pos1:pos2] is sorted.
 #
-# @param l the list to sort
-# @param cmp a comparator function, default `Internal.compare`
-# @param pos1 the first slice index, default 1
-# @param pos2 the second slice index, default 0
+# :Parameters :
+# :  `l` - the list to sort
+# :  `cmp` - a comparator function, default `Internal.compare`
+# :  `pos1` - the first slice index, default 1
+# :  `pos2` - the second slice index, default 0
 #
 procedure qsort(l, cmp, pos1, pos2)
    local s
@@ -381,13 +382,14 @@ end
 # keep the list in order.  If `iflag` is not set, then the procedure
 # simply fails.
 #
-# @param l the list to search
-# @param val the value to search for
-# @param cmp a comparator function, default `Internal.compare`
-# @param pos1 the first slice index, default 1
-# @param pos2 the second slice index, default 0
-# @param iflag a flag requesting an insert position if val is not
-# @      found.
+# :Parameters :
+# :  `l` - the list to search
+# :  `val` - the value to search for
+# :  `cmp` - a comparator function, default `Internal.compare`
+# :  `pos1` - the first slice index, default 1
+# :  `pos2` - the second slice index, default 0
+# :  `iflag` - a flag requesting an insert position if val is not
+#        found.
 #
 procedure bsearch(l, val, cmp, pos1, pos2, iflag)
    local s, m, c, first, last
@@ -414,10 +416,11 @@ end
 # then only the sublist l[pos1:pos2] is sorted, and that sublist is
 # returned.
 #
-# @param l the list to sort
-# @param cmp a comparator function, default `Internal.compare`
-# @param pos1 the first slice index, default 1
-# @param pos2 the second slice index, default 0
+# :Parameters :
+# :  `l` - the list to sort
+# :  `cmp` - a comparator function, default `Internal.compare`
+# :  `pos1` - the first slice index, default 1
+# :  `pos2` - the second slice index, default 0
 #
 procedure mergesort(l, cmp, pos1, pos2)
    local s
@@ -461,8 +464,9 @@ package record Item(last, e)
 #          5  10  11  11  15  20  99  200
 # ~
 #
-# @param el the list of co-expressions
-# @param cmp a comparator function, default `Internal.compare`
+# :Parameters :
+# :  `el` - the list of co-expressions
+# :  `cmp` - a comparator function, default `Internal.compare`
 #
 procedure sort_seq(el, cmp)
    local l, cmp_item, e, i

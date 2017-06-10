@@ -268,11 +268,13 @@ class HttpClient(NetClient)
    end
 
    #
-   # Retrieve the given {HttpRequest} request, or fail if that
+   # Retrieve the given `HttpRequest` request, or fail if that
    # is not possible.
    #
-   # @param request - an {HttpRequest} instance
-   # @return an {HttpResponse} object.
+   # :Parameters :
+   # :  `request` - an `HttpRequest` instance
+   # :Returns :
+   # :  an `HttpResponse` object.
    public retrieve(request)
       local sc, e
       \request.url | runerr("URL not set")
@@ -518,7 +520,8 @@ class HttpClient(NetClient)
 
    #
    # 
-   # @param omit - if non-null, omit the quotes from the result
+   # :Parameters :
+   # :  `omit` - if non-null, omit the quotes from the result
    public static parse_quoted_string(omit)
       local res
 

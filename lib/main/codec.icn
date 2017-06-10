@@ -77,9 +77,10 @@ end
 
 #
 # Return a string, being the encoded representation of the given object.
-# @param o the object to encode
-# @param fast a flag - see {Encode.set_fast} below.
-# @param bin a flag - see {Encode.set_allow_binary} below.
+# :Parameters :
+# :  `o` - the object to encode
+# :  `fast` - a flag - see `Encode.set_fast` below.
+# :  `bin` - a flag - see `Encode.set_allow_binary` below.
 #
 procedure encode(o, fast, bin)
    local e, f

@@ -56,10 +56,11 @@ class Element(Node)
    end
 
    #
-   # Search for all the {Element}s with the given tag name, recursively
+   # Search for all the `Element`s with the given tag name, recursively
    # traversing the entire tree based at this node.
    #
-   # @param s the name of the sub-elements.
+   # :Parameters :
+   # :  `s` - the name of the sub-elements.
    #
    public search_tree(s)
       local n
@@ -72,7 +73,8 @@ class Element(Node)
    # Generate the elements under this element, with the given name.  If name
    # is omitted, generate all the elements.
    #
-   # @param s the name of the sub-elements.
+   # :Parameters :
+   # :  `s` - the name of the sub-elements.
    #
    public search_children(s)
       local n
@@ -85,9 +87,11 @@ class Element(Node)
    # Return the nth sub-element matching the given tag; if the tag is
    # omitted just return the nth sub-element.
    #
-   # @param n the index to look for; 1 being the first.
-   # @param s the name of the sub-element.
-   # @fail if there is no such element.
+   # :Parameters :
+   # :  `n` - the index to look for; 1 being the first.
+   # :  `s` - the name of the sub-element.
+   # :Fails :
+   # :  if there is no such element.
    #
    public get_nth_element(n, s)
       local x
@@ -101,8 +105,10 @@ class Element(Node)
    #
    # Return the nth sub-element which is a string/ucs.
    #
-   # @param n the index to look for; 1 being the first.
-   # @fail if there is no such element.
+   # :Parameters :
+   # :  `n` - the index to look for; 1 being the first.
+   # :Fails :
+   # :  if there is no such element.
    #
    public get_nth_string(n)
       local s
@@ -117,8 +123,10 @@ class Element(Node)
    # Return the nth sub-element which is a string, after
    # trimming it.
    #
-   # @param n the index to look for; 1 being the first.
-   # @fail if there is no such element.
+   # :Parameters :
+   # :  `n` - the index to look for; 1 being the first.
+   # :Fails :
+   # :  if there is no such element.
    #
    public get_nth_trimmed_string(n)
       return xml_trim(get_nth_string(n))

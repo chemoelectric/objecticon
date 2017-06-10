@@ -26,9 +26,10 @@ final abstract class Format()
    #
    # Convert an integer to a string.
    #
-   # @param base   The desired base of the result.
-   # @param p      The minimum width of the result, padding with zeroes
-   # @             if necessary.
+   # :Parameters :
+   # :  `base` - The desired base of the result.
+   # :  `p` - The minimum width of the result, padding with zeroes
+   #               if necessary.
    #
    public static int_to_string(subject, base, p)
       local s, n, digs, neg
@@ -58,15 +59,16 @@ final abstract class Format()
    #
    # Convert a numeric to a string.
    #
-   # @param p  The number of decimal places to produce (default 4).
-   # @param f  A cset of flags.  If c contains {'e'} then the output is
-   # @         in scientific notation.  If c contains {','} then commas
-   # @         are introduced into the non-fractional part of the number;
-   # @         if c contains {'+'} then a leading + is added to positive
-   # @         numbers.  If c contains {'s'} then trailing fractional
-   # @         zeroes are replaced with spaces, whilst {'z'} means drop
-   # @         such zeroes altogether.
-   # @           
+   # :Parameters :
+   # :  `p` - The number of decimal places to produce (default 4).
+   # :  `f` - A cset of flags.  If c contains `'e'` then the output is
+   #           in scientific notation.  If c contains `','` then commas
+   #           are introduced into the non-fractional part of the number;
+   #           if c contains `'+'` then a leading + is added to positive
+   #           numbers.  If c contains `'s'` then trailing fractional
+   #           zeroes are replaced with spaces, whilst `'z'` means drop
+   #           such zeroes altogether.
+   #             
    #
    public static numeric_to_string(subject, p, f)
       local n1, s, t, lim, d, zs, dig, i, n

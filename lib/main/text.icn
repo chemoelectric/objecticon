@@ -62,11 +62,12 @@ final abstract class Text()
    end
 
    # A more liberal way of parsing a utf-8 string than the builtin
-   # {ucs} function.  Any errors in the input result in the substitute
+   # `ucs` function.  Any errors in the input result in the substitute
    # character (by default U+FFFD) being put into the resulting
    # string.
-   # @param s the string to parse into a ucs
-   # @param subst the substitute character
+   # :Parameters :
+   # :  `s` - the string to parse into a ucs
+   # :  `subst` - the substitute character
    public static liberal_ucs(s, subst)
       local t, n
       if s := ucs(s) then
@@ -119,8 +120,8 @@ final abstract class Text()
       return t
    end
 
-   # Given a cset {c}, produce another cset containing those characters in 
-   # positions {i}:{j}.
+   # Given a cset `c`, produce another cset containing those characters in 
+   # positions `i`:`j`.
    #
    public static native slice(c, i, j)
 end

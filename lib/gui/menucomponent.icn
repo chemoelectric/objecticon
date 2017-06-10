@@ -12,14 +12,14 @@ import util, graphics, ipl.lists
 
 #
 # This is the superclass of all the objects that make up the
-# menu system (other than the top level {Component}s of course).
+# menu system (other than the top level `Component`s of course).
 #
 # It encapsulates the position and space of labels in the parent
 # menu, as well as methods which allow this item to be a popup
 # submenu. A submenu need not necessarily contain other
-# {MenuComponent}s; see for example the {Palette} class.  A
+# `MenuComponent`s; see for example the `Palette` class.  A
 # conventional submenu, which does contain children, is in the
-# {Menu} class.
+# `Menu` class.
 #
 abstract class MenuComponent(Rect,Connectable)
    public 
@@ -54,12 +54,14 @@ abstract class MenuComponent(Rect,Connectable)
    end
 
    #
-   # Add the given {MenuComponent} to the Menu.
+   # Add the given `MenuComponent` to the Menu.
    #
-   # @param c   The {MenuComponent} to add.
-   # @param i   The index to add at; if omitted then the new component
-   # @          is appended to the end.
-   # @fail      If i is out of range
+   # :Parameters :
+   # :  `c` - The `MenuComponent` to add.
+   # :  `i` - The index to add at; if omitted then the new component
+   #            is appended to the end.
+   # :Fails :
+   # :  If i is out of range
    #
    public add(c, i)
       /i := 0
@@ -78,18 +80,22 @@ abstract class MenuComponent(Rect,Connectable)
    end
 
    #
-   # Remove the {MenuComponent} from the menu.
-   # @param c   The {MenuComponent} to remove.
-   # @fail      If c is not a child of this instance.
+   # Remove the `MenuComponent` from the menu.
+   # :Parameters :
+   # :  `c` - The `MenuComponent` to remove.
+   # :Fails :
+   # :  If c is not a child of this instance.
    #
    public remove(c)
       return remove_index(get_index(c))
    end
 
    #
-   # Remove the {MenuComponent} at the given index from the list of children.
-   # @param i    The index
-   # @fail      If i is out of range
+   # Remove the `MenuComponent` at the given index from the list of children.
+   # :Parameters :
+   # :  `i` - The index
+   # :Fails :
+   # :  If i is out of range
    #
    public remove_index(i)
       local c
@@ -109,21 +115,25 @@ abstract class MenuComponent(Rect,Connectable)
    end
 
    #
-   # Move the {MenuComponent} to the given index position.
-   # @param c   The {MenuComponent} to move.
-   # @param j   The new position.
-   # @fail      If c is not a child of this instance, 
-   # @           or j is out of range.
+   # Move the `MenuComponent` to the given index position.
+   # :Parameters :
+   # :  `c` - The `MenuComponent` to move.
+   # :  `j` - The new position.
+   # :Fails :
+   # :  If c is not a child of this instance, 
+   #             or j is out of range.
    #
    public reposition(c, j)
       return reposition_index(get_index(c), j)
    end
 
    #
-   # Move the {MenuComponent} at position {i} to {j}.
-   # @param i   The old position.
-   # @param j   The new position.
-   # @fail      If either index is out of range.
+   # Move the `MenuComponent` at position `i` to `j`.
+   # :Parameters :
+   # :  `i` - The old position.
+   # :  `j` - The new position.
+   # :Fails :
+   # :  If either index is out of range.
    #
    public reposition_index(i, j)
       lmove(children, i, j) | fail
@@ -132,9 +142,11 @@ abstract class MenuComponent(Rect,Connectable)
 
    # Remove the children in the range `i:j`, returning the
    # removed children in a list.
-   # @param i   The start slice index, default 1
-   # @param j   The end slice index, default 0
-   # @fail      If the range is invalid.
+   # :Parameters :
+   # :  `i` - The start slice index, default 1
+   # :  `j` - The end slice index, default 0
+   # :Fails :
+   # :  If the range is invalid.
    #
    #
    public remove_list(i, j)
@@ -148,9 +160,11 @@ abstract class MenuComponent(Rect,Connectable)
 
    # Add all the `MenuComponent`s contained in list `l` at index `i`.
    #
-   # @param l    The list to add
-   # @param i    The index
-   # @fail      If i is out of range
+   # :Parameters :
+   # :  `l` - The list to add
+   # :  `i` - The index
+   # :Fails :
+   # :  If i is out of range
    #
    public add_list(l, i)
       linsert(children, l, i) | fail
@@ -163,10 +177,12 @@ abstract class MenuComponent(Rect,Connectable)
    # Move all the children of `MenuComponent` `other`, to this
    # `MenuComponent`, adding them at index `i`.  `other` will be left empty.
    #
-   # @param other The source {MenuComponent}.
-   # @param i     The index to add at; if omitted then the new components
-   # @            are appended to the end.
-   # @fail        If i is out of range
+   # :Parameters :
+   # :  `other` - The source `MenuComponent`.
+   # :  `i` - The index to add at; if omitted then the new components
+   #              are appended to the end.
+   # :Fails :
+   # :  If i is out of range
    #
    public move_all(other, i)
       return add_list(other.remove_list(), i)
@@ -191,8 +207,8 @@ abstract class MenuComponent(Rect,Connectable)
    end
 
    #
-   # Succeed iff the component has been initialized with {init()}, but
-   # not yet cleaned up with {finally()}.
+   # Succeed iff the component has been initialized with `init()`, but
+   # not yet cleaned up with `finally()`.
    #
    public is_initialized()
       return \self.parent_component
@@ -204,7 +220,7 @@ abstract class MenuComponent(Rect,Connectable)
    end
 
    #
-   # Get the parent {MenuComponent}, or fail if there is none.
+   # Get the parent `MenuComponent`, or fail if there is none.
    #
    public get_parent()
       return \self.parent
@@ -247,7 +263,7 @@ abstract class MenuComponent(Rect,Connectable)
    end
 
    #
-   # Invalidate the parent {Component} if this is the root of the menu hierarchy, or
+   # Invalidate the parent `Component` if this is the root of the menu hierarchy, or
    # the parent menu if it is open.
    #
    public possibly_invalidate()
@@ -259,14 +275,14 @@ abstract class MenuComponent(Rect,Connectable)
    end
 
    #
-   # The label's area as a {Rect}
+   # The label's area as a `Rect`
    #
    public get_label_rect()
       return Rect(label_x, label_y, label_w, label_h)
    end
 
    #
-   # Return the parent {Component}, for example a {MenuBar}.
+   # Return the parent `Component`, for example a `MenuBar`.
    #
    public get_parent_component()
       return \self.parent_component
@@ -279,8 +295,8 @@ abstract class MenuComponent(Rect,Connectable)
 
    #
    # Set the link to the parent component for the root of a tree of
-   # {MenuComponent}s.  The tree's {parent_component} links will then
-   # be set in the {initially} method.
+   # `MenuComponent`s.  The tree's `parent_component` links will then
+   # be set in the `initially` method.
    #
    public set_component_link(x)
       self.component_link := x

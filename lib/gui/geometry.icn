@@ -123,10 +123,10 @@ class Rect(Point,Size)
    end
 
    #
-   # Float the given {Size} within this {Rect}, according to the given
-   # {Align}, but limit the result so that it lies within this {Rect}.
-   # A {Rect} is returned, with width and height set to the input
-   # values, or this {Rect}'s values, depending on whether the result
+   # Float the given `Size` within this `Rect`, according to the given
+   # `Align`, but limit the result so that it lies within this `Rect`.
+   # A `Rect` is returned, with width and height set to the input
+   # values, or this `Rect`'s values, depending on whether the result
    # was so limited.
    #
    public float(s, a)

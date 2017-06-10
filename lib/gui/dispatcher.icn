@@ -59,7 +59,7 @@ final abstract class Dispatcher()
    end
 
    #
-   # Loop until dialog r is closed processing events and {Task}s.  If r
+   # Loop until dialog r is closed processing events and `Task`s.  If r
    # is omitted, then loop until there are no open dialogs.
    #
    public static message_loop(r)
@@ -72,13 +72,13 @@ final abstract class Dispatcher()
       }
    end
 
-   # This is similar to the normal {message_loop} method, but instead
+   # This is similar to the normal `message_loop` method, but instead
    # of returning only when there are no dialogs open, this method
    # will also return when it first finds it has no work to do,
    # allowing the caller to undertake some activity before calling it
    # again.  When using this method, it is best to configure the
-   # {Dispatcher}'s scheduler so that it does not sleep in poll, by
-   # setting its poll timeout to 0.  This prevents {work} from ever
+   # `Dispatcher`'s scheduler so that it does not sleep in poll, by
+   # setting its poll timeout to 0.  This prevents `work` from ever
    # sleeping.
    #
    public static service(r)
@@ -93,7 +93,7 @@ final abstract class Dispatcher()
 
    #
    # A further variant of the message loop which never returns.  Even
-   # when there are no dialogs open, {Task}s continue to be activated.
+   # when there are no dialogs open, `Task`s continue to be activated.
    #
    public static message_loop_forever()
       repeat

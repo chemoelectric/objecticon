@@ -153,7 +153,8 @@ class EditableTextList(LineBasedScrollArea)
    #
    # Set the contents of the component.
    #
-   # @param x the contents, as a list of strings
+   # :Parameters :
+   # :  `x` - the contents, as a list of strings
    #
    public set_contents(x)
       self.contents := x
@@ -163,7 +164,7 @@ class EditableTextList(LineBasedScrollArea)
 
    #
    # Call this method if the contents list, previously
-   # set with {set_contents()}, has changed.
+   # set with `set_contents()`, has changed.
    #
    public contents_changed()
       local t
@@ -227,8 +228,9 @@ class EditableTextList(LineBasedScrollArea)
 
    #
    # Append lines of text and go to the bottom of the content.
-   # @param l a list of lines to append
-   # @param max optional maximum length of resulting contents
+   # :Parameters :
+   # :  `l` - a list of lines to append
+   # :  `max` - optional maximum length of resulting contents
    #
    public log(l, max)
       local n, t
@@ -1009,7 +1011,7 @@ class EditableTextList(LineBasedScrollArea)
 
    #
    # Get the region as a list of strings, each element representing one line, ie in
-   # the same format as that supplied to {set_contents()}.
+   # the same format as that supplied to `set_contents()`.
    #
    public get_region_list()
       local l

@@ -2,16 +2,18 @@ package ipl.tasks
 
 import ipl.lists(ldel1)
 
-# A semaphore implementation using {Task}s.
+# A semaphore implementation using `Task`s.
 #
 class Semaphore()
    private readable n
    private wl
 
    # Perform a wait on the semaphore.
-   # @param t the current {Task} which may be put to sleep
-   # @param timeout the optional timeout
-   # @fail on timeout/interrupt to {t}
+   # :Parameters :
+   # :  `t` - the current `Task` which may be put to sleep
+   # :  `timeout` - the optional timeout
+   # :Fails :
+   # :  on timeout/interrupt to `t`
    public wait(t, timeout)
       if n > 0 then
          n -:= 1
@@ -35,7 +37,7 @@ class Semaphore()
       return self
    end
 
-   # Create a new semaphore with initial value {n}, default 0.
+   # Create a new semaphore with initial value `n`, default 0.
    public new(n)
       /n := 0
       self.n := n

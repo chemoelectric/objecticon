@@ -28,7 +28,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
-   # Insert a new member.  Always succeeds and returns {self}.  Only
+   # Insert a new member.  Always succeeds and returns `self`.  Only
    # implemented with INSERT capability.
    #
    public defer insert(x)
@@ -40,7 +40,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
 
    #
    # Delete `x` from the set.  Fails if the key was not present,
-   # otherwise succeeds and returns {self}.  Only implemented with
+   # otherwise succeeds and returns `self`.  Only implemented with
    # DELETE capability.
    #
    public defer delete(x)
@@ -99,7 +99,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
 
    #
    # Clear the set of all elements. Always succeeds and returns
-   # {self}.  Only implemented with DELETE capability.
+   # `self`.  Only implemented with DELETE capability.
    #
    public clear()
       while size() > 0 do
@@ -108,14 +108,14 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
-   # Return a list of the members, in the order produced by {gen()}.
+   # Return a list of the members, in the order produced by `gen()`.
    #
    public member_list()
       return ipl.pdco.List{gen()}
    end
 
    #
-   # Custom equals mirrors the {equals()} behaviour for builtin sets.
+   # Custom equals mirrors the `equals()` behaviour for builtin sets.
    #
    private object_equals(other, seen)
       other.size() = self.size() | fail
@@ -123,7 +123,7 @@ abstract class Set(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
-   # Custom hash mirrors the {hash()} behaviour for builtin sets.
+   # Custom hash mirrors the `hash()` behaviour for builtin sets.
    #
    private object_hash(depth)
       local n
@@ -211,7 +211,7 @@ class UnmodifiableSet(Set)
 end
 
 #
-# A Set which is a view of the keys of a {Table}.
+# A Set which is a view of the keys of a `Table`.
 #
 class TableSet(Set)
    private const t
@@ -266,10 +266,11 @@ class TableSet(Set)
    #
    # Create a new instance.
    #
-   # @param t either the {Table} to wrap, or a class indicating the class of
-   # @   a new {Table}, which will be instantiated by calling its
-   # @   constructor with no parameters.
-   # @param entries initial entries to insert.
+   # :Parameters :
+   # :  `t` - either the `Table` to wrap, or a class indicating the class of
+   #     a new `Table`, which will be instantiated by calling its
+   #     constructor with no parameters.
+   # :  `entries` - initial entries to insert.
    #
    public new(t, entries[])
       if type(t) == "class" then
@@ -301,7 +302,7 @@ package class EmptySet(Set, SelfClone)
 end
 
 #
-# A {Set} that is just a wrapper around a builtin set
+# A `Set` that is just a wrapper around a builtin set
 #
 class BuiltinSet(Set)
    private const s
@@ -343,7 +344,8 @@ class BuiltinSet(Set)
    #
    # Create a new instance.
    #
-   # @param s the set to wrap; if omitted a new set is created.
+   # :Parameters :
+   # :  `s` - the set to wrap; if omitted a new set is created.
    #
    public new(s)
       /s := set()
@@ -381,7 +383,8 @@ class UnmodifiableBuiltinSet(Set)
    #
    # Create a new instance.
    #
-   # @param s the set to wrap
+   # :Parameters :
+   # :  `s` - the set to wrap
    #
    public new(s)
       self.s := s

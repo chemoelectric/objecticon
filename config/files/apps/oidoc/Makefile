@@ -2,7 +2,7 @@ include ../../Makedefs
 
 .NOTPARALLEL:
 
-COMMONSRC=outputter.icn htmloutputter.icn groffoutputter.icn comment.icn
+COMMONSRC=outputter.icn htmloutputter.icn groffoutputter.icn
 COMMONU=$(COMMONSRC:.icn=.u)
 
 PROGS=oidoc

@@ -224,7 +224,7 @@ class HtmlOutputter(Outputter)
 
          if is(c.obj, Tree) then {
             output_a_file(c)
-            comment_and_fields(f, c)
+            output_comment(f, c)
             write(f, "<p/>")
          }
 
@@ -277,7 +277,7 @@ class HtmlOutputter(Outputter)
                }
                if is(m.obj, Tree) then {
                   write(f, "<dd>")
-                  comment_and_fields(f, m)
+                  output_comment(f, m)
                   write(f, "</dd>")
                }
                write(f, "</dl><hr>")
@@ -293,7 +293,7 @@ class HtmlOutputter(Outputter)
                write(f, "<dl>")
                if is(m.obj, Tree) then {
                   write(f, "<dd>")
-                  comment_and_fields(f, m)
+                  output_comment(f, m)
                   write(f, "</dd>")
                }
                write(f, "</dl><hr>")
@@ -364,57 +364,16 @@ class HtmlOutputter(Outputter)
       write(f, "</td></tr></table>")
    end
 
-   private comment_and_fields(f, c)
-      local k, com
-      com := Comment(c)
-      html(f, com.comment, c)
-      write(f, "<dl>")
-      every k := !com.keys do
-         html_fields(f, c, k, com.fields[k])
-      write(f, "</dl>")
-      write(f, "<a href=\"", 
+   private output_comment(f, c)
+      self.output_file := f
+      self.output_sym := c
+      markdown(c)
+      write(f, "<p/><a href=\"", 
             get_id(c.scanned_file) || ".html#", 
             c.obj.get_first_token().line , 
             "\" target=\"displayFrame\">Source - ", 
             FilePath(c.obj.get_first_token().filename).get(-1),
             " </a>")
-   end
-
-   private dt_list(title, f, c, vals)
-      local l
-      write(f, "<dt>", title, " :</dt>")
-      every l := !vals do {
-         write(f, "<dd>")
-         html(f, l, c)
-         write(f, "</dd>")
-      }
-   end
-
-   private dt_vlist(title, f, c, vals)
-      local l, name
-      write(f, "<dt>", title, " :</dt>")
-      every l := !vals do {
-         l[1] ? {
-            tab(many(WHITESPACE))
-            name := tab(many(ID_CHAR))
-            l[1] := tab(0)
-         }
-         writes(f, "<dd><code>", name, "</code> - ")
-         html(f, l, c)
-         write(f, "</dd>")
-      }
-   end
-   
-   private html_fields(f, c, key, vals)
-      case key of {
-         "param" : dt_vlist("Parameters", f, c, vals)
-         "field" : dt_vlist("Fields", f, c, vals)
-         "return" : dt_list("Returns", f, c, vals)
-         "generate" : dt_list("Generates", f, c, vals)
-         "fail" : dt_list("Fails", f, c, vals)
-         "runerr" : dt_list("Runtime error", f, c, vals)
-         "see" : dt_list("See also", f, c, vals)
-      }
    end
 
    private esc(s)
@@ -426,15 +385,19 @@ class HtmlOutputter(Outputter)
    end
 
    protected output_link(s)
-      writes(output_file, "<code>", create_link(s, output_sym), "</code>")
-   end
-
-   protected output_code(s)
-      writes(output_file, "<code>", esc(s), "</code>")
+      writes(output_file, create_link(s, output_sym))
    end
 
    protected output_anchor(s)
       writes(output_file, "<a href=\"", s, "\">", esc(s), "</a>")
+   end
+
+   protected begin_code()
+      writes(output_file, "<code>")
+   end
+
+   protected end_code()
+      writes(output_file, "</code>")
    end
 
    protected begin_bold()
@@ -480,24 +443,16 @@ class HtmlOutputter(Outputter)
       write(output_file, "</pre>")
    end
 
-   protected output_bar(n)
-      write(output_file, "<br>", repl("&nbsp;", n))
-   end
-
-   protected end_bar()
-      write(output_file, "<br>")
-   end
-
    protected begin_ul()
-      write(output_file, "<p/><ul>")
+      write(output_file, "<ul>")
    end
 
    protected end_ul()
       write(output_file, "</ul>")
    end
 
-   protected begin_ol()
-      write(output_file, "<p/><ol>")
+   protected begin_ol(type)
+      write(output_file, "<ol type=\"", type, "\">")
    end
 
    protected end_ol()
@@ -512,24 +467,47 @@ class HtmlOutputter(Outputter)
       write(output_file, "</li>")
    end
 
+   protected begin_dt()
+      write(output_file, "<dt>")
+   end
+
+   protected end_dt()
+      write(output_file, "</dt>")
+   end
+
+   protected begin_dl()
+      write(output_file, "<dl>")
+   end
+
+   protected end_dl()
+      write(output_file, "</dl>")
+   end
+
+   protected begin_dd()
+      write(output_file, "<dd>")
+   end
+
+   protected end_dd()
+      write(output_file, "</dd>")
+   end
+
    protected new_para()
       write(output_file, "<p/>")
    end
 
    private output_file, output_sym
 
-   private html(f, l, c)
-      self.output_file := f
-      self.output_sym := c
-      markdown(l)
-   end
-
    private resolve_link(sym, name)
       local i, j, d
       name := (name ? tab(upto('({') | 0))
-      # For a procedure or method, fail if the name matches one of the parameters.
-      if is(sym, ProcedureSymbol | ClassMethod) then {
+      # For a procedure fail if the name matches one of the parameters.
+      if is(sym, ProcedureSymbol) then {
          if name == sym.obj.get_args().gen().str() then
+            fail
+      }
+      # For a method, fail if the name matches one of the parameters, or is "self".
+      if is(sym, ClassMethod) then {
+         if name == ("self" | sym.obj.get_args().gen().str()) then
             fail
       }
       # Similarly, for a record, fail if the name matches one of the fields.
@@ -621,7 +599,7 @@ class HtmlOutputter(Outputter)
          write(f, "</dl><p/>")
          if is(c.obj, Tree) then {
             output_a_file(c)
-            comment_and_fields(f, c)
+            output_comment(f, c)
             write(f, "<p/>")
          }
          write(f, "</body></html>")

@@ -18,23 +18,26 @@ abstract class EncodingHandler()
    #
    # Succeed if this object can handle the given encoding
    #
-   # @param enc the encoding (a string, eg "7bit")
+   # :Parameters :
+   # :  `enc` - the encoding (a string, eg "7bit")
    #
    public abstract can_handle(enc)
 
    #
    # Decode the given data
    #
-   # @param m the {Message}
-   # @param data the source data (a string)
+   # :Parameters :
+   # :  `m` - the `Message`
+   # :  `data` - the source data (a string)
    #
    public abstract decode_data(m, data)
 
    #
    # Create string data from the given object
    #
-   # @param m the {Message}
-   # @param data the raw data (a string)
+   # :Parameters :
+   # :  `m` - the `Message`
+   # :  `data` - the raw data (a string)
    #
    public abstract encode_data(m, data)
 end

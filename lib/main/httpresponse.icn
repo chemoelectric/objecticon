@@ -29,7 +29,8 @@ class HttpResponse(MimeHeaders)
 
    #
    # Return the status of the page
-   # @return  The status eg "HTTP/1.1 200 OK"
+   # :Returns :
+   # :  The status eg "HTTP/1.1 200 OK"
    #
    public get_status()
       return .status
@@ -70,8 +71,8 @@ class HttpResponse(MimeHeaders)
    end
 
    #
-   # Return the result of {get_content_disposition_filename()}, or
-   # failing that the filename contained in the {url} (which may be
+   # Return the result of `get_content_disposition_filename()`, or
+   # failing that the filename contained in the `url` (which may be
    # the empty string).
    #
    public get_filename()

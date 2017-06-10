@@ -24,7 +24,7 @@ class SmtpClient(NetClient)
       sent_helo
 
    #
-   # Set the hostname to use with the EHLO command; by default {&host}.
+   # Set the hostname to use with the EHLO command; by default `&host`.
    #
    public set_hostname(s)
       hostname := s

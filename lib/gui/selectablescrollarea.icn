@@ -69,7 +69,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Set the data to be displayed.
-   # @param x  The list of data.
+   # :Parameters :
+   # :  `x` - The list of data.
    #
    public set_contents(x)
       self.contents := x
@@ -89,7 +90,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Call this method if the contents list, previously
-   # set with {set_contents()}, has changed.
+   # set with `set_contents()`, has changed.
    #
    public contents_changed()
       constrain_selections()
@@ -166,7 +167,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Configure the selection mode.
-   # @param s a constant from {Select}
+   # :Parameters :
+   # :  `s` - a constant from `Select`
    #
    public set_select_mode(s)
       self.select_mode := s
@@ -177,9 +179,10 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    # Configure the dnd mode, which indicates whether drags should be
    # be over whole lines, edges of lines, or both.  As a more flexible
    # alternative, which allows the mode to change depending on the
-   # line, the {get_dnd_mode} method may be overridden.
+   # line, the `get_dnd_mode` method may be overridden.
    # 
-   # @param s a constant, one of {MIDDLE_ONLY}, {EDGES_ONLY}, or {MIDDLE_AND_EDGES}
+   # :Parameters :
+   # :  `s` - a constant, one of `MIDDLE_ONLY`, `EDGES_ONLY`, or `MIDDLE_AND_EDGES`
    #
    public set_dnd_mode(s)
       self.dnd_mode := s
@@ -188,7 +191,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Return item currently under the clicked cursor
-   # @return The item number
+   # :Returns :
+   # :  The item number
    #
    public get_cursor()
       return \self.cursor
@@ -196,7 +200,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Return object currently under the clicked cursor
-   # @return The object
+   # :Returns :
+   # :  The object
    #
    public object_get_cursor()
       return self.contents[\self.cursor]
@@ -204,7 +209,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Return item currently under the dnd highlight
-   # @return The item number
+   # :Returns :
+   # :  The item number
    #
    public get_highlight()
       return \self.highlight
@@ -212,7 +218,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Return the part of the item currently under the dnd highlight;
-   # one of {TOP}, {MIDDLE} or {BOTTOM}.
+   # one of `TOP`, `MIDDLE` or `BOTTOM`.
    #
    public get_highlight_part()
       return \self.highlight_part
@@ -220,7 +226,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Return object currently under the dnd highlight
-   # @return The object
+   # :Returns :
+   # :  The object
    #
    public object_get_highlight()
       return self.contents[\self.highlight]
@@ -228,7 +235,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Return the item previously under the clicked cursor
-   # @return The item number
+   # :Returns :
+   # :  The item number
    #
    public get_prev_cursor()
       return \self.prev_cursor
@@ -236,7 +244,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Return object currently under the clicked cursor
-   # @return The object
+   # :Returns :
+   # :  The object
    #
    public object_get_prev_cursor()
       return self.contents[\self.prev_cursor]
@@ -251,7 +260,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Return a list of items selected (highlighted)
-   # @return A list of items currently selected
+   # :Returns :
+   # :  A list of items currently selected
    #
    public get_selections()
       return sort(self.selections)
@@ -259,7 +269,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Return a list of objects selected (highlighted)
-   # @return A list of objects currently selected
+   # :Returns :
+   # :  A list of objects currently selected
    #
    public object_get_selections()
       local r
@@ -271,7 +282,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    # Set the current selections to the list l, which is a list of
    # item numbers.
-   # @param l   The list of item numbers.
+   # :Parameters :
+   # :  `l` - The list of item numbers.
    #
    public set_selections(l)
       local i, t
@@ -334,7 +346,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Set the current selections to the list l, which is a list of objects
-   # @param l  The list of objects.
+   # :Parameters :
+   # :  `l` - The list of objects.
    #
    public object_set_selections(l)
       local i, t, s
@@ -369,7 +382,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    end
 
    #
-   # Return the contents of the {ScrollArea}
+   # Return the contents of the `ScrollArea`
    #
    public get_contents()
       return self.contents
@@ -384,7 +397,8 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Delete lines from content
-   # @param l the list of lines in ascending order.
+   # :Parameters :
+   # :  `l` - the list of lines in ascending order.
    #
    public delete_lines(l)
       local i, t1, t2
@@ -415,8 +429,9 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    # Set the given lines in the content starting at pos n.  Any elements out
    # of the bounds of the current content are ignored.
-   # @param l the lines
-   # @param n the position
+   # :Parameters :
+   # :  `l` - the lines
+   # :  `n` - the position
    #
    public set_lines(l, n)
       local i
@@ -432,8 +447,9 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Insert lines into content at pos n
-   # @param l the lines
-   # @param n the position
+   # :Parameters :
+   # :  `l` - the lines
+   # :  `n` - the position
    #
    public insert_lines(l, n)
       local i, e, t
@@ -459,8 +475,9 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Move the given list of lines to the given position.
-   # @param l the lines in ascending order
-   # @param n the position
+   # :Parameters :
+   # :  `l` - the lines in ascending order
+   # :  `n` - the position
    #
    public move_lines(l, n)
       local t, s, e, n1, i, tc
@@ -866,20 +883,21 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    # This method is overridden by the subclass to draw the given 
    # line at the given position, as well as the selection drawing.
-   # Alternatively, the simpler method {draw_line_data()} below
+   # Alternatively, the simpler method `draw_line_data()` below
    # can be overridden - this just has to draw the data, and leaves the selection drawing to
    # be done by this class.
    #
-   # @param xp  The x position it should be drawn at
-   # @param yp  The y position it should be drawn at
-   # @param lh  The line height allowed for this line
-   # @param i   The line number to draw
-   # @param sel If non-null, the line must be drawn as selected
-   # @param cur Indicates the cursor for this row; &null indicates none, "f" indicates 
-   # @          focus cursor "d" indicates disabled cursor.
-   # @param hi  Indicates the dnd highlight for this row; &null indicates none, "t" indicates top
-   # @          highlight, "m" indicates middle highlight, "b" indicates bottom highlight.
-   # @param ov  If non-null, the line must be drawn as showing the cursor over the line
+   # :Parameters :
+   # :  `xp` - The x position it should be drawn at
+   # :  `yp` - The y position it should be drawn at
+   # :  `lh` - The line height allowed for this line
+   # :  `i` - The line number to draw
+   # :  `sel` - If non-null, the line must be drawn as selected
+   # :  `cur` - Indicates the cursor for this row; &null indicates none, "f" indicates 
+   #            focus cursor "d" indicates disabled cursor.
+   # :  `hi` - Indicates the dnd highlight for this row; &null indicates none, "t" indicates top
+   #            highlight, "m" indicates middle highlight, "b" indicates bottom highlight.
+   # :  `ov` - If non-null, the line must be drawn as showing the cursor over the line
    #
    public draw_line(xp, yp, lh, i, sel, cur, hi, ov)
       draw_line_data(xp, yp, lh, i)
@@ -914,9 +932,9 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
 
    #
    # Given the highlight is set, return the dnd_mode for that line.
-   # By default just returns {dnd_mode}, but may be overridden to
+   # By default just returns `dnd_mode`, but may be overridden to
    # return different modes for different rows (eg in a Tree, a folder
-   # may allow {MIDDLE_AND_EDGES}, but a leaf {EDGES_ONLY}.
+   # may allow `MIDDLE_AND_EDGES`, but a leaf `EDGES_ONLY`.
    #
    protected get_dnd_mode()
       return dnd_mode

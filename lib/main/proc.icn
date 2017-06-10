@@ -47,10 +47,11 @@ final abstract class Proc()
          return extract_package(get_name(p, &yes))
    end
 
-   # Return the source location of the proc.  For a native method, {flag}
+   # Return the source location of the proc.  For a native method, `flag`
    # indicates whether to return the location of the native method
    # declaration, or to fail.
-   # @return a {Location} instance
+   # :Returns :
+   # :  a `Location` instance
    #
    public static get_location(p, flag)
       local cl, i, prog
@@ -90,11 +91,11 @@ final abstract class Proc()
 
    #
    # Return the kind of this procedure, which is one of the constants :-
-   #  {Procedure} for a procedure or method defined in an icon source file
-   #  {Function} a builtin function like {upto}, or a native method
-   #  {Keyword} a keyword function, obtained via {Prog.get_keyword()}
-   #  {Operator} an operator function, obtained via {Prog.get_operator()}
-   #  {Internal} an internally used block of VM instructions.
+   #  `Procedure` for a procedure or method defined in an icon source file
+   #  `Function` a builtin function like `upto`, or a native method
+   #  `Keyword` a keyword function, obtained via `Prog.get_keyword()`
+   #  `Operator` an operator function, obtained via `Prog.get_operator()`
+   #  `Internal` an internally used block of VM instructions.
    #
    public static native get_kind(p)
 
@@ -122,7 +123,7 @@ final abstract class Proc()
 
    #
    # Return the type of the given local, which is one of the constants
-   # {Argument}, {Dynamic} or {Static}.
+   # `Argument`, `Dynamic` or `Static`.
    #
    public static native get_local_kind(p, id)
 
@@ -137,12 +138,15 @@ final abstract class Proc()
    # searched for a matching procedure or function.  Failing that, the
    # builtin function, operator and keyword tables are searched.
    # 
-   # @param s a name to search for
-   # @param n the arity of an operator
-   # @param ce a coexpression, representing a loaded program, defaults
-   # @ to the main program
-   # @return a procedure
-   # @fail if the name is unknown as a proc
+   # :Parameters :
+   # :  `s` - a name to search for
+   # :  `n` - the arity of an operator
+   # :  `ce` - a coexpression, representing a loaded program, defaults
+   #   to the main program
+   # :Returns :
+   # :  a procedure
+   # :Fails :
+   # :  if the name is unknown as a proc
    #
    public static for_name(s, n, ce)
       return proc(s, n, ce)

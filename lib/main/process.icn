@@ -80,7 +80,7 @@ class Process(HasTask, HasBgProc)
    end
 
    #
-   # Poll the socket for some available data, waiting for {t}
+   # Poll the socket for some available data, waiting for `t`
    # milliseconds.  If data becomes available then return it, else
    # fail.
    #
@@ -95,7 +95,7 @@ class Process(HasTask, HasBgProc)
    end
 
    #
-   # Do a {poll} on the socket.
+   # Do a `poll` on the socket.
    #
    public do_poll(for, timeout)
       return choose_poll([sock, for], timeout)
@@ -126,7 +126,7 @@ class Process(HasTask, HasBgProc)
    end
 
    #
-   # Called by the parent to kill the child.  Then the {close} method is invoked.
+   # Called by the parent to kill the child.  Then the `close` method is invoked.
    #
    public stop()
       \pid | runerr("stop() called out of sequence", self)

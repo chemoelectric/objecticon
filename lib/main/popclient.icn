@@ -13,7 +13,8 @@ class PopClient(NetClient)
 
    #
    # Flag the given message for deletion
-   # @param n the message number
+   # :Parameters :
+   # :  `n` - the message number
    #
    public dele(n)
       send_command("DELE " || n) | fail
@@ -37,7 +38,7 @@ class PopClient(NetClient)
    end
 
    #
-   # Open a connection; should be followed by {login()}
+   # Open a connection; should be followed by `login()`
    #
    public open()
       open_connection() | fail
@@ -76,7 +77,7 @@ class PopClient(NetClient)
    end
 
    #
-   # Retrieve the given message; the result is a {Message} object
+   # Retrieve the given message; the result is a `Message` object
    #
    public retr(n)
       local l, m, s
@@ -95,7 +96,8 @@ class PopClient(NetClient)
    # Return a table of integer to integer mappings, of message numbers
    # to sizes.
    #
-   # @param n optionally return only this message number
+   # :Parameters :
+   # :  `n` - optionally return only this message number
    #
    public list(n)
       local l, r, num, size, s
@@ -131,7 +133,8 @@ class PopClient(NetClient)
    # Return a table of integer to integer mappings, of message numbers
    # to unique ids, using the UIDL command.
    #
-   # @param n optionally return only this message number
+   # :Parameters :
+   # :  `n` - optionally return only this message number
    #
    public uidl(n)
       local l, r, num, id, s

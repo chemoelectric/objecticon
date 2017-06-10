@@ -3,7 +3,7 @@ package gui
 import util
 
 #
-# A column in a {PTable}.
+# A column in a `PTable`.
 #
 abstract class BasePTableColumn()
    public
@@ -32,7 +32,8 @@ abstract class BasePTableColumn()
    #
    # Set the initial width of the column, in pixels.  If this is
    # not provided, then the width will be set automatically.
-   # @param x  The width
+   # :Parameters :
+   # :  `x` - The width
    #
    public set_fixed_width(x)
       self.fixed_width := x
@@ -58,7 +59,8 @@ abstract class BasePTableColumn()
    # column.  This should return an integer if the heights are all the
    # same, or a list containing the different heights for each line.
    #
-   # @param W the cloned window to draw into
+   # :Parameters :
+   # :  `W` - the cloned window to draw into
    #
    public abstract calculate_line_height(W)
 
@@ -67,13 +69,14 @@ abstract class BasePTableColumn()
    #
    # Draw an individual cell for this column.
    #
-   # @param W the cloned window to draw into
-   # @param data the data to draw
-   # @param line the line number of the data
-   # @param col the column number of the data
-   # @param cx the x position of the cell
-   # @param cy the y position of the cell
-   # @param ch the height of the cell
+   # :Parameters :
+   # :  `W` - the cloned window to draw into
+   # :  `data` - the data to draw
+   # :  `line` - the line number of the data
+   # :  `col` - the column number of the data
+   # :  `cx` - the x position of the cell
+   # :  `cy` - the y position of the cell
+   # :  `ch` - the height of the cell
    #
    public abstract draw_cell(W, data, line, col, cx, cy, ch)
 
@@ -92,7 +95,8 @@ class PTableColumn(BasePTableColumn)
 
    #
    # Set the column alignment
-   # @param x A constant from {Align}
+   # :Parameters :
+   # :  `x` - A constant from `Align`
    public set_align(x)
       self.align := x
       return self
@@ -214,7 +218,7 @@ class ItemPaintPTableColumn(BasePTableColumn)
 end
 
 #
-# A {PTable} is like a {Table}, but without headers.  Column widths can also be calculated
+# A `PTable` is like a `Table`, but without headers.  Column widths can also be calculated
 # automatically.
 #
 class PTable(SelectableScrollArea)
@@ -232,9 +236,10 @@ class PTable(SelectableScrollArea)
 
    #
    # Add the given PTableColumn to this PTable.
-   # @param c  The column to add.
-   # @param i  The index to add at; if omitted then the new column
-   # @         is appended to the end.
+   # :Parameters :
+   # :  `c` - The column to add.
+   # :  `i` - The index to add at; if omitted then the new column
+   #           is appended to the end.
    #
    public add_column(c, i)
       /i := 0
@@ -247,7 +252,8 @@ class PTable(SelectableScrollArea)
 
    #
    # Remove a column
-   # @param c  The column to remove.
+   # :Parameters :
+   # :  `c` - The column to remove.
    #
    public remove_column(c)
       remove_column_index(get_column_index(c))
@@ -256,7 +262,8 @@ class PTable(SelectableScrollArea)
 
    #
    # Remove a column
-   # @param i   The index to remove
+   # :Parameters :
+   # :  `i` - The index to remove
    #
    public remove_column_index(i)
       local c

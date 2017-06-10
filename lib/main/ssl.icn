@@ -47,9 +47,11 @@ final class SslStream(Stream, HasUnderlyingStream, NoCopy)
    #
    # Create a new SslStream.
    #
-   # @param other an already connected {SocketStream} over which the connection
+   # :Parameters :
+   # :  `other` - an already connected `SocketStream` over which the connection
    #              will operate
-   # @param host  the name of the host corresponding to the connection
+   # :Parameters :
+   # :  `host` - the name of the host corresponding to the connection
    public new(other, host)
       \LOADED | return error("SSL not supported")
       ptr := new_impl(other, host) | fail

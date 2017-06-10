@@ -89,7 +89,8 @@ class MD5()
 
    #
    # Add some input data to the computation
-   # @param input a string
+   # :Parameters :
+   # :  `input` - a string
    #
    public update(input)
       local block
@@ -254,7 +255,7 @@ class MD5()
 
    #
    # Reset this object, so it may be used for another
-   # computation.  Called by {finally()}.
+   # computation.  Called by `finally()`.
    #
    public reset()
       bit_count := 0

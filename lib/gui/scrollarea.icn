@@ -148,7 +148,7 @@ abstract class ScrollArea(Component)
    #
    # Set the vertical increment, which is the amount moved on a press on
    # the small button; if not set then the subclass's method
-   # {get_default_vertical_increment()} is used for the value.
+   # `get_default_vertical_increment()` is used for the value.
    #
    public set_vertical_increment(n)
       self.vertical_increment := n
@@ -162,7 +162,7 @@ abstract class ScrollArea(Component)
    #
    # Set the horizontal increment, which is the amount moved on a press on
    # the small button; if not set then the subclass's method
-   # {get_default_horizontal_increment()} is used for the value.
+   # `get_default_horizontal_increment()` is used for the value.
    #
    public set_horizontal_increment(n)
       self.horizontal_increment := n

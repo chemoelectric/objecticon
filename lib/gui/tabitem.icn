@@ -9,16 +9,16 @@
 package gui
 
 #
-# This class represents a single pane in a {TabSet}.  {Component}s
-# can be added to the {TabItem} using {Component}'s {add} method.
+# This class represents a single pane in a `TabSet`.  `Component`s
+# can be added to the `TabItem` using `Component`'s `add` method.
 # They are then displayed and accept input when that TabItem
 # is selected.
 #
-# Components added to the {TabItem} are positioned relative to
-# the position and size of the parent {TabSet}.  Therefore for
-# example {set_pos("50%", "50%")} refers to the centre of the
-# {TabSet} rather than the centre of the screen.  The components
-# also inherit any window attributes of the {TabSet}, such as
+# Components added to the `TabItem` are positioned relative to
+# the position and size of the parent `TabSet`.  Therefore for
+# example `set_pos("50%", "50%")` refers to the centre of the
+# `TabSet` rather than the centre of the screen.  The components
+# also inherit any window attributes of the `TabSet`, such as
 # font, colour and so on.
 #
 class TabItem(Component)
@@ -41,7 +41,7 @@ class TabItem(Component)
    end
 
    #
-   # Set the {TabItem}'s label.
+   # Set the `TabItem`'s label.
    #
    public set_label(x)
       set_paint(paint_for_string(x))

@@ -781,10 +781,11 @@ end
 #
 # Convert a string to a list.
 #
-# @param s the string to convert
-# @param sep cset of the separator chars, default ',' - note each separator
-# @      in the string is always one character wide.
-# @param f func to apply to each element before adding to list
+# :Parameters :
+# :  `s` - the string to convert
+# :  `sep` - cset of the separator chars, default ',' - note each separator
+#        in the string is always one character wide.
+# :  `f` - func to apply to each element before adding to list
 #
 procedure str2list(s, sep, f)
    local l, t
@@ -800,9 +801,10 @@ end
 # Convert a list to a string.  Note: to be compatible for re-input to str2list above,
 # the separator must be one character long.
 #
-# @param l the list
-# @param sep the separator char, default ","
-# @param f func to apply to each element before appending to result
+# :Parameters :
+# :  `l` - the list
+# :  `sep` - the separator char, default ","
+# :  `f` - func to apply to each element before appending to result
 #
 procedure list2str(l, sep, f)
    local s, e
@@ -818,8 +820,9 @@ end
 #
 # Convert a string to a list, breaking on lines ending with \n or \r\n.
 #
-# @param s the string to convert
-# @param f func to apply to each element before adding to list
+# :Parameters :
+# :  `s` - the string to convert
+# :  `f` - func to apply to each element before adding to list
 #
 procedure break_lines(s, f)
    local l, t
@@ -834,8 +837,9 @@ end
 # Convert a list to a string, separating elements by the platform's
 # end-of-line character(s).
 #
-# @param l the list
-# @param f func to apply to each element before appending to result
+# :Parameters :
+# :  `l` - the list
+# :  `f` - func to apply to each element before appending to result
 #
 procedure cat_lines(l, f)
    local s, e

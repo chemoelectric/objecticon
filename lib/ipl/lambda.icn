@@ -5,7 +5,7 @@ import util(State, save_state)
 global _a, _l
 
 #
-# Implementation class for {lambda}
+# Implementation class for `lambda`
 #
 package class Lambda()
    private e
@@ -61,7 +61,7 @@ procedure lambda1(e)
    return Lambda(e).call1
 end
 
-# Evaluates coexpression {e}, saving the value of {_a} and {_l}.  This
+# Evaluates coexpression `e`, saving the value of `_a` and `_l`.  This
 # can be necessary if a lambda calls another lambda which exits via an
 # exception or a runtime error.
 #

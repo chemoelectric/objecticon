@@ -4,9 +4,10 @@ import io, util, ipl.tables, ipl.scan, exception
 
 #
 # Convert the object to string, descending structures to the given depth.  See
-# also {ObjectOutputStream}.
+# also `ObjectOutputStream`.
 #
-# @param o       The object to be converted.
+# :Parameters :
+# :  `o` - The object to be converted.
 #
 procedure to_string(o, indent, always_structure, depth, ignore_object_output)
    local sb
@@ -21,10 +22,11 @@ procedure to_string(o, indent, always_structure, depth, ignore_object_output)
 end
 
 #
-# Like {to_string}, but send the output direct to {FileStream.stdout}.  See
-# also {ObjectOutputStream}.
+# Like `to_string`, but send the output direct to `FileStream.stdout`.  See
+# also `ObjectOutputStream`.
 #
-# @param o       The object to be output.
+# :Parameters :
+# :  `o` - The object to be output.
 #
 procedure to_stdout(o, indent, always_structure, depth, ignore_object_output)
    return ObjectOutputStream(FileStream.stdout).
@@ -36,10 +38,11 @@ procedure to_stdout(o, indent, always_structure, depth, ignore_object_output)
 end
 
 #
-# Like {to_string}, but send the output direct to {FileStream.stderr}.  See
-# also {ObjectOutputStream}.
+# Like `to_string`, but send the output direct to `FileStream.stderr`.  See
+# also `ObjectOutputStream`.
 #
-# @param o       The object to be output.
+# :Parameters :
+# :  `o` - The object to be output.
 #
 procedure to_stderr(o, indent, always_structure, depth, ignore_object_output)
    return ObjectOutputStream(FileStream.stderr).
@@ -91,11 +94,11 @@ end
 #
 # Note that most of the public methods in this class are intended for
 # use by other classes which implement custom output (by having an
-# {object_output} method).  Only the setter and {show} methods should
+# `object_output` method).  Only the setter and `show` methods should
 # be used by a client.
 #
-# For simpler procedure interfaces to this class, see {to_string},
-# {to_stdout} and {to_stderr}.
+# For simpler procedure interfaces to this class, see `to_string`,
+# `to_stdout` and `to_stderr`.
 #
 class ObjectOutputStream(Stream, HasUnderlyingStream)
    private readable
@@ -485,7 +488,7 @@ class ObjectOutputStream(Stream, HasUnderlyingStream)
       return self
    end
 
-   # If set, then any custom {object_output} methods in objects are
+   # If set, then any custom `object_output` methods in objects are
    # ignored, and the default object output format is used instead.
    #
    public set_ignore_object_output(s)
@@ -597,7 +600,7 @@ procedure clone(o, seen)
 end
 
 #
-# Return a hash code for this object.  For any two objects for which {equals} indicates
+# Return a hash code for this object.  For any two objects for which `equals` indicates
 # equality, the returned hash code should be the same.
 #
 procedure hash(x, depth)
@@ -765,22 +768,22 @@ end
 final abstract class Internal()
    #
    # This method gives access to the internal ordering method used by
-   # the interpreter, for example in the builtin {sort} function.  The
-   # two values are compared and either {-1}, {0}, or {+1} is returned
-   # depending on whether {x} is less than, equal to, or greater than
-   # {y}, respectively.
+   # the interpreter, for example in the builtin `sort` function.  The
+   # two values are compared and either `-1`, `0`, or `+1` is returned
+   # depending on whether `x` is less than, equal to, or greater than
+   # `y`, respectively.
    #
    public static native compare(x, y)
 
    #
    # This method gives access to the internal hash method used
    # by the interpreter, for example in implementing tables and sets.
-   # It is distinct from the {lang.hash()} procedure.
+   # It is distinct from the `lang.hash()` procedure.
    #
    public static native hash(x)
 
    #
-   # Return the collating order number for {x}, which is a small integer
+   # Return the collating order number for `x`, which is a small integer
    # dependent on the type.
    #
    public static native order(x)

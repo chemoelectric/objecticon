@@ -50,7 +50,7 @@ end
 
 #
 # This class allows an arbitrary Component to be placed within 
-# the ScrollArea.  The component is set with the {set_inner()}
+# the ScrollArea.  The component is set with the `set_inner()`
 # method.
 #
 class ComponentScrollArea(ScrollArea)
@@ -62,12 +62,12 @@ class ComponentScrollArea(ScrollArea)
       return self
    end
 
-   # This resets the layouts when the view's {size_inner} is called by
-   # {layout}.  This is useful if some of the inner components alter
+   # This resets the layouts when the view's `size_inner` is called by
+   # `layout`.  This is useful if some of the inner components alter
    # their preferred size when the surrounding component's size
-   # changes (eg {TextDisplay} with "width" line splitting).  By
+   # changes (eg `TextDisplay` with "width" line splitting).  By
    # resetting the layout, the preferred widths are recalculated
-   # before {inner} is laid out.
+   # before `inner` is laid out.
    #
    public set_reset_layouts_on_size_inner(s)
       self.reset_layouts_on_size_inner_flag := check_flag(s)

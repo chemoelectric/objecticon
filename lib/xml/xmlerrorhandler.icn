@@ -43,7 +43,8 @@ class XmlErrorHandler()
 
    #
    # Connect the error handler to the given parser.
-   # @param p An {XmlParser} instance.
+   # :Parameters :
+   # :  `p` - An `XmlParser` instance.
    #
    public connect(p)
       p.connect(self.warning, XmlParser.WARNING_EVENT)

@@ -2,7 +2,7 @@ package lang
 
 # In the methods below, the term "program" refers to the main
 # co-expression of either the root program, or a program loaded via
-# {Prog.load} below.   The parameters named {P} are always programs
+# `Prog.load` below.   The parameters named `P` are always programs
 # and default to the currently executing program if omitted.
 #
 final abstract class Prog()
@@ -21,7 +21,7 @@ final abstract class Prog()
       Readable := 4
    end
 
-   # Load and return a program from file {s}.
+   # Load and return a program from file `s`.
    #
    public static native load(s, arglist, blocksize, stringsize)
 
@@ -32,25 +32,29 @@ final abstract class Prog()
 
    #
    # Return the name of the given global.
-   # @param q either a global name or number
+   # :Parameters :
+   # :  `q` - either a global name or number
    #
    public static native get_global_name(q, P)
 
    #
    # Return the index number of the given global.
-   # @param q either a global name or number
+   # :Parameters :
+   # :  `q` - either a global name or number
    #
    public static native get_global_index(q, P)
 
    #
    # Return an integer flag value giving info about the global.
-   # @param q either a global name or number
+   # :Parameters :
+   # :  `q` - either a global name or number
    #
    public static native get_global_flags(q, P)
 
    #
-   # Get the global named {s} in program P
-   # @param q either a global name or number
+   # Get the global named `s` in program P
+   # :Parameters :
+   # :  `q` - either a global name or number
    #
    public static get_global(q, P)
       local i
@@ -63,7 +67,8 @@ final abstract class Prog()
 
    #
    # Get the global in program P, restricting results to named (constant) globals.
-   # @param q either a global name or number
+   # :Parameters :
+   # :  `q` - either a global name or number
    #
    public static get_named_global(q, P)
       local i
@@ -97,27 +102,29 @@ final abstract class Prog()
    public static native get_keywords()
 
    #
-   # Get the builtin function named {s}, or fail if it doesn't exist.
+   # Get the builtin function named `s`, or fail if it doesn't exist.
    #
    public static native get_function(s)
 
    #
-   # Get the builtin operator named {s}, with arity {n}, or fail if
+   # Get the builtin operator named `s`, with arity `n`, or fail if
    # it doesn't exist.
    #
    public static native get_operator(s, n)
 
    #
-   # Get the builtin keyword named {s} (as an invocable function), or fail
+   # Get the builtin keyword named `s` (as an invocable function), or fail
    # if it doesn't exist.
    #
    public static native get_keyword(s)
 
    #
-   # Get the location of global {s} in program P, if that data is
+   # Get the location of global `s` in program P, if that data is
    # available.
-   # @param q either a global name or number
-   # @return a {Location} instance
+   # :Parameters :
+   # :  `q` - either a global name or number
+   # :Returns :
+   # :  a `Location` instance
    #
    public static get_global_location(q, P)
       return Location!get_global_location_impl(q, P)
@@ -126,7 +133,7 @@ final abstract class Prog()
    private static native get_global_location_impl(q, P)
 
    #
-   # Return the value of the keyword {s} in program P.
+   # Return the value of the keyword `s` in program P.
    #
    public static native eval_keyword(s, P)
 
@@ -204,7 +211,8 @@ final abstract class Prog()
 
    #
    # Return info about the collections in the given program.
-   # @return a {CollectionInfo} object
+   # :Returns :
+   # :  a `CollectionInfo` object
    #
    public static get_collection_info(P)
       return CollectionInfo!get_collection_info_impl(P)
@@ -220,7 +228,8 @@ final abstract class Prog()
 
    #
    # Return info about the allocations in the given program.
-   # @return a {AllocationInfo} object
+   # :Returns :
+   # :  a `AllocationInfo` object
    #
    public static get_allocation_info(P)
       return AllocationInfo!get_allocation_info_impl(P)
@@ -230,7 +239,8 @@ final abstract class Prog()
 
    #
    # Return info about the memory regions in the given program.
-   # @return a {RegionInfo} object
+   # :Returns :
+   # :  a `RegionInfo` object
    #
    public static get_region_info(P)
       local t, l, m
@@ -248,7 +258,8 @@ final abstract class Prog()
    # Return the amount of stack (stack frames and local variables)
    # currently allocated by the given program.
    #
-   # @return an integer
+   # :Returns :
+   # :  an integer
    #
    public static native get_stack_used(P)
 end
@@ -259,10 +270,11 @@ end
 class Coexpression()
    #
    # Return the given coexpression's activator (ie the value of
-   # {&source} when it was last active); fails if the coexpression has
+   # `&source` when it was last active); fails if the coexpression has
    # never been activated.
    #
-   # @param ce - the coexpression, by default &current
+   # :Parameters :
+   # :  `ce` - the coexpression, by default &current
    #
    public static native get_activator(ce)
 
@@ -270,7 +282,8 @@ class Coexpression()
    # Return the program holding the current execution point
    # of the given co-expression.
    #
-   # @param ce - the coexpression, by default &current
+   # :Parameters :
+   # :  `ce` - the coexpression, by default &current
    #
    public static native get_program(ce)
 
@@ -278,7 +291,8 @@ class Coexpression()
    # Succeed iff this coexpression is the main coexpression of a
    # program.
    #
-   # @param ce - the coexpression, by default &current
+   # :Parameters :
+   # :  `ce` - the coexpression, by default &current
    #
    public static native is_main(ce)
 
@@ -286,7 +300,8 @@ class Coexpression()
    # Return the current procedure depth level of the given
    # coexpression (ie the value of &level for that coexpression).
    #
-   # @param ce - the coexpression, by default &current
+   # :Parameters :
+   # :  `ce` - the coexpression, by default &current
    #
    public static native get_level(ce)
 
@@ -294,8 +309,9 @@ class Coexpression()
    # Output (to stderr) a traceback in the same format as that produced by
    # a runtime error.
    #
-   # @param ce - the coexpression, by default &current
-   # @param act_chain - if non-null, show the traceback for the activator chain, otherwise
+   # :Parameters :
+   # :  `ce` - the coexpression, by default &current
+   # :  `act_chain` - if non-null, show the traceback for the activator chain, otherwise
    #            just show the traceback for this coexpression.
    #
    public static native traceback(ce, act_chain)
@@ -308,11 +324,12 @@ class Coexpression()
 
    #
    # Return a list containing information about the stack of frames in the given
-   # co-expression.  Each element is a {FrameInfo} instance.
+   # co-expression.  Each element is a `FrameInfo` instance.
    #
-   # @param ce - the coexpression, by default &current
-   # @param lim - the maximum number of frames to put in the list, by default 
-   # @            all frames
+   # :Parameters :
+   # :  `ce` - the coexpression, by default &current
+   # :  `lim` - the maximum number of frames to put in the list, by default 
+   #              all frames
    #
    public static get_stack_info(ce, lim)
       local l
@@ -353,7 +370,7 @@ end
 #
 class CollectionInfo()
    public const
-      # The number of collections requested by the {collect()} function.
+      # The number of collections requested by the `collect()` function.
       user_requests, 
       # The number of collections requested during stack allocations.
       stack_requests, 
@@ -409,21 +426,21 @@ end
 #
 class RegionInfo()
    public const
-      # A list of {Region} instances, one for each string region
+      # A list of `Region` instances, one for each string region
       # allocated.
       string_regions, 
-      # A list of {Region} instances, one for each block region
+      # A list of `Region` instances, one for each block region
       # allocated.
       block_regions
 
-   # Return a {Region} instance representing the sum of all the string
+   # Return a `Region` instance representing the sum of all the string
    # regions.
    #
    public get_string_total()
       return Region.sum_list(string_regions)
    end
 
-   # Return a {Region} instance representing the sum of all the block
+   # Return a `Region` instance representing the sum of all the block
    # regions.
    #
    public get_block_total()
@@ -453,7 +470,7 @@ class Region()
       current
 
    #
-   # Add up the elements in a list of {Region}s.
+   # Add up the elements in a list of `Region`s.
    #
    public static sum_list(l)
       local x, y

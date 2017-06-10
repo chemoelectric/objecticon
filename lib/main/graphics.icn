@@ -1104,15 +1104,17 @@ final class Window(NoCopy, ObjectOutput)
    public native request_selection(selection, target_type)
 
    # Define a custom pointer.  The contents of this window provide the source image.
-   # @param name the name of the pointer
-   # @param x the x hotpoint
-   # @param y the y hotpoint
+   # :Parameters :
+   # :  `name` - the name of the pointer
+   # :  `x` - the x hotpoint
+   # :  `y` - the y hotpoint
    #
    public native define_pointer(name, x, y)
 
    # Make the destination pointer be the same as the src.
-   # @param dest the destination name, which need not currently be defined
-   # @param src the current name.
+   # :Parameters :
+   # :  `dest` - the destination name, which need not currently be defined
+   # :  `src` - the current name.
    #
    public native copy_pointer(dest, src)
 
@@ -1171,7 +1173,8 @@ final class Window(NoCopy, ObjectOutput)
 
    # Convenient method to open an image and return a hidden window with
    # its contents.
-   # @param img the image
+   # :Parameters :
+   # :  `img` - the image
    #
    public static open_image(img)
       local w

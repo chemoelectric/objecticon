@@ -9,14 +9,14 @@
 package gui
 
 #
-# This class provides one column within a {Table}, which
+# This class provides one column within a `Table`, which
 # displays a table of data.  A column has a label with a
 # button which produces an event when clicked.  The column may
 # be expanded or contracted by dragging the right edge of the
 # button.
 #
-# The label is set by calling the {set_label(x)} method of the
-# parent class, {TextButton}.
+# The label is set by calling the `set_label(x)` method of the
+# parent class, `TextButton`.
 # 
 abstract class BaseTableColumn(TextButton)
    public 
@@ -76,7 +76,8 @@ abstract class BaseTableColumn(TextButton)
    # Set the initial width of the column, in pixels.  If this is
    # not provided, then the width will be set automatically to
    # use up any available free space.
-   # @param x  The width
+   # :Parameters :
+   # :  `x` - The width
    #
    public set_column_width(x)
       self.column_width := x
@@ -85,7 +86,8 @@ abstract class BaseTableColumn(TextButton)
 
    #
    # Set the column alignment
-   # @param x A constant from {Align}
+   # :Parameters :
+   # :  `x` - A constant from `Align`
    public set_column_align(x)
       self.border.x_align := x
       return self
@@ -146,12 +148,13 @@ abstract class BaseTableColumn(TextButton)
    #
    # Draw an individual cell for this column.
    #
-   # @param W the cloned window to draw into
-   # @param data the data to draw
-   # @param line the line number of the data
-   # @param col the column number of the data
-   # @param cy the y position of the cell
-   # @param ch the height of the cell
+   # :Parameters :
+   # :  `W` - the cloned window to draw into
+   # :  `data` - the data to draw
+   # :  `line` - the line number of the data
+   # :  `col` - the column number of the data
+   # :  `cy` - the y position of the cell
+   # :  `ch` - the height of the cell
    #
    public abstract draw_cell(W, data, line, col, cy, ch)
 
@@ -159,7 +162,8 @@ abstract class BaseTableColumn(TextButton)
    # Return the desired height of the lines for the cells in this column.  This should
    # return an integer if the heights are all the same, or a list containing the different
    # heights for each line.
-   # @param W the cloned window to draw into
+   # :Parameters :
+   # :  `W` - the cloned window to draw into
    #
    public abstract calculate_line_height(W)
 

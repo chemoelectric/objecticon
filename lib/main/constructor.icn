@@ -26,43 +26,53 @@ final abstract class Constructor()
    end
 
    # Return the source location of the constructor
-   # @return a {Location} instance
+   # :Returns :
+   # :  a `Location` instance
    #
    public static get_location(c)
       return Prog.get_global_location(get_name(c), get_program(c))
    end
 
-   # Generate the field names of the constructor {c}.
+   # Generate the field names of the constructor `c`.
    #
    public static get_field_names(c)
       suspend get_field_name(c, 1 to get_n_fields(c))
    end
 
-   # Return the number of fields in the constructor {c}.
+   # Return the number of fields in the constructor `c`.
    #
    public static native get_n_fields(c)
 
-   # Return the field index number of the given field in constructor{c}.
-   # @param c the constructor
-   # @param field either a field name or number
-   # @return an integer, being the index
-   # @fail if the field is unknown
+   # Return the field index number of the given field in constructor`c`.
+   # :Parameters :
+   # :  `c` - the constructor
+   # :  `field` - either a field name or number
+   # :Returns :
+   # :  an integer, being the index
+   # :Fails :
+   # :  if the field is unknown
    #
    public static native get_field_index(c, field)
 
-   # Return the field name of the given field in constructor{c}.
-   # @param c the constructor
-   # @param field either a field name or number
-   # @return the field name
-   # @fail if the field is unknown
+   # Return the field name of the given field in constructor`c`.
+   # :Parameters :
+   # :  `c` - the constructor
+   # :  `field` - either a field name or number
+   # :Returns :
+   # :  the field name
+   # :Fails :
+   # :  if the field is unknown
    #
    public static native get_field_name(c, field)
 
-   # Return the source location of the given field in constructor{c}.
-   # @param c the constructor
-   # @param field either a field name or number
-   # @return a {Location} instance
-   # @fail if the field is unknown
+   # Return the source location of the given field in constructor`c`.
+   # :Parameters :
+   # :  `c` - the constructor
+   # :  `field` - either a field name or number
+   # :Returns :
+   # :  a `Location` instance
+   # :Fails :
+   # :  if the field is unknown
    #
    public static get_field_location(c, field)
       return Location!get_field_location_impl(c, field)
@@ -72,11 +82,14 @@ final abstract class Constructor()
 
    # Lookup a constructor by name
    # 
-   # @param s a constructor name
-   # @param ce a coexpression, representing a loaded program, defaults
-   # @ to the main program
-   # @return a constructor
-   # @fail if the constructor is unknown
+   # :Parameters :
+   # :  `s` - a constructor name
+   # :  `ce` - a coexpression, representing a loaded program, defaults
+   #   to the main program
+   # :Returns :
+   # :  a constructor
+   # :Fails :
+   # :  if the constructor is unknown
    #
    public static for_name(s, ce)
       local t

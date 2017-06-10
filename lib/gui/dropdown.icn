@@ -160,8 +160,8 @@ abstract class DropDown(Component, MenuMode)
    end
 
    #
-   # Set the direction to pop-up in.  Options are {Direction.UP}, {Direction.DOWN} or
-   # {Direction.BEST} (the default).
+   # Set the direction to pop-up in.  Options are `Direction.UP`, `Direction.DOWN` or
+   # `Direction.BEST` (the default).
    #
    public set_direction(s)
       self.direction := s
@@ -284,7 +284,7 @@ abstract class DropDown(Component, MenuMode)
 end
 
 #
-# This class is just a superclass of {List} and {EditList}.
+# This class is just a superclass of `List` and `EditList`.
 #
 abstract class SelectionDropDown(SelectionList, DropDown)
    public 

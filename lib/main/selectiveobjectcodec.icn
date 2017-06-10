@@ -14,8 +14,8 @@ package record ClassInfo(template_els, fnum_map)
 package record TemplateElement(ident, fnum)
 
 #
-# An implementation of {object_encode} and {object_decode}.  The
-# subclass may override the method {get_template()} to generate
+# An implementation of `object_encode` and `object_decode`.  The
+# subclass may override the method `get_template()` to generate
 # a list of pairs.  The first element of each pair is an arbitrary
 # identifier used to identify the field; the second element is the
 # name of the field.
@@ -33,15 +33,15 @@ package record TemplateElement(ident, fnum)
 # ~
 #
 # The programmer may change the name of the field afterwards; for
-# example {value} may be re-named {initial_value}, and the data would
-# still be restored correctly, so long as the {get_template()} method
+# example `value` may be re-named `initial_value`, and the data would
+# still be restored correctly, so long as the `get_template()` method
 # was updated appropriately.
 #
 # Alternatively, any of the pairs may be a string field name, in which
 # the label is the field name itself.  This does not permit the field
 # name to change without rendering the encoded string invalid.
 #
-# If not implemented by a subclass, a default {get_template()}
+# If not implemented by a subclass, a default `get_template()`
 # suspends all of the fields in the class.
 #
 class SelectiveObjectCodec(ObjectCodec)

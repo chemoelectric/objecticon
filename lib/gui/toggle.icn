@@ -21,8 +21,9 @@ abstract class Toggle()
       is_checked_flag
 
    #
-   # Set the parent {CheckBoxGroup}.
-   # @param x   The parent {CheckBoxGroup}.
+   # Set the parent `CheckBoxGroup`.
+   # :Parameters :
+   # :  `x` - The parent `CheckBoxGroup`.
    #
    public set_parent_check_box_group(x)
       self.parent_check_box_group := x
@@ -45,8 +46,8 @@ abstract class Toggle()
    end
 
    #
-   # Return the status of the object; {&yes} if the object is checked,
-   # {&null} otherwise.
+   # Return the status of the object; `&yes` if the object is checked,
+   # `&null` otherwise.
    #
    public get_status()
       return self.is_checked_flag

@@ -213,10 +213,11 @@ $endif
 
    #
    # Make a temporary filename.
-   # @param prefix, by default empty
-   # @param suffix, by default empty
-   # @param path, the directory, by default {get_temp()}
-   # @param len, the number of digits in the result, default 8
+   # :Parameters :
+   # :  `prefix` - by default empty
+   # :  `suffix` - by default empty
+   # :  `path` - the directory, by default `get_temp()`
+   # :  `len` - the number of digits in the result, default 8
    #
    public static make_temp_filename(prefix, suffix, path, len)
       local p, name
@@ -277,8 +278,9 @@ $endif
    # fails, try to copy the file then delete the original, or if that
    # fails, fail.
    #
-   # @param s1 the source filename
-   # @param s2 the target filename
+   # :Parameters :
+   # :  `s1` - the source filename
+   # :  `s2` - the target filename
    #
    public static move(s1, s2)
       if rename(s1, s2) then
@@ -290,31 +292,35 @@ $endif
    #
    # Rename a file.
    #
-   # @param s1 the source filename
-   # @param s2 the target filename
+   # :Parameters :
+   # :  `s1` - the source filename
+   # :  `s2` - the target filename
    #
    public static native rename(s1, s2)
 
    #
    # Create a (hard) link to a file.
    #
-   # @param s1 the source filename
-   # @param s2 the target filename
+   # :Parameters :
+   # :  `s1` - the source filename
+   # :  `s2` - the target filename
    #
    public static native hardlink(s1, s2)
 
    #
    # Create a symlink to a file.
    #
-   # @param s1 the source filename
-   # @param s2 the target filename
+   # :Parameters :
+   # :  `s1` - the source filename
+   # :  `s2` - the target filename
    #
    public static native symlink(s1, s2)
 
    #
    # Read a symbolic link
    #
-   # @param s the source filename
+   # :Parameters :
+   # :  `s` - the source filename
    #
    public static native readlink(s)
 
@@ -322,14 +328,16 @@ $endif
    # Return the canonicalized absolute pathname as produced by the
    # POSIX realpath function.
    #
-   # @param s a filename
+   # :Parameters :
+   # :  `s` - a filename
    #
    public static native realpath(s)
 
    #
    # Changes the current directory to that specified in s.
    #
-   # @param s the directory
+   # :Parameters :
+   # :  `s` - the directory
    #
    public static native chdir(s)
 
@@ -341,38 +349,44 @@ $endif
    #
    # Remove a regular file
    #
-   # @param s the file
+   # :Parameters :
+   # :  `s` - the file
    #
    public static native remove(s)
 
    #
    # Remove an empty directory
    #
-   # @param s the empty directory
+   # :Parameters :
+   # :  `s` - the empty directory
    #
    public static native rmdir(s)
 
    #
    # Make a new directory
    #
-   # @param s the directory path
-   # @param perm the permission bits, defaults to rwxr-xr-x
+   # :Parameters :
+   # :  `s` - the directory path
+   # :  `perm` - the permission bits, defaults to rwxr-xr-x
    #
    public static native mkdir(s, perm)
 
    #
-   # Truncate the given file to {len} bytes.
+   # Truncate the given file to `len` bytes.
    #
-   # @param s1 the source filename
-   # @param len the desired length
+   # :Parameters :
+   # :  `s1` - the source filename
+   # :  `len` - the desired length
    #
    public static native truncate(s, len)
 
    #
    # Obtain information about the given file
    #
-   # @param s the file
-   # @return a {Stat} object
+   # :Parameters :
+   # :  `s` - the file
+   # :Returns :
+   # :  a `Stat` object
    #
    public static stat(s)
       return Stat!stat_impl(s)
@@ -384,8 +398,10 @@ $endif
    # Obtain information about the given file without following
    # symlinks.
    #
-   # @param s the file
-   # @return a {Stat} object
+   # :Parameters :
+   # :  `s` - the file
+   # :Returns :
+   # :  a `Stat` object
    #
    public static lstat(s)
       return Stat!lstat_impl(s)
@@ -395,14 +411,15 @@ $endif
 
    #
    # Write selected attributes about a file.  If any of the parameters
-   # are {&null}, they are left unchanged.
+   # are `&null`, they are left unchanged.
    #
-   # @param s the file
-   # @param mode the mode (an integer)
-   # @param uid the owner id
-   # @param gid the group id
-   # @param atime the access time (an integer)
-   # @param mtime the modification time (an integer)
+   # :Parameters :
+   # :  `s` - the file
+   # :  `mode` - the mode (an integer)
+   # :  `uid` - the owner id
+   # :  `gid` - the group id
+   # :  `atime` - the access time (an integer)
+   # :  `mtime` - the modification time (an integer)
    #
    public static native wstat(s, mode, uid, gid, atime, mtime)
 
@@ -413,8 +430,9 @@ $endif
 
    #
    # Copy a file.
-   # @param s1 the source filename
-   # @param s2 the target filename
+   # :Parameters :
+   # :  `s1` - the source filename
+   # :  `s2` - the target filename
    #
    public static copy(s1, s2)
       local f1, f2
@@ -428,9 +446,10 @@ $endif
    end
 
    #
-   # Append file {s1} onto {s2}.
-   # @param s1 the source filename
-   # @param s2 the target filename
+   # Append file `s1` onto `s2`.
+   # :Parameters :
+   # :  `s1` - the source filename
+   # :  `s2` - the target filename
    #
    public static append(s1, s2)
       local f1, f2
@@ -476,10 +495,11 @@ $endif
    # It follows the same logic as the C function pathfind() in
    # mlocal.c
    #
-   # @param f the file to look for
-   # @param n the name of the environment variable holding the path
-   # @param cd the current directory; if &null then the "real" cd
-   # @param mode the access mode to check for; by default {Access.F_OK}
+   # :Parameters :
+   # :  `f` - the file to look for
+   # :  `n` - the name of the environment variable holding the path
+   # :  `cd` - the current directory; if &null then the "real" cd
+   # :  `mode` - the access mode to check for; by default `Access.F_OK`
    #
    public static path_find(f, n, cd, mode)
       local p, s
@@ -523,9 +543,10 @@ $endif
    # but a little more strict.  In particular, the cd isn't tried before
    # the directories on $PATH.
    #
-   # @param n the name of the environment variable holding the path,
-   # @        by default "PATH"
-   # @param mode the access mode to check for; by default {Access.X_OK}
+   # :Parameters :
+   # :  `n` - the name of the environment variable holding the path,
+   #          by default "PATH"
+   # :  `mode` - the access mode to check for; by default `Access.X_OK`
    public static find_exe(f, n, mode)
       local p, s, path
 
@@ -611,7 +632,7 @@ end
 
 #
 # This class provides implementations of some of the methods in
-# {Files} and {FilePath}.  It is not used directly by clients.
+# `Files` and `FilePath`.  It is not used directly by clients.
 #
 package abstract class FileSystem()
    public abstract get_path_list(s)
@@ -662,7 +683,7 @@ class FilePath(ObjectOutput)
    end
 
    #
-   # Return the {i}th element in the path.
+   # Return the `i`th element in the path.
    #
    public get(i)
       return .l[i]
@@ -725,7 +746,7 @@ class FilePath(ObjectOutput)
 
    #
    # Return the child path, ie a path with the same elements plus the
-   # element {s}.
+   # element `s`.
    #
    public child(s)
       return from_list(l ||| [s])
@@ -733,7 +754,7 @@ class FilePath(ObjectOutput)
 
    #
    # Return the sibling path, ie a path with the same elements, except the
-   # last one, which is replaced by {s}.  Fails if the path has no elements.
+   # last one, which is replaced by `s`.  Fails if the path has no elements.
    #
    public sibling(s)
       local t
@@ -806,7 +827,7 @@ class FilePath(ObjectOutput)
    end
 
    #
-   # Return another {FilePath} with the same elements, but as ucs
+   # Return another `FilePath` with the same elements, but as ucs
    # strings.  Fails if any part cannot be converted to ucs.
    #
    public ucs_path()

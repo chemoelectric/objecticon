@@ -11,9 +11,9 @@ package gui
 import graphics
 
 #
-# This is similar to {MenuBar}, but holds just a single
+# This is similar to `MenuBar`, but holds just a single
 # drop-down menu, rather than several.  It may be placed anywhere on
-# the dialog, whereas a {MenuBar} would invariably be placed along the top.
+# the dialog, whereas a `MenuBar` would invariably be placed along the top.
 #
 class MenuButton(Component, BorderWhilstEntered, MenuSystem)
    public 
@@ -22,7 +22,8 @@ class MenuButton(Component, BorderWhilstEntered, MenuSystem)
 
    #
    # Set the menu to be displayed when the component is clicked.
-   # @param c   The {Menu}.
+   # :Parameters :
+   # :  `c` - The `Menu`.
    #
    public set_menu(c)
       (\self.menu).set_component_link(&null)

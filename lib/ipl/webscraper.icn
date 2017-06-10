@@ -107,7 +107,8 @@ class WebScraper()
 
    #
    # Create a new instance using the given template.
-   # @param data the template, either string or ucs.
+   # :Parameters :
+   # :  `data` - the template, either string or ucs.
    #
    public new(data)
       local d, n, s, i, anchors, ak, sk
@@ -245,9 +246,10 @@ class WebScraper()
    # scrape directive was a tag attribute, or part of a text content
    # in the template.
    #
-   # @param d An `HtmlDocument`.
-   # @param id The particular scrape id, corresponding to one of the
-   # @         ids in the template.
+   # :Parameters :
+   # :  `d` - An `HtmlDocument`.
+   # :  `id` - The particular scrape id, corresponding to one of the
+   #           ids in the template.
    public lookup(d, id)
       local l, n, e
 
@@ -303,7 +305,8 @@ class WebScraper()
 
    #
    # Return an instance with template in the given file.
-   # @param fn the filename.
+   # :Parameters :
+   # :  `fn` - the filename.
    #
    public static from_file(fn)
       return WebScraper(Files.file_to_string(fn))
@@ -311,7 +314,8 @@ class WebScraper()
  
    # Return an instance with template in the given file, which is
    # first converted to a ucs string.
-   # @param fn the filename.
+   # :Parameters :
+   # :  `fn` - the filename.
    #
    public static from_ucs_file(fn)
       local s

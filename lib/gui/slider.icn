@@ -12,7 +12,7 @@ import lang, graphics, util
 
 #
 # Component representing the slider area
-# @p
+#
 class SliderArea(Component)
    public 
       inner_x, 
@@ -119,7 +119,8 @@ class Slider(Component, HasOrientation)
 
    #
    # Set the increment_size to increment on a click in the slider area; default is 1.
-   # @param x   The increment_size
+   # :Parameters :
+   # :  `x` - The increment_size
    #
    public set_increment_size(x)
       self.increment_size := x
@@ -172,7 +173,8 @@ class Slider(Component, HasOrientation)
 
    #
    # Get the value.
-   # @return The value
+   # :Returns :
+   # :  The value
    #
    public get_value()
       return self.value
@@ -220,8 +222,9 @@ class Slider(Component, HasOrientation)
    # Set the range of the slider.  The values may
    # be integer or real.
    #
-   # @param lo  The lower bound
-   # @param hi  The upper bound
+   # :Parameters :
+   # :  `lo` - The lower bound
+   # :  `hi` - The upper bound
    #
    public set_range(lo, hi)
       if self.lo ~=== lo | self.hi ~=== hi then {

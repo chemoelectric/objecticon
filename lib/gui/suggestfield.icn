@@ -14,7 +14,7 @@ class Conversion()
    end
 end
 
-# This class is a {TextField} which provides suggested completions in
+# This class is a `TextField` which provides suggested completions in
 # a popup list based on partial input.
 #
 abstract class SuggestField(TextField, MenuMode)
@@ -37,8 +37,8 @@ abstract class SuggestField(TextField, MenuMode)
       list_data
 
    #
-   # Set the direction to pop-up in.  Options are {Direction.UP}, {Direction.DOWN} or
-   # {Direction.BEST} (the default).
+   # Set the direction to pop-up in.  Options are `Direction.UP`, `Direction.DOWN` or
+   # `Direction.BEST` (the default).
    #
    public set_direction(s)
       self.direction := s
@@ -144,9 +144,9 @@ abstract class SuggestField(TextField, MenuMode)
    protected abort_request()
    end
 
-   # This is invoked whilst {do_request} is not in progress to allow
-   # any resources which remain open between {do_request} calls to be
-   # closed.  Note that {do_request} may later be invoked again.
+   # This is invoked whilst `do_request` is not in progress to allow
+   # any resources which remain open between `do_request` calls to be
+   # closed.  Note that `do_request` may later be invoked again.
    #
    protected close_request()
    end

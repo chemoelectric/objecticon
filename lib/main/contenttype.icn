@@ -48,15 +48,17 @@ class ContentType()
    #
    # Get the parameter for the given key.
    #
-   # @param key the key
+   # :Parameters :
+   # :  `key` - the key
    public get_parameter(key)
       return parameters.member(key)
    end
 
    #
    # Set the parameter to the given value
-   # @param key the key
-   # @param value the value
+   # :Parameters :
+   # :  `key` - the key
+   # :  `value` - the value
    #
    public set_parameter(key, value)
       parameters.insert(key, value)

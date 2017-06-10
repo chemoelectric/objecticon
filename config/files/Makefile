@@ -38,7 +38,7 @@ PACKAGE_BUGREPORT=@PACKAGE_BUGREPORT@
 libref :
 	rm -rf libref
 	mkdir libref
-	oidoc -html -d -o libref -a
+	oidoc -d -o libref -a
 
 T=$(PACKAGE_TARNAME)-$(PACKAGE_VERSION)
 tar :

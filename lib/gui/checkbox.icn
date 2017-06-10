@@ -17,7 +17,7 @@ package gui
 #
 # The size will also default if not specified.  The methods
 # used to control the images, label and check the status are
-# inherited from the superclasses {Button} and {Toggle}.
+# inherited from the superclasses `Button` and `Toggle`.
 #
 # Example :-
 # ~
@@ -35,10 +35,11 @@ class CheckBox(Button)
       paint
 
    #
-   # Set the up/down icons to the given (distinct) {Paint} instances.
+   # Set the up/down icons to the given (distinct) `Paint` instances.
    # The two images must have the same dimensions.
-   # @param x   The up image
-   # @param y   The down image
+   # :Parameters :
+   # :  `x` - The up image
+   # :  `y` - The down image
    #
    public set_box_paint(x, y)
       if is_initialized() then {
@@ -60,7 +61,8 @@ class CheckBox(Button)
 
    #
    # Set the label.
-   # @param x   The label.
+   # :Parameters :
+   # :  `x` - The label.
    #
    public set_label(x)
       return set_paint(paint_for_string(x))

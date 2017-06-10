@@ -14,7 +14,7 @@ import graphics, ipl.lists
 # This class is the base from which menu systems are created,
 # other than popup menus.
 #
-# Menus are added to the menu bar with the {add()} method.
+# Menus are added to the menu bar with the `add()` method.
 #
 class MenuBar(Component, MenuSystem)
    public 
@@ -27,12 +27,14 @@ class MenuBar(Component, MenuSystem)
    end
 
    #
-   # Add the {Menu} c to the {MenuBar}.  This will be one drop down
-   # menu.  Items are then added to the {Menu}.
-   # @param c  The {Menu} to add.
-   # @param i   The index to add at; if omitted then the new component
-   # @          is appended to the end.
-   # @fail      If i is out of range
+   # Add the `Menu` c to the `MenuBar`.  This will be one drop down
+   # menu.  Items are then added to the `Menu`.
+   # :Parameters :
+   # :  `c` - The `Menu` to add.
+   # :  `i` - The index to add at; if omitted then the new component
+   #            is appended to the end.
+   # :Fails :
+   # :  If i is out of range
    #
    public add(c, i)
       /i := 0
@@ -44,25 +46,29 @@ class MenuBar(Component, MenuSystem)
    end
 
    #
-   # Get the index of the given {Menu}
+   # Get the index of the given `Menu`
    #
    public get_index(c)
       return keyof(self.menus, c)
    end
 
    #
-   # Remove the {Menu} from the menu list.
-   # @param c   The {Menu} to remove.
-   # @fail      If c is not a child menu of this instance.
+   # Remove the `Menu` from the menu list.
+   # :Parameters :
+   # :  `c` - The `Menu` to remove.
+   # :Fails :
+   # :  If c is not a child menu of this instance.
    #
    public remove(c)
       return remove_index(get_index(c))
    end
 
    #
-   # Remove the {Menu} at the given index from the menu list.
-   # @param i    The index
-   # @fail      If i is out of range
+   # Remove the `Menu` at the given index from the menu list.
+   # :Parameters :
+   # :  `i` - The index
+   # :Fails :
+   # :  If i is out of range
    #
    public remove_index(i)
       local c
@@ -82,21 +88,25 @@ class MenuBar(Component, MenuSystem)
    end
 
    #
-   # Move the {Menu} to the given index position.
-   # @param c   The {Menu} to move.
-   # @param j   The new position.
-   # @fail      If c is not a child of this instance, 
-   # @           or j is out of range.
+   # Move the `Menu` to the given index position.
+   # :Parameters :
+   # :  `c` - The `Menu` to move.
+   # :  `j` - The new position.
+   # :Fails :
+   # :  If c is not a child of this instance, 
+   #             or j is out of range.
    #
    public reposition(c, j)
       return reposition_index(get_index(c), j)
    end
 
    #
-   # Move the {Menu} at position {i} to {j}.
-   # @param i   The old position.
-   # @param j   The new position.
-   # @fail      If either index is out of range.
+   # Move the `Menu` at position `i` to `j`.
+   # :Parameters :
+   # :  `i` - The old position.
+   # :  `j` - The new position.
+   # :Fails :
+   # :  If either index is out of range.
    #
    public reposition_index(i, j)
       lmove(menus, i, j) | fail
@@ -105,9 +115,11 @@ class MenuBar(Component, MenuSystem)
 
    # Remove the menus in the range `i:j`, returning the
    # removed menus in a list.
-   # @param i   The start slice index, default 1
-   # @param j   The end slice index, default 0
-   # @fail      If the range is invalid.
+   # :Parameters :
+   # :  `i` - The start slice index, default 1
+   # :  `j` - The end slice index, default 0
+   # :Fails :
+   # :  If the range is invalid.
    #
    #
    public remove_list(i, j)
@@ -121,9 +133,11 @@ class MenuBar(Component, MenuSystem)
 
    # Add all the `Menu`s contained in list `l` at index `i`.
    #
-   # @param l    The list to add
-   # @param i    The index
-   # @fail      If i is out of range
+   # :Parameters :
+   # :  `l` - The list to add
+   # :  `i` - The index
+   # :Fails :
+   # :  If i is out of range
    #
    public add_list(l, i)
       linsert(menus, l, i) | fail

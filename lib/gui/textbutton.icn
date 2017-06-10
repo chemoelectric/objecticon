@@ -13,7 +13,7 @@ import util
 #
 # A button with a text label.
 #
-# The size of the button can either be set using {set_size()},
+# The size of the button can either be set using `set_size()`,
 # be left to default to a size based on the given label.
 #
 class TextButton(Button, BorderWhilstEntered)
@@ -47,7 +47,8 @@ class TextButton(Button, BorderWhilstEntered)
 
    #
    # Set the label.
-   # @param x   The label.
+   # :Parameters :
+   # :  `x` - The label.
    #
    public set_label(x)
       return set_paint(paint_for_string(x))
@@ -60,7 +61,8 @@ class TextButton(Button, BorderWhilstEntered)
    #
    # Set down image to use in the button
    #
-   # @param x   The down image
+   # :Parameters :
+   # :  `x` - The down image
    #
    public set_image_down(x)
       return if /x then
@@ -71,7 +73,8 @@ class TextButton(Button, BorderWhilstEntered)
 
    #
    # Set an image to use in the button
-   # @param x   The image
+   # :Parameters :
+   # :  `x` - The image
    #
    public set_image(x)
       return set_paint(ImagePaint().set_image(x))
@@ -80,8 +83,9 @@ class TextButton(Button, BorderWhilstEntered)
    #
    # Set the up/down images (if any) to the strings provided.
    # The two images must have the same dimensions.
-   # @param x   The up image
-   # @param y   The down image
+   # :Parameters :
+   # :  `x` - The up image
+   # :  `y` - The down image
    #
    public set_images(x, y)
       set_image(x)

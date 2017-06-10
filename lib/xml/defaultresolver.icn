@@ -39,8 +39,9 @@ class DefaultResolver(Resolver)
    #    set_public_mapping("-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN", 
    #                       "/tmp/web-app_2_3.dtd")
    # ~
-   # @param pub_id the public id
-   # @param uri the alternative uri
+   # :Parameters :
+   # :  `pub_id` - the public id
+   # :  `uri` - the alternative uri
    #
    public set_public_mapping(pub_id, uri)
       insert(public_mapping, pub_id, uri)

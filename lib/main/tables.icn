@@ -35,7 +35,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
    
    #
-   # Insert a new entry.  Always succeeds and returns {self}.  Only
+   # Insert a new entry.  Always succeeds and returns `self`.  Only
    # implemented with INSERT capability.
    #
    public defer insert(key, val)
@@ -48,21 +48,21 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    
    #
    # Delete the entry with the given key.  Fails if the key was not
-   # present, otherwise succeeds and returns {self}.  Only implemented
+   # present, otherwise succeeds and returns `self`.  Only implemented
    # with DELETE capability.
    #
    public defer delete(key)
 
    #
    # Return the value with the given key, or the default value if
-   # the key is not present.  Equivalent to {.t[k]} for a table.
+   # the key is not present.  Equivalent to `.t[k]` for a table.
    #
    public get(key)
       return .member(key) | def
    end
 
    #
-   # Like {member}, but if the key is not present a new entry is added
+   # Like `member`, but if the key is not present a new entry is added
    # (with the default value).  If the table has MODIFY capability, a
    # variable for the new entry is returned, otherwise a value is
    # returned.
@@ -183,7 +183,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
 
    #
    # Clear the table of all elements. Always succeeds and returns
-   # {self}.  Only implemented with DELETE capability.
+   # `self`.  Only implemented with DELETE capability.
    #
    public clear()
       while size() > 0 do
@@ -239,7 +239,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
-   # Custom equals mirrors the {equals()} behaviour for builtin tables.
+   # Custom equals mirrors the `equals()` behaviour for builtin tables.
    #
    private object_equals(other, seen)
       other.size() = self.size() | fail
@@ -248,7 +248,7 @@ abstract class Table(HasMode, ObjectOutput, ObjectHash, ObjectEquals)
    end
 
    #
-   # Custom hash mirrors the {hash()} behaviour for builtin tables.
+   # Custom hash mirrors the `hash()` behaviour for builtin tables.
    #
    private object_hash(depth)
       local n
@@ -436,7 +436,7 @@ package class SortTableNode()
 end
 
 #
-# A {Table} which uses a red-black binary tree so that its members are always
+# A `Table` which uses a red-black binary tree so that its members are always
 # in sorted order.
 #
 class SortTable(Table)
@@ -752,14 +752,15 @@ class SortTable(Table)
    #
    # Create a new instance.
    #
-   # @param def the default value
-   # @param cmp a comparator function taking two arbitrary values and
-   # @   returning {<0}, {0} or {>0} by way of comparison.  The default
-   # @   value is {Internal.compare}.  The function must satisfy
-   # @   *  `sign(cmp(a,b)) = -sign(cmp(b,a))` for all `a,b`
-   # @   *  `cmp(a,b)>0 & cmp(b,c)>0 => cmp(a,c)>0`
-   # @   *  `cmp(a,b)=0 <=> sign(cmp(a,x))=sign(cmp(b,x))` for all other `x'.
-   # @param entries initial key-value entries.
+   # :Parameters :
+   # :  `def` - the default value
+   # :  `cmp` - a comparator function taking two arbitrary values and
+   #     returning `<0`, `0` or `>0` by way of comparison.  The default
+   #     value is `Internal.compare`.  The function must satisfy
+   #     *  `sign(cmp(a,b)) = -sign(cmp(b,a))` for all `a,b`
+   #     *  `cmp(a,b)>0 & cmp(b,c)>0 => cmp(a,c)>0`
+   #     *  `cmp(a,b)=0 <=> sign(cmp(a,x))=sign(cmp(b,x))` for all other `x'.
+   # :  `entries` - initial key-value entries.
    #
    public new(def, cmp, entries[])
       self.def := def
@@ -771,8 +772,8 @@ class SortTable(Table)
 end
 
 #
-# A {Table} which uses the {lang.equals} procedure for key comparison,
-# rather than the builtin {===} operator.
+# A `Table` which uses the `lang.equals` procedure for key comparison,
+# rather than the builtin `===` operator.
 #
 class EqTable(Table)
    private const t
@@ -857,8 +858,9 @@ class EqTable(Table)
    #
    # Create a new instance.
    #
-   # @param def the default value
-   # @param entries initial key-value entries.
+   # :Parameters :
+   # :  `def` - the default value
+   # :  `entries` - initial key-value entries.
    #
    public new(def, entries[])
       self.def := def
@@ -870,7 +872,7 @@ class EqTable(Table)
 end
 
 #
-# A {Table} which is just a wrapper around a builtin table.
+# A `Table` which is just a wrapper around a builtin table.
 #
 class BuiltinTable(Table)
    private const t
@@ -916,8 +918,9 @@ class BuiltinTable(Table)
    #
    # Create a new instance.
    #
-   # @param t the table to wrap; if omitted then a new table is
-   # @     created.
+   # :Parameters :
+   # :  `t` - the table to wrap; if omitted then a new table is
+   #       created.
    #
    public new(t)
       /t := table()
@@ -948,7 +951,7 @@ package class EmptyTable(Table, SelfClone)
 end
 
 #
-# A {Table} which uses weak references
+# A `Table` which uses weak references
 #
 class WeakrefTable(Table)
    private const t
@@ -1066,8 +1069,9 @@ class WeakrefTable(Table)
    #
    # Create a new instance.
    #
-   # @param def the default value
-   # @param entries initial key-value entries.
+   # :Parameters :
+   # :  `def` - the default value
+   # :  `entries` - initial key-value entries.
    #
    public new(def, entries[])
       self.def := def
@@ -1111,7 +1115,8 @@ class UnmodifiableBuiltinTable(Table)
    #
    # Create a new instance.
    #
-   # @param t the table to wrap
+   # :Parameters :
+   # :  `t` - the table to wrap
    #
    public new(t)
       self.t := t
