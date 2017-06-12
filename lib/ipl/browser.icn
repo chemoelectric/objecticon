@@ -4766,7 +4766,10 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          put(row.input, TextCmd(val || u"\ua0\ua0\ua0", context))
       }
       lc.tbl.content.add(row)
-      row := TextFlow(self).set_v_align("baseline").set_constraint("eol", &yes)
+      row := TextFlow(self).
+         set_trim(&no).
+         set_v_align("baseline").
+         set_constraint("eol", &yes)
       lc.tbl.content.add(row)
       traverse(e, row, context)
    end
@@ -4788,7 +4791,10 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private traverse_dt(e, p, context)
       local dc, row
       dc := \context.def_list | fail
-      row := TextFlow(self) .set_constraint("eol", &yes).set_constraint("w", 2)
+      row := TextFlow(self).
+         set_trim(&no).
+         set_constraint("eol", &yes).
+         set_constraint("w", 2)
       dc.tbl.content.add(row)
       traverse(e, row, context)
    end
@@ -4796,10 +4802,15 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
    private traverse_dd(e, p, context)
       local dc, row
       dc := \context.def_list | fail
-      row := TextFlow(self).set_v_align("baseline").set_constraint("eol", &no)
+      row := TextFlow(self).
+         set_v_align("baseline").
+         set_constraint("eol", &no)
       put(row.input, TextCmd(u"\ua0\ua0\ua0\ua0\ua0", context))
       dc.tbl.content.add(row)
-      row := TextFlow(self).set_v_align("baseline").set_constraint("eol", &yes)
+      row := TextFlow(self).
+         set_trim(&no).
+         set_v_align("baseline").
+         set_constraint("eol", &yes)
       dc.tbl.content.add(row)
       traverse(e, row, context)
    end
@@ -4812,7 +4823,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       row := TextFlow(self)
       put(row.input, TextCmd(u"\ua0\ua0\ua0\ua0", context))
       tbl.content.add(row)
-      row := TextFlow(self).set_constraint("eol", &yes)
+      row := TextFlow(self).
+         set_trim(&no).
+         set_constraint("eol", &yes)
       tbl.content.add(row)
       traverse(e, row, context)
       put_new_row(p, context)

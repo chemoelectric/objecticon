@@ -236,6 +236,7 @@ class TextFlow(Component, HasLastHighlight)
       compute_w,
       deferred,
       at_new_para,
+      trim_flag,
       def_width,
       max_width,
       held,               # URL held during mouse press
@@ -315,6 +316,11 @@ class TextFlow(Component, HasLastHighlight)
       }
    end
 
+   public set_trim(s)
+      self.trim_flag := check_flag(s)
+      return self
+   end
+
    public set_v_align(v)
       self.v_align := v
       return self
@@ -351,7 +357,7 @@ class TextFlow(Component, HasLastHighlight)
       local mh, co
       dw -:= border.get_total_width()
       compute(dw)
-      mh := row_bottom
+      mh := if /trim_flag then row_y else row_bottom
       every co := !left_comps | !right_comps do
         mh <:= co.y + co.h
       return mh + border.get_total_height()
@@ -1510,6 +1516,7 @@ class TextFlow(Component, HasLastHighlight)
       input := []
       ascent_adj := 0
       v_align := Align.T
+      trim_flag := &yes
       set_constraint("x_fill", &yes)
       set_constraint("y_fill", &yes)
       connect(handle_lmdrag, Event.MOUSE_LEFT_DRAG)
