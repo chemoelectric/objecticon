@@ -285,8 +285,9 @@ abstract class BaseTree(SelectableScrollArea)
       thick2 := thick / 2
       N := contents[i]
       use {
-         dashed := view.cbwin.clone().set_masked_pattern("gray"),
+         dashed := view.cbwin.clone(),
          {
+            dashed.set_masked_pattern("gray")
             lp := xp
             every j := 1 to N.depth - 1 do {
                if N.draw_line[j] == ("f"|"d") then
