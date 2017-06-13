@@ -364,9 +364,7 @@ final abstract class Gui()
       # Printable on a single line of text
       PRINTABLE_1,
       # Printable on multi lines of text
-      PRINTABLE_N
-
-   public static
+      PRINTABLE_N,
       style
 
    #
@@ -391,6 +389,7 @@ final abstract class Gui()
    end
 
    private static init()
+      local s
       SCALE := env_real("OI_GUI_SCALE", 1.0) | calc_scale() | 1.0
       UNIT := scale(1)
       FINE_WIDTH := env_scale("OI_GUI_FINE_WIDTH") | UNIT
@@ -411,7 +410,11 @@ final abstract class Gui()
       MENU_ICON_SIZE := env_scale("OI_GUI_MENU_ICON_SIZE") | scale(16)
       ALLOW_INTERNAL_POPUPS := env_flag("OI_GUI_ALLOW_INTERNAL_POPUPS") | &yes
       POPUP_LIST_DIRECTION_FACTOR := env_real("OI_GUI_POPUP_LIST_DIRECTION_FACTOR") | 2.0
-      style := Style()
+      if s := env_string("OI_GUI_STYLE") then {
+         style := Class.for_name(s)() | runerr("Unable to instantiate Style class", s)
+         is(style, Style) | runerr("Style class not a subclass of gui.Style", style)
+      } else
+         style := Style()
       PRINTABLE_1 := '\x20-\x7e\x80-\U10ffff'
       PRINTABLE_N := '\t\n\x20-\x7e\x80-\U10ffff'
       WATTRIB_SET := set(WAttrib.LABEL, WAttrib.X, WAttrib.POS, WAttrib.Y, WAttrib.RESIZE, WAttrib.SIZE,
