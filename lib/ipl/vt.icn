@@ -1933,111 +1933,113 @@ class Vt(LineBasedScrollArea, MenuMode)
       yp := cr.y - info.offset
       xp := get_subject_x() + Gui.TEXT_INSET
 
-      W := view.cbwin.clone()
-      bg := default_bg := W.get_bg()
-      fg := default_fg := W.get_fg()
-      font := default_font := get_wattrib(WAttrib.FONT)
-      leading := W.get_absolute_leading()
-      if /hide_cursor_mode then
-         cursor_i := cy_to_index()
+      use { 
+         W := view.cbwin.clone(), 
+         {
+            bg := default_bg := W.get_bg()
+            fg := default_fg := W.get_fg()
+            font := default_font := get_wattrib(WAttrib.FONT)
+            leading := W.get_absolute_leading()
+            if /hide_cursor_mode then
+               cursor_i := cy_to_index()
 
-      #
-      # Write the lines
-      #
-      every i := info.first to info.last do {
-         # Don't draw partial lines at the top, since this looks poor
-         # when running full-screen editing style apps (eg emacs)
-         if yp >= view.y then {
-            row := contents[i]
+            #
+            # Write the lines
+            #
+            every i := info.first to info.last do {
+               # Don't draw partial lines at the top, since this looks poor
+               # when running full-screen editing style apps (eg emacs)
+               if yp >= view.y then {
+                  row := contents[i]
 
-            x1 := xp
-            y1 := yp + leading
-            every seg := !row.l do {
-               a := seg.attr
-               ss := seg.s
-               want_fg := if \a.url === highlight then Style.FOCUS_COLOR else (\a.fg | default_fg)
-               want_bg := \a.bg | default_bg
-               if \a.inverse then
-                  want_fg :=: want_bg
-               want_font := \a.font | default_font
+                  x1 := xp
+                  y1 := yp + leading
+                  every seg := !row.l do {
+                     a := seg.attr
+                     ss := seg.s
+                     want_fg := if \a.url === highlight then Style.FOCUS_COLOR else (\a.fg | default_fg)
+                     want_bg := \a.bg | default_bg
+                     if \a.inverse then
+                        want_fg :=: want_bg
+                     want_font := \a.font | default_font
 
-               W.set_fg(fg ~===:= want_fg)
-               W.set_bg(bg ~===:= want_bg)
-               W.set_font(font ~===:= want_font)
+                     W.set_fg(fg ~===:= want_fg)
+                     W.set_bg(bg ~===:= want_bg)
+                     W.set_font(font ~===:= want_font)
 
-               w1 := char_w * *ss
-               if want_bg ~=== default_bg then
-                  W.erase_area(x1, yp, w1, line_height)
+                     w1 := char_w * *ss
+                     if want_bg ~=== default_bg then
+                        W.erase_area(x1, yp, w1, line_height)
 
-               if /a.invisible then
-                  W.draw_string(x1, y1 + W.get_font_ascent(), ss)
+                     if /a.invisible then
+                        W.draw_string(x1, y1 + W.get_font_ascent(), ss)
 
-               if \a.underline then
-                  W.fill_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
-               else if \a.url ~=== last_highlight then
-                  use { 
-                     W2 := W.clone(),
-                     W2.set_fg(EditRGBA(want_fg,,,, 16000)).      # 25% alpha of the current fg.
-                        fill_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+                     if \a.underline then
+                        W.fill_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+                     else if \a.url ~=== last_highlight then
+                        use { 
+                           W2 := W.clone(),
+                           W2.set_fg(EditRGBA(want_fg,,,, 16000)).      # 25% alpha of the current fg.
+                                fill_rectangle(x1, y1 + W.get_font_ascent() + Gui.UNIT, w1, Gui.FINE_WIDTH)
+                        }
+
+                     if \a.crossed then
+                        W.fill_rectangle(x1, y1 + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
+
+                     if \a.url === last_highlight then
+                        Gui.style.draw_dashed_rectangle(W, x1, yp, w1, line_height, Gui.FINE_WIDTH)
+                     if \a.url === over then
+                        Gui.style.fill_over_rectangle(W, x1, yp, w1, line_height)
+
+                     x1 +:= w1
                   }
 
-               if \a.crossed then
-                  W.fill_rectangle(x1, y1 + (2 * W.get_font_ascent()) / 3, w1, Gui.FINE_WIDTH)
+                  if \row.bg ~=== default_bg then {
+                     w1 := xp + cols * char_w - x1
+                     W.set_bg(bg ~===:= row.bg)
+                     W.erase_area(x1, yp, w1, line_height)
+                  }
 
-               if \a.url === last_highlight then
-                  Gui.style.draw_dashed_rectangle(W, x1, yp, w1, line_height, Gui.FINE_WIDTH)
-               if \a.url === over then
-                  Gui.style.fill_over_rectangle(W, x1, yp, w1, line_height)
+                  if \mark_y & 
+                     ((mark_y <= i <= cursor_y) | (mark_y >= i >= cursor_y)) &
+                     n := line_len(row.l) &
+                     (r := if (mark_y < i < cursor_y) | (mark_y > i > cursor_y) then
+                      Range(1, 1 + (0 < n))
+                     else if i = mark_y = cursor_y then
+                     range1(1, n + 1, cursor_x, mark_x)
+                     else if i = mark_y then {
+                        if mark_y < cursor_y then
+                           range1(1, n + 1, mark_x, n + 1)
+                        else
+                           range1(1, n + 1, 1, mark_x)
+                     } else if i = cursor_y then {
+                        if mark_y > cursor_y then
+                           range1(1, n + 1, cursor_x, n + 1)
+                        else
+                           range1(1, n + 1, 1, cursor_x)
+                     })
+                  then
+                     Gui.style.fill_selection_rectangle(W, xp + (r.lo - 1) * char_w, yp,  
+                                                        (r.hi - r.lo) * char_w, line_height)
 
-               x1 +:= w1
-            }
-
-            if \row.bg ~=== default_bg then {
-               w1 := xp + cols * char_w - x1
-               W.set_bg(bg ~===:= row.bg)
-               W.erase_area(x1, yp, w1, line_height)
-            }
-
-            if \mark_y & 
-               ((mark_y <= i <= cursor_y) | (mark_y >= i >= cursor_y)) &
-               n := line_len(row.l) &
-               (r := if (mark_y < i < cursor_y) | (mark_y > i > cursor_y) then
-                         Range(1, 1 + (0 < n))
-                      else if i = mark_y = cursor_y then
-                         range1(1, n + 1, cursor_x, mark_x)
-                      else if i = mark_y then {
-                         if mark_y < cursor_y then
-                            range1(1, n + 1, mark_x, n + 1)
-                         else
-                            range1(1, n + 1, 1, mark_x)
-                      } else if i = cursor_y then {
-                         if mark_y > cursor_y then
-                            range1(1, n + 1, cursor_x, n + 1)
-                         else
-                            range1(1, n + 1, 1, cursor_x)
-                      })
-            then
-               Gui.style.fill_selection_rectangle(W, xp + (r.lo - 1) * char_w, yp,  
-                                                  (r.hi - r.lo) * char_w, line_height)
-
-            if i = \cursor_i then {
-               if has_focus() & is_unshaded() then {
-                  if cursor_on ~= 2 then
-                     Gui.style.draw_text_cursor(W,
-                                                xp + (cx - 1) * char_w,
-                                                y1, 
-                                                view.cbwin.get_font_height())
-               } else 
-                  Gui.style.draw_shadow_text_cursor(W,
-                                                    xp + (cx - 1) * char_w,
-                                                    y1, 
-                                                    view.cbwin.get_font_height())
+                  if i = \cursor_i then {
+                     if has_focus() & is_unshaded() then {
+                        if cursor_on ~= 2 then
+                           Gui.style.draw_text_cursor(W,
+                                                      xp + (cx - 1) * char_w,
+                                                      y1, 
+                                                      view.cbwin.get_font_height())
+                     } else 
+                        Gui.style.draw_shadow_text_cursor(W,
+                                                          xp + (cx - 1) * char_w,
+                                                          y1, 
+                                                          view.cbwin.get_font_height())
+                  }
+               }
+               yp +:= line_height
             }
          }
-         yp +:= line_height
       }
-
-      W.close()
    end
 
    #
