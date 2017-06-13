@@ -27,24 +27,25 @@ import
    ipl.sets(elementset),
    ipl.strings(separate,separate_lines),
    lang(equals,Prog),
-   util(cvpos, cvslice, cvslice_def, cvpos_item)
+   util(cvpos, cvslice, cvslice_def, cvpos_item, use)
 
 # Create list from lines in file
 procedure file2lst(s)			
    local input, result, x
 
-   input := open(s) | fail
+   return use {
+      input := open(s),
+      {
+         result := []
 
-   result := []
+         while x := input.read() do {
+            x := numeric(x)			# kludge
+            put(result, x)
+         }
 
-   while x := input.read() do {
-      x := numeric(x)			# kludge
-      put(result, x)
+         result
       }
-
-   input.close()
-
-   return result
+   }
 
 end
 
