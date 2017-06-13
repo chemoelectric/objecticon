@@ -44,55 +44,72 @@ class Style()
    # Draw a raised rectangle.
    #
    public draw_raised_rectangle(W, x, y, w, h, width)
-      return BevelRectangle(W, x, y, w, h, width)
+      BevelRectangle(W, x, y, w, h, width)
+      return self
    end
 
    #
    # Draw a sunken rectangle.
    #
    public draw_sunken_rectangle(W, x, y, w, h, width)
-      return BevelRectangle(W, x, y, w, h, -width)
+      BevelRectangle(W, x, y, w, h, -width)
+      return self
    end
 
    public get_hilite_clone(W)
-      return W.clone().set_fg(get_hilite_color(W))
+      W := W.clone()
+      W.set_fg(get_hilite_color(W))
+      return W
    end
 
    public get_shadow_clone(W)
-      return W.clone().set_fg(get_shadow_color(W))
+      W := W.clone()
+      W.set_fg(get_shadow_color(W))
+      return W
    end
 
    public get_focus_clone(W)
-      return W.clone().
-         set_fg(FOCUS_COLOR).
+      W := W.clone()
+      W.set_fg(FOCUS_COLOR).
          set_masked_pattern(FOCUS_PATTERN)
+      return W
    end
 
    public get_dashed_clone(W)
-      return get_shadow_clone(W).
-         set_masked_pattern(DASHED_PATTERN)
+      W := get_shadow_clone(W)
+      W.set_masked_pattern(DASHED_PATTERN)
+      return W
    end
 
    public get_highlight_clone(W)
-      return W.clone().
-         set_fg(HIGHLIGHT_COLOR).
+      W := W.clone()
+      W.set_fg(HIGHLIGHT_COLOR).
          set_masked_pattern(HIGHLIGHT_PATTERN)
+      return W
    end
 
    public get_cursor_clone(W)
-      return W.clone().set_fg(CURSOR_COLOR)
+      W := W.clone()
+      W.set_fg(CURSOR_COLOR)
+      return W
    end
 
    public get_down_clone(W)
-      return W.clone().set_fg(DOWN_COLOR)
+      W := W.clone()
+      W.set_fg(DOWN_COLOR)
+      return W
    end
 
    public get_selection_clone(W)
-      return W.clone().set_fg(SELECTION_COLOR)
+      W := W.clone()
+      W.set_fg(SELECTION_COLOR)
+      return W
    end
 
    public get_over_clone(W)
-      return W.clone().set_fg(OVER_COLOR)
+      W := W.clone()
+      W.set_fg(OVER_COLOR)
+      return W
    end
 
    public get_hilite_color(W)
@@ -104,98 +121,110 @@ class Style()
    end
 
    public shade_rectangle(W, x, y, w, h)
-      return W.filter(x, y, w, h, SHADE_FILTER)
+      W.filter(x, y, w, h, SHADE_FILTER)
+      return self
    end
 
    public fill_down_rectangle(W, x, y, w, h)
       local cw
-      return use {
+      use {
          cw := get_down_clone(W),
          cw.fill_rectangle(x, y, w, h)
       }
+      return self
    end
 
    public fill_selection_rectangle(W, x, y, w, h)
       local cw
-      return use {
+      use {
          cw := get_selection_clone(W),
          cw.fill_rectangle(x, y, w, h)
       }
+      return self
    end
 
    public fill_over_rectangle(W, x, y, w, h)
       local cw
-      return use {
+      use {
          cw := get_over_clone(W),
          cw.fill_rectangle(x, y, w, h)
       }
+      return self
    end
 
    public fill_hilite_rectangle(W, x, y, w, h)
       local cw
-      return use {
+      use {
          cw := get_hilite_clone(W),
          cw.fill_rectangle(x, y, w, h)
       }
+      return self
    end
 
    public fill_shadow_rectangle(W, x, y, w, h)
       local cw
-      return use {
+      use {
          cw := get_shadow_clone(W),
          cw.fill_rectangle(x, y, w, h)
       }
+      return self
    end
 
    public draw_dashed_rectangle(W, x, y, w, h, t)
       local cw
       /t := Gui.DASHED_WIDTH
-      return use {
+      use {
          cw := get_dashed_clone(W),
          cw.draw_rectangle(x, y, w, h, t)
       }
+      return self
    end
 
    public draw_focus_rectangle(W, x, y, w, h, t)
       local cw
       /t := Gui.DASHED_WIDTH
-      return use {
+      use {
          cw := get_focus_clone(W),
          cw.draw_rectangle(x, y, w, h, t)
       }
+      return self
    end
 
    public draw_highlight_rectangle(W, x, y, w, h, t)
       local cw
       /t := Gui.DASHED_WIDTH
-      return use {
+      use {
          cw := get_highlight_clone(W),
          cw.draw_rectangle(x, y, w, h, t)
       }
+      return self
    end
 
    public fill_highlight_rectangle(W, x, y, w, h)
       local cw
-      return use {
+      use {
          cw := get_highlight_clone(W),
          cw.fill_rectangle(x, y, w, h)
       }
+      return self
    end
 
    public draw_shadow_text_cursor(W, x, y, h)
       local cw
-      return use {
+      use {
          cw := get_shadow_clone(W),
          cw.fill_rectangle(x - Gui.CURSOR_WIDTH / 2, y, Gui.CURSOR_WIDTH, h)
       }
+      return self
    end
 
    public draw_text_cursor(W, x, y, h)
       local cw
-      return use {
+      use {
          cw := get_cursor_clone(W),
          cw.fill_rectangle(x - Gui.CURSOR_WIDTH / 2, y, Gui.CURSOR_WIDTH, h)
       }
+      return self
    end
 
    public create_tooltip_label()
