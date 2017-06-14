@@ -30,20 +30,25 @@ import
    util(cvpos, cvslice, cvslice_def, cvpos_item, use)
 
 # Create list from lines in file
-procedure file2lst(s)			
+#
+# :Parameters :
+# :  `s` - the file name
+# :  `f` - an optional function to apply to each element before appending to result
+#
+procedure file2list(s, f)
    local input, result, x
 
    return use {
       input := open(s),
       {
          result := []
-
-         while x := input.read() do {
-            x := numeric(x)			# kludge
+         /f := 1
+         repeat {
+            x := input.read_line() | break &fail
+            if /x then break result
+            x := f(x)
             put(result, x)
          }
-
-         result
       }
    }
 
@@ -786,15 +791,17 @@ end
 # :  `s` - the string to convert
 # :  `sep` - cset of the separator chars, default ',' - note each separator
 #        in the string is always one character wide.
-# :  `f` - func to apply to each element before adding to list
+# :  `f` - an optional function to apply to each element before adding to list
 #
 procedure str2list(s, sep, f)
    local l, t
    /sep := ','
    /f := 1
    l := []
-   every t := separate(s, sep) do
-      put(l, f(t)) | runerr("str2list: conversion proc failed")
+   every t := separate(s, sep) do {
+      t := f(t)
+      put(l, t)
+   }
    return l
 end
 
@@ -805,15 +812,17 @@ end
 # :Parameters :
 # :  `l` - the list
 # :  `sep` - the separator char, default ","
-# :  `f` - func to apply to each element before appending to result
+# :  `f` - an optional function to apply to each element before appending to result
 #
 procedure list2str(l, sep, f)
    local s, e
    /sep := ","
    /f := 1
    s := ""
-   every e := !l do
-      s ||:= f(e) || sep | runerr("list2str: conversion proc failed")
+   every e := !l do {
+      e := f(e)
+      s ||:= e || sep
+   }
    s[-*sep:0] := ""
    return s
 end
@@ -823,14 +832,16 @@ end
 #
 # :Parameters :
 # :  `s` - the string to convert
-# :  `f` - func to apply to each element before adding to list
+# :  `f` - an optional function to apply to each element before adding to list
 #
 procedure break_lines(s, f)
    local l, t
    /f := 1
    l := []
-   every t := separate_lines(s) do
-      put(l, f(t)) | runerr("break_lines: conversion proc failed")
+   every t := separate_lines(s) do {
+      t := f(t)
+      put(l, t)
+   }
    return l
 end
 
@@ -840,14 +851,16 @@ end
 #
 # :Parameters :
 # :  `l` - the list
-# :  `f` - func to apply to each element before appending to result
+# :  `f` - an optional function to apply to each element before appending to result
 #
 procedure cat_lines(l, f)
    local s, e
    /f := 1
    s := ""
-   every e := !l do
-      s ||:= f(e) || Files.EOL | runerr("cat_lines: conversion proc failed")
+   every e := !l do {
+      e := f(e)
+      s ||:= e || Files.EOL
+   }
    s[-*Files.EOL:0] := ""
    return s
 end
