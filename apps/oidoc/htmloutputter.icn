@@ -499,7 +499,7 @@ class HtmlOutputter(Outputter)
 
    private resolve_link(sym, name)
       local i, j, d
-      name ?:= tab(upto('({ '))
+      name ?:= tab(upto('({'))
       # For a procedure fail if the name matches one of the parameters.
       if is(sym, ProcedureSymbol) then {
          if name == sym.obj.get_args().gen().str() then
