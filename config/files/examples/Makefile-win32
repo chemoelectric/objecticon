@@ -6,7 +6,7 @@ PROGS=browser canvasstate colors cursors directorydialogtest \
 	memorytracker multi selection sieve sizetest \
 	sliders stock suggest tooltip treetest \
 	ttexplorer fields flowterm bus lscookies \
-	showtemplate cairotest memdebug
+	showtemplate cairotest memdebug lsxdg
 
 all :	$(PROGS)
 
