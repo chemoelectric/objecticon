@@ -3,15 +3,16 @@ include ../Makedefs
 PROGS=browser canvasstate colors cursors directorydialogtest \
 	dndtest dyncomps editor explorer filedialogtest \
 	fonttest geturl grabtest imageview lslinks \
-	memorytracker multi selection sieve sizetest \
+	multi selection sieve sizetest \
 	sliders stock suggest tooltip treetest \
 	ttexplorer fields flowterm bus lscookies \
-	showtemplate cairotest memdebug lsxdg
+	showtemplate cairotest lsxdg
 
 all :	$(PROGS)
 
 clean :
-	$(RM) *.u packages.txt $(PROGS)
+	$(RM) *.u packages.txt $(PROGS) bin/*
 
 %: 	%.icn
 	oit -s $<
+	ln -f $@ bin

@@ -1,6 +1,6 @@
 include ../Makedefs
 
-PROGS=  ieval fiximports
+PROGS=  ieval fiximports memdebug memorytracker
 PROGSRC=$(PROGS:=.icn)
 
 all :	$(PROGS)
