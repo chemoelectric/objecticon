@@ -9,7 +9,9 @@ HDRS = ../h/define.h ../h/config.h ../h/typedefs.h ../h/monitor.h\
 
 GRAPHICSHDRS = ../h/graphics.h ../h/xwin.h
 
-default: oix
+PROG=		../../bin/oix.exe
+
+all:	$(PROG)
 
 XOBJS=	cnv.obj def.obj errmsg.obj fconv.obj fmath.obj\
 	fmisc.obj fmonitr.obj fscan.obj fstr.obj fstranl.obj fstruct.obj fsys.obj\
@@ -37,12 +39,10 @@ interp.obj: interpiasm.ri
 init.obj: initiasm.ri
 oref.obj: orefiasm.ri
 
-all:	oix
-
-oix:	$(OBJS)
+$(PROG):	$(OBJS)
+	$(RM) $(PROG)
 	$(LD) $(LDFLAGS) /STACK:16000000 /INCREMENTAL:NO /ENTRY:wmainCRTStartup \
-		/SUBSYSTEM:CONSOLE $(OBJS) $(LIBS) /OUT:oix.exe
-	$(INSTALL) oix "$(OI_BIN)"
+		/SUBSYSTEM:CONSOLE $(OBJS) $(LIBS) /OUT:$(PROG)
 
 %.obj: %.r $(HDRS)
 	rtt $<
@@ -50,4 +50,4 @@ oix:	$(OBJS)
 	$(RM) $*.c
 
 clean:		
-	rm -f *.obj $(RTTC) $(RTTTMP) rt.db rt.a rttcur.lst rttfull.lst oix.exe
+	rm -f *.obj $(RTTC) $(RTTTMP) rt.db rt.a rttcur.lst rttfull.lst $(PROG) $(PROG:.exe=.pdb)

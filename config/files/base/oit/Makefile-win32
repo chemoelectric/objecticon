@@ -15,21 +15,23 @@ OBJS=		$(OITOBJS) $(COBJS)
 
 LIBS=		ws2_32.lib
 
-all:		win32header oit
+PROG=		../../bin/oit.exe
+HDR=		../../bin/win32header.exe
+
+all:		$(PROG) $(HDR)
 
 clean:		
-		rm -f *.obj tgram.g y.tab.c y.tab.h y.output oit win32header mkkwd fixgram mktoktab
+		rm -f *.obj tgram.g y.tab.c y.tab.h y.output $(PROG) $(PROG:.exe=.pdb) \
+			$(HDR) $(HDR:.exe=.pdb) mkkwd fixgram mktoktab
 
-oit:		$(OBJS)
+$(PROG):		$(OBJS)
 		$(LD) $(LDFLAGS) /STACK:16000000 /INCREMENTAL:NO /ENTRY:wmainCRTStartup \
-                      /SUBSYSTEM:CONSOLE $(OBJS) $(LIBS) /OUT:oit.exe 
-		$(INSTALL) oit "$(OI_BIN)"
+                      /SUBSYSTEM:CONSOLE $(OBJS) $(LIBS) /OUT:$(PROG)
 
-win32header:	win32header.obj ../common/mlocal.obj ../common/alloc.obj ../common/win32.obj
+$(HDR):		win32header.obj ../common/mlocal.obj ../common/alloc.obj ../common/win32.obj
 		$(LD) /ENTRY:mainCRTStartup /SUBSYSTEM:CONSOLE \
                    win32header.obj ../common/mlocal.obj ../common/alloc.obj \
-                   ../common/win32.obj $(LIBS) /OUT:win32header.exe 
-		$(INSTALL) win32header "$(OI_BIN)"
+                   ../common/win32.obj $(LIBS) /OUT:$(HDR)
 
 $(OBJS):   ../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
 		   ../h/mproto.h ../h/typedefs.h ../h/cstructs.h
