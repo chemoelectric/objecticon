@@ -8,11 +8,12 @@ PROGS=browser canvasstate colors cursors directorydialogtest \
 	ttexplorer fields flowterm bus lscookies \
 	showtemplate cairotest lsxdg
 
-all :	$(PROGS)
+BIN=$(addprefix bin/, $(PROGS))
+
+all :	$(BIN)
 
 clean :
-	$(RM) *.u packages.txt $(PROGS) bin/*
+	$(RM) *.u packages.txt bin/*
 
-%: 	%.icn
-	oit -s $<
-	ln -f $@ bin
+bin/%: 	%.icn
+	oit -s -o $@ $<

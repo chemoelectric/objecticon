@@ -23,7 +23,7 @@ COBJS         = ../../base/common/mlocal.o ../../base/common/alloc.o
 
 PRINT	      = pr -f -l88
 
-PROGRAM	      = iyacc
+PROGRAM	      = ../../bin/iyacc
 
 SRCS	      = closure.c \
 		error.c \
@@ -42,7 +42,6 @@ all:		$(PROGRAM)
 
 $(PROGRAM):     $(OBJS)
 		$(CC) $(CFLAGS) $(LDFLAGS) -o $(PROGRAM) $(OBJS) $(COBJS) $(LIBS)
-		$(INSTALL) iyacc "$(OI_BIN)"
 
 clean:;		@rm -f $(OBJS) $(PROGRAM)
 		$(MAKE) -C test clean

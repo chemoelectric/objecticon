@@ -9,7 +9,9 @@ HDRS = ../h/define.h ../h/config.h ../h/typedefs.h ../h/monitor.h\
 
 GRAPHICSHDRS = ../h/graphics.h ../h/xwin.h
 
-default: oix
+PROG=		../../bin/oix
+
+all:	$(PROG)
 
 XOBJS=	cnv.o def.o errmsg.o fconv.o fmath.o\
 	fmisc.o fmonitr.o fscan.o fstr.o fstranl.o fstruct.o fsys.o\
@@ -33,11 +35,9 @@ interp.o: interpiasm.ri
 init.o: initiasm.ri
 oref.o: orefiasm.ri
 
-all:	oix
-
-oix:	$(OBJS)
-	$(CC) $(CFLAGS) $(DYNAMIC_EXPORT_LDFLAGS) $(LDFLAGS) -o oix $(OBJS) $(LIBS)
-	$(INSTALL) oix "$(OI_BIN)"
+$(PROG):	$(OBJS)
+	$(RM) $(PROG)
+	$(CC) $(CFLAGS) $(DYNAMIC_EXPORT_LDFLAGS) $(LDFLAGS) -o $(PROG) $(OBJS) $(LIBS)
 
 %.o: %.r $(HDRS)
 	$(RTT) $<
@@ -45,7 +45,7 @@ oix:	$(OBJS)
 	$(RM) $*.c
 
 clean:		
-	rm -f *.o $(RTTC) $(RTTTMP) rt.db rt.a rttcur.lst rttfull.lst oix keysymtocodepoint iasm
+	rm -f *.o $(RTTC) $(RTTTMP) rt.db rt.a rttcur.lst rttfull.lst $(PROG) keysymtocodepoint iasm
 
 etags:
 	$(ETAGS) $(RTLTAGS) $(RFILES) rmswin.ri rxwin.ri

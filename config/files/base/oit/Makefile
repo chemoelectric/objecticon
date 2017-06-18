@@ -12,20 +12,20 @@ OBJS=		$(OITOBJS) $(COBJS)
 
 OITC=$(OITOBJS:.o=.c)
 
-all:		oit
+PROG=		../../bin/oit
+
+all:		$(PROG)
 
 clean:		
-		rm -f *.o tgram.g y.tab.c y.tab.h y.output oit mkkwd fixgram mktoktab
+		rm -f *.o tgram.g y.tab.c y.tab.h y.output $(PROG) mkkwd fixgram mktoktab
 
 etags:
 		$(ETAGS) $(OITC) tgrammar.c *.h
 
-oit:		$(OBJS)
-		$(CC) $(CFLAGS) $(LDFLAGS) -o oit $(OBJS) $(LIBS)
-		$(INSTALL) oit "$(OI_BIN)"
-		(cd "$(OI_BIN)" && $(RM) udis && $(LN_S) oit udis)
+$(PROG):	$(OBJS)
+		$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
-$(OBJS):   ../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
+$(OBJS):	../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
 		   ../h/mproto.h ../h/typedefs.h ../h/cstructs.h
 
 $(COBJS):	../h/mproto.h

@@ -15,17 +15,18 @@ COBJS = ../common/getopt.o ../common/alloc.o \
 OBJS = $(ROBJS) $(COBJS)
 RSRC=$(ROBJS:.o=.c)
 
-all:	rtt
+PROG=		../../bin/rtt
+
+all:	$(PROG)
 
 clean:		
-	rm -f *.o rtt typespec y.output
+	rm -f *.o $(PROG) typespec y.output
 
 etags:
 	$(ETAGS) $(RSRC) *.h
 
-rtt:	$(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o rtt $(OBJS) $(LIBS)
-	$(INSTALL) rtt "$(OI_BIN)"
+$(PROG):	$(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
 $(ROBJS): rtt.h rtt1.h rttproto.h preproc.h pproto.h ltoken.h ../h/mproto.h\
 	        ../h/define.h ../h/config.h ../h/typedefs.h \
