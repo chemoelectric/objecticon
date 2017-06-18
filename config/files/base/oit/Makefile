@@ -17,7 +17,7 @@ PROG=		../../bin/oit
 all:		$(PROG)
 
 clean:		
-		rm -f *.o tgram.g y.tab.c y.tab.h y.output $(PROG) mkkwd fixgram mktoktab
+		$(RM) *.o tgram.g y.tab.c y.tab.h y.output $(PROG) mkkwd fixgram mktoktab
 
 etags:
 		$(ETAGS) $(OITC) tgrammar.c *.h

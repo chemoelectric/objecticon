@@ -23,7 +23,6 @@ XOBJS=	cnv.obj def.obj errmsg.obj fconv.obj fmath.obj\
 
 RTTC=$(XOBJS:.obj=.c)
 RFILES=$(XOBJS:.obj=.r)
-RTTTMP=$(XOBJS:.obj=.tmp)
 
 COBJS=	../common/mlocal.obj ../common/win32.obj ../common/gdip.obj
 
@@ -50,4 +49,4 @@ $(PROG):	$(OBJS)
 	$(RM) $*.c
 
 clean:		
-	rm -f *.obj $(RTTC) $(RTTTMP) rt.db rt.a rttcur.lst rttfull.lst $(PROG) $(PROG:.exe=.pdb)
+	$(RM) *.obj $(RTTC) $(PROG) $(PROG:.exe=.pdb)

@@ -23,7 +23,6 @@ XOBJS=	cnv.o def.o errmsg.o fconv.o fmath.o\
 
 RTTC=$(XOBJS:.o=.c)
 RFILES=$(XOBJS:.o=.r)
-RTTTMP=$(XOBJS:.o=.tmp)
 
 COBJS=	../common/mlocal.o
 
@@ -45,7 +44,7 @@ $(PROG):	$(OBJS)
 	$(RM) $*.c
 
 clean:		
-	rm -f *.o $(RTTC) $(RTTTMP) rt.db rt.a rttcur.lst rttfull.lst $(PROG) keysymtocodepoint iasm
+	$(RM) *.o $(RTTC) $(PROG) keysymtocodepoint iasm
 
 etags:
 	$(ETAGS) $(RTLTAGS) $(RFILES) rmswin.ri rxwin.ri
