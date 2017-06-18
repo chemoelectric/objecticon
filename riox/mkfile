@@ -19,12 +19,13 @@ OFILES=\
 	frselect.$O\
 	frutil.$O\
 
+PROG=	../bin/riox
+
 all:V:  $O.out
 
 $O.out:  $OFILES
-	$LD -o riox $OFILES
-	rm -f $OI_BIN/riox
-	cp riox $OI_BIN
+	rm -f $PROG
+	$LD -o $PROG $OFILES
 
 clean:V:	
-	rm -f $OFILES riox
+	rm -f $OFILES $PROG

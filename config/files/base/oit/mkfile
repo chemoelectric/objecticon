@@ -10,19 +10,20 @@ COBJS=		../common/getopt.$O ../common/alloc.$O \
 
 OBJS=		$OITOBJS $COBJS
 
-all:V:		oit
+PROG=		../../bin/oit
+
+all:V:		$PROG
 
 clean:V:
-		rm -f *.[$OS] [$OS].out tparse_mod.c oit
+		rm -f *.[$OS] [$OS].out tparse_mod.c $PROG
 
-oit:            $OBJS
-		$LD -o oit $OBJS
-		cp oit $OI_BIN
+$PROG:		$OBJS
+		$LD -o $PROG $OBJS
 
-$OBJS:   ../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
+$OBJS:		../h/define.h ../h/config.h ../h/cpuconf.h ../h/gsupport.h \
 		   ../h/mproto.h ../h/typedefs.h ../h/cstructs.h
 
-$COBJS:	../h/mproto.h
+$COBJS:		../h/mproto.h
 
 tmain.$O:	tree.h lexdef.h
 package.$O:	package.h

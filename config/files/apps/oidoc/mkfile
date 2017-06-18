@@ -1,20 +1,16 @@
 < ../../mkdefs
 
-COMMONSRC=outputter.icn htmloutputter.icn groffoutputter.icn
-COMMONU=${COMMONSRC:%.icn=%.u}
+SRC=oidoc.icn outputter.icn htmloutputter.icn groffoutputter.icn
+UFILES=${SRC:%.icn=%.u}
+PROG=../../bin/oidoc
 
-PROGS=oidoc
-PROGSRC=${PROGS:%=%.icn}
-PROGU=${PROGSRC:%.icn=%.u}
-
-all:V:	$PROGS
+all:V:	$PROG
 
 clean:
-	rm -f $PROGS *.u packages.txt
+	rm -f $PROG *.u packages.txt
 
-oidoc:   $COMMONU
-	oit -sn -o oidoc oidoc.icn $COMMONU
-	cp oidoc $OI_BIN
+$PROG:  $UFILES
+	oit -sn -o $target $UFILES
 
 %.u:Q: %.icn
-	test $stem.u -nt $stem.icn || oit -snc $COMMONSRC $PROGSRC
+	test $stem.u -nt $stem.icn || oit -snc $SRC

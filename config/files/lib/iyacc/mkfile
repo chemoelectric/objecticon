@@ -17,7 +17,7 @@ OBJS	      = closure.$O \
 
 COBJS         = ../../base/common/mlocal.$O ../../base/common/alloc.$O
 
-PROGRAM	      = iyacc
+PROGRAM	      = ../../bin/iyacc
 
 SRCS	      = closure.c \
 		error.c \
@@ -36,7 +36,6 @@ all:V:		$PROGRAM
 
 $PROGRAM:       $OBJS
 		$LD -o $PROGRAM $OBJS $COBJS ../../base/common/plan9.$O
-		cp iyacc $OI_BIN
 
 clean:V:	
 		rm -f $OBJS $PROGRAM

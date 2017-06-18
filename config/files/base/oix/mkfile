@@ -8,7 +8,9 @@ HDRS = ../h/define.h ../h/config.h ../h/typedefs.h ../h/monitor.h\
 
 GRAPHICSHDRS = ../h/graphics.h ../h/xwin.h
 
-default:V: oix
+PROG=		../../bin/oix
+
+all:V:   $PROG
 
 XOBJS=	cnv.$O def.$O errmsg.$O fconv.$O fmath.$O\
 	fmisc.$O fmonitr.$O fscan.$O fstr.$O fstranl.$O fstruct.$O fsys.$O\
@@ -28,18 +30,14 @@ interp.$O: interpiasm.ri
 init.$O: initiasm.ri
 oref.$O: orefiasm.ri
 
-all:V:   oix
-
-oix:	$XOBJS
-	$LD -o oix $OBJS
-	rm -f $OI_BIN/oix
-	cp oix $OI_BIN
+$PROG:	$XOBJS
+	rm -f $PROG
+	$LD -o $PROG $OBJS
 
 clean:V:
-	rm -f *.c *.[$OS] [$OS].out oix
+	rm -f *.c *.[$OS] [$OS].out $PROG
 
 %.$O: %.r
 	rtt -r ../h/ $stem.r
 	$CC $CFLAGS $stem.c
 	rm $stem.c
-        

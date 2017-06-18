@@ -11,11 +11,12 @@ COBJS = ../common/getopt.$O ../common/alloc.$O \
 
 OBJS = $ROBJS $COBJS
 
-all:V:   rtt
+PROG=		../../bin/rtt
 
-rtt:	$OBJS
-	$LD -o rtt $OBJS
-	cp rtt $OI_BIN
+all:V:   $PROG
+
+$PROG:	$OBJS
+	$LD -o $PROG $OBJS
 
 $ROBJS: rtt.h rtt1.h rttproto.h preproc.h pproto.h ltoken.h ../h/mproto.h\
 	        ../h/define.h ../h/config.h ../h/typedefs.h \
@@ -26,7 +27,7 @@ rttparse_mod.$O : ../h/gsupport.h ../h/config.h ../h/cstructs.h \
 	../h/typedefs.h ../h/cpuconf.h ../h/define.h
 
 clean:V:
-	rm -f *.[$OS] [$OS].out rttparse_mod.c rtt
+	rm -f *.[$OS] [$OS].out rttparse_mod.c $PROG
 
 rttparse_mod.c: rttparse.c
 	sed -e 's/^#include <stdlib.h>.*$//'  \

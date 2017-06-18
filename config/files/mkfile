@@ -25,6 +25,7 @@ clean:V:
 	@{ cd apps ; mk clean }
 	@{ cd examples ; mk clean }
 	@{ cd riox ; mk clean }
+	rm -f bin/*
 
 test:V:
 	@{ cd test ; ./runtest.sh }

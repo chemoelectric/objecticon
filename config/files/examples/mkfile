@@ -3,15 +3,17 @@
 PROGS=browser canvasstate colors cursors directorydialogtest \
 	dndtest dyncomps editor explorer filedialogtest \
 	fonttest geturl grabtest imageview lslinks \
-	memorytracker multi selection sieve sizetest \
+	multi selection sieve sizetest \
 	sliders stock suggest tooltip treetest \
 	ttexplorer fields flowterm bus lscookies \
-	showtemplate cairotest
+	showtemplate cairotest lsxdg
 
-all:V: $PROGS
+BIN=${PROGS:%=bin/%}
+
+all:V: $BIN
 
 clean :
-	rm -f *.u packages.txt $PROGS
+	rm -f *.u packages.txt bin/*
 
-%: %.icn
-	oit -s $stem.icn
+bin/%: %.icn
+	oit -s -o $target $stem.icn
