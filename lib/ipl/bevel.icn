@@ -139,11 +139,15 @@ procedure GetShadowColor(win)
 end
 
 procedure GetHiliteClone(win)
-   return win.clone().set_fg(GetHiliteColor(win))
+   win := win.clone()
+   win.set_fg(GetHiliteColor(win))
+   return win
 end
 
 procedure GetShadowClone(win)
-   return win.clone().set_fg(GetShadowColor(win))
+   win := win.clone()
+   win.set_fg(GetShadowColor(win))
+   return win
 end
 
 

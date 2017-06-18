@@ -129,6 +129,7 @@ AX_CHECK_MSG_NOSIGNAL()
 
 AC_CONFIG_COMMANDS(system, [
 	AS_MKDIR_P(bin)
+	AS_MKDIR_P(examples/bin)
 ])
 
 AC_CONFIG_FILES([Makedefs:config/files/Makedefs])

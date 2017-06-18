@@ -2,7 +2,7 @@ include ../../Makedefs
 
 .NOTPARALLEL:
 
-COMMONSRC=canvas.icn canvasborder.icn canvasborderdialog.icn \
+SRC=canvas.icn canvasborder.icn canvasborderdialog.icn \
 	canvasborderui.icn canvasbutton.icn canvasbuttondialog.icn \
 	canvasbuttongroup.icn canvascheckbox.icn canvascheckboxdialog.icn \
 	canvascheckboxgroup.icn canvascheckboxmenuedit.icn canvascheckboxmenuitem.icn \
@@ -47,31 +47,25 @@ COMMONSRC=canvas.icn canvasborder.icn canvasborderdialog.icn \
 	groupsdialog.icn layoutfield.icn \
 	borderfield.icn paintedit.icn canvasvsplitui.icn canvashsplitui.icn \
 	canvassplit.icn canvassplitdialog.icn canvasoverlayitemdialog.icn \
-	selectmodelist.icn plugin.icn maptab.icn canvasplugin.icn
+	selectmodelist.icn plugin.icn maptab.icn canvasplugin.icn ivib.icn
 
-COMMONU=$(COMMONSRC:.icn=.u)
+UFILES=$(SRC:.icn=.u)
+PROG=../../bin/ivib
 
 .PHONY: plugins
 
-PROGS=ivib testmigrate
-PROGSRC=$(PROGS:=.icn)
-PROGU=$(PROGSRC:.icn=.u)
-
-default: ivib
-
-all: $(COMMONU) ivib
+all: $(PROG)
 	$(MAKE) -C plugins
 
 etags:
-	$(ETAGS) $(ICNTAGS) $(COMMONSRC) $(PROGSRC)
+	$(ETAGS) $(ICNTAGS) $(SRC)
 
 clean:
-	rm -f *.u packages.txt $(PROGS)
+	rm -f *.u packages.txt $(PROG)
 	$(MAKE) -C plugins clean
 
-$(COMMONU) $(PROGU): %.u: %.icn
-	oit -snc $(COMMONSRC) $(PROGSRC)
+%.u: %.icn
+	oit -snc $(SRC)
 
-%:      %.u $(COMMONU)
-	oit -o $@ $@.u $(COMMONU)
-	cp $@ "$(OI_BIN)"
+$(PROG):	$(UFILES)
+	oit -o $@ $(UFILES)

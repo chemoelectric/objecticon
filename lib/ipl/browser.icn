@@ -2415,10 +2415,8 @@ class FormOptionList(SelectableScrollArea, FormEntry)
       if \o.disabled then {
          use {
             W := view.cbwin.clone(),
-            {
-               W.set_fg("gray")
-               W.draw_string(xp + Gui.TEXT_INSET, yp + W.get_line_ascent(), o.txt)
-            }
+            W.set_fg("gray").
+              draw_string(xp + Gui.TEXT_INSET, yp + W.get_line_ascent(), o.txt)
          }
       } else 
          view.cbwin.draw_string(xp + Gui.TEXT_INSET, yp + view.cbwin.get_line_ascent(), o.txt)
@@ -5167,11 +5165,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       if r := get_band_rect() then {
          use {
             W := view.cbwin.clone(),
-            {
-               W.set_fg("purple").
-                  set_masked_pattern("gray").
-                  draw_rectangle(r.x, r.y, r.w, r.h, Gui.FINE_WIDTH)
-            }
+            W.set_fg("purple").
+              set_masked_pattern("gray").
+              draw_rectangle(r.x, r.y, r.w, r.h, Gui.FINE_WIDTH)
          }
       }
    end

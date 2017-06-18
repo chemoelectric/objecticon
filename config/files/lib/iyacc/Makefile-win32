@@ -26,7 +26,7 @@ COBJS         =	../../base/common/mlocal.obj ../../base/common/alloc.obj ../../b
 
 PRINT	      = pr -f -l88
 
-PROGRAM	      = iyacc
+PROGRAM	      = ../../bin/iyacc.exe
 
 SRCS	      = closure.c \
 		error.c \
@@ -45,10 +45,9 @@ all:		$(PROGRAM)
 
 $(PROGRAM):     $(OBJS)
 		$(LD) $(LDFLAGS) /INCREMENTAL:NO /ENTRY:wmainCRTStartup \
-                   /SUBSYSTEM:CONSOLE $(OBJS) $(COBJS) $(LIBS) /OUT:iyacc.exe 
-		$(INSTALL) iyacc "$(OI_BIN)"
+                   /SUBSYSTEM:CONSOLE $(OBJS) $(COBJS) $(LIBS) /OUT:$(PROGRAM)
 
-clean:;		@rm -f $(OBJS) $(PROGRAM)
+clean:;		@rm -f $(OBJS) $(PROGRAM) $(PROGRAM:.exe=.pdb)
 
 clobber:;	@rm -f $(OBJS) $(PROGRAM)
 

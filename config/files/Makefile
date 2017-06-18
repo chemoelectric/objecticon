@@ -13,6 +13,7 @@ clean :
 	$(MAKE) -C lib clean
 	$(MAKE) -C apps clean
 	$(MAKE) -C examples clean
+	$(RM) bin/*
 
 etags :
 	rm -f TAGS

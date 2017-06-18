@@ -18,15 +18,16 @@ OBJ = $(ROBJS) $(COBJS)
 
 LIBS=	ws2_32.lib
 
-all:	rtt
+PROG=		../../bin/rtt.exe
+
+all:	$(PROG)
 
 clean:		
-	rm -f *.obj rtt typespec
+	rm -f *.obj $(PROG) $(PROG:.exe=.pdb) typespec
 
-rtt:	$(OBJ)
+$(PROG):	$(OBJ)
 	$(LD) $(LDFLAGS) /INCREMENTAL:NO /ENTRY:wmainCRTStartup \
-           /SUBSYSTEM:CONSOLE $(OBJ) $(LIBS) /OUT:rtt.exe 
-	$(INSTALL) rtt "$(OI_BIN)"
+           /SUBSYSTEM:CONSOLE $(OBJ) $(LIBS) /OUT:$(PROG)
 
 rttdb.obj: ../h/version.h
 rttparse.obj : ../h/gsupport.h ../h/config.h ../h/cstructs.h \

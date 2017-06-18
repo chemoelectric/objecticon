@@ -27,25 +27,70 @@ import
    ipl.sets(elementset),
    ipl.strings(separate,separate_lines),
    lang(equals,Prog),
-   util(cvpos, cvslice, cvslice_def, cvpos_item)
+   util(cvpos, cvslice, cvslice_def, cvpos_item, use)
 
 # Create list from lines in file
-procedure file2lst(s)			
-   local input, result, x
+#
+# :Parameters :
+# :  `s` - the file name
+# :  `f` - an optional function to apply to each element before appending to the list
+#
+procedure file2list(s, f)
+   local input
+   return use {
+      input := open(s),
+      stream2list(input, f)
+   }
+end
 
-   input := open(s) | fail
+# Create list from reading lines from a stream
+#
+# :Parameters :
+# :  `s` - the `io.Stream`
+# :  `f` - an optional function to apply to each element before appending to the list
+#
+procedure stream2list(s, f)
+   local l, t
+   /f := 1
+   l := []
+   repeat {
+      t := s.read_line() | fail
+      if /t then
+         return l
+      t := f(t)
+      put(l, t)
+   }
+end
 
-   result := []
+# Output a list to a file, with one line per element.
+#
+# :Parameters :
+# :  `l` - the list to output
+# :  `s` - the file name
+# :  `f` - an optional function to apply to each element before output
+#
+procedure list2file(l, s, f)
+   local output
+   return use {
+      output := open(s, "w"),
+      list2stream(l, output, f)
+   }
+end
 
-   while x := input.read() do {
-      x := numeric(x)			# kludge
-      put(result, x)
-      }
-
-   input.close()
-
-   return result
-
+# Output a list to a stream, with one line per element.
+#
+# :Parameters :
+# :  `l` - the list to output
+# :  `s` - the `io.Stream`
+# :  `f` - an optional function to apply to each element before output
+#
+procedure list2stream(l, s, f)
+   local t
+   every t := !l do {
+      t := f(t)
+      s.write(t) | fail
+   }
+   return
 end
 
 # Convert `limage()` output to list
@@ -785,15 +830,17 @@ end
 # :  `s` - the string to convert
 # :  `sep` - cset of the separator chars, default ',' - note each separator
 #        in the string is always one character wide.
-# :  `f` - func to apply to each element before adding to list
+# :  `f` - an optional function to apply to each element before adding to list
 #
 procedure str2list(s, sep, f)
    local l, t
    /sep := ','
    /f := 1
    l := []
-   every t := separate(s, sep) do
-      put(l, f(t)) | runerr("str2list: conversion proc failed")
+   every t := separate(s, sep) do {
+      t := f(t)
+      put(l, t)
+   }
    return l
 end
 
@@ -804,15 +851,17 @@ end
 # :Parameters :
 # :  `l` - the list
 # :  `sep` - the separator char, default ","
-# :  `f` - func to apply to each element before appending to result
+# :  `f` - an optional function to apply to each element before appending to result
 #
 procedure list2str(l, sep, f)
    local s, e
    /sep := ","
    /f := 1
    s := ""
-   every e := !l do
-      s ||:= f(e) || sep | runerr("list2str: conversion proc failed")
+   every e := !l do {
+      e := f(e)
+      s ||:= e || sep
+   }
    s[-*sep:0] := ""
    return s
 end
@@ -822,14 +871,16 @@ end
 #
 # :Parameters :
 # :  `s` - the string to convert
-# :  `f` - func to apply to each element before adding to list
+# :  `f` - an optional function to apply to each element before adding to list
 #
 procedure break_lines(s, f)
    local l, t
    /f := 1
    l := []
-   every t := separate_lines(s) do
-      put(l, f(t)) | runerr("break_lines: conversion proc failed")
+   every t := separate_lines(s) do {
+      t := f(t)
+      put(l, t)
+   }
    return l
 end
 
@@ -839,14 +890,16 @@ end
 #
 # :Parameters :
 # :  `l` - the list
-# :  `f` - func to apply to each element before appending to result
+# :  `f` - an optional function to apply to each element before appending to result
 #
 procedure cat_lines(l, f)
    local s, e
    /f := 1
    s := ""
-   every e := !l do
-      s ||:= f(e) || Files.EOL | runerr("cat_lines: conversion proc failed")
+   every e := !l do {
+      e := f(e)
+      s ||:= e || Files.EOL
+   }
    s[-*Files.EOL:0] := ""
    return s
 end

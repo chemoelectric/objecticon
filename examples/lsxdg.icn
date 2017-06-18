@@ -1,0 +1,129 @@
+import io, lang, xdg, ipl.options, net, util
+
+global opts
+
+procedure text_link(s)
+   return if Files.is_flowterm_tty(FileStream.stdout) then
+      "\e[!\"text:" || URL.percent_encode(s, URL.UNRESERVED) || "\"L" || s || "\e[!L" 
+   else
+      s
+end
+
+procedure file_link(s)
+   return if Files.is_flowterm_tty(FileStream.stdout) then
+      Files.begin_link(s) || s || Files.end_link()
+   else
+      s
+end
+
+procedure need_one(a)
+   if *a = 1 then
+      return a[1]
+   else
+      stop("This option needs a single parameter")
+end
+
+record pair(name, size)
+
+procedure need_pair(a)
+   if *a = 2 then
+      return pair(a[1], integer(a[2])) | stop("This option needs an integer second parameter")
+   else
+      stop("This option needs two parameters")
+end
+
+procedure usage(opts)
+   write("Usage: lsxdg [OPTIONS] CMD [ARGS]\nQuery the xdg database")
+   options_help(opts)
+   write("Possible values of CMD :-")
+   help_line("mime", "Get mime type for file(s)")
+   help_line("alt-mime" ,"List alternatives for a mime type")
+   help_line("generic-icons", "List generic icons for mime type")
+   help_line("all-icons", "List all icons for mime type")
+   help_line("icons", "List icons for mime type")
+   help_line("icon-file", "Find icon for file and size")
+   help_line("find-icon", "Find icon for icon name and size")
+   help_line("de", "List desktop entries for mime type")
+   help_line("de-file", "List desktop entries for file")
+   help_line("dir", "Show config and data directories")
+   help_line("cmd", "List commands for file")
+   exit(0)
+end
+
+procedure main(a)
+   local s, s1, d, cmd, u, p, c
+
+   opts := options(a, [], usage)
+
+   c := pop(a) | stop("Command argument needed")
+
+   case c of {
+      "mime": {
+         every s := !a do
+            write(s, ": ", text_link(Mime.get_mime_type_for_file(s)))
+      }
+
+      "alt-mime": {
+         s := need_one(a)
+         every write(text_link(Mime.alternative_mime_types(s)))
+      }
+
+      "generic-icons": {
+         s := need_one(a)
+         every write(text_link(Mime.gen_generic_icons(s)))
+      }
+
+      "all-icons": {
+         s := need_one(a)
+         every write(text_link(Mime.gen_all_icons(s)))
+      }
+
+      "icons": {
+         s := need_one(a)
+         every write(text_link(Mime.gen_icons(s)))
+      }
+
+      "icon-file": {
+         p := need_pair(a)
+         write(file_link(Mime.find_icon_for_file(p.name, p.size)))
+      }
+
+      "find-icon": {
+         p := need_pair(a)
+         write(file_link(IconTheme.find_icon(p.name, p.size)))
+      }
+
+      "de": {
+         s := need_one(a)
+         every write(to_string(Mime.gen_desktop_entries(s), 3, &yes))
+      }
+
+      "de-file": {
+         s := need_one(a)
+         every write(to_string(Mime.gen_desktop_entries_for_file(s), 3, &yes))
+      }
+
+      "dir": {
+         write("Data Home: ", file_link(BaseDir.get_data_home()))
+         every write("Data Dirs: ", file_link(Files.split_paths(BaseDir.get_data_dirs())))
+         write("Config Home: ", file_link(BaseDir.get_config_home()))
+         every write("Config Dirs: ", file_link(Files.split_paths(BaseDir.get_config_dirs())))
+      }
+
+      "cmd": {
+         s := need_one(a)
+         s1 := Format.shell_escape(FilePath(s).canonical().str())
+         every d := Mime.gen_desktop_entries_for_file(s) do {
+            cmd := d.subst_file(s1)
+            if Files.is_flowterm_tty(FileStream.stdout) then {
+               u := URL("launch:" || URL.percent_encode(cmd, URL.UNRESERVED))
+               write(Files.begin_link(u), cmd, Files.end_link())
+            } else
+               write(cmd)
+         }
+      }
+
+      default:
+         stop("Unknown query command ", c)
+   }
+end

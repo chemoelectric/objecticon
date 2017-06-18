@@ -375,63 +375,66 @@ class TextFlow(Component, HasLastHighlight)
 
    private compute1()
       local cmd, font, W
-      W := cbwin.clone()
-      every cmd := !input do {
-         W.set_font(font ~===:= cmd.attr.font)
-         case classof(cmd) of {
-            ComponentCmd: 
-               compute_component(W, cmd)
-            NewRowCmd: {
-               # Avoid 1-pixel gap, which would be added if *row=0
-               if *row > 0 then
-                  new_row()
-            }
-            ParaCmd: {
-               if /at_new_para then {
-                  new_row(W.get_line_height() / 2)
-                  at_new_para := &yes
-               }
-            }
+      use {
+         W := cbwin.clone(),
+         {
+            every cmd := !input do {
+               W.set_font(font ~===:= cmd.attr.font)
+               case classof(cmd) of {
+                  ComponentCmd: 
+                     compute_component(W, cmd)
+                  NewRowCmd: {
+                     # Avoid 1-pixel gap, which would be added if *row=0
+                     if *row > 0 then
+                        new_row()
+                  }
+                  ParaCmd: {
+                     if /at_new_para then {
+                        new_row(W.get_line_height() / 2)
+                        at_new_para := &yes
+                     }
+                  }
 
-            SupStartCmd: baseline_off +:= W.get_font_ascent() / 2
-            SupEndCmd: baseline_off -:= W.get_font_ascent() / 2
-            SubStartCmd: baseline_off -:= W.get_font_ascent() / 3
-            SubEndCmd: baseline_off +:= W.get_font_ascent() / 3
+                  SupStartCmd: baseline_off +:= W.get_font_ascent() / 2
+                  SupEndCmd: baseline_off -:= W.get_font_ascent() / 2
+                  SubStartCmd: baseline_off -:= W.get_font_ascent() / 3
+                  SubEndCmd: baseline_off +:= W.get_font_ascent() / 3
 
-            BreakCmd: {
-               if *row > 0 then
-                  new_row()
-               else
-                  new_row(W.get_line_height())
-               case \cmd.clear of {
-                  Align.L: 
-                     until row_x = 0 do new_row()
-                  Align.R:
-                     until right_margin = compute_w do new_row()
-                  "all":
-                     until have_max() do new_row()
+                  BreakCmd: {
+                     if *row > 0 then
+                        new_row()
+                     else
+                        new_row(W.get_line_height())
+                     case \cmd.clear of {
+                        Align.L: 
+                           until row_x = 0 do new_row()
+                        Align.R:
+                           until right_margin = compute_w do new_row()
+                        "all":
+                           until have_max() do new_row()
+                     }
+                  }
+                  NamedAnchorCmd: {
+                     if /calculating then
+                        insert(named_anchors, string(cmd.name), row_y)
+                  }
+                  WbrCmd: {
+                     if /cmd.attr.nowrap & /cmd.attr.pre then
+                        blob_start := &null
+                  }
+                  TextCmd: {
+                     if /cmd.attr.pre then {
+                        if /cmd.attr.nowrap then
+                           compute_txt(W, cmd)
+                        else
+                           compute_nowrap_txt(W, cmd)
+                     } else
+                        compute_pre_txt(W, cmd)
+                  }
                }
-            }
-            NamedAnchorCmd: {
-               if /calculating then
-                  insert(named_anchors, string(cmd.name), row_y)
-            }
-            WbrCmd: {
-               if /cmd.attr.nowrap & /cmd.attr.pre then
-                  blob_start := &null
-            }
-            TextCmd: {
-               if /cmd.attr.pre then {
-                  if /cmd.attr.nowrap then
-                     compute_txt(W, cmd)
-                  else
-                     compute_nowrap_txt(W, cmd)
-               } else
-                  compute_pre_txt(W, cmd)
             }
          }
       }
-      W.close()
    end
 
    public lookup_named_anchor(name)
@@ -482,61 +485,64 @@ class TextFlow(Component, HasLastHighlight)
       border.draw(self.cbwin, x, y, w, h)
       x1 := x + border.get_l_inset()
       y1 := y + border.get_t_inset() + y_off
-      W := cbwin.clone()
-      r := get_cbwin_clip()
-      every or := rows_in_range(r.y - y1, r.h) do {
-         every o := !or.l do {
-            if is(o, TextOut) then {
-               t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
-               if r.intersect(t) then {
-                  want_fg := if o.attr.url === \highlight then
-                     browser.page_alink_color
-                  else
-                     o.attr.fg
-                  W.set_font(font ~===:= o.attr.font)
-                  W.set_fg(fg ~===:= want_fg)
-                  if \o.attr.mark then
-                     text_bg(W, MARKED_COLOR, x1 + o.x, y1 + o.y, o.w, o.h)
-                  W.draw_string(x1 + o.x, y1 + o.y + W.get_line_ascent(), o.s)
+      use { 
+         W := cbwin.clone(),
+         {
+            r := get_cbwin_clip()
+            every or := rows_in_range(r.y - y1, r.h) do {
+               every o := !or.l do {
+                  if is(o, TextOut) then {
+                     t := Rect(x1 + o.x, y1 + o.y, o.w, o.h)
+                     if r.intersect(t) then {
+                        want_fg := if o.attr.url === \highlight then
+                           browser.page_alink_color
+                        else
+                           o.attr.fg
+                        W.set_font(font ~===:= o.attr.font)
+                        W.set_fg(fg ~===:= want_fg)
+                        if \o.attr.mark then
+                           text_bg(W, MARKED_COLOR, x1 + o.x, y1 + o.y, o.w, o.h)
+                        W.draw_string(x1 + o.x, y1 + o.y + W.get_line_ascent(), o.s)
 
-                  every ts := browser.is_searched(o) do {
-                     text_bg(W, 
-                             if member(browser.highlighted_searched.memb, ts) then SEARCHED_CURR_COLOR else SEARCHED_OTHER_COLOR,
-                             x1 + o.x + ts.w_off,
-                             y1 + o.y, 
-                             ts.w_sub,
-                             o.h)
+                        every ts := browser.is_searched(o) do {
+                           text_bg(W, 
+                                   if member(browser.highlighted_searched.memb, ts) then SEARCHED_CURR_COLOR else SEARCHED_OTHER_COLOR,
+                                   x1 + o.x + ts.w_off,
+                                   y1 + o.y, 
+                                   ts.w_sub,
+                                   o.h)
+                        }
+
+                        if ts := browser.is_banded(o) then
+                           # NB - the rectangle used should be the same as that returned by ts.get_bounds()
+                           Gui.style.fill_selection_rectangle(W,
+                                                              x1 + o.x + ts.w_off,
+                                                              y1 + o.y, 
+                                                              ts.w_sub,
+                                                              o.h)
+                        if \o.attr.underline then
+                           text_line(W,
+                                     o.s, 
+                                     x1 + o.x, 
+                                     y1 + o.y + W.get_line_ascent() + Gui.UNIT)
+                        else if \o.attr.underdash | (o.attr.url === \last_highlight) then
+                           text_dash(W,
+                                     o.s, 
+                                     x1 + o.x, 
+                                     y1 + o.y + W.get_line_ascent() + Gui.UNIT)
+                        if \o.attr.strike then
+                           text_line(W,
+                                     o.s, 
+                                     x1 + o.x,
+                                     y1 + o.y + W.get_absolute_leading() + (2 * W.get_font_ascent()) / 3)
+                        if o.attr.url === \over then
+                           Gui.style.fill_over_rectangle(W, x1 + o.x, y1 + o.y, o.w, o.h)
+                     }
                   }
-
-                  if ts := browser.is_banded(o) then
-                     # NB - the rectangle used should be the same as that returned by ts.get_bounds()
-                     Gui.style.fill_selection_rectangle(W,
-                                                        x1 + o.x + ts.w_off,
-                                                        y1 + o.y, 
-                                                        ts.w_sub,
-                                                        o.h)
-                  if \o.attr.underline then
-                     text_line(W,
-                               o.s, 
-                               x1 + o.x, 
-                               y1 + o.y + W.get_line_ascent() + Gui.UNIT)
-                  else if \o.attr.underdash | (o.attr.url === \last_highlight) then
-                     text_dash(W,
-                               o.s, 
-                               x1 + o.x, 
-                               y1 + o.y + W.get_line_ascent() + Gui.UNIT)
-                  if \o.attr.strike then
-                     text_line(W,
-                               o.s, 
-                               x1 + o.x,
-                               y1 + o.y + W.get_absolute_leading() + (2 * W.get_font_ascent()) / 3)
-                  if o.attr.url === \over then
-                     Gui.style.fill_over_rectangle(W, x1 + o.x, y1 + o.y, o.w, o.h)
                }
             }
          }
       }
-      W.close()
       Component.display()
    end
 
@@ -599,93 +605,97 @@ class TextFlow(Component, HasLastHighlight)
       until l[-1] === last do
          pull(l)
 
-      W := cbwin.clone()
-      every o := !l do {
-         case classof(o) of {
-            TextOut: {
-               W.set_font(font ~===:= o.attr.font)
-               i := 1
-               if o === first then {
-                  d := first_r.x - x1 - o.x
-                  u := 0
-                  while i <= *o.s & ((.u + (u := W.text_width(o.s[1+:i]))) / 2) < d do
-                     i +:= 1
-               }
-               if o === last then {
-                  d := last_r.x - x1 - o.x + last_r.w
-                  j := i
-                  u := W.text_width(o.s[1:i])
-                  while j <= *o.s & ((.u + (u := W.text_width(o.s[1+:j]))) / 2) < d do
-                     j +:= 1
-               } else
-                  j := *o.s + 1
+      use { 
+         W := cbwin.clone(),
+         every o := !l do {
+            case classof(o) of {
+               TextOut: {
+                  W.set_font(font ~===:= o.attr.font)
+                  i := 1
+                  if o === first then {
+                     d := first_r.x - x1 - o.x
+                     u := 0
+                     while i <= *o.s & ((.u + (u := W.text_width(o.s[1+:i]))) / 2) < d do
+                        i +:= 1
+                  }
+                  if o === last then {
+                     d := last_r.x - x1 - o.x + last_r.w
+                     j := i
+                     u := W.text_width(o.s[1:i])
+                     while j <= *o.s & ((.u + (u := W.text_width(o.s[1+:j]))) / 2) < d do
+                        j +:= 1
+                  } else
+                     j := *o.s + 1
 
-               if i < j then {
-                  ts := TextSelection(o, self, 
-                                      i, j, 
-                                      W.text_width(o.s[1:i]), W.text_width(o.s[i:j]))
-                  insert(bs, o, ts)
+                  if i < j then {
+                     ts := TextSelection(o, self, 
+                                         i, j, 
+                                         W.text_width(o.s[1:i]), W.text_width(o.s[i:j]))
+                     insert(bs, o, ts)
+                  }
                }
-            }
-            CompOut: {
-               # An image; add the Img to the banded map.  (It may be
-               # inserted again by Browser.calculate_banded() if the
-               # image actually intersects the band).
-               insert(bs, o.c, o.c)
+               CompOut: {
+                  # An image; add the Img to the banded map.  (It may be
+                  # inserted again by Browser.calculate_banded() if the
+                  # image actually intersects the band).
+                  insert(bs, o.c, o.c)
+               }
             }
          }
       }
-      W.close()
    end
 
    package search(sl, searched, sorted)
       local or, o, o1, ts, i, j, k, sp, s, W, x1, y1, sal, font, e
       s := sl[1]
-      W := cbwin.clone()
-      x1 := x + border.get_l_inset()
-      y1 := y + border.get_t_inset() + y_off
-      i := 1
-      every or := !computed_output_rows do {
-         j := 1
-         every o := !or.l do {
-            if is(o, TextOut) then {
-               /o.l_s := map(o.s)
-               every k := find(s, o.l_s) do {
-                  if *sl = 1 then {
-                     # Optimize for simple case of one word.
-                     W.set_font(font ~===:= o.attr.font)
-                     ts := TextSelection(o, self, 
-                                         k, k + *s,
-                                         W.text_width(o.s[1:k]),
-                                         W.text_width(o.s[k+:*s]))
+      use {
+         W := cbwin.clone(),
+         {
+            x1 := x + border.get_l_inset()
+            y1 := y + border.get_t_inset() + y_off
+            i := 1
+            every or := !computed_output_rows do {
+               j := 1
+               every o := !or.l do {
+                  if is(o, TextOut) then {
+                     /o.l_s := map(o.s)
+                     every k := find(s, o.l_s) do {
+                        if *sl = 1 then {
+                           # Optimize for simple case of one word.
+                           W.set_font(font ~===:= o.attr.font)
+                           ts := TextSelection(o, self, 
+                                               k, k + *s,
+                                               W.text_width(o.s[1:k]),
+                                               W.text_width(o.s[k+:*s]))
 
-                     put(member(searched, o), ts) | insert(searched, o, [ts])
-                     # Note we use or.y as the y sort co-ordinate so that all matches in the same row             
-                     # compare on their x position.                                                               
-                     sp := SearchMatch(self, x1 + o.x + ts.w_off, y1 + or.y, set(ts))
-                     put(sorted, sp)
-                  } else if sal := search_ahead(or, o, i, j, k, sl) then {
-                     sp := &null
-                     every e := !sal do {
-                        o1 := e.textout
-                        W.set_font(font ~===:= o1.attr.font)
-                        ts := TextSelection(o1, self, 
-                                            e.i, e.j,
-                                            W.text_width(o1.s[1:e.i]),
-                                            W.text_width(o1.s[e.i:e.j]))
-                        put(member(searched, o1), ts) | insert(searched, o1, [ts])
-                        /sp := SearchMatch(self, x1 + o.x + ts.w_off, y1 + or.y, set())
-                        insert(sp.memb, ts)
+                           put(member(searched, o), ts) | insert(searched, o, [ts])
+                           # Note we use or.y as the y sort co-ordinate so that all matches in the same row             
+                           # compare on their x position.                                                               
+                           sp := SearchMatch(self, x1 + o.x + ts.w_off, y1 + or.y, set(ts))
+                           put(sorted, sp)
+                        } else if sal := search_ahead(or, o, i, j, k, sl) then {
+                           sp := &null
+                           every e := !sal do {
+                              o1 := e.textout
+                              W.set_font(font ~===:= o1.attr.font)
+                              ts := TextSelection(o1, self, 
+                                                  e.i, e.j,
+                                                  W.text_width(o1.s[1:e.i]),
+                                                  W.text_width(o1.s[e.i:e.j]))
+                              put(member(searched, o1), ts) | insert(searched, o1, [ts])
+                              /sp := SearchMatch(self, x1 + o.x + ts.w_off, y1 + or.y, set())
+                              insert(sp.memb, ts)
+                           }
+                           put(sorted, sp)
+                        }
                      }
-                     put(sorted, sp)
                   }
+                  j +:= 1
                }
+               i +:= 1
             }
-            j +:= 1
          }
-         i +:= 1
       }
-      W.close()
    end
 
    # Search forward from the given position, (OutputRow or, TextOut o,

@@ -1,0 +1,65 @@
+package gui
+
+import graphics
+
+# A version of `Menu` which allows for a popup menu to be shown on a
+# right click on one of the child items.
+#
+abstract class MenuWithPopup(Menu)
+   public
+      popup
+
+   # This method must be implemented to return the popup `Menu` to
+   # show on a right click.  It may fail, to indicate no menu should
+   # be shown for this event.
+   #
+   # :Parameters :
+   # :  `ev` - the right click event.
+   public abstract create_popup(ev)
+
+   public set_which_highlight(x)
+      #
+      # Do nothing if already in desired state.
+      #
+      if (self.which_highlight === x) & /self.which_open then
+         return self
+
+      (\self.which_open).hide()
+      if \self.which_open === popup then {
+         remove(popup)
+         # Hack re handle_key_escape with popup open
+         if x === popup then
+            x := self.which_highlight
+         self.popup := &null
+      }
+
+      # Just invalidate the bits that have changed.
+      self.temp_win.invalidate((\self.which_highlight).get_label_rect())
+      self.which_highlight := x
+      self.temp_win.invalidate((\self.which_highlight).get_label_rect())
+      self.which_open := &null
+      return self
+   end
+
+   public handle_press(e)
+      local m, p
+
+      if m := which_item(e) then {
+         if e.code === Mouse.RIGHT_PRESS & (p := create_popup(e)) then {
+            # Since it has no label... otherwise in_label_region crashes out.
+            p.label_x := p.label_y := p.label_w := p.label_h := 0
+            set_which_highlight(m)
+            self.popup := self.which_open := p
+            add(p)
+            p.show(e.x, e.y)
+         } else if m.is_sub_menu() then {
+            if m === self.which_open then
+               set_which_highlight(m)
+            else
+               set_which_open(m)
+         } else
+            set_which_highlight(m)
+      } else
+         set_which_highlight()
+   end
+end

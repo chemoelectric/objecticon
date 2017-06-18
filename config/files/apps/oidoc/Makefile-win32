@@ -1,21 +1,21 @@
 include ../../Makedefs
 
-COMMONSRC=outputter.icn htmloutputter.icn groffoutputter.icn
-COMMONU=$(COMMONSRC:.icn=.u)
+.NOTPARALLEL:
 
-PROGS=oidoc
-PROGSRC=$(PROGS:=.icn)
-PROGEXE=$(PROGS:=.exe)
-PROGU=$(PROGSRC:.icn=.u)
+SRC=oidoc.icn outputter.icn htmloutputter.icn groffoutputter.icn
+UFILES=$(SRC:.icn=.u)
+PROG=../../bin/oidoc
 
-all:	$(PROGS)
+all:	$(PROG)
+
+etags:
+	$(ETAGS) $(ICNTAGS) $(SRC)
 
 clean:
-	$(RM) *.u packages.txt $(PROGEXE)
+	$(RM) *.u packages.txt $(PROG)
 
-$(COMMONU) $(PROGU): %.u: %.icn
-	oit -snc $(COMMONSRC) $(PROGSRC)
+%.u: %.icn
+	oit -snc $(SRC)
 
-%:      %.u $(COMMONU)
-	oit -o $@ $@.u $(COMMONU)
-	cp $@ "$(OI_BIN)"
+$(PROG):	$(UFILES)
+	oit -o $@ $(UFILES)

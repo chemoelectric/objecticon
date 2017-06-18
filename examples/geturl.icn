@@ -119,7 +119,7 @@ procedure usage(opts)
 end
 
 procedure main(args)
-   local l, f, t, cookies
+   local l, f, t, s, cookies
 
    opts := options(args, [Opt("over",, "Overwrite any existing files"),
                           Opt("i",string, "INPUT FILE#Input file for a POST request"),
@@ -204,10 +204,11 @@ procedure main(args)
 
    hc.connect(l.got_headers, "Headers")
 
-   if \opts["f"] then {
-      f := open(opts["f"]) | stop("Couldn't open ", opts["f"], ": ", &why)
-      every process_one(expand_arg(|read(f)))
-      close(f)
+   if s := \opts["f"] then {
+      use {
+         f := open(s) | stop("Couldn't open ", s, ": ", &why),
+         every process_one(expand_arg(|read(f)))
+      }
    } else if *args = 0 then
       every process_one(expand_arg(|read()))
    else

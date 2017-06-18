@@ -19,7 +19,7 @@ cp config/files/apps/ivib/plugins/mkfile apps/ivib/plugins/mkfile
 cp config/files/apps/mkfile apps/mkfile
 cp config/files/apps/oidoc/mkfile apps/oidoc/mkfile
 cp config/files/examples/mkfile examples/mkfile
-mkdir -p bin
+mkdir -p bin examples/bin
 x=`{pwd}
 echo creating mkdefs
 sed -e 's:@CONFIG_DIR@:'^$"x^':'  \

@@ -180,8 +180,8 @@ class SliderDragComponent(Component)
    public display()
       local cw
       use {
-         cw := cbwin.clone().set_masked_pattern("gray"),
-         cw.fill_rectangle(self.x, self.y, self.w, self.h)
+         cw := cbwin.clone(),
+         cw.set_masked_pattern("gray").fill_rectangle(self.x, self.y, self.w, self.h)
       }
    end
 end

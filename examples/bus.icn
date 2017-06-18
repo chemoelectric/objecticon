@@ -1649,29 +1649,32 @@ class Map(Panel)
    private load_stops()
       local f, s, e, st,
          code, naptan, name, easting, northing, area, loc, point_letter
-      f := open(get_file("bus-stops.csv")) | stop("Couldn't open bus stop data file: ", &why)
-      # Header line
-      f.read() | fail
-      while s := f.read() do {
-         if s == "\x1a" then
-            break
-         e := create gen_csv_fields(s)
-         (code := @e &
-          @e &            # bus_stop_code 
-          naptan := @e &
-          name := @e &
-          easting := @e &
-          northing := @e &
-          @e &            # heading
-          area := @e) | stop("Bad data in bus file: ", image(s))
-         loc := grid_to_loc(easting, northing)
-         name := cleanup_name(name)
-         point_letter := if any(&letters, naptan[-2]) then naptan[-2:0] else naptan[-1]
-         insert(stops, st := Stop(loc,
-                                  code, table(), set(), set(), name, point_letter, set(area)))
-         stop_codes[code] := st
+      use {
+         f := open(get_file("bus-stops.csv")) | stop("Couldn't open bus stop data file: ", &why),
+         {
+            # Header line
+            f.read() | stop("No header line in bus file")
+            while s := f.read() do {
+               if s == "\x1a" then
+                  break
+               e := create gen_csv_fields(s)
+               (code := @e &
+                @e &            # bus_stop_code 
+                naptan := @e &
+                name := @e &
+                easting := @e &
+                northing := @e &
+                @e &            # heading
+                area := @e) | stop("Bad data in bus file: ", image(s))
+               loc := grid_to_loc(easting, northing)
+               name := cleanup_name(name)
+               point_letter := if any(&letters, naptan[-2]) then naptan[-2:0] else naptan[-1]
+               insert(stops, st := Stop(loc,
+                                        code, table(), set(), set(), name, point_letter, set(area)))
+               stop_codes[code] := st
+            }
+         }
       }
-      f.close()
    end
 
    private fixup_data()

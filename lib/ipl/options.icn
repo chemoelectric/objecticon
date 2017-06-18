@@ -23,7 +23,7 @@
 package ipl.options
 
 import
-   io, lang, util, ipl.scan, ipl.pdco
+   io, lang, util, ipl.scan, ipl.lists
 
 # The result of the `Opt.format` method.
 record OptFormat(names, help)
@@ -254,7 +254,7 @@ end
 #  only the non-option arguments.
 #
 procedure options(arg, opts, usage, errproc)
-   local f, fList, fileArg, fn, ignore, optname, opttable, x,
+   local fList, fileArg, fn, ignore, optname, opttable, x,
       option, k, v, p, opt, opttype, convert
    #
    #  Initialize.
@@ -363,7 +363,7 @@ procedure options(arg, opts, usage, errproc)
          #
          else if ="@" & not pos(0) & /ignore then {
             fn := tab(0)
-            fileArg := use { f := open(fn), List{ f.gen() } } |
+            fileArg := file2list(fn) |
                return errproc("Can't open " || fn || ": " || &why)
             # push null to signal end of args from file, followed by each line.
             every push(arg, &null | back(fileArg))
