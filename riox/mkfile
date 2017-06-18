@@ -21,11 +21,11 @@ OFILES=\
 
 PROG=	../bin/riox
 
-all:V:  $O.out
+all:V:  $PROG
 
-$O.out:  $OFILES
+$PROG:  $OFILES
 	rm -f $PROG
 	$LD -o $PROG $OFILES
 
 clean:V:	
-	rm -f $OFILES $PROG
+	rm -f *.[$OS] [$OS].out $PROG

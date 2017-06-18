@@ -20,6 +20,8 @@ XOBJS=	cnv.$O def.$O errmsg.$O fconv.$O fmath.$O\
 	rdebug.$O rlrgint.$O rmemmgt.$O rmisc.$O rstruct.$O rsys.$O\
 	rwinsys.$O rwindow.$O posix.$O cstruct.$O
 
+RTTC=${XOBJS:%.$O=%.c}
+
 COBJS=	../common/mlocal.$O ../common/plan9.$O
 
 OBJS=	$XOBJS  $COBJS
@@ -35,7 +37,7 @@ $PROG:	$XOBJS
 	$LD -o $PROG $OBJS
 
 clean:V:
-	rm -f *.c *.[$OS] [$OS].out $PROG
+	rm -f $RTTC *.[$OS] [$OS].out $PROG
 
 %.$O: %.r
 	rtt -r ../h/ $stem.r
