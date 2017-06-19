@@ -1512,12 +1512,13 @@ int is_gif(dptr data)
 int writeimagefile(char *filename, struct imgdata *imd)
 {
     int r;
-    struct fileparts *fp;
 
     if ((r = writeimagefileimpl(filename, imd)) != NoCvt)
         return r;
 
-    fp = fparse(filename);
+#if HAVE_LIBPNG || HAVE_LIBJPEG
+    {
+    struct fileparts *fp = fparse(filename);
 
 #if HAVE_LIBPNG
     if (strcasecmp(fp->ext, ".png") == 0)
@@ -1527,6 +1528,8 @@ int writeimagefile(char *filename, struct imgdata *imd)
 #if HAVE_LIBJPEG
     if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
         return writejpegfile(filename, imd);
+#endif
+    }
 #endif
 
     LitWhy("Unsupported file type");
