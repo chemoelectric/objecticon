@@ -6,9 +6,19 @@ procedure note(s)
    write("Scanning ", s)
 end
 
+procedure usage(opts)
+   write("Usage: fiximports [OPTIONS] [SRC FILES...]\n_
+          Rewrite import declarations so that each used symbol is explicitly imported.")
+   options_help(opts)
+   exit(0)
+end
+
 procedure main(a)
    local s
-   opts := options(a, "-d! -c!")
+   opts := options(a, [Opt("d",, "Generate symbol table scanning progress messages"),
+                       Opt("c",, "Output to standard output, without changing the source file")],
+                       usage)
+
    symbol_table := SymbolTable().set_file_mode(SymbolTable.PREFER_U)
    if \opts["d"] then
       symbol_table.connect(note, SymbolTable.SCANNING_EVENT)
