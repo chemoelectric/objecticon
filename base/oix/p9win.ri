@@ -2434,7 +2434,7 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
     else
         return NoCvt;
 
-    if ((fd = create(filename, OWRITE, 0777)) < 0) {
+    if ((fd = create(filename, OWRITE, 0664)) < 0) {
         whyf("Couldn't open %s: %r", filename);
         return Failed;
     }
