@@ -1188,7 +1188,7 @@ class Session9P()
 
    private new_fid(n, path, uid, mode)
       if member(fids, n) then
-         throw("fid already in use:" || n)
+         throw("fid already in use: " || n)
       insert(fids, n, Fid(path, uid, mode))
       if \mode then
          open_cnt[data.get_file_key(path)] +:= 1
@@ -1197,7 +1197,7 @@ class Session9P()
 
    private del_fid(n)
       local x, k, i
-      x := member(fids, n) | throw("no such fid:" || n)
+      x := member(fids, n) | throw("no such fid: " || n)
       delete(fids, n)
       if \x.omode then {
          k := data.get_file_key(x.path)
@@ -1216,7 +1216,7 @@ class Session9P()
 
    private lookup(n, t)
       local o
-      o := member(fids, n) | throw("no such fid:" || n)
+      o := member(fids, n) | throw("no such fid: " || n)
       tmp(o.path, t)
       return o
    end
@@ -1276,7 +1276,7 @@ class Session9P()
    private inc_ref(p)
       if \track_refs then {
          ref_cnt[p] +:= 1
-         if \verbose then write("INC:",image(p), " to ", ref_cnt[p])
+         if \verbose then write("INC: ",image(p), " to ", ref_cnt[p])
       }
    end
 
@@ -1292,7 +1292,7 @@ class Session9P()
       local i
       if \track_refs then {
          i := (ref_cnt[p] -:= 1)
-         if \verbose then write("DEC:",image(p)," to ", i)
+         if \verbose then write("DEC: ",image(p)," to ", i)
          if i < 0 then
             syserr("negative reference count in Session9P")
          if i = 0 then {
@@ -1531,11 +1531,11 @@ class Session9P()
    public io(f)
       local x, y
       while x := Comms9P.get(f) do {
-         if \verbose then write("GOT:", to_string(x))
+         if \verbose then write("GOT: ", to_string(x))
          if is(x, Tinvalid) then
             next
          y := respond(x)
-         if \verbose then write("SEND:", to_string(y))
+         if \verbose then write("SEND: ", to_string(y))
          f.writes1(Comms9P.encode(y)) | fail
       }
    end
@@ -1558,7 +1558,7 @@ class Session9P()
    private clear_valid()
       local e
       while e := ?valid do {
-         if \verbose then write("CLEARING:", to_string(e.req))
+         if \verbose then write("CLEARING: ", to_string(e.req))
          delete(valid, e)
          (\e.worker).interrupt()
       }
@@ -1577,9 +1577,9 @@ class Session9P()
                # before exiting even after done_flag set.
                item := get(queue) | break
                if member(valid, item) then {
-                  if \verbose then write("SEND:", to_string(item.resp))
+                  if \verbose then write("SEND: ", to_string(item.resp))
                   ts.writes1(Comms9P.encode(item.resp)) |
-                     if \verbose then write("ERROR ON SEND:", to_string(item.resp), ": ", &why)
+                     if \verbose then write("ERROR ON SEND: ", to_string(item.resp), ": ", &why)
                   delete(valid, item)
                }
             }
@@ -1615,7 +1615,7 @@ class Session9P()
          use {
             ts := TaskStream(f, t).set_close_underlying(&no),
             while x := Comms9P.get(ts) do {
-               if \verbose then write("GOT:", to_string(x))
+               if \verbose then write("GOT: ", to_string(x))
                if is(x, Tinvalid) then
                   next
                item := WorkItem(x)
@@ -1623,7 +1623,7 @@ class Session9P()
                   item.resp := respond(x)
                   every e := !valid do {
                      if e.req.tag = x.oldtag then {
-                        if \verbose then write("FLUSHING:", to_string(e.req))
+                        if \verbose then write("FLUSHING: ", to_string(e.req))
                         delete(valid, e)
                         (\e.worker).interrupt()
                      }
