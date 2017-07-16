@@ -361,6 +361,20 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    end
 
    #
+   # Succeed iff the index `i` is currently selected.
+   #
+   public is_selected(i)
+      return member(selections, i)
+   end
+
+   #
+   # Succeed iff the index `o` is currently selected.
+   #
+   public object_is_selected(o)
+      return member(selections, find_line(o))
+   end
+
+   #
    # Set the cursor to the given object.  Has no effect if o is not
    # in the contents list.
    #
