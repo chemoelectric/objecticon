@@ -551,11 +551,17 @@ void pollevent(wbp w)
                     /* Found a char string, so generate string event */
                     StrLen(d) = 1;
                     StrLoc(d) = &allchars[arg & 0xFF];
-                } else if (arg < 60000) {
+                } else if (arg >= 0xe000 && arg <= 0xf8ff) {
+                    /* A char in the Private Use Area of the Basic
+                     * Multilingual Plane.  These are used for cursor
+                     * keys, function keys, etc, and are returned as
+                     * integers rather than ucs strings. */
+                    MakeInt(arg, &d);
+                } else {
                     d.dword = D_Ucs;
                     BlkLoc(d) = (union block *)make_one_char_ucs_block(arg);
-                } else 
-                    MakeInt(arg, &d);
+                }
+
                 qevent(ws, &d, 
                        mx,
                        my,
