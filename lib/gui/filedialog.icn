@@ -239,14 +239,20 @@ class FileDialog(Dialog)
       goto_dir(gen_favourites_directories())
    end
 
-   public check_existing()
+   public check_current_selection()
       local f
-      /multiple_files_flag | fail
-      f := get_current_selection().str()
-      warned := &null
-      if \f & existing_file_mode === (WARN | DISALLOW) & not Files.is_directory(f) & Files.access(f) then {
-         warned := &yes
-         msg("Existing file")
+      if /multiple_files_flag then {
+         f := get_current_selection().str()
+         warned := &null
+         if \f & existing_file_mode === (WARN | DISALLOW) & not Files.is_directory(f) & Files.access(f) then {
+            warned := &yes
+            msg("Existing file")
+         }
+      } else {
+         # For multiple selection, choose the selected item with the
+         # cursor (if any) as the file to show in the image tab.
+         if \img & flist.is_selected(flist.get_cursor()) then
+            f := loaded_dir_path.child(flist.object_get_cursor().name).str()
       }
       if \img then {
          if endswith(map(\f), ".gif" | ".jpg" | ".jpeg" | ".png") then
@@ -263,7 +269,7 @@ class FileDialog(Dialog)
 
    public on_file_content_changed(ev)
       msg()
-      check_existing()
+      check_current_selection()
       synch_file()
    end
 
@@ -477,7 +483,7 @@ class FileDialog(Dialog)
          file.set_contents(flist.object_get_selections()[1].name)
       else
          update_file_label()
-      check_existing()
+      check_current_selection()
    end
 
    public on_filter_action(ev)
@@ -577,12 +583,54 @@ class FileDialog(Dialog)
    end
 
    public refresh_dir(load)
+      local e, s, t, c, i, j
       save_pos()
       msg()
-      if \load then
-         load_dir_list()
-      annotate_dir_list()
-      set_lists(sort_dir_list())
+      if /multiple_files_flag then {
+         if \load then
+            load_dir_list()
+         annotate_dir_list()
+         set_lists(sort_dir_list())
+      } else {
+         # Save cursor and selection settings.  If reloading, then we
+         # save names rather than objects.
+         if \load then {
+            s := Set{ (!flist.object_get_selections()).name }
+            c := flist.object_get_cursor().name
+            load_dir_list()
+         } else { 
+            s := flist.object_get_selections()
+            c := flist.object_get_cursor()
+         }
+         annotate_dir_list()
+         # This will clear image and file label, but they are reset
+         # below.
+         set_lists(sort_dir_list())
+         # Restore selections, and set j to new cursor index.
+         if \load then {
+            t := []
+            every e := flist.contents[i := 1 to *flist.contents] do {
+               if member(s, e.name) then
+                  put(t, i)
+               if e.name === c then
+                  j := i
+            }
+            flist.set_selections(t)
+         } else {
+            flist.object_set_selections(s)
+            j := flist.find_line(\c)
+         }
+         # If cursor found, set it and center line.
+         # check_current_selection() will set the image in the image
+         # tab if the cursor is selected.
+         if \j then {
+            flist.
+               set_cursor(j).
+               center_line(j)
+            check_current_selection()
+         }
+         update_file_label()
+      }
       restore_pos()
    end
 
@@ -628,6 +676,7 @@ class FileDialog(Dialog)
       return self
    end
 
+   
    public set_lists(l)
       #
       # Update directory and file lists.
@@ -647,7 +696,7 @@ class FileDialog(Dialog)
          set_cursor(1)
 
       synch_file()
-      check_existing()
+      check_current_selection()
    end
 
    public load_dir_list()
