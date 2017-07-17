@@ -18,6 +18,28 @@ import
 # This class extends LineBasedScrollArea to provide selection on lines,
 # event handling and selection handling.
 #
+# Mouse and key movements are briefly as follows.
+#
+# * Mouse movements.
+#   * middle and right mouse just move the cursor and don't select
+#   * left mouse moves the cursor and selects.  In select many mode :-
+#       * shift modifier selects all from old cursor to new
+#       * ctrl modifier toggles one row on or off
+# 
+# * Key movements.  In selection on key moves mode :-
+#   * control modifier means just move, no selection.
+#   * shift modifier means (in select many mode) select all from old cursor
+#     to new.
+# 
+# * Return key.
+#   * In select many mode, shift or control modifier means toggle the cursor
+#     row's selection.
+#   * Otherwise, the cursor row alone is selected.
+#
+# * Escape key clears the selection.
+#
+# * Control-A selects all rows (in select many mode).
+#
 abstract class SelectableScrollArea(LineBasedScrollArea)
    public 
       contents,
@@ -231,24 +253,6 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    #
    public object_get_highlight()
       return self.contents[\self.highlight]
-   end
-
-   #
-   # Return the item previously under the clicked cursor
-   # :Returns :
-   # :  The item number
-   #
-   public get_prev_cursor()
-      return \self.prev_cursor
-   end
-
-   #
-   # Return object currently under the clicked cursor
-   # :Returns :
-   # :  The object
-   #
-   public object_get_prev_cursor()
-      return self.contents[\self.prev_cursor]
    end
 
    #
@@ -525,15 +529,37 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       return self
    end
 
+   private select_range(from)
+      if \from then {
+         if from > cursor then
+            every insert(selections, cursor to from)
+         else
+            every insert(selections, from to cursor)
+      } else
+         insert(selections, cursor)
+   end
+
+   private select_cursor()
+      selections := set(cursor)
+   end
+
+   private toggle_select_cursor()
+      if member(selections, cursor) then
+         delete(selections, cursor) 
+      else
+         insert(selections, cursor)
+   end
+
    private move_cursor_on_key(e, line)
+      local t
+      t := self.cursor
       self.cursor := line
       constrain_cursor()
-      self.prev_cursor := self.cursor
-      if \self.selection_on_key_moves_flag & (self.select_mode ~=== Select.NONE) then {
-         if not (\e.shift & (self.select_mode === Select.MANY)) then {
-            self.selections := set()
-         }
-         insert(self.selections, self.cursor)
+      if \cursor & /e.ctrl & \self.selection_on_key_moves_flag & (self.select_mode ~=== Select.NONE) then {
+         if \e.shift & (self.select_mode === Select.MANY) then
+            select_range(t)
+         else
+            select_cursor()
       }
       ensure_line_visible(self.cursor)
    end
@@ -579,12 +605,11 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
    public handle_return(e)
       if /self.cursor | (self.select_mode === Select.NONE) then
          return
-
       start_handle(e)
-      if not (\e.shift & (self.select_mode === Select.MANY)) then {
-         self.selections := set()
-      }
-      insert(self.selections, self.cursor)
+      if (self.select_mode === Select.MANY) & (\e.shift | \e.ctrl) then
+         toggle_select_cursor()
+      else
+         select_cursor()
       end_handle(e)
    end
 
@@ -651,14 +676,21 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       end_handle(e)
    end
 
-   public handle_rpress(e)
+   private move_cursor_to_pointer(e)
       local l
       l := get_line_under_pointer(e) | fail
       start_handle(e)
-      self.prev_cursor := self.cursor
       self.cursor := l
       ensure_line_visible(self.cursor)
       end_handle(e)
+   end
+
+   public handle_rpress(e)
+      move_cursor_to_pointer(e)
+   end
+
+   public handle_mpress(e)
+      move_cursor_to_pointer(e)
    end
 
    public handle_select_all(e)
@@ -683,7 +715,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       end_handle(e)
    end
 
-   private handle_exit(e)
+   public handle_exit(e)
       if \self.motion_cursor_flag then {
          # We don't move the motion cursor on a drag
          parent_dialog.get_held_count() = 0 | fail
@@ -735,14 +767,14 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       end_handle(e)
    end
 
-   public check_ticker(d)
+   private check_ticker(d)
       scroll_ticker_interval := Gui.style.distance2ticker_rate(d)
       scroll_ticker.change_time(scroll_ticker_interval)
       # Start it (if it isn't already running)
       scroll_ticker.start()
    end
 
-   public scroll_tick()
+   private scroll_tick()
       local i
       repeat {
          if i := get_line_info() then {
@@ -782,26 +814,14 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       scroll_ticker.stop()
       if (self.select_mode ~=== Select.NONE) & (get_line_under_pointer(e) = self.cursor) then {
          if (self.select_mode === Select.MANY) & (\e.shift | \e.ctrl) then {
-            if \e.ctrl then {
-               if member(self.selections, self.cursor) then
-                  delete(self.selections, self.cursor) 
-               else
-                  insert(self.selections, self.cursor)
-            } else {
-               if \self.prev_cursor then {
-                  if self.prev_cursor > self.cursor then {
-                     every insert(self.selections, self.cursor to self.prev_cursor)
-                  } else {
-                     every insert(self.selections, self.prev_cursor to self.cursor)
-                  }
-               } else {
-                  insert(self.selections, self.cursor)
-               }                  
+            if \e.ctrl then
+               toggle_select_cursor()
+            else {
+               \prev_cursor >:= *contents
+               select_range(prev_cursor)
             }
-         } else {
-            self.selections := set()
-            insert(self.selections, \self.cursor)
-         }
+         } else
+            select_cursor()
       }
       ensure_line_visible(\self.cursor)
       end_handle(e)
@@ -1057,6 +1077,7 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       view.
          connect(self.handle_lpress, Event.MOUSE_LEFT_PRESS).
          connect(self.handle_rpress, Event.MOUSE_RIGHT_PRESS).
+         connect(self.handle_mpress, Event.MOUSE_MIDDLE_PRESS).
          connect(self.handle_ldrag, Event.MOUSE_LEFT_DRAG).
          connect(self.handle_lrelease, Event.MOUSE_LEFT_RELEASE).
          connect(self.handle_move, Event.MOUSE_MOVEMENT).
