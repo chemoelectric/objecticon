@@ -149,6 +149,37 @@ class XmlElement(Element)
             suspend n
    end
 
+   #
+   # Like `get_string_content()`, but includes CDATA sections too.
+   #
+   public get_string_content_with_cdata()
+      local s, e, t
+      s := ""
+      every e := !self.children do {
+         if t := text(e) then
+            s ||:= t
+         else if is(e, CData) then
+            s ||:= e.get_content()
+      }
+      return s
+   end
+
+   #
+   # Like `get_trimmed_string_content()`, but includes CDATA sections
+   # too (which are not trimmed).
+   #
+   public get_trimmed_string_content_with_cdata()
+      local s, e, t
+      s := ""
+      every e := !self.children do {
+         if t := text(e) then
+            s ||:= xml_trim(t) 
+         else if is(e, CData) then
+            s ||:= e.get_content()
+      }
+      return s
+   end
+
    public print_structure(f, indent, flags)
       local s, x, i, e, j
 
