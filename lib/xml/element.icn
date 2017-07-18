@@ -103,36 +103,6 @@ class Element(Node)
    end
 
    #
-   # Return the nth sub-element which is a string/ucs.
-   #
-   # :Parameters :
-   # :  `n` - the index to look for; 1 being the first.
-   # :Fails :
-   # :  if there is no such element.
-   #
-   public get_nth_string(n)
-      local s
-      every s := text(!children) do {
-         if n = 1 then
-            return s
-         n -:= 1
-      }
-   end
-
-   #
-   # Return the nth sub-element which is a string, after
-   # trimming it.
-   #
-   # :Parameters :
-   # :  `n` - the index to look for; 1 being the first.
-   # :Fails :
-   # :  if there is no such element.
-   #
-   public get_nth_trimmed_string(n)
-      return xml_trim(get_nth_string(n))
-   end
-
-   #
    # Print the structure to the given file
    #
    public print_structure(f, indent, flags)

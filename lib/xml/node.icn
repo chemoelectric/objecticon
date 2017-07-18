@@ -224,6 +224,36 @@ class Node()
    end
 
    #
+   # Return the nth child which is a string/ucs.
+   #
+   # :Parameters :
+   # :  `n` - the index to look for; 1 being the first.
+   # :Fails :
+   # :  if there is no such element.
+   #
+   public get_nth_string(n)
+      local s
+      every s := text(!children) do {
+         if n = 1 then
+            return s
+         n -:= 1
+      }
+   end
+
+   #
+   # Return the nth child which is a string, after
+   # trimming it.
+   #
+   # :Parameters :
+   # :  `n` - the index to look for; 1 being the first.
+   # :Fails :
+   # :  if there is no such element.
+   #
+   public get_nth_trimmed_string(n)
+      return xml_trim(get_nth_string(n))
+   end
+
+   #
    # Print the structure to the given file, for debugging.
    #
    public print_structure(f, indent, flags)
@@ -244,10 +274,10 @@ class Node()
    end
 
    #
-   # Trim `XmlParser.SPACE` chars from both ends of the given string
+   # Trim whitespace characters from both ends of the given string
    #
    public static xml_trim(s)
-      return trim(s, XmlParser.SPACE)
+      return trim(s, ' \t\n\r\f')
    end
 
    public new()
