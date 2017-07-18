@@ -157,14 +157,14 @@ class Node()
    end
 
    #
-   # Succeed if this node has string s as a child.
+   # Succeed if this node has string `s` as a child.
    #
    public has_string(s)
       return text(!self.children) == s
    end
 
    #
-   # As has_string() above, but trims the child strings before
+   # As `has_string()` above, but trims the child strings before
    # comparison.
    #
    public has_trimmed_string(s)
@@ -213,7 +213,7 @@ class Node()
    end
 
    #
-   # Trim xml.xml_space chars from both ends of the given string
+   # Trim `XmlParser.SPACE` chars from both ends of the given string
    #
    public static xml_trim(s)
       return trim(s, XmlParser.SPACE)
@@ -224,4 +224,3 @@ class Node()
       return
    end
 end
-
