@@ -276,12 +276,12 @@ class XmlParser(Connectable)
    # [3] S ::= (#x20 | #x9 | #xD | #xA)+
    #
    private spaces()
-      any(SPACE) | throw("space expected")
+      any(SPACE) | throw("Space expected")
       return tab(many(SPACE))
    end
 
    private dtd_spaces()
-      dtd_any(SPACE) | throw("space expected")
+      dtd_any(SPACE) | throw("Space expected")
       return tab(dtd_many(SPACE))
    end
 
@@ -390,7 +390,7 @@ class XmlParser(Connectable)
          if any('%') then {
             # Can't reference a pe in the internal subset; see ibm test ibm29n04.xml
             if /in_ext_subset then 
-               throw("cannnot reference a parameter entity in the internal subset")
+               throw("Cannnot reference a parameter entity in the internal subset")
             # In an entity value, perefs (%..;) are always expanded
             res ||:= resolve_entity(lookup_pe_reference(parse_pe_reference()))
          } else if match(u"&#") then
@@ -485,7 +485,7 @@ class XmlParser(Connectable)
                else {
                   ref := parse_entity_ref()
                   if member(\circle, ref) then
-                     throw("circular entity replacement")
+                     throw("Circular entity replacement")
                   c2 := copy(\circle) | set()
                   insert(c2, ref)
                   o := lookup_entity_ref(ref)
@@ -494,16 +494,16 @@ class XmlParser(Connectable)
                   # If standalone "yes", then can't refernce the entity if it was defined in the external subset
                   #
                   if \doc.standalone & \o.in_ext_subset then
-                     throw("cannot reference an entity declared externally, in a standalone document")
+                     throw("Cannot reference an entity declared externally, in a standalone document")
                   #
                   # Can't have an external reference here.  See s3.1
                   #
-                  \o.str | throw("reference to external entity in attribute value")
+                  \o.str | throw("Reference to external entity in attribute value")
                   #
                   # Can't have a < char; s3.1
                   #
                   if upto('<', o.str) then
-                     throw("the replacement text in an attribute value cannot contain a '<' char")
+                     throw("The replacement text in an attribute value cannot contain a '<' char")
                   #
                   # Recursively normalize the entity ref's value
                   #
@@ -542,7 +542,7 @@ class XmlParser(Connectable)
       local c, res
       any('\'\"') | throw("\' or \" expected")
       c := move(1)
-      res := tab(upto(c)) | throw("couldn't find " || c)
+      res := tab(upto(c)) | throw("Couldn't find " || c)
       move(1)
       check_is_char_data(res, "system literal value")
       return res
@@ -600,7 +600,7 @@ class XmlParser(Connectable)
       res.target := parse_pi_target()
       if any(SPACE) then {
          spaces()
-         res.content := tab(find(u"?>")) | throw("missing '?>'")
+         res.content := tab(find(u"?>")) | throw("Missing '?>'")
          check_is_char_data(res.content, "PI")
       }
       =u"?>" | throw("'?>' expected")
@@ -614,7 +614,7 @@ class XmlParser(Connectable)
       local s
       s := parse_name()
       if string(map(s)) == "xml" then
-         throw("can't have 'xml' here")
+         throw("Can't have 'xml' here")
       return s
    end
 
@@ -629,7 +629,7 @@ class XmlParser(Connectable)
    private parse_cdsect()
       local res
       res := CData()
-      res.content := tab(find(u"]]>")) | throw("no corresponding ']]>' in CDATA section")
+      res.content := tab(find(u"]]>")) | throw("No corresponding ']]>' in CDATA section")
       check_is_char_data(res.content, "PI")
       =u"]]>"
       return res
@@ -712,7 +712,7 @@ class XmlParser(Connectable)
    private parse_version_num()
       local c
       c := 'a-zA-Z0-9_.:\-'
-      any(c) | throw("expected " || image(c))
+      any(c) | throw("Expected " || image(c))
       return tab(many(c))
    end
 
@@ -778,7 +778,7 @@ class XmlParser(Connectable)
          in_ext_subset := &yes
          r.content ? {
             parse_ext_subset()
-            pos(0) | throw("extraneous content")
+            pos(0) | throw("Extraneous content")
          }
          in_ext_subset := &null
          end_divert()
@@ -816,18 +816,18 @@ class XmlParser(Connectable)
                start_divert(current_base, "macro")
                o.str ? {
                   parse_markup_decls()
-                  pos(0) | throw("extraneous content")
+                  pos(0) | throw("Extraneous content")
                }
                end_divert()
             } else {
                if \o.notation then
-                  throw("unparsed entity not allowed")
+                  throw("Unparsed entity not allowed")
                # Resolve the external entity, parse it appropriately.
                r := resolve(current_base, o.external_id)
                start_divert(r.base, to_string(o.external_id))
                r.content ? {
                   parse_markup_decls()
-                  pos(0) | throw("extraneous content")
+                  pos(0) | throw("Extraneous content")
                }
                end_divert()
             }
@@ -876,18 +876,18 @@ class XmlParser(Connectable)
                start_divert(current_base, "macro")
                o.str ? {
                   parse_ext_subset_decl()
-                  pos(0) | throw("extraneous content")
+                  pos(0) | throw("Extraneous content")
                }
                end_divert()
             } else {
                if \o.notation then
-                  throw("unparsed entity not allowed")
+                  throw("Unparsed entity not allowed")
                # Resolve the external entity, parse it appropriately.
                r := resolve(current_base, o.external_id)
                start_divert(r.base, to_string(o.external_id))
                r.content ? {
                   parse_ext_subset_decl()
-                  pos(0) | throw("extraneous content")
+                  pos(0) | throw("Extraneous content")
                }
                end_divert()
             }
@@ -1004,7 +1004,7 @@ class XmlParser(Connectable)
 
       val := normalize_attvalue(parse_attvalue(), attdef)
       if member(el.attributes, att) then
-         throw("duplicated attribute declaration: " || att)
+         throw("Duplicated attribute declaration: " || att)
       insert(el.attributes, att, val)
       return
    end
@@ -1016,7 +1016,7 @@ class XmlParser(Connectable)
       local t
       =u"</" | throw("'</' expected")
       t := parse_name()
-      t == el.name | throw("mismatched tags: " || el.name || " expected")
+      t == el.name | throw("Mismatched tags: " || el.name || " expected")
       opt_spaces()
       =u">" | throw("'>' expected")
       return
@@ -1036,7 +1036,7 @@ class XmlParser(Connectable)
             else {
                ref := parse_entity_ref()
                if member(\circle, ref) then
-                  throw("circular entity replacement")
+                  throw("Circular entity replacement")
                c2 := copy(\circle) | set()
                insert(c2, ref)
                o := lookup_entity_ref(ref)
@@ -1044,24 +1044,24 @@ class XmlParser(Connectable)
                # If standalone "yes", then can't refernce the entity if it was defined in the external subset
                #
                if \doc.standalone & \o.in_ext_subset then
-                  throw("cannot reference an entity declared externally, in a standalone document")
+                  throw("Cannot reference an entity declared externally, in a standalone document")
                if \o.str then { 
                   # Simple expansion, parsed as content.
                   start_divert(current_base, "macro")
                   o.str ? {
                      parse_content(parent, c2)
-                     pos(0) | throw("extraneous content")
+                     pos(0) | throw("Extraneous content")
                   }
                   end_divert()
                } else {
                   if \o.notation then
-                     throw("unparsed entity not allowed")
+                     throw("Unparsed entity not allowed")
                   # Resolve the external entity, parse it appropriately.
                   r := resolve(current_base, o.external_id)
                   start_divert(r.base, to_string(o.external_id))
                   r.content ? {
                      parse_external_parsed_entity(parent, c2)
-                     pos(0) | throw("extraneous content")
+                     pos(0) | throw("Extraneous content")
                   }
                   end_divert()
                }
@@ -1082,7 +1082,7 @@ class XmlParser(Connectable)
             #
             cd := tab(many(~'<&'))
             if find(u"]]>", cd) then
-               throw("cannot have ']]>' in character content")
+               throw("Cannot have ']]>' in character content")
 
             check_is_char_data(cd, "content character data")
 
@@ -1095,7 +1095,7 @@ class XmlParser(Connectable)
    private check_is_char_data(s, msg)
       local j
       if j := upto(INVALID_CHAR, s) then
-         throw("invalid char (" || image(s[j]) || ") in " || msg)
+         throw("Invalid char (" || image(s[j]) || ") in " || msg)
       return
    end
 
@@ -1328,7 +1328,7 @@ class XmlParser(Connectable)
          attribute_def.def_type := "ENUMERATION"
          attribute_def.def_set := parse_enumeration()
       } else
-         throw("syntax error")
+         throw("Syntax error")
 
       return attribute_def
    end
@@ -1476,7 +1476,7 @@ class XmlParser(Connectable)
    #
    private parse_ignore_sect_contents()
       repeat {
-         tab(upto('<]')) | throw("ignore section not closed")
+         tab(upto('<]')) | throw("Ignore section not closed")
          if match(u"]]>") then 
             return
          else if =u"<![" then {
@@ -1518,7 +1518,7 @@ class XmlParser(Connectable)
             else
                char(256 > i | 63)
          }
-         throw("invalid char number: " || digs)
+         throw("Invalid char number: " || digs)
       }
    end
 
@@ -1588,7 +1588,7 @@ class XmlParser(Connectable)
       if \o.str then
          return o.str
       if \o.notation then
-         throw("unparsed entity not allowed")
+         throw("Unparsed entity not allowed")
       # Resolve with base set to the current_base of the place where defined.
       return resolve(o.pos[1].base, o.external_id).content
    end
