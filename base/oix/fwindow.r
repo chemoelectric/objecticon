@@ -12,9 +12,9 @@ static struct inline_field_cache self_id_ic;
 self_id_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_id_ic);
 if (!self_id_dptr)
     syserr("Missing idp field");
-self_id = (struct imgdata *)IntVal(*self_id_dptr);
-if (!self_id)
+if (is:null(*self_id_dptr))
     runerr(152, self);
+self_id = (struct imgdata *)IntVal(*self_id_dptr);
 #enddef
 
 #begdef GetSelfPalettedPixels()
@@ -37,9 +37,9 @@ static struct inline_field_cache self_w_ic;
 self_w_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_w_ic);
 if (!self_w_dptr)
     syserr("Missing wbp field");
-self_w = (wbp)IntVal(*self_w_dptr);
-if (!self_w)
+if (is:null(*self_w_dptr))
     runerr(142, self);
+self_w = (wbp)IntVal(*self_w_dptr);
 #enddef
 
 function graphics_Window_new_impl(display)
@@ -800,7 +800,7 @@ end
 function graphics_Window_close(self)
    body {
       GetSelfW();
-      *self_w_dptr = zerodesc;
+      *self_w_dptr = nulldesc;
       freewbinding(self_w);
       return self;
    }
@@ -1864,7 +1864,7 @@ function graphics_Pixels_close(self)
    body {
       GetSelfPixels();
       unlinkimgdata(self_id);
-       *self_id_dptr = zerodesc;
+       *self_id_dptr = nulldesc;
       return self;
    }
 end

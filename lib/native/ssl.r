@@ -16,9 +16,9 @@ static struct inline_field_cache self_ssl_ic;
 self_ssl_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_ssl_ic);
 if (!self_ssl_dptr)
     syserr("Missing ptr field");
-self_ssl = (struct sslstream*)IntVal(*self_ssl_dptr);
-if (!self_ssl)
+if (is:null(*self_ssl_dptr))
     runerr(219, self);
+self_ssl = (struct sslstream*)IntVal(*self_ssl_dptr);
 #enddef
 
 static int pattern_match (char *pattern, char *string)
@@ -237,7 +237,7 @@ function ssl_SslStream_close_impl(self)
        SSL_CTX_free(self_ssl->ctx);
        free(self_ssl->host);
        free(self_ssl);
-       *self_ssl_dptr = zerodesc;
+       *self_ssl_dptr = nulldesc;
        return self;
    }
 end

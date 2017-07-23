@@ -36,9 +36,9 @@ static struct inline_field_cache self_cr_ic;
 self_cr_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_cr_ic);
 if (!self_cr_dptr)
     syserr("Missing ptr field");
-self_cr = (cairo_t *)IntVal(*self_cr_dptr);
-if (!self_cr)
+if (is:null(*self_cr_dptr))
     runerr(152, self);
+self_cr = (cairo_t *)IntVal(*self_cr_dptr);
 ensure(self_cr);
 #enddef
 
@@ -49,9 +49,9 @@ static struct inline_field_cache self_pattern_ic;
 self_pattern_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_pattern_ic);
 if (!self_pattern_dptr)
     syserr("Missing ptr field");
-self_pattern = (cairo_pattern_t *)IntVal(*self_pattern_dptr);
-if (!self_pattern)
+if (is:null(*self_pattern_dptr))
     runerr(152, self);
+self_pattern = (cairo_pattern_t *)IntVal(*self_pattern_dptr);
 #enddef
 
 #begdef GetSelfSurface()
@@ -61,9 +61,9 @@ static struct inline_field_cache self_surface_ic;
 self_surface_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_surface_ic);
 if (!self_surface_dptr)
     syserr("Missing ptr field");
-self_surface = (cairo_surface_t *)IntVal(*self_surface_dptr);
-if (!self_surface)
+if (is:null(*self_surface_dptr))
     runerr(152, self);
+self_surface = (cairo_surface_t *)IntVal(*self_surface_dptr);
 #enddef
 
 static struct sdescrip patternclassname = {13, "cairo.Pattern"};
@@ -80,9 +80,9 @@ if (!c_is(&p, (dptr)&patternclassname, &x##_igc)) {
 x##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &x##_ic);
 if (!x##_dptr)
     syserr("Missing ptr field");
-(x) = (cairo_pattern_t *)IntVal(*x##_dptr);
-if (!(x))
+if (is:null(*x##_dptr))
     runerr(152, p);
+(x) = (cairo_pattern_t *)IntVal(*x##_dptr);
 #enddef
 
 static struct sdescrip surfaceclassname = {13, "cairo.Surface"};
@@ -99,9 +99,9 @@ if (!c_is(&p, (dptr)&surfaceclassname, &x##_igc)) {
 x##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &x##_ic);
 if (!x##_dptr)
     syserr("Missing ptr field");
-(x) = (cairo_surface_t *)IntVal(*x##_dptr);
-if (!(x))
+if (is:null(*x##_dptr))
     runerr(152, p);
+(x) = (cairo_surface_t *)IntVal(*x##_dptr);
 #enddef
 
 static struct sdescrip crclassname = {13, "cairo.Context"};
@@ -118,9 +118,9 @@ if (!c_is(&p, (dptr)&crclassname, &x##_igc)) {
 x##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &x##_ic);
 if (!x##_dptr)
     syserr("Missing ptr field");
-(x) = (cairo_t *)IntVal(*x##_dptr);
-if (!(x))
+if (is:null(*x##_dptr))
     runerr(152, p);
+(x) = (cairo_t *)IntVal(*x##_dptr);
 #enddef
 
 #begdef GetSelfSVG()
@@ -130,9 +130,9 @@ static struct inline_field_cache self_svg_ic;
 self_svg_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_svg_ic);
 if (!self_svg_dptr)
     syserr("Missing ptr field");
-self_svg = (RsvgHandle *)IntVal(*self_svg_dptr);
-if (!self_svg)
+if (is:null(*self_svg_dptr))
     runerr(152, self);
+self_svg = (RsvgHandle *)IntVal(*self_svg_dptr);
 #enddef
 
 #begdef CheckStatus2(status, obj)
@@ -1174,7 +1174,7 @@ function cairo_Context_close(self)
     body {
        GetSelfCr();
        cairo_destroy(self_cr);
-       *self_cr_dptr = zerodesc;
+       *self_cr_dptr = nulldesc;
        return self;
     }
 end
@@ -1669,7 +1669,7 @@ function cairo_Pattern_close(self)
     body {
        GetSelfPattern();
        cairo_pattern_destroy(self_pattern);
-       *self_pattern_dptr = zerodesc;
+       *self_pattern_dptr = nulldesc;
        return self;
     }
 end
@@ -1993,7 +1993,7 @@ function cairo_Surface_close(self)
     body {
        GetSelfSurface();
        cairo_surface_destroy(self_surface);
-       *self_surface_dptr = zerodesc;
+       *self_surface_dptr = nulldesc;
        return self;
     }
 end
@@ -2581,7 +2581,7 @@ function cairo_SVG_close(self)
     body {
        GetSelfSVG();
        g_object_unref(self_svg);
-       *self_svg_dptr = zerodesc;
+       *self_svg_dptr = nulldesc;
        return self;
     }
 end

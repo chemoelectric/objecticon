@@ -49,10 +49,11 @@ final class Shm(NoCopy)
    public native close()
 
    #
-   # Return the underlying id of the shared variable.
+   # Return the underlying id of the shared variable; fails if the
+   # resource is closed.
    #
    public get_id()
-      return id
+      return .\id
    end
 
    private static native open_public_impl()
