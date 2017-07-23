@@ -3758,9 +3758,9 @@ if (!c_is(&p, (dptr)&wsclassname, &m##_igc)) {
 m##_dptr = c_get_instance_data(&p, (dptr)&socketf, &m##_ic);
 if (!m##_dptr)
     syserr("Missing socket field");
-(m) = (SOCKET)IntVal(*m##_dptr);
-if ((word)m == -1)
+if (is:null(*m##_dptr))
     runerr(219, p);
+(m) = (SOCKET)IntVal(*m##_dptr);
 #enddef
 
 function io_WinsockStream_in(self, i)
