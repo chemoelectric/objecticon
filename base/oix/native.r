@@ -2239,7 +2239,7 @@ function io_DescStream_poll(l, timeout)
        tended struct descrip result;
 
        if (ListBlk(l).size % 2 != 0)
-           runerr(130);
+           runerr(177, l);
 
        nfds = ListBlk(l).size / 2;
 
@@ -4169,7 +4169,7 @@ function io_DescStream_poll(l, timeout)
        tended struct descrip result;
 
        if (ListBlk(l).size % 2 != 0)
-           runerr(130);
+           runerr(177, l);
 
        nfds = ListBlk(l).size / 2;
 
