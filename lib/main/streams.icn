@@ -2369,9 +2369,9 @@ class NetStream(FileStream)
    # Open the data stream file
    #
    public open_data()
-      if self.fd ~= -1 then
+      if \fd  then
          return error("data stream already open")
-      self.fd := open_subfile("data", FileOpt.RDWR).get_fd() |
+      fd := open_subfile("data", FileOpt.RDWR).get_fd() |
          return error("Couldn't open data stream: " || &why)
       return self
    end
@@ -2518,14 +2518,14 @@ class NetStream(FileStream)
    end
 
    public close()
-      if self.fd ~= -1 then
+      if \fd  then
          FileStream.close()
       ctrl.close()
       return self
    end
 
    private new(ctrl, dir)
-      setup(-1, READ_WRITE)
+      setup(, READ_WRITE)
       self.ctrl := ctrl
       self.dir := dir
       return
