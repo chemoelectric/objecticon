@@ -242,7 +242,7 @@ class RFC822Parser()
          next_token()
       }
       if *res = 0 then
-         throw("phrase expected")
+         throw("Phrase expected")
       return res
    end
 
@@ -405,31 +405,31 @@ class RFC822Parser()
       every i := 1 to *MONTHS do
          if =MONTHS[i] then
             return i
-      throw("invalid month")
+      throw("Invalid month")
    end
 
    private parse_day()
       local s
       next_token()
-      s := tab(many(&digits)) | throw("digit expected")
+      s := tab(many(&digits)) | throw("Digit expected")
       if *s <= 2 then
          return integer(s)
-      throw("invalid day: " || s)
+      throw("Invalid day: " || s)
    end
 
    private parse_year()
       local s
       next_token()
-      s := tab(many(&digits)) | throw("digit expected")
+      s := tab(many(&digits)) | throw("Digit expected")
       if 2 <= *s <= 4 then
          return integer(s)
-      throw("invalid year: " || s)
+      throw("Invalid year: " || s)
    end
 
    private parse_2dig()
       local s
       next_token()
-      s := tab(many(&digits)) | throw("digit expected")
+      s := tab(many(&digits)) | throw("Digit expected")
       if *s = 2 then
          return integer(s)
       throw("2 digit field expected")

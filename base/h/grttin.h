@@ -299,9 +299,9 @@ if (!c_is(&p, (dptr)&pixclassname, &x##_igc)) {
 x##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &x##_ic);
 if (!x##_dptr)
     syserr("Missing idp field");
-(x) = (struct imgdata *)IntVal(*x##_dptr);
-if (!(x))
+if (is:null(*x##_dptr))
     runerr(152, p);
+(x) = (struct imgdata *)IntVal(*x##_dptr);
 #enddef
 
 #begdef WindowStaticParam(p, w)
@@ -316,9 +316,9 @@ if (!c_is(&p, (dptr)&wclassname, &w##_igc)) {
 w##_dptr = c_get_instance_data(&p, (dptr)&ptrf, &w##_ic);
 if (!w##_dptr)
     syserr("Missing wbp field");
-(w) = (wbp)IntVal(*w##_dptr);
-if (!(w))
+if (is:null(*w##_dptr))
     runerr(142, p);
+(w) = (wbp)IntVal(*w##_dptr);
 #enddef
 
 /*
@@ -436,9 +436,9 @@ if (!c_is(&p, (dptr)&dsclassname, &m##_igc)) {
 m##_dptr = c_get_instance_data(&p, (dptr)&fdf, &m##_ic);
 if (!m##_dptr)
     syserr("Missing fd field");
-(m) = (int)IntVal(*m##_dptr);
-if (m < 0)
+if (is:null(*m##_dptr))
     runerr(219, p);
+(m) = (int)IntVal(*m##_dptr);
 #enddef
 
 /*

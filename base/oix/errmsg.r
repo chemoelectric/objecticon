@@ -73,6 +73,8 @@ struct errtab errtab[] = {
     {170, "string or integer expected"},
     {171, "flag value expected"},
     {176, "exec requires at least one argument for the program"},
+    {177, "even number of elements expected"},
+    {178, "odd number of elements expected"},
 
     {201, "division by zero"},
     {202, "remaindering by zero"},

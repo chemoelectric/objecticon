@@ -619,10 +619,11 @@ abstract class DescStream(Stream, NoCopy)
       mode
 
    #
-   # Return the integer file descriptor.
+   # Return the integer file descriptor; fails if the stream is
+   # closed.
    #
    public get_fd()
-      return .fd
+      return .\fd
    end
 
    public get_mode()
@@ -662,7 +663,7 @@ $ifdef _PLAN9
    public static poll(l, timeout)
       local loop_until, f, ev, r, done, i, res, snooze
       if *l % 2 ~= 0 then
-         runerr(130)
+         runerr(177, l)
       r := list(*l / 2)
       loop_until := Prog.get_runtime_millis() + \timeout
       snooze := 1

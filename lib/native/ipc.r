@@ -66,9 +66,9 @@ static struct inline_field_cache self_id_ic;
 self_id_dptr = c_get_instance_data(&self, (dptr)&idf, &self_id_ic);
 if (!self_id_dptr)
     syserr("Missing id field");
-self_id = IntVal(*self_id_dptr);
-if (self_id < 0)
+if (is:null(*self_id_dptr))
     runerr(219, self);
+self_id = IntVal(*self_id_dptr);
 #enddef
 
 static convert_to_macro(key_t)
@@ -217,7 +217,7 @@ function ipc_Shm_close(self)
        shmdt(tp);
        remove_resource(self_id, 0);
 
-       *self_id_dptr = minusonedesc;
+       *self_id_dptr = nulldesc;
 
        return self;
    }
@@ -467,7 +467,7 @@ function ipc_Sem_close(self)
        GetSelfId();
        semctl(self_id, -1, IPC_RMID, 0);
        remove_resource(self_id, 1);
-       *self_id_dptr = minusonedesc;
+       *self_id_dptr = nulldesc;
        return self;
    }
 end
@@ -603,7 +603,7 @@ function ipc_Msg_close(self)
         shmctl(self_id, IPC_RMID, 0);
         shmdt(tp);
         remove_resource(self_id, 2);
-        *self_id_dptr = minusonedesc;
+        *self_id_dptr = nulldesc;
 
         return self;
    }

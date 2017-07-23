@@ -10,9 +10,9 @@ static struct inline_field_cache self_mysql_ic;
 self_mysql_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_mysql_ic);
 if (!self_mysql_dptr)
     syserr("Missing ptr field");
-self_mysql = (MYSQL*)IntVal(*self_mysql_dptr);
-if (!self_mysql)
+if (is:null(*self_mysql_dptr))
     runerr(219, self);
+self_mysql = (MYSQL*)IntVal(*self_mysql_dptr);
 #enddef
 
 #begdef GetSelfMySqlRes()
@@ -22,9 +22,9 @@ static struct inline_field_cache self_mysql_res_ic;
 self_mysql_res_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_mysql_res_ic);
 if (!self_mysql_res_dptr)
     syserr("Missing ptr field");
-self_mysql_res = (MYSQL_RES*)IntVal(*self_mysql_res_dptr);
-if (!self_mysql_res)
+if (is:null(*self_mysql_res_dptr))
     runerr(219, self);
+self_mysql_res = (MYSQL_RES*)IntVal(*self_mysql_res_dptr);
 #enddef
 
 static void on_mysql_error(MYSQL *p)
@@ -57,7 +57,7 @@ function mysql_MySql_close(self)
    body {
       GetSelfMySql();
       mysql_close(self_mysql);
-      *self_mysql_dptr = zerodesc;
+      *self_mysql_dptr = nulldesc;
       return self;
    } 
 end
@@ -875,7 +875,7 @@ function mysql_MySqlRes_close(self)
    body {
        GetSelfMySqlRes();
        mysql_free_result(self_mysql_res);
-       *self_mysql_res_dptr = zerodesc;
+       *self_mysql_res_dptr = nulldesc;
        return self;
    }
 end

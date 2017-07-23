@@ -1391,9 +1391,9 @@ static struct inline_field_cache self_fd_ic;
 self_fd_dptr = c_get_instance_data(&self, (dptr)&fdf, &self_fd_ic);
 if (!self_fd_dptr)
     syserr("Missing fd field");
-self_fd = (int)IntVal(*self_fd_dptr);
-if (self_fd < 0)
+if (is:null(*self_fd_dptr))
     runerr(219, self);
+self_fd = (int)IntVal(*self_fd_dptr);
 #enddef
 
 #if PLAN9
@@ -1616,10 +1616,10 @@ function io_FileStream_close(self)
        GetSelfFd();
        if (close(self_fd) < 0) {
            errno2why();
-           *self_fd_dptr = minusonedesc;
+           *self_fd_dptr = nulldesc;
            fail;
        }
-       *self_fd_dptr = minusonedesc;
+       *self_fd_dptr = nulldesc;
        return self;
    }
 end
@@ -1869,10 +1869,10 @@ function io_SocketStream_close(self)
        GetSelfFd();
        if (close(self_fd) < 0) {
            errno2why();
-           *self_fd_dptr = minusonedesc;
+           *self_fd_dptr = nulldesc;
            fail;
        }
-       *self_fd_dptr = minusonedesc;
+       *self_fd_dptr = nulldesc;
        return self;
    }
 end
@@ -2490,7 +2490,7 @@ function io_DescStream_poll(l, timeout)
        tended struct descrip result;
 
        if (ListBlk(l).size % 2 != 0)
-           runerr(130);
+           runerr(177, l);
 
        nfds = ListBlk(l).size / 2;
 
@@ -2612,9 +2612,9 @@ static struct inline_field_cache self_dir_ic;
 self_dir_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_dir_ic);
 if (!self_dir_dptr)
     syserr("Missing dd field");
-self_dir = (struct DirData*)IntVal(*self_dir_dptr);
-if (!self_dir)
+if (is:null(*self_dir_dptr))
     runerr(219, self);
+self_dir = (struct DirData*)IntVal(*self_dir_dptr);
 #enddef
 
 function io_DirStream_new_impl(path)
@@ -2680,7 +2680,7 @@ function io_DirStream_close(self)
        }
        free(self_dir->st);
        free(self_dir);
-       *self_dir_dptr = zerodesc;
+       *self_dir_dptr = nulldesc;
        return self;
    }
 end
@@ -2694,9 +2694,9 @@ static struct inline_field_cache self_dir_ic;
 self_dir_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_dir_ic);
 if (!self_dir_dptr)
     syserr("Missing dd field");
-self_dir = (DIR*)IntVal(*self_dir_dptr);
-if (!self_dir)
+if (is:null(*self_dir_dptr))
     runerr(219, self);
+self_dir = (DIR*)IntVal(*self_dir_dptr);
 #enddef
 
 function io_DirStream_new_impl(path)
@@ -2736,10 +2736,10 @@ function io_DirStream_close(self)
        GetSelfDir();
        if ((closedir(self_dir)) < 0) {
            errno2why();
-           *self_dir_dptr = zerodesc;
+           *self_dir_dptr = nulldesc;
            fail;
        }
-       *self_dir_dptr = zerodesc;
+       *self_dir_dptr = nulldesc;
        return self;
    }
 end
@@ -2760,9 +2760,9 @@ static struct inline_field_cache self_dir_ic;
 self_dir_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_dir_ic);
 if (!self_dir_dptr)
     syserr("Missing dd field");
-self_dir = (struct DirData*)IntVal(*self_dir_dptr);
-if (!self_dir)
+if (is:null(*self_dir_dptr))
     runerr(219, self);
+self_dir = (struct DirData*)IntVal(*self_dir_dptr);
 #enddef
 
 function io_DirStream_new_impl(path)
@@ -2812,7 +2812,7 @@ function io_DirStream_close(self)
        GetSelfDir();
        FindClose(self_dir->handle);
        free(self_dir);
-       *self_dir_dptr = zerodesc;
+       *self_dir_dptr = nulldesc;
        return self;
    }
 end
@@ -3592,9 +3592,9 @@ static struct inline_field_cache self_rs_ic;
 self_rs_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_rs_ic);
 if (!self_rs_dptr)
     syserr("Missing ptr field");
-self_rs = (struct ramstream*)IntVal(*self_rs_dptr);
-if (!self_rs)
+if (is:null(*self_rs_dptr))
     runerr(219, self);
+self_rs = (struct ramstream*)IntVal(*self_rs_dptr);
 #enddef
 
 function io_RamStream_close(self)
@@ -3602,7 +3602,7 @@ function io_RamStream_close(self)
        GetSelfRs();
        free(self_rs->data);
        free(self_rs);
-       *self_rs_dptr = zerodesc;
+       *self_rs_dptr = nulldesc;
        return self;
    }
 end
@@ -4395,9 +4395,9 @@ static struct inline_field_cache self_fileworker_ic;
 self_fileworker_dptr = c_get_instance_data(&self, (dptr)&ptrf, &self_fileworker_ic);
 if (!self_fileworker_dptr)
     syserr("Missing ptr field");
-self_fileworker = (struct fileworker*)IntVal(*self_fileworker_dptr);
-if (!self_fileworker)
+if (is:null(*self_fileworker_dptr))
     runerr(219, self);
+self_fileworker = (struct fileworker*)IntVal(*self_fileworker_dptr);
 #enddef
 
 function io_FileWorker_new_impl(f, buff_size)
@@ -4700,7 +4700,7 @@ function io_FileWorker_close(self)
    body {
       GetSelfFileWorker()
       cleanup_fileworker(self_fileworker);
-      *self_fileworker_dptr = zerodesc;
+      *self_fileworker_dptr = nulldesc;
       return self;
    }
 end
@@ -4864,9 +4864,9 @@ static struct inline_field_cache self_socket_ic;
 self_socket_dptr = c_get_instance_data(&self, (dptr)&socketf, &self_socket_ic);
 if (!self_socket_dptr)
     syserr("Missing socket field");
-self_socket = (SOCKET)IntVal(*self_socket_dptr);
-if ((word)self_socket == -1)
+if (is:null(*self_socket_dptr))
     runerr(219, self);
+self_socket = (SOCKET)IntVal(*self_socket_dptr);
 #enddef
 
 #begdef SocketStaticParam(p, m)
@@ -4881,9 +4881,9 @@ if (!c_is(&p, (dptr)&wsclassname, &m##_igc)) {
 m##_dptr = c_get_instance_data(&p, (dptr)&socketf, &m##_ic);
 if (!m##_dptr)
     syserr("Missing socket field");
-(m) = (SOCKET)IntVal(*m##_dptr);
-if ((word)m == -1)
+if (is:null(*m##_dptr))
     runerr(219, p);
+(m) = (SOCKET)IntVal(*m##_dptr);
 #enddef
 
 function io_WinsockStream_in(self, i)
@@ -4962,10 +4962,10 @@ function io_WinsockStream_close(self)
        GetSelfSocket();
        if (closesocket(self_socket) == SOCKET_ERROR) {
            win32error2why();
-           *self_socket_dptr = minusonedesc;
+           *self_socket_dptr = nulldesc;
            fail;
        }
-       *self_socket_dptr = minusonedesc;
+       *self_socket_dptr = nulldesc;
        return self;
    }
 end
@@ -5292,7 +5292,7 @@ function io_DescStream_poll(l, timeout)
        tended struct descrip result;
 
        if (ListBlk(l).size % 2 != 0)
-           runerr(130);
+           runerr(177, l);
 
        nfds = ListBlk(l).size / 2;
 

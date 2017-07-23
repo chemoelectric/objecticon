@@ -93,10 +93,10 @@ final class Sem(NoCopy)
    public native close()
 
    #
-   # Return the underlying id of the semaphore.
+   # Return the underlying id of the semaphore, failing if it is closed.
    #
    public get_id()
-      return id
+      return .\id
    end
 
    private static native open_public_impl()

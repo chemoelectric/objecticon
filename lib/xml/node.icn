@@ -157,14 +157,45 @@ class Node()
    end
 
    #
-   # Succeed if this node has string s as a child.
+   # Like `get_string_content()`, but includes CDATA sections too.
+   #
+   public get_string_content_with_cdata()
+      local s, e, t
+      s := ""
+      every e := !self.children do {
+         if t := text(e) then
+            s ||:= t
+         else if is(e, CData) then
+            s ||:= e.get_content()
+      }
+      return s
+   end
+
+   #
+   # Like `get_trimmed_string_content()`, but includes CDATA sections
+   # too (which are not trimmed).
+   #
+   public get_trimmed_string_content_with_cdata()
+      local s, e, t
+      s := ""
+      every e := !self.children do {
+         if t := text(e) then
+            s ||:= xml_trim(t) 
+         else if is(e, CData) then
+            s ||:= e.get_content()
+      }
+      return s
+   end
+
+   #
+   # Succeed if this node has string `s` as a child.
    #
    public has_string(s)
       return text(!self.children) == s
    end
 
    #
-   # As has_string() above, but trims the child strings before
+   # As `has_string()` above, but trims the child strings before
    # comparison.
    #
    public has_trimmed_string(s)
@@ -193,6 +224,36 @@ class Node()
    end
 
    #
+   # Return the nth child which is a string/ucs.
+   #
+   # :Parameters :
+   # :  `n` - the index to look for; 1 being the first.
+   # :Fails :
+   # :  if there is no such element.
+   #
+   public get_nth_string(n)
+      local s
+      every s := text(!children) do {
+         if n = 1 then
+            return s
+         n -:= 1
+      }
+   end
+
+   #
+   # Return the nth child which is a string, after
+   # trimming it.
+   #
+   # :Parameters :
+   # :  `n` - the index to look for; 1 being the first.
+   # :Fails :
+   # :  if there is no such element.
+   #
+   public get_nth_trimmed_string(n)
+      return xml_trim(get_nth_string(n))
+   end
+
+   #
    # Print the structure to the given file, for debugging.
    #
    public print_structure(f, indent, flags)
@@ -213,10 +274,10 @@ class Node()
    end
 
    #
-   # Trim xml.xml_space chars from both ends of the given string
+   # Trim whitespace characters from both ends of the given string
    #
    public static xml_trim(s)
-      return trim(s, XmlParser.SPACE)
+      return trim(s, ' \t\n\r\f')
    end
 
    public new()
@@ -224,4 +285,3 @@ class Node()
       return
    end
 end
-
