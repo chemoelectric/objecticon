@@ -2,7 +2,7 @@ include Makedefs
 
 .PHONY:	libref test bmark tar
 
-all :
+all :	bin/oiscript
 	$(MAKE) -C base all
 	$(MAKE) -C lib all
 	$(MAKE) -C apps all
@@ -29,6 +29,10 @@ testipllink :
 
 bmark :
 	cd bmark && ./runbmark.sh
+
+bin/oiscript :	config/files/bin/oiscript
+	cp config/files/bin/oiscript bin
+	chmod +x bin/oiscript
 
 PACKAGE_NAME=@PACKAGE_NAME@
 PACKAGE_TARNAME=@PACKAGE_TARNAME@
