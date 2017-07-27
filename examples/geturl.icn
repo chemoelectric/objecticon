@@ -2,7 +2,7 @@
 # Retrieve http pages.
 #
 
-import util, http, net, lang, ipl.options, io, xdg
+import util, http, net, lang, ipl.options, ipl.lists, io, xdg
 
 global total, ok, err, failed, hc, opts, skipped, out
 
@@ -123,7 +123,8 @@ procedure main(args)
 
    opts := options(args, [Opt("over",, "Overwrite any existing files"),
                           Opt("i",string, "INPUT FILE#Input file for a POST request"),
-                          Opt("form",string, "K=V#Post an HTTP form with entry K=V; multiple uses allowed",&yes),
+                          Opt("is",string, "STRING#Input string for a POST request; multiple uses will be catenated", &yes),
+                          Opt("form",string, "K=V#Post an HTTP form with entry K=V; multiple uses allowed", &yes),
                           Opt("type",string, "TYPE#Content type for a POST request"),
                           Opt("o",string,"OUTPUT FILE/DIR#Output file or directory"),
                           Opt("k",string, "FILE#Load cookies from file"),
@@ -146,7 +147,7 @@ procedure main(args)
                           Opt("agent",string, "Set user agent field"),
                           Opt("while",, "Set the retry-while-data flag"),
                           Opt("close",, "Use Connection: Close"),
-                          Opt("x",string,"HEADER:VALUE#Set extra HTTP header; multiple uses allowed",&yes),
+                          Opt("x",string,"HEADER:VALUE#Set extra HTTP header; multiple uses allowed", &yes),
                           Opt("nz",, "Don't use gzip compression"),
                           Opt("v1",, "Use HTTP 1.0")],
                           usage)
@@ -259,7 +260,7 @@ end
 
 procedure process_one(a)
    local hr, url, start_t, res, end_t, kbps, s, msg, tmp_file, output_stream, 
-      input_stream, content_type, t, k, v, p, f
+      input_stream, content_type, t, k, v, p, f, n
 
    total +:= 1
 
@@ -299,17 +300,17 @@ procedure process_one(a)
       hr.set_range(p.size)
    }
 
-   if \opts["i"] & \opts["form"] then
-      stop("Can't have -i and -form options together")
+   if \opts["i" | "is"] & \opts["form"] then
+      stop("Can't have -i or -is and -form options together")
 
-   if \opts["i"] then {
-      /opts["head"] | stop("Can't have -head and -i options together")
-      input_stream := FileStream(opts["i"], FileOpt.RDONLY) | stop("Couldn't open ", opts["i"], ": ", &why)
-      hr.set_input_stream(input_stream)
-      if \opts["put"] then
-         hr.set_method("PUT")
+   if \opts["i" | "is"] then {
+      /opts["head"] | stop("Can't have -head and -i or -is options together")
+      input_stream := if n := \opts["i"] then
+         FileStream(n, FileOpt.RDONLY) | stop("Couldn't open ", n, ": ", &why)
       else
-         hr.set_method("POST")
+         StringStream(cat_lines(opts["is"]))
+      hr.set_input_stream(input_stream)
+      hr.set_method(if \opts["put"] then "PUT" else "POST")
       content_type := \opts["type"] | "application/x-www-form-urlencoded"
       hr.set_content_type(content_type)
    }
