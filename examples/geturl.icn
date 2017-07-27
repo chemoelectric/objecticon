@@ -123,7 +123,7 @@ procedure main(args)
 
    opts := options(args, [Opt("over",, "Overwrite any existing files"),
                           Opt("i",string, "INPUT FILE#Input file for a POST request"),
-                          Opt("is",string, "STRING#Input string for a POST request; multiple uses will be catenated", &yes),
+                          Opt("is",string, "STRING#Input string for a POST request; multiple uses will be concatenated and separated with EOL", &yes),
                           Opt("form",string, "K=V#Post an HTTP form with entry K=V; multiple uses allowed", &yes),
                           Opt("type",string, "TYPE#Content type for a POST request"),
                           Opt("o",string,"OUTPUT FILE/DIR#Output file or directory"),
