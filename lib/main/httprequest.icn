@@ -4,7 +4,7 @@
 
 package http
 
-import util, net, io
+import util, net, io, mail
 
 #
 # Encapsulate one request to `HttpClient`.
@@ -71,9 +71,13 @@ class HttpRequest(MimeHeaders)
    end
 
    #
-   # Set the content type of the post/put data.
+   # Set the content type of the post/put data.  The parameter may
+   # either be a string, or a `ContentType` instance.  In the latter
+   # case, it is converted to string using `ContentType.to_rfc2616()`.
    #
    public set_content_type(content_type)
+      if is(content_type, ContentType) then
+         content_type := content_type.to_rfc2616()
       self.content_type := content_type
       return self
    end
