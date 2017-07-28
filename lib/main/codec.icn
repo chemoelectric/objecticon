@@ -100,7 +100,7 @@ end
 procedure encode_to_file(fn, o, fast, bin)
    local f
    return use {
-      f := FileStream(fn, ior(FileOpt.WRONLY, FileOpt.TRUNC, FileOpt.CREAT)),
+      f := open(fn, "w"),
       Encode(f).set_fast(fast).set_allow_binary(bin).begin(o) & o
    }
 end
