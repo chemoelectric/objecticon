@@ -92,6 +92,23 @@ class RFC2616Parser()
    end
 
    #
+   # Little utility function for quoting a string (if necessary).
+   #
+   public static escape_value(s)
+      local t, ch
+      # If non-empty and all chars are atom chars, no quotes needed.
+      if many(ATOM_CHAR, s) = *s + 1 then
+         return s
+      t := "\""
+      s ? repeat {
+         t ||:= tab(many(QTEXT_CHAR))
+         ch := move(1) | break
+         t ||:= "\\" || ch
+      }
+      return t || "\""
+   end
+
+   #
    # atom        =  1*<any CHAR except specials, SPACE and CTLs>
    # ie one or more atom_char
    #

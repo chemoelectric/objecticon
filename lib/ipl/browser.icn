@@ -303,7 +303,7 @@ class Cache()
                exp := format_expiry(ce.expiry) | (if ce.may_revalidate() then "revalidate" else "expired")
                n := Browser.limit_text(\ce.fname, scale(200)) | "-"
                sz := Format.numeric_to_string(*ce.data, 0, ',')
-               ct := (\ce.content_type).to_rfc1521() | "-"
+               ct := (\ce.content_type).to_rfc2616() | "-"
                s1 ||:= "<tr><td>" || Browser.to_content(n) || "</td><td align=right>" || sz || "&nbsp;</td><td>" || exp ||
                   "</td><td>" || Browser.to_content(ct) || "</td>" || Browser.mk_anchor_cell(ce.url) || "</tr>" 
                total +:= *ce.data
@@ -5444,7 +5444,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       if *\page_title > 0 then
          s ||:= "Title: " || to_content(page_title) || "<p>"
       if ct := \page_resp.content_type then
-         s ||:= "Content-type: " || to_content(ct.to_rfc1521()) || "<p>"
+         s ||:= "Content-type: " || to_content(ct.to_rfc2616()) || "<p>"
       if l := \page_resp.req.referer & (l.scheme == (u"http" | u"https")) then
          s ||:= "Referer: " || mk_anchor(l) || "<p>"
       if e := \page_resp.err then

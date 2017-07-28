@@ -133,7 +133,6 @@ AC_CONFIG_COMMANDS(system, [
 ])
 
 AC_CONFIG_FILES([Makedefs:config/files/Makedefs])
-AC_CONFIG_FILES([bin/oiscript:config/files/bin/oiscript], [chmod +x bin/oiscript])
 AC_CONFIG_FILES([apps/ivib/plugins/Makefile:config/files/apps/ivib/plugins/Makefile])
 AC_CONFIG_FILES([apps/ivib/Makefile:config/files/apps/ivib/Makefile])
 AC_CONFIG_FILES([apps/oidoc/Makefile:config/files/apps/oidoc/Makefile])

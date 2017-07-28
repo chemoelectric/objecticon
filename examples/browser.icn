@@ -99,6 +99,15 @@ class BrowserDialog(Dialog, WorkerPoolOwner)
       last_download_dir,
       last_file_dir
 
+   public static gen_desktop_entries_for_resp(res)
+      local mt
+      if \res.content_type then
+         # Ignore the parameters part, if any.
+         mt := res.content_type.type || "/" || res.content_type.subtype
+      suspend Unique{Mime.gen_desktop_entries(\mt) | 
+                     Mime.gen_desktop_entries(Mime.alternative_mime_types(Mime.get_mime_type_for_file(\res.fname)))}
+   end
+
    public static create_open_with_menu_item(de, path)
       local m
       m := TextMenuItem().
@@ -796,13 +805,6 @@ $endif
       ticker.interrupt()
    end
 
-   private static get_possible_desktop_entries(res)
-      local mt
-      mt := (\res.content_type).to_rfc1521()
-      suspend Unique{Mime.gen_desktop_entries(\mt) | 
-                     Mime.gen_desktop_entries(Mime.alternative_mime_types(Mime.get_mime_type_for_file(\res.fname)))}
-   end
-
    private on_table_rpress(ev)
       local popup, menu, l, d, m, de
 
@@ -829,7 +831,7 @@ $endif
                set_label("Copy escaped result").
                connect(create on_copy_escaped_result(d), Event.ACTION))
             m := Menu().set_label("Open with")
-            every de := get_possible_desktop_entries(d.resp) do
+            every de := BrowserDialog.gen_desktop_entries_for_resp(d.resp) do
                m.add(BrowserDialog.create_open_with_menu_item(de, d.full_path))
             if *m.children > 0 then 
                menu.add(m)
@@ -1512,9 +1514,8 @@ class BrowserTab(TabItem, BrowserUI)
    end
 
    public display_externally(res)
-      local de, mt, file
-      mt := (\res.content_type).to_rfc1521()
-      de := Mime.gen_desktop_entries(\mt) | Mime.gen_desktop_entries_for_file(\res.fname) | fail
+      local de, file
+      de := BrowserDialog.gen_desktop_entries_for_resp(res) | fail
       file := make_display_file(res)
       BrowserDialog.launch_prog(de, file)
       parent_dialog.update_visited(res.url)
