@@ -81,6 +81,14 @@ class ContentType()
       return s
    end
 
+   public to_rfc2616()
+      local s, e
+      s := type || "/" || subtype
+      every e := parameters.entries() do
+         s ||:= "; " || e.key || "=" || RFC2616Parser.escape_value(e.val)
+      return s
+   end
+
    public new(type, subtype)
       self.type := type
       self.subtype := subtype
