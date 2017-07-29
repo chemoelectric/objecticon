@@ -516,6 +516,9 @@ class BufferStream(Stream, HasUnderlyingStream)
    public out(s)
       s := string(s) | runerr(103, s)
       unbuff() | fail
+      # Avoid concatenating a large s in flush().
+      if *s > buff_size then
+         flush() | fail
       if *s > 0 then {
          put(wbuff, s)
          wbuff_len +:= *s
@@ -598,7 +601,7 @@ class BufferStream(Stream, HasUnderlyingStream)
       self.rbuff := ""
       self.wbuff := []
       self.wbuff_len := 0
-      self.buff_size := 1024
+      self.buff_size := 8192
       self.close_underlying_flag := &yes
       return
    end
