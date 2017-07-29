@@ -336,6 +336,9 @@ $endif
       return if /f then self else error(f)
    end
 
+   #
+   # Close this client and any associated connection.
+   #
    public close()
       return close_connection()
    end
@@ -508,6 +511,9 @@ $endif
       return \s | error("Unexpected eof")
    end
 
+   #
+   # Succeed iff the connection is currently open.
+   #
    protected is_connected()
       if \self.connection then
          return
@@ -531,11 +537,18 @@ $endif
       return self
    end
 
+   #
+   # Set the `dont_retry_flag`, indicating an error has occurred that
+   # couldn't be overcome by retrying.  Then `&why` is set to `s`.
+   #
    protected error_dont_retry(s)
       dont_retry_flag := &yes
       return error(s)
    end
 
+   #
+   # Clear the `dont_retry_flag`.
+   #
    protected reset_dont_retry()
       dont_retry_flag := &null
       return self
