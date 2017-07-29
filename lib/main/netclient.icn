@@ -58,7 +58,8 @@ class NetClient(Connectable, HasTask)
       port,
       timeout,
       ssl_flag,
-      ssl_verify_flag
+      ssl_verify_flag,
+      dont_retry_flag
 
    private
       connection,
@@ -127,9 +128,9 @@ $ifdef _MS_WIN32
       close_connection()
       fire(CONNECTING_EVENT)
       if \ssl_flag then
-         return error("SSL not supported")
+         return error_dont_retry("SSL not supported")
       if \path then
-         return error("UNIX domain not supported")
+         return error_dont_retry("UNIX domain not supported")
       l := dns_query() | return error("Couldn't translate address: " || &why)
       l := List{ ip_to_addr(!l) }
       addr := choose_addr(l)
@@ -527,6 +528,16 @@ $endif
    #
    public set_ssl_verify(s)
       self.ssl_verify_flag := check_flag(s)
+      return self
+   end
+
+   protected error_dont_retry(s)
+      dont_retry_flag := &yes
+      return error(s)
+   end
+
+   protected reset_dont_retry()
+      dont_retry_flag := &null
       return self
    end
 
