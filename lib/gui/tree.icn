@@ -68,11 +68,12 @@ abstract class BaseTree(SelectableScrollArea)
    end
 
    #
-   # Expand all the nodes in the `Tree`.
+   # Expand all the nodes in the `Tree`.  Nodes with no children
+   # are not expanded unless the force flag is set to &yes.
    #
-   public expand()
+   public expand(force)
       if \root_node then {
-         root_node.expand()
+         root_node.expand(force)
          tree_structure_changed()
       }
       return self
