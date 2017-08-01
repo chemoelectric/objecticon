@@ -64,13 +64,14 @@ class TreeNode()
 
    #
    # Expand all the `TreeNode`s below this node.  Nodes with no children
-   # are not expanded unless the force flag is set to 1.
+   # are not expanded unless the force flag is set to &yes.
    #
    public expand(force)
       local n
       every n := Seq{traverse_all_postorder()} do
          if \force | *n.children > 0 then
             n.is_expanded_flag := &yes
+      return self
    end
 
    #
@@ -83,6 +84,7 @@ class TreeNode()
       n := self
       while n := n.get_parent() do
          n.set_expanded(&yes)
+      return self
    end
 
    #
