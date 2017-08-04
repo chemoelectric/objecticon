@@ -945,31 +945,31 @@ class FileStream(DescStream)
          FileOpt.RDWR: READ_WRITE
          default: return error("Invalid flags combination")
       }
-      return adjust_mode(setup(new_impl(name, flags, perm), mode))
+      return setup(new_impl(name, flags, perm), mode).adjust_mode()
    end
 
    # Adjust this FileStream's mode based on the file type returned by
    # stat().  If it is a regular file, add SEEK capability, and
    # TRUNCATE too for a writable file.
    #
-   private static adjust_mode(f)
-      if f.stat().mode_str[1] == "-" then {
-         if f.can(WRITE) then
-            f.mode := ior(f.mode, TRUNCATE)
-         f.mode := ior(f.mode, SEEK)
+   private adjust_mode()
+      if stat().mode_str[1] == "-" then {
+         if can(WRITE) then
+            mode := ior(mode, TRUNCATE)
+         mode := ior(mode, SEEK)
       } else {
-         if save_why{f.tell()} then
-            f.mode := ior(f.mode, SEEK)
+         if save_why{tell()} then
+            mode := ior(mode, SEEK)
       }
-      return f
+      return self
    end
 
    private static native new_impl(path, flags, perm)
 
    private static init()
-      stdin := adjust_mode(create_for_fd(0, READ))
-      stdout := adjust_mode(create_for_fd(1, WRITE))
-      stderr := adjust_mode(create_for_fd(2, WRITE))
+      stdin := create_for_fd(0, READ).adjust_mode()
+      stdout := create_for_fd(1, WRITE).adjust_mode()
+      stderr := create_for_fd(2, WRITE).adjust_mode()
    end
 
    #
