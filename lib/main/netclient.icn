@@ -64,7 +64,8 @@ class NetClient(Connectable, HasTask)
       port,
       timeout,
       ssl_flag,
-      ssl_verify_flag
+      ssl_verify_flag,
+      dont_retry_flag
 
    private
       connection,
@@ -121,9 +122,9 @@ $ifdef _PLAN9
       close_connection()
       fire(CONNECTING_EVENT)
       if \ssl_flag then
-         return error("SSL not supported")
+         return error_dont_retry("SSL not supported")
       if \path then
-         return error("UNIX domain not supported")
+         return error_dont_retry("UNIX domain not supported")
       addr := "tcp!" || server || "!" || port
       l := NetStream.cs_query(addr, task) | return error("Couldn't translate address: " || &why)
       cs := choose_addr(l)
@@ -158,9 +159,9 @@ $elsifdef _MS_WIN32
       close_connection()
       fire(CONNECTING_EVENT)
       if \ssl_flag then
-         return error("SSL not supported")
+         return error_dont_retry("SSL not supported")
       if \path then
-         return error("UNIX domain not supported")
+         return error_dont_retry("UNIX domain not supported")
       l := dns_query() | return error("Couldn't translate address: " || &why)
       l := List{ ip_to_addr(!l) }
       addr := choose_addr(l)
@@ -365,6 +366,9 @@ $endif
       return if /f then self else error(f)
    end
 
+   #
+   # Close this client and any associated connection.
+   #
    public close()
       return close_connection()
    end
@@ -537,6 +541,9 @@ $endif
       return \s | error("Unexpected eof")
    end
 
+   #
+   # Succeed iff the connection is currently open.
+   #
    protected is_connected()
       if \self.connection then
          return
@@ -557,6 +564,23 @@ $endif
    #
    public set_ssl_verify(s)
       self.ssl_verify_flag := check_flag(s)
+      return self
+   end
+
+   #
+   # Set the `dont_retry_flag`, indicating an error has occurred that
+   # couldn't be overcome by retrying.  Then `&why` is set to `s`.
+   #
+   protected error_dont_retry(s)
+      dont_retry_flag := &yes
+      return error(s)
+   end
+
+   #
+   # Clear the `dont_retry_flag`.
+   #
+   protected reset_dont_retry()
+      dont_retry_flag := &null
       return self
    end
 

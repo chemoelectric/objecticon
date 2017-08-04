@@ -35,8 +35,7 @@ class CgiParams()
                every p := !multi.parts do {
                   cd := p.get_content_disposition() | return error("No Content-Disposition")
                   key := cd.get_parameter("name")
-                  /params[key] := []
-                  put(params[key], p)
+                  put(member(params, key), p) | insert(params, key, [p])
                }
             } else 
                params := table()

@@ -141,7 +141,6 @@ class HttpClient(NetClient)
       cookies,
       authentications,
       abort_flag,
-      dont_retry_flag,
       gzip_flag,
       inflater_stream
 
@@ -463,9 +462,9 @@ class HttpClient(NetClient)
          # Calculate H(entity)
          t := MD5()
          if \request.input_stream then {
-            request.input_stream.seek(1) | return fail_dont_retry("Couldn't seek on request input stream")
+            request.input_stream.seek(1) | return error_dont_retry("Couldn't seek on request input stream: " || &why)
             repeat {
-               s := request.input_stream.in(1048576) | return fail_dont_retry("Couldn't read request input stream")
+               s := request.input_stream.in(1048576) | return error_dont_retry("Couldn't read request input stream: " || &why)
                if /s then
                   break
                t.update(s)
@@ -776,7 +775,7 @@ class HttpClient(NetClient)
       local i, prev_read
 
       i := retries
-      dont_retry_flag := &null
+      reset_dont_retry()
       reset_progress_counters()
 
       repeat {
@@ -916,15 +915,15 @@ class HttpClient(NetClient)
 
       if \request.input_stream then {
          request.set_header("content-type", request.content_type)
-         sz := request.input_stream.seek(0) - 1 | return fail_dont_retry("Couldn't seek on request input stream")
+         sz := request.input_stream.seek(0) - 1 | return error_dont_retry("Couldn't seek on request input stream: " || &why)
          request.set_header("content-length", sz)
          maybe_set_authorization_header() | fail
          add_request_headers(l)
          put(l, "")
          write_lines(l) | fail
-         request.input_stream.seek(1) | return fail_dont_retry("Couldn't seek on request input stream")
+         request.input_stream.seek(1) | return error_dont_retry("Couldn't seek on request input stream: " || &why)
          repeat {
-            s := request.input_stream.in(1048576) | return fail_dont_retry("Couldn't read request input stream")
+            s := request.input_stream.in(1048576) | return error_dont_retry("Couldn't read request input stream: " || &why)
             if /s then
                break
             if \abort_flag then fail
@@ -994,7 +993,7 @@ class HttpClient(NetClient)
          not endswith(map(response.get_filename()), ".gz" | ".tgz" | ".svgz" | ".gzip") then 
       {
          inflater_stream := FilterOutputStream(request.output_stream, "gunzip", ["-c"]) | 
-            return fail_dont_retry("Couldn't open inflater stream")
+            return error_dont_retry("Couldn't open inflater stream: " || &why)
       }
       return
    end
@@ -1010,7 +1009,7 @@ class HttpClient(NetClient)
       #
       if not(\self.read & response.get_status_code() = 206) then {
          close_inflater()
-         request.output_stream.truncate(0).seek(1) | return fail_dont_retry("Couldn't reset request output stream")
+         request.output_stream.truncate(0).seek(1) | return error_dont_retry("Couldn't reset request output stream: " || &why)
          open_inflater() | fail
          self.length := integer(response.get_first_header("content-length")) | &null
          self.read := 0
@@ -1112,18 +1111,13 @@ class HttpClient(NetClient)
       return .\self.read
    end
 
-   private fail_dont_retry(msg)
-      &why := msg || ": " || &why
-      dont_retry_flag := &yes
-   end
-
    private add_some(s)
       self.read +:= *s
       fire(PROGRESS_EVENT)
       return if \inflater_stream then
-         inflater_stream.writes(s) | fail_dont_retry("Couldn't write to inflater stream")
+         inflater_stream.writes(s) | error_dont_retry("Couldn't write to inflater stream: " || &why)
       else
-         request.output_stream.writes(s) | fail_dont_retry("Couldn't write to request output stream")
+         request.output_stream.writes(s) | error_dont_retry("Couldn't write to request output stream: " || &why)
    end
 
    public new()

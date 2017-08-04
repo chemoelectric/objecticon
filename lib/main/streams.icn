@@ -521,6 +521,9 @@ class BufferStream(Stream, HasUnderlyingStream)
    public out(s)
       s := string(s) | runerr(103, s)
       unbuff() | fail
+      # Avoid concatenating a large s in flush().
+      if *s > buff_size then
+         flush() | fail
       if *s > 0 then {
          put(wbuff, s)
          wbuff_len +:= *s
@@ -603,7 +606,7 @@ class BufferStream(Stream, HasUnderlyingStream)
       self.rbuff := ""
       self.wbuff := []
       self.wbuff_len := 0
-      self.buff_size := 1024
+      self.buff_size := 8192
       self.close_underlying_flag := &yes
       return
    end
@@ -987,14 +990,13 @@ $ifdef _PLAN9
    #        type of file being opened.
    #
    public new(name, flags, perm, mode)
-      local C, flags2
+      local m1, flags2
 
       # If we have no mode then we need to test for SEEK after
-      # the file is opened.
-      if \mode then
-         C := 1
-      else {
-         C := adjust_mode
+      # the file is opened (see below).
+      m1 := mode
+
+      if /mode then {
          if /perm then
             /flags := FileOpt.RDONLY
          #
@@ -1018,13 +1020,23 @@ $ifdef _PLAN9
             if iand(flags, FileOpt.EXCL) ~= 0 then
                return error("File exists")
             # Fall through to normal open
-         } else
-            return C(setup(create_impl(name, flags2, perm), mode))
+         } else {
+            setup(create_impl(name, flags2, perm), mode) | fail
+            if /m1 then
+               adjust_mode()
+            return
+         }
       }
 
-      C(setup(open_impl(name, flags2), mode)) | fail
-      if iand(flags, FileOpt.APPEND) ~= 0 then
-         seek(0)
+      setup(open_impl(name, flags2), mode) | fail
+      if /m1 then
+         adjust_mode()
+      if iand(flags, FileOpt.APPEND) ~= 0 then {
+         seek(0) | {
+            close()
+            fail
+         }
+      }
       return
    end
 
@@ -1041,7 +1053,7 @@ $ifdef _PLAN9
          FileOpt9.ORDWR: READ_WRITE
          default: return error("Invalid flags combination")
       }
-      return adjust_mode(create_for_fd(open_impl(name, flags), mode))
+      return create_for_fd(open_impl(name, flags), mode).adjust_mode()
    end
 
    public static create9(name, flags, perm, mode)
@@ -1057,19 +1069,19 @@ $ifdef _PLAN9
          FileOpt9.ORDWR: READ_WRITE
          default: return error("Invalid flags combination")
       }
-      return adjust_mode(create_for_fd(create_impl(name, flags, perm), mode))
+      return create_for_fd(create_impl(name, flags, perm), mode).adjust_mode()
    end
 
    # Adjust this FileStream's mode based on whether we think it is
    # seekable or not.
    #
-   private static adjust_mode(f)
-      if save_why{f.tell()} then {
-         if f.can(WRITE) then
-            f.mode := ior(f.mode, TRUNCATE)
-         f.mode := ior(f.mode, SEEK)
+   private adjust_mode()
+      if save_why{tell()} then {
+         if can(WRITE) then
+            mode := ior(mode, TRUNCATE)
+         mode := ior(mode, SEEK)
       }
-      return f
+      return self
    end
 
    #
@@ -1153,23 +1165,23 @@ $else
          FileOpt.RDWR: READ_WRITE
          default: return error("Invalid flags combination")
       }
-      return adjust_mode(setup(new_impl(name, flags, perm), mode))
+      return setup(new_impl(name, flags, perm), mode).adjust_mode()
    end
 
    # Adjust this FileStream's mode based on the file type returned by
    # stat().  If it is a regular file, add SEEK capability, and
    # TRUNCATE too for a writable file.
    #
-   private static adjust_mode(f)
-      if f.stat().mode_str[1] == "-" then {
-         if f.can(WRITE) then
-            f.mode := ior(f.mode, TRUNCATE)
-         f.mode := ior(f.mode, SEEK)
+   private adjust_mode()
+      if stat().mode_str[1] == "-" then {
+         if can(WRITE) then
+            mode := ior(mode, TRUNCATE)
+         mode := ior(mode, SEEK)
       } else {
-         if save_why{f.tell()} then
-            f.mode := ior(f.mode, SEEK)
+         if save_why{tell()} then
+            mode := ior(mode, SEEK)
       }
-      return f
+      return self
    end
 
    private static native new_impl(path, flags, perm)
@@ -1185,9 +1197,9 @@ $else
 $endif
 
    private static init()
-      stdin := adjust_mode(create_for_fd(0, READ))
-      stdout := adjust_mode(create_for_fd(1, WRITE))
-      stderr := adjust_mode(create_for_fd(2, WRITE))
+      stdin := create_for_fd(0, READ).adjust_mode()
+      stdout := create_for_fd(1, WRITE).adjust_mode()
+      stderr := create_for_fd(2, WRITE).adjust_mode()
    end
 
    private static native pipe_impl()
