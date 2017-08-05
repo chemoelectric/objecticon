@@ -26,7 +26,7 @@ $endif
 # Common base class for a client class which holds a connection to a
 # server and communicates using CRLF-terminated lines.
 #
-class NetClient(Connectable, HasTask)
+abstract class NetClient(Connectable, HasTask)
    public static const 
       CONNECTING_EVENT,
       CONNECTED_EVENT,
@@ -59,7 +59,8 @@ class NetClient(Connectable, HasTask)
       timeout,
       ssl_flag,
       ssl_verify_flag,
-      dont_retry_flag
+      dont_retry_flag,
+      ip_version
 
    private
       connection,
@@ -95,6 +96,14 @@ class NetClient(Connectable, HasTask)
       return best
    end
 
+   # Set the ip version option to pass during dns lookup; see
+   # `SocketStream.dns_query()`.  By default, this is null.
+   #
+   public set_ip_version(ver)
+      self.ip_version := ver
+      return self
+   end
+
    # Set the timeout in ms to use.  If `&null`, then no timeout will
    # be used.
    #
@@ -109,7 +118,7 @@ class NetClient(Connectable, HasTask)
 
 $ifdef _MS_WIN32
    private dns_query()
-      return WinsockStream.dns_query(server)
+      return WinsockStream.dns_query(server, ip_version)
    end
 
    private ip_to_addr(ip)
@@ -175,7 +184,7 @@ $ifdef _MS_WIN32
    end
 $else
    private dns_query_impl()
-      return SocketStream.dns_query(server)
+      return SocketStream.dns_query(server, ip_version)
    end
 
    private dns_bg_query(p)
