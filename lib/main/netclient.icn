@@ -97,7 +97,7 @@ abstract class NetClient(Connectable, HasTask)
    end
 
    # Set the ip version option to pass during dns lookup; see
-   # `SocketStream.dns_query()`.  By default, this is null.
+   # `SocketStream.dns_query()`.  By default, this is `&null`.
    #
    public set_ip_version(ver)
       self.ip_version := ver
@@ -275,6 +275,7 @@ $else
          }
       }
       if \ssl_flag then {
+         ssl_available() | return error_dont_retry(&why)
          ssl_connection := SslStream(connection, server) | {
             save_why{ close_connection() }
             return error("Couldn't create SslStream: " || &why)
@@ -552,7 +553,7 @@ $endif
    #
    protected error_dont_retry(s)
       dont_retry_flag := &yes
-      return error(s)
+      &why := s
    end
 
    #
@@ -563,7 +564,7 @@ $endif
       return self
    end
 
-   protected new()
+   public new()
       Connectable.new()
       sbuff := ""
       ssl_verify_flag := &yes

@@ -726,8 +726,7 @@ class HttpClient(NetClient)
    end
 
    private on_http_error(s)
-      http_error := s
-      return error(s)
+      &why := http_error := s
    end
 
    #
