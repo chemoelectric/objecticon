@@ -983,6 +983,30 @@ class FileStream(DescStream)
 
    private static native pipe_impl()
 
+   #
+   # This method provides an interface to the system pread function.
+   #
+   # NB - for consistency with `seek` and `tell`, `offset` is one
+   # based.
+   #
+   # :Parameters :
+   # :  `n` - the maximum number of chars to read; n must be > 0.
+   # :  `offset` - the one-based offset to seek to before reading.
+   #
+   public native pread(n, offset)
+
+   #
+   # This method provides an interface to the system pwrite function.
+   #
+   # NB - for consistency with `seek` and `tell`, `offset` is one
+   # based.
+   #
+   # :Parameters :
+   # :  `s` - the string to write
+   # :  `offset` - the one-based offset to seek to before writing.
+   #
+   public native pwrite(s, offset)
+
    public native in(n)
 
    public native out(s)
