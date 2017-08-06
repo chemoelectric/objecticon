@@ -1434,69 +1434,6 @@ function io_FileStream_create_impl(path, flags, mode)
    }
 end
 
-function io_FileStream_pread(self, i, offset)
-   if !cnv:C_integer(i) then
-      runerr(101, i)
-   if !cnv:integer(offset) then
-      runerr(101, offset)
-   body {
-       word nread;
-       vlong c_offset;
-       tended struct descrip s;
-       GetSelfFd();
-
-       if (i <= 0)
-           Irunerr(205, i);
-
-       if (!convert_to_vlong(&offset, &c_offset))
-           runerr(0);
-
-       /*
-        * For now, assume we can read the full number of bytes.
-        */
-       MemProtect(StrLoc(s) = alcstr(NULL, i));
-
-       nread = pread(self_fd, StrLoc(s), i, c_offset);
-       if (nread <= 0) {
-           /* Reset the memory just allocated */
-           dealcstr(StrLoc(s));
-
-           if (nread < 0) {
-               errno2why();
-               fail;
-           } else   /* nread == 0 */
-               return nulldesc;
-       }
-
-       StrLen(s) = nread;
-       /*
-        * We may not have used the entire amount of storage we reserved.
-        */
-       dealcstr(StrLoc(s) + nread);
-
-       return s;
-   }
-end
-
-function io_FileStream_pwrite(self, s, offset)
-   if !cnv:string(s) then
-      runerr(103, s)
-   if !cnv:integer(offset) then
-      runerr(101, offset)
-   body {
-       word rc;
-       vlong c_offset;
-       GetSelfFd();
-       if (!convert_to_vlong(&offset, &c_offset))
-           runerr(0);
-       if ((rc = pwrite(self_fd, StrLoc(s), StrLen(s), c_offset)) < 0) {
-           errno2why();
-           fail;
-       }
-       return C_integer rc;
-   }
-end
-
 function io_FileStream_fd2path(self)
    body {
        int buff_size, n, len;
@@ -1715,8 +1652,7 @@ function io_FileStream_seek(self, offset)
        GetSelfFd();
 
        if (bigsign(&offset) > 0) {
-           bigsub(&offset, &onedesc, &t);
-           offset = t;
+           bigsub(&offset, &onedesc, &offset);
            whence = SEEK_SET;
        } else
            whence = SEEK_END;
@@ -1771,6 +1707,79 @@ function io_FileStream_pipe_impl()
       list_put(&result, &t);
 
       return result;
+#else
+      Unsupported;
+#endif
+   }
+end
+
+function io_FileStream_pread(self, i, offset)
+   if !cnv:C_integer(i) then
+      runerr(101, i)
+   if !cnv:integer(offset) then
+      runerr(101, offset)
+   body {
+#if HAVE_PREAD
+       word nread;
+       off_t c_offset;
+       tended struct descrip s;
+       GetSelfFd();
+
+       if (i <= 0)
+           Irunerr(205, i);
+
+       bigsub(&offset, &onedesc, &offset);
+       if (!convert_to_off_t(&offset, &c_offset))
+           runerr(0);
+
+       /*
+        * For now, assume we can read the full number of bytes.
+        */
+       MemProtect(StrLoc(s) = alcstr(NULL, i));
+
+       nread = pread(self_fd, StrLoc(s), i, c_offset);
+       if (nread <= 0) {
+           /* Reset the memory just allocated */
+           dealcstr(StrLoc(s));
+
+           if (nread < 0) {
+               errno2why();
+               fail;
+           } else   /* nread == 0 */
+               return nulldesc;
+       }
+
+       StrLen(s) = nread;
+       /*
+        * We may not have used the entire amount of storage we reserved.
+        */
+       dealcstr(StrLoc(s) + nread);
+
+       return s;
+#else
+      Unsupported;
+#endif
+   }
+end
+
+function io_FileStream_pwrite(self, s, offset)
+   if !cnv:string(s) then
+      runerr(103, s)
+   if !cnv:integer(offset) then
+      runerr(101, offset)
+   body {
+#if HAVE_PWRITE
+       word rc;
+       off_t c_offset;
+       GetSelfFd();
+       bigsub(&offset, &onedesc, &offset);
+       if (!convert_to_off_t(&offset, &c_offset))
+           runerr(0);
+       if ((rc = pwrite(self_fd, StrLoc(s), StrLen(s), c_offset)) < 0) {
+           errno2why();
+           fail;
+       }
+       return C_integer rc;
 #else
       Unsupported;
 #endif
@@ -4541,6 +4550,7 @@ function io_FileWorker_op_pread(self, n, offset)
       word i;
       vlong c_offset;
       GetSelfFileWorker();
+      bigsub(&offset, &onedesc, &offset);
       if (!convert_to_vlong(&offset, &c_offset))
           runerr(0);
       if (is:null(n))
@@ -4571,6 +4581,7 @@ function io_FileWorker_op_pwrite(self, s, offset)
    body {
       vlong c_offset;
       GetSelfFileWorker();
+      bigsub(&offset, &onedesc, &offset);
       if (!convert_to_vlong(&offset, &c_offset))
           runerr(0);
       if (StrLen(s) > self_fileworker->buff_size) {
@@ -4717,7 +4728,7 @@ function io_FileWorker_close_when_complete(self)
          qunlock(&self_fileworker->l);
          cleanup_fileworker(self_fileworker);
       }
-      *self_fileworker_dptr = zerodesc;
+      *self_fileworker_dptr = nulldesc;
       return self;
    }
 end

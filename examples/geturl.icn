@@ -118,6 +118,10 @@ procedure usage(opts)
    exit(0)
 end
 
+procedure ip_version(s)
+   return integer(s) = (4 | 6 | 46 | 64 | 0)
+end
+
 procedure main(args)
    local l, f, t, s, cookies
 
@@ -147,6 +151,7 @@ procedure main(args)
                           Opt("agent",string, "Set user agent field"),
                           Opt("while",, "Set the retry-while-data flag"),
                           Opt("close",, "Use Connection: Close"),
+                          Opt("ip",ip_version, "VERSION#Specify IP version(s) and order for dns queries; allowed values: 4, 6, 46, 64 or 0",,, "IP version"),
                           Opt("x",string,"HEADER:VALUE#Set extra HTTP header; multiple uses allowed", &yes),
                           Opt("nz",, "Don't use gzip compression"),
                           Opt("v1",, "Use HTTP 1.0")],
@@ -160,6 +165,7 @@ procedure main(args)
    hc.set_timeout(\opts["t"] * 1000)
    hc.set_retries(\opts["r"])
    hc.set_user_agent(\opts["agent"])
+   hc.set_ip_version(\opts["ip"])
    if \opts["nsslv"] then
       hc.set_ssl_verify(&no)
 

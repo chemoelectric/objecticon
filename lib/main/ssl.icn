@@ -2,6 +2,13 @@ package ssl
 
 import io, lang, util
 
+# Succeed if the ssl library is available, or fail and set &why if
+# it isn't.
+#
+procedure ssl_available()
+   return \SslStream.LOADED | error("SSL not supported")
+end
+
 #
 # A very simple SSL stream, using the openssl library.
 #
@@ -53,7 +60,7 @@ final class SslStream(Stream, HasUnderlyingStream, NoCopy)
    # :Parameters :
    # :  `host` - the name of the host corresponding to the connection
    public new(other, host)
-      \LOADED | return error("SSL not supported")
+      ssl_available() | fail
       ptr := new_impl(other, host) | fail
       self.other := other
       return

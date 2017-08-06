@@ -174,8 +174,6 @@ NativeDef(io.FileStream,in,io_FileStream_in)
 #if PLAN9
 NativeDef(io.FileStream,create_impl,io_FileStream_create_impl)
 NativeDef(io.FileStream,open_impl,io_FileStream_open_impl)
-NativeDef(io.FileStream,pread,io_FileStream_pread)
-NativeDef(io.FileStream,pwrite,io_FileStream_pwrite)
 NativeDef(io.FileStream,fd2path,io_FileStream_fd2path)
 #else
 NativeDef(io.FileStream,new_impl,io_FileStream_new_impl)
@@ -188,6 +186,8 @@ NativeDef(io.FileStream,truncate,io_FileStream_truncate)
 NativeDef(io.FileStream,chdir,io_FileStream_chdir)
 NativeDef(io.FileStream,ttyname,io_FileStream_ttyname)
 NativeDef(io.FileStream,isatty,io_FileStream_isatty)
+NativeDef(io.FileStream,pread,io_FileStream_pread)
+NativeDef(io.FileStream,pwrite,io_FileStream_pwrite)
 NativeDef(io.Files,access,io_Files_access)
 NativeDef(io.Files,hardlink,io_Files_hardlink)
 #if PLAN9

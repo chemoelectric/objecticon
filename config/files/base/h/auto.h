@@ -69,6 +69,12 @@
 /* define as 1 if truncate exists */
 #undef HAVE_TRUNCATE
 
+/* define as 1 if pread exists */
+#undef HAVE_PREAD
+
+/* define as 1 if pwrite exists */
+#undef HAVE_PWRITE
+
 /* define as 1 if alloca exists */
 #undef HAVE_ALLOCA
 

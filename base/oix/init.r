@@ -1270,6 +1270,8 @@ int main(int argc, char **argv)
     env_double(OI_FONT_SIZE, &defaultfontsize, MIN_FONT_SIZE, 1e32);
     env_double(OI_LEADING, &defaultleading, 0.0, 1e32);
     env_word(OI_IP_VER, &defaultipver, 0, 64);
+    if (!(defaultipver == 4 || defaultipver == 6 || defaultipver == 46 || defaultipver == 64 || defaultipver == 0))
+        ffatalerr("environment variable has invalid value: %s=" WordFmt, OI_IP_VER, defaultipver);
     t = getenv(OI_FONT);
     if (t && *t)
         defaultfont = salloc(t);

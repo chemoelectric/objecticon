@@ -963,6 +963,9 @@ class Component(Rect,Align,Connectable)
    public get_default_height()
    end
 
+   #
+   # Set the `Layout` to use to `l`, which may be `&null`.
+   #
    public set_layout(l)
       self.layout_delegate := l
       (\l).set_parent(self)
@@ -981,23 +984,38 @@ class Component(Rect,Align,Connectable)
       every (!children).layout()
    end
 
+   #
+   # Recursively shift the `x` and `y` location variables of this
+   # component and its descendants by the given amounts.
+   #
    public shift(dx, dy)
       self.x +:= dx
       self.y +:= dy
       every (!children).shift(dx, dy)
    end
 
+   #
+   # Recursively call `reset_layout()` on this component and all of
+   # its descendants.
+   #
    public reset_all_layouts()
       reset_layout()
       every (!self.children).reset_all_layouts()
       return self
    end
 
+   #
+   # Invoke the `reset()` method of the layout delegate (if any).
+   #
    public reset_layout()
       (\layout_delegate).reset()
       return self
    end
 
+   #
+   # Invoke `reset_layout()` on this component and all of its
+   # ancestors.
+   #
    public reset_layout_chain()
       every gen_parents().reset_layout()
       return self
@@ -1039,6 +1057,12 @@ class Component(Rect,Align,Connectable)
       }
    end
 
+   #
+   # Given a point `ex`, `ey`, recursively add to list `l` so that it
+   # contains a list of the components containing the point, with the
+   # deepest in the component hierarchy being at the front of the
+   # list.
+   #
    public build_point_chain(l, ex, ey)
       local c
       if c := whose_point(ex, ey) then {
@@ -1356,11 +1380,14 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Invoked on a drag gesture; if the  component wishes to start a drag and drop session,
-   # it should succeed and return the drag content, otherwise it should fail.  The drag
-   # content is subsequently stored in the `content` of the current `Drag` object.
+   # Invoked on a drag gesture; if the component wishes to start a
+   # drag and drop session, it should succeed and return the drag
+   # content, otherwise it should fail.  The drag content is
+   # subsequently stored in the `content` of the current `Drag`
+   # object.
    #
-   # NB - this method will only be invoked if the allow_drag flag is non-null.
+   # NB - this method will only be invoked if the allow_drag flag is
+   # non-null (see `set_allow_drag()`).
    #
    # :Parameters :
    # :  `e` - the event, an instance of WindowEvent
@@ -1369,9 +1396,11 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Invoked after `can_drag` succeeds, at the beginning of an operation.  Two pointers, "dnd positive" and
-   # "dnd negative" should be defined to indicate to the user whether the current operation has
-   # a potential drop or not.  By default, this method just uses two pre-defined pointers.
+   # Invoked after `can_drag` succeeds, at the beginning of an
+   # operation.  Two pointers, "dnd positive" and "dnd negative"
+   # should be defined to indicate to the user whether the current
+   # operation has a potential drop or not.  By default, this method
+   # just uses two pre-defined pointers.
    #
    public define_dnd_pointers(drag)
       cbwin.copy_pointer("dnd negative", Dialog.DND_NEGATIVE_POINTER)
@@ -1379,12 +1408,15 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Invoked during a drag.  The component may update itself to indicate a potential drop
-   # location.  If it succeeds, then this component becomes the "drag holder".  It is the only
-   # component for which drag_event() is called in the future.  Should the method fail, then
-   # the component ceases to be the "drag holder" and other components are tried again.
+   # Invoked during a drag.  The component may update itself to
+   # indicate a potential drop location.  If it succeeds, then this
+   # component becomes the "drag holder".  It is the only component
+   # for which drag_event() is called in the future.  Should the
+   # method fail, then the component ceases to be the "drag holder"
+   # and other components are tried again.
    #
-   # NB - this method will only be invoked if the allow_drop flag is non-null.
+   # NB - this method will only be invoked if the allow_drop flag is
+   # non-null (see `set_allow_drop()`).
    #
    # :Parameters :
    # :  `drag` - the current Drag object.
@@ -1394,15 +1426,17 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Invoked on the "drag holder", ie after the drag_event() method has succeeded for a
-   # particular event.  The method indicates whether the current location is suitable for
-   # a drop.  The mouse cursor is updated accordingly.   The component remains the "drag
-   # holder" regardless of whether this method succeeds or fails.  On success, the data
-   # returned is put into the content field of a Drag object, which is passed to
-   # `perform_drop()` on a drop event.
+   # Invoked on the "drag holder", ie after the drag_event() method
+   # has succeeded for a particular event.  The method indicates
+   # whether the current location is suitable for a drop.  The mouse
+   # cursor is updated accordingly.  The component remains the "drag
+   # holder" regardless of whether this method succeeds or fails.  On
+   # success, the data returned is put into the content field of a
+   # Drag object, which is passed to `perform_drop()` on a drop event.
    #
-   # It may also be invoked independently of any particular event, for example if the
-   # state potentially changes via a ticker.  In this case the passed event is null.
+   # It may also be invoked independently of any particular event, for
+   # example if the state potentially changes via a ticker.  In this
+   # case the passed event is null.
    #
    # :Parameters :
    # :  `drag` - the current Drag object.
@@ -1412,13 +1446,15 @@ class Component(Rect,Align,Connectable)
    end
 
    #
-   # Invoked on a drop.  The component's can_drop() method has previously succeeded during
-   # the drag.  However, the component can still reject the drop if it so wishes.
+   # Invoked on a drop.  The component's can_drop() method has
+   # previously succeeded during the drag.  However, the component can
+   # still reject the drop if it so wishes.
    #
    # If the component accepts the drop, it should handle it and succeed;
    # otherwise it should fail.
    #
-   # NB - this method will only be invoked if the allow_drop flag is non-null.
+   # NB - this method will only be invoked if the allow_drop flag is
+   # non-null (see `set_allow_drop()`).
    #
    # :Parameters :
    # :  `drag` - the current Drag object representing the drag
@@ -1481,41 +1517,65 @@ class Component(Rect,Align,Connectable)
       return self
    end
 
+   #
+   # Set the `WAttrib.BG` attribute; see `set_wattrib()`.
+   #
    public set_bg(v)
       set_wattrib(WAttrib.BG, v)
       return self
    end
 
+   #
+   # Set the `WAttrib.FG` attribute; see `set_wattrib()`.
+   #
    public set_fg(v)
       set_wattrib(WAttrib.FG, v)
       return self
    end
 
+   #
+   # Set the `WAttrib.DRAW_OP` attribute; see `set_wattrib()`.
+   #
    public set_draw_op(v)
       set_wattrib(WAttrib.DRAW_OP, v)
       return self
    end
 
+   #
+   # Set the `WAttrib.FONT` attribute; see `set_wattrib()`.
+   #
    public set_font(v)
       set_wattrib(WAttrib.FONT, v)
       return self
    end
 
+   #
+   # Set the `WAttrib.LEADING` attribute; see `set_wattrib()`.
+   #
    public set_leading(v)
       set_wattrib(WAttrib.LEADING, v)
       return self
    end
 
+   #
+   # Set the `WAttrib.LINE_WIDTH` attribute; see `set_wattrib()`.
+   #
    public set_line_width(v)
       set_wattrib(WAttrib.LINE_WIDTH, v)
       return self
    end
 
+   #
+   # Set the `WAttrib.LINE_STYLE` attribute; see `set_wattrib()`.
+   #
    public set_line_style(v)
       set_wattrib(WAttrib.LINE_STYLE, v)
       return self
    end
 
+   #
+   # Set the `WAttrib.PATTERN` attribute; see `set_wattrib()`.
+   #
    public set_pattern(v)
       set_wattrib(WAttrib.PATTERN, v)
       return self

@@ -1118,22 +1118,6 @@ $ifdef _PLAN9
    private static native open_impl(path, flags)
    private static native create_impl(path, flags, perm)
 
-   # This method provides an interface to the Plan 9 pread function.
-   #
-   # :Parameters :
-   # :  `n` - the maximum number of chars to read; n must be > 0.
-   # :  `offset` - the zero-based offset to seek to before reading.
-   #
-   public native pread(n, offset)
-
-   # This method provides an interface to the Plan 9 pwrite function.
-   #
-   # :Parameters :
-   # :  `s` - the string to write
-   # :  `offset` - the zero-based offset to seek to before writing.
-   #
-   public native pwrite(s, offset)
-
    # Returns the result of the Plan 9 fd2path function applied to this
    # file.
    #
@@ -1203,6 +1187,30 @@ $endif
    end
 
    private static native pipe_impl()
+
+   #
+   # This method provides an interface to the system pread function.
+   #
+   # NB - for consistency with `seek` and `tell`, `offset` is one
+   # based.
+   #
+   # :Parameters :
+   # :  `n` - the maximum number of chars to read; n must be > 0.
+   # :  `offset` - the one-based offset to seek to before reading.
+   #
+   public native pread(n, offset)
+
+   #
+   # This method provides an interface to the system pwrite function.
+   #
+   # NB - for consistency with `seek` and `tell`, `offset` is one
+   # based.
+   #
+   # :Parameters :
+   # :  `s` - the string to write
+   # :  `offset` - the one-based offset to seek to before writing.
+   #
+   public native pwrite(s, offset)
 
    public native in(n)
 
@@ -2795,23 +2803,63 @@ class FileWorker(Pollable, NoCopy)
 
    private static native new_impl(other, buff_size)
 
+   # Start a read operation in the background.
    public native op_read(n)
+
+   # Start a write operation in the background.
    public native op_write(s)
+
+   # Start a write_all operation in the background.  This performs
+   # successive writes until the string is fully output.
    public native op_write_all(s)
+
+   # Start a pread operation in the background.  Note that, for
+   # consistency with `FileStream.pread`, `offset` is one-based.
    public native op_pread(n, offset)
+
+   # Start a pwrite operation in the background.  Note that, for
+   # consistency with `FileStream.pwrite`, `offset` is one-based.
    public native op_pwrite(s, offset)
+
+   # Start a open operation in the background.
    public native op_open(path, mode)
+
+   # Start a create operation in the background.
    public native op_create(path, mode, perm)
+
+   # Start a close operation in the background.
    public native op_close()
+
+   # Succeed iff a background operation is currently running.
    public native is_running()
+
+   # Return the buffer size
    public native get_buff_size()
+
+   # Return the first `n` bytes of the buffer.
    public native get_buff(n)
+
+   # Get the integer result code of the last operation.  Note that
+   # this always succeeds and returns an integer.
    public native get_result()
+
+   # Wait for the background operation (if any) to finish.  Then, if
+   # the result of the last operation indicates an error, this method
+   # fails, setting `&why`.  Otherwise it succeeds.
    public native await()
+
+   # Close this instance and free any resources.
    public native close()
+
+   # If a background operation is running, a flag is set indicating
+   # that this instance should be closed on its completion; otherwise
+   # this instance is closed immediately.
    public native close_when_complete()
+
+   # Return a "dup"ed copy of the underlying file descriptor.
    public native dup_fd()
 
+   # Succeed iff a background operation is not currently running.
    public is_complete()
       return not is_running()
    end
