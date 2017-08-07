@@ -45,10 +45,6 @@ AC_DEFUN([OI_ADD_INCLUDE_DIR],[
 
 AC_SUBST([CONFIG_DIR])
 CONFIG_DIR=$(pwd -P)
-# This ensures that, if needed, AC_PROG_INSTALL will set install-sh to
-# an absolute path rather than being "./install-sh", so it is found in
-# sub-directories.
-AC_CONFIG_AUX_DIR($CONFIG_DIR)
 
 AC_SUBST([CONFIG_DATE])
 CONFIG_DATE=$(date)
@@ -92,7 +88,6 @@ if test "$HAVE_DYNAMIC_LINKING" = yes; then
    AX_CHECK_OPENSSL()
 fi
 
-AC_PROG_INSTALL()
 AC_PROG_LN_S()
 AC_PROG_MAKE_SET()
 
