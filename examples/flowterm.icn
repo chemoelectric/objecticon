@@ -2537,9 +2537,10 @@ $endif
       if is_live() then {
          if \track_cursor & i := columns.get_row_for_index(columns.get_cursor()) then {
             # Set vis to &yes if the last highlight is currently visible; also get the ino of
-            # the last highlight.
-            info := columns.get_line_info()
-            vis := Yes{ info.first_whole <= i <= info.last_whole }
+            # the last highlight.  Note that get_line_info() will fail if the terminal is maximized
+            # and the split is horizontal (since columns then has zero height).
+            if info := columns.get_line_info() then
+               vis := Yes{ info.first_whole <= i <= info.last_whole }
             ino := columns.object_get_cursor().stat.ino
             high := Yes{ columns.get_cursor() === columns.get_highlight() }
             held := Yes{ columns.get_cursor() === columns.get_held() }
