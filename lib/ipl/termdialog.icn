@@ -104,10 +104,6 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
    public search_msg(s)
    end
 
-   public close()
-      return self
-   end
-
    # Clear the log area.
    #
    public clear_text()
