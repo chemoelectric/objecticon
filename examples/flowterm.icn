@@ -2532,18 +2532,20 @@ $endif
    end
 
    private resort_cwd(track_cursor)
-      local i, ino, info, vis, high, held, over
+      local i, ino, info, vis, high, held, over, c
       \cwd | fail
       if is_live() then {
-         if \track_cursor & i := columns.get_row_for_index(columns.get_cursor()) then {
+         if \track_cursor & c := columns.get_cursor() then {
             # Set vis to &yes if the last highlight is currently visible; also get the ino of
-            # the last highlight.
-            info := columns.get_line_info()
-            vis := Yes{ info.first_whole <= i <= info.last_whole }
+            # the last highlight.  Note that get_line_info() will fail if the terminal is maximized
+            # and the split is horizontal (since columns then has zero height).
+            if info := columns.get_line_info() then
+               vis := Yes{ info.first_whole <= columns.get_row_for_index(c) 
+                                            <= info.last_whole }
             ino := columns.object_get_cursor().stat.ino
-            high := Yes{ columns.get_cursor() === columns.get_highlight() }
-            held := Yes{ columns.get_cursor() === columns.get_held() }
-            over := Yes{ columns.get_cursor() === columns.get_over() }
+            high := Yes{ c = columns.get_highlight() }
+            held := Yes{ c = columns.get_held() }
+            over := Yes{ c = columns.get_over() }
          }
          sort_cwd_list()
          # Search for the old ino in the new data.  If found, set the highlight and if the old

@@ -13,7 +13,7 @@ BIN=$(addprefix bin/, $(PROGS))
 all :	$(BIN)
 
 clean :
-	$(RM) *.u packages.txt bin/*
+	-$(RM) *.u packages.txt bin/*
 
 bin/%: 	%.icn
 	oit -s -o $@ $<

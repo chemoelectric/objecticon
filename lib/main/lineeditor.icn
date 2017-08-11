@@ -78,10 +78,6 @@ class LineEditorStream(LineBasedInputStream, HasTask)
       return .history_start_no
    end
 
-   public close()
-      return self
-   end
-
    public get_mode()
       return READ
    end

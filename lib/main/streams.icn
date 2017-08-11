@@ -88,7 +88,9 @@ abstract class Stream(HasMode)
    # stream may stop with a runtime error.  Fails on error, setting
    # `&why`; returns `self` on success.
    #
-   public abstract close()
+   public close()
+      return self
+   end
 
    #
    # Read a complete line from the stream, reading up to the next "\n"
@@ -304,10 +306,6 @@ class StringStream(Stream)
       return .pos
    end
 
-   public close()
-      return self
-   end
-
    public get_mode()
       return ALL
    end
@@ -364,10 +362,6 @@ class NullStream(Stream)
       return 1
    end
 
-   public close()
-      return self
-   end
-
    public get_mode()
       return ALL
    end
@@ -397,10 +391,6 @@ class ZeroStream(Stream)
 
    public tell()
       return 1
-   end
-
-   public close()
-      return self
    end
 
    public get_mode()
@@ -543,7 +533,7 @@ class BufferStream(Stream, HasUnderlyingStream)
          return self
       s := ""
       every s ||:= !wbuff
-      wbuff := []
+      clear(wbuff)
       wbuff_len := 0
       return other.writes1(s) & self
    end
@@ -1409,7 +1399,7 @@ abstract class LineBasedInputStream(Stream)
    #
    protected abstract read_line_impl()
 
-   protected new()
+   public new()
       self.line := ""
       return
    end
@@ -1424,16 +1414,23 @@ abstract class LineBasedOutputStream(Stream)
       buff
 
    public out(s)
-      local t
+      local t, c
       s := string(s) | runerr(103, s)
-      buff ||:= s
-      repeat {
-         buff ? {
-            t := tab(upto('\n')) | break
-            if t[-1] == "\r" then
-               t[-1] := ""
-            buff := (move(1), tab(0))
-            write_line_impl(t) | fail
+      if *s > 0 then {
+         put(buff, s)
+         if upto('\n', s) then {
+            c := ""
+            every c ||:= !buff
+            clear(buff)
+            c ? {
+               while t := tab(upto('\n')) do {
+                  if t[-1] == "\r" then
+                     t[-1] := ""
+                  write_line_impl(t) | fail
+                  move(1)
+               }
+               pos(0) | put(buff, tab(0))
+            }
          }
       }
       return *s
@@ -1449,8 +1446,8 @@ abstract class LineBasedOutputStream(Stream)
       return WRITE
    end
 
-   protected new()
-      self.buff := ""
+   public new()
+      self.buff := []
       return
    end
 end
@@ -2844,8 +2841,9 @@ class FileWorker(Pollable, NoCopy)
    public native get_result()
 
    # Wait for the background operation (if any) to finish.  Then, if
-   # the result of the last operation indicates an error, this method
-   # fails, setting `&why`.  Otherwise it succeeds.
+   # the result code of the last operation indicates an error, this
+   # method fails, setting `&why`.  Otherwise it succeeds, returning
+   # the result code.
    public native await()
 
    # Close this instance and free any resources.
@@ -2937,10 +2935,6 @@ class GeneratorStream(LineBasedInputStream, NoCopy)
       return t
    end
 
-   public close()
-      return self
-   end
-
    public new(coex)
       self.coex := coex
       LineBasedInputStream.new()
@@ -2967,10 +2961,6 @@ class ExprStream(LineBasedInputStream, NoCopy)
       if t := @coex then
          t := string(t) | runerr(103, t)
       return t
-   end
-
-   public close()
-      return self
    end
 
    public new(coex)

@@ -4823,7 +4823,9 @@ end
 #if UNIX
 function io_PttyStream_prepare_slave(f)
     body {
+#if HAVE_TIOCSCTTY || OS_SOLARIS
        FdStaticParam(f, fd);
+#endif
 #if HAVE_TIOCSCTTY                        /* Acquire controlling tty on BSD */
        if (ioctl(fd, TIOCSCTTY, 0) < 0) {
            errno2why();
