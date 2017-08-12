@@ -182,9 +182,9 @@ end
 #
 #     The parameters of `options` are:
 #  
-#       `arg` -     the argument list as passed to the main procedure.
+#   :   `arg` -     the argument list as passed to the main procedure.
 #
-#       `optstring` - a string specifying the allowable options.  This is
+#   :   `optstring` - a string specifying the allowable options.  This is
 #                   a concatenation, with optional spaces between, of
 #                   one or more option specs of the form `-name%`, where
 #                    *   `-`     introduces the option
@@ -210,13 +210,13 @@ end
 #                       -silent!n+tvqF:-geometry:
 #                   ~~~
 #
-#       `usage` -   a procedure which will be called, with the list of
+#   :   `usage` -   a procedure which will be called, with the list of
 #                   `Opt` objects (see below), if the special `-help`
 #                   option is given; by default the options are listed
 #                   and `exit(0)` called.  A string may be given,
 #                   which is printed before the options.
 #
-#       `errproc` -  a procedure which will be called if an error is
+#   :   `errproc` - a procedure which will be called if an error is
 #                   is detected in the command line options.  The
 #                   procedure is called with one argument:  a string
 #                   describing the error that occurred.  After `errproc()`
@@ -225,7 +225,7 @@ end
 #                   Already processed arguments will have been removed
 #                   from `arg`.  If `errproc` is omitted, stop() is
 #                   called if an error is detected.
-#  
+#  `
 #     Instead of an option string, a list of `Opt` objects may be given
 #  instead.  This allows a descriptive help string to be given for
 #  each option.
