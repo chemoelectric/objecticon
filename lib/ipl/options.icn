@@ -132,6 +132,14 @@ procedure help_line(ns, h)
 end
 
 #
+# This is just a wrapper around stop(), which prints out the given
+# message and a helpful line about the "-help" option.
+#
+procedure help_stop(msg)
+   stop(msg, "\nUse the -help option for more information.") 
+end
+
+#
 #     This procedure separates and interprets command options included in 
 #  the main program argument list.  Option names and values are removed
 #  from the argument list and returned in a table.
@@ -259,7 +267,7 @@ procedure options(arg, opts, usage, errproc)
    #
    #  Initialize.
    #
-   /errproc := stop
+   /errproc := help_stop
    option := table()
    fList := []
    opttable := table()
