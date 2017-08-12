@@ -263,7 +263,7 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable)
    #
    private object_output(oo)
       local s
-      s := if ptr = 0 then "closed" else
+      s := if /ptr then "closed" else
          get_width() || "x" || get_height() || " " || get_format()
       oo.object_string(self, s)
    end
@@ -342,7 +342,7 @@ final class Window(NoCopy, ObjectOutput)
 
    private object_output(oo)
       local s
-      s := if ptr = 0 then "closed" else
+      s := if /ptr then "closed" else
          get_width() || "x" || get_height() || " " || get_canvas()
       oo.object_string(self, s)
    end
