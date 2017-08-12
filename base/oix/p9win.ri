@@ -76,6 +76,8 @@ static void freecontext(wcp wc);
 static int simplify_font_flag(int flags, int src, int dest);
 static int simplify_font_flags(int flags);
 static Rune *iso8859_to_runes(dptr str);
+static int read_winname(char *d, char *res, int sz);
+static int compare_winnames(char *d1, char *d2);
 
 static struct imgdataformat imgdataformat_P9ABGR32;
 static struct imgdataformat imgdataformat_P9AG16;
@@ -489,7 +491,17 @@ static int call_gengetwindow(wsp ws)
     char *buff;
     int res;
     MemProtect(buff = smprint("%s/winname", ws->mount_dir));
-    res = gengetwindow(display, buff, &ws->win, &ws->screen, Refnone);
+    /* 
+     * Check that winname is readable; if it isn't, rather than return
+     * an error, gengetwindow sets ws->win to the root display image,
+     * which causes chaos.
+     */
+    if (access(buff, 4) == 0)
+        res = gengetwindow(display, buff, &ws->win, &ws->screen, Refnone);
+    else {
+        werrstr("winname file '%s' not readable", buff);
+        res = -1;
+    }
     free(buff);
     return res;
 }
@@ -497,7 +509,7 @@ static int call_gengetwindow(wsp ws)
 static void handle_reshape(wsp ws)
 {
     if (call_gengetwindow(ws) < 0)
-        syserr("Failed to reconnect to window on a resize: %r");
+        ffatalerr("Failed to reconnect to window on a reshape: %r");
     handle_reshape1(ws);
 }
 
@@ -1692,6 +1704,54 @@ static int open_screen_win(wsp ws)
         }
     }
 
+    if ((fd = open_winfile(ws, "winid", OREAD)) < 0) {
+        whyf("Can't open winid file: %r");
+        close_screen_win(ws);
+        return Failed;
+    }
+    if (read(fd, buff, 12) != 12) {
+        whyf("Can't read winid file: %r");
+        close(fd);
+        close_screen_win(ws);
+        return Failed;
+    }
+    ws->winid = atoi(buff);
+    close(fd);
+
+    if (!ws->using_win) {
+        char *buff;
+        /*
+         * Try to unmount the mount directory if possible, by using
+         * the equivalent directory under /dev/wsys.  This avoids the
+         * mount being inadvertently caught in any forked process that
+         * copies the namespace, which would keep the window open
+         * after the program exits.  We compare the winname entry of
+         * each directory to ensure they refer to the same window.
+         * This should be unique as it refers to the named draw image
+         * of the window.
+         */
+        MemProtect(buff = smprint("/dev/wsys/%d", ws->winid));
+        if (compare_winnames(ws->mount_dir, buff)) {
+            int fd;
+            unmount(0, ws->mount_dir);
+            free(ws->mount_dir);
+            ws->mount_dir = buff;
+            /*
+             * Re-open the wctl file under the /dev/wsys
+             * directory.  This has the effect of removing the old
+             * (now empty) mount directory under /n.
+             */
+            if ((fd = open_winfile(ws, "wctl", OWRITE)) < 0) {
+                whyf("Can't re-open wctl file: %r");
+                close_screen_win(ws);
+                return Failed;
+            }
+            close(ws->wctl_fd);
+            ws->wctl_fd = fd;
+        } else
+            free(buff);
+    }
+
     /* Open mouse before gengetwindow so that we don't miss any
      * reshape events */
     if ((ws->mouse_fd = open_winfile(ws, "mouse", ORDWR)) < 0) {
@@ -1706,20 +1766,6 @@ static int open_screen_win(wsp ws)
         return Failed;
     }
     GLink4(ws, vwstates, vnext, vprevious);
-
-    if ((fd = open_winfile(ws, "winid", OREAD)) < 0) {
-        whyf("Can't open winid file: %r");
-        close_screen_win(ws);
-        return Failed;
-    }
-    if (read(fd, buff, 12) != 12) {
-        whyf("Can't read winid file: %r");
-        close(fd);
-        close_screen_win(ws);
-        return Failed;
-    }
-    ws->winid = atoi(buff);
-    close(fd);
 
     if ((ws->label_fd = open_winfile(ws, "label", ORDWR)) < 0) {
         whyf("Can't open label file: %r");
@@ -1820,7 +1866,7 @@ static void close_screen_win(wsp ws)
         /* Clear any size limits */
         if (ws->wctl_fd >= 0)
             fprint(ws->wctl_fd, "resize -mindx 1 -maxdx %d -mindy 1 -maxdy %d", INT_MAX, INT_MAX);
-    } else if (ws->mount_dir)
+    } else if (ws->mount_dir && strncmp(ws->mount_dir, "/n/", 3) == 0)
         unmount(0, ws->mount_dir);
 
     if (ws->mouse_pid >= 0)
@@ -2098,6 +2144,33 @@ static int read_screeninfo(wsp ws, int *mx, int *my, int *sx, int *sy, int *sw, 
     return Succeeded;
 }
 
+static int read_winname(char *d, char *res, int sz)
+{
+    int fd, n;
+    char *name;
+    MemProtect(name = smprint("%s/winname", d));
+    fd = open(name, OREAD);
+    free(name);
+    if (fd < 0)
+        return Failed;
+    n = read(fd, res, sz - 1);
+    close(fd);
+    if (n < 0)
+        return Failed;
+    res[n] = 0;
+    return Succeeded;
+}
+
+static int compare_winnames(char *d1, char *d2)
+{
+    char wn1[256], wn2[256];
+    if (read_winname(d1, wn1, sizeof(wn1)) != Succeeded)
+        return 0;
+    if (read_winname(d2, wn2, sizeof(wn2)) != Succeeded)
+        return 0;
+    return strcmp(wn1, wn2) == 0;
+}
+
 int querypointer(wbp w, int *x, int *y)
 {
     int mx, my;
@@ -2242,18 +2315,9 @@ static void close_window_system(void)
 
 static void init_window_system(void)
 {
-    int win_nameg = 1;
-
     env_int("OI_USE_WIN", &use_win, 0, 4);
-    env_int("OI_WIN_NAMEG", &win_nameg, 0, 1);
-
     load_font_info();
     setup_cursors();
-
-    if (win_nameg) {
-        /* Keep mounts private */
-        rfork(RFNAMEG);
-    }
 
     /*
      * So far as I can see the second param (win) isn't actually used
