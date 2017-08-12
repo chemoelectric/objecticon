@@ -28,12 +28,12 @@ int mkdir(const char *path, mode_t mode)
     int f;
 
     if (access(path, AEXIST) == 0){
-        werrstr("mkdir: %s already exists", path);
+        werrstr("mkdir: '%s' already exists", path);
         return -1;
     }
     f = create(path, OREAD, DMDIR | mode);
     if (f < 0){
-        werrstr("mkdir: can't create %s: %r", path);
+        werrstr("mkdir: can't create '%s': %r", path);
         return -1;
     }
     close(f);
