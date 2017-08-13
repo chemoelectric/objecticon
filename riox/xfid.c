@@ -230,13 +230,16 @@ xfidopen(Xfid *x)
 {
 	Fcall t;
 	Window *w;
+        int fno;
 
 	w = x->f->w;
-	if(w->deleted){
+        /* Allow opening the directory of a deleted window, or the wsys sub-directory. */
+        fno = FILE(x->f->qid);
+	if(w->deleted && fno != Qwsys && fno != Qdir){
 		filsysrespond(x->fs, x, &t, Edeleted);
 		return;
 	}
-	switch(FILE(x->f->qid)){
+	switch(fno){
 	case Qconsctl:
 		if(w->ctlopen){
 			filsysrespond(x->fs, x, &t, Einuse);
