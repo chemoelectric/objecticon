@@ -180,7 +180,7 @@ end
 #  of `--` causes all remaining arguments IN THAT FILE ONLY to be
 #  treated as non-options (including `@filename` arguments).
 #
-#     The parameters of `options` are:
+#   :The parameters of `options` are:
 #  
 #   :   `arg` -     the argument list as passed to the main procedure.
 #
@@ -303,7 +303,7 @@ procedure options(arg, opts, usage, errproc)
    while x := get(arg) do {
       if /x then ignore := &null     # if end of args from file, stop ignoring
       else if x == ("-help" | "--help") & not member(opttable, "help") then {
-         /usage := "Usage: " || FilePath(&progname).get(-1) || " [OPTIONS...]"
+         /usage := "Usage: " || Files.get_program_name() || " [OPTIONS...]"
          if usage := text(usage) then {
             write(usage)
             options_help(opts)
