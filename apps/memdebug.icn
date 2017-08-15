@@ -548,7 +548,7 @@ procedure main(args)
                        Opt("addrs",integer,"Set the address display mode (default is 1)")],
                        usage)
    if *args = 0 then
-      stop("Program and optional arguments expected.")
+      help_stop("Program and optional arguments expected.")
 
    hlim := (10 < \opts["hlim"]) | 500
    llim := (0 <= \opts["llim"]) | 600

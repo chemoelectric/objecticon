@@ -135,8 +135,9 @@ end
 # This is just a wrapper around stop(), which prints out the given
 # message and a helpful line about the "-help" option.
 #
-procedure help_stop(msg)
-   stop(msg, "\nUse the -help option for more information.") 
+procedure help_stop(a[])
+   put(a, "\nUse the -help option for more information.")
+   stop!a
 end
 
 #
