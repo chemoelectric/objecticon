@@ -97,7 +97,7 @@ class HttpRequestHelperImpl(HttpRequestHelper)
    public get_authentication(httpc, dom, realm)
       local u, p
       \opts["a"] ? {
-         u := tab(upto(':')) | stop("Bad -a option")
+         u := tab(upto(':')) | help_stop("Bad -a option")
          move(1)
          p := tab(0)
          # Only succeed once, otherwise httpclient will loop forever retrying
@@ -307,10 +307,10 @@ procedure process_one(a)
    }
 
    if \opts["i" | "is"] & \opts["form"] then
-      stop("Can't have -i or -is and -form options together")
+      help_stop("Can't have -i or -is and -form options together")
 
    if \opts["i" | "is"] then {
-      /opts["head"] | stop("Can't have -head and -i or -is options together")
+      /opts["head"] | help_stop("Can't have -head and -i or -is options together")
       input_stream := if n := \opts["i"] then
          FileStream(n, FileOpt.RDONLY) | stop("Couldn't open ", n, ": ", &why)
       else
@@ -322,7 +322,7 @@ procedure process_one(a)
    }
 
    if \opts["form"] then {
-      /opts["head"] | stop("Can't have -head and -form options together")
+      /opts["head"] | help_stop("Can't have -head and -form options together")
       t := table()
       every s := !opts["form"] do {
          s ? {
