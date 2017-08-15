@@ -9,8 +9,10 @@ global opts, mountpt
 #
 procedure get_optl()
    return [Opt("v",, "Verbose mode"),
+           Opt("q",, "Don't output messages about mount points, etc."),
            Opt("m",string, "PATH#Use PATH as the mount point, rather than the default, " || get_mountpt()),
            Opt("s",string, "FILE#Don't mount, instead post the pipe in /srv/FILE"),
+           Opt("S",string, "FILE#Like -s, but mount in addition to posting"),
            Opt("a",, "Use the MAFTER flag when mounting"),
            Opt("b",, "Use the MBEFORE flag when mounting"),
            Opt("c",, "Use the MCREATE flag when mounting"),
@@ -30,6 +32,15 @@ procedure get_mountpt()
       mountpt := "/n/" || s
    }
    return mountpt
+end
+
+# Output a message to stdout, unless the -q option was given.
+#
+procedure server_msg(a[])
+   if /opts["q"] then {
+      push(a, Files.get_program_name() || ": ")
+      write!a
+   }
 end
 
 # Main helper procedure for a server which doesn't use an attach
@@ -89,8 +100,7 @@ end
 #           process.
 #
 procedure server_main(attach, sess, sched, ff)
-   local p, pid, pname, fl, s, mp
-   pname := Files.get_program_name()
+   local p, pid, fl, s, mp
    p := FileStream.pipe() | stop(&why)
    /ff := 0
    ff := ior(ff, ForkOpt.RFPROC, ForkOpt.RFFDG, ForkOpt.RFNOTEG)
@@ -108,14 +118,15 @@ procedure server_main(attach, sess, sched, ff)
          sess.dump()
          system("cat /proc/" || System.getpid() || "/fd")
       }
-      ewrite(pname, ": exit")
+      server_msg("exit")
    } else {
       sess := &null
       p[2].close()
-      if s := "/srv/" || \opts["s"] then {
+      if s := "/srv/" || \opts["s" | "S"] then {
          Files.string_to_file(s, p[1].get_fd()) | stop(&why)
-         ewrite(pname, ": serving on ", s)
-      } else {
+         server_msg("serving on ", s)
+      }
+      if /opts["s"] then {
          mp := \opts["m"] | get_mountpt()
          fl := if \opts["a"] then
             MountOpt.MAFTER
@@ -128,7 +139,7 @@ procedure server_main(attach, sess, sched, ff)
          if \opts["C"] then
             fl := ior(fl, MountOpt.MCACHE)
          Files.mount(p[1], &null, mp, fl, attach) | stop(&why)
-         ewrite(pname, ": mounted on ", mp)
+         server_msg("mounted on ", mp)
       }
       p[1].close()
    }
@@ -171,8 +182,7 @@ end
 #           process.
 #
 procedure gui_main(attach, sess, async_flag, body, ff)
-   local p, pid, pname, nb, fl, s, mp
-   pname := Files.get_program_name()
+   local p, pid, nb, fl, s, mp
    p := FileStream.pipe() | stop(&why)
    /ff := 0
    ff := ior(ff, ForkOpt.RFPROC, ForkOpt.RFFDG)
@@ -199,12 +209,11 @@ procedure gui_main(attach, sess, async_flag, body, ff)
    } else {
       # parent
       p[2].close()
-      if s := "/srv/" || \opts["s"] then {
+      if s := "/srv/" || \opts["s" | "S"] then {
          Files.string_to_file(s, p[1].get_fd()) | stop(&why)
-         ewrite(pname, ": serving on ", s)
-         System.wait(pid)
-         Files.remove(s)
-      } else {
+         server_msg("serving on ", s)
+      }
+      if /opts["s"] then {
          mp := \opts["m"] | get_mountpt()
          fl := if \opts["a"] then
             MountOpt.MAFTER
@@ -217,11 +226,18 @@ procedure gui_main(attach, sess, async_flag, body, ff)
          if \opts["C"] then
             fl := ior(fl, MountOpt.MCACHE)
          Files.mount(p[1], &null, mp, fl, attach) | stop(&why)
-         ewrite(pname, ": mounted on ", mp)
-         System.wait(pid)
+         server_msg("mounted on ", mp)
+      }
+      System.wait(pid)
+      if \s then {
+         Files.remove(s)
+         server_msg("removed ", s)
+      }
+      if \mp then {
          Files.unmount(&null, mp)
+         server_msg("unmounted ", mp)
       }
       p[1].close()
-      ewrite(pname, ": exit")
+      server_msg("exit")
    }
 end
