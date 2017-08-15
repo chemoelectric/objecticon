@@ -2,28 +2,11 @@ package ipl.server9p
 
 import io, posix, ipl.options, util, gui
 
-procedure usage_impl(s, opts)
-   write("Usage: ", get_progname(), s)
-   if /opts then
-      exit(1)
-   else {
-      options_help(opts)
-      exit(0)
-   }
-end
+global opts, mountpt
 
-procedure usage_0(opts)
-   usage_impl(" [OPTIONS]", opts)
-end
-
-procedure usage_1(opts)
-   usage_impl(" [OPTIONS] [ATTACH]", opts)
-end
-
-procedure get_progname()
-   return FilePath(&progname).get(-1)
-end
-
+# Return the standard list of options for a file server.  These may be
+# added to as desired by a particular program.
+#
 procedure get_optl()
    return [Opt("v",, "Verbose mode"),
            Opt("m",string, "PATH#Use PATH as the mount point, rather than the default, " || get_mountpt()),
@@ -34,12 +17,14 @@ procedure get_optl()
            Opt("C",, "Use the MCACHE flag when mounting")]
 end
 
-global opts, mountpt
-
+# Return the default mountpoint, based on the server program name.
+# This default may be changed by assigning to the global variable
+# `mountpt`.
+#
 procedure get_mountpt()
    local s
    if /mountpt then {
-      s :=  get_progname()
+      s :=  Files.get_program_name()
       if s[-2:0] == "fs" then
          s[-2:0] := ""
       mountpt := "/n/" || s
@@ -47,29 +32,69 @@ procedure get_mountpt()
    return mountpt
 end
 
-procedure server_main_0(a, sess, sched, optl)
+# Main helper procedure for a server which doesn't use an attach
+# parameter.
+#
+# :Parameters :
+# :  `a` - the command line arguments list
+# :  `sess` - the `plan9.Session9P` instance to use
+# :  `sched` - an optional `io.Scheduler` to use for asynchronous servers
+# :  `optl` - the options list
+# :  `ff` - optional extra flags to give to `fork` when creating the child
+#           process.
+#
+procedure server_main_0(a, sess, sched, optl, ff)
    /optl := get_optl()
-   opts := options(a, optl, usage_0)
-   server_main(, sess, sched)
+   opts := options(a, optl, 
+                   "Usage: " || Files.get_program_name() || " [OPTIONS]")
+   server_main(, sess, sched, ff)
 end
 
-procedure server_main_1(a, sess, sched, optl)
+# Main helper procedure for a server which uses an optional attach
+# parameter.
+#
+# :Parameters :
+# :  `a` - the command line arguments list
+# :  `sess` - the `plan9.Session9P` instance to use
+# :  `sched` - an optional `io.Scheduler` to use for asynchronous servers
+# :  `optl` - the options list
+# :  `ff` - optional extra flags to give to `fork` when creating the child
+#           process.
+#
+procedure server_main_1(a, sess, sched, optl, ff)
    local attach
    /optl := get_optl()
-   opts := options(a, optl, usage_1)
+   opts := options(a, optl,
+                   "Usage: " || Files.get_program_name() || " [OPTIONS] [ATTACH]")
    if /opts["s"] then {
       if *a = 0 then
-         usage_1()
+         help_stop("Use the -s option or provide an attach parameter.")
       attach := a[1]
    }
-   server_main(attach, sess, sched)
+   server_main(attach, sess, sched, ff)
 end
 
-procedure server_main(attach, sess, sched)
+# Main helper procedure.  This is called by `server_main_0` and
+# `server_main_1` after options processing.  Servers which wish to do
+# their own custom options processing and other initializations may
+# wish to call this procedure directly.
+#
+# :Parameters :
+# :  `attach` - the optional attach parameter; ignored if the `s` options
+#           is set in `opts`.
+# :  `sess` - the `plan9.Session9P` instance to use
+# :  `sched` - an optional `io.Scheduler` to use for asynchronous servers.  If
+#           given the `asynch_sched_loop()` below is used.
+# :  `ff` - optional extra flags to give to `fork` when creating the child
+#           process.
+#
+procedure server_main(attach, sess, sched, ff)
    local p, pid, pname, fl, s, mp
-   pname := get_progname()
+   pname := Files.get_program_name()
    p := FileStream.pipe() | stop(&why)
-   pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFFDG, ForkOpt.RFNAMEG, ForkOpt.RFNOTEG)) | stop(&why)
+   /ff := 0
+   ff := ior(ff, ForkOpt.RFPROC, ForkOpt.RFFDG, ForkOpt.RFNOTEG)
+   pid := System.fork(ff) | stop(&why)
    if pid = 0 then {
       p[1].close()
       if \opts["v"] then 
@@ -110,6 +135,15 @@ procedure server_main(attach, sess, sched)
    exit()
 end
 
+# A helper method to loop repeatedly, processing messages using the
+# given session's `async_io` method.
+#
+# :Parameters :
+# :  `sess` - the `plan9.Session9P`
+# :  `sched` - the `io.Scheduler` 
+# :  `f` - the pipe from which to process messages.  This is not
+#          closed by this procedure.
+#
 procedure async_sched_loop(sess, sched, f)
    local nb
    use {
@@ -123,11 +157,26 @@ procedure async_sched_loop(sess, sched, f)
    }
 end
 
-procedure gui_main(attach, sess, async_flag, body)
+# Main helper procedure for a gui program that also acts as a file server.
+#
+# :Parameters :
+# :  `attach` - the optional attach parameter; ignored if the `s` options
+#           is set in `opts`.
+# :  `sess` - the `plan9.Session9P` instance to use
+# :  `async_flag` - a flag indicating whether the session should process
+# :         each message in a background `Task`.
+# :  `sched` - an optional `io.Scheduler` to use for asynchronous servers
+# :  `body` - a co-expression giving the main body of the program
+# :  `ff` - optional extra flags to give to `fork` when creating the child
+#           process.
+#
+procedure gui_main(attach, sess, async_flag, body, ff)
    local p, pid, pname, nb, fl, s, mp
-   pname := get_progname()
+   pname := Files.get_program_name()
    p := FileStream.pipe() | stop(&why)
-   pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFFDG)) | stop(&why)
+   /ff := 0
+   ff := ior(ff, ForkOpt.RFPROC, ForkOpt.RFFDG)
+   pid := System.fork(ff) | stop(&why)
    if pid = 0 then {
       # child
       p[1].close()
