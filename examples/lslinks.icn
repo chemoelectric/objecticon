@@ -51,7 +51,7 @@ procedure do_one(a)
       hr := HttpRequest().set_output_stream(sb)
       if \opts["a"] then {
          opts["a"] ? {
-            u := tab(upto(':')) | stop("Bad -a option")
+            u := tab(upto(':')) | help_stop("Bad -a option")
             move(1)
             p := tab(0)
          }

@@ -20,16 +20,16 @@ procedure need_one(a)
    if *a = 1 then
       return a[1]
    else
-      stop("This option needs a single parameter")
+      help_stop("This option needs a single parameter")
 end
 
 record pair(name, size)
 
 procedure need_pair(a)
    if *a = 2 then
-      return pair(a[1], integer(a[2])) | stop("This option needs an integer second parameter")
+      return pair(a[1], integer(a[2])) | help_stop("This option needs an integer second parameter")
    else
-      stop("This option needs two parameters")
+      help_stop("This option needs two parameters")
 end
 
 procedure usage(opts)
@@ -55,7 +55,7 @@ procedure main(a)
 
    opts := options(a, [], usage)
 
-   c := pop(a) | stop("Command argument needed")
+   c := pop(a) | help_stop("Command argument needed")
 
    case c of {
       "mime": {
@@ -124,6 +124,6 @@ procedure main(a)
       }
 
       default:
-         stop("Unknown query command ", c)
+         help_stop("Unknown query command ", c)
    }
 end

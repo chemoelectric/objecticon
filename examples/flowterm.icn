@@ -246,7 +246,7 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
       local i, t
       t := \tabs.which_one | tabs.children[1]
       if i := \opts["width"] then {
-         i > 0 | stop("Invalid -width: integer > 0 expected")
+         i > 0 | help_stop("Invalid -width: integer > 0 expected")
          t.output.
             set_width().
             set_vt_width(i)
@@ -254,7 +254,7 @@ The FlowTerm extras can be downloaded <a href=\"https://sourceforge.net/projects
          set_width(scale(1200))
 
       if i := \opts["height"] then {
-         i > 0 | stop("Invalid -height: integer > 0 expected")
+         i > 0 | help_stop("Invalid -height: integer > 0 expected")
          t.output.
             set_height().
             set_vt_height(i)
@@ -395,7 +395,7 @@ class Columns(LineBasedScrollArea)
       local v
       if v := scale(\opts["lfw"]) then {
          if v < 1 then
-            stop("Invalid -lfw: scaled value >= 1 required")
+            help_stop("Invalid -lfw: scaled value >= 1 required")
       }
       FOCUS_DASHED_WIDTH := \v | Gui.DASHED_WIDTH
    end
@@ -3383,7 +3383,7 @@ procedure main(a)
    if *a = 0 then
       put(a, "")
    d := FlowTermDialog()
-   d.do_tab_cmd(a) | stop(&why)
+   d.do_tab_cmd(a) | help_stop(&why)
    t := \d.tabs.which_one | d.tabs.children[1]
    d.set_focus(t.remembered_focus)
    d.show_modal()
