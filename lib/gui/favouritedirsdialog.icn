@@ -74,7 +74,7 @@ class FavouriteDirectoriesDialog(Dialog)
 
    public static gen_directories()
       local app, e
-      app := Files.get_application_name()
+      app := Files.get_program_name()
       every e := !get_pair_list() do {
          if /e[1] | (e[1] == app) then
             suspend e[2]
@@ -159,7 +159,7 @@ class FavouriteDirectoriesDialog(Dialog)
    end
 
    private on_add_button(ev)
-      etc.insert_lines([ [Files.get_application_name(), u"Edit me"] ], *etc.contents + 1)
+      etc.insert_lines([ [Files.get_program_name(), u"Edit me"] ], *etc.contents + 1)
       etc.set_selections([*etc.contents])
       parent_dialog.set_focus(directory_field)
       on_table_selection()
@@ -184,7 +184,7 @@ class FavouriteDirectoriesDialog(Dialog)
 
    private on_application_check_box(ev)
       if application_check_box.is_unchecked() & *application_field.get_contents() = 0 then
-         application_field.set_contents(Files.get_application_name())
+         application_field.set_contents(Files.get_program_name())
       update_grey()
       msg()
    end

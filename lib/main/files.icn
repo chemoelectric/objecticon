@@ -730,10 +730,10 @@ $endif
    end
 
    #
-   # Return the application name, based on the last path element of `&progname`
+   # Return the program name, based on the last path element of `&progname`
    #
-   public static get_application_name()
-      return FilePath(&progname).get(-1)
+   public static get_program_name()
+      return FS.get_program_name()
    end
 end
 
@@ -754,6 +754,7 @@ package abstract class FileSystem()
    public abstract is_relative_dir(s)
    public abstract get_roots()
    public abstract split_paths(s)
+   public abstract get_program_name()
 end
 
 #
@@ -1202,6 +1203,10 @@ package class UnixFileSystem(FileSystem)
          move(1) | break
       }
    end
+
+   public get_program_name()
+      return FilePath(&progname).get(-1)
+   end
 end
 
 package class Plan9FileSystem(UnixFileSystem)
@@ -1337,5 +1342,13 @@ package class WindowsFileSystem(FileSystem)
          suspend t
          move(1) | break
       }
+   end
+
+   public get_program_name()
+      local s
+      s := FilePath(&progname).get(-1)
+      if map(s[-4:0]) == ".exe" then
+         s[-4:0] := ""
+      return s
    end
 end
