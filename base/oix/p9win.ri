@@ -8,7 +8,7 @@ static struct wcursor *cursors[CURSORHASH_SIZE];
 static struct SharedCursor *null_cursor;
 static Rectangle max_rect;
 static struct Cursor cursor_data[];
-static int use_win;
+static int use_win, win_nameg;
 static char old_label[256];
 
 static int read_screeninfo(wsp ws, int *mx, int *my, int *sx, int *sy, int *sw, int *sh);
@@ -1718,7 +1718,7 @@ static int open_screen_win(wsp ws)
     ws->winid = atoi(buff);
     close(fd);
 
-    if (!ws->using_win) {
+    if (!ws->using_win && win_nameg == 0) {
         char *buff;
         /*
          * Try to unmount the mount directory if possible, by using
@@ -2316,8 +2316,15 @@ static void close_window_system(void)
 static void init_window_system(void)
 {
     env_int("OI_USE_WIN", &use_win, 0, 4);
+    env_int("OI_WIN_NAMEG", &win_nameg, 0, 2);
+
     load_font_info();
     setup_cursors();
+
+    if (win_nameg == 2) {
+        /* Keep mounts private */
+        rfork(RFNAMEG);
+    }
 
     /*
      * So far as I can see the second param (win) isn't actually used
