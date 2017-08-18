@@ -631,7 +631,7 @@ $endif
          return s
 
       # Search all the elements in the path
-      every s := FilePath(split_paths(System.getenv(\n))).append(p).str() do {
+      every s := FilePath(split_paths(env_string(\n))).append(p).str() do {
          if access(s, mode) then
             return s
       }

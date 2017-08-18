@@ -82,6 +82,7 @@ static double calc_progress_factor(double rx, double ry);
 static void synch_pos(wsp ws);
 static int limit_strlen(word n);
 static char *get_atom_name(wdp wd, Atom a);
+static char *resource_name, *resource_class;
 
 static stringint drawops[] = {
    { 0, 12},
@@ -973,7 +974,7 @@ static void wmap(wbp w)
 {
     XWindowAttributes attrs;
     XSetWindowAttributes attr;
-    char *s, *m1, *m2;
+    char *m1, *m2;
     XWMHints wmhints;
     XClassHint clhints;
     wcp wc = w->context;
@@ -1091,15 +1092,15 @@ static void wmap(wbp w)
      * Set the class hints that name the program (for reference by the
      * window manager) following conventions given in O'Reilly.
      */
-    if ((s = getenv("OI_RESOURCE_NAME"))) {
-        clhints.res_name = s;
+    if (resource_name) {
+        clhints.res_name = resource_name;
         m1 = 0;
     } else {
         m1 = get_progname();
         clhints.res_name = m1;
     }
-    if ((s = getenv("OI_RESOURCE_CLASS"))) {
-        clhints.res_class = s;
+    if (resource_class) {
+        clhints.res_class = resource_class;
         m2 = 0;
     } else {
         /* Defaults to prog name, with first letter capitalized (see X(7) manpage). */
@@ -3508,8 +3509,15 @@ wbp findwbp(wsp ws)
  */
 static wdp alcdisplay(char *s)
 {
+    static int inited = 0;
     wdp wd;
     int major_version, minor_version;
+
+    if (!inited) {
+        env_string("OI_RESOURCE_NAME", &resource_name);
+        env_string("OI_RESOURCE_CLASS", &resource_class);
+        inited = 1;
+    }
 
     if (s == NULL) s = getenv("DISPLAY");
     if (s == NULL) s = "";

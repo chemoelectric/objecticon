@@ -392,7 +392,7 @@ void env_int(char *name, int *variable, int min, int max)
 {
     int t;
     char *value, ch;
-    if ((value = getenv(name)) == NULL || *value == '\0')
+    if ((value = getenv_nn(name)) == NULL)
         return;
     if (sscanf(value, "%d%c", &t, &ch) != 1)
         ffatalerr("environment variable not numeric: %s=%s", name, value);
@@ -408,7 +408,7 @@ void env_word(char *name, word *variable, word min, word max)
 {
     word t;
     char *value, ch;
-    if ((value = getenv(name)) == NULL || *value == '\0')
+    if ((value = getenv_nn(name)) == NULL)
         return;
     if (sscanf(value, WordFmt "%c", &t, &ch) != 1)
         ffatalerr("environment variable not numeric: %s=%s", name, value);
@@ -424,7 +424,7 @@ void env_uword(char *name, uword *variable, uword min, uword max)
 {
     uword t;
     char *value, ch;
-    if ((value = getenv(name)) == NULL || *value == '\0')
+    if ((value = getenv_nn(name)) == NULL)
         return;
     if (sscanf(value, UWordFmt "%c", &t, &ch) != 1)
         ffatalerr("environment variable not numeric: %s=%s", name, value);
@@ -440,13 +440,25 @@ void env_double(char *name, double *variable, double min, double max)
 {
     double t;
     char *value, ch;
-    if ((value = getenv(name)) == NULL || *value == '\0')
+    if ((value = getenv_nn(name)) == NULL)
         return;
     if (sscanf(value, "%lf%c", &t, &ch) != 1)
         ffatalerr("environment variable not numeric: %s=%s", name, value);
     if (t < min || t > max)
         ffatalerr("environment variable out of range: %s=%s", name, value);
     *variable = t;
+}
+
+/*
+ * env_string - get the value of a string environment variable.  If it
+ * is present, it is saved and assigned to the variable.
+ */
+void env_string(char *name, char **variable)
+{
+    char *value;
+    if ((value = getenv_nn(name)) == NULL)
+        return;
+    *variable = salloc(value);
 }
 
 /*
@@ -1272,9 +1284,7 @@ int main(int argc, char **argv)
     env_word(OI_IP_VER, &defaultipver, 0, 64);
     if (!(defaultipver == 4 || defaultipver == 6 || defaultipver == 46 || defaultipver == 64 || defaultipver == 0))
         ffatalerr("environment variable has invalid value: %s=" WordFmt, OI_IP_VER, defaultipver);
-    t = getenv(OI_FONT);
-    if (t && *t)
-        defaultfont = salloc(t);
+    env_string(OI_FONT, &defaultfont);
 
     Protect(rootpstate.Code = malloc(hdr.icodesize), fatalerr(315, NULL));
 

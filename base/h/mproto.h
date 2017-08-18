@@ -99,6 +99,7 @@ unsigned int hashcstr(char *s);
 
 char *get_hostname(void);
 int is_flowterm_tty(FILE *f);
+char *getenv_nn(char *name);
 
 void ssreserve(struct staticstr *ss, size_t n);
 void ssexpand(struct staticstr *ss, size_t n);

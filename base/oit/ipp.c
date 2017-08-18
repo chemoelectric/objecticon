@@ -168,7 +168,7 @@ int ppinit(char *fname, int m4)
    /*
     * initialize variables and open source file 
     */
-   lpath = getenv(OI_INCL);
+   lpath = getenv_nn(OI_INCL);
    curfile = &nofile;			/* init file struct pointer */
    last_line_file = last_line_encoding = 0;
    return ppopen(fname, m4);		/* open main source file */

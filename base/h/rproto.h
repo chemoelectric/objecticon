@@ -464,6 +464,7 @@ void env_int(char *name, int *variable, int min, int max);
 void env_word(char *name, word *variable, word min, word max);
 void env_uword(char *name, uword *variable, uword min, uword max);
 void env_double(char *name, double *variable, double min, double max);
+void env_string(char *name, char **variable);
 
 int stringint_str2int(stringint * sip, char *s);
 char *stringint_int2str(stringint * sip, int i);

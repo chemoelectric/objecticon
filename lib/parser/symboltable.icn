@@ -1,7 +1,7 @@
 package parser
 
 import 
-   util(Connectable, error, check_flag), 
+   util(Connectable, error, check_flag, env_string), 
    lang(),
    io,
    posix
@@ -569,7 +569,7 @@ class SymbolTable(Connectable)
       if \package_db then
          return
       package_db := table()
-      every d := Files.getcwd() | Files.split_paths(System.getenv("OI_PATH")) do {
+      every d := Files.getcwd() | Files.split_paths(env_string("OI_PATH")) do {
          p := FilePath(d).canonical().standard_case()
          s := p.str()
          if /package_db[s] then {
