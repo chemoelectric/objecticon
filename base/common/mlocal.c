@@ -299,7 +299,7 @@ char *canonicalize(char *path)
  *  makename.
  * 
  *  cd is the current directory; may be NULL, meaning the "real" cd
- *  path is the IPATH or LPATH value, or NULL if unset.
+ *  path is the search path value, or NULL if unset.
  *  name is the file name.
  *  extn is the file extension (.icn or .u) to be appended, or NULL if none.
  */
@@ -1195,4 +1195,18 @@ void ssdbg(struct staticstr *ss)
         fprintf(stderr, " s=%p('%s',%ld)\n", ss->s, ss->s, (long)strlen(ss->s));
     else
         fprintf(stderr, " s=nil\n");
+}
+
+/*
+ * This is just like getenv(), but if the variable's value is the
+ * empty string, null is returned.
+ */
+char *getenv_nn(char *name)
+{
+    char *s;
+    s = getenv(name);
+    if (s && *s)
+        return s;
+    else
+        return 0;
 }
