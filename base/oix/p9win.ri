@@ -79,6 +79,9 @@ static Rune *iso8859_to_runes(dptr str);
 static int read_winname(char *d, char *res, int sz);
 static int compare_winnames(char *d1, char *d2);
 
+char *mntgen_dir = "/n";
+char *wsys_dir = "/dev/wsys";
+
 static struct imgdataformat imgdataformat_P9ABGR32;
 static struct imgdataformat imgdataformat_P9AG16;
 
@@ -1668,7 +1671,7 @@ static int open_screen_win(wsp ws)
             close_screen_win(ws);
             return Failed;
         }
-        MemProtect(ws->mount_dir = smprint("/n/oix-win.%d.%d", getpid(), ++window_count));
+        MemProtect(ws->mount_dir = smprint("%s/oix-win.%d.%d", mntgen_dir, getpid(), ++window_count));
         ws->border_width = (ws->state == PopupCanvas ? 0 : 2 * Borderwidth);
         /* If either x or y unset, let rio place the window */
         if (ws->reqx == -INT_MAX || ws->reqy == -INT_MAX)
@@ -1697,6 +1700,7 @@ static int open_screen_win(wsp ws)
             close_screen_win(ws);
             return Failed;
         }
+        ws->is_mounted = 1;
         if ((ws->wctl_fd = open_winfile(ws, "wctl", OWRITE)) < 0) {
             whyf("Can't open wctl file: %r");
             close_screen_win(ws);
@@ -1730,11 +1734,12 @@ static int open_screen_win(wsp ws)
          * This should be unique as it refers to the named draw image
          * of the window.
          */
-        MemProtect(buff = smprint("/dev/wsys/%d", ws->winid));
+        MemProtect(buff = smprint("%s/%d", wsys_dir, ws->winid));
         if (compare_winnames(ws->mount_dir, buff)) {
             int fd;
             unmount(0, ws->mount_dir);
             free(ws->mount_dir);
+            ws->is_mounted = 0;
             ws->mount_dir = buff;
             /*
              * Re-open the wctl file under the /dev/wsys
@@ -1866,7 +1871,7 @@ static void close_screen_win(wsp ws)
         /* Clear any size limits */
         if (ws->wctl_fd >= 0)
             fprint(ws->wctl_fd, "resize -mindx 1 -maxdx %d -mindy 1 -maxdy %d", INT_MAX, INT_MAX);
-    } else if (ws->mount_dir && strncmp(ws->mount_dir, "/n/", 3) == 0)
+    } else if (ws->is_mounted)
         unmount(0, ws->mount_dir);
 
     if (ws->mouse_pid >= 0)
@@ -1923,6 +1928,7 @@ static void close_screen_win(wsp ws)
     ws->using_win = 0;
     free(ws->mount_dir);
     ws->mount_dir = 0;
+    ws->is_mounted = 0;
     ws->event_pipe[0] = ws->event_pipe[1] = ws->mouse_fd = ws->cons_fd = ws->consctl_fd =
         ws->screeninfo_fd = ws->cursor_fd = ws->label_fd = ws->mouse_pid = ws->cons_pid =
         ws->wininfo_fd = ws->wsys_fd = ws->wctl_fd = ws->winid = -1;
@@ -2317,6 +2323,8 @@ static void init_window_system(void)
 {
     env_int("OI_USE_WIN", &use_win, 0, 4);
     env_int("OI_WIN_NAMEG", &win_nameg, 0, 2);
+    env_string("OI_WIN_MNTGEN", &mntgen_dir);
+    env_string("OI_WIN_WSYS", &wsys_dir);
 
     load_font_info();
     setup_cursors();
