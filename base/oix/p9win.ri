@@ -317,7 +317,7 @@ wbp wopen(char *display)
     if (display)
         wsysstr = salloc(display);
     else {
-        wsysstr = getenv("wsys");
+        wsysstr = getenv_nn("wsys");
         if (!wsysstr) {
             LitWhy("wsys environment variable not set");
             return 0;
@@ -2341,7 +2341,7 @@ static void init_window_system(void)
      * OI_USE_WIN; it means windows so opened in twin console
      * windows take over the right window.
      */
-    if ((display = initdisplay(0, getenv("wdir"), draw_error)) == nil)
+    if ((display = initdisplay(0, getenv_nn("wdir"), draw_error)) == nil)
         ffatalerr("Couldn't initialize display: %r");
 
     black = new_sharedcolor("black", 0x000000ff);
@@ -2700,7 +2700,7 @@ static void load_font_info(void)
     double size;
     struct FontInfo *fi;
 
-    fn = getenv("OI_FONTINFO");
+    fn = getenv_nn("OI_FONTINFO");
     if (!fn)
         ffatalerr("OI_FONTINFO environment variable not set");
 
