@@ -58,7 +58,7 @@ char *findexe(char *name)
         return p;
 #endif
 
-    path = getenv("PATH");
+    path = getenv_nn("PATH");
     if (!path)
         path = "";
 
@@ -144,7 +144,7 @@ int is_flowterm_tty(FILE *f)
     if (!init) {
         char *s;
         init = 1;
-        s = getenv("FLOWTERM");
+        s = getenv_nn("FLOWTERM");
         if (s)
             flowterm = atoi(s);
     }
@@ -1085,7 +1085,7 @@ char *maketemp(char *fn)
     sprintf(buf.s, "%s%s", tmp, fn);
     free(tmp);
 #else
-    char *tmp = getenv("TEMP");
+    char *tmp = getenv_nn("TEMP");
     if (tmp == 0)
         tmp = "/tmp";
     ssreserve(&buf, strlen(tmp) + 1 + strlen(fn) + 1);
