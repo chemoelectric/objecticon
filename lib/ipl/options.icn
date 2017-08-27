@@ -121,8 +121,11 @@ end
 procedure options_help(opts)
    local o, t
    every o := !opts do {
-      t := o.format()
-      help_line(t.names, t.help)
+      if is(o, Opt) then {
+         t := o.format()
+         help_line(t.names, t.help)
+      } else
+         help_line(o)
    }
 end
 
@@ -285,6 +288,10 @@ end
 #  whilst `-w` alone, or `-w anything` would give the result
 #  `"w"->200`.
 #
+#     The list of `Opt`s may also contain strings; these are interspersed
+#  with the formatted option output when help is produced with the `-help`
+#  option (or by calling `options_help()`).
+#
 #     A table is returned containing the options that were specified.
 #  The keys are the specified option names.  The assigned values are the
 #  data values following the options converted to the specified type.  For
@@ -328,8 +335,10 @@ procedure options(arg, opts, usage, errproc)
       }
    }
 
-   every opt := !opts do
-      every insert(opttable, string(!opt.names), opt)
+   every opt := !opts do {
+      if is(opt, Opt) then
+         every insert(opttable, string(!opt.names), opt)
+   }
 
    #
    #  Iterate over program invocation argument words.
