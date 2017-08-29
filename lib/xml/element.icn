@@ -13,7 +13,7 @@ import io, ipl.pdco
 #
 # Represents an element in the document.
 #
-class Element(Node)
+abstract class Element(Node)
    public
       name, 
       attributes
@@ -136,4 +136,3 @@ class Element(Node)
       return
    end
 end
-
