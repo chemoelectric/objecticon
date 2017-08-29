@@ -14,7 +14,7 @@ package xml
 #
 class CanonicalXmlFormatter(XmlFormatter)
    protected format_cdata(n)
-      writes(xml_escape(n.content, '\n\r\t&<>\"'))
+      writes1(xml_escape(n.content, '\n\r\t&<>\"'))
    end
 
    protected format_document(n)
@@ -46,7 +46,7 @@ class CanonicalXmlFormatter(XmlFormatter)
          s ||:= ">\n"
       }
       s ||:= "]>\n"
-      writes(s)
+      writes1(s)
    end
 
    protected format_element(n)
@@ -61,15 +61,15 @@ class CanonicalXmlFormatter(XmlFormatter)
          s[-1] := ""
       }
       s ||:= ">"
-      writes(s)
+      writes1(s)
       every e := !n.children do {
          if text(e) then
-            writes(xml_escape(e, '\n\r\t&<>\"'))
+            writes1(xml_escape(e, '\n\r\t&<>\"'))
          else if not is(e, Comment) then
             format_node(e)
       }
 
-      writes("</" || n.name || ">")
+      writes("</", n.name, ">")
    end
 
    protected format_pi(n)
@@ -78,7 +78,7 @@ class CanonicalXmlFormatter(XmlFormatter)
       if \n.content then
          s ||:= n.content
       s ||:= "?>"
-      writes(s)
+      writes1(s)
    end
 end
 
