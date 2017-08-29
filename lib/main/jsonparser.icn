@@ -1,7 +1,9 @@
 package json
 
 import 
+   lang,
    util,
+   io,
    exception
 
 class JSONParser()
@@ -20,16 +22,25 @@ class JSONParser()
       UNESCAPED_CHAR := '\x20-\x21\x23-\x5B\x5D-\U10FFFF'
    end
 
+   #
+   # Set a value to represent json "true"; by default `&yes`.
+   #
    public set_true(x)
       self.true := x
       return self
    end
 
+   #
+   # Set a value to represent json "false"; by default `&no`.
+   #
    public set_false(x)
       self.false := x
       return self
    end
 
+   #
+   # Set a value to represent json "null"; by default `&null`.
+   #
    public set_null(x)
       self.null := x
       return self
@@ -45,18 +56,25 @@ class JSONParser()
    end
 
    private parse_string()
-      local s, t, ch, i
+      local res
+      return use {
+         res := RamStream(),
+         parse_string1(res)
+      }
+   end
+
+   private parse_string1(res)
+      local t, ch, i
       =u"\""
-      s := ""
       repeat {
-         s ||:= tab(many(UNESCAPED_CHAR))
+         res.out(tab(many(UNESCAPED_CHAR)))
          if pos(0) then
             throw("Unclosed quote")
          if =u"\"" then
             break
          if =u"\\" then {
             ch := move(1) | throw("Unclosed quote")
-            s ||:= case string(ch) of {
+            res.out(case string(ch) of {
                "\"": "\""
                "\\": "\\"
                "/": "/"
@@ -69,16 +87,17 @@ class JSONParser()
                   many(&digits ++ 'ABCDEFabcdef', t := move(4)) = 5 | throw("Invalid \\u escape")
                   i := integer("16r" || t)
                   if \utf8_flag then
-                     uchar(i | 63)
+                     Text.utf8_seq(i | 63)
                   else
                      char(i | 63)
                }
                default: throw("Invalid escape char in string: " || ch)
-            }
+            })
          } else
             throw("Invalid char in string:" || image(&subject[&pos]))
       }
-      return s
+      res := res.str()
+      return if \utf8_flag then ucs(res) else res
    end
 
    private parse_value()
@@ -163,7 +182,7 @@ class JSONParser()
 
    public parse(s)
       utf8_flag := Yes{ type(s) == "ucs" }
-      return s ? try1{ end_check(parse_impl()) }
+      return s ? clean{try1{ end_check(parse_impl()) }}
    end
 
    public new()
