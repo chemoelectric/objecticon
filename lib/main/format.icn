@@ -196,9 +196,9 @@ final abstract class Format()
                   else if ="x" then
                      char("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
                   else if ="u" then
-                     uchar("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
+                     Text.utf8_seq("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
                   else if ="U" then
-                     uchar("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6))) | {
+                     Text.utf8_seq("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6))) | {
                         res.close()
                         return error("code point out of range")
                      }
