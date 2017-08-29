@@ -11,7 +11,7 @@ package xml
 #
 # The base class for a document, being either an XML or HTML document.
 #
-class Document(Node)
+abstract class Document(Node)
    public get_root_element()
       local n
       every n := !children do
@@ -19,4 +19,3 @@ class Document(Node)
             return n
    end
 end
-
