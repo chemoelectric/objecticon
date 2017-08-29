@@ -16,7 +16,7 @@
 
 package ipl.strings
 
-import lang(Prog)
+import lang(Prog,Text)
 
 # Concatenates an arbitrary number of strings.
 procedure cat(args[])			
@@ -703,4 +703,46 @@ procedure separate_lines(s)
       }
       return tab(0)
    }
+end
+
+# Return a string which is the same as `s`, but with any utf-16
+# surrogate pairs replaced with their equivalent characters.
+#
+# The procedure fails if `s` contains an invalid surrogate pair
+# encoding.
+#
+procedure remove_surrogate_pairs(s)
+   local t, c1, c2
+   s := text(s) | runerr(129, s)
+   upto('\ud800-\udfff', s) | return s
+   t := ""
+   s ? repeat {
+      t ||:= string(tab(upto('\ud800-\udfff') | 0))
+      if pos(0) then
+         break
+      any('\ud800-\udbff') | fail
+      c1 := move(1)
+      any('\udc00-\udfff') | fail
+      c2 := move(1)
+      t ||:= Text.utf8_seq(16r10000 + ishift(iand(ord(c1), 16r3ff), 10) + iand(ord(c2), 16r3ff))
+   }
+   return ucs(t)
+end
+
+# Return a string which is the same as `s`, but with any characters
+# outside the BMP replaced with their UTF-16 surrogate pair
+# equivalent.
+#
+procedure add_surrogate_pairs(s)
+   local t, c, i
+   s := text(s) | runerr(129, s)
+   upto('\U10000-\U10FFFF', s) | return s
+   t := ""
+   s ? repeat {
+      t ||:= string(tab(upto('\U10000-\U10FFFF') | 0))
+      c := move(1) | break
+      i := ord(c) - 16r10000
+      t ||:= Text.utf8_seq(16rd800 + ishift(i, -10)) || Text.utf8_seq(16rdc00 + iand(i, 16r3ff))
+   }
+   return ucs(t)
 end
