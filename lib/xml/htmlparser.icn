@@ -191,6 +191,7 @@ class HtmlParser()
    #
    public parse(s)
       local i, node
+      s := text(s) | runerr(129, s)
       doc := HtmlDocument()
 
       utf8_flag := Yes{ type(s) == "ucs" }
