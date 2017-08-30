@@ -187,28 +187,32 @@ final abstract class Format()
    #
    public static unescape(subject)
       local res
-      res := RamStream()
-      subject ? repeat {
-         res.out(tab(upto('\\') | 0))
-         move(1) | break
-         res.out((if any('01234567') then
-                     char(iand("8r" || tab(max_many('01234567', 3)), 8r377))
-                  else if ="x" then
-                     char("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
-                  else if ="u" then
-                     Text.utf8_seq("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
-                  else if ="U" then
-                     Text.utf8_seq("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6))) | {
-                        res.close()
-                        return error("code point out of range")
-                     }
-                  else if ="^" then
-                     char(iand(ord(move(1)), 8r37))
-                  else 
-                     unescape_char(move(1))) | "\0")
+      subject ? {
+         # Shortcut for common case
+         upto('\\') | return .&subject
+         res := RamStream()
+         repeat {
+            res.out(tab(upto('\\') | 0))
+            move(1) | break
+            res.out((if any('01234567') then
+                        char(iand("8r" || tab(max_many('01234567', 3)), 8r377))
+                     else if ="x" then
+                        char("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 2)))
+                     else if ="u" then
+                        Text.utf8_seq("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 4)))
+                     else if ="U" then
+                        Text.utf8_seq("16r" || tab(max_many(&digits ++ 'abcdefABCDEF', 6))) | {
+                           res.close()
+                           return error("code point out of range")
+                        }
+                     else if ="^" then
+                        char(iand(ord(move(1)), 8r37))
+                     else 
+                        unescape_char(move(1))) | "\0")
+         }
+         res := res.done()
+         return if type(&subject) == "ucs" then ucs(res) | error("invalid utf-8 escape sequence") else res
       }
-      res := res.done()
-      return if type(subject) == "ucs" then ucs(res) | error("invalid utf-8 escape sequence") else res
    end
 
    #
