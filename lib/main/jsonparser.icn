@@ -57,6 +57,9 @@ class JSONParser()
 
    private parse_string()
       local res
+      # Shortcut for common case
+      if =u"\"" & res := tab(many(UNESCAPED_CHAR)) & =u"\"" then
+         return res
       return use {
          res := RamStream(),
          parse_string1(res)
@@ -181,6 +184,7 @@ class JSONParser()
    end
 
    public parse(s)
+      s := text(s) | runerr(129, s)
       utf8_flag := Yes{ type(s) == "ucs" }
       return s ? clean{try1{ end_check(parse_impl()) }}
    end
