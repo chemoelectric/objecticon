@@ -1099,9 +1099,16 @@ class SocketStream(DescStream)
    public native listen(backlog)
 
    #
-   # Returns the address of the peer connected to the socket.
+   # Returns a string giving the address and port of the peer
+   # connected to the socket.
    #
    public native get_peer()
+
+   #
+   # Returns the local address of the socket, in the same format
+   # as returned by `get_peer()`.
+   #
+   public native get_local()
 
    #
    # Accept a new connection, returning a new `SocketStream`.
@@ -2041,9 +2048,16 @@ class WinsockStream(Stream, NoCopy)
    public native listen(backlog)
 
    #
-   # Returns the address of the peer connected to the socket.
+   # Returns a string giving the address and port of the peer
+   # connected to the socket.
    #
    public native get_peer()
+
+   #
+   # Returns the local address of the socket, in the same format
+   # as returned by `get_peer()`.
+   #
+   public native get_local()
 
    #
    # Accept a new connection, returning a new `WinsockStream`.

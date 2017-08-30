@@ -2088,20 +2088,72 @@ function io_SocketStream_listen(self, backlog)
    }
 end
 
+static char *sockaddr_string(struct sockaddr *sa)
+{
+    static struct staticstr buf = {16};
+    switch (sa->sa_family) {
+        case AF_INET : {
+            char ipstr[INET_ADDRSTRLEN];
+            struct sockaddr_in *s = (struct sockaddr_in *)sa;
+            inet_ntop(AF_INET, &s->sin_addr, ipstr, sizeof(ipstr));
+            ssreserve(&buf, strlen(ipstr) + 12);
+            sprintf(buf.s, "%s:%u", ipstr, (unsigned)ntohs(s->sin_port));
+            break;
+        }
+        case AF_INET6 : {
+            char ipstr[INET6_ADDRSTRLEN];
+            struct sockaddr_in6 *s = (struct sockaddr_in6 *)sa;
+            inet_ntop(AF_INET6, &s->sin6_addr, ipstr, sizeof(ipstr));
+            ssreserve(&buf, strlen(ipstr) + 14);
+            sprintf(buf.s, "[%s]:%u", ipstr, (unsigned)ntohs(s->sin6_port));
+            break;
+        }
+        default:
+            return 0;
+    }
+    return buf.s;
+}
+
 function io_SocketStream_get_peer(self)
    body {
        tended struct descrip result;
-       struct sockaddr_in iss;
+       struct sockaddr_storage iss;
        socklen_t iss_len;
-       char buf[128];
+       char *ip;
        GetSelfFd();
        iss_len = sizeof(iss);
        if (getpeername(self_fd, (struct sockaddr *)&iss, &iss_len) < 0) {
            errno2why();
            fail;
        }
-       snprintf(buf, sizeof(buf), "%s:%u", inet_ntoa(iss.sin_addr), (unsigned)ntohs(iss.sin_port));
-       cstr2string(buf, &result);
+       ip = sockaddr_string((struct sockaddr *)&iss);
+       if (!ip) {
+           LitWhy("No peer information available");
+           fail;
+       }
+       cstr2string(ip, &result);
+       return result;
+   }
+end
+
+function io_SocketStream_get_local(self)
+   body {
+       tended struct descrip result;
+       struct sockaddr_storage iss;
+       socklen_t iss_len;
+       char *ip;
+       GetSelfFd();
+       iss_len = sizeof(iss);
+       if (getsockname(self_fd, (struct sockaddr *)&iss, &iss_len) < 0) {
+           errno2why();
+           fail;
+       }
+       ip = sockaddr_string((struct sockaddr *)&iss);
+       if (!ip) {
+           LitWhy("No name information available");
+           fail;
+       }
+       cstr2string(ip, &result);
        return result;
    }
 end
@@ -4196,20 +4248,72 @@ function io_WinsockStream_listen(self, backlog)
    }
 end
 
+static char *sockaddr_string(struct sockaddr *sa)
+{
+    static struct staticstr buf = {16};
+    switch (sa->sa_family) {
+        case AF_INET : {
+            char ipstr[INET_ADDRSTRLEN];
+            struct sockaddr_in *s = (struct sockaddr_in *)sa;
+            inet_ntop(AF_INET, &s->sin_addr, ipstr, sizeof(ipstr));
+            ssreserve(&buf, strlen(ipstr) + 12);
+            sprintf(buf.s, "%s:%u", ipstr, (unsigned)ntohs(s->sin_port));
+            break;
+        }
+        case AF_INET6 : {
+            char ipstr[INET6_ADDRSTRLEN];
+            struct sockaddr_in6 *s = (struct sockaddr_in6 *)sa;
+            inet_ntop(AF_INET6, &s->sin6_addr, ipstr, sizeof(ipstr));
+            ssreserve(&buf, strlen(ipstr) + 14);
+            sprintf(buf.s, "[%s]:%u", ipstr, (unsigned)ntohs(s->sin6_port));
+            break;
+        }
+        default:
+            return 0;
+    }
+    return buf.s;
+}
+
 function io_WinsockStream_get_peer(self)
    body {
        tended struct descrip result;
-       struct sockaddr_in iss;
+       struct sockaddr_storage iss;
        socklen_t iss_len;
-       char buf[128];
+       char *ip;
        GetSelfSocket();
        iss_len = sizeof(iss);
        if (getpeername(self_socket, (struct sockaddr *)&iss, &iss_len) == SOCKET_ERROR) {
            win32error2why();
            fail;
        }
-       snprintf(buf, sizeof(buf), "%s:%u", inet_ntoa(iss.sin_addr), (unsigned)ntohs(iss.sin_port));
-       cstr2string(buf, &result);
+       ip = sockaddr_string((struct sockaddr *)&iss);
+       if (!ip) {
+           LitWhy("No peer information available");
+           fail;
+       }
+       cstr2string(ip, &result);
+       return result;
+   }
+end
+
+function io_WinsockStream_get_local(self)
+   body {
+       tended struct descrip result;
+       struct sockaddr_storage iss;
+       socklen_t iss_len;
+       char *ip;
+       GetSelfSocket();
+       iss_len = sizeof(iss);
+       if (getsockname(self_socket, (struct sockaddr *)&iss, &iss_len) == SOCKET_ERROR) {
+           win32error2why();
+           fail;
+       }
+       ip = sockaddr_string((struct sockaddr *)&iss);
+       if (!ip) {
+           LitWhy("No name information available");
+           fail;
+       }
+       cstr2string(ip, &result);
        return result;
    }
 end
