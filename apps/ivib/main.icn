@@ -1341,7 +1341,7 @@ class Main(Dialog)
       info_label.set_label("")
       p.add(info_label)
 
-      pos_label := Label().set_size(scale(200)).set_constraint("y_fill", &yes).set_font("serif,-2")
+      pos_label := Label().set_size(scale(200)).set_constraint("y_fill", &yes).set_font("serif,*0.85")
       pos_label.set_border(CompoundBorder().set_outer(SunkenBorder()).set_inner(EmptyBorder().set_l_inset(Gui.TEXT_INSET)).set_x_align("l"))
       pos_label.set_label("")
       p.add(pos_label)

@@ -4,7 +4,6 @@ import
    lang,
    util,
    net,
-   posix,
    ipl.random,
    ipl.scan
 
@@ -669,9 +668,9 @@ $endif
 
       # Search all the elements in the path
 $ifdef _PLAN9
-      path := System.getenv("path") | ". /bin"
+      path := env_string(n) | ". /bin"
 $else
-      path := System.getenv(n) | ""
+      path := env_string(n) | ""
 $endif
       every s := FilePath(split_paths(path)).append(p).str() do {
          if access(s, mode) then
@@ -701,7 +700,7 @@ $endif
    public static is_flowterm_tty(f)
       static flowterm
       initial
-         flowterm := integer(System.getenv("FLOWTERM"))
+         flowterm := integer(env_string("FLOWTERM"))
       return case flowterm of {
          1 : f.isatty()
          2 : &null
@@ -1174,11 +1173,11 @@ package class UnixFileSystem(FileSystem)
    end
 
    public get_home()
-      return System.getenv("HOME")
+      return env_string("HOME")
    end
 
    public get_temp()
-      return System.getenv("TEMP") | "/tmp"
+      return env_string("TEMP") | "/tmp"
    end
 
    public is_hidden(s)
@@ -1211,7 +1210,7 @@ end
 
 package class Plan9FileSystem(UnixFileSystem)
    public get_home()
-      return System.getenv("home")
+      return env_string("home")
    end
 
    public get_temp()
@@ -1316,12 +1315,12 @@ package class WindowsFileSystem(FileSystem)
    private static native getdcwd(d)
 
    public get_home()
-      return System.getenv("USERPROFILE") | get_temp()
+      return env_string("USERPROFILE") | get_temp()
    end
 
    public get_temp()
       # Conform with what the Windows function GetTempPath() does.
-      return System.getenv("TMP" | "TEMP" | "USERPROFILE") | "C:\\WINDOWS\\TEMP"
+      return env_string("TMP" | "TEMP" | "USERPROFILE") | "C:\\WINDOWS\\TEMP"
    end
 
    public is_hidden(s)

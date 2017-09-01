@@ -24,7 +24,7 @@ class Style()
    private static init()
       TOOLTIP_BG := env_color("OI_STYLE_TOOLTIP_BG") | "pale yellow"
       TOOLTIP_FG := env_color("OI_STYLE_TOOLTIP_FG") | "black"
-      TOOLTIP_FONT := env_font("OI_STYLE_TOOLTIP_FONT") | "sans,-2"
+      TOOLTIP_FONT := env_font("OI_STYLE_TOOLTIP_FONT") | "sans,*0.85"
       FOCUS_COLOR := env_color("OI_STYLE_FOCUS_COLOR") | "red"
       FOCUS_PATTERN := env_pattern("OI_STYLE_FOCUS_PATTERN") | "gray"
       DASHED_PATTERN := env_pattern("OI_STYLE_DASHED_PATTERN") | "gray"

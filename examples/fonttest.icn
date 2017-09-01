@@ -310,7 +310,7 @@ class FontTestDialog(Dialog)
          set_tooltip(paint_10).
          connect(self.synch_font, Event.CONTENT_CHANGED).
          set_selection_list(["-", "8", "10", "12", "16", "24", "32", "48"]).
-         set_filter('+\-.0123456789')
+         set_filter('*+\-.0123456789')
       layout_3 := GridLayout().
          set_doi(scale(0)).
          set_extra("cells")

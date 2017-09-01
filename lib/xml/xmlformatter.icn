@@ -13,7 +13,7 @@ import util
 #
 # A formatter for XML documents.  The default formatter behaviour is to output the
 # string content as held in the children array (this may or may not have had whitespace
-# removed depending on whether validation against a DTD occured), and without
+# removed depending on whether validation against a DTD occurred), and without
 # indentation.
 #
 class XmlFormatter(Formatter)
@@ -70,7 +70,7 @@ class XmlFormatter(Formatter)
    end
 
    protected format_content(s)
-      writes(s)
+      writes1(s)
    end
 
    protected format_doctype(n)
@@ -85,11 +85,11 @@ class XmlFormatter(Formatter)
             s ||:= " SYSTEM \"" || x.system_id || "\""
       }
       s ||:= ">"
-      writes(s)
+      writes1(s)
    end
 
    protected format_comment(n)
-      writes("<!--" || n.comment || "-->")
+      writes("<!--", n.comment, "-->")
    end
 
    protected format_pi(n)
@@ -98,7 +98,7 @@ class XmlFormatter(Formatter)
       if \n.content then
          s ||:= " " || n.content 
       s ||:= "?>"
-      writes(s)
+      writes1(s)
    end
 
    protected format_element(n)
@@ -120,25 +120,25 @@ class XmlFormatter(Formatter)
          s ||:= "/>"
       else
          s ||:= ">"
-      writes(s)
+      writes1(s)
 
       if *n.children > 0 then {
          l := get_children(n)
          if *l = 1 & text(l[1]) then {
-            writes(xml_escape(l[1], '&<>\"'))
+            writes1(xml_escape(l[1], '&<>\"'))
          } else {
             every e := !l do {
                if \indent then
-                  writes(istr1)
+                  writes1(istr1)
                if text(e) then
-                  writes(xml_escape(e, '&<>\"'))
+                  writes1(xml_escape(e, '&<>\"'))
                else
                   format_node(e)
             }
             if \indent then
-               writes(istr2)
+               writes1(istr2)
          }
-         writes("</" || n.name || ">")
+         writes("</", n.name, ">")
       }
    end
 
@@ -154,7 +154,7 @@ class XmlFormatter(Formatter)
    end
 
    protected format_cdata(n)
-      writes("<![CDATA[" || n.content || "]]>")
+      writes("<![CDATA[", n.content, "]]>")
    end
 
    protected format_xmldecl(n)
@@ -167,7 +167,7 @@ class XmlFormatter(Formatter)
       if \n.standalone then
          s ||:= "standalone='" || n.standalone || "' "
       s ||:= "?>"
-      writes(s)
+      writes1(s)
    end
 end
 

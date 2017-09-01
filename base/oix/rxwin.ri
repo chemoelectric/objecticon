@@ -82,7 +82,7 @@ static double calc_progress_factor(double rx, double ry);
 static void synch_pos(wsp ws);
 static int limit_strlen(word n);
 static char *get_atom_name(wdp wd, Atom a);
-static char *resource_name, *resource_class;
+static char *resource_name, *resource_class, *display;
 
 static stringint drawops[] = {
    { 0, 12},
@@ -1714,15 +1714,7 @@ int setbg(wbp w, char *s)
 
 char *getdisplay(wbp w)
 {
-    char *tmp;
-    wdp wd = w->window->display;
-    if (!strcmp(wd->name, "")) {
-        if ((tmp = getenv("DISPLAY")) != NULL)
-            return tmp;
-        else
-            return "";
-    }
-    else return wd->name;
+    return w->window->display->name;
 }
 
 int getdisplaysize(wbp w, int *width, int *height)
@@ -3516,11 +3508,18 @@ static wdp alcdisplay(char *s)
     if (!inited) {
         env_string("OI_RESOURCE_NAME", &resource_name);
         env_string("OI_RESOURCE_CLASS", &resource_class);
+        env_string("DISPLAY", &display);
         inited = 1;
     }
 
-    if (s == NULL) s = getenv("DISPLAY");
-    if (s == NULL) s = "";
+    if (s == NULL) {
+        s = display;
+        if (s == NULL) {
+            LitWhy("DISPLAY variable not set");
+            return NULL;
+        }
+    }
+
     for(wd = wdsplys; wd; wd = wd->next)
         if (wd->program == curpstate && !strcmp(wd->name, s)) {
             return wd;
@@ -3529,7 +3528,7 @@ static wdp alcdisplay(char *s)
     wd = safe_zalloc(sizeof(struct _wdisplay));
 
     wd->program = curpstate;
-    wd->display = XOpenDisplay(*s ? s : NULL);
+    wd->display = XOpenDisplay(s);
     if (wd->display == NULL) {
         LitWhy("Couldn't connect to display");
         free(wd);

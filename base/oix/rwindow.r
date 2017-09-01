@@ -1462,8 +1462,11 @@ int parsefont(char *s, char family[MAXFONTWORD], int *style, double *size)
          */
         if (*family == '\0')
             strcpy(family, attr);		/* first word is the family name */
-        else if (sscanf(attr, "%lf%c", &tmpf, &c) == 1) {
-            if (attr[0] == '+' || tmpf < 0.0)
+        else if ((*attr == '*' && sscanf(attr + 1, "%lf%c", &tmpf, &c) == 1) ||
+                 sscanf(attr, "%lf%c", &tmpf, &c) == 1) {
+            if (*attr == '*')
+                tmpf *= defaultfontsize;        /* factor of default font size */
+            else if (*attr == '+' || tmpf < 0.0)
                 tmpf += defaultfontsize;        /* relative to default font size */
             if (tmpf < MIN_FONT_SIZE) 
                 tmpf = MIN_FONT_SIZE;

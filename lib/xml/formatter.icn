@@ -21,6 +21,10 @@ abstract class Formatter(Stream, HasUnderlyingStream)
    protected 
       level
 
+   #
+   # Create a formatter which will output to the `Stream` `file`; by
+   # default standard output.
+   #
    public new(file)
       /file := FileStream.stdout
       self.file := file
@@ -44,13 +48,13 @@ abstract class Formatter(Stream, HasUnderlyingStream)
 
    public format(n)
       self.level := -1
-      return try1{ format_node(n) }
+      return try1{ format_node(n) } & self
    end
 
    protected format_node(n)
-      local s, res
+      local s
       level +:= 1
-      if (res := if s := text(n) then
+      if s := text(n) then
          format_content(s)
       else if is(n, Element) then
          format_element(n)
@@ -65,14 +69,10 @@ abstract class Formatter(Stream, HasUnderlyingStream)
       else if is(n, Document) then
          format_document(n)
       else if is(n, XmlDecl) then
-         format_xmldecl(n)) then 
-      {
-         level -:= 1
-         return res
-      } else {
-         level -:= 1
-         fail
-      }
+         format_xmldecl(n)
+      else
+         runerr("Unexpected type in document structure", n)
+      level -:= 1
    end
 
    protected abstract format_document(n)
@@ -92,7 +92,9 @@ abstract class Formatter(Stream, HasUnderlyingStream)
    protected abstract format_xmldecl(n)
 end
 
-
+#
+# Convert `s` by escaping any characters in cset `c`.
+#
 procedure xml_escape(s, c)
    local ch, r
 

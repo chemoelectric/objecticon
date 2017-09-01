@@ -53,7 +53,7 @@ char *findexe(char *name)
     }
 
 #if PLAN9
-    path = getenv("path");
+    path = getenv_nn("path");
     if (!path)
         path = ". /bin";
 #elif MSWIN32
@@ -61,7 +61,7 @@ char *findexe(char *name)
     if ((p = tryexe(0, name)))
         return p;
 #else
-    path = getenv("PATH");
+    path = getenv_nn("PATH");
     if (!path)
         path = "";
 #endif
@@ -150,7 +150,7 @@ int is_flowterm_tty(FILE *f)
     if (!init) {
         char *s;
         init = 1;
-        s = getenv("FLOWTERM");
+        s = getenv_nn("FLOWTERM");
         if (s)
             flowterm = atoi(s);
     }
@@ -1111,7 +1111,7 @@ char *maketemp(char *fn)
     ssreserve(&buf, strlen(fn) + 5 + 1);
     sprint(buf.s, "/tmp/%s", fn);
 #else
-    char *tmp = getenv("TEMP");
+    char *tmp = getenv_nn("TEMP");
     if (tmp == 0)
         tmp = "/tmp";
     ssreserve(&buf, strlen(tmp) + 1 + strlen(fn) + 1);

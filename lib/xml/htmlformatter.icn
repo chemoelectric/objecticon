@@ -21,7 +21,7 @@ class HtmlFormatter(Formatter)
    end
 
    protected format_content(s)
-      writes(s)
+      writes1(s)
    end
 
    protected format_doctype(n)
@@ -39,11 +39,11 @@ class HtmlFormatter(Formatter)
             s ||:= " SYSTEM \"" || \x.system_id || "\""
       }
       s ||:= ">"
-      writes(s)
+      writes1(s)
    end
 
    protected format_comment(n)
-      writes("<!--" || n.comment || "-->")
+      writes("<!--", n.comment, "-->")
    end
 
    protected format_element(n)
@@ -59,17 +59,17 @@ class HtmlFormatter(Formatter)
       }
 
       s ||:= ">"
-      writes(s)
+      writes1(s)
 
       every e := !n.children do {
          if text(e) then
-            writes(xml_escape(e, '&<>\"'))
+            writes1(xml_escape(e, '&<>\"'))
          else
             format_node(e)
       }
 
       if not(HtmlParser.is_standalone_tag(n.name)) then
-         writes("</" || n.name || ">")
+         writes("</", n.name, ">")
    end
 
    protected format_pi(n) end

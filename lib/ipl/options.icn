@@ -30,7 +30,9 @@ record OptFormat(names, help)
 
 class Opt()
    public const
-      names, convert, multi, help, def, err
+      names, convert, help
+   private readable
+      multiple_flag, def, param_err
 
    # A utility function to help format an option string.
    public format()
@@ -52,6 +54,33 @@ class Opt()
       return OptFormat(ns, h)
    end
 
+   # Set whether multiple uses of the option are allowed.
+   #
+   public set_multiple(multi) 
+      self.multiple_flag := check_flag(multi)
+      return self
+   end
+
+   # Set a default value if a flag requiring a value doesn't specify
+   # one.  Note that it is still subject to the `convert` function.
+   #
+   public set_default(def)
+      self.def := def
+      return self
+   end
+
+   # Set an error string describing the type of parameter (for error
+   # output); by default the name of the `convert` procedure.  For
+   # example, if the `convert` procedure converted the parameter's
+   # argument to an IP address, then this could be set to "an IP
+   # address" to give the error output "-x needs an IP address
+   # parameter" if the parameter were omitted or erroneous.
+   #
+   public set_param_err(err)
+      self.param_err := err
+      return self
+   end
+
    # Create a new Opt instance.
    # :Parameters :
    # :  `s` - the name of the option; may be a list of several synonymous names 
@@ -59,23 +88,27 @@ class Opt()
    #         `real`, `string`, etc) to the option value; if omitted then the
    #          option takes no value.
    # :  `help` - a descriptive help string
-   # :  `multi` - a flag value, set if multiple uses of the option are allowed.
+   # :  `multiple` - a flag value, set if multiple uses of the option are 
+   #          allowed; see `set_multi()`.
    # :  `def` - a default value if a flag requiring a value doesn't specify one.
-   #             Note that it is still subject to the `convert` function.
-   # :  `err` - a string describing the type of parameter (for error output);
-   #             by default the name of the `convert` procedure.
+   #          Note that it is still subject to the `convert` 
+   #          function; see `set_default()`.
+   # :  `param_err` - a string describing the type of parameter (for error output);
+   #           see `set_param_err()`.
    #
-   public new(s, convert, help, multi, def, err)
+   public new(s, convert, help, multiple, def, param_err)
       names := if type(s) == "list" then
          s
       else
          [s]
       self.convert := convert
-      self.multi := check_flag(multi)
       self.help := help
-      self.def := def
-      /err := Proc.get_name(\convert)
-      self.err := err
+      set_multiple(multiple)
+      if \convert then {
+         set_default(def)
+         /param_err := Proc.get_name(convert)
+         set_param_err(param_err)
+      }
       return
    end
 end
@@ -88,8 +121,11 @@ end
 procedure options_help(opts)
    local o, t
    every o := !opts do {
-      t := o.format()
-      help_line(t.names, t.help)
+      if is(o, Opt) then {
+         t := o.format()
+         help_line(t.names, t.help)
+      } else
+         help_line(o)
    }
 end
 
@@ -148,11 +184,11 @@ end
 #     On the command line, options are introduced by a `-` character.
 #  An option name is either a single printable character, as in `-n`
 #  or `-?`, or a string of letters, numbers, and underscores, as in
-#  `-geometry`.  Single-character options may appear in combination,
-#  for example as `-qtv`.  If an option string is ambiguous, in that
-#  it may either be interpreted as a single multi-character option, or
-#  as several single-character options, then the former always has
-#  precedence.
+#  `-geometry`.  Single-character options which don't take a parameter
+#  may appear in combination, for example as `-qtv`.  If an option
+#  string is ambiguous, in that it may either be interpreted as a
+#  single multi-character option, or as several single-character
+#  options, then the former always has precedence.
 #
 #     Some options require values.  Generally, the option name is one
 #  argument and the value appears as the next argument, for example
@@ -252,6 +288,10 @@ end
 #  whilst `-w` alone, or `-w anything` would give the result
 #  `"w"->200`.
 #
+#     The list of `Opt`s may also contain strings; these are interspersed
+#  with the formatted option output when help is produced with the `-help`
+#  option (or by calling `options_help()`).
+#
 #     A table is returned containing the options that were specified.
 #  The keys are the specified option names.  The assigned values are the
 #  data values following the options converted to the specified type.  For
@@ -295,8 +335,10 @@ procedure options(arg, opts, usage, errproc)
       }
    }
 
-   every opt := !opts do
-      every insert(opttable, string(!opt.names), opt)
+   every opt := !opts do {
+      if is(opt, Opt) then
+         every insert(opttable, string(!opt.names), opt)
+   }
 
    #
    #  Iterate over program invocation argument words.
@@ -332,11 +374,11 @@ procedure options(arg, opts, usage, errproc)
                         get(arg)
                      else
                         \opt.def | return errproc("No parameter following -" || optname)
-                     v := opt.convert(p) | return errproc("-" || optname || " needs " ||  opt.err || " parameter")
+                     v := opt.convert(p) | return errproc("-" || optname || " needs " ||  opt.param_err || " parameter")
                   }
 
                   k := opt.names[1]
-                  if /opt.multi then
+                  if /opt.multiple_flag then
                      insert(option, k, v)
                   else
                      put(member(option, k), v) | insert(option, k, [v]) 
@@ -349,17 +391,19 @@ procedure options(arg, opts, usage, errproc)
                   if /opt.convert then
                      v := &yes
                   else {
+                     pos(*optname + 1) | return errproc("An option taking a parameter cannot be combined: -" || optname)
+
                      p := if not pos(0) then
                         tab(0)
                      else if \arg[1] & /opt.def then
                         get(arg)
                      else
                         \opt.def | return errproc("No parameter following -" || optname)
-                     v := opt.convert(p) | return errproc("-" || optname || " needs " ||  opt.err || " parameter")
+                     v := opt.convert(p) | return errproc("-" || optname || " needs " ||  opt.param_err || " parameter")
                   }
                   
                   k := opt.names[1]
-                  if /opt.multi then
+                  if /opt.multiple_flag then
                      insert(option, k, v)
                   else
                      put(member(option, k), v) | insert(option, k, [v]) 

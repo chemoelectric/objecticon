@@ -1,0 +1,193 @@
+package json
+
+import 
+   util,
+   io,
+   exception
+
+#
+# A class for outputting formatted output of a json structure.
+#
+class JSONFormatter(Stream, HasUnderlyingStream)
+   private
+      file,
+      indent,
+      level,
+      true,
+      false,
+      null
+
+   #
+   # Create a formatter which will output to the `Stream` `file`; by
+   # default standard output.
+   #
+   public new(file)
+      /file := FileStream.stdout
+      self.file := file
+      file.can(Stream.WRITE) | runerr("Formatter: stream not writable: ", file)
+      true := &yes
+      false := &no
+      return
+   end
+
+   #
+   # Set a value to represent json "true"; by default `&yes`.
+   #
+   public set_true(x)
+      self.true := x
+      return self
+   end
+
+   #
+   # Set a value to represent json "false"; by default `&no`.
+   #
+   public set_false(x)
+      self.false := x
+      return self
+   end
+
+   #
+   # Set a value to represent json "null"; by default `&null`.  Note
+   # that, since this is the same as the default for "false", if
+   # neither default is changed then `&null` values are always output
+   # as "false".
+   #
+   public set_null(x)
+      self.null := x
+      return self
+   end
+
+   public out(s)
+      return file.out(s) | throw(&why)
+   end
+
+   public get_mode()
+      return WRITE
+   end
+
+   public close()
+      if \close_underlying_flag then
+         file.close() | fail
+      return self
+   end
+
+   #
+   # Output the formatted version of `x`.
+   #
+   public format(x)
+      self.level := 0
+      return try1{ format1(x) } & self
+   end
+
+   private format1(x)
+      case x of {
+         true: writes1("true")
+         false: writes1("false")
+         null: writes1("null")
+         default : case type(x) of {
+            "table": format_object(x)
+            "list" : format_array(x)
+            "integer" |
+            "real" : writes1(x)
+            "ucs" |
+            "string" : writes("\"", json_escape(x), "\"")
+            default: runerr("Unknown type in json format", x)
+         }
+      }
+   end
+
+   private format_array(x)
+      local istr, e, fl
+
+      if \indent & type(!x) == ("list" | "table") then {
+         level +:= 1
+         istr := repl(" ", indent * level)
+         write("[")
+         every e := !x do {
+            if \fl then
+               write(",")
+            writes1(istr)
+            format1(e)
+            fl := &yes
+         }
+         if \fl then
+            write()
+         level -:= 1
+         writes(repl(" ", indent * level), "]")
+      } else {
+         writes1("[")
+         every e := !x do {
+            if \fl then
+               writes1(", ")
+            format1(e)
+            fl := &yes
+         }
+         writes1("]")
+      }
+   end
+
+   private format_object(x)
+      local istr, k, fl
+      if \indent & *x > 0 then {
+         level +:= 1
+         istr := repl(" ", indent * level)
+         write("{")
+         every k := key(x) do {
+            if \fl then
+               write(",")
+            writes(istr, "\"", json_escape(k), "\": ")
+            format1(x[k])
+            fl := &yes
+         }
+         if \fl then
+            write()
+         level -:= 1
+         writes(repl(" ", indent * level), "}")
+      } else {
+         writes1("{")
+         every k := key(x) do {
+            if \fl then
+               writes1(", ")
+            writes("\"", json_escape(k), "\": ")
+            format1(x[k])
+            fl := &yes
+         }
+         writes1("}")
+      }
+   end
+
+   # Ensure that each object member appears on a new line with an
+   # indent of n chars.  Lists with nested structures are similarly
+   # indented.  Whitespace will be inserted as appropriate.  By
+   # default, no indentation is done.
+   #
+   public set_indent(n)
+      self.indent := n
+      return self
+   end
+end
+
+# Return a string equivalent to `s`, but with any necessary characters
+# escaped so that the resulting string is suitable to form part of a
+# json document.
+#
+procedure json_escape(s)
+   local ch, r
+
+   r := ""
+   s ? repeat {
+      r ||:= tab(upto(~JSONParser.UNESCAPED_CHAR) | 0)
+      ch := move(1) | break
+      r ||:= case string(ch) of {
+         "\"": "\\\""
+         "\\": "\\\\"
+         "\b": "\\b"
+         "\f": "\\f"
+         "\n": "\\n"
+         "\r": "\\r"
+         "\t": "\\t"
+         default : "\\u" || Format.int_to_string(ord(ch),,4)
+      }
+   }
+   return r
+end

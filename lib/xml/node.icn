@@ -14,7 +14,7 @@ import lang, io, ipl.pdco
 # This is the base class for all objects in the document, including
 # the document itself.
 #
-class Node()
+abstract class Node()
    public
       parent,
       children

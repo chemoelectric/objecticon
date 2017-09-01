@@ -755,11 +755,11 @@ class Worker()
    end
 
    private failed(ev)
-      dwrite("Failed ", &why, repl(" ", 20))
+      dwrite("Failed: ", &why)
    end
 
    private retrying(ev)
-      dwrite("Retrying ", &why, repl(" ", 20))
+      dwrite("Retrying: ", &why)
    end
 
    private other(ev, src, type)
