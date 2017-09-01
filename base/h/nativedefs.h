@@ -256,6 +256,7 @@ NativeDef(io.FileWorker,await,io_FileWorker_await)
 NativeDef(io.FileWorker,close,io_FileWorker_close)
 NativeDef(io.FileWorker,close_when_complete,io_FileWorker_close_when_complete)
 NativeDef(io.FileWorker,dup_fd,io_FileWorker_dup_fd)
+NativeDef(io.NetStream,get_default_ip_version,io_NetStream_get_default_ip_version)
 #endif
 NativeDef(io.PttyStream,new_impl,io_PttyStream_new_impl)
 #if UNIX

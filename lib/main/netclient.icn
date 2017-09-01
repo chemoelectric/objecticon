@@ -135,7 +135,7 @@ $ifdef _PLAN9
       if \path then
          return error_dont_retry("UNIX domain not supported")
       addr := "tcp!" || server || "!" || port
-      l := NetStream.cs_query(addr, task) | return error("Couldn't translate address: " || &why)
+      l := NetStream.cs_query(addr, ip_version, task) | return error("Couldn't translate address: " || &why)
       cs := choose_addr(l)
       connection := NetStream.connect(cs, timeout, task) | {
          avoid_addr(cs)

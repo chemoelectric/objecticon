@@ -1344,7 +1344,7 @@ class SocketStream(DescStream)
    #       the underlying system call.
    #
    # If `ver` is omitted, the value given by the environment variable
-   # `OI_IP_VER` is used; if that is unset then `4` is used.
+   # `OI_IP_VERSION` is used; if that is unset then `4` is used.
    #
    # :Parameters :
    # :  `host` - the host name (a string)
@@ -2304,8 +2304,18 @@ end
 class NetStream(FileStream)
    private dir, ctrl
 
-   private static cs_query1(q, task, f)
-      local l, nb
+   private static native get_default_ip_version()
+
+   private static is_v4(s)
+      upto(':', s) | return s
+   end
+
+   private static is_v6(s)
+      upto('.', s) | return s
+   end
+
+   private static cs_query1(q, ver, task, f)
+      local l, r, nb
       if /task then
          # May block for a few seconds during dns
          f.out(q) | fail
@@ -2332,23 +2342,47 @@ class NetStream(FileStream)
       l := []
       f.seek(1)
       while put(l, \f.in(1024))
-      # Hack for 9vx
-      if *l = 1 & find("0.0.0.0", l[1]) then
-         return error("No such dns entry")
-      return l
+      # Transform according to the desired ip version.
+      r := []
+      case ver of {
+         4 :  every put(r, is_v4(!l))
+         6 :  every put(r, is_v6(!l))
+         46 : every put(r, is_v4(!l) | is_v6(!l))
+         64 : every put(r, is_v6(!l) | is_v4(!l))
+         0 :  r := l
+         default: runerr(205, ver)
+      }
+      return r
    end
 
    # Query the connection server (/net/cs)
+   #
+   # The second parameter, `ver`, an integer, specifies the IP
+   # versions which the result list can contain.  Possible values
+   # are :-
+   #
+   # * 4 - return only v4 addresses
+   # * 6 - return only v6 addresses
+   # * 46 - return either v4 or v6 addresses, with v4 coming first
+   # * 64 - return either v4 or v6 addresses, with v6 coming first
+   # * 0 - return either v4 or v6 addresses, in the order returned by
+   #       the underlying system call.
+   #
+   # If `ver` is omitted, the value given by the environment variable
+   # `OI_IP_VERSION` is used; if that is unset then `4` is used.
+   #
    # :Parameters :
    # :  `addr` - the address to query
+   # :  `ver` - the IP version(s) to try
    # :  `task` - an optional task to use to poll the server, allowing other work to take place
    #        during the query.
    #
-   public static cs_query(addr, task)
+   public static cs_query(addr, ver, task)
       local f
+      /ver := get_default_ip_version()
       return use {
          f := FileStream("/net/cs", FileOpt.RDWR),
-         cs_query1(addr, task, f)
+         cs_query1(addr, ver, task, f)
       }
    end
 
@@ -2433,22 +2467,23 @@ class NetStream(FileStream)
    #
    # :Parameters :
    # :  `addr` - the address, eg "tcp!www.google.com!80"
+   # :  `ver` - the IP version(s) to try; see `cs_query()`
    # :  `timeout` - an optional timeout
    # :  `task` - an optional task to use to poll the server, allowing other work to take place
    #        whilst waiting.
    #
-   public static dial(addr, timeout, task)
+   public static dial(addr, ver, timeout, task)
       local l
-      l := cs_query(addr, task) | fail
+      l := cs_query(addr, ver, task) | fail
       return connect(!l, timeout, task)
    end
 
    # Dial the given address.  As per `dial`, but just use the first
    # result from cs_query, then give up.
    #
-   public static dial_first(addr, timeout, task)
+   public static dial_first(addr, ver, timeout, task)
       local l
-      l := cs_query(addr, task) | fail
+      l := cs_query(addr, ver, task) | fail
       return connect(l[1], timeout, task)
    end
 
@@ -2464,10 +2499,14 @@ class NetStream(FileStream)
    end
 
    # Return a new `NetStream` which can be used to listen on the given address.
+   # 
+   # :Parameters :
+   # :  `addr` - the address, eg "tcp!www.google.com!80"
+   # :  `ver` - the IP version(s) to try; see `cs_query()`
    #
-   public static announce(addr)
+   public static announce(addr, ver)
       local l, res, clone_file, arg
-      l := cs_query(addr) | fail
+      l := cs_query(addr, ver) | fail
       # will be in the form "/net/tcp/clone 1234"      
       l[1] ? {
          clone_file := tab(upto(' '))
@@ -3114,7 +3153,7 @@ class WinsockStream(Stream, NoCopy)
    #       the underlying system call.
    #
    # If `ver` is omitted, the value given by the environment variable
-   # `OI_IP_VER` is used; if that is unset then `4` is used.
+   # `OI_IP_VERSION` is used; if that is unset then `4` is used.
    #
    # :Parameters :
    # :  `host` - the host name (a string)

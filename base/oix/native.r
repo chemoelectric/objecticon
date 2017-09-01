@@ -4285,6 +4285,12 @@ function io_Files_unmount(name, old)
    }
 end
 
+function io_NetStream_get_default_ip_version()
+   body {
+       return C_integer defaultipver;
+   }
+end
+
 enum fileworker_status { FW_RUNNING, FW_COMPLETE };
 enum fileworker_cmd { FW_READ, FW_WRITE, FW_PREAD, FW_PWRITE, FW_OPEN, FW_CREATE, FW_CLOSE, FW_WRITE_ALL };
 

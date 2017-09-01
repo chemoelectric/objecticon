@@ -50,8 +50,8 @@ echo creating base/h/version.h
 x=`{date}
 # Plan9 specific version modifiers, to be changed if the branch version changes
 # independently of the trunk.
-uv=3
-iv=3
+uv=4
+iv=4
 sed -e 's/@CONFIG_DATE@/'^$"x^'/'  \
     -e 's/@PACKAGE_VERSION@/plan9/' \
     -e '/^#define UVersion/ s/$/ ".'^$uv^'"/' \
