@@ -1139,7 +1139,7 @@ class SocketStream(DescStream)
    #       the underlying system call.
    #
    # If `ver` is omitted, the value given by the environment variable
-   # `OI_IP_VER` is used; if that is unset then `4` is used.
+   # `OI_IP_VERSION` is used; if that is unset then `4` is used.
    #
    # :Parameters :
    # :  `host` - the host name (a string)
@@ -2093,7 +2093,7 @@ class WinsockStream(Stream, NoCopy)
    #       the underlying system call.
    #
    # If `ver` is omitted, the value given by the environment variable
-   # `OI_IP_VER` is used; if that is unset then `4` is used.
+   # `OI_IP_VERSION` is used; if that is unset then `4` is used.
    #
    # :Parameters :
    # :  `host` - the host name (a string)
