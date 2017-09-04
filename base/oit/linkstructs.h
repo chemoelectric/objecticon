@@ -175,7 +175,7 @@ struct lfile {
  */
 struct fimport {
     char *name;
-    int qualified;
+    int mode;
     int used;
     struct loc pos;
     struct fimport_symbol *symbol_hash[64], *symbols, *last_symbol;

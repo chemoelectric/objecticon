@@ -90,7 +90,7 @@ procedure print(s)
       im := Factory.new_import(pad, [])
       p.get_imports().put(im)
       every e := !sort(need) do {
-         ispec := Factory.new_import_spec("\n   ", e[1], [])
+         ispec := Factory.new_import_some_spec("\n   ", e[1], [])
          im.put(ispec)
          k := 0
          pad := ""

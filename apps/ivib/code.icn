@@ -168,7 +168,7 @@ class Code()
 
    private add_nice_import(im, pack, ids)
       local ispec, k, pad, f
-      ispec := Factory.new_import_spec("\n   ", pack, [])
+      ispec := Factory.new_import_some_spec("\n   ", pack, [])
       im.put(ispec)
       k := 0
       pad := ""

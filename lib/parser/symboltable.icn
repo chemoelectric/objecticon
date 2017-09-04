@@ -318,11 +318,20 @@ end
 
 class ImportDec()
    public const
-      qualified,
+      mode,
       name
 
    private const 
       syms
+
+   public static const
+      All, Some, Except
+
+   private static init()
+      All := 0
+      Some := 1
+      Except := 2
+   end
 
    package add(sym)
       insert(syms, sym)
@@ -332,9 +341,9 @@ class ImportDec()
       return member(syms, sym)
    end
 
-   package new(name, qualified)
+   package new(name, mode)
       self.name := name
-      self.qualified := qualified
+      self.mode := mode
       self.syms := set()
       return
    end
@@ -456,7 +465,7 @@ class SymbolTable(Connectable)
    end
 
    private scan_src(sf)
-      local c, d, e, f, s, i, prog
+      local c, d, e, f, s, i, prog, mode
 
       prog := parse(sf.filename) | fail
       sf.set_obj(prog)
@@ -467,11 +476,13 @@ class SymbolTable(Connectable)
       # Any imports
       every e := prog.get_imports().gen().gen() do {
          if is(e, Id) then
-            sf.add_import(ImportDec(e.str()))
+            sf.add_import(ImportDec(e.str(), ImportDec.All))
          else {
             s := e.get_package().str()
             if not(i := sf.get_import(s)) then {
-               i := ImportDec(s, 1)
+               mode := if e.pos.size() = 4 then 
+                  ImportDec.Some else ImportDec.Except
+               i := ImportDec(s, mode)
                sf.add_import(i)
             }
             every i.add(e.gen().str())
@@ -682,7 +693,10 @@ class SymbolTable(Connectable)
       else
          put(r, gb_locate(name))
       every i := sf.get_imports() do {
-         if /i.qualified | i.has(name) then
+         if (i.mode = ImportDec.All) |
+            (i.mode = ImportDec.Some & i.has(name)) |
+            (i.mode = ImportDec.Except & not i.has(name))
+         then
             put(r, check_package_access(sf, glocate(i.name || "." || name)))
       }
       if \sf.pack & (*r = 0) then {

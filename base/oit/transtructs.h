@@ -55,8 +55,10 @@ struct tfunction {
  */
 struct timport {
     char *name;
-    int qualified;         /* Flag indicating whether qualified with 
-                            * symbols, eg import gui(X,Y) */
+    int mode;         /* Mode indicating whether whole package import (I_All), qualified with 
+                       * included symbols, eg import gui(X,Y) (I_Some),  or qualified with excluded
+                       * symbols eg import gui -(X,Y) (I_Except).
+                       */
     struct node *pos;
     struct timport_symbol *symbol_hash[64], *symbols, *last_symbol;
     struct timport *next, *b_next;

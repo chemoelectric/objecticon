@@ -91,6 +91,47 @@ static struct gentry *check_package_access(struct lfile *lf, struct gentry *gl)
     return gl;
 }
 
+static struct gentry *try_import_lookup(struct lfile *lf, struct fimport *fp, char *name)
+{
+    char *abs;
+    struct fimport_symbol *is;
+    struct gentry *gl;
+
+    switch (fp->mode) {
+        case I_All: {
+            abs = join(fp->name, ".", name, NULL);
+            return check_package_access(lf, glocate(abs));
+        }
+        case I_Some: {
+            is = lookup_fimport_symbol(fp, name);
+            if (!is)
+                return 0;
+            abs = join(fp->name, ".", name, NULL);
+            gl = check_package_access(lf, glocate(abs));
+            if (!gl)
+                return 0;
+            is->used = 1;
+            return gl;
+        }
+        case I_Except: {
+            abs = join(fp->name, ".", name, NULL);
+            gl = check_package_access(lf, glocate(abs));
+            if (!gl)
+                return 0;
+            is = lookup_fimport_symbol(fp, name);
+            if (is) {
+                is->used = 1;
+                return 0;
+            }
+            return gl;
+        }
+        default:
+            quit("illegal fimport mode");
+    }
+    /* Not reached */
+    return 0;
+}
+
 /*
  * Resolve the given name in the given file to a global entry.  There
  * are three possible results, as indicated by the variables
@@ -99,7 +140,7 @@ static struct gentry *check_package_access(struct lfile *lf, struct gentry *gl)
  */
 static void resolve_global(struct lfile *lf, char *name)
 {
-    char *abs, *dot;
+    char *dot;
     struct fimport *fp;
     struct gentry *gl;
     static struct str_buf resolve_sbuf;
@@ -148,23 +189,16 @@ static void resolve_global(struct lfile *lf, char *name)
      * Now try the imports in turn.
      */
     for (fp = lf->imports; fp; fp = fp->next) {
-        struct fimport_symbol *is = 0;
         /*
-         * If it's unqualified, or has the symbol...
+         * If it matches the import spec...
          */
-        if (!fp->qualified || (is = lookup_fimport_symbol(fp, name))) {
-            abs = join(fp->name, ".", name, NULL);
-            gl = check_package_access(lf, glocate(abs));
-            if (gl) {
-                fp->used = 1;
-                if (is)
-                    is->used = 1;
-                if (rres_found) {
-                    rres_ambig = gl;
-                    return;
-                }
-                rres_found = gl;
+        if ((gl = try_import_lookup(lf, fp, name))) {
+            fp->used = 1;
+            if (rres_found) {
+                rres_ambig = gl;
+                return;
             }
+            rres_found = gl;
         }
     }
 

@@ -56,6 +56,7 @@ importlist : importspec;
 
 importspec : rdottedident {Importspec1($1); };
         |  rdottedident {Importspec2($1);} LPAREN eidlist RPAREN;
+        |  rdottedident MINUS {Importspec3($1);} LPAREN eidlist RPAREN;
 
 class   : {Modifier0();} classaccess CLASS IDENT {Class1($3,$4);} LPAREN supers RPAREN classbody END ;
 

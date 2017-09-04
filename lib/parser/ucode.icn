@@ -305,7 +305,7 @@ class UReader()
             UcodeOp.Import: {
                s := uin_str() | fail
                n := uin_16() | fail
-               curr_import := if n = 0 then ImportDec(s) else ImportDec(s, 1)
+               curr_import := ImportDec(s, n)
                uf.add_import(curr_import)
             }
 

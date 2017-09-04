@@ -123,7 +123,7 @@ procedure ip_version(s)
 end
 
 procedure main(args)
-   local l, f, t, s, cookies
+   local l, f, t, s, cookies, k
 
    opts := options(args, [Opt("over",, "Overwrite any existing files"),
                           Opt("i",string, "INPUT FILE#Input file for a POST request"),
@@ -156,6 +156,17 @@ procedure main(args)
                           Opt("nz",, "Don't use gzip compression"),
                           Opt("v1",, "Use HTTP 1.0")],
                           usage)
+
+   # Check for invalid option mixtures
+
+   if \opts["i"] & \opts["is"] then
+      help_stop("Can't have -i and -is options together")
+
+   if \opts[k := "i" | "is"] & \opts["form"] then
+      help_stop("Can't have -", k, " and -form options together")
+
+   if \opts[k := "i" | "is" | "form"] & \opts["head"] then
+      help_stop("Can't have -", k, " and -head options together")
 
    total := ok := skipped := 0
    err := []
@@ -306,11 +317,7 @@ procedure process_one(a)
       hr.set_range(p.size)
    }
 
-   if \opts["i" | "is"] & \opts["form"] then
-      help_stop("Can't have -i or -is and -form options together")
-
    if \opts["i" | "is"] then {
-      /opts["head"] | help_stop("Can't have -head and -i or -is options together")
       input_stream := if n := \opts["i"] then
          FileStream(n, FileOpt.RDONLY) | stop("Couldn't open ", n, ": ", &why)
       else
@@ -322,7 +329,6 @@ procedure process_one(a)
    }
 
    if \opts["form"] then {
-      /opts["head"] | help_stop("Can't have -head and -form options together")
       t := table()
       every s := !opts["form"] do {
          s ? {
