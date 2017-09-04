@@ -39,6 +39,12 @@
 #define F_Package     04000000  /* global has package-level scope */
 #define F_Readable   010000000  /* global has (package) readable scope */
 
+/* Values of mode field in import structures */
+#define I_All     0             /* import all symbols (an unqualified import). */
+#define I_Some    1             /* import given symbols, eg gui(A,B,C) */
+#define I_Except  2             /* import all but given symbols eg gui -(A,B,C) */
+
+
 #define MemProtect(notnull) do {if (!(notnull)) quit("Out of memory");} while(0)
 
 #endif

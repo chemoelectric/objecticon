@@ -250,7 +250,7 @@ void set_package(char *s, struct node *n)
     package_name = s;
 }
 
-void next_import(char *s, int qualified, struct node *n)
+void next_import(char *s, int mode, struct node *n)
 {
     int i = hasher(s, import_hash);
     struct timport *x = import_hash[i];
@@ -259,11 +259,11 @@ void next_import(char *s, int qualified, struct node *n)
     while (x && x->name != s)
         x = x->b_next;
     if (x) {
-        /* Can only have duplicate import declarations if both are qualified */
-        if (!qualified)
+        /* Can only have duplicate import declarations if both are qualified and of the same import mode */
+        if (mode == I_All && x->mode == I_All)
             tfatal_at(n, "duplicate import: %s", s);
-        else if (!x->qualified)
-            tfatal_at(n, "package already imported as an unqualified import: %s", s);
+        else if (mode != x->mode)
+            tfatal_at(n, "package already imported with different import mode: %s", s);
         curr_import = x;
         return;
     }
@@ -271,7 +271,7 @@ void next_import(char *s, int qualified, struct node *n)
     x->b_next = import_hash[i];
     import_hash[i] = x;
     x->name = s;
-    x->qualified = qualified;
+    x->mode = mode;
     x->pos = n;
     if (last_import) {
         last_import->next = x;

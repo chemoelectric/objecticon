@@ -580,7 +580,9 @@ class ImportSpec(SimpleIdList)
    end
 
    package new(pos, comma)
-      SimpleIdList.new(pos,3)
+      # pos.size() will be 4 for a "some" import, 5 for an "excl"
+      # import, and the list of symbols is one child in from the end.
+      SimpleIdList.new(pos, pos.size() - 1)
       /comma := Token(YY.COMMA, ",", ",")
       self.comma := comma
       return
@@ -820,10 +822,23 @@ class Factory()
                           Token(YY.IDENT, id, " " || id)))
    end
 
-   public static new_import_spec(pad, pack, syms)
+   public static new_import_some_spec(pad, pack, syms)
       local t
       t := ImportSpec(Node("importspec",
                            Token(YY.IDENT, pack, pad || pack),
+                           Token(YY.LPAREN, "(", "("),
+                           Node.EMPTY,
+                           Token(YY.RPAREN, ")", ")")))
+      t.put(new_id("", pop(syms)))
+      every t.put(new_id(" ", !syms))
+      return t
+   end
+
+   public static new_import_except_spec(pad, pack, syms)
+      local t
+      t := ImportSpec(Node("importspec",
+                           Token(YY.IDENT, pack, pad || pack),
+                           Token(YY.MINUS, "-", "-"),
                            Token(YY.LPAREN, "(", "("),
                            Node.EMPTY,
                            Token(YY.RPAREN, ")", ")")))

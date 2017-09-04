@@ -266,7 +266,7 @@ void add_method(struct lfile *lf, struct lclass *x, char *name, int flag, struct
     f->native_method_id = -1;
 }
 
-void add_fimport(struct lfile *lf, char *package, int qualified, struct loc *pos)
+void add_fimport(struct lfile *lf, char *package, int mode, struct loc *pos)
 {
     int i = hasher(package, lf->import_hash);
     struct fimport *fimp = Alloc(struct fimport);
@@ -274,7 +274,7 @@ void add_fimport(struct lfile *lf, char *package, int qualified, struct loc *pos
     lf->import_hash[i] = fimp;
     fimp->name = package;
     fimp->pos = *pos;
-    fimp->qualified = qualified;
+    fimp->mode = mode;
     if (lf->last_import) {
         lf->last_import->next = fimp;
         lf->last_import = fimp;

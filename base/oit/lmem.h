@@ -38,7 +38,7 @@ void lmfree(void);
 void add_super(struct lclass *x, char *name, struct loc *pos);
 void add_field(struct lclass *x, char *name, int flag, struct loc *pos);
 void add_method(struct lfile *lf, struct lclass *x, char *name, int flag, struct loc *pos);
-void add_fimport(struct lfile *lf, char *package, int qualified, struct loc *pos);
+void add_fimport(struct lfile *lf, char *package, int mode, struct loc *pos);
 struct fimport *lookup_fimport(struct lfile *lf, char *package);
 void add_fimport_symbol(struct lfile *lf, char *symbol, struct loc *pos);
 struct fimport_symbol *lookup_fimport_symbol(struct fimport *p, char *symbol);

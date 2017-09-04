@@ -1153,13 +1153,11 @@ void output_code()
         ensure_pos(im->pos);
         uout_op(Uop_Import);
         uout_str(im->name);
-        uout_16(im->qualified);
-        if (im->qualified) {
-            for (ims = im->symbols; ims; ims = ims->next) {
-                ensure_pos(ims->pos);
-                uout_op(Uop_Importsym);
-                uout_str(ims->name);
-            }
+        uout_16(im->mode);
+        for (ims = im->symbols; ims; ims = ims->next) {
+            ensure_pos(ims->pos);
+            uout_op(Uop_Importsym);
+            uout_str(ims->name);
         }
     }
 

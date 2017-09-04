@@ -297,7 +297,7 @@ static void check_unused_imports()
              */
             if (!fp->used && !strinv)
                 lwarn(lf, &fp->pos, "Unused import: %s", fp->name);
-            else if (fp->qualified) {
+            else {
                 for (fis = fp->symbols; fis; fis = fis->next) {
                     if (!fis->used)
                         lwarn(lf, &fis->pos, "Unused import symbol: %s", fis->name);
@@ -398,12 +398,21 @@ void dumpstate()
         else
             fprintf(stderr, "file %s u2off=%d\n",lf->name,lf->declend_offset);
         for (fp = lf->imports; fp; fp = fp->next) {
-            if (fp->qualified) {
-                fprintf(stderr, "\timport %s (qualified)\n",fp->name);
-                for (fis = fp->symbols; fis; fis = fis->next)
-                    fprintf(stderr, "\t\t%s\n",fis->name);
-            } else
-                fprintf(stderr, "\timport %s (unqualified)\n",fp->name);
+            switch (fp->mode) {
+                case I_All: 
+                    fprintf(stderr, "\timport %s (unqualified)\n",fp->name);
+                    break;
+                case I_Some:
+                    fprintf(stderr, "\timport %s (qualified)\n",fp->name);
+                    for (fis = fp->symbols; fis; fis = fis->next)
+                        fprintf(stderr, "\t\t%s\n",fis->name);
+                    break;
+                case I_Except:
+                    fprintf(stderr, "\timport %s -(qualified)\n",fp->name);
+                    for (fis = fp->symbols; fis; fis = fis->next)
+                        fprintf(stderr, "\t\t%s\n",fis->name);
+                    break;
+            }
         }
     }
     fprintf(stderr, "Globals\n---------\n");

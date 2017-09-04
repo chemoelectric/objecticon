@@ -115,8 +115,9 @@ int globalflag;
 #define Package(x1,x2)          set_package(dottedid2string(x2), x2);
 #define Class1(x1,x2)           next_class(Str0(x2), x2);
 #define Super(x)                next_super(dottedid2string(x),x);
-#define Importspec1(x)          next_import(dottedid2string(x),0,x);
-#define Importspec2(x)          next_import(dottedid2string(x),1,x);idflag = F_Importsym
+#define Importspec1(x)          next_import(dottedid2string(x),I_All,x);
+#define Importspec2(x)          next_import(dottedid2string(x),I_Some,x);idflag = F_Importsym
+#define Importspec3(x)          next_import(dottedid2string(x),I_Except,x);idflag = F_Importsym
 #define Dottedident(x1,x2,x3)   $$ = tree4(N_Dottedid,x2,x1,x3)
 #define Toplevelident(x1,x2,x3) $$ = tree4(N_Dottedid,x2,IdNode(default_string),x3)
 #define Dottedidentexpr(x)      $$ = convert_dottedidentexpr(x)

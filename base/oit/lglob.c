@@ -90,7 +90,7 @@ void readglob(struct lfile *lf)
             case Uop_Import:		/* import the named package */
                 package = uin_str();
                 alsoimport(package, lf, &pos);	/*  (maybe) import the files in the package */
-                n = uin_16();        /* qualified flag */
+                n = uin_16();        /* import mode */
                 add_fimport(lf, package, n, &pos);  /* Add it to the lfile structure's list of imports */
                 break;
 

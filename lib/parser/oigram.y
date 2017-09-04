@@ -195,6 +195,7 @@ importlist : importspec;
 
 importspec : rdottedident
         |  rdottedident LPAREN eidlist RPAREN {$$ := Node("importspec", $1,$2,$3,$4)} ;
+        |  rdottedident MINUS LPAREN eidlist RPAREN {$$ := Node("importspec", $1,$2,$3,$4,$5)} ;
 
 class   : classaccess CLASS IDENT LPAREN supers RPAREN classbody END 
              {$$ := Node("class", $1,$2,$3,$4,$5,$6,$7,$8)};
