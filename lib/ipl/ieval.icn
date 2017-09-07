@@ -4,7 +4,7 @@
 
 package ipl.ieval
 
-import io, gui, lang, xdg, ipl.columnize, parser, eval, util, 
+import io, gui-(List), lang, xdg, ipl.columnize, parser(Parser,Token), eval, util,
    ipl.pdco, ipl.sort, ipl.termdialog, ipl.lists, ipl.scan, net
 
 $load IEVAL_LOGO "rpp.IEVAL_LOGO.png"
@@ -20,10 +20,6 @@ class Ieval(MinimalObjectOutput)
       input, output, error, vars, ev, quiet_flag, par, consts,
       oos, trace_flag, parse_flag, last_runerr, ee, hist_line, hlim,
       elim, llim, imports, files, opts, history, is_flowterm
-
-   private static map1(x)
-      return map(x[1])
-   end
 
    private show_env()
       local p
@@ -60,7 +56,7 @@ class Ieval(MinimalObjectOutput)
    private columnize_gen_ft(l, screen_width, gutter, rowwise)
       local cr, s, i, j, k, w
       /gutter := 2
-      cr := columnize(ipl.pdco.List{*!l}, screen_width, gutter, rowwise)
+      cr := columnize(List{*!l}, screen_width, gutter, rowwise)
       every i := 1 to cr.rows do {
          s := ""
          every j := 1 to cr.cols do {
@@ -79,26 +75,26 @@ class Ieval(MinimalObjectOutput)
    end
 
    private list_syms()
-      local s, e, w
+      local l, e, w
       w := if is(output, TermDialog) then
          output.get_term_width()
       else
          LineEditorStream.get_console_width()
-      s := set()
+      l := []
       every e := get_accessible_global_names() do
          if e ? ((not upto('.')) | (=!imports & ="." & (not upto('.')))) then
-            insert(s, e)
-      every output.write(columnize_gen_ft(isort(s, map), w))
+            put(l, e)
+      every output.write(columnize_gen_ft(qsort(l, Text.caseless_compare), w))
    end
 
    private list_prog_syms(prog)
-      local s, w
+      local l, w
       w := if is(output, TermDialog) then
          output.get_term_width()
       else
          LineEditorStream.get_console_width()
-      s := Set{ get_accessible_global_names(prog) }
-      every output.write(columnize_gen_ft(isort(s, map), w))
+      l := List{ get_accessible_global_names(prog) }
+      every output.write(columnize_gen_ft(qsort(l, Text.caseless_compare), w))
    end
 
    private show_parse(x, level)
@@ -112,31 +108,31 @@ class Ieval(MinimalObjectOutput)
    private flags_string(f)
       local s
       s := ""
-      if iand(f, lang.Class.Method) ~= 0 then
+      if iand(f, Class.Method) ~= 0 then
          s ||:= "Method "
-      if iand(f, lang.Class.Private) ~= 0 then
+      if iand(f, Class.Private) ~= 0 then
          s ||:= "Private "
-      if iand(f, lang.Class.Public) ~= 0 then
+      if iand(f, Class.Public) ~= 0 then
          s ||:= "Public "
-      if iand(f, lang.Class.Protected) ~= 0 then
+      if iand(f, Class.Protected) ~= 0 then
          s ||:= "Protected "
-      if iand(f, lang.Class.Package) ~= 0 then
+      if iand(f, Class.Package) ~= 0 then
          s ||:= "Package "
-      if iand(f, lang.Class.Static) ~= 0 then
+      if iand(f, Class.Static) ~= 0 then
          s ||:= "Static "
-      if iand(f, lang.Class.Const) ~= 0 then
+      if iand(f, Class.Const) ~= 0 then
          s ||:= "Const "
-      if iand(f, lang.Class.Readable) ~= 0 then
+      if iand(f, Class.Readable) ~= 0 then
          s ||:= "Readable "
-      if iand(f, lang.Class.Defer) ~= 0 then
+      if iand(f, Class.Defer) ~= 0 then
          s ||:= "Defer "
-      if iand(f, lang.Class.Abstract) ~= 0 then
+      if iand(f, Class.Abstract) ~= 0 then
          s ||:= "Abstract "
-      if iand(f, lang.Class.Native) ~= 0 then
+      if iand(f, Class.Native) ~= 0 then
          s ||:= "Native "
-      if iand(f, lang.Class.Final) ~= 0 then
+      if iand(f, Class.Final) ~= 0 then
          s ||:= "Final "
-      if iand(f, lang.Class.Special) ~= 0 then
+      if iand(f, Class.Special) ~= 0 then
          s ||:= "Special "
       s[-1] := ""
       return s
@@ -151,11 +147,11 @@ class Ieval(MinimalObjectOutput)
    end
 
    private supers_string(c)
-      return comma_string{lang.Class.get_name(lang.Class.get_supers(c))} 
+      return comma_string{Class.get_name(Class.get_supers(c))} 
    end
 
    private implements_string(c)
-      return comma_string{text_link(lang.Class.get_name(lang.Class.get_implemented_classes(c)))}
+      return comma_string{text_link(Class.get_name(Class.get_implemented_classes(c)))}
    end
 
    private fields_string(c)
@@ -232,24 +228,24 @@ class Ieval(MinimalObjectOutput)
          list_syms()
       else case type(c := a[1]) of {
          "object"|"cast"|"class": {
-            s := map(flags_string(lang.Class.get_class_flags(c)))
+            s := map(flags_string(Class.get_class_flags(c)))
             if *s > 0 then
                output.writes(s, " ")
-            output.write("class ", lang.Class.get_name(c), "(", supers_string(c), ")")
-            output.write("   at ", locn_string(lang.Class.get_location(c))) 
+            output.write("class ", Class.get_name(c), "(", supers_string(c), ")")
+            output.write("   at ", locn_string(Class.get_location(c))) 
             output.write("   implements ", implements_string(c))
             t := []
-            every f := lang.Class.get_field_names(c) do
+            every f := Class.get_field_names(c) do
                put(t, [f, 
-                       lang.Class.get_name(lang.Class.get_field_defining_class(c, f)), 
-                       right(lang.Class.get_field_index(c, f), *lang.Class.get_n_fields(c)),
-                       flags_string(lang.Class.get_field_flags(c, f))])
-            print_table(isort(t, map1), set(1))
+                       Class.get_name(Class.get_field_defining_class(c, f)), 
+                       right(Class.get_field_index(c, f), *Class.get_n_fields(c)),
+                       flags_string(Class.get_field_flags(c, f))])
+            print_table(qsort(t, index_cmp(1, Text.caseless_compare)), set(1))
          }
          "procedure"|"methp": {
             output.write(kind_string(Proc.get_kind(c)), " ", Proc.get_name(c), "(", args_string(c), ")")
             output.write("   at ", locn_string(Proc.get_location(c))) 
-            output.write("   method of ", lang.Class.get_name(Proc.get_defining_class(c)))
+            output.write("   method of ", Class.get_name(Proc.get_defining_class(c)))
             t := []
             every f := Proc.get_local_names(c) do
                put(t, [f,
@@ -324,13 +320,13 @@ class Ieval(MinimalObjectOutput)
       local s, i
       coact()
       repeat {
-         if s := lang.Prog.eval_keyword("&errortext", prog) then {
-            if i := lang.Prog.eval_keyword("&errornumber", prog) then
+         if s := Prog.eval_keyword("&errortext", prog) then {
+            if i := Prog.eval_keyword("&errornumber", prog) then
                error.write("Runtime error ", i, ": ", s)
             else
                error.write("Runtime error: ", s)
-            error.write("offending value: ", image(lang.Prog.eval_keyword("&errorvalue", prog)))
-            last_runerr := lang.Prog.eval_keyword("&errorcoexpr", prog)
+            error.write("offending value: ", image(Prog.eval_keyword("&errorvalue", prog)))
+            last_runerr := Prog.eval_keyword("&errorcoexpr", prog)
             errorclear(prog)
          }
          cofail(&handler)
@@ -339,10 +335,10 @@ class Ieval(MinimalObjectOutput)
 
    private load(s)
       local p, e
-      p := lang.Prog.load(s) | fail
+      p := Prog.load(s) | fail
       e := create load_handler(p)
       @e
-      lang.Prog.eval_keyword("&handler", p) := e
+      Prog.eval_keyword("&handler", p) := e
       return p
    end
 
@@ -453,7 +449,7 @@ class Ieval(MinimalObjectOutput)
       consts["hlim"] := set_hlim
       consts["llim"] := set_llim
       consts["load"] := load
-      consts["gg"] := lang.Prog.get_global
+      consts["gg"] := Prog.get_global
       consts["traceback"] := create traceback()
       consts["cmd"] := cmd
       consts["oos"] := oos := ObjectOutputStream(output).set_indent(3)
@@ -523,7 +519,7 @@ class Ieval(MinimalObjectOutput)
    private static complete_keyword(p, subj, pos)
       local l, e
       l := []
-      every e := Proc.get_name(lang.Prog.get_keywords()) do {
+      every e := Proc.get_name(Prog.get_keywords()) do {
          if match(p, e) then
             put(l, simple_insert(e, p, subj, pos))
       }
@@ -539,10 +535,13 @@ class Ieval(MinimalObjectOutput)
    end
 
    private static get_accessible_global_names(P)
-      local i
-      every i := 1 to lang.Prog.get_n_globals(P) do {
-         if lang.Prog.get_global(i, P) then
-            suspend lang.Prog.get_global_name(i, P)
+      local n, i
+      every n := 1 to Prog.get_n_globals(P) do {
+         i := Prog.get_global_flags(n, P)
+         if iand(i, Prog.Package) = 0 |
+            iand(i, Prog.Readable) ~= 0
+         then
+            suspend Prog.get_global_name(n, P)
       }
    end
 
@@ -560,22 +559,30 @@ class Ieval(MinimalObjectOutput)
    end
 
    private dot_candidates(h, t)
-      local v, f
+      local v, f, i
       suspend !imports || "." | gen_package_global_names(h)
       if v := lookup_global(h) then {
          case type(v) of {
             "class": {
-               every f := lang.Class.get_class_field_names(v) do
-                  if iand(lang.Class.get_field_flags(v, f), lang.Class.Static) ~= 0 then
+               every f := Class.get_class_field_names(v) do {
+                  i := Class.get_field_flags(v, f)
+                  if iand(i, Class.Static) ~= 0 & 
+                     iand(i, Class.Public + Class.Readable) ~= 0
+                  then
                      suspend h || "." || f
+               }
             }
             "object": {  
-               every f := lang.Class.get_field_names(v) do
-                  if iand(lang.Class.get_field_flags(v, f), lang.Class.Static) = 0 then
+               every f := Class.get_field_names(v) do {
+                  i := Class.get_field_flags(v, f)
+                  if iand(i, Class.Static) = 0 &
+                     iand(i, Class.Public + Class.Readable) ~= 0
+                  then
                      suspend h || "." || f
+               }
             }
             "record": 
-               suspend h || "." || lang.Constructor.get_field_names(v)
+               suspend h || "." || Constructor.get_field_names(v)
          }
       }
    end
@@ -595,9 +602,9 @@ class Ieval(MinimalObjectOutput)
          if match(p, e) then
             put(l, NamePair(e, e))
       every e := key(consts | vars) do
-         if match(p, e) & not lang.Prog.get_global_name(e) then
+         if match(p, e) & not Prog.get_global_name(e) then
             put(l, NamePair("default." || e, e))
-      every e := lang.Prog.get_global_names() do
+      every e := Prog.get_global_names() do
          if not upto('.', e) & match(p, e) then
             put(l, NamePair("default." || e, e))
       every e := get_accessible_global_names() do
@@ -637,7 +644,7 @@ class Ieval(MinimalObjectOutput)
       }
       if *l = 1 & l[1].str == subj then
          pop(l)
-      return l
+      return qsort(l, cmp_CompleteElement)
    end
 
    private do_gui()
