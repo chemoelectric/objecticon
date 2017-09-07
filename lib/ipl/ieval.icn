@@ -84,7 +84,7 @@ class Ieval(MinimalObjectOutput)
       every e := get_accessible_global_names() do
          if e ? ((not upto('.')) | (=!imports & ="." & (not upto('.')))) then
             put(l, e)
-      every output.write(columnize_gen_ft(qsort(l, Text.caseless_compare), w))
+      every output.write(columnize_gen_ft(qsort(l, Text.consistent_compare), w))
    end
 
    private list_prog_syms(prog)
@@ -94,7 +94,7 @@ class Ieval(MinimalObjectOutput)
       else
          LineEditorStream.get_console_width()
       l := List{ get_accessible_global_names(prog) }
-      every output.write(columnize_gen_ft(qsort(l, Text.caseless_compare), w))
+      every output.write(columnize_gen_ft(qsort(l, Text.consistent_compare), w))
    end
 
    private show_parse(x, level)
@@ -240,7 +240,7 @@ class Ieval(MinimalObjectOutput)
                        Class.get_name(Class.get_field_defining_class(c, f)), 
                        right(Class.get_field_index(c, f), *Class.get_n_fields(c)),
                        flags_string(Class.get_field_flags(c, f))])
-            print_table(qsort(t, index_cmp(1, Text.caseless_compare)), set(1))
+            print_table(qsort(t, index_cmp(1, Text.consistent_compare)), set(1))
          }
          "procedure"|"methp": {
             output.write(kind_string(Proc.get_kind(c)), " ", Proc.get_name(c), "(", args_string(c), ")")

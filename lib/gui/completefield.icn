@@ -20,7 +20,7 @@ end
 # A useful sort comparator for `CompleteElement` instances.
 #
 procedure cmp_CompleteElement(x, y)
-   return Text.caseless_compare(x.label, y.label)
+   return Text.consistent_compare(x.label, y.label)
 end
 
 # An `ItemPaint` class for displaying `CompleteElement`s with strings
