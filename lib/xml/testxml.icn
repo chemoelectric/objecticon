@@ -59,7 +59,7 @@ procedure main(a)
          s := ucs(s) | stop("Couldn't convert to utf8")
 
       write("--- Parsing ", e)
-      if d := p.parse(s) then {
+      if d := p.parse(s, "file://" || FilePath(e).canonical().str()) then {
          write("--- Parsing complete.  Document was well-formed")
          write("--- Formatted input")
          fmt.format(d)
