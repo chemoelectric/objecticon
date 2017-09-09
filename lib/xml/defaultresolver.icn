@@ -86,21 +86,20 @@ class DefaultResolver(Resolver)
 
       sys_id := string(sys_id)
 
-      # 
-      # Make an absolute filename a URL
-      #
-      if sys_id[1] == "/" then
-         sys_id := "file://" || sys_id
-
-      #
-      # Try to make an absolute URL of sys_id, using base.
-      #
-      if \base &
-         not match("http://" | "https://" | "file://", sys_id) &
-         match("http://" | "https://" | "file://", base) &
-         u := URL(base) then
-      {
-         sys_id := u.get_relative(sys_id).str()
+      if not match("http://" | "https://" | "file://", sys_id) then {
+         sys_id := if base := string(base) &
+            match("http://" | "https://" | "file://", base) & 
+            u := URL(base)
+         then
+            #
+            # Make a URL from sys_id and base.
+            #
+            u.get_relative(sys_id).str()
+         else
+            # 
+            # Make a file URL from the filename.
+            #
+            "file://" || FilePath(sys_id).canonical().str()
       }
 
       #
@@ -109,7 +108,7 @@ class DefaultResolver(Resolver)
       if \cache_uris_flag & t := member(uri_cache, sys_id) then
          return Resolved(sys_id, t)
 
-      res := resolve_impl(sys_id) | fail
+      res := resolve_impl(sys_id) | return error("Failed to resolve " || sys_id || ": " || &why)
 
       #
       # Cache if appropriate
@@ -127,11 +126,11 @@ class DefaultResolver(Resolver)
       if match("file://", sys_id) then
          return get_local(sys_id[8:0])
 
-      return get_local(sys_id)
+      syserr("sys_id not a URL")
    end
 
    private get_local(sys_id)
-      return Files.file_to_string(sys_id) | error("Couldn't open:" || sys_id)
+      return Files.file_to_string(sys_id)
    end
 
    private get_http(sys_id)
