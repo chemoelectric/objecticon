@@ -398,10 +398,10 @@ class FileSubWorker(SubWorker)
       local f, g, e, l, t, path, rs, now, tf, gcache, ucache
 $ifndef _MS_WIN32
       local ts
-$endif
 
       worker.req.url.is_local_file() |
          return error("Can't access a file: URL from another host")
+$endif
       
       f := Files.url_to_file(worker.req.url)
       if Files.is_directory(f) then {
