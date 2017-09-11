@@ -605,13 +605,13 @@ $endif
    # must be a `URL` (properly url-encoded), or an absolute path.
    #
    public static begin_link(f, line)
-      local s
-      if is(f, URL) then
-         return "\e[!\"" || f.str() || "\"L"
-      s := "\e[!\"file://" || &host || URL.percent_encode(f, URL.UNRESERVED ++ '/')
-      if \line then
-         s ||:= "?line=" || line
-      return s || "\"L"
+      is(f, URL) | {
+         f := URL(file_to_url(f)).
+            set_host(&host)
+         if \line then
+            f.set_query("line=" || line)
+      }
+      return "\e[!\"" || f.str() || "\"L"
    end
 
    #
