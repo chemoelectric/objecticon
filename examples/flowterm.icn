@@ -872,7 +872,7 @@ class Columns(LineBasedScrollArea)
 end
 
 procedure mk_file_URL(s)
-   return URL(u"file://" || URL.percent_encode(s, URL.UNRESERVED ++ '/'))
+   return URL(ucs(Files.file_to_url(s)))
 end
 
 class FilterEditList(EditList)

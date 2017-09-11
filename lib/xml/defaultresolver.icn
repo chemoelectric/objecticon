@@ -76,7 +76,7 @@ class DefaultResolver(Resolver)
    end
 
    public resolve(base, external_id)
-      local sys_id, res, u, t
+      local sys_id, sys_url, res, u, t
 
       #
       # Try to map from the public id (if any) to an alternative URI
@@ -86,21 +86,22 @@ class DefaultResolver(Resolver)
 
       sys_id := string(sys_id)
 
-      if not match("http://" | "https://" | "file://", sys_id) then {
-         sys_id := if base := string(base) &
-            match("http://" | "https://" | "file://", base) & 
-            u := URL(base)
+      (sys_url := URL(sys_id) & sys_url.scheme == ("http" | "https" | "file")) | {
+         sys_url := if u := URL(string(base)) &
+                       u.scheme == ("http" | "https" | "file")
          then
             #
             # Make a URL from sys_id and base.
             #
-            u.get_relative(sys_id).str()
+            u.get_relative(sys_id)
          else
             # 
             # Make a file URL from the filename.
             #
-            "file://" || FilePath(sys_id).canonical().str()
+            URL(FilePath(sys_id).canonical().to_url())
       }
+
+      sys_id := sys_url.str()
 
       #
       # Try the cache.
@@ -108,7 +109,7 @@ class DefaultResolver(Resolver)
       if \cache_uris_flag & t := member(uri_cache, sys_id) then
          return Resolved(sys_id, t)
 
-      res := resolve_impl(sys_id) | return error("Failed to resolve " || sys_id || ": " || &why)
+      res := resolve_impl(sys_url) | return error("Failed to resolve " || sys_id || ": " || &why)
 
       #
       # Cache if appropriate
@@ -119,23 +120,20 @@ class DefaultResolver(Resolver)
       return Resolved(sys_id, res)
    end
 
-   private resolve_impl(sys_id)
-      if match("http://" | "https://", sys_id) then
-         return get_http(sys_id)
-
-      if match("file://", sys_id) then
-         return get_local(sys_id[8:0])
-
-      syserr("sys_id not a URL")
+   private resolve_impl(url)
+      return case url.scheme of {
+         "http" | "https": get_http(url)
+         "file": get_local(url)
+         default: syserr("sys_id not a file or http(s) URL")
+      }
    end
 
-   private get_local(sys_id)
-      return Files.file_to_string(sys_id)
+   private get_local(url)
+      return Files.file_to_string(Files.url_to_file(url))
    end
 
-   private get_http(sys_id)
-      local url, sb
-      url := URL(sys_id) | fail
+   private get_http(url)
+      local sb
       return use { 
          http_client,
          use {
