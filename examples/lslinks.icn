@@ -96,7 +96,7 @@ procedure print(pfx, url)
 end
 
 procedure do_search(url, src, doc, tag, attr, pfx)
-   local base, n, s
+   local base, n, s, u
 
    base := url
    if n := doc.get_root_element().search_tree("BASE") then {
@@ -112,10 +112,10 @@ procedure do_search(url, src, doc, tag, attr, pfx)
       map(src) ? {
          while tab(past("<" || map(tag) || " ")) do {
             if tab(past(map(attr) || "=\"")) then {
-               if s := tab(upto("\"")) then {
+               if s := tab(upto('\"')) then {
                   s := remove_entities(s)
-                  if match("file://" | "http://" | "https://", s) then
-                     print(pfx, URL(s))
+                  if u := URL(s) & u.scheme == ("http" | "https" | "file") then
+                     print(pfx, u)
                   else
                      print(pfx, base.get_relative(s))
                }
@@ -125,8 +125,8 @@ procedure do_search(url, src, doc, tag, attr, pfx)
    } else {
       every n := doc.get_root_element().search_tree(tag) do {
          if s := n.get_attribute(attr) then {
-            if match("file://" | "http://" | "https://", map(s)) then
-               print(pfx, URL(s))
+            if u := URL(s) & u.scheme == ("http" | "https" | "file") then
+               print(pfx, u)
             else
                print(pfx, base.get_relative(s))
          }

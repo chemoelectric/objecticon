@@ -191,7 +191,7 @@ procedure decspec(pattern)
    local cols, chunk, dec
 
    pattern ? {
-      if not upto("#") then return pattern
+      if not upto('#') then return pattern
       cols := tab(upto(','))
       move(2)
       chunk := (cols + 3) / 4

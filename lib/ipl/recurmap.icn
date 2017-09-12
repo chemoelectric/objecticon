@@ -42,7 +42,7 @@ procedure recurmap(recur)
 
    every line := !recur do {
       line ? {
-         if proto := tab(upto(":")) & pos(-1) then {
+         if proto := tab(upto(':')) & pos(-1) then {
             result ||:= "procedure " || proto || "\nreturn {\n"
             }
          else result ||:= || tab(0) || "\n"

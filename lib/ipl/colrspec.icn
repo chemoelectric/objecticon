@@ -39,7 +39,7 @@ procedure colrspec(s)
 
    Window.color_value(s) ? {
       every 1 to 3 do {
-         color ||:= (tab(upto(",") | 0) / max) || " "
+         color ||:= (tab(upto(',') | 0) / max) || " "
          move(1)
          }
       return color
