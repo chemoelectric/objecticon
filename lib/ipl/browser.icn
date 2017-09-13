@@ -398,12 +398,13 @@ class FileSubWorker(SubWorker)
       local f, g, e, l, t, path, rs, now, tf, gcache, ucache
 $ifndef _MS_WIN32
       local ts
-
-      worker.req.url.is_local_file() |
-         return error("Can't access a file: URL from another host")
 $endif
-      
-      f := Files.url_to_file(worker.req.url)
+
+      # This will fail if, on Unix (but not Windows), the file has a
+      # non-local host.
+      #
+      f := Files.url_to_file(worker.req.url) | fail
+
       if Files.is_directory(f) then {
          l := qsort(Files.ucs_list(f), Files.name_cmp) | fail
          now := Time.get_system_seconds()

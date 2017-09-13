@@ -631,11 +631,13 @@ $endif
    #
    # Given a `URL` instance, return an equivalent file name, using the
    # local file system's conversion rules.  This method fails if the
-   # URL is not a "file" URL.
+   # URL is not a "file" URL, or if the host is not local and the file
+   # system cannot represent a remote file (this is true in Unix, but
+   # not in Windows).
    #
    public static url_to_file(u)
-      u.scheme == "file" | fail
-      return FS.url_to_file(u.get_decoded_host(), u.get_decoded_path())
+      u.scheme == "file" | return error("Can only convert a file: URL")
+      return FS.url_to_file(u)
    end
 
    #
@@ -643,7 +645,7 @@ $endif
    # a string), using the local file system's conversion rules.
    #
    public static file_to_url(f)
-      return "file://" || URL.percent_encode(FS.file_to_url(f), URL.UNRESERVED ++ '/')
+      return "file://" || URL.percent_encode(FS.file_to_url(f), URL.UNRESERVED ++ '/:')
    end
 end
 
@@ -659,7 +661,7 @@ package abstract class FileSystem()
    public abstract filepath_absolute(fp, other)
    public abstract filepath_standard_case(fp)
    public abstract file_to_url(f)
-   public abstract url_to_file(h, f)
+   public abstract url_to_file(u)
    public abstract get_home()
    public abstract get_temp()
    public abstract is_hidden(s)
@@ -1059,8 +1061,9 @@ package class UnixFileSystem(FileSystem)
       return f
    end
 
-   public url_to_file(h, f)
-      return f
+   public url_to_file(u)
+      u.is_local_file() | return error("Can't convert a file: URL from another host")
+      return u.get_decoded_path()
    end
 end
 
@@ -1193,10 +1196,12 @@ package class WindowsFileSystem(FileSystem)
          return "/" || map(f, "\\", "/")
    end
 
-   public url_to_file(h, f)
+   public url_to_file(u)
+      local f
+      f := u.get_decoded_path()
       if f[3:5] == ":/" then
          return map(f[2:0], "/", "\\")
       else
-         return "\\\\" || h || map(f, "/", "\\")
+         return "\\\\" || u.get_decoded_host() || map(f, "/", "\\")
    end
 end
