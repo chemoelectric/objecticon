@@ -3244,6 +3244,35 @@ function io_RamStream_out(self, s)
    }
 end
 
+function io_RamStream_read_line(self)
+   body {
+       word i, n;
+       tended struct descrip result;
+       GetSelfRs();
+
+       if (self_rs->pos >= self_rs->size)
+           return nulldesc;
+
+       i = self_rs->pos;
+       while (i < self_rs->size && self_rs->data[i] != '\n')
+           ++i;
+
+       if (i < self_rs->size) {
+           n = i - self_rs->pos;
+           if (n > 0 && self_rs->data[i - 1] == '\r')
+               n--;
+           bytes2string(&self_rs->data[self_rs->pos], n, &result);
+           self_rs->pos = i + 1;
+       } else {
+           n = self_rs->size - self_rs->pos;
+           bytes2string(&self_rs->data[self_rs->pos], n, &result);
+           self_rs->pos = self_rs->size;
+       }
+      
+       return result;
+   }
+end
+
 function io_RamStream_seek(self, offset)
    if !cnv:C_integer(offset) then
       runerr(101, offset)
