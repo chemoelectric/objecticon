@@ -3214,7 +3214,8 @@ function io_RamStream_new_impl(s, wiggle)
            Irunerr(205, wiggle);
        p = safe_malloc(sizeof(*p));
        p->wiggle = wiggle;
-       p->pos = p->size = StrLen(s);
+       p->size = StrLen(s);
+       p->pos = 0;
        p->avail = p->size + p->wiggle;
        p->data = safe_malloc(p->avail);
        memcpy(p->data, StrLoc(s), p->size);
