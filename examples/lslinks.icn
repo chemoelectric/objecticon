@@ -40,13 +40,13 @@ procedure main(args)
 end
 
 procedure do_one(a)
-   local url, hr, u, p, res, src, parser, doc, sb
+   local url, hr, u, p, res, src, parser, doc, sb, f
    
    url := URL(a) | stop("Invalid url:" || a)
 
-   if url.scheme == "file" then {
-      src := Files.file_to_string(url.path) | stop("Couldn't read file: ", &why)
-   } else {
+   if f := Files.url_to_file(url) then
+      src := Files.file_to_string(f) | stop("Couldn't read file: ", &why)
+   else {
       sb := RamStream()
       hr := HttpRequest().set_output_stream(sb)
       if \opts["a"] then {
