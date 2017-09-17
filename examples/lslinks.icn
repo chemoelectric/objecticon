@@ -47,6 +47,7 @@ procedure do_one(a)
    if f := Files.url_to_file(url) then
       src := Files.file_to_string(f) | stop("Couldn't read file: ", &why)
    else {
+      url.scheme == ("http"|"https") | stop("Unknown url scheme: " || url.scheme)
       sb := RamStream()
       hr := HttpRequest().set_output_stream(sb)
       if \opts["a"] then {
