@@ -292,6 +292,22 @@ class StringStream(Stream)
       return *s
    end
 
+   public read_line()
+      local i, s
+      if pos > *subj then
+         return
+      if i := upto('\n', subj, pos) then {
+         s := subj[pos:i]
+         pos := i + 1
+         if s[-1] == "\r" then
+            s[-1] := ""
+      } else {
+         s := subj[pos:0]
+         pos := *subj + 1
+      }
+      return s
+   end
+
    public seek(offset)
       offset := integer(offset) | runerr(101, offset)
       return .if offset > 0 then
@@ -2245,6 +2261,8 @@ final class RamStream(Stream, NoCopy)
    public native in(n)
 
    public native out(s)
+
+   public native read_line()
 
    public native seek(offset)
 

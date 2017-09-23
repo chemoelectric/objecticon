@@ -3700,7 +3700,8 @@ function io_RamStream_new_impl(s, wiggle)
            Irunerr(205, wiggle);
        p = safe_malloc(sizeof(*p));
        p->wiggle = wiggle;
-       p->pos = p->size = StrLen(s);
+       p->size = StrLen(s);
+       p->pos = 0;
        p->avail = p->size + p->wiggle;
        p->data = safe_malloc(p->avail);
        memcpy(p->data, StrLoc(s), p->size);
@@ -3727,6 +3728,35 @@ function io_RamStream_out(self, s)
            self_rs->size = self_rs->pos;
 
        return C_integer StrLen(s);
+   }
+end
+
+function io_RamStream_read_line(self)
+   body {
+       word i, n;
+       tended struct descrip result;
+       GetSelfRs();
+
+       if (self_rs->pos >= self_rs->size)
+           return nulldesc;
+
+       i = self_rs->pos;
+       while (i < self_rs->size && self_rs->data[i] != '\n')
+           ++i;
+
+       if (i < self_rs->size) {
+           n = i - self_rs->pos;
+           if (n > 0 && self_rs->data[i - 1] == '\r')
+               n--;
+           bytes2string(&self_rs->data[self_rs->pos], n, &result);
+           self_rs->pos = i + 1;
+       } else {
+           n = self_rs->size - self_rs->pos;
+           bytes2string(&self_rs->data[self_rs->pos], n, &result);
+           self_rs->pos = self_rs->size;
+       }
+      
+       return result;
    }
 end
 

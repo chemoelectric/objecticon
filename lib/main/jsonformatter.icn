@@ -127,16 +127,16 @@ class JSONFormatter(Stream, HasUnderlyingStream)
    end
 
    private format_object(x)
-      local istr, k, fl
+      local istr, fl, e
       if \indent & *x > 0 then {
          level +:= 1
          istr := repl(" ", indent * level)
          write("{")
-         every k := key(x) do {
+         every e := !sort(x) do {
             if \fl then
                write(",")
-            writes(istr, "\"", json_escape(k), "\": ")
-            format1(x[k])
+            writes(istr, "\"", json_escape(e[1]), "\": ")
+            format1(e[2])
             fl := &yes
          }
          if \fl then
@@ -145,11 +145,11 @@ class JSONFormatter(Stream, HasUnderlyingStream)
          writes(repl(" ", indent * level), "}")
       } else {
          writes1("{")
-         every k := key(x) do {
+         every e := !sort(x) do {
             if \fl then
                writes1(", ")
-            writes("\"", json_escape(k), "\": ")
-            format1(x[k])
+            writes("\"", json_escape(e[1]), "\": ")
+            format1(e[2])
             fl := &yes
          }
          writes1("}")

@@ -141,11 +141,13 @@ class XmlParser(Connectable)
    end
 
    #
-   # Parse the string s returning an XmlDocument object.
+   # Parse the string `s` returning an `XmlDocument` object.  `base` is an
+   # optional string parameter giving the URL of the source of `s`.  Providing
+   # it can help resolve relative paths within the document.
    #
    # [1] document ::= prolog element Misc*
    #
-   public parse(s)
+   public parse(s, base)
       s := text(s) | runerr(129, s)
       doc := XmlDocument()
 
@@ -169,6 +171,7 @@ class XmlParser(Connectable)
 
       dtd_insert_shown_error := &null
       current_divert_id := "input"
+      current_base := base
       divert_stack := []
       id_attribute_refs := []
 
@@ -1563,9 +1566,7 @@ class XmlParser(Connectable)
    private lookup_pe_reference(s)
       local name
       name := s[2:-1]
-      if member(doc.parameter_entities, name) then
-         return doc.parameter_entities[name]
-      else
+      return member(doc.parameter_entities, name) |
          throw("No such parameter entity defined: " || name)
    end
 
@@ -1575,9 +1576,7 @@ class XmlParser(Connectable)
    private lookup_entity_ref(s)
       local name
       name := s[2:-1]
-      if member(doc.general_entities, name) then
-         return doc.general_entities[name]
-      else
+      return member(doc.general_entities, name) |
          throw("No such general entity defined: " || name)
    end
 

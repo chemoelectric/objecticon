@@ -40,7 +40,7 @@ procedure morse(s)
    every c := !map(s) do
       if i := upto(c, key1) then {
          t := code[i+:6]
-         x ||:= t[ upto("-",t)+1 : 0 ] || " "
+         x ||:= t[ upto('-',t)+1 : 0 ] || " "
       }
       else if i := upto(c, key2) then
          x ||:= code[i+:6] || " "

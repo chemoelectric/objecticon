@@ -712,13 +712,13 @@ $endif
    # must be a `URL` (properly url-encoded), or an absolute path.
    #
    public static begin_link(f, line)
-      local s
-      if is(f, URL) then
-         return "\e[!\"" || f.str() || "\"L"
-      s := "\e[!\"file://" || &host || URL.percent_encode(f, URL.UNRESERVED ++ '/')
-      if \line then
-         s ||:= "?line=" || line
-      return s || "\"L"
+      is(f, URL) | {
+         f := URL(file_to_url(f)).
+            set_host(&host)
+         if \line then
+            f.set_query("line=" || line)
+      }
+      return "\e[!\"" || f.str() || "\"L"
    end
 
    #
@@ -734,6 +734,26 @@ $endif
    public static get_program_name()
       return FS.get_program_name()
    end
+
+   #
+   # Given a `URL` instance, return an equivalent file name, using the
+   # local file system's conversion rules.  This method fails if the
+   # URL is not a "file" URL, or if the host is not local and the file
+   # system cannot represent a remote file (this is true in Unix, but
+   # not in Windows).
+   #
+   public static url_to_file(u)
+      u.scheme == "file" | return error("Can only convert a file: URL")
+      return FS.url_to_file(u)
+   end
+
+   #
+   # Given an absolute file name, return an equivalent "file" URL (as
+   # a string), using the local file system's conversion rules.
+   #
+   public static file_to_url(f)
+      return FS.file_to_url(f)
+   end
 end
 
 #
@@ -747,6 +767,8 @@ package abstract class FileSystem()
    public abstract filepath_canonical(fp)
    public abstract filepath_absolute(fp, other)
    public abstract filepath_standard_case(fp)
+   public abstract file_to_url(f)
+   public abstract url_to_file(u)
    public abstract get_home()
    public abstract get_temp()
    public abstract is_hidden(s)
@@ -943,6 +965,15 @@ class FilePath(ObjectOutput)
       every s := !l do
          put(t, default.ucs(s)) | fail
       return from_list(t)
+   end
+
+   #
+   # Convenient method to convert this path to a file URL, using
+   # `Files.file_to_url()`, applied to the absolute path converted
+   # to string.
+   #
+   public to_url(f)
+      return Files.file_to_url(absolute().str())
    end
 
    #
@@ -1206,6 +1237,15 @@ package class UnixFileSystem(FileSystem)
    public get_program_name()
       return FilePath(&progname).get(-1)
    end
+
+   public file_to_url(f)
+      return "file://" || URL.percent_encode(f, URL.UNRESERVED ++ '/')
+   end
+
+   public url_to_file(u)
+      u.is_local_file() | return error("Can't convert a file: URL from another host")
+      return u.get_decoded_path()
+   end
 end
 
 package class Plan9FileSystem(UnixFileSystem)
@@ -1259,7 +1299,7 @@ package class WindowsFileSystem(FileSystem)
       local e, s
       s := ""
       every e := !fp.l do {
-         if *s > 0 & not any("\\:", s[-1]) then
+         if *s > 0 & not any('\\:', s[-1]) then
             s ||:= "\\"
          s ||:= string(e)
       }
@@ -1349,5 +1389,26 @@ package class WindowsFileSystem(FileSystem)
       if map(s[-4:0]) == ".exe" then
          s[-4:0] := ""
       return s
+   end
+
+   public file_to_url(f)
+      local p
+      f := string(f) | runerr(103, f)
+      # See
+      #   https://blogs.msdn.microsoft.com/ie/2006/12/06/file-uris-in-windows/
+      p := if f[1:3] == "\\\\" then
+         map(f[3:0], "\\", "/")
+      else
+         "/" || map(f, "\\", "/")
+      return "file://" || URL.percent_encode(p, URL.UNRESERVED ++ '/:')
+   end
+
+   public url_to_file(u)
+      local f
+      f := u.get_decoded_path()
+      if f[3:5] == ":/" then
+         return map(f[2:0], "/", "\\")
+      else
+         return "\\\\" || u.get_decoded_host() || map(f, "/", "\\")
    end
 end

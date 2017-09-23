@@ -409,10 +409,11 @@ $ifndef _MS_WIN32
       local ts
 $endif
 
-      worker.req.url.host == ("localhost" | &host) |
-         return error("Can't access a file: URL from another host")
-      
-      f := worker.req.url.get_decoded_path()
+      # This will fail if, on Unix (but not Windows), the file has a
+      # non-local host.
+      #
+      f := Files.url_to_file(worker.req.url) | fail
+
       if Files.is_directory(f) then {
          l := qsort(Files.ucs_list(f), Files.name_cmp) | fail
          now := Time.get_system_seconds()
@@ -429,13 +430,10 @@ $endif
                      Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("NNN'&nbsp;'dd'&nbsp;&nbsp;'yyyy")
                   else
                      Time(t.mtime + Time.SYSTEM_BASE_OFFSET).format("NNN'&nbsp;'dd'&nbsp;'HH:mm")
-                  g := path.child(e.name).canonical().str()
-$ifdef _MS_WIN32
-                  g := map(g, "\\", "/")
-$endif
+                  g := path.child(e.name).canonical().to_url()
                   rs.out("<tr><td>" || t.mode_str || "&nbsp;</td><td>" || uname(t.uid, ucache) || "&nbsp;</td><td>" || grname(t.gid, gcache) ||
                          "&nbsp;</td><td align=right>" || Format.numeric_to_string(t.size, 0, ',') || "&nbsp;</td><td>" || string(tf) || "&nbsp;</td>" ||
-                         "<td nowrap><a href=\"file://" || URL.percent_encode(g, URL.UNRESERVED ++ '/') || "\">" || 
+                         "<td nowrap><a href=\"" || g || "\">" || 
                                  Browser.to_content(e.name) || "</a></td></tr>\n")
                }
                rs.out("</table></html>")

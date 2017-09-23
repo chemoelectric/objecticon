@@ -1,6 +1,6 @@
 package gui
 
-import ipl.strings
+import ipl.strings, lang
 
 # This type gives, for each displayed suggestion, the label to display
 # in the popup and the string to set in the field on selection, and
@@ -15,6 +15,12 @@ class CompleteElement(Conversion)
       Conversion.new(str, pos)
       return
    end
+end
+
+# A useful sort comparator for `CompleteElement` instances.
+#
+procedure cmp_CompleteElement(x, y)
+   return Text.consistent_compare(x.label, y.label)
 end
 
 # An `ItemPaint` class for displaying `CompleteElement`s with strings
