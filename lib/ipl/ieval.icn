@@ -418,7 +418,7 @@ class Ieval(MinimalObjectOutput)
 
    public run()
       local hfile
-      is_flowterm := Yes{ \opts["g"] | Files.is_flowterm_tty(FileStream.stdin) }
+      is_flowterm := Yes{ \opts["g"] | FileStream.stdin.is_flowterm_tty() }
       if \opts["s"] then
          do_stdin()
       else {

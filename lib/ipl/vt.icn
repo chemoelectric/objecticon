@@ -440,7 +440,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    public get_default_width()
-      return predict_total_width(vt_width * char_w + 2 * Gui.TEXT_INSET, Yes{ history_size > 0 })
+      return predict_total_width(integer(vt_width * char_w) + 2 * Gui.TEXT_INSET, Yes{ history_size > 0 })
    end
 
    public get_default_height()
@@ -577,7 +577,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       # See notes for explanation.
       hsz := history_size
       hsz <:= (\saved_buffer).history_size
-      cols := (predict_view_width(w, Yes{ hsz > 0 }) - 2 * Gui.TEXT_INSET) / char_w
+      cols := integer((predict_view_width(w, Yes{ hsz > 0 }) - 2 * Gui.TEXT_INSET) / char_w)
       cols >:= \col_mode
       cols <:= 16
       rows := predict_view_height(h) / get_line_height()
@@ -630,6 +630,15 @@ class Vt(LineBasedScrollArea, MenuMode)
       cursor_ticker.start()
    end
 
+   private static calc_font_width(W, s)
+      local m, m2
+      W.set_font(s) | fail
+      m := W.text_width("m")
+      (m = W.text_width("i")) | return error("font is not monospace")
+      m2 := W.text_width(repl("m", 1000))
+      return if m2 = m * 1000 then m else m2 / 1000.0
+   end
+
    private check_font(s)
       local fam, size, width, W, t
       s ? {
@@ -648,8 +657,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       s := fam || "," || size
       width := use {
          W := Window(),
-         if W.set_font(s) then
-            (W.text_width("m") = W.text_width("i")) | error("font is not monospace")
+         calc_font_width(W, s)
       } | fail
       return [fam, size, width]
    end
@@ -2050,7 +2058,7 @@ class Vt(LineBasedScrollArea, MenuMode)
       # Adding char_w/2 notionally places the dividing points in the
       # middle of chars; this is better for selection of regions with
       # the "xterm" mouse cursor.
-      cursor_x := col_for_x(e.x + char_w / 2)
+      cursor_x := col_for_x(e.x + integer(char_w / 2))
       cursor_x >:= cols + 1
    end
 
@@ -2317,7 +2325,7 @@ class Vt(LineBasedScrollArea, MenuMode)
    private col_for_x(x)
       x := x - (view.x + Gui.TEXT_INSET)
       x <:= 0
-      return 1 + x / char_w
+      return 1 + integer(x / char_w)
    end
 
    private get_segment_for_pos(ev)
@@ -2676,7 +2684,7 @@ class Vt(LineBasedScrollArea, MenuMode)
 
       close_popup()
       (*l > 0) | fail
-      px := view.x + Gui.TEXT_INSET + (cx - 1) * char_w + Gui.TEXT_INSET
+      px := view.x + Gui.TEXT_INSET + integer((cx - 1) * char_w) + Gui.TEXT_INSET
       info := get_line_info() | fail
       py := view.y - info.offset + (cy_to_index() - info.first) * line_height
       # Ensure cursor is entirely within view

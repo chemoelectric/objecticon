@@ -90,7 +90,7 @@ procedure do_one(a)
 end
 
 procedure print(pfx, url)
-   if Files.is_flowterm_tty(FileStream.stdout) then
+   if FileStream.stdout.is_flowterm_tty() then
       write(pfx, Files.begin_link(url), url.str(), Files.end_link())
    else
       write(pfx, url.str())

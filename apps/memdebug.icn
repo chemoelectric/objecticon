@@ -519,7 +519,7 @@ procedure usage(opts)
    options_help(opts)
    u := URL("http://objecticon.sourceforge.net/Memdebug.html")
    writes("\nFor more details, visit ")
-   if Files.is_flowterm_tty(FileStream.stdout) then
+   if FileStream.stdout.is_flowterm_tty() then
       write(Files.begin_link(u), u.str(), Files.end_link())
    else
       write(u.str())
@@ -559,7 +559,7 @@ procedure main(args)
    MemDebug.set_program(prog)
    MemDebug.set_slim(slim)
    MemDebug.set_addrs(addrs)
-   MemDebug.set_flowterm(Yes{ \opts["g"] | Files.is_flowterm_tty(FileStream.stdin) })
+   MemDebug.set_flowterm(Yes{ \opts["g"] | FileStream.stdin.is_flowterm_tty() })
    Prog.set_timer_interval(100, prog)
 
    synch_mask()

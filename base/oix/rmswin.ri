@@ -210,6 +210,7 @@ wbp wopen(char *display)
     add_gc_global(&ws->windowlabel);
     add_gc_global(&ws->listp);
     ws->cursor = lookup_wcursor("arrow");
+    ws->state = HiddenCanvas;
     ws->minwidth = ws->minheight = 1;
     ws->maxwidth = ws->maxheight = INT_MAX;
     w->window = ws;
@@ -1453,7 +1454,7 @@ int textwidth(wbp w, dptr str)
     }
     f = gb_textwidth(&d, mbs, len);
     free(mbs);
-    return (int)f;
+    return (int)ceilf(f);
 }
 
 void drawstring(wbp w, int x, int y, dptr str)

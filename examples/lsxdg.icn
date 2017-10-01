@@ -3,14 +3,14 @@ import io, lang, xdg, ipl.options, net, util
 global opts
 
 procedure text_link(s)
-   return if Files.is_flowterm_tty(FileStream.stdout) then
+   return if FileStream.stdout.is_flowterm_tty() then
       "\e[!\"text:" || URL.percent_encode(s, URL.UNRESERVED) || "\"L" || s || "\e[!L" 
    else
       s
 end
 
 procedure file_link(s)
-   return if Files.is_flowterm_tty(FileStream.stdout) then
+   return if FileStream.stdout.is_flowterm_tty() then
       Files.begin_link(s) || s || Files.end_link()
    else
       s
@@ -115,7 +115,7 @@ procedure main(a)
          s1 := Format.shell_escape(FilePath(s).canonical().str())
          every d := Mime.gen_desktop_entries_for_file(s) do {
             cmd := d.subst_file(s1)
-            if Files.is_flowterm_tty(FileStream.stdout) then {
+            if FileStream.stdout.is_flowterm_tty() then {
                u := URL("launch:" || URL.percent_encode(cmd, URL.UNRESERVED))
                write(Files.begin_link(u), cmd, Files.end_link())
             } else

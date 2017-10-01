@@ -328,7 +328,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
 
    private do_complete()
       local l, e, fl, cmd, v
-      Files.is_flowterm_tty(tty) | fail
+      tty.is_flowterm_tty() | fail
       l := (\complete_function)(subj, pos) | fail
       if *l = 1 then
          assign_contents(l[1].str, l[1].pos)
