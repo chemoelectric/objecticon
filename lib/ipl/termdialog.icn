@@ -52,7 +52,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       case string(url.scheme) of {
          "text": input.insert_string(ucs(url.get_decoded_path()))
          "file": {
-            file := ucs(url.get_decoded_path()) | fail
+            file := ucs(Files.url_to_file(url)) | fail
             line := integer(url.extract_cgi_parameters()["line"][1])
             if de := Mime.gen_desktop_entries_for_file(FilePath(file).get(-1)) then
                launch_prog(de, file, line)
@@ -64,7 +64,35 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       input.insert_string(ucs(url.get_decoded_path()) || u" ")
    end
 
+   private copy_text(s)
+      own_selection(Selection.CLIPBOARD, StaticTextSelectionOwner(s))
+   end
+
+   private copy_url(url)
+      own_selection(Selection.CLIPBOARD, URLSelectionOwner([url]))
+   end 
+
    public create_link_menu(url)
+      local m, udp, file
+      m := Menu()
+      case string(url.scheme) of {
+         "text": {
+            if udp := ucs(url.get_decoded_path()) then
+               m.add(TextMenuItem().
+                     set_label("Copy").
+                     connect(create copy_text(udp), Event.ACTION))
+         }
+         "file": {
+            if file := ucs(Files.url_to_file(url)) then
+               m.add(TextMenuItem().
+                     set_label("Copy").
+                     connect(create copy_text(file), Event.ACTION))
+         }
+      }
+      m.add(TextMenuItem().
+            set_label("Copy URL").
+            connect(create copy_url(url), Event.ACTION))
+      return m
    end
 
    public create_context_menu()
