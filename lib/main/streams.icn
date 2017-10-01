@@ -1,7 +1,8 @@
 package io
 
 import
-   util(error, check_flag, check_positive_int, save_why, HasMode),
+   util(error, check_flag, check_positive_int, save_why, 
+        env_string, HasMode),
    lang(Class, NoCopy),
    posix(System),
    ipl.strings(replace)
@@ -1012,6 +1013,19 @@ class FileStream(DescStream)
    # :  `offset` - the one-based offset to seek to before writing.
    #
    public native pwrite(s, offset)
+
+   #
+   # Succeed if this `FileStream` represents a tty supporting links.
+   #
+   public is_flowterm_tty()
+      static flowterm
+      initial
+         flowterm := integer(env_string("FLOWTERM"))
+      return case flowterm of {
+         1 : isatty()
+         2 : &null
+      }
+   end
 
    public native in(n)
 

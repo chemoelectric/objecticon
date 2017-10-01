@@ -588,19 +588,6 @@ $endif
    end
 
    #
-   # Succeed if the given `FileStream` represents a tty supporting links.
-   #
-   public static is_flowterm_tty(f)
-      static flowterm
-      initial
-         flowterm := integer(env_string("FLOWTERM"))
-      return case flowterm of {
-         1 : f.isatty()
-         2 : &null
-      }
-   end
-
-   #
    # Return the opening escape sequence for an embedded link.  File f
    # must be a `URL` (properly url-encoded), or an absolute path.
    #

@@ -3353,7 +3353,7 @@ procedure usage(opts)
 
    u := URL("http://objecticon.sourceforge.net/FlowTerm.html")
    writes("\nFor more details, visit ")
-   if Files.is_flowterm_tty(FileStream.stdout) then
+   if FileStream.stdout.is_flowterm_tty() then
       write(Files.begin_link(u), u.str(), Files.end_link())
    else
       write(u.str())
