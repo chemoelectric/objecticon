@@ -2252,8 +2252,8 @@ $endif
    public create_link_menu(url)
       local m, r, udp
       m := Menu()
-      if udp := get_ucs_decoded_path(url) &
-         url.scheme == (u"file" | u"text") then 
+      if url.scheme == (u"file" | u"text") &
+         udp := get_ucs_decoded_path(url) then
       {
          m.add(TextMenuItem().
                set_label("Copy").
