@@ -53,48 +53,28 @@ class Ieval(MinimalObjectOutput)
          write("out         The OutputStream of the terminal.")
    end
 
-   private columnize_gen_ft(l, screen_width, gutter, rowwise)
-      local cr, s, i, j, k, w
-      /gutter := 2
-      cr := columnize(List{*!l}, screen_width, gutter, rowwise)
-      every i := 1 to cr.rows do {
-         s := ""
-         every j := 1 to cr.cols do {
-            w := cr.width[j]
-            if j < cr.cols then
-               w +:= gutter
-            k := if /rowwise then 
-               i + cr.rows * (j - 1)
-            else
-               (i -1) * cr.cols + j
-            s ||:= text_link(l[k])
-            s ||:= repl(" ", 0 < w - *l[k])
-         }
-         suspend s
-      }
+   private get_screen_width()
+      return if is(output, TermDialog) then
+         output.get_term_width()
+      else
+         LineEditorStream.get_console_width() | 80
+   end
+
+   private output_columns(l)
+      every output.write(columnize_gen(qsort(l, Text.consistent_compare), get_screen_width(),,, text_link))
    end
 
    private list_syms()
-      local l, e, w
-      w := if is(output, TermDialog) then
-         output.get_term_width()
-      else
-         LineEditorStream.get_console_width()
+      local l, e
       l := []
       every e := get_accessible_global_names() do
          if e ? ((not upto('.')) | (=!imports & ="." & (not upto('.')))) then
             put(l, e)
-      every output.write(columnize_gen_ft(qsort(l, Text.consistent_compare), w))
+      output_columns(l)
    end
 
    private list_prog_syms(prog)
-      local l, w
-      w := if is(output, TermDialog) then
-         output.get_term_width()
-      else
-         LineEditorStream.get_console_width()
-      l := List{ get_accessible_global_names(prog) }
-      every output.write(columnize_gen_ft(qsort(l, Text.consistent_compare), w))
+      output_columns(List{ get_accessible_global_names(prog) })
    end
 
    private show_parse(x, level)
@@ -418,7 +398,7 @@ class Ieval(MinimalObjectOutput)
 
    public run()
       local hfile
-      is_flowterm := Yes{ \opts["g"] | FileStream.stdin.is_flowterm_tty() }
+      is_flowterm := Yes{ \opts["g"] | FileStream.stdout.is_flowterm_tty() }
       if \opts["s"] then
          do_stdin()
       else {
