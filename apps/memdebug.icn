@@ -3,7 +3,7 @@ import io, lang, util, net, ipl.options, gui, ipl.termdialog,
 
 global prog, input, output, stopped, sched, break_proc, break_line, break_file, 
    curr_file, tmp_out, tmp_out_name, cmd_out, exited, opts, hlim, llim,
-   history, hfile, slim, addrs, hist_line
+   history, hfile, slim, addrs, hist_line, is_flowterm
 
 class MemDebug()
    public static native list(obj)
@@ -282,6 +282,7 @@ procedure do_line(s)
       cmd_out := tmp_out
    }
 
+   MemDebug.set_flowterm(if \ (pipe | redir) then &no else is_flowterm)
    MemDebug.set_output(cmd_out)
 
    case string(pop(a)) of {
@@ -319,12 +320,10 @@ procedure do_line(s)
    else if cmd_out === tmp_out then {
       tmp_out.seek(1)
       if \pipe then {
-         if p := ProgOutputStream("/bin/sh", ["-c", pipe]) then {
+         use { p := ProgOutputStream("/bin/sh", ["-c", pipe]),
             # This will ignore any SIGPIPE signals (and just fail).
             tmp_out.copy_to(p)
-            p.close()
-         } else
-            output.write("Couldn't open pipe ", pipe, ": ", &why)
+         }
       } else
          tmp_out.copy_to(output)
    }
@@ -559,7 +558,7 @@ procedure main(args)
    MemDebug.set_program(prog)
    MemDebug.set_slim(slim)
    MemDebug.set_addrs(addrs)
-   MemDebug.set_flowterm(Yes{ \opts["g"] | FileStream.stdin.is_flowterm_tty() })
+   is_flowterm := Yes{ \opts["g"] | FileStream.stdout.is_flowterm_tty() }
    Prog.set_timer_interval(100, prog)
 
    synch_mask()
