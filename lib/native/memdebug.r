@@ -137,6 +137,9 @@ static void traverse_proc(struct b_proc *proc);
 static void print_stk_element(struct stk_element *e);
 static void traverse_element(struct stk_element e);
 static int is_prog_region(struct region *rp);
+static void begin_linkx(dptr fname, word line);
+static void end_linkx();
+static void print_locationx(struct p_frame *pf);
 
 
 /* Get from stack, assumes it's not empty */
@@ -516,16 +519,13 @@ static void kywdout(dptr d)
 
 static void structout(char *name, uword id, dptr d)
 {
-    int link = 0;
-    if (flowterm) {
-        link = 1;
+    if (flowterm)
         fprintf(out, "\x1b[!\"text:%s%%23" UWordFmt "\"L", name, id);
-    }
     if (addrs > 1)
         addrout(BlkLoc(*d));
     outimage1(out, d, 1, slim, llim);
-    if (link)
-        fputs("\x1b[!L", out);
+    if (flowterm)
+        end_linkx();
     return;
 }
 
@@ -541,7 +541,7 @@ static void litblockout(dptr d)
     }
     outimage1(out, d, 1, slim, llim);
     if (link)
-        fputs("\x1b[!L", out);
+        end_linkx();
 }
 
 static void addrout(void *p)
@@ -552,6 +552,53 @@ static void addrout(void *p)
 static void outimagex(dptr d)
 {
     outimagey(d, 0);
+}
+
+static void begin_linkx(dptr fname, word line)
+{
+    char *s;
+    int i;
+    fputs("\x1b[!\"file://", out);
+    if ((s = get_hostname()))
+        fputs(s, out);
+    i = StrLen(*fname);
+    s = StrLoc(*fname);
+    while (i-- > 0) {
+        if (strchr(URL_UNRESERVED, *s))
+            fputc(*s, out);
+        else
+            fprintf(out, "%%%02x", *s & 0xff);
+        s++;
+    }
+    if (line)
+        fprintf(out, "?line=" WordFmt, line);
+    fputs("\"L", out);
+}
+
+static void end_linkx()
+{
+    fputs("\x1b[!L", out);
+}
+
+/*
+ * Print the current location in the given frame in the standard
+ * format.
+ */
+static void print_locationx(struct p_frame *pf)
+{
+    struct ipc_line *pline;
+    struct ipc_fname *pfile;
+    pline = frame_ipc_line(pf);
+    pfile = frame_ipc_fname(pf);
+    if (pline && pfile) {
+        struct descrip t;
+        abbr_fname(pfile->fname, &t);
+        if (flowterm) begin_linkx(pfile->fname, pline->line);
+        fprintf(out, "File %.*s; Line " WordFmt, StrF(t), pline->line);
+        if (flowterm) end_linkx();
+        fputc('\n', out);
+    } else
+        fprintf(out, "File ?; Line ?\n");
 }
 
 static void outimagey(dptr d, struct frame *frame)
@@ -577,7 +624,7 @@ static void outimagey(dptr d, struct frame *frame)
             }
             outimage1(out, d, 1, slim, llim);
             if (link)
-                fputs("\x1b[!L", out);
+                end_linkx();
         }
       cset: {
             litblockout(d);
@@ -629,7 +676,7 @@ static void outimagey(dptr d, struct frame *frame)
 
             outimage1(out, d, 1, slim, llim);
             if (link)
-                fputs("\x1b[!L", out);
+                end_linkx();
         }
       record: {
             if (RecordBlk(*d).constructor->program == prog) {
@@ -651,7 +698,7 @@ static void outimagey(dptr d, struct frame *frame)
             }
             outimage1(out, d, 1, slim, llim);
             if (link)
-                fputs("\x1b[!L", out);
+                end_linkx();
         }
       class: {
             if (ClassBlk(*d).program == prog) {
@@ -663,7 +710,7 @@ static void outimagey(dptr d, struct frame *frame)
                 progout(ClassBlk(*d).program);
             outimage1(out, d, 1, slim, llim);
             if (link)
-                fputs("\x1b[!L", out);
+                end_linkx();
         }
       constructor: {
             if (ConstructorBlk(*d).program == prog) {
@@ -675,7 +722,7 @@ static void outimagey(dptr d, struct frame *frame)
                 progout(ConstructorBlk(*d).program);
             outimage1(out, d, 1, slim, llim);
             if (link)
-                fputs("\x1b[!L", out);
+                end_linkx();
         }
       proc: {
             if (ProcBlk(*d).type == P_Proc) {
@@ -697,18 +744,16 @@ static void outimagey(dptr d, struct frame *frame)
             }
             outimage1(out, d, 1, slim, llim);
             if (link)
-                fputs("\x1b[!L", out);
+                end_linkx();
         }
       methp: {
-            if (flowterm) {
-                link = 1;
+            if (flowterm)
                 fprintf(out, "\x1b[!\"text:methp%%23" UWordFmt "\"L", MethpBlk(*d).id);
-            }
             if (addrs > 1)
                 addrout(BlkLoc(*d));
             fprintf(out, "methp#" UWordFmt, MethpBlk(*d).id);
-            if (link)
-                fputs("\x1b[!L", out);
+            if (flowterm)
+                end_linkx();
             fputs("(", out);
             outblock((union block *)MethpBlk(*d).object);
             fputs(",", out);
@@ -716,15 +761,13 @@ static void outimagey(dptr d, struct frame *frame)
             fputs(")", out);
         }
       weakref: {
-            if (flowterm) {
-                link = 1;
+            if (flowterm)
                 fprintf(out, "\x1b[!\"text:weakref%%23" UWordFmt "\"L", WeakrefBlk(*d).id);
-            }
             if (addrs > 1)
                 addrout(BlkLoc(*d));
             fprintf(out, "weakref#" UWordFmt, WeakrefBlk(*d).id);
-            if (link)
-                fputs("\x1b[!L", out);
+            if (flowterm)
+                end_linkx();
              if (is:null(WeakrefBlk(*d).val))
                  fprintf(out, "()");
              else {
@@ -1398,7 +1441,7 @@ static void display(dptr dp)
                         fprintf(out, "\t\t%p, caller=%p\n", f, pf->caller);
                         if (pf->proc->program && pf->curr_inst) {
                             fputs("\t\t", out);
-                            print_location(out, pf);
+                            print_locationx(pf);
                         }
                         for (i = 0; i < pf->proc->ntmp; ++i) {
                             fprintf(out, "\t\tTemp %d=", i);
