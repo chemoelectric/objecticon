@@ -1476,7 +1476,7 @@ end
 # This class provides symbolic names for the drawing operations
 # supported by `Context.set_operator()`.
 #
-class DrawOp()
+final abstract class DrawOp()
    public static const
       ATOP,
       CLEAR,
@@ -1510,7 +1510,7 @@ end
 # This class provides symbolic names for the line joins supported by
 # `Context.set_line_join()`.
 #
-class LineJoin()
+final abstract class LineJoin()
    public static const
       BEVEL,
       MITER,
@@ -1526,7 +1526,7 @@ end
 # This class provides symbolic names for the line caps supported by
 # `Context.set_line_cap()`.
 #
-class LineCap()
+final abstract class LineCap()
    public static const
       BUTT,
       ROUND,
@@ -1542,7 +1542,7 @@ end
 # This class provides symbolic names for the fill rules supported by
 # `Context.set_fill_rule()`.
 #
-class FillRule()
+final abstract class FillRule()
    public static const
       EVEN_ODD,
       WINDING
@@ -1556,7 +1556,7 @@ end
 # This class provides symbolic names for the settings supported by
 # `Pattern.set_extend()`.
 #
-class Extend()
+final abstract class Extend()
    public static const
       NONE,
       PAD,
@@ -1574,7 +1574,7 @@ end
 # This class provides symbolic names for the content settings
 # supported by `Context.push_group()`.
 #
-class Content()
+final abstract class Content()
    public static const
       ALPHA,
       COLOR,
@@ -1590,7 +1590,7 @@ end
 # This class provides symbolic names for the settings supported by
 # `Context.set_antialias()`.
 #
-class Antialias()
+final abstract class Antialias()
    public static const
       BEST,
       DEFAULT,
@@ -1614,7 +1614,7 @@ end
 # This class provides symbolic names for the settings supported by
 # `Pattern.set_filter()`.
 #
-class Filter()
+final abstract class Filter()
    public static const
       BEST,
       BILINEAR,
