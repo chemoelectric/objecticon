@@ -39,7 +39,8 @@ class Ieval(MinimalObjectOutput)
          write("!wglob      Toggle the write-globals flag.").
          write("!traceback  Show the traceback of the last command that gave a runtime error.").
          write("!quiet      Don't force evaluation of all of the values in the expression, and don't output any expression value.").
-         write("dir(x)      With no parameter, show all global variables.  With a parameter, show information about it.").
+         write("dir(x,l)    With no parameter, show all global variables.  With a parameter, show information about it.  If l").
+         write("            is non-null, show class field locations.").
          write("!hist       Show the command line history.").
          write("!cls        Clear the screen.").
          write("old(s)      Search history for commands containing string s.").
@@ -215,17 +216,21 @@ class Ieval(MinimalObjectOutput)
             output.write("   at ", locn_string(Class.get_location(c))) 
             output.write("   implements ", implements_string(c))
             t := []
-            every f := Class.get_field_names(c) do
+            every f := Class.get_field_names(c) do {
                put(t, [f, 
                        Class.get_name(Class.get_field_defining_class(c, f)), 
                        right(Class.get_field_index(c, f), *Class.get_n_fields(c)),
-                       flags_string(Class.get_field_flags(c, f))])
-            print_table(qsort(t, index_cmp(1, Text.consistent_compare)), set(1))
+                       flags_string(Class.get_field_flags(c, f)) ])
+               if \a[2] then
+                  put(t[-1], abbr_locn_string(Class.get_field_location(c, f)))
+            }
+            t := qsort(t, index_cmp(1, Text.consistent_compare))
+            print_table(t, set(1))
          }
          "procedure"|"methp": {
-            output.write(kind_string(Proc.get_kind(c)), " ", Proc.get_name(c), "(", args_string(c), ")")
+            output.write(map(kind_string(Proc.get_kind(c))), " ", Proc.get_name(c), "(", args_string(c), ")")
             output.write("   at ", locn_string(Proc.get_location(c))) 
-            output.write("   method of ", Class.get_name(Proc.get_defining_class(c)))
+            output.write("   method of ", text_link(Class.get_name(Proc.get_defining_class(c))))
             t := []
             every f := Proc.get_local_names(c) do
                put(t, [f,
