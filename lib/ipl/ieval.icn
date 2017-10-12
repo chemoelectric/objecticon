@@ -32,15 +32,18 @@ class Ieval(MinimalObjectOutput)
 
    private show_help()
       output.
-         write("!env        Show the values stored in the environment, excluding these predefined values.").
+         write("!env        Show the values stored in the environment, excluding these predefined").
+         write("            values.").
          write("!help       Show help.").
-         write("!parse      Toggle parse mode, in which just the syntax structure of the command is printed.").
+         write("!parse      Toggle parse mode, in which just the syntax structure of the command is").
+         write("            printed.").
          write("!trace      Toggle tracing.").
          write("!wglob      Toggle the write-globals flag.").
          write("!traceback  Show the traceback of the last command that gave a runtime error.").
-         write("!quiet      Don't force evaluation of all of the values in the expression, and don't output any expression value.").
-         write("dir(x,l)    With no parameter, show all global variables.  With a parameter, show information about it.  If l").
-         write("            is non-null, show class field locations.").
+         write("!quiet      Don't force evaluation of all of the values in the expression, and don't").
+         write("            output any expression value.").
+         write("dir(x,l)    With no parameter, show all global variables.  With a parameter, show").
+         write("            information about it.  If l is non-null, show class field locations.").
          write("!hist       Show the command line history.").
          write("!cls        Clear the screen.").
          write("old(s)      Search history for commands containing string s.").
@@ -49,7 +52,8 @@ class Ieval(MinimalObjectOutput)
          write("elim(n)     Set the expression limit to n.").
          write("llim(n)     Set the gui log area line limit to n.").
          write("load(s)     Load the given prog, and set its error handler.").
-         write("gg(s,p)     Get the given global from the the given prog (shorthand for Prog.get_global).").
+         write("gg(s,p)     Get the given global from the the given prog (shorthand for").
+         write("            Prog.get_global).").
          write("oos         The ObjectOutputStream used to output results.").
          write("out         The OutputStream of the terminal.")
    end
