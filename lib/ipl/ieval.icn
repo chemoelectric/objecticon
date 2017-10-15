@@ -18,7 +18,7 @@ end
 class Ieval(MinimalObjectOutput)
    private 
       input, output, error, vars, ev, quiet_flag, par, consts,
-      oos, trace_flag, parse_flag, last_runerr, ee, hist_line, hlim,
+      oos, trace_flag, parse_flag, last_runerr, ee, hlim,
       elim, llim, imports, files, opts, history, is_flowterm
 
    private show_env()
@@ -47,7 +47,6 @@ class Ieval(MinimalObjectOutput)
          write("!hist       Show the command line history.").
          write("!cls        Clear the screen.").
          write("old(s)      Search history for commands containing string s.").
-         write("cmd(n)      Run command number n again.").
          write("hlim(n)     Set the history limit to n.").
          write("elim(n)     Set the expression limit to n.").
          write("llim(n)     Set the gui log area line limit to n.").
@@ -381,11 +380,6 @@ class Ieval(MinimalObjectOutput)
       }
    end
 
-   private cmd(n)
-      if is(input, TermDialog | LineEditorStream) then 
-         hist_line := input.get_history_item(n)
-   end
-
    public new(imports, files, opts)
       self.imports := imports
       self.files := files
@@ -408,7 +402,9 @@ class Ieval(MinimalObjectOutput)
    public run()
       local hfile
       is_flowterm := Yes{ \opts["g"] | FileStream.stdout.is_flowterm_tty() }
-      if \opts["s"] then
+      if \opts["z"] then
+         do_nothing()
+      else if \opts["s"] then
          do_stdin()
       else {
          hfile := FilePath(BaseDir.ensure_data_home()).child("ieval").str() | stop("Couldn't access data dir: ", &why)
@@ -440,7 +436,6 @@ class Ieval(MinimalObjectOutput)
       consts["load"] := load
       consts["gg"] := Prog.get_global
       consts["traceback"] := create traceback()
-      consts["cmd"] := cmd
       consts["oos"] := oos := ObjectOutputStream(output).set_indent(3)
       consts["out"] := output
 
@@ -651,85 +646,70 @@ class Ieval(MinimalObjectOutput)
          input.set_popup_on_tab(&no)
 
       error := output := input
-      prelim()
       s := ""
       prompt := "> "
       input.connect(create {
          t := input.line
-         repeat {
-            output.write(prompt, t)
-            hist_line := &null
-            s ||:= t
-            if s[-1] == "\\" then {
-               s[-1] := ""
-               prompt := ">> "
-               break
-            }
+         output.write(prompt, t)
+         s ||:= t
+         if s[-1] == "\\" then {
+            s[-1] := ""
+            prompt := ">> "
+         } else {
             body(s)
             prompt := "> "
             s := ""
-            t := \hist_line | break
          }
       }, Event.ACTION)
-      input.show_modal()
+      # Do prelim() after showing the TermDialog, since output to
+      # it will be discarded before it is live.
+      input.show()
+      prelim()
+      Dispatcher.message_loop(input)
+   end
+
+   private do_nothing()
+      output := FileStream.stdout
+      error := FileStream.stderr
+      prelim()
    end
 
    private do_stdin()
+      input := FileStream.stdin
+      do_terminal()
+   end
+
+   private do_line_editor()
+      input := LineEditorStream().
+         set_complete_function(complete).
+         set_history_limit(hlim).
+         set_history(history) | stop("Failed to create LineEditorStream: ", &why)
+      do_terminal()
+   end
+
+   private do_terminal()
       local s, t, prompt
 
-      output := FileStream.stdout
-      error := FileStream.stderr
-      input := FileStream.stdin
-      prelim()
+      do_nothing()
+
       s := ""
       prompt := "> "
       repeat {
-         writes(prompt)
-         t := input.read_line() | stop("Failed to read file: ", &why)
+         if is(input, LineEditorStream) then
+            input.set_prompt(prompt)
+         else
+            writes(prompt)
+         t := input.read_line() | stop("Failed to read input: ", &why)
          if /t then break
          s ||:= t
          if s[-1] == "\\" then {
             s[-1] := ""
             prompt := ">> "
-            next
-         }
-         body(s)
-         prompt := "> "
-         s := ""
-      }
-   end
-
-   private do_line_editor()
-      local s, t, prompt
-
-      output := FileStream.stdout
-      error := FileStream.stderr
-      input := LineEditorStream().
-         set_complete_function(complete).
-         set_history_limit(hlim).
-         set_history(history) | stop("Failed to create LineEditorStream: ", &why)
-      prelim()
-      s := ""
-      prompt := "> "
-      repeat {
-         if \hist_line then {
-            write(prompt, hist_line)
-            t := hist_line
-            hist_line := &null
          } else {
-            input.set_prompt(prompt)
-            t := input.read_line() | stop("Failed to read file: ", &why)
-            if /t then break
+            body(s)
+            prompt := "> "
+            s := ""
          }
-         s ||:= t
-         if s[-1] == "\\" then {
-            s[-1] := ""
-            prompt := ">> "
-            next
-         }
-         body(s)
-         prompt := "> "
-         s := ""
       }
    end
 end
