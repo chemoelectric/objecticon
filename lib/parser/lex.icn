@@ -17,22 +17,14 @@ class Lex(Connectable)
       yytokval, yylinestart, yytext
 
    public static const
-      O, D, L, H, R, FS, IS, W, idchars, reswords,
+      idchars, reswords,
       Beginner, Ender, Newline
 
    private static init()
       Beginner := 1
       Ender := 2
       Newline := 4
-      O  := '01234567'
-      D  := &digits
-      L  := &letters ++ '_'
-      H  := &digits ++ 'abcdefABCDEF'
-      R  := &digits ++ &letters
-      FS := 'fFlL'
-      IS := 'uUlL'
-      W  := ' \t\v'
-      idchars := L ++ D
+      idchars := &letters ++ '_' ++ &digits
       reswords := table([Beginner+Ender, YY.IDENT])
       reswords["abstract"] := [0, YY.ABSTRACT]
       reswords["break"] := [Beginner+Ender, YY.BREAK]
@@ -296,7 +288,7 @@ class Lex(Connectable)
       }
       else {
          if yytext ||:= tab(any('rR')) then {
-            yytext ||:= tab(many(R))
+            yytext ||:= tab(many(&digits ++ &letters))
          }
          yytokval := integer(yytext) | err("invalid integer literal")
          return YY.INTLIT
