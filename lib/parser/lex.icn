@@ -5,10 +5,6 @@ package parser
 #
 import io, lang, util
 
-$define Beginner 1
-$define Ender 2
-$define Newline 4
-
 class Lex(Connectable)
    #
    # the tokflags will tell you whether the token can start an expression or
@@ -21,18 +17,14 @@ class Lex(Connectable)
       yytokval, yylinestart, yytext
 
    public static const
-      O, D, L, H, R, FS, IS, W, idchars, reswords
+      idchars, reswords,
+      Beginner, Ender, Newline
 
    private static init()
-      O  := '01234567'
-      D  := &digits
-      L  := &letters ++ '_'
-      H  := &digits ++ 'abcdefABCDEF'
-      R  := &digits ++ &letters
-      FS := 'fFlL'
-      IS := 'uUlL'
-      W  := ' \t\v'
-      idchars := L ++ D
+      Beginner := 1
+      Ender := 2
+      Newline := 4
+      idchars := &letters ++ '_' ++ &digits
       reswords := table([Beginner+Ender, YY.IDENT])
       reswords["abstract"] := [0, YY.ABSTRACT]
       reswords["break"] := [Beginner+Ender, YY.BREAK]
@@ -296,7 +288,7 @@ class Lex(Connectable)
       }
       else {
          if yytext ||:= tab(any('rR')) then {
-            yytext ||:= tab(many(R))
+            yytext ||:= tab(many(&digits ++ &letters))
          }
          yytokval := integer(yytext) | err("invalid integer literal")
          return YY.INTLIT
@@ -363,7 +355,7 @@ class Lex(Connectable)
             return YY.LCONCAT
          }
          if yytext ||:= =":=" then { return YY.AUGCONCAT}
-         tokflags +:= 1
+         tokflags +:= Beginner
          return YY.CONCAT
       }
       tokflags +:= Beginner
@@ -377,7 +369,7 @@ class Lex(Connectable)
    end
 
    private do_backslash()
-      tokflags+:=Beginner
+      tokflags +:= Beginner
       return YY.BACKSLASH
    end
 
@@ -389,7 +381,7 @@ class Lex(Connectable)
 
    private do_qmark()
       if yytext ||:= =":=" then { return YY.AUGQMARK }
-      tokflags +:= 1
+      tokflags +:= Beginner
       return YY.QMARK
    end
 

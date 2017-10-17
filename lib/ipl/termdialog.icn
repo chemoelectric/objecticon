@@ -61,7 +61,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
    end
 
    public link_middle_clicked(url)
-      input.insert_string(ucs(url.get_decoded_path()) || u" ")
+      input.insert_string(get_url_text(url) || u" ")
    end
 
    private copy_text(s)
@@ -72,23 +72,20 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       own_selection(Selection.CLIPBOARD, URLSelectionOwner([url]))
    end 
 
-   public create_link_menu(url)
-      local m, udp, file
-      m := Menu()
-      case string(url.scheme) of {
-         "text": {
-            if udp := ucs(url.get_decoded_path()) then
-               m.add(TextMenuItem().
-                     set_label("Copy").
-                     connect(create copy_text(udp), Event.ACTION))
-         }
-         "file": {
-            if file := ucs(Files.url_to_file(url)) then
-               m.add(TextMenuItem().
-                     set_label("Copy").
-                     connect(create copy_text(file), Event.ACTION))
-         }
+   private static get_url_text(url)
+      return case string(url.scheme) of {
+         "text": ucs(url.get_decoded_path())
+         "file": ucs(Files.url_to_file(url))
       }
+   end
+
+   public create_link_menu(url)
+      local m, s
+      m := Menu()
+      if s := get_url_text(url) then
+         m.add(TextMenuItem().
+               set_label("Copy").
+               connect(create copy_text(s), Event.ACTION))
       m.add(TextMenuItem().
             set_label("Copy URL").
             connect(create copy_url(url), Event.ACTION))

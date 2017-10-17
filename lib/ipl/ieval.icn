@@ -18,7 +18,7 @@ end
 class Ieval(MinimalObjectOutput)
    private 
       input, output, error, vars, ev, quiet_flag, par, consts,
-      oos, trace_flag, parse_flag, last_runerr, ee, hist_line, hlim,
+      oos, trace_flag, parse_flag, last_runerr, ee, hlim,
       elim, llim, imports, files, opts, history, is_flowterm
 
    private show_env()
@@ -32,69 +32,53 @@ class Ieval(MinimalObjectOutput)
 
    private show_help()
       output.
-         write("!env        Show the values stored in the environment, excluding these predefined values.").
+         write("!env        Show the values stored in the environment, excluding these predefined").
+         write("            values.").
          write("!help       Show help.").
-         write("!parse      Toggle parse mode, in which just the syntax structure of the command is printed.").
+         write("!parse      Toggle parse mode, in which just the syntax structure of the command is").
+         write("            printed.").
          write("!trace      Toggle tracing.").
          write("!wglob      Toggle the write-globals flag.").
          write("!traceback  Show the traceback of the last command that gave a runtime error.").
-         write("!quiet      Don't force evaluation of all of the values in the expression, and don't output any expression value.").
-         write("dir(x)      With no parameter, show all global variables.  With a parameter, show information about it.").
+         write("!quiet      Don't force evaluation of all of the values in the expression, and don't").
+         write("            output any expression value.").
+         write("dir(x,l)    With no parameter, show all global variables.  With a parameter, show").
+         write("            information about it.  If l is non-null, show class field locations.").
          write("!hist       Show the command line history.").
          write("!cls        Clear the screen.").
          write("old(s)      Search history for commands containing string s.").
-         write("cmd(n)      Run command number n again.").
          write("hlim(n)     Set the history limit to n.").
          write("elim(n)     Set the expression limit to n.").
          write("llim(n)     Set the gui log area line limit to n.").
          write("load(s)     Load the given prog, and set its error handler.").
-         write("gg(s,p)     Get the given global from the the given prog (shorthand for Prog.get_global).").
+         write("gg(s,p)     Get the given global from the the given prog (shorthand for").
+         write("            Prog.get_global).").
          write("oos         The ObjectOutputStream used to output results.").
          write("out         The OutputStream of the terminal.")
    end
 
-   private columnize_gen_ft(l, screen_width, gutter, rowwise)
-      local cr, s, i, j, k, w
-      /gutter := 2
-      cr := columnize(List{*!l}, screen_width, gutter, rowwise)
-      every i := 1 to cr.rows do {
-         s := ""
-         every j := 1 to cr.cols do {
-            w := cr.width[j]
-            if j < cr.cols then
-               w +:= gutter
-            k := if /rowwise then 
-               i + cr.rows * (j - 1)
-            else
-               (i -1) * cr.cols + j
-            s ||:= text_link(l[k])
-            s ||:= repl(" ", 0 < w - *l[k])
-         }
-         suspend s
-      }
+   private get_screen_width()
+      return if is(output, TermDialog) then
+         output.get_term_width()
+      else
+         LineEditorStream.get_console_width() | 80
+   end
+
+   private output_columns(l)
+      every output.write(columnize_gen(qsort(l, Text.consistent_compare), get_screen_width(),,, text_link))
    end
 
    private list_syms()
-      local l, e, w
-      w := if is(output, TermDialog) then
-         output.get_term_width()
-      else
-         LineEditorStream.get_console_width()
+      local l, e
       l := []
       every e := get_accessible_global_names() do
          if e ? ((not upto('.')) | (=!imports & ="." & (not upto('.')))) then
             put(l, e)
-      every output.write(columnize_gen_ft(qsort(l, Text.consistent_compare), w))
+      output_columns(l)
    end
 
    private list_prog_syms(prog)
-      local l, w
-      w := if is(output, TermDialog) then
-         output.get_term_width()
-      else
-         LineEditorStream.get_console_width()
-      l := List{ get_accessible_global_names(prog) }
-      every output.write(columnize_gen_ft(qsort(l, Text.consistent_compare), w))
+      output_columns(List{ get_accessible_global_names(prog) })
    end
 
    private show_parse(x, level)
@@ -235,17 +219,21 @@ class Ieval(MinimalObjectOutput)
             output.write("   at ", locn_string(Class.get_location(c))) 
             output.write("   implements ", implements_string(c))
             t := []
-            every f := Class.get_field_names(c) do
+            every f := Class.get_field_names(c) do {
                put(t, [f, 
                        Class.get_name(Class.get_field_defining_class(c, f)), 
                        right(Class.get_field_index(c, f), *Class.get_n_fields(c)),
-                       flags_string(Class.get_field_flags(c, f))])
-            print_table(qsort(t, index_cmp(1, Text.consistent_compare)), set(1))
+                       flags_string(Class.get_field_flags(c, f)) ])
+               if \a[2] then
+                  put(t[-1], abbr_locn_string(Class.get_field_location(c, f)))
+            }
+            t := qsort(t, index_cmp(1, Text.consistent_compare))
+            print_table(t, set(1))
          }
          "procedure"|"methp": {
-            output.write(kind_string(Proc.get_kind(c)), " ", Proc.get_name(c), "(", args_string(c), ")")
+            output.write(map(kind_string(Proc.get_kind(c))), " ", Proc.get_name(c), "(", args_string(c), ")")
             output.write("   at ", locn_string(Proc.get_location(c))) 
-            output.write("   method of ", Class.get_name(Proc.get_defining_class(c)))
+            output.write("   method of ", text_link(Class.get_name(Proc.get_defining_class(c))))
             t := []
             every f := Proc.get_local_names(c) do
                put(t, [f,
@@ -392,11 +380,6 @@ class Ieval(MinimalObjectOutput)
       }
    end
 
-   private cmd(n)
-      if is(input, TermDialog | LineEditorStream) then 
-         hist_line := input.get_history_item(n)
-   end
-
    public new(imports, files, opts)
       self.imports := imports
       self.files := files
@@ -418,8 +401,10 @@ class Ieval(MinimalObjectOutput)
 
    public run()
       local hfile
-      is_flowterm := Yes{ \opts["g"] | FileStream.stdin.is_flowterm_tty() }
-      if \opts["s"] then
+      is_flowterm := Yes{ \opts["g"] | FileStream.stdout.is_flowterm_tty() }
+      if \opts["z"] then
+         do_nothing()
+      else if \opts["s"] then
          do_stdin()
       else {
          hfile := FilePath(BaseDir.ensure_data_home()).child("ieval").str() | stop("Couldn't access data dir: ", &why)
@@ -451,7 +436,6 @@ class Ieval(MinimalObjectOutput)
       consts["load"] := load
       consts["gg"] := Prog.get_global
       consts["traceback"] := create traceback()
-      consts["cmd"] := cmd
       consts["oos"] := oos := ObjectOutputStream(output).set_indent(3)
       consts["out"] := output
 
@@ -662,85 +646,70 @@ class Ieval(MinimalObjectOutput)
          input.set_popup_on_tab(&no)
 
       error := output := input
-      prelim()
       s := ""
       prompt := "> "
       input.connect(create {
          t := input.line
-         repeat {
-            output.write(prompt, t)
-            hist_line := &null
-            s ||:= t
-            if s[-1] == "\\" then {
-               s[-1] := ""
-               prompt := ">> "
-               break
-            }
+         output.write(prompt, t)
+         s ||:= t
+         if s[-1] == "\\" then {
+            s[-1] := ""
+            prompt := ">> "
+         } else {
             body(s)
             prompt := "> "
             s := ""
-            t := \hist_line | break
          }
       }, Event.ACTION)
-      input.show_modal()
+      # Do prelim() after showing the TermDialog, since output to
+      # it will be discarded before it is live.
+      input.show()
+      prelim()
+      Dispatcher.message_loop(input)
+   end
+
+   private do_nothing()
+      output := FileStream.stdout
+      error := FileStream.stderr
+      prelim()
    end
 
    private do_stdin()
+      input := FileStream.stdin
+      do_terminal()
+   end
+
+   private do_line_editor()
+      input := LineEditorStream().
+         set_complete_function(complete).
+         set_history_limit(hlim).
+         set_history(history) | stop("Failed to create LineEditorStream: ", &why)
+      do_terminal()
+   end
+
+   private do_terminal()
       local s, t, prompt
 
-      output := FileStream.stdout
-      error := FileStream.stderr
-      input := FileStream.stdin
-      prelim()
+      do_nothing()
+
       s := ""
       prompt := "> "
       repeat {
-         writes(prompt)
-         t := input.read_line() | stop("Failed to read file: ", &why)
+         if is(input, LineEditorStream) then
+            input.set_prompt(prompt)
+         else
+            writes(prompt)
+         t := input.read_line() | stop("Failed to read input: ", &why)
          if /t then break
          s ||:= t
          if s[-1] == "\\" then {
             s[-1] := ""
             prompt := ">> "
-            next
-         }
-         body(s)
-         prompt := "> "
-         s := ""
-      }
-   end
-
-   private do_line_editor()
-      local s, t, prompt
-
-      output := FileStream.stdout
-      error := FileStream.stderr
-      input := LineEditorStream().
-         set_complete_function(complete).
-         set_history_limit(hlim).
-         set_history(history) | stop("Failed to create LineEditorStream: ", &why)
-      prelim()
-      s := ""
-      prompt := "> "
-      repeat {
-         if \hist_line then {
-            write(prompt, hist_line)
-            t := hist_line
-            hist_line := &null
          } else {
-            input.set_prompt(prompt)
-            t := input.read_line() | stop("Failed to read file: ", &why)
-            if /t then break
+            body(s)
+            prompt := "> "
+            s := ""
          }
-         s ||:= t
-         if s[-1] == "\\" then {
-            s[-1] := ""
-            prompt := ">> "
-            next
-         }
-         body(s)
-         prompt := "> "
-         s := ""
       }
    end
 end

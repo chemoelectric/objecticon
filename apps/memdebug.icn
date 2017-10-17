@@ -3,7 +3,7 @@ import io, lang, util, net, ipl.options, gui, ipl.termdialog,
 
 global prog, input, output, stopped, sched, break_proc, break_line, break_file, 
    curr_file, tmp_out, tmp_out_name, cmd_out, exited, opts, hlim, llim,
-   history, hfile, slim, addrs, hist_line
+   history, hfile, slim, addrs, is_flowterm
 
 class MemDebug()
    public static native list(obj)
@@ -51,7 +51,6 @@ procedure do_help()
    cmd_out.write("breakpoint [x y]  - set or clear breakpoint at file x, line y.")
    cmd_out.write("hlim i            - set the command history limit.")
    cmd_out.write("hist              - display the history.")
-   cmd_out.write("cmd n             - perform command n in the history.")
    cmd_out.write("llim i            - set the history log limit in the gui.")
    cmd_out.write("slim i            - set the displayed string limit; 0 means no limit.")
    cmd_out.write("addrs i           - set the display of addresses in the regions")
@@ -222,15 +221,6 @@ procedure do_echo(a)
    cmd_out.write(list2str(a, " "))
 end
 
-procedure do_cmd(a)
-   local n
-   if *a = 1 & n := integer(a[1]) then {
-      if is(input, TermDialog | LineEditorStream) then
-         hist_line := input.get_history_item(n)
-   } else
-      return errmsg("usage: cmd n")
-end
-
 procedure do_settings()
    cmd_out.write("slim is ", slim)
    cmd_out.write("hlim is ", hlim)
@@ -282,6 +272,7 @@ procedure do_line(s)
       cmd_out := tmp_out
    }
 
+   MemDebug.set_flowterm(if \ (pipe | redir) then &no else is_flowterm)
    MemDebug.set_output(cmd_out)
 
    case string(pop(a)) of {
@@ -306,7 +297,6 @@ procedure do_line(s)
       "slim" :  do_slim(a)
       "addrs" :  do_addrs(a)
       "cls" :  do_cls()
-      "cmd" : do_cmd(a)
       "echo" :  do_echo(a)
       "help": do_help()
       default: {
@@ -319,12 +309,10 @@ procedure do_line(s)
    else if cmd_out === tmp_out then {
       tmp_out.seek(1)
       if \pipe then {
-         if p := ProgOutputStream("/bin/sh", ["-c", pipe]) then {
+         use { p := ProgOutputStream("/bin/sh", ["-c", pipe]),
             # This will ignore any SIGPIPE signals (and just fail).
             tmp_out.copy_to(p)
-            p.close()
-         } else
-            output.write("Couldn't open pipe ", pipe, ": ", &why)
+         }
       } else
          tmp_out.copy_to(output)
    }
@@ -341,16 +329,9 @@ end
 
 procedure gui_line()
    local s
-   repeat {
-      if s := \hist_line then
-         hist_line := &null
-      else
-         s := input.line
-      output.write("? ", s)
-      do_line(s)
-      if /hist_line then
-         break
-   }
+   s := input.line
+   output.write("? ", s)
+   do_line(s)
 end
 
 procedure do_gui()
@@ -400,16 +381,11 @@ end
 procedure terminal_task(task)
    local s
    repeat {
-      if s := \hist_line then {
-         output.write("? ", s)
-         hist_line := &null
-      } else {
-         if is(input, TaskStream) then
-            output.out("? ")
-         s := input.read_line()
-         if /s then
-            break
-      }
+      if is(input, TaskStream) then
+         output.out("? ")
+      s := input.read_line() | stop("Failed to read input: ", &why)
+      if /s then
+         break
       do_line(s)
    }
    write("Reverting")
@@ -418,19 +394,28 @@ procedure terminal_task(task)
    task.revert()
 end
 
+procedure do_stdin()
+   input := FileStream.stdin
+   do_terminal()
+end
+
+procedure do_line_editor()
+   input := LineEditorStream().
+      set_complete_function(complete).
+      set_history_limit(hlim).
+      set_history(history).
+      set_prompt("? ")
+   do_terminal()
+end
+
 procedure do_terminal()
    local task
    sched := Scheduler()
    task := Task(sched, create terminal_task(task))
-   input := if /opts["s"] then
-      LineEditorStream().
-         set_complete_function(complete).
-         set_history_limit(hlim).
-         set_history(history).
-         set_task(task).
-         set_prompt("? ")
+   if is(input, LineEditorStream) then
+      input.set_task(task)
    else
-      TaskStream(FileStream.stdin, task)
+      input := TaskStream(input, task)
    output := FileStream.stdout
    task.start()
    prelim()
@@ -559,7 +544,7 @@ procedure main(args)
    MemDebug.set_program(prog)
    MemDebug.set_slim(slim)
    MemDebug.set_addrs(addrs)
-   MemDebug.set_flowterm(Yes{ \opts["g"] | FileStream.stdin.is_flowterm_tty() })
+   is_flowterm := Yes{ \opts["g"] | FileStream.stdout.is_flowterm_tty() }
    Prog.set_timer_interval(100, prog)
 
    synch_mask()
@@ -567,13 +552,16 @@ procedure main(args)
    tmp_out_name := Files.make_temp_filename("monitor", ".txt") | stop(&why)
    tmp_out := FileStream(tmp_out_name, ior(FileOpt.RDWR, FileOpt.TRUNC, FileOpt.CREAT)) | stop(&why)
 
-   hfile := FilePath(BaseDir.ensure_data_home()).child("memdebug").str() | stop("Couldn't access data dir: ", &why)
-   history := decode_from_file(hfile) | []
-
-   if \opts["g"] then
-      do_gui()
-   else
-      do_terminal()
+   if \opts["s"] then
+      do_stdin()
+   else {
+      hfile := FilePath(BaseDir.ensure_data_home()).child("memdebug").str() | stop("Couldn't access data dir: ", &why)
+      history := decode_from_file(hfile) | []
+      if \opts["g"] then
+         do_gui()
+      else
+         do_line_editor()
+   }
 
    cleanup()
 

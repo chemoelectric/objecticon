@@ -1196,7 +1196,7 @@ end
 #
 # Event codes for selection events.
 #
-class Selection()
+final abstract class Selection()
    public static const
       # Selection request event
       REQUEST,     
@@ -1234,7 +1234,7 @@ end
 #
 # Event codes for mouse events.
 #
-class Mouse()
+final abstract class Mouse()
    public static const
       LEFT_PRESS,
       MIDDLE_PRESS,
@@ -1278,7 +1278,7 @@ end
 #
 # Event codes for key events.
 #
-class Key()
+final abstract class Key()
    public static const
       # Modifier flags
       MOD_SHIFT,
@@ -1783,7 +1783,7 @@ end
 # This class provides symbolic names for the drawing operations
 # supported by `Window.set_draw_op()`.
 #
-class DrawOp()
+final abstract class DrawOp()
    public static const
       ATOP,
       CLEAR,
@@ -1818,7 +1818,7 @@ end
 # This class provides symbolic names for the line styles supported by
 # `Window.set_line_style()`.
 #
-class LineStyle()
+final abstract class LineStyle()
    public static const
       DISC,
       SQUARE
@@ -1833,7 +1833,7 @@ end
 # This class provides symbolic names for the canvas types supported by
 # `Window.set_canvas()`.
 #
-class Canvas()
+final abstract class Canvas()
    public static const
       FULLSCREEN,
       HIDDEN,
@@ -1860,7 +1860,7 @@ end
 # This class provides symbolic names for the pattern names supported
 # by `Window.set_textured_pattern()` and  `Window.set_masked_pattern()`.
 #
-class Pattern()
+final abstract class Pattern()
    public static const
       BLACK,
       VERY_DARK,

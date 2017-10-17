@@ -31,9 +31,10 @@ import ipl.pdco
 
 record ColumnizeResult(rows, cols, width)
 
-procedure columnize_gen(l, screen_width, gutter, rowwise)
+procedure columnize_gen(l, screen_width, gutter, rowwise, cvt)
    local cr, s, i, j, k, w
    /gutter := 2
+   /cvt := 1
    cr := columnize(List{*!l}, screen_width, gutter, rowwise)
    every i := 1 to cr.rows do {
       s := ""
@@ -44,8 +45,9 @@ procedure columnize_gen(l, screen_width, gutter, rowwise)
          k := if /rowwise then 
             i + cr.rows * (j - 1)
          else
-            (i -1) * cr.cols + j
-         s ||:= left(l[k], w)
+            (i -1) * cr.cols + j 
+         s ||:= cvt(l[k])
+         s ||:= repl(" ", 0 < w - *l[k])
       }
       suspend s
    }

@@ -154,7 +154,6 @@ void output_rule_data(void)
     }
     if (!rflag) outline += 2;
     fprintf(output_file, iflag ? "\n  ]\n" : "\n};\n");
-    if (iflag) ++outline;
 
     if (jflag) /*rwj*/
       fprintf(output_file, "final static short yylen[] = {%29d,", 2);
@@ -899,6 +898,7 @@ void output_defines(void)
       fprintf(code_file, "public final static short YYERRCODE=%d;\n", symbol_value[1]);
     else if (iflag) {
       fprintf(code_file, "public static const YYERRCODE\n");
+      ++outline;
       fprintf(code_file, "private static init() \n");
 
       for (i = 2; i < ntokens; ++i)
@@ -927,6 +927,7 @@ void output_defines(void)
               fprintf(code_file, " := %d\n", symbol_value[i]);
           }
       }
+      ++outline;
       fprintf(code_file, "  YYERRCODE := %d\n", symbol_value[1]);
     }
     else
@@ -988,10 +989,11 @@ void output_debug(void)
       fprintf(code_file, "$define YYFINAL %d\n", final_state);
     else
       fprintf(code_file, "#define YYFINAL %d\n", final_state);
-    outline += 3;
-    if (!jflag && !iflag)/*rwj*/
+    if (!jflag && !iflag)/*rwj*/ {
+      outline += 3;
       fprintf(code_file, "#ifndef YYDEBUG\n#define YYDEBUG %d\n#endif\n",
 	    tflag);
+    }
     if (rflag)
 	fprintf(output_file, "#ifndef YYDEBUG\n#define YYDEBUG %d\n#endif\n",
 		tflag);
@@ -1019,7 +1021,6 @@ void output_debug(void)
 	symnam[symbol_value[i]] = symbol_name[i];
     symnam[0] = "end-of-file";
 
-    if (!rflag) ++outline;
     if (jflag)/*rwj*/
       fprintf(output_file, "final static String yyname[] = {");
     else if (iflag)

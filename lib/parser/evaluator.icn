@@ -359,7 +359,13 @@ class Evaluator()
       ls := Util.dottedid2string(n.child(1))
       if (ls == "default") | member(\imports, ls) then
          return env.get(ls || "." || n.child(3).s, self)
-      suspend lang.Class.get(E(n.child(1)), n.child(3).s)
+      suspend Class_get(E(n.child(1)), n.child(3).s)
+   end
+
+   # This is wrapped in a static method so that lookups if x is a
+   # class give the right error message (606 rather than 607).
+   private static Class_get(x, field)
+      return lang.Class.get(x, field)
    end
 
    private do_keyword(n) 
@@ -458,7 +464,7 @@ class Evaluator()
    private do_Uqmark(n) suspend ?E(n.child(2)) end
    private do_Unequiv(n) suspend ~===E(n.child(2)) end
    private do_Ubackslash(n) suspend \E(n.child(2)) end
-   private do_field(n) suspend lang.Class.get(E(n.child(1)), n.child(3).s) end
+   private do_field(n) suspend Class_get(E(n.child(1)), n.child(3).s) end
    private do_if(n) suspend if E(n.child(2)) then E(n.child(4)) end
    private do_ifelse(n) suspend if E(n.child(2)) then E(n.child(4)) else E(n.child(6)) end
    private do_whiledo(n) suspend E( loop(n, create  while E(n.child(2)) do E(n.child(4)) )) end
