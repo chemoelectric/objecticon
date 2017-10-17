@@ -207,7 +207,7 @@ int main(int argc, char **argv)
 
             case 'V':
                 printf("%s\n", Version);
-                exit(0);
+                exit(EXIT_SUCCESS);
                 break;
 
             case 'c':			/* -c: compile only (no linking) */
@@ -719,7 +719,7 @@ static int ldbg(int argc, char **argv)
                 int i;
                 for (i = 0;; ++i) {
                     if (toktab[i].t_type == 0)
-                        exit(-1);
+                        exit(EXIT_FAILURE);
                     if (toktab[i].t_type == Val0(yylval))
                         break;
                 }
@@ -742,7 +742,7 @@ static int ldbg(int argc, char **argv)
                 int i;
                 for (i = 0;; ++i) {
                     if (optab[i].tok.t_type == 0)
-                        exit(-1);
+                        exit(EXIT_FAILURE);
                     if (optab[i].tok.t_type == Val0(yylval))
                         break;
                 }
