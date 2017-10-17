@@ -1,13 +1,13 @@
 import io, lang, util, net, ipl.options, ipl.lists
 
-procedure create_prog(imps, links)
+procedure create_prog(main, imps, links)
    local tf, prog
 
    imps ++:= set("ipl.ieval")  # Avoid changing imps parameter
    prog := ""
    every prog ||:= "import " || !imps || "\n"
    prog ||:= "invocable all\n_
-procedure main(imports, files, opts)\n_
+procedure " || main || "(imports, files, opts)\n_
     ipl.ieval.Ieval(imports, files, opts).run()\n_
 end\n"
    return use {
@@ -17,26 +17,27 @@ end\n"
    }
 end
 
-$ifdef _MS_WIN32
+procedure esc(s)
+$ifdef _UNIX
+   return Format.shell_escape(s)
+$elsifdef _PLAN9
+   return Format.rc_escape(s)
+$else
+   return s
+$endif
+end
+
 procedure compile1(prog, pf, tf, links)
    local s, i
    Files.string_to_file(pf, prog) | fail
-   s := "oit -s -l 2 -o " || tf || " " || pf
-   every s ||:= " " || (!links)
+   s := "oit -s -l 2 -o " || esc(tf) || " " || esc(pf)
+   every s ||:= " " || esc(!links)
    i := system(s)
    if i = 0 then
       return
    else
       error("oit failed, exit status " || i)
 end
-$else
-procedure compile1(prog, pf, tf, links)
-   local p
-   Files.string_to_file(pf, prog) | fail
-   use{ p := FilterOutputStream(, "oit", ["-s", "-l", "2", "-o", tf, pf] ||| links) } | fail
-   return p.succeeded()
-end
-$endif
 
 procedure compile(prog, tf, links)
    local pf
@@ -63,9 +64,10 @@ procedure usage(opts)
 end
 
 procedure main(a)
-   local opts, prog, imports, links
+   local opts, prog, imports, links, main
    opts := options(a, [Opt("i", string, "Import the given package(s).  Several packages may be comma-separated, or several -i options may be given",&yes),
                        Opt("l", string, "Link the given source file.  Several -l options may be given",&yes),
+                       Opt("m",, "Expect a main procedure in one of the linked source files"),
                        Opt("wglob",, "If given, then assignments to global variables are allowed"),
                        Opt("s",, "Read commands from standard input rather than using a line editor"),
                        Opt("g",, "Use a gui interface rather than the console"),
@@ -75,9 +77,10 @@ procedure main(a)
                        Opt("elim",integer,"Set the expression limit for evaluation (default is 35)"),
                        Opt("llim",integer,"Set the gui interface's log area line limit (default is 600)")],
                        usage)
+   main := if /opts["m"] then "main" else "ieval_main"
    imports := set()
    every insert(imports, !str2list(!\opts["i"]))
    links := \opts["l"] | []
-   prog := create_prog(imports, links) | stop(&why)
-   Prog.get_global("main", prog)(imports, a, opts)
+   prog := create_prog(main, imports, links) | stop(&why)
+   Prog.get_global(main, prog)(imports, a, opts)
 end
