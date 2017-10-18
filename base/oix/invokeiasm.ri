@@ -179,3 +179,24 @@ static word lang_Class_create_raw_instance_of_impl_code[] = {
    1,
 };
 #passthru CustomProc(lang_Class_create_raw_instance_of_impl,lang_Class_create_raw_instance_of_impl_code,0,0,0,0,2,0,0,"lang_Class_create_raw_instance_of_impl")
+static word apply_impl_code[] = {
+   Op_Apply,
+   0,
+   Op_Tmp,
+   2,
+   Op_Tmp,
+   0,
+   Op_Tmp,
+   1,
+   0,
+   (word)&apply_impl_code[17],
+   Op_CSuspend,
+   Op_Tmp,
+   2,
+   Op_Resume,
+   0,
+   Op_Goto,
+   (word)&apply_impl_code[10],
+   Op_CFail,
+};
+#passthru CustomProc(apply_impl,apply_impl_code,0,0,0,1,3,0,0,"apply_impl")

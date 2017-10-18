@@ -1267,3 +1267,21 @@ function lang_Class_ensure_initialized(c)
       return;
    }
 end
+
+/*
+ * This operator allows the binary apply (!) operation via string invocation.
+ */
+
+operator ! apply(fun, args)
+    body {
+        struct p_frame *pf;
+        MemProtect(pf = alc_p_frame(&Bapply_impl, 0));
+        push_frame((struct frame *)pf);
+        pf->tmp[0] = fun;
+        pf->tmp[1] = args;
+        for (;;) {
+            tail_invoke_frame((struct frame *)pf);
+            suspend;
+        }
+    }
+end

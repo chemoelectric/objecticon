@@ -139,3 +139,22 @@ $start lang_Class_create_raw_instance_of_impl
     Op_CReturn
          Op_Tmp tmp:1
 $end
+
+$start apply_impl
+    Op_Apply
+         clo:0
+         Op_Tmp tmp:2
+         Op_Tmp tmp:0
+         Op_Tmp tmp:1
+         0
+         Done
+Loop:
+    Op_CSuspend
+         Op_Tmp tmp:2
+    Op_Resume
+         clo:0
+    Op_Goto 
+         Loop
+Done:
+     Op_CFail
+$end
