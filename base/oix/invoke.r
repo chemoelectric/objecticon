@@ -1283,6 +1283,7 @@ operator ! apply(fun, args)
             tail_invoke_frame((struct frame *)pf);
             suspend;
         }
+        /* Not reached */
         fail;
     }
 end
