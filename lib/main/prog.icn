@@ -267,7 +267,7 @@ end
 #
 # This class contains some useful methods for manipulating coexpressions.
 #
-class Coexpression()
+final abstract class Coexpression()
    #
    # Return the given coexpression's activator (ie the value of
    # `&source` when it was last active); fails if the coexpression has
