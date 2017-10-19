@@ -330,7 +330,7 @@ static int bufcmp(char *s)
 {
     char *s1;
     s1 = lex_sbuf.strtimage;
-    while (s != '\0' && s1 < lex_sbuf.endimage && *s == *s1) {
+    while (*s != '\0' && s1 < lex_sbuf.endimage && *s == *s1) {
         ++s;
         ++s1;
     }
