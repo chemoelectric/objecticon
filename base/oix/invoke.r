@@ -1283,5 +1283,6 @@ operator ! apply(fun, args)
             tail_invoke_frame((struct frame *)pf);
             suspend;
         }
+        fail;
     }
 end
