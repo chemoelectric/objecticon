@@ -463,6 +463,10 @@ procedure next_event()
       MonitorCode.File : {
          curr_file := e.value
       }
+      MonitorCode.Break : {
+         output.write("&break evaluated")
+         do_stop()
+      }
       MonitorCode.Line : {
          if e.value = \break_line & curr_file == \break_file then {
             output.write("Breakpoint hit")
@@ -482,7 +486,7 @@ end
 
 procedure synch_mask()
    local c
-   c := MonitorCode.Timer ++ MonitorCode.Error
+   c := MonitorCode.Timer ++ MonitorCode.Error ++ MonitorCode.Break
    if \break_line then
       c ++:= MonitorCode.File ++ MonitorCode.Line
    if \break_proc then

@@ -406,6 +406,7 @@ expr11  : literal ;
         | expr11 LPAREN exprlist RPAREN { $$ := Node("invoke", $1,$2,$3,$4);} ;
         | expr11 DOT IDENT { $$ := Node("field",$1,$2,$3);} ;
         | AND FAIL { $$ := Node("keyword",$1,$2);} ;
+	| AND BREAK { $$ := Node("keyword",$1,$2);} ;
         | AND IDENT { $$ := Node("keyword",$1,$2);} ;
 
 while   : WHILE expr { $$ := Node("while", $1,$2);} ;

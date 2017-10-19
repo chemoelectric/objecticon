@@ -341,3 +341,12 @@ keyword handler
       return kywdhandler(&kywd_handler);
       }
 end
+
+"&break - cause a break event to be sent to the program monitor."
+keyword break
+   body {
+      if (Testb(E_Break, curpstate->eventmask->bits))
+          add_to_prog_event_queue(&nulldesc, E_Break);
+      fail;
+      }
+end
