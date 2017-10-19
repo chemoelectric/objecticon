@@ -334,10 +334,7 @@ static int bufcmp(char *s)
         ++s;
         ++s1;
     }
-    if (*s == '\0' && s1 == lex_sbuf.endimage)
-        return 1;
-    else
-        return 0;
+    return (*s == '\0' && s1 == lex_sbuf.endimage);
 }
 
 /*
@@ -560,7 +557,7 @@ static struct toktab *getstring(int ac, int *cc)
         lexfatal("unclosed quote");
         *cc = c;
     }
-    len = lex_sbuf.endimage - lex_sbuf.strtimage;
+    len = CurrLen(lex_sbuf);
     yylval = StrNode(str_install(&lex_sbuf), len);
     return T_String;
 }
