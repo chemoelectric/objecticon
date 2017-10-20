@@ -1059,7 +1059,7 @@ final class Window(NoCopy, ObjectOutput)
       return Size!get_display_size_mm_impl()
    end
 
-   public native get_display_size_mm_impl()
+   private native get_display_size_mm_impl()
 
    # Return the pointer's current position as a `Point` record,
    # relative to this window.
