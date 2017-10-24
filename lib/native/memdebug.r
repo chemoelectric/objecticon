@@ -787,7 +787,7 @@ static void outimagey(dptr d, struct frame *frame)
         }
       tvsubs: {
             fputs("tvsubs -> ", out);
-            outimagex(&TvsubsBlk(*d).ssvar);
+            outimagey(&TvsubsBlk(*d).ssvar, frame);
             if (TvsubsBlk(*d).sslen == 1)
                 fprintf(out, "[" WordFmt "]", TvsubsBlk(*d).sspos);
             else
