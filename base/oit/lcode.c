@@ -20,6 +20,12 @@
 #include "../h/rmacros.h"
 #undef constants
 
+#define KDef(p,n) #p,
+char *keyword_names[] = {
+    NULL,
+#include "../h/kdefs.h"
+};
+
 static int nstatics = 0;               /* Running count of static variables */
 static int ntcase = 0;                 /* Running count of tcase tables */
 
@@ -836,7 +842,7 @@ static void lemitcode()
                 case Ir_KeyOp: {
                     struct ir_keyop *x = (struct ir_keyop *)ir;
                     out_op(Op_Keyop);
-                    word_field(x->keyword, "keyword");
+                    outwordx(x->keyword, "   keyword=" WordFmt " (&%s)", x->keyword, keyword_names[x->keyword]);
                     emit_ir_var(x->lhs, "lhs");
                     labout(x->fail_label, "fail");
                     break;
@@ -844,7 +850,7 @@ static void lemitcode()
                 case Ir_KeyClo: {
                     struct ir_keyclo *x = (struct ir_keyclo *)ir;
                     out_op(Op_Keyclo);
-                    word_field(x->keyword, "keyword");
+                    outwordx(x->keyword, "   keyword=" WordFmt " (&%s)", x->keyword, keyword_names[x->keyword]);
                     word_field(x->clo, "clo");
                     emit_ir_var(x->lhs, "lhs");
                     labout(x->fail_label, "fail");
