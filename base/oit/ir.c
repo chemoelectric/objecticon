@@ -2664,13 +2664,14 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
         case Uop_Case:                  /* case expression */
         case Uop_Casedef: {
             struct lnode_case *x = (struct lnode_case *)n;
-            struct ir_var *e, *v;
+            struct ir_var *e, **var;
             struct ir_info *expr, *def = 0, **selector, **clause;
             struct ir_stack *case_st, *clause_st, *expr_st;
             int i, j, mk, tl, *tbl, xc, need_mark;
 
             selector = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
             clause = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_info *));
+            var = mb_alloc(&ir_func_mb, x->n * sizeof(struct ir_var *));
 
             if (x->use_tcase) {
                 tbl = mb_alloc(&ir_func_mb, 2 * (x->n + 1) * sizeof(int));
@@ -2686,13 +2687,14 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 expr_st = branch_stack(case_st);
                 mk = make_mark(expr_st);
 
-                v = make_tmp(case_st);
                 expr = ir_traverse(x->expr, expr_st, e, 1, 1);
                 clause_st = branch_stack(st);
 
                 for (i = 0; i < x->n; ++i) {                /* The n non-default cases */
-                    struct ir_stack *tst;
-                    selector[i] = ir_traverse(x->selector[i], branch_stack(case_st), v, 0, 1);
+                    struct ir_stack *tst, *sst;
+                    sst = branch_stack(case_st);
+                    var[i] = get_var(x->selector[i], sst);
+                    selector[i] = ir_traverse(x->selector[i], sst, var[i], 0, 1);
                     tst = branch_stack(st);
                     clause[i] = ir_traverse(x->clause[i], tst, target, bounded, rval);
                     union_stack(clause_st, tst);
@@ -2733,7 +2735,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                     j = 0;
                     for (i = 0; i < x->n; ++i) {
                         chunk2(selector[i]->success,
-                               ir_tcaseinsert(n, ci, v, i),
+                               ir_tcaseinsert(n, ci, var[i], i),
                                ir_goto(n, selector[i]->resume));
 
                         if (i < x->n - 1)
@@ -2785,7 +2787,6 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
                 expr_st = branch_stack(case_st);
 
-                v = make_tmp(case_st);
                 expr = ir_traverse(x->expr, expr_st, e, 1, 1);
 
                 /* Set to 1 if the expression or any selector uses stack */
@@ -2793,8 +2794,10 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
 
                 clause_st = branch_stack(st);
                 for (i = 0; i < x->n; ++i) {                /* The n non-default cases */
-                    struct ir_stack *tst;
-                    selector[i] = ir_traverse(x->selector[i], branch_stack(case_st), v, 0, 1);
+                    struct ir_stack *tst, *sst;
+                    sst = branch_stack(case_st);
+                    var[i] = get_var(x->selector[i], sst);
+                    selector[i] = ir_traverse(x->selector[i], sst, var[i], 0, 1);
                     if (selector[i]->uses_stack)
                         need_mark = 1;
                     tst = branch_stack(st);
@@ -2831,7 +2834,7 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                            ir_goto(n, selector[0]->start));
                     for (i = 0; i < x->n; ++i) {
                         chunk4(selector[i]->success,
-                               ir_op(n, 0, Uop_Eqv, e, v, 0, 1, selector[i]->resume),
+                               ir_op(n, 0, Uop_Eqv, e, var[i], 0, 1, selector[i]->resume),
                                OptIns(selector[i]->uses_stack, ir_unmark(n, mk)),
                                OptIns(!bounded, ir_movelabel(n, tl, clause[i]->resume)), 
                                ir_goto(n, clause[i]->start));
