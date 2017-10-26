@@ -1310,6 +1310,7 @@ static int is_repeatable(struct lnode *n)
             return (x->global->g_flag & (F_Builtin|F_Proc|F_Record|F_Class)) != 0;
         }
 
+        case Uop_List: 
         case Uop_Mutual:
         case Uop_Slist: {
             struct lnode_n *x = (struct lnode_n *)n;
@@ -1431,7 +1432,6 @@ static int is_repeatable(struct lnode *n)
         case Uop_Create: 
         case Uop_Uactivate: 
         case Uop_Bactivate: 
-        case Uop_List: 
         case Uop_Local: 
         case Uop_Next:
         case Uop_End:
