@@ -88,92 +88,93 @@ struct toktab *restab[] = {
 
 struct optab optab[] = {
    {{"!",      BANG,       Beginner}, Unary},         /* 0 */
-   {{"%",      MOD,        0},        Binary},        /* 1 */
-   {{"%:=",    AUGMOD,     0},        0},             /* 2 */
-   {{"&",      AND,        Beginner}, Binary},        /* 3 */
-   {{"&:=",    AUGAND,     0},        0},             /* 4 */
-   {{"*",      STAR,       Beginner}, Unary | Binary},/* 5 */
-   {{"*:=",    AUGSTAR,    0},        0},             /* 6 */
-   {{"**",     INTER,      Beginner}, Binary},        /* 7 */
-   {{"**:=",   AUGINTER,   0},        0},             /* 8 */
-   {{"+",      PLUS,       Beginner}, Unary | Binary},/* 9 */
-   {{"+:=",    AUGPLUS,    0},        0},             /* 10 */
-   {{"++",     UNION,      Beginner}, Binary},        /* 11 */
-   {{"++:=",   AUGUNION,   0},        0},             /* 12 */
-   {{"-",      MINUS,      Beginner}, Unary | Binary},/* 13 */
-   {{"-:=",    AUGMINUS,   0},        0},             /* 14 */
-   {{"--",     DIFF,       Beginner}, Binary},        /* 15 */
-   {{"--:=",   AUGDIFF,    0},        0},             /* 16 */
-   {{".",      DOT,        Beginner}, Unary},         /* 17 */
-   {{"/",      SLASH,      Beginner}, Unary | Binary},/* 18 */
-   {{"/:=",    AUGSLASH,   0},        0},             /* 19 */
-   {{":=",     ASSIGN,     0},        Binary},        /* 20 */
-   {{":=:",    SWAP,       0},        Binary},        /* 21 */
-   {{"<",      NMLT,       0},        Binary},        /* 22 */
-   {{"<:=",    AUGNMLT,    0},        0},             /* 23 */
-   {{"<-",     REVASSIGN,  0},        Binary},        /* 24 */
-   {{"<->",    REVSWAP,    0},        Binary},        /* 25 */
-   {{"<<",     SLT,        0},        Binary},        /* 26 */
-   {{"<<:=",   AUGSLT,     0},        0},             /* 27 */
-   {{"<<=",    SLE,        0},        Binary},        /* 28 */
-   {{"<<=:=",  AUGSLE,     0},        0},             /* 29 */
-   {{"<=",     NMLE,       0},        Binary},        /* 30 */
-   {{"<=:=",   AUGNMLE,    0},        0},             /* 31 */
-   {{"=",      NMEQ,       Beginner}, Unary | Binary},/* 32 */
-   {{"=:=",    AUGNMEQ,    0},        0},             /* 33 */
-   {{"==",     SEQ,        Beginner}, Binary},        /* 34 */
-   {{"==:=",   AUGSEQ,     0},        0},             /* 35 */
-   {{"===",    EQUIV,      Beginner}, Binary},        /* 36 */
-   {{"===:=",  AUGEQUIV,   0},        0},             /* 37 */
-   {{">",      NMGT,       0},        Binary},        /* 38 */
-   {{">:=",    AUGNMGT,    0},        0},             /* 39 */
-   {{">=",     NMGE,       0},        Binary},        /* 40 */
-   {{">=:=",   AUGNMGE,    0},        0},             /* 41 */
-   {{">>",     SGT,        0},        Binary},        /* 42 */
-   {{">>:=",   AUGSGT,     0},        0},             /* 43 */
-   {{">>=",    SGE,        0},        Binary},        /* 44 */
-   {{">>=:=",  AUGSGE,     0},        0},             /* 45 */
-   {{"?",      QMARK,      Beginner}, Unary},         /* 46 */
-   {{"?:=",    AUGQMARK,   0},        0},             /* 47 */
-   {{"@",      AT,         Beginner}, 0},             /* 48 */
-   {{"@:=",    AUGAT,      0},        0},             /* 49 */
-   {{"\\",     BACKSLASH,  Beginner}, Unary},         /* 50 */
-   {{"^",      CARET,      Beginner}, Unary | Binary},/* 51 */
-   {{"^:=",    AUGCARET,   0},        0},             /* 52 */
-   {{"|",      BAR,        Beginner}, 0},             /* 53 */
-   {{"||",     CONCAT,     Beginner}, Binary},        /* 54 */
-   {{"||:=",   AUGCONCAT,  0},        0},             /* 55 */
-   {{"|||",    LCONCAT,    Beginner}, Binary},        /* 56 */
-   {{"|||:=",  AUGLCONCAT, 0},        0},             /* 57 */
-   {{"~",      TILDE,      Beginner}, Unary},         /* 58 */
-   {{"~=",     NMNE,       Beginner}, Binary},        /* 59 */
-   {{"~=:=",   AUGNMNE,    0},        0},             /* 60 */
-   {{"~==",    SNE,        Beginner}, Binary},        /* 61 */
-   {{"~==:=",  AUGSNE,     0},        0},             /* 62 */
-   {{"~===",   NEQUIV,     Beginner}, Binary},        /* 63 */
-   {{"~===:=", AUGNEQUIV,  0},        0},             /* 64 */
-   {{"(",      LPAREN,     Beginner}, 0},             /* 65 */
-   {{")",      RPAREN,     Ender},    0},             /* 66 */
-   {{"+:",     PCOLON,     0},        0},             /* 67 */
-   {{",",      COMMA,      0},        0},             /* 68 */
-   {{"-:",     MCOLON,     0},        0},             /* 69 */
-   {{":",      COLON,      0},        0},             /* 70 */
-   {{";",      SEMICOL,    0},        0},             /* 71 */
-   {{"[",      LBRACK,     Beginner}, 0},             /* 72 */
-   {{"]",      RBRACK,     Ender},    0},             /* 73 */
-   {{"{",      LBRACE,     Beginner}, 0},             /* 74 */
-   {{"}",      RBRACE,     Ender},    0},             /* 75 */
-   {{"$(",     LBRACE,     Beginner}, 0},             /* 76 */
-   {{"$)",     RBRACE,     Ender},    0},             /* 77 */
-   {{"$<",     LBRACK,     Beginner}, 0},             /* 78 */
-   {{"$>",     RBRACK,     Ender},    0},             /* 79 */
+   {{"!:=",    AUGBANG,    0},        0},             /* 1 */
+   {{"%",      MOD,        0},        Binary},        /* 2 */
+   {{"%:=",    AUGMOD,     0},        0},             /* 3 */
+   {{"&",      AND,        Beginner}, Binary},        /* 4 */
+   {{"&:=",    AUGAND,     0},        0},             /* 5 */
+   {{"*",      STAR,       Beginner}, Unary | Binary},/* 6 */
+   {{"*:=",    AUGSTAR,    0},        0},             /* 7 */
+   {{"**",     INTER,      Beginner}, Binary},        /* 8 */
+   {{"**:=",   AUGINTER,   0},        0},             /* 9 */
+   {{"+",      PLUS,       Beginner}, Unary | Binary},/* 10 */
+   {{"+:=",    AUGPLUS,    0},        0},             /* 11 */
+   {{"++",     UNION,      Beginner}, Binary},        /* 12 */
+   {{"++:=",   AUGUNION,   0},        0},             /* 13 */
+   {{"-",      MINUS,      Beginner}, Unary | Binary},/* 14 */
+   {{"-:=",    AUGMINUS,   0},        0},             /* 15 */
+   {{"--",     DIFF,       Beginner}, Binary},        /* 16 */
+   {{"--:=",   AUGDIFF,    0},        0},             /* 17 */
+   {{".",      DOT,        Beginner}, Unary},         /* 18 */
+   {{"/",      SLASH,      Beginner}, Unary | Binary},/* 19 */
+   {{"/:=",    AUGSLASH,   0},        0},             /* 20 */
+   {{":=",     ASSIGN,     0},        Binary},        /* 21 */
+   {{":=:",    SWAP,       0},        Binary},        /* 22 */
+   {{"<",      NMLT,       0},        Binary},        /* 23 */
+   {{"<:=",    AUGNMLT,    0},        0},             /* 24 */
+   {{"<-",     REVASSIGN,  0},        Binary},        /* 25 */
+   {{"<->",    REVSWAP,    0},        Binary},        /* 26 */
+   {{"<<",     SLT,        0},        Binary},        /* 27 */
+   {{"<<:=",   AUGSLT,     0},        0},             /* 28 */
+   {{"<<=",    SLE,        0},        Binary},        /* 29 */
+   {{"<<=:=",  AUGSLE,     0},        0},             /* 30 */
+   {{"<=",     NMLE,       0},        Binary},        /* 31 */
+   {{"<=:=",   AUGNMLE,    0},        0},             /* 32 */
+   {{"=",      NMEQ,       Beginner}, Unary | Binary},/* 33 */
+   {{"=:=",    AUGNMEQ,    0},        0},             /* 34 */
+   {{"==",     SEQ,        Beginner}, Binary},        /* 35 */
+   {{"==:=",   AUGSEQ,     0},        0},             /* 36 */
+   {{"===",    EQUIV,      Beginner}, Binary},        /* 37 */
+   {{"===:=",  AUGEQUIV,   0},        0},             /* 38 */
+   {{">",      NMGT,       0},        Binary},        /* 39 */
+   {{">:=",    AUGNMGT,    0},        0},             /* 40 */
+   {{">=",     NMGE,       0},        Binary},        /* 41 */
+   {{">=:=",   AUGNMGE,    0},        0},             /* 42 */
+   {{">>",     SGT,        0},        Binary},        /* 43 */
+   {{">>:=",   AUGSGT,     0},        0},             /* 44 */
+   {{">>=",    SGE,        0},        Binary},        /* 45 */
+   {{">>=:=",  AUGSGE,     0},        0},             /* 46 */
+   {{"?",      QMARK,      Beginner}, Unary},         /* 47 */
+   {{"?:=",    AUGQMARK,   0},        0},             /* 48 */
+   {{"@",      AT,         Beginner}, 0},             /* 49 */
+   {{"@:=",    AUGAT,      0},        0},             /* 50 */
+   {{"\\",     BACKSLASH,  Beginner}, Unary},         /* 51 */
+   {{"^",      CARET,      Beginner}, Unary | Binary},/* 52 */
+   {{"^:=",    AUGCARET,   0},        0},             /* 53 */
+   {{"|",      BAR,        Beginner}, 0},             /* 54 */
+   {{"||",     CONCAT,     Beginner}, Binary},        /* 55 */
+   {{"||:=",   AUGCONCAT,  0},        0},             /* 56 */
+   {{"|||",    LCONCAT,    Beginner}, Binary},        /* 57 */
+   {{"|||:=",  AUGLCONCAT, 0},        0},             /* 58 */
+   {{"~",      TILDE,      Beginner}, Unary},         /* 59 */
+   {{"~=",     NMNE,       Beginner}, Binary},        /* 60 */
+   {{"~=:=",   AUGNMNE,    0},        0},             /* 61 */
+   {{"~==",    SNE,        Beginner}, Binary},        /* 62 */
+   {{"~==:=",  AUGSNE,     0},        0},             /* 63 */
+   {{"~===",   NEQUIV,     Beginner}, Binary},        /* 64 */
+   {{"~===:=", AUGNEQUIV,  0},        0},             /* 65 */
+   {{"(",      LPAREN,     Beginner}, 0},             /* 66 */
+   {{")",      RPAREN,     Ender},    0},             /* 67 */
+   {{"+:",     PCOLON,     0},        0},             /* 68 */
+   {{",",      COMMA,      0},        0},             /* 69 */
+   {{"-:",     MCOLON,     0},        0},             /* 70 */
+   {{":",      COLON,      0},        0},             /* 71 */
+   {{";",      SEMICOL,    0},        0},             /* 72 */
+   {{"[",      LBRACK,     Beginner}, 0},             /* 73 */
+   {{"]",      RBRACK,     Ender},    0},             /* 74 */
+   {{"{",      LBRACE,     Beginner}, 0},             /* 75 */
+   {{"}",      RBRACE,     Ender},    0},             /* 76 */
+   {{"$(",     LBRACE,     Beginner}, 0},             /* 77 */
+   {{"$)",     RBRACE,     Ender},    0},             /* 78 */
+   {{"$<",     LBRACK,     Beginner}, 0},             /* 79 */
+   {{"$>",     RBRACK,     Ender},    0},             /* 80 */
    {{NULL,          0,     0},        0}
    };
 
-int asgn_loc = 20;
-int semicol_loc = 71;
-int plus_loc = 9;
-int minus_loc = 13;
+int asgn_loc = 21;
+int semicol_loc = 72;
+int plus_loc = 10;
+int minus_loc = 14;
 
 /*
  * getopr - find the longest legal operator and return the
@@ -187,66 +188,75 @@ int getopr(int ac, int *cc)
    *cc = ' ';
    switch (c = ac) {
       case '!':
-         return 0;   /* ! */
+         if ((c = NextChar) == ':') {
+            if ((c = NextChar) == '=') {
+               return 1;   /* !:= */
+               }
+            }
+         else {
+            *cc = c;
+            return 0;   /* ! */
+            }
+         break;
       case '$':
          switch (c = NextChar) {
             case '(':
-               return 76;   /* $( */
+               return 77;   /* $( */
             case ')':
-               return 77;   /* $) */
+               return 78;   /* $) */
             case '<':
-               return 78;   /* $< */
+               return 79;   /* $< */
             case '>':
-               return 79;   /* $> */
+               return 80;   /* $> */
             }
          break;
       case '%':
          if ((c = NextChar) == ':') {
             if ((c = NextChar) == '=') {
-               return 2;   /* %:= */
+               return 3;   /* %:= */
                }
             }
          else {
             *cc = c;
-            return 1;   /* % */
+            return 2;   /* % */
             }
          break;
       case '&':
          if ((c = NextChar) == ':') {
             if ((c = NextChar) == '=') {
-               return 4;   /* &:= */
+               return 5;   /* &:= */
                }
             }
          else {
             *cc = c;
-            return 3;   /* & */
+            return 4;   /* & */
             }
          break;
       case '(':
-         return 65;   /* ( */
+         return 66;   /* ( */
       case ')':
-         return 66;   /* ) */
+         return 67;   /* ) */
       case '*':
          switch (c = NextChar) {
             case '*':
                if ((c = NextChar) == ':') {
                   if ((c = NextChar) == '=') {
-                     return 8;   /* **:= */
+                     return 9;   /* **:= */
                      }
                   }
                else {
                   *cc = c;
-                  return 7;   /* ** */
+                  return 8;   /* ** */
                   }
                break;
             case ':':
                if ((c = NextChar) == '=') {
-                  return 6;   /* *:= */
+                  return 7;   /* *:= */
                   }
                break;
             default:
                *cc = c;
-               return 5;   /* * */
+               return 6;   /* * */
             }
          break;
       case '+':
@@ -254,330 +264,330 @@ int getopr(int ac, int *cc)
             case '+':
                if ((c = NextChar) == ':') {
                   if ((c = NextChar) == '=') {
-                     return 12;   /* ++:= */
+                     return 13;   /* ++:= */
                      }
                   }
                else {
                   *cc = c;
-                  return 11;   /* ++ */
+                  return 12;   /* ++ */
                   }
                break;
             case ':':
                if ((c = NextChar) == '=') {
-                  return 10;   /* +:= */
+                  return 11;   /* +:= */
                   }
                else {
                   *cc = c;
-                  return 67;   /* +: */
+                  return 68;   /* +: */
                   }
             default:
                *cc = c;
-               return 9;   /* + */
+               return 10;   /* + */
             }
          break;
       case ',':
-         return 68;   /* , */
+         return 69;   /* , */
       case '-':
          switch (c = NextChar) {
             case '-':
                if ((c = NextChar) == ':') {
                   if ((c = NextChar) == '=') {
-                     return 16;   /* --:= */
+                     return 17;   /* --:= */
                      }
                   }
                else {
                   *cc = c;
-                  return 15;   /* -- */
+                  return 16;   /* -- */
                   }
                break;
             case ':':
                if ((c = NextChar) == '=') {
-                  return 14;   /* -:= */
+                  return 15;   /* -:= */
                   }
                else {
                   *cc = c;
-                  return 69;   /* -: */
+                  return 70;   /* -: */
                   }
             default:
                *cc = c;
-               return 13;   /* - */
+               return 14;   /* - */
             }
          break;
       case '.':
-         return 17;   /* . */
+         return 18;   /* . */
       case '/':
          if ((c = NextChar) == ':') {
             if ((c = NextChar) == '=') {
-               return 19;   /* /:= */
+               return 20;   /* /:= */
                }
             }
          else {
             *cc = c;
-            return 18;   /* / */
+            return 19;   /* / */
             }
          break;
       case ':':
          if ((c = NextChar) == '=') {
             if ((c = NextChar) == ':') {
-               return 21;   /* :=: */
+               return 22;   /* :=: */
                }
             else {
                *cc = c;
-               return 20;   /* := */
+               return 21;   /* := */
                }
             }
          else {
             *cc = c;
-            return 70;   /* : */
+            return 71;   /* : */
             }
       case ';':
-         return 71;   /* ; */
+         return 72;   /* ; */
       case '<':
          switch (c = NextChar) {
             case '-':
                if ((c = NextChar) == '>') {
-                  return 25;   /* <-> */
+                  return 26;   /* <-> */
                   }
                else {
                   *cc = c;
-                  return 24;   /* <- */
+                  return 25;   /* <- */
                   }
             case ':':
                if ((c = NextChar) == '=') {
-                  return 23;   /* <:= */
+                  return 24;   /* <:= */
                   }
                break;
             case '<':
                switch (c = NextChar) {
                   case ':':
                      if ((c = NextChar) == '=') {
-                        return 27;   /* <<:= */
+                        return 28;   /* <<:= */
                         }
                      break;
                   case '=':
                      if ((c = NextChar) == ':') {
                         if ((c = NextChar) == '=') {
-                           return 29;   /* <<=:= */
+                           return 30;   /* <<=:= */
                            }
                         }
                      else {
                         *cc = c;
-                        return 28;   /* <<= */
+                        return 29;   /* <<= */
                         }
                      break;
                   default:
                      *cc = c;
-                     return 26;   /* << */
+                     return 27;   /* << */
                   }
                break;
             case '=':
                if ((c = NextChar) == ':') {
                   if ((c = NextChar) == '=') {
-                     return 31;   /* <=:= */
+                     return 32;   /* <=:= */
                      }
                   }
                else {
                   *cc = c;
-                  return 30;   /* <= */
+                  return 31;   /* <= */
                   }
                break;
             default:
                *cc = c;
-               return 22;   /* < */
+               return 23;   /* < */
             }
          break;
       case '=':
          switch (c = NextChar) {
             case ':':
                if ((c = NextChar) == '=') {
-                  return 33;   /* =:= */
+                  return 34;   /* =:= */
                   }
                break;
             case '=':
                switch (c = NextChar) {
                   case ':':
                      if ((c = NextChar) == '=') {
-                        return 35;   /* ==:= */
+                        return 36;   /* ==:= */
                         }
                      break;
                   case '=':
                      if ((c = NextChar) == ':') {
                         if ((c = NextChar) == '=') {
-                           return 37;   /* ===:= */
+                           return 38;   /* ===:= */
                            }
                         }
                      else {
                         *cc = c;
-                        return 36;   /* === */
+                        return 37;   /* === */
                         }
                      break;
                   default:
                      *cc = c;
-                     return 34;   /* == */
+                     return 35;   /* == */
                   }
                break;
             default:
                *cc = c;
-               return 32;   /* = */
+               return 33;   /* = */
             }
          break;
       case '>':
          switch (c = NextChar) {
             case ':':
                if ((c = NextChar) == '=') {
-                  return 39;   /* >:= */
+                  return 40;   /* >:= */
                   }
                break;
             case '=':
                if ((c = NextChar) == ':') {
                   if ((c = NextChar) == '=') {
-                     return 41;   /* >=:= */
+                     return 42;   /* >=:= */
                      }
                   }
                else {
                   *cc = c;
-                  return 40;   /* >= */
+                  return 41;   /* >= */
                   }
                break;
             case '>':
                switch (c = NextChar) {
                   case ':':
                      if ((c = NextChar) == '=') {
-                        return 43;   /* >>:= */
+                        return 44;   /* >>:= */
                         }
                      break;
                   case '=':
                      if ((c = NextChar) == ':') {
                         if ((c = NextChar) == '=') {
-                           return 45;   /* >>=:= */
+                           return 46;   /* >>=:= */
                            }
                         }
                      else {
                         *cc = c;
-                        return 44;   /* >>= */
+                        return 45;   /* >>= */
                         }
                      break;
                   default:
                      *cc = c;
-                     return 42;   /* >> */
+                     return 43;   /* >> */
                   }
                break;
             default:
                *cc = c;
-               return 38;   /* > */
+               return 39;   /* > */
             }
          break;
       case '?':
          if ((c = NextChar) == ':') {
             if ((c = NextChar) == '=') {
-               return 47;   /* ?:= */
+               return 48;   /* ?:= */
                }
             }
          else {
             *cc = c;
-            return 46;   /* ? */
+            return 47;   /* ? */
             }
          break;
       case '@':
          if ((c = NextChar) == ':') {
             if ((c = NextChar) == '=') {
-               return 49;   /* @:= */
+               return 50;   /* @:= */
                }
             }
          else {
             *cc = c;
-            return 48;   /* @ */
+            return 49;   /* @ */
             }
          break;
       case '[':
-         return 72;   /* [ */
+         return 73;   /* [ */
       case '\\':
-         return 50;   /* \ */
+         return 51;   /* \ */
       case ']':
-         return 73;   /* ] */
+         return 74;   /* ] */
       case '^':
          if ((c = NextChar) == ':') {
             if ((c = NextChar) == '=') {
-               return 52;   /* ^:= */
+               return 53;   /* ^:= */
                }
             }
          else {
             *cc = c;
-            return 51;   /* ^ */
+            return 52;   /* ^ */
             }
          break;
       case '{':
-         return 74;   /* { */
+         return 75;   /* { */
       case '|':
          if ((c = NextChar) == '|') {
             switch (c = NextChar) {
                case ':':
                   if ((c = NextChar) == '=') {
-                     return 55;   /* ||:= */
+                     return 56;   /* ||:= */
                      }
                   break;
                case '|':
                   if ((c = NextChar) == ':') {
                      if ((c = NextChar) == '=') {
-                        return 57;   /* |||:= */
+                        return 58;   /* |||:= */
                         }
                      }
                   else {
                      *cc = c;
-                     return 56;   /* ||| */
+                     return 57;   /* ||| */
                      }
                   break;
                default:
                   *cc = c;
-                  return 54;   /* || */
+                  return 55;   /* || */
                }
             }
          else {
             *cc = c;
-            return 53;   /* | */
+            return 54;   /* | */
             }
          break;
       case '}':
-         return 75;   /* } */
+         return 76;   /* } */
       case '~':
          if ((c = NextChar) == '=') {
             switch (c = NextChar) {
                case ':':
                   if ((c = NextChar) == '=') {
-                     return 60;   /* ~=:= */
+                     return 61;   /* ~=:= */
                      }
                   break;
                case '=':
                   switch (c = NextChar) {
                      case ':':
                         if ((c = NextChar) == '=') {
-                           return 62;   /* ~==:= */
+                           return 63;   /* ~==:= */
                            }
                         break;
                      case '=':
                         if ((c = NextChar) == ':') {
                            if ((c = NextChar) == '=') {
-                              return 64;   /* ~===:= */
+                              return 65;   /* ~===:= */
                               }
                            }
                         else {
                            *cc = c;
-                           return 63;   /* ~=== */
+                           return 64;   /* ~=== */
                            }
                         break;
                      default:
                         *cc = c;
-                        return 61;   /* ~== */
+                        return 62;   /* ~== */
                      }
                   break;
                default:
                   *cc = c;
-                  return 59;   /* ~= */
+                  return 60;   /* ~= */
                }
             }
          else {
             *cc = c;
-            return 58;   /* ~ */
+            return 59;   /* ~ */
             }
          break;
       }

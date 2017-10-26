@@ -1017,6 +1017,10 @@ static void augop(int op)
             uout_op(Uop_Augscan);
             break;
 
+        case AUGBANG:
+            uout_op(Uop_Augapply);
+            break;
+
         default:
             quit("binop: undefined binary operator: %d", op);
     }

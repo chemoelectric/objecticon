@@ -513,6 +513,7 @@ class Lex(Connectable)
    end
 
    private do_bang()
+      if yytext ||:= =":=" then { return YY.AUGBANG }
       tokflags +:= Beginner
       return YY.BANG
    end

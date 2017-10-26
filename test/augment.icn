@@ -167,6 +167,59 @@ procedure p12()
    write("s ----> ",image(s) | "none")
 end
 
+procedure f(x,y)
+   write("g1(",x,",",y,") -> g1")
+   suspend g1
+   write("g1(",x,",",y,") -> g2")
+   suspend g2
+   write("g1(",x,",",y,") -> g3")
+   suspend g3
+   write("g1(",x,",",y,") fails")
+end
+
+procedure g1(x,y)
+   write("g1(",x,",",y,")")
+end
+
+procedure g2(x,y)
+   write("g2(",x,",",y,")")
+end
+
+procedure g3(x,y)
+   write("g3(",x,",",y,") -> g4")
+   return g4
+end
+
+procedure g4(x,y)
+   write("g4(",x,",",y,")")
+end
+
+procedure g5(a,b,c)
+   write("g5(",a,",",b,",",c,")")
+end
+
+procedure p13()
+   local p, l1, l2
+
+   l1 := [1,2]
+   l2 := [3,4]
+
+   p := f
+   every p !:= l1 do
+      write(image(p))
+
+   p := f
+   every p !:= (l1|l2) do
+      write(image(p))
+
+   p := f
+   (p !:= l1) := g4
+   write(image(p))
+
+   p := g5
+   every p !:= (l1|l2|[3,2,1]|[5,6,7,8])
+end
+
 procedure main()
    p1()
    p2()
@@ -180,6 +233,7 @@ procedure main()
    p10()
    p11()
    p12()
+   p13()
 end
 
 global i, s, c, one, two, x

@@ -53,6 +53,7 @@ int globalflag;
 #define Baugne(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
 #define Baugneqv(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
 #define Baugques(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3) 
+#define Baugbang(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3) 
 #define Baugseq(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
 #define Baugsge(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
 #define Baugsgt(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)

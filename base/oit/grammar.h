@@ -171,6 +171,7 @@ expr1	: expr2 ;
 	| expr2 AUGSLT expr1 {Baugslt($1,$2,$3);} ;
 	| expr2 AUGSNE expr1 {Baugsne($1,$2,$3);} ;
 	| expr2 AUGQMARK expr1 {Baugques($1,$2,$3);} ;
+	| expr2 AUGBANG expr1 {Baugbang($1,$2,$3);} ;
 	| expr2 AUGAND expr1 {Baugamper($1,$2,$3);} ;
 	| expr2 AUGAT expr1 {Baugact($1,$2,$3);} ;
 

@@ -202,7 +202,7 @@ struct ucode_op ucode_op_table[] = {
     /* 194 */         { Uop_Local, "local", { TYPE_32,TYPE_STR }, "\t%-12s %08o %s" },
     /* 195 */         INVALID,
     /* 196 */         { Uop_Var, "var", { TYPE_16,0 }, "\t%-12s %d" },
-    /* 197 */         INVALID,
+    /* 197 */         { Uop_Augapply, "augapply", {0,0}, "\t%-12s" },                 
     /* 198 */         INVALID,
     /* 199 */         INVALID,
     /* 200 */         { Uop_Field, "field", { TYPE_STR,0 }, "\t%-12s %s" },

@@ -56,6 +56,7 @@
 /* operators */
 
 %token  BANG        /* !         */
+%token  AUGBANG     /* !:=       */
 %token  MOD         /* %         */
 %token  AUGMOD      /* %:=       */
 %token  AND         /* &         */
@@ -308,6 +309,7 @@ expr1   : expr2 ;
         | expr2 AUGSLT expr1    { $$ := Node("augslt", $1,$2,$3);} ;
         | expr2 AUGSNE expr1    { $$ := Node("augsne", $1,$2,$3);} ;
         | expr2 AUGQMARK expr1  { $$ := Node("augqmark", $1,$2,$3);} ;
+        | expr2 AUGBANG expr1  { $$ := Node("augbang", $1,$2,$3);} ;
         | expr2 AUGAND expr1    { $$ := Node("augand", $1,$2,$3);} ;
         | expr2 AUGAT expr1     { $$ := Node("augat", $1,$2,$3);} ;
 

@@ -1391,7 +1391,6 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
             }
             right = ir_traverse(x->child2, st, rv, 0, 1);
 
-
             chunk1(res->start, ir_goto(n, left->start));
             chunk1(left->success, ir_goto(n, right->start));
             chunk1(left->failure, ir_goto(n, res->failure));
@@ -1410,6 +1409,67 @@ static struct ir_info *ir_traverse(struct lnode *n, struct ir_stack *st, struct 
                 chunk2(right->success, 
                        ir_apply(n, clo, target, lv, rv, rval, right->resume),
                        ir_goto(n, res->success));
+
+            res->uses_stack = 1;
+
+            break;
+        }
+
+        case Uop_Augapply: {
+            struct lnode_2 *x = (struct lnode_2 *)n;
+            struct ir_var *lv, *rv, *tmp;
+            struct ir_info *left, *right;
+            int clo, xc;
+
+            clo = make_closure(st);
+            lv = get_var(x->child1, st);
+            rv = get_var(x->child2, st);
+            tmp = make_tmp(st);
+
+            left = ir_traverse(x->child1, st, lv, 0, 0);
+            right = ir_traverse(x->child2, st, rv, 0, 1);
+
+            chunk1(res->start, ir_goto(n, left->start));
+            chunk1(left->success, ir_goto(n, right->start));
+            chunk1(left->failure, ir_goto(n, res->failure));
+            chunk1(right->failure, ir_goto(n, left->resume));
+
+            xc = get_extra_chunk();
+
+            /*
+             * Optimisation v !:= expr where v is local or global.
+             * Note that we still need a temporary variable since the
+             * procedure being applied may return a variable, which we
+             * must dereference.
+             */
+            if (is_assignable_var(x->child1)) {
+                if (!bounded)
+                    chunk2(res->resume, 
+                           ir_resume(n, clo),
+                           ir_goto(n, xc));
+
+                chunk2(right->success, 
+                       ir_apply(n, clo, tmp, lv, rv, 1, right->resume),
+                       ir_goto(n, xc));
+
+                chunk3(xc, 
+                       ir_deref(n, lv, tmp),
+                       ir_move(n, target, lv),
+                       ir_goto(n, res->success));
+            } else {
+                /* Always needed, regardless of bounded */
+                chunk2(res->resume, 
+                       ir_resume(n, clo),
+                       ir_goto(n, xc));
+
+                chunk2(right->success, 
+                       ir_apply(n, clo, tmp, lv, rv, 1, right->resume),
+                       ir_goto(n, xc));
+
+                chunk2(xc, 
+                       ir_op(n, target, Uop_Asgn, lv, tmp, 0, rval, res->resume),
+                       ir_goto(n, res->success));
+            }
 
             res->uses_stack = 1;
 

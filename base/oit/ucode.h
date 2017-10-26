@@ -146,6 +146,7 @@ extern struct ucode_op ucode_op_table[];
 #define Uop_Augdiv      152
 #define Uop_Augmult     153
 #define Uop_Augunion    154
+#define Uop_Augapply    197
 
 #define Uop_PkRecord	155
 #define Uop_PkProcdecl	156

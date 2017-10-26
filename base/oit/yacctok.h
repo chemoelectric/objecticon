@@ -60,6 +60,7 @@
 /* operators */
 
 %token	BANG        /* !         */
+%token	AUGBANG     /* !:=       */
 %token	MOD         /* %         */
 %token	AUGMOD      /* %:=       */
 %token	AND         /* &         */
