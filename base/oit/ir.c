@@ -787,6 +787,7 @@ static int is_rval(int op, int arg, int parent)
 
         case Uop_Asgn:
         case Uop_Augactivate:
+        case Uop_Augapply:
         case Uop_Augpower:
         case Uop_Augcat:
         case Uop_Augdiff:
