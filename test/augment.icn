@@ -218,6 +218,21 @@ procedure p13()
 
    p := g5
    every p !:= (l1|l2|[3,2,1]|[5,6,7,8])
+
+   p := [f]
+   every p[1] !:= l1 do
+      write(image(p[1]))
+
+   p := [f]
+   every p[1] !:= (l1|l2) do
+      write(image(p[1]))
+
+   p := [f]
+   (p[1] !:= l1) := g4
+   write(image(p[1]))
+
+   p := [g5]
+   every p[1] !:= (l1|l2|[3,2,1]|[5,6,7,8])
 end
 
 procedure main()
