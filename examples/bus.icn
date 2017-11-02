@@ -1574,13 +1574,16 @@ class Map(Panel)
    end
 
    private load_routes()
-      local f, s, e, route, p_route, run, p_run, stop_code, rt, st, p_st, skip
-      f := open(get_file("bus-sequences.csv")) | stop("Couldn't open bus route data file: ", &why)
-      # Header line
-      f.read() | fail
-      while s := f.read() do {
-         if s == "\x1a" then
-            break
+      local f
+      use {
+         f := open(get_file("bus-sequences.csv")) | stop("Couldn't open bus route data file: ", &why),
+         load_routes1(f)
+      }
+   end
+
+   private load_routes1(f)
+      local s, e, route, p_route, run, p_run, stop_code, rt, st, p_st, skip
+      every s := read_data(f) do {
          e := create gen_csv_fields(s)
          (route := @e &
           run := @e &
@@ -1646,34 +1649,50 @@ class Map(Panel)
       return t
    end
 
+   private static read_data(f)
+      local prev, s
+      f.read() | stop("Couldn't read header line: ", &why)
+      prev := f.read() | stop("Couldn't read first line: ", &why)
+      repeat {
+         s := f.read() | stop("Couldn't read data file: ", &why)
+         if s[1] == "\"" then
+            prev ||:= s
+         else {
+            suspend prev
+            prev := s
+         }
+         if s == "\x1a" then
+            break
+      }
+   end
+
    private load_stops()
-      local f, s, e, st,
-         code, naptan, name, easting, northing, area, loc, point_letter
+      local f
       use {
          f := open(get_file("bus-stops.csv")) | stop("Couldn't open bus stop data file: ", &why),
-         {
-            # Header line
-            f.read() | stop("No header line in bus file")
-            while s := f.read() do {
-               if s == "\x1a" then
-                  break
-               e := create gen_csv_fields(s)
-               (code := @e &
-                @e &            # bus_stop_code 
-                naptan := @e &
-                name := @e &
-                easting := @e &
-                northing := @e &
-                @e &            # heading
-                area := @e) | stop("Bad data in bus file: ", image(s))
-               loc := grid_to_loc(easting, northing)
-               name := cleanup_name(name)
-               point_letter := if any(&letters, naptan[-2]) then naptan[-2:0] else naptan[-1]
-               insert(stops, st := Stop(loc,
-                                        code, table(), set(), set(), name, point_letter, set(area)))
-               stop_codes[code] := st
-            }
-         }
+         load_stops1(f)
+      }
+   end
+
+   private load_stops1(f)
+      local s, e, st,
+         code, naptan, name, easting, northing, area, loc, point_letter
+      every s := read_data(f) do {
+         e := create gen_csv_fields(s)
+         (code := @e &
+          @e &            # bus_stop_code 
+          naptan := @e &
+          name := @e &
+          easting := @e &
+          northing := @e &
+          @e &            # heading
+          area := @e) | stop("Bad data in bus file: ", image(s))
+         loc := grid_to_loc(easting, northing)
+         name := cleanup_name(name)
+         point_letter := if any(&letters, naptan[-2]) then naptan[-2:0] else naptan[-1]
+         insert(stops, st := Stop(loc,
+                                  code, table(), set(), set(), name, point_letter, set(area)))
+         stop_codes[code] := st
       }
    end
 
