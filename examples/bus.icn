@@ -835,7 +835,7 @@ class Map(Panel)
       suspend !\stop_pod[pod_neighbours(loc, dist)]
    end
 
-   private inter_pods(st, other, dist)
+   private static inter_pods(st, other, dist)
       local stx, sty, otherx, othery, x, y, dx, dy, k
       k := 1 + dist / POD_SIZE
       stx := st.loc.long / POD_SIZE
