@@ -1,7 +1,7 @@
 $encoding UTF-8
 $load BUS_LOGO "rpp.BUS_LOGO.png"
 
-import gui, graphics(Window,Mouse), io, ipl.options, lang, util, 
+import gui, graphics(Window,Mouse), io, ipl.options, lang, util, json,
    net, ipl.graphics, ipl.sort, ipl.sets, ipl.strings, ipl.tables
 
 global opts
@@ -28,21 +28,21 @@ class Route(SelectiveObjectCodec)
 end
 
 class Stop(SelectiveObjectCodec)
-   public loc, code, arcs, ptrs, routes, name, letter, scale_times_east, scale_times_south, px, py, deleted, label_weight, areas
+   public loc, code, arcs, ptrs, routes, matches, name, letter, scale_times_east, scale_times_south, px, py, deleted, label_weight
 
    private get_template()
-      suspend "loc" | "code" | "name" | "letter"
+      suspend "loc" | "code" | "name" | "matches" | "letter"
    end
 
-   public new(loc, code, arcs, ptrs, routes, name, letter, areas)
+   public new(loc, code, arcs, ptrs, routes, matches, name, letter)
       self.loc := loc
       self.code := code
       self.arcs := arcs
       self.ptrs := ptrs
       self.routes := routes
+      self.matches := matches
       self.name := name
       self.letter := letter
-      self.areas := areas
       return
    end
 end
@@ -68,11 +68,14 @@ class MapSearchField(SuggestField)
    end
 
    public convert_element(o)
-      return o[1] || " {" || o[2] || "}"
+      local s
+      s := o[1]
+      s ||:= " {" || o[2] || "}"
+      return s
    end
 
    protected do_request()
-      return map.match_stops(contents)
+      return map.search_match(contents)
    end
 
    public set_map(m)
@@ -116,18 +119,22 @@ class Map(Panel)
                            "Hatton Cross Bus Station", "Hatton Cross Station",
                            "Gallymead Road", "Galleymead Road"
                            )
-                           
    end
 
-   public match_stops(s)
-      local l, st
+   public search_match(s)
+      local l, st, r
       l := []
       if *s = 0 then
          return l
       s := map(s)
       every st := !stops do {
-         if match(s, map(st.name)) then
+         if match(s, !st.matches) then
             put(l, [st.name, st.code])
+      }
+      s := map(s, &lcase, &ucase)
+      every r := !routes do {
+         if match(s, r.number) then
+            ((!l)[1] == r.number) | put(l, [r.number])
       }
       return isort(l, 1)
    end
@@ -922,7 +929,7 @@ class Map(Panel)
       local e, done
       e := create space_nodes(1)
       repeat {
-         @e | (done := 1)
+         @e | (done := &yes)
          precalc()
          invalidate()
          draw_all()
@@ -1046,16 +1053,80 @@ class Map(Panel)
       return map(t)
    end
 
+   private join_stops(st, other, new_name, new_loc)
+      local p, x, rt
+
+      p := Stop(new_loc,
+                st.code || "/" || other.code,
+                arc_union(st, other),
+                ptr_union(st, other),
+                st.routes ++ other.routes,
+                st.matches ++ other.matches,
+                new_name,
+                join_letters(st.letter, other.letter))
+
+      # Patch all references to st, other to refer to p.  We have to remember that st/other may
+      # have pointed to each other.
+      every x := (other ~=== key(st.arcs)) do {
+         delete(x.ptrs, st)
+         insert(x.ptrs, p)
+      }
+      every x := (other ~=== !st.ptrs) do {
+         insert(x.arcs, p, x.arcs[st])
+         delete(x.arcs, st)
+      }
+      every rt := !st.routes do
+         every rt.stops[keyof(rt.stops, st)] := p
+
+      delete(stops, st)
+      delete(stop_codes, st.code)
+
+      st.deleted := &yes
+
+      every x := (st ~=== key(other.arcs)) do {
+         delete(x.ptrs, other)
+         insert(x.ptrs, p)
+      }
+      every x := (st ~=== !other.ptrs) do {
+         # Note x.arcs may already contain p since s and
+         # other might both be pointed to by the same node
+         # (ie, x was in s.ptrs above, hence x.arcs[p] has
+         # some routes in already.
+         if member(x.arcs, p) then
+            x.arcs[p].routes ++:= x.arcs[other].routes
+         else
+            insert(x.arcs, p, x.arcs[other])
+         delete(x.arcs, other)
+      }
+      every rt := !other.routes do {
+         every rt.stops[keyof(rt.stops, other)] := p
+         # We may be left with adjacent instances of p if
+         # there were arcs between st and other
+         del_adj(rt.stops, p)
+      }
+
+      delete(stops, other)
+      delete(stop_codes, other.code)
+
+      other.deleted := &yes
+
+      every (!p.arcs).src := p
+      every (!p.ptrs).arcs[p].dest := p
+
+      insert(stops, p)
+
+      return p
+   end
+
    private join_same_named_stops()
-      local st, t, other, l, p, x, rt, n
+      local st, t, other, l, p, n
 
       note_time()
 
       t := table()
       every st := !stops do {
          n := normal_name(st.name)
-         /t[n] := []
-         put(t[n], st)
+         put(member(t, n), st) | insert(t, n, [st])
       }
 
       every l := !t do {
@@ -1063,64 +1134,11 @@ class Map(Panel)
             every other := !l do {
                if st === other | \st.deleted | \other.deleted then next
 
-               # If different areas and too far apart
-               (!other.areas == !st.areas) | near(SAME_NAME_STOP_TOL, st, other) | next
+               # Check if too far apart
+               near(SAME_NAME_STOP_TOL, st, other) | next
 
-               p := Stop(Loc((st.loc.east + other.loc.east)/2, (st.loc.south + other.loc.south)/2),
-                         st.code || "/" || other.code,
-                         arc_union(st, other),
-                         ptr_union(st, other),
-                         st.routes ++ other.routes,
-                         st.name,
-                         join_letters(st.letter, other.letter),
-                         st.areas ++ other.areas)
-
-               # Patch all references to st, other to refer to p.  We have to remember that st/other may
-               # have pointed to each other.
-               every x := (other ~=== key(st.arcs)) do {
-                  delete(x.ptrs, st)
-                  insert(x.ptrs, p)
-               }
-               every x := (other ~=== !st.ptrs) do {
-                  insert(x.arcs, p, x.arcs[st])
-                  delete(x.arcs, st)
-               }
-               every rt := !st.routes do
-                  every rt.stops[keyof(rt.stops, st)] := p
-
-               delete(stops, st)
-               st.deleted := 1
-
-               every x := (st ~=== key(other.arcs)) do {
-                  delete(x.ptrs, other)
-                  insert(x.ptrs, p)
-               }
-               every x := (st ~=== !other.ptrs) do {
-                  # Note x.arcs may already contain p since s and
-                  # other might both be pointed to by the same node
-                  # (ie, x was in s.ptrs above, hence x.arcs[p] has
-                  # some routes in already.
-                  if member(x.arcs, p) then
-                     x.arcs[p].routes ++:= x.arcs[other].routes
-                  else
-                     insert(x.arcs, p, x.arcs[other])
-                  delete(x.arcs, other)
-               }
-               every rt := !other.routes do {
-                  every rt.stops[keyof(rt.stops, other)] := p
-                  # We may be left with adjacent instances of p if
-                  # there were arcs between st and other
-                  del_adj(rt.stops, p)
-               }
-
-               delete(stops, other)
-               other.deleted := 1
-
-               every (!p.arcs).src := p
-               every (!p.ptrs).arcs[p].dest := p
-
-               insert(stops, p)
-
+               p := join_stops(st, other, st.name, 
+                               Loc((st.loc.east + other.loc.east)/2, (st.loc.south + other.loc.south)/2))
                put(l, p)
             }
          }
@@ -1543,28 +1561,26 @@ class Map(Panel)
          return \opts["n"]
       else if \opts["n"] then
          fail
-      if rt[1] == ("6"|"9") & *rt = 3 then
+      if rt[1] == ("6"|"9") & many(&digits, rt) = 4 then
          fail
       return
    end
 
-   private static gen_csv_fields(s)
-      local t
-      s ? repeat {
-         if ="\"" then {
-            t := tab(upto('"') | 0)
-            move(1)
-         } else
-            t := tab(upto(',') | 0)
-         suspend t
-         if pos(0) then
-            break
-         =","
+   private mk_route(route, stops)
+      local stop_code, rt, st, p_st, other
+      rt := Route(route)
+      every stop_code := !stops do {
+         st := member(stop_codes, stop_code) |
+            stop("Route ", route, " contains non-existent stop: ", stop_code)
+         put(rt.stops, st)
+         insert(st.routes, rt)
+         if \p_st then {
+            /p_st.arcs[st] := Arc(set(), p_st, st)
+            insert(p_st.arcs[st].routes, rt)
+            insert(st.ptrs, p_st)
+         }
+         p_st := st
       }
-   end
-
-   private complete_route(rt)
-      local other
       rt.direction := direction(rt.stops[1].loc, rt.stops[-1].loc)
       insert(routes, rt)
       # Set up reverse routes
@@ -1576,56 +1592,18 @@ class Map(Panel)
    end
 
    private load_routes()
-      local f
-      use {
-         f := open(get_file("bus-sequences.csv")) | stop("Couldn't open bus route data file: ", &why),
-         load_routes1(f)
+      local s, d, t, route, l, st
+      s := Files.file_to_string(get_file("routes.txt")) | stop("Couldn't open bus route data file: ", &why)
+      d := JSONParser().parse(s) | stop("Couldn't parse route data file: ", &why)
+      every t := !d do {
+         route := t["id"]
+         if want_route(route) then {
+            if l := member(t, "outbound") then
+               mk_route(route, l)
+            if l := member(t, "inbound") then
+               mk_route(route, l)
+         }
       }
-   end
-
-   private load_routes1(f)
-      local s, e, route, p_route, run, p_run, stop_code, rt, st, p_st, skip
-      every s := read_data(f) do {
-         e := create gen_csv_fields(s)
-         (route := @e &
-          run := @e &
-          @e &
-          stop_code := @e) | stop("Bad data in route file: ", image(s))
-
-         (run = (1 | 2)) | next
-
-         if not(route === p_route & run === p_run) then {
-            complete_route(\rt)
-            if want_route(route) then {
-               rt := Route(route)
-               p_st := &null
-               skip := &null
-            } else {
-               rt := &null
-               p_st := &null
-               skip := 1
-            }
-            p_route := route
-            p_run := run
-         }
-         if \skip then
-            next
-
-         st := member(stop_codes, stop_code) | {
-            ewrite("No such stop: ", stop_code)
-            next
-         }
-         put(rt.stops, st)
-         insert(st.routes, rt)
-         if \p_st then {
-            /p_st.arcs[st] := Arc(set(), p_st, st)
-            insert(p_st.arcs[st].routes, rt)
-            insert(st.ptrs, p_st)
-         }
-         p_st := st
-      }
-      complete_route(\rt)
-
       # Purge stops with no routes.
       every st := !stops do {
          if *st.routes = 0 then {
@@ -1635,65 +1613,49 @@ class Map(Panel)
       }
    end
 
-   private static cleanup_name(s)
-      local t, w, i
-      t := ""
-      # Ensure spaces around /
-      if i := upto('/', s) then
-         s := s[1:i] || " / " || s[i + 1:0]
-      every w := words(map(s), ' \t\r\n\v\f#<>') do {
-        if not(w == ("and" | "of")) then
-            w[1] := map(w[1], &lcase, &ucase)
-         if *t > 0 then
-            t ||:= " "
-         t ||:= w
-      }
-      return t
-   end
-
-   private static read_data(f)
-      local prev, s
-      f.read() | stop("Couldn't read header line: ", &why)
-      prev := f.read() | stop("Couldn't read first line: ", &why)
-      repeat {
-         s := f.read() | stop("Couldn't read data file: ", &why)
-         if s[1] == "\"" then
-            prev ||:= s
-         else {
-            suspend prev
-            prev := s
+   private join_grouped_stops()
+      local s, d, l, x, p, t, loc, name, easting, northing, id, nn, names, xn
+      s := Files.file_to_string(get_file("groups.txt")) | stop("Couldn't open bus groups data file: ", &why)
+      d := JSONParser().parse(s) | stop("Couldn't parse stops data file: ", &why)
+      every t := !d do {
+         name := t["name"]
+         easting := t["easting"]
+         northing := t["northing"]
+         loc := grid_to_loc(easting, northing)
+         l := t["stops"]
+         id := get(l)
+         # A group may contain a non-existent stop, for example a stop
+         # serving only a 6xx bus route, which will have been purged
+         # in load_routes() above.
+         p := member(stop_codes, id) | next
+         names := set(normal_name(p.name))
+         while id := get(l) do {
+            x := member(stop_codes, id) | next
+            xn := normal_name(x.name)
+            nn := if member(names, xn) then
+               p.name
+            else
+               p.name  || " = " || x.name
+            insert(names, xn)
+            p := join_stops(x, p, nn, loc)
          }
-         if s == "\x1a" then
-            break
       }
    end
 
    private load_stops()
-      local f
-      use {
-         f := open(get_file("bus-stops.csv")) | stop("Couldn't open bus stop data file: ", &why),
-         load_stops1(f)
-      }
-   end
-
-   private load_stops1(f)
-      local s, e, st,
-         code, naptan, name, easting, northing, area, loc, point_letter
-      every s := read_data(f) do {
-         e := create gen_csv_fields(s)
-         (code := @e &
-          @e &            # bus_stop_code 
-          naptan := @e &
-          name := @e &
-          easting := @e &
-          northing := @e &
-          @e &            # heading
-          area := @e) | stop("Bad data in bus file: ", image(s))
+      local s, d, st, t,
+         code, name, easting, northing, loc, letter
+      s := Files.file_to_string(get_file("stops.txt")) | stop("Couldn't open bus stop data file: ", &why)
+      d := JSONParser().parse(s) | stop("Couldn't parse stops data file: ", &why)
+      every t := !d do {
+         code := t["id"]
+         name := t["name"]
+         easting := t["easting"]
+         northing := t["northing"]
+         letter := member(t, "letter") | "-"
          loc := grid_to_loc(easting, northing)
-         name := cleanup_name(name)
-         point_letter := if any(&letters, naptan[-2]) then naptan[-2:0] else naptan[-1]
          insert(stops, st := Stop(loc,
-                                  code, table(), set(), set(), name, point_letter, set(area)))
+                                  code, table(), set(), set(), set(map(name)), name, letter))
          stop_codes[code] := st
       }
    end
@@ -1735,13 +1697,10 @@ class Map(Panel)
    end
 
    private find_data_dir()
-      if \opts["d"] then
-         data_dir := FilePath(opts["d"])
-      else {
-         data_dir := FilePath(&progname).sibling("busroutes")
-         Files.is_directory(data_dir.str()) |
-            (data_dir := FilePath(Files.get_home()).child("busroutes"))
-      }
+      data_dir := if \opts["d"] then
+         FilePath(opts["d"])
+      else
+         FilePath(Files.get_home()).child("busroutes")
       Files.is_directory(data_dir.str()) | stop("Data directory doesn't exist: ", data_dir.str())
    end
 
@@ -1772,8 +1731,10 @@ class Map(Panel)
 
       load_data()
 
-      if /opts["j"] then
+      if /opts["j"] then {
+         join_grouped_stops()
          join_same_named_stops()
+      }
 
       init_pod()
       calc_geometry()
