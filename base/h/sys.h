@@ -193,6 +193,8 @@
    #include <sys/sysctl.h>
    #include <libproc.h>
    #endif
+   /* Avoid name clash with symbol in glib math.h */
+   #define canonicalize oi_canonicalize
 #endif					/* UNIX */
 
 #if XWindows

@@ -563,6 +563,7 @@ static int changes(struct lnode *n)
             case Uop_Augmult:
             case Uop_Augunion: 
             case Uop_Augactivate: 
+            case Uop_Augapply:
             case Uop_Augscan: {
                 struct lnode_2 *x = (struct lnode_2 *)n->parent;
                 return x->child1 == n;
@@ -1312,6 +1313,7 @@ static int is_repeatable(struct lnode *n)
             int k = ((struct lnode_keyword *)n)->num;
             switch (k) {
                 case K_NULL:
+                case K_YES:
                 case K_FAIL:
                     return 1;
                 default:
@@ -1326,6 +1328,7 @@ static int is_repeatable(struct lnode *n)
             return (x->global->g_flag & (F_Builtin|F_Proc|F_Record|F_Class)) != 0;
         }
 
+        case Uop_List: 
         case Uop_Mutual:
         case Uop_Slist: {
             struct lnode_n *x = (struct lnode_n *)n;
@@ -1360,7 +1363,6 @@ static int is_repeatable(struct lnode *n)
             return is_repeatable(x->child);
         }
 
-        case Uop_Asgn:
         case Uop_Power:
         case Uop_Cat:
         case Uop_Diff:
@@ -1384,12 +1386,35 @@ static int is_repeatable(struct lnode *n)
         case Uop_Numlt:
         case Uop_Numne:
         case Uop_Plus:
-        case Uop_Rasgn:
-        case Uop_Rswap:
         case Uop_Div:
         case Uop_Mult:
-        case Uop_Swap:
         case Uop_Union:
+        case Uop_Conj: 
+        case Uop_If: 
+        case Uop_Whiledo: 
+        case Uop_Alt: 
+        case Uop_Untildo: 
+        case Uop_Everydo: 
+        case Uop_Limit:
+        case Uop_To: 
+        case Uop_Scan: {
+            struct lnode_2 *x = (struct lnode_2 *)n;
+            return is_repeatable(x->child1) && is_repeatable(x->child2);
+        }
+
+        case Uop_Toby: 
+        case Uop_Sect:
+        case Uop_Sectp:
+        case Uop_Sectm:
+        case Uop_Ifelse: {
+            struct lnode_3 *x = (struct lnode_3 *)n;
+            return is_repeatable(x->child1) && is_repeatable(x->child2) && is_repeatable(x->child3);
+        }
+
+        case Uop_Asgn:
+        case Uop_Rasgn:
+        case Uop_Rswap:
+        case Uop_Swap:
         case Uop_Augpower:
         case Uop_Augcat:
         case Uop_Augdiff:
@@ -1415,38 +1440,16 @@ static int is_repeatable(struct lnode *n)
         case Uop_Augdiv:
         case Uop_Augmult:
         case Uop_Augunion: 
-        case Uop_Conj: 
-        case Uop_If: 
-        case Uop_Whiledo: 
-        case Uop_Alt: 
-        case Uop_Untildo: 
-        case Uop_Everydo: 
-        case Uop_Suspenddo: 
-        case Uop_Bactivate: 
+        case Uop_Augapply:
+        case Uop_Augscan:
         case Uop_Augactivate: 
-        case Uop_Limit:
-        case Uop_To: 
-        case Uop_Scan:
-        case Uop_Augscan: {
-            struct lnode_2 *x = (struct lnode_2 *)n;
-            return is_repeatable(x->child1) && is_repeatable(x->child2);
-        }
-
-        case Uop_Toby: 
-        case Uop_Sect:
-        case Uop_Sectp:
-        case Uop_Sectm:
-        case Uop_Ifelse: {
-            struct lnode_3 *x = (struct lnode_3 *)n;
-            return is_repeatable(x->child1) && is_repeatable(x->child2) && is_repeatable(x->child3);
-        }
-
         case Uop_Suspendexpr: 
+        case Uop_Suspenddo: 
         case Uop_Returnexpr: 
         case Uop_Breakexpr: 
         case Uop_Create: 
         case Uop_Uactivate: 
-        case Uop_List: 
+        case Uop_Bactivate: 
         case Uop_Local: 
         case Uop_Next:
         case Uop_End:

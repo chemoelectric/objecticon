@@ -171,6 +171,7 @@ expr1	: expr2 ;
 	| expr2 AUGSLT expr1 {Baugslt($1,$2,$3);} ;
 	| expr2 AUGSNE expr1 {Baugsne($1,$2,$3);} ;
 	| expr2 AUGQMARK expr1 {Baugques($1,$2,$3);} ;
+	| expr2 AUGBANG expr1 {Baugbang($1,$2,$3);} ;
 	| expr2 AUGAND expr1 {Baugamper($1,$2,$3);} ;
 	| expr2 AUGAT expr1 {Baugact($1,$2,$3);} ;
 
@@ -269,6 +270,7 @@ expr11	: literal ;
 	| expr11 LPAREN exprlist RPAREN {Invoke($1,$2,$3,$4);} ;
 	| expr11 DOT IDENT {Field($1,$2,$3);} ;
 	| AND FAIL {Kfail($1,$2);} ;
+	| AND BREAK {Kbreak($1,$2);} ;
 	| AND IDENT {Keyword($1,$2);} ;
 
 while	: WHILE expr {While0($1,$2);} ;

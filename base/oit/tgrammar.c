@@ -53,6 +53,7 @@ int globalflag;
 #define Baugne(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
 #define Baugneqv(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
 #define Baugques(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3) 
+#define Baugbang(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3) 
 #define Baugseq(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
 #define Baugsge(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
 #define Baugsgt(x1,x2,x3)	$$ = tree5(N_Augop,x2,x2,x1,x3)
@@ -176,6 +177,7 @@ int globalflag;
 				   tfatal("invalid keyword: %s",Str0(x2));\
                                 $$ = int_leaf(N_Key,x1,kn);
 #define Kfail(x1,x2)		$$ = int_leaf(N_Key,x1,K_FAIL) 
+#define Kbreak(x1,x2)		$$ = int_leaf(N_Key,x1,K_BREAK) 
 #define Local(x)		idflag = F_Dynamic
 #define Locals1()		/* empty */
 #define Locals2(x1,x2,x3)	/* empty */

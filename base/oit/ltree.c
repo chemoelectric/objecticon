@@ -272,6 +272,7 @@ static struct lnode *buildtree(void)
         case Uop_Conj: 
         case Uop_Scan:
         case Uop_Augscan:
+        case Uop_Augapply:
         case Uop_Bactivate:
         case Uop_Augactivate:
         case Uop_If: 
@@ -663,6 +664,7 @@ static void visitnode_pre(struct lnode *n, visitf v)
         case Uop_Limit:
         case Uop_To: 
         case Uop_Scan:
+        case Uop_Augapply:
         case Uop_Augscan: {
             struct lnode_2 *x = (struct lnode_2 *)n;
             visitnode_pre(x->child1, v);
@@ -847,6 +849,7 @@ static void visitnode_post(struct lnode *n, visitf v)
         case Uop_Limit:
         case Uop_To: 
         case Uop_Scan:
+        case Uop_Augapply:
         case Uop_Augscan: {
             struct lnode_2 *x = (struct lnode_2 *)n;
             visitnode_post(x->child1, v);
@@ -1107,6 +1110,7 @@ void replace_node(struct lnode *old, struct lnode *new)
         case Uop_Limit:
         case Uop_To: 
         case Uop_Scan:
+        case Uop_Augapply:
         case Uop_Augscan: {
             struct lnode_2 *x = (struct lnode_2 *)n;
             if (x->child1 == old) {

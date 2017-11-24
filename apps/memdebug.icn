@@ -3,7 +3,7 @@ import io, lang, util, net, ipl.options, gui, ipl.termdialog,
 
 global prog, input, output, stopped, sched, break_proc, break_line, break_file, 
    curr_file, tmp_out, tmp_out_name, cmd_out, exited, opts, hlim, llim,
-   history, hfile, slim, addrs, is_flowterm
+   history, hfile, slim, addrs, is_flowterm, kbreak
 
 class MemDebug()
    public static native list(obj)
@@ -49,6 +49,7 @@ procedure do_help()
    cmd_out.write("                    which should be a class, procedure or method name.")
    cmd_out.write("breakproc [x]     - set or clear breakpoint to stop in procedure x.")
    cmd_out.write("breakpoint [x y]  - set or clear breakpoint at file x, line y.")
+   cmd_out.write("kbreak [f]        - set or toggle whether to break on &break.")
    cmd_out.write("hlim i            - set the command history limit.")
    cmd_out.write("hist              - display the history.")
    cmd_out.write("llim i            - set the history log limit in the gui.")
@@ -211,6 +212,15 @@ procedure do_breakpoint(a)
    cmd_out.write(if /break_file then "break point cleared" else "break now " || break_file || " at " || break_line)
 end
 
+procedure do_kbreak(a)
+   if *a = 0 then
+      kbreak := toggle_flag(kbreak)
+   else
+      kbreak := flag(a[1]) | return errmsg("usage: kbreak [flag]")
+   synch_mask()
+   cmd_out.write(if /kbreak then "&break doesn't cause a break" else "&break causes a break")
+end
+
 procedure do_exit()
    write("Exiting.")
    cleanup()
@@ -228,6 +238,7 @@ procedure do_settings()
    cmd_out.write("addrs is ", addrs)
    cmd_out.write(if /break_proc then "break proc not set" else "break proc " || break_proc)
    cmd_out.write(if /break_file then "break point not set" else "break point " || break_file || " at " || break_line)
+   cmd_out.write(if /kbreak then "&break doesn't cause a break" else "&break causes a break")
 end
 
 procedure do_line(s)
@@ -299,6 +310,7 @@ procedure do_line(s)
       "cls" :  do_cls()
       "echo" :  do_echo(a)
       "help": do_help()
+      "kbreak": do_kbreak(a)
       default: {
          output.write("Unknown command: ", s)
       }
@@ -463,6 +475,10 @@ procedure next_event()
       MonitorCode.File : {
          curr_file := e.value
       }
+      MonitorCode.Break : {
+         output.write("&break evaluated")
+         do_stop()
+      }
       MonitorCode.Line : {
          if e.value = \break_line & curr_file == \break_file then {
             output.write("Breakpoint hit")
@@ -483,6 +499,8 @@ end
 procedure synch_mask()
    local c
    c := MonitorCode.Timer ++ MonitorCode.Error
+   if \kbreak then
+      c ++:= MonitorCode.Break
    if \break_line then
       c ++:= MonitorCode.File ++ MonitorCode.Line
    if \break_proc then
@@ -530,7 +548,8 @@ procedure main(args)
                        Opt("hlim",integer,"Set the history limit for the line editor (default is 500)"),
                        Opt("llim",integer,"Set the gui interface's log area line limit (default is 600)"),
                        Opt("slim",integer,"Set the string display limit (default is 64)"), 
-                       Opt("addrs",integer,"Set the address display mode (default is 1)")],
+                       Opt("addrs",integer,"Set the address display mode (default is 1)"),
+                       Opt("nk",,"Set kbreak off initially (default is on)")],
                        usage)
    if *args = 0 then
       help_stop("Program and optional arguments expected.")
@@ -539,6 +558,7 @@ procedure main(args)
    llim := (0 <= \opts["llim"]) | 600
    slim := (0 <= \opts["slim"]) | 64
    addrs := (0 <= \opts["addrs"] <= 2) | 1
+   kbreak := Yes{ /opts["nk"] }
 
    prog := Prog.load(Files.find_exe(args[1]), args[2:0]) | stop(&why)
    MemDebug.set_program(prog)

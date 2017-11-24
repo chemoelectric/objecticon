@@ -5,6 +5,7 @@
  */
 
 KDef(ascii,K_ASCII)
+KDef(break,K_BREAK)
 KDef(clock,K_CLOCK)
 KDef(cset,K_CSET)
 KDef(current,K_CURRENT)

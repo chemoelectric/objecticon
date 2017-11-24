@@ -409,6 +409,7 @@ class Evaluator()
    private do_augqmark(n) suspend 1(E(n.child(1)),save(n)) ?:= E(n.child(3)) end
    private do_augand(n) suspend E(n.child(1)) &:= E(n.child(3)) end
    private do_augat(n) suspend E(n.child(1)) @:= E(n.child(3)) end
+   private do_augbang(n) suspend E(n.child(1)) !:= E(n.child(3)) end
    private do_to(n) suspend E(n.child(1)) to E(n.child(3)) end
    private do_toby(n) suspend E(n.child(1)) to E(n.child(3)) by E(n.child(5)) end
    private do_Bbar(n) suspend E(n.child(1)) | E(n.child(3)) end
