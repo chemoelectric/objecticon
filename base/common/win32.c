@@ -68,6 +68,16 @@ int stat_utf8(char *path, struct stat *st)
     return v;
 }
 
+int stat64_utf8(char *path, struct _stat64 *st)
+{
+    WCHAR *wpath;
+    int v;
+    wpath = utf8_to_wchar(path);
+    v = _wstat64(wpath, st);
+    free(wpath);
+    return v;
+}
+
 int open_utf8(char *path, int oflag, int pmode)
 {
     WCHAR *wpath;

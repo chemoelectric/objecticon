@@ -1,4 +1,8 @@
+#if MSWIN32
+static void stat2list(struct _stat64 *st, dptr res);
+#else
 static void stat2list(struct stat *st, dptr res);
+#endif
 
 /*
  * Helper method to get a class from a descriptor; if a class
@@ -2246,6 +2250,15 @@ end
 function io_DescStream_stat_impl(self)
    body {
        tended struct descrip result;
+#if MSWIN32
+       struct _stat64 st;
+       GetSelfFd();
+       if (_fstat64(self_fd, &st) < 0) {
+           errno2why();
+           fail;
+       }
+       stat2list(&st, &result);
+#else
        struct stat st;
        GetSelfFd();
        if (fstat(self_fd, &st) < 0) {
@@ -2253,6 +2266,7 @@ function io_DescStream_stat_impl(self)
            fail;
        }
        stat2list(&st, &result);
+#endif
        return result;
    }
 end
@@ -2803,6 +2817,58 @@ function io_Files_truncate(s, len)
    }
 end
 
+#if MSWIN32
+static void stat2list(struct _stat64 *st, dptr result)
+{
+   tended struct descrip tmp;
+   char mode[12];
+
+   create_list(13, result);
+   convert_from_dev_t(st->st_dev, &tmp);
+   list_put(result, &tmp);
+   list_put(result, &zerodesc);
+
+   convert_from_mode_t(st->st_mode, &tmp);
+   list_put(result, &tmp);
+   strcpy(mode, "----------");
+   if (st->st_mode & _S_IFREG) mode[0] = '-';
+   else if (st->st_mode & _S_IFDIR) mode[0] = 'd';
+   else if (st->st_mode & _S_IFCHR) mode[0] = 'c';
+   else if (st->st_mode & _S_IFMT) mode[0] = 'm';
+
+   if (st->st_mode & S_IREAD) mode[1] = mode[4] = mode[7] = 'r';
+   if (st->st_mode & S_IWRITE) mode[2] = mode[5] = mode[8] = 'w';
+   if (st->st_mode & S_IEXEC) mode[3] = mode[6] = mode[9] = 'x';
+   cstr2string(mode, &tmp);
+   list_put(result, &tmp);
+
+   MakeInt(st->st_nlink, &tmp);
+   list_put(result, &tmp);
+
+   list_put(result, &zerodesc);
+   list_put(result, &zerodesc);
+
+   convert_from_dev_t(st->st_rdev, &tmp);
+   list_put(result, &tmp);
+
+   convert_from_off_t(st->st_size, &tmp);
+   list_put(result, &tmp);
+
+   list_put(result, &zerodesc);
+   list_put(result, &zerodesc);
+
+   convert_from_time_t(st->st_atime, &tmp);
+   list_put(result, &tmp);
+   convert_from_time_t(st->st_mtime, &tmp);
+   list_put(result, &tmp);
+   convert_from_time_t(st->st_ctime, &tmp);
+   list_put(result, &tmp);
+
+   list_put(result, &zerodesc);
+   list_put(result, &zerodesc);
+   list_put(result, &zerodesc);
+}
+#else
 static void stat2list(struct stat *st, dptr result)
 {
    tended struct descrip tmp;
@@ -2811,16 +2877,11 @@ static void stat2list(struct stat *st, dptr result)
    create_list(13, result);
    convert_from_dev_t(st->st_dev, &tmp);
    list_put(result, &tmp);
-#if UNIX
    convert_from_ino_t(st->st_ino, &tmp);
    list_put(result, &tmp);
-#else
-   list_put(result, &zerodesc);
-#endif
    convert_from_mode_t(st->st_mode, &tmp);
    list_put(result, &tmp);
    strcpy(mode, "----------");
-#if UNIX
    if (S_ISLNK(st->st_mode)) mode[0] = 'l';
    else if (S_ISREG(st->st_mode)) mode[0] = '-';
    else if (S_ISDIR(st->st_mode)) mode[0] = 'd';
@@ -2842,45 +2903,29 @@ static void stat2list(struct stat *st, dptr result)
    if (S_ISUID & st->st_mode) mode[3] = (mode[3] == 'x') ? 's' : 'S';
    if (S_ISGID & st->st_mode) mode[6] = (mode[6] == 'x') ? 's' : 'S';
    if (S_ISVTX & st->st_mode) mode[9] = (mode[9] == 'x') ? 't' : 'T';
-#elif MSWIN32
-   if (st->st_mode & _S_IFREG) mode[0] = '-';
-   else if (st->st_mode & _S_IFDIR) mode[0] = 'd';
-   else if (st->st_mode & _S_IFCHR) mode[0] = 'c';
-   else if (st->st_mode & _S_IFMT) mode[0] = 'm';
 
-   if (st->st_mode & S_IREAD) mode[1] = mode[4] = mode[7] = 'r';
-   if (st->st_mode & S_IWRITE) mode[2] = mode[5] = mode[8] = 'w';
-   if (st->st_mode & S_IEXEC) mode[3] = mode[6] = mode[9] = 'x';
-#endif
    cstr2string(mode, &tmp);
    list_put(result, &tmp);
 
    MakeInt(st->st_nlink, &tmp);
    list_put(result, &tmp);
 
-#if UNIX
    convert_from_uid_t(st->st_uid, &tmp);
    list_put(result, &tmp);
    convert_from_gid_t(st->st_gid, &tmp);
    list_put(result, &tmp);
-#else
-   list_put(result, &emptystr);
-   list_put(result, &emptystr);
-#endif
 
    convert_from_dev_t(st->st_rdev, &tmp);
    list_put(result, &tmp);
+
    convert_from_off_t(st->st_size, &tmp);
    list_put(result, &tmp);
-#if UNIX
+
    MakeInt(st->st_blksize, &tmp);
    list_put(result, &tmp);
    convert_from_blkcnt_t(st->st_blocks, &tmp);
    list_put(result, &tmp);
-#else
-   list_put(result, &zerodesc);
-   list_put(result, &zerodesc);
-#endif
+
    convert_from_time_t(st->st_atime, &tmp);
    list_put(result, &tmp);
    convert_from_time_t(st->st_mtime, &tmp);
@@ -2900,18 +2945,28 @@ static void stat2list(struct stat *st, dptr result)
    list_put(result, &zerodesc);
 #endif
 }
+#endif
 
 function io_Files_stat_impl(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
       tended struct descrip result;
+#if MSWIN32
+      struct _stat64 st;
+      if (stat64_utf8(s, &st) < 0) {
+          errno2why();
+          fail;
+      }
+      stat2list(&st, &result);
+#else
       struct stat st;
       if (stat(s, &st) < 0) {
           errno2why();
           fail;
       }
       stat2list(&st, &result);
+#endif
       return result;
    }
 end
@@ -2921,12 +2976,21 @@ function io_Files_lstat_impl(s)
       runerr(103,s)
    body {
       tended struct descrip result;
+#if MSWIN32
+      struct _stat64 st;
+      if (stat64_utf8(s, &st) < 0) {
+          errno2why();
+          fail;
+      }
+      stat2list(&st, &result);
+#else
       struct stat st;
       if (lstat(s, &st) < 0) {
           errno2why();
           fail;
       }
       stat2list(&st, &result);
+#endif
       return result;
    }
 end

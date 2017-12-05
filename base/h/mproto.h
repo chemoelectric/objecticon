@@ -70,6 +70,7 @@ int mkstemp(char *path);
 int gettimeofday(struct timeval *tv, struct timezone *tz);
 WCHAR *utf8_to_wchar(char *s);
 char *wchar_to_utf8(WCHAR *s);
+int stat64_utf8(char *path, struct _stat64 *st);
 int stat_utf8(char *path, struct stat *st);
 int open_utf8(char *path, int oflag, int pmode);
 int rename_utf8(char *path1, char *path2);
