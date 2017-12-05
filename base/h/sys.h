@@ -137,14 +137,15 @@
    #define F_OK 0
    #define R_OK 0
    #define X_OK 0
-   #define ftruncate _chsize
+   #define ftruncate _chsize_s
    typedef int mode_t;
    #define O_ACCMODE 3
    #include <sys/timeb.h>
    #include <io.h>
    #include <time.h>
    #include "gdip.h"
-
+   #define off_t __int64
+   #define lseek(x, y, z) _lseeki64(x, y, z)
    #define rename(x, y) rename_utf8(x, y)
    #define mkdir(x) mkdir_utf8(x)
    #define remove(x) remove_utf8(x)
@@ -152,7 +153,6 @@
    #define access(x, y) access_utf8(x, y)
    #define stat(x, y) stat_utf8(x, y)
    #define open(x, y, z) open_utf8(x, y, z)
-   #define lstat(x, y) stat_utf8(x, y)
    #define getenv(x) getenv_utf8(x)
    #define setenv(k, v, o) setenv_utf8(k, v)
    #define unsetenv(a) setenv_utf8(a, NULL)
