@@ -1519,6 +1519,7 @@ class Map(Panel)
 
    public string_to_route(name)
       local rt
+      name := map(name, &lcase, &ucase)
       every rt := !routes do
          if rt.number == name then
             return rt
