@@ -49,21 +49,27 @@
 #endif
 
 #if IntBits == 32
-   #define Integer32 int
+   typedef int Integer32;
+   typedef unsigned int uInteger32;
 #elif ShortBits == 32
-   #define Integer32 short
+   typedef short Integer32;
+   typedef unsigned short uInteger32;
 #elif LongBits == 32
-   #define Integer32 long
+   typedef long Integer32;
+   typedef unsigned long uInteger32;
 #else
    #error "Either IntBits, ShortBits or LongBits must be 32"
 #endif
 
 #if IntBits == 16
-   #define Integer16 int
+   typedef int Integer16;
+   typedef unsigned int uInteger16;
 #elif ShortBits == 16
-   #define Integer16 short
+   typedef short Integer16;
+   typedef unsigned short uInteger16;
 #elif LongBits == 16
-   #define Integer16 long
+   typedef long Integer16;
+   typedef unsigned long uInteger16;
 #else
    #error "Either IntBits, ShortBits or LongBits must be 16"
 #endif

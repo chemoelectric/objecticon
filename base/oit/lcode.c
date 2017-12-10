@@ -2408,8 +2408,8 @@ static void set_ucs_slot(word *off, word offset_bits, word i, word n)
             break;
         }
         case 16: {
-            unsigned Integer16 *p = (unsigned Integer16 *)(off);
-            p[i] = (unsigned Integer16)n;
+            uInteger16 *p = (uInteger16 *)(off);
+            p[i] = (uInteger16)n;
             break;
         }
 #if WordBits == 32
@@ -2419,8 +2419,8 @@ static void set_ucs_slot(word *off, word offset_bits, word i, word n)
         }
 #else
         case 32: {
-            unsigned Integer32 *p = (unsigned Integer32 *)(off);
-            p[i] = (unsigned Integer32)n;
+            uInteger32 *p = (uInteger32 *)(off);
+            p[i] = (uInteger32)n;
             break;
         }
         case 64: {
