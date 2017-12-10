@@ -10,8 +10,6 @@ package gui
 
 import util, lang, io, graphics
 
-$define X_PADDING_INC 5
-
 #
 # This class holds the several `TabItem`s, and represents a tabbed pane.
 #
@@ -31,6 +29,13 @@ class TabSet(Component)
       tabs_at_bottom_flag,
       remember_focus_flag,
       may_drag
+
+   public static const
+      X_PADDING_INC
+
+   private static init()
+      X_PADDING_INC := scale(5)
+   end
 
    # Vertical layout :-
    #           border top margin
