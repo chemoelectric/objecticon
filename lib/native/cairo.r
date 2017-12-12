@@ -1482,9 +1482,7 @@ end
 
 static void mk_errortext(cairo_status_t status)
 {
-    char buff[256];
-    snprintf(buff, sizeof(buff), "cairo error: %s", cairo_status_to_string(status));
-    cstr2string(buff, &t_errortext);
+    cstr2string(buffprintf("cairo error: %s", cairo_status_to_string(status)), &t_errortext);
 }
 
 function cairo_Context_pop_group_impl(self)
