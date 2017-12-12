@@ -8,6 +8,7 @@ static char *tryfile(char *dir, char *name, char *extn);
 static char *tryexe(char *dir, char *name);
 static word calc_ucs_offset_words(word n_offs, int offset_bits);
 static word calc_ucs_index_step(word utf8_len, word len, int offset_bits);
+static char *getcachedcwd(void);
 
 /*
  *  relfile(prog, mod) -- find related file.
@@ -263,6 +264,39 @@ static char *tryfile(char *dir, char *name, char *extn)
 
 #endif
 
+static char *getcachedcwd()
+{
+    static char *buf;
+    if (!buf) {
+        int len = 2;
+        for (;;) {
+            buf = safe_realloc(buf, len);
+#if MSWIN32
+            if (getcwd_utf8(buf, len))
+#else
+            if (getcwd(buf, len))
+#endif
+                break;
+#if PLAN9
+            {
+                char buf[ERRMAX];
+                rerrstr(buf, sizeof(buf));
+                if (strcmp(buf, "buffer too short") != 0) {
+                    fprintf(stderr, "unable to getcwd() (%s)", buf);
+                    exit(EXIT_FAILURE);
+                }
+            }
+#else
+            if (errno != ERANGE) {
+                fprintf(stderr, "unable to getcwd() (errno=%d)", errno);
+                exit(EXIT_FAILURE);
+            }
+#endif
+            len *= 2;
+        }
+    }
+    return buf;
+}
 
 /*
  * Canonicalize a path by making it an absolute path if it isn't one
@@ -275,13 +309,8 @@ char *canonicalize(char *path)
     if (isabsolute(path))
         sscpy(&buf, path);
     else {
-        char cwd[MaxPath];
-        int l;
-        if (!getcwd(cwd, sizeof(cwd))) {
-            fprintf(stderr, "getcwd return 0 - current working dir too long.");
-            exit(EXIT_FAILURE);
-        }
-        l = strlen(cwd);
+        char *cwd = getcachedcwd();
+        int l = strlen(cwd);
         ssreserve(&buf, l + 1 + strlen(path) + 1);
         strcpy(buf.s, cwd);
         if (!strchr(FILEPREFIX, buf.s[l - 1]))
@@ -291,7 +320,6 @@ char *canonicalize(char *path)
     normalize(buf.s);
     return buf.s;
 }
-
 
 /*
  * pathfind(cd,path,name,extn) -- find file in path and return name.
@@ -321,11 +349,16 @@ char *pathfind(char *cd, char *path, char *name, char *extn)
      * the cd */
     name_dir = getdir(name);
     if (*name_dir) {
-        char tmp[MaxPath];
+        char *tmp;
+        int len;
         if (!cd)
             return tryfile(0, name, extn);
-        snprintf(tmp, sizeof(tmp), "%s%s", cd, name_dir);
-        return tryfile(tmp, name, extn);
+        len = strlen(cd) + strlen(name_dir) + 1;
+        tmp = safe_malloc(len);
+        snprintf(tmp, len, "%s%s", cd, name_dir);
+        p = tryfile(tmp, name, extn);
+        free(tmp);
+        return p;
     }
 
     /* Neither absolute nor relative.  Try current directory first */
@@ -439,6 +472,19 @@ int newer_than(char *f1, char *f2)
 char *getdir(char *s)
 {
     return fparse(s)->dir;
+}
+
+/*
+ * This is like fparse(s)->ext, but instead of returning a pointer to
+ * a static buffer, it returns a pointer into the given string.  It
+ * never returns NULL.
+ */
+char *getext(char *s)
+{
+    char *r = strrchr(s, '.');
+    if (!r)
+        r = s + strlen(s);
+    return r;
 }
 
 /*

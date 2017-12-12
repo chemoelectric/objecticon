@@ -5,6 +5,7 @@
 void	clear_sbuf	(struct str_buf *sbuf);
 int	cmp_pre		(char *pre1, char *pre2);
 char *getdir(char *s);
+char *getext(char *s);
 struct fileparts *fparse(char *s);
 void	free_stbl	(void);
 void	init_sbuf	(struct str_buf *sbuf);

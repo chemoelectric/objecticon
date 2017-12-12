@@ -55,7 +55,8 @@ char *getcwd(char *buf, size_t size)
     close(fd);
     if (n != 0)
         return 0;
-    if (strlen(buf) > size - 6) {
+    /* cast to int since size_t is unsigned (and size - 6 is a huge +ve number). */
+    if (strlen(buf) > (int)size - 6) {
         werrstr("buffer too short");
         return 0;
     }

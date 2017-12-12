@@ -2446,12 +2446,12 @@ int readimagefileimpl(char *filename, struct imgdata *imd)
 {
     int fd, r;
     char *cmd;
-    struct fileparts *fp = fparse(filename);
-    if (strcasecmp(fp->ext, ".png") == 0)
+    char *ext = getext(filename);
+    if (strcasecmp(ext, ".png") == 0)
         cmd = "png -9 -3";
-    else if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
+    else if (strcasecmp(ext, ".jpg") == 0 || strcasecmp(ext, ".jpeg") == 0)
         cmd = "jpg -9 -3";
-    else if (strcasecmp(fp->ext, ".ppm") == 0)
+    else if (strcasecmp(ext, ".ppm") == 0)
         cmd = "ppm -9 -3";
     else
         return NoCvt;
@@ -2506,15 +2506,15 @@ int writeimagefileimpl(char *filename, struct imgdata *imd)
     int pip[2], pid, fd, ndata, i, j;
     char *cmd;
     uchar *data, *p;
-    struct fileparts *fp = fparse(filename);
+    char *ext = getext(filename);
 
-    if (strcasecmp(fp->ext, ".png") == 0)
+    if (strcasecmp(ext, ".png") == 0)
         cmd = "topng";
-    else if (strcasecmp(fp->ext, ".gif") == 0)
+    else if (strcasecmp(ext, ".gif") == 0)
         cmd = "togif";
-    else if (strcasecmp(fp->ext, ".ppm") == 0)
+    else if (strcasecmp(ext, ".ppm") == 0)
         cmd = "toppm";
-    else if (strcasecmp(fp->ext, ".ico") == 0)
+    else if (strcasecmp(ext, ".ico") == 0)
         cmd = "toico";
     else
         return NoCvt;

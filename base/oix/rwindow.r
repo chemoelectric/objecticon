@@ -405,23 +405,23 @@ static int tryimagedata(dptr data, struct imgdata *imd)
 static int tryimagefile(char *filename, struct imgdata *imd)
 {
     int r;
-    struct fileparts *fp;
+    char *ext;
 
     if ((r = readimagefileimpl(filename, imd)) != NoCvt)
         return r;
 
-    fp = fparse(filename);
+    ext = getext(filename);
 
-    if (strcasecmp(fp->ext, ".gif") == 0)
+    if (strcasecmp(ext, ".gif") == 0)
         return readgiffile(filename, imd);
 
 #if HAVE_LIBPNG
-    if (strcasecmp(fp->ext, ".png") == 0)
+    if (strcasecmp(ext, ".png") == 0)
         return readpngfile(filename, imd);
 #endif
 
 #if HAVE_LIBJPEG
-    if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
+    if (strcasecmp(ext, ".jpg") == 0 || strcasecmp(ext, ".jpeg") == 0)
         return readjpegfile(filename, imd);
 #endif
 
@@ -1521,15 +1521,15 @@ int writeimagefile(char *filename, struct imgdata *imd)
 
 #if HAVE_LIBPNG || HAVE_LIBJPEG
     {
-    struct fileparts *fp = fparse(filename);
+    char *ext = getext(filename);
 
 #if HAVE_LIBPNG
-    if (strcasecmp(fp->ext, ".png") == 0)
+    if (strcasecmp(ext, ".png") == 0)
         return writepngfile(filename, imd);
 #endif		
 
 #if HAVE_LIBJPEG
-    if (strcasecmp(fp->ext, ".jpg") == 0 || strcasecmp(fp->ext, ".jpeg") == 0)
+    if (strcasecmp(ext, ".jpg") == 0 || strcasecmp(ext, ".jpeg") == 0)
         return writejpegfile(filename, imd);
 #endif
     }
