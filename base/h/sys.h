@@ -27,6 +27,7 @@
     * be used. */
    #define snprintf snprint
    #define vsnprintf vsnprint
+   #define va_copy(x,y) x=y
    #define setenv(k, v, o) putenv(k, v)
    #define getenv(k) oi_getenv(k)
    #define fillarc oi_fillarc

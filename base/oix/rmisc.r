@@ -2092,12 +2092,12 @@ void why(char *s)
  */
 void whyf(char *fmt, ...)
 {
-    char buff[512];
+    char *s;
     va_list ap;
     va_start(ap, fmt);
-    vsnprintf(buff, sizeof(buff), fmt, ap);
+    s = buffvprintf(fmt, ap);
     va_end(ap);
-    cstr2string(buff, &kywd_why);
+    cstr2string(s, &kywd_why);
 }
 
 static int pdptr_cmp(dptr p1, dptr *p2)

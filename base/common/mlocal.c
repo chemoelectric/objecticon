@@ -1155,6 +1155,39 @@ char *get_system_error()
 }
 
 /*
+ * printf to a static buffer.
+ */
+char *buffprintf(char *fmt, ...)
+{
+    char *s;
+    va_list ap;
+    va_start(ap, fmt);
+    s = buffvprintf(fmt, ap);
+    va_end(ap);
+    return s;
+}
+
+/*
+ * vprintf to a static buffer.
+ */
+char *buffvprintf(char *fmt, va_list ap)
+{
+    static struct staticstr buf = {96};
+    va_list ap1;
+    int n;
+    ssreserve(&buf, buf.smin);
+    while (1) {
+        va_copy(ap1, ap);
+        n = vsnprintf(buf.s, buf.curr, fmt, ap1);
+        va_end(ap1);
+        if (n < buf.curr - 1)
+            break;
+        ssreserve(&buf, 2 * buf.curr);
+    }
+    return buf.s;
+}
+
+/*
  * salloc - allocate and initialize string
  */
 char *salloc(char *s)

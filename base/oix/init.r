@@ -571,6 +571,7 @@ void fatalerr(int n, dptr v)
     kywd_handler = nulldesc;
     curpstate->monitor = 0;
     err_msg(n, v);
+    /* Not reached */
 }
 
 /*
@@ -579,15 +580,13 @@ void fatalerr(int n, dptr v)
  */
 void ffatalerr(char *fmt, ...)
 {
-    char buff[512];
+    char *s;
     va_list ap;
     va_start(ap, fmt);
-    vsnprintf(buff, sizeof(buff), fmt, ap);
+    s = salloc(buffvprintf(fmt, ap));
     va_end(ap);
-    CMakeStr(buff, &t_errortext);
-    kywd_handler = nulldesc;
-    curpstate->monitor = 0;
-    err_msg(-1, 0);
+    CMakeStr(s, &t_errortext);
+    fatalerr(-1, 0);
     /* Not reached */
 }
 
