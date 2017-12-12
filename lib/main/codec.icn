@@ -625,7 +625,7 @@ class Decode()
                 i := integer(decode()) | throw("Integer expected")
                 put(l, i)
              }
-             return Text.create_cset(l)
+             return Text.create_cset(l) | throw("Invalid cset range")
           }
 
          Codec.UCS_CODE :
