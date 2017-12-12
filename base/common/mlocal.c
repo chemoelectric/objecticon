@@ -268,7 +268,7 @@ static char *getcachedcwd()
 {
     static char *buf;
     if (!buf) {
-        int len = 2;
+        int len = 32;
         for (;;) {
             buf = safe_realloc(buf, len);
 #if MSWIN32
