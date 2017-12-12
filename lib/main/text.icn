@@ -5,7 +5,11 @@ final abstract class Text()
    #
    public static native get_ord_range(c)
 
-   # Produce a cset consisting of characters in the range x[1]-x[2], x[3]-x[4] etc
+   # Produce a cset consisting of characters in the range x[1]-x[2],
+   # x[3]-x[4] etc.  A list of ranges may also be passed as a
+   # parameter.
+   #
+   # Fails and sets &why if any of the code point numbers is invalid.
    #
    public static native create_cset(x[])
 
