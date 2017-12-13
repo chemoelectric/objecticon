@@ -1186,9 +1186,9 @@ char *buffvprintf(char *fmt, va_list ap)
         va_copy(ap1, ap);
         n = vsnprintf(buf.s, buf.curr, fmt, ap1);
         va_end(ap1);
-        if (n < buf.curr - 1)
+        if (n < buf.curr)
             break;
-        ssreserve(&buf, 2 * buf.curr);
+        ssreserve(&buf, n + 1);
     }
     return buf.s;
 }
