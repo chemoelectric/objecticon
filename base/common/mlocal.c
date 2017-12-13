@@ -1146,8 +1146,9 @@ char *maketemp(char *fn)
 {
     static struct staticstr buf = {128};
 #if MSWIN32
-    WCHAR path[MaxPath];
+    WCHAR path[MAX_PATH + 100];
     char *tmp;
+    path[0] = 0;
     GetTempPathW(ElemCount(path), path);
     tmp = wchar_to_utf8(path);
     ssreserve(&buf, strlen(tmp) + strlen(fn) + 1);
@@ -1226,9 +1227,15 @@ char *buffvprintf(char *fmt, va_list ap)
         va_copy(ap1, ap);
         n = vsnprintf(buf.s, buf.curr, fmt, ap1);
         va_end(ap1);
+#if PLAN9
         if (n < buf.curr - 1)
             break;
         ssreserve(&buf, 2 * buf.curr);
+#else
+        if (n < buf.curr)
+            break;
+        ssreserve(&buf, n + 1);
+#endif
     }
     return buf.s;
 }
