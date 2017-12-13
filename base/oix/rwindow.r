@@ -428,12 +428,14 @@ static int tryimagefile(char *filename, struct imgdata *imd)
     return NoCvt;
 }
 
+#define MaxTryImageFile 1024
+
 int interpimage(dptr d,  struct imgdata *imd)
 {
     int r;
     if ((r = tryimagedata(d, imd)) != NoCvt)
         return r;
-    if (StrLen(*d) < MaxPath) {
+    if (StrLen(*d) < MaxTryImageFile) {
         if ((r = tryimagefile(buffstr(d), imd)) != NoCvt)
             return r;
     }

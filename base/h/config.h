@@ -81,10 +81,6 @@
  * Other defaults.
  */
 
-#ifndef MaxPath
-   #define MaxPath 1024
-#endif					/* MaxPath */
-
 #ifndef ByteBits
    #define ByteBits 8
 #endif					/* ByteBits */
