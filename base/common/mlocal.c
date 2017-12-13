@@ -1112,8 +1112,9 @@ char *maketemp(char *fn)
 {
     static struct staticstr buf = {128};
 #if MSWIN32
-    WCHAR path[MaxPath];
+    WCHAR path[MAX_PATH + 100];
     char *tmp;
+    path[0] = 0;
     GetTempPathW(ElemCount(path), path);
     tmp = wchar_to_utf8(path);
     ssreserve(&buf, strlen(tmp) + strlen(fn) + 1);
