@@ -446,8 +446,8 @@ struct progstate {
 
     struct timeval start_time;          /* time program started */
 
-    ulonglong stringtotal;		/* cumulative total allocation */
-    ulonglong blocktotal;		/* cumulative total allocation */
+    uint64_t stringtotal;		/* cumulative total allocation */
+    uint64_t blocktotal;		/* cumulative total allocation */
 
     uword stackcurr;			/* current stack allocation in use (frame
                                          * and local structs) */

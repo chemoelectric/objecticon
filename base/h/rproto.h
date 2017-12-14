@@ -126,7 +126,7 @@ word            mul             (word a,word b);
 word            neg             (word a);
 void            outimage        (FILE *f,dptr dp,int noimage);
 void            outimage1       (FILE *f, dptr dp, int noimage, word stringlimit, word listlimit);
-ulonglong       physicalmemorysize(void);
+uint64_t        physicalmemorysize(void);
 word            prescan         (dptr d);
 int             putstr          (FILE *f,dptr d);
 int             putn            (FILE *f, char *s, size_t n);
@@ -197,7 +197,7 @@ declare_convert_from_macro(gid_t)
 declare_convert_to_macro(pid_t)
 declare_convert_from_macro(pid_t)
 #endif
-declare_convert_from_macro(ulonglong)
+declare_convert_from_macro(uint64_t)
 declare_convert_from_macro(uword)
 
 char *buffstr(dptr d);

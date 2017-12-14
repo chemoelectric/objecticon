@@ -166,7 +166,7 @@ convert_from_macro(gid_t)
 convert_to_macro(pid_t)
 convert_from_macro(pid_t)
 #endif
-convert_from_macro(ulonglong)
+convert_from_macro(uint64_t)
 convert_from_macro(uword)
 
 function lang_Prog_get_event_mask(ce)
@@ -719,9 +719,9 @@ function lang_Prog_get_allocation_info_impl(c)
           runerr(0);
 
        create_list(2, &result);
-       convert_from_ulonglong(prog->stringtotal, &tmp);
+       convert_from_uint64_t(prog->stringtotal, &tmp);
        list_put(&result, &tmp);
-       convert_from_ulonglong(prog->blocktotal, &tmp);
+       convert_from_uint64_t(prog->blocktotal, &tmp);
        list_put(&result, &tmp);
        return result;
    }

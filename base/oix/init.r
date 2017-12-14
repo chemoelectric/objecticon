@@ -1136,7 +1136,7 @@ int main(int argc, char **argv)
     struct header hdr;
     FILE *ifile = 0;
     char *t, *name;
-    ulonglong pmem;
+    uint64_t pmem;
     double d;
 
 #if MSWIN32
@@ -1225,7 +1225,7 @@ int main(int argc, char **argv)
 
     pmem = physicalmemorysize();
     if (pmem == 0)  /* If unknown, assume 2GB */
-        pmem = (ulonglong)2 * 1024 * 1024 * 1024;
+        pmem = (uint64_t)2 * 1024 * 1024 * 1024;
 
     rootstring.size = Min(Max(pmem / 256, MinDefStrSpace), MaxDefStrSpace);
     rootblock.size  = Min(Max(WordSize * (pmem / 1024), MinDefAbrSize), MaxDefAbrSize);
