@@ -509,7 +509,7 @@ int convert_to_##TYPE(dptr src, TYPE *dest)
     for (k = 0; k < sizeof(TYPE) / 2; ++k) {
         bigand(&i, &int65535, &bits);
         bigshift(&i, -16, &i);
-        res |= ((ulonglong)IntVal(bits) << pos);
+        res |= ((TYPE)IntVal(bits) << pos);
         pos += 16;
     }
     *dest = res;
