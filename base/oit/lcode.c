@@ -130,7 +130,7 @@ static struct strconst *first_strconst, *last_strconst, *strconst_hash[128];
 static int strconst_offset;
 static struct centry *constblock_hash[128];
 static void outbytex(char b, char *fmt, ...);
-static void outshortx(short s, char *fmt, ...);
+static void outint16(int16_t s, char *fmt, ...);
 static void outwordx(word oword, char *fmt, ...);
 static void outwordz(word oword, char *fmt, ...);
 static void outstr(struct strconst *sp, char *fmt, ...);
@@ -138,11 +138,11 @@ static void outsdescrip(struct centry *ce, char *fmt, ...);
 
 #if WordBits == 32
 #define PadWordFmt "%08"XWordFmtCh
-#define PadShortFmt "%04lx    "
+#define PadInt16Fmt "%04lx    "
 #define PadByteFmt "%02lx      "
 #else
 #define PadWordFmt "%016"XWordFmtCh
-#define PadShortFmt "%04lx            "
+#define PadInt16Fmt "%04lx            "
 #define PadByteFmt "%02lx              "
 #endif
 
@@ -1270,7 +1270,7 @@ static void genclass(struct lclass *cl)
     outwordz(ap, "   Pointer to field info array");
     ap += n_fields * WordSize;
     outwordz(ap, "   Pointer to field sort array");
-    ap += n_fields * sizeof(short);
+    ap += n_fields * sizeof(int16_t);
     ap += nalign(ap);
 
     /*
@@ -1306,7 +1306,7 @@ static void genclass(struct lclass *cl)
         fprintf(dbgfile, "# Sorted fields array\n");
 
     for (i = 0; i < n_fields; ++i)
-        outshortx((short)sortf[i].n, "   Field %s (fnum=%d)", sortf[i].fp->name, sortf[i].fp->field_id);
+        outint16((int16_t)sortf[i].n, "   Field %s (fnum=%d)", sortf[i].fp->name, sortf[i].fp->field_id);
     free(sortf);
 
     align();
@@ -1404,7 +1404,7 @@ static void genclasses(void)
                                cl->n_supers +
                                cl->n_implemented_classes +
                                n_fields) + 
-            sizeof(short) * n_fields;
+            sizeof(int16_t) * n_fields;
 
         cl->size += nalign(cl->size);
         x += cl->size;
@@ -1511,7 +1511,7 @@ static void gentables()
         s = rec->global->name;
         rec->pc = pc;
         ce = inst_sdescrip(s);
-        size = 9 * WordSize + rec->nfields * (WordSize + sizeof(short));
+        size = 9 * WordSize + rec->nfields * (WordSize + sizeof(int16_t));
         if (loclevel > 1)
             size += rec->nfields * 2 * WordSize;
         size += nalign(size);
@@ -1538,7 +1538,7 @@ static void gentables()
         } else
             outwordz(0, "   Pointer to field_locs array");
         outwordz(ap, "   Pointer to field sort array");
-        ap += rec->nfields * sizeof(short);
+        ap += rec->nfields * sizeof(int16_t);
         ap += nalign(ap);
 
         /*
@@ -1570,7 +1570,7 @@ static void gentables()
             fprintf(dbgfile, "# Sorted fields array\n");
 
         for (i = 0; i < rec->nfields; ++i)
-            outshortx((short)sortf[i].n, "   Field %s (fnum=%d)", sortf[i].fp->name, sortf[i].fp->field_id);
+            outint16((int16_t)sortf[i].n, "   Field %s (fnum=%d)", sortf[i].fp->name, sortf[i].fp->field_id);
         free(sortf);
 
         align();
@@ -1939,20 +1939,20 @@ static void outwordx(word oword, char *fmt, ...)
     outword(oword);
 }
 
-static void outshortx(short s, char *fmt, ...)
+static void outint16(int16_t s, char *fmt, ...)
 {
     if (Dflag) {
         va_list ap;
         va_start(ap, fmt);
-        fprintf(dbgfile, PadWordFmt ":   " PadShortFmt "    # ", pc, (long)s);
+        fprintf(dbgfile, PadWordFmt ":   " PadInt16Fmt "    # ", pc, (long)s);
         vfprintf(dbgfile, fmt, ap);
         putc('\n', dbgfile);
         va_end(ap);
     }
-    CodeCheck(sizeof(short));
-    memcpy(codep, &s, sizeof(short));
-    codep += sizeof(short);
-    pc += sizeof(short);
+    CodeCheck(sizeof(int16_t));
+    memcpy(codep, &s, sizeof(int16_t));
+    codep += sizeof(int16_t);
+    pc += sizeof(int16_t);
 }
 
 static void outbytex(char b, char *fmt, ...)
@@ -2408,8 +2408,8 @@ static void set_ucs_slot(word *off, word offset_bits, word i, word n)
             break;
         }
         case 16: {
-            uInteger16 *p = (uInteger16 *)(off);
-            p[i] = (uInteger16)n;
+            uint16_t *p = (uint16_t *)(off);
+            p[i] = (uint16_t)n;
             break;
         }
 #if WordBits == 32
@@ -2419,8 +2419,8 @@ static void set_ucs_slot(word *off, word offset_bits, word i, word n)
         }
 #else
         case 32: {
-            uInteger32 *p = (uInteger32 *)(off);
-            p[i] = (uInteger32)n;
+            uint32_t *p = (uint32_t *)(off);
+            p[i] = (uint32_t)n;
             break;
         }
         case 64: {

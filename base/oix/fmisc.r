@@ -916,7 +916,7 @@ static word get_ucs_slot(struct b_ucs *b, word i)
             return (word)p[i];
         }
         case 16: {
-            uInteger16 *p = (uInteger16 *)(b->off);
+            uint16_t *p = (uint16_t *)(b->off);
             return (word)p[i];
         }
 #if WordBits == 32
@@ -925,7 +925,7 @@ static word get_ucs_slot(struct b_ucs *b, word i)
         }
 #else
         case 32: {
-            uInteger32 *p = (uInteger32 *)(b->off);
+            uint32_t *p = (uint32_t *)(b->off);
             return (word)p[i];
         }
         case 64: {
@@ -949,8 +949,8 @@ static void set_ucs_slot(struct b_ucs *b, word i, word n)
             break;
         }
         case 16: {
-            uInteger16 *p = (uInteger16 *)(b->off);
-            p[i] = (uInteger16)n;
+            uint16_t *p = (uint16_t *)(b->off);
+            p[i] = (uint16_t)n;
             break;
         }
 #if WordBits == 32
@@ -960,8 +960,8 @@ static void set_ucs_slot(struct b_ucs *b, word i, word n)
         }
 #else
         case 32: {
-            uInteger32 *p = (uInteger32 *)(b->off);
-            p[i] = (uInteger32)n;
+            uint32_t *p = (uint32_t *)(b->off);
+            p[i] = (uint32_t)n;
             break;
         }
         case 64: {

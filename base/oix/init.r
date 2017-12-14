@@ -1026,7 +1026,7 @@ void resolve(struct progstate *p)
                 cb->fields = (struct class_field **)(p->Code + (uword)cb->fields);
                 for (i = 0; i < n_fields; ++i) 
                     cb->fields[i] = (struct class_field*)(p->Code + (uword)cb->fields[i]);
-                cb->sorted_fields = (short *)(p->Code + (uword)cb->sorted_fields);
+                cb->sorted_fields = (int16_t *)(p->Code + (uword)cb->sorted_fields);
                 break;
             }
 
@@ -1039,7 +1039,7 @@ void resolve(struct progstate *p)
                 c->fnums = (word *)(p->Code + (uword)c->fnums);
                 if (c->field_locs)
                     c->field_locs = (struct loc *)(p->Code + (uword)c->field_locs);
-                c->sorted_fields = (short *)(p->Code + (uword)c->sorted_fields);
+                c->sorted_fields = (int16_t *)(p->Code + (uword)c->sorted_fields);
                 /*
                  * Relocate the name and loc'ns
                  */

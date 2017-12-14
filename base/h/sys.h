@@ -19,6 +19,7 @@
 #include <float.h>
 #include <assert.h>
 #include <setjmp.h>
+#include <stdint.h>
 
 /*
  * Operating-system-dependent includes.
