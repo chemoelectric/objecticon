@@ -138,7 +138,7 @@ static void outsdescrip(struct centry *ce, char *fmt, ...);
 
 #if WordBits == 32
 #define PadWordFmt "%08"XWordFmtCh
-#define PadInt16Fmt "%04lx    "
+#define PadUInt16Fmt "%04lx    "
 #define PadByteFmt "%02lx      "
 #else
 #define PadWordFmt "%016"XWordFmtCh
