@@ -190,7 +190,7 @@ convert_from_macro(vlong)
 convert_from_macro(uvlong)
 convert_from_macro(uint)
 #endif
-convert_from_macro(ulonglong)
+convert_from_macro(uint64_t)
 convert_from_macro(uword)
 
 function lang_Prog_get_event_mask(ce)
@@ -743,9 +743,9 @@ function lang_Prog_get_allocation_info_impl(c)
           runerr(0);
 
        create_list(2, &result);
-       convert_from_ulonglong(prog->stringtotal, &tmp);
+       convert_from_uint64_t(prog->stringtotal, &tmp);
        list_put(&result, &tmp);
-       convert_from_ulonglong(prog->blocktotal, &tmp);
+       convert_from_uint64_t(prog->blocktotal, &tmp);
        list_put(&result, &tmp);
        return result;
    }
@@ -1295,7 +1295,7 @@ function parser_UReader_raw_convert(s)
        if (StrLen(s) == 2) {
            union {
                unsigned char c[2];
-               uInteger16 s;
+               uint16_t s;
            } i;
            i.c[0] = p[0];
            i.c[1] = p[1];
@@ -1304,7 +1304,7 @@ function parser_UReader_raw_convert(s)
        if (StrLen(s) == 4) {
            union {
                unsigned char c[4];
-               uInteger32 w;
+               uint32_t w;
            } i;
            i.c[0] = p[0];
            i.c[1] = p[1];

@@ -48,32 +48,6 @@
    #define RealInDesc 1
 #endif
 
-#if IntBits == 32
-   typedef int Integer32;
-   typedef unsigned int uInteger32;
-#elif ShortBits == 32
-   typedef short Integer32;
-   typedef unsigned short uInteger32;
-#elif LongBits == 32
-   typedef long Integer32;
-   typedef unsigned long uInteger32;
-#else
-   #error "Either IntBits, ShortBits or LongBits must be 32"
-#endif
-
-#if IntBits == 16
-   typedef int Integer16;
-   typedef unsigned int uInteger16;
-#elif ShortBits == 16
-   typedef short Integer16;
-   typedef unsigned short uInteger16;
-#elif LongBits == 16
-   typedef long Integer16;
-   typedef unsigned long uInteger16;
-#else
-   #error "Either IntBits, ShortBits or LongBits must be 16"
-#endif
-
 /*
  * Typedefs to make some things easier.
  */

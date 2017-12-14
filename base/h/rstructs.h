@@ -144,7 +144,7 @@ struct b_constructor {		/* constructor block */
     dptr name;           	/*   record type name (pointer to string qualifier) */
     word *fnums;                /* Pointer to array of field numbers array */
     struct loc *field_locs;     /* Source location of fields or null if not available */
-    short *sorted_fields;       /* An array of indices giving the order sorted by name */
+    int16_t *sorted_fields;     /* An array of indices giving the order sorted by name */
 };
 
 struct b_record {		/* record block */
@@ -185,8 +185,8 @@ struct b_class {                 /* block representing a class - always static, 
     struct b_class **implemented_classes;  /* Array of pointers to implemented classes, sorted by 
                                             * ascending address to allow binary search */
     struct class_field **fields;  /* Pointers to field info; one for each field */
-    short *sorted_fields;       /* An array of indices into fields, giving the order sorted by
-                                 * field number (and hence also sorted by name) */
+    int16_t *sorted_fields;       /* An array of indices into fields, giving the order sorted by
+                                   * field number (and hence also sorted by name) */
 };
 
 struct b_object {		/* object block */
@@ -446,8 +446,8 @@ struct progstate {
 
     struct timeval start_time;          /* time program started */
 
-    ulonglong stringtotal;		/* cumulative total allocation */
-    ulonglong blocktotal;		/* cumulative total allocation */
+    uint64_t stringtotal;		/* cumulative total allocation */
+    uint64_t blocktotal;		/* cumulative total allocation */
 
     uword stackcurr;			/* current stack allocation in use (frame
                                          * and local structs) */

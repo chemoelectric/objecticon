@@ -23,6 +23,13 @@
    typedef unsigned long mode_t;
    typedef unsigned long clock_t;
    typedef vlong off_t;
+   typedef short int16_t;
+   typedef unsigned short uint16_t;
+   typedef int int32_t;
+   typedef unsigned int uint32_t;
+   typedef long long int64_t;
+   typedef unsigned long long uint64_t;
+
    /* snprintf and vsnprintf have a buffer overrun bug, and must never
     * be used. */
    #define snprintf snprint
@@ -115,6 +122,7 @@
    #include <float.h>
    #include <assert.h>
    #include <setjmp.h>
+   #include <stdint.h>
 #endif
 
 /*

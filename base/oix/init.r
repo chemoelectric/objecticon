@@ -1039,7 +1039,7 @@ void resolve(struct progstate *p)
                 cb->fields = (struct class_field **)(p->Code + (uword)cb->fields);
                 for (i = 0; i < n_fields; ++i) 
                     cb->fields[i] = (struct class_field*)(p->Code + (uword)cb->fields[i]);
-                cb->sorted_fields = (short *)(p->Code + (uword)cb->sorted_fields);
+                cb->sorted_fields = (int16_t *)(p->Code + (uword)cb->sorted_fields);
                 break;
             }
 
@@ -1052,7 +1052,7 @@ void resolve(struct progstate *p)
                 c->fnums = (word *)(p->Code + (uword)c->fnums);
                 if (c->field_locs)
                     c->field_locs = (struct loc *)(p->Code + (uword)c->field_locs);
-                c->sorted_fields = (short *)(p->Code + (uword)c->sorted_fields);
+                c->sorted_fields = (int16_t *)(p->Code + (uword)c->sorted_fields);
                 /*
                  * Relocate the name and loc'ns
                  */
@@ -1149,7 +1149,7 @@ int main(int argc, char **argv)
     struct header hdr;
     FILE *ifile = 0;
     char *t, *name;
-    ulonglong pmem;
+    uint64_t pmem;
     double d;
 
 #if MSWIN32
@@ -1243,7 +1243,7 @@ int main(int argc, char **argv)
 
     pmem = physicalmemorysize();
     if (pmem == 0)  /* If unknown, assume 2GB */
-        pmem = (ulonglong)2 * 1024 * 1024 * 1024;
+        pmem = (uint64_t)2 * 1024 * 1024 * 1024;
 
     rootstring.size = Min(Max(pmem / 256, MinDefStrSpace), MaxDefStrSpace);
     rootblock.size  = Min(Max(WordSize * (pmem / 1024), MinDefAbrSize), MaxDefAbrSize);

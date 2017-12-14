@@ -150,7 +150,8 @@ end
  */
 typedef int clock_t, time_t, fd_set, va_list, off_t, mode_t,
     ino_t, blkcnt_t, dev_t, size_t, jmp_buf,
-    DIR, uid_t, gid_t, pid_t, stringint, socklen_t;
+    DIR, uid_t, gid_t, pid_t, stringint, socklen_t,
+    int16_t, uint16_t, int32_t, uint32_t, int64_t, uint64_t;
 
 #if HAVE_LIBZ
 typedef int gzFile;
@@ -512,7 +513,7 @@ int convert_to_##TYPE(dptr src, TYPE *dest)
     for (k = 0; k < sizeof(TYPE) / 2; ++k) {
         bigand(&i, &int65535, &bits);
         bigshift(&i, -16, &i);
-        res |= ((ulonglong)IntVal(bits) << pos);
+        res |= ((TYPE)IntVal(bits) << pos);
         pos += 16;
     }
     *dest = res;

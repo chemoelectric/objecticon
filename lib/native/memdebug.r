@@ -2078,8 +2078,8 @@ function MemDebug_regions()
        fprintf(out, "Block collections=%d\n", prog->collected_block);
        fprintf(out, "Stack collections=%d\n", prog->collected_stack); 
        fprintf(out, "User collections=%d\n", prog->collected_user);
-       fprintf(out, "Total string allocations=%'llu\n", prog->stringtotal);
-       fprintf(out, "Total block allocations=%'llu\n", prog->blocktotal);
+       fprintf(out, "Total string allocations=%'llu\n", (ulonglong)prog->stringtotal);
+       fprintf(out, "Total block allocations=%'llu\n", (ulonglong)prog->blocktotal);
 
        return nulldesc;
     }

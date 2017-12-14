@@ -1068,12 +1068,12 @@ void show_regions()
 }
 
 
-ulonglong physicalmemorysize()
+uint64_t physicalmemorysize()
 {
 #if UNIX
 #define TAG "MemTotal: "
     FILE *f = fopen("/proc/meminfo", "r");
-    ulonglong i = 0;
+    uint64_t i = 0;
     if (f) {
         char buf[80], *p;
         while (fgets(buf, sizeof(buf), f)) {
