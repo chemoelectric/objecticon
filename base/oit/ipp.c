@@ -49,11 +49,6 @@ typedef struct bstruct {		/* buffer pointer structure */
    char *lim;				/* saved limit value */
    } buffer;
 
-typedef struct {			/* preprocessor token structure */
-   char *addr;				/* beginning of token */
-   short len;				/* length */
-   } ptok;
-
 typedef struct cd {			/* structure holding a definition */
    struct cd *next;			/* link to next defn */
    struct cd *prev;			/* link to previous defn */
