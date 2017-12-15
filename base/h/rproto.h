@@ -190,9 +190,11 @@ declare_convert_to_macro(off_t)
 declare_convert_from_macro(off_t)
 declare_convert_to_macro(time_t)
 declare_convert_from_macro(time_t)
+#if !PLAN9
 declare_convert_to_macro(mode_t)
 declare_convert_from_macro(mode_t)
 declare_convert_from_macro(dev_t)
+#endif
 #if UNIX
 declare_convert_from_macro(ino_t)
 declare_convert_from_macro(blkcnt_t)

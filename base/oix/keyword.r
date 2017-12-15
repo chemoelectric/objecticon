@@ -11,11 +11,9 @@ keyword clock
    body {
       char sbuf[9], *tmp;
 #if PLAN9
-      long t;
       struct Tm *ct;
 
-      time(&t);
-      ct = localtime(t);
+      ct = localtime(time(0));
       sprintf(sbuf,"%02d:%02d:%02d", ct->hour, ct->min, ct->sec);
 #else
       time_t t;
@@ -42,11 +40,9 @@ keyword date
    body {
       char sbuf[11], *tmp;
 #if PLAN9
-      long t;
       struct Tm *ct;
 
-      time(&t);
-      ct = localtime(t);
+      ct = localtime(time(0));
       sprintf(sbuf, "%04d/%02d/%02d",
          1900 + ct->year, ct->mon + 1, ct->mday);
 #else
@@ -79,11 +75,9 @@ keyword dateline
       int hour;
       char *merid;
 #if PLAN9
-      long t;
       struct Tm *ct;
 
-      time(&t);
-      ct = localtime(t);
+      ct = localtime(time(0));
       if ((hour = ct->hour) >= 12) {
          merid = "pm";
          if (hour > 12)

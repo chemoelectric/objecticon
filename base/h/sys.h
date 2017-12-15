@@ -17,11 +17,10 @@
    #define SHRT_MAX 32767
    #define UCHAR_MAX 255
    #define INT_MAX 0x7fffffff
-   typedef unsigned int size_t;
-   typedef unsigned int dev_t;
-   typedef unsigned long time_t;
-   typedef unsigned long mode_t;
-   typedef unsigned long clock_t;
+   typedef ulong size_t;
+   /* time(2) says times should be ulongs. */
+   typedef ulong time_t;
+   typedef ulong mode_t;
    typedef vlong off_t;
    typedef short int16_t;
    typedef unsigned short uint16_t;
@@ -75,7 +74,7 @@
    #define PointerMotionMask    1
 
    struct timeval {
-      long    tv_sec;
+      time_t  tv_sec;
       long    tv_usec;
    };
    struct timezone {
