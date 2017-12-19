@@ -687,7 +687,7 @@ static void initptrs(struct progstate *p, struct header *h)
     p->ETCaseTables = (dptr)(p->Code + h->Filenms);
     p->NTCaseTables = p->ETCaseTables - p->TCaseTables;
     p->Filenms = (struct ipc_fname *)(p->ETCaseTables);
-    p->Efilenms = (struct ipc_fname *)(p->Code + h->linenums);
+    p->Efilenms = (struct ipc_fname *)(p->Code + h->Linenums);
     p->Ilines = (struct ipc_line *)(p->Efilenms);
     p->Elines = (struct ipc_line *)(p->Code + h->Constants);
     p->Constants = (dptr)(p->Elines);
