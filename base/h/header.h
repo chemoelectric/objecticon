@@ -21,6 +21,6 @@ struct header {
     word Constants;             /* location of constant descriptors */
     word Strcons;		/* location of identifier table */
     word Filenms;		/* location of ipc/file name table */
-    word linenums;		/* location of ipc/line number table */
+    word Linenums;		/* location of ipc/line number table */
     word config[16];		/* icode version */
 };

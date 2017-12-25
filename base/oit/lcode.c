@@ -1733,7 +1733,7 @@ static void gentables()
 
     if (Dflag)
         fprintf(dbgfile, "\n# Line number table\n");
-    hdr.linenums = pc;
+    hdr.Linenums = pc;
     for (lnptr = lntable; lnptr < lnfree; lnptr++) {
         outwordx(lnptr->ipc, "IPC");
         outwordx(lnptr->line, "   Line %d", lnptr->line);        
@@ -1831,7 +1831,7 @@ static void gentables()
         fprintf(dbgfile, "snames:           " XWordFmt "\n", hdr.Snames);
         fprintf(dbgfile, "tcasetables:      " XWordFmt "\n", hdr.TCaseTables);
         fprintf(dbgfile, "filenms:          " XWordFmt "\n", hdr.Filenms);
-        fprintf(dbgfile, "linenums:         " XWordFmt "\n", hdr.linenums);
+        fprintf(dbgfile, "linenums:         " XWordFmt "\n", hdr.Linenums);
         fprintf(dbgfile, "constants:        " XWordFmt "\n", hdr.Constants);
         fprintf(dbgfile, "strcons:          " XWordFmt "\n", hdr.Strcons);
         fprintf(dbgfile, "config:           %s\n", (char*)hdr.config);
@@ -1862,8 +1862,8 @@ static void gentables()
         report("  Statics         %7ld", (long)(hdr.Snames - hdr.Statics));
         report("  Static names    %7ld", (long)(hdr.TCaseTables - hdr.Snames));
         report("  TCaseTables     %7ld", (long)(hdr.Filenms - hdr.TCaseTables));
-        report("  Filenms         %7ld", (long)(hdr.linenums - hdr.Filenms));
-        report("  Linenums        %7ld", (long)(hdr.Constants - hdr.linenums));
+        report("  Filenms         %7ld", (long)(hdr.Linenums - hdr.Filenms));
+        report("  Linenums        %7ld", (long)(hdr.Constants - hdr.Linenums));
         report("  Constants       %7ld", (long)(hdr.Strcons - hdr.Constants));
         report("  Strings         %7ld", (long)(hdr.icodesize - hdr.Strcons));
         report("  Total           %7ld", (long)tsize);
