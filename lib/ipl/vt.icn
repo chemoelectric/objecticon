@@ -891,10 +891,15 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    private do_device_status_report(n)
+      local t
       case n of {
          5 : send("\e[0n")
-         # cx may be in cols+1; xterm reports cols (but konsole reports cols+1).  Do as per xterm.
-         6 : send("\e[" || cy || ";" || min(cx, cols) || "R")
+         6 : { 
+            # cy is relative to top_margin, for consistency with xterm (see vttest option 6,3).
+            # cx may be in cols+1; xterm reports cols (but konsole reports cols+1).  Do as per xterm.
+            t := if \origin_mode then cy - top_margin + 1 else cy
+            send("\e[" || t || ";" || min(cx, cols) || "R")
+         }
       }
    end
 
