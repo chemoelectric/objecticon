@@ -152,10 +152,10 @@ end
 #
 class DesktopEntry()
    public const
-      name,                 # Descriptive name (ucs)
+      name,                 # Descriptive name (ucs, mandatory)
       icon,                 # Icon name (string)
       source,               # Source file (string)
-      exec,                 # Exec entry (ucs)
+      exec,                 # Exec entry (ucs, mandatory)
       exec_line,            # optional ExecLine entry (ucs)
       path,                 # Path entry (ucs)
       terminal,             # Terminal entry (flag)
@@ -170,7 +170,7 @@ class DesktopEntry()
    #
    public subst_file(f, line)
       local r, ch, s, fl
-      s := \exec | fail
+      s := exec
       if \line then
          s := \exec_line
       r := u""
@@ -825,7 +825,7 @@ final abstract class Mime()
          Files.find_exe(try_exec) | fail
 
       icon := string(member(dm, u"Icon"))
-      exec := member(dm, u"Exec")
+      exec := member(dm, u"Exec") | fail
       exec_line := member(dm, u"ExecLine")
       path := member(dm, u"Path")
       terminal := if map(member(dm, u"Terminal")) == u"true" then &yes

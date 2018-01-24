@@ -18,7 +18,7 @@ end
 
 procedure need_one(a)
    if *a = 1 then
-      return a[1]
+      return ucs(a[1]) | help_stop("Parameter not utf-8")
    else
       help_stop("This option needs a single parameter")
 end
@@ -27,7 +27,7 @@ record pair(name, size)
 
 procedure need_pair(a)
    if *a = 2 then
-      return pair(a[1], integer(a[2])) | help_stop("This option needs an integer second parameter")
+      return pair(ucs(a[1]), integer(a[2])) | help_stop("This option needs a utf-8 string and an integer second parameter")
    else
       help_stop("This option needs two parameters")
 end
@@ -47,11 +47,12 @@ procedure usage(opts)
    help_line("de-file", "List desktop entries for file")
    help_line("dir", "Show config and data directories")
    help_line("cmd", "List commands for file")
+   help_line("cmd-url", "List commands for URL")
    exit(0)
 end
 
 procedure main(a)
-   local s, s1, d, cmd, u, p, c
+   local s, s1, d, cmd, u, u1, p, c
 
    opts := options(a, [], usage)
 
@@ -59,8 +60,10 @@ procedure main(a)
 
    case c of {
       "mime": {
-         every s := !a do
+         every s := !a do {
+            s := ucs(s) | help_stop("Parameter not utf-8")
             write(s, ": ", text_link(Mime.get_mime_type_for_file(s)))
+         }
       }
 
       "alt-mime": {
@@ -112,8 +115,22 @@ procedure main(a)
 
       "cmd": {
          s := need_one(a)
-         s1 := Format.shell_escape(FilePath(s).canonical().str())
+         s1 := Format.shell_escape(FilePath(s).canonical().ucs()) | help_stop("Path not utf-8")
          every d := Mime.gen_desktop_entries_for_file(s) do {
+            cmd := d.subst_file(s1)
+            if FileStream.stdout.is_flowterm_tty() then {
+               u := URL("launch:" || URL.percent_encode(cmd, URL.UNRESERVED))
+               write(Files.begin_link(u), cmd, Files.end_link())
+            } else
+               write(cmd)
+         }
+      }
+
+      "cmd-url": {
+         s := need_one(a)
+         u1 := URL(s) | help_stop("This option needs a valid URL parameter")
+         s1 := u1.ucs()
+         every d := Mime.gen_desktop_entries("x-scheme-handler/" || string(u1.scheme)) do {
             cmd := d.subst_file(s1)
             if FileStream.stdout.is_flowterm_tty() then {
                u := URL("launch:" || URL.percent_encode(cmd, URL.UNRESERVED))

@@ -242,7 +242,7 @@ class Main(Dialog)
       self.args := a
       show()
       if *self.args > 0  then {
-         s := ucs(self.args[1]) | return alert_error(self, "Invalid (non-utf8) filename")
+         s := ucs(self.args[1]) | return alert_error(self, "Invalid (non-utf-8) filename")
          if Files.access(s, Access.R_OK) then {
             c := load_canvas(s) | fail
             c.set_pos(Canvas.SURROUND, Canvas.SURROUND)
@@ -270,7 +270,7 @@ class Main(Dialog)
    #         
    public test(fname)
       local s, c, code
-      s := ucs(fname) | return alert_error(self, "Invalid (non-utf8) filename")
+      s := ucs(fname) | return alert_error(self, "Invalid (non-utf-8) filename")
       Files.access(s, Access.R_OK) | return alert_error(self, "Couldn't open " || s)
       c := load_canvas(s) | fail
       code := c.gen_code()
@@ -282,7 +282,7 @@ class Main(Dialog)
    #         
    public load_and_save(fname)
       local s, c, code
-      s := ucs(fname) | return alert_error(self, "Invalid (non-utf8) filename")
+      s := ucs(fname) | return alert_error(self, "Invalid (non-utf-8) filename")
       Files.access(s, Access.R_OK) | return alert_error(self, "Couldn't open " || s)
       c := load_canvas(s) | fail
       code := c.gen_code()

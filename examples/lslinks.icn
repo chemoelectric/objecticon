@@ -21,8 +21,8 @@ procedure main(args)
                           Opt("t",integer,"TIMEOUT#Specify timeout (in seconds) to use"),
                           Opt("r",integer, "RETRIES#Specify number of retries to use"),
                           Opt("k",string, "FILE#Load cookies from file"),
-                          Opt("text",,"Do text search for tags rather than parse"),
-                          Opt("utf8",,"Retrieved data is in utf8 format")],
+                          Opt("text",,"Do text search for tags rather than search parsed document"),
+                          Opt("u",,"Retrieved data is in utf-8 format")],
                           "Usage: lslinks [URL]... [OPTIONS]\n_
                           List links in URL(s)")
 
@@ -72,11 +72,11 @@ procedure do_one(a)
    if \opts["tee"] then
       Files.string_to_file(opts["tee"], src) | stop("Couldn't dump file to ", opts["tee"])
 
-   if \opts["utf8"] then
-      src := ucs(src) | stop("Couldn't convert utf8")
+   if \opts["u"] then
+      src := ucs(src) | stop("Couldn't convert to utf-8")
 
    parser := HtmlParser()
-   doc := parser.parse(src) | stop("couldnt parse page")
+   doc := parser.parse(src)
    if \opts["i"] then
       do_search(url, src, doc, "IMG", "SRC", "")
    else if \opts["b"] then {
@@ -104,7 +104,7 @@ procedure do_search(url, src, doc, tag, attr, pfx)
       base := URL(n.get_attribute("HREF"))
    }
 
-   if \opts["utf8"] then {
+   if \opts["u"] then {
       tag := ucs(tag)
       attr := ucs(attr)
    }
@@ -163,7 +163,7 @@ procedure remove_entities(s)
          break
       i := &pos
       res ||:= if j := parse_entity() then {
-         if \opts["utf8"] then
+         if \opts["u"] then
             uchar(j | 63)
          else
             char(j | 63)

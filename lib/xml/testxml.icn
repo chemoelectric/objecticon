@@ -18,7 +18,7 @@ procedure main(a)
 
    fmt := XmlFormatter()
 
-   t := options(a, [Opt("u",,"Input is utf8"),
+   t := options(a, [Opt("u",,"Input is utf-8"),
                     Opt("g",,"Show global names"),
                     Opt("nc",,"Don't preserve comments"),
                     Opt("nv",,"Don't validate"),
@@ -56,7 +56,7 @@ procedure main(a)
    every e := !a do {
       s := Files.file_to_string(e) | stop("Couldn't open ", e, ": ", &why)
       if \t["u"] then
-         s := ucs(s) | stop("Couldn't convert to utf8")
+         s := ucs(s) | stop("Couldn't convert to utf-8")
 
       write("--- Parsing ", e)
       if d := p.parse(s, FilePath(e).canonical().to_url()) then {

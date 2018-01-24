@@ -888,7 +888,7 @@ static void print_ucs(struct b_ucs *b)
         fprintf(stderr, "Index len in words: " WordFmt "\n", 
                 (b->blksize - sizeof(struct b_ucs)) / sizeof(word) + 1);
     fprintf(stderr, "Offset bits: " WordFmt "\n", b->offset_bits);
-    fprintf(stderr, "Offset to UTF8 ratio: %.2f%%\n", 
+    fprintf(stderr, "Offset to UTF-8 ratio: %.2f%%\n", 
             (float)(100.0 * n_slots * (b->offset_bits)/8) / StrLen(b->utf8));
     fprintf(stderr, "N left indexed: " WordFmt "\n", b->n_off_l_indexed);
     for (i = 0; i < b->n_off_l_indexed; ++i)
