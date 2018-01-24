@@ -640,7 +640,7 @@ static void lemitcon(struct centry *ce)
         outwordx(T_Ucs, "T_Ucs");
         outwordx((9 + n_off_words) * WordSize, "   Block size");
         outwordx(length, "   Length");
-        outstr(utf8, "   UTF8 string");
+        outstr(utf8, "   UTF-8 string");
         outwordx(n_offs, "   N left indexed");
         outwordx(n_offs, "   N right indexed");
         outwordx(offset_bits, "   Offset bits");

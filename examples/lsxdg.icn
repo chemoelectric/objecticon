@@ -18,7 +18,7 @@ end
 
 procedure need_one(a)
    if *a = 1 then
-      return ucs(a[1]) | help_stop("Parameter not utf8")
+      return ucs(a[1]) | help_stop("Parameter not utf-8")
    else
       help_stop("This option needs a single parameter")
 end
@@ -27,7 +27,7 @@ record pair(name, size)
 
 procedure need_pair(a)
    if *a = 2 then
-      return pair(ucs(a[1]), integer(a[2])) | help_stop("This option needs a utf8 string and an integer second parameter")
+      return pair(ucs(a[1]), integer(a[2])) | help_stop("This option needs a utf-8 string and an integer second parameter")
    else
       help_stop("This option needs two parameters")
 end
@@ -61,7 +61,7 @@ procedure main(a)
    case c of {
       "mime": {
          every s := !a do {
-            s := ucs(s) | help_stop("Parameter not utf8")
+            s := ucs(s) | help_stop("Parameter not utf-8")
             write(s, ": ", text_link(Mime.get_mime_type_for_file(s)))
          }
       }
@@ -115,7 +115,7 @@ procedure main(a)
 
       "cmd": {
          s := need_one(a)
-         s1 := Format.shell_escape(FilePath(s).canonical().ucs()) | help_stop("Path not utf8")
+         s1 := Format.shell_escape(FilePath(s).canonical().ucs()) | help_stop("Path not utf-8")
          every d := Mime.gen_desktop_entries_for_file(s) do {
             cmd := d.subst_file(s1)
             if FileStream.stdout.is_flowterm_tty() then {

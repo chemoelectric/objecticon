@@ -53,7 +53,7 @@ class Editor(Dialog)
                   text.move_cursor(1, 1)
                curr_file_name := fname
             } else
-               msg("File not in utf8 format:" || &why)
+               msg("File not in utf-8 format:" || &why)
          } else
             msg("Couldn't load:" || &why)
       } else {

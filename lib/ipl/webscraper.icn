@@ -320,7 +320,7 @@ class WebScraper()
    public static from_ucs_file(fn)
       local s
       s := Files.file_to_string(fn) | fail
-      s := ucs(s) | return error("File not utf8")
+      s := ucs(s) | return error("File not utf-8")
       return WebScraper(s)
    end
 end

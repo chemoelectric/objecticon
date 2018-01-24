@@ -2161,7 +2161,7 @@ class XmlParser(Connectable)
       local t
       t := resolver.resolve(base, external_id)  | throw("Couldn't resolve: " || to_string(external_id) || ": " || &why)
       if \utf8_flag then
-         t.content := ucs(t.content) | throw("Couldn't convert " || to_string(external_id) || " to utf8")
+         t.content := ucs(t.content) | throw("Couldn't convert " || to_string(external_id) || " to utf-8")
       t.content := normalize_eol(t.content)
       return t
    end
