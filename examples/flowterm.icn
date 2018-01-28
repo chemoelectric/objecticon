@@ -1144,9 +1144,9 @@ class Terminal(TabItem, VtUI)
       SHOW_NAME_ONLY := 1
       SHOW_DATE := 2
       SHOW_SIZE := 3 
-      DEFAULT_HISTORY_SIZE := 100
-      DEFAULT_LIST_WIDTH := 300
-      DEFAULT_LIST_HEIGHT := 300
+      DEFAULT_HISTORY_SIZE := env_int("OI_FLOWTERM_DEFAULT_HISTORY_SIZE", 1) | 100
+      DEFAULT_LIST_WIDTH := env_real("OI_FLOWTERM_DEFAULT_LIST_WIDTH", 50) | 300
+      DEFAULT_LIST_HEIGHT := env_real("OI_FLOWTERM_DEFAULT_LIST_HEIGHT", 50) | 300
    end
 
    public set_select(f)
