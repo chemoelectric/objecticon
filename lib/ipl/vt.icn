@@ -1180,25 +1180,6 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    #
-   # A helper procedure to clear the history and screen content, and
-   # move the cursor to (1, 1).
-   #
-   public clear()
-      local n
-      \rows | fail
-      n := *contents - rows
-      if n > 0 then {
-         every 1 to n do
-            content_delete(1)
-         invalidate_line_count()
-         compute_and_invalidate()
-      }
-      do_erase_all()
-      do_move_cursor(1, 1)
-      return self
-   end
-
-   #
    # Return the history size, but ignoring the value used by the
    # alternate buffer, if we are in that mode.
    #
@@ -1223,6 +1204,7 @@ class Vt(LineBasedScrollArea, MenuMode)
          0 : do_erase_below()
          1 : do_erase_above()
          2 : do_erase_all()
+         9 : do_erase_history()
       }
    end
 
@@ -1265,6 +1247,17 @@ class Vt(LineBasedScrollArea, MenuMode)
    private do_erase_all()
       every content_edit(row_to_index(1) to *contents,, attr.bg)
       view.invalidate()
+   end
+
+   private do_erase_history()
+      local n
+      n := *contents - rows
+      if n > 0 then {
+         every 1 to n do
+            content_delete(1)
+         invalidate_line_count()
+         compute_and_invalidate()
+      }
    end
 
    # Change line i in the contents; the caller is responsible for invalidating the line i.

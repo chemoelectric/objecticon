@@ -132,7 +132,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
    # Clear the log area.
    #
    public clear_text()
-      text.clear()
+      text.input("\e[9J\e[2J\e[H")
       need_crnl := &no
       return self
    end
