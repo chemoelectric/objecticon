@@ -1180,6 +1180,25 @@ class Vt(LineBasedScrollArea, MenuMode)
    end
 
    #
+   # A helper procedure to clear the history and screen content, and
+   # move the cursor to (1, 1).
+   #
+   public clear()
+      local n
+      \rows | fail
+      n := *contents - rows
+      if n > 0 then {
+         every 1 to n do
+            content_delete(1)
+         invalidate_line_count()
+         compute_and_invalidate()
+      }
+      do_erase_all()
+      do_move_cursor(1, 1)
+      return self
+   end
+
+   #
    # Return the history size, but ignoring the value used by the
    # alternate buffer, if we are in that mode.
    #
