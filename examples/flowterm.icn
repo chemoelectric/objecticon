@@ -1281,6 +1281,10 @@ class Terminal(TabItem, VtUI)
          "bg": output.set_normal_bg(param) | return error("invalid parameter to bg: " || &why)
          "reverse-fg": output.set_reverse_fg(param) | return error("invalid parameter to reverse-fg: " || &why)
          "reverse-bg": output.set_reverse_bg(param) | return error("invalid parameter to reverse-bg: " || &why)
+         "clear" : {
+            check_live(s) | fail
+            do_clear()
+         }
          "scroll": {
             /param := Vt.DEFAULT_HISTORY_SIZE
             param := (0 <= integer(param)) | return error("integer >= 0 expected to scroll")
@@ -1666,6 +1670,10 @@ class Terminal(TabItem, VtUI)
 
    private on_quit()
       parent_dialog.dispose()
+   end
+
+   private do_clear()
+      output.clear()
    end
 
    private do_custom_key(param)
@@ -2224,6 +2232,9 @@ $endif
          m.add(TextMenuItem().
                set_label("End log").
                connect(on_end_log, Event.ACTION))
+      m.add(TextMenuItem().
+            set_label("Clear").
+            connect(do_clear, Event.ACTION))
 
       return m
    end
@@ -3334,6 +3345,7 @@ procedure usage(opts)
    help_line(":close-tab", "Close the tab")
    help_line(":clone-tab", "Clone the tab")
    help_line(":new-tab", "Open a new tab")
+   help_line(":clear", "Clear the terminal")
    help_line(":quit", "Quit the program")
    help_line(":home", "Go to the home directory")
    help_line(":refresh", "Refresh the columns list")
