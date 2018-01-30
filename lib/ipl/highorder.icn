@@ -57,19 +57,23 @@ procedure partial(f, spec, l[])
 end
 
 #
-# Implementation class for `lpartial`
+# Implementation class for `lpartial` and `lpartial1`
 #
 package class LPartial()
    private
-      f, l
+      f, x
 
    public call(a[])
-      suspend f!(l ||| a)
+      suspend f!(x ||| a)
    end
 
-   public new(f, l)
+   public call1(a)
+      suspend f(x, a)
+   end
+
+   public new(f, x)
       self.f := f
-      self.l := l
+      self.x := x
       return
    end
 end
@@ -81,20 +85,33 @@ procedure lpartial(f, l[])
    return LPartial(f, l).call
 end
 
+# Partial application of the first parameter to the two-parameter
+# function f.  The result is the same as using the more general
+# function `lpartial`, but avoids the creation of temporary lists on
+# each invocation of the resulting function.
 #
-# Implementation class for `rpartial`
+procedure lpartial1(f, x)
+   return LPartial(f, x).call1
+end
+
+#
+# Implementation class for `rpartial` and `rpartial1`
 #
 package class RPartial()
    private
-      f, l
+      f, x
 
    public call(a[])
-      suspend f!(a ||| l)
+      suspend f!(a ||| x)
    end
 
-   public new(f, l)
+   public call1(a)
+      suspend f(a, x)
+   end
+
+   public new(f, x)
       self.f := f
-      self.l := l
+      self.x := x
       return
    end
 end
@@ -104,6 +121,15 @@ end
 #
 procedure rpartial(f, l[])
    return RPartial(f, l).call
+end
+
+# Partial application of the second parameter to the two-parameter
+# function f.  The result is the same as using the more general
+# function `rpartial`, but avoids the creation of temporary lists on
+# each invocation of the resulting function.
+#
+procedure rpartial1(f, x)
+   return RPartial(f, x).call1
 end
 
 #
@@ -131,33 +157,6 @@ procedure compose(f, g)
    return Compose(f, g).call
 end
 
-#
-# Implementation class for `lpartial2`
-#
-package class LPartial2()
-   private
-      f, x
-
-   public call(a)
-      suspend f(x, a)
-   end
-
-   public new(f, x)
-      self.f := f
-      self.x := x
-      return
-   end
-end
-
-# Partial application of the first parameter to the two-parameter
-# function f.  The result is the same as using the more general
-# function `lpartial`, but avoids the creation of temporary lists on
-# each invocation of the resulting function.
-#
-procedure lpartial2(f, x)
-   return LPartial2(f, x).call
-end
-
 # Convenient function to get the named binary operator, partially
 # applied with x as the left argument.  For example lpb(2, "*")
 # returns a function which doubles its argument, whilst lpb(0, "<")
@@ -165,34 +164,7 @@ end
 # greater than 0.
 #
 procedure lpb(x, s)
-   return lpartial2(callable(s, 2), x)
-end
-
-#
-# Implementation class for `rpartial2`
-#
-package class RPartial2()
-   private
-      f, x
-
-   public call(a)
-      suspend f(a, x)
-   end
-
-   public new(f, x)
-      self.f := f
-      self.x := x
-      return
-   end
-end
-
-# Partial application of the second parameter to the two-parameter
-# function f.  The result is the same as using the more general
-# function `rpartial`, but avoids the creation of temporary lists on
-# each invocation of the resulting function.
-#
-procedure rpartial2(f, x)
-   return RPartial2(f, x).call
+   return lpartial1(callable(s, 2), x)
 end
 
 # Convenient function to get the named binary operator, partially
@@ -200,7 +172,7 @@ end
 # function which halves its argument.
 #
 procedure rpb(s, x)
-   return rpartial2(callable(s, 2), x)
+   return rpartial1(callable(s, 2), x)
 end
 
 #
