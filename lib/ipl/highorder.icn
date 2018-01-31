@@ -57,18 +57,26 @@ procedure partial(f, spec, l[])
 end
 
 #
-# Implementation class for `lpartial` and `lpartial1`
+# Implementation class for several partial application functions.
 #
-package class LPartial()
+package class LRPartial()
    private
       f, x
 
-   public call(a[])
+   public lcall(a[])
       suspend f!(x ||| a)
    end
 
-   public call1(a)
+   public lcall1(a)
       suspend f(x, a)
+   end
+
+   public rcall(a[])
+      suspend f!(a ||| x)
+   end
+
+   public rcall1(a)
+      suspend f(a, x)
    end
 
    public new(f, x)
@@ -82,7 +90,7 @@ end
 # Partial application to function f, prepending l to the arguments.
 #
 procedure lpartial(f, l[])
-   return LPartial(f, l).call
+   return LRPartial(f, l).lcall
 end
 
 # Partial application of the first parameter to the two-parameter
@@ -91,36 +99,14 @@ end
 # each invocation of the resulting function.
 #
 procedure lpartial1(f, x)
-   return LPartial(f, x).call1
-end
-
-#
-# Implementation class for `rpartial` and `rpartial1`
-#
-package class RPartial()
-   private
-      f, x
-
-   public call(a[])
-      suspend f!(a ||| x)
-   end
-
-   public call1(a)
-      suspend f(a, x)
-   end
-
-   public new(f, x)
-      self.f := f
-      self.x := x
-      return
-   end
+   return LRPartial(f, x).lcall1
 end
 
 #
 # Partial application to function f, appending l to the arguments.
 #
 procedure rpartial(f, l[])
-   return RPartial(f, l).call
+   return LRPartial(f, l).rcall
 end
 
 # Partial application of the second parameter to the two-parameter
@@ -129,7 +115,7 @@ end
 # each invocation of the resulting function.
 #
 procedure rpartial1(f, x)
-   return RPartial(f, x).call1
+   return LRPartial(f, x).rcall1
 end
 
 #
@@ -205,13 +191,17 @@ procedure methodf(field)
 end
 
 #
-# Implementation class for `coexf`
+# Implementation class for `coexf` and `exprf`
 #
-package class Coexf()
+package class Coexpr()
    private e
 
-   public call()
+   public act()
       return @e
+   end
+
+   public gen()
+      suspend !e
    end
 
    public new(e)
@@ -225,23 +215,7 @@ end
 # on each evaluation.  Arguments to the function are discarded.
 #
 procedure coexf(e)
-   return Coexf(e).call
-end
-
-#
-# Implementation class for `exprf`
-#
-package class Exprf()
-   private e
-
-   public call()
-      suspend !e
-   end
-
-   public new(e)
-      self.e := e
-      return
-   end
+   return Coexpr(e).act
 end
 
 #
@@ -249,15 +223,19 @@ end
 # on each evaluation.  Arguments to the function are discarded.
 #
 procedure exprf(e)
-   return Exprf(e).call
+   return Coexpr(e).gen
 end
 
-# Implementation class for `flip`.
-package class Flip()
+# Implementation class for `flip` and `revargs`.
+package class Func()
    private f
 
-   public call(a, b)
+   public two(a, b)
       suspend f(b, a)
+   end
+
+   public all(a[])
+      suspend f!lreverse_mod(a)
    end
 
    public new(f)
@@ -270,21 +248,7 @@ end
 # which invokes the original, but swapping its two arguments.
 #
 procedure flip(f)
-   return Flip(f).call
-end
-
-# Implementation class for `revargs`.
-package class RevArgs()
-   private f
-
-   public call(a[])
-      suspend f!lreverse_mod(a)
-   end
-
-   public new(f)
-      self.f := f
-      return
-   end
+   return Func(f).two
 end
 
 # This function takes a function and returns another function which
@@ -292,7 +256,7 @@ end
 # `flip` above, but more general (and slower).
 #
 procedure revargs(f)
-   return RevArgs(f).call
+   return Func(f).all
 end
 
 # Implementation class for `memoize`.
@@ -323,7 +287,7 @@ end
 
 # Implementation class for `adjoin`.
 package class Adjoin()
-   private f, t
+   private f
 
    private mk(f, a)
       return create f!a
