@@ -169,11 +169,24 @@ end
 
 #
 # This is just a wrapper around stop(), which prints out the given
-# message and a helpful line about the "-help" option.
+# message and a helpful line about the "-?" option.
 #
 procedure help_stop(a[])
-   put(a, "\nUse the -help option for more information.")
+   put(a, "\nUse the -? option for more information.")
    stop!a
+end
+
+package procedure unknown(opts, optname, errproc, msg, usage)
+   if optname == ("help" | "?") then {
+      /usage := "Usage: " || Files.get_program_name() || " [OPTIONS...]"
+      if usage := text(usage) then {
+         write(usage)
+         options_help(opts)
+         exit(0)
+      }
+      usage(opts)
+   } else
+      errproc(msg)
 end
 
 #
@@ -247,11 +260,11 @@ end
 #                       -silent!n+tvqF:-geometry:
 #                   ~~~
 #
-#   :   `usage` -   a procedure which will be called, with the list of
+#   :   `usage`  -  a procedure which will be called, with the list of
 #                   `Opt` objects (see below), if the special `-help`
-#                   option is given; by default the options are listed
-#                   and `exit(0)` called.  A string may be given,
-#                   which is printed before the options.
+#                   or `-?` option is given; by default the options
+#                   are listed and `exit(0)` called.  A string may be
+#                   given, which is printed before the options.
 #
 #   :   `errproc` - a procedure which will be called if an error is
 #                   is detected in the command line options.  The
@@ -345,6 +358,8 @@ procedure options(arg, opts, usage, errproc)
    #
    while x := get(arg) do {
       if /x then ignore := &null     # if end of args from file, stop ignoring
+      else if \ignore then
+         put(fList,x)
       else if x == ("-help" | "--help") & not member(opttable, "help") then {
          /usage := "Usage: " || Files.get_program_name() || " [OPTIONS...]"
          if usage := text(usage) then {
@@ -356,14 +371,14 @@ procedure options(arg, opts, usage, errproc)
             fail
          }
       } else x ? {
-         if ="-" & not pos(0) & /ignore then {
+         if ="-" & not pos(0) then {
             if ="-" then {
                if pos(0) then
                   ignore := &yes   # ignore following args if --
                else {
                   optname := tab(upto('=') | 0)
                   opt := member(opttable, string(optname)) |
-                     return errproc("Unrecognized option: --" || optname)
+                     return unknown(opts, optname, errproc, "Unrecognized option: --" || optname, usage)
 
                   if /opt.convert then
                      v := &yes
@@ -386,7 +401,7 @@ procedure options(arg, opts, usage, errproc)
             } else {
                tab(0) ? until pos(0) do {
                   opt := member(opttable, string(optname := ((pos(1),tab(0)) | move(1)))) | 
-                     return errproc("Unrecognized option: -" || optname)
+                     return unknown(opts, optname, errproc, "Unrecognized option: -" || optname, usage)
 
                   if /opt.convert then
                      v := &yes
@@ -414,7 +429,7 @@ procedure options(arg, opts, usage, errproc)
          #  If the argument begins with the character "@", fetch option
          #  words from lines of a text file.
          #
-         else if ="@" & not pos(0) & /ignore then {
+         else if ="@" & not pos(0) then {
             fn := tab(0)
             fileArg := file2list(fn) |
                return errproc("Can't open " || fn || ": " || &why)
