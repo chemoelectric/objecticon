@@ -172,6 +172,7 @@ end
 # message and a helpful line about the "-?" option.
 #
 procedure help_stop(a[])
+   push(a, Files.get_program_name() || ": ")
    put(a, "\nUse the -? option for more information.")
    stop!a
 end
@@ -187,6 +188,10 @@ package procedure unknown(opts, optname, errproc, msg, usage)
       usage(opts)
    } else
       errproc(msg)
+end
+
+package procedure article(s)
+   return (if any('aeiou', s) then "an " else "a ") || s
 end
 
 #
@@ -388,8 +393,8 @@ procedure options(arg, opts, usage, errproc)
                      else if \arg[1] & /opt.def then
                         get(arg)
                      else
-                        \opt.def | return errproc("No parameter following -" || optname)
-                     v := opt.convert(p) | return errproc("-" || optname || " needs " ||  opt.param_err || " parameter")
+                        \opt.def | return errproc("No parameter following --" || optname)
+                     v := opt.convert(p) | return errproc("--" || optname || " needs " ||  article(opt.param_err) || " parameter")
                   }
 
                   k := opt.names[1]
@@ -414,7 +419,7 @@ procedure options(arg, opts, usage, errproc)
                         get(arg)
                      else
                         \opt.def | return errproc("No parameter following -" || optname)
-                     v := opt.convert(p) | return errproc("-" || optname || " needs " ||  opt.param_err || " parameter")
+                     v := opt.convert(p) | return errproc("-" || optname || " needs " ||  article(opt.param_err) || " parameter")
                   }
                   
                   k := opt.names[1]
