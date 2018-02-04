@@ -1594,9 +1594,12 @@ class Terminal(TabItem, VtUI)
          }
          "open-menu": {
             check_live(s) | fail
-            /param := 1
-            param := parent_dialog.menu_bar.menus[integer(param)] | return error("valid menu index expected for open-menu")
-            parent_dialog.menu_bar.set_which_open(param)
+            if /param then
+               parent_dialog.menu_bar.set_which_highlight(parent_dialog.menu_bar.menus[1])
+            else {
+               param := parent_dialog.menu_bar.menus[integer(param)] | return error("valid menu index expected for open-menu")
+               parent_dialog.menu_bar.set_which_open(param)
+            }
          }
          "info": {
             check_live(s) | fail
@@ -3432,7 +3435,7 @@ procedure usage(opts)
    help_line(":open-history", "Open the history list")
    help_line(":open-filter", "Open the filter list")
    help_line(":open-favourites", "Open the favourites list")
-   help_line(":open-menu=N", "Open top-level menu, starting at index N (default 1)")
+   help_line(":open-menu=N", "Open top-level menu bar; with optional parameter N, also open sub-menu index N")
    help_line(":info=MSG", "Output MSG to the status bar")
    help_line(":tab-left", "Select the next tab to the left")
    help_line(":tab-right", "Select the next tab to the right")
