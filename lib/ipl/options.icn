@@ -178,7 +178,7 @@ procedure help_stop(a[])
 end
 
 package procedure article(s)
-   return (if any('aeiou', s) then "an " else "a ") || s
+   return (if any('aeiouAEIOU', s) then "an " else "a ") || s
 end
 
 #
