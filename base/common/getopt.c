@@ -9,7 +9,7 @@
  *  getopt(3) by Keith Bostic (keith@seismo), Aug 24, 1984.
  */
 
-#define BadCh	(int)'!'
+#define BadCh	0
 #define EMSG	""
 #define tell(m)	fprintf(stderr,"%s: %s -- %c\n",nargv[0],m,oi_optopt);return BadCh;
 
