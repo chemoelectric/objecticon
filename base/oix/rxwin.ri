@@ -723,11 +723,7 @@ void pollevent(wbp w)
                 break;
             }
 
-            case KeyRelease: {
-                if (ws->inputmask & IM_KEY_RELEASE)
-                    handle_keypress(ws, (XKeyEvent *)&event);
-                break;
-            }
+            case KeyRelease:
             case KeyPress:
                 handle_keypress(ws, (XKeyEvent *)&event);
                 break;

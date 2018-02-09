@@ -152,7 +152,6 @@ final abstract class WAttrib()
       HEIGHT,
       ICON,
       IMAGE,
-      INPUT_MASK,
       LABEL,
       LEADING,
       LINE_STYLE,
@@ -188,7 +187,6 @@ final abstract class WAttrib()
       HEIGHT := "height"
       ICON := "icon"
       IMAGE := "image"
-      INPUT_MASK := "input_mask"
       LABEL := "label"
       LEADING := "leading"
       LINE_STYLE := "line_style"
@@ -422,7 +420,7 @@ final abstract class Gui()
                          WAttrib.DISPLAY, WAttrib.FG, WAttrib.BG, WAttrib.DRAW_OP, WAttrib.ICON, WAttrib.LEADING,
                          WAttrib.FONT, WAttrib.LINE_WIDTH, WAttrib.GEOMETRY, WAttrib.TRANSIENT_FOR,
                          WAttrib.LINE_STYLE, WAttrib.PATTERN, WAttrib.CLIP, WAttrib.UNCLIP, WAttrib.DX,
-                         WAttrib.DY, WAttrib.INPUT_MASK, WAttrib.MIN_WIDTH, WAttrib.MIN_HEIGHT,
+                         WAttrib.DY, WAttrib.MIN_WIDTH, WAttrib.MIN_HEIGHT,
                          WAttrib.MIN_SIZE, WAttrib.MAX_WIDTH, WAttrib.MAX_HEIGHT, WAttrib.MAX_SIZE)
       CONTEXT_WATTRIB_SET := set(WAttrib.FG, WAttrib.BG, WAttrib.DRAW_OP, WAttrib.FONT, WAttrib.LEADING,
                                  WAttrib.LINE_WIDTH, WAttrib.LINE_STYLE, WAttrib.PATTERN)
@@ -675,7 +673,6 @@ procedure open_win_with(t)
          WAttrib.UNCLIP: w.unclip()
          WAttrib.DX: w.set_dx(v)
          WAttrib.DY: w.set_dy(v)
-         WAttrib.INPUT_MASK: w.set_input_mask(v)
          WAttrib.MIN_WIDTH: w.set_min_width(v)
          WAttrib.MIN_HEIGHT: w.set_min_height(v)
          WAttrib.MIN_SIZE: w.set_min_size(v[1],v[2])

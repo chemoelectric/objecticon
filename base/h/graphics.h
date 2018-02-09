@@ -358,7 +358,6 @@ typedef struct _wcontext {
  */
 typedef struct _wstate {
   int		refcount;		/* reference count */
-  int		inputmask;		/* user input mask */
   int		reqx, reqy;	        /* requested window position */
   int		x, y;		        /* actual window position */
   int           height;                 /* window height, in pixels */
@@ -439,11 +438,8 @@ struct filter {
 #define C_CLIP	        32
 
 /*
- * Input masks
+ * Event modifiers
  */
-#define IM_KEY_RELEASE     1
-#define IM_POINTER_MOTION  2
-
 #define MOD_SHIFT       1
 #define MOD_LOCK        2
 #define MOD_CTRL        4

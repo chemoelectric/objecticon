@@ -152,10 +152,8 @@ void qmouseevents(wsp ws,             /* canvas */
     if (ws->mousestate == state) {
         if (state == 0) {
             /* Motion */
-            if (ws->inputmask & IM_POINTER_MOTION) {
-                MakeInt(MOUSEMOVED, &d);
-                qevent(ws, &d, x, y, t, mod);
-            }
+            MakeInt(MOUSEMOVED, &d);
+            qevent(ws, &d, x, y, t, mod);
         } else {
             /* Drag on one or more buttons */
             MakeInt(MOUSEDRAG, &d);
@@ -283,25 +281,6 @@ static void invertfilter(struct filter *f)
             imd->format->setpixel(imd, i, j, 65535 - r, 65535 - g, 65535 - b, a);
         }
     }
-}
-
-int parseinputmask(char *s, int *res)
-{
-    char *t;
-    *res = 0;
-    for (t = s; *t; ++t) {
-        switch (*t) {
-            case 'k':
-                *res |= IM_KEY_RELEASE;
-                break;
-            case 'm':
-                *res |= IM_POINTER_MOTION;
-                break;
-            default:
-                return 0;
-        }
-    }
-    return 1;
 }
 
 int parsefilter(wbp w, char *s, struct filter *res)

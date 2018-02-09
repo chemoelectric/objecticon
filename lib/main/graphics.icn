@@ -450,10 +450,6 @@ final class Window(NoCopy, ObjectOutput)
    #
    public native get_height()
 
-   # Return the input mask as set by `set_input_mask()`.
-   #
-   public native get_input_mask()
-
    # Return the window label as set by `set_label()`.
    #
    public native get_label()
@@ -641,12 +637,6 @@ final class Window(NoCopy, ObjectOutput)
          }
       }
    end
-
-   # Set the input mask for the window.  If the string `v` contains
-   # "k" then key release events are reported; if it contains "m" then
-   # mouse motion events are reported.
-   #
-   public native set_input_mask(v)
 
    # Specify an image used to identify the window.  If null, then the
    # setting is cleared.  The parameter takes the same format as
