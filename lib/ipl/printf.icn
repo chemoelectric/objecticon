@@ -57,7 +57,7 @@ end
 # which case an argument is consumed to give the width.
 #
 # The optional precision (which may also be a "*") means :-
-# *  for format s,  the maximum string length;
+# *  for string formats (s, i, t) the maximum string length;
 # *  for integer formats (d, x, X, o, b), the minimum number of
 #    digits; leading zeroes are added if needed.
 # *  for real formats (r, e), the number of digits in the
@@ -112,8 +112,8 @@ package procedure one(args)
          "X": v := intstr(a, prec, flag)
          "o": v := intstr(a, prec, flag, 8)
          "b": v := intstr(a, prec, flag, 2)
-         "i": v := image(a)
-         "t": v := to_string(a)
+         "i": v := str(image(a), prec)
+         "t": v := str(to_string(a), prec)
          "r": v := fixnum(a, prec, flag)
          "e": v := eformatstr(a, prec, flag)
       }

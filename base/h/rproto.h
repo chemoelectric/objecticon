@@ -260,7 +260,6 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    void drawcurve       (wbp w, struct point *p, int n);
    int  parsefilter     (wbp w, char *s, struct filter *res);
    int  parsefont       (char *s, char *fam, int *sty, double *sz);
-   int  parseinputmask  (char *s, int *res);
    void qevent          (wsp ws, dptr e, int x, int y, word t, int mod);
    void qeventcode      (wsp, int);
    void qmouseevents    (wsp ws, int state, int x, int y, word t, int mod);

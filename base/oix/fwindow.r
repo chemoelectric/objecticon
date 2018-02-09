@@ -1060,24 +1060,6 @@ function graphics_Window_get_height(self)
    }
 end
 
-function graphics_Window_get_input_mask(self)
-   body {
-       tended struct descrip result;
-       char buf[3], *s;
-       int mask;
-       GetSelfW();
-       s = buf;  
-       mask = self_w->window->inputmask;
-       if (mask & IM_POINTER_MOTION)
-           *s++ = 'm';
-       if (mask & IM_KEY_RELEASE)
-           *s++ = 'k';
-       *s = 0;
-       cstr2string(buf, &result);
-       return result;
-   }
-end
-
 function graphics_Window_get_label(self)
    body {
        GetSelfW();
@@ -1375,21 +1357,6 @@ function graphics_Window_set_icon_impl(self, val)
       }
       return self;
       }
-   }
-end
-
-function graphics_Window_set_input_mask(self, val)
-   if !cnv:string(val) then
-      runerr(103, val)
-   body {
-       int t;
-       GetSelfW();
-       if (!parseinputmask(buffstr(&val), &t)) {
-           LitWhy("Invalid input mask");
-           fail;
-       }
-       self_w->window->inputmask = t;
-       return self;
    }
 end
 

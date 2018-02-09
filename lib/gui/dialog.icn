@@ -407,7 +407,6 @@ class Dialog(Component)
       local t, pw
       t := copy(self.wattribs)
       ensure_size(t)
-      t[WAttrib.INPUT_MASK] := "mk"
       if pw := (\owning_dialog).win then
          t[WAttrib.TRANSIENT_FOR] := pw
       /t[WAttrib.CANVAS] := "normal"
@@ -1457,11 +1456,6 @@ class Dialog(Component)
 
    public set_dy(v)
       set_wattrib(WAttrib.DY, v)
-      return self
-   end
-
-   public set_input_mask(v)
-      set_wattrib(WAttrib.INPUT_MASK, v)
       return self
    end
 
