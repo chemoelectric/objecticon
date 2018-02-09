@@ -157,17 +157,17 @@ int main(int argc, char **argv)
     char ch;
     struct fileparts *fp;
 
-    progname = *argv;
+    fp = fparse(*argv);
+    progname = salloc(fp->name);
 
     init_strings();
 
     /*
      * Check for alternate uses, udis and ldbg.
      */
-    fp = fparse(*argv);
-    if (strcasecmp(fp->name, "udis") == 0)
+    if (strcasecmp(progname, "udis") == 0)
         return udis(argc, argv);
-    if (strcasecmp(fp->name, "ldbg") == 0)
+    if (strcasecmp(progname, "ldbg") == 0)
         return ldbg(argc, argv);
 
     oixloc = findexe("oix");
