@@ -69,8 +69,8 @@ static void file_comp(void);
 #endif
 static void bundle_iconx(void);
 static void execute(char **args);
+static void help_stop(char *);
 static void usage(void);
-static void long_usage(void);
 static void remove_intermediate_files(void);
 
 
@@ -175,14 +175,11 @@ int main(int argc, char **argv)
         quit("Couldn't find oix on PATH");
     oixloc = intern(canonicalize(oixloc));
 
-    if (argc == 1)
-        long_usage();
-
     /*
      * Process options. NOTE: Keep Usage definition in sync with getopt() call.
      */
 #define Usage "[-cBfmnsELIZTV] [-o ofile] [-v i] [-l i] [-O i]"	/* omit -e from doc */
-    while ((c = oi_getopt(argc,argv, "cBfmno:sv:ELIZTVl:O:")) != EOF) {
+    while ((c = oi_getopt(argc,argv, "?cBfmno:sv:ELIZTVl:O:")) != EOF) {
         switch (c) {
             case 'n':
                 neweronly = 1;
@@ -249,9 +246,12 @@ int main(int argc, char **argv)
                 Zflag = 1;
                 break;
 
-            default:
-            case 'x':			/* -x illegal until after file list */
+            case '?':
                 usage();
+                break;
+
+            default:
+                help_stop(NULL);
         }
     }
 
@@ -280,7 +280,7 @@ int main(int argc, char **argv)
     }
 
     if (!link_files)
-        usage();				/* error -- no files named */
+        help_stop("no files");				/* error -- no files named */
 
     /*
      * Translate .icn files to make .u files.
@@ -546,15 +546,17 @@ void report(char *fmt, ...)
  * Print an error message if called incorrectly.  The message depends
  *  on the legal options for this system.
  */
-static void usage()
+static void help_stop(char *msg)
 {
-   fprintf(stderr,"usage: %s %s file ... [-x args]\n", progname, Usage);
-   fprintf(stderr,"run %s with no options or arguments for full option details\n", progname);
-   exit(EXIT_FAILURE);
+    if (msg)
+        fprintf(stderr, "%s: %s\n", progname, msg);
+    fprintf(stderr, "Use the -? option for more information\n");
+    exit(EXIT_FAILURE);
 }
 
-static void long_usage()
+static void usage()
 {
+    fprintf(stderr,"Usage: %s %s file ... [-x args]\n", progname, Usage);
     fprintf(stderr,"-n      Only translate a .icn to a .u file if it is out-of-date\n"
                    "-B      Bundle the oix executable in the output\n"
                    "-m      Preprocess using m4\n"
