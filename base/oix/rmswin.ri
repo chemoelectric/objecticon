@@ -342,21 +342,29 @@ static void handle_keypress(wsp ws, UINT msg, WPARAM wp, LPARAM lp)
     POINT p;
     static struct descrip curr;
     static int inited = 0;
-
-    if (msg == WM_KEYUP || msg == WM_SYSKEYUP) {
-        if (!inited)
-            return;
-    } else if (msg == WM_CHAR || msg == WM_SYSCHAR) {
-        StrLen(curr) = 1;
-        StrLoc(curr) = &allchars[wp & 0xFF];
-        inited = 1;
-    } else { /* WM_KEYDOWN or WM_SYSKEYDOWN */
-        if (wp == VK_DELETE) {
+    switch(msg) {
+        case WM_KEYUP:
+        case WM_SYSKEYUP:
+            if (!inited)
+                return;
+            break;
+        case WM_CHAR:
+        case WM_SYSCHAR:
             StrLen(curr) = 1;
-            StrLoc(curr) = &allchars[127];
-        } else 
-            MakeInt(wp, &curr);
-        inited = 1;
+            StrLoc(curr) = &allchars[wp & 0xFF];
+            inited = 1;
+            break;
+        case WM_KEYDOWN:
+        case WM_SYSKEYDOWN:
+            if (wp == VK_DELETE) {
+                StrLen(curr) = 1;
+                StrLoc(curr) = &allchars[127];
+            } else 
+                MakeInt(wp, &curr);
+            inited = 1;
+            break;
+        default:
+            syserr("Unexpected msg value");
     }
 
    /* Mouse location in SCREEN coordinates; convert to client */
@@ -599,12 +607,9 @@ LRESULT_CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             case WM_SYSKEYDOWN:
             case WM_CHAR:
             case WM_SYSCHAR:
-                handle_keypress(ws, msg, wp, lp);
-                return 0;
             case WM_KEYUP:
             case WM_SYSKEYUP:
-                if (ws->inputmask & IM_KEY_RELEASE)
-                    handle_keypress(ws, msg, wp, lp);
+                handle_keypress(ws, msg, wp, lp);
                 return 0;
             case WM_SIZE:
                 handle_size(ws, msg, wp, lp);
