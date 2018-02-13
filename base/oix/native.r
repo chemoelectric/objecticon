@@ -2271,7 +2271,7 @@ function io_DescStream_stat_impl(self)
    }
 end
 
-function io_DescStream_wstat(self, mode, uid, gid)
+function io_DescStream_wstat(self, mode, uid, gid, atime, mtime)
    body {
 #if UNIX
        GetSelfFd();
@@ -2310,6 +2310,39 @@ function io_DescStream_wstat(self, mode, uid, gid)
                errno2why();
                fail;
            }
+       }
+       if (!is:null(atime) || !is:null(mtime)) {
+#if HAVE_FUTIMENS
+           struct timespec times[2];
+           if (is:null(atime)) {
+               times[0].tv_sec = 0;
+               times[0].tv_nsec = UTIME_OMIT;
+           } else {
+               if (!cnv:integer(atime, atime))
+                   runerr(101, atime);
+               if (!convert_to_time_t(&atime, &times[0].tv_sec))
+                   runerr(0);
+               times[0].tv_nsec = 0;
+           }
+
+           if (is:null(mtime)) {
+               times[1].tv_sec = 0;
+               times[1].tv_nsec = UTIME_OMIT;
+           } else {
+               if (!cnv:integer(mtime, mtime))
+                   runerr(101, mtime);
+               if (!convert_to_time_t(&mtime, &times[1].tv_sec))
+                   runerr(0);
+               times[1].tv_nsec = 0;
+           }
+           if (futimens(self_fd, times) < 0) {
+               errno2why();
+               fail;
+           }
+#else
+           LitWhy("Setting atime/mtime not supported");
+           fail;
+#endif
        }
        return self;
 #else

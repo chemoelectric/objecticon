@@ -84,6 +84,9 @@
 /* define as 1 if utimensat exists */
 #undef HAVE_UTIMENSAT
 
+/* define as 1 if futimens exists */
+#undef HAVE_FUTIMENS
+
 /* define as 1 if unsetenv exists and returns an int */
 #undef HAVE_UNSETENV_INT_RETURN
 
