@@ -81,6 +81,9 @@
 /* define as 1 if _etext exists */
 #undef HAVE__ETEXT
 
+/* define as 1 if utimensat exists */
+#undef HAVE_UTIMENSAT
+
 /* define as 1 if unsetenv exists and returns an int */
 #undef HAVE_UNSETENV_INT_RETURN
 

@@ -3036,6 +3036,40 @@ function io_Files_wstat(s, mode, uid, gid, atime, mtime)
            }
        }
        if (!is:null(atime) || !is:null(mtime)) {
+#if HAVE_UTIMENSAT
+           /*
+            * utimensat() allows one of the fields to be modified
+            * whilst leaving the other alone; utime forces us to clear
+            * the other's nanosecond time resolution.
+            */
+           struct timespec times[2];
+           if (is:null(atime)) {
+               times[0].tv_sec = 0;
+               times[0].tv_nsec = UTIME_OMIT;
+           } else {
+               if (!cnv:integer(atime, atime))
+                   runerr(101, atime);
+               if (!convert_to_time_t(&atime, &times[0].tv_sec))
+                   runerr(0);
+               times[0].tv_nsec = 0;
+           }
+
+           if (is:null(mtime)) {
+               times[1].tv_sec = 0;
+               times[1].tv_nsec = UTIME_OMIT;
+           } else {
+               if (!cnv:integer(mtime, mtime))
+                   runerr(101, mtime);
+               if (!convert_to_time_t(&mtime, &times[1].tv_sec))
+                   runerr(0);
+               times[1].tv_nsec = 0;
+           }
+
+           if (utimensat(AT_FDCWD, s, times, 0) < 0) {
+               errno2why();
+               fail;
+           }
+#else
            struct utimbuf u;
            struct stat st;
            if (is:null(atime) || is:null(mtime)) {
@@ -3064,6 +3098,7 @@ function io_Files_wstat(s, mode, uid, gid, atime, mtime)
                errno2why();
                fail;
            }
+#endif
        }
 
        return nulldesc;
