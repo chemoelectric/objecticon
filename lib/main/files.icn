@@ -500,7 +500,6 @@ $ifdef _PLAN9
    # :  `gid` - the group id
    # :  `atime` - the access time (an integer)
    # :  `mtime` - the modification time (an integer)
-   # :Parameters :
    # :  `length` - the file length
    # :  `name` - the file name
    #
@@ -508,7 +507,8 @@ $ifdef _PLAN9
 $else
    #
    # Write selected attributes about a file.  If any of the parameters
-   # are `&null`, they are left unchanged.
+   # are `&null`, they are left unchanged.  The nanosecond parameters
+   # are ignored unless their corresponding time fields are being set.
    #
    # :Parameters :
    # :  `s` - the file
@@ -517,8 +517,10 @@ $else
    # :  `gid` - the group name
    # :  `atime` - the access time (an integer)
    # :  `mtime` - the modification time (an integer)
+   # :  `atime_ns` - the access time nanosecond part (an integer, default 0)
+   # :  `mtime_ns` - the modification time nanosecond part (an integer, default 0)
    #
-   public static native wstat(s, mode, uid, gid, atime, mtime)
+   public static native wstat(s, mode, uid, gid, atime, mtime, atime_ns, mtime_ns)
 $endif
 
    #
