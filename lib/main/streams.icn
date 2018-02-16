@@ -759,8 +759,10 @@ abstract class DescStream(Stream, NoCopy)
    # :  `mode` - the mode (an integer)
    # :  `uid` - the owner id
    # :  `gid` - the group id
+   # :  `atime` - the access time (an integer)
+   # :  `mtime` - the modification time (an integer)
    #
-   public native wstat(mode, uid, gid)
+   public native wstat(mode, uid, gid, atime, mtime)
 
    # Helper function for initialization methods.
    #
