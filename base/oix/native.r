@@ -2271,7 +2271,7 @@ function io_DescStream_stat_impl(self)
    }
 end
 
-function io_DescStream_wstat(self, mode, uid, gid, atime, mtime)
+function io_DescStream_wstat(self, mode, uid, gid, atime, mtime, atime_ns, mtime_ns)
    body {
 #if UNIX
        GetSelfFd();
@@ -2314,6 +2314,7 @@ function io_DescStream_wstat(self, mode, uid, gid, atime, mtime)
        if (!is:null(atime) || !is:null(mtime)) {
 #if HAVE_FUTIMENS
            struct timespec times[2];
+           word ns;
            if (is:null(atime)) {
                times[0].tv_sec = 0;
                times[0].tv_nsec = UTIME_OMIT;
@@ -2322,7 +2323,9 @@ function io_DescStream_wstat(self, mode, uid, gid, atime, mtime)
                    runerr(101, atime);
                if (!convert_to_time_t(&atime, &times[0].tv_sec))
                    runerr(0);
-               times[0].tv_nsec = 0;
+               if (!def:C_integer(atime_ns, 0, ns))
+                   runerr(101, atime_ns);
+               times[0].tv_nsec = ns;
            }
 
            if (is:null(mtime)) {
@@ -2333,7 +2336,9 @@ function io_DescStream_wstat(self, mode, uid, gid, atime, mtime)
                    runerr(101, mtime);
                if (!convert_to_time_t(&mtime, &times[1].tv_sec))
                    runerr(0);
-               times[1].tv_nsec = 0;
+               if (!def:C_integer(mtime_ns, 0, ns))
+                   runerr(101, mtime_ns);
+               times[1].tv_nsec = ns;
            }
            if (futimens(self_fd, times) < 0) {
                errno2why();
@@ -3028,7 +3033,7 @@ function io_Files_lstat_impl(s)
    }
 end
 
-function io_Files_wstat(s, mode, uid, gid, atime, mtime)
+function io_Files_wstat(s, mode, uid, gid, atime, mtime, atime_ns, mtime_ns)
    if !cnv:C_string(s) then
       runerr(103, s)
    body {
@@ -3076,6 +3081,7 @@ function io_Files_wstat(s, mode, uid, gid, atime, mtime)
             * the other's nanosecond time resolution.
             */
            struct timespec times[2];
+           word ns;
            if (is:null(atime)) {
                times[0].tv_sec = 0;
                times[0].tv_nsec = UTIME_OMIT;
@@ -3084,7 +3090,9 @@ function io_Files_wstat(s, mode, uid, gid, atime, mtime)
                    runerr(101, atime);
                if (!convert_to_time_t(&atime, &times[0].tv_sec))
                    runerr(0);
-               times[0].tv_nsec = 0;
+               if (!def:C_integer(atime_ns, 0, ns))
+                   runerr(101, atime_ns);
+               times[0].tv_nsec = ns;
            }
 
            if (is:null(mtime)) {
@@ -3095,7 +3103,9 @@ function io_Files_wstat(s, mode, uid, gid, atime, mtime)
                    runerr(101, mtime);
                if (!convert_to_time_t(&mtime, &times[1].tv_sec))
                    runerr(0);
-               times[1].tv_nsec = 0;
+               if (!def:C_integer(mtime_ns, 0, ns))
+                   runerr(101, mtime_ns);
+               times[1].tv_nsec = ns;
            }
 
            if (utimensat(AT_FDCWD, s, times, 0) < 0) {
