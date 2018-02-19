@@ -29,6 +29,30 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       complete_function,
       line
 
+$ifdef _PLAN9
+   public static launch_prog(de, file, line)
+      local pid, cmd
+      pid := System.fork(ior(ForkOpt.RFPROC, ForkOpt.RFFDG, ForkOpt.RFNAMEG, ForkOpt.RFENVG,
+                             ForkOpt.RFNOTEG, ForkOpt.RFREND, ForkOpt.RFNOWAIT)) | fail
+      if pid > 0 then {
+         # Parent
+         return
+      }
+
+      # Unmount our window directories in /n.  If we didn't do this,
+      # and since we are copying the namespace, this would prevent
+      # these windows closing until the launched application closes.
+      Files.unmount_windows()
+
+      # Set the working directory for the child process
+      Files.chdir(\de.path | Files.get_home())
+      # Get the command to run.
+      cmd := de.subst_file(Format.rc_escape(file), line)
+      every get_null().dup2(FileStream.stdin | FileStream.stdout | FileStream.stderr)
+      System.exec("/bin/rc", ["-c", "exec " || cmd]) | stop(&why)
+      syserr("Not reached")
+   end
+$else
    public static launch_prog(de, file, line)
       local pid, cmd
       pid := System.fork() | fail
@@ -46,6 +70,7 @@ class TermDialog(Dialog, LineBasedOutputStream, VtUI)
       System.exec("/bin/sh", ["-c", "exec " || cmd]) | stop(&why)
       syserr("Not reached")
    end
+$endif
 
    public link_left_clicked(url)
       local file, line, de
