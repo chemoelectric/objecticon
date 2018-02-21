@@ -247,7 +247,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
    private opt_write(key, def)
       local s
       if s := \ti[key] | \def then
-         return tty.writes(s)
+         return tty.writes1(s)
       else
          return
    end
@@ -338,17 +338,17 @@ class LineEditorStream(LineBasedInputStream, HasTask)
             if \line_no then 
                show()
          }
-         tty.writes("\e[!")
+         tty.writes1("\e[!")
          every e := !l do {
             if \fl then
-               tty.writes(";")
+               tty.writes1(";")
             cmd := "\e[\"" || URL.percent_encode(e.str, URL.UNRESERVED) || "\";\"" || e.pos || "\"Q"
             tty.writes("\"", 
                        URL.percent_encode(e.label, URL.UNRESERVED), "\";\"", 
                        URL.percent_encode(cmd, URL.UNRESERVED), "\"")
             fl := &yes
          }
-         tty.writes("P")
+         tty.writes1("P")
       }
    end
 
@@ -358,7 +358,7 @@ class LineEditorStream(LineBasedInputStream, HasTask)
       buff_flag := line_no := nlines := &null
       dim := get_console_size() | fail
       # Request line_no
-      tty.writes("\e[6n")
+      tty.writes1("\e[6n")
       repeat {
          if \line_no then 
             show()

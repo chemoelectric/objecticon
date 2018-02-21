@@ -138,7 +138,7 @@ end
 
 procedure do_cls()
    if is(output, DescStream) then
-      output.writes("\e[2J\e[H")
+      output.writes1("\e[2J\e[H")
    else
       output.clear_text()
 end

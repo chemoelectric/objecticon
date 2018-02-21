@@ -33,7 +33,7 @@ class ContentSpec(ObjectOutput)
       write(f, i || "Op : ", op)
       j := 1
       every e:= \arg1 | \arg2 do {
-         writes(i || j || ":")
+         writes(i, j, ":")
          if text(e) then
             write(f, image(e))
          else {
@@ -155,10 +155,10 @@ class ContentSpec(ObjectOutput)
       oo.object_start(self)
       case op of {
          "ANY" | "EMPTY" | "#PCDATA" :
-            oo.writes(op)
+            oo.writes1(op)
 
          "name" :
-            oo.writes(arg1)
+            oo.writes1(arg1)
 
          "," | "|" : {
             s := ""
@@ -170,18 +170,18 @@ class ContentSpec(ObjectOutput)
                   break
                x := x.arg2
             }
-            oo.writes("(" || s).
+            oo.writes("(", s).
                traverse(x.arg2).
-               writes(")")
+               writes1(")")
          }
 
          "+" | "*" | "?" :  {
             oo.traverse(arg1).
-               writes(op)
+               writes1(op)
          }
 
          default:
-            oo.writes("?")
+            oo.writes1("?")
       }
 
       oo.object_end(self)

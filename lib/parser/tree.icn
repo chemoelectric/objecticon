@@ -34,7 +34,7 @@ final class Token()
    # Output this token to the given stream.
    #
    public output(f)
-      return f.writes(chunk)
+      return f.writes1(chunk)
    end
 
    public new(tok, s, chunk, val, line, column, filename)
