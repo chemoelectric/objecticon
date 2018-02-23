@@ -679,18 +679,26 @@ int walert(wbp w, int volume)
     return Succeeded;
 }
 
-int copyarea(wbp w1, int x, int y, int w, int h, wbp w2, int x2, int y2)
+int copyarea(wbp w1, int x, int y, int w, int h, wbp w2, int x2, int y2, wbp w3, int x3, int y3)
 {
     wsp ws1 = w1->window;
     wsp ws2 = w2->window;
     wcp wc2 = w2->context;
+    Image *mask;
+    if (w3) {
+        wsp ws3 = w3->window;
+        no_clip(ws3, 0);
+        mask = ws3->pix;
+    } else
+        mask = nil;
     no_clip(ws1, 0);
     clip(w2);
     gendrawop(ws2->pix,
               MkRect(x2, y2, w, h), 
               ws1->pix,
               Pt(x, y),
-              0, ZP,
+              mask,
+              Pt(x3, y3),
               wc2->drawop->i);
     pix_to_win(ws2, x2, y2, w, h);
     flushimage(display, 1);
@@ -907,16 +915,19 @@ void fillpolygon(wbp w, struct point *points0, int npoints)
 
 static int needmask(wcp wc, int overlap)
 {
-    /* ops where influence of source color is 0 (clear, dest, dest in, dest out) */
-    if (wc->drawop->i == Clear || wc->drawop->i == D || wc->drawop->i == DinS || wc->drawop->i == DoutS)
+    /* ops where influence of source pixel is 0 (clear, dest) */
+    if (wc->drawop->i == Clear || wc->drawop->i == D)
         return 0;
     if (wc->pattern)
         return 1;
     if (!overlap)
         return 0;
-    if ((wc->fg->rgba & 0xff) != 0xff)
-        return 1;
-    return 0;
+    /* overlap doesn't matter if influence of dest pixel is 0 */
+    if (wc->drawop->i == S)
+        return 0;
+    if ((wc->fg->rgba & 0xff) == 0xff && wc->drawop->i == SoverD)
+        return 0;
+    return 1;
 }
 
 static Image *getmask(int width, int height)
