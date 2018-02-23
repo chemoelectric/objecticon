@@ -156,9 +156,10 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable)
    #
    public native copy_pixel(x1, y1, dest, x2, y2)
 
-   # Copy a rectangular area from this instance to another.
+   # Copy a rectangular area from this instance to another, with an
+   # optional mask window.
    #
-   public native copy_to(x1, y1, w, h, dest, x2, y2)
+   public native copy_to(x, y, w, h, dest, dx, dy, mask, mx, my)
 
    #
    # Encode the image to a file.

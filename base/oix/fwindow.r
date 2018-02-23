@@ -111,10 +111,10 @@ function graphics_Window_clone_impl(self)
    }
 end
 
-function graphics_Window_copy_to(self, x0, y0, w0, h0, dest, x1, y1)
+function graphics_Window_copy_to(self, sx, sy, sw, sh, dest, dx, dy, mask, mx, my)
    body {
-      word ox, oy, x, y, width, height, x2, y2;
-      wbp w2;
+      word ox, oy, x, y, width, height, x2, y2, x3, y3;
+      wbp w2, w3;
 
       GetSelfW();
 
@@ -125,14 +125,27 @@ function graphics_Window_copy_to(self, x0, y0, w0, h0, dest, x1, y1)
           w2 = tmp;
       }
 
+      if (is:null(mask))
+          w3 = NULL;
+      else {
+          WindowStaticParam(mask, tmp);
+          w3 = tmp;
+      }
+
       /*
-       * x1, y1, width, and height follow standard conventions.
+       * x, y, width, and height follow standard conventions.
        */
-      if (rectargs(self_w, &x0, &x, &y, &width, &height) == Error)
+      if (rectargs(self_w, &sx, &x, &y, &width, &height) == Error)
           runerr(0);
 
-      if (pointargs_def(w2, &x1, &x2, &y2) == Error)
+      if (pointargs_def(w2, &dx, &x2, &y2) == Error)
           runerr(0);
+
+      if (w3) {
+          if (pointargs_def(w3, &mx, &x3, &y3) == Error)
+              runerr(0);
+      } else
+          x3 = y3 = 0;
 
       ox = x;
       oy = y;
@@ -140,6 +153,8 @@ function graphics_Window_copy_to(self, x0, y0, w0, h0, dest, x1, y1)
           return self;
       x2 += (x - ox);
       y2 += (y - oy);
+      x3 += (x - ox);
+      y3 += (y - oy);
 
       ox = x2;
       oy = y2;
@@ -147,8 +162,21 @@ function graphics_Window_copy_to(self, x0, y0, w0, h0, dest, x1, y1)
           return self;
       x += (x2 - ox);
       y += (y2 - oy);
+      x3 += (x2 - ox);
+      y3 += (y2 - oy);
 
-      AttemptOp(copyarea(self_w, x, y, width, height, w2, x2, y2));
+      if (w3) {
+          ox = x3;
+          oy = y3;
+          if (!reducerect(w3, 0, &x3, &y3, &width, &height))
+              return self;
+          x += (x3 - ox);
+          y += (y3 - oy);
+          x2 += (x3 - ox);
+          y2 += (y3 - oy);
+      }
+      
+      AttemptOp(copyarea(self_w, x, y, width, height, w2, x2, y2, w3, x3, y3));
 
       return self;
    }
