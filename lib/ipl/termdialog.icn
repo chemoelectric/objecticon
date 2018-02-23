@@ -2,7 +2,10 @@ package ipl.termdialog
 
 import
    gui, io, graphics, util, undo, ipl.vt, xdg, 
-   ipl.childwait, ipl.io, posix
+$ifndef _PLAN9
+      ipl.childwait,
+$endif
+      ipl.io, posix
 
 class TermTextField(CompleteField)
    public keeps(e)
