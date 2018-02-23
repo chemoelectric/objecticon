@@ -159,7 +159,7 @@ final class Pixels(ObjectClone, ObjectOutput, Unencodable)
    # Copy a rectangular area from this instance to another, with an
    # optional mask window.
    #
-   public native copy_to(x, y, w, h, dest, dx, dy, mask, mx, my)
+   public native copy_to(x1, y1, width, height, dest, x2, y2, mask, x3, y3)
 
    #
    # Encode the image to a file.
@@ -833,7 +833,7 @@ final class Window(NoCopy, ObjectOutput)
    # output extending outside its bounds is discarded. To disable
    # clipping, use `unclip()`.
    #
-   public native clip(x, y, w, h)
+   public native clip(x, y, width, height)
 
    # Clear the clip settings
    #
@@ -893,7 +893,7 @@ final class Window(NoCopy, ObjectOutput)
    # Copy a rectangular area from this window to another window, `dest`, at `x2`,
    # `y2`.
    #
-   public native copy_to(x1, y1, w, h, dest, x2, y2)
+   public native copy_to(x1, y1, width, height, dest, x2, y2)
 
    # Draw a line through the points `(x1,y1,...xN,yN)`.  At least 2
    # points (4 parameters) must be given.
