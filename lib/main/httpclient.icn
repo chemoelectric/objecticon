@@ -1114,9 +1114,9 @@ class HttpClient(NetClient)
       self.read +:= *s
       fire(PROGRESS_EVENT)
       return if \inflater_stream then
-         inflater_stream.writes(s) | error_dont_retry("Couldn't write to inflater stream: " || &why)
+         inflater_stream.writes1(s) | error_dont_retry("Couldn't write to inflater stream: " || &why)
       else
-         request.output_stream.writes(s) | error_dont_retry("Couldn't write to request output stream: " || &why)
+         request.output_stream.writes1(s) | error_dont_retry("Couldn't write to request output stream: " || &why)
    end
 
    public new()

@@ -198,9 +198,9 @@ class Ieval(MinimalObjectOutput)
       }
       every row := !t do {
          every col := 1 to *t[1] do {
-            output.writes(if member(links, col) then text_link(row[col]) else row[col])
+            output.writes1(if member(links, col) then text_link(row[col]) else row[col])
             if col < *t[1] then
-               output.writes(repl(" ", 4 + widths[col] - *row[col]))
+               output.writes1(repl(" ", 4 + widths[col] - *row[col]))
          }
          output.write()
       }
@@ -262,7 +262,7 @@ class Ieval(MinimalObjectOutput)
 
    private cls()
       if is(output, DescStream) then
-         output.writes("\e[2J\e[H")
+         output.writes1("\e[2J\e[H")
       else
          output.clear_text()
    end

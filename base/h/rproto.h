@@ -278,7 +278,7 @@ void copyimgdata(struct imgdata *dest, struct imgdata *src);
    int is_png(dptr data);
    int is_jpeg(dptr data);
    int is_gif(dptr data);
-   int  copyarea        (wbp w, int x, int y, int wd, int h, wbp w2, int x2, int y2);
+   int  copyarea        (wbp w, int x, int y, int wd, int h, wbp w2, int x2, int y2, wbp w3, int x3, int y3);
    void doconfig        (wbp w, int status);
    void erasearea       (wbp w, int x, int y, int width, int height);
    void fillrectangle   (wbp w, int x, int y, int width, int height);
