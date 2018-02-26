@@ -361,7 +361,7 @@ class Tree(BaseTree)
       # Ensure the line height is slightly greater than the
       # bitmap height
       #
-      res <:= \img_h + 4
+      res <:= \img_h + scale(4)
       return res
    end
 
@@ -447,11 +447,11 @@ class ItemPaintTree(BaseTree)
          # Ensure the line height is slightly greater than the
          # bitmap height
          #
-         h <:= \img_h + 4
+         h <:= \img_h + scale(4)
       } else {
          h := []
          every h1 := item_paint.get_height(view.cbwin, (!self.contents).label) + bh do {
-            h1 <:= \img_h + 4
+            h1 <:= \img_h + scale(4)
             put(h, h1)
          }
       }
