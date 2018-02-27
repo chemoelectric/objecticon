@@ -35,6 +35,13 @@ static	Image	*holdcol;
 static	Image	*lightholdcol;
 static	Image	*paleholdcol;
 
+static	Image	*palemagenta;
+static	Image	*palered;
+static	Image	*palegreen;
+static	Image	*paleyellow;
+static	Image	*paleblue;
+static	Image	*palecyan;
+
 static void addhist(Window *w, int from, int to);
 static void rmhist(Window *w);
 static void gotohist(Window *w, int pos);
@@ -94,6 +101,13 @@ colorinit(void)
     holdcol = allocimage(display, Rect(0,0,1,1), CMAP8, 1, DMedblue);
     lightholdcol = allocimage(display, Rect(0,0,1,1), CMAP8, 1, DGreyblue);
     paleholdcol = allocimage(display, Rect(0,0,1,1), CMAP8, 1, DPalegreyblue);
+
+    palered = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0xCC6666FF);
+    palegreen = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0x66CC66FF);
+    paleyellow = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0xCCCC66FF);
+    paleblue = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0x6666FFFF);
+    palemagenta = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0xB266FFFF);
+    palecyan = allocimage(display, Rect(0,0,1,1), CMAP8, 1, 0x66CCCCFF);
 }
 
 Window*
@@ -849,6 +863,24 @@ wsetcols(Window *w)
 			w->cols[TEXT] = w->cols[HTEXT] = display->black;
 		else
 			w->cols[TEXT] = w->cols[HTEXT] = darkgrey;
+
+        if(w == input) {
+            w->cols[ATTR_BLACK] = cols[ATTR_BLACK];
+            w->cols[ATTR_MAGENTA] = cols[ATTR_MAGENTA];
+            w->cols[ATTR_RED] = cols[ATTR_RED];
+            w->cols[ATTR_GREEN] = cols[ATTR_GREEN];
+            w->cols[ATTR_YELLOW] = cols[ATTR_YELLOW];
+            w->cols[ATTR_BLUE] = cols[ATTR_BLUE];
+            w->cols[ATTR_CYAN] = cols[ATTR_CYAN];
+        } else {
+            w->cols[ATTR_BLACK] = darkgrey;
+            w->cols[ATTR_MAGENTA] = palemagenta;
+            w->cols[ATTR_RED] = palered;
+            w->cols[ATTR_GREEN] = palegreen;
+            w->cols[ATTR_YELLOW] = paleyellow;
+            w->cols[ATTR_BLUE] = paleblue;
+            w->cols[ATTR_CYAN] = palecyan;
+        }
 }
 
 void
