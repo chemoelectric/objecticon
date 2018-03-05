@@ -149,28 +149,25 @@ class Split(Component)
       if /self.sizer.is_horizontal_flag then {
          first.x := self.x
          sizer.w := sizer.get_preferred_width()
-         # If either first or second are hidden, then the other
-         # component gets all the space.
-         if \first.is_hidden_flag then {
-            sizer.w := first.w := 0
-         } else if \second.is_hidden_flag then {
-            sizer.w := 0
-            first.w := self.w
-         } else {
-            sizer.w := sizer.get_preferred_width()
-            p1 := first.get_preferred_width()
-            p2 := second.get_preferred_width()
-            ex := self.w - (sizer.w + p1 + p2)
-            first.w := p1 + integer(ex * weight)
-            # Ensure first.w in range that tries to keep both minimum
-            # values valid.
-            first.w <:= min_first
-            first.w >:= self.w - sizer.w - min_second
-         }
+         p1 := first.get_preferred_width()
+         p2 := second.get_preferred_width()
+         ex := self.w - (sizer.w + p1 + p2)
+         first.w := p1 + integer(ex * weight)
+         # Ensure first.w in range that tries to keep both minimum
+         # values valid.
+         first.w <:= min_first
+         first.w >:= self.w - sizer.w - min_second
          sizer.x := first.x + first.w
          second.x := sizer.x + sizer.w
          # Set to ensure the total width is the sum of the parts.
          second.w := self.w - sizer.w - first.w
+         # If either component is hidden, adjust the other to cover
+         # the full width.
+         if \first.is_hidden_flag then {
+            second.x := self.x
+            second.w := self.w
+         } else if \second.is_hidden_flag then
+            first.w := self.w
          every c := !self.children do {
             c.y := self.y
             c.h := self.h
@@ -178,23 +175,21 @@ class Split(Component)
          }
       } else {
          first.y := self.y
-         if \first.is_hidden_flag then {
-            sizer.h := first.h := 0
-         } else if \second.is_hidden_flag then {
-            sizer.h := 0
-            first.h := self.h
-         } else {
-            sizer.h := sizer.get_preferred_height(self.w)
-            p1 := first.get_preferred_height(self.w)
-            p2 := second.get_preferred_height(self.w)
-            ex := self.h - (sizer.h + p1 + p2)
-            first.h := p1 + integer(ex * weight)
-            first.h <:= min_first
-            first.h >:= self.h - sizer.h - min_second
-         }
+         sizer.h := sizer.get_preferred_height(self.w)
+         p1 := first.get_preferred_height(self.w)
+         p2 := second.get_preferred_height(self.w)
+         ex := self.h - (sizer.h + p1 + p2)
+         first.h := p1 + integer(ex * weight)
+         first.h <:= min_first
+         first.h >:= self.h - sizer.h - min_second
          sizer.y := first.y + first.h
          second.y := sizer.y + sizer.h
          second.h := self.h - sizer.h - first.h
+         if \first.is_hidden_flag then {
+            second.y := self.y
+            second.h := self.h
+         } else if \second.is_hidden_flag then
+            first.h := self.h
          every c := !self.children do {
             c.x := self.x
             c.w := self.w
