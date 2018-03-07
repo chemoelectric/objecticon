@@ -28,7 +28,7 @@ class B(A)
       local t
       t := self.f
       return [ B.h, [self,t], [t,self], [t,t], self.f, self.f2, self.g, 
-              A.f, StringStream().in, rpartial1(proc1,100) ]
+              A.f, StringStream().in, rpartial(proc1,100) ]
    end
 end
 
