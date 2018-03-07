@@ -131,22 +131,33 @@ procedure compose(f, g)
    return Compose(f, g).call
 end
 
-# Convenient function to get the named binary operator, partially
-# applied with x as the left argument.  For example lpb(2, "*")
-# returns a function which doubles its argument, whilst lpb(0, "<")
+# Convenient function to get the binary operator `op`, partially
+# applied with `x` as the left argument.  For example
+# ~
+#    lpb(2, "*")
+# ~
+# returns a function which doubles its argument, whilst
+# ~
+#    lpb(0, "<")
+# ~
 # returns a function which succeeds and returns its argument if it is
 # greater than 0.
 #
-procedure lpb(x, s)
-   return lpartial(callable(s, 2), x)
+procedure lpb(x, op)
+   op := callable(op, 2) | runerr("invalid operation for lpb", op)
+   return lpartial(op, x)
 end
 
-# Convenient function to get the named binary operator, partially
-# applied with x, using rpartial.  For example rpb("/", 2) returns a
-# function which halves its argument.
+# Convenient function to get the binary operator `op`, partially
+# applied with `x`, as the right argument.  For example
+# ~
+#   rpb("/", 2)
+# ~
+# returns a function which halves its argument.
 #
-procedure rpb(s, x)
-   return rpartial(callable(s, 2), x)
+procedure rpb(op, x)
+   op := callable(op, 2) | runerr("invalid operation for rpb", op)
+   return rpartial(op, x)
 end
 
 #
