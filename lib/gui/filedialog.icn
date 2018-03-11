@@ -207,17 +207,12 @@ class FileDialog(Dialog)
       /init_filters := [u"*"]
       filter.set_selection_list(ucs_list(init_filters)).set_selection(1)
       synch_pats()
-      if /multiple_files_flag then {
-         file.
-            set_selection_list(ucs_list(init_files)).
-            set_selection(1).
-            set_use_wheel(&no)
-         flist.set_select_mode(Select.ONE)
-         file_overlay.set_which_one(single_file_overlay_item)
-      } else {
-         flist.set_select_mode(Select.MANY)
-         file_overlay.set_which_one(multiple_files_overlay_item)
-      }
+      file.
+         set_selection_list(ucs_list(init_files)).
+         set_selection(1).
+         set_use_wheel(&no)
+      flist.set_select_mode(if /multiple_files_flag then Select.ONE else Select.MANY)
+      synch_file_overlay()
       pos_table := table()
       res := &null
    end
@@ -226,14 +221,12 @@ class FileDialog(Dialog)
       local s, x
       # Clear any cached directory list in the suggest field
       file.view.refresh()
-      if /multiple_files_flag then {
-         file.grab_focus()
-         s := file.get_contents()
-         if *s > 0 then {
-            file.view.move_cursor(1).move_cursor(*s + 1, &yes)
-            if x := Files.get_extension(s) then
-               file.view.move_cursor(*s - *x, &yes)
-         }
+      file.grab_focus()
+      s := file.get_contents()
+      if *s > 0 then {
+         file.view.move_cursor(1).move_cursor(*s + 1, &yes)
+         if x := Files.get_extension(s) then
+            file.view.move_cursor(*s - *x, &yes)
       }
       win.set_min_size(win.get_width(), win.get_height())
       goto_dir(gen_favourites_directories())
@@ -269,13 +262,13 @@ class FileDialog(Dialog)
 
    public on_file_content_changed(ev)
       msg()
+      synch_flist()
       check_current_selection()
-      synch_file()
    end
 
-   public synch_file()
+   public synch_flist()
       local i
-      if /multiple_files_flag then {
+      if showing_file() then {
          if i := Positions{(!flist.contents).name, file.get_contents()} then {
             flist.
                set_cursor(i).
@@ -283,9 +276,6 @@ class FileDialog(Dialog)
                center_line(i)
          } else
             flist.clear_selections()
-      } else {
-         flist.clear_selections()
-         update_file_label()
       }
    end
 
@@ -452,11 +442,15 @@ class FileDialog(Dialog)
    end
 
    public on_file_action(ev)
-      local f
+      local f, p
       if file.view.was_applied(ev) then
          fail
-      if Files.is_directory(f := get_current_selection().str()) then {
+      p := get_current_selection() | fail
+      if Files.is_directory(f := p.str()) then {
          file.set_contents(u"")
+         goto_dir(f)
+      } else if Files.is_directory(f := p.parent().str()) then {
+         file.set_contents(p.get(-1))
          goto_dir(f)
       }
    end
@@ -466,12 +460,21 @@ class FileDialog(Dialog)
    end
 
    public update_file_label()
-      local n
-      file_label.set_label(case n := *flist.get_selections() of {
-         0:  "No files selected"
-         1:  "One file selected"
-         default:  n || " files selected"
-      })
+      # The label is only used when there are >1 files selected.
+      file_label.set_label(*flist.get_selections() || " files selected")
+   end
+
+   public synch_file_overlay()
+      file_overlay.set_which_one(
+         if /multiple_files_flag | *flist.get_selections() <= 1 then
+            single_file_overlay_item
+         else
+            multiple_files_overlay_item )
+   end
+
+   public showing_file()
+      if file_overlay.which_one === single_file_overlay_item then
+         return
    end
 
    public on_flist()
@@ -479,7 +482,8 @@ class FileDialog(Dialog)
       # Clicked in file list; set TextField
       #
       msg()
-      if /multiple_files_flag then
+      synch_file_overlay()
+      if showing_file() then
          file.set_contents(flist.object_get_selections()[1].name)
       else
          update_file_label()
@@ -586,11 +590,12 @@ class FileDialog(Dialog)
       local e, s, t, c, i, j
       save_pos()
       msg()
-      if /multiple_files_flag then {
+      if showing_file() then {
          if \load then
             load_dir_list()
          annotate_dir_list()
          set_lists(sort_dir_list())
+         synch_flist()
       } else {
          # Save cursor and selection settings.  If reloading, then we
          # save names rather than objects.
@@ -603,8 +608,6 @@ class FileDialog(Dialog)
             c := flist.object_get_cursor()
          }
          annotate_dir_list()
-         # This will clear image and file label, but they are reset
-         # below.
          set_lists(sort_dir_list())
          # Restore selections, and set j to new cursor index.
          if \load then {
@@ -620,17 +623,26 @@ class FileDialog(Dialog)
             flist.object_set_selections(s)
             j := flist.find_line(\c)
          }
+         synch_file_overlay()
+         if showing_file() then {
+            # On a refresh, one of the selected files must have
+            # disappeared.  Update the file field accordingly.
+            # Setting j ensures the selection becomes the centred
+            # cursor below.
+            file.set_contents(
+               if j := flist.get_selections()[1] then
+                  flist.contents[j].name
+               else
+                  u"")
+         } else
+            update_file_label()
          # If cursor found, set it and center line.
-         # check_current_selection() will set the image in the image
-         # tab if the cursor is selected.
-         if \j then {
+         if \j then
             flist.
                set_cursor(j).
                center_line(j)
-            check_current_selection()
-         }
-         update_file_label()
       }
+      check_current_selection()
       restore_pos()
    end
 
@@ -662,6 +674,9 @@ class FileDialog(Dialog)
       load_dir_list()
       annotate_dir_list()
       set_lists(sort_dir_list())
+      synch_file_overlay()
+      synch_flist()
+      check_current_selection()
       restore_pos()
       if /nav then {
          ds := loaded_dir_path.ucs()
@@ -694,9 +709,6 @@ class FileDialog(Dialog)
          set_area_y(0).
          clear_selections().
          set_cursor(1)
-
-      synch_file()
-      check_current_selection()
    end
 
    public load_dir_list()
