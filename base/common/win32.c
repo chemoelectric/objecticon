@@ -221,6 +221,16 @@ FILE *fopen_utf8(char *path, char *mode)
     return res;
 }
 
+int system_utf8(char *cmd)
+{
+    WCHAR *wcmd;
+    int res;
+    wcmd = utf8_to_wchar(cmd);
+    res = _wsystem(wcmd);
+    free(wcmd);
+    return res;
+}
+
 int wmain(int argc, WCHAR *wargv[])
 {
     char **argv;

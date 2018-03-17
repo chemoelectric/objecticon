@@ -100,6 +100,10 @@ function system(s)
    if !cnv:C_string(s) then
       runerr(103,s)
    body {
+#if MSWIN32
+       return C_integer (word)system_utf8(s);
+#else
        return C_integer (word)system(s);
+#endif
       }
 end
