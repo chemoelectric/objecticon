@@ -18,6 +18,8 @@ WCHAR *utf8_to_wchar(char *s)
 {
     WCHAR *mbs;
     int n;
+    if (!s)
+        return NULL;
     n = MultiByteToWideChar(CP_UTF8,
                             0,
                             s,
@@ -38,6 +40,8 @@ char *wchar_to_utf8(WCHAR *s)
 {
     char *u;
     int n;
+    if (!s)
+        return NULL;
     n = WideCharToMultiByte(CP_UTF8,
                             0,
                             s,
