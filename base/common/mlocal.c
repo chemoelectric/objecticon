@@ -265,11 +265,7 @@ static char *getcachedcwd()
         int len = 32;
         for (;;) {
             buf = safe_realloc(buf, len);
-#if MSWIN32
-            if (getcwd_utf8(buf, len))
-#else
             if (getcwd(buf, len))
-#endif
                 break;
             if (errno != ERANGE) {
                 fprintf(stderr, "unable to getcwd() (errno=%d)", errno);
