@@ -190,24 +190,17 @@ abstract class Outputter()
       return s
    end
 
-   private list_extract(sym)
-      return if sym.decl_obj.size() = 1 then
-         sym.decl_obj.get_first_token().get_pad()
+   protected get_comment_token(sym)
+      return if is(sym, ClassVariable | GlobalSymbol) & sym.decl_obj.size() = 1 then
+         sym.decl_obj.get_first_token()
       else
-         sym.obj.get_first_token().get_pad()
-   end
-
-   private get_comment_str(sym)
-      return if is(sym, ClassVariable | GlobalSymbol) then
-         list_extract(sym)
-      else
-         sym.obj.get_first_token().get_pad()
+         sym.obj.get_first_token()
    end
 
    private get_comment_list(sym)
       local comment, l
       comment := []
-      get_comment_str(sym) ? {
+      get_comment_token(sym).get_pad() ? {
          while tab(upto('#')) do {
             move(1)
             l := tab(upto('\n\r') | 0)

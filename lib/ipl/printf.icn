@@ -21,7 +21,7 @@
 package ipl.printf
 
 import
-   io(writes),
+   io(writes, Files),
    util(Format),
    lang(to_string)
 
@@ -74,6 +74,7 @@ end
 # *   %t  to_string() result
 # *   %r  real decimal
 # *   %e  real in exponential format
+# *   %n  platform-independent end-of-line string
 #
 procedure printf(format, args[])
    return writes(doprnt(format, args))
@@ -103,7 +104,7 @@ package procedure one(args)
    #io.write("just: ",image(just),", width: ", width, ", prec: ",
    # prec, ", conv: ", conv)
 
-   if any('dsxXoitreb', conv) then {
+   if any('dsxXoitrebn', conv) then {
       a := get(args)
       case string(conv) of {
          "d": v := decimal(a, prec, flag)
@@ -116,6 +117,7 @@ package procedure one(args)
          "t": v := str(to_string(a), prec)
          "r": v := fixnum(a, prec, flag)
          "e": v := eformatstr(a, prec, flag)
+         "n": v := Files.EOL
       }
    } else
       v := conv

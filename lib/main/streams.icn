@@ -3001,7 +3001,12 @@ end
 # co-expression generating `&null` and errors are signalled by it
 # failing and setting `&why`.
 #
-class GeneratorStream(LineBasedInputStream, NoCopy)
+# For example :-
+# ~
+#     # A stream with 10 lines
+#     e := LineBasedGeneratorStream{ (1 to 10) | &null }
+# ~
+class LineBasedGeneratorStream(LineBasedInputStream, NoCopy)
    private
       coex
 
@@ -3009,11 +3014,15 @@ class GeneratorStream(LineBasedInputStream, NoCopy)
       local t
       if /coex then
          return
-      t := @coex | fail
-      if /t then
+      (t := @coex) | {
          coex := &null
-      else
-         t := string(t) | runerr(103, t)
+         fail
+      }
+      if /t then {
+         coex := &null
+         return
+      }
+      t := string(t) | runerr(103, t)
       return t
    end
 
@@ -3025,29 +3034,52 @@ class GeneratorStream(LineBasedInputStream, NoCopy)
 end
 
 # A `Stream` which takes its data from a co-expression.  Each result
-# provides one line of output.  Unlike `GeneratorStream`, no provision
-# is made for signalling errors (failure of the co-expression
-# indicates end-of-file).
+# provides a chunk of output of arbitrary size.  End-of-file is
+# signalled by the co-expression generating `&null` and errors are
+# signalled by it failing and setting `&why`.
 #
 # For example :-
 # ~
-#     # A stream with 10 lines
-#     e := ExprStream{1 to 10}
+#     # A stream containing a string repeated indefinitely.
+#     e := GeneratorStream{ |"The quick brown fox" }
+#
+#     # A stream containing lines of random digits.
+#     e := GeneratorStream{ |?(&digits ++ '\n') }
 # ~
-class ExprStream(LineBasedInputStream, NoCopy)
+class GeneratorStream(Stream, NoCopy)
    private
-      coex
+      coex, buff
 
-   protected read_line_impl()
+   public get_mode()
+      return READ
+   end
+
+   public in(n)
       local t
-      if t := @coex then
-         t := string(t) | runerr(103, t)
+      if /coex then
+         return
+      while *buff = 0 do {
+         (t := @coex) | {
+            coex := &null
+            fail
+         }
+         if /t then {
+            coex := &null
+            return
+         }
+         buff := string(t) | runerr(103, t)
+      }
+      buff ? {
+         t := move(n) | tab(0)
+         buff := tab(0)
+      }
       return t
    end
 
-   public new(coex)
-      self.coex := coex
-      return LineBasedInputStream.new()
+   public new(e)
+      self.coex := e
+      self.buff := ""
+      return
    end
 end
 

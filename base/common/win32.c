@@ -18,6 +18,8 @@ WCHAR *utf8_to_wchar(char *s)
 {
     WCHAR *mbs;
     int n;
+    if (!s)
+        return NULL;
     n = MultiByteToWideChar(CP_UTF8,
                             0,
                             s,
@@ -38,6 +40,8 @@ char *wchar_to_utf8(WCHAR *s)
 {
     char *u;
     int n;
+    if (!s)
+        return NULL;
     n = WideCharToMultiByte(CP_UTF8,
                             0,
                             s,
@@ -218,6 +222,16 @@ FILE *fopen_utf8(char *path, char *mode)
     res = _wfopen(wpath, wmode);
     free(wpath);
     free(wmode);
+    return res;
+}
+
+int system_utf8(char *cmd)
+{
+    WCHAR *wcmd;
+    int res;
+    wcmd = utf8_to_wchar(cmd);
+    res = _wsystem(wcmd);
+    free(wcmd);
     return res;
 }
 

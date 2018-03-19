@@ -86,12 +86,40 @@ abstract class Node()
    end
 
    #
-   # Traverse all the nodes in this `Node` with a preorder traversal.
+   # Traverse all the nodes in this `Node` with a postorder traversal.
    #
    public traverse_nodes_postorder()
       local e
       every e := !children do
          text(e) | e.traverse_nodes_postorder()
+      coact(self)
+   end
+
+   #
+   # Traverse all the nodes and strings in this `Node` with a preorder traversal.
+   #
+   public traverse_all_preorder()
+      local e
+      coact(self)
+      every e := !children do {
+         if text(e) then
+            coact(e)
+         else
+            e.traverse_all_preorder()
+      }
+   end
+
+   #
+   # Traverse all the nodes and strings in this `Node` with a postorder traversal.
+   #
+   public traverse_all_postorder()
+      local e
+      every e := !children do {
+         if text(e) then
+            coact(e)
+         else
+            e.traverse_all_postorder()
+      }
       coact(self)
    end
 

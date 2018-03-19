@@ -365,14 +365,25 @@ class HtmlOutputter(Outputter)
    end
 
    private output_comment(f, c)
+      local t, n
       self.output_file := f
       self.output_sym := c
       markdown(c)
+      t := get_comment_token(c)
+      # Calculate the number of lines to show before the actual symbol
+      t.get_pad() ? {
+         n := 0
+         # Go to the first comment which is not a pp directive.
+         if tab(upto('#')) & not match("#line") then {
+            every upto('\n') do
+               n +:= 1
+         }
+      }
       write(f, "<p/><a href=\"", 
             get_id(c.scanned_file) || ".html#", 
-            c.obj.get_first_token().line , 
+            t.line - n,
             "\" target=\"displayFrame\">Source - ", 
-            FilePath(c.obj.get_first_token().filename).get(-1),
+            FilePath(t.filename).get(-1),
             " </a>")
    end
 

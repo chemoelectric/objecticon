@@ -15,7 +15,7 @@ procedure main(a)
 
    d :=  FileDialog().
       set_label("A File Dialog").
-      set_filters(["*", "*.icn", "*.c", "*.txt"]).
+      set_filters(["*", "*.jpg", "*.icn", "*.c", "*.txt"]).
       set_directories([Files.get_temp(), "/non/existent/path"])
 
    if /opts["nf"] then

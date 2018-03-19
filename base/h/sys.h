@@ -165,6 +165,9 @@
    #define setenv(k, v, o) setenv_utf8(k, v)
    #define unsetenv(a) setenv_utf8(a, NULL)
    #define fopen(x, y) fopen_utf8(x, y)
+   #define system(x) system_utf8(x)
+   #define chdir(x) chdir_utf8(x)
+   #define getcwd(x, y) getcwd_utf8(x, y)
 #endif					/* MSWIN32 */
 
 #if UNIX

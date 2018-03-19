@@ -5233,12 +5233,27 @@ function io_WinsockStream_set_blocking_mode(self, flag)
    }
 end
 
+static int getaddrinfo_utf8(char *node,
+                            char *service,
+                            struct addrinfoW *hints,
+                            struct addrinfoW **result)
+{
+    WCHAR *wnode, *wservice;
+    int res;
+    wnode = utf8_to_wchar(node);
+    wservice = utf8_to_wchar(service);
+    res = GetAddrInfoW(wnode, wservice, hints, result);
+    free(wnode);
+    free(wservice);
+    return res;
+}
+
 static struct sockaddr *parse_sockaddr(char *s, int *len)
 {
     if (strncmp(s, "inet:", 5) == 0) {
         static struct sockaddr_in iss;
-        struct addrinfo hints;
-        struct addrinfo *res;
+        struct addrinfoW hints;
+        struct addrinfoW *res;
         int error;
         char *t = s + 5, buf[128], *host, *port;
         if (strlen(t) >= sizeof(buf)) {
@@ -5261,20 +5276,20 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
             host = 0;
         } else
             host = buf;
-        error = getaddrinfo(host, port, &hints, &res);
+        error = getaddrinfo_utf8(host, port, &hints, &res);
         if (error != 0) {
             win32error2why();
             return 0;
         }
         memcpy(&iss, res->ai_addr, res->ai_addrlen);
-        freeaddrinfo(res);
+        FreeAddrInfoW(res);
         *len = sizeof(iss);
         return (struct sockaddr *)&iss;
     }
     if (strncmp(s, "inet6:", 6) == 0) {
         static struct sockaddr_in6 iss;
-        struct addrinfo hints;
-        struct addrinfo *res;
+        struct addrinfoW hints;
+        struct addrinfoW *res;
         int error;
         char *t = s + 6, buf[128], *host, *port;
         if (strlen(t) >= sizeof(buf)) {
@@ -5311,13 +5326,13 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
             hints.ai_flags = AI_PASSIVE;
             host = 0;
         }
-        error = getaddrinfo(host, port, &hints, &res);
+        error = getaddrinfo_utf8(host, port, &hints, &res);
         if (error != 0) {
             win32error2why();
             return 0;
         }
         memcpy(&iss, res->ai_addr, res->ai_addrlen);
-        freeaddrinfo(res);
+        FreeAddrInfoW(res);
         *len = sizeof(iss);
         return (struct sockaddr *)&iss;
     }
@@ -5326,7 +5341,7 @@ static struct sockaddr *parse_sockaddr(char *s, int *len)
     return 0;
 }
 
-static void add_addrinfo4(struct addrinfo *t, dptr result)
+static void add_addrinfo4(struct addrinfoW *t, dptr result)
 {
     tended struct descrip tmp;
     char buf[INET_ADDRSTRLEN];
@@ -5336,7 +5351,7 @@ static void add_addrinfo4(struct addrinfo *t, dptr result)
     list_put(result, &tmp);
 }
 
-static void add_addrinfo6(struct addrinfo *t, dptr result)
+static void add_addrinfo6(struct addrinfoW *t, dptr result)
 {
     tended struct descrip tmp;
     char buf[INET6_ADDRSTRLEN];
@@ -5352,8 +5367,8 @@ function io_WinsockStream_dns_query(host, ver)
    if !def:C_integer(ver, defaultipver) then
       runerr(101, ver)
    body {
-      struct addrinfo hints;
-      struct addrinfo *res, *t;
+      struct addrinfoW hints;
+      struct addrinfoW *res, *t;
       tended struct descrip result;
       int error;
       memset(&hints, 0, sizeof(hints));
@@ -5366,7 +5381,7 @@ function io_WinsockStream_dns_query(host, ver)
           default: Irunerr(205, ver);
       }
       hints.ai_socktype = SOCK_STREAM;
-      error = getaddrinfo(host, NULL, &hints, &res);
+      error = getaddrinfo_utf8(host, NULL, &hints, &res);
       if (error != 0) {
           win32error2why();
           fail;
@@ -5411,7 +5426,7 @@ function io_WinsockStream_dns_query(host, ver)
               break;
           }
       }
-      freeaddrinfo(res);
+      FreeAddrInfoW(res);
       if (ListBlk(result).size == 0) {
            LitWhy("No AF_INET or AF_INET6 records returned");
            fail;

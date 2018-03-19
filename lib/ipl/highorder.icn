@@ -57,7 +57,7 @@ procedure partial(f, spec, l[])
 end
 
 #
-# Implementation class for several partial application functions.
+# Implementation class for `lpartial` and `rpartial`
 #
 package class LRPartial()
    private
@@ -90,32 +90,20 @@ end
 # Partial application to function f, prepending l to the arguments.
 #
 procedure lpartial(f, l[])
-   return LRPartial(f, l).lcall
-end
-
-# Partial application of the first parameter to the two-parameter
-# function f.  The result is the same as using the more general
-# function `lpartial`, but avoids the creation of temporary lists on
-# each invocation of the resulting function.
-#
-procedure lpartial1(f, x)
-   return LRPartial(f, x).lcall1
+   return if *l = 1 then
+      LRPartial(f, l[1]).lcall1
+   else
+      LRPartial(f, l).lcall
 end
 
 #
 # Partial application to function f, appending l to the arguments.
 #
 procedure rpartial(f, l[])
-   return LRPartial(f, l).rcall
-end
-
-# Partial application of the second parameter to the two-parameter
-# function f.  The result is the same as using the more general
-# function `rpartial`, but avoids the creation of temporary lists on
-# each invocation of the resulting function.
-#
-procedure rpartial1(f, x)
-   return LRPartial(f, x).rcall1
+   return if *l = 1 then
+      LRPartial(f, l[1]).rcall1
+   else
+      LRPartial(f, l).rcall
 end
 
 #
@@ -143,22 +131,33 @@ procedure compose(f, g)
    return Compose(f, g).call
 end
 
-# Convenient function to get the named binary operator, partially
-# applied with x as the left argument.  For example lpb(2, "*")
-# returns a function which doubles its argument, whilst lpb(0, "<")
+# Convenient function to get the binary operator `op`, partially
+# applied with `x` as the left argument.  For example
+# ~
+#    lpb(2, "*")
+# ~
+# returns a function which doubles its argument, whilst
+# ~
+#    lpb(0, "<")
+# ~
 # returns a function which succeeds and returns its argument if it is
 # greater than 0.
 #
-procedure lpb(x, s)
-   return lpartial1(callable(s, 2), x)
+procedure lpb(x, op)
+   op := callable(op, 2) | runerr("invalid operation for lpb", op)
+   return lpartial(op, x)
 end
 
-# Convenient function to get the named binary operator, partially
-# applied with x, using rpartial.  For example rpb("/", 2) returns a
-# function which halves its argument.
+# Convenient function to get the binary operator `op`, partially
+# applied with `x`, as the right argument.  For example
+# ~
+#   rpb("/", 2)
+# ~
+# returns a function which halves its argument.
 #
-procedure rpb(s, x)
-   return rpartial1(callable(s, 2), x)
+procedure rpb(op, x)
+   op := callable(op, 2) | runerr("invalid operation for rpb", op)
+   return rpartial(op, x)
 end
 
 #

@@ -1,13 +1,13 @@
 package ipl.streams
 
 import
-   io(GeneratorStream, HasUnderlyingStream, lclose)
+   io(LineBasedGeneratorStream, HasUnderlyingStream, lclose)
 
 #
 # This `Stream` takes a list of other `Stream`s.  Their lines of
 # output are interspersed together to form the output.
 #
-class IntersperseStream(GeneratorStream, HasUnderlyingStream)
+class IntersperseStream(LineBasedGeneratorStream, HasUnderlyingStream)
    private
       a
 
@@ -36,6 +36,6 @@ class IntersperseStream(GeneratorStream, HasUnderlyingStream)
 
    public new(a[])
       self.a := a
-      return GeneratorStream.new{line_gen()}
+      return LineBasedGeneratorStream.new{line_gen()}
    end
 end
