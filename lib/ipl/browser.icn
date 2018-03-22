@@ -160,7 +160,7 @@ class HttpRequestHelperImpl(HttpRequestHelper)
          unset_header("if-none-match")
 
       # Never use the cache on a refresh
-      if worker.req.kind = Worker.REFRESH then
+      if worker.req.kind === Worker.REFRESH then
          fail
       # .. or on anything other than a GET
       (hreq.method == "GET") | fail
@@ -555,7 +555,7 @@ class HttpSubWorker(SubWorker)
       # The request URL without the fragment
       req_url_no_frag := clone(req.url).set_fragment()
 
-      if req.kind ~= Worker.REFRESH & /req.form_data then
+      if req.kind ~=== Worker.REFRESH & /req.form_data then
          ce := worker.pool.cache.get(req_url_no_frag)
 
       return if (\ce).hasnt_expired() then {
@@ -568,7 +568,7 @@ class HttpSubWorker(SubWorker)
          if (\req.referer).scheme == (u"http" | u"https") then
             hreq.set_referer(req.referer)
 
-         if req.kind = Worker.DOWNLOAD then {
+         if req.kind === Worker.DOWNLOAD then {
             tmp_file := Files.make_temp_filename("http_oibrowser.", ".bin") | stop("Couldn't create temp file: ", &why)
             use {
                s := BufferStream(FileStream(tmp_file, 
@@ -674,10 +674,10 @@ class Worker()
    public static const NORMAL, NAVIGATE, REFRESH, DOWNLOAD
 
    private static init()
-      NORMAL := 1
-      NAVIGATE := 2
-      REFRESH := 3
-      DOWNLOAD := 4
+      NORMAL := "normal"
+      NAVIGATE := "navigate"
+      REFRESH := "refresh"
+      DOWNLOAD := "download"
    end
 
    public initially()
@@ -1045,7 +1045,7 @@ class WorkerPool()
    end
 
    public get_status()
-      local s, w, st, t, l, r, k, c
+      local s, w, st, t, l, r
       s := "<html><title>Worker pool status</title>"
 
       s ||:= "<h1>Workers</h1>" || Browser.TABLE_TAG || "<tr><th align=left>Serial</th><th align=left>Status</th><th align=left>URL</th></tr>"
@@ -1069,15 +1069,8 @@ class WorkerPool()
       if *queue > 0 then {
          s ||:= "<h1>Queue</h1>" || Browser.TABLE_TAG || "<tr><th align=left>Client</th><th align=left>Kind</th><th align=left>URL</th></tr>"
          every r := !!queue do {
-            k := case r.kind of {
-               Worker.NORMAL: "NORMAL"
-               Worker.NAVIGATE: "NAVIGATE"
-               Worker.REFRESH: "REFRESH"
-               Worker.DOWNLOAD: "DOWNLOAD"
-               default: "-"
-            }
-            c := Class.get_name(r.client) || "#" || serial(r.client)
-            s ||:= "<tr><td>" || c || "</td><td>" || k || "</td>" || Browser.mk_anchor_cell(r.url) || "</tr>"
+            s ||:= "<tr><td>" || Class.get_name(r.client) || "#" || serial(r.client) || "</td><td>" ||
+                    r.kind || "</td>" || Browser.mk_anchor_cell(r.url) || "</tr>"
          }
          s ||:= "</table>"
       }
@@ -3158,9 +3151,9 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          # The test for Worker.NORMAL ensures that when we click on a
          # link to a page from within the page itself we reload and go
          # back to the top of the page.
-         if yp := (k ~= Worker.NORMAL & \curr_history_entry.area_y) | (lookup_named_anchor(page_url.get_fragment()) - view.y) then {
+         if yp := (k ~=== Worker.NORMAL & \curr_history_entry.area_y) | (lookup_named_anchor(page_url.get_fragment()) - view.y) then {
             set_area_y(yp)
-            if xp := (k ~= Worker.NORMAL & \curr_history_entry.area_x) then
+            if xp := (k ~=== Worker.NORMAL & \curr_history_entry.area_x) then
                set_area_x(xp)
          }
          # If the user has placed the focus in a component in the new
@@ -3171,7 +3164,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
          # focus methods fail and no change to the focus is made.
          if view === (f := parent_dialog.get_focus()).gen_parents() then
             focus_scroll(, f)
-         else if k = Worker.NAVIGATE then
+         else if k === Worker.NAVIGATE then
             parent_dialog.set_focus(get_nth_focusable(\curr_history_entry.focus_index))
          else {
             if f := (!forms).get_autofocus() then
@@ -3552,7 +3545,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       page_resp := res
       page_url := res.url
       clear_searched()
-      if res.req.kind = Worker.NORMAL &
+      if res.req.kind === Worker.NORMAL &
          not URL.equiv(history[history_pos].url, page_url) then
       {
          every 1 to history_pos - 1 do
@@ -3615,14 +3608,14 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       if \page_data then
          get_favicon()
       curr_history_entry.title := page_title
-      if page_resp.req.kind = Worker.NAVIGATE then
+      if page_resp.req.kind === Worker.NAVIGATE then
          restore_form_values()
       every form_tab_children |||:= (!forms).get_tab_children()
       set_inner(row)
       layout()
       invalidate()
       last_highlight_component := &null
-      if page_resp.req.kind = Worker.NAVIGATE then
+      if page_resp.req.kind === Worker.NAVIGATE then
          restore_last_highlight()
       parent_dialog.resynch_pointer()
       setup_tabbing()
@@ -5040,7 +5033,7 @@ class Browser(ComponentScrollArea, WorkerPoolOwner)
       /kind := Worker.NORMAL
       cancel()
       # Anything other than a navigate puts us back at the page we're viewing.
-      if kind ~= Worker.NAVIGATE then
+      if kind ~=== Worker.NAVIGATE then
          reset_history_pos()
       goto_externally(url) |
          enqueue(Req(self, url, referer, set_top_data, kind, form_data))
