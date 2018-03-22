@@ -79,9 +79,9 @@ abstract class SelectableScrollArea(LineBasedScrollArea)
       TOP := "t"
       MIDDLE := "m"
       BOTTOM := "b"
-      MIDDLE_ONLY := 1
-      EDGES_ONLY := 2
-      MIDDLE_AND_EDGES := 3
+      MIDDLE_ONLY := "middle only"
+      EDGES_ONLY := "edges only"
+      MIDDLE_AND_EDGES := "middle and edges"
       INTER_LINE_WIDTH := env_int("OI_SCROLLAREA_INTER_LINE_WIDTH", 1) | 2 * Gui.FINE_WIDTH
    end
 
