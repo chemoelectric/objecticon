@@ -35,6 +35,10 @@ procedure fprintf(file, format, args[])
    return writes(file, doprnt(format, args))
 end
 
+# Set `&why` from a `printf` format, and fail.
+procedure whyf(format, args[])
+   &why := doprnt(format, args)
+end
 
 # Provides C-style printf formatting.  The specifier format is
 # ~
@@ -75,6 +79,7 @@ end
 # *   %r  real decimal
 # *   %e  real in exponential format
 # *   %n  platform-independent end-of-line string
+# *   %w  the value of &why
 #
 procedure printf(format, args[])
    return writes(doprnt(format, args))
@@ -101,10 +106,8 @@ package procedure one(args)
    if ="." then prec := intparam(args)
    conv := move(1) | ""
 
-   #io.write("just: ",image(just),", width: ", width, ", prec: ",
-   # prec, ", conv: ", conv)
-
-   if any('dsxXoitrebn', conv) then {
+   if any('dsxXoitreb', conv) then {
+      # Formats that take an argument.
       a := get(args)
       case string(conv) of {
          "d": v := decimal(a, prec, flag)
@@ -118,6 +121,12 @@ package procedure one(args)
          "r": v := fixnum(a, prec, flag)
          "e": v := eformatstr(a, prec, flag)
          "n": v := Files.EOL
+      }
+   } else if any('nw', conv) then {
+      # Formats that don't take an argument.
+      case string(conv) of {
+         "n": v := str(Files.EOL, prec)
+         "w": v := str(&why, prec)
       }
    } else
       v := conv
