@@ -21,7 +21,7 @@
 package ipl.printf
 
 import
-   io(stop, writes, Files),
+   io(stop, ewrites, writes, Files),
    util(Format),
    lang(to_string)
 
@@ -33,6 +33,11 @@ end
 # See `printf`
 procedure fprintf(file, format, args[])
    return writes(file, doprnt(format, args))
+end
+
+# Like `printf`, but outputs to stderr.
+procedure eprintf(format, args[])
+   return ewrites(doprnt(format, args))
 end
 
 # Set `&why` from a `printf` format, and fail.
